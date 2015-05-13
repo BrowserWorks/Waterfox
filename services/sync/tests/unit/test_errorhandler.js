@@ -14,8 +14,6 @@ Cu.import("resource://gre/modules/FileUtils.jsm");
 
 const FAKE_SERVER_URL = "http://dummy:9000/";
 const logsdir = FileUtils.getDir("ProfD", ["weave", "logs"], true);
-const LOG_PREFIX_SUCCESS = "success-";
-const LOG_PREFIX_ERROR   = "error-";
 
 const PROLONGED_ERROR_DURATION =
   (Svc.Prefs.get('errorhandler.networkFailureReportTimeout') * 2) * 1000;
@@ -468,6 +466,24 @@ add_identity_test(this, function test_shouldReportError_master_password() {
   let deferred = Promise.defer();
   server.stop(deferred.resolve);
   yield deferred.promise;
+});
+
+// Test that even if we don't have a cluster URL, a login failure due to
+// authentication errors is always reported.
+add_identity_test(this, function test_shouldReportLoginFailureWithNoCluster() {
+  // Ensure no clusterURL - any error not specific to login should not be reported.
+  Service.serverURL  = "";
+  Service.clusterURL = "";
+
+  // Test explicit "login rejected" state.
+  Status.resetSync();
+  // If we have a LOGIN_REJECTED state, we always report the error.
+  Status.login = LOGIN_FAILED_LOGIN_REJECTED;
+  do_check_true(errorHandler.shouldReportError());
+  // But any other status with a missing clusterURL is treated as a mid-sync
+  // 401 (ie, should be treated as a node reassignment)
+  Status.login = LOGIN_SUCCEEDED;
+  do_check_false(errorHandler.shouldReportError());
 });
 
 // XXX - how to arrange for 'Service.identity.basicPassword = null;' in
@@ -1772,8 +1788,7 @@ add_task(function test_sync_engine_generic_fail() {
       let entries = logsdir.directoryEntries;
       do_check_true(entries.hasMoreElements());
       let logfile = entries.getNext().QueryInterface(Ci.nsILocalFile);
-      do_check_eq(logfile.leafName.slice(0, LOG_PREFIX_ERROR.length),
-                  LOG_PREFIX_ERROR);
+      do_check_true(logfile.leafName.startsWith("error-sync-"), logfile.leafName);
 
       clean();
       server.stop(deferred.resolve);
@@ -1804,8 +1819,7 @@ add_test(function test_logs_on_sync_error_despite_shouldReportError() {
     let entries = logsdir.directoryEntries;
     do_check_true(entries.hasMoreElements());
     let logfile = entries.getNext().QueryInterface(Ci.nsILocalFile);
-    do_check_eq(logfile.leafName.slice(0, LOG_PREFIX_ERROR.length),
-                LOG_PREFIX_ERROR);
+    do_check_true(logfile.leafName.startsWith("error-sync-"), logfile.leafName);
 
     clean();
     run_next_test();
@@ -1832,8 +1846,7 @@ add_test(function test_logs_on_login_error_despite_shouldReportError() {
     let entries = logsdir.directoryEntries;
     do_check_true(entries.hasMoreElements());
     let logfile = entries.getNext().QueryInterface(Ci.nsILocalFile);
-    do_check_eq(logfile.leafName.slice(0, LOG_PREFIX_ERROR.length),
-                LOG_PREFIX_ERROR);
+    do_check_true(logfile.leafName.startsWith("error-sync-"), logfile.leafName);
 
     clean();
     run_next_test();
@@ -1867,8 +1880,7 @@ add_task(function test_engine_applyFailed() {
     let entries = logsdir.directoryEntries;
     do_check_true(entries.hasMoreElements());
     let logfile = entries.getNext().QueryInterface(Ci.nsILocalFile);
-    do_check_eq(logfile.leafName.slice(0, LOG_PREFIX_ERROR.length),
-                LOG_PREFIX_ERROR);
+    do_check_true(logfile.leafName.startsWith("error-sync-"), logfile.leafName);
 
     clean();
     server.stop(deferred.resolve);

@@ -32,7 +32,8 @@ const HTML_NS = "http://www.w3.org/1999/xhtml";
  * @param onClick
  *        A function that's called when a search suggestion is clicked.  Ideally
  *        we could call submit() on inputElement's ancestor form, but that
- *        doesn't trigger submit listeners.
+ *        doesn't trigger submit listeners. The function is passed one argument,
+ *        the click event.
  * @param idPrefix
  *        The IDs of elements created by the object will be prefixed with this
  *        string.
@@ -57,6 +58,8 @@ function SearchSuggestionUIController(inputElement, tableParent, onClick=null,
 
   this._stickyInputValue = "";
   this._hideSuggestions();
+
+  this._ignoreInputEvent = false;
 }
 
 SearchSuggestionUIController.prototype = {
@@ -143,6 +146,10 @@ SearchSuggestionUIController.prototype = {
   },
 
   _onInput: function () {
+    if (this._ignoreInputEvent) {
+      this._ignoreInputEvent = false;
+      return;
+    }
     if (this.input.value) {
       this._getSuggestions();
     }
@@ -228,15 +235,27 @@ SearchSuggestionUIController.prototype = {
   },
 
   _onMousedown: function (event) {
+    if (event.button == 2) {
+      return;
+    }
     let idx = this._indexOfTableRowOrDescendent(event.target);
     let suggestion = this.suggestionAtIndex(idx);
     this._stickyInputValue = suggestion;
+
+    // Commit composition string forcibly, because setting input value does not
+    // work if input has composition string (see bug 1115616 and bug 632744).
+    // Ignore input event for composition end to avoid getting suggestion again.
+    this._ignoreInputEvent = true;
+    this.input.blur();
+    this.input.focus();
+    this._ignoreInputEvent = false;
+
     this.input.value = suggestion;
     this.input.setAttribute("selection-index", idx);
     this.input.setAttribute("selection-kind", "mouse");
     this._hideSuggestions();
     if (this.onClick) {
-      this.onClick.call(null);
+      this.onClick.call(null, event);
     }
   },
 

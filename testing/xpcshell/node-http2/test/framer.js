@@ -15,7 +15,8 @@ var frame_types = {
   PING:          ['data'],
   GOAWAY:        ['last_stream', 'error'],
   WINDOW_UPDATE: ['window_size'],
-  CONTINUATION:  ['data']
+  CONTINUATION:  ['data'],
+  ALTSVC:        ['protocolID', 'host', 'port', 'origin', 'maxAge']
 };
 
 var test_frames = [{
@@ -188,7 +189,7 @@ var test_frames = [{
     host: "altsvc.example.com",
     origin: ""
   },
-  buffer: new Buffer('00001D' + '0A' + '00' + '00000000' + '01E13380' + '115B' + '00' + '02' + '6832' + '12' + '616C747376632E6578616D706C652E636F6D', 'hex')
+  buffer: new Buffer(new Buffer('00002B' + '0A' + '00' + '00000000' + '0000', 'hex') + new Buffer('h2="altsvc.example.com:4443"; ma=31536000', 'ascii'))
 }, {
   frame: {
     type: 'ALTSVC',
@@ -201,7 +202,7 @@ var test_frames = [{
     host: "altsvc.example.com",
     origin: "https://onlyme.example.com"
   },
-  buffer: new Buffer('000037' + '0A' + '00' + '00000000' + '01E13380' + '115B' + '00' + '02' + '6832' + '12' + '616C747376632E6578616D706C652E636F6D' + '68747470733A2F2F6F6E6C796D652E6578616D706C652E636F6D', 'hex')
+  buffer: new Buffer(new Buffer('000045' + '0A' + '00' + '00000000' + '001A', 'hex') + new Buffer('https://onlyme.example.comh2="altsvc.example.com:4443"; ma=31536000', 'ascii'))
 
 }, {
   frame: {

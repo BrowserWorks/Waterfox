@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -17,6 +18,7 @@
 
 #include "jsapi.h"
 #include "jsfriendapi.h"
+#include "js/Conversions.h"
 #include "nsString.h"
 
 class nsIScriptContext;
@@ -160,7 +162,7 @@ AssignJSString(JSContext *cx, T &dest, JSString *s)
   size_t len = js::GetStringLength(s);
   static_assert(js::MaxStringLength < (1 << 28),
                 "Shouldn't overflow here or in SetCapacity");
-  if (MOZ_UNLIKELY(!dest.SetLength(len, mozilla::fallible_t()))) {
+  if (MOZ_UNLIKELY(!dest.SetLength(len, mozilla::fallible))) {
     JS_ReportOutOfMemory(cx);
     return false;
   }
@@ -215,6 +217,8 @@ public:
     JS::Rooted<JS::Value> v(aContext);
     return JS_IdToValue(aContext, id, &v) && init(aContext, v);
   }
+
+  bool init(const JS::Value &v);
 
   ~nsAutoJSString() {}
 };

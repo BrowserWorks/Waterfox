@@ -46,6 +46,10 @@ function on(target, type, listener) {
 }
 exports.on = on;
 
+
+let onceWeakMap = new WeakMap();
+
+
 /**
  * Registers an event `listener` that is called only the next time an event
  * of the specified `type` is emitted on the given event `target`.
@@ -57,10 +61,13 @@ exports.on = on;
  *    The listener function that processes the event.
  */
 function once(target, type, listener) {
-  on(target, type, function observer(...args) {
+  let replacement = function observer(...args) {
     off(target, type, observer);
+    onceWeakMap.delete(listener);
     listener.apply(target, args);
-  });
+  };
+  onceWeakMap.set(listener, replacement);
+  on(target, type, replacement);
 }
 exports.once = once;
 
@@ -79,6 +86,14 @@ exports.once = once;
  *    Arguments that will be passed to listeners.
  */
 function emit (target, type, ...args) {
+  emitOnObject(target, type, target, ...args);
+}
+exports.emit = emit;
+
+/**
+ * A variant of emit that allows setting the this property for event listeners
+ */
+function emitOnObject(target, type, thisArg, ...args) {
   let all = observers(target, '*').length;
   let state = observers(target, type);
   let listeners = state.slice();
@@ -94,7 +109,7 @@ function emit (target, type, ...args) {
       let listener = listeners[index];
       // Dispatch only if listener is still registered.
       if (~state.indexOf(listener))
-        listener.apply(target, args);
+        listener.apply(thisArg, args);
     }
     catch (error) {
       // If exception is not thrown by a error listener and error listener is
@@ -107,7 +122,7 @@ function emit (target, type, ...args) {
    // Also emit on `"*"` so that one could listen for all events.
   if (type !== '*') emit(target, '*', type, ...args);
 }
-exports.emit = emit;
+exports.emitOnObject = emitOnObject;
 
 /**
  * Removes an event `listener` for the given event `type` on the given event
@@ -124,6 +139,11 @@ exports.emit = emit;
 function off(target, type, listener) {
   let length = arguments.length;
   if (length === 3) {
+    if (onceWeakMap.has(listener)) {
+      listener = onceWeakMap.get(listener);
+      onceWeakMap.delete(listener);
+    }
+
     let listeners = observers(target, type);
     let index = listeners.indexOf(listener);
     if (~index)

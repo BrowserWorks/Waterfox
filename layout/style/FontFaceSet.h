@@ -30,9 +30,9 @@ class Promise;
 namespace mozilla {
 namespace dom {
 
-class FontFaceSet MOZ_FINAL : public DOMEventTargetHelper
-                            , public nsIDOMEventListener
-                            , public nsICSSLoaderObserver
+class FontFaceSet final : public DOMEventTargetHelper
+                        , public nsIDOMEventListener
+                        , public nsICSSLoaderObserver
 {
   friend class UserFontSet;
 
@@ -47,7 +47,7 @@ public:
    * collector).  So UserFontSet exists just to override the needed virtual
    * methods from gfxUserFontSet and to forward them on FontFaceSet.
    */
-  class UserFontSet MOZ_FINAL : public gfxUserFontSet
+  class UserFontSet final : public gfxUserFontSet
   {
     friend class FontFaceSet;
 
@@ -61,21 +61,21 @@ public:
 
     virtual nsresult CheckFontLoad(const gfxFontFaceSrc* aFontFaceSrc,
                                    nsIPrincipal** aPrincipal,
-                                   bool* aBypassCache) MOZ_OVERRIDE;
+                                   bool* aBypassCache) override;
     virtual nsresult StartLoad(gfxUserFontEntry* aUserFontEntry,
-                               const gfxFontFaceSrc* aFontFaceSrc) MOZ_OVERRIDE;
+                               const gfxFontFaceSrc* aFontFaceSrc) override;
 
   protected:
-    virtual bool GetPrivateBrowsing() MOZ_OVERRIDE;
+    virtual bool GetPrivateBrowsing() override;
     virtual nsresult SyncLoadFontData(gfxUserFontEntry* aFontToLoad,
                                       const gfxFontFaceSrc* aFontFaceSrc,
                                       uint8_t*& aBuffer,
-                                      uint32_t& aBufferLength) MOZ_OVERRIDE;
+                                      uint32_t& aBufferLength) override;
     virtual nsresult LogMessage(gfxUserFontEntry* aUserFontEntry,
                                 const char* aMessage,
                                 uint32_t aFlags = nsIScriptError::errorFlag,
-                                nsresult aStatus = NS_OK) MOZ_OVERRIDE;
-    virtual void DoRebuildUserFontSet() MOZ_OVERRIDE;
+                                nsresult aStatus = NS_OK) override;
+    virtual void DoRebuildUserFontSet() override;
     virtual already_AddRefed<gfxUserFontEntry> CreateUserFontEntry(
                                    const nsTArray<gfxFontFaceSrc>& aFontFaceSrcList,
                                    uint32_t aWeight,
@@ -83,7 +83,7 @@ public:
                                    uint32_t aItalicStyle,
                                    const nsTArray<gfxFontFeature>& aFeatureSettings,
                                    uint32_t aLanguageOverride,
-                                   gfxSparseBitSet* aUnicodeRanges) MOZ_OVERRIDE;
+                                   gfxSparseBitSet* aUnicodeRanges) override;
 
   private:
     nsRefPtr<FontFaceSet> mFontFaceSet;
@@ -95,9 +95,8 @@ public:
 
   FontFaceSet(nsPIDOMWindow* aWindow, nsPresContext* aPresContext);
 
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
-  UserFontSet* EnsureUserFontSet(nsPresContext* aPresContext);
   UserFontSet* GetUserFontSet() { return mUserFontSet; }
 
   // Called when this font set is no longer associated with a presentation.
@@ -136,15 +135,6 @@ public:
     FindOrCreateUserFontEntryFromFontFace(FontFace* aFontFace);
 
   /**
-   * Notification method called by a FontFace once it has been initialized.
-   *
-   * This is needed for the FontFaceSet to handle a FontFace that was created
-   * and inserted into the set immediately, before the event loop has spun and
-   * the FontFace's initialization tasks have run.
-   */
-  void OnFontFaceInitialized(FontFace* aFontFace);
-
-  /**
    * Notification method called by a FontFace to indicate that its loading
    * status has changed.
    */
@@ -165,7 +155,9 @@ public:
   // nsICSSLoaderObserver
   NS_IMETHOD StyleSheetLoaded(mozilla::CSSStyleSheet* aSheet,
                               bool aWasAlternate,
-                              nsresult aStatus) MOZ_OVERRIDE;
+                              nsresult aStatus) override;
+
+  FontFace* GetFontFaceAt(uint32_t aIndex);
 
   // -- Web IDL --------------------------------------------------------------
 
@@ -183,10 +175,14 @@ public:
 
   FontFaceSet* Add(FontFace& aFontFace, mozilla::ErrorResult& aRv);
   void Clear();
-  bool Delete(FontFace& aFontFace, mozilla::ErrorResult& aRv);
+  bool Delete(FontFace& aFontFace);
   bool Has(FontFace& aFontFace);
-  FontFace* IndexedGetter(uint32_t aIndex, bool& aFound);
-  uint32_t Length();
+  uint32_t Size();
+  mozilla::dom::FontFaceSetIterator* Entries();
+  mozilla::dom::FontFaceSetIterator* Values();
+  void ForEach(JSContext* aCx, FontFaceSetForEachCallback& aCallback,
+               JS::Handle<JS::Value> aThisArg,
+               mozilla::ErrorResult& aRv);
 
 private:
   ~FontFaceSet();
@@ -200,6 +196,8 @@ private:
    * Removes any listeners and observers.
    */
   void Disconnect();
+
+  void RemoveDOMContentLoadedListener();
 
   /**
    * Returns whether there might be any pending font loads, which should cause
@@ -220,6 +218,12 @@ private:
   void CheckLoadingFinished();
 
   /**
+   * Callback for invoking CheckLoadingFinished after going through the
+   * event loop.  See OnFontFaceStatusChanged.
+   */
+  void CheckLoadingFinishedAfterDelay();
+
+  /**
    * Dispatches a CSSFontFaceLoadEvent to this object.
    */
   void DispatchLoadingFinishedEvent(
@@ -231,7 +235,12 @@ private:
   // accordingly.
   struct FontFaceRecord {
     nsRefPtr<FontFace> mFontFace;
-    uint8_t mSheetType;
+    uint8_t mSheetType;  // only relevant for mRuleFaces entries
+
+    // When true, indicates that when finished loading, the FontFace should be
+    // included in the subsequent loadingdone/loadingerror event fired at the
+    // FontFaceSet.
+    bool mLoadEventShouldFire;
   };
 
   already_AddRefed<gfxUserFontEntry> FindOrCreateUserFontEntryFromFontFace(
@@ -298,8 +307,8 @@ private:
   nsTArray<FontFaceRecord> mRuleFaces;
 
   // The non rule backed FontFace objects that have been added to this
-  // FontFaceSet and their corresponding user font entries.
-  nsTArray<nsRefPtr<FontFace>> mNonRuleFaces;
+  // FontFaceSet.
+  nsTArray<FontFaceRecord> mNonRuleFaces;
 
   // The non rule backed FontFace objects that have not been added to
   // this FontFaceSet.
@@ -311,13 +320,6 @@ private:
   // Whether mNonRuleFaces has changed since last time UpdateRules ran.
   bool mNonRuleFacesDirty;
 
-  // Whether we have called MaybeResolve() on mReady.
-  bool mReadyIsResolved;
-
-  // Whether we have already dispatched loading events for the current set
-  // of loading FontFaces.
-  bool mDispatchedLoadingEvent;
-
   // Whether any FontFace objects in mRuleFaces or mNonRuleFaces are
   // loading.  Only valid when mHasLoadingFontFacesIsDirty is false.  Don't use
   // this variable directly; call the HasLoadingFontFaces method instead.
@@ -325,6 +327,10 @@ private:
 
   // This variable is only valid when mLoadingDirty is false.
   bool mHasLoadingFontFacesIsDirty;
+
+  // Whether CheckLoadingFinished calls should be ignored.  See comment in
+  // OnFontFaceStatusChanged.
+  bool mDelayedLoadCheck;
 };
 
 } // namespace dom

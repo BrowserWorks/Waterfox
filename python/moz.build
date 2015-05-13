@@ -4,6 +4,12 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files('mach/**'):
+    BUG_COMPONENT = ('Core', 'mach')
+
+with Files('mozbuild/**'):
+    BUG_COMPONENT = ('Core', 'Build Config')
+
 SPHINX_PYTHON_PACKAGE_DIRS += [
     'mach',
     'mozbuild/mozbuild',
@@ -68,6 +74,7 @@ PYTHON_UNIT_TESTS += [
     'mozbuild/mozpack/test/test_packager.py',
     'mozbuild/mozpack/test/test_packager_formats.py',
     'mozbuild/mozpack/test/test_packager_l10n.py',
+    'mozbuild/mozpack/test/test_packager_unpack.py',
     'mozbuild/mozpack/test/test_path.py',
     'mozbuild/mozpack/test/test_unify.py',
 ]

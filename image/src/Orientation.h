@@ -3,26 +3,25 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef MOZILLA_IMAGELIB_ORIENTATION_H_
-#define MOZILLA_IMAGELIB_ORIENTATION_H_
+#ifndef mozilla_image_src_Orientation_h
+#define mozilla_image_src_Orientation_h
 
 #include <stdint.h>
-#include "mozilla/TypedEnum.h"
 
 namespace mozilla {
 namespace image {
 
-MOZ_BEGIN_ENUM_CLASS(Angle, uint8_t)
+enum class Angle : uint8_t {
   D0,
   D90,
   D180,
   D270
-MOZ_END_ENUM_CLASS(Angle)
+};
 
-MOZ_BEGIN_ENUM_CLASS(Flip, uint8_t)
+enum class Flip : uint8_t {
   Unflipped,
   Horizontal
-MOZ_END_ENUM_CLASS(Flip)
+};
 
 /**
  * A struct that describes an image's orientation as a rotation optionally
@@ -57,7 +56,7 @@ struct Orientation
   Flip  flip;
 };
 
-}
-}
+} // namespace image
+} // namespace mozilla
 
-#endif
+#endif // mozilla_image_src_Orientation_h

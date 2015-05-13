@@ -8,6 +8,7 @@
 // Constants & Enumeration Values
 
 Components.utils.import('resource://gre/modules/Services.jsm');
+Components.utils.import('resource://gre/modules/AppConstants.jsm');
 const TYPE_MAYBE_FEED = "application/vnd.mozilla.maybe.feed";
 const TYPE_MAYBE_VIDEO_FEED = "application/vnd.mozilla.maybe.video.feed";
 const TYPE_MAYBE_AUDIO_FEED = "application/vnd.mozilla.maybe.audio.feed";
@@ -67,17 +68,9 @@ const PREF_AUDIO_FEED_SELECTED_READER = "browser.audioFeeds.handler.default";
 // identifying the "use plugin" action, so we use this constant instead.
 const kActionUsePlugin = 5;
 
-/*
-#if MOZ_WIDGET_GTK == 2
-*/
-const ICON_URL_APP      = "moz-icon://dummy.exe?size=16";
-/*
-#else
-*/
-const ICON_URL_APP      = "chrome://browser/skin/preferences/application.png";
-/*
-#endif
-*/
+const ICON_URL_APP = AppConstants.platform == "linux" ?
+                     "moz-icon://dummy.exe?size=16" :
+                     "chrome://browser/skin/preferences/application.png";
 
 // For CSS. Can be one of "ask", "save", "plugin" or "feed". If absent, the icon URL
 // was set by us to a custom handler icon and CSS should not try to override it.
@@ -1506,16 +1499,21 @@ var gApplicationsPane = {
     }
 
     // Create a menu item for selecting a local application.
+    let canOpenWithOtherApp = true;
 #ifdef XP_WIN
     // On Windows, selecting an application to open another application
     // would be meaningless so we special case executables.
-    var executableType = Cc["@mozilla.org/mime;1"].getService(Ci.nsIMIMEService)
+    let executableType = Cc["@mozilla.org/mime;1"].getService(Ci.nsIMIMEService)
                                                   .getTypeFromExtension("exe");
-    if (handlerInfo.type != executableType)
+    canOpenWithOtherApp = handlerInfo.type != executableType;
 #endif
+    if (canOpenWithOtherApp)
     {
       let menuItem = document.createElement("menuitem");
-      menuItem.setAttribute("oncommand", "gApplicationsPane.chooseApp(event)");
+      menuItem.className = "choose-app-item";
+      menuItem.addEventListener("command", function(e) {
+        gApplicationsPane.chooseApp(e);
+      });
       let label = this._prefsBundle.getString("useOtherApp");
       menuItem.setAttribute("label", label);
       menuItem.setAttribute("tooltiptext", label);
@@ -1527,7 +1525,10 @@ var gApplicationsPane = {
       let menuItem = document.createElement("menuseparator");
       menuPopup.appendChild(menuItem);
       menuItem = document.createElement("menuitem");
-      menuItem.setAttribute("oncommand", "gApplicationsPane.manageApp(event)");
+      menuItem.className = "manage-app-item";
+      menuItem.addEventListener("command", function(e) {
+        gApplicationsPane.manageApp(e);
+      });
       menuItem.setAttribute("label", this._prefsBundle.getString("manageApp"));
       menuPopup.appendChild(menuItem);
     }
@@ -1700,20 +1701,23 @@ var gApplicationsPane = {
     var typeItem = this._list.selectedItem;
     var handlerInfo = this._handledTypes[typeItem.type];
 
+    let onComplete = () => {
+      // Rebuild the actions menu so that we revert to the previous selection,
+      // or "Always ask" if the previous default application has been removed
+      this.rebuildActionsMenu();
+
+      // update the richlistitem too. Will be visible when selecting another row
+      typeItem.setAttribute("actionDescription",
+                            this._describePreferredAction(handlerInfo));
+      if (!this._setIconClassForPreferredAction(handlerInfo, typeItem)) {
+        typeItem.setAttribute("actionIcon",
+                              this._getIconURLForPreferredAction(handlerInfo));
+      }
+    };
+
     gSubDialog.open("chrome://browser/content/preferences/applicationManager.xul",
-                    "resizable=no", handlerInfo);
+                    "resizable=no", handlerInfo, onComplete);
 
-    // Rebuild the actions menu so that we revert to the previous selection,
-    // or "Always ask" if the previous default application has been removed
-    this.rebuildActionsMenu();
-
-    // update the richlistitem too. Will be visible when selecting another row
-    typeItem.setAttribute("actionDescription",
-                          this._describePreferredAction(handlerInfo));
-    if (!this._setIconClassForPreferredAction(handlerInfo, typeItem)) {
-      typeItem.setAttribute("actionIcon",
-                            this._getIconURLForPreferredAction(handlerInfo));
-    }
   },
 
   chooseApp: function(aEvent) {
@@ -1762,17 +1766,20 @@ var gApplicationsPane = {
     params.filename      = null;
     params.handlerApp    = null;
 
+    let onAppSelected = () => {
+      if (this.isValidHandlerApp(params.handlerApp)) {
+        handlerApp = params.handlerApp;
+
+        // Add the app to the type's list of possible handlers.
+        handlerInfo.addPossibleApplicationHandler(handlerApp);
+      }
+
+      chooseAppCallback(handlerApp);
+    };
+
     gSubDialog.open("chrome://global/content/appPicker.xul",
-                    null, params);
+                    null, params, onAppSelected);
 
-    if (this.isValidHandlerApp(params.handlerApp)) {
-      handlerApp = params.handlerApp;
-
-      // Add the app to the type's list of possible handlers.
-      handlerInfo.addPossibleApplicationHandler(handlerApp);
-    }
-
-    chooseAppCallback(handlerApp);
 #else
     let winTitle = this._prefsBundle.getString("fpTitleChooseApp");
     let fp = Cc["@mozilla.org/filepicker;1"].createInstance(Ci.nsIFilePicker);

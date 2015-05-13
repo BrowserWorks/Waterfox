@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -22,8 +23,8 @@
 namespace mozilla {
 namespace dom {
 
-class PluginDocument MOZ_FINAL : public MediaDocument
-                               , public nsIPluginDocument
+class PluginDocument final : public MediaDocument
+                           , public nsIPluginDocument
 {
 public:
   PluginDocument();
@@ -37,10 +38,10 @@ public:
                                      nsISupports*        aContainer,
                                      nsIStreamListener** aDocListener,
                                      bool                aReset = true,
-                                     nsIContentSink*     aSink = nullptr) MOZ_OVERRIDE;
+                                     nsIContentSink*     aSink = nullptr) override;
 
-  virtual void SetScriptGlobalObject(nsIScriptGlobalObject* aScriptGlobalObject) MOZ_OVERRIDE;
-  virtual bool CanSavePresentation(nsIRequest *aNewRequest) MOZ_OVERRIDE;
+  virtual void SetScriptGlobalObject(nsIScriptGlobalObject* aScriptGlobalObject) override;
+  virtual bool CanSavePresentation(nsIRequest *aNewRequest) override;
 
   const nsCString& GetType() const { return mMimeType; }
   Element*         GetPluginContent() { return mPluginContent; }

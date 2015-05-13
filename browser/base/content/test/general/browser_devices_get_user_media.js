@@ -154,7 +154,7 @@ function activateSecondaryAction(aAction) {
 
   // One down event to open the popup
   EventUtils.synthesizeKey("VK_DOWN",
-                           { altKey: !navigator.platform.contains("Mac") });
+                           { altKey: !navigator.platform.includes("Mac") });
 }
 
 registerCleanupFunction(function() {
@@ -456,6 +456,43 @@ let gTests = [
 
     // the stream is already closed, but this will do some cleanup anyway
     yield closeStream(true);
+  }
+},
+
+{
+  desc: "getUserMedia audio+video: reloading the page removes all gUM UI",
+  run: function checkReloading() {
+    yield promisePopupNotificationShown("webRTC-shareDevices", () => {
+      info("requesting devices");
+      content.wrappedJSObject.requestDevice(true, true);
+    });
+    expectObserverCalled("getUserMedia:request");
+    checkDeviceSelectors(true, true);
+
+    yield promiseMessage("ok", () => {
+      PopupNotifications.panel.firstChild.button.click();
+    });
+    expectObserverCalled("getUserMedia:response:allow");
+    expectObserverCalled("recording-device-events");
+    is(getMediaCaptureState(), "CameraAndMicrophone",
+       "expected camera and microphone to be shared");
+
+    yield checkSharingUI({video: true, audio: true});
+
+    yield promiseNotificationShown(PopupNotifications.getNotification("webRTC-sharingDevices"));
+
+    info("reloading the web page");
+    yield promiseObserverCalled("recording-device-events",
+                                () => { content.location.reload(); });
+
+    yield promiseNoPopupNotification("webRTC-sharingDevices");
+    if (gObservedTopics["recording-device-events"] == 1) {
+      todo(false, "Got the 'recording-device-events' notification twice, likely because of bug 962719");
+      gObservedTopics["recording-device-events"] = 0;
+    }
+    expectObserverCalled("recording-window-ended");
+    expectNoObserverCalled();
+    yield checkNotSharing();
   }
 },
 

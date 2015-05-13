@@ -22,8 +22,8 @@ namespace dom {
 
 class SpeechRecognition;
 
-class SpeechRecognitionResultList MOZ_FINAL : public nsISupports,
-                                              public nsWrapperCache
+class SpeechRecognitionResultList final : public nsISupports,
+                                          public nsWrapperCache
 {
 public:
   explicit SpeechRecognitionResultList(SpeechRecognition* aParent);
@@ -33,7 +33,7 @@ public:
 
   nsISupports* GetParentObject() const;
 
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   uint32_t Length() const;
 

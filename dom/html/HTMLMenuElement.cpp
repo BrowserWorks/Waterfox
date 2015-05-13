@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -206,9 +207,7 @@ HTMLMenuElement::TraverseContent(nsIContent* aContent,
       continue;
     }
 
-    nsIAtom* tag = child->Tag();
-
-    if (tag == nsGkAtoms::menuitem) {
+    if (child->IsHTMLElement(nsGkAtoms::menuitem)) {
       HTMLMenuItemElement* menuitem = HTMLMenuItemElement::FromContent(child);
 
       if (menuitem->IsHidden()) {
@@ -227,7 +226,7 @@ HTMLMenuElement::TraverseContent(nsIContent* aContent,
       aBuilder->AddItemFor(menuitem, CanLoadIcon(child, icon));
 
       aSeparator = ST_FALSE;
-    } else if (tag == nsGkAtoms::menu && !element->IsHidden()) {
+    } else if (child->IsHTMLElement(nsGkAtoms::menu) && !element->IsHidden()) {
       if (child->HasAttr(kNameSpaceID_None, nsGkAtoms::label)) {
         nsAutoString label;
         child->GetAttr(kNameSpaceID_None, nsGkAtoms::label, label);
@@ -258,9 +257,9 @@ HTMLMenuElement::AddSeparator(nsIMenuBuilder* aBuilder, int8_t& aSeparator)
 }
 
 JSObject*
-HTMLMenuElement::WrapNode(JSContext* aCx)
+HTMLMenuElement::WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return HTMLMenuElementBinding::Wrap(aCx, this);
+  return HTMLMenuElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 } // namespace dom

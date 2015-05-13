@@ -17,7 +17,7 @@
 #include "nsAutoPtr.h"                  // for nsRefPtr
 #include "nsDebug.h"                    // for NS_WARNING, NS_ASSERTION
 #include "nsISupportsImpl.h"            // for Image::AddRef, etc
-#include "nsRect.h"                     // for nsIntRect
+#include "nsRect.h"                     // for mozilla::gfx::IntRect
 #include "nsSize.h"                     // for nsIntSize
 
 // Just big enough for a 1080p RGBA32 frame
@@ -49,8 +49,7 @@ CreateSharedRGBImage(ImageContainer *aImageContainer,
   }
 
   nsRefPtr<SharedRGBImage> rgbImage = static_cast<SharedRGBImage*>(image.get());
-  if (!rgbImage->Allocate(gfx::ToIntSize(aSize),
-                          gfx::ImageFormatToSurfaceFormat(aImageFormat))) {
+  if (!rgbImage->Allocate(aSize, gfx::ImageFormatToSurfaceFormat(aImageFormat))) {
     NS_WARNING("Failed to allocate a shared image");
     return nullptr;
   }

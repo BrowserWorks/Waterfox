@@ -50,7 +50,6 @@
 #include "DataChannel.h"
 #include "DataChannelProtocol.h"
 
-#ifdef PR_LOGGING
 PRLogModuleInfo*
 GetDataChannelLog()
 {
@@ -68,7 +67,6 @@ GetSCTPLog()
     sLog = PR_NewLogModule("SCTP");
   return sLog;
 }
-#endif
 
 // Let us turn on and off important assertions in non-debug builds
 #ifdef DEBUG
@@ -122,7 +120,7 @@ private:
 
 public:
   NS_IMETHODIMP Observe(nsISupports* aSubject, const char* aTopic,
-                        const char16_t* aData) {
+                        const char16_t* aData) override {
     if (strcmp(aTopic, "profile-change-net-teardown") == 0) {
       LOG(("Shutting down SCTP"));
       if (sctp_initialized) {
@@ -174,7 +172,6 @@ receive_cb(struct socket* sock, union sctp_sockstore addr,
   return connection->ReceiveCallback(sock, data, datalen, rcv, flags);
 }
 
-#ifdef PR_LOGGING
 static void
 debug_printf(const char *format, ...)
 {
@@ -193,7 +190,6 @@ debug_printf(const char *format, ...)
     va_end(ap);
   }
 }
-#endif
 
 DataChannelConnection::DataChannelConnection(DataConnectionListener *listener) :
    mLock("netwerk::sctp::DataChannelConnection")
@@ -325,11 +321,7 @@ DataChannelConnection::Init(unsigned short aPort, uint16_t aNumStreams, bool aUs
 #ifdef MOZ_PEERCONNECTION
         usrsctp_init(0,
                      DataChannelConnection::SctpDtlsOutput,
-#ifdef PR_LOGGING
                      debug_printf
-#else
-                     nullptr
-#endif
                     );
 #else
         NS_ASSERTION(!aUsingDtls, "Trying to use SCTP/DTLS without mtransport");
@@ -338,20 +330,15 @@ DataChannelConnection::Init(unsigned short aPort, uint16_t aNumStreams, bool aUs
         LOG(("sctp_init(%u)", aPort));
         usrsctp_init(aPort,
                      nullptr,
-#ifdef PR_LOGGING
                      debug_printf
-#else
-                     nullptr
-#endif
                     );
       }
 
-#ifdef PR_LOGGING
       // Set logging to SCTP:PR_LOG_DEBUG to get SCTP debugs
       if (PR_LOG_TEST(GetSCTPLog(), PR_LOG_ALWAYS)) {
         usrsctp_sysctl_set_sctp_debug_on(SCTP_DEBUG_ALL);
       }
-#endif
+
       usrsctp_sysctl_set_sctp_blackhole(2);
       // ECN is currently not supported by the Firefox code
       usrsctp_sysctl_set_sctp_ecn_enable(0);
@@ -666,7 +653,6 @@ void
 DataChannelConnection::SctpDtlsInput(TransportFlow *flow,
                                      const unsigned char *data, size_t len)
 {
-#ifdef PR_LOGGING
   if (PR_LOG_TEST(GetSCTPLog(), PR_LOG_DEBUG)) {
     char *buf;
 
@@ -675,7 +661,6 @@ DataChannelConnection::SctpDtlsInput(TransportFlow *flow,
       usrsctp_freedumpbuffer(buf);
     }
   }
-#endif
   // Pass the data to SCTP
   usrsctp_conninput(static_cast<void *>(this), data, len, 0);
 }
@@ -698,7 +683,6 @@ DataChannelConnection::SctpDtlsOutput(void *addr, void *buffer, size_t length,
   DataChannelConnection *peer = static_cast<DataChannelConnection *>(addr);
   int res;
 
-#ifdef PR_LOGGING
   if (PR_LOG_TEST(GetSCTPLog(), PR_LOG_DEBUG)) {
     char *buf;
 
@@ -707,7 +691,6 @@ DataChannelConnection::SctpDtlsOutput(void *addr, void *buffer, size_t length,
       usrsctp_freedumpbuffer(buf);
     }
   }
-#endif
   // We're async proxying even if on the STSThread because this is called
   // with internal SCTP locks held in some cases (such as in usrsctp_connect()).
   // SCTP has an option for Apple, on IP connections only, to release at least
@@ -1008,7 +991,7 @@ DataChannelConnection::SendOpenRequestMessage(const nsACString& label,
     break;
   default:
     // FIX! need to set errno!  Or make all these SendXxxx() funcs return 0 or errno!
-    moz_free(req);
+    free(req);
     return (0);
   }
   if (unordered) {
@@ -1025,7 +1008,7 @@ DataChannelConnection::SendOpenRequestMessage(const nsACString& label,
 
   int32_t result = SendControlMessage(req, req_size, stream);
 
-  moz_free(req);
+  free(req);
   return result;
 }
 
@@ -1125,7 +1108,7 @@ DataChannelConnection::SendDeferredMessages()
                                     nullptr, 0,
                                     (void *)spa, (socklen_t)sizeof(struct sctp_sendv_spa),
                                     SCTP_SENDV_SPA,
-                                    0) < 0)) {
+                                    0)) < 0) {
           if (errno == EAGAIN || errno == EWOULDBLOCK) {
             // leave queued for resend
             failed_send = true;
@@ -1731,7 +1714,7 @@ DataChannelConnection::SendOutgoingStreamReset()
   } else {
     mStreamsResetting.Clear();
   }
-  moz_free(srs);
+  free(srs);
 }
 
 void
@@ -1766,12 +1749,12 @@ DataChannelConnection::HandleStreamResetEvent(const struct sctp_stream_reset_eve
                         channel->mState == DataChannel::WAITING_TO_OPEN);
           if (channel->mState == DataChannel::OPEN ||
               channel->mState == DataChannel::WAITING_TO_OPEN) {
+            // Mark the stream for reset (the reset is sent below)
             ResetOutgoingStream(channel->mStream);
-            SendOutgoingStreamReset();
-            NS_DispatchToMainThread(new DataChannelOnMessageAvailable(
-                                      DataChannelOnMessageAvailable::ON_CHANNEL_CLOSED, this,
-                                      channel));
           }
+          NS_DispatchToMainThread(new DataChannelOnMessageAvailable(
+                                    DataChannelOnMessageAvailable::ON_CHANNEL_CLOSED, this,
+                                    channel));
           mStreams[channel->mStream] = nullptr;
 
           LOG(("Disconnected DataChannel %p from connection %p",
@@ -1785,7 +1768,7 @@ DataChannelConnection::HandleStreamResetEvent(const struct sctp_stream_reset_eve
     }
   }
 
-  // In case we failed to send a RESET due to having one outstanding, process any pending resets now:
+  // Process any pending resets now:
   if (!mStreamsResetting.IsEmpty()) {
     LOG(("Sending %d pending resets", mStreamsResetting.Length()));
     SendOutgoingStreamReset();

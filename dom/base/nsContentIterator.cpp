@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -86,23 +87,23 @@ public:
 
   // nsIContentIterator interface methods ------------------------------
 
-  virtual nsresult Init(nsINode* aRoot) MOZ_OVERRIDE;
+  virtual nsresult Init(nsINode* aRoot) override;
 
-  virtual nsresult Init(nsIDOMRange* aRange) MOZ_OVERRIDE;
+  virtual nsresult Init(nsIDOMRange* aRange) override;
 
-  virtual void First() MOZ_OVERRIDE;
+  virtual void First() override;
 
-  virtual void Last() MOZ_OVERRIDE;
+  virtual void Last() override;
 
-  virtual void Next() MOZ_OVERRIDE;
+  virtual void Next() override;
 
-  virtual void Prev() MOZ_OVERRIDE;
+  virtual void Prev() override;
 
-  virtual nsINode* GetCurrentNode() MOZ_OVERRIDE;
+  virtual nsINode* GetCurrentNode() override;
 
-  virtual bool IsDone() MOZ_OVERRIDE;
+  virtual bool IsDone() override;
 
-  virtual nsresult PositionAt(nsINode* aCurNode) MOZ_OVERRIDE;
+  virtual nsresult PositionAt(nsINode* aCurNode) override;
 
 protected:
   virtual ~nsContentIterator();
@@ -1113,21 +1114,21 @@ public:
 
   // nsContentIterator overrides ------------------------------
 
-  virtual nsresult Init(nsINode* aRoot) MOZ_OVERRIDE;
+  virtual nsresult Init(nsINode* aRoot) override;
 
-  virtual nsresult Init(nsIDOMRange* aRange) MOZ_OVERRIDE;
+  virtual nsresult Init(nsIDOMRange* aRange) override;
 
-  virtual void Next() MOZ_OVERRIDE;
+  virtual void Next() override;
 
-  virtual void Prev() MOZ_OVERRIDE;
+  virtual void Prev() override;
 
-  virtual nsresult PositionAt(nsINode* aCurNode) MOZ_OVERRIDE;
-
-  // Must override these because we don't do PositionAt
-  virtual void First() MOZ_OVERRIDE;
+  virtual nsresult PositionAt(nsINode* aCurNode) override;
 
   // Must override these because we don't do PositionAt
-  virtual void Last() MOZ_OVERRIDE;
+  virtual void First() override;
+
+  // Must override these because we don't do PositionAt
+  virtual void Last() override;
 
 protected:
   virtual ~nsContentSubtreeIterator() {}
@@ -1143,7 +1144,7 @@ protected:
   nsContentSubtreeIterator(const nsContentSubtreeIterator&);
   nsContentSubtreeIterator& operator=(const nsContentSubtreeIterator&);
 
-  virtual void LastRelease() MOZ_OVERRIDE;
+  virtual void LastRelease() override;
 
   nsRefPtr<nsRange> mRange;
 

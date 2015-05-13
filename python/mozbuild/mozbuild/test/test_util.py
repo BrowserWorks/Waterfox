@@ -4,10 +4,12 @@
 
 from __future__ import unicode_literals
 
+import itertools
 import hashlib
 import os
 import unittest
 import shutil
+import string
 import sys
 import tempfile
 
@@ -19,6 +21,7 @@ from mozunit import (
 
 from mozbuild.util import (
     FileAvoidWrite,
+    group_unified_files,
     hash_file,
     memoize,
     memoized_property,
@@ -29,6 +32,7 @@ from mozbuild.util import (
     StrictOrderingOnAppendList,
     StrictOrderingOnAppendListWithFlagsFactory,
     TypedList,
+    TypedNamedTuple,
     UnsortedError,
 )
 
@@ -660,6 +664,61 @@ class TypedTestStrictOrderingOnAppendList(unittest.TestCase):
 
         self.assertEqual(len(l), 3)
 
+
+class TestTypedNamedTuple(unittest.TestCase):
+    def test_simple(self):
+        FooBar = TypedNamedTuple('FooBar', [('foo', unicode), ('bar', int)])
+
+        t = FooBar(foo='foo', bar=2)
+        self.assertEquals(type(t), FooBar)
+        self.assertEquals(t.foo, 'foo')
+        self.assertEquals(t.bar, 2)
+        self.assertEquals(t[0], 'foo')
+        self.assertEquals(t[1], 2)
+
+        FooBar('foo', 2)
+
+        with self.assertRaises(TypeError):
+            FooBar('foo', 'not integer')
+        with self.assertRaises(TypeError):
+            FooBar(2, 4)
+
+        # Passing a tuple as the first argument is the same as passing multiple
+        # arguments.
+        t1 = ('foo', 3)
+        t2 = FooBar(t1)
+        self.assertEquals(type(t2), FooBar)
+        self.assertEqual(FooBar(t1), FooBar('foo', 3))
+
+
+class TestGroupUnifiedFiles(unittest.TestCase):
+    FILES = ['%s.cpp' % letter for letter in string.ascii_lowercase]
+
+    def test_multiple_files(self):
+        mapping = list(group_unified_files(self.FILES, 'Unified', 'cpp', 5))
+
+        def check_mapping(index, expected_num_source_files):
+            (unified_file, source_files) = mapping[index]
+
+            self.assertEqual(unified_file, 'Unified%d.cpp' % index)
+            self.assertEqual(len(source_files), expected_num_source_files)
+
+        all_files = list(itertools.chain(*[files for (_, files) in mapping]))
+        self.assertEqual(len(all_files), len(self.FILES))
+        self.assertEqual(set(all_files), set(self.FILES))
+
+        expected_amounts = [5, 5, 5, 5, 5, 1]
+        for i, amount in enumerate(expected_amounts):
+            check_mapping(i, amount)
+
+    def test_unsorted_files(self):
+        unsorted_files = ['a%d.cpp' % i for i in range(11)]
+        sorted_files = sorted(unsorted_files)
+        mapping = list(group_unified_files(unsorted_files, 'Unified', 'cpp', 5))
+
+        self.assertEqual(mapping[0][1], sorted_files[0:5])
+        self.assertEqual(mapping[1][1], sorted_files[5:10])
+        self.assertEqual(mapping[2][1], sorted_files[10:])
 
 if __name__ == '__main__':
     main()

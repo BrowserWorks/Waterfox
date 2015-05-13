@@ -7,8 +7,6 @@
 #include "nsSSLStatus.h"
 #include "plstr.h"
 #include "nsIClassInfoImpl.h"
-#include "nsIIdentityInfo.h"
-#include "nsIProgrammingLanguage.h"
 #include "nsIObjectOutputStream.h"
 #include "nsIObjectInputStream.h"
 #include "ssl.h"
@@ -215,7 +213,7 @@ nsSSLStatus::GetInterfaces(uint32_t* aCount, nsIID*** aArray)
 }
 
 NS_IMETHODIMP
-nsSSLStatus::GetHelperForLanguage(uint32_t aLanguage, nsISupports** aHelper)
+nsSSLStatus::GetScriptableHelper(nsIXPCScriptable** aHelper)
 {
   *aHelper = nullptr;
   return NS_OK;
@@ -238,18 +236,11 @@ nsSSLStatus::GetClassDescription(char** aClassDescription)
 NS_IMETHODIMP
 nsSSLStatus::GetClassID(nsCID** aClassID)
 {
-  *aClassID = (nsCID*) nsMemory::Alloc(sizeof(nsCID));
+  *aClassID = (nsCID*) moz_xmalloc(sizeof(nsCID));
   if (!*aClassID) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
   return GetClassIDNoAlloc(*aClassID);
-}
-
-NS_IMETHODIMP
-nsSSLStatus::GetImplementationLanguage(uint32_t* aImplementationLanguage)
-{
-  *aImplementationLanguage = nsIProgrammingLanguage::CPLUSPLUS;
-  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -288,7 +279,8 @@ nsSSLStatus::~nsSSLStatus()
 }
 
 void
-nsSSLStatus::SetServerCert(nsIX509Cert* aServerCert, nsNSSCertificate::EVStatus aEVStatus)
+nsSSLStatus::SetServerCert(nsNSSCertificate* aServerCert,
+                           nsNSSCertificate::EVStatus aEVStatus)
 {
   mServerCert = aServerCert;
 
@@ -299,10 +291,9 @@ nsSSLStatus::SetServerCert(nsIX509Cert* aServerCert, nsNSSCertificate::EVStatus 
   }
 
 #ifndef MOZ_NO_EV_CERTS
-  nsCOMPtr<nsIIdentityInfo> idinfo = do_QueryInterface(mServerCert);
-  if (idinfo) {
-    nsresult rv = idinfo->GetIsExtendedValidation(&mIsEV);
-    if (NS_WARN_IF(NS_FAILED(rv))) {
+  if (aServerCert) {
+    nsresult rv = aServerCert->GetIsExtendedValidation(&mIsEV);
+    if (NS_FAILED(rv)) {
       return;
     }
     mHasIsEVStatus = true;

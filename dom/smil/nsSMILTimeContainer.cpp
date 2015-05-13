@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -254,9 +255,9 @@ nsSMILTimeContainer::PopMilestoneElementsAtMilestone(
   nsSMILMilestone containerMilestone(containerTime.GetMillis(),
                                      aMilestone.mIsEnd);
 
-  NS_ABORT_IF_FALSE(mMilestoneEntries.Top().mMilestone >= containerMilestone,
-      "Trying to pop off earliest times but we have earlier ones that were "
-      "overlooked");
+  MOZ_ASSERT(mMilestoneEntries.Top().mMilestone >= containerMilestone,
+             "Trying to pop off earliest times but we have earlier ones that "
+             "were overlooked");
 
   bool gotOne = false;
   while (!mMilestoneEntries.IsEmpty() &&
@@ -291,7 +292,7 @@ nsSMILTimeContainer::UpdateCurrentTime()
 {
   nsSMILTime now = IsPaused() ? mPauseStart : GetParentTime();
   mCurrentTime = now - mParentOffset;
-  NS_ABORT_IF_FALSE(mCurrentTime >= 0, "Container has negative time");
+  MOZ_ASSERT(mCurrentTime >= 0, "Container has negative time");
 }
 
 void
@@ -313,9 +314,9 @@ nsSMILTimeContainer::NotifyTimeChange()
   while (p < mMilestoneEntries.Elements() + mMilestoneEntries.Length()) {
     mozilla::dom::SVGAnimationElement* elem = p->mTimebase.get();
     elem->TimedElement().HandleContainerTimeChange();
-    NS_ABORT_IF_FALSE(queueLength == mMilestoneEntries.Length(),
-        "Call to HandleContainerTimeChange resulted in a change to the "
-        "queue of milestones");
+    MOZ_ASSERT(queueLength == mMilestoneEntries.Length(),
+               "Call to HandleContainerTimeChange resulted in a change to the "
+               "queue of milestones");
     ++p;
   }
 }

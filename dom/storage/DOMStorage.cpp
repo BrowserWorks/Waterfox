@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -60,9 +61,9 @@ DOMStorage::~DOMStorage()
 }
 
 /* virtual */ JSObject*
-DOMStorage::WrapObject(JSContext* aCx)
+DOMStorage::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return StorageBinding::Wrap(aCx, this);
+  return StorageBinding::Wrap(aCx, this, aGivenProto);
 }
 
 uint32_t
@@ -117,7 +118,7 @@ DOMStorage::SetItem(const nsAString& aKey, const nsAString& aData,
       : Telemetry::SESSIONDOMSTORAGE_VALUE_SIZE_BYTES, aData.Length());
 
   nsString data;
-  bool ok = data.Assign(aData, fallible_t());
+  bool ok = data.Assign(aData, fallible);
   if (!ok) {
     aRv.Throw(NS_ERROR_OUT_OF_MEMORY);
     return;
@@ -129,7 +130,7 @@ DOMStorage::SetItem(const nsAString& aKey, const nsAString& aData,
     return;
   }
 
-  if (aRv.ErrorCode() != NS_SUCCESS_DOM_NO_OPERATION) {
+  if (!aRv.ErrorCodeIs(NS_SUCCESS_DOM_NO_OPERATION)) {
     BroadcastChangeNotification(aKey, old, aData);
   }
 }
@@ -148,7 +149,7 @@ DOMStorage::RemoveItem(const nsAString& aKey, ErrorResult& aRv)
     return;
   }
 
-  if (aRv.ErrorCode() != NS_SUCCESS_DOM_NO_OPERATION) {
+  if (!aRv.ErrorCodeIs(NS_SUCCESS_DOM_NO_OPERATION)) {
     BroadcastChangeNotification(aKey, old, NullString());
   }
 }
@@ -166,7 +167,7 @@ DOMStorage::Clear(ErrorResult& aRv)
     return;
   }
 
-  if (aRv.ErrorCode() != NS_SUCCESS_DOM_NO_OPERATION) {
+  if (!aRv.ErrorCodeIs(NS_SUCCESS_DOM_NO_OPERATION)) {
     BroadcastChangeNotification(NullString(), NullString(), NullString());
   }
 }

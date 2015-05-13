@@ -7,6 +7,7 @@
 #define GFX_USER_FONT_SET_H
 
 #include "gfxFont.h"
+#include "gfxFontFamilyList.h"
 #include "nsRefPtrHashtable.h"
 #include "nsAutoPtr.h"
 #include "nsCOMPtr.h"
@@ -238,6 +239,9 @@ public:
     // the given name
     gfxUserFontFamily* LookupFamily(const nsAString& aName) const;
 
+    // Look up names in a fontlist and return true if any are in the set
+    bool ContainsUserFontSetFonts(const mozilla::FontFamilyList& aFontList) const;
+
     // Lookup a font entry for a given style, returns null if not loaded.
     // aFamily must be a family returned by our LookupFamily method.
     // (only used by gfxPangoFontGroup for now)
@@ -463,9 +467,7 @@ public:
         mLocalRulesUsed = true;
     }
 
-#ifdef PR_LOGGING
     static PRLogModuleInfo* GetUserFontsLog();
-#endif
 
 protected:
     // Protected destructor, to discourage deletion outside of Release():
@@ -553,7 +555,7 @@ public:
     virtual gfxFont* CreateFontInstance(const gfxFontStyle* aFontStyle,
                                         bool aNeedsBold);
 
-    gfxFontEntry* GetPlatformFontEntry() { return mPlatformFontEntry; }
+    gfxFontEntry* GetPlatformFontEntry() const { return mPlatformFontEntry; }
 
     // is the font loading or loaded, or did it fail?
     UserFontLoadState LoadState() const { return mUserFontLoadState; }
@@ -607,14 +609,14 @@ protected:
     // returns true if platform font creation sucessful (or local()
     // reference was next in line)
     // Ownership of aFontData is passed in here; the font set must
-    // ensure that it is eventually deleted with NS_Free().
+    // ensure that it is eventually deleted with free().
     bool FontDataDownloadComplete(const uint8_t* aFontData, uint32_t aLength,
                                   nsresult aDownloadStatus);
 
     // helper method for creating a platform font
     // returns true if platform font creation successful
     // Ownership of aFontData is passed in here; the font must
-    // ensure that it is eventually deleted with NS_Free().
+    // ensure that it is eventually deleted with free().
     bool LoadPlatformFont(const uint8_t* aFontData, uint32_t& aLength);
 
     // store metadata and src details for current src into aFontEntry

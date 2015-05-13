@@ -20,9 +20,9 @@ public:
 
   nsresult Init();
 
-  virtual void RegisterWithConnection(DBusConnection* connection);
-  virtual void UnregisterWithConnection(DBusConnection* connection);
-  virtual bool HandleMessage(DBusMessage* msg);
+  virtual void RegisterWithConnection(DBusConnection* connection) override;
+  virtual void UnregisterWithConnection(DBusConnection* connection) override;
+  virtual bool HandleMessage(DBusMessage* msg) override;
 
   /**
    * This gets called when NetworkManager sends us a StateChange signal,

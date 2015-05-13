@@ -5,11 +5,13 @@
 
 package org.mozilla.gecko.distribution;
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.GeckoEvent;
 import org.mozilla.gecko.mozglue.RobocopTarget;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -28,7 +30,13 @@ public class ReferrerReceiver extends BroadcastReceiver {
     public static final String ACTION_REFERRER_RECEIVED = "org.mozilla.fennec.REFERRER_RECEIVED";
 
     /**
-     * If the install intent has this source, we'll track the campaign ID.
+     * If the install intent has this source, it is a Mozilla specific or over
+     * the air distribution referral.  We'll track the campaign ID using
+     * Mozilla's metrics systems.
+     *
+     * If the install intent has a source different than this one, it is a
+     * referral from an advertising network.  We may track these campaigns using
+     * third-party tracking and metrics systems.
      */
     private static final String MOZILLA_UTM_SOURCE = "mozilla";
 
@@ -45,17 +53,27 @@ public class ReferrerReceiver extends BroadcastReceiver {
             return;
         }
 
+        // Track the referrer object for distribution handling.
         ReferrerDescriptor referrer = new ReferrerDescriptor(intent.getStringExtra("referrer"));
 
-        // Track the referrer object for distribution handling.
-        if (TextUtils.equals(referrer.campaign, DISTRIBUTION_UTM_CAMPAIGN)) {
-            Distribution.onReceivedReferrer(referrer);
-        } else {
-            Log.d(LOGTAG, "Not downloading distribution: non-matching campaign.");
+        if (!TextUtils.equals(referrer.source, MOZILLA_UTM_SOURCE)) {
+            if (AppConstants.MOZ_INSTALL_TRACKING) {
+                // Allow the Adjust handler to process the intent.
+                try {
+                    AppConstants.getAdjustHelper().onReceive(context, intent);
+                } catch (Exception e) {
+                    Log.e(LOGTAG, "Got exception in Adjust's onReceive; ignoring referrer intent.", e);
+                }
+            }
+            return;
         }
 
-        // If this is a Mozilla campaign, pass the campaign along to Gecko.
-        if (TextUtils.equals(referrer.source, MOZILLA_UTM_SOURCE)) {
+        if (TextUtils.equals(referrer.campaign, DISTRIBUTION_UTM_CAMPAIGN)) {
+            Distribution.onReceivedReferrer(context, referrer);
+        } else {
+            Log.d(LOGTAG, "Not downloading distribution: non-matching campaign.");
+            // If this is a Mozilla campaign, pass the campaign along to Gecko.
+            // It'll pretend to be a "playstore" distribution for BLP purposes.
             propagateMozillaCampaign(referrer);
         }
 

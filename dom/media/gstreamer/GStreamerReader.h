@@ -25,6 +25,8 @@
 #include "ImageContainer.h"
 #include "nsRect.h"
 
+struct GstURIDecodeBin;
+
 namespace mozilla {
 
 namespace dom {
@@ -41,35 +43,33 @@ public:
   explicit GStreamerReader(AbstractMediaDecoder* aDecoder);
   virtual ~GStreamerReader();
 
-  virtual nsresult Init(MediaDecoderReader* aCloneDonor);
-  virtual nsresult ResetDecode();
-  virtual bool DecodeAudioData();
+  virtual nsresult Init(MediaDecoderReader* aCloneDonor) override;
+  virtual nsRefPtr<ShutdownPromise> Shutdown() override;
+  virtual nsresult ResetDecode() override;
+  virtual bool DecodeAudioData() override;
   virtual bool DecodeVideoFrame(bool &aKeyframeSkip,
-                                int64_t aTimeThreshold);
+                                int64_t aTimeThreshold) override;
   virtual nsresult ReadMetadata(MediaInfo* aInfo,
-                                MetadataTags** aTags);
+                                MetadataTags** aTags) override;
   virtual nsRefPtr<SeekPromise>
-  Seek(int64_t aTime,
-       int64_t aStartTime,
-       int64_t aEndTime,
-       int64_t aCurrentTime) MOZ_OVERRIDE;
-  virtual nsresult GetBuffered(dom::TimeRanges* aBuffered);
+  Seek(int64_t aTime, int64_t aEndTime) override;
+  virtual nsresult GetBuffered(dom::TimeRanges* aBuffered) override;
 
   virtual void NotifyDataArrived(const char *aBuffer,
                                  uint32_t aLength,
-                                 int64_t aOffset) MOZ_OVERRIDE;
+                                 int64_t aOffset) override;
 
-  virtual bool HasAudio() {
+  virtual bool HasAudio() override {
     return mInfo.HasAudio();
   }
 
-  virtual bool HasVideo() {
+  virtual bool HasVideo() override {
     return mInfo.HasVideo();
   }
 
   layers::ImageContainer* GetImageContainer() { return mDecoder->GetImageContainer(); }
 
-  virtual bool IsMediaSeekable() MOZ_OVERRIDE;
+  virtual bool IsMediaSeekable() override;
 
 private:
 
@@ -92,6 +92,30 @@ private:
 
   static GstBusSyncReply ErrorCb(GstBus *aBus, GstMessage *aMessage, gpointer aUserData);
   GstBusSyncReply Error(GstBus *aBus, GstMessage *aMessage);
+
+  /*
+   * We attach this callback to playbin so that when uridecodebin is
+   * constructed, we can then list for its autoplug-sort signal to blacklist
+   * the elements it can construct.
+   */
+  static void ElementAddedCb(GstBin *aPlayBin,
+                             GstElement *aElement,
+                             gpointer aUserData);
+
+  /*
+   * Called on the autoplug-sort signal emitted by uridecodebin for filtering
+   * the elements it uses.
+   */
+  static GValueArray *ElementFilterCb(GstURIDecodeBin *aBin,
+                                      GstPad *aPad,
+                                      GstCaps *aCaps,
+                                      GValueArray *aFactories,
+                                      gpointer aUserData);
+
+  GValueArray *ElementFilter(GstURIDecodeBin *aBin,
+                             GstPad *aPad,
+                             GstCaps *aCaps,
+                             GValueArray *aFactories);
 
   /* Called on the source-setup signal emitted by playbin. Used to
    * configure appsrc .
@@ -172,7 +196,7 @@ private:
   static bool ShouldAutoplugFactory(GstElementFactory* aFactory, GstCaps* aCaps);
 
   /* Called by decodebin during autoplugging. We use it to apply our
-   * container/codec whitelist.
+   * container/codec blacklist.
    */
   static GValueArray* AutoplugSortCb(GstElement* aElement,
                                      GstPad* aPad, GstCaps* aCaps,

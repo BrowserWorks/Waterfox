@@ -104,7 +104,7 @@ nsresult
 DirectShowReader::ReadMetadata(MediaInfo* aInfo,
                                MetadataTags** aTags)
 {
-  MOZ_ASSERT(mDecoder->OnDecodeThread(), "Should be on decode thread.");
+  MOZ_ASSERT(OnTaskQueue());
   HRESULT hr;
   nsresult rv;
 
@@ -197,8 +197,8 @@ DirectShowReader::ReadMetadata(MediaInfo* aInfo,
 
   mInfo.mAudio.mChannels = mNumChannels = format.nChannels;
   mInfo.mAudio.mRate = mAudioRate = format.nSamplesPerSec;
+  mInfo.mAudio.mBitDepth = format.wBitsPerSample;
   mBytesPerSample = format.wBitsPerSample / 8;
-  mInfo.mAudio.mHasAudio = true;
 
   *aInfo = mInfo;
   // Note: The SourceFilter strips ID3v2 tags out of the stream.
@@ -245,7 +245,7 @@ UnsignedByteToAudioSample(uint8_t aValue)
 bool
 DirectShowReader::Finish(HRESULT aStatus)
 {
-  MOZ_ASSERT(mDecoder->OnDecodeThread(), "Should be on decode thread.");
+  MOZ_ASSERT(OnTaskQueue());
 
   LOG("DirectShowReader::Finish(0x%x)", aStatus);
   // Notify the filter graph of end of stream.
@@ -302,7 +302,7 @@ private:
 bool
 DirectShowReader::DecodeAudioData()
 {
-  MOZ_ASSERT(mDecoder->OnDecodeThread(), "Should be on decode thread.");
+  MOZ_ASSERT(OnTaskQueue());
   HRESULT hr;
 
   SampleSink* sink = mAudioSinkFilter->GetSampleSink();
@@ -349,29 +349,26 @@ bool
 DirectShowReader::DecodeVideoFrame(bool &aKeyframeSkip,
                                    int64_t aTimeThreshold)
 {
-  MOZ_ASSERT(mDecoder->OnDecodeThread(), "Should be on decode thread.");
+  MOZ_ASSERT(OnTaskQueue());
   return false;
 }
 
 bool
 DirectShowReader::HasAudio()
 {
-  MOZ_ASSERT(mDecoder->OnDecodeThread(), "Should be on decode thread.");
+  MOZ_ASSERT(OnTaskQueue());
   return true;
 }
 
 bool
 DirectShowReader::HasVideo()
 {
-  MOZ_ASSERT(mDecoder->OnDecodeThread(), "Should be on decode thread.");
+  MOZ_ASSERT(OnTaskQueue());
   return false;
 }
 
 nsRefPtr<MediaDecoderReader::SeekPromise>
-DirectShowReader::Seek(int64_t aTargetUs,
-                       int64_t aStartTime,
-                       int64_t aEndTime,
-                       int64_t aCurrentTime)
+DirectShowReader::Seek(int64_t aTargetUs, int64_t aEndTime)
 {
   nsresult res = SeekInternal(aTargetUs);
   if (NS_FAILED(res)) {
@@ -385,7 +382,7 @@ nsresult
 DirectShowReader::SeekInternal(int64_t aTargetUs)
 {
   HRESULT hr;
-  MOZ_ASSERT(mDecoder->OnDecodeThread(), "Should be on decode thread.");\
+  MOZ_ASSERT(OnTaskQueue());
 
   LOG("DirectShowReader::Seek() target=%lld", aTargetUs);
 
@@ -412,15 +409,20 @@ void
 DirectShowReader::NotifyDataArrived(const char* aBuffer, uint32_t aLength, int64_t aOffset)
 {
   MOZ_ASSERT(NS_IsMainThread());
+  if (!mMP3FrameParser.NeedsData()) {
+    return;
+  }
+
+  mMP3FrameParser.Parse(aBuffer, aLength, aOffset);
   if (!mMP3FrameParser.IsMP3()) {
     return;
   }
-  mMP3FrameParser.Parse(aBuffer, aLength, aOffset);
+
   int64_t duration = mMP3FrameParser.GetDuration();
   if (duration != mDuration) {
-    mDuration = duration;
     MOZ_ASSERT(mDecoder);
     ReentrantMonitorAutoEnter mon(mDecoder->GetReentrantMonitor());
+    mDuration = duration;
     mDecoder->UpdateEstimatedMediaDuration(mDuration);
   }
 }

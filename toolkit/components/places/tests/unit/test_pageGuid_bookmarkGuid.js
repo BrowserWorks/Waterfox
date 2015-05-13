@@ -56,7 +56,7 @@ add_task(function test_addBookmarksAndCheckGuids() {
 
   root.containerOpen = false;
 
-  remove_all_bookmarks();
+  yield PlacesUtils.bookmarks.eraseEverything();
 });
 
 add_task(function test_updateBookmarksAndCheckGuids() {
@@ -85,14 +85,14 @@ add_task(function test_updateBookmarksAndCheckGuids() {
 
   root.containerOpen = false;
 
-  remove_all_bookmarks();
+  yield PlacesUtils.bookmarks.eraseEverything();
 });
 
 add_task(function test_addVisitAndCheckGuid() {
   // add a visit and test page guid and non-existing bookmark guids.
   let now = Date.now() * 1000;
   let sourceURI = uri("http://test4.com/");
-  yield promiseAddVisits({ uri: sourceURI });
+  yield PlacesTestUtils.addVisits({ uri: sourceURI });
   do_check_eq(bmsvc.getBookmarkedURIFor(sourceURI), null);
 
   let options = histsvc.getNewQueryOptions();
@@ -106,7 +106,7 @@ add_task(function test_addVisitAndCheckGuid() {
   do_check_eq(root.getChild(0).bookmarkGuid, "");
   root.containerOpen = false;
 
-  yield promiseClearHistory();
+  yield PlacesTestUtils.clearHistory();
 });
 
 add_task(function test_addItemsWithInvalidGUIDsFails() {
@@ -133,7 +133,7 @@ add_task(function test_addItemsWithInvalidGUIDsFails() {
   }
   catch(ex) { }
 
-  remove_all_bookmarks();
+  yield PlacesUtils.bookmarks.eraseEverything();
 });
 
 add_task(function test_addItemsWithGUIDs() {
@@ -154,7 +154,7 @@ add_task(function test_addItemsWithGUIDs() {
   do_check_eq(root.getChild(1).bookmarkGuid, SEPARATOR_GUID);
 
   root.containerOpen = false;
-  remove_all_bookmarks();
+  yield PlacesUtils.bookmarks.eraseEverything();
 });
 
 add_task(function test_emptyGUIDIgnored() {
@@ -162,7 +162,7 @@ add_task(function test_emptyGUIDIgnored() {
                                   bmsvc.DEFAULT_INDEX, "");
   do_check_valid_places_guid(PlacesUtils.getFolderContents(folder)
                                         .root.bookmarkGuid);
-  remove_all_bookmarks();
+  yield PlacesUtils.bookmarks.eraseEverything();
 });
 
 add_task(function test_usingSameGUIDFails() {
@@ -176,5 +176,5 @@ add_task(function test_usingSameGUIDFails() {
   }
   catch(ex) { }
 
-  remove_all_bookmarks();
+  yield PlacesUtils.bookmarks.eraseEverything();
 });

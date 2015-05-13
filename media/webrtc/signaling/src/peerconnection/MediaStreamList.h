@@ -34,8 +34,8 @@ public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(MediaStreamList)
 
-  virtual JSObject* WrapObject(JSContext *cx)
-    MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto)
+    override;
   nsISupports* GetParentObject();
 
   DOMMediaStream* IndexedGetter(uint32_t index, bool& found);

@@ -14,11 +14,19 @@ var Cu = Components.utils;
 Cu.import("resource://specialpowers/MockFilePicker.jsm");
 Cu.import("resource://specialpowers/MockColorPicker.jsm");
 Cu.import("resource://specialpowers/MockPermissionPrompt.jsm");
+Cu.import("resource://specialpowers/MockPaymentsUIGlue.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-Cu.importGlobalProperties(["File"]);
+// We're loaded with "this" not set to the global in some cases, so we
+// have to play some games to get at the global object here.  Normally
+// we'd try "this" from a function called with undefined this value,
+// but this whole file is in strict mode.  So instead fall back on
+// returning "this" from indirect eval, which returns the global.
+if (!(function() { var e = eval; return e("this"); })().File) {
+    Cu.importGlobalProperties(["File"]);
+}
 
 // Allow stuff from this scope to be accessed from non-privileged scopes. This
 // would crash if used outside of automation.
@@ -300,10 +308,10 @@ SpecialPowersHandler.prototype.doGetPropertyDescriptor = function(name, own) {
   if (typeof desc === 'undefined')
     return undefined;
 
-  // When accessors are implemented as JSPropertyOps rather than JSNatives (ie,
-  // QuickStubs), the js engine does the wrong thing and treats it as a value
-  // descriptor rather than an accessor descriptor. Jorendorff suggested this
-  // little hack to work around it. See bug 520882.
+  // When accessors are implemented as JSGetterOp/JSSetterOps rather than
+  // JSNatives (ie, QuickStubs), the js engine does the wrong thing and treats
+  // it as a value descriptor rather than an accessor descriptor. Jorendorff
+  // suggested this little hack to work around it. See bug 520882.
   if (desc && 'value' in desc && desc.value === undefined)
     desc.value = obj[name];
 
@@ -521,15 +529,19 @@ SpecialPowersAPI.prototype = {
   },
 
   get MockFilePicker() {
-    return MockFilePicker
+    return MockFilePicker;
   },
 
   get MockColorPicker() {
-    return MockColorPicker
+    return MockColorPicker;
   },
 
   get MockPermissionPrompt() {
-    return MockPermissionPrompt
+    return MockPermissionPrompt;
+  },
+
+  get MockPaymentsUIGlue() {
+    return MockPaymentsUIGlue;
   },
 
   loadChromeScript: function (url) {
@@ -577,7 +589,7 @@ SpecialPowersAPI.prototype = {
 
         if (aMessage.name == "SPChromeScriptMessage") {
           listeners.filter(o => (o.name == name))
-                   .forEach(o => o.listener(this.wrap(message)));
+                   .forEach(o => o.listener(message));
         } else if (aMessage.name == "SPChromeScriptAssert") {
           assert(aMessage.json);
         }
@@ -1107,6 +1119,14 @@ SpecialPowersAPI.prototype = {
     });
   },
 
+  // Turn on debug information from UserCustomizations.jsm
+  debugUserCustomizations: function(value) {
+    this._sendSyncMessage("SPWebAppService", {
+      op: "debug-customizations",
+      value: value
+    });
+  },
+
   // Restore the launchable property to its default value.
   flushAllAppsLaunchable: function() {
     this._sendSyncMessage("SPWebAppService", {
@@ -1219,7 +1239,7 @@ SpecialPowersAPI.prototype = {
     var val = this._sendSyncMessage('SPPrefService', msg);
 
     if (val == null || val[0] == null)
-      throw "Error getting pref";
+      throw "Error getting pref '" + aPrefName + "'";
     return val[0];
   },
   _setPref: function(aPrefName, aPrefType, aValue, aIid) {
@@ -1475,6 +1495,14 @@ SpecialPowersAPI.prototype = {
     return this._os;
   },
 
+  get isB2G() {
+#ifdef MOZ_B2G
+    return true;
+#else
+    return false;
+#endif
+  },
+
   addSystemEventListener: function(target, type, listener, useCapture) {
     Cc["@mozilla.org/eventlistenerservice;1"].
       getService(Ci.nsIEventListenerService).
@@ -1588,10 +1616,10 @@ SpecialPowersAPI.prototype = {
 
     var xferable = Components.classes["@mozilla.org/widget/transferable;1"].
                    createInstance(Components.interfaces.nsITransferable);
-    // in e10s b-c tests |content.window| is null whereas |window| works fine.
+    // in e10s b-c tests |content.window| is a CPOW whereas |window| works fine.
     // for some non-e10s mochi tests, |window| is null whereas |content.window|
     // works fine.  So we take whatever is non-null!
-    xferable.init(this._getDocShell(content.window || window)
+    xferable.init(this._getDocShell(typeof(window) == "undefined" ? content.window : window)
                       .QueryInterface(Components.interfaces.nsILoadContext));
     xferable.addDataFlavor(flavor);
     this._cb.getData(xferable, whichClipboard);
@@ -1893,6 +1921,18 @@ SpecialPowersAPI.prototype = {
 
   createDOMFile: function(path, options) {
     return new File(path, options);
+  },
+
+  startPeriodicServiceWorkerUpdates: function() {
+    return this._sendSyncMessage('SPPeriodicServiceWorkerUpdates', {});
+  },
+
+  removeAllServiceWorkerData: function() {
+    this.notifyObserversInParentProcess(null, "browser:purge-session-history", "");
+  },
+
+  removeServiceWorkerDataForExampleDomain: function() {
+    this.notifyObserversInParentProcess(null, "browser:purge-domain-data", "example.com");
   },
 };
 

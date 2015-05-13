@@ -32,7 +32,7 @@ function run_test()
 add_task(function test_execute()
 {
   // Put some trash in the database.
-  const URI = NetUtil.newURI("http://moz.org/");
+  let uri = NetUtil.newURI("http://moz.org/");
 
   let folderId = PlacesUtils.bookmarks.createFolder(PlacesUtils.unfiledBookmarksFolderId,
                                                     "moz test",
@@ -42,7 +42,7 @@ add_task(function test_execute()
                                                     PlacesUtils.bookmarks.DEFAULT_INDEX,
                                                     "moz test");
   PlacesUtils.tagging.tagURI(uri, ["tag"]);
-  PlacesUtils.bookmarks.setKeywordForBookmark(itemId, "keyword");
+  yield PlacesUtils.keywords.insert({ url: uri.spec, keyword: "keyword"});
 
   // Set a large annotation.
   let content = "";
@@ -59,12 +59,12 @@ add_task(function test_execute()
     .getService(Ci.nsIObserver)
     .observe(null, "gather-telemetry", null);
 
-  yield promiseAsyncUpdates();
+  yield PlacesTestUtils.promiseAsyncUpdates();
 
   // Test expiration probes.
   for (let i = 0; i < 2; i++) {
-    yield promiseAddVisits({
-      uri: uri("http://" +  i + ".moz.org/"),
+    yield PlacesTestUtils.addVisits({
+      uri: NetUtil.newURI("http://" +  i + ".moz.org/"),
       visitDate: Date.now() // [sic]
     });
   }
@@ -117,7 +117,7 @@ add_task(function test_execute()
   yield promiseTopicObserved("places-maintenance-finished");
 
   for (let histogramId in histograms) {
-    do_log_info("checking histogram " + histogramId);
+    do_print("checking histogram " + histogramId);
     let validate = histograms[histogramId];
     let snapshot = Services.telemetry.getHistogramById(histogramId).snapshot();
     validate(snapshot.sum);
@@ -126,6 +126,7 @@ add_task(function test_execute()
 });
 
 add_test(function test_healthreport_callback() {
+  Services.prefs.clearUserPref("places.database.lastMaintenance");
   PlacesDBUtils.telemetry(null, function onResult(data) {
     do_check_neq(data, null);
 
@@ -133,6 +134,7 @@ add_test(function test_healthreport_callback() {
     do_check_eq(data.PLACES_PAGES_COUNT, 1);
     do_check_eq(data.PLACES_BOOKMARKS_COUNT, 1);
 
+    do_check_true(!Services.prefs.prefHasUserValue("places.database.lastMaintenance"));
     run_next_test();
   });
 });

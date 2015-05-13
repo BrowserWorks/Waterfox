@@ -15,6 +15,7 @@ if toolkit == 'windows':
     DIRS += ['windows']
 
     XPIDL_SOURCES += [
+        'nsIGfxInfo2.idl',
         'nsIJumpListBuilder.idl',
         'nsIJumpListItem.idl',
         'nsIPrintSettingsWin.idl',
@@ -84,12 +85,6 @@ XPIDL_SOURCES += [
     'nsITransferable.idl',
 ]
 
-if CONFIG['MOZ_METRO']:
-    XPIDL_SOURCES += [
-        'MetroUIUtils.idl',
-        'nsIWinMetroUtils.idl',
-    ]
-
 XPIDL_MODULE = 'widget'
 
 EXPORTS += [
@@ -117,14 +112,22 @@ EXPORTS.mozilla += [
     'ContentEvents.h',
     'EventClassList.h',
     'EventForwards.h',
+    'FontRange.h',
     'LookAndFeel.h',
     'MiscEvents.h',
     'MouseEvents.h',
+    'TextEventDispatcher.h',
+    'TextEventDispatcherListener.h',
     'TextEvents.h',
     'TextRange.h',
     'TouchEvents.h',
     'VsyncDispatcher.h',
     'WidgetUtils.h',
+]
+
+EXPORTS.mozilla.widget += [
+    'PuppetBidiKeyboard.h',
+    'WidgetMessageUtils.h',
 ]
 
 UNIFIED_SOURCES += [
@@ -141,6 +144,7 @@ UNIFIED_SOURCES += [
     'nsClipboardProxy.cpp',
     'nsColorPickerProxy.cpp',
     'nsContentProcessWidgetFactory.cpp',
+    'nsDragServiceProxy.cpp',
     'nsFilePickerProxy.cpp',
     'nsHTMLFormatConverter.cpp',
     'nsIdleService.cpp',
@@ -153,9 +157,11 @@ UNIFIED_SOURCES += [
     'nsTransferable.cpp',
     'nsXPLookAndFeel.cpp',
     'PluginWidgetProxy.cpp',
+    'PuppetBidiKeyboard.cpp',
     'PuppetWidget.cpp',
     'ScreenProxy.cpp',
     'SharedWidgetUtils.cpp',
+    'TextEventDispatcher.cpp',
     'VsyncDispatcher.cpp',
     'WidgetEventImpl.cpp',
     'WidgetUtils.cpp',
@@ -208,11 +214,11 @@ if not CONFIG['MOZ_B2G']:
 
 FAIL_ON_WARNINGS = True
 
-MSVC_ENABLE_PGO = True
-
 include('/ipc/chromium/chromium-config.mozbuild')
 
 LOCAL_INCLUDES += [
+    '/dom/base',
+    '/dom/ipc',
     '/layout/base',
     '/layout/forms',
     '/layout/generic',

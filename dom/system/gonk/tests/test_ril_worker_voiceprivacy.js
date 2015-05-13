@@ -1,5 +1,5 @@
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 subscriptLoader.loadSubScript("resource://gre/modules/ril_consts.js", this);
 
@@ -13,9 +13,7 @@ add_test(function test_setVoicePrivacyMode_success() {
   let context = worker.ContextPool._contexts[0];
 
   context.RIL.setVoicePrivacyMode = function fakeSetVoicePrivacyMode(options) {
-    context.RIL[REQUEST_CDMA_SET_PREFERRED_VOICE_PRIVACY_MODE](0, {
-      rilRequestError: ERROR_SUCCESS
-    });
+    context.RIL[REQUEST_CDMA_SET_PREFERRED_VOICE_PRIVACY_MODE](0, {});
   };
 
   context.RIL.setVoicePrivacyMode({
@@ -24,7 +22,7 @@ add_test(function test_setVoicePrivacyMode_success() {
 
   let postedMessage = workerHelper.postedMessage;
 
-  do_check_eq(postedMessage.errorMsg, undefined);
+  equal(postedMessage.errorMsg, undefined);
 
   run_next_test();
 });
@@ -36,7 +34,7 @@ add_test(function test_setVoicePrivacyMode_generic_failure() {
 
   context.RIL.setVoicePrivacyMode = function fakeSetVoicePrivacyMode(options) {
     context.RIL[REQUEST_CDMA_SET_PREFERRED_VOICE_PRIVACY_MODE](0, {
-      rilRequestError: ERROR_GENERIC_FAILURE
+      errorMsg: GECKO_ERROR_GENERIC_FAILURE
     });
   };
 
@@ -46,7 +44,7 @@ add_test(function test_setVoicePrivacyMode_generic_failure() {
 
   let postedMessage = workerHelper.postedMessage;
 
-  do_check_eq(postedMessage.errorMsg, "GenericFailure");
+  equal(postedMessage.errorMsg, GECKO_ERROR_GENERIC_FAILURE);
 
   run_next_test();
 });
@@ -61,17 +59,15 @@ add_test(function test_queryVoicePrivacyMode_success_enabled_true() {
   };
 
   context.RIL.queryVoicePrivacyMode = function fakeQueryVoicePrivacyMode(options) {
-    context.RIL[REQUEST_CDMA_QUERY_PREFERRED_VOICE_PRIVACY_MODE](1, {
-      rilRequestError: ERROR_SUCCESS
-    });
+    context.RIL[REQUEST_CDMA_QUERY_PREFERRED_VOICE_PRIVACY_MODE](1, {});
   };
 
   context.RIL.queryVoicePrivacyMode();
 
   let postedMessage = workerHelper.postedMessage;
 
-  do_check_eq(postedMessage.errorMsg, undefined);
-  do_check_true(postedMessage.enabled);
+  equal(postedMessage.errorMsg, undefined);
+  ok(postedMessage.enabled);
   run_next_test();
 });
 
@@ -85,16 +81,14 @@ add_test(function test_queryVoicePrivacyMode_success_enabled_false() {
   };
 
   context.RIL.queryVoicePrivacyMode = function fakeQueryVoicePrivacyMode(options) {
-    context.RIL[REQUEST_CDMA_QUERY_PREFERRED_VOICE_PRIVACY_MODE](1, {
-      rilRequestError: ERROR_SUCCESS
-    });
+    context.RIL[REQUEST_CDMA_QUERY_PREFERRED_VOICE_PRIVACY_MODE](1, {});
   };
 
   context.RIL.queryVoicePrivacyMode();
 
   let postedMessage = workerHelper.postedMessage;
 
-  do_check_eq(postedMessage.errorMsg, undefined);
-  do_check_false(postedMessage.enabled);
+  equal(postedMessage.errorMsg, undefined);
+  ok(!postedMessage.enabled);
   run_next_test();
 });

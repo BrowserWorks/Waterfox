@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -15,6 +15,9 @@
 #include "nsAutoPtr.h"
 #include "nsCycleCollectionParticipant.h"
 
+#define PRIVATE_IDBREQUEST_IID \
+  {0xe68901e5, 0x1d50, 0x4ee9, {0xaf, 0x49, 0x90, 0x99, 0x4a, 0xff, 0xc8, 0x39}}
+
 class nsPIDOMWindow;
 struct PRThread;
 
@@ -25,7 +28,6 @@ class ErrorResult;
 namespace dom {
 
 class DOMError;
-struct ErrorEventInit;
 template <typename> struct Nullable;
 class OwningIDBObjectStoreOrIDBIndexOrIDBCursor;
 
@@ -87,7 +89,7 @@ public:
 
   // nsIDOMEventTarget
   virtual nsresult
-  PreHandleEvent(EventChainPreVisitor& aVisitor) MOZ_OVERRIDE;
+  PreHandleEvent(EventChainPreVisitor& aVisitor) override;
 
   void
   GetSource(Nullable<OwningIDBObjectStoreOrIDBIndexOrIDBCursor>& aSource) const;
@@ -194,7 +196,7 @@ public:
 
   // nsWrapperCache
   virtual JSObject*
-  WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 protected:
   explicit IDBRequest(IDBDatabase* aDatabase);
@@ -219,7 +221,7 @@ protected:
   { }
 };
 
-class IDBOpenDBRequest MOZ_FINAL
+class IDBOpenDBRequest final
   : public IDBRequest
 {
   class WorkerFeature;
@@ -247,7 +249,7 @@ public:
 
   // nsIDOMEventTarget
   virtual nsresult
-  PostHandleEvent(EventChainPostVisitor& aVisitor) MOZ_OVERRIDE;
+  PostHandleEvent(EventChainPostVisitor& aVisitor) override;
 
   IDBFactory*
   Factory() const
@@ -263,7 +265,7 @@ public:
 
   // nsWrapperCache
   virtual JSObject*
-  WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 private:
   IDBOpenDBRequest(IDBFactory* aFactory, nsPIDOMWindow* aOwner);

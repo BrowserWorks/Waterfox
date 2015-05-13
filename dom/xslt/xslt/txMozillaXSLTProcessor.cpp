@@ -194,7 +194,7 @@ txToFragmentHandlerFactory::createHandlerWith(txOutputFormat* aFormat,
             NS_ASSERTION(domdoc, "unable to get ownerdocument");
             nsCOMPtr<nsIDocument> doc = do_QueryInterface(domdoc);
 
-            if (doc && doc->IsHTML()) {
+            if (doc && doc->IsHTMLDocument()) {
                 format.mMethod = eHTMLOutput;
             } else {
                 format.mMethod = eXMLOutput;
@@ -892,7 +892,7 @@ txMozillaXSLTProcessor::SetParameter(const nsAString & aNamespaceURI,
 
             if (type != nsIDataType::VTYPE_INTERFACE &&
                 type != nsIDataType::VTYPE_INTERFACE_IS) {
-                nsMemory::Free(array);
+                free(array);
 
                 // We only support arrays of DOM nodes.
                 return NS_ERROR_ILLEGAL_VALUE;
@@ -919,7 +919,7 @@ txMozillaXSLTProcessor::SetParameter(const nsAString & aNamespaceURI,
                         NS_IF_RELEASE(values[i]);
                         ++i;
                     }
-                    nsMemory::Free(array);
+                    free(array);
 
                     return rv;
                 }
@@ -927,7 +927,7 @@ txMozillaXSLTProcessor::SetParameter(const nsAString & aNamespaceURI,
                 NS_RELEASE(supports);
             }
 
-            nsMemory::Free(array);
+            free(array);
 
             break;
         }
@@ -1279,9 +1279,9 @@ txMozillaXSLTProcessor::ContentRemoved(nsIDocument* aDocument,
 }
 
 /* virtual */ JSObject*
-txMozillaXSLTProcessor::WrapObject(JSContext* aCx)
+txMozillaXSLTProcessor::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-    return XSLTProcessorBinding::Wrap(aCx, this);
+    return XSLTProcessorBinding::Wrap(aCx, this, aGivenProto);
 }
 
 
@@ -1579,7 +1579,7 @@ txVariable::Convert(nsIVariant *aValue, txAExprResult** aResult)
                         NS_RELEASE(values[i]);
                         ++i;
                     }
-                    nsMemory::Free(array);
+                    free(array);
 
                     return NS_ERROR_FAILURE;
                 }
@@ -1589,7 +1589,7 @@ txVariable::Convert(nsIVariant *aValue, txAExprResult** aResult)
                 NS_RELEASE(supports);
             }
 
-            nsMemory::Free(array);
+            free(array);
 
             NS_ADDREF(*aResult = nodeSet);
 

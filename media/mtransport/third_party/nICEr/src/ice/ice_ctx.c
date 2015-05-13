@@ -157,7 +157,7 @@ int nr_ice_ctx_set_turn_servers(nr_ice_ctx *ctx,nr_ice_turn_server *servers,int 
     return(_status);
   }
 
-int nr_ice_ctx_set_local_addrs(nr_ice_ctx *ctx,nr_local_addr *addrs,int ct)
+static int nr_ice_ctx_set_local_addrs(nr_ice_ctx *ctx,nr_local_addr *addrs,int ct)
   {
     int _status,i,r;
 
@@ -208,6 +208,21 @@ int nr_ice_ctx_set_interface_prioritizer(nr_ice_ctx *ctx, nr_interface_prioritiz
     }
 
     ctx->interface_prioritizer = ip;
+
+    _status=0;
+   abort:
+    return(_status);
+  }
+
+int nr_ice_ctx_set_turn_tcp_socket_wrapper(nr_ice_ctx *ctx, nr_socket_wrapper_factory *wrapper)
+  {
+    int _status;
+
+    if (ctx->turn_tcp_socket_wrapper) {
+      ABORT(R_ALREADY);
+    }
+
+    ctx->turn_tcp_socket_wrapper = wrapper;
 
     _status=0;
    abort:
@@ -285,6 +300,7 @@ int nr_ice_fetch_turn_servers(int ct, nr_ice_turn_server **out)
   }
 #endif /* USE_TURN */
 
+#define MAXADDRS 100 // Ridiculously high
 int nr_ice_ctx_create(char *label, UINT4 flags, nr_ice_ctx **ctxp)
   {
     nr_ice_ctx *ctx=0;
@@ -389,6 +405,11 @@ static void nr_ice_ctx_destroy_cb(NR_SOCKET s, int how, void *cb_arg)
     int i;
     nr_ice_stun_id *id1,*id2;
 
+    STAILQ_FOREACH_SAFE(s1, &ctx->streams, entry, s2){
+      STAILQ_REMOVE(&ctx->streams,s1,nr_ice_media_stream_,entry);
+      nr_ice_media_stream_destroy(&s1);
+    }
+
     RFREE(ctx->label);
 
     RFREE(ctx->stun_servers);
@@ -410,11 +431,6 @@ static void nr_ice_ctx_destroy_cb(NR_SOCKET s, int how, void *cb_arg)
     RFREE(ctx->pwd);
     RFREE(ctx->ufrag);
 
-    STAILQ_FOREACH_SAFE(s1, &ctx->streams, entry, s2){
-      STAILQ_REMOVE(&ctx->streams,s1,nr_ice_media_stream_,entry);
-      nr_ice_media_stream_destroy(&s1);
-    }
-
     STAILQ_FOREACH_SAFE(id1, &ctx->ids, entry, id2){
       STAILQ_REMOVE(&ctx->ids,id1,nr_ice_stun_id_,entry);
       RFREE(id1);
@@ -422,6 +438,7 @@ static void nr_ice_ctx_destroy_cb(NR_SOCKET s, int how, void *cb_arg)
 
     nr_resolver_destroy(&ctx->resolver);
     nr_interface_prioritizer_destroy(&ctx->interface_prioritizer);
+    nr_socket_wrapper_factory_destroy(&ctx->turn_tcp_socket_wrapper);
 
     RFREE(ctx);
   }
@@ -441,9 +458,9 @@ int nr_ice_ctx_destroy(nr_ice_ctx **ctxp)
     return(0);
   }
 
-void nr_ice_initialize_finished_cb(NR_SOCKET s, int h, void *cb_arg)
+void nr_ice_gather_finished_cb(NR_SOCKET s, int h, void *cb_arg)
   {
-    int r,_status;
+    int r;
     nr_ice_candidate *cand=cb_arg;
     nr_ice_ctx *ctx;
 
@@ -481,7 +498,6 @@ void nr_ice_initialize_finished_cb(NR_SOCKET s, int h, void *cb_arg)
 
     if(ctx->uninitialized_candidates==0){
       r_log(LOG_ICE,LOG_DEBUG,"ICE(%s): All candidates initialized",ctx->label);
-      ctx->state=NR_ICE_STATE_INITIALIZED;
       if (ctx->done_cb) {
         ctx->done_cb(0,0,ctx->cb_arg);
       }
@@ -516,47 +532,47 @@ static int nr_ice_ctx_pair_new_trickle_candidates(nr_ice_ctx *ctx, nr_ice_candid
   }
 
 
-#define MAXADDRS 100 // Ridiculously high
-int nr_ice_initialize(nr_ice_ctx *ctx, NR_async_cb done_cb, void *cb_arg)
+int nr_ice_gather(nr_ice_ctx *ctx, NR_async_cb done_cb, void *cb_arg)
   {
     int r,_status;
     nr_ice_media_stream *stream;
     nr_local_addr addrs[MAXADDRS];
     int i,addr_ct;
 
-    r_log(LOG_ICE,LOG_DEBUG,"ICE(%s): Initializing candidates",ctx->label);
-    ctx->state=NR_ICE_STATE_INITIALIZING;
-    ctx->done_cb=done_cb;
-    ctx->cb_arg=cb_arg;
+    if (!ctx->local_addrs) {
+      /* First, gather all the local addresses we have */
+      if(r=nr_stun_find_local_addresses(addrs,MAXADDRS,&addr_ct)) {
+        r_log(LOG_ICE,LOG_ERR,"ICE(%s): unable to find local addresses",ctx->label);
+        ABORT(r);
+      }
+
+      /* Sort interfaces by preference */
+      if(ctx->interface_prioritizer) {
+        for(i=0;i<addr_ct;i++){
+          if(r=nr_interface_prioritizer_add_interface(ctx->interface_prioritizer,addrs+i)) {
+            r_log(LOG_ICE,LOG_ERR,"ICE(%s): unable to add interface ",ctx->label);
+            ABORT(r);
+          }
+        }
+        if(r=nr_interface_prioritizer_sort_preference(ctx->interface_prioritizer)) {
+          r_log(LOG_ICE,LOG_ERR,"ICE(%s): unable to sort interface by preference",ctx->label);
+          ABORT(r);
+        }
+      }
+
+      if (r=nr_ice_ctx_set_local_addrs(ctx,addrs,addr_ct)) {
+        ABORT(r);
+      }
+    }
 
     if(STAILQ_EMPTY(&ctx->streams)) {
       r_log(LOG_ICE,LOG_ERR,"ICE(%s): Missing streams to initialize",ctx->label);
       ABORT(R_BAD_ARGS);
     }
 
-    /* First, gather all the local addresses we have */
-    if(r=nr_stun_find_local_addresses(addrs,MAXADDRS,&addr_ct)) {
-      r_log(LOG_ICE,LOG_ERR,"ICE(%s): unable to find local addresses",ctx->label);
-      ABORT(r);
-    }
-
-    /* Sort interfaces by preference */
-    if(ctx->interface_prioritizer) {
-      for(i=0;i<addr_ct;i++){
-        if(r=nr_interface_prioritizer_add_interface(ctx->interface_prioritizer,addrs+i)) {
-          r_log(LOG_ICE,LOG_ERR,"ICE(%s): unable to add interface ",ctx->label);
-          ABORT(r);
-        }
-      }
-      if(r=nr_interface_prioritizer_sort_preference(ctx->interface_prioritizer)) {
-        r_log(LOG_ICE,LOG_ERR,"ICE(%s): unable to sort interface by preference",ctx->label);
-        ABORT(r);
-      }
-    }
-
-    if (r=nr_ice_ctx_set_local_addrs(ctx,addrs,addr_ct)) {
-      ABORT(r);
-    }
+    r_log(LOG_ICE,LOG_DEBUG,"ICE(%s): Initializing candidates",ctx->label);
+    ctx->done_cb=done_cb;
+    ctx->cb_arg=cb_arg;
 
     /* Initialize all the media stream/component pairs */
     stream=STAILQ_FIRST(&ctx->streams);
@@ -569,7 +585,6 @@ int nr_ice_initialize(nr_ice_ctx *ctx, NR_async_cb done_cb, void *cb_arg)
 
     if(ctx->uninitialized_candidates)
       ABORT(R_WOULDBLOCK);
-
 
     _status=0;
   abort:
@@ -584,6 +599,33 @@ int nr_ice_add_media_stream(nr_ice_ctx *ctx,char *label,int components, nr_ice_m
       ABORT(r);
 
     STAILQ_INSERT_TAIL(&ctx->streams,*streamp,entry);
+
+    _status=0;
+  abort:
+    return(_status);
+  }
+
+int nr_ice_remove_media_stream(nr_ice_ctx *ctx,nr_ice_media_stream **streamp)
+  {
+    int r,_status;
+    nr_ice_peer_ctx *pctx;
+    nr_ice_media_stream *peer_stream;
+
+    pctx=STAILQ_FIRST(&ctx->peers);
+    while(pctx){
+      if(!nr_ice_peer_ctx_find_pstream(pctx, *streamp, &peer_stream)) {
+        if(r=nr_ice_peer_ctx_remove_pstream(pctx, &peer_stream)) {
+          ABORT(r);
+        }
+      }
+
+      pctx=STAILQ_NEXT(pctx,entry);
+    }
+
+    STAILQ_REMOVE(&ctx->streams,*streamp,nr_ice_media_stream_,entry);
+    if(r=nr_ice_media_stream_destroy(streamp)) {
+      ABORT(r);
+    }
 
     _status=0;
   abort:

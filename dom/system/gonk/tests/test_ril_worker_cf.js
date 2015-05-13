@@ -1,5 +1,5 @@
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 subscriptLoader.loadSubScript("resource://gre/modules/ril_consts.js", this);
 
@@ -23,7 +23,7 @@ function toaFromString(number) {
 add_test(function test_toaFromString_empty() {
   let retval = toaFromString("");
 
-  do_check_eq(retval, TOA_UNKNOWN);
+  equal(retval, TOA_UNKNOWN);
 
   run_next_test();
 });
@@ -31,7 +31,7 @@ add_test(function test_toaFromString_empty() {
 add_test(function test_toaFromString_undefined() {
   let retval = toaFromString();
 
-  do_check_eq(retval, TOA_UNKNOWN);
+  equal(retval, TOA_UNKNOWN);
 
   run_next_test();
 });
@@ -39,7 +39,7 @@ add_test(function test_toaFromString_undefined() {
 add_test(function test_toaFromString_unknown() {
   let retval = toaFromString("666222333");
 
-  do_check_eq(retval, TOA_UNKNOWN);
+  equal(retval, TOA_UNKNOWN);
 
   run_next_test();
 });
@@ -47,7 +47,7 @@ add_test(function test_toaFromString_unknown() {
 add_test(function test_toaFromString_international() {
   let retval = toaFromString("+34666222333");
 
-  do_check_eq(retval, TOA_INTERNATIONAL);
+  equal(retval, TOA_INTERNATIONAL);
 
   run_next_test();
 });
@@ -58,9 +58,7 @@ add_test(function test_setCallForward_unconditional() {
   let context = worker.ContextPool._contexts[0];
 
   context.RIL.setCallForward = function fakeSetCallForward(options) {
-    context.RIL[REQUEST_SET_CALL_FORWARD](0, {
-      rilRequestError: ERROR_SUCCESS
-    });
+    context.RIL[REQUEST_SET_CALL_FORWARD](0, {});
   };
 
   context.RIL.setCallForward({
@@ -73,8 +71,7 @@ add_test(function test_setCallForward_unconditional() {
 
   let postedMessage = workerHelper.postedMessage;
 
-  do_check_eq(postedMessage.errorMsg, GECKO_ERROR_SUCCESS);
-  do_check_true(postedMessage.success);
+  equal(postedMessage.errorMsg, undefined);
 
   run_next_test();
 });
@@ -85,9 +82,7 @@ add_test(function test_queryCallForwardStatus_unconditional() {
   let context = worker.ContextPool._contexts[0];
 
   context.RIL.setCallForward = function fakeSetCallForward(options) {
-    context.RIL[REQUEST_SET_CALL_FORWARD](0, {
-      rilRequestError: ERROR_SUCCESS
-    });
+    context.RIL[REQUEST_SET_CALL_FORWARD](0, {});
   };
 
   context.Buf.readInt32 = function fakeReadUint32() {
@@ -107,9 +102,7 @@ add_test(function test_queryCallForwardStatus_unconditional() {
       1,   // rules.active
       1    // rulesLength
     ];
-    context.RIL[REQUEST_QUERY_CALL_FORWARD_STATUS](1, {
-      rilRequestError: ERROR_SUCCESS
-    });
+    context.RIL[REQUEST_QUERY_CALL_FORWARD_STATUS](1, {});
   };
 
   context.RIL.queryCallForwardStatus({
@@ -122,13 +115,12 @@ add_test(function test_queryCallForwardStatus_unconditional() {
 
   let postedMessage = workerHelper.postedMessage;
 
-  do_check_eq(postedMessage.errorMsg, GECKO_ERROR_SUCCESS);
-  do_check_true(postedMessage.success);
-  do_check_true(Array.isArray(postedMessage.rules));
+  equal(postedMessage.errorMsg, undefined);
+  ok(Array.isArray(postedMessage.rules));
   do_print(postedMessage.rules.length);
-  do_check_eq(postedMessage.rules.length, 1);
-  do_check_true(postedMessage.rules[0].active);
-  do_check_eq(postedMessage.rules[0].reason, CALL_FORWARD_REASON_UNCONDITIONAL);
-  do_check_eq(postedMessage.rules[0].number, "+34666222333");
+  equal(postedMessage.rules.length, 1);
+  ok(postedMessage.rules[0].active);
+  equal(postedMessage.rules[0].reason, CALL_FORWARD_REASON_UNCONDITIONAL);
+  equal(postedMessage.rules[0].number, "+34666222333");
   run_next_test();
 });

@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim:set ts=2 sw=2 sts=2 et cindent: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -24,9 +24,9 @@ namespace dom {
 struct UDPOptions;
 class StringOrBlobOrArrayBufferOrArrayBufferView;
 
-class UDPSocket MOZ_FINAL : public DOMEventTargetHelper
-                          , public nsIUDPSocketListener
-                          , public nsIUDPSocketInternal
+class UDPSocket final : public DOMEventTargetHelper
+                      , public nsIUDPSocketListener
+                      , public nsIUDPSocketInternal
 {
 public:
   NS_DECL_ISUPPORTS_INHERITED
@@ -43,10 +43,10 @@ public:
   }
 
   virtual JSObject*
-  WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   virtual void
-  DisconnectFromOwner() MOZ_OVERRIDE;
+  DisconnectFromOwner() override;
 
   static already_AddRefed<UDPSocket>
   Constructor(const GlobalObject& aGlobal, const UDPOptions& aOptions, ErrorResult& aRv);
@@ -128,6 +128,30 @@ public:
        ErrorResult& aRv);
 
 private:
+  class ListenerProxy : public nsIUDPSocketListener
+                      , public nsIUDPSocketInternal
+  {
+  public:
+    NS_DECL_ISUPPORTS
+    NS_FORWARD_SAFE_NSIUDPSOCKETLISTENER(mSocket)
+    NS_FORWARD_SAFE_NSIUDPSOCKETINTERNAL(mSocket)
+
+    explicit ListenerProxy(UDPSocket* aSocket)
+      : mSocket(aSocket)
+    {
+    }
+
+    void Disconnect()
+    {
+      mSocket = nullptr;
+    }
+
+  private:
+    virtual ~ListenerProxy() {}
+
+    UDPSocket* mSocket;
+  };
+
   UDPSocket(nsPIDOMWindow* aOwner,
             const nsCString& aRemoteAddress,
             const Nullable<uint16_t>& aRemotePort);
@@ -176,6 +200,7 @@ private:
 
   nsCOMPtr<nsIUDPSocket> mSocket;
   nsCOMPtr<nsIUDPSocketChild> mSocketChild;
+  nsRefPtr<ListenerProxy> mListenerProxy;
 
   struct MulticastCommand {
     enum CommandType { Join, Leave };

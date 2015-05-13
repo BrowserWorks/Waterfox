@@ -23,7 +23,7 @@ NS_INTERFACE_MAP_END_INHERITING(AudioNode)
 NS_IMPL_ADDREF_INHERITED(OscillatorNode, AudioNode)
 NS_IMPL_RELEASE_INHERITED(OscillatorNode, AudioNode)
 
-class OscillatorNodeEngine : public AudioNodeEngine
+class OscillatorNodeEngine final : public AudioNodeEngine
 {
 public:
   OscillatorNodeEngine(AudioNode* aNode, AudioDestinationNode* aDestination)
@@ -57,7 +57,7 @@ public:
   };
   void SetTimelineParameter(uint32_t aIndex,
                             const AudioParamTimeline& aValue,
-                            TrackRate aSampleRate) MOZ_OVERRIDE
+                            TrackRate aSampleRate) override
   {
     mRecomputeParameters = true;
     switch (aIndex) {
@@ -76,7 +76,7 @@ public:
     }
   }
 
-  virtual void SetStreamTimeParameter(uint32_t aIndex, StreamTime aParam) MOZ_OVERRIDE
+  virtual void SetStreamTimeParameter(uint32_t aIndex, StreamTime aParam) override
   {
     switch (aIndex) {
     case START: mStart = aParam; break;
@@ -86,7 +86,7 @@ public:
     }
   }
 
-  virtual void SetInt32Parameter(uint32_t aIndex, int32_t aParam) MOZ_OVERRIDE
+  virtual void SetInt32Parameter(uint32_t aIndex, int32_t aParam) override
   {
     switch (aIndex) {
       case TYPE:
@@ -129,7 +129,7 @@ public:
     // End index switch.
   }
 
-  virtual void SetBuffer(already_AddRefed<ThreadSharedFloatArrayBufferList> aBuffer) MOZ_OVERRIDE
+  virtual void SetBuffer(already_AddRefed<ThreadSharedFloatArrayBufferList> aBuffer) override
   {
     MOZ_ASSERT(mCustomLength, "Custom buffer sent before length");
     mCustom = aBuffer;
@@ -258,8 +258,8 @@ public:
       }
       // Bilinear interpolation between adjacent samples in each table.
       float floorPhase = floorf(mPhase);
-      uint32_t j1 = floorPhase;
-      j1 &= indexMask;
+      int j1Signed = static_cast<int>(floorPhase);
+      uint32_t j1 = j1Signed & indexMask;
       uint32_t j2 = j1 + 1;
       j2 &= indexMask;
 
@@ -287,7 +287,7 @@ public:
   virtual void ProcessBlock(AudioNodeStream* aStream,
                             const AudioChunk& aInput,
                             AudioChunk* aOutput,
-                            bool* aFinished) MOZ_OVERRIDE
+                            bool* aFinished) override
   {
     MOZ_ASSERT(mSource == aStream, "Invalid source stream");
 
@@ -303,7 +303,7 @@ public:
       *aFinished = true;
       return;
     }
-    if (ticks + WEBAUDIO_BLOCK_SIZE < mStart) {
+    if (ticks + WEBAUDIO_BLOCK_SIZE <= mStart) {
       // We're not playing yet.
       ComputeSilence(aOutput);
       return;
@@ -333,7 +333,7 @@ public:
 
   }
 
-  virtual size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const MOZ_OVERRIDE
+  virtual size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     size_t amount = AudioNodeEngine::SizeOfExcludingThis(aMallocSizeOf);
 
@@ -354,7 +354,7 @@ public:
     return amount;
   }
 
-  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const MOZ_OVERRIDE
+  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
   }
@@ -381,10 +381,9 @@ OscillatorNode::OscillatorNode(AudioContext* aContext)
               ChannelCountMode::Max,
               ChannelInterpretation::Speakers)
   , mType(OscillatorType::Sine)
-  , mFrequency(new AudioParam(this, SendFrequencyToStream, 440.0f))
-  , mDetune(new AudioParam(this, SendDetuneToStream, 0.0f))
+  , mFrequency(new AudioParam(this, SendFrequencyToStream, 440.0f, "frequency"))
+  , mDetune(new AudioParam(this, SendDetuneToStream, 0.0f, "detune"))
   , mStartCalled(false)
-  , mStopped(false)
 {
   OscillatorNodeEngine* engine = new OscillatorNodeEngine(this, aContext->Destination());
   mStream = aContext->Graph()->CreateAudioNodeStream(engine, MediaStreamGraph::SOURCE_STREAM);
@@ -417,9 +416,9 @@ OscillatorNode::SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const
 }
 
 JSObject*
-OscillatorNode::WrapObject(JSContext* aCx)
+OscillatorNode::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return OscillatorNodeBinding::Wrap(aCx, this);
+  return OscillatorNodeBinding::Wrap(aCx, this, aGivenProto);
 }
 
 void
@@ -512,38 +511,35 @@ OscillatorNode::Stop(double aWhen, ErrorResult& aRv)
 }
 
 void
-OscillatorNode::NotifyMainThreadStateChanged()
+OscillatorNode::NotifyMainThreadStreamFinished()
 {
-  if (mStream->IsFinished()) {
-    class EndedEventDispatcher : public nsRunnable
-    {
-    public:
-      explicit EndedEventDispatcher(OscillatorNode* aNode)
-        : mNode(aNode) {}
-      NS_IMETHODIMP Run()
-      {
-        // If it's not safe to run scripts right now, schedule this to run later
-        if (!nsContentUtils::IsSafeToRunScript()) {
-          nsContentUtils::AddScriptRunner(this);
-          return NS_OK;
-        }
+  MOZ_ASSERT(mStream->IsFinished());
 
-        mNode->DispatchTrustedEvent(NS_LITERAL_STRING("ended"));
+  class EndedEventDispatcher final : public nsRunnable
+  {
+  public:
+    explicit EndedEventDispatcher(OscillatorNode* aNode)
+      : mNode(aNode) {}
+    NS_IMETHOD Run() override
+    {
+      // If it's not safe to run scripts right now, schedule this to run later
+      if (!nsContentUtils::IsSafeToRunScript()) {
+        nsContentUtils::AddScriptRunner(this);
         return NS_OK;
       }
-    private:
-      nsRefPtr<OscillatorNode> mNode;
-    };
-    if (!mStopped) {
-      // Only dispatch the ended event once
-      NS_DispatchToMainThread(new EndedEventDispatcher(this));
-      mStopped = true;
-    }
 
-    // Drop the playing reference
-    // Warning: The below line might delete this.
-    MarkInactive();
-  }
+      mNode->DispatchTrustedEvent(NS_LITERAL_STRING("ended"));
+      return NS_OK;
+    }
+  private:
+    nsRefPtr<OscillatorNode> mNode;
+  };
+
+  NS_DispatchToMainThread(new EndedEventDispatcher(this));
+
+  // Drop the playing reference
+  // Warning: The below line might delete this.
+  MarkInactive();
 }
 
 }

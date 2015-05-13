@@ -21,6 +21,7 @@
 
 #include "nsDebug.h"
 #include "pldhash.h"
+#include "mozilla/Attributes.h"
 
 class nsIFrame;
 class nsIPresShell;
@@ -37,7 +38,6 @@ public:
     , mDisplayContentsMap(nullptr)
     , mIsDestroyingFrames(false)
   {
-    mPlaceholderMap.ops = nullptr;
   }
 
   bool IsDestroyingFrames() { return mIsDestroyingFrames; }
@@ -60,7 +60,7 @@ protected:
   class UndisplayedMap;
 
   // weak link, because the pres shell owns us
-  nsIPresShell*                   mPresShell;
+  nsIPresShell* MOZ_NON_OWNING_REF mPresShell;
   // the pres shell owns the style set
   nsStyleSet*                     mStyleSet;
   nsIFrame*                       mRootFrame;

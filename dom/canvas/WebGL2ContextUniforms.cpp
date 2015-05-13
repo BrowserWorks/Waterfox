@@ -11,8 +11,7 @@
 #include "WebGLVertexAttribData.h"
 #include "mozilla/dom/WebGL2RenderingContextBinding.h"
 
-using namespace mozilla;
-using namespace mozilla::dom;
+namespace mozilla {
 
 typedef union { GLint i; GLfloat f; GLuint u; } fi_t;
 
@@ -74,6 +73,12 @@ WebGL2Context::ValidateAttribPointerType(bool integerMode, GLenum type,
     return false;
 }
 
+bool
+WebGL2Context::ValidateUniformMatrixTranspose(bool /*transpose*/, const char* /*info*/)
+{
+    return true;
+}
+
 // -------------------------------------------------------------------------
 // Uniforms and attributes
 
@@ -113,140 +118,222 @@ WebGL2Context::VertexAttribIPointer(GLuint index, GLint size, GLenum type, GLsiz
 }
 
 void
-WebGL2Context::Uniform1ui(WebGLUniformLocation* location, GLuint v0)
+WebGL2Context::Uniform1ui(WebGLUniformLocation* loc, GLuint v0)
 {
-    MOZ_CRASH("Not Implemented.");
+    GLuint rawLoc;
+    if (!ValidateUniformSetter(loc, 1, LOCAL_GL_UNSIGNED_INT, "uniform1ui", &rawLoc))
+        return;
+
+    MakeContextCurrent();
+    gl->fUniform1ui(rawLoc, v0);
 }
 
 void
-WebGL2Context::Uniform2ui(WebGLUniformLocation* location, GLuint v0, GLuint v1)
+WebGL2Context::Uniform2ui(WebGLUniformLocation* loc, GLuint v0, GLuint v1)
 {
-    MOZ_CRASH("Not Implemented.");
+    GLuint rawLoc;
+    if (!ValidateUniformSetter(loc, 2, LOCAL_GL_UNSIGNED_INT, "uniform2ui", &rawLoc))
+        return;
+
+    MakeContextCurrent();
+    gl->fUniform2ui(rawLoc, v0, v1);
 }
 
 void
-WebGL2Context::Uniform3ui(WebGLUniformLocation* location, GLuint v0, GLuint v1, GLuint v2)
+WebGL2Context::Uniform3ui(WebGLUniformLocation* loc, GLuint v0, GLuint v1, GLuint v2)
 {
-    MOZ_CRASH("Not Implemented.");
+    GLuint rawLoc;
+    if (!ValidateUniformSetter(loc, 3, LOCAL_GL_UNSIGNED_INT, "uniform3ui", &rawLoc))
+        return;
+
+    MakeContextCurrent();
+    gl->fUniform3ui(rawLoc, v0, v1, v2);
 }
 
 void
-WebGL2Context::Uniform4ui(WebGLUniformLocation* location, GLuint v0, GLuint v1,
-                          GLuint v2, GLuint v3)
+WebGL2Context::Uniform4ui(WebGLUniformLocation* loc, GLuint v0, GLuint v1, GLuint v2, GLuint v3)
 {
-    MOZ_CRASH("Not Implemented.");
+    GLuint rawLoc;
+    if (!ValidateUniformSetter(loc, 4, LOCAL_GL_UNSIGNED_INT, "uniform4ui", &rawLoc))
+        return;
+
+    MakeContextCurrent();
+    gl->fUniform4ui(rawLoc, v0, v1, v2, v3);
 }
 
 void
-WebGL2Context::Uniform1uiv(WebGLUniformLocation* location,
-                           const dom::Sequence<GLuint>& value)
+WebGL2Context::Uniform1uiv_base(WebGLUniformLocation* loc, size_t arrayLength,
+                                const GLuint* data)
 {
-    MOZ_CRASH("Not Implemented.");
+    GLuint rawLoc;
+    GLsizei numElementsToUpload;
+
+    if (!ValidateUniformArraySetter(loc, 1, LOCAL_GL_UNSIGNED_INT, arrayLength,
+                                    "uniform1uiv", &rawLoc, &numElementsToUpload))
+    {
+        return;
+    }
+
+    MakeContextCurrent();
+    gl->fUniform1uiv(rawLoc, numElementsToUpload, data);
 }
 
 void
-WebGL2Context::Uniform2uiv(WebGLUniformLocation* location,
-                           const dom::Sequence<GLuint>& value)
+WebGL2Context::Uniform2uiv_base(WebGLUniformLocation* loc, size_t arrayLength,
+                                const GLuint* data)
 {
-    MOZ_CRASH("Not Implemented.");
+    GLuint rawLoc;
+    GLsizei numElementsToUpload;
+
+    if (!ValidateUniformArraySetter(loc, 2, LOCAL_GL_UNSIGNED_INT, arrayLength,
+                                    "uniform2uiv", &rawLoc, &numElementsToUpload))
+    {
+        return;
+    }
+
+    MakeContextCurrent();
+    gl->fUniform2uiv(rawLoc, numElementsToUpload, data);
 }
 
 void
-WebGL2Context::Uniform3uiv(WebGLUniformLocation* location,
-                           const dom::Sequence<GLuint>& value)
+WebGL2Context::Uniform3uiv_base(WebGLUniformLocation* loc, size_t arrayLength,
+                                const GLuint* data)
 {
-    MOZ_CRASH("Not Implemented.");
+    GLuint rawLoc;
+    GLsizei numElementsToUpload;
+
+    if (!ValidateUniformArraySetter(loc, 3, LOCAL_GL_UNSIGNED_INT, arrayLength,
+                                    "uniform3uiv", &rawLoc, &numElementsToUpload))
+    {
+        return;
+    }
+
+    MakeContextCurrent();
+    gl->fUniform1uiv(rawLoc, numElementsToUpload, data);
 }
 
 void
-WebGL2Context::Uniform4uiv(WebGLUniformLocation* location,
-                           const dom::Sequence<GLuint>& value)
+WebGL2Context::Uniform4uiv_base(WebGLUniformLocation* loc, size_t arrayLength,
+                                const GLuint* data)
 {
-    MOZ_CRASH("Not Implemented.");
+    GLuint rawLoc;
+    GLsizei numElementsToUpload;
+
+    if (!ValidateUniformArraySetter(loc, 4, LOCAL_GL_UNSIGNED_INT, arrayLength,
+                                    "uniform4uiv", &rawLoc, &numElementsToUpload)) {
+        return;
+    }
+
+    MakeContextCurrent();
+    gl->fUniform4uiv(rawLoc, numElementsToUpload, data);
 }
 
 void
-WebGL2Context::UniformMatrix2x3fv(WebGLUniformLocation* location, bool transpose,
-                                  const dom::Float32Array& value)
+WebGL2Context::UniformMatrix2x3fv_base(WebGLUniformLocation* loc, bool transpose,
+                                       size_t arrayLength, const GLfloat* data)
 {
-    MOZ_CRASH("Not Implemented.");
+    GLuint rawLoc;
+    GLsizei numElementsToUpload;
+
+    if (!ValidateUniformMatrixArraySetter(loc, 2, 3, LOCAL_GL_FLOAT, arrayLength,
+                                          transpose, "uniformMatrix2x3fv",
+                                          &rawLoc, &numElementsToUpload))
+    {
+        return;
+    }
+
+    MakeContextCurrent();
+    gl->fUniformMatrix2x3fv(rawLoc, numElementsToUpload, transpose, data);
 }
 
 void
-WebGL2Context::UniformMatrix2x3fv(WebGLUniformLocation* location, bool transpose,
-                                  const dom::Sequence<GLfloat>& value)
+WebGL2Context::UniformMatrix2x4fv_base(WebGLUniformLocation* loc, bool transpose,
+                                       size_t arrayLength, const GLfloat* data)
 {
-    MOZ_CRASH("Not Implemented.");
+    GLuint rawLoc;
+    GLsizei numElementsToUpload;
+
+    if (!ValidateUniformMatrixArraySetter(loc, 2, 4, LOCAL_GL_FLOAT, arrayLength,
+                                          transpose, "uniformMatrix2x4fv",
+                                          &rawLoc, &numElementsToUpload))
+    {
+        return;
+    }
+
+    MakeContextCurrent();
+    gl->fUniformMatrix2x4fv(rawLoc, numElementsToUpload, transpose, data);
 }
 
 void
-WebGL2Context::UniformMatrix3x2fv(WebGLUniformLocation* location, bool transpose,
-                                  const dom::Float32Array& value)
+WebGL2Context::UniformMatrix3x2fv_base(WebGLUniformLocation* loc, bool transpose,
+                                       size_t arrayLength, const GLfloat* data)
 {
-    MOZ_CRASH("Not Implemented.");
+    GLuint rawLoc;
+    GLsizei numElementsToUpload;
+
+    if (!ValidateUniformMatrixArraySetter(loc, 3, 2, LOCAL_GL_FLOAT, arrayLength,
+                                          transpose, "uniformMatrix3x2fv",
+                                          &rawLoc, &numElementsToUpload))
+    {
+        return;
+    }
+
+    MakeContextCurrent();
+    gl->fUniformMatrix3x2fv(rawLoc, numElementsToUpload, transpose, data);
 }
 
 void
-WebGL2Context::UniformMatrix3x2fv(WebGLUniformLocation* location, bool transpose,
-                                  const dom::Sequence<GLfloat>& value)
+WebGL2Context::UniformMatrix3x4fv_base(WebGLUniformLocation* loc, bool transpose,
+                                       size_t arrayLength, const GLfloat* data)
 {
-    MOZ_CRASH("Not Implemented.");
+    GLuint rawLoc;
+    GLsizei numElementsToUpload;
+
+    if (!ValidateUniformMatrixArraySetter(loc, 3, 4, LOCAL_GL_FLOAT, arrayLength,
+                                          transpose, "uniformMatrix3x4fv",
+                                          &rawLoc, &numElementsToUpload))
+    {
+        return;
+    }
+
+    MakeContextCurrent();
+    gl->fUniformMatrix3x4fv(rawLoc, numElementsToUpload, transpose, data);
 }
 
 void
-WebGL2Context::UniformMatrix2x4fv(WebGLUniformLocation* location, bool transpose,
-                                  const dom::Float32Array& value)
+WebGL2Context::UniformMatrix4x2fv_base(WebGLUniformLocation* loc, bool transpose,
+                                       size_t arrayLength, const GLfloat* data)
 {
-    MOZ_CRASH("Not Implemented.");
+    GLuint rawLoc;
+    GLsizei numElementsToUpload;
+
+    if (!ValidateUniformMatrixArraySetter(loc, 4, 2, LOCAL_GL_FLOAT, arrayLength,
+                                          transpose, "uniformMatrix4x2fv",
+                                          &rawLoc, &numElementsToUpload))
+    {
+        return;
+    }
+
+    MakeContextCurrent();
+    gl->fUniformMatrix4x2fv(rawLoc, numElementsToUpload, transpose, data);
 }
 
 void
-WebGL2Context::UniformMatrix2x4fv(WebGLUniformLocation* location, bool transpose,
-                                  const dom::Sequence<GLfloat>& value)
+WebGL2Context::UniformMatrix4x3fv_base(WebGLUniformLocation* loc, bool transpose,
+                                       size_t arrayLength, const GLfloat* data)
 {
-    MOZ_CRASH("Not Implemented.");
-}
+    GLuint rawLoc;
+    GLsizei numElementsToUpload;
 
-void
-WebGL2Context::UniformMatrix4x2fv(WebGLUniformLocation* location, bool transpose,
-                                  const dom::Float32Array& value)
-{
-    MOZ_CRASH("Not Implemented.");
-}
+    if (!ValidateUniformMatrixArraySetter(loc, 4, 3, LOCAL_GL_FLOAT, arrayLength,
+                                          transpose, "uniformMatrix4x3fv",
+                                          &rawLoc, &numElementsToUpload))
+    {
+        return;
+    }
 
-void
-WebGL2Context::UniformMatrix4x2fv(WebGLUniformLocation* location, bool transpose,
-                                  const dom::Sequence<GLfloat>& value)
-{
-    MOZ_CRASH("Not Implemented.");
-}
-
-void
-WebGL2Context::UniformMatrix3x4fv(WebGLUniformLocation* location, bool transpose,
-                                  const dom::Float32Array& value)
-{
-    MOZ_CRASH("Not Implemented.");
-}
-
-void
-WebGL2Context::UniformMatrix3x4fv(WebGLUniformLocation* location, bool transpose,
-                                  const dom::Sequence<GLfloat>& value)
-{
-    MOZ_CRASH("Not Implemented.");
-}
-
-void
-WebGL2Context::UniformMatrix4x3fv(WebGLUniformLocation* location, bool transpose,
-                                  const dom::Float32Array& value)
-{
-    MOZ_CRASH("Not Implemented.");
-}
-
-void
-WebGL2Context::UniformMatrix4x3fv(WebGLUniformLocation* location, bool transpose,
-                                  const dom::Sequence<GLfloat>& value)
-{
-    MOZ_CRASH("Not Implemented.");
+    MakeContextCurrent();
+    gl->fUniformMatrix4x3fv(rawLoc, numElementsToUpload, transpose, data);
 }
 
 void
@@ -396,7 +483,7 @@ WebGL2Context::GetUniformIndices(WebGLProgram* program,
     if (!uniformNames.Length())
         return;
 
-    GLuint progname = program->GLName();
+    GLuint progname = program->mGLName;
     size_t count = uniformNames.Length();
     nsTArray<GLuint>& arr = retval.SetValue();
 
@@ -431,7 +518,7 @@ WebGL2Context::GetActiveUniforms(WebGLProgram* program,
     if (!count)
         return;
 
-    GLuint progname = program->GLName();
+    GLuint progname = program->mGLName;
     nsTArray<GLint>& arr = retval.SetValue();
     arr.SetLength(count);
 
@@ -450,42 +537,7 @@ WebGL2Context::GetUniformBlockIndex(WebGLProgram* program,
     if (!ValidateObject("getUniformBlockIndex: program", program))
         return 0;
 
-    if (!ValidateGLSLVariableName(uniformBlockName, "getUniformBlockIndex"))
-        return 0;
-
-    NS_LossyConvertUTF16toASCII cname(uniformBlockName);
-    nsCString mappedName;
-    program->MapIdentifier(cname, &mappedName);
-
-    GLuint progname = program->GLName();
-
-    MakeContextCurrent();
-    return gl->fGetUniformBlockIndex(progname, mappedName.get());
-}
-
-static bool
-GetUniformBlockActiveUniforms(gl::GLContext* gl, JSContext* cx,
-                              WebGL2Context* owner, GLuint progname,
-                              GLuint uniformBlockIndex,
-                              JS::MutableHandleObject out_array)
-{
-    GLint length = 0;
-    gl->fGetActiveUniformBlockiv(progname, uniformBlockIndex,
-                                 LOCAL_GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &length);
-    JS::RootedObject obj(cx, Uint32Array::Create(cx, owner, length, nullptr));
-    if (!obj)
-        return false;
-
-    Uint32Array result;
-    DebugOnly<bool> inited = result.Init(obj);
-    MOZ_ASSERT(inited);
-    result.ComputeLengthAndData();
-    gl->fGetActiveUniformBlockiv(progname, uniformBlockIndex,
-                                 LOCAL_GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES,
-                                 (GLint*) result.Data());
-
-    out_array.set(obj);
-    return true;
+    return program->GetUniformBlockIndex(uniformBlockName);
 }
 
 void
@@ -501,45 +553,24 @@ WebGL2Context::GetActiveUniformBlockParameter(JSContext* cx, WebGLProgram* progr
     if (!ValidateObject("getActiveUniformBlockParameter: program", program))
         return;
 
-    GLuint progname = program->GLName();
-    GLint param = 0;
-
     MakeContextCurrent();
 
     switch(pname) {
     case LOCAL_GL_UNIFORM_BLOCK_REFERENCED_BY_VERTEX_SHADER:
     case LOCAL_GL_UNIFORM_BLOCK_REFERENCED_BY_FRAGMENT_SHADER:
-        gl->fGetActiveUniformBlockiv(progname, uniformBlockIndex, pname, &param);
-        retval.SetValue().SetAsBoolean() = (param != 0);
-        return;
-
     case LOCAL_GL_UNIFORM_BLOCK_BINDING:
     case LOCAL_GL_UNIFORM_BLOCK_DATA_SIZE:
-    case LOCAL_GL_UNIFORM_BLOCK_NAME_LENGTH:
     case LOCAL_GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS:
-        gl->fGetActiveUniformBlockiv(progname, uniformBlockIndex, pname, &param);
-        retval.SetValue().SetAsUnsignedLong() = param;
+        program->GetActiveUniformBlockParam(uniformBlockIndex, pname, retval);
         return;
 
     case LOCAL_GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES:
-        JS::RootedObject array(cx);
-        if (!GetUniformBlockActiveUniforms(gl, cx, this, progname, uniformBlockIndex,
-                                           &array))
-        {
-            rv = NS_ERROR_OUT_OF_MEMORY;
-            return;
-        }
-
-        DebugOnly<bool> inited = retval.SetValue().SetAsUint32Array().Init(array);
-        MOZ_ASSERT(inited);
-
+        program->GetActiveUniformBlockActiveUniforms(cx, uniformBlockIndex, retval, rv);
         return;
     }
 
     ErrorInvalidEnumInfo("getActiveUniformBlockParameter: parameter", pname);
 }
-
-#define WEBGL_MAX_UNIFORM_BLOCK_NAME_LENGTH 256
 
 void
 WebGL2Context::GetActiveUniformBlockName(WebGLProgram* program, GLuint uniformBlockIndex,
@@ -551,18 +582,8 @@ WebGL2Context::GetActiveUniformBlockName(WebGLProgram* program, GLuint uniformBl
     if (!ValidateObject("getActiveUniformBlockName: program", program))
         return;
 
-    GLuint progname = program->GLName();
-    GLchar nameBuffer[WEBGL_MAX_UNIFORM_BLOCK_NAME_LENGTH];
-    GLsizei length = 0;
-
-    MakeContextCurrent();
-    gl->fGetActiveUniformBlockName(progname, uniformBlockIndex,
-                                   WEBGL_MAX_UNIFORM_BLOCK_NAME_LENGTH, &length,
-                                   nameBuffer);
-    retval.Assign(NS_ConvertASCIItoUTF16(nsDependentCString(nameBuffer)));
+    program->GetActiveUniformBlockName(uniformBlockIndex, retval);
 }
-
-#undef WEBGL_MAX_UNIFORM_BLOCK_NAME_LENGTH
 
 void
 WebGL2Context::UniformBlockBinding(WebGLProgram* program, GLuint uniformBlockIndex,
@@ -574,8 +595,7 @@ WebGL2Context::UniformBlockBinding(WebGLProgram* program, GLuint uniformBlockInd
     if (!ValidateObject("uniformBlockBinding: program", program))
         return;
 
-    GLuint progname = program->GLName();
-
-    MakeContextCurrent();
-    gl->fUniformBlockBinding(progname, uniformBlockIndex, uniformBlockBinding);
+    program->UniformBlockBinding(uniformBlockIndex, uniformBlockBinding);
 }
+
+} // namespace mozilla

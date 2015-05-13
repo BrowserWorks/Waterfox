@@ -9,20 +9,13 @@ Cu.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
 var stringBundle = Cc["@mozilla.org/intl/stringbundle;1"].getService(Ci.nsIStringBundleService)
                                                          .createBundle("chrome://browser/locale/aboutPrivateBrowsing.properties");
 
-if (!PrivateBrowsingUtils.isWindowPrivate(window)) {
+if (!PrivateBrowsingUtils.isContentWindowPrivate(window)) {
   document.title = stringBundle.GetStringFromName("title.normal");
   setFavIcon("chrome://global/skin/icons/question-16.png");
 } else {
   document.title = stringBundle.GetStringFromName("title");
   setFavIcon("chrome://browser/skin/Privacy-16.png");
 }
-
-var mainWindow = window.QueryInterface(Ci.nsIInterfaceRequestor)
-                       .getInterface(Ci.nsIWebNavigation)
-                       .QueryInterface(Ci.nsIDocShellTreeItem)
-                       .rootTreeItem
-                       .QueryInterface(Ci.nsIInterfaceRequestor)
-                       .getInterface(Ci.nsIDOMWindow);
 
 function setFavIcon(url) {
   var icon = document.createElement("link");
@@ -34,7 +27,7 @@ function setFavIcon(url) {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-  if (!PrivateBrowsingUtils.isWindowPrivate(window)) {
+  if (!PrivateBrowsingUtils.isContentWindowPrivate(window)) {
     document.body.setAttribute("class", "normal");
   }
 
@@ -54,5 +47,7 @@ document.addEventListener("DOMContentLoaded", function () {
 }, false);
 
 function openPrivateWindow() {
-  mainWindow.OpenBrowserWindow({private: true});
+  // Ask chrome to open a private window
+  document.dispatchEvent(
+    new CustomEvent("AboutPrivateBrowsingOpenWindow", {bubbles:true}));
 }

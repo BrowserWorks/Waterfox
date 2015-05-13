@@ -4,6 +4,12 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+XPIDL_SOURCES += [
+    'nsIHangReport.idl',
+]
+
+XPIDL_MODULE = 'dom'
+
 EXPORTS += [
     'nsICachedFileDescriptorListener.h',
 ]
@@ -39,6 +45,8 @@ EXPORTS.mozilla.dom += [
 EXPORTS.mozilla += [
     'AppProcessChecker.h',
     'PreallocatedProcessManager.h',
+    'ProcessHangMonitor.h',
+    'ProcessHangMonitorIPC.h',
     'ProcessPriorityManager.h',
 ]
 
@@ -73,9 +81,11 @@ SOURCES += [
     'Blob.cpp',
     'ContentChild.cpp',
     'CrashReporterChild.cpp',
+    'ProcessHangMonitor.cpp',
 ]
 
 IPDL_SOURCES += [
+    'BrowserConfiguration.ipdlh',
     'DOMTypes.ipdlh',
     'PBlob.ipdl',
     'PBlobStream.ipdl',
@@ -92,6 +102,7 @@ IPDL_SOURCES += [
     'PFilePicker.ipdl',
     'PMemoryReportRequest.ipdl',
     'PPluginWidget.ipdl',
+    'PProcessHangMonitor.ipdl',
     'PScreenManager.ipdl',
     'PTabContext.ipdlh',
 ]
@@ -101,12 +112,18 @@ FAIL_ON_WARNINGS = True
 include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
+
+if CONFIG['MOZ_SANDBOX'] and CONFIG['OS_TARGET'] == 'Darwin':
+    USE_LIBS += [
+        'mozsandbox',
+    ]
+
 LOCAL_INCLUDES += [
+    '/caps',
     '/chrome',
     '/docshell/base',
     '/dom/base',
     '/dom/bluetooth',
-    '/dom/bluetooth/ipc',
     '/dom/devicestorage',
     '/dom/filesystem',
     '/dom/fmradio/ipc',
@@ -119,16 +136,23 @@ LOCAL_INCLUDES += [
     '/embedding/components/printingui/ipc',
     '/extensions/cookie',
     '/extensions/spellcheck/src',
+    '/gfx/2d',
     '/hal/sandbox',
-    '/js/ipc',
     '/layout/base',
-    '/netwerk/base/src',
+    '/media/webrtc',
+    '/netwerk/base',
     '/toolkit/xre',
     '/uriloader/exthandler',
     '/widget',
     '/xpcom/base',
     '/xpcom/threads',
 ]
+
+if CONFIG['MOZ_SANDBOX'] and CONFIG['OS_ARCH'] == 'WINNT':
+    LOCAL_INCLUDES += [
+        '/security/sandbox/chromium',
+        '/security/sandbox/chromium-shim',
+    ]
 
 DEFINES['BIN_SUFFIX'] = '"%s"' % CONFIG['BIN_SUFFIX']
 
@@ -138,12 +162,20 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android', 'gtk2', 'gonk', 'qt'):
 if CONFIG['MOZ_TOOLKIT_SEARCH']:
     DEFINES['MOZ_TOOLKIT_SEARCH'] = True
 
-for var in ('MOZ_PERMISSIONS', 'MOZ_CHILD_PERMISSIONS'):
-    if CONFIG[var]:
-        DEFINES[var] = True
+if CONFIG['MOZ_B2G_BT_API_V2']:
+    LOCAL_INCLUDES += [
+        '/dom/bluetooth/bluetooth2',
+        '/dom/bluetooth/bluetooth2/ipc',
+    ]
+else:
+    LOCAL_INCLUDES += [
+        '/dom/bluetooth/bluetooth1',
+        '/dom/bluetooth/bluetooth1/ipc',
+    ]
 
 JAR_MANIFESTS += ['jar.mn']
 
+BROWSER_CHROME_MANIFESTS += ['tests/browser.ini']
 MOCHITEST_CHROME_MANIFESTS += ['tests/chrome.ini']
 MOCHITEST_MANIFESTS += ['tests/mochitest.ini']
 

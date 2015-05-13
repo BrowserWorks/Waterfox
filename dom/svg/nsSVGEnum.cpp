@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -185,8 +186,8 @@ nsSVGEnum::SMILEnum::SetAnimValue(const nsSMILValue& aValue)
   NS_ASSERTION(aValue.mType == SMILEnumType::Singleton(),
                "Unexpected type to assign animated value");
   if (aValue.mType == SMILEnumType::Singleton()) {
-    NS_ABORT_IF_FALSE(aValue.mU.mUint <= USHRT_MAX,
-                      "Very large enumerated value - too big for uint16_t");
+    MOZ_ASSERT(aValue.mU.mUint <= USHRT_MAX,
+               "Very large enumerated value - too big for uint16_t");
     mVal->SetAnimValue(uint16_t(aValue.mU.mUint), mSVGElement);
   }
   return NS_OK;

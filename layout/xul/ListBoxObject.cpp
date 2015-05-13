@@ -28,9 +28,9 @@ ListBoxObject::~ListBoxObject()
 {
 }
 
-JSObject* ListBoxObject::WrapObject(JSContext* aCx)
+JSObject* ListBoxObject::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return ListBoxObjectBinding::Wrap(aCx, this);
+  return ListBoxObjectBinding::Wrap(aCx, this, aGivenProto);
 }
 
 // nsIListBoxObject
@@ -145,7 +145,7 @@ ListBoxObject::GetIndexOfItem(Element& aElement)
 static nsIContent*
 FindBodyContent(nsIContent* aParent)
 {
-  if (aParent->Tag() == nsGkAtoms::listboxbody) {
+  if (aParent->IsXULElement(nsGkAtoms::listboxbody)) {
     return aParent;
   }
 

@@ -18,7 +18,6 @@
 #include "prtime.h"
 
 class nsNavBookmarks;
-class nsIOutputStream;
 
 namespace mozilla {
 namespace places {
@@ -69,11 +68,11 @@ namespace places {
 } // namespace places
 } // namespace mozilla
 
-class nsNavBookmarks MOZ_FINAL : public nsINavBookmarksService
-                               , public nsINavHistoryObserver
-                               , public nsIAnnotationObserver
-                               , public nsIObserver
-                               , public nsSupportsWeakReference
+class nsNavBookmarks final : public nsINavBookmarksService
+                           , public nsINavHistoryObserver
+                           , public nsIAnnotationObserver
+                           , public nsIObserver
+                           , public nsSupportsWeakReference
 {
 public:
   NS_DECL_ISUPPORTS
@@ -361,13 +360,13 @@ private:
 
   int64_t RecursiveFindRedirectedBookmark(int64_t aPlaceId);
 
-  class RemoveFolderTransaction MOZ_FINAL : public nsITransaction {
+  class RemoveFolderTransaction final : public nsITransaction {
   public:
     explicit RemoveFolderTransaction(int64_t aID) : mID(aID) {}
 
     NS_DECL_ISUPPORTS
 
-    NS_IMETHOD DoTransaction() {
+    NS_IMETHOD DoTransaction() override {
       nsNavBookmarks* bookmarks = nsNavBookmarks::GetBookmarksService();
       NS_ENSURE_TRUE(bookmarks, NS_ERROR_OUT_OF_MEMORY);
       BookmarkData folder;
@@ -382,7 +381,7 @@ private:
       return bookmarks->RemoveItem(mID);
     }
 
-    NS_IMETHOD UndoTransaction() {
+    NS_IMETHOD UndoTransaction() override {
       nsNavBookmarks* bookmarks = nsNavBookmarks::GetBookmarksService();
       NS_ENSURE_TRUE(bookmarks, NS_ERROR_OUT_OF_MEMORY);
       int64_t newFolder;
@@ -390,16 +389,16 @@ private:
                                               &mIndex, EmptyCString(), &newFolder);
     }
 
-    NS_IMETHOD RedoTransaction() {
+    NS_IMETHOD RedoTransaction() override {
       return DoTransaction();
     }
 
-    NS_IMETHOD GetIsTransient(bool* aResult) {
+    NS_IMETHOD GetIsTransient(bool* aResult) override {
       *aResult = false;
       return NS_OK;
     }
 
-    NS_IMETHOD Merge(nsITransaction* aTransaction, bool* aResult) {
+    NS_IMETHOD Merge(nsITransaction* aTransaction, bool* aResult) override {
       *aResult = false;
       return NS_OK;
     }
@@ -422,20 +421,12 @@ private:
   bool mBatching;
 
   /**
-   * Always call EnsureKeywordsHash() and check it for errors before actually
-   * using the hash.  Internal keyword methods are already doing that.
-   */
-  nsresult EnsureKeywordsHash();
-  nsDataHashtable<nsTrimInt64HashKey, nsString> mBookmarkToKeywordHash;
-  bool mBookmarkToKeywordHashInitialized;
-
-  /**
    * This function must be called every time a bookmark is removed.
    *
    * @param aURI
    *        Uri to test.
    */
-  nsresult UpdateKeywordsHashForRemovedBookmark(int64_t aItemId);
+  nsresult UpdateKeywordsForRemovedBookmark(const BookmarkData& aBookmark);
 };
 
 #endif // nsNavBookmarks_h_

@@ -37,6 +37,10 @@ endif
 ifndef _BINPATH
 _BINPATH = /$(_APPNAME)/Contents/MacOS
 endif # _BINPATH
+ifndef _RESPATH
+# Resource path for the precomplete file
+_RESPATH = /$(_APPNAME)/Contents/Resources
+endif
 ifdef UNIVERSAL_BINARY
 STAGEPATH = universal/
 endif
@@ -66,9 +70,17 @@ JSSHELL_BINS  = \
   $(DIST)/bin/$(DLL_PREFIX)mozglue$(DLL_SUFFIX) \
   $(NULL)
 ifndef MOZ_NATIVE_NSPR
-ifeq ($(_MSC_VER),1800)
-JSSHELL_BINS += $(DIST)/bin/msvcr120.dll
-JSSHELL_BINS += $(DIST)/bin/msvcp120.dll
+ifdef MSVC_C_RUNTIME_DLL
+JSSHELL_BINS += $(DIST)/bin/$(MSVC_C_RUNTIME_DLL)
+endif
+ifdef MSVC_CXX_RUNTIME_DLL
+JSSHELL_BINS += $(DIST)/bin/$(MSVC_CXX_RUNTIME_DLL)
+endif
+ifdef MSVC_APPCRT_DLL
+JSSHELL_BINS += $(DIST)/bin/$(MSVC_APPCRT_DLL)
+endif
+ifdef MSVC_DESKTOPCRT_DLL
+JSSHELL_BINS += $(DIST)/bin/$(MSVC_DESKTOPCRT_DLL)
 endif
 ifdef MOZ_FOLD_LIBS
 JSSHELL_BINS += $(DIST)/bin/$(DLL_PREFIX)nss3$(DLL_SUFFIX)
@@ -258,7 +270,6 @@ include $(MOZILLA_DIR)/config/android-common.mk
 DIST_FILES =
 
 # Place the files in the order they are going to be opened by the linker
-DIST_FILES += libmozalloc.so
 ifndef MOZ_FOLD_LIBS
 DIST_FILES += \
   libnspr4.so \
@@ -352,6 +363,37 @@ INNER_MAKE_GECKOVIEW_LIBRARY=echo 'GeckoView library packaging is only enabled o
 INNER_MAKE_GECKOVIEW_EXAMPLE=echo 'GeckoView example packaging is only enabled on Nightly'
 endif
 
+# Create Android ARchives and metadata for download by local
+# developers using Gradle.
+ifdef MOZ_ANDROID_GECKOLIBS_AAR
+geckoaar-revision := $(BUILDID)
+
+UPLOAD_EXTRA_FILES += \
+  geckolibs-$(geckoaar-revision).aar \
+  geckolibs-$(geckoaar-revision).aar.sha1 \
+  geckolibs-$(geckoaar-revision).pom \
+  geckolibs-$(geckoaar-revision).pom.sha1 \
+  ivy-geckolibs-$(geckoaar-revision).xml \
+  ivy-geckolibs-$(geckoaar-revision).xml.sha1 \
+  geckoview-$(geckoaar-revision).aar \
+  geckoview-$(geckoaar-revision).aar.sha1 \
+  geckoview-$(geckoaar-revision).pom \
+  geckoview-$(geckoaar-revision).pom.sha1 \
+  ivy-geckoview-$(geckoaar-revision).xml \
+  ivy-geckoview-$(geckoaar-revision).xml.sha1 \
+  $(NULL)
+
+INNER_MAKE_GECKOLIBS_AAR= \
+  $(PYTHON) -m mozbuild.action.package_geckolibs_aar \
+    --verbose \
+    --revision $(geckoaar-revision) \
+    --topsrcdir '$(topsrcdir)' \
+    --distdir '$(_ABS_DIST)' \
+    '$(_ABS_DIST)'
+else
+INNER_MAKE_GECKOLIBS_AAR=echo 'Android geckolibs.aar packaging is disabled'
+endif
+
 ifdef MOZ_OMX_PLUGIN
 DIST_FILES += libomxplugin.so libomxplugingb.so libomxplugingb235.so \
               libomxpluginhc.so libomxpluginkk.so
@@ -428,6 +470,7 @@ INNER_MAKE_PACKAGE	= \
   $(RELEASE_JARSIGNER) $(_ABS_DIST)/gecko.apk && \
   $(ZIPALIGN) -f -v 4 $(_ABS_DIST)/gecko.apk $(PACKAGE) && \
   $(INNER_ROBOCOP_PACKAGE) && \
+  $(INNER_MAKE_GECKOLIBS_AAR) && \
   $(INNER_MAKE_GECKOVIEW_LIBRARY) && \
   $(INNER_MAKE_GECKOVIEW_EXAMPLE)
 
@@ -514,17 +557,18 @@ endif
 
 ifdef MOZ_SIGN_PREPARED_PACKAGE_CMD
 ifeq (Darwin, $(OS_ARCH))
-MAKE_PACKAGE    = cd ./$(PKG_DMG_SOURCE) && $(MOZ_SIGN_PREPARED_PACKAGE_CMD) $(MOZ_MACBUNDLE_NAME) \
-                  && cd $(PACKAGE_BASE_DIR) \
-                  && $(INNER_MAKE_PACKAGE)
+MAKE_PACKAGE    = (cd $(STAGEPATH)$(MOZ_PKG_DIR)$(_RESPATH) && $(CREATE_PRECOMPLETE_CMD)) \
+                  && cd ./$(PKG_DMG_SOURCE) && $(MOZ_SIGN_PREPARED_PACKAGE_CMD) $(MOZ_MACBUNDLE_NAME) \
+                  && cd $(PACKAGE_BASE_DIR) && $(INNER_MAKE_PACKAGE)
 else
 MAKE_PACKAGE    = $(MOZ_SIGN_PREPARED_PACKAGE_CMD) $(MOZ_PKG_DIR) \
-                  && $(or $(MAKE_SIGN_EME_VOUCHER),true) \
+                  && $(or $(call MAKE_SIGN_EME_VOUCHER,$(STAGEPATH)$(MOZ_PKG_DIR)),true) \
+                  && (cd $(STAGEPATH)$(MOZ_PKG_DIR)$(_RESPATH) && $(CREATE_PRECOMPLETE_CMD)) \
                   && $(INNER_MAKE_PACKAGE)
 endif #Darwin
 
 else
-MAKE_PACKAGE    = $(INNER_MAKE_PACKAGE)
+MAKE_PACKAGE    = (cd $(STAGEPATH)$(MOZ_PKG_DIR)$(_RESPATH) && $(CREATE_PRECOMPLETE_CMD)) && $(INNER_MAKE_PACKAGE)
 endif
 
 ifdef MOZ_SIGN_PACKAGE_CMD

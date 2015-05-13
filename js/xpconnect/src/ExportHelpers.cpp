@@ -8,12 +8,15 @@
 #include "WrapperFactory.h"
 #include "AccessCheck.h"
 #include "jsfriendapi.h"
-#include "jsproxy.h"
 #include "jswrapper.h"
 #include "js/StructuredClone.h"
+#include "js/Proxy.h"
 #include "mozilla/dom/BindingUtils.h"
 #include "mozilla/dom/BlobBinding.h"
 #include "mozilla/dom/File.h"
+#ifdef MOZ_NFC
+#include "mozilla/dom/MozNDEFRecord.h"
+#endif
 #include "nsGlobalWindow.h"
 #include "nsJSUtils.h"
 #include "nsIDOMFileList.h"
@@ -26,7 +29,7 @@ using namespace js;
 namespace xpc {
 
 bool
-IsReflector(JSObject *obj)
+IsReflector(JSObject* obj)
 {
     obj = CheckedUnwrap(obj, /* stopAtOuter = */ false);
     if (!obj)
@@ -38,29 +41,30 @@ enum StackScopedCloneTags {
     SCTAG_BASE = JS_SCTAG_USER_MIN,
     SCTAG_REFLECTOR,
     SCTAG_BLOB,
-    SCTAG_FUNCTION
+    SCTAG_FUNCTION,
+    SCTAG_DOM_NFC_NDEF
 };
 
 class MOZ_STACK_CLASS StackScopedCloneData {
 public:
-    StackScopedCloneData(JSContext *aCx, StackScopedCloneOptions *aOptions)
+    StackScopedCloneData(JSContext* aCx, StackScopedCloneOptions* aOptions)
         : mOptions(aOptions)
         , mReflectors(aCx)
         , mFunctions(aCx)
     {}
 
-    StackScopedCloneOptions *mOptions;
+    StackScopedCloneOptions* mOptions;
     AutoObjectVector mReflectors;
     AutoObjectVector mFunctions;
-    nsTArray<nsRefPtr<FileImpl>> mBlobImpls;
+    nsTArray<nsRefPtr<BlobImpl>> mBlobImpls;
 };
 
-static JSObject *
-StackScopedCloneRead(JSContext *cx, JSStructuredCloneReader *reader, uint32_t tag,
-                     uint32_t data, void *closure)
+static JSObject*
+StackScopedCloneRead(JSContext* cx, JSStructuredCloneReader* reader, uint32_t tag,
+                     uint32_t data, void* closure)
 {
     MOZ_ASSERT(closure, "Null pointer!");
-    StackScopedCloneData *cloneData = static_cast<StackScopedCloneData *>(closure);
+    StackScopedCloneData* cloneData = static_cast<StackScopedCloneData*>(closure);
     if (tag == SCTAG_REFLECTOR) {
         MOZ_ASSERT(!data);
 
@@ -105,20 +109,40 @@ StackScopedCloneRead(JSContext *cx, JSStructuredCloneReader *reader, uint32_t ta
             return nullptr;
         }
 
-        nsIGlobalObject *global = xpc::NativeGlobal(JS::CurrentGlobalOrNull(cx));
+        nsIGlobalObject* global = xpc::NativeGlobal(JS::CurrentGlobalOrNull(cx));
         MOZ_ASSERT(global);
 
         // nsRefPtr<File> needs to go out of scope before toObjectOrNull() is called because
         // otherwise the static analysis thinks it can gc the JSObject via the stack.
         JS::Rooted<JS::Value> val(cx);
         {
-            nsRefPtr<File> blob = new File(global, cloneData->mBlobImpls[idx]);
-            if (!GetOrCreateDOMReflector(cx, blob, &val)) {
+            nsRefPtr<Blob> blob = Blob::Create(global, cloneData->mBlobImpls[idx]);
+            if (!ToJSValue(cx, blob, &val)) {
                 return nullptr;
             }
         }
 
         return val.toObjectOrNull();
+    }
+
+    if (tag == SCTAG_DOM_NFC_NDEF) {
+#ifdef MOZ_NFC
+      nsIGlobalObject* global = xpc::NativeGlobal(JS::CurrentGlobalOrNull(cx));
+      if (!global) {
+        return nullptr;
+      }
+
+      // Prevent the return value from being trashed by a GC during ~nsRefPtr.
+      JS::Rooted<JSObject*> result(cx);
+      {
+        nsRefPtr<MozNDEFRecord> ndefRecord = new MozNDEFRecord(global);
+        result = ndefRecord->ReadStructuredClone(cx, reader) ?
+                 ndefRecord->WrapObject(cx, JS::NullPtr()) : nullptr;
+      }
+      return result;
+#else
+      return nullptr;
+#endif
     }
 
     MOZ_ASSERT_UNREACHABLE("Encountered garbage in the clone stream!");
@@ -135,9 +159,9 @@ StackScopedCloneRead(JSContext *cx, JSStructuredCloneReader *reader, uint32_t ta
 // cross-compartment wrappers. For this, our current implementation relies on the
 // fact that these objects are implemented with XPConnect and have one reflector
 // per scope.
-bool IsFileList(JSObject *obj)
+bool IsFileList(JSObject* obj)
 {
-    nsISupports *supports = UnwrapReflectorToISupports(obj);
+    nsISupports* supports = UnwrapReflectorToISupports(obj);
     if (!supports)
         return false;
     nsCOMPtr<nsIDOMFileList> fileList = do_QueryInterface(supports);
@@ -147,16 +171,16 @@ bool IsFileList(JSObject *obj)
 }
 
 static bool
-StackScopedCloneWrite(JSContext *cx, JSStructuredCloneWriter *writer,
-                      Handle<JSObject *> obj, void *closure)
+StackScopedCloneWrite(JSContext* cx, JSStructuredCloneWriter* writer,
+                      Handle<JSObject*> obj, void* closure)
 {
     MOZ_ASSERT(closure, "Null pointer!");
-    StackScopedCloneData *cloneData = static_cast<StackScopedCloneData *>(closure);
+    StackScopedCloneData* cloneData = static_cast<StackScopedCloneData*>(closure);
 
     {
-        File* blob = nullptr;
+        Blob* blob = nullptr;
         if (NS_SUCCEEDED(UNWRAP_OBJECT(Blob, obj, blob))) {
-            FileImpl* blobImpl = blob->Impl();
+            BlobImpl* blobImpl = blob->Impl();
             MOZ_ASSERT(blobImpl);
 
             if (!cloneData->mBlobImpls.AppendElement(blobImpl))
@@ -192,6 +216,16 @@ StackScopedCloneWrite(JSContext *cx, JSStructuredCloneWriter *writer,
         }
     }
 
+#ifdef MOZ_NFC
+    {
+      MozNDEFRecord* ndefRecord;
+      if (NS_SUCCEEDED(UNWRAP_OBJECT(MozNDEFRecord, obj, ndefRecord))) {
+        return JS_WriteUint32Pair(writer, SCTAG_DOM_NFC_NDEF, 0) &&
+               ndefRecord->WriteStructuredClone(cx, writer);
+      }
+    }
+#endif
+
     JS_ReportError(cx, "Encountered unsupported value type writing stack-scoped structured clone");
     return false;
 }
@@ -217,7 +251,7 @@ static const JSStructuredCloneCallbacks gStackScopedCloneCallbacks = {
  * function returns, |val| is set to the result of the clone.
  */
 bool
-StackScopedClone(JSContext *cx, StackScopedCloneOptions &options,
+StackScopedClone(JSContext* cx, StackScopedCloneOptions& options,
                  MutableHandleValue val)
 {
     JSAutoStructuredCloneBuffer buffer;
@@ -243,7 +277,7 @@ StackScopedClone(JSContext *cx, StackScopedCloneOptions &options,
 // Note - This function mirrors the logic of CheckPassToChrome in
 // ChromeObjectWrapper.cpp.
 static bool
-CheckSameOriginArg(JSContext *cx, FunctionForwarderOptions &options, HandleValue v)
+CheckSameOriginArg(JSContext* cx, FunctionForwarderOptions& options, HandleValue v)
 {
     // Consumers can explicitly opt out of this security check. This is used in
     // the web console to allow the utility functions to accept cross-origin Windows.
@@ -276,7 +310,7 @@ CheckSameOriginArg(JSContext *cx, FunctionForwarderOptions &options, HandleValue
 }
 
 static bool
-FunctionForwarder(JSContext *cx, unsigned argc, Value *vp)
+FunctionForwarder(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
 
@@ -290,18 +324,14 @@ FunctionForwarder(JSContext *cx, unsigned argc, Value *vp)
     RootedValue v(cx, js::GetFunctionNativeReserved(&args.callee(), 0));
     RootedObject unwrappedFun(cx, js::UncheckedUnwrap(&v.toObject()));
 
-    RootedObject thisObj(cx, JS_THIS_OBJECT(cx, vp));
-    if (!thisObj) {
-        return false;
-    }
-
+    RootedObject thisObj(cx, args.isConstructing() ? nullptr : JS_THIS_OBJECT(cx, vp));
     {
         // We manually implement the contents of CrossCompartmentWrapper::call
         // here, because certain function wrappers (notably content->nsEP) are
         // not callable.
         JSAutoCompartment ac(cx, unwrappedFun);
 
-        RootedValue thisVal(cx, ObjectValue(*thisObj));
+        RootedValue thisVal(cx, ObjectOrNullValue(thisObj));
         if (!CheckSameOriginArg(cx, options, thisVal) || !JS_WrapObject(cx, &thisObj))
             return false;
 
@@ -311,8 +341,13 @@ FunctionForwarder(JSContext *cx, unsigned argc, Value *vp)
         }
 
         RootedValue fval(cx, ObjectValue(*unwrappedFun));
-        if (!JS_CallFunctionValue(cx, thisObj, fval, args, args.rval()))
-            return false;
+        if (args.isConstructing()) {
+            if (!JS::Construct(cx, fval, args, args.rval()))
+                return false;
+        } else {
+            if (!JS_CallFunctionValue(cx, thisObj, fval, args, args.rval()))
+                return false;
+        }
     }
 
     // Rewrap the return value into our compartment.
@@ -320,15 +355,18 @@ FunctionForwarder(JSContext *cx, unsigned argc, Value *vp)
 }
 
 bool
-NewFunctionForwarder(JSContext *cx, HandleId idArg, HandleObject callable,
-                     FunctionForwarderOptions &options, MutableHandleValue vp)
+NewFunctionForwarder(JSContext* cx, HandleId idArg, HandleObject callable,
+                     FunctionForwarderOptions& options, MutableHandleValue vp)
 {
     RootedId id(cx, idArg);
     if (id == JSID_VOIDHANDLE)
         id = GetRTIdByIndex(cx, XPCJSRuntime::IDX_EMPTYSTRING);
 
-    JSFunction *fun = js::NewFunctionByIdWithReserved(cx, FunctionForwarder,
-                                                      0,0, JS::CurrentGlobalOrNull(cx), id);
+    // We have no way of knowing whether the underlying function wants to be a
+    // constructor or not, so we just mark all forwarders as constructors, and
+    // let the underlying function throw for construct calls if it wants.
+    JSFunction* fun = js::NewFunctionByIdWithReserved(cx, FunctionForwarder,
+                                                      0, JSFUN_CONSTRUCTOR, id);
     if (!fun)
         return false;
 
@@ -348,7 +386,7 @@ NewFunctionForwarder(JSContext *cx, HandleId idArg, HandleObject callable,
 }
 
 bool
-ExportFunction(JSContext *cx, HandleValue vfunction, HandleValue vscope, HandleValue voptions,
+ExportFunction(JSContext* cx, HandleValue vfunction, HandleValue vscope, HandleValue voptions,
                MutableHandleValue rval)
 {
     bool hasOptions = !voptions.isUndefined();
@@ -395,7 +433,7 @@ ExportFunction(JSContext *cx, HandleValue vfunction, HandleValue vscope, HandleV
         if (JSID_IS_VOID(id)) {
             // If there wasn't any function name specified,
             // copy the name from the function being imported.
-            JSFunction *fun = JS_GetObjectFunction(funObj);
+            JSFunction* fun = JS_GetObjectFunction(funObj);
             RootedString funName(cx, JS_GetFunctionId(fun));
             if (!funName)
                 funName = JS_InternString(cx, "");
@@ -440,7 +478,7 @@ ExportFunction(JSContext *cx, HandleValue vfunction, HandleValue vscope, HandleV
 }
 
 bool
-CreateObjectIn(JSContext *cx, HandleValue vobj, CreateObjectInOptions &options,
+CreateObjectIn(JSContext* cx, HandleValue vobj, CreateObjectInOptions& options,
                MutableHandleValue rval)
 {
     if (!vobj.isObject()) {
@@ -464,7 +502,7 @@ CreateObjectIn(JSContext *cx, HandleValue vobj, CreateObjectInOptions &options,
     RootedObject obj(cx);
     {
         JSAutoCompartment ac(cx, scope);
-        obj = JS_NewObject(cx, nullptr, JS::NullPtr(), scope);
+        obj = JS_NewPlainObject(cx);
         if (!obj)
             return false;
 

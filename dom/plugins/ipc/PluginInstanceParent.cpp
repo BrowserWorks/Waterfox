@@ -7,6 +7,7 @@
 #include "mozilla/DebugOnly.h"
 #include <stdint.h> // for intptr_t
 
+#include "mozilla/Preferences.h"
 #include "mozilla/Telemetry.h"
 #include "PluginInstanceParent.h"
 #include "BrowserStreamParent.h"
@@ -21,8 +22,11 @@
 #include "gfxContext.h"
 #include "gfxPlatform.h"
 #include "gfxSharedImageSurface.h"
+#include "nsNetUtil.h"
 #include "nsNPAPIPluginInstance.h"
 #include "nsPluginInstanceOwner.h"
+#include "nsFocusManager.h"
+#include "nsIDOMElement.h"
 #ifdef MOZ_X11
 #include "gfxXlibSurface.h"
 #endif
@@ -43,17 +47,18 @@
 #include <windowsx.h>
 #include "gfxWindowsPlatform.h"
 #include "mozilla/plugins/PluginSurfaceParent.h"
-
-// Plugin focus event for widget.
-extern const wchar_t* kOOPPPluginFocusEventId;
-UINT gOOPPPluginFocusEvent =
-    RegisterWindowMessage(kOOPPPluginFocusEventId);
+#include "nsClassHashtable.h"
+#include "nsHashKeys.h"
 extern const wchar_t* kFlashFullscreenClass;
 #elif defined(MOZ_WIDGET_GTK)
 #include <gdk/gdk.h>
 #elif defined(XP_MACOSX)
 #include <ApplicationServices/ApplicationServices.h>
 #endif // defined(XP_MACOSX)
+
+// This is the pref used to determine whether to use Shumway on a Flash object
+// (when Shumway is enabled).
+static const char kShumwayWhitelistPref[] = "shumway.swf.whitelist";
 
 using namespace mozilla::plugins;
 using namespace mozilla::layers;
@@ -73,6 +78,29 @@ StreamNotifyParent::RecvRedirectNotifyResponse(const bool& allow)
   return true;
 }
 
+#if defined(XP_WIN)
+namespace mozilla {
+namespace plugins {
+/**
+ * e10s specific, used in cross referencing hwnds with plugin instances so we
+ * can access methods here from PluginWidgetChild.
+ */
+static nsClassHashtable<nsVoidPtrHashKey, PluginInstanceParent>* sPluginInstanceList;
+
+// static
+PluginInstanceParent*
+PluginInstanceParent::LookupPluginInstanceByID(uintptr_t aId)
+{
+    MOZ_ASSERT(NS_IsMainThread());
+    if (sPluginInstanceList) {
+        return sPluginInstanceList->Get((void*)aId);
+    }
+    return nullptr;
+}
+}
+}
+#endif
+
 PluginInstanceParent::PluginInstanceParent(PluginModuleParent* parent,
                                            NPP npp,
                                            const nsCString& aMimeType,
@@ -82,6 +110,7 @@ PluginInstanceParent::PluginInstanceParent(PluginModuleParent* parent,
     , mUseSurrogate(true)
     , mNPP(npp)
     , mNPNIface(npniface)
+    , mIsWhitelistedForShumway(false)
     , mWindowType(NPWindowTypeWindow)
     , mDrawingModel(kDefaultDrawingModel)
 #if defined(OS_WIN)
@@ -95,6 +124,11 @@ PluginInstanceParent::PluginInstanceParent(PluginModuleParent* parent,
     , mShColorSpace(nullptr)
 #endif
 {
+#if defined(OS_WIN)
+    if (!sPluginInstanceList) {
+        sPluginInstanceList = new nsClassHashtable<nsVoidPtrHashKey, PluginInstanceParent>();
+    }
+#endif
 }
 
 PluginInstanceParent::~PluginInstanceParent()
@@ -116,9 +150,38 @@ PluginInstanceParent::~PluginInstanceParent()
 }
 
 bool
-PluginInstanceParent::Init()
+PluginInstanceParent::InitMetadata(const nsACString& aMimeType,
+                                   const nsACString& aSrcAttribute)
 {
-    return true;
+    if (aSrcAttribute.IsEmpty()) {
+        return false;
+    }
+    // Ensure that the src attribute is absolute
+    nsRefPtr<nsPluginInstanceOwner> owner = GetOwner();
+    if (!owner) {
+        return false;
+    }
+    nsCOMPtr<nsIURI> baseUri(owner->GetBaseURI());
+    nsresult rv = NS_MakeAbsoluteURI(mSrcAttribute, aSrcAttribute, baseUri);
+    if (NS_FAILED(rv)) {
+        return false;
+    }
+    // Check the whitelist
+    nsAutoCString baseUrlSpec;
+    rv = baseUri->GetSpec(baseUrlSpec);
+    if (NS_FAILED(rv)) {
+        return false;
+    }
+    auto whitelist = Preferences::GetCString(kShumwayWhitelistPref);
+    // Empty whitelist is interpreted by CheckWhitelist as "allow everything,"
+    // which is not valid for our use case and should be treated as a failure.
+    if (whitelist.IsEmpty()) {
+        return false;
+    }
+    rv = nsPluginPlayPreviewInfo::CheckWhitelist(baseUrlSpec, mSrcAttribute,
+                                                 whitelist,
+                                                 &mIsWhitelistedForShumway);
+    return NS_SUCCEEDED(rv);
 }
 
 void
@@ -578,7 +641,7 @@ PluginInstanceParent::RecvShow(const NPRect& updatedRect,
         NS_ASSERTION(image->GetFormat() == ImageFormat::CAIRO_SURFACE, "Wrong format?");
         CairoImage* cairoImage = static_cast<CairoImage*>(image.get());
         CairoImage::Data cairoData;
-        cairoData.mSize = surface->GetSize().ToIntSize();
+        cairoData.mSize = surface->GetSize();
         cairoData.mSourceSurface = gfxPlatform::GetPlatform()->GetSourceSurfaceForSurface(nullptr, surface);
         cairoImage->SetData(cairoData);
 
@@ -716,7 +779,7 @@ PluginInstanceParent::SetBackgroundUnknown()
 
     if (mBackground) {
         DestroyBackground();
-        NS_ABORT_IF_FALSE(!mBackground, "Background not destroyed");
+        MOZ_ASSERT(!mBackground, "Background not destroyed");
     }
 
     return NS_OK;
@@ -735,8 +798,8 @@ PluginInstanceParent::BeginUpdateBackground(const nsIntRect& aRect,
         // update, there's no guarantee that later updates will be for
         // the entire background area until successful.  We might want
         // to fix that eventually.
-        NS_ABORT_IF_FALSE(aRect.TopLeft() == nsIntPoint(0, 0),
-                          "Expecting rect for whole frame");
+        MOZ_ASSERT(aRect.TopLeft() == nsIntPoint(0, 0),
+                   "Expecting rect for whole frame");
         if (!CreateBackground(aRect.Size())) {
             *aCtx = nullptr;
             return NS_OK;
@@ -745,8 +808,8 @@ PluginInstanceParent::BeginUpdateBackground(const nsIntRect& aRect,
 
     gfxIntSize sz = mBackground->GetSize();
 #ifdef DEBUG
-    NS_ABORT_IF_FALSE(nsIntRect(0, 0, sz.width, sz.height).Contains(aRect),
-                      "Update outside of background area");
+    MOZ_ASSERT(nsIntRect(0, 0, sz.width, sz.height).Contains(aRect),
+               "Update outside of background area");
 #endif
 
     RefPtr<gfx::DrawTarget> dt = gfxPlatform::GetPlatform()->
@@ -792,7 +855,7 @@ PluginInstanceParent::GetAsyncSurrogate()
 bool
 PluginInstanceParent::CreateBackground(const nsIntSize& aSize)
 {
-    NS_ABORT_IF_FALSE(!mBackground, "Already have a background");
+    MOZ_ASSERT(!mBackground, "Already have a background");
 
     // XXX refactor me
 
@@ -837,7 +900,7 @@ PluginInstanceParent::DestroyBackground()
 mozilla::plugins::SurfaceDescriptor
 PluginInstanceParent::BackgroundDescriptor()
 {
-    NS_ABORT_IF_FALSE(mBackground, "Need a background here");
+    MOZ_ASSERT(mBackground, "Need a background here");
 
     // XXX refactor me
 
@@ -847,8 +910,8 @@ PluginInstanceParent::BackgroundDescriptor()
 #endif
 
 #ifdef XP_WIN
-    NS_ABORT_IF_FALSE(gfxSharedImageSurface::IsSharedImage(mBackground),
-                      "Expected shared image surface");
+    MOZ_ASSERT(gfxSharedImageSurface::IsSharedImage(mBackground),
+               "Expected shared image surface");
     gfxSharedImageSurface* shmem =
         static_cast<gfxSharedImageSurface*>(mBackground.get());
     return shmem->GetShmem();
@@ -1332,7 +1395,7 @@ PluginInstanceParent::NPP_NewStream(NPMIMEType type, NPStream* stream,
         MOZ_ASSERT(mSurrogate);
         mSurrogate->AsyncCallDeparting();
         if (SendAsyncNPP_NewStream(bs, NullableString(type), seekable)) {
-            *stype = UINT16_MAX;
+            *stype = nsPluginStreamListenerPeer::STREAM_TYPE_UNKNOWN;
         } else {
             err = NPERR_GENERIC_ERROR;
         }
@@ -1356,6 +1419,12 @@ PluginInstanceParent::NPP_DestroyStream(NPStream* stream, NPReason reason)
                       FULLFUNCTION, (void*) stream, (int) reason));
 
     AStream* s = static_cast<AStream*>(stream->pdata);
+    if (!s) {
+        // The stream has already been deleted by other means.
+        // With async plugin init this could happen if async NPP_NewStream
+        // returns an error code.
+        return NPERR_NO_ERROR;
+    }
     if (s->IsBrowserStream()) {
         BrowserStreamParent* sp =
             static_cast<BrowserStreamParent*>(s);
@@ -1676,15 +1745,18 @@ PluginInstanceParent::RecvAsyncNPP_NewResult(const NPError& aResult)
         mSurrogate->SetAcceptingCalls(true);
     }
 
+    // It is possible for a plugin instance to outlive its owner (eg. When a
+    // PluginDestructionGuard was on the stack at the time the owner was being
+    // destroyed). We need to handle that case.
     nsPluginInstanceOwner* owner = GetOwner();
     if (!owner) {
-        // This is possible in async plugin land; the instance may outlive
-        // the owner
+        // We can't do anything at this point, just return. Any pending browser
+        // streams will be cleaned up when the plugin instance is destroyed.
         return true;
     }
 
     if (aResult != NPERR_NO_ERROR) {
-        owner->NotifyHostAsyncInitFailed();
+        mSurrogate->NotifyAsyncInitFailed();
         return true;
     }
 
@@ -1756,30 +1828,56 @@ PluginInstanceParent::PluginWindowHookProc(HWND hWnd,
 void
 PluginInstanceParent::SubclassPluginWindow(HWND aWnd)
 {
-    if (XRE_GetProcessType() == GeckoProcessType_Content) {
-      mPluginHWND = aWnd; // now a remote window, we can't subclass this
-      mPluginWndProc = nullptr;
-      return;
+    if ((aWnd && mPluginHWND == aWnd) || (!aWnd && mPluginHWND)) {
+        return;
     }
-    NS_ASSERTION(!(mPluginHWND && aWnd != mPluginHWND),
-      "PluginInstanceParent::SubclassPluginWindow hwnd is not our window!");
 
-    if (!mPluginHWND) {
-        mPluginHWND = aWnd;
-        mPluginWndProc =
-            (WNDPROC)::SetWindowLongPtrA(mPluginHWND, GWLP_WNDPROC,
-                         reinterpret_cast<LONG_PTR>(PluginWindowHookProc));
-        DebugOnly<bool> bRes = ::SetPropW(mPluginHWND, kPluginInstanceParentProperty, this);
-        NS_ASSERTION(mPluginWndProc,
-          "PluginInstanceParent::SubclassPluginWindow failed to set subclass!");
-        NS_ASSERTION(bRes,
-          "PluginInstanceParent::SubclassPluginWindow failed to set prop!");
-   }
+    if (XRE_GetProcessType() == GeckoProcessType_Content) {
+        if (!aWnd) {
+            NS_WARNING("PluginInstanceParent::SubclassPluginWindow unexpected null window");
+            return;
+        }
+        mPluginHWND = aWnd; // now a remote window, we can't subclass this
+        mPluginWndProc = nullptr;
+        // Note sPluginInstanceList wil delete 'this' if we do not remove
+        // it on shutdown.
+        sPluginInstanceList->Put((void*)mPluginHWND, this);
+        return;
+    }
+
+    NS_ASSERTION(!(mPluginHWND && aWnd != mPluginHWND),
+        "PluginInstanceParent::SubclassPluginWindow hwnd is not our window!");
+
+    mPluginHWND = aWnd;
+    mPluginWndProc =
+        (WNDPROC)::SetWindowLongPtrA(mPluginHWND, GWLP_WNDPROC,
+            reinterpret_cast<LONG_PTR>(PluginWindowHookProc));
+    DebugOnly<bool> bRes = ::SetPropW(mPluginHWND, kPluginInstanceParentProperty, this);
+    NS_ASSERTION(mPluginWndProc,
+        "PluginInstanceParent::SubclassPluginWindow failed to set subclass!");
+    NS_ASSERTION(bRes,
+        "PluginInstanceParent::SubclassPluginWindow failed to set prop!");
 }
 
 void
 PluginInstanceParent::UnsubclassPluginWindow()
 {
+    if (XRE_GetProcessType() == GeckoProcessType_Content) {
+        if (mPluginHWND) {
+            // Remove 'this' from the plugin list safely
+            nsAutoPtr<PluginInstanceParent> tmp;
+            MOZ_ASSERT(sPluginInstanceList);
+            sPluginInstanceList->RemoveAndForget((void*)mPluginHWND, tmp);
+            tmp.forget();
+            if (!sPluginInstanceList->Count()) {
+                delete sPluginInstanceList;
+                sPluginInstanceList = nullptr;
+            }
+        }
+        mPluginHWND = nullptr;
+        return;
+    }
+
     if (mPluginHWND && mPluginWndProc) {
         ::SetWindowLongPtrA(mPluginHWND, GWLP_WNDPROC,
                             reinterpret_cast<LONG_PTR>(mPluginWndProc));
@@ -1855,8 +1953,9 @@ PluginInstanceParent::SharedSurfaceSetWindow(const NPWindow* aWindow,
     mSharedSize = newPort;
 
     base::SharedMemoryHandle handle;
-    if (NS_FAILED(mSharedSurfaceDib.ShareToProcess(OtherProcess(), &handle)))
+    if (NS_FAILED(mSharedSurfaceDib.ShareToProcess(OtherPid(), &handle))) {
       return false;
+    }
 
     aRemoteWindow.surfaceHandle = handle;
 
@@ -1921,14 +2020,21 @@ PluginInstanceParent::AnswerPluginFocusChange(const bool& gotFocus)
 {
     PLUGIN_LOG_DEBUG(("%s", FULLFUNCTION));
 
-    // Currently only in use on windows - an rpc event we receive from the
-    // child when it's plugin window (or one of it's children) receives keyboard
-    // focus. We forward the event down to widget so the dom/focus manager can
-    // be updated.
+    // Currently only in use on windows - an event we receive from the child
+    // when it's plugin window (or one of it's children) receives keyboard
+    // focus. We detect this and forward a notification here so we can update
+    // focus.
 #if defined(OS_WIN)
-    // XXX This needs to go to PuppetWidget. bug ???
-    if (XRE_GetProcessType() == GeckoProcessType_Default) {
-      ::SendMessage(mPluginHWND, gOOPPPluginFocusEvent, gotFocus ? 1 : 0, 0);
+    if (gotFocus) {
+      nsPluginInstanceOwner* owner = GetOwner();
+      if (owner) {
+        nsIFocusManager* fm = nsFocusManager::GetFocusManager();
+        nsCOMPtr<nsIDOMElement> element;
+        owner->GetDOMElement(getter_AddRefs(element));
+        if (fm && element) {
+          fm->SetFocus(element, 0);
+        }
+      }
     }
     return true;
 #else

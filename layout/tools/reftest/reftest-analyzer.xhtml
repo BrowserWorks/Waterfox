@@ -43,6 +43,7 @@ Features to add:
 
   #itemlist > table { border-collapse: collapse; }
   #itemlist > table > tbody > tr > td { border: 1px solid; padding: 1px; }
+  #itemlist td.activeitem { background-color: yellow; }
 
   /*
   #itemlist > table > tbody > tr.pass > td.url { background: lime; }
@@ -104,14 +105,14 @@ function load() {
   build_mag();
   gParams = hash_parameters();
   if (gParams.log) {
-    ID("logentry").value = gParams.log;
-    log_pasted();
+    show_phase("loading");
+    process_log(gParams.log);
   } else if (gParams.logurl) {
+    show_phase("loading");
     var req = new XMLHttpRequest();
     req.onreadystatechange = function() {
       if (req.readyState === 4) {
-        ID("logentry").value = req.responseText;
-        log_pasted();
+        process_log(req.responseText);
       }
     };
     req.open('GET', gParams.logurl, true);
@@ -245,7 +246,7 @@ function process_log(contents) {
         });
       continue;
     }
-    match = line.match(/^(?:  |)IMAGE ([^:]*): (data:.*)$/);
+    match = line.match(/^(?:  |)IMAGE([^:]*): (data:.*)$/);
     if (match) {
       var item = gTestItems[gTestItems.length - 1];
       item.images.push(match[2]);
@@ -295,6 +296,7 @@ function build_viewer() {
     tr.appendChild(td);
 
     td = document.createElement("td");
+    td.id = "item" + i;
     td.className = "url";
     // Only display part of URL after "/mozilla/".
     var match = item.url.match(/\/mozilla\/(.*)/);
@@ -344,6 +346,13 @@ function show_images(i) {
   var item = gTestItems[i];
   var cell = ID("images");
 
+  // Remove activeitem class from any existing elements
+  var activeItems = document.querySelectorAll(".activeitem");
+  for (var activeItemIdx = activeItems.length; activeItemIdx-- != 0;) {
+    activeItems[activeItemIdx].classList.remove("activeitem");
+  }
+
+  ID("item" + i).classList.add("activeitem");
   ID("image1").style.display = "";
   ID("image2").style.display = "none";
   ID("diffrect").style.display = "none";

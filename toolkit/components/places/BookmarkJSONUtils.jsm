@@ -14,7 +14,7 @@ Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/NetUtil.jsm");
 Cu.import("resource://gre/modules/osfile.jsm");
 Cu.import("resource://gre/modules/PlacesUtils.jsm");
-Cu.import("resource://gre/modules/Promise.jsm");
+Cu.import("resource://gre/modules/PromiseUtils.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesBackups",
@@ -40,7 +40,7 @@ function generateHash(aString) {
   stringStream.data = aString;
   cryptoHash.updateFromStream(stringStream, -1);
   // base64 allows the '/' char, but we can't use it for filenames.
-  return cryptoHash.finish(true).replace("/", "-", "g");
+  return cryptoHash.finish(true).replace(/\//g, "-");
 }
 
 this.BookmarkJSONUtils = Object.freeze({
@@ -188,40 +188,35 @@ BookmarkImporter.prototype = {
    * @resolves When the new bookmarks have been created.
    * @rejects JavaScript exception.
    */
-  importFromURL: function BI_importFromURL(aSpec) {
-    let deferred = Promise.defer();
-
-    let streamObserver = {
-      onStreamComplete: function (aLoader, aContext, aStatus, aLength,
-                                  aResult) {
-        let converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"].
-                        createInstance(Ci.nsIScriptableUnicodeConverter);
-        converter.charset = "UTF-8";
-
-        try {
-          let jsonString = converter.convertFromByteArray(aResult,
-                                                          aResult.length);
-          deferred.resolve(this.importFromJSON(jsonString));
-        } catch (ex) {
-          Cu.reportError("Failed to import from URL: " + ex);
-          deferred.reject(ex);
-          throw ex;
+  importFromURL(spec) {
+    return new Promise((resolve, reject) => {
+      let streamObserver = {
+        onStreamComplete: (aLoader, aContext, aStatus, aLength, aResult) => {
+          let converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"].
+                          createInstance(Ci.nsIScriptableUnicodeConverter);
+          converter.charset = "UTF-8";
+          try {
+            let jsonString = converter.convertFromByteArray(aResult,
+                                                            aResult.length);
+            resolve(this.importFromJSON(jsonString));
+          } catch (ex) {
+            Cu.reportError("Failed to import from URL: " + ex);
+            reject(ex);
+          }
         }
-      }.bind(this)
-    };
+      };
 
-    try {
-      let channel = Services.io.newChannelFromURI(NetUtil.newURI(aSpec));
-      let streamLoader = Cc["@mozilla.org/network/stream-loader;1"].
-                         createInstance(Ci.nsIStreamLoader);
-
+      let uri = NetUtil.newURI(spec);
+      let channel = NetUtil.newChannel({
+        uri,
+        loadingPrincipal: Services.scriptSecurityManager.getNoAppCodebasePrincipal(uri),
+        contentPolicyType: Ci.nsIContentPolicy.TYPE_DATAREQUEST
+      });
+      let streamLoader = Cc["@mozilla.org/network/stream-loader;1"]
+                           .createInstance(Ci.nsIStreamLoader);
       streamLoader.init(streamObserver);
       channel.asyncOpen(streamLoader, channel);
-    } catch (ex) {
-      deferred.reject(ex);
-    }
-
-    return deferred.promise;
+    });
   },
 
   /**
@@ -249,8 +244,9 @@ BookmarkImporter.prototype = {
    * @param aString
    *        JSON string of serialized bookmark data.
    */
-  importFromJSON: function BI_importFromJSON(aString) {
-    let deferred = Promise.defer();
+  importFromJSON: Task.async(function* (aString) {
+    this._importPromises = [];
+    let deferred = PromiseUtils.defer();
     let nodes =
       PlacesUtils.unwrapNodes(aString, PlacesUtils.TYPE_X_MOZ_PLACE_CONTAINER);
 
@@ -353,8 +349,15 @@ BookmarkImporter.prototype = {
 
       PlacesUtils.bookmarks.runInBatchMode(batch, null);
     }
-    return deferred.promise;
-  },
+    yield deferred.promise;
+    // TODO (bug 1095426) once converted to the new bookmarks API, methods will
+    // yield, so this hack should not be needed anymore.
+    try {
+      yield Promise.all(this._importPromises);
+    } finally {
+      delete this._importPromises;
+    }
+  }),
 
   /**
    * Takes a JSON-serialized node and inserts it into the db.
@@ -408,7 +411,7 @@ BookmarkImporter.prototype = {
           });
 
           if (feedURI) {
-            PlacesUtils.livemarks.addLivemark({
+            let lmPromise = PlacesUtils.livemarks.addLivemark({
               title: aData.title,
               feedURI: feedURI,
               parentId: aContainer,
@@ -421,7 +424,8 @@ BookmarkImporter.prototype = {
                 PlacesUtils.bookmarks.setItemDateAdded(id, aData.dateAdded);
               if (aData.annos && aData.annos.length)
                 PlacesUtils.setAnnotationsForItem(id, aData.annos);
-            }, Cu.reportError);
+            });
+            this._importPromises.push(lmPromise);
           }
         } else {
           id = PlacesUtils.bookmarks.createFolder(
@@ -445,11 +449,20 @@ BookmarkImporter.prototype = {
       case PlacesUtils.TYPE_X_MOZ_PLACE:
         id = PlacesUtils.bookmarks.insertBookmark(
                aContainer, NetUtil.newURI(aData.uri), aIndex, aData.title);
-        if (aData.keyword)
-          PlacesUtils.bookmarks.setKeywordForBookmark(id, aData.keyword);
+        if (aData.keyword) {
+          // POST data could be set in 2 ways:
+          // 1. new backups have a postData property
+          // 2. old backups have an item annotation
+          let postDataAnno = aData.annos &&
+                             aData.annos.find(anno => anno.name == PlacesUtils.POST_DATA_ANNO);
+          let postData = aData.postData || (postDataAnno && postDataAnno.value);
+          let kwPromise = PlacesUtils.keywords.insert({ keyword: aData.keyword,
+                                                        url: aData.uri,
+                                                        postData });
+          this._importPromises.push(kwPromise);
+        }
         if (aData.tags) {
-          // TODO (bug 967196) the tagging service should trim by itself.
-          let tags = aData.tags.split(",").map(tag => tag.trim());
+          let tags = aData.tags.split(",");
           if (tags.length)
             PlacesUtils.tagging.tagURI(NetUtil.newURI(aData.uri), tags);
         }

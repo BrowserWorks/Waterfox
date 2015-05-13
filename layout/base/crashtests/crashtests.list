@@ -7,7 +7,7 @@ load 56746-1.html
 load 89101-1.html
 load 89358-1.html
 load 90205-1.html
-skip-if((OSX==10.7||OSX==10.8)&&browserIsRemote) load 99776-1.html # Bug 849747
+skip-if((OSX==1007||OSX==1008)&&browserIsRemote) load 99776-1.html # Bug 849747
 load 118931-1.html
 load 121533-1.html
 load 123049-1.html
@@ -318,6 +318,8 @@ load 495350-1.html
 load 496011-1.xhtml
 load 497519-1.xhtml
 load 497519-2.xhtml
+load 497519-3.xhtml
+load 497519-4.xhtml
 load 499741-1.xhtml
 load 499841-1.xhtml
 load 499858-1.xhtml
@@ -433,7 +435,7 @@ load 835056.html
 load 836990-1.html
 load 840480.html
 load 847242.html
-load 852293.html
+pref(layers.progressive-paint,false) pref(layers.low-precision-buffer,false) load 852293.html
 load 860579-1.html
 pref(layers.force-active,true) load 859526-1.html
 pref(layers.force-active,true) load 859630-1.html
@@ -444,6 +446,7 @@ load 897852.html
 asserts-if(Android,2) asserts-if(!Android,4-6) load 898913.html # bug 847368
 pref(layers.acceleration.disabled,true) pref(layers.force-active,true) load 919434.html
 pref(layout.css.sticky.enabled,true) load 926728.html
+load 930381.html
 load 931464.html
 load 936988-1.html
 load 931450.html
@@ -456,3 +459,5 @@ load 1043163-1.html
 load 1061028.html
 load 1116104.html
 load 1107508-1.html
+load 1127198-1.html
+load 1140198.html

@@ -21,7 +21,7 @@ class nsRegion;
 class nsDeviceContext;
 class nsIPresShell;
 
-class nsViewManager MOZ_FINAL
+class nsViewManager final
 {
   ~nsViewManager();
 public:
@@ -406,7 +406,6 @@ private:
   bool              mPainting;
   bool              mRecursiveRefreshPending;
   bool              mHasPendingWidgetGeometryChanges;
-  bool              mInScroll;
 
   //from here to public should be static and locked... MMP
 

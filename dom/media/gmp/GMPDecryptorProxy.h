@@ -10,7 +10,7 @@
 #include "gmp-decryption.h"
 #include "nsString.h"
 
-namespace mp4_demuxer {
+namespace mozilla {
 class CryptoSample;
 }
 
@@ -31,8 +31,8 @@ public:
                              const nsCString& aSessionId) = 0;
 
   virtual void SessionMessage(const nsCString& aSessionId,
-                              const nsTArray<uint8_t>& aMessage,
-                              const nsCString& aDestinationURL) = 0;
+                              GMPSessionMessageType aMessageType,
+                              const nsTArray<uint8_t>& aMessage) = 0;
 
   virtual void ExpirationChange(const nsCString& aSessionId,
                                 GMPTimestamp aExpiryTime) = 0;
@@ -44,11 +44,9 @@ public:
                             uint32_t aSystemCode,
                             const nsCString& aMessage) = 0;
 
-  virtual void KeyIdUsable(const nsCString& aSessionId,
-                           const nsTArray<uint8_t>& aKeyId) = 0;
-
-  virtual void KeyIdNotUsable(const nsCString& aSessionId,
-                              const nsTArray<uint8_t>& aKeyId) = 0;
+  virtual void KeyStatusChanged(const nsCString& aSessionId,
+                                const nsTArray<uint8_t>& aKeyId,
+                                GMPMediaKeyStatus aStatus) = 0;
 
   virtual void SetCaps(uint64_t aCaps) = 0;
 
@@ -60,6 +58,8 @@ public:
 class GMPDecryptorProxy {
 public:
   ~GMPDecryptorProxy() {}
+
+  virtual const uint32_t GetPluginId() const = 0;
 
   virtual nsresult Init(GMPDecryptorProxyCallback* aCallback) = 0;
 
@@ -86,7 +86,7 @@ public:
                                     const nsTArray<uint8_t>& aServerCert) = 0;
 
   virtual void Decrypt(uint32_t aId,
-                       const mp4_demuxer::CryptoSample& aCrypto,
+                       const mozilla::CryptoSample& aCrypto,
                        const nsTArray<uint8_t>& aBuffer) = 0;
 
   virtual void Close() = 0;

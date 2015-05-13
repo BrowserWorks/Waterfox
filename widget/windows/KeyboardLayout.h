@@ -37,7 +37,6 @@
 #define VK_OEM_CLEAR            0xFE
 
 class nsIIdleServiceInternal;
-struct nsModifierKeyState;
 
 namespace mozilla {
 namespace widget {
@@ -62,24 +61,27 @@ public:
   ModifierKeyState(bool aIsShiftDown, bool aIsControlDown, bool aIsAltDown);
   ModifierKeyState(Modifiers aModifiers);
 
-  MOZ_ALWAYS_INLINE void Update();
+  void Update();
 
-  MOZ_ALWAYS_INLINE void Unset(Modifiers aRemovingModifiers);
+  void Unset(Modifiers aRemovingModifiers);
   void Set(Modifiers aAddingModifiers);
 
   void InitInputEvent(WidgetInputEvent& aInputEvent) const;
 
   bool IsShift() const;
   bool IsControl() const;
-  MOZ_ALWAYS_INLINE bool IsAlt() const;
-  MOZ_ALWAYS_INLINE bool IsAltGr() const;
-  MOZ_ALWAYS_INLINE bool IsWin() const;
+  bool IsAlt() const;
+  bool IsAltGr() const;
+  bool IsWin() const;
 
-  MOZ_ALWAYS_INLINE bool IsCapsLocked() const;
-  MOZ_ALWAYS_INLINE bool IsNumLocked() const;
-  MOZ_ALWAYS_INLINE bool IsScrollLocked() const;
+  bool IsCapsLocked() const;
+  bool IsNumLocked() const;
+  bool IsScrollLocked() const;
 
-  MOZ_ALWAYS_INLINE Modifiers GetModifiers() const;
+  MOZ_ALWAYS_INLINE Modifiers GetModifiers() const
+  {
+    return mModifiers;
+  }
 
 private:
   Modifiers mModifiers;
@@ -648,7 +650,7 @@ public:
    * message for the redirected keydown message.  AutoFlusher class is a helper
    * class for doing it.  This must be created in the stack.
    */
-  class MOZ_STACK_CLASS AutoFlusher MOZ_FINAL
+  class MOZ_STACK_CLASS AutoFlusher final
   {
   public:
     AutoFlusher(nsWindowBase* aWidget, const MSG &aMsg) :

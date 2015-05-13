@@ -15,6 +15,7 @@ include PBackgroundSharedTypes;
 using struct mozilla::void_t from "ipc/IPCMessageUtils.h";
 using RequestHeaderTuples from "mozilla/net/PHttpChannelParams.h";
 using struct nsHttpAtom from "nsHttp.h";
+using class nsHttpResponseHead from "nsHttpResponseHead.h";
 
 namespace mozilla {
 namespace net {
@@ -22,6 +23,24 @@ namespace net {
 //-----------------------------------------------------------------------------
 // HTTP IPDL structs
 //-----------------------------------------------------------------------------
+
+union OptionalHttpResponseHead
+{
+  void_t;
+  nsHttpResponseHead;
+};
+
+struct HttpChannelCacheKey
+{
+  uint32_t postId;
+  nsCString key;
+};
+
+union OptionalHttpChannelCacheKey
+{
+  void_t;
+  HttpChannelCacheKey;
+};
 
 struct HttpChannelOpenArgs
 {
@@ -52,12 +71,15 @@ struct HttpChannelOpenArgs
   bool                        chooseApplicationCache;
   nsCString                   appCacheClientID;
   bool                        allowSpdy;
+  bool                        allowAltSvc;
   OptionalFileDescriptorSet   fds;
   PrincipalInfo               requestingPrincipalInfo;
   PrincipalInfo               triggeringPrincipalInfo;
   uint32_t                    securityFlags;
   uint32_t                    contentPolicyType;
   uint32_t                    innerWindowID;
+  OptionalHttpResponseHead    synthesizedResponseHead;
+  OptionalHttpChannelCacheKey cacheKey;
 };
 
 struct HttpChannelConnectArgs
@@ -119,6 +141,19 @@ struct RtspChannelConnectArgs
 {
   URIParams uri;
   uint32_t channelId;
+};
+
+//-----------------------------------------------------------------------------
+// WS IPDL structs
+//-----------------------------------------------------------------------------
+
+struct WebSocketLoadInfoArgs
+{
+  PrincipalInfo requestingPrincipalInfo;
+  PrincipalInfo triggeringPrincipalInfo;
+  uint32_t      securityFlags;
+  uint32_t      contentPolicyType;
+  uint32_t      innerWindowID;
 };
 
 } // namespace ipc

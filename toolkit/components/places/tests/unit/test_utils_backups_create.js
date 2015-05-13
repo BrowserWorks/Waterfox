@@ -23,9 +23,8 @@ add_task(function () {
     let randomDate = new Date(dateObj.getFullYear() - 1,
                               Math.floor(12 * Math.random()),
                               Math.floor(28 * Math.random()));
-    let dateString = randomDate.toLocaleFormat("%Y-%m-%d");
-    if (dates.indexOf(dateString) == -1)
-      dates.push(dateString);
+    if (dates.indexOf(randomDate.getTime()) == -1)
+      dates.push(randomDate.getTime());
   }
   // Sort dates from oldest to newest.
   dates.sort();
@@ -42,14 +41,14 @@ add_task(function () {
     let backupFile = bookmarksBackupDir.clone();
     backupFile.append(backupFilename);
     backupFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, parseInt("0666", 8));
-    do_log_info("Creating fake backup " + backupFile.leafName);
+    do_print("Creating fake backup " + backupFile.leafName);
     if (!backupFile.exists())
       do_throw("Unable to create fake backup " + backupFile.leafName);
   }
 
   yield PlacesBackups.create(NUMBER_OF_BACKUPS);
   // Add today's backup.
-  dates.push(dateObj.toLocaleFormat("%Y-%m-%d"));
+  dates.push(dateObj.getTime());
 
   // Check backups.  We have 11 dates but we the max number is 10 so the
   // oldest backup should have been removed.

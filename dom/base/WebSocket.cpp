@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set sw=2 ts=8 et tw=80 : */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -61,12 +61,12 @@ using namespace mozilla::dom::workers;
 namespace mozilla {
 namespace dom {
 
-class WebSocketImpl MOZ_FINAL : public nsIInterfaceRequestor
-                              , public nsIWebSocketListener
-                              , public nsIObserver
-                              , public nsSupportsWeakReference
-                              , public nsIRequest
-                              , public nsIEventTarget
+class WebSocketImpl final : public nsIInterfaceRequestor
+                          , public nsIWebSocketListener
+                          , public nsIObserver
+                          , public nsSupportsWeakReference
+                          , public nsIRequest
+                          , public nsIEventTarget
 {
 public:
   NS_DECL_NSIINTERFACEREQUESTOR
@@ -90,6 +90,7 @@ public:
   , mHasFeatureRegistered(false)
 #endif
   , mIsMainThread(true)
+  , mMutex("WebSocketImpl::mMutex")
   , mWorkerShuttingDown(false)
   {
     if (!NS_IsMainThread()) {
@@ -222,6 +223,9 @@ public:
   nsWeakPtr mWeakLoadGroup;
 
   bool mIsMainThread;
+
+  // This mutex protects mWorkerShuttingDown.
+  mozilla::Mutex mMutex;
   bool mWorkerShuttingDown;
 
 private:
@@ -242,7 +246,7 @@ NS_IMPL_ISUPPORTS(WebSocketImpl,
                   nsIRequest,
                   nsIEventTarget)
 
-class CallDispatchConnectionCloseEvents MOZ_FINAL : public nsCancelableRunnable
+class CallDispatchConnectionCloseEvents final : public nsCancelableRunnable
 {
 public:
   explicit CallDispatchConnectionCloseEvents(WebSocketImpl* aWebSocketImpl)
@@ -268,7 +272,7 @@ private:
 
 namespace {
 
-class PrintErrorOnConsoleRunnable MOZ_FINAL : public WorkerMainThreadRunnable
+class PrintErrorOnConsoleRunnable final : public WorkerMainThreadRunnable
 {
 public:
   PrintErrorOnConsoleRunnable(WebSocketImpl* aImpl,
@@ -285,7 +289,7 @@ public:
     , mRv(NS_ERROR_FAILURE)
   { }
 
-  bool MainThreadRun() MOZ_OVERRIDE
+  bool MainThreadRun() override
   {
     mRv = mImpl->PrintErrorOnConsole(mBundleURI, mError, mFormatStrings,
                                      mFormatStringsLen);
@@ -380,36 +384,26 @@ WebSocketImpl::PrintErrorOnConsole(const char *aBundleURI,
 
 namespace {
 
-class CloseRunnable MOZ_FINAL : public WorkerMainThreadRunnable
+class CancelWebSocketRunnable final : public nsRunnable
 {
 public:
-  CloseRunnable(WebSocketImpl* aImpl, uint16_t aReasonCode,
-                const nsACString& aReasonString)
-    : WorkerMainThreadRunnable(aImpl->mWorkerPrivate)
-    , mImpl(aImpl)
+  CancelWebSocketRunnable(nsIWebSocketChannel* aChannel, uint16_t aReasonCode,
+                          const nsACString& aReasonString)
+    : mChannel(aChannel)
     , mReasonCode(aReasonCode)
     , mReasonString(aReasonString)
-    , mRv(NS_ERROR_FAILURE)
-  { }
+  {}
 
-  bool MainThreadRun() MOZ_OVERRIDE
+  NS_IMETHOD Run() override
   {
-    mRv = mImpl->mChannel->Close(mReasonCode, mReasonString);
-    return true;
-  }
-
-  nsresult ErrorCode() const
-  {
-    return mRv;
+    mChannel->Close(mReasonCode, mReasonString);
+    return NS_OK;
   }
 
 private:
-  // A raw pointer because this runnable is sync.
-  WebSocketImpl* mImpl;
-
+  nsCOMPtr<nsIWebSocketChannel> mChannel;
   uint16_t mReasonCode;
-  const nsACString& mReasonString;
-  nsresult mRv;
+  nsCString mReasonString;
 };
 
 class MOZ_STACK_CLASS MaybeDisconnect
@@ -422,7 +416,14 @@ public:
 
   ~MaybeDisconnect()
   {
-    if (mImpl->mWorkerShuttingDown) {
+    bool toDisconnect = false;
+
+    {
+      MutexAutoLock lock(mImpl->mMutex);
+      toDisconnect = mImpl->mWorkerShuttingDown;
+    }
+
+    if (toDisconnect) {
       mImpl->Disconnect();
     }
   }
@@ -431,12 +432,40 @@ private:
   WebSocketImpl* mImpl;
 };
 
+class CloseConnectionRunnable final : public nsRunnable
+{
+public:
+  CloseConnectionRunnable(WebSocketImpl* aImpl,
+                          uint16_t aReasonCode,
+                          const nsACString& aReasonString)
+    : mImpl(aImpl)
+    , mReasonCode(aReasonCode)
+    , mReasonString(aReasonString)
+  {}
+
+  NS_IMETHOD Run() override
+  {
+    return mImpl->CloseConnection(mReasonCode, mReasonString);
+  }
+
+private:
+  nsRefPtr<WebSocketImpl> mImpl;
+  uint16_t mReasonCode;
+  const nsCString mReasonString;
+};
+
 } // anonymous namespace
 
 nsresult
 WebSocketImpl::CloseConnection(uint16_t aReasonCode,
                                const nsACString& aReasonString)
 {
+  if (!IsTargetThread()) {
+    nsRefPtr<nsRunnable> runnable =
+      new CloseConnectionRunnable(this, aReasonCode, aReasonString);
+    return Dispatch(runnable, NS_DISPATCH_NORMAL);
+  }
+
   AssertIsOnTargetThread();
 
   if (mDisconnectingOrDisconnected) {
@@ -464,14 +493,12 @@ WebSocketImpl::CloseConnection(uint16_t aReasonCode,
       return mChannel->Close(aReasonCode, aReasonString);
     }
 
-    nsRefPtr<CloseRunnable> runnable =
-      new CloseRunnable(this, aReasonCode, aReasonString);
-    runnable->Dispatch(mWorkerPrivate->GetJSContext());
-    return runnable->ErrorCode();
+    nsRefPtr<CancelWebSocketRunnable> runnable =
+      new CancelWebSocketRunnable(mChannel, aReasonCode, aReasonString);
+    return NS_DispatchToMainThread(runnable);
   }
 
   // No channel, but not disconnected: canceled or failed early
-  //
   MOZ_ASSERT(readyState == WebSocket::CONNECTING,
              "Should only get here for early websocket cancel/error");
 
@@ -497,6 +524,14 @@ nsresult
 WebSocketImpl::ConsoleError()
 {
   AssertIsOnTargetThread();
+
+  {
+    MutexAutoLock lock(mMutex);
+    if (mWorkerShuttingDown) {
+      // Too late to report anything, bail out.
+      return NS_OK;
+    }
+  }
 
   NS_ConvertUTF8toUTF16 specUTF16(mURI);
   const char16_t* formatStrings[] = { specUTF16.get() };
@@ -531,7 +566,7 @@ WebSocketImpl::FailConnection(uint16_t aReasonCode,
 
 namespace {
 
-class DisconnectInternalRunnable MOZ_FINAL : public WorkerMainThreadRunnable
+class DisconnectInternalRunnable final : public WorkerMainThreadRunnable
 {
 public:
   explicit DisconnectInternalRunnable(WebSocketImpl* aImpl)
@@ -539,7 +574,7 @@ public:
     , mImpl(aImpl)
   { }
 
-  bool MainThreadRun() MOZ_OVERRIDE
+  bool MainThreadRun() override
   {
     mImpl->DisconnectInternal();
     return true;
@@ -614,10 +649,12 @@ WebSocketImpl::DisconnectInternal()
     mWeakLoadGroup = nullptr;
   }
 
-  nsCOMPtr<nsIObserverService> os = mozilla::services::GetObserverService();
-  if (os) {
-    os->RemoveObserver(this, DOM_WINDOW_DESTROYED_TOPIC);
-    os->RemoveObserver(this, DOM_WINDOW_FROZEN_TOPIC);
+  if (!mWorkerPrivate) {
+    nsCOMPtr<nsIObserverService> os = mozilla::services::GetObserverService();
+    if (os) {
+      os->RemoveObserver(this, DOM_WINDOW_DESTROYED_TOPIC);
+      os->RemoveObserver(this, DOM_WINDOW_FROZEN_TOPIC);
+    }
   }
 }
 
@@ -886,7 +923,7 @@ WebSocket::WebSocket(nsPIDOMWindow* aOwnerWindow)
   , mCheckMustKeepAlive(true)
   , mOutgoingBufferedAmount(0)
   , mBinaryType(dom::BinaryType::Blob)
-  , mMutex("WebSocketImpl::mMutex")
+  , mMutex("WebSocket::mMutex")
   , mReadyState(CONNECTING)
 {
   mImpl = new WebSocketImpl(this);
@@ -898,9 +935,9 @@ WebSocket::~WebSocket()
 }
 
 JSObject*
-WebSocket::WrapObject(JSContext* cx)
+WebSocket::WrapObject(JSContext* cx, JS::Handle<JSObject*> aGivenProto)
 {
-  return WebSocketBinding::Wrap(cx, this);
+  return WebSocketBinding::Wrap(cx, this, aGivenProto);
 }
 
 //---------------------------------------------------------------------------
@@ -948,7 +985,7 @@ private:
   JSContext* mCx;
 };
 
-class InitRunnable MOZ_FINAL : public WorkerMainThreadRunnable
+class InitRunnable final : public WorkerMainThreadRunnable
 {
 public:
   InitRunnable(WebSocketImpl* aImpl, const nsAString& aURL,
@@ -968,7 +1005,7 @@ public:
     mWorkerPrivate->AssertIsOnWorkerThread();
   }
 
-  bool MainThreadRun() MOZ_OVERRIDE
+  bool MainThreadRun() override
   {
     AssertIsOnMainThread();
 
@@ -1041,7 +1078,7 @@ private:
   bool* mConnectionFailed;
 };
 
-class AsyncOpenRunnable MOZ_FINAL : public WorkerMainThreadRunnable
+class AsyncOpenRunnable final : public WorkerMainThreadRunnable
 {
 public:
   AsyncOpenRunnable(WebSocketImpl* aImpl, ErrorResult& aRv)
@@ -1053,7 +1090,7 @@ public:
     mWorkerPrivate->AssertIsOnWorkerThread();
   }
 
-  bool MainThreadRun() MOZ_OVERRIDE
+  bool MainThreadRun() override
   {
     AssertIsOnMainThread();
     mImpl->AsyncOpen(mRv);
@@ -1482,7 +1519,7 @@ WebSocketImpl::Init(JSContext* aCx,
 void
 WebSocketImpl::AsyncOpen(ErrorResult& aRv)
 {
-  NS_ABORT_IF_FALSE(NS_IsMainThread(), "Not running on main thread");
+  MOZ_ASSERT(NS_IsMainThread(), "Not running on main thread");
 
   nsCString asciiOrigin;
   aRv = nsContentUtils::GetASCIIOrigin(mPrincipal, asciiOrigin);
@@ -1506,7 +1543,7 @@ WebSocketImpl::AsyncOpen(ErrorResult& aRv)
 // WebSocketImpl methods:
 //-----------------------------------------------------------------------------
 
-class nsAutoCloseWS MOZ_FINAL
+class nsAutoCloseWS final
 {
 public:
   explicit nsAutoCloseWS(WebSocketImpl* aWebSocketImpl)
@@ -1527,7 +1564,7 @@ nsresult
 WebSocketImpl::InitializeConnection()
 {
   AssertIsOnMainThread();
-  NS_ABORT_IF_FALSE(!mChannel, "mChannel should be null");
+  MOZ_ASSERT(!mChannel, "mChannel should be null");
 
   nsCOMPtr<nsIWebSocketChannel> wsChannel;
   nsAutoCloseWS autoClose(this);
@@ -1563,15 +1600,11 @@ WebSocketImpl::InitializeConnection()
   // are not thread-safe.
   mOriginDocument = nullptr;
 
-  nsCOMPtr<nsILoadInfo> loadInfo =
-    new LoadInfo(doc ?
-                   doc->NodePrincipal() : mPrincipal.get(),
-                 mPrincipal,
-                 doc,
-                 nsILoadInfo::SEC_NORMAL,
-                 nsIContentPolicy::TYPE_WEBSOCKET);
-  rv = wsChannel->SetLoadInfo(loadInfo);
-  NS_ENSURE_SUCCESS(rv, rv);
+  wsChannel->InitLoadInfo(doc ? doc->AsDOMNode() : nullptr,
+                          doc ? doc->NodePrincipal() : mPrincipal.get(),
+                          mPrincipal,
+                          nsILoadInfo::SEC_NORMAL,
+                          nsIContentPolicy::TYPE_WEBSOCKET);
 
   if (!mRequestedProtocolList.IsEmpty()) {
     rv = wsChannel->SetProtocol(mRequestedProtocolList);
@@ -1761,7 +1794,7 @@ WebSocket::CreateAndDispatchCloseEvent(bool aWasClean,
 
 namespace {
 
-class PrefEnabledRunnable MOZ_FINAL : public WorkerMainThreadRunnable
+class PrefEnabledRunnable final : public WorkerMainThreadRunnable
 {
 public:
   explicit PrefEnabledRunnable(WorkerPrivate* aWorkerPrivate)
@@ -1769,7 +1802,7 @@ public:
     , mEnabled(false)
   { }
 
-  bool MainThreadRun() MOZ_OVERRIDE
+  bool MainThreadRun() override
   {
     AssertIsOnMainThread();
     mEnabled = Preferences::GetBool("dom.workers.websocket.enabled", false);
@@ -1819,9 +1852,9 @@ WebSocketImpl::ParseURL(const nsAString& aURL)
   nsCOMPtr<nsIURL> parsedURL = do_QueryInterface(uri, &rv);
   NS_ENSURE_SUCCESS(rv, NS_ERROR_DOM_SYNTAX_ERR);
 
-  nsAutoCString fragment;
-  rv = parsedURL->GetRef(fragment);
-  NS_ENSURE_TRUE(NS_SUCCEEDED(rv) && fragment.IsEmpty(),
+  bool hasRef;
+  rv = parsedURL->GetHasRef(&hasRef);
+  NS_ENSURE_TRUE(NS_SUCCEEDED(rv) && !hasRef,
                  NS_ERROR_DOM_SYNTAX_ERR);
 
   nsAutoCString scheme;
@@ -1838,7 +1871,7 @@ WebSocketImpl::ParseURL(const nsAString& aURL)
   NS_ENSURE_SUCCESS(rv, NS_ERROR_DOM_SYNTAX_ERR);
 
   rv = NS_CheckPortSafety(port, scheme.get());
-  NS_ENSURE_SUCCESS(rv, NS_ERROR_DOM_SYNTAX_ERR);
+  NS_ENSURE_SUCCESS(rv, NS_ERROR_DOM_SECURITY_ERR);
 
   nsAutoCString filePath;
   rv = parsedURL->GetFilePath(filePath);
@@ -1881,11 +1914,10 @@ WebSocketImpl::ParseURL(const nsAString& aURL)
     }
   }
 
-  mWebSocket->mOriginalURL = aURL;
-
   rv = parsedURL->GetSpec(mURI);
   MOZ_ASSERT(NS_SUCCEEDED(rv));
 
+  CopyUTF8toUTF16(mURI, mWebSocket->mURI);
   return NS_OK;
 }
 
@@ -1969,7 +2001,7 @@ WebSocket::DontKeepAliveAnyMore()
 
 namespace {
 
-class WebSocketWorkerFeature MOZ_FINAL : public WorkerFeature
+class WebSocketWorkerFeature final : public WorkerFeature
 {
 public:
   explicit WebSocketWorkerFeature(WebSocketImpl* aWebSocketImpl)
@@ -1977,21 +2009,30 @@ public:
   {
   }
 
-  bool Notify(JSContext* aCx, Status aStatus) MOZ_OVERRIDE
+  bool Notify(JSContext* aCx, Status aStatus) override
   {
     MOZ_ASSERT(aStatus > workers::Running);
 
     if (aStatus >= Canceling) {
-      mWebSocketImpl->mWorkerShuttingDown = true;
-      mWebSocketImpl->CloseConnection(nsIWebSocketChannel::CLOSE_GOING_AWAY);
+      {
+        MutexAutoLock lock(mWebSocketImpl->mMutex);
+        mWebSocketImpl->mWorkerShuttingDown = true;
+      }
+
+      mWebSocketImpl->CloseConnection(nsIWebSocketChannel::CLOSE_GOING_AWAY,
+                                      EmptyCString());
     }
 
     return true;
   }
 
-  bool Suspend(JSContext* aCx) MOZ_OVERRIDE
+  bool Suspend(JSContext* aCx) override
   {
-    mWebSocketImpl->mWorkerShuttingDown = true;
+    {
+      MutexAutoLock lock(mWebSocketImpl->mMutex);
+      mWebSocketImpl->mWorkerShuttingDown = true;
+    }
+
     mWebSocketImpl->CloseConnection(nsIWebSocketChannel::CLOSE_GOING_AWAY);
     return true;
   }
@@ -2135,7 +2176,7 @@ WebSocket::GetUrl(nsAString& aURL)
   AssertIsOnTargetThread();
 
   if (mEffectiveURL.IsEmpty()) {
-    aURL = mOriginalURL;
+    aURL = mURI;
   } else {
     aURL = mEffectiveURL;
   }
@@ -2169,7 +2210,7 @@ WebSocket::Send(const nsAString& aData,
 }
 
 void
-WebSocket::Send(File& aData, ErrorResult& aRv)
+WebSocket::Send(Blob& aData, ErrorResult& aRv)
 {
   AssertIsOnTargetThread();
 
@@ -2362,7 +2403,7 @@ WebSocketImpl::GetName(nsACString& aName)
 {
   AssertIsOnMainThread();
 
-  CopyUTF16toUTF8(mWebSocket->mOriginalURL, aName);
+  CopyUTF16toUTF8(mWebSocket->mURI, aName);
   return NS_OK;
 }
 
@@ -2387,7 +2428,7 @@ WebSocketImpl::GetStatus(nsresult* aStatus)
 
 namespace {
 
-class CancelRunnable MOZ_FINAL : public WorkerRunnable
+class CancelRunnable final : public WorkerRunnable
 {
 public:
   CancelRunnable(WorkerPrivate* aWorkerPrivate, WebSocketImpl* aImpl)
@@ -2549,11 +2590,15 @@ WebSocketImpl::SetLoadFlags(nsLoadFlags aLoadFlags)
 
 namespace {
 
-class WorkerRunnableDispatcher MOZ_FINAL : public WorkerRunnable
+class WorkerRunnableDispatcher final : public WorkerRunnable
 {
+  nsRefPtr<WebSocketImpl> mWebSocketImpl;
+
 public:
-  WorkerRunnableDispatcher(WorkerPrivate* aWorkerPrivate, nsIRunnable* aEvent)
+  WorkerRunnableDispatcher(WebSocketImpl* aImpl, WorkerPrivate* aWorkerPrivate,
+                           nsIRunnable* aEvent)
     : WorkerRunnable(aWorkerPrivate, WorkerThreadUnchangedBusyCount)
+    , mWebSocketImpl(aImpl)
     , mEvent(aEvent)
   {
   }
@@ -2562,6 +2607,13 @@ public:
   {
     aWorkerPrivate->AssertIsOnWorkerThread();
     aWorkerPrivate->ModifyBusyCountFromWorker(aCx, true);
+
+    // No messages when disconnected.
+    if (mWebSocketImpl->mDisconnectingOrDisconnected) {
+      NS_WARNING("Dispatching a WebSocket event after the disconnection!");
+      return true;
+    }
+
     return !NS_FAILED(mEvent->Run());
   }
 
@@ -2596,12 +2648,7 @@ WebSocketImpl::Dispatch(nsIRunnable* aEvent, uint32_t aFlags)
     return NS_DispatchToMainThread(aEvent);
   }
 
-  // No messages when disconnected.
-  if (mDisconnectingOrDisconnected) {
-    NS_WARNING("Dispatching a WebSocket event after the disconnection!");
-    return NS_OK;
-  }
-
+  MutexAutoLock lock(mMutex);
   if (mWorkerShuttingDown) {
     return NS_OK;
   }
@@ -2615,7 +2662,8 @@ WebSocketImpl::Dispatch(nsIRunnable* aEvent, uint32_t aFlags)
   // If the target is a worker, we have to use a custom WorkerRunnableDispatcher
   // runnable.
   nsRefPtr<WorkerRunnableDispatcher> event =
-    new WorkerRunnableDispatcher(mWorkerPrivate, aEvent);
+    new WorkerRunnableDispatcher(this, mWorkerPrivate, aEvent);
+
   if (!event->Dispatch(nullptr)) {
     return NS_ERROR_FAILURE;
   }

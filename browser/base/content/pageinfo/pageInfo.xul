@@ -115,7 +115,7 @@
             <textbox readonly="true" crop="end" id="modetext"/>
           </row>
           <row id="generalEncodingRow">
-            <label control="encodingtext" value="&generalEncoding;"/>
+            <label control="encodingtext" value="&generalEncoding2;"/>
             <separator/>
             <textbox readonly="true" id="encodingtext"/>
           </row>
@@ -155,6 +155,9 @@
           <treechildren id="metatreechildren" flex="1"/>
         </tree>        
       </groupbox>
+      <hbox pack="end">
+        <button command="cmd_help" label="&helpButton.label;" dlgtype="help"/>
+      </hbox>
     </vbox>
 
     <!-- Media information -->
@@ -232,6 +235,9 @@
             <label control="thepreviewimage" value="&mediaPreview;" class="header"/>
           </vbox>
           <spacer id="imageSaveBoxSpacer" flex="1"/>
+          <button label="&selectall.label;" accesskey="&selectall.accesskey;"
+                  id="selectallbutton"
+                  oncommand="doSelectAllMedia();"/>
           <button label="&mediaSaveAs;" accesskey="&mediaSaveAs.accesskey;"
                   icon="save" id="imagesaveasbutton"
                   oncommand="saveMedia();"/>
@@ -250,6 +256,9 @@
         <button label="&mediaSaveAs;" accesskey="&mediaSaveAs2.accesskey;"
                 icon="save" id="mediasaveasbutton"
                 oncommand="saveMedia();"/>
+      </hbox>
+      <hbox pack="end">
+        <button command="cmd_help" label="&helpButton.label;" dlgtype="help"/>
       </hbox>
     </vbox>
 
@@ -290,6 +299,9 @@
           </hbox>
         </vbox>
       </vbox>
+      <hbox pack="end">
+        <button command="cmd_help" label="&helpButton.label;" dlgtype="help"/>
+      </hbox>
     </vbox>
 
     <!-- Security & Privacy -->
@@ -407,6 +419,9 @@
           <description id="security-technical-longform2" class="fieldLabel"/>
         </vbox>
       </groupbox>
+      <hbox pack="end">
+        <button command="cmd_help" label="&helpButton.label;" dlgtype="help"/>
+      </hbox>
     </vbox>
     <!-- Others added by overlay -->
   </deck>

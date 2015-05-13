@@ -15,15 +15,11 @@ if CONFIG['MOZ_ENABLE_GCONF']:
         'nsGConfService.cpp',
     ]
 
-if CONFIG['MOZ_ENABLE_GNOMEVFS']:
-    SOURCES += [
-        'nsGnomeVFSService.cpp',
-    ]
-
 if CONFIG['MOZ_ENABLE_GIO']:
     SOURCES += [
         'nsGIOService.cpp',
         'nsGSettingsService.cpp',
+        'nsPackageKitService.cpp'
     ]
 
 XPCOMBinaryComponent('mozgnome')
@@ -35,7 +31,6 @@ LOCAL_INCLUDES += [
 ]
 
 CXXFLAGS += CONFIG['MOZ_GCONF_CFLAGS']
-CXXFLAGS += CONFIG['MOZ_GNOMEVFS_CFLAGS']
 CXXFLAGS += CONFIG['MOZ_GIO_CFLAGS']
 CXXFLAGS += CONFIG['GLIB_CFLAGS']
 CXXFLAGS += CONFIG['MOZ_DBUS_GLIB_CFLAGS']
@@ -44,7 +39,6 @@ if CONFIG['MOZ_ENABLE_GTK']:
     CXXFLAGS += CONFIG['TK_CFLAGS']
 
 OS_LIBS += CONFIG['MOZ_GCONF_LIBS']
-OS_LIBS += CONFIG['MOZ_GNOMEVFS_LIBS']
 OS_LIBS += CONFIG['GLIB_LIBS']
 OS_LIBS += CONFIG['MOZ_GIO_LIBS']
 OS_LIBS += CONFIG['MOZ_DBUS_GLIB_LIBS']

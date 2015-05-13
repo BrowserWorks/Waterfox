@@ -188,8 +188,8 @@ private:
   nsTArray<nsMediaExpression> mExpressions;
 };
 
-class nsMediaList MOZ_FINAL : public nsIDOMMediaList
-                            , public nsWrapperCache
+class nsMediaList final : public nsIDOMMediaList
+                        , public nsWrapperCache
 {
 public:
   typedef mozilla::ErrorResult ErrorResult;
@@ -197,7 +197,7 @@ public:
   nsMediaList();
 
   virtual JSObject*
-  WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
   nsISupports* GetParentObject() const
   {
     return nullptr;

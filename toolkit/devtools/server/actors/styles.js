@@ -487,6 +487,10 @@ var PageStyleActor = protocol.ActorClass({
    *     caused this rule to match its node.
    */
   getApplied: method(function(node, options) {
+    if (!node) {
+      return {entries: [], rules: [], sheets: []};
+    }
+
     this.cssLogic.highlight(node.rawNode);
     let entries = [];
     entries = entries.concat(this._getAllElementRules(node, undefined, options));
@@ -747,8 +751,8 @@ var PageStyleActor = protocol.ActorClass({
     // the size of the element.
 
     let clientRect = node.rawNode.getBoundingClientRect();
-    layout.width = Math.ceil(clientRect.width);
-    layout.height = Math.ceil(clientRect.height);
+    layout.width = parseFloat(clientRect.width.toPrecision(6));
+    layout.height = parseFloat(clientRect.height.toPrecision(6));
 
     // We compute and update the values of margins & co.
     let style = CssLogic.getComputedStyle(node.rawNode);
@@ -776,7 +780,7 @@ var PageStyleActor = protocol.ActorClass({
 
     for (let i in this.map) {
       let property = this.map[i].property;
-      this.map[i].value = parseInt(style.getPropertyValue(property));
+      this.map[i].value = parseFloat(style.getPropertyValue(property));
     }
 
 
@@ -991,6 +995,17 @@ var StyleRuleActor = protocol.ActorClass({
 
     if (this.rawRule.parentRule) {
       form.parentRule = this.pageStyle._styleRef(this.rawRule.parentRule).actorID;
+
+      // CSS rules that we call media rules are STYLE_RULES that are children
+      // of MEDIA_RULEs. We need to check the parentRule to check if a rule is
+      // a media rule so we do this here instead of in the switch statement
+      // below.
+      if (this.rawRule.parentRule.type === Ci.nsIDOMCSSRule.MEDIA_RULE) {
+        form.media = [];
+        for (let i = 0, n = this.rawRule.parentRule.media.length; i < n; i++) {
+          form.media.push(this.rawRule.parentRule.media.item(i));
+        }
+      }
     }
     if (this.rawRule.parentStyleSheet) {
       form.parentStyleSheet = this.pageStyle._sheetRef(this.rawRule.parentStyleSheet).actorID;
@@ -1005,7 +1020,8 @@ var StyleRuleActor = protocol.ActorClass({
         // Elements don't have a parent stylesheet, and therefore
         // don't have an associated URI.  Provide a URI for
         // those.
-        form.href = this.rawNode.ownerDocument.location.href;
+        let doc = this.rawNode.ownerDocument;
+        form.href = doc.location ? doc.location.href : "";
         form.cssText = this.rawStyle.cssText || "";
         break;
       case Ci.nsIDOMCSSRule.CHARSET_RULE:
@@ -1013,12 +1029,6 @@ var StyleRuleActor = protocol.ActorClass({
         break;
       case Ci.nsIDOMCSSRule.IMPORT_RULE:
         form.href = this.rawRule.href;
-        break;
-      case Ci.nsIDOMCSSRule.MEDIA_RULE:
-        form.media = [];
-        for (let i = 0, n = this.rawRule.media.length; i < n; i++) {
-          form.media.push(this.rawRule.media.item(i));
-        }
         break;
       case Ci.nsIDOMCSSRule.KEYFRAMES_RULE:
         form.cssText = this.rawRule.cssText;
@@ -1068,7 +1078,7 @@ var StyleRuleActor = protocol.ActorClass({
       document = this.getDocument(parentStyleSheet);
     }
 
-    let tempElement = document.createElement("div");
+    let tempElement = document.createElementNS(XHTML_NS, "div");
 
     for (let mod of modifications) {
       if (mod.type === "set") {
@@ -1222,7 +1232,7 @@ var StyleRuleFront = protocol.FrontClass(StyleRuleActor, {
       return this._form.href;
     }
     let sheet = this.parentStyleSheet;
-    return sheet.href;
+    return sheet ? sheet.href : "";
   },
 
   get nodeHref() {
@@ -1245,9 +1255,10 @@ var StyleRuleFront = protocol.FrontClass(StyleRuleActor, {
     if (this._originalLocation) {
       return promise.resolve(this._originalLocation);
     }
-
     let parentSheet = this.parentStyleSheet;
     if (!parentSheet) {
+      // This rule doesn't belong to a stylesheet so it is an inline style.
+      // Inline styles do not have any mediaText so we can return early.
       return promise.resolve(this.location);
     }
     return parentSheet.getOriginalLocation(this.line, this.column)
@@ -1255,8 +1266,9 @@ var StyleRuleFront = protocol.FrontClass(StyleRuleActor, {
         let location = {
           href: source,
           line: line,
-          column: column
-        }
+          column: column,
+          mediaText: this.mediaText
+        };
         if (fromSourceMap === false) {
           location.source = this.parentStyleSheet;
         }
@@ -1265,7 +1277,7 @@ var StyleRuleFront = protocol.FrontClass(StyleRuleActor, {
         }
         this._originalLocation = location;
         return location;
-      })
+      });
   }
 });
 

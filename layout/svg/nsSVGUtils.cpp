@@ -167,8 +167,8 @@ nsRect
 nsSVGUtils::GetPostFilterVisualOverflowRect(nsIFrame *aFrame,
                                             const nsRect &aPreFilterRect)
 {
-  NS_ABORT_IF_FALSE(aFrame->GetStateBits() & NS_FRAME_SVG_LAYOUT,
-                    "Called on invalid frame type");
+  MOZ_ASSERT(aFrame->GetStateBits() & NS_FRAME_SVG_LAYOUT,
+             "Called on invalid frame type");
 
   nsSVGFilterProperty *property = nsSVGEffects::GetFilterProperty(aFrame);
   if (!property || !property->ReferencesValidResources()) {
@@ -200,8 +200,8 @@ nsSVGUtils::AnyOuterSVGIsCallingReflowSVG(nsIFrame* aFrame)
 void
 nsSVGUtils::ScheduleReflowSVG(nsIFrame *aFrame)
 {
-  NS_ABORT_IF_FALSE(aFrame->IsFrameOfType(nsIFrame::eSVG),
-                    "Passed bad frame!");
+  MOZ_ASSERT(aFrame->IsFrameOfType(nsIFrame::eSVG),
+             "Passed bad frame!");
 
   // If this is triggered, the callers should be fixed to call us before
   // ReflowSVG is called. If we try to mark dirty bits on frames while we're
@@ -242,15 +242,15 @@ nsSVGUtils::ScheduleReflowSVG(nsIFrame *aFrame)
       }
       f->AddStateBits(NS_FRAME_HAS_DIRTY_CHILDREN);
       f = f->GetParent();
-      NS_ABORT_IF_FALSE(f->IsFrameOfType(nsIFrame::eSVG),
-                        "NS_STATE_IS_OUTER_SVG check above not valid!");
+      MOZ_ASSERT(f->IsFrameOfType(nsIFrame::eSVG),
+                 "NS_STATE_IS_OUTER_SVG check above not valid!");
     }
 
     outerSVGFrame = static_cast<nsSVGOuterSVGFrame*>(f);
 
-    NS_ABORT_IF_FALSE(outerSVGFrame &&
-                      outerSVGFrame->GetType() == nsGkAtoms::svgOuterSVGFrame,
-                      "Did not find nsSVGOuterSVGFrame!");
+    MOZ_ASSERT(outerSVGFrame &&
+               outerSVGFrame->GetType() == nsGkAtoms::svgOuterSVGFrame,
+               "Did not find nsSVGOuterSVGFrame!");
   }
 
   if (outerSVGFrame->GetStateBits() & NS_FRAME_IN_REFLOW) {
@@ -270,8 +270,8 @@ nsSVGUtils::ScheduleReflowSVG(nsIFrame *aFrame)
 bool
 nsSVGUtils::NeedsReflowSVG(nsIFrame *aFrame)
 {
-  NS_ABORT_IF_FALSE(aFrame->IsFrameOfType(nsIFrame::eSVG),
-                    "SVG uses bits differently!");
+  MOZ_ASSERT(aFrame->IsFrameOfType(nsIFrame::eSVG),
+             "SVG uses bits differently!");
 
   // The flags we test here may change, hence why we have this separate
   // function.
@@ -281,8 +281,8 @@ nsSVGUtils::NeedsReflowSVG(nsIFrame *aFrame)
 void
 nsSVGUtils::NotifyAncestorsOfFilterRegionChange(nsIFrame *aFrame)
 {
-  NS_ABORT_IF_FALSE(!(aFrame->GetStateBits() & NS_STATE_IS_OUTER_SVG),
-                    "Not expecting to be called on the outer SVG Frame");
+  MOZ_ASSERT(!(aFrame->GetStateBits() & NS_STATE_IS_OUTER_SVG),
+             "Not expecting to be called on the outer SVG Frame");
 
   aFrame = aFrame->GetParent();
 
@@ -442,7 +442,7 @@ class SVGPaintCallback : public nsSVGFilterPaintCallback
 public:
   virtual void Paint(gfxContext& aContext, nsIFrame *aTarget,
                      const gfxMatrix& aTransform,
-                     const nsIntRect* aDirtyRect) MOZ_OVERRIDE
+                     const nsIntRect* aDirtyRect) override
   {
     nsISVGChildFrame *svgChildFrame = do_QueryFrame(aTarget);
     NS_ASSERTION(svgChildFrame, "Expected SVG frame here");
@@ -490,7 +490,7 @@ nsSVGUtils::PaintFrameWithEffects(nsIFrame *aFrame,
     return;
 
   const nsIContent* content = aFrame->GetContent();
-  if (content->IsSVG() &&
+  if (content->IsSVGElement() &&
       !static_cast<const nsSVGElement*>(content)->HasValidDimensions()) {
     return;
   }
@@ -706,7 +706,7 @@ nsSVGUtils::HitTestChildren(nsSVGDisplayContainerFrame* aFrame,
   // First we transform aPoint into the coordinate space established by aFrame
   // for its children (e.g. take account of any 'viewBox' attribute):
   gfxPoint point = aPoint;
-  if (aFrame->GetContent()->IsSVG()) { // must check before cast
+  if (aFrame->GetContent()->IsSVGElement()) { // must check before cast
     gfxMatrix m = static_cast<const nsSVGElement*>(aFrame->GetContent())->
                     PrependLocalTransformsTo(gfxMatrix(),
                                              nsSVGElement::eChildToUserSpace);
@@ -727,14 +727,14 @@ nsSVGUtils::HitTestChildren(nsSVGDisplayContainerFrame* aFrame,
     nsISVGChildFrame* SVGFrame = do_QueryFrame(current);
     if (SVGFrame) {
       const nsIContent* content = current->GetContent();
-      if (content->IsSVG() &&
+      if (content->IsSVGElement() &&
           !static_cast<const nsSVGElement*>(content)->HasValidDimensions()) {
         continue;
       }
       // GetFrameForPoint() expects a point in its frame's SVG user space, so
       // we need to convert to that space:
       gfxPoint p = point;
-      if (content->IsSVG()) { // must check before cast
+      if (content->IsSVGElement()) { // must check before cast
         gfxMatrix m = static_cast<const nsSVGElement*>(content)->
                         PrependLocalTransformsTo(gfxMatrix(),
                                                  nsSVGElement::eUserSpaceToParent);
@@ -899,10 +899,21 @@ nsSVGUtils::GetBBox(nsIFrame *aFrame, uint32_t aFlags)
       svg = do_QueryFrame(ancestor);
     }
     nsIContent* content = aFrame->GetContent();
-    if (content->IsSVG() &&
+    if (content->IsSVGElement() &&
         !static_cast<const nsSVGElement*>(content)->HasValidDimensions()) {
       return bbox;
     }
+
+    FrameProperties props = aFrame->Properties();
+
+    if (aFlags == eBBoxIncludeFillGeometry) {
+      gfxRect* prop =
+        static_cast<gfxRect*>(props.Get(ObjectBoundingBoxProperty()));
+      if (prop) {
+        return *prop;
+      }
+    }
+
     gfxMatrix matrix;
     if (aFrame->GetType() == nsGkAtoms::svgForeignObjectFrame ||
         aFrame->GetType() == nsGkAtoms::svgUseFrame) {
@@ -911,7 +922,7 @@ nsSVGUtils::GetBBox(nsIFrame *aFrame, uint32_t aFlags)
       // needs investigation to check that we won't break too much content.
       // NOTE: When changing this to apply to other frame types, make sure to
       // also update nsSVGUtils::FrameSpaceInCSSPxToUserSpaceOffset.
-      NS_ABORT_IF_FALSE(content->IsSVG(), "bad cast");
+      MOZ_ASSERT(content->IsSVGElement(), "bad cast");
       nsSVGElement *element = static_cast<nsSVGElement*>(content);
       matrix = element->PrependLocalTransformsTo(matrix,
                           nsSVGElement::eChildToUserSpace);
@@ -971,6 +982,13 @@ nsSVGUtils::GetBBox(nsIFrame *aFrame, uint32_t aFlags)
         bbox = gfxRect(0, 0, 0, 0);
       }
     }
+
+    if (aFlags == eBBoxIncludeFillGeometry) {
+      // Obtaining the bbox for objectBoundingBox calculations is common so we
+      // cache the result for future calls, since calculation can be expensive:
+      props.Set(ObjectBoundingBoxProperty(), new gfxRect(bbox));
+    }
+
     return bbox;
   }
   return nsSVGIntegrationUtils::GetSVGBBoxForNonSVGFrame(aFrame);
@@ -1038,7 +1056,7 @@ nsSVGUtils::GetRelativeRect(uint16_t aUnits, const nsSVGLength2 *aXYWH,
     return GetBoundingBoxRelativeRect(aXYWH, aBBox);
   }
   nsIContent* content = aFrame->GetContent();
-  if (content->IsSVG()) {
+  if (content->IsSVGElement()) {
     nsSVGElement* svgElement = static_cast<nsSVGElement*>(content);
     return GetRelativeRect(aUnits, aXYWH, aBBox, SVGElementMetrics(svgElement));
   }
@@ -1114,7 +1132,7 @@ nsSVGUtils::GetNonScalingStrokeTransform(nsIFrame *aFrame,
   }
 
   nsIContent *content = aFrame->GetContent();
-  NS_ABORT_IF_FALSE(content->IsSVG(), "bad cast");
+  MOZ_ASSERT(content->IsSVGElement(), "bad cast");
 
   *aUserToOuterSVG = ThebesMatrix(SVGContentUtils::GetCTM(
                        static_cast<nsSVGElement*>(content), true));
@@ -1162,10 +1180,9 @@ nsSVGUtils::PathExtentsToMaxStrokeExtents(const gfxRect& aPathExtents,
                                           nsSVGPathGeometryFrame* aFrame,
                                           const gfxMatrix& aMatrix)
 {
-  const nsIAtom* tag = aFrame->GetContent()->Tag();
-
-  bool strokeMayHaveCorners = (tag != nsGkAtoms::circle &&
-                               tag != nsGkAtoms::ellipse);
+  bool strokeMayHaveCorners =
+    !aFrame->GetContent()->IsAnyOfSVGElements(nsGkAtoms::circle,
+                                              nsGkAtoms::ellipse);
 
   // For a shape without corners the stroke can only extend half the stroke
   // width from the path in the x/y-axis directions. For shapes with corners
@@ -1175,9 +1192,11 @@ nsSVGUtils::PathExtentsToMaxStrokeExtents(const gfxRect& aPathExtents,
 
   // The stroke can extend even further for paths that can be affected by
   // stroke-miterlimit.
-  bool affectedByMiterlimit = (tag == nsGkAtoms::path ||
-                               tag == nsGkAtoms::polyline ||
-                               tag == nsGkAtoms::polygon);
+  bool affectedByMiterlimit =
+    aFrame->GetContent()->IsAnyOfSVGElements(nsGkAtoms::path,
+                                             nsGkAtoms::polyline,
+                                             nsGkAtoms::polygon);
+
   if (affectedByMiterlimit) {
     const nsStyleSVG* style = aFrame->StyleSVG();
     if (style->mStrokeLinejoin == NS_STYLE_STROKE_LINEJOIN_MITER &&
@@ -1441,7 +1460,7 @@ GetStrokeDashData(nsIFrame* aFrame,
 
     gfxFloat pathScale = 1.0;
 
-    if (content->Tag() == nsGkAtoms::path) {
+    if (content->IsSVGElement(nsGkAtoms::path)) {
       pathScale = static_cast<SVGPathElement*>(content)->
         GetPathLengthScale(SVGPathElement::eForStroking);
       if (pathScale <= 0) {
@@ -1595,7 +1614,7 @@ nsSVGUtils::PaintSVGGlyph(Element* aElement, gfxContext* aContext,
   aContext->GetDrawTarget()->AddUserData(&gfxTextContextPaint::sUserDataKey,
                                          aContextPaint, nullptr);
   gfxMatrix m;
-  if (frame->GetContent()->IsSVG()) {
+  if (frame->GetContent()->IsSVGElement()) {
     // PaintSVG() expects the passed transform to be the transform to its own
     // SVG user space, so we need to account for any 'transform' attribute:
     m = static_cast<nsSVGElement*>(frame->GetContent())->
@@ -1618,7 +1637,7 @@ nsSVGUtils::GetSVGGlyphExtents(Element* aElement,
 
   gfxMatrix transform(aSVGToAppSpace);
   nsIContent* content = frame->GetContent();
-  if (content->IsSVG()) {
+  if (content->IsSVGElement()) {
     transform = static_cast<nsSVGElement*>(content)->
                   PrependLocalTransformsTo(aSVGToAppSpace);
   }

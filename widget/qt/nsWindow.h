@@ -14,8 +14,6 @@
 #include "nsBaseWidget.h"
 #include "mozilla/EventForwards.h"
 
-#include "nsWeakReference.h"
-
 #include "nsGkAtoms.h"
 #include "nsIIdleServiceInternal.h"
 #include "nsIRunnable.h"
@@ -61,7 +59,6 @@ extern PRLogModuleInfo *gWidgetDrawLog;
 
 #endif /* MOZ_LOGGING */
 
-class nsIdleService;
 class QCloseEvent;
 class QFocusEvent;
 class QHideEvent;
@@ -77,8 +74,7 @@ class QWheelEvent;
 namespace mozilla {
 namespace widget {
 class MozQWidget;
-class nsWindow : public nsBaseWidget,
-                 public nsSupportsWeakReference
+class nsWindow : public nsBaseWidget
 {
 public:
     nsWindow();
@@ -91,7 +87,6 @@ public:
     NS_IMETHOD Create(nsIWidget        *aParent,
                       nsNativeWidget   aNativeParent,
                       const nsIntRect  &aRect,
-                      nsDeviceContext *aContext,
                       nsWidgetInitData *aInitData);
     NS_IMETHOD Destroy(void);
 
@@ -124,7 +119,7 @@ public:
     {
         return NS_OK;
     }
-    virtual nsIntPoint WidgetToScreenOffset();
+    virtual mozilla::LayoutDeviceIntPoint WidgetToScreenOffset();
     NS_IMETHOD DispatchEvent(mozilla::WidgetGUIEvent* aEvent,
                              nsEventStatus& aStatus);
     NS_IMETHOD CaptureRollupEvents(nsIRollupListener *aListener,
@@ -145,9 +140,9 @@ public:
                                       const InputContextAction& aAction);
     NS_IMETHOD_(InputContext) GetInputContext();
 
-    virtual uint32_t GetGLFrameBufferFormat() MOZ_OVERRIDE;
+    virtual uint32_t GetGLFrameBufferFormat() override;
 
-    mozilla::TemporaryRef<mozilla::gfx::DrawTarget> StartRemoteDrawing() MOZ_OVERRIDE;
+    mozilla::TemporaryRef<mozilla::gfx::DrawTarget> StartRemoteDrawing() override;
 
     // Widget notifications
     virtual void OnPaint();

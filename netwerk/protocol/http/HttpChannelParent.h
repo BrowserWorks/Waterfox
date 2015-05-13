@@ -20,6 +20,7 @@
 #include "nsHttpChannel.h"
 #include "nsIAuthPromptProvider.h"
 #include "mozilla/dom/ipc/IdType.h"
+#include "nsINetworkInterceptController.h"
 
 class nsICacheEntry;
 class nsIAssociatedContentSecurity;
@@ -35,13 +36,15 @@ namespace net {
 
 class HttpChannelParentListener;
 
-class HttpChannelParent : public PHttpChannelParent
-                        , public nsIParentRedirectingChannel
-                        , public nsIProgressEventSink
-                        , public nsIInterfaceRequestor
-                        , public ADivertableParentChannel
-                        , public nsIAuthPromptProvider
-                        , public DisconnectableParent
+class HttpChannelParent final : public PHttpChannelParent
+                              , public nsIParentRedirectingChannel
+                              , public nsIProgressEventSink
+                              , public nsIInterfaceRequestor
+                              , public ADivertableParentChannel
+                              , public nsIAuthPromptProvider
+                              , public nsINetworkInterceptController
+                              , public DisconnectableParent
+                              , public HttpChannelSecurityWarningReporter
 {
   virtual ~HttpChannelParent();
 
@@ -54,6 +57,7 @@ public:
   NS_DECL_NSIPROGRESSEVENTSINK
   NS_DECL_NSIINTERFACEREQUESTOR
   NS_DECL_NSIAUTHPROMPTPROVIDER
+  NS_DECL_NSINETWORKINTERCEPTCONTROLLER
 
   HttpChannelParent(const dom::PBrowserOrId& iframeEmbedding,
                     nsILoadContext* aLoadContext,
@@ -62,8 +66,8 @@ public:
   bool Init(const HttpChannelCreationArgs& aOpenArgs);
 
   // ADivertableParentChannel functions.
-  void DivertTo(nsIStreamListener *aListener) MOZ_OVERRIDE;
-  nsresult SuspendForDiversion() MOZ_OVERRIDE;
+  void DivertTo(nsIStreamListener *aListener) override;
+  nsresult SuspendForDiversion() override;
 
   // Calls OnStartRequest for "DivertTo" listener, then notifies child channel
   // that it should divert OnDataAvailable and OnStopRequest calls to this
@@ -110,32 +114,35 @@ protected:
                    const bool&                chooseApplicationCache,
                    const nsCString&           appCacheClientID,
                    const bool&                allowSpdy,
+                   const bool&                allowAltSvc,
                    const OptionalFileDescriptorSet& aFds,
                    const ipc::PrincipalInfo&  aRequestingPrincipalInfo,
                    const ipc::PrincipalInfo&  aTriggeringPrincipalInfo,
                    const uint32_t&            aSecurityFlags,
                    const uint32_t&            aContentPolicyType,
-                   const uint32_t&            aInnerWindowID);
+                   const uint32_t&            aInnerWindowID,
+                   const OptionalHttpResponseHead& aSynthesizedResponseHead,
+                   const OptionalHttpChannelCacheKey& aCacheKey);
 
-  virtual bool RecvSetPriority(const uint16_t& priority) MOZ_OVERRIDE;
-  virtual bool RecvSetClassOfService(const uint32_t& cos) MOZ_OVERRIDE;
-  virtual bool RecvSetCacheTokenCachedCharset(const nsCString& charset) MOZ_OVERRIDE;
-  virtual bool RecvSuspend() MOZ_OVERRIDE;
-  virtual bool RecvResume() MOZ_OVERRIDE;
-  virtual bool RecvCancel(const nsresult& status) MOZ_OVERRIDE;
+  virtual bool RecvSetPriority(const uint16_t& priority) override;
+  virtual bool RecvSetClassOfService(const uint32_t& cos) override;
+  virtual bool RecvSetCacheTokenCachedCharset(const nsCString& charset) override;
+  virtual bool RecvSuspend() override;
+  virtual bool RecvResume() override;
+  virtual bool RecvCancel(const nsresult& status) override;
   virtual bool RecvRedirect2Verify(const nsresult& result,
                                    const RequestHeaderTuples& changedHeaders,
-                                   const OptionalURIParams& apiRedirectUri) MOZ_OVERRIDE;
+                                   const OptionalURIParams& apiRedirectUri) override;
   virtual bool RecvUpdateAssociatedContentSecurity(const int32_t& broken,
-                                                   const int32_t& no) MOZ_OVERRIDE;
-  virtual bool RecvDocumentChannelCleanup() MOZ_OVERRIDE;
-  virtual bool RecvMarkOfflineCacheEntryAsForeign() MOZ_OVERRIDE;
+                                                   const int32_t& no) override;
+  virtual bool RecvDocumentChannelCleanup() override;
+  virtual bool RecvMarkOfflineCacheEntryAsForeign() override;
   virtual bool RecvDivertOnDataAvailable(const nsCString& data,
                                          const uint64_t& offset,
-                                         const uint32_t& count) MOZ_OVERRIDE;
-  virtual bool RecvDivertOnStopRequest(const nsresult& statusCode) MOZ_OVERRIDE;
-  virtual bool RecvDivertComplete() MOZ_OVERRIDE;
-  virtual void ActorDestroy(ActorDestroyReason why) MOZ_OVERRIDE;
+                                         const uint32_t& count) override;
+  virtual bool RecvDivertOnStopRequest(const nsresult& statusCode) override;
+  virtual bool RecvDivertComplete() override;
+  virtual void ActorDestroy(ActorDestroyReason why) override;
 
   // Supporting function for ADivertableParentChannel.
   nsresult ResumeForDiversion();
@@ -146,8 +153,11 @@ protected:
   friend class HttpChannelParentListener;
   nsRefPtr<mozilla::dom::TabParent> mTabParent;
 
-  void OfflineDisconnect() MOZ_OVERRIDE;
-  uint32_t GetAppId() MOZ_OVERRIDE;
+  void OfflineDisconnect() override;
+  uint32_t GetAppId() override;
+
+  nsresult ReportSecurityMessage(const nsAString& aMessageTag,
+                                 const nsAString& aMessageCategory) override;
 
 private:
   nsRefPtr<nsHttpChannel>       mChannel;
@@ -163,8 +173,8 @@ private:
   // state for combining OnStatus/OnProgress with OnDataAvailable
   // into one IPDL call to child.
   nsresult mStoredStatus;
-  uint64_t mStoredProgress;
-  uint64_t mStoredProgressMax;
+  int64_t mStoredProgress;
+  int64_t mStoredProgressMax;
 
   bool mSentRedirect1Begin          : 1;
   bool mSentRedirect1BeginFailed    : 1;
@@ -176,6 +186,8 @@ private:
 
   nsCOMPtr<nsILoadContext> mLoadContext;
   nsRefPtr<nsHttpHandler>  mHttpHandler;
+
+  nsAutoPtr<nsHttpResponseHead> mSynthesizedResponseHead;
 
   nsRefPtr<HttpChannelParentListener> mParentListener;
   // This is listener we are diverting to.

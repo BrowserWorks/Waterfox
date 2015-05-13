@@ -16,11 +16,13 @@
 
 #include "jsscriptinlines.h"
 
+#include "vm/ScopeObject-inl.h"
+
 namespace js {
 namespace jit {
 
 inline void
-BaselineFrame::pushOnScopeChain(ScopeObject &scope)
+BaselineFrame::pushOnScopeChain(ScopeObject& scope)
 {
     MOZ_ASSERT(*scopeChain() == scope.enclosingScope() ||
                *scopeChain() == scope.as<CallObject>().enclosingScope().as<DeclEnvObject>().enclosingScope());
@@ -34,7 +36,7 @@ BaselineFrame::popOffScopeChain()
 }
 
 inline void
-BaselineFrame::popWith(JSContext *cx)
+BaselineFrame::popWith(JSContext* cx)
 {
     if (MOZ_UNLIKELY(isDebuggee()))
         DebugScopes::onPopWith(this);
@@ -43,12 +45,19 @@ BaselineFrame::popWith(JSContext *cx)
     popOffScopeChain();
 }
 
+inline void
+BaselineFrame::replaceInnermostScope(ScopeObject& scope)
+{
+    MOZ_ASSERT(scope.enclosingScope() == scopeChain_->as<ScopeObject>().enclosingScope());
+    scopeChain_ = &scope;
+}
+
 inline bool
-BaselineFrame::pushBlock(JSContext *cx, Handle<StaticBlockObject *> block)
+BaselineFrame::pushBlock(JSContext* cx, Handle<StaticBlockObject*> block)
 {
     MOZ_ASSERT(block->needsClone());
 
-    ClonedBlockObject *clone = ClonedBlockObject::create(cx, block, this);
+    ClonedBlockObject* clone = ClonedBlockObject::create(cx, block, this);
     if (!clone)
         return false;
     pushOnScopeChain(*clone);
@@ -57,20 +66,32 @@ BaselineFrame::pushBlock(JSContext *cx, Handle<StaticBlockObject *> block)
 }
 
 inline void
-BaselineFrame::popBlock(JSContext *cx)
+BaselineFrame::popBlock(JSContext* cx)
 {
     MOZ_ASSERT(scopeChain_->is<ClonedBlockObject>());
 
     popOffScopeChain();
 }
 
-inline CallObject &
+inline bool
+BaselineFrame::freshenBlock(JSContext* cx)
+{
+    Rooted<ClonedBlockObject*> current(cx, &scopeChain_->as<ClonedBlockObject>());
+    ClonedBlockObject* clone = ClonedBlockObject::clone(cx, current);
+    if (!clone)
+        return false;
+
+    replaceInnermostScope(*clone);
+    return true;
+}
+
+inline CallObject&
 BaselineFrame::callObj() const
 {
     MOZ_ASSERT(hasCallObj());
     MOZ_ASSERT(fun()->isHeavyweight());
 
-    JSObject *obj = scopeChain();
+    JSObject* obj = scopeChain();
     while (!obj->is<CallObject>())
         obj = obj->enclosingScope();
     return obj->as<CallObject>();

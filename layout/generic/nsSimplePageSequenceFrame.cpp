@@ -42,7 +42,6 @@ static const char sPrintOptionsContractID[] = "@mozilla.org/gfx/printsettings-se
 //
 
 #include "prlog.h"
-#ifdef PR_LOGGING 
 PRLogModuleInfo *
 GetLayoutPrintingLog()
 {
@@ -52,9 +51,6 @@ GetLayoutPrintingLog()
   return sLog;
 }
 #define PR_PL(_p1)  PR_LOG(GetLayoutPrintingLog(), PR_LOG_DEBUG, _p1)
-#else
-#define PR_PL(_p1)
-#endif
 
 nsSimplePageSequenceFrame*
 NS_NewSimplePageSequenceFrame(nsIPresShell* aPresShell, nsStyleContext* aContext)
@@ -161,6 +157,7 @@ nsSimplePageSequenceFrame::Reflow(nsPresContext*          aPresContext,
                                   const nsHTMLReflowState& aReflowState,
                                   nsReflowStatus&          aStatus)
 {
+  MarkInReflow();
   NS_PRECONDITION(aPresContext->IsRootPaginatedDocument(),
                   "A Page Sequence is only for real pages");
   DO_GLOBAL_REFLOW_COUNT("nsSimplePageSequenceFrame");
@@ -168,6 +165,32 @@ nsSimplePageSequenceFrame::Reflow(nsPresContext*          aPresContext,
   NS_FRAME_TRACE_REFLOW_IN("nsSimplePageSequenceFrame::Reflow");
 
   aStatus = NS_FRAME_COMPLETE;  // we're always complete
+
+  // Don't do incremental reflow until we've taught tables how to do
+  // it right in paginated mode.
+  if (!(GetStateBits() & NS_FRAME_FIRST_REFLOW)) {
+    // Return our desired size
+    SetDesiredSize(aDesiredSize, aReflowState, mSize.width, mSize.height);
+    aDesiredSize.SetOverflowAreasToDesiredBounds();
+    FinishAndStoreOverflow(&aDesiredSize);
+
+    if (GetRect().Width() != aDesiredSize.Width()) {
+      // Our width is changing; we need to re-center our children (our pages).
+      for (nsFrameList::Enumerator e(mFrames); !e.AtEnd(); e.Next()) {
+        nsIFrame* child = e.get();
+        nsMargin pageCSSMargin = child->GetUsedMargin();
+        nscoord centeringMargin =
+          ComputeCenteringMargin(aReflowState.ComputedWidth(),
+                                 child->GetRect().width,
+                                 pageCSSMargin);
+        nscoord newX = pageCSSMargin.left + centeringMargin;
+
+        // Adjust the child's x-position:
+        child->MovePositionBy(nsPoint(newX - child->GetNormalPosition().x, 0));
+      }
+    }
+    return;
+  }
 
   // See if we can get a Print Settings from the Context
   if (!mPageData->mPrintSettings &&

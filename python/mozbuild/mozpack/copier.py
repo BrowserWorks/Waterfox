@@ -10,7 +10,7 @@ from mozpack.files import (
     BaseFile,
     Dest,
 )
-import mozpack.path
+import mozpack.path as mozpath
 import errno
 from collections import (
     Counter,
@@ -41,7 +41,7 @@ class FileRegistry(object):
         partial_paths = []
         partial_path = path
         while partial_path:
-            partial_path = mozpack.path.dirname(partial_path)
+            partial_path = mozpath.dirname(partial_path)
             if partial_path:
                 partial_paths.append(partial_path)
         return partial_paths
@@ -73,13 +73,13 @@ class FileRegistry(object):
         '''
         if '*' in pattern:
             return [p for p in self.paths()
-                    if mozpack.path.match(p, pattern)]
+                    if mozpath.match(p, pattern)]
         if pattern == '':
             return self.paths()
         if pattern in self._files:
             return [pattern]
         return [p for p in self.paths()
-                if mozpack.path.basedir(p, [pattern]) == pattern]
+                if mozpath.basedir(p, [pattern]) == pattern]
 
     def remove(self, pattern):
         '''
@@ -315,6 +315,14 @@ class FileCopier(FileRegistry):
 
         # Now we reconcile the state of the world against what we want.
 
+        # Install files.
+        for p, f in self:
+            destfile = os.path.normpath(os.path.join(destination, p))
+            if f.copy(destfile, skip_if_older):
+                result.updated_files.add(destfile)
+            else:
+                result.existing_files.add(destfile)
+
         # Remove files no longer accounted for.
         if remove_unaccounted:
             for f in existing_files - dest_files:
@@ -326,14 +334,6 @@ class FileCopier(FileRegistry):
 
                 os.remove(f)
                 result.removed_files.add(f)
-
-        # Install files.
-        for p, f in self:
-            destfile = os.path.normpath(os.path.join(destination, p))
-            if f.copy(destfile, skip_if_older):
-                result.updated_files.add(destfile)
-            else:
-                result.existing_files.add(destfile)
 
         if not remove_empty_directories:
             return result

@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim:set ts=2 sw=2 sts=2 et cindent: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -17,9 +17,8 @@ class nsMediaList;
 namespace mozilla {
 namespace dom {
 
-class ResponsiveImageSelector;
-class HTMLSourceElement MOZ_FINAL : public nsGenericHTMLElement,
-                                    public nsIDOMHTMLSourceElement
+class HTMLSourceElement final : public nsGenericHTMLElement,
+                                public nsIDOMHTMLSourceElement
 {
 public:
   explicit HTMLSourceElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
@@ -32,17 +31,23 @@ public:
   // nsIDOMHTMLSourceElement
   NS_DECL_NSIDOMHTMLSOURCEELEMENT
 
-  virtual nsresult Clone(mozilla::dom::NodeInfo* aNodeInfo, nsINode** aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(mozilla::dom::NodeInfo* aNodeInfo, nsINode** aResult) const override;
 
   // Override BindToTree() so that we can trigger a load when we add a
   // child source element.
   virtual nsresult BindToTree(nsIDocument* aDocument, nsIContent* aParent,
                               nsIContent* aBindingParent,
-                              bool aCompileEventHandlers) MOZ_OVERRIDE;
+                              bool aCompileEventHandlers) override;
 
   // If this element's media attr matches for its owner document.  Returns true
   // if no media attr was set.
   bool MatchesCurrentMedia();
+
+  // True if a source tag would match the given media attribute for the
+  // specified document. Used by the preloader to determine valid <source> tags
+  // prior to DOM creation.
+  static bool WouldMatchMediaForDocument(const nsAString& aMediaStr,
+                                         const nsIDocument *aDocument);
 
   // WebIDL
   void GetSrc(nsString& aSrc)
@@ -54,7 +59,7 @@ public:
     SetHTMLAttr(nsGkAtoms::src, aSrc, rv);
   }
 
-  void GetType(nsString& aType)
+  void GetType(DOMString& aType)
   {
     GetHTMLAttr(nsGkAtoms::type, aType);
   }
@@ -63,7 +68,7 @@ public:
     SetHTMLAttr(nsGkAtoms::type, aType, rv);
   }
 
-  void GetSrcset(nsString& aSrcset)
+  void GetSrcset(DOMString& aSrcset)
   {
     GetHTMLAttr(nsGkAtoms::srcset, aSrcset);
   }
@@ -72,7 +77,7 @@ public:
     SetHTMLAttr(nsGkAtoms::srcset, aSrcset, rv);
   }
 
-  void GetSizes(nsString& aSizes)
+  void GetSizes(DOMString& aSizes)
   {
     GetHTMLAttr(nsGkAtoms::sizes, aSizes);
   }
@@ -81,7 +86,7 @@ public:
     SetHTMLAttr(nsGkAtoms::sizes, aSizes, rv);
   }
 
-  void GetMedia(nsString& aMedia)
+  void GetMedia(DOMString& aMedia)
   {
     GetHTMLAttr(nsGkAtoms::media, aMedia);
   }
@@ -93,15 +98,15 @@ public:
 protected:
   virtual ~HTMLSourceElement();
 
-  virtual JSObject* WrapNode(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 protected:
-  virtual void GetItemValueText(nsAString& text) MOZ_OVERRIDE;
-  virtual void SetItemValueText(const nsAString& text) MOZ_OVERRIDE;
+  virtual void GetItemValueText(DOMString& text) override;
+  virtual void SetItemValueText(const nsAString& text) override;
 
   virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                 const nsAttrValue* aValue,
-                                bool aNotify) MOZ_OVERRIDE;
+                                bool aNotify) override;
 
 
 private:

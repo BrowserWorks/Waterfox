@@ -13,16 +13,17 @@
 #include "nsDebug.h"                    // for NS_WARNING
 #include "gfxCore.h"                    // for NS_GFX
 #include "mozilla/Likely.h"             // for MOZ_UNLIKELY
-#include "mozilla/gfx/BaseRect.h"       // for BaseRect
+#include "mozilla/gfx/Rect.h"
 #include "nsCoord.h"                    // for nscoord, etc
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_CTOR, etc
 #include "nsPoint.h"                    // for nsIntPoint, nsPoint
 #include "nsSize.h"                     // for nsIntSize, nsSize
 #include "nscore.h"                     // for NS_BUILD_REFCNT_LOGGING
 
-struct nsIntRect;
 struct nsMargin;
 struct nsIntMargin;
+
+typedef mozilla::gfx::IntRect nsIntRect;
 
 struct NS_GFX nsRect :
   public mozilla::gfx::BaseRect<nscoord, nsRect, nsPoint, nsSize, nsMargin> {
@@ -59,7 +60,7 @@ struct NS_GFX nsRect :
   // overflowing nscoord values in the 'width' and 'height' fields by
   // clamping the width and height values to nscoord_MAX if necessary.
 
-  nsRect SaturatingUnion(const nsRect& aRect) const
+  MOZ_WARN_UNUSED_RESULT nsRect SaturatingUnion(const nsRect& aRect) const
   {
     if (IsEmpty()) {
       return aRect;
@@ -70,7 +71,7 @@ struct NS_GFX nsRect :
     }
   }
 
-  nsRect SaturatingUnionEdges(const nsRect& aRect) const
+  MOZ_WARN_UNUSED_RESULT nsRect SaturatingUnionEdges(const nsRect& aRect) const
   {
 #ifdef NS_COORD_IS_FLOAT
     return UnionEdges(aRect);
@@ -107,7 +108,7 @@ struct NS_GFX nsRect :
 
 #ifndef NS_COORD_IS_FLOAT
   // Make all nsRect Union methods be saturating.
-  nsRect UnionEdges(const nsRect& aRect) const
+  MOZ_WARN_UNUSED_RESULT nsRect UnionEdges(const nsRect& aRect) const
   {
     return SaturatingUnionEdges(aRect);
   }
@@ -115,7 +116,7 @@ struct NS_GFX nsRect :
   {
     *this = aRect1.UnionEdges(aRect2);
   }
-  nsRect Union(const nsRect& aRect) const
+  MOZ_WARN_UNUSED_RESULT nsRect Union(const nsRect& aRect) const
   {
     return SaturatingUnion(aRect);
   }
@@ -134,63 +135,45 @@ struct NS_GFX nsRect :
     *this = aRect1.SaturatingUnionEdges(aRect2);
   }
 
-  // Converts this rect from aFromAPP, an appunits per pixel ratio, to aToAPP.
-  // In the RoundOut version we make the rect the smallest rect containing the
-  // unrounded result. In the RoundIn version we make the rect the largest rect
-  // contained in the unrounded result.
-  // Note: this can turn an empty rectangle into a non-empty rectangle
-  inline nsRect ConvertAppUnitsRoundOut(int32_t aFromAPP, int32_t aToAPP) const;
-  inline nsRect ConvertAppUnitsRoundIn(int32_t aFromAPP, int32_t aToAPP) const;
+  /**
+   * Return this rect scaled to a different appunits per pixel (APP) ratio.
+   * In the RoundOut version we make the rect the smallest rect containing the
+   * unrounded result. In the RoundIn version we make the rect the largest rect
+   * contained in the unrounded result.
+   * @param aFromAPP the APP to scale from
+   * @param aToAPP the APP to scale to
+   * @note this can turn an empty rectangle into a non-empty rectangle
+   */
+  MOZ_WARN_UNUSED_RESULT inline nsRect
+    ScaleToOtherAppUnitsRoundOut(int32_t aFromAPP, int32_t aToAPP) const;
+  MOZ_WARN_UNUSED_RESULT inline nsRect
+    ScaleToOtherAppUnitsRoundIn(int32_t aFromAPP, int32_t aToAPP) const;
 
-  inline nsIntRect ScaleToNearestPixels(float aXScale, float aYScale,
-                                        nscoord aAppUnitsPerPixel) const;
-  inline nsIntRect ToNearestPixels(nscoord aAppUnitsPerPixel) const;
+  MOZ_WARN_UNUSED_RESULT inline mozilla::gfx::IntRect
+  ScaleToNearestPixels(float aXScale, float aYScale,
+                       nscoord aAppUnitsPerPixel) const;
+
+  MOZ_WARN_UNUSED_RESULT inline mozilla::gfx::IntRect
+  ToNearestPixels(nscoord aAppUnitsPerPixel) const;
+
   // Note: this can turn an empty rectangle into a non-empty rectangle
-  inline nsIntRect ScaleToOutsidePixels(float aXScale, float aYScale,
-                                        nscoord aAppUnitsPerPixel) const;
+  MOZ_WARN_UNUSED_RESULT inline mozilla::gfx::IntRect
+  ScaleToOutsidePixels(float aXScale, float aYScale,
+                       nscoord aAppUnitsPerPixel) const;
+
   // Note: this can turn an empty rectangle into a non-empty rectangle
-  inline nsIntRect ToOutsidePixels(nscoord aAppUnitsPerPixel) const;
-  inline nsIntRect ScaleToInsidePixels(float aXScale, float aYScale,
-                                       nscoord aAppUnitsPerPixel) const;
-  inline nsIntRect ToInsidePixels(nscoord aAppUnitsPerPixel) const;
+  MOZ_WARN_UNUSED_RESULT inline mozilla::gfx::IntRect
+  ToOutsidePixels(nscoord aAppUnitsPerPixel) const;
+
+  MOZ_WARN_UNUSED_RESULT inline mozilla::gfx::IntRect
+  ScaleToInsidePixels(float aXScale, float aYScale,
+                      nscoord aAppUnitsPerPixel) const;
+
+  MOZ_WARN_UNUSED_RESULT inline mozilla::gfx::IntRect
+  ToInsidePixels(nscoord aAppUnitsPerPixel) const;
 
   // This is here only to keep IPDL-generated code happy. DO NOT USE.
   bool operator==(const nsRect& aRect) const
-  {
-    return IsEqualEdges(aRect);
-  }
-};
-
-struct NS_GFX nsIntRect :
-  public mozilla::gfx::BaseRect<int32_t, nsIntRect, nsIntPoint, nsIntSize, nsIntMargin> {
-  typedef mozilla::gfx::BaseRect<int32_t, nsIntRect, nsIntPoint, nsIntSize, nsIntMargin> Super;
-
-  // Constructors
-  nsIntRect() : Super()
-  {
-  }
-  nsIntRect(const nsIntRect& aRect) : Super(aRect)
-  {
-  }
-  nsIntRect(const nsIntPoint& aOrigin, const nsIntSize &aSize) : Super(aOrigin, aSize)
-  {
-  }
-  nsIntRect(int32_t aX, int32_t aY, int32_t aWidth, int32_t aHeight) :
-      Super(aX, aY, aWidth, aHeight)
-  {
-  }
-
-  inline nsRect ToAppUnits(nscoord aAppUnitsPerPixel) const;
-
-  // Returns a special nsIntRect that's used in some places to signify
-  // "all available space".
-  static const nsIntRect& GetMaxSizedIntRect() {
-    static const nsIntRect r(0, 0, INT32_MAX, INT32_MAX);
-    return r;
-  }
-
-  // This is here only to keep IPDL-generated code happy. DO NOT USE.
-  bool operator==(const nsIntRect& aRect) const
   {
     return IsEqualEdges(aRect);
   }
@@ -201,7 +184,7 @@ struct NS_GFX nsIntRect :
  */
 
 inline nsRect
-nsRect::ConvertAppUnitsRoundOut(int32_t aFromAPP, int32_t aToAPP) const
+nsRect::ScaleToOtherAppUnitsRoundOut(int32_t aFromAPP, int32_t aToAPP) const
 {
   if (aFromAPP == aToAPP) {
     return *this;
@@ -219,7 +202,7 @@ nsRect::ConvertAppUnitsRoundOut(int32_t aFromAPP, int32_t aToAPP) const
 }
 
 inline nsRect
-nsRect::ConvertAppUnitsRoundIn(int32_t aFromAPP, int32_t aToAPP) const
+nsRect::ScaleToOtherAppUnitsRoundIn(int32_t aFromAPP, int32_t aToAPP) const
 {
   if (aFromAPP == aToAPP) {
     return *this;
@@ -237,11 +220,11 @@ nsRect::ConvertAppUnitsRoundIn(int32_t aFromAPP, int32_t aToAPP) const
 }
 
 // scale the rect but round to preserve centers
-inline nsIntRect
+inline mozilla::gfx::IntRect
 nsRect::ScaleToNearestPixels(float aXScale, float aYScale,
                              nscoord aAppUnitsPerPixel) const
 {
-  nsIntRect rect;
+  mozilla::gfx::IntRect rect;
   rect.x = NSToIntRoundUp(NSAppUnitsToDoublePixels(x, aAppUnitsPerPixel) * aXScale);
   rect.y = NSToIntRoundUp(NSAppUnitsToDoublePixels(y, aAppUnitsPerPixel) * aYScale);
   // Avoid negative widths and heights due to overflow
@@ -253,11 +236,11 @@ nsRect::ScaleToNearestPixels(float aXScale, float aYScale,
 }
 
 // scale the rect but round to smallest containing rect
-inline nsIntRect
+inline mozilla::gfx::IntRect
 nsRect::ScaleToOutsidePixels(float aXScale, float aYScale,
                              nscoord aAppUnitsPerPixel) const
 {
-  nsIntRect rect;
+  mozilla::gfx::IntRect rect;
   rect.x = NSToIntFloor(NSAppUnitsToFloatPixels(x, float(aAppUnitsPerPixel)) * aXScale);
   rect.y = NSToIntFloor(NSAppUnitsToFloatPixels(y, float(aAppUnitsPerPixel)) * aYScale);
   // Avoid negative widths and heights due to overflow
@@ -269,11 +252,11 @@ nsRect::ScaleToOutsidePixels(float aXScale, float aYScale,
 }
 
 // scale the rect but round to largest contained rect
-inline nsIntRect
+inline mozilla::gfx::IntRect
 nsRect::ScaleToInsidePixels(float aXScale, float aYScale,
                             nscoord aAppUnitsPerPixel) const
 {
-  nsIntRect rect;
+  mozilla::gfx::IntRect rect;
   rect.x = NSToIntCeil(NSAppUnitsToFloatPixels(x, float(aAppUnitsPerPixel)) * aXScale);
   rect.y = NSToIntCeil(NSAppUnitsToFloatPixels(y, float(aAppUnitsPerPixel)) * aYScale);
   // Avoid negative widths and heights due to overflow
@@ -284,33 +267,29 @@ nsRect::ScaleToInsidePixels(float aXScale, float aYScale,
   return rect;
 }
 
-inline nsIntRect
+inline mozilla::gfx::IntRect
 nsRect::ToNearestPixels(nscoord aAppUnitsPerPixel) const
 {
   return ScaleToNearestPixels(1.0f, 1.0f, aAppUnitsPerPixel);
 }
 
-inline nsIntRect
+inline mozilla::gfx::IntRect
 nsRect::ToOutsidePixels(nscoord aAppUnitsPerPixel) const
 {
   return ScaleToOutsidePixels(1.0f, 1.0f, aAppUnitsPerPixel);
 }
 
-inline nsIntRect
+inline mozilla::gfx::IntRect
 nsRect::ToInsidePixels(nscoord aAppUnitsPerPixel) const
 {
   return ScaleToInsidePixels(1.0f, 1.0f, aAppUnitsPerPixel);
 }
 
+const mozilla::gfx::IntRect& GetMaxSizedIntRect();
+
 // app units are integer multiples of pixels, so no rounding needed
-inline nsRect
-nsIntRect::ToAppUnits(nscoord aAppUnitsPerPixel) const
-{
-  return nsRect(NSIntPixelsToAppUnits(x, aAppUnitsPerPixel),
-                NSIntPixelsToAppUnits(y, aAppUnitsPerPixel),
-                NSIntPixelsToAppUnits(width, aAppUnitsPerPixel),
-                NSIntPixelsToAppUnits(height, aAppUnitsPerPixel));
-}
+nsRect
+ToAppUnits(const mozilla::gfx::IntRect& aRect, nscoord aAppUnitsPerPixel);
 
 #ifdef DEBUG
 // Diagnostics

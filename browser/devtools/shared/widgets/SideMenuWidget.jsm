@@ -10,8 +10,11 @@ const Cu = Components.utils;
 
 Cu.import("resource:///modules/devtools/ViewHelpers.jsm");
 Cu.import("resource://gre/modules/devtools/event-emitter.js");
+const {DeferredTask} = Cu.import("resource://gre/modules/DeferredTask.jsm", {});
 
 this.EXPORTED_SYMBOLS = ["SideMenuWidget"];
+
+const SCROLL_FREQUENCY = 16;
 
 /**
  * A simple side menu, with the ability of grouping menu items.
@@ -22,6 +25,7 @@ this.EXPORTED_SYMBOLS = ["SideMenuWidget"];
  * @param nsIDOMNode aNode
  *        The element associated with the widget.
  * @param Object aOptions
+ *        - contextMenu: optional element or element ID that serves as a context menu.
  *        - showArrows: specifies if items should display horizontal arrows.
  *        - showItemCheckboxes: specifies if items should display checkboxes.
  *        - showGroupCheckboxes: specifies if groups should display checkboxes.
@@ -31,7 +35,8 @@ this.SideMenuWidget = function SideMenuWidget(aNode, aOptions={}) {
   this.window = this.document.defaultView;
   this._parent = aNode;
 
-  let { showArrows, showItemCheckboxes, showGroupCheckboxes } = aOptions;
+  let { contextMenu, showArrows, showItemCheckboxes, showGroupCheckboxes } = aOptions;
+  this._contextMenu = contextMenu || null;
   this._showArrows = showArrows || false;
   this._showItemCheckboxes = showItemCheckboxes || false;
   this._showGroupCheckboxes = showGroupCheckboxes || false;
@@ -45,6 +50,7 @@ this.SideMenuWidget = function SideMenuWidget(aNode, aOptions={}) {
   this._list.setAttribute("with-item-checkboxes", this._showItemCheckboxes);
   this._list.setAttribute("with-group-checkboxes", this._showGroupCheckboxes);
   this._list.setAttribute("tabindex", "0");
+  this._list.addEventListener("contextmenu", e => this._showContextMenu(e), false);
   this._list.addEventListener("keypress", e => this.emit("keyPress", e), false);
   this._list.addEventListener("mousedown", e => this.emit("mousePress", e), false);
   this._parent.appendChild(this._list);
@@ -110,18 +116,72 @@ SideMenuWidget.prototype = {
       !this._selectedItem &&
       // 3. The new item should be appended at the end of the list.
       (aIndex < 0 || aIndex >= this._orderedMenuElementsArray.length) &&
-      // 4. The list should already be scrolled at the bottom.
-      (this._list.scrollTop + this._list.clientHeight >= this._list.scrollHeight);
+      // 4. We aren't waiting for a scroll to happen.
+      (!this._scrollToBottomTask || !this._scrollToBottomTask.isArmed) &&
+      // 5. The list should already be scrolled at the bottom.
+      this.isScrolledToBottom();
 
     let group = this._getMenuGroupForName(aAttachment.group);
     let item = this._getMenuItemForGroup(group, aContents, aAttachment);
     let element = item.insertSelfAt(aIndex);
 
     if (maintainScrollAtBottom) {
-      this._list.scrollTop = this._list.scrollHeight;
+      this.scrollToBottom();
     }
 
     return element;
+  },
+
+  /**
+   * Checks to see if the list is scrolled all the way to the bottom.
+   * Uses getBoundsWithoutFlushing to limit the performance impact
+   * of this function.
+   *
+   * @return bool
+   */
+  isScrolledToBottom: function() {
+    if (this._list.lastElementChild) {
+      let utils = this.window.QueryInterface(Ci.nsIInterfaceRequestor)
+                             .getInterface(Ci.nsIDOMWindowUtils);
+      let childRect = utils.getBoundsWithoutFlushing(this._list.lastElementChild);
+      let listRect = utils.getBoundsWithoutFlushing(this._list);
+
+      // Cheap way to check if it's scrolled all the way to the bottom.
+      return (childRect.height + childRect.top) <= listRect.bottom;
+    }
+
+    return false;
+  },
+
+  /**
+   * Scroll the list to the bottom after a timeout.
+   * If the user scrolls in the meantime, cancel this operation.
+   */
+  scrollToBottom: function() {
+    // Lazily attach this functionality to the object, so it won't get
+    // created unless if this scrollToBottom behavior is needed.
+    if (!this._scrollToBottomTask) {
+      // The scroll event fires asynchronously, so we need to keep a bit to
+      // distinguish between user-initiated events and scrollTop assignment.
+      let ignoreNextScroll = false;
+
+      this._scrollToBottomTask = new DeferredTask(() => {
+        ignoreNextScroll = true;
+        this._list.scrollTop = this._list.scrollHeight;
+        this.emit("scroll-to-bottom");
+      }, SCROLL_FREQUENCY);
+
+      // On a user scroll, cancel any pending calls to the scroll function.
+      this._list.addEventListener("scroll", () => {
+        if (!ignoreNextScroll && this._scrollToBottomTask.isArmed &&
+            !this.isScrolledToBottom()) {
+          this._scrollToBottomTask.disarm();
+        }
+        ignoreNextScroll = false;
+      }, true);
+    }
+
+    this._scrollToBottomTask.arm();
   },
 
   /**
@@ -389,6 +449,26 @@ SideMenuWidget.prototype = {
     }
   },
 
+  /**
+   * Shows the contextMenu element.
+   */
+  _showContextMenu: function(e) {
+    if (!this._contextMenu) {
+      return;
+    }
+
+    // Don't show the menu if a descendant node is going to be visible also.
+    let node = e.originalTarget;
+    while (node && node !== this._list) {
+      if (node.hasAttribute("contextmenu")) {
+        return;
+      }
+      node = node.parentNode;
+    }
+
+    this._contextMenu.openPopupAtScreen(e.screenX, e.screenY, true);
+  },
+
   window: null,
   document: null,
   _showArrows: false,
@@ -496,7 +576,7 @@ SideMenuGroup.prototype = {
     for (let group of groupsArray) {
       let name = group.getAttribute("name");
       if (sortPredicate(name, identifier) > 0 && // Insertion sort at its best :)
-          !name.contains(identifier)) { // Least significant group should be last.
+          !name.includes(identifier)) { // Least significant group should be last.
         return groupsArray.indexOf(group);
       }
     }

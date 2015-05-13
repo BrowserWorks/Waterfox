@@ -27,7 +27,10 @@ this.EXPORTED_SYMBOLS = [
 
 const { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components;
 
+Cu.importGlobalProperties(["URL"]);
+
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://gre/modules/AppConstants.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Services",
                                   "resource://gre/modules/Services.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
@@ -52,14 +55,10 @@ XPCOMUtils.defineLazyModuleGetter(this, "History",
 // refresh instead.
 const MIN_TRANSACTIONS_FOR_BATCH = 5;
 
-#ifdef XP_MACOSX
-// On Mac OSX, the transferable system converts "\r\n" to "\n\n", where we
-// really just want "\n".
-const NEWLINE= "\n";
-#else
-// On other platforms, the transferable system converts "\r\n" to "\n".
-const NEWLINE = "\r\n";
-#endif
+// On Mac OSX, the transferable system converts "\r\n" to "\n\n", where
+// we really just want "\n". On other platforms, the transferable system
+// converts "\r\n" to "\n".
+const NEWLINE = AppConstants.platform == "macosx" ? "\n" : "\r\n";
 
 function QI_node(aNode, aIID) {
   var result = null;
@@ -72,6 +71,55 @@ function QI_node(aNode, aIID) {
 }
 function asContainer(aNode) QI_node(aNode, Ci.nsINavHistoryContainerResultNode);
 function asQuery(aNode) QI_node(aNode, Ci.nsINavHistoryQueryResultNode);
+
+/**
+ * Sends a bookmarks notification through the given observers.
+ *
+ * @param observers
+ *        array of nsINavBookmarkObserver objects.
+ * @param notification
+ *        the notification name.
+ * @param args
+ *        array of arguments to pass to the notification.
+ */
+function notify(observers, notification, args) {
+  for (let observer of observers) {
+    try {
+      observer[notification](...args);
+    } catch (ex) {}
+  }
+}
+
+/**
+ * Sends a keyword change notification.
+ *
+ * @param url
+ *        the url to notify about.
+ * @param keyword
+ *        The keyword to notify, or empty string if a keyword was removed.
+ */
+function* notifyKeywordChange(url, keyword) {
+  // Notify bookmarks about the removal.
+  let bookmarks = [];
+  yield PlacesUtils.bookmarks.fetch({ url }, b => bookmarks.push(b));
+  // We don't want to yield in the gIgnoreKeywordNotifications section.
+  for (let bookmark of bookmarks) {
+    bookmark.id = yield PlacesUtils.promiseItemId(bookmark.guid);
+    bookmark.parentId = yield PlacesUtils.promiseItemId(bookmark.parentGuid);
+  }
+  let observers = PlacesUtils.bookmarks.getObservers();
+  gIgnoreKeywordNotifications = true;
+  for (let bookmark of bookmarks) {
+    notify(observers, "onItemChanged", [ bookmark.id, "keyword", false,
+                                         keyword,
+                                         bookmark.lastModified * 1000,
+                                         bookmark.type,
+                                         bookmark.parentId,
+                                         bookmark.guid, bookmark.parentGuid
+                                       ]);
+  }
+  gIgnoreKeywordNotifications = false;
+}
 
 this.PlacesUtils = {
   // Place entries that are containers, e.g. bookmark folders or queries.
@@ -244,6 +292,11 @@ this.PlacesUtils = {
           let observerInfo = this._bookmarksServiceObserversQueue.shift();
           this.bookmarks.addObserver(observerInfo.observer, observerInfo.weak);
         }
+
+        // Initialize the keywords cache to start observing bookmarks
+        // notifications.  This is needed as far as we support both the old and
+        // the new bookmarking APIs at the same time.
+        gKeywordsCachePromise.catch(Cu.reportError);
         break;
     }
   },
@@ -382,6 +435,23 @@ this.PlacesUtils = {
       return folders[0];
     }
     return aNode.itemId;
+  },
+
+  /**
+   * Gets the concrete item-guid for the given node. For everything but folder
+   * shortcuts, this is just node.bookmarkGuid.  For folder shortcuts, this is
+   * node.targetFolderGuid (see nsINavHistoryService.idl for the semantics).
+   *
+   * @param aNode
+   *        a result node.
+   * @return the concrete item-guid for aNode.
+   * @note unlike getConcreteItemId, this doesn't allow retrieving the guid of a
+   *       ta container.
+   */
+  getConcreteItemGuid(aNode) {
+    if (aNode.type == Ci.nsINavHistoryResultNode.RESULT_TYPE_FOLDER_SHORTCUT)
+      return asQuery(aNode).targetFolderGuid;
+    return aNode.bookmarkGuid;
   },
 
   /**
@@ -810,53 +880,98 @@ this.PlacesUtils = {
    * Set the POST data associated with a bookmark, if any.
    * Used by POST keywords.
    *   @param aBookmarkId
-   *   @returns string of POST data
+   *
+   * @deprecated Use PlacesUtils.keywords.insert() API instead.
    */
-  setPostDataForBookmark: function PU_setPostDataForBookmark(aBookmarkId, aPostData) {
-    const annos = this.annotations;
-    if (aPostData)
-      annos.setItemAnnotation(aBookmarkId, this.POST_DATA_ANNO, aPostData, 
-                              0, Ci.nsIAnnotationService.EXPIRE_NEVER);
-    else if (annos.itemHasAnnotation(aBookmarkId, this.POST_DATA_ANNO))
-      annos.removeItemAnnotation(aBookmarkId, this.POST_DATA_ANNO);
+  setPostDataForBookmark(aBookmarkId, aPostData) {
+    if (!aPostData)
+      throw new Error("Must provide valid POST data");
+    // For now we don't have a unified API to create a keyword with postData,
+    // thus here we can just try to complete a keyword that should already exist
+    // without any post data.
+    let stmt = PlacesUtils.history.DBConnection.createStatement(
+      `UPDATE moz_keywords SET post_data = :post_data
+       WHERE id = (SELECT k.id FROM moz_keywords k
+                   JOIN moz_bookmarks b ON b.fk = k.place_id
+                   WHERE b.id = :item_id
+                   AND post_data ISNULL
+                   LIMIT 1)`);
+    stmt.params.item_id = aBookmarkId;
+    stmt.params.post_data = aPostData;
+    try {
+      stmt.execute();
+    }
+    finally {
+      stmt.finalize();
+    }
+
+    // Update the cache.
+    return Task.spawn(function* () {
+      let guid = yield PlacesUtils.promiseItemGuid(aBookmarkId);
+      let bm = yield PlacesUtils.bookmarks.fetch(guid);
+
+      // Fetch keywords for this href.
+      let cache = yield gKeywordsCachePromise;
+      for (let [ keyword, entry ] of cache) {
+        // Set the POST data on keywords not having it.
+        if (entry.url.href == bm.url.href && !entry.postData) {
+          entry.postData = aPostData;
+        }
+      }
+    }).catch(Cu.reportError);
   },
 
   /**
    * Get the POST data associated with a bookmark, if any.
    * @param aBookmarkId
    * @returns string of POST data if set for aBookmarkId. null otherwise.
+   *
+   * @deprecated Use PlacesUtils.keywords.fetch() API instead.
    */
-  getPostDataForBookmark: function PU_getPostDataForBookmark(aBookmarkId) {
-    const annos = this.annotations;
-    if (annos.itemHasAnnotation(aBookmarkId, this.POST_DATA_ANNO))
-      return annos.getItemAnnotation(aBookmarkId, this.POST_DATA_ANNO);
-
-    return null;
+  getPostDataForBookmark(aBookmarkId) {
+    let stmt = PlacesUtils.history.DBConnection.createStatement(
+      `SELECT k.post_data
+       FROM moz_keywords k
+       JOIN moz_places h ON h.id = k.place_id
+       JOIN moz_bookmarks b ON b.fk = h.id
+       WHERE b.id = :item_id`);
+    stmt.params.item_id = aBookmarkId;
+    try {
+      if (!stmt.executeStep())
+        return null;
+      return stmt.row.post_data;
+    }
+    finally {
+      stmt.finalize();
+    }
   },
 
   /**
    * Get the URI (and any associated POST data) for a given keyword.
    * @param aKeyword string keyword
    * @returns an array containing a string URL and a string of POST data
+   *
+   * @deprecated
    */
-  getURLAndPostDataForKeyword: function PU_getURLAndPostDataForKeyword(aKeyword) {
-    var url = null, postdata = null;
+  getURLAndPostDataForKeyword(aKeyword) {
+    Deprecated.warning("getURLAndPostDataForKeyword() is deprecated, please " +
+                       "use PlacesUtils.keywords.fetch() instead",
+                       "https://bugzilla.mozilla.org/show_bug.cgi?id=1100294");
+
+    let stmt = PlacesUtils.history.DBConnection.createStatement(
+      `SELECT h.url, k.post_data
+       FROM moz_keywords k
+       JOIN moz_places h ON h.id = k.place_id
+       WHERE k.keyword = :keyword`);
+    stmt.params.keyword = aKeyword.toLowerCase();
     try {
-      var uri = this.bookmarks.getURIForKeyword(aKeyword);
-      if (uri) {
-        url = uri.spec;
-        var bookmarks = this.bookmarks.getBookmarkIdsForURI(uri);
-        for (let i = 0; i < bookmarks.length; i++) {
-          var bookmark = bookmarks[i];
-          var kw = this.bookmarks.getKeywordForBookmark(bookmark);
-          if (kw == aKeyword) {
-            postdata = this.getPostDataForBookmark(bookmark);
-            break;
-          }
-        }
-      }
-    } catch(ex) {}
-    return [url, postdata];
+      if (!stmt.executeStep())
+        return [ null, null ];
+      return [ stmt.row.url, stmt.row.post_data ];
+    }
+    finally {
+      stmt.finalize();
+    }
   },
 
   /**
@@ -1237,6 +1352,14 @@ this.PlacesUtils = {
   promiseDBConnection: () => gAsyncDBConnPromised,
 
   /**
+   * Gets a Sqlite.jsm wrapped connection to the Places database.
+   * This is intended to be used mostly internally, and by other Places modules.
+   * Keep in mind the Places DB schema is by no means frozen or even stable.
+   * Your custom queries can - and will - break overtime.
+   */
+  promiseWrappedConnection: () => gAsyncDBWrapperPromised,
+
+  /**
    * Given a uri returns list of itemIds associated to it.
    *
    * @param aURI
@@ -1463,7 +1586,7 @@ this.PlacesUtils = {
         uri = PlacesUtils.favicons.getFaviconLinkForIcon(uri);
         deferred.resolve(uri);
       } else {
-        deferred.reject();
+        deferred.reject("favicon not found for uri");
       }
     });
     return deferred.promise;
@@ -1490,9 +1613,12 @@ this.PlacesUtils = {
    */
   getImageURLForResolution:
   function PU_getImageURLForResolution(aWindow, aURL, aWidth = 16, aHeight = 16) {
+    if (!aURL.endsWith('.ico') && !aURL.endsWith('.ICO')) {
+      return aURL;
+    }
     let width  = Math.round(aWidth * aWindow.devicePixelRatio);
     let height = Math.round(aHeight * aWindow.devicePixelRatio);
-    return aURL + (aURL.contains("#") ? "&" : "#") +
+    return aURL + (aURL.includes("#") ? "&" : "#") +
            "-moz-resolution=" + width + "," + height;
   },
 
@@ -1574,6 +1700,7 @@ this.PlacesUtils = {
    *  - tags (string): csv string of the bookmark's tags.
    *  - charset (string): the last known charset of the bookmark.
    *  - keyword (string): the bookmark's keyword (unset if none).
+   *  - postData (string): the bookmark's keyword postData (unset if none).
    *  - iconuri (string): the bookmark's favicon url.
    * The last four properties are not set at all if they're irrelevant (e.g.
    * |charset| is not set if no charset was previously set for the bookmark
@@ -1588,7 +1715,7 @@ this.PlacesUtils = {
    * resolved to null.
    */
   promiseBookmarksTree: Task.async(function* (aItemGuid = "", aOptions = {}) {
-    let createItemInfoObject = (aRow, aIncludeParentGuid) => {
+    let createItemInfoObject = function* (aRow, aIncludeParentGuid) {
       let item = {};
       let copyProps = (...props) => {
         for (let prop of props) {
@@ -1627,9 +1754,11 @@ this.PlacesUtils = {
           // If this throws due to an invalid url, the item will be skipped.
           item.uri = NetUtil.newURI(aRow.getResultByName("url")).spec;
           // Keywords are cached, so this should be decently fast.
-          let keyword = PlacesUtils.bookmarks.getKeywordForBookmark(itemId);
-          if (keyword)
-            item.keyword = keyword;
+          let entry = yield PlacesUtils.keywords.fetch({ url: item.uri });
+          if (entry) {
+            item.keyword = entry.keyword;
+            item.postData = entry.postData;
+          }
           break;
         case Ci.nsINavBookmarksService.TYPE_FOLDER:
           item.type = PlacesUtils.TYPE_X_MOZ_PLACE_CONTAINER;
@@ -1651,7 +1780,7 @@ this.PlacesUtils = {
           break;
       }
       return item;
-    };
+    }.bind(this);
 
     const QUERY_STR =
       `WITH RECURSIVE
@@ -1704,40 +1833,34 @@ this.PlacesUtils = {
       return exclude;
     };
 
-    let rootItem = null, rootItemCreationEx = null;
+    let rootItem = null;
     let parentsMap = new Map();
-    try {
-      let conn = yield this.promiseDBConnection();
-      yield conn.executeCached(QUERY_STR,
-          { tags_folder: PlacesUtils.tagsFolderId,
-            charset_anno: PlacesUtils.CHARSET_ANNO,
-            item_guid: aItemGuid }, (aRow) => {
-        let item;
-        if (!rootItem) {
+    let conn = yield this.promiseDBConnection();
+    let rows = yield conn.executeCached(QUERY_STR,
+        { tags_folder: PlacesUtils.tagsFolderId,
+          charset_anno: PlacesUtils.CHARSET_ANNO,
+          item_guid: aItemGuid });
+    for (let row of rows) {
+      let item;
+      if (!rootItem) {
+        try {
           // This is the first row.
-          try {
-            rootItem = item = createItemInfoObject(aRow, true);
-          }
-          catch(ex) {
-            // If we couldn't figure out the root item, that is just as bad
-            // as a failed query.  Bail out.
-            rootItemCreationEx = ex;
-            throw StopIteration;
-          }
-
-          Object.defineProperty(rootItem, "itemsCount",
-                                { value: 1
-                                , writable: true
-                                , enumerable: false
-                                , configurable: false });
+          rootItem = item = yield createItemInfoObject(row, true);
+          Object.defineProperty(rootItem, "itemsCount", { value: 1
+                                                        , writable: true
+                                                        , enumerable: false
+                                                        , configurable: false });
+        } catch(ex) {
+          throw new Error("Failed to fetch the data for the root item " + ex);
         }
-        else {
+      } else {
+        try {
           // Our query guarantees that we always visit parents ahead of their
           // children.
-          item = createItemInfoObject(aRow, false);
-          let parentGuid = aRow.getResultByName("parentGuid");
+          item = yield createItemInfoObject(row, false);
+          let parentGuid = row.getResultByName("parentGuid");
           if (hasExcludeItemsCallback && shouldExcludeItem(item, parentGuid))
-            return;
+            continue;
 
           let parentItem = parentsMap.get(parentGuid);
           if ("children" in parentItem)
@@ -1746,17 +1869,15 @@ this.PlacesUtils = {
             parentItem.children = [item];
 
           rootItem.itemsCount++;
+        } catch(ex) {
+          // This is a bogus child, report and skip it.
+          Cu.reportError("Failed to fetch the data for an item " + ex);
+          continue;
         }
+      }
 
-        if (item.type == this.TYPE_X_MOZ_PLACE_CONTAINER)
-          parentsMap.set(item.guid, item);
-      });
-    } catch(e) {
-      throw new Error("Unable to query the database " + e);
-    }
-    if (rootItemCreationEx) {
-      throw new Error("Failed to fetch the data for the root item" +
-                      rootItemCreationEx);
+      if (item.type == this.TYPE_X_MOZ_PLACE_CONTAINER)
+        parentsMap.set(item.guid, item);
     }
 
     return rootItem;
@@ -1819,6 +1940,8 @@ XPCOMUtils.defineLazyServiceGetter(PlacesUtils, "livemarks",
                                    "@mozilla.org/browser/livemark-service;2",
                                    "mozIAsyncLivemarks");
 
+XPCOMUtils.defineLazyGetter(PlacesUtils, "keywords", () => Keywords);
+
 XPCOMUtils.defineLazyGetter(PlacesUtils, "transactionManager", function() {
   let tm = Cc["@mozilla.org/transactionmanager;1"].
            createInstance(Ci.nsITransactionManager);
@@ -1858,24 +1981,324 @@ XPCOMUtils.defineLazyGetter(this, "bundle", function() {
          createBundle(PLACES_STRING_BUNDLE_URI);
 });
 
-XPCOMUtils.defineLazyGetter(this, "gAsyncDBConnPromised", () => {
-  let connPromised = Sqlite.cloneStorageConnection({
-    connection: PlacesUtils.history.DBConnection,
-    readOnly:   true });
-  connPromised.then(conn => {
-    try {
-      Sqlite.shutdown.addBlocker("Places DB readonly connection closing",
-                                 conn.close.bind(conn));
+XPCOMUtils.defineLazyGetter(this, "gAsyncDBConnPromised",
+  () => new Promise((resolve) => {
+    Sqlite.cloneStorageConnection({
+      connection: PlacesUtils.history.DBConnection,
+      readOnly:   true
+    }).then(conn => {
+      try {
+        Sqlite.shutdown.addBlocker(
+          "PlacesUtils read-only connection closing",
+          conn.close.bind(conn));
+      } catch(ex) {
+        // It's too late to block shutdown, just close the connection.
+        conn.close();
+        throw ex;
+      }
+      resolve(conn);
+    });
+  })
+);
+
+XPCOMUtils.defineLazyGetter(this, "gAsyncDBWrapperPromised",
+  () => new Promise((resolve) => {
+    Sqlite.wrapStorageConnection({
+      connection: PlacesUtils.history.DBConnection,
+    }).then(conn => {
+      try {
+        Sqlite.shutdown.addBlocker(
+          "PlacesUtils wrapped connection closing",
+          conn.close.bind(conn));
+
+        // Also ensure we close the wrapper in case Places shutdowns first.
+        Services.obs.addObserver(function observe() {
+          Services.obs.removeObserver(observe, "places-will-close-connection");
+          conn.close();
+        }, "places-will-close-connection", false);
+      } catch(ex) {
+        // It's too late to block shutdown, just close the connection.
+        conn.close();
+        throw ex;
+      }
+      resolve(conn);
+    });
+  })
+);
+
+/**
+ * Keywords management API.
+ * Sooner or later these keywords will merge with search keywords, this is an
+ * interim API that should then be replaced by a unified one.
+ * Keywords are associated with URLs and can have POST data.
+ * A single URL can have multiple keywords, provided they differ by POST data.
+ */
+let Keywords = {
+  /**
+   * Fetches a keyword entry based on keyword or URL.
+   *
+   * @param keywordOrEntry
+   *        Either the keyword to fetch or an entry providing keyword
+   *        or url property to find keywords for.  If both properties are set,
+   *        this returns their intersection.
+   * @param onResult [optional]
+   *        Callback invoked for each found entry.
+   * @return {Promise}
+   * @resolves to an object in the form: { keyword, url, postData },
+   *           or null if a keyword entry was not found.
+   */
+  fetch(keywordOrEntry, onResult=null) {
+    if (typeof(keywordOrEntry) == "string")
+      keywordOrEntry = { keyword: keywordOrEntry };
+
+    if (keywordOrEntry === null || typeof(keywordOrEntry) != "object" ||
+        (("keyword" in keywordOrEntry) && typeof(keywordOrEntry.keyword) != "string"))
+      throw new Error("Invalid keyword");
+
+    let hasKeyword = "keyword" in keywordOrEntry;
+    let hasUrl = "url" in keywordOrEntry;
+
+    if (!hasKeyword && !hasUrl)
+      throw new Error("At least keyword or url must be provided");
+    if (onResult && typeof onResult != "function")
+      throw new Error("onResult callback must be a valid function");
+
+    if (hasUrl)
+      keywordOrEntry.url = new URL(keywordOrEntry.url);
+    if (hasKeyword)
+      keywordOrEntry.keyword = keywordOrEntry.keyword.trim().toLowerCase();
+
+    let safeOnResult = entry => {
+      if (onResult) {
+        try {
+          onResult(entry);
+        } catch (ex) {
+          Cu.reportError(ex);
+        }
+      }
+    };
+
+    return gKeywordsCachePromise.then(cache => {
+      let entries = [];
+      if (hasKeyword) {
+        let entry = cache.get(keywordOrEntry.keyword);
+        if (entry)
+          entries.push(entry);
+      }
+      if (hasUrl) {
+        for (let entry of cache.values()) {
+          if (entry.url.href == keywordOrEntry.url.href)
+            entries.push(entry);
+        }
+      }
+
+      entries = entries.filter(e => {
+        return (!hasUrl || e.url.href == keywordOrEntry.url.href) &&
+               (!hasKeyword || e.keyword == keywordOrEntry.keyword);
+      });
+
+      entries.forEach(safeOnResult);
+      return entries.length ? entries[0] : null;
+    });
+  },
+
+  /**
+   * Adds a new keyword and postData for the given URL.
+   *
+   * @param keywordEntry
+   *        An object describing the keyword to insert, in the form:
+   *        {
+   *          keyword: non-empty string,
+   *          URL: URL or href to associate to the keyword,
+   *          postData: optional POST data to associate to the keyword
+   *        }
+   * @note Do not define a postData property if there isn't any POST data.
+   * @resolves when the addition is complete.
+   */
+  insert(keywordEntry) {
+    if (!keywordEntry || typeof keywordEntry != "object")
+      throw new Error("Input should be a valid object");
+
+    if (!("keyword" in keywordEntry) || !keywordEntry.keyword ||
+        typeof(keywordEntry.keyword) != "string")
+      throw new Error("Invalid keyword");
+    if (("postData" in keywordEntry) && keywordEntry.postData &&
+                                        typeof(keywordEntry.postData) != "string")
+      throw new Error("Invalid POST data");
+    if (!("url" in keywordEntry))
+      throw new Error("undefined is not a valid URL");
+    let { keyword, url } = keywordEntry;
+    keyword = keyword.trim().toLowerCase();
+    let postData = keywordEntry.postData || null;
+    // This also checks href for validity
+    url = new URL(url);
+
+    return Task.spawn(function* () {
+      let cache = yield gKeywordsCachePromise;
+
+      // Trying to set the same keyword is a no-op.
+      let oldEntry = cache.get(keyword);
+      if (oldEntry && oldEntry.url.href == url.href &&
+                      oldEntry.postData == keywordEntry.postData) {
+        return;
+      }
+
+      // A keyword can only be associated to a single page.
+      // If another page is using the new keyword, we must update the keyword
+      // entry.
+      // Note we cannot use INSERT OR REPLACE cause it wouldn't invoke the delete
+      // trigger.
+      let db = yield PlacesUtils.promiseWrappedConnection();
+      if (oldEntry) {
+        yield db.executeCached(
+          `UPDATE moz_keywords
+           SET place_id = (SELECT id FROM moz_places WHERE url = :url),
+               post_data = :post_data
+           WHERE keyword = :keyword
+          `, { url: url.href, keyword: keyword, post_data: postData });
+        yield notifyKeywordChange(oldEntry.url.href, "");
+      } else {
+        // An entry for the given page could be missing, in such a case we need to
+        // create it.
+        yield db.executeCached(
+          `INSERT OR IGNORE INTO moz_places (url, rev_host, hidden, frecency, guid)
+           VALUES (:url, :rev_host, 0, :frecency, GENERATE_GUID())
+          `, { url: url.href, rev_host: PlacesUtils.getReversedHost(url),
+               frecency: url.protocol == "place:" ? 0 : -1 });
+        yield db.executeCached(
+          `INSERT INTO moz_keywords (keyword, place_id, post_data)
+           VALUES (:keyword, (SELECT id FROM moz_places WHERE url = :url), :post_data)
+          `, { url: url.href, keyword: keyword, post_data: postData });
+      }
+
+      cache.set(keyword, { keyword, url, postData });
+
+      // In any case, notify about the new keyword.
+      yield notifyKeywordChange(url.href, keyword);
+    }.bind(this));
+  },
+
+  /**
+   * Removes a keyword.
+   *
+   * @param keyword
+   *        The keyword to remove.
+   * @return {Promise}
+   * @resolves when the removal is complete.
+   */
+  remove(keyword) {
+    if (!keyword || typeof(keyword) != "string")
+      throw new Error("Invalid keyword");
+    keyword = keyword.trim().toLowerCase();
+    return Task.spawn(function* () {
+      let cache = yield gKeywordsCachePromise;
+      if (!cache.has(keyword))
+        return;
+      let { url } = cache.get(keyword);
+      cache.delete(keyword);
+
+      let db = yield PlacesUtils.promiseWrappedConnection();
+      yield db.execute(`DELETE FROM moz_keywords WHERE keyword = :keyword`,
+                       { keyword });
+
+      // Notify bookmarks about the removal.
+      yield notifyKeywordChange(url.href, "");
+    }.bind(this));
+  }
+};
+
+// Set by the keywords API to distinguish notifications fired by the old API.
+// Once the old API will be gone, we can remove this and stop observing.
+let gIgnoreKeywordNotifications = false;
+
+XPCOMUtils.defineLazyGetter(this, "gKeywordsCachePromise", Task.async(function* () {
+  let cache = new Map();
+  let db = yield PlacesUtils.promiseWrappedConnection();
+  let rows = yield db.execute(
+    `SELECT keyword, url, post_data
+     FROM moz_keywords k
+     JOIN moz_places h ON h.id = k.place_id
+    `);
+  for (let row of rows) {
+    let keyword = row.getResultByName("keyword");
+    let entry = { keyword,
+                  url: new URL(row.getResultByName("url")),
+                  postData: row.getResultByName("post_data") };
+    cache.set(keyword, entry);
+  }
+
+  // Helper to get a keyword from an href.
+  function keywordsForHref(href) {
+    let keywords = [];
+    for (let [ key, val ] of cache) {
+      if (val.url.href == href)
+        keywords.push(key);
     }
-    catch(ex) {
-      // It's too late to block shutdown, just close the connection.
-      return conn.close();
-      throw (ex);
+    return keywords;
+  }
+
+  // Start observing changes to bookmarks. For now we are going to keep that
+  // relation for backwards compatibility reasons, but mostly because we are
+  // lacking a UI to manage keywords directly.
+  let observer = {
+    QueryInterface: XPCOMUtils.generateQI(Ci.nsINavBookmarkObserver),
+    onBeginUpdateBatch() {},
+    onEndUpdateBatch() {},
+    onItemAdded() {},
+    onItemVisited() {},
+    onItemMoved() {},
+
+    onItemRemoved(id, parentId, index, itemType, uri, guid, parentGuid) {
+      if (itemType != PlacesUtils.bookmarks.TYPE_BOOKMARK)
+        return;
+
+      let keywords = keywordsForHref(uri.spec);
+      // This uri has no keywords associated, so there's nothing to do.
+      if (keywords.length == 0)
+        return;
+
+      Task.spawn(function* () {
+        // If the uri is not bookmarked anymore, we can remove this keyword.
+        let bookmark = yield PlacesUtils.bookmarks.fetch({ url: uri });
+        if (!bookmark) {
+          for (let keyword of keywords) {
+            yield PlacesUtils.keywords.remove(keyword);
+          }
+        }
+      }).catch(Cu.reportError);
+    },
+
+    onItemChanged(id, prop, isAnno, val, lastMod, itemType, parentId, guid) {
+      if (gIgnoreKeywordNotifications ||
+          prop != "keyword")
+        return;
+
+      Task.spawn(function* () {
+        let bookmark = yield PlacesUtils.bookmarks.fetch(guid);
+        // By this time the bookmark could have gone, there's nothing we can do.
+        if (!bookmark)
+          return;
+
+        if (val.length == 0) {
+          // We are removing a keyword.
+          let keywords = keywordsForHref(bookmark.url.href)
+          for (let keyword of keywords) {
+            cache.delete(keyword);
+          }
+        } else {
+          // We are adding a new keyword.
+          cache.set(val, { keyword: val, url: bookmark.url });
+        }
+      }).catch(Cu.reportError);
     }
-    return Promise.resolve();
-  }).then(null, Cu.reportError);
-  return connPromised;
-});
+  };
+
+  PlacesUtils.bookmarks.addObserver(observer, false);
+  PlacesUtils.registerShutdownFunction(() => {
+    PlacesUtils.bookmarks.removeObserver(observer);
+  });
+  return cache;
+}));
 
 // Sometime soon, likely as part of the transition to mozIAsyncBookmarks,
 // itemIds will be deprecated in favour of GUIDs, which play much better
@@ -1902,6 +2325,7 @@ let GuidHelper = {
       return cached;
 
     let conn = yield PlacesUtils.promiseDBConnection();
+
     let rows = yield conn.executeCached(
       "SELECT b.id, b.guid from moz_bookmarks b WHERE b.guid = :guid LIMIT 1",
       { guid: aGuid });
@@ -1920,6 +2344,7 @@ let GuidHelper = {
       return cached;
 
     let conn = yield PlacesUtils.promiseDBConnection();
+
     let rows = yield conn.executeCached(
       "SELECT b.id, b.guid from moz_bookmarks b WHERE b.id = :id LIMIT 1",
       { id: aItemId });
@@ -1955,7 +2380,12 @@ let GuidHelper = {
         },
 
         QueryInterface: XPCOMUtils.generateQI(Ci.nsINavBookmarkObserver),
-        __noSuchMethod__: () => {}, // Catch all all onItem* methods.
+
+        onBeginUpdateBatch: function() {},
+        onEndUpdateBatch: function() {},
+        onItemChanged: function() {},
+        onItemVisited: function() {},
+        onItemMoved: function() {},
       };
       PlacesUtils.bookmarks.addObserver(this.observer, false);
       PlacesUtils.registerShutdownFunction(() => {
@@ -2891,15 +3321,19 @@ this.PlacesEditBookmarkPostDataTransaction =
 PlacesEditBookmarkPostDataTransaction.prototype = {
   __proto__: BaseTransaction.prototype,
 
-  doTransaction: function EBPDTXN_doTransaction()
-  {
-    this.item.postData = PlacesUtils.getPostDataForBookmark(this.item.id);
-    PlacesUtils.setPostDataForBookmark(this.item.id, this.new.postData);
+  doTransaction() {
+    // Setting null postData is not supported by the current schema.
+    if (this.new.postData) {
+      this.item.postData = PlacesUtils.getPostDataForBookmark(this.item.id);
+      PlacesUtils.setPostDataForBookmark(this.item.id, this.new.postData);
+    }
   },
 
-  undoTransaction: function EBPDTXN_undoTransaction()
-  {
-    PlacesUtils.setPostDataForBookmark(this.item.id, this.item.postData);
+  undoTransaction() {
+    // Setting null postData is not supported by the current schema.
+    if (this.item.postData) {
+      PlacesUtils.setPostDataForBookmark(this.item.id, this.item.postData);
+    }
   }
 };
 
@@ -3061,7 +3495,7 @@ PlacesSortFolderByNameTransaction.prototype = {
     let callback = {
       _self: this,
       runBatched: function() {
-        for (item in this._self._oldOrder)
+        for (let item in this._self._oldOrder)
           PlacesUtils.bookmarks.setItemIndex(item, this._self._oldOrder[item]);
       }
     };

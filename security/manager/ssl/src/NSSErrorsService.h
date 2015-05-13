@@ -14,7 +14,7 @@
 namespace mozilla {
 namespace psm {
 
-class NSSErrorsService MOZ_FINAL : public nsINSSErrorsService
+class NSSErrorsService final : public nsINSSErrorsService
 {
   NS_DECL_ISUPPORTS
   NS_DECL_NSINSSERRORSSERVICE
@@ -38,6 +38,7 @@ private:
 
 bool IsNSSErrorCode(PRErrorCode code);
 nsresult GetXPCOMFromNSSError(PRErrorCode code);
+bool ErrorIsOverridable(PRErrorCode code);
 
 } // psm
 } // mozilla

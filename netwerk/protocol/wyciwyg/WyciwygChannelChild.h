@@ -36,9 +36,9 @@ enum WyciwygChannelChildState {
 
 
 // Header file contents
-class WyciwygChannelChild : public PWyciwygChannelChild
-                          , public nsIWyciwygChannel
-                          , public PrivateBrowsingChannel<WyciwygChannelChild>
+class WyciwygChannelChild final : public PWyciwygChannelChild
+                                , public nsIWyciwygChannel
+                                , public PrivateBrowsingChannel<WyciwygChannelChild>
 {
 public:
   NS_DECL_ISUPPORTS
@@ -62,11 +62,11 @@ protected:
                           const int64_t& contentLength,
                           const int32_t& source,
                           const nsCString& charset,
-                          const nsCString& securityInfo) MOZ_OVERRIDE;
+                          const nsCString& securityInfo) override;
   bool RecvOnDataAvailable(const nsCString& data,
-                           const uint64_t& offset) MOZ_OVERRIDE;
-  bool RecvOnStopRequest(const nsresult& statusCode) MOZ_OVERRIDE;
-  bool RecvCancelEarly(const nsresult& statusCode) MOZ_OVERRIDE;
+                           const uint64_t& offset) override;
+  bool RecvOnStopRequest(const nsresult& statusCode) override;
+  bool RecvCancelEarly(const nsresult& statusCode) override;
 
   void OnStartRequest(const nsresult& statusCode,
                       const int64_t& contentLength,

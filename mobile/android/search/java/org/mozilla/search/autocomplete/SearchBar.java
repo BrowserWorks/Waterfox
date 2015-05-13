@@ -53,6 +53,8 @@ public class SearchBar extends FrameLayout {
         public void onFocusChange(boolean hasFocus);
     }
 
+    // Deprecation warnings suppressed to allow building with API level 22
+    @SuppressWarnings("deprecation")
     public SearchBar(Context context, AttributeSet attrs) {
         super(context, attrs);
 
@@ -82,7 +84,8 @@ public class SearchBar extends FrameLayout {
         editText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                if (listener != null && actionId == EditorInfo.IME_ACTION_SEARCH) {
+                if (listener != null &&
+                    (actionId == EditorInfo.IME_ACTION_UNSPECIFIED || actionId == EditorInfo.IME_ACTION_SEARCH)) {
                     // The user searched without using search engine suggestions.
                     Telemetry.sendUIEvent(TelemetryContract.Event.SEARCH, TelemetryContract.Method.ACTIONBAR, "text");
                     listener.onSubmit(v.getText().toString());

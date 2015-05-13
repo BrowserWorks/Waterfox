@@ -10,7 +10,8 @@ const Cu = Components.utils;
 Cu.import("resource://gre/modules/Services.jsm");
 
 // Import common head.
-let (commonFile = do_get_file("../head_common.js", false)) {
+{
+  let commonFile = do_get_file("../head_common.js", false);
   let uri = Services.io.newFileURI(commonFile);
   Services.scriptloader.loadSubScript(uri.spec, this);
 }
@@ -121,26 +122,35 @@ function ensure_results(aSearchString, aExpectedValue) {
     do_check_eq(numSearchesStarted, 1);
   };
 
-  input.onSearchComplete = function() {
-    // We should be running only one query.
-    do_check_eq(numSearchesStarted, 1);
 
-    // Check the autoFilled result.
-    do_check_eq(input.textValue, autoFilledValue);
+  let promise = new Promise(resolve => {
+    input.onSearchComplete = function() {
+      // We should be running only one query.
+      do_check_eq(numSearchesStarted, 1);
 
-    if (completedValue) {
-      // Now force completion and check correct casing of the result.
-      // This ensures the controller is able to do its magic case-preserving
-      // stuff and correct replacement of the user's casing with result's one.
-      controller.handleEnter(false);
-      do_check_eq(input.textValue, completedValue);
-    }
+      // Check the autoFilled result.
+      do_check_eq(input.textValue, autoFilledValue);
 
-    waitForCleanup(run_next_test);
-  };
+      if (completedValue) {
+        // Now force completion and check correct casing of the result.
+        // This ensures the controller is able to do its magic case-preserving
+        // stuff and correct replacement of the user's casing with result's one.
+        controller.handleEnter(false);
+        do_check_eq(input.textValue, completedValue);
+      }
 
-  do_log_info("Searching for: '" + aSearchString + "'");
+      // Cleanup.
+      Promise.all([
+        PlacesUtils.bookmarks.eraseEverything(),
+        PlacesTestUtils.clearHistory()
+      ]).then(resolve);
+    };
+  });
+
+  do_print("Searching for: '" + aSearchString + "'");
   controller.startSearch(aSearchString);
+
+  return promise;
 }
 
 function run_test() {
@@ -152,22 +162,22 @@ function run_test() {
 
   gAutoCompleteTests.forEach(function (testData) {
     let [description, searchString, expectedValue, setupFunc] = testData;
-    add_test(function () {
-      do_log_info(description);
+    add_task(function* () {
+      do_print(description);
       Services.prefs.setBoolPref("browser.urlbar.autocomplete.enabled", true);
       Services.prefs.setBoolPref("browser.urlbar.autoFill", true);
       Services.prefs.setBoolPref("browser.urlbar.autoFill.typed", false);
 
       if (setupFunc) {
-        setupFunc();
+        yield setupFunc();
       }
 
       // At this point frecency could still be updating due to latest pages
       // updates.
       // This is not a problem in real life, but autocomplete tests should
       // return reliable resultsets, thus we have to wait.
-      promiseAsyncUpdates().then(function () ensure_results(searchString,
-                                                            expectedValue));
+      yield PlacesTestUtils.promiseAsyncUpdates();
+      yield ensure_results(searchString, expectedValue);
     })
   }, this);
 
@@ -179,21 +189,13 @@ function add_autocomplete_test(aTestData) {
   gAutoCompleteTests.push(aTestData);
 }
 
-function waitForCleanup(aCallback) {
-  remove_all_bookmarks();
-  promiseClearHistory().then(aCallback);
-}
-
-function addBookmark(aBookmarkObj) {
+function* addBookmark(aBookmarkObj) {
   do_check_true(!!aBookmarkObj.url);
-  let parentId = aBookmarkObj.parentId ? aBookmarkObj.parentId
-                                       : PlacesUtils.unfiledBookmarksFolderId;
-  let itemId = PlacesUtils.bookmarks
-                          .insertBookmark(parentId,
-                                          NetUtil.newURI(aBookmarkObj.url),
-                                          PlacesUtils.bookmarks.DEFAULT_INDEX,
-                                          "A bookmark");
+  yield PlacesUtils.bookmarks
+                   .insert({ parentGuid: PlacesUtils.bookmarks.unfiledGuid,
+                             url: aBookmarkObj.url });
   if (aBookmarkObj.keyword) {
-    PlacesUtils.bookmarks.setKeywordForBookmark(itemId, aBookmarkObj.keyword);
+    yield PlacesUtils.keywords.insert({ keyword: aBookmarkObj.keyword,
+                                        url: aBookmarkObj.url });
   }
 }

@@ -21,11 +21,11 @@ public:
   // Called by the media decoder to indicate that the download is progressing.
   virtual void DownloadProgressed() = 0;
 
-  // Dispatch a synchronous event to the decoder owner
-  virtual nsresult DispatchEvent(const nsAString& aName) = 0;
-
   // Dispatch an asynchronous event to the decoder owner
   virtual nsresult DispatchAsyncEvent(const nsAString& aName) = 0;
+
+  // Triggers a recomputation of readyState.
+  virtual void UpdateReadyState() = 0;
 
   /**
    * Fires a timeupdate event. If aPeriodic is true, the event will only
@@ -116,12 +116,11 @@ public:
     NEXT_FRAME_UNINITIALIZED
   };
 
-  // Called by the decoder when some data has been downloaded or
-  // buffering/seeking has ended. aNextFrameAvailable is true when
-  // the data for the next frame is available. This method will
-  // decide whether to set the ready state to HAVE_CURRENT_DATA,
-  // HAVE_FUTURE_DATA or HAVE_ENOUGH_DATA.
-  virtual void UpdateReadyStateForData(NextFrameStatus aNextFrame) = 0;
+  // Check if the decoder owner is active.
+  virtual bool IsActive() = 0;
+
+  // Check if the decoder owner is hidden.
+  virtual bool IsHidden() = 0;
 
   // Called by the media decoder and the video frame to get the
   // ImageContainer containing the video data.
@@ -133,11 +132,11 @@ public:
 
 #ifdef MOZ_EME
   // Dispatches a "encrypted" event to the HTMLMediaElement, with the
-  // provided init data.
+  // provided init data. Actual dispatch may be delayed until HAVE_METADATA.
   // Main thread only.
   virtual void DispatchEncrypted(const nsTArray<uint8_t>& aInitData,
                                  const nsAString& aInitDataType) = 0;
-#endif
+#endif // MOZ_EME
 };
 
 }

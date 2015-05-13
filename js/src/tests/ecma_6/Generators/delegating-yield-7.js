@@ -9,12 +9,12 @@ function results(results) {
         return results[i++];
     }
     var ret = { next: next }
-    ret[std_iterator] = iterator;
+    ret[Symbol.iterator] = iterator;
     return ret;
 }
 
 function* yield_results(expected) {
-    return yield* Proxy(results(expected), {});
+    return yield* new Proxy(results(expected), {});
 }
 
 function collect_results(iter) {

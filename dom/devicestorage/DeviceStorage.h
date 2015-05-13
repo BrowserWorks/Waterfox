@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 sw=2 et tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -29,6 +29,7 @@ class nsIOutputStream;
 namespace mozilla {
 class EventListenerManager;
 namespace dom {
+class Blob;
 struct DeviceStorageEnumerationParameters;
 class DOMCursor;
 class DOMRequest;
@@ -40,7 +41,7 @@ class FileDescriptor;
 }
 } // namespace mozilla
 
-class DeviceStorageFile MOZ_FINAL
+class DeviceStorageFile final
   : public nsISupports {
 public:
   nsCOMPtr<nsIFile> mFile;
@@ -142,7 +143,7 @@ private:
     * ContentParent::Init (for IPC)
     * nsDOMDeviceStorage::Init (for non-ipc)
 */
-class FileUpdateDispatcher MOZ_FINAL
+class FileUpdateDispatcher final
   : public nsIObserver
 {
   ~FileUpdateDispatcher() {}
@@ -156,7 +157,7 @@ class FileUpdateDispatcher MOZ_FINAL
   static mozilla::StaticRefPtr<FileUpdateDispatcher> sSingleton;
 };
 
-class nsDOMDeviceStorage MOZ_FINAL
+class nsDOMDeviceStorage final
   : public mozilla::DOMEventTargetHelper
   , public nsIDOMDeviceStorage
   , public nsIObserver
@@ -178,23 +179,25 @@ public:
   NS_DECL_NSIDOMEVENTTARGET
 
   virtual mozilla::EventListenerManager*
-    GetExistingListenerManager() const MOZ_OVERRIDE;
+    GetExistingListenerManager() const override;
   virtual mozilla::EventListenerManager*
-    GetOrCreateListenerManager() MOZ_OVERRIDE;
+    GetOrCreateListenerManager() override;
 
   virtual void
   AddEventListener(const nsAString& aType,
                    mozilla::dom::EventListener* aListener,
                    bool aUseCapture,
                    const mozilla::dom::Nullable<bool>& aWantsUntrusted,
-                   ErrorResult& aRv) MOZ_OVERRIDE;
+                   ErrorResult& aRv) override;
 
   virtual void RemoveEventListener(const nsAString& aType,
                                    mozilla::dom::EventListener* aListener,
                                    bool aUseCapture,
-                                   ErrorResult& aRv) MOZ_OVERRIDE;
+                                   ErrorResult& aRv) override;
 
   explicit nsDOMDeviceStorage(nsPIDOMWindow* aWindow);
+
+  static int InstanceCount() { return sInstanceCount; }
 
   nsresult Init(nsPIDOMWindow* aWindow, const nsAString& aType,
                 const nsAString& aVolName);
@@ -215,20 +218,21 @@ public:
     return GetOwner();
   }
   virtual JSObject*
-  WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   IMPL_EVENT_HANDLER(change)
 
   already_AddRefed<DOMRequest>
-  Add(nsIDOMBlob* aBlob, ErrorResult& aRv);
+  Add(mozilla::dom::Blob* aBlob, ErrorResult& aRv);
   already_AddRefed<DOMRequest>
-  AddNamed(nsIDOMBlob* aBlob, const nsAString& aPath, ErrorResult& aRv);
+  AddNamed(mozilla::dom::Blob* aBlob, const nsAString& aPath, ErrorResult& aRv);
 
   already_AddRefed<DOMRequest>
-  AppendNamed(nsIDOMBlob* aBlob, const nsAString& aPath, ErrorResult& aRv);
+  AppendNamed(mozilla::dom::Blob* aBlob, const nsAString& aPath,
+              ErrorResult& aRv);
 
   already_AddRefed<DOMRequest>
-  AddOrAppendNamed(nsIDOMBlob* aBlob, const nsAString& aPath,
+  AddOrAppendNamed(mozilla::dom::Blob* aBlob, const nsAString& aPath,
                    const int32_t aRequestType, ErrorResult& aRv);
 
   already_AddRefed<DOMRequest>
@@ -290,6 +294,12 @@ public:
                           const nsAString& aType,
                           nsTArray<nsRefPtr<nsDOMDeviceStorage> >& aStores);
 
+  static void
+  CreateDeviceStorageByNameAndType(nsPIDOMWindow* aWin,
+                                   const nsAString& aName,
+                                   const nsAString& aType,
+                                   nsDOMDeviceStorage** aStore);
+
   void Shutdown();
 
   static void GetOrderedVolumeNames(nsTArray<nsString>& aVolumeNames);
@@ -319,6 +329,8 @@ private:
                     const EnumerationParameters& aOptions, bool aEditable,
                     ErrorResult& aRv);
 
+  static int sInstanceCount;
+
   nsString mStorageType;
   nsCOMPtr<nsIFile> mRootDirectory;
   nsString mStorageName;
@@ -330,10 +342,17 @@ private:
   already_AddRefed<nsDOMDeviceStorage>
     GetStorageByName(const nsAString &aStorageName);
 
+  static already_AddRefed<nsDOMDeviceStorage>
+    GetStorageByNameAndType(nsPIDOMWindow* aWin,
+                            const nsAString& aStorageName,
+                            const nsAString& aType);
+
   nsCOMPtr<nsIPrincipal> mPrincipal;
 
   bool mIsWatchingFile;
   bool mAllowedToWatchFile;
+  bool mIsDefaultLocation;
+  void DispatchDefaultChangeEvent();
 
   nsresult Notify(const char* aReason, class DeviceStorageFile* aFile);
 

@@ -1,6 +1,6 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
- * vim: sw=2 ts=2 et lcs=trail\:.,tab\:>~ :
- * This Source Code Form is subject to the terms of the Mozilla Public
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -126,9 +126,8 @@ public:
   explicit SVGTransformSMILData(uint16_t aType)
   : mTransformType(aType)
   {
-    NS_ABORT_IF_FALSE(aType >= SVG_TRANSFORM_MATRIX &&
-                      aType <= SVG_TRANSFORM_SKEWY,
-                      "Unexpected transform type");
+    MOZ_ASSERT(aType >= SVG_TRANSFORM_MATRIX && aType <= SVG_TRANSFORM_SKEWY,
+               "Unexpected transform type");
     for (uint32_t i = 0; i < NUM_STORED_PARAMS; ++i) {
       mParams[i] = 0.f;
     }
@@ -137,9 +136,8 @@ public:
   SVGTransformSMILData(uint16_t aType, float (&aParams)[NUM_SIMPLE_PARAMS])
   : mTransformType(aType)
   {
-    NS_ABORT_IF_FALSE(aType >= SVG_TRANSFORM_TRANSLATE &&
-                      aType <= SVG_TRANSFORM_SKEWY,
-                      "Expected 'simple' transform type");
+    MOZ_ASSERT(aType >= SVG_TRANSFORM_TRANSLATE && aType <= SVG_TRANSFORM_SKEWY,
+               "Expected 'simple' transform type");
     for (uint32_t i = 0; i < NUM_SIMPLE_PARAMS; ++i) {
       mParams[i] = aParams[i];
     }

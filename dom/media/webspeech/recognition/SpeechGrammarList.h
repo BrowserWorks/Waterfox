@@ -25,8 +25,8 @@ class GlobalObject;
 class SpeechGrammar;
 template<typename> class Optional;
 
-class SpeechGrammarList MOZ_FINAL : public nsISupports,
-                                    public nsWrapperCache
+class SpeechGrammarList final : public nsISupports,
+                                public nsWrapperCache
 {
 public:
   explicit SpeechGrammarList(nsISupports* aParent, nsISpeechRecognitionService* aRecognitionService);
@@ -38,7 +38,7 @@ public:
 
   nsISupports* GetParentObject() const;
 
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   uint32_t Length() const;
 

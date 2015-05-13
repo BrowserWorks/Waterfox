@@ -1,7 +1,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-
 "use strict";
 
 // Skipping due to window creation being unsupported in Fennec
@@ -14,13 +13,14 @@ module.metadata = {
 const { Cc, Ci } = require("chrome");
 const { on } = require("sdk/event/core");
 const { setTimeout } = require("sdk/timers");
-const { LoaderWithHookedConsole } = require("sdk/test/loader");
+const { LoaderWithHookedConsole, Loader } = require("sdk/test/loader");
 const { Worker } = require("sdk/content/worker");
 const { close } = require("sdk/window/helpers");
 const { set: setPref } = require("sdk/preferences/service");
 const { isArray } = require("sdk/lang/type");
 const { URL } = require('sdk/url');
 const fixtures = require("./fixtures");
+const system = require("sdk/system/events");
 
 const DEPRECATE_PREF = "devtools.errorconsole.deprecation_warnings";
 
@@ -334,6 +334,8 @@ exports["test:content is wrapped"] = WorkerTest(
   }
 );
 
+// ContentWorker is not for chrome
+/*
 exports["test:chrome is unwrapped"] = function(assert, done) {
   let window = makeWindow();
 
@@ -354,6 +356,7 @@ exports["test:chrome is unwrapped"] = function(assert, done) {
 
   });
 }
+*/
 
 exports["test:nothing is leaked to content script"] = WorkerTest(
   DEFAULT_CONTENT_URL,
@@ -382,19 +385,19 @@ exports["test:nothing is leaked to content script"] = WorkerTest(
 exports["test:ensure console.xxx works in cs"] = WorkerTest(
   DEFAULT_CONTENT_URL,
   function(assert, browser, done) {
-    let { loader } = LoaderWithHookedConsole(module, onMessage);
+    const EXPECTED = ["time", "log", "info", "warn", "error", "error", "timeEnd"];
 
-    // Intercept all console method calls
     let calls = [];
-    function onMessage(type, msg) {
-      assert.equal(type, msg,
-        "console.xxx(\"xxx\"), i.e. message is equal to the " +
-        "console method name we are calling");
-      calls.push(msg);
+    let levels = [];
+
+    system.on('console-api-log-event', onMessage);
+
+    function onMessage({ subject }) {
+      calls.push(subject.wrappedJSObject.arguments[0]);
+      levels.push(subject.wrappedJSObject.level);
     }
 
-    // Finally, create a worker that will call all console methods
-    let worker =  loader.require("sdk/content/worker").Worker({
+    let worker =  Worker({
       window: browser.contentWindow,
       contentScript: "new " + function WorkerScope() {
         console.time("time");
@@ -403,17 +406,21 @@ exports["test:ensure console.xxx works in cs"] = WorkerTest(
         console.warn("warn");
         console.error("error");
         console.debug("debug");
-        console.exception("exception");
+        console.exception("error");
         console.timeEnd("timeEnd");
         self.postMessage();
       },
       onMessage: function() {
-        // Ensure that console methods are called in the same execution order
-        const EXPECTED_CALLS = ["time", "log", "info", "warn", "error",
-          "debug", "exception", "timeEnd"];
+        system.off('console-api-log-event', onMessage);
+
         assert.equal(JSON.stringify(calls),
-          JSON.stringify(EXPECTED_CALLS),
+          JSON.stringify(EXPECTED),
           "console methods have been called successfully, in expected order");
+
+        assert.equal(JSON.stringify(levels),
+          JSON.stringify(EXPECTED),
+          "console messages have correct log levels, in expected order");
+
         done();
       }
     });
@@ -735,8 +742,16 @@ exports["test:check worker API with page history"] = WorkerTest(
           // that will be disable until the page gets visible again
           self.on("pagehide", function () {
             setTimeout(function () {
-              self.postMessage("timeout restored");
+              self.port.emit("timeout");
             }, 0);
+          });
+
+          self.on("message", function() {
+            self.postMessage("saw message");
+          });
+
+          self.on("event", function() {
+            self.port.emit("event", "saw event");
           });
         },
         contentScriptWhen: "start"
@@ -754,19 +769,10 @@ exports["test:check worker API with page history"] = WorkerTest(
       // Wait for the document to be hidden
       browser.addEventListener("pagehide", function onpagehide() {
         browser.removeEventListener("pagehide", onpagehide, false);
-        // Now any event sent to this worker should throw
+        // Now any event sent to this worker should be cached
 
-        assert.throws(
-            function () { worker.postMessage("data"); },
-            /The page is currently hidden and can no longer be used/,
-            "postMessage should throw when the page is hidden in history"
-            );
-
-        assert.throws(
-            function () { worker.port.emit("event"); },
-            /The page is currently hidden and can no longer be used/,
-            "port.emit should throw when the page is hidden in history"
-            );
+        worker.postMessage("message");
+        worker.port.emit("event");
 
         // Display the page with attached content script back in order to resume
         // its timeout and receive the expected message.
@@ -775,10 +781,30 @@ exports["test:check worker API with page history"] = WorkerTest(
         // do not receive the message immediatly, so that the timeout is
         // actually disabled
         setTimeout(function () {
-          worker.on("message", function (data) {
-            assert.ok(data, "timeout restored");
-            done();
+          worker.on("pageshow", function() {
+            let promise = Promise.all([
+              new Promise(resolve => {
+                worker.port.on("event", () => {
+                  assert.pass("Saw event");
+                  resolve();
+                });
+              }),
+              new Promise(resolve => {
+                worker.on("message", () => {
+                  assert.pass("Saw message");
+                  resolve();
+                });
+              }),
+              new Promise(resolve => {
+                worker.port.on("timeout", () => {
+                  assert.pass("Timer fired");
+                  resolve();
+                });
+              })
+            ]);
+            promise.then(done);
           });
+
           browser.goForward();
         }, 500);
 
@@ -886,15 +912,18 @@ exports["test:console method log functions properly"] = WorkerTest(
   function(assert, browser, done) {
     let logs = [];
 
+    system.on('console-api-log-event', onMessage);
+
+    function onMessage({ subject }) {
+      logs.push(clean(subject.wrappedJSObject.arguments[0]));
+    }
+
     let clean = message =>
           message.trim().
           replace(/[\r\n]/g, " ").
           replace(/ +/g, " ");
 
-    let onMessage = (type, message) => logs.push(clean(message));
-    let { loader } = LoaderWithHookedConsole(module, onMessage);
-
-    let worker =  loader.require("sdk/content/worker").Worker({
+    let worker =  Worker({
       window: browser.contentWindow,
       contentScript: "new " + function WorkerScope() {
         console.log(Function);
@@ -904,6 +933,8 @@ exports["test:console method log functions properly"] = WorkerTest(
         self.postMessage();
       },
       onMessage: () => {
+        system.off('console-api-log-event', onMessage);
+
         assert.deepEqual(logs, [
           "function Function() { [native code] }",
           "(foo) => foo * foo",
@@ -963,5 +994,133 @@ exports["test:destroy unbinds listeners from port"] = WorkerTest(
   }
 );
 
+exports["test:destroy kills child worker"] = WorkerTest(
+  "data:text/html;charset=utf-8,<html><body><p id='detail'></p></body></html>",
+  function(assert, browser, done) {
+    let worker1 = Worker({
+      window: browser.contentWindow,
+      contentScript: "new " + function WorkerScope() {
+        self.port.on("ping", detail => {
+          let event = document.createEvent("CustomEvent");
+          event.initCustomEvent("Test:Ping", true, true, detail);
+          document.dispatchEvent(event);
+          self.port.emit("pingsent");
+        });
 
-require("test").run(exports);
+        let listener = function(event) {
+          self.port.emit("pong", event.detail);
+        };
+
+        self.port.on("detach", () => {
+          window.removeEventListener("Test:Pong", listener);
+        });
+        window.addEventListener("Test:Pong", listener);
+      },
+      onAttach: function() {
+        let worker2 = Worker({
+          window: browser.contentWindow,
+          contentScript: "new " + function WorkerScope() {
+            let listener = function(event) {
+              let newEvent = document.createEvent("CustomEvent");
+              newEvent.initCustomEvent("Test:Pong", true, true, event.detail);
+              document.dispatchEvent(newEvent);
+            };
+            self.port.on("detach", () => {
+              window.removeEventListener("Test:Ping", listener);
+            })
+            window.addEventListener("Test:Ping", listener);
+            self.postMessage();
+          },
+          onMessage: function() {
+            worker1.port.emit("ping", "test1");
+            worker1.port.once("pong", detail => {
+              assert.equal(detail, "test1", "Saw the right message");
+              worker1.port.once("pingsent", () => {
+                assert.pass("The message was sent");
+
+                worker2.destroy();
+
+                worker1.port.emit("ping", "test2");
+                worker1.port.once("pong", detail => {
+                  assert.fail("worker2 shouldn't have responded");
+                })
+                worker1.port.once("pingsent", () => {
+                  assert.pass("The message was sent");
+                  worker1.destroy();
+                  done();
+                });
+              });
+            })
+          }
+        });
+      }
+    });
+  }
+);
+
+exports["test:unload kills child worker"] = WorkerTest(
+  "data:text/html;charset=utf-8,<html><body><p id='detail'></p></body></html>",
+  function(assert, browser, done) {
+    let loader = Loader(module);
+    let worker1 = Worker({
+      window: browser.contentWindow,
+      contentScript: "new " + function WorkerScope() {
+        self.port.on("ping", detail => {
+          let event = document.createEvent("CustomEvent");
+          event.initCustomEvent("Test:Ping", true, true, detail);
+          document.dispatchEvent(event);
+          self.port.emit("pingsent");
+        });
+
+        let listener = function(event) {
+          self.port.emit("pong", event.detail);
+        };
+
+        self.port.on("detach", () => {
+          window.removeEventListener("Test:Pong", listener);
+        });
+        window.addEventListener("Test:Pong", listener);
+      },
+      onAttach: function() {
+        let worker2 = loader.require("sdk/content/worker").Worker({
+          window: browser.contentWindow,
+          contentScript: "new " + function WorkerScope() {
+            let listener = function(event) {
+              let newEvent = document.createEvent("CustomEvent");
+              newEvent.initCustomEvent("Test:Pong", true, true, event.detail);
+              document.dispatchEvent(newEvent);
+            };
+            self.port.on("detach", () => {
+              window.removeEventListener("Test:Ping", listener);
+            })
+            window.addEventListener("Test:Ping", listener);
+            self.postMessage();
+          },
+          onMessage: function() {
+            worker1.port.emit("ping", "test1");
+            worker1.port.once("pong", detail => {
+              assert.equal(detail, "test1", "Saw the right message");
+              worker1.port.once("pingsent", () => {
+                assert.pass("The message was sent");
+
+                loader.unload();
+
+                worker1.port.emit("ping", "test2");
+                worker1.port.once("pong", detail => {
+                  assert.fail("worker2 shouldn't have responded");
+                })
+                worker1.port.once("pingsent", () => {
+                  assert.pass("The message was sent");
+                  worker1.destroy();
+                  done();
+                });
+              });
+            })
+          }
+        });
+      }
+    });
+  }
+);
+
+require("sdk/test").run(exports);

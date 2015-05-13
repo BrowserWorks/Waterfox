@@ -3,7 +3,8 @@
  */
 
 #include "jsfriendapi.h"
-#include "jsproxy.h"
+
+#include "js/Proxy.h"
 
 #include "jsapi-tests/tests.h"
 
@@ -14,30 +15,29 @@ class CustomProxyHandler : public DirectProxyHandler {
   public:
     CustomProxyHandler() : DirectProxyHandler(nullptr) {}
 
-    bool getPropertyDescriptor(JSContext *cx, HandleObject proxy, HandleId id,
-                               MutableHandle<JSPropertyDescriptor> desc) const MOZ_OVERRIDE
+    bool getPropertyDescriptor(JSContext* cx, HandleObject proxy, HandleId id,
+                               MutableHandle<JSPropertyDescriptor> desc) const override
     {
         return impl(cx, proxy, id, desc, false);
     }
 
-    bool getOwnPropertyDescriptor(JSContext *cx, HandleObject proxy, HandleId id,
-                                  MutableHandle<JSPropertyDescriptor> desc) const MOZ_OVERRIDE
+    bool getOwnPropertyDescriptor(JSContext* cx, HandleObject proxy, HandleId id,
+                                  MutableHandle<JSPropertyDescriptor> desc) const override
     {
         return impl(cx, proxy, id, desc, true);
     }
 
-    bool set(JSContext *cx, HandleObject proxy, HandleObject receiver,
-             HandleId id, bool strict, MutableHandleValue vp) const MOZ_OVERRIDE
+    bool set(JSContext* cx, HandleObject proxy, HandleId id, HandleValue v, HandleValue receiver,
+             ObjectOpResult& result) const override
     {
         Rooted<JSPropertyDescriptor> desc(cx);
         if (!DirectProxyHandler::getPropertyDescriptor(cx, proxy, id, &desc))
             return false;
-        return SetPropertyIgnoringNamedGetter(cx, this, proxy, receiver, id, &desc,
-                                              desc.object() == proxy, strict, vp);
+        return SetPropertyIgnoringNamedGetter(cx, proxy, id, v, receiver, desc, result);
     }
 
   private:
-    bool impl(JSContext *cx, HandleObject proxy, HandleId id,
+    bool impl(JSContext* cx, HandleObject proxy, HandleId id,
               MutableHandle<JSPropertyDescriptor> desc, bool ownOnly) const
     {
         if (JSID_IS_STRING(id)) {
@@ -71,7 +71,7 @@ BEGIN_TEST(testSetPropertyIgnoringNamedGetter_direct)
     EVAL("({})", &targetv);
 
     RootedObject proxyObj(cx, NewProxyObject(cx, &customProxyHandler, targetv,
-                                             &protov.toObject(), global, ProxyOptions()));
+                                             &protov.toObject(), ProxyOptions()));
     CHECK(proxyObj);
 
     CHECK(JS_DefineProperty(cx, global, "target", targetv, 0));

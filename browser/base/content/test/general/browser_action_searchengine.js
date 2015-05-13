@@ -3,10 +3,11 @@
 
 add_task(function* () {
   // This test is only relevant if UnifiedComplete is enabled.
-  if (!Services.prefs.getBoolPref("browser.urlbar.unifiedcomplete")) {
-    todo(false, "Stop supporting old autocomplete components.");
-    return;
-  }
+  let ucpref = Services.prefs.getBoolPref("browser.urlbar.unifiedcomplete");
+  Services.prefs.setBoolPref("browser.urlbar.unifiedcomplete", true);
+  registerCleanupFunction(() => {
+    Services.prefs.setBoolPref("browser.urlbar.unifiedcomplete", ucpref);
+  });
 
   Services.search.addEngineWithDetails("MozSearch", "", "", "", "GET",
                                        "http://example.com/?q={searchTerms}");
@@ -26,7 +27,7 @@ add_task(function* () {
       gBrowser.removeTab(tab);
     } catch(ex) { /* tab may have already been closed in case of failure */ }
 
-    return promiseClearHistory();
+    return PlacesTestUtils.clearHistory();
   });
 
   yield promiseAutocompleteResultPopup("open a search");

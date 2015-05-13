@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -77,8 +78,8 @@ IsAbsoluteUnit(uint8_t aUnit)
  */
 inline static float GetAbsUnitsPerAbsUnit(uint8_t aUnits, uint8_t aPerUnit)
 {
-  NS_ABORT_IF_FALSE(IsAbsoluteUnit(aUnits), "Not a CSS absolute unit");
-  NS_ABORT_IF_FALSE(IsAbsoluteUnit(aPerUnit), "Not a CSS absolute unit");
+  MOZ_ASSERT(IsAbsoluteUnit(aUnits), "Not a CSS absolute unit");
+  MOZ_ASSERT(IsAbsoluteUnit(aPerUnit), "Not a CSS absolute unit");
 
   float CSSAbsoluteUnitConversionFactors[5][5] = { // columns: cm, mm, in, pt, pc
     // cm per...:

@@ -1,7 +1,36 @@
 Version history
 ===============
 
-### 3.0.0 (2014-08-XX) ###
+### 3.2.0 (2015-02-19) ###
+
+* Update ALPN token to final RFC version (h2).
+* Update altsvc implementation to draft 06: [draft-ietf-httpbis-alt-svc-06]
+
+[draft-ietf-httpbis-altsvc-06]: http://tools.ietf.org/html/draft-ietf-httpbis-alt-svc-06
+
+### 3.1.2 (2015-02-17) ###
+
+* Update the example server to have a safe push example.
+
+### 3.1.1 (2015-01-29) ###
+
+* Bugfix release.
+* Fixes an issue sending a push promise that is large enough to fill the frame (#93).
+
+### 3.1.0 (2014-12-11) ###
+
+* Upgrade to the latest draft: [draft-ietf-httpbis-http2-16]
+ * This involves some state transition changes that are technically incompatible with draft-14. If you need to be assured to interop on -14, continue using 3.0.1
+
+[draft-ietf-httpbis-http2-16]: http://tools.ietf.org/html/draft-ietf-httpbis-http2-16
+
+### 3.0.1 (2014-11-20) ###
+
+* Bugfix release.
+* Fixed #81 and #87
+* Fixed a bug in flow control (without GitHub issue)
+
+### 3.0.0 (2014-08-25) ###
 
 * Re-join node-http2 and node-http2-protocol into one repository
 * API Changes

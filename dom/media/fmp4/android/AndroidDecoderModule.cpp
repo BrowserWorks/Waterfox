@@ -12,12 +12,11 @@
 #include "GLLibraryEGL.h"
 
 #include "MediaData.h"
-
-#include "mp4_demuxer/AnnexB.h"
-#include "mp4_demuxer/DecoderData.h"
+#include "MediaInfo.h"
 
 #include "nsThreadUtils.h"
 #include "nsAutoPtr.h"
+#include "nsPromiseFlatString.h"
 
 #include <jni.h>
 #include <string.h>
@@ -28,30 +27,26 @@ using namespace mozilla::widget::sdk;
 
 namespace mozilla {
 
-static MediaCodec::LocalRef CreateDecoder(const char* aMimeType)
+static MediaCodec::LocalRef CreateDecoder(const nsACString& aMimeType)
 {
-  if (!aMimeType) {
-    return nullptr;
-  }
-
   MediaCodec::LocalRef codec;
-  NS_ENSURE_SUCCESS(MediaCodec::CreateDecoderByType(aMimeType, &codec), nullptr);
+  NS_ENSURE_SUCCESS(MediaCodec::CreateDecoderByType(PromiseFlatCString(aMimeType).get(), &codec), nullptr);
   return codec;
 }
 
 class VideoDataDecoder : public MediaCodecDataDecoder {
 public:
-  VideoDataDecoder(const mp4_demuxer::VideoDecoderConfig& aConfig,
+  VideoDataDecoder(const VideoInfo& aConfig,
                    MediaFormat::Param aFormat, MediaDataDecoderCallback* aCallback,
                    layers::ImageContainer* aImageContainer)
-    : MediaCodecDataDecoder(MediaData::Type::VIDEO_DATA, aConfig.mime_type, aFormat, aCallback)
+    : MediaCodecDataDecoder(MediaData::Type::VIDEO_DATA, aConfig.mMimeType, aFormat, aCallback)
     , mImageContainer(aImageContainer)
     , mConfig(aConfig)
   {
 
   }
 
-  nsresult Init() MOZ_OVERRIDE {
+  nsresult Init() override {
     mSurfaceTexture = AndroidSurfaceTexture::Create();
     if (!mSurfaceTexture) {
       NS_WARNING("Failed to create SurfaceTexture for video decode\n");
@@ -61,35 +56,30 @@ public:
     return InitDecoder(mSurfaceTexture->JavaSurface());
   }
 
-  void Cleanup() MOZ_OVERRIDE {
+  void Cleanup() override {
     mGLContext = nullptr;
   }
 
-  virtual nsresult Input(mp4_demuxer::MP4Sample* aSample) MOZ_OVERRIDE {
-    mp4_demuxer::AnnexB::ConvertSampleToAnnexB(aSample);
+  virtual nsresult Input(MediaRawData* aSample) override {
     return MediaCodecDataDecoder::Input(aSample);
   }
 
-  EGLImage CopySurface() {
-    if (!EnsureGLContext()) {
-      return nullptr;
-    }
+  bool WantCopy() {
+    // Allocating a texture is incredibly slow on PowerVR
+    return mGLContext->Vendor() != GLVendor::Imagination;
+  }
 
-    nsRefPtr<layers::Image> img = mImageContainer->CreateImage(ImageFormat::SURFACE_TEXTURE);
-    layers::SurfaceTextureImage::Data data;
-    data.mSurfTex = mSurfaceTexture.get();
-    data.mSize = gfx::IntSize(mConfig.display_width, mConfig.display_height);
-    data.mOriginPos = gl::OriginPos::BottomLeft;
-
-    layers::SurfaceTextureImage* stImg = static_cast<layers::SurfaceTextureImage*>(img.get());
-    stImg->SetData(data);
-
+  EGLImage CopySurface(layers::Image* img) {
     mGLContext->MakeCurrent();
 
-    GLuint tex = CreateTextureForOffscreen(mGLContext, mGLContext->GetGLFormats(), data.mSize);
+    GLuint tex = CreateTextureForOffscreen(mGLContext, mGLContext->GetGLFormats(),
+                                           img->GetSize());
 
-    GLBlitHelper helper(mGLContext);
-    if (!helper.BlitImageToTexture(img, data.mSize, tex, LOCAL_GL_TEXTURE_2D)) {
+    auto helper = mGLContext->BlitHelper();
+    const gl::OriginPos destOrigin = gl::OriginPos::TopLeft;
+    if (!helper->BlitImageToTexture(img, img->GetSize(), tex, LOCAL_GL_TEXTURE_2D,
+                                    destOrigin))
+    {
       mGLContext->fDeleteTextures(1, &tex);
       return nullptr;
     }
@@ -108,40 +98,51 @@ public:
     return eglImage;
   }
 
-  virtual nsresult PostOutput(BufferInfo::Param aInfo, MediaFormat::Param aFormat, Microseconds aDuration) MOZ_OVERRIDE {
-    VideoInfo videoInfo;
-    videoInfo.mDisplay = nsIntSize(mConfig.display_width, mConfig.display_height);
-
-    EGLImage eglImage = CopySurface();
-    if (!eglImage) {
+  virtual nsresult PostOutput(BufferInfo::Param aInfo, MediaFormat::Param aFormat, Microseconds aDuration) override {
+    if (!EnsureGLContext()) {
       return NS_ERROR_FAILURE;
     }
 
-    EGLSync eglSync = nullptr;
-    if (sEGLLibrary.IsExtensionSupported(GLLibraryEGL::KHR_fence_sync) &&
-        mGLContext->IsExtensionSupported(GLContext::OES_EGL_sync))
-    {
-      MOZ_ASSERT(mGLContext->IsCurrent());
-      eglSync = sEGLLibrary.fCreateSync(EGL_DISPLAY(),
-                                        LOCAL_EGL_SYNC_FENCE,
-                                        nullptr);
-      if (eglSync) {
-          mGLContext->fFlush();
-      }
-    } else {
-      NS_WARNING("No EGL fence support detected, rendering artifacts may occur!");
-    }
-
-    nsRefPtr<layers::Image> img = mImageContainer->CreateImage(ImageFormat::EGLIMAGE);
-    layers::EGLImageImage::Data data;
-    data.mImage = eglImage;
-    data.mSync = eglSync;
-    data.mOwns = true;
-    data.mSize = gfx::IntSize(mConfig.display_width, mConfig.display_height);
+    nsRefPtr<layers::Image> img = mImageContainer->CreateImage(ImageFormat::SURFACE_TEXTURE);
+    layers::SurfaceTextureImage::Data data;
+    data.mSurfTex = mSurfaceTexture.get();
+    data.mSize = mConfig.mDisplay;
     data.mOriginPos = gl::OriginPos::BottomLeft;
 
-    layers::EGLImageImage* typedImg = static_cast<layers::EGLImageImage*>(img.get());
-    typedImg->SetData(data);
+    layers::SurfaceTextureImage* stImg = static_cast<layers::SurfaceTextureImage*>(img.get());
+    stImg->SetData(data);
+
+    if (WantCopy()) {
+      EGLImage eglImage = CopySurface(img);
+      if (!eglImage) {
+        return NS_ERROR_FAILURE;
+      }
+
+      EGLSync eglSync = nullptr;
+      if (sEGLLibrary.IsExtensionSupported(GLLibraryEGL::KHR_fence_sync) &&
+          mGLContext->IsExtensionSupported(GLContext::OES_EGL_sync))
+      {
+        MOZ_ASSERT(mGLContext->IsCurrent());
+        eglSync = sEGLLibrary.fCreateSync(EGL_DISPLAY(),
+                                          LOCAL_EGL_SYNC_FENCE,
+                                          nullptr);
+        MOZ_ASSERT(eglSync);
+        mGLContext->fFlush();
+      } else {
+        NS_WARNING("No EGL fence support detected, rendering artifacts may occur!");
+      }
+
+      img = mImageContainer->CreateImage(ImageFormat::EGLIMAGE);
+      layers::EGLImageImage::Data data;
+      data.mImage = eglImage;
+      data.mSync = eglSync;
+      data.mOwns = true;
+      data.mSize = mConfig.mDisplay;
+      data.mOriginPos = gl::OriginPos::TopLeft;
+
+      layers::EGLImageImage* typedImg = static_cast<layers::EGLImageImage*>(img.get());
+      typedImg->SetData(data);
+    }
 
     nsresult rv;
     int32_t flags;
@@ -155,14 +156,18 @@ public:
     int64_t presentationTimeUs;
     NS_ENSURE_SUCCESS(rv = aInfo->PresentationTimeUs(&presentationTimeUs), rv);
 
-    nsRefPtr<VideoData> v = VideoData::CreateFromImage(videoInfo, mImageContainer, offset,
-                                                       presentationTimeUs,
-                                                       aDuration,
-                                                       img, isSync,
-                                                       presentationTimeUs,
-                                                       gfx::IntRect(0, 0,
-                                                         mConfig.display_width,
-                                                         mConfig.display_height));
+    nsRefPtr<VideoData> v =
+      VideoData::CreateFromImage(mConfig,
+                                 mImageContainer,
+                                 offset,
+                                 presentationTimeUs,
+                                 aDuration,
+                                 img,
+                                 isSync,
+                                 presentationTimeUs,
+                                 gfx::IntRect(0, 0,
+                                              mConfig.mDisplay.width,
+                                              mConfig.mDisplay.height));
     mCallback->Output(v);
     return NS_OK;
   }
@@ -173,12 +178,12 @@ protected:
       return true;
     }
 
-    mGLContext = GLContextProvider::CreateHeadless();
+    mGLContext = GLContextProvider::CreateHeadless(false);
     return mGLContext;
   }
 
   layers::ImageContainer* mImageContainer;
-  const mp4_demuxer::VideoDecoderConfig& mConfig;
+  const VideoInfo& mConfig;
   RefPtr<AndroidSurfaceTexture> mSurfaceTexture;
   nsRefPtr<GLContext> mGLContext;
 };
@@ -188,17 +193,17 @@ private:
   uint8_t csd0[2];
 
 public:
-  AudioDataDecoder(const mp4_demuxer::AudioDecoderConfig& aConfig, MediaFormat::Param aFormat, MediaDataDecoderCallback* aCallback)
-    : MediaCodecDataDecoder(MediaData::Type::AUDIO_DATA, aConfig.mime_type, aFormat, aCallback)
+  AudioDataDecoder(const AudioInfo& aConfig, MediaFormat::Param aFormat, MediaDataDecoderCallback* aCallback)
+    : MediaCodecDataDecoder(MediaData::Type::AUDIO_DATA, aConfig.mMimeType, aFormat, aCallback)
   {
     JNIEnv* env = GetJNIForThread();
 
     jni::Object::LocalRef buffer(env);
     NS_ENSURE_SUCCESS_VOID(aFormat->GetByteBuffer(NS_LITERAL_STRING("csd-0"), &buffer));
 
-    if (!buffer) {
-      csd0[0] = (*aConfig.audio_specific_config)[0];
-      csd0[1] = (*aConfig.audio_specific_config)[1];
+    if (!buffer && aConfig.mCodecSpecificConfig->Length() >= 2) {
+      csd0[0] = (*aConfig.mCodecSpecificConfig)[0];
+      csd0[1] = (*aConfig.mCodecSpecificConfig)[1];
 
       buffer = jni::Object::LocalRef::Adopt(env, env->NewDirectByteBuffer(csd0, 2));
       NS_ENSURE_SUCCESS_VOID(aFormat->SetByteBuffer(NS_LITERAL_STRING("csd-0"), buffer));
@@ -242,24 +247,29 @@ public:
 };
 
 
-bool AndroidDecoderModule::SupportsAudioMimeType(const char* aMimeType) {
-  return static_cast<bool>(CreateDecoder(aMimeType));
+bool AndroidDecoderModule::SupportsMimeType(const nsACString& aMimeType)
+{
+  if (aMimeType.EqualsLiteral("video/mp4") ||
+      aMimeType.EqualsLiteral("video/avc")) {
+    return true;
+  }
+  return static_cast<bool>(mozilla::CreateDecoder(aMimeType));
 }
 
 already_AddRefed<MediaDataDecoder>
 AndroidDecoderModule::CreateVideoDecoder(
-                                const mp4_demuxer::VideoDecoderConfig& aConfig,
+                                const VideoInfo& aConfig,
                                 layers::LayersBackend aLayersBackend,
                                 layers::ImageContainer* aImageContainer,
-                                MediaTaskQueue* aVideoTaskQueue,
+                                FlushableMediaTaskQueue* aVideoTaskQueue,
                                 MediaDataDecoderCallback* aCallback)
 {
   MediaFormat::LocalRef format;
 
   NS_ENSURE_SUCCESS(MediaFormat::CreateVideoFormat(
-      aConfig.mime_type,
-      aConfig.display_width,
-      aConfig.display_height,
+      aConfig.mMimeType,
+      aConfig.mDisplay.width,
+      aConfig.mDisplay.height,
       &format), nullptr);
 
   nsRefPtr<MediaDataDecoder> decoder =
@@ -269,18 +279,18 @@ AndroidDecoderModule::CreateVideoDecoder(
 }
 
 already_AddRefed<MediaDataDecoder>
-AndroidDecoderModule::CreateAudioDecoder(const mp4_demuxer::AudioDecoderConfig& aConfig,
-                                         MediaTaskQueue* aAudioTaskQueue,
+AndroidDecoderModule::CreateAudioDecoder(const AudioInfo& aConfig,
+                                         FlushableMediaTaskQueue* aAudioTaskQueue,
                                          MediaDataDecoderCallback* aCallback)
 {
-  MOZ_ASSERT(aConfig.bits_per_sample == 16, "We only handle 16-bit audio!");
+  MOZ_ASSERT(aConfig.mBitDepth == 16, "We only handle 16-bit audio!");
 
   MediaFormat::LocalRef format;
 
   NS_ENSURE_SUCCESS(MediaFormat::CreateAudioFormat(
-      aConfig.mime_type,
-      aConfig.samples_per_second,
-      aConfig.channel_count,
+      aConfig.mMimeType,
+      aConfig.mBitDepth,
+      aConfig.mChannels,
       &format), nullptr);
 
   nsRefPtr<MediaDataDecoder> decoder =
@@ -290,18 +300,22 @@ AndroidDecoderModule::CreateAudioDecoder(const mp4_demuxer::AudioDecoderConfig& 
 
 }
 
-
-nsresult AndroidDecoderModule::Shutdown()
+PlatformDecoderModule::ConversionRequired
+AndroidDecoderModule::DecoderNeedsConversion(const TrackInfo& aConfig) const
 {
-  return NS_OK;
+  if (aConfig.IsVideo()) {
+    return kNeedAnnexB;
+  } else {
+    return kNeedNone;
+  }
 }
 
 MediaCodecDataDecoder::MediaCodecDataDecoder(MediaData::Type aType,
-                                             const char* aMimeType,
+                                             const nsACString& aMimeType,
                                              MediaFormat::Param aFormat,
                                              MediaDataDecoderCallback* aCallback)
   : mType(aType)
-  , mMimeType(strdup(aMimeType))
+  , mMimeType(aMimeType)
   , mFormat(aFormat)
   , mCallback(aCallback)
   , mInputBuffers(nullptr)
@@ -355,6 +369,29 @@ nsresult MediaCodecDataDecoder::InitDecoder(Surface::Param aSurface)
     break; \
   }
 
+nsresult MediaCodecDataDecoder::GetInputBuffer(JNIEnv* env, int index, jni::Object::LocalRef* buffer)
+{
+  bool retried = false;
+  while (!*buffer) {
+    *buffer = jni::Object::LocalRef::Adopt(env->GetObjectArrayElement(mInputBuffers.Get(), index));
+    if (!*buffer) {
+      if (!retried) {
+        // Reset the input buffers and then try again
+        nsresult res = ResetInputBuffers();
+        if (NS_FAILED(res)) {
+          return res;
+        }
+        retried = true;
+      } else {
+        // We already tried resetting the input buffers, return an error
+        return NS_ERROR_FAILURE;
+      }
+    }
+  }
+
+  return NS_OK;
+}
+
 void MediaCodecDataDecoder::DecoderLoop()
 {
   bool outputDone = false;
@@ -363,7 +400,7 @@ void MediaCodecDataDecoder::DecoderLoop()
   bool waitingEOF = false;
 
   AutoLocalJNIFrame frame(GetJNIForThread(), 1);
-  mp4_demuxer::MP4Sample* sample = nullptr;
+  nsRefPtr<MediaRawData> sample;
 
   MediaFormat::LocalRef outputFormat(frame.GetEnv());
   nsresult res;
@@ -424,11 +461,13 @@ void MediaCodecDataDecoder::DecoderLoop()
       HANDLE_DECODER_ERROR();
 
       if (inputIndex >= 0) {
-        auto buffer = jni::Object::LocalRef::Adopt(
-            frame.GetEnv()->GetObjectArrayElement(mInputBuffers.Get(), inputIndex));
+        jni::Object::LocalRef buffer(frame.GetEnv());
+        res = GetInputBuffer(frame.GetEnv(), inputIndex, &buffer);
+        HANDLE_DECODER_ERROR();
+
         void* directBuffer = frame.GetEnv()->GetDirectBufferAddress(buffer.Get());
 
-        MOZ_ASSERT(frame.GetEnv()->GetDirectBufferCapacity(buffer.Get()) >= sample->size,
+        MOZ_ASSERT(frame.GetEnv()->GetDirectBufferCapacity(buffer.Get()) >= sample->mSize,
           "Decoder buffer is not large enough for sample");
 
         {
@@ -437,14 +476,13 @@ void MediaCodecDataDecoder::DecoderLoop()
           mQueue.pop();
         }
 
-        PodCopy((uint8_t*)directBuffer, sample->data, sample->size);
+        PodCopy((uint8_t*)directBuffer, sample->mData, sample->mSize);
 
-        res = mDecoder->QueueInputBuffer(inputIndex, 0, sample->size,
-                                         sample->composition_timestamp, 0);
+        res = mDecoder->QueueInputBuffer(inputIndex, 0, sample->mSize,
+                                         sample->mTime, 0);
         HANDLE_DECODER_ERROR();
 
-        mDurations.push(sample->duration);
-        delete sample;
+        mDurations.push(sample->mDuration);
         sample = nullptr;
         outputDone = false;
       }
@@ -536,7 +574,6 @@ void MediaCodecDataDecoder::ClearQueue()
 {
   mMonitor.AssertCurrentThreadOwns();
   while (!mQueue.empty()) {
-    delete mQueue.front();
     mQueue.pop();
   }
   while (!mDurations.empty()) {
@@ -544,7 +581,7 @@ void MediaCodecDataDecoder::ClearQueue()
   }
 }
 
-nsresult MediaCodecDataDecoder::Input(mp4_demuxer::MP4Sample* aSample) {
+nsresult MediaCodecDataDecoder::Input(MediaRawData* aSample) {
   MonitorAutoLock lock(mMonitor);
   mQueue.push(aSample);
   lock.NotifyAll();

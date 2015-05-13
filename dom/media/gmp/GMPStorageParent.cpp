@@ -39,7 +39,7 @@ extern PRLogModuleInfo* GetGMPLog();
 #ifdef __CLASS__
 #undef __CLASS__
 #endif
-#define __CLASS__ "GMPParent"
+#define __CLASS__ "GMPStorageParent"
 
 namespace gmp {
 
@@ -52,7 +52,7 @@ GetGMPStorageDir(nsIFile** aTempDir, const nsCString& aNodeId)
     return NS_ERROR_INVALID_ARG;
   }
 
-  nsCOMPtr<mozIGeckoMediaPluginService> mps =
+  nsCOMPtr<mozIGeckoMediaPluginChromeService> mps =
     do_GetService("@mozilla.org/gecko-media-plugin-service;1");
   if (NS_WARN_IF(!mps)) {
     return NS_ERROR_FAILURE;
@@ -91,7 +91,7 @@ GetGMPStorageDir(nsIFile** aTempDir, const nsCString& aNodeId)
 
 enum OpenFileMode  { ReadWrite, Truncate };
 
-nsresult
+static nsresult
 OpenStorageFile(const nsCString& aRecordName,
                 const nsCString& aNodeId,
                 const OpenFileMode aMode,
@@ -117,11 +117,28 @@ OpenStorageFile(const nsCString& aRecordName,
   return f->OpenNSPRFileDesc(mode, PR_IRWXU, aOutFD);
 }
 
+static nsresult
+RemoveStorageFile(const nsCString& aRecordName,
+                  const nsCString& aNodeId)
+{
+  nsCOMPtr<nsIFile> f;
+  nsresult rv = GetGMPStorageDir(getter_AddRefs(f), aNodeId);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  nsAutoString recordNameHash;
+  recordNameHash.AppendInt(HashString(aRecordName.get()));
+  f->Append(recordNameHash);
+
+  return f->Remove(/* bool recursive= */ false);
+}
+
 PLDHashOperator
 CloseFile(const nsACString& key, PRFileDesc*& entry, void* cx)
 {
   if (PR_Close(entry) != PR_SUCCESS) {
-    NS_WARNING("GMPDiskStorage Failed to clsose file.");
+    NS_WARNING("GMPDiskStorage failed to close file.");
   }
   return PL_DHASH_REMOVE;
 }
@@ -137,7 +154,7 @@ public:
     MOZ_ASSERT(!mFiles.Count());
   }
 
-  virtual GMPErr Open(const nsCString& aRecordName) MOZ_OVERRIDE
+  virtual GMPErr Open(const nsCString& aRecordName) override
   {
     MOZ_ASSERT(!IsOpen(aRecordName));
     PRFileDesc* fd = nullptr;
@@ -149,10 +166,11 @@ public:
     return GMPNoErr;
   }
 
-  virtual bool IsOpen(const nsCString& aRecordName) MOZ_OVERRIDE {
+  virtual bool IsOpen(const nsCString& aRecordName) override {
     return mFiles.Contains(aRecordName);
   }
 
+  static
   GMPErr ReadRecordMetadata(PRFileDesc* aFd,
                             int32_t& aOutFileLength,
                             int32_t& aOutRecordLength,
@@ -206,7 +224,7 @@ public:
   }
 
   virtual GMPErr Read(const nsCString& aRecordName,
-                      nsTArray<uint8_t>& aOutBytes) MOZ_OVERRIDE
+                      nsTArray<uint8_t>& aOutBytes) override
   {
     // Our error strategy is to report records with invalid contents as
     // containing 0 bytes. Zero length records are considered "deleted" by
@@ -250,17 +268,29 @@ public:
   }
 
   virtual GMPErr Write(const nsCString& aRecordName,
-                       const nsTArray<uint8_t>& aBytes) MOZ_OVERRIDE
+                       const nsTArray<uint8_t>& aBytes) override
   {
     PRFileDesc* fd = mFiles.Get(aRecordName);
     if (!fd) {
       return GMPGenericErr;
     }
 
-    // Write operations overwrite the entire record. So re-open the file
-    // in truncate mode, to clear its contents.
+    // Write operations overwrite the entire record. So close it now.
     PR_Close(fd);
     mFiles.Remove(aRecordName);
+
+    // Writing 0 bytes means removing (deleting) the file.
+    if (aBytes.Length() == 0) {
+      nsresult rv = RemoveStorageFile(aRecordName, mNodeId);
+      if (NS_WARN_IF(NS_FAILED(rv))) {
+        // Could not delete file -> Continue with trying to erase the contents.
+      } else {
+        return GMPNoErr;
+      }
+    }
+
+    // Write operations overwrite the entire record. So re-open the file
+    // in truncate mode, to clear its contents.
     if (NS_FAILED(OpenStorageFile(aRecordName, mNodeId, Truncate, &fd))) {
       return GMPGenericErr;
     }
@@ -285,7 +315,7 @@ public:
     return (bytesWritten == (int32_t)aBytes.Length()) ? GMPNoErr : GMPGenericErr;
   }
 
-  virtual GMPErr GetRecordNames(nsTArray<nsCString>& aOutRecordNames) MOZ_OVERRIDE
+  virtual GMPErr GetRecordNames(nsTArray<nsCString>& aOutRecordNames) override
   {
     nsCOMPtr<nsIFile> storageDir;
     nsresult rv = GetGMPStorageDir(getter_AddRefs(storageDir), mNodeId);
@@ -351,14 +381,14 @@ public:
     return GMPNoErr;
   }
 
-  virtual void Close(const nsCString& aRecordName) MOZ_OVERRIDE
+  virtual void Close(const nsCString& aRecordName) override
   {
     PRFileDesc* fd = mFiles.Get(aRecordName);
     if (fd) {
       if (PR_Close(fd) == PR_SUCCESS) {
         mFiles.Remove(aRecordName);
       } else {
-        NS_WARNING("GMPDiskStorage Failed to clsose file.");
+        NS_WARNING("GMPDiskStorage failed to close file.");
       }
     }
   }
@@ -370,7 +400,7 @@ private:
 
 class GMPMemoryStorage : public GMPStorage {
 public:
-  virtual GMPErr Open(const nsCString& aRecordName) MOZ_OVERRIDE
+  virtual GMPErr Open(const nsCString& aRecordName) override
   {
     MOZ_ASSERT(!IsOpen(aRecordName));
 
@@ -383,7 +413,7 @@ public:
     return GMPNoErr;
   }
 
-  virtual bool IsOpen(const nsCString& aRecordName) MOZ_OVERRIDE {
+  virtual bool IsOpen(const nsCString& aRecordName) override {
     Record* record = nullptr;
     if (!mRecords.Get(aRecordName, &record)) {
       return false;
@@ -392,7 +422,7 @@ public:
   }
 
   virtual GMPErr Read(const nsCString& aRecordName,
-                      nsTArray<uint8_t>& aOutBytes) MOZ_OVERRIDE
+                      nsTArray<uint8_t>& aOutBytes) override
   {
     Record* record = nullptr;
     if (!mRecords.Get(aRecordName, &record)) {
@@ -403,7 +433,7 @@ public:
   }
 
   virtual GMPErr Write(const nsCString& aRecordName,
-                       const nsTArray<uint8_t>& aBytes) MOZ_OVERRIDE
+                       const nsTArray<uint8_t>& aBytes) override
   {
     Record* record = nullptr;
     if (!mRecords.Get(aRecordName, &record)) {
@@ -413,13 +443,13 @@ public:
     return GMPNoErr;
   }
 
-  virtual GMPErr GetRecordNames(nsTArray<nsCString>& aOutRecordNames) MOZ_OVERRIDE
+  virtual GMPErr GetRecordNames(nsTArray<nsCString>& aOutRecordNames) override
   {
     mRecords.EnumerateRead(EnumRecordNames, &aOutRecordNames);
     return GMPNoErr;
   }
 
-  virtual void Close(const nsCString& aRecordName) MOZ_OVERRIDE
+  virtual void Close(const nsCString& aRecordName) override
   {
     Record* record = nullptr;
     if (!mRecords.Get(aRecordName, &record)) {
@@ -468,7 +498,7 @@ GMPStorageParent::Init()
   if (NS_WARN_IF(mNodeId.IsEmpty())) {
     return NS_ERROR_FAILURE;
   }
-  nsCOMPtr<mozIGeckoMediaPluginService> mps =
+  nsCOMPtr<mozIGeckoMediaPluginChromeService> mps =
     do_GetService("@mozilla.org/gecko-media-plugin-service;1");
   if (NS_WARN_IF(!mps)) {
     return NS_ERROR_FAILURE;
@@ -540,7 +570,7 @@ GMPStorageParent::RecvRead(const nsCString& aRecordName)
 
 bool
 GMPStorageParent::RecvWrite(const nsCString& aRecordName,
-                            const InfallibleTArray<uint8_t>& aBytes)
+                            InfallibleTArray<uint8_t>&& aBytes)
 {
   LOGD(("%s::%s: %p record=%s", __CLASS__, __FUNCTION__, this, aRecordName.get()));
 

@@ -21,11 +21,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "pkix/pkix.h"
 #include "pkixcheck.h"
 #include "pkixder.h"
 #include "pkixgtest.h"
-#include "pkixtestutil.h"
 #include "pkixutil.h"
 
 namespace mozilla { namespace pkix {
@@ -72,7 +70,8 @@ struct PresentedMatchesReference
   { \
     ByteString(reinterpret_cast<const uint8_t*>(a), sizeof(a) - 1), \
     ByteString(reinterpret_cast<const uint8_t*>(b), sizeof(b) - 1), \
-    Result::ERROR_BAD_DER \
+    Result::ERROR_BAD_DER, \
+    false \
   }
 
 static const PresentedMatchesReference DNSID_MATCH_PARAMS[] =
@@ -85,6 +84,27 @@ static const PresentedMatchesReference DNSID_MATCH_PARAMS[] =
   DNS_ID_MATCH("*.b.a", "c.b.a"),
   DNS_ID_MISMATCH("*.b.a", "b.a"),
   DNS_ID_MISMATCH("*.b.a", "b.a."),
+
+  // We allow underscores for compatibility with existing practices.
+  DNS_ID_MATCH("a_b", "a_b"),
+  DNS_ID_MATCH("*.example.com", "uses_underscore.example.com"),
+  DNS_ID_MATCH("*.uses_underscore.example.com", "a.uses_underscore.example.com"),
+
+  // See bug 1139039
+  DNS_ID_MATCH("_.example.com", "_.example.com"),
+  DNS_ID_MATCH("*.example.com", "_.example.com"),
+  DNS_ID_MATCH("_", "_"),
+  DNS_ID_MATCH("___", "___"),
+  DNS_ID_MATCH("example_", "example_"),
+  DNS_ID_MATCH("_example", "_example"),
+  DNS_ID_MATCH("*._._", "x._._"),
+
+  // See bug 1139039
+  // A DNS-ID must not end in an all-numeric label. We don't consider
+  // underscores to be numeric.
+  DNS_ID_MATCH("_1", "_1"),
+  DNS_ID_MATCH("example._1", "example._1"),
+  DNS_ID_MATCH("example.1_", "example.1_"),
 
   // Wildcard not in leftmost label
   DNS_ID_MATCH("d.c.b.a", "d.c.b.a"),
@@ -286,6 +306,10 @@ static const PresentedMatchesReference DNSID_MATCH_PARAMS[] =
   DNS_ID_MATCH("*.co.uk", "foo.co.uk."),
   DNS_ID_BAD_DER("*.co.uk.", "foo.co.uk"),
   DNS_ID_BAD_DER("*.co.uk.", "foo.co.uk."),
+
+  DNS_ID_MISMATCH("*.example.com", "localhost"),
+  DNS_ID_MISMATCH("*.example.com", "localhost."),
+  // Note that we already have the testcase DNS_ID_BAD_DER("*", "foo") above
 };
 
 struct InputValidity
@@ -382,6 +406,16 @@ static const InputValidity DNSNAMES_VALIDITY[] =
   I("A.B.C.D.E.F.G.H.I.J.K.L.M.N.O.P.Q.R.S.T.U.V.W.X.Y.Z", true, true),
   I("0.1.2.3.4.5.6.7.8.9.a", true, true), // "a" needed to avoid numeric last label
   I("a-b", true, true), // hyphen (a label cannot start or end with a hyphen)
+
+  // Underscores
+  I("a_b", true, true),
+  // See bug 1139039
+  I("_", true, true),
+  I("a_", true, true),
+  I("_a", true, true),
+  I("_1", true, true),
+  I("1_", true, true),
+  I("___", true, true),
 
   // An invalid character in various positions
   I("!", false, false),
@@ -1320,7 +1354,11 @@ static const CheckCertHostnameParams CHECK_CERT_HOSTNAME_PARAMS[] =
 
   // http://tools.ietf.org/html/rfc5280#section-4.2.1.6: "If the subjectAltName
   // extension is present, the sequence MUST contain at least one entry."
-  WITH_SAN("a", RDN(CN("a")), ByteString(), Result::ERROR_BAD_DER),
+  // However, for compatibility reasons, this is not enforced. See bug 1143085.
+  // This case is treated as if the extension is not present (i.e. name
+  // matching falls back to the subject CN).
+  WITH_SAN("a", RDN(CN("a")), ByteString(), Success),
+  WITH_SAN("a", RDN(CN("b")), ByteString(), Result::ERROR_BAD_CERT_DOMAIN),
 
   // http://tools.ietf.org/html/rfc5280#section-4.1.2.6 says "If subject naming
   // information is present only in the subjectAltName extension (e.g., a key
@@ -1385,6 +1423,14 @@ static const CheckCertHostnameParams CHECK_CERT_HOSTNAME_PARAMS[] =
 
   // Empty CN does not match.
   WITHOUT_SAN("example.com", RDN(CN("")), Result::ERROR_BAD_CERT_DOMAIN),
+
+  WITHOUT_SAN("uses_underscore.example.com", RDN(CN("*.example.com")), Success),
+  WITHOUT_SAN("a.uses_underscore.example.com",
+              RDN(CN("*.uses_underscore.example.com")), Success),
+  WITH_SAN("uses_underscore.example.com", RDN(CN("foo")),
+           DNSName("*.example.com"), Success),
+  WITH_SAN("a.uses_underscore.example.com", RDN(CN("foo")),
+           DNSName("*.uses_underscore.example.com"), Success),
 
   // Do not match a DNSName that is encoded in a malformed IPAddress.
   WITH_SAN("example.com", RDN(CN("foo")), IPAddress(example_com),
@@ -1502,9 +1548,9 @@ CreateCert(const ByteString& subject, const ByteString& subjectAltName)
 
   ScopedTestKeyPair keyPair(CloneReusedKeyPair());
   return CreateEncodedCertificate(
-                    v3, sha256WithRSAEncryption, serialNumber, issuerDER,
+                    v3, sha256WithRSAEncryption(), serialNumber, issuerDER,
                     oneDayBeforeNow, oneDayAfterNow, Name(subject), *keyPair,
-                    extensions, *keyPair, sha256WithRSAEncryption);
+                    extensions, *keyPair, sha256WithRSAEncryption());
 }
 
 TEST_P(pkixnames_CheckCertHostname, CheckCertHostname)
@@ -1542,10 +1588,10 @@ TEST_F(pkixnames_CheckCertHostname, SANWithoutSequence)
 
   ScopedTestKeyPair keyPair(CloneReusedKeyPair());
   ByteString certDER(CreateEncodedCertificate(
-                       v3, sha256WithRSAEncryption, serialNumber,
+                       v3, sha256WithRSAEncryption(), serialNumber,
                        Name(RDN(CN("issuer"))), oneDayBeforeNow, oneDayAfterNow,
                        Name(RDN(CN("a"))), *keyPair, extensions,
-                       *keyPair, sha256WithRSAEncryption));
+                       *keyPair, sha256WithRSAEncryption()));
   ASSERT_FALSE(ENCODING_FAILED(certDER));
   Input certInput;
   ASSERT_EQ(Success, certInput.Init(certDER.data(), certDER.length()));
@@ -2175,11 +2221,6 @@ static const NameConstraintParams NAME_CONSTRAINT_PARAMS[] =
   { RDN(CN("b.example.com")), NO_SAN, GeneralSubtree(DNSName("a.example.com")),
     Result::ERROR_CERT_NOT_IN_NAME_SPACE, Success
   },
-  { // Empty SAN is rejected
-    RDN(CN("a.example.com")), ByteString(),
-    GeneralSubtree(DNSName("a.example.com")),
-    Result::ERROR_BAD_DER, Result::ERROR_BAD_DER
-  },
   { // DNSName CN-ID match is detected when there is a SAN w/o any DNSName or
     // IPAddress
     RDN(CN("a.example.com")), RFC822Name("foo@example.com"),
@@ -2322,6 +2363,147 @@ static const NameConstraintParams NAME_CONSTRAINT_PARAMS[] =
     Result::ERROR_BAD_DER,
     Result::ERROR_BAD_DER
   },
+
+  /////////////////////////////////////////////////////////////////////////////
+  // Test name constraints with underscores.
+  //
+  { ByteString(), DNSName("uses_underscore.example.com"),
+    GeneralSubtree(DNSName("uses_underscore.example.com")),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { ByteString(), DNSName("uses_underscore.example.com"),
+    GeneralSubtree(DNSName("example.com")),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { ByteString(), DNSName("a.uses_underscore.example.com"),
+    GeneralSubtree(DNSName("uses_underscore.example.com")),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { ByteString(), RFC822Name("a@uses_underscore.example.com"),
+    GeneralSubtree(RFC822Name("uses_underscore.example.com")),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { ByteString(), RFC822Name("uses_underscore@example.com"),
+    GeneralSubtree(RFC822Name("example.com")),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { ByteString(), RFC822Name("a@a.uses_underscore.example.com"),
+    GeneralSubtree(RFC822Name(".uses_underscore.example.com")),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+
+  /////////////////////////////////////////////////////////////////////////////
+  // Name constraint tests that relate to having an empty SAN. According to RFC
+  // 5280 this isn't valid, but we allow it for compatibility reasons (see bug
+  // 1143085).
+  { // For DNSNames, we fall back to the subject CN.
+    RDN(CN("a.example.com")), ByteString(),
+    GeneralSubtree(DNSName("a.example.com")),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { // For RFC822Names, we do not fall back to the subject emailAddress.
+    // This new implementation seems to conform better to the standards for
+    // RFC822 name constraints, by only applying the name constraints to
+    // emailAddress names in the certificate subject if there is no
+    // subjectAltName extension in the cert.
+    // In this case, the presence of the (empty) SAN extension means that RFC822
+    // name constraints are not enforced on the emailAddress attributes of the
+    // subject.
+    RDN(emailAddress("a@example.com")), ByteString(),
+    GeneralSubtree(RFC822Name("a@example.com")),
+    Success, Success
+  },
+  { // Compare this to the case where there is no SAN (i.e. the name
+    // constraints are enforced, because the extension is not present at all).
+    RDN(emailAddress("a@example.com")), NO_SAN,
+    GeneralSubtree(RFC822Name("a@example.com")),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+
+  /////////////////////////////////////////////////////////////////////////////
+  // DirectoryName name constraint tests
+
+  { // One AVA per RDN
+    RDN(OU("Example Organization")) + RDN(CN("example.com")), NO_SAN,
+    GeneralSubtree(DirectoryName(Name(RDN(OU("Example Organization")) +
+                                      RDN(CN("example.com"))))),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { // RDNs can have multiple AVAs.
+    RDN(OU("Example Organization") + CN("example.com")), NO_SAN,
+    GeneralSubtree(DirectoryName(Name(RDN(OU("Example Organization") +
+                                          CN("example.com"))))),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { // The constraint is a prefix of the subject DN.
+    RDN(OU("Example Organization")) + RDN(CN("example.com")), NO_SAN,
+    GeneralSubtree(DirectoryName(Name(RDN(OU("Example Organization"))))),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { // The name constraint is not a prefix of the subject DN.
+    // Note that for excludedSubtrees, we simply prohibit any non-empty
+    // directoryName constraint to ensure we are not being too lenient.
+    RDN(OU("Other Example Organization")) + RDN(CN("example.com")), NO_SAN,
+    GeneralSubtree(DirectoryName(Name(RDN(OU("Example Organization")) +
+                                      RDN(CN("example.com"))))),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { // Same as the previous one, but one RDN with multiple AVAs.
+    RDN(OU("Other Example Organization") + CN("example.com")), NO_SAN,
+    GeneralSubtree(DirectoryName(Name(RDN(OU("Example Organization") +
+                                          CN("example.com"))))),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { // With multiple AVAs per RDN in the subject DN, the constraint is not a
+    // prefix of the subject DN.
+    RDN(OU("Example Organization") + CN("example.com")), NO_SAN,
+    GeneralSubtree(DirectoryName(Name(RDN(OU("Example Organization"))))),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { // The subject DN RDN has multiple AVAs, but the name constraint has only
+    // one AVA per RDN.
+    RDN(OU("Example Organization") + CN("example.com")), NO_SAN,
+    GeneralSubtree(DirectoryName(Name(RDN(OU("Example Organization")) +
+                                      RDN(CN("example.com"))))),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { // The name constraint RDN has multiple AVAs, but the subject DN has only
+    // one AVA per RDN.
+    RDN(OU("Example Organization")) + RDN(CN("example.com")), NO_SAN,
+    GeneralSubtree(DirectoryName(Name(RDN(OU("Example Organization") +
+                                          CN("example.com"))))),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { // In this case, the constraint uses a different encoding from the subject.
+    // We consider them to match because we allow UTF8String and
+    // PrintableString to compare equal when their contents are equal.
+    RDN(OU("Example Organization", der::UTF8String)) + RDN(CN("example.com")),
+    NO_SAN, GeneralSubtree(DirectoryName(Name(RDN(OU("Example Organization",
+                                                     der::PrintableString)) +
+                                              RDN(CN("example.com"))))),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { // Same as above, but with UTF8String/PrintableString switched.
+    RDN(OU("Example Organization", der::PrintableString)) + RDN(CN("example.com")),
+    NO_SAN, GeneralSubtree(DirectoryName(Name(RDN(OU("Example Organization",
+                                                     der::UTF8String)) +
+                                              RDN(CN("example.com"))))),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { // If the contents aren't the same, then they shouldn't match.
+    RDN(OU("Other Example Organization", der::UTF8String)) + RDN(CN("example.com")),
+    NO_SAN, GeneralSubtree(DirectoryName(Name(RDN(OU("Example Organization",
+                                                     der::PrintableString)) +
+                                              RDN(CN("example.com"))))),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { // Only UTF8String and PrintableString are considered equivalent.
+    RDN(OU("Example Organization", der::PrintableString)) + RDN(CN("example.com")),
+    NO_SAN, GeneralSubtree(DirectoryName(Name(RDN(OU("Example Organization",
+                                                     der::TeletexString)) +
+                                              RDN(CN("example.com"))))),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
 };
 
 class pkixnames_CheckNameConstraints
@@ -2331,7 +2513,7 @@ class pkixnames_CheckNameConstraints
 };
 
 TEST_P(pkixnames_CheckNameConstraints,
-       NameConstraintsEnforcedforDirectlyIssuedEndEntity)
+       NameConstraintsEnforcedForDirectlyIssuedEndEntity)
 {
   // Test that name constraints are enforced on a certificate directly issued by
   // this certificate.

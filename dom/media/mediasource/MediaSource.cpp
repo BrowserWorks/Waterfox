@@ -55,8 +55,8 @@ PRLogModuleInfo* GetMediaSourceAPILog()
   return sLogModule;
 }
 
-#define MSE_DEBUG(...) PR_LOG(GetMediaSourceLog(), PR_LOG_DEBUG, (__VA_ARGS__))
-#define MSE_API(...) PR_LOG(GetMediaSourceAPILog(), PR_LOG_DEBUG, (__VA_ARGS__))
+#define MSE_DEBUG(arg, ...) PR_LOG(GetMediaSourceLog(), PR_LOG_DEBUG, ("MediaSource(%p)::%s: " arg, this, __func__, ##__VA_ARGS__))
+#define MSE_API(arg, ...) PR_LOG(GetMediaSourceAPILog(), PR_LOG_DEBUG, ("MediaSource(%p)::%s: " arg, this, __func__, ##__VA_ARGS__))
 #else
 #define MSE_DEBUG(...)
 #define MSE_API(...)
@@ -135,7 +135,7 @@ MediaSource::Constructor(const GlobalObject& aGlobal,
 MediaSource::~MediaSource()
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MSE_API("MediaSource(%p)::~MediaSource()", this);
+  MSE_API("");
   if (mDecoder) {
     mDecoder->DetachMediaSource();
   }
@@ -179,7 +179,7 @@ void
 MediaSource::SetDuration(double aDuration, ErrorResult& aRv)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MSE_API("MediaSource(%p)::SetDuration(aDuration=%f, ErrorResult)", this, aDuration);
+  MSE_API("SetDuration(aDuration=%f, ErrorResult)", aDuration);
   if (aDuration < 0 || IsNaN(aDuration)) {
     aRv.Throw(NS_ERROR_DOM_INVALID_ACCESS_ERR);
     return;
@@ -189,15 +189,15 @@ MediaSource::SetDuration(double aDuration, ErrorResult& aRv)
     aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
     return;
   }
-  SetDuration(aDuration);
+  SetDuration(aDuration, MSRangeRemovalAction::RUN);
 }
 
 void
-MediaSource::SetDuration(double aDuration)
+MediaSource::SetDuration(double aDuration, MSRangeRemovalAction aAction)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MSE_API("MediaSource(%p)::SetDuration(aDuration=%f)", this, aDuration);
-  mDecoder->SetMediaSourceDuration(aDuration);
+  MSE_API("SetDuration(aDuration=%f)", aDuration);
+  mDecoder->SetMediaSourceDuration(aDuration, aAction);
 }
 
 already_AddRefed<SourceBuffer>
@@ -205,8 +205,8 @@ MediaSource::AddSourceBuffer(const nsAString& aType, ErrorResult& aRv)
 {
   MOZ_ASSERT(NS_IsMainThread());
   nsresult rv = mozilla::IsTypeSupported(aType);
-  MSE_API("MediaSource(%p)::AddSourceBuffer(aType=%s)%s",
-          this, NS_ConvertUTF16toUTF8(aType).get(),
+  MSE_API("AddSourceBuffer(aType=%s)%s",
+          NS_ConvertUTF16toUTF8(aType).get(),
           rv == NS_OK ? "" : " [not supported]");
   if (NS_FAILED(rv)) {
     aRv.Throw(rv);
@@ -233,9 +233,25 @@ MediaSource::AddSourceBuffer(const nsAString& aType, ErrorResult& aRv)
     return nullptr;
   }
   mSourceBuffers->Append(sourceBuffer);
-  mActiveSourceBuffers->Append(sourceBuffer);
-  MSE_DEBUG("MediaSource(%p)::AddSourceBuffer() sourceBuffer=%p", this, sourceBuffer.get());
+  MSE_DEBUG("sourceBuffer=%p", sourceBuffer.get());
   return sourceBuffer.forget();
+}
+
+void
+MediaSource::SourceBufferIsActive(SourceBuffer* aSourceBuffer)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  mActiveSourceBuffers->ClearSimple();
+  bool found = false;
+  for (uint32_t i = 0; i < mSourceBuffers->Length(); i++) {
+    SourceBuffer* sourceBuffer = mSourceBuffers->IndexedGetter(i, found);
+    MOZ_ALWAYS_TRUE(found);
+    if (sourceBuffer == aSourceBuffer) {
+      mActiveSourceBuffers->Append(aSourceBuffer);
+    } else if (sourceBuffer->IsActive()) {
+      mActiveSourceBuffers->AppendSimple(sourceBuffer);
+    }
+  }
 }
 
 void
@@ -243,18 +259,16 @@ MediaSource::RemoveSourceBuffer(SourceBuffer& aSourceBuffer, ErrorResult& aRv)
 {
   MOZ_ASSERT(NS_IsMainThread());
   SourceBuffer* sourceBuffer = &aSourceBuffer;
-  MSE_API("MediaSource(%p)::RemoveSourceBuffer(aSourceBuffer=%p)", this, sourceBuffer);
+  MSE_API("RemoveSourceBuffer(aSourceBuffer=%p)", sourceBuffer);
   if (!mSourceBuffers->Contains(sourceBuffer)) {
     aRv.Throw(NS_ERROR_DOM_NOT_FOUND_ERR);
     return;
   }
-  if (sourceBuffer->Updating()) {
-    // TODO:
-    // abort stream append loop (if running)
-    // set updating to false
-    // fire "abort" at sourceBuffer
-    // fire "updateend" at sourceBuffer
-  }
+
+  sourceBuffer->AbortBufferAppend();
+  // TODO:
+  // abort stream append loop (if running)
+
   // TODO:
   // For all sourceBuffer audioTracks, videoTracks, textTracks:
   //     set sourceBuffer to null
@@ -273,8 +287,8 @@ void
 MediaSource::EndOfStream(const Optional<MediaSourceEndOfStreamError>& aError, ErrorResult& aRv)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MSE_API("MediaSource(%p)::EndOfStream(aError=%d)",
-          this, aError.WasPassed() ? uint32_t(aError.Value()) : 0);
+  MSE_API("EndOfStream(aError=%d)",
+          aError.WasPassed() ? uint32_t(aError.Value()) : 0);
   if (mReadyState != MediaSourceReadyState::Open ||
       mSourceBuffers->AnyUpdating()) {
     aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
@@ -283,14 +297,14 @@ MediaSource::EndOfStream(const Optional<MediaSourceEndOfStreamError>& aError, Er
 
   SetReadyState(MediaSourceReadyState::Ended);
   mSourceBuffers->Ended();
-  mDecoder->Ended();
   if (!aError.WasPassed()) {
-    mDecoder->SetMediaSourceDuration(mSourceBuffers->GetHighestBufferedEndTime());
+    mDecoder->SetMediaSourceDuration(mSourceBuffers->GetHighestBufferedEndTime(),
+                                     MSRangeRemovalAction::SKIP);
     if (aRv.Failed()) {
       return;
     }
-    // TODO:
-    //   Notify media element that all data is now available.
+    // Notify reader that all data is now available.
+    mDecoder->Ended(true);
     return;
   }
   switch (aError.Value()) {
@@ -314,8 +328,10 @@ MediaSource::IsTypeSupported(const GlobalObject&, const nsAString& aType)
 {
   MOZ_ASSERT(NS_IsMainThread());
   nsresult rv = mozilla::IsTypeSupported(aType);
-  MSE_API("MediaSource::IsTypeSupported(aType=%s)%s",
-          NS_ConvertUTF16toUTF8(aType).get(), rv == NS_OK ? "" : " [not supported]");
+#define this nullptr
+  MSE_API("IsTypeSupported(aType=%s)%s ",
+          NS_ConvertUTF16toUTF8(aType).get(), rv == NS_OK ? "OK" : "[not supported]");
+#undef this // don't ever remove this line !
   return NS_SUCCEEDED(rv);
 }
 
@@ -333,23 +349,18 @@ MediaSource::Enabled(JSContext* cx, JSObject* aGlobal)
     return false;
   }
 
-  // Check whether it's enabled everywhere or just YouTube.
-  bool restrict = Preferences::GetBool("media.mediasource.youtubeonly", false);
+  // Check whether it's enabled everywhere or just whitelisted sites.
+  bool restrict = Preferences::GetBool("media.mediasource.whitelist", false);
   if (!restrict) {
     return true;
   }
 
   // We want to restrict to YouTube only.
-  // We define that as the origin being https://*.youtube.com.
-  // We also support https://*.youtube-nocookie.com.
+  // We define that as the origin being *.youtube.com.
+  // We also support *.youtube-nocookie.com
   nsIPrincipal* principal = nsContentUtils::ObjectPrincipal(global);
   nsCOMPtr<nsIURI> uri;
   if (NS_FAILED(principal->GetURI(getter_AddRefs(uri))) || !uri) {
-    return false;
-  }
-
-  bool isHttps = false;
-  if (NS_FAILED(uri->SchemeIs("https", &isHttps)) || !isHttps) {
     return false;
   }
 
@@ -363,14 +374,15 @@ MediaSource::Enabled(JSContext* cx, JSObject* aGlobal)
    }
 
    return eTLDplusOne.EqualsLiteral("youtube.com") ||
-          eTLDplusOne.EqualsLiteral("youtube-nocookie.com");
+          eTLDplusOne.EqualsLiteral("youtube-nocookie.com") ||
+          eTLDplusOne.EqualsLiteral("netflix.com");
 }
 
 bool
 MediaSource::Attach(MediaSourceDecoder* aDecoder)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MSE_DEBUG("MediaSource(%p)::Attach(aDecoder=%p) owner=%p", this, aDecoder, aDecoder->GetOwner());
+  MSE_DEBUG("Attach(aDecoder=%p) owner=%p", aDecoder, aDecoder->GetOwner());
   MOZ_ASSERT(aDecoder);
   MOZ_ASSERT(aDecoder->GetOwner());
   if (mReadyState != MediaSourceReadyState::Closed) {
@@ -389,8 +401,8 @@ void
 MediaSource::Detach()
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MSE_DEBUG("MediaSource(%p)::Detach() mDecoder=%p owner=%p",
-            this, mDecoder.get(), mDecoder ? mDecoder->GetOwner() : nullptr);
+  MSE_DEBUG("mDecoder=%p owner=%p",
+            mDecoder.get(), mDecoder ? mDecoder->GetOwner() : nullptr);
   if (!mDecoder) {
     MOZ_ASSERT(mReadyState == MediaSourceReadyState::Closed);
     MOZ_ASSERT(mActiveSourceBuffers->IsEmpty() && mSourceBuffers->IsEmpty());
@@ -425,8 +437,8 @@ MediaSource::MediaSource(nsPIDOMWindow* aWindow)
     mPrincipal = sop->GetPrincipal();
   }
 
-  MSE_API("MediaSource(%p)::MediaSource(aWindow=%p) mSourceBuffers=%p mActiveSourceBuffers=%p",
-          this, aWindow, mSourceBuffers.get(), mActiveSourceBuffers.get());
+  MSE_API("MediaSource(aWindow=%p) mSourceBuffers=%p mActiveSourceBuffers=%p",
+          aWindow, mSourceBuffers.get(), mActiveSourceBuffers.get());
 }
 
 void
@@ -434,7 +446,7 @@ MediaSource::SetReadyState(MediaSourceReadyState aState)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aState != mReadyState);
-  MSE_DEBUG("MediaSource(%p)::SetReadyState(aState=%d) mReadyState=%d", this, aState, mReadyState);
+  MSE_DEBUG("SetReadyState(aState=%d) mReadyState=%d", aState, mReadyState);
 
   MediaSourceReadyState oldState = mReadyState;
   mReadyState = aState;
@@ -443,6 +455,10 @@ MediaSource::SetReadyState(MediaSourceReadyState aState)
       (oldState == MediaSourceReadyState::Closed ||
        oldState == MediaSourceReadyState::Ended)) {
     QueueAsyncSimpleEvent("sourceopen");
+    if (oldState == MediaSourceReadyState::Ended) {
+      // Notify reader that more data may come.
+      mDecoder->Ended(false);
+    }
     return;
   }
 
@@ -466,14 +482,14 @@ void
 MediaSource::DispatchSimpleEvent(const char* aName)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MSE_API("MediaSource(%p) Dispatch event '%s'", this, aName);
+  MSE_API("Dispatch event '%s'", aName);
   DispatchTrustedEvent(NS_ConvertUTF8toUTF16(aName));
 }
 
 void
 MediaSource::QueueAsyncSimpleEvent(const char* aName)
 {
-  MSE_DEBUG("MediaSource(%p) Queuing event '%s'", this, aName);
+  MSE_DEBUG("Queuing event '%s'", aName);
   nsCOMPtr<nsIRunnable> event = new AsyncEventRunner<MediaSource>(this, aName);
   NS_DispatchToMainThread(event);
 }
@@ -482,10 +498,11 @@ void
 MediaSource::DurationChange(double aOldDuration, double aNewDuration)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MSE_DEBUG("MediaSource(%p)::DurationChange(aOldDuration=%f, aNewDuration=%f)", this, aOldDuration, aNewDuration);
+  MSE_DEBUG("DurationChange(aOldDuration=%f, aNewDuration=%f)", aOldDuration, aNewDuration);
 
   if (aNewDuration < aOldDuration) {
-    mSourceBuffers->RangeRemoval(aNewDuration, aOldDuration);
+    // Remove all buffered data from aNewDuration.
+    mSourceBuffers->RangeRemoval(aNewDuration, PositiveInfinity<double>());
   }
   // TODO: If partial audio frames/text cues exist, clamp duration based on mSourceBuffers.
 }
@@ -494,7 +511,7 @@ void
 MediaSource::NotifyEvicted(double aStart, double aEnd)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MSE_DEBUG("MediaSource(%p)::NotifyEvicted(aStart=%f, aEnd=%f)", this, aStart, aEnd);
+  MSE_DEBUG("NotifyEvicted(aStart=%f, aEnd=%f)", aStart, aEnd);
   // Cycle through all SourceBuffers and tell them to evict data in
   // the given range.
   mSourceBuffers->Evict(aStart, aEnd);
@@ -508,8 +525,8 @@ MediaSource::QueueInitializationEvent()
     return;
   }
   mFirstSourceBufferInitialized = true;
-  MSE_DEBUG("MediaSource(%p)::QueueInitializationEvent()", this);
-  nsRefPtr<nsIRunnable> task =
+  MSE_DEBUG("");
+  nsCOMPtr<nsIRunnable> task =
     NS_NewRunnableMethod(this, &MediaSource::InitializationEvent);
   NS_DispatchToMainThread(task);
 }
@@ -518,7 +535,7 @@ void
 MediaSource::InitializationEvent()
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MSE_DEBUG("MediaSource(%p)::InitializationEvent()", this);
+  MSE_DEBUG("");
   if (mDecoder) {
     mDecoder->PrepareReaderInitialization();
   }
@@ -538,6 +555,12 @@ MediaSource::Dump(const char* aPath)
 }
 #endif
 
+void
+MediaSource::GetMozDebugReaderData(nsAString& aString)
+{
+  mDecoder->GetMozDebugReaderData(aString);
+}
+
 nsPIDOMWindow*
 MediaSource::GetParentObject() const
 {
@@ -545,9 +568,9 @@ MediaSource::GetParentObject() const
 }
 
 JSObject*
-MediaSource::WrapObject(JSContext* aCx)
+MediaSource::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return MediaSourceBinding::Wrap(aCx, this);
+  return MediaSourceBinding::Wrap(aCx, this, aGivenProto);
 }
 
 NS_IMPL_CYCLE_COLLECTION_INHERITED(MediaSource, DOMEventTargetHelper,
@@ -560,6 +583,9 @@ NS_IMPL_RELEASE_INHERITED(MediaSource, DOMEventTargetHelper)
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(MediaSource)
   NS_INTERFACE_MAP_ENTRY(mozilla::dom::MediaSource)
 NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
+
+#undef MSE_DEBUG
+#undef MSE_API
 
 } // namespace dom
 

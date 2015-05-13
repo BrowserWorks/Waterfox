@@ -9,6 +9,7 @@ let {console} = Cu.import("resource://gre/modules/devtools/Console.jsm", {});
 let promise = devtools.require("resource://gre/modules/Promise.jsm").Promise;
 let {getInplaceEditorForSpan: inplaceEditor} = devtools.require("devtools/shared/inplace-editor");
 let clipboard = devtools.require("sdk/clipboard");
+let {setTimeout, clearTimeout} = devtools.require("sdk/timers");
 
 // All test are asynchronous
 waitForExplicitFinish();
@@ -47,6 +48,7 @@ registerCleanupFunction(function*() {
 
 const TEST_URL_ROOT = "http://mochi.test:8888/browser/browser/devtools/markupview/test/";
 const CHROME_BASE = "chrome://mochitests/content/browser/browser/devtools/markupview/test/";
+const COMMON_FRAME_SCRIPT_URL = "chrome://browser/content/devtools/frame-script-utils.js";
 
 /**
  * Add a new test tab in the browser and load the given url.
@@ -64,6 +66,9 @@ function addTab(url) {
 
   let tab = window.gBrowser.selectedTab = window.gBrowser.addTab(url);
   let linkedBrowser = tab.linkedBrowser;
+
+  info("Loading the helper frame script " + COMMON_FRAME_SCRIPT_URL);
+  linkedBrowser.messageManager.loadFrameScript(COMMON_FRAME_SCRIPT_URL, false);
 
   linkedBrowser.addEventListener("load", function onload() {
     linkedBrowser.removeEventListener("load", onload, true);
@@ -124,6 +129,57 @@ function openInspector() {
 }
 
 /**
+ * Wait for a content -> chrome message on the message manager (the window
+ * messagemanager is used).
+ * @param {String} name The message name
+ * @return {Promise} A promise that resolves to the response data when the
+ * message has been received
+ */
+function waitForContentMessage(name) {
+  info("Expecting message " + name + " from content");
+
+  let mm = gBrowser.selectedBrowser.messageManager;
+
+  let def = promise.defer();
+  mm.addMessageListener(name, function onMessage(msg) {
+    mm.removeMessageListener(name, onMessage);
+    def.resolve(msg.data);
+  });
+  return def.promise;
+}
+
+/**
+ * Send an async message to the frame script (chrome -> content) and wait for a
+ * response message with the same name (content -> chrome).
+ * @param {String} name The message name. Should be one of the messages defined
+ * in doc_frame_script.js
+ * @param {Object} data Optional data to send along
+ * @param {Object} objects Optional CPOW objects to send along
+ * @param {Boolean} expectResponse If set to false, don't wait for a response
+ * with the same name from the content script. Defaults to true.
+ * @return {Promise} Resolves to the response data if a response is expected,
+ * immediately resolves otherwise
+ */
+function executeInContent(name, data={}, objects={}, expectResponse=true) {
+  info("Sending message " + name + " to content");
+  let mm = gBrowser.selectedBrowser.messageManager;
+
+  mm.sendAsyncMessage(name, data, objects);
+  if (expectResponse) {
+    return waitForContentMessage(name);
+  } else {
+    return promise.resolve();
+  }
+}
+
+/**
+ * Reload the current tab location.
+ */
+function reloadTab() {
+  return executeInContent("devtools:test:reload", {}, {}, false);
+}
+
+/**
  * Simple DOM node accesor function that takes either a node or a string css
  * selector as argument and returns the corresponding node
  * @param {String|DOMNode} nodeOrSelector
@@ -149,6 +205,27 @@ function getNodeFront(selector, {walker}) {
     return selector;
   }
   return walker.querySelector(walker.rootNode, selector);
+}
+
+/**
+ * Get information about a DOM element, identified by its selector.
+ * @param {String} selector.
+ * @return {Promise} a promise that resolves to the element's information.
+ */
+function getNodeInfo(selector) {
+  return executeInContent("devtools:test:getDomElementInfo", {selector});
+}
+
+/**
+ * Set the value of an attribute of a DOM element, identified by its selector.
+ * @param {String} selector.
+ * @param {String} attributeName.
+ * @param {String} attributeValue.
+ * @param {Promise} resolves when done.
+ */
+function setNodeAttribute(selector, attributeName, attributeValue) {
+  return executeInContent("devtools:test:setAttribute",
+                          {selector, attributeName, attributeValue});
 }
 
 /**
@@ -304,25 +381,28 @@ let addNewAttributes = Task.async(function*(selector, text, inspector) {
 });
 
 /**
- * Checks that a node has the given attributes
+ * Checks that a node has the given attributes.
  *
- * @param {String} selector The node or node selector to check.
- * @param {Object} attrs An object containing the attributes to check.
+ * @param {String} selector The selector for the node to check.
+ * @param {Object} expected An object containing the attributes to check.
  *        e.g. {id: "id1", class: "someclass"}
  *
  * Note that node.getAttribute() returns attribute values provided by the HTML
  * parser. The parser only provides unescaped entities so &amp; will return &.
  */
-function assertAttributes(selector, attrs) {
-  let node = getNode(selector);
+let assertAttributes = Task.async(function*(selector, expected) {
+  let {attributes: actual} = yield getNodeInfo(selector);
 
-  is(node.attributes.length, Object.keys(attrs).length,
-    "Node has the correct number of attributes.");
-  for (let attr in attrs) {
-    is(node.getAttribute(attr), attrs[attr],
-      "Node has the correct " + attr + " attribute.");
+  is(actual.length, Object.keys(expected).length,
+    "The node " + selector + " has the expected number of attributes.");
+  for (let attr in expected) {
+    let foundAttr = actual.find(({name, value}) => name === attr);
+    let foundValue = foundAttr ? foundAttr.value : undefined;
+    ok(foundAttr, "The node " + selector + " has the attribute " + attr);
+    is(foundValue, expected[attr],
+      "The node " + selector + " has the correct " + attr + " attribute value");
   }
-}
+});
 
 /**
  * Undo the last markup-view action and wait for the corresponding mutation to
@@ -525,4 +605,97 @@ function promiseNextTick() {
   let deferred = promise.defer();
   executeSoon(deferred.resolve);
   return deferred.promise;
+}
+
+/**
+ * Collapses the current text selection in an input field and tabs to the next
+ * field.
+ */
+function collapseSelectionAndTab(inspector) {
+  EventUtils.sendKey("tab", inspector.panelWin); // collapse selection and move caret to end
+  EventUtils.sendKey("tab", inspector.panelWin); // next element
+}
+
+/**
+ * Collapses the current text selection in an input field and tabs to the
+ * previous field.
+ */
+function collapseSelectionAndShiftTab(inspector) {
+  EventUtils.synthesizeKey("VK_TAB", { shiftKey: true },
+    inspector.panelWin); // collapse selection and move caret to end
+  EventUtils.synthesizeKey("VK_TAB", { shiftKey: true },
+    inspector.panelWin); // previous element
+}
+
+/**
+ * Check that the current focused element is an attribute element in the markup
+ * view.
+ * @param {String} attrName The attribute name expected to be found
+ * @param {Boolean} editMode Whether or not the attribute should be in edit mode
+ */
+function checkFocusedAttribute(attrName, editMode) {
+  let focusedAttr = Services.focus.focusedElement;
+  is(focusedAttr ? focusedAttr.parentNode.dataset.attr : undefined,
+    attrName, attrName + " attribute editor is currently focused.");
+  is(focusedAttr ? focusedAttr.tagName : undefined,
+    editMode ? "input": "span",
+    editMode ? attrName + " is in edit mode" : attrName + " is not in edit mode");
+}
+
+// The expand all operation of the markup-view calls itself recursively and
+// there's not one event we can wait for to know when it's done
+// so use this helper function to wait until all recursive children updates are done.
+function* waitForMultipleChildrenUpdates(inspector) {
+  // As long as child updates are queued up while we wait for an update already
+  // wait again
+  if (inspector.markup._queuedChildUpdates &&
+      inspector.markup._queuedChildUpdates.size) {
+    yield waitForChildrenUpdated(inspector);
+    return yield waitForMultipleChildrenUpdates(inspector);
+  }
+}
+
+/**
+ * Create an HTTP server that can be used to simulate custom requests within
+ * a test.  It is automatically cleaned up when the test ends, so no need to
+ * call `destroy`.
+ *
+ * See https://developer.mozilla.org/en-US/docs/Httpd.js/HTTP_server_for_unit_tests
+ * for more information about how to register handlers.
+ *
+ * The server can be accessed like:
+ *
+ *   const server = createTestHTTPServer();
+ *   let url = "http://localhost: " + server.identity.primaryPort + "/path";
+ *
+ * @returns {HttpServer}
+ */
+function createTestHTTPServer() {
+  const {HttpServer} = Cu.import("resource://testing-common/httpd.js", {});
+  let server = new HttpServer();
+
+  registerCleanupFunction(function* cleanup() {
+    let destroyed = promise.defer();
+    server.stop(() => {
+      destroyed.resolve();
+    });
+    yield destroyed.promise;
+  });
+
+  server.start(-1);
+  return server;
+}
+
+/**
+ * A helper that simulates a contextmenu event on the given chrome DOM element.
+ */
+function contextMenuClick(element) {
+  let evt = element.ownerDocument.createEvent('MouseEvents');
+  let button = 2;  // right click
+
+  evt.initMouseEvent('contextmenu', true, true,
+       element.ownerDocument.defaultView, 1, 0, 0, 0, 0, false,
+       false, false, false, button, null);
+
+  element.dispatchEvent(evt);
 }

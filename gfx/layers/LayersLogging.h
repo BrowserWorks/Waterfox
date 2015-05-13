@@ -17,9 +17,6 @@
 #include "nscore.h"                     // for nsACString, etc
 
 struct gfxRGBA;
-struct nsIntPoint;
-struct nsIntRect;
-struct nsIntSize;
 
 namespace mozilla {
 namespace gfx {
@@ -53,10 +50,6 @@ void
 AppendToString(std::stringstream& aStream, const nsRect& r,
                const char* pfx="", const char* sfx="");
 
-void
-AppendToString(std::stringstream& aStream, const nsIntPoint& p,
-               const char* pfx="", const char* sfx="");
-
 template<class T>
 void
 AppendToString(std::stringstream& aStream, const mozilla::gfx::PointTyped<T>& p,
@@ -65,9 +58,13 @@ AppendToString(std::stringstream& aStream, const mozilla::gfx::PointTyped<T>& p,
   aStream << pfx << p << sfx;
 }
 
+template<class T>
 void
-AppendToString(std::stringstream& aStream, const nsIntRect& r,
-               const char* pfx="", const char* sfx="");
+AppendToString(std::stringstream& aStream, const mozilla::gfx::IntPointTyped<T>& p,
+               const char* pfx="", const char* sfx="")
+{
+  aStream << pfx << p << sfx;
+}
 
 template<class T>
 void
@@ -101,12 +98,28 @@ void
 AppendToString(std::stringstream& aStream, const nsIntRegion& r,
                const char* pfx="", const char* sfx="");
 
+template <typename units>
 void
-AppendToString(std::stringstream& aStream, const EventRegions& e,
-               const char* pfx="", const char* sfx="");
+AppendToString(std::stringstream& aStream, const mozilla::gfx::IntRegionTyped<units>& r,
+               const char* pfx="", const char* sfx="")
+{
+  typedef mozilla::gfx::IntRegionTyped<units> RegionType;
+
+  aStream << pfx;
+
+  typename RegionType::RectIterator it(r);
+  aStream << "< ";
+  while (const typename RegionType::RectType* sr = it.Next()) {
+    AppendToString(aStream, *sr);
+    aStream << "; ";
+  }
+  aStream << ">";
+
+  aStream << sfx;
+}
 
 void
-AppendToString(std::stringstream& aStream, const nsIntSize& sz,
+AppendToString(std::stringstream& aStream, const EventRegions& e,
                const char* pfx="", const char* sfx="");
 
 void
@@ -150,6 +163,22 @@ AppendToString(std::stringstream& aStream, const mozilla::gfx::IntSizeTyped<T>& 
   aStream << nsPrintfCString(
     "(w=%d, h=%d)",
     sz.width, sz.height).get();
+  aStream << sfx;
+}
+
+template<class src, class dst>
+void
+AppendToString(std::stringstream& aStream, const mozilla::gfx::ScaleFactors2D<src, dst>& scale,
+               const char* pfx="", const char* sfx="")
+{
+  aStream << pfx;
+  std::streamsize oldPrecision = aStream.precision(3);
+  if (scale.AreScalesSame()) {
+    aStream << scale.xScale;
+  } else {
+    aStream << '(' << scale.xScale << ',' << scale.yScale << ')';
+  }
+  aStream.precision(oldPrecision);
   aStream << sfx;
 }
 

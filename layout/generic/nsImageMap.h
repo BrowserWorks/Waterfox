@@ -21,8 +21,8 @@ class nsIFrame;
 class nsIContent;
 struct nsRect;
 
-class nsImageMap MOZ_FINAL : public nsStubMutationObserver,
-                             public nsIDOMEventListener
+class nsImageMap final : public nsStubMutationObserver,
+                         public nsIDOMEventListener
 {
   typedef mozilla::gfx::DrawTarget DrawTarget;
   typedef mozilla::gfx::ColorPattern ColorPattern;

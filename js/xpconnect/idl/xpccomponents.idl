@@ -13,6 +13,7 @@ interface xpcIJSWeakReference;
 interface nsIAddonInterposition;
 interface nsIClassInfo;
 interface nsIComponentManager;
+interface nsICycleCollectorListener;
 interface nsIJSCID;
 interface nsIJSIID;
 interface nsIPrincipal;
@@ -122,7 +123,7 @@ interface ScheduledGCCallback : nsISupports
 /**
 * interface of Components.utils
 */
-[scriptable, uuid(2617a800-63c1-11e4-9803-0800200c9a66)]
+[scriptable, uuid(e04a4a58-2b5e-4a74-941a-0d344b057c5a)]
 interface nsIXPCComponents_Utils : nsISupports
 {
 
@@ -284,7 +285,7 @@ interface nsIXPCComponents_Utils : nsISupports
      *
      * Force an immediate cycle collection cycle.
      */
-    void forceCC();
+    void forceCC([optional] in nsICycleCollectorListener aListener);
 
     /*
      * To be called from JS only.
@@ -360,6 +361,20 @@ interface nsIXPCComponents_Utils : nsISupports
 
     [implicit_jscontext]
     jsval getJSTestingFunctions();
+
+    /*
+     * To be called from JS only.
+     *
+     * Call 'function', using the provided stack as the async stack responsible
+     * for the call, and propagate its return value or the exception it throws.
+     * The function is called with no arguments, and 'this' is 'undefined'.
+     *
+     * The code in the function will see the given stack frame as the
+     * asyncCaller of its own stack frame, instead of the current caller.
+     */
+    [implicit_jscontext]
+    jsval callFunctionWithAsyncStack(in jsval function, in nsIStackFrame stack,
+                                     in AString asyncCause);
 
     /*
      * To be called from JS only.
@@ -673,6 +688,12 @@ interface nsIXPCComponents_Utils : nsISupports
 
     [implicit_jscontext]
     void setAddonInterposition(in ACString addonId, in nsIAddonInterposition interposition);
+
+    /*
+     * Enables call interpositions from addon scopes to any functions in the scope of |target|.
+     */
+    [implicit_jscontext]
+    void setAddonCallInterposition(in jsval target);
 
     /*
      * Return a fractional number of milliseconds from process

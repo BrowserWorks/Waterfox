@@ -21,6 +21,7 @@ import org.mozilla.gecko.favicons.Favicons;
 import org.mozilla.gecko.favicons.LoadFaviconTask;
 import org.mozilla.gecko.favicons.OnFaviconLoadedListener;
 import org.mozilla.gecko.favicons.RemoteFavicon;
+import org.mozilla.gecko.gfx.BitmapUtils;
 import org.mozilla.gecko.gfx.Layer;
 import org.mozilla.gecko.toolbar.BrowserToolbar.TabEditingState;
 import org.mozilla.gecko.util.ThreadUtils;
@@ -34,6 +35,7 @@ import android.os.Build;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
 public class Tab {
     private static final String LOGTAG = "GeckoTab";
@@ -48,6 +50,7 @@ public class Tab {
     private String mTitle;
     private Bitmap mFavicon;
     private String mFaviconUrl;
+    private String mApplicationId; // Intended to be null after explicit user action.
 
     // The set of all available Favicons for this tab, sorted by attractiveness.
     final TreeSet<RemoteFavicon> mAvailableFavicons = new TreeSet<>();
@@ -58,6 +61,7 @@ public class Tab {
     private final int mParentId;
     private final boolean mExternal;
     private boolean mBookmark;
+    private boolean mIsInReadingList;
     private int mFaviconLoadId;
     private String mContentType;
     private boolean mHasTouchListeners;
@@ -129,6 +133,7 @@ public class Tab {
         mBackgroundColor = DEFAULT_BACKGROUND_COLOR;
 
         updateBookmark();
+        updateReadingList();
     }
 
     private ContentResolver getContentResolver() {
@@ -178,12 +183,24 @@ public class Tab {
         return mUrl;
     }
 
+    /**
+     * Returns the base domain of the loaded uri. Note that if the page is
+     * a Reader mode uri, the base domain returned is that of the original uri.
+     */
     public String getBaseDomain() {
         return mBaseDomain;
     }
 
     public Bitmap getFavicon() {
         return mFavicon;
+    }
+
+    protected String getApplicationId() {
+        return mApplicationId;
+    }
+
+    protected void setApplicationId(final String applicationId) {
+        mApplicationId = applicationId;
     }
 
     public BitmapDrawable getThumbnail() {
@@ -265,6 +282,10 @@ public class Tab {
 
     public boolean isBookmark() {
         return mBookmark;
+    }
+
+    public boolean isInReadingList() {
+        return mIsInReadingList;
     }
 
     public boolean isExternal() {
@@ -492,6 +513,25 @@ public class Tab {
         });
     }
 
+    void updateReadingList() {
+        if (getURL() == null) {
+            return;
+        }
+
+        ThreadUtils.postToBackgroundThread(new Runnable() {
+            @Override
+            public void run() {
+                final String url = getURL();
+                if (url == null) {
+                    return;
+                }
+
+                mIsInReadingList = mDB.getReadingListAccessor().isReadingListItem(getContentResolver(), url);
+                Tabs.getInstance().notifyListeners(Tab.this, Tabs.TabEvents.MENU_UPDATED);
+            }
+        });
+    }
+
     public void addBookmark() {
         ThreadUtils.postToBackgroundThread(new Runnable() {
             @Override
@@ -516,6 +556,48 @@ public class Tab {
 
                 mDB.removeBookmarksWithURL(getContentResolver(), url);
                 Tabs.getInstance().notifyListeners(Tab.this, Tabs.TabEvents.BOOKMARK_REMOVED);
+            }
+        });
+    }
+
+    public void addToReadingList() {
+        ThreadUtils.postToBackgroundThread(new Runnable() {
+            @Override
+            public void run() {
+                String url = getURL();
+                if (url == null) {
+                    return;
+                }
+
+                mDB.getReadingListAccessor().addBasicReadingListItem(getContentResolver(), url, mTitle);
+                ThreadUtils.postToUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(mAppContext, R.string.reading_list_added, Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        });
+    }
+
+    public void removeFromReadingList() {
+        ThreadUtils.postToBackgroundThread(new Runnable() {
+            @Override
+            public void run() {
+                String url = getURL();
+                if (url == null) {
+                    return;
+                }
+                if (AboutPages.isAboutReader(url)) {
+                    url = ReaderModeUtils.getUrlFromAboutReader(url);
+                }
+                mDB.getReadingListAccessor().removeReadingListItemWithURL(getContentResolver(), url);
+                ThreadUtils.postToUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(mAppContext, R.string.reading_list_removed, Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
         });
     }
@@ -584,6 +666,7 @@ public class Tab {
         if (!TextUtils.equals(oldUrl, uri)) {
             updateURL(uri);
             updateBookmark();
+            updateReadingList();
             if (!sameDocument) {
                 // We can unconditionally clear the favicon and title here: we
                 // already filtered both cases in which this was a (pseudo-)
@@ -607,7 +690,7 @@ public class Tab {
 
         setHasFeeds(false);
         setHasOpenSearch(false);
-        updateIdentityData(null);
+        mSiteIdentity.reset();
         setZoomConstraints(new ZoomConstraints(true));
         setHasTouchListeners(false);
         setBackgroundColor(DEFAULT_BACKGROUND_COLOR);
@@ -624,7 +707,7 @@ public class Tab {
     void handleDocumentStart(boolean restoring, String url) {
         setLoadProgress(LOAD_PROGRESS_START);
         setState((!restoring && shouldShowProgress(url)) ? STATE_LOADING : STATE_SUCCESS);
-        updateIdentityData(null);
+        mSiteIdentity.reset();
     }
 
     void handleDocumentStop(boolean success) {
@@ -641,7 +724,7 @@ public class Tab {
                 if (!TextUtils.equals(oldURL, getURL()))
                     return;
 
-                ThumbnailHelper.getInstance().getAndProcessThumbnailFor(tab, mDB);
+                ThumbnailHelper.getInstance().getAndProcessThumbnailFor(tab);
             }
         }, 500);
     }
@@ -657,7 +740,7 @@ public class Tab {
         }
 
         try {
-            String url = getURL();
+            final String url = getURL();
             if (url == null) {
                 return;
             }
@@ -668,11 +751,33 @@ public class Tab {
         }
     }
 
+    public void loadThumbnailFromDB(final BrowserDB db) {
+        try {
+            final String url = getURL();
+            if (url == null) {
+                return;
+            }
+
+            byte[] thumbnail = db.getThumbnailForUrl(getContentResolver(), url);
+            if (thumbnail == null) {
+                return;
+            }
+
+            Bitmap bitmap = BitmapUtils.decodeByteArray(thumbnail);
+            mThumbnail = new BitmapDrawable(mAppContext.getResources(), bitmap);
+
+            Tabs.getInstance().notifyListeners(Tab.this, Tabs.TabEvents.THUMBNAIL);
+        } catch (Exception e) {
+            // ignore
+        }
+    }
+
     private void clearThumbnailFromDB(final BrowserDB db) {
         try {
-            String url = getURL();
-            if (url == null)
+            final String url = getURL();
+            if (url == null) {
                 return;
+            }
 
             // Passing in a null thumbnail will delete the stored thumbnail for this url
             db.updateThumbnailForUrl(getContentResolver(), url, null);

@@ -21,8 +21,8 @@ namespace dom {
 
 class GlobalObject;
 
-class SpeechGrammar MOZ_FINAL : public nsISupports,
-                                public nsWrapperCache
+class SpeechGrammar final : public nsISupports,
+                            public nsWrapperCache
 {
 public:
   explicit SpeechGrammar(nsISupports* aParent);
@@ -32,7 +32,7 @@ public:
 
   nsISupports* GetParentObject() const;
 
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   static already_AddRefed<SpeechGrammar>
     Constructor(const GlobalObject& aGlobal, ErrorResult& aRv);

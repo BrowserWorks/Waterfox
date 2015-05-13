@@ -5,85 +5,153 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "SharedDecoderManager.h"
-#include "mp4_demuxer/DecoderData.h"
 
 namespace mozilla {
 
 class SharedDecoderCallback : public MediaDataDecoderCallback
 {
 public:
-  explicit SharedDecoderCallback(SharedDecoderManager* aManager) : mManager(aManager) {}
+  explicit SharedDecoderCallback(SharedDecoderManager* aManager)
+    : mManager(aManager)
+  {
+  }
 
-  virtual void Output(MediaData* aData) MOZ_OVERRIDE
+  virtual void Output(MediaData* aData) override
   {
     if (mManager->mActiveCallback) {
+      AssertHaveActiveProxy();
       mManager->mActiveCallback->Output(aData);
     }
   }
-  virtual void Error() MOZ_OVERRIDE
+  virtual void Error() override
   {
     if (mManager->mActiveCallback) {
+      AssertHaveActiveProxy();
       mManager->mActiveCallback->Error();
     }
   }
-  virtual void InputExhausted() MOZ_OVERRIDE
+  virtual void InputExhausted() override
   {
     if (mManager->mActiveCallback) {
+      AssertHaveActiveProxy();
       mManager->mActiveCallback->InputExhausted();
     }
   }
-  virtual void DrainComplete() MOZ_OVERRIDE
+  virtual void DrainComplete() override
   {
     if (mManager->mActiveCallback) {
+      AssertHaveActiveProxy();
       mManager->DrainComplete();
     }
   }
-  virtual void NotifyResourcesStatusChanged() MOZ_OVERRIDE
+  virtual void NotifyResourcesStatusChanged() override
   {
     if (mManager->mActiveCallback) {
+      AssertHaveActiveProxy();
       mManager->mActiveCallback->NotifyResourcesStatusChanged();
     }
   }
-  virtual void ReleaseMediaResources() MOZ_OVERRIDE
+  virtual void ReleaseMediaResources() override
   {
     if (mManager->mActiveCallback) {
+      AssertHaveActiveProxy();
       mManager->mActiveCallback->ReleaseMediaResources();
     }
+  }
+  virtual bool OnReaderTaskQueue() override
+  {
+    MOZ_ASSERT(mManager->mActiveCallback);
+    return mManager->mActiveCallback->OnReaderTaskQueue();
+  }
+
+private:
+  void AssertHaveActiveProxy() {
+#ifdef MOZ_FFMPEG // bug 1161895
+    NS_WARN_IF_FALSE(mManager->mActiveProxy, "callback not active proxy");
+#else
+    MOZ_DIAGNOSTIC_ASSERT(mManager->mActiveProxy);
+#endif
   }
 
   SharedDecoderManager* mManager;
 };
 
 SharedDecoderManager::SharedDecoderManager()
-  : mActiveProxy(nullptr)
+  : mTaskQueue(new FlushableMediaTaskQueue(GetMediaThreadPool(MediaThreadType::PLATFORM_DECODER)))
+  , mActiveProxy(nullptr)
   , mActiveCallback(nullptr)
   , mWaitForInternalDrain(false)
   , mMonitor("SharedDecoderProxy")
+  , mDecoderReleasedResources(false)
 {
+  MOZ_ASSERT(NS_IsMainThread()); // taskqueue must be created on main thread.
   mCallback = new SharedDecoderCallback(this);
 }
 
-SharedDecoderManager::~SharedDecoderManager() {}
+SharedDecoderManager::~SharedDecoderManager()
+{
+}
 
 already_AddRefed<MediaDataDecoder>
 SharedDecoderManager::CreateVideoDecoder(
-  const mp4_demuxer::VideoDecoderConfig& aConfig,
-  layers::LayersBackend aLayersBackend, layers::ImageContainer* aImageContainer,
-  MediaTaskQueue* aVideoTaskQueue, MediaDataDecoderCallback* aCallback)
+  PlatformDecoderModule* aPDM,
+  const VideoInfo& aConfig,
+  layers::LayersBackend aLayersBackend,
+  layers::ImageContainer* aImageContainer,
+  FlushableMediaTaskQueue* aVideoTaskQueue,
+  MediaDataDecoderCallback* aCallback)
 {
   if (!mDecoder) {
-    nsRefPtr<PlatformDecoderModule> platform(PlatformDecoderModule::Create());
-    mDecoder = platform->CreateVideoDecoder(
-      aConfig, aLayersBackend, aImageContainer, aVideoTaskQueue, mCallback);
+    mLayersBackend = aLayersBackend;
+    mImageContainer = aImageContainer;
+    // We use the manager's task queue for the decoder, rather than the one
+    // passed in, so that none of the objects sharing the decoder can shutdown
+    // the task queue while we're potentially still using it for a *different*
+    // object also sharing the decoder.
+    mDecoder =
+      aPDM->CreateDecoder(aConfig,
+                          mTaskQueue,
+                          mCallback,
+                          mLayersBackend,
+                          mImageContainer);
     if (!mDecoder) {
+      mPDM = nullptr;
       return nullptr;
     }
     nsresult rv = mDecoder->Init();
-    NS_ENSURE_SUCCESS(rv, nullptr);
+    if (NS_FAILED(rv)) {
+      mDecoder = nullptr;
+      return nullptr;
+    }
+    mPDM = aPDM;
   }
 
   nsRefPtr<SharedDecoderProxy> proxy(new SharedDecoderProxy(this, aCallback));
   return proxy.forget();
+}
+
+void
+SharedDecoderManager::DisableHardwareAcceleration()
+{
+  MOZ_ASSERT(mPDM);
+  mPDM->DisableHardwareAcceleration();
+}
+
+bool
+SharedDecoderManager::Recreate(const VideoInfo& aConfig)
+{
+  mDecoder->Flush();
+  mDecoder->Shutdown();
+  mDecoder = mPDM->CreateDecoder(aConfig,
+                                 mTaskQueue,
+                                 mCallback,
+                                 mLayersBackend,
+                                 mImageContainer);
+  if (!mDecoder) {
+    return false;
+  }
+  nsresult rv = mDecoder->Init();
+  return rv == NS_OK;
 }
 
 void
@@ -102,11 +170,19 @@ void
 SharedDecoderManager::SetIdle(MediaDataDecoder* aProxy)
 {
   if (aProxy && mActiveProxy == aProxy) {
-    mWaitForInternalDrain = true;
-    mActiveProxy->Drain();
     MonitorAutoLock mon(mMonitor);
-    while (mWaitForInternalDrain) {
-      mon.Wait();
+    mWaitForInternalDrain = true;
+    nsresult rv;
+    {
+      // We don't want to hold the lock while calling Drain() has some
+      // platform implementations call DrainComplete() immediately.
+      MonitorAutoUnlock mon(mMonitor);
+      rv = mActiveProxy->Drain();
+    }
+    if (NS_SUCCEEDED(rv)) {
+      while (mWaitForInternalDrain) {
+        mon.Wait();
+      }
     }
     mActiveProxy->Flush();
     mActiveProxy = nullptr;
@@ -116,22 +192,46 @@ SharedDecoderManager::SetIdle(MediaDataDecoder* aProxy)
 void
 SharedDecoderManager::DrainComplete()
 {
-  if (mWaitForInternalDrain) {
+  {
     MonitorAutoLock mon(mMonitor);
-    mWaitForInternalDrain = false;
-    mon.NotifyAll();
-  } else {
-    mActiveCallback->DrainComplete();
+    if (mWaitForInternalDrain) {
+      mWaitForInternalDrain = false;
+      mon.NotifyAll();
+      return;
+    }
+  }
+  mActiveCallback->DrainComplete();
+}
+
+void
+SharedDecoderManager::Shutdown()
+{
+  // Shutdown() should have been called on any proxies.
+  MOZ_ASSERT(!mActiveProxy);
+
+  if (mDecoder) {
+    mDecoder->Shutdown();
+    mDecoder = nullptr;
+  }
+  mPDM = nullptr;
+  if (mTaskQueue) {
+    mTaskQueue->BeginShutdown();
+    mTaskQueue->AwaitShutdownAndIdle();
+    mTaskQueue = nullptr;
   }
 }
 
-SharedDecoderProxy::SharedDecoderProxy(
-  SharedDecoderManager* aManager, MediaDataDecoderCallback* aCallback)
-  : mManager(aManager), mCallback(aCallback)
+SharedDecoderProxy::SharedDecoderProxy(SharedDecoderManager* aManager,
+                                       MediaDataDecoderCallback* aCallback)
+  : mManager(aManager)
+  , mCallback(aCallback)
 {
 }
 
-SharedDecoderProxy::~SharedDecoderProxy() { Shutdown(); }
+SharedDecoderProxy::~SharedDecoderProxy()
+{
+  Shutdown();
+}
 
 nsresult
 SharedDecoderProxy::Init()
@@ -140,13 +240,12 @@ SharedDecoderProxy::Init()
 }
 
 nsresult
-SharedDecoderProxy::Input(mp4_demuxer::MP4Sample* aSample)
+SharedDecoderProxy::Input(MediaRawData* aSample)
 {
   if (mManager->mActiveProxy != this) {
     mManager->Select(this);
   }
   return mManager->mDecoder->Input(aSample);
-  return NS_OK;
 }
 
 nsresult
@@ -163,8 +262,10 @@ SharedDecoderProxy::Drain()
 {
   if (mManager->mActiveProxy == this) {
     return mManager->mDecoder->Drain();
+  } else {
+    mCallback->DrainComplete();
+    return NS_OK;
   }
-  return NS_OK;
 }
 
 nsresult
@@ -175,33 +276,9 @@ SharedDecoderProxy::Shutdown()
 }
 
 bool
-SharedDecoderProxy::IsWaitingMediaResources()
+SharedDecoderProxy::IsHardwareAccelerated() const
 {
-  if (mManager->mActiveProxy == this) {
-    return mManager->mDecoder->IsWaitingMediaResources();
-  }
-  return mManager->mActiveProxy != nullptr;
+  return mManager->mDecoder->IsHardwareAccelerated();
 }
 
-bool
-SharedDecoderProxy::IsDormantNeeded()
-{
-  return mManager->mDecoder->IsDormantNeeded();
-}
-
-void
-SharedDecoderProxy::ReleaseMediaResources()
-{
-  if (mManager->mActiveProxy == this) {
-    mManager->mDecoder->ReleaseMediaResources();
-  }
-}
-
-void
-SharedDecoderProxy::ReleaseDecoder()
-{
-  if (mManager->mActiveProxy == this) {
-    mManager->mDecoder->ReleaseMediaResources();
-  }
-}
 }

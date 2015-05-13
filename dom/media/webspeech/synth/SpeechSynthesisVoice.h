@@ -20,8 +20,8 @@ namespace dom {
 class nsSynthVoiceRegistry;
 class SpeechSynthesis;
 
-class SpeechSynthesisVoice MOZ_FINAL : public nsISupports,
-                                       public nsWrapperCache
+class SpeechSynthesisVoice final : public nsISupports,
+                                   public nsWrapperCache
 {
   friend class nsSynthVoiceRegistry;
   friend class SpeechSynthesis;
@@ -34,7 +34,7 @@ public:
 
   nsISupports* GetParentObject() const;
 
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   void GetVoiceURI(nsString& aRetval) const;
 

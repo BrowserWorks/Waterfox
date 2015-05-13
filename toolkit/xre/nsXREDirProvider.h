@@ -14,14 +14,14 @@
 #include "nsCOMArray.h"
 #include "mozilla/Attributes.h"
 
-class nsXREDirProvider MOZ_FINAL : public nsIDirectoryServiceProvider2,
-                                   public nsIProfileStartup
+class nsXREDirProvider final : public nsIDirectoryServiceProvider2,
+                               public nsIProfileStartup
 {
 public:
   // we use a custom isupports implementation (no refcount)
-  NS_IMETHOD QueryInterface(REFNSIID aIID, void** aInstancePtr) MOZ_OVERRIDE;
-  NS_IMETHOD_(MozExternalRefCountType) AddRef(void) MOZ_OVERRIDE;
-  NS_IMETHOD_(MozExternalRefCountType) Release(void) MOZ_OVERRIDE;
+  NS_IMETHOD QueryInterface(REFNSIID aIID, void** aInstancePtr) override;
+  NS_IMETHOD_(MozExternalRefCountType) AddRef(void) override;
+  NS_IMETHOD_(MozExternalRefCountType) Release(void) override;
 
   NS_DECL_NSIDIRECTORYSERVICEPROVIDER
   NS_DECL_NSIDIRECTORYSERVICEPROVIDER2
@@ -127,8 +127,10 @@ protected:
   // Calculate and register extension and theme bundle directories.
   void LoadExtensionBundleDirectories();
 
+#ifdef MOZ_B2G
   // Calculate and register app-bundled extension directories.
   void LoadAppBundleDirs();
+#endif
 
   void Append(nsIFile* aDirectory);
 

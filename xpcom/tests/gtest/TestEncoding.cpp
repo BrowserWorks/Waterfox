@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -29,7 +30,7 @@ TEST(Encoding, GoodSurrogatePair)
   nsDependentCString expected((const char*)expected8);
   EXPECT_EQ(0, CompareUTF8toUTF16(expected, goodPair16));
 
-  NS_Free(goodPair8);
+  free(goodPair8);
 }
 
 TEST(Encoding, BackwardsSurrogatePair)
@@ -54,7 +55,7 @@ TEST(Encoding, BackwardsSurrogatePair)
   nsDependentCString expected((const char*)expected8);
   EXPECT_EQ(0, CompareUTF8toUTF16(expected, backwardsPair16));
 
-  NS_Free(backwardsPair8);
+  free(backwardsPair8);
 }
 
 TEST(Encoding, MalformedUTF16OrphanHighSurrogate)
@@ -79,7 +80,7 @@ TEST(Encoding, MalformedUTF16OrphanHighSurrogate)
   nsDependentCString expected((const char*)expected8);
   EXPECT_EQ(0, CompareUTF8toUTF16(expected, highSurrogate16));
 
-  NS_Free(highSurrogate8);
+  free(highSurrogate8);
 }
 
 TEST(Encoding, MalformedUTF16OrphanLowSurrogate)
@@ -104,5 +105,5 @@ TEST(Encoding, MalformedUTF16OrphanLowSurrogate)
   nsDependentCString expected((const char*)expected8);
   EXPECT_EQ(0, CompareUTF8toUTF16(expected, lowSurrogate16));
 
-  NS_Free(lowSurrogate8);
+  free(lowSurrogate8);
 }

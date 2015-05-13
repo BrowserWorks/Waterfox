@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -46,7 +47,7 @@ NS_IMPL_BOOL_ATTR(HTMLIFrameElement, AllowFullscreen, allowfullscreen)
 NS_IMPL_STRING_ATTR(HTMLIFrameElement, Srcdoc, srcdoc)
 
 void
-HTMLIFrameElement::GetItemValueText(nsAString& aValue)
+HTMLIFrameElement::GetItemValueText(DOMString& aValue)
 {
   GetSrc(aValue);
 }
@@ -121,10 +122,10 @@ HTMLIFrameElement::MapAttributesIntoRule(const nsMappedAttributes* aAttributes,
       if (NS_STYLE_FRAME_0 == frameborder ||
           NS_STYLE_FRAME_NO == frameborder ||
           NS_STYLE_FRAME_OFF == frameborder) {
-        nsCSSValue* borderLeftWidth = aData->ValueForBorderLeftWidthValue();
+        nsCSSValue* borderLeftWidth = aData->ValueForBorderLeftWidth();
         if (borderLeftWidth->GetUnit() == eCSSUnit_Null)
           borderLeftWidth->SetFloatValue(0.0f, eCSSUnit_Pixel);
-        nsCSSValue* borderRightWidth = aData->ValueForBorderRightWidthValue();
+        nsCSSValue* borderRightWidth = aData->ValueForBorderRightWidth();
         if (borderRightWidth->GetUnit() == eCSSUnit_Null)
           borderRightWidth->SetFloatValue(0.0f, eCSSUnit_Pixel);
         nsCSSValue* borderTopWidth = aData->ValueForBorderTopWidth();
@@ -247,9 +248,9 @@ HTMLIFrameElement::GetSandboxFlags()
 }
 
 JSObject*
-HTMLIFrameElement::WrapNode(JSContext* aCx)
+HTMLIFrameElement::WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return HTMLIFrameElementBinding::Wrap(aCx, this);
+  return HTMLIFrameElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 } // namespace dom

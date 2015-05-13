@@ -1,5 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -33,11 +33,12 @@ class BluetoothProfileResultHandler
 public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(BluetoothProfileResultHandler);
 
-  virtual ~BluetoothProfileResultHandler() { }
-
   virtual void OnError(nsresult aResult) { }
   virtual void Init() { }
   virtual void Deinit() { }
+
+protected:
+  virtual ~BluetoothProfileResultHandler() { }
 };
 
 class BluetoothProfileManagerBase : public nsIObserver
@@ -88,22 +89,22 @@ public:
   virtual void GetName(nsACString& aName) = 0;
 };
 
-#define BT_DECL_PROFILE_MGR_BASE                                                 \
-public:                                                                          \
-  NS_DECL_ISUPPORTS                                                              \
-  NS_DECL_NSIOBSERVER                                                            \
-  virtual void OnGetServiceChannel(const nsAString& aDeviceAddress,              \
-                                   const nsAString& aServiceUuid,                \
-                                   int aChannel) MOZ_OVERRIDE;                   \
-  virtual void OnUpdateSdpRecords(const nsAString& aDeviceAddress) MOZ_OVERRIDE; \
-  virtual void GetAddress(nsAString& aDeviceAddress) MOZ_OVERRIDE;               \
-  virtual bool IsConnected() MOZ_OVERRIDE;                                       \
-  virtual void Connect(const nsAString& aDeviceAddress,                          \
-                       BluetoothProfileController* aController) MOZ_OVERRIDE;    \
-  virtual void Disconnect(BluetoothProfileController* aController) MOZ_OVERRIDE; \
-  virtual void OnConnect(const nsAString& aErrorStr) MOZ_OVERRIDE;               \
-  virtual void OnDisconnect(const nsAString& AErrorStr) MOZ_OVERRIDE;            \
-  virtual void Reset() MOZ_OVERRIDE;
+#define BT_DECL_PROFILE_MGR_BASE                                             \
+public:                                                                      \
+  NS_DECL_ISUPPORTS                                                          \
+  NS_DECL_NSIOBSERVER                                                        \
+  virtual void OnGetServiceChannel(const nsAString& aDeviceAddress,          \
+                                   const nsAString& aServiceUuid,            \
+                                   int aChannel) override;                   \
+  virtual void OnUpdateSdpRecords(const nsAString& aDeviceAddress) override; \
+  virtual void GetAddress(nsAString& aDeviceAddress) override;               \
+  virtual bool IsConnected() override;                                       \
+  virtual void Connect(const nsAString& aDeviceAddress,                      \
+                       BluetoothProfileController* aController) override;    \
+  virtual void Disconnect(BluetoothProfileController* aController) override; \
+  virtual void OnConnect(const nsAString& aErrorStr) override;               \
+  virtual void OnDisconnect(const nsAString& AErrorStr) override;            \
+  virtual void Reset() override;
 
 END_BLUETOOTH_NAMESPACE
 

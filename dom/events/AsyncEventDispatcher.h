@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -54,7 +55,7 @@ public:
 
   AsyncEventDispatcher(dom::EventTarget* aTarget, WidgetEvent& aEvent);
 
-  NS_IMETHOD Run() MOZ_OVERRIDE;
+  NS_IMETHOD Run() override;
   nsresult PostDOMEvent();
   void RunDOMEventWhenSafe();
 
@@ -65,7 +66,7 @@ public:
   bool                  mDispatchChromeOnly;
 };
 
-class LoadBlockingAsyncEventDispatcher MOZ_FINAL : public AsyncEventDispatcher
+class LoadBlockingAsyncEventDispatcher final : public AsyncEventDispatcher
 {
 public:
   LoadBlockingAsyncEventDispatcher(nsINode* aEventNode,

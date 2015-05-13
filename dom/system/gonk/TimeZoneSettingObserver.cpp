@@ -45,11 +45,13 @@ public:
   NS_DECL_NSIOBSERVER
 
   TimeZoneSettingObserver();
-  virtual ~TimeZoneSettingObserver();
   static nsresult SetTimeZone(const JS::Value &aValue, JSContext *aContext);
+
+protected:
+  virtual ~TimeZoneSettingObserver();
 };
 
-class TimeZoneSettingCb MOZ_FINAL : public nsISettingsServiceCallback
+class TimeZoneSettingCb final : public nsISettingsServiceCallback
 {
 public:
   NS_DECL_ISUPPORTS
@@ -111,6 +113,9 @@ public:
     ERR("TimeZoneSettingCb::HandleError: %s\n", NS_LossyConvertUTF16toASCII(aName).get());
     return NS_OK;
   }
+
+protected:
+  ~TimeZoneSettingCb() {}
 };
 
 NS_IMPL_ISUPPORTS(TimeZoneSettingCb, nsISettingsServiceCallback)

@@ -7,8 +7,11 @@
 #ifndef mozilla_BackgroundHangMonitor_h
 #define mozilla_BackgroundHangMonitor_h
 
-#include "mozilla/RefPtr.h"
+#include "mozilla/HangAnnotations.h"
 #include "mozilla/Monitor.h"
+#include "mozilla/RefPtr.h"
+
+#include "nsString.h"
 
 #include <stdint.h>
 
@@ -18,14 +21,8 @@ namespace Telemetry {
 class ThreadHangStats;
 };
 
-// Disabled for Beta/Release builds because of bug 965392.
-// Disabled for debug builds because of bug 979069.
-#if !defined(RELEASE_BUILD) && !defined(DEBUG)
-// Undefine to disable background hang monitor
-#define MOZ_ENABLE_BACKGROUND_HANG_MONITOR
-#endif
-
 class BackgroundHangThread;
+class BackgroundHangManager;
 
 /**
  * The background hang monitor is responsible for detecting and reporting
@@ -113,7 +110,12 @@ class BackgroundHangThread;
 class BackgroundHangMonitor
 {
 private:
+  friend BackgroundHangManager;
+
   RefPtr<BackgroundHangThread> mThread;
+
+  static bool ShouldDisableOnBeta(const nsCString &);
+  static bool DisableOnBeta();
 
 public:
   static const uint32_t kNoTimeout = 0;
@@ -167,6 +169,11 @@ public:
    * Can be called without destroying all BackgroundHangMonitors first.
    */
   static void Shutdown();
+
+  /**
+   * Returns true if BHR is disabled.
+   */
+  static bool IsDisabled();
 
   /**
    * Start monitoring hangs for the current thread.
@@ -227,6 +234,21 @@ public:
    * \see Prohibit()
    */
   static void Allow();
+
+  /**
+   * Register an annotator with BHR for the current thread.
+   * @param aAnnotator annotator to register
+   * @return true if the annotator was registered, otherwise false.
+   */
+  static bool RegisterAnnotator(HangMonitor::Annotator& aAnnotator);
+
+  /**
+   * Unregister an annotator that was previously registered via
+   * RegisterAnnotator.
+   * @param aAnnotator annotator to unregister
+   * @return true if there are still remaining annotators registered
+   */
+  static bool UnregisterAnnotator(HangMonitor::Annotator& aAnnotator);
 };
 
 } // namespace mozilla

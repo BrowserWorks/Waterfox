@@ -22,8 +22,8 @@
  * limitations under the License.
  */
 
-#ifndef mozilla_pkix__pkix_h
-#define mozilla_pkix__pkix_h
+#ifndef mozilla_pkix_pkix_h
+#define mozilla_pkix_pkix_h
 
 #include "pkixtypes.h"
 
@@ -122,7 +122,7 @@ Result CheckCertHostname(Input cert, Input hostname);
 // responder, for the provided CertID. The request has no extensions.
 static const size_t OCSP_REQUEST_MAX_LENGTH = 127;
 Result CreateEncodedOCSPRequest(TrustDomain& trustDomain,
-                                const struct CertID& certID,
+                                const CertID& certID,
                                 /*out*/ uint8_t (&out)[OCSP_REQUEST_MAX_LENGTH],
                                 /*out*/ size_t& outLen);
 
@@ -149,4 +149,4 @@ Result VerifyEncodedOCSPResponse(TrustDomain& trustDomain,
 
 } } // namespace mozilla::pkix
 
-#endif // mozilla_pkix__pkix_h
+#endif // mozilla_pkix_pkix_h

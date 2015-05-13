@@ -1,13 +1,12 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-
 "use strict";
 
 /**
  * Many Gecko operations (painting, reflows, restyle, ...) can be tracked
  * in real time. A marker is a representation of one operation. A marker
- * has a name, and start and end timestamps. Markers are stored in docShells.
+ * has a name, start and end timestamps. Markers are stored in docShells.
  *
  * This actor exposes this tracking mechanism to the devtools protocol.
  *
@@ -18,7 +17,6 @@
  *
  * When markers are available, an event is emitted:
  *   TimelineFront.on("markers", function(markers) {...})
- *
  */
 
 const {Ci, Cu} = require("chrome");
@@ -26,7 +24,9 @@ const protocol = require("devtools/server/protocol");
 const {method, Arg, RetVal, Option} = protocol;
 const events = require("sdk/event/core");
 const {setTimeout, clearTimeout} = require("sdk/timers");
-const {MemoryActor} = require("devtools/server/actors/memory");
+const {Task} = Cu.import("resource://gre/modules/Task.jsm", {});
+
+const {MemoryBridge} = require("devtools/server/actors/utils/memory-bridge");
 const {FramerateActor} = require("devtools/server/actors/framerate");
 const {StackFrameCache} = require("devtools/server/actors/utils/stack");
 
@@ -45,7 +45,8 @@ const DEFAULT_TIMELINE_DATA_PULL_TIMEOUT = 200; // ms
  */
 protocol.types.addType("array-of-numbers-as-strings", {
   write: (v) => v.join(","),
-  read: (v) => v.split(",")
+  // In Gecko <= 37, `v` is an array; do not transform in this case.
+  read: (v) => typeof v === "string" ? v.split(",") : v
 });
 
 /**
@@ -56,22 +57,20 @@ let TimelineActor = exports.TimelineActor = protocol.ActorClass({
 
   events: {
     /**
-     * "markers" events are emitted every DEFAULT_TIMELINE_DATA_PULL_TIMEOUT ms
-     * at most, when profile markers are found. A marker has the following
-     * properties:
-     * - start {Number} ms
-     * - end {Number} ms
-     * - name {String}
+     * The "markers" events emitted every DEFAULT_TIMELINE_DATA_PULL_TIMEOUT ms
+     * at most, when profile markers are found. The timestamps on each marker
+     * are relative to when recording was started.
      */
     "markers" : {
       type: "markers",
-      markers: Arg(0, "array:json"),
+      markers: Arg(0, "json"),
       endTime: Arg(1, "number")
     },
 
     /**
-     * "memory" events emitted in tandem with "markers", if this was enabled
-     * when the recording started.
+     * The "memory" events emitted in tandem with "markers", if this was enabled
+     * when the recording started. The `delta` timestamp on this measurement is
+     * relative to when recording was started.
      */
     "memory" : {
       type: "memory",
@@ -80,8 +79,9 @@ let TimelineActor = exports.TimelineActor = protocol.ActorClass({
     },
 
     /**
-     * "ticks" events (from the refresh driver) emitted in tandem with "markers",
-     * if this was enabled when the recording started.
+     * The "ticks" events (from the refresh driver) emitted in tandem with
+     * "markers", if this was enabled when the recording started. All ticks
+     * are timestamps with a zero epoch.
      */
     "ticks" : {
       type: "ticks",
@@ -89,6 +89,11 @@ let TimelineActor = exports.TimelineActor = protocol.ActorClass({
       timestamps: Arg(1, "array-of-numbers-as-strings")
     },
 
+    /**
+     * The "frames" events emitted in tandem with "markers", containing
+     * JS stack frames. The `delta` timestamp on this frames packet is
+     * relative to when recording was started.
+     */
     "frames" : {
       type: "frames",
       delta: Arg(0, "number"),
@@ -96,16 +101,20 @@ let TimelineActor = exports.TimelineActor = protocol.ActorClass({
     }
   },
 
+  /**
+   * Initializes this actor with the provided connection and tab actor.
+   */
   initialize: function(conn, tabActor) {
     protocol.Actor.prototype.initialize.call(this, conn);
     this.tabActor = tabActor;
 
     this._isRecording = false;
-    this._startTime = 0;
     this._stackFrames = null;
+    this._memoryBridge = null;
 
     // Make sure to get markers from new windows as they become available
     this._onWindowReady = this._onWindowReady.bind(this);
+    this._onGarbageCollection = this._onGarbageCollection.bind(this);
     events.on(this.tabActor, "window-ready", this._onWindowReady);
   },
 
@@ -118,11 +127,15 @@ let TimelineActor = exports.TimelineActor = protocol.ActorClass({
     this.destroy();
   },
 
+  /**
+   * Destroys this actor, stopping recording first.
+   */
   destroy: function() {
     this.stop();
 
     events.off(this.tabActor, "window-ready", this._onWindowReady);
     this.tabActor = null;
+    this._memoryBridge = null;
 
     protocol.Actor.prototype.destroy.call(this);
   },
@@ -161,13 +174,10 @@ let TimelineActor = exports.TimelineActor = protocol.ActorClass({
 
   /**
    * At regular intervals, pop the markers from the docshell, and forward
-   * markers if any.
+   * markers, memory, tick and frames events, if any.
    */
   _pullTimelineData: function() {
-    if (!this._isRecording) {
-      return;
-    }
-    if (!this.docShells.length) {
+    if (!this._isRecording || !this.docShells.length) {
       return;
     }
 
@@ -175,7 +185,7 @@ let TimelineActor = exports.TimelineActor = protocol.ActorClass({
     let markers = [];
 
     for (let docShell of this.docShells) {
-      markers = [...markers, ...docShell.popProfileTimelineMarkers()];
+      markers.push(...docShell.popProfileTimelineMarkers());
     }
 
     // The docshell may return markers with stack traces attached.
@@ -200,10 +210,10 @@ let TimelineActor = exports.TimelineActor = protocol.ActorClass({
     if (markers.length > 0) {
       events.emit(this, "markers", markers, endTime);
     }
-    if (this._memoryActor) {
-      events.emit(this, "memory", endTime, this._memoryActor.measure());
+    if (this._withMemory) {
+      events.emit(this, "memory", endTime, this._memoryBridge.measure());
     }
-    if (this._framerateActor) {
+    if (this._withTicks) {
       events.emit(this, "ticks", endTime, this._framerateActor.getPendingTicks());
     }
 
@@ -226,33 +236,47 @@ let TimelineActor = exports.TimelineActor = protocol.ActorClass({
 
   /**
    * Start recording profile markers.
+   *
+   * @option {boolean} withMemory
+   *         Boolean indiciating whether we want memory measurements sampled. A memory actor
+   *         will be created regardless (to hook into GC events), but this determines
+   *         whether or not a `memory` event gets fired.
+   * @option {boolean} withTicks
+   *         Boolean indicating whether a `ticks` event is fired and a FramerateActor
+   *         is created.
    */
-  start: method(function({ withMemory, withTicks }) {
+  start: method(Task.async(function *({ withMemory, withTicks }) {
+    var startTime = this._startTime = this.docShells[0].now();
+    // Store the start time from unix epoch so we can normalize
+    // markers from the memory actor
+    this._unixStartTime = Date.now();
+
     if (this._isRecording) {
-      return;
+      return startTime;
     }
+
     this._isRecording = true;
-    this._startTime = this.docShells[0].now();
     this._stackFrames = new StackFrameCache();
     this._stackFrames.initFrames();
+    this._withMemory = withMemory;
+    this._withTicks = withTicks;
 
     for (let docShell of this.docShells) {
       docShell.recordProfileTimelineMarkers = true;
     }
 
-    if (withMemory) {
-      this._memoryActor = new MemoryActor(this.conn, this.tabActor,
-                                          this._stackFrames);
-      events.emit(this, "memory", this._startTime, this._memoryActor.measure());
-    }
+    this._memoryBridge = new MemoryBridge(this.tabActor, this._stackFrames);
+    this._memoryBridge.attach();
+    events.on(this._memoryBridge, "garbage-collection", this._onGarbageCollection);
+
     if (withTicks) {
       this._framerateActor = new FramerateActor(this.conn, this.tabActor);
       this._framerateActor.startRecording();
     }
 
     this._pullTimelineData();
-    return this._startTime;
-  }, {
+    return startTime;
+  }), {
     request: {
       withMemory: Option(0, "boolean"),
       withTicks: Option(0, "boolean")
@@ -265,16 +289,16 @@ let TimelineActor = exports.TimelineActor = protocol.ActorClass({
   /**
    * Stop recording profile markers.
    */
-  stop: method(function() {
+  stop: method(Task.async(function *() {
     if (!this._isRecording) {
       return;
     }
     this._isRecording = false;
     this._stackFrames = null;
 
-    if (this._memoryActor) {
-      this._memoryActor = null;
-    }
+    events.off(this._memoryBridge, "garbage-collection", this._onGarbageCollection);
+    this._memoryBridge.detach();
+
     if (this._framerateActor) {
       this._framerateActor.stopRecording();
       this._framerateActor = null;
@@ -286,7 +310,7 @@ let TimelineActor = exports.TimelineActor = protocol.ActorClass({
 
     clearTimeout(this._dataPullTimeout);
     return this.docShells[0].now();
-  }, {
+  }), {
     response: {
       // Set as possibly nullable due to the end time possibly being
       // undefined during destruction
@@ -305,7 +329,38 @@ let TimelineActor = exports.TimelineActor = protocol.ActorClass({
                            .QueryInterface(Ci.nsIDocShell);
       docShell.recordProfileTimelineMarkers = true;
     }
-  }
+  },
+
+  /**
+   * Fired when the MemoryActor emits a `garbage-collection` event. Used to
+   * emit the data to the front end and in similar format to other markers.
+   *
+   * A GC "marker" here represents a full GC cycle, which may contain several incremental
+   * events within its `collection` array. The marker contains a `reason` field, indicating
+   * why there was a GC, and may contain a `nonincrementalReason` when SpiderMonkey could
+   * not incrementally collect garbage.
+   */
+  _onGarbageCollection: function ({ collections, reason, nonincrementalReason }) {
+    if (!this._isRecording || !this.docShells.length) {
+      return;
+    }
+
+    // Normalize the start time to docshell start time, and convert it
+    // to microseconds.
+    let startTime = (this._unixStartTime - this._startTime) * 1000;
+    let endTime = this.docShells[0].now();
+
+    events.emit(this, "markers", collections.map(({ startTimestamp: start, endTimestamp: end }) => {
+      return {
+        name: "GarbageCollection",
+        causeName: reason,
+        nonincrementalReason: nonincrementalReason,
+        // Both timestamps are in microseconds -- convert to milliseconds to match other markers
+        start: (start - startTime) / 1000,
+        end: (end - startTime) / 1000
+      };
+    }), endTime);
+  },
 });
 
 exports.TimelineFront = protocol.FrontClass(TimelineActor, {
@@ -313,7 +368,6 @@ exports.TimelineFront = protocol.FrontClass(TimelineActor, {
     protocol.Front.prototype.initialize.call(this, client, {actor: timelineActor});
     this.manage(this);
   },
-
   destroy: function() {
     protocol.Front.prototype.destroy.call(this);
   },

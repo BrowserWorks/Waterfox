@@ -73,7 +73,7 @@ SetParamsOnBiquad(WebCore::Biquad& aBiquad,
   }
 }
 
-class BiquadFilterNodeEngine : public AudioNodeEngine
+class BiquadFilterNodeEngine final : public AudioNodeEngine
 {
 public:
   BiquadFilterNodeEngine(AudioNode* aNode, AudioDestinationNode* aDestination)
@@ -102,7 +102,7 @@ public:
     Q,
     GAIN
   };
-  void SetInt32Parameter(uint32_t aIndex, int32_t aValue) MOZ_OVERRIDE
+  void SetInt32Parameter(uint32_t aIndex, int32_t aValue) override
   {
     switch (aIndex) {
     case TYPE: mType = static_cast<BiquadFilterType>(aValue); break;
@@ -112,7 +112,7 @@ public:
   }
   void SetTimelineParameter(uint32_t aIndex,
                             const AudioParamTimeline& aValue,
-                            TrackRate aSampleRate) MOZ_OVERRIDE
+                            TrackRate aSampleRate) override
   {
     MOZ_ASSERT(mSource && mDestination);
     switch (aIndex) {
@@ -140,7 +140,7 @@ public:
   virtual void ProcessBlock(AudioNodeStream* aStream,
                             const AudioChunk& aInput,
                             AudioChunk* aOutput,
-                            bool* aFinished) MOZ_OVERRIDE
+                            bool* aFinished) override
   {
     float inputBuffer[WEBAUDIO_BLOCK_SIZE];
 
@@ -211,7 +211,7 @@ public:
     }
   }
 
-  virtual size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const MOZ_OVERRIDE
+  virtual size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     // Not owned:
     // - mSource - probably not owned
@@ -222,7 +222,7 @@ public:
     return amount;
   }
 
-  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const MOZ_OVERRIDE
+  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
   }
@@ -244,10 +244,10 @@ BiquadFilterNode::BiquadFilterNode(AudioContext* aContext)
               ChannelCountMode::Max,
               ChannelInterpretation::Speakers)
   , mType(BiquadFilterType::Lowpass)
-  , mFrequency(new AudioParam(this, SendFrequencyToStream, 350.f))
-  , mDetune(new AudioParam(this, SendDetuneToStream, 0.f))
-  , mQ(new AudioParam(this, SendQToStream, 1.f))
-  , mGain(new AudioParam(this, SendGainToStream, 0.f))
+  , mFrequency(new AudioParam(this, SendFrequencyToStream, 350.f, "frequency"))
+  , mDetune(new AudioParam(this, SendDetuneToStream, 0.f, "detune"))
+  , mQ(new AudioParam(this, SendQToStream, 1.f, "Q"))
+  , mGain(new AudioParam(this, SendGainToStream, 0.f, "gain"))
 {
   BiquadFilterNodeEngine* engine = new BiquadFilterNodeEngine(this, aContext->Destination());
   mStream = aContext->Graph()->CreateAudioNodeStream(engine, MediaStreamGraph::INTERNAL_STREAM);
@@ -289,9 +289,9 @@ BiquadFilterNode::SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const
 }
 
 JSObject*
-BiquadFilterNode::WrapObject(JSContext* aCx)
+BiquadFilterNode::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return BiquadFilterNodeBinding::Wrap(aCx, this);
+  return BiquadFilterNodeBinding::Wrap(aCx, this, aGivenProto);
 }
 
 void

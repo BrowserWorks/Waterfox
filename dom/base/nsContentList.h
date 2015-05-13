@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -45,8 +46,8 @@ public:
   NS_DECL_NSIDOMNODELIST
 
   // nsINodeList
-  virtual int32_t IndexOf(nsIContent* aContent) MOZ_OVERRIDE;
-  virtual nsIContent* Item(uint32_t aIndex) MOZ_OVERRIDE;
+  virtual int32_t IndexOf(nsIContent* aContent) override;
+  virtual nsIContent* Item(uint32_t aIndex) override;
 
   uint32_t Length() const { 
     return mElements.Length();
@@ -87,8 +88,8 @@ public:
 
   virtual int32_t IndexOf(nsIContent *aContent, bool aDoFlush);
 
-  virtual JSObject* WrapObject(JSContext *cx)
-    MOZ_OVERRIDE = 0;
+  virtual JSObject* WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto)
+    override = 0;
 
   void SetCapacity(uint32_t aCapacity)
   {
@@ -121,11 +122,11 @@ public:
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(nsSimpleContentList,
                                            nsBaseContentList)
 
-  virtual nsINode* GetParentObject() MOZ_OVERRIDE
+  virtual nsINode* GetParentObject() override
   {
     return mRoot;
   }
-  virtual JSObject* WrapObject(JSContext *cx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto) override;
 
 protected:
   virtual ~nsSimpleContentList() {}
@@ -251,11 +252,11 @@ public:
 
   // nsWrapperCache
   using nsWrapperCache::GetWrapperPreserveColor;
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 protected:
   virtual ~nsContentList();
 
-  virtual JSObject* GetWrapperPreserveColorInternal() MOZ_OVERRIDE
+  virtual JSObject* GetWrapperPreserveColorInternal() override
   {
     return nsWrapperCache::GetWrapperPreserveColor();
   }
@@ -265,24 +266,24 @@ public:
   NS_DECL_NSIDOMHTMLCOLLECTION
 
   // nsBaseContentList overrides
-  virtual int32_t IndexOf(nsIContent *aContent, bool aDoFlush) MOZ_OVERRIDE;
-  virtual int32_t IndexOf(nsIContent* aContent) MOZ_OVERRIDE;
-  virtual nsINode* GetParentObject() MOZ_OVERRIDE
+  virtual int32_t IndexOf(nsIContent *aContent, bool aDoFlush) override;
+  virtual int32_t IndexOf(nsIContent* aContent) override;
+  virtual nsINode* GetParentObject() override
   {
     return mRootNode;
   }
 
-  virtual nsIContent* Item(uint32_t aIndex) MOZ_OVERRIDE;
-  virtual mozilla::dom::Element* GetElementAt(uint32_t index) MOZ_OVERRIDE;
+  virtual nsIContent* Item(uint32_t aIndex) override;
+  virtual mozilla::dom::Element* GetElementAt(uint32_t index) override;
   virtual mozilla::dom::Element*
-  GetFirstNamedElement(const nsAString& aName, bool& aFound) MOZ_OVERRIDE
+  GetFirstNamedElement(const nsAString& aName, bool& aFound) override
   {
     mozilla::dom::Element* item = NamedItem(aName, true);
     aFound = !!item;
     return item;
   }
   virtual void GetSupportedNames(unsigned aFlags,
-                                 nsTArray<nsString>& aNames) MOZ_OVERRIDE;
+                                 nsTArray<nsString>& aNames) override;
 
   // nsContentList public methods
   uint32_t Length(bool aDoFlush);
@@ -392,7 +393,7 @@ protected:
    * Needed because if subclasses want to have cache behavior they can't just
    * override RemoveFromHashtable(), since we call that in our destructor.
    */
-  virtual void RemoveFromCaches() MOZ_OVERRIDE
+  virtual void RemoveFromCaches() override
   {
     RemoveFromHashtable();
   }
@@ -511,7 +512,7 @@ protected:
     MOZ_ASSERT(mData);
   }
 
-  virtual void RemoveFromCaches() MOZ_OVERRIDE {
+  virtual void RemoveFromCaches() override {
     RemoveFromFuncStringHashtable();
   }
   void RemoveFromFuncStringHashtable();
@@ -536,7 +537,7 @@ public:
 #endif
   }
 
-  virtual JSObject* WrapObject(JSContext *cx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto) override;
 
 #ifdef DEBUG
   static const ContentListType sType;
@@ -560,7 +561,7 @@ public:
 #endif
   }
 
-  virtual JSObject* WrapObject(JSContext *cx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto) override;
 
 #ifdef DEBUG
   static const ContentListType sType;

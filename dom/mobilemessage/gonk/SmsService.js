@@ -21,6 +21,7 @@ const NS_PREFBRANCH_PREFCHANGE_TOPIC_ID  = "nsPref:changed";
 const kPrefDefaultServiceId = "dom.sms.defaultServiceId";
 const kPrefRilDebuggingEnabled = "ril.debugging.enabled";
 const kPrefRilNumRadioInterfaces = "ril.numRadioInterfaces";
+const kPrefLastKnownSimMcc = "ril.lastKnownSimMcc";
 
 const kDiskSpaceWatcherObserverTopic = "disk-space-watcher";
 
@@ -40,7 +41,10 @@ const DOM_MOBILE_MESSAGE_DELIVERY_ERROR    = "error";
 const SMS_HANDLED_WAKELOCK_TIMEOUT = 5000;
 
 XPCOMUtils.defineLazyGetter(this, "gRadioInterfaces", function() {
-  let ril = Cc["@mozilla.org/ril;1"].getService(Ci.nsIRadioInterfaceLayer);
+  let ril = { numRadioInterfaces: 0 };
+  try {
+    ril = Cc["@mozilla.org/ril;1"].getService(Ci.nsIRadioInterfaceLayer);
+  } catch(e) {}
 
   let interfaces = [];
   for (let i = 0; i < ril.numRadioInterfaces; i++) {
@@ -52,6 +56,10 @@ XPCOMUtils.defineLazyGetter(this, "gRadioInterfaces", function() {
 XPCOMUtils.defineLazyGetter(this, "gSmsSegmentHelper", function() {
   let ns = {};
   Cu.import("resource://gre/modules/SmsSegmentHelper.jsm", ns);
+
+  // Initialize enabledGsmTableTuples from current MCC.
+  ns.SmsSegmentHelper.enabledGsmTableTuples = getEnabledGsmTableTuplesFromMcc();
+
   return ns.SmsSegmentHelper;
 });
 
@@ -68,8 +76,12 @@ XPCOMUtils.defineLazyGetter(this, "gWAP", function() {
 });
 
 XPCOMUtils.defineLazyServiceGetter(this, "gCellBroadcastService",
-                                   "@mozilla.org/cellbroadcast/gonkservice;1",
+                                   "@mozilla.org/cellbroadcast/cellbroadcastservice;1",
                                    "nsIGonkCellBroadcastService");
+
+XPCOMUtils.defineLazyServiceGetter(this, "gIccService",
+                                   "@mozilla.org/icc/iccservice;1",
+                                   "nsIIccService");
 
 XPCOMUtils.defineLazyServiceGetter(this, "gMobileConnectionService",
                                    "@mozilla.org/mobileconnection/mobileconnectionservice;1",
@@ -97,16 +109,19 @@ function debug(s) {
 }
 
 function SmsService() {
+  this._updateDebugFlag();
   this._silentNumbers = [];
   this.smsDefaultServiceId = this._getDefaultServiceId();
 
   this._portAddressedSmsApps = {};
-  this._portAddressedSmsApps[gWAP.WDP_PORT_PUSH] = this._handleSmsWdpPortPush.bind(this);
+  this._portAddressedSmsApps[gWAP.WDP_PORT_PUSH] =
+    (aMessage, aServiceId) => this._handleSmsWdpPortPush(aMessage, aServiceId);
 
   this._receivedSmsSegmentsMap = {};
 
   Services.prefs.addObserver(kPrefRilDebuggingEnabled, this, false);
   Services.prefs.addObserver(kPrefDefaultServiceId, this, false);
+  Services.prefs.addObserver(kPrefLastKnownSimMcc, this, false);
   Services.obs.addObserver(this, NS_XPCOM_SHUTDOWN_OBSERVER_ID, false);
   Services.obs.addObserver(this, kDiskSpaceWatcherObserverTopic, false);
 }
@@ -147,7 +162,7 @@ SmsService.prototype = {
     // Get the proper IccInfo based on the current card type.
     try {
       let iccInfo = null;
-      let baseIccInfo = gRadioInterfaces[aServiceId].rilContext.iccInfo;
+      let baseIccInfo = this._getIccInfo(aServiceId);
       if (baseIccInfo.iccType === 'ruim' || baseIccInfo.iccType === 'csim') {
         iccInfo = baseIccInfo.QueryInterface(Ci.nsICdmaIccInfo);
         number = iccInfo.mdn;
@@ -165,8 +180,18 @@ SmsService.prototype = {
     return number;
   },
 
+  _getIccInfo: function(aServiceId) {
+    let icc = gIccService.getIccByServiceId(aServiceId);
+    return icc ? icc.iccInfo : null;
+  },
+
+  _getCardState: function(aServiceId) {
+    let icc = gIccService.getIccByServiceId(aServiceId);
+    return icc ? icc.cardState : Ci.nsIIcc.CARD_STATE_UNKNOWN;
+  },
+
   _getIccId: function(aServiceId) {
-    let iccInfo = gRadioInterfaces[aServiceId].rilContext.iccInfo;
+    let iccInfo = this._getIccInfo(aServiceId);
 
     if (!iccInfo) {
       return null;
@@ -192,7 +217,7 @@ SmsService.prototype = {
     }
     if (DEBUG) debug("Setting the timer for releasing the CPU wake lock.");
     this._smsHandledWakeLockTimer
-        .initWithCallback(this._releaseSmsHandledWakeLock.bind(this),
+        .initWithCallback(() => this._releaseSmsHandledWakeLock(),
                           SMS_HANDLED_WAKELOCK_TIMEOUT,
                           Ci.nsITimer.TYPE_ONE_SHOT);
   },
@@ -259,13 +284,10 @@ SmsService.prototype = {
       // Failed to send SMS out.
       if (aResponse.errorMsg) {
         let error = Ci.nsIMobileMessageCallback.UNKNOWN_ERROR;
-        switch (aResponse.errorMsg) {
-          case RIL.ERROR_RADIO_NOT_AVAILABLE:
-            error = Ci.nsIMobileMessageCallback.NO_SIGNAL_ERROR;
-            break;
-          case RIL.ERROR_FDN_CHECK_FAILURE:
-            error = Ci.nsIMobileMessageCallback.FDN_CHECK_ERROR;
-            break;
+        if (aResponse.errorMsg === RIL.GECKO_ERROR_RADIO_NOT_AVAILABLE) {
+          error = Ci.nsIMobileMessageCallback.NO_SIGNAL_ERROR;
+        } else if (aResponse.errorMsg === RIL.GECKO_ERROR_FDN_CHECK_FAILURE) {
+          error = Ci.nsIMobileMessageCallback.FDN_CHECK_ERROR;
         }
 
         if (aSilent) {
@@ -298,6 +320,8 @@ SmsService.prototype = {
                                          null,
                                          (aRv, aDomMessage) => {
           // TODO bug 832140 handle !Components.isSuccessCode(aRv)
+          this._broadcastSmsSystemMessage(
+            Ci.nsISmsMessenger.NOTIFICATION_TYPE_SENT_FAILED, aDomMessage);
           aRequest.notifySendMessageFailed(error, aDomMessage);
           Services.obs.notifyObservers(aDomMessage, kSmsFailedObserverTopic, null);
         });
@@ -363,16 +387,16 @@ SmsService.prototype = {
                                        (aRv, aDomMessage) => {
         // TODO bug 832140 handle !Components.isSuccessCode(aRv)
 
-        let topic = (aResponse.deliveryStatus ==
-                     RIL.GECKO_SMS_DELIVERY_STATUS_SUCCESS)
-                    ? kSmsDeliverySuccessObserverTopic
-                    : kSmsDeliveryErrorObserverTopic;
+        let [topic, notificationType] =
+          (aResponse.deliveryStatus == RIL.GECKO_SMS_DELIVERY_STATUS_SUCCESS)
+            ? [kSmsDeliverySuccessObserverTopic,
+               Ci.nsISmsMessenger.NOTIFICATION_TYPE_DELIVERY_SUCCESS]
+            : [kSmsDeliveryErrorObserverTopic,
+               Ci.nsISmsMessenger.NOTIFICATION_TYPE_DELIVERY_ERROR];
 
-        // Broadcasting a "sms-delivery-success" system message to open apps.
-        if (topic == kSmsDeliverySuccessObserverTopic) {
-          this._broadcastSmsSystemMessage(
-            Ci.nsISmsMessenger.NOTIFICATION_TYPE_DELIVERY_SUCCESS, aDomMessage);
-        }
+        // Broadcasting a "sms-delivery-success/sms-delivery-error" system
+        // message to open apps.
+        this._broadcastSmsSystemMessage(notificationType, aDomMessage);
 
         // Notifying observers the delivery status is updated.
         Services.obs.notifyObservers(aDomMessage, topic, null);
@@ -778,7 +802,7 @@ SmsService.prototype = {
     }
   },
 
-  // An array of slient numbers.
+  // An array of silent numbers.
   _silentNumbers: null,
   _isSilentNumber: function(aNumber) {
     return this._silentNumbers.indexOf(aNumber) >= 0;
@@ -851,6 +875,8 @@ SmsService.prototype = {
     let saveSendingMessageCallback = (aRv, aSendingMessage) => {
       if (!Components.isSuccessCode(aRv)) {
         if (DEBUG) debug("Error! Fail to save sending message! aRv = " + aRv);
+        this._broadcastSmsSystemMessage(
+          Ci.nsISmsMessenger.NOTIFICATION_TYPE_SENT_FAILED, aSendingMessage);
         aRequest.notifySendMessageFailed(
           gMobileMessageDatabaseService.translateCrErrorToMessageCallbackError(aRv),
           aSendingMessage);
@@ -875,8 +901,7 @@ SmsService.prototype = {
                  radioState == Ci.nsIMobileConnection.MOBILE_RADIO_STATE_DISABLED) {
         if (DEBUG) debug("Error! Radio is disabled when sending SMS.");
         errorCode = Ci.nsIMobileMessageCallback.RADIO_DISABLED_ERROR;
-      } else if (gRadioInterfaces[aServiceId].rilContext.cardState !=
-                 Ci.nsIIccProvider.CARD_STATE_READY) {
+      } else if (this._getCardState(aServiceId) != Ci.nsIIcc.CARD_STATE_READY) {
         if (DEBUG) debug("Error! SIM card is not ready when sending SMS.");
         errorCode = Ci.nsIMobileMessageCallback.NO_SIM_CARD_ERROR;
       }
@@ -894,6 +919,8 @@ SmsService.prototype = {
                                          null,
                                          (aRv, aDomMessage) => {
           // TODO bug 832140 handle !Components.isSuccessCode(aRv)
+          this._broadcastSmsSystemMessage(
+            Ci.nsISmsMessenger.NOTIFICATION_TYPE_SENT_FAILED, aDomMessage);
           aRequest.notifySendMessageFailed(errorCode, aDomMessage);
           Services.obs.notifyObservers(aDomMessage, kSmsFailedObserverTopic, null);
         });
@@ -959,6 +986,30 @@ SmsService.prototype = {
       } else {
         aRequest.notifyGetSmscAddressFailed(
           Ci.nsIMobileMessageCallback.NOT_FOUND_ERROR);
+      }
+    });
+  },
+
+  setSmscAddress: function(aServiceId, aNumber, aTypeOfNumber,
+                      aNumberPlanIdentification, aRequest) {
+    if (aServiceId > (gRadioInterfaces.length - 1)) {
+      throw Cr.NS_ERROR_INVALID_ARG;
+    }
+
+    let options = {
+      smscAddress: aNumber,
+      typeOfNumber: aTypeOfNumber,
+      numberPlanIdentification: aNumberPlanIdentification
+    };
+
+    gRadioInterfaces[aServiceId].sendWorkerMessage("setSmscAddress",
+                                                   options,
+                                                   (aResponse) => {
+      if (!aResponse.errorMsg) {
+        aRequest.notifySetSmscAddress();
+      } else {
+        aRequest.notifySetSmscAddressFailed(
+          Ci.nsIMobileMessageCallback.INVALID_ADDRESS_ERROR);
       }
     });
   },
@@ -1032,7 +1083,7 @@ SmsService.prototype = {
                            this._processReceivedSmsSegment(segment));
     } else {
       gMobileMessageDatabaseService
-        .saveSmsSegment(segment, function notifyResult(aRv, aCompleteMessage) {
+        .saveSmsSegment(segment, (aRv, aCompleteMessage) => {
         handleReceivedAndAck(aRv,  // Ack according to the result after saving
                              aCompleteMessage);
       });
@@ -1051,6 +1102,10 @@ SmsService.prototype = {
         else if (aData === kPrefDefaultServiceId) {
           this.smsDefaultServiceId = this._getDefaultServiceId();
         }
+        else if ( aData === kPrefLastKnownSimMcc) {
+          gSmsSegmentHelper.enabledGsmTableTuples =
+            getEnabledGsmTableTuplesFromMcc();
+        }
         break;
       case kDiskSpaceWatcherObserverTopic:
         if (DEBUG) {
@@ -1068,6 +1123,28 @@ SmsService.prototype = {
         break;
     }
   }
+};
+
+/**
+ * Get enabled GSM national language locking shift / single shift table pairs
+ * for current SIM MCC.
+ *
+ * @return a list of pairs of national language identifiers for locking shift
+ * table and single shfit table, respectively.
+ */
+function getEnabledGsmTableTuplesFromMcc() {
+  let mcc;
+  try {
+    mcc = Services.prefs.getCharPref(kPrefLastKnownSimMcc);
+  } catch (e) {}
+  let tuples = [[RIL.PDU_NL_IDENTIFIER_DEFAULT,
+    RIL.PDU_NL_IDENTIFIER_DEFAULT]];
+  let extraTuples = RIL.PDU_MCC_NL_TABLE_TUPLES_MAPPING[mcc];
+  if (extraTuples) {
+    tuples = tuples.concat(extraTuples);
+  }
+
+  return tuples;
 };
 
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory([SmsService]);

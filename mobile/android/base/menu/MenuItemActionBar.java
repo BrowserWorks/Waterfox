@@ -4,14 +4,12 @@
 
 package org.mozilla.gecko.menu;
 
-import org.mozilla.gecko.NewTabletUI;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.widget.ThemedImageButton;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
-import android.widget.ImageButton;
 
 public class MenuItemActionBar extends ThemedImageButton
                                implements GeckoMenuItem.Layout {
@@ -22,9 +20,7 @@ public class MenuItemActionBar extends ThemedImageButton
     }
 
     public MenuItemActionBar(Context context, AttributeSet attrs) {
-        // TODO: Remove this branch (and associated attr) when old tablet is removed.
-        this(context, attrs, (NewTabletUI.isEnabled(context)) ?
-                R.attr.menuItemActionBarStyleNewTablet : R.attr.menuItemActionBarStyle);
+        this(context, attrs, R.attr.menuItemActionBarStyle);
     }
 
     public MenuItemActionBar(Context context, AttributeSet attrs, int defStyle) {

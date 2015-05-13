@@ -39,13 +39,13 @@ NS_INTERFACE_MAP_END_INHERITING(AudioNode)
 NS_IMPL_ADDREF_INHERITED(PannerNode, AudioNode)
 NS_IMPL_RELEASE_INHERITED(PannerNode, AudioNode)
 
-class PannerNodeEngine : public AudioNodeEngine
+class PannerNodeEngine final : public AudioNodeEngine
 {
 public:
   explicit PannerNodeEngine(AudioNode* aNode)
     : AudioNodeEngine(aNode)
     // Please keep these default values consistent with PannerNode::PannerNode below.
-    , mPanningModelFunction(&PannerNodeEngine::HRTFPanningFunction)
+    , mPanningModelFunction(&PannerNodeEngine::EqualPowerPanningFunction)
     , mDistanceModelFunction(&PannerNodeEngine::InverseGainFunction)
     , mPosition()
     , mOrientation(1., 0., 0.)
@@ -68,7 +68,7 @@ public:
     mHRTFPanner = new HRTFPanner(aNode->Context()->SampleRate(), loader);
   }
 
-  virtual void SetInt32Parameter(uint32_t aIndex, int32_t aParam) MOZ_OVERRIDE
+  virtual void SetInt32Parameter(uint32_t aIndex, int32_t aParam) override
   {
     switch (aIndex) {
     case PannerNode::PANNING_MODEL:
@@ -104,7 +104,7 @@ public:
       NS_ERROR("Bad PannerNodeEngine Int32Parameter");
     }
   }
-  virtual void SetThreeDPointParameter(uint32_t aIndex, const ThreeDPoint& aParam) MOZ_OVERRIDE
+  virtual void SetThreeDPointParameter(uint32_t aIndex, const ThreeDPoint& aParam) override
   {
     switch (aIndex) {
     case PannerNode::LISTENER_POSITION: mListenerPosition = aParam; break;
@@ -118,7 +118,7 @@ public:
       NS_ERROR("Bad PannerNodeEngine ThreeDPointParameter");
     }
   }
-  virtual void SetDoubleParameter(uint32_t aIndex, double aParam) MOZ_OVERRIDE
+  virtual void SetDoubleParameter(uint32_t aIndex, double aParam) override
   {
     switch (aIndex) {
     case PannerNode::LISTENER_DOPPLER_FACTOR: mListenerDopplerFactor = aParam; break;
@@ -137,7 +137,7 @@ public:
   virtual void ProcessBlock(AudioNodeStream* aStream,
                             const AudioChunk& aInput,
                             AudioChunk* aOutput,
-                            bool *aFinished) MOZ_OVERRIDE
+                            bool *aFinished) override
   {
     if (aInput.IsNull()) {
       // mLeftOverData != INT_MIN means that the panning model was HRTF and a
@@ -184,7 +184,7 @@ public:
   float InverseGainFunction(float aDistance);
   float ExponentialGainFunction(float aDistance);
 
-  virtual size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const MOZ_OVERRIDE
+  virtual size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     size_t amount = AudioNodeEngine::SizeOfExcludingThis(aMallocSizeOf);
     if (mHRTFPanner) {
@@ -194,7 +194,7 @@ public:
     return amount;
   }
 
-  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const MOZ_OVERRIDE
+  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
   }
@@ -228,7 +228,7 @@ PannerNode::PannerNode(AudioContext* aContext)
               ChannelCountMode::Clamped_max,
               ChannelInterpretation::Speakers)
   // Please keep these default values consistent with PannerNodeEngine::PannerNodeEngine above.
-  , mPanningModel(PanningModelType::HRTF)
+  , mPanningModel(PanningModelType::Equalpower)
   , mDistanceModel(DistanceModelType::Inverse)
   , mPosition()
   , mOrientation(1., 0., 0.)
@@ -268,9 +268,9 @@ PannerNode::SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const
 }
 
 JSObject*
-PannerNode::WrapObject(JSContext* aCx)
+PannerNode::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return PannerNodeBinding::Wrap(aCx, this);
+  return PannerNodeBinding::Wrap(aCx, this, aGivenProto);
 }
 
 void PannerNode::DestroyMediaStream()
@@ -495,7 +495,7 @@ PannerNode::ComputeDopplerShift()
       listenerProjection = -listenerProjection;
       sourceProjection = -sourceProjection;
 
-      double scaledSpeedOfSound = listener->DopplerFactor() / listener->DopplerFactor();
+      double scaledSpeedOfSound = listener->SpeedOfSound() / listener->DopplerFactor();
       listenerProjection = min(listenerProjection, scaledSpeedOfSound);
       sourceProjection = min(sourceProjection, scaledSpeedOfSound);
 

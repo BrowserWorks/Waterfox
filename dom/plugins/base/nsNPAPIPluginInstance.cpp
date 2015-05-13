@@ -91,15 +91,14 @@ static nsRefPtr<GLContext> sPluginContext = nullptr;
 static bool EnsureGLContext()
 {
   if (!sPluginContext) {
-    gfxIntSize dummySize(16, 16);
-    sPluginContext = GLContextProvider::CreateOffscreen(dummySize,
-                                                        SurfaceCaps::Any());
+    bool requireCompatProfile = true;
+    sPluginContext = GLContextProvider::CreateHeadless(requireCompatProfile);
   }
 
   return sPluginContext != nullptr;
 }
 
-class SharedPluginTexture MOZ_FINAL {
+class SharedPluginTexture final {
 public:
   NS_INLINE_DECL_REFCOUNTING(SharedPluginTexture)
 
@@ -231,19 +230,19 @@ nsNPAPIPluginInstance::~nsNPAPIPluginInstance()
 
   for (uint32_t i = 0; i < mCachedParamLength; i++) {
     if (mCachedParamNames[i]) {
-      NS_Free(mCachedParamNames[i]);
+      free(mCachedParamNames[i]);
       mCachedParamNames[i] = nullptr;
     }
     if (mCachedParamValues[i]) {
-      NS_Free(mCachedParamValues[i]);
+      free(mCachedParamValues[i]);
       mCachedParamValues[i] = nullptr;
     }
   }
 
-  NS_Free(mCachedParamNames);
+  free(mCachedParamNames);
   mCachedParamNames = nullptr;
 
-  NS_Free(mCachedParamValues);
+  free(mCachedParamValues);
   mCachedParamValues = nullptr;
 }
 
@@ -278,7 +277,7 @@ nsNPAPIPluginInstance::StopTime()
   return mStopTime;
 }
 
-nsresult nsNPAPIPluginInstance::Initialize(nsNPAPIPlugin *aPlugin, nsPluginInstanceOwner* aOwner, const char* aMIMEType)
+nsresult nsNPAPIPluginInstance::Initialize(nsNPAPIPlugin *aPlugin, nsPluginInstanceOwner* aOwner, const nsACString& aMIMEType)
 {
   PLUGIN_LOG(PLUGIN_LOG_NORMAL, ("nsNPAPIPluginInstance::Initialize this=%p\n",this));
 
@@ -288,11 +287,8 @@ nsresult nsNPAPIPluginInstance::Initialize(nsNPAPIPlugin *aPlugin, nsPluginInsta
   mPlugin = aPlugin;
   mOwner = aOwner;
 
-  if (aMIMEType) {
-    mMIMEType = (char*)PR_Malloc(strlen(aMIMEType) + 1);
-    if (mMIMEType) {
-      PL_strcpy(mMIMEType, aMIMEType);
-    }
+  if (!aMIMEType.IsEmpty()) {
+    mMIMEType = ToNewCString(aMIMEType);
   }
 
   return Start();
@@ -458,8 +454,8 @@ nsNPAPIPluginInstance::Start()
   uint32_t quirkParamLength = params.Length() ?
                                 mCachedParamLength : attributes.Length();
 
-  mCachedParamNames = (char**)NS_Alloc(sizeof(char*) * mCachedParamLength);
-  mCachedParamValues = (char**)NS_Alloc(sizeof(char*) * mCachedParamLength);
+  mCachedParamNames = (char**)moz_xmalloc(sizeof(char*) * mCachedParamLength);
+  mCachedParamValues = (char**)moz_xmalloc(sizeof(char*) * mCachedParamLength);
 
   for (uint32_t i = 0; i < attributes.Length(); i++) {
     mCachedParamNames[i] = ToNewUTF8String(attributes[i].mName);
@@ -535,8 +531,10 @@ nsresult nsNPAPIPluginInstance::SetWindow(NPWindow* window)
 #if MOZ_WIDGET_GTK
   // bug 108347, flash plugin on linux doesn't like window->width <=
   // 0, but Java needs wants this call.
-  if (!nsPluginHost::IsJavaMIMEType(mMIMEType) && window->type == NPWindowTypeWindow &&
-      (window->width <= 0 || window->height <= 0)) {
+  if (window && window->type == NPWindowTypeWindow &&
+      (window->width <= 0 || window->height <= 0) &&
+      (nsPluginHost::GetSpecialType(nsDependentCString(mMIMEType)) !=
+       nsPluginHost::eSpecialType_Java)) {
     return NS_OK;
   }
 #endif
@@ -749,8 +747,8 @@ NPError nsNPAPIPluginInstance::SetWindowless(bool aWindowless)
     // property. (Last tested version: sl 4.0).
     // Changes to this code should be matched with changes in
     // PluginInstanceChild::InitQuirksMode.
-    NS_NAMED_LITERAL_CSTRING(silverlight, "application/x-silverlight");
-    if (!PL_strncasecmp(mMIMEType, silverlight.get(), silverlight.Length())) {
+    if (nsPluginHost::GetSpecialType(nsDependentCString(mMIMEType)) ==
+        nsPluginHost::eSpecialType_Silverlight) {
       mTransparent = true;
     }
   }
@@ -926,7 +924,7 @@ void nsNPAPIPluginInstance::SetWakeLock(bool aLocked)
     return;
 
   mWakeLocked = aLocked;
-  hal::ModifyWakeLock(NS_LITERAL_STRING("nsNPAPIPluginInstance"),
+  hal::ModifyWakeLock(NS_LITERAL_STRING("screen"),
                       mWakeLocked ? hal::WAKE_LOCK_ADD_ONE : hal::WAKE_LOCK_REMOVE_ONE,
                       hal::WAKE_LOCK_NO_CHANGE);
 }
@@ -1169,7 +1167,7 @@ public:
     if (plugin)
       mLibrary = plugin->GetLibrary();
   }
-  operator bool() { return !!mLibrary; }
+  explicit operator bool() { return !!mLibrary; }
   PluginLibrary* operator->() { return mLibrary; }
 
 private:
@@ -1295,7 +1293,7 @@ nsNPAPIPluginInstance::GetFormValue(nsAString& aValue)
 
   // NPPVformValue allocates with NPN_MemAlloc(), which uses
   // nsMemory.
-  nsMemory::Free(value);
+  free(value);
 
   return NS_OK;
 }
@@ -1779,4 +1777,23 @@ nsNPAPIPluginInstance::GetContentsScaleFactor()
     mOwner->GetContentsScaleFactor(&scaleFactor);
   }
   return scaleFactor;
+}
+
+nsresult
+nsNPAPIPluginInstance::GetRunID(uint32_t* aRunID)
+{
+  if (NS_WARN_IF(!aRunID)) {
+    return NS_ERROR_INVALID_POINTER;
+  }
+
+  if (NS_WARN_IF(!mPlugin)) {
+    return NS_ERROR_FAILURE;
+  }
+
+  PluginLibrary* library = mPlugin->GetLibrary();
+  if (!library) {
+    return NS_ERROR_FAILURE;
+  }
+
+  return library->GetRunID(aRunID);
 }

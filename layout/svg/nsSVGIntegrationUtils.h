@@ -19,7 +19,6 @@ class nsIFrame;
 class nsIntRegion;
 
 struct nsRect;
-struct nsIntRect;
 
 namespace mozilla {
 namespace gfx {
@@ -37,7 +36,7 @@ struct nsSize;
  * Integration of SVG effects (clipPath clipping, masking and filters) into
  * regular display list based painting and hit-testing.
  */
-class nsSVGIntegrationUtils MOZ_FINAL
+class nsSVGIntegrationUtils final
 {
   typedef mozilla::gfx::DrawTarget DrawTarget;
 

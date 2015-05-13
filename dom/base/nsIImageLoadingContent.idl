@@ -28,16 +28,11 @@ interface nsIFrame;
  * become current only when the image is loaded.  It is the responsibility of
  * observers to check which request they are getting notifications for.
  *
- * Observers added in mid-load will not get any notifications they
- * missed.  We should NOT freeze this interface without considering
- * this issue.  (It could be that the image status on imgIRequest is
- * sufficient, when combined with the imageBlockingStatus information.)
- *
  * Please make sure to update the MozImageLoadingContent WebIDL
  * interface to mirror this interface when changing it.
  */
 
-[scriptable, builtinclass, uuid(ce098f6c-baca-4178-a9aa-266e8bfe509b)]
+[scriptable, builtinclass, uuid(770f7d84-c917-42d7-bf8d-d1b70649e733)]
 interface nsIImageLoadingContent : imgINotificationObserver
 {
   /**
@@ -99,6 +94,11 @@ interface nsIImageLoadingContent : imgINotificationObserver
    * known
    */
   imgIRequest getRequest(in long aRequestType);
+
+  /**
+   * @return true if the current request's size is available.
+   */
+  [noscript, notxpcom] boolean currentRequestHasSize();
 
   /**
    * Used to notify the image loading content node that a frame has been
@@ -170,9 +170,17 @@ interface nsIImageLoadingContent : imgINotificationObserver
 
   /**
    * A visible count is stored, if it is non-zero then this image is considered
-   * visible. These methods increment, decrement, or return the visible coount.
+   * visible. These methods increment, decrement, or return the visible count.
+   *
+   * @param aNonvisibleAction What to do if the image's visibility count is now
+   *                          zero. If ON_NONVISIBLE_NO_ACTION, nothing will be
+   *                          done. If ON_NONVISIBLE_REQUEST_DISCARD, the image
+   *                          will be asked to discard its surfaces if possible.
    */
   [noscript, notxpcom] void IncrementVisibleCount();
-  [noscript, notxpcom] void DecrementVisibleCount();
+  [noscript, notxpcom] void DecrementVisibleCount(in uint32_t aNonvisibleAction);
   [noscript, notxpcom] uint32_t GetVisibleCount();
+
+  const long ON_NONVISIBLE_NO_ACTION = 0;
+  const long ON_NONVISIBLE_REQUEST_DISCARD = 1;
 };

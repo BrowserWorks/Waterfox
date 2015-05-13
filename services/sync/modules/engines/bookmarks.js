@@ -185,12 +185,24 @@ let kSpecialIds = {
     return null;
   },
 
-  get menu()    PlacesUtils.bookmarksMenuFolderId,
-  get places()  PlacesUtils.placesRootId,
-  get tags()    PlacesUtils.tagsFolderId,
-  get toolbar() PlacesUtils.toolbarFolderId,
-  get unfiled() PlacesUtils.unfiledBookmarksFolderId,
-  get mobile()  this.findMobileRoot(true),
+  get menu() {
+    return PlacesUtils.bookmarksMenuFolderId;
+  },
+  get places() {
+    return PlacesUtils.placesRootId;
+  },
+  get tags() {
+    return PlacesUtils.tagsFolderId;
+  },
+  get toolbar() {
+    return PlacesUtils.toolbarFolderId;
+  },
+  get unfiled() {
+    return PlacesUtils.unfiledBookmarksFolderId;
+  },
+  get mobile() {
+    return this.findMobileRoot(true);
+  },
 };
 
 this.BookmarksEngine = function BookmarksEngine(service) {
@@ -235,7 +247,19 @@ BookmarksEngine.prototype = {
       // Figure out with which key to store the mapping.
       let key;
       let id = this._store.idForGUID(guid);
-      switch (PlacesUtils.bookmarks.getItemType(id)) {
+      let itemType;
+      try {
+        itemType = PlacesUtils.bookmarks.getItemType(id);
+      } catch (ex) {
+        this._log.warn("Deleting invalid bookmark record with id", id);
+        try {
+          PlacesUtils.bookmarks.removeItem(id);
+        } catch (ex) {
+          this._log.warn("Failed to delete invalid bookmark", ex);
+        }
+        continue;
+      }
+      switch (itemType) {
         case PlacesUtils.bookmarks.TYPE_BOOKMARK:
 
           // Smart bookmarks map to their annotation value.
@@ -244,7 +268,7 @@ BookmarksEngine.prototype = {
             queryId = PlacesUtils.annotations.getItemAnnotation(
               id, SMART_BOOKMARKS_ANNO);
           } catch(ex) {}
-          
+
           if (queryId)
             key = "q" + queryId;
           else
@@ -1271,7 +1295,7 @@ BookmarksStore.prototype = {
     }
 
     // Filter out any null/undefined/empty tags.
-    tags = tags.filter(function(t) t);
+    tags = tags.filter(t => t);
 
     // Temporarily tag a dummy URI to preserve tag ids when untagging.
     let dummyURI = Utils.makeURI("about:weave#BStore_tagURI");
@@ -1445,9 +1469,9 @@ BookmarksTracker.prototype = {
   },
 
   _ensureMobileQuery: function _ensureMobileQuery() {
-    let find = function (val)
+    let find = val =>
       PlacesUtils.annotations.getItemsWithAnnotation(ORGANIZERQUERY_ANNO, {}).filter(
-        function (id) PlacesUtils.annotations.getItemAnnotation(id, ORGANIZERQUERY_ANNO) == val
+        id => PlacesUtils.annotations.getItemAnnotation(id, ORGANIZERQUERY_ANNO) == val
       );
 
     // Don't continue if the Library isn't ready

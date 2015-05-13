@@ -464,6 +464,74 @@ policies and contribution forms [3].
                 }));
     }
 
+    /**
+     * This constructor helper allows DOM events to be handled using Promises,
+     * which can make it a lot easier to test a very specific series of events,
+     * including ensuring that unexpected events are not fired at any point.
+     */
+    function EventWatcher(test, watchedNode, eventTypes)
+    {
+        if (typeof eventTypes == 'string') {
+            eventTypes = [eventTypes];
+        }
+
+        var waitingFor = null;
+
+        var eventHandler = test.step_func(function(evt) {
+            assert_true(!!waitingFor,
+                        'Not expecting event, but got ' + evt.type + ' event');
+            assert_equals(evt.type, waitingFor.types[0],
+                          'Expected ' + waitingFor.types[0] + ' event, but got ' +
+                          evt.type + ' event instead');
+            if (waitingFor.types.length > 1) {
+                // Pop first event from array
+                waitingFor.types.shift();
+                return;
+            }
+            // We need to null out waitingFor before calling the resolve function
+            // since the Promise's resolve handlers may call wait_for() which will
+            // need to set waitingFor.
+            var resolveFunc = waitingFor.resolve;
+            waitingFor = null;
+            resolveFunc(evt);
+        });
+
+        for (var i = 0; i < eventTypes.length; i++) {
+            watchedNode.addEventListener(eventTypes[i], eventHandler);
+        }
+
+        /**
+         * Returns a Promise that will resolve after the specified event or
+         * series of events has occured.
+         */
+        this.wait_for = function(types) {
+            if (waitingFor) {
+                return Promise.reject('Already waiting for an event or events');
+            }
+            if (typeof types == 'string') {
+                types = [types];
+            }
+            return new Promise(function(resolve, reject) {
+                waitingFor = {
+                    types: types,
+                    resolve: resolve,
+                    reject: reject
+                };
+            });
+        };
+
+        function stop_watching() {
+            for (var i = 0; i < eventTypes.length; i++) {
+                watchedNode.removeEventListener(eventTypes[i], eventHandler);
+            }
+        };
+
+        test.add_cleanup(stop_watching);
+
+        return this;
+    }
+    expose(EventWatcher, 'EventWatcher');
+
     function setup(func_or_properties, maybe_properties)
     {
         var func = null;
@@ -836,6 +904,24 @@ policies and contribution forms [3].
     }
     expose(assert_greater_than, "assert_greater_than");
 
+    function assert_between_exclusive(actual, lower, upper, description)
+    {
+        /*
+         * Test if a primitive number is between two others
+         */
+        assert(typeof actual === "number",
+               "assert_between_exclusive", description,
+               "expected a number but got a ${type_actual}",
+               {type_actual:typeof actual});
+
+        assert(actual > lower && actual < upper,
+               "assert_between_exclusive", description,
+               "expected a number greater than ${lower} " +
+               "and less than ${upper} but got ${actual}",
+               {lower:lower, upper:upper, actual:actual});
+    }
+    expose(assert_between_exclusive, "assert_between_exclusive");
+
     function assert_less_than_equal(actual, expected, description)
     {
         /*
@@ -869,6 +955,24 @@ policies and contribution forms [3].
                {expected:expected, actual:actual});
     }
     expose(assert_greater_than_equal, "assert_greater_than_equal");
+
+    function assert_between_inclusive(actual, lower, upper, description)
+    {
+        /*
+         * Test if a primitive number is between to two others or equal to either of them
+         */
+        assert(typeof actual === "number",
+               "assert_between_inclusive", description,
+               "expected a number but got a ${type_actual}",
+               {type_actual:typeof actual});
+
+        assert(actual >= lower && actual <= upper,
+               "assert_between_inclusive", description,
+               "expected a number greater than or equal to ${lower} " +
+               "and less than or equal to ${upper} but got ${actual}",
+               {lower:lower, upper:upper, actual:actual});
+    }
+    expose(assert_between_inclusive, "assert_between_inclusive");
 
     function assert_regexp_match(actual, expected, description) {
         /*

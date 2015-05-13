@@ -4,6 +4,7 @@
 
 let Ci = Components.interfaces, Cc = Components.classes, Cu = Components.utils;
 
+Cu.import("resource://gre/modules/Messaging.jsm");
 Cu.import("resource://gre/modules/Services.jsm")
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
@@ -15,6 +16,9 @@ XPCOMUtils.defineLazyGetter(window, "gChromeWin", function()
     .QueryInterface(Ci.nsIInterfaceRequestor)
     .getInterface(Ci.nsIDOMWindow)
     .QueryInterface(Ci.nsIDOMChromeWindow));
+
+XPCOMUtils.defineLazyModuleGetter(this, "Prompt",
+                                  "resource://gre/modules/Prompt.jsm");
 
 let debug = Cu.import("resource://gre/modules/AndroidLog.jsm", {}).AndroidLog.d.bind(null, "AboutPasswords");
 
@@ -31,8 +35,12 @@ function copyStringAndToast(string, notifyString) {
   }
 }
 
+// Delay filtering while typing in MS
+const FILTER_DELAY = 500;
+
 let Passwords = {
   _logins: [],
+  _filterTimer: null,
 
   _getLogins: function() {
     let logins;
@@ -62,7 +70,19 @@ let Passwords = {
     let filterInput = document.getElementById("filter-input");
     let filterContainer = document.getElementById("filter-input-container");
 
-    filterInput.addEventListener("input", this._filter.bind(this), false);
+    filterInput.addEventListener("input", (event) => {
+      // Stop any in-progress filter timer
+      if (this._filterTimer) {
+        clearTimeout(this._filterTimer);
+        this._filterTimer = null;
+      }
+
+      // Start a new timer
+      this._filterTimer = setTimeout(() => {
+        this._filter(event);
+      }, FILTER_DELAY);
+    }, false);
+
     filterInput.addEventListener("blur", (event) => {
       filterContainer.setAttribute("hidden", true);
     });
@@ -73,6 +93,12 @@ let Passwords = {
     }, false);
 
     document.getElementById("filter-clear").addEventListener("click", (event) => {
+      // Stop any in-progress filter timer
+      if (this._filterTimer) {
+        clearTimeout(this._filterTimer);
+        this._filterTimer = null;
+      }
+
       filterInput.blur();
       filterInput.value = "";
       this._loadList(this._logins);
@@ -119,20 +145,80 @@ let Passwords = {
     }
   },
 
+  _onLoginClick: function (event) {
+    let loginItem = event.currentTarget;
+    let login = loginItem.login;
+    if (!login) {
+      debug("No login!");
+      return;
+    }
+
+    let prompt = new Prompt({
+      window: window,
+    });
+    let menuItems = [
+      { label: gStringBundle.GetStringFromName("passwordsMenu.copyPassword") },
+      { label: gStringBundle.GetStringFromName("passwordsMenu.copyUsername") },
+      { label: gStringBundle.GetStringFromName("passwordsMenu.details") },
+      { label: gStringBundle.GetStringFromName("passwordsMenu.delete") }
+    ];
+
+    prompt.setSingleChoiceItems(menuItems);
+    prompt.show((data) => {
+      // Switch on indices of buttons, as they were added when creating login item.
+      switch (data.button) {
+        case 0:
+          copyStringAndToast(login.password, gStringBundle.GetStringFromName("passwordsDetails.passwordCopied"));
+          break;
+        case 1:
+          copyStringAndToast(login.username, gStringBundle.GetStringFromName("passwordsDetails.usernameCopied"));
+          break;
+        case 2:
+          this._showDetails(loginItem);
+          history.pushState({ id: login.guid }, document.title);
+          break;
+        case 3:
+          let confirmPrompt = new Prompt({
+            window: window,
+            message: gStringBundle.GetStringFromName("passwordsDialog.confirmDelete"),
+            buttons: [
+              gStringBundle.GetStringFromName("passwordsDialog.confirm"),
+              gStringBundle.GetStringFromName("passwordsDialog.cancel") ]
+          });
+          confirmPrompt.show((data) => {
+            switch (data.button) {
+              case 0:
+                // Corresponds to "confirm" button.
+                Services.logins.removeLogin(login);
+            }
+          });
+      }
+    });
+  },
+
   _createItemForLogin: function (login) {
     let loginItem = document.createElement("div");
 
     loginItem.setAttribute("loginID", login.guid);
     loginItem.className = "login-item list-item";
-    loginItem.addEventListener("click", () => {
-      this._showDetails(loginItem);
-      history.pushState({ id: login.guid }, document.title);
-    }, true);
+
+    loginItem.addEventListener("click", this, true);
 
     // Create item icon.
-    let img = document.createElement("img");
+    let img = document.createElement("div");
     img.className = "icon";
-    img.setAttribute("src", login.hostname + "/favicon.ico");
+
+    // Load favicon from cache.
+    Messaging.sendRequestForResult({
+      type: "Favicon:CacheLoad",
+      url: login.hostname,
+    }).then(function(faviconUrl) {
+      img.style.backgroundImage= "url('" + faviconUrl + "')";
+      img.style.visibility = "visible";
+    }, function(data) {
+      debug("Favicon cache failure : " + data);
+      img.style.visibility = "visible";
+    });
     loginItem.appendChild(img);
 
     // Create item details.
@@ -175,6 +261,10 @@ let Passwords = {
         this._onPopState(event);
         break;
       }
+      case "click": {
+        this._onLoginClick(event);
+        break;
+      }
     }
   },
 
@@ -192,8 +282,8 @@ let Passwords = {
     let detailItem = document.querySelector("#login-details > .login-item");
     let login = detailItem.login = listItem.login;
     let favicon = detailItem.querySelector(".icon");
-    favicon.setAttribute("src", login.hostname + "/favicon.ico");
-
+    favicon.style["background-image"] = listItem.querySelector(".icon").style["background-image"];
+    favicon.style.visibility = "visible";
     document.getElementById("details-header").setAttribute("link", login.hostname);
 
     document.getElementById("detail-hostname").textContent = login.hostname;
@@ -209,7 +299,7 @@ let Passwords = {
       userInputs = domain.split(".").filter(part => part.length > 3);
     }
 
-    let lastChanged = new Date(login.timePasswordChanged);
+    let lastChanged = new Date(login.QueryInterface(Ci.nsILoginMetaInfo).timePasswordChanged);
     let days = Math.round((Date.now() - lastChanged) / 1000 / 60 / 60/ 24);
     document.getElementById("detail-age").textContent = gStringBundle.formatStringFromName("passwordsDetails.age", [days], 1);
 
@@ -244,7 +334,7 @@ let Passwords = {
   },
 
   _filter: function(event) {
-    let value = event.target.value;
+    let value = event.target.value.toLowerCase();
     let logins = this._logins.filter((login) => {
       if (login.hostname.toLowerCase().indexOf(value) != -1) {
         return true;

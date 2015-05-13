@@ -11,6 +11,8 @@
 using namespace js;
 using JS::PerfMeasurement;
 
+using mozilla::UniquePtr;
+
 // You cannot forward-declare a static object in C++, so instead
 // we have to forward-declare the helper function that refers to it.
 static PerfMeasurement* GetPM(JSContext* cx, JS::HandleValue value, const char* fname);
@@ -19,7 +21,7 @@ static PerfMeasurement* GetPM(JSContext* cx, JS::HandleValue value, const char* 
 
 #define GETTER(name)                                                    \
     static bool                                                         \
-    pm_get_##name(JSContext* cx, unsigned argc, Value *vp)              \
+    pm_get_##name(JSContext* cx, unsigned argc, Value* vp)              \
     {                                                                   \
         CallArgs args = CallArgsFromVp(argc, vp);                       \
         PerfMeasurement* p = GetPM(cx, args.thisv(), #name);            \
@@ -135,7 +137,7 @@ static const JSPropertySpec pm_props[] = {
 #define CONSTANT(name) { #name, PerfMeasurement::name }
 
 static const struct pm_const {
-    const char *name;
+    const char* name;
     PerfMeasurement::EventMask value;
 } pm_consts[] = {
     CONSTANT(CPU_CYCLES),
@@ -161,7 +163,7 @@ static void pm_finalize(JSFreeOp* fop, JSObject* obj);
 
 static const JSClass pm_class = {
     "PerfMeasurement", JSCLASS_HAS_PRIVATE,
-    nullptr, nullptr, nullptr, nullptr,
+    nullptr, nullptr, nullptr, nullptr, nullptr,
     nullptr, nullptr, nullptr, pm_finalize
 };
 
@@ -174,7 +176,7 @@ pm_construct(JSContext* cx, unsigned argc, jsval* vp)
 
     uint32_t mask;
     if (!args.hasDefined(0)) {
-        js_ReportMissingArg(cx, args.calleev(), 0);
+        ReportMissingArg(cx, args.calleev(), 0);
         return false;
     }
     if (!JS::ToUint32(cx, args[0], &mask))
@@ -210,7 +212,11 @@ static PerfMeasurement*
 GetPM(JSContext* cx, JS::HandleValue value, const char* fname)
 {
     if (!value.isObject()) {
-        JS_ReportErrorNumber(cx, js_GetErrorMessage, 0, JSMSG_NOT_NONNULL_OBJECT);
+        UniquePtr<char[], JS::FreePolicy> bytes =
+            DecompileValueGenerator(cx, JSDVG_SEARCH_STACK, value, NullPtr());
+        if (!bytes)
+            return nullptr;
+        JS_ReportErrorNumber(cx, GetErrorMessage, 0, JSMSG_NOT_NONNULL_OBJECT, bytes.get());
         return nullptr;
     }
     RootedObject obj(cx, &value.toObject());
@@ -221,7 +227,7 @@ GetPM(JSContext* cx, JS::HandleValue value, const char* fname)
 
     // JS_GetInstancePrivate only sets an exception if its last argument
     // is nonzero, so we have to do it by hand.
-    JS_ReportErrorNumber(cx, js_GetErrorMessage, 0, JSMSG_INCOMPATIBLE_PROTO,
+    JS_ReportErrorNumber(cx, GetErrorMessage, 0, JSMSG_INCOMPATIBLE_PROTO,
                          pm_class.name, fname, JS_GetClass(obj)->name);
     return nullptr;
 }
@@ -229,7 +235,7 @@ GetPM(JSContext* cx, JS::HandleValue value, const char* fname)
 namespace JS {
 
 JSObject*
-RegisterPerfMeasurement(JSContext *cx, HandleObject globalArg)
+RegisterPerfMeasurement(JSContext* cx, HandleObject globalArg)
 {
     static const uint8_t PM_CATTRS = JSPROP_ENUMERATE|JSPROP_READONLY|JSPROP_PERMANENT;
 
@@ -246,7 +252,7 @@ RegisterPerfMeasurement(JSContext *cx, HandleObject globalArg)
     if (!ctor)
         return 0;
 
-    for (const pm_const *c = pm_consts; c->name; c++) {
+    for (const pm_const* c = pm_consts; c->name; c++) {
         if (!JS_DefineProperty(cx, ctor, c->name, c->value, PM_CATTRS,
                                JS_STUBGETTER, JS_STUBSETTER))
             return 0;
@@ -268,7 +274,7 @@ ExtractPerfMeasurement(jsval wrapper)
 
     // This is what JS_GetInstancePrivate does internally.  We can't
     // call JS_anything from here, because we don't have a JSContext.
-    JSObject *obj = wrapper.toObjectOrNull();
+    JSObject* obj = wrapper.toObjectOrNull();
     if (obj->getClass() != js::Valueify(&pm_class))
         return 0;
 

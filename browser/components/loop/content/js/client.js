@@ -9,12 +9,6 @@ var loop = loop || {};
 loop.Client = (function($) {
   "use strict";
 
-  // The expected properties to be returned from the POST /call-url/ request.
-  var expectedCallUrlProperties = ["callUrl", "expiresAt"];
-
-  // The expected properties to be returned from the GET /calls request.
-  var expectedCallProperties = ["calls"];
-
   // THe expected properties to be returned from the POST /calls request.
   var expectedPostCallProperties = [
     "apiKey", "callId", "progressURL",
@@ -82,87 +76,6 @@ loop.Client = (function($) {
     },
 
     /**
-     * Requests a call URL from the Loop server. It will note the
-     * expiry time for the url with the mozLoop api.  It will select the
-     * appropriate hawk session to use based on whether or not the user
-     * is currently logged into a Firefox account profile.
-     *
-     * Callback parameters:
-     * - err null on successful request, non-null otherwise.
-     * - callUrlData an object of the obtained call url data if successful:
-     * -- callUrl: The url of the call
-     * -- expiresAt: The amount of hours until expiry of the url
-     *
-     * @param  {String} simplepushUrl a registered Simple Push URL
-     * @param  {string} nickname the nickname of the future caller
-     * @param  {Function} cb Callback(err, callUrlData)
-     */
-    requestCallUrl: function(nickname, cb) {
-      var sessionType;
-      if (this.mozLoop.userProfile) {
-        sessionType = this.mozLoop.LOOP_SESSION_TYPE.FXA;
-      } else {
-        sessionType = this.mozLoop.LOOP_SESSION_TYPE.GUEST;
-      }
-
-      this.mozLoop.hawkRequest(sessionType, "/call-url/", "POST",
-                               {callerId: nickname},
-        function (error, responseText) {
-          if (error) {
-            this._telemetryAdd("LOOP_CLIENT_CALL_URL_REQUESTS_SUCCESS", false);
-            this._failureHandler(cb, error);
-            return;
-          }
-
-          try {
-            var urlData = JSON.parse(responseText);
-
-            // This throws if the data is invalid, in which case only the failure
-            // telemetry will be recorded.
-            var returnData = this._validate(urlData, expectedCallUrlProperties);
-
-            this._telemetryAdd("LOOP_CLIENT_CALL_URL_REQUESTS_SUCCESS", true);
-            cb(null, returnData);
-          } catch (err) {
-            this._telemetryAdd("LOOP_CLIENT_CALL_URL_REQUESTS_SUCCESS", false);
-            console.log("Error requesting call info", err);
-            cb(err);
-          }
-        }.bind(this));
-    },
-
-    /**
-     * Block call URL based on the token identifier
-     *
-     * @param {string} token Conversation identifier used to block the URL
-     * @param {mozLoop.LOOP_SESSION_TYPE} sessionType The type of session which
-     *                                                the url belongs to.
-     * @param {function} cb Callback function used for handling an error
-     *                      response. XXX The incoming call panel does not
-     *                      exist after the block button is clicked therefore
-     *                      it does not make sense to display an error.
-     **/
-    deleteCallUrl: function(token, sessionType, cb) {
-      function deleteRequestCallback(error, responseText) {
-        if (error) {
-          this._failureHandler(cb, error);
-          return;
-        }
-
-        try {
-          cb(null);
-        } catch (err) {
-          console.log("Error deleting call info", err);
-          cb(err);
-        }
-      }
-
-      this.mozLoop.hawkRequest(sessionType,
-                               "/call-url/" + token, "DELETE", null,
-                               deleteRequestCallback.bind(this));
-    },
-
-    /**
      * Sets up an outgoing call, getting the relevant data from the server.
      *
      * Callback parameters:
@@ -202,21 +115,7 @@ loop.Client = (function($) {
           }
         }.bind(this)
       );
-    },
-
-    /**
-     * Adds a value to a telemetry histogram, ignoring errors.
-     *
-     * @param  {string}  histogramId Name of the telemetry histogram to update.
-     * @param  {integer} value       Value to add to the histogram.
-     */
-    _telemetryAdd: function(histogramId, value) {
-      try {
-        this.mozLoop.telemetryAdd(histogramId, value);
-      } catch (err) {
-        console.error("Error recording telemetry", err);
-      }
-    },
+    }
   };
 
   return Client;

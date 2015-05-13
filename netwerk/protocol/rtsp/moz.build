@@ -44,8 +44,6 @@ SOURCES += [
 
 FAIL_ON_WARNINGS = True
 
-MSVC_ENABLE_PGO = True
-
 include('/ipc/chromium/chromium-config.mozbuild')
 
 # Suppress some GCC warnings being treated as errors:
@@ -60,8 +58,8 @@ DEFINES['IMPL_NS_NET'] = True
 DEFINES['FORCE_PR_LOG'] = True
 
 LOCAL_INCLUDES += [
-    '../../base/src',
     '/dom/base',
+    '/netwerk/base',
     'controller',
     'rtsp',
 ]

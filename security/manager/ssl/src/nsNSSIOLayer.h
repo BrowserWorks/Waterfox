@@ -24,9 +24,9 @@ class SharedSSLState;
 
 class nsIObserver;
 
-class nsNSSSocketInfo MOZ_FINAL : public mozilla::psm::TransportSecurityInfo,
-                                  public nsISSLSocketControl,
-                                  public nsIClientAuthUserDecision
+class nsNSSSocketInfo final : public mozilla::psm::TransportSecurityInfo,
+                              public nsISSLSocketControl,
+                              public nsIClientAuthUserDecision
 {
 public:
   nsNSSSocketInfo(mozilla::psm::SharedSSLState& aState, uint32_t providerFlags);
@@ -43,8 +43,6 @@ public:
 
   bool IsHandshakePending() const { return mHandshakePending; }
   void SetHandshakeNotPending() { mHandshakePending = false; }
-
-  void GetPreviousCert(nsIX509Cert** _result);
 
   void SetTLSVersionRange(SSLVersionRange range) { mTLSVersionRange = range; }
   SSLVersionRange GetTLSVersionRange() const { return mTLSVersionRange; };
@@ -99,6 +97,13 @@ public:
 
   void SetKEAKeyBits(uint32_t keaBits) { mKEAKeyBits = keaBits; }
 
+  void SetBypassAuthentication(bool val)
+  {
+    if (!mHandshakeCompleted) {
+      mBypassAuthentication = val;
+    }
+  }
+
   void SetSSLVersionUsed(int16_t version)
   {
     mSSLVersionUsed = version;
@@ -110,14 +115,6 @@ public:
   {
     bool result = false;
     mozilla::DebugOnly<nsresult> rv = GetBypassAuthentication(&result);
-    MOZ_ASSERT(NS_SUCCEEDED(rv));
-    return result;
-  }
-
-  inline int32_t GetAuthenticationPort()
-  {
-    int32_t result = -1;
-    mozilla::DebugOnly<nsresult> rv = GetAuthenticationPort(&result);
     MOZ_ASSERT(NS_SUCCEEDED(rv));
     return result;
   }
@@ -186,7 +183,6 @@ public:
   static PRIOMethods nsSSLIOLayerMethods;
   static PRIOMethods nsSSLPlaintextLayerMethods;
 
-  nsTHashtable<nsCStringHashKey>* mRenegoUnrestrictedSites;
   bool mTreatUnsafeNegotiationAsBroken;
   int32_t mWarnLevelMissingRFC5746;
 
@@ -209,9 +205,14 @@ private:
     }
   };
   nsDataHashtable<nsCStringHashKey, IntoleranceEntry> mTLSIntoleranceInfo;
+  // Sites that require insecure fallback to TLS 1.0, set by the pref
+  // security.tls.insecure_fallback_hosts, which is a comma-delimited
+  // list of domain names.
+  nsTHashtable<nsCStringHashKey> mInsecureFallbackSites;
 public:
   void rememberTolerantAtVersion(const nsACString& hostname, int16_t port,
                                  uint16_t tolerant);
+  bool fallbackLimitReached(const nsACString& hostname, uint16_t intolerant);
   bool rememberIntolerantAtVersion(const nsACString& hostname, int16_t port,
                                    uint16_t intolerant, uint16_t minVersion,
                                    PRErrorCode intoleranceReason);
@@ -225,13 +226,17 @@ public:
                                /*out*/ StrongCipherStatus& strongCipherStatus);
   PRErrorCode getIntoleranceReason(const nsACString& hostname, int16_t port);
 
-  void setRenegoUnrestrictedSites(const nsCString& str);
-  bool isRenegoUnrestrictedSite(const nsCString& str);
   void clearStoredData();
   void loadVersionFallbackLimit();
+  void setInsecureFallbackSites(const nsCString& str);
+  bool isInsecureFallbackSite(const nsACString& hostname);
 
   bool mFalseStartRequireNPN;
-  bool mFalseStartRequireForwardSecrecy;
+  // Use the static list of sites that require insecure fallback
+  // to TLS 1.0 if true, set by the pref
+  // security.tls.insecure_fallback_hosts.use_static_list.
+  bool mUseStaticFallbackList;
+  bool mUnrestrictedRC4Fallback;
   uint16_t mVersionFallbackLimit;
 private:
   mozilla::Mutex mutex;

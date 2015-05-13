@@ -1,4 +1,5 @@
 /* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set sw=2 sts=2 ts=2 et tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -14,8 +15,6 @@
 #include "nsNullPrincipal.h"
 #include "nsNullPrincipalURI.h"
 #include "nsMemory.h"
-#include "nsIUUIDGenerator.h"
-#include "nsID.h"
 #include "nsNetUtil.h"
 #include "nsIClassInfoImpl.h"
 #include "nsIObjectInputStream.h"
@@ -77,7 +76,15 @@ nsNullPrincipal::CreateWithInheritedAttributes(nsIPrincipal* aInheritFrom)
   return NS_SUCCEEDED(rv) ? nullPrin.forget() : nullptr;
 }
 
-#define NS_NULLPRINCIPAL_PREFIX NS_NULLPRINCIPAL_SCHEME ":"
+/* static */ already_AddRefed<nsNullPrincipal>
+nsNullPrincipal::Create(uint32_t aAppId, bool aInMozBrowser)
+{
+  nsRefPtr<nsNullPrincipal> nullPrin = new nsNullPrincipal();
+  nsresult rv = nullPrin->Init(aAppId, aInMozBrowser);
+  NS_ENSURE_SUCCESS(rv, nullptr);
+
+  return nullPrin.forget();
+}
 
 nsresult
 nsNullPrincipal::Init(uint32_t aAppId, bool aInMozBrowser)
@@ -86,37 +93,8 @@ nsNullPrincipal::Init(uint32_t aAppId, bool aInMozBrowser)
   mAppId = aAppId;
   mInMozBrowser = aInMozBrowser;
 
-  // FIXME: bug 327161 -- make sure the uuid generator is reseeding-resistant.
-  nsresult rv;
-  nsCOMPtr<nsIUUIDGenerator> uuidgen =
-    do_GetService("@mozilla.org/uuid-generator;1", &rv);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  nsID id;
-  rv = uuidgen->GenerateUUIDInPlace(&id);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  char chars[NSID_LENGTH];
-  id.ToProvidedString(chars);
-
-  uint32_t suffixLen = NSID_LENGTH - 1;
-  uint32_t prefixLen = ArrayLength(NS_NULLPRINCIPAL_PREFIX) - 1;
-
-  // Use an nsCString so we only do the allocation once here and then share
-  // with nsJSPrincipals
-  nsCString str;
-  str.SetCapacity(prefixLen + suffixLen);
-
-  str.Append(NS_NULLPRINCIPAL_PREFIX);
-  str.Append(chars);
-
-  if (str.Length() != prefixLen + suffixLen) {
-    NS_WARNING("Out of memory allocating null-principal URI");
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
-
-  mURI = new nsNullPrincipalURI(str);
-  NS_ENSURE_TRUE(mURI, NS_ERROR_OUT_OF_MEMORY);
+  mURI = nsNullPrincipalURI::Create();
+  NS_ENSURE_TRUE(mURI, NS_ERROR_NOT_AVAILABLE);
 
   return NS_OK;
 }
@@ -307,6 +285,12 @@ nsNullPrincipal::GetBaseDomain(nsACString& aBaseDomain)
 {
   // For a null principal, we use our unique uuid as the base domain.
   return mURI->GetPath(aBaseDomain);
+}
+
+bool
+nsNullPrincipal::IsOnCSSUnprefixingWhitelist()
+{
+  return false;
 }
 
 /**

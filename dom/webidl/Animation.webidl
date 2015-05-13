@@ -4,18 +4,45 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * The origin of this IDL file is
- * http://dev.w3.org/fxtf/web-animations/#the-animation-interface
+ * http://w3c.github.io/web-animations/#the-animation-interface
  *
- * Copyright © 2014 W3C® (MIT, ERCIM, Keio), All Rights Reserved. W3C
+ * Copyright © 2015 W3C® (MIT, ERCIM, Keio), All Rights Reserved. W3C
  * liability, trademark and document use rules apply.
  */
 
+enum AnimationPlayState { "idle", "pending", "running", "paused", "finished" };
+
 [Func="nsDocument::IsWebAnimationsEnabled"]
 interface Animation {
-  // FIXME: |effect| should have type (AnimationEffect or EffectCallback)?
-  // but we haven't implemented EffectCallback yet.
-  [Cached,Pure]
-  readonly attribute AnimationEffect? effect;
-  // FIXME: This should be writeable (bug 1067769)
-  readonly attribute Element?         target;
+  // Bug 1049975: Make 'effect' writeable
+  [Pure]
+  readonly attribute AnimationEffectReadOnly? effect;
+  readonly attribute AnimationTimeline timeline;
+  [BinaryName="startTimeAsDouble"]
+  attribute double? startTime;
+  [SetterThrows, BinaryName="currentTimeAsDouble"]
+  attribute double? currentTime;
+
+           attribute double             playbackRate;
+  [BinaryName="playStateFromJS"]
+  readonly attribute AnimationPlayState playState;
+  [Throws]
+  readonly attribute Promise<Animation> ready;
+  [Throws]
+  readonly attribute Promise<Animation> finished;
+  void cancel ();
+  [Throws]
+  void finish ();
+  [BinaryName="playFromJS"]
+  void play ();
+  [BinaryName="pauseFromJS"]
+  void pause ();
+  /*
+  void reverse ();
+  */
+};
+
+// Non-standard extensions
+partial interface Animation {
+  [ChromeOnly] readonly attribute boolean isRunningOnCompositor;
 };

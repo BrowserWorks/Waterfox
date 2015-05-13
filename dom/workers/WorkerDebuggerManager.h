@@ -1,4 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -25,7 +26,7 @@ BEGIN_WORKERS_NAMESPACE
 
 class WorkerDebugger;
 
-class WorkerDebuggerManager MOZ_FINAL : public nsIWorkerDebuggerManager
+class WorkerDebuggerManager final : public nsIWorkerDebuggerManager
 {
   friend class ::RegisterDebuggerRunnable;
 
@@ -41,15 +42,17 @@ public:
   static WorkerDebuggerManager*
   GetOrCreateService()
   {
-    nsCOMPtr<nsIWorkerDebuggerManager> wdm =
+    nsCOMPtr<nsIWorkerDebuggerManager> manager =
       do_GetService(WORKERDEBUGGERMANAGER_CONTRACTID);
-    return static_cast<WorkerDebuggerManager*>(wdm.get());
+    return static_cast<WorkerDebuggerManager*>(manager.get());
   }
 
   WorkerDebuggerManager();
 
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSIWORKERDEBUGGERMANAGER
+
+  void ClearListeners();
 
   void RegisterDebugger(WorkerDebugger* aDebugger);
 
@@ -63,6 +66,19 @@ private:
 
   void UnregisterDebuggerOnMainThread(WorkerDebugger* aDebugger);
 };
+
+inline nsresult
+ClearWorkerDebuggerManagerListeners()
+{
+  nsRefPtr<WorkerDebuggerManager> manager =
+    WorkerDebuggerManager::GetOrCreateService();
+  if (!manager) {
+    return NS_ERROR_FAILURE;
+  }
+
+  manager->ClearListeners();
+  return NS_OK;
+}
 
 inline nsresult
 RegisterWorkerDebugger(WorkerDebugger* aDebugger)

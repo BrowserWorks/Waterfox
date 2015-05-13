@@ -1,5 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -36,6 +36,19 @@
 using namespace mozilla;
 using namespace mozilla::dom;
 using namespace mozilla::hal;
+
+// When a inner-window is destroyed we have to mute all the related
+// AudioChannelAgents. In order to do this we have to notify them after purging
+// AudioChannelService::mAgents.
+struct MOZ_STACK_CLASS WindowDestroyedEnumeratorData
+{
+  explicit WindowDestroyedEnumeratorData(uint64_t aInnerID)
+    : mInnerID(aInnerID)
+  {}
+
+  nsTArray<nsRefPtr<AudioChannelAgent>> mAgents;
+  uint64_t mInnerID;
+};
 
 StaticRefPtr<AudioChannelService> gAudioChannelService;
 
@@ -360,6 +373,13 @@ AudioChannelService::GetState(AudioChannelAgent* aAgent, bool aElementHidden)
 
   data->mState = GetStateInternal(data->mChannel, CONTENT_PROCESS_ID_MAIN,
                                 aElementHidden, oldElementHidden);
+  #ifdef MOZ_WIDGET_GONK
+    bool active = AnyAudioChannelIsActive();
+    for (uint32_t i = 0; i < mSpeakerManager.Length(); i++) {
+      mSpeakerManager[i]->SetAudioChannelActive(active);
+    }
+  #endif
+
   return data->mState;
 }
 
@@ -507,15 +527,15 @@ AudioChannelService::ProcessContentOrNormalChannelIsActive(uint64_t aChildID)
 
 void
 AudioChannelService::SetDefaultVolumeControlChannel(int32_t aChannel,
-                                                    bool aHidden)
+                                                    bool aVisible)
 {
-  SetDefaultVolumeControlChannelInternal(aChannel, aHidden,
+  SetDefaultVolumeControlChannelInternal(aChannel, aVisible,
                                          CONTENT_PROCESS_ID_MAIN);
 }
 
 void
 AudioChannelService::SetDefaultVolumeControlChannelInternal(int32_t aChannel,
-                                                            bool aHidden,
+                                                            bool aVisible,
                                                             uint64_t aChildID)
 {
   if (XRE_GetProcessType() != GeckoProcessType_Default) {
@@ -525,13 +545,26 @@ AudioChannelService::SetDefaultVolumeControlChannelInternal(int32_t aChannel,
   // If this child is in the background and mDefChannelChildID is set to
   // others then it means other child in the foreground already set it's
   // own default channel already.
-  if (!aHidden && mDefChannelChildID != aChildID) {
+  if (!aVisible && mDefChannelChildID != aChildID) {
+    return;
+  }
+  // Workaround for the call screen app. The call screen app is running on the
+  // main process, that will results in wrong visible state. Because we use the
+  // docshell's active state as visible state, the main process is always
+  // active. Therefore, we will see the strange situation that the visible
+  // state of the call screen is always true. If the mDefChannelChildID is set
+  // to others then it means other child in the foreground already set it's
+  // own default channel already.
+  // Summary :
+  //   Child process : foreground app always can set type.
+  //   Parent process : check the mDefChannelChildID.
+  else if (aChildID == CONTENT_PROCESS_ID_MAIN &&
+           mDefChannelChildID != CONTENT_PROCESS_ID_UNKNOWN) {
     return;
   }
 
-  mDefChannelChildID = aChildID;
-  nsString channelName;
-
+  mDefChannelChildID = aVisible ? aChildID : CONTENT_PROCESS_ID_UNKNOWN;
+  nsAutoString channelName;
   if (aChannel == -1) {
     channelName.AssignASCII("unknown");
   } else {
@@ -755,11 +788,15 @@ AudioChannelService::WindowDestroyedEnumerator(AudioChannelAgent* aAgent,
                                                nsAutoPtr<AudioChannelAgentData>& aData,
                                                void* aPtr)
 {
-  uint64_t* innerID = static_cast<uint64_t*>(aPtr);
-  MOZ_ASSERT(innerID);
+  auto* data = static_cast<WindowDestroyedEnumeratorData*>(aPtr);
+  MOZ_ASSERT(data);
 
   nsCOMPtr<nsPIDOMWindow> window = do_QueryInterface(aAgent->Window());
-  if (!window || window->WindowID() != *innerID) {
+  if (window && !window->IsInnerWindow()) {
+    window = window->GetCurrentInnerWindow();
+  }
+
+  if (!window || window->WindowID() != data->mInnerID) {
     return PL_DHASH_NEXT;
   }
 
@@ -768,6 +805,7 @@ AudioChannelService::WindowDestroyedEnumerator(AudioChannelAgent* aAgent,
 
   service->UnregisterType(aData->mChannel, aData->mElementHidden,
                           CONTENT_PROCESS_ID_MAIN, aData->mWithVideo);
+  data->mAgents.AppendElement(aAgent);
 
   return PL_DHASH_REMOVE;
 }
@@ -839,7 +877,7 @@ AudioChannelService::Observe(nsISupports* aSubject, const char* aTopic, const ch
     if (!setting.mValue.isNumber()) {
       return NS_OK;
     }
-    
+
     nsCOMPtr<nsIAudioManager> audioManager = do_GetService(NS_AUDIOMANAGER_CONTRACTID);
     NS_ENSURE_TRUE(audioManager, NS_OK);
 
@@ -873,7 +911,11 @@ AudioChannelService::Observe(nsISupports* aSubject, const char* aTopic, const ch
       return rv;
     }
 
-    mAgents.Enumerate(WindowDestroyedEnumerator, &innerID);
+    WindowDestroyedEnumeratorData data(innerID);
+    mAgents.Enumerate(WindowDestroyedEnumerator, &data);
+    for (uint32_t i = 0, len = data.mAgents.Length(); i < len; ++i) {
+      data.mAgents[i]->NotifyAudioChannelStateChanged();
+    }
 
 #ifdef MOZ_WIDGET_GONK
     bool active = AnyAudioChannelIsActive();

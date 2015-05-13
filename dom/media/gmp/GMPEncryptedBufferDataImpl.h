@@ -7,16 +7,29 @@
 #define GMPEncryptedBufferDataImpl_h_
 
 #include "gmp-decryption.h"
-#include "mp4_demuxer/DecoderData.h"
 #include "nsTArray.h"
 #include "mozilla/gmp/GMPTypes.h"
 
 namespace mozilla {
+class CryptoSample;
+
 namespace gmp {
 
-class GMPEncryptedBufferDataImpl : public GMPEncryptedBufferMetadata {
+class GMPStringListImpl : public GMPStringList
+{
+public:
+  explicit GMPStringListImpl(const nsTArray<nsCString>& aStrings);
+  virtual const uint32_t Size() const override;
+  virtual void StringAt(uint32_t aIndex,
+                        const char** aOutString, uint32_t *aOutLength) const override;
+  virtual ~GMPStringListImpl() override;
+  void RelinquishData(nsTArray<nsCString>& aStrings);
+
 private:
-  typedef mp4_demuxer::CryptoSample CryptoSample;
+  nsTArray<nsCString> mStrings;
+};
+
+class GMPEncryptedBufferDataImpl : public GMPEncryptedBufferMetadata {
 public:
   explicit GMPEncryptedBufferDataImpl(const CryptoSample& aCrypto);
   explicit GMPEncryptedBufferDataImpl(const GMPDecryptionData& aData);
@@ -24,19 +37,22 @@ public:
 
   void RelinquishData(GMPDecryptionData& aData);
 
-  virtual const uint8_t* KeyId() const MOZ_OVERRIDE;
-  virtual uint32_t KeyIdSize() const MOZ_OVERRIDE;
-  virtual const uint8_t* IV() const MOZ_OVERRIDE;
-  virtual uint32_t IVSize() const MOZ_OVERRIDE;
-  virtual uint32_t NumSubsamples() const MOZ_OVERRIDE;
-  virtual const uint16_t* ClearBytes() const MOZ_OVERRIDE;
-  virtual const uint32_t* CipherBytes() const MOZ_OVERRIDE;
+  virtual const uint8_t* KeyId() const override;
+  virtual uint32_t KeyIdSize() const override;
+  virtual const uint8_t* IV() const override;
+  virtual uint32_t IVSize() const override;
+  virtual uint32_t NumSubsamples() const override;
+  virtual const uint16_t* ClearBytes() const override;
+  virtual const uint32_t* CipherBytes() const override;
+  virtual const GMPStringList* SessionIds() const override;
 
 private:
   nsTArray<uint8_t> mKeyId;
   nsTArray<uint8_t> mIV;
   nsTArray<uint16_t> mClearBytes;
   nsTArray<uint32_t> mCipherBytes;
+
+  GMPStringListImpl mSessionIdList;
 };
 
 class GMPBufferImpl : public GMPBuffer {

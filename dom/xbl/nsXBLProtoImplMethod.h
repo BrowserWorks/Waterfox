@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -28,7 +29,7 @@ struct nsXBLParameter {
 
   ~nsXBLParameter() {
     MOZ_COUNT_DTOR(nsXBLParameter);
-    nsMemory::Free(mName);
+    free(mName);
     NS_CONTENT_DELETE_LIST_MEMBER(nsXBLParameter, this, mNext);
   }
 };
@@ -90,14 +91,14 @@ public:
   void SetLineNumber(uint32_t aLineNumber);
   
   virtual nsresult InstallMember(JSContext* aCx,
-                                 JS::Handle<JSObject*> aTargetClassObject) MOZ_OVERRIDE;
-  virtual nsresult CompileMember(mozilla::dom::AutoJSAPI& jsapi, const nsCString& aClassStr,
-                                 JS::Handle<JSObject*> aClassObject) MOZ_OVERRIDE;
+                                 JS::Handle<JSObject*> aTargetClassObject) override;
+  virtual nsresult CompileMember(mozilla::dom::AutoJSAPI& jsapi, const nsString& aClassStr,
+                                 JS::Handle<JSObject*> aClassObject) override;
 
-  virtual void Trace(const TraceCallbacks& aCallbacks, void *aClosure) MOZ_OVERRIDE;
+  virtual void Trace(const TraceCallbacks& aCallbacks, void *aClosure) override;
 
   nsresult Read(nsIObjectInputStream* aStream);
-  virtual nsresult Write(nsIObjectOutputStream* aStream) MOZ_OVERRIDE;
+  virtual nsresult Write(nsIObjectOutputStream* aStream) override;
 
   bool IsCompiled() const
   {
@@ -145,7 +146,7 @@ public:
   // binding instantiations (though they may hang out in mMembers on the
   // prototype implementation).
   virtual nsresult InstallMember(JSContext* aCx,
-                                 JS::Handle<JSObject*> aTargetClassObject) MOZ_OVERRIDE {
+                                 JS::Handle<JSObject*> aTargetClassObject) override {
     return NS_OK;
   }
 

@@ -18,6 +18,7 @@
 #include "mozilla/WindowsVersion.h"
 #include "nsServiceManagerUtils.h"
 #include "nsTArray.h"
+#include "mozilla/Telemetry.h"
 
 #include "nsIWindowsRegKey.h"
 #include "nsIFile.h"
@@ -76,6 +77,8 @@
 #include "nsExceptionHandler.h"
 #endif
 
+#include "VsyncSource.h"
+
 using namespace mozilla;
 using namespace mozilla::gfx;
 using namespace mozilla::layers;
@@ -114,10 +117,9 @@ DCFromDrawTarget::DCFromDrawTarget(DrawTarget& aDrawTarget)
 static const char *kFeatureLevelPref =
   "gfx.direct3d.last_used_feature_level_idx";
 static const int kSupportedFeatureLevels[] =
-  { D3D10_FEATURE_LEVEL_10_1, D3D10_FEATURE_LEVEL_10_0,
-    D3D10_FEATURE_LEVEL_9_3 };
+  { D3D10_FEATURE_LEVEL_10_1, D3D10_FEATURE_LEVEL_10_0 };
 
-class GfxD2DSurfaceReporter MOZ_FINAL : public nsIMemoryReporter
+class GfxD2DSurfaceReporter final : public nsIMemoryReporter
 {
     ~GfxD2DSurfaceReporter() {}
 
@@ -151,7 +153,7 @@ NS_IMPL_ISUPPORTS(GfxD2DSurfaceReporter, nsIMemoryReporter)
 
 #endif
 
-class GfxD2DVramReporter MOZ_FINAL : public nsIMemoryReporter
+class GfxD2DVramReporter final : public nsIMemoryReporter
 {
     ~GfxD2DVramReporter() {}
 
@@ -191,7 +193,7 @@ NS_IMPL_ISUPPORTS(GfxD2DVramReporter, nsIMemoryReporter)
 #define GFX_CLEARTYPE_PARAMS_STRUCTURE "gfx.font_rendering.cleartype_params.pixel_structure"
 #define GFX_CLEARTYPE_PARAMS_MODE      "gfx.font_rendering.cleartype_params.rendering_mode"
 
-class GPUAdapterReporter : public nsIMemoryReporter
+class GPUAdapterReporter final : public nsIMemoryReporter
 {
     // Callers must Release the DXGIAdapter after use or risk mem-leak
     static bool GetDXGIAdapter(IDXGIAdapter **DXGIAdapter)
@@ -325,8 +327,92 @@ public:
 
 NS_IMPL_ISUPPORTS(GPUAdapterReporter, nsIMemoryReporter)
 
+
+Atomic<size_t> gfxWindowsPlatform::sD3D11MemoryUsed;
+
+class D3D11TextureReporter final : public nsIMemoryReporter
+{
+  ~D3D11TextureReporter() {}
+
+public:
+  NS_DECL_ISUPPORTS
+
+  NS_IMETHOD CollectReports(nsIHandleReportCallback *aHandleReport,
+                            nsISupports* aData, bool aAnonymize) override
+  {
+      return MOZ_COLLECT_REPORT("d3d11-shared-textures", KIND_OTHER, UNITS_BYTES,
+                                gfxWindowsPlatform::sD3D11MemoryUsed,
+                                "Memory used for D3D11 shared textures");
+  }
+};
+
+NS_IMPL_ISUPPORTS(D3D11TextureReporter, nsIMemoryReporter)
+
+Atomic<size_t> gfxWindowsPlatform::sD3D9MemoryUsed;
+
+class D3D9TextureReporter final : public nsIMemoryReporter
+{
+  ~D3D9TextureReporter() {}
+
+public:
+  NS_DECL_ISUPPORTS
+
+  NS_IMETHOD CollectReports(nsIHandleReportCallback *aHandleReport,
+                            nsISupports* aData, bool aAnonymize) override
+  {
+    return MOZ_COLLECT_REPORT("d3d9-shared-textures", KIND_OTHER, UNITS_BYTES,
+                              gfxWindowsPlatform::sD3D9MemoryUsed,
+                              "Memory used for D3D9 shared textures");
+  }
+};
+
+NS_IMPL_ISUPPORTS(D3D9TextureReporter, nsIMemoryReporter)
+
+Atomic<size_t> gfxWindowsPlatform::sD3D9SurfaceImageUsed;
+
+class D3D9SurfaceImageReporter final : public nsIMemoryReporter
+{
+  ~D3D9SurfaceImageReporter() {}
+
+public:
+  NS_DECL_ISUPPORTS
+
+  NS_IMETHOD CollectReports(nsIHandleReportCallback *aHandleReport,
+                            nsISupports* aData, bool aAnonymize) override
+  {
+    return MOZ_COLLECT_REPORT("d3d9-surface-image", KIND_OTHER, UNITS_BYTES,
+                              gfxWindowsPlatform::sD3D9SurfaceImageUsed,
+                              "Memory used for D3D9 surface images");
+  }
+};
+
+NS_IMPL_ISUPPORTS(D3D9SurfaceImageReporter, nsIMemoryReporter)
+
+Atomic<size_t> gfxWindowsPlatform::sD3D9SharedTextureUsed;
+
+class D3D9SharedTextureReporter final : public nsIMemoryReporter
+{
+  ~D3D9SharedTextureReporter() {}
+
+public:
+  NS_DECL_ISUPPORTS
+
+  NS_IMETHOD CollectReports(nsIHandleReportCallback *aHandleReport,
+                            nsISupports* aData, bool aAnonymize) override
+  {
+    return MOZ_COLLECT_REPORT("d3d9-shared-texture", KIND_OTHER, UNITS_BYTES,
+                              gfxWindowsPlatform::sD3D9SharedTextureUsed,
+                              "Memory used for D3D9 shared textures");
+  }
+};
+
+NS_IMPL_ISUPPORTS(D3D9SharedTextureReporter, nsIMemoryReporter)
+
 gfxWindowsPlatform::gfxWindowsPlatform()
   : mD3D11DeviceInitialized(false)
+  , mIsWARP(false)
+  , mCanInitMediaDevice(false)
+  , mHasDeviceReset(false)
 {
     mUseClearTypeForDownloadableFonts = UNINITIALIZED_VALUE;
     mUseClearTypeAlways = UNINITIALIZED_VALUE;
@@ -351,6 +437,10 @@ gfxWindowsPlatform::gfxWindowsPlatform()
     UpdateRenderMode();
 
     RegisterStrongMemoryReporter(new GPUAdapterReporter());
+    RegisterStrongMemoryReporter(new D3D11TextureReporter());
+    RegisterStrongMemoryReporter(new D3D9TextureReporter());
+    RegisterStrongMemoryReporter(new D3D9SurfaceImageReporter());
+    RegisterStrongMemoryReporter(new D3D9SharedTextureReporter());
 }
 
 gfxWindowsPlatform::~gfxWindowsPlatform()
@@ -385,25 +475,27 @@ gfxWindowsPlatform::UpdateRenderMode()
 /* Pick the default render mode for
  * desktop.
  */
-    if (DidRenderingDeviceReset()) {
+    bool didReset = false;
+    DeviceResetReason resetReason = DeviceResetReason::OK;
+    if (DidRenderingDeviceReset(&resetReason)) {
+      Telemetry::Accumulate(Telemetry::DEVICE_RESET_REASON, uint32_t(resetReason));
       mD3D11DeviceInitialized = false;
       mD3D11Device = nullptr;
       mD3D11ContentDevice = nullptr;
       mAdapter = nullptr;
+      mDeviceResetReason = DeviceResetReason::OK;
+      mHasDeviceReset = false;
 
       imgLoader::Singleton()->ClearCache(true);
       imgLoader::Singleton()->ClearCache(false);
       Factory::SetDirect3D11Device(nullptr);
+
+      didReset = true;
     }
 
     mRenderMode = RENDER_GDI;
 
     bool isVistaOrHigher = IsVistaOrLater();
-
-    bool safeMode = false;
-    nsCOMPtr<nsIXULRuntime> xr = do_GetService("@mozilla.org/xre/runtime;1");
-    if (xr)
-      xr->GetInSafeMode(&safeMode);
 
     mUseDirectWrite = Preferences::GetBool("gfx.font_rendering.directwrite.enabled", false);
 
@@ -441,7 +533,7 @@ gfxWindowsPlatform::UpdateRenderMode()
     }
 
     ID3D11Device *device = GetD3D11Device();
-    if (isVistaOrHigher && !safeMode && tryD2D &&
+    if (isVistaOrHigher && !InSafeMode() && tryD2D &&
         device &&
         device->GetFeatureLevel() >= D3D_FEATURE_LEVEL_10_0 &&
         DoesD3D11TextureSharingWork(device)) {
@@ -511,6 +603,10 @@ gfxWindowsPlatform::UpdateRenderMode()
     contentMask |= BackendTypeBit(BackendType::SKIA);
     InitBackendPrefs(canvasMask, defaultBackend,
                      contentMask, defaultBackend);
+
+    if (didReset) {
+      mScreenReferenceDrawTarget = CreateOffscreenContentDrawTarget(IntSize(1, 1), SurfaceFormat::B8G8R8A8);
+    }
 }
 
 #ifdef CAIRO_HAS_D2D_SURFACE
@@ -577,10 +673,6 @@ gfxWindowsPlatform::VerifyD2DDevice(bool aAttemptForce)
     nsRefPtr<ID3D10Device1> device;
 
     int supportedFeatureLevelsCount = ArrayLength(kSupportedFeatureLevels);
-    // If we're not running in Metro don't allow DX9.3
-    if (!IsRunningInWindowsMetro()) {
-      supportedFeatureLevelsCount--;
-    }
 
     nsRefPtr<IDXGIAdapter1> adapter1 = GetDXGIAdapter();
 
@@ -674,18 +766,18 @@ gfxWindowsPlatform::CreateOffscreenSurface(const IntSize& size,
 
 #ifdef CAIRO_HAS_WIN32_SURFACE
     if (mRenderMode == RENDER_GDI)
-        surf = new gfxWindowsSurface(ThebesIntSize(size),
+        surf = new gfxWindowsSurface(size,
                                      OptimalFormatForContent(contentType));
 #endif
 
 #ifdef CAIRO_HAS_D2D_SURFACE
     if (mRenderMode == RENDER_DIRECT2D)
-        surf = new gfxD2DSurface(ThebesIntSize(size),
+        surf = new gfxD2DSurface(size,
                                  OptimalFormatForContent(contentType));
 #endif
 
     if (!surf || surf->CairoStatus()) {
-        surf = new gfxImageSurface(ThebesIntSize(size),
+        surf = new gfxImageSurface(size,
                                    OptimalFormatForContent(contentType));
     }
 
@@ -1044,42 +1136,73 @@ gfxWindowsPlatform::IsFontFormatSupported(nsIURI *aFontURI, uint32_t aFormatFlag
     return true;
 }
 
-bool
-gfxWindowsPlatform::DidRenderingDeviceReset()
+static DeviceResetReason HResultToResetReason(HRESULT hr)
 {
-  if (mD3D11Device) {
-    if (mD3D11Device->GetDeviceRemovedReason() != S_OK) {
-      return true;
-    }
+  switch (hr) {
+  case DXGI_ERROR_DEVICE_HUNG:
+    return DeviceResetReason::HUNG;
+  case DXGI_ERROR_DEVICE_REMOVED:
+    return DeviceResetReason::REMOVED;
+  case DXGI_ERROR_DEVICE_RESET:
+    return DeviceResetReason::RESET;
+  case DXGI_ERROR_DRIVER_INTERNAL_ERROR:
+    return DeviceResetReason::DRIVER_ERROR;
+  case DXGI_ERROR_INVALID_CALL:
+    return DeviceResetReason::INVALID_CALL;
+  case E_OUTOFMEMORY:
+    return DeviceResetReason::OUT_OF_MEMORY;
+  default:
+    MOZ_ASSERT(false);
   }
-  if (mD3D11ContentDevice) {
-    if (mD3D11ContentDevice->GetDeviceRemovedReason() != S_OK) {
-      return true;
+  return DeviceResetReason::UNKNOWN;
+}
+
+bool
+gfxWindowsPlatform::IsDeviceReset(HRESULT hr, DeviceResetReason* aResetReason)
+{
+  if (hr != S_OK) {
+    mDeviceResetReason = HResultToResetReason(hr);
+    mHasDeviceReset = true;
+    if (aResetReason) {
+      *aResetReason = mDeviceResetReason;
     }
-  }
-  if (GetD3D10Device()) {
-    if (GetD3D10Device()->GetDeviceRemovedReason() != S_OK) {
-      return true;
-    }
+    return true;
   }
   return false;
 }
 
-gfxFontFamily *
-gfxWindowsPlatform::FindFontFamily(const nsAString& aName)
+bool
+gfxWindowsPlatform::DidRenderingDeviceReset(DeviceResetReason* aResetReason)
 {
-    return gfxPlatformFontList::PlatformFontList()->FindFamily(aName);
-}
+  if (mHasDeviceReset) {
+    if (aResetReason) {
+      *aResetReason = mDeviceResetReason;
+    }
+    return true;
+  }
+  if (aResetReason) {
+    *aResetReason = DeviceResetReason::OK;
+  }
 
-gfxFontEntry *
-gfxWindowsPlatform::FindFontEntry(const nsAString& aName, const gfxFontStyle& aFontStyle)
-{
-    nsRefPtr<gfxFontFamily> ff = FindFontFamily(aName);
-    if (!ff)
-        return nullptr;
-
-    bool aNeedsBold;
-    return ff->FindFontForStyle(aFontStyle, aNeedsBold);
+  if (mD3D11Device) {
+    HRESULT hr = mD3D11Device->GetDeviceRemovedReason();
+    if (IsDeviceReset(hr, aResetReason)) {
+      return true;
+    }
+  }
+  if (mD3D11ContentDevice) {
+    HRESULT hr = mD3D11ContentDevice->GetDeviceRemovedReason();
+    if (IsDeviceReset(hr, aResetReason)) {
+      return true;
+    }
+  }
+  if (GetD3D10Device()) {
+    HRESULT hr = GetD3D10Device()->GetDeviceRemovedReason();
+    if (IsDeviceReset(hr, aResetReason)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 void
@@ -1444,7 +1567,7 @@ gfxWindowsPlatform::GetD3D9DeviceManager()
        CompositorParent::IsInCompositorThread())) {
     mDeviceManager = new DeviceManagerD3D9();
     if (!mDeviceManager->Init()) {
-      NS_WARNING("Could not initialise device manager");
+      gfxCriticalError() << "[D3D9] Could not Initialize the DeviceManagerD3D9";
       mDeviceManager = nullptr;
     }
   }
@@ -1475,6 +1598,59 @@ gfxWindowsPlatform::GetD3D11ContentDevice()
 
   return mD3D11ContentDevice;
 }
+
+ID3D11Device*
+gfxWindowsPlatform::GetD3D11MediaDevice()
+{
+  if (mD3D11MediaDevice) {
+    return mD3D11MediaDevice;
+  }
+
+  if (!mCanInitMediaDevice) {
+    return nullptr;
+  }
+
+  mCanInitMediaDevice = false;
+
+  nsModuleHandle d3d11Module(LoadLibrarySystem32(L"d3d11.dll"));
+  decltype(D3D11CreateDevice)* d3d11CreateDevice = (decltype(D3D11CreateDevice)*)
+    GetProcAddress(d3d11Module, "D3D11CreateDevice");
+  MOZ_ASSERT(d3d11CreateDevice);
+
+  nsTArray<D3D_FEATURE_LEVEL> featureLevels;
+  if (IsWin8OrLater()) {
+    featureLevels.AppendElement(D3D_FEATURE_LEVEL_11_1);
+  }
+  featureLevels.AppendElement(D3D_FEATURE_LEVEL_11_0);
+  featureLevels.AppendElement(D3D_FEATURE_LEVEL_10_1);
+  featureLevels.AppendElement(D3D_FEATURE_LEVEL_10_0);
+  featureLevels.AppendElement(D3D_FEATURE_LEVEL_9_3);
+
+  RefPtr<IDXGIAdapter1> adapter = GetDXGIAdapter();
+  MOZ_ASSERT(adapter);
+
+  HRESULT hr = E_INVALIDARG;
+
+  MOZ_SEH_TRY{
+    hr = d3d11CreateDevice(adapter, D3D_DRIVER_TYPE_UNKNOWN, nullptr,
+                           D3D11_CREATE_DEVICE_BGRA_SUPPORT,
+                           featureLevels.Elements(), featureLevels.Length(),
+                           D3D11_SDK_VERSION, byRef(mD3D11MediaDevice), nullptr, nullptr);
+  } MOZ_SEH_EXCEPT(EXCEPTION_EXECUTE_HANDLER) {
+    mD3D11MediaDevice = nullptr;
+  }
+
+  d3d11Module.disown();
+
+  if (FAILED(hr)) {
+    return nullptr;
+  }
+
+  mD3D11MediaDevice->SetExceptionMode(0);
+
+  return mD3D11MediaDevice;
+}
+
 
 ReadbackManagerD3D11*
 gfxWindowsPlatform::GetReadbackManager()
@@ -1563,8 +1739,8 @@ gfxWindowsPlatform::GetDXGIAdapter()
 
 bool DoesD3D11DeviceWork(ID3D11Device *device)
 {
-  static bool checked;
-  static bool result;
+  static bool checked = false;
+  static bool result = false;
 
   if (checked)
       return result;
@@ -1602,8 +1778,8 @@ bool DoesD3D11DeviceWork(ID3D11Device *device)
 // with E_OUTOFMEMORY.
 bool DoesD3D11TextureSharingWork(ID3D11Device *device)
 {
-  static bool checked;
-  static bool result;
+  static bool checked = false;
+  static bool result = false;
 
   if (checked)
       return result;
@@ -1700,10 +1876,13 @@ gfxWindowsPlatform::InitD3D11Devices()
 
   mD3D11DeviceInitialized = true;
 
-  MOZ_ASSERT(!mD3D11Device);
+  MOZ_ASSERT(!mD3D11Device); 
+
+  if (InSafeMode()) {
+    return;
+  }
 
   bool useWARP = false;
-  ScopedGfxFeatureReporter reporterWARP("D3D11-WARP", gfxPrefs::LayersD3D11ForceWARP());
 
   nsCOMPtr<nsIGfxInfo> gfxInfo = do_GetService("@mozilla.org/gfx/info;1");
   if (gfxInfo) {
@@ -1711,7 +1890,8 @@ gfxWindowsPlatform::InitD3D11Devices()
     if (NS_SUCCEEDED(gfxInfo->GetFeatureStatus(nsIGfxInfo::FEATURE_DIRECT3D_11_LAYERS, &status))) {
       if (status != nsIGfxInfo::FEATURE_STATUS_OK) {
 
-        if (gfxPrefs::LayersD3D11DisableWARP()) {
+        // It seems like nvdxgiwrap makes a mess of WARP. See bug 1154703 for more.
+        if (gfxPrefs::LayersD3D11DisableWARP() || GetModuleHandleA("nvdxgiwrap.dll")) {
           return;
         }
 
@@ -1790,21 +1970,29 @@ gfxWindowsPlatform::InitD3D11Devices()
     MOZ_ASSERT(!mD3D11Device);
     MOZ_ASSERT(!adapter);
 
-    hr = d3d11CreateDevice(nullptr, D3D_DRIVER_TYPE_WARP, nullptr,
-                           // Use
-                           // D3D11_CREATE_DEVICE_PREVENT_INTERNAL_THREADING_OPTIMIZATIONS
-                           // to prevent bug 1092260. IE 11 also uses this flag.
-                           D3D11_CREATE_DEVICE_BGRA_SUPPORT,
-                           featureLevels.Elements(), featureLevels.Length(),
-                           D3D11_SDK_VERSION, byRef(mD3D11Device), nullptr, nullptr);
+    ScopedGfxFeatureReporter reporterWARP("D3D11-WARP", gfxPrefs::LayersD3D11ForceWARP());
 
-    if (FAILED(hr)) {
-      // This should always succeed... in theory.
-      gfxCriticalError() << "Failed to initialize WARP D3D11 device!" << hr;
-      MOZ_CRASH();
+    MOZ_SEH_TRY {
+      hr = d3d11CreateDevice(nullptr, D3D_DRIVER_TYPE_WARP, nullptr,
+                             // Use
+                             // D3D11_CREATE_DEVICE_PREVENT_INTERNAL_THREADING_OPTIMIZATIONS
+                             // to prevent bug 1092260. IE 11 also uses this flag.
+                             D3D11_CREATE_DEVICE_BGRA_SUPPORT,
+                             featureLevels.Elements(), featureLevels.Length(),
+                             D3D11_SDK_VERSION, byRef(mD3D11Device), nullptr, nullptr);
+
+      if (FAILED(hr)) {
+        // This should always succeed... in theory.
+        gfxCriticalError() << "Failed to initialize WARP D3D11 device!" << hr;
+        return;
+      }
+
+      mIsWARP = true;
+      reporterWARP.SetSuccessful();
+    } MOZ_SEH_EXCEPT (EXCEPTION_EXECUTE_HANDLER) {
+      gfxCriticalError() << "Exception occurred initializing WARP D3D11 device!";
+      return;
     }
-
-    reporterWARP.SetSuccessful();
   }
 
   mD3D11Device->SetExceptionMode(0);
@@ -1835,8 +2023,261 @@ gfxWindowsPlatform::InitD3D11Devices()
     Factory::SetDirect3D11Device(mD3D11ContentDevice);
   }
 
+  if (!useWARP) {
+    mCanInitMediaDevice = true;
+  }
+
   // We leak these everywhere and we need them our entire runtime anyway, let's
   // leak it here as well.
   d3d11Module.disown();
 }
 
+TemporaryRef<ID3D11Device>
+gfxWindowsPlatform::CreateD3D11DecoderDevice()
+{
+  nsModuleHandle d3d11Module(LoadLibrarySystem32(L"d3d11.dll"));
+  decltype(D3D11CreateDevice)* d3d11CreateDevice = (decltype(D3D11CreateDevice)*)
+    GetProcAddress(d3d11Module, "D3D11CreateDevice");
+
+   if (!d3d11CreateDevice) {
+    // We should just be on Windows Vista or XP in this case.
+    return nullptr;
+  }
+
+  nsTArray<D3D_FEATURE_LEVEL> featureLevels;
+  if (IsWin8OrLater()) {
+    featureLevels.AppendElement(D3D_FEATURE_LEVEL_11_1);
+  }
+  featureLevels.AppendElement(D3D_FEATURE_LEVEL_11_0);
+  featureLevels.AppendElement(D3D_FEATURE_LEVEL_10_1);
+  featureLevels.AppendElement(D3D_FEATURE_LEVEL_10_0);
+  featureLevels.AppendElement(D3D_FEATURE_LEVEL_9_3);
+
+  RefPtr<IDXGIAdapter1> adapter = GetDXGIAdapter();
+
+  if (!adapter) {
+    return nullptr;
+  }
+
+  HRESULT hr = E_INVALIDARG;
+
+  RefPtr<ID3D11Device> device;
+
+  MOZ_SEH_TRY{
+    hr = d3d11CreateDevice(adapter, D3D_DRIVER_TYPE_UNKNOWN, nullptr,
+                           D3D11_CREATE_DEVICE_VIDEO_SUPPORT,
+                           featureLevels.Elements(), featureLevels.Length(),
+                           D3D11_SDK_VERSION, byRef(device), nullptr, nullptr);
+  } MOZ_SEH_EXCEPT(EXCEPTION_EXECUTE_HANDLER) {
+    return nullptr;
+  }
+
+  if (FAILED(hr) || !DoesD3D11DeviceWork(device)) {
+    return nullptr;
+  }
+
+  nsRefPtr<ID3D10Multithread> multi;
+  device->QueryInterface(__uuidof(ID3D10Multithread), getter_AddRefs(multi));
+
+  multi->SetMultithreadProtected(TRUE);
+
+  return device;
+}
+
+static bool
+DwmCompositionEnabled()
+{
+  MOZ_ASSERT(WinUtils::dwmIsCompositionEnabledPtr);
+  BOOL dwmEnabled = false;
+  WinUtils::dwmIsCompositionEnabledPtr(&dwmEnabled);
+  return dwmEnabled;
+}
+
+class D3DVsyncSource final : public VsyncSource
+{
+public:
+
+  class D3DVsyncDisplay final : public VsyncSource::Display
+  {
+    NS_INLINE_DECL_THREADSAFE_REFCOUNTING(D3DVsyncDisplay)
+    public:
+      D3DVsyncDisplay()
+        : mVsyncEnabledLock("D3DVsyncEnabledLock")
+        , mVsyncEnabled(false)
+      {
+        mVsyncThread = new base::Thread("WindowsVsyncThread");
+        const double rate = 1000 / 60.0;
+        mSoftwareVsyncRate = TimeDuration::FromMilliseconds(rate);
+        MOZ_RELEASE_ASSERT(mVsyncThread->Start(), "Could not start Windows vsync thread");
+      }
+
+      virtual void EnableVsync() override
+      {
+        MOZ_ASSERT(NS_IsMainThread());
+        MOZ_ASSERT(mVsyncThread->IsRunning());
+        { // scope lock
+          MonitorAutoLock lock(mVsyncEnabledLock);
+          if (mVsyncEnabled) {
+            return;
+          }
+          mVsyncEnabled = true;
+        }
+
+        CancelableTask* vsyncStart = NewRunnableMethod(this,
+            &D3DVsyncDisplay::VBlankLoop);
+        mVsyncThread->message_loop()->PostTask(FROM_HERE, vsyncStart);
+      }
+
+      virtual void DisableVsync() override
+      {
+        MOZ_ASSERT(NS_IsMainThread());
+        MOZ_ASSERT(mVsyncThread->IsRunning());
+        MonitorAutoLock lock(mVsyncEnabledLock);
+        if (!mVsyncEnabled) {
+          return;
+        }
+        mVsyncEnabled = false;
+      }
+
+      virtual bool IsVsyncEnabled() override
+      {
+        MOZ_ASSERT(NS_IsMainThread());
+        MonitorAutoLock lock(mVsyncEnabledLock);
+        return mVsyncEnabled;
+      }
+
+      void ScheduleSoftwareVsync(TimeStamp aVsyncTimestamp)
+      {
+        MOZ_ASSERT(IsInVsyncThread());
+        NS_WARNING("DwmComposition dynamically disabled, falling back to software timers");
+
+        TimeStamp nextVsync = aVsyncTimestamp + mSoftwareVsyncRate;
+        TimeDuration delay = nextVsync - TimeStamp::Now();
+        if (delay.ToMilliseconds() < 0) {
+          delay = mozilla::TimeDuration::FromMilliseconds(0);
+        }
+
+        mVsyncThread->message_loop()->PostDelayedTask(FROM_HERE,
+            NewRunnableMethod(this, &D3DVsyncDisplay::VBlankLoop),
+            delay.ToMilliseconds());
+      }
+
+      void VBlankLoop()
+      {
+        MOZ_ASSERT(IsInVsyncThread());
+        MOZ_ASSERT(sizeof(int64_t) == sizeof(QPC_TIME));
+
+        DWM_TIMING_INFO vblankTime;
+        // Make sure to init the cbSize, otherwise GetCompositionTiming will fail
+        vblankTime.cbSize = sizeof(DWM_TIMING_INFO);
+
+        LARGE_INTEGER qpcNow;
+        LARGE_INTEGER frequency;
+        QueryPerformanceFrequency(&frequency);
+        TimeStamp vsync = TimeStamp::Now();
+        TimeStamp previousVsync = vsync;
+        const int microseconds = 1000000;
+
+        for (;;) {
+          { // scope lock
+            MonitorAutoLock lock(mVsyncEnabledLock);
+            if (!mVsyncEnabled) return;
+          }
+
+          if (previousVsync > vsync) {
+            vsync = TimeStamp::Now();
+            NS_WARNING("Previous vsync timestamp is ahead of the calculated vsync timestamp.");
+          }
+
+          previousVsync = vsync;
+          Display::NotifyVsync(vsync);
+
+          // DwmComposition can be dynamically enabled/disabled
+          // so we have to check every time that it's available.
+          // When it is unavailable, we fallback to software but will try
+          // to get back to dwm rendering once it's re-enabled
+          if (!DwmCompositionEnabled()) {
+            ScheduleSoftwareVsync(vsync);
+            return;
+          }
+
+          // Use a combination of DwmFlush + DwmGetCompositionTimingInfoPtr
+          // Using WaitForVBlank, the whole system dies :/
+          WinUtils::dwmFlushProcPtr();
+          HRESULT hr = WinUtils::dwmGetCompositionTimingInfoPtr(0, &vblankTime);
+          vsync = TimeStamp::Now();
+          if (SUCCEEDED(hr)) {
+            QueryPerformanceCounter(&qpcNow);
+            // Adjust the timestamp to be the vsync timestamp since when
+            // DwmFlush wakes up and when the actual vsync occurred are not the
+            // same.
+            int64_t adjust = qpcNow.QuadPart - vblankTime.qpcVBlank;
+            int64_t usAdjust = (adjust * microseconds) / frequency.QuadPart;
+            vsync -= TimeDuration::FromMicroseconds((double) usAdjust);
+          }
+        } // end for
+      }
+
+    private:
+      virtual ~D3DVsyncDisplay()
+      {
+        MOZ_ASSERT(NS_IsMainThread());
+        DisableVsync();
+        mVsyncThread->Stop();
+        delete mVsyncThread;
+      }
+
+      bool IsInVsyncThread()
+      {
+        return mVsyncThread->thread_id() == PlatformThread::CurrentId();
+      }
+
+      TimeDuration mSoftwareVsyncRate;
+      Monitor mVsyncEnabledLock;
+      base::Thread* mVsyncThread;
+      bool mVsyncEnabled;
+  }; // end d3dvsyncdisplay
+
+  D3DVsyncSource()
+  {
+    mPrimaryDisplay = new D3DVsyncDisplay();
+  }
+
+  virtual Display& GetGlobalDisplay() override
+  {
+    return *mPrimaryDisplay;
+  }
+
+private:
+  virtual ~D3DVsyncSource()
+  {
+  }
+  nsRefPtr<D3DVsyncDisplay> mPrimaryDisplay;
+}; // end D3DVsyncSource
+
+already_AddRefed<mozilla::gfx::VsyncSource>
+gfxWindowsPlatform::CreateHardwareVsyncSource()
+{
+  MOZ_RELEASE_ASSERT(NS_IsMainThread());
+  if (!WinUtils::dwmIsCompositionEnabledPtr) {
+    NS_WARNING("Dwm composition not available, falling back to software vsync");
+    return gfxPlatform::CreateHardwareVsyncSource();
+  }
+
+  BOOL dwmEnabled = false;
+  WinUtils::dwmIsCompositionEnabledPtr(&dwmEnabled);
+  if (!dwmEnabled) {
+    NS_WARNING("DWM not enabled, falling back to software vsync");
+    return gfxPlatform::CreateHardwareVsyncSource();
+  }
+
+  nsRefPtr<VsyncSource> d3dVsyncSource = new D3DVsyncSource();
+  return d3dVsyncSource.forget();
+}
+
+bool
+gfxWindowsPlatform::SupportsApzTouchInput() const
+{
+  int value = Preferences::GetInt("dom.w3c_touch_events.enabled", 0);
+  return value == 1 || value == 2;
+}

@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -122,9 +123,9 @@ public:
   bool MozLockOrientation(const mozilla::dom::Sequence<nsString>& aOrientations, ErrorResult& aRv);
   void MozUnlockOrientation();
 
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
-  void Notify(const mozilla::hal::ScreenConfiguration& aConfiguration) MOZ_OVERRIDE;
+  void Notify(const mozilla::hal::ScreenConfiguration& aConfiguration) override;
 
 protected:
   nsDeviceContext* GetDeviceContext();
@@ -134,7 +135,7 @@ protected:
   mozilla::dom::ScreenOrientation mOrientation;
 
 private:
-  class FullScreenEventListener MOZ_FINAL : public nsIDOMEventListener
+  class FullScreenEventListener final : public nsIDOMEventListener
   {
     ~FullScreenEventListener() {}
   public:

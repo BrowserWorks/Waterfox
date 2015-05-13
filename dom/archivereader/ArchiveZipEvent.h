@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -28,10 +28,11 @@ protected:
   virtual ~ArchiveZipItem();
 
 public:
-  nsresult GetFilename(nsString& aFilename) MOZ_OVERRIDE;
+  nsresult GetFilename(nsString& aFilename) override;
 
   // From zipItem to File:
-  virtual nsIDOMFile* File(ArchiveReader* aArchiveReader) MOZ_OVERRIDE;
+  virtual already_AddRefed<File>
+  GetFile(ArchiveReader* aArchiveReader) override;
 
 public: // for the event
   static uint32_t StrToInt32(const uint8_t* aStr);
@@ -58,7 +59,7 @@ public:
   ArchiveReaderZipEvent(ArchiveReader* aArchiveReader,
                         const nsACString& aEncoding);
 
-  nsresult Exec() MOZ_OVERRIDE;
+  nsresult Exec() override;
 
 private:
   nsCString mEncoding;

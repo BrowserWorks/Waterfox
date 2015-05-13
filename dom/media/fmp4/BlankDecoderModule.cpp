@@ -11,7 +11,7 @@
 #include "mozilla/CheckedInt.h"
 #include "VideoUtils.h"
 #include "ImageContainer.h"
-#include "mp4_demuxer/mp4_demuxer.h"
+#include "MediaInfo.h"
 #include "MediaTaskQueue.h"
 
 namespace mozilla {
@@ -23,7 +23,7 @@ class BlankMediaDataDecoder : public MediaDataDecoder {
 public:
 
   BlankMediaDataDecoder(BlankMediaDataCreator* aCreator,
-                        MediaTaskQueue* aTaskQueue,
+                        FlushableMediaTaskQueue* aTaskQueue,
                         MediaDataDecoderCallback* aCallback)
     : mCreator(aCreator)
     , mTaskQueue(aTaskQueue)
@@ -31,17 +31,17 @@ public:
   {
   }
 
-  virtual nsresult Init() MOZ_OVERRIDE {
+  virtual nsresult Init() override {
     return NS_OK;
   }
 
-  virtual nsresult Shutdown() MOZ_OVERRIDE {
+  virtual nsresult Shutdown() override {
     return NS_OK;
   }
 
   class OutputEvent : public nsRunnable {
   public:
-    OutputEvent(mp4_demuxer::MP4Sample* aSample,
+    OutputEvent(MediaRawData* aSample,
                 MediaDataDecoderCallback* aCallback,
                 BlankMediaDataCreator* aCreator)
       : mSample(aSample)
@@ -49,21 +49,21 @@ public:
       , mCallback(aCallback)
     {
     }
-    NS_IMETHOD Run() MOZ_OVERRIDE
+    NS_IMETHOD Run() override
     {
-      nsRefPtr<MediaData> data = mCreator->Create(mSample->composition_timestamp,
-                                                  mSample->duration,
-                                                  mSample->byte_offset);
+      nsRefPtr<MediaData> data = mCreator->Create(mSample->mTime,
+                                                  mSample->mDuration,
+                                                  mSample->mOffset);
       mCallback->Output(data);
       return NS_OK;
     }
   private:
-    nsAutoPtr<mp4_demuxer::MP4Sample> mSample;
+    nsRefPtr<MediaRawData> mSample;
     BlankMediaDataCreator* mCreator;
     MediaDataDecoderCallback* mCallback;
   };
 
-  virtual nsresult Input(mp4_demuxer::MP4Sample* aSample) MOZ_OVERRIDE
+  virtual nsresult Input(MediaRawData* aSample) override
   {
     // The MediaDataDecoder must delete the sample when we're finished
     // with it, so the OutputEvent stores it in an nsAutoPtr and deletes
@@ -73,19 +73,19 @@ public:
     return NS_OK;
   }
 
-  virtual nsresult Flush() MOZ_OVERRIDE {
+  virtual nsresult Flush() override {
     mTaskQueue->Flush();
     return NS_OK;
   }
 
-  virtual nsresult Drain() MOZ_OVERRIDE {
+  virtual nsresult Drain() override {
     mCallback->DrainComplete();
     return NS_OK;
   }
 
 private:
   nsAutoPtr<BlankMediaDataCreator> mCreator;
-  RefPtr<MediaTaskQueue> mTaskQueue;
+  RefPtr<FlushableMediaTaskQueue> mTaskQueue;
   MediaDataDecoderCallback* mCallback;
 };
 
@@ -206,20 +206,15 @@ private:
 class BlankDecoderModule : public PlatformDecoderModule {
 public:
 
-  // Called when the decoders have shutdown. Main thread only.
-  virtual nsresult Shutdown() MOZ_OVERRIDE {
-    return NS_OK;
-  }
-
   // Decode thread.
   virtual already_AddRefed<MediaDataDecoder>
-  CreateVideoDecoder(const mp4_demuxer::VideoDecoderConfig& aConfig,
+  CreateVideoDecoder(const VideoInfo& aConfig,
                      layers::LayersBackend aLayersBackend,
                      layers::ImageContainer* aImageContainer,
-                     MediaTaskQueue* aVideoTaskQueue,
-                     MediaDataDecoderCallback* aCallback) MOZ_OVERRIDE {
+                     FlushableMediaTaskQueue* aVideoTaskQueue,
+                     MediaDataDecoderCallback* aCallback) override {
     BlankVideoDataCreator* creator = new BlankVideoDataCreator(
-      aConfig.display_width, aConfig.display_height, aImageContainer);
+      aConfig.mDisplay.width, aConfig.mDisplay.height, aImageContainer);
     nsRefPtr<MediaDataDecoder> decoder =
       new BlankMediaDataDecoder<BlankVideoDataCreator>(creator,
                                                        aVideoTaskQueue,
@@ -229,11 +224,11 @@ public:
 
   // Decode thread.
   virtual already_AddRefed<MediaDataDecoder>
-  CreateAudioDecoder(const mp4_demuxer::AudioDecoderConfig& aConfig,
-                     MediaTaskQueue* aAudioTaskQueue,
-                     MediaDataDecoderCallback* aCallback) MOZ_OVERRIDE {
+  CreateAudioDecoder(const AudioInfo& aConfig,
+                     FlushableMediaTaskQueue* aAudioTaskQueue,
+                     MediaDataDecoderCallback* aCallback) override {
     BlankAudioDataCreator* creator = new BlankAudioDataCreator(
-      aConfig.channel_count, aConfig.samples_per_second);
+      aConfig.mChannels, aConfig.mRate);
 
     nsRefPtr<MediaDataDecoder> decoder =
       new BlankMediaDataDecoder<BlankAudioDataCreator>(creator,
@@ -243,9 +238,15 @@ public:
   }
 
   virtual bool
-  SupportsAudioMimeType(const char* aMimeType) MOZ_OVERRIDE
+  SupportsMimeType(const nsACString& aMimeType) override
   {
     return true;
+  }
+
+  virtual ConversionRequired
+  DecoderNeedsConversion(const TrackInfo& aConfig) const override
+  {
+    return kNeedNone;
   }
 
 };

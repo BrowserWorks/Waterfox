@@ -108,14 +108,24 @@ function isObject(value) {
 exports.isObject = isObject;
 
 /**
+ * Detect whether a value is a generator.
+ *
+ * @param aValue
+ *        The value to identify.
+ * @return A boolean indicating whether the value is a generator.
+ */
+function isGenerator(aValue) {
+  return !!(aValue && aValue.isGenerator && aValue.isGenerator());
+}
+exports.isGenerator = isGenerator;
+
+/**
  * Returns true if `value` is an Array.
  * @examples
  *    isArray([1, 2, 3])  // true
  *    isArray({ 0: 'foo', length: 1 }) // false
  */
-var isArray = Array.isArray || function isArray(value) {
-  Object.prototype.toString.call(value) === "[object Array]";
-}
+var isArray = Array.isArray;
 exports.isArray = isArray;
 
 /**
@@ -125,7 +135,7 @@ exports.isArray = isArray;
  *    isArguments([1,2,3]); // false
  */
 function isArguments(value) {
-  Object.prototype.toString.call(value) === "[object Arguments]";
+  return Object.prototype.toString.call(value) === "[object Arguments]";
 }
 exports.isArguments = isArguments;
 

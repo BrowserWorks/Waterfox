@@ -10,6 +10,7 @@ import static org.mozilla.gecko.overlays.ui.SendTabList.State.SHOW_DEVICES;
 
 import java.util.Arrays;
 
+import org.mozilla.gecko.AppConstants.Versions;
 import org.mozilla.gecko.Assert;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.Telemetry;
@@ -113,15 +114,6 @@ public class SendTabList extends ListView {
         final ParcelableClientRecord[] clients = c == null ? new ParcelableClientRecord[0] : c;
 
         clientListAdapter.setClientRecordList(Arrays.asList(clients));
-
-        if (clients.length <= MAXIMUM_INLINE_ELEMENTS) {
-            // Show the list of devices in-line.
-            switchState(LIST);
-            return;
-        }
-
-        // Just show a button to launch the list of devices to choose from.
-        switchState(SHOW_DEVICES);
     }
 
     /**
@@ -130,7 +122,14 @@ public class SendTabList extends ListView {
      * inline and looking crazy).
      */
     public AlertDialog getDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        final Context context = getContext();
+
+        final AlertDialog.Builder builder;
+        if (Versions.feature11Plus) {
+            builder = new AlertDialog.Builder(context, R.style.Gecko_Dialog);
+        } else {
+            builder = new AlertDialog.Builder(context);
+        }
 
         final ParcelableClientRecord[] records = clientListAdapter.toArray();
         final String[] dialogElements = new String[records.length];
@@ -154,17 +153,5 @@ public class SendTabList extends ListView {
                });
 
         return builder.create();
-    }
-
-    /**
-     * Prevent scrolling of this ListView.
-     */
-    @Override
-    public boolean dispatchTouchEvent(MotionEvent ev) {
-        if (ev.getAction() == MotionEvent.ACTION_MOVE) {
-            return true;
-        }
-
-        return super.dispatchTouchEvent(ev);
     }
 }

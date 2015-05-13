@@ -23,16 +23,22 @@ include conditional3/reftest.list
 include flexbox/reftest.list
 
 # Fonts Level 3
-# include fonts3/reftest.list
+include fonts3/reftest.list
 
 # Image Values and Replaced Content Level 3
 include images3/reftest.list
+
+# Lists and Counters Level 3
+include lists-3/reftest.list
 
 # Media Queries Level 3
 # include mediaqueries3/reftest.list
 
 # Multi-column Layout 3
 include multicol3/reftest.list
+
+# Ruby Layout Module
+include ruby/reftest.list
 
 # Selectors Level 3
 # include selectors3/reftest.list
@@ -41,7 +47,7 @@ include multicol3/reftest.list
 # include selectors4/reftest.list
 
 # Text Level 3
-# include text3/reftest.list
+include text3/reftest.list
 
 # Text Decoration Level 3
 include text-decor-3/reftest.list

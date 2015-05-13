@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set sw=2 ts=8 et tw=80 : */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -24,7 +24,6 @@ TabContext::TabContext()
   : mInitialized(false)
   , mOwnAppId(NO_APP_ID)
   , mContainingAppId(NO_APP_ID)
-  , mScrollingBehavior(DEFAULT_SCROLLING)
   , mIsBrowser(false)
 {
 }
@@ -156,8 +155,7 @@ TabContext::SetTabContext(const TabContext& aContext)
 
 bool
 TabContext::SetTabContextForAppFrame(mozIApplication* aOwnApp,
-                                     mozIApplication* aAppFrameOwnerApp,
-                                     ScrollingBehavior aRequestedBehavior)
+                                     mozIApplication* aAppFrameOwnerApp)
 {
   NS_ENSURE_FALSE(mInitialized, false);
 
@@ -181,15 +179,13 @@ TabContext::SetTabContextForAppFrame(mozIApplication* aOwnApp,
   mIsBrowser = false;
   mOwnAppId = ownAppId;
   mContainingAppId = containingAppId;
-  mScrollingBehavior = aRequestedBehavior;
   mOwnApp = aOwnApp;
   mContainingApp = aAppFrameOwnerApp;
   return true;
 }
 
 bool
-TabContext::SetTabContextForBrowserFrame(mozIApplication* aBrowserFrameOwnerApp,
-                                         ScrollingBehavior aRequestedBehavior)
+TabContext::SetTabContextForBrowserFrame(mozIApplication* aBrowserFrameOwnerApp)
 {
   NS_ENSURE_FALSE(mInitialized, false);
 
@@ -204,18 +200,16 @@ TabContext::SetTabContextForBrowserFrame(mozIApplication* aBrowserFrameOwnerApp,
   mIsBrowser = true;
   mOwnAppId = NO_APP_ID;
   mContainingAppId = containingAppId;
-  mScrollingBehavior = aRequestedBehavior;
   mContainingApp = aBrowserFrameOwnerApp;
   return true;
 }
 
 bool
-TabContext::SetTabContextForNormalFrame(ScrollingBehavior aRequestedBehavior)
+TabContext::SetTabContextForNormalFrame()
 {
   NS_ENSURE_FALSE(mInitialized, false);
 
   mInitialized = true;
-  mScrollingBehavior = aRequestedBehavior;
   return true;
 }
 
@@ -223,12 +217,10 @@ IPCTabContext
 TabContext::AsIPCTabContext() const
 {
   if (mIsBrowser) {
-    return IPCTabContext(BrowserFrameIPCTabContext(mContainingAppId),
-                         mScrollingBehavior);
+    return IPCTabContext(BrowserFrameIPCTabContext(mContainingAppId));
   }
 
-  return IPCTabContext(AppFrameIPCTabContext(mOwnAppId, mContainingAppId),
-                       mScrollingBehavior);
+  return IPCTabContext(AppFrameIPCTabContext(mOwnAppId, mContainingAppId));
 }
 
 static already_AddRefed<mozIApplication>
@@ -257,7 +249,7 @@ MaybeInvalidTabContext::MaybeInvalidTabContext(const IPCTabContext& aParams)
 
       TabContext *context;
       if (ipcContext.opener().type() == PBrowserOrId::TPBrowserParent) {
-        context = static_cast<TabParent*>(ipcContext.opener().get_PBrowserParent());
+        context = TabParent::GetFrom(ipcContext.opener().get_PBrowserParent());
         if (context->IsBrowserElement() && !ipcContext.isBrowserElement()) {
           // If the TabParent corresponds to a browser element, then it can only
           // open other browser elements, for security reasons.  We should have
@@ -342,12 +334,10 @@ MaybeInvalidTabContext::MaybeInvalidTabContext(const IPCTabContext& aParams)
 
   bool rv;
   if (isBrowser) {
-    rv = mTabContext.SetTabContextForBrowserFrame(containingApp,
-                                                  aParams.scrollingBehavior());
+    rv = mTabContext.SetTabContextForBrowserFrame(containingApp);
   } else {
     rv = mTabContext.SetTabContextForAppFrame(ownApp,
-                                              containingApp,
-                                              aParams.scrollingBehavior());
+                                              containingApp);
   }
 
   if (!rv) {

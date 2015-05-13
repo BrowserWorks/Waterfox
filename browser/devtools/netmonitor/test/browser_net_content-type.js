@@ -14,7 +14,7 @@ function test() {
 
     RequestsMenu.lazyUpdate = false;
 
-    waitForNetworkEvents(aMonitor, 6).then(() => {
+    waitForNetworkEvents(aMonitor, 7).then(() => {
       verifyRequestItemTarget(RequestsMenu.getItemAtIndex(0),
         "GET", CONTENT_TYPE_SJS + "?fmt=xml", {
           status: 200,
@@ -48,7 +48,7 @@ function test() {
           statusText: "OK",
           type: "json",
           fullMimeType: "application/json; charset=utf-8",
-          size: L10N.getFormatStrWithNumbers("networkMenu.sizeKB", 0.02),
+          size: L10N.getFormatStrWithNumbers("networkMenu.sizeKB", 0.03),
           time: true
         });
       verifyRequestItemTarget(RequestsMenu.getItemAtIndex(4),
@@ -67,7 +67,16 @@ function test() {
           statusText: "OK",
           type: "png",
           fullMimeType: "image/png",
-          size: L10N.getFormatStrWithNumbers("networkMenu.sizeKB", 0.75),
+          size: L10N.getFormatStrWithNumbers("networkMenu.sizeKB", 0.76),
+          time: true
+        });
+      verifyRequestItemTarget(RequestsMenu.getItemAtIndex(6),
+        "GET", CONTENT_TYPE_SJS + "?fmt=gzip", {
+          status: 200,
+          statusText: "OK",
+          type: "plain",
+          fullMimeType: "text/plain",
+          size: L10N.getFormatStrWithNumbers("networkMenu.sizeKB", 10.73),
           time: true
         });
 
@@ -94,6 +103,9 @@ function test() {
         RequestsMenu.selectedIndex = 5;
         yield waitForTabUpdated();
         yield testResponseTab("png");
+        RequestsMenu.selectedIndex = 6;
+        yield waitForTabUpdated();
+        yield testResponseTab("gzip");
         yield teardown(aMonitor);
         finish();
       });
@@ -208,7 +220,7 @@ function test() {
                 .getAttribute("value"), "base64",
                 "The image encoding info isn't correct.");
               is(tabpanel.querySelector("#response-content-image-dimensions-value")
-                .getAttribute("value"), "16 x 16",
+                .getAttribute("value"), "16" + " \u00D7 " + "16",
                 "The image dimensions info isn't correct.");
 
               deferred.resolve();
@@ -216,6 +228,19 @@ function test() {
 
             return deferred.promise;
           }
+
+          case "gzip": {
+            checkVisibility("textarea");
+
+            let expected = new Array(1000).join("Hello gzip!");
+            return NetMonitorView.editor("#response-content-textarea").then((aEditor) => {
+              is(aEditor.getText(), expected,
+                "The text shown in the source editor is incorrect for the gzip request.");
+              is(aEditor.getMode(), Editor.modes.text,
+                "The mode active in the source editor is incorrect for the gzip request.");
+            });
+          }
+
         }
       }
 

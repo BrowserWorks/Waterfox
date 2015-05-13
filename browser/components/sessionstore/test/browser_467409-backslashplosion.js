@@ -19,14 +19,14 @@
 // 3c. Check that formdata doesn't require JSON.parse
 
 const CRASH_STATE = {windows: [{tabs: [{entries: [{url: "about:mozilla" }]}]}]};
-const STATE = {entries: [createEntry(CRASH_STATE)]};
-const STATE2 = {entries: [createEntry({windows: [{tabs: [STATE]}]})]};
-const STATE3 = {entries: [createEntry(JSON.stringify(CRASH_STATE))]};
+const STATE = createEntries(CRASH_STATE);
+const STATE2 = createEntries({windows: [{tabs: [STATE]}]});
+const STATE3 = createEntries(JSON.stringify(CRASH_STATE));
 
-function createEntry(sessionData) {
+function createEntries(sessionData) {
   return {
-    url: "about:sessionrestore",
-    formdata: {id: {sessionData: sessionData}}
+    entries: [{url: "about:sessionrestore"}],
+    formdata: {id: {sessionData: sessionData}, url: "about:sessionrestore"}
   };
 }
 
@@ -37,18 +37,15 @@ add_task(function test_nested_about_sessionrestore() {
   yield promiseBrowserLoaded(browser);
 
   // test 1
-  ss.setTabState(tab, JSON.stringify(STATE));
-  yield promiseTabRestored(tab);
+  yield promiseTabState(tab, STATE);
   checkState("test1", tab);
 
   // test 2
-  ss.setTabState(tab, JSON.stringify(STATE2));
-  yield promiseTabRestored(tab);
+  yield promiseTabState(tab, STATE2);
   checkState("test2", tab);
 
   // test 3
-  ss.setTabState(tab, JSON.stringify(STATE3));
-  yield promiseTabRestored(tab);
+  yield promiseTabState(tab, STATE3);
   checkState("test3", tab);
 
   // Cleanup.

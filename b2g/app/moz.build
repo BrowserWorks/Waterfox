@@ -58,7 +58,7 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
         'cutils',
     ]
     OS_LIBS += CONFIG['MOZ_ZLIB_LIBS']
-    if CONFIG['ANDROID_VERSION'] in ('17', '18', '19', '21'):
+    if CONFIG['ANDROID_VERSION'] in ('17', '18', '19', '21', '22'):
         OS_LIBS += [
             'gui',
             'suspend',
@@ -76,3 +76,8 @@ if CONFIG['OS_ARCH'] == 'WINNT':
     ]
 
 FAIL_ON_WARNINGS = True
+
+JS_PREFERENCE_FILES += [
+    'b2g.js',
+]
+

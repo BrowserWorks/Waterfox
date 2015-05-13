@@ -3,106 +3,56 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-self.onmessage = e => {
-  const { id, task, args } = e.data;
-
-  switch (task) {
-    case "plotTimestampsGraph":
-      plotTimestampsGraph(id, args);
-      break;
-    default:
-      self.postMessage({ id, error: e.message + "\n" + e.stack });
-      break;
-  }
-};
+/**
+ * Import `createTask` to communicate with `devtools/shared/worker`.
+ */
+importScripts("resource://gre/modules/workers/require.js");
+const { createTask } = require("resource:///modules/devtools/shared/worker-helper");
 
 /**
  * @see LineGraphWidget.prototype.setDataFromTimestamps in Graphs.jsm
  * @param number id
- * @param number width
- * @param number height
  * @param array timestamps
  * @param number interval
+ * @param number duration
  */
-function plotTimestampsGraph(id, args) {
-  let plottedData = plotTimestamps(args.timestamps, args.interval);
-  let plottedMinMaxSum = getMinMaxSum(plottedData);
-  let sparsifiedData = sparsifyLineData(plottedData, plottedMinMaxSum, args);
+createTask(self, "plotTimestampsGraph", function ({ timestamps, interval, duration }) {
+  let plottedData = plotTimestamps(timestamps, interval);
+  let plottedMinMaxSum = getMinMaxAvg(plottedData, timestamps, duration);
 
-  let response = { id, plottedData: sparsifiedData, plottedMinMaxSum };
-  self.postMessage(response);
-}
+  return { plottedData, plottedMinMaxSum };
+});
+
 
 /**
  * Gets the min, max and average of the values in an array.
  * @param array source
+ * @param array timestamps
+ * @param number duration
  * @return object
  */
-function getMinMaxSum(source) {
+function getMinMaxAvg(source, timestamps, duration) {
   let totalTicks = source.length;
+  let totalFrames = timestamps.length;
   let maxValue = Number.MIN_SAFE_INTEGER;
   let minValue = Number.MAX_SAFE_INTEGER;
-  let avgValue = 0;
-  let sumValues = 0;
+  // Calculate the average by counting how many frames occurred
+  // in the duration of the recording, rather than average the frame points
+  // we have, as that weights higher FPS, as there'll be more timestamps for those
+  // values
+  let avgValue = totalFrames / (duration / 1000);
 
   for (let { value } of source) {
     maxValue = Math.max(value, maxValue);
     minValue = Math.min(value, minValue);
-    sumValues += value;
   }
-  avgValue = sumValues / totalTicks;
 
   return { minValue, maxValue, avgValue };
 }
 
 /**
- * Reduce a data source for a line graph, based off of a minimum distance
- * between the points to render.
- */
-function sparsifyLineData(plottedData, plottedMinMaxSum, options) {
-  let { width: graphWidth, height: graphHeight } = options;
-  let { dataOffsetX, dampenValuesFactor } = options;
-  let { minSquaredDistanceBetweenPoints } = options;
-
-  let result = [];
-
-  let totalTicks = plottedData.length;
-  let maxValue = plottedMinMaxSum.maxValue;
-
-  let firstTick = totalTicks ? plottedData[0].delta : 0;
-  let lastTick = totalTicks ? plottedData[totalTicks - 1].delta : 0;
-  let dataScaleX = graphWidth / (lastTick - dataOffsetX);
-  let dataScaleY = graphHeight / maxValue * dampenValuesFactor;
-
-  let prevX = 0;
-  let prevY = 0;
-
-  for (let { delta, value } of plottedData) {
-    let currX = (delta - dataOffsetX) * dataScaleX;
-    let currY = graphHeight - value * dataScaleY;
-
-    if (delta == firstTick || delta == lastTick) {
-      result.push({ delta, value });
-      continue;
-    }
-
-    let dist = distSquared(prevX, prevY, currX, currY);
-    if (dist >= minSquaredDistanceBetweenPoints) {
-      result.push({ delta, value });
-      prevX = currX;
-      prevY = currY;
-    }
-  }
-
-  return result;
-}
-
-/**
  * Takes a list of numbers and plots them on a line graph representing
  * the rate of occurences in a specified interval.
- *
- * XXX: Copied almost verbatim from toolkit/devtools/server/actors/framerate.js
- * Remove that dead code after the Performance panel lands, bug 1075567.
  *
  * @param array timestamps
  *        A list of numbers representing time, ordered ascending. For example,
@@ -149,13 +99,4 @@ function plotTimestamps(timestamps, interval = 100, clamp = 60) {
   }
 
   return timeline;
-}
-
-/**
- * Calculates the squared distance between two 2D points.
- */
-function distSquared(x0, y0, x1, y1) {
-  let xs = x1 - x0;
-  let ys = y1 - y0;
-  return xs * xs + ys * ys;
 }

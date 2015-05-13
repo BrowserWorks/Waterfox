@@ -24,6 +24,7 @@ const MODE_TRUNCATE = FileUtils.MODE_TRUNCATE;
 // nsSearchService.js uses Services.appinfo.name to build a salt for a hash.
 var XULRuntime = Components.classesByID["{95d89e3e-a169-41a3-8e56-719978e15b12}"]
                            .getService(Ci.nsIXULRuntime);
+
 var XULAppInfo = {
   vendor: "Mozilla",
   name: "XPCShell",
@@ -34,7 +35,8 @@ var XULAppInfo = {
   platformBuildID: "2007010101",
   inSafeMode: false,
   logConsoleErrors: true,
-  OS: "XPCShell",
+  // mirror OS from the base impl as some of the "location" tests rely on it
+  OS: XULRuntime.OS,
   XPCOMABI: "noarch-spidermonkey",
   // mirror processType from the base implementation
   processType: XULRuntime.processType,
@@ -141,36 +143,19 @@ function isUSTimezone() {
 }
 
 /**
- * Run some callback once metadata has been committed to disk.
+ * Waits for metadata being committed.
+ * @return {Promise} Resolved when the metadata is committed to disk.
  */
-function afterCommit(callback)
-{
-  let obs = function(result, topic, verb) {
-    if (verb == "write-metadata-to-disk-complete") {
-      Services.obs.removeObserver(obs, topic);
-      callback(result);
-    } else {
-      dump("TOPIC: " + topic+ "\n");
-    }
-  }
-  Services.obs.addObserver(obs, "browser-search-service", false);
+function promiseAfterCommit() {
+  return waitForSearchNotification("write-metadata-to-disk-complete");
 }
 
 /**
- * Run some callback once cache has been built.
+ * Waits for the cache file to be saved.
+ * @return {Promise} Resolved when the cache file is saved.
  */
-function afterCache(callback)
-{
-  let obs = function(result, topic, verb) {
-    do_print("afterCache: " + verb);
-    if (verb == "write-cache-to-disk-complete") {
-      Services.obs.removeObserver(obs, topic);
-      callback(result);
-    } else {
-      dump("TOPIC: " + topic+ "\n");
-    }
-  }
-  Services.obs.addObserver(obs, "browser-search-service", false);
+function promiseAfterCache() {
+  return waitForSearchNotification("write-cache-to-disk-complete");
 }
 
 function parseJsonFromStream(aInputStream) {
@@ -302,6 +287,30 @@ let addTestEngines = Task.async(function* (aItems) {
 
   return engines;
 });
+
+/**
+ * Installs a test engine into the test profile.
+ */
+function installTestEngine() {
+  removeMetadata();
+  removeCacheFile();
+
+  do_check_false(Services.search.isInitialized);
+
+  let engineDummyFile = gProfD.clone();
+  engineDummyFile.append("searchplugins");
+  engineDummyFile.append("test-search-engine.xml");
+  let engineDir = engineDummyFile.parent;
+  engineDir.create(Ci.nsIFile.DIRECTORY_TYPE, FileUtils.PERMS_DIRECTORY);
+
+  do_get_file("data/engine.xml").copyTo(engineDir, "engine.xml");
+
+  do_register_cleanup(function() {
+    removeMetadata();
+    removeCacheFile();
+  });
+}
+
 
 /**
  * Returns a promise that is resolved when an observer notification from the

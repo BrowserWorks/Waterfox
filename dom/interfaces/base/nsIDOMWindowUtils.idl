@@ -46,12 +46,12 @@ interface nsIDOMClientRect;
 interface nsIURI;
 interface nsIDOMEventTarget;
 interface nsIRunnable;
-interface nsICompositionStringSynthesizer;
 interface nsITranslationNodeList;
 interface nsIJSRAIIHelper;
 interface nsIContentPermissionRequest;
+interface nsIObserver;
 
-[scriptable, uuid(0281e107-394d-4c96-830b-2f830b07c6c0)]
+[scriptable, uuid(1a75c351-d115-4d51-94df-731dd1723a1f)]
 interface nsIDOMWindowUtils : nsISupports {
 
   /**
@@ -206,15 +206,14 @@ interface nsIDOMWindowUtils : nsISupports {
    *
    * The effect of this API is for gfx code to allocate more or fewer
    * pixels for rescalable content by a factor of |resolution| in
-   * either or both dimensions.  The scale at which the content is
-   * displayed does not change; if that is desired, use
-   * setResolutionAndScaleTo() instead.
+   * both dimensions.  The scale at which the content is displayed does
+   * not change; if that is desired, use setResolutionAndScaleTo() instead.
    *
    * The caller of this method must have chrome privileges.
    */
-  void setResolution(in float aXResolution, in float aYResolution);
+  void setResolution(in float aResolution);
 
-  void getResolution(out float aXResolution, out float aYResolution);
+  void getResolution(out float aResolution);
 
   /**
    * Similar to setResolution(), but also scales the content by the
@@ -227,7 +226,7 @@ interface nsIDOMWindowUtils : nsISupports {
    *
    * The caller of this method must have chrome privileges.
    */
-  void setResolutionAndScaleTo(in float aXResolution, in float aYResolution);
+  void setResolutionAndScaleTo(in float aResolution);
 
   /**
    * Whether the resolution has been set by the user.
@@ -262,10 +261,12 @@ interface nsIDOMWindowUtils : nsISupports {
   const long MODIFIER_ALTGRAPH   = 0x0010;
   const long MODIFIER_CAPSLOCK   = 0x0020;
   const long MODIFIER_FN         = 0x0040;
-  const long MODIFIER_NUMLOCK    = 0x0080;
-  const long MODIFIER_SCROLLLOCK = 0x0100;
-  const long MODIFIER_SYMBOLLOCK = 0x0200;
-  const long MODIFIER_OS         = 0x0400;
+  const long MODIFIER_FNLOCK     = 0x0080;
+  const long MODIFIER_NUMLOCK    = 0x0100;
+  const long MODIFIER_SCROLLLOCK = 0x0200;
+  const long MODIFIER_SYMBOL     = 0x0400;
+  const long MODIFIER_SYMBOLLOCK = 0x0800;
+  const long MODIFIER_OS         = 0x1000;
 
   /** Synthesize a mouse event. The event types supported are:
    *    mousedown, mouseup, mousemove, mouseover, mouseout, contextmenu,
@@ -557,8 +558,6 @@ interface nsIDOMWindowUtils : nsISupports {
   const unsigned long KEY_FLAG_LOCATION_LEFT     = 0x0020;
   const unsigned long KEY_FLAG_LOCATION_RIGHT    = 0x0040;
   const unsigned long KEY_FLAG_LOCATION_NUMPAD   = 0x0080;
-  const unsigned long KEY_FLAG_LOCATION_MOBILE   = 0x0100;
-  const unsigned long KEY_FLAG_LOCATION_JOYSTICK = 0x0200;
 
   boolean sendKeyEvent(in AString aType,
                        in long aKeyCode,
@@ -573,12 +572,17 @@ interface nsIDOMWindowUtils : nsISupports {
    * Will throw a DOM security error if called without chrome privileges.
    *
    * When you use this for tests, use the constants defined in NativeKeyCodes.js
+   *
+   * NOTE: The synthesized native event will be fired asynchronously, and upon
+   * completion the observer, if provided, will be notified with a "keyevent"
+   * topic.
    */
   void sendNativeKeyEvent(in long aNativeKeyboardLayout,
                           in long aNativeKeyCode,
                           in long aModifierFlags,
                           in AString aCharacters,
-                          in AString aUnmodifiedCharacters);
+                          in AString aUnmodifiedCharacters,
+                          [optional] in nsIObserver aObserver);
 
   /**
    * See nsIWidget::SynthesizeNativeMouseEvent
@@ -586,12 +590,17 @@ interface nsIDOMWindowUtils : nsISupports {
    * Will be called on the widget that contains aElement.
    * Cannot be accessed from unprivileged context (not content-accessible)
    * Will throw a DOM security error if called without chrome privileges.
+   *
+   * NOTE: The synthesized native event will be fired asynchronously, and upon
+   * completion the observer, if provided, will be notified with a "mouseevent"
+   * topic.
    */
   void sendNativeMouseEvent(in long aScreenX,
                             in long aScreenY,
                             in long aNativeMessage,
                             in long aModifierFlags,
-                            in nsIDOMElement aElement);
+                            in nsIDOMElement aElement,
+                            [optional] in nsIObserver aObserver);
 
   /**
    * The values for sendNativeMouseScrollEvent's aAdditionalFlags.
@@ -603,6 +612,11 @@ interface nsIDOMWindowUtils : nsISupports {
    * a default target on the platform.  E.g., on Windows, it's focused window.
    */
   const unsigned long MOUSESCROLL_PREFER_WIDGET_AT_POINT = 0x00000001;
+
+  /**
+   * Interpret the scroll delta values as lines rather than pixels.
+   */
+  const unsigned long MOUSESCROLL_SCROLL_LINES = 0x00000002;
 
   /**
    * The platform specific values of aAdditionalFlags.  Must be over 0x00010000.
@@ -622,7 +636,9 @@ interface nsIDOMWindowUtils : nsISupports {
    * Cannot be accessed from unprivileged context (not content-accessible)
    * Will throw a DOM security error if called without chrome privileges.
    *
-   * NOTE: The synthesized native event may be fired asynchronously.
+   * NOTE: The synthesized native event will be fired asynchronously, and upon
+   * completion the observer, if provided, will be notified with a
+   * "mousescrollevent" topic.
    *
    * @param aNativeMessage
    *   On Windows:  WM_MOUSEWHEEL (0x020A), WM_MOUSEHWHEEL(0x020E),
@@ -636,7 +652,8 @@ interface nsIDOMWindowUtils : nsISupports {
                                   in double aDeltaZ,
                                   in unsigned long aModifierFlags,
                                   in unsigned long aAdditionalFlags,
-                                  in nsIDOMElement aElement);
+                                  in nsIDOMElement aElement,
+                                  [optional] in nsIObserver aObserver);
 
   /**
    * Touch states for sendNativeTouchPoint. These values match
@@ -664,8 +681,12 @@ interface nsIDOMWindowUtils : nsISupports {
    * drag - msg1-n:TOUCH_CONTACT (moving), msgn+1:TOUCH_REMOVE
    * hover drag - msg1-n:TOUCH_HOVER (moving), msgn+1:TOUCH_REMOVE
    *
-   * Widget support: Windows 8.0+, Winrt/Win32. Other widgets will
-   * throw.
+   * Widget support: Windows 8.0+, Winrt/Win32. Gonk supports CONTACT, REMOVE,
+   * and CANCEL but no HOVER. Other widgets will throw.
+   *
+   * NOTE: The synthesized native event will be fired asynchronously, and upon
+   * completion the observer, if provided, will be notified with a "touchpoint"
+   * topic.
    *
    * @param aPointerId The touch point id to create or update.
    * @param aTouchState one or more of the touch states listed above
@@ -679,7 +700,8 @@ interface nsIDOMWindowUtils : nsISupports {
                             in long aScreenX,
                             in long aScreenY,
                             in double aPressure,
-                            in unsigned long aOrientation);
+                            in unsigned long aOrientation,
+                            [optional] in nsIObserver aObserver);
 
   /**
    * Simulates native touch based taps on the input digitizer. Events
@@ -696,13 +718,18 @@ interface nsIDOMWindowUtils : nsISupports {
    * Widget support: Windows 8.0+, Winrt/Win32. Other widgets will
    * throw.
    *
+   * NOTE: The synthesized native event will be fired asynchronously, and upon
+   * completion the observer, if provided, will be notified, with a "touchtap"
+   * topic.
+   *
    * @param aScreenX, aScreenY screen coords of this event
    * @param aLongTap true if the tap should be long, false for a short
    * tap.
    */
   void sendNativeTouchTap(in long aScreenX,
                           in long aScreenY,
-                          in boolean aLongTap);
+                          in boolean aLongTap,
+                          [optional] in nsIObserver aObserver);
 
   /**
    * Cancel any existing touch points or long tap delays. Calling this is safe
@@ -710,8 +737,12 @@ interface nsIDOMWindowUtils : nsISupports {
    * this when tests shut down to reset the digitizer driver. Not doing so can
    * leave the digitizer in an undetermined state which can screw up subsequent
    * tests and native input.
+   *
+   * NOTE: The synthesized native event will be fired asynchronously, and upon
+   * completion the observer, if provided, will be notified with a "cleartouch"
+   * topic.
    */
-  void clearNativeTouchSequence();
+  void clearNativeTouchSequence([optional] in nsIObserver aObserver);
 
   /**
    * See nsIWidget::ActivateNativeMenuItemAt
@@ -1036,33 +1067,6 @@ interface nsIDOMWindowUtils : nsISupports {
                                [optional] in nsITransferable aTransferable);
 
   /**
-   * Synthesize a composition event to the window.
-   *
-   * Cannot be accessed from unprivileged context (not content-accessible)
-   * Will throw a DOM security error if called without chrome privileges.
-   *
-   * @param aType     The event type: "compositionstart",
-   *                  "compositioncommitasis", or "compositioncommit".
-   * @param aData     The data property value.  Note that this isn't applied
-   *                  for compositionstart event because its value is the
-   *                  selected text which is automatically computed. And also
-   *                  this isn't applied for compositioncommitasis because
-   *                  the last data will be set automatically.
-   * @param aLocale   The locale property value.
-   */
-  void sendCompositionEvent(in AString aType,
-                            in AString aData,
-                            in AString aLocale);
-
-  /**
-   * Creating synthesizer of composition string on the window.
-   *
-   * Cannot be accessed from unprivileged context (not content-accessible)
-   * Will throw a DOM security error if called without chrome privileges.
-   */
-  nsICompositionStringSynthesizer createCompositionStringSynthesizer();
-
-  /**
    * If sendQueryContentEvent()'s aAdditionalFlags argument is
    * QUERY_CONTENT_FLAG_USE_XP_LINE_BREAK, plain text generated from content
    * is created with "\n".
@@ -1276,14 +1280,6 @@ interface nsIDOMWindowUtils : nsISupports {
                                            in AString aPropertyName);
 
   /**
-   * Returns the parent of obj.
-   *
-   * @param obj The JavaScript object whose parent is to be gotten.
-   * @return the parent.
-   */
-  [implicit_jscontext] jsval getParent(in jsval obj);
-
-  /**
    * Get the id of the outer window of this window.  This will never throw.
    */
   readonly attribute unsigned long long outerWindowID;
@@ -1312,6 +1308,11 @@ interface nsIDOMWindowUtils : nsISupports {
   [noscript] boolean isInModalState();
 
   /**
+   * Request set internal desktopMode flag change.
+   */
+  void setDesktopModeViewport(in boolean aDesktopModeViewport);
+
+  /**
    * Suspend/resume timeouts on this window and its descendant windows.
    */
   void suspendTimeouts();
@@ -1330,6 +1331,13 @@ interface nsIDOMWindowUtils : nsISupports {
    * error if there is no widget associated with this window.
    */
   readonly attribute boolean layerManagerRemote;
+
+  /**
+   * True if we can initialize a hardware-backed h264 decoder for a simple
+   * test video, does not mean that all h264 video decoding will be done
+   * in hardware.
+   */
+  readonly attribute boolean supportsHardwareH264Decoding;
 
   /**
    * Record (and return) frame-intervals for frames which were presented
@@ -1466,17 +1474,29 @@ interface nsIDOMWindowUtils : nsISupports {
    * the bounds of the window. Always returns true in non-DEBUG builds.
    */
   boolean leafLayersPartitionWindow();
-
-  /**
-   * true if the (current inner) window may have event listeners for touch events.
-   */
-  readonly attribute boolean mayHaveTouchEventListeners;
  
   /**
    * Check if any PaintedLayer painting has been done for this element,
    * clears the painted flags if they have.
    */
   boolean checkAndClearPaintedState(in nsIDOMElement aElement);
+
+  /**
+   * Check whether all display items of the primary frame of aElement have been
+   * assigned to the same single PaintedLayer in the last paint. If that is the
+   * case, returns whether that PaintedLayer is opaque; if it's not the case, an
+   * exception is thrown.
+   */
+  boolean isPartOfOpaqueLayer(in nsIDOMElement aElement);
+
+  /**
+   * Count the number of different PaintedLayers that the supplied elements have
+   * been assigned to in the last paint. Throws an exception if any of the
+   * elements doesn't have a primary frame, or if that frame's display items are
+   * assigned to any other layers than just a single PaintedLayer per element.
+   */
+  unsigned long numberOfAssignedPaintedLayers([array, size_is(count)] in nsIDOMElement aElements,
+                                              in uint32_t count);
 
   /**
    * Get internal id of the stored blob, file or file handle.
@@ -1729,6 +1749,11 @@ interface nsIDOMWindowUtils : nsISupports {
    [implicit_jscontext] jsval getCompositorAPZTestData();
 
    /**
+    * Posts an eRestyle_Self restyle event for the given element.
+    */
+   void postRestyleSelfEvent(in nsIDOMElement aElement);
+
+   /**
     * With this it's possible to mute all the MediaElements in this window.
     * We have audioMuted and audioVolume to preserve the volume across
     * mute/umute.
@@ -1767,6 +1792,21 @@ interface nsIDOMWindowUtils : nsISupports {
    * May throw NS_ERROR_NOT_AVAILABLE.
    */
   readonly attribute unsigned long long framesReflowed;
+
+  /**
+   * Controls the amount of chrome that should be visible on each side of
+   * the window. Works like the chromemargin xul:window attribute.
+   * This should only be used with non-XUL windows.
+   */
+  void setChromeMargin(in int32_t aTop,
+                       in int32_t aRight,
+                       in int32_t aBottom,
+                       in int32_t aLeft);
+
+  /**
+   * Enable some service workers testing features.
+   */
+  attribute boolean serviceWorkersTestingEnabled;
 };
 
 [scriptable, uuid(c694e359-7227-4392-a138-33c0cc1f15a6)]

@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -8,9 +8,11 @@
 
 #include "nsIConsoleService.h"
 #include "nsIDiskSpaceWatcher.h"
+#include "nsIDOMWindow.h"
 #include "nsIFile.h"
 #include "nsIObserverService.h"
 #include "nsIScriptError.h"
+#include "nsIScriptGlobalObject.h"
 
 #include "jsapi.h"
 #include "mozilla/ClearOnShutdown.h"
@@ -117,6 +119,8 @@ private:
 
 namespace {
 
+NS_DEFINE_IID(kIDBRequestIID, PRIVATE_IDBREQUEST_IID);
+
 #define IDB_PREF_BRANCH_ROOT "dom.indexedDB."
 
 const char kTestingPref[] = IDB_PREF_BRANCH_ROOT "testing";
@@ -142,7 +146,7 @@ Atomic<bool> gClosed(false);
 Atomic<bool> gTestingMode(false);
 Atomic<bool> gExperimentalFeaturesEnabled(false);
 
-class AsyncDeleteFileRunnable MOZ_FINAL : public nsIRunnable
+class AsyncDeleteFileRunnable final : public nsIRunnable
 {
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
@@ -157,7 +161,7 @@ private:
   int64_t mFileId;
 };
 
-class GetFileReferencesHelper MOZ_FINAL : public nsIRunnable
+class GetFileReferencesHelper final : public nsIRunnable
 {
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
@@ -370,38 +374,41 @@ IndexedDatabaseManager::Destroy()
 
 // static
 nsresult
-IndexedDatabaseManager::CommonPostHandleEvent(
-                                             DOMEventTargetHelper* aEventTarget,
-                                             IDBFactory* aFactory,
-                                             EventChainPostVisitor& aVisitor)
+IndexedDatabaseManager::CommonPostHandleEvent(EventChainPostVisitor& aVisitor,
+                                              IDBFactory* aFactory)
 {
-  MOZ_ASSERT(aEventTarget);
-  MOZ_ASSERT(aFactory);
   MOZ_ASSERT(aVisitor.mDOMEvent);
+  MOZ_ASSERT(aFactory);
 
   if (aVisitor.mEventStatus == nsEventStatus_eConsumeNoDefault) {
     return NS_OK;
   }
 
-  nsString type;
-  nsresult rv = aVisitor.mDOMEvent->GetType(type);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return rv;
-  }
+  Event* internalEvent = aVisitor.mDOMEvent->InternalDOMEvent();
+  MOZ_ASSERT(internalEvent);
 
-  NS_NAMED_LITERAL_STRING(errorType, "error");
-
-  MOZ_ASSERT(nsDependentString(kErrorEventType) == errorType);
-
-  if (type != errorType) {
+  if (!internalEvent->IsTrusted()) {
     return NS_OK;
   }
 
-  nsCOMPtr<EventTarget> eventTarget =
-    aVisitor.mDOMEvent->InternalDOMEvent()->GetTarget();
+  nsString type;
+  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(internalEvent->GetType(type)));
+
+  MOZ_ASSERT(nsDependentString(kErrorEventType).EqualsLiteral("error"));
+  if (!type.EqualsLiteral("error")) {
+    return NS_OK;
+  }
+
+  nsCOMPtr<EventTarget> eventTarget = internalEvent->GetTarget();
   MOZ_ASSERT(eventTarget);
 
-  auto* request = static_cast<IDBRequest*>(eventTarget.get());
+  // Only mess with events that were originally targeted to an IDBRequest.
+  nsRefPtr<IDBRequest> request;
+  if (NS_FAILED(eventTarget->QueryInterface(kIDBRequestIID,
+                                            getter_AddRefs(request))) ||
+      !request) {
+    return NS_OK;
+  }
 
   nsRefPtr<DOMError> error = request->GetErrorAfterResult();
 
@@ -421,7 +428,8 @@ IndexedDatabaseManager::CommonPostHandleEvent(
   nsEventStatus status = nsEventStatus_eIgnore;
 
   if (NS_IsMainThread()) {
-    if (nsPIDOMWindow* window = aEventTarget->GetOwner()) {
+    nsCOMPtr<nsIDOMWindow> window = do_QueryInterface(eventTarget->GetOwnerGlobal());
+    if (window) {
       nsCOMPtr<nsIScriptGlobalObject> sgo = do_QueryInterface(window);
       MOZ_ASSERT(sgo);
 
@@ -441,7 +449,9 @@ IndexedDatabaseManager::CommonPostHandleEvent(
     MOZ_ASSERT(globalScope);
 
     nsRefPtr<ErrorEvent> errorEvent =
-      ErrorEvent::Constructor(globalScope, errorType, init);
+      ErrorEvent::Constructor(globalScope,
+                              nsDependentString(kErrorEventType),
+                              init);
     MOZ_ASSERT(errorEvent);
 
     errorEvent->SetTrusted(true);
@@ -649,8 +659,7 @@ IndexedDatabaseManager::FullSynchronous()
 
 // static
 bool
-IndexedDatabaseManager::ExperimentalFeaturesEnabled(JSContext* aCx,
-                                                    JSObject* aGlobal)
+IndexedDatabaseManager::ExperimentalFeaturesEnabled()
 {
   if (NS_IsMainThread()) {
     if (NS_WARN_IF(!GetOrCreate())) {
@@ -703,7 +712,7 @@ IndexedDatabaseManager::InvalidateAllFileManagers()
 {
   AssertIsOnIOThread();
 
-  class MOZ_STACK_CLASS Helper MOZ_FINAL
+  class MOZ_STACK_CLASS Helper final
   {
   public:
     static PLDHashOperator

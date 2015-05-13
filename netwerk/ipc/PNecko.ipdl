@@ -20,6 +20,7 @@ include protocol PDNSRequest;
 include protocol PChannelDiverter;
 include protocol PBlob; //FIXME: bug #792908
 include protocol PFileDescriptorSet;
+include protocol PDataChannel;
 
 include protocol PRtspController;
 include protocol PRtspChannel;
@@ -30,6 +31,7 @@ include PBrowserOrId;
 
 using class IPC::SerializedLoadContext from "SerializedLoadContext.h";
 using mozilla::dom::TabId from "mozilla/dom/ipc/IdType.h";
+using class IPC::Principal from "mozilla/dom/PermissionMessageUtils.h";
 
 namespace mozilla {
 namespace net {
@@ -48,6 +50,7 @@ prio(normal upto urgent) sync protocol PNecko
   manages PUDPSocket;
   manages PDNSRequest;
   manages PRemoteOpenFile;
+  manages PDataChannel;
   manages PRtspController;
   manages PRtspChannel;
   manages PChannelDiverter;
@@ -65,16 +68,24 @@ parent:
 
   PWebSocket(PBrowserOrId browser, SerializedLoadContext loadContext);
   PTCPServerSocket(uint16_t localPort, uint16_t backlog, nsString binaryType);
-  PUDPSocket(nsCString filter);
+  PUDPSocket(Principal principal, nsCString filter);
 
-  PDNSRequest(nsCString hostName, uint32_t flags);
+  PDNSRequest(nsCString hostName, uint32_t flags, nsCString networkInterface);
 
   PRemoteOpenFile(SerializedLoadContext loadContext,
                   URIParams fileuri,
                   OptionalURIParams appuri);
 
+  SpeculativeConnect(URIParams uri, bool anonymous);
   HTMLDNSPrefetch(nsString hostname, uint16_t flags);
   CancelHTMLDNSPrefetch(nsString hostname, uint16_t flags, nsresult reason);
+
+  /**
+   * channelId is used to establish a connection between redirect channels in
+   * the parent and the child when we're redirecting to a data: URI.
+   */
+  PDataChannel(uint32_t channelId);
+
   PRtspController();
   PRtspChannel(RtspChannelConnectArgs args);
   PChannelDiverter(ChannelDiverterArgs channel);

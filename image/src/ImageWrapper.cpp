@@ -21,12 +21,6 @@ namespace image {
 
 // Inherited methods from Image.
 
-nsresult
-ImageWrapper::Init(const char* aMimeType, uint32_t aFlags)
-{
-  return mInnerImage->Init(aMimeType, aFlags);
-}
-
 already_AddRefed<ProgressTracker>
 ImageWrapper::GetProgressTracker()
 {
@@ -39,11 +33,11 @@ ImageWrapper::SizeOfSourceWithComputedFallback(MallocSizeOf aMallocSizeOf) const
   return mInnerImage->SizeOfSourceWithComputedFallback(aMallocSizeOf);
 }
 
-size_t
-ImageWrapper::SizeOfDecoded(gfxMemoryLocation aLocation,
-                            MallocSizeOf aMallocSizeOf) const
+void
+ImageWrapper::CollectSizeOfSurfaces(nsTArray<SurfaceMemoryCounter>& aCounters,
+                                    MallocSizeOf aMallocSizeOf) const
 {
-  return mInnerImage->SizeOfDecoded(aLocation, aMallocSizeOf);
+  mInnerImage->CollectSizeOfSurfaces(aCounters, aMallocSizeOf);
 }
 
 void
@@ -167,12 +161,6 @@ ImageWrapper::GetType(uint16_t* aType)
   return mInnerImage->GetType(aType);
 }
 
-NS_IMETHODIMP_(uint16_t)
-ImageWrapper::GetType()
-{
-  return mInnerImage->GetType();
-}
-
 NS_IMETHODIMP
 ImageWrapper::GetAnimated(bool* aAnimated)
 {
@@ -192,14 +180,19 @@ ImageWrapper::IsOpaque()
   return mInnerImage->IsOpaque();
 }
 
-NS_IMETHODIMP
-ImageWrapper::GetImageContainer(LayerManager* aManager,
-                                ImageContainer** _retval)
+NS_IMETHODIMP_(bool)
+ImageWrapper::IsImageContainerAvailable(LayerManager* aManager, uint32_t aFlags)
 {
-  return mInnerImage->GetImageContainer(aManager, _retval);
+  return mInnerImage->IsImageContainerAvailable(aManager, aFlags);
 }
 
-NS_IMETHODIMP
+NS_IMETHODIMP_(already_AddRefed<ImageContainer>)
+ImageWrapper::GetImageContainer(LayerManager* aManager, uint32_t aFlags)
+{
+  return mInnerImage->GetImageContainer(aManager, aFlags);
+}
+
+NS_IMETHODIMP_(DrawResult)
 ImageWrapper::Draw(gfxContext* aContext,
                    const nsIntSize& aSize,
                    const ImageRegion& aRegion,
@@ -224,10 +217,10 @@ ImageWrapper::StartDecoding()
   return mInnerImage->StartDecoding();
 }
 
-bool
-ImageWrapper::IsDecoded()
+NS_IMETHODIMP
+ImageWrapper::RequestDecodeForSize(const nsIntSize& aSize, uint32_t aFlags)
 {
-  return mInnerImage->IsDecoded();
+  return mInnerImage->RequestDecodeForSize(aSize, aFlags);
 }
 
 NS_IMETHODIMP

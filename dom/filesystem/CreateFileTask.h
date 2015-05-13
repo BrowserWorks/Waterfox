@@ -1,5 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -16,17 +16,17 @@ class nsIInputStream;
 namespace mozilla {
 namespace dom {
 
-class File;
-class FileImpl;
+class Blob;
+class BlobImpl;
 class Promise;
 
-class CreateFileTask MOZ_FINAL
+class CreateFileTask final
   : public FileSystemTaskBase
 {
 public:
   CreateFileTask(FileSystemBase* aFileSystem,
                  const nsAString& aPath,
-                 File* aBlobData,
+                 Blob* aBlobData,
                  InfallibleTArray<uint8_t>& aArrayData,
                  bool replace,
                  ErrorResult& aRv);
@@ -41,23 +41,23 @@ public:
   GetPromise();
 
   virtual void
-  GetPermissionAccessType(nsCString& aAccess) const MOZ_OVERRIDE;
+  GetPermissionAccessType(nsCString& aAccess) const override;
 
 protected:
   virtual FileSystemParams
-  GetRequestParams(const nsString& aFileSystem) const MOZ_OVERRIDE;
+  GetRequestParams(const nsString& aFileSystem) const override;
 
   virtual FileSystemResponseValue
-  GetSuccessRequestResult() const MOZ_OVERRIDE;
+  GetSuccessRequestResult() const override;
 
   virtual void
-  SetSuccessRequestResult(const FileSystemResponseValue& aValue) MOZ_OVERRIDE;
+  SetSuccessRequestResult(const FileSystemResponseValue& aValue) override;
 
   virtual nsresult
-  Work() MOZ_OVERRIDE;
+  Work() override;
 
   virtual void
-  HandlerCallback() MOZ_OVERRIDE;
+  HandlerCallback() override;
 
 private:
   void
@@ -68,15 +68,15 @@ private:
   nsString mTargetRealPath;
 
   // Not thread-safe and should be released on main thread.
-  nsRefPtr<File> mBlobData;
+  nsRefPtr<Blob> mBlobData;
 
   nsCOMPtr<nsIInputStream> mBlobStream;
   InfallibleTArray<uint8_t> mArrayData;
   bool mReplace;
 
   // This cannot be a File because this object is created on a different
-  // thread and File is not thread-safe. Let's use the FileImpl instead.
-  nsRefPtr<FileImpl> mTargetFileImpl;
+  // thread and File is not thread-safe. Let's use the BlobImpl instead.
+  nsRefPtr<BlobImpl> mTargetBlobImpl;
 };
 
 } // namespace dom

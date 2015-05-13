@@ -175,9 +175,9 @@ class PrefCallback : public PLDHashEntryHdr {
     }
 };
 
-class nsPrefBranch : public nsIPrefBranchInternal,
-                     public nsIObserver,
-                     public nsSupportsWeakReference
+class nsPrefBranch final : public nsIPrefBranchInternal,
+                           public nsIObserver,
+                           public nsSupportsWeakReference
 {
   friend class mozilla::PreferenceServiceReporter;
 public:
@@ -228,8 +228,8 @@ private:
 };
 
 
-class nsPrefLocalizedString : public nsIPrefLocalizedString,
-                              public nsISupportsString
+class nsPrefLocalizedString final : public nsIPrefLocalizedString,
+                                    public nsISupportsString
 {
 public:
   nsPrefLocalizedString();
@@ -243,9 +243,9 @@ public:
 private:
   virtual ~nsPrefLocalizedString();
 
-  NS_IMETHOD GetData(char16_t**) MOZ_OVERRIDE;
-  NS_IMETHOD SetData(const char16_t* aData) MOZ_OVERRIDE;
-  NS_IMETHOD SetDataWithLength(uint32_t aLength, const char16_t *aData) MOZ_OVERRIDE;
+  NS_IMETHOD GetData(char16_t**) override;
+  NS_IMETHOD SetData(const char16_t* aData) override;
+  NS_IMETHOD SetDataWithLength(uint32_t aLength, const char16_t *aData) override;
 
   nsCOMPtr<nsISupportsString> mUnicodeString;
 };

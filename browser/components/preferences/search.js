@@ -3,7 +3,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
-Components.utils.import("resource://gre/modules/PlacesUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
+                                  "resource://gre/modules/PlacesUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Task",
+                                  "resource://gre/modules/Task.jsm");
 
 const ENGINE_FLAVOR = "text/x-moz-search-engine";
 
@@ -123,19 +126,13 @@ var gSearchPane = {
     document.getElementById("engineList").focus();
   },
 
-  editKeyword: function(aEngine, aNewKeyword) {
+  editKeyword: Task.async(function* (aEngine, aNewKeyword) {
     if (aNewKeyword) {
-      let bduplicate = false;
       let eduplicate = false;
       let dupName = "";
 
-      try {
-        let bmserv =
-          Components.classes["@mozilla.org/browser/nav-bookmarks-service;1"]
-                    .getService(Components.interfaces.nsINavBookmarksService);
-        if (bmserv.getURIForKeyword(aNewKeyword))
-          bduplicate = true;
-      } catch(ex) {}
+      // Check for duplicates in Places keywords.
+      let bduplicate = !!(yield PlacesUtils.keywords.fetch(aNewKeyword));
 
       // Check for duplicates in changes we haven't committed yet
       let engines = gEngineView._engineStore.engines;
@@ -163,7 +160,7 @@ var gSearchPane = {
     gEngineView._engineStore.changeEngine(aEngine, "alias", aNewKeyword);
     gEngineView.invalidate();
     return true;
-  },
+  }),
 
   saveOneClickEnginesList: function () {
     let hiddenList = [];
@@ -190,7 +187,10 @@ var gSearchPane = {
 
 function onDragEngineStart(event) {
   var selectedIndex = gEngineView.selectedIndex;
-  if (selectedIndex >= 0) {
+  var tree = document.getElementById("engineList");
+  var row = { }, col = { }, child = { };
+  tree.treeBoxObject.getCellAt(event.clientX, event.clientY, row, col, child);
+  if (selectedIndex >= 0 && !gEngineView.isCheckBox(row.value, col.value)) {
     event.dataTransfer.setData(ENGINE_FLAVOR, selectedIndex.toString());
     event.dataTransfer.effectAllowed = "move";
   }
@@ -369,6 +369,11 @@ EngineStore.prototype = {
         this.moveEngine(this._getEngineByName(e.name), i);
       } else {
         // Otherwise, add it back to our internal store
+
+        // The search service removes the alias when an engine is hidden,
+        // so clear any alias we may have cached before unhiding the engine.
+        e.alias = "";
+
         this._engines.splice(i, 0, e);
         this._ops.push(new EngineUnhideOp(e, i));
         added++;
@@ -433,6 +438,10 @@ EngineView.prototype = {
 
   getSourceIndexFromDrag: function (dataTransfer) {
     return parseInt(dataTransfer.getData(ENGINE_FLAVOR));
+  },
+
+  isCheckBox: function(index, column) {
+    return column.id == "engineShown";
   },
 
   // nsITreeView
@@ -522,11 +531,11 @@ EngineView.prototype = {
   },
   setCellText: function(index, column, value) {
     if (column.id == "engineKeyword") {
-      if (!gSearchPane.editKeyword(this._engineStore.engines[index], value)) {
-        setTimeout(() => {
+      gSearchPane.editKeyword(this._engineStore.engines[index], value)
+                 .then(valid => {
+        if (!valid)
           document.getElementById("engineList").startEditing(index, column);
-        }, 0);
-      }
+      });
     }
   },
   performAction: function(action) { },

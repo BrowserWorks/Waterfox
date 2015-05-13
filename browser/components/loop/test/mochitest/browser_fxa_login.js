@@ -24,7 +24,7 @@ function* checkFxA401() {
 
   let loopPanel = document.getElementById("loop-notification-panel");
   yield loadLoopPanel();
-  let loopDoc = document.getElementById("loop").contentDocument;
+  let loopDoc = document.getElementById("loop-panel-iframe").contentDocument;
   is(loopDoc.querySelector(".alert-error .message").textContent,
      getLoopString("could_not_authenticate"),
      "Check error bar message");
@@ -42,16 +42,12 @@ add_task(function* setup() {
   MozLoopServiceInternal.mocks.pushHandler = mockPushHandler;
   // Normally the same pushUrl would be registered but we change it in the test
   // to be able to check for success on the second registration.
-  mockPushHandler.registeredChannels[MozLoopService.channelIDs.callsFxA] = "https://localhost/pushUrl/fxa-calls";
-  mockPushHandler.registeredChannels[MozLoopService.channelIDs.roomsFxA] = "https://localhost/pushUrl/fxa-rooms";
 
   registerCleanupFunction(function* () {
     info("cleanup time");
     yield promiseDeletedOAuthParams(BASE_URL);
     Services.prefs.clearUserPref("loop.gettingStarted.seen");
     MozLoopServiceInternal.mocks.pushHandler = undefined;
-    delete mockPushHandler.registeredChannels[MozLoopService.channelIDs.callsFxA];
-    delete mockPushHandler.registeredChannels[MozLoopService.channelIDs.roomsFxA];
 
     yield resetFxA();
     Services.prefs.clearUserPref(MozLoopServiceInternal.getSessionTokenPrefName(LOOP_SESSION_TYPE.GUEST));
@@ -64,7 +60,7 @@ add_task(function* checkOAuthParams() {
     content_uri: BASE_URL + "/content",
     oauth_uri: BASE_URL + "/oauth",
     profile_uri: BASE_URL + "/profile",
-    state: "state",
+    state: "state"
   };
   yield promiseOAuthParamsSetup(BASE_URL, params);
   let client = yield MozLoopServiceInternal.promiseFxAOAuthClient();
@@ -112,7 +108,7 @@ add_task(function* params_no_hawk_session() {
     oauth_uri: BASE_URL + "/oauth",
     profile_uri: BASE_URL + "/profile",
     state: "state",
-    test_error: "params_no_hawk",
+    test_error: "params_no_hawk"
   };
   yield promiseOAuthParamsSetup(BASE_URL, params);
 
@@ -157,7 +153,7 @@ add_task(function* invalidState() {
     content_uri: BASE_URL + "/content",
     oauth_uri: BASE_URL + "/oauth",
     profile_uri: BASE_URL + "/profile",
-    state: "invalid_state",
+    state: "invalid_state"
   };
   yield promiseOAuthParamsSetup(BASE_URL, params);
   let loginPromise = MozLoopService.logInToFxA();
@@ -169,7 +165,6 @@ add_task(function* invalidState() {
 add_task(function* basicRegistrationWithoutSession() {
   yield resetFxA();
   yield promiseDeletedOAuthParams(BASE_URL);
-
   let caught = false;
   yield MozLoopServiceInternal.promiseFxAOAuthToken("code1", "state").catch((error) => {
     caught = true;
@@ -185,7 +180,7 @@ add_task(function* basicRegistration() {
     content_uri: BASE_URL + "/content",
     oauth_uri: BASE_URL + "/oauth",
     profile_uri: BASE_URL + "/profile",
-    state: "state",
+    state: "state"
   };
   yield promiseOAuthParamsSetup(BASE_URL, params);
   yield resetFxA();
@@ -206,7 +201,7 @@ add_task(function* registrationWithInvalidState() {
     content_uri: BASE_URL + "/content",
     oauth_uri: BASE_URL + "/oauth",
     profile_uri: BASE_URL + "/profile",
-    state: "invalid_state",
+    state: "invalid_state"
   };
   yield promiseOAuthParamsSetup(BASE_URL, params);
 
@@ -233,7 +228,7 @@ add_task(function* registrationWith401() {
     oauth_uri: BASE_URL + "/oauth",
     profile_uri: BASE_URL + "/profile",
     state: "state",
-    test_error: "token_401",
+    test_error: "token_401"
   };
   yield promiseOAuthParamsSetup(BASE_URL, params);
 
@@ -282,7 +277,7 @@ add_task(function* basicAuthorizationAndRegistration() {
     content_uri: BASE_URL + "/content",
     oauth_uri: BASE_URL + "/oauth",
     profile_uri: BASE_URL + "/profile",
-    state: "state",
+    state: "state"
   };
   yield promiseOAuthParamsSetup(BASE_URL, params);
 
@@ -293,7 +288,7 @@ add_task(function* basicAuthorizationAndRegistration() {
   let statusChangedPromise = promiseObserverNotified("loop-status-changed");
   yield loadLoopPanel({stayOnline: true});
   yield statusChangedPromise;
-  let loopDoc = document.getElementById("loop").contentDocument;
+  let loopDoc = document.getElementById("loop-panel-iframe").contentDocument;
   let visibleEmail = loopDoc.getElementsByClassName("user-identity")[0];
   is(visibleEmail.textContent, "Guest", "Guest should be displayed on the panel when not logged in");
   is(MozLoopService.userProfile, null, "profile should be null before log-in");
@@ -301,8 +296,9 @@ add_task(function* basicAuthorizationAndRegistration() {
   is(loopButton.getAttribute("state"), "", "state of loop button should be empty when not logged in");
 
   info("Login");
+  statusChangedPromise = promiseObserverNotified("loop-status-changed", "login");
   let tokenData = yield MozLoopService.logInToFxA();
-  yield promiseObserverNotified("loop-status-changed", "login");
+  yield statusChangedPromise;
   ise(tokenData.access_token, "code1_access_token", "Check access_token");
   ise(tokenData.scope, "profile", "Check scope");
   ise(tokenData.token_type, "bearer", "Check token_type");
@@ -344,7 +340,7 @@ add_task(function* loginWithParams401() {
     oauth_uri: BASE_URL + "/oauth",
     profile_uri: BASE_URL + "/profile",
     state: "state",
-    test_error: "params_401",
+    test_error: "params_401"
   };
   yield promiseOAuthParamsSetup(BASE_URL, params);
   yield MozLoopService.promiseRegisteredWithServers();
@@ -364,17 +360,13 @@ add_task(function* loginWithParams401() {
 add_task(function* logoutWithIncorrectPushURL() {
   yield resetFxA();
   let pushURL = "http://www.example.com/";
-  mockPushHandler.registeredChannels[MozLoopService.channelIDs.callsFxA] = pushURL;
-  mockPushHandler.registeredChannels[MozLoopService.channelIDs.roomsFxA] = pushURL;
-
   // Create a fake FxA hawk session token
   const fxASessionPref = MozLoopServiceInternal.getSessionTokenPrefName(LOOP_SESSION_TYPE.FXA);
   Services.prefs.setCharPref(fxASessionPref, "X".repeat(HAWK_TOKEN_LENGTH));
-
-  yield MozLoopServiceInternal.registerWithLoopServer(LOOP_SESSION_TYPE.FXA);
+  yield MozLoopServiceInternal.registerWithLoopServer(LOOP_SESSION_TYPE.FXA, "calls", pushURL);
   let registrationResponse = yield promiseOAuthGetRegistration(BASE_URL);
   ise(registrationResponse.response.simplePushURLs.calls, pushURL, "Check registered push URL");
-  mockPushHandler.registeredChannels[MozLoopService.channelIDs.callsFxA] = "http://www.example.com/invalid";
+  MozLoopServiceInternal.pushURLs.get(LOOP_SESSION_TYPE.FXA).calls = "http://www.example.com/invalid";
   let caught = false;
   yield MozLoopService.logOutFromFxA().catch((error) => {
     caught = true;
@@ -388,17 +380,14 @@ add_task(function* logoutWithIncorrectPushURL() {
 add_task(function* logoutWithNoPushURL() {
   yield resetFxA();
   let pushURL = "http://www.example.com/";
-  mockPushHandler.registeredChannels[MozLoopService.channelIDs.callsFxA] = pushURL;
-
   // Create a fake FxA hawk session token
   const fxASessionPref = MozLoopServiceInternal.getSessionTokenPrefName(LOOP_SESSION_TYPE.FXA);
   Services.prefs.setCharPref(fxASessionPref, "X".repeat(HAWK_TOKEN_LENGTH));
 
-  yield MozLoopServiceInternal.registerWithLoopServer(LOOP_SESSION_TYPE.FXA);
+  yield MozLoopServiceInternal.registerWithLoopServer(LOOP_SESSION_TYPE.FXA, "calls", pushURL);
   let registrationResponse = yield promiseOAuthGetRegistration(BASE_URL);
   ise(registrationResponse.response.simplePushURLs.calls, pushURL, "Check registered push URL");
-  mockPushHandler.registeredChannels[MozLoopService.channelIDs.callsFxA] = null;
-  mockPushHandler.registeredChannels[MozLoopService.channelIDs.roomsFxA] = null;
+  MozLoopServiceInternal.pushURLs.delete(LOOP_SESSION_TYPE.FXA);
   yield MozLoopService.logOutFromFxA();
   checkLoggedOutState();
   registrationResponse = yield promiseOAuthGetRegistration(BASE_URL);
@@ -413,7 +402,7 @@ add_task(function* loginWithRegistration401() {
     oauth_uri: BASE_URL + "/oauth",
     profile_uri: BASE_URL + "/profile",
     state: "state",
-    test_error: "token_401",
+    test_error: "token_401"
   };
   yield promiseOAuthParamsSetup(BASE_URL, params);
 
@@ -443,7 +432,7 @@ add_task(function* openFxASettings() {
     oauth_uri: BASE_URL + "/oauth",
     profile_uri: BASE_URL + "/profile",
     state: "state",
-    test_error: "token_401",
+    test_error: "token_401"
   };
   yield promiseOAuthParamsSetup(BASE_URL, params);
 
@@ -459,7 +448,7 @@ add_task(function* openFxASettings() {
         is(aBrowser.currentURI.spec, Services.io.newURI("/settings", null, contentURI).spec,
            "Check settings tab URL");
         resolve();
-      },
+      }
     };
     gBrowser.addTabsProgressListener(progressListener);
 

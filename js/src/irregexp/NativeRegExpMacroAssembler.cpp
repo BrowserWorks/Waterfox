@@ -62,13 +62,13 @@ using namespace js::jit;
  * The tempN registers are free to use for computations.
  */
 
-NativeRegExpMacroAssembler::NativeRegExpMacroAssembler(LifoAlloc *alloc, RegExpShared *shared,
-                                                       JSRuntime *rt, Mode mode, int registers_to_save)
+NativeRegExpMacroAssembler::NativeRegExpMacroAssembler(LifoAlloc* alloc, RegExpShared* shared,
+                                                       JSRuntime* rt, Mode mode, int registers_to_save)
   : RegExpMacroAssembler(*alloc, shared, registers_to_save),
     runtime(rt), mode_(mode)
 {
     // Find physical registers for each compiler register.
-    GeneralRegisterSet regs(GeneralRegisterSet::All());
+    AllocatableGeneralRegisterSet regs(GeneralRegisterSet::All());
 
     input_end_pointer = regs.takeAny();
     current_character = regs.takeAny();
@@ -89,19 +89,7 @@ NativeRegExpMacroAssembler::NativeRegExpMacroAssembler(LifoAlloc *alloc, RegExpS
             temp1.name(),
             temp2.name());
 
-    // Determine the non-volatile registers which might be modified by jitcode.
-    for (GeneralRegisterIterator iter(GeneralRegisterSet::NonVolatile()); iter.more(); iter++) {
-        Register reg = *iter;
-        if (!regs.has(reg))
-            savedNonVolatileRegisters.add(reg);
-    }
-
-#if defined(JS_CODEGEN_ARM)
-    // ARM additionally requires that the link register be saved.
-    savedNonVolatileRegisters.add(Register::FromCode(Registers::lr));
-#elif defined(JS_CODEGEN_MIPS)
-    savedNonVolatileRegisters.add(Register::FromCode(Registers::ra));
-#endif
+    savedNonVolatileRegisters = SavedNonVolatileRegisters(regs);
 
     masm.jump(&entry_label_);
     masm.bind(&start_label_);
@@ -113,7 +101,7 @@ NativeRegExpMacroAssembler::NativeRegExpMacroAssembler(LifoAlloc *alloc, RegExpS
 //
 // void execute(InputOutputData*);
 RegExpCode
-NativeRegExpMacroAssembler::GenerateCode(JSContext *cx, bool match_only)
+NativeRegExpMacroAssembler::GenerateCode(JSContext* cx, bool match_only)
 {
     if (!cx->compartment()->ensureJitCompartmentExists(cx))
         return RegExpCode();
@@ -143,7 +131,7 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext *cx, bool match_only)
     masm.Push(IntArgReg0);
 #endif
 
-    size_t frameSize = sizeof(FrameData) + num_registers_ * sizeof(void *);
+    size_t frameSize = sizeof(FrameData) + num_registers_ * sizeof(void*);
     frameSize = JS_ROUNDUP(frameSize + masm.framePushed(), ABIStackAlignment) - masm.framePushed();
 
     // Actually emit code to start a new stack frame.
@@ -152,8 +140,8 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext *cx, bool match_only)
 
     // Check if we have space on the stack.
     Label stack_ok;
-    void *stack_limit = runtime->mainThread.addressOfJitStackLimit();
-    masm.branchPtr(Assembler::Below, AbsoluteAddress(stack_limit), StackPointer, &stack_ok);
+    void* stack_limit = runtime->addressOfJitStackLimit();
+    masm.branchStackPtrRhs(Assembler::Below, AbsoluteAddress(stack_limit), &stack_ok);
 
     // Exit with an exception. There is not enough space on the stack
     // for our working registers.
@@ -166,16 +154,17 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext *cx, bool match_only)
     // Ensure that we write to each stack page, in order. Skipping a page
     // on Windows can cause segmentation faults. Assuming page size is 4k.
     const int kPageSize = 4096;
-    for (int i = frameSize - sizeof(void *); i >= 0; i -= kPageSize)
-        masm.storePtr(temp0, Address(StackPointer, i));
+    for (int i = frameSize - sizeof(void*); i >= 0; i -= kPageSize)
+        masm.storePtr(temp0, Address(masm.getStackPointer(), i));
 #endif // XP_WIN
 
 #ifndef JS_CODEGEN_X86
     // The InputOutputData* is stored on the stack immediately above the frame.
-    Address inputOutputAddress(StackPointer, frameSize);
+    Address inputOutputAddress(masm.getStackPointer(), frameSize);
 #else
     // The InputOutputData* is left in its original on stack location.
-    Address inputOutputAddress(StackPointer, frameSize + (pushedNonVolatileRegisters + 1) * sizeof(void *));
+    Address inputOutputAddress(masm.getStackPointer(),
+                               frameSize + (pushedNonVolatileRegisters + 1) * sizeof(void*));
 #endif
 
     masm.loadPtr(inputOutputAddress, temp0);
@@ -185,10 +174,10 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext *cx, bool match_only)
         Register matchPairsRegister = input_end_pointer;
         masm.loadPtr(Address(temp0, offsetof(InputOutputData, matches)), matchPairsRegister);
         masm.loadPtr(Address(matchPairsRegister, MatchPairs::offsetOfPairs()), temp1);
-        masm.storePtr(temp1, Address(StackPointer, offsetof(FrameData, outputRegisters)));
+        masm.storePtr(temp1, Address(masm.getStackPointer(), offsetof(FrameData, outputRegisters)));
         masm.load32(Address(matchPairsRegister, MatchPairs::offsetOfPairCount()), temp1);
         masm.lshiftPtr(Imm32(1), temp1);
-        masm.store32(temp1, Address(StackPointer, offsetof(FrameData, numOutputRegisters)));
+        masm.store32(temp1, Address(masm.getStackPointer(), offsetof(FrameData, numOutputRegisters)));
 
 #ifdef DEBUG
         // Bounds check numOutputRegisters.
@@ -205,11 +194,11 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext *cx, bool match_only)
 
     // Load input start pointer, and copy to FrameData.
     masm.loadPtr(Address(temp0, offsetof(InputOutputData, inputStart)), current_position);
-    masm.storePtr(current_position, Address(StackPointer, offsetof(FrameData, inputStart)));
+    masm.storePtr(current_position, Address(masm.getStackPointer(), offsetof(FrameData, inputStart)));
 
     // Load start index, and copy to FrameData.
     masm.loadPtr(Address(temp0, offsetof(InputOutputData, startIndex)), temp1);
-    masm.storePtr(temp1, Address(StackPointer, offsetof(FrameData, startIndex)));
+    masm.storePtr(temp1, Address(masm.getStackPointer(), offsetof(FrameData, startIndex)));
 
     // Set up input position to be negative offset from string end.
     masm.subPtr(input_end_pointer, current_position);
@@ -220,7 +209,7 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext *cx, bool match_only)
 
     // Store this value on the frame, for use when clearing
     // position registers.
-    masm.storePtr(temp0, Address(StackPointer, offsetof(FrameData, inputStartMinusOne)));
+    masm.storePtr(temp0, Address(masm.getStackPointer(), offsetof(FrameData, inputStartMinusOne)));
 
     // Update current position based on start index.
     masm.computeEffectiveAddress(BaseIndex(current_position, temp1, factor()), current_position);
@@ -229,7 +218,7 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext *cx, bool match_only)
 
     // Load newline if index is at start, previous character otherwise.
     masm.branchPtr(Assembler::NotEqual, 
-                   Address(StackPointer, offsetof(FrameData, startIndex)), ImmWord(0),
+                   Address(masm.getStackPointer(), offsetof(FrameData, startIndex)), ImmWord(0),
                    &load_char_start_regexp);
     masm.movePtr(ImmWord('\n'), current_character);
     masm.jump(&start_regexp);
@@ -251,8 +240,8 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext *cx, bool match_only)
         masm.movePtr(ImmWord(register_offset(0)), temp1);
         Label init_loop;
         masm.bind(&init_loop);
-        masm.storePtr(temp0, BaseIndex(StackPointer, temp1, TimesOne));
-        masm.addPtr(ImmWord(sizeof(void *)), temp1);
+        masm.storePtr(temp0, BaseIndex(masm.getStackPointer(), temp1, TimesOne));
+        masm.addPtr(ImmWord(sizeof(void*)), temp1);
         masm.branchPtr(Assembler::LessThan, temp1,
                        ImmWord(register_offset(num_saved_registers_)), &init_loop);
     } else {
@@ -262,8 +251,9 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext *cx, bool match_only)
     }
 
     // Initialize backtrack stack pointer.
-    masm.loadPtr(AbsoluteAddress(runtime->mainThread.regexpStack.addressOfBase()), backtrack_stack_pointer);
-    masm.storePtr(backtrack_stack_pointer, Address(StackPointer, offsetof(FrameData, backtrackStackBase)));
+    masm.loadPtr(AbsoluteAddress(runtime->regexpStack.addressOfBase()), backtrack_stack_pointer);
+    masm.storePtr(backtrack_stack_pointer,
+                  Address(masm.getStackPointer(), offsetof(FrameData, backtrackStackBase)));
 
     masm.jump(&start_label_);
 
@@ -271,7 +261,7 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext *cx, bool match_only)
     if (success_label_.used()) {
         MOZ_ASSERT(num_saved_registers_ > 0);
 
-        Address outputRegistersAddress(StackPointer, offsetof(FrameData, outputRegisters));
+        Address outputRegistersAddress(masm.getStackPointer(), offsetof(FrameData, outputRegisters));
 
         // Save captures when successful.
         masm.bind(&success_label_);
@@ -309,9 +299,9 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext *cx, bool match_only)
         // Restart matching if the regular expression is flagged as global.
         if (global()) {
             // Increment success counter.
-            masm.add32(Imm32(1), Address(StackPointer, offsetof(FrameData, successfulCaptures)));
+            masm.add32(Imm32(1), Address(masm.getStackPointer(), offsetof(FrameData, successfulCaptures)));
 
-            Address numOutputRegistersAddress(StackPointer, offsetof(FrameData, numOutputRegisters));
+            Address numOutputRegistersAddress(masm.getStackPointer(), offsetof(FrameData, numOutputRegisters));
 
             // Capture results have been stored, so the number of remaining global
             // output registers is reduced by the number of stored captures.
@@ -325,10 +315,10 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext *cx, bool match_only)
             masm.store32(temp0, numOutputRegistersAddress);
 
             // Advance the location for output.
-            masm.add32(Imm32(num_saved_registers_ * sizeof(void *)), outputRegistersAddress);
+            masm.add32(Imm32(num_saved_registers_ * sizeof(void*)), outputRegistersAddress);
 
             // Prepare temp0 to initialize registers with its value in the next run.
-            masm.loadPtr(Address(StackPointer, offsetof(FrameData, inputStartMinusOne)), temp0);
+            masm.loadPtr(Address(masm.getStackPointer(), offsetof(FrameData, inputStartMinusOne)), temp0);
 
             if (global_with_zero_length_check()) {
                 // Special case for zero-length matches.
@@ -355,7 +345,7 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext *cx, bool match_only)
 
     if (global()) {
         // Return the number of successful captures.
-        masm.load32(Address(StackPointer, offsetof(FrameData, successfulCaptures)), temp0);
+        masm.load32(Address(masm.getStackPointer(), offsetof(FrameData, successfulCaptures)), temp0);
     }
 
     masm.bind(&return_temp0);
@@ -366,7 +356,7 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext *cx, bool match_only)
 
 #ifndef JS_CODEGEN_X86
     // Include the InputOutputData* when adjusting the stack size.
-    masm.freeStack(frameSize + sizeof(void *));
+    masm.freeStack(frameSize + sizeof(void*));
 #else
     masm.freeStack(frameSize);
 #endif
@@ -394,7 +384,7 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext *cx, bool match_only)
         masm.movePtr(ImmPtr(runtime), temp1);
 
         // Save registers before calling C function
-        GeneralRegisterSet volatileRegs = GeneralRegisterSet::Volatile();
+        LiveGeneralRegisterSet volatileRegs(GeneralRegisterSet::Volatile());
 #if defined(JS_CODEGEN_ARM)
         volatileRegs.add(Register::FromCode(Registers::lr));
 #elif defined(JS_CODEGEN_MIPS)
@@ -406,7 +396,7 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext *cx, bool match_only)
 
         masm.setupUnalignedABICall(1, temp0);
         masm.passABIArg(temp1);
-        masm.callWithABI(JS_FUNC_TO_DATA_PTR(void *, GrowBacktrackStack));
+        masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, GrowBacktrackStack));
         masm.storeCallResult(temp0);
 
         masm.PopRegsInMask(volatileRegs);
@@ -422,7 +412,7 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext *cx, bool match_only)
         Address backtrackStackBaseAddress(temp2, offsetof(FrameData, backtrackStackBase));
         masm.subPtr(backtrackStackBaseAddress, backtrack_stack_pointer);
 
-        masm.loadPtr(AbsoluteAddress(runtime->mainThread.regexpStack.addressOfBase()), temp1);
+        masm.loadPtr(AbsoluteAddress(runtime->regexpStack.addressOfBase()), temp1);
         masm.storePtr(temp1, backtrackStackBaseAddress);
         masm.addPtr(temp1, backtrack_stack_pointer);
 
@@ -442,7 +432,7 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext *cx, bool match_only)
 
     Linker linker(masm);
     AutoFlushICache afc("RegExp");
-    JitCode *code = linker.newCode<NoGC>(cx, REGEXP_CODE);
+    JitCode* code = linker.newCode<NoGC>(cx, REGEXP_CODE);
     if (!code)
         return RegExpCode();
 
@@ -451,7 +441,7 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext *cx, bool match_only)
 #endif
 
     for (size_t i = 0; i < labelPatches.length(); i++) {
-        LabelPatch &v = labelPatches[i];
+        LabelPatch& v = labelPatches[i];
         MOZ_ASSERT(!v.label);
         v.patchOffset.fixup(&masm);
         uintptr_t offset = masm.actualOffset(v.labelOffset);
@@ -461,7 +451,7 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext *cx, bool match_only)
     }
 
     JitSpew(JitSpew_Codegen, "Created RegExp (raw %p length %d)",
-            (void *) code->raw(), (int) masm.bytesNeeded());
+            (void*) code->raw(), (int) masm.bytesNeeded());
 
     RegExpCode res;
     res.jitCode = code;
@@ -514,7 +504,7 @@ NativeRegExpMacroAssembler::Backtrack()
 }
 
 void
-NativeRegExpMacroAssembler::Bind(Label *label)
+NativeRegExpMacroAssembler::Bind(Label* label)
 {
     JitSpew(SPEW_PREFIX "Bind");
 
@@ -529,13 +519,13 @@ NativeRegExpMacroAssembler::CheckAtStart(Label* on_at_start)
     Label not_at_start;
 
     // Did we start the match at the start of the string at all?
-    Address startIndex(StackPointer, offsetof(FrameData, startIndex));
+    Address startIndex(masm.getStackPointer(), offsetof(FrameData, startIndex));
     masm.branchPtr(Assembler::NotEqual, startIndex, ImmWord(0), &not_at_start);
 
     // If we did, are we still at the start of the input?
     masm.computeEffectiveAddress(BaseIndex(input_end_pointer, current_position, TimesOne), temp0);
 
-    Address inputStart(StackPointer, offsetof(FrameData, inputStart));
+    Address inputStart(masm.getStackPointer(), offsetof(FrameData, inputStart));
     masm.branchPtr(Assembler::Equal, inputStart, temp0, BranchOrBacktrack(on_at_start));
 
     masm.bind(&not_at_start);
@@ -547,13 +537,13 @@ NativeRegExpMacroAssembler::CheckNotAtStart(Label* on_not_at_start)
     JitSpew(SPEW_PREFIX "CheckNotAtStart");
 
     // Did we start the match at the start of the string at all?
-    Address startIndex(StackPointer, offsetof(FrameData, startIndex));
+    Address startIndex(masm.getStackPointer(), offsetof(FrameData, startIndex));
     masm.branchPtr(Assembler::NotEqual, startIndex, ImmWord(0), BranchOrBacktrack(on_not_at_start));
 
     // If we did, are we still at the start of the input?
     masm.computeEffectiveAddress(BaseIndex(input_end_pointer, current_position, TimesOne), temp0);
 
-    Address inputStart(StackPointer, offsetof(FrameData, inputStart));
+    Address inputStart(masm.getStackPointer(), offsetof(FrameData, inputStart));
     masm.branchPtr(Assembler::NotEqual, inputStart, temp0, BranchOrBacktrack(on_not_at_start));
 }
 
@@ -573,7 +563,7 @@ NativeRegExpMacroAssembler::CheckNotCharacter(unsigned c, Label* on_not_equal)
 
 void
 NativeRegExpMacroAssembler::CheckCharacterAfterAnd(unsigned c, unsigned and_with,
-                                                   Label *on_equal)
+                                                   Label* on_equal)
 {
     JitSpew(SPEW_PREFIX "CheckCharacterAfterAnd(%d, %d)", (int) c, (int) and_with);
 
@@ -589,7 +579,7 @@ NativeRegExpMacroAssembler::CheckCharacterAfterAnd(unsigned c, unsigned and_with
 
 void
 NativeRegExpMacroAssembler::CheckNotCharacterAfterAnd(unsigned c, unsigned and_with,
-                                                      Label *on_not_equal)
+                                                      Label* on_not_equal)
 {
     JitSpew(SPEW_PREFIX "CheckNotCharacterAfterAnd(%d, %d)", (int) c, (int) and_with);
 
@@ -625,9 +615,9 @@ NativeRegExpMacroAssembler::CheckGreedyLoop(Label* on_tos_equals_current_positio
 
     Label fallthrough;
     masm.branchPtr(Assembler::NotEqual,
-                   Address(backtrack_stack_pointer, -int(sizeof(void *))), current_position,
+                   Address(backtrack_stack_pointer, -int(sizeof(void*))), current_position,
                    &fallthrough);
-    masm.subPtr(Imm32(sizeof(void *)), backtrack_stack_pointer);  // Pop.
+    masm.subPtr(Imm32(sizeof(void*)), backtrack_stack_pointer);  // Pop.
     JumpOrBacktrack(on_tos_equals_current_position);
     masm.bind(&fallthrough);
 }
@@ -788,7 +778,7 @@ NativeRegExpMacroAssembler::CheckNotBackReferenceIgnoreCase(int start_reg, Label
         masm.bind(&success);
 
         // Drop original character position value.
-        masm.addPtr(Imm32(sizeof(uintptr_t)), StackPointer);
+        masm.addToStackPtr(Imm32(sizeof(uintptr_t)));
 
         // Compute new value of character position after the matched part.
         masm.subPtr(input_end_pointer, current_position);
@@ -796,7 +786,7 @@ NativeRegExpMacroAssembler::CheckNotBackReferenceIgnoreCase(int start_reg, Label
         MOZ_ASSERT(mode_ == CHAR16);
 
         // Note: temp1 needs to be saved/restored if it is volatile, as it is used after the call.
-        GeneralRegisterSet volatileRegs = GeneralRegisterSet::Volatile();
+        LiveGeneralRegisterSet volatileRegs(GeneralRegisterSet::Volatile());
         volatileRegs.takeUnchecked(temp0);
         volatileRegs.takeUnchecked(temp2);
         masm.PushRegsInMask(volatileRegs);
@@ -819,7 +809,7 @@ NativeRegExpMacroAssembler::CheckNotBackReferenceIgnoreCase(int start_reg, Label
         masm.passABIArg(current_position);
         masm.passABIArg(temp1);
         int (*fun)(const char16_t*, const char16_t*, size_t) = CaseInsensitiveCompareStrings;
-        masm.callWithABI(JS_FUNC_TO_DATA_PTR(void *, fun));
+        masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, fun));
         masm.storeCallResult(temp0);
 
         masm.PopRegsInMask(volatileRegs);
@@ -872,7 +862,7 @@ NativeRegExpMacroAssembler::CheckCharacterNotInRange(char16_t from, char16_t to,
 }
 
 void
-NativeRegExpMacroAssembler::CheckBitInTable(uint8_t *table, Label *on_bit_set)
+NativeRegExpMacroAssembler::CheckBitInTable(uint8_t* table, Label* on_bit_set)
 {
     JitSpew(SPEW_PREFIX "CheckBitInTable");
 
@@ -948,7 +938,7 @@ NativeRegExpMacroAssembler::LoadCurrentCharacterUnchecked(int cp_offset, int cha
         } else if (characters == 2) {
             masm.load16ZeroExtend(address, current_character);
         } else {
-            MOZ_ASSERT(characters = 1);
+            MOZ_ASSERT(characters == 1);
             masm.load8ZeroExtend(address, current_character);
         }
     } else {
@@ -980,7 +970,7 @@ NativeRegExpMacroAssembler::PopRegister(int register_index)
 }
 
 void
-NativeRegExpMacroAssembler::PushBacktrack(Label *label)
+NativeRegExpMacroAssembler::PushBacktrack(Label* label)
 {
     JitSpew(SPEW_PREFIX "PushBacktrack");
 
@@ -995,14 +985,14 @@ NativeRegExpMacroAssembler::PushBacktrack(Label *label)
 }
 
 void
-NativeRegExpMacroAssembler::BindBacktrack(Label *label)
+NativeRegExpMacroAssembler::BindBacktrack(Label* label)
 {
     JitSpew(SPEW_PREFIX "BindBacktrack");
 
     Bind(label);
 
     for (size_t i = 0; i < labelPatches.length(); i++) {
-        LabelPatch &v = labelPatches[i];
+        LabelPatch& v = labelPatches[i];
         if (v.label == label) {
             v.labelOffset = label->offset();
             v.label = nullptr;
@@ -1020,7 +1010,7 @@ NativeRegExpMacroAssembler::PushBacktrack(Register source)
 
     // Notice: This updates flags, unlike normal Push.
     masm.storePtr(source, Address(backtrack_stack_pointer, 0));
-    masm.addPtr(Imm32(sizeof(void *)), backtrack_stack_pointer);
+    masm.addPtr(Imm32(sizeof(void*)), backtrack_stack_pointer);
 }
 
 void
@@ -1030,7 +1020,7 @@ NativeRegExpMacroAssembler::PushBacktrack(int32_t value)
 
     // Notice: This updates flags, unlike normal Push.
     masm.storePtr(ImmWord(value), Address(backtrack_stack_pointer, 0));
-    masm.addPtr(Imm32(sizeof(void *)), backtrack_stack_pointer);
+    masm.addPtr(Imm32(sizeof(void*)), backtrack_stack_pointer);
 }
 
 void
@@ -1041,7 +1031,7 @@ NativeRegExpMacroAssembler::PopBacktrack(Register target)
     MOZ_ASSERT(target != backtrack_stack_pointer);
 
     // Notice: This updates flags, unlike normal Pop.
-    masm.subPtr(Imm32(sizeof(void *)), backtrack_stack_pointer);
+    masm.subPtr(Imm32(sizeof(void*)), backtrack_stack_pointer);
     masm.loadPtr(Address(backtrack_stack_pointer, 0), target);
 }
 
@@ -1050,14 +1040,14 @@ NativeRegExpMacroAssembler::CheckBacktrackStackLimit()
 {
     JitSpew(SPEW_PREFIX "CheckBacktrackStackLimit");
 
-    const void *limitAddr = runtime->mainThread.regexpStack.addressOfLimit();
+    const void* limitAddr = runtime->regexpStack.addressOfLimit();
 
     Label no_stack_overflow;
     masm.branchPtr(Assembler::AboveOrEqual, AbsoluteAddress(limitAddr),
                    backtrack_stack_pointer, &no_stack_overflow);
 
     // Copy the stack pointer before the call() instruction modifies it.
-    masm.movePtr(StackPointer, temp2);
+    masm.moveStackPtrTo(temp2);
 
     masm.call(&stack_overflow_label_);
     masm.bind(&no_stack_overflow);
@@ -1112,7 +1102,8 @@ NativeRegExpMacroAssembler::ReadBacktrackStackPointerFromRegister(int reg)
     JitSpew(SPEW_PREFIX "ReadBacktrackStackPointerFromRegister(%d)", reg);
 
     masm.loadPtr(register_location(reg), backtrack_stack_pointer);
-    masm.addPtr(Address(StackPointer, offsetof(FrameData, backtrackStackBase)), backtrack_stack_pointer);
+    masm.addPtr(Address(masm.getStackPointer(),
+                offsetof(FrameData, backtrackStackBase)), backtrack_stack_pointer);
 }
 
 void
@@ -1121,7 +1112,8 @@ NativeRegExpMacroAssembler::WriteBacktrackStackPointerToRegister(int reg)
     JitSpew(SPEW_PREFIX "WriteBacktrackStackPointerToRegister(%d)", reg);
 
     masm.movePtr(backtrack_stack_pointer, temp0);
-    masm.subPtr(Address(StackPointer, offsetof(FrameData, backtrackStackBase)), temp0);
+    masm.subPtr(Address(masm.getStackPointer(),
+                offsetof(FrameData, backtrackStackBase)), temp0);
     masm.storePtr(temp0, register_location(reg));
 }
 
@@ -1166,7 +1158,7 @@ NativeRegExpMacroAssembler::ClearRegisters(int reg_from, int reg_to)
     JitSpew(SPEW_PREFIX "ClearRegisters(%d, %d)", reg_from, reg_to);
 
     MOZ_ASSERT(reg_from <= reg_to);
-    masm.loadPtr(Address(StackPointer, offsetof(FrameData, inputStartMinusOne)), temp0);
+    masm.loadPtr(Address(masm.getStackPointer(), offsetof(FrameData, inputStartMinusOne)), temp0);
     for (int reg = reg_from; reg <= reg_to; reg++)
         masm.storePtr(temp0, register_location(reg));
 }
@@ -1179,8 +1171,8 @@ NativeRegExpMacroAssembler::CheckPosition(int cp_offset, Label* on_outside_input
                    ImmWord(-cp_offset * char_size()), BranchOrBacktrack(on_outside_input));
 }
 
-Label *
-NativeRegExpMacroAssembler::BranchOrBacktrack(Label *branch)
+Label*
+NativeRegExpMacroAssembler::BranchOrBacktrack(Label* branch)
 {
     if (branch)
         return branch;
@@ -1188,7 +1180,7 @@ NativeRegExpMacroAssembler::BranchOrBacktrack(Label *branch)
 }
 
 void
-NativeRegExpMacroAssembler::JumpOrBacktrack(Label *to)
+NativeRegExpMacroAssembler::JumpOrBacktrack(Label* to)
 {
     JitSpew(SPEW_PREFIX "JumpOrBacktrack");
 
@@ -1203,7 +1195,7 @@ NativeRegExpMacroAssembler::CheckSpecialCharacterClass(char16_t type, Label* on_
 {
     JitSpew(SPEW_PREFIX "CheckSpecialCharacterClass(%d)", (int) type);
 
-    Label *branch = BranchOrBacktrack(on_no_match);
+    Label* branch = BranchOrBacktrack(on_no_match);
 
     // Range checks (c in min..max) are generally implemented by an unsigned
     // (c - min) <= (max - min) check

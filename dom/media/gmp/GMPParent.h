@@ -7,7 +7,7 @@
 #define GMPParent_h_
 
 #include "GMPProcessParent.h"
-#include "GMPService.h"
+#include "GMPServiceParent.h"
 #include "GMPAudioDecoderParent.h"
 #include "GMPDecryptorParent.h"
 #include "GMPVideoDecoderParent.h"
@@ -23,7 +23,6 @@
 #include "nsIFile.h"
 #include "ThreadSafeRefcountingWithMainThreadDestruction.h"
 
-class nsILineInputStream;
 class nsIThread;
 
 #ifdef MOZ_CRASHREPORTER
@@ -54,15 +53,30 @@ enum GMPState {
   GMPStateClosing
 };
 
-class GMPParent MOZ_FINAL : public PGMPParent,
-                            public GMPSharedMem
+class GMPContentParent;
+
+class GetGMPContentParentCallback
+{
+public:
+  GetGMPContentParentCallback()
+  {
+    MOZ_COUNT_CTOR(GetGMPContentParentCallback);
+  };
+  virtual ~GetGMPContentParentCallback()
+  {
+    MOZ_COUNT_DTOR(GetGMPContentParentCallback);
+  };
+  virtual void Done(GMPContentParent* aGMPContentParent) = 0;
+};
+
+class GMPParent final : public PGMPParent
 {
 public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING_WITH_MAIN_THREAD_DESTRUCTION(GMPParent)
 
   GMPParent();
 
-  nsresult Init(GeckoMediaPluginService *aService, nsIFile* aPluginDir);
+  nsresult Init(GeckoMediaPluginServiceParent* aService, nsIFile* aPluginDir);
   nsresult CloneFrom(const GMPParent* aOther);
 
   void Crash();
@@ -76,6 +90,10 @@ public:
   // normal shutdown or unexpected shutdown/crash.
   void CloseActive(bool aDieWhenUnloaded);
 
+  // Tell the plugin to die after shutdown.
+  void MarkForDeletion();
+  bool IsMarkedForDeletion();
+
   // Called by the GMPService to forcibly close active de/encoders at shutdown
   void Shutdown();
 
@@ -83,18 +101,6 @@ public:
   void DeleteProcess();
 
   bool SupportsAPI(const nsCString& aAPI, const nsCString& aTag);
-
-  nsresult GetGMPVideoDecoder(GMPVideoDecoderParent** aGMPVD);
-  void VideoDecoderDestroyed(GMPVideoDecoderParent* aDecoder);
-
-  nsresult GetGMPVideoEncoder(GMPVideoEncoderParent** aGMPVE);
-  void VideoEncoderDestroyed(GMPVideoEncoderParent* aEncoder);
-
-  nsresult GetGMPDecryptor(GMPDecryptorParent** aGMPKS);
-  void DecryptorDestroyed(GMPDecryptorParent* aSession);
-
-  nsresult GetGMPAudioDecoder(GMPAudioDecoderParent** aGMPAD);
-  void AudioDecoderDestroyed(GMPAudioDecoderParent* aDecoder);
 
   GMPState State() const;
   nsIThread* GMPThread();
@@ -115,6 +121,10 @@ public:
   void SetNodeId(const nsACString& aNodeId);
   const nsACString& GetNodeId() const { return mNodeId; }
 
+  const nsCString& GetDisplayName() const;
+  const nsCString& GetVersion() const;
+  const uint32_t GetPluginId() const;
+
   // Returns true if a plugin can be or is being used across multiple NodeIds.
   bool CanBeSharedCrossNodeIds() const;
 
@@ -127,47 +137,52 @@ public:
     return nsCOMPtr<nsIFile>(mDirectory).forget();
   }
 
-  // GMPSharedMem
-  virtual void CheckThread() MOZ_OVERRIDE;
-
   void AbortAsyncShutdown();
+
+  // Called when the child process has died.
+  void ChildTerminated();
+
+  bool GetGMPContentParent(UniquePtr<GetGMPContentParentCallback>&& aCallback);
+  already_AddRefed<GMPContentParent> ForgetGMPContentParent();
+
+  bool EnsureProcessLoaded(base::ProcessId* aID);
+
+  bool Bridge(GMPServiceParent* aGMPServiceParent);
 
 private:
   ~GMPParent();
-  nsRefPtr<GeckoMediaPluginService> mService;
+  nsRefPtr<GeckoMediaPluginServiceParent> mService;
   bool EnsureProcessLoaded();
   nsresult ReadGMPMetaData();
 #ifdef MOZ_CRASHREPORTER
   void WriteExtraDataForMinidump(CrashReporter::AnnotationTable& notes);
   void GetCrashID(nsString& aResult);
 #endif
-  virtual void ActorDestroy(ActorDestroyReason aWhy) MOZ_OVERRIDE;
+  virtual void ActorDestroy(ActorDestroyReason aWhy) override;
 
-  virtual PCrashReporterParent* AllocPCrashReporterParent(const NativeThreadId& aThread) MOZ_OVERRIDE;
-  virtual bool DeallocPCrashReporterParent(PCrashReporterParent* aCrashReporter) MOZ_OVERRIDE;
+  virtual PCrashReporterParent* AllocPCrashReporterParent(const NativeThreadId& aThread) override;
+  virtual bool DeallocPCrashReporterParent(PCrashReporterParent* aCrashReporter) override;
 
-  virtual PGMPVideoDecoderParent* AllocPGMPVideoDecoderParent() MOZ_OVERRIDE;
-  virtual bool DeallocPGMPVideoDecoderParent(PGMPVideoDecoderParent* aActor) MOZ_OVERRIDE;
+  virtual bool RecvPGMPStorageConstructor(PGMPStorageParent* actor) override;
+  virtual PGMPStorageParent* AllocPGMPStorageParent() override;
+  virtual bool DeallocPGMPStorageParent(PGMPStorageParent* aActor) override;
 
-  virtual PGMPVideoEncoderParent* AllocPGMPVideoEncoderParent() MOZ_OVERRIDE;
-  virtual bool DeallocPGMPVideoEncoderParent(PGMPVideoEncoderParent* aActor) MOZ_OVERRIDE;
+  virtual PGMPContentParent* AllocPGMPContentParent(Transport* aTransport,
+                                                    ProcessId aOtherPid) override;
 
-  virtual PGMPDecryptorParent* AllocPGMPDecryptorParent() MOZ_OVERRIDE;
-  virtual bool DeallocPGMPDecryptorParent(PGMPDecryptorParent* aActor) MOZ_OVERRIDE;
+  virtual bool RecvPGMPTimerConstructor(PGMPTimerParent* actor) override;
+  virtual PGMPTimerParent* AllocPGMPTimerParent() override;
+  virtual bool DeallocPGMPTimerParent(PGMPTimerParent* aActor) override;
 
-  virtual PGMPAudioDecoderParent* AllocPGMPAudioDecoderParent() MOZ_OVERRIDE;
-  virtual bool DeallocPGMPAudioDecoderParent(PGMPAudioDecoderParent* aActor) MOZ_OVERRIDE;
+  virtual bool RecvAsyncShutdownComplete() override;
+  virtual bool RecvAsyncShutdownRequired() override;
 
-  virtual bool RecvPGMPStorageConstructor(PGMPStorageParent* actor) MOZ_OVERRIDE;
-  virtual PGMPStorageParent* AllocPGMPStorageParent() MOZ_OVERRIDE;
-  virtual bool DeallocPGMPStorageParent(PGMPStorageParent* aActor) MOZ_OVERRIDE;
+  virtual bool RecvPGMPContentChildDestroyed() override;
+  bool IsUsed()
+  {
+    return mGMPContentChildCount > 0;
+  }
 
-  virtual bool RecvPGMPTimerConstructor(PGMPTimerParent* actor) MOZ_OVERRIDE;
-  virtual PGMPTimerParent* AllocPGMPTimerParent() MOZ_OVERRIDE;
-  virtual bool DeallocPGMPTimerParent(PGMPTimerParent* aActor) MOZ_OVERRIDE;
-
-  virtual bool RecvAsyncShutdownComplete() MOZ_OVERRIDE;
-  virtual bool RecvAsyncShutdownRequired() MOZ_OVERRIDE;
 
   nsresult EnsureAsyncShutdownTimeoutSet();
 
@@ -177,15 +192,15 @@ private:
   nsCString mDisplayName; // name of plugin displayed to users
   nsCString mDescription; // description of plugin for display to users
   nsCString mVersion;
+  uint32_t mPluginId;
   nsTArray<nsAutoPtr<GMPCapability>> mCapabilities;
   GMPProcessParent* mProcess;
   bool mDeleteProcessOnlyOnUnload;
   bool mAbnormalShutdownInProgress;
+  bool mIsBlockingDeletion;
 
-  nsTArray<nsRefPtr<GMPVideoDecoderParent>> mVideoDecoders;
-  nsTArray<nsRefPtr<GMPVideoEncoderParent>> mVideoEncoders;
-  nsTArray<nsRefPtr<GMPDecryptorParent>> mDecryptors;
-  nsTArray<nsRefPtr<GMPAudioDecoderParent>> mAudioDecoders;
+  bool mCanDecrypt;
+
   nsTArray<nsRefPtr<GMPTimerParent>> mTimers;
   nsTArray<nsRefPtr<GMPStorageParent>> mStorage;
   nsCOMPtr<nsIThread> mGMPThread;
@@ -193,9 +208,18 @@ private:
   // NodeId the plugin is assigned to, or empty if the the plugin is not
   // assigned to a NodeId.
   nsAutoCString mNodeId;
+  // This is used for GMP content in the parent, there may be more of these in
+  // the content processes.
+  nsRefPtr<GMPContentParent> mGMPContentParent;
+  nsTArray<UniquePtr<GetGMPContentParentCallback>> mCallbacks;
+  uint32_t mGMPContentChildCount;
 
   bool mAsyncShutdownRequired;
   bool mAsyncShutdownInProgress;
+
+#ifdef PR_LOGGING
+  int mChildPid;
+#endif
 };
 
 } // namespace gmp

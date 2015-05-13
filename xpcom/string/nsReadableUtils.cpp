@@ -46,8 +46,22 @@ CopyASCIItoUTF16(const char* aSource, nsAString& aDest)
 void
 CopyUTF16toUTF8(const nsAString& aSource, nsACString& aDest)
 {
+  if (!CopyUTF16toUTF8(aSource, aDest, mozilla::fallible)) {
+    // Note that this may wildly underestimate the allocation that failed, as
+    // we report the length of aSource as UTF-16 instead of UTF-8.
+    aDest.AllocFailed(aDest.Length() + aSource.Length());
+  }
+}
+
+bool
+CopyUTF16toUTF8(const nsAString& aSource, nsACString& aDest,
+                const mozilla::fallible_t& aFallible)
+{
   aDest.Truncate();
-  AppendUTF16toUTF8(aSource, aDest);
+  if (!AppendUTF16toUTF8(aSource, aDest, aFallible)) {
+    return false;
+  }
+  return true;
 }
 
 void
@@ -94,18 +108,18 @@ LossyAppendUTF16toASCII(const nsAString& aSource, nsACString& aDest)
 void
 AppendASCIItoUTF16(const nsACString& aSource, nsAString& aDest)
 {
-  if (!AppendASCIItoUTF16(aSource, aDest, mozilla::fallible_t())) {
+  if (!AppendASCIItoUTF16(aSource, aDest, mozilla::fallible)) {
     aDest.AllocFailed(aDest.Length() + aSource.Length());
   }
 }
 
 bool
 AppendASCIItoUTF16(const nsACString& aSource, nsAString& aDest,
-                   const mozilla::fallible_t&)
+                   const mozilla::fallible_t& aFallible)
 {
   uint32_t old_dest_length = aDest.Length();
   if (!aDest.SetLength(old_dest_length + aSource.Length(),
-                       mozilla::fallible_t())) {
+                       aFallible)) {
     return false;
   }
 
@@ -132,6 +146,16 @@ LossyAppendUTF16toASCII(const char16_t* aSource, nsACString& aDest)
   }
 }
 
+bool
+AppendASCIItoUTF16(const char* aSource, nsAString& aDest, const mozilla::fallible_t& aFallible)
+{
+  if (aSource) {
+    return AppendASCIItoUTF16(nsDependentCString(aSource), aDest, aFallible);
+  }
+
+  return true;
+}
+
 void
 AppendASCIItoUTF16(const char* aSource, nsAString& aDest)
 {
@@ -143,14 +167,16 @@ AppendASCIItoUTF16(const char* aSource, nsAString& aDest)
 void
 AppendUTF16toUTF8(const nsAString& aSource, nsACString& aDest)
 {
-  if (!AppendUTF16toUTF8(aSource, aDest, mozilla::fallible_t())) {
+  if (!AppendUTF16toUTF8(aSource, aDest, mozilla::fallible)) {
+    // Note that this may wildly underestimate the allocation that failed, as
+    // we report the length of aSource as UTF-16 instead of UTF-8.
     aDest.AllocFailed(aDest.Length() + aSource.Length());
   }
 }
 
 bool
 AppendUTF16toUTF8(const nsAString& aSource, nsACString& aDest,
-                  const mozilla::fallible_t&)
+                  const mozilla::fallible_t& aFallible)
 {
   nsAString::const_iterator source_start, source_end;
   CalculateUTF8Size calculator;
@@ -163,7 +189,7 @@ AppendUTF16toUTF8(const nsAString& aSource, nsACString& aDest,
     uint32_t old_dest_length = aDest.Length();
 
     // Grow the buffer if we need to.
-    if (!aDest.SetLength(old_dest_length + count, mozilla::fallible_t())) {
+    if (!aDest.SetLength(old_dest_length + count, aFallible)) {
       return false;
     }
 
@@ -184,14 +210,14 @@ AppendUTF16toUTF8(const nsAString& aSource, nsACString& aDest,
 void
 AppendUTF8toUTF16(const nsACString& aSource, nsAString& aDest)
 {
-  if (!AppendUTF8toUTF16(aSource, aDest, mozilla::fallible_t())) {
+  if (!AppendUTF8toUTF16(aSource, aDest, mozilla::fallible)) {
     aDest.AllocFailed(aDest.Length() + aSource.Length());
   }
 }
 
 bool
 AppendUTF8toUTF16(const nsACString& aSource, nsAString& aDest,
-                  const mozilla::fallible_t&)
+                  const mozilla::fallible_t& aFallible)
 {
   nsACString::const_iterator source_start, source_end;
   CalculateUTF8Length calculator;
@@ -205,7 +231,7 @@ AppendUTF8toUTF16(const nsACString& aSource, nsAString& aDest,
     uint32_t old_dest_length = aDest.Length();
 
     // Grow the buffer if we need to.
-    if (!aDest.SetLength(old_dest_length + count, mozilla::fallible_t())) {
+    if (!aDest.SetLength(old_dest_length + count, aFallible)) {
       return false;
     }
 
@@ -249,7 +275,7 @@ AppendUTF8toUTF16(const char* aSource, nsAString& aDest)
  * A helper function that allocates a buffer of the desired character type big enough to hold a copy of the supplied string (plus a zero terminator).
  *
  * @param aSource an string you will eventually be making a copy of
- * @return a new buffer (of the type specified by the second parameter) which you must free with |nsMemory::Free|.
+ * @return a new buffer (of the type specified by the second parameter) which you must free with |free|.
  *
  */
 template <class FromStringT, class ToCharT>
@@ -257,7 +283,7 @@ inline
 ToCharT*
 AllocateStringCopy(const FromStringT& aSource, ToCharT*)
 {
-  return static_cast<ToCharT*>(nsMemory::Alloc(
+  return static_cast<ToCharT*>(moz_xmalloc(
     (aSource.Length() + 1) * sizeof(ToCharT)));
 }
 
@@ -290,7 +316,7 @@ ToNewUTF8String(const nsAString& aSource, uint32_t* aUTF8Count)
   }
 
   char* result = static_cast<char*>
-                 (nsMemory::Alloc(calculator.Size() + 1));
+                 (moz_xmalloc(calculator.Size() + 1));
   if (!result) {
     return nullptr;
   }
@@ -382,7 +408,7 @@ UTF8ToNewUnicode(const nsACString& aSource, uint32_t* aUTF16Count)
 {
   const uint32_t length = CalcUTF8ToUnicodeLength(aSource);
   const size_t buffer_size = (length + 1) * sizeof(char16_t);
-  char16_t* buffer = static_cast<char16_t*>(nsMemory::Alloc(buffer_size));
+  char16_t* buffer = static_cast<char16_t*>(moz_xmalloc(buffer_size));
   if (!buffer) {
     return nullptr;
   }

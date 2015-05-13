@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -26,7 +27,7 @@ namespace mozilla {
   }
 }
 
-class nsTranslationNodeList MOZ_FINAL : public nsITranslationNodeList
+class nsTranslationNodeList final : public nsITranslationNodeList
 {
 public:
   nsTranslationNodeList()
@@ -54,9 +55,11 @@ private:
   uint32_t mLength;
 };
 
-class nsDOMWindowUtils MOZ_FINAL : public nsIDOMWindowUtils,
-                                   public nsSupportsWeakReference
+class nsDOMWindowUtils final : public nsIDOMWindowUtils,
+                               public nsSupportsWeakReference
 {
+  typedef mozilla::widget::TextEventDispatcher
+    TextEventDispatcher;
 public:
   explicit nsDOMWindowUtils(nsGlobalWindow *aWindow);
   NS_DECL_ISUPPORTS
@@ -78,8 +81,6 @@ protected:
   nsPresContext* GetPresContext();
   nsIDocument* GetDocument();
   mozilla::layers::LayerTransactionChild* GetLayerTransaction();
-
-  nsView* GetViewToDispatchEvent(nsPresContext* presContext, nsIPresShell** presShell);
 
   NS_IMETHOD SendMouseEventCommon(const nsAString& aType,
                                   float aX,
@@ -127,8 +128,6 @@ protected:
                                   bool aIgnoreRootScrollFrame,
                                   bool aToWindow,
                                   bool* aPreventDefault);
-
-  static mozilla::Modifiers GetWidgetModifiers(int32_t aModifiers);
 };
 
 #endif

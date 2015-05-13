@@ -253,7 +253,7 @@ class WebTestRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                         err = [e.message]
                     else:
                         err = []
-                        err.append(traceback.format_exc())
+                    err.append(traceback.format_exc())
                     response.set_error(500, "\n".join(err))
             self.logger.debug("%i %s %s (%s) %i" % (response.status[0],
                                                     request.method,
@@ -285,7 +285,7 @@ class WebTestRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             if response:
                 response.set_error(500, err)
                 response.write()
-            logger.error(err)
+            self.logger.error(err)
 
     def get_request_line(self):
         try:

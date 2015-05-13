@@ -169,10 +169,10 @@
 **      Macros to get the number of elements and the pointer to one past the
 **      last element of a C array. Use them like this:
 **
-**      char16_t buf[10], *s;
-**      JSString *str;
+**      char16_t buf[10];
+**      JSString* str;
 **      ...
-**      for (s = buf; s != JS_ARRAY_END(buf); ++s) *s = ...;
+**      for (char16_t* s = buf; s != JS_ARRAY_END(buf); ++s) *s = ...;
 **      ...
 **      str = JS_NewStringCopyN(cx, buf, JS_ARRAY_LENGTH(buf));
 **      ...
@@ -198,12 +198,12 @@
 **      Macros to convert between function and data pointers of the same
 **      size. Use them like this:
 **
-**      JSPropertyOp nativeGetter;
-**      JSObject *scriptedGetter;
+**      JSGetterOp nativeGetter;
+**      JSObject* scriptedGetter;
 **      ...
-**      scriptedGetter = JS_FUNC_TO_DATA_PTR(JSObject *, nativeGetter);
+**      scriptedGetter = JS_FUNC_TO_DATA_PTR(JSObject*, nativeGetter);
 **      ...
-**      nativeGetter = JS_DATA_TO_FUNC_PTR(JSPropertyOp, scriptedGetter);
+**      nativeGetter = JS_DATA_TO_FUNC_PTR(JSGetterOp, scriptedGetter);
 **
 ***********************************************************************/
 

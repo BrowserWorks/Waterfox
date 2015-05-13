@@ -4,20 +4,32 @@
 
 #include "PluginWidgetParent.h"
 #include "mozilla/dom/TabParent.h"
+#include "mozilla/dom/ContentParent.h"
 #include "nsComponentManagerUtils.h"
 #include "nsWidgetsCID.h"
+
+#include "mozilla/unused.h"
+#include "mozilla/DebugOnly.h"
 #include "nsDebug.h"
 
 #if defined(MOZ_WIDGET_GTK)
 #include "nsPluginNativeWindowGtk.h"
-#else
-#include "nsPluginNativeWindow.h"
 #endif
 
+using namespace mozilla;
 using namespace mozilla::widget;
 
 #define PWLOG(...)
-// #define PWLOG(...) printf_stderr(__VA_ARGS__)
+//#define PWLOG(...) printf_stderr(__VA_ARGS__)
+
+#if defined(XP_WIN)
+namespace mozilla {
+namespace dom {
+// For nsWindow
+const wchar_t* kPluginWidgetContentParentProperty =
+  L"kPluginWidgetParentProperty";
+} }
+#endif
 
 namespace mozilla {
 namespace plugins {
@@ -34,9 +46,6 @@ static NS_DEFINE_CID(kWidgetCID, NS_CHILD_CID);
 }
 
 PluginWidgetParent::PluginWidgetParent()
-#if defined(MOZ_WIDGET_GTK)
-  : mWrapper(nullptr)
-#endif
 {
   PWLOG("PluginWidgetParent::PluginWidgetParent()\n");
   MOZ_COUNT_CTOR(PluginWidgetParent);
@@ -49,10 +58,7 @@ PluginWidgetParent::~PluginWidgetParent()
   // A destroy call can actually get skipped if a widget is associated
   // with the last out-of-process page, make sure and cleanup any left
   // over widgets if we have them.
-  if (mWidget) {
-    mWidget->Destroy();
-    mWidget = nullptr;
-  }
+  KillWidget();
 }
 
 mozilla::dom::TabParent*
@@ -62,9 +68,11 @@ PluginWidgetParent::GetTabParent()
 }
 
 void
-PluginWidgetParent::ActorDestroy(ActorDestroyReason aWhy)
+PluginWidgetParent::SetParent(nsIWidget* aParent)
 {
-  PWLOG("PluginWidgetParent::ActorDestroy()\n");
+  if (mWidget && aParent) {
+    mWidget->SetParent(aParent);
+  }
 }
 
 // When plugins run in chrome, nsPluginNativeWindow(Plat) implements platform
@@ -73,76 +81,109 @@ PluginWidgetParent::ActorDestroy(ActorDestroyReason aWhy)
 // makes use of some of the utility functions as well.
 
 bool
-PluginWidgetParent::RecvCreate()
+PluginWidgetParent::RecvCreate(nsresult* aResult)
 {
   PWLOG("PluginWidgetParent::RecvCreate()\n");
 
-  nsresult rv;
-
-  mWidget = do_CreateInstance(kWidgetCID, &rv);
+  mWidget = do_CreateInstance(kWidgetCID, aResult);
+  NS_ASSERTION(NS_SUCCEEDED(*aResult), "widget create failure");
 
 #if defined(MOZ_WIDGET_GTK)
   // We need this currently just for GTK in setting up a socket widget
   // we can send over to content -> plugin.
   PLUG_NewPluginNativeWindow((nsPluginNativeWindow**)&mWrapper);
   if (!mWrapper) {
+    KillWidget();
     return false;
   }
+  // Give a copy of this to the widget, which handles some update
+  // work for us.
+  mWidget->SetNativeData(NS_NATIVE_PLUGIN_OBJECT_PTR, (uintptr_t)mWrapper.get());
 #endif
 
   // This returns the top level window widget
   nsCOMPtr<nsIWidget> parentWidget = GetTabParent()->GetWidget();
+  // If this fails, bail.
+  if (!parentWidget) {
+    *aResult = NS_ERROR_NOT_AVAILABLE;
+    KillWidget();
+    return true;
+  }
 
   nsWidgetInitData initData;
   initData.mWindowType = eWindowType_plugin_ipc_chrome;
   initData.mUnicode = false;
   initData.clipChildren = true;
   initData.clipSiblings = true;
-  rv = mWidget->Create(parentWidget.get(), nullptr, nsIntRect(0,0,0,0),
-                       nullptr, &initData);
-  if (NS_FAILED(rv)) {
-    mWidget->Destroy();
-    mWidget = nullptr;
+  *aResult = mWidget->Create(parentWidget.get(), nullptr, nsIntRect(0,0,0,0),
+                             &initData);
+  if (NS_FAILED(*aResult)) {
+    KillWidget();
+    // This should never fail, abort.
     return false;
   }
 
-  mWidget->EnableDragDrop(true);
-  mWidget->Show(false);
-  mWidget->Enable(false);
-
-  // Force the initial position down into content. If we miss an
-  // initial position update this insures the widget doesn't overlap
-  // chrome.
-  RecvMove(0, 0);
+  DebugOnly<nsresult> drv;
+  drv = mWidget->EnableDragDrop(true);
+  NS_ASSERTION(NS_SUCCEEDED(drv), "widget call failure");
 
 #if defined(MOZ_WIDGET_GTK)
   // For setup, initially GTK code expects 'window' to hold the parent.
   mWrapper->window = mWidget->GetNativeData(NS_NATIVE_PLUGIN_PORT);
-  mWrapper->CreateXEmbedWindow(false);
+  drv = mWrapper->CreateXEmbedWindow(false);
+  NS_ASSERTION(NS_SUCCEEDED(drv), "widget call failure");
   mWrapper->SetAllocation();
   PWLOG("Plugin XID=%p\n", (void*)mWrapper->window);
+#elif defined(XP_WIN)
+  DebugOnly<DWORD> winres =
+    ::SetPropW((HWND)mWidget->GetNativeData(NS_NATIVE_WINDOW),
+               mozilla::dom::kPluginWidgetContentParentProperty,
+               GetTabParent()->Manager()->AsContentParent());
+  NS_ASSERTION(winres, "SetPropW call failure");
 #endif
 
+  // This is a special call we make to nsBaseWidget to register this
+  // window as a remote plugin window which is expected to receive
+  // visibility updates from the compositor, which ships this data
+  // over with corresponding layer updates.
+  mWidget->RegisterPluginWindowForRemoteUpdates();
+
   return true;
 }
 
-bool
-PluginWidgetParent::RecvDestroy()
+void
+PluginWidgetParent::KillWidget()
 {
-  ENSURE_CHANNEL;
-  PWLOG("PluginWidgetParent::RecvDestroy()\n");
-  mWidget->Destroy();
-  mWidget = nullptr;
-  return true;
+  PWLOG("PluginWidgetParent::KillWidget() widget=%p\n", (void*)mWidget.get());
+  if (mWidget) {
+    mWidget->UnregisterPluginWindowForRemoteUpdates();
+    DebugOnly<nsresult> rv = mWidget->Destroy();
+    NS_ASSERTION(NS_SUCCEEDED(rv), "widget destroy failure");
+#if defined(MOZ_WIDGET_GTK)
+    mWidget->SetNativeData(NS_NATIVE_PLUGIN_OBJECT_PTR, (uintptr_t)0);
+    mWrapper = nullptr;
+#elif defined(XP_WIN)
+    ::RemovePropW((HWND)mWidget->GetNativeData(NS_NATIVE_WINDOW),
+                  mozilla::dom::kPluginWidgetContentParentProperty);
+#endif
+    mWidget = nullptr;
+  }
 }
 
-bool
-PluginWidgetParent::RecvShow(const bool& aState)
+void
+PluginWidgetParent::ActorDestroy(ActorDestroyReason aWhy)
 {
-  ENSURE_CHANNEL;
-  PWLOG("PluginWidgetParent::RecvShow(%d)\n", aState);
-  mWidget->Show(aState);
-  return true;
+  PWLOG("PluginWidgetParent::ActorDestroy(%d)\n", aWhy);
+  KillWidget();
+}
+
+// Called by TabParent's Destroy() in response to an early tear down (Early
+// in that this is happening before layout in the child has had a chance
+// to destroy the child widget.) when the tab is closing.
+void
+PluginWidgetParent::ParentDestroy()
+{
+  PWLOG("PluginWidgetParent::ParentDestroy()\n");
 }
 
 bool
@@ -155,74 +196,17 @@ PluginWidgetParent::RecvSetFocus(const bool& aRaise)
 }
 
 bool
-PluginWidgetParent::RecvInvalidate(const nsIntRect& aRect)
-{
-  ENSURE_CHANNEL;
-  PWLOG("PluginWidgetParent::RecvInvalidate(%d, %d, %d, %d)\n", aRect.x, aRect.y, aRect.width, aRect.height);
-  mWidget->Invalidate(aRect);
-  return true;
-}
-
-bool
 PluginWidgetParent::RecvGetNativePluginPort(uintptr_t* value)
 {
   ENSURE_CHANNEL;
-  PWLOG("PluginWidgetParent::RecvGetNativeData()\n");
 #if defined(MOZ_WIDGET_GTK)
   *value = (uintptr_t)mWrapper->window;
+  NS_ASSERTION(*value, "no xid??");
 #else
   *value = (uintptr_t)mWidget->GetNativeData(NS_NATIVE_PLUGIN_PORT);
+  NS_ASSERTION(*value, "no native port??");
 #endif
   PWLOG("PluginWidgetParent::RecvGetNativeData() %p\n", (void*)*value);
-  return true;
-}
-
-bool
-PluginWidgetParent::RecvResize(const nsIntRect& aRect)
-{
-  ENSURE_CHANNEL;
-  PWLOG("PluginWidgetParent::RecvResize(%d, %d, %d, %d)\n", aRect.x, aRect.y, aRect.width, aRect.height);
-  mWidget->Resize(aRect.width, aRect.height, true);
-#if defined(MOZ_WIDGET_GTK)
-  mWrapper->width = aRect.width;
-  mWrapper->height = aRect.height;
-  mWrapper->SetAllocation();
-#endif
-  return true;
-}
-
-bool
-PluginWidgetParent::RecvMove(const double& aX, const double& aY)
-{
-  ENSURE_CHANNEL;
-  PWLOG("PluginWidgetParent::RecvMove(%f, %f)\n", aX, aY);
-
-
-  // This returns the top level window
-  nsCOMPtr<nsIWidget> widget = GetTabParent()->GetWidget();
-  if (!widget) {
-    // return true otherwise ipc will abort the content process, crashing
-    // all tabs.
-    return true;
-  }
-
-  // Passed in coords are at the tab origin, adjust to the main window.
-  nsIntPoint offset = GetTabParent()->GetChildProcessOffset();
-  offset.x = abs(offset.x);
-  offset.y = abs(offset.y);
-  offset += nsIntPoint(ceil(aX), ceil(aY));
-  mWidget->Move(offset.x, offset.y);
-
-  return true;
-}
-
-bool
-PluginWidgetParent::RecvSetWindowClipRegion(const nsTArray<nsIntRect>& Regions,
-                                            const bool& aIntersectWithExisting)
-{
-  ENSURE_CHANNEL;
-  PWLOG("PluginWidgetParent::RecvSetWindowClipRegion()\n");
-  mWidget->SetWindowClipRegion(Regions, aIntersectWithExisting);
   return true;
 }
 

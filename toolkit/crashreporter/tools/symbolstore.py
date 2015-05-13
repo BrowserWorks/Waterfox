@@ -29,6 +29,7 @@ import shutil
 import textwrap
 import fnmatch
 import subprocess
+import ctypes
 import urlparse
 import multiprocessing
 import collections
@@ -101,7 +102,7 @@ class VCSFileInfo:
     def GetCleanRoot(self):
         """ This method should return the repository root for the file or 'None'
             on failure. """
-        raise NotImplementedErrors
+        raise NotImplementedError
 
     def GetRevision(self):
         """ This method should return the revision number for the file or 'None'
@@ -669,7 +670,7 @@ class Dumper:
                         self.CopyDebug(file, debug_file, guid)
             except StopIteration:
                 pass
-            except e:
+            except Exception as e:
                 self.output(sys.stderr, "Unexpected error: %s" % (str(e),))
                 raise
             if result['status']:
@@ -705,6 +706,7 @@ class Dumper_Win32(Dumper):
 
         result = file
 
+        ctypes.windll.kernel32.SetErrorMode(ctypes.c_uint(1))
         (path, filename) = os.path.split(file)
         if os.path.isdir(path):
             lc_filename = filename.lower()
@@ -781,7 +783,7 @@ class Dumper_Linux(Dumper):
                                                       rel_path))
             shutil.move(file_dbg, full_path)
             # gzip the shipped debug files
-            os.system("gzip %s" % full_path)
+            os.system("gzip -f %s" % full_path)
             self.output(sys.stdout, rel_path + ".gz")
         else:
             if os.path.isfile(file_dbg):

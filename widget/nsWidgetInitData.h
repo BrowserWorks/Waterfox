@@ -94,8 +94,9 @@ struct nsWidgetInitData {
       mBorderStyle(eBorderStyle_default),
       mPopupHint(ePopupTypePanel),
       mPopupLevel(ePopupLevelTop),
-      clipChildren(false), 
-      clipSiblings(false), 
+      mScreenId(0),
+      clipChildren(false),
+      clipSiblings(false),
       mDropShadow(false),
       mListenForResizes(false),
       mUnicode(true),
@@ -104,8 +105,7 @@ struct nsWidgetInitData {
       mIsDragPopup(false),
       mIsAnimationSuppressed(false),
       mSupportTranslucency(false),
-      mMouseTransparent(false),
-      mRequireOffMainThreadCompositing(false)
+      mMouseTransparent(false)
   {
   }
 
@@ -113,6 +113,10 @@ struct nsWidgetInitData {
   nsBorderStyle mBorderStyle;
   nsPopupType   mPopupHint;
   nsPopupLevel  mPopupLevel;
+  // B2G multi-screen support. Screen ID is for differentiating screens of
+  // windows, and due to the hardware limitation, it is platform-specific for
+  // now, which align with the value of display type defined in HWC.
+  uint32_t      mScreenId;
   // when painting exclude area occupied by child windows and sibling windows
   bool          clipChildren, clipSiblings, mDropShadow;
   bool          mListenForResizes;
@@ -127,9 +131,6 @@ struct nsWidgetInitData {
   // true if the window should be transparent to mouse events. Currently this is
   // only valid for eWindowType_popup widgets
   bool          mMouseTransparent;
-  // Windows with out-of-process tabs always require OMTC. This flag designates
-  // such windows.
-  bool          mRequireOffMainThreadCompositing;
 };
 
 #endif // nsWidgetInitData_h__

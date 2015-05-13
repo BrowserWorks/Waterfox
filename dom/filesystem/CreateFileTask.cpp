@@ -1,5 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -27,7 +27,7 @@ uint32_t CreateFileTask::sOutputBufferSize = 0;
 
 CreateFileTask::CreateFileTask(FileSystemBase* aFileSystem,
                                const nsAString& aPath,
-                               File* aBlobData,
+                               Blob* aBlobData,
                                InfallibleTArray<uint8_t>& aArrayData,
                                bool replace,
                                ErrorResult& aRv)
@@ -79,7 +79,7 @@ CreateFileTask::CreateFileTask(FileSystemBase* aFileSystem,
   }
 
   BlobParent* bp = static_cast<BlobParent*>(static_cast<PBlobParent*>(data));
-  nsRefPtr<FileImpl> blobImpl = bp->GetBlobImpl();
+  nsRefPtr<BlobImpl> blobImpl = bp->GetBlobImpl();
   MOZ_ASSERT(blobImpl, "blobData should not be null.");
 
   nsresult rv = blobImpl->GetInternalStream(getter_AddRefs(mBlobStream));
@@ -127,9 +127,7 @@ FileSystemResponseValue
 CreateFileTask::GetSuccessRequestResult() const
 {
   MOZ_ASSERT(NS_IsMainThread(), "Only call on main thread!");
-  nsRefPtr<File> file = new File(mFileSystem->GetWindow(),
-                                       mTargetFileImpl);
-  BlobParent* actor = GetBlobParent(file);
+  BlobParent* actor = GetBlobParent(mTargetBlobImpl);
   if (!actor) {
     return FileSystemErrorResponse(NS_ERROR_DOM_FILESYSTEM_UNKNOWN_ERR);
   }
@@ -144,7 +142,7 @@ CreateFileTask::SetSuccessRequestResult(const FileSystemResponseValue& aValue)
   MOZ_ASSERT(NS_IsMainThread(), "Only call on main thread!");
   FileSystemFileResponse r = aValue;
   BlobChild* actor = static_cast<BlobChild*>(r.blobChild());
-  mTargetFileImpl = actor->GetBlobImpl();
+  mTargetBlobImpl = actor->GetBlobImpl();
 }
 
 nsresult
@@ -261,7 +259,7 @@ CreateFileTask::Work()
       return NS_ERROR_FAILURE;
     }
 
-    mTargetFileImpl = new FileImplFile(file);
+    mTargetBlobImpl = new BlobImplFile(file);
     return NS_OK;
   }
 
@@ -280,7 +278,7 @@ CreateFileTask::Work()
     return NS_ERROR_DOM_FILESYSTEM_UNKNOWN_ERR;
   }
 
-  mTargetFileImpl = new FileImplFile(file);
+  mTargetBlobImpl = new BlobImplFile(file);
   return NS_OK;
 }
 
@@ -303,8 +301,8 @@ CreateFileTask::HandlerCallback()
     return;
   }
 
-  nsCOMPtr<nsIDOMFile> file = new File(mFileSystem->GetWindow(), mTargetFileImpl);
-  mPromise->MaybeResolve(file);
+  nsRefPtr<Blob> blob = Blob::Create(mFileSystem->GetWindow(), mTargetBlobImpl);
+  mPromise->MaybeResolve(blob);
   mPromise = nullptr;
   mBlobData = nullptr;
 }

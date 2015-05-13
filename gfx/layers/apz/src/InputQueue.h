@@ -20,9 +20,9 @@ class ScrollWheelInput;
 namespace layers {
 
 class AsyncPanZoomController;
-class OverscrollHandoffChain;
 class CancelableBlockState;
 class TouchBlockState;
+class WheelBlockState;
 
 /**
  * This class stores incoming input events, separated into "input blocks", until
@@ -31,9 +31,6 @@ class TouchBlockState;
  */
 class InputQueue {
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(InputQueue)
-
-public:
-  typedef uint32_t TouchBehaviorFlags;
 
 public:
   InputQueue();
@@ -83,22 +80,36 @@ public:
    */
   CancelableBlockState* CurrentBlock() const;
   /**
-   * Returns the current pending input block as a touch block. It must only
+   * Returns the current pending input block as a touch block. It must only be
    * called if the current pending block is a touch block.
    */
   TouchBlockState* CurrentTouchBlock() const;
+  /**
+   * Returns the current pending input block as a wheel block. It must only be
+   * called if the current pending block is a wheel block.
+   */
+  WheelBlockState* CurrentWheelBlock() const;
   /**
    * Returns true iff the pending block at the head of the queue is ready for
    * handling.
    */
   bool HasReadyTouchBlock() const;
+  /**
+   * If there is a wheel transaction, returns the WheelBlockState representing
+   * the transaction. Otherwise, returns null.
+   */
+  WheelBlockState* GetCurrentWheelTransaction() const;
+  /**
+   * Remove all input blocks from the input queue.
+   */
+  void Clear();
 
 private:
   ~InputQueue();
 
   TouchBlockState* StartNewTouchBlock(const nsRefPtr<AsyncPanZoomController>& aTarget,
                                       bool aTargetConfirmed,
-                                      bool aCopyAllowedTouchBehaviorFromCurrent);
+                                      bool aCopyPropertiesFromCurrent);
 
   /**
    * If animations are present for the current pending input block, cancel
@@ -127,11 +138,11 @@ private:
   void SweepDepletedBlocks();
 
   /**
-   * Processes the current block if it's ready for handling.
+   * Processes the current block if it's ready for handling, using the block's
+   * target APZC.
    */
-  bool MaybeHandleCurrentBlock(const nsRefPtr<AsyncPanZoomController>& aTarget,
-                                      CancelableBlockState* block,
-                                      const InputData& aEvent);
+  bool MaybeHandleCurrentBlock(CancelableBlockState* block,
+                               const InputData& aEvent);
 
   void ScheduleMainThreadTimeout(const nsRefPtr<AsyncPanZoomController>& aTarget, uint64_t aInputBlockId);
   void MainThreadTimeout(const uint64_t& aInputBlockId);

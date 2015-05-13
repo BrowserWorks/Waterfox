@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim:set ts=2 sw=2 sts=2 et cindent: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -84,14 +84,14 @@ namespace mozilla {
 double
 BaseTimeDurationPlatformUtils::ToSeconds(int64_t aTicks)
 {
-  NS_ABORT_IF_FALSE(gInitialized, "calling TimeDuration too early");
+  MOZ_ASSERT(gInitialized, "calling TimeDuration too early");
   return (aTicks * sNsPerTick) / kNsPerSecd;
 }
 
 double
 BaseTimeDurationPlatformUtils::ToSecondsSigDigits(int64_t aTicks)
 {
-  NS_ABORT_IF_FALSE(gInitialized, "calling TimeDuration too early");
+  MOZ_ASSERT(gInitialized, "calling TimeDuration too early");
   // don't report a value < mResolution ...
   int64_t valueSigDigs = sResolution * (aTicks / sResolution);
   // and chop off insignificant digits
@@ -102,7 +102,7 @@ BaseTimeDurationPlatformUtils::ToSecondsSigDigits(int64_t aTicks)
 int64_t
 BaseTimeDurationPlatformUtils::TicksFromMilliseconds(double aMilliseconds)
 {
-  NS_ABORT_IF_FALSE(gInitialized, "calling TimeDuration too early");
+  MOZ_ASSERT(gInitialized, "calling TimeDuration too early");
   double result = (aMilliseconds * kNsPerMsd) / sNsPerTick;
   if (result > INT64_MAX) {
     return INT64_MAX;
@@ -116,7 +116,7 @@ BaseTimeDurationPlatformUtils::TicksFromMilliseconds(double aMilliseconds)
 int64_t
 BaseTimeDurationPlatformUtils::ResolutionInTicks()
 {
-  NS_ABORT_IF_FALSE(gInitialized, "calling TimeDuration too early");
+  MOZ_ASSERT(gInitialized, "calling TimeDuration too early");
   return static_cast<int64_t>(sResolution);
 }
 

@@ -60,10 +60,11 @@ if os.path.isdir(mozbase):
     for package in os.listdir(mozbase):
         sys.path.append(os.path.join(mozbase, package))
 
-import manifestparser
+from manifestparser import TestManifest
+from manifestparser.filters import chunk_by_slice, tags
+from mozlog import structured
 import mozcrash
 import mozinfo
-from mozlog import structured
 
 # --------------------------------------------------------------
 
@@ -420,7 +421,6 @@ class XPCShellTestThread(Thread):
             '-r', self.httpdManifest,
             '-m',
             '-s',
-            '-e', 'const _HTTPD_JS_PATH = "%s";' % self.httpdJSPath,
             '-e', 'const _HEAD_JS_PATH = "%s";' % self.headJSPath
         ]
 
@@ -751,17 +751,17 @@ class XPCShellTests(object):
         self.harness_timeout = HARNESS_TIMEOUT
         self.nodeProc = {}
 
-    def buildTestList(self):
+    def buildTestList(self, test_tags=None):
         """
           read the xpcshell.ini manifest and set self.alltests to be
           an array of test objects.
 
           if we are chunking tests, it will be done here as well
         """
-        if isinstance(self.manifest, manifestparser.TestManifest):
+        if isinstance(self.manifest, TestManifest):
             mp = self.manifest
         else:
-            mp = manifestparser.TestManifest(strict=True)
+            mp = TestManifest(strict=True)
             if self.manifest is None:
                 for testdir in self.testdirs:
                     if testdir:
@@ -771,28 +771,22 @@ class XPCShellTests(object):
 
         self.buildTestPath()
 
+        filters = []
+        if test_tags:
+            filters.append(tags(test_tags))
+
+        if self.singleFile is None and self.totalChunks > 1:
+            filters.append(chunk_by_slice(self.thisChunk, self.totalChunks))
         try:
-            self.alltests = mp.active_tests(**mozinfo.info)
+            self.alltests = mp.active_tests(filters=filters, **mozinfo.info)
         except TypeError:
             sys.stderr.write("*** offending mozinfo.info: %s\n" % repr(mozinfo.info))
             raise
 
-        if self.singleFile is None and self.totalChunks > 1:
-            self.chunkTests()
-
-    def chunkTests(self):
-        """
-          Split the list of tests up into [totalChunks] pieces and filter the
-          self.alltests based on thisChunk, so we only run a subset.
-        """
-        totalTests = len(self.alltests)
-        testsPerChunk = math.ceil(totalTests / float(self.totalChunks))
-        start = int(round((self.thisChunk-1) * testsPerChunk))
-        end = int(start + testsPerChunk)
-        if end > totalTests:
-            end = totalTests
-        self.log.info("Running tests %d-%d/%d" % (start + 1, end, totalTests))
-        self.alltests = self.alltests[start:end]
+        if len(self.alltests) == 0:
+            self.log.error("no tests to run using specified "
+                           "combination of filters: {}".format(
+                                mp.fmt_filters()))
 
     def setAbsPath(self):
         """
@@ -949,7 +943,7 @@ class XPCShellTests(object):
                         # We pipe stdin to node because the spdy server will exit when its
                         # stdin reaches EOF
                         process = Popen([nodeBin, serverJs], stdin=PIPE, stdout=PIPE,
-                                stderr=STDOUT, env=self.env, cwd=os.getcwd())
+                                stderr=PIPE, env=self.env, cwd=os.getcwd())
                         self.nodeProc[name] = process
 
                         # Check to make sure the server starts properly by waiting for it to
@@ -957,6 +951,12 @@ class XPCShellTests(object):
                         msg = process.stdout.readline()
                         if 'server listening' in msg:
                             nodeMozInfo['hasNode'] = True
+                            searchObj = re.search( r'SPDY server listening on port (.*)', msg, 0)
+                            if searchObj:
+                              self.env["MOZSPDY-PORT"] = searchObj.group(1)
+                            searchObj = re.search( r'HTTP2 server listening on port (.*)', msg, 0)
+                            if searchObj:
+                              self.env["MOZHTTP2-PORT"] = searchObj.group(1)
                     except OSError, e:
                         # This occurs if the subprocess couldn't be started
                         self.log.error('Could not run %s server: %s' % (name, str(e)))
@@ -973,7 +973,19 @@ class XPCShellTests(object):
         """
         for name, proc in self.nodeProc.iteritems():
             self.log.info('Node %s server shutting down ...' % name)
-            proc.terminate()
+            if proc.poll() is not None:
+                self.log.info('Node server %s already dead %s' % (name, proc.poll()))
+            else:
+                proc.terminate()
+            def dumpOutput(fd, label):
+                firstTime = True
+                for msg in fd:
+                    if firstTime:
+                        firstTime = False;
+                        self.log.info('Process %s' % label)
+                    self.log.info(msg)
+            dumpOutput(proc.stdout, "stdout")
+            dumpOutput(proc.stderr, "stderr")
 
     def buildXpcsRunArgs(self):
         """
@@ -1010,7 +1022,7 @@ class XPCShellTests(object):
                  testsRootDir=None, testingModulesDir=None, pluginsPath=None,
                  testClass=XPCShellTestThread, failureManifest=None,
                  log=None, stream=None, jsDebugger=False, jsDebuggerPort=0,
-                 **otherOptions):
+                 test_tags=None, **otherOptions):
         """Run xpcshell tests.
 
         |xpcshell|, is the xpcshell executable to use to run the tests.
@@ -1158,7 +1170,7 @@ class XPCShellTests(object):
 
         pStdout, pStderr = self.getPipes()
 
-        self.buildTestList()
+        self.buildTestList(test_tags)
         if self.singleFile:
             self.sequential = True
 
@@ -1203,6 +1215,11 @@ class XPCShellTests(object):
             if self.debuggerInfo.interactive:
                 signal.signal(signal.SIGINT, lambda signum, frame: None)
 
+            if "lldb" in self.debuggerInfo.path:
+                # Ask people to start debugging using 'process launch', see bug 952211.
+                self.log.info("It appears that you're using LLDB to debug this test.  " +
+                              "Please use the 'process launch' command instead of the 'run' command to start xpcshell.")
+
         if self.jsDebuggerInfo:
             # The js debugger magic needs more work to do the right thing
             # if debugging multiple files.
@@ -1232,8 +1249,10 @@ class XPCShellTests(object):
 
             test = testClass(test_object, self.event, self.cleanup_dir_list,
                     tests_root_dir=testsRootDir, app_dir_key=appDirKey,
-                    interactive=interactive, verbose=verbose, pStdout=pStdout,
-                    pStderr=pStderr, keep_going=keepGoing, log=self.log,
+                    interactive=interactive,
+                    verbose=verbose or test_object.get("verbose") == "true",
+                    pStdout=pStdout, pStderr=pStderr,
+                    keep_going=keepGoing, log=self.log,
                     mobileArgs=mobileArgs, **kwargs)
             if 'run-sequentially' in test_object or self.sequential:
                 sequential_tests.append(test)
@@ -1461,6 +1480,12 @@ class XPCShellOptions(OptionParser):
                         default=6000,
                         help="The port to listen on for a debugger connection if "
                              "--jsdebugger is specified.")
+        self.add_option("--tag",
+                        action="append", dest="test_tags",
+                        default=None,
+                        help="filter out tests that don't have the given tag. Can be "
+                             "used multiple times in which case the test must contain "
+                             "at least one of the given tags.")
 
 def main():
     parser = XPCShellOptions()

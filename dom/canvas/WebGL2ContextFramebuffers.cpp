@@ -398,6 +398,13 @@ WebGL2Context::InvalidateFramebuffer(GLenum target, const dom::Sequence<GLenum>&
         }
     }
 
+    // InvalidateFramebuffer is a hint to the driver. Should be OK to
+    // skip calls if not supported, for example by OSX 10.9 GL
+    // drivers.
+    static bool invalidateFBSupported = gl->IsSupported(gl::GLFeature::invalidate_framebuffer);
+    if (!invalidateFBSupported)
+        return;
+
     if (!fb && !isDefaultFB) {
         dom::Sequence<GLenum> tmpAttachments;
         TranslateDefaultAttachments(attachments, &tmpAttachments);
@@ -445,6 +452,13 @@ WebGL2Context::InvalidateSubFramebuffer(GLenum target, const dom::Sequence<GLenu
         }
     }
 
+    // InvalidateFramebuffer is a hint to the driver. Should be OK to
+    // skip calls if not supported, for example by OSX 10.9 GL
+    // drivers.
+    static bool invalidateFBSupported = gl->IsSupported(gl::GLFeature::invalidate_framebuffer);
+    if (!invalidateFBSupported)
+        return;
+
     if (!fb && !isDefaultFB) {
         dom::Sequence<GLenum> tmpAttachments;
         TranslateDefaultAttachments(attachments, &tmpAttachments);
@@ -459,12 +473,45 @@ WebGL2Context::InvalidateSubFramebuffer(GLenum target, const dom::Sequence<GLenu
 void
 WebGL2Context::ReadBuffer(GLenum mode)
 {
-    MOZ_CRASH("Not Implemented.");
+    if (IsContextLost())
+        return;
+
+    MakeContextCurrent();
+
+    if (mBoundReadFramebuffer) {
+        bool isColorAttachment = (mode >= LOCAL_GL_COLOR_ATTACHMENT0 &&
+                                  mode <= LastColorAttachment());
+        if (mode != LOCAL_GL_NONE &&
+            !isColorAttachment)
+        {
+            ErrorInvalidEnumInfo("readBuffer: If READ_FRAMEBUFFER is non-null,"
+                                 " `mode` must be COLOR_ATTACHMENTN or NONE."
+                                 " Was:", mode);
+            return;
+        }
+
+        gl->fReadBuffer(mode);
+        return;
+    }
+
+    // Operating on the default framebuffer.
+
+    if (mode != LOCAL_GL_NONE &&
+        mode != LOCAL_GL_BACK)
+    {
+        ErrorInvalidEnumInfo("readBuffer: If READ_FRAMEBUFFER is null, `mode`"
+                             " must be BACK or NONE. Was:", mode);
+        return;
+    }
+
+    gl->Screen()->SetReadBuffer(mode);
 }
 
 void
-WebGL2Context::RenderbufferStorageMultisample(GLenum target, GLsizei samples, GLenum internalformat,
+WebGL2Context::RenderbufferStorageMultisample(GLenum target, GLsizei samples,
+                                              GLenum internalFormat,
                                               GLsizei width, GLsizei height)
 {
-    MOZ_CRASH("Not Implemented.");
+    RenderbufferStorage_base("renderbufferStorageMultisample", target, samples,
+                              internalFormat, width, height);
 }

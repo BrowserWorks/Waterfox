@@ -147,13 +147,11 @@ ShadowChild(const OpRaiseToTopChild& op)
 // LayerTransactionParent
 LayerTransactionParent::LayerTransactionParent(LayerManagerComposite* aManager,
                                                ShadowLayersManager* aLayersManager,
-                                               uint64_t aId,
-                                               ProcessId aOtherProcess)
+                                               uint64_t aId)
   : mLayerManager(aManager)
   , mShadowLayersManager(aLayersManager)
   , mId(aId)
   , mPendingTransaction(0)
-  , mChildProcessId(aOtherProcess)
   , mDestroyed(false)
   , mIPCOpen(false)
 {
@@ -190,16 +188,17 @@ LayerTransactionParent::GetCompositorBackendType() const
 }
 
 bool
-LayerTransactionParent::RecvUpdateNoSwap(const InfallibleTArray<Edit>& cset,
+LayerTransactionParent::RecvUpdateNoSwap(InfallibleTArray<Edit>&& cset,
                                          const uint64_t& aTransactionId,
                                          const TargetConfig& targetConfig,
+                                         PluginsArray&& aPlugins,
                                          const bool& isFirstPaint,
                                          const bool& scheduleComposite,
                                          const uint32_t& paintSequenceNumber,
                                          const bool& isRepeatTransaction,
                                          const mozilla::TimeStamp& aTransactionStart)
 {
-  return RecvUpdate(cset, aTransactionId, targetConfig, isFirstPaint,
+  return RecvUpdate(Move(cset), aTransactionId, targetConfig, Move(aPlugins), isFirstPaint,
       scheduleComposite, paintSequenceNumber, isRepeatTransaction,
       aTransactionStart, nullptr);
 }
@@ -212,17 +211,18 @@ public:
 
   ~AutoLayerTransactionParentAsyncMessageSender()
   {
-    mLayerTransaction->SendPendingAsyncMessges();
-    ImageBridgeParent::SendPendingAsyncMessges(mLayerTransaction->GetChildProcessId());
+    mLayerTransaction->SendPendingAsyncMessages();
+    ImageBridgeParent::SendPendingAsyncMessages(mLayerTransaction->GetChildProcessId());
   }
 private:
   LayerTransactionParent* mLayerTransaction;
 };
 
 bool
-LayerTransactionParent::RecvUpdate(const InfallibleTArray<Edit>& cset,
+LayerTransactionParent::RecvUpdate(InfallibleTArray<Edit>&& cset,
                                    const uint64_t& aTransactionId,
                                    const TargetConfig& targetConfig,
+                                   PluginsArray&& aPlugins,
                                    const bool& isFirstPaint,
                                    const bool& scheduleComposite,
                                    const uint32_t& paintSequenceNumber,
@@ -327,7 +327,7 @@ LayerTransactionParent::RecvUpdate(const InfallibleTArray<Edit>& cset,
       layer->SetEventRegions(common.eventRegions());
       layer->SetContentFlags(common.contentFlags());
       layer->SetOpacity(common.opacity());
-      layer->SetClipRect(common.useClipRect() ? &common.clipRect() : nullptr);
+      layer->SetClipRect(common.useClipRect() ? Some(common.clipRect()) : Nothing());
       layer->SetBaseTransform(common.transform().value());
       layer->SetPostScale(common.postXScale(), common.postYScale());
       layer->SetIsFixedPosition(common.isFixedPosition());
@@ -339,7 +339,8 @@ LayerTransactionParent::RecvUpdate(const InfallibleTArray<Edit>& cset,
                                      common.stickyScrollRangeInner());
       }
       layer->SetScrollbarData(common.scrollbarTargetContainerId(),
-        static_cast<Layer::ScrollDirection>(common.scrollbarDirection()));
+        static_cast<Layer::ScrollDirection>(common.scrollbarDirection()),
+        common.scrollbarThumbRatio());
       layer->SetMixBlendMode((gfx::CompositionOp)common.mixBlendMode());
       layer->SetForceIsolatedGroup(common.forceIsolatedGroup());
       if (PLayerParent* maskLayer = common.maskLayerParent()) {
@@ -384,6 +385,7 @@ LayerTransactionParent::RecvUpdate(const InfallibleTArray<Edit>& cset,
         containerLayer->SetInheritedScale(attrs.inheritedXScale(), attrs.inheritedYScale());
         containerLayer->SetScaleToResolution(attrs.scaleToResolution(),
                                              attrs.presShellResolution());
+        containerLayer->SetEventRegionsOverride(attrs.eventRegionsOverride());
 
         if (attrs.hmdInfo()) {
           if (!IsSameProcess()) {
@@ -425,6 +427,7 @@ LayerTransactionParent::RecvUpdate(const InfallibleTArray<Edit>& cset,
           return false;
         }
         refLayer->SetReferentId(specific.get_RefLayerAttributes().id());
+        refLayer->SetEventRegionsOverride(specific.get_RefLayerAttributes().eventRegionsOverride());
         break;
       }
       case Specific::TImageLayerAttributes: {
@@ -581,7 +584,8 @@ LayerTransactionParent::RecvUpdate(const InfallibleTArray<Edit>& cset,
   }
 
   mShadowLayersManager->ShadowLayersUpdated(this, aTransactionId, targetConfig,
-      isFirstPaint, scheduleComposite, paintSequenceNumber, isRepeatTransaction);
+                                            aPlugins, isFirstPaint, scheduleComposite,
+                                            paintSequenceNumber, isRepeatTransaction);
 
   {
     AutoResolveRefLayers resolve(mShadowLayersManager->GetCompositionManager(this));
@@ -609,15 +613,23 @@ LayerTransactionParent::RecvUpdate(const InfallibleTArray<Edit>& cset,
   }
 #endif
 
-  TimeDuration latency = TimeStamp::Now() - aTransactionStart;
-  // Theshold is 200ms to trigger, 1000ms to hit red
-  if (latency > TimeDuration::FromMilliseconds(kVisualWarningTrigger)) {
-    float severity = (latency - TimeDuration::FromMilliseconds(kVisualWarningTrigger)).ToMilliseconds() /
-                       (kVisualWarningMax - kVisualWarningTrigger);
-    if (severity > 1.f) {
-      severity = 1.f;
+  // Enable visual warning for long transaction when draw FPS option is enabled
+  bool drawFps = gfxPrefs::LayersDrawFPS();
+  if (drawFps) {
+    uint32_t visualWarningTrigger = gfxPrefs::LayerTransactionWarning();
+    // The default theshold is 200ms to trigger, hit red when it take 4 times longer
+    TimeDuration latency = TimeStamp::Now() - aTransactionStart;
+    if (latency > TimeDuration::FromMilliseconds(visualWarningTrigger)) {
+      float severity = (latency - TimeDuration::FromMilliseconds(visualWarningTrigger)).ToMilliseconds() /
+                         (4 * visualWarningTrigger);
+      if (severity > 1.f) {
+        severity = 1.f;
+      }
+      mLayerManager->VisualFrameWarning(severity);
+      PR_LogPrint("LayerTransactionParent::RecvUpdate transaction from process %d took %f ms",
+                  OtherPid(),
+                  latency.ToMilliseconds());
     }
-    mLayerManager->VisualFrameWarning(severity);
   }
 
   profiler_tracing("Paint", "LayerTransaction", TRACING_INTERVAL_END);
@@ -650,6 +662,8 @@ LayerTransactionParent::RecvGetOpacity(PLayerParent* aParent,
     return false;
   }
 
+  mShadowLayersManager->ApplyAsyncProperties(this);
+
   *aOpacity = layer->GetLocalOpacity();
   return true;
 }
@@ -666,6 +680,12 @@ LayerTransactionParent::RecvGetAnimationTransform(PLayerParent* aParent,
   if (!layer) {
     return false;
   }
+
+  // Make sure we apply the latest animation style or else we can end up with
+  // a race between when we temporarily clear the animation transform (in
+  // CompositorParent::SetShadowProperties) and when animation recalculates
+  // the value.
+  mShadowLayersManager->ApplyAsyncProperties(this);
 
   // This method is specific to transforms applied by animation.
   // This is because this method uses the information stored with an animation
@@ -700,9 +720,7 @@ LayerTransactionParent::RecvGetAnimationTransform(PLayerParent* aParent,
         Point3D(NS_round(NSAppUnitsToFloatPixels(data.origin().x, scale)),
                 NS_round(NSAppUnitsToFloatPixels(data.origin().y, scale)),
                 0.0f);
-      double cssPerDev =
-        double(nsDeviceContext::AppUnitsPerCSSPixel()) / double(scale);
-      transformOrigin = data.transformOrigin() * cssPerDev;
+      transformOrigin = data.transformOrigin();
       break;
     }
   }
@@ -785,6 +803,13 @@ LayerTransactionParent::RecvRequestProperty(const nsString& aProperty, float* aV
   return true;
 }
 
+bool
+LayerTransactionParent::RecvSetConfirmedTargetAPZC(const uint64_t& aBlockId,
+                                                   nsTArray<ScrollableLayerGuid>&& aTargets)
+{
+  mShadowLayersManager->SetConfirmedTargetAPZC(this, aBlockId, aTargets);
+  return true;
+}
 
 bool
 LayerTransactionParent::Attach(ShadowLayerParent* aLayerParent,
@@ -829,6 +854,7 @@ LayerTransactionParent::RecvClearCachedResources()
     // of resources to exactly that subtree, so we specify it here.
     mLayerManager->ClearCachedResources(mRoot);
   }
+  mShadowLayersManager->NotifyClearCachedResources(this);
   return true;
 }
 
@@ -878,7 +904,7 @@ LayerTransactionParent::DeallocPTextureParent(PTextureParent* actor)
 }
 
 bool
-LayerTransactionParent::RecvChildAsyncMessages(const InfallibleTArray<AsyncChildMessageData>& aMessages)
+LayerTransactionParent::RecvChildAsyncMessages(InfallibleTArray<AsyncChildMessageData>&& aMessages)
 {
   AutoLayerTransactionParentAsyncMessageSender autoAsyncMessageSender(this);
 
@@ -886,32 +912,6 @@ LayerTransactionParent::RecvChildAsyncMessages(const InfallibleTArray<AsyncChild
     const AsyncChildMessageData& message = aMessages[i];
 
     switch (message.type()) {
-      case AsyncChildMessageData::TOpDeliverFenceFromChild: {
-        const OpDeliverFenceFromChild& op = message.get_OpDeliverFenceFromChild();
-#if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION >= 17
-        FenceHandle fence = FenceHandle(op.fence());
-        PTextureParent* parent = op.textureParent();
-
-        TextureHostOGL* hostOGL = nullptr;
-        RefPtr<TextureHost> texture = TextureHost::AsTextureHost(parent);
-        if (texture) {
-          hostOGL = texture->AsHostOGL();
-        }
-        if (hostOGL) {
-          hostOGL->SetAcquireFence(fence.mFence);
-        }
-#endif
-        // Send back a response.
-        InfallibleTArray<AsyncParentMessageData> replies;
-        replies.AppendElement(OpReplyDeliverFence(op.transactionId()));
-        mozilla::unused << SendParentAsyncMessages(replies);
-        break;
-      }
-      case AsyncChildMessageData::TOpReplyDeliverFence: {
-        const OpReplyDeliverFence& op = message.get_OpReplyDeliverFence();
-        TransactionCompleteted(op.transactionId());
-        break;
-      }
       case AsyncChildMessageData::TOpRemoveTextureAsync: {
         const OpRemoveTextureAsync& op = message.get_OpRemoveTextureAsync();
         CompositableHost* compositable = CompositableHost::FromIPDLActor(op.compositableParent());
@@ -920,20 +920,23 @@ LayerTransactionParent::RecvChildAsyncMessages(const InfallibleTArray<AsyncChild
         MOZ_ASSERT(tex.get());
         compositable->RemoveTextureHost(tex);
 
-        // send FenceHandle if present via ImageBridge.
-        ImageBridgeParent::SendFenceHandleToTrackerIfPresent(
-                             GetChildProcessId(),
-                             op.holderId(),
-                             op.transactionId(),
-                             op.textureParent(),
-                             compositable);
-
-        // Send message back via PImageBridge.
-        ImageBridgeParent::ReplyRemoveTexture(
-                             GetChildProcessId(),
-                             OpReplyRemoveTexture(true, // isMain
-                                                  op.holderId(),
-                                                  op.transactionId()));
+        MOZ_ASSERT(ImageBridgeParent::GetInstance(GetChildProcessId()));
+        if (ImageBridgeParent::GetInstance(GetChildProcessId())) {
+          // send FenceHandle if present via ImageBridge.
+          ImageBridgeParent::AppendDeliverFenceMessage(
+            GetChildProcessId(),
+            op.holderId(),
+            op.transactionId(),
+            op.textureParent(),
+            compositable);
+          // Send message back via PImageBridge.
+          ImageBridgeParent::ReplyRemoveTexture(
+            GetChildProcessId(),
+            OpReplyRemoveTexture(op.holderId(),
+                                 op.transactionId()));
+        } else {
+          NS_ERROR("ImageBridgeParent should exist");
+        }
         break;
       }
       default:
@@ -947,12 +950,11 @@ LayerTransactionParent::RecvChildAsyncMessages(const InfallibleTArray<AsyncChild
 void
 LayerTransactionParent::ActorDestroy(ActorDestroyReason why)
 {
-  DestroyAsyncTransactionTrackersHolder();
 }
 
 bool LayerTransactionParent::IsSameProcess() const
 {
-  return OtherProcess() == ipc::kInvalidProcessHandle;
+  return OtherPid() == base::GetCurrentProcId();
 }
 
 void
@@ -968,10 +970,7 @@ LayerTransactionParent::SendFenceHandleIfPresent(PTextureParent* aTexture,
   if (aCompositableHost && aCompositableHost->GetCompositor()) {
     FenceHandle fence = aCompositableHost->GetCompositor()->GetReleaseFence();
     if (fence.IsValid()) {
-      RefPtr<FenceDeliveryTracker> tracker = new FenceDeliveryTracker(fence);
-      HoldUntilComplete(tracker);
-      mPendingAsyncMessage.push_back(OpDeliverFence(tracker->GetId(),
-                                                    aTexture, nullptr,
+      mPendingAsyncMessage.push_back(OpDeliverFence(aTexture, nullptr,
                                                     fence));
     }
   }
@@ -979,31 +978,23 @@ LayerTransactionParent::SendFenceHandleIfPresent(PTextureParent* aTexture,
   // Send a ReleaseFence that is set by HwcComposer2D.
   FenceHandle fence = texture->GetAndResetReleaseFenceHandle();
   if (fence.IsValid()) {
-    RefPtr<FenceDeliveryTracker> tracker = new FenceDeliveryTracker(fence);
-    HoldUntilComplete(tracker);
-    mPendingAsyncMessage.push_back(OpDeliverFence(tracker->GetId(),
-                                                  aTexture, nullptr,
+    mPendingAsyncMessage.push_back(OpDeliverFence(aTexture, nullptr,
                                                   fence));
   }
-}
-
-void
-LayerTransactionParent::SendFenceHandle(AsyncTransactionTracker* aTracker,
-                                        PTextureParent* aTexture,
-                                        const FenceHandle& aFence)
-{
-  HoldUntilComplete(aTracker);
-  InfallibleTArray<AsyncParentMessageData> messages;
-  messages.AppendElement(OpDeliverFence(aTracker->GetId(),
-                                        aTexture, nullptr,
-                                        aFence));
-  mozilla::unused << SendParentAsyncMessages(messages);
 }
 
 void
 LayerTransactionParent::SendAsyncMessage(const InfallibleTArray<AsyncParentMessageData>& aMessage)
 {
   mozilla::unused << SendParentAsyncMessages(aMessage);
+}
+
+void
+LayerTransactionParent::ReplyRemoveTexture(const OpReplyRemoveTexture& aReply)
+{
+  InfallibleTArray<AsyncParentMessageData> messages;
+  messages.AppendElement(aReply);
+  mozilla::unused << SendParentAsyncMessages(messages);
 }
 
 } // namespace layers

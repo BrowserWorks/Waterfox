@@ -108,7 +108,7 @@ this.SafeBrowsing = {
     debug = Services.prefs.getBoolPref("browser.safebrowsing.debug");
     this.phishingEnabled = Services.prefs.getBoolPref("browser.safebrowsing.enabled");
     this.malwareEnabled = Services.prefs.getBoolPref("browser.safebrowsing.malware.enabled");
-    this.trackingEnabled = Services.prefs.getBoolPref("privacy.trackingprotection.enabled");
+    this.trackingEnabled = Services.prefs.getBoolPref("privacy.trackingprotection.enabled") || Services.prefs.getBoolPref("privacy.trackingprotection.pbmode.enabled");
     this.updateProviderURLs();
 
     // XXX The listManager backend gets confused if this is called before the
@@ -199,8 +199,9 @@ this.SafeBrowsing = {
   addMozEntries: function() {
     // Add test entries to the DB.
     // XXX bug 779008 - this could be done by DB itself?
-    const phishURL   = "itisatrap.org/firefox/its-a-trap.html";
-    const malwareURL = "itisatrap.org/firefox/its-an-attack.html";
+    const phishURL    = "itisatrap.org/firefox/its-a-trap.html";
+    const malwareURL  = "itisatrap.org/firefox/its-an-attack.html";
+    const unwantedURL = "itisatrap.org/firefox/unwanted.html";
 
     let update = "n:1000\ni:test-malware-simple\nad:1\n" +
                  "a:1:32:" + malwareURL.length + "\n" +
@@ -208,6 +209,9 @@ this.SafeBrowsing = {
     update += "n:1000\ni:test-phish-simple\nad:1\n" +
               "a:1:32:" + phishURL.length + "\n" +
               phishURL;
+    update += "n:1000\ni:test-unwanted-simple\nad:1\n" +
+              "a:1:32:" + unwantedURL.length + "\n" +
+              unwantedURL;
     log("addMozEntries:", update);
 
     let db = Cc["@mozilla.org/url-classifier/dbservice;1"].
@@ -222,7 +226,7 @@ this.SafeBrowsing = {
     };
 
     try {
-      db.beginUpdate(dummyListener, "test-malware-simple,test-phish-simple", "");
+      db.beginUpdate(dummyListener, "test-malware-simple,test-phish-simple,test-unwanted-simple", "");
       db.beginStream("", "");
       db.updateStream(update);
       db.finishStream();

@@ -13,9 +13,9 @@
 #include "mozilla/layers/TextureHostOGL.h"  // for TextureHostOGL
 #include "nsAString.h"
 #include "nsDebug.h"                    // for NS_WARNING
-#include "nsPoint.h"                    // for nsIntPoint
+#include "nsPoint.h"                    // for IntPoint
 #include "nsPrintfCString.h"            // for nsPrintfCString
-#include "nsRect.h"                     // for nsIntRect
+#include "nsRect.h"                     // for IntRect
 #include "nsSize.h"                     // for nsIntSize
 #include "mozilla/layers/TiledContentClient.h"
 
@@ -28,7 +28,7 @@ namespace layers {
 class Layer;
 
 TiledLayerBufferComposite::TiledLayerBufferComposite()
-  : mFrameResolution(1.0)
+  : mFrameResolution()
   , mHasDoubleBufferedTiles(false)
   , mIsValid(false)
 {}
@@ -51,7 +51,8 @@ TiledLayerBufferComposite::TiledLayerBufferComposite(ISurfaceAllocator* aAllocat
   mRetainedWidth = aDescriptor.retainedWidth();
   mRetainedHeight = aDescriptor.retainedHeight();
   mResolution = aDescriptor.resolution();
-  mFrameResolution = CSSToParentLayerScale(aDescriptor.frameResolution());
+  mFrameResolution = CSSToParentLayerScale2D(aDescriptor.frameXResolution(),
+                                             aDescriptor.frameYResolution());
   if (mResolution == 0 || IsNaN(mResolution)) {
     // There are divisions by mResolution so this protects the compositor process
     // against malicious content processes and fuzzing.
@@ -170,7 +171,7 @@ TiledLayerBufferComposite::Upload()
 
 TileHost
 TiledLayerBufferComposite::ValidateTile(TileHost aTile,
-                                        const nsIntPoint& aTileOrigin,
+                                        const IntPoint& aTileOrigin,
                                         const nsIntRegion& aDirtyRect)
 {
   if (aTile.IsPlaceholderTile()) {
@@ -211,6 +212,7 @@ TiledLayerBufferComposite::ValidateTile(TileHost aTile,
 void
 TiledLayerBufferComposite::SetCompositor(Compositor* aCompositor)
 {
+  MOZ_ASSERT(aCompositor);
   if (!IsValid()) {
     return;
   }
@@ -222,23 +224,6 @@ TiledLayerBufferComposite::SetCompositor(Compositor* aCompositor)
     }
   }
 }
-
-#if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION >= 17
-void
-TiledLayerBufferComposite::SetReleaseFence(const android::sp<android::Fence>& aReleaseFence)
-{
-  for (size_t i = 0; i < mRetainedTiles.Length(); i++) {
-    if (!mRetainedTiles[i].mTextureHost) {
-      continue;
-    }
-    TextureHostOGL* texture = mRetainedTiles[i].mTextureHost->AsHostOGL();
-    if (!texture) {
-      continue;
-    }
-    texture->SetReleaseFence(new android::Fence(aReleaseFence->dup()));
-  }
-}
-#endif
 
 TiledContentHost::TiledContentHost(const TextureInfo& aTextureInfo)
   : ContentHost(aTextureInfo)
@@ -390,6 +375,7 @@ TiledContentHost::Composite(EffectChain& aEffectChain,
                             const gfx::Rect& aClipRect,
                             const nsIntRegion* aVisibleRegion /* = nullptr */)
 {
+  MOZ_ASSERT(mCompositor);
   if (mPendingUpload) {
     mTiledBuffer.SetCompositor(mCompositor);
     mTiledBuffer.Upload();
@@ -479,7 +465,7 @@ TiledContentHost::RenderTile(const TileHost& aTile,
                              const gfx::Filter& aFilter,
                              const gfx::Rect& aClipRect,
                              const nsIntRegion& aScreenRegion,
-                             const nsIntPoint& aTextureOffset,
+                             const IntPoint& aTextureOffset,
                              const nsIntSize& aTextureBounds)
 {
   if (aTile.IsPlaceholderTile()) {
@@ -491,7 +477,7 @@ TiledContentHost::RenderTile(const TileHost& aTile,
   if (aBackgroundColor) {
     aEffectChain.mPrimaryEffect = new EffectSolidColor(ToColor(*aBackgroundColor));
     nsIntRegionRectIterator it(aScreenRegion);
-    for (const nsIntRect* rect = it.Next(); rect != nullptr; rect = it.Next()) {
+    for (const IntRect* rect = it.Next(); rect != nullptr; rect = it.Next()) {
       Rect graphicsRect(rect->x, rect->y, rect->width, rect->height);
       mCompositor->DrawQuad(graphicsRect, aClipRect, aEffectChain, 1.0, aTransform);
     }
@@ -521,7 +507,7 @@ TiledContentHost::RenderTile(const TileHost& aTile,
   aEffectChain.mPrimaryEffect = effect;
 
   nsIntRegionRectIterator it(aScreenRegion);
-  for (const nsIntRect* rect = it.Next(); rect != nullptr; rect = it.Next()) {
+  for (const IntRect* rect = it.Next(); rect != nullptr; rect = it.Next()) {
     Rect graphicsRect(rect->x, rect->y, rect->width, rect->height);
     Rect textureRect(rect->x - aTextureOffset.x, rect->y - aTextureOffset.y,
                      rect->width, rect->height);
@@ -532,7 +518,11 @@ TiledContentHost::RenderTile(const TileHost& aTile,
                                   textureRect.height / aTextureBounds.height);
     mCompositor->DrawQuad(graphicsRect, aClipRect, aEffectChain, aOpacity, aTransform);
   }
-  mCompositor->DrawDiagnostics(DiagnosticFlags::CONTENT | DiagnosticFlags::TILE,
+  DiagnosticFlags flags = DiagnosticFlags::CONTENT | DiagnosticFlags::TILE;
+  if (aTile.mTextureHostOnWhite) {
+    flags |= DiagnosticFlags::COMPONENT_ALPHA;
+  }
+  mCompositor->DrawDiagnostics(flags,
                                aScreenRegion, aClipRect, aTransform, mFlashCounter);
 }
 
@@ -557,9 +547,10 @@ TiledContentHost::RenderLayerBuffer(TiledLayerBufferComposite& aLayerBuffer,
   // precision layer buffer. Compensate for a changing frame resolution when
   // rendering the low precision buffer.
   if (aLayerBuffer.GetFrameResolution() != mTiledBuffer.GetFrameResolution()) {
-    const CSSToParentLayerScale& layerResolution = aLayerBuffer.GetFrameResolution();
-    const CSSToParentLayerScale& localResolution = mTiledBuffer.GetFrameResolution();
-    layerScale.width = layerScale.height = layerResolution.scale / localResolution.scale;
+    const CSSToParentLayerScale2D& layerResolution = aLayerBuffer.GetFrameResolution();
+    const CSSToParentLayerScale2D& localResolution = mTiledBuffer.GetFrameResolution();
+    layerScale.width = layerResolution.xScale / localResolution.xScale;
+    layerScale.height = layerResolution.yScale / localResolution.yScale;
     aVisibleRegion.ScaleRoundOut(layerScale.width, layerScale.height);
   }
 
@@ -579,9 +570,11 @@ TiledContentHost::RenderLayerBuffer(TiledLayerBufferComposite& aLayerBuffer,
   aTransform.PreScale(1/(resolution * layerScale.width),
                       1/(resolution * layerScale.height), 1);
 
+  DiagnosticFlags componentAlphaDiagnostic = DiagnosticFlags::NO_DIAGNOSTIC;
+
   uint32_t rowCount = 0;
   uint32_t tileX = 0;
-  nsIntRect visibleRect = aVisibleRegion.GetBounds();
+  IntRect visibleRect = aVisibleRegion.GetBounds();
   gfx::IntSize scaledTileSize = aLayerBuffer.GetScaledTileSize();
   for (int32_t x = visibleRect.x; x < visibleRect.x + visibleRect.width;) {
     rowCount++;
@@ -599,22 +592,25 @@ TiledContentHost::RenderLayerBuffer(TiledLayerBufferComposite& aLayerBuffer,
       }
 
       TileHost tileTexture = aLayerBuffer.
-        GetTile(nsIntPoint(aLayerBuffer.RoundDownToTileEdge(x, scaledTileSize.width),
-                           aLayerBuffer.RoundDownToTileEdge(y, scaledTileSize.height)));
+        GetTile(IntPoint(aLayerBuffer.RoundDownToTileEdge(x, scaledTileSize.width),
+                         aLayerBuffer.RoundDownToTileEdge(y, scaledTileSize.height)));
       if (tileTexture != aLayerBuffer.GetPlaceholderTile()) {
         nsIntRegion tileDrawRegion;
-        tileDrawRegion.And(nsIntRect(x, y, w, h), aLayerBuffer.GetValidRegion());
+        tileDrawRegion.And(IntRect(x, y, w, h), aLayerBuffer.GetValidRegion());
         tileDrawRegion.And(tileDrawRegion, aVisibleRegion);
         tileDrawRegion.Sub(tileDrawRegion, maskRegion);
 
         if (!tileDrawRegion.IsEmpty()) {
           tileDrawRegion.ScaleRoundOut(resolution, resolution);
-          nsIntPoint tileOffset((x - tileStartX) * resolution,
+          IntPoint tileOffset((x - tileStartX) * resolution,
                                 (y - tileStartY) * resolution);
           gfx::IntSize tileSize = aLayerBuffer.GetTileSize();
           RenderTile(tileTexture, aBackgroundColor, aEffectChain, aOpacity, aTransform,
                      aFilter, aClipRect, tileDrawRegion, tileOffset,
                      nsIntSize(tileSize.width, tileSize.height));
+          if (tileTexture.mTextureHostOnWhite) {
+            componentAlphaDiagnostic = DiagnosticFlags::COMPONENT_ALPHA;
+          }
         }
       }
       tileY++;
@@ -625,7 +621,7 @@ TiledContentHost::RenderLayerBuffer(TiledLayerBufferComposite& aLayerBuffer,
   }
   gfx::Rect rect(visibleRect.x, visibleRect.y,
                  visibleRect.width, visibleRect.height);
-  GetCompositor()->DrawDiagnostics(DiagnosticFlags::CONTENT,
+  GetCompositor()->DrawDiagnostics(DiagnosticFlags::CONTENT | componentAlphaDiagnostic,
                                    rect, aClipRect, aTransform, mFlashCounter);
 }
 

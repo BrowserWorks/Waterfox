@@ -46,6 +46,12 @@ searchbar {
   -moz-binding: url("chrome://browser/content/search/search.xml#searchbar");
 }
 
+/* Prevent shrinking the page content to 0 height and width */
+.browserStack > browser {
+  min-height: 25px;
+  min-width: 25px;
+}
+
 .browserStack > browser {
   -moz-binding: url("chrome://browser/content/tabbrowser.xml#tabbrowser-browser");
 }
@@ -216,6 +222,10 @@ toolbar[customizing] > .overflow-button {
 
 #titlebar {
   -moz-binding: url("chrome://global/content/bindings/general.xml#windowdragbox");
+
+%ifdef XP_MACOSX
+  -moz-window-dragging: drag;
+%endif
 }
 
 #titlebar-spacer {
@@ -288,6 +298,10 @@ toolbar[customizing] > .overflow-button {
 #main-window[inFullscreen] #global-notificationbox,
 #main-window[inFullscreen] #high-priority-global-notificationbox {
   visibility: collapse;
+}
+
+#navigator-toolbox[fullscreenShouldAnimate] {
+  transition: 1.5s margin-top ease-out;
 }
 
 /* Rules to help integrate SDK widgets */
@@ -759,6 +773,14 @@ window[chromehidden~="toolbar"] toolbar:not(#nav-bar):not(#TabsToolbar):not(#pri
   -moz-binding: url("chrome://browser/content/urlbarBindings.xml#click-to-play-plugins-notification");
 }
 
+#password-fill-notification {
+  -moz-binding: url("chrome://browser/content/urlbarBindings.xml#password-fill-notification");
+}
+
+.login-fill-item {
+  -moz-binding: url("chrome://passwordmgr/content/login.xml#login");
+}
+
 .plugin-popupnotification-centeritem {
   -moz-binding: url("chrome://browser/content/urlbarBindings.xml#plugin-popupnotification-center-item");
 }
@@ -877,14 +899,6 @@ toolbarbutton[type="socialmark"] {
   -moz-binding: url("chrome://browser/content/socialmarks.xml#toolbarbutton-marks");
 }
 
-toolbarbutton.badged-button > .toolbarbutton-badge-container > .toolbarbutton-icon,
-toolbarbutton[type="socialmark"] > .toolbarbutton-icon {
-  max-width: 18px;
-}
-toolbarpaletteitem[place="palette"] > toolbarbutton.badged-button > .toolbarbutton-badge-container > .toolbarbutton-icon {
-  max-width: 32px;
-}
-
 panelview > .social-panel-frame {
   width: auto;
   height: auto;
@@ -895,6 +909,11 @@ notification[value="translation"] {
   -moz-binding: url("chrome://browser/content/translation-infobar.xml#translationbar");
 }
 
+/* Loop/ Hello */
+notification[value="loop-sharing-notification"] .close-icon {
+  display: none;
+}
+
 /* Social */
 /* Note the chatbox 'width' values are duplicated in socialchat.xml */
 chatbox {
@@ -902,6 +921,10 @@ chatbox {
   transition: height 150ms ease-out, width 150ms ease-out;
   height: 285px;
   width: 260px; /* CHAT_WIDTH_OPEN in socialchat.xml */
+}
+
+chatbox[large="true"] {
+  width: 300px;
 }
 
 chatbox[minimized="true"] {
@@ -1008,8 +1031,8 @@ chatbox:-moz-full-screen-ancestor > .chat-titlebar {
 }
 
 /* Combobox dropdown renderer */
-#ContentSelectDropdown {
-  -moz-binding: url("chrome://global/content/bindings/popup.xml#popup-scrollbars");
+#ContentSelectDropdown > menupopup {
+  max-height: 350px;
 }
 
 .contentSelectDropdown-optgroup {
@@ -1169,7 +1192,9 @@ toolbarpaletteitem[dragover] {
 
 toolbarpaletteitem[place="palette"] {
   width: 10em;
-  height: calc(40px + 2em);
+  /* icon (32) + margin (2 * 4) + button padding/border (2 * 4) + label margin (~2) + label
+   * line-height (1.5em): */
+  height: calc(50px + 1.5em);
   margin-bottom: 5px;
   overflow: hidden;
   display: inline-block;
@@ -1184,6 +1209,10 @@ toolbarpaletteitem[place="palette"][hidden] {
   -moz-box-flex: 1;
   width: 10em;
   max-width: 10em;
+}
+
+#main-window[customizing=true] #PanelUI-update-status {
+  display: none;
 }
 
 /* UI Tour */

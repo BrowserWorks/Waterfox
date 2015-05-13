@@ -106,13 +106,14 @@
 
         win.AppManager.runtimeList.other = [remote, local, other];
 
-        win.AppManager.update("runtimelist");
+        win.AppManager.update("runtime-list");
       }
 
       function addTestApp(win) {
         return Task.spawn(function*() {
           let packagedAppLocation = getTestFilePath("app");
           yield win.Cmds.importPackagedApp(packagedAppLocation);
+          yield waitForUpdate(win, "project-validated");
         });
       }
 
@@ -143,7 +144,7 @@
 
       function connectToRuntime(win, type, index) {
         return Task.spawn(function*() {
-          yield startConnection(win, type, index);
+          startConnection(win, type, index);
           yield waitUntilConnected(win);
         });
       }

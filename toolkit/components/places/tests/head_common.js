@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const CURRENT_SCHEMA_VERSION = 26;
+const CURRENT_SCHEMA_VERSION = 28;
 const FIRST_UPGRADABLE_SCHEMA_VERSION = 11;
 
 const NS_APP_USER_PROFILE_50_DIR = "ProfD";
@@ -40,6 +40,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "BookmarkHTMLUtils",
                                   "resource://gre/modules/BookmarkHTMLUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesBackups",
                                   "resource://gre/modules/PlacesBackups.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PlacesTestUtils",
+                                  "resource://testing-common/PlacesTestUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesTransactions",
                                   "resource://gre/modules/PlacesTransactions.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "OS",
@@ -55,12 +57,6 @@ XPCOMUtils.defineLazyGetter(this, "SMALLPNG_DATA_URI", function() {
          "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAA" +
          "AAAA6fptVAAAACklEQVQI12NgAAAAAgAB4iG8MwAAAABJRU5ErkJggg==");
 });
-
-function LOG(aMsg) {
-  aMsg = ("*** PLACES TESTS: " + aMsg);
-  Services.console.logStringMessage(aMsg);
-  print(aMsg);
-}
 
 let gTestDir = do_get_cwd();
 
@@ -106,10 +102,7 @@ function DBConn(aForceNewConnection) {
     let dbConn = gDBConn = Services.storage.openDatabase(file);
 
     // Be sure to cleanly close this connection.
-    Services.obs.addObserver(function DBCloseCallback(aSubject, aTopic, aData) {
-      Services.obs.removeObserver(DBCloseCallback, aTopic);
-      dbConn.asyncClose();
-    }, "profile-before-change", false);
+    promiseTopicObserved("profile-before-change").then(() => dbConn.asyncClose());
   }
 
   return gDBConn.connectionReady ? gDBConn : null;
@@ -119,7 +112,7 @@ function DBConn(aForceNewConnection) {
  * Reads data from the provided inputstream.
  *
  * @return an array of bytes.
- */ 
+ */
 function readInputStreamData(aStream) {
   let bistream = Cc["@mozilla.org/binaryinputstream;1"].
                  createInstance(Ci.nsIBinaryInputStream);
@@ -332,20 +325,6 @@ function visits_in_database(aURI)
 }
 
 /**
- * Removes all bookmarks and checks for correct cleanup
- */
-function remove_all_bookmarks() {
-  let PU = PlacesUtils;
-  // Clear all bookmarks
-  PU.bookmarks.removeFolderChildren(PU.bookmarks.bookmarksMenuFolder);
-  PU.bookmarks.removeFolderChildren(PU.bookmarks.toolbarFolder);
-  PU.bookmarks.removeFolderChildren(PU.bookmarks.unfiledBookmarksFolder);
-  // Check for correct cleanup
-  check_no_bookmarks();
-}
-
-
-/**
  * Checks that we don't have any bookmark
  */
 function check_no_bookmarks() {
@@ -377,30 +356,13 @@ function check_no_bookmarks() {
  */
 function promiseTopicObserved(aTopic)
 {
-  let deferred = Promise.defer();
-
-  Services.obs.addObserver(
-    function PTO_observe(aSubject, aTopic, aData) {
-      Services.obs.removeObserver(PTO_observe, aTopic);
-      deferred.resolve([aSubject, aData]);
+  return new Promise(resolve => {
+    Services.obs.addObserver(function observe(aSubject, aTopic, aData) {
+      Services.obs.removeObserver(observe, aTopic);
+      resolve([aSubject, aData]);
     }, aTopic, false);
-
-  return deferred.promise;
+  });
 }
-
-/**
- * Clears history asynchronously.
- *
- * @return {Promise}
- * @resolves When history has been cleared.
- * @rejects Never.
- */
-function promiseClearHistory() {
-  let promise = promiseTopicObserved(PlacesUtils.TOPIC_EXPIRATION_FINISHED);
-  do_execute_soon(function() PlacesUtils.bhistory.removeAllPages());
-  return promise;
-}
-
 
 /**
  * Simulates a Places shutdown.
@@ -414,7 +376,7 @@ function shutdownPlaces(aKeepAliveConnection)
 
 const FILENAME_BOOKMARKS_HTML = "bookmarks.html";
 const FILENAME_BOOKMARKS_JSON = "bookmarks-" +
-  (new Date().toLocaleFormat("%Y-%m-%d")) + ".json";
+  (PlacesBackups.toISODateString(new Date())) + ".json";
 
 /**
  * Creates a bookmarks.html file in the profile folder from a given source file.
@@ -526,7 +488,7 @@ function check_JSON_backup(aIsAutomaticBackup) {
     let bookmarksBackupDir = gProfD.clone();
     bookmarksBackupDir.append("bookmarkbackups");
     let files = bookmarksBackupDir.directoryEntries;
-    let backup_date = new Date().toLocaleFormat("%Y-%m-%d");
+    let backup_date = PlacesBackups.toISODateString(new Date());
     while (files.hasMoreElements()) {
       let entry = files.getNext().QueryInterface(Ci.nsIFile);
       if (PlacesBackups.filenamesRegex.test(entry.leafName)) {
@@ -611,42 +573,6 @@ function is_time_ordered(before, after) {
 }
 
 /**
- * Waits for all pending async statements on the default connection.
- *
- * @return {Promise}
- * @resolves When all pending async statements finished.
- * @rejects Never.
- *
- * @note The result is achieved by asynchronously executing a query requiring
- *       a write lock.  Since all statements on the same connection are
- *       serialized, the end of this write operation means that all writes are
- *       complete.  Note that WAL makes so that writers don't block readers, but
- *       this is a problem only across different connections.
- */
-function promiseAsyncUpdates()
-{
-  let deferred = Promise.defer();
-
-  let db = DBConn();
-  let begin = db.createAsyncStatement("BEGIN EXCLUSIVE");
-  begin.executeAsync();
-  begin.finalize();
-
-  let commit = db.createAsyncStatement("COMMIT");
-  commit.executeAsync({
-    handleResult: function () {},
-    handleError: function () {},
-    handleCompletion: function(aReason)
-    {
-      deferred.resolve();
-    }
-  });
-  commit.finalize();
-
-  return deferred.promise;
-}
-
-/**
  * Shutdowns Places, invoking the callback when the connection has been closed.
  *
  * @param aCallback
@@ -654,10 +580,7 @@ function promiseAsyncUpdates()
  */
 function waitForConnectionClosed(aCallback)
 {
-  Services.obs.addObserver(function WFCCCallback() {
-    Services.obs.removeObserver(WFCCCallback, "places-connection-closed");
-    aCallback();
-  }, "places-connection-closed", false);
+  promiseTopicObserved("places-connection-closed").then(aCallback);
   shutdownPlaces();
 }
 
@@ -773,17 +696,6 @@ function do_check_guid_for_bookmark(aId,
 }
 
 /**
- * Logs info to the console in the standard way (includes the filename).
- *
- * @param aMessage
- *        The message to log to the console.
- */
-function do_log_info(aMessage)
-{
-  print("TEST-INFO | " + _TEST_FILE + " | " + aMessage);
-}
-
-/**
  * Compares 2 arrays returning whether they contains the same elements.
  *
  * @param a1
@@ -877,69 +789,6 @@ NavHistoryResultObserver.prototype = {
 };
 
 /**
- * Asynchronously adds visits to a page.
- *
- * @param aPlaceInfo
- *        Can be an nsIURI, in such a case a single LINK visit will be added.
- *        Otherwise can be an object describing the visit to add, or an array
- *        of these objects:
- *          { uri: nsIURI of the page,
- *            transition: one of the TRANSITION_* from nsINavHistoryService,
- *            [optional] title: title of the page,
- *            [optional] visitDate: visit date in microseconds from the epoch
- *            [optional] referrer: nsIURI of the referrer for this visit
- *          }
- *
- * @return {Promise}
- * @resolves When all visits have been added successfully.
- * @rejects JavaScript exception.
- */
-function promiseAddVisits(aPlaceInfo)
-{
-  let deferred = Promise.defer();
-  let places = [];
-  if (aPlaceInfo instanceof Ci.nsIURI) {
-    places.push({ uri: aPlaceInfo });
-  }
-  else if (Array.isArray(aPlaceInfo)) {
-    places = places.concat(aPlaceInfo);
-  } else {
-    places.push(aPlaceInfo)
-  }
-
-  // Create mozIVisitInfo for each entry.
-  let now = Date.now();
-  for (let i = 0; i < places.length; i++) {
-    if (!places[i].title) {
-      places[i].title = "test visit for " + places[i].uri.spec;
-    }
-    places[i].visits = [{
-      transitionType: places[i].transition === undefined ? TRANSITION_LINK
-                                                         : places[i].transition,
-      visitDate: places[i].visitDate || (now++) * 1000,
-      referrerURI: places[i].referrer
-    }];
-  }
-
-  PlacesUtils.asyncHistory.updatePlaces(
-    places,
-    {
-      handleError: function AAV_handleError(aResultCode, aPlaceInfo) {
-        let ex = new Components.Exception("Unexpected error in adding visits.",
-                                          aResultCode);
-        deferred.reject(ex);
-      },
-      handleResult: function () {},
-      handleCompletion: function UP_handleCompletion() {
-        deferred.resolve();
-      }
-    }
-  );
-
-  return deferred.promise;
-}
-
-/**
  * Asynchronously check a url is visited.
  *
  * @param aURI The URI.
@@ -981,4 +830,18 @@ function checkBookmarkObject(info) {
   Assert.ok(info.lastModified.constructor.name == "Date", "lastModified should be a Date");
   Assert.ok(info.lastModified >= info.dateAdded, "lastModified should never be smaller than dateAdded");
   Assert.ok(typeof info.type == "number", "type should be a number");
+}
+
+/**
+ * Reads foreign_count value for a given url.
+ */
+function* foreign_count(url) {
+  if (url instanceof Ci.nsIURI)
+    url = url.spec;
+  let db = yield PlacesUtils.promiseDBConnection();
+  let rows = yield db.executeCached(
+    `SELECT foreign_count FROM moz_places
+     WHERE url = :url
+    `, { url });
+  return rows.length == 0 ? 0 : rows[0].getResultByName("foreign_count");
 }

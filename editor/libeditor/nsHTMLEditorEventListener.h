@@ -11,7 +11,6 @@
 
 class nsEditor;
 class nsHTMLEditor;
-class nsIDOMEvent;
 
 class nsHTMLEditorEventListener : public nsEditorEventListener
 {
@@ -27,13 +26,13 @@ public:
 
 #ifdef DEBUG
   // WARNING: You must be use nsHTMLEditor or its sub class for this class.
-  virtual nsresult Connect(nsEditor* aEditor) MOZ_OVERRIDE;
+  virtual nsresult Connect(nsEditor* aEditor) override;
 #endif
 
 protected:
-  virtual nsresult MouseDown(nsIDOMMouseEvent* aMouseEvent) MOZ_OVERRIDE;
-  virtual nsresult MouseUp(nsIDOMMouseEvent* aMouseEvent) MOZ_OVERRIDE;
-  virtual nsresult MouseClick(nsIDOMMouseEvent* aMouseEvent) MOZ_OVERRIDE;
+  virtual nsresult MouseDown(nsIDOMMouseEvent* aMouseEvent) override;
+  virtual nsresult MouseUp(nsIDOMMouseEvent* aMouseEvent) override;
+  virtual nsresult MouseClick(nsIDOMMouseEvent* aMouseEvent) override;
 
   inline nsHTMLEditor* GetHTMLEditor();
 };

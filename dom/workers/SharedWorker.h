@@ -1,4 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -25,7 +26,7 @@ class MessagePort;
 class RuntimeService;
 class WorkerPrivate;
 
-class SharedWorker MOZ_FINAL : public DOMEventTargetHelper
+class SharedWorker final : public DOMEventTargetHelper
 {
   friend class MessagePort;
   friend class RuntimeService;
@@ -35,9 +36,9 @@ class SharedWorker MOZ_FINAL : public DOMEventTargetHelper
 
   nsRefPtr<WorkerPrivate> mWorkerPrivate;
   nsRefPtr<MessagePort> mMessagePort;
-  nsTArray<nsCOMPtr<nsIDOMEvent>> mSuspendedEvents;
+  nsTArray<nsCOMPtr<nsIDOMEvent>> mFrozenEvents;
   uint64_t mSerial;
-  bool mSuspended;
+  bool mFrozen;
 
 public:
   static already_AddRefed<SharedWorker>
@@ -55,16 +56,16 @@ public:
   }
 
   bool
-  IsSuspended() const
+  IsFrozen() const
   {
-    return mSuspended;
+    return mFrozen;
   }
 
   void
-  Suspend();
+  Freeze();
 
   void
-  Resume();
+  Thaw();
 
   void
   QueueEvent(nsIDOMEvent* aEvent);
@@ -78,10 +79,10 @@ public:
   IMPL_EVENT_HANDLER(error)
 
   virtual JSObject*
-  WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   virtual nsresult
-  PreHandleEvent(EventChainPreVisitor& aVisitor) MOZ_OVERRIDE;
+  PreHandleEvent(EventChainPreVisitor& aVisitor) override;
 
   WorkerPrivate*
   GetWorkerPrivate() const

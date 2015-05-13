@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -7,7 +8,6 @@
 #define MOZILLA_CONTENT_SVGPRESERVEASPECTRATIO_H_
 
 #include "mozilla/HashFunctions.h"  // for HashGeneric
-#include "mozilla/TypedEnum.h"
 
 #include "nsWrapperCache.h"
 #include "nsAutoPtr.h"
@@ -17,7 +17,7 @@
 
 namespace mozilla {
 // Alignment Types
-enum SVGAlign MOZ_ENUM_TYPE(uint8_t) {
+enum SVGAlign : uint8_t {
   SVG_PRESERVEASPECTRATIO_UNKNOWN = 0,
   SVG_PRESERVEASPECTRATIO_NONE = 1,
   SVG_PRESERVEASPECTRATIO_XMINYMIN = 2,
@@ -37,7 +37,7 @@ const uint16_t SVG_ALIGN_MIN_VALID = SVG_PRESERVEASPECTRATIO_NONE;
 const uint16_t SVG_ALIGN_MAX_VALID = SVG_PRESERVEASPECTRATIO_XMAXYMAX;
 
 // Meet-or-slice Types
-enum SVGMeetOrSlice MOZ_ENUM_TYPE(uint8_t) {
+enum SVGMeetOrSlice : uint8_t {
   SVG_MEETORSLICE_UNKNOWN = 0,
   SVG_MEETORSLICE_MEET = 1,
   SVG_MEETORSLICE_SLICE = 2
@@ -50,7 +50,7 @@ const uint16_t SVG_MEETORSLICE_MAX_VALID = SVG_MEETORSLICE_SLICE;
 
 class SVGAnimatedPreserveAspectRatio;
 
-class SVGPreserveAspectRatio MOZ_FINAL
+class SVGPreserveAspectRatio final
 {
   friend class SVGAnimatedPreserveAspectRatio;
 public:
@@ -113,8 +113,8 @@ private:
 
 namespace dom {
 
-class DOMSVGPreserveAspectRatio MOZ_FINAL : public nsISupports,
-                                            public nsWrapperCache
+class DOMSVGPreserveAspectRatio final : public nsISupports,
+                                        public nsWrapperCache
 {
 public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -129,7 +129,7 @@ public:
 
   // WebIDL
   nsSVGElement* GetParentObject() const { return mSVGElement; }
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   uint16_t Align();
   void SetAlign(uint16_t aAlign, ErrorResult& rv);

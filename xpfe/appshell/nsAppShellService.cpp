@@ -40,6 +40,7 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/Services.h"
 #include "mozilla/StartupTimeline.h"
 
 #include "nsEmbedCID.h"
@@ -57,14 +58,14 @@ using namespace mozilla;
 
 class nsIAppShell;
 
-nsAppShellService::nsAppShellService() : 
+nsAppShellService::nsAppShellService() :
   mXPCOMWillShutDown(false),
   mXPCOMShuttingDown(false),
   mModalWindowCount(0),
-  mApplicationProvidedHiddenWindow(false)
+  mApplicationProvidedHiddenWindow(false),
+  mScreenId(0)
 {
-  nsCOMPtr<nsIObserverService> obs
-    (do_GetService("@mozilla.org/observer-service;1"));
+  nsCOMPtr<nsIObserverService> obs = services::GetObserverService();
 
   if (obs) {
     obs->AddObserver(this, "xpcom-will-shutdown", false);
@@ -88,6 +89,13 @@ NS_IMETHODIMP
 nsAppShellService::CreateHiddenWindow()
 {
   return CreateHiddenWindowHelper(false);
+}
+
+NS_IMETHODIMP
+nsAppShellService::SetScreenId(uint32_t aScreenId)
+{
+  mScreenId = aScreenId;
+  return NS_OK;
 }
 
 void
@@ -321,8 +329,9 @@ WebBrowserChrome2Stub::GetInterface(const nsIID & aIID, void **aSink)
 // This is the "stub" we return from CreateWindowlessBrowser - it exists
 // purely to keep a strong reference to the browser and the container to
 // prevent the container being collected while the stub remains alive.
-class WindowlessBrowserStub MOZ_FINAL : public nsIWebNavigation,
-                                        public nsIInterfaceRequestor {
+class WindowlessBrowserStub final : public nsIWebNavigation,
+                                    public nsIInterfaceRequestor
+{
 public:
   WindowlessBrowserStub(nsIWebBrowser *aBrowser, nsISupports *aContainer) {
     mBrowser = aBrowser;
@@ -392,8 +401,8 @@ nsAppShellService::CreateWindowlessBrowser(bool aIsChrome, nsIWebNavigation **aR
     NS_ERROR("Couldn't create instance of PuppetWidget");
     return NS_ERROR_FAILURE;
   }
-  widget->Create(nullptr, 0, nsIntRect(nsIntPoint(0, 0), nsIntSize(0, 0)),
-                 nullptr, nullptr);
+  widget->Create(nullptr, 0, gfx::IntRect(gfx::IntPoint(0, 0), gfx::IntSize(0, 0)),
+                 nullptr);
   nsCOMPtr<nsIBaseWindow> window = do_QueryInterface(navigation);
   window->InitWindow(0, widget, 0, 0, 0, 0);
   window->Create();
@@ -525,9 +534,6 @@ nsAppShellService::JustCreateTopWindow(nsIXULWindow *aParent,
   if (aChromeMask & nsIWebBrowserChrome::CHROME_MAC_SUPPRESS_ANIMATION)
     widgetInitData.mIsAnimationSuppressed = true;
 
-  if (aChromeMask & nsIWebBrowserChrome::CHROME_REMOTE_WINDOW)
-    widgetInitData.mRequireOffMainThreadCompositing = true;
-
 #ifdef XP_MACOSX
   // Mac OS X sheet support
   // Adding CHROME_OPENAS_CHROME to sheetMask makes modal windows opened from
@@ -598,6 +604,13 @@ nsAppShellService::JustCreateTopWindow(nsIXULWindow *aParent,
     reg->IsLocaleRTL(package, &isRTL);
     widgetInitData.mRTL = isRTL;
   }
+
+#ifdef MOZ_WIDGET_GONK
+  // B2G multi-screen support. Screen ID is for differentiating screens of
+  // windows, and due to the hardware limitation, it is platform-specific for
+  // now, which align with the value of display type defined in HWC.
+  widgetInitData.mScreenId = mScreenId;
+#endif
 
   nsresult rv = window->Initialize(parent, center ? aParent : nullptr,
                                    aUrl, aInitialWidth, aInitialHeight,
@@ -806,8 +819,7 @@ nsAppShellService::RegisterTopLevelWindow(nsIXULWindow* aWindow)
   }
 
   // an ongoing attempt to quit is stopped by a newly opened window
-  nsCOMPtr<nsIObserverService> obssvc =
-    do_GetService("@mozilla.org/observer-service;1");
+  nsCOMPtr<nsIObserverService> obssvc = services::GetObserverService();
   NS_ASSERTION(obssvc, "Couldn't get observer service.");
 
   if (obssvc)

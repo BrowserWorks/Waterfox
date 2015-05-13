@@ -22,9 +22,9 @@ class Row;
 
 nsresult NS_NewTreeContentView(nsITreeView** aResult);
 
-class nsTreeContentView MOZ_FINAL : public nsINativeTreeView,
-                                    public nsITreeContentView,
-                                    public nsStubDocumentObserver
+class nsTreeContentView final : public nsINativeTreeView,
+                                public nsITreeContentView,
+                                public nsStubDocumentObserver
 {
   public:
     nsTreeContentView(void);
@@ -35,7 +35,7 @@ class nsTreeContentView MOZ_FINAL : public nsINativeTreeView,
 
     NS_DECL_NSITREEVIEW
     // nsINativeTreeView: Untrusted code can use us
-    NS_IMETHOD EnsureNative() MOZ_OVERRIDE { return NS_OK; }
+    NS_IMETHOD EnsureNative() override { return NS_OK; }
 
     NS_DECL_NSITREECONTENTVIEW
 

@@ -63,7 +63,7 @@ public:
 
 
 // hash entry class
-class nsCertOverrideEntry MOZ_FINAL : public PLDHashEntryHdr
+class nsCertOverrideEntry final : public PLDHashEntryHdr
 {
   public:
     // Hash methods
@@ -126,9 +126,9 @@ class nsCertOverrideEntry MOZ_FINAL : public PLDHashEntryHdr
     nsCString mHostWithPort;
 };
 
-class nsCertOverrideService MOZ_FINAL : public nsICertOverrideService
-                                      , public nsIObserver
-                                      , public nsSupportsWeakReference
+class nsCertOverrideService final : public nsICertOverrideService
+                                  , public nsIObserver
+                                  , public nsSupportsWeakReference
 {
 public:
   NS_DECL_THREADSAFE_ISUPPORTS

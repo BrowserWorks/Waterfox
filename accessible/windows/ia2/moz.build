@@ -39,6 +39,7 @@ LOCAL_INCLUDES += [
     '/accessible/base',
     '/accessible/generic',
     '/accessible/html',
+    '/accessible/windows',
     '/accessible/windows/msaa',
     '/accessible/xpcom',
     '/accessible/xul',
@@ -52,3 +53,5 @@ if CONFIG['OS_ARCH'] == 'WINNT':
     DEFINES['NOMINMAX'] = True
 
 FAIL_ON_WARNINGS = True
+
+include('/ipc/chromium/chromium-config.mozbuild')

@@ -27,7 +27,6 @@ class BufferTextureClient;
 class ImageBridgeChild;
 class CompositableForwarder;
 class CompositableChild;
-class SurfaceDescriptor;
 class PCompositableChild;
 
 /**
@@ -48,23 +47,23 @@ protected:
   }
 
 public:
-  virtual void Complete() MOZ_OVERRIDE
+  virtual void Complete() override
   {
     ReleaseTextureClient();
   }
 
-  virtual void Cancel() MOZ_OVERRIDE
+  virtual void Cancel() override
   {
     ReleaseTextureClient();
   }
 
-  virtual void SetTextureClient(TextureClient* aTextureClient) MOZ_OVERRIDE
+  virtual void SetTextureClient(TextureClient* aTextureClient) override
   {
     ReleaseTextureClient();
     mTextureClient = aTextureClient;
   }
 
-  virtual void SetReleaseFenceHandle(FenceHandle& aReleaseFenceHandle) MOZ_OVERRIDE
+  virtual void SetReleaseFenceHandle(FenceHandle& aReleaseFenceHandle) override
   {
     if (mTextureClient) {
       mTextureClient->SetReleaseFenceHandle(aReleaseFenceHandle);
@@ -142,12 +141,6 @@ public:
                                 gfx::BackendType aMoz2DBackend,
                                 TextureFlags aTextureFlags,
                                 TextureAllocationFlags aAllocFlags = ALLOC_DEFAULT);
-
-  virtual void SetDescriptorFromReply(TextureIdentifier aTextureId,
-                                      const SurfaceDescriptor& aDescriptor)
-  {
-    MOZ_CRASH("If you want to call this, you should have implemented it");
-  }
 
   /**
    * Establishes the connection with compositor side through IPDL

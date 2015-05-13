@@ -32,9 +32,7 @@
 using namespace mozilla;
 using namespace mozilla::gfx;
 
-#ifdef PR_LOGGING
 extern PRLogModuleInfo* sCocoaLog;
-#endif
 
 extern void EnsureLogInitialized();
 
@@ -274,7 +272,7 @@ nsDragService::InvokeDragSession(nsIDOMNode* aDOMNode, nsISupportsArray* aTransf
     [image unlockFocus];
   }
 
-  nsIntPoint pt(dragRect.x, dragRect.YMost());
+  LayoutDeviceIntPoint pt(dragRect.x, dragRect.YMost());
   CGFloat scaleFactor = nsCocoaUtils::GetBackingScaleFactor(gLastDragView);
   NSPoint point = nsCocoaUtils::DevPixelsToCocoaPoints(pt, scaleFactor);
   point.y = nsCocoaUtils::FlippedScreenY(point.y);

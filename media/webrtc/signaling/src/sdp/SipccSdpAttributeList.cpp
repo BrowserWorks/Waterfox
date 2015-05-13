@@ -108,8 +108,6 @@ SipccSdpAttributeList::LoadSimpleStrings(sdp_t* sdp, uint16_t level,
                    errorHolder);
   LoadSimpleString(sdp, level, SDP_ATTR_IDENTITY,
                    SdpAttribute::kIdentityAttribute, errorHolder);
-  LoadSimpleString(sdp, level, SDP_ATTR_MSID_SEMANTIC,
-                   SdpAttribute::kMsidSemanticAttribute, errorHolder);
 }
 
 void
@@ -361,6 +359,8 @@ SipccSdpAttributeList::GetCodecType(rtp_ptype type)
       return SdpRtpmapAttributeList::kOpus;
     case RTP_VP8:
       return SdpRtpmapAttributeList::kVP8;
+    case RTP_VP9:
+      return SdpRtpmapAttributeList::kVP9;
     case RTP_NONE:
     // Happens when sipcc doesn't know how to translate to the enum
     case RTP_CELP:
@@ -547,6 +547,38 @@ SipccSdpAttributeList::LoadGroups(sdp_t* sdp, uint16_t level,
   return true;
 }
 
+bool
+SipccSdpAttributeList::LoadMsidSemantics(sdp_t* sdp, uint16_t level,
+                                         SdpErrorHolder& errorHolder)
+{
+  auto msidSemantics = MakeUnique<SdpMsidSemanticAttributeList>();
+
+  for (uint16_t i = 1; i < UINT16_MAX; ++i) {
+    sdp_attr_t* attr = sdp_find_attr(sdp, level, 0, SDP_ATTR_MSID_SEMANTIC, i);
+
+    if (!attr) {
+      break;
+    }
+
+    sdp_msid_semantic_t* msid_semantic = &(attr->attr.msid_semantic);
+    std::vector<std::string> msids;
+    for (size_t i = 0; i < SDP_MAX_MEDIA_STREAMS; ++i) {
+      if (!msid_semantic->msids[i]) {
+        break;
+      }
+
+      msids.push_back(msid_semantic->msids[i]);
+    }
+
+    msidSemantics->PushEntry(msid_semantic->semantic, msids);
+  }
+
+  if (!msidSemantics->mMsidSemantics.empty()) {
+    SetAttribute(msidSemantics.release());
+  }
+  return true;
+}
+
 void
 SipccSdpAttributeList::LoadFmtp(sdp_t* sdp, uint16_t level)
 {
@@ -615,9 +647,20 @@ SipccSdpAttributeList::LoadFmtp(sdp_t* sdp, uint16_t level)
 
         parameters.reset(h264Parameters);
       } break;
+      case RTP_VP9: {
+        SdpFmtpAttributeList::VP8Parameters* vp9Parameters(
+            new SdpFmtpAttributeList::VP8Parameters(
+              SdpRtpmapAttributeList::kVP9));
+
+        vp9Parameters->max_fs = fmtp->max_fs;
+        vp9Parameters->max_fr = fmtp->max_fr;
+
+        parameters.reset(vp9Parameters);
+      } break;
       case RTP_VP8: {
         SdpFmtpAttributeList::VP8Parameters* vp8Parameters(
-            new SdpFmtpAttributeList::VP8Parameters);
+            new SdpFmtpAttributeList::VP8Parameters(
+              SdpRtpmapAttributeList::kVP8));
 
         vp8Parameters->max_fs = fmtp->max_fs;
         vp8Parameters->max_fr = fmtp->max_fr;
@@ -827,6 +870,10 @@ SipccSdpAttributeList::Load(sdp_t* sdp, uint16_t level,
 
   if (AtSessionLevel()) {
     if (!LoadGroups(sdp, level, errorHolder)) {
+      return false;
+    }
+
+    if (!LoadMsidSemantics(sdp, level, errorHolder)) {
       return false;
     }
   } else {
@@ -1045,14 +1092,14 @@ SipccSdpAttributeList::GetMsid() const
   return *static_cast<const SdpMsidAttributeList*>(attr);
 }
 
-const std::string&
+const SdpMsidSemanticAttributeList&
 SipccSdpAttributeList::GetMsidSemantic() const
 {
   if (!HasAttribute(SdpAttribute::kMsidSemanticAttribute)) {
-    return kEmptyString;
+    MOZ_CRASH();
   }
   const SdpAttribute* attr = GetAttribute(SdpAttribute::kMsidSemanticAttribute);
-  return static_cast<const SdpStringAttribute*>(attr)->mValue;
+  return *static_cast<const SdpMsidSemanticAttributeList*>(attr);
 }
 
 uint32_t

@@ -69,6 +69,15 @@ nsStringBundle::LoadProperties()
   rv = NS_NewURI(getter_AddRefs(uri), mPropertiesURL);
   if (NS_FAILED(rv)) return rv;
 
+  // whitelist check for local schemes
+  nsCString scheme;
+  uri->GetScheme(scheme);
+  if (!scheme.EqualsLiteral("chrome") && !scheme.EqualsLiteral("jar") &&
+      !scheme.EqualsLiteral("resource") && !scheme.EqualsLiteral("file") &&
+      !scheme.EqualsLiteral("data")) {
+    return NS_ERROR_ABORT;
+  }
+
   nsCOMPtr<nsIChannel> channel;
   rv = NS_NewChannel(getter_AddRefs(channel),
                      uri,
@@ -476,7 +485,7 @@ nsresult nsExtensibleStringBundle::GetSimpleEnumeration(nsISimpleEnumerator ** a
 
 #define MAX_CACHED_BUNDLES 16
 
-struct bundleCacheEntry_t MOZ_FINAL : public LinkedListElement<bundleCacheEntry_t> {
+struct bundleCacheEntry_t final : public LinkedListElement<bundleCacheEntry_t> {
   nsCString mHashKey;
   nsCOMPtr<nsIStringBundle> mBundle;
 
@@ -651,9 +660,8 @@ nsStringBundleService::CreateExtensibleBundle(const char* aCategory,
     return res;
   }
 
-  res = bundle->QueryInterface(NS_GET_IID(nsIStringBundle), (void**) aResult);
-
-  return res;
+  bundle.forget(aResult);
+  return NS_OK;
 }
 
 #define GLOBAL_PROPERTIES "chrome://global/locale/global-strres.properties"
@@ -752,7 +760,7 @@ done:
   if (argCount > 1) {
     for (i = 0; i < argCount; i++) {
       if (argArray[i])
-        nsMemory::Free(argArray[i]);
+        free(argArray[i]);
     }
   }
   return rv;

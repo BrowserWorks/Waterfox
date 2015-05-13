@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 sw=2 et tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -14,6 +14,7 @@
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/IMEStateManager.h"
 #include "mozilla/MiscEvents.h"
+#include "mozilla/Preferences.h"
 #include "mozilla/TextComposition.h"
 #include "mozilla/TextEvents.h"
 
@@ -43,6 +44,9 @@ TextComposition::TextComposition(nsPresContext* aPresContext,
   , mIsRequestingCancel(false)
   , mRequestedToCommitOrCancel(false)
   , mWasNativeCompositionEndEventDiscarded(false)
+  , mAllowControlCharacters(
+      Preferences::GetBool("dom.compositionevent.allow_control_characters",
+                           false))
 {
 }
 
@@ -133,6 +137,60 @@ TextComposition::OnCompositionEventDiscarded(
   mWasNativeCompositionEndEventDiscarded = true;
 }
 
+static inline bool
+IsControlChar(uint32_t aCharCode)
+{
+  return aCharCode < ' ' || aCharCode == 0x7F;
+}
+
+static size_t
+FindFirstControlCharacter(const nsAString& aStr)
+{
+  const char16_t* sourceBegin = aStr.BeginReading();
+  const char16_t* sourceEnd = aStr.EndReading();
+
+  for (const char16_t* source = sourceBegin; source < sourceEnd; ++source) {
+    if (*source != '\t' && IsControlChar(*source)) {
+      return source - sourceBegin;
+    }
+  }
+
+  return -1;
+}
+
+static void
+RemoveControlCharactersFrom(nsAString& aStr, TextRangeArray* aRanges)
+{
+  size_t firstControlCharOffset = FindFirstControlCharacter(aStr);
+  if (firstControlCharOffset == (size_t)-1) {
+    return;
+  }
+
+  nsAutoString copy(aStr);
+  const char16_t* sourceBegin = copy.BeginReading();
+  const char16_t* sourceEnd = copy.EndReading();
+
+  char16_t* dest = aStr.BeginWriting();
+  if (NS_WARN_IF(!dest)) {
+    return;
+  }
+
+  char16_t* curDest = dest + firstControlCharOffset;
+  size_t i = firstControlCharOffset;
+  for (const char16_t* source = sourceBegin + firstControlCharOffset;
+       source < sourceEnd; ++source) {
+    if (*source == '\t' || !IsControlChar(*source)) {
+      *curDest = *source;
+      ++curDest;
+      ++i;
+    } else if (aRanges) {
+      aRanges->RemoveCharacter(i);
+    }
+  }
+
+  aStr.SetLength(curDest - dest);
+}
+
 void
 TextComposition::DispatchCompositionEvent(
                    WidgetCompositionEvent* aCompositionEvent,
@@ -140,6 +198,10 @@ TextComposition::DispatchCompositionEvent(
                    EventDispatchingCallback* aCallBack,
                    bool aIsSynthesized)
 {
+  if (!mAllowControlCharacters) {
+    RemoveControlCharactersFrom(aCompositionEvent->mData,
+                                aCompositionEvent->mRanges);
+  }
   if (aCompositionEvent->message == NS_COMPOSITION_COMMIT_AS_IS) {
     NS_ASSERTION(!aCompositionEvent->mRanges,
                  "mRanges of NS_COMPOSITION_COMMIT_AS_IS should be null");
@@ -221,6 +283,17 @@ TextComposition::DispatchCompositionEvent(
   if (dispatchDOMTextEvent &&
       aCompositionEvent->message != NS_COMPOSITION_CHANGE &&
       !mIsComposing && mLastData == aCompositionEvent->mData) {
+    dispatchEvent = dispatchDOMTextEvent = false;
+  }
+
+  // widget may dispatch redundant NS_COMPOSITION_CHANGE event
+  // which modifies neither composition string, clauses nor caret
+  // position.  In such case, we shouldn't dispatch DOM events.
+  if (dispatchDOMTextEvent &&
+      aCompositionEvent->message == NS_COMPOSITION_CHANGE &&
+      mLastData == aCompositionEvent->mData &&
+      mRanges && aCompositionEvent->mRanges &&
+      mRanges->Equals(*aCompositionEvent->mRanges)) {
     dispatchEvent = dispatchDOMTextEvent = false;
   }
 
@@ -340,35 +413,14 @@ TextComposition::RequestToCommit(nsIWidget* aWidget, bool aDiscard)
       mIsRequestingCancel = false;
       mIsRequestingCommit = true;
     }
-    if (!mIsSynthesizedForTests) {
-      // FYI: CompositionEvents caused by a call of NotifyIME() may be
-      //      discarded by PresShell if it's not safe to dispatch the event.
-      nsresult rv =
-        aWidget->NotifyIME(IMENotification(aDiscard ?
-                                             REQUEST_TO_CANCEL_COMPOSITION :
-                                             REQUEST_TO_COMMIT_COMPOSITION));
-      if (rv == NS_ERROR_NOT_IMPLEMENTED) {
-        return rv;
-      }
-      if (NS_WARN_IF(NS_FAILED(rv))) {
-        return rv;
-      }
-    } else {
-      // Emulates to commit or cancel the composition
-      // FYI: These events may be discarded by PresShell if it's not safe to
-      //      dispatch the event.
-      nsCOMPtr<nsIWidget> widget(aWidget);
-      nsAutoString commitData(aDiscard ? EmptyString() : lastData);
-      bool isChanging = commitData != mLastData;
-      uint32_t message =
-        isChanging ? NS_COMPOSITION_COMMIT : NS_COMPOSITION_COMMIT_AS_IS;
-      WidgetCompositionEvent commitEvent(true, message, widget);
-      if (commitEvent.message == NS_COMPOSITION_COMMIT) {
-        commitEvent.mData = commitData;
-      }
-      commitEvent.mFlags.mIsSynthesizedForTests = true;
-      nsEventStatus status = nsEventStatus_eIgnore;
-      widget->DispatchEvent(&commitEvent, status);
+    // FYI: CompositionEvents caused by a call of NotifyIME() may be
+    //      discarded by PresShell if it's not safe to dispatch the event.
+    nsresult rv =
+      aWidget->NotifyIME(IMENotification(aDiscard ?
+                                           REQUEST_TO_CANCEL_COMPOSITION :
+                                           REQUEST_TO_COMMIT_COMPOSITION));
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
     }
   }
 

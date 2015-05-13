@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -16,9 +17,9 @@ namespace mozilla {
 namespace dom {
 
 JSObject*
-SVGCircleElement::WrapNode(JSContext *aCx)
+SVGCircleElement::WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return SVGCircleElementBinding::Wrap(aCx, this);
+  return SVGCircleElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 nsSVGElement::LengthInfo SVGCircleElement::sLengthInfo[3] =
@@ -82,24 +83,23 @@ SVGCircleElement::GetLengthInfo()
 // nsSVGPathGeometryElement methods
 
 bool
-SVGCircleElement::GetGeometryBounds(Rect* aBounds, Float aStrokeWidth,
-                                    const Matrix& aTransform)
+SVGCircleElement::GetGeometryBounds(
+  Rect* aBounds, const StrokeOptions& aStrokeOptions, const Matrix& aTransform)
 {
   float x, y, r;
   GetAnimatedLengthValues(&x, &y, &r, nullptr);
 
   if (r <= 0.f) {
     // Rendering of the element is disabled
-    aBounds->MoveTo(x, y);
-    aBounds->SetEmpty();
+    *aBounds = Rect(aTransform * Point(x, y), Size());
     return true;
   }
 
   if (aTransform.IsRectilinear()) {
     // Optimize the case where we can treat the circle as a rectangle and
     // still get tight bounds.
-    if (aStrokeWidth > 0.f) {
-      r += aStrokeWidth / 2.f;
+    if (aStrokeOptions.mLineWidth > 0.f) {
+      r += aStrokeOptions.mLineWidth / 2.f;
     }
     Rect rect(x - r, y - r, 2 * r, 2 * r);
     *aBounds = aTransform.TransformBounds(rect);

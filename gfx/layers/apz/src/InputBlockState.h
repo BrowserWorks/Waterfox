@@ -7,9 +7,10 @@
 #ifndef mozilla_layers_InputBlockState_h
 #define mozilla_layers_InputBlockState_h
 
-#include "nsTArray.h"                       // for nsTArray
 #include "InputData.h"                      // for MultiTouchInput
-#include "nsAutoPtr.h"
+#include "mozilla/gfx/Matrix.h"             // for Matrix4x4
+#include "nsAutoPtr.h"                      // for nsRefPtr
+#include "nsTArray.h"                       // for nsTArray
 
 namespace mozilla {
 namespace layers {
@@ -23,6 +24,9 @@ class WheelBlockState;
 /**
  * A base class that stores state common to various input blocks.
  * Currently, it just stores the overscroll handoff chain.
+ * Note that the InputBlockState constructor acquires the tree lock, so callers
+ * from inside AsyncPanZoomController should ensure that the APZC lock is not
+ * held.
  */
 class InputBlockState
 {
@@ -34,18 +38,27 @@ public:
   virtual ~InputBlockState()
   {}
 
-  bool SetConfirmedTargetApzc(const nsRefPtr<AsyncPanZoomController>& aTargetApzc);
+  virtual bool SetConfirmedTargetApzc(const nsRefPtr<AsyncPanZoomController>& aTargetApzc);
   const nsRefPtr<AsyncPanZoomController>& GetTargetApzc() const;
   const nsRefPtr<const OverscrollHandoffChain>& GetOverscrollHandoffChain() const;
   uint64_t GetBlockId() const;
 
   bool IsTargetConfirmed() const;
 
+protected:
+  virtual void UpdateTargetApzc(const nsRefPtr<AsyncPanZoomController>& aTargetApzc);
+
 private:
   nsRefPtr<AsyncPanZoomController> mTargetApzc;
-  nsRefPtr<const OverscrollHandoffChain> mOverscrollHandoffChain;
   bool mTargetConfirmed;
   const uint64_t mBlockId;
+protected:
+  nsRefPtr<const OverscrollHandoffChain> mOverscrollHandoffChain;
+
+  // Used to transform events from global screen space to |mTargetApzc|'s
+  // screen space. It's cached at the beginning of the input block so that
+  // all events in the block are in the same coordinate space.
+  gfx::Matrix4x4 mTransformToApzc;
 };
 
 /**
@@ -79,7 +92,7 @@ public:
    * @return false if this block has already received a response from
    *         web content, true if not.
    */
-  bool SetContentResponse(bool aPreventDefault);
+  virtual bool SetContentResponse(bool aPreventDefault);
 
   /**
    * Record that content didn't respond in time.
@@ -91,6 +104,13 @@ public:
    * @return true iff web content cancelled this block of events.
    */
   bool IsDefaultPrevented() const;
+
+  /**
+   * Process the given event using this input block's target apzc.
+   * This input block must not have pending events, and its apzc must not be
+   * nullptr.
+   */
+  void DispatchImmediate(const InputData& aEvent) const;
 
   /**
    * @return true iff this block has received all the information needed
@@ -109,9 +129,10 @@ public:
   virtual void DropEvents() = 0;
 
   /**
-   * Process all events given an apzc, leaving ths block depleted.
+   * Process all events using this input block's target apzc, leaving this
+   * block depleted. This input block's apzc must not be nullptr.
    */
-  virtual void HandleEvents(const nsRefPtr<AsyncPanZoomController>& aTarget) = 0;
+  virtual void HandleEvents() = 0;
 
   /**
    * Return true if this input block must stay active if it would otherwise
@@ -137,23 +158,82 @@ class WheelBlockState : public CancelableBlockState
 {
 public:
   WheelBlockState(const nsRefPtr<AsyncPanZoomController>& aTargetApzc,
-                  bool aTargetConfirmed);
+                  bool aTargetConfirmed,
+                  const ScrollWheelInput& aEvent);
 
-  bool IsReadyForHandling() const MOZ_OVERRIDE;
-  bool HasEvents() const MOZ_OVERRIDE;
-  void DropEvents() MOZ_OVERRIDE;
-  void HandleEvents(const nsRefPtr<AsyncPanZoomController>& aTarget) MOZ_OVERRIDE;
-  bool MustStayActive() MOZ_OVERRIDE;
-  const char* Type() MOZ_OVERRIDE;
+  bool SetContentResponse(bool aPreventDefault) override;
+  bool IsReadyForHandling() const override;
+  bool HasEvents() const override;
+  void DropEvents() override;
+  void HandleEvents() override;
+  bool MustStayActive() override;
+  const char* Type() override;
+  bool SetConfirmedTargetApzc(const nsRefPtr<AsyncPanZoomController>& aTargetApzc) override;
 
   void AddEvent(const ScrollWheelInput& aEvent);
 
-  WheelBlockState *AsWheelBlock() MOZ_OVERRIDE {
+  WheelBlockState *AsWheelBlock() override {
     return this;
   }
 
+  /**
+   * Determine whether this wheel block is accepting new events.
+   */
+  bool ShouldAcceptNewEvent() const;
+
+  /**
+   * Call to check whether a wheel event will cause the current transaction to
+   * timeout.
+   */
+  bool MaybeTimeout(const ScrollWheelInput& aEvent);
+
+  /**
+   * Called from APZCTM when a mouse move or drag+drop event occurs, before
+   * the event has been processed.
+   */
+  void OnMouseMove(const ScreenIntPoint& aPoint);
+
+  /**
+   * Returns whether or not the block is participating in a wheel transaction.
+   * This means that the block is the most recent input block to be created,
+   * and no events have occurred that would require scrolling a different
+   * frame.
+   *
+   * @return True if in a transaction, false otherwise.
+   */
+  bool InTransaction() const;
+
+  /**
+   * Mark the block as no longer participating in a wheel transaction. This
+   * will force future wheel events to begin a new input block.
+   */
+  void EndTransaction();
+
+  /**
+   * @return Whether or not overscrolling is prevented for this wheel block.
+   */
+  bool AllowScrollHandoff() const;
+
+  /**
+   * Called to check and possibly end the transaction due to a timeout.
+   *
+   * @return True if the transaction ended, false otherwise.
+   */
+  bool MaybeTimeout(const TimeStamp& aTimeStamp);
+
+  /**
+   * Update the wheel transaction state for a new event.
+   */
+  void Update(const ScrollWheelInput& aEvent);
+
+protected:
+  void UpdateTargetApzc(const nsRefPtr<AsyncPanZoomController>& aTargetApzc) override;
+
 private:
   nsTArray<ScrollWheelInput> mEvents;
+  TimeStamp mLastEventTime;
+  TimeStamp mLastMouseMove;
+  bool mTransactionEnded;
 };
 
 /**
@@ -182,12 +262,10 @@ private:
 class TouchBlockState : public CancelableBlockState
 {
 public:
-  typedef uint32_t TouchBehaviorFlags;
-
   explicit TouchBlockState(const nsRefPtr<AsyncPanZoomController>& aTargetApzc,
                            bool aTargetConfirmed);
 
-  TouchBlockState *AsTouchBlock() MOZ_OVERRIDE {
+  TouchBlockState *AsTouchBlock() override {
     return this;
   }
 
@@ -197,16 +275,21 @@ public:
    */
   bool SetAllowedTouchBehaviors(const nsTArray<TouchBehaviorFlags>& aBehaviors);
   /**
-   * Copy the allowed touch behavior flags from another block.
-   * @return false if this block already has these flags set, true if not.
+   * If the allowed touch behaviors have been set, populate them into
+   * |aOutBehaviors| and return true. Else, return false.
    */
-  bool CopyAllowedTouchBehaviorsFrom(const TouchBlockState& aOther);
+  bool GetAllowedTouchBehaviors(nsTArray<TouchBehaviorFlags>& aOutBehaviors) const;
+
+  /**
+   * Copy various properties from another block.
+   */
+  void CopyPropertiesFrom(const TouchBlockState& aOther);
 
   /**
    * @return true iff this block has received all the information needed
    *         to properly dispatch the events in the block.
    */
-  bool IsReadyForHandling() const MOZ_OVERRIDE;
+  bool IsReadyForHandling() const override;
 
   /**
    * Sets a flag that indicates this input block occurred while the APZ was
@@ -253,18 +336,11 @@ public:
   bool TouchActionAllowsPanningY() const;
   bool TouchActionAllowsPanningXY() const;
 
-  bool HasEvents() const MOZ_OVERRIDE;
-  void DropEvents() MOZ_OVERRIDE;
-  void HandleEvents(const nsRefPtr<AsyncPanZoomController>& aTarget) MOZ_OVERRIDE;
-  bool MustStayActive() MOZ_OVERRIDE;
-  const char* Type() MOZ_OVERRIDE;
-
-private:
-  /**
-   * @return the first event in the queue. The event is removed from the queue
-   *         before it is returned.
-   */
-  MultiTouchInput RemoveFirstEvent();
+  bool HasEvents() const override;
+  void DropEvents() override;
+  void HandleEvents() override;
+  bool MustStayActive() override;
+  const char* Type() override;
 
 private:
   nsTArray<TouchBehaviorFlags> mAllowedTouchBehaviors;

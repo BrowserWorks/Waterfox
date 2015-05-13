@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -42,7 +43,7 @@ NS_IMETHODIMP_(MozExternalRefCountType) DOMStorageDBChild::Release(void)
 void
 DOMStorageDBChild::AddIPDLReference()
 {
-  NS_ABORT_IF_FALSE(!mIPCOpen, "Attempting to retain multiple IPDL references");
+  MOZ_ASSERT(!mIPCOpen, "Attempting to retain multiple IPDL references");
   mIPCOpen = true;
   AddRef();
 }
@@ -50,7 +51,7 @@ DOMStorageDBChild::AddIPDLReference()
 void
 DOMStorageDBChild::ReleaseIPDLReference()
 {
-  NS_ABORT_IF_FALSE(mIPCOpen, "Attempting to release non-existent IPDL reference");
+  MOZ_ASSERT(mIPCOpen, "Attempting to release non-existent IPDL reference");
   mIPCOpen = false;
   Release();
 }
@@ -214,7 +215,7 @@ DOMStorageDBChild::RecvObserve(const nsCString& aTopic,
 }
 
 bool
-DOMStorageDBChild::RecvScopesHavingData(const InfallibleTArray<nsCString>& aScopes)
+DOMStorageDBChild::RecvScopesHavingData(nsTArray<nsCString>&& aScopes)
 {
   for (uint32_t i = 0; i < aScopes.Length(); ++i) {
     ScopesHavingData().PutEntry(aScopes[i]);
@@ -275,7 +276,7 @@ NS_IMPL_RELEASE(DOMStorageDBParent)
 void
 DOMStorageDBParent::AddIPDLReference()
 {
-  NS_ABORT_IF_FALSE(!mIPCOpen, "Attempting to retain multiple IPDL references");
+  MOZ_ASSERT(!mIPCOpen, "Attempting to retain multiple IPDL references");
   mIPCOpen = true;
   AddRef();
 }
@@ -283,7 +284,7 @@ DOMStorageDBParent::AddIPDLReference()
 void
 DOMStorageDBParent::ReleaseIPDLReference()
 {
-  NS_ABORT_IF_FALSE(mIPCOpen, "Attempting to release non-existent IPDL reference");
+  MOZ_ASSERT(mIPCOpen, "Attempting to release non-existent IPDL reference");
   mIPCOpen = false;
   Release();
 }

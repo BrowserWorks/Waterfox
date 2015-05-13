@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -157,15 +158,14 @@ void
 HTMLStyleElement::UnbindFromTree(bool aDeep, bool aNullParent)
 {
   nsCOMPtr<nsIDocument> oldDoc = GetUncomposedDoc();
-  nsCOMPtr<nsIDocument> oldComposedDoc = GetComposedDoc();
   ShadowRoot* oldShadow = GetContainingShadow();
 
   nsGenericHTMLElement::UnbindFromTree(aDeep, aNullParent);
 
-  if (GetContainingShadow() && !oldComposedDoc) {
-    // The style is in a shadow tree and was already not
-    // in the composed document. Thus the sheet does not
-    // need to be updated.
+  if (oldShadow && GetContainingShadow()) {
+    // The style is in a shadow tree and is still in the
+    // shadow tree. Thus the sheets in the shadow DOM
+    // do not need to be updated.
     return;
   }
 
@@ -279,9 +279,9 @@ HTMLStyleElement::GetStyleSheetInfo(nsAString& aTitle,
 }
 
 JSObject*
-HTMLStyleElement::WrapNode(JSContext *aCx)
+HTMLStyleElement::WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return HTMLStyleElementBinding::Wrap(aCx, this);
+  return HTMLStyleElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 } // namespace dom

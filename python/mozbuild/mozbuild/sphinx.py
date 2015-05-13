@@ -101,6 +101,22 @@ def special_reference(v, func, typ, doc):
 
 def format_module(m):
     lines = []
+
+    for subcontext, cls in sorted(m.SUBCONTEXTS.items()):
+        lines.extend([
+            '.. _mozbuild_subcontext_%s:' % subcontext,
+            '',
+            'Sub-Context: %s' % subcontext,
+            '=============' + '=' * len(subcontext),
+            '',
+        ])
+        lines.extend(prepare_docstring(cls.__doc__))
+        if lines[-1]:
+            lines.append('')
+
+        for k, v in sorted(cls.VARIABLES.items()):
+            lines.extend(variable_reference(k, *v))
+
     lines.extend([
         'Variables',
         '=========',

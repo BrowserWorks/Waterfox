@@ -27,7 +27,7 @@ class nsIdleServiceGTK : public nsIdleService
 public:
     NS_DECL_ISUPPORTS_INHERITED
 
-    bool PollIdleTime(uint32_t* aIdleTime);
+    virtual bool PollIdleTime(uint32_t* aIdleTime) override;
 
     static already_AddRefed<nsIdleServiceGTK> GetInstance()
     {
@@ -46,7 +46,7 @@ private:
 
 protected:
     nsIdleServiceGTK();
-    bool UsePollMode();
+    virtual bool UsePollMode() override;
 };
 
 #endif // nsIdleServiceGTK_h__

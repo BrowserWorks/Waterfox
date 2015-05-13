@@ -15,53 +15,54 @@
 
 namespace mozilla {
 
-typedef std::queue<mp4_demuxer::MP4Sample*> SampleQueue;
+typedef std::queue<nsRefPtr<MediaRawData>> SampleQueue;
 
 class AndroidDecoderModule : public PlatformDecoderModule {
 public:
-  virtual nsresult Shutdown() MOZ_OVERRIDE;
-
   virtual already_AddRefed<MediaDataDecoder>
-  CreateVideoDecoder(const mp4_demuxer::VideoDecoderConfig& aConfig,
+  CreateVideoDecoder(const VideoInfo& aConfig,
                      layers::LayersBackend aLayersBackend,
                      layers::ImageContainer* aImageContainer,
-                     MediaTaskQueue* aVideoTaskQueue,
-                     MediaDataDecoderCallback* aCallback) MOZ_OVERRIDE;
+                     FlushableMediaTaskQueue* aVideoTaskQueue,
+                     MediaDataDecoderCallback* aCallback) override;
 
   virtual already_AddRefed<MediaDataDecoder>
-  CreateAudioDecoder(const mp4_demuxer::AudioDecoderConfig& aConfig,
-                     MediaTaskQueue* aAudioTaskQueue,
-                     MediaDataDecoderCallback* aCallback) MOZ_OVERRIDE;
+  CreateAudioDecoder(const AudioInfo& aConfig,
+                     FlushableMediaTaskQueue* aAudioTaskQueue,
+                     MediaDataDecoderCallback* aCallback) override;
 
 
   AndroidDecoderModule() {}
   virtual ~AndroidDecoderModule() {}
 
-  virtual bool SupportsAudioMimeType(const char* aMimeType) MOZ_OVERRIDE;
+  virtual bool SupportsMimeType(const nsACString& aMimeType) override;
+
+  virtual ConversionRequired
+  DecoderNeedsConversion(const TrackInfo& aConfig) const override;
 };
 
 class MediaCodecDataDecoder : public MediaDataDecoder {
 public:
 
   MediaCodecDataDecoder(MediaData::Type aType,
-                        const char* aMimeType,
+                        const nsACString& aMimeType,
                         widget::sdk::MediaFormat::Param aFormat,
                         MediaDataDecoderCallback* aCallback);
 
   virtual ~MediaCodecDataDecoder();
 
-  virtual nsresult Init() MOZ_OVERRIDE;
-  virtual nsresult Flush() MOZ_OVERRIDE;
-  virtual nsresult Drain() MOZ_OVERRIDE;
-  virtual nsresult Shutdown() MOZ_OVERRIDE;
-  virtual nsresult Input(mp4_demuxer::MP4Sample* aSample);
+  virtual nsresult Init() override;
+  virtual nsresult Flush() override;
+  virtual nsresult Drain() override;
+  virtual nsresult Shutdown() override;
+  virtual nsresult Input(MediaRawData* aSample);
 
 protected:
   friend class AndroidDecoderModule;
 
   MediaData::Type mType;
 
-  nsAutoPtr<char> mMimeType;
+  nsAutoCString mMimeType;
   widget::sdk::MediaFormat::GlobalRef mFormat;
 
   MediaDataDecoderCallback* mCallback;
@@ -92,6 +93,7 @@ protected:
   nsresult ResetOutputBuffers();
 
   void DecoderLoop();
+  nsresult GetInputBuffer(JNIEnv* env, int index, jni::Object::LocalRef* buffer);
   virtual void ClearQueue();
 };
 

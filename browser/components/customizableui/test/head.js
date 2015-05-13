@@ -127,18 +127,6 @@ function removeDeveloperButtonIfDevEdition(areaPanelPlacements) {
   }
 }
 
-function isInWin8() {
-  if (!Services.metro)
-    return false;
-  return Services.metro.supported;
-}
-
-function addSwitchToMetroButtonInWindows8(areaPanelPlacements) {
-  if (isInWin8()) {
-    areaPanelPlacements.push("switch-to-metro-button");
-  }
-}
-
 function assertAreaPlacements(areaId, expectedPlacements) {
   let actualPlacements = getAreaWidgetIds(areaId);
   placementArraysEqual(areaId, actualPlacements, expectedPlacements);
@@ -185,12 +173,8 @@ function getAreaWidgetIds(areaId) {
   return CustomizableUI.getWidgetIdsInArea(areaId);
 }
 
-function simulateItemDrag(toDrag, target) {
-  let docId = toDrag.ownerDocument.documentElement.id;
-  let dragData = [[{type: 'text/toolbarwrapper-id/' + docId,
-                    data: toDrag.id}]];
-  synthesizeDragStart(toDrag.parentNode, dragData);
-  synthesizeDrop(target, target, dragData);
+function simulateItemDrag(aToDrag, aTarget) {
+  synthesizeDrop(aToDrag.parentNode, aTarget);
 }
 
 function endCustomizing(aWindow=window) {

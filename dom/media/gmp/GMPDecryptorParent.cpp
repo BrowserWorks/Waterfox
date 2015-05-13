@@ -4,16 +4,17 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "GMPDecryptorParent.h"
-#include "GMPParent.h"
-#include "mp4_demuxer/DecoderData.h"
+#include "GMPContentParent.h"
+#include "MediaData.h"
 #include "mozilla/unused.h"
 
 namespace mozilla {
 namespace gmp {
 
-GMPDecryptorParent::GMPDecryptorParent(GMPParent* aPlugin)
+GMPDecryptorParent::GMPDecryptorParent(GMPContentParent* aPlugin)
   : mIsOpen(false)
   , mShuttingDown(false)
+  , mActorDestroyed(false)
   , mPlugin(aPlugin)
   , mCallback(nullptr)
 #ifdef DEBUG
@@ -21,10 +22,17 @@ GMPDecryptorParent::GMPDecryptorParent(GMPParent* aPlugin)
 #endif
 {
   MOZ_ASSERT(mPlugin && mGMPThread);
+  mPluginId = aPlugin->GetPluginId();
 }
 
 GMPDecryptorParent::~GMPDecryptorParent()
 {
+}
+
+const uint32_t
+GMPDecryptorParent::GetPluginId() const
+{
+  return mPluginId;
 }
 
 nsresult
@@ -126,7 +134,7 @@ GMPDecryptorParent::SetServerCertificate(uint32_t aPromiseId,
 
 void
 GMPDecryptorParent::Decrypt(uint32_t aId,
-                            const mp4_demuxer::CryptoSample& aCrypto,
+                            const CryptoSample& aCrypto,
                             const nsTArray<uint8_t>& aBuffer)
 {
   if (!mIsOpen) {
@@ -135,12 +143,13 @@ GMPDecryptorParent::Decrypt(uint32_t aId,
   }
 
   // Caller should ensure parameters passed in are valid.
-  MOZ_ASSERT(!aBuffer.IsEmpty() && aCrypto.valid);
+  MOZ_ASSERT(!aBuffer.IsEmpty() && aCrypto.mValid);
 
-  GMPDecryptionData data(aCrypto.key,
-                         aCrypto.iv,
-                         aCrypto.plain_sizes,
-                         aCrypto.encrypted_sizes);
+  GMPDecryptionData data(aCrypto.mKeyId,
+                         aCrypto.mIV,
+                         aCrypto.mPlainSizes,
+                         aCrypto.mEncryptedSizes,
+                         aCrypto.mSessionIds);
 
   unused << SendDecrypt(aId, aBuffer, data);
 }
@@ -213,14 +222,14 @@ GMPDecryptorParent::RecvRejectPromise(const uint32_t& aPromiseId,
 
 bool
 GMPDecryptorParent::RecvSessionMessage(const nsCString& aSessionId,
-                                       const nsTArray<uint8_t>& aMessage,
-                                       const nsCString& aDestinationURL)
+                                       const GMPSessionMessageType& aMessageType,
+                                       nsTArray<uint8_t>&& aMessage)
 {
   if (!mIsOpen) {
     NS_WARNING("Trying to use a dead GMP decrypter!");
     return false;
   }
-  mCallback->SessionMessage(aSessionId, aMessage, aDestinationURL);
+  mCallback->SessionMessage(aSessionId, aMessageType, aMessage);
   return true;
 }
 
@@ -265,26 +274,13 @@ GMPDecryptorParent::RecvSessionError(const nsCString& aSessionId,
 }
 
 bool
-GMPDecryptorParent::RecvKeyIdUsable(const nsCString& aSessionId,
-                                    const nsTArray<uint8_t>& aKeyId)
+GMPDecryptorParent::RecvKeyStatusChanged(const nsCString& aSessionId,
+                                         InfallibleTArray<uint8_t>&& aKeyId,
+                                         const GMPMediaKeyStatus& aStatus)
 {
-  if (!mIsOpen) {
-    NS_WARNING("Trying to use a dead GMP decrypter!");
-    return false;
+  if (mIsOpen) {
+    mCallback->KeyStatusChanged(aSessionId, aKeyId, aStatus);
   }
-  mCallback->KeyIdUsable(aSessionId, aKeyId);
-  return true;
-}
-
-bool
-GMPDecryptorParent::RecvKeyIdNotUsable(const nsCString& aSessionId,
-                                       const nsTArray<uint8_t>& aKeyId)
-{
-  if (!mIsOpen) {
-    NS_WARNING("Trying to use a dead GMP decrypter!");
-    return false;
-  }
-  mCallback->KeyIdNotUsable(aSessionId, aKeyId);
   return true;
 }
 
@@ -302,13 +298,20 @@ GMPDecryptorParent::RecvSetCaps(const uint64_t& aCaps)
 bool
 GMPDecryptorParent::RecvDecrypted(const uint32_t& aId,
                                   const GMPErr& aErr,
-                                  const nsTArray<uint8_t>& aBuffer)
+                                  InfallibleTArray<uint8_t>&& aBuffer)
 {
   if (!mIsOpen) {
     NS_WARNING("Trying to use a dead GMP decrypter!");
     return false;
   }
   mCallback->Decrypted(aId, aErr, aBuffer);
+  return true;
+}
+
+bool
+GMPDecryptorParent::RecvShutdown()
+{
+  Shutdown();
   return true;
 }
 
@@ -345,7 +348,9 @@ GMPDecryptorParent::Shutdown()
   }
 
   mIsOpen = false;
-  unused << SendDecryptingComplete();
+  if (!mActorDestroyed) {
+    unused << SendDecryptingComplete();
+  }
 }
 
 // Note: Keep this sync'd up with Shutdown
@@ -353,6 +358,7 @@ void
 GMPDecryptorParent::ActorDestroy(ActorDestroyReason aWhy)
 {
   mIsOpen = false;
+  mActorDestroyed = true;
   if (mCallback) {
     // May call Close() (and Shutdown()) immediately or with a delay
     mCallback->Terminated();

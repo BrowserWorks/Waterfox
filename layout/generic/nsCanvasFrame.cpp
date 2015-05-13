@@ -53,6 +53,26 @@ NS_QUERYFRAME_HEAD(nsCanvasFrame)
   NS_QUERYFRAME_ENTRY(nsIAnonymousContentCreator)
 NS_QUERYFRAME_TAIL_INHERITING(nsContainerFrame)
 
+NS_IMPL_ISUPPORTS(nsCanvasFrame::DummyTouchListener, nsIDOMEventListener)
+
+void
+nsCanvasFrame::ShowCustomContentContainer()
+{
+  if (mCustomContentContainer) {
+    mCustomContentContainer->UnsetAttr(kNameSpaceID_None, nsGkAtoms::hidden, true);
+  }
+}
+
+void
+nsCanvasFrame::HideCustomContentContainer()
+{
+  if (mCustomContentContainer) {
+    mCustomContentContainer->SetAttr(kNameSpaceID_None, nsGkAtoms::hidden,
+                                     NS_LITERAL_STRING("true"),
+                                     true);
+  }
+}
+
 nsresult
 nsCanvasFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
 {
@@ -83,6 +103,12 @@ nsCanvasFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
     classValue.AppendLiteral("moz-touchcaret hidden");
     rv = mTouchCaretElement->SetAttr(kNameSpaceID_None, nsGkAtoms::_class,
                                      classValue, true);
+
+    if (!mDummyTouchListener) {
+      mDummyTouchListener = new DummyTouchListener();
+    }
+    mTouchCaretElement->AddEventListener(NS_LITERAL_STRING("touchstart"),
+                                         mDummyTouchListener, false);
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
@@ -106,6 +132,14 @@ nsCanvasFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
     rv = mSelectionCaretsEndElement->SetAttr(kNameSpaceID_None, nsGkAtoms::_class,
                                              NS_LITERAL_STRING("moz-selectioncaret-right hidden"),
                                              true);
+
+    if (!mDummyTouchListener) {
+      mDummyTouchListener = new DummyTouchListener();
+    }
+    mSelectionCaretsStartElement->AddEventListener(NS_LITERAL_STRING("touchstart"),
+                                                   mDummyTouchListener, false);
+    mSelectionCaretsEndElement->AddEventListener(NS_LITERAL_STRING("touchstart"),
+                                                 mDummyTouchListener, false);
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
@@ -124,6 +158,11 @@ nsCanvasFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
   for (size_t i = 0; i < len; ++i) {
     nsCOMPtr<Element> node = doc->GetAnonymousContents()[i]->GetContentNode();
     mCustomContentContainer->AppendChildTo(node->AsContent(), true);
+  }
+
+  // Only create a frame for mCustomContentContainer if it has some children.
+  if (len == 0) {
+    HideCustomContentContainer();
   }
 
   return NS_OK;
@@ -154,6 +193,21 @@ nsCanvasFrame::DestroyFrom(nsIFrame* aDestructRoot)
     PresContext()->GetPresShell()->GetRootScrollFrameAsScrollable();
   if (sf) {
     sf->RemoveScrollPositionListener(this);
+  }
+
+  if (mTouchCaretElement) {
+    mTouchCaretElement->RemoveEventListener(NS_LITERAL_STRING("touchstart"),
+                                            mDummyTouchListener, false);
+  }
+
+  if (mSelectionCaretsStartElement) {
+    mSelectionCaretsStartElement->RemoveEventListener(NS_LITERAL_STRING("touchstart"),
+                                                      mDummyTouchListener, false);
+  }
+
+  if (mSelectionCaretsEndElement) {
+    mSelectionCaretsEndElement->RemoveEventListener(NS_LITERAL_STRING("touchstart"),
+                                                    mDummyTouchListener, false);
   }
 
   nsContentUtils::DestroyAnonymousContent(&mTouchCaretElement);
@@ -380,7 +434,7 @@ public:
   }
 
   virtual nsRect GetBounds(nsDisplayListBuilder* aBuilder,
-                           bool* aSnap) MOZ_OVERRIDE
+                           bool* aSnap) override
   {
     *aSnap = false;
     // This is an overestimate, but that's not a problem.
@@ -389,7 +443,7 @@ public:
   }
 
   virtual void Paint(nsDisplayListBuilder* aBuilder,
-                     nsRenderingContext* aCtx) MOZ_OVERRIDE
+                     nsRenderingContext* aCtx) override
   {
     nsCanvasFrame* frame = static_cast<nsCanvasFrame*>(mFrame);
     frame->PaintFocus(*aCtx, ToReferenceFrame());
@@ -456,9 +510,13 @@ nsCanvasFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
 
   nsIFrame* kid;
   for (kid = GetFirstPrincipalChild(); kid; kid = kid->GetNextSibling()) {
-    // Skip touch caret frame if we do not build caret.
-    if (!aBuilder->IsBuildingCaret() && kid->GetContent() == mTouchCaretElement) {
-      continue;
+    // Skip touch/selection caret frame if we do not build caret.
+    if (!aBuilder->IsBuildingCaret()) {
+      if(kid->GetContent() == mTouchCaretElement ||
+         kid->GetContent() == mSelectionCaretsStartElement||
+         kid->GetContent() == mSelectionCaretsEndElement) {
+        continue;
+      }
     }
 
     // Put our child into its own pseudo-stack.
@@ -550,6 +608,7 @@ nsCanvasFrame::Reflow(nsPresContext*           aPresContext,
                       const nsHTMLReflowState& aReflowState,
                       nsReflowStatus&          aStatus)
 {
+  MarkInReflow();
   DO_GLOBAL_REFLOW_COUNT("nsCanvasFrame");
   DISPLAY_REFLOW(aPresContext, this, aReflowState, aDesiredSize, aStatus);
   NS_FRAME_TRACE_REFLOW_IN("nsCanvasFrame::Reflow");

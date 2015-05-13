@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -22,6 +23,8 @@
 #include "nsString.h"
 #include "nsTArray.h"
 
+#include <stack>
+
 class nsIContent;
 
 namespace mozilla {
@@ -30,7 +33,7 @@ class Element;
 } // namespace dom
 } // namespace mozilla
 
-class nsPlainTextSerializer : public nsIContentSerializer
+class nsPlainTextSerializer final : public nsIContentSerializer
 {
 public:
   nsPlainTextSerializer();
@@ -40,33 +43,33 @@ public:
   // nsIContentSerializer
   NS_IMETHOD Init(uint32_t flags, uint32_t aWrapColumn,
                   const char* aCharSet, bool aIsCopying,
-                  bool aIsWholeDocument) MOZ_OVERRIDE;
+                  bool aIsWholeDocument) override;
 
   NS_IMETHOD AppendText(nsIContent* aText, int32_t aStartOffset,
-                        int32_t aEndOffset, nsAString& aStr) MOZ_OVERRIDE;
+                        int32_t aEndOffset, nsAString& aStr) override;
   NS_IMETHOD AppendCDATASection(nsIContent* aCDATASection,
                                 int32_t aStartOffset, int32_t aEndOffset,
-                                nsAString& aStr) MOZ_OVERRIDE;
+                                nsAString& aStr) override;
   NS_IMETHOD AppendProcessingInstruction(nsIContent* aPI,
                                          int32_t aStartOffset,
                                          int32_t aEndOffset,
-                                         nsAString& aStr) MOZ_OVERRIDE  { return NS_OK; }
+                                         nsAString& aStr) override  { return NS_OK; }
   NS_IMETHOD AppendComment(nsIContent* aComment, int32_t aStartOffset,
-                           int32_t aEndOffset, nsAString& aStr) MOZ_OVERRIDE  { return NS_OK; }
+                           int32_t aEndOffset, nsAString& aStr) override  { return NS_OK; }
   NS_IMETHOD AppendDoctype(nsIContent *aDoctype,
-                           nsAString& aStr) MOZ_OVERRIDE  { return NS_OK; }
+                           nsAString& aStr) override  { return NS_OK; }
   NS_IMETHOD AppendElementStart(mozilla::dom::Element* aElement,
                                 mozilla::dom::Element* aOriginalElement,
-                                nsAString& aStr) MOZ_OVERRIDE; 
+                                nsAString& aStr) override; 
   NS_IMETHOD AppendElementEnd(mozilla::dom::Element* aElement,
-                              nsAString& aStr) MOZ_OVERRIDE;
-  NS_IMETHOD Flush(nsAString& aStr) MOZ_OVERRIDE;
+                              nsAString& aStr) override;
+  NS_IMETHOD Flush(nsAString& aStr) override;
 
   NS_IMETHOD AppendDocumentStart(nsIDocument *aDocument,
-                                 nsAString& aStr) MOZ_OVERRIDE;
+                                 nsAString& aStr) override;
 
-protected:
-  virtual ~nsPlainTextSerializer();
+private:
+  ~nsPlainTextSerializer();
 
   nsresult GetAttributeValue(nsIAtom* aName, nsString& aValueRet);
   void AddToLine(const char16_t* aStringToAdd, int32_t aLength);
@@ -111,8 +114,12 @@ protected:
   bool PopBool(nsTArray<bool>& aStack);
 
   bool ShouldReplaceContainerWithPlaceholder(nsIAtom* aTag);
+  bool IsIgnorableRubyAnnotation(nsIAtom* aTag);
 
-protected:
+  bool IsElementPreformatted(mozilla::dom::Element* aElement);
+  bool IsElementBlock(mozilla::dom::Element* aElement);
+
+private:
   nsString         mCurrentLine;
   uint32_t         mHeadLevel;
   bool             mAtFirstColumn;
@@ -159,13 +166,19 @@ protected:
                                 // line and -1 if we are in a line.
 
   bool             mInWhitespace;
-  bool             mPreFormatted;
+  bool             mPreFormattedMail; // we're dealing with special DOM
+                                      // used by Thunderbird code.
   bool             mStartedOutput; // we've produced at least a character
 
   // While handling a new tag, this variable should remind if any line break
   // is due because of a closing tag. Setting it to "TRUE" while closing the tags.
   // Hence opening tags are guaranteed to start with appropriate line breaks.
-  bool             mLineBreakDue; 
+  bool             mLineBreakDue;
+
+  bool             mPreformattedBlockBoundary;
+
+  // Whether the output should include ruby annotations.
+  bool             mWithRubyAnnotation;
 
   nsString         mURL;
   int32_t          mHeaderStrategy;    /* Header strategy (pref)
@@ -195,6 +208,11 @@ protected:
   // refcounted.
   nsIAtom**        mTagStack;
   uint32_t         mTagStackIndex;
+
+  // The stack indicating whether the elements we've been operating on are
+  // CSS preformatted elements, so that we can tell if the text inside them
+  // should be formatted.
+  std::stack<bool> mPreformatStack;
 
   // Content in the stack above this index should be ignored:
   uint32_t          mIgnoreAboveIndex;

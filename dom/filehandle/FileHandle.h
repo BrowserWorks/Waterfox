@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -25,7 +25,7 @@ class nsAString;
 namespace mozilla {
 namespace dom {
 
-class File;
+class Blob;
 class FileHelper;
 class FileRequestBase;
 class FileService;
@@ -240,7 +240,7 @@ protected:
                  ErrorResult& aRv);
 
   static already_AddRefed<nsIInputStream>
-  GetInputStream(const File& aValue, uint64_t* aInputLength,
+  GetInputStream(const Blob& aValue, uint64_t* aInputLength,
                  ErrorResult& aRv);
 
   static already_AddRefed<nsIInputStream>
@@ -248,7 +248,7 @@ protected:
                  ErrorResult& aRv);
 };
 
-class FinishHelper MOZ_FINAL : public nsIRunnable
+class FinishHelper final : public nsIRunnable
 {
   friend class FileHandleBase;
 

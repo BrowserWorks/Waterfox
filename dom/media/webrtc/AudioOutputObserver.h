@@ -32,7 +32,7 @@ public:
                      AudioSampleFormat aFormat,
                      uint32_t aChannels,
                      uint32_t aFrames,
-                     uint32_t aSampleRate) MOZ_OVERRIDE;
+                     uint32_t aSampleRate) override;
 
   void Clear();
   void InsertFarEnd(const AudioDataValue *aBuffer, uint32_t aFrames, bool aOverran,
@@ -52,7 +52,7 @@ private:
   uint32_t mChunkSize;
 
   // chunking to 10ms support
-  FarEndAudioChunk *mSaved; // can't be nsAutoPtr since we need to use moz_free()
+  FarEndAudioChunk *mSaved; // can't be nsAutoPtr since we need to use free(), not delete
   uint32_t mSamplesSaved;
 };
 

@@ -25,6 +25,8 @@ const Cr = Components.results;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "AsyncShutdown",
+                                  "resource://gre/modules/AsyncShutdown.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "DeferredTask",
                                   "resource://gre/modules/DeferredTask.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Downloads",
@@ -88,23 +90,11 @@ const Timer = Components.Constructor("@mozilla.org/timer;1", "nsITimer",
 
 /**
  * Indicates the delay between a change to the downloads data and the related
- * save operation.  This value is the result of a delicate trade-off, assuming
- * the host application uses the browser history instead of the download store
- * to save completed downloads.
+ * save operation.
  *
- * If a download takes less than this interval to complete (for example, saving
- * a page that is already displayed), then no input/output is triggered by the
- * download store except for an existence check, resulting in the best possible
- * efficiency.
- *
- * Conversely, if the browser is closed before this interval has passed, the
- * download will not be saved.  This prevents it from being restored in the next
- * session, and if there is partial data associated with it, then the ".part"
- * file will not be deleted when the browser starts again.
- *
- * In all cases, for best efficiency, this value should be high enough that the
- * input/output for opening or closing the target file does not overlap with the
- * one for saving the list of downloads.
+ * For best efficiency, this value should be high enough that the input/output
+ * for opening or closing the target file does not overlap with the one for
+ * saving the list of downloads.
  */
 const kSaveDelayMs = 1500;
 
@@ -196,7 +186,8 @@ this.DownloadIntegration = {
       return this.shouldKeepBlockedDataInTest;
     }
 
-    return false;
+    const FIREFOX_ID = "{ec8030f7-c20a-464f-9b0e-13a3a9e97384}";
+    return Services.appinfo.ID == FIREFOX_ID;
   },
 
   /**
@@ -470,13 +461,7 @@ this.DownloadIntegration = {
 #elifdef MOZ_WIDGET_GONK
       directoryPath = yield this.getSystemDownloadsDirectory();
 #else
-      // For Metro mode on Windows 8,  we want searchability for documents
-      // that the user chose to open with an external application.
-      if (Services.metro && Services.metro.immersive) {
-        directoryPath = yield this.getSystemDownloadsDirectory();
-      } else {
-        directoryPath = this._getDirectory("TmpD");
-      }
+      directoryPath = this._getDirectory("TmpD");
 #endif
       throw new Task.Result(directoryPath);
     }.bind(this));
@@ -654,15 +639,25 @@ this.DownloadIntegration = {
           Services.prefs.getBoolPref("browser.helperApps.deleteTempFileOnExit"));
         // Permanently downloaded files are made accessible by other users on
         // this system, while temporary downloads are marked as read-only.
-        let unixMode = isTemporaryDownload ? 0o400 : 0o666;
-        // On Unix, the umask of the process is respected.  This call has no
-        // effect on Windows.
-        yield OS.File.setPermissions(aDownload.target.path, { unixMode });
+        let options = {};
+        if (isTemporaryDownload) {
+          options.unixMode = 0o400;
+          options.winAttributes = {readOnly: true};
+        } else {
+          options.unixMode = 0o666;
+        }
+        // On Unix, the umask of the process is respected.
+        yield OS.File.setPermissions(aDownload.target.path, options);
       } catch (ex) {
         // We should report errors with making the permissions less restrictive
         // or marking the file as read-only on Unix and Mac, but this should not
         // prevent the download from completing.
-        Cu.reportError(ex);
+        // The setPermissions API error EPERM is expected to occur when working
+        // on a file system that does not support file permissions, like FAT32,
+        // thus we don't report this error.
+        if (!(ex instanceof OS.File.Error) || ex.unixErrno != OS.Constants.libc.EPERM) {
+          Cu.reportError(ex);
+        }
       }
 
       gDownloadPlatform.downloadDone(NetUtil.newURI(aDownload.source.url),
@@ -1216,6 +1211,8 @@ this.DownloadAutoSaveView = function (aList, aStore)
   this._store = aStore;
   this._downloadsMap = new Map();
   this._writer = new DeferredTask(() => this._store.save(), kSaveDelayMs);
+  AsyncShutdown.profileBeforeChange.addBlocker("DownloadAutoSaveView: writing data",
+                                               () => this._writer.finalize());
 }
 
 this.DownloadAutoSaveView.prototype = {

@@ -1,5 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -154,7 +154,7 @@ FileSystemTaskBase::Recv__delete__(const FileSystemResponseValue& aValue)
 }
 
 BlobParent*
-FileSystemTaskBase::GetBlobParent(nsIDOMFile* aFile) const
+FileSystemTaskBase::GetBlobParent(BlobImpl* aFile) const
 {
   MOZ_ASSERT(FileSystemUtils::IsParentProcess(),
              "Only call from parent process!");
@@ -164,13 +164,23 @@ FileSystemTaskBase::GetBlobParent(nsIDOMFile* aFile) const
   // Load the lazy dom file data from the parent before sending to the child.
   nsString mimeType;
   aFile->GetType(mimeType);
-  uint64_t fileSize;
-  aFile->GetSize(&fileSize);
-  uint64_t lastModifiedDate;
-  aFile->GetMozLastModifiedDate(&lastModifiedDate);
+
+  // We call GetSize and GetLastModified to prepopulate the value in the
+  // BlobImpl.
+  {
+    ErrorResult rv;
+    aFile->GetSize(rv);
+    rv.SuppressException();
+  }
+
+  {
+    ErrorResult rv;
+    aFile->GetLastModified(rv);
+    rv.SuppressException();
+  }
 
   ContentParent* cp = static_cast<ContentParent*>(mRequestParent->Manager());
-  return cp->GetOrCreateActorForBlob(static_cast<File*>(aFile));
+  return cp->GetOrCreateActorForBlobImpl(aFile);
 }
 
 void

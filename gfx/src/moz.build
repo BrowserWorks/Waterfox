@@ -39,6 +39,10 @@ EXPORTS.mozilla += [
     'AppUnits.h',
 ]
 
+EXPORTS.mozilla.gfx += [
+    'RegionTyped.h',
+]
+
 if CONFIG['MOZ_X11']:
     EXPORTS.mozilla += ['X11Util.h']
     SOURCES += [
@@ -66,8 +70,6 @@ SOURCES += [
 ]
 
 FAIL_ON_WARNINGS = True
-
-MSVC_ENABLE_PGO = True
 
 FINAL_LIBRARY = 'xul'
 

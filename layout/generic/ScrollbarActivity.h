@@ -15,7 +15,6 @@
 class nsIContent;
 class nsIScrollbarMediator;
 class nsITimer;
-class nsIAtom;
 
 namespace mozilla {
 namespace layout {
@@ -55,8 +54,9 @@ namespace layout {
  * ActivityStarted().
  */
 
-class ScrollbarActivity MOZ_FINAL : public nsIDOMEventListener,
-                                    public nsARefreshObserver {
+class ScrollbarActivity final : public nsIDOMEventListener,
+                                public nsARefreshObserver
+{
 public:
   explicit ScrollbarActivity(nsIScrollbarMediator* aScrollableFrame)
    : mScrollableFrame(aScrollableFrame)
@@ -83,7 +83,7 @@ public:
   void ActivityStarted();
   void ActivityStopped();
 
-  virtual void WillRefresh(TimeStamp aTime) MOZ_OVERRIDE;
+  virtual void WillRefresh(TimeStamp aTime) override;
 
   static void FadeBeginTimerFired(nsITimer* aTimer, void* aSelf) {
     nsRefPtr<ScrollbarActivity> scrollbarActivity(

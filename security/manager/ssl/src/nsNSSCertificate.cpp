@@ -10,9 +10,9 @@
 #include "prprf.h"
 #include "CertVerifier.h"
 #include "ExtendedValidation.h"
+#include "mozilla/UniquePtr.h"
 #include "pkix/pkixnss.h"
 #include "pkix/pkixtypes.h"
-#include "pkix/ScopedPtr.h"
 #include "nsNSSComponent.h" // for PIPNSS string bundle calls.
 #include "nsCOMPtr.h"
 #include "nsIMutableArray.h"
@@ -36,7 +36,6 @@
 #include "nsCertVerificationThread.h"
 #include "nsIObjectOutputStream.h"
 #include "nsIObjectInputStream.h"
-#include "nsIProgrammingLanguage.h"
 #include "nsXULAppAPI.h"
 #include "nsProxyRelease.h"
 #include "mozilla/Base64.h"
@@ -54,9 +53,7 @@
 using namespace mozilla;
 using namespace mozilla::psm;
 
-#ifdef PR_LOGGING
 extern PRLogModuleInfo* gPIPNSSLog;
-#endif
 
 // This is being stored in an uint32_t that can otherwise
 // only take values from nsIX509Cert's list of cert types.
@@ -66,7 +63,6 @@ extern PRLogModuleInfo* gPIPNSSLog;
 
 NS_IMPL_ISUPPORTS(nsNSSCertificate,
                   nsIX509Cert,
-                  nsIIdentityInfo,
                   nsISerializable,
                   nsIClassInfo)
 
@@ -504,7 +500,7 @@ nsNSSCertificate::GetDbKey(char** aDbKey)
   NS_ENSURE_ARG(aDbKey);
   *aDbKey = nullptr;
   key.len = NS_NSS_LONG*4+mCert->serialNumber.len+mCert->derIssuer.len;
-  key.data = (unsigned char*) nsMemory::Alloc(key.len);
+  key.data = (unsigned char*) moz_xmalloc(key.len);
   if (!key.data)
     return NS_ERROR_OUT_OF_MEMORY;
   NS_NSS_PUT_LONG(0,key.data); // later put moduleID
@@ -517,7 +513,7 @@ nsNSSCertificate::GetDbKey(char** aDbKey)
          mCert->derIssuer.data, mCert->derIssuer.len);
 
   *aDbKey = NSSBase64_EncodeItem(nullptr, nullptr, 0, &key);
-  nsMemory::Free(key.data); // SECItem is a 'c' type without a destrutor
+  free(key.data); // SECItem is a 'c' type without a destructor
   return (*aDbKey) ? NS_OK : NS_ERROR_FAILURE;
 }
 
@@ -536,8 +532,8 @@ nsNSSCertificate::GetWindowTitle(nsAString& aWindowTitle)
     return NS_ERROR_FAILURE;
   }
 
-  mozilla::pkix::ScopedPtr<char, mozilla::psm::PORT_Free_string>
-    commonName(CERT_GetCommonName(&mCert->subject));
+  UniquePtr<char, void(&)(void*)>
+    commonName(CERT_GetCommonName(&mCert->subject), PORT_Free);
 
   const char* titleOptions[] = {
     mCert->nickname,
@@ -624,7 +620,7 @@ nsNSSCertificate::GetEmailAddresses(uint32_t* aLength, char16_t*** aAddresses)
     ++(*aLength);
   }
 
-  *aAddresses = (char16_t**) nsMemory::Alloc(sizeof(char16_t*) * (*aLength));
+  *aAddresses = (char16_t**) moz_xmalloc(sizeof(char16_t*) * (*aLength));
   if (!*aAddresses)
     return NS_ERROR_OUT_OF_MEMORY;
 
@@ -941,7 +937,7 @@ nsNSSCertificate::GetAllTokenNames(uint32_t* aLength, char16_t*** aTokenNames)
     ++(*aLength);
   }
 
-  *aTokenNames = (char16_t**) nsMemory::Alloc(sizeof(char16_t*) * (*aLength));
+  *aTokenNames = (char16_t**) moz_xmalloc(sizeof(char16_t*) * (*aLength));
   if (!*aTokenNames) {
     *aLength = 0;
     return NS_ERROR_OUT_OF_MEMORY;
@@ -972,9 +968,8 @@ nsNSSCertificate::GetSubjectName(nsAString& _subjectName)
   _subjectName.Truncate();
   if (mCert->subjectName) {
     _subjectName = NS_ConvertUTF8toUTF16(mCert->subjectName);
-    return NS_OK;
   }
-  return NS_ERROR_FAILURE;
+  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -987,9 +982,8 @@ nsNSSCertificate::GetIssuerName(nsAString& _issuerName)
   _issuerName.Truncate();
   if (mCert->issuerName) {
     _issuerName = NS_ConvertUTF8toUTF16(mCert->issuerName);
-    return NS_OK;
   }
-  return NS_ERROR_FAILURE;
+  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -1118,7 +1112,7 @@ nsNSSCertificate::GetRawDER(uint32_t* aLength, uint8_t** aArray)
     return NS_ERROR_NOT_AVAILABLE;
 
   if (mCert) {
-    *aArray = (uint8_t*)nsMemory::Alloc(mCert->derCert.len);
+    *aArray = (uint8_t*)moz_xmalloc(mCert->derCert.len);
     if (*aArray) {
       memcpy(*aArray, mCert->derCert.data, mCert->derCert.len);
       *aLength = mCert->derCert.len;
@@ -1244,7 +1238,7 @@ nsNSSCertificate::ExportAsCMS(uint32_t chainMode,
     return NS_ERROR_FAILURE;
   }
 
-  *aArray = (uint8_t*)nsMemory::Alloc(certP7.len);
+  *aArray = (uint8_t*)moz_xmalloc(certP7.len);
   if (!*aArray)
     return NS_ERROR_OUT_OF_MEMORY;
 
@@ -1298,7 +1292,7 @@ nsNSSCertificate::GetUsagesArray(bool localOnly,
                           tmpUsages);
   NS_ENSURE_SUCCESS(rv,rv);
   if (tmpCount > 0) {
-    *_usages = (char16_t**) nsMemory::Alloc(sizeof(char16_t*) * tmpCount);
+    *_usages = (char16_t**) moz_xmalloc(sizeof(char16_t*) * tmpCount);
     if (!*_usages)
       return NS_ERROR_OUT_OF_MEMORY;
     for (uint32_t i=0; i<tmpCount; i++) {
@@ -1307,7 +1301,7 @@ nsNSSCertificate::GetUsagesArray(bool localOnly,
     *_count = tmpCount;
     return NS_OK;
   }
-  *_usages = (char16_t**) nsMemory::Alloc(sizeof(char16_t*));
+  *_usages = (char16_t**) moz_xmalloc(sizeof(char16_t*));
   if (!*_usages)
     return NS_ERROR_OUT_OF_MEMORY;
   *_count = 0;
@@ -1357,7 +1351,7 @@ nsNSSCertificate::GetUsagesString(bool localOnly, uint32_t* _verified,
   for (uint32_t i=0; i<tmpCount; i++) {
     if (i>0) _usages.Append(',');
     _usages.Append(tmpUsages[i]);
-    nsMemory::Free(tmpUsages[i]);
+    free(tmpUsages[i]);
   }
   return NS_OK;
 }
@@ -1442,7 +1436,7 @@ nsNSSCertificate::getValidEVOidTag(SECOidTag& resultOidTag, bool& validEV)
 
 #endif // MOZ_NO_EV_CERTS
 
-NS_IMETHODIMP
+nsresult
 nsNSSCertificate::GetIsExtendedValidation(bool* aIsEV)
 {
 #ifdef MOZ_NO_EV_CERTS
@@ -1465,43 +1459,6 @@ nsNSSCertificate::GetIsExtendedValidation(bool* aIsEV)
   SECOidTag oid_tag;
   return getValidEVOidTag(oid_tag, *aIsEV);
 #endif
-}
-
-NS_IMETHODIMP
-nsNSSCertificate::GetValidEVPolicyOid(nsACString& outDottedOid)
-{
-  outDottedOid.Truncate();
-
-#ifndef MOZ_NO_EV_CERTS
-  nsNSSShutDownPreventionLock locker;
-  if (isAlreadyShutDown()) {
-    return NS_ERROR_NOT_AVAILABLE;
-  }
-
-  SECOidTag oid_tag;
-  bool valid;
-  nsresult rv = getValidEVOidTag(oid_tag, valid);
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-
-  if (valid) {
-    SECOidData* oid_data = SECOID_FindOIDByTag(oid_tag);
-    if (!oid_data) {
-      return NS_ERROR_FAILURE;
-    }
-
-    char* oid_str = CERT_GetOidString(&oid_data->oid);
-    if (!oid_str) {
-      return NS_ERROR_FAILURE;
-    }
-
-    outDottedOid.Assign(oid_str);
-    PR_smprintf_free(oid_str);
-  }
-#endif
-
-  return NS_OK;
 }
 
 namespace mozilla {
@@ -1667,8 +1624,17 @@ nsNSSCertList::DupCertList(CERTCertList* aCertList,
 void*
 nsNSSCertList::GetRawCertList()
 {
-  // This function should only be called after adquiring a
-  // nsNSSShutDownPreventionLock
+  // This function should only be called after acquiring a
+  // nsNSSShutDownPreventionLock. It's difficult to enforce this in code since
+  // this is an implementation of an XPCOM interface function (albeit a
+  // C++-only one), so we acquire the (reentrant) lock and check for shutdown
+  // ourselves here. At the moment it appears that only nsCertTree uses this
+  // function. When that gets removed and replaced by a more reasonable
+  // implementation of the certificate manager, this function can be removed.
+  nsNSSShutDownPreventionLock locker;
+  if (isAlreadyShutDown()) {
+    return nullptr;
+  }
   return mCertList.get();
 }
 
@@ -1961,8 +1927,7 @@ nsNSSCertificate::GetInterfaces(uint32_t* count, nsIID*** array)
 }
 
 NS_IMETHODIMP
-nsNSSCertificate::GetHelperForLanguage(uint32_t language,
-                                       nsISupports** _retval)
+nsNSSCertificate::GetScriptableHelper(nsIXPCScriptable** _retval)
 {
   *_retval = nullptr;
   return NS_OK;
@@ -1985,17 +1950,10 @@ nsNSSCertificate::GetClassDescription(char** aClassDescription)
 NS_IMETHODIMP
 nsNSSCertificate::GetClassID(nsCID** aClassID)
 {
-  *aClassID = (nsCID*) nsMemory::Alloc(sizeof(nsCID));
+  *aClassID = (nsCID*) moz_xmalloc(sizeof(nsCID));
   if (!*aClassID)
     return NS_ERROR_OUT_OF_MEMORY;
   return GetClassIDNoAlloc(*aClassID);
-}
-
-NS_IMETHODIMP
-nsNSSCertificate::GetImplementationLanguage(uint32_t* aImplementationLanguage)
-{
-  *aImplementationLanguage = nsIProgrammingLanguage::CPLUSPLUS;
-  return NS_OK;
 }
 
 NS_IMETHODIMP

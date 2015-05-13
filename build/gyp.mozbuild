@@ -22,9 +22,11 @@ gyp_vars = {
     # use_system_lib* still seems to be in use in trunk/build
     'use_system_libjpeg': 0,
     'use_system_libvpx': 0,
+    'build_json': 0,
     'build_libjpeg': 0,
-    'build_libvpx': 0,
     'build_libyuv': 0,
+    'build_libvpx': 0,
+    'build_ssl': 0,
     'libyuv_dir': '/media/libyuv',
     'yuv_disable_avx2': 0 if CONFIG['HAVE_X86_AVX2'] else 1,
     # don't use openssl
@@ -42,6 +44,7 @@ gyp_vars = {
 
     'moz_widget_toolkit_gonk': 0,
     'moz_webrtc_omx': 0,
+    'moz_webrtc_mediacodec': 0,
 
     # (for vp8) chromium sets to 0 also
     'use_temporal_layers': 0,
@@ -78,6 +81,7 @@ elif os == 'Android':
     else:
         gyp_vars.update(
             gtest_target_type='executable',
+            moz_webrtc_mediacodec=1,
             android_toolchain=CONFIG['ANDROID_TOOLCHAIN'],
         )
 
@@ -93,7 +97,7 @@ flavors = {
     'NetBSD': 'netbsd',
     'OpenBSD': 'openbsd',
 }
-gyp_vars['OS'] = flavors[os]
+gyp_vars['OS'] = flavors.get(os)
 
 arches = {
     'x86_64': 'x64',

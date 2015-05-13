@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set sw=2 ts=8 et ft=cpp : */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -10,6 +10,7 @@
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/TabParent.h"
 #include "mozilla/Hal.h"
+#include "mozilla/IntegerPrintfMacros.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Services.h"
 #include "mozilla/unused.h"
@@ -37,6 +38,8 @@
 #undef LOG
 #endif
 
+#include <utility>
+
 // Use LOGP inside a ParticularProcessPriorityManager method; use LOG
 // everywhere else.  LOGP prints out information about the particular process
 // priority manager.
@@ -54,17 +57,18 @@
 #  define LOGP(fmt, ...) \
     __android_log_print(ANDROID_LOG_INFO, \
       "Gecko:ProcessPriorityManager", \
-      "[%schild-id=%llu, pid=%d] " fmt, \
+      "[%schild-id=%" PRIu64 ", pid=%d] " fmt, \
       NameWithComma().get(), \
-      (long long unsigned) ChildID(), Pid(), ## __VA_ARGS__)
+      static_cast<uint64_t>(ChildID()), Pid(), ## __VA_ARGS__)
 
 #elif defined(ENABLE_LOGGING)
 #  define LOG(fmt, ...) \
      printf("ProcessPriorityManager - " fmt "\n", ##__VA_ARGS__)
 #  define LOGP(fmt, ...) \
-     printf("ProcessPriorityManager[%schild-id=%llu, pid=%d] - " fmt "\n", \
+     printf("ProcessPriorityManager[%schild-id=%" PRIu64 ", pid=%d] - " \
+       fmt "\n", \
        NameWithComma().get(), \
-       (unsigned long long) ChildID(), Pid(), ##__VA_ARGS__)
+       static_cast<uint64_t>(ChildID()), Pid(), ##__VA_ARGS__)
 
 #elif defined(PR_LOGGING)
   static PRLogModuleInfo*
@@ -80,9 +84,9 @@
             ("ProcessPriorityManager - " fmt, ##__VA_ARGS__))
 #  define LOGP(fmt, ...) \
      PR_LOG(GetPPMLog(), PR_LOG_DEBUG, \
-            ("ProcessPriorityManager[%schild-id=%llu, pid=%d] - " fmt, \
+            ("ProcessPriorityManager[%schild-id=%" PRIu64 ", pid=%d] - " fmt, \
             NameWithComma().get(), \
-            (unsigned long long) ChildID(), Pid(), ##__VA_ARGS__))
+            static_cast<uint64_t>(ChildID()), Pid(), ##__VA_ARGS__))
 #else
 #define LOG(fmt, ...)
 #define LOGP(fmt, ...)
@@ -96,6 +100,42 @@ namespace {
 
 class ParticularProcessPriorityManager;
 
+class ProcessLRUPool final
+{
+public:
+  /**
+   * Creates a new process LRU pool for the specified priority.
+   */
+  ProcessLRUPool(ProcessPriority aPriority, uint32_t aBias);
+
+  /**
+   * Used to remove a particular process priority manager from the LRU pool
+   * when the associated ContentParent is destroyed or its priority changes.
+   */
+  void Remove(ParticularProcessPriorityManager* aParticularManager);
+
+  /**
+   * Used to add a particular process priority manager into the LRU pool when
+   * the associated ContentParent's priority changes.
+   */
+  void Add(ParticularProcessPriorityManager* aParticularManager);
+
+private:
+  ProcessPriority mPriority;
+  uint32_t mLRUPoolLevels;
+  uint32_t mLRUPoolSize;
+  uint32_t mBias;
+  nsTArray<ParticularProcessPriorityManager*> mLRUPool;
+
+  uint32_t CalculateLRULevel(uint32_t aLRUPoolIndex);
+
+  void AdjustLRUValues(
+    nsTArray<ParticularProcessPriorityManager*>::index_type aStart,
+    bool removed);
+
+  DISALLOW_EVIL_CONSTRUCTORS(ProcessLRUPool);
+};
+
 /**
  * This singleton class does the work to implement the process priority manager
  * in the main process.  This class may not be used in child processes.  (You
@@ -107,7 +147,7 @@ class ParticularProcessPriorityManager;
  * any process, are handled separately, by the ProcessPriorityManagerChild
  * class.
  */
-class ProcessPriorityManagerImpl MOZ_FINAL
+class ProcessPriorityManagerImpl final
   : public nsIObserver
   , public WakeLockObserver
 {
@@ -129,7 +169,7 @@ public:
    */
   void SetProcessPriority(ContentParent* aContentParent,
                           ProcessPriority aPriority,
-                          uint32_t aBackgroundLRU = 0);
+                          uint32_t aLRU = 0);
 
   /**
    * If a magic testing-only pref is set, notify the observer service on the
@@ -137,13 +177,6 @@ public:
    */
   void FireTestOnlyObserverNotification(const char* aTopic,
                                         const nsACString& aData = EmptyCString());
-
-  /**
-   * Does some process, other than the one handled by aParticularManager, have
-   * priority FOREGROUND_HIGH?
-   */
-  bool OtherProcessHasHighPriority(
-    ParticularProcessPriorityManager* aParticularManager);
 
   /**
    * Does one of the child processes have priority FOREGROUND_HIGH?
@@ -162,11 +195,43 @@ public:
    * Implements WakeLockObserver, used to monitor wake lock changes in the
    * main process.
    */
-  virtual void Notify(const WakeLockInformation& aInfo) MOZ_OVERRIDE;
+  virtual void Notify(const WakeLockInformation& aInfo) override;
+
+  /**
+   * Prevents processes from changing priority until unfrozen.
+   */
+  void Freeze();
+
+  /**
+   * Allow process' priorities to change again.  This will immediately adjust
+   * processes whose priority change did not happen because of the freeze.
+   */
+  void Unfreeze();
+
+  /**
+   * Return the number of processes that have
+   * PROCESS_PRIORITY_FOREGROUND priority.
+   */
+  uint32_t NumberOfForegroundProcesses();
+
+  /**
+   * Register a priority change to be performed at later time.
+   */
+  void ScheduleDelayedSetPriority(
+    ParticularProcessPriorityManager* aParticularManager,
+    hal::ProcessPriority aPriority);
+
+  /**
+   * Perform the registered priority change unless
+   * aLastParticularManager is the same as the registered one.
+   */
+  void PerformDelayedSetPriority(
+    ParticularProcessPriorityManager* aLastParticularManager);
 
 private:
   static bool sPrefListenersRegistered;
   static bool sInitialized;
+  static bool sFrozen;
   static StaticRefPtr<ProcessPriorityManagerImpl> sSingleton;
 
   static void PrefChangedCallback(const char* aPref, void* aClosure);
@@ -182,20 +247,32 @@ private:
 
   void ObserveContentParentCreated(nsISupports* aContentParent);
   void ObserveContentParentDestroyed(nsISupports* aSubject);
-  void ResetAllCPUPriorities();
 
   nsDataHashtable<nsUint64HashKey, nsRefPtr<ParticularProcessPriorityManager> >
     mParticularManagers;
 
+  /** True if the main process is holding a high-priority wakelock */
   bool mHighPriority;
+
+  /** Contains the PIDs of child processes holding high-priority wakelocks */
   nsTHashtable<nsUint64HashKey> mHighPriorityChildIDs;
+
+  /** Contains a pseudo-LRU list of background processes */
+  ProcessLRUPool mBackgroundLRUPool;
+
+  /** Contains a pseudo-LRU list of foreground processes */
+  ProcessLRUPool mForegroundLRUPool;
+
+  /** Contains the delayed priority change request */
+  std::pair<nsRefPtr<ParticularProcessPriorityManager>, hal::ProcessPriority>
+    mDelayedSetPriority;
 };
 
 /**
  * This singleton class implements the parts of the process priority manager
  * that are available from all processes.
  */
-class ProcessPriorityManagerChild MOZ_FINAL
+class ProcessPriorityManagerChild final
   : public nsIObserver
 {
 public:
@@ -224,7 +301,7 @@ private:
  * This class manages the priority of one particular process.  It is
  * main-process only.
  */
-class ParticularProcessPriorityManager MOZ_FINAL
+class ParticularProcessPriorityManager final
   : public WakeLockObserver
   , public nsIObserver
   , public nsITimerCallback
@@ -232,13 +309,14 @@ class ParticularProcessPriorityManager MOZ_FINAL
 {
   ~ParticularProcessPriorityManager();
 public:
-  explicit ParticularProcessPriorityManager(ContentParent* aContentParent);
+  explicit ParticularProcessPriorityManager(ContentParent* aContentParent,
+                                            bool aFrozen = false);
 
   NS_DECL_ISUPPORTS
   NS_DECL_NSIOBSERVER
   NS_DECL_NSITIMERCALLBACK
 
-  virtual void Notify(const WakeLockInformation& aInfo) MOZ_OVERRIDE;
+  virtual void Notify(const WakeLockInformation& aInfo) override;
   void Init();
 
   int32_t Pid() const;
@@ -263,27 +341,16 @@ public:
   void OnRemoteBrowserFrameShown(nsISupports* aSubject);
   void OnTabParentDestroyed(nsISupports* aSubject);
   void OnFrameloaderVisibleChanged(nsISupports* aSubject);
-  void OnChannelConnected(nsISupports* aSubject);
 
   ProcessPriority CurrentPriority();
   ProcessPriority ComputePriority();
-  ProcessCPUPriority ComputeCPUPriority(ProcessPriority aPriority);
 
   void ScheduleResetPriority(const char* aTimeoutPref);
   void ResetPriority();
   void ResetPriorityNow();
-  void ResetCPUPriorityNow();
-
-  /**
-   * This overload is equivalent to SetPriorityNow(aPriority,
-   * ComputeCPUPriority()).
-   */
-  void SetPriorityNow(ProcessPriority aPriority,
-                      uint32_t aBackgroundLRU = 0);
-
-  void SetPriorityNow(ProcessPriority aPriority,
-                      ProcessCPUPriority aCPUPriority,
-                      uint32_t aBackgroundLRU = 0);
+  void SetPriorityNow(ProcessPriority aPriority, uint32_t aLRU = 0);
+  void Freeze();
+  void Unfreeze();
 
   void ShutDown();
 
@@ -299,9 +366,10 @@ private:
   ContentParent* mContentParent;
   uint64_t mChildID;
   ProcessPriority mPriority;
-  ProcessCPUPriority mCPUPriority;
+  uint32_t mLRU;
   bool mHoldsCPUWakeLock;
   bool mHoldsHighPriorityWakeLock;
+  bool mFrozen;
 
   /**
    * Used to implement NameWithComma().
@@ -311,48 +379,9 @@ private:
   nsCOMPtr<nsITimer> mResetPriorityTimer;
 };
 
-class BackgroundProcessLRUPool MOZ_FINAL
-{
-public:
-  static BackgroundProcessLRUPool* Singleton();
-
-  /**
-   * Used to remove a ContentParent from background LRU pool when
-   * it is destroyed or its priority changed from BACKGROUND to others.
-   */
-  void RemoveFromBackgroundLRUPool(ContentParent* aContentParent);
-
-  /**
-   * Used to add a ContentParent into background LRU pool when
-   * its priority changed to BACKGROUND from others.
-   */
-  void AddIntoBackgroundLRUPool(ContentParent* aContentParent);
-
-private:
-  static StaticAutoPtr<BackgroundProcessLRUPool> sSingleton;
-
-  int32_t mLRUPoolLevels;
-  int32_t mLRUPoolSize;
-  int32_t mLRUPoolAvailableIndex;
-  nsTArray<ContentParent*> mLRUPool;
-
-  uint32_t CalculateLRULevel(uint32_t aBackgroundLRUPoolIndex);
-
-  nsresult UpdateAvailableIndexInLRUPool(
-      ContentParent* aContentParent,
-      int32_t aTargetIndex = -1);
-
-  void ShiftLRUPool();
-
-  void EnsureLRUPool();
-
-  BackgroundProcessLRUPool();
-  DISALLOW_EVIL_CONSTRUCTORS(BackgroundProcessLRUPool);
-
-};
-
 /* static */ bool ProcessPriorityManagerImpl::sInitialized = false;
 /* static */ bool ProcessPriorityManagerImpl::sPrefListenersRegistered = false;
+/* static */ bool ProcessPriorityManagerImpl::sFrozen = false;
 /* static */ StaticRefPtr<ProcessPriorityManagerImpl>
   ProcessPriorityManagerImpl::sSingleton;
 
@@ -421,9 +450,12 @@ ProcessPriorityManagerImpl::GetSingleton()
 
 ProcessPriorityManagerImpl::ProcessPriorityManagerImpl()
     : mHighPriority(false)
+    , mBackgroundLRUPool(PROCESS_PRIORITY_BACKGROUND, 1)
+    , mForegroundLRUPool(PROCESS_PRIORITY_FOREGROUND, 0)
 {
   MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
   RegisterWakeLockObserver(this);
+  mDelayedSetPriority = std::make_pair(nullptr, PROCESS_PRIORITY_UNKNOWN);
 }
 
 ProcessPriorityManagerImpl::~ProcessPriorityManagerImpl()
@@ -439,8 +471,7 @@ ProcessPriorityManagerImpl::Init()
   // The master process's priority never changes; set it here and then forget
   // about it.  We'll manage only subprocesses' priorities using the process
   // priority manager.
-  hal::SetProcessPriority(getpid(), PROCESS_PRIORITY_MASTER,
-                          PROCESS_CPU_PRIORITY_NORMAL);
+  hal::SetProcessPriority(getpid(), PROCESS_PRIORITY_MASTER);
 
   nsCOMPtr<nsIObserverService> os = services::GetObserverService();
   if (os) {
@@ -471,11 +502,18 @@ already_AddRefed<ParticularProcessPriorityManager>
 ProcessPriorityManagerImpl::GetParticularProcessPriorityManager(
   ContentParent* aContentParent)
 {
+#ifdef MOZ_NUWA_PROCESS
+  // Do not attempt to change the priority of the Nuwa process
+  if (aContentParent->IsNuwaProcess()) {
+    return nullptr;
+  }
+#endif
+
   nsRefPtr<ParticularProcessPriorityManager> pppm;
   uint64_t cpId = aContentParent->ChildID();
   mParticularManagers.Get(cpId, &pppm);
   if (!pppm) {
-    pppm = new ParticularProcessPriorityManager(aContentParent);
+    pppm = new ParticularProcessPriorityManager(aContentParent, sFrozen);
     pppm->Init();
     mParticularManagers.Put(cpId, pppm);
 
@@ -489,12 +527,14 @@ ProcessPriorityManagerImpl::GetParticularProcessPriorityManager(
 void
 ProcessPriorityManagerImpl::SetProcessPriority(ContentParent* aContentParent,
                                                ProcessPriority aPriority,
-                                               uint32_t aBackgroundLRU)
+                                               uint32_t aLRU)
 {
   MOZ_ASSERT(aContentParent);
   nsRefPtr<ParticularProcessPriorityManager> pppm =
     GetParticularProcessPriorityManager(aContentParent);
-  pppm->SetPriorityNow(aPriority, aBackgroundLRU);
+  if (pppm) {
+    pppm->SetPriorityNow(aPriority, aLRU);
+  }
 }
 
 void
@@ -506,18 +546,6 @@ ProcessPriorityManagerImpl::ObserveContentParentCreated(
   nsCOMPtr<nsIContentParent> cp = do_QueryInterface(aContentParent);
   nsRefPtr<ParticularProcessPriorityManager> pppm =
     GetParticularProcessPriorityManager(cp->AsContentParent());
-}
-
-static PLDHashOperator
-EnumerateParticularProcessPriorityManagers(
-  const uint64_t& aKey,
-  nsRefPtr<ParticularProcessPriorityManager> aValue,
-  void* aUserData)
-{
-  nsTArray<nsRefPtr<ParticularProcessPriorityManager> >* aArray =
-    static_cast<nsTArray<nsRefPtr<ParticularProcessPriorityManager> >*>(aUserData);
-  aArray->AppendElement(aValue);
-  return PL_DHASH_NEXT;
 }
 
 void
@@ -532,44 +560,23 @@ ProcessPriorityManagerImpl::ObserveContentParentDestroyed(nsISupports* aSubject)
 
   nsRefPtr<ParticularProcessPriorityManager> pppm;
   mParticularManagers.Get(childID, &pppm);
-  MOZ_ASSERT(pppm);
   if (pppm) {
+    // Unconditionally remove the manager from the pools
+    mBackgroundLRUPool.Remove(pppm);
+    mForegroundLRUPool.Remove(pppm);
+
     pppm->ShutDown();
+
+    mParticularManagers.Remove(childID);
+
+    if (mHighPriorityChildIDs.Contains(childID)) {
+      mHighPriorityChildIDs.RemoveEntry(childID);
+    }
+
+    if (mDelayedSetPriority.first == pppm) {
+      mDelayedSetPriority = std::make_pair(nullptr, PROCESS_PRIORITY_UNKNOWN);
+    }
   }
-
-  mParticularManagers.Remove(childID);
-
-  if (mHighPriorityChildIDs.Contains(childID)) {
-    mHighPriorityChildIDs.RemoveEntry(childID);
-
-    // We just lost a high-priority process; reset everyone's CPU priorities.
-    ResetAllCPUPriorities();
-  }
-}
-
-void
-ProcessPriorityManagerImpl::ResetAllCPUPriorities( void )
-{
-  nsTArray<nsRefPtr<ParticularProcessPriorityManager> > pppms;
-  mParticularManagers.EnumerateRead(
-    &EnumerateParticularProcessPriorityManagers,
-    &pppms);
-
-  for (uint32_t i = 0; i < pppms.Length(); i++) {
-    pppms[i]->ResetCPUPriorityNow();
-  }
-}
-
-bool
-ProcessPriorityManagerImpl::OtherProcessHasHighPriority(
-  ParticularProcessPriorityManager* aParticularManager)
-{
-  if (mHighPriority) {
-    return true;
-  } else if (mHighPriorityChildIDs.Contains(aParticularManager->ChildID())) {
-    return mHighPriorityChildIDs.Count() > 1;
-  }
-  return mHighPriorityChildIDs.Count() > 0;
 }
 
 bool
@@ -583,32 +590,33 @@ ProcessPriorityManagerImpl::NotifyProcessPriorityChanged(
   ParticularProcessPriorityManager* aParticularManager,
   ProcessPriority aOldPriority)
 {
-  // This priority change can only affect other processes' priorities if we're
-  // changing to/from FOREGROUND_HIGH.
+  ProcessPriority newPriority = aParticularManager->CurrentPriority();
+  bool isPreallocated = aParticularManager->IsPreallocated();
 
-  if (aOldPriority < PROCESS_PRIORITY_FOREGROUND_HIGH &&
-      aParticularManager->CurrentPriority() <
-        PROCESS_PRIORITY_FOREGROUND_HIGH) {
-
-    return;
+  if (newPriority == PROCESS_PRIORITY_BACKGROUND &&
+      aOldPriority != PROCESS_PRIORITY_BACKGROUND &&
+      !isPreallocated) {
+    mBackgroundLRUPool.Add(aParticularManager);
+  } else if (newPriority != PROCESS_PRIORITY_BACKGROUND &&
+      aOldPriority == PROCESS_PRIORITY_BACKGROUND &&
+      !isPreallocated) {
+    mBackgroundLRUPool.Remove(aParticularManager);
   }
 
-  if (aParticularManager->CurrentPriority() >=
-      PROCESS_PRIORITY_FOREGROUND_HIGH) {
+  if (newPriority == PROCESS_PRIORITY_FOREGROUND &&
+      aOldPriority != PROCESS_PRIORITY_FOREGROUND) {
+    mForegroundLRUPool.Add(aParticularManager);
+  } else if (newPriority != PROCESS_PRIORITY_FOREGROUND &&
+      aOldPriority == PROCESS_PRIORITY_FOREGROUND) {
+    mForegroundLRUPool.Remove(aParticularManager);
+  }
+
+  if (newPriority >= PROCESS_PRIORITY_FOREGROUND_HIGH &&
+    aOldPriority < PROCESS_PRIORITY_FOREGROUND_HIGH) {
     mHighPriorityChildIDs.PutEntry(aParticularManager->ChildID());
-  } else {
+  } else if (newPriority < PROCESS_PRIORITY_FOREGROUND_HIGH &&
+    aOldPriority >= PROCESS_PRIORITY_FOREGROUND_HIGH) {
     mHighPriorityChildIDs.RemoveEntry(aParticularManager->ChildID());
-  }
-
-  nsTArray<nsRefPtr<ParticularProcessPriorityManager> > pppms;
-  mParticularManagers.EnumerateRead(
-    &EnumerateParticularProcessPriorityManagers,
-    &pppms);
-
-  for (uint32_t i = 0; i < pppms.Length(); i++) {
-    if (pppms[i] != aParticularManager) {
-      pppms[i]->ResetCPUPriorityNow();
-    }
   }
 }
 
@@ -625,15 +633,95 @@ ProcessPriorityManagerImpl::Notify(const WakeLockInformation& aInfo)
       mHighPriority = false;
     }
 
-    /* The main process got a high-priority wakelock change; reset everyone's
-     * CPU priorities. */
-    ResetAllCPUPriorities();
-
     LOG("Got wake lock changed event. "
         "Now mHighPriorityParent = %d\n", mHighPriority);
   }
 }
 
+static PLDHashOperator
+FreezeParticularProcessPriorityManagers(
+  const uint64_t& aKey,
+  nsRefPtr<ParticularProcessPriorityManager> aValue,
+  void* aUserData)
+{
+  aValue->Freeze();
+  return PL_DHASH_NEXT;
+}
+
+void
+ProcessPriorityManagerImpl::Freeze()
+{
+  sFrozen = true;
+  mParticularManagers.EnumerateRead(&FreezeParticularProcessPriorityManagers,
+                                    nullptr);
+}
+
+static PLDHashOperator
+UnfreezeParticularProcessPriorityManagers(
+  const uint64_t& aKey,
+  nsRefPtr<ParticularProcessPriorityManager> aValue,
+  void* aUserData)
+{
+  aValue->Unfreeze();
+  return PL_DHASH_NEXT;
+}
+
+void
+ProcessPriorityManagerImpl::Unfreeze()
+{
+  sFrozen = false;
+  mParticularManagers.EnumerateRead(&UnfreezeParticularProcessPriorityManagers,
+                                    nullptr);
+}
+
+static PLDHashOperator
+CountNumberOfForegroundProcesses(
+  const uint64_t& aKey,
+  nsRefPtr<ParticularProcessPriorityManager> aValue,
+  void* aUserData)
+{
+  uint32_t* accumulator = static_cast<uint32_t*>(aUserData);
+  if (aValue->CurrentPriority() == PROCESS_PRIORITY_FOREGROUND ||
+      aValue->CurrentPriority() == PROCESS_PRIORITY_FOREGROUND_HIGH) {
+    (*accumulator)++;
+  }
+  return PL_DHASH_NEXT;
+}
+
+uint32_t
+ProcessPriorityManagerImpl::NumberOfForegroundProcesses()
+{
+  uint32_t accumulator = 0;
+  mParticularManagers.EnumerateRead(&CountNumberOfForegroundProcesses,
+                                    &accumulator);
+  return accumulator;
+}
+
+void
+ProcessPriorityManagerImpl::ScheduleDelayedSetPriority(
+  ParticularProcessPriorityManager* aParticularManager,
+  ProcessPriority aPriority)
+{
+  mDelayedSetPriority = std::make_pair(aParticularManager, aPriority);
+}
+
+void
+ProcessPriorityManagerImpl::PerformDelayedSetPriority(
+  ParticularProcessPriorityManager* aLastParticularManager)
+{
+  nsRefPtr<ParticularProcessPriorityManager> pppm = mDelayedSetPriority.first;
+  ProcessPriority priority = mDelayedSetPriority.second;
+
+  mDelayedSetPriority = std::make_pair(nullptr, PROCESS_PRIORITY_UNKNOWN);
+
+  if (pppm == aLastParticularManager) {
+    return;
+  }
+
+  if (pppm && priority != PROCESS_PRIORITY_UNKNOWN) {
+    pppm->SetPriorityNow(priority);
+  }
+}
 
 NS_IMPL_ISUPPORTS(ParticularProcessPriorityManager,
                   nsIObserver,
@@ -641,13 +729,14 @@ NS_IMPL_ISUPPORTS(ParticularProcessPriorityManager,
                   nsISupportsWeakReference);
 
 ParticularProcessPriorityManager::ParticularProcessPriorityManager(
-  ContentParent* aContentParent)
+  ContentParent* aContentParent, bool aFrozen)
   : mContentParent(aContentParent)
   , mChildID(aContentParent->ChildID())
   , mPriority(PROCESS_PRIORITY_UNKNOWN)
-  , mCPUPriority(PROCESS_CPU_PRIORITY_NORMAL)
+  , mLRU(0)
   , mHoldsCPUWakeLock(false)
   , mHoldsHighPriorityWakeLock(false)
+  , mFrozen(aFrozen)
 {
   MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
   LOGP("Creating ParticularProcessPriorityManager.");
@@ -806,23 +895,25 @@ ParticularProcessPriorityManager::OnRemoteBrowserFrameShown(nsISupports* aSubjec
   nsCOMPtr<nsIFrameLoader> fl = do_QueryInterface(aSubject);
   NS_ENSURE_TRUE_VOID(fl);
 
-  // Ignore notifications that aren't from a BrowserOrApp
-  bool isBrowserOrApp;
-  fl->GetOwnerIsBrowserOrAppFrame(&isBrowserOrApp);
-  if (!isBrowserOrApp) {
-    return;
-  }
-
-  nsCOMPtr<nsITabParent> tp;
-  fl->GetTabParent(getter_AddRefs(tp));
+  TabParent* tp = TabParent::GetFrom(fl);
   NS_ENSURE_TRUE_VOID(tp);
 
   MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
-  if (static_cast<TabParent*>(tp.get())->Manager() != mContentParent) {
+  if (tp->Manager() != mContentParent) {
     return;
   }
 
-  ResetPriority();
+  // Ignore notifications that aren't from a BrowserOrApp
+  bool isBrowserOrApp;
+  fl->GetOwnerIsBrowserOrAppFrame(&isBrowserOrApp);
+  if (isBrowserOrApp) {
+    ResetPriority();
+  }
+
+  nsCOMPtr<nsIObserverService> os = services::GetObserverService();
+  if (os) {
+    os->RemoveObserver(this, "remote-browser-shown");
+  }
 }
 
 void
@@ -832,7 +923,7 @@ ParticularProcessPriorityManager::OnTabParentDestroyed(nsISupports* aSubject)
   NS_ENSURE_TRUE_VOID(tp);
 
   MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
-  if (static_cast<TabParent*>(tp.get())->Manager() != mContentParent) {
+  if (TabParent::GetFrom(tp)->Manager() != mContentParent) {
     return;
   }
 
@@ -845,14 +936,13 @@ ParticularProcessPriorityManager::OnFrameloaderVisibleChanged(nsISupports* aSubj
   nsCOMPtr<nsIFrameLoader> fl = do_QueryInterface(aSubject);
   NS_ENSURE_TRUE_VOID(fl);
 
-  nsCOMPtr<nsITabParent> tp;
-  fl->GetTabParent(getter_AddRefs(tp));
+  TabParent* tp = TabParent::GetFrom(fl);
   if (!tp) {
     return;
   }
 
   MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
-  if (static_cast<TabParent*>(tp.get())->Manager() != mContentParent) {
+  if (tp->Manager() != mContentParent) {
     return;
   }
 
@@ -915,7 +1005,6 @@ ParticularProcessPriorityManager::ScheduleResetPriority(const char* aTimeoutPref
   mResetPriorityTimer->InitWithCallback(this, timeout, nsITimer::TYPE_ONE_SHOT);
 }
 
-
 NS_IMETHODIMP
 ParticularProcessPriorityManager::Notify(nsITimer* aTimer)
 {
@@ -932,7 +1021,7 @@ ParticularProcessPriorityManager::HasAppType(const char* aAppType)
     mContentParent->ManagedPBrowserParent();
   for (uint32_t i = 0; i < browsers.Length(); i++) {
     nsAutoString appType;
-    static_cast<TabParent*>(browsers[i])->GetAppType(appType);
+    TabParent::GetFrom(browsers[i])->GetAppType(appType);
     if (appType.EqualsASCII(aAppType)) {
       return true;
     }
@@ -947,7 +1036,7 @@ ParticularProcessPriorityManager::IsExpectingSystemMessage()
   const InfallibleTArray<PBrowserParent*>& browsers =
     mContentParent->ManagedPBrowserParent();
   for (uint32_t i = 0; i < browsers.Length(); i++) {
-    TabParent* tp = static_cast<TabParent*>(browsers[i]);
+    TabParent* tp = TabParent::GetFrom(browsers[i]);
     nsCOMPtr<nsIMozBrowserFrame> bf = do_QueryInterface(tp->GetOwnerElement());
     if (!bf) {
       continue;
@@ -979,7 +1068,7 @@ ParticularProcessPriorityManager::ComputePriority()
   const InfallibleTArray<PBrowserParent*>& browsers =
     mContentParent->ManagedPBrowserParent();
   for (uint32_t i = 0; i < browsers.Length(); i++) {
-    if (static_cast<TabParent*>(browsers[i])->IsVisible()) {
+    if (TabParent::GetFrom(browsers[i])->IsVisible()) {
       isVisible = true;
       break;
     }
@@ -1006,103 +1095,61 @@ ParticularProcessPriorityManager::ComputePriority()
          PROCESS_PRIORITY_BACKGROUND;
 }
 
-ProcessCPUPriority
-ParticularProcessPriorityManager::ComputeCPUPriority(ProcessPriority aPriority)
-{
-  if (aPriority == PROCESS_PRIORITY_PREALLOC) {
-    return PROCESS_CPU_PRIORITY_LOW;
-  }
-
-  if (aPriority >= PROCESS_PRIORITY_FOREGROUND_HIGH) {
-    return PROCESS_CPU_PRIORITY_NORMAL;
-  }
-
-  return ProcessPriorityManagerImpl::GetSingleton()->
-    OtherProcessHasHighPriority(this) ?
-    PROCESS_CPU_PRIORITY_LOW :
-    PROCESS_CPU_PRIORITY_NORMAL;
-}
-
-void
-ParticularProcessPriorityManager::ResetCPUPriorityNow()
-{
-  SetPriorityNow(mPriority);
-}
-
 void
 ParticularProcessPriorityManager::SetPriorityNow(ProcessPriority aPriority,
-                                                 uint32_t aBackgroundLRU)
+                                                 uint32_t aLRU)
 {
-  SetPriorityNow(aPriority, ComputeCPUPriority(aPriority), aBackgroundLRU);
-}
-
-void
-ParticularProcessPriorityManager::SetPriorityNow(ProcessPriority aPriority,
-                                                 ProcessCPUPriority aCPUPriority,
-                                                 uint32_t aBackgroundLRU)
-{
-#ifdef MOZ_NUWA_PROCESS
-  // Do not attempt to change the priority of the Nuwa process
-  if (mContentParent->IsNuwaProcess()) {
-    return;
-  }
-#endif
-
   if (aPriority == PROCESS_PRIORITY_UNKNOWN) {
     MOZ_ASSERT(false);
     return;
   }
 
-  if (aBackgroundLRU > 0 &&
-      aPriority == PROCESS_PRIORITY_BACKGROUND &&
-      mPriority == PROCESS_PRIORITY_BACKGROUND) {
-    hal::SetProcessPriority(Pid(), mPriority, mCPUPriority, aBackgroundLRU);
-
-    nsPrintfCString ProcessPriorityWithBackgroundLRU("%s:%d",
-      ProcessPriorityToString(mPriority, mCPUPriority),
-      aBackgroundLRU);
-
-    FireTestOnlyObserverNotification("process-priority-with-background-LRU-set",
-      ProcessPriorityWithBackgroundLRU.get());
-  }
-
-  if (!mContentParent ||
-      !ProcessPriorityManagerImpl::PrefsEnabled() ||
-      (mPriority == aPriority && mCPUPriority == aCPUPriority)) {
+  if (!ProcessPriorityManagerImpl::PrefsEnabled() ||
+      !mContentParent ||
+      mFrozen ||
+      ((mPriority == aPriority) && (mLRU == aLRU))) {
     return;
   }
 
-  // If the prefs were disabled after this ParticularProcessPriorityManager was
-  // created, we can at least avoid any further calls to
-  // hal::SetProcessPriority.  Supporting dynamic enabling/disabling of the
-  // ProcessPriorityManager is mostly for testing.
-  if (!ProcessPriorityManagerImpl::PrefsEnabled()) {
+  if ((mPriority == aPriority) && (mLRU != aLRU)) {
+    mLRU = aLRU;
+    hal::SetProcessPriority(Pid(), mPriority, aLRU);
+
+    nsPrintfCString processPriorityWithLRU("%s:%d",
+      ProcessPriorityToString(mPriority), aLRU);
+
+    FireTestOnlyObserverNotification("process-priority-with-LRU-set",
+      processPriorityWithLRU.get());
     return;
-  }
-
-  if (aPriority == PROCESS_PRIORITY_BACKGROUND &&
-      mPriority != PROCESS_PRIORITY_BACKGROUND &&
-      !IsPreallocated()) {
-    ProcessPriorityManager::AddIntoBackgroundLRUPool(mContentParent);
-  }
-
-  if (aPriority != PROCESS_PRIORITY_BACKGROUND &&
-      mPriority == PROCESS_PRIORITY_BACKGROUND &&
-      !IsPreallocated()) {
-    ProcessPriorityManager::RemoveFromBackgroundLRUPool(mContentParent);
   }
 
   LOGP("Changing priority from %s to %s.",
-       ProcessPriorityToString(mPriority, mCPUPriority),
-       ProcessPriorityToString(aPriority, aCPUPriority));
+       ProcessPriorityToString(mPriority),
+       ProcessPriorityToString(aPriority));
 
   ProcessPriority oldPriority = mPriority;
 
+  if (oldPriority == PROCESS_PRIORITY_FOREGROUND &&
+      aPriority < PROCESS_PRIORITY_FOREGROUND &&
+      ProcessPriorityManagerImpl::GetSingleton()->
+        NumberOfForegroundProcesses() == 1) {
+    LOGP("Attempting to demote the last foreground process is delayed.");
+
+    ProcessPriorityManagerImpl::GetSingleton()->
+      ScheduleDelayedSetPriority(this, aPriority);
+
+    FireTestOnlyObserverNotification("process-priority-delayed",
+      ProcessPriorityToString(aPriority));
+    return;
+  }
+
   mPriority = aPriority;
-  mCPUPriority = aCPUPriority;
-  hal::SetProcessPriority(Pid(), mPriority, mCPUPriority);
+  hal::SetProcessPriority(Pid(), mPriority);
 
   if (oldPriority != mPriority) {
+    ProcessPriorityManagerImpl::GetSingleton()->
+      NotifyProcessPriorityChanged(this, oldPriority);
+
     unused << mContentParent->SendNotifyProcessPriorityChanged(mPriority);
   }
 
@@ -1111,12 +1158,26 @@ ParticularProcessPriorityManager::SetPriorityNow(ProcessPriority aPriority,
   }
 
   FireTestOnlyObserverNotification("process-priority-set",
-    ProcessPriorityToString(mPriority, mCPUPriority));
+    ProcessPriorityToString(mPriority));
 
-  if (oldPriority != mPriority) {
+  if (aPriority >= PROCESS_PRIORITY_FOREGROUND) {
+    LOGP("More than one foreground processes. Run delayed priority change");
     ProcessPriorityManagerImpl::GetSingleton()->
-      NotifyProcessPriorityChanged(this, oldPriority);
+      PerformDelayedSetPriority(this);
   }
+}
+
+void
+ParticularProcessPriorityManager::Freeze()
+{
+  mFrozen = true;
+}
+
+void
+ParticularProcessPriorityManager::Unfreeze()
+{
+  mFrozen = false;
+  ResetPriorityNow();
 }
 
 void
@@ -1129,10 +1190,6 @@ ParticularProcessPriorityManager::ShutDown()
   if (mResetPriorityTimer) {
     mResetPriorityTimer->Cancel();
     mResetPriorityTimer = nullptr;
-  }
-
-  if (mPriority == PROCESS_PRIORITY_BACKGROUND && !IsPreallocated()) {
-    ProcessPriorityManager::RemoveFromBackgroundLRUPool(mContentParent);
   }
 
   mContentParent = nullptr;
@@ -1275,179 +1332,112 @@ ProcessPriorityManagerChild::CurrentProcessIsHighPriority()
          mCachedPriority >= PROCESS_PRIORITY_FOREGROUND_HIGH;
 }
 
-/* static */ StaticAutoPtr<BackgroundProcessLRUPool>
-BackgroundProcessLRUPool::sSingleton;
-
-/* static */ BackgroundProcessLRUPool*
-BackgroundProcessLRUPool::Singleton()
+ProcessLRUPool::ProcessLRUPool(ProcessPriority aPriority, uint32_t aBias)
+  : mPriority(aPriority)
+  , mLRUPoolLevels(1)
+  , mBias(aBias)
 {
-  if (!sSingleton) {
-    sSingleton = new BackgroundProcessLRUPool();
-    ClearOnShutdown(&sSingleton);
-  }
-  return sSingleton;
-}
-
-BackgroundProcessLRUPool::BackgroundProcessLRUPool()
-{
-  EnsureLRUPool();
-}
-
-uint32_t
-BackgroundProcessLRUPool::CalculateLRULevel(uint32_t aBackgroundLRUPoolIndex)
-{
-  // Set LRU level of each background process and maintain LRU buffer as below:
-
-  // Priority background  : LRU0
-  // Priority background+1: LRU1, LRU2
-  // Priority background+2: LRU3, LRU4, LRU5, LRU6
-  // Priority background+3: LRU7, LRU8, LRU9, LRU10, LRU11, LRU12, LRU13, LRU14
-  // ...
-  // Priority background+L-1: 2^(number of background LRU pool levels - 1)
-  // (End of buffer)
-
-  return (uint32_t)(log((float)aBackgroundLRUPoolIndex) / log(2.0));
-}
-
-void
-BackgroundProcessLRUPool::EnsureLRUPool()
-{
-  // We set mBackgroundLRUPoolLevels according to our pref.
+  // We set mLRUPoolLevels according to our pref.
   // This value is used to set background process LRU pool
-  if (!NS_SUCCEEDED(Preferences::GetInt(
-        "dom.ipc.processPriorityManager.backgroundLRUPoolLevels",
-        &mLRUPoolLevels))) {
-    mLRUPoolLevels = 1;
-  }
+  const char* str = ProcessPriorityToString(aPriority);
+  nsPrintfCString pref("dom.ipc.processPriorityManager.%s.LRUPoolLevels", str);
 
-  if (mLRUPoolLevels <= 0) {
-    MOZ_CRASH();
-  }
+  Preferences::GetUint(pref.get(), &mLRUPoolLevels);
 
   // GonkHal defines OOM_ADJUST_MAX is 15 and b2g.js defines
   // PROCESS_PRIORITY_BACKGROUND's oom_score_adj is 667 and oom_adj is 10.
   // This means we can only have at most (15 -10 + 1) = 6 background LRU levels.
-  // See bug 822325 comment 49
-  MOZ_ASSERT(mLRUPoolLevels <= 6);
+  // Similarly we can have at most 4 foreground LRU levels. We should really be
+  // getting rid of oom_adj and just rely on oom_score_adj only which would
+  // lift this constraint.
+  MOZ_ASSERT(aPriority != PROCESS_PRIORITY_BACKGROUND || mLRUPoolLevels <= 6);
+  MOZ_ASSERT(aPriority != PROCESS_PRIORITY_FOREGROUND || mLRUPoolLevels <= 4);
 
   // LRU pool size = 2 ^ (number of background LRU pool levels) - 1
   mLRUPoolSize = (1 << mLRUPoolLevels) - 1;
 
-  mLRUPoolAvailableIndex = 0;
+  LOG("Making %s LRU pool with size(%d)", str, mLRUPoolSize);
+}
 
-  LOG("Making background LRU pool with size(%d)", mLRUPoolSize);
+uint32_t
+ProcessLRUPool::CalculateLRULevel(uint32_t aLRU)
+{
+  // This is used to compute the LRU adjustment for the specified LRU position.
+  // We use power-of-two groups with increasing adjustments that look like the
+  // following:
 
-  mLRUPool.InsertElementsAt(0, mLRUPoolSize, (ContentParent*)nullptr);
+  // Priority  : LRU0, LRU1
+  // Priority+1: LRU2, LRU3
+  // Priority+2: LRU4, LRU5, LRU6, LRU7
+  // Priority+3: LRU8, LRU9, LRU10, LRU11, LRU12, LRU12, LRU13, LRU14, LRU15
+  // ...
+  // Priority+L-1: 2^(number of LRU pool levels - 1)
+  // (End of buffer)
+
+  // Biasing the input can be used to shift the assignment
+
+  int exp;
+  unused << frexp(static_cast<double>(aLRU), &exp);
+  uint32_t level = std::max(exp - 1, 0);
+
+  return std::min(mLRUPoolLevels - 1, level);
 }
 
 void
-BackgroundProcessLRUPool::RemoveFromBackgroundLRUPool(
-    ContentParent* aContentParent)
+ProcessLRUPool::Remove(ParticularProcessPriorityManager* aParticularManager)
 {
-  for (int32_t i = 0; i < mLRUPoolSize; i++) {
-    if (mLRUPool[i]) {
-      if (mLRUPool[i]->ChildID() == aContentParent->ChildID()) {
+  nsTArray<ParticularProcessPriorityManager*>::index_type index =
+    mLRUPool.IndexOf(aParticularManager);
 
-        mLRUPool[i] = nullptr;
-        LOG("Remove ChildID(%llu) from LRU pool", aContentParent->ChildID());
-
-        // After we remove this ContentParent from LRU pool, we still need to
-        // update the available index if the index of removed one is less than
-        // the available index we already have.
-        UpdateAvailableIndexInLRUPool(aContentParent, i);
-        break;
-      }
-    }
-  }
-}
-
-nsresult
-BackgroundProcessLRUPool::UpdateAvailableIndexInLRUPool(
-    ContentParent* aContentParent,
-    int32_t aTargetIndex)
-{
-  // If we specify which index we want to assign to mLRUPoolAvailableIndex,
-  // We have to make sure the index in LRUPool doesn't point to any
-  // ContentParent.
-  if (aTargetIndex >= 0 && aTargetIndex < mLRUPoolSize &&
-      aTargetIndex < mLRUPoolAvailableIndex &&
-      !mLRUPool[aTargetIndex]) {
-    mLRUPoolAvailableIndex = aTargetIndex;
-    return NS_OK;
-  }
-
-  // When we didn't specify any legal aTargetIndex, then we just check
-  // whether current mLRUPoolAvailableIndex points to any ContentParent or not.
-  if (mLRUPoolAvailableIndex >= 0 && mLRUPoolAvailableIndex < mLRUPoolSize &&
-      !(mLRUPool[mLRUPoolAvailableIndex])) {
-    return NS_OK;
-  }
-
-  // Both above way failed. So now we have to find proper value
-  // for mLRUPoolAvailableIndex.
-  // We are looking for an available index. We only shift process with
-  // LRU less than the available index should have, so we stop update
-  // mLRUPoolAvailableIndex from the for loop once we got a candidate.
-  mLRUPoolAvailableIndex = -1;
-
-  for (int32_t i = 0; i < mLRUPoolSize; i++) {
-    if (mLRUPool[i]) {
-      if (mLRUPool[i]->ChildID() == aContentParent->ChildID()) {
-        LOG("ChildID(%llu) already in LRU pool", aContentParent->ChildID());
-        MOZ_ASSERT(false);
-        return NS_ERROR_UNEXPECTED;
-      }
-      continue;
-    } else {
-      if (mLRUPoolAvailableIndex == -1) {
-        mLRUPoolAvailableIndex = i;
-      }
-    }
-  }
-
-  // If the LRUPool is already full, mLRUPoolAvailableIndex is still -1 after
-  // above loop finished. We should set mLRUPoolAvailableIndex
-  // to mLRUPoolSize - 1 in this case. Here uses the mod operator to do it:
-  // New mLRUPoolAvailableIndex either equals old mLRUPoolAvailableIndex, or
-  // mLRUPoolSize - 1 if old mLRUPoolAvailableIndex is -1.
-  mLRUPoolAvailableIndex =
-    (mLRUPoolAvailableIndex + mLRUPoolSize) % mLRUPoolSize;
-
-  return NS_OK;
-}
-
-void
-BackgroundProcessLRUPool::ShiftLRUPool()
-{
-  for (int32_t i = mLRUPoolAvailableIndex; i > 0; i--) {
-    mLRUPool[i] = mLRUPool[i - 1];
-    // Check whether i+1 is power of Two.
-    // If so, then it crossed a LRU group boundary and
-    // we need to assign its new process priority LRU.
-    if (!((i + 1) & i)) {
-      ProcessPriorityManagerImpl::GetSingleton()->SetProcessPriority(
-        mLRUPool[i], PROCESS_PRIORITY_BACKGROUND, CalculateLRULevel(i + 1));
-    }
-  }
-}
-
-void
-BackgroundProcessLRUPool::AddIntoBackgroundLRUPool(
-    ContentParent* aContentParent)
-{
-  // We have to make sure that we have correct available index in LRU pool
-  if (!NS_SUCCEEDED(
-      UpdateAvailableIndexInLRUPool(aContentParent))) {
+  if (index == nsTArray<ParticularProcessPriorityManager*>::NoIndex) {
     return;
   }
 
+  mLRUPool.RemoveElementAt(index);
+  AdjustLRUValues(index, /* removed */ true);
+
+  LOG("Remove ChildID(%" PRIu64 ") from %s LRU pool",
+      static_cast<uint64_t>(aParticularManager->ChildID()),
+      ProcessPriorityToString(mPriority));
+}
+
+/*
+ * Adjust the LRU values of all the processes in an LRU pool. When true the
+ * `removed` parameter indicates that the processes were shifted left because
+ * an element was removed; otherwise it means the elements were shifted right
+ * as an element was added.
+ */
+void
+ProcessLRUPool::AdjustLRUValues(
+  nsTArray<ParticularProcessPriorityManager*>::index_type aStart,
+  bool removed)
+{
+  uint32_t adj = (removed ? 1 : 0) + mBias;
+
+  for (nsTArray<ParticularProcessPriorityManager*>::index_type i = aStart;
+       i < mLRUPool.Length();
+       i++) {
+    /* Check whether i is a power of two.  If so, then it crossed a LRU group
+     * boundary and we need to assign its new process priority LRU. Note that
+     * depending on the direction and the bias this test will pick different
+     * elements. */
+    if (((i + adj) & (i + adj - 1)) == 0) {
+      mLRUPool[i]->SetPriorityNow(mPriority, CalculateLRULevel(i + mBias));
+    }
+  }
+}
+
+void
+ProcessLRUPool::Add(ParticularProcessPriorityManager* aParticularManager)
+{
   // Shift the list in the pool, so we have room at index 0 for the newly added
-  // ContentParent
-  ShiftLRUPool();
+  // manager
+  mLRUPool.InsertElementAt(0, aParticularManager);
+  AdjustLRUValues(1, /* removed */ false);
 
-  mLRUPool[0] = aContentParent;
-
-  LOG("Add ChildID(%llu) into LRU pool", aContentParent->ChildID());
+  LOG("Add ChildID(%" PRIu64 ") into %s LRU pool",
+      static_cast<uint64_t>(aParticularManager->ChildID()),
+      ProcessPriorityToString(mPriority));
 }
 
 } // anonymous namespace
@@ -1474,31 +1464,6 @@ ProcessPriorityManager::SetProcessPriority(ContentParent* aContentParent,
   }
 }
 
-/* static */ void
-ProcessPriorityManager::RemoveFromBackgroundLRUPool(
-    ContentParent* aContentParent)
-{
-  MOZ_ASSERT(aContentParent);
-
-  BackgroundProcessLRUPool* singleton =
-    BackgroundProcessLRUPool::Singleton();
-  if (singleton) {
-    singleton->RemoveFromBackgroundLRUPool(aContentParent);
-  }
-}
-
-/* static */ void
-ProcessPriorityManager::AddIntoBackgroundLRUPool(ContentParent* aContentParent)
-{
-  MOZ_ASSERT(aContentParent);
-
-  BackgroundProcessLRUPool* singleton =
-    BackgroundProcessLRUPool::Singleton();
-  if (singleton) {
-    singleton->AddIntoBackgroundLRUPool(aContentParent);
-  }
-}
-
 /* static */ bool
 ProcessPriorityManager::CurrentProcessIsForeground()
 {
@@ -1517,6 +1482,26 @@ ProcessPriorityManager::AnyProcessHasHighPriority()
   } else {
     return ProcessPriorityManagerChild::Singleton()->
       CurrentProcessIsHighPriority();
+  }
+}
+
+/* static */ void
+ProcessPriorityManager::Freeze()
+{
+  ProcessPriorityManagerImpl* singleton =
+    ProcessPriorityManagerImpl::GetSingleton();
+  if (singleton) {
+    singleton->Freeze();
+  }
+}
+
+/* static */ void
+ProcessPriorityManager::Unfreeze()
+{
+  ProcessPriorityManagerImpl* singleton =
+    ProcessPriorityManagerImpl::GetSingleton();
+  if (singleton) {
+    singleton->Unfreeze();
   }
 }
 

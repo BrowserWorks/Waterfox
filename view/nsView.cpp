@@ -134,7 +134,7 @@ void nsView::DestroyWidget()
       NS_DispatchToMainThread(widgetDestroyer);
     }
 
-    NS_RELEASE(mWindow);
+    mWindow = nullptr;
   }
 }
 
@@ -220,7 +220,7 @@ nsIntRect nsView::CalcWidgetBounds(nsWindowType aType)
     if (parentWidget && aType == eWindowType_popup &&
         IsEffectivelyVisible()) {
       // put offset into screen coordinates. (based on client area origin)
-      nsIntPoint screenPoint = parentWidget->WidgetToScreenOffset();
+      LayoutDeviceIntPoint screenPoint = parentWidget->WidgetToScreenOffset();
       viewBounds += nsPoint(NSIntPixelsToAppUnits(screenPoint.x, p2a),
                             NSIntPixelsToAppUnits(screenPoint.y, p2a));
     }
@@ -233,7 +233,7 @@ nsIntRect nsView::CalcWidgetBounds(nsWindowType aType)
   // cocoa rounds widget coordinates to the nearest global "display pixel"
   // integer value. So we avoid fractional display pixel values by rounding
   // to the nearest value that won't yield a fractional display pixel.
-  nsIWidget* widget = parentWidget ? parentWidget : mWindow;
+  nsIWidget* widget = parentWidget ? parentWidget : mWindow.get();
   uint32_t round;
   if (aType == eWindowType_popup && widget &&
       ((round = widget->RoundsWidgetCoordinatesTo()) > 1)) {
@@ -553,9 +553,9 @@ nsresult nsView::CreateWidget(nsWidgetInitData *aWidgetInitData,
                                bool aResetVisibility)
 {
   AssertNoWindow();
-  NS_ABORT_IF_FALSE(!aWidgetInitData ||
-                    aWidgetInitData->mWindowType != eWindowType_popup,
-                    "Use CreateWidgetForPopup");
+  MOZ_ASSERT(!aWidgetInitData ||
+             aWidgetInitData->mWindowType != eWindowType_popup,
+             "Use CreateWidgetForPopup");
 
   DefaultWidgetInitData defaultInitData;
   bool initDataPassedIn = !!aWidgetInitData;
@@ -566,8 +566,6 @@ nsresult nsView::CreateWidget(nsWidgetInitData *aWidgetInitData,
 
   nsIntRect trect = CalcWidgetBounds(aWidgetInitData->mWindowType);
 
-  nsRefPtr<nsDeviceContext> dx = mViewManager->GetDeviceContext();
-
   nsIWidget* parentWidget =
     GetParent() ? GetParent()->GetNearestWidget(nullptr) : nullptr;
   if (!parentWidget) {
@@ -577,8 +575,7 @@ nsresult nsView::CreateWidget(nsWidgetInitData *aWidgetInitData,
 
   // XXX: using aForceUseIWidgetParent=true to preserve previous
   // semantics.  It's not clear that it's actually needed.
-  mWindow = parentWidget->CreateChild(trect, dx, aWidgetInitData,
-                                      true).take();
+  mWindow = parentWidget->CreateChild(trect, aWidgetInitData, true);
   if (!mWindow) {
     return NS_ERROR_FAILURE;
   }
@@ -594,20 +591,17 @@ nsresult nsView::CreateWidgetForParent(nsIWidget* aParentWidget,
                                         bool aResetVisibility)
 {
   AssertNoWindow();
-  NS_ABORT_IF_FALSE(!aWidgetInitData ||
-                    aWidgetInitData->mWindowType != eWindowType_popup,
-                    "Use CreateWidgetForPopup");
-  NS_ABORT_IF_FALSE(aParentWidget, "Parent widget required");
+  MOZ_ASSERT(!aWidgetInitData ||
+             aWidgetInitData->mWindowType != eWindowType_popup,
+             "Use CreateWidgetForPopup");
+  MOZ_ASSERT(aParentWidget, "Parent widget required");
 
   DefaultWidgetInitData defaultInitData;
   aWidgetInitData = aWidgetInitData ? aWidgetInitData : &defaultInitData;
 
   nsIntRect trect = CalcWidgetBounds(aWidgetInitData->mWindowType);
 
-  nsRefPtr<nsDeviceContext> dx = mViewManager->GetDeviceContext();
-
-  mWindow =
-    aParentWidget->CreateChild(trect, dx, aWidgetInitData).take();
+  mWindow = aParentWidget->CreateChild(trect, aWidgetInitData);
   if (!mWindow) {
     return NS_ERROR_FAILURE;
   }
@@ -623,13 +617,11 @@ nsresult nsView::CreateWidgetForPopup(nsWidgetInitData *aWidgetInitData,
                                        bool aResetVisibility)
 {
   AssertNoWindow();
-  NS_ABORT_IF_FALSE(aWidgetInitData, "Widget init data required");
-  NS_ABORT_IF_FALSE(aWidgetInitData->mWindowType == eWindowType_popup,
-                    "Use one of the other CreateWidget methods");
+  MOZ_ASSERT(aWidgetInitData, "Widget init data required");
+  MOZ_ASSERT(aWidgetInitData->mWindowType == eWindowType_popup,
+             "Use one of the other CreateWidget methods");
 
   nsIntRect trect = CalcWidgetBounds(aWidgetInitData->mWindowType);
-
-  nsRefPtr<nsDeviceContext> dx = mViewManager->GetDeviceContext();
 
   // XXX/cjones: having these two separate creation cases seems ... um
   // ... unnecessary, but it's the way the old code did it.  Please
@@ -638,8 +630,7 @@ nsresult nsView::CreateWidgetForPopup(nsWidgetInitData *aWidgetInitData,
   if (aParentWidget) {
     // XXX: using aForceUseIWidgetParent=true to preserve previous
     // semantics.  It's not clear that it's actually needed.
-    mWindow = aParentWidget->CreateChild(trect, dx, aWidgetInitData,
-                                         true).take();
+    mWindow = aParentWidget->CreateChild(trect, aWidgetInitData, true);
   }
   else {
     nsIWidget* nearestParent = GetParent() ? GetParent()->GetNearestWidget(nullptr)
@@ -650,8 +641,7 @@ nsresult nsView::CreateWidgetForPopup(nsWidgetInitData *aWidgetInitData,
       return NS_ERROR_FAILURE;
     }
 
-    mWindow =
-      nearestParent->CreateChild(trect, dx, aWidgetInitData).take();
+    mWindow = nearestParent->CreateChild(trect, aWidgetInitData);
   }
   if (!mWindow) {
     return NS_ERROR_FAILURE;
@@ -665,7 +655,7 @@ nsresult nsView::CreateWidgetForPopup(nsWidgetInitData *aWidgetInitData,
 void
 nsView::InitializeWindow(bool aEnableDragDrop, bool aResetVisibility)
 {
-  NS_ABORT_IF_FALSE(mWindow, "Must have a window to initialize");
+  MOZ_ASSERT(mWindow, "Must have a window to initialize");
 
   mWindow->SetWidgetListener(this);
 
@@ -683,6 +673,16 @@ nsView::InitializeWindow(bool aEnableDragDrop, bool aResetVisibility)
   }
 }
 
+void
+nsView::SetNeedsWindowPropertiesSync()
+{
+  mNeedsWindowPropertiesSync = true;
+  if (mViewManager) {
+    mViewManager->PostPendingUpdate();
+  }
+}
+
+
 // Attach to a top level widget and start receiving mirrored events.
 nsresult nsView::AttachToTopLevelWidget(nsIWidget* aWidget)
 {
@@ -697,16 +697,13 @@ nsresult nsView::AttachToTopLevelWidget(nsIWidget* aWidget)
     }
   }
 
-  nsRefPtr<nsDeviceContext> dx = mViewManager->GetDeviceContext();
-
   // Note, the previous device context will be released. Detaching
   // will not restore the old one.
-  nsresult rv = aWidget->AttachViewToTopLevel(!nsIWidget::UsePuppetWidgets(), dx);
+  nsresult rv = aWidget->AttachViewToTopLevel(!nsIWidget::UsePuppetWidgets());
   if (NS_FAILED(rv))
     return rv;
 
   mWindow = aWidget;
-  NS_ADDREF(mWindow);
 
   mWindow->SetAttachedWidgetListener(this);
   mWindow->EnableDragDrop(true);
@@ -725,7 +722,7 @@ nsresult nsView::DetachFromTopLevelWidget()
   NS_PRECONDITION(mWindow, "null mWindow for DetachFromTopLevelWidget!");
 
   mWindow->SetAttachedWidgetListener(nullptr);
-  NS_RELEASE(mWindow);
+  mWindow = nullptr;
 
   mWidgetIsTopLevel = false;
   
@@ -750,7 +747,7 @@ void nsView::AssertNoWindow()
     NS_ERROR("We already have a window for this view? BAD");
     mWindow->SetWidgetListener(nullptr);
     mWindow->Destroy();
-    NS_RELEASE(mWindow);
+    mWindow = nullptr;
   }
 }
 
@@ -783,11 +780,11 @@ void nsView::List(FILE* out, int32_t aIndent) const
     nscoord p2a = mViewManager->AppUnitsPerDevPixel();
     nsIntRect rect;
     mWindow->GetClientBounds(rect);
-    nsRect windowBounds = rect.ToAppUnits(p2a);
+    nsRect windowBounds = ToAppUnits(rect, p2a);
     mWindow->GetBounds(rect);
-    nsRect nonclientBounds = rect.ToAppUnits(p2a);
-    nsrefcnt widgetRefCnt = mWindow->AddRef() - 1;
-    mWindow->Release();
+    nsRect nonclientBounds = ToAppUnits(rect, p2a);
+    nsrefcnt widgetRefCnt = mWindow.get()->AddRef() - 1;
+    mWindow.get()->Release();
     int32_t Z = mWindow->GetZIndex();
     fprintf(out, "(widget=%p[%" PRIuPTR "] z=%d pos={%d,%d,%d,%d}) ",
             (void*)mWindow, widgetRefCnt, Z,
@@ -815,9 +812,8 @@ nsPoint nsView::GetOffsetTo(const nsView* aOther) const
 
 nsPoint nsView::GetOffsetTo(const nsView* aOther, const int32_t aAPD) const
 {
-  NS_ABORT_IF_FALSE(GetParent() || !aOther || aOther->GetParent() ||
-                    this == aOther, "caller of (outer) GetOffsetTo must not "
-                    "pass unrelated views");
+  MOZ_ASSERT(GetParent() || !aOther || aOther->GetParent() || this == aOther,
+             "caller of (outer) GetOffsetTo must not pass unrelated views");
   // We accumulate the final result in offset
   nsPoint offset(0, 0);
   // The offset currently accumulated at the current APD
@@ -831,7 +827,7 @@ nsPoint nsView::GetOffsetTo(const nsView* aOther, const int32_t aAPD) const
     if (newVM != currVM) {
       int32_t newAPD = newVM->AppUnitsPerDevPixel();
       if (newAPD != currAPD) {
-        offset += docOffset.ConvertAppUnits(currAPD, aAPD);
+        offset += docOffset.ScaleToOtherAppUnits(currAPD, aAPD);
         docOffset.x = docOffset.y = 0;
         currAPD = newAPD;
       }
@@ -839,7 +835,7 @@ nsPoint nsView::GetOffsetTo(const nsView* aOther, const int32_t aAPD) const
     }
     docOffset += v->GetPosition();
   }
-  offset += docOffset.ConvertAppUnits(currAPD, aAPD);
+  offset += docOffset.ScaleToOtherAppUnits(currAPD, aAPD);
 
   if (v != aOther) {
     // Looks like aOther wasn't an ancestor of |this|.  So now we have
@@ -875,7 +871,7 @@ nsPoint nsView::GetOffsetToWidget(nsIWidget* aWidget) const
   // Convert to our appunits.
   int32_t widgetAPD = widgetView->GetViewManager()->AppUnitsPerDevPixel();
   int32_t ourAPD = GetViewManager()->AppUnitsPerDevPixel();
-  pt = pt.ConvertAppUnits(widgetAPD, ourAPD);
+  pt = pt.ScaleToOtherAppUnits(widgetAPD, ourAPD);
   return pt;
 }
 
@@ -901,7 +897,7 @@ nsIWidget* nsView::GetNearestWidget(nsPoint* aOffset, const int32_t aAPD) const
     if (newVM != currVM) {
       int32_t newAPD = newVM->AppUnitsPerDevPixel();
       if (newAPD != currAPD) {
-        pt += docPt.ConvertAppUnits(currAPD, aAPD);
+        pt += docPt.ScaleToOtherAppUnits(currAPD, aAPD);
         docPt.x = docPt.y = 0;
         currAPD = newAPD;
       }
@@ -911,7 +907,7 @@ nsIWidget* nsView::GetNearestWidget(nsPoint* aOffset, const int32_t aAPD) const
   }
   if (!v) {
     if (aOffset) {
-      pt += docPt.ConvertAppUnits(currAPD, aAPD);
+      pt += docPt.ScaleToOtherAppUnits(currAPD, aAPD);
       *aOffset = pt;
     }
     return nullptr;
@@ -921,7 +917,7 @@ nsIWidget* nsView::GetNearestWidget(nsPoint* aOffset, const int32_t aAPD) const
   // We add the ViewToWidgetOffset to get the offset to the widget.
   if (aOffset) {
     docPt += v->ViewToWidgetOffset();
-    pt += docPt.ConvertAppUnits(currAPD, aAPD);
+    pt += docPt.ScaleToOtherAppUnits(currAPD, aAPD);
     *aOffset = pt;
   }
   return v->GetWidget();
@@ -943,7 +939,7 @@ nsView::GetBoundsInParentUnits() const
   }
   int32_t ourAPD = VM->AppUnitsPerDevPixel();
   int32_t parentAPD = parent->GetViewManager()->AppUnitsPerDevPixel();
-  return mDimBounds.ConvertAppUnitsRoundOut(ourAPD, parentAPD);
+  return mDimBounds.ScaleToOtherAppUnitsRoundOut(ourAPD, parentAPD);
 }
 
 nsPoint
@@ -951,8 +947,9 @@ nsView::ConvertFromParentCoords(nsPoint aPt) const
 {
   const nsView* parent = GetParent();
   if (parent) {
-    aPt = aPt.ConvertAppUnits(parent->GetViewManager()->AppUnitsPerDevPixel(),
-                              GetViewManager()->AppUnitsPerDevPixel());
+    aPt = aPt.ScaleToOtherAppUnits(
+      parent->GetViewManager()->AppUnitsPerDevPixel(),
+      GetViewManager()->AppUnitsPerDevPixel());
   }
   aPt -= GetPosition();
   return aPt;
@@ -1010,7 +1007,7 @@ nsView::WindowResized(nsIWidget* aWidget, int32_t aWidth, int32_t aHeight)
   else if (IsPopupWidget(aWidget)) {
     nsXULPopupManager* pm = nsXULPopupManager::GetInstance();
     if (pm) {
-      pm->PopupResized(mFrame, nsIntSize(aWidth, aHeight));
+      pm->PopupResized(mFrame, LayoutDeviceIntSize(aWidth, aHeight));
       return true;
     }
   }

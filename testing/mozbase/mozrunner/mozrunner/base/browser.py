@@ -27,6 +27,10 @@ class GeckoRuntimeRunner(BaseRunner):
         # keeps Firefox attached to the terminal window after it starts
         self.env['NO_EM_RESTART'] = '1'
 
+        # Disable crash reporting dialogs that interfere with debugging
+        self.env['GNOME_DISABLE_CRASH_DIALOG'] = '1'
+        self.env['XRE_NO_WINDOWS_CRASH_DIALOG'] = '1'
+
         # set the library path if needed on linux
         if sys.platform == 'linux2' and self.binary.endswith('-bin'):
             dirname = os.path.dirname(self.binary)
@@ -63,5 +67,12 @@ class GeckoRuntimeRunner(BaseRunner):
         if not self.profile.exists():
             self.profile.reset()
             assert self.profile.exists(), "%s : failure to reset profile" % self.__class__.__name__
+
+        has_debugger = "debug_args" in kwargs and kwargs["debug_args"]
+        if has_debugger:
+            self.env["MOZ_CRASHREPORTER_DISABLE"] = "1"
+        else:
+            self.env["MOZ_CRASHREPORTER_NO_REPORT"] = "1"
+            self.env["MOZ_CRASHREPORTER"] = "1"
 
         BaseRunner.start(self, *args, **kwargs)

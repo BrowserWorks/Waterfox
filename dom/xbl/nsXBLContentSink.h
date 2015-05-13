@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -69,32 +70,32 @@ public:
   NS_IMETHOD HandleStartElement(const char16_t *aName, 
                                 const char16_t **aAtts, 
                                 uint32_t aAttsCount, 
-                                uint32_t aLineNumber) MOZ_OVERRIDE;
+                                uint32_t aLineNumber) override;
 
-  NS_IMETHOD HandleEndElement(const char16_t *aName) MOZ_OVERRIDE;
+  NS_IMETHOD HandleEndElement(const char16_t *aName) override;
   
   NS_IMETHOD HandleCDataSection(const char16_t *aData, 
-                                uint32_t aLength) MOZ_OVERRIDE;
+                                uint32_t aLength) override;
 
 protected:
     // nsXMLContentSink overrides
-    virtual void MaybeStartLayout(bool aIgnorePendingSheets) MOZ_OVERRIDE;
+    virtual void MaybeStartLayout(bool aIgnorePendingSheets) override;
 
     bool OnOpenContainer(const char16_t **aAtts, 
                            uint32_t aAttsCount, 
                            int32_t aNameSpaceID, 
                            nsIAtom* aTagName,
-                           uint32_t aLineNumber) MOZ_OVERRIDE;
+                           uint32_t aLineNumber) override;
 
-    bool NotifyForDocElement() MOZ_OVERRIDE { return false; }
+    bool NotifyForDocElement() override { return false; }
 
     nsresult CreateElement(const char16_t** aAtts, uint32_t aAttsCount,
                            mozilla::dom::NodeInfo* aNodeInfo, uint32_t aLineNumber,
                            nsIContent** aResult, bool* aAppendContent,
-                           mozilla::dom::FromParser aFromParser) MOZ_OVERRIDE;
+                           mozilla::dom::FromParser aFromParser) override;
     
     nsresult AddAttributes(const char16_t** aAtts, 
-                           nsIContent* aContent) MOZ_OVERRIDE;
+                           nsIContent* aContent) override;
 
 #ifdef MOZ_XUL    
     nsresult AddAttributesToXULPrototype(const char16_t **aAtts, 
@@ -114,13 +115,13 @@ protected:
   
 
   // nsXMLContentSink overrides
-  nsresult FlushText(bool aReleaseTextNode = true) MOZ_OVERRIDE;
+  nsresult FlushText(bool aReleaseTextNode = true) override;
 
   // nsIExpatSink overrides
   NS_IMETHOD ReportError(const char16_t* aErrorText,
                          const char16_t* aSourceText,
                          nsIScriptError *aError,
-                         bool *_retval) MOZ_OVERRIDE;
+                         bool *_retval) override;
 
 protected:
   nsresult ReportUnexpectedElement(nsIAtom* aElementName, uint32_t aLineNumber);

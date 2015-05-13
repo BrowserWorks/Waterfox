@@ -12,6 +12,7 @@ const Cu = Components.utils;
 
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://gre/modules/Task.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
   "resource://gre/modules/PlacesUtils.jsm");
@@ -471,9 +472,21 @@ let PinnedLinks = {
  */
 let BlockedLinks = {
   /**
+   * A list of objects that are observing blocked link changes.
+   */
+  _observers: [],
+
+  /**
    * The cached list of blocked links.
    */
   _links: null,
+
+  /**
+   * Registers an object that will be notified when the blocked links change.
+   */
+  addObserver: function (aObserver) {
+    this._observers.push(aObserver);
+  },
 
   /**
    * The list of blocked links.
@@ -486,10 +499,11 @@ let BlockedLinks = {
   },
 
   /**
-   * Blocks a given link.
+   * Blocks a given link. Adjusts siteMap accordingly, and notifies listeners.
    * @param aLink The link to block.
    */
   block: function BlockedLinks_block(aLink) {
+    this._callObservers("onLinkBlocked", aLink);
     this.links[toHash(aLink.url)] = 1;
     this.save();
 
@@ -498,13 +512,14 @@ let BlockedLinks = {
   },
 
   /**
-   * Unblocks a given link.
+   * Unblocks a given link. Adjusts siteMap accordingly, and notifies listeners.
    * @param aLink The link to unblock.
    */
   unblock: function BlockedLinks_unblock(aLink) {
     if (this.isBlocked(aLink)) {
       delete this.links[toHash(aLink.url)];
       this.save();
+      this._callObservers("onLinkUnblocked", aLink);
     }
   },
 
@@ -536,6 +551,18 @@ let BlockedLinks = {
    */
   resetCache: function BlockedLinks_resetCache() {
     this._links = null;
+  },
+
+  _callObservers(methodName, ...args) {
+    for (let obs of this._observers) {
+      if (typeof(obs[methodName]) == "function") {
+        try {
+          obs[methodName](...args);
+        } catch (err) {
+          Cu.reportError(err);
+        }
+      }
+    }
   }
 };
 
@@ -650,6 +677,20 @@ let PlacesProvider = {
   /**
    * Called by the history service.
    */
+  onDeleteURI: function PlacesProvider_onDeleteURI(aURI, aGUID, aReason) {
+    // let observers remove sensetive data associated with deleted visit
+    this._callObservers("onDeleteURI", {
+      url: aURI.spec,
+    });
+  },
+
+  onClearHistory: function() {
+    this._callObservers("onClearHistory")
+  },
+
+  /**
+   * Called by the history service.
+   */
   onFrecencyChanged: function PlacesProvider_onFrecencyChanged(aURI, aNewFrecency, aGUID, aHidden, aLastVisitDate) {
     // The implementation of the query in getLinks excludes hidden and
     // unvisited pages, so it's important to exclude them here, too.
@@ -715,16 +756,14 @@ let Links = {
   maxNumLinks: LINKS_GET_LINKS_LIMIT,
 
   /**
-   * The link providers.
+   * A mapping from each provider to an object { sortedLinks, siteMap, linkMap }.
+   * sortedLinks is the cached, sorted array of links for the provider.
+   * siteMap is a mapping from base domains to URL count associated with the domain.
+   *         The count does not include blocked URLs. siteMap is used to look up a
+   *         user's top sites that can be targeted with a suggested tile.
+   * linkMap is a Map from link URLs to link objects.
    */
-  _providers: new Set(),
-
-  /**
-   * A mapping from each provider to an object { sortedLinks, linkMap }.
-   * sortedLinks is the cached, sorted array of links for the provider.  linkMap
-   * is a Map from link URLs to link objects.
-   */
-  _providerLinks: new Map(),
+  _providers: new Map(),
 
   /**
    * The properties of link objects used to sort them.
@@ -741,11 +780,23 @@ let Links = {
   _populateCallbacks: [],
 
   /**
+   * A list of objects that are observing links updates.
+   */
+  _observers: [],
+
+  /**
+   * Registers an object that will be notified when links updates.
+   */
+  addObserver: function (aObserver) {
+    this._observers.push(aObserver);
+  },
+
+  /**
    * Adds a link provider.
    * @param aProvider The link provider.
    */
   addProvider: function Links_addProvider(aProvider) {
-    this._providers.add(aProvider);
+    this._providers.set(aProvider, null);
     aProvider.addObserver(this);
   },
 
@@ -756,7 +807,6 @@ let Links = {
   removeProvider: function Links_removeProvider(aProvider) {
     if (!this._providers.delete(aProvider))
       throw new Error("Unknown provider");
-    this._providerLinks.delete(aProvider);
   },
 
   /**
@@ -789,7 +839,7 @@ let Links = {
     }
 
     let numProvidersRemaining = this._providers.size;
-    for (let provider of this._providers) {
+    for (let [provider, links] of this._providers) {
       this._populateProviderCache(provider, () => {
         if (--numProvidersRemaining == 0)
           executeCallbacks();
@@ -832,6 +882,11 @@ let Links = {
     if (links.length)
       pinnedLinks = pinnedLinks.concat(links);
 
+    for (let link of pinnedLinks) {
+      if (link) {
+        link.baseDomain = NewTabUtils.extractSite(link.url);
+      }
+    }
     return pinnedLinks;
   },
 
@@ -839,7 +894,9 @@ let Links = {
    * Resets the links cache.
    */
   resetCache: function Links_resetCache() {
-    this._providerLinks.clear();
+    for (let provider of this._providers.keys()) {
+      this._providers.set(provider, null);
+    }
   },
 
   /**
@@ -862,6 +919,68 @@ let Links = {
            aLink1.url.localeCompare(aLink2.url);
   },
 
+  _incrementSiteMap: function(map, link) {
+    if (NewTabUtils.blockedLinks.isBlocked(link)) {
+      // Don't count blocked URLs.
+      return;
+    }
+    let site = NewTabUtils.extractSite(link.url);
+    map.set(site, (map.get(site) || 0) + 1);
+  },
+
+  _decrementSiteMap: function(map, link) {
+    if (NewTabUtils.blockedLinks.isBlocked(link)) {
+      // Blocked URLs are not included in map.
+      return;
+    }
+    let site = NewTabUtils.extractSite(link.url);
+    let previousURLCount = map.get(site);
+    if (previousURLCount === 1) {
+      map.delete(site);
+    } else {
+      map.set(site, previousURLCount - 1);
+    }
+  },
+
+  /**
+    * Update the siteMap cache based on the link given and whether we need
+    * to increment or decrement it. We do this by iterating over all stored providers
+    * to find which provider this link already exists in. For providers that
+    * have this link, we will adjust siteMap for them accordingly.
+    *
+    * @param aLink The link that will affect siteMap
+    * @param increment A boolean for whether to increment or decrement siteMap
+    */
+  _adjustSiteMapAndNotify: function(aLink, increment=true) {
+    for (let [provider, cache] of this._providers) {
+      // We only update siteMap if aLink is already stored in linkMap.
+      if (cache.linkMap.get(aLink.url)) {
+        if (increment) {
+          this._incrementSiteMap(cache.siteMap, aLink);
+          continue;
+        }
+        this._decrementSiteMap(cache.siteMap, aLink);
+      }
+    }
+    this._callObservers("onLinkChanged", aLink);
+  },
+
+  onLinkBlocked: function(aLink) {
+    this._adjustSiteMapAndNotify(aLink, false);
+  },
+
+  onLinkUnblocked: function(aLink) {
+    this._adjustSiteMapAndNotify(aLink);
+  },
+
+  populateProviderCache: function(provider, callback) {
+    if (!this._providers.has(provider)) {
+      throw new Error("Can only populate provider cache for existing provider.");
+    }
+
+    return this._populateProviderCache(provider, callback, false);
+  },
+
   /**
    * Calls getLinks on the given provider and populates our cache for it.
    * @param aProvider The provider whose cache will be populated.
@@ -869,24 +988,42 @@ let Links = {
    * @param aForce When true, populates the provider's cache even when it's
    *               already filled.
    */
-  _populateProviderCache: function Links_populateProviderCache(aProvider, aCallback, aForce) {
-    if (this._providerLinks.has(aProvider) && !aForce) {
-      aCallback();
-    } else {
-      aProvider.getLinks(links => {
-        // Filter out null and undefined links so we don't have to deal with
-        // them in getLinks when merging links from providers.
-        links = links.filter((link) => !!link);
-        this._providerLinks.set(aProvider, {
-          sortedLinks: links,
-          linkMap: links.reduce((map, link) => {
+  _populateProviderCache: function (aProvider, aCallback, aForce) {
+    let cache = this._providers.get(aProvider);
+    let createCache = !cache;
+    if (createCache) {
+      cache = {
+        // Start with a resolved promise.
+        populatePromise: new Promise(resolve => resolve()),
+      };
+      this._providers.set(aProvider, cache);
+    }
+    // Chain the populatePromise so that calls are effectively queued.
+    cache.populatePromise = cache.populatePromise.then(() => {
+      return new Promise(resolve => {
+        if (!createCache && !aForce) {
+          aCallback();
+          resolve();
+          return;
+        }
+        aProvider.getLinks(links => {
+          // Filter out null and undefined links so we don't have to deal with
+          // them in getLinks when merging links from providers.
+          links = links.filter((link) => !!link);
+          cache.sortedLinks = links;
+          cache.siteMap = links.reduce((map, link) => {
+            this._incrementSiteMap(map, link);
+            return map;
+          }, new Map());
+          cache.linkMap = links.reduce((map, link) => {
             map.set(link.url, link);
             return map;
-          }, new Map()),
+          }, new Map());
+          aCallback();
+          resolve();
         });
-        aCallback();
       });
-    }
+    });
   },
 
   /**
@@ -896,8 +1033,15 @@ let Links = {
   _getMergedProviderLinks: function Links__getMergedProviderLinks() {
     // Build a list containing a copy of each provider's sortedLinks list.
     let linkLists = [];
-    for (let links of this._providerLinks.values()) {
-      linkLists.push(links.sortedLinks.slice());
+    for (let provider of this._providers.keys()) {
+      if (!AllPages.enhanced && provider != PlacesProvider) {
+        // Only show history tiles if we're not in 'enhanced' mode.
+        continue;
+      }
+      let links = this._providers.get(provider);
+      if (links && links.sortedLinks) {
+        linkLists.push(links.sortedLinks.slice());
+      }
     }
 
     function getNextLink() {
@@ -926,19 +1070,22 @@ let Links = {
    * @param aLink The link that changed.  If the link is new, it must have all
    *              of the _sortProperties.  Otherwise, it may have as few or as
    *              many as is convenient.
+   * @param aIndex The current index of the changed link in the sortedLinks
+                   cache in _providers. Defaults to -1 if the provider doesn't know the index
+   * @param aDeleted Boolean indicating if the provider has deleted the link.
    */
-  onLinkChanged: function Links_onLinkChanged(aProvider, aLink) {
+  onLinkChanged: function Links_onLinkChanged(aProvider, aLink, aIndex=-1, aDeleted=false) {
     if (!("url" in aLink))
       throw new Error("Changed links must have a url property");
 
-    let links = this._providerLinks.get(aProvider);
+    let links = this._providers.get(aProvider);
     if (!links)
       // This is not an error, it just means that between the time the provider
       // was added and the future time we call getLinks on it, it notified us of
       // a change.
       return;
 
-    let { sortedLinks, linkMap } = links;
+    let { sortedLinks, siteMap, linkMap } = links;
     let existingLink = linkMap.get(aLink.url);
     let insertionLink = null;
     let updatePages = false;
@@ -947,19 +1094,29 @@ let Links = {
       // Update our copy's position in O(lg n) by first removing it from its
       // list.  It's important to do this before modifying its properties.
       if (this._sortProperties.some(prop => prop in aLink)) {
-        let idx = this._indexOf(sortedLinks, existingLink);
+        let idx = aIndex;
+        if (idx < 0) {
+          idx = this._indexOf(sortedLinks, existingLink);
+        } else if (this.compareLinks(aLink, sortedLinks[idx]) != 0) {
+          throw new Error("aLink should be the same as sortedLinks[idx]");
+        }
+
         if (idx < 0) {
           throw new Error("Link should be in _sortedLinks if in _linkMap");
         }
         sortedLinks.splice(idx, 1);
-        // Update our copy's properties.
-        for (let prop of this._sortProperties) {
-          if (prop in aLink) {
-            existingLink[prop] = aLink[prop];
-          }
+
+        if (aDeleted) {
+          updatePages = true;
+          linkMap.delete(existingLink.url);
+          this._decrementSiteMap(siteMap, existingLink);
+        } else {
+          // Update our copy's properties.
+          Object.assign(existingLink, aLink);
+
+          // Finally, reinsert our copy below.
+          insertionLink = existingLink;
         }
-        // Finally, reinsert our copy below.
-        insertionLink = existingLink;
       }
       // Update our copy's title in O(1).
       if ("title" in aLink && aLink.title != existingLink.title) {
@@ -983,6 +1140,7 @@ let Links = {
         insertionLink[prop] = aLink[prop];
       }
       linkMap.set(aLink.url, insertionLink);
+      this._incrementSiteMap(siteMap, aLink);
     }
 
     if (insertionLink) {
@@ -991,6 +1149,7 @@ let Links = {
       if (sortedLinks.length > aProvider.maxNumLinks) {
         let lastLink = sortedLinks.pop();
         linkMap.delete(lastLink.url);
+        this._decrementSiteMap(siteMap, lastLink);
       }
       updatePages = true;
     }
@@ -1034,6 +1193,18 @@ let Links = {
       this.resetCache();
   },
 
+  _callObservers(methodName, ...args) {
+    for (let obs of this._observers) {
+      if (typeof(obs[methodName]) == "function") {
+        try {
+          obs[methodName](this, ...args);
+        } catch (err) {
+          Cu.reportError(err);
+        }
+      }
+    }
+  },
+
   /**
    * Adds a sanitization observer and turns itself into a no-op after the first
    * invokation.
@@ -1068,6 +1239,8 @@ let Telemetry = {
     let probes = [
       { histogram: "NEWTAB_PAGE_ENABLED",
         value: AllPages.enabled },
+      { histogram: "NEWTAB_PAGE_ENHANCED",
+        value: AllPages.enhanced },
       { histogram: "NEWTAB_PAGE_PINNED_SITES_COUNT",
         value: PinnedLinks.links.length },
       { histogram: "NEWTAB_PAGE_BLOCKED_SITES_COUNT",
@@ -1159,21 +1332,24 @@ this.NewTabUtils = {
    * @return The "site" string or null
    */
   extractSite: function Links_extractSite(url) {
-    let uri;
+    let host;
     try {
-      uri = Services.io.newURI(url, null, null);
+      // Note that nsIURI.asciiHost throws NS_ERROR_FAILURE for some types of
+      // URIs, including jar and moz-icon URIs.
+      host = Services.io.newURI(url, null, null).asciiHost;
     } catch (ex) {
       return null;
     }
 
     // Strip off common subdomains of the same site (e.g., www, load balancer)
-    return uri.asciiHost.replace(/^(m|mobile|www\d*)\./, "");
+    return host.replace(/^(m|mobile|www\d*)\./, "");
   },
 
   init: function NewTabUtils_init() {
     if (this.initWithoutProviders()) {
       PlacesProvider.init();
       Links.addProvider(PlacesProvider);
+      BlockedLinks.addObserver(Links);
     }
   },
 
@@ -1185,6 +1361,26 @@ this.NewTabUtils = {
       return true;
     }
     return false;
+  },
+
+  getProviderLinks: function(aProvider) {
+    let cache = Links._providers.get(aProvider);
+    if (cache && cache.sortedLinks) {
+      return cache.sortedLinks;
+    }
+    return [];
+  },
+
+  isTopSiteGivenProvider: function(aSite, aProvider) {
+    let cache = Links._providers.get(aProvider);
+    if (cache && cache.siteMap) {
+      return cache.siteMap.has(aSite);
+    }
+    return false;
+  },
+
+  isTopPlacesSite: function(aSite) {
+    return this.isTopSiteGivenProvider(aSite, PlacesProvider);
   },
 
   /**
@@ -1218,5 +1414,6 @@ this.NewTabUtils = {
   linkChecker: LinkChecker,
   pinnedLinks: PinnedLinks,
   blockedLinks: BlockedLinks,
-  gridPrefs: GridPrefs
+  gridPrefs: GridPrefs,
+  placesProvider: PlacesProvider
 };

@@ -84,13 +84,13 @@ static_assert(SRC_XDELTA == 24, "SRC_XDELTA should be 24");
 
 /* A source note array is terminated by an all-zero element. */
 inline void
-SN_MAKE_TERMINATOR(jssrcnote *sn)
+SN_MAKE_TERMINATOR(jssrcnote* sn)
 {
     *sn = SRC_NULL;
 }
 
 inline bool
-SN_IS_TERMINATOR(jssrcnote *sn)
+SN_IS_TERMINATOR(jssrcnote* sn)
 {
     return *sn == SRC_NULL;
 }
@@ -184,21 +184,27 @@ SN_COLSPAN_TO_OFFSET(ptrdiff_t colspan) {
 }
 
 #define SN_LENGTH(sn)           ((js_SrcNoteSpec[SN_TYPE(sn)].arity == 0) ? 1 \
-                                 : js_SrcNoteLength(sn))
+                                 : js::SrcNoteLength(sn))
 #define SN_NEXT(sn)             ((sn) + SN_LENGTH(sn))
 
 struct JSSrcNoteSpec {
-    const char      *name;      /* name for disassembly/debugging output */
+    const char*     name;      /* name for disassembly/debugging output */
     int8_t          arity;      /* number of offset operands */
 };
 
 extern JS_FRIEND_DATA(const JSSrcNoteSpec) js_SrcNoteSpec[];
-extern JS_FRIEND_API(unsigned)         js_SrcNoteLength(jssrcnote *sn);
+
+namespace js {
+
+extern JS_FRIEND_API(unsigned)
+SrcNoteLength(jssrcnote* sn);
 
 /*
  * Get and set the offset operand identified by which (0 for the first, etc.).
  */
 extern JS_FRIEND_API(ptrdiff_t)
-js_GetSrcNoteOffset(jssrcnote *sn, unsigned which);
+GetSrcNoteOffset(jssrcnote* sn, unsigned which);
+
+}
 
 #endif /* frontend_SourceNotes_h */

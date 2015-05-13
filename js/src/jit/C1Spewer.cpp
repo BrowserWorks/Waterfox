@@ -8,9 +8,11 @@
 
 #include "jit/C1Spewer.h"
 
+#include "mozilla/SizePrintfMacros.h"
+
 #include <time.h>
 
-#include "jit/LinearScan.h"
+#include "jit/BacktrackingAllocator.h"
 #include "jit/LIR.h"
 #include "jit/MIRGraph.h"
 
@@ -18,14 +20,14 @@ using namespace js;
 using namespace js::jit;
 
 bool
-C1Spewer::init(const char *path)
+C1Spewer::init(const char* path)
 {
     spewout_ = fopen(path, "w");
     return spewout_ != nullptr;
 }
 
 void
-C1Spewer::beginFunction(MIRGraph *graph, HandleScript script)
+C1Spewer::beginFunction(MIRGraph* graph, HandleScript script)
 {
     if (!spewout_)
         return;
@@ -34,8 +36,8 @@ C1Spewer::beginFunction(MIRGraph *graph, HandleScript script)
 
     fprintf(spewout_, "begin_compilation\n");
     if (script) {
-        fprintf(spewout_, "  name \"%s:%d\"\n", script->filename(), (int)script->lineno());
-        fprintf(spewout_, "  method \"%s:%d\"\n", script->filename(), (int)script->lineno());
+        fprintf(spewout_, "  name \"%s:%" PRIuSIZE "\"\n", script->filename(), script->lineno());
+        fprintf(spewout_, "  method \"%s:%" PRIuSIZE "\"\n", script->filename(), script->lineno());
     } else {
         fprintf(spewout_, "  name \"asm.js compilation\"\n");
         fprintf(spewout_, "  method \"asm.js compilation\"\n");
@@ -45,7 +47,7 @@ C1Spewer::beginFunction(MIRGraph *graph, HandleScript script)
 }
 
 void
-C1Spewer::spewPass(const char *pass)
+C1Spewer::spewPass(const char* pass)
 {
     if (!spewout_)
         return;
@@ -61,7 +63,7 @@ C1Spewer::spewPass(const char *pass)
 }
 
 void
-C1Spewer::spewIntervals(const char *pass, LinearScanAllocator *regalloc)
+C1Spewer::spewIntervals(const char* pass, BacktrackingAllocator* regalloc)
 {
     if (!spewout_)
         return;
@@ -90,7 +92,7 @@ C1Spewer::finish()
 }
 
 static void
-DumpDefinition(FILE *fp, MDefinition *def)
+DumpDefinition(FILE* fp, MDefinition* def)
 {
     fprintf(fp, "      ");
     fprintf(fp, "%u %u ", def->id(), unsigned(def->useCount()));
@@ -101,7 +103,7 @@ DumpDefinition(FILE *fp, MDefinition *def)
 }
 
 static void
-DumpLIR(FILE *fp, LNode *ins)
+DumpLIR(FILE* fp, LNode* ins)
 {
     fprintf(fp, "      ");
     fprintf(fp, "%d ", ins->id());
@@ -110,14 +112,14 @@ DumpLIR(FILE *fp, LNode *ins)
 }
 
 void
-C1Spewer::spewIntervals(FILE *fp, LinearScanAllocator *regalloc, LNode *ins, size_t &nextId)
+C1Spewer::spewIntervals(FILE* fp, BacktrackingAllocator* regalloc, LNode* ins, size_t& nextId)
 {
     for (size_t k = 0; k < ins->numDefs(); k++) {
         uint32_t id = ins->getDef(k)->virtualRegister();
-        VirtualRegister *vreg = &regalloc->vregs[id];
+        VirtualRegister* vreg = &regalloc->vregs[id];
 
         for (size_t i = 0; i < vreg->numIntervals(); i++) {
-            LiveInterval *live = vreg->getInterval(i);
+            LiveInterval* live = vreg->getInterval(i);
             if (live->numRanges()) {
                 fprintf(fp, "%d object \"", (i == 0) ? id : int32_t(nextId++));
                 fprintf(fp, "%s", live->getAllocation()->toString());
@@ -135,9 +137,9 @@ C1Spewer::spewIntervals(FILE *fp, LinearScanAllocator *regalloc, LNode *ins, siz
 }
 
 void
-C1Spewer::spewIntervals(FILE *fp, MBasicBlock *block, LinearScanAllocator *regalloc, size_t &nextId)
+C1Spewer::spewIntervals(FILE* fp, MBasicBlock* block, BacktrackingAllocator* regalloc, size_t& nextId)
 {
-    LBlock *lir = block->lir();
+    LBlock* lir = block->lir();
     if (!lir)
         return;
 
@@ -149,7 +151,7 @@ C1Spewer::spewIntervals(FILE *fp, MBasicBlock *block, LinearScanAllocator *regal
 }
 
 void
-C1Spewer::spewPass(FILE *fp, MBasicBlock *block)
+C1Spewer::spewPass(FILE* fp, MBasicBlock* block)
 {
     fprintf(fp, "  begin_block\n");
     fprintf(fp, "    name \"B%d\"\n", block->id());
@@ -158,14 +160,14 @@ C1Spewer::spewPass(FILE *fp, MBasicBlock *block)
 
     fprintf(fp, "    predecessors");
     for (uint32_t i = 0; i < block->numPredecessors(); i++) {
-        MBasicBlock *pred = block->getPredecessor(i);
+        MBasicBlock* pred = block->getPredecessor(i);
         fprintf(fp, " \"B%d\"", pred->id());
     }
     fprintf(fp, "\n");
 
     fprintf(fp, "    successors");
     for (uint32_t i = 0; i < block->numSuccessors(); i++) {
-        MBasicBlock *successor = block->getSuccessor(i);
+        MBasicBlock* successor = block->getSuccessor(i);
         fprintf(fp, " \"B%d\"", successor->id());
     }
     fprintf(fp, "\n");
@@ -185,7 +187,7 @@ C1Spewer::spewPass(FILE *fp, MBasicBlock *block)
         fprintf(fp, "        size %d\n", (int)block->numEntrySlots());
         fprintf(fp, "        method \"None\"\n");
         for (uint32_t i = 0; i < block->numEntrySlots(); i++) {
-            MDefinition *ins = block->getEntrySlot(i);
+            MDefinition* ins = block->getEntrySlot(i);
             fprintf(fp, "        ");
             fprintf(fp, "%d ", i);
             if (ins->isUnused())

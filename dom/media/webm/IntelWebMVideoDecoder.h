@@ -14,7 +14,8 @@
 #include "mozilla/Monitor.h"
 
 #include "mp4_demuxer/mp4_demuxer.h"
-#include "mp4_demuxer/DecoderData.h"
+#include "MediaInfo.h"
+#include "MediaData.h"
 
 class MediaTaskQueue;
 
@@ -22,25 +23,30 @@ namespace mozilla {
 
 class VP8Sample;
 
-typedef std::deque<VP8Sample*> VP8SampleQueue;
+typedef std::deque<nsRefPtr<VP8Sample>> VP8SampleQueue;
 
 class IntelWebMVideoDecoder : public WebMVideoDecoder, public MediaDataDecoderCallback
 {
 public:
   static WebMVideoDecoder* Create(WebMReader* aReader);
-  virtual nsresult Init(unsigned int aWidth, unsigned int aHeight) MOZ_OVERRIDE;
-  virtual nsresult Flush() MOZ_OVERRIDE;
-  virtual void Shutdown() MOZ_OVERRIDE;
+  virtual nsresult Init(unsigned int aWidth, unsigned int aHeight) override;
+  virtual nsresult Flush() override;
+  virtual void Shutdown() override;
 
   virtual bool DecodeVideoFrame(bool &aKeyframeSkip,
-                                int64_t aTimeThreshold) MOZ_OVERRIDE;
+                                int64_t aTimeThreshold) override;
 
-  virtual void Output(MediaData* aSample) MOZ_OVERRIDE;
+  virtual void Output(MediaData* aSample) override;
 
-  virtual void DrainComplete() MOZ_OVERRIDE;
+  virtual void DrainComplete() override;
 
-  virtual void InputExhausted() MOZ_OVERRIDE;
-  virtual void Error() MOZ_OVERRIDE;
+  virtual void InputExhausted() override;
+  virtual void Error() override;
+
+  virtual bool OnReaderTaskQueue() override
+  {
+    return mReader->OnTaskQueue();
+  }
 
   IntelWebMVideoDecoder(WebMReader* aReader);
   ~IntelWebMVideoDecoder();
@@ -50,13 +56,13 @@ private:
 
   bool Decode();
 
-  bool Demux(nsAutoPtr<VP8Sample>& aSample, bool* aEOS);
+  bool Demux(nsRefPtr<VP8Sample>& aSample, bool* aEOS);
 
   bool SkipVideoDemuxToNextKeyFrame(int64_t aTimeThreshold, uint32_t& parsed);
 
-  bool IsSupportedVideoMimeType(const char* aMimeType);
+  bool IsSupportedVideoMimeType(const nsACString& aMimeType);
 
-  VP8Sample* PopSample();
+  already_AddRefed<VP8Sample> PopSample();
 
   nsRefPtr<WebMReader> mReader;
   nsRefPtr<PlatformDecoderModule> mPlatform;
@@ -64,15 +70,15 @@ private:
 
   // TaskQueue on which decoder can choose to decode.
   // Only non-null up until the decoder is created.
-  nsRefPtr<MediaTaskQueue> mTaskQueue;
+  nsRefPtr<FlushableMediaTaskQueue> mTaskQueue;
 
   // Monitor that protects all non-threadsafe state; the primitives
   // that follow.
   Monitor mMonitor;
-  nsAutoPtr<mp4_demuxer::VideoDecoderConfig> mDecoderConfig;
+  nsAutoPtr<VideoInfo> mDecoderConfig;
 
   VP8SampleQueue mSampleQueue;
-  nsAutoPtr<VP8Sample> mQueuedVideoSample;
+  nsRefPtr<VP8Sample> mQueuedVideoSample;
   uint64_t mNumSamplesInput;
   uint64_t mNumSamplesOutput;
   uint64_t mLastReportedNumDecodedFrames;

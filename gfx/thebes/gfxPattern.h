@@ -17,13 +17,11 @@
 #include "nsAutoPtr.h"
 #include "nsTArray.h"
 
-class gfxContext;
-class gfxASurface;
 struct gfxRGBA;
 typedef struct _cairo_pattern cairo_pattern_t;
 
 
-class gfxPattern MOZ_FINAL{
+class gfxPattern final{
     NS_INLINE_DECL_REFCOUNTING(gfxPattern)
 
 public:

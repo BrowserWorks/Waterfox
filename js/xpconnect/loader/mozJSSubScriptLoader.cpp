@@ -38,8 +38,8 @@ using namespace mozilla;
 
 class MOZ_STACK_CLASS LoadSubScriptOptions : public OptionsBase {
 public:
-    explicit LoadSubScriptOptions(JSContext *cx = xpc_GetSafeJSContext(),
-                                  JSObject *options = nullptr)
+    explicit LoadSubScriptOptions(JSContext* cx = xpc_GetSafeJSContext(),
+                                  JSObject* options = nullptr)
         : OptionsBase(cx, options)
         , target(cx)
         , charset(NullString())
@@ -84,7 +84,7 @@ mozJSSubScriptLoader::~mozJSSubScriptLoader()
 NS_IMPL_ISUPPORTS(mozJSSubScriptLoader, mozIJSSubScriptLoader)
 
 static nsresult
-ReportError(JSContext *cx, const char *msg)
+ReportError(JSContext* cx, const char* msg)
 {
     RootedValue exn(cx, JS::StringValue(JS_NewStringCopyZ(cx, msg)));
     JS_SetPendingException(cx, exn);
@@ -92,7 +92,7 @@ ReportError(JSContext *cx, const char *msg)
 }
 
 static nsresult
-ReportError(JSContext *cx, const char *origMsg, nsIURI* uri)
+ReportError(JSContext* cx, const char* origMsg, nsIURI* uri)
 {
     if (!uri)
         return ReportError(cx, origMsg);
@@ -108,26 +108,10 @@ ReportError(JSContext *cx, const char *origMsg, nsIURI* uri)
     return ReportError(cx, msg.get());
 }
 
-// There probably aren't actually any consumers that rely on having the full
-// scope chain up the parent chain of "obj" (instead of just having obj and then
-// the global), but we do this for now to preserve backwards compat.
-static bool
-BuildScopeChainForObject(JSContext *cx, HandleObject obj,
-                         AutoObjectVector &scopeChain)
-{
-    RootedObject cur(cx, obj);
-    for ( ; cur && !JS_IsGlobalObject(cur); cur = JS_GetParent(cur)) {
-        if (!scopeChain.append(cur)) {
-            return false;
-        }
-    }
-    return true;
-}
-
 nsresult
-mozJSSubScriptLoader::ReadScript(nsIURI *uri, JSContext *cx, JSObject *targetObjArg,
-                                 const nsAString &charset, const char *uriStr,
-                                 nsIIOService *serv, nsIPrincipal *principal,
+mozJSSubScriptLoader::ReadScript(nsIURI* uri, JSContext* cx, JSObject* targetObjArg,
+                                 const nsAString& charset, const char* uriStr,
+                                 nsIIOService* serv, nsIPrincipal* principal,
                                  bool reuseGlobal, JS::MutableHandleScript script,
                                  JS::MutableHandleFunction function)
 {
@@ -179,7 +163,7 @@ mozJSSubScriptLoader::ReadScript(nsIURI *uri, JSContext *cx, JSObject *targetObj
     JS::CompileOptions options(cx);
     options.setFileAndLine(uriStr, 1);
     if (!charset.IsVoid()) {
-        char16_t *scriptBuf = nullptr;
+        char16_t* scriptBuf = nullptr;
         size_t scriptLength = 0;
 
         rv = nsScriptLoader::ConvertToUTF16(nullptr, reinterpret_cast<const uint8_t*>(buf.get()), len,
@@ -193,10 +177,12 @@ mozJSSubScriptLoader::ReadScript(nsIURI *uri, JSContext *cx, JSObject *targetObj
         }
 
         if (!reuseGlobal) {
-            JS::Compile(cx, target_obj, options, srcBuf, script);
+            options.setHasPollutedScope(!JS_IsGlobalObject(target_obj));
+            JS::Compile(cx, options, srcBuf, script);
         } else {
             AutoObjectVector scopeChain(cx);
-            if (!BuildScopeChainForObject(cx, target_obj, scopeChain)) {
+            if (!JS_IsGlobalObject(target_obj) &&
+                !scopeChain.append(target_obj)) {
                 return NS_ERROR_OUT_OF_MEMORY;
             }
             // XXXbz do we really not care if the compile fails???
@@ -207,11 +193,13 @@ mozJSSubScriptLoader::ReadScript(nsIURI *uri, JSContext *cx, JSObject *targetObj
         // We only use lazy source when no special encoding is specified because
         // the lazy source loader doesn't know the encoding.
         if (!reuseGlobal) {
-            options.setSourceIsLazy(true);
-            JS::Compile(cx, target_obj, options, buf.get(), len, script);
+            options.setSourceIsLazy(true)
+                   .setHasPollutedScope(!JS_IsGlobalObject(target_obj));
+            JS::Compile(cx, options, buf.get(), len, script);
         } else {
             AutoObjectVector scopeChain(cx);
-            if (!BuildScopeChainForObject(cx, target_obj, scopeChain)) {
+            if (!JS_IsGlobalObject(target_obj) &&
+                !scopeChain.append(target_obj)) {
                 return NS_ERROR_OUT_OF_MEMORY;
             }
             // XXXbz do we really not care if the compile fails???
@@ -224,10 +212,10 @@ mozJSSubScriptLoader::ReadScript(nsIURI *uri, JSContext *cx, JSObject *targetObj
 }
 
 NS_IMETHODIMP
-mozJSSubScriptLoader::LoadSubScript(const nsAString &url,
+mozJSSubScriptLoader::LoadSubScript(const nsAString& url,
                                     HandleValue target,
-                                    const nsAString &charset,
-                                    JSContext *cx,
+                                    const nsAString& charset,
+                                    JSContext* cx,
                                     MutableHandleValue retval)
 {
     /*
@@ -249,9 +237,9 @@ mozJSSubScriptLoader::LoadSubScript(const nsAString &url,
 
 
 NS_IMETHODIMP
-mozJSSubScriptLoader::LoadSubScriptWithOptions(const nsAString &url,
+mozJSSubScriptLoader::LoadSubScriptWithOptions(const nsAString& url,
                                                HandleValue optionsVal,
-                                               JSContext *cx,
+                                               JSContext* cx,
                                                MutableHandleValue retval)
 {
     if (!optionsVal.isObject())
@@ -263,9 +251,9 @@ mozJSSubScriptLoader::LoadSubScriptWithOptions(const nsAString &url,
 }
 
 nsresult
-mozJSSubScriptLoader::DoLoadSubScriptWithOptions(const nsAString &url,
-                                                 LoadSubScriptOptions &options,
-                                                 JSContext *cx,
+mozJSSubScriptLoader::DoLoadSubScriptWithOptions(const nsAString& url,
+                                                 LoadSubScriptOptions& options,
+                                                 JSContext* cx,
                                                  MutableHandleValue retval)
 {
     nsresult rv = NS_OK;
@@ -283,7 +271,7 @@ mozJSSubScriptLoader::DoLoadSubScriptWithOptions(const nsAString &url,
     }
 
     RootedObject targetObj(cx);
-    mozJSComponentLoader *loader = mozJSComponentLoader::Get();
+    mozJSComponentLoader* loader = mozJSComponentLoader::Get();
     rv = loader->FindTargetObject(cx, &targetObj);
     NS_ENSURE_SUCCESS(rv, rv);
 
@@ -392,7 +380,13 @@ mozJSSubScriptLoader::DoLoadSubScriptWithOptions(const nsAString &url,
         ok = JS_CallFunction(cx, targetObj, function, JS::HandleValueArray::empty(),
                              retval);
     } else {
-        ok = JS_ExecuteScript(cx, targetObj, script, retval);
+        if (JS_IsGlobalObject(targetObj)) {
+            ok = JS_ExecuteScript(cx, script, retval);
+        } else {
+            JS::AutoObjectVector scopeChain(cx);
+            ok = scopeChain.append(targetObj) &&
+                 JS_ExecuteScript(cx, scopeChain, script, retval);
+        }
     }
 
     if (ok) {
@@ -428,7 +422,7 @@ public:
         , mScriptLength(0)
     {}
 
-    static void OffThreadCallback(void *aToken, void *aData);
+    static void OffThreadCallback(void* aToken, void* aData);
 
     /* Sends the "done" notification back. Main thread only. */
     void SendObserverNotification();
@@ -500,7 +494,7 @@ NotifyPrecompilationCompleteRunnable::Run(void)
     AutoSendObserverNotification notifier(mPrecompiler);
 
     if (mToken) {
-        JSRuntime *rt = XPCJSRuntime::Get()->Runtime();
+        JSRuntime* rt = XPCJSRuntime::Get()->Runtime();
         NS_ENSURE_TRUE(rt, NS_ERROR_FAILURE);
         JS::FinishOffThreadScript(nullptr, rt, mToken);
     }
@@ -546,7 +540,6 @@ ScriptPrecompiler::OnStreamComplete(nsIStreamLoader* aLoader,
 
     JS::CompileOptions options(cx, JSVERSION_DEFAULT);
     options.forceAsync = true;
-    options.compileAndGo = true;
     options.installedFile = true;
 
     nsCOMPtr<nsIURI> uri;
@@ -602,7 +595,7 @@ ScriptPrecompiler::SendObserverNotification()
 NS_IMETHODIMP
 mozJSSubScriptLoader::PrecompileScript(nsIURI* aURI,
                                        nsIPrincipal* aPrincipal,
-                                       nsIObserver *aObserver)
+                                       nsIObserver* aObserver)
 {
     nsCOMPtr<nsIChannel> channel;
     nsresult rv = NS_NewChannel(getter_AddRefs(channel),

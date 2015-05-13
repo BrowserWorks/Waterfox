@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -7,7 +8,6 @@
 
 #include "mozilla/Attributes.h"
 #include "nsGenericHTMLElement.h"
-#include "nsIDOMHTMLTableElement.h"
 #include "mozilla/dom/HTMLTableCaptionElement.h"
 #include "mozilla/dom/HTMLTableSectionElement.h"
 
@@ -18,8 +18,7 @@ namespace dom {
 
 class TableRowsCollection;
 
-class HTMLTableElement MOZ_FINAL : public nsGenericHTMLElement,
-                                   public nsIDOMHTMLTableElement
+class HTMLTableElement final : public nsGenericHTMLElement
 {
 public:
   explicit HTMLTableElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
@@ -54,7 +53,7 @@ public:
   }
   void SetTHead(HTMLTableSectionElement* aTHead, ErrorResult& aError)
   {
-    if (aTHead && !aTHead->IsHTML(nsGkAtoms::thead)) {
+    if (aTHead && !aTHead->IsHTMLElement(nsGkAtoms::thead)) {
       aError.Throw(NS_ERROR_DOM_HIERARCHY_REQUEST_ERR);
       return;
     }
@@ -74,7 +73,7 @@ public:
   }
   void SetTFoot(HTMLTableSectionElement* aTFoot, ErrorResult& aError)
   {
-    if (aTFoot && !aTFoot->IsHTML(nsGkAtoms::tfoot)) {
+    if (aTFoot && !aTFoot->IsHTMLElement(nsGkAtoms::tfoot)) {
       aError.Throw(NS_ERROR_DOM_HIERARCHY_REQUEST_ERR);
       return;
     }
@@ -96,7 +95,7 @@ public:
                                                    ErrorResult& aError);
   void DeleteRow(int32_t aIndex, ErrorResult& aError);
 
-  void GetAlign(nsString& aAlign)
+  void GetAlign(DOMString& aAlign)
   {
     GetHTMLAttr(nsGkAtoms::align, aAlign);
   }
@@ -104,7 +103,7 @@ public:
   {
     SetHTMLAttr(nsGkAtoms::align, aAlign, aError);
   }
-  void GetBorder(nsString& aBorder)
+  void GetBorder(DOMString& aBorder)
   {
     GetHTMLAttr(nsGkAtoms::border, aBorder);
   }
@@ -112,7 +111,7 @@ public:
   {
     SetHTMLAttr(nsGkAtoms::border, aBorder, aError);
   }
-  void GetFrame(nsString& aFrame)
+  void GetFrame(DOMString& aFrame)
   {
     GetHTMLAttr(nsGkAtoms::frame, aFrame);
   }
@@ -120,7 +119,7 @@ public:
   {
     SetHTMLAttr(nsGkAtoms::frame, aFrame, aError);
   }
-  void GetRules(nsString& aRules)
+  void GetRules(DOMString& aRules)
   {
     GetHTMLAttr(nsGkAtoms::rules, aRules);
   }
@@ -132,11 +131,15 @@ public:
   {
     GetHTMLAttr(nsGkAtoms::summary, aSummary);
   }
+  void GetSummary(DOMString& aSummary)
+  {
+    GetHTMLAttr(nsGkAtoms::summary, aSummary);
+  }
   void SetSummary(const nsAString& aSummary, ErrorResult& aError)
   {
     SetHTMLAttr(nsGkAtoms::summary, aSummary, aError);
   }
-  void GetWidth(nsString& aWidth)
+  void GetWidth(DOMString& aWidth)
   {
     GetHTMLAttr(nsGkAtoms::width, aWidth);
   }
@@ -144,7 +147,7 @@ public:
   {
     SetHTMLAttr(nsGkAtoms::width, aWidth, aError);
   }
-  void GetBgColor(nsString& aBgColor)
+  void GetBgColor(DOMString& aBgColor)
   {
     GetHTMLAttr(nsGkAtoms::bgcolor, aBgColor);
   }
@@ -152,7 +155,7 @@ public:
   {
     SetHTMLAttr(nsGkAtoms::bgcolor, aBgColor, aError);
   }
-  void GetCellPadding(nsString& aCellPadding)
+  void GetCellPadding(DOMString& aCellPadding)
   {
     GetHTMLAttr(nsGkAtoms::cellpadding, aCellPadding);
   }
@@ -160,7 +163,7 @@ public:
   {
     SetHTMLAttr(nsGkAtoms::cellpadding, aCellPadding, aError);
   }
-  void GetCellSpacing(nsString& aCellSpacing)
+  void GetCellSpacing(DOMString& aCellSpacing)
   {
     GetHTMLAttr(nsGkAtoms::cellspacing, aCellSpacing);
   }
@@ -172,28 +175,28 @@ public:
   virtual bool ParseAttribute(int32_t aNamespaceID,
                                 nsIAtom* aAttribute,
                                 const nsAString& aValue,
-                                nsAttrValue& aResult) MOZ_OVERRIDE;
-  virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const MOZ_OVERRIDE;
-  NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const MOZ_OVERRIDE;
+                                nsAttrValue& aResult) override;
+  virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const override;
+  NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const override;
 
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
 
   virtual nsresult BindToTree(nsIDocument* aDocument, nsIContent* aParent,
                               nsIContent* aBindingParent,
-                              bool aCompileEventHandlers) MOZ_OVERRIDE;
+                              bool aCompileEventHandlers) override;
   virtual void UnbindFromTree(bool aDeep = true,
-                              bool aNullParent = true) MOZ_OVERRIDE;
+                              bool aNullParent = true) override;
   /**
    * Called when an attribute is about to be changed
    */
   virtual nsresult BeforeSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                  const nsAttrValueOrString* aValue,
-                                 bool aNotify) MOZ_OVERRIDE;
+                                 bool aNotify) override;
   /**
    * Called when an attribute has just been changed
    */
   virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                                const nsAttrValue* aValue, bool aNotify) MOZ_OVERRIDE;
+                                const nsAttrValue* aValue, bool aNotify) override;
 
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(HTMLTableElement,
                                            nsGenericHTMLElement)
@@ -202,13 +205,13 @@ public:
 protected:
   virtual ~HTMLTableElement();
 
-  virtual JSObject* WrapNode(JSContext *aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   nsIContent* GetChild(nsIAtom *aTag) const
   {
     for (nsIContent* cur = nsINode::GetFirstChild(); cur;
          cur = cur->GetNextSibling()) {
-      if (cur->IsHTML(aTag)) {
+      if (cur->IsHTMLElement(aTag)) {
         return cur;
       }
     }

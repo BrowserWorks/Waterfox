@@ -17,11 +17,11 @@
 #include "nsIObjectInputStream.h"
 #include "nsIObjectOutputStream.h"
 #include "nsNSSCertHelper.h"
-#include "nsIProgrammingLanguage.h"
 #include "nsIArray.h"
 #include "nsComponentManagerUtils.h"
 #include "nsReadableUtils.h"
 #include "nsServiceManagerUtils.h"
+#include "nsXULAppAPI.h"
 #include "PSMRunnable.h"
 
 #include "secerr.h"
@@ -234,9 +234,13 @@ TransportSecurityInfo::formatErrorMessage(MutexAutoLock const & proofOfLock,
                                           bool wantsHtml, bool suppressPort443, 
                                           nsString &result)
 {
+  result.Truncate();
   if (errorCode == 0) {
-    result.Truncate();
     return NS_OK;
+  }
+
+  if (XRE_GetProcessType() != GeckoProcessType_Default) {
+    return NS_ERROR_UNEXPECTED;
   }
 
   nsresult rv;
@@ -296,8 +300,8 @@ TransportSecurityInfo::GetInterface(const nsIID & uuid, void * *result)
 // of the previous value. This is so when older versions attempt to
 // read a newer serialized TransportSecurityInfo, they will actually
 // fail and return NS_ERROR_FAILURE instead of silently failing.
-#define TRANSPORTSECURITYINFOMAGIC { 0xa9863a23, 0x328f, 0x45ab, \
-  { 0xa8, 0xa4, 0x35, 0x18, 0x80, 0x04, 0x77, 0x8d } }
+#define TRANSPORTSECURITYINFOMAGIC { 0xa9863a23, 0x1faa, 0x4169, \
+  { 0xb0, 0xd2, 0x81, 0x29, 0xec, 0x7c, 0xb1, 0xde } }
 static NS_DEFINE_CID(kTransportSecurityInfoMagic, TRANSPORTSECURITYINFOMAGIC);
 
 NS_IMETHODIMP
@@ -322,11 +326,17 @@ TransportSecurityInfo::Write(nsIObjectOutputStream* stream)
   if (NS_FAILED(rv)) {
     return rv;
   }
-  // XXX: uses nsNSSComponent string bundles off the main thread
-  rv = formatErrorMessage(lock, mErrorCode, mErrorMessageType, true, true,
-                          mErrorMessageCached);
+  rv = stream->Write32(static_cast<uint32_t>(mErrorCode));
   if (NS_FAILED(rv)) {
     return rv;
+  }
+  if (mErrorMessageCached.IsEmpty()) {
+    // XXX: uses nsNSSComponent string bundles off the main thread
+    rv = formatErrorMessage(lock, mErrorCode, mErrorMessageType,
+                            true, true, mErrorMessageCached);
+    if (NS_FAILED(rv)) {
+      return rv;
+    }
   }
   rv = stream->WriteWStringZ(mErrorMessageCached.get());
   if (NS_FAILED(rv)) {
@@ -394,12 +404,18 @@ TransportSecurityInfo::Read(nsIObjectInputStream* stream)
     return NS_ERROR_UNEXPECTED;
   }
   mSubRequestsNoSecurity = subRequestsNoSecurity;
+  uint32_t errorCode;
+  rv = stream->Read32(&errorCode);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+  // PRErrorCode will be a negative value
+  mErrorCode = static_cast<PRErrorCode>(errorCode);
+
   rv = stream->ReadString(mErrorMessageCached);
   if (NS_FAILED(rv)) {
     return rv;
   }
-
-  mErrorCode = 0;
 
   // For successful connections and for connections with overridable errors,
   // mSSLStatus will be non-null. For connections with non-overridable errors,
@@ -430,8 +446,7 @@ TransportSecurityInfo::GetInterfaces(uint32_t *count, nsIID * **array)
 }
 
 NS_IMETHODIMP
-TransportSecurityInfo::GetHelperForLanguage(uint32_t language,
-                                            nsISupports **_retval)
+TransportSecurityInfo::GetScriptableHelper(nsIXPCScriptable **_retval)
 {
   *_retval = nullptr;
   return NS_OK;
@@ -454,18 +469,10 @@ TransportSecurityInfo::GetClassDescription(char * *aClassDescription)
 NS_IMETHODIMP
 TransportSecurityInfo::GetClassID(nsCID * *aClassID)
 {
-  *aClassID = (nsCID*) nsMemory::Alloc(sizeof(nsCID));
+  *aClassID = (nsCID*) moz_xmalloc(sizeof(nsCID));
   if (!*aClassID)
     return NS_ERROR_OUT_OF_MEMORY;
   return GetClassIDNoAlloc(*aClassID);
-}
-
-NS_IMETHODIMP
-TransportSecurityInfo::GetImplementationLanguage(
-  uint32_t *aImplementationLanguage)
-{
-  *aImplementationLanguage = nsIProgrammingLanguage::CPLUSPLUS;
-  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -566,7 +573,9 @@ AppendErrorTextUntrusted(PRErrorCode errTrust,
                          nsINSSComponent *component,
                          nsString &returnedMessage)
 {
-  const char *errorID = nullptr;
+  const char* errorID = nullptr;
+  const char* errorID2 = nullptr;
+  const char* errorID3 = nullptr;
   bool isSelfSigned;
   if (NS_SUCCEEDED(ix509->GetIsSelfSigned(&isSelfSigned)) && isSelfSigned) {
     errorID = "certErrorTrust_SelfSigned";
@@ -575,18 +584,10 @@ AppendErrorTextUntrusted(PRErrorCode errTrust,
   if (!errorID) {
     switch (errTrust) {
       case SEC_ERROR_UNKNOWN_ISSUER:
-      {
-        nsCOMPtr<nsIArray> chain;
-        ix509->GetChain(getter_AddRefs(chain));
-        uint32_t length = 0;
-        if (chain && NS_FAILED(chain->GetLength(&length)))
-          length = 0;
-        if (length == 1)
-          errorID = "certErrorTrust_MissingChain";
-        else
-          errorID = "certErrorTrust_UnknownIssuer";
+        errorID = "certErrorTrust_UnknownIssuer";
+        errorID2 = "certErrorTrust_UnknownIssuer2";
+        errorID3 = "certErrorTrust_UnknownIssuer3";
         break;
-      }
       case SEC_ERROR_CA_CERT_INVALID:
         errorID = "certErrorTrust_CaInvalid";
         break;
@@ -606,13 +607,18 @@ AppendErrorTextUntrusted(PRErrorCode errTrust,
     }
   }
 
-  nsString formattedString;
-  nsresult rv = component->GetPIPNSSBundleString(errorID, 
-                                                 formattedString);
-  if (NS_SUCCEEDED(rv))
-  {
-    returnedMessage.Append(formattedString);
-    returnedMessage.Append('\n');
+  const char* errorIDs[] = { errorID, errorID2, errorID3 };
+  for (size_t i = 0; i < ArrayLength(errorIDs); i++) {
+    if (!errorIDs[i]) {
+      break;
+    }
+
+    nsString formattedString;
+    nsresult rv = component->GetPIPNSSBundleString(errorIDs[i], formattedString);
+    if (NS_SUCCEEDED(rv)) {
+      returnedMessage.Append(formattedString);
+      returnedMessage.Append('\n');
+    }
   }
 }
 
@@ -1081,15 +1087,16 @@ RememberCertErrorsTable::LookupCertErrorBits(TransportSecurityInfo* infoObject,
 }
 
 void
-TransportSecurityInfo::SetStatusErrorBits(nsIX509Cert & cert,
+TransportSecurityInfo::SetStatusErrorBits(nsNSSCertificate* cert,
                                           uint32_t collected_errors)
 {
   MutexAutoLock lock(mMutex);
 
-  if (!mSSLStatus)
+  if (!mSSLStatus) {
     mSSLStatus = new nsSSLStatus();
+  }
 
-  mSSLStatus->SetServerCert(&cert, nsNSSCertificate::ev_status_invalid);
+  mSSLStatus->SetServerCert(cert, nsNSSCertificate::ev_status_invalid);
 
   mSSLStatus->mHaveCertErrorBits = true;
   mSSLStatus->mIsDomainMismatch = 

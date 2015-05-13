@@ -7,6 +7,8 @@ const PROMPT_URL = "chrome://global/content/commonDialog.xul";
 const ADDONS_URL = "chrome://mozapps/content/extensions/extensions.xul";
 const PREF_LOGGING_ENABLED = "extensions.logging.enabled";
 const PREF_INSTALL_REQUIREBUILTINCERTS = "extensions.install.requireBuiltInCerts";
+const PREF_INSTALL_REQUIRESECUREORIGIN = "extensions.install.requireSecureOrigin";
+const PREF_CUSTOM_CONFIRMATION_UI = "xpinstall.customConfirmationUI";
 const CHROME_NAME = "mochikit";
 
 function getChromeRoot(path) {
@@ -25,6 +27,11 @@ function extractChromeRoot(path) {
   }
   return chromeRootPath;
 }
+
+Services.prefs.setBoolPref(PREF_CUSTOM_CONFIRMATION_UI, false);
+registerCleanupFunction(() => {
+  Services.prefs.clearUserPref(PREF_CUSTOM_CONFIRMATION_UI);
+});
 
 /**
  * This is a test harness designed to handle responding to UI during the process
@@ -88,6 +95,8 @@ var Harness = {
       waitForExplicitFinish();
       this.waitingForFinish = true;
 
+      Services.prefs.setBoolPref(PREF_INSTALL_REQUIRESECUREORIGIN, false);
+
       Services.prefs.setBoolPref(PREF_LOGGING_ENABLED, true);
       Services.obs.addObserver(this, "addon-install-started", false);
       Services.obs.addObserver(this, "addon-install-disabled", false);
@@ -102,6 +111,7 @@ var Harness = {
       var self = this;
       registerCleanupFunction(function() {
         Services.prefs.clearUserPref(PREF_LOGGING_ENABLED);
+        Services.prefs.clearUserPref(PREF_INSTALL_REQUIRESECUREORIGIN);
         Services.obs.removeObserver(self, "addon-install-started");
         Services.obs.removeObserver(self, "addon-install-disabled");
         Services.obs.removeObserver(self, "addon-install-blocked");

@@ -24,11 +24,11 @@ public:
 
 protected:
     virtual bool RecvTake(
-            Shmem& mem,
-            Shmem& unsafe,
-            const size_t& expectedSize) MOZ_OVERRIDE;
+            Shmem&& mem,
+            Shmem&& unsafe,
+            const size_t& expectedSize) override;
 
-    virtual void ActorDestroy(ActorDestroyReason why) MOZ_OVERRIDE
+    virtual void ActorDestroy(ActorDestroyReason why) override
     {
         if (NormalShutdown != why)
             fail("unexpected destruction!");  
@@ -47,11 +47,11 @@ public:
 
 protected:
     virtual bool RecvGive(
-            Shmem& mem,
-            Shmem& unsafe,
-            const size_t& expectedSize) MOZ_OVERRIDE;
+            Shmem&& mem,
+            Shmem&& unsafe,
+            const size_t& expectedSize) override;
 
-    virtual void ActorDestroy(ActorDestroyReason why) MOZ_OVERRIDE
+    virtual void ActorDestroy(ActorDestroyReason why) override
     {
         if (NormalShutdown != why)
             fail("unexpected destruction!");

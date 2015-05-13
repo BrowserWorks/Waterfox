@@ -44,13 +44,8 @@ PaintWithMask(gfxContext* aContext, float aOpacity, Layer* aMaskLayer)
 {
   AutoMoz2DMaskData mask;
   if (GetMaskData(aMaskLayer, Point(), &mask)) {
-    if (aOpacity < 1.0) {
-      aContext->PushGroup(gfxContentType::COLOR_ALPHA);
-      aContext->Paint(aOpacity);
-      aContext->PopGroupToSource();
-    }
     aContext->SetMatrix(ThebesMatrix(mask.GetTransform()));
-    aContext->Mask(mask.GetSurface());
+    aContext->Mask(mask.GetSurface(), aOpacity);
     return;
   }
 
@@ -183,8 +178,8 @@ bool
 ShouldShadow(Layer* aLayer)
 {
   if (!ToShadowable(aLayer)) {
-    NS_ABORT_IF_FALSE(aLayer->GetType() == Layer::TYPE_READBACK,
-                      "Only expect not to shadow ReadbackLayers");
+    MOZ_ASSERT(aLayer->GetType() == Layer::TYPE_READBACK,
+               "Only expect not to shadow ReadbackLayers");
     return false;
   }
   return true;

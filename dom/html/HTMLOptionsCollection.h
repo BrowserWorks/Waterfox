@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -30,9 +31,9 @@ class HTMLSelectElement;
  * The collection of options in the select (what you get back when you do
  * select.options in DOM)
  */
-class HTMLOptionsCollection MOZ_FINAL : public nsIHTMLCollection
-                                      , public nsIDOMHTMLOptionsCollection
-                                      , public nsWrapperCache
+class HTMLOptionsCollection final : public nsIHTMLCollection
+                                  , public nsIDOMHTMLOptionsCollection
+                                  , public nsWrapperCache
 {
   typedef HTMLOptionElementOrHTMLOptGroupElement HTMLOptionOrOptGroupElement;
 public:
@@ -42,11 +43,11 @@ public:
 
   // nsWrapperCache
   using nsWrapperCache::GetWrapperPreserveColor;
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 protected:
   virtual ~HTMLOptionsCollection();
 
-  virtual JSObject* GetWrapperPreserveColorInternal() MOZ_OVERRIDE
+  virtual JSObject* GetWrapperPreserveColorInternal() override
   {
     return nsWrapperCache::GetWrapperPreserveColor();
   }
@@ -58,8 +59,8 @@ public:
   // nsIDOMHTMLCollection interface, all its methods are defined in
   // nsIDOMHTMLOptionsCollection
 
-  virtual Element* GetElementAt(uint32_t aIndex) MOZ_OVERRIDE;
-  virtual nsINode* GetParentObject() MOZ_OVERRIDE;
+  virtual Element* GetElementAt(uint32_t aIndex) override;
+  virtual nsINode* GetParentObject() override;
 
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS_AMBIGUOUS(HTMLOptionsCollection,
                                                          nsIHTMLCollection)
@@ -136,7 +137,7 @@ public:
   }
   HTMLOptionElement* NamedGetter(const nsAString& aName, bool& aFound);
   virtual Element*
-  GetFirstNamedElement(const nsAString& aName, bool& aFound) MOZ_OVERRIDE
+  GetFirstNamedElement(const nsAString& aName, bool& aFound) override
   {
     return NamedGetter(aName, aFound);
   }
@@ -153,7 +154,7 @@ public:
     aError = SetOption(aIndex, aOption);
   }
   virtual void GetSupportedNames(unsigned aFlags,
-                                 nsTArray<nsString>& aNames) MOZ_OVERRIDE;
+                                 nsTArray<nsString>& aNames) override;
 
 private:
   /** The list of options (holds strong references).  This is infallible, so

@@ -51,10 +51,6 @@ class JavaPanZoomController
     // Animation stops is the velocity is below this threshold when flinging.
     private static final float FLING_STOPPED_THRESHOLD = 0.1f;
 
-    // The distance the user has to pan before we recognize it as such (e.g. to avoid 1-pixel pans
-    // between the touch-down and touch-up of a click). In units of density-independent pixels.
-    public static final float PAN_THRESHOLD = 1/16f * GeckoAppShell.getDpi();
-
     // Angle from axis within which we stay axis-locked
     private static final double AXIS_LOCK_ANGLE = Math.PI / 6.0; // 30 degrees
 
@@ -129,6 +125,10 @@ class JavaPanZoomController
     private boolean mNegateWheelScrollY;
     /* Whether the current event has been default-prevented. */
     private boolean mDefaultPrevented;
+    /* Whether longpress events are enabled, or suppressed by robocop tests. */
+    private boolean isLongpressEnabled;
+    /* Whether longpress detection should be ignored */
+    private boolean mIgnoreLongPress;
 
     // Handler to be notified when overscroll occurs
     private Overscroll mOverscroll;
@@ -139,6 +139,7 @@ class JavaPanZoomController
         mX = new AxisX(mSubscroller);
         mY = new AxisY(mSubscroller);
         mTouchEventHandler = new TouchEventHandler(view.getContext(), view, this);
+        isLongpressEnabled = true;
 
         checkMainThread();
 
@@ -394,11 +395,22 @@ class JavaPanZoomController
     public void startingNewEventBlock(MotionEvent event, boolean waitingForTouchListeners) {
         checkMainThread();
         mSubscroller.cancel();
-        if (waitingForTouchListeners && (event.getAction() & MotionEvent.ACTION_MASK) == MotionEvent.ACTION_DOWN) {
-            // this is the first touch point going down, so we enter the pending state
-            // setting the state will kill any animations in progress, possibly leaving
-            // the page in overscroll
-            setState(PanZoomState.WAITING_LISTENERS);
+        mIgnoreLongPress = false;
+        if (waitingForTouchListeners) {
+            if ((event.getAction() & MotionEvent.ACTION_MASK) == MotionEvent.ACTION_DOWN) {
+                // this is the first touch point going down, so we enter the pending state
+                // setting the state will kill any animations in progress, possibly leaving
+                // the page in overscroll
+                setState(PanZoomState.WAITING_LISTENERS);
+            } else if ((event.getAction() & MotionEvent.ACTION_MASK) == MotionEvent.ACTION_POINTER_DOWN) {
+                // this is a second (or more) touch point going down, and we're waiting for
+                // the content listeners to respond. while we're waiting though we might end
+                // up triggering a long-press from the first touch point, which would be bad
+                // because from the user's point of view they are already in a multi-touch
+                // gesture. to prevent this from happening we set a flag that discards long-press
+                // gesture detections.
+                mIgnoreLongPress = true;
+            }
         }
     }
 
@@ -476,7 +488,7 @@ class JavaPanZoomController
             if (mTarget.getFullScreenState() == FullScreenState.NON_ROOT_ELEMENT && !mSubscroller.scrolling()) {
                 return false;
             }
-            if (panDistance(event) < PAN_THRESHOLD) {
+            if (panDistance(event) < PanZoomController.PAN_THRESHOLD) {
                 return false;
             }
             cancelTouch();
@@ -1348,8 +1360,20 @@ class JavaPanZoomController
         mWaitForDoubleTap = false;
     }
 
+    /**
+     * MotionEventHelper dragAsync() robocop tests can have us suppress
+     * longpress events that are spuriously created on slower test devices.
+     */
+    public void setIsLongpressEnabled(boolean isLongpressEnabled) {
+        this.isLongpressEnabled = isLongpressEnabled;
+    }
+
     @Override
     public void onLongPress(MotionEvent motionEvent) {
+        if (!isLongpressEnabled || mIgnoreLongPress) {
+            return;
+        }
+
         GeckoEvent e = GeckoEvent.createLongPressEvent(motionEvent);
         GeckoAppShell.sendEventToGecko(e);
     }

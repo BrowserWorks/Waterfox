@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 sw=2 et tw=78: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -23,8 +23,8 @@ namespace dom {
 
 typedef nsSVGElement SVGScriptElementBase;
 
-class SVGScriptElement MOZ_FINAL : public SVGScriptElementBase,
-                                   public nsScriptElement
+class SVGScriptElement final : public SVGScriptElementBase,
+                               public nsScriptElement
 {
 protected:
   friend nsresult (::NS_NewSVGScriptElement(nsIContent **aResult,
@@ -33,7 +33,7 @@ protected:
   SVGScriptElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo,
                    FromParser aFromParser);
 
-  virtual JSObject* WrapNode(JSContext *aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 public:
   // interfaces:
@@ -41,27 +41,27 @@ public:
   NS_DECL_ISUPPORTS_INHERITED
 
   // nsIScriptElement
-  virtual void GetScriptType(nsAString& type) MOZ_OVERRIDE;
-  virtual void GetScriptText(nsAString& text) MOZ_OVERRIDE;
-  virtual void GetScriptCharset(nsAString& charset) MOZ_OVERRIDE;
-  virtual void FreezeUriAsyncDefer() MOZ_OVERRIDE;
-  virtual CORSMode GetCORSMode() const MOZ_OVERRIDE;
+  virtual void GetScriptType(nsAString& type) override;
+  virtual void GetScriptText(nsAString& text) override;
+  virtual void GetScriptCharset(nsAString& charset) override;
+  virtual void FreezeUriAsyncDefer() override;
+  virtual CORSMode GetCORSMode() const override;
 
   // nsScriptElement
-  virtual bool HasScriptContent() MOZ_OVERRIDE;
+  virtual bool HasScriptContent() override;
 
   // nsIContent specializations:
   virtual nsresult BindToTree(nsIDocument* aDocument, nsIContent* aParent,
                               nsIContent* aBindingParent,
-                              bool aCompileEventHandlers) MOZ_OVERRIDE;
+                              bool aCompileEventHandlers) override;
   virtual nsresult AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
-                                const nsAttrValue* aValue, bool aNotify) MOZ_OVERRIDE;
+                                const nsAttrValue* aValue, bool aNotify) override;
   virtual bool ParseAttribute(int32_t aNamespaceID,
                               nsIAtom* aAttribute,
                               const nsAString& aValue,
-                              nsAttrValue& aResult) MOZ_OVERRIDE;
+                              nsAttrValue& aResult) override;
 
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
 
   // WebIDL
   void GetType(nsAString & aType);
@@ -73,7 +73,7 @@ public:
 protected:
   ~SVGScriptElement();
 
-  virtual StringAttributesInfo GetStringInfo() MOZ_OVERRIDE;
+  virtual StringAttributesInfo GetStringInfo() override;
 
   enum { HREF };
   nsSVGString mStringAttributes[1];

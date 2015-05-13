@@ -13,6 +13,7 @@
 #include "nsError.h"
 #include "mozilla/Mutex.h"
 #include "mozilla/CondVar.h"
+#include "nsQueryObject.h"
 #include "nsThreadUtils.h"
 #include "nsJSUtils.h"
 
@@ -75,7 +76,7 @@ convertResultCode(int aSQLiteResultCode)
   message.AppendLiteral("SQLite returned error code ");
   message.AppendInt(rc);
   message.AppendLiteral(" , Storage will convert it to NS_ERROR_FAILURE");
-  NS_WARNING(message.get());
+  NS_WARN_IF_FALSE(rc == SQLITE_ERROR, message.get());
 #endif
   return NS_ERROR_FAILURE;
 }
@@ -95,22 +96,18 @@ checkAndLogStatementPerformance(sqlite3_stmt *aStatement)
   if (::strstr(sql, "/* do not warn (bug "))
     return;
 
-  nsAutoCString message;
-  message.AppendInt(count);
-  if (count == 1)
-    message.AppendLiteral(" sort operation has ");
-  else
-    message.AppendLiteral(" sort operations have ");
-  message.AppendLiteral("occurred for the SQL statement '");
+  nsAutoCString message("Suboptimal indexes for the SQL statement ");
 #ifdef MOZ_STORAGE_SORTWARNING_SQL_DUMP
-  message.AppendLiteral("SQL command: ");
+  message.Append('`');
   message.Append(sql);
+  message.AppendLiteral("` [");
+  message.AppendInt(count);
+  message.AppendLiteral(" sort operation(s)]");
 #else
   nsPrintfCString address("0x%p", aStatement);
   message.Append(address);
 #endif
-  message.Append("'.  See https://developer.mozilla.org/En/Storage/Warnings "
-                 "details.");
+  message.AppendLiteral(" (http://mzl.la/1FuID0j).");
   NS_WARNING(message.get());
 }
 
@@ -152,6 +149,95 @@ convertJSValToVariant(
   }
 
   return nullptr;
+}
+
+Variant_base *
+convertVariantToStorageVariant(nsIVariant* aVariant)
+{
+  nsRefPtr<Variant_base> variant = do_QueryObject(aVariant);
+  if (variant) {
+    // JS helpers already convert the JS representation to a Storage Variant,
+    // in such a case there's nothing left to do here, so just pass-through.
+    return variant;
+  }
+
+  if (!aVariant)
+    return new NullVariant();
+
+  uint16_t dataType;
+  nsresult rv = aVariant->GetDataType(&dataType);
+  NS_ENSURE_SUCCESS(rv, nullptr);
+
+  switch (dataType) {
+    case nsIDataType::VTYPE_BOOL:
+    case nsIDataType::VTYPE_INT8:
+    case nsIDataType::VTYPE_INT16:
+    case nsIDataType::VTYPE_INT32:
+    case nsIDataType::VTYPE_UINT8:
+    case nsIDataType::VTYPE_UINT16:
+    case nsIDataType::VTYPE_UINT32:
+    case nsIDataType::VTYPE_INT64:
+    case nsIDataType::VTYPE_UINT64: {
+      int64_t v;
+      rv = aVariant->GetAsInt64(&v);
+      NS_ENSURE_SUCCESS(rv, nullptr);
+      return new IntegerVariant(v);
+    }
+    case nsIDataType::VTYPE_FLOAT:
+    case nsIDataType::VTYPE_DOUBLE: {
+      double v;
+      rv = aVariant->GetAsDouble(&v);
+      NS_ENSURE_SUCCESS(rv, nullptr);
+      return new FloatVariant(v);
+    }
+    case nsIDataType::VTYPE_CHAR:
+    case nsIDataType::VTYPE_CHAR_STR:
+    case nsIDataType::VTYPE_STRING_SIZE_IS:
+    case nsIDataType::VTYPE_UTF8STRING:
+    case nsIDataType::VTYPE_CSTRING: {
+      nsCString v;
+      rv = aVariant->GetAsAUTF8String(v);
+      NS_ENSURE_SUCCESS(rv, nullptr);
+      return new UTF8TextVariant(v);
+    }
+    case nsIDataType::VTYPE_WCHAR:
+    case nsIDataType::VTYPE_DOMSTRING:
+    case nsIDataType::VTYPE_WCHAR_STR:
+    case nsIDataType::VTYPE_WSTRING_SIZE_IS:
+    case nsIDataType::VTYPE_ASTRING: {
+      nsString v;
+      rv = aVariant->GetAsAString(v);
+      NS_ENSURE_SUCCESS(rv, nullptr);
+      return new TextVariant(v);
+    }
+    case nsIDataType::VTYPE_ARRAY: {
+      uint16_t type;
+      nsIID iid;
+      uint32_t len;
+      void *rawArray;
+      // Note this copies the array data.
+      rv = aVariant->GetAsArray(&type, &iid, &len, &rawArray);
+      NS_ENSURE_SUCCESS(rv, nullptr);
+      if (type == nsIDataType::VTYPE_UINT8) {
+        std::pair<uint8_t *, int> v(static_cast<uint8_t *>(rawArray), len);
+        // Take ownership of the data avoiding a further copy.
+        return new AdoptedBlobVariant(v);
+      }
+    }
+    case nsIDataType::VTYPE_EMPTY:
+    case nsIDataType::VTYPE_EMPTY_ARRAY:
+    case nsIDataType::VTYPE_VOID:
+      return new NullVariant();
+    case nsIDataType::VTYPE_ID:
+    case nsIDataType::VTYPE_INTERFACE:
+    case nsIDataType::VTYPE_INTERFACE_IS:
+    default:
+      NS_WARNING("Unsupported variant type");
+      return nullptr;
+  }
+
+  return nullptr;
+
 }
 
 namespace {

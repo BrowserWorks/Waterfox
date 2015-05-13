@@ -20,6 +20,12 @@
 #pragma warning( disable : 4509 )
 #endif
 
+#ifdef __GNUC__
+#define ATTRIBUTE_UNUSED __attribute__((unused))
+#else
+#define ATTRIBUTE_UNUSED
+#endif
+
 namespace mozilla {
 namespace a11y {
 
@@ -45,13 +51,13 @@ private:
 #define DECL_IUNKNOWN                                                          \
 public:                                                                        \
   virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID, void**);            \
-  virtual ULONG STDMETHODCALLTYPE AddRef() MOZ_FINAL                           \
+  virtual ULONG STDMETHODCALLTYPE AddRef() final                               \
   {                                                                            \
     MOZ_ASSERT(int32_t(mRefCnt) >= 0, "illegal refcnt");                       \
     ++mRefCnt;                                                                 \
     return mRefCnt;                                                            \
   }                                                                            \
-  virtual ULONG STDMETHODCALLTYPE Release() MOZ_FINAL                          \
+  virtual ULONG STDMETHODCALLTYPE Release() final                              \
   {                                                                            \
      MOZ_ASSERT(int32_t(mRefCnt) > 0, "dup release");                          \
      --mRefCnt;                                                                \
@@ -78,7 +84,7 @@ Class::QueryInterface(REFIID aIID, void** aInstancePtr)                        \
     return E_INVALIDARG;                                                       \
   *aInstancePtr = nullptr;                                                     \
                                                                                \
-  HRESULT hr = E_NOINTERFACE;
+  HRESULT hr ATTRIBUTE_UNUSED = E_NOINTERFACE;
 
 #define IMPL_IUNKNOWN_QUERY_TAIL                                               \
   return hr;                                                                   \

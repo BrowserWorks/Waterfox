@@ -157,6 +157,22 @@ interface TestInterface {
   readonly attribute byte cachedConstantByte;
   [StoreInSlot, Pure]
   attribute byte cachedWritableByte;
+  [Affects=Nothing]
+  attribute byte sideEffectFreeByte;
+  [Affects=Nothing, DependsOn=DOMState]
+  attribute byte domDependentByte;
+  [Affects=Nothing, DependsOn=Nothing]
+  readonly attribute byte constantByte;
+  [DependsOn=DeviceState, Affects=Nothing]
+  readonly attribute byte deviceStateDependentByte;
+  [Affects=Nothing]
+  byte returnByteSideEffectFree();
+  [Affects=Nothing, DependsOn=DOMState]
+  byte returnDOMDependentByte();
+  [Affects=Nothing, DependsOn=Nothing]
+  byte returnConstantByte();
+  [DependsOn=DeviceState, Affects=Nothing]
+  byte returnDeviceStateDependentByte();
 
   [UnsafeInPrerendering]
   void unsafePrerenderMethod();
@@ -390,7 +406,9 @@ interface TestInterface {
   sequence<object?> receiveNullableObjectSequence();
 
   void passSequenceOfSequences(sequence<sequence<long>> arg);
+  void passSequenceOfSequencesOfSequences(sequence<sequence<sequence<long>>> arg);
   sequence<sequence<long>> receiveSequenceOfSequences();
+  sequence<sequence<sequence<long>>> receiveSequenceOfSequencesOfSequences();
 
   // MozMap types
   void passMozMap(MozMap<long> arg);
@@ -667,6 +685,7 @@ interface TestInterface {
   attribute byte otherAttributeRenamedFrom;
 
   void passDictionary(optional Dict x);
+  void passDictionary2(Dict x);
   [Cached, Pure]
   readonly attribute Dict readonlyDictionary;
   [Cached, Pure]
@@ -707,10 +726,26 @@ interface TestInterface {
   AnotherNameForTestInterface exerciseTypedefInterfaces2(NullableTestInterface arg);
   void exerciseTypedefInterfaces3(YetAnotherNameForTestInterface arg);
 
+  // Deprecated methods and attributes
+  [Deprecated="GetAttributeNode"]
+  attribute byte deprecatedAttribute;
+  [Deprecated="GetAttributeNode"]
+  byte deprecatedMethod();
+  [Deprecated="GetAttributeNode"]
+  byte deprecatedMethodWithContext(any arg);
+
   // Static methods and attributes
   static attribute boolean staticAttribute;
   static void staticMethod(boolean arg);
   static void staticMethodWithContext(any arg);
+
+  // Deprecated static methods and attributes
+  [Deprecated="GetAttributeNode"]
+  static attribute byte staticDeprecatedAttribute;
+  [Deprecated="GetAttributeNode"]
+  static void staticDeprecatedMethod();
+  [Deprecated="GetAttributeNode"]
+  static void staticDeprecatedMethodWithContext(any arg);
 
   // Overload resolution tests
   //void overload1(DOMString... strs);
@@ -942,6 +977,7 @@ dictionary Dict : ParentDict {
   unrestricted double  nanUrDouble = NaN;
 
   (float or DOMString) floatOrString = "str";
+  (float or DOMString)? nullableFloatOrString = "str";
   (object or long) objectOrLong;
 #ifdef DEBUG
   (EventInit or long) eventInitOrLong;
@@ -954,7 +990,16 @@ dictionary Dict : ParentDict {
   (CustomEventInit or long) eventInitOrLongWithDefaultValue2 = null;
   (EventInit or long) eventInitOrLongWithDefaultValue3 = 5;
   (CustomEventInit or long) eventInitOrLongWithDefaultValue4 = 5;
+  (EventInit or long)? nullableEventInitOrLongWithDefaultValue = null;
+  (CustomEventInit or long)? nullableEventInitOrLongWithDefaultValue2 = null;
+  (EventInit or long)? nullableEventInitOrLongWithDefaultValue3 = 5;
+  (CustomEventInit or long)? nullableEventInitOrLongWithDefaultValue4 = 5;
   (sequence<object> or long) objectSequenceOrLong;
+  (sequence<object> or long) objectSequenceOrLongWithDefaultValue1 = 1;
+  (sequence<object> or long) objectSequenceOrLongWithDefaultValue2 = [];
+  (sequence<object> or long)? nullableObjectSequenceOrLong;
+  (sequence<object> or long)? nullableObjectSequenceOrLongWithDefaultValue1 = 1;
+  (sequence<object> or long)? nullableObjectSequenceOrLongWithDefaultValue2 = [];
 #endif
 
   ArrayBuffer arrayBuffer;
@@ -972,6 +1017,8 @@ dictionary Dict : ParentDict {
 
   required long requiredLong;
   required object requiredObject;
+
+  CustomEventInit customEventInit;
 };
 
 dictionary ParentDict : GrandparentDict {

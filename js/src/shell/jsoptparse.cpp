@@ -27,25 +27,25 @@ const char OptionParser::prognameMeta[] = "{progname}";
     Option::as##__cls##Option() \
     { \
         MOZ_ASSERT(is##__cls##Option()); \
-        return static_cast<__cls##Option *>(this); \
+        return static_cast<__cls##Option*>(this); \
     } \
     const __cls##Option * \
     Option::as##__cls##Option() const \
     { \
-        return const_cast<Option *>(this)->as##__cls##Option(); \
+        return const_cast<Option*>(this)->as##__cls##Option(); \
     }
 
-ValuedOption *
+ValuedOption*
 Option::asValued()
 {
     MOZ_ASSERT(isValued());
-    return static_cast<ValuedOption *>(this);
+    return static_cast<ValuedOption*>(this);
 }
 
-const ValuedOption *
+const ValuedOption*
 Option::asValued() const
 {
-    return const_cast<Option *>(this)->asValued();
+    return const_cast<Option*>(this)->asValued();
 }
 
 OPTION_CONVERT_IMPL(Bool)
@@ -54,13 +54,13 @@ OPTION_CONVERT_IMPL(Int)
 OPTION_CONVERT_IMPL(MultiString)
 
 void
-OptionParser::setArgTerminatesOptions(const char *name, bool enabled)
+OptionParser::setArgTerminatesOptions(const char* name, bool enabled)
 {
     findArgument(name)->setTerminatesOptions(enabled);
 }
 
 void
-OptionParser::setArgCapturesRest(const char *name)
+OptionParser::setArgCapturesRest(const char* name)
 {
     MOZ_ASSERT(restArgument == -1, "only one argument may be set to capture the rest");
     restArgument = findArgumentIndex(name);
@@ -68,7 +68,7 @@ OptionParser::setArgCapturesRest(const char *name)
 }
 
 OptionParser::Result
-OptionParser::error(const char *fmt, ...)
+OptionParser::error(const char* fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
@@ -81,19 +81,24 @@ OptionParser::error(const char *fmt, ...)
 
 /* Quick and dirty paragraph printer. */
 static void
-PrintParagraph(const char *text, unsigned startColno, const unsigned limitColno, bool padFirstLine)
+PrintParagraph(const char* text, unsigned startColno, const unsigned limitColno, bool padFirstLine)
 {
     unsigned colno = startColno;
-    const char *it = text;
+    unsigned indent = 0;
+    const char* it = text;
 
     if (padFirstLine)
         printf("%*s", startColno, "");
+
+    /* Skip any leading spaces. */
+    while (*it != '\0' && isspace(*it))
+        ++it;
 
     while (*it != '\0') {
         MOZ_ASSERT(!isspace(*it));
 
         /* Delimit the current token. */
-        const char *limit = it;
+        const char* limit = it;
         while (!isspace(*limit) && *limit != '\0')
             ++limit;
 
@@ -105,7 +110,7 @@ PrintParagraph(const char *text, unsigned startColno, const unsigned limitColno,
         size_t tokLen = limit - it;
         MOZ_ASSERT(tokLen);
         if (tokLen + colno >= limitColno) {
-            printf("\n%*s%.*s", startColno, "", int(tokLen), it);
+            printf("\n%*s%.*s", startColno + indent, "", int(tokLen), it);
             colno = startColno + tokLen;
         } else {
             printf("%.*s", int(tokLen), it);
@@ -128,9 +133,11 @@ PrintParagraph(const char *text, unsigned startColno, const unsigned limitColno,
             colno = startColno;
             it = limit + 1;
             /* Could also have line-leading spaces. */
+            indent = 0;
             while (*it == ' ') {
                 putchar(' ');
                 ++colno;
+                ++indent;
                 ++it;
             }
             break;
@@ -140,8 +147,8 @@ PrintParagraph(const char *text, unsigned startColno, const unsigned limitColno,
     }
 }
 
-static const char *
-OptionFlagsToFormatInfo(char shortflag, bool isValued, size_t *length)
+static const char*
+OptionFlagsToFormatInfo(char shortflag, bool isValued, size_t* length)
 {
     static const char * const fmt[4] = { "  -%c --%s ",
                                          "  --%s ",
@@ -162,9 +169,9 @@ OptionFlagsToFormatInfo(char shortflag, bool isValued, size_t *length)
 }
 
 OptionParser::Result
-OptionParser::printHelp(const char *progname)
+OptionParser::printHelp(const char* progname)
 {
-    const char *prefixEnd = strstr(usage, prognameMeta);
+    const char* prefixEnd = strstr(usage, prognameMeta);
     if (prefixEnd) {
         printf("%.*s%s%s\n", int(prefixEnd - usage), usage, progname,
                prefixEnd + sizeof(prognameMeta) - 1);
@@ -178,8 +185,8 @@ OptionParser::printHelp(const char *progname)
         putchar('\n');
     }
 
-    if (ver)
-        printf("\nVersion: %s\n\n", ver);
+    if (version)
+        printf("\nVersion: %s\n\n", version);
 
     if (!arguments.empty()) {
         printf("Arguments:\n");
@@ -187,11 +194,10 @@ OptionParser::printHelp(const char *progname)
         static const char fmt[] = "  %s ";
         size_t fmtChars = sizeof(fmt) - 2;
         size_t lhsLen = 0;
-        for (Option **it = arguments.begin(), **end = arguments.end(); it != end; ++it)
-            lhsLen = Max(lhsLen, strlen((*it)->longflag) + fmtChars);
+        for (Option* arg : arguments)
+            lhsLen = Max(lhsLen, strlen(arg->longflag) + fmtChars);
 
-        for (Option **it = arguments.begin(), **end = arguments.end(); it != end; ++it) {
-            Option *arg = *it;
+        for (Option* arg : arguments) {
             size_t chars = printf(fmt, arg->longflag);
             for (; chars < lhsLen; ++chars)
                 putchar(' ');
@@ -206,8 +212,7 @@ OptionParser::printHelp(const char *progname)
 
         /* Calculate sizes for column alignment. */
         size_t lhsLen = 0;
-        for (Option **it = options.begin(), **end = options.end(); it != end; ++it) {
-            Option *opt = *it;
+        for (Option* opt : options) {
             size_t longflagLen = strlen(opt->longflag);
 
             size_t fmtLen;
@@ -220,10 +225,9 @@ OptionParser::printHelp(const char *progname)
         }
 
         /* Print option help text. */
-        for (Option **it = options.begin(), **end = options.end(); it != end; ++it) {
-            Option *opt = *it;
+        for (Option* opt : options) {
             size_t fmtLen;
-            const char *fmt = OptionFlagsToFormatInfo(opt->shortflag, opt->isValued(), &fmtLen);
+            const char* fmt = OptionFlagsToFormatInfo(opt->shortflag, opt->isValued(), &fmtLen);
             size_t chars;
             if (opt->isValued()) {
                 if (opt->shortflag)
@@ -243,14 +247,22 @@ OptionParser::printHelp(const char *progname)
         }
     }
 
-    return ParseHelp;
+    return EarlyExit;
 }
 
 OptionParser::Result
-OptionParser::extractValue(size_t argc, char **argv, size_t *i, char **value)
+OptionParser::printVersion()
+{
+    MOZ_ASSERT(version);
+    printf("%s\n", version);
+    return EarlyExit;
+}
+
+OptionParser::Result
+OptionParser::extractValue(size_t argc, char** argv, size_t* i, char** value)
 {
     MOZ_ASSERT(*i < argc);
-    char *eq = strchr(argv[*i], '=');
+    char* eq = strchr(argv[*i], '=');
     if (eq) {
         *value = eq + 1;
         if (*value[0] == '\0')
@@ -267,7 +279,7 @@ OptionParser::extractValue(size_t argc, char **argv, size_t *i, char **value)
 }
 
 OptionParser::Result
-OptionParser::handleOption(Option *opt, size_t argc, char **argv, size_t *i, bool *optionsAllowed)
+OptionParser::handleOption(Option* opt, size_t argc, char** argv, size_t* i, bool* optionsAllowed)
 {
     if (opt->getTerminatesOptions())
         *optionsAllowed = false;
@@ -277,6 +289,8 @@ OptionParser::handleOption(Option *opt, size_t argc, char **argv, size_t *i, boo
       {
         if (opt == &helpOption)
             return printHelp(argv[0]);
+        if (opt == &versionOption)
+            return printVersion();
         opt->asBoolOption()->value = true;
         return Okay;
       }
@@ -286,7 +300,7 @@ OptionParser::handleOption(Option *opt, size_t argc, char **argv, size_t *i, boo
        */
       case OptionKindString:
       {
-        char *value = nullptr;
+        char* value = nullptr;
         if (Result r = extractValue(argc, argv, i, &value))
             return r;
         opt->asStringOption()->value = value;
@@ -294,7 +308,7 @@ OptionParser::handleOption(Option *opt, size_t argc, char **argv, size_t *i, boo
       }
       case OptionKindInt:
       {
-        char *value = nullptr;
+        char* value = nullptr;
         if (Result r = extractValue(argc, argv, i, &value))
             return r;
         opt->asIntOption()->value = atoi(value);
@@ -302,7 +316,7 @@ OptionParser::handleOption(Option *opt, size_t argc, char **argv, size_t *i, boo
       }
       case OptionKindMultiString:
       {
-        char *value = nullptr;
+        char* value = nullptr;
         if (Result r = extractValue(argc, argv, i, &value))
             return r;
         StringArg arg(value, *i);
@@ -314,12 +328,12 @@ OptionParser::handleOption(Option *opt, size_t argc, char **argv, size_t *i, boo
 }
 
 OptionParser::Result
-OptionParser::handleArg(size_t argc, char **argv, size_t *i, bool *optionsAllowed)
+OptionParser::handleArg(size_t argc, char** argv, size_t* i, bool* optionsAllowed)
 {
     if (nextArgument >= arguments.length())
         return error("Too many arguments provided");
 
-    Option *arg = arguments[nextArgument];
+    Option* arg = arguments[nextArgument];
 
     if (arg->getTerminatesOptions())
         *optionsAllowed = false;
@@ -341,7 +355,7 @@ OptionParser::handleArg(size_t argc, char **argv, size_t *i, bool *optionsAllowe
 }
 
 OptionParser::Result
-OptionParser::parseArgs(int inputArgc, char **argv)
+OptionParser::parseArgs(int inputArgc, char** argv)
 {
     MOZ_ASSERT(inputArgc >= 0);
     size_t argc = inputArgc;
@@ -349,12 +363,12 @@ OptionParser::parseArgs(int inputArgc, char **argv)
     bool optionsAllowed = true;
 
     for (size_t i = 1; i < argc; ++i) {
-        char *arg = argv[i];
+        char* arg = argv[i];
         Result r;
         /* Note: solo dash option is actually a 'stdin' argument. */
         if (arg[0] == '-' && arg[1] != '\0' && optionsAllowed) {
             /* Option. */
-            Option *opt;
+            Option* opt;
             if (arg[1] == '-') {
                 if (arg[2] == '\0') {
                     /* End of options */
@@ -389,7 +403,7 @@ OptionParser::parseArgs(int inputArgc, char **argv)
 }
 
 void
-OptionParser::setHelpOption(char shortflag, const char *longflag, const char *help)
+OptionParser::setHelpOption(char shortflag, const char* longflag, const char* help)
 {
     helpOption.setFlagInfo(shortflag, longflag, help);
 }
@@ -412,7 +426,7 @@ OptionParser::getIntOption(char shortflag) const
     return findOption(shortflag)->asIntOption()->value;
 }
 
-const char *
+const char*
 OptionParser::getStringOption(char shortflag) const
 {
     return findOption(shortflag)->asStringOption()->value;
@@ -421,66 +435,69 @@ OptionParser::getStringOption(char shortflag) const
 MultiStringRange
 OptionParser::getMultiStringOption(char shortflag) const
 {
-    const MultiStringOption *mso = findOption(shortflag)->asMultiStringOption();
+    const MultiStringOption* mso = findOption(shortflag)->asMultiStringOption();
     return MultiStringRange(mso->strings.begin(), mso->strings.end());
 }
 
 bool
-OptionParser::getBoolOption(const char *longflag) const
+OptionParser::getBoolOption(const char* longflag) const
 {
     return findOption(longflag)->asBoolOption()->value;
 }
 
 int
-OptionParser::getIntOption(const char *longflag) const
+OptionParser::getIntOption(const char* longflag) const
 {
     return findOption(longflag)->asIntOption()->value;
 }
 
-const char *
-OptionParser::getStringOption(const char *longflag) const
+const char*
+OptionParser::getStringOption(const char* longflag) const
 {
     return findOption(longflag)->asStringOption()->value;
 }
 
 MultiStringRange
-OptionParser::getMultiStringOption(const char *longflag) const
+OptionParser::getMultiStringOption(const char* longflag) const
 {
-    const MultiStringOption *mso = findOption(longflag)->asMultiStringOption();
+    const MultiStringOption* mso = findOption(longflag)->asMultiStringOption();
     return MultiStringRange(mso->strings.begin(), mso->strings.end());
 }
 
 OptionParser::~OptionParser()
 {
-    for (Option **it = options.begin(), **end = options.end(); it != end; ++it)
-        js_delete<Option>(*it);
-    for (Option **it = arguments.begin(), **end = arguments.end(); it != end; ++it)
-        js_delete<Option>(*it);
+    for (Option* opt : options)
+        js_delete<Option>(opt);
+    for (Option* arg : arguments)
+        js_delete<Option>(arg);
 }
 
-Option *
+Option*
 OptionParser::findOption(char shortflag)
 {
-    for (Option **it = options.begin(), **end = options.end(); it != end; ++it) {
-        if ((*it)->shortflag == shortflag)
-            return *it;
+    for (Option* opt : options) {
+        if (opt->shortflag == shortflag)
+            return opt;
     }
+
+    if (versionOption.shortflag == shortflag)
+        return &versionOption;
 
     return helpOption.shortflag == shortflag ? &helpOption : nullptr;
 }
 
-const Option *
+const Option*
 OptionParser::findOption(char shortflag) const
 {
-    return const_cast<OptionParser *>(this)->findOption(shortflag);
+    return const_cast<OptionParser*>(this)->findOption(shortflag);
 }
 
-Option *
-OptionParser::findOption(const char *longflag)
+Option*
+OptionParser::findOption(const char* longflag)
 {
-    for (Option **it = options.begin(), **end = options.end(); it != end; ++it) {
-        const char *target = (*it)->longflag;
-        if ((*it)->isValued()) {
+    for (Option* opt : options) {
+        const char* target = opt->longflag;
+        if (opt->isValued()) {
             size_t targetLen = strlen(target);
             /* Permit a trailing equals sign on the longflag argument. */
             for (size_t i = 0; i < targetLen; ++i) {
@@ -488,72 +505,75 @@ OptionParser::findOption(const char *longflag)
                     goto no_match;
             }
             if (longflag[targetLen] == '\0' || longflag[targetLen] == '=')
-                return *it;
+                return opt;
         } else {
             if (strcmp(target, longflag) == 0)
-                return *it;
+                return opt;
         }
   no_match:;
     }
 
+    if (strcmp(versionOption.longflag, longflag) == 0)
+        return &versionOption;
+
     return strcmp(helpOption.longflag, longflag) ? nullptr : &helpOption;
 }
 
-const Option *
-OptionParser::findOption(const char *longflag) const
+const Option*
+OptionParser::findOption(const char* longflag) const
 {
-    return const_cast<OptionParser *>(this)->findOption(longflag);
+    return const_cast<OptionParser*>(this)->findOption(longflag);
 }
 
 /* Argument accessors */
 
 int
-OptionParser::findArgumentIndex(const char *name) const
+OptionParser::findArgumentIndex(const char* name) const
 {
-    for (Option * const *it = arguments.begin(); it != arguments.end(); ++it) {
-        const char *target = (*it)->longflag;
+    for (Option * const* it = arguments.begin(); it != arguments.end(); ++it) {
+        const char* target = (*it)->longflag;
         if (strcmp(target, name) == 0)
             return it - arguments.begin();
     }
     return -1;
 }
 
-Option *
-OptionParser::findArgument(const char *name)
+Option*
+OptionParser::findArgument(const char* name)
 {
     int index = findArgumentIndex(name);
     return (index == -1) ? nullptr : arguments[index];
 }
 
-const Option *
-OptionParser::findArgument(const char *name) const
+const Option*
+OptionParser::findArgument(const char* name) const
 {
     int index = findArgumentIndex(name);
     return (index == -1) ? nullptr : arguments[index];
 }
 
-const char *
-OptionParser::getStringArg(const char *name) const
+const char*
+OptionParser::getStringArg(const char* name) const
 {
     return findArgument(name)->asStringOption()->value;
 }
 
 MultiStringRange
-OptionParser::getMultiStringArg(const char *name) const
+OptionParser::getMultiStringArg(const char* name) const
 {
-    const MultiStringOption *mso = findArgument(name)->asMultiStringOption();
+    const MultiStringOption* mso = findArgument(name)->asMultiStringOption();
     return MultiStringRange(mso->strings.begin(), mso->strings.end());
 }
 
 /* Option builders */
 
 bool
-OptionParser::addIntOption(char shortflag, const char *longflag, const char *metavar,
-                           const char *help, int defaultValue)
+OptionParser::addIntOption(char shortflag, const char* longflag, const char* metavar,
+                           const char* help, int defaultValue)
 {
     if (!options.reserve(options.length() + 1))
         return false;
-    IntOption *io = js_new<IntOption>(shortflag, longflag, help, metavar, defaultValue);
+    IntOption* io = js_new<IntOption>(shortflag, longflag, help, metavar, defaultValue);
     if (!io)
         return false;
     options.infallibleAppend(io);
@@ -561,11 +581,11 @@ OptionParser::addIntOption(char shortflag, const char *longflag, const char *met
 }
 
 bool
-OptionParser::addBoolOption(char shortflag, const char *longflag, const char *help)
+OptionParser::addBoolOption(char shortflag, const char* longflag, const char* help)
 {
     if (!options.reserve(options.length() + 1))
         return false;
-    BoolOption *bo = js_new<BoolOption>(shortflag, longflag, help);
+    BoolOption* bo = js_new<BoolOption>(shortflag, longflag, help);
     if (!bo)
         return false;
     options.infallibleAppend(bo);
@@ -573,12 +593,12 @@ OptionParser::addBoolOption(char shortflag, const char *longflag, const char *he
 }
 
 bool
-OptionParser::addStringOption(char shortflag, const char *longflag, const char *metavar,
-                              const char *help)
+OptionParser::addStringOption(char shortflag, const char* longflag, const char* metavar,
+                              const char* help)
 {
     if (!options.reserve(options.length() + 1))
         return false;
-    StringOption *so = js_new<StringOption>(shortflag, longflag, help, metavar);
+    StringOption* so = js_new<StringOption>(shortflag, longflag, help, metavar);
     if (!so)
         return false;
     options.infallibleAppend(so);
@@ -586,12 +606,12 @@ OptionParser::addStringOption(char shortflag, const char *longflag, const char *
 }
 
 bool
-OptionParser::addMultiStringOption(char shortflag, const char *longflag, const char *metavar,
-                                   const char *help)
+OptionParser::addMultiStringOption(char shortflag, const char* longflag, const char* metavar,
+                                   const char* help)
 {
     if (!options.reserve(options.length() + 1))
         return false;
-    MultiStringOption *mso = js_new<MultiStringOption>(shortflag, longflag, help, metavar);
+    MultiStringOption* mso = js_new<MultiStringOption>(shortflag, longflag, help, metavar);
     if (!mso)
         return false;
     options.infallibleAppend(mso);
@@ -601,11 +621,11 @@ OptionParser::addMultiStringOption(char shortflag, const char *longflag, const c
 /* Argument builders */
 
 bool
-OptionParser::addOptionalStringArg(const char *name, const char *help)
+OptionParser::addOptionalStringArg(const char* name, const char* help)
 {
     if (!arguments.reserve(arguments.length() + 1))
         return false;
-    StringOption *so = js_new<StringOption>(1, name, help, (const char *) nullptr);
+    StringOption* so = js_new<StringOption>(1, name, help, (const char*) nullptr);
     if (!so)
         return false;
     arguments.infallibleAppend(so);
@@ -613,12 +633,12 @@ OptionParser::addOptionalStringArg(const char *name, const char *help)
 }
 
 bool
-OptionParser::addOptionalMultiStringArg(const char *name, const char *help)
+OptionParser::addOptionalMultiStringArg(const char* name, const char* help)
 {
     MOZ_ASSERT_IF(!arguments.empty(), !arguments.back()->isVariadic());
     if (!arguments.reserve(arguments.length() + 1))
         return false;
-    MultiStringOption *mso = js_new<MultiStringOption>(1, name, help, (const char *) nullptr);
+    MultiStringOption* mso = js_new<MultiStringOption>(1, name, help, (const char*) nullptr);
     if (!mso)
         return false;
     arguments.infallibleAppend(mso);

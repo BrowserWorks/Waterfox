@@ -7,6 +7,8 @@
 
 const {Cc, Ci, Cu} = require("chrome");
 
+const { Services } = require("resource://gre/modules/Services.jsm");
+
 loader.lazyImporter(this, "VariablesView", "resource:///modules/devtools/VariablesView.jsm");
 loader.lazyImporter(this, "escapeHTML", "resource:///modules/devtools/VariablesView.jsm");
 loader.lazyImporter(this, "gDevTools", "resource:///modules/devtools/gDevTools.jsm");
@@ -25,6 +27,9 @@ const STRINGS_URI = "chrome://browser/locale/devtools/webconsole.properties";
 
 const WebConsoleUtils = require("devtools/toolkit/webconsole/utils").Utils;
 const l10n = new WebConsoleUtils.l10n(STRINGS_URI);
+
+const MAX_STRING_GRIP_LENGTH = 36;
+const ELLIPSIS = Services.prefs.getComplexValue("intl.ellipsis", Ci.nsIPrefLocalizedString).data;
 
 // Constants for compatibility with the Web Console output implementation before
 // bug 778766.
@@ -88,6 +93,7 @@ const CONSOLE_API_LEVELS_TO_SEVERITIES = {
   table: "log",
   debug: "log",
   dir: "log",
+  dirxml: "log",
   group: "log",
   groupCollapsed: "log",
   groupEnd: "log",
@@ -833,6 +839,7 @@ Messages.Simple.prototype = Heritage.extend(Messages.BaseMessage.prototype,
 
     let icon = this.document.createElementNS(XHTML_NS, "span");
     icon.className = "icon";
+    icon.title = l10n.getStr("severity." + this._severityNameCompat);
 
     // Apply the current group by indenting appropriately.
     // TODO: remove this once bug 778766 is fixed.
@@ -893,13 +900,16 @@ Messages.Simple.prototype = Heritage.extend(Messages.BaseMessage.prototype,
     let body = this.document.createElementNS(XHTML_NS, "span");
     body.className = "message-body-wrapper message-body devtools-monospace";
 
-    let anchor, container = body;
+    let bodyInner = this.document.createElementNS(XHTML_NS, "span");
+    body.appendChild(bodyInner);
+
+    let anchor, container = bodyInner;
     if (this._link || this._linkCallback) {
       container = anchor = this.document.createElementNS(XHTML_NS, "a");
       anchor.href = this._link || "#";
       anchor.draggable = false;
       this._addLinkCallback(anchor, this._linkCallback);
-      body.appendChild(anchor);
+      bodyInner.appendChild(anchor);
     }
 
     if (typeof this._message == "function") {
@@ -1052,7 +1062,7 @@ Messages.Extended.prototype = Heritage.extend(Messages.Simple.prototype,
    *        DOM node or a function to invoke.
    * @return Element
    */
-  _renderBodyPiece: function(piece)
+  _renderBodyPiece: function(piece, options = {})
   {
     if (piece instanceof Ci.nsIDOMNode) {
       return piece;
@@ -1061,7 +1071,7 @@ Messages.Extended.prototype = Heritage.extend(Messages.Simple.prototype,
       return piece(this);
     }
 
-    return this._renderValueGrip(piece);
+    return this._renderValueGrip(piece, options);
   },
 
   /**
@@ -1124,6 +1134,29 @@ Messages.Extended.prototype = Heritage.extend(Messages.Simple.prototype,
     }
 
     return result;
+  },
+
+  /**
+   * Shorten grips of the type string, leaves other grips unmodified.
+   *
+   * @param object grip
+   *        Value grip from the server.
+   * @return object
+   *        Possible values of object:
+   *        - A shortened string, if original grip was of string type.
+   *        - The unmodified input grip, if it wasn't of string type.
+   */
+  shortenValueGrip: function(grip)
+  {
+    let shortVal = grip;
+    if (typeof(grip)=="string") {
+      shortVal = grip.replace(/(\r\n|\n|\r)/gm," ");
+      if (shortVal.length > MAX_STRING_GRIP_LENGTH) {
+        shortVal = shortVal.substring(0,MAX_STRING_GRIP_LENGTH - 1) + ELLIPSIS;
+      }
+    }
+
+    return shortVal;
   },
 
   /**
@@ -1377,20 +1410,21 @@ Messages.ConsoleGeneric.prototype = Heritage.extend(Messages.Extended.prototype,
   _renderBodyPieces: function(container)
   {
     let lastStyle = null;
+    let stylePieces = this._styles.length > 0 ? this._styles.length : 1;
 
     for (let i = 0; i < this._messagePieces.length; i++) {
-      let separator = i > 0 ? this._renderBodyPieceSeparator() : null;
-      if (separator) {
-        container.appendChild(separator);
+      // Pieces with an associated style definition come from "%c" formatting.
+      // For body pieces beyond that, add a separator before each one.
+      if (i >= stylePieces) {
+        container.appendChild(this._renderBodyPieceSeparator());
       }
 
       let piece = this._messagePieces[i];
       let style = this._styles[i];
 
       // No long string support.
-      if (style && typeof style == "string" ) {
-        lastStyle = this.cleanupStyle(style);
-      }
+      lastStyle = (style && typeof style == "string") ?
+                  this.cleanupStyle(style) : null;
 
       container.appendChild(this._renderBodyPiece(piece, lastStyle));
     }
@@ -1401,7 +1435,9 @@ Messages.ConsoleGeneric.prototype = Heritage.extend(Messages.Extended.prototype,
 
   _renderBodyPiece: function(piece, style)
   {
-    let elem = Messages.Extended.prototype._renderBodyPiece.call(this, piece);
+    // Skip quotes for top-level strings.
+    let options = { noStringQuotes: true };
+    let elem = Messages.Extended.prototype._renderBodyPiece.call(this, piece, options);
     let result = elem;
 
     if (style) {
@@ -2356,7 +2392,8 @@ Widgets.JSObject.prototype = Heritage.extend(Widgets.BaseWidget.prototype,
     if (valueIsText) {
       this._text(value);
     } else {
-      let valueElem = this.message._renderValueGrip(value, { concise: true });
+      let shortVal = this.message.shortenValueGrip(value);
+      let valueElem = this.message._renderValueGrip(shortVal, { concise: true });
       container.appendChild(valueElem);
     }
   },
@@ -2676,7 +2713,9 @@ Widgets.ObjectRenderers.add({
           this._renderEmptySlots(emptySlots);
           emptySlots = 0;
         }
-        let elem = this.message._renderValueGrip(item, { concise: true });
+
+        let shortVal = this.message.shortenValueGrip(item);
+        let elem = this.message._renderValueGrip(shortVal, { concise: true });
         this.element.appendChild(elem);
       }
     }
@@ -2947,7 +2986,8 @@ Widgets.ObjectRenderers.add({
 
   _renderDocumentNode: function()
   {
-    let fn = Widgets.ObjectRenderers.byKind.ObjectWithURL.prototype._renderElement;
+    let fn =
+      Widgets.ObjectRenderers.byKind.ObjectWithURL.prototype._renderElement;
     this.element = fn.call(this, this.objectActor,
                            this.objectActor.preview.location);
     this.element.classList.add("documentNode");
@@ -3073,82 +3113,82 @@ Widgets.ObjectRenderers.add({
     // the message is destroyed.
     this.message.widgets.add(this);
 
-    this.linkToInspector();
+    this.linkToInspector().then(null, Cu.reportError);
   },
 
   /**
    * If the DOMNode being rendered can be highlit in the page, this function
    * will attach mouseover/out event listeners to do so, and the inspector icon
    * to open the node in the inspector.
-   * @return a promise (always the same) that resolves when the node has been
-   * linked to the inspector, or rejects if it wasn't (either if no toolbox
-   * could be found to access the inspector, or if the node isn't present in the
-   * inspector, i.e. if the node is in a DocumentFragment or not part of the
-   * tree, or not of type Ci.nsIDOMNode.ELEMENT_NODE).
+   * @return a promise that resolves when the node has been linked to the
+   * inspector, or rejects if it wasn't (either if no toolbox could be found to
+   * access the inspector, or if the node isn't present in the inspector, i.e.
+   * if the node is in a DocumentFragment or not part of the tree, or not of
+   * type Ci.nsIDOMNode.ELEMENT_NODE).
    */
-  linkToInspector: function()
+  linkToInspector: Task.async(function*()
   {
     if (this._linkedToInspector) {
-      return this._linkedToInspector;
+      return;
     }
 
-    this._linkedToInspector = Task.spawn(function*() {
-      // Checking the node type
-      if (this.objectActor.preview.nodeType !== Ci.nsIDOMNode.ELEMENT_NODE) {
-        throw null;
-      }
+    // Checking the node type
+    if (this.objectActor.preview.nodeType !== Ci.nsIDOMNode.ELEMENT_NODE) {
+      throw new Error("The object cannot be linked to the inspector as it " +
+        "isn't an element node");
+    }
 
-      // Checking the presence of a toolbox
-      let target = this.message.output.toolboxTarget;
-      this.toolbox = gDevTools.getToolbox(target);
-      if (!this.toolbox) {
-        throw null;
-      }
+    // Checking the presence of a toolbox
+    let target = this.message.output.toolboxTarget;
+    this.toolbox = gDevTools.getToolbox(target);
+    if (!this.toolbox) {
+      throw new Error("The object cannot be linked to the inspector without a " +
+        "toolbox");
+    }
 
-      // Checking that the inspector supports the node
-      yield this.toolbox.initInspector();
-      this._nodeFront = yield this.toolbox.walker.getNodeActorFromObjectActor(this.objectActor.actor);
-      if (!this._nodeFront) {
-        throw null;
-      }
+    // Checking that the inspector supports the node
+    yield this.toolbox.initInspector();
+    this._nodeFront = yield this.toolbox.walker.getNodeActorFromObjectActor(this.objectActor.actor);
+    if (!this._nodeFront) {
+      throw new Error("The object cannot be linked to the inspector, the " +
+        "corresponding nodeFront could not be found");
+    }
 
-      // At this stage, the message may have been cleared already
-      if (!this.document) {
-        throw null;
-      }
+    // At this stage, the message may have been cleared already
+    if (!this.document) {
+      throw new Error("The object cannot be linked to the inspector, the " +
+        "message was got cleared away");
+    }
 
-      this.highlightDomNode = this.highlightDomNode.bind(this);
-      this.element.addEventListener("mouseover", this.highlightDomNode, false);
-      this.unhighlightDomNode = this.unhighlightDomNode.bind(this);
-      this.element.addEventListener("mouseout", this.unhighlightDomNode, false);
+    this.highlightDomNode = this.highlightDomNode.bind(this);
+    this.element.addEventListener("mouseover", this.highlightDomNode, false);
+    this.unhighlightDomNode = this.unhighlightDomNode.bind(this);
+    this.element.addEventListener("mouseout", this.unhighlightDomNode, false);
 
-      this._openInspectorNode = this._anchor("", {
-        className: "open-inspector",
-        onClick: this.openNodeInInspector.bind(this)
-      });
-      this._openInspectorNode.title = l10n.getStr("openNodeInInspector");
-    }.bind(this));
+    this._openInspectorNode = this._anchor("", {
+      className: "open-inspector",
+      onClick: this.openNodeInInspector.bind(this)
+    });
+    this._openInspectorNode.title = l10n.getStr("openNodeInInspector");
 
-    return this._linkedToInspector;
-  },
+    this._linkedToInspector = true;
+  }),
 
   /**
    * Highlight the DOMNode corresponding to the ObjectActor in the page.
    * @return a promise that resolves when the node has been highlighted, or
    * rejects if the node cannot be highlighted (detached from the DOM)
    */
-  highlightDomNode: function()
+  highlightDomNode: Task.async(function*()
   {
-    return Task.spawn(function*() {
-      yield this.linkToInspector();
-      let isAttached = yield this.toolbox.walker.isInDOMTree(this._nodeFront);
-      if (isAttached) {
-        yield this.toolbox.highlighterUtils.highlightNodeFront(this._nodeFront);
-      } else {
-        throw null;
-      }
-    }.bind(this));
-  },
+    yield this.linkToInspector();
+    let isAttached = yield this.toolbox.walker.isInDOMTree(this._nodeFront);
+    if (isAttached) {
+      yield this.toolbox.highlighterUtils.highlightNodeFront(this._nodeFront);
+    } else {
+      throw null;
+    }
+  }),
 
   /**
    * Unhighlight a previously highlit node
@@ -3159,7 +3199,7 @@ Widgets.ObjectRenderers.add({
   {
     return this.linkToInspector().then(() => {
       return this.toolbox.highlighterUtils.unhighlight();
-    });
+    }).then(null, Cu.reportError);
   },
 
   /**
@@ -3169,22 +3209,21 @@ Widgets.ObjectRenderers.add({
    * (detached from the DOM). Note that in any case, the inspector panel will
    * be switched to.
    */
-  openNodeInInspector: function()
+  openNodeInInspector: Task.async(function*()
   {
-    return Task.spawn(function*() {
-      yield this.linkToInspector();
-      yield this.toolbox.selectTool("inspector");
+    yield this.linkToInspector();
+    yield this.toolbox.selectTool("inspector");
 
-      let isAttached = yield this.toolbox.walker.isInDOMTree(this._nodeFront);
-      if (isAttached) {
-        let onReady = this.toolbox.inspector.once("inspector-updated");
-        yield this.toolbox.selection.setNodeFront(this._nodeFront, "console");
-        yield onReady;
-      } else {
-        throw null;
-      }
-    }.bind(this));
-  },
+    let isAttached = yield this.toolbox.walker.isInDOMTree(this._nodeFront);
+    if (isAttached) {
+      let onReady = promise.defer();
+      this.toolbox.inspector.once("inspector-updated", onReady.resolve);
+      yield this.toolbox.selection.setNodeFront(this._nodeFront, "console");
+      yield onReady.promise;
+    } else {
+      throw null;
+    }
+  }),
 
   destroy: function()
   {
@@ -3206,7 +3245,7 @@ Widgets.ObjectRenderers.add({
 
   render: function()
   {
-    let { ownProperties, safeGetterValues } = this.objectActor.preview;
+    let { ownProperties, safeGetterValues } = this.objectActor.preview || {};
     if ((!ownProperties && !safeGetterValues) || this.options.concise) {
       this._renderConciseObject();
       return;
@@ -3242,7 +3281,7 @@ Widgets.ObjectRenderers.add({
 
   render: function()
   {
-    let { ownProperties, safeGetterValues } = this.objectActor.preview;
+    let { ownProperties, safeGetterValues } = this.objectActor.preview || {};
     if ((!ownProperties && !safeGetterValues) || this.options.concise) {
       this._renderConciseObject();
       return;
@@ -3262,11 +3301,16 @@ Widgets.ObjectRenderers.add({
  *        The owning message.
  * @param object longStringActor
  *        The LongStringActor to display.
+ * @param object options
+ *        Options, such as noStringQuotes
  */
-Widgets.LongString = function(message, longStringActor)
+Widgets.LongString = function(message, longStringActor, options)
 {
   Widgets.BaseWidget.call(this, message);
   this.longStringActor = longStringActor;
+  this.noStringQuotes = (options && "noStringQuotes" in options) ?
+    options.noStringQuotes : !this.message._quoteStrings;
+
   this._onClick = this._onClick.bind(this);
   this._onSubstring = this._onSubstring.bind(this);
 };
@@ -3302,7 +3346,7 @@ Widgets.LongString.prototype = Heritage.extend(Widgets.BaseWidget.prototype,
   _renderString: function(str)
   {
     this.element.textContent = VariablesView.getString(str, {
-      noStringQuotes: !this.message._quoteStrings,
+      noStringQuotes: this.noStringQuotes,
       noEllipsis: true,
     });
   },

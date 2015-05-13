@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -34,8 +36,8 @@ class DesktopNotification;
  * DesktopNotificationCenter
  * Object hangs off of the navigator object and hands out DesktopNotification objects
  */
-class DesktopNotificationCenter MOZ_FINAL : public nsISupports,
-                                            public nsWrapperCache
+class DesktopNotificationCenter final : public nsISupports,
+                                        public nsWrapperCache
 {
 public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -62,7 +64,7 @@ public:
     return mOwner;
   }
 
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   already_AddRefed<DesktopNotification>
   CreateNotification(const nsAString& title,
@@ -80,7 +82,7 @@ private:
 
 class DesktopNotificationRequest;
 
-class DesktopNotification MOZ_FINAL : public DOMEventTargetHelper
+class DesktopNotification final : public DOMEventTargetHelper
 {
   friend class DesktopNotificationRequest;
 
@@ -118,7 +120,7 @@ public:
     return GetOwner();
   }
 
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   void Show(ErrorResult& aRv);
 
@@ -152,7 +154,7 @@ class AlertServiceObserver: public nsIObserver
   NS_IMETHODIMP
   Observe(nsISupports* aSubject,
           const char* aTopic,
-          const char16_t* aData) MOZ_OVERRIDE
+          const char16_t* aData) override
   {
 
     // forward to parent

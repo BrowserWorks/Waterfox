@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -31,11 +32,9 @@ class nsIDocument;
 class nsIURI;
 class nsIChannel;
 class nsIDocShell;
-class nsIParser;
 class nsIAtom;
 class nsIChannel;
 class nsIContent;
-class nsViewManager;
 class nsNodeInfoManager;
 class nsScriptLoader;
 class nsIApplicationCache;
@@ -88,7 +87,7 @@ class nsContentSink : public nsICSSLoaderObserver,
   // nsICSSLoaderObserver
   NS_IMETHOD StyleSheetLoaded(mozilla::CSSStyleSheet* aSheet,
                               bool aWasAlternate,
-                              nsresult aStatus) MOZ_OVERRIDE;
+                              nsresult aStatus) override;
 
   virtual nsresult ProcessMETATag(nsIContent* aContent);
 
@@ -164,9 +163,10 @@ protected:
   void PrefetchHref(const nsAString &aHref, nsINode *aSource,
                     bool aExplicit);
 
-  // aHref can either be the usual URI format or of the form "//www.hostname.com"
-  // without a scheme.
+  // For both PrefetchDNS() and Preconnect() aHref can either be the usual
+  // URI format or of the form "//www.hostname.com" without a scheme.
   void PrefetchDNS(const nsAString &aHref);
+  void Preconnect(const nsAString &aHref);
 
   // Gets the cache key (used to identify items in a cache) of the channel.
   nsresult GetChannelCacheKey(nsIChannel* aChannel, nsACString& aCacheKey);

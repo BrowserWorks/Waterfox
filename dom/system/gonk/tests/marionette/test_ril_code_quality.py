@@ -2,7 +2,7 @@
 The test performs the static code analysis check by JSHint.
 
 Target js files:
-- RILContentHelper.js
+- RILContentHelper.js TODO: Bug 815526, deprecate RILContentHelper.
 - RadioInterfaceLayer.js
 - ril_worker.js
 - ril_consts.js
@@ -100,7 +100,7 @@ class ResourceUriFileReader:
 
     URI_PREFIX = 'resource://gre/'
     URI_PATH = {
-        'RILContentHelper.js':    'components/RILContentHelper.js',
+        'RILContentHelper.js':    'components/RILContentHelper.js', #TODO: Bug 815526, deprecate RILContentHelper.
         'RadioInterfaceLayer.js': 'components/RadioInterfaceLayer.js',
         'ril_worker.js':          'modules/ril_worker.js',
         'ril_consts.js':          'modules/ril_consts.js',
@@ -112,8 +112,16 @@ class ResourceUriFileReader:
     var Cc = SpecialPowers.Cc;
     var Ci = SpecialPowers.Ci;
     var ios = Cc["@mozilla.org/network/io-service;1"].getService(Ci.nsIIOService);
+    var secMan = Cc["@mozilla.org/scriptsecuritymanager;1"].getService(Ci.nsIScriptSecurityManager);
     global.uri = '%(uri)s';
-    global.channel = ios.newChannel(global.uri, null, null);
+    global.channel = ios.newChannel2(global.uri,
+                                     null,
+                                     null,
+                                     null,      // aLoadingNode
+                                     secMan.getSystemPrincipal(),
+                                     null,      // aTriggeringPrincipal
+                                     Ci.nsILoadInfo.SEC_NORMAL,
+                                     Ci.nsIContentPolicy.TYPE_OTHER);
     '''
 
     CODE_GET_SPEC = '''
@@ -346,6 +354,7 @@ class TestRILCodeQuality(MarionetteTestCase):
     def tearDown(self):
         MarionetteTestCase.tearDown(self)
 
+    # TODO: Bug 815526, deprecate RILContentHelper.
     def test_RILContentHelper(self):
         self._check('RILContentHelper.js')
 

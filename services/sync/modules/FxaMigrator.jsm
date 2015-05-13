@@ -27,12 +27,20 @@ XPCOMUtils.defineLazyModuleGetter(this, "Weave",
 let fxAccountsCommon = {};
 Cu.import("resource://gre/modules/FxAccountsCommon.js", fxAccountsCommon);
 
-// We send this notification whenever the migration state changes.
+// We send this notification whenever the "user" migration state changes.
 const OBSERVER_STATE_CHANGE_TOPIC = "fxa-migration:state-changed";
 // We also send the state notification when we *receive* this.  This allows
 // consumers to avoid loading this module until it receives a notification
 // from us (which may never happen if there's no migration to do)
 const OBSERVER_STATE_REQUEST_TOPIC = "fxa-migration:state-request";
+
+// We send this notification whenever the migration is paused waiting for
+// something internal to complete.
+const OBSERVER_INTERNAL_STATE_CHANGE_TOPIC = "fxa-migration:internal-state-changed";
+
+// We use this notification so Sync's healthreport module can record telemetry
+// (actually via "health report") for us.
+const OBSERVER_INTERNAL_TELEMETRY_TOPIC = "fxa-migration:internal-telemetry";
 
 const OBSERVER_TOPICS = [
   "xpcom-shutdown",
@@ -85,6 +93,19 @@ Migrator.prototype = {
   // until shutdown) may require a significantly longer wait.
   STATE_USER_FXA: "waiting for user to be signed in to FxA",
   STATE_USER_FXA_VERIFIED: "waiting for a verified FxA user",
+
+  // What internal state are we at?  This is primarily used for FHR reporting so
+  // we can determine why exactly we might be stalled.
+  STATE_INTERNAL_WAITING_SYNC_COMPLETE: "waiting for sync to complete",
+  STATE_INTERNAL_WAITING_WRITE_SENTINEL: "waiting for sentinel to be written",
+  STATE_INTERNAL_WAITING_START_OVER: "waiting for sync to reset itself",
+  STATE_INTERNAL_COMPLETE: "migration complete",
+
+  // Flags for the telemetry we record.  The UI will call a helper to record
+  // the fact some UI was interacted with.
+  TELEMETRY_ACCEPTED: "accepted",
+  TELEMETRY_DECLINED: "declined",
+  TELEMETRY_UNLINKED: "unlinked",
 
   finalize() {
     for (let topic of OBSERVER_TOPICS) {
@@ -199,10 +220,14 @@ Migrator.prototype = {
     if (Weave.Service._locked) {
       // our observers will kick us further along when complete.
       this.log.info("waiting for sync to complete")
+      Services.obs.notifyObservers(null, OBSERVER_INTERNAL_STATE_CHANGE_TOPIC,
+                                   this.STATE_INTERNAL_WAITING_SYNC_COMPLETE);
       return null;
     }
 
     // Write the migration sentinel if necessary.
+    Services.obs.notifyObservers(null, OBSERVER_INTERNAL_STATE_CHANGE_TOPIC,
+                                 this.STATE_INTERNAL_WAITING_WRITE_SENTINEL);
     yield this._setMigrationSentinelIfNecessary();
 
     // Get the list of enabled engines to we can restore that state.
@@ -210,36 +235,52 @@ Migrator.prototype = {
 
     // Must be ready to perform the actual migration.
     this.log.info("Performing final sync migration steps");
-    // Do the actual migration.
+    // Do the actual migration.  We setup one observer for when the new identity
+    // is about to be initialized so we can reset some key preferences - but
+    // there's no promise associated with this.
+    let observeStartOverIdentity;
+    Services.obs.addObserver(observeStartOverIdentity = () => {
+      this.log.info("observed that startOver is about to re-initialize the identity");
+      Services.obs.removeObserver(observeStartOverIdentity, "weave:service:start-over:init-identity");
+      // We've now reset all sync prefs - set the engine related prefs back to
+      // what they were.
+      for (let [prefName, prefType, prefVal] of enginePrefs) {
+        this.log.debug("Restoring pref ${prefName} (type=${prefType}) to ${prefVal}",
+                       {prefName, prefType, prefVal});
+        switch (prefType) {
+          case Services.prefs.PREF_BOOL:
+            Services.prefs.setBoolPref(prefName, prefVal);
+            break;
+          case Services.prefs.PREF_STRING:
+            Services.prefs.setCharPref(prefName, prefVal);
+            break;
+          default:
+            // _getEngineEnabledPrefs doesn't return any other type...
+            Cu.reportError("unknown engine pref type for " + prefName + ": " + prefType);
+        }
+      }
+    }, "weave:service:start-over:init-identity", false);
+
+    // And another observer for the startOver being fully complete - the only
+    // reason for this is so we can wait until everything is fully reset.
     let startOverComplete = new Promise((resolve, reject) => {
       let observe;
       Services.obs.addObserver(observe = () => {
         this.log.info("observed that startOver is complete");
         Services.obs.removeObserver(observe, "weave:service:start-over:finish");
-        // We've now reset all sync prefs - set the engine related prefs back to
-        // what they were.
-        for (let [prefName, prefType, prefVal] of enginePrefs) {
-          switch (prefType) {
-            case Services.prefs.PREF_BOOL:
-              Services.prefs.setBoolPref(prefName, prefVal);
-              break;
-            case Services.prefs.PREF_STRING:
-              Services.prefs.setCharPref(prefName, prefVal);
-              break;
-            default:
-              // _getEngineEnabledPrefs doesn't return any other type...
-              Cu.reportError("unknown engine pref type for " + prefName + ": " + prefType);
-          }
-        }
         resolve();
       }, "weave:service:start-over:finish", false);
     });
 
     Weave.Service.startOver();
     // need to wait for an observer.
+    Services.obs.notifyObservers(null, OBSERVER_INTERNAL_STATE_CHANGE_TOPIC,
+                                 this.STATE_INTERNAL_WAITING_START_OVER);
     yield startOverComplete;
     // observer fired, now kick things off with the FxA user.
     this.log.info("scheduling initial FxA sync.");
+    // Note we technically don't need to unblockSync as by now all sync prefs
+    // have been reset - but it doesn't hurt.
     this._unblockSync();
     Weave.Service.scheduler.scheduleNextSync(0);
 
@@ -249,6 +290,8 @@ Migrator.prototype = {
     this.log.info("Migration complete");
     update(null);
 
+    Services.obs.notifyObservers(null, OBSERVER_INTERNAL_STATE_CHANGE_TOPIC,
+                                 this.STATE_INTERNAL_COMPLETE);
     return null;
   }),
 
@@ -411,6 +454,9 @@ Migrator.prototype = {
     let customize = !this._allEnginesEnabled();
     tail += "&customizeSync=" + customize;
 
+    // We assume the caller of this is going to actually use it, so record
+    // telemetry now.
+    this.recordTelemetry(this.TELEMETRY_ACCEPTED);
     return {
       url: "about:accounts?action=" + action + tail,
       options: {ignoreFragment: true, replaceQueryString: true}
@@ -434,6 +480,7 @@ Migrator.prototype = {
       this.log.error("Failed to resend verification mail: ${}", ex);
       ok = false;
     }
+    this.recordTelemetry(this.TELEMETRY_ACCEPTED);
     let fxauser = yield fxAccounts.getSignedInUser();
     let sb = Services.strings.createBundle("chrome://browser/locale/accounts.properties");
 
@@ -465,7 +512,34 @@ Migrator.prototype = {
     return fxAccounts.signOut();
   }),
 
-}
+  recordTelemetry(flag) {
+    // Note the value is the telemetry field name - but this is an
+    // implementation detail which could be changed later.
+    switch (flag) {
+      case this.TELEMETRY_ACCEPTED:
+      case this.TELEMETRY_UNLINKED:
+      case this.TELEMETRY_DECLINED:
+        Services.obs.notifyObservers(null, OBSERVER_INTERNAL_TELEMETRY_TOPIC, flag);
+        break;
+      default:
+        throw new Error("Unexpected telemetry flag: " + flag);
+    }
+  },
+
+  get learnMoreLink() {
+    try {
+      var url = Services.prefs.getCharPref("app.support.baseURL");
+    } catch (err) {
+      return null;
+    }
+    url += "sync-upgrade";
+    let sb = Services.strings.createBundle("chrome://weave/locale/services/sync.properties");
+    return {
+      text: sb.GetStringFromName("sync.eol.learnMore.label"),
+      href: Services.urlFormatter.formatURL(url),
+    };
+  },
+};
 
 // We expose a singleton
 this.EXPORTED_SYMBOLS = ["fxaMigrator"];

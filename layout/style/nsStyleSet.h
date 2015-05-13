@@ -26,55 +26,56 @@
 #include "nsCSSPseudoElements.h"
 
 class gfxFontFeatureValueSet;
-class nsCSSFontFaceRule;
 class nsCSSKeyframesRule;
 class nsCSSFontFeatureValuesRule;
 class nsCSSPageRule;
 class nsCSSCounterStyleRule;
+class nsICSSPseudoComparator;
 class nsRuleWalker;
 struct ElementDependentRuleProcessorData;
+struct nsFontFaceRuleContainer;
 struct TreeMatchContext;
 
 namespace mozilla {
 class EventStates;
 } // namespace mozilla
 
-class nsEmptyStyleRule MOZ_FINAL : public nsIStyleRule
+class nsEmptyStyleRule final : public nsIStyleRule
 {
 private:
   ~nsEmptyStyleRule() {}
 
 public:
   NS_DECL_ISUPPORTS
-  virtual void MapRuleInfoInto(nsRuleData* aRuleData) MOZ_OVERRIDE;
+  virtual void MapRuleInfoInto(nsRuleData* aRuleData) override;
 #ifdef DEBUG
-  virtual void List(FILE* out = stdout, int32_t aIndent = 0) const MOZ_OVERRIDE;
+  virtual void List(FILE* out = stdout, int32_t aIndent = 0) const override;
 #endif
 };
 
-class nsInitialStyleRule MOZ_FINAL : public nsIStyleRule
+class nsInitialStyleRule final : public nsIStyleRule
 {
 private:
   ~nsInitialStyleRule() {}
 
 public:
   NS_DECL_ISUPPORTS
-  virtual void MapRuleInfoInto(nsRuleData* aRuleData) MOZ_OVERRIDE;
+  virtual void MapRuleInfoInto(nsRuleData* aRuleData) override;
 #ifdef DEBUG
-  virtual void List(FILE* out = stdout, int32_t aIndent = 0) const MOZ_OVERRIDE;
+  virtual void List(FILE* out = stdout, int32_t aIndent = 0) const override;
 #endif
 };
 
-class nsDisableTextZoomStyleRule MOZ_FINAL : public nsIStyleRule
+class nsDisableTextZoomStyleRule final : public nsIStyleRule
 {
 private:
   ~nsDisableTextZoomStyleRule() {}
 
 public:
   NS_DECL_ISUPPORTS
-  virtual void MapRuleInfoInto(nsRuleData* aRuleData) MOZ_OVERRIDE;
+  virtual void MapRuleInfoInto(nsRuleData* aRuleData) override;
 #ifdef DEBUG
-  virtual void List(FILE* out = stdout, int32_t aIndent = 0) const MOZ_OVERRIDE;
+  virtual void List(FILE* out = stdout, int32_t aIndent = 0) const override;
 #endif
 };
 
@@ -133,11 +134,28 @@ class nsStyleSet
   // Resolve style by making replacements in the list of style rules as
   // described by aReplacements, but otherwise maintaining the status
   // quo.
+  // aPseudoElement must follow the same rules as for
+  // ResolvePseudoElementStyle, and be null for non-pseudo-element cases
+  enum { // flags for aFlags
+    // Skip starting CSS animations that result from the style.
+    eSkipStartingAnimations = (1<<0),
+  };
   already_AddRefed<nsStyleContext>
   ResolveStyleWithReplacement(mozilla::dom::Element* aElement,
+                              mozilla::dom::Element* aPseudoElement,
                               nsStyleContext* aNewParentContext,
                               nsStyleContext* aOldStyleContext,
-                              nsRestyleHint aReplacements);
+                              nsRestyleHint aReplacements,
+                              uint32_t aFlags = 0);
+
+  // Resolve style by returning a style context with the specified
+  // animation data removed.  It is allowable to remove all animation
+  // data with eRestyle_AllHintsWithAnimations, or by using any other
+  // hints that are allowed by ResolveStyleWithReplacement.
+  already_AddRefed<nsStyleContext>
+    ResolveStyleWithoutAnimation(mozilla::dom::Element* aElement,
+                                 nsStyleContext* aStyleContext,
+                                 nsRestyleHint aWhichToRemove);
 
   // Get a style context for a non-element (which no rules will match),
   // such as text nodes, placeholder frames, and the nsFirstLetterFrame
@@ -152,8 +170,8 @@ class nsStyleSet
   // Get a style context for a pseudo-element.  aParentElement must be
   // non-null.  aPseudoID is the nsCSSPseudoElements::Type for the
   // pseudo-element.  aPseudoElement must be non-null if the pseudo-element
-  // type is one that allows user action pseudo-classes after it; otherwise,
-  // it is ignored.
+  // type is one that allows user action pseudo-classes after it or allows
+  // style attributes; otherwise, it is ignored.
   already_AddRefed<nsStyleContext>
   ResolvePseudoElementStyle(mozilla::dom::Element* aParentElement,
                             nsCSSPseudoElements::Type aType,
@@ -192,40 +210,35 @@ class nsStyleSet
 
   // Append all the currently-active font face rules to aArray.  Return
   // true for success and false for failure.
-  bool AppendFontFaceRules(nsPresContext* aPresContext,
-                             nsTArray<nsFontFaceRuleContainer>& aArray);
+  bool AppendFontFaceRules(nsTArray<nsFontFaceRuleContainer>& aArray);
 
   // Return the winning (in the cascade) @keyframes rule for the given name.
-  nsCSSKeyframesRule* KeyframesRuleForName(nsPresContext* aPresContext,
-                                           const nsString& aName);
+  nsCSSKeyframesRule* KeyframesRuleForName(const nsString& aName);
 
   // Return the winning (in the cascade) @counter-style rule for the given name.
-  nsCSSCounterStyleRule* CounterStyleRuleForName(nsPresContext* aPresContext,
-                                                 const nsAString& aName);
+  nsCSSCounterStyleRule* CounterStyleRuleForName(const nsAString& aName);
 
   // Fetch object for looking up font feature values
   already_AddRefed<gfxFontFeatureValueSet> GetFontFeatureValuesLookup();
 
   // Append all the currently-active font feature values rules to aArray.
   // Return true for success and false for failure.
-  bool AppendFontFeatureValuesRules(nsPresContext* aPresContext,
+  bool AppendFontFeatureValuesRules(
                               nsTArray<nsCSSFontFeatureValuesRule*>& aArray);
 
   // Append all the currently-active page rules to aArray.  Return
   // true for success and false for failure.
-  bool AppendPageRules(nsPresContext* aPresContext,
-                       nsTArray<nsCSSPageRule*>& aArray);
+  bool AppendPageRules(nsTArray<nsCSSPageRule*>& aArray);
 
   // Begin ignoring style context destruction, to avoid lots of unnecessary
   // work on document teardown.
-  void BeginShutdown(nsPresContext* aPresContext);
+  void BeginShutdown();
 
   // Free all of the data associated with this style set.
-  void Shutdown(nsPresContext* aPresContext);
+  void Shutdown();
 
   // Notification that a style context is being destroyed.
-  void NotifyStyleContextDestroyed(nsPresContext* aPresContext,
-                                   nsStyleContext* aStyleContext);
+  void NotifyStyleContextDestroyed(nsStyleContext* aStyleContext);
 
   // Get a new style context that lives in a different parent
   // The new context will be the same as the old if the new parent is the
@@ -233,35 +246,25 @@ class nsStyleSet
   // aElement should be non-null if this is a style context for an
   // element or pseudo-element; in the latter case it should be the
   // real element the pseudo-element is for.
-  // aElementOrPseudoElement should be the same, except for
-  // pseudo-elements it should be the pseudo-element.  It is temporary
-  // until bug 960465 lands.  It only really needs to be correct for
-  // things we run animations on (elements and ::before and ::after
-  // pseudo-elements).
   already_AddRefed<nsStyleContext>
   ReparentStyleContext(nsStyleContext* aStyleContext,
                        nsStyleContext* aNewParentContext,
-                       mozilla::dom::Element* aElement,
-                       mozilla::dom::Element* aElementOrPseudoElement);
+                       mozilla::dom::Element* aElement);
 
   // Test if style is dependent on a document state.
-  bool HasDocumentStateDependentStyle(nsPresContext* aPresContext,
-                                      nsIContent*    aContent,
+  bool HasDocumentStateDependentStyle(nsIContent*    aContent,
                                       mozilla::EventStates aStateMask);
 
   // Test if style is dependent on content state
-  nsRestyleHint HasStateDependentStyle(nsPresContext* aPresContext,
-                                       mozilla::dom::Element* aElement,
+  nsRestyleHint HasStateDependentStyle(mozilla::dom::Element* aElement,
                                        mozilla::EventStates aStateMask);
-  nsRestyleHint HasStateDependentStyle(nsPresContext* aPresContext,
-                                       mozilla::dom::Element* aElement,
+  nsRestyleHint HasStateDependentStyle(mozilla::dom::Element* aElement,
                                        nsCSSPseudoElements::Type aPseudoType,
                                        mozilla::dom::Element* aPseudoElement,
                                        mozilla::EventStates aStateMask);
 
   // Test if style is dependent on the presence of an attribute.
-  nsRestyleHint HasAttributeDependentStyle(nsPresContext* aPresContext,
-                                           mozilla::dom::Element* aElement,
+  nsRestyleHint HasAttributeDependentStyle(mozilla::dom::Element* aElement,
                                            nsIAtom*       aAttribute,
                                            int32_t        aModType,
                                            bool           aAttrHasChanged);
@@ -271,7 +274,7 @@ class nsStyleSet
    * the characteristics of the medium, and return whether style rules
    * may have changed as a result.
    */
-  bool MediumFeaturesChanged(nsPresContext* aPresContext);
+  bool MediumFeaturesChanged();
 
   // APIs for registering objects that can supply additional
   // rules during processing.
@@ -422,7 +425,10 @@ class nsStyleSet
                           bool aWalkAllXBLStylesheets);
 
   // Helper for ResolveStyleWithReplacement
+  // aPseudoElement must follow the same rules as for
+  // ResolvePseudoElementStyle, and be null for non-pseudo-element cases
   nsRuleNode* RuleNodeWithReplacement(mozilla::dom::Element* aElement,
+                                      mozilla::dom::Element* aPseudoElement,
                                       nsRuleNode* aOldRuleNode,
                                       nsCSSPseudoElements::Type aPseudoType,
                                       nsRestyleHint aReplacements);

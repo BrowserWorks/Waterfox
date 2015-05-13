@@ -7,8 +7,6 @@
 #ifndef js_ProfilingStack_h
 #define js_ProfilingStack_h
 
-#include "mozilla/TypedEnum.h"
-
 #include "jsbytecode.h"
 #include "jstypes.h"
 
@@ -60,28 +58,33 @@ class ProfileEntry
         // sample of the pseudostack.
         FRAME_LABEL_COPY = 0x02,
 
-        // This ProfileEntry was pushed immediately before calling into asm.js.
-        ASMJS = 0x04,
+        // This ProfileEntry is a dummy entry indicating the start of a run
+        // of JS pseudostack entries.
+        BEGIN_PSEUDO_JS = 0x04,
+
+        // This flag is used to indicate that an interpreter JS entry has OSR-ed
+        // into baseline.
+        OSR = 0x08,
 
         // Mask for removing all flags except the category information.
-        CATEGORY_MASK = ~IS_CPP_ENTRY & ~FRAME_LABEL_COPY & ~ASMJS
+        CATEGORY_MASK = ~IS_CPP_ENTRY & ~FRAME_LABEL_COPY & ~BEGIN_PSEUDO_JS & ~OSR
     };
 
     // Keep these in sync with browser/devtools/profiler/utils/global.js
-    MOZ_BEGIN_NESTED_ENUM_CLASS(Category, uint32_t)
-        OTHER    = 0x08,
-        CSS      = 0x10,
-        JS       = 0x20,
-        GC       = 0x40,
-        CC       = 0x80,
-        NETWORK  = 0x100,
-        GRAPHICS = 0x200,
-        STORAGE  = 0x400,
-        EVENTS   = 0x800,
+    enum class Category : uint32_t {
+        OTHER    = 0x10,
+        CSS      = 0x20,
+        JS       = 0x40,
+        GC       = 0x80,
+        CC       = 0x100,
+        NETWORK  = 0x200,
+        GRAPHICS = 0x400,
+        STORAGE  = 0x800,
+        EVENTS   = 0x1000,
 
         FIRST    = OTHER,
         LAST     = EVENTS
-    MOZ_END_NESTED_ENUM_CLASS(Category)
+    };
 
     // All of these methods are marked with the 'volatile' keyword because SPS's
     // representation of the stack is stored such that all ProfileEntry
@@ -93,15 +96,15 @@ class ProfileEntry
 
     bool isCopyLabel() const volatile { return hasFlag(FRAME_LABEL_COPY); }
 
-    void setLabel(const char *aString) volatile { string = aString; }
-    const char *label() const volatile { return string; }
+    void setLabel(const char* aString) volatile { string = aString; }
+    const char* label() const volatile { return string; }
 
-    void setJsFrame(JSScript *aScript, jsbytecode *aPc) volatile {
+    void setJsFrame(JSScript* aScript, jsbytecode* aPc) volatile {
         flags_ = 0;
         spOrScript = aScript;
         setPC(aPc);
     }
-    void setCppFrame(void *aSp, uint32_t aLine) volatile {
+    void setCppFrame(void* aSp, uint32_t aLine) volatile {
         flags_ = IS_CPP_ENTRY;
         spOrScript = aSp;
         lineOrPc = static_cast<int32_t>(aLine);
@@ -126,13 +129,25 @@ class ProfileEntry
         return flags_ & CATEGORY_MASK;
     }
 
-    void *stackAddress() const volatile {
+    void setOSR() volatile {
+        MOZ_ASSERT(isJs());
+        setFlag(OSR);
+    }
+    void unsetOSR() volatile {
+        MOZ_ASSERT(isJs());
+        unsetFlag(OSR);
+    }
+    bool isOSR() const volatile {
+        return hasFlag(OSR);
+    }
+
+    void* stackAddress() const volatile {
         MOZ_ASSERT(!isJs());
         return spOrScript;
     }
-    JSScript *script() const volatile {
+    JSScript* script() const volatile {
         MOZ_ASSERT(isJs());
-        return (JSScript *)spOrScript;
+        return (JSScript*)spOrScript;
     }
     uint32_t line() const volatile {
         MOZ_ASSERT(!isJs());
@@ -140,8 +155,8 @@ class ProfileEntry
     }
 
     // We can't know the layout of JSScript, so look in vm/SPSProfiler.cpp.
-    JS_FRIEND_API(jsbytecode *) pc() const volatile;
-    JS_FRIEND_API(void) setPC(jsbytecode *pc) volatile;
+    JS_FRIEND_API(jsbytecode*) pc() const volatile;
+    JS_FRIEND_API(void) setPC(jsbytecode* pc) volatile;
 
     // The offset of a pc into a script's code can actually be 0, so to
     // signify a nullptr pc, use a -1 index. This is checked against in
@@ -155,17 +170,17 @@ class ProfileEntry
 };
 
 JS_FRIEND_API(void)
-SetRuntimeProfilingStack(JSRuntime *rt, ProfileEntry *stack, uint32_t *size,
+SetRuntimeProfilingStack(JSRuntime* rt, ProfileEntry* stack, uint32_t* size,
                          uint32_t max);
 
 JS_FRIEND_API(void)
-EnableRuntimeProfilingStack(JSRuntime *rt, bool enabled);
+EnableRuntimeProfilingStack(JSRuntime* rt, bool enabled);
 
 JS_FRIEND_API(void)
-RegisterRuntimeProfilingEventMarker(JSRuntime *rt, void (*fn)(const char *));
+RegisterRuntimeProfilingEventMarker(JSRuntime* rt, void (*fn)(const char*));
 
 JS_FRIEND_API(jsbytecode*)
-ProfilingGetPC(JSRuntime *rt, JSScript *script, void *ip);
+ProfilingGetPC(JSRuntime* rt, JSScript* script, void* ip);
 
 } // namespace js
 

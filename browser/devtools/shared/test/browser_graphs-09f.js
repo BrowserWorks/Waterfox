@@ -6,15 +6,12 @@
 
 const TEST_DATA = [{ delta: 100, value: 60 }, { delta: 200, value: 1 }];
 let {LineGraphWidget} = Cu.import("resource:///modules/devtools/Graphs.jsm", {});
-let {DOMHelpers} = Cu.import("resource:///modules/devtools/DOMHelpers.jsm", {});
 let {Promise} = devtools.require("resource://gre/modules/Promise.jsm");
-let {Hosts} = devtools.require("devtools/framework/toolbox-hosts");
 
-let test = Task.async(function*() {
+add_task(function*() {
   yield promiseTab("about:blank");
   yield performTest();
   gBrowser.removeCurrentTab();
-  finish();
 });
 
 function* performTest() {
@@ -51,5 +48,5 @@ function* testGraph (parent, options) {
   is(graph._avgGutterLine.hidden, options.avg === false,
     `The avg gutter should ${options.avg === false ? "not " : ""}be shown`);
 
-  graph.destroy();
+  yield graph.destroy();
 }

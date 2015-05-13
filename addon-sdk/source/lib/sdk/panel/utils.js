@@ -95,6 +95,7 @@ function close(panel) {
   // when quitting the host application while a panel is visible.  To suppress
   // these errors, check for "hidePopup" in panel before calling it.
   // It's not clear if there's an issue or it's expected behavior.
+  // See Bug 1151796.
 
   return panel.hidePopup && panel.hidePopup();
 }
@@ -213,7 +214,7 @@ function show(panel, options, anchor) {
   // Prevent the panel from getting focus when showing up
   // if focus is set to false
   panel.setAttribute("noautofocus", !options.focus);
-  
+
   let window = anchor && getOwnerBrowserWindow(anchor);
   let { document } = window ? window : getMostRecentBrowserWindow();
   attach(panel, document);
@@ -286,8 +287,7 @@ function make(document) {
       events.emit(type, { subject: panel });
   }
 
-  function onContentChange({subject, type}) {
-    let document = subject;
+  function onContentChange({subject: document, type}) {
     if (document === getContentDocument(panel) && document.defaultView)
       events.emit(type, { subject: panel });
   }
@@ -411,9 +411,9 @@ function setURL(panel, url) {
 exports.setURL = setURL;
 
 function allowContextMenu(panel, allow) {
-  if(allow) {
+  if (allow) {
     panel.setAttribute("context", "contentAreaContextMenu");
-  } 
+  }
   else {
     panel.removeAttribute("context");
   }

@@ -1,4 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -49,6 +50,22 @@ WorkerRunnable::WorkerRunnable(WorkerPrivate* aWorkerPrivate,
   MOZ_ASSERT(aWorkerPrivate);
 }
 #endif
+
+bool
+WorkerRunnable::IsDebuggerRunnable() const
+{
+  return false;
+}
+
+nsIGlobalObject*
+WorkerRunnable::DefaultGlobalObject() const
+{
+  if (IsDebuggerRunnable()) {
+    return mWorkerPrivate->DebuggerGlobalScope();
+  } else {
+    return mWorkerPrivate->GlobalScope();
+  }
+}
 
 bool
 WorkerRunnable::PreDispatch(JSContext* aCx, WorkerPrivate* aWorkerPrivate)
@@ -121,7 +138,11 @@ WorkerRunnable::DispatchInternal()
 {
   if (mBehavior == WorkerThreadModifyBusyCount ||
       mBehavior == WorkerThreadUnchangedBusyCount) {
-    return NS_SUCCEEDED(mWorkerPrivate->Dispatch(this));
+    if (IsDebuggerRunnable()) {
+      return NS_SUCCEEDED(mWorkerPrivate->DispatchDebuggerRunnable(this));
+    } else {
+      return NS_SUCCEEDED(mWorkerPrivate->Dispatch(this));
+    }
   }
 
   MOZ_ASSERT(mBehavior == ParentThreadUnchangedBusyCount);
@@ -277,7 +298,7 @@ WorkerRunnable::Run()
     MOZ_ASSERT(IsCanceled(), "Subclass Cancel() didn't set IsCanceled()!");
 
     return NS_OK;
- }
+  }
 
   // Track down the appropriate global to use for the AutoJSAPI/AutoEntryScript.
   nsCOMPtr<nsIGlobalObject> globalObject;
@@ -285,9 +306,18 @@ WorkerRunnable::Run()
   MOZ_ASSERT(isMainThread == NS_IsMainThread());
   nsRefPtr<WorkerPrivate> kungFuDeathGrip;
   if (targetIsWorkerThread) {
-    globalObject = mWorkerPrivate->GlobalScope();
-  }
-  else {
+    JSContext* cx = GetCurrentThreadJSContext();
+    if (NS_WARN_IF(!cx)) {
+      return NS_ERROR_FAILURE;
+    }
+
+    JSObject* global = JS::CurrentGlobalOrNull(cx);
+    if (global) {
+      globalObject = GetGlobalObjectForGlobal(global);
+    } else {
+      globalObject = DefaultGlobalObject();
+    }
+  } else {
     kungFuDeathGrip = mWorkerPrivate;
     if (isMainThread) {
       globalObject = static_cast<nsGlobalWindow*>(mWorkerPrivate->GetWindow());
@@ -308,8 +338,9 @@ WorkerRunnable::Run()
   Maybe<mozilla::dom::AutoEntryScript> aes;
   JSContext* cx;
   if (globalObject) {
-    aes.emplace(globalObject, isMainThread, isMainThread ? nullptr :
-                                            GetCurrentThreadJSContext());
+    aes.emplace(globalObject, "Worker runnable",
+                isMainThread,
+                isMainThread ? nullptr : GetCurrentThreadJSContext());
     cx = aes->cx();
   } else {
     jsapi.Init();
@@ -327,8 +358,9 @@ WorkerRunnable::Run()
 
   // In the case of CompileScriptRunnnable, WorkerRun above can cause us to
   // lazily create a global, so we construct aes here before calling PostRun.
-  if (targetIsWorkerThread && !aes && mWorkerPrivate->GlobalScope()) {
-    aes.emplace(mWorkerPrivate->GlobalScope(), false, GetCurrentThreadJSContext());
+  if (targetIsWorkerThread && !aes && DefaultGlobalObject()) {
+    aes.emplace(DefaultGlobalObject(), "worker runnable",
+                false, GetCurrentThreadJSContext());
     cx = aes->cx();
   }
 
@@ -347,6 +379,14 @@ WorkerRunnable::Cancel()
   // The docs say that Cancel() should not be called more than once and that we
   // should throw NS_ERROR_UNEXPECTED if it is.
   return (canceledCount == 1) ? NS_OK : NS_ERROR_UNEXPECTED;
+}
+
+void
+WorkerDebuggerRunnable::PostDispatch(JSContext* aCx,
+                                     WorkerPrivate* aWorkerPrivate,
+                                     bool aDispatchResult)
+{
+  MaybeReportMainThreadException(aCx, aDispatchResult);
 }
 
 WorkerSyncRunnable::WorkerSyncRunnable(WorkerPrivate* aWorkerPrivate,
@@ -464,6 +504,16 @@ WorkerControlRunnable::WorkerControlRunnable(WorkerPrivate* aWorkerPrivate,
              "WorkerControlRunnables should not modify the busy count");
 }
 #endif
+
+NS_IMETHODIMP
+WorkerControlRunnable::Cancel()
+{
+  if (NS_FAILED(Run())) {
+    NS_WARNING("WorkerControlRunnable::Run() failed.");
+  }
+
+  return WorkerRunnable::Cancel();
+}
 
 bool
 WorkerControlRunnable::DispatchInternal()

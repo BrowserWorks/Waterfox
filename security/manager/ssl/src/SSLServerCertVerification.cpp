@@ -98,7 +98,6 @@
 
 #include "pkix/pkix.h"
 #include "pkix/pkixnss.h"
-#include "pkix/ScopedPtr.h"
 #include "CertVerifier.h"
 #include "CryptoTask.h"
 #include "ExtendedValidation.h"
@@ -114,6 +113,7 @@
 #include "mozilla/Mutex.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/net/DNS.h"
+#include "mozilla/UniquePtr.h"
 #include "mozilla/unused.h"
 #include "nsIThreadPool.h"
 #include "nsNetUtil.h"
@@ -133,9 +133,7 @@
 #include "secport.h"
 #include "sslerr.h"
 
-#ifdef PR_LOGGING
 extern PRLogModuleInfo* gPIPNSSLog;
-#endif
 
 using namespace mozilla::pkix;
 
@@ -265,14 +263,14 @@ class CertErrorRunnable : public SyncRunnableBase
                     uint32_t collectedErrors,
                     PRErrorCode errorCodeTrust,
                     PRErrorCode errorCodeMismatch,
-                    PRErrorCode errorCodeExpired,
+                    PRErrorCode errorCodeTime,
                     uint32_t providerFlags)
     : mFdForLogging(fdForLogging), mCert(cert), mInfoObject(infoObject),
       mDefaultErrorCodeToReport(defaultErrorCodeToReport),
       mCollectedErrors(collectedErrors),
       mErrorCodeTrust(errorCodeTrust),
       mErrorCodeMismatch(errorCodeMismatch),
-      mErrorCodeExpired(errorCodeExpired),
+      mErrorCodeTime(errorCodeTime),
       mProviderFlags(providerFlags)
   {
   }
@@ -289,17 +287,18 @@ private:
   const uint32_t mCollectedErrors;
   const PRErrorCode mErrorCodeTrust;
   const PRErrorCode mErrorCodeMismatch;
-  const PRErrorCode mErrorCodeExpired;
+  const PRErrorCode mErrorCodeTime;
   const uint32_t mProviderFlags;
 };
 
 // A probe value of 1 means "no error".
 uint32_t
-MapCertErrorToProbeValue(PRErrorCode errorCode)
+MapOverridableErrorToProbeValue(PRErrorCode errorCode)
 {
   switch (errorCode)
   {
     case SEC_ERROR_UNKNOWN_ISSUER:                     return  2;
+    case SEC_ERROR_CA_CERT_INVALID:                    return  3;
     case SEC_ERROR_UNTRUSTED_ISSUER:                   return  4;
     case SEC_ERROR_EXPIRED_ISSUER_CERTIFICATE:         return  5;
     case SEC_ERROR_UNTRUSTED_CERT:                     return  6;
@@ -310,10 +309,42 @@ MapCertErrorToProbeValue(PRErrorCode errorCode)
     case mozilla::pkix::MOZILLA_PKIX_ERROR_CA_CERT_USED_AS_END_ENTITY: return 11;
     case mozilla::pkix::MOZILLA_PKIX_ERROR_V1_CERT_USED_AS_CA: return 12;
     case mozilla::pkix::MOZILLA_PKIX_ERROR_INADEQUATE_KEY_SIZE: return 13;
+    case mozilla::pkix::MOZILLA_PKIX_ERROR_NOT_YET_VALID_CERTIFICATE: return 14;
+    case mozilla::pkix::MOZILLA_PKIX_ERROR_NOT_YET_VALID_ISSUER_CERTIFICATE:
+      return 15;
+    case SEC_ERROR_INVALID_TIME: return 16;
   }
-  NS_WARNING("Unknown certificate error code. Does MapCertErrorToProbeValue "
+  NS_WARNING("Unknown certificate error code. Does MapOverridableErrorToProbeValue "
              "handle everything in DetermineCertOverrideErrors?");
   return 0;
+}
+
+static uint32_t
+MapCertErrorToProbeValue(PRErrorCode errorCode)
+{
+  uint32_t probeValue;
+  switch (errorCode)
+  {
+    // see security/pkix/include/pkix/Result.h
+#define MOZILLA_PKIX_MAP(name, value, nss_name) case nss_name: probeValue = value; break;
+    MOZILLA_PKIX_MAP_LIST
+#undef MOZILLA_PKIX_MAP
+    default: return 0;
+  }
+
+  // Since FATAL_ERROR_FLAG is 0x800, fatal error values are much larger than
+  // non-fatal error values. To conserve space, we remap these so they start at
+  // (decimal) 90 instead of 0x800. Currently there are ~50 non-fatal errors
+  // mozilla::pkix might return, so saving space for 90 should be sufficient
+  // (similarly, there are 4 fatal errors, so saving space for 10 should also
+  // be sufficient).
+  static_assert(FATAL_ERROR_FLAG == 0x800,
+                "mozilla::pkix::FATAL_ERROR_FLAG is not what we were expecting");
+  if (probeValue & FATAL_ERROR_FLAG) {
+    probeValue ^= FATAL_ERROR_FLAG;
+    probeValue += 90;
+  }
+  return probeValue;
 }
 
 SECStatus
@@ -322,14 +353,14 @@ DetermineCertOverrideErrors(CERTCertificate* cert, const char* hostName,
                             /*out*/ uint32_t& collectedErrors,
                             /*out*/ PRErrorCode& errorCodeTrust,
                             /*out*/ PRErrorCode& errorCodeMismatch,
-                            /*out*/ PRErrorCode& errorCodeExpired)
+                            /*out*/ PRErrorCode& errorCodeTime)
 {
   MOZ_ASSERT(cert);
   MOZ_ASSERT(hostName);
   MOZ_ASSERT(collectedErrors == 0);
   MOZ_ASSERT(errorCodeTrust == 0);
   MOZ_ASSERT(errorCodeMismatch == 0);
-  MOZ_ASSERT(errorCodeExpired == 0);
+  MOZ_ASSERT(errorCodeTime == 0);
 
   // Assumes the error prioritization described in mozilla::pkix's
   // BuildForward function. Also assumes that CheckCertHostname was only
@@ -338,28 +369,39 @@ DetermineCertOverrideErrors(CERTCertificate* cert, const char* hostName,
     case SEC_ERROR_CERT_SIGNATURE_ALGORITHM_DISABLED:
     case SEC_ERROR_EXPIRED_ISSUER_CERTIFICATE:
     case SEC_ERROR_UNKNOWN_ISSUER:
+    case SEC_ERROR_CA_CERT_INVALID:
     case mozilla::pkix::MOZILLA_PKIX_ERROR_CA_CERT_USED_AS_END_ENTITY:
     case mozilla::pkix::MOZILLA_PKIX_ERROR_INADEQUATE_KEY_SIZE:
     case mozilla::pkix::MOZILLA_PKIX_ERROR_V1_CERT_USED_AS_CA:
+    case mozilla::pkix::MOZILLA_PKIX_ERROR_NOT_YET_VALID_ISSUER_CERTIFICATE:
     {
       collectedErrors = nsICertOverrideService::ERROR_UNTRUSTED;
       errorCodeTrust = defaultErrorCodeToReport;
 
       SECCertTimeValidity validity = CERT_CheckCertValidTimes(cert, now, false);
       if (validity == secCertTimeUndetermined) {
-        PR_SetError(defaultErrorCodeToReport, 0);
+        // This only happens if cert is null. CERT_CheckCertValidTimes will
+        // have set the error code to SEC_ERROR_INVALID_ARGS. We should really
+        // be using mozilla::pkix here anyway.
+        MOZ_ASSERT(PR_GetError() == SEC_ERROR_INVALID_ARGS);
         return SECFailure;
       }
-      if (validity != secCertTimeValid) {
+      if (validity == secCertTimeExpired) {
         collectedErrors |= nsICertOverrideService::ERROR_TIME;
-        errorCodeExpired = SEC_ERROR_EXPIRED_CERTIFICATE;
+        errorCodeTime = SEC_ERROR_EXPIRED_CERTIFICATE;
+      } else if (validity == secCertTimeNotValidYet) {
+        collectedErrors |= nsICertOverrideService::ERROR_TIME;
+        errorCodeTime =
+          mozilla::pkix::MOZILLA_PKIX_ERROR_NOT_YET_VALID_CERTIFICATE;
       }
       break;
     }
 
+    case SEC_ERROR_INVALID_TIME:
     case SEC_ERROR_EXPIRED_CERTIFICATE:
+    case mozilla::pkix::MOZILLA_PKIX_ERROR_NOT_YET_VALID_CERTIFICATE:
       collectedErrors = nsICertOverrideService::ERROR_TIME;
-      errorCodeExpired = SEC_ERROR_EXPIRED_CERTIFICATE;
+      errorCodeTime = defaultErrorCodeToReport;
       break;
 
     case SSL_ERROR_BAD_CERT_DOMAIN:
@@ -395,7 +437,7 @@ DetermineCertOverrideErrors(CERTCertificate* cert, const char* hostName,
       collectedErrors |= nsICertOverrideService::ERROR_MISMATCH;
       errorCodeMismatch = SSL_ERROR_BAD_CERT_DOMAIN;
     } else if (result != Success) {
-      PR_SetError(defaultErrorCodeToReport, 0);
+      PR_SetError(MapResultToPRErrorCode(result), 0);
       return SECFailure;
     }
   }
@@ -437,26 +479,45 @@ CertErrorRunnable::CheckCertOverrides()
 
   uint32_t remaining_display_errors = mCollectedErrors;
 
-  nsresult nsrv;
 
-  // Enforce Strict-Transport-Security for hosts that are "STS" hosts:
-  // connections must be dropped when there are any certificate errors
-  // (STS Spec section 7.3).
+  // If this is an HTTP Strict Transport Security host or a pinned host and the
+  // certificate is bad, don't allow overrides (RFC 6797 section 12.1,
+  // HPKP draft spec section 2.6).
   bool strictTransportSecurityEnabled = false;
-  nsCOMPtr<nsISiteSecurityService> sss
-    = do_GetService(NS_SSSERVICE_CONTRACTID, &nsrv);
-  if (NS_SUCCEEDED(nsrv)) {
-    nsrv = sss->IsSecureHost(nsISiteSecurityService::HEADER_HSTS,
-                             mInfoObject->GetHostNameRaw(),
-                             mProviderFlags,
-                             &strictTransportSecurityEnabled);
+  bool hasPinningInformation = false;
+  nsCOMPtr<nsISiteSecurityService> sss(do_GetService(NS_SSSERVICE_CONTRACTID));
+  if (!sss) {
+    PR_LOG(gPIPNSSLog, PR_LOG_DEBUG,
+           ("[%p][%p] couldn't get nsISiteSecurityService to check for HSTS/HPKP\n",
+            mFdForLogging, this));
+    return new SSLServerCertVerificationResult(mInfoObject,
+                                               mDefaultErrorCodeToReport);
   }
+  nsresult nsrv = sss->IsSecureHost(nsISiteSecurityService::HEADER_HSTS,
+                                    mInfoObject->GetHostNameRaw(),
+                                    mProviderFlags,
+                                    &strictTransportSecurityEnabled);
   if (NS_FAILED(nsrv)) {
+    PR_LOG(gPIPNSSLog, PR_LOG_DEBUG,
+           ("[%p][%p] checking for HSTS failed\n", mFdForLogging, this));
+    return new SSLServerCertVerificationResult(mInfoObject,
+                                               mDefaultErrorCodeToReport);
+  }
+  nsrv = sss->IsSecureHost(nsISiteSecurityService::HEADER_HPKP,
+                           mInfoObject->GetHostNameRaw(),
+                           mProviderFlags,
+                           &hasPinningInformation);
+  if (NS_FAILED(nsrv)) {
+    PR_LOG(gPIPNSSLog, PR_LOG_DEBUG,
+           ("[%p][%p] checking for HPKP failed\n", mFdForLogging, this));
     return new SSLServerCertVerificationResult(mInfoObject,
                                                mDefaultErrorCodeToReport);
   }
 
-  if (!strictTransportSecurityEnabled) {
+  if (!strictTransportSecurityEnabled && !hasPinningInformation) {
+    PR_LOG(gPIPNSSLog, PR_LOG_DEBUG,
+           ("[%p][%p] no HSTS or HPKP - overrides allowed\n",
+            mFdForLogging, this));
     nsCOMPtr<nsICertOverrideService> overrideService =
       do_GetService(NS_CERTOVERRIDE_CONTRACTID);
     // it is fine to continue without the nsICertOverrideService
@@ -485,15 +546,15 @@ CertErrorRunnable::CheckCertOverrides()
       // different types of errors. Since this is telemetry and we just
       // want a ballpark answer, we don't care.
       if (mErrorCodeTrust != 0) {
-        uint32_t probeValue = MapCertErrorToProbeValue(mErrorCodeTrust);
+        uint32_t probeValue = MapOverridableErrorToProbeValue(mErrorCodeTrust);
         Telemetry::Accumulate(Telemetry::SSL_CERT_ERROR_OVERRIDES, probeValue);
       }
       if (mErrorCodeMismatch != 0) {
-        uint32_t probeValue = MapCertErrorToProbeValue(mErrorCodeMismatch);
+        uint32_t probeValue = MapOverridableErrorToProbeValue(mErrorCodeMismatch);
         Telemetry::Accumulate(Telemetry::SSL_CERT_ERROR_OVERRIDES, probeValue);
       }
-      if (mErrorCodeExpired != 0) {
-        uint32_t probeValue = MapCertErrorToProbeValue(mErrorCodeExpired);
+      if (mErrorCodeTime != 0) {
+        uint32_t probeValue = MapOverridableErrorToProbeValue(mErrorCodeTime);
         Telemetry::Accumulate(Telemetry::SSL_CERT_ERROR_OVERRIDES, probeValue);
       }
 
@@ -505,8 +566,8 @@ CertErrorRunnable::CheckCertOverrides()
     }
   } else {
     PR_LOG(gPIPNSSLog, PR_LOG_DEBUG,
-           ("[%p][%p] Strict-Transport-Security is violated: untrusted "
-            "transport layer\n", mFdForLogging, this));
+           ("[%p][%p] HSTS or HPKP - no overrides allowed\n",
+            mFdForLogging, this));
   }
 
   PR_LOG(gPIPNSSLog, PR_LOG_DEBUG,
@@ -535,7 +596,7 @@ CertErrorRunnable::CheckCertOverrides()
   // pick the error code to report by priority
   PRErrorCode errorCodeToReport = mErrorCodeTrust    ? mErrorCodeTrust
                                 : mErrorCodeMismatch ? mErrorCodeMismatch
-                                : mErrorCodeExpired  ? mErrorCodeExpired
+                                : mErrorCodeTime     ? mErrorCodeTime
                                 : mDefaultErrorCodeToReport;
 
   SSLServerCertVerificationResult* result =
@@ -576,14 +637,24 @@ CreateCertErrorRunnable(CertVerifier& certVerifier,
   MOZ_ASSERT(infoObject);
   MOZ_ASSERT(cert);
 
+  uint32_t probeValue = MapCertErrorToProbeValue(defaultErrorCodeToReport);
+  Telemetry::Accumulate(Telemetry::SSL_CERT_VERIFICATION_ERRORS, probeValue);
+
   uint32_t collected_errors = 0;
   PRErrorCode errorCodeTrust = 0;
   PRErrorCode errorCodeMismatch = 0;
-  PRErrorCode errorCodeExpired = 0;
+  PRErrorCode errorCodeTime = 0;
   if (DetermineCertOverrideErrors(cert, infoObject->GetHostNameRaw(), now,
                                   defaultErrorCodeToReport, collected_errors,
                                   errorCodeTrust, errorCodeMismatch,
-                                  errorCodeExpired) != SECSuccess) {
+                                  errorCodeTime) != SECSuccess) {
+    // Attempt to enforce that if DetermineCertOverrideErrors failed,
+    // PR_SetError was set with a non-overridable error. This is because if we
+    // return from CreateCertErrorRunnable without calling
+    // infoObject->SetStatusErrorBits, we won't have the required information
+    // to actually add a certificate error override. This results in a broken
+    // UI which is annoying but not a security disaster.
+    MOZ_ASSERT(!ErrorIsOverridable(PR_GetError()));
     return nullptr;
   }
 
@@ -603,13 +674,13 @@ CreateCertErrorRunnable(CertVerifier& certVerifier,
     return nullptr;
   }
 
-  infoObject->SetStatusErrorBits(*nssCert, collected_errors);
+  infoObject->SetStatusErrorBits(nssCert, collected_errors);
 
   return new CertErrorRunnable(fdForLogging,
                                static_cast<nsIX509Cert*>(nssCert.get()),
                                infoObject, defaultErrorCodeToReport,
                                collected_errors, errorCodeTrust,
-                               errorCodeMismatch, errorCodeExpired,
+                               errorCodeMismatch, errorCodeTime,
                                providerFlags);
 }
 
@@ -822,8 +893,8 @@ GatherBaselineRequirementsTelemetry(const ScopedCERTCertList& certList)
     return;
   }
   CERTCertificate* cert = endEntityNode->cert;
-  mozilla::pkix::ScopedPtr<char, PORT_Free_string> commonName(
-    CERT_GetCommonName(&cert->subject));
+  UniquePtr<char, void(&)(void*)>
+    commonName(CERT_GetCommonName(&cert->subject), PORT_Free);
   // This only applies to certificates issued by authorities in our root
   // program.
   bool isBuiltIn = false;
@@ -1087,12 +1158,14 @@ AuthCertificate(CertVerifier& certVerifier,
   ScopedCERTCertList certList;
   CertVerifier::OCSPStaplingStatus ocspStaplingStatus =
     CertVerifier::OCSP_STAPLING_NEVER_CHECKED;
+  KeySizeStatus keySizeStatus = KeySizeStatus::NeverChecked;
 
   rv = certVerifier.VerifySSLServerCert(cert, stapledOCSPResponse,
                                         time, infoObject,
                                         infoObject->GetHostNameRaw(),
                                         saveIntermediates, 0, &certList,
-                                        &evOidPolicy, &ocspStaplingStatus);
+                                        &evOidPolicy, &ocspStaplingStatus,
+                                        &keySizeStatus);
   PRErrorCode savedErrorCode;
   if (rv != SECSuccess) {
     savedErrorCode = PR_GetError();
@@ -1100,6 +1173,10 @@ AuthCertificate(CertVerifier& certVerifier,
 
   if (ocspStaplingStatus != CertVerifier::OCSP_STAPLING_NEVER_CHECKED) {
     Telemetry::Accumulate(Telemetry::SSL_OCSP_STAPLING, ocspStaplingStatus);
+  }
+  if (keySizeStatus != KeySizeStatus::NeverChecked) {
+    Telemetry::Accumulate(Telemetry::CERT_CHAIN_KEY_SIZE_STATUS,
+                          static_cast<uint32_t>(keySizeStatus));
   }
 
   // We want to remember the CA certs in the temp db, so that the application can find the
@@ -1468,14 +1545,14 @@ AuthCertificateHook(void* arg, PRFileDesc* fd, PRBool checkSig, PRBool isServer)
 #ifndef MOZ_NO_EV_CERTS
 class InitializeIdentityInfo : public CryptoTask
 {
-  virtual nsresult CalculateResult() MOZ_OVERRIDE
+  virtual nsresult CalculateResult() override
   {
     EnsureIdentityInfoLoaded();
     return NS_OK;
   }
 
-  virtual void ReleaseNSSResources() MOZ_OVERRIDE { } // no-op
-  virtual void CallCallback(nsresult rv) MOZ_OVERRIDE { } // no-op
+  virtual void ReleaseNSSResources() override { } // no-op
+  virtual void CallCallback(nsresult rv) override { } // no-op
 };
 #endif
 

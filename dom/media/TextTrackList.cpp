@@ -60,9 +60,9 @@ TextTrackList::UpdateAndGetShowingCues(nsTArray<nsRefPtr<TextTrackCue> >& aCues)
 }
 
 JSObject*
-TextTrackList::WrapObject(JSContext* aCx)
+TextTrackList::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return TextTrackListBinding::Wrap(aCx, this);
+  return TextTrackListBinding::Wrap(aCx, this, aGivenProto);
 }
 
 TextTrack*
@@ -133,7 +133,7 @@ TextTrackList::DidSeek()
   }
 }
 
-class TrackEventRunner MOZ_FINAL: public nsRunnable
+class TrackEventRunner final: public nsRunnable
 {
 public:
   TrackEventRunner(TextTrackList* aList, nsIDOMEvent* aEvent)
@@ -141,7 +141,7 @@ public:
     , mEvent(aEvent)
   {}
 
-  NS_IMETHOD Run() MOZ_OVERRIDE
+  NS_IMETHOD Run() override
   {
     return mList->DispatchTrackEvent(mEvent);
   }

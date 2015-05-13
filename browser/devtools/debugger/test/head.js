@@ -38,9 +38,18 @@ SimpleTest.registerCleanupFunction(() => {
 // All tests are asynchronous.
 waitForExplicitFinish();
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function* () {
   info("finish() was called, cleaning up...");
   Services.prefs.setBoolPref("devtools.debugger.log", gEnableLogging);
+
+  while (gBrowser && gBrowser.tabs && gBrowser.tabs.length > 1) {
+    info("Destroying toolbox.");
+    let target = TargetFactory.forTab(gBrowser.selectedTab);
+    yield gDevTools.closeToolbox(target);
+
+    info("Removing tab.");
+    gBrowser.removeCurrentTab();
+  }
 
   // Properly shut down the server to avoid memory leaks.
   DebuggerServer.destroy();
@@ -249,7 +258,7 @@ function waitForSourceShown(aPanel, aUrl) {
     let sourceUrl = aSource.url || aSource.introductionUrl;
     info("Source shown: " + sourceUrl);
 
-    if (!sourceUrl.contains(aUrl)) {
+    if (!sourceUrl.includes(aUrl)) {
       return waitForSourceShown(aPanel, aUrl);
     } else {
       ok(true, "The correct source has been shown.");
@@ -265,7 +274,7 @@ function ensureSourceIs(aPanel, aUrlOrSource, aWaitFlag = false) {
   let sources = aPanel.panelWin.DebuggerView.Sources;
 
   if (sources.selectedValue === aUrlOrSource ||
-      sources.selectedItem.attachment.source.url.contains(aUrlOrSource)) {
+      sources.selectedItem.attachment.source.url.includes(aUrlOrSource)) {
     ok(true, "Expected source is shown: " + aUrlOrSource);
     return promise.resolve(null);
   }
@@ -432,6 +441,12 @@ function waitForClientEvents(aPanel, aEventName, aEventRepeat = 1) {
   return deferred.promise;
 }
 
+function waitForClipboardPromise(setup, expected) {
+  return new Promise((resolve, reject) => {
+    SimpleTest.waitForClipboard(expected, setup, resolve, reject);
+  });
+}
+
 function ensureThreadClientState(aPanel, aState) {
   let thread = aPanel.panelWin.gThreadClient;
   let state = thread.state;
@@ -554,6 +569,7 @@ AddonDebugger.prototype = {
       DebuggerServer.init();
       DebuggerServer.addBrowserActors();
     }
+    DebuggerServer.allowChromeProcess = true;
 
     this.frame = document.createElement("iframe");
     this.frame.setAttribute("height", 400);
@@ -572,7 +588,8 @@ AddonDebugger.prototype = {
     let targetOptions = {
       form: addonActor,
       client: this.client,
-      chrome: true
+      chrome: true,
+      isTabActor: false
     };
 
     let toolboxOptions = {
@@ -710,8 +727,8 @@ function prepareDebugger(aDebugger) {
     let view = aDebugger.panelWin.DebuggerView;
     view.Variables.lazyEmpty = false;
     view.Variables.lazySearch = false;
-    view.FilteredSources._autoSelectFirstItem = true;
-    view.FilteredFunctions._autoSelectFirstItem = true;
+    view.Filtering.FilteredSources._autoSelectFirstItem = true;
+    view.Filtering.FilteredFunctions._autoSelectFirstItem = true;
   } else {
     // Nothing to do here yet.
   }
@@ -1007,4 +1024,69 @@ function getSourceActor(aSources, aURL) {
 function getSourceForm(aSources, aURL) {
   let item = aSources.getItemByValue(getSourceActor(gSources, aURL));
   return item.attachment.source;
+}
+
+function connect(client) {
+  info("Connecting client.");
+  return new Promise(function (resolve) {
+    client.connect(function () {
+      resolve();
+    });
+  });
+}
+
+function close(client) {
+  info("Closing client.\n");
+  return new Promise(function (resolve) {
+    client.close(() => {
+      resolve();
+    });
+  });
+}
+
+function listTabs(client) {
+  info("Listing tabs.");
+  return new Promise(function (resolve) {
+    client.listTabs(function (response) {
+      resolve(response);
+    });
+  });
+}
+
+function findTab(tabs, url) {
+  info("Finding tab with url '" + url + "'.");
+  for (let tab of tabs) {
+    if (tab.url === url) {
+      return tab;
+    }
+  }
+  return null;
+}
+
+function attachTab(client, tab) {
+  info("Attaching to tab with url '" + tab.url + "'.");
+  return new Promise(function (resolve) {
+    client.attachTab(tab.actor, function (response, tabClient) {
+      resolve([response, tabClient]);
+    });
+  });
+}
+
+function listWorkers(tabClient) {
+  info("Listing workers.");
+  return new Promise(function (resolve) {
+    tabClient.listWorkers(function (response) {
+      resolve(response);
+    });
+  });
+}
+
+function waitForWorkerListChanged(tabClient) {
+  info("Waiting for worker list to change.");
+  return new Promise(function (resolve) {
+    tabClient.addListener("workerListChanged", function listener() {
+      tabClient.removeListener("workerListChanged", listener);
+      resolve();
+    });
+  });
 }

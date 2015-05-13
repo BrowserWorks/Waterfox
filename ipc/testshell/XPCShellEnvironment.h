@@ -10,12 +10,12 @@
 #include <string>
 #include <stdio.h>
 
-#include "nsAutoJSValHolder.h"
 #include "nsCOMPtr.h"
 #include "nsDebug.h"
 #include "nsString.h"
 #include "nsJSPrincipals.h"
 #include "nsContentUtils.h"
+#include "js/RootingAPI.h"
 #include "js/TypeDecls.h"
 
 struct JSPrincipals;
@@ -29,8 +29,7 @@ public:
     static XPCShellEnvironment* CreateEnvironment();
     ~XPCShellEnvironment();
 
-    void ProcessFile(JSContext *cx, JS::Handle<JSObject*> obj,
-                     const char *filename, FILE *file, bool forceTTY);
+    void ProcessFile(JSContext *cx, const char *filename, FILE *file, bool forceTTY);
     bool EvaluateString(const nsString& aString,
                         nsString* aResult = nullptr);
 
@@ -39,7 +38,7 @@ public:
     }
 
     JSObject* GetGlobalObject() {
-        return mGlobalHolder.ToJSObject();
+        return mGlobalHolder;
     }
 
     void SetIsQuitting() {
@@ -54,7 +53,7 @@ protected:
     bool Init();
 
 private:
-    nsAutoJSValHolder mGlobalHolder;
+    JS::PersistentRooted<JSObject *> mGlobalHolder;
 
     bool mQuitting;
 };

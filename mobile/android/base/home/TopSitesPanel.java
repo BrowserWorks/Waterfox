@@ -103,9 +103,6 @@ public class TopSitesPanel extends HomeFragment {
     // Max number of entries shown in the grid from the cursor.
     private int mMaxGridEntries;
 
-    // Fields used for tiles metrics recording.
-    private TilesRecorder mTilesRecorder;
-
     // Time in ms until the Gecko thread is reset to normal priority.
     private static final long PRIORITY_RESET_TIMEOUT = 10000;
 
@@ -128,22 +125,11 @@ public class TopSitesPanel extends HomeFragment {
         }
     }
 
-    public interface BrowserTilesRecorderProvider {
-        public TilesRecorder getTilesRecorder();
-    }
-
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
 
         mMaxGridEntries = activity.getResources().getInteger(R.integer.number_of_top_sites);
-
-        try {
-            mTilesRecorder = ((BrowserTilesRecorderProvider) activity).getTilesRecorder();
-        } catch (ClassCastException e) {
-            throw new ClassCastException(activity.toString()
-                    + " must implement TopSitesPanel.BrowserTilesRecorderProvider");
-        }
     }
 
     @Override
@@ -238,7 +224,7 @@ public class TopSitesPanel extends HomeFragment {
                         if (!tab.isPrivate()) {
                             final Locale locale = Locale.getDefault();
                             final String localeTag = Locales.getLanguageTag(locale);
-                            mTilesRecorder.recordAction(tab, TilesRecorder.ACTION_CLICK, position, getTilesSnapshot(), localeTag);
+                            TilesRecorder.recordAction(tab, TilesRecorder.ACTION_CLICK, position, getTilesSnapshot(), localeTag);
                         }
 
                         mUrlOpenListener.onUrlOpen(url, EnumSet.noneOf(OnUrlOpenListener.Flags.class));
@@ -313,11 +299,12 @@ public class TopSitesPanel extends HomeFragment {
     public void onDestroyView() {
         super.onDestroyView();
 
-        // Discard any additional item clicks on the list
-        // as the panel is getting destroyed (see bug 930160).
+        // Discard any additional item clicks on the list as the
+        // panel is getting destroyed (see bugs 930160 & 1096958).
         mList.setOnItemClickListener(null);
-        mList = null;
+        mGrid.setOnItemClickListener(null);
 
+        mList = null;
         mGrid = null;
         mListAdapter = null;
         mGridAdapter = null;
@@ -667,7 +654,7 @@ public class TopSitesPanel extends HomeFragment {
             }
 
             // Otherwise, do this until the async lookup returns.
-            view.displayThumbnail(R.drawable.favicon);
+            view.displayThumbnail(R.drawable.favicon_globe);
 
             // Give each side enough information to shake hands later.
             listener.setLoadId(loadId);

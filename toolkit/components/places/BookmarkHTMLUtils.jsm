@@ -68,7 +68,6 @@ Cu.import("resource://gre/modules/NetUtil.jsm");
 Cu.import("resource://gre/modules/osfile.jsm");
 Cu.import("resource://gre/modules/FileUtils.jsm");
 Cu.import("resource://gre/modules/PlacesUtils.jsm");
-Cu.import("resource://gre/modules/Promise.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesBackups",
@@ -106,11 +105,11 @@ function base64EncodeString(aString) {
  * file, compatible with the old bookmarks system.
  */
 function escapeHtmlEntities(aText) {
-  return (aText || "").replace("&", "&amp;", "g")
-                      .replace("<", "&lt;", "g")
-                      .replace(">", "&gt;", "g")
-                      .replace("\"", "&quot;", "g")
-                      .replace("'", "&#39;", "g");
+  return (aText || "").replace(/&/g, "&amp;")
+                      .replace(/</g, "&lt;")
+                      .replace(/>/g, "&gt;")
+                      .replace(/"/g, "&quot;")
+                      .replace(/'/g, "&#39;");
 }
 
 /**
@@ -118,19 +117,12 @@ function escapeHtmlEntities(aText) {
  * compatible with the old bookmarks system.
  */
 function escapeUrl(aText) {
-  return (aText || "").replace("\"", "%22", "g");
+  return (aText || "").replace(/"/g, "%22");
 }
 
 function notifyObservers(aTopic, aInitialImport) {
   Services.obs.notifyObservers(null, aTopic, aInitialImport ? "html-initial"
                                                             : "html");
-}
-
-function promiseSoon() {
-  let deferred = Promise.defer();
-  Services.tm.mainThread.dispatch(deferred.resolve,
-                                  Ci.nsIThread.DISPATCH_NORMAL);
-  return deferred.promise;
 }
 
 this.BookmarkHTMLUtils = Object.freeze({
@@ -602,17 +594,10 @@ BookmarkImporter.prototype = {
 
     // Save the keyword.
     if (keyword) {
-      try {
-        PlacesUtils.bookmarks.setKeywordForBookmark(frame.previousId, keyword);
-        if (postData) {
-          PlacesUtils.annotations.setItemAnnotation(frame.previousId,
-                                                    PlacesUtils.POST_DATA_ANNO,
-                                                    postData,
-                                                    0,
-                                                    PlacesUtils.annotations.EXPIRE_NEVER);
-        }
-      } catch(e) {
-      }
+      let kwPromise = PlacesUtils.keywords.insert({ keyword,
+                                                    url: frame.previousLink.spec,
+                                                    postData });
+      this._importPromises.push(kwPromise);
     }
 
     // Set load-in-sidebar annotation for the bookmark.
@@ -629,7 +614,8 @@ BookmarkImporter.prototype = {
 
     // Import last charset.
     if (lastCharset) {
-      PlacesUtils.setCharsetForURI(frame.previousLink, lastCharset);
+      let chPromise = PlacesUtils.setCharsetForURI(frame.previousLink, lastCharset);
+      this._importPromises.push(chPromise);
     }
   },
 
@@ -678,13 +664,14 @@ BookmarkImporter.prototype = {
       if (frame.previousFeed) {
         // The is a live bookmark.  We create it here since in HandleLinkBegin we
         // don't know the title.
-        PlacesUtils.livemarks.addLivemark({
+        let lmPromise = PlacesUtils.livemarks.addLivemark({
           "title": frame.previousText,
           "parentId": frame.containerId,
           "index": PlacesUtils.bookmarks.DEFAULT_INDEX,
           "feedURI": frame.previousFeed,
           "siteURI": frame.previousLink,
-        }).then(null, Cu.reportError);
+        });
+        this._importPromises.push(lmPromise);
       } else if (frame.previousLink) {
         // This is a common bookmark.
         PlacesUtils.bookmarks.setItemTitle(frame.previousId,
@@ -934,33 +921,35 @@ BookmarkImporter.prototype = {
     PlacesUtils.bookmarks.runInBatchMode(this, aDoc);
   },
 
-  importFromURL: function importFromURL(aSpec) {
-    let deferred = Promise.defer();
-    let xhr = Cc["@mozilla.org/xmlextras/xmlhttprequest;1"]
-                .createInstance(Ci.nsIXMLHttpRequest);
-    xhr.onload = () => {
-      try {
-        this._walkTreeForImport(xhr.responseXML);
-        deferred.resolve();
-      } catch(e) {
-        deferred.reject(e);
-        throw e;
-      }
-    };
-    xhr.onabort = xhr.onerror = xhr.ontimeout = () => {
-      deferred.reject(new Error("xmlhttprequest failed"));
-    };
-    try {
-      xhr.open("GET", aSpec);
+  importFromURL: Task.async(function* (href) {
+    this._importPromises = [];
+    yield new Promise((resolve, reject) => {
+      let xhr = Cc["@mozilla.org/xmlextras/xmlhttprequest;1"]
+                  .createInstance(Ci.nsIXMLHttpRequest);
+      xhr.onload = () => {
+        try {
+          this._walkTreeForImport(xhr.responseXML);
+          resolve();
+        } catch(e) {
+          reject(e);
+        }
+      };
+      xhr.onabort = xhr.onerror = xhr.ontimeout = () => {
+        reject(new Error("xmlhttprequest failed"));
+      };
+      xhr.open("GET", href);
       xhr.responseType = "document";
       xhr.overrideMimeType("text/html");
       xhr.send();
-    } catch (e) {
-      deferred.reject(e);
+    });
+    // TODO (bug 1095427) once converted to the new bookmarks API, methods will
+    // yield, so this hack should not be needed anymore.
+    try {
+      yield Promise.all(this._importPromises);
+    } finally {
+      delete this._importPromises;
     }
-    return deferred.promise;
-  },
-
+  }),
 };
 
 function BookmarkExporter(aBookmarksTree) {
@@ -1104,10 +1093,6 @@ BookmarkExporter.prototype = {
   },
 
   _writeItem: function (aItem, aIndent) {
-    // This is a workaround for "too much recursion" error, due to the fact
-    // Task.jsm still uses old on-same-tick promises.  It may be removed as
-    // soon as bug 887923 is fixed.
-    yield promiseSoon();
     let uri = null;
     try {
       uri = NetUtil.newURI(aItem.uri);
@@ -1121,14 +1106,11 @@ BookmarkExporter.prototype = {
     this._writeDateAttributes(aItem);
     yield this._writeFaviconAttribute(aItem);
 
-    let keyword = PlacesUtils.bookmarks.getKeywordForBookmark(aItem.id);
-    if (aItem.keyword)
-      this._writeAttribute("SHORTCUTURL", escapeHtmlEntities(keyword));
-
-    let postDataAnno = aItem.annos &&
-                       aItem.annos.find(anno => anno.name == PlacesUtils.POST_DATA_ANNO);
-    if (postDataAnno)
-      this._writeAttribute("POST_DATA", escapeHtmlEntities(postDataAnno.value));
+    if (aItem.keyword) {
+      this._writeAttribute("SHORTCUTURL", escapeHtmlEntities(aItem.keyword));
+      if (aItem.postData)
+        this._writeAttribute("POST_DATA", escapeHtmlEntities(aItem.postData));
+    }
 
     if (aItem.annos && aItem.annos.some(anno => anno.name == LOAD_IN_SIDEBAR_ANNO))
       this._writeAttribute("WEB_PANEL", "true");

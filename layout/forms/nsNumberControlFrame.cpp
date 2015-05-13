@@ -106,6 +106,7 @@ nsNumberControlFrame::Reflow(nsPresContext* aPresContext,
                              const nsHTMLReflowState& aReflowState,
                              nsReflowStatus& aStatus)
 {
+  MarkInReflow();
   DO_GLOBAL_REFLOW_COUNT("nsNumberControlFrame");
   DISPLAY_REFLOW(aPresContext, this, aReflowState, aDesiredSize, aStatus);
 
@@ -269,7 +270,7 @@ public:
       mTextField(aTextField)
   {}
 
-  NS_IMETHODIMP Run() MOZ_OVERRIDE
+  NS_IMETHODIMP Run() override
   {
     if (mNumber->AsElement()->State().HasState(NS_EVENT_STATE_FOCUS)) {
       HTMLInputElement::FromContent(mTextField)->Focus();
@@ -530,7 +531,7 @@ nsNumberControlFrame::GetNumberControlFrameForTextField(nsIFrame* aFrame)
   if (content->IsInNativeAnonymousSubtree() &&
       content->GetParent() && content->GetParent()->GetParent()) {
     nsIContent* grandparent = content->GetParent()->GetParent();
-    if (grandparent->IsHTML(nsGkAtoms::input) &&
+    if (grandparent->IsHTMLElement(nsGkAtoms::input) &&
         grandparent->AttrValueIs(kNameSpaceID_None, nsGkAtoms::type,
                                  nsGkAtoms::number, eCaseMatters)) {
       return do_QueryFrame(grandparent->GetPrimaryFrame());
@@ -552,7 +553,7 @@ nsNumberControlFrame::GetNumberControlFrameForSpinButton(nsIFrame* aFrame)
       content->GetParent() && content->GetParent()->GetParent() &&
       content->GetParent()->GetParent()->GetParent()) {
     nsIContent* greatgrandparent = content->GetParent()->GetParent()->GetParent();
-    if (greatgrandparent->IsHTML(nsGkAtoms::input) &&
+    if (greatgrandparent->IsHTMLElement(nsGkAtoms::input) &&
         greatgrandparent->AttrValueIs(kNameSpaceID_None, nsGkAtoms::type,
                                       nsGkAtoms::number, eCaseMatters)) {
       return do_QueryFrame(greatgrandparent->GetPrimaryFrame());
@@ -585,8 +586,7 @@ nsNumberControlFrame::GetSpinButtonForPointerEvent(WidgetGUIEvent* aEvent) const
     LayoutDeviceIntPoint absPoint = aEvent->refPoint;
     nsPoint point =
       nsLayoutUtils::GetEventCoordinatesRelativeTo(aEvent,
-                       LayoutDeviceIntPoint::ToUntyped(absPoint),
-                       mSpinBox->GetPrimaryFrame());
+                       absPoint, mSpinBox->GetPrimaryFrame());
     if (point != nsPoint(NS_UNCONSTRAINEDSIZE, NS_UNCONSTRAINEDSIZE)) {
       if (point.y < mSpinBox->GetPrimaryFrame()->GetSize().height / 2) {
         return eSpinButtonUp;
@@ -806,17 +806,17 @@ nsNumberControlFrame::GetPseudoElement(nsCSSPseudoElements::Type aType)
   }
 
   if (aType == nsCSSPseudoElements::ePseudo_mozNumberSpinBox) {
-    MOZ_ASSERT(mSpinBox);
+    // Might be null.
     return mSpinBox;
   }
 
   if (aType == nsCSSPseudoElements::ePseudo_mozNumberSpinUp) {
-    MOZ_ASSERT(mSpinUp);
+    // Might be null.
     return mSpinUp;
   }
 
   if (aType == nsCSSPseudoElements::ePseudo_mozNumberSpinDown) {
-    MOZ_ASSERT(mSpinDown);
+    // Might be null.
     return mSpinDown;
   }
 

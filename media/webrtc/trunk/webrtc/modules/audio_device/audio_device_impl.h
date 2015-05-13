@@ -32,7 +32,8 @@ public:
         kPlatformLinux = 3,
         kPlatformMac = 4,
         kPlatformAndroid = 5,
-        kPlatformIOS = 6
+        kPlatformIOS = 6,
+        kPlatformSndio = 7
     };
 
     int32_t CheckPlatform();
@@ -115,10 +116,8 @@ public:
                                   uint16_t* volumeRight) const OVERRIDE;
 
     // Audio mixer initialization
-    virtual int32_t SpeakerIsAvailable(bool* available) OVERRIDE;
     virtual int32_t InitSpeaker() OVERRIDE;
     virtual bool SpeakerIsInitialized() const OVERRIDE;
-    virtual int32_t MicrophoneIsAvailable(bool* available) OVERRIDE;
     virtual int32_t InitMicrophone() OVERRIDE;
     virtual bool MicrophoneIsInitialized() const OVERRIDE;
 

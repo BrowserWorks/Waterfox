@@ -22,9 +22,7 @@
  * limitations under the License.
  */
 
-#include "gtest/gtest.h"
-#include "pkix/pkixtypes.h"
-#include "pkixtestutil.h"
+#include "pkixgtest.h"
 
 using namespace mozilla::pkix;
 using namespace mozilla::pkix::test;

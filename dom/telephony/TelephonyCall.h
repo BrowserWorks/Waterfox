@@ -1,5 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
-/* vim: set ts=2 et sw=2 tw=40: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -9,6 +9,7 @@
 
 #include "mozilla/dom/DOMError.h"
 #include "mozilla/dom/Promise.h"
+#include "mozilla/dom/TelephonyCallBinding.h"
 #include "mozilla/dom/TelephonyCallId.h"
 #include "mozilla/dom/telephony/TelephonyCommon.h"
 
@@ -17,7 +18,7 @@ class nsPIDOMWindow;
 namespace mozilla {
 namespace dom {
 
-class TelephonyCall MOZ_FINAL : public DOMEventTargetHelper
+class TelephonyCall final : public DOMEventTargetHelper
 {
   nsRefPtr<Telephony> mTelephony;
   nsRefPtr<TelephonyCallGroup> mGroup;
@@ -29,6 +30,8 @@ class TelephonyCall MOZ_FINAL : public DOMEventTargetHelper
   nsString mState;
   bool mEmergency;
   nsRefPtr<DOMError> mError;
+  Nullable<TelephonyCallDisconnectedReason> mDisconnectedReason;
+
   bool mSwitchable;
   bool mMergeable;
 
@@ -51,7 +54,7 @@ public:
 
   // WrapperCache
   virtual JSObject*
-  WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // WebIDL
   already_AddRefed<TelephonyCallId>
@@ -87,6 +90,12 @@ public:
   already_AddRefed<DOMError>
   GetError() const;
 
+  Nullable<TelephonyCallDisconnectedReason>
+  GetDisconnectedReason() const
+  {
+    return mDisconnectedReason;
+  }
+
   already_AddRefed<TelephonyCallGroup>
   GetGroup() const;
 
@@ -105,13 +114,9 @@ public:
   IMPL_EVENT_HANDLER(statechange)
   IMPL_EVENT_HANDLER(dialing)
   IMPL_EVENT_HANDLER(alerting)
-  IMPL_EVENT_HANDLER(connecting)
   IMPL_EVENT_HANDLER(connected)
-  IMPL_EVENT_HANDLER(disconnecting)
   IMPL_EVENT_HANDLER(disconnected)
-  IMPL_EVENT_HANDLER(holding)
   IMPL_EVENT_HANDLER(held)
-  IMPL_EVENT_HANDLER(resuming)
   IMPL_EVENT_HANDLER(error)
   IMPL_EVENT_HANDLER(groupchange)
 
@@ -170,6 +175,9 @@ public:
   NotifyError(const nsAString& aError);
 
   void
+  UpdateDisconnectedReason(const nsAString& aDisconnectedReason);
+
+  void
   ChangeGroup(TelephonyCallGroup* aGroup);
 
 private:
@@ -183,6 +191,9 @@ private:
   nsresult
   DispatchCallEvent(const nsAString& aType,
                     TelephonyCall* aCall);
+
+  already_AddRefed<Promise>
+  CreatePromise(ErrorResult& aRv);
 };
 
 } // namespace dom

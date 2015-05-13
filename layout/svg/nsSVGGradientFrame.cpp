@@ -34,7 +34,7 @@ public:
     MOZ_GUARD_OBJECT_NOTIFIER_INIT;
     // Reference loops should normally be detected in advance and handled, so
     // we're not expecting to encounter them here
-    NS_ABORT_IF_FALSE(!mFrame->mLoopFlag, "Undetected reference loop!");
+    MOZ_ASSERT(!mFrame->mLoopFlag, "Undetected reference loop!");
     mFrame->mLoopFlag = true;
   }
   ~AutoGradientReferencer() {
@@ -198,7 +198,7 @@ static void GetStopInformation(nsIFrame* aStopFrame,
                                float *aStopOpacity)
 {
   nsIContent* stopContent = aStopFrame->GetContent();
-  MOZ_ASSERT(stopContent && stopContent->IsSVG(nsGkAtoms::stop));
+  MOZ_ASSERT(stopContent && stopContent->IsSVGElement(nsGkAtoms::stop));
 
   static_cast<SVGStopElement*>(stopContent)->
     GetAnimatedNumberValues(aOffset, nullptr);
@@ -410,7 +410,7 @@ nsSVGLinearGradientFrame::Init(nsIContent*       aContent,
                                nsContainerFrame* aParent,
                                nsIFrame*         aPrevInFlow)
 {
-  NS_ASSERTION(aContent->IsSVG(nsGkAtoms::linearGradient),
+  NS_ASSERTION(aContent->IsSVGElement(nsGkAtoms::linearGradient),
                "Content is not an SVG linearGradient");
 
   nsSVGLinearGradientFrameBase::Init(aContent, aParent, aPrevInFlow);
@@ -450,7 +450,7 @@ nsSVGLinearGradientFrame::GetLengthValue(uint32_t aIndex)
       static_cast<dom::SVGLinearGradientElement*>(mContent));
   // We passed in mContent as a fallback, so, assuming mContent is non-null, the
   // return value should also be non-null.
-  NS_ABORT_IF_FALSE(lengthElement,
+  MOZ_ASSERT(lengthElement,
     "Got unexpected null element from GetLinearGradientWithLength");
   const nsSVGLength2 &length = lengthElement->mLengthAttributes[aIndex];
 
@@ -519,7 +519,7 @@ nsSVGRadialGradientFrame::Init(nsIContent*       aContent,
                                nsContainerFrame* aParent,
                                nsIFrame*         aPrevInFlow)
 {
-  NS_ASSERTION(aContent->IsSVG(nsGkAtoms::radialGradient),
+  NS_ASSERTION(aContent->IsSVGElement(nsGkAtoms::radialGradient),
                "Content is not an SVG radialGradient");
 
   nsSVGRadialGradientFrameBase::Init(aContent, aParent, aPrevInFlow);
@@ -560,7 +560,7 @@ nsSVGRadialGradientFrame::GetLengthValue(uint32_t aIndex)
       static_cast<dom::SVGRadialGradientElement*>(mContent));
   // We passed in mContent as a fallback, so, assuming mContent is non-null,
   // the return value should also be non-null.
-  NS_ABORT_IF_FALSE(lengthElement,
+  MOZ_ASSERT(lengthElement,
     "Got unexpected null element from GetRadialGradientWithLength");
   return GetLengthValueFromElement(aIndex, *lengthElement);
 }

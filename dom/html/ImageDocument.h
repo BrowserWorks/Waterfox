@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -14,17 +15,17 @@
 namespace mozilla {
 namespace dom {
 
-class ImageDocument MOZ_FINAL : public MediaDocument,
-                                public nsIImageDocument,
-                                public imgINotificationObserver,
-                                public nsIDOMEventListener
+class ImageDocument final : public MediaDocument,
+                            public nsIImageDocument,
+                            public imgINotificationObserver,
+                            public nsIDOMEventListener
 {
 public:
   ImageDocument();
 
   NS_DECL_ISUPPORTS_INHERITED
 
-  virtual nsresult Init() MOZ_OVERRIDE;
+  virtual nsresult Init() override;
 
   virtual nsresult StartDocumentLoad(const char*         aCommand,
                                      nsIChannel*         aChannel,
@@ -32,18 +33,18 @@ public:
                                      nsISupports*        aContainer,
                                      nsIStreamListener** aDocListener,
                                      bool                aReset = true,
-                                     nsIContentSink*     aSink = nullptr) MOZ_OVERRIDE;
+                                     nsIContentSink*     aSink = nullptr) override;
 
-  virtual void SetScriptGlobalObject(nsIScriptGlobalObject* aScriptGlobalObject) MOZ_OVERRIDE;
-  virtual void Destroy() MOZ_OVERRIDE;
+  virtual void SetScriptGlobalObject(nsIScriptGlobalObject* aScriptGlobalObject) override;
+  virtual void Destroy() override;
   virtual void OnPageShow(bool aPersisted,
-                          EventTarget* aDispatchStartTarget) MOZ_OVERRIDE;
+                          EventTarget* aDispatchStartTarget) override;
 
   NS_DECL_NSIIMAGEDOCUMENT
   NS_DECL_IMGINOTIFICATIONOBSERVER
 
   // nsIDOMEventListener
-  NS_IMETHOD HandleEvent(nsIDOMEvent* aEvent) MOZ_OVERRIDE;
+  NS_IMETHOD HandleEvent(nsIDOMEvent* aEvent) override;
 
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(ImageDocument, MediaDocument)
 
@@ -52,8 +53,8 @@ public:
   void DefaultCheckOverflowing() { CheckOverflowing(mResizeImageByDefault); }
 
   // WebIDL API
-  virtual JSObject* WrapNode(JSContext* aCx)
-    MOZ_OVERRIDE;
+  virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
+    override;
 
   bool ImageResizingEnabled() const
   {
@@ -79,7 +80,7 @@ public:
 protected:
   virtual ~ImageDocument();
 
-  virtual nsresult CreateSyntheticDocument() MOZ_OVERRIDE;
+  virtual nsresult CreateSyntheticDocument() override;
 
   nsresult CheckOverflowing(bool changeState);
 

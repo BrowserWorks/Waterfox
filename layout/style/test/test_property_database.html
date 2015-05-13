@@ -122,6 +122,44 @@ for (var prop in gCSSProperties) {
      "must have non-initial values for property '" + prop + "'");
 }
 
+/*
+ * Test that only longhand properties are listed as logical properties.
+ */
+for (var prop in gCSSProperties) {
+  var info = gCSSProperties[prop];
+  if (info.logical) {
+    is(info.type, CSS_TYPE_LONGHAND,
+       "property '" + prop + "' is listed as CSS_TYPE_LONGHAND due to its " +
+       "being a logical property");
+  }
+}
+
+/*
+ * Test that axis is only specified for logical properties.
+ */
+for (var prop in gCSSProperties) {
+  var info = gCSSProperties[prop];
+  if (info.axis) {
+    ok(info.logical,
+       "property '" + prop + "' is listed as an logical property due to its " +
+       "being listed as an axis-related property");
+  }
+}
+
+/*
+ * Test that DOM properties match the expected rules.
+ */
+for (var prop in gCSSProperties) {
+  var info = gCSSProperties[prop];
+  var expectedDOMProp = prop.replace(/-([a-z])/g,
+                                     function(m, p1, offset, str) {
+                                       return p1.toUpperCase();
+                                     });
+  if (expectedDOMProp == "float") {
+    expectedDOMProp = "cssFloat";
+  }
+  is(info.domProp, expectedDOMProp, "DOM property for " + prop);
+}
 </script>
 </pre>
 </body>

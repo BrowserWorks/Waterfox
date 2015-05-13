@@ -13,7 +13,7 @@
 #include <string>
 
 #if defined(XP_WIN) && defined(MOZ_SANDBOX)
-#include "mozilla/sandboxTarget.h"
+#include "mozilla/Scoped.h"
 #include "windows.h"
 #include <intrin.h>
 #include <assert.h>
@@ -33,6 +33,31 @@
 #include "sha256.h"
 #endif
 
+#if defined(XP_WIN) && defined(MOZ_SANDBOX)
+namespace {
+
+// Scoped type used by Load
+struct ScopedActCtxHandleTraits
+{
+  typedef HANDLE type;
+
+  static type empty()
+  {
+    return INVALID_HANDLE_VALUE;
+  }
+
+  static void release(type aActCtxHandle)
+  {
+    if (aActCtxHandle != INVALID_HANDLE_VALUE) {
+      ReleaseActCtx(aActCtxHandle);
+    }
+  }
+};
+typedef mozilla::Scoped<ScopedActCtxHandleTraits> ScopedActCtxHandle;
+
+} // anonymous namespace
+#endif
+
 namespace mozilla {
 namespace gmp {
 
@@ -47,18 +72,16 @@ public:
                     uint32_t aLibPathLen,
                     char* aOriginSalt,
                     uint32_t aOriginSaltLen,
-                    const GMPPlatformAPI* aPlatformAPI) MOZ_OVERRIDE;
+                    const GMPPlatformAPI* aPlatformAPI) override;
 
   virtual GMPErr GetAPI(const char* aAPIName,
                         void* aHostAPI,
-                        void** aPluginAPI) MOZ_OVERRIDE;
+                        void** aPluginAPI) override;
 
-  virtual void Shutdown() MOZ_OVERRIDE;
+  virtual void Shutdown() override;
 
-#ifdef SANDBOX_NOT_STATICALLY_LINKED_INTO_PLUGIN_CONTAINER
-  virtual void SetStartSandboxStarter(SandboxStarter* aStarter) MOZ_OVERRIDE {
-    mSandboxStarter = aStarter;
-  }
+#if defined(XP_MACOSX)
+  virtual void SetSandboxInfo(MacSandboxInfo* aSandboxInfo) override;
 #endif
 
 private:
@@ -168,11 +191,35 @@ GMPLoaderImpl::Load(const char* aLibPath,
     nodeId = std::string(aOriginSalt, aOriginSalt + aOriginSaltLen);
   }
 
+#if defined(XP_WIN) && defined(MOZ_SANDBOX)
+  // If the GMP DLL is a side-by-side assembly with static imports then the DLL
+  // loader will attempt to create an activation context which will fail because
+  // of the sandbox. If we create an activation context before we start the
+  // sandbox then this one will get picked up by the DLL loader.
+  int pathLen = MultiByteToWideChar(CP_ACP, 0, aLibPath, -1, nullptr, 0);
+  if (pathLen == 0) {
+    return false;
+  }
+
+  wchar_t* widePath = new wchar_t[pathLen];
+  if (MultiByteToWideChar(CP_ACP, 0, aLibPath, -1, widePath, pathLen) == 0) {
+    delete[] widePath;
+    return false;
+  }
+
+  ACTCTX actCtx = { sizeof(actCtx) };
+  actCtx.dwFlags = ACTCTX_FLAG_RESOURCE_NAME_VALID;
+  actCtx.lpSource = widePath;
+  actCtx.lpResourceName = ISOLATIONAWARE_MANIFEST_RESOURCE_ID;
+  ScopedActCtxHandle actCtxHandle(CreateActCtx(&actCtx));
+  delete[] widePath;
+#endif
+
   // Start the sandbox now that we've generated the device bound node id.
   // This must happen after the node id is bound to the device id, as
   // generating the device id requires privileges.
-  if (mSandboxStarter) {
-    mSandboxStarter->Start(aLibPath);
+  if (mSandboxStarter && !mSandboxStarter->Start(aLibPath)) {
+    return false;
   }
 
   // Load the GMP.
@@ -228,6 +275,15 @@ GMPLoaderImpl::Shutdown()
   }
 }
 
+#if defined(XP_MACOSX)
+void
+GMPLoaderImpl::SetSandboxInfo(MacSandboxInfo* aSandboxInfo)
+{
+  if (mSandboxStarter) {
+    mSandboxStarter->SetSandboxInfo(aSandboxInfo);
+  }
+}
+#endif
 } // namespace gmp
 } // namespace mozilla
 

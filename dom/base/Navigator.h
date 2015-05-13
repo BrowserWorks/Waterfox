@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 sw=2 et tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -19,7 +19,7 @@
 #include "nsString.h"
 #include "nsTArray.h"
 #ifdef MOZ_EME
-#include "mozilla/dom/MediaKeySystemAccess.h"
+#include "mozilla/dom/MediaKeySystemAccessManager.h"
 #endif
 
 class nsPluginArray;
@@ -43,10 +43,6 @@ struct MobileIdOptions;
 class ServiceWorkerContainer;
 }
 }
-
-#ifdef MOZ_B2G_RIL
-class nsIDOMMozIccManager;
-#endif // MOZ_B2G_RIL
 
 //*****************************************************************************
 // Navigator: Script "navigator" object
@@ -88,15 +84,17 @@ class BluetoothManager;
 #endif // MOZ_B2G_BT
 
 #ifdef MOZ_B2G_RIL
-class IccManager;
 class MobileConnectionArray;
 #endif
 
 class PowerManager;
 class CellBroadcast;
+class IccManager;
 class Telephony;
 class Voicemail;
 class TVManager;
+class InputPortManager;
+class DeviceStorageAreaListener;
 
 namespace time {
 class TimeManager;
@@ -108,9 +106,9 @@ class AudioChannelManager;
 #endif
 } // namespace system
 
-class Navigator MOZ_FINAL : public nsIDOMNavigator
-                          , public nsIMozNavigatorNetwork
-                          , public nsWrapperCache
+class Navigator final : public nsIDOMNavigator
+                      , public nsIMozNavigatorNetwork
+                      , public nsWrapperCache
 {
 public:
   explicit Navigator(nsPIDOMWindow* aInnerWindow);
@@ -217,17 +215,23 @@ public:
   void RemoveIdleObserver(MozIdleObserver& aObserver, ErrorResult& aRv);
   already_AddRefed<WakeLock> RequestWakeLock(const nsAString &aTopic,
                                              ErrorResult& aRv);
+  DeviceStorageAreaListener* GetDeviceStorageAreaListener(ErrorResult& aRv);
   nsDOMDeviceStorage* GetDeviceStorage(const nsAString& aType,
                                        ErrorResult& aRv);
   void GetDeviceStorages(const nsAString& aType,
                          nsTArray<nsRefPtr<nsDOMDeviceStorage> >& aStores,
                          ErrorResult& aRv);
+  nsDOMDeviceStorage* GetDeviceStorageByNameAndType(const nsAString& aName,
+                                                    const nsAString& aType,
+                                                    ErrorResult& aRv);
   DesktopNotificationCenter* GetMozNotification(ErrorResult& aRv);
   CellBroadcast* GetMozCellBroadcast(ErrorResult& aRv);
+  IccManager* GetMozIccManager(ErrorResult& aRv);
   MobileMessageManager* GetMozMobileMessage();
   Telephony* GetMozTelephony(ErrorResult& aRv);
   Voicemail* GetMozVoicemail(ErrorResult& aRv);
   TVManager* GetTv();
+  InputPortManager* GetInputPortManager(ErrorResult& aRv);
   network::Connection* GetConnection(ErrorResult& aRv);
   nsDOMCameraManager* GetMozCameras(ErrorResult& aRv);
   MediaDevices* GetMediaDevices(ErrorResult& aRv);
@@ -243,7 +247,6 @@ public:
 #endif
 #ifdef MOZ_B2G_RIL
   MobileConnectionArray* GetMozMobileConnections(ErrorResult& aRv);
-  IccManager* GetMozIccManager(ErrorResult& aRv);
 #endif // MOZ_B2G_RIL
 #ifdef MOZ_GAMEPAD
   void GetGamepads(nsTArray<nsRefPtr<Gamepad> >& aGamepads, ErrorResult& aRv);
@@ -283,9 +286,14 @@ public:
   bool DoResolve(JSContext* aCx, JS::Handle<JSObject*> aObject,
                  JS::Handle<jsid> aId,
                  JS::MutableHandle<JSPropertyDescriptor> aDesc);
+  // The return value is whether DoResolve might end up resolving the given id.
+  // If in doubt, return true.
+  static bool MayResolve(jsid aId);
   void GetOwnPropertyNames(JSContext* aCx, nsTArray<nsString>& aNames,
                            ErrorResult& aRv);
   void GetLanguages(nsTArray<nsString>& aLanguages);
+
+  bool MozE10sEnabled();
 
   static void GetAcceptLanguages(nsTArray<nsString>& aLanguages);
 
@@ -315,18 +323,26 @@ public:
 
   static bool HasTVSupport(JSContext* aCx, JSObject* aGlobal);
 
+  static bool IsE10sEnabled(JSContext* aCx, JSObject* aGlobal);
+
   nsPIDOMWindow* GetParentObject() const
   {
     return GetWindow();
   }
 
-  virtual JSObject* WrapObject(JSContext* cx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* cx, JS::Handle<JSObject*> aGivenProto) override;
+
+  // GetWindowFromGlobal returns the inner window for this global, if
+  // any, else null.
+  static already_AddRefed<nsPIDOMWindow> GetWindowFromGlobal(JSObject* aGlobal);
 
 #ifdef MOZ_EME
   already_AddRefed<Promise>
   RequestMediaKeySystemAccess(const nsAString& aKeySystem,
                               const Optional<Sequence<MediaKeySystemOptions>>& aOptions,
                               ErrorResult& aRv);
+private:
+  nsRefPtr<MediaKeySystemAccessManager> mMediaKeySystemAccessManager;
 #endif
 
 private:
@@ -334,9 +350,6 @@ private:
 
   bool CheckPermission(const char* type);
   static bool CheckPermission(nsPIDOMWindow* aWindow, const char* aType);
-  // GetWindowFromGlobal returns the inner window for this global, if
-  // any, else null.
-  static already_AddRefed<nsPIDOMWindow> GetWindowFromGlobal(JSObject* aGlobal);
 
   nsRefPtr<nsMimeTypeArray> mMimeTypes;
   nsRefPtr<nsPluginArray> mPlugins;
@@ -348,14 +361,15 @@ private:
 #endif
   nsRefPtr<PowerManager> mPowerManager;
   nsRefPtr<CellBroadcast> mCellBroadcast;
+  nsRefPtr<IccManager> mIccManager;
   nsRefPtr<MobileMessageManager> mMobileMessageManager;
   nsRefPtr<Telephony> mTelephony;
   nsRefPtr<Voicemail> mVoicemail;
   nsRefPtr<TVManager> mTVManager;
+  nsRefPtr<InputPortManager> mInputPortManager;
   nsRefPtr<network::Connection> mConnection;
 #ifdef MOZ_B2G_RIL
   nsRefPtr<MobileConnectionArray> mMobileConnections;
-  nsRefPtr<IccManager> mIccManager;
 #endif
 #ifdef MOZ_B2G_BT
   nsRefPtr<bluetooth::BluetoothManager> mBluetooth;
@@ -370,6 +384,7 @@ private:
   nsRefPtr<time::TimeManager> mTimeManager;
   nsRefPtr<ServiceWorkerContainer> mServiceWorkerContainer;
   nsCOMPtr<nsPIDOMWindow> mWindow;
+  nsRefPtr<DeviceStorageAreaListener> mDeviceStorageAreaListener;
 
   // Hashtable for saving cached objects DoResolve created, so we don't create
   // the object twice if asked for it twice, whether due to use of "delete" or

@@ -176,7 +176,7 @@ public:
   // arbitrary MessageLoop to Quit.
   class QuitTask : public Task {
    public:
-    virtual void Run() {
+    virtual void Run() override {
       MessageLoop::current()->Quit();
     }
   };
@@ -396,9 +396,9 @@ public:
                        int delay_ms, bool nestable);
 
   // base::MessagePump::Delegate methods:
-  virtual bool DoWork();
-  virtual bool DoDelayedWork(base::TimeTicks* next_delayed_work_time);
-  virtual bool DoIdleWork();
+  virtual bool DoWork() override;
+  virtual bool DoDelayedWork(base::TimeTicks* next_delayed_work_time) override;
+  virtual bool DoIdleWork() override;
 
   Type type_;
   int32_t id_;

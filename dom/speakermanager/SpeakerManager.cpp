@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -78,7 +80,7 @@ SpeakerManager::SetForcespeaker(bool aEnable)
 void
 SpeakerManager::DispatchSimpleEvent(const nsAString& aStr)
 {
-  NS_ABORT_IF_FALSE(NS_IsMainThread(), "Not running on main thread");
+  MOZ_ASSERT(NS_IsMainThread(), "Not running on main thread");
   nsresult rv = CheckInnerWindowCorrectness();
   if (NS_FAILED(rv)) {
     return;
@@ -165,9 +167,9 @@ SpeakerManager::Constructor(const GlobalObject& aGlobal, ErrorResult& aRv)
 }
 
 JSObject*
-SpeakerManager::WrapObject(JSContext* aCx)
+SpeakerManager::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return MozSpeakerManagerBinding::Wrap(aCx, this);
+  return MozSpeakerManagerBinding::Wrap(aCx, this, aGivenProto);
 }
 
 NS_IMETHODIMP
@@ -211,12 +213,11 @@ SpeakerManager::HandleEvent(nsIDOMEvent* aEvent)
 void
 SpeakerManager::SetAudioChannelActive(bool isActive)
 {
-  if (!isActive && !mVisible) {
+  if (mForcespeaker) {
     SpeakerManagerService *service =
       SpeakerManagerService::GetOrCreateSpeakerManagerService();
     MOZ_ASSERT(service);
-
-    service->ForceSpeaker(false, mVisible);
+    service->ForceSpeaker(isActive, mVisible);
   }
 }
 

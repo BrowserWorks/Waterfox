@@ -3,6 +3,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+Components.utils.import("resource://gre/modules/BrowserUtils.jsm");
+
 var security = {
   // Display the server certificate (static)
   viewCert : function () {
@@ -34,7 +36,10 @@ var security = {
 
     var isBroken =
       (ui.state & Components.interfaces.nsIWebProgressListener.STATE_IS_BROKEN);
-    var isInsecure = 
+    var isMixed =
+      (ui.state & (Components.interfaces.nsIWebProgressListener.STATE_LOADED_MIXED_ACTIVE_CONTENT |
+                   Components.interfaces.nsIWebProgressListener.STATE_LOADED_MIXED_DISPLAY_CONTENT));
+    var isInsecure =
       (ui.state & Components.interfaces.nsIWebProgressListener.STATE_IS_INSECURE);
     var isEV =
       (ui.state & Components.interfaces.nsIWebProgressListener.STATE_IDENTITY_EV_TOPLEVEL);
@@ -54,6 +59,7 @@ var security = {
         encryptionStrength : undefined,
         version: undefined,
         isBroken : isBroken,
+        isMixed : isMixed,
         isEV : isEV,
         cert : cert,
         fullLocation : gWindow.location
@@ -92,6 +98,7 @@ var security = {
         encryptionStrength : 0,
         version: "",
         isBroken : isBroken,
+        isMixed : isMixed,
         isEV : isEV,
         cert : null,
         fullLocation : gWindow.location
@@ -130,7 +137,7 @@ var security = {
                       getService(Components.interfaces.nsIEffectiveTLDService);
 
     var eTLD;
-    var uri = gDocument.documentURIObject;
+    var uri = BrowserUtils.makeURIFromCPOW(gDocument.documentURIObject);
     try {
       eTLD = eTLDService.getBaseDomain(uri);
     }
@@ -227,7 +234,7 @@ function securityOnLoad() {
   var yesStr = pageInfoBundle.getString("yes");
   var noStr = pageInfoBundle.getString("no");
 
-  var uri = gDocument.documentURIObject;
+  var uri = BrowserUtils.makeURIFromCPOW(gDocument.documentURIObject);
   setText("security-privacy-cookies-value",
           hostHasCookies(uri) ? yesStr : noStr);
   setText("security-privacy-passwords-value",
@@ -253,8 +260,15 @@ function securityOnLoad() {
   var msg2;
 
   if (info.isBroken) {
-    hdr = pkiBundle.getString("pageInfo_MixedContent");
-    msg1 = pkiBundle.getString("pageInfo_Privacy_Broken1");
+    if (info.isMixed) {
+      hdr = pkiBundle.getString("pageInfo_MixedContent");
+    } else {
+      hdr = pkiBundle.getFormattedString("pageInfo_BrokenEncryption",
+                                         [info.encryptionAlgorithm,
+                                          info.encryptionStrength + "",
+                                          info.version]);
+    }
+    msg1 = pkiBundle.getString("pageInfo_Privacy_Broken2");
     msg2 = pkiBundle.getString("pageInfo_Privacy_None2");
   }
   else if (info.encryptionStrength > 0) {

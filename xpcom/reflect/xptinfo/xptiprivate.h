@@ -180,21 +180,26 @@ public:
     };
     
     // Additional bit flags...
-    enum {SCRIPTABLE = 4, BUILTINCLASS = 8, HASNOTXPCOM = 16};
+    enum {SCRIPTABLE = 4, BUILTINCLASS = 8, HASNOTXPCOM = 16,
+          MAIN_PROCESS_SCRIPTABLE_ONLY = 32};
 
     uint8_t GetResolveState() const {return mFlags.GetState();}
     
     bool IsFullyResolved() const 
         {return GetResolveState() == (uint8_t) FULLY_RESOLVED;}
 
-    void   SetScriptableFlag(bool on)
+    void SetScriptableFlag(bool on)
                 {mFlags.SetFlagBit(uint8_t(SCRIPTABLE),on);}
     bool GetScriptableFlag() const
                 {return mFlags.GetFlagBit(uint8_t(SCRIPTABLE));}
-    void   SetBuiltinClassFlag(bool on)
+    void SetBuiltinClassFlag(bool on)
                 {mFlags.SetFlagBit(uint8_t(BUILTINCLASS),on);}
     bool GetBuiltinClassFlag() const
                 {return mFlags.GetFlagBit(uint8_t(BUILTINCLASS));}
+    void SetMainProcessScriptableOnlyFlag(bool on)
+                {mFlags.SetFlagBit(uint8_t(MAIN_PROCESS_SCRIPTABLE_ONLY),on);}
+    bool GetMainProcessScriptableOnlyFlag() const
+                {return mFlags.GetFlagBit(uint8_t(MAIN_PROCESS_SCRIPTABLE_ONLY));}
 
 
     // AddRef/Release are special and are not considered for the NOTXPCOM flag.
@@ -235,6 +240,10 @@ public:
     nsresult IsScriptable(bool *_retval);
     nsresult IsBuiltinClass(bool *_retval) {
         *_retval = GetBuiltinClassFlag();
+        return NS_OK;
+    }
+    nsresult IsMainProcessScriptableOnly(bool *_retval) {
+        *_retval = GetMainProcessScriptableOnlyFlag();
         return NS_OK;
     }
     // Except this one.
@@ -304,51 +313,53 @@ private:
 
     xptiInterfaceEntry*     mParent;      // Valid only when fully resolved
 
-    xptiInterfaceInfo*      mInfo;        // May come and go.
+    xptiInterfaceInfo* MOZ_UNSAFE_REF("The safety of this pointer is ensured "
+                                      "by the semantics of xptiWorkingSet.")
+                            mInfo;        // May come and go.
     xptiInfoFlags           mFlags;
     char                    mName[1];     // Always last. Sized to fit.
 };
 
-class xptiInterfaceInfo MOZ_FINAL : public nsIInterfaceInfo
+class xptiInterfaceInfo final : public nsIInterfaceInfo
 {
 public:
     NS_DECL_THREADSAFE_ISUPPORTS
 
     // Use delegation to implement (most!) of nsIInterfaceInfo.
-    NS_IMETHOD GetName(char * *aName) MOZ_OVERRIDE { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->GetName(aName); }
-    NS_IMETHOD GetInterfaceIID(nsIID * *aIID) MOZ_OVERRIDE { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->GetIID(aIID); }
-    NS_IMETHOD IsScriptable(bool *_retval) MOZ_OVERRIDE { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->IsScriptable(_retval); }
-    NS_IMETHOD IsBuiltinClass(bool *_retval) MOZ_OVERRIDE { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->IsBuiltinClass(_retval); }
+    NS_IMETHOD GetName(char * *aName) override { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->GetName(aName); }
+    NS_IMETHOD GetInterfaceIID(nsIID * *aIID) override { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->GetIID(aIID); }
+    NS_IMETHOD IsScriptable(bool *_retval) override { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->IsScriptable(_retval); }
+    NS_IMETHOD IsBuiltinClass(bool *_retval) override { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->IsBuiltinClass(_retval); }
+    NS_IMETHOD IsMainProcessScriptableOnly(bool *_retval) override { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->IsMainProcessScriptableOnly(_retval); }
     // Except this one.
-    NS_IMETHOD GetParent(nsIInterfaceInfo * *aParent) MOZ_OVERRIDE
+    NS_IMETHOD GetParent(nsIInterfaceInfo * *aParent) override
     {
         if(!EnsureResolved() || !EnsureParent())
             return NS_ERROR_UNEXPECTED;
         NS_IF_ADDREF(*aParent = mParent);
         return NS_OK;
     }
-    NS_IMETHOD GetMethodCount(uint16_t *aMethodCount) MOZ_OVERRIDE { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->GetMethodCount(aMethodCount); }
-    NS_IMETHOD GetConstantCount(uint16_t *aConstantCount) MOZ_OVERRIDE { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->GetConstantCount(aConstantCount); }
-    NS_IMETHOD GetMethodInfo(uint16_t index, const nsXPTMethodInfo * *info) MOZ_OVERRIDE { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->GetMethodInfo(index, info); }
-    NS_IMETHOD GetMethodInfoForName(const char *methodName, uint16_t *index, const nsXPTMethodInfo * *info) MOZ_OVERRIDE { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->GetMethodInfoForName(methodName, index, info); }
-    NS_IMETHOD GetConstant(uint16_t index, JS::MutableHandleValue constant, char** name) MOZ_OVERRIDE { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->GetConstant(index, constant, name); }
-    NS_IMETHOD GetInfoForParam(uint16_t methodIndex, const nsXPTParamInfo * param, nsIInterfaceInfo **_retval) MOZ_OVERRIDE { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->GetInfoForParam(methodIndex, param, _retval); }
-    NS_IMETHOD GetIIDForParam(uint16_t methodIndex, const nsXPTParamInfo * param, nsIID * *_retval) MOZ_OVERRIDE { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->GetIIDForParam(methodIndex, param, _retval); }
-    NS_IMETHOD GetTypeForParam(uint16_t methodIndex, const nsXPTParamInfo * param, uint16_t dimension, nsXPTType *_retval) MOZ_OVERRIDE { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->GetTypeForParam(methodIndex, param, dimension, _retval); }
-    NS_IMETHOD GetSizeIsArgNumberForParam(uint16_t methodIndex, const nsXPTParamInfo * param, uint16_t dimension, uint8_t *_retval) MOZ_OVERRIDE { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->GetSizeIsArgNumberForParam(methodIndex, param, dimension, _retval); }
-    NS_IMETHOD GetInterfaceIsArgNumberForParam(uint16_t methodIndex, const nsXPTParamInfo * param, uint8_t *_retval) MOZ_OVERRIDE { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->GetInterfaceIsArgNumberForParam(methodIndex, param, _retval); }
-    NS_IMETHOD IsIID(const nsIID * IID, bool *_retval) MOZ_OVERRIDE { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->IsIID(IID, _retval); }
-    NS_IMETHOD GetNameShared(const char **name) MOZ_OVERRIDE { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->GetNameShared(name); }
-    NS_IMETHOD GetIIDShared(const nsIID * *iid) MOZ_OVERRIDE { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->GetIIDShared(iid); }
-    NS_IMETHOD IsFunction(bool *_retval) MOZ_OVERRIDE { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->IsFunction(_retval); }
-    NS_IMETHOD HasAncestor(const nsIID * iid, bool *_retval) MOZ_OVERRIDE { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->HasAncestor(iid, _retval); }
-    NS_IMETHOD GetIIDForParamNoAlloc(uint16_t methodIndex, const nsXPTParamInfo * param, nsIID *iid) MOZ_OVERRIDE { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->GetIIDForParamNoAlloc(methodIndex, param, iid); }
+    NS_IMETHOD GetMethodCount(uint16_t *aMethodCount) override { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->GetMethodCount(aMethodCount); }
+    NS_IMETHOD GetConstantCount(uint16_t *aConstantCount) override { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->GetConstantCount(aConstantCount); }
+    NS_IMETHOD GetMethodInfo(uint16_t index, const nsXPTMethodInfo * *info) override { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->GetMethodInfo(index, info); }
+    NS_IMETHOD GetMethodInfoForName(const char *methodName, uint16_t *index, const nsXPTMethodInfo * *info) override { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->GetMethodInfoForName(methodName, index, info); }
+    NS_IMETHOD GetConstant(uint16_t index, JS::MutableHandleValue constant, char** name) override { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->GetConstant(index, constant, name); }
+    NS_IMETHOD GetInfoForParam(uint16_t methodIndex, const nsXPTParamInfo * param, nsIInterfaceInfo **_retval) override { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->GetInfoForParam(methodIndex, param, _retval); }
+    NS_IMETHOD GetIIDForParam(uint16_t methodIndex, const nsXPTParamInfo * param, nsIID * *_retval) override { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->GetIIDForParam(methodIndex, param, _retval); }
+    NS_IMETHOD GetTypeForParam(uint16_t methodIndex, const nsXPTParamInfo * param, uint16_t dimension, nsXPTType *_retval) override { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->GetTypeForParam(methodIndex, param, dimension, _retval); }
+    NS_IMETHOD GetSizeIsArgNumberForParam(uint16_t methodIndex, const nsXPTParamInfo * param, uint16_t dimension, uint8_t *_retval) override { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->GetSizeIsArgNumberForParam(methodIndex, param, dimension, _retval); }
+    NS_IMETHOD GetInterfaceIsArgNumberForParam(uint16_t methodIndex, const nsXPTParamInfo * param, uint8_t *_retval) override { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->GetInterfaceIsArgNumberForParam(methodIndex, param, _retval); }
+    NS_IMETHOD IsIID(const nsIID * IID, bool *_retval) override { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->IsIID(IID, _retval); }
+    NS_IMETHOD GetNameShared(const char **name) override { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->GetNameShared(name); }
+    NS_IMETHOD GetIIDShared(const nsIID * *iid) override { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->GetIIDShared(iid); }
+    NS_IMETHOD IsFunction(bool *_retval) override { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->IsFunction(_retval); }
+    NS_IMETHOD HasAncestor(const nsIID * iid, bool *_retval) override { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->HasAncestor(iid, _retval); }
+    NS_IMETHOD GetIIDForParamNoAlloc(uint16_t methodIndex, const nsXPTParamInfo * param, nsIID *iid) override { return !mEntry ? NS_ERROR_UNEXPECTED : mEntry->GetIIDForParamNoAlloc(methodIndex, param, iid); }
 
 public:
     explicit xptiInterfaceInfo(xptiInterfaceEntry* entry);
 
-    void Invalidate() 
-        {NS_IF_RELEASE(mParent); mEntry = nullptr;}
+    void Invalidate();
 
 private:
 
@@ -372,7 +383,7 @@ private:
 
 private:
     xptiInterfaceEntry* mEntry;
-    xptiInterfaceInfo*  mParent;
+    nsRefPtr<xptiInterfaceInfo> mParent;
 };
 
 /***************************************************************************/

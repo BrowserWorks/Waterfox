@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -41,6 +41,7 @@
 #include "mozilla/ipc/BackgroundChild.h"
 #include "mozilla/ipc/PBackgroundSharedTypes.h"
 #include "nsCOMPtr.h"
+#include "nsQueryObject.h"
 #include "ProfilerHelpers.h"
 #include "ReportInternalError.h"
 #include "WorkerPrivate.h"
@@ -61,7 +62,7 @@ struct IDBObjectStore::StructuredCloneWriteInfo
 {
   struct BlobOrFileInfo
   {
-    nsRefPtr<File> mBlob;
+    nsRefPtr<Blob> mBlob;
     nsRefPtr<FileInfo> mFileInfo;
 
     bool
@@ -136,7 +137,7 @@ struct IDBObjectStore::StructuredCloneWriteInfo
 
 namespace {
 
-struct MOZ_STACK_CLASS MutableFileData MOZ_FINAL
+struct MOZ_STACK_CLASS MutableFileData final
 {
   nsString type;
   nsString name;
@@ -152,18 +153,18 @@ struct MOZ_STACK_CLASS MutableFileData MOZ_FINAL
   }
 };
 
-struct MOZ_STACK_CLASS BlobOrFileData MOZ_FINAL
+struct MOZ_STACK_CLASS BlobOrFileData final
 {
   uint32_t tag;
   uint64_t size;
   nsString type;
   nsString name;
-  uint64_t lastModifiedDate;
+  int64_t lastModifiedDate;
 
   BlobOrFileData()
     : tag(0)
     , size(0)
-    , lastModifiedDate(UINT64_MAX)
+    , lastModifiedDate(INT64_MAX)
   {
     MOZ_COUNT_CTOR(BlobOrFileData);
   }
@@ -174,7 +175,7 @@ struct MOZ_STACK_CLASS BlobOrFileData MOZ_FINAL
   }
 };
 
-struct MOZ_STACK_CLASS GetAddInfoClosure MOZ_FINAL
+struct MOZ_STACK_CLASS GetAddInfoClosure final
 {
   IDBObjectStore::StructuredCloneWriteInfo& mCloneWriteInfo;
   JS::Handle<JS::Value> mValue;
@@ -223,7 +224,7 @@ StructuredCloneWriteCallback(JSContext* aCx,
 
   if (JS_GetClass(aObj) == IDBObjectStore::DummyPropClass()) {
     MOZ_ASSERT(!cloneWriteInfo->mOffsetToKeyProp);
-    cloneWriteInfo->mOffsetToKeyProp = js_GetSCOffset(aWriter);
+    cloneWriteInfo->mOffsetToKeyProp = js::GetSCOffset(aWriter);
 
     uint64_t value = 0;
     // Omit endian swap
@@ -299,7 +300,7 @@ StructuredCloneWriteCallback(JSContext* aCx,
   }
 
   {
-    File* blob = nullptr;
+    Blob* blob = nullptr;
     if (NS_SUCCEEDED(UNWRAP_OBJECT(Blob, aObj, blob))) {
       uint64_t size;
       MOZ_ALWAYS_TRUE(NS_SUCCEEDED(blob->GetSize(&size)));
@@ -331,15 +332,16 @@ StructuredCloneWriteCallback(JSContext* aCx,
         return false;
       }
 
-      if (blob->IsFile()) {
-        uint64_t lastModifiedDate;
+      nsRefPtr<File> file = blob->ToFile();
+      if (file) {
+        int64_t lastModifiedDate;
         MOZ_ALWAYS_TRUE(NS_SUCCEEDED(
-          blob->GetMozLastModifiedDate(&lastModifiedDate)));
+          file->GetMozLastModifiedDate(&lastModifiedDate)));
 
         lastModifiedDate = NativeEndian::swapToLittleEndian(lastModifiedDate);
 
         nsString name;
-        MOZ_ALWAYS_TRUE(NS_SUCCEEDED(blob->GetName(name)));
+        MOZ_ALWAYS_TRUE(NS_SUCCEEDED(file->GetName(name)));
 
         NS_ConvertUTF16toUTF8 convName(name);
         uint32_t convNameLength =
@@ -401,11 +403,11 @@ GetAddInfoCallback(JSContext* aCx, void* aClosure)
 }
 
 BlobChild*
-ActorFromRemoteBlob(File* aBlob)
+ActorFromRemoteBlobImpl(BlobImpl* aImpl)
 {
-  MOZ_ASSERT(aBlob);
+  MOZ_ASSERT(aImpl);
 
-  nsCOMPtr<nsIRemoteBlob> remoteBlob = do_QueryInterface(aBlob->Impl());
+  nsCOMPtr<nsIRemoteBlob> remoteBlob = do_QueryInterface(aImpl);
   if (remoteBlob) {
     BlobChild* actor = remoteBlob->GetBlobChild();
     MOZ_ASSERT(actor);
@@ -427,13 +429,13 @@ ActorFromRemoteBlob(File* aBlob)
 }
 
 bool
-ResolveMysteryFile(File* aBlob,
+ResolveMysteryFile(BlobImpl* aImpl,
                    const nsString& aName,
                    const nsString& aContentType,
                    uint64_t aSize,
                    uint64_t aLastModifiedDate)
 {
-  BlobChild* actor = ActorFromRemoteBlob(aBlob);
+  BlobChild* actor = ActorFromRemoteBlobImpl(aImpl);
   if (actor) {
     return actor->SetMysteryBlobInfo(aName, aContentType,
                                      aSize, aLastModifiedDate);
@@ -442,11 +444,11 @@ ResolveMysteryFile(File* aBlob,
 }
 
 bool
-ResolveMysteryBlob(File* aBlob,
+ResolveMysteryBlob(BlobImpl* aImpl,
                    const nsString& aContentType,
                    uint64_t aSize)
 {
-  BlobChild* actor = ActorFromRemoteBlob(aBlob);
+  BlobChild* actor = ActorFromRemoteBlobImpl(aImpl);
   if (actor) {
     return actor->SetMysteryBlobInfo(aContentType, aSize);
   }
@@ -464,7 +466,7 @@ StructuredCloneReadString(JSStructuredCloneReader* aReader,
   }
   length = NativeEndian::swapFromLittleEndian(length);
 
-  if (!aString.SetLength(length, fallible_t())) {
+  if (!aString.SetLength(length, fallible)) {
     NS_WARNING("Out of memory?");
     return false;
   }
@@ -540,9 +542,9 @@ ReadBlobOrFile(JSStructuredCloneReader* aReader,
   MOZ_ASSERT(aTag == SCTAG_DOM_FILE ||
              aTag == SCTAG_DOM_FILE_WITHOUT_LASTMODIFIEDDATE);
 
-  uint64_t lastModifiedDate;
+  int64_t lastModifiedDate;
   if (aTag == SCTAG_DOM_FILE_WITHOUT_LASTMODIFIEDDATE) {
-    lastModifiedDate = UINT64_MAX;
+    lastModifiedDate = INT64_MAX;
   } else {
     if (NS_WARN_IF(!JS_ReadBytes(aReader, &lastModifiedDate,
                                 sizeof(lastModifiedDate)))) {
@@ -585,7 +587,7 @@ public:
                              aFile.mFileInfo.forget());
     MOZ_ASSERT(mutableFile);
 
-    JS::Rooted<JSObject*> result(aCx, mutableFile->WrapObject(aCx));
+    JS::Rooted<JSObject*> result(aCx, mutableFile->WrapObject(aCx, JS::NullPtr()));
     if (NS_WARN_IF(!result)) {
       return false;
     }
@@ -604,7 +606,7 @@ public:
     MOZ_ASSERT(aData.tag == SCTAG_DOM_FILE ||
                aData.tag == SCTAG_DOM_FILE_WITHOUT_LASTMODIFIEDDATE ||
                aData.tag == SCTAG_DOM_BLOB);
-    MOZ_ASSERT(aFile.mFile);
+    MOZ_ASSERT(aFile.mBlob);
 
     // It can happen that this IDB is chrome code, so there is no parent, but
     // still we want to set a correct parent for the new File object.
@@ -626,17 +628,18 @@ public:
     }
 
     MOZ_ASSERT(parent);
-    nsRefPtr<File> file = new File(parent, aFile.mFile->Impl());
 
     if (aData.tag == SCTAG_DOM_BLOB) {
-      if (NS_WARN_IF(!ResolveMysteryBlob(aFile.mFile,
+      if (NS_WARN_IF(!ResolveMysteryBlob(aFile.mBlob->Impl(),
                                          aData.type,
                                          aData.size))) {
         return false;
       }
 
+      MOZ_ASSERT(!aFile.mBlob->IsFile());
+
       JS::Rooted<JS::Value> wrappedBlob(aCx);
-      if (!GetOrCreateDOMReflector(aCx, aFile.mFile, &wrappedBlob)) {
+      if (!ToJSValue(aCx, aFile.mBlob, &wrappedBlob)) {
         return false;
       }
 
@@ -644,9 +647,7 @@ public:
       return true;
     }
 
-    MOZ_ASSERT(aFile.mFile->IsFile());
-
-    if (NS_WARN_IF(!ResolveMysteryFile(aFile.mFile,
+    if (NS_WARN_IF(!ResolveMysteryFile(aFile.mBlob->Impl(),
                                        aData.name,
                                        aData.type,
                                        aData.size,
@@ -654,8 +655,12 @@ public:
       return false;
     }
 
+    MOZ_ASSERT(aFile.mBlob->IsFile());
+    nsRefPtr<File> file = aFile.mBlob->ToFile();
+    MOZ_ASSERT(file);
+
     JS::Rooted<JS::Value> wrappedFile(aCx);
-    if (!GetOrCreateDOMReflector(aCx, aFile.mFile, &wrappedFile)) {
+    if (!ToJSValue(aCx, file, &wrappedFile)) {
       return false;
     }
 
@@ -677,9 +682,7 @@ public:
     MOZ_ASSERT(!aDatabase);
 
     // MutableFile can't be used in index creation, so just make a dummy object.
-    JS::Rooted<JSObject*> obj(aCx,
-      JS_NewObject(aCx, nullptr, JS::NullPtr(), JS::NullPtr()));
-
+    JS::Rooted<JSObject*> obj(aCx, JS_NewPlainObject(aCx));
     if (NS_WARN_IF(!obj)) {
       return false;
     }
@@ -705,8 +708,7 @@ public:
     //   File.name
     //   File.lastModifiedDate
 
-    JS::Rooted<JSObject*> obj(aCx,
-      JS_NewObject(aCx, nullptr, JS::NullPtr(), JS::NullPtr()));
+    JS::Rooted<JSObject*> obj(aCx, JS_NewPlainObject(aCx));
     if (NS_WARN_IF(!obj)) {
       return false;
     }
@@ -856,7 +858,7 @@ const JSClass IDBObjectStore::sDummyPropJSClass = {
 IDBObjectStore::IDBObjectStore(IDBTransaction* aTransaction,
                                const ObjectStoreSpec* aSpec)
   : mTransaction(aTransaction)
-  , mCachedKeyPath(JSVAL_VOID)
+  , mCachedKeyPath(JS::UndefinedValue())
   , mSpec(aSpec)
   , mId(aSpec->metadata().id())
   , mRooted(false)
@@ -871,7 +873,7 @@ IDBObjectStore::~IDBObjectStore()
   AssertIsOnOwningThread();
 
   if (mRooted) {
-    mCachedKeyPath = JSVAL_VOID;
+    mCachedKeyPath.setUndefined();
     mozilla::DropJSObjects(this);
   }
 }
@@ -1282,9 +1284,8 @@ IDBObjectStore::AddOrPut(JSContext* aCx,
     }
   }
 
-  BackgroundRequestChild* actor = new BackgroundRequestChild(request);
-
-  mTransaction->StartRequest(actor, params);
+  BackgroundRequestChild* actor = mTransaction->StartRequest(request, params);
+  MOZ_ASSERT(actor);
 
   if (!fileInfosToKeepAlive.IsEmpty()) {
     nsTArray<nsRefPtr<FileInfo>> fileInfos;
@@ -1368,9 +1369,7 @@ IDBObjectStore::GetAllInternal(bool aKeysOnly,
                  IDB_LOG_STRINGIFY(aLimit));
   }
 
-  BackgroundRequestChild* actor = new BackgroundRequestChild(request);
-
-  mTransaction->StartRequest(actor, params);
+  mTransaction->StartRequest(request, params);
 
   return request.forget();
 }
@@ -1406,9 +1405,7 @@ IDBObjectStore::Clear(ErrorResult& aRv)
                IDB_LOG_STRINGIFY(mTransaction),
                IDB_LOG_STRINGIFY(this));
 
-  BackgroundRequestChild* actor = new BackgroundRequestChild(request);
-
-  mTransaction->StartRequest(actor, params);
+  mTransaction->StartRequest(request, params);
 
   return request.forget();
 }
@@ -1487,7 +1484,7 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(IDBObjectStore)
 
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mIndexes);
 
-  tmp->mCachedKeyPath = JSVAL_VOID;
+  tmp->mCachedKeyPath.setUndefined();
 
   if (tmp->mRooted) {
     mozilla::DropJSObjects(tmp);
@@ -1504,9 +1501,9 @@ NS_IMPL_CYCLE_COLLECTING_ADDREF(IDBObjectStore)
 NS_IMPL_CYCLE_COLLECTING_RELEASE(IDBObjectStore)
 
 JSObject*
-IDBObjectStore::WrapObject(JSContext* aCx)
+IDBObjectStore::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return IDBObjectStoreBinding::Wrap(aCx, this);
+  return IDBObjectStoreBinding::Wrap(aCx, this, aGivenProto);
 }
 
 nsPIDOMWindow*
@@ -1603,9 +1600,7 @@ IDBObjectStore::Get(JSContext* aCx,
                IDB_LOG_STRINGIFY(this),
                IDB_LOG_STRINGIFY(keyRange));
 
-  BackgroundRequestChild* actor = new BackgroundRequestChild(request);
-
-  mTransaction->StartRequest(actor, params);
+  mTransaction->StartRequest(request, params);
 
   return request.forget();
 }
@@ -1660,9 +1655,7 @@ IDBObjectStore::DeleteInternal(JSContext* aCx,
                  IDB_LOG_STRINGIFY(keyRange));
   }
 
-  BackgroundRequestChild* actor = new BackgroundRequestChild(request);
-
-  mTransaction->StartRequest(actor, params);
+  mTransaction->StartRequest(request, params);
 
   return request.forget();
 }
@@ -1902,9 +1895,7 @@ IDBObjectStore::Count(JSContext* aCx,
                IDB_LOG_STRINGIFY(this),
                IDB_LOG_STRINGIFY(keyRange));
 
-  BackgroundRequestChild* actor = new BackgroundRequestChild(request);
-
-  mTransaction->StartRequest(actor, params);
+  mTransaction->StartRequest(request, params);
 
   return request.forget();
 }

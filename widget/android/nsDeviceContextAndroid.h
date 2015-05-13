@@ -5,7 +5,7 @@
 #include "nsIDeviceContextSpec.h"
 #include "nsCOMPtr.h"
 
-class nsDeviceContextSpecAndroid MOZ_FINAL : public nsIDeviceContextSpec
+class nsDeviceContextSpecAndroid final : public nsIDeviceContextSpec
 {
 private:
     ~nsDeviceContextSpecAndroid() {}
@@ -26,7 +26,6 @@ public:
     NS_IMETHOD BeginPage() { return NS_OK; }
     NS_IMETHOD EndPage() { return NS_OK; }
 
-    NS_IMETHOD GetPath (const char** aPath);
 private:
     nsCOMPtr<nsIPrintSettings> mPrintSettings;
     nsCOMPtr<nsIFile> mTempFile;

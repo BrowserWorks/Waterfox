@@ -42,8 +42,8 @@ CopyArrayBufferViewOrArrayBufferData(const ArrayBufferViewOrArrayBuffer& aBuffer
 
 // This class is used on the main thread only.
 // Note: it's addref/release is not (and can't be) thread safe!
-class MediaKeys MOZ_FINAL : public nsISupports,
-                            public nsWrapperCache
+class MediaKeys final : public nsISupports,
+                        public nsWrapperCache
 {
   ~MediaKeys();
 
@@ -57,7 +57,7 @@ public:
 
   nsPIDOMWindow* GetParentObject() const;
 
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   nsresult Bind(HTMLMediaElement* aElement);
 
@@ -65,7 +65,8 @@ public:
   void GetKeySystem(nsString& retval) const;
 
   // JavaScript: MediaKeys.createSession()
-  already_AddRefed<MediaKeySession> CreateSession(SessionType aSessionType,
+  already_AddRefed<MediaKeySession> CreateSession(JSContext* aCx,
+                                                  SessionType aSessionType,
                                                   ErrorResult& aRv);
 
   // JavaScript: MediaKeys.SetServerCertificate()
@@ -79,7 +80,8 @@ public:
   already_AddRefed<MediaKeySession> GetPendingSession(uint32_t aToken);
 
   // Called once a Init() operation succeeds.
-  void OnCDMCreated(PromiseId aId, const nsACString& aNodeId);
+  void OnCDMCreated(PromiseId aId,
+                    const nsACString& aNodeId, const uint32_t aPluginId);
 
   // Called once the CDM generates a sessionId while servicing a
   // MediaKeySession.generateRequest() or MediaKeySession.load() call,
@@ -116,10 +118,6 @@ public:
 
   // Returns true if this MediaKeys has been bound to a media element.
   bool IsBoundToMediaElement() const;
-
-  // Return NS_OK if the principals are the same as when the MediaKeys
-  // was created, failure otherwise.
-  nsresult CheckPrincipals();
 
 private:
 

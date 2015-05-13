@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -75,8 +75,8 @@ ArchiveZipItem::GetFilename(nsString& aFilename)
 }
 
 // From zipItem to File:
-nsIDOMFile*
-ArchiveZipItem::File(ArchiveReader* aArchiveReader)
+already_AddRefed<File>
+ArchiveZipItem::GetFile(ArchiveReader* aArchiveReader)
 {
   nsString filename;
 
@@ -84,11 +84,13 @@ ArchiveZipItem::File(ArchiveReader* aArchiveReader)
     return nullptr;
   }
 
-  return new dom::File(aArchiveReader,
-    new ArchiveZipFileImpl(filename,
+  nsRefPtr<dom::File> file = dom::File::Create(aArchiveReader,
+    new ArchiveZipBlobImpl(filename,
                            NS_ConvertUTF8toUTF16(GetType()),
                            StrToInt32(mCentralStruct.orglen),
-                           mCentralStruct, aArchiveReader->GetFileImpl()));
+                           mCentralStruct, aArchiveReader->GetBlobImpl()));
+  MOZ_ASSERT(file);
+  return file.forget();
 }
 
 uint32_t

@@ -12,8 +12,6 @@
 #include "nsDebug.h"                    // for NS_RUNTIMEABORT
 #include "nsRegion.h"                   // for nsIntRegion
 
-class gfxContext;
-
 namespace mozilla {
 namespace layers {
 
@@ -36,7 +34,7 @@ class SpecificLayerAttributes;
  * There is no ContentClient for tiled layers. There is a ContentHost, however.
  */
 class ClientTiledPaintedLayer : public PaintedLayer,
-                               public ClientLayer
+                                public ClientLayer
 {
   typedef PaintedLayer Base;
 
@@ -47,15 +45,15 @@ public:
 protected:
   ~ClientTiledPaintedLayer();
 
-  virtual void PrintInfo(std::stringstream& aStream, const char* aPrefix) MOZ_OVERRIDE;
+  virtual void PrintInfo(std::stringstream& aStream, const char* aPrefix) override;
 
 public:
   // Override name to distinguish it from ClientPaintedLayer in layer dumps
-  virtual const char* Name() const MOZ_OVERRIDE { return "TiledPaintedLayer"; }
+  virtual const char* Name() const override { return "TiledPaintedLayer"; }
 
   // PaintedLayer
-  virtual Layer* AsLayer() MOZ_OVERRIDE { return this; }
-  virtual void InvalidateRegion(const nsIntRegion& aRegion) MOZ_OVERRIDE {
+  virtual Layer* AsLayer() override { return this; }
+  virtual void InvalidateRegion(const nsIntRegion& aRegion) override {
     mInvalidRegion.Or(mInvalidRegion, aRegion);
     mInvalidRegion.SimplifyOutward(20);
     mValidRegion.Sub(mValidRegion, mInvalidRegion);
@@ -63,17 +61,17 @@ public:
   }
 
   // Shadow methods
-  virtual void FillSpecificAttributes(SpecificLayerAttributes& aAttrs) MOZ_OVERRIDE;
-  virtual ShadowableLayer* AsShadowableLayer() MOZ_OVERRIDE { return this; }
+  virtual void FillSpecificAttributes(SpecificLayerAttributes& aAttrs) override;
+  virtual ShadowableLayer* AsShadowableLayer() override { return this; }
 
-  virtual void Disconnect() MOZ_OVERRIDE
+  virtual void Disconnect() override
   {
     ClientLayer::Disconnect();
   }
 
-  virtual void RenderLayer() MOZ_OVERRIDE;
+  virtual void RenderLayer() override;
 
-  virtual void ClearCachedResources() MOZ_OVERRIDE;
+  virtual void ClearCachedResources() override;
 
   /**
    * Helper method to find the nearest ancestor layers which
@@ -81,7 +79,8 @@ public:
    * which hold the return values; the values passed in may be null.
    */
   void GetAncestorLayers(LayerMetricsWrapper* aOutScrollAncestor,
-                         LayerMetricsWrapper* aOutDisplayPortAncestor);
+                         LayerMetricsWrapper* aOutDisplayPortAncestor,
+                         bool* aOutHasTransformAnimation);
 
 private:
   ClientLayerManager* ClientManager()
@@ -96,15 +95,16 @@ private:
   void BeginPaint();
 
   /**
-   * Determine if we can use a fast path to just do a single high-precision,
-   * non-progressive paint.
-   */
-  bool UseFastPath();
-
-  /**
    * Check if the layer is being scrolled by APZ on the compositor.
    */
   bool IsScrollingOnCompositor(const FrameMetrics& aParentMetrics);
+
+  /**
+   * Check if we should use progressive draw on this layer. We will
+   * disable progressive draw based on a preference or if the layer
+   * is not being scrolled.
+   */
+  bool UseProgressiveDraw();
 
   /**
    * Helper function to do the high-precision paint.

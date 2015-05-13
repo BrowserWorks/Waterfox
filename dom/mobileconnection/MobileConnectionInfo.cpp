@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim:set ts=2 sw=2 sts=2 et cindent: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -119,7 +119,7 @@ MobileConnectionInfo::Update(nsIMobileConnectionInfo* aInfo)
 
   // Update mSignalStrength
   AutoJSContext cx;
-  JS::Rooted<JS::Value> signalStrength(cx, JSVAL_VOID);
+  JS::Rooted<JS::Value> signalStrength(cx, JS::UndefinedValue());
   aInfo->GetSignalStrength(&signalStrength);
   if (signalStrength.isNumber()) {
     mSignalStrength.SetValue(signalStrength.toNumber());
@@ -128,7 +128,7 @@ MobileConnectionInfo::Update(nsIMobileConnectionInfo* aInfo)
   }
 
   // Update mRelSignalStrength
-  JS::Rooted<JS::Value> relSignalStrength(cx, JSVAL_VOID);
+  JS::Rooted<JS::Value> relSignalStrength(cx, JS::UndefinedValue());
   aInfo->GetRelSignalStrength(&relSignalStrength);
   if (relSignalStrength.isNumber()) {
     mRelSignalStrength.SetValue(relSignalStrength.toNumber());
@@ -162,9 +162,9 @@ MobileConnectionInfo::Update(nsIMobileConnectionInfo* aInfo)
 }
 
 JSObject*
-MobileConnectionInfo::WrapObject(JSContext* aCx)
+MobileConnectionInfo::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return MozMobileConnectionInfoBinding::Wrap(aCx, this);
+  return MozMobileConnectionInfoBinding::Wrap(aCx, this, aGivenProto);
 }
 
 // nsIMobileConnectionInfo

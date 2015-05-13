@@ -72,13 +72,18 @@ Protocol.prototype = {
   /**
    * Constructs a new channel from the given URI for this protocol handler.
    * @param aURI The URI for which to construct a channel.
+   * @param aLoadInfo The Loadinfo which to use on the channel.
    * @return The newly created channel.
    */
-  newChannel: function Proto_newChannel(aURI) {
+  newChannel2: function Proto_newChannel2(aURI, aLoadInfo) {
     let {url} = parseURI(aURI);
     let file = PageThumbsStorage.getFilePathForURL(url);
     let fileuri = Services.io.newFileURI(new FileUtils.File(file));
-    return Services.io.newChannelFromURI(fileuri);
+    return Services.io.newChannelFromURIWithLoadInfo(fileuri, aLoadInfo);
+  },
+
+  newChannel: function Proto_newChannel(aURI) {
+    return newChannel2(aURI, null);
   },
 
   /**

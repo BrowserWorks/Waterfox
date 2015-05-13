@@ -15,7 +15,6 @@ UNIFIED_SOURCES += [
     'nsEntropyCollector.cpp',
     'nsSecureBrowserUIImpl.cpp',
     'nsSecurityHeaderParser.cpp',
-    'nsSecurityWarningDialogs.cpp',
     'nsSiteSecurityService.cpp',
     'PublicKeyPinningService.cpp',
     'RootCertificateTelemetryUtils.cpp',
@@ -30,7 +29,5 @@ GENERATED_INCLUDES += [
 ]
 
 FAIL_ON_WARNINGS = True
-
-MSVC_ENABLE_PGO = True
 
 FINAL_LIBRARY = 'xul'

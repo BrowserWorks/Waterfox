@@ -99,7 +99,7 @@ nsCacheEntryDescriptor::~nsCacheEntryDescriptor()
     if (mCacheEntry)
         Close();
 
-    NS_ASSERTION(mInputWrappers.Count() == 0,
+    NS_ASSERTION(mInputWrappers.IsEmpty(),
                  "We have still some input wrapper!");
     NS_ASSERTION(!mOutputWrapper, "We have still an output wrapper!");
 
@@ -536,7 +536,7 @@ nsCacheEntryDescriptor::AsyncDoom(nsICacheListener *listener)
         return NS_OK;
     }
 
-    nsRefPtr<nsIRunnable> event = new nsAsyncDoomEvent(this, listener);
+    nsCOMPtr<nsIRunnable> event = new nsAsyncDoomEvent(this, listener);
     return nsCacheService::DispatchToCacheIOThread(event);
 }
 
@@ -565,9 +565,8 @@ nsCacheEntryDescriptor::Close()
         // Make sure no other stream can be opened
         mClosingDescriptor = true;
         outputWrapper = mOutputWrapper;
-        for (int32_t i = 0 ; i < mInputWrappers.Count() ; i++)
-            inputWrappers.AppendElement(static_cast<nsInputStreamWrapper *>(
-                        mInputWrappers[i]));
+        for (size_t i = 0; i < mInputWrappers.Length(); i++)
+            inputWrappers.AppendElement(mInputWrappers[i]);
     }
 
     // Call Close() on the streams outside the lock since it might need to call
@@ -678,7 +677,7 @@ nsCacheEntryDescriptor::nsInputStreamWrapper::Release()
     if (0 == count) {
         // don't use desc here since mDescriptor might be already nulled out
         if (mDescriptor) {
-            NS_ASSERTION(mDescriptor->mInputWrappers.IndexOf(this) != -1,
+            NS_ASSERTION(mDescriptor->mInputWrappers.Contains(this),
                          "Wrapper not found in array!");
             mDescriptor->mInputWrappers.RemoveElement(this);
         }
@@ -872,7 +871,7 @@ nsCacheEntryDescriptor::nsDecompressInputStreamWrapper::Release()
     if (0 == count) {
         // don't use desc here since mDescriptor might be already nulled out
         if (mDescriptor) {
-            NS_ASSERTION(mDescriptor->mInputWrappers.IndexOf(this) != -1,
+            NS_ASSERTION(mDescriptor->mInputWrappers.Contains(this),
                          "Wrapper not found in array!");
             mDescriptor->mInputWrappers.RemoveElement(this);
         }
@@ -924,7 +923,7 @@ nsDecompressInputStreamWrapper::Read(char *    buf,
         // number of read requests to the input stream.
         uint32_t newBufLen = std::max(count, (uint32_t)kMinDecompressReadBufLen);
         unsigned char* newBuf;
-        newBuf = (unsigned char*)nsMemory::Realloc(mReadBuffer, 
+        newBuf = (unsigned char*)moz_xrealloc(mReadBuffer,
             newBufLen);
         if (newBuf) {
             mReadBuffer = newBuf;
@@ -987,7 +986,7 @@ nsDecompressInputStreamWrapper::Close()
 
     EndZstream();
     if (mReadBuffer) {
-        nsMemory::Free(mReadBuffer);
+        free(mReadBuffer);
         mReadBuffer = 0;
         mReadBufferLen = 0;
     }
@@ -1334,7 +1333,7 @@ nsCompressOutputStreamWrapper::Write(const char * buf,
         // cannot be grown. We use 2x(initial write request) to approximate
         // a stream buffer size proportional to request buffers.
         mWriteBufferLen = std::max(count*2, (uint32_t)kMinCompressWriteBufLen);
-        mWriteBuffer = (unsigned char*)nsMemory::Alloc(mWriteBufferLen);
+        mWriteBuffer = (unsigned char*)moz_xmalloc(mWriteBufferLen);
         if (!mWriteBuffer) {
             mWriteBufferLen = 0;
             return NS_ERROR_OUT_OF_MEMORY;
@@ -1419,7 +1418,7 @@ nsCompressOutputStreamWrapper::Close()
     }
 
     if (mWriteBuffer) {
-        nsMemory::Free(mWriteBuffer);
+        free(mWriteBuffer);
         mWriteBuffer = 0;
         mWriteBufferLen = 0;
     }

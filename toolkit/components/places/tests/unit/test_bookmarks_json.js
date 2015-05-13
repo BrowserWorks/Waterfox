@@ -78,7 +78,7 @@ add_task(function test_import_bookmarks() {
   let bookmarksFile = OS.Path.join(do_get_cwd().path, "bookmarks.json");
 
   yield BookmarkJSONUtils.importFromFile(bookmarksFile, true);
-  yield promiseAsyncUpdates();
+  yield PlacesTestUtils.promiseAsyncUpdates();
   yield testImportedBookmarks();
 });
 
@@ -86,29 +86,29 @@ add_task(function test_export_bookmarks() {
   bookmarksExportedFile = OS.Path.join(OS.Constants.Path.profileDir,
                                        "bookmarks.exported.json");
   yield BookmarkJSONUtils.exportToFile(bookmarksExportedFile);
-  yield promiseAsyncUpdates();
+  yield PlacesTestUtils.promiseAsyncUpdates();
 });
 
 add_task(function test_import_exported_bookmarks() {
-  remove_all_bookmarks();
+  yield PlacesUtils.bookmarks.eraseEverything();
   yield BookmarkJSONUtils.importFromFile(bookmarksExportedFile, true);
-  yield promiseAsyncUpdates();
+  yield PlacesTestUtils.promiseAsyncUpdates();
   yield testImportedBookmarks();
 });
 
 add_task(function test_import_ontop() {
-  remove_all_bookmarks();
+  yield PlacesUtils.bookmarks.eraseEverything();
   yield BookmarkJSONUtils.importFromFile(bookmarksExportedFile, true);
-  yield promiseAsyncUpdates();
+  yield PlacesTestUtils.promiseAsyncUpdates();
   yield BookmarkJSONUtils.exportToFile(bookmarksExportedFile);
-  yield promiseAsyncUpdates();
+  yield PlacesTestUtils.promiseAsyncUpdates();
   yield BookmarkJSONUtils.importFromFile(bookmarksExportedFile, true);
-  yield promiseAsyncUpdates();
+  yield PlacesTestUtils.promiseAsyncUpdates();
   yield testImportedBookmarks();
 });
 
 add_task(function test_clean() {
-  remove_all_bookmarks();
+  yield PlacesUtils.bookmarks.eraseEverything();
 });
 
 function testImportedBookmarks() {
@@ -171,28 +171,31 @@ function checkItem(aExpected, aNode) {
             do_check_eq(aNode.uri, aExpected.url);
           break;
         case "icon":
-          let (deferred = Promise.defer(), data) {
-            PlacesUtils.favicons.getFaviconDataForPage(
-              NetUtil.newURI(aExpected.url),
-              function (aURI, aDataLen, aData, aMimeType) {
-                deferred.resolve(aData);
-              });
-            data = yield deferred.promise;
-            let base64Icon = "data:image/png;base64," +
-                             base64EncodeString(String.fromCharCode.apply(String, data));
-            do_check_true(base64Icon == aExpected.icon);
-          }
+          let deferred = Promise.defer();
+          PlacesUtils.favicons.getFaviconDataForPage(
+            NetUtil.newURI(aExpected.url),
+            function (aURI, aDataLen, aData, aMimeType) {
+              deferred.resolve(aData);
+            });
+          let data = yield deferred.promise;
+          let base64Icon = "data:image/png;base64," +
+                           base64EncodeString(String.fromCharCode.apply(String, data));
+          do_check_true(base64Icon == aExpected.icon);
           break;
-        case "keyword":
+        case "keyword": {
+          let entry = yield PlacesUtils.keywords.fetch({ url: aNode.uri });
+          Assert.equal(entry.keyword, aExpected.keyword);
           break;
+        }
         case "sidebar":
           do_check_eq(PlacesUtils.annotations.itemHasAnnotation(
                       id, LOAD_IN_SIDEBAR_ANNO), aExpected.sidebar);
           break;
-        case "postData":
-          do_check_eq(PlacesUtils.annotations.getItemAnnotation(
-                      id, PlacesUtils.POST_DATA_ANNO), aExpected.postData);
+        case "postData": {
+          let entry = yield PlacesUtils.keywords.fetch({ url: aNode.uri });
+          Assert.equal(entry.postData, aExpected.postData);
           break;
+        }
         case "charset":
           let testURI = NetUtil.newURI(aNode.uri);
           do_check_eq((yield PlacesUtils.getCharsetForURI(testURI)), aExpected.charset);

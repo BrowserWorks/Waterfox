@@ -3,22 +3,128 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef MOZILLA_IMAGELIB_IMAGE_H_
-#define MOZILLA_IMAGELIB_IMAGE_H_
+#ifndef mozilla_image_src_Image_h
+#define mozilla_image_src_Image_h
 
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/TimeStamp.h"
 #include "gfx2DGlue.h"                // for gfxMemoryLocation
 #include "imgIContainer.h"
-#include "ProgressTracker.h"
 #include "ImageURL.h"
 #include "nsStringFwd.h"
+#include "ProgressTracker.h"
+#include "SurfaceCache.h"
 
 class nsIRequest;
 class nsIInputStream;
 
 namespace mozilla {
 namespace image {
+
+class Image;
+
+///////////////////////////////////////////////////////////////////////////////
+// Memory Reporting
+///////////////////////////////////////////////////////////////////////////////
+
+struct MemoryCounter
+{
+  MemoryCounter()
+    : mSource(0)
+    , mDecodedHeap(0)
+    , mDecodedNonHeap(0)
+  { }
+
+  void SetSource(size_t aCount) { mSource = aCount; }
+  size_t Source() const { return mSource; }
+  void SetDecodedHeap(size_t aCount) { mDecodedHeap = aCount; }
+  size_t DecodedHeap() const { return mDecodedHeap; }
+  void SetDecodedNonHeap(size_t aCount) { mDecodedNonHeap = aCount; }
+  size_t DecodedNonHeap() const { return mDecodedNonHeap; }
+
+  MemoryCounter& operator+=(const MemoryCounter& aOther)
+  {
+    mSource += aOther.mSource;
+    mDecodedHeap += aOther.mDecodedHeap;
+    mDecodedNonHeap += aOther.mDecodedNonHeap;
+    return *this;
+  }
+
+private:
+  size_t mSource;
+  size_t mDecodedHeap;
+  size_t mDecodedNonHeap;
+};
+
+enum class SurfaceMemoryCounterType
+{
+  NORMAL,
+  COMPOSITING,
+  COMPOSITING_PREV
+};
+
+struct SurfaceMemoryCounter
+{
+  SurfaceMemoryCounter(const SurfaceKey& aKey,
+                       bool aIsLocked,
+                       SurfaceMemoryCounterType aType =
+                         SurfaceMemoryCounterType::NORMAL)
+    : mKey(aKey)
+    , mType(aType)
+    , mIsLocked(aIsLocked)
+  { }
+
+  const SurfaceKey& Key() const { return mKey; }
+  Maybe<gfx::IntSize>& SubframeSize() { return mSubframeSize; }
+  const Maybe<gfx::IntSize>& SubframeSize() const { return mSubframeSize; }
+  MemoryCounter& Values() { return mValues; }
+  const MemoryCounter& Values() const { return mValues; }
+  SurfaceMemoryCounterType Type() const { return mType; }
+  bool IsLocked() const { return mIsLocked; }
+
+private:
+  const SurfaceKey mKey;
+  Maybe<gfx::IntSize> mSubframeSize;
+  MemoryCounter mValues;
+  const SurfaceMemoryCounterType mType;
+  const bool mIsLocked;
+};
+
+struct ImageMemoryCounter
+{
+  ImageMemoryCounter(Image* aImage,
+                     MallocSizeOf aMallocSizeOf,
+                     bool aIsUsed);
+
+  nsCString& URI() { return mURI; }
+  const nsCString& URI() const { return mURI; }
+  const nsTArray<SurfaceMemoryCounter>& Surfaces() const { return mSurfaces; }
+  const gfx::IntSize IntrinsicSize() const { return mIntrinsicSize; }
+  const MemoryCounter& Values() const { return mValues; }
+  uint16_t Type() const { return mType; }
+  bool IsUsed() const { return mIsUsed; }
+
+  bool IsNotable() const
+  {
+    const size_t NotableThreshold = 16 * 1024;
+    size_t total = mValues.Source() + mValues.DecodedHeap()
+                                    + mValues.DecodedNonHeap();
+    return total >= NotableThreshold;
+  }
+
+private:
+  nsCString mURI;
+  nsTArray<SurfaceMemoryCounter> mSurfaces;
+  gfx::IntSize mIntrinsicSize;
+  MemoryCounter mValues;
+  uint16_t mType;
+  const bool mIsUsed;
+};
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Image Base Types
+///////////////////////////////////////////////////////////////////////////////
 
 class Image : public imgIContainer
 {
@@ -44,28 +150,28 @@ public:
    *
    * INIT_FLAG_DISCARDABLE: The container should be discardable
    *
-   * INIT_FLAG_DECODE_ON_DRAW: The container should decode on draw rather than
-   * decoding on load.
+   * INIT_FLAG_DECODE_ONLY_ON_DRAW: The container should decode on draw rather
+   * than possibly being speculatively decoded earlier.
+   *
+   * INIT_FLAG_DECODE_IMMEDIATELY: The container should decode as soon as
+   * possible, regardless of what our heuristics say.
    *
    * INIT_FLAG_TRANSIENT: The container is likely to exist for only a short time
    * before being destroyed. (For example, containers for
    * multipart/x-mixed-replace image parts fall into this category.) If this
-   * flag is set, INIT_FLAG_DISCARDABLE and INIT_FLAG_DECODE_ON_DRAW must not be
-   * set.
-   */
-  static const uint32_t INIT_FLAG_NONE           = 0x0;
-  static const uint32_t INIT_FLAG_DISCARDABLE    = 0x1;
-  static const uint32_t INIT_FLAG_DECODE_ON_DRAW = 0x2;
-  static const uint32_t INIT_FLAG_TRANSIENT      = 0x4;
-
-  /**
-   * Creates a new image container.
+   * flag is set, INIT_FLAG_DISCARDABLE and INIT_FLAG_DECODE_ONLY_ON_DRAW must
+   * not be set.
    *
-   * @param aMimeType The mimetype of the image.
-   * @param aFlags Initialization flags of the INIT_FLAG_* variety.
+   * INIT_FLAG_DOWNSCALE_DURING_DECODE: The container should attempt to
+   * downscale images during decoding instead of decoding them to their
+   * intrinsic size.
    */
-  virtual nsresult Init(const char* aMimeType,
-                        uint32_t aFlags) = 0;
+  static const uint32_t INIT_FLAG_NONE                     = 0x0;
+  static const uint32_t INIT_FLAG_DISCARDABLE              = 0x1;
+  static const uint32_t INIT_FLAG_DECODE_ONLY_ON_DRAW      = 0x2;
+  static const uint32_t INIT_FLAG_DECODE_IMMEDIATELY       = 0x4;
+  static const uint32_t INIT_FLAG_TRANSIENT                = 0x8;
+  static const uint32_t INIT_FLAG_DOWNSCALE_DURING_DECODE  = 0x10;
 
   virtual already_AddRefed<ProgressTracker> GetProgressTracker() = 0;
   virtual void SetProgressTracker(ProgressTracker* aProgressTracker) {}
@@ -75,14 +181,16 @@ public:
    * If MallocSizeOf does not work on this platform, uses a fallback approach to
    * ensure that something reasonable is always returned.
    */
-  virtual size_t SizeOfSourceWithComputedFallback(
-                                          MallocSizeOf aMallocSizeOf) const = 0;
+  virtual size_t
+    SizeOfSourceWithComputedFallback(MallocSizeOf aMallocSizeOf) const = 0;
 
   /**
-   * The size, in bytes, occupied by the image's decoded data.
+   * Collect an accounting of the memory occupied by the image's surfaces (which
+   * together make up its decoded data). Each surface is recorded as a separate
+   * SurfaceMemoryCounter, stored in @aCounters.
    */
-  virtual size_t SizeOfDecoded(gfxMemoryLocation aLocation,
-                               MallocSizeOf aMallocSizeOf) const = 0;
+  virtual void CollectSizeOfSurfaces(nsTArray<SurfaceMemoryCounter>& aCounters,
+                                     MallocSizeOf aMallocSizeOf) const = 0;
 
   virtual void IncrementAnimationConsumers() = 0;
   virtual void DecrementAnimationConsumers() = 0;
@@ -138,7 +246,7 @@ public:
 class ImageResource : public Image
 {
 public:
-  already_AddRefed<ProgressTracker> GetProgressTracker() MOZ_OVERRIDE
+  already_AddRefed<ProgressTracker> GetProgressTracker() override
   {
     nsRefPtr<ProgressTracker> progressTracker = mProgressTracker;
     MOZ_ASSERT(progressTracker);
@@ -146,41 +254,42 @@ public:
   }
 
   void SetProgressTracker(
-                       ProgressTracker* aProgressTracker) MOZ_OVERRIDE MOZ_FINAL
+                       ProgressTracker* aProgressTracker) override final
   {
     MOZ_ASSERT(aProgressTracker);
     MOZ_ASSERT(!mProgressTracker);
     mProgressTracker = aProgressTracker;
   }
 
-  virtual void IncrementAnimationConsumers() MOZ_OVERRIDE;
-  virtual void DecrementAnimationConsumers() MOZ_OVERRIDE;
+  virtual void IncrementAnimationConsumers() override;
+  virtual void DecrementAnimationConsumers() override;
 #ifdef DEBUG
-  virtual uint32_t GetAnimationConsumers() MOZ_OVERRIDE
+  virtual uint32_t GetAnimationConsumers() override
   {
     return mAnimationConsumers;
   }
 #endif
 
-  virtual void OnSurfaceDiscarded() MOZ_OVERRIDE { }
+  virtual void OnSurfaceDiscarded() override { }
 
-  virtual void SetInnerWindowID(uint64_t aInnerWindowId) MOZ_OVERRIDE
+  virtual void SetInnerWindowID(uint64_t aInnerWindowId) override
   {
     mInnerWindowId = aInnerWindowId;
   }
-  virtual uint64_t InnerWindowID() const MOZ_OVERRIDE { return mInnerWindowId; }
+  virtual uint64_t InnerWindowID() const override { return mInnerWindowId; }
 
-  virtual bool HasError() MOZ_OVERRIDE    { return mError; }
-  virtual void SetHasError() MOZ_OVERRIDE { mError = true; }
+  virtual bool HasError() override    { return mError; }
+  virtual void SetHasError() override { mError = true; }
 
   /*
    * Returns a non-AddRefed pointer to the URI associated with this image.
    * Illegal to use off-main-thread.
    */
-  virtual ImageURL* GetURI() MOZ_OVERRIDE { return mURI.get(); }
+  virtual ImageURL* GetURI() override { return mURI.get(); }
 
 protected:
   explicit ImageResource(ImageURL* aURI);
+  ~ImageResource();
 
   // Shared functionality for implementors of imgIContainer. Every
   // implementation of attribute animationMode should forward here.
@@ -230,4 +339,4 @@ protected:
 } // namespace image
 } // namespace mozilla
 
-#endif // MOZILLA_IMAGELIB_IMAGE_H_
+#endif // mozilla_image_src_Image_h

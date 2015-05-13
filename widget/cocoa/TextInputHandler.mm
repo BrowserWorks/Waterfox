@@ -21,11 +21,12 @@
 #include "nsCocoaUtils.h"
 #include "WidgetUtils.h"
 #include "nsPrintfCString.h"
+#include "mozilla/unused.h"
+#include "mozilla/dom/ContentParent.h"
+#include "ComplexTextInputPanel.h"
 
 using namespace mozilla;
 using namespace mozilla::widget;
-
-#ifdef PR_LOGGING
 
 PRLogModuleInfo* gLog = nullptr;
 
@@ -302,8 +303,6 @@ GetWindowLevelName(NSInteger aWindowLevel)
   }
 }
 
-#endif // #ifdef PR_LOGGING
-
 static bool
 IsControlChar(uint32_t aCharCode)
 {
@@ -316,14 +315,12 @@ static TISInputSourceWrapper gCurrentInputSource;
 static void
 InitLogModule()
 {
-#ifdef PR_LOGGING
   // Clear() is always called when TISInputSourceWrappper is created.
   if (!gLog) {
     gLog = PR_NewLogModule("TextInputHandlerWidgets");
     TextInputHandler::DebugPrintAllKeyboardLayouts();
     IMEInputHandler::DebugPrintAllIMEModes();
   }
-#endif
 }
 
 static void
@@ -1044,7 +1041,6 @@ TISInputSourceWrapper::InitKeyPressEvent(NSEvent *aNativeKeyEvent,
   NS_ASSERTION(aKeyEvent.message == NS_KEY_PRESS,
                "aKeyEvent must be NS_KEY_PRESS event");
 
-#ifdef PR_LOGGING
   if (PR_LOG_TEST(gLog, PR_LOG_ALWAYS)) {
     nsAutoString chars;
     nsCocoaUtils::GetStringForNSString([aNativeKeyEvent characters], chars);
@@ -1059,7 +1055,6 @@ TISInputSourceWrapper::InitKeyPressEvent(NSEvent *aNativeKeyEvent,
        utf8ExpectedChar.get(), GetGeckoKeyEventType(aKeyEvent), aKbType,
        TrueOrFalse(IsOpenedIMEMode())));
   }
-#endif // #ifdef PR_LOGGING
 
   aKeyEvent.isChar = true; // this is not a special key  XXX not used in XP
   aKeyEvent.charCode = aInsertChar;
@@ -1448,7 +1443,6 @@ TextInputHandler::CreateAllKeyboardLayoutList()
 void
 TextInputHandler::DebugPrintAllKeyboardLayouts()
 {
-#ifdef PR_LOGGING
   if (PR_LOG_TEST(gLog, PR_LOG_ALWAYS)) {
     CFArrayRef list = CreateAllKeyboardLayoutList();
     PR_LOG(gLog, PR_LOG_ALWAYS, ("Keyboard layout configuration:"));
@@ -1471,7 +1465,6 @@ TextInputHandler::DebugPrintAllKeyboardLayouts()
     }
     ::CFRelease(list);
   }
-#endif // #ifdef PR_LOGGING
 }
 
 
@@ -1523,7 +1516,20 @@ TextInputHandler::HandleKeyDownEvent(NSEvent* aNativeEvent)
   KeyEventState* currentKeyEvent = PushKeyEvent(aNativeEvent);
   AutoKeyEventStateCleaner remover(this);
 
-  if (!IsIMEComposing()) {
+  ComplexTextInputPanel* ctiPanel = ComplexTextInputPanel::GetSharedComplexTextInputPanel();
+  if (ctiPanel && ctiPanel->IsInComposition()) {
+    nsAutoString committed;
+    ctiPanel->InterpretKeyEvent(aNativeEvent, committed);
+    if (!committed.IsEmpty()) {
+      WidgetKeyboardEvent imeEvent(true, NS_KEY_DOWN, mWidget);
+      InitKeyEvent(aNativeEvent, imeEvent);
+      imeEvent.mPluginTextEventString.Assign(committed);
+      DispatchEvent(imeEvent);
+    }
+    return true;
+  }
+
+  if (mWidget->IsPluginFocused() || !IsIMEComposing()) {
     NSResponder* firstResponder = [[mView window] firstResponder];
 
     WidgetKeyboardEvent keydownEvent(true, NS_KEY_DOWN, mWidget);
@@ -1553,6 +1559,14 @@ TextInputHandler::HandleKeyDownEvent(NSEvent* aNativeEvent)
          "keydown event's default is prevented", this));
       return true;
     }
+  }
+
+  // None of what follows is needed for plugin keyboard input.  In fact it
+  // may cause trouble -- for example the call to [mView interpretKeyEvents:]
+  // can, in e10s mode, cause each key typed to appear twice in an IME
+  // composition.
+  if (mWidget->IsPluginFocused()) {
+    return true;
   }
 
   // Let Cocoa interpret the key events, caching IsIMEComposing first.
@@ -2205,6 +2219,7 @@ TextInputHandler::DoCommandBySelector(const char* aSelector)
  ******************************************************************************/
 
 bool IMEInputHandler::sStaticMembersInitialized = false;
+bool IMEInputHandler::sCachedIsForRTLLangage = false;
 CFStringRef IMEInputHandler::sLatestIMEOpenedModeInputSourceID = nullptr;
 IMEInputHandler* IMEInputHandler::sFocusedIMEHandler = nullptr;
 
@@ -2245,7 +2260,6 @@ IMEInputHandler::OnCurrentTextInputSourceChange(CFNotificationCenterRef aCenter,
     tis.GetInputSourceID(sLatestIMEOpenedModeInputSourceID);
   }
 
-#ifdef PR_LOGGING
   if (PR_LOG_TEST(gLog, PR_LOG_ALWAYS)) {
     static CFStringRef sLastTIS = nullptr;
     CFStringRef newTIS;
@@ -2292,7 +2306,20 @@ IMEInputHandler::OnCurrentTextInputSourceChange(CFNotificationCenterRef aCenter,
     }
     sLastTIS = newTIS;
   }
-#endif // #ifdef PR_LOGGING
+
+  /**
+   * When the direction is changed, all the children are notified.
+   * No need to treat the initial case separately because it is covered
+   * by the general case (sCachedIsForRTLLangage is initially false)
+   */
+  if (sCachedIsForRTLLangage != tis.IsForRTLLanguage()) {
+    nsTArray<dom::ContentParent*> children;
+    dom::ContentParent::GetAll(children);
+    for (uint32_t i = 0; i < children.Length(); i++) {
+      unused << children[i]->SendBidiKeyboardNotify(tis.IsForRTLLanguage());
+    }
+    sCachedIsForRTLLangage = tis.IsForRTLLanguage();
+  }
 }
 
 // static
@@ -2321,7 +2348,6 @@ IMEInputHandler::CreateAllIMEModeList()
 void
 IMEInputHandler::DebugPrintAllIMEModes()
 {
-#ifdef PR_LOGGING
   if (PR_LOG_TEST(gLog, PR_LOG_ALWAYS)) {
     CFArrayRef list = CreateAllIMEModeList();
     PR_LOG(gLog, PR_LOG_ALWAYS, ("IME mode configuration:"));
@@ -2343,7 +2369,6 @@ IMEInputHandler::DebugPrintAllIMEModes()
     }
     ::CFRelease(list);
   }
-#endif // #ifdef PR_LOGGING
 }
 
 //static
@@ -2975,6 +3000,7 @@ IMEInputHandler::GetAttributedSubstringFromRange(NSRange& aRange,
   nsAutoString str;
   WidgetQueryContentEvent textContent(true, NS_QUERY_TEXT_CONTENT, mWidget);
   textContent.InitForQueryTextContent(aRange.location, aRange.length);
+  textContent.RequestFontRanges();
   DispatchEvent(textContent);
 
   PR_LOG(gLog, PR_LOG_ALWAYS,
@@ -2989,9 +3015,26 @@ IMEInputHandler::GetAttributedSubstringFromRange(NSRange& aRange,
   }
 
   NSString* nsstr = nsCocoaUtils::ToNSString(textContent.mReply.mString);
-  NSAttributedString* result =
-    [[[NSAttributedString alloc] initWithString:nsstr
-                                     attributes:nil] autorelease];
+  NSMutableAttributedString* result =
+    [[[NSMutableAttributedString alloc] initWithString:nsstr
+                                            attributes:nil] autorelease];
+  const nsTArray<FontRange>& fontRanges = textContent.mReply.mFontRanges;
+  int32_t lastOffset = textContent.mReply.mString.Length();
+  for (auto i = fontRanges.Length(); i > 0; --i) {
+    const FontRange& fontRange = fontRanges[i - 1];
+    NSString* fontName = nsCocoaUtils::ToNSString(fontRange.mFontName);
+    CGFloat fontSize = fontRange.mFontSize / mWidget->BackingScaleFactor();
+    NSFont* font = [NSFont fontWithName:fontName size:fontSize];
+    if (!font) {
+      font = [NSFont systemFontOfSize:fontSize];
+    }
+
+    NSDictionary* attrs = @{ NSFontAttributeName: font };
+    NSRange range = NSMakeRange(fontRange.mStartOffset,
+                                lastOffset - fontRange.mStartOffset);
+    [result setAttributes:attrs range:range];
+    lastOffset = fontRange.mStartOffset;
+  }
   if (aActualRange) {
     aActualRange->location = textContent.mReply.mOffset;
     aActualRange->length = textContent.mReply.mString.Length();
@@ -3061,16 +3104,50 @@ IMEInputHandler::SelectedRange()
     return mSelectedRange;
   }
 
+  mWritingMode = selection.GetWritingMode();
+  mRangeForWritingMode = NSMakeRange(selection.mReply.mOffset,
+                                     selection.mReply.mString.Length());
+
   if (mIMEHasFocus) {
-    mSelectedRange.location = selection.mReply.mOffset;
-    mSelectedRange.length = selection.mReply.mString.Length();
-    return mSelectedRange;
+    mSelectedRange = mRangeForWritingMode;
   }
 
-  return NSMakeRange(selection.mReply.mOffset,
-                     selection.mReply.mString.Length());
+  return mRangeForWritingMode;
 
   NS_OBJC_END_TRY_ABORT_BLOCK_RETURN(mSelectedRange);
+}
+
+bool
+IMEInputHandler::DrawsVerticallyForCharacterAtIndex(uint32_t aCharIndex)
+{
+  NS_OBJC_BEGIN_TRY_ABORT_BLOCK_RETURN;
+
+  if (Destroyed()) {
+    return false;
+  }
+
+  if (mRangeForWritingMode.location == NSNotFound) {
+    // Update cached writing-mode value for the current selection.
+    SelectedRange();
+  }
+
+  if (aCharIndex < mRangeForWritingMode.location ||
+      aCharIndex > mRangeForWritingMode.location + mRangeForWritingMode.length) {
+    // It's not clear to me whether this ever happens in practice, but if an
+    // IME ever wants to query writing mode at an offset outside the current
+    // selection, the writing-mode value may not be correct for the index.
+    // In that case, use FirstRectForCharacterRange to get a fresh value.
+    // This does more work than strictly necessary (we don't need the rect here),
+    // but should be a rare case.
+    NS_WARNING("DrawsVerticallyForCharacterAtIndex not using cached writing mode");
+    NSRange range = NSMakeRange(aCharIndex, 1);
+    NSRange actualRange;
+    FirstRectForCharacterRange(range, &actualRange);
+  }
+
+  return mWritingMode.IsVertical();
+
+  NS_OBJC_END_TRY_ABORT_BLOCK_RETURN(false);
 }
 
 NSRect
@@ -3100,7 +3177,7 @@ IMEInputHandler::FirstRectForCharacterRange(NSRange& aRange,
 
   nsRefPtr<IMEInputHandler> kungFuDeathGrip(this);
 
-  nsIntRect r;
+  LayoutDeviceIntRect r;
   bool useCaretRect = (aRange.length == 0);
   if (!useCaretRect) {
     WidgetQueryContentEvent charRect(true, NS_QUERY_TEXT_RECT, mWidget);
@@ -3110,6 +3187,8 @@ IMEInputHandler::FirstRectForCharacterRange(NSRange& aRange,
       r = charRect.mReply.mRect;
       actualRange.location = charRect.mReply.mOffset;
       actualRange.length = charRect.mReply.mString.Length();
+      mWritingMode = charRect.GetWritingMode();
+      mRangeForWritingMode = actualRange;
     } else {
       useCaretRect = true;
     }
@@ -3136,7 +3215,8 @@ IMEInputHandler::FirstRectForCharacterRange(NSRange& aRange,
   if (!rootWindow || !rootView) {
     return rect;
   }
-  rect = nsCocoaUtils::DevPixelsToCocoaPoints(r, mWidget->BackingScaleFactor());
+  rect = nsCocoaUtils::DevPixelsToCocoaPoints(LayoutDevicePixel::ToUntyped(r),
+                                              mWidget->BackingScaleFactor());
   rect = [rootView convertRect:rect toView:nil];
   rect.origin = [rootWindow convertBaseToScreen:rect.origin];
 
@@ -3288,6 +3368,10 @@ IMEInputHandler::OnDestroyWidget(nsChildView* aDestroyingWidget)
   // created by another widget/nsChildView.
   if (sFocusedIMEHandler && sFocusedIMEHandler != this) {
     sFocusedIMEHandler->OnDestroyWidget(aDestroyingWidget);
+  }
+
+  if (!TextInputHandlerBase::OnDestroyWidget(aDestroyingWidget)) {
+    return false;
   }
 
   if (IsIMEComposing()) {
@@ -3492,6 +3576,19 @@ IMEInputHandler::IsFocused()
 }
 
 bool
+IMEInputHandler::IsOrWouldBeFocused()
+{
+  NS_OBJC_BEGIN_TRY_ABORT_BLOCK;
+
+  NS_ENSURE_TRUE(!Destroyed(), false);
+  NSWindow* window = [mView window];
+  NS_ENSURE_TRUE(window, false);
+  return [window firstResponder] == mView && ![window attachedSheet];
+
+  NS_OBJC_END_TRY_ABORT_BLOCK_RETURN(false);
+}
+
+bool
 IMEInputHandler::IsIMEOpened()
 {
   TISInputSourceWrapper tis;
@@ -3584,7 +3681,6 @@ IMEInputHandler::OpenSystemPreferredLanguageIME()
       TISInputSourceWrapper tis;
       tis.InitByLanguage(lang);
       if (tis.IsOpenedIMEMode()) {
-#ifdef PR_LOGGING
         if (PR_LOG_TEST(gLog, PR_LOG_ALWAYS)) {
           CFStringRef foundTIS;
           tis.GetInputSourceID(foundTIS);
@@ -3593,7 +3689,6 @@ IMEInputHandler::OpenSystemPreferredLanguageIME()
              "foundTIS=%s, lang=%s",
              this, GetCharacters(foundTIS), GetCharacters(lang)));
         }
-#endif // #ifdef PR_LOGGING
         tis.Select();
         changed = true;
       }

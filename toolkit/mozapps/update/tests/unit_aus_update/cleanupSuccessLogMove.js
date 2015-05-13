@@ -6,42 +6,37 @@
 function run_test() {
   setupTestCommon();
 
-  logTestInfo("testing that the update.log is moved after a successful update");
+  debugDump("testing that the update.log is moved after a successful update");
 
   writeUpdatesToXMLFile(getLocalUpdatesXMLString(""), false);
-  var patches = getLocalPatchString(null, null, null, null, null, null,
+  let patches = getLocalPatchString(null, null, null, null, null, null,
                                     STATE_PENDING);
-  var updates = getLocalUpdateString(patches);
+  let updates = getLocalUpdateString(patches);
   writeUpdatesToXMLFile(getLocalUpdatesXMLString(updates), true);
   writeStatusFile(STATE_SUCCEEDED);
 
-  var dir = getUpdatesDir();
-  var log = dir.clone();
-  log.append("0");
+  let dir = getUpdatesDir();
+  let log = dir.clone();
+  log.append(DIR_PATCH);
   log.append(FILE_UPDATE_LOG);
   writeFile(log, "Last Update Log");
 
   standardInit();
 
-  logTestInfo("testing " + log.path + " shouldn't exist");
-  do_check_false(log.exists());
+  Assert.ok(!log.exists(), MSG_SHOULD_NOT_EXIST);
 
   log = dir.clone();
   log.append(FILE_LAST_LOG);
-  logTestInfo("testing " + log.path + " should exist");
-  do_check_true(log.exists());
-
-  logTestInfo("testing " + log.path + " contents");
-  do_check_eq(readFile(log), "Last Update Log");
+  Assert.ok(log.exists(), MSG_SHOULD_EXIST);
+  Assert.equal(readFile(log), "Last Update Log",
+               "the last update log contents" + MSG_SHOULD_EQUAL);
 
   log = dir.clone();
   log.append(FILE_BACKUP_LOG);
-  logTestInfo("testing " + log.path + " shouldn't exist");
-  do_check_false(log.exists());
+  Assert.ok(!log.exists(), MSG_SHOULD_NOT_EXIST);
 
-  dir.append("0");
-  logTestInfo("testing " + dir.path + " should exist (bug 512994)");
-  do_check_true(dir.exists());
+  dir.append(DIR_PATCH);
+  Assert.ok(dir.exists(), MSG_SHOULD_EXIST);
 
   doTestFinish();
 }

@@ -4,10 +4,6 @@
 // Test support methods on Target, such as `hasActor`, `getActorDescription`,
 // `actorHasMethod` and `getTrait`.
 
-let { DebuggerServer } =
-  Cu.import("resource://gre/modules/devtools/dbg-server.jsm", {});
-let { DebuggerClient } =
-  Cu.import("resource://gre/modules/devtools/dbg-client.jsm", {});
 let { devtools } =
   Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
 let { Task } =
@@ -48,8 +44,8 @@ function* testTarget (client, target) {
   ise(hasMethod, false,
     "target.actorHasMethod() returns false for undefined params");
 
-  ise(target.getTrait("customHighlighters")[0], "BoxModelHighlighter",
-    "target.getTrait() returns objects when trait exists");
+  ise(target.getTrait("customHighlighters"), true,
+    "target.getTrait() returns boolean when trait exists");
   ise(target.getTrait("giddyup"), undefined,
     "target.getTrait() returns undefined when trait does not exist");
 
@@ -60,29 +56,20 @@ function* testTarget (client, target) {
 function test() {
   waitForExplicitFinish();
 
-  if (!DebuggerServer.initialized) {
-    DebuggerServer.init();
-    DebuggerServer.addBrowserActors();
-  }
+  getChromeActors((client, response) => {
+    let options = {
+      form: response,
+      client: client,
+      chrome: true
+    };
 
-  var client = new DebuggerClient(DebuggerServer.connectPipe());
-  client.connect(() => {
-    client.listTabs(response => {
-      let options = {
-        form: response,
-        client: client,
-        chrome: true
-      };
-
-      devtools.TargetFactory.forRemoteTab(options).then(Task.async(testTarget).bind(null, client));
-    });
+    devtools.TargetFactory.forRemoteTab(options).then(Task.async(testTarget).bind(null, client));
   });
 }
 
 function close (target, client) {
   target.on("close", () => {
     ok(true, "Target was closed");
-    DebuggerServer.destroy();
     finish();
   });
   client.close();

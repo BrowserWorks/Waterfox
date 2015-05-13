@@ -26,8 +26,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "AddonManager",
                                   "resource://gre/modules/AddonManager.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "AddonManagerPrivate",
                                   "resource://gre/modules/AddonManager.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "TelemetryPing",
-                                  "resource://gre/modules/TelemetryPing.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "TelemetrySession",
+                                  "resource://gre/modules/TelemetrySession.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "TelemetryLog",
                                   "resource://gre/modules/TelemetryLog.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "CommonUtils",
@@ -137,28 +137,6 @@ function configureLogging() {
     }
     gLogDumping = logDumping;
   }
-}
-
-// Takes an array of promises and returns a promise that is resolved once all of
-// them are rejected or resolved.
-function allResolvedOrRejected(promises) {
-  if (!promises.length) {
-    return Promise.resolve([]);
-  }
-
-  let countdown = promises.length;
-  let deferred = Promise.defer();
-
-  for (let p of promises) {
-    let helper = () => {
-      if (--countdown == 0) {
-        deferred.resolve();
-      }
-    };
-    Promise.resolve(p).then(helper, helper);
-  }
-
-  return deferred.promise;
 }
 
 // Loads a JSON file using OS.file. file is a string representing the path
@@ -323,7 +301,7 @@ Experiments.Policy.prototype = {
   },
 
   telemetryPayload: function () {
-    return TelemetryPing.getPayload();
+    return TelemetrySession.getPayload();
   },
 
   /**
@@ -418,6 +396,14 @@ Experiments.Experiments = function (policy=new Experiments.Policy()) {
 
 Experiments.Experiments.prototype = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsITimerCallback, Ci.nsIObserver]),
+
+  /**
+   * `true` if the experiments manager is currently setup (has been fully initialized
+   * and not uninitialized yet).
+   */
+  get isReady() {
+    return !this._shutdown;
+  },
 
   init: function () {
     this._shutdown = false;

@@ -15,9 +15,9 @@ Cu.import("resource://services-sync/util.js");
 
 this.Notifications = {
   // Match the referenced values in toolkit/content/widgets/notification.xml.
-  get PRIORITY_INFO()     1, // PRIORITY_INFO_LOW
-  get PRIORITY_WARNING()  4, // PRIORITY_WARNING_LOW
-  get PRIORITY_ERROR()    7, // PRIORITY_CRITICAL_LOW
+  get PRIORITY_INFO()     { return 1; },  // PRIORITY_INFO_LOW
+  get PRIORITY_WARNING()  { return 4; },  // PRIORITY_WARNING_LOW
+  get PRIORITY_ERROR()    { return 7; },  // PRIORITY_CRITICAL_LOW
 
   // FIXME: instead of making this public, dress the Notifications object
   // to behave like an iterator (using generators?) and have callers access
@@ -68,8 +68,8 @@ this.Notifications = {
    *        Title of notifications to remove; falsy value means remove all
    */
   removeAll: function Notifications_removeAll(title) {
-    this.notifications.filter(function(old) old.title == title || !title).
-      forEach(function(old) this.remove(old), this);
+    this.notifications.filter(old => (old.title == title || !title)).
+      forEach(old => { this.remove(old); }, this);
   },
 
   // replaces all existing notifications with the same title as the new one
@@ -84,7 +84,7 @@ this.Notifications = {
  * A basic notification.  Subclass this to create more complex notifications.
  */
 this.Notification =
- function Notification(title, description, iconURL, priority, buttons) {
+function Notification(title, description, iconURL, priority, buttons, link) {
   this.title = title;
   this.description = description;
 
@@ -96,6 +96,9 @@ this.Notification =
 
   if (buttons)
     this.buttons = buttons;
+
+  if (link)
+    this.link = link;
 }
 
 // We set each prototype property individually instead of redefining

@@ -249,7 +249,7 @@ nsresult WebMReader::Init(MediaDecoderReader* aCloneDonor)
 
     InitLayersBackendType();
 
-    mVideoTaskQueue = new MediaTaskQueue(
+    mVideoTaskQueue = new FlushableMediaTaskQueue(
       SharedThreadPool::Get(NS_LITERAL_CSTRING("IntelVP8 Video Decode")));
     NS_ENSURE_TRUE(mVideoTaskQueue, NS_ERROR_FAILURE);
   }
@@ -329,7 +329,10 @@ void WebMReader::Cleanup()
 nsresult WebMReader::ReadMetadata(MediaInfo* aInfo,
                                   MetadataTags** aTags)
 {
-  NS_ASSERTION(mDecoder->OnDecodeThread(), "Should be on decode thread.");
+  // We can't use OnTaskQueue() here because of the wacky initialization task
+  // queue that TrackBuffer uses. We should be able to fix this when we do
+  // bug 1148234.
+  MOZ_ASSERT(mDecoder->OnDecodeTaskQueue());
 
   nestegg_io io;
   io.read = webm_read;
@@ -337,7 +340,7 @@ nsresult WebMReader::ReadMetadata(MediaInfo* aInfo,
   io.tell = webm_tell;
   io.userdata = mDecoder;
   int64_t maxOffset = mDecoder->HasInitializationData() ?
-    mDecoder->GetResource()->GetLength() : -1;
+    mBufferedState->GetInitEndOffset() : -1;
   int r = nestegg_init(&mContext, io, &webm_log, maxOffset);
   if (r == -1) {
     return NS_ERROR_FAILURE;
@@ -430,7 +433,6 @@ nsresult WebMReader::ReadMetadata(MediaInfo* aInfo,
 
       mVideoTrack = track;
       mHasVideo = true;
-      mInfo.mVideo.mHasVideo = true;
 
       mInfo.mVideo.mDisplay = displaySize;
       mPicture = pictureRect;
@@ -463,7 +465,6 @@ nsresult WebMReader::ReadMetadata(MediaInfo* aInfo,
 
       mAudioTrack = track;
       mHasAudio = true;
-      mInfo.mAudio.mHasAudio = true;
       mAudioCodec = nestegg_track_codec_id(mContext, track);
       mCodecDelay = params.codec_delay / NS_PER_USEC;
 
@@ -581,34 +582,28 @@ bool WebMReader::InitOpusDecoder()
   return r == OPUS_OK;
 }
 
-bool WebMReader::DecodeAudioPacket(nestegg_packet* aPacket, int64_t aOffset)
+bool WebMReader::DecodeAudioPacket(NesteggPacketHolder* aHolder)
 {
-  NS_ASSERTION(mDecoder->OnDecodeThread(), "Should be on decode thread.");
+  MOZ_ASSERT(OnTaskQueue());
 
   int r = 0;
   unsigned int count = 0;
-  r = nestegg_packet_count(aPacket, &count);
+  r = nestegg_packet_count(aHolder->Packet(), &count);
   if (r == -1) {
     return false;
   }
 
-  uint64_t tstamp = 0;
-  r = nestegg_packet_tstamp(aPacket, &tstamp);
-  if (r == -1) {
-    return false;
-  }
-
-  uint64_t tstamp_usecs = tstamp / NS_PER_USEC;
+  int64_t tstamp = aHolder->Timestamp();
   if (mAudioStartUsec == -1) {
     // This is the first audio chunk. Assume the start time of our decode
     // is the start of this chunk.
-    mAudioStartUsec = tstamp_usecs;
+    mAudioStartUsec = tstamp;
   }
   // If there's a gap between the start of this audio chunk and the end of
   // the previous audio chunk, we need to increment the packet count so that
   // the vorbis decode doesn't use data from before the gap to help decode
   // from after the gap.
-  CheckedInt64 tstamp_frames = UsecsToFrames(tstamp_usecs, mInfo.mAudio.mRate);
+  CheckedInt64 tstamp_frames = UsecsToFrames(tstamp, mInfo.mAudio.mRate);
   CheckedInt64 decoded_frames = UsecsToFrames(mAudioStartUsec,
                                               mInfo.mAudio.mRate);
   if (!tstamp_frames.isValid() || !decoded_frames.isValid()) {
@@ -629,7 +624,7 @@ bool WebMReader::DecodeAudioPacket(nestegg_packet* aPacket, int64_t aOffset)
                        gap_frames));
 #endif
     mPacketCount++;
-    mAudioStartUsec = tstamp_usecs;
+    mAudioStartUsec = tstamp;
     mAudioFrames = 0;
   }
 
@@ -637,16 +632,16 @@ bool WebMReader::DecodeAudioPacket(nestegg_packet* aPacket, int64_t aOffset)
   for (uint32_t i = 0; i < count; ++i) {
     unsigned char* data;
     size_t length;
-    r = nestegg_packet_data(aPacket, i, &data, &length);
+    r = nestegg_packet_data(aHolder->Packet(), i, &data, &length);
     if (r == -1) {
       return false;
     }
     if (mAudioCodec == NESTEGG_CODEC_VORBIS) {
-      if (!DecodeVorbis(data, length, aOffset, tstamp_usecs, &total_frames)) {
+      if (!DecodeVorbis(data, length, aHolder->Offset(), tstamp, &total_frames)) {
         return false;
       }
     } else if (mAudioCodec == NESTEGG_CODEC_OPUS) {
-      if (!DecodeOpus(data, length, aOffset, tstamp_usecs, aPacket)) {
+      if (!DecodeOpus(data, length, aHolder->Offset(), tstamp, aHolder->Packet())) {
         return false;
       }
     }
@@ -866,7 +861,7 @@ bool WebMReader::DecodeOpus(const unsigned char* aData, size_t aLength,
   return true;
 }
 
-nsReturnRef<NesteggPacketHolder> WebMReader::NextPacket(TrackType aTrackType)
+already_AddRefed<NesteggPacketHolder> WebMReader::NextPacket(TrackType aTrackType)
 {
   // The packet queue that packets will be pushed on if they
   // are not the type we are interested in.
@@ -891,71 +886,183 @@ nsReturnRef<NesteggPacketHolder> WebMReader::NextPacket(TrackType aTrackType)
   // Value of other track
   uint32_t otherTrack = aTrackType == VIDEO ? mAudioTrack : mVideoTrack;
 
-  nsAutoRef<NesteggPacketHolder> holder;
-
   if (packets.GetSize() > 0) {
-    holder.own(packets.PopFront());
-  } else {
-    // Keep reading packets until we find a packet
-    // for the track we want.
-    do {
-      nestegg_packet* packet;
-      int r = nestegg_read_packet(mContext, &packet);
-      if (r <= 0) {
-        return nsReturnRef<NesteggPacketHolder>();
-      }
-      int64_t offset = mDecoder->GetResource()->Tell();
-      holder.own(new NesteggPacketHolder(packet, offset));
-
-      unsigned int track = 0;
-      r = nestegg_packet_track(packet, &track);
-      if (r == -1) {
-        return nsReturnRef<NesteggPacketHolder>();
-      }
-
-      if (hasOtherType && otherTrack == track) {
-        // Save the packet for when we want these packets
-        otherPackets.Push(holder.disown());
-        continue;
-      }
-
-      // The packet is for the track we want to play
-      if (hasType && ourTrack == track) {
-        break;
-      }
-    } while (true);
+    return packets.PopFront();
   }
 
-  return holder.out();
+  do {
+    nsRefPtr<NesteggPacketHolder> holder = DemuxPacket();
+    if (!holder) {
+      return nullptr;
+    }
+
+    if (hasOtherType && otherTrack == holder->Track()) {
+      // Save the packet for when we want these packets
+      otherPackets.Push(holder.forget());
+      continue;
+    }
+
+    // The packet is for the track we want to play
+    if (hasType && ourTrack == holder->Track()) {
+      return holder.forget();
+    }
+  } while (true);
+}
+
+already_AddRefed<NesteggPacketHolder>
+WebMReader::DemuxPacket()
+{
+  nestegg_packet* packet;
+  int r = nestegg_read_packet(mContext, &packet);
+  if (r <= 0) {
+    return nullptr;
+  }
+
+  unsigned int track = 0;
+  r = nestegg_packet_track(packet, &track);
+  if (r == -1) {
+    return nullptr;
+  }
+
+  // Figure out if this is a keyframe.
+  //
+  // Doing this at packet-granularity is kind of the wrong level of
+  // abstraction, but timestamps are on the packet, so the only time
+  // we have multiple video frames in a packet is when we have "alternate
+  // reference frames", which are a compression detail and never displayed.
+  // So for our purposes, we can just take the union of the is_kf values for
+  // all the frames in the packet.
+  bool isKeyframe = false;
+  if (track == mAudioTrack) {
+    isKeyframe = true;
+  } else if (track == mVideoTrack) {
+    unsigned int count = 0;
+    r = nestegg_packet_count(packet, &count);
+    if (r == -1) {
+      return nullptr;
+    }
+
+    for (unsigned i = 0; i < count; ++i) {
+      unsigned char* data;
+      size_t length;
+      r = nestegg_packet_data(packet, i, &data, &length);
+      if (r == -1) {
+        return nullptr;
+      }
+      vpx_codec_stream_info_t si;
+      memset(&si, 0, sizeof(si));
+      si.sz = sizeof(si);
+      if (mVideoCodec == NESTEGG_CODEC_VP8) {
+        vpx_codec_peek_stream_info(vpx_codec_vp8_dx(), data, length, &si);
+      } else if (mVideoCodec == NESTEGG_CODEC_VP9) {
+        vpx_codec_peek_stream_info(vpx_codec_vp9_dx(), data, length, &si);
+      }
+      isKeyframe = isKeyframe || si.is_kf;
+    }
+  }
+
+  int64_t offset = mDecoder->GetResource()->Tell();
+  nsRefPtr<NesteggPacketHolder> holder = new NesteggPacketHolder();
+  if (!holder->Init(packet, offset, track, isKeyframe)) {
+    return nullptr;
+  }
+
+  return holder.forget();
 }
 
 bool WebMReader::DecodeAudioData()
 {
-  NS_ASSERTION(mDecoder->OnDecodeThread(), "Should be on decode thread.");
+  MOZ_ASSERT(OnTaskQueue());
 
-  nsAutoRef<NesteggPacketHolder> holder(NextPacket(AUDIO));
+  nsRefPtr<NesteggPacketHolder> holder(NextPacket(AUDIO));
   if (!holder) {
     return false;
   }
 
-  return DecodeAudioPacket(holder->mPacket, holder->mOffset);
+  return DecodeAudioPacket(holder);
+}
+
+bool WebMReader::FilterPacketByTime(int64_t aEndTime, WebMPacketQueue& aOutput)
+{
+  // Push the video frames to the aOutput which's timestamp is less
+  // than aEndTime.
+  while (true) {
+    nsRefPtr<NesteggPacketHolder> holder(NextPacket(VIDEO));
+    if (!holder) {
+      break;
+    }
+    int64_t tstamp = holder->Timestamp();
+    if (tstamp >= aEndTime) {
+      PushVideoPacket(holder.forget());
+      return true;
+    } else {
+      aOutput.PushFront(holder.forget());
+    }
+  }
+
+  return false;
+}
+
+int64_t WebMReader::GetNextKeyframeTime(int64_t aTimeThreshold)
+{
+  WebMPacketQueue skipPacketQueue;
+  if (!FilterPacketByTime(aTimeThreshold, skipPacketQueue)) {
+    // Restore the packets before we return -1.
+    uint32_t size = skipPacketQueue.GetSize();
+    for (uint32_t i = 0; i < size; ++i) {
+      PushVideoPacket(skipPacketQueue.PopFront());
+    }
+    return -1;
+  }
+
+  // Find keyframe.
+  bool foundKeyframe = false;
+  int64_t keyframeTime = -1;
+  while (!foundKeyframe) {
+    nsRefPtr<NesteggPacketHolder> holder(NextPacket(VIDEO));
+    if (!holder) {
+      break;
+    }
+
+    if (holder->IsKeyframe()) {
+      foundKeyframe = true;
+      keyframeTime = holder->Timestamp();
+    }
+
+    skipPacketQueue.PushFront(holder.forget());
+  }
+
+  uint32_t size = skipPacketQueue.GetSize();
+  for (uint32_t i = 0; i < size; ++i) {
+    PushVideoPacket(skipPacketQueue.PopFront());
+  }
+
+  return keyframeTime;
+}
+
+bool WebMReader::ShouldSkipVideoFrame(int64_t aTimeThreshold)
+{
+  return GetNextKeyframeTime(aTimeThreshold) != -1;
 }
 
 bool WebMReader::DecodeVideoFrame(bool &aKeyframeSkip, int64_t aTimeThreshold)
 {
+  if (!(aKeyframeSkip && ShouldSkipVideoFrame(aTimeThreshold))) {
+    LOG(PR_LOG_DEBUG, ("Reader [%p]: set the aKeyframeSkip to false.",this));
+    aKeyframeSkip = false;
+  }
   return mVideoDecoder->DecodeVideoFrame(aKeyframeSkip, aTimeThreshold);
 }
 
-void WebMReader::PushVideoPacket(NesteggPacketHolder* aItem)
+void WebMReader::PushVideoPacket(already_AddRefed<NesteggPacketHolder> aItem)
 {
-    mVideoPackets.PushFront(aItem);
+    mVideoPackets.PushFront(Move(aItem));
 }
 
 nsRefPtr<MediaDecoderReader::SeekPromise>
-WebMReader::Seek(int64_t aTarget, int64_t aStartTime, int64_t aEndTime,
-                      int64_t aCurrentTime)
+WebMReader::Seek(int64_t aTarget, int64_t aEndTime)
 {
-  nsresult res = SeekInternal(aTarget, aStartTime);
+  nsresult res = SeekInternal(aTarget);
   if (NS_FAILED(res)) {
     return SeekPromise::CreateAndReject(res, __func__);
   } else {
@@ -963,9 +1070,9 @@ WebMReader::Seek(int64_t aTarget, int64_t aStartTime, int64_t aEndTime,
   }
 }
 
-nsresult WebMReader::SeekInternal(int64_t aTarget, int64_t aStartTime)
+nsresult WebMReader::SeekInternal(int64_t aTarget)
 {
-  NS_ASSERTION(mDecoder->OnDecodeThread(), "Should be on decode thread.");
+  MOZ_ASSERT(OnTaskQueue());
   if (mVideoDecoder) {
     nsresult rv = mVideoDecoder->Flush();
     NS_ENSURE_SUCCESS(rv, rv);
@@ -980,7 +1087,7 @@ nsresult WebMReader::SeekInternal(int64_t aTarget, int64_t aStartTime)
   uint64_t target = aTarget * NS_PER_USEC;
 
   if (mSeekPreroll) {
-    target = std::max(uint64_t(aStartTime * NS_PER_USEC),
+    target = std::max(uint64_t(mStartTime * NS_PER_USEC),
                       target - mSeekPreroll);
   }
   int r = nestegg_track_seek(mContext, trackToSeek, target);
@@ -1091,12 +1198,12 @@ nsIntSize WebMReader::GetInitialFrame()
   return mInitialFrame;
 }
 
-uint64_t WebMReader::GetLastVideoFrameTime()
+int64_t WebMReader::GetLastVideoFrameTime()
 {
   return mLastVideoFrameTime;
 }
 
-void WebMReader::SetLastVideoFrameTime(uint64_t aFrameTime)
+void WebMReader::SetLastVideoFrameTime(int64_t aFrameTime)
 {
   mLastVideoFrameTime = aFrameTime;
 }

@@ -20,8 +20,8 @@ class AccessibleWrap;
 /**
  * IRawElementProviderSimple implementation (maintains IAccessibleEx approach).
  */
-class uiaRawElmProvider MOZ_FINAL : public IAccessibleEx,
-                                    public IRawElementProviderSimple
+class uiaRawElmProvider final : public IAccessibleEx,
+                                public IRawElementProviderSimple
 {
 public:
   uiaRawElmProvider(AccessibleWrap* aAcc) : mAcc(aAcc) { }

@@ -10,7 +10,8 @@ const Cu = Components.utils;
 Cu.import("resource://gre/modules/Services.jsm");
 
 // Import common head.
-let (commonFile = do_get_file("../head_common.js", false)) {
+{
+  let commonFile = do_get_file("../head_common.js", false);
   let uri = Services.io.newFileURI(commonFile);
   Services.scriptloader.loadSubScript(uri.spec, this);
 }
@@ -31,8 +32,8 @@ function* cleanup() {
   for (let type of ["history", "bookmark", "history.onlyTyped", "openpage"]) {
     Services.prefs.clearUserPref("browser.urlbar.suggest." + type);
   }
-  remove_all_bookmarks();
-  yield promiseClearHistory();
+  yield PlacesUtils.bookmarks.eraseEverything();
+  yield PlacesTestUtils.clearHistory();
 }
 do_register_cleanup(cleanup);
 
@@ -101,7 +102,7 @@ function* check_autocomplete(test) {
   // updates.
   // This is not a problem in real life, but autocomplete tests should
   // return reliable resultsets, thus we have to wait.
-  yield promiseAsyncUpdates();
+  yield PlacesTestUtils.promiseAsyncUpdates();
 
   // Make an AutoCompleteInput that uses our searches and confirms results.
   let input = new AutoCompleteInput(["unifiedcomplete"]);
@@ -122,12 +123,12 @@ function* check_autocomplete(test) {
 
   let numSearchesStarted = 0;
   input.onSearchBegin = () => {
-    do_log_info("onSearchBegin received");
+    do_print("onSearchBegin received");
     numSearchesStarted++;
   };
   let deferred = Promise.defer();
   input.onSearchComplete = () => {
-    do_log_info("onSearchComplete received");
+    do_print("onSearchComplete received");
     deferred.resolve();
   }
 
@@ -136,7 +137,7 @@ function* check_autocomplete(test) {
     controller.startSearch(test.incompleteSearch);
     expectedSearches++;
   }
-  do_log_info("Searching for: '" + test.search + "'");
+  do_print("Searching for: '" + test.search + "'");
   controller.startSearch(test.search);
   yield deferred.promise;
 
@@ -150,7 +151,7 @@ function* check_autocomplete(test) {
     for (let i = 0; i < controller.matchCount; i++) {
       let value = controller.getValueAt(i);
       let comment = controller.getCommentAt(i);
-      do_log_info("Looking for '" + value + "', '" + comment + "' in expected results...");
+      do_print("Looking for '" + value + "', '" + comment + "' in expected results...");
       let j;
       for (j = 0; j < matches.length; j++) {
         // Skip processed expected results
@@ -167,10 +168,10 @@ function* check_autocomplete(test) {
         else
           style = ["favicon"];
 
-        do_log_info("Checking against expected '" + uri.spec + "', '" + title + "'...");
+        do_print("Checking against expected '" + uri.spec + "', '" + title + "'...");
         // Got a match on both uri and title?
         if (stripPrefix(uri.spec) == stripPrefix(value) && title == comment) {
-          do_log_info("Got a match at index " + j + "!");
+          do_print("Got a match at index " + j + "!");
           let actualStyle = controller.getStyleAt(i).split(/\s+/).sort();
           if (style)
             Assert.equal(actualStyle.toString(), style.toString(), "Match should have expected style");
@@ -212,23 +213,27 @@ function* check_autocomplete(test) {
   }
 }
 
-function addBookmark(aBookmarkObj) {
+let addBookmark = Task.async(function* (aBookmarkObj) {
   Assert.ok(!!aBookmarkObj.uri, "Bookmark object contains an uri");
   let parentId = aBookmarkObj.parentId ? aBookmarkObj.parentId
                                        : PlacesUtils.unfiledBookmarksFolderId;
-  let itemId = PlacesUtils.bookmarks
-                          .insertBookmark(parentId,
-                                          aBookmarkObj.uri,
-                                          PlacesUtils.bookmarks.DEFAULT_INDEX,
-                                          aBookmarkObj.title || "A bookmark");
+
+  let bm = yield PlacesUtils.bookmarks.insert({
+    parentGuid: (yield PlacesUtils.promiseItemGuid(parentId)),
+    title: aBookmarkObj.title || "A bookmark",
+    url: aBookmarkObj.uri
+  });
+  let itemId = yield PlacesUtils.promiseItemId(bm.guid);
+
   if (aBookmarkObj.keyword) {
-    PlacesUtils.bookmarks.setKeywordForBookmark(itemId, aBookmarkObj.keyword);
+    yield PlacesUtils.keywords.insert({ keyword: aBookmarkObj.keyword,
+                                        url: aBookmarkObj.uri.spec });
   }
 
   if (aBookmarkObj.tags) {
     PlacesUtils.tagging.tagURI(aBookmarkObj.uri, aBookmarkObj.tags);
   }
-}
+});
 
 function addOpenPages(aUri, aCount=1) {
   let ac = Cc["@mozilla.org/autocomplete/search;1?name=unifiedcomplete"]
@@ -254,7 +259,7 @@ function changeRestrict(aType, aChar) {
   else
     branch += "restrict.";
 
-  do_log_info("changing restrict for " + aType + " to '" + aChar + "'");
+  do_print("changing restrict for " + aType + " to '" + aChar + "'");
   Services.prefs.setCharPref(branch + aType, aChar);
 }
 

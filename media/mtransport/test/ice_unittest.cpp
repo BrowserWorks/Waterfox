@@ -45,6 +45,10 @@
 #include "ice_peer_ctx.h"
 #include "ice_media_stream.h"
 
+extern "C" {
+#include "r_data.h"
+}
+
 #define GTEST_HAS_RTTI 0
 #include "gtest/gtest.h"
 #include "gtest_utils.h"
@@ -265,13 +269,14 @@ class IceTestPeer : public sigslot::has_slots<> {
     PR_Sleep(1000);
   }
 
-  void AddStream(int components) {
+  void AddStream_s(int components) {
     char name[100];
     snprintf(name, sizeof(name), "%s:stream%d", name_.c_str(),
              (int)streams_.size());
 
     mozilla::RefPtr<NrIceMediaStream> stream =
         ice_ctx_->CreateStream(static_cast<char *>(name), components);
+    ice_ctx_->SetStream(streams_.size(), stream);
 
     ASSERT_TRUE(stream);
     streams_.push_back(stream);
@@ -279,6 +284,24 @@ class IceTestPeer : public sigslot::has_slots<> {
     stream->SignalReady.connect(this, &IceTestPeer::StreamReady);
     stream->SignalFailed.connect(this, &IceTestPeer::StreamFailed);
     stream->SignalPacketReceived.connect(this, &IceTestPeer::PacketReceived);
+  }
+
+  void AddStream(int components)
+  {
+    test_utils->sts_target()->Dispatch(
+        WrapRunnable(this, &IceTestPeer::AddStream_s, components),
+        NS_DISPATCH_SYNC);
+  }
+
+  void RemoveStream_s(size_t index) {
+    streams_[index] = nullptr;
+    ice_ctx_->SetStream(index, nullptr);
+  }
+
+  void RemoveStream(size_t index) {
+    test_utils->sts_target()->Dispatch(
+        WrapRunnable(this, &IceTestPeer::RemoveStream_s, index),
+        NS_DISPATCH_SYNC);
   }
 
   void SetStunServer(const std::string addr, uint16_t port) {
@@ -377,8 +400,10 @@ class IceTestPeer : public sigslot::has_slots<> {
   std::vector<std::string> GetCandidates_s(size_t stream) {
     std::vector<std::string> candidates;
 
-    if (stream >= streams_.size())
+    if (stream >= streams_.size() || !streams_[stream]) {
+      EXPECT_TRUE(false) << "No such stream " << stream;
       return candidates;
+    }
 
     std::vector<std::string> candidates_in =
       streams_[stream]->GetCandidates();
@@ -403,15 +428,26 @@ class IceTestPeer : public sigslot::has_slots<> {
     expected_remote_type_ = remote;
   }
 
-  void SetExpectedCandidateAddr(const std::string& addr) {
-    expected_local_addr_ = addr;
+  void SetExpectedRemoteCandidateAddr(const std::string& addr) {
     expected_remote_addr_ = addr;
   }
 
   bool gathering_complete() { return gathering_complete_; }
   int ready_ct() { return ready_ct_; }
-  bool is_ready(size_t stream) {
+  bool is_ready_s(size_t stream) {
+    if (!streams_[stream]) {
+      EXPECT_TRUE(false) << "No such stream " << stream;
+      return false;
+    }
     return streams_[stream]->state() == NrIceMediaStream::ICE_OPEN;
+  }
+  bool is_ready(size_t stream)
+  {
+    bool result;
+    test_utils->sts_target()->Dispatch(
+        WrapRunnableRet(this, &IceTestPeer::is_ready_s, stream, &result),
+        NS_DISPATCH_SYNC);
+    return result;
   }
   bool ice_complete() { return ice_complete_; }
   bool ice_reached_checking() { return ice_reached_checking_; }
@@ -426,12 +462,16 @@ class IceTestPeer : public sigslot::has_slots<> {
     remote_ = remote;
 
     trickle_mode_ = trickle_mode;
+    ice_complete_ = false;
     res = ice_ctx_->ParseGlobalAttributes(remote->GetGlobalAttributes());
     ASSERT_TRUE(NS_SUCCEEDED(res));
 
     if (trickle_mode == TRICKLE_NONE ||
         trickle_mode == TRICKLE_REAL) {
       for (size_t i=0; i<streams_.size(); ++i) {
+        if (!streams_[i] || streams_[i]->HasParsedAttributes()) {
+          continue;
+        }
         std::vector<std::string> candidates =
             remote->GetCandidates(i);
 
@@ -444,7 +484,11 @@ class IceTestPeer : public sigslot::has_slots<> {
     } else {
       // Parse empty attributes and then trickle them out later
       for (size_t i=0; i<streams_.size(); ++i) {
+        if (!streams_[i] || streams_[i]->HasParsedAttributes()) {
+          continue;
+        }
         std::vector<std::string> empty_attrs;
+        std::cout << "Calling ParseAttributes on stream " << i << std::endl;
         res = streams_[i]->ParseAttributes(empty_attrs);
         ASSERT_TRUE(NS_SUCCEEDED(res));
       }
@@ -470,7 +514,10 @@ class IceTestPeer : public sigslot::has_slots<> {
     // If we are in trickle deferred mode, now trickle in the candidates
     // for |stream|
 
+    // The size of streams_ is not going to change out from under us, so should
+    // be safe here.
     ASSERT_GT(remote_->streams_.size(), stream);
+    ASSERT_TRUE(remote_->streams_[stream]);
 
     std::vector<SchedulableTrickleCandidate*>& candidates =
       ControlTrickle(stream);
@@ -498,6 +545,10 @@ class IceTestPeer : public sigslot::has_slots<> {
   }
 
   nsresult TrickleCandidate_s(const std::string &candidate, size_t stream) {
+    if (!streams_[stream]) {
+      // stream might have gone away before the trickle timer popped
+      return NS_OK;
+    }
     return streams_[stream]->ParseTrickleCandidate(candidate);
   }
 
@@ -551,6 +602,10 @@ class IceTestPeer : public sigslot::has_slots<> {
   void DumpAndCheckActiveCandidates_s() {
     std::cerr << "Active candidates:" << std::endl;
     for (size_t i=0; i < streams_.size(); ++i) {
+      if (!streams_[i]) {
+        continue;
+      }
+
       for (size_t j=0; j < streams_[i]->components(); ++j) {
         std::cerr << "Stream " << i << " component " << j+1 << std::endl;
 
@@ -567,9 +622,6 @@ class IceTestPeer : public sigslot::has_slots<> {
           ASSERT_EQ(expected_local_transport_, local->local_addr.transport);
           DumpCandidate("Remote ", *remote);
           ASSERT_EQ(expected_remote_type_, remote->type);
-          if (!expected_local_addr_.empty()) {
-            ASSERT_EQ(expected_local_addr_, local->cand_addr.host);
-          }
           if (!expected_remote_addr_.empty()) {
             ASSERT_EQ(expected_remote_addr_, remote->cand_addr.host);
           }
@@ -602,6 +654,16 @@ class IceTestPeer : public sigslot::has_slots<> {
     }
 
     ice_ctx_ = nullptr;
+
+    if (remote_) {
+      remote_->UnsetRemote();
+      remote_ = nullptr;
+    }
+  }
+
+  void UnsetRemote()
+  {
+    remote_ = nullptr;
   }
 
   void StartChecks() {
@@ -628,6 +690,12 @@ class IceTestPeer : public sigslot::has_slots<> {
     std::cerr << "CANDIDATES:" << std::endl;
     for (size_t i=0; i<streams_.size(); ++i) {
       std::cerr << "Stream " << name_ << std::endl;
+
+      if (!streams_[i]) {
+        std::cerr << "DISABLED" << std::endl;
+        continue;
+      }
+
       std::vector<std::string> candidates =
           streams_[i]->GetCandidates();
 
@@ -649,7 +717,7 @@ class IceTestPeer : public sigslot::has_slots<> {
 
     // If we are connected, then try to trickle to the
     // other side.
-    if (remote_ && remote_->remote_) {
+    if (remote_ && remote_->remote_ && (trickle_mode_ != TRICKLE_SIMULATE)) {
       std::vector<mozilla::RefPtr<NrIceMediaStream> >::iterator it =
           std::find(streams_.begin(), streams_.end(), stream);
       ASSERT_NE(streams_.end(), it);
@@ -663,23 +731,30 @@ class IceTestPeer : public sigslot::has_slots<> {
     }
   }
 
-  nsresult GetCandidatePairs(size_t stream_index,
-                             std::vector<NrIceCandidatePair>* pairs) {
+  nsresult GetCandidatePairs_s(size_t stream_index,
+                               std::vector<NrIceCandidatePair>* pairs)
+  {
     MOZ_ASSERT(pairs);
-    if (stream_index >= streams_.size()) {
+    if (stream_index >= streams_.size() || !streams_[stream_index]) {
       // Is there a better error for "no such index"?
       ADD_FAILURE() << "No such media stream index: " << stream_index;
       return NS_ERROR_INVALID_ARG;
     }
 
-    nsresult res;
+    return streams_[stream_index]->GetCandidatePairs(pairs);
+  }
+
+  nsresult GetCandidatePairs(size_t stream_index,
+                             std::vector<NrIceCandidatePair>* pairs) {
+    nsresult v;
     test_utils->sts_target()->Dispatch(
-        WrapRunnableRet(streams_[stream_index],
-                        &NrIceMediaStream::GetCandidatePairs,
+        WrapRunnableRet(this,
+                        &IceTestPeer::GetCandidatePairs_s,
+                        stream_index,
                         pairs,
-                        &res),
+                        &v),
         NS_DISPATCH_SYNC);
-    return res;
+    return v;
   }
 
   void DumpCandidatePair(const NrIceCandidatePair& pair) {
@@ -693,7 +768,7 @@ class IceTestPeer : public sigslot::has_slots<> {
                 << " codeword = " << pair.codeword << std::endl;
   }
 
-  void DumpCandidatePairs(NrIceMediaStream *stream) {
+  void DumpCandidatePairs_s(NrIceMediaStream *stream) {
     std::vector<NrIceCandidatePair> pairs;
     nsresult res = stream->GetCandidatePairs(&pairs);
     ASSERT_TRUE(NS_SUCCEEDED(res));
@@ -707,10 +782,13 @@ class IceTestPeer : public sigslot::has_slots<> {
     std::cerr << "]" << std::endl;
   }
 
-  void DumpCandidatePairs() {
+  void DumpCandidatePairs_s() {
     std::cerr << "Dumping candidate pairs for all streams [" << std::endl;
     for (size_t s = 0; s < streams_.size(); ++s) {
-      DumpCandidatePairs(streams_[s]);
+      if (!streams_[s]) {
+        continue;
+      }
+      DumpCandidatePairs_s(streams_[s]);
     }
     std::cerr << "]" << std::endl;
   }
@@ -790,11 +868,11 @@ class IceTestPeer : public sigslot::has_slots<> {
   void StreamReady(NrIceMediaStream *stream) {
     ++ready_ct_;
     std::cerr << "Stream ready " << stream->name() << " ct=" << ready_ct_ << std::endl;
-    DumpCandidatePairs(stream);
+    DumpCandidatePairs_s(stream);
   }
   void StreamFailed(NrIceMediaStream *stream) {
     std::cerr << "Stream failed " << stream->name() << " ct=" << ready_ct_ << std::endl;
-    DumpCandidatePairs(stream);
+    DumpCandidatePairs_s(stream);
   }
 
   void ConnectionStateChange(NrIceCtx* ctx,
@@ -824,6 +902,11 @@ class IceTestPeer : public sigslot::has_slots<> {
 
   void SendPacket(int stream, int component, const unsigned char *data,
                   int len) {
+    if (!streams_[stream]) {
+      ADD_FAILURE() << "No such stream " << stream;
+      return;
+    }
+
     ASSERT_TRUE(NS_SUCCEEDED(streams_[stream]->SendPacket(component, data, len)));
 
     ++sent_;
@@ -834,18 +917,40 @@ class IceTestPeer : public sigslot::has_slots<> {
     candidate_filter_ = filter;
   }
 
-  // Allow us to parse candidates directly on the current thread.
-  void ParseCandidate(size_t i, const std::string& candidate) {
+  void ParseCandidate_s(size_t i, const std::string& candidate) {
+    ASSERT_TRUE(streams_[i]) << "No such stream " << i;
+
     std::vector<std::string> attributes;
 
     attributes.push_back(candidate);
     streams_[i]->ParseAttributes(attributes);
   }
 
-  void DisableComponent(size_t stream, int component_id) {
+  void ParseCandidate(size_t i, const std::string& candidate)
+  {
+    test_utils->sts_target()->Dispatch(
+        WrapRunnable(this,
+                        &IceTestPeer::ParseCandidate_s,
+                        i,
+                        candidate),
+        NS_DISPATCH_SYNC);
+  }
+
+  void DisableComponent_s(size_t stream, int component_id) {
     ASSERT_LT(stream, streams_.size());
+    ASSERT_TRUE(streams_[stream]) << "No such stream " << stream;
     nsresult res = streams_[stream]->DisableComponent(component_id);
     ASSERT_TRUE(NS_SUCCEEDED(res));
+  }
+
+  void DisableComponent(size_t stream, int component_id)
+  {
+    test_utils->sts_target()->Dispatch(
+        WrapRunnable(this,
+                        &IceTestPeer::DisableComponent_s,
+                        stream,
+                        component_id),
+        NS_DISPATCH_SYNC);
   }
 
   int trickled() { return trickled_; }
@@ -899,7 +1004,6 @@ class IceTestPeer : public sigslot::has_slots<> {
   NrIceCandidate::Type expected_local_type_;
   std::string expected_local_transport_;
   NrIceCandidate::Type expected_remote_type_;
-  std::string expected_local_addr_;
   std::string expected_remote_addr_;
   TrickleMode trickle_mode_;
   int trickled_;
@@ -1007,6 +1111,11 @@ class IceConnectTest : public ::testing::Test {
     p2_->AddStream(components);
   }
 
+  void RemoveStream(size_t index) {
+    p1_->RemoveStream(index);
+    p2_->RemoveStream(index);
+  }
+
   void Init(bool set_priorities, bool allow_loopback) {
     if (!initted_) {
       p1_ = new IceTestPeer("P1", true, set_priorities, allow_loopback);
@@ -1083,9 +1192,9 @@ class IceConnectTest : public ::testing::Test {
     p2_->SetExpectedTypes(local2, remote2);
   }
 
-  void SetExpectedCandidateAddr(const std::string& addr) {
-    p1_->SetExpectedCandidateAddr(addr);
-    p2_->SetExpectedCandidateAddr(addr);
+  void SetExpectedRemoteCandidateAddr(const std::string& addr) {
+    p1_->SetExpectedRemoteCandidateAddr(addr);
+    p2_->SetExpectedRemoteCandidateAddr(addr);
   }
 
   void ConnectP1(TrickleMode mode = TRICKLE_NONE) {
@@ -1461,9 +1570,9 @@ TEST_F(IceConnectTest, TestConnect) {
 TEST_F(IceConnectTest, TestLoopbackOnlySortOf) {
   Init(false, true);
   AddStream("first", 1);
-  ASSERT_TRUE(Gather());
   SetCandidateFilter(IsLoopbackCandidate);
-  SetExpectedCandidateAddr("127.0.0.1");
+  ASSERT_TRUE(Gather());
+  SetExpectedRemoteCandidateAddr("127.0.0.1");
   Connect();
 }
 
@@ -1612,6 +1721,142 @@ TEST_F(IceConnectTest, TestConnectTrickleTwoStreamsOneComponent) {
   AssertCheckingReached();
 }
 
+void RealisticTrickleDelay(
+    std::vector<SchedulableTrickleCandidate*>& candidates) {
+  for (size_t i = 0; i < candidates.size(); ++i) {
+    SchedulableTrickleCandidate* cand = candidates[i];
+    if (cand->IsHost()) {
+      cand->Schedule(i*10);
+    } else if (cand->IsReflexive()) {
+      cand->Schedule(i*10 + 100);
+    } else if (cand->IsRelay()) {
+      cand->Schedule(i*10 + 200);
+    }
+  }
+}
+
+void DelayRelayCandidates(
+    std::vector<SchedulableTrickleCandidate*>& candidates,
+    unsigned int ms) {
+  for (auto i = candidates.begin(); i != candidates.end(); ++i) {
+    if ((*i)->IsRelay()) {
+      (*i)->Schedule(ms);
+    } else {
+      (*i)->Schedule(0);
+    }
+  }
+}
+
+TEST_F(IceConnectTest, TestConnectTrickleAddStreamDuringICE) {
+  AddStream("first", 1);
+  ASSERT_TRUE(Gather());
+  ConnectTrickle();
+  RealisticTrickleDelay(p1_->ControlTrickle(0));
+  RealisticTrickleDelay(p2_->ControlTrickle(0));
+  AddStream("second", 1);
+  RealisticTrickleDelay(p1_->ControlTrickle(1));
+  RealisticTrickleDelay(p2_->ControlTrickle(1));
+  ASSERT_TRUE_WAIT(p1_->ice_complete(), 1000);
+  ASSERT_TRUE_WAIT(p2_->ice_complete(), 1000);
+  AssertCheckingReached();
+}
+
+TEST_F(IceConnectTest, TestConnectTrickleAddStreamAfterICE) {
+  AddStream("first", 1);
+  ASSERT_TRUE(Gather());
+  ConnectTrickle();
+  RealisticTrickleDelay(p1_->ControlTrickle(0));
+  RealisticTrickleDelay(p2_->ControlTrickle(0));
+  ASSERT_TRUE_WAIT(p1_->ice_complete(), 1000);
+  ASSERT_TRUE_WAIT(p2_->ice_complete(), 1000);
+  AddStream("second", 1);
+  ASSERT_TRUE(Gather());
+  ConnectTrickle();
+  RealisticTrickleDelay(p1_->ControlTrickle(1));
+  RealisticTrickleDelay(p2_->ControlTrickle(1));
+  ASSERT_TRUE_WAIT(p1_->ice_complete(), 1000);
+  ASSERT_TRUE_WAIT(p2_->ice_complete(), 1000);
+  AssertCheckingReached();
+}
+
+TEST_F(IceConnectTest, RemoveStream) {
+  AddStream("first", 1);
+  AddStream("second", 1);
+  ASSERT_TRUE(Gather());
+  ConnectTrickle();
+  RealisticTrickleDelay(p1_->ControlTrickle(0));
+  RealisticTrickleDelay(p2_->ControlTrickle(0));
+  RealisticTrickleDelay(p1_->ControlTrickle(1));
+  RealisticTrickleDelay(p2_->ControlTrickle(1));
+  ASSERT_TRUE_WAIT(p1_->ice_complete(), 1000);
+  ASSERT_TRUE_WAIT(p2_->ice_complete(), 1000);
+
+  RemoveStream(0);
+  ASSERT_TRUE(Gather());
+  ConnectTrickle();
+}
+
+TEST_F(IceConnectTest, RemoveAndAddStream) {
+  AddStream("first", 1);
+  AddStream("second", 1);
+  ASSERT_TRUE(Gather());
+  ConnectTrickle();
+  RealisticTrickleDelay(p1_->ControlTrickle(0));
+  RealisticTrickleDelay(p2_->ControlTrickle(0));
+  RealisticTrickleDelay(p1_->ControlTrickle(1));
+  RealisticTrickleDelay(p2_->ControlTrickle(1));
+  ASSERT_TRUE_WAIT(p1_->ice_complete(), 1000);
+  ASSERT_TRUE_WAIT(p2_->ice_complete(), 1000);
+
+  RemoveStream(0);
+  AddStream("third", 1);
+  ASSERT_TRUE(Gather());
+  ConnectTrickle();
+  RealisticTrickleDelay(p1_->ControlTrickle(2));
+  RealisticTrickleDelay(p2_->ControlTrickle(2));
+  ASSERT_TRUE_WAIT(p1_->ice_complete(), 1000);
+  ASSERT_TRUE_WAIT(p2_->ice_complete(), 1000);
+}
+
+TEST_F(IceConnectTest, RemoveStreamBeforeGather) {
+  AddStream("first", 1);
+  AddStream("second", 1);
+  ASSERT_TRUE(Gather(0));
+  RemoveStream(0);
+  WaitForGather();
+  ConnectTrickle();
+  RealisticTrickleDelay(p1_->ControlTrickle(1));
+  RealisticTrickleDelay(p2_->ControlTrickle(1));
+  ASSERT_TRUE_WAIT(p1_->ice_complete(), 1000);
+  ASSERT_TRUE_WAIT(p2_->ice_complete(), 1000);
+}
+
+TEST_F(IceConnectTest, RemoveStreamDuringGather) {
+  AddStream("first", 1);
+  AddStream("second", 1);
+  RemoveStream(0);
+  ASSERT_TRUE(Gather());
+  ConnectTrickle();
+  RealisticTrickleDelay(p1_->ControlTrickle(1));
+  RealisticTrickleDelay(p2_->ControlTrickle(1));
+  ASSERT_TRUE_WAIT(p1_->ice_complete(), 1000);
+  ASSERT_TRUE_WAIT(p2_->ice_complete(), 1000);
+}
+
+TEST_F(IceConnectTest, RemoveStreamDuringConnect) {
+  AddStream("first", 1);
+  AddStream("second", 1);
+  ASSERT_TRUE(Gather());
+  ConnectTrickle();
+  RealisticTrickleDelay(p1_->ControlTrickle(0));
+  RealisticTrickleDelay(p2_->ControlTrickle(0));
+  RealisticTrickleDelay(p1_->ControlTrickle(1));
+  RealisticTrickleDelay(p2_->ControlTrickle(1));
+  RemoveStream(0);
+  ASSERT_TRUE_WAIT(p1_->ice_complete(), 1000);
+  ASSERT_TRUE_WAIT(p2_->ice_complete(), 1000);
+}
+
 TEST_F(IceConnectTest, TestConnectRealTrickleOneStreamOneComponent) {
   AddStream("first", 1);
   AddStream("second", 1);
@@ -1655,32 +1900,6 @@ TEST_F(IceConnectTest, TestConnectTurnWithDelay) {
   ConnectTrickle(TRICKLE_REAL);
   WaitForGather();
   WaitForComplete();
-}
-
-void RealisticTrickleDelay(
-    std::vector<SchedulableTrickleCandidate*>& candidates) {
-  for (size_t i = 0; i < candidates.size(); ++i) {
-    SchedulableTrickleCandidate* cand = candidates[i];
-    if (cand->IsHost()) {
-      cand->Schedule(i*10);
-    } else if (cand->IsReflexive()) {
-      cand->Schedule(i*10 + 100);
-    } else if (cand->IsRelay()) {
-      cand->Schedule(i*10 + 200);
-    }
-  }
-}
-
-void DelayRelayCandidates(
-    std::vector<SchedulableTrickleCandidate*>& candidates,
-    unsigned int ms) {
-  for (auto i = candidates.begin(); i != candidates.end(); ++i) {
-    if ((*i)->IsRelay()) {
-      (*i)->Schedule(ms);
-    } else {
-      (*i)->Schedule(0);
-    }
-  }
 }
 
 TEST_F(IceConnectTest, TestConnectTurnWithNormalTrickleDelay) {
@@ -2082,6 +2301,17 @@ TEST_F(PacketFilterTest, TestSendNonRequestStunPacket) {
   TestOutgoing(msg->buffer, msg->length, 123, 45, true);
 
   ASSERT_EQ(0, nr_stun_message_destroy(&msg));
+}
+
+TEST(InternalsTest, TestAddBogusAttribute) {
+  nr_stun_message *req;
+  ASSERT_EQ(0, nr_stun_message_create(&req));
+  Data *data;
+  ASSERT_EQ(0, r_data_alloc(&data, 3000));
+  memset(data->data, 'A', data->len);
+  ASSERT_TRUE(nr_stun_message_add_message_integrity_attribute(req, data));
+  ASSERT_EQ(0, r_data_destroy(&data));
+  ASSERT_EQ(0, nr_stun_message_destroy(&req));
 }
 
 static std::string get_environment(const char *name) {

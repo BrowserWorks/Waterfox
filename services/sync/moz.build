@@ -4,8 +4,12 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files('**'):
+    BUG_COMPONENT = ('Mozilla Services', 'Firefox Sync: Backend')
+
 DIRS += ['locales']
-TEST_DIRS += ['tests']
+
+XPCSHELL_TESTS_MANIFESTS += ['tests/unit/xpcshell.ini']
 
 EXTRA_COMPONENTS += [
     'Weave.js',
@@ -60,3 +64,8 @@ TESTING_JS_MODULES.services.sync += [
     'modules-testing/rotaryengine.js',
     'modules-testing/utils.js',
 ]
+
+JS_PREFERENCE_FILES += [
+    'services-sync.js',
+]
+

@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -102,7 +103,7 @@ nsAttrAndChildArray::~nsAttrAndChildArray()
 
   Clear();
 
-  moz_free(mImpl);
+  free(mImpl);
 }
 
 nsIContent*
@@ -635,11 +636,11 @@ nsAttrAndChildArray::Compact()
   // Then resize or free buffer
   uint32_t newSize = attrCount * ATTRSIZE + childCount;
   if (!newSize && !mImpl->mMappedAttrs) {
-    moz_free(mImpl);
+    free(mImpl);
     mImpl = nullptr;
   }
   else if (newSize < mImpl->mBufferSize) {
-    mImpl = static_cast<Impl*>(moz_realloc(mImpl, (newSize + NS_IMPL_EXTRA_SIZE) * sizeof(nsIContent*)));
+    mImpl = static_cast<Impl*>(realloc(mImpl, (newSize + NS_IMPL_EXTRA_SIZE) * sizeof(nsIContent*)));
     NS_ASSERTION(mImpl, "failed to reallocate to smaller buffer");
 
     mImpl->mBufferSize = newSize;
@@ -776,7 +777,7 @@ nsAttrAndChildArray::GrowBy(uint32_t aGrowSize)
   }
 
   bool needToInitialize = !mImpl;
-  Impl* newImpl = static_cast<Impl*>(moz_realloc(mImpl, size * sizeof(void*)));
+  Impl* newImpl = static_cast<Impl*>(realloc(mImpl, size * sizeof(void*)));
   NS_ENSURE_TRUE(newImpl, false);
 
   mImpl = newImpl;

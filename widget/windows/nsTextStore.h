@@ -38,10 +38,6 @@ struct ITfDocumentMgr;
 struct ITfDisplayAttributeMgr;
 struct ITfCategoryMgr;
 class nsWindow;
-#ifdef MOZ_METRO
-class MetroWidget;
-#endif
-class TSFStaticSink;
 
 namespace mozilla {
 namespace widget {
@@ -53,9 +49,9 @@ struct MSGResult;
  * Text Services Framework text store
  */
 
-class nsTextStore MOZ_FINAL : public ITextStoreACP
-                            , public ITfContextOwnerCompositionSink
-                            , public ITfMouseTrackerACP
+class nsTextStore final : public ITextStoreACP
+                        , public ITfContextOwnerCompositionSink
+                        , public ITfMouseTrackerACP
 {
 public: /*IUnknown*/
   STDMETHODIMP          QueryInterface(REFIID, void**);
@@ -297,7 +293,7 @@ protected:
   // application.  Otherwise, this does nothing.
   void     CreateNativeCaret();
 
-  // Holds the pointer to our current win32 or metro widget
+  // Holds the pointer to our current win32 widget
   nsRefPtr<nsWindowBase>       mWidget;
   // Document manager for the currently focused editor
   nsRefPtr<ITfDocumentMgr>     mDocumentMgr;
@@ -314,7 +310,7 @@ protected:
   // 0 if no lock is queued, otherwise TS_LF_* indicating the queue lock
   DWORD                        mLockQueued;
 
-  class Composition MOZ_FINAL
+  class Composition final
   {
   public:
     // nullptr if no composition is active, otherwise the current composition
@@ -384,13 +380,15 @@ protected:
       mACP.style.fInterimChar = FALSE;
     }
 
-    void SetSelection(uint32_t aStart, uint32_t aLength, bool aReversed)
+    void SetSelection(uint32_t aStart, uint32_t aLength, bool aReversed,
+                      mozilla::WritingMode aWritingMode)
     {
       mDirty = false;
       mACP.acpStart = static_cast<LONG>(aStart);
       mACP.acpEnd = static_cast<LONG>(aStart + aLength);
       mACP.style.ase = aReversed ? TS_AE_START : TS_AE_END;
       mACP.style.fInterimChar = FALSE;
+      mWritingMode = aWritingMode;
     }
 
     bool IsCollapsed() const
@@ -401,6 +399,9 @@ protected:
 
     void CollapseAt(uint32_t aOffset)
     {
+      // XXX This does not update the selection's mWritingMode.
+      // If it is ever used to "collapse" to an entirely new location,
+      // we may need to fix that.
       mDirty = false;
       mACP.acpStart = mACP.acpEnd = static_cast<LONG>(aOffset);
       mACP.style.ase = TS_AE_END;
@@ -462,8 +463,15 @@ protected:
       return (mACP.style.fInterimChar != FALSE);
     }
 
+    mozilla::WritingMode GetWritingMode() const
+    {
+      MOZ_ASSERT(!mDirty);
+      return mWritingMode;
+    }
+
   private:
     TS_SELECTION_ACP mACP;
+    mozilla::WritingMode mWritingMode;
     bool mDirty;
   };
   // Don't access mSelection directly except at calling MarkDirty().
@@ -478,9 +486,9 @@ protected:
   // modified.  Note that this is also called by LockedContent().
   Selection& CurrentSelection();
 
-  struct PendingAction MOZ_FINAL
+  struct PendingAction final
   {
-    enum ActionType MOZ_ENUM_TYPE(uint8_t)
+    enum ActionType : uint8_t
     {
       COMPOSITION_START,
       COMPOSITION_UPDATE,
@@ -544,7 +552,7 @@ protected:
   // When On*Composition() is called without document lock, we need to flush
   // the recorded actions at quitting the method.
   // AutoPendingActionAndContentFlusher class is usedful for it.  
-  class MOZ_STACK_CLASS AutoPendingActionAndContentFlusher MOZ_FINAL
+  class MOZ_STACK_CLASS AutoPendingActionAndContentFlusher final
   {
   public:
     AutoPendingActionAndContentFlusher(nsTextStore* aTextStore)
@@ -571,7 +579,7 @@ protected:
     nsRefPtr<nsTextStore> mTextStore;
   };
 
-  class Content MOZ_FINAL
+  class Content final
   {
   public:
     Content(nsTextStore::Composition& aComposition,
@@ -584,6 +592,7 @@ protected:
     void Clear()
     {
       mText.Truncate();
+      mLastCompositionString.Truncate();
       mInitialized = false;
     }
 
@@ -592,6 +601,9 @@ protected:
     void Init(const nsAString& aText)
     {
       mText = aText;
+      if (mComposition.IsComposing()) {
+        mLastCompositionString = mComposition.mString;
+      }
       mMinTextModifiedOffset = NOT_MODIFIED;
       mInitialized = true;
     }
@@ -625,17 +637,25 @@ protected:
     {
       return mInitialized && (mMinTextModifiedOffset != NOT_MODIFIED);
     }
+    // Returns minimum offset of modified text range.
+    uint32_t MinOffsetOfLayoutChanged() const
+    {
+      return mInitialized ? mMinTextModifiedOffset : NOT_MODIFIED;
+    }
 
     nsTextStore::Composition& Composition() { return mComposition; }
     nsTextStore::Selection& Selection() { return mSelection; }
 
   private:
     nsString mText;
+    // mLastCompositionString stores the composition string when the document
+    // is locked. This is necessary to compute mMinTextModifiedOffset.
+    nsString mLastCompositionString;
     nsTextStore::Composition& mComposition;
     nsTextStore::Selection& mSelection;
 
     // The minimum offset of modified part of the text.
-    enum MOZ_ENUM_TYPE(uint32_t)
+    enum : uint32_t
     {
       NOT_MODIFIED = UINT32_MAX
     };
@@ -657,7 +677,7 @@ protected:
   // mLockedContent.  Otherwise, return the current text content.
   bool GetCurrentText(nsAString& aTextContent);
 
-  class MouseTracker MOZ_FINAL
+  class MouseTracker final
   {
   public:
     static const DWORD kInvalidCookie = static_cast<DWORD>(-1);
@@ -706,6 +726,7 @@ protected:
     // Supported attributes
     eInputScope = 0,
     eTextVerticalWriting,
+    eTextOrientation,
 
     // Count of the supported attributes
     NUM_OF_SUPPORTED_ATTRS
@@ -771,6 +792,8 @@ protected:
   static bool sCreateNativeCaretForATOK;
   static bool sDoNotReturnNoLayoutErrorToFreeChangJie;
   static bool sDoNotReturnNoLayoutErrorToEasyChangjei;
+  static bool sDoNotReturnNoLayoutErrorToGoogleJaInputAtFirstChar;
+  static bool sDoNotReturnNoLayoutErrorToGoogleJaInputAtCaret;
 };
 
 #endif /*NSTEXTSTORE_H_*/

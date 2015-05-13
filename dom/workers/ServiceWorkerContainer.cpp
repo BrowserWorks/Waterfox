@@ -1,5 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -56,21 +56,24 @@ ServiceWorkerContainer::RemoveReadyPromise()
   if (window) {
     nsCOMPtr<nsIServiceWorkerManager> swm =
       mozilla::services::GetServiceWorkerManager();
-    MOZ_ASSERT(swm);
+    if (!swm) {
+      // If the browser is shutting down, we don't need to remove the promise.
+      return;
+    }
 
     swm->RemoveReadyPromise(window);
   }
 }
 
 JSObject*
-ServiceWorkerContainer::WrapObject(JSContext* aCx)
+ServiceWorkerContainer::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return ServiceWorkerContainerBinding::Wrap(aCx, this);
+  return ServiceWorkerContainerBinding::Wrap(aCx, this, aGivenProto);
 }
 
 already_AddRefed<Promise>
 ServiceWorkerContainer::Register(const nsAString& aScriptURL,
-                                 const RegistrationOptionList& aOptions,
+                                 const RegistrationOptions& aOptions,
                                  ErrorResult& aRv)
 {
   nsCOMPtr<nsISupports> promise;
@@ -81,7 +84,38 @@ ServiceWorkerContainer::Register(const nsAString& aScriptURL,
     return nullptr;
   }
 
-  aRv = swm->Register(aOptions.mScope, aScriptURL, getter_AddRefs(promise));
+  nsCOMPtr<nsPIDOMWindow> window = GetOwner();
+  MOZ_ASSERT(window);
+
+  nsresult rv;
+  nsCOMPtr<nsIURI> scriptURI;
+  rv = NS_NewURI(getter_AddRefs(scriptURI), aScriptURL, nullptr,
+                 window->GetDocBaseURI());
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    aRv.ThrowTypeError(MSG_INVALID_URL, &aScriptURL);
+    return nullptr;
+  }
+
+  // In ServiceWorkerContainer.register() the scope argument is parsed against
+  // different base URLs depending on whether it was passed or not.
+  nsCOMPtr<nsIURI> scopeURI;
+
+  // Step 4. If none passed, parse against script's URL
+  if (!aOptions.mScope.WasPassed()) {
+    nsresult rv = NS_NewURI(getter_AddRefs(scopeURI), NS_LITERAL_CSTRING("./"),
+                            nullptr, scriptURI);
+    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(rv));
+  } else {
+    // Step 5. Parse against entry settings object's base URL.
+    nsresult rv = NS_NewURI(getter_AddRefs(scopeURI), aOptions.mScope.Value(),
+                            nullptr, window->GetDocBaseURI());
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      aRv.ThrowTypeError(MSG_INVALID_URL, &aOptions.mScope.Value());
+      return nullptr;
+    }
+  }
+
+  aRv = swm->Register(window, scopeURI, scriptURI, getter_AddRefs(promise));
   if (aRv.Failed()) {
     return nullptr;
   }
@@ -179,14 +213,6 @@ ServiceWorkerContainer::GetReady(ErrorResult& aRv)
 }
 
 // Testing only.
-already_AddRefed<Promise>
-ServiceWorkerContainer::ClearAllServiceWorkerData(ErrorResult& aRv)
-{
-  aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
-  return nullptr;
-}
-
-// Testing only.
 void
 ServiceWorkerContainer::GetScopeForUrl(const nsAString& aUrl,
                                        nsString& aScope,
@@ -201,14 +227,5 @@ ServiceWorkerContainer::GetScopeForUrl(const nsAString& aUrl,
   aRv = swm->GetScopeForUrl(aUrl, aScope);
 }
 
-// Testing only.
-void
-ServiceWorkerContainer::GetControllingWorkerScriptURLForPath(
-                                                        const nsAString& aPath,
-                                                        nsString& aScriptURL,
-                                                        ErrorResult& aRv)
-{
-  aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
-}
 } // namespace dom
 } // namespace mozilla

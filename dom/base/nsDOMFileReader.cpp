@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -42,13 +43,13 @@ NS_IMPL_CYCLE_COLLECTION_CLASS(nsDOMFileReader)
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(nsDOMFileReader,
                                                   FileIOObject)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mFile)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mBlob)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(nsDOMFileReader,
                                                 FileIOObject)
   tmp->mResultArrayBuffer = nullptr;
-  NS_IMPL_CYCLE_COLLECTION_UNLINK(mFile)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mBlob)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 
@@ -182,44 +183,44 @@ nsDOMFileReader::GetError(nsISupports** aError)
 }
 
 NS_IMETHODIMP
-nsDOMFileReader::ReadAsArrayBuffer(nsIDOMBlob* aFile, JSContext* aCx)
+nsDOMFileReader::ReadAsArrayBuffer(nsIDOMBlob* aBlob, JSContext* aCx)
 {
-  NS_ENSURE_TRUE(aFile, NS_ERROR_NULL_POINTER);
+  NS_ENSURE_TRUE(aBlob, NS_ERROR_NULL_POINTER);
   ErrorResult rv;
-  nsRefPtr<File> file = static_cast<File*>(aFile);
-  ReadAsArrayBuffer(aCx, *file, rv);
-  return rv.ErrorCode();
+  nsRefPtr<Blob> blob = static_cast<Blob*>(aBlob);
+  ReadAsArrayBuffer(aCx, *blob, rv);
+  return rv.StealNSResult();
 }
 
 NS_IMETHODIMP
-nsDOMFileReader::ReadAsBinaryString(nsIDOMBlob* aFile)
+nsDOMFileReader::ReadAsBinaryString(nsIDOMBlob* aBlob)
 {
-  NS_ENSURE_TRUE(aFile, NS_ERROR_NULL_POINTER);
+  NS_ENSURE_TRUE(aBlob, NS_ERROR_NULL_POINTER);
   ErrorResult rv;
-  nsRefPtr<File> file = static_cast<File*>(aFile);
-  ReadAsBinaryString(*file, rv);
-  return rv.ErrorCode();
+  nsRefPtr<Blob> blob = static_cast<Blob*>(aBlob);
+  ReadAsBinaryString(*blob, rv);
+  return rv.StealNSResult();
 }
 
 NS_IMETHODIMP
-nsDOMFileReader::ReadAsText(nsIDOMBlob* aFile,
+nsDOMFileReader::ReadAsText(nsIDOMBlob* aBlob,
                             const nsAString &aCharset)
 {
-  NS_ENSURE_TRUE(aFile, NS_ERROR_NULL_POINTER);
+  NS_ENSURE_TRUE(aBlob, NS_ERROR_NULL_POINTER);
   ErrorResult rv;
-  nsRefPtr<File> file = static_cast<File*>(aFile);
-  ReadAsText(*file, aCharset, rv);
-  return rv.ErrorCode();
+  nsRefPtr<Blob> blob = static_cast<Blob*>(aBlob);
+  ReadAsText(*blob, aCharset, rv);
+  return rv.StealNSResult();
 }
 
 NS_IMETHODIMP
-nsDOMFileReader::ReadAsDataURL(nsIDOMBlob* aFile)
+nsDOMFileReader::ReadAsDataURL(nsIDOMBlob* aBlob)
 {
-  NS_ENSURE_TRUE(aFile, NS_ERROR_NULL_POINTER);
+  NS_ENSURE_TRUE(aBlob, NS_ERROR_NULL_POINTER);
   ErrorResult rv;
-  nsRefPtr<File> file = static_cast<File*>(aFile);
-  ReadAsDataURL(*file, rv);
-  return rv.ErrorCode();
+  nsRefPtr<Blob> blob = static_cast<Blob*>(aBlob);
+  ReadAsDataURL(*blob, rv);
+  return rv.StealNSResult();
 }
 
 NS_IMETHODIMP
@@ -227,7 +228,7 @@ nsDOMFileReader::Abort()
 {
   ErrorResult rv;
   FileIOObject::Abort(rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 /* virtual */ void
@@ -240,7 +241,7 @@ nsDOMFileReader::DoAbort(nsAString& aEvent)
   if (mAsyncStream) {
     mAsyncStream = nullptr;
   }
-  mFile = nullptr;
+  mBlob = nullptr;
 
   //Clean up memory buffer
   FreeFileData();
@@ -280,8 +281,8 @@ nsDOMFileReader::DoOnLoadEnd(nsresult aStatus,
   // Make sure we drop all the objects that could hold files open now.
   nsCOMPtr<nsIAsyncInputStream> stream;
   mAsyncStream.swap(stream);
-  nsCOMPtr<nsIDOMBlob> file;
-  mFile.swap(file);
+  nsCOMPtr<nsIDOMBlob> blob;
+  mBlob.swap(blob);
 
   aSuccessEvent = NS_LITERAL_STRING(LOAD_STR);
   aTerminationEvent = NS_LITERAL_STRING(LOADEND_STR);
@@ -318,13 +319,13 @@ nsDOMFileReader::DoOnLoadEnd(nsresult aStatus,
           rv = NS_ERROR_OUT_OF_MEMORY;
           break;
         }
-        rv = GetAsText(file, mCharset, "", mDataLen, mResult);
+        rv = GetAsText(blob, mCharset, "", mDataLen, mResult);
         break;
       }
-      rv = GetAsText(file, mCharset, mFileData, mDataLen, mResult);
+      rv = GetAsText(blob, mCharset, mFileData, mDataLen, mResult);
       break;
     case FILE_AS_DATAURL:
-      rv = GetAsDataURL(file, mFileData, mDataLen, mResult);
+      rv = GetAsDataURL(blob, mFileData, mDataLen, mResult);
       break;
   }
 
@@ -348,7 +349,7 @@ nsDOMFileReader::DoReadData(nsIAsyncInputStream* aStream, uint64_t aCount)
     if (uint64_t(oldLen) + aCount > UINT32_MAX)
       return NS_ERROR_OUT_OF_MEMORY;
     char16_t *buf = nullptr;
-    mResult.GetMutableData(&buf, oldLen + aCount, fallible_t());
+    mResult.GetMutableData(&buf, oldLen + aCount, fallible);
     NS_ENSURE_TRUE(buf, NS_ERROR_OUT_OF_MEMORY);
 
     uint32_t bytesRead = 0;
@@ -363,7 +364,7 @@ nsDOMFileReader::DoReadData(nsIAsyncInputStream* aStream, uint64_t aCount)
       return NS_ERROR_OUT_OF_MEMORY;
     }
     if (mDataFormat != FILE_AS_ARRAYBUFFER) {
-      mFileData = (char *) moz_realloc(mFileData, mDataLen + aCount);
+      mFileData = (char *) realloc(mFileData, mDataLen + aCount);
       NS_ENSURE_TRUE(mFileData, NS_ERROR_OUT_OF_MEMORY);
     }
 
@@ -379,7 +380,7 @@ nsDOMFileReader::DoReadData(nsIAsyncInputStream* aStream, uint64_t aCount)
 // Helper methods
 
 void
-nsDOMFileReader::ReadFileContent(File& aFile,
+nsDOMFileReader::ReadFileContent(Blob& aBlob,
                                  const nsAString &aCharset,
                                  eDataFormat aDataFormat,
                                  ErrorResult& aRv)
@@ -393,7 +394,7 @@ nsDOMFileReader::ReadFileContent(File& aFile,
   mReadyState = nsIDOMFileReader::EMPTY;
   FreeFileData();
 
-  mFile = &aFile;
+  mBlob = &aBlob;
   mDataFormat = aDataFormat;
   CopyUTF16toUTF8(aCharset, mCharset);
 
@@ -407,7 +408,7 @@ nsDOMFileReader::ReadFileContent(File& aFile,
   }
 
   nsCOMPtr<nsIInputStream> stream;
-  rv = mFile->GetInternalStream(getter_AddRefs(stream));
+  rv = mBlob->GetInternalStream(getter_AddRefs(stream));
   if (NS_WARN_IF(NS_FAILED(rv))) {
     aRv.Throw(rv);
     return;
@@ -439,7 +440,7 @@ nsDOMFileReader::ReadFileContent(File& aFile,
   MOZ_ASSERT(mAsyncStream);
 
   mTotal = mozilla::dom::kUnknownSize;
-  mFile->GetSize(&mTotal);
+  mBlob->GetSize(&mTotal);
 
   rv = DoAsyncWait(mAsyncStream);
   if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -461,7 +462,7 @@ nsDOMFileReader::ReadFileContent(File& aFile,
 }
 
 nsresult
-nsDOMFileReader::GetAsText(nsIDOMBlob *aFile,
+nsDOMFileReader::GetAsText(nsIDOMBlob *aBlob,
                            const nsACString &aCharset,
                            const char *aFileData,
                            uint32_t aDataLen,
@@ -479,7 +480,7 @@ nsDOMFileReader::GetAsText(nsIDOMBlob *aFile,
                                              encoding)) {
       // API argument failed. Try the type property of the blob.
       nsAutoString type16;
-      aFile->GetType(type16);
+      aBlob->GetType(type16);
       NS_ConvertUTF16toUTF8 type(type16);
       nsAutoCString specifiedCharset;
       bool haveCharset;
@@ -501,7 +502,7 @@ nsDOMFileReader::GetAsText(nsIDOMBlob *aFile,
 }
 
 nsresult
-nsDOMFileReader::GetAsDataURL(nsIDOMBlob *aFile,
+nsDOMFileReader::GetAsDataURL(nsIDOMBlob *aBlob,
                               const char *aFileData,
                               uint32_t aDataLen,
                               nsAString& aResult)
@@ -510,7 +511,7 @@ nsDOMFileReader::GetAsDataURL(nsIDOMBlob *aFile,
 
   nsresult rv;
   nsString contentType;
-  rv = aFile->GetType(contentType);
+  rv = aBlob->GetType(contentType);
   if (NS_SUCCEEDED(rv) && !contentType.IsEmpty()) {
     aResult.Append(contentType);
   } else {
@@ -522,7 +523,7 @@ nsDOMFileReader::GetAsDataURL(nsIDOMBlob *aFile,
   rv = Base64Encode(Substring(aFileData, aDataLen), encodedData);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  if (!AppendASCIItoUTF16(encodedData, aResult, fallible_t())) {
+  if (!AppendASCIItoUTF16(encodedData, aResult, fallible)) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
@@ -530,7 +531,7 @@ nsDOMFileReader::GetAsDataURL(nsIDOMBlob *aFile,
 }
 
 /* virtual */ JSObject*
-nsDOMFileReader::WrapObject(JSContext* aCx)
+nsDOMFileReader::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return FileReaderBinding::Wrap(aCx, this);
+  return FileReaderBinding::Wrap(aCx, this, aGivenProto);
 }

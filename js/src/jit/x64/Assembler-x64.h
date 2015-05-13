@@ -16,39 +16,39 @@
 namespace js {
 namespace jit {
 
-static MOZ_CONSTEXPR_VAR Register rax = { X86Registers::eax };
-static MOZ_CONSTEXPR_VAR Register rbx = { X86Registers::ebx };
-static MOZ_CONSTEXPR_VAR Register rcx = { X86Registers::ecx };
-static MOZ_CONSTEXPR_VAR Register rdx = { X86Registers::edx };
-static MOZ_CONSTEXPR_VAR Register rsi = { X86Registers::esi };
-static MOZ_CONSTEXPR_VAR Register rdi = { X86Registers::edi };
-static MOZ_CONSTEXPR_VAR Register rbp = { X86Registers::ebp };
-static MOZ_CONSTEXPR_VAR Register r8  = { X86Registers::r8  };
-static MOZ_CONSTEXPR_VAR Register r9  = { X86Registers::r9  };
-static MOZ_CONSTEXPR_VAR Register r10 = { X86Registers::r10 };
-static MOZ_CONSTEXPR_VAR Register r11 = { X86Registers::r11 };
-static MOZ_CONSTEXPR_VAR Register r12 = { X86Registers::r12 };
-static MOZ_CONSTEXPR_VAR Register r13 = { X86Registers::r13 };
-static MOZ_CONSTEXPR_VAR Register r14 = { X86Registers::r14 };
-static MOZ_CONSTEXPR_VAR Register r15 = { X86Registers::r15 };
-static MOZ_CONSTEXPR_VAR Register rsp = { X86Registers::esp };
+static MOZ_CONSTEXPR_VAR Register rax = { X86Encoding::rax };
+static MOZ_CONSTEXPR_VAR Register rbx = { X86Encoding::rbx };
+static MOZ_CONSTEXPR_VAR Register rcx = { X86Encoding::rcx };
+static MOZ_CONSTEXPR_VAR Register rdx = { X86Encoding::rdx };
+static MOZ_CONSTEXPR_VAR Register rsi = { X86Encoding::rsi };
+static MOZ_CONSTEXPR_VAR Register rdi = { X86Encoding::rdi };
+static MOZ_CONSTEXPR_VAR Register rbp = { X86Encoding::rbp };
+static MOZ_CONSTEXPR_VAR Register r8  = { X86Encoding::r8  };
+static MOZ_CONSTEXPR_VAR Register r9  = { X86Encoding::r9  };
+static MOZ_CONSTEXPR_VAR Register r10 = { X86Encoding::r10 };
+static MOZ_CONSTEXPR_VAR Register r11 = { X86Encoding::r11 };
+static MOZ_CONSTEXPR_VAR Register r12 = { X86Encoding::r12 };
+static MOZ_CONSTEXPR_VAR Register r13 = { X86Encoding::r13 };
+static MOZ_CONSTEXPR_VAR Register r14 = { X86Encoding::r14 };
+static MOZ_CONSTEXPR_VAR Register r15 = { X86Encoding::r15 };
+static MOZ_CONSTEXPR_VAR Register rsp = { X86Encoding::rsp };
 
-static MOZ_CONSTEXPR_VAR FloatRegister xmm0 = { X86Registers::xmm0 };
-static MOZ_CONSTEXPR_VAR FloatRegister xmm1 = { X86Registers::xmm1 };
-static MOZ_CONSTEXPR_VAR FloatRegister xmm2 = { X86Registers::xmm2 };
-static MOZ_CONSTEXPR_VAR FloatRegister xmm3 = { X86Registers::xmm3 };
-static MOZ_CONSTEXPR_VAR FloatRegister xmm4 = { X86Registers::xmm4 };
-static MOZ_CONSTEXPR_VAR FloatRegister xmm5 = { X86Registers::xmm5 };
-static MOZ_CONSTEXPR_VAR FloatRegister xmm6 = { X86Registers::xmm6 };
-static MOZ_CONSTEXPR_VAR FloatRegister xmm7 = { X86Registers::xmm7 };
-static MOZ_CONSTEXPR_VAR FloatRegister xmm8 = { X86Registers::xmm8 };
-static MOZ_CONSTEXPR_VAR FloatRegister xmm9 = { X86Registers::xmm9 };
-static MOZ_CONSTEXPR_VAR FloatRegister xmm10 = { X86Registers::xmm10 };
-static MOZ_CONSTEXPR_VAR FloatRegister xmm11 = { X86Registers::xmm11 };
-static MOZ_CONSTEXPR_VAR FloatRegister xmm12 = { X86Registers::xmm12 };
-static MOZ_CONSTEXPR_VAR FloatRegister xmm13 = { X86Registers::xmm13 };
-static MOZ_CONSTEXPR_VAR FloatRegister xmm14 = { X86Registers::xmm14 };
-static MOZ_CONSTEXPR_VAR FloatRegister xmm15 = { X86Registers::xmm15 };
+static MOZ_CONSTEXPR_VAR FloatRegister xmm0 = FloatRegister(X86Encoding::xmm0, FloatRegisters::Double);
+static MOZ_CONSTEXPR_VAR FloatRegister xmm1 = FloatRegister(X86Encoding::xmm1, FloatRegisters::Double);
+static MOZ_CONSTEXPR_VAR FloatRegister xmm2 = FloatRegister(X86Encoding::xmm2, FloatRegisters::Double);
+static MOZ_CONSTEXPR_VAR FloatRegister xmm3 = FloatRegister(X86Encoding::xmm3, FloatRegisters::Double);
+static MOZ_CONSTEXPR_VAR FloatRegister xmm4 = FloatRegister(X86Encoding::xmm4, FloatRegisters::Double);
+static MOZ_CONSTEXPR_VAR FloatRegister xmm5 = FloatRegister(X86Encoding::xmm5, FloatRegisters::Double);
+static MOZ_CONSTEXPR_VAR FloatRegister xmm6 = FloatRegister(X86Encoding::xmm6, FloatRegisters::Double);
+static MOZ_CONSTEXPR_VAR FloatRegister xmm7 = FloatRegister(X86Encoding::xmm7, FloatRegisters::Double);
+static MOZ_CONSTEXPR_VAR FloatRegister xmm8 = FloatRegister(X86Encoding::xmm8, FloatRegisters::Double);
+static MOZ_CONSTEXPR_VAR FloatRegister xmm9 = FloatRegister(X86Encoding::xmm9, FloatRegisters::Double);
+static MOZ_CONSTEXPR_VAR FloatRegister xmm10 = FloatRegister(X86Encoding::xmm10, FloatRegisters::Double);
+static MOZ_CONSTEXPR_VAR FloatRegister xmm11 = FloatRegister(X86Encoding::xmm11, FloatRegisters::Double);
+static MOZ_CONSTEXPR_VAR FloatRegister xmm12 = FloatRegister(X86Encoding::xmm12, FloatRegisters::Double);
+static MOZ_CONSTEXPR_VAR FloatRegister xmm13 = FloatRegister(X86Encoding::xmm13, FloatRegisters::Double);
+static MOZ_CONSTEXPR_VAR FloatRegister xmm14 = FloatRegister(X86Encoding::xmm14, FloatRegisters::Double);
+static MOZ_CONSTEXPR_VAR FloatRegister xmm15 = FloatRegister(X86Encoding::xmm15, FloatRegisters::Double);
 
 // X86-common synonyms.
 static MOZ_CONSTEXPR_VAR Register eax = rax;
@@ -60,8 +60,8 @@ static MOZ_CONSTEXPR_VAR Register edi = rdi;
 static MOZ_CONSTEXPR_VAR Register ebp = rbp;
 static MOZ_CONSTEXPR_VAR Register esp = rsp;
 
-static MOZ_CONSTEXPR_VAR Register InvalidReg = { X86Registers::invalid_reg };
-static MOZ_CONSTEXPR_VAR FloatRegister InvalidFloatReg = { X86Registers::invalid_xmm };
+static MOZ_CONSTEXPR_VAR Register InvalidReg = { X86Encoding::invalid_reg };
+static MOZ_CONSTEXPR_VAR FloatRegister InvalidFloatReg = FloatRegister();
 
 static MOZ_CONSTEXPR_VAR Register StackPointer = rsp;
 static MOZ_CONSTEXPR_VAR Register FramePointer = rbp;
@@ -73,11 +73,12 @@ static MOZ_CONSTEXPR_VAR Register JSReturnReg_Data = JSReturnReg;
 static MOZ_CONSTEXPR_VAR Register ReturnReg = rax;
 static MOZ_CONSTEXPR_VAR Register ScratchReg = r11;
 static MOZ_CONSTEXPR_VAR Register HeapReg = r15;
-static MOZ_CONSTEXPR_VAR FloatRegister ReturnFloat32Reg = xmm0;
-static MOZ_CONSTEXPR_VAR FloatRegister ScratchFloat32Reg = xmm15;
-static MOZ_CONSTEXPR_VAR FloatRegister ReturnDoubleReg = xmm0;
-static MOZ_CONSTEXPR_VAR FloatRegister ScratchDoubleReg = xmm15;
-static MOZ_CONSTEXPR_VAR FloatRegister ReturnSimdReg = xmm0;
+static MOZ_CONSTEXPR_VAR FloatRegister ReturnFloat32Reg = FloatRegister(X86Encoding::xmm0, FloatRegisters::Single);
+static MOZ_CONSTEXPR_VAR FloatRegister ReturnDoubleReg = FloatRegister(X86Encoding::xmm0, FloatRegisters::Double);
+static MOZ_CONSTEXPR_VAR FloatRegister ReturnInt32x4Reg = FloatRegister(X86Encoding::xmm0, FloatRegisters::Int32x4);
+static MOZ_CONSTEXPR_VAR FloatRegister ReturnFloat32x4Reg = FloatRegister(X86Encoding::xmm0, FloatRegisters::Float32x4);
+static MOZ_CONSTEXPR_VAR FloatRegister ScratchFloat32Reg = FloatRegister(X86Encoding::xmm15, FloatRegisters::Single);
+static MOZ_CONSTEXPR_VAR FloatRegister ScratchDoubleReg = FloatRegister(X86Encoding::xmm15, FloatRegisters::Double);
 static MOZ_CONSTEXPR_VAR FloatRegister ScratchSimdReg = xmm15;
 
 // Avoid rbp, which is the FramePointer, which is unavailable in some modes.
@@ -162,7 +163,7 @@ class ABIArgGenerator
   public:
     ABIArgGenerator();
     ABIArg next(MIRType argType);
-    ABIArg &current() { return current_; }
+    ABIArg& current() { return current_; }
     uint32_t stackBytesConsumedSoFar() const { return stackOffset_; }
 
     // Note: these registers are all guaranteed to be different
@@ -177,20 +178,29 @@ static MOZ_CONSTEXPR_VAR Register OsrFrameReg = IntArgReg3;
 
 static MOZ_CONSTEXPR_VAR Register PreBarrierReg = rdx;
 
-static const uint32_t ABIStackAlignment = 16;
-static const uint32_t CodeAlignment = 16;
+static MOZ_CONSTEXPR_VAR uint32_t ABIStackAlignment = 16;
+static MOZ_CONSTEXPR_VAR uint32_t CodeAlignment = 16;
+static MOZ_CONSTEXPR_VAR uint32_t JitStackAlignment = 16;
+
+static MOZ_CONSTEXPR_VAR uint32_t JitStackValueAlignment = JitStackAlignment / sizeof(Value);
+static_assert(JitStackAlignment % sizeof(Value) == 0 && JitStackValueAlignment >= 1,
+  "Stack alignment should be a non-zero multiple of sizeof(Value)");
 
 // This boolean indicates whether we support SIMD instructions flavoured for
 // this architecture or not. Rather than a method in the LIRGenerator, it is
 // here such that it is accessible from the entire codebase. Once full support
 // for SIMD is reached on all tier-1 platforms, this constant can be deleted.
-static const bool SupportsSimd = true;
-static const uint32_t SimdMemoryAlignment = 16;
+static MOZ_CONSTEXPR_VAR bool SupportsSimd = true;
+static MOZ_CONSTEXPR_VAR uint32_t SimdMemoryAlignment = 16;
 
 static_assert(CodeAlignment % SimdMemoryAlignment == 0,
-  "Code alignment should be larger than any of the alignment which are used for "
+  "Code alignment should be larger than any of the alignments which are used for "
   "the constant sections of the code buffer.  Thus it should be larger than the "
   "alignment for SIMD constants.");
+
+static_assert(JitStackAlignment % SimdMemoryAlignment == 0,
+  "Stack alignment should be larger than any of the alignments which are used for "
+  "spilled values.  Thus it should be larger than the alignment for SIMD accesses.");
 
 static const uint32_t AsmJSStackAlignment = SimdMemoryAlignment;
 
@@ -199,7 +209,7 @@ static const Scale ScalePointer = TimesEight;
 } // namespace jit
 } // namespace js
 
-#include "jit/shared/Assembler-x86-shared.h"
+#include "jit/x86-shared/Assembler-x86-shared.h"
 
 namespace js {
 namespace jit {
@@ -238,7 +248,7 @@ class Assembler : public AssemblerX86Shared
 
     uint32_t extendedJumpTable_;
 
-    static JitCode *CodeFromJump(JitCode *code, uint8_t *jump);
+    static JitCode* CodeFromJump(JitCode* code, uint8_t* jump);
 
   private:
     void writeRelocation(JmpSrc src, Relocation::Kind reloc);
@@ -252,16 +262,17 @@ class Assembler : public AssemblerX86Shared
     using AssemblerX86Shared::jmp;
     using AssemblerX86Shared::push;
     using AssemblerX86Shared::pop;
+    using AssemblerX86Shared::vmovq;
 
-    static uint8_t *PatchableJumpAddress(JitCode *code, size_t index);
-    static void PatchJumpEntry(uint8_t *entry, uint8_t *target);
+    static uint8_t* PatchableJumpAddress(JitCode* code, size_t index);
+    static void PatchJumpEntry(uint8_t* entry, uint8_t* target);
 
     Assembler()
       : extendedJumpTable_(0)
     {
     }
 
-    static void TraceJumpRelocations(JSTracer *trc, JitCode *code, CompactBufferReader &reader);
+    static void TraceJumpRelocations(JSTracer* trc, JitCode* code, CompactBufferReader& reader);
 
     // The buffer is about to be linked, make sure any constant pools or excess
     // bookkeeping has been flushed to the instruction stream.
@@ -269,7 +280,7 @@ class Assembler : public AssemblerX86Shared
 
     // Copy the assembly code to the given buffer, and perform any pending
     // relocations relying on the target address.
-    void executableCopy(uint8_t *buffer);
+    void executableCopy(uint8_t* buffer);
 
     // Actual assembly emitting functions.
 
@@ -306,7 +317,7 @@ class Assembler : public AssemblerX86Shared
     }
 
     CodeOffsetLabel movWithPatch(ImmWord word, Register dest) {
-        masm.movq_i64r(word.value, dest.code());
+        masm.movq_i64r(word.value, dest.encoding());
         return CodeOffsetLabel(masm.currentOffset());
     }
     CodeOffsetLabel movWithPatch(ImmPtr imm, Register dest) {
@@ -322,59 +333,59 @@ class Assembler : public AssemblerX86Shared
         // smaller encodings.
         if (word.value <= UINT32_MAX) {
             // movl has a 32-bit unsigned (effectively) immediate field.
-            masm.movl_i32r((uint32_t)word.value, dest.code());
+            masm.movl_i32r((uint32_t)word.value, dest.encoding());
         } else if ((intptr_t)word.value >= INT32_MIN && (intptr_t)word.value <= INT32_MAX) {
             // movq has a 32-bit signed immediate field.
-            masm.movq_i32r((int32_t)(intptr_t)word.value, dest.code());
+            masm.movq_i32r((int32_t)(intptr_t)word.value, dest.encoding());
         } else {
             // Otherwise use movabs.
-            masm.movq_i64r(word.value, dest.code());
+            masm.movq_i64r(word.value, dest.encoding());
         }
     }
     void movq(ImmPtr imm, Register dest) {
         movq(ImmWord(uintptr_t(imm.value)), dest);
     }
     void movq(ImmGCPtr ptr, Register dest) {
-        masm.movq_i64r(uintptr_t(ptr.value), dest.code());
+        masm.movq_i64r(uintptr_t(ptr.value), dest.encoding());
         writeDataRelocation(ptr);
     }
-    void movq(const Operand &src, Register dest) {
+    void movq(const Operand& src, Register dest) {
         switch (src.kind()) {
           case Operand::REG:
-            masm.movq_rr(src.reg(), dest.code());
+            masm.movq_rr(src.reg(), dest.encoding());
             break;
           case Operand::MEM_REG_DISP:
-            masm.movq_mr(src.disp(), src.base(), dest.code());
+            masm.movq_mr(src.disp(), src.base(), dest.encoding());
             break;
           case Operand::MEM_SCALE:
-            masm.movq_mr(src.disp(), src.base(), src.index(), src.scale(), dest.code());
+            masm.movq_mr(src.disp(), src.base(), src.index(), src.scale(), dest.encoding());
             break;
           case Operand::MEM_ADDRESS32:
-            masm.movq_mr(src.address(), dest.code());
+            masm.movq_mr(src.address(), dest.encoding());
             break;
           default:
             MOZ_CRASH("unexpected operand kind");
         }
     }
-    void movq(Register src, const Operand &dest) {
+    void movq(Register src, const Operand& dest) {
         switch (dest.kind()) {
           case Operand::REG:
-            masm.movq_rr(src.code(), dest.reg());
+            masm.movq_rr(src.encoding(), dest.reg());
             break;
           case Operand::MEM_REG_DISP:
-            masm.movq_rm(src.code(), dest.disp(), dest.base());
+            masm.movq_rm(src.encoding(), dest.disp(), dest.base());
             break;
           case Operand::MEM_SCALE:
-            masm.movq_rm(src.code(), dest.disp(), dest.base(), dest.index(), dest.scale());
+            masm.movq_rm(src.encoding(), dest.disp(), dest.base(), dest.index(), dest.scale());
             break;
           case Operand::MEM_ADDRESS32:
-            masm.movq_rm(src.code(), dest.address());
+            masm.movq_rm(src.encoding(), dest.address());
             break;
           default:
             MOZ_CRASH("unexpected operand kind");
         }
     }
-    void movq(Imm32 imm32, const Operand &dest) {
+    void movq(Imm32 imm32, const Operand& dest) {
         switch (dest.kind()) {
           case Operand::REG:
             masm.movl_i32r(imm32.value, dest.reg());
@@ -393,38 +404,54 @@ class Assembler : public AssemblerX86Shared
         }
     }
     void vmovq(Register src, FloatRegister dest) {
-        masm.vmovq_rr(src.code(), dest.code());
+        masm.vmovq_rr(src.encoding(), dest.encoding());
     }
     void vmovq(FloatRegister src, Register dest) {
-        masm.vmovq_rr(src.code(), dest.code());
+        masm.vmovq_rr(src.encoding(), dest.encoding());
     }
     void movq(Register src, Register dest) {
-        masm.movq_rr(src.code(), dest.code());
+        masm.movq_rr(src.encoding(), dest.encoding());
     }
 
     void xchgq(Register src, Register dest) {
-        masm.xchgq_rr(src.code(), dest.code());
+        masm.xchgq_rr(src.encoding(), dest.encoding());
+    }
+
+    void movslq(Register src, Register dest) {
+        masm.movslq_rr(src.encoding(), dest.encoding());
+    }
+    void movslq(const Operand& src, Register dest) {
+        switch (src.kind()) {
+          case Operand::MEM_REG_DISP:
+            masm.movslq_mr(src.disp(), src.base(), dest.encoding());
+            break;
+          case Operand::MEM_SCALE:
+            masm.movslq_mr(src.disp(), src.base(), src.index(), src.scale(), dest.encoding());
+            break;
+          default:
+            MOZ_CRASH("unexpected operand kind");
+        }
     }
 
     void andq(Register src, Register dest) {
-        masm.andq_rr(src.code(), dest.code());
+        masm.andq_rr(src.encoding(), dest.encoding());
     }
     void andq(Imm32 imm, Register dest) {
-        masm.andq_ir(imm.value, dest.code());
+        masm.andq_ir(imm.value, dest.encoding());
     }
-    void andq(const Operand &src, Register dest) {
+    void andq(const Operand& src, Register dest) {
         switch (src.kind()) {
           case Operand::REG:
-            masm.andq_rr(src.reg(), dest.code());
+            masm.andq_rr(src.reg(), dest.encoding());
             break;
           case Operand::MEM_REG_DISP:
-            masm.andq_mr(src.disp(), src.base(), dest.code());
+            masm.andq_mr(src.disp(), src.base(), dest.encoding());
             break;
           case Operand::MEM_SCALE:
-            masm.andq_mr(src.disp(), src.base(), src.index(), src.scale(), dest.code());
+            masm.andq_mr(src.disp(), src.base(), src.index(), src.scale(), dest.encoding());
             break;
           case Operand::MEM_ADDRESS32:
-            masm.andq_mr(src.address(), dest.code());
+            masm.andq_mr(src.address(), dest.encoding());
             break;
           default:
             MOZ_CRASH("unexpected operand kind");
@@ -432,9 +459,9 @@ class Assembler : public AssemblerX86Shared
     }
 
     void addq(Imm32 imm, Register dest) {
-        masm.addq_ir(imm.value, dest.code());
+        masm.addq_ir(imm.value, dest.encoding());
     }
-    void addq(Imm32 imm, const Operand &dest) {
+    void addq(Imm32 imm, const Operand& dest) {
         switch (dest.kind()) {
           case Operand::REG:
             masm.addq_ir(imm.value, dest.reg());
@@ -450,18 +477,18 @@ class Assembler : public AssemblerX86Shared
         }
     }
     void addq(Register src, Register dest) {
-        masm.addq_rr(src.code(), dest.code());
+        masm.addq_rr(src.encoding(), dest.encoding());
     }
-    void addq(const Operand &src, Register dest) {
+    void addq(const Operand& src, Register dest) {
         switch (src.kind()) {
           case Operand::REG:
-            masm.addq_rr(src.reg(), dest.code());
+            masm.addq_rr(src.reg(), dest.encoding());
             break;
           case Operand::MEM_REG_DISP:
-            masm.addq_mr(src.disp(), src.base(), dest.code());
+            masm.addq_mr(src.disp(), src.base(), dest.encoding());
             break;
           case Operand::MEM_ADDRESS32:
-            masm.addq_mr(src.address(), dest.code());
+            masm.addq_mr(src.address(), dest.encoding());
             break;
           default:
             MOZ_CRASH("unexpected operand kind");
@@ -469,73 +496,73 @@ class Assembler : public AssemblerX86Shared
     }
 
     void subq(Imm32 imm, Register dest) {
-        masm.subq_ir(imm.value, dest.code());
+        masm.subq_ir(imm.value, dest.encoding());
     }
     void subq(Register src, Register dest) {
-        masm.subq_rr(src.code(), dest.code());
+        masm.subq_rr(src.encoding(), dest.encoding());
     }
-    void subq(const Operand &src, Register dest) {
+    void subq(const Operand& src, Register dest) {
         switch (src.kind()) {
           case Operand::REG:
-            masm.subq_rr(src.reg(), dest.code());
+            masm.subq_rr(src.reg(), dest.encoding());
             break;
           case Operand::MEM_REG_DISP:
-            masm.subq_mr(src.disp(), src.base(), dest.code());
+            masm.subq_mr(src.disp(), src.base(), dest.encoding());
             break;
           case Operand::MEM_ADDRESS32:
-            masm.subq_mr(src.address(), dest.code());
+            masm.subq_mr(src.address(), dest.encoding());
             break;
           default:
             MOZ_CRASH("unexpected operand kind");
         }
     }
-    void subq(Register src, const Operand &dest) {
+    void subq(Register src, const Operand& dest) {
         switch (dest.kind()) {
           case Operand::REG:
-            masm.subq_rr(src.code(), dest.reg());
+            masm.subq_rr(src.encoding(), dest.reg());
             break;
           case Operand::MEM_REG_DISP:
-            masm.subq_rm(src.code(), dest.disp(), dest.base());
+            masm.subq_rm(src.encoding(), dest.disp(), dest.base());
             break;
           default:
             MOZ_CRASH("unexpected operand kind");
         }
     }
     void shlq(Imm32 imm, Register dest) {
-        masm.shlq_ir(imm.value, dest.code());
+        masm.shlq_ir(imm.value, dest.encoding());
     }
     void shrq(Imm32 imm, Register dest) {
-        masm.shrq_ir(imm.value, dest.code());
+        masm.shrq_ir(imm.value, dest.encoding());
     }
     void sarq(Imm32 imm, Register dest) {
-        masm.sarq_ir(imm.value, dest.code());
+        masm.sarq_ir(imm.value, dest.encoding());
     }
     void orq(Imm32 imm, Register dest) {
-        masm.orq_ir(imm.value, dest.code());
+        masm.orq_ir(imm.value, dest.encoding());
     }
     void orq(Register src, Register dest) {
-        masm.orq_rr(src.code(), dest.code());
+        masm.orq_rr(src.encoding(), dest.encoding());
     }
-    void orq(const Operand &src, Register dest) {
+    void orq(const Operand& src, Register dest) {
         switch (src.kind()) {
           case Operand::REG:
-            masm.orq_rr(src.reg(), dest.code());
+            masm.orq_rr(src.reg(), dest.encoding());
             break;
           case Operand::MEM_REG_DISP:
-            masm.orq_mr(src.disp(), src.base(), dest.code());
+            masm.orq_mr(src.disp(), src.base(), dest.encoding());
             break;
           case Operand::MEM_ADDRESS32:
-            masm.orq_mr(src.address(), dest.code());
+            masm.orq_mr(src.address(), dest.encoding());
             break;
           default:
             MOZ_CRASH("unexpected operand kind");
         }
     }
     void xorq(Register src, Register dest) {
-        masm.xorq_rr(src.code(), dest.code());
+        masm.xorq_rr(src.encoding(), dest.encoding());
     }
     void xorq(Imm32 imm, Register dest) {
-        masm.xorq_ir(imm.value, dest.code());
+        masm.xorq_ir(imm.value, dest.encoding());
     }
 
     void mov(ImmWord word, Register dest) {
@@ -553,38 +580,38 @@ class Assembler : public AssemblerX86Shared
         movq(imm, dest);
     }
     void mov(AsmJSImmPtr imm, Register dest) {
-        masm.movq_i64r(-1, dest.code());
+        masm.movq_i64r(-1, dest.encoding());
         append(AsmJSAbsoluteLink(CodeOffsetLabel(masm.currentOffset()), imm.kind()));
     }
-    void mov(const Operand &src, Register dest) {
+    void mov(const Operand& src, Register dest) {
         movq(src, dest);
     }
-    void mov(Register src, const Operand &dest) {
+    void mov(Register src, const Operand& dest) {
         movq(src, dest);
     }
-    void mov(Imm32 imm32, const Operand &dest) {
+    void mov(Imm32 imm32, const Operand& dest) {
         movq(imm32, dest);
     }
     void mov(Register src, Register dest) {
         movq(src, dest);
     }
-    void mov(AbsoluteLabel *label, Register dest) {
+    void mov(AbsoluteLabel* label, Register dest) {
         MOZ_ASSERT(!label->bound());
         // Thread the patch list through the unpatched address word in the
         // instruction stream.
-        masm.movq_i64r(label->prev(), dest.code());
+        masm.movq_i64r(label->prev(), dest.encoding());
         label->setPrev(masm.size());
     }
     void xchg(Register src, Register dest) {
         xchgq(src, dest);
     }
-    void lea(const Operand &src, Register dest) {
+    void lea(const Operand& src, Register dest) {
         switch (src.kind()) {
           case Operand::MEM_REG_DISP:
-            masm.leaq_mr(src.disp(), src.base(), dest.code());
+            masm.leaq_mr(src.disp(), src.base(), dest.encoding());
             break;
           case Operand::MEM_SCALE:
-            masm.leaq_mr(src.disp(), src.base(), src.index(), src.scale(), dest.code());
+            masm.leaq_mr(src.disp(), src.base(), src.index(), src.scale(), dest.encoding());
             break;
           default:
             MOZ_CRASH("unexepcted operand kind");
@@ -592,40 +619,40 @@ class Assembler : public AssemblerX86Shared
     }
 
     CodeOffsetLabel loadRipRelativeInt32(Register dest) {
-        return CodeOffsetLabel(masm.movl_ripr(dest.code()).offset());
+        return CodeOffsetLabel(masm.movl_ripr(dest.encoding()).offset());
     }
     CodeOffsetLabel loadRipRelativeInt64(Register dest) {
-        return CodeOffsetLabel(masm.movq_ripr(dest.code()).offset());
+        return CodeOffsetLabel(masm.movq_ripr(dest.encoding()).offset());
     }
     CodeOffsetLabel loadRipRelativeDouble(FloatRegister dest) {
-        return CodeOffsetLabel(masm.vmovsd_ripr(dest.code()).offset());
+        return CodeOffsetLabel(masm.vmovsd_ripr(dest.encoding()).offset());
     }
     CodeOffsetLabel loadRipRelativeFloat32(FloatRegister dest) {
-        return CodeOffsetLabel(masm.vmovss_ripr(dest.code()).offset());
+        return CodeOffsetLabel(masm.vmovss_ripr(dest.encoding()).offset());
     }
     CodeOffsetLabel loadRipRelativeInt32x4(FloatRegister dest) {
-        return CodeOffsetLabel(masm.vmovdqa_ripr(dest.code()).offset());
+        return CodeOffsetLabel(masm.vmovdqa_ripr(dest.encoding()).offset());
     }
     CodeOffsetLabel loadRipRelativeFloat32x4(FloatRegister dest) {
-        return CodeOffsetLabel(masm.vmovaps_ripr(dest.code()).offset());
+        return CodeOffsetLabel(masm.vmovaps_ripr(dest.encoding()).offset());
     }
     CodeOffsetLabel storeRipRelativeInt32(Register dest) {
-        return CodeOffsetLabel(masm.movl_rrip(dest.code()).offset());
+        return CodeOffsetLabel(masm.movl_rrip(dest.encoding()).offset());
     }
     CodeOffsetLabel storeRipRelativeDouble(FloatRegister dest) {
-        return CodeOffsetLabel(masm.vmovsd_rrip(dest.code()).offset());
+        return CodeOffsetLabel(masm.vmovsd_rrip(dest.encoding()).offset());
     }
     CodeOffsetLabel storeRipRelativeFloat32(FloatRegister dest) {
-        return CodeOffsetLabel(masm.vmovss_rrip(dest.code()).offset());
+        return CodeOffsetLabel(masm.vmovss_rrip(dest.encoding()).offset());
     }
     CodeOffsetLabel storeRipRelativeInt32x4(FloatRegister dest) {
-        return CodeOffsetLabel(masm.vmovdqa_rrip(dest.code()).offset());
+        return CodeOffsetLabel(masm.vmovdqa_rrip(dest.encoding()).offset());
     }
     CodeOffsetLabel storeRipRelativeFloat32x4(FloatRegister dest) {
-        return CodeOffsetLabel(masm.vmovaps_rrip(dest.code()).offset());
+        return CodeOffsetLabel(masm.vmovaps_rrip(dest.encoding()).offset());
     }
     CodeOffsetLabel leaRipRelative(Register dest) {
-        return CodeOffsetLabel(masm.leaq_rip(dest.code()).offset());
+        return CodeOffsetLabel(masm.leaq_rip(dest.encoding()).offset());
     }
 
     void loadAsmJSActivation(Register dest) {
@@ -638,27 +665,27 @@ class Assembler : public AssemblerX86Shared
     }
 
     void cmpq(Register rhs, Register lhs) {
-        masm.cmpq_rr(rhs.code(), lhs.code());
+        masm.cmpq_rr(rhs.encoding(), lhs.encoding());
     }
-    void cmpq(Register rhs, const Operand &lhs) {
+    void cmpq(Register rhs, const Operand& lhs) {
         switch (lhs.kind()) {
           case Operand::REG:
-            masm.cmpq_rr(rhs.code(), lhs.reg());
+            masm.cmpq_rr(rhs.encoding(), lhs.reg());
             break;
           case Operand::MEM_REG_DISP:
-            masm.cmpq_rm(rhs.code(), lhs.disp(), lhs.base());
+            masm.cmpq_rm(rhs.encoding(), lhs.disp(), lhs.base());
             break;
           case Operand::MEM_ADDRESS32:
-            masm.cmpq_rm(rhs.code(), lhs.address());
+            masm.cmpq_rm(rhs.encoding(), lhs.address());
             break;
           default:
             MOZ_CRASH("unexpected operand kind");
         }
     }
     void cmpq(Imm32 rhs, Register lhs) {
-        masm.cmpq_ir(rhs.value, lhs.code());
+        masm.cmpq_ir(rhs.value, lhs.encoding());
     }
-    void cmpq(Imm32 rhs, const Operand &lhs) {
+    void cmpq(Imm32 rhs, const Operand& lhs) {
         switch (lhs.kind()) {
           case Operand::REG:
             masm.cmpq_ir(rhs.value, lhs.reg());
@@ -673,13 +700,13 @@ class Assembler : public AssemblerX86Shared
             MOZ_CRASH("unexpected operand kind");
         }
     }
-    void cmpq(const Operand &rhs, Register lhs) {
+    void cmpq(const Operand& rhs, Register lhs) {
         switch (rhs.kind()) {
           case Operand::REG:
-            masm.cmpq_rr(rhs.reg(), lhs.code());
+            masm.cmpq_rr(rhs.reg(), lhs.encoding());
             break;
           case Operand::MEM_REG_DISP:
-            masm.cmpq_mr(rhs.disp(), rhs.base(), lhs.code());
+            masm.cmpq_mr(rhs.disp(), rhs.base(), lhs.encoding());
             break;
           default:
             MOZ_CRASH("unexpected operand kind");
@@ -687,12 +714,12 @@ class Assembler : public AssemblerX86Shared
     }
 
     void testq(Imm32 rhs, Register lhs) {
-        masm.testq_ir(rhs.value, lhs.code());
+        masm.testq_ir(rhs.value, lhs.encoding());
     }
     void testq(Register rhs, Register lhs) {
-        masm.testq_rr(rhs.code(), lhs.code());
+        masm.testq_rr(rhs.encoding(), lhs.encoding());
     }
-    void testq(Imm32 rhs, const Operand &lhs) {
+    void testq(Imm32 rhs, const Operand& lhs) {
         switch (lhs.kind()) {
           case Operand::REG:
             masm.testq_ir(rhs.value, lhs.reg());
@@ -712,24 +739,24 @@ class Assembler : public AssemblerX86Shared
     }
     void j(Condition cond, ImmPtr target,
            Relocation::Kind reloc = Relocation::HARDCODED) {
-        JmpSrc src = masm.jCC(static_cast<X86Assembler::Condition>(cond));
+        JmpSrc src = masm.jCC(static_cast<X86Encoding::Condition>(cond));
         addPendingJump(src, target, reloc);
     }
 
-    void jmp(JitCode *target) {
+    void jmp(JitCode* target) {
         jmp(ImmPtr(target->raw()), Relocation::JITCODE);
     }
-    void j(Condition cond, JitCode *target) {
+    void j(Condition cond, JitCode* target) {
         j(cond, ImmPtr(target->raw()), Relocation::JITCODE);
     }
-    void call(JitCode *target) {
+    void call(JitCode* target) {
         JmpSrc src = masm.call();
         addPendingJump(src, ImmPtr(target->raw()), Relocation::JITCODE);
     }
 
     // Emit a CALL or CMP (nop) instruction. ToggleCall can be used to patch
     // this instruction.
-    CodeOffsetLabel toggledCall(JitCode *target, bool enabled) {
+    CodeOffsetLabel toggledCall(JitCode* target, bool enabled) {
         CodeOffsetLabel offset(size());
         JmpSrc src = enabled ? masm.call() : masm.cmp_eax();
         addPendingJump(src, ImmPtr(target->raw()), Relocation::JITCODE);
@@ -737,7 +764,7 @@ class Assembler : public AssemblerX86Shared
         return offset;
     }
 
-    static size_t ToggledCallSize(uint8_t *code) {
+    static size_t ToggledCallSize(uint8_t* code) {
         // Size of a call instruction.
         return 5;
     }
@@ -746,37 +773,37 @@ class Assembler : public AssemblerX86Shared
     using AssemblerX86Shared::call;
 
     void vcvttsd2sq(FloatRegister src, Register dest) {
-        masm.vcvttsd2sq_rr(src.code(), dest.code());
+        masm.vcvttsd2sq_rr(src.encoding(), dest.encoding());
     }
     void vcvttss2sq(FloatRegister src, Register dest) {
-        masm.vcvttss2sq_rr(src.code(), dest.code());
+        masm.vcvttss2sq_rr(src.encoding(), dest.encoding());
     }
     void vcvtsq2sd(Register src1, FloatRegister src0, FloatRegister dest) {
-        masm.vcvtsq2sd_rr(src1.code(), src0.code(), dest.code());
+        masm.vcvtsq2sd_rr(src1.encoding(), src0.encoding(), dest.encoding());
     }
     void vcvtsq2ss(Register src1, FloatRegister src0, FloatRegister dest) {
-        masm.vcvtsq2ss_rr(src1.code(), src0.code(), dest.code());
+        masm.vcvtsq2ss_rr(src1.encoding(), src0.encoding(), dest.encoding());
     }
 };
 
 static inline void
 PatchJump(CodeLocationJump jump, CodeLocationLabel label)
 {
-    if (X86Assembler::canRelinkJump(jump.raw(), label.raw())) {
-        X86Assembler::setRel32(jump.raw(), label.raw());
+    if (X86Encoding::CanRelinkJump(jump.raw(), label.raw())) {
+        X86Encoding::SetRel32(jump.raw(), label.raw());
     } else {
-        X86Assembler::setRel32(jump.raw(), jump.jumpTableEntry());
+        X86Encoding::SetRel32(jump.raw(), jump.jumpTableEntry());
         Assembler::PatchJumpEntry(jump.jumpTableEntry(), label.raw());
     }
 }
 static inline void
-PatchBackedge(CodeLocationJump &jump_, CodeLocationLabel label, JitRuntime::BackedgeTarget target)
+PatchBackedge(CodeLocationJump& jump_, CodeLocationLabel label, JitRuntime::BackedgeTarget target)
 {
     PatchJump(jump_, label);
 }
 
 static inline bool
-GetIntArgReg(uint32_t intArg, uint32_t floatArg, Register *out)
+GetIntArgReg(uint32_t intArg, uint32_t floatArg, Register* out)
 {
 #if defined(_WIN64)
     uint32_t arg = intArg + floatArg;
@@ -795,7 +822,7 @@ GetIntArgReg(uint32_t intArg, uint32_t floatArg, Register *out)
 // CallTempReg* don't overlap the argument registers, and only fail once those
 // run out too.
 static inline bool
-GetTempRegForIntArg(uint32_t usedIntArgs, uint32_t usedFloatArgs, Register *out)
+GetTempRegForIntArg(uint32_t usedIntArgs, uint32_t usedFloatArgs, Register* out)
 {
     if (GetIntArgReg(usedIntArgs, usedFloatArgs, out))
         return true;
@@ -815,7 +842,7 @@ GetTempRegForIntArg(uint32_t usedIntArgs, uint32_t usedFloatArgs, Register *out)
 }
 
 static inline bool
-GetFloatArgReg(uint32_t intArg, uint32_t floatArg, FloatRegister *out)
+GetFloatArgReg(uint32_t intArg, uint32_t floatArg, FloatRegister* out)
 {
 #if defined(_WIN64)
     uint32_t arg = intArg + floatArg;

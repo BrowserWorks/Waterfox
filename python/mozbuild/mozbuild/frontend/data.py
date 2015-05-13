@@ -27,6 +27,10 @@ from mozbuild.util import (
 import mozpack.path as mozpath
 from .context import FinalTargetValue
 
+from ..util import (
+    group_unified_files,
+)
+
 
 class TreeMetadata(object):
     """Base class for all data being captured."""
@@ -244,6 +248,29 @@ class Resources(ContextDerived):
             defs.update(defines)
         self.defines = defs
 
+class BrandingFiles(ContextDerived):
+    """Sandbox container object for BRANDING_FILES, which is a
+    HierarchicalStringList.
+
+    We need an object derived from ContextDerived for use in the backend, so
+    this object fills that role. It just has a reference to the underlying
+    HierarchicalStringList, which is created when parsing BRANDING_FILES.
+    """
+    __slots__ = ('files')
+
+    def __init__(self, sandbox, files):
+        ContextDerived.__init__(self, sandbox)
+        self.files = files
+
+class JsPreferenceFile(ContextDerived):
+    """Context derived container object for a Javascript preference file.
+
+    Paths are assumed to be relative to the srcdir."""
+    __slots__ = ('path')
+
+    def __init__(self, context, path):
+        ContextDerived.__init__(self, context)
+        self.path = path
 
 class IPDLFile(ContextDerived):
     """Describes an individual .ipdl source file."""
@@ -475,12 +502,14 @@ class StaticLibrary(Library):
     """Context derived container object for a static library"""
     __slots__ = (
         'link_into',
+        'no_expand_lib',
     )
 
     def __init__(self, context, basename, real_name=None, is_sdk=False,
-        link_into=None):
+        link_into=None, no_expand_lib=False):
         Library.__init__(self, context, basename, real_name, is_sdk)
         self.link_into = link_into
+        self.no_expand_lib = no_expand_lib
 
 
 class SharedLibrary(Library):
@@ -769,13 +798,32 @@ class UnifiedSources(BaseSources):
     """Represents files to be compiled in a unified fashion during the build."""
 
     __slots__ = (
-        'files_per_unified_file',
+        'have_unified_mapping',
+        'unified_source_mapping'
     )
 
     def __init__(self, context, files, canonical_suffix, files_per_unified_file=16):
         BaseSources.__init__(self, context, files, canonical_suffix)
 
-        self.files_per_unified_file = files_per_unified_file
+        self.have_unified_mapping = files_per_unified_file > 1
+
+        if self.have_unified_mapping:
+            # Sorted so output is consistent and we don't bump mtimes.
+            source_files = list(sorted(self.files))
+
+            # On Windows, path names have a maximum length of 255 characters,
+            # so avoid creating extremely long path names.
+            unified_prefix = context.relsrcdir
+            if len(unified_prefix) > 20:
+                unified_prefix = unified_prefix[-20:].split('/', 1)[-1]
+            unified_prefix = unified_prefix.replace('/', '_')
+
+            suffix = self.canonical_suffix[1:]
+            unified_prefix='Unified_%s_%s' % (suffix, unified_prefix)
+            self.unified_source_mapping = list(group_unified_files(source_files,
+                                                                   unified_prefix=unified_prefix,
+                                                                   unified_suffix=suffix,
+                                                                   files_per_unified_file=files_per_unified_file))
 
 
 class InstallationTarget(ContextDerived):
@@ -794,7 +842,7 @@ class InstallationTarget(ContextDerived):
         self.xpiname = context.get('XPI_NAME', '')
         self.subdir = context.get('DIST_SUBDIR', '')
         self.target = context['FINAL_TARGET']
-        self.enabled = not context.get('NO_DIST_INSTALL', False)
+        self.enabled = context['DIST_INSTALL'] is not False
 
     def is_custom(self):
         """Returns whether or not the target is not derived from the default
@@ -819,6 +867,40 @@ class FinalTargetFiles(ContextDerived):
         ContextDerived.__init__(self, sandbox)
         self.files = files
         self.target = target
+
+
+class DistFiles(ContextDerived):
+    """Sandbox container object for FINAL_TARGET_FILES, which is a
+    HierarchicalStringList.
+
+    We need an object derived from ContextDerived for use in the backend, so
+    this object fills that role. It just has a reference to the underlying
+    HierarchicalStringList, which is created when parsing DIST_FILES.
+    """
+    __slots__ = ('files', 'target')
+
+    def __init__(self, sandbox, files, target):
+        ContextDerived.__init__(self, sandbox)
+        self.files = files
+        self.target = target
+
+
+class GeneratedFile(ContextDerived):
+    """Represents a generated file."""
+
+    __slots__ = (
+        'script',
+        'method',
+        'output',
+        'inputs',
+    )
+
+    def __init__(self, context, script, method, output, inputs):
+        ContextDerived.__init__(self, context)
+        self.script = script
+        self.method = method
+        self.output = output
+        self.inputs = inputs
 
 
 class ClassPathEntry(object):

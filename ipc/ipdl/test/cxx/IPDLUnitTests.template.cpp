@@ -20,8 +20,9 @@
 ${INCLUDES}
 //-----------------------------------------------------------------------------
 
-using namespace base;
 using namespace std;
+
+using base::Thread;
 
 namespace mozilla {
 namespace _ipdltest {
@@ -138,10 +139,6 @@ IPDLUnitTestMain(void* aData)
 {
     char* testString = reinterpret_cast<char*>(aData);
 
-    // Some tests require this, and we don't care what thread we're on if we're
-    // not using Nuwa.
-    mozilla::ipc::IToplevelProtocol::SetAllowNonMainThreadUse();
-
     // Check if we are to run the test using threads instead:
     const char *prefix = "thread:";
     const int prefixLen = strlen(prefix);
@@ -184,7 +181,7 @@ ${PARENT_ENABLED_CASES_PROC}
     if (!transport)
         fail("no transport");
 
-    base::ProcessHandle child = gSubprocess->GetChildProcessHandle();
+    base::ProcessId child = base::GetProcId(gSubprocess->GetChildProcessHandle());
 
     switch (test) {
 //-----------------------------------------------------------------------------
@@ -374,13 +371,9 @@ ${CHILD_DELETE_CASES}
 
 void
 IPDLUnitTestChildInit(IPC::Channel* transport,
-                      base::ProcessHandle parent,
+                      base::ProcessId parentPid,
                       MessageLoop* worker)
 {
-    // Some tests require this, and we don't care what thread we're on if we're
-    // not using Nuwa.
-    mozilla::ipc::IToplevelProtocol::SetAllowNonMainThreadUse();
-
     switch (IPDLUnitTest()) {
 //-----------------------------------------------------------------------------
 //===== TEMPLATED =====

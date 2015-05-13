@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -20,11 +21,12 @@ TextDecoder::Init(const nsAString& aLabel, const bool aFatal,
 {
   nsAutoCString encoding;
   // Let encoding be the result of getting an encoding from label.
-  // If encoding is failure or replacement, throw a TypeError.
+  // If encoding is failure or replacement, throw a RangeError
+  // (https://encoding.spec.whatwg.org/#dom-textdecoder).
   if (!EncodingUtils::FindEncodingForLabelNoReplacement(aLabel, encoding)) {
     nsAutoString label(aLabel);
     EncodingUtils::TrimSpaceCharacters(label);
-    aRv.ThrowTypeError(MSG_ENCODING_NOT_SUPPORTED, &label);
+    aRv.ThrowRangeError(MSG_ENCODING_NOT_SUPPORTED, &label);
     return;
   }
   InitWithEncoding(encoding, aFatal);
@@ -63,7 +65,6 @@ TextDecoder::Decode(const char* aInput, const int32_t aLength,
   }
   // Need a fallible allocator because the caller may be a content
   // and the content can specify the length of the string.
-  static const fallible_t fallible = fallible_t();
   nsAutoArrayPtr<char16_t> buf(new (fallible) char16_t[outLen + 1]);
   if (!buf) {
     aRv.Throw(NS_ERROR_OUT_OF_MEMORY);
@@ -82,7 +83,7 @@ TextDecoder::Decode(const char* aInput, const int32_t aLength,
     mDecoder->Reset();
     if (rv == NS_OK_UDEC_MOREINPUT) {
       if (mFatal) {
-        aRv.Throw(NS_ERROR_DOM_ENCODING_DECODE_ERR);
+        aRv.ThrowTypeError(MSG_DOM_DECODING_FAILED);
       } else {
         // Need to emit a decode error manually
         // to simulate the EOF handling of the Encoding spec.
@@ -92,7 +93,7 @@ TextDecoder::Decode(const char* aInput, const int32_t aLength,
   }
 
   if (NS_FAILED(rv)) {
-    aRv.Throw(NS_ERROR_DOM_ENCODING_DECODE_ERR);
+    aRv.ThrowTypeError(MSG_DOM_DECODING_FAILED);
   }
 }
 

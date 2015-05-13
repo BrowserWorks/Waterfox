@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-// vim: ft=cpp tw=78 sw=2 et ts=2
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -312,7 +312,6 @@ AutoJSAPI::~AutoJSAPI()
 {
   if (mOwnErrorReporting) {
     MOZ_ASSERT(NS_IsMainThread(), "See corresponding assertion in TakeOwnershipOfErrorReporting()");
-    JS::ContextOptionsRef(cx()).setAutoJSAPIOwnsErrorReporting(mOldAutoJSAPIOwnsErrorReporting);
 
     if (HasException()) {
 
@@ -342,6 +341,13 @@ AutoJSAPI::~AutoJSAPI()
         NS_WARNING("OOMed while acquiring uncaught exception from JSAPI");
       }
     }
+
+    // We need to do this _after_ processing the existing exception, because the
+    // JS engine can throw while doing that, and uses this bit to determine what
+    // to do in that case: squelch the exception if the bit is set, otherwise
+    // call the error reporter. Calling WarningOnlyErrorReporter with a
+    // non-warning will assert, so we need to make sure we do the former.
+    JS::ContextOptionsRef(cx()).setAutoJSAPIOwnsErrorReporting(mOldAutoJSAPIOwnsErrorReporting);
   }
 
   if (mOldErrorReporter.isSome()) {
@@ -483,7 +489,7 @@ WarningOnlyErrorReporter(JSContext* aCx, const char* aMessage, JSErrorReport* aR
 {
   MOZ_ASSERT(JSREPORT_IS_WARNING(aRep->flags));
   nsRefPtr<xpc::ErrorReport> xpcReport = new xpc::ErrorReport();
-  nsPIDOMWindow* win = xpc::WindowGlobalOrNull(JS::CurrentGlobalOrNull(aCx));
+  nsPIDOMWindow* win = xpc::CurrentWindowOrNull(aCx);
   xpcReport->Init(aRep, aMessage, nsContentUtils::IsCallerChrome(),
                   win ? win->WindowID() : 0);
   xpcReport->LogToConsole();
@@ -516,6 +522,7 @@ AutoJSAPI::StealException(JS::MutableHandle<JS::Value> aVal)
 }
 
 AutoEntryScript::AutoEntryScript(nsIGlobalObject* aGlobalObject,
+                                 const char *aReason,
                                  bool aIsMainThread,
                                  JSContext* aCx)
   : AutoJSAPI(aGlobalObject, aIsMainThread,
@@ -540,7 +547,7 @@ AutoEntryScript::AutoEntryScript(nsIGlobalObject* aGlobalObject,
   }
 
   if (mDocShellForJSRunToCompletion) {
-    mDocShellForJSRunToCompletion->NotifyJSRunToCompletionStart();
+    mDocShellForJSRunToCompletion->NotifyJSRunToCompletionStart(aReason);
   }
 }
 

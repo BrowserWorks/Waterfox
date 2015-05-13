@@ -119,16 +119,16 @@ public:
   virtual ~nsSVGIDRenderingObserver();
 
 protected:
-  Element* GetTarget() MOZ_OVERRIDE { return mElement.get(); }
+  Element* GetTarget() override { return mElement.get(); }
 
   // This is called when the referenced resource changes.
-  virtual void DoUpdate() MOZ_OVERRIDE;
+  virtual void DoUpdate() override;
 
   class SourceReference : public nsReferencedElement {
   public:
     explicit SourceReference(nsSVGIDRenderingObserver* aContainer) : mContainer(aContainer) {}
   protected:
-    virtual void ElementChanged(Element* aFrom, Element* aTo) MOZ_OVERRIDE {
+    virtual void ElementChanged(Element* aFrom, Element* aTo) override {
       mContainer->StopListening();
       nsReferencedElement::ElementChanged(aFrom, aTo);
       mContainer->StartListening();
@@ -138,7 +138,7 @@ protected:
      * Override IsPersistent because we want to keep tracking the element
      * for the ID even when it changes.
      */
-    virtual bool IsPersistent() MOZ_OVERRIDE { return true; }
+    virtual bool IsPersistent() override { return true; }
   private:
     nsSVGIDRenderingObserver* mContainer;
   };
@@ -181,7 +181,7 @@ public:
   {}
 
 protected:
-  virtual void DoUpdate() MOZ_OVERRIDE;
+  virtual void DoUpdate() override;
 
   nsSVGFrameReferenceFromProperty mFrameReference;
 };
@@ -198,7 +198,7 @@ protected:
  *
  * The nsSVGFilterChainObserver class manages a list of nsSVGFilterReferences.
  */
-class nsSVGFilterReference MOZ_FINAL :
+class nsSVGFilterReference final :
   public nsSVGIDRenderingObserver, public nsISVGFilterReference {
 public:
   nsSVGFilterReference(nsIURI* aURI,
@@ -223,13 +223,13 @@ public:
   NS_DECL_CYCLE_COLLECTION_CLASS_AMBIGUOUS(nsSVGFilterReference, nsSVGIDRenderingObserver)
 
   // nsISVGFilterReference
-  virtual void Invalidate() MOZ_OVERRIDE { DoUpdate(); };
+  virtual void Invalidate() override { DoUpdate(); };
 
 protected:
   virtual ~nsSVGFilterReference() {}
 
   // nsSVGIDRenderingObserver
-  virtual void DoUpdate() MOZ_OVERRIDE;
+  virtual void DoUpdate() override;
 
 private:
   nsSVGFilterChainObserver* mFilterChainObserver;
@@ -278,7 +278,7 @@ public:
   void DetachFromFrame() { mFrameReference.Detach(); }
 
 protected:
-  virtual void DoUpdate() MOZ_OVERRIDE;
+  virtual void DoUpdate() override;
 
   nsSVGFrameReferenceFromProperty mFrameReference;
 };
@@ -289,7 +289,7 @@ public:
     : nsSVGRenderingObserverProperty(aURI, aFrame, aReferenceImage) {}
 
 protected:
-  virtual void DoUpdate() MOZ_OVERRIDE;
+  virtual void DoUpdate() override;
 };
 
 class nsSVGTextPathProperty : public nsSVGRenderingObserverProperty {
@@ -298,10 +298,10 @@ public:
     : nsSVGRenderingObserverProperty(aURI, aFrame, aReferenceImage)
     , mValid(true) {}
 
-  virtual bool ObservesReflow() MOZ_OVERRIDE { return false; }
+  virtual bool ObservesReflow() override { return false; }
 
 protected:
-  virtual void DoUpdate() MOZ_OVERRIDE;
+  virtual void DoUpdate() override;
 
 private:
   /**
@@ -318,7 +318,7 @@ public:
     : nsSVGRenderingObserverProperty(aURI, aFrame, aReferenceImage) {}
 
 protected:
-  virtual void DoUpdate() MOZ_OVERRIDE;
+  virtual void DoUpdate() override;
 };
 
 /**
@@ -390,11 +390,6 @@ public:
   typedef nsInterfaceHashtable<nsURIHashKey, nsIMutationObserver>
     URIObserverHashtable;
 
-  static void DestroySupports(void* aPropertyValue)
-  {
-    (static_cast<nsISupports*>(aPropertyValue))->Release();
-  }
-
   static void DestroyFilterProperty(void* aPropertyValue)
   {
     auto* prop = static_cast<nsSVGFilterProperty*>(aPropertyValue);
@@ -407,21 +402,17 @@ public:
     prop->Release();
   }
 
-  static void DestroyHashtable(void* aPropertyValue)
-  {
-    delete static_cast<URIObserverHashtable*> (aPropertyValue);
-  }
-
   NS_DECLARE_FRAME_PROPERTY(FilterProperty, DestroyFilterProperty)
-  NS_DECLARE_FRAME_PROPERTY(MaskProperty, DestroySupports)
-  NS_DECLARE_FRAME_PROPERTY(ClipPathProperty, DestroySupports)
-  NS_DECLARE_FRAME_PROPERTY(MarkerBeginProperty, DestroySupports)
-  NS_DECLARE_FRAME_PROPERTY(MarkerMiddleProperty, DestroySupports)
-  NS_DECLARE_FRAME_PROPERTY(MarkerEndProperty, DestroySupports)
-  NS_DECLARE_FRAME_PROPERTY(FillProperty, DestroySupports)
-  NS_DECLARE_FRAME_PROPERTY(StrokeProperty, DestroySupports)
-  NS_DECLARE_FRAME_PROPERTY(HrefProperty, DestroySupports)
-  NS_DECLARE_FRAME_PROPERTY(BackgroundImageProperty, DestroyHashtable)
+  NS_DECLARE_FRAME_PROPERTY(MaskProperty, ReleaseValue<nsISupports>)
+  NS_DECLARE_FRAME_PROPERTY(ClipPathProperty, ReleaseValue<nsISupports>)
+  NS_DECLARE_FRAME_PROPERTY(MarkerBeginProperty, ReleaseValue<nsISupports>)
+  NS_DECLARE_FRAME_PROPERTY(MarkerMiddleProperty, ReleaseValue<nsISupports>)
+  NS_DECLARE_FRAME_PROPERTY(MarkerEndProperty, ReleaseValue<nsISupports>)
+  NS_DECLARE_FRAME_PROPERTY(FillProperty, ReleaseValue<nsISupports>)
+  NS_DECLARE_FRAME_PROPERTY(StrokeProperty, ReleaseValue<nsISupports>)
+  NS_DECLARE_FRAME_PROPERTY(HrefProperty, ReleaseValue<nsISupports>)
+  NS_DECLARE_FRAME_PROPERTY(BackgroundImageProperty,
+                            DeleteValue<URIObserverHashtable>)
 
   /**
    * Get the paint server for a aTargetFrame.

@@ -309,6 +309,16 @@ public:
     return EventRegions();
   }
 
+  bool HasTransformAnimation() const
+  {
+    MOZ_ASSERT(IsValid());
+
+    if (AtBottomLayer()) {
+      return mLayer->HasTransformAnimation();
+    }
+    return false;
+  }
+
   RefLayer* AsRefLayer() const
   {
     MOZ_ASSERT(IsValid());
@@ -331,11 +341,27 @@ public:
     return region;
   }
 
-  const nsIntRect* GetClipRect() const
+  const Maybe<ParentLayerIntRect>& GetClipRect() const
   {
     MOZ_ASSERT(IsValid());
 
-    return mLayer->GetClipRect();
+    static const Maybe<ParentLayerIntRect> sNoClipRect = Nothing();
+
+    if (AtBottomLayer()) {
+      return mLayer->GetClipRect();
+    }
+
+    return sNoClipRect;
+  }
+
+  EventRegionsOverride GetEventRegionsOverride() const
+  {
+    MOZ_ASSERT(IsValid());
+
+    if (mLayer->AsContainerLayer()) {
+      return mLayer->AsContainerLayer()->GetEventRegionsOverride();
+    }
+    return EventRegionsOverride::NoOverride;
   }
 
   // Expose an opaque pointer to the layer. Mostly used for printf

@@ -154,7 +154,8 @@ private:
     HRESULT hr;
     if (attributes & FILE_ATTRIBUTE_DIRECTORY) {
       // We have a directory so we should open the directory itself.
-      ITEMIDLIST* dir = ILCreateFromPathW(mResolvedPath.get());
+      ITEMIDLIST* dir =
+        static_cast<ITEMIDLIST*>(ILCreateFromPathW(mResolvedPath.get()));
       if (!dir) {
         return NS_ERROR_FAILURE;
       }
@@ -177,13 +178,15 @@ private:
       PathRemoveFileSpecW(parentDirectoryPath);
 
       // We have a file so we should open the parent directory.
-      ITEMIDLIST* dir = ILCreateFromPathW(parentDirectoryPath);
+      ITEMIDLIST* dir =
+        static_cast<ITEMIDLIST*>(ILCreateFromPathW(parentDirectoryPath));
       if (!dir) {
         return NS_ERROR_FAILURE;
       }
 
       // Set the item in the directory to select to the file we want to reveal.
-      ITEMIDLIST* item = ILCreateFromPathW(mResolvedPath.get());
+      ITEMIDLIST* item =
+        static_cast<ITEMIDLIST*>(ILCreateFromPathW(mResolvedPath.get()));
       if (!item) {
         CoTaskMemFree(dir);
         return NS_ERROR_FAILURE;
@@ -209,9 +212,6 @@ private:
     SHELLEXECUTEINFOW seinfo;
     memset(&seinfo, 0, sizeof(seinfo));
     seinfo.cbSize = sizeof(SHELLEXECUTEINFOW);
-    if (XRE_GetWindowsEnvironment() == WindowsEnvironmentType_Metro) {
-      seinfo.fMask  = SEE_MASK_FLAG_LOG_USAGE;
-    }
     seinfo.hwnd   = nullptr;
     seinfo.lpVerb = nullptr;
     seinfo.lpFile = mResolvedPath.get();
@@ -454,10 +454,6 @@ static nsresult
 NS_CreateShortcutResolver()
 {
   gResolver = new ShortcutResolver();
-  if (!gResolver) {
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
-
   return gResolver->Init();
 }
 
@@ -551,7 +547,7 @@ IsShortcutPath(const nsAString& aPath)
   // Under Windows, the shortcuts are just files with a ".lnk" extension.
   // Note also that we don't resolve links in the middle of paths.
   // i.e. "c:\foo.lnk\bar.txt" is invalid.
-  NS_ABORT_IF_FALSE(!aPath.IsEmpty(), "don't pass an empty string");
+  MOZ_ASSERT(!aPath.IsEmpty(), "don't pass an empty string");
   int32_t len = aPath.Length();
   return len >= 4 && (StringTail(aPath, 4).LowerCaseEqualsASCII(".lnk"));
 }
@@ -761,11 +757,7 @@ OpenDir(const nsAFlatString& aName, nsDir** aDir)
     return NS_ERROR_FILE_NAME_TOO_LONG;
   }
 
-  nsDir* d  = PR_NEW(nsDir);
-  if (!d) {
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
-
+  nsDir* d  = new nsDir();
   nsAutoString filename(aName);
 
   // If |aName| ends in a slash or backslash, do not append another backslash.
@@ -783,7 +775,7 @@ OpenDir(const nsAFlatString& aName, nsDir** aDir)
   d->handle = ::FindFirstFileW(filename.get(), &(d->data));
 
   if (d->handle == INVALID_HANDLE_VALUE) {
-    PR_Free(d);
+    delete d;
     return ConvertWinError(GetLastError());
   }
   d->firstEntry = true;
@@ -852,8 +844,8 @@ CloseDir(nsDir*& aDir)
   }
 
   BOOL isOk = FindClose(aDir->handle);
-  // PR_DELETE also nulls out the passed in pointer.
-  PR_DELETE(aDir);
+  delete aDir;
+  aDir = nullptr;
   return isOk ? NS_OK : ConvertWinError(GetLastError());
 }
 
@@ -861,7 +853,7 @@ CloseDir(nsDir*& aDir)
 // nsDirEnumerator
 //-----------------------------------------------------------------------------
 
-class nsDirEnumerator MOZ_FINAL
+class nsDirEnumerator final
   : public nsISimpleEnumerator
   , public nsIDirectoryEnumerator
 {
@@ -1015,10 +1007,6 @@ nsLocalFile::nsLocalFileConstructor(nsISupports* aOuter, const nsIID& aIID,
   }
 
   nsLocalFile* inst = new nsLocalFile();
-  if (!inst) {
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
-
   nsresult rv = inst->QueryInterface(aIID, aInstancePtr);
   if (NS_FAILED(rv)) {
     delete inst;
@@ -1192,10 +1180,6 @@ nsLocalFile::Clone(nsIFile** aFile)
 {
   // Just copy-construct ourselves
   *aFile = new nsLocalFile(*this);
-  if (!*aFile) {
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
-
   NS_ADDREF(*aFile);
 
   return NS_OK;
@@ -1729,11 +1713,7 @@ nsLocalFile::GetVersionInfoField(const char* aField, nsAString& aResult)
     return rv;
   }
 
-  void* ver = calloc(size, 1);
-  if (!ver) {
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
-
+  void* ver = moz_xcalloc(size, 1);
   if (::GetFileVersionInfoW(path, 0, size, ver)) {
     LANGANDCODEPAGE* translate = nullptr;
     UINT pageCount;
@@ -2031,10 +2011,6 @@ nsLocalFile::CopyMove(nsIFile* aParentDir, const nsAString& aNewName,
           newParentDir->GetTarget(target);
 
           nsCOMPtr<nsIFile> realDest = new nsLocalFile();
-          if (!realDest) {
-            return NS_ERROR_OUT_OF_MEMORY;
-          }
-
           rv = realDest->InitWithPath(target);
 
           if (NS_FAILED(rv)) {
@@ -3228,9 +3204,6 @@ nsLocalFile::GetDirectoryEntries(nsISimpleEnumerator** aEntries)
   *aEntries = nullptr;
   if (mWorkingPath.EqualsLiteral("\\\\.")) {
     nsDriveEnumerator* drives = new nsDriveEnumerator;
-    if (!drives) {
-      return NS_ERROR_OUT_OF_MEMORY;
-    }
     NS_ADDREF(drives);
     rv = drives->Init();
     if (NS_FAILED(rv)) {
@@ -3378,9 +3351,6 @@ nsresult
 NS_NewLocalFile(const nsAString& aPath, bool aFollowLinks, nsIFile** aResult)
 {
   nsLocalFile* file = new nsLocalFile();
-  if (!file) {
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
   NS_ADDREF(file);
 
   file->SetFollowLinks(aFollowLinks);
@@ -3651,7 +3621,7 @@ nsDriveEnumerator::Init()
    * the length required for the string. */
   DWORD length = GetLogicalDriveStringsW(0, 0);
   /* The string is null terminated */
-  if (!mDrives.SetLength(length + 1, fallible_t())) {
+  if (!mDrives.SetLength(length + 1, fallible)) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
   if (!GetLogicalDriveStringsW(length, wwc(mDrives.BeginWriting()))) {

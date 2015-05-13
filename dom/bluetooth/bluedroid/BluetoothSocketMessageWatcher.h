@@ -1,5 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -41,8 +41,8 @@ public:
 
   virtual void Proceed(BluetoothStatus aStatus) = 0;
 
-  void OnFileCanReadWithoutBlocking(int aFd) MOZ_OVERRIDE;
-  void OnFileCanWriteWithoutBlocking(int aFd) MOZ_OVERRIDE;
+  void OnFileCanReadWithoutBlocking(int aFd) override;
+  void OnFileCanWriteWithoutBlocking(int aFd) override;
 
   void Watch();
   void StopWatching();
@@ -81,12 +81,12 @@ private:
 /* |SocketMessageWatcherTask| starts a SocketMessageWatcher
  * on the I/O task
  */
-class SocketMessageWatcherTask MOZ_FINAL : public Task
+class SocketMessageWatcherTask final : public Task
 {
 public:
   SocketMessageWatcherTask(SocketMessageWatcher* aWatcher);
 
-  void Run() MOZ_OVERRIDE;
+  void Run() override;
 
 private:
   SocketMessageWatcher* mWatcher;
@@ -95,12 +95,12 @@ private:
 /* |DeleteSocketMessageWatcherTask| deletes a watching SocketMessageWatcher
  * on the I/O task
  */
-class DeleteSocketMessageWatcherTask MOZ_FINAL : public Task
+class DeleteSocketMessageWatcherTask final : public Task
 {
 public:
   DeleteSocketMessageWatcherTask(BluetoothSocketResultHandler* aRes);
 
-  void Run() MOZ_OVERRIDE;
+  void Run() override;
 
 private:
   BluetoothSocketResultHandler* mRes;

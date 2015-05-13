@@ -12,24 +12,12 @@ const Profiler = Cc["@mozilla.org/tools/profiler;1"].getService(Ci.nsIProfiler);
 const INITIAL_WAIT_TIME = 100; // ms
 const MAX_WAIT_TIME = 20000; // ms
 
-function connect_client(callback)
-{
-  let client = new DebuggerClient(DebuggerServer.connectPipe());
-  client.connect(() => {
-    client.listTabs(response => {
-      callback(client, response.profilerActor);
-    });
-  });
-}
-
 function run_test()
 {
-  DebuggerServer.init();
-  DebuggerServer.addBrowserActors();
-
-  connect_client((client, actor) => {
-    activate_profiler(client, actor, () => {
-      test_data(client, actor, () => {
+  get_chrome_actors((client, form) => {
+    let actor = form.profilerActor;
+    activate_profiler(client, actor, startTime => {
+      test_data(client, actor, startTime, () => {
         deactivate_profiler(client, actor, () => {
           client.close(do_test_finished);
         })
@@ -46,7 +34,7 @@ function activate_profiler(client, actor, callback)
     do_check_true(response.started);
     client.request({ to: actor, type: "isActive" }, response => {
       do_check_true(response.isActive);
-      callback();
+      callback(response.currentTime);
     });
   });
 }
@@ -62,7 +50,7 @@ function deactivate_profiler(client, actor, callback)
   });
 }
 
-function test_data(client, actor, callback)
+function test_data(client, actor, startTime, callback)
 {
   function attempt(delay)
   {
@@ -76,7 +64,7 @@ function test_data(client, actor, callback)
     while (Date.now() - start < delay) { stack = Components.stack; }
     do_print("Attempt: finished waiting.");
 
-    client.request({ to: actor, type: "getProfile" }, response => {
+    client.request({ to: actor, type: "getProfile", startTime  }, response => {
       // Any valid getProfile response should have the following top
       // level structure.
       do_check_eq(typeof response.profile, "object");
@@ -106,12 +94,11 @@ function test_data(client, actor, callback)
       // Now check the samples. At least one sample is expected to
       // have been in the busy wait above.
       let loc = stack.name + " (" + stack.filename + ":" + funcLine + ")";
-      let line = stack.lineNumber;
-
-      do_check_true(response.profile.threads[0].samples.some(sample => {
-        return typeof sample.frames == "object" &&
-               sample.frames.length != 0 &&
-               sample.frames.some(f => (f.line == line) && (f.location == loc));
+      let thread0 = response.profile.threads[0];
+      do_check_true(thread0.samples.data.some(sample => {
+        let frames = getInflatedStackLocations(thread0, sample);
+        return frames.length != 0 &&
+               frames.some(location => (location == loc));
       }));
 
       callback();

@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set sw=2 ts=8 et ft=cpp : */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -18,8 +18,8 @@ namespace mozilla {
 namespace dom {
 namespace voicemail {
 
-class VoicemailParent MOZ_FINAL : public PVoicemailParent
-                                , public nsIVoicemailListener
+class VoicemailParent final : public PVoicemailParent
+                            , public nsIVoicemailListener
 {
 public:
   NS_DECL_ISUPPORTS
@@ -37,13 +37,13 @@ public:
                     bool* aHasMessages,
                     int32_t* aMessageCount,
                     nsString* aReturnNumber,
-                    nsString* aReturnMessage) MOZ_OVERRIDE;
+                    nsString* aReturnMessage) override;
 
   void
-  ActorDestroy(ActorDestroyReason aWhy) MOZ_OVERRIDE;
+  ActorDestroy(ActorDestroyReason aWhy) override;
 
 private:
-  // MOZ_FINAL suppresses -Werror,-Wdelete-non-virtual-dtor
+  // final suppresses -Werror,-Wdelete-non-virtual-dtor
   ~VoicemailParent() { MOZ_COUNT_DTOR(VoicemailParent); }
 
 private:

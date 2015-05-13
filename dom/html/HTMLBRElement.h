@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -7,32 +8,24 @@
 #define mozilla_dom_HTMLBRElement_h
 
 #include "mozilla/Attributes.h"
-#include "nsIDOMHTMLBRElement.h"
 #include "nsGenericHTMLElement.h"
 #include "nsGkAtoms.h"
 
 namespace mozilla {
 namespace dom {
 
-class HTMLBRElement MOZ_FINAL : public nsGenericHTMLElement,
-                                public nsIDOMHTMLBRElement
+class HTMLBRElement final : public nsGenericHTMLElement
 {
 public:
   explicit HTMLBRElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
 
-  // nsISupports
-  NS_DECL_ISUPPORTS_INHERITED
-
-  // nsIDOMHTMLBRElement
-  NS_DECL_NSIDOMHTMLBRELEMENT
-
   virtual bool ParseAttribute(int32_t aNamespaceID,
                                 nsIAtom* aAttribute,
                                 const nsAString& aValue,
-                                nsAttrValue& aResult) MOZ_OVERRIDE;
-  NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const MOZ_OVERRIDE;
-  virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const MOZ_OVERRIDE;
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
+                                nsAttrValue& aResult) override;
+  NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const override;
+  virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
 
   bool Clear()
   {
@@ -42,8 +35,12 @@ public:
   {
     return SetHTMLAttr(nsGkAtoms::clear, aClear, aError);
   }
+  void GetClear(DOMString& aClear) const
+  {
+    return GetHTMLAttr(nsGkAtoms::clear, aClear);
+  }
 
-  virtual JSObject* WrapNode(JSContext *aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 private:
   virtual ~HTMLBRElement();

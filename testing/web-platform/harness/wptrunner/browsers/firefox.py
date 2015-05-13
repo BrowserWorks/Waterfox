@@ -4,6 +4,7 @@
 
 import os
 import subprocess
+import sys
 
 import mozinfo
 from mozprocess import ProcessHandler
@@ -12,9 +13,10 @@ from mozprofile.permissions import ServerLocations
 from mozrunner import FirefoxRunner
 from mozcrash import mozcrash
 
-from .base import get_free_port, Browser, ExecutorBrowser, require_arg, cmd_arg
+from .base import get_free_port, Browser, ExecutorBrowser, require_arg, cmd_arg, browser_command
 from ..executors import executor_kwargs as base_executor_kwargs
-from ..executors.executormarionette import MarionetteTestharnessExecutor, MarionetteReftestExecutor, required_files
+from ..executors.executormarionette import MarionetteTestharnessExecutor, MarionetteRefTestExecutor
+from ..environment import hostnames
 
 here = os.path.join(os.path.split(__file__)[0])
 
@@ -22,7 +24,7 @@ __wptrunner__ = {"product": "firefox",
                  "check_args": "check_args",
                  "browser": "FirefoxBrowser",
                  "executor": {"testharness": "MarionetteTestharnessExecutor",
-                              "reftest": "MarionetteReftestExecutor"},
+                              "reftest": "MarionetteRefTestExecutor"},
                  "browser_kwargs": "browser_kwargs",
                  "executor_kwargs": "executor_kwargs",
                  "env_options": "env_options"}
@@ -37,16 +39,16 @@ def check_args(**kwargs):
 def browser_kwargs(**kwargs):
     return {"binary": kwargs["binary"],
             "prefs_root": kwargs["prefs_root"],
-            "debug_args": kwargs["debug_args"],
-            "interactive": kwargs["interactive"],
+            "debug_info": kwargs["debug_info"],
             "symbols_path": kwargs["symbols_path"],
             "stackwalk_binary": kwargs["stackwalk_binary"],
             "certutil_binary": kwargs["certutil_binary"],
             "ca_certificate_path": kwargs["ssl_env"].ca_cert_path()}
 
 
-def executor_kwargs(http_server_url, **kwargs):
-    executor_kwargs = base_executor_kwargs(http_server_url, **kwargs)
+def executor_kwargs(test_type, server_config, cache_manager, **kwargs):
+    executor_kwargs = base_executor_kwargs(test_type, server_config,
+                                           cache_manager, **kwargs)
     executor_kwargs["close_after_done"] = True
     return executor_kwargs
 
@@ -55,15 +57,14 @@ def env_options():
     return {"host": "127.0.0.1",
             "external_host": "web-platform.test",
             "bind_hostname": "false",
-            "required_files": required_files,
             "certificate_domain": "web-platform.test",
-            "encrypt_after_connect": True}
+            "supports_debugger": True}
 
 
 class FirefoxBrowser(Browser):
     used_ports = set()
 
-    def __init__(self, logger, binary, prefs_root, debug_args=None, interactive=None,
+    def __init__(self, logger, binary, prefs_root, debug_info=None,
                  symbols_path=None, stackwalk_binary=None, certutil_binary=None,
                  ca_certificate_path=None):
         Browser.__init__(self, logger)
@@ -72,8 +73,7 @@ class FirefoxBrowser(Browser):
         self.marionette_port = None
         self.used_ports.add(self.marionette_port)
         self.runner = None
-        self.debug_args = debug_args
-        self.interactive = interactive
+        self.debug_info = debug_info
         self.profile = None
         self.symbols_path = symbols_path
         self.stackwalk_binary = stackwalk_binary
@@ -84,38 +84,35 @@ class FirefoxBrowser(Browser):
         self.marionette_port = get_free_port(2828, exclude=self.used_ports)
 
         env = os.environ.copy()
-        env["MOZ_CRASHREPORTER"] = "1"
-        env["MOZ_CRASHREPORTER_SHUTDOWN"] = "1"
-        env["MOZ_CRASHREPORTER_NO_REPORT"] = "1"
         env["MOZ_DISABLE_NONLOCAL_CONNECTIONS"] = "1"
 
         locations = ServerLocations(filename=os.path.join(here, "server-locations.txt"))
 
         preferences = self.load_prefs()
 
-        ports = {"http": "8000",
-                 "https": "8443",
-                 "ws": "8888"}
-
         self.profile = FirefoxProfile(locations=locations,
-                                      proxy=ports,
                                       preferences=preferences)
         self.profile.set_preferences({"marionette.defaultPrefs.enabled": True,
                                       "marionette.defaultPrefs.port": self.marionette_port,
-                                      "dom.disable_open_during_load": False})
+                                      "dom.disable_open_during_load": False,
+                                      "network.dns.localDomains": ",".join(hostnames)})
 
         if self.ca_certificate_path is not None:
             self.setup_ssl()
 
+        debug_args, cmd = browser_command(self.binary, [cmd_arg("marionette"), "about:blank"],
+                                          self.debug_info)
+
         self.runner = FirefoxRunner(profile=self.profile,
-                                    binary=self.binary,
-                                    cmdargs=[cmd_arg("marionette"), "about:blank"],
+                                    binary=cmd[0],
+                                    cmdargs=cmd[1:],
                                     env=env,
                                     process_class=ProcessHandler,
                                     process_args={"processOutputLine": [self.on_output]})
 
         self.logger.debug("Starting Firefox")
-        self.runner.start(debug_args=self.debug_args, interactive=self.interactive)
+
+        self.runner.start(debug_args=debug_args, interactive=self.debug_info and self.debug_info.interactive)
         self.logger.debug("Firefox Started")
 
     def load_prefs(self):
@@ -186,8 +183,17 @@ class FirefoxBrowser(Browser):
         # TODO: Maybe only set this if certutil won't launch?
         env = os.environ.copy()
         certutil_dir = os.path.dirname(self.binary)
-        env["LD_LIBRARY_PATH"] = certutil_dir
-        env["PATH"] = os.path.pathsep.join([certutil_dir, env["PATH"]])
+        if mozinfo.isMac:
+            env_var = "DYLD_LIBRARY_PATH"
+        elif mozinfo.isUnix:
+            env_var = "LD_LIBRARY_PATH"
+        else:
+            env_var = "PATH"
+
+
+        env[env_var] = (os.path.pathsep.join([certutil_dir, env[env_var]])
+                        if env_var in env else certutil_dir).encode(
+                                sys.getfilesystemencoding() or 'utf-8', 'replace')
 
         def certutil(*args):
             cmd = [self.certutil_binary] + list(args)

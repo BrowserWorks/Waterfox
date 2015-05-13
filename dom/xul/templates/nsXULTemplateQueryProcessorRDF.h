@@ -29,19 +29,16 @@
 #include "mozilla/Attributes.h"
 
 #include "prlog.h"
-#ifdef PR_LOGGING
 extern PRLogModuleInfo* gXULTemplateLog;
-#endif
 
 class nsIContent;
-class nsIRDFCompositeDataSource;
 class nsXULTemplateResultRDF;
 
 /**
  * An object that generates results from a query on an RDF graph
  */
-class nsXULTemplateQueryProcessorRDF MOZ_FINAL : public nsIXULTemplateQueryProcessor,
-                                                 public nsIRDFObserver
+class nsXULTemplateQueryProcessorRDF final : public nsIXULTemplateQueryProcessor,
+                                             public nsIRDFObserver
 {
 public:
     typedef nsTArray<nsRefPtr<nsXULTemplateResultRDF> > ResultArray;
@@ -257,7 +254,6 @@ public:
 
     nsResourceSet& ContainmentProperties() { return mContainmentProperties; }
 
-#ifdef PR_LOGGING
     nsresult
     Log(const char* aOperation,
         nsIRDFResource* aSource,
@@ -266,10 +262,6 @@ public:
 
 #define LOG(_op, _src, _prop, _targ) \
     Log(_op, _src, _prop, _targ)
-
-#else
-#define LOG(_op, _src, _prop, _targ)
-#endif
 
 protected:
     ~nsXULTemplateQueryProcessorRDF();

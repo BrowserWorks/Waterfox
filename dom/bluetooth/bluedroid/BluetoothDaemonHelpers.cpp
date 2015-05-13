@@ -1,5 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -70,19 +70,31 @@ Convert(int aIn, int16_t& aOut)
 }
 
 nsresult
-Convert(int32_t aIn, BluetoothDeviceType& aOut)
+Convert(int aIn, int32_t& aOut)
 {
-  static const BluetoothDeviceType sDeviceType[] = {
-    CONVERT(0x00, static_cast<BluetoothDeviceType>(0)), // invalid, required by gcc
-    CONVERT(0x01, DEVICE_TYPE_BREDR),
-    CONVERT(0x02, DEVICE_TYPE_BLE),
-    CONVERT(0x03, DEVICE_TYPE_DUAL)
-  };
-  if (NS_WARN_IF(!aIn) ||
-      NS_WARN_IF(static_cast<size_t>(aIn) >= MOZ_ARRAY_LENGTH(sDeviceType))) {
+  if (NS_WARN_IF(aIn < std::numeric_limits<int32_t>::min()) ||
+      NS_WARN_IF(aIn > std::numeric_limits<int32_t>::max())) {
+    aOut = 0; // silences compiler warning
     return NS_ERROR_ILLEGAL_VALUE;
   }
-  aOut = sDeviceType[aIn];
+  aOut = static_cast<int32_t>(aIn);
+  return NS_OK;
+}
+
+nsresult
+Convert(int32_t aIn, BluetoothTypeOfDevice& aOut)
+{
+  static const BluetoothTypeOfDevice sTypeOfDevice[] = {
+    CONVERT(0x00, static_cast<BluetoothTypeOfDevice>(0)), // invalid, required by gcc
+    CONVERT(0x01, TYPE_OF_DEVICE_BREDR),
+    CONVERT(0x02, TYPE_OF_DEVICE_BLE),
+    CONVERT(0x03, TYPE_OF_DEVICE_DUAL)
+  };
+  if (NS_WARN_IF(!aIn) ||
+      NS_WARN_IF(static_cast<size_t>(aIn) >= MOZ_ARRAY_LENGTH(sTypeOfDevice))) {
+    return NS_ERROR_ILLEGAL_VALUE;
+  }
+  aOut = sTypeOfDevice[aIn];
   return NS_OK;
 }
 
@@ -376,6 +388,21 @@ Convert(uint8_t aIn, BluetoothHandsfreeVolumeType& aOut)
 }
 
 nsresult
+Convert(uint8_t aIn, BluetoothHandsfreeWbsConfig& aOut)
+{
+  static const BluetoothHandsfreeWbsConfig sWbsConfig[] = {
+    CONVERT(0x00, HFP_WBS_NONE),
+    CONVERT(0x01, HFP_WBS_NO),
+    CONVERT(0x02, HFP_WBS_YES)
+  };
+  if (NS_WARN_IF(aIn >= MOZ_ARRAY_LENGTH(sWbsConfig))) {
+    return NS_ERROR_ILLEGAL_VALUE;
+  }
+  aOut = sWbsConfig[aIn];
+  return NS_OK;
+}
+
+nsresult
 Convert(uint8_t aIn, BluetoothPropertyType& aOut)
 {
   static const BluetoothPropertyType sPropertyType[] = {
@@ -428,18 +455,18 @@ Convert(BluetoothSocketType aIn, uint8_t& aOut)
 }
 
 nsresult
-Convert(uint8_t aIn, BluetoothSspPairingVariant& aOut)
+Convert(uint8_t aIn, BluetoothSspVariant& aOut)
 {
-  static const BluetoothSspPairingVariant sSspPairingVariant[] = {
+  static const BluetoothSspVariant sSspVariant[] = {
     CONVERT(0x00, SSP_VARIANT_PASSKEY_CONFIRMATION),
     CONVERT(0x01, SSP_VARIANT_PASSKEY_ENTRY),
     CONVERT(0x02, SSP_VARIANT_CONSENT),
     CONVERT(0x03, SSP_VARIANT_PASSKEY_NOTIFICATION)
   };
-  if (NS_WARN_IF(aIn >= MOZ_ARRAY_LENGTH(sSspPairingVariant))) {
+  if (NS_WARN_IF(aIn >= MOZ_ARRAY_LENGTH(sSspVariant))) {
     return NS_ERROR_ILLEGAL_VALUE;
   }
-  aOut = sSspPairingVariant[aIn];
+  aOut = sSspVariant[aIn];
   return NS_OK;
 }
 
@@ -572,25 +599,6 @@ Convert(const nsAString& aIn, BluetoothServiceName& aOut)
 }
 
 nsresult
-Convert(const nsAString& aIn, BluetoothSspPairingVariant& aOut)
-{
-  if (aIn.EqualsLiteral("PasskeyConfirmation")) {
-    aOut = SSP_VARIANT_PASSKEY_CONFIRMATION;
-  } else if (aIn.EqualsLiteral("PasskeyEntry")) {
-    aOut = SSP_VARIANT_PASSKEY_ENTRY;
-  } else if (aIn.EqualsLiteral("Consent")) {
-    aOut = SSP_VARIANT_CONSENT;
-  } else if (aIn.EqualsLiteral("PasskeyNotification")) {
-    aOut = SSP_VARIANT_PASSKEY_NOTIFICATION;
-  } else {
-    BT_LOGR("Invalid SSP variant name: %s", NS_ConvertUTF16toUTF8(aIn).get());
-    aOut = SSP_VARIANT_PASSKEY_CONFIRMATION; // silences compiler warning
-    return NS_ERROR_ILLEGAL_VALUE;
-  }
-  return NS_OK;
-}
-
-nsresult
 Convert(BluetoothAclState aIn, bool& aOut)
 {
   static const bool sBool[] = {
@@ -660,6 +668,22 @@ Convert(BluetoothAvrcpNotification aIn, uint8_t& aOut)
 }
 
 nsresult
+Convert(BluetoothAvrcpPlayerAttribute aIn, uint8_t& aOut)
+{
+  static const uint8_t sValue[] = {
+    CONVERT(AVRCP_PLAYER_ATTRIBUTE_EQUALIZER, 0x01),
+    CONVERT(AVRCP_PLAYER_ATTRIBUTE_REPEAT, 0x02),
+    CONVERT(AVRCP_PLAYER_ATTRIBUTE_SHUFFLE, 0x03),
+    CONVERT(AVRCP_PLAYER_ATTRIBUTE_SCAN, 0x04)
+  };
+  if (NS_WARN_IF(aIn >= MOZ_ARRAY_LENGTH(sValue))) {
+    return NS_ERROR_ILLEGAL_VALUE;
+  }
+  aOut = sValue[aIn];
+  return NS_OK;
+}
+
+nsresult
 Convert(BluetoothAvrcpRemoteFeature aIn, unsigned long& aOut)
 {
   if (NS_WARN_IF(aIn < std::numeric_limits<unsigned long>::min()) ||
@@ -668,6 +692,23 @@ Convert(BluetoothAvrcpRemoteFeature aIn, unsigned long& aOut)
     return NS_ERROR_ILLEGAL_VALUE;
   }
   aOut = static_cast<unsigned long>(aIn);
+  return NS_OK;
+}
+
+nsresult
+Convert(BluetoothAvrcpStatus aIn, uint8_t& aOut)
+{
+  static const uint8_t sValue[] = {
+    CONVERT(AVRCP_STATUS_BAD_COMMAND, 0x00),
+    CONVERT(AVRCP_STATUS_BAD_PARAMETER, 0x01),
+    CONVERT(AVRCP_STATUS_NOT_FOUND, 0x02),
+    CONVERT(AVRCP_STATUS_INTERNAL_ERROR, 0x03),
+    CONVERT(AVRCP_STATUS_SUCCESS, 0x04)
+  };
+  if (NS_WARN_IF(aIn >= MOZ_ARRAY_LENGTH(sValue))) {
+    return NS_ERROR_ILLEGAL_VALUE;
+  }
+  aOut = sValue[aIn];
   return NS_OK;
 }
 
@@ -813,6 +854,22 @@ Convert(BluetoothHandsfreeVolumeType aIn, uint8_t& aOut)
 }
 
 nsresult
+Convert(BluetoothHandsfreeWbsConfig aIn, uint8_t& aOut)
+{
+  static const uint8_t sWbsConfig[] = {
+    CONVERT(HFP_WBS_NONE, 0x00),
+    CONVERT(HFP_WBS_NO, 0x01),
+    CONVERT(HFP_WBS_YES, 0x02)
+  };
+  if (NS_WARN_IF(aIn >= MOZ_ARRAY_LENGTH(sWbsConfig))) {
+    aOut = 0x00; // silences compiler warning
+    return NS_ERROR_ILLEGAL_VALUE;
+  }
+  aOut = sWbsConfig[aIn];
+  return NS_OK;
+}
+
+nsresult
 Convert(BluetoothPropertyType aIn, uint8_t& aOut)
 {
   static const uint8_t sPropertyType[] = {
@@ -866,7 +923,7 @@ Convert(BluetoothScanMode aIn, int32_t& aOut)
 }
 
 nsresult
-Convert(BluetoothSspPairingVariant aIn, uint8_t& aOut)
+Convert(BluetoothSspVariant aIn, uint8_t& aOut)
 {
   static const uint8_t sValue[] = {
     CONVERT(SSP_VARIANT_PASSKEY_CONFIRMATION, 0x00),
@@ -879,22 +936,6 @@ Convert(BluetoothSspPairingVariant aIn, uint8_t& aOut)
     return NS_ERROR_ILLEGAL_VALUE;
   }
   aOut = sValue[aIn];
-  return NS_OK;
-}
-
-nsresult
-Convert(BluetoothSspPairingVariant aIn, nsAString& aOut)
-{
-  static const char* const sString[] = {
-    CONVERT(SSP_VARIANT_PASSKEY_CONFIRMATION, "PasskeyConfirmation"),
-    CONVERT(SSP_VARIANT_PASSKEY_ENTRY, "PasskeyEntry"),
-    CONVERT(SSP_VARIANT_CONSENT, "Consent"),
-    CONVERT(SSP_VARIANT_PASSKEY_NOTIFICATION, "PasskeyNotification")
-  };
-  if (NS_WARN_IF(aIn >= MOZ_ARRAY_LENGTH(sString))) {
-    return NS_ERROR_ILLEGAL_VALUE;
-  }
-  aOut = NS_ConvertUTF8toUTF16(sString[aIn]);
   return NS_OK;
 }
 
@@ -1041,9 +1082,9 @@ PackPDU(const BluetoothAvrcpElementAttribute& aIn, BluetoothDaemonPDU& aPDU)
     return NS_ERROR_ILLEGAL_VALUE; /* integer overflow detected */
   }
 
-  PRUint32 clen = cstr.Length() + 1; /* include \0 character */
+  uint32_t clen = cstr.Length() + 1; /* include \0 character */
 
-  rv = PackPDU(PackConversion<PRUint32, uint8_t>(clen), aPDU);
+  rv = PackPDU(PackConversion<uint32_t, uint8_t>(clen), aPDU);
   if (NS_FAILED(rv)) {
     return rv;
   }
@@ -1106,6 +1147,19 @@ PackPDU(BluetoothAvrcpNotification aIn, BluetoothDaemonPDU& aPDU)
 {
   return PackPDU(
     PackConversion<BluetoothAvrcpNotification, uint8_t>(aIn), aPDU);
+}
+
+nsresult
+PackPDU(BluetoothAvrcpPlayerAttribute aIn, BluetoothDaemonPDU& aPDU)
+{
+  return PackPDU(
+    PackConversion<BluetoothAvrcpPlayerAttribute, uint8_t>(aIn), aPDU);
+}
+
+nsresult
+PackPDU(BluetoothAvrcpStatus aIn, BluetoothDaemonPDU& aPDU)
+{
+  return PackPDU(PackConversion<BluetoothAvrcpStatus, uint8_t>(aIn), aPDU);
 }
 
 nsresult
@@ -1185,6 +1239,13 @@ PackPDU(const BluetoothHandsfreeVolumeType& aIn, BluetoothDaemonPDU& aPDU)
 }
 
 nsresult
+PackPDU(const BluetoothHandsfreeWbsConfig& aIn, BluetoothDaemonPDU& aPDU)
+{
+  return PackPDU(
+    PackConversion<BluetoothHandsfreeWbsConfig, uint8_t>(aIn), aPDU);
+}
+
+nsresult
 PackPDU(const BluetoothNamedValue& aIn, BluetoothDaemonPDU& aPDU)
 {
   nsresult rv = PackPDU(
@@ -1235,10 +1296,9 @@ PackPDU(BluetoothPropertyType aIn, BluetoothDaemonPDU& aPDU)
 }
 
 nsresult
-PackPDU(BluetoothSspPairingVariant aIn, BluetoothDaemonPDU& aPDU)
+PackPDU(BluetoothSspVariant aIn, BluetoothDaemonPDU& aPDU)
 {
-  return PackPDU(PackConversion<BluetoothSspPairingVariant, uint8_t>(aIn),
-                 aPDU);
+  return PackPDU(PackConversion<BluetoothSspVariant, uint8_t>(aIn), aPDU);
 }
 
 nsresult
@@ -1364,10 +1424,10 @@ UnpackPDU(BluetoothDaemonPDU& aPDU, BluetoothBondState& aOut)
 }
 
 nsresult
-UnpackPDU(BluetoothDaemonPDU& aPDU, BluetoothDeviceType& aOut)
+UnpackPDU(BluetoothDaemonPDU& aPDU, BluetoothTypeOfDevice& aOut)
 {
   return UnpackPDU(
-    aPDU, UnpackConversion<int32_t, BluetoothDeviceType>(aOut));
+    aPDU, UnpackConversion<int32_t, BluetoothTypeOfDevice>(aOut));
 }
 
 nsresult
@@ -1457,7 +1517,7 @@ UnpackPDU(BluetoothDaemonPDU& aPDU, BluetoothProperty& aOut)
       rv = UnpackPDU(aPDU, aOut.mUint32);
       break;
     case PROPERTY_TYPE_OF_DEVICE:
-      rv = UnpackPDU(aPDU, aOut.mDeviceType);
+      rv = UnpackPDU(aPDU, aOut.mTypeOfDevice);
       break;
     case PROPERTY_SERVICE_RECORD:
       rv = UnpackPDU(aPDU, aOut.mServiceRecord);
@@ -1545,10 +1605,10 @@ UnpackPDU(BluetoothDaemonPDU& aPDU, BluetoothServiceRecord& aOut)
 }
 
 nsresult
-UnpackPDU(BluetoothDaemonPDU& aPDU, BluetoothSspPairingVariant& aOut)
+UnpackPDU(BluetoothDaemonPDU& aPDU, BluetoothSspVariant& aOut)
 {
   return UnpackPDU(
-    aPDU, UnpackConversion<uint8_t, BluetoothSspPairingVariant>(aOut));
+    aPDU, UnpackConversion<uint8_t, BluetoothSspVariant>(aOut));
 }
 
 nsresult
@@ -1569,7 +1629,7 @@ UnpackPDU(BluetoothDaemonPDU& aPDU, nsDependentCString& aOut)
     return NS_ERROR_ILLEGAL_VALUE; // end of PDU
   }
 
-  const char* end = static_cast<char*>(memchr(str, '\0', aPDU.GetSize()));
+  const char* end = static_cast<char*>(memchr(str, '\0', aPDU.GetSize() + 1));
   if (NS_WARN_IF(!end)) {
     return NS_ERROR_ILLEGAL_VALUE; // no string terminator
   }

@@ -4,6 +4,50 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+# Directory metadata
+component_engine = ('Core', 'JavaScript Engine')
+component_gc     = ('Core', 'JavaScript: GC')
+component_intl   = ('Core', 'JavaScript: Internationalization API')
+component_jit    = ('Core', 'JavaScript Engine: JIT')
+component_stl    = ('Core', 'JavaScript: Standard Library')
+
+with Files('../public/**'):
+    BUG_COMPONENT = component_engine
+with Files('*'):
+    BUG_COMPONENT = component_engine
+
+with Files('asmjs/**'):
+    BUG_COMPONENT = component_jit
+with Files('builtin/**'):
+    BUG_COMPONENT = component_stl
+with Files('ctypes/**'):
+    BUG_COMPONENT = ('Core', 'js-ctypes')
+with Files('gc/**'):
+    BUG_COMPONENT = component_gc
+with Files('jit/**'):
+    BUG_COMPONENT = component_jit
+
+# File-specific metadata
+for gcfile in ['jsgc*', 'devtools/rootAnalysis', 'devtools/gc-ubench', 'devtools/gctrace']:
+    with Files(gcfile):
+        BUG_COMPONENT = component_gc
+for header in ('GCAPI.h', 'HeapAPI.h', 'RootingAPI.h', 'SliceBudget.h', 'TracingAPI.h', 'WeakMapPtr.h'):
+    with Files('../public/' + header):
+        BUG_COMPONENT = component_gc
+
+for stlfile in ['jsarray.*', 'jsbool*', 'jsdate.*', 'jsnum.*', 'json.*', 'jsreflect.*', 'jsstr.*']:
+    with Files(stlfile):
+        BUG_COMPONENT = component_stl
+
+with Files('builtin/Intl*'):
+    BUG_COMPONENT = component_intl
+with Files('builtin/make_intl_data.py'):
+    BUG_COMPONENT = component_intl
+
+with Files('../public/TrackedOptimizationInfo.h'):
+    BUG_COMPONENT = component_jit
+
+
 if CONFIG['DEHYDRA_PATH']:
     DIRS += ['analysis-tests']
 
@@ -23,12 +67,7 @@ CONFIGURE_SUBST_FILES += [
     'js.pc',
 ]
 
-if CONFIG['JS_STANDALONE']:
-    DEFINES['IMPL_MFBT'] = True
-    USE_LIBS += [
-        'mfbt',
-    ]
-else:
+if not CONFIG['JS_STANDALONE']:
     CONFIGURE_SUBST_FILES += [
         '../../config/autoconf-js.mk',
         '../../config/emptyvars-js.mk',
@@ -51,7 +90,6 @@ EXPORTS += [
     'jsfriendapi.h',
     'jsprf.h',
     'jsprototypes.h',
-    'jsproxy.h',
     'jspubtd.h',
     'jstypes.h',
     'jsversion.h',
@@ -79,11 +117,13 @@ EXPORTS.js += [
     '../public/Principals.h',
     '../public/ProfilingFrameIterator.h',
     '../public/ProfilingStack.h',
+    '../public/Proxy.h',
     '../public/RequiredDefines.h',
     '../public/RootingAPI.h',
     '../public/SliceBudget.h',
     '../public/StructuredClone.h',
     '../public/TracingAPI.h',
+    '../public/TrackedOptimizationInfo.h',
     '../public/TypeDecls.h',
     '../public/UbiNode.h',
     '../public/UbiNodeTraverse.h',
@@ -119,6 +159,7 @@ UNIFIED_SOURCES += [
     'frontend/ParseMaps.cpp',
     'frontend/ParseNode.cpp',
     'frontend/TokenStream.cpp',
+    'gc/Allocator.cpp',
     'gc/Barrier.cpp',
     'gc/GCTrace.cpp',
     'gc/Iteration.cpp',
@@ -139,6 +180,7 @@ UNIFIED_SOURCES += [
     'irregexp/RegExpParser.cpp',
     'irregexp/RegExpStack.cpp',
     'jit/AliasAnalysis.cpp',
+    'jit/AlignmentMaskAnalysis.cpp',
     'jit/BacktrackingAllocator.cpp',
     'jit/Bailouts.cpp',
     'jit/BaselineBailouts.cpp',
@@ -154,6 +196,8 @@ UNIFIED_SOURCES += [
     'jit/C1Spewer.cpp',
     'jit/CodeGenerator.cpp',
     'jit/CompileWrappers.cpp',
+    'jit/Disassembler.cpp',
+    'jit/EagerSimdUnbox.cpp',
     'jit/EdgeCaseAnalysis.cpp',
     'jit/EffectiveAddressAnalysis.cpp',
     'jit/ExecutableAllocator.cpp',
@@ -168,7 +212,6 @@ UNIFIED_SOURCES += [
     'jit/JitSpewer.cpp',
     'jit/JSONSpewer.cpp',
     'jit/LICM.cpp',
-    'jit/LinearScan.cpp',
     'jit/LIR.cpp',
     'jit/LiveRangeAllocator.cpp',
     'jit/LoopUnroller.cpp',
@@ -178,6 +221,7 @@ UNIFIED_SOURCES += [
     'jit/MIR.cpp',
     'jit/MIRGraph.cpp',
     'jit/MoveResolver.cpp',
+    'jit/OptimizationTracking.cpp',
     'jit/PerfSpewer.cpp',
     'jit/RangeAnalysis.cpp',
     'jit/Recover.cpp',
@@ -200,14 +244,12 @@ UNIFIED_SOURCES += [
     'jsbool.cpp',
     'jscntxt.cpp',
     'jscompartment.cpp',
-    'jscrashreport.cpp',
     'jsdate.cpp',
     'jsdtoa.cpp',
     'jsexn.cpp',
     'jsfriendapi.cpp',
     'jsfun.cpp',
     'jsgc.cpp',
-    'jsinfer.cpp',
     'jsiter.cpp',
     'jsnativestack.cpp',
     'jsnum.cpp',
@@ -241,7 +283,6 @@ UNIFIED_SOURCES += [
     'vm/Debugger.cpp',
     'vm/DebuggerMemory.cpp',
     'vm/ErrorObject.cpp',
-    'vm/ForkJoin.cpp',
     'vm/ForOfIterator.cpp',
     'vm/GeneratorObject.cpp',
     'vm/GlobalObject.cpp',
@@ -252,9 +293,11 @@ UNIFIED_SOURCES += [
     'vm/MemoryMetrics.cpp',
     'vm/Monitor.cpp',
     'vm/NativeObject.cpp',
+    'vm/ObjectGroup.cpp',
     'vm/PIC.cpp',
     'vm/Probes.cpp',
     'vm/ProxyObject.cpp',
+    'vm/ReceiverGuard.cpp',
     'vm/RegExpObject.cpp',
     'vm/RegExpStatics.cpp',
     'vm/Runtime.cpp',
@@ -270,9 +313,10 @@ UNIFIED_SOURCES += [
     'vm/StringBuffer.cpp',
     'vm/StructuredClone.cpp',
     'vm/Symbol.cpp',
-    'vm/ThreadPool.cpp',
     'vm/TypedArrayObject.cpp',
+    'vm/TypeInference.cpp',
     'vm/UbiNode.cpp',
+    'vm/UnboxedObject.cpp',
     'vm/Unicode.cpp',
     'vm/Value.cpp',
     'vm/WeakMapPtr.cpp',
@@ -321,13 +365,16 @@ if not CONFIG['ENABLE_ION']:
     ]
 elif CONFIG['JS_CODEGEN_X86'] or CONFIG['JS_CODEGEN_X64']:
     UNIFIED_SOURCES += [
-        'jit/shared/Assembler-x86-shared.cpp',
-        'jit/shared/BaselineCompiler-x86-shared.cpp',
-        'jit/shared/BaselineIC-x86-shared.cpp',
-        'jit/shared/CodeGenerator-x86-shared.cpp',
-        'jit/shared/Lowering-x86-shared.cpp',
-        'jit/shared/MacroAssembler-x86-shared.cpp',
-        'jit/shared/MoveEmitter-x86-shared.cpp',
+        'jit/x86-shared/Architecture-x86-shared.cpp',
+        'jit/x86-shared/Assembler-x86-shared.cpp',
+        'jit/x86-shared/AssemblerBuffer-x86-shared.cpp',
+        'jit/x86-shared/BaselineCompiler-x86-shared.cpp',
+        'jit/x86-shared/BaselineIC-x86-shared.cpp',
+        'jit/x86-shared/CodeGenerator-x86-shared.cpp',
+        'jit/x86-shared/Disassembler-x86-shared.cpp',
+        'jit/x86-shared/Lowering-x86-shared.cpp',
+        'jit/x86-shared/MacroAssembler-x86-shared.cpp',
+        'jit/x86-shared/MoveEmitter-x86-shared.cpp',
     ]
     if CONFIG['JS_CODEGEN_X64']:
         UNIFIED_SOURCES += [
@@ -422,8 +469,6 @@ else:
         'perf/pm_stub.cpp'
     ]
 
-MSVC_ENABLE_PGO = True
-
 HostSimplePrograms([
     'host_jskwgen',
 ])
@@ -490,6 +535,11 @@ if CONFIG['_MSC_VER']:
     # Prevent floating point errors caused by VC++ optimizations
     # XXX We should add this to CXXFLAGS, too?
     CFLAGS += ['-fp:precise']
+    # C4805 warns mixing bool with other integral types in computation.
+    # But given the conversion from bool is specified, and this is a
+    # pattern widely used in code in js/src, suppress this warning here.
+    CXXFLAGS += ['-wd4805']
+    CXXFLAGS += ['-we4067', '-we4258', '-we4275']
 
 if CONFIG['OS_ARCH'] not in ('WINNT', 'HP-UX'):
     OS_LIBS += [
@@ -516,3 +566,7 @@ if CONFIG['OS_ARCH'] == 'SunOS':
 
 if CONFIG['GNU_CXX']:
     FAIL_ON_WARNINGS = True
+
+NO_EXPAND_LIBS = True
+
+DIST_INSTALL = True

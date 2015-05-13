@@ -14,8 +14,6 @@ XPIDL_SOURCES += [
 XPIDL_MODULE = 'places'
 
 if CONFIG['MOZ_PLACES']:
-    MSVC_ENABLE_PGO = True
-
     XPIDL_SOURCES += [
         'mozIAsyncFavicons.idl',
         'mozIAsyncHistory.idl',
@@ -28,7 +26,6 @@ if CONFIG['MOZ_PLACES']:
         'nsINavBookmarksService.idl',
         'nsITaggingService.idl',
         'nsPIPlacesDatabase.idl',
-        'nsPIPlacesHistoryListenersNotifier.idl',
     ]
 
     EXPORTS.mozilla.places = [
@@ -71,9 +68,6 @@ if CONFIG['MOZ_PLACES']:
         'PlacesDBUtils.jsm',
         'PlacesSearchAutocompleteProvider.jsm',
         'PlacesTransactions.jsm',
-    ]
-
-    EXTRA_PP_JS_MODULES += [
         'PlacesUtils.jsm',
     ]
 
@@ -98,3 +92,6 @@ if CONFIG['MOZ_PLACES']:
     FINAL_LIBRARY = 'xul'
 
 include('/ipc/chromium/chromium-config.mozbuild')
+
+with Files('**'):
+    BUG_COMPONENT = ('Toolkit', 'Places')

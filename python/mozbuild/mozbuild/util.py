@@ -13,10 +13,12 @@ import difflib
 import errno
 import functools
 import hashlib
+import itertools
 import os
 import stat
 import sys
 import time
+import types
 
 from collections import (
     defaultdict,
@@ -30,12 +32,12 @@ if sys.version_info[0] == 3:
 else:
     str_type = basestring
 
-def hash_file(path):
+def hash_file(path, hasher=None):
     """Hashes a file specified by the path given and returns the hex digest."""
 
-    # If the hashing function changes, this may invalidate lots of cached data.
-    # Don't change it lightly.
-    h = hashlib.sha1()
+    # If the default hashing function changes, this may invalidate
+    # lots of cached data.  Don't change it lightly.
+    h = hasher or hashlib.sha1()
 
     with open(path, 'rb') as fh:
         while True:
@@ -47,6 +49,17 @@ def hash_file(path):
             h.update(data)
 
     return h.hexdigest()
+
+
+class EmptyValue(unicode):
+    """A dummy type that behaves like an empty string and sequence.
+
+    This type exists in order to support
+    :py:class:`mozbuild.frontend.reader.EmptyConfig`. It should likely not be
+    used elsewhere.
+    """
+    def __init__(self):
+        super(EmptyValue, self).__init__()
 
 
 class ReadOnlyDict(dict):
@@ -253,9 +266,9 @@ class ListMixin(object):
         return super(ListMixin, self).__setslice__(i, j, sequence)
 
     def __add__(self, other):
-        # Allow None is a special case because it makes undefined variable
-        # references in moz.build behave better.
-        other = [] if other is None else other
+        # Allow None and EmptyValue is a special case because it makes undefined
+        # variable references in moz.build behave better.
+        other = [] if isinstance(other, (types.NoneType, EmptyValue)) else other
         if not isinstance(other, list):
             raise ValueError('Only lists can be appended to lists.')
 
@@ -264,7 +277,7 @@ class ListMixin(object):
         return new_list
 
     def __iadd__(self, other):
-        other = [] if other is None else other
+        other = [] if isinstance(other, (types.NoneType, EmptyValue)) else other
         if not isinstance(other, list):
             raise ValueError('Only lists can be appended to lists.')
 
@@ -816,6 +829,56 @@ class memoized_property(object):
         return getattr(instance, name)
 
 
+def TypedNamedTuple(name, fields):
+    """Factory for named tuple types with strong typing.
+
+    Arguments are an iterable of 2-tuples. The first member is the
+    the field name. The second member is a type the field will be validated
+    to be.
+
+    Construction of instances varies from ``collections.namedtuple``.
+
+    First, if a single tuple argument is given to the constructor, this is
+    treated as the equivalent of passing each tuple value as a separate
+    argument into __init__. e.g.::
+
+        t = (1, 2)
+        TypedTuple(t) == TypedTuple(1, 2)
+
+    This behavior is meant for moz.build files, so vanilla tuples are
+    automatically cast to typed tuple instances.
+
+    Second, fields in the tuple are validated to be instances of the specified
+    type. This is done via an ``isinstance()`` check. To allow multiple types,
+    pass a tuple as the allowed types field.
+    """
+    cls = collections.namedtuple(name, (name for name, typ in fields))
+
+    class TypedTuple(cls):
+        __slots__ = ()
+
+        def __new__(klass, *args, **kwargs):
+            if len(args) == 1 and not kwargs and isinstance(args[0], tuple):
+                args = args[0]
+
+            return super(TypedTuple, klass).__new__(klass, *args, **kwargs)
+
+        def __init__(self, *args, **kwargs):
+            for i, (fname, ftype) in enumerate(self._fields):
+                value = self[i]
+
+                if not isinstance(value, ftype):
+                    raise TypeError('field in tuple not of proper type: %s; '
+                                    'got %s, expected %s' % (fname,
+                                    type(value), ftype))
+
+            super(TypedTuple, self).__init__(*args, **kwargs)
+
+    TypedTuple._fields = fields
+
+    return TypedTuple
+
+
 class TypedListMixin(object):
     '''Mixin for a list with type coercion. See TypedList.'''
 
@@ -875,3 +938,41 @@ def TypedList(type, base_class=List):
     class _TypedList(TypedListMixin, base_class):
         TYPE = type
     return _TypedList
+
+def group_unified_files(files, unified_prefix, unified_suffix,
+                        files_per_unified_file):
+    """Return an iterator of (unified_filename, source_filenames) tuples.
+
+    We compile most C and C++ files in "unified mode"; instead of compiling
+    ``a.cpp``, ``b.cpp``, and ``c.cpp`` separately, we compile a single file
+    that looks approximately like::
+
+       #include "a.cpp"
+       #include "b.cpp"
+       #include "c.cpp"
+
+    This function handles the details of generating names for the unified
+    files, and determining which original source files go in which unified
+    file."""
+
+    # Make sure the input list is sorted. If it's not, bad things could happen!
+    files = sorted(files)
+
+    # Our last returned list of source filenames may be short, and we
+    # don't want the fill value inserted by izip_longest to be an
+    # issue.  So we do a little dance to filter it out ourselves.
+    dummy_fill_value = ("dummy",)
+    def filter_out_dummy(iterable):
+        return itertools.ifilter(lambda x: x != dummy_fill_value,
+                                 iterable)
+
+    # From the itertools documentation, slightly modified:
+    def grouper(n, iterable):
+        "grouper(3, 'ABCDEFG', 'x') --> ABC DEF Gxx"
+        args = [iter(iterable)] * n
+        return itertools.izip_longest(fillvalue=dummy_fill_value, *args)
+
+    for i, unified_group in enumerate(grouper(files_per_unified_file,
+                                              files)):
+        just_the_filenames = list(filter_out_dummy(unified_group))
+        yield '%s%d.%s' % (unified_prefix, i, unified_suffix), just_the_filenames

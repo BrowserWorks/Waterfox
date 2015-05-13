@@ -6,7 +6,8 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-Components.utils.import("resource://gre/modules/Services.jsm");
+const {utils: Cu, interfaces: Ci, classes: Cc, results: Cr} = Components;
+Cu.import("resource://gre/modules/Services.jsm");
 
 ///////////////////////////////////////////////////////////////////////////////
 //// Helper Functions
@@ -142,6 +143,14 @@ nsUnknownContentTypeDialog.prototype = {
     this.mContext  = aContext;
     this.mReason   = aReason;
 
+    // Cache some information in case this context goes away:
+    try {
+      let parent = aContext.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindow);
+      this._mDownloadDir = new downloadModule.DownloadLastDir(parent);
+    } catch (ex) {
+      Cu.reportError("Missing window information when showing nsIHelperAppLauncherDialog: " + ex);
+    }
+
     const nsITimer = Components.interfaces.nsITimer;
     this._showTimer = Components.classes["@mozilla.org/timer;1"]
                                 .createInstance(nsITimer);
@@ -195,22 +204,6 @@ nsUnknownContentTypeDialog.prototype = {
                    bundle.GetStringFromName("badPermissions"));
   },
 
-  // promptForSaveToFile:  Display file picker dialog and return selected file.
-  //                       This is called by the External Helper App Service
-  //                       after the ucth dialog calls |saveToDisk| with a null
-  //                       target filename (no target, therefore user must pick).
-  //
-  //                       Alternatively, if the user has selected to have all
-  //                       files download to a specific location, return that
-  //                       location and don't ask via the dialog.
-  //
-  // Note - this function is called without a dialog, so it cannot access any part
-  // of the dialog XUL as other functions on this object do.
-
-  promptForSaveToFile: function(aLauncher, aContext, aDefaultFile, aSuggestedFileExtension, aForcePrompt) {
-    throw new Components.Exception("Async version must be used", Components.results.NS_ERROR_NOT_AVAILABLE);
-  },
-
   promptForSaveToFileAsync: function(aLauncher, aContext, aDefaultFile, aSuggestedFileExtension, aForcePrompt) {
     var result = null;
 
@@ -221,6 +214,22 @@ nsUnknownContentTypeDialog.prototype = {
     let bundle =
       Services.strings
               .createBundle("chrome://mozapps/locale/downloads/unknownContentType.properties");
+
+    let parent;
+    let gDownloadLastDir;
+    try {
+      parent = aContext.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindow);
+    } catch (ex) {}
+
+    if (parent) {
+      gDownloadLastDir = new downloadModule.DownloadLastDir(parent);
+    } else {
+      // Use the cached download info, but pick an arbitrary parent window
+      // because the original one is definitely gone (and nsIFilePicker doesn't like
+      // a null parent):
+      gDownloadLastDir = this._mDownloadDir;
+      parent = Services.wm.getMostRecentWindow("");
+    }
 
     Task.spawn(function() {
       if (!aForcePrompt) {
@@ -257,11 +266,8 @@ nsUnknownContentTypeDialog.prototype = {
       var nsIFilePicker = Components.interfaces.nsIFilePicker;
       var picker = Components.classes["@mozilla.org/filepicker;1"].createInstance(nsIFilePicker);
       var windowTitle = bundle.GetStringFromName("saveDialogTitle");
-      var parent = aContext.QueryInterface(Components.interfaces.nsIInterfaceRequestor).getInterface(Components.interfaces.nsIDOMWindow);
       picker.init(parent, windowTitle, nsIFilePicker.modeSave);
       picker.defaultString = aDefaultFile;
-
-      let gDownloadLastDir = new downloadModule.DownloadLastDir(parent);
 
       if (aSuggestedFileExtension) {
         // aSuggestedFileExtension includes the period, so strip it

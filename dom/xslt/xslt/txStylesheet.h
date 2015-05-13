@@ -13,7 +13,6 @@
 #include "nsISupportsImpl.h"
 
 class txInstruction;
-class txToplevelItem;
 class txTemplateItem;
 class txVariableItem;
 class txStripSpaceItem;
@@ -22,7 +21,7 @@ class txDecimalFormat;
 class txStripSpaceTest;
 class txXSLKey;
 
-class txStylesheet MOZ_FINAL
+class txStylesheet final
 {
 public:
     class ImportFrame;

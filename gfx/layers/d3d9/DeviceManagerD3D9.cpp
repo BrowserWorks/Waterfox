@@ -5,7 +5,6 @@
 
 #include "DeviceManagerD3D9.h"
 #include "LayerManagerD3D9Shaders.h"
-#include "PaintedLayerD3D9.h"
 #include "nsIServiceManager.h"
 #include "nsIConsoleService.h"
 #include "nsPrintfCString.h"
@@ -133,7 +132,7 @@ SwapChainD3D9::PrepareForRendering()
 }
 
 void
-SwapChainD3D9::Present(const nsIntRect &aRect)
+SwapChainD3D9::Present(const gfx::IntRect &aRect)
 {
   RECT r;
   r.left = aRect.x;
@@ -207,7 +206,7 @@ DeviceManagerD3D9::Init()
     if (!mNv3DVUtils) {
       mNv3DVUtils = new Nv3DVUtils();
       if (!mNv3DVUtils) {
-        NS_WARNING("Could not create a new instance of Nv3DVUtils.\n");
+        NS_WARNING("Could not create a new instance of Nv3DVUtils.");
       }
     }
 
@@ -241,7 +240,7 @@ DeviceManagerD3D9::Init()
     mD3D9 = dont_AddRef(d3d9Create(D3D_SDK_VERSION));
 
     if (!mD3D9) {
-      gfxCriticalError() << "[D3D9] Failed to create the device";
+      gfxCriticalError() << "[D3D9] Failed to create the IDirect3D9 object";
       return false;
     }
   }
@@ -250,7 +249,7 @@ DeviceManagerD3D9::Init()
   hr = mD3D9->GetAdapterIdentifier(D3DADAPTER_DEFAULT, 0, &ident);
 
   if (FAILED(hr)) {
-    gfxCriticalError() << "[D3D9] Failed to create the environment";
+    gfxCriticalError() << "[D3D9] Failed to create the environment code: " << gfx::hexa(hr);
     return false;
   }
 
@@ -302,8 +301,8 @@ DeviceManagerD3D9::Init()
                              &pp,
                              getter_AddRefs(mDevice));
 
-    if (FAILED(hr)) {
-      gfxCriticalError() << "[D3D9] Failed to create the device";
+    if (FAILED(hr) || !mDevice) {
+      gfxCriticalError() << "[D3D9] Failed to create the device, code: " << hexa(hr);
       return false;
     }
   }
@@ -332,13 +331,13 @@ DeviceManagerD3D9::Init()
     mNv3DVUtils->SetDeviceInfo(devUnknown); 
   } 
 
-  auto failCreateShaderMsg = "[D3D9] failed to create a critical resource (shader)";
+  auto failCreateShaderMsg = "[D3D9] failed to create a critical resource (shader) code: ";
 
   hr = mDevice->CreateVertexShader((DWORD*)LayerQuadVS,
                                    getter_AddRefs(mLayerVS));
 
   if (FAILED(hr)) {
-    gfxCriticalError() << failCreateShaderMsg;
+    gfxCriticalError() << failCreateShaderMsg << gfx::hexa(hr);
     return false;
   }
 
@@ -346,7 +345,7 @@ DeviceManagerD3D9::Init()
                                   getter_AddRefs(mRGBPS));
 
   if (FAILED(hr)) {
-    gfxCriticalError() << failCreateShaderMsg;
+    gfxCriticalError() << failCreateShaderMsg << gfx::hexa(hr);
     return false;
   }
 
@@ -354,7 +353,7 @@ DeviceManagerD3D9::Init()
                                   getter_AddRefs(mRGBAPS));
 
   if (FAILED(hr)) {
-    gfxCriticalError() << failCreateShaderMsg;
+    gfxCriticalError() << failCreateShaderMsg << gfx::hexa(hr);
     return false;
   }
 
@@ -362,7 +361,7 @@ DeviceManagerD3D9::Init()
                                   getter_AddRefs(mComponentPass1PS));
 
   if (FAILED(hr)) {
-    gfxCriticalError() << failCreateShaderMsg;
+    gfxCriticalError() << failCreateShaderMsg << gfx::hexa(hr);
     return false;
   }
 
@@ -370,7 +369,7 @@ DeviceManagerD3D9::Init()
                                   getter_AddRefs(mComponentPass2PS));
 
   if (FAILED(hr)) {
-    gfxCriticalError() << failCreateShaderMsg;
+    gfxCriticalError() << failCreateShaderMsg << gfx::hexa(hr);
     return false;
   }
 
@@ -378,7 +377,7 @@ DeviceManagerD3D9::Init()
                                   getter_AddRefs(mYCbCrPS));
 
   if (FAILED(hr)) {
-    gfxCriticalError() << failCreateShaderMsg;
+    gfxCriticalError() << failCreateShaderMsg << gfx::hexa(hr);
     return false;
   }
 
@@ -394,14 +393,14 @@ DeviceManagerD3D9::Init()
                                    getter_AddRefs(mLayerVSMask));
 
   if (FAILED(hr)) {
-    gfxCriticalError() << failCreateShaderMsg;
+    gfxCriticalError() << failCreateShaderMsg << gfx::hexa(hr);
     return false;
   }
   hr = mDevice->CreateVertexShader((DWORD*)LayerQuadVSMask3D,
                                    getter_AddRefs(mLayerVSMask3D));
 
   if (FAILED(hr)) {
-    gfxCriticalError() << failCreateShaderMsg;
+    gfxCriticalError() << failCreateShaderMsg << gfx::hexa(hr);
     return false;
   }
 
@@ -409,7 +408,7 @@ DeviceManagerD3D9::Init()
                                   getter_AddRefs(mRGBPSMask));
 
   if (FAILED(hr)) {
-    gfxCriticalError() << failCreateShaderMsg;
+    gfxCriticalError() << failCreateShaderMsg << gfx::hexa(hr);
     return false;
   }
 
@@ -417,7 +416,7 @@ DeviceManagerD3D9::Init()
                                   getter_AddRefs(mRGBAPSMask));
 
   if (FAILED(hr)) {
-    gfxCriticalError() << failCreateShaderMsg;
+    gfxCriticalError() << failCreateShaderMsg << gfx::hexa(hr);
     return false;
   }
 
@@ -425,7 +424,7 @@ DeviceManagerD3D9::Init()
                                   getter_AddRefs(mRGBAPSMask3D));
 
   if (FAILED(hr)) {
-    gfxCriticalError() << failCreateShaderMsg;
+    gfxCriticalError() << failCreateShaderMsg << gfx::hexa(hr);
     return false;
   }
 
@@ -433,7 +432,7 @@ DeviceManagerD3D9::Init()
                                   getter_AddRefs(mComponentPass1PSMask));
 
   if (FAILED(hr)) {
-    gfxCriticalError() << failCreateShaderMsg;
+    gfxCriticalError() << failCreateShaderMsg << gfx::hexa(hr);
     return false;
   }
 
@@ -449,7 +448,7 @@ DeviceManagerD3D9::Init()
                                   getter_AddRefs(mYCbCrPSMask));
 
   if (FAILED(hr)) {
-    gfxCriticalError() << failCreateShaderMsg;
+    gfxCriticalError() << failCreateShaderMsg << gfx::hexa(hr);
     return false;
   }
 
@@ -457,7 +456,7 @@ DeviceManagerD3D9::Init()
                                   getter_AddRefs(mSolidColorPSMask));
 
   if (FAILED(hr)) {
-    gfxCriticalError() << failCreateShaderMsg;
+    gfxCriticalError() << failCreateShaderMsg << gfx::hexa(hr);
     return false;
   }
 
@@ -468,7 +467,7 @@ DeviceManagerD3D9::Init()
 
   hr = mDevice->SetStreamSource(0, mVB, 0, sizeof(vertex));
   if (FAILED(hr)) {
-    gfxCriticalError() << "[D3D9] Failed to set the stream source";
+    gfxCriticalError() << "[D3D9] Failed to set the stream source code: " << gfx::hexa(hr);
     return false;
   }
 
@@ -557,42 +556,6 @@ DeviceManagerD3D9::CreateSwapChain(HWND hWnd)
   return swapChain.forget();
 }
 
-/*
-  * Finds a texture for the mask layer and sets it as an
-  * input to the shaders.
-  * Returns true if a texture is loaded, false if 
-  * a texture for the mask layer could not be loaded.
-  */
-bool
-LoadMaskTexture(Layer* aMask, IDirect3DDevice9* aDevice,
-                uint32_t aMaskTexRegister)
-{
-  IntSize size;
-  nsRefPtr<IDirect3DTexture9> texture =
-    static_cast<LayerD3D9*>(aMask->ImplData())->GetAsTexture(&size);
-
-  if (!texture) {
-    return false;
-  }
-
-  Matrix maskTransform;
-  Matrix4x4 effectiveTransform = aMask->GetEffectiveTransform();
-  bool maskIs2D = effectiveTransform.CanDraw2D(&maskTransform);
-  NS_ASSERTION(maskIs2D, "How did we end up with a 3D transform here?!");
-  Rect bounds = Rect(Point(), Size(size));
-  bounds = maskTransform.TransformBounds(bounds);
-
-  aDevice->SetVertexShaderConstantF(DeviceManagerD3D9::sMaskQuadRegister,
-                                    ShaderConstantRect((float)bounds.x,
-                                                       (float)bounds.y,
-                                                       (float)bounds.width,
-                                                       (float)bounds.height),
-                                    1);
-
-  aDevice->SetTexture(aMaskTexRegister, texture);
-  return true;
-}
-
 uint32_t
 DeviceManagerD3D9::SetShaderMode(ShaderMode aMode, MaskType aMaskType)
 {
@@ -668,25 +631,6 @@ DeviceManagerD3D9::SetShaderMode(ShaderMode aMode, MaskType aMaskType)
 }
 
 void
-DeviceManagerD3D9::SetShaderMode(ShaderMode aMode, Layer* aMask, bool aIs2D)
-{
-  MaskType maskType = MaskType::MaskNone;
-  if (aMask) {
-    maskType = aIs2D ? MaskType::Mask2d : MaskType::Mask3d;
-  }
-  uint32_t maskTexRegister = SetShaderMode(aMode, maskType);
-  if (aMask) {
-    // register allocations are taken from LayerManagerD3D9Shaders.h after
-    // the shaders are compiled (genshaders.sh)
-    if (!LoadMaskTexture(aMask, mDevice, maskTexRegister)) {
-      // if we can't load the mask, fall back to unmasked rendering
-      NS_WARNING("Could not load texture for mask layer.");
-      SetShaderMode(aMode, MaskType::MaskNone);
-    }
-  }
-}
-
-void
 DeviceManagerD3D9::DestroyDevice()
 {
   ++mDeviceResetCount;
@@ -718,10 +662,6 @@ DeviceManagerD3D9::VerifyReadyForRendering()
     return DeviceOK;
   }
 
-  // We need to release all texture resources and swap chains before resetting.
-  for (unsigned int i = 0; i < mLayersWithResources.Length(); i++) {
-    mLayersWithResources[i]->CleanResources();
-  }
   ReleaseTextureResources();
   for (unsigned int i = 0; i < mSwapChains.Length(); i++) {
     mSwapChains[i]->Reset();

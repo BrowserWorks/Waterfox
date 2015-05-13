@@ -37,7 +37,7 @@ Site.prototype = {
   /**
    * The title of the site's link.
    */
-  get title() { return this.link.title; },
+  get title() { return this.link.title || this.link.url; },
 
   /**
    * The site's parent cell.
@@ -122,14 +122,23 @@ Site.prototype = {
   _render: function Site_render() {
     let enhanced = gAllPages.enhanced && DirectoryLinksProvider.getEnhancedLink(this.link);
     let url = this.url;
-    let title = enhanced && enhanced.title || this.title || url;
-    let tooltip = (title == url ? title : title + "\n" + url);
+    let title = enhanced && enhanced.title ? enhanced.title :
+                this.link.type == "history" ? this.link.baseDomain :
+                this.title;
+    let tooltip = (this.title == url ? this.title : this.title + "\n" + url);
 
     let link = this._querySelector(".newtab-link");
     link.setAttribute("title", tooltip);
     link.setAttribute("href", url);
     this._querySelector(".newtab-title").textContent = title;
     this.node.setAttribute("type", this.link.type);
+
+    if (this.link.targetedSite) {
+      this.node.setAttribute("suggested", true);
+      let targetedSite = `<strong> ${this.link.targetedName} </strong>`;
+      this._querySelector(".newtab-suggested").innerHTML =
+        `<div class='newtab-suggested-bounds'> ${newTabString("suggested.button", [targetedSite])} </div>`;
+    }
 
     if (this.isPinned())
       this._updateAttributes(true);
@@ -177,6 +186,15 @@ Site.prototype = {
     }
   },
 
+  _ignoreHoverEvents: function(element) {
+    element.addEventListener("mouseover", () => {
+      this.cell.node.setAttribute("ignorehover", "true");
+    });
+    element.addEventListener("mouseout", () => {
+      this.cell.node.removeAttribute("ignorehover");
+    });
+  },
+
   /**
    * Adds event handlers for the site and its buttons.
    */
@@ -186,14 +204,12 @@ Site.prototype = {
     this._node.addEventListener("dragend", this, false);
     this._node.addEventListener("mouseover", this, false);
 
-    // Specially treat the sponsored icon to prevent regular hover effects
+    // Specially treat the sponsored icon & suggested explanation
+    // text to prevent regular hover effects
     let sponsored = this._querySelector(".newtab-sponsored");
-    sponsored.addEventListener("mouseover", () => {
-      this.cell.node.setAttribute("ignorehover", "true");
-    });
-    sponsored.addEventListener("mouseout", () => {
-      this.cell.node.removeAttribute("ignorehover");
-    });
+    let suggested = this._querySelector(".newtab-suggested");
+    this._ignoreHoverEvents(sponsored);
+    this._ignoreHoverEvents(suggested);
   },
 
   /**
@@ -220,25 +236,26 @@ Site.prototype = {
                       .add(aIndex);
   },
 
-  _toggleSponsored: function() {
-    let button = this._querySelector(".newtab-sponsored");
+  _toggleLegalText: function(buttonClass, explanationTextClass) {
+    let button = this._querySelector(buttonClass);
     if (button.hasAttribute("active")) {
-      let explain = this._querySelector(".sponsored-explain");
+      let explain = this._querySelector(explanationTextClass);
       explain.parentNode.removeChild(explain);
 
       button.removeAttribute("active");
     }
     else {
       let explain = document.createElementNS(HTML_NAMESPACE, "div");
-      explain.className = "sponsored-explain";
+      explain.className = explanationTextClass.slice(1); // Slice off the first character, '.'
       this.node.appendChild(explain);
 
       let link = '<a href="' + TILES_EXPLAIN_LINK + '">' +
                  newTabString("learn.link") + "</a>";
-      let type = this.node.getAttribute("type");
+      let type = (this.node.getAttribute("suggested") && this.node.getAttribute("type") == "affiliate") ?
+                  "suggested" : this.node.getAttribute("type");
       let icon = '<input type="button" class="newtab-control newtab-' +
-                 (type == "sponsored" ? "control-block" : "customize") + '"/>';
-      explain.innerHTML = newTabString(type + ".explain", [icon, link]);
+                 (type == "enhanced" ? "customize" : "control-block") + '"/>';
+      explain.innerHTML = newTabString(type + (type == "sponsored" ? ".explain2" : ".explain"), [icon, link]);
 
       button.setAttribute("active", "true");
     }
@@ -266,6 +283,9 @@ Site.prototype = {
     else if (target.parentElement.classList.contains("sponsored-explain")) {
       action = "sponsored_link";
     }
+    else if (target.parentElement.classList.contains("suggested-explain")) {
+      action = "suggested_link";
+    }
     // Only handle primary clicks for the remaining targets
     else if (button == 0) {
       aEvent.preventDefault();
@@ -275,21 +295,23 @@ Site.prototype = {
       }
       else if (target.classList.contains("sponsored-explain") ||
                target.classList.contains("newtab-sponsored")) {
-        this._toggleSponsored();
+        this._toggleLegalText(".newtab-sponsored", ".sponsored-explain");
         action = "sponsored";
       }
-      else if (pinned) {
+      else if (pinned && target.classList.contains("newtab-control-pin")) {
         this.unpin();
         action = "unpin";
       }
-      else {
+      else if (!pinned && target.classList.contains("newtab-control-pin")) {
         this.pin();
         action = "pin";
       }
     }
 
     // Report all link click actions
-    DirectoryLinksProvider.reportSitesAction(gGrid.sites, action, tileIndex);
+    if (action) {
+      DirectoryLinksProvider.reportSitesAction(gGrid.sites, action, tileIndex);
+    }
   },
 
   /**

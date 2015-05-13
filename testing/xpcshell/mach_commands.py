@@ -67,7 +67,7 @@ class XPCShellRunner(MozbuildObject):
                  debugger=None, debuggerArgs=None, debuggerInteractive=None,
                  jsDebugger=False, jsDebuggerPort=None,
                  rerun_failures=False, test_objects=None, verbose=False,
-                 log=None,
+                 log=None, test_tags=None,
                  # ignore parameters from other platforms' options
                  **kwargs):
         """Runs an individual xpcshell test."""
@@ -79,14 +79,17 @@ class XPCShellRunner(MozbuildObject):
         if build_path not in sys.path:
             sys.path.append(build_path)
 
-        if test_paths == ['all']:
+        if not os.path.isfile(os.path.join(self.topsrcdir, 'build', 'automationutils.py')):
+            sys.path.append(os.path.join(self.topsrcdir, 'mozilla', 'build'))
+
+        if test_paths == 'all':
             self.run_suite(interactive=interactive,
                            keep_going=keep_going, shuffle=shuffle, sequential=sequential,
                            debugger=debugger, debuggerArgs=debuggerArgs,
                            debuggerInteractive=debuggerInteractive,
                            jsDebugger=jsDebugger, jsDebuggerPort=jsDebuggerPort,
                            rerun_failures=rerun_failures,
-                           verbose=verbose, log=log)
+                           verbose=verbose, log=log, test_tags=test_tags)
             return
         elif test_paths:
             test_paths = [self._wrap_path_argument(p).relpath() for p in test_paths]
@@ -121,6 +124,7 @@ class XPCShellRunner(MozbuildObject):
             'manifest': manifest,
             'verbose': verbose,
             'log': log,
+            'test_tags': test_tags,
         }
 
         return self._run_xpcshell_harness(**args)
@@ -130,7 +134,7 @@ class XPCShellRunner(MozbuildObject):
                               keep_going=False, sequential=False,
                               debugger=None, debuggerArgs=None, debuggerInteractive=None,
                               jsDebugger=False, jsDebuggerPort=None,
-                              rerun_failures=False, verbose=False, log=None):
+                              rerun_failures=False, verbose=False, log=None, test_tags=None):
 
         # Obtain a reference to the xpcshell test runner.
         import runxpcshelltests
@@ -168,6 +172,7 @@ class XPCShellRunner(MozbuildObject):
             'debuggerInteractive': debuggerInteractive,
             'jsDebugger': jsDebugger,
             'jsDebuggerPort': jsDebuggerPort,
+            'test_tags': test_tags,
         }
 
         if test_path is not None:
@@ -391,12 +396,6 @@ class B2GXPCShellRunner(MozbuildObject):
 
         return runtestsb2g.run_remote_xpcshell(parser, options, args, log)
 
-def is_platform_supported(cls):
-    """Must have a Firefox, Android or B2G build."""
-    return conditions.is_android(cls) or \
-           conditions.is_b2g(cls) or \
-           conditions.is_firefox(cls)
-
 @CommandProvider
 class MachCommands(MachCommandBase):
     def __init__(self, context):
@@ -406,8 +405,8 @@ class MachCommands(MachCommandBase):
             setattr(self, attr, getattr(context, attr, None))
 
     @Command('xpcshell-test', category='testing',
-        conditions=[is_platform_supported],
         description='Run XPCOM Shell tests (API direct unit testing)',
+        conditions=[lambda *args: True],
         parser=_parser)
     @CommandArgument('test_paths', default='all', nargs='*', metavar='TEST',
         help='Test to run. Can be specified as a single JS file, a directory, '
@@ -441,6 +440,10 @@ class MachCommands(MachCommandBase):
         help='Randomize the execution order of tests.')
     @CommandArgument('--rerun-failures', action='store_true',
         help='Reruns failures from last time.')
+    @CommandArgument('--tag', action='append', dest='test_tags',
+        help='Filter out tests that don\'t have the given tag. Can be used '
+             'multiple times in which case the test must contain at least one '
+             'of the given tags.')
     @CommandArgument('--devicemanager', default='adb', type=str,
         help='(Android) Type of devicemanager to use for communication: adb or sut')
     @CommandArgument('--ip', type=str, default=None,

@@ -10,7 +10,7 @@
 #include <stdio.h>                      // for FILE
 #include "gfxRect.h"                    // for gfxRect
 #include "mozilla/Assertions.h"         // for MOZ_ASSERT, etc
-#include "mozilla/Attributes.h"         // for MOZ_OVERRIDE
+#include "mozilla/Attributes.h"         // for override
 #include "mozilla/RefPtr.h"             // for RefPtr, RefCounted, etc
 #include "mozilla/gfx/Point.h"          // for Point
 #include "mozilla/gfx/Rect.h"           // for Rect
@@ -28,9 +28,6 @@
 #include "nscore.h"                     // for nsACString
 #include "Units.h"                      // for CSSToScreenScale
 
-struct nsIntPoint;
-struct nsIntRect;
-
 namespace mozilla {
 namespace gfx {
 class Matrix4x4;
@@ -40,9 +37,7 @@ class DataSourceSurface;
 namespace layers {
 
 class Layer;
-class SurfaceDescriptor;
 class Compositor;
-class ISurfaceAllocator;
 class ThebesBufferData;
 class TiledLayerComposer;
 class CompositableParentManager;
@@ -102,52 +97,13 @@ public:
   }
 
   /**
-   * Update the content host using a surface that only contains the updated
-   * region.
-   *
-   * Takes ownership of aSurface, and is responsible for freeing it.
-   *
-   * @param aTextureId Texture to update.
-   * @param aSurface Surface containing the update area. Its contents are relative
-   *                 to aUpdated.TopLeft()
-   * @param aUpdated Area of the content host to update.
-   * @param aBufferRect New area covered by the content host.
-   * @param aBufferRotation New buffer rotation.
-   */
-  virtual void UpdateIncremental(TextureIdentifier aTextureId,
-                                 SurfaceDescriptor& aSurface,
-                                 const nsIntRegion& aUpdated,
-                                 const nsIntRect& aBufferRect,
-                                 const nsIntPoint& aBufferRotation)
-  {
-    MOZ_ASSERT(false, "should be implemented or not used");
-  }
-
-  /**
-   * Ensure that a suitable texture host exists in this compsitable.
-   *
-   * Only used with ContentHostIncremental.
-   *
-   * No SurfaceDescriptor or TextureIdentifier is provider as we
-   * don't have a single surface for the texture contents, and we
-   * need to allocate our own one to be updated later.
-   */
-  virtual bool CreatedIncrementalTexture(ISurfaceAllocator* aAllocator,
-                                         const TextureInfo& aTextureInfo,
-                                         const nsIntRect& aBufferRect)
-  {
-    NS_ERROR("should be implemented or not used");
-    return false;
-  }
-
-  /**
    * Returns the front buffer.
    */
   virtual TextureHost* GetAsTextureHost() { return nullptr; }
 
   virtual LayerRenderState GetRenderState() = 0;
 
-  virtual void SetPictureRect(const nsIntRect& aPictureRect)
+  virtual void SetPictureRect(const gfx::IntRect& aPictureRect)
   {
     MOZ_ASSERT(false, "Should have been overridden");
   }
@@ -195,6 +151,12 @@ public:
     SetLayer(aLayer);
     mAttached = true;
     mKeepAttached = aFlags & KEEP_ATTACHED;
+
+    // If we already have a textureHost before, use that in this moment.
+    RefPtr<TextureHost> frontBuffer = GetAsTextureHost();
+    if (frontBuffer) {
+      UseTextureHost(frontBuffer);
+    }
   }
   // Detach this compositable host from its layer.
   // If we are used for async video, then it is not safe to blindly detach since
@@ -274,7 +236,7 @@ protected:
   bool mKeepAttached;
 };
 
-class AutoLockCompositableHost MOZ_FINAL
+class AutoLockCompositableHost final
 {
 public:
   explicit AutoLockCompositableHost(CompositableHost* aHost)

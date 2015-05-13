@@ -15,19 +15,18 @@ import android.util.Log;
 
 import com.google.android.gms.cast.CastMediaControlIntent;
 
-import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
+import org.mozilla.gecko.AppConstants.Versions;
 import org.mozilla.gecko.mozglue.JNITarget;
 import org.mozilla.gecko.util.EventCallback;
 import org.mozilla.gecko.util.NativeEventListener;
 import org.mozilla.gecko.util.NativeJSObject;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
-/* Manages a list of GeckoMediaPlayers methods (i.e. Chromecast/Miracast). Routes messages
+/**
+ * Manages a list of GeckoMediaPlayers methods (i.e. Chromecast/Miracast). Routes messages
  * from Gecko to the correct caster based on the id of the display
  */
 public class MediaPlayerManager extends Fragment implements NativeEventListener {
@@ -37,7 +36,11 @@ public class MediaPlayerManager extends Fragment implements NativeEventListener 
      */
     @JNITarget
     public static MediaPlayerManager newInstance() {
-        return new MediaPlayerManager();
+        if (Versions.feature17Plus) {
+            return new PresentationMediaPlayerManager();
+        } else {
+            return new MediaPlayerManager();
+        }
     }
 
     private static final String LOGTAG = "GeckoMediaPlayerManager";
@@ -59,8 +62,8 @@ public class MediaPlayerManager extends Fragment implements NativeEventListener 
         }
     }
 
-    private MediaRouter mediaRouter = null;
-    private final Map<String, GeckoMediaPlayer> displays = new HashMap<String, GeckoMediaPlayer>();
+    protected MediaRouter mediaRouter = null;
+    protected final Map<String, GeckoMediaPlayer> displays = new HashMap<String, GeckoMediaPlayer>();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -135,19 +138,23 @@ public class MediaPlayerManager extends Fragment implements NativeEventListener 
                 displays.remove(route.getId());
                 GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent(
                         "MediaPlayer:Removed", route.getId()));
+                updatePresentation();
             }
 
             @SuppressWarnings("unused")
             public void onRouteSelected(MediaRouter router, int type, MediaRouter.RouteInfo route) {
+                updatePresentation();
             }
 
             // These methods aren't used by the support version Media Router
             @SuppressWarnings("unused")
             public void onRouteUnselected(MediaRouter router, int type, RouteInfo route) {
+                updatePresentation();
             }
 
             @Override
             public void onRoutePresentationDisplayChanged(MediaRouter router, RouteInfo route) {
+                updatePresentation();
             }
 
             @Override
@@ -159,6 +166,7 @@ public class MediaPlayerManager extends Fragment implements NativeEventListener 
                 debug("onRouteAdded: route=" + route);
                 final GeckoMediaPlayer display = getMediaPlayerForRoute(route);
                 saveAndNotifyOfDisplay("MediaPlayer:Added", route, display);
+                updatePresentation();
             }
 
             @Override
@@ -166,6 +174,7 @@ public class MediaPlayerManager extends Fragment implements NativeEventListener 
                 debug("onRouteChanged: route=" + route);
                 final GeckoMediaPlayer display = displays.get(route.getId());
                 saveAndNotifyOfDisplay("MediaPlayer:Changed", route, display);
+                updatePresentation();
             }
 
             private void saveAndNotifyOfDisplay(final String eventName,
@@ -221,4 +230,6 @@ public class MediaPlayerManager extends Fragment implements NativeEventListener 
             .build();
         mediaRouter.addCallback(selectorBuilder, callback, MediaRouter.CALLBACK_FLAG_REQUEST_DISCOVERY);
     }
+
+    protected void updatePresentation() { /* Overridden in sub-classes. */ }
 }

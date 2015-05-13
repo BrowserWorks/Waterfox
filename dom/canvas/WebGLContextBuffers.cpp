@@ -93,11 +93,13 @@ WebGLContext::BindBufferBase(GLenum target, GLuint index, WebGLBuffer* buffer)
         if (index >= mGLMaxTransformFeedbackSeparateAttribs)
             return ErrorInvalidValue("bindBufferBase: index should be less than "
                                      "MAX_TRANSFORM_FEEDBACK_SEPARATE_ATTRIBS");
+        break;
 
     case LOCAL_GL_UNIFORM_BUFFER:
         if (index >= mGLMaxUniformBufferBindings)
             return ErrorInvalidValue("bindBufferBase: index should be less than "
                                      "MAX_UNIFORM_BUFFER_BINDINGS");
+        break;
 
     default:
         return ErrorInvalidEnumInfo("bindBufferBase: target", target);
@@ -131,11 +133,14 @@ WebGLContext::BindBufferRange(GLenum target, GLuint index, WebGLBuffer* buffer,
         if (index >= mGLMaxTransformFeedbackSeparateAttribs)
             return ErrorInvalidValue("bindBufferRange: index should be less than "
                                      "MAX_TRANSFORM_FEEDBACK_SEPARATE_ATTRIBS");
+        break;
 
     case LOCAL_GL_UNIFORM_BUFFER:
         if (index >= mGLMaxUniformBufferBindings)
             return ErrorInvalidValue("bindBufferRange: index should be less than "
                                      "MAX_UNIFORM_BUFFER_BINDINGS");
+        break;
+
     default:
         return ErrorInvalidEnumInfo("bindBufferRange: target", target);
     }
@@ -174,7 +179,7 @@ WebGLContext::BufferData(GLenum target, WebGLsizeiptr size, GLenum usage)
     if (!boundBuffer)
         return ErrorInvalidOperation("bufferData: no buffer bound!");
 
-    UniquePtr<uint8_t> zeroBuffer((uint8_t*)moz_calloc(size, 1));
+    UniquePtr<uint8_t> zeroBuffer((uint8_t*)calloc(size, 1));
     if (!zeroBuffer)
         return ErrorOutOfMemory("bufferData: out of memory");
 
@@ -495,6 +500,7 @@ WebGLContext::GetBufferSlotByTargetIndexed(GLenum target, GLuint index)
     case LOCAL_GL_TRANSFORM_FEEDBACK_BUFFER:
         MOZ_ASSERT(index < mGLMaxTransformFeedbackSeparateAttribs);
         return mBoundTransformFeedbackBuffers[index];
+
     case LOCAL_GL_UNIFORM_BUFFER:
         MOZ_ASSERT(index < mGLMaxUniformBufferBindings);
         return mBoundUniformBuffers[index];

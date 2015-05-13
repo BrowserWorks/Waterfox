@@ -52,7 +52,6 @@ NS_IMPL_ISUPPORTS(nsNSSDialogs, nsITokenPasswordDialogs,
                   nsIClientAuthDialogs,
                   nsICertPickDialogs,
                   nsITokenDialogs,
-                  nsIDOMCryptoDialogs,
                   nsIGeneratingKeypairInfoDialogs)
 
 nsresult
@@ -101,39 +100,6 @@ nsNSSDialogs::SetPassword(nsIInterfaceRequestor *ctx,
 
   *_canceled = (status == 0)?true:false;
 
-  return rv;
-}
-
-nsresult
-nsNSSDialogs::GetPassword(nsIInterfaceRequestor *ctx,
-                          const char16_t *tokenName, 
-                          char16_t **_password,
-                          bool* _canceled)
-{
-  nsresult rv;
-  *_canceled = false;
-  // Get the parent window for the dialog
-  nsCOMPtr<nsIDOMWindow> parent = do_GetInterface(ctx);
-  nsCOMPtr<nsIDialogParamBlock> block = 
-           do_CreateInstance(NS_DIALOGPARAMBLOCK_CONTRACTID);
-  if (!block) return NS_ERROR_FAILURE;
-  // Set the token name in the window
-  rv = block->SetString(1, tokenName);
-  if (NS_FAILED(rv)) return rv;
-  // open up the window
-  rv = nsNSSDialogHelper::openDialog(parent,
-                                     "chrome://pippki/content/getpassword.xul",
-                                     block);
-  if (NS_FAILED(rv)) return rv;
-  // see if user canceled
-  int32_t status;
-  rv = block->GetInt(1, &status);
-  if (NS_FAILED(rv)) return rv;
-  *_canceled = (status == 0) ? true : false;
-  if (!*_canceled) {
-    // retrieve the password
-    rv = block->GetString(2, _password);
-  }
   return rv;
 }
 
@@ -367,44 +333,48 @@ nsNSSDialogs::SetPKCS12FilePassword(nsIInterfaceRequestor *ctx,
     rv = block->GetString(2, &pw);
     if (NS_SUCCEEDED(rv)) {
       _password = pw;
-      nsMemory::Free(pw);
+      free(pw);
     }
   }
   return rv;
 }
 
-NS_IMETHODIMP 
-nsNSSDialogs::GetPKCS12FilePassword(nsIInterfaceRequestor *ctx, 
-                                    nsAString &_password,
-                                    bool *_retval)
+NS_IMETHODIMP
+nsNSSDialogs::GetPKCS12FilePassword(nsIInterfaceRequestor* ctx,
+                                    nsAString& _password,
+                                    bool* _retval)
 {
-  nsresult rv;
-  *_retval = true;
+  *_retval = false;
+
+  nsCOMPtr<nsIPromptService> promptSvc(
+    do_GetService(NS_PROMPTSERVICE_CONTRACTID));
+  if (!promptSvc) {
+    return NS_ERROR_FAILURE;
+  }
+
+  nsAutoString msg;
+  nsresult rv = mPIPStringBundle->GetStringFromName(
+    MOZ_UTF16("getPKCS12FilePasswordMessage"), getter_Copies(msg));
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+
   // Get the parent window for the dialog
   nsCOMPtr<nsIDOMWindow> parent = do_GetInterface(ctx);
-  nsCOMPtr<nsIDialogParamBlock> block =
-           do_CreateInstance(NS_DIALOGPARAMBLOCK_CONTRACTID);
-  if (!block) return NS_ERROR_FAILURE;
-  // open up the window
-  rv = nsNSSDialogHelper::openDialog(parent,
-                                  "chrome://pippki/content/getp12password.xul",
-                                  block);
-  if (NS_FAILED(rv)) return rv;
-  // see if user canceled
-  int32_t status;
-  rv = block->GetInt(1, &status);
-  if (NS_FAILED(rv)) return rv;
-  *_retval = (status == 0) ? false : true;
-  if (*_retval) {
-    // retrieve the password
-    char16_t *pw;
-    rv = block->GetString(2, &pw);
-    if (NS_SUCCEEDED(rv)) {
-      _password = pw;
-      nsMemory::Free(pw);
-    }
+  bool ignored = false;
+  char16_t* pwTemp = nullptr;
+  rv = promptSvc->PromptPassword(parent, nullptr, msg.get(), &pwTemp, nullptr,
+                                 &ignored, _retval);
+  if (NS_FAILED(rv)) {
+    return rv;
   }
-  return rv;
+
+  if (*_retval) {
+    _password.Assign(pwTemp);
+    free(pwTemp);
+  }
+
+  return NS_OK;
 }
 
 /* void viewCert (in nsIX509Cert cert); */
@@ -486,41 +456,6 @@ nsNSSDialogs::ChooseToken(nsIInterfaceRequestor *aCtx, const char16_t **aTokenLi
     // retrieve the nickname
     rv = block->GetString(0, aTokenChosen);
   }
-  return rv;
-}
-
-/* boolean ConfirmKeyEscrow (in nsIX509Cert escrowAuthority); */
-NS_IMETHODIMP 
-nsNSSDialogs::ConfirmKeyEscrow(nsIX509Cert *escrowAuthority, bool *_retval)
-                                     
-{
-  *_retval = false;
-
-  nsresult rv;
-
-  nsCOMPtr<nsIPKIParamBlock> block =
-           do_CreateInstance(NS_PKIPARAMBLOCK_CONTRACTID);
-  if (!block)
-    return NS_ERROR_FAILURE;
-
-  rv = block->SetISupportAtIndex(1, escrowAuthority);
-  if (NS_FAILED(rv))
-    return rv;
-
-  rv = nsNSSDialogHelper::openDialog(nullptr,
-                                     "chrome://pippki/content/escrowWarn.xul",
-                                     block);
-
-  if (NS_FAILED(rv))
-    return rv;
-
-  int32_t status=0;
-  nsCOMPtr<nsIDialogParamBlock> dlgParamBlock = do_QueryInterface(block);
-  rv = dlgParamBlock->GetInt(1, &status);
- 
-  if (status) {
-    *_retval = true;
-  } 
   return rv;
 }
 

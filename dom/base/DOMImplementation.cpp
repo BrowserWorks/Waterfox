@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -29,9 +31,9 @@ NS_IMPL_CYCLE_COLLECTING_ADDREF(DOMImplementation)
 NS_IMPL_CYCLE_COLLECTING_RELEASE(DOMImplementation)
 
 JSObject*
-DOMImplementation::WrapObject(JSContext* aCx)
+DOMImplementation::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return DOMImplementationBinding::Wrap(aCx, this);
+  return DOMImplementationBinding::Wrap(aCx, this, aGivenProto);
 }
 
 bool
@@ -90,7 +92,7 @@ DOMImplementation::CreateDocumentType(const nsAString& aQualifiedName,
   ErrorResult rv;
   *aReturn =
     CreateDocumentType(aQualifiedName, aPublicId, aSystemId, rv).take();
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 nsresult

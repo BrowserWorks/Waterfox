@@ -16,67 +16,57 @@
 namespace mozilla {
 namespace gmp {
 
-class GMPChild;
+class GMPContentChild;
 
 class GMPVideoDecoderChild : public PGMPVideoDecoderChild,
                              public GMPVideoDecoderCallback,
                              public GMPSharedMemManager
 {
 public:
-  explicit GMPVideoDecoderChild(GMPChild* aPlugin);
-  virtual ~GMPVideoDecoderChild();
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(GMPVideoDecoderChild);
+
+  explicit GMPVideoDecoderChild(GMPContentChild* aPlugin);
 
   void Init(GMPVideoDecoder* aDecoder);
   GMPVideoHostImpl& Host();
 
   // GMPVideoDecoderCallback
-  virtual void Decoded(GMPVideoi420Frame* decodedFrame) MOZ_OVERRIDE;
-  virtual void ReceivedDecodedReferenceFrame(const uint64_t pictureId) MOZ_OVERRIDE;
-  virtual void ReceivedDecodedFrame(const uint64_t pictureId) MOZ_OVERRIDE;
-  virtual void InputDataExhausted() MOZ_OVERRIDE;
-  virtual void DrainComplete() MOZ_OVERRIDE;
-  virtual void ResetComplete() MOZ_OVERRIDE;
-  virtual void Error(GMPErr aError) MOZ_OVERRIDE;
+  virtual void Decoded(GMPVideoi420Frame* decodedFrame) override;
+  virtual void ReceivedDecodedReferenceFrame(const uint64_t pictureId) override;
+  virtual void ReceivedDecodedFrame(const uint64_t pictureId) override;
+  virtual void InputDataExhausted() override;
+  virtual void DrainComplete() override;
+  virtual void ResetComplete() override;
+  virtual void Error(GMPErr aError) override;
 
   // GMPSharedMemManager
-  virtual bool Alloc(size_t aSize, Shmem::SharedMemory::SharedMemoryType aType, Shmem* aMem) MOZ_OVERRIDE
-  {
-#ifndef SHMEM_ALLOC_IN_CHILD
-    return CallNeedShmem(aSize, aMem);
-#else
-#ifdef GMP_SAFE_SHMEM
-    return AllocShmem(aSize, aType, aMem);
-#else
-    return AllocUnsafeShmem(aSize, aType, aMem);
-#endif
-#endif
-  }
-  virtual void Dealloc(Shmem& aMem) MOZ_OVERRIDE
-  {
-#ifndef SHMEM_ALLOC_IN_CHILD
-    SendParentShmemForPool(aMem);
-#else
-    DeallocShmem(aMem);
-#endif
-  }
+  virtual bool Alloc(size_t aSize, Shmem::SharedMemory::SharedMemoryType aType, Shmem* aMem) override;
+  virtual void Dealloc(Shmem& aMem) override;
 
 private:
+  virtual ~GMPVideoDecoderChild();
+
   // PGMPVideoDecoderChild
   virtual bool RecvInitDecode(const GMPVideoCodec& aCodecSettings,
-                              const nsTArray<uint8_t>& aCodecSpecific,
-                              const int32_t& aCoreCount) MOZ_OVERRIDE;
+                              InfallibleTArray<uint8_t>&& aCodecSpecific,
+                              const int32_t& aCoreCount) override;
   virtual bool RecvDecode(const GMPVideoEncodedFrameData& aInputFrame,
                           const bool& aMissingFrames,
-                          const nsTArray<uint8_t>& aCodecSpecificInfo,
-                          const int64_t& aRenderTimeMs) MOZ_OVERRIDE;
-  virtual bool RecvChildShmemForPool(Shmem& aFrameBuffer) MOZ_OVERRIDE;
-  virtual bool RecvReset() MOZ_OVERRIDE;
-  virtual bool RecvDrain() MOZ_OVERRIDE;
-  virtual bool RecvDecodingComplete() MOZ_OVERRIDE;
+                          InfallibleTArray<uint8_t>&& aCodecSpecificInfo,
+                          const int64_t& aRenderTimeMs) override;
+  virtual bool RecvChildShmemForPool(Shmem&& aFrameBuffer) override;
+  virtual bool RecvReset() override;
+  virtual bool RecvDrain() override;
+  virtual bool RecvDecodingComplete() override;
 
-  GMPChild* mPlugin;
+  GMPContentChild* mPlugin;
   GMPVideoDecoder* mVideoDecoder;
   GMPVideoHostImpl mVideoHost;
+
+  // Non-zero when a GMP is blocked spinning the IPC message loop while
+  // waiting on an NeedShmem to complete.
+  int mNeedShmemIntrCount;
+  bool mPendingDecodeComplete;
 };
 
 } // namespace gmp

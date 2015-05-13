@@ -16,9 +16,6 @@ TOPLEVEL_BUILD := 1
 
 run_for_side_effects := $(shell echo 'MAKE: $(MAKE)')
 
-DIST_INSTALL = 1
-NO_EXPAND_LIBS = 1
-
 ifdef JS_HAS_CTYPES
 ifdef MOZ_NATIVE_FFI
 LOCAL_INCLUDES = $(MOZ_FFI_CFLAGS)
@@ -134,30 +131,18 @@ check-style::
 
 check-jit-test::
 	$(JITTEST_ASAN_ENV) $(wildcard $(RUN_TEST_PROGRAM)) $(PYTHON) -u $(srcdir)/jit-test/jit_test.py \
-	        --no-slow --no-progress --tinderbox --tbpl \
+	        --no-slow --no-progress --format=automation --jitflags=all \
 			$(JITTEST_VALGRIND_FLAG) \
 			$(JITTEST_EXTRA_ARGS) \
 	        $(DIST)/bin/$(JS_SHELL_NAME)$(BIN_SUFFIX)
 
 check:: check-style
 
-# jstests doesn't have a --jitflags option, so we need to loop, updating the
-# exit code (RC) after each invocation.
-# FIXME: MethodJIT doesn't work for 1 test case (bug 644393), so
-# --no-extensions is set to skip that test. Remove as soon as possible.
 check-jstests:
-	RC=0; \
-	for f in `echo '$(JITFLAGS)' | tr ',' '\n'`; \
-		do \
-			$(wildcard $(RUN_TEST_PROGRAM)) $(PYTHON) -u $(srcdir)/tests/jstests.py \
-				--tinderbox --no-progress \
-				--no-extensions \
-				--timeout 300 \
-				--args="`echo $$f | sed 's/\(.\)/ -\1/g'`" \
-				$(DIST)/bin/$(JS_SHELL_NAME)$(BIN_SUFFIX); \
-			RC=$$(( $$RC || $$?)); \
-		done; \
-	exit $$RC
+	$(wildcard $(RUN_TEST_PROGRAM)) $(PYTHON) -u $(srcdir)/tests/jstests.py \
+		--no-progress --format=automation --timeout 300 \
+		$(JSTESTS_EXTRA_ARGS) \
+		$(DIST)/bin/$(JS_SHELL_NAME)$(BIN_SUFFIX)
 
 # FIXME:
 # We want to run check-jstests as part of |make check| on all platforms, on
@@ -225,6 +210,9 @@ $(LIBRARY_NAME).pc: js.pc
 
 install:: $(LIBRARY_NAME).pc
 	$(SYSINSTALL) $^ $(DESTDIR)$(libdir)/pkgconfig
+
+install:: js-config.h
+	$(SYSINSTALL) $^ $(DESTDIR)$(includedir)
 
 ######################################################
 # BEGIN SpiderMonkey header installation
@@ -323,6 +311,7 @@ selfhosting_srcs := \
   $(srcdir)/builtin/Map.js \
   $(srcdir)/builtin/Number.js \
   $(srcdir)/builtin/Object.js \
+  $(srcdir)/builtin/RegExp.js \
   $(srcdir)/builtin/String.js \
   $(srcdir)/builtin/Set.js \
   $(srcdir)/builtin/TypedArray.js \

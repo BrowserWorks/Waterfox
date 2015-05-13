@@ -24,7 +24,7 @@ describe("loop.Dispatcher", function () {
 
       dispatcher.register(object, ["getWindowData"]);
 
-      expect(dispatcher._eventData["getWindowData"][0]).eql(object);
+      expect(dispatcher._eventData.getWindowData[0]).eql(object);
     });
 
     it("should register multiple store against an action name", function() {
@@ -34,8 +34,8 @@ describe("loop.Dispatcher", function () {
       dispatcher.register(object1, ["getWindowData"]);
       dispatcher.register(object2, ["getWindowData"]);
 
-      expect(dispatcher._eventData["getWindowData"][0]).eql(object1);
-      expect(dispatcher._eventData["getWindowData"][1]).eql(object2);
+      expect(dispatcher._eventData.getWindowData[0]).eql(object1);
+      expect(dispatcher._eventData.getWindowData[1]).eql(object2);
     });
   });
 
@@ -102,6 +102,31 @@ describe("loop.Dispatcher", function () {
       sinon.assert.calledOnce(cancelStore1.cancelCall);
       sinon.assert.calledOnce(getDataStore1.getWindowData);
       sinon.assert.calledOnce(getDataStore2.getWindowData);
+    });
+
+    describe("Error handling", function() {
+      beforeEach(function() {
+        sandbox.stub(console, "error");
+      });
+
+      it("should handle uncaught exceptions", function() {
+        getDataStore1.getWindowData.throws("Uncaught Error");
+
+        dispatcher.dispatch(getDataAction);
+        dispatcher.dispatch(cancelAction);
+
+        sinon.assert.calledOnce(getDataStore1.getWindowData);
+        sinon.assert.calledOnce(getDataStore2.getWindowData);
+        sinon.assert.calledOnce(cancelStore1.cancelCall);
+      });
+
+      it("should log uncaught exceptions", function() {
+        getDataStore1.getWindowData.throws("Uncaught Error");
+
+        dispatcher.dispatch(getDataAction);
+
+        sinon.assert.calledOnce(console.error);
+      });
     });
 
     describe("Queued actions", function() {

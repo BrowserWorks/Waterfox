@@ -3,8 +3,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 let {devtools} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+let {TargetFactory, require} = devtools;
 let {console} = Cu.import("resource://gre/modules/devtools/Console.jsm", {});
-let TargetFactory = devtools.TargetFactory;
+let {gDevTools} = Cu.import("resource:///modules/devtools/gDevTools.jsm", {});
+const {DOMHelpers} = Cu.import("resource:///modules/devtools/DOMHelpers.jsm", {});
+const {Hosts} = require("devtools/framework/toolbox-hosts");
+const {defer} = require("sdk/core/promise");
 
 gDevTools.testing = true;
 SimpleTest.registerCleanupFunction(() => {
@@ -12,6 +16,7 @@ SimpleTest.registerCleanupFunction(() => {
 });
 
 const TEST_URI_ROOT = "http://example.com/browser/browser/devtools/shared/test/";
+const OPTIONS_VIEW_URL = TEST_URI_ROOT + "doc_options-view.xul";
 
 /**
  * Open a new tab at a URL and call a callback on load
@@ -40,6 +45,9 @@ function promiseTab(aURL) {
 }
 
 registerCleanupFunction(function tearDown() {
+  let target = TargetFactory.forTab(gBrowser.selectedTab);
+  yield gDevTools.closeToolbox(target);
+
   while (gBrowser.tabs.length > 1) {
     gBrowser.removeCurrentTab();
   }
@@ -133,7 +141,7 @@ function oneTimeObserve(name, callback) {
   Services.obs.addObserver(func, name, false);
 }
 
-function* createHost(type = "bottom", src = "data:text/html;charset=utf-8,") {
+let createHost = Task.async(function*(type = "bottom", src = "data:text/html;charset=utf-8,") {
   let host = new Hosts[type](gBrowser.selectedTab);
   let iframe = yield host.create();
 
@@ -144,4 +152,131 @@ function* createHost(type = "bottom", src = "data:text/html;charset=utf-8,") {
   });
 
   return [host, iframe.contentWindow, iframe.contentDocument];
+});
+
+/**
+ * Load the Telemetry utils, then stub Telemetry.prototype.log in order to
+ * record everything that's logged in it.
+ * Store all recordings on Telemetry.telemetryInfo.
+ * @return {Telemetry}
+ */
+function loadTelemetryAndRecordLogs() {
+  info("Mock the Telemetry log function to record logged information");
+
+  let Telemetry = require("devtools/shared/telemetry");
+  Telemetry.prototype.telemetryInfo = {};
+  Telemetry.prototype._oldlog = Telemetry.prototype.log;
+  Telemetry.prototype.log = function(histogramId, value) {
+    if (!this.telemetryInfo) {
+      // Can be removed when Bug 992911 lands (see Bug 1011652 Comment 10)
+      return;
+    }
+    if (histogramId) {
+      if (!this.telemetryInfo[histogramId]) {
+        this.telemetryInfo[histogramId] = [];
+      }
+
+      this.telemetryInfo[histogramId].push(value);
+    }
+  };
+
+  return Telemetry;
+}
+
+/**
+ * Stop recording the Telemetry logs and put back the utils as it was before.
+ */
+function stopRecordingTelemetryLogs(Telemetry) {
+  Telemetry.prototype.log = Telemetry.prototype._oldlog;
+  delete Telemetry.prototype._oldlog;
+  delete Telemetry.prototype.telemetryInfo;
+}
+
+/**
+ * Check the correctness of the data recorded in Telemetry after
+ * loadTelemetryAndRecordLogs was called.
+ */
+function checkTelemetryResults(Telemetry) {
+  let result = Telemetry.prototype.telemetryInfo;
+
+  for (let [histId, value] of Iterator(result)) {
+    if (histId.endsWith("OPENED_PER_USER_FLAG")) {
+      ok(value.length === 1 && value[0] === true,
+         "Per user value " + histId + " has a single value of true");
+    } else if (histId.endsWith("OPENED_BOOLEAN")) {
+      ok(value.length > 1, histId + " has more than one entry");
+
+      let okay = value.every(function(element) {
+        return element === true;
+      });
+
+      ok(okay, "All " + histId + " entries are === true");
+    } else if (histId.endsWith("TIME_ACTIVE_SECONDS")) {
+      ok(value.length > 1, histId + " has more than one entry");
+
+      let okay = value.every(function(element) {
+        return element > 0;
+      });
+
+      ok(okay, "All " + histId + " entries have time > 0");
+    }
+  }
+}
+
+/**
+ * Open and close the toolbox in the current browser tab, several times, waiting
+ * some amount of time in between.
+ * @param {Number} nbOfTimes
+ * @param {Number} usageTime in milliseconds
+ * @param {String} toolId
+ */
+function* openAndCloseToolbox(nbOfTimes, usageTime, toolId) {
+  for (let i = 0; i < nbOfTimes; i ++) {
+    info("Opening toolbox " + (i + 1));
+    let target = TargetFactory.forTab(gBrowser.selectedTab);
+    yield gDevTools.showToolbox(target, toolId)
+
+    // We use a timeout to check the toolbox's active time
+    yield new Promise(resolve => setTimeout(resolve, usageTime));
+
+    info("Closing toolbox " + (i + 1));
+    yield gDevTools.closeToolbox(target);
+  }
+}
+
+/**
+ * Synthesize a profile for testing.
+ */
+function synthesizeProfileForTest(samples) {
+  const { RecordingUtils } = devtools.require("devtools/performance/recording-utils");
+
+  samples.unshift({
+    time: 0,
+    frames: []
+  });
+
+  let uniqueStacks = new RecordingUtils.UniqueStacks();
+  return RecordingUtils.deflateThread({
+    samples: samples,
+    markers: []
+  }, uniqueStacks);
+}
+
+/**
+ * Waits until a predicate returns true.
+ *
+ * @param function predicate
+ *        Invoked once in a while until it returns true.
+ * @param number interval [optional]
+ *        How often the predicate is invoked, in milliseconds.
+ */
+function waitUntil(predicate, interval = 10) {
+  if (predicate()) {
+    return Promise.resolve(true);
+  }
+  return new Promise(resolve => {
+    setTimeout(function() {
+      waitUntil(predicate).then(() => resolve(true));
+    }, interval);
+  });
 }

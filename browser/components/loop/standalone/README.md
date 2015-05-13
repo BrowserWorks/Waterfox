@@ -9,12 +9,9 @@ NodeJS and npm installed.
 Installation
 ------------
 
-Fetch and install/build any NPM and bower dependencies, as well as the
-localized Terms-of-Service content:
+Fetch and install/build any NPM dependencies:
 
     $ make install
-
-Some of the above is driven by Gruntfile.js.
 
 Configuration
 -------------
@@ -50,11 +47,6 @@ Then point your browser at:
 
 **Note:** the provided static file server for web contents is **not** intended
 for production use.
-
-Code linting
-------------
-
-    $ make lint
 
 License
 -------

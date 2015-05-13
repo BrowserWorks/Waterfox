@@ -41,6 +41,18 @@ def get_free_port(start_port, exclude=None):
         finally:
             s.close()
 
+def browser_command(binary, args, debug_info):
+    if debug_info:
+        if debug_info.requiresEscapedArgs:
+            args = [item.replace("&", "\\&") for item in args]
+        debug_args = [debug_info.path] + debug_info.args
+    else:
+        debug_args = []
+
+    command = [binary] + args
+
+    return debug_args, command
+
 
 class BrowserError(Exception):
     pass
@@ -113,6 +125,7 @@ class Browser(object):
         in the browser, or an empty list if no crashes occurred"""
         self.logger.crash(process, test)
 
+
 class NullBrowser(Browser):
     def start(self):
         """No-op browser to use in scenarios where the TestRunnerManager shouldn't
@@ -131,6 +144,7 @@ class NullBrowser(Browser):
 
     def on_output(self, line):
         raise NotImplementedError
+
 
 class ExecutorBrowser(object):
     def __init__(self, **kwargs):

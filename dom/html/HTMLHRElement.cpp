@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -88,8 +89,8 @@ HTMLHRElement::MapAttributesIntoRule(const nsMappedAttributes* aAttributes,
     const nsAttrValue* value = aAttributes->GetAttr(nsGkAtoms::align);
     if (value && value->Type() == nsAttrValue::eEnum) {
       // Map align attribute into auto side margins
-      nsCSSValue* marginLeft = aData->ValueForMarginLeftValue();
-      nsCSSValue* marginRight = aData->ValueForMarginRightValue();
+      nsCSSValue* marginLeft = aData->ValueForMarginLeft();
+      nsCSSValue* marginRight = aData->ValueForMarginRight();
       switch (value->GetEnumValue()) {
       case NS_STYLE_TEXT_ALIGN_LEFT:
         if (marginLeft->GetUnit() == eCSSUnit_Null)
@@ -165,7 +166,7 @@ HTMLHRElement::MapAttributesIntoRule(const nsMappedAttributes* aAttributes,
       borderTopWidth->SetFloatValue(sizePerSide, eCSSUnit_Pixel);
     }
     if (allSides) {
-      nsCSSValue* borderRightWidth = aData->ValueForBorderRightWidthValue();
+      nsCSSValue* borderRightWidth = aData->ValueForBorderRightWidth();
       if (borderRightWidth->GetUnit() == eCSSUnit_Null) {
         borderRightWidth->SetFloatValue(sizePerSide, eCSSUnit_Pixel);
       }
@@ -173,7 +174,7 @@ HTMLHRElement::MapAttributesIntoRule(const nsMappedAttributes* aAttributes,
       if (borderBottomWidth->GetUnit() == eCSSUnit_Null) {
         borderBottomWidth->SetFloatValue(sizePerSide, eCSSUnit_Pixel);
       }
-      nsCSSValue* borderLeftWidth = aData->ValueForBorderLeftWidthValue();
+      nsCSSValue* borderLeftWidth = aData->ValueForBorderLeftWidth();
       if (borderLeftWidth->GetUnit() == eCSSUnit_Null) {
         borderLeftWidth->SetFloatValue(sizePerSide, eCSSUnit_Pixel);
       }
@@ -185,7 +186,7 @@ HTMLHRElement::MapAttributesIntoRule(const nsMappedAttributes* aAttributes,
                                   eCSSUnit_Enumerated);
     }
     if (allSides) {
-      nsCSSValue* borderRightStyle = aData->ValueForBorderRightStyleValue();
+      nsCSSValue* borderRightStyle = aData->ValueForBorderRightStyle();
       if (borderRightStyle->GetUnit() == eCSSUnit_Null) {
         borderRightStyle->SetIntValue(NS_STYLE_BORDER_STYLE_SOLID,
                                       eCSSUnit_Enumerated);
@@ -195,7 +196,7 @@ HTMLHRElement::MapAttributesIntoRule(const nsMappedAttributes* aAttributes,
         borderBottomStyle->SetIntValue(NS_STYLE_BORDER_STYLE_SOLID,
                                        eCSSUnit_Enumerated);
       }
-      nsCSSValue* borderLeftStyle = aData->ValueForBorderLeftStyleValue();
+      nsCSSValue* borderLeftStyle = aData->ValueForBorderLeftStyle();
       if (borderLeftStyle->GetUnit() == eCSSUnit_Null) {
         borderLeftStyle->SetIntValue(NS_STYLE_BORDER_STYLE_SOLID,
                                      eCSSUnit_Enumerated);
@@ -257,9 +258,9 @@ HTMLHRElement::GetAttributeMappingFunction() const
 }
 
 JSObject*
-HTMLHRElement::WrapNode(JSContext* aCx)
+HTMLHRElement::WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return HTMLHRElementBinding::Wrap(aCx, this);
+  return HTMLHRElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 } // namespace mozilla

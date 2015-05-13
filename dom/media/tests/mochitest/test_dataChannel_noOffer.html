@@ -1,9 +1,6 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
-  <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
-  <script type="application/javascript" src="head.js"></script>
   <script type="application/javascript" src="pc.js"></script>
 </head>
 <body>
@@ -21,7 +18,7 @@
     var options = { offerToReceiveAudio: true };
 
     pc.createOffer(options).then(offer => {
-      ok(!offer.sdp.contains("m=application"),
+      ok(!offer.sdp.includes("m=application"),
         "m=application is not contained in the SDP");
 
       networkTestFinished();

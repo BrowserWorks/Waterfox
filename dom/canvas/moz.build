@@ -4,8 +4,15 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-TEST_DIRS += ['test']
 TEST_DIRS += ['compiledtest']
+
+MOCHITEST_MANIFESTS += [
+    'test/crossorigin/mochitest.ini',
+    'test/mochitest-subsuite-webgl.ini',
+    'test/mochitest.ini',
+]
+
+MOCHITEST_CHROME_MANIFESTS += ['test/chrome/chrome.ini']
 
 EXPORTS += [
     'nsICanvasRenderingContextInternal.h',
@@ -18,6 +25,7 @@ EXPORTS.mozilla.ipc += [
 
 EXPORTS.mozilla.dom += [
     'CanvasGradient.h',
+    'CanvasPath.h',
     'CanvasPattern.h',
     'CanvasRenderingContext2D.h',
     'CanvasUtils.h',
@@ -108,11 +116,13 @@ UNIFIED_SOURCES += [
     'WebGLSampler.cpp',
     'WebGLShader.cpp',
     'WebGLShaderPrecisionFormat.cpp',
+    'WebGLShaderValidator.cpp',
     'WebGLSync.cpp',
     'WebGLTexelConversions.cpp',
     'WebGLTexture.cpp',
     'WebGLTransformFeedback.cpp',
     'WebGLUniformLocation.cpp',
+    'WebGLValidateStrings.cpp',
     'WebGLVertexArray.cpp',
     'WebGLVertexArrayFake.cpp',
     'WebGLVertexArrayGL.cpp',
@@ -122,8 +132,6 @@ LOCAL_INCLUDES += [
 ]
 
 FAIL_ON_WARNINGS = True
-
-MSVC_ENABLE_PGO = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

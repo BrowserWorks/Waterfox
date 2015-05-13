@@ -25,12 +25,6 @@ def url_or_path(path):
     else:
         return abs_path(path)
 
-def slash_prefixed(url):
-    if not url.startswith("/"):
-        url = "/" + url
-    return url
-
-
 def require_arg(kwargs, name, value_func=None):
     if value_func is None:
         value_func = lambda x: x is not None
@@ -54,11 +48,6 @@ def create_parser(product_choices=None):
                         help="Path to the folder containing test metadata"),
     parser.add_argument("--tests", action="store", type=abs_path, dest="tests_root",
                         help="Path to test files"),
-    parser.add_argument("--prefs-root", dest="prefs_root", action="store", type=abs_path,
-                        help="Path to the folder containing browser prefs"),
-    parser.add_argument("--serve-root", action="store", type=abs_path, dest="serve_root",
-                        help="Path to web-platform-tests checkout containing serve.py and manifest.py"
-                        " (defaults to test_root)")
     parser.add_argument("--run-info", action="store", type=abs_path,
                         help="Path to directory containing extra json files to add to run info")
     parser.add_argument("--config", action="store", type=abs_path, dest="config",
@@ -71,37 +60,13 @@ def create_parser(product_choices=None):
                         type=abs_path, help="Binary to run tests against")
     parser.add_argument("--webdriver-binary", action="store", metavar="BINARY",
                         type=abs_path, help="WebDriver server binary to use")
-    parser.add_argument("--test-types", action="store",
-                        nargs="*", default=["testharness", "reftest"],
-                        choices=["testharness", "reftest"],
-                        help="Test types to run")
-    parser.add_argument("--processes", action="store", type=int, default=1,
+    parser.add_argument("--processes", action="store", type=int, default=None,
                         help="Number of simultaneous processes to use")
-    parser.add_argument("--include", action="append", type=slash_prefixed,
-                        help="URL prefix to include")
-    parser.add_argument("--exclude", action="append", type=slash_prefixed,
-                        help="URL prefix to exclude")
-    parser.add_argument("--include-manifest", type=abs_path,
-                        help="Path to manifest listing tests to include")
 
     parser.add_argument("--run-by-dir", type=int, nargs="?", default=False,
                         help="Split run into groups by directories. With a parameter,"
                         "limit the depth of splits e.g. --run-by-dir=1 to split by top-level"
                         "directory")
-
-    parser.add_argument("--total-chunks", action="store", type=int, default=1,
-                        help="Total number of chunks to use")
-    parser.add_argument("--this-chunk", action="store", type=int, default=1,
-                        help="Chunk number to run")
-    parser.add_argument("--chunk-type", action="store", choices=["none", "equal_time", "hash"],
-                        default=None, help="Chunking type to use")
-
-    parser.add_argument("--list-test-groups", action="store_true",
-                        default=False,
-                        help="List the top level directories containing tests that will run.")
-    parser.add_argument("--list-disabled", action="store_true",
-                        default=False,
-                        help="List the tests that are disabled on the current platform")
 
     parser.add_argument("--timeout-multiplier", action="store", type=float, default=None,
                         help="Multiplier relative to standard test timeout to use")
@@ -112,39 +77,81 @@ def create_parser(product_choices=None):
                         help="Don't capture stdio and write to logging")
 
     parser.add_argument("--product", action="store", choices=product_choices,
-                        default="firefox", help="Browser against which to run tests")
+                        default=None, help="Browser against which to run tests")
 
-    parser.add_argument('--debugger',
-                        help="run under a debugger, e.g. gdb or valgrind")
-    parser.add_argument('--debugger-args', help="arguments to the debugger")
-    parser.add_argument('--pause-on-unexpected', action="store_true",
-                        help="Halt the test runner when an unexpected result is encountered")
+    parser.add_argument("--list-test-groups", action="store_true",
+                        default=False,
+                        help="List the top level directories containing tests that will run.")
+    parser.add_argument("--list-disabled", action="store_true",
+                        default=False,
+                        help="List the tests that are disabled on the current platform")
 
-    parser.add_argument("--symbols-path", action="store", type=url_or_path,
-                        help="Path or url to symbols file used to analyse crash minidumps.")
-    parser.add_argument("--stackwalk-binary", action="store", type=abs_path,
-                        help="Path to stackwalker program used to analyse minidumps.")
+    test_selection_group = parser.add_argument_group("Test Selection")
+    test_selection_group.add_argument("--test-types", action="store",
+                                      nargs="*", default=["testharness", "reftest"],
+                                      choices=["testharness", "reftest"],
+                                      help="Test types to run")
+    test_selection_group.add_argument("--include", action="append",
+                                      help="URL prefix to include")
+    test_selection_group.add_argument("--exclude", action="append",
+                                      help="URL prefix to exclude")
+    test_selection_group.add_argument("--include-manifest", type=abs_path,
+                                      help="Path to manifest listing tests to include")
 
-    parser.add_argument("--ssl-type", action="store", default=None,
+    debugging_group = parser.add_argument_group("Debugging")
+    debugging_group.add_argument('--debugger', const="__default__", nargs="?",
+                                 help="run under a debugger, e.g. gdb or valgrind")
+    debugging_group.add_argument('--debugger-args', help="arguments to the debugger")
+
+    debugging_group.add_argument('--pause-after-test', action="store_true", default=None,
+                                 help="Halt the test runner after each test (this happens by default if only a single test is run)")
+    debugging_group.add_argument('--no-pause-after-test', dest="pause_after_test", action="store_false",
+                                 help="Don't halt the test runner irrespective of the number of tests run")
+
+    debugging_group.add_argument('--pause-on-unexpected', action="store_true",
+                                 help="Halt the test runner when an unexpected result is encountered")
+
+    debugging_group.add_argument("--symbols-path", action="store", type=url_or_path,
+                                 help="Path or url to symbols file used to analyse crash minidumps.")
+    debugging_group.add_argument("--stackwalk-binary", action="store", type=abs_path,
+                                 help="Path to stackwalker program used to analyse minidumps.")
+
+    chunking_group = parser.add_argument_group("Test Chunking")
+    chunking_group.add_argument("--total-chunks", action="store", type=int, default=1,
+                                help="Total number of chunks to use")
+    chunking_group.add_argument("--this-chunk", action="store", type=int, default=1,
+                                help="Chunk number to run")
+    chunking_group.add_argument("--chunk-type", action="store", choices=["none", "equal_time", "hash"],
+                                default=None, help="Chunking type to use")
+
+    ssl_group = parser.add_argument_group("SSL/TLS")
+    ssl_group.add_argument("--ssl-type", action="store", default=None,
                         choices=["openssl", "pregenerated", "none"],
                         help="Type of ssl support to enable (running without ssl may lead to spurious errors)")
 
-    parser.add_argument("--openssl-binary", action="store",
+    ssl_group.add_argument("--openssl-binary", action="store",
                         help="Path to openssl binary", default="openssl")
-    parser.add_argument("--certutil-binary", action="store",
+    ssl_group.add_argument("--certutil-binary", action="store",
                         help="Path to certutil binary for use with Firefox + ssl")
 
-
-    parser.add_argument("--ca-cert-path", action="store", type=abs_path,
+    ssl_group.add_argument("--ca-cert-path", action="store", type=abs_path,
                         help="Path to ca certificate when using pregenerated ssl certificates")
-    parser.add_argument("--host-key-path", action="store", type=abs_path,
+    ssl_group.add_argument("--host-key-path", action="store", type=abs_path,
                         help="Path to host private key when using pregenerated ssl certificates")
-    parser.add_argument("--host-cert-path", action="store", type=abs_path,
+    ssl_group.add_argument("--host-cert-path", action="store", type=abs_path,
                         help="Path to host certificate when using pregenerated ssl certificates")
 
+    gecko_group = parser.add_argument_group("Gecko-specific")
+    gecko_group.add_argument("--prefs-root", dest="prefs_root", action="store", type=abs_path,
+                             help="Path to the folder containing browser prefs")
 
-    parser.add_argument("--b2g-no-backup", action="store_true", default=False,
-                        help="Don't backup device before testrun with --product=b2g")
+    b2g_group = parser.add_argument_group("B2G-specific")
+    b2g_group.add_argument("--b2g-no-backup", action="store_true", default=False,
+                           help="Don't backup device before testrun with --product=b2g")
+
+    parser.add_argument("test_list", nargs="*",
+                        help="List of URLs for tests to run, or paths including tests to run. "
+                             "(equivalent to --include)")
 
     commandline.add_logging_group(parser)
     return parser
@@ -157,10 +164,10 @@ def set_from_config(kwargs):
         config_path = kwargs["config"]
 
     kwargs["config_path"] = config_path
+
     kwargs["config"] = config.read(kwargs["config_path"])
 
-    keys = {"paths": [("serve", "serve_root", True),
-                      ("prefs", "prefs_root", True),
+    keys = {"paths": [("prefs", "prefs_root", True),
                       ("run_info", "run_info", True)],
             "web-platform-tests": [("remote_url", "remote_url", False),
                                    ("branch", "branch", False),
@@ -192,6 +199,8 @@ def set_from_config(kwargs):
             kwargs["test_paths"]["/"] = {}
         kwargs["test_paths"]["/"]["metadata_path"] = kwargs["metadata_root"]
 
+    kwargs["suite_name"] = kwargs["config"].get("web-platform-tests", {}).get("name", "web-platform-tests")
+
 
 def get_test_paths(config):
     # Set up test_paths
@@ -209,14 +218,15 @@ def get_test_paths(config):
 
 
 def exe_path(name):
+    if name is None:
+        return
+
     path = find_executable(name)
     if os.access(path, os.X_OK):
         return path
 
 
 def check_args(kwargs):
-    from mozrunner import debugger_arguments
-
     set_from_config(kwargs)
 
     for test_paths in kwargs["test_paths"].itervalues():
@@ -235,12 +245,14 @@ def check_args(kwargs):
                 print "Fatal: %s path %s is not a directory" % (name, path)
                 sys.exit(1)
 
-    if kwargs["serve_root"] is None:
-        if "/" in kwargs["test_paths"]:
-            kwargs["serve_root"] = kwargs["test_paths"]["/"]["tests_path"]
-    else:
-        print >> sys.stderr, "Unable to determine server root path"
-        sys.exit(1)
+    if kwargs["product"] is None:
+        kwargs["product"] = "firefox"
+
+    if kwargs["test_list"]:
+        if kwargs["include"] is not None:
+            kwargs["include"].extend(kwargs["test_list"])
+        else:
+            kwargs["include"] = kwargs["test_list"]
 
     if kwargs["run_info"] is None:
         kwargs["run_info"] = kwargs["config_path"]
@@ -254,17 +266,22 @@ def check_args(kwargs):
         else:
             kwargs["chunk_type"] = "none"
 
+    if kwargs["processes"] is None:
+        kwargs["processes"] = 1
+
     if kwargs["debugger"] is not None:
-        debug_args, interactive = debugger_arguments(kwargs["debugger"],
-                                                     kwargs["debugger_args"])
-        if interactive:
-            require_arg(kwargs, "processes", lambda x: x == 1)
+        import mozdebug
+        if kwargs["debugger"] == "__default__":
+            kwargs["debugger"] = mozdebug.get_default_debugger_name()
+        debug_info = mozdebug.get_debugger_info(kwargs["debugger"],
+                                                kwargs["debugger_args"])
+        if debug_info.interactive:
+            if kwargs["processes"] != 1:
+                kwargs["processes"] = 1
             kwargs["no_capture_stdio"] = True
-        kwargs["interactive"] = interactive
-        kwargs["debug_args"] = debug_args
+        kwargs["debug_info"] = debug_info
     else:
-        kwargs["interactive"] = False
-        kwargs["debug_args"] = None
+        kwargs["debug_info"] = None
 
     if kwargs["binary"] is not None:
         if not os.path.exists(kwargs["binary"]):
@@ -313,9 +330,6 @@ def create_parser_update():
                         help="Path to web-platform-tests"),
     parser.add_argument("--sync-path", action="store", type=abs_path,
                         help="Path to store git checkout of web-platform-tests during update"),
-    parser.add_argument("--serve-root", action="store", type=abs_path, dest="serve_root",
-                        help="Path to web-platform-tests checkout containing serve.py and manifest.py"
-                        " (defaults to test_root)")
     parser.add_argument("--remote_url", action="store",
                         help="URL of web-platfrom-tests repository to sync against"),
     parser.add_argument("--branch", action="store", type=abs_path,

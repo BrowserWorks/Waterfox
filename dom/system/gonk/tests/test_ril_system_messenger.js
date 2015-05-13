@@ -243,9 +243,75 @@ add_test(function test_sms_messenger_notify_sms() {
       read:              true
     });
 
+  // Verify 'sms-failed' system message.
+  messenger.notifySms(Ci.nsISmsMessenger.NOTIFICATION_TYPE_SENT_FAILED,
+                      7,
+                      8,
+                      "99887766554433221100",
+                      Ci.nsISmsService.DELIVERY_TYPE_ERROR,
+                      Ci.nsISmsService.DELIVERY_STATUS_TYPE_ERROR,
+                      null,
+                      "+0987654321",
+                      "Outgoing message",
+                      Ci.nsISmsService.MESSAGE_CLASS_TYPE_NORMAL,
+                      timestamp,
+                      0,
+                      0,
+                      true);
+
+  equal_received_system_message("sms-failed", {
+      iccId:             "99887766554433221100",
+      type:              "sms",
+      id:                7,
+      threadId:          8,
+      delivery:          "error",
+      deliveryStatus:    "error",
+      sender:            null,
+      receiver:          "+0987654321",
+      body:              "Outgoing message",
+      messageClass:      "normal",
+      timestamp:         timestamp,
+      sentTimestamp:     0,
+      deliveryTimestamp: 0,
+      read:              true
+    });
+
+  // Verify 'sms-delivery-error' system message.
+  messenger.notifySms(Ci.nsISmsMessenger.NOTIFICATION_TYPE_DELIVERY_ERROR,
+                      9,
+                      10,
+                      "99887766554433221100",
+                      Ci.nsISmsService.DELIVERY_TYPE_SENT,
+                      Ci.nsISmsService.DELIVERY_STATUS_TYPE_ERROR,
+                      null,
+                      "+0987654321",
+                      "Outgoing message",
+                      Ci.nsISmsService.MESSAGE_CLASS_TYPE_NORMAL,
+                      timestamp,
+                      0,
+                      0,
+                      true);
+
+  equal_received_system_message("sms-delivery-error", {
+      iccId:             "99887766554433221100",
+      type:              "sms",
+      id:                9,
+      threadId:          10,
+      delivery:          "sent",
+      deliveryStatus:    "error",
+      sender:            null,
+      receiver:          "+0987654321",
+      body:              "Outgoing message",
+      messageClass:      "normal",
+      timestamp:         timestamp,
+      sentTimestamp:     0,
+      deliveryTimestamp: 0,
+      read:              true
+    });
+
   // Verify the protection of invalid nsISmsMessenger.NOTIFICATION_TYPEs.
   try {
-    messenger.notifySms(3,
+    messenger.notifySms(5,
                         1,
                         2,
                         "99887766554433221100",
@@ -725,7 +791,6 @@ add_test(function test_icc_notify_stk_proactive_command() {
           { identifier: 0x02, text: "Menu Item 2" },
           { identifier: 0x03, text: "Menu Item 3" }
         ],
-        presentationType: RIL.STK_PRESENTATION_TYPE_NOT_SPECIFIED,
         isHelpAvailable: true
       }
     },
@@ -762,7 +827,6 @@ add_test(function test_icc_notify_stk_proactive_command() {
         ],
         iconSelfExplanatory: false,
         icons: [basicIcon, colorIcon, colorTransparencyIcon],
-        presentationType: RIL.STK_PRESENTATION_TYPE_NOT_SPECIFIED,
         isHelpAvailable: false
       }
     },
@@ -772,11 +836,13 @@ add_test(function test_icc_notify_stk_proactive_command() {
       typeOfCommand: RIL.STK_CMD_SELECT_ITEM,
       commandQualifier: RIL.STK_PRESENTATION_TYPE_NOT_SPECIFIED,
       options: {
+        title: null,
         items: [
           { identifier: 0x01, text: "Menu Item 1" },
           { identifier: 0x02, text: "Menu Item 2" },
           { identifier: 0x03, text: "Menu Item 3" }
         ],
+        presentationType: RIL.STK_PRESENTATION_TYPE_NOT_SPECIFIED,
         isHelpAvailable: false
       }
     },
@@ -814,6 +880,7 @@ add_test(function test_icc_notify_stk_proactive_command() {
         defaultItem: 0x02,
         iconSelfExplanatory: false,
         icons: [basicIcon, colorIcon, colorTransparencyIcon],
+        presentationType: RIL.STK_PRESENTATION_TYPE_NAVIGATION_OPTIONS,
         isHelpAvailable: false
       }
     },
@@ -915,6 +982,7 @@ add_test(function test_icc_notify_stk_proactive_command() {
         isUCS2: false,
         isYesNoRequested: true,
         isHelpAvailable: true,
+        defaultText: null,
         iconSelfExplanatory: false,
         icons: [colorIcon]
       }
@@ -934,6 +1002,7 @@ add_test(function test_icc_notify_stk_proactive_command() {
         hideInput: true,
         isPacked: true,
         isHelpAvailable: false,
+        defaultText: null,
         iconSelfExplanatory: true,
         icons: [basicIcon]
       }
@@ -1001,6 +1070,7 @@ add_test(function test_icc_notify_stk_proactive_command() {
       typeOfCommand: RIL.STK_CMD_PLAY_TONE,
       commandQualifier: 0x01, // isVibrate
       options: {
+        text: null,
         isVibrate: true
       }
     },
@@ -1048,6 +1118,7 @@ add_test(function test_icc_notify_stk_proactive_command() {
       typeOfCommand: RIL.STK_CMD_OPEN_CHANNEL,
       commandQualifier: 0x00,  //RFU
       options: {
+        text: null,
       }
     },
     // STK_CMD_OPEN_CHANNEL with optional properties.
@@ -1078,6 +1149,7 @@ add_test(function test_icc_notify_stk_proactive_command() {
       typeOfCommand: RIL.STK_CMD_SEND_DATA,
       commandQualifier: 0x00,  //RFU
       options: {
+        text: null,
         iconSelfExplanatory: false,
         icons: [basicIcon]
       }

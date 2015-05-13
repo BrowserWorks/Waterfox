@@ -20,7 +20,7 @@
         '.',
         '../interface',
         'include',
-        'dummy', # dummy audio device
+        'dummy',  # Contains dummy audio device implementations.
       ],
       'direct_dependent_settings': {
         'include_dirs': [
@@ -45,6 +45,8 @@
         'dummy/audio_device_dummy.h',
         'dummy/audio_device_utility_dummy.cc',
         'dummy/audio_device_utility_dummy.h',
+        'dummy/file_audio_device.cc',
+        'dummy/file_audio_device.h',
       ],
       'conditions': [
         ['build_with_mozilla==1', {
@@ -57,6 +59,11 @@
             'WEBRTC_HARDWARE_AEC_NS',
           ],
         }],
+        ['include_sndio_audio==1', {
+          'include_dirs': [
+            'sndio',
+          ],
+        }], # include_sndio_audio==1
         ['OS=="linux" or include_alsa_audio==1 or include_pulse_audio==1', {
           'include_dirs': [
             'linux',
@@ -105,13 +112,20 @@
             'WEBRTC_DUMMY_AUDIO_BUILD',
           ],
         }],
+        ['build_with_chromium==0', {
+          'sources': [
+            # Don't link these into Chrome since they contain static data.
+            'dummy/file_audio_device_factory.cc',
+            'dummy/file_audio_device_factory.h',
+          ],
+        }],
         ['include_internal_audio_device==1', {
           'sources': [
             'linux/audio_device_utility_linux.cc',
             'linux/audio_device_utility_linux.h',
             'linux/latebindingsymboltable_linux.cc',
             'linux/latebindingsymboltable_linux.h',
-            'ios/audio_device_ios.cc',
+            'ios/audio_device_ios.mm',
             'ios/audio_device_ios.h',
             'ios/audio_device_utility_ios.cc',
             'ios/audio_device_utility_ios.h',
@@ -189,6 +203,19 @@
                 ],
               },
             }],
+            ['include_sndio_audio==1', {
+              'link_settings': {
+                'libraries': [
+                  '-lsndio',
+                ],
+              },
+              'sources': [
+                'sndio/audio_device_sndio.cc',
+                'sndio/audio_device_sndio.h',
+                'sndio/audio_device_utility_sndio.cc',
+                'sndio/audio_device_utility_sndio.h',
+              ],
+            }],
             ['include_alsa_audio==1', {
               'cflags_mozilla': [
                 '$(MOZ_ALSA_CFLAGS)',
@@ -221,12 +248,25 @@
                 'linux/pulseaudiosymboltable_linux.h',
               ],
             }],
-            ['OS=="mac" or OS=="ios"', {
+            ['OS=="mac"', {
               'link_settings': {
                 'libraries': [
                   '$(SDKROOT)/System/Library/Frameworks/AudioToolbox.framework',
                   '$(SDKROOT)/System/Library/Frameworks/CoreAudio.framework',
                 ],
+              },
+            }],
+            ['OS=="ios"', {
+              'xcode_settings': {
+                'CLANG_ENABLE_OBJC_ARC': 'YES',
+              },
+              'link_settings': {
+                'xcode_settings': {
+                  'OTHER_LDFLAGS': [
+                    '-framework AudioToolbox',
+                    '-framework AVFoundation',
+                  ],
+                },
               },
             }],
             ['OS=="win"', {
@@ -293,7 +333,6 @@
               ],
               'includes': [
                 '../../build/isolate.gypi',
-                'audio_device_tests.isolate',
               ],
               'sources': [
                 'audio_device_tests.isolate',

@@ -32,11 +32,7 @@
 // and we load localstore from somewhere else.
 #define NS_LOCALSTORE_UNSAFE_FILE "LStoreS"
 
-class nsACString;
-struct nsStaticModuleInfo;
-
 class nsINativeAppSupport;
-class nsICmdLineService;
 class nsXREDirProvider;
 class nsIToolkitProfileService;
 class nsIFile;
@@ -57,6 +53,8 @@ extern char **gArgv;
 extern int    gRestartArgc;
 extern char **gRestartArgv;
 extern bool gLogConsoleErrors;
+
+extern bool gIsGtest;
 
 /**
  * Create the nativeappsupport implementation.

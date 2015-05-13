@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -8,12 +9,14 @@
 
 #include "nsIDOMNodeList.h"
 #include "nsWrapperCache.h"
-#include "nsIContent.h"
 
 // IID for the nsINodeList interface
 #define NS_INODELIST_IID \
 { 0xadb5e54c, 0x6e96, 0x4102, \
  { 0x8d, 0x40, 0xe0, 0x12, 0x3d, 0xcf, 0x48, 0x7a } }
+
+class nsIContent;
+class nsINode;
 
 /**
  * An internal interface for a reasonably fast indexOf.

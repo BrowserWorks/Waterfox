@@ -18,6 +18,13 @@
 #include "nsTextFrame.h"
 #include "nsBlockFrame.h"
 #include "nsIFrameInlines.h"
+#include "nsStyleStructInlines.h"
+#include "RubyUtils.h"
+#include "nsRubyFrame.h"
+#include "nsRubyBaseFrame.h"
+#include "nsRubyTextFrame.h"
+#include "nsRubyBaseContainerFrame.h"
+#include "nsRubyTextContainerFrame.h"
 #include <algorithm>
 
 #undef NOISY_BIDI
@@ -50,6 +57,51 @@ static const char16_t kSeparators[] = {
 };
 
 #define NS_BIDI_CONTROL_FRAME ((nsIFrame*)0xfffb1d1)
+
+// Given a style context, return any bidi control character necessary to
+// implement style properties that override directionality (i.e. if it has
+// unicode-bidi:bidi-override or bidi-embed, or text-orientation:upright
+// in vertical writing mode) when applying the bidi algorithm.
+//
+// The aBidiControl parameter specifies which bidi controls we want to
+// consider: override only, or also embed.
+//
+// XXX support for isolates may need to be added for bug 1157726.
+//
+// Returns 0 if no directional control character is implied by the style.
+
+enum WhichBidiControl {
+  kOverride,
+  kOverrideOrEmbed
+};
+
+static char16_t GetBidiControl(nsStyleContext* aStyleContext,
+                               WhichBidiControl aBidiControl)
+{
+  const nsStyleVisibility* vis = aStyleContext->StyleVisibility();
+  if (vis->mWritingMode != NS_STYLE_WRITING_MODE_HORIZONTAL_TB &&
+      vis->mTextOrientation == NS_STYLE_TEXT_ORIENTATION_UPRIGHT) {
+    return kLRO;
+  }
+  const nsStyleTextReset* text = aStyleContext->StyleTextReset();
+  if (text->mUnicodeBidi & NS_STYLE_UNICODE_BIDI_OVERRIDE) {
+    if (NS_STYLE_DIRECTION_RTL == vis->mDirection) {
+      return kRLO;
+    }
+    if (NS_STYLE_DIRECTION_LTR == vis->mDirection) {
+      return kLRO;
+    }
+  } else if (aBidiControl == kOverrideOrEmbed &&
+             text->mUnicodeBidi & NS_STYLE_UNICODE_BIDI_EMBED) {
+    if (NS_STYLE_DIRECTION_RTL == vis->mDirection) {
+      return kRLE;
+    }
+    if (NS_STYLE_DIRECTION_LTR == vis->mDirection) {
+      return kLRE;
+    }
+  }
+  return 0;
+}
 
 struct BidiParagraphData {
   nsString            mBuffer;
@@ -93,7 +145,7 @@ struct BidiParagraphData {
       for (nsIContent* content = aBlockFrame->GetContent() ; content; 
            content = content->GetParent()) {
         if (content->IsNodeOfType(nsINode::eHTML_FORM_CONTROL) ||
-            content->IsXUL()) {
+            content->IsXULElement()) {
           mIsVisual = false;
           break;
         }
@@ -130,10 +182,12 @@ struct BidiParagraphData {
     mPrevFrame = aBpd->mPrevFrame;
     mParagraphDepth = aBpd->mParagraphDepth + 1;
 
-    const nsStyleTextReset* text = aBDIFrame->StyleTextReset();
-    bool isRTL = (NS_STYLE_DIRECTION_RTL ==
+    char16_t ch = GetBidiControl(aBDIFrame->StyleContext(), kOverride);
+    bool isRTL = ch != kLRO &&
+                 (NS_STYLE_DIRECTION_RTL ==
                   aBDIFrame->StyleVisibility()->mDirection);
 
+    const nsStyleTextReset* text = aBDIFrame->StyleTextReset();
     if (text->mUnicodeBidi & NS_STYLE_UNICODE_BIDI_PLAINTEXT) {
       mParaLevel = NSBIDI_DEFAULT_LTR;
     } else {
@@ -141,8 +195,8 @@ struct BidiParagraphData {
       if (isRTL) ++mParaLevel;
     }
 
-    if (text->mUnicodeBidi & NS_STYLE_UNICODE_BIDI_OVERRIDE) {
-      PushBidiControl(isRTL ? kRLO : kLRO);
+    if (ch != 0) {
+      PushBidiControl(ch);
     }
   }
 
@@ -607,19 +661,9 @@ nsBidiPresUtils::Resolve(nsBlockFrame* aBlockFrame)
 
   // Handle bidi-override being set on the block itself before calling
   // TraverseFrames.
-  const nsStyleTextReset* text = aBlockFrame->StyleTextReset();
-  char16_t ch = 0;
-  if (text->mUnicodeBidi & NS_STYLE_UNICODE_BIDI_OVERRIDE) {
-    const nsStyleVisibility* vis = aBlockFrame->StyleVisibility();
-    if (NS_STYLE_DIRECTION_RTL == vis->mDirection) {
-      ch = kRLO;
-    }
-    else if (NS_STYLE_DIRECTION_LTR == vis->mDirection) {
-      ch = kLRO;
-    }
-    if (ch != 0) {
-      bpd.PushBidiControl(ch);
-    }
+  char16_t ch = GetBidiControl(aBlockFrame->StyleContext(), kOverride);
+  if (ch != 0) {
+    bpd.PushBidiControl(ch);
   }
   for (nsBlockFrame* block = aBlockFrame; block;
        block = static_cast<nsBlockFrame*>(block->GetNextContinuation())) {
@@ -983,28 +1027,12 @@ nsBidiPresUtils::TraverseFrames(nsBlockFrame*              aBlockFrame,
     if (frame->IsFrameOfType(nsIFrame::eBidiInlineContainer)) {
       if (!(frame->GetStateBits() & NS_FRAME_FIRST_REFLOW)) {
         nsContainerFrame* c = static_cast<nsContainerFrame*>(frame);
-        MOZ_ASSERT(c = do_QueryFrame(frame),
+        MOZ_ASSERT(c == do_QueryFrame(frame),
                    "eBidiInlineContainer must be a nsContainerFrame subclass");
         c->DrainSelfOverflowList();
       }
 
-      const nsStyleVisibility* vis = frame->StyleVisibility();
-      const nsStyleTextReset* text = frame->StyleTextReset();
-      if (text->mUnicodeBidi & NS_STYLE_UNICODE_BIDI_OVERRIDE) {
-        if (NS_STYLE_DIRECTION_RTL == vis->mDirection) {
-          ch = kRLO;
-        }
-        else if (NS_STYLE_DIRECTION_LTR == vis->mDirection) {
-          ch = kLRO;
-        }
-      } else if (text->mUnicodeBidi & NS_STYLE_UNICODE_BIDI_EMBED) {
-        if (NS_STYLE_DIRECTION_RTL == vis->mDirection) {
-          ch = kRLE;
-        }
-        else if (NS_STYLE_DIRECTION_LTR == vis->mDirection) {
-          ch = kLRE;
-        }
-      }
+      ch = GetBidiControl(frame->StyleContext(), kOverrideOrEmbed);
 
       // Add a dummy frame pointer representing a bidi control code before the
       // first frame of an element specifying embedding or override
@@ -1027,7 +1055,8 @@ nsBidiPresUtils::TraverseFrames(nsBlockFrame*              aBlockFrame,
       if (nsGkAtoms::textFrame == frameType) {
         if (content != aBpd->mPrevContent) {
           aBpd->mPrevContent = content;
-          if (!frame->StyleText()->NewlineIsSignificant()) {
+          if (!frame->StyleText()->NewlineIsSignificant(
+                static_cast<nsTextFrame*>(frame))) {
             content->AppendTextTo(aBpd->mBuffer);
           } else {
             /*
@@ -1148,7 +1177,7 @@ nsBidiPresUtils::TraverseFrames(nsBlockFrame*              aBlockFrame,
         // U+FFFC"
         // <wbr>, however, is treated as U+200B ZERO WIDTH SPACE. See
         // http://dev.w3.org/html5/spec/Overview.html#phrasing-content-1
-        aBpd->AppendUnichar(content->IsHTML(nsGkAtoms::wbr) ?
+        aBpd->AppendUnichar(content->IsHTMLElement(nsGkAtoms::wbr) ?
                             kZWSP : kObjectSubstitute);
         if (!frame->IsInlineOutside()) {
           // if it is not inline, end the paragraph
@@ -1222,11 +1251,11 @@ nsBidiPresUtils::ResolveParagraphWithinBlock(nsBlockFrame* aBlockFrame,
 }
 
 void
-nsBidiPresUtils::ReorderFrames(nsIFrame*   aFirstFrameOnLine,
-                               int32_t     aNumFramesOnLine,
+nsBidiPresUtils::ReorderFrames(nsIFrame* aFirstFrameOnLine,
+                               int32_t aNumFramesOnLine,
                                WritingMode aLineWM,
-                               nscoord     aLineWidth,
-                               nscoord     aStart)
+                               const nsSize& aContainerSize,
+                               nscoord aStart)
 {
   // If this line consists of a line frame, reorder the line frame's children.
   if (aFirstFrameOnLine->GetType() == nsGkAtoms::lineFrame) {
@@ -1239,7 +1268,8 @@ nsBidiPresUtils::ReorderFrames(nsIFrame*   aFirstFrameOnLine,
   }
 
   BidiLineData bld(aFirstFrameOnLine, aNumFramesOnLine);
-  RepositionInlineFrames(&bld, aFirstFrameOnLine, aLineWM, aLineWidth, aStart);
+  RepositionInlineFrames(&bld, aFirstFrameOnLine, aLineWM,
+                         aContainerSize, aStart);
 }
 
 nsIFrame*
@@ -1279,11 +1309,11 @@ nsBidiPresUtils::GetFrameBaseLevel(nsIFrame* aFrame)
 }
 
 void
-nsBidiPresUtils::IsFirstOrLast(nsIFrame*             aFrame,
-                               nsContinuationStates* aContinuationStates,
-                               bool                  aSpanDirMatchesLineDir,
-                               bool&                 aIsFirst /* out */,
-                               bool&                 aIsLast /* out */)
+nsBidiPresUtils::IsFirstOrLast(nsIFrame* aFrame,
+                               const nsContinuationStates* aContinuationStates,
+                               bool aSpanDirMatchesLineDir,
+                               bool& aIsFirst /* out */,
+                               bool& aIsLast /* out */)
 {
   /*
    * Since we lay out frames in the line's direction, visiting a frame with
@@ -1394,16 +1424,94 @@ nsBidiPresUtils::IsFirstOrLast(nsIFrame*             aFrame,
   }
 }
 
-void
-nsBidiPresUtils::RepositionFrame(nsIFrame*             aFrame,
-                                 bool                  aIsEvenLevel,
-                                 nscoord&              aStart,
-                                 nsContinuationStates* aContinuationStates,
-                                 WritingMode           aContainerWM,
-                                 nscoord               aContainerWidth)
+/* static */ nscoord
+nsBidiPresUtils::RepositionRubyFrame(
+  nsIFrame* aFrame,
+  const nsContinuationStates* aContinuationStates,
+  const WritingMode aContainerWM,
+  const LogicalMargin& aBorderPadding)
 {
+  nsIAtom* frameType = aFrame->GetType();
+  MOZ_ASSERT(RubyUtils::IsRubyBox(frameType));
+
+  nscoord icoord = 0;
+  WritingMode frameWM = aFrame->GetWritingMode();
+  bool isLTR = frameWM.IsBidiLTR();
+  nsSize frameSize = aFrame->GetSize();
+  if (frameType == nsGkAtoms::rubyFrame) {
+    icoord += aBorderPadding.IStart(frameWM);
+    // Reposition ruby segments in a ruby container
+    for (RubySegmentEnumerator e(static_cast<nsRubyFrame*>(aFrame));
+          !e.AtEnd(); e.Next()) {
+      nsRubyBaseContainerFrame* rbc = e.GetBaseContainer();
+      AutoRubyTextContainerArray textContainers(rbc);
+
+      nscoord segmentISize = RepositionFrame(rbc, isLTR, icoord,
+                                             aContinuationStates,
+                                             frameWM, false, frameSize);
+      for (nsRubyTextContainerFrame* rtc : textContainers) {
+        nscoord isize = RepositionFrame(rtc, isLTR, icoord, aContinuationStates,
+                                        frameWM, false, frameSize);
+        segmentISize = std::max(segmentISize, isize);
+      }
+      icoord += segmentISize;
+    }
+    icoord += aBorderPadding.IEnd(frameWM);
+  } else if (frameType == nsGkAtoms::rubyBaseContainerFrame) {
+    // Reposition ruby columns in a ruby segment
+    auto rbc = static_cast<nsRubyBaseContainerFrame*>(aFrame);
+    AutoRubyTextContainerArray textContainers(rbc);
+
+    for (RubyColumnEnumerator e(rbc, textContainers); !e.AtEnd(); e.Next()) {
+      RubyColumn column;
+      e.GetColumn(column);
+
+      nscoord columnISize = RepositionFrame(column.mBaseFrame, isLTR, icoord,
+                                            aContinuationStates,
+                                            frameWM, false, frameSize);
+      for (nsRubyTextFrame* rt : column.mTextFrames) {
+        nscoord isize = RepositionFrame(rt, isLTR, icoord, aContinuationStates,
+                                        frameWM, false, frameSize);
+        columnISize = std::max(columnISize, isize);
+      }
+      icoord += columnISize;
+    }
+  } else {
+    if (frameType == nsGkAtoms::rubyBaseFrame ||
+        frameType == nsGkAtoms::rubyTextFrame) {
+      // Reorder the children.
+      // XXX It currently doesn't work properly because we do not
+      // resolve frames inside ruby content frames.
+      const nsFrameList& childList = aFrame->PrincipalChildList();
+      if (childList.NotEmpty()) {
+        ReorderFrames(childList.FirstChild(), childList.GetLength(),
+                      frameWM, frameSize, aBorderPadding.IStart(frameWM));
+      }
+    }
+    // Note that, ruby text container is not present in all conditions
+    // above. It is intended, because the children of rtc are reordered
+    // with the children of ruby base container simultaneously. We only
+    // need to return its isize here, as it should not be changed.
+    icoord += aFrame->ISize(aContainerWM);
+  }
+  return icoord;
+}
+
+/* static */ nscoord
+nsBidiPresUtils::RepositionFrame(nsIFrame* aFrame,
+                                 bool aIsEvenLevel,
+                                 nscoord aStartOrEnd,
+                                 const nsContinuationStates* aContinuationStates,
+                                 WritingMode aContainerWM,
+                                 bool aContainerReverseDir,
+                                 const nsSize& aContainerSize)
+{
+  nscoord lineSize = aContainerWM.IsVertical() ?
+    aContainerSize.height : aContainerSize.width;
+  NS_ASSERTION(lineSize != NS_UNCONSTRAINEDSIZE,
+               "Unconstrained inline line size in bidi frame reordering");
   if (!aFrame)
-    return;
+    return 0;
 
   bool isFirst, isLast;
   WritingMode frameWM = aFrame->GetWritingMode();
@@ -1423,8 +1531,18 @@ nsBidiPresUtils::RepositionFrame(nsIFrame*             aFrame,
   // This method is called from nsBlockFrame::PlaceLine via the call to
   // bidiUtils->ReorderFrames, so this is guaranteed to be after the inlines
   // have been reflowed, which is required for GetUsedMargin/Border/Padding
+  nscoord frameISize = aFrame->ISize();
   LogicalMargin frameMargin = aFrame->GetLogicalUsedMargin(frameWM);
   LogicalMargin borderPadding = aFrame->GetLogicalUsedBorderAndPadding(frameWM);
+  // Since the visual order of frame could be different from the
+  // continuation order, we need to remove any border/padding first,
+  // so that we can get the correct isize of the current frame.
+  if (!aFrame->GetPrevContinuation()) {
+    frameISize -= borderPadding.IStart(frameWM);
+  }
+  if (!aFrame->GetNextContinuation()) {
+    frameISize -= borderPadding.IEnd(frameWM);
+  }
   if (!isFirst) {
     frameMargin.IStart(frameWM) = 0;
     borderPadding.IStart(frameWM) = 0;
@@ -1433,57 +1551,56 @@ nsBidiPresUtils::RepositionFrame(nsIFrame*             aFrame,
     frameMargin.IEnd(frameWM) = 0;
     borderPadding.IEnd(frameWM) = 0;
   }
-  LogicalMargin margin = frameMargin.ConvertTo(aContainerWM, frameWM);
-  aStart += margin.IStart(aContainerWM);
+  frameISize += borderPadding.IStartEnd(frameWM);
 
-  nscoord start = aStart;
-
+  nscoord icoord = 0;
   if (!IsBidiLeaf(aFrame)) {
-    // If the resolved direction of the container is different from the
-    // direction of the frame, we need to traverse the child list in reverse
-    // order, to make it O(n) we store the list locally and iterate the list
-    // in reverse
-    bool reverseOrder = aIsEvenLevel != frameWM.IsBidiLTR();
-    nsTArray<nsIFrame*> childList;
-    nsIFrame *frame = aFrame->GetFirstPrincipalChild();
-    if (frame && reverseOrder) {
-      childList.AppendElement((nsIFrame*)nullptr);
-      while (frame) {
-        childList.AppendElement(frame);
-        frame = frame->GetNextSibling();
-      }
-      frame = childList[childList.Length() - 1];
-    }
-
+    bool reverseDir = aIsEvenLevel != frameWM.IsBidiLTR();
+    icoord += reverseDir ?
+      borderPadding.IEnd(frameWM) : borderPadding.IStart(frameWM);
+    LogicalSize logicalSize(frameWM, frameISize, aFrame->BSize());
+    nsSize frameSize = logicalSize.GetPhysicalSize(frameWM);
     // Reposition the child frames
-    int32_t index = 0;
-    nscoord iCoord = borderPadding.IStart(frameWM);
-
-    while (frame) {
-      RepositionFrame(frame,
-                      aIsEvenLevel,
-                      iCoord,
-                      aContinuationStates,
-                      frameWM,
-                      aFrame->GetLogicalSize(aContainerWM).Width(aContainerWM));
-      index++;
-      frame = reverseOrder ?
-                childList[childList.Length() - index - 1] :
-                frame->GetNextSibling();
+    for (nsFrameList::Enumerator e(aFrame->PrincipalChildList());
+         !e.AtEnd(); e.Next()) {
+      icoord += RepositionFrame(e.get(), aIsEvenLevel, icoord,
+                                aContinuationStates,
+                                frameWM, reverseDir, frameSize);
     }
-
-    aStart += iCoord + borderPadding.IEnd(frameWM);
+    icoord += reverseDir ?
+      borderPadding.IStart(frameWM) : borderPadding.IEnd(frameWM);
+  } else if (RubyUtils::IsRubyBox(aFrame->GetType())) {
+    icoord += RepositionRubyFrame(aFrame, aContinuationStates,
+                                  aContainerWM, borderPadding);
   } else {
-    aStart += aFrame->ISize(aContainerWM);
+    icoord +=
+      frameWM.IsOrthogonalTo(aContainerWM) ? aFrame->BSize() : frameISize;
   }
 
-  LogicalRect logicalRect = aFrame->GetLogicalRect(aContainerWM,
-                                                   aContainerWidth);
-  logicalRect.IStart(aContainerWM) = start;
-  logicalRect.ISize(aContainerWM) = aStart - start;
-  aFrame->SetRect(aContainerWM, logicalRect, aContainerWidth);
+  // LogicalRect doesn't correctly calculate the vertical position
+  // in vertical writing modes with right-to-left direction (Bug 1131451).
+  // This does the correct calculation ad hoc pending the fix for that.
+  nsRect rect = aFrame->GetRect();
 
-  aStart += margin.IEnd(aContainerWM);
+  LogicalMargin margin = frameMargin.ConvertTo(aContainerWM, frameWM);
+  // In the following variables, if aContainerReverseDir is true, i.e.
+  // the container is positioning its children in reverse of its logical
+  // direction, the "StartOrEnd" refers to the distance from the frame
+  // to the inline end edge of the container, elsewise, it refers to the
+  // distance to the inline start edge.
+  nscoord marginStartOrEnd = aContainerReverseDir ?
+    margin.IEnd(aContainerWM) : margin.IStart(aContainerWM);
+  nscoord frameStartOrEnd = aStartOrEnd + marginStartOrEnd;
+  // Whether we are placing frames from right to left.
+  // e.g. If the frames are placed reversely in LTR mode, they are
+  // actually placed from right to left.
+  bool orderingRTL = aContainerReverseDir == aContainerWM.IsBidiLTR();
+  (aContainerWM.IsVertical() ? rect.y : rect.x) = orderingRTL ?
+    lineSize - (frameStartOrEnd + icoord) : frameStartOrEnd;
+  (aContainerWM.IsVertical() ? rect.height : rect.width) = icoord;
+  aFrame->SetRect(rect);
+
+  return icoord + margin.IStartEnd(aContainerWM);
 }
 
 void
@@ -1494,7 +1611,7 @@ nsBidiPresUtils::InitContinuationStates(nsIFrame*              aFrame,
   state->mFirstVisualFrame = nullptr;
   state->mFrameCount = 0;
 
-  if (!IsBidiLeaf(aFrame)) {
+  if (!IsBidiLeaf(aFrame) || RubyUtils::IsRubyBox(aFrame->GetType())) {
     // Continue for child frames
     nsIFrame* frame;
     for (frame = aFrame->GetFirstPrincipalChild();
@@ -1510,7 +1627,7 @@ void
 nsBidiPresUtils::RepositionInlineFrames(BidiLineData *aBld,
                                         nsIFrame* aFirstChild,
                                         WritingMode aLineWM,
-                                        nscoord aLineWidth,
+                                        const nsSize& aContainerSize,
                                         nscoord aStart)
 {
   nscoord start = aStart;
@@ -1538,12 +1655,10 @@ nsBidiPresUtils::RepositionInlineFrames(BidiLineData *aBld,
   }
   for (; index != limit; index += step) {
     frame = aBld->VisualFrameAt(index);
-    RepositionFrame(frame,
-                    !(IS_LEVEL_RTL(aBld->mLevels[aBld->mIndexMap[index]])),
-                    start,
-                    &continuationStates,
-                    aLineWM,
-                    aLineWidth);
+    start += RepositionFrame(
+      frame, !(IS_LEVEL_RTL(aBld->mLevels[aBld->mIndexMap[index]])),
+      start, &continuationStates,
+      aLineWM, false, aContainerSize);
   }
 }
 
@@ -2056,7 +2171,7 @@ nsresult nsBidiPresUtils::ProcessText(const char16_t*       aText,
   return NS_OK;
 }
 
-class MOZ_STACK_CLASS nsIRenderingContextBidiProcessor MOZ_FINAL
+class MOZ_STACK_CLASS nsIRenderingContextBidiProcessor final
   : public nsBidiPresUtils::BidiProcessor
 {
 public:
@@ -2077,21 +2192,21 @@ public:
 
   virtual void SetText(const char16_t* aText,
                        int32_t         aLength,
-                       nsBidiDirection aDirection) MOZ_OVERRIDE
+                       nsBidiDirection aDirection) override
   {
     mFontMetrics->SetTextRunRTL(aDirection==NSBIDI_RTL);
     mText = aText;
     mLength = aLength;
   }
 
-  virtual nscoord GetWidth() MOZ_OVERRIDE
+  virtual nscoord GetWidth() override
   {
     return nsLayoutUtils::AppUnitWidthOfString(mText, mLength, *mFontMetrics,
                                                *mTextRunConstructionContext);
   }
 
   virtual void DrawText(nscoord aIOffset,
-                        nscoord) MOZ_OVERRIDE
+                        nscoord) override
   {
     nsPoint pt(mPt);
     if (mFontMetrics->GetVertical()) {
@@ -2220,7 +2335,7 @@ void nsBidiPresUtils::CopyLogicalToVisual(const nsAString& aSource,
   uint32_t srcLength = aSource.Length();
   if (srcLength == 0)
     return;
-  if (!aDest.SetLength(srcLength, fallible_t())) {
+  if (!aDest.SetLength(srcLength, fallible)) {
     return;
   }
   nsAString::const_iterator fromBegin, fromEnd;

@@ -343,6 +343,10 @@ SurfaceFactory::NewShSurfHandle(const gfx::IntSize& size)
     if (!surf)
         return nullptr;
 
+    // Before next use, wait until SharedSurface's buffer
+    // is no longer being used.
+    surf->WaitForBufferOwnership();
+
     return new ShSurfHandle(this, Move(surf));
 }
 
@@ -551,6 +555,26 @@ ReadbackSharedSurface(SharedSurface* src, gfx::DrawTarget* dst)
     }
 
     return true;
+}
+
+uint32_t
+ReadPixel(SharedSurface* src)
+{
+    GLContext* gl = src->mGL;
+
+    uint32_t pixel;
+
+    ScopedReadbackFB a(src);
+    {
+        ScopedPackAlignment autoAlign(gl, 4);
+
+        UniquePtr<uint8_t[]> bytes(new uint8_t[4]);
+        gl->raw_fReadPixels(0, 0, 1, 1, LOCAL_GL_RGBA, LOCAL_GL_UNSIGNED_BYTE,
+                            bytes.get());
+        memcpy(&pixel, bytes.get(), 4);
+    }
+
+    return pixel;
 }
 
 } /* namespace gfx */

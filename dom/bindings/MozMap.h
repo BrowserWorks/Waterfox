@@ -17,6 +17,7 @@
 #include "nsHashKeys.h"
 #include "nsStringGlue.h"
 #include "nsTArray.h"
+#include "mozilla/Attributes.h"
 #include "mozilla/Move.h"
 
 namespace mozilla {
@@ -100,11 +101,10 @@ public:
     this->EnumerateEntries(ValueEnumerator, &args);
   }
 
-  DataType* AddEntry(const nsAString& aKey) NS_WARN_UNUSED_RESULT
+  MOZ_WARN_UNUSED_RESULT
+  DataType* AddEntry(const nsAString& aKey)
   {
-    // XXXbz can't just use fallible_t() because our superclass has a
-    // private typedef by that name.
-    EntryType* ent = this->PutEntry(aKey, mozilla::fallible_t());
+    EntryType* ent = this->PutEntry(aKey, fallible);
     if (!ent) {
       return nullptr;
     }

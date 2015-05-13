@@ -1,11 +1,12 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set sw=2 ts=8 et ft=cpp : */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "ContentProcessManager.h"
 #include "ContentParent.h"
+#include "mozilla/dom/TabParent.h"
 
 #include "mozilla/StaticPtr.h"
 #include "mozilla/ClearOnShutdown.h"
@@ -274,6 +275,63 @@ ContentProcessManager::GetRemoteFrameOpenerTabId(const ContentParentId& aChildCp
   *aOpenerTabId = remoteFrameIter->second.mOpenerTabId;
 
   return true;
+}
+
+already_AddRefed<TabParent>
+ContentProcessManager::GetTabParentByProcessAndTabId(const ContentParentId& aChildCpId,
+                                                     const TabId& aChildTabId)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  auto iter = mContentParentMap.find(aChildCpId);
+  if (NS_WARN_IF(iter == mContentParentMap.end())) {
+    ASSERT_UNLESS_FUZZING();
+    return nullptr;
+  }
+
+  const InfallibleTArray<PBrowserParent*>& browsers =
+    iter->second.mCp->ManagedPBrowserParent();
+  for (uint32_t i = 0; i < browsers.Length(); i++) {
+    nsRefPtr<TabParent> tab = TabParent::GetFrom(browsers[i]);
+    if (tab->GetTabId() == aChildTabId) {
+      return tab.forget();
+    }
+  }
+
+  return nullptr;
+}
+
+already_AddRefed<TabParent>
+ContentProcessManager::GetTopLevelTabParentByProcessAndTabId(const ContentParentId& aChildCpId,
+                                                             const TabId& aChildTabId)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  // Used to keep the current ContentParentId and the current TabId
+  // in the iteration(do-while loop below)
+  ContentParentId currentCpId;
+  TabId currentTabId;
+
+  // To get the ContentParentId and the TabParentId on upper level
+  ContentParentId parentCpId = aChildCpId;
+  TabId openerTabId = aChildTabId;
+
+  // Stop this loop when the upper ContentParentId of
+  // the current ContentParentId is chrome(ContentParentId = 0).
+  do {
+    // Update the current ContentParentId and TabId in iteration
+    currentCpId = parentCpId;
+    currentTabId = openerTabId;
+
+    // Get the ContentParentId and TabId on upper level
+    if (!GetParentProcessId(currentCpId, &parentCpId) ||
+        !GetRemoteFrameOpenerTabId(currentCpId, currentTabId, &openerTabId)) {
+      return nullptr;
+    }
+  } while (parentCpId);
+
+  // Get the top level TabParent by the current ContentParentId and TabId
+  return GetTabParentByProcessAndTabId(currentCpId, currentTabId);
 }
 
 } // namespace dom

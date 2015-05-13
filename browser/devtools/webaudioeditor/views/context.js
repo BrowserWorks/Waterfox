@@ -36,17 +36,15 @@ let ContextView = {
    * Initialization function, called when the tool is started.
    */
   initialize: function() {
-    this._onGraphNodeClick = this._onGraphNodeClick.bind(this);
+    this._onGraphClick = this._onGraphClick.bind(this);
     this._onThemeChange = this._onThemeChange.bind(this);
-    this._onNodeSelect = this._onNodeSelect.bind(this);
     this._onStartContext = this._onStartContext.bind(this);
     this._onEvent = this._onEvent.bind(this);
 
     this.draw = debounce(this.draw.bind(this), GRAPH_DEBOUNCE_TIMER);
-    $('#graph-target').addEventListener('click', this._onGraphNodeClick, false);
+    $("#graph-target").addEventListener("click", this._onGraphClick, false);
 
     window.on(EVENTS.THEME_CHANGE, this._onThemeChange);
-    window.on(EVENTS.UI_INSPECTOR_NODE_SET, this._onNodeSelect);
     window.on(EVENTS.START_CONTEXT, this._onStartContext);
     gAudioNodes.on("*", this._onEvent);
   },
@@ -60,9 +58,9 @@ let ContextView = {
     if (this._zoomBinding) {
       this._zoomBinding.on("zoom", null);
     }
-    $('#graph-target').removeEventListener('click', this._onGraphNodeClick, false);
+    $("#graph-target").removeEventListener("click", this._onGraphClick, false);
+
     window.off(EVENTS.THEME_CHANGE, this._onThemeChange);
-    window.off(EVENTS.UI_INSPECTOR_NODE_SET, this._onNodeSelect);
     window.off(EVENTS.START_CONTEXT, this._onStartContext);
     gAudioNodes.off("*", this._onEvent);
   },
@@ -112,7 +110,6 @@ let ContextView = {
    * Makes the corresponding graph node appear "focused", removing
    * focused styles from all other nodes. If no `actorID` specified,
    * make all nodes appear unselected.
-   * Called from UI_INSPECTOR_NODE_SELECT.
    */
   focusNode: function (actorID) {
     // Remove class "selected" from all nodes
@@ -128,6 +125,15 @@ let ContextView = {
    */
   _getNodeByID: function (actorID) {
     return $(".nodes > g[data-id='" + actorID + "']");
+  },
+
+  /**
+   * Sets the appropriate class on an SVG node when its bypass
+   * status is toggled.
+   */
+  _bypassNode: function (node, enabled) {
+    let el = this._getNodeByID(node.id);
+    el.classList[enabled ? "add" : "remove"]("bypassed");
   },
 
   /**
@@ -147,42 +153,33 @@ let ContextView = {
     let oldDrawNodes = renderer.drawNodes();
     renderer.drawNodes(function(graph, root) {
       let svgNodes = oldDrawNodes(graph, root);
-      svgNodes.attr("class", (n) => {
+      svgNodes.each(function (n) {
         let node = graph.node(n);
-        return "audionode type-" + node.type;
-      });
-      svgNodes.attr("data-id", (n) => {
-        let node = graph.node(n);
-        return node.id;
+        let classString = "audionode type-" + node.type + (node.bypassed ? " bypassed" : "");
+        this.setAttribute("class", classString);
+        this.setAttribute("data-id", node.id);
+        this.setAttribute("data-type", node.type);
       });
       return svgNodes;
     });
 
     // Post-render manipulation of edges
-    // TODO do all of this more efficiently, rather than
-    // using the direct D3 helper utilities to loop over each
-    // edge several times
     let oldDrawEdgePaths = renderer.drawEdgePaths();
+    let defaultClasses = "edgePath enter";
+
     renderer.drawEdgePaths(function(graph, root) {
       let svgEdges = oldDrawEdgePaths(graph, root);
-      svgEdges.attr("data-source", (n) => {
-        let edge = graph.edge(n);
-        return edge.source;
-      });
-      svgEdges.attr("data-target", (n) => {
-        let edge = graph.edge(n);
-        return edge.target;
-      });
-      svgEdges.attr("data-param", (n) => {
-        let edge = graph.edge(n);
-        return edge.param ? edge.param : null;
-      });
-      // We have to manually specify the default classes on the edges
-      // as to not overwrite them
-      let defaultClasses = "edgePath enter";
-      svgEdges.attr("class", (n) => {
-        let edge = graph.edge(n);
-        return defaultClasses + (edge.param ? (" param-connection " + edge.param) : "");
+      svgEdges.each(function (e) {
+        let edge = graph.edge(e);
+
+        // We have to manually specify the default classes on the edges
+        // as to not overwrite them
+        let edgeClass = defaultClasses + (edge.param ? (" param-connection " + edge.param) : "");
+
+        this.setAttribute("data-source", edge.source);
+        this.setAttribute("data-target", edge.target);
+        this.setAttribute("data-param", edge.param ? edge.param : null);
+        this.setAttribute("class", edgeClass);
       });
 
       return svgEdges;
@@ -267,13 +264,14 @@ let ContextView = {
    * in GRAPH_REDRAW_EVENTS) qualify as a redraw event.
    */
   _onEvent: function (eventName, ...args) {
+    // If bypassing, just toggle the class on the SVG node
+    // rather than rerendering everything
+    if (eventName === "bypass") {
+      this._bypassNode.apply(this, args);
+    }
     if (~GRAPH_REDRAW_EVENTS.indexOf(eventName)) {
       this.draw();
     }
-  },
-
-  _onNodeSelect: function (eventName, id) {
-    this.focusNode(id);
   },
 
   /**
@@ -288,18 +286,21 @@ let ContextView = {
   },
 
   /**
-   * Fired when a node in the svg graph is clicked. Used to handle triggering the AudioNodePane.
+   * Fired when a click occurs in the graph.
    *
    * @param Event e
    *        Click event.
    */
-  _onGraphNodeClick: function (e) {
+  _onGraphClick: function (e) {
     let node = findGraphNodeParent(e.target);
     // If node not found (clicking outside of an audio node in the graph),
     // then ignore this event
     if (!node)
       return;
 
-    window.emit(EVENTS.UI_SELECT_NODE, node.getAttribute("data-id"));
+    let id = node.getAttribute("data-id");
+
+    this.focusNode(id);
+    window.emit(EVENTS.UI_SELECT_NODE, id);
   }
 };

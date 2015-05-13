@@ -7,29 +7,33 @@
 #ifndef MOZILLA_CONTAINERPARSER_H_
 #define MOZILLA_CONTAINERPARSER_H_
 
-#include "nsTArray.h"
+#include "nsRefPtr.h"
+#include "nsString.h"
 
 namespace mozilla {
 
+class MediaLargeByteBuffer;
+class SourceBufferResource;
+
 class ContainerParser {
 public:
-  ContainerParser() : mHasInitData(false) {}
+  explicit ContainerParser(const nsACString& aType);
   virtual ~ContainerParser() {}
 
   // Return true if aData starts with an initialization segment.
   // The base implementation exists only for debug logging and is expected
   // to be called first from the overriding implementation.
-  virtual bool IsInitSegmentPresent(const uint8_t* aData, uint32_t aLength);
+  virtual bool IsInitSegmentPresent(MediaLargeByteBuffer* aData);
 
   // Return true if aData starts with a media segment.
   // The base implementation exists only for debug logging and is expected
   // to be called first from the overriding implementation.
-  virtual bool IsMediaSegmentPresent(const uint8_t* aData, uint32_t aLength);
+  virtual bool IsMediaSegmentPresent(MediaLargeByteBuffer* aData);
 
   // Parse aData to extract the start and end frame times from the media
   // segment.  aData may not start on a parser sync boundary.  Return true
   // if aStart and aEnd have been updated.
-  virtual bool ParseStartAndEndTimestamps(const uint8_t* aData, uint32_t aLength,
+  virtual bool ParseStartAndEndTimestamps(MediaLargeByteBuffer* aData,
                                           int64_t& aStart, int64_t& aEnd);
 
   // Compare aLhs and rHs, considering any error that may exist in the
@@ -39,18 +43,22 @@ public:
 
   virtual int64_t GetRoundingError();
 
-  const nsTArray<uint8_t>& InitData();
+  MediaLargeByteBuffer* InitData();
 
   bool HasInitData()
   {
     return mHasInitData;
   }
 
+  bool HasCompleteInitData();
+
   static ContainerParser* CreateForMIMEType(const nsACString& aType);
 
 protected:
-  nsTArray<uint8_t> mInitData;
+  nsRefPtr<MediaLargeByteBuffer> mInitData;
+  nsRefPtr<SourceBufferResource> mResource;
   bool mHasInitData;
+  const nsCString mType;
 };
 
 } // namespace mozilla

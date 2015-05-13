@@ -13,7 +13,7 @@
 namespace mozilla {
 namespace dom {
 
-class TelephonyCallGroup MOZ_FINAL : public DOMEventTargetHelper
+class TelephonyCallGroup final : public DOMEventTargetHelper
 {
   nsRefPtr<Telephony> mTelephony;
 
@@ -38,7 +38,7 @@ public:
 
   // WrapperCache
   virtual JSObject*
-  WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // WebIDL interface
   already_AddRefed<CallsList>
@@ -70,9 +70,7 @@ public:
 
   IMPL_EVENT_HANDLER(statechange)
   IMPL_EVENT_HANDLER(connected)
-  IMPL_EVENT_HANDLER(holding)
   IMPL_EVENT_HANDLER(held)
-  IMPL_EVENT_HANDLER(resuming)
   IMPL_EVENT_HANDLER(callschanged)
   IMPL_EVENT_HANDLER(error)
 

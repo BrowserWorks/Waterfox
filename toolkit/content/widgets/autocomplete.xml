@@ -130,7 +130,7 @@
       <property name="timeout"
                 onset="this.setAttribute('timeout', val); return val;">
         <getter><![CDATA[
-          // For security reasons delay searches on pasted values. 
+          // For security reasons delay searches on pasted values.
           if (this._valueIsPasted) {
             let t = parseInt(this.getAttribute('pastetimeout'));
             return isNaN(t) ? 1000 : t;
@@ -156,6 +156,9 @@
 
       <property name="inPrivateContext" readonly="true"
                 onget="return this.PrivateBrowsingUtils.isWindowPrivate(window);"/>
+
+      <property name="noRollupOnCaretMove" readonly="true"
+                onget="return this.popup.getAttribute('norolluponanchor') == 'true'"/>
 
       <!-- This is the maximum number of drop-down rows we get when we
             hit the drop marker beside fields that have it (like the URLbar).-->
@@ -301,7 +304,7 @@
       <!-- option to allow scrolling through the list via the tab key, rather than
            tab moving focus out of the textbox -->
       <property name="tabScrolling"
-                onset="return this.setAttribute('tabscrolling', val); return val;"
+                onset="this.setAttribute('tabscrolling', val); return val;"
                 onget="return this.getAttribute('tabscrolling') == 'true';"/>
 
       <!-- disable key navigation handling in the popup results -->
@@ -475,7 +478,7 @@
                   kind: "key"
                 };
               }
-              cancel = this.mController.handleEnter(false);
+              cancel = this.handleEnter();
               break;
             case KeyEvent.DOM_VK_DELETE:
 #ifdef XP_MACOSX
@@ -502,6 +505,12 @@
           }
 
           return true;
+        ]]></body>
+      </method>
+
+      <method name="handleEnter">
+        <body><![CDATA[
+          return this.mController.handleEnter(false);
         ]]></body>
       </method>
 
@@ -704,9 +713,9 @@
 
           var height = rows * bx.rowHeight;
 
-          if (height == 0)
+          if (height == 0) {
             this.tree.setAttribute("collapsed", "true");
-          else {
+          } else {
             if (this.tree.hasAttribute("collapsed"))
               this.tree.removeAttribute("collapsed");
 
@@ -1106,9 +1115,12 @@ extends="chrome://global/content/bindings/popup.xml#popup">
         <parameter name="aHeight"/>
         <body>
           <![CDATA[
+          if (!aURL.endsWith('.ico') && !aURL.endsWith('.ICO')) {
+            return aURL;
+          }
           let width  = Math.round(aWidth * aWin.devicePixelRatio);
           let height = Math.round(aHeight * aWin.devicePixelRatio);
-          return aURL + (aURL.contains("#") ? "&" : "#") +
+          return aURL + (aURL.includes("#") ? "&" : "#") +
                  "-moz-resolution=" + width + "," + height;
           ]]>
         </body>

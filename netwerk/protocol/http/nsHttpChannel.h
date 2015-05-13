@@ -23,7 +23,6 @@
 #include "TimingStruct.h"
 #include "AutoClose.h"
 
-class nsIPrincipal;
 class nsDNSPrefetch;
 class nsICancelable;
 class nsIHttpChannelAuthProvider;
@@ -33,6 +32,48 @@ class nsISSLStatus;
 namespace mozilla { namespace net {
 
 class Http2PushedStream;
+
+class HttpChannelSecurityWarningReporter
+{
+public:
+  virtual nsresult ReportSecurityMessage(const nsAString& aMessageTag,
+                                         const nsAString& aMessageCategory) = 0;
+};
+
+//-----------------------------------------------------------------------------
+// nsHttpChannelCacheKey
+//-----------------------------------------------------------------------------
+
+class nsHttpChannelCacheKey final : public nsISupportsPRUint32,
+                                    public nsISupportsCString
+{
+    NS_DECL_ISUPPORTS
+
+    NS_DECL_NSISUPPORTSPRIMITIVE
+    NS_FORWARD_NSISUPPORTSPRUINT32(mSupportsPRUint32->)
+
+    // Both interfaces declares toString method with the same signature.
+    // Thus we have to delegate only to nsISupportsPRUint32 implementation.
+    NS_IMETHOD GetData(nsACString & aData) override
+    {
+        return mSupportsCString->GetData(aData);
+    }
+    NS_IMETHOD SetData(const nsACString & aData) override
+    {
+        return mSupportsCString->SetData(aData);
+    }
+
+public:
+    nsresult SetData(uint32_t aPostID, const nsACString& aKey);
+    nsresult GetData(uint32_t *aPostID, nsACString& aKey);
+
+protected:
+    ~nsHttpChannelCacheKey() {}
+
+    nsCOMPtr<nsISupportsPRUint32> mSupportsPRUint32;
+    nsCOMPtr<nsISupportsCString> mSupportsCString;
+};
+
 //-----------------------------------------------------------------------------
 // nsHttpChannel
 //-----------------------------------------------------------------------------
@@ -46,20 +87,20 @@ class Http2PushedStream;
   {0xa9, 0x71, 0x40, 0xbc, 0xfa, 0x81, 0xde, 0x12} \
 }
 
-class nsHttpChannel MOZ_FINAL : public HttpBaseChannel
-                              , public HttpAsyncAborter<nsHttpChannel>
-                              , public nsIStreamListener
-                              , public nsICachingChannel
-                              , public nsICacheEntryOpenCallback
-                              , public nsITransportEventSink
-                              , public nsIProtocolProxyCallback
-                              , public nsIHttpAuthenticableChannel
-                              , public nsIApplicationCacheChannel
-                              , public nsIAsyncVerifyRedirectCallback
-                              , public nsIThreadRetargetableRequest
-                              , public nsIThreadRetargetableStreamListener
-                              , public nsIDNSListener
-                              , public nsSupportsWeakReference
+class nsHttpChannel final : public HttpBaseChannel
+                          , public HttpAsyncAborter<nsHttpChannel>
+                          , public nsIStreamListener
+                          , public nsICachingChannel
+                          , public nsICacheEntryOpenCallback
+                          , public nsITransportEventSink
+                          , public nsIProtocolProxyCallback
+                          , public nsIHttpAuthenticableChannel
+                          , public nsIApplicationCacheChannel
+                          , public nsIAsyncVerifyRedirectCallback
+                          , public nsIThreadRetargetableRequest
+                          , public nsIThreadRetargetableStreamListener
+                          , public nsIDNSListener
+                          , public nsSupportsWeakReference
 {
 public:
     NS_DECL_ISUPPORTS_INHERITED
@@ -82,63 +123,70 @@ public:
     // nsIHttpAuthenticableChannel. We can't use
     // NS_DECL_NSIHTTPAUTHENTICABLECHANNEL because it duplicates cancel() and
     // others.
-    NS_IMETHOD GetIsSSL(bool *aIsSSL) MOZ_OVERRIDE;
-    NS_IMETHOD GetProxyMethodIsConnect(bool *aProxyMethodIsConnect) MOZ_OVERRIDE;
-    NS_IMETHOD GetServerResponseHeader(nsACString & aServerResponseHeader) MOZ_OVERRIDE;
-    NS_IMETHOD GetProxyChallenges(nsACString & aChallenges) MOZ_OVERRIDE;
-    NS_IMETHOD GetWWWChallenges(nsACString & aChallenges) MOZ_OVERRIDE;
-    NS_IMETHOD SetProxyCredentials(const nsACString & aCredentials) MOZ_OVERRIDE;
-    NS_IMETHOD SetWWWCredentials(const nsACString & aCredentials) MOZ_OVERRIDE;
-    NS_IMETHOD OnAuthAvailable() MOZ_OVERRIDE;
-    NS_IMETHOD OnAuthCancelled(bool userCancel) MOZ_OVERRIDE;
+    NS_IMETHOD GetIsSSL(bool *aIsSSL) override;
+    NS_IMETHOD GetProxyMethodIsConnect(bool *aProxyMethodIsConnect) override;
+    NS_IMETHOD GetServerResponseHeader(nsACString & aServerResponseHeader) override;
+    NS_IMETHOD GetProxyChallenges(nsACString & aChallenges) override;
+    NS_IMETHOD GetWWWChallenges(nsACString & aChallenges) override;
+    NS_IMETHOD SetProxyCredentials(const nsACString & aCredentials) override;
+    NS_IMETHOD SetWWWCredentials(const nsACString & aCredentials) override;
+    NS_IMETHOD OnAuthAvailable() override;
+    NS_IMETHOD OnAuthCancelled(bool userCancel) override;
     // Functions we implement from nsIHttpAuthenticableChannel but are
     // declared in HttpBaseChannel must be implemented in this class. We
     // just call the HttpBaseChannel:: impls.
-    NS_IMETHOD GetLoadFlags(nsLoadFlags *aLoadFlags) MOZ_OVERRIDE;
-    NS_IMETHOD GetURI(nsIURI **aURI) MOZ_OVERRIDE;
-    NS_IMETHOD GetNotificationCallbacks(nsIInterfaceRequestor **aCallbacks) MOZ_OVERRIDE;
-    NS_IMETHOD GetLoadGroup(nsILoadGroup **aLoadGroup) MOZ_OVERRIDE;
-    NS_IMETHOD GetRequestMethod(nsACString& aMethod) MOZ_OVERRIDE;
+    NS_IMETHOD GetLoadFlags(nsLoadFlags *aLoadFlags) override;
+    NS_IMETHOD GetURI(nsIURI **aURI) override;
+    NS_IMETHOD GetNotificationCallbacks(nsIInterfaceRequestor **aCallbacks) override;
+    NS_IMETHOD GetLoadGroup(nsILoadGroup **aLoadGroup) override;
+    NS_IMETHOD GetRequestMethod(nsACString& aMethod) override;
 
     nsHttpChannel();
 
     virtual nsresult Init(nsIURI *aURI, uint32_t aCaps, nsProxyInfo *aProxyInfo,
                           uint32_t aProxyResolveFlags,
-                          nsIURI *aProxyURI) MOZ_OVERRIDE;
+                          nsIURI *aProxyURI) override;
 
     nsresult OnPush(const nsACString &uri, Http2PushedStream *pushedStream);
 
     // Methods HttpBaseChannel didn't implement for us or that we override.
     //
     // nsIRequest
-    NS_IMETHOD Cancel(nsresult status) MOZ_OVERRIDE;
-    NS_IMETHOD Suspend() MOZ_OVERRIDE;
-    NS_IMETHOD Resume() MOZ_OVERRIDE;
+    NS_IMETHOD Cancel(nsresult status) override;
+    NS_IMETHOD Suspend() override;
+    NS_IMETHOD Resume() override;
     // nsIChannel
-    NS_IMETHOD GetSecurityInfo(nsISupports **aSecurityInfo) MOZ_OVERRIDE;
-    NS_IMETHOD AsyncOpen(nsIStreamListener *listener, nsISupports *aContext) MOZ_OVERRIDE;
+    NS_IMETHOD GetSecurityInfo(nsISupports **aSecurityInfo) override;
+    NS_IMETHOD AsyncOpen(nsIStreamListener *listener, nsISupports *aContext) override;
     // nsIHttpChannelInternal
-    NS_IMETHOD SetupFallbackChannel(const char *aFallbackKey) MOZ_OVERRIDE;
+    NS_IMETHOD SetupFallbackChannel(const char *aFallbackKey) override;
+    NS_IMETHOD ContinueBeginConnect() override;
     // nsISupportsPriority
-    NS_IMETHOD SetPriority(int32_t value) MOZ_OVERRIDE;
+    NS_IMETHOD SetPriority(int32_t value) override;
     // nsIClassOfService
-    NS_IMETHOD SetClassFlags(uint32_t inFlags) MOZ_OVERRIDE;
-    NS_IMETHOD AddClassFlags(uint32_t inFlags) MOZ_OVERRIDE;
-    NS_IMETHOD ClearClassFlags(uint32_t inFlags) MOZ_OVERRIDE;
+    NS_IMETHOD SetClassFlags(uint32_t inFlags) override;
+    NS_IMETHOD AddClassFlags(uint32_t inFlags) override;
+    NS_IMETHOD ClearClassFlags(uint32_t inFlags) override;
 
     // nsIResumableChannel
-    NS_IMETHOD ResumeAt(uint64_t startPos, const nsACString& entityID) MOZ_OVERRIDE;
+    NS_IMETHOD ResumeAt(uint64_t startPos, const nsACString& entityID) override;
 
-    NS_IMETHOD SetNotificationCallbacks(nsIInterfaceRequestor *aCallbacks) MOZ_OVERRIDE;
-    NS_IMETHOD SetLoadGroup(nsILoadGroup *aLoadGroup) MOZ_OVERRIDE;
+    NS_IMETHOD SetNotificationCallbacks(nsIInterfaceRequestor *aCallbacks) override;
+    NS_IMETHOD SetLoadGroup(nsILoadGroup *aLoadGroup) override;
     // nsITimedChannel
-    NS_IMETHOD GetDomainLookupStart(mozilla::TimeStamp *aDomainLookupStart) MOZ_OVERRIDE;
-    NS_IMETHOD GetDomainLookupEnd(mozilla::TimeStamp *aDomainLookupEnd) MOZ_OVERRIDE;
-    NS_IMETHOD GetConnectStart(mozilla::TimeStamp *aConnectStart) MOZ_OVERRIDE;
-    NS_IMETHOD GetConnectEnd(mozilla::TimeStamp *aConnectEnd) MOZ_OVERRIDE;
-    NS_IMETHOD GetRequestStart(mozilla::TimeStamp *aRequestStart) MOZ_OVERRIDE;
-    NS_IMETHOD GetResponseStart(mozilla::TimeStamp *aResponseStart) MOZ_OVERRIDE;
-    NS_IMETHOD GetResponseEnd(mozilla::TimeStamp *aResponseEnd) MOZ_OVERRIDE;
+    NS_IMETHOD GetDomainLookupStart(mozilla::TimeStamp *aDomainLookupStart) override;
+    NS_IMETHOD GetDomainLookupEnd(mozilla::TimeStamp *aDomainLookupEnd) override;
+    NS_IMETHOD GetConnectStart(mozilla::TimeStamp *aConnectStart) override;
+    NS_IMETHOD GetConnectEnd(mozilla::TimeStamp *aConnectEnd) override;
+    NS_IMETHOD GetRequestStart(mozilla::TimeStamp *aRequestStart) override;
+    NS_IMETHOD GetResponseStart(mozilla::TimeStamp *aResponseStart) override;
+    NS_IMETHOD GetResponseEnd(mozilla::TimeStamp *aResponseEnd) override;
+
+    nsresult AddSecurityMessage(const nsAString& aMessageTag,
+                                const nsAString& aMessageCategory) override;
+
+    void SetWarningReporter(HttpChannelSecurityWarningReporter* aReporter)
+      { mWarningReporter = aReporter; }
 
 public: /* internal necko use only */
 
@@ -261,7 +309,7 @@ private:
     void     HandleAsyncFallback();
     nsresult ContinueHandleAsyncFallback(nsresult);
     nsresult PromptTempRedirect();
-    virtual  nsresult SetupReplacementChannel(nsIURI *, nsIChannel *, bool preserveMethod) MOZ_OVERRIDE;
+    virtual  nsresult SetupReplacementChannel(nsIURI *, nsIChannel *, bool preserveMethod) override;
 
     // proxy specific methods
     nsresult ProxyFailover();
@@ -366,13 +414,14 @@ private:
     nsresult MaybeSetupByteRangeRequest(int64_t partialLen, int64_t contentLength,
                                         bool ignoreMissingPartialLen = false);
     nsresult SetupByteRangeRequest(int64_t partialLen);
+    void UntieByteRangeRequest();
+    void UntieValidationRequest();
     nsresult OpenCacheInputStream(nsICacheEntry* cacheEntry, bool startBuffering,
                                   bool checkingAppCacheEntry);
 
     void SetPushedStream(Http2PushedStream *stream);
 
 private:
-    nsCOMPtr<nsISupports>             mSecurityInfo;
     nsCOMPtr<nsICancelable>           mProxyRequest;
 
     nsRefPtr<nsInputStreamPump>       mTransactionPump;
@@ -403,6 +452,8 @@ private:
         MAYBE_INTERCEPT,   // interception in progress, but can be cancelled
         INTERCEPTED,       // a synthesized response has been provided
     } mInterceptCache;
+    // Unique ID of this channel for the interception purposes.
+    const uint64_t mInterceptionID;
 
     bool PossiblyIntercepted() {
         return mInterceptCache != DO_NOT_INTERCEPT;
@@ -465,6 +516,9 @@ private:
     nsRefPtr<nsDNSPrefetch>           mDNSPrefetch;
 
     Http2PushedStream                 *mPushedStream;
+    // True if the channel's principal was found on a phishing, malware, or
+    // tracking (if tracking protection is enabled) blocklist
+    bool                              mLocalBlocklist;
 
     nsresult WaitForRedirectCallback();
     void PushRedirectAsyncFunc(nsContinueRedirectionFunc func);
@@ -472,8 +526,11 @@ private:
 
     nsCString mUsername;
 
+    // If non-null, warnings should be reported to this object.
+    HttpChannelSecurityWarningReporter* mWarningReporter;
+
 protected:
-    virtual void DoNotifyListenerCleanup() MOZ_OVERRIDE;
+    virtual void DoNotifyListenerCleanup() override;
 
 private: // cache telemetry
     bool mDidReval;

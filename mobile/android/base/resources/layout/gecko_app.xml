@@ -3,12 +3,11 @@
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<org.mozilla.gecko.OuterLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 xmlns:gecko="http://schemas.android.com/apk/res-auto"
                 android:id="@+id/root_layout"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:fitsSystemWindows="true">
+                android:layout_height="match_parent">
 
     <ViewStub android:id="@+id/tabs_panel"
               android:layout="@layout/tabs_panel_view"
@@ -29,6 +28,12 @@
 
             <include layout="@layout/shared_ui_components"/>
 
+            <ViewStub android:id="@+id/zoomed_view_stub"
+                      android:inflatedId="@+id/zoomed_view"
+                      android:layout="@layout/zoomed_view"
+                      android:layout_width="wrap_content"
+                      android:layout_height="wrap_content" />
+
             <FrameLayout android:id="@+id/home_pager_container"
                          android:layout_width="match_parent"
                          android:layout_height="match_parent"
@@ -44,6 +49,11 @@
                           android:layout_width="match_parent"
                           android:layout_height="@dimen/home_banner_height"
                           android:layout_gravity="bottom"/>
+
+                <ViewStub android:id="@+id/firstrun_pager_stub"
+                          android:layout="@layout/firstrun_pane"
+                          android:layout_width="match_parent"
+                          android:layout_height="match_parent"/>
 
             </FrameLayout>
 
@@ -88,10 +98,10 @@
                       android:layout_height="@dimen/new_tablet_tab_strip_height"
                       android:visibility="gone"/>
 
-            <org.mozilla.gecko.toolbar.ActionBarViewFlipper
+            <org.mozilla.gecko.widget.GeckoViewFlipper
                 android:id="@+id/browser_actionbar"
                 android:layout_width="match_parent"
-                android:layout_height="@dimen/browser_toolbar_height"
+                android:layout_height="@dimen/browser_toolbar_height_flipper"
                 android:clickable="true"
                 android:focusable="true">
 
@@ -109,7 +119,7 @@
                                                         android:layout_width="match_parent"
                                                         style="@style/GeckoActionBar"/>
 
-            </org.mozilla.gecko.toolbar.ActionBarViewFlipper>
+            </org.mozilla.gecko.widget.GeckoViewFlipper>
 
         </LinearLayout>
 
@@ -134,4 +144,4 @@
               android:layout="@layout/button_toast"
               style="@style/Toast"/>
 
-</RelativeLayout>
+</org.mozilla.gecko.OuterLayout>

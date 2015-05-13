@@ -30,8 +30,8 @@ function run_test() {
   lockFileRelPath = lockFileRelPath.join("/") + "/" + gTestFiles[3].fileName;
   let args = [getApplyDirPath() + DIR_RESOURCES, "input", "output", "-s",
               HELPER_SLEEP_TIMEOUT, lockFileRelPath];
-  let lockFileProcess = AUS_Cc["@mozilla.org/process/util;1"].
-                     createInstance(AUS_Ci.nsIProcess);
+  let lockFileProcess = Cc["@mozilla.org/process/util;1"].
+                        createInstance(Ci.nsIProcess);
   lockFileProcess.init(helperBin);
   lockFileProcess.run(false, args, args.length);
 
@@ -43,7 +43,7 @@ function setupAppFilesFinished() {
 }
 
 function doUpdate() {
-  runUpdateUsingService(STATE_PENDING_SVC, STATE_FAILED);
+  runUpdateUsingService(STATE_PENDING_SVC, STATE_FAILED_WRITE_ERROR_FILE_COPY);
 }
 
 function checkUpdateFinished() {
@@ -51,7 +51,7 @@ function checkUpdateFinished() {
   gStageUpdate = false;
   gSwitchApp = true;
   gDisableReplaceFallback = true;
-  runUpdate(1, STATE_FAILED_WRITE_ERROR);
+  runUpdate(1, STATE_FAILED_WRITE_ERROR, checkUpdateApplied);
 }
 
 function checkUpdateApplied() {
@@ -61,5 +61,6 @@ function checkUpdateApplied() {
 function checkUpdate() {
   checkFilesAfterUpdateFailure(getApplyDirFile, true, false);
   checkUpdateLogContains(ERR_RENAME_FILE);
+  standardInit();
   checkCallbackAppLog();
 }

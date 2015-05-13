@@ -7,10 +7,9 @@
 #define __editor_h__
 
 #include "mozilla/Assertions.h"         // for MOZ_ASSERT, etc.
-#include "mozilla/TypedEnum.h"          // for MOZ_BEGIN_ENUM_CLASS, etc.
+#include "mozilla/dom/OwningNonNull.h"  // for OwningNonNull
 #include "mozilla/dom/Text.h"
 #include "nsAutoPtr.h"                  // for nsRefPtr
-#include "nsCOMArray.h"                 // for nsCOMArray
 #include "nsCOMPtr.h"                   // for already_AddRefed, nsCOMPtr
 #include "nsCycleCollectionParticipant.h"
 #include "nsGkAtoms.h"
@@ -19,6 +18,7 @@
 #include "nsIObserver.h"                // for NS_DECL_NSIOBSERVER, etc
 #include "nsIPhonetic.h"                // for NS_DECL_NSIPHONETIC, etc
 #include "nsIPlaintextEditor.h"         // for nsIPlaintextEditor, etc
+#include "nsISelectionController.h"     // for nsISelectionController constants
 #include "nsISupportsImpl.h"            // for nsEditor::Release, etc
 #include "nsIWeakReferenceUtils.h"      // for nsWeakPtr
 #include "nsLiteralString.h"            // for NS_LITERAL_STRING
@@ -33,10 +33,7 @@ class EditAggregateTxn;
 class RemoveStyleSheetTxn;
 class nsIAtom;
 class nsIContent;
-class nsIDOMCharacterData;
-class nsIDOMDataTransfer;
 class nsIDOMDocument;
-class nsIDOMElement;
 class nsIDOMEvent;
 class nsIDOMEventListener;
 class nsIDOMEventTarget;
@@ -90,7 +87,7 @@ struct IMEState;
 
 // This is int32_t instead of int16_t because nsIInlineSpellChecker.idl's
 // spellCheckAfterEditorChange is defined to take it as a long.
-MOZ_BEGIN_ENUM_CLASS(EditAction, int32_t)
+enum class EditAction : int32_t {
   ignore = -1,
   none = 0,
   undo,
@@ -128,7 +125,7 @@ MOZ_BEGIN_ENUM_CLASS(EditAction, int32_t)
   removeAbsolutePosition = 3016,
   decreaseZIndex      = 3017,
   increaseZIndex      = 3018
-MOZ_END_ENUM_CLASS(EditAction)
+};
 
 inline bool operator!(const EditAction& aOp)
 {
@@ -422,6 +419,8 @@ protected:
    */
   void EnsureComposition(mozilla::WidgetGUIEvent* aEvent);
 
+  nsresult GetSelection(int16_t aSelectionType, nsISelection** aSelection);
+
 public:
 
   /** All editor operations which alter the doc should be prefaced
@@ -619,7 +618,8 @@ public:
 #if DEBUG_JOE
   static void DumpNode(nsIDOMNode *aNode, int32_t indent=0);
 #endif
-  mozilla::dom::Selection* GetSelection();
+  mozilla::dom::Selection* GetSelection(int16_t aSelectionType =
+      nsISelectionController::SELECTION_NORMAL);
 
   // Helpers to add a node to the selection. 
   // Used by table cell selection methods
@@ -830,9 +830,12 @@ protected:
   nsRefPtr<mozilla::TextComposition> mComposition;
 
   // various listeners
-  nsCOMArray<nsIEditActionListener> mActionListeners;  // listens to all low level actions on the doc
-  nsCOMArray<nsIEditorObserver> mEditorObservers;  // just notify once per high level change
-  nsCOMArray<nsIDocumentStateListener> mDocStateListeners;// listen to overall doc state (dirty or not, just created, etc)
+  // Listens to all low level actions on the doc
+  nsTArray<mozilla::dom::OwningNonNull<nsIEditActionListener>> mActionListeners;
+  // Just notify once per high level change
+  nsTArray<mozilla::dom::OwningNonNull<nsIEditorObserver>> mEditorObservers;
+  // Listen to overall doc state (dirty or not, just created, etc)
+  nsTArray<mozilla::dom::OwningNonNull<nsIDocumentStateListener>> mDocStateListeners;
 
   nsSelectionState  mSavedSel;           // cached selection for nsAutoSelectionReset
   nsRangeUpdater    mRangeUpdater;       // utility class object for maintaining preserved ranges

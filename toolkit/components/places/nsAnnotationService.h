@@ -20,7 +20,7 @@
 namespace mozilla {
 namespace places {
 
-class AnnotatedResult MOZ_FINAL : public mozIAnnotatedResult
+class AnnotatedResult final : public mozIAnnotatedResult
 {
 public:
   NS_DECL_ISUPPORTS
@@ -43,9 +43,9 @@ private:
 } // namespace places
 } // namespace mozilla
 
-class nsAnnotationService MOZ_FINAL : public nsIAnnotationService
-                                    , public nsIObserver
-                                    , public nsSupportsWeakReference
+class nsAnnotationService final : public nsIAnnotationService
+                                , public nsIObserver
+                                , public nsSupportsWeakReference
 {
 public:
   NS_DECL_ISUPPORTS

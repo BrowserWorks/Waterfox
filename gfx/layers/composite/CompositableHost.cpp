@@ -13,7 +13,7 @@
 #include "TiledContentHost.h"           // for TiledContentHost
 #include "mozilla/layers/LayersSurfaces.h"  // for SurfaceDescriptor
 #include "mozilla/layers/TextureHost.h"  // for TextureHost, etc
-#include "nsAutoPtr.h"                  // for nsRefPtr
+#include "nsRefPtr.h"                   // for nsRefPtr
 #include "nsDebug.h"                    // for NS_WARNING
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_CTOR, etc
 #include "gfxPlatform.h"                // for gfxPlatform
@@ -53,7 +53,7 @@ public:
     CompositableMap::Erase(mHost->GetAsyncID());
   }
 
-  virtual void ActorDestroy(ActorDestroyReason why) MOZ_OVERRIDE
+  virtual void ActorDestroy(ActorDestroyReason why) override
   {
     if (mHost) {
       mHost->Detach(nullptr, CompositableHost::FORCE_DETACH);
@@ -109,7 +109,9 @@ CompositableHost::UseTextureHost(TextureHost* aTexture)
   if (!aTexture) {
     return;
   }
-  aTexture->SetCompositor(GetCompositor());
+  if (GetCompositor()) {
+    aTexture->SetCompositor(GetCompositor());
+  }
 }
 
 void
@@ -117,8 +119,10 @@ CompositableHost::UseComponentAlphaTextures(TextureHost* aTextureOnBlack,
                                             TextureHost* aTextureOnWhite)
 {
   MOZ_ASSERT(aTextureOnBlack && aTextureOnWhite);
-  aTextureOnBlack->SetCompositor(GetCompositor());
-  aTextureOnWhite->SetCompositor(GetCompositor());
+  if (GetCompositor()) {
+    aTextureOnBlack->SetCompositor(GetCompositor());
+    aTextureOnWhite->SetCompositor(GetCompositor());
+  }
 }
 
 void
@@ -128,6 +132,7 @@ CompositableHost::RemoveTextureHost(TextureHost* aTexture)
 void
 CompositableHost::SetCompositor(Compositor* aCompositor)
 {
+  MOZ_ASSERT(aCompositor);
   mCompositor = aCompositor;
 }
 
@@ -181,9 +186,6 @@ CompositableHost::Create(const TextureInfo& aTextureInfo)
   case CompositableType::IMAGE_BRIDGE:
     NS_ERROR("Cannot create an image bridge compositable this way");
     break;
-  case CompositableType::CONTENT_INC:
-    result = new ContentHostIncremental(aTextureInfo);
-    break;
   case CompositableType::CONTENT_TILED:
     result = new TiledContentHost(aTextureInfo);
     break;
@@ -217,7 +219,7 @@ CompositableHost::DumpTextureHost(std::stringstream& aStream, TextureHost* aText
   if (!dSurf) {
     return;
   }
-  aStream << gfxUtils::GetAsLZ4Base64Str(dSurf).get();
+  aStream << gfxUtils::GetAsDataURI(dSurf).get();
 }
 
 namespace CompositableMap {

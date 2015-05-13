@@ -21,8 +21,11 @@
         Task.spawn(function* () {
 
           Cu.import("resource://gre/modules/devtools/dbg-server.jsm");
-          DebuggerServer.init();
-          DebuggerServer.addBrowserActors();
+
+          if (!DebuggerServer.initialized) {
+            DebuggerServer.init();
+            DebuggerServer.addBrowserActors();
+          }
 
           let win = yield openWebIDE();
 
@@ -44,7 +47,7 @@
             }
           };
           win.AppManager.runtimeList.usb.push(fakeRuntime);
-          win.AppManager.update("runtimelist");
+          win.AppManager.update("runtime-list");
 
           let panelNode = win.document.querySelector("#runtime-panel");
           let items = panelNode.querySelectorAll(".runtime-panel-item-usb");
@@ -69,9 +72,9 @@
           win = yield openWebIDE();
 
           win.AppManager.runtimeList.usb.push(fakeRuntime);
-          win.AppManager.update("runtimelist");
+          win.AppManager.update("runtime-list");
 
-          yield waitForUpdate(win, "list-tabs-response");
+          yield waitForUpdate(win, "runtime-targets");
 
           is(Object.keys(DebuggerServer._connections).length, 1, "Automatically reconnected");
 

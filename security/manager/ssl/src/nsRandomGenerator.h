@@ -15,8 +15,8 @@
 #define NS_RANDOMGENERATOR_CONTRACTID \
   "@mozilla.org/security/random-generator;1"
 
-class nsRandomGenerator MOZ_FINAL : public nsIRandomGenerator
-                                  , public nsNSSShutDownObject
+class nsRandomGenerator final : public nsIRandomGenerator
+                              , public nsNSSShutDownObject
 {
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
@@ -24,7 +24,7 @@ public:
 
 private:
   ~nsRandomGenerator();
-  virtual void virtualDestroyNSSReference() MOZ_OVERRIDE {}
+  virtual void virtualDestroyNSSReference() override {}
 };
 
 #endif // nsRandomGenerator_h

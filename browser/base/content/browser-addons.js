@@ -48,9 +48,15 @@ const gXPInstallObserver = {
       timeout: Date.now() + 30000
     };
 
+    try {
+      options.originHost = installInfo.originatingURI.host;
+    } catch (e) {
+      // originatingURI might be missing or 'host' might throw for non-nsStandardURL nsIURIs.
+    }
+
     switch (aTopic) {
-    case "addon-install-disabled":
-      notificationID = "xpinstall-disabled"
+    case "addon-install-disabled": {
+      notificationID = "xpinstall-disabled";
 
       if (gPrefService.prefIsLocked("xpinstall.enabled")) {
         messageString = gNavigatorBundle.getString("xpinstallDisabledMessageLocked");
@@ -70,18 +76,15 @@ const gXPInstallObserver = {
 
       PopupNotifications.show(browser, notificationID, messageString, anchorID,
                               action, null, options);
-      break;
-    case "addon-install-blocked":
-      let originatingHost;
-      try {
-        originatingHost = installInfo.originatingURI.host;
-      } catch (ex) {
+      break; }
+    case "addon-install-blocked": {
+      if (!options.originHost) {
         // Need to deal with missing originatingURI and with about:/data: URIs more gracefully,
         // see bug 1063418 - but for now, bail:
         return;
       }
-      messageString = gNavigatorBundle.getFormattedString("xpinstallPromptWarning",
-                        [brandShortName, originatingHost]);
+      messageString = gNavigatorBundle.getFormattedString("xpinstallPromptMessage",
+                        [brandShortName]);
 
       let secHistogram = Components.classes["@mozilla.org/base/telemetry;1"].getService(Ci.nsITelemetry).getHistogramById("SECURITY_UI");
       action = {
@@ -96,9 +99,9 @@ const gXPInstallObserver = {
       secHistogram.add(Ci.nsISecurityUITelemetry.WARNING_ADDON_ASKING_PREVENTED);
       PopupNotifications.show(browser, notificationID, messageString, anchorID,
                               action, null, options);
-      break;
-    case "addon-install-started":
-      var needsDownload = function needsDownload(aInstall) {
+      break; }
+    case "addon-install-started": {
+      let needsDownload = function needsDownload(aInstall) {
         return aInstall.state != AddonManager.STATE_DOWNLOADED;
       }
       // If all installs have already been downloaded then there is no need to
@@ -106,25 +109,36 @@ const gXPInstallObserver = {
       if (!installInfo.installs.some(needsDownload))
         return;
       notificationID = "addon-progress";
-      messageString = gNavigatorBundle.getString("addonDownloading");
+      messageString = gNavigatorBundle.getString("addonDownloadingAndVerifying");
       messageString = PluralForm.get(installInfo.installs.length, messageString);
+      messageString = messageString.replace("#1", installInfo.installs.length);
       options.installs = installInfo.installs;
       options.contentWindow = browser.contentWindow;
       options.sourceURI = browser.currentURI;
-      options.eventCallback = function(aEvent) {
-        if (aEvent != "removed")
-          return;
-        options.contentWindow = null;
-        options.sourceURI = null;
+      options.eventCallback = (aEvent) => {
+        switch (aEvent) {
+          case "removed":
+            options.contentWindow = null;
+            options.sourceURI = null;
+            break;
+        }
       };
-      PopupNotifications.show(browser, notificationID, messageString, anchorID,
-                              null, null, options);
-      break;
-    case "addon-install-failed":
+      let notification = PopupNotifications.show(browser, notificationID, messageString,
+                                                 anchorID, null, null, options);
+      notification._startTime = Date.now();
+
+      let cancelButton = document.getElementById("addon-progress-cancel");
+      cancelButton.label = gNavigatorBundle.getString("addonInstall.cancelButton.label");
+      cancelButton.accessKey = gNavigatorBundle.getString("addonInstall.cancelButton.accesskey");
+
+      let acceptButton = document.getElementById("addon-progress-accept");
+      acceptButton.label = gNavigatorBundle.getString("addonInstall.acceptButton.label");
+      acceptButton.accessKey = gNavigatorBundle.getString("addonInstall.acceptButton.accesskey");
+      break; }
+    case "addon-install-failed": {
       // TODO This isn't terribly ideal for the multiple failure case
       for (let install of installInfo.installs) {
-        let host = (installInfo.originatingURI instanceof Ci.nsIStandardURL) &&
-                   installInfo.originatingURI.host;
+        let host = options.originHost;
         if (!host)
           host = (install.sourceURI instanceof Ci.nsIStandardURL) &&
                  install.sourceURI.host;
@@ -147,9 +161,124 @@ const gXPInstallObserver = {
         PopupNotifications.show(browser, notificationID, messageString, anchorID,
                                 action, null, options);
       }
-      break;
-    case "addon-install-complete":
-      var needsRestart = installInfo.installs.some(function(i) {
+      this._removeProgressNotification(browser);
+      break; }
+    case "addon-install-confirmation": {
+      let unsigned = installInfo.installs.filter(i => i.addon.signedState <= AddonManager.SIGNEDSTATE_MISSING);
+      let someUnsigned = unsigned.length > 0 && unsigned.length < installInfo.installs.length;
+
+      options.eventCallback = (aEvent) => {
+        switch (aEvent) {
+          case "removed":
+            if (installInfo) {
+              for (let install of installInfo.installs)
+                install.cancel();
+            }
+            this.acceptInstallation = null;
+            break;
+          case "shown":
+            let addonList = document.getElementById("addon-install-confirmation-content");
+            while (addonList.firstChild)
+              addonList.firstChild.remove();
+
+            for (let install of installInfo.installs) {
+              let container = document.createElement("hbox");
+
+              let name = document.createElement("label");
+              name.setAttribute("value", install.addon.name);
+              name.setAttribute("class", "addon-install-confirmation-name");
+              container.appendChild(name);
+
+              if (someUnsigned && install.addon.signedState <= AddonManager.SIGNEDSTATE_MISSING) {
+                let unsigned = document.createElement("label");
+                unsigned.setAttribute("value", gNavigatorBundle.getString("addonInstall.unsigned"));
+                unsigned.setAttribute("class", "addon-install-confirmation-unsigned");
+                container.appendChild(unsigned);
+              }
+
+              addonList.appendChild(container);
+            }
+
+            this.acceptInstallation = () => {
+              for (let install of installInfo.installs)
+                install.install();
+              installInfo = null;
+
+              Services.telemetry
+                      .getHistogramById("SECURITY_UI")
+                      .add(Ci.nsISecurityUITelemetry.WARNING_CONFIRM_ADDON_INSTALL_CLICK_THROUGH);
+            };
+            break;
+        }
+      };
+
+      options.learnMoreURL = Services.urlFormatter.formatURLPref("app.support.baseURL") +
+                             "find-and-install-add-ons";
+
+      if (unsigned.length == installInfo.installs.length) {
+        // None of the add-ons are verified
+        messageString = gNavigatorBundle.getString("addonConfirmInstallUnsigned.message");
+      }
+      else if (unsigned.length == 0) {
+        // All add-ons are verified or don't need to be verified
+        messageString = gNavigatorBundle.getString("addonConfirmInstall.message");
+      }
+      else {
+        // Some of the add-ons are unverified, the list of names will indicate
+        // which
+        messageString = gNavigatorBundle.getString("addonConfirmInstallSomeUnsigned.message");
+      }
+
+      messageString = PluralForm.get(installInfo.installs.length, messageString);
+      messageString = messageString.replace("#1", brandShortName);
+      messageString = messageString.replace("#2", installInfo.installs.length);
+
+      let cancelButton = document.getElementById("addon-install-confirmation-cancel");
+      cancelButton.label = gNavigatorBundle.getString("addonInstall.cancelButton.label");
+      cancelButton.accessKey = gNavigatorBundle.getString("addonInstall.cancelButton.accesskey");
+
+      let acceptButton = document.getElementById("addon-install-confirmation-accept");
+      acceptButton.label = gNavigatorBundle.getString("addonInstall.acceptButton.label");
+      acceptButton.accessKey = gNavigatorBundle.getString("addonInstall.acceptButton.accesskey");
+
+      let showNotification = () => {
+        let tab = gBrowser.getTabForBrowser(browser);
+        if (tab)
+          gBrowser.selectedTab = tab;
+
+        if (PopupNotifications.isPanelOpen) {
+          let rect = document.getElementById("addon-progress-notification").getBoundingClientRect();
+          let notification = document.getElementById("addon-install-confirmation-notification");
+          notification.style.minHeight = rect.height + "px";
+        }
+
+        PopupNotifications.show(browser, notificationID, messageString, anchorID,
+                                action, null, options);
+
+        this._removeProgressNotification(browser);
+
+        Services.telemetry
+                .getHistogramById("SECURITY_UI")
+                .add(Ci.nsISecurityUITelemetry.WARNING_CONFIRM_ADDON_INSTALL);
+      };
+
+      let progressNotification = PopupNotifications.getNotification("addon-progress", browser);
+      if (progressNotification) {
+        let downloadDuration = Date.now() - progressNotification._startTime;
+        let securityDelay = Services.prefs.getIntPref("security.dialog_enable_delay") - downloadDuration;
+        if (securityDelay > 0) {
+          setTimeout(() => {
+            // The download may have been cancelled during the security delay
+            if (PopupNotifications.getNotification("addon-progress", browser))
+              showNotification();
+          }, securityDelay);
+          break;
+        }
+      }
+      showNotification();
+      break; }
+    case "addon-install-complete": {
+      let needsRestart = installInfo.installs.some(function(i) {
         return i.addon.pendingOperations != AddonManager.PENDING_NONE;
       });
 
@@ -159,7 +288,7 @@ const gXPInstallObserver = {
           label: gNavigatorBundle.getString("addonInstallRestartButton"),
           accessKey: gNavigatorBundle.getString("addonInstallRestartButton.accesskey"),
           callback: function() {
-            Application.restart();
+            BrowserUtils.restartApplication();
           }
         };
       }
@@ -180,8 +309,13 @@ const gXPInstallObserver = {
 
       PopupNotifications.show(browser, notificationID, messageString, anchorID,
                               action, null, options);
-      break;
+      break; }
     }
+  },
+  _removeProgressNotification(aBrowser) {
+    let notification = PopupNotifications.getNotification("addon-progress", aBrowser);
+    if (notification)
+      notification.remove();
   }
 };
 
@@ -270,7 +404,7 @@ var LightWeightThemeWebInstaller = {
           label: gNavigatorBundle.getString("lwthemeNeedsRestart.button"),
           accessKey: gNavigatorBundle.getString("lwthemeNeedsRestart.accesskey"),
           callback: function () {
-            Application.restart();
+            BrowserUtils.restartApplication();
           }
         };
 
@@ -370,6 +504,10 @@ var LightWeightThemeWebInstaller = {
     var pm = Services.perms;
 
     var uri = node.ownerDocument.documentURIObject;
+
+    if (!uri.schemeIs("https"))
+      return false;
+
     return pm.testPermission(uri, "install") == pm.ALLOW_ACTION;
   },
 

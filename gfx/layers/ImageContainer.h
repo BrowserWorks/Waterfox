@@ -22,7 +22,7 @@
 #include "nsCOMPtr.h"                   // for already_AddRefed
 #include "nsDebug.h"                    // for NS_ASSERTION
 #include "nsISupportsImpl.h"            // for Image::Release, etc
-#include "nsRect.h"                     // for nsIntRect
+#include "nsRect.h"                     // for mozilla::gfx::IntRect
 #include "nsSize.h"                     // for nsIntSize
 #include "nsTArray.h"                   // for nsTArray
 #include "mozilla/Atomics.h"
@@ -95,7 +95,6 @@ typedef void* HANDLE;
 
 namespace mozilla {
 
-class CrossProcessMutex;
 
 namespace layers {
 
@@ -103,8 +102,6 @@ class ImageClient;
 class SharedPlanarYCbCrImage;
 class TextureClient;
 class CompositableClient;
-class CompositableForwarder;
-class SurfaceDescriptor;
 class GrallocImage;
 
 struct ImageBackendData
@@ -113,18 +110,6 @@ struct ImageBackendData
 
 protected:
   ImageBackendData() {}
-};
-
-// sadly we'll need this until we get rid of Deprected image classes
-class ISharedImage {
-public:
-    virtual uint8_t* GetBuffer() = 0;
-
-    /**
-     * For use with the CompositableClient only (so that the later can
-     * synchronize the TextureClient with the TextureHost).
-     */
-    virtual TextureClient* GetTextureClient(CompositableClient* aClient) = 0;
 };
 
 /**
@@ -145,15 +130,13 @@ class Image {
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(Image)
 
 public:
-  virtual ISharedImage* AsSharedImage() { return nullptr; }
-
   ImageFormat GetFormat() { return mFormat; }
   void* GetImplData() { return mImplData; }
 
   virtual gfx::IntSize GetSize() = 0;
-  virtual nsIntRect GetPictureRect()
+  virtual gfx::IntRect GetPictureRect()
   {
-    return nsIntRect(0, 0, GetSize().width, GetSize().height);
+    return gfx::IntRect(0, 0, GetSize().width, GetSize().height);
   }
 
   ImageBackendData* GetBackendData(LayersBackend aBackend)
@@ -172,6 +155,16 @@ public:
   {
     return nullptr;
   }
+
+  virtual bool IsValid() { return true; }
+
+  virtual uint8_t* GetBuffer() { return nullptr; }
+
+  /**
+  * For use with the CompositableClient only (so that the later can
+  * synchronize the TextureClient with the TextureHost).
+  */
+  virtual TextureClient* GetTextureClient(CompositableClient* aClient) { return nullptr; }
 
 protected:
   Image(void* aImplData, ImageFormat aFormat) :
@@ -203,7 +196,7 @@ protected:
  * and we must avoid creating a reference loop between an ImageContainer and
  * its active image.
  */
-class BufferRecycleBin MOZ_FINAL {
+class BufferRecycleBin final {
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(BufferRecycleBin)
 
   //typedef mozilla::gl::GLContext GLContext;
@@ -294,10 +287,10 @@ protected:
  * updates the shared state to point to the new image and the old image
  * is immediately released (not true in Normal or Asynchronous modes).
  */
-class ImageContainer MOZ_FINAL : public SupportsWeakPtr<ImageContainer> {
+class ImageContainer final : public SupportsWeakPtr<ImageContainer> {
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(ImageContainer)
 public:
-  MOZ_DECLARE_REFCOUNTED_TYPENAME(ImageContainer)
+  MOZ_DECLARE_WEAKREFERENCE_TYPENAME(ImageContainer)
 
   enum { DISABLE_ASYNC = 0x0, ENABLE_ASYNC = 0x01 };
 
@@ -646,8 +639,8 @@ struct PlanarYCbCrData {
   gfx::IntSize mPicSize;
   StereoMode mStereoMode;
 
-  nsIntRect GetPictureRect() const {
-    return nsIntRect(mPicX, mPicY,
+  gfx::IntRect GetPictureRect() const {
+    return gfx::IntRect(mPicX, mPicY,
                      mPicSize.width,
                      mPicSize.height);
   }
@@ -791,8 +784,7 @@ protected:
  * device output color space. This class is very simple as all backends
  * have to know about how to deal with drawing a cairo image.
  */
-class CairoImage MOZ_FINAL : public Image,
-                             public ISharedImage {
+class CairoImage final : public Image {
 public:
   struct Data {
     gfx::IntSize mSize;
@@ -810,16 +802,14 @@ public:
     mSourceSurface = aData.mSourceSurface;
   }
 
-  virtual TemporaryRef<gfx::SourceSurface> GetAsSourceSurface() MOZ_OVERRIDE
+  virtual TemporaryRef<gfx::SourceSurface> GetAsSourceSurface() override
   {
     return mSourceSurface.get();
   }
 
-  virtual ISharedImage* AsSharedImage() MOZ_OVERRIDE { return this; }
-  virtual uint8_t* GetBuffer() MOZ_OVERRIDE { return nullptr; }
-  virtual TextureClient* GetTextureClient(CompositableClient* aClient) MOZ_OVERRIDE;
+  virtual TextureClient* GetTextureClient(CompositableClient* aClient) override;
 
-  virtual gfx::IntSize GetSize() MOZ_OVERRIDE { return mSize; }
+  virtual gfx::IntSize GetSize() override { return mSize; }
 
   CairoImage();
   ~CairoImage();
@@ -863,7 +853,7 @@ private:
 };
 #endif
 
-} //namespace
-} //namespace
+} // namespace layers
+} // namespace mozilla
 
 #endif

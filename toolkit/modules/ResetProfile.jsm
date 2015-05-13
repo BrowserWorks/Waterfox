@@ -7,10 +7,12 @@
 this.EXPORTED_SYMBOLS = ["ResetProfile"];
 
 const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
-#expand const MOZ_APP_NAME = "__MOZ_APP_NAME__";
-#expand const MOZ_BUILD_APP = "__MOZ_BUILD_APP__";
 
 Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/AppConstants.jsm");
+
+const MOZ_APP_NAME = AppConstants.MOZ_APP_NAME;
+const MOZ_BUILD_APP = AppConstants.MOZ_BUILD_APP;
 
 this.ResetProfile = {
   /**
@@ -32,32 +34,6 @@ this.ResetProfile = {
       Cu.reportError(e);
     }
     return false;
-  },
-
-  getMigratedData: function() {
-    Cu.import("resource:///modules/MigrationUtils.jsm");
-
-    // From migration.properties
-    const MIGRATED_TYPES = [
-      128,// Windows/Tabs
-      4,  // History and Bookmarks
-      16, // Passwords
-      8,  // Form History
-      2,  // Cookies
-    ];
-
-    // Loop over possible data to migrate to give the user a list of what will be preserved.
-    let dataTypes = [];
-    for (let itemID of MIGRATED_TYPES) {
-      try {
-        let typeName = MigrationUtils.getLocalizedString(itemID + "_" + MOZ_APP_NAME);
-        dataTypes.push(typeName);
-      } catch (x) {
-        // Catch exceptions when the string for a data type doesn't exist.
-        Cu.reportError(x);
-      }
-    }
-    return dataTypes;
   },
 
   /**

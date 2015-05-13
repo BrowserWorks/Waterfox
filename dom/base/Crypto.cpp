@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -46,9 +48,9 @@ Crypto::Init(nsIGlobalObject* aParent)
 }
 
 /* virtual */ JSObject*
-Crypto::WrapObject(JSContext* aCx)
+Crypto::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return CryptoBinding::Wrap(aCx, this);
+  return CryptoBinding::Wrap(aCx, this, aGivenProto);
 }
 
 void
@@ -56,7 +58,7 @@ Crypto::GetRandomValues(JSContext* aCx, const ArrayBufferView& aArray,
                         JS::MutableHandle<JSObject*> aRetval,
                         ErrorResult& aRv)
 {
-  NS_ABORT_IF_FALSE(NS_IsMainThread(), "Called on the wrong thread");
+  MOZ_ASSERT(NS_IsMainThread(), "Called on the wrong thread");
 
   JS::Rooted<JSObject*> view(aCx, aArray.Obj());
 
@@ -110,7 +112,7 @@ Crypto::GetRandomValues(JSContext* aCx, const ArrayBufferView& aArray,
     }
 
     memcpy(data, buf, dataLen);
-    NS_Free(buf);
+    free(buf);
   }
 
   aRetval.set(view);

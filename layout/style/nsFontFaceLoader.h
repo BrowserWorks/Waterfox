@@ -18,7 +18,6 @@
 #include "nsTHashtable.h"
 #include "nsCSSRules.h"
 
-class nsPresContext;
 class nsIPrincipal;
 
 class nsFontFaceLoader : public nsIStreamLoaderObserver
@@ -45,10 +44,7 @@ public:
   static nsresult CheckLoadAllowed(nsIPrincipal* aSourcePrincipal,
                                    nsIURI* aTargetURI,
                                    nsISupports* aContext);
-
-#ifdef PR_LOGGING
-  static PRLogModuleInfo* GetFontDownloaderLog();
-#endif
+  gfxUserFontEntry* GetUserFontEntry() const { return mUserFontEntry; }
 
 protected:
   virtual ~nsFontFaceLoader();

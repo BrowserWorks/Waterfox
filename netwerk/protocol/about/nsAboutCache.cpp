@@ -64,28 +64,12 @@ nsAboutCache::NewChannel(nsIURI* aURI,
     mEntriesHeaderAdded = false;
 
     nsCOMPtr<nsIChannel> channel;
-    // Bug 1087720 (and Bug 1099296):
-    // Once all callsites have been updated to call NewChannel2()
-    // instead of NewChannel() we should have a non-null loadInfo
-    // consistently. Until then we have to branch on the loadInfo.
-    if (aLoadInfo) {
-      rv = NS_NewInputStreamChannelInternal(getter_AddRefs(channel),
-                                            aURI,
-                                            inputStream,
-                                            NS_LITERAL_CSTRING("text/html"),
-                                            NS_LITERAL_CSTRING("utf-8"),
-                                            aLoadInfo);
-    }
-    else {
-      rv = NS_NewInputStreamChannel(getter_AddRefs(channel),
-                            aURI,
-                            inputStream,
-                            nsContentUtils::GetSystemPrincipal(),
-                            nsILoadInfo::SEC_NORMAL,
-                            nsIContentPolicy::TYPE_OTHER,
-                            NS_LITERAL_CSTRING("text/html"),
-                            NS_LITERAL_CSTRING("utf-8"));
-    }
+    rv = NS_NewInputStreamChannelInternal(getter_AddRefs(channel),
+                                          aURI,
+                                          inputStream,
+                                          NS_LITERAL_CSTRING("text/html"),
+                                          NS_LITERAL_CSTRING("utf-8"),
+                                          aLoadInfo);
     if (NS_FAILED(rv)) return rv;
 
     mBuffer.AssignLiteral(
@@ -126,7 +110,7 @@ nsAboutCache::NewChannel(nsIURI* aURI,
         mBuffer.AppendLiteral("<a href=\"about:cache?storage=&amp;context=");
         char* escapedContext = nsEscapeHTML(mContextString.get());
         mBuffer.Append(escapedContext);
-        nsMemory::Free(escapedContext);
+        free(escapedContext);
         mBuffer.AppendLiteral("\">Back to overview</a>");
     }
 
@@ -211,13 +195,13 @@ nsAboutCache::FireVisitStorage()
             mBuffer.Append(
                 nsPrintfCString("<p>Unrecognized storage name '%s' in about:cache URL</p>",
                                 escaped));
-            nsMemory::Free(escaped);
+            free(escaped);
         } else {
             char* escaped = nsEscapeHTML(mContextString.get());
             mBuffer.Append(
                 nsPrintfCString("<p>Unrecognized context key '%s' in about:cache URL</p>",
                                 escaped));
-            nsMemory::Free(escaped);
+            free(escaped);
         }
 
         FlushBuffer();
@@ -335,7 +319,7 @@ nsAboutCache::OnCacheStorageInfo(uint32_t aEntryCount, uint64_t aConsumption,
             mBuffer.AppendLiteral("&amp;context=");
             char* escapedContext = nsEscapeHTML(mContextString.get());
             mBuffer.Append(escapedContext);
-            nsMemory::Free(escapedContext);
+            free(escapedContext);
             mBuffer.AppendLiteral("\">List Cache Entries</a></th>\n"
                                   "  </tr>\n");
         }
@@ -399,12 +383,12 @@ nsAboutCache::OnCacheEntryInfo(nsIURI *aURI, const nsACString & aIdEnhance,
     url.AppendLiteral("&amp;context=");
     char* escapedContext = nsEscapeHTML(mContextString.get());
     url += escapedContext;
-    nsMemory::Free(escapedContext);
+    free(escapedContext);
 
     url.AppendLiteral("&amp;eid=");
     char* escapedEID = nsEscapeHTML(aIdEnhance.BeginReading());
     url += escapedEID;
-    nsMemory::Free(escapedEID);
+    free(escapedEID);
 
     nsAutoCString cacheUriSpec;
     aURI->GetAsciiSpec(cacheUriSpec);
@@ -426,7 +410,7 @@ nsAboutCache::OnCacheEntryInfo(nsIURI *aURI, const nsACString & aIdEnhance,
     mBuffer.Append(escapedCacheURI);
     mBuffer.AppendLiteral("</a></td>\n");
 
-    nsMemory::Free(escapedCacheURI);
+    free(escapedCacheURI);
 
     // Content length
     mBuffer.AppendLiteral("    <td>");

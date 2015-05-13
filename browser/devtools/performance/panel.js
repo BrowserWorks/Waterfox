@@ -6,7 +6,7 @@
 "use strict";
 
 const {Cc, Ci, Cu, Cr} = require("chrome");
-const { PerformanceFront, getPerformanceActorsConnection } = require("devtools/performance/front");
+const { PerformanceFront } = require("devtools/performance/front");
 
 Cu.import("resource://gre/modules/Task.jsm");
 
@@ -34,11 +34,18 @@ PerformancePanel.prototype = {
   open: Task.async(function*() {
     this.panelWin.gToolbox = this._toolbox;
     this.panelWin.gTarget = this.target;
+    this._onRecordingStartOrStop = this._onRecordingStartOrStop.bind(this);
 
-    this._connection = getPerformanceActorsConnection(this.target);
+    // Connection is already created in the toolbox; reuse
+    // the same connection.
+    this._connection = this.panelWin.gToolbox.getPerformanceActorsConnection();
+    // The toolbox will also open the connection, but attempt to open it again
+    // incase it's still in the process of opening.
     yield this._connection.open();
 
     this.panelWin.gFront = new PerformanceFront(this._connection);
+    this.panelWin.gFront.on("recording-started", this._onRecordingStartOrStop);
+    this.panelWin.gFront.on("recording-stopped", this._onRecordingStartOrStop);
 
     yield this.panelWin.startupPerformance();
 
@@ -57,11 +64,19 @@ PerformancePanel.prototype = {
       return;
     }
 
-    // Destroy the connection to ensure packet handlers are removed from client.
-    this._connection.destroy();
-
+    this.panelWin.gFront.off("recording-started", this._onRecordingStartOrStop);
+    this.panelWin.gFront.off("recording-stopped", this._onRecordingStartOrStop);
     yield this.panelWin.shutdownPerformance();
     this.emit("destroyed");
     this._destroyed = true;
-  })
+  }),
+
+  _onRecordingStartOrStop: function () {
+    let front = this.panelWin.gFront;
+    if (front.isRecording()) {
+      this._toolbox.highlightTool("performance");
+    } else {
+      this._toolbox.unhighlightTool("performance");
+    }
+  }
 };

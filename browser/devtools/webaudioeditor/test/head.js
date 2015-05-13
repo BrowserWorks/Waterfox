@@ -16,10 +16,14 @@ let { Promise } = Cu.import("resource://gre/modules/Promise.jsm", {});
 let { gDevTools } = Cu.import("resource:///modules/devtools/gDevTools.jsm", {});
 let { devtools } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
 let { DebuggerServer } = Cu.import("resource://gre/modules/devtools/dbg-server.jsm", {});
+let { generateUUID } = Cc["@mozilla.org/uuid-generator;1"].getService(Ci.nsIUUIDGenerator);
 
 let { WebAudioFront } = devtools.require("devtools/server/actors/webaudio");
 let TargetFactory = devtools.TargetFactory;
+let audioNodes = devtools.require("devtools/server/actors/utils/audionodes.json");
+let mm = null;
 
+const FRAME_SCRIPT_UTILS_URL = "chrome://browser/content/devtools/frame-script-utils.js";
 const EXAMPLE_URL = "http://example.com/browser/browser/devtools/webaudioeditor/test/";
 const SIMPLE_CONTEXT_URL = EXAMPLE_URL + "doc_simple-context.html";
 const COMPLEX_CONTEXT_URL = EXAMPLE_URL + "doc_complex-context.html";
@@ -46,6 +50,15 @@ registerCleanupFunction(() => {
   Services.prefs.setBoolPref("devtools.webaudioeditor.enabled", gToolEnabled);
   Cu.forceGC();
 });
+
+/**
+ * Call manually in tests that use frame script utils after initializing
+ * the web audio editor. Call after init but before navigating to a different page.
+ */
+function loadFrameScripts () {
+  mm = gBrowser.selectedBrowser.messageManager;
+  mm.loadFrameScript(FRAME_SCRIPT_UTILS_URL, false);
+}
 
 function addTab(aUrl, aWindow) {
   info("Adding tab: " + aUrl);
@@ -98,6 +111,7 @@ function once(aTarget, aEventName, aUseCapture = false) {
     if ((add in aTarget) && (remove in aTarget)) {
       aTarget[add](aEventName, function onEvent(...aArgs) {
         aTarget[remove](aEventName, onEvent, aUseCapture);
+        info("Got event: '" + aEventName + "' on " + aTarget + ".");
         deferred.resolve(...aArgs);
       }, aUseCapture);
       break;
@@ -115,6 +129,15 @@ function reload(aTarget, aWaitForTargetEvent = "navigate") {
 function navigate(aTarget, aUrl, aWaitForTargetEvent = "navigate") {
   executeSoon(() => aTarget.activeTab.navigateTo(aUrl));
   return once(aTarget, aWaitForTargetEvent);
+}
+
+/**
+ * Call manually in tests that use frame script utils after initializing
+ * the shader editor. Call after init but before navigating to different pages.
+ */
+function loadFrameScripts () {
+  mm = gBrowser.selectedBrowser.messageManager;
+  mm.loadFrameScript(FRAME_SCRIPT_UTILS_URL, false);
 }
 
 /**
@@ -231,7 +254,7 @@ function checkVariableView (view, index, hash, description = "") {
   // If node shouldn't display any properties, ensure that the 'empty' message is
   // visible
   if (!variables.length) {
-    ok(isVisible(scope.window.$("#properties-tabpanel-content-empty")),
+    ok(isVisible(scope.window.$("#properties-empty")),
       description + " should show the empty properties tab.");
     return;
   }
@@ -318,6 +341,12 @@ function mouseOver (win, element) {
   EventUtils.sendMouseEvent({ type: "mouseover" }, element, win);
 }
 
+function command (button) {
+  let ev = button.ownerDocument.createEvent("XULCommandEvent");
+  ev.initCommandEvent("command", true, true, button.ownerDocument.defaultView, 0, false, false, false, false, null);
+  button.dispatchEvent(ev);
+}
+
 function isVisible (element) {
   return !element.getAttribute("hidden");
 }
@@ -334,13 +363,15 @@ function wait (n) {
 
 /**
  * Clicks a graph node based on actorID or passing in an element.
- * Returns a promise that resolves once
- * UI_INSPECTOR_NODE_SET is fired.
+ * Returns a promise that resolves once UI_INSPECTOR_NODE_SET is fired and
+ * the tabs have rendered, completing all RDP requests for the node.
  */
 function clickGraphNode (panelWin, el, waitForToggle = false) {
   let { promise, resolve } = Promise.defer();
   let promises = [
-   once(panelWin, panelWin.EVENTS.UI_INSPECTOR_NODE_SET)
+   once(panelWin, panelWin.EVENTS.UI_INSPECTOR_NODE_SET),
+   once(panelWin, panelWin.EVENTS.UI_PROPERTIES_TAB_RENDERED),
+   once(panelWin, panelWin.EVENTS.UI_AUTOMATION_TAB_RENDERED)
   ];
 
   if (waitForToggle) {
@@ -413,10 +444,10 @@ function checkAutomationValue (values, time, expected) {
    */
   function getValueAt (values, time) {
     for (let i = 0; i < values.length; i++) {
-      if (values[i].t === time) {
+      if (values[i].delta === time) {
         return values[i].value;
       }
-      if (values[i].t > time) {
+      if (values[i].delta > time) {
         return (values[i - 1].value + values[i].value) / 2;
       }
     }
@@ -425,80 +456,88 @@ function checkAutomationValue (values, time, expected) {
 }
 
 /**
- * List of audio node properties to test against expectations of the AudioNode actor
+ * Wait for all inspector tabs to complete rendering.
  */
+function waitForInspectorRender (panelWin, EVENTS) {
+  return Promise.all([
+    once(panelWin, EVENTS.UI_PROPERTIES_TAB_RENDERED),
+    once(panelWin, EVENTS.UI_AUTOMATION_TAB_RENDERED)
+  ]);
+}
 
-const NODE_DEFAULT_VALUES = {
-  "AudioDestinationNode": {},
-  "MediaElementAudioSourceNode": {},
-  "MediaStreamAudioSourceNode": {},
-  "MediaStreamAudioDestinationNode": {
-    "stream": "MediaStream"
-  },
-  "AudioBufferSourceNode": {
-    "playbackRate": 1,
-    "loop": false,
-    "loopStart": 0,
-    "loopEnd": 0,
-    "buffer": null
-  },
-  "ScriptProcessorNode": {
-    "bufferSize": 4096
-  },
-  "AnalyserNode": {
-    "fftSize": 2048,
-    "minDecibels": -100,
-    "maxDecibels": -30,
-    "smoothingTimeConstant": 0.8,
-    "frequencyBinCount": 1024
-  },
-  "GainNode": {
-    "gain": 1
-  },
-  "DelayNode": {
-    "delayTime": 0
-  },
-  "BiquadFilterNode": {
-    "type": "lowpass",
-    "frequency": 350,
-    "Q": 1,
-    "detune": 0,
-    "gain": 0
-  },
-  "WaveShaperNode": {
-    "curve": null,
-    "oversample": "none"
-  },
-  "PannerNode": {
-    "panningModel": "HRTF",
-    "distanceModel": "inverse",
-    "refDistance": 1,
-    "maxDistance": 10000,
-    "rolloffFactor": 1,
-    "coneInnerAngle": 360,
-    "coneOuterAngle": 360,
-    "coneOuterGain": 0
-  },
-  "ConvolverNode": {
-    "buffer": null,
-    "normalize": true
-  },
-  "ChannelSplitterNode": {},
-  "ChannelMergerNode": {},
-  "DynamicsCompressorNode": {
-    "threshold": -24,
-    "knee": 30,
-    "ratio": 12,
-    "reduction": 0,
-    "attack": 0.003000000026077032,
-    "release": 0.25
-  },
-  "OscillatorNode": {
-    "type": "sine",
-    "frequency": 440,
-    "detune": 0
-  },
-  "StereoPannerNode": {
-    "pan": 0
+/**
+ * Takes a string `script` and evaluates it directly in the content
+ * in potentially a different process.
+ */
+function evalInDebuggee (script) {
+  let deferred = Promise.defer();
+
+  if (!mm) {
+    throw new Error("`loadFrameScripts()` must be called when using MessageManager.");
   }
+
+  let id = generateUUID().toString();
+  mm.sendAsyncMessage("devtools:test:eval", { script: script, id: id });
+  mm.addMessageListener("devtools:test:eval:response", handler);
+
+  function handler ({ data }) {
+    if (id !== data.id) {
+      return;
+    }
+
+    mm.removeMessageListener("devtools:test:eval:response", handler);
+    deferred.resolve(data.value);
+  }
+
+  return deferred.promise;
+}
+
+/**
+ * Takes an AudioNode type and returns it's properties (from audionode.json)
+ * as keys and their default values as keys
+ */
+function nodeDefaultValues(nodeName) {
+  let fn = NODE_CONSTRUCTORS[nodeName];
+
+  if(typeof fn === 'undefined') return {};
+
+  let init = nodeName === "AudioDestinationNode" ? "destination" : `create${fn}()`;
+
+  let definition = JSON.stringify(audioNodes[nodeName].properties);
+
+  let evalNode = evalInDebuggee(`
+    let ins = (new AudioContext()).${init};
+    let props = ${definition};
+    let answer = {};
+
+    for(let k in props) {
+      if (props[k].param) {
+        answer[k] = ins[k].defaultValue;
+      } else if (typeof ins[k] === "object" && ins[k] !== null) {
+        answer[k] = ins[k].toString().slice(8, -1);
+      } else {
+        answer[k] = ins[k];
+      }
+    }
+    answer;`);
+
+  return evalNode;
+}
+
+const NODE_CONSTRUCTORS = {
+  "MediaStreamAudioDestinationNode": "MediaStreamDestination",
+  "AudioBufferSourceNode": "BufferSource",
+  "ScriptProcessorNode": "ScriptProcessor",
+  "AnalyserNode": "Analyser",
+  "GainNode": "Gain",
+  "DelayNode": "Delay",
+  "BiquadFilterNode": "BiquadFilter",
+  "WaveShaperNode": "WaveShaper",
+  "PannerNode": "Panner",
+  "ConvolverNode": "Convolver",
+  "ChannelSplitterNode": "ChannelSplitter",
+  "ChannelMergerNode": "ChannelMerger",
+  "DynamicsCompressorNode": "DynamicsCompressor",
+  "OscillatorNode": "Oscillator",
+  "StereoPannerNode": "StereoPanner"
 };

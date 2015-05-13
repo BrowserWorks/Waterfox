@@ -6,7 +6,9 @@
 #include "nsNativeThemeGTK.h"
 #include "nsThemeConstants.h"
 #include "gtkdrawing.h"
+#include "nsScreenGtk.h"
 
+#include "gfx2DGlue.h"
 #include "nsIObserverService.h"
 #include "nsIServiceManager.h"
 #include "nsIFrame.h"
@@ -31,7 +33,20 @@
 #include "gfxContext.h"
 #include "gfxPlatformGtk.h"
 #include "gfxGdkNativeRenderer.h"
+#include "mozilla/gfx/BorrowedContext.h"
+#include "mozilla/gfx/HelpersCairo.h"
+
+#ifdef MOZ_X11
+#  ifdef CAIRO_HAS_XLIB_SURFACE
+#    include "cairo-xlib.h"
+#  endif
+#  ifdef CAIRO_HAS_XLIB_XRENDER_SURFACE
+#    include "cairo-xlib-xrender.h"
+#  endif
+#endif
+
 #include <algorithm>
+#include <dlfcn.h>
 
 using namespace mozilla;
 using namespace mozilla::gfx;
@@ -87,6 +102,7 @@ nsNativeThemeGTK::RefreshWidgetWindow(nsIFrame* aFrame)
  
   vm->InvalidateAllViews();
 }
+
 
 static bool IsFrameContentNodeInNamespace(nsIFrame *aFrame, uint32_t aNamespace)
 {
@@ -577,7 +593,7 @@ nsNativeThemeGTK::GetGtkWidgetAndState(uint8_t aWidgetType, nsIFrame* aFrame,
       EventStates eventStates = GetContentState(stateFrame, aWidgetType);
 
       aGtkWidgetType = IsIndeterminateProgress(stateFrame, eventStates)
-                         ? (stateFrame->StyleDisplay()->mOrient == NS_STYLE_ORIENT_VERTICAL)
+                         ? IsVerticalProgress(stateFrame)
                            ? MOZ_GTK_PROGRESS_CHUNK_VERTICAL_INDETERMINATE
                            : MOZ_GTK_PROGRESS_CHUNK_INDETERMINATE
                          : MOZ_GTK_PROGRESS_CHUNK;
@@ -698,6 +714,158 @@ ThemeRenderer::DrawWithGDK(GdkDrawable * drawable, gint offsetX,
 
   return NS_OK;
 }
+#else
+static void
+DrawThemeWithCairo(gfxContext* aContext, DrawTarget* aDrawTarget,
+                   GtkWidgetState aState, GtkThemeWidgetType aGTKWidgetType,
+                   gint aFlags, GtkTextDirection aDirection, gint aScaleFactor,
+                   bool aSnapped, const Point& aDrawOrigin, const nsIntSize& aDrawSize,
+                   GdkRectangle& aGDKRect, nsITheme::Transparency aTransparency)
+{
+#ifndef MOZ_TREE_CAIRO
+  // Directly use the Cairo draw target to render the widget if using system Cairo everywhere.
+  BorrowedCairoContext borrow(aDrawTarget);
+  if (borrow.mCairo) {
+    if (aSnapped) {
+      cairo_identity_matrix(borrow.mCairo);
+    }
+    if (aDrawOrigin != Point(0, 0)) {
+      cairo_translate(borrow.mCairo, aDrawOrigin.x, aDrawOrigin.y);
+    }
+    if (aScaleFactor != 1) {
+      cairo_scale(borrow.mCairo, aScaleFactor, aScaleFactor);
+    }
+
+    moz_gtk_widget_paint(aGTKWidgetType, borrow.mCairo, &aGDKRect, &aState, aFlags, aDirection);
+
+    borrow.Finish();
+    return;
+  }
+#endif
+
+  // A direct Cairo draw target is not available, so we need to create a temporary one.
+  bool needClip = !aSnapped || aContext->HasComplexClip();
+#if defined(MOZ_X11) && defined(CAIRO_HAS_XLIB_SURFACE)
+  if (!needClip) {
+    // If using a Cairo xlib surface, then try to reuse it.
+    BorrowedXlibDrawable borrow(aDrawTarget);
+    if (borrow.GetDrawable()) {
+      nsIntSize size = aDrawTarget->GetSize();
+      cairo_surface_t* surf = nullptr;
+      // Check if the surface is using XRender.
+#ifdef CAIRO_HAS_XLIB_XRENDER_SURFACE
+      if (borrow.GetXRenderFormat()) {
+        surf = cairo_xlib_surface_create_with_xrender_format(
+          borrow.GetDisplay(), borrow.GetDrawable(), borrow.GetScreen(),
+          borrow.GetXRenderFormat(), size.width, size.height);
+      } else {
+#else
+      if (! borrow.GetXRenderFormat()) {
+#endif
+        surf = cairo_xlib_surface_create(
+          borrow.GetDisplay(), borrow.GetDrawable(), borrow.GetVisual(),
+          size.width, size.height);
+      }
+      if (!NS_WARN_IF(!surf)) {
+        cairo_t* cr = cairo_create(surf);
+        if (!NS_WARN_IF(!cr)) {
+          cairo_new_path(cr);
+          cairo_rectangle(cr, aDrawOrigin.x, aDrawOrigin.y, aDrawSize.width, aDrawSize.height);
+          cairo_clip(cr);
+          if (aDrawOrigin != Point(0, 0)) {
+            cairo_translate(cr, aDrawOrigin.x, aDrawOrigin.y);
+          }
+          if (aScaleFactor != 1) {
+            cairo_scale(cr, aScaleFactor, aScaleFactor);
+          }
+
+          moz_gtk_widget_paint(aGTKWidgetType, cr, &aGDKRect, &aState, aFlags, aDirection);
+
+          cairo_destroy(cr);
+        }
+        cairo_surface_destroy(surf);
+      }
+      borrow.Finish();
+      return;
+    }
+  }
+#endif
+
+  // Check if the widget requires complex masking that must be composited.
+  // Try to directly write to the draw target's pixels if possible.
+  uint8_t* data;
+  nsIntSize size;
+  int32_t stride;
+  SurfaceFormat format;
+  if (!needClip && aDrawTarget->LockBits(&data, &size, &stride, &format)) {
+    // Create a Cairo image surface context the device rectangle.
+    cairo_surface_t* surf =
+      cairo_image_surface_create_for_data(
+        data + int32_t(aDrawOrigin.y) * stride + int32_t(aDrawOrigin.x) * BytesPerPixel(format),
+        GfxFormatToCairoFormat(format), aDrawSize.width, aDrawSize.height, stride);
+    if (!NS_WARN_IF(!surf)) {
+      cairo_t* cr = cairo_create(surf);
+      if (!NS_WARN_IF(!cr)) {
+        if (aScaleFactor != 1) {
+          cairo_scale(cr, aScaleFactor, aScaleFactor);
+        }
+
+        moz_gtk_widget_paint(aGTKWidgetType, cr, &aGDKRect, &aState, aFlags, aDirection);
+
+        cairo_destroy(cr);
+      }
+      cairo_surface_destroy(surf);
+    }
+    aDrawTarget->ReleaseBits(data);
+  } else {
+    // If the widget has any transparency, make sure to choose an alpha format.
+    format = aTransparency != nsITheme::eOpaque ? SurfaceFormat::B8G8R8A8 : aDrawTarget->GetFormat();
+    // Create a temporary data surface to render the widget into.
+    RefPtr<DataSourceSurface> dataSurface =
+      Factory::CreateDataSourceSurface(aDrawSize, format, aTransparency != nsITheme::eOpaque);
+    DataSourceSurface::MappedSurface map;
+    if (!NS_WARN_IF(!(dataSurface && dataSurface->Map(DataSourceSurface::MapType::WRITE, &map)))) {
+      // Create a Cairo image surface wrapping the data surface.
+      cairo_surface_t* surf =
+        cairo_image_surface_create_for_data(map.mData, GfxFormatToCairoFormat(format),
+                                            aDrawSize.width, aDrawSize.height, map.mStride);
+      cairo_t* cr = nullptr;
+      if (!NS_WARN_IF(!surf)) {
+        cr = cairo_create(surf);
+        if (!NS_WARN_IF(!cr)) {
+          if (aScaleFactor != 1) {
+            cairo_scale(cr, aScaleFactor, aScaleFactor);
+          }
+
+          moz_gtk_widget_paint(aGTKWidgetType, cr, &aGDKRect, &aState, aFlags, aDirection);
+        }
+      }
+
+      // Unmap the surface before using it as a source
+      dataSurface->Unmap();
+
+      if (cr) {
+        if (needClip || aTransparency != nsITheme::eOpaque) {
+          // The widget either needs to be masked or has transparency, so use the slower drawing path.
+          aDrawTarget->DrawSurface(dataSurface,
+                                   Rect(aDrawOrigin, Size(aDrawSize)),
+                                   Rect(0, 0, aDrawSize.width, aDrawSize.height));
+        } else {
+          // The widget is a simple opaque rectangle, so just copy it out.
+          aDrawTarget->CopySurface(dataSurface,
+                                   IntRect(0, 0, aDrawSize.width, aDrawSize.height),
+                                   TruncatedToInt(aDrawOrigin));
+        }
+
+        cairo_destroy(cr);
+      }
+
+      if (surf) {
+        cairo_surface_destroy(surf);
+      }
+    }
+  }
+}
 #endif
 
 bool
@@ -711,10 +879,10 @@ nsNativeThemeGTK::GetExtraSizeForWidget(nsIFrame* aFrame, uint8_t aWidgetType,
   switch (aWidgetType) {
   case NS_THEME_SCROLLBAR_THUMB_VERTICAL:
     aExtra->top = aExtra->bottom = 1;
-    return true;
+    break;
   case NS_THEME_SCROLLBAR_THUMB_HORIZONTAL:
     aExtra->left = aExtra->right = 1;
-    return true;
+    break;
 
   // Include the indicator spacing (the padding around the control).
   case NS_THEME_CHECKBOX:
@@ -732,7 +900,7 @@ nsNativeThemeGTK::GetExtraSizeForWidget(nsIFrame* aFrame, uint8_t aWidgetType,
       aExtra->right = indicator_spacing;
       aExtra->bottom = indicator_spacing;
       aExtra->left = indicator_spacing;
-      return true;
+      break;
     }
   case NS_THEME_BUTTON :
     {
@@ -745,7 +913,7 @@ nsNativeThemeGTK::GetExtraSizeForWidget(nsIFrame* aFrame, uint8_t aWidgetType,
         aExtra->right = right;
         aExtra->bottom = bottom;
         aExtra->left = left;
-        return true;
+        break;
       }
     }
   case NS_THEME_FOCUS_OUTLINE:
@@ -753,7 +921,7 @@ nsNativeThemeGTK::GetExtraSizeForWidget(nsIFrame* aFrame, uint8_t aWidgetType,
       moz_gtk_get_focus_outline_size(&aExtra->left, &aExtra->top);
       aExtra->right = aExtra->left;
       aExtra->bottom = aExtra->top;
-      return true;
+      break;
     }
   case NS_THEME_TAB :
     {
@@ -761,6 +929,8 @@ nsNativeThemeGTK::GetExtraSizeForWidget(nsIFrame* aFrame, uint8_t aWidgetType,
         return false;
 
       gint gap_height = moz_gtk_get_tab_thickness();
+      if (!gap_height)
+        return false;
 
       int32_t extra = gap_height - GetTabMarginPixels(aFrame);
       if (extra <= 0)
@@ -775,6 +945,12 @@ nsNativeThemeGTK::GetExtraSizeForWidget(nsIFrame* aFrame, uint8_t aWidgetType,
   default:
     return false;
   }
+  gint scale = nsScreenGtk::GetGtkMonitorScaleFactor();
+  aExtra->top *= scale;
+  aExtra->right *= scale;
+  aExtra->bottom *= scale;
+  aExtra->left *= scale;
+  return true;
 }
 
 NS_IMETHODIMP
@@ -784,10 +960,6 @@ nsNativeThemeGTK::DrawWidgetBackground(nsRenderingContext* aContext,
                                        const nsRect& aRect,
                                        const nsRect& aDirtyRect)
 {
-#if (MOZ_WIDGET_GTK != 2)
-  DrawTarget& aDrawTarget = *aContext->GetDrawTarget();
-#endif
-
   GtkWidgetState state;
   GtkThemeWidgetType gtkWidgetType;
   GtkTextDirection direction = GetTextDirection(aFrame);
@@ -801,13 +973,14 @@ nsNativeThemeGTK::DrawWidgetBackground(nsRenderingContext* aContext,
 
   gfxRect rect = presContext->AppUnitsToGfxUnits(aRect);
   gfxRect dirtyRect = presContext->AppUnitsToGfxUnits(aDirtyRect);
+  gint scaleFactor = nsScreenGtk::GetGtkMonitorScaleFactor();
 
   // Align to device pixels where sensible
   // to provide crisper and faster drawing.
   // Don't snap if it's a non-unit scale factor. We're going to have to take
   // slow paths then in any case.
-  bool snapXY = ctx->UserToDevicePixelSnapped(rect);
-  if (snapXY) {
+  bool snapped = ctx->UserToDevicePixelSnapped(rect);
+  if (snapped) {
     // Leave rect in device coords but make dirtyRect consistent.
     dirtyRect = ctx->UserToDevice(dirtyRect);
   }
@@ -824,7 +997,7 @@ nsNativeThemeGTK::DrawWidgetBackground(nsRenderingContext* aContext,
   nsIntRect overflowRect(widgetRect);
   nsIntMargin extraSize;
   if (GetExtraSizeForWidget(aFrame, aWidgetType, &extraSize)) {
-    overflowRect.Inflate(extraSize);
+    overflowRect.Inflate(gfx::ToIntMargin(extraSize));
   }
 
   // This is the rectangle that will actually be drawn, in gdk pixels
@@ -836,20 +1009,6 @@ nsNativeThemeGTK::DrawWidgetBackground(nsRenderingContext* aContext,
       || !drawingRect.IntersectRect(overflowRect, drawingRect))
     return NS_OK;
 
-  // gdk rectangles are wrt the drawing rect.
-
-  GdkRectangle gdk_rect = {-drawingRect.x, -drawingRect.y,
-                           widgetRect.width, widgetRect.height};
-
-  // translate everything so (0,0) is the top left of the drawingRect
-  gfxContextAutoSaveRestore autoSR(ctx);
-  gfxMatrix tm;
-  if (!snapXY) { // else rects are in device coords
-    tm = ctx->CurrentMatrix();
-  }
-  tm.Translate(rect.TopLeft() + gfxPoint(drawingRect.x, drawingRect.y));
-  ctx->SetMatrix(tm);
-
   NS_ASSERTION(!IsWidgetTypeDisabled(mDisabledWidgetTypes, aWidgetType),
                "Trying to render an unsafe widget!");
 
@@ -859,7 +1018,27 @@ nsNativeThemeGTK::DrawWidgetBackground(nsRenderingContext* aContext,
     gdk_error_trap_push ();
   }
 
+  Transparency transparency = GetWidgetTransparency(aFrame, aWidgetType);
+
+  // gdk rectangles are wrt the drawing rect.
+  GdkRectangle gdk_rect = {-drawingRect.x/scaleFactor,
+                           -drawingRect.y/scaleFactor,
+                           widgetRect.width/scaleFactor,
+                           widgetRect.height/scaleFactor};
+
+  // translate everything so (0,0) is the top left of the drawingRect
+  gfxPoint origin = rect.TopLeft() + drawingRect.TopLeft();
+
 #if (MOZ_WIDGET_GTK == 2)
+  gfxContextAutoSaveRestore autoSR(ctx);
+  gfxMatrix matrix;
+  if (!snapped) { // else rects are in device coords
+    matrix = ctx->CurrentMatrix();
+  }
+  matrix.Translate(origin);
+  matrix.Scale(scaleFactor, scaleFactor); // Draw in GDK coords
+  ctx->SetMatrix(matrix);
+
   // The gdk_clip is just advisory here, meaning "you don't
   // need to draw outside this rect if you don't feel like it!"
   GdkRectangle gdk_clip = {0, 0, drawingRect.width, drawingRect.height};
@@ -871,7 +1050,7 @@ nsNativeThemeGTK::DrawWidgetBackground(nsRenderingContext* aContext,
   // clip rect we provide, so we cannot advertise support for clipping within
   // the widget bounds.
   uint32_t rendererFlags = 0;
-  if (GetWidgetTransparency(aFrame, aWidgetType) == eOpaque) {
+  if (transparency == eOpaque) {
     rendererFlags |= gfxGdkNativeRenderer::DRAW_IS_OPAQUE;
   }
 
@@ -881,11 +1060,10 @@ nsNativeThemeGTK::DrawWidgetBackground(nsRenderingContext* aContext,
 
   renderer.Draw(ctx, drawingRect.Size(), rendererFlags, colormap);
 #else 
-  cairo_t *cairo_ctx =
-    (cairo_t*)aDrawTarget.GetNativeSurface(NativeSurfaceType::CAIRO_CONTEXT); 
-  MOZ_ASSERT(cairo_ctx);
-  moz_gtk_widget_paint(gtkWidgetType, cairo_ctx, &gdk_rect, 
-                       &state, flags, direction);
+  DrawThemeWithCairo(ctx, aContext->GetDrawTarget(),
+                     state, gtkWidgetType, flags, direction, scaleFactor,
+                     snapped, ToPoint(origin), drawingRect.Size(),
+                     gdk_rect, transparency);
 #endif
 
   if (!safeState) {
@@ -1036,6 +1214,12 @@ nsNativeThemeGTK::GetWidgetPadding(nsDeviceContext* aContext,
         aResult->left += horizontal_padding;
         aResult->right += horizontal_padding;
 
+        gint scale = nsScreenGtk::GetGtkMonitorScaleFactor();
+        aResult->top *= scale;
+        aResult->right *= scale;
+        aResult->bottom *= scale;
+        aResult->left *= scale;
+
         return true;
       }
   }
@@ -1065,7 +1249,8 @@ nsNativeThemeGTK::GetWidgetOverflow(nsDeviceContext* aContext,
 NS_IMETHODIMP
 nsNativeThemeGTK::GetMinimumWidgetSize(nsPresContext* aPresContext,
                                        nsIFrame* aFrame, uint8_t aWidgetType,
-                                       nsIntSize* aResult, bool* aIsOverridable)
+                                       LayoutDeviceIntSize* aResult,
+                                       bool* aIsOverridable)
 {
   aResult->width = aResult->height = 0;
   *aIsOverridable = true;
@@ -1296,6 +1481,9 @@ nsNativeThemeGTK::GetMinimumWidgetSize(nsPresContext* aPresContext,
     }
     break;
   }
+
+  *aResult = *aResult * nsScreenGtk::GetGtkMonitorScaleFactor();
+
   return NS_OK;
 }
 
@@ -1354,6 +1542,7 @@ nsNativeThemeGTK::WidgetStateChanged(nsIFrame* aFrame, uint8_t aWidgetType,
     if (aAttribute == nsGkAtoms::disabled ||
         aAttribute == nsGkAtoms::checked ||
         aAttribute == nsGkAtoms::selected ||
+        aAttribute == nsGkAtoms::visuallyselected ||
         aAttribute == nsGkAtoms::focused ||
         aAttribute == nsGkAtoms::readonly ||
         aAttribute == nsGkAtoms::_default ||
@@ -1528,9 +1717,15 @@ nsNativeThemeGTK::GetWidgetTransparency(nsIFrame* aFrame, uint8_t aWidgetType)
   case NS_THEME_MENUPOPUP:
   case NS_THEME_WINDOW:
   case NS_THEME_DIALOG:
-  // Tooltips use gtk_paint_flat_box().
-  case NS_THEME_TOOLTIP:
     return eOpaque;
+  // Tooltips use gtk_paint_flat_box() on Gtk2
+  // but are shaped on Gtk3
+  case NS_THEME_TOOLTIP:
+#if (MOZ_WIDGET_GTK == 2)
+    return eOpaque;
+#else
+    return eTransparent;
+#endif
   }
 
   return eUnknownTransparency;

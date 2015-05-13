@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2014 Mozilla Foundation
+ * Copyright (C) 2013-2015 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
  */
 
 #include "GonkCameraParameters.h"
-#include "camera/CameraParameters.h"
 #include "CameraPreferences.h"
 #include "ICameraControl.h"
 #include "CameraCommon.h"
 #include "mozilla/Hal.h"
 #include "nsDataHashtable.h"
+#include "nsPrintfCString.h"
 
 using namespace mozilla;
 using namespace android;
@@ -51,121 +51,215 @@ GonkCameraParameters::IsLowMemoryPlatform()
   return false;
 }
 
-/* static */ const char*
-GonkCameraParameters::Parameters::GetTextKey(uint32_t aKey)
+const char*
+GonkCameraParameters::FindVendorSpecificKey(const char* aPotentialKeys[],
+                                            size_t aPotentialKeyCount)
+{
+  const char* val;
+
+  for (size_t i = 0; i < aPotentialKeyCount; ++i) {
+    GetImpl(aPotentialKeys[i], val);
+    if (val) {
+      // We received a value (potentially an empty-string one),
+      // which indicates that this key exists.
+      return aPotentialKeys[i];
+    }
+  }
+
+  return nullptr;
+}
+
+/* static */ PLDHashOperator
+GonkCameraParameters::EnumerateFlatten(const nsACString& aKey,
+                                       nsCString* aValue,
+                                       void* aUserArg)
+{
+  nsCString* data = static_cast<nsCString*>(aUserArg);
+  if (!data->IsEmpty()) {
+    data->Append(';');
+  }
+  data->Append(aKey);
+  data->Append('=');
+  data->Append(*aValue);
+  return PL_DHASH_NEXT;
+}
+
+String8
+GonkCameraParameters::Flatten() const
+{
+  MutexAutoLock lock(mLock);
+  nsCString data;
+  mParams.EnumerateRead(EnumerateFlatten, static_cast<void*>(&data));
+  return String8(data.Data());
+}
+
+nsresult
+GonkCameraParameters::Unflatten(const String8& aFlatParameters)
+{
+  MutexAutoLock lock(mLock);
+  mParams.Clear();
+
+  const char* data = aFlatParameters.string();
+  while (data && *data) {
+    const char* pos = strchr(data, '=');
+    if (!pos) {
+      break;
+    }
+
+    nsDependentCSubstring key(data, pos - data);
+    data = pos + 1;
+
+    nsCString* value;
+    pos = strchr(data, ';');
+    if (pos) {
+      value = new nsCString(data, pos - data);
+      data = pos + 1;
+    } else {
+      value = new nsCString(data);
+      data = nullptr;
+    }
+
+    mParams.Put(key, value);
+  }
+
+  if (mInitialized) {
+    return NS_OK;
+  }
+
+  // We call Initialize() once when the parameter set is first loaded,
+  // to set up any constant values this class requires internally,
+  // e.g. the exposure compensation step and limits.
+  return Initialize();
+}
+
+const char*
+GonkCameraParameters::GetTextKey(uint32_t aKey)
 {
   switch (aKey) {
     case CAMERA_PARAM_PREVIEWSIZE:
-      return KEY_PREVIEW_SIZE;
+      return CameraParameters::KEY_PREVIEW_SIZE;
     case CAMERA_PARAM_PREVIEWFORMAT:
-      return KEY_PREVIEW_FORMAT;
+      return CameraParameters::KEY_PREVIEW_FORMAT;
     case CAMERA_PARAM_PREVIEWFRAMERATE:
-      return KEY_PREVIEW_FRAME_RATE;
+      return CameraParameters::KEY_PREVIEW_FRAME_RATE;
     case CAMERA_PARAM_EFFECT:
-      return KEY_EFFECT;
+      return CameraParameters::KEY_EFFECT;
     case CAMERA_PARAM_WHITEBALANCE:
-      return KEY_WHITE_BALANCE;
+      return CameraParameters::KEY_WHITE_BALANCE;
     case CAMERA_PARAM_SCENEMODE:
-      return KEY_SCENE_MODE;
+      return CameraParameters::KEY_SCENE_MODE;
     case CAMERA_PARAM_FLASHMODE:
-      return KEY_FLASH_MODE;
+      return CameraParameters::KEY_FLASH_MODE;
     case CAMERA_PARAM_FOCUSMODE:
-      return KEY_FOCUS_MODE;
+      return CameraParameters::KEY_FOCUS_MODE;
     case CAMERA_PARAM_ZOOM:
-      return KEY_ZOOM;
+      return CameraParameters::KEY_ZOOM;
     case CAMERA_PARAM_METERINGAREAS:
-      return KEY_METERING_AREAS;
+      return CameraParameters::KEY_METERING_AREAS;
     case CAMERA_PARAM_FOCUSAREAS:
-      return KEY_FOCUS_AREAS;
+      return CameraParameters::KEY_FOCUS_AREAS;
     case CAMERA_PARAM_FOCALLENGTH:
-      return KEY_FOCAL_LENGTH;
+      return CameraParameters::KEY_FOCAL_LENGTH;
     case CAMERA_PARAM_FOCUSDISTANCENEAR:
-      return KEY_FOCUS_DISTANCES;
+      return CameraParameters::KEY_FOCUS_DISTANCES;
     case CAMERA_PARAM_FOCUSDISTANCEOPTIMUM:
-      return KEY_FOCUS_DISTANCES;
+      return CameraParameters::KEY_FOCUS_DISTANCES;
     case CAMERA_PARAM_FOCUSDISTANCEFAR:
-      return KEY_FOCUS_DISTANCES;
+      return CameraParameters::KEY_FOCUS_DISTANCES;
     case CAMERA_PARAM_EXPOSURECOMPENSATION:
-      return KEY_EXPOSURE_COMPENSATION;
+      return CameraParameters::KEY_EXPOSURE_COMPENSATION;
     case CAMERA_PARAM_THUMBNAILQUALITY:
-      return KEY_JPEG_THUMBNAIL_QUALITY;
+      return CameraParameters::KEY_JPEG_THUMBNAIL_QUALITY;
     case CAMERA_PARAM_PICTURE_SIZE:
-      return KEY_PICTURE_SIZE;
+      return CameraParameters::KEY_PICTURE_SIZE;
     case CAMERA_PARAM_PICTURE_FILEFORMAT:
-      return KEY_PICTURE_FORMAT;
+      return CameraParameters::KEY_PICTURE_FORMAT;
     case CAMERA_PARAM_PICTURE_ROTATION:
-      return KEY_ROTATION;
+      return CameraParameters::KEY_ROTATION;
     case CAMERA_PARAM_PICTURE_DATETIME:
-      // Not every platform defines a KEY_EXIF_DATETIME;
+      // Not every platform defines a CameraParameters::EXIF_DATETIME;
       // for those that don't, we use the raw string key, and if the platform
       // doesn't support it, it will be ignored.
       //
       // See bug 832494.
       return "exif-datetime";
     case CAMERA_PARAM_VIDEOSIZE:
-      return KEY_VIDEO_SIZE;
+      return CameraParameters::KEY_VIDEO_SIZE;
     case CAMERA_PARAM_ISOMODE:
-      // Not every platform defines KEY_ISO_MODE;
-      // for those that don't, we use the raw string key.
-      return "iso";
+      if (!mVendorSpecificKeyIsoMode) {
+        const char* isoModeKeys[] = {
+          "iso",
+          "sony-iso"
+        };
+        mVendorSpecificKeyIsoMode =
+          FindVendorSpecificKey(isoModeKeys, MOZ_ARRAY_LENGTH(isoModeKeys));
+      }
+      return mVendorSpecificKeyIsoMode;
     case CAMERA_PARAM_LUMINANCE:
       return "luminance-condition";
     case CAMERA_PARAM_SCENEMODE_HDR_RETURNNORMALPICTURE:
-      // Not every platform defines KEY_QC_HDR_NEED_1X;
+      // Not every platform defines CameraParameters::QC_HDR_NEED_1X;
       // for those that don't, we use the raw string key.
       return "hdr-need-1x";
     case CAMERA_PARAM_RECORDINGHINT:
-      return KEY_RECORDING_HINT;
+      return CameraParameters::KEY_RECORDING_HINT;
     case CAMERA_PARAM_PICTURE_QUALITY:
-      return KEY_JPEG_QUALITY;
+      return CameraParameters::KEY_JPEG_QUALITY;
     case CAMERA_PARAM_PREFERRED_PREVIEWSIZE_FOR_VIDEO:
-      return KEY_PREFERRED_PREVIEW_SIZE_FOR_VIDEO;
+      return CameraParameters::KEY_PREFERRED_PREVIEW_SIZE_FOR_VIDEO;
     case CAMERA_PARAM_METERINGMODE:
-      // Not every platform defines KEY_AUTO_EXPOSURE.
+      // Not every platform defines CameraParameters::AUTO_EXPOSURE.
       return "auto-exposure";
 
     case CAMERA_PARAM_SUPPORTED_PREVIEWSIZES:
-      return KEY_SUPPORTED_PREVIEW_SIZES;
+      return CameraParameters::KEY_SUPPORTED_PREVIEW_SIZES;
     case CAMERA_PARAM_SUPPORTED_PICTURESIZES:
-      return KEY_SUPPORTED_PICTURE_SIZES;
+      return CameraParameters::KEY_SUPPORTED_PICTURE_SIZES;
     case CAMERA_PARAM_SUPPORTED_VIDEOSIZES:
-      return KEY_SUPPORTED_VIDEO_SIZES;
+      return CameraParameters::KEY_SUPPORTED_VIDEO_SIZES;
     case CAMERA_PARAM_SUPPORTED_PICTUREFORMATS:
-      return KEY_SUPPORTED_PICTURE_FORMATS;
+      return CameraParameters::KEY_SUPPORTED_PICTURE_FORMATS;
     case CAMERA_PARAM_SUPPORTED_WHITEBALANCES:
-      return KEY_SUPPORTED_WHITE_BALANCE;
+      return CameraParameters::KEY_SUPPORTED_WHITE_BALANCE;
     case CAMERA_PARAM_SUPPORTED_SCENEMODES:
-      return KEY_SUPPORTED_SCENE_MODES;
+      return CameraParameters::KEY_SUPPORTED_SCENE_MODES;
     case CAMERA_PARAM_SUPPORTED_EFFECTS:
-      return KEY_SUPPORTED_EFFECTS;
+      return CameraParameters::KEY_SUPPORTED_EFFECTS;
     case CAMERA_PARAM_SUPPORTED_FLASHMODES:
-      return KEY_SUPPORTED_FLASH_MODES;
+      return CameraParameters::KEY_SUPPORTED_FLASH_MODES;
     case CAMERA_PARAM_SUPPORTED_FOCUSMODES:
-      return KEY_SUPPORTED_FOCUS_MODES;
+      return CameraParameters::KEY_SUPPORTED_FOCUS_MODES;
     case CAMERA_PARAM_SUPPORTED_MAXFOCUSAREAS:
-      return KEY_MAX_NUM_FOCUS_AREAS;
+      return CameraParameters::KEY_MAX_NUM_FOCUS_AREAS;
     case CAMERA_PARAM_SUPPORTED_MAXMETERINGAREAS:
-      return KEY_MAX_NUM_METERING_AREAS;
+      return CameraParameters::KEY_MAX_NUM_METERING_AREAS;
     case CAMERA_PARAM_SUPPORTED_MINEXPOSURECOMPENSATION:
-      return KEY_MIN_EXPOSURE_COMPENSATION;
+      return CameraParameters::KEY_MIN_EXPOSURE_COMPENSATION;
     case CAMERA_PARAM_SUPPORTED_MAXEXPOSURECOMPENSATION:
-      return KEY_MAX_EXPOSURE_COMPENSATION;
+      return CameraParameters::KEY_MAX_EXPOSURE_COMPENSATION;
     case CAMERA_PARAM_SUPPORTED_EXPOSURECOMPENSATIONSTEP:
-      return KEY_EXPOSURE_COMPENSATION_STEP;
+      return CameraParameters::KEY_EXPOSURE_COMPENSATION_STEP;
     case CAMERA_PARAM_SUPPORTED_ZOOM:
-      return KEY_ZOOM_SUPPORTED;
+      return CameraParameters::KEY_ZOOM_SUPPORTED;
     case CAMERA_PARAM_SUPPORTED_ZOOMRATIOS:
-      return KEY_ZOOM_RATIOS;
+      return CameraParameters::KEY_ZOOM_RATIOS;
     case CAMERA_PARAM_SUPPORTED_MAXDETECTEDFACES:
-      return KEY_MAX_NUM_DETECTED_FACES_HW;
+      return CameraParameters::KEY_MAX_NUM_DETECTED_FACES_HW;
     case CAMERA_PARAM_SUPPORTED_JPEG_THUMBNAIL_SIZES:
-      return KEY_SUPPORTED_JPEG_THUMBNAIL_SIZES;
+      return CameraParameters::KEY_SUPPORTED_JPEG_THUMBNAIL_SIZES;
     case CAMERA_PARAM_SUPPORTED_ISOMODES:
-      // Not every platform defines KEY_SUPPORTED_ISO_MODES;
-      // for those that don't, we use the raw string key.
-      return "iso-values";
+      if (!mVendorSpecificKeySupportedIsoModes) {
+        const char* supportedIsoModesKeys[] = {
+          "iso-values",
+          "sony-iso-values"
+        };
+        mVendorSpecificKeySupportedIsoModes =
+          FindVendorSpecificKey(supportedIsoModesKeys,
+                                MOZ_ARRAY_LENGTH(supportedIsoModesKeys));
+      }
+      return mVendorSpecificKeySupportedIsoModes;
     case CAMERA_PARAM_SUPPORTED_METERINGMODES:
-      // Not every platform defines KEY_SUPPORTED_AUTO_EXPOSURE.
+      // Not every platform defines CameraParameters::SUPPORTED_AUTO_EXPOSURE.
       return "auto-exposure-values";
     default:
       DOM_CAMERA_LOGE("Unhandled camera parameter value %u\n", aKey);
@@ -174,26 +268,20 @@ GonkCameraParameters::Parameters::GetTextKey(uint32_t aKey)
 }
 
 GonkCameraParameters::GonkCameraParameters()
-  : mLock(PR_NewRWLock(PR_RWLOCK_RANK_NONE, "GonkCameraParameters.Lock"))
+  : mLock("mozilla::camera::GonkCameraParameters")
   , mDirty(false)
   , mInitialized(false)
   , mExposureCompensationStep(0.0)
+  , mVendorSpecificKeyIsoMode(nullptr)
+  , mVendorSpecificKeySupportedIsoModes(nullptr)
 {
   MOZ_COUNT_CTOR(GonkCameraParameters);
-  if (!mLock) {
-    MOZ_CRASH("Out of memory getting new PRRWLock");
-  }
 }
 
 GonkCameraParameters::~GonkCameraParameters()
 {
   MOZ_COUNT_DTOR(GonkCameraParameters);
   mIsoModeMap.Clear();
-  MOZ_ASSERT(mLock, "mLock missing in ~GonkCameraParameters()");
-  if (mLock) {
-    PR_DestroyRWLock(mLock);
-    mLock = nullptr;
-  }
 }
 
 nsresult
@@ -217,6 +305,10 @@ GonkCameraParameters::MapIsoToGonk(const nsAString& aIso, nsACString& aIsoOut)
 nsresult
 GonkCameraParameters::MapIsoFromGonk(const char* aIso, nsAString& aIsoOut)
 {
+  if (!aIso) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
   if (strcmp(aIso, "ISO_HJR") == 0) {
     aIsoOut.AssignASCII("hjr");
   } else if (strcmp(aIso, "auto") == 0) {
@@ -243,17 +335,17 @@ GonkCameraParameters::Initialize()
 {
   nsresult rv;
 
-  rv = GetImpl(Parameters::KEY_EXPOSURE_COMPENSATION_STEP, mExposureCompensationStep);
+  rv = GetImpl(CameraParameters::KEY_EXPOSURE_COMPENSATION_STEP, mExposureCompensationStep);
   if (NS_FAILED(rv)) {
     NS_WARNING("Failed to initialize exposure compensation step size");
     mExposureCompensationStep = 0.0;
   }
-  rv = GetImpl(Parameters::KEY_MIN_EXPOSURE_COMPENSATION, mExposureCompensationMinIndex);
+  rv = GetImpl(CameraParameters::KEY_MIN_EXPOSURE_COMPENSATION, mExposureCompensationMinIndex);
   if (NS_FAILED(rv)) {
     NS_WARNING("Failed to initialize minimum exposure compensation index");
     mExposureCompensationMinIndex = 0;
   }
-  rv = GetImpl(Parameters::KEY_MAX_EXPOSURE_COMPENSATION, mExposureCompensationMaxIndex);
+  rv = GetImpl(CameraParameters::KEY_MAX_EXPOSURE_COMPENSATION, mExposureCompensationMaxIndex);
   if (NS_FAILED(rv)) {
     NS_WARNING("Failed to initialize maximum exposure compensation index");
     mExposureCompensationMaxIndex = 0;
@@ -360,10 +452,12 @@ GonkCameraParameters::GetTranslated(uint32_t aKey, nsAString& aValue)
   if (NS_FAILED(rv)) {
     return rv;
   }
-  if (aKey == CAMERA_PARAM_ISOMODE) {
-    rv = MapIsoFromGonk(val, aValue);
-  } else if(val) {
-    aValue.AssignASCII(val);
+  if (val) {
+    if (aKey == CAMERA_PARAM_ISOMODE) {
+      rv = MapIsoFromGonk(val, aValue);
+    } else {
+      aValue.AssignASCII(val);
+    }
   } else {
     aValue.Truncate(0);
   }
@@ -388,9 +482,9 @@ GonkCameraParameters::SetTranslated(uint32_t aKey, const ICameraControl::Size& a
       // This is a special case--for some reason the thumbnail size
       // is accessed as two separate values instead of a tuple.
       // XXXmikeh - make this restore the original values on error
-      rv = SetImpl(Parameters::KEY_JPEG_THUMBNAIL_WIDTH, static_cast<int>(aSize.width));
+      rv = SetImpl(CameraParameters::KEY_JPEG_THUMBNAIL_WIDTH, static_cast<int>(aSize.width));
       if (NS_SUCCEEDED(rv)) {
-        rv = SetImpl(Parameters::KEY_JPEG_THUMBNAIL_HEIGHT, static_cast<int>(aSize.height));
+        rv = SetImpl(CameraParameters::KEY_JPEG_THUMBNAIL_HEIGHT, static_cast<int>(aSize.height));
       }
       break;
 
@@ -424,14 +518,14 @@ GonkCameraParameters::GetTranslated(uint32_t aKey, ICameraControl::Size& aSize)
     int width;
     int height;
 
-    rv = GetImpl(Parameters::KEY_JPEG_THUMBNAIL_WIDTH, width);
+    rv = GetImpl(CameraParameters::KEY_JPEG_THUMBNAIL_WIDTH, width);
     if (NS_FAILED(rv)) {
       return rv;
     }
     if (width < 0) {
       return NS_ERROR_NOT_AVAILABLE;
     }
-    rv = GetImpl(Parameters::KEY_JPEG_THUMBNAIL_HEIGHT, height);
+    rv = GetImpl(CameraParameters::KEY_JPEG_THUMBNAIL_HEIGHT, height);
     if (NS_FAILED(rv)) {
       return rv;
     }
@@ -533,29 +627,24 @@ GonkCameraParameters::SetTranslated(uint32_t aKey, const ICameraControl::Positio
   MOZ_ASSERT(aKey == CAMERA_PARAM_PICTURE_LOCATION);
 
   // Add any specified location information -- we don't care if these fail.
-  if (!isnan(aPosition.latitude)) {
-    DOM_CAMERA_LOGI("setting picture latitude to %lf\n", aPosition.latitude);
-    SetImpl(Parameters::KEY_GPS_LATITUDE, nsPrintfCString("%lf", aPosition.latitude).get());
+  if (!isnan(aPosition.latitude) &&
+      !isnan(aPosition.longitude) &&
+      !isnan(aPosition.altitude) &&
+      !isnan(aPosition.timestamp)) {
+    DOM_CAMERA_LOGI("setting picture gps coordinates to (%lf, %lf, %lf, %lf)\n",
+      aPosition.latitude, aPosition.longitude, aPosition.altitude, aPosition.timestamp);
+    SetImpl(CameraParameters::KEY_GPS_LATITUDE, aPosition.latitude);
+    SetImpl(CameraParameters::KEY_GPS_LONGITUDE, aPosition.longitude);
+    SetImpl(CameraParameters::KEY_GPS_ALTITUDE, aPosition.altitude);
+    SetImpl(CameraParameters::KEY_GPS_TIMESTAMP, aPosition.timestamp);
+    SetImpl(CameraParameters::KEY_GPS_PROCESSING_METHOD, "UNKNOWN");
   } else {
-    ClearImpl(Parameters::KEY_GPS_LATITUDE);
-  }
-  if (!isnan(aPosition.longitude)) {
-    DOM_CAMERA_LOGI("setting picture longitude to %lf\n", aPosition.longitude);
-    SetImpl(Parameters::KEY_GPS_LONGITUDE, nsPrintfCString("%lf", aPosition.longitude).get());
-  } else {
-    ClearImpl(Parameters::KEY_GPS_LONGITUDE);
-  }
-  if (!isnan(aPosition.altitude)) {
-    DOM_CAMERA_LOGI("setting picture altitude to %lf\n", aPosition.altitude);
-    SetImpl(Parameters::KEY_GPS_ALTITUDE, nsPrintfCString("%lf", aPosition.altitude).get());
-  } else {
-    ClearImpl(Parameters::KEY_GPS_ALTITUDE);
-  }
-  if (!isnan(aPosition.timestamp)) {
-    DOM_CAMERA_LOGI("setting picture timestamp to %lf\n", aPosition.timestamp);
-    SetImpl(Parameters::KEY_GPS_TIMESTAMP, nsPrintfCString("%lf", aPosition.timestamp).get());
-  } else {
-    ClearImpl(Parameters::KEY_GPS_TIMESTAMP);
+    DOM_CAMERA_LOGI("clear incomplete gps information\n");
+    ClearImpl(CameraParameters::KEY_GPS_LATITUDE);
+    ClearImpl(CameraParameters::KEY_GPS_LONGITUDE);
+    ClearImpl(CameraParameters::KEY_GPS_ALTITUDE);
+    ClearImpl(CameraParameters::KEY_GPS_TIMESTAMP);
+    ClearImpl(CameraParameters::KEY_GPS_PROCESSING_METHOD);
   }
 
   return NS_OK;

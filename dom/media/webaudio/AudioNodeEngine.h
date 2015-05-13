@@ -27,7 +27,8 @@ class AudioNodeStream;
  * pointers can be different (e.g. if the buffers are contained inside
  * some malloced object).
  */
-class ThreadSharedFloatArrayBufferList : public ThreadSharedObject {
+class ThreadSharedFloatArrayBufferList final : public ThreadSharedObject
+{
 public:
   /**
    * Construct with null data.
@@ -37,7 +38,8 @@ public:
     mContents.SetLength(aCount);
   }
 
-  struct Storage {
+  struct Storage final
+  {
     Storage() :
       mDataToFree(nullptr),
       mFree(nullptr),
@@ -91,7 +93,7 @@ public:
    */
   void Clear() { mContents.Clear(); }
 
-  virtual size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const MOZ_OVERRIDE
+  virtual size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const override
   {
     size_t amount = ThreadSharedObject::SizeOfExcludingThis(aMallocSizeOf);
     amount += mContents.SizeOfExcludingThis(aMallocSizeOf);
@@ -102,7 +104,7 @@ public:
     return amount;
   }
 
-  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const MOZ_OVERRIDE
+  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
   }
@@ -234,7 +236,8 @@ AudioBufferSumOfSquares(const float* aInput, uint32_t aLength);
  * All methods of this class and its subclasses are called on the
  * MediaStreamGraph thread.
  */
-class AudioNodeEngine {
+class AudioNodeEngine
+{
 public:
   // This should be compatible with AudioNodeStream::OutputChunks.
   typedef nsAutoTArray<AudioChunk, 1> OutputChunks;

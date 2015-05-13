@@ -1,13 +1,6 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-///////////////////
-//
-// Whitelisting this test.
-// As part of bug 1077403, the leaking uncaught rejection should be fixed. 
-//
-thisTestLeaksUncaughtRejectionsAndShouldBeFixed("Error: Shader Editor is still waiting for a WebGL context to be created.");
-
 /**
  * Tests if error indicators are shown in the editor's gutter and text area
  * when there's a shader compilation error.
@@ -102,9 +95,9 @@ function ifWebGLSupported() {
         "The correct line was parsed.");
       is(parsed[0].messages.length, 2,
         "There are 2 parsed messages.");
-      ok(parsed[0].messages[0].contains("'constructor' : too many arguments"),
+      ok(parsed[0].messages[0].includes("'constructor' : too many arguments"),
         "The correct first message was parsed.");
-      ok(parsed[0].messages[1].contains("'assign' : cannot convert from"),
+      ok(parsed[0].messages[1].includes("'assign' : cannot convert from"),
         "The correct second message was parsed.");
     }
   }
@@ -130,7 +123,7 @@ function ifWebGLSupported() {
         "The correct line was parsed.");
       is(parsed[1].messages.length, 1,
         "There is 1 parsed message.");
-      ok(parsed[1].messages[0].contains("'assign' : cannot convert from"),
+      ok(parsed[1].messages[0].includes("'assign' : cannot convert from"),
         "The correct message was parsed.");
     }
   }
@@ -156,7 +149,7 @@ function ifWebGLSupported() {
         "The correct line was parsed.");
       is(parsed[0].messages.length, 1,
         "There is 1 parsed message.");
-      ok(parsed[0].messages[0].contains("'constructor' : too many arguments"),
+      ok(parsed[0].messages[0].includes("'constructor' : too many arguments"),
         "The correct message was parsed.");
     }
   }

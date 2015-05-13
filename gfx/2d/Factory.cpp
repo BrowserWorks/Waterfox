@@ -52,7 +52,6 @@
 
 #include "mozilla/CheckedInt.h"
 
-#if defined(DEBUG) || defined(PR_LOGGING)
 GFX2D_API PRLogModuleInfo *
 GetGFX2DLog()
 {
@@ -61,7 +60,6 @@ GetGFX2DLog()
     sLog = PR_NewLogModule("gfx2d");
   return sLog;
 }
-#endif
 
 // The following code was largely taken from xpcom/glue/SSE.cpp and
 // made a little simpler.
@@ -449,6 +447,30 @@ Factory::DoesBackendSupportDataDrawtarget(BackendType aType)
   return false;
 }
 
+uint32_t
+Factory::GetMaxSurfaceSize(BackendType aType)
+{
+  switch (aType) {
+  case BackendType::CAIRO:
+  case BackendType::COREGRAPHICS:
+    return DrawTargetCairo::GetMaxSurfaceSize();
+#ifdef XP_MACOSX
+  case BackendType::COREGRAPHICS_ACCELERATED:
+    return DrawTargetCG::GetMaxSurfaceSize();
+#endif
+  case BackendType::SKIA:
+    return INT_MAX;
+#ifdef WIN32
+  case BackendType::DIRECT2D:
+    return DrawTargetD2D::GetMaxSurfaceSize();
+  case BackendType::DIRECT2D1_1:
+    return DrawTargetD2D1::GetMaxSurfaceSize();
+#endif
+  default:
+    return 0;
+  }
+}
+
 TemporaryRef<ScaledFont>
 Factory::CreateScaledFontForNativeFont(const NativeFont &aNativeFont, Float aSize)
 {
@@ -571,13 +593,13 @@ Factory::CreateDualDrawTargetForD3D10Textures(ID3D10Texture2D *aTextureA,
 
   newTargetA = new DrawTargetD2D();
   if (!newTargetA->Init(aTextureA, aFormat)) {
-    gfxWarning() << "Failed to create draw target for D3D10 texture.";
+    gfxWarning() << "Failed to create dual draw target for D3D10 texture.";
     return nullptr;
   }
 
   newTargetB = new DrawTargetD2D();
   if (!newTargetB->Init(aTextureB, aFormat)) {
-    gfxWarning() << "Failed to create draw target for D3D10 texture.";
+    gfxWarning() << "Failed to create new draw target for D3D10 texture.";
     return nullptr;
   }
 
@@ -633,7 +655,7 @@ Factory::CreateDrawTargetForD3D11Texture(ID3D11Texture2D *aTexture, SurfaceForma
     return retVal;
   }
 
-  gfxWarning() << "Failed to create draw target for D3D10 texture.";
+  gfxWarning() << "Failed to create draw target for D3D11 texture.";
 
   // Failed
   return nullptr;
@@ -657,7 +679,10 @@ Factory::SetDirect3D11Device(ID3D11Device *aDevice)
 
   RefPtr<IDXGIDevice> device;
   aDevice->QueryInterface((IDXGIDevice**)byRef(device));
-  factory->CreateDevice(device, &mD2D1Device);
+  HRESULT hr = factory->CreateDevice(device, &mD2D1Device);
+  if (FAILED(hr)) {
+    gfxCriticalError() << "[D2D1] Failed to create gfx factory's D2D1 device, code: " << hexa(hr);
+  }
 }
 
 ID3D11Device*

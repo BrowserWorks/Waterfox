@@ -9,11 +9,13 @@ from metadata import MetadataUpdateRunner
 from sync import SyncFromUpstreamRunner
 from tree import GitTree, HgTree, NoVCSTree
 
+from .. import environment as env
 from base import Step, StepRunner, exit_clean, exit_unclean
 from state import State
 
-def setup_paths(serve_root):
-    sys.path.insert(0, os.path.join(serve_root, "tools", "scripts"))
+def setup_paths(sync_path):
+    sys.path.insert(0, os.path.abspath(sync_path))
+    from tools import localpaths
 
 class LoadConfig(Step):
     """Step for loading configuration from the ini file and kwargs."""
@@ -67,9 +69,11 @@ class SyncFromUpstream(Step):
             state.sync_tree = GitTree(root=state.sync["path"])
 
         kwargs = state.kwargs
-        with state.push(["sync", "paths", "metadata_path", "tests_path", "local_tree", "sync_tree"]):
+        with state.push(["sync", "paths", "metadata_path", "tests_path", "local_tree",
+                         "sync_tree"]):
             state.target_rev = kwargs["rev"]
             state.no_patch = kwargs["no_patch"]
+            state.suite_name = kwargs["suite_name"]
             runner = SyncFromUpstreamRunner(self.logger, state)
             runner.run()
 
@@ -82,11 +86,11 @@ class UpdateMetadata(Step):
             return
 
         kwargs = state.kwargs
-        with state.push(["local_tree", "sync_tree", "paths"]):
+        with state.push(["local_tree", "sync_tree", "paths", "serve_root"]):
             state.run_log = kwargs["run_log"]
-            state.serve_root = kwargs["serve_root"]
             state.ignore_existing = kwargs["ignore_existing"]
             state.no_patch = kwargs["no_patch"]
+            state.suite_name = kwargs["suite_name"]
             runner = MetadataUpdateRunner(self.logger, state)
             runner.run()
 
@@ -108,11 +112,14 @@ class WPTUpdate(object):
         :param kwargs: Command line arguments
         """
         self.runner_cls = runner_cls
-        if kwargs["serve_root"] is None:
-            kwargs["serve_root"] = kwargs["test_paths"]["/"]["tests_path"]
+        self.serve_root = kwargs["test_paths"]["/"]["tests_path"]
 
-        #This must be before we try to reload state
-        setup_paths(kwargs["serve_root"])
+        if not kwargs["sync"]:
+            setup_paths(self.serve_root)
+        else:
+            if os.path.exists(kwargs["sync_path"]):
+                # If the sync path doesn't exist we defer this until it does
+                setup_paths(kwargs["sync_path"])
 
         self.state = State(logger)
         self.kwargs = kwargs
@@ -135,6 +142,8 @@ class WPTUpdate(object):
             self.kwargs = self.state.kwargs
         else:
             self.state.kwargs = self.kwargs
+
+        self.state.serve_root = self.serve_root
 
         update_runner = self.runner_cls(self.logger, self.state)
         rv = update_runner.run()

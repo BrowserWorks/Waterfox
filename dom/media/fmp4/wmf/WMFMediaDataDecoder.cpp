@@ -22,23 +22,27 @@ PRLogModuleInfo* GetDemuxerLog();
 namespace mozilla {
 
 WMFMediaDataDecoder::WMFMediaDataDecoder(MFTManager* aMFTManager,
-                                         MediaTaskQueue* aTaskQueue,
+                                         FlushableMediaTaskQueue* aTaskQueue,
                                          MediaDataDecoderCallback* aCallback)
   : mTaskQueue(aTaskQueue)
   , mCallback(aCallback)
   , mMFTManager(aMFTManager)
+  , mMonitor("WMFMediaDataDecoder")
+  , mIsFlushing(false)
+  , mIsShutDown(false)
 {
-  MOZ_COUNT_CTOR(WMFMediaDataDecoder);
 }
 
 WMFMediaDataDecoder::~WMFMediaDataDecoder()
 {
-  MOZ_COUNT_DTOR(WMFMediaDataDecoder);
 }
 
 nsresult
 WMFMediaDataDecoder::Init()
 {
+  MOZ_ASSERT(!mDecoder);
+  MOZ_ASSERT(!mIsShutDown);
+
   mDecoder = mMFTManager->Init();
   NS_ENSURE_TRUE(mDecoder, NS_ERROR_FAILURE);
 
@@ -48,33 +52,55 @@ WMFMediaDataDecoder::Init()
 nsresult
 WMFMediaDataDecoder::Shutdown()
 {
-  mTaskQueue->FlushAndDispatch(NS_NewRunnableMethod(this, &WMFMediaDataDecoder::ProcessShutdown));
+  MOZ_DIAGNOSTIC_ASSERT(!mIsShutDown);
+
+  if (mTaskQueue) {
+    mTaskQueue->Dispatch(
+      NS_NewRunnableMethod(this, &WMFMediaDataDecoder::ProcessShutdown));
+  } else {
+    ProcessShutdown();
+  }
+  mIsShutDown = true;
   return NS_OK;
 }
 
 void
 WMFMediaDataDecoder::ProcessShutdown()
 {
-  mMFTManager->Shutdown();
-  mMFTManager = nullptr;
+  if (mMFTManager) {
+    mMFTManager->Shutdown();
+    mMFTManager = nullptr;
+  }
   mDecoder = nullptr;
 }
 
 // Inserts data into the decoder's pipeline.
 nsresult
-WMFMediaDataDecoder::Input(mp4_demuxer::MP4Sample* aSample)
+WMFMediaDataDecoder::Input(MediaRawData* aSample)
 {
-  mTaskQueue->Dispatch(
-    NS_NewRunnableMethodWithArg<nsAutoPtr<mp4_demuxer::MP4Sample>>(
+  MOZ_ASSERT(mCallback->OnReaderTaskQueue());
+  MOZ_DIAGNOSTIC_ASSERT(!mIsShutDown);
+
+  nsCOMPtr<nsIRunnable> runnable =
+    NS_NewRunnableMethodWithArg<nsRefPtr<MediaRawData>>(
       this,
       &WMFMediaDataDecoder::ProcessDecode,
-      nsAutoPtr<mp4_demuxer::MP4Sample>(aSample)));
+      nsRefPtr<MediaRawData>(aSample));
+  mTaskQueue->Dispatch(runnable.forget());
   return NS_OK;
 }
 
 void
-WMFMediaDataDecoder::ProcessDecode(mp4_demuxer::MP4Sample* aSample)
+WMFMediaDataDecoder::ProcessDecode(MediaRawData* aSample)
 {
+  {
+    MonitorAutoLock mon(mMonitor);
+    if (mIsFlushing) {
+      // Skip sample, to be released by runnable.
+      return;
+    }
+  }
+
   HRESULT hr = mMFTManager->Input(aSample);
   if (FAILED(hr)) {
     NS_WARNING("MFTManager rejected sample");
@@ -82,7 +108,7 @@ WMFMediaDataDecoder::ProcessDecode(mp4_demuxer::MP4Sample* aSample)
     return;
   }
 
-  mLastStreamOffset = aSample->byte_offset;
+  mLastStreamOffset = aSample->mOffset;
 
   ProcessOutput();
 }
@@ -106,40 +132,68 @@ WMFMediaDataDecoder::ProcessOutput()
   }
 }
 
+void
+WMFMediaDataDecoder::ProcessFlush()
+{
+  if (mDecoder) {
+    mDecoder->Flush();
+  }
+  MonitorAutoLock mon(mMonitor);
+  mIsFlushing = false;
+  mon.NotifyAll();
+}
+
 nsresult
 WMFMediaDataDecoder::Flush()
 {
-  // Flush the input task queue. This cancels all pending Decode() calls.
-  // Note this blocks until the task queue finishes its current job, if
-  // it's executing at all. Note the MP4Reader ignores all output while
-  // flushing.
-  mTaskQueue->Flush();
+  MOZ_ASSERT(mCallback->OnReaderTaskQueue());
+  MOZ_DIAGNOSTIC_ASSERT(!mIsShutDown);
 
-  // Order the MFT to flush; drop all internal data.
-  NS_ENSURE_TRUE(mDecoder, NS_ERROR_FAILURE);
-  HRESULT hr = mDecoder->Flush();
-  NS_ENSURE_TRUE(SUCCEEDED(hr), NS_ERROR_FAILURE);
-
+  nsCOMPtr<nsIRunnable> runnable =
+    NS_NewRunnableMethod(this, &WMFMediaDataDecoder::ProcessFlush);
+  MonitorAutoLock mon(mMonitor);
+  mIsFlushing = true;
+  mTaskQueue->Dispatch(runnable.forget());
+  while (mIsFlushing) {
+    mon.Wait();
+  }
   return NS_OK;
 }
 
 void
 WMFMediaDataDecoder::ProcessDrain()
 {
-  // Order the decoder to drain...
-  if (FAILED(mDecoder->SendMFTMessage(MFT_MESSAGE_COMMAND_DRAIN, 0))) {
-    NS_WARNING("Failed to send DRAIN command to MFT");
+  bool isFlushing;
+  {
+    MonitorAutoLock mon(mMonitor);
+    isFlushing = mIsFlushing;
   }
-  // Then extract all available output.
-  ProcessOutput();
+  if (!isFlushing && mDecoder) {
+    // Order the decoder to drain...
+    if (FAILED(mDecoder->SendMFTMessage(MFT_MESSAGE_COMMAND_DRAIN, 0))) {
+      NS_WARNING("Failed to send DRAIN command to MFT");
+    }
+    // Then extract all available output.
+    ProcessOutput();
+  }
   mCallback->DrainComplete();
 }
 
 nsresult
 WMFMediaDataDecoder::Drain()
 {
+  MOZ_ASSERT(mCallback->OnReaderTaskQueue());
+  MOZ_DIAGNOSTIC_ASSERT(!mIsShutDown);
+
   mTaskQueue->Dispatch(NS_NewRunnableMethod(this, &WMFMediaDataDecoder::ProcessDrain));
   return NS_OK;
+}
+
+bool
+WMFMediaDataDecoder::IsHardwareAccelerated() const {
+  MOZ_ASSERT(!mIsShutDown);
+
+  return mMFTManager && mMFTManager->IsHardwareAccelerated();
 }
 
 } // namespace mozilla

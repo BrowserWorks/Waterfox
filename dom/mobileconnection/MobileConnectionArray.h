@@ -13,8 +13,8 @@
 namespace mozilla {
 namespace dom {
 
-class MobileConnectionArray MOZ_FINAL : public nsISupports
-                                      , public nsWrapperCache
+class MobileConnectionArray final : public nsISupports
+                                  , public nsWrapperCache
 {
 public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -27,7 +27,7 @@ public:
 
   // WrapperCache
   virtual JSObject*
-  WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   //  WebIDL
   MobileConnection*

@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
-/* vim:set ts=4 sw=4 sts=4 ci et: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -141,6 +141,12 @@ extern nsresult nsStringInputStreamConstructor(nsISupports*, REFNSIID, void**);
 
 #include "ogg/ogg.h"
 #if defined(MOZ_VPX) && !defined(MOZ_VPX_NO_MEM_REPORTING)
+#if defined(HAVE_STDINT_H)
+// mozilla-config.h defines HAVE_STDINT_H, and then it's defined *again* in
+// vpx_config.h (which we include via vpx_mem.h, below). This redefinition
+// triggers a build warning on MSVC, so we have to #undef it first.
+#undef HAVE_STDINT_H
+#endif
 #include "vpx_mem/vpx_mem.h"
 #endif
 #ifdef MOZ_WEBM
@@ -341,12 +347,12 @@ const mozilla::Module kXPCOMModule = {
 };
 
 // gDebug will be freed during shutdown.
-static nsIDebug* gDebug = nullptr;
+static nsIDebug2* gDebug = nullptr;
 
 EXPORT_XPCOM_API(nsresult)
-NS_GetDebug(nsIDebug** aResult)
+NS_GetDebug(nsIDebug2** aResult)
 {
-  return nsDebugImpl::Create(nullptr,  NS_GET_IID(nsIDebug), (void**)aResult);
+  return nsDebugImpl::Create(nullptr,  NS_GET_IID(nsIDebug2), (void**)aResult);
 }
 
 EXPORT_XPCOM_API(nsresult)
@@ -356,7 +362,7 @@ NS_InitXPCOM(nsIServiceManager** aResult,
   return NS_InitXPCOM2(aResult, aBinDirectory, nullptr);
 }
 
-class ICUReporter MOZ_FINAL
+class ICUReporter final
   : public nsIMemoryReporter
   , public CountingAllocatorBase<ICUReporter>
 {
@@ -381,7 +387,7 @@ public:
 private:
   NS_IMETHODIMP
   CollectReports(nsIHandleReportCallback* aHandleReport, nsISupports* aData,
-                 bool aAnonymize) MOZ_OVERRIDE
+                 bool aAnonymize) override
   {
     return MOZ_COLLECT_REPORT(
       "explicit/icu", KIND_HEAP, UNITS_BYTES, MemoryAllocated(),
@@ -396,7 +402,7 @@ NS_IMPL_ISUPPORTS(ICUReporter, nsIMemoryReporter)
 /* static */ template<> Atomic<size_t>
 CountingAllocatorBase<ICUReporter>::sAmount(0);
 
-class OggReporter MOZ_FINAL
+class OggReporter final
   : public nsIMemoryReporter
   , public CountingAllocatorBase<OggReporter>
 {
@@ -406,7 +412,7 @@ public:
 private:
   NS_IMETHODIMP
   CollectReports(nsIHandleReportCallback* aHandleReport, nsISupports* aData,
-                 bool aAnonymize) MOZ_OVERRIDE
+                 bool aAnonymize) override
   {
     return MOZ_COLLECT_REPORT(
       "explicit/media/libogg", KIND_HEAP, UNITS_BYTES, MemoryAllocated(),
@@ -422,7 +428,7 @@ NS_IMPL_ISUPPORTS(OggReporter, nsIMemoryReporter)
 CountingAllocatorBase<OggReporter>::sAmount(0);
 
 #ifdef MOZ_VPX
-class VPXReporter MOZ_FINAL
+class VPXReporter final
   : public nsIMemoryReporter
   , public CountingAllocatorBase<VPXReporter>
 {
@@ -432,7 +438,7 @@ public:
 private:
   NS_IMETHODIMP
   CollectReports(nsIHandleReportCallback* aHandleReport, nsISupports* aData,
-                 bool aAnonymize) MOZ_OVERRIDE
+                 bool aAnonymize) override
   {
     return MOZ_COLLECT_REPORT(
       "explicit/media/libvpx", KIND_HEAP, UNITS_BYTES, MemoryAllocated(),
@@ -449,7 +455,7 @@ CountingAllocatorBase<VPXReporter>::sAmount(0);
 #endif /* MOZ_VPX */
 
 #ifdef MOZ_WEBM
-class NesteggReporter MOZ_FINAL
+class NesteggReporter final
   : public nsIMemoryReporter
   , public CountingAllocatorBase<NesteggReporter>
 {
@@ -459,7 +465,7 @@ public:
 private:
   NS_IMETHODIMP
   CollectReports(nsIHandleReportCallback* aHandleReport, nsISupports* aData,
-                 bool aAnonymize) MOZ_OVERRIDE
+                 bool aAnonymize) override
   {
     return MOZ_COLLECT_REPORT(
       "explicit/media/libnestegg", KIND_HEAP, UNITS_BYTES, MemoryAllocated(),
@@ -525,8 +531,8 @@ NS_InitXPCOM2(nsIServiceManager** aResult,
     sMessageLoop = new MessageLoopForUI(MessageLoop::TYPE_MOZILLA_UI);
     sMessageLoop->set_thread_name("Gecko");
     // Set experimental values for main thread hangs:
-    // 512ms for transient hangs and 8192ms for permanent hangs
-    sMessageLoop->set_hang_timeouts(512, 8192);
+    // 128ms for transient hangs and 8192ms for permanent hangs
+    sMessageLoop->set_hang_timeouts(128, 8192);
   }
 
   if (XRE_GetProcessType() == GeckoProcessType_Default &&
@@ -911,7 +917,7 @@ ShutdownXPCOM(nsIServiceManager* aServMgr)
   // Release the directory service
   NS_IF_RELEASE(nsDirectoryService::gService);
 
-  NS_Free(gGREBinPath);
+  free(gGREBinPath);
   gGREBinPath = nullptr;
 
   if (moduleLoaders) {

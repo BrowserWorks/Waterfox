@@ -282,12 +282,24 @@ SipccSdpMediaSection::AddCodec(const std::string& pt, const std::string& name,
     codec = SdpRtpmapAttributeList::kPCMA;
   } else if (name == "VP8") {
     codec = SdpRtpmapAttributeList::kVP8;
+  } else if (name == "VP9") {
+    codec = SdpRtpmapAttributeList::kVP9;
   } else if (name == "H264") {
     codec = SdpRtpmapAttributeList::kH264;
   }
 
   rtpmap->PushEntry(pt, codec, name, clockrate, channels);
   mAttributeList.SetAttribute(rtpmap);
+}
+
+void
+SipccSdpMediaSection::ClearCodecs()
+{
+  mFormats.clear();
+  mAttributeList.RemoveAttribute(SdpAttribute::kRtpmapAttribute);
+  mAttributeList.RemoveAttribute(SdpAttribute::kFmtpAttribute);
+  mAttributeList.RemoveAttribute(SdpAttribute::kSctpmapAttribute);
+  mAttributeList.RemoveAttribute(SdpAttribute::kRtcpFbAttribute);
 }
 
 void

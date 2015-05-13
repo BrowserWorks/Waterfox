@@ -7,6 +7,7 @@
 
 #include "mozilla/gfx/2D.h"
 #include "mozilla/gfx/Filters.h"
+#include "mozilla/gfx/Logging.h"
 #include "mozilla/PodOperations.h"
 
 #include "gfxContext.h"
@@ -399,8 +400,9 @@ ComputeColorMatrix(uint32_t aColorMatrixType, const nsTArray<float>& aValues,
 
     case SVG_FECOLORMATRIX_TYPE_MATRIX:
     {
-      if (aValues.Length() != 20)
+      if (aValues.Length() != 20) {
         return NS_ERROR_FAILURE;
+      }
 
       PodCopy(aOutMatrix, aValues.Elements(), 20);
       break;
@@ -1298,7 +1300,7 @@ ResultChangeRegionForPrimitive(const FilterPrimitiveDescription& aDescription,
     }
 
     case PrimitiveType::Tile:
-      return ThebesIntRect(aDescription.PrimitiveSubregion());
+      return aDescription.PrimitiveSubregion();
 
     case PrimitiveType::ConvolveMatrix:
     {
@@ -1382,11 +1384,47 @@ FilterSupport::ComputeResultChangeRegion(const FilterDescription& aFilter,
     }
     nsIntRegion changeRegion =
       ResultChangeRegionForPrimitive(descr, inputChangeRegions);
-    changeRegion.And(changeRegion, ThebesIntRect(descr.PrimitiveSubregion()));
+    changeRegion.And(changeRegion, descr.PrimitiveSubregion());
     resultChangeRegions.AppendElement(changeRegion);
   }
 
   return resultChangeRegions[resultChangeRegions.Length() - 1];
+}
+
+static float
+ResultOfZeroUnderTransferFunction(const AttributeMap& aFunctionAttributes)
+{
+  switch (aFunctionAttributes.GetUint(eComponentTransferFunctionType)) {
+    case SVG_FECOMPONENTTRANSFER_TYPE_TABLE:
+    {
+      const nsTArray<float>& tableValues =
+        aFunctionAttributes.GetFloats(eComponentTransferFunctionTableValues);
+      if (tableValues.Length() < 2) {
+        return 0.0f;
+      }
+      return tableValues[0];
+    }
+
+    case SVG_FECOMPONENTTRANSFER_TYPE_DISCRETE:
+    {
+      const nsTArray<float>& tableValues =
+        aFunctionAttributes.GetFloats(eComponentTransferFunctionTableValues);
+      if (tableValues.Length() < 1) {
+        return 0.0f;
+      }
+      return tableValues[0];
+    }
+
+    case SVG_FECOMPONENTTRANSFER_TYPE_LINEAR:
+      return aFunctionAttributes.GetFloat(eComponentTransferFunctionIntercept);
+
+    case SVG_FECOMPONENTTRANSFER_TYPE_GAMMA:
+      return aFunctionAttributes.GetFloat(eComponentTransferFunctionOffset);
+
+    case SVG_FECOMPONENTTRANSFER_TYPE_IDENTITY:
+    default:
+      return 0.0f;
+  }
 }
 
 nsIntRegion
@@ -1397,7 +1435,7 @@ FilterSupport::PostFilterExtentsForPrimitive(const FilterPrimitiveDescription& a
   switch (aDescription.Type()) {
 
     case PrimitiveType::Empty:
-      return nsIntRect();
+      return IntRect();
 
     case PrimitiveType::Composite:
     {
@@ -1421,7 +1459,7 @@ FilterSupport::PostFilterExtentsForPrimitive(const FilterPrimitiveDescription& a
           region.Or(region, aInputExtents[1]);
         }
         if (coefficients[3] > 0.0f) {
-          region = ThebesIntRect(aDescription.PrimitiveSubregion());
+          region = aDescription.PrimitiveSubregion();
         }
         return region;
       }
@@ -1434,15 +1472,36 @@ FilterSupport::PostFilterExtentsForPrimitive(const FilterPrimitiveDescription& a
     case PrimitiveType::Flood:
     {
       if (atts.GetColor(eFloodColor).a == 0.0f) {
-        return nsIntRect();
+        return IntRect();
       }
-      return ThebesIntRect(aDescription.PrimitiveSubregion());
+      return aDescription.PrimitiveSubregion();
+    }
+
+    case PrimitiveType::ColorMatrix:
+    {
+      if (atts.GetUint(eColorMatrixType) == (uint32_t)SVG_FECOLORMATRIX_TYPE_MATRIX) {
+        const nsTArray<float>& values = atts.GetFloats(eColorMatrixValues);
+        if (values.Length() == 20 && values[19] > 0.0f) {
+          return aDescription.PrimitiveSubregion();
+        }
+      }
+      return aInputExtents[0];
+    }
+
+    case PrimitiveType::ComponentTransfer:
+    {
+      AttributeMap functionAttributes =
+        atts.GetAttributeMap(eComponentTransferFunctionA);
+      if (ResultOfZeroUnderTransferFunction(functionAttributes) > 0.0f) {
+        return aDescription.PrimitiveSubregion();
+      }
+      return aInputExtents[0];
     }
 
     case PrimitiveType::Turbulence:
     case PrimitiveType::Image:
     {
-      return ThebesIntRect(aDescription.PrimitiveSubregion());
+      return aDescription.PrimitiveSubregion();
     }
 
     case PrimitiveType::Morphology:
@@ -1471,7 +1530,7 @@ FilterSupport::ComputePostFilterExtents(const FilterDescription& aFilter,
 
   for (int32_t i = 0; i < int32_t(primitives.Length()); ++i) {
     const FilterPrimitiveDescription& descr = primitives[i];
-    nsIntRegion filterSpace = ThebesIntRect(descr.FilterSpaceBounds());
+    nsIntRegion filterSpace = descr.FilterSpaceBounds();
 
     nsTArray<nsIntRegion> inputExtents;
     for (size_t j = 0; j < descr.NumberOfInputs(); j++) {
@@ -1483,7 +1542,7 @@ FilterSupport::ComputePostFilterExtents(const FilterDescription& aFilter,
       inputExtents.AppendElement(inputExtent);
     }
     nsIntRegion extent = PostFilterExtentsForPrimitive(descr, inputExtents);
-    extent.And(extent, ThebesIntRect(descr.PrimitiveSubregion()));
+    extent.And(extent, descr.PrimitiveSubregion());
     postFilterExtents.AppendElement(extent);
   }
 
@@ -1524,7 +1583,7 @@ SourceNeededRegionForPrimitive(const FilterPrimitiveDescription& aDescription,
     }
 
     case PrimitiveType::Tile:
-      return nsIntRect(INT32_MIN/2, INT32_MIN/2, INT32_MAX, INT32_MAX);
+      return IntRect(INT32_MIN/2, INT32_MIN/2, INT32_MAX, INT32_MAX);
 
     case PrimitiveType::ConvolveMatrix:
     {
@@ -1605,7 +1664,7 @@ FilterSupport::ComputeSourceNeededRegions(const FilterDescription& aFilter,
   for (int32_t i = primitives.Length() - 1; i >= 0; --i) {
     const FilterPrimitiveDescription& descr = primitives[i];
     nsIntRegion neededRegion = primitiveNeededRegions[i];
-    neededRegion.And(neededRegion, ThebesIntRect(descr.PrimitiveSubregion()));
+    neededRegion.And(neededRegion, descr.PrimitiveSubregion());
 
     for (size_t j = 0; j < descr.NumberOfInputs(); j++) {
       int32_t inputIndex = descr.InputPrimitiveIndex(j);
@@ -1623,7 +1682,7 @@ FilterSupport::ComputeSourceNeededRegions(const FilterDescription& aFilter,
   if (primitives.Length() > 0) {
     const FilterPrimitiveDescription& firstDescr = primitives[0];
     aSourceGraphicNeededRegion.And(aSourceGraphicNeededRegion,
-                                   ThebesIntRect(firstDescr.FilterSpaceBounds()));
+                                   firstDescr.FilterSpaceBounds());
   }
 }
 

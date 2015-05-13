@@ -23,8 +23,8 @@ function check_cert_err_generic(cert, expected_error, usage) {
   do_print("cert issuer cn=" + cert.issuerCommonName);
   let hasEVPolicy = {};
   let verifiedChain = {};
-  let error = certdb.verifyCertNow(cert, usage,
-                                   NO_FLAGS, verifiedChain, hasEVPolicy);
+  let error = certdb.verifyCertNow(cert, usage, NO_FLAGS, null, verifiedChain,
+                                   hasEVPolicy);
   do_check_eq(error, expected_error);
 }
 
@@ -37,11 +37,11 @@ function check_ca_err(cert, expected_error) {
 }
 
 function check_ok(x) {
-  return check_cert_err(x, 0);
+  return check_cert_err(x, PRErrorCodeSuccess);
 }
 
 function check_ok_ca(x) {
-  return check_cert_err_generic(x, 0, certificateUsageSSLCA);
+  return check_cert_err_generic(x, PRErrorCodeSuccess, certificateUsageSSLCA);
 }
 
 function run_test() {

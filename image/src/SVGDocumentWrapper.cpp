@@ -46,8 +46,7 @@ NS_IMPL_ISUPPORTS(SVGDocumentWrapper,
 SVGDocumentWrapper::SVGDocumentWrapper()
   : mIgnoreInvalidation(false),
     mRegisteredForXPCOMShutdown(false)
-{
-}
+{ }
 
 SVGDocumentWrapper::~SVGDocumentWrapper()
 {
@@ -68,45 +67,6 @@ SVGDocumentWrapper::DestroyViewer()
   }
 }
 
-bool
-SVGDocumentWrapper::GetWidthOrHeight(Dimension aDimension,
-                                     int32_t& aResult)
-{
-  SVGSVGElement* rootElem = GetRootSVGElem();
-  NS_ABORT_IF_FALSE(rootElem, "root elem missing or of wrong type");
-
-  // Get the width or height SVG object
-  nsRefPtr<SVGAnimatedLength> domAnimLength;
-  if (aDimension == eWidth) {
-    domAnimLength = rootElem->Width();
-  } else {
-    NS_ABORT_IF_FALSE(aDimension == eHeight, "invalid dimension");
-    domAnimLength = rootElem->Height();
-  }
-  NS_ENSURE_TRUE(domAnimLength, false);
-
-  // Get the animated value from the object
-  nsRefPtr<DOMSVGLength> domLength = domAnimLength->AnimVal();
-  NS_ENSURE_TRUE(domLength, false);
-
-  // Check if it's a percent value (and fail if so)
-  uint16_t unitType;
-  nsresult rv = domLength->GetUnitType(&unitType);
-  NS_ENSURE_SUCCESS(rv, false);
-  if (unitType == nsIDOMSVGLength::SVG_LENGTHTYPE_PERCENTAGE) {
-    return false;
-  }
-
-  // Non-percent value - woot! Grab it & return it.
-  float floatLength;
-  rv = domLength->GetValue(&floatLength);
-  NS_ENSURE_SUCCESS(rv, false);
-
-  aResult = nsSVGUtils::ClampToInt(floatLength);
-
-  return true;
-}
-
 nsIFrame*
 SVGDocumentWrapper::GetRootLayoutFrame()
 {
@@ -117,7 +77,7 @@ SVGDocumentWrapper::GetRootLayoutFrame()
 void
 SVGDocumentWrapper::UpdateViewportBounds(const nsIntSize& aViewportSize)
 {
-  NS_ABORT_IF_FALSE(!mIgnoreInvalidation, "shouldn't be reentrant");
+  MOZ_ASSERT(!mIgnoreInvalidation, "shouldn't be reentrant");
   mIgnoreInvalidation = true;
 
   nsIntRect currentBounds;
@@ -125,7 +85,7 @@ SVGDocumentWrapper::UpdateViewportBounds(const nsIntSize& aViewportSize)
 
   // If the bounds have changed, we need to do a layout flush.
   if (currentBounds.Size() != aViewportSize) {
-    mViewer->SetBounds(nsIntRect(nsIntPoint(0, 0), aViewportSize));
+    mViewer->SetBounds(IntRect(IntPoint(0, 0), aViewportSize));
     FlushLayout();
   }
 
@@ -135,11 +95,12 @@ SVGDocumentWrapper::UpdateViewportBounds(const nsIntSize& aViewportSize)
 void
 SVGDocumentWrapper::FlushImageTransformInvalidation()
 {
-  NS_ABORT_IF_FALSE(!mIgnoreInvalidation, "shouldn't be reentrant");
+  MOZ_ASSERT(!mIgnoreInvalidation, "shouldn't be reentrant");
 
   SVGSVGElement* svgElem = GetRootSVGElem();
-  if (!svgElem)
+  if (!svgElem) {
     return;
+  }
 
   mIgnoreInvalidation = true;
   svgElem->FlushImageTransformInvalidation();
@@ -160,8 +121,9 @@ SVGDocumentWrapper::StartAnimation()
 {
   // Can be called for animated images during shutdown, after we've
   // already Observe()'d XPCOM shutdown and cleared out our mViewer pointer.
-  if (!mViewer)
+  if (!mViewer) {
     return;
+  }
 
   nsIDocument* doc = mViewer->GetDocument();
   if (doc) {
@@ -178,8 +140,9 @@ SVGDocumentWrapper::StopAnimation()
 {
   // Can be called for animated images during shutdown, after we've
   // already Observe()'d XPCOM shutdown and cleared out our mViewer pointer.
-  if (!mViewer)
+  if (!mViewer) {
     return;
+  }
 
   nsIDocument* doc = mViewer->GetDocument();
   if (doc) {
@@ -195,8 +158,9 @@ void
 SVGDocumentWrapper::ResetAnimation()
 {
   SVGSVGElement* svgElem = GetRootSVGElem();
-  if (!svgElem)
+  if (!svgElem) {
     return;
+  }
 
   svgElem->SetCurrentTime(0.0f);
 }
@@ -288,7 +252,7 @@ SVGDocumentWrapper::OnStopRequest(nsIRequest* aRequest, nsISupports* ctxt,
 NS_IMETHODIMP
 SVGDocumentWrapper::Observe(nsISupports* aSubject,
                             const char* aTopic,
-                            const char16_t *aData)
+                            const char16_t* aData)
 {
   if (!strcmp(aTopic, NS_XPCOM_SHUTDOWN_OBSERVER_ID)) {
     // Sever ties from rendering observers to helper-doc's root SVG node
@@ -299,10 +263,12 @@ SVGDocumentWrapper::Observe(nsISupports* aSubject,
 
     // Clean up at XPCOM shutdown time.
     DestroyViewer();
-    if (mListener)
+    if (mListener) {
       mListener = nullptr;
-    if (mLoadGroup)
+    }
+    if (mLoadGroup) {
       mLoadGroup = nullptr;
+    }
 
     // Turn off "registered" flag, or else we'll try to unregister when we die.
     // (No need for that now, and the try would fail anyway -- it's too late.)
@@ -359,7 +325,8 @@ SVGDocumentWrapper::SetupViewer(nsIRequest* aRequest,
   nsCOMPtr<nsIStreamListener> listener;
   rv = docLoaderFactory->CreateInstance("external-resource", chan,
                                         newLoadGroup,
-                                        IMAGE_SVG_XML, nullptr, nullptr,
+                                        NS_LITERAL_CSTRING(IMAGE_SVG_XML),
+                                        nullptr, nullptr,
                                         getter_AddRefs(listener),
                                         getter_AddRefs(viewer));
   NS_ENSURE_SUCCESS(rv, rv);
@@ -385,8 +352,8 @@ SVGDocumentWrapper::SetupViewer(nsIRequest* aRequest,
 void
 SVGDocumentWrapper::RegisterForXPCOMShutdown()
 {
-  NS_ABORT_IF_FALSE(!mRegisteredForXPCOMShutdown,
-                    "re-registering for XPCOM shutdown");
+  MOZ_ASSERT(!mRegisteredForXPCOMShutdown,
+             "re-registering for XPCOM shutdown");
   // Listen for xpcom-shutdown so that we can drop references to our
   // helper-document at that point. (Otherwise, we won't get cleaned up
   // until imgLoader::Shutdown, which can happen after the JAR service
@@ -405,8 +372,8 @@ SVGDocumentWrapper::RegisterForXPCOMShutdown()
 void
 SVGDocumentWrapper::UnregisterForXPCOMShutdown()
 {
-  NS_ABORT_IF_FALSE(mRegisteredForXPCOMShutdown,
-                    "unregistering for XPCOM shutdown w/out being registered");
+  MOZ_ASSERT(mRegisteredForXPCOMShutdown,
+             "unregistering for XPCOM shutdown w/out being registered");
 
   nsresult rv;
   nsCOMPtr<nsIObserverService> obsSvc = do_GetService(OBSERVER_SVC_CID, &rv);
@@ -431,8 +398,9 @@ SVGDocumentWrapper::FlushLayout()
 nsIDocument*
 SVGDocumentWrapper::GetDocument()
 {
-  if (!mViewer)
+  if (!mViewer) {
     return nullptr;
+  }
 
   return mViewer->GetDocument(); // May be nullptr.
 }
@@ -440,15 +408,17 @@ SVGDocumentWrapper::GetDocument()
 SVGSVGElement*
 SVGDocumentWrapper::GetRootSVGElem()
 {
-  if (!mViewer)
+  if (!mViewer) {
     return nullptr; // Can happen during destruction
+  }
 
   nsIDocument* doc = mViewer->GetDocument();
-  if (!doc)
+  if (!doc) {
     return nullptr; // Can happen during destruction
+  }
 
   Element* rootElem = mViewer->GetDocument()->GetRootElement();
-  if (!rootElem || !rootElem->IsSVG(nsGkAtoms::svg)) {
+  if (!rootElem || !rootElem->IsSVGElement(nsGkAtoms::svg)) {
     return nullptr;
   }
 

@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -48,7 +49,7 @@ protected:
   double mX, mY, mZ, mW;
 };
 
-class DOMPoint MOZ_FINAL : public DOMPointReadOnly
+class DOMPoint final : public DOMPointReadOnly
 {
 public:
   explicit DOMPoint(nsISupports* aParent, double aX = 0.0, double aY = 0.0,
@@ -64,7 +65,7 @@ public:
               double aZ, double aW, ErrorResult& aRV);
 
   nsISupports* GetParentObject() const { return mParent; }
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   void SetX(double aX) { mX = aX; }
   void SetY(double aY) { mY = aY; }

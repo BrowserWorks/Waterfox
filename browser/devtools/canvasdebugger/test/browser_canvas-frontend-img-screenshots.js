@@ -20,13 +20,13 @@ function ifTestingSupported() {
   is($("#screenshot-container").hidden, false,
     "The screenshot container should now be visible.");
 
-  is($("#screenshot-dimensions").getAttribute("value"), "128 x 128",
+  is($("#screenshot-dimensions").getAttribute("value"), "128" + "\u00D7" + "128",
     "The screenshot dimensions label has the expected value.");
 
   is($("#screenshot-image").getAttribute("flipped"), "false",
     "The screenshot element should not be flipped vertically.");
 
-  ok(window.getComputedStyle($("#screenshot-image")).backgroundImage.contains("#screenshot-rendering"),
+  ok(window.getComputedStyle($("#screenshot-image")).backgroundImage.includes("#screenshot-rendering"),
     "The screenshot element should have an offscreen canvas element as a background.");
 
   yield teardown(panel);

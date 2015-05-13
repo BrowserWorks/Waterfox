@@ -11,8 +11,6 @@
 
 class nsIChannel;
 class nsIContentViewer;
-class nsIFile;
-class nsIInputStream;
 class nsILoadGroup;
 class nsIStreamListener;
 
@@ -43,7 +41,6 @@ public:
   nsresult CreateXULDocument(const char* aCommand,
                              nsIChannel* aChannel,
                              nsILoadGroup* aLoadGroup,
-                             const char* aContentType,
                              nsIDocShell* aContainer,
                              nsISupports* aExtraInfo,
                              nsIStreamListener** aDocListener,

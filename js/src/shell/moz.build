@@ -12,15 +12,11 @@ if CONFIG['JS_SHELL_NAME']:
 
 UNIFIED_SOURCES += [
     'js.cpp',
-    'jsheaptools.cpp',
     'jsoptparse.cpp',
     'OSObject.cpp'
 ]
 
-# Building against js_static requires that we declare mfbt sybols "exported"
-# on its behalf.
-for var in ('EXPORT_JS_API', 'IMPL_MFBT'):
-    DEFINES[var] = True
+DEFINES['EXPORT_JS_API'] = True
 
 if CONFIG['_MSC_VER']:
     # unnecessary PGO for js shell.  But gcc cannot turn off pgo because it is

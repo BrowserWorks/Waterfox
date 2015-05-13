@@ -78,9 +78,22 @@ gfxPlatformMac::gfxPlatformMac()
     uint32_t canvasMask = BackendTypeBit(BackendType::CAIRO) |
                           BackendTypeBit(BackendType::SKIA) |
                           BackendTypeBit(BackendType::COREGRAPHICS);
-    uint32_t contentMask = BackendTypeBit(BackendType::COREGRAPHICS);
+    uint32_t contentMask = BackendTypeBit(BackendType::COREGRAPHICS) |
+                           BackendTypeBit(BackendType::SKIA);
     InitBackendPrefs(canvasMask, BackendType::COREGRAPHICS,
                      contentMask, BackendType::COREGRAPHICS);
+
+    // XXX: Bug 1036682 - we run out of fds on Mac when using tiled layers because
+    // with 256x256 tiles we can easily hit the soft limit of 800 when using double
+    // buffered tiles in e10s, so let's bump the soft limit to the hard limit for the OS
+    // up to a new cap of OPEN_MAX.
+    struct rlimit limits;
+    if (getrlimit(RLIMIT_NOFILE, &limits) == 0) {
+        limits.rlim_cur = std::min(rlim_t(OPEN_MAX), limits.rlim_max);
+        if (setrlimit(RLIMIT_NOFILE, &limits) != 0) {
+            NS_WARNING("Unable to bump RLIMIT_NOFILE to the maximum number on this OS");
+        }
+    }
 }
 
 gfxPlatformMac::~gfxPlatformMac()
@@ -104,8 +117,7 @@ gfxPlatformMac::CreateOffscreenSurface(const IntSize& size,
                                        gfxContentType contentType)
 {
     nsRefPtr<gfxASurface> newSurface =
-      new gfxQuartzSurface(ThebesIntSize(size),
-                           OptimalFormatForContent(contentType));
+      new gfxQuartzSurface(size, OptimalFormatForContent(contentType));
     return newSurface.forget();
 }
 
@@ -154,7 +166,7 @@ gfxPlatformMac::MakePlatformFont(const nsAString& aFontName,
 {
     // Ownership of aFontData is received here, and passed on to
     // gfxPlatformFontList::MakePlatformFont(), which must ensure the data
-    // is released with NS_Free when no longer needed
+    // is released with free when no longer needed
     return gfxPlatformFontList::PlatformFontList()->MakePlatformFont(aFontName,
                                                                      aWeight,
                                                                      aStretch,
@@ -420,59 +432,98 @@ static CVReturn VsyncCallback(CVDisplayLinkRef aDisplayLink,
                               CVOptionFlags* aFlagsOut,
                               void* aDisplayLinkContext);
 
-class OSXVsyncSource MOZ_FINAL : public VsyncSource
+class OSXVsyncSource final : public VsyncSource
 {
 public:
   OSXVsyncSource()
   {
   }
 
-  virtual Display& GetGlobalDisplay() MOZ_OVERRIDE
+  virtual Display& GetGlobalDisplay() override
   {
     return mGlobalDisplay;
   }
 
-  class OSXDisplay MOZ_FINAL : public VsyncSource::Display
+  class OSXDisplay final : public VsyncSource::Display
   {
   public:
     OSXDisplay()
+      : mDisplayLink(nullptr)
     {
-      EnableVsync();
+      MOZ_ASSERT(NS_IsMainThread());
+      mTimer = do_CreateInstance(NS_TIMER_CONTRACTID);
     }
 
     ~OSXDisplay()
     {
+      MOZ_ASSERT(NS_IsMainThread());
+      mTimer->Cancel();
+      mTimer = nullptr;
       DisableVsync();
     }
 
-    virtual void EnableVsync() MOZ_OVERRIDE
+    static void RetryEnableVsync(nsITimer* aTimer, void* aOsxDisplay)
     {
       MOZ_ASSERT(NS_IsMainThread());
+      OSXDisplay* osxDisplay = static_cast<OSXDisplay*>(aOsxDisplay);
+      MOZ_ASSERT(osxDisplay);
+      osxDisplay->EnableVsync();
+    }
+
+    virtual void EnableVsync() override
+    {
+      MOZ_ASSERT(NS_IsMainThread());
+      if (IsVsyncEnabled()) {
+        return;
+      }
 
       // Create a display link capable of being used with all active displays
       // TODO: See if we need to create an active DisplayLink for each monitor in multi-monitor
       // situations. According to the docs, it is compatible with all displays running on the computer
       // But if we have different monitors at different display rates, we may hit issues.
       if (CVDisplayLinkCreateWithActiveCGDisplays(&mDisplayLink) != kCVReturnSuccess) {
-        NS_WARNING("Could not create a display link, returning");
+        NS_WARNING("Could not create a display link with all active displays. Retrying");
+        CVDisplayLinkRelease(mDisplayLink);
+        mDisplayLink = nullptr;
+
+        // bug 1142708 - When coming back from sleep,
+        // or when changing displays, active displays may not be ready yet,
+        // even if listening for the kIOMessageSystemHasPoweredOn event
+        // from OS X sleep notifications.
+        // Active displays are those that are drawable.
+        // bug 1144638 - When changing display configurations and getting
+        // notifications from CGDisplayReconfigurationCallBack, the
+        // callback gets called twice for each active display
+        // so it's difficult to know when all displays are active.
+        // Instead, try again soon. The delay is arbitrary. 100ms chosen
+        // because on a late 2013 15" retina, it takes about that
+        // long to come back up from sleep.
+        uint32_t delay = 100;
+        mTimer->InitWithFuncCallback(RetryEnableVsync, this, delay, nsITimer::TYPE_ONE_SHOT);
         return;
       }
 
       if (CVDisplayLinkSetOutputCallback(mDisplayLink, &VsyncCallback, this) != kCVReturnSuccess) {
         NS_WARNING("Could not set displaylink output callback");
+        CVDisplayLinkRelease(mDisplayLink);
+        mDisplayLink = nullptr;
         return;
       }
 
       mPreviousTimestamp = TimeStamp::Now();
       if (CVDisplayLinkStart(mDisplayLink) != kCVReturnSuccess) {
         NS_WARNING("Could not activate the display link");
+        CVDisplayLinkRelease(mDisplayLink);
         mDisplayLink = nullptr;
       }
     }
 
-    virtual void DisableVsync() MOZ_OVERRIDE
+    virtual void DisableVsync() override
     {
       MOZ_ASSERT(NS_IsMainThread());
+      if (!IsVsyncEnabled()) {
+        return;
+      }
 
       // Release the display link
       if (mDisplayLink) {
@@ -481,7 +532,7 @@ public:
       }
     }
 
-    virtual bool IsVsyncEnabled() MOZ_OVERRIDE
+    virtual bool IsVsyncEnabled() override
     {
       MOZ_ASSERT(NS_IsMainThread());
       return mDisplayLink != nullptr;
@@ -497,6 +548,7 @@ public:
   private:
     // Manages the display link render thread
     CVDisplayLinkRef   mDisplayLink;
+    nsRefPtr<nsITimer> mTimer;
   }; // OSXDisplay
 
 private:
@@ -531,6 +583,14 @@ already_AddRefed<mozilla::gfx::VsyncSource>
 gfxPlatformMac::CreateHardwareVsyncSource()
 {
   nsRefPtr<VsyncSource> osxVsyncSource = new OSXVsyncSource();
+  VsyncSource::Display& primaryDisplay = osxVsyncSource->GetGlobalDisplay();
+  primaryDisplay.EnableVsync();
+  if (!primaryDisplay.IsVsyncEnabled()) {
+    NS_WARNING("OS X Vsync source not enabled. Falling back to software vsync.");
+    return gfxPlatform::CreateHardwareVsyncSource();
+  }
+
+  primaryDisplay.DisableVsync();
   return osxVsyncSource.forget();
 }
 

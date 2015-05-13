@@ -5,7 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /*
- * Algorithms that determine column and table widths used for CSS2's
+ * Algorithms that determine column and table isizes used for CSS2's
  * 'table-layout: fixed'.
  */
 
@@ -24,11 +24,11 @@ public:
     virtual ~FixedTableLayoutStrategy();
 
     // nsITableLayoutStrategy implementation
-    virtual nscoord GetMinISize(nsRenderingContext* aRenderingContext) MOZ_OVERRIDE;
+    virtual nscoord GetMinISize(nsRenderingContext* aRenderingContext) override;
     virtual nscoord GetPrefISize(nsRenderingContext* aRenderingContext,
-                                 bool aComputingSize) MOZ_OVERRIDE;
-    virtual void MarkIntrinsicISizesDirty() MOZ_OVERRIDE;
-    virtual void ComputeColumnWidths(const nsHTMLReflowState& aReflowState) MOZ_OVERRIDE;
+                                 bool aComputingSize) override;
+    virtual void MarkIntrinsicISizesDirty() override;
+    virtual void ComputeColumnISizes(const nsHTMLReflowState& aReflowState) override;
 
 private:
     nsTableFrame *mTableFrame;

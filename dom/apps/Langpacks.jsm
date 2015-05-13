@@ -32,7 +32,7 @@ let debug = Services.prefs.getBoolPref("dom.mozApps.debug")
   * "languages-target" : { "app://*.gaiamobile.org/manifest.webapp": "2.2" },
   * "languages-provided": {
   * "de": {
-  *   "version": 201411051234,
+  *   "revision": 201411051234,
   *   "name": "Deutsch",
   *   "apps": {
   *     "app://calendar.gaiamobile.org/manifest.webapp": "/de/calendar",
@@ -47,14 +47,17 @@ this.Langpacks = {
   _data: {},
   _broadcaster: null,
   _appIdFromManifestURL: null,
+  _appFromManifestURL: null,
 
   init: function() {
     ppmm.addMessageListener("Webapps:GetLocalizationResource", this);
+    ppmm.addMessageListener("Webapps:GetLocalizedValue", this);
   },
 
-  registerRegistryFunctions: function(aBroadcaster, aIdGetter) {
+  registerRegistryFunctions: function(aBroadcaster, aIdGetter, aAppGetter) {
     this._broadcaster = aBroadcaster;
     this._appIdFromManifestURL = aIdGetter;
+    this._appFromManifestURL = aAppGetter;
   },
 
   receiveMessage: function(aMessage) {
@@ -63,6 +66,9 @@ this.Langpacks = {
     switch (aMessage.name) {
       case "Webapps:GetLocalizationResource":
         this.getLocalizationResource(data, mm);
+        break;
+      case "Webapps:GetLocalizedValue":
+        this.getLocalizedValue(data, mm);
         break;
       default:
         debug("Unexpected message: " + aMessage.name);
@@ -81,7 +87,7 @@ this.Langpacks = {
         }
         let current = this._data[aManifestURL].langs[lang];
         langs[lang].push({
-          version: current.version,
+          revision: current.revision,
           name: current.name,
           target: current.target
         });
@@ -108,6 +114,35 @@ this.Langpacks = {
     this._broadcaster("Webapps:UpdateState", message);
   },
 
+  _getResource: function(aURL, aResponseType) {
+    let xhr =  Cc["@mozilla.org/xmlextras/xmlhttprequest;1"]
+                 .createInstance(Ci.nsIXMLHttpRequest);
+    xhr.mozBackgroundRequest = true;
+    xhr.open("GET", aURL);
+
+    // Default to text response type, but the webidl binding takes care of
+    // validating the dataType value.
+    xhr.responseType = "text";
+    if (aResponseType === "json") {
+      xhr.responseType = "json";
+    } else if (aResponseType === "binary") {
+      xhr.responseType = "blob";
+    }
+
+    return new Promise((aResolve, aReject) => {
+      xhr.addEventListener("load", function() {
+        debug("Success loading " + aURL);
+        if (xhr.status >= 200 && xhr.status < 400) {
+          aResolve(xhr.response);
+        } else {
+          aReject();
+        }
+      });
+      xhr.addEventListener("error", aReject);
+      xhr.send(null);
+    });
+  },
+
   getLocalizationResource: function(aData, aMm) {
     debug("getLocalizationResource " + uneval(aData));
 
@@ -128,7 +163,7 @@ this.Langpacks = {
                        "UnavailableLanguage");
     }
 
-    // Check that we have the right version.
+    // Check that we have the langpack for the right app version.
     let item = this._data[aData.manifestURL].langs[aData.lang];
     if (item.target != aData.version) {
       return sendError("No version " + aData.version + " for this app.",
@@ -143,33 +178,103 @@ this.Langpacks = {
     let href = item.url + aData.path;
     debug("Will load " + href);
 
-    let xhr =  Cc["@mozilla.org/xmlextras/xmlhttprequest;1"]
-                 .createInstance(Ci.nsIXMLHttpRequest);
-    xhr.mozBackgroundRequest = true;
-    xhr.open("GET", href);
+    this._getResource(href, aData.dataType).then(
+      (aResponse) => {
+        aMm.sendAsyncMessage("Webapps:GetLocalizationResource:Return",
+          { requestID: aData.requestID, oid: aData.oid, data: aResponse });
+      },
+      () => { sendError("Error loading " + href, "UnavailableResource"); }
+    );
+  },
 
-    // Default to text response type, but the webidl binding takes care of
-    // validating the dataType value.
-    xhr.responseType = "text";
-    if (aData.dataType === "json") {
-      xhr.responseType = "json";
-    } else if (aData.dataType === "binary") {
-      xhr.responseType = "blob";
+  getLocalizedValue: function(aData, aMm) {
+    debug("getLocalizedValue " + aData.property);
+    function sendError(aMsg, aCode) {
+      debug(aMsg);
+      aMm.sendAsyncMessage("Webapps:GetLocalizedValue:Return",
+        { success: false,
+          requestID: aData.requestID,
+          oid: aData.oid,
+          error: aCode });
     }
 
-    xhr.addEventListener("load", function() {
-      debug("Success loading " + href);
-      if (xhr.status >= 200 && xhr.status < 400) {
-        aMm.sendAsyncMessage("Webapps:GetLocalizationResource:Return",
-          { requestID: aData.requestID, oid: aData.oid, data: xhr.response });
+    function getValueFromManifest(aManifest) {
+      debug("Getting " + aData.property + " from the manifest.");
+      let value = aManifest._localeProp(aData.property);
+      if (!value) {
+        sendError("No property " + aData.property + " in manifest", "UnknownProperty");
       } else {
-        sendError("Error loading " + href, "UnavailableResource");
+        aMm.sendAsyncMessage("Webapps:GetLocalizedValue:Return",
+        { success: true,
+          requestID: aData.requestID,
+          oid: aData.oid,
+          value: value });
       }
-    });
-    xhr.addEventListener("error", function() {
-      sendError("Error loading " + href, "UnavailableResource");
-    });
-    xhr.send(null);
+    }
+
+    let self = this;
+
+    function getValueFromLangpack(aItem, aManifest) {
+      debug("Getting value from langpack at " + aItem.url + "/manifest.json")
+      let href = aItem.url + "/manifest.json";
+
+      function getProperty(aResponse, aProp) {
+       let root = aData.entryPoint && aResponse.entry_points &&
+                   aResponse.entry_points[aData.entryPoint]
+          ? aResponse.entry_points[aData.entryPoint]
+          : aResponse;
+        return root[aProp];
+      }
+
+      self._getResource(href, "json").then(
+        (aResponse) => {
+          let propValue = getProperty(aResponse, aData.property);
+          if (propValue) {
+            aMm.sendAsyncMessage("Webapps:GetLocalizedValue:Return",
+              { success: true,
+                requestID: aData.requestID,
+                oid: aData.oid,
+                value: propValue });
+          } else {
+            getValueFromManifest(aManifest);
+          }
+        },
+        () => { getValueFromManifest(aManifest); }
+      );
+    }
+
+    // We need to get the app with the manifest since the version is only
+    // available in the manifest.
+    this._appFromManifestURL(aData.manifestURL, aData.entryPoint, aData.lang)
+      .then(aApp => {
+        let manifest = aApp.manifest;
+
+        // No langpack for this app or we have langpack(s) for this app, but
+        // not for this language.
+        // Fallback to the manifest values.
+        if (!this._data[aData.manifestURL] ||
+            !this._data[aData.manifestURL].langs[aData.lang]) {
+          getValueFromManifest(manifest);
+          return;
+        }
+
+        if (!manifest.version) {
+          getValueFromManifest(manifest);
+          return;
+        }
+
+        // Check that we have the langpack for the right app version.
+        let item = this._data[aData.manifestURL].langs[aData.lang];
+        // Only keep x.y in the manifest's version in case it's x.y.z
+        let manVersion = manifest.version.split('.').slice(0, 2).join('.');
+        if (item.target == manVersion) {
+          getValueFromLangpack(item, manifest);
+          return;
+        }
+        // Fallback on getting the value from the manifest.
+        getValueFromManifest(manifest);
+      })
+      .catch(aError => { sendError("No app!", "NoSuchApp") });
   },
 
   // Validates the langpack part of a manifest.
@@ -187,14 +292,14 @@ this.Langpacks = {
     for (let lang in aManifest["languages-provided"]) {
       let item = aManifest["languages-provided"][lang];
 
-      if (!item.version) {
-        debug("Error: missing 'version' in languages-provided." + lang);
+      if (!item.revision) {
+        debug("Error: missing 'revision' in languages-provided." + lang);
         return false;
       }
 
-      if (typeof item.version !== "number") {
+      if (typeof item.revision !== "number") {
         debug("Error: languages-provided." + lang +
-              ".version must be a number but is a " + (typeof item.version));
+              ".revision must be a number but is a " + (typeof item.revision));
         return false;
       }
 
@@ -224,13 +329,12 @@ this.Langpacks = {
 
   // Check if this app is a langpack and update registration if needed.
   register: function(aApp, aManifest) {
-    debug("register app " + aApp.manifestURL + " role=" + aApp.role);
-
     if (aApp.role !== "langpack") {
-      debug("Not a langpack.");
       // Not a langpack, but that's fine.
       return;
     }
+
+    debug("register app " + aApp.manifestURL);
 
     if (!this.checkManifest(aManifest)) {
       debug("Invalid langpack manifest.");
@@ -243,13 +347,13 @@ this.Langpacks = {
 
     for (let lang in aManifest["languages-provided"]) {
       let item = aManifest["languages-provided"][lang];
-      let version = item.version;   // The langpack version, not the platform.
+      let revision = item.revision;
       let name = item.name || lang; // If no name specified, default to lang.
       for (let app in item.apps) {
         let sendEvent = false;
         if (!this._data[app] ||
             !this._data[app].langs[lang] ||
-            this._data[app].langs[lang].version > version) {
+            this._data[app].langs[lang].revision > revision) {
           if (!this._data[app]) {
             this._data[app] = {
               appId: this._appIdFromManifestURL(app),
@@ -257,7 +361,7 @@ this.Langpacks = {
             };
           }
           this._data[app].langs[lang] = {
-            version: version,
+            revision: revision,
             target: platformVersion,
             name: name,
             url: origin.resolve(item.apps[app]),
@@ -283,32 +387,31 @@ this.Langpacks = {
   // Check if this app is a langpack and update registration by removing all
   // the entries from this app.
   unregister: function(aApp, aManifest) {
-    debug("unregister app " + aApp.manifestURL + " role=" + aApp.role);
+    if (aApp.role !== "langpack") {
+      // Not a langpack, but that's fine.
+      return;
+    }
 
-      if (aApp.role !== "langpack") {
-        debug("Not a langpack.");
-        // Not a langpack, but that's fine.
-        return;
-      }
+    debug("unregister app " + aApp.manifestURL);
 
-      for (let app in this._data) {
-        let sendEvent = false;
-        for (let lang in this._data[app].langs) {
-          if (this._data[app].langs[lang].from == aApp.manifestURL) {
-            sendEvent = true;
-            delete this._data[app].langs[lang];
-          }
-        }
-        // Fire additionallanguageschange event.
-        // This will only be dispatched to documents using the langpack api.
-        if (sendEvent) {
-          this.sendAppUpdate(app);
-          ppmm.broadcastAsyncMessage(
-              "Webapps:AdditionalLanguageChange",
-              { manifestURL: app,
-                languages: this.getAdditionalLanguages(app).langs });
+    for (let app in this._data) {
+      let sendEvent = false;
+      for (let lang in this._data[app].langs) {
+        if (this._data[app].langs[lang].from == aApp.manifestURL) {
+          sendEvent = true;
+          delete this._data[app].langs[lang];
         }
       }
+      // Fire additionallanguageschange event.
+      // This will only be dispatched to documents using the langpack api.
+      if (sendEvent) {
+        this.sendAppUpdate(app);
+        ppmm.broadcastAsyncMessage(
+            "Webapps:AdditionalLanguageChange",
+            { manifestURL: app,
+              languages: this.getAdditionalLanguages(app).langs });
+      }
+    }
   }
 }
 

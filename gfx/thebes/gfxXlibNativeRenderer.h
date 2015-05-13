@@ -8,6 +8,8 @@
 
 #include "nsPoint.h"
 #include "nsRect.h"
+#include "mozilla/gfx/Rect.h"
+#include "mozilla/gfx/Point.h"
 #include <X11/Xlib.h>
 
 namespace mozilla {
@@ -18,9 +20,6 @@ namespace gfx {
 
 class gfxASurface;
 class gfxContext;
-struct nsIntRect;
-struct nsIntPoint;
-struct nsIntSize;
 typedef struct _cairo cairo_t;
 typedef struct _cairo_surface cairo_surface_t;
 
@@ -46,8 +45,9 @@ public:
      *                     no clipping is required.
      */
     virtual nsresult DrawWithXlib(cairo_surface_t* surface,
-                                  nsIntPoint offset,
-                                  nsIntRect* clipRects, uint32_t numClipRects) = 0;
+                                  mozilla::gfx::IntPoint offset,
+                                  mozilla::gfx::IntRect* clipRects,
+                                  uint32_t numClipRects) = 0;
   
     enum {
         // If set, then Draw() is opaque, i.e., every pixel in the intersection
@@ -82,23 +82,23 @@ public:
      * successful, a pointer to the new gfxASurface is stored in *resultSurface,
      * otherwise *resultSurface is set to nullptr.
      */
-    void Draw(gfxContext* ctx, nsIntSize size,
+    void Draw(gfxContext* ctx, mozilla::gfx::IntSize size,
               uint32_t flags, Screen *screen, Visual *visual);
 
 private:
-    bool DrawDirect(gfxContext *ctx, nsIntSize bounds,
+    bool DrawDirect(gfxContext *ctx, mozilla::gfx::IntSize bounds,
                     uint32_t flags, Screen *screen, Visual *visual);
 
-    bool DrawCairo(cairo_t* cr, nsIntSize size,
+    bool DrawCairo(cairo_t* cr, mozilla::gfx::IntSize size,
                    uint32_t flags, Screen *screen, Visual *visual);
 
     void DrawFallback(mozilla::gfx::DrawTarget* dt, gfxContext* ctx,
-                      gfxASurface* aSurface, nsIntSize& size,
-                      nsIntRect& drawingRect, bool canDrawOverBackground,
+                      gfxASurface* aSurface, mozilla::gfx::IntSize& size,
+                      mozilla::gfx::IntRect& drawingRect, bool canDrawOverBackground,
                       uint32_t flags, Screen* screen, Visual* visual);
 
     bool DrawOntoTempSurface(cairo_surface_t *tempXlibSurface,
-                             nsIntPoint offset);
+                             mozilla::gfx::IntPoint offset);
 
 };
 

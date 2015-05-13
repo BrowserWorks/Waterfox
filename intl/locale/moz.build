@@ -48,8 +48,6 @@ EXTRA_JS_MODULES += [
     'PluralForm.jsm',
 ]
 
-MSVC_ENABLE_PGO = True
-
 FINAL_LIBRARY = 'xul'
 
 LOCAL_INCLUDES += [
@@ -60,6 +58,13 @@ RESOURCE_FILES += [
     'langGroups.properties',
     'language.properties',
 ]
+
+GENERATED_FILES += [
+    'langGroups.properties.h',
+]
+langgroups = GENERATED_FILES['langGroups.properties.h']
+langgroups.script = 'props2arrays.py'
+langgroups.inputs = ['langGroups.properties']
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'qt':
     CXXFLAGS += CONFIG['MOZ_QT_CFLAGS']

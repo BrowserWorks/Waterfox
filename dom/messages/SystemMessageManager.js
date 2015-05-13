@@ -193,10 +193,24 @@ SystemMessageManager.prototype = {
       return false;
     }
 
-    return cpmm.sendSyncMessage("SystemMessageManager:HasPendingMessages",
-                                { type: aType,
-                                  pageURL: this._pageURL,
-                                  manifestURL: this._manifestURL })[0];
+
+    // Use SystemMessageManager directly when we are in the same process.
+    if (Services.appinfo.processType === Services.appinfo.PROCESS_TYPE_DEFAULT) {
+      return cpmm.sendSyncMessage("SystemMessageManager:HasPendingMessages",
+                                  { type: aType,
+                                    pageURL: this._pageURL,
+                                    manifestURL: this._manifestURL })[0];
+    }
+
+    /*
+     * NB: If the system message is fired after we received the cache
+     *     and before we registered the pageURL we will get false
+     *     negative however this is unlikely and will do no harm.
+     */
+    let cache = Cc["@mozilla.org/system-message-cache;1"]
+                  .getService(Ci.nsISystemMessageCache);
+
+    return cache.hasPendingMessage(aType, this._pageURL, this._manifestURL);
   },
 
   mozIsHandlingMessage: function() {
@@ -267,7 +281,7 @@ SystemMessageManager.prototype = {
     }
 
     let messages = (aMessage.name == "SystemMessageManager:Message")
-                   ? [msg.msg]
+                   ? [{ msg: msg.msg, msgID: msg.msgID }]
                    : msg.msgQueue;
 
     // We only dispatch messages when a handler is registered.
@@ -285,7 +299,7 @@ SystemMessageManager.prototype = {
       }
 
       messages.forEach(function(aMsg) {
-        this._dispatchMessage(msg.type, dispatcher, aMsg, msg.msgID);
+        this._dispatchMessage(msg.type, dispatcher, aMsg.msg, aMsg.msgID);
       }, this);
 
     } else {

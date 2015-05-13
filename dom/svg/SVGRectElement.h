@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -17,25 +18,25 @@ typedef nsSVGPathGeometryElement SVGRectElementBase;
 namespace mozilla {
 namespace dom {
 
-class SVGRectElement MOZ_FINAL : public SVGRectElementBase
+class SVGRectElement final : public SVGRectElementBase
 {
 protected:
   explicit SVGRectElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
-  virtual JSObject* WrapNode(JSContext *cx) MOZ_OVERRIDE;
+  virtual JSObject* WrapNode(JSContext *cx, JS::Handle<JSObject*> aGivenProto) override;
   friend nsresult (::NS_NewSVGRectElement(nsIContent **aResult,
                                           already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo));
 
 public:
   // nsSVGSVGElement methods:
-  virtual bool HasValidDimensions() const MOZ_OVERRIDE;
+  virtual bool HasValidDimensions() const override;
 
   // nsSVGPathGeometryElement methods:
-  virtual bool GetGeometryBounds(Rect* aBounds, Float aStrokeWidth,
-                                 const Matrix& aTransform) MOZ_OVERRIDE;
-  virtual void GetAsSimplePath(SimplePath* aSimplePath) MOZ_OVERRIDE;
-  virtual TemporaryRef<Path> BuildPath(PathBuilder* aBuilder = nullptr) MOZ_OVERRIDE;
+  virtual bool GetGeometryBounds(Rect* aBounds, const StrokeOptions& aStrokeOptions,
+                                 const Matrix& aTransform) override;
+  virtual void GetAsSimplePath(SimplePath* aSimplePath) override;
+  virtual TemporaryRef<Path> BuildPath(PathBuilder* aBuilder = nullptr) override;
 
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
 
   // WebIDL
   already_AddRefed<SVGAnimatedLength> X();
@@ -47,7 +48,7 @@ public:
 
 protected:
 
-  virtual LengthAttributesInfo GetLengthInfo() MOZ_OVERRIDE;
+  virtual LengthAttributesInfo GetLengthInfo() override;
 
   enum { ATTR_X, ATTR_Y, ATTR_WIDTH, ATTR_HEIGHT, ATTR_RX, ATTR_RY };
   nsSVGLength2 mLengthAttributes[6];

@@ -84,12 +84,12 @@ public:
    */
   void Push(void* aItem)
   {
-    if (!Push(aItem, fallible_t())) {
+    if (!Push(aItem, mozilla::fallible)) {
       NS_ABORT_OOM(mSize * sizeof(void*));
     }
   }
 
-  NS_WARN_UNUSED_RESULT bool Push(void* aItem, const fallible_t&);
+  MOZ_WARN_UNUSED_RESULT bool Push(void* aItem, const fallible_t&);
 
   /**
    * Inserts new member at the front of the deque.
@@ -98,12 +98,12 @@ public:
    */
   void PushFront(void* aItem)
   {
-    if (!PushFront(aItem, fallible_t())) {
+    if (!PushFront(aItem, mozilla::fallible)) {
       NS_ABORT_OOM(mSize * sizeof(void*));
     }
   }
 
-  NS_WARN_UNUSED_RESULT bool PushFront(void* aItem, const fallible_t&);
+  MOZ_WARN_UNUSED_RESULT bool PushFront(void* aItem, const fallible_t&);
 
   /**
    * Remove and return the last item in the container.

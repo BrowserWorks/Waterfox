@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 sw=2 et tw=79: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -306,14 +306,14 @@ nsIContent::GetBaseURI(bool aTryUseXHRDocBaseURI) const
   const nsIContent *elem = this;
   do {
     // First check for SVG specialness (why is this SVG specific?)
-    if (elem->IsSVG()) {
+    if (elem->IsSVGElement()) {
       nsIContent* bindingParent = elem->GetBindingParent();
       if (bindingParent) {
         nsXBLBinding* binding = bindingParent->GetXBLBinding();
         if (binding) {
           // XXX sXBL/XBL2 issue
           // If this is an anonymous XBL element use the binding
-          // document for the base URI. 
+          // document for the base URI.
           // XXX Will fail with xml:base
           base = binding->PrototypeBinding()->DocURI();
           break;
@@ -326,7 +326,7 @@ nsIContent::GetBaseURI(bool aTryUseXHRDocBaseURI) const
       base = explicitBaseURI;
       break;
     }
-    
+
     // Otherwise check for xml:base attribute
     elem->GetAttr(kNameSpaceID_XML, nsGkAtoms::base, attr);
     if (!attr.IsEmpty()) {
@@ -334,7 +334,7 @@ nsIContent::GetBaseURI(bool aTryUseXHRDocBaseURI) const
     }
     elem = elem->GetParent();
   } while(elem);
-  
+
   // Now resolve against all xml:base attrs
   for (uint32_t i = baseAttrs.Length() - 1; i != uint32_t(-1); --i) {
     nsCOMPtr<nsIURI> newBase;
@@ -401,9 +401,9 @@ NS_INTERFACE_TABLE_HEAD(nsChildContentList)
 NS_INTERFACE_MAP_END
 
 JSObject*
-nsChildContentList::WrapObject(JSContext *cx)
+nsChildContentList::WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto)
 {
-  return NodeListBinding::Wrap(cx, this);
+  return NodeListBinding::Wrap(cx, this, aGivenProto);
 }
 
 NS_IMETHODIMP
@@ -455,8 +455,8 @@ FragmentOrElement::Children()
   FragmentOrElement::nsDOMSlots *slots = DOMSlots();
 
   if (!slots->mChildrenList) {
-    slots->mChildrenList = new nsContentList(this, kNameSpaceID_Wildcard, 
-                                             nsGkAtoms::_asterix, nsGkAtoms::_asterix,
+    slots->mChildrenList = new nsContentList(this, kNameSpaceID_Wildcard,
+                                             nsGkAtoms::_asterisk, nsGkAtoms::_asterisk,
                                              false);
   }
 
@@ -676,8 +676,8 @@ nsIContent::PreHandleEvent(EventChainPreVisitor& aVisitor)
   // Don't propagate mouseover and mouseout events when mouse is moving
   // inside chrome access only content.
   bool isAnonForEvents = IsRootOfChromeAccessOnlySubtree();
-  if ((aVisitor.mEvent->message == NS_MOUSE_ENTER_SYNTH ||
-       aVisitor.mEvent->message == NS_MOUSE_EXIT_SYNTH ||
+  if ((aVisitor.mEvent->message == NS_MOUSE_OVER ||
+       aVisitor.mEvent->message == NS_MOUSE_OUT ||
        aVisitor.mEvent->message == NS_POINTER_OVER ||
        aVisitor.mEvent->message == NS_POINTER_OUT) &&
       // Check if we should stop event propagation when event has just been
@@ -731,14 +731,14 @@ nsIContent::PreHandleEvent(EventChainPreVisitor& aVisitor)
                 do_QueryInterface(aVisitor.mEvent->originalTarget);
               nsAutoString ot, ct, rt;
               if (originalTarget) {
-                originalTarget->Tag()->ToString(ot);
+                originalTarget->NodeInfo()->NameAtom()->ToString(ot);
               }
-              Tag()->ToString(ct);
-              relatedTarget->Tag()->ToString(rt);
+              NodeInfo()->NameAtom()->ToString(ct);
+              relatedTarget->NodeInfo()->NameAtom()->ToString(rt);
               printf("Stopping %s propagation:"
                      "\n\toriginalTarget=%s \n\tcurrentTarget=%s %s"
                      "\n\trelatedTarget=%s %s \n%s",
-                     (aVisitor.mEvent->message == NS_MOUSE_ENTER_SYNTH)
+                     (aVisitor.mEvent->message == NS_MOUSE_OVER)
                        ? "mouseover" : "mouseout",
                      NS_ConvertUTF16toUTF8(ot).get(),
                      NS_ConvertUTF16toUTF8(ct).get(),
@@ -1184,6 +1184,10 @@ FragmentOrElement::DestroyContent()
     // The child can remove itself from the parent in BindToTree.
     mAttrsAndChildren.ChildAt(i)->DestroyContent();
   }
+  ShadowRoot* shadowRoot = GetShadowRoot();
+  if (shadowRoot) {
+    shadowRoot->DestroyContent();
+  }
 }
 
 void
@@ -1343,7 +1347,7 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(FragmentOrElement)
   // which is dispatched in UnbindFromTree.
 
   if (tmp->HasProperties()) {
-    if (tmp->IsHTML() || tmp->IsSVG()) {
+    if (tmp->IsHTMLElement() || tmp->IsSVGElement()) {
       nsIAtom*** props = Element::HTMLSVGPropertiesToTraverseAndUnlink();
       for (uint32_t i = 0; props[i]; ++i) {
         tmp->DeleteProperty(*props[i]);
@@ -1385,7 +1389,7 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(FragmentOrElement)
   {
     nsDOMSlots *slots = tmp->GetExistingDOMSlots();
     if (slots) {
-      slots->Unlink(tmp->IsXUL());
+      slots->Unlink(tmp->IsXULElement());
     }
   }
 
@@ -1682,7 +1686,7 @@ FragmentOrElement::CanSkip(nsINode* aNode, bool aRemovingAllowed)
   if (!root) {
     return false;
   }
- 
+
   // Subtree has been traversed already, and aNode has
   // been handled in a way that doesn't require revisiting it.
   if (root->IsPurpleRoot()) {
@@ -1736,7 +1740,7 @@ FragmentOrElement::CanSkip(nsINode* aNode, bool aRemovingAllowed)
     }
   }
 
-  if (!currentDoc || !foundBlack) { 
+  if (!currentDoc || !foundBlack) {
     root->SetIsPurpleRoot(true);
     if (domOnlyCycle) {
       if (!gNodesToUnbind) {
@@ -1776,7 +1780,7 @@ FragmentOrElement::CanSkip(nsINode* aNode, bool aRemovingAllowed)
     nsIContent* n = nodesToClear[i];
     MarkNodeChildren(n);
     // Can't remove currently handled purple node,
-    // unless aRemovingAllowed is true. 
+    // unless aRemovingAllowed is true.
     if ((n != aNode || aRemovingAllowed) && n->IsPurple()) {
       n->RemovePurple();
     }
@@ -1794,7 +1798,7 @@ FragmentOrElement::CanSkipThis(nsINode* aNode)
     return true;
   }
   nsIDocument* c = aNode->GetUncomposedDoc();
-  return 
+  return
     ((c && nsCCUncollectableMarker::InGeneration(c->GetMarkedCCGeneration())) ||
      aNode->InCCBlackTree()) && !NeedsScriptTraverse(aNode);
 }
@@ -1895,7 +1899,7 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INTERNAL(FragmentOrElement)
   tmp->OwnerDoc()->BindingManager()->Traverse(tmp, cb);
 
   if (tmp->HasProperties()) {
-    if (tmp->IsHTML() || tmp->IsSVG()) {
+    if (tmp->IsHTMLElement() || tmp->IsSVGElement()) {
       nsIAtom*** props = Element::HTMLSVGPropertiesToTraverseAndUnlink();
       for (uint32_t i = 0; props[i]; ++i) {
         nsISupports* property =
@@ -1930,7 +1934,7 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INTERNAL(FragmentOrElement)
   {
     nsDOMSlots *slots = tmp->GetExistingDOMSlots();
     if (slots) {
-      slots->Traverse(cb, tmp->IsXUL());
+      slots->Traverse(cb, tmp->IsXULElement());
     }
   }
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
@@ -2202,7 +2206,7 @@ public:
 
   bool ToString(nsAString& aOut)
   {
-    if (!aOut.SetCapacity(mLength, fallible_t())) {
+    if (!aOut.SetCapacity(mLength, fallible)) {
       return false;
     }
 
@@ -2425,11 +2429,12 @@ AppendEncodedAttributeValue(nsAutoString* aValue, StringBuilder& aBuilder)
 static void
 StartElement(Element* aContent, StringBuilder& aBuilder)
 {
-  nsIAtom* localName = aContent->Tag();
+  nsIAtom* localName = aContent->NodeInfo()->NameAtom();
   int32_t tagNS = aContent->GetNameSpaceID();
 
   aBuilder.Append("<");
-  if (aContent->IsHTML() || aContent->IsSVG() || aContent->IsMathML()) {
+  if (aContent->IsHTMLElement() || aContent->IsSVGElement() ||
+      aContent->IsMathMLElement()) {
     aBuilder.Append(localName);
   } else {
     aBuilder.Append(aContent->NodeName());
@@ -2460,7 +2465,7 @@ StartElement(Element* aContent, StringBuilder& aBuilder)
       delete attValue;
       continue;
     }
-    
+
     aBuilder.Append(" ");
 
     if (MOZ_LIKELY(attNs == kNameSpaceID_None) ||
@@ -2494,7 +2499,7 @@ StartElement(Element* aContent, StringBuilder& aBuilder)
   // pre/textarea/listing is a textnode and starts with a \n.
   // But because browsers haven't traditionally had that behavior,
   // we're not changing our behavior either - yet.
-  if (aContent->IsHTML()) {
+  if (aContent->IsHTMLElement()) {
     if (localName == nsGkAtoms::pre || localName == nsGkAtoms::textarea ||
         localName == nsGkAtoms::listing) {
       nsIContent* fc = aContent->GetFirstChild();
@@ -2513,19 +2518,19 @@ StartElement(Element* aContent, StringBuilder& aBuilder)
 static inline bool
 ShouldEscape(nsIContent* aParent)
 {
-  if (!aParent || !aParent->IsHTML()) {
+  if (!aParent || !aParent->IsHTMLElement()) {
     return true;
   }
 
   static const nsIAtom* nonEscapingElements[] = {
     nsGkAtoms::style, nsGkAtoms::script, nsGkAtoms::xmp,
     nsGkAtoms::iframe, nsGkAtoms::noembed, nsGkAtoms::noframes,
-    nsGkAtoms::plaintext, 
+    nsGkAtoms::plaintext,
     // Per the current spec noscript should be escaped in case
     // scripts are disabled or if document doesn't have
     // browsing context. However the latter seems to be a spec bug
     // and Gecko hasn't traditionally done the former.
-    nsGkAtoms::noscript    
+    nsGkAtoms::noscript
   };
   static mozilla::BloomFilter<12, nsIAtom> sFilter;
   static bool sInitialized = false;
@@ -2536,7 +2541,7 @@ ShouldEscape(nsIContent* aParent)
     }
   }
 
-  nsIAtom* tag = aParent->Tag();
+  nsIAtom* tag = aParent->NodeInfo()->NameAtom();
   if (sFilter.mightContain(tag)) {
     for (uint32_t i = 0; i < ArrayLength(nonEscapingElements); ++i) {
       if (tag == nonEscapingElements[i]) {
@@ -2548,16 +2553,12 @@ ShouldEscape(nsIContent* aParent)
 }
 
 static inline bool
-IsVoidTag(Element* aElement)
+IsVoidTag(nsIAtom* aTag)
 {
-  if (!aElement->IsHTML()) {
-    return false;
-  }
-
   static const nsIAtom* voidElements[] = {
     nsGkAtoms::area, nsGkAtoms::base, nsGkAtoms::basefont,
     nsGkAtoms::bgsound, nsGkAtoms::br, nsGkAtoms::col,
-    nsGkAtoms::command, nsGkAtoms::embed, nsGkAtoms::frame,
+    nsGkAtoms::embed, nsGkAtoms::frame,
     nsGkAtoms::hr, nsGkAtoms::img, nsGkAtoms::input,
     nsGkAtoms::keygen, nsGkAtoms::link, nsGkAtoms::meta,
     nsGkAtoms::param, nsGkAtoms::source, nsGkAtoms::track,
@@ -2572,16 +2573,31 @@ IsVoidTag(Element* aElement)
       sFilter.add(voidElements[i]);
     }
   }
-  
-  nsIAtom* tag = aElement->Tag();
-  if (sFilter.mightContain(tag)) {
+
+  if (sFilter.mightContain(aTag)) {
     for (uint32_t i = 0; i < ArrayLength(voidElements); ++i) {
-      if (tag == voidElements[i]) {
+      if (aTag == voidElements[i]) {
         return true;
       }
     }
   }
   return false;
+}
+
+static inline bool
+IsVoidTag(Element* aElement)
+{
+  if (!aElement->IsHTMLElement()) {
+    return false;
+  }
+  return IsVoidTag(aElement->NodeInfo()->NameAtom());
+}
+
+/* static */
+bool
+FragmentOrElement::IsHTMLVoid(nsIAtom* aLocalName)
+{
+  return aLocalName && IsVoidTag(aLocalName);
 }
 
 static bool
@@ -2651,8 +2667,9 @@ Serialize(FragmentOrElement* aRoot, bool aDescendentsOnly, nsAString& aOut)
       if (!isVoid && current->NodeType() == nsIDOMNode::ELEMENT_NODE) {
         builder.Append("</");
         nsIContent* elem = static_cast<nsIContent*>(current);
-        if (elem->IsHTML() || elem->IsSVG() || elem->IsMathML()) {
-          builder.Append(elem->Tag());
+        if (elem->IsHTMLElement() || elem->IsSVGElement() ||
+            elem->IsMathMLElement()) {
+          builder.Append(elem->NodeInfo()->NameAtom());
         } else {
           builder.Append(current->NodeName());
         }
@@ -2823,17 +2840,17 @@ FragmentOrElement::SetInnerHTMLInternal(const nsAString& aInnerHTML, ErrorResult
 
   nsAutoScriptLoaderDisabler sld(doc);
 
-  nsIAtom* contextLocalName = Tag();
+  nsIAtom* contextLocalName = NodeInfo()->NameAtom();
   int32_t contextNameSpaceID = GetNameSpaceID();
 
   ShadowRoot* shadowRoot = ShadowRoot::FromNode(this);
   if (shadowRoot) {
     // Fix up the context to be the host of the ShadowRoot.
-    contextLocalName = shadowRoot->GetHost()->Tag();
+    contextLocalName = shadowRoot->GetHost()->NodeInfo()->NameAtom();
     contextNameSpaceID = shadowRoot->GetHost()->GetNameSpaceID();
   }
 
-  if (doc->IsHTML()) {
+  if (doc->IsHTMLDocument()) {
     int32_t oldChildCount = target->GetChildCount();
     aError = nsContentUtils::ParseFragmentHTML(aInnerHTML,
                                                target,

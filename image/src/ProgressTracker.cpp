@@ -22,26 +22,6 @@ using mozilla::WeakPtr;
 namespace mozilla {
 namespace image {
 
-ProgressTrackerInit::ProgressTrackerInit(Image* aImage,
-                                         ProgressTracker* aTracker)
-{
-  MOZ_ASSERT(aImage);
-
-  if (aTracker) {
-    mTracker = aTracker;
-  } else {
-    mTracker = new ProgressTracker();
-  }
-  mTracker->SetImage(aImage);
-  aImage->SetProgressTracker(mTracker);
-  MOZ_ASSERT(mTracker);
-}
-
-ProgressTrackerInit::~ProgressTrackerInit()
-{
-  mTracker->ResetImage();
-}
-
 static void
 CheckProgressConsistency(Progress aProgress)
 {
@@ -87,25 +67,18 @@ CheckProgressConsistency(Progress aProgress)
 void
 ProgressTracker::SetImage(Image* aImage)
 {
-  NS_ABORT_IF_FALSE(aImage, "Setting null image");
-  NS_ABORT_IF_FALSE(!mImage, "Setting image when we already have one");
+  MutexAutoLock lock(mImageMutex);
+  MOZ_ASSERT(aImage, "Setting null image");
+  MOZ_ASSERT(!mImage, "Setting image when we already have one");
   mImage = aImage;
 }
 
 void
 ProgressTracker::ResetImage()
 {
-  NS_ABORT_IF_FALSE(mImage, "Resetting image when it's already null!");
+  MutexAutoLock lock(mImageMutex);
+  MOZ_ASSERT(mImage, "Resetting image when it's already null!");
   mImage = nullptr;
-}
-
-bool
-ProgressTracker::IsLoading() const
-{
-  // Checking for whether OnStopRequest has fired allows us to say we're
-  // loading before OnStartRequest gets called, letting the request properly
-  // get removed from the cache in certain cases.
-  return !(mProgress & FLAG_LOAD_COMPLETE);
 }
 
 uint32_t
@@ -191,18 +164,19 @@ ProgressTracker::Notify(IProgressObserver* aObserver)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-#ifdef PR_LOGGING
-  if (mImage && mImage->GetURI()) {
-    nsRefPtr<ImageURL> uri(mImage->GetURI());
-    nsAutoCString spec;
-    uri->GetSpec(spec);
-    LOG_FUNC_WITH_PARAM(GetImgLog(),
-                        "ProgressTracker::Notify async", "uri", spec.get());
-  } else {
-    LOG_FUNC_WITH_PARAM(GetImgLog(),
-                        "ProgressTracker::Notify async", "uri", "<unknown>");
+  if (PR_LOG_TEST(GetImgLog(), PR_LOG_DEBUG)) {
+    nsRefPtr<Image> image = GetImage();
+    if (image && image->GetURI()) {
+      nsRefPtr<ImageURL> uri(image->GetURI());
+      nsAutoCString spec;
+      uri->GetSpec(spec);
+      LOG_FUNC_WITH_PARAM(GetImgLog(),
+                          "ProgressTracker::Notify async", "uri", spec.get());
+    } else {
+      LOG_FUNC_WITH_PARAM(GetImgLog(),
+                          "ProgressTracker::Notify async", "uri", "<unknown>");
+    }
   }
-#endif
 
   aObserver->SetNotificationsDeferred(true);
 
@@ -259,18 +233,20 @@ ProgressTracker::NotifyCurrentState(IProgressObserver* aObserver)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-#ifdef PR_LOGGING
-  nsAutoCString spec;
-  if (mImage && mImage->GetURI()) {
-    mImage->GetURI()->GetSpec(spec);
+  if (PR_LOG_TEST(GetImgLog(), PR_LOG_DEBUG)) {
+    nsRefPtr<Image> image = GetImage();
+    nsAutoCString spec;
+    if (image && image->GetURI()) {
+      image->GetURI()->GetSpec(spec);
+    }
+    LOG_FUNC_WITH_PARAM(GetImgLog(),
+                        "ProgressTracker::NotifyCurrentState", "uri", spec.get());
   }
-  LOG_FUNC_WITH_PARAM(GetImgLog(),
-                      "ProgressTracker::NotifyCurrentState", "uri", spec.get());
-#endif
 
   aObserver->SetNotificationsDeferred(true);
 
-  nsCOMPtr<nsIRunnable> ev = new AsyncNotifyCurrentStateRunnable(this, aObserver);
+  nsCOMPtr<nsIRunnable> ev = new AsyncNotifyCurrentStateRunnable(this,
+                                                                 aObserver);
   NS_DispatchToCurrentThread(ev);
 }
 
@@ -360,13 +336,22 @@ ProgressTracker::SyncNotifyProgress(Progress aProgress,
     progress &= ~FLAG_ONLOAD_UNBLOCKED;
   }
 
+  // XXX(seth): Hack to work around the fact that some observers have bugs and
+  // need to get onload blocking notifications multiple times. We should fix
+  // those observers and remove this.
+  if ((aProgress & FLAG_DECODE_COMPLETE) &&
+      (mProgress & FLAG_ONLOAD_BLOCKED) &&
+      (mProgress & FLAG_ONLOAD_UNBLOCKED)) {
+    progress |= FLAG_ONLOAD_BLOCKED | FLAG_ONLOAD_UNBLOCKED;
+  }
+
   // Apply the changes.
   mProgress |= progress;
 
   CheckProgressConsistency(mProgress);
 
   // Send notifications.
-  SyncNotifyInternal(mObservers, !!mImage, progress, aInvalidRect);
+  SyncNotifyInternal(mObservers, HasImage(), progress, aInvalidRect);
 
   if (progress & FLAG_HAS_ERROR) {
     FireFailureNotification();
@@ -378,27 +363,27 @@ ProgressTracker::SyncNotify(IProgressObserver* aObserver)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-#ifdef PR_LOGGING
+  nsRefPtr<Image> image = GetImage();
+
   nsAutoCString spec;
-  if (mImage && mImage->GetURI()) {
-    mImage->GetURI()->GetSpec(spec);
+  if (image && image->GetURI()) {
+    image->GetURI()->GetSpec(spec);
   }
   LOG_SCOPE_WITH_PARAM(GetImgLog(),
                        "ProgressTracker::SyncNotify", "uri", spec.get());
-#endif
 
   nsIntRect rect;
-  if (mImage) {
-    if (NS_FAILED(mImage->GetWidth(&rect.width)) ||
-        NS_FAILED(mImage->GetHeight(&rect.height))) {
+  if (image) {
+    if (NS_FAILED(image->GetWidth(&rect.width)) ||
+        NS_FAILED(image->GetHeight(&rect.height))) {
       // Either the image has no intrinsic size, or it has an error.
-      rect = nsIntRect::GetMaxSizedIntRect();
+      rect = GetMaxSizedIntRect();
     }
   }
 
   ObserverArray array;
   array.AppendElement(aObserver);
-  SyncNotifyInternal(array, !!mImage, mProgress, rect);
+  SyncNotifyInternal(array, !!image, mProgress, rect);
 }
 
 void
@@ -492,16 +477,15 @@ ProgressTracker::OnDiscard()
 void
 ProgressTracker::OnImageAvailable()
 {
-  if (!NS_IsMainThread()) {
-    // Note: SetHasImage calls Image::Lock and Image::IncrementAnimationCounter
-    // so subsequent calls or dispatches which Unlock or Decrement~ should
-    // be issued after this to avoid race conditions.
-    NS_DispatchToMainThread(
-      NS_NewRunnableMethod(this, &ProgressTracker::OnImageAvailable));
-    return;
+  MOZ_ASSERT(NS_IsMainThread());
+  // Notify any imgRequestProxys that are observing us that we have an Image.
+  ObserverArray::ForwardIterator iter(mObservers);
+  while (iter.HasMore()) {
+    nsRefPtr<IProgressObserver> observer = iter.GetNext().get();
+    if (observer) {
+      observer->SetHasImage();
+    }
   }
-
-  NOTIFY_IMAGE_OBSERVERS(mObservers, SetHasImage());
 }
 
 void
@@ -511,11 +495,12 @@ ProgressTracker::FireFailureNotification()
 
   // Some kind of problem has happened with image decoding.
   // Report the URI to net:failed-to-process-uri-conent observers.
-  if (mImage) {
+  nsRefPtr<Image> image = GetImage();
+  if (image) {
     // Should be on main thread, so ok to create a new nsIURI.
     nsCOMPtr<nsIURI> uri;
     {
-      nsRefPtr<ImageURL> threadsafeUriData = mImage->GetURI();
+      nsRefPtr<ImageURL> threadsafeUriData = image->GetURI();
       uri = threadsafeUriData ? threadsafeUriData->ToIURI() : nullptr;
     }
     if (uri) {

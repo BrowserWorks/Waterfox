@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set sw=2 ts=8 et ft=cpp : */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -32,7 +32,7 @@ struct ContentProcessInfo
   std::map<TabId, RemoteFrameInfo> mRemoteFrames;
 };
 
-class ContentProcessManager MOZ_FINAL
+class ContentProcessManager final
 {
 public:
   static ContentProcessManager* GetSingleton();
@@ -109,6 +109,31 @@ public:
   bool GetRemoteFrameOpenerTabId(const ContentParentId& aChildCpId,
                                  const TabId& aChildTabId,
                                  /*out*/ TabId* aOpenerTabId);
+
+  /**
+   * Get the TabParent by the given content process and tab id.
+   * Return nullptr when TabParent couldn't be found via aChildCpId
+   * and aChildTabId.
+   * (or probably because the TabParent is not in the chrome process)
+   */
+  already_AddRefed<TabParent>
+  GetTabParentByProcessAndTabId(const ContentParentId& aChildCpId,
+                                const TabId& aChildTabId);
+
+  /**
+   * Get the TabParent on top level by the given content process and tab id.
+   *
+   *  This function return the TabParent belong to the chrome process,
+   *  called top-level TabParent here, by given aChildCpId and aChildTabId.
+   *  The given aChildCpId and aChildTabId are related to a content process
+   *  and a tab respectively. In nested-oop, the top-level TabParent isn't
+   *  always the opener tab of the given tab in content process. This function
+   *  will call GetTabParentByProcessAndTabId iteratively until the Tab returned
+   *  is belong to the chrome process.
+   */
+  already_AddRefed<TabParent>
+  GetTopLevelTabParentByProcessAndTabId(const ContentParentId& aChildCpId,
+                                        const TabId& aChildTabId);
 
 private:
   static StaticAutoPtr<ContentProcessManager> sSingleton;

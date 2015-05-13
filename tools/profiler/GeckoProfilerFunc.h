@@ -53,20 +53,24 @@ const double* mozilla_sampler_get_responsiveness();
 
 void mozilla_sampler_save();
 
-char* mozilla_sampler_get_profile();
+char* mozilla_sampler_get_profile(float aSinceTime);
 
-JSObject *mozilla_sampler_get_profile_data(JSContext *aCx);
+JSObject *mozilla_sampler_get_profile_data(JSContext *aCx, float aSinceTime);
 
-void mozilla_sampler_save_profile_to_file(const char* aFilename);
+// Make this function easily callable from a debugger in a build without
+// debugging information (work around http://llvm.org/bugs/show_bug.cgi?id=22211)
+extern "C" {
+  void mozilla_sampler_save_profile_to_file(const char* aFilename);
+}
 
 const char** mozilla_sampler_get_features();
+
+void mozilla_sampler_get_buffer_info(uint32_t *aCurrentPosition, uint32_t *aTotalSize,
+                                     uint32_t *aGeneration);
 
 void mozilla_sampler_init(void* stackTop);
 
 void mozilla_sampler_shutdown();
-
-void mozilla_sampler_print_location1();
-void mozilla_sampler_print_location2();
 
 // Lock the profiler. When locked the profiler is (1) stopped,
 // (2) profile data is cleared, (3) profiler-locked is fired.
@@ -85,9 +89,6 @@ void mozilla_sampler_sleep_end();
 
 double mozilla_sampler_time();
 double mozilla_sampler_time(const mozilla::TimeStamp& aTime);
-
-/* Returns true if env var SPS_NEW is set to anything, else false. */
-extern bool sps_version2();
 
 void mozilla_sampler_tracing(const char* aCategory, const char* aInfo,
                              TracingMetadata aMetaData);

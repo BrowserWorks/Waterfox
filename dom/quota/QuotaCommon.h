@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -10,6 +10,7 @@
 #include "nsAutoPtr.h"
 #include "nsCOMPtr.h"
 #include "nsDebug.h"
+#include "nsPrintfCString.h"
 #include "nsString.h"
 #include "nsTArray.h"
 
@@ -21,7 +22,13 @@
   using namespace mozilla::dom::quota;
 
 #define DSSTORE_FILE_NAME ".DS_Store"
-#define PERMISSION_STORAGE_UNLIMITED "indexedDB-unlimited"
+
+#define QM_WARNING(...)                                                        \
+  do {                                                                         \
+    nsPrintfCString str(__VA_ARGS__);                                          \
+    mozilla::dom::quota::ReportInternalError(__FILE__, __LINE__, str.get());   \
+    NS_WARNING(str.get());                                                     \
+  } while (0)
 
 BEGIN_QUOTA_NAMESPACE
 
@@ -33,6 +40,9 @@ AssertCurrentThreadOwnsQuotaMutex();
 
 bool
 IsOnIOThread();
+
+void
+ReportInternalError(const char* aFile, uint32_t aLine, const char* aStr);
 
 END_QUOTA_NAMESPACE
 

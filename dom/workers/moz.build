@@ -8,6 +8,8 @@
 EXPORTS.mozilla.dom += [
     'ServiceWorkerCommon.h',
     'ServiceWorkerContainer.h',
+    'ServiceWorkerEvents.h',
+    'ServiceWorkerRegistrar.h',
     'ServiceWorkerRegistration.h',
     'WorkerPrivate.h',
     'WorkerRunnable.h',
@@ -16,6 +18,7 @@ EXPORTS.mozilla.dom += [
 
 EXPORTS.mozilla.dom.workers += [
     'ServiceWorkerManager.h',
+    'ServiceWorkerPeriodicUpdater.h',
     'WorkerDebuggerManager.h',
     'Workers.h',
 ]
@@ -32,6 +35,7 @@ EXPORTS.mozilla.dom.workers.bindings += [
     'ServiceWorker.h',
     'ServiceWorkerClient.h',
     'ServiceWorkerClients.h',
+    'ServiceWorkerWindowClient.h',
     'SharedWorker.h',
     'URL.h',
     'WorkerFeature.h',
@@ -65,7 +69,11 @@ UNIFIED_SOURCES += [
     'ServiceWorkerContainer.cpp',
     'ServiceWorkerEvents.cpp',
     'ServiceWorkerManager.cpp',
+    'ServiceWorkerPeriodicUpdater.cpp',
+    'ServiceWorkerRegistrar.cpp',
     'ServiceWorkerRegistration.cpp',
+    'ServiceWorkerScriptCache.cpp',
+    'ServiceWorkerWindowClient.cpp',
     'SharedWorker.cpp',
     'URL.cpp',
     'WorkerDebuggerManager.cpp',
@@ -77,9 +85,11 @@ UNIFIED_SOURCES += [
     'XMLHttpRequestUpload.cpp',
 ]
 
-FAIL_ON_WARNINGS = True
+IPDL_SOURCES += [
+    'ServiceWorkerRegistrarTypes.ipdlh',
+]
 
-MSVC_ENABLE_PGO = True
+FAIL_ON_WARNINGS = True
 
 LOCAL_INCLUDES += [
     '../base',
@@ -99,7 +109,6 @@ TEST_DIRS += [
 ]
 
 MOCHITEST_MANIFESTS += [
-    'test/fetch/mochitest.ini',
     'test/mochitest.ini',
     'test/serviceworkers/mochitest.ini',
 ]
@@ -107,3 +116,7 @@ MOCHITEST_MANIFESTS += [
 MOCHITEST_CHROME_MANIFESTS += ['test/chrome.ini']
 
 XPCSHELL_TESTS_MANIFESTS += ['test/xpcshell/xpcshell.ini']
+
+BROWSER_CHROME_MANIFESTS += ['test/browser.ini']
+
+TEST_DIRS += ['test/gtest']

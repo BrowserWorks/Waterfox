@@ -14,6 +14,7 @@ import org.json.JSONObject;
 import org.mozilla.gecko.GeckoApp;
 import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.GeckoEvent;
+import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.GeckoThread;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.Tab;
@@ -59,17 +60,13 @@ public class WebappImpl extends GeckoApp implements InstallCallback {
     @Override
     public int getLayout() { return R.layout.web_app; }
 
-    @Override
-    public boolean hasTabsSideBar() { return false; }
-
-    @Override
-    public BrowserDB.Factory getBrowserDBFactory() {
-        return new BrowserDB.Factory() {
+    public WebappImpl() {
+        GeckoProfile.setBrowserDBFactory(new BrowserDB.Factory() {
             @Override
             public BrowserDB get(String profileName, File profileDir) {
                 return new StubBrowserDB(profileName);
             }
-        };
+        });
     }
 
     @Override
@@ -188,11 +185,18 @@ public class WebappImpl extends GeckoApp implements InstallCallback {
     }
 
     @Override
-    protected void loadStartupTab(String uri, int flags) {
+    protected void loadStartupTabWithAboutHome(final int flags) {
+        loadStartupTab(null, null, flags);
+    }
+
+    // Note: there is no support for loading with intent extras in
+    // Webapps at the moment because I don't have time to debug/test.
+    @Override
+    protected void loadStartupTab(final String uri, final SafeIntent unusedIntent, int flags) {
         // Load a tab so it's available for any code that assumes a tab
         // before the app tab itself is loaded in BrowserApp._loadWebapp.
         flags = Tabs.LOADURL_NEW_TAB | Tabs.LOADURL_USER_ENTERED | Tabs.LOADURL_EXTERNAL;
-        super.loadStartupTab("about:blank", flags);
+        super.loadStartupTab("about:blank", null, flags);
     }
 
     private void showSplash() {

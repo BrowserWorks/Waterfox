@@ -12,6 +12,7 @@
 #include "mozilla/BasicEvents.h"
 #include "mozilla/EventForwards.h" // for KeyNameIndex, temporarily
 #include "mozilla/TextRange.h"
+#include "mozilla/FontRange.h"
 #include "nsCOMPtr.h"
 #include "nsIDOMKeyEvent.h"
 #include "nsITransferable.h"
@@ -19,6 +20,9 @@
 #include "nsStringGlue.h"
 #include "nsTArray.h"
 #include "WritingModes.h"
+
+class nsStringHashKey;
+template<class, class> class nsDataHashtable;
 
 /******************************************************************************
  * virtual keycode values
@@ -82,7 +86,7 @@ protected:
   }
 
 public:
-  virtual WidgetKeyboardEvent* AsKeyboardEvent() MOZ_OVERRIDE { return this; }
+  virtual WidgetKeyboardEvent* AsKeyboardEvent() override { return this; }
 
   WidgetKeyboardEvent(bool aIsTrusted, uint32_t aMessage, nsIWidget* aWidget,
                       EventClassID aEventClassID = eKeyboardEventClass)
@@ -104,7 +108,7 @@ public:
   {
   }
 
-  virtual WidgetEvent* Duplicate() const MOZ_OVERRIDE
+  virtual WidgetEvent* Duplicate() const override
   {
     MOZ_ASSERT(mClass == eKeyboardEventClass,
                "Duplicate() must be overridden by sub class");
@@ -161,7 +165,14 @@ public:
   uint32_t mNativeModifierFlags;
   nsString mNativeCharacters;
   nsString mNativeCharactersIgnoringModifiers;
+  // If this is non-empty, create a text event for plugins instead of a
+  // keyboard event.
+  nsString mPluginTextEventString;
 #endif
+
+  // If the key should cause keypress events, this returns true.
+  // Otherwise, false.
+  bool ShouldCauseKeypressEvents() const;
 
   void GetDOMKeyName(nsAString& aKeyName)
   {
@@ -180,10 +191,47 @@ public:
     GetDOMCodeName(mCodeNameIndex, aCodeName);
   }
 
+  bool IsModifierKeyEvent() const
+  {
+    return GetModifierForKeyName(mKeyNameIndex) != MODIFIER_NONE;
+  }
+
+  static void Shutdown();
+
+  /**
+   * ComputeLocationFromCodeValue() returns one of .location value
+   * (nsIDOMKeyEvent::DOM_KEY_LOCATION_*) which is the most preferred value
+   * for the specified specified code value.
+   */
+  static uint32_t ComputeLocationFromCodeValue(CodeNameIndex aCodeNameIndex);
+
+  /**
+   * ComputeKeyCodeFromKeyNameIndex() return a .keyCode value which can be
+   * mapped from the specified key value.  Note that this returns 0 if the
+   * key name index is KEY_NAME_INDEX_Unidentified or KEY_NAME_INDEX_USE_STRING.
+   * This means that this method is useful only for non-printable keys.
+   */
+  static uint32_t ComputeKeyCodeFromKeyNameIndex(KeyNameIndex aKeyNameIndex);
+
+  /**
+   * GetModifierForKeyName() returns a value of Modifier which is activated
+   * by the aKeyNameIndex.
+   */
+  static Modifier GetModifierForKeyName(KeyNameIndex aKeyNameIndex);
+
+  /**
+   * IsLockableModifier() returns true if aKeyNameIndex is a lockable modifier
+   * key such as CapsLock and NumLock.
+   */
+  static bool IsLockableModifier(KeyNameIndex aKeyNameIndex);
+
   static void GetDOMKeyName(KeyNameIndex aKeyNameIndex,
                             nsAString& aKeyName);
   static void GetDOMCodeName(CodeNameIndex aCodeNameIndex,
                              nsAString& aCodeName);
+
+  static KeyNameIndex GetKeyNameIndex(const nsAString& aKeyValue);
+  static CodeNameIndex GetCodeNameIndex(const nsAString& aCodeValue);
 
   static const char* GetCommandStr(Command aCommand);
 
@@ -206,7 +254,25 @@ public:
     // is destroyed.
     mNativeKeyEvent = nullptr;
     mUniqueId = aEvent.mUniqueId;
+#ifdef XP_MACOSX
+    mNativeKeyCode = aEvent.mNativeKeyCode;
+    mNativeModifierFlags = aEvent.mNativeModifierFlags;
+    mNativeCharacters.Assign(aEvent.mNativeCharacters);
+    mNativeCharactersIgnoringModifiers.
+      Assign(aEvent.mNativeCharactersIgnoringModifiers);
+    mPluginTextEventString.Assign(aEvent.mPluginTextEventString);
+#endif
   }
+
+private:
+  static const char16_t* kKeyNames[];
+  static const char16_t* kCodeNames[];
+  typedef nsDataHashtable<nsStringHashKey,
+                          KeyNameIndex> KeyNameIndexHashtable;
+  typedef nsDataHashtable<nsStringHashKey,
+                          CodeNameIndex> CodeNameIndexHashtable;
+  static KeyNameIndexHashtable* sKeyNameIndexHashtable;
+  static CodeNameIndexHashtable* sCodeNameIndexHashtable;
 };
 
 
@@ -236,7 +302,7 @@ public:
   // default actions of keydown/keyup event is prevented.
   Nullable<bool> mEmbeddedCancelled;
 
-  virtual InternalBeforeAfterKeyboardEvent* AsBeforeAfterKeyboardEvent() MOZ_OVERRIDE
+  virtual InternalBeforeAfterKeyboardEvent* AsBeforeAfterKeyboardEvent() override
   {
     return this;
   }
@@ -247,7 +313,7 @@ public:
   {
   }
 
-  virtual WidgetEvent* Duplicate() const MOZ_OVERRIDE
+  virtual WidgetEvent* Duplicate() const override
   {
     MOZ_ASSERT(mClass == eBeforeAfterKeyboardEventClass,
                "Duplicate() must be overridden by sub class");
@@ -294,7 +360,7 @@ public:
   uint32_t mSeqno;
 
 public:
-  virtual WidgetCompositionEvent* AsCompositionEvent() MOZ_OVERRIDE
+  virtual WidgetCompositionEvent* AsCompositionEvent() override
   {
     return this;
   }
@@ -310,7 +376,7 @@ public:
     mFlags.mCancelable = false;
   }
 
-  virtual WidgetEvent* Duplicate() const MOZ_OVERRIDE
+  virtual WidgetEvent* Duplicate() const override
   {
     MOZ_ASSERT(mClass == eCompositionEventClass,
                "Duplicate() must be overridden by sub class");
@@ -386,7 +452,7 @@ private:
   }
 
 public:
-  virtual WidgetQueryContentEvent* AsQueryContentEvent() MOZ_OVERRIDE
+  virtual WidgetQueryContentEvent* AsQueryContentEvent() override
   {
     return this;
   }
@@ -397,10 +463,11 @@ public:
     , mSucceeded(false)
     , mWasAsync(false)
     , mUseNativeLineBreak(true)
+    , mWithFontRanges(false)
   {
   }
 
-  virtual WidgetEvent* Duplicate() const MOZ_OVERRIDE
+  virtual WidgetEvent* Duplicate() const override
   {
     // This event isn't an internal event of any DOM event.
     NS_ASSERTION(!IsAllowedToDispatchDOMEvent(),
@@ -445,6 +512,13 @@ public:
     refPoint = aPoint;
   }
 
+  void RequestFontRanges()
+  {
+    NS_ASSERTION(message == NS_QUERY_TEXT_CONTENT,
+                 "not querying text content");
+    mWithFontRanges = true;
+  }
+
   uint32_t GetSelectionStart(void) const
   {
     NS_ASSERTION(message == NS_QUERY_SELECTED_TEXT,
@@ -461,38 +535,57 @@ public:
 
   mozilla::WritingMode GetWritingMode(void) const
   {
-    NS_ASSERTION(message == NS_QUERY_SELECTED_TEXT,
-                 "not querying selection");
+    NS_ASSERTION(message == NS_QUERY_SELECTED_TEXT ||
+                 message == NS_QUERY_TEXT_RECT,
+                 "not querying selection or text rect");
     return mReply.mWritingMode;
   }
 
   bool mSucceeded;
   bool mWasAsync;
   bool mUseNativeLineBreak;
+  bool mWithFontRanges;
   struct
   {
     uint32_t mOffset;
     uint32_t mLength;
   } mInput;
-  struct
+
+  struct Reply
   {
     void* mContentsRoot;
     uint32_t mOffset;
+    // mTentativeCaretOffset is used by only NS_QUERY_CHARACTER_AT_POINT.
+    // This is the offset where caret would be if user clicked at the refPoint.
+    uint32_t mTentativeCaretOffset;
     nsString mString;
     // Finally, the coordinates is system coordinates.
-    nsIntRect mRect;
+    mozilla::LayoutDeviceIntRect mRect;
     // The return widget has the caret. This is set at all query events.
     nsIWidget* mFocusedWidget;
+    // mozilla::WritingMode value at the end (focus) of the selection
+    mozilla::WritingMode mWritingMode;
+    // used by NS_QUERY_SELECTION_AS_TRANSFERABLE
+    nsCOMPtr<nsITransferable> mTransferable;
+    // used by NS_QUERY_TEXT_CONTENT with font ranges requested
+    nsAutoTArray<mozilla::FontRange, 1> mFontRanges;
     // true if selection is reversed (end < start)
     bool mReversed;
     // true if the selection exists
     bool mHasSelection;
     // true if DOM element under mouse belongs to widget
     bool mWidgetIsHit;
-    // mozilla::WritingMode value at the end (focus) of the selection
-    mozilla::WritingMode mWritingMode;
-    // used by NS_QUERY_SELECTION_AS_TRANSFERABLE
-    nsCOMPtr<nsITransferable> mTransferable;
+
+    Reply()
+      : mContentsRoot(nullptr)
+      , mOffset(NOT_FOUND)
+      , mTentativeCaretOffset(NOT_FOUND)
+      , mFocusedWidget(nullptr)
+      , mReversed(false)
+      , mHasSelection(false)
+      , mWidgetIsHit(false)
+    {
+    }
   } mReply;
 
   enum
@@ -533,7 +626,7 @@ public:
   uint32_t mSeqno;
 
 public:
-  virtual WidgetSelectionEvent* AsSelectionEvent() MOZ_OVERRIDE
+  virtual WidgetSelectionEvent* AsSelectionEvent() override
   {
     return this;
   }
@@ -550,7 +643,7 @@ public:
   {
   }
 
-  virtual WidgetEvent* Duplicate() const MOZ_OVERRIDE
+  virtual WidgetEvent* Duplicate() const override
   {
     // This event isn't an internal event of any DOM event.
     NS_ASSERTION(!IsAllowedToDispatchDOMEvent(),
@@ -586,7 +679,7 @@ private:
   }
 
 public:
-  virtual InternalEditorInputEvent* AsEditorInputEvent() MOZ_OVERRIDE
+  virtual InternalEditorInputEvent* AsEditorInputEvent() override
   {
     return this;
   }
@@ -606,7 +699,7 @@ public:
     mFlags.mCancelable = false;
   }
 
-  virtual WidgetEvent* Duplicate() const MOZ_OVERRIDE
+  virtual WidgetEvent* Duplicate() const override
   {
     MOZ_ASSERT(mClass == eEditorInputEventClass,
                "Duplicate() must be overridden by sub class");

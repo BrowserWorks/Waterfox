@@ -20,7 +20,7 @@
 
 class nsDocumentOpenInfo;
 
-class nsURILoader MOZ_FINAL : public nsIURILoader
+class nsURILoader final : public nsIURILoader
 {
 public:
   NS_DECL_NSIURILOADER
@@ -48,12 +48,10 @@ protected:
    */
   nsCOMArray<nsIWeakReference> m_listeners;
 
-#ifdef PR_LOGGING
   /**
    * NSPR logging.  The module is called "URILoader"
    */
   static PRLogModuleInfo* mLog;
-#endif
   
   friend class nsDocumentOpenInfo;
 };

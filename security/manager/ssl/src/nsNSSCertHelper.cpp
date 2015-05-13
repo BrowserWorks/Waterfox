@@ -364,8 +364,20 @@ GetOIDText(SECItem *oid, nsINSSComponent *nssComponent, nsAString &text)
   case SEC_OID_ANSIX9_DSA_SIGNATURE_WITH_SHA1_DIGEST:
     bundlekey = "CertDumpAnsiX9DsaSignatureWithSha1";
     break;
-  case SEC_OID_ANSIX962_ECDSA_SIGNATURE_WITH_SHA1_DIGEST:
+  case SEC_OID_ANSIX962_ECDSA_SHA1_SIGNATURE:
     bundlekey = "CertDumpAnsiX962ECDsaSignatureWithSha1";
+    break;
+  case SEC_OID_ANSIX962_ECDSA_SHA224_SIGNATURE:
+    bundlekey = "CertDumpAnsiX962ECDsaSignatureWithSha224";
+    break;
+  case SEC_OID_ANSIX962_ECDSA_SHA256_SIGNATURE:
+    bundlekey = "CertDumpAnsiX962ECDsaSignatureWithSha256";
+    break;
+  case SEC_OID_ANSIX962_ECDSA_SHA384_SIGNATURE:
+    bundlekey = "CertDumpAnsiX962ECDsaSignatureWithSha384";
+    break;
+  case SEC_OID_ANSIX962_ECDSA_SHA512_SIGNATURE:
+    bundlekey = "CertDumpAnsiX962ECDsaSignatureWithSha512";
     break;
   case SEC_OID_RFC1274_UID:
     bundlekey = "CertDumpUserID";
@@ -658,7 +670,7 @@ ProcessKeyUsageExtension(SECItem *extData, nsAString &text,
   if (decoded.len) {
     keyUsage = decoded.data[0];
   }
-  nsMemory::Free(decoded.data);  
+  free(decoded.data);
   if (keyUsage & KU_DIGITAL_SIGNATURE) {
     nssComponent->GetPIPNSSBundleString("CertDumpKUSign", local);
     text.Append(local.get());
@@ -889,7 +901,7 @@ ProcessIA5String(SECItem  *extData,
 				       extData))
     return NS_ERROR_FAILURE;
   local.AssignASCII((char*)item.data, item.len);
-  nsMemory::Free(item.data);
+  free(item.data);
   text.Append(local);
   return NS_OK;
 }
@@ -1504,7 +1516,7 @@ ProcessMSCAVersion(SECItem  *extData,
     return ProcessRawBytes(nssComponent, extData, text);
 
   rv = GetIntValue(&decoded, &version);
-  nsMemory::Free(decoded.data);
+  free(decoded.data);
   if (NS_FAILED(rv))
     /* Value out of range, display raw bytes */
     return ProcessRawBytes(nssComponent, extData, text);

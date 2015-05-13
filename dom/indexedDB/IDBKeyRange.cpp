@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -44,8 +44,8 @@ IDBKeyRange::IDBKeyRange(nsISupports* aGlobal,
                          bool aUpperOpen,
                          bool aIsOnly)
   : mGlobal(aGlobal)
-  , mCachedLowerVal(JSVAL_VOID)
-  , mCachedUpperVal(JSVAL_VOID)
+  , mCachedLowerVal(JS::UndefinedValue())
+  , mCachedUpperVal(JS::UndefinedValue())
   , mLowerOpen(aLowerOpen)
   , mUpperOpen(aUpperOpen)
   , mIsOnly(aIsOnly)
@@ -248,9 +248,9 @@ IDBKeyRange::DropJSObjects()
 }
 
 bool
-IDBKeyRange::WrapObject(JSContext* aCx, JS::MutableHandle<JSObject*> aReflector)
+IDBKeyRange::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto, JS::MutableHandle<JSObject*> aReflector)
 {
-  return IDBKeyRangeBinding::Wrap(aCx, this, aReflector);
+  return IDBKeyRangeBinding::Wrap(aCx, this, aGivenProto, aReflector);
 }
 
 void

@@ -22,8 +22,8 @@
  * limitations under the License.
  */
 
-#ifndef mozilla_pkix__pkixder_h
-#define mozilla_pkix__pkixder_h
+#ifndef mozilla_pkix_pkixder_h
+#define mozilla_pkix_pkixder_h
 
 // Expect* functions advance the input mark and return Success if the input
 // matches the given criteria; they fail with the input mark in an undefined
@@ -55,7 +55,7 @@ enum Constructed
   CONSTRUCTED = 1 << 5
 };
 
-enum Tag
+enum Tag : uint8_t
 {
   BOOLEAN = UNIVERSAL | 0x01,
   INTEGER = UNIVERSAL | 0x02,
@@ -186,14 +186,24 @@ Nested(Reader& input, uint8_t outerTag, uint8_t innerTag, Decoder decoder)
 //     Foo ::= SEQUENCE {
 //     }
 //
-// using a call like this:
+// using code like this:
 //
-//    rv = NestedOf(input, SEQEUENCE, SEQUENCE, bind(_1, Foo));
+//    Result Foo(Reader& r) { /*...*/ }
 //
-//    Result Foo(Reader& input) {
-//    }
+//    rv = der::NestedOf(input, der::SEQEUENCE, der::SEQUENCE, Foo);
 //
-// In this example, Foo will get called once for each element of foos.
+// or:
+//
+//    Result Bar(Reader& r, int value) { /*...*/ }
+//
+//    int value = /*...*/;
+//
+//    rv = der::NestedOf(input, der::SEQUENCE, [value](Reader& r) {
+//      return Bar(r, value);
+//    });
+//
+// In these examples the function will get called once for each element of
+// foos.
 //
 template <typename Decoder>
 inline Result
@@ -251,30 +261,21 @@ ExpectTagAndGetValueAtEnd(Input outer, uint8_t expectedTag,
 
 namespace internal {
 
+enum class IntegralValueRestriction
+{
+  NoRestriction,
+  MustBePositive,
+  MustBe0To127,
+};
+
+Result IntegralBytes(Reader& input, uint8_t tag,
+                     IntegralValueRestriction valueRestriction,
+             /*out*/ Input& value,
+    /*optional out*/ Input::size_type* significantBytes = nullptr);
+
 // This parser will only parse values between 0..127. If this range is
 // increased then callers will need to be changed.
-template <typename T> inline Result
-IntegralValue(Reader& input, uint8_t tag, T& value)
-{
-  // Conveniently, all the Integers that we actually have to be able to parse
-  // are positive and very small. Consequently, this parser is *much* simpler
-  // than a general Integer parser would need to be.
-  Reader valueReader;
-  Result rv = ExpectTagAndGetValue(input, tag, valueReader);
-  if (rv != Success) {
-    return rv;
-  }
-  uint8_t valueByte;
-  rv = valueReader.Read(valueByte);
-  if (rv != Success) {
-    return rv;
-  }
-  if (valueByte & 0x80) { // negative
-    return Result::ERROR_BAD_DER;
-  }
-  value = valueByte;
-  return End(valueReader);
-}
+Result IntegralValue(Reader& input, uint8_t tag, /*out*/ uint8_t& value);
 
 } // namespace internal
 
@@ -365,6 +366,19 @@ TimeChoice(Reader& input, /*out*/ Time& time)
   return internal::TimeChoice(input, expectedTag, time);
 }
 
+// Parse a DER integer value into value. Empty values, negative values, and
+// zero are rejected. If significantBytes is not null, then it will be set to
+// the number of significant bytes in the value (the length of the value, less
+// the length of any leading padding), which is useful for key size checks.
+inline Result
+PositiveInteger(Reader& input, /*out*/ Input& value,
+                /*optional out*/ Input::size_type* significantBytes = nullptr)
+{
+  return internal::IntegralBytes(
+           input, INTEGER, internal::IntegralValueRestriction::MustBePositive,
+           value, significantBytes);
+}
+
 // This parser will only parse values between 0..127. If this range is
 // increased then callers will need to be changed.
 inline Result
@@ -436,83 +450,20 @@ CertificateSerialNumber(Reader& input, /*out*/ Input& value)
   // * "Note: Non-conforming CAs may issue certificates with serial numbers
   //   that are negative or zero.  Certificate users SHOULD be prepared to
   //   gracefully handle such certificates."
-
-  Result rv = ExpectTagAndGetValue(input, INTEGER, value);
-  if (rv != Success) {
-    return rv;
-  }
-
-  if (value.GetLength() == 0) {
-    return Result::ERROR_BAD_DER;
-  }
-
-  // Check for overly-long encodings. If the first byte is 0x00 then the high
-  // bit on the second byte must be 1; otherwise the same *positive* value
-  // could be encoded without the leading 0x00 byte. If the first byte is 0xFF
-  // then the second byte must NOT have its high bit set; otherwise the same
-  // *negative* value could be encoded without the leading 0xFF byte.
-  if (value.GetLength() > 1) {
-    Reader valueInput(value);
-    uint8_t firstByte;
-    rv = valueInput.Read(firstByte);
-    if (rv != Success) {
-      return rv;
-    }
-    uint8_t secondByte;
-    rv = valueInput.Read(secondByte);
-    if (rv != Success) {
-      return rv;
-    }
-    if ((firstByte == 0x00 && (secondByte & 0x80) == 0) ||
-        (firstByte == 0xff && (secondByte & 0x80) != 0)) {
-      return Result::ERROR_BAD_DER;
-    }
-  }
-
-  return Success;
+  return internal::IntegralBytes(
+           input, INTEGER, internal::IntegralValueRestriction::NoRestriction,
+           value);
 }
 
 // x.509 and OCSP both use this same version numbering scheme, though OCSP
 // only supports v1.
 enum class Version { v1 = 0, v2 = 1, v3 = 2, v4 = 3 };
 
-// X.509 Certificate and OCSP ResponseData both use this
-// "[0] EXPLICIT Version DEFAULT <defaultVersion>" construct, but with
-// different default versions.
-inline Result
-OptionalVersion(Reader& input, /*out*/ Version& version)
-{
-  static const uint8_t TAG = CONTEXT_SPECIFIC | CONSTRUCTED | 0;
-  if (!input.Peek(TAG)) {
-    version = Version::v1;
-    return Success;
-  }
-  Reader value;
-  Result rv = ExpectTagAndGetValue(input, TAG, value);
-  if (rv != Success) {
-    return rv;
-  }
-  uint8_t integerValue;
-  rv = Integer(value, integerValue);
-  if (rv != Success) {
-    return rv;
-  }
-  rv = End(value);
-  if (rv != Success) {
-    return rv;
-  }
-  switch (integerValue) {
-    case static_cast<uint8_t>(Version::v3): version = Version::v3; break;
-    case static_cast<uint8_t>(Version::v2): version = Version::v2; break;
-    // XXX(bug 1031093): We shouldn't accept an explicit encoding of v1, but we
-    // do here for compatibility reasons.
-    case static_cast<uint8_t>(Version::v1): version = Version::v1; break;
-    case static_cast<uint8_t>(Version::v4): version = Version::v4; break;
-    default:
-      return Result::ERROR_BAD_DER;
-  }
-  return Success;
-}
+// X.509 Certificate and OCSP ResponseData both use
+// "[0] EXPLICIT Version DEFAULT v1". Although an explicit encoding of v1 is
+// illegal, we support it because some real-world OCSP responses explicitly
+// encode it.
+Result OptionalVersion(Reader& input, /*out*/ Version& version);
 
 template <typename ExtensionHandler>
 inline Result
@@ -523,86 +474,78 @@ OptionalExtensions(Reader& input, uint8_t tag,
     return Success;
   }
 
-  Result rv;
-
-  Reader extensions;
-  {
-    Reader tagged;
-    rv = ExpectTagAndGetValue(input, tag, tagged);
-    if (rv != Success) {
-      return rv;
-    }
-    rv = ExpectTagAndGetValue(tagged, SEQUENCE, extensions);
-    if (rv != Success) {
-      return rv;
-    }
-    rv = End(tagged);
-    if (rv != Success) {
-      return rv;
-    }
-  }
-
-  // Extensions ::= SEQUENCE SIZE (1..MAX) OF Extension
-  //
-  // TODO(bug 997994): According to the specification, there should never be
-  // an empty sequence of extensions but we've found OCSP responses that have
-  // that (see bug 991898).
-  while (!extensions.AtEnd()) {
-    Reader extension;
-    rv = ExpectTagAndGetValue(extensions, SEQUENCE, extension);
-    if (rv != Success) {
-      return rv;
-    }
-
-    // Extension  ::=  SEQUENCE  {
-    //      extnID      OBJECT IDENTIFIER,
-    //      critical    BOOLEAN DEFAULT FALSE,
-    //      extnValue   OCTET STRING
-    //      }
-    Reader extnID;
-    rv = ExpectTagAndGetValue(extension, OIDTag, extnID);
-    if (rv != Success) {
-      return rv;
-    }
-    bool critical;
-    rv = OptionalBoolean(extension, critical);
-    if (rv != Success) {
-      return rv;
-    }
-    Input extnValue;
-    rv = ExpectTagAndGetValue(extension, OCTET_STRING, extnValue);
-    if (rv != Success) {
-      return rv;
-    }
-    rv = End(extension);
-    if (rv != Success) {
-      return rv;
-    }
-
-    bool understood = false;
-    rv = extensionHandler(extnID, extnValue, critical, understood);
-    if (rv != Success) {
-      return rv;
-    }
-    if (critical && !understood) {
-      return Result::ERROR_UNKNOWN_CRITICAL_EXTENSION;
-    }
-  }
-
-  return Success;
+  return Nested(input, tag, [extensionHandler](Reader& tagged) {
+    // Extensions ::= SEQUENCE SIZE (1..MAX) OF Extension
+    //
+    // TODO(bug 997994): According to the specification, there should never be
+    // an empty sequence of extensions but we've found OCSP responses that have
+    // that (see bug 991898).
+    return NestedOf(tagged, SEQUENCE, SEQUENCE, EmptyAllowed::Yes,
+                    [extensionHandler](Reader& extension) -> Result {
+      // Extension  ::=  SEQUENCE  {
+      //      extnID      OBJECT IDENTIFIER,
+      //      critical    BOOLEAN DEFAULT FALSE,
+      //      extnValue   OCTET STRING
+      //      }
+      Reader extnID;
+      Result rv = ExpectTagAndGetValue(extension, OIDTag, extnID);
+      if (rv != Success) {
+        return rv;
+      }
+      bool critical;
+      rv = OptionalBoolean(extension, critical);
+      if (rv != Success) {
+        return rv;
+      }
+      Input extnValue;
+      rv = ExpectTagAndGetValue(extension, OCTET_STRING, extnValue);
+      if (rv != Success) {
+        return rv;
+      }
+      bool understood = false;
+      rv = extensionHandler(extnID, extnValue, critical, understood);
+      if (rv != Success) {
+        return rv;
+      }
+      if (critical && !understood) {
+        return Result::ERROR_UNKNOWN_CRITICAL_EXTENSION;
+      }
+      return Success;
+    });
+  });
 }
 
 Result DigestAlgorithmIdentifier(Reader& input,
                                  /*out*/ DigestAlgorithm& algorithm);
 
-Result SignatureAlgorithmIdentifier(Reader& input,
-                                    /*out*/ SignatureAlgorithm& algorithm);
+enum class PublicKeyAlgorithm
+{
+  RSA_PKCS1,
+  ECDSA,
+};
+
+Result SignatureAlgorithmIdentifierValue(
+         Reader& input,
+         /*out*/ PublicKeyAlgorithm& publicKeyAlgorithm,
+         /*out*/ DigestAlgorithm& digestAlgorithm);
+
+struct SignedDataWithSignature final
+{
+public:
+  Input data;
+  Input algorithm;
+  Input signature;
+
+  void operator=(const SignedDataWithSignature&) = delete;
+};
 
 // Parses a SEQUENCE into tbs and then parses an AlgorithmIdentifier followed
 // by a BIT STRING into signedData. This handles the commonality between
 // parsing the signed/signature fields of certificates and OCSP responses. In
 // the case of an OCSP response, the caller needs to parse the certs
 // separately.
+//
+// Note that signatureAlgorithm is NOT parsed or validated.
 //
 // Certificate  ::=  SEQUENCE  {
 //        tbsCertificate       TBSCertificate,
@@ -619,4 +562,4 @@ Result SignedData(Reader& input, /*out*/ Reader& tbs,
 
 } } } // namespace mozilla::pkix::der
 
-#endif // mozilla_pkix__pkixder_h
+#endif // mozilla_pkix_pkixder_h

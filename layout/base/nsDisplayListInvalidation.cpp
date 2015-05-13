@@ -24,6 +24,12 @@ nsDisplayItemGenericGeometry::nsDisplayItemGenericGeometry(nsDisplayItem* aItem,
   , mBorderRect(aItem->GetBorderRect())
 {}
 
+bool
+ShouldSyncDecodeImages(nsDisplayListBuilder* aBuilder)
+{
+  return aBuilder->ShouldSyncDecodeImages();
+}
+
 void
 nsDisplayItemGenericGeometry::MoveBy(const nsPoint& aOffset)
 {
@@ -53,6 +59,7 @@ nsDisplayBorderGeometry::MoveBy(const nsPoint& aOffset)
 nsDisplayBackgroundGeometry::nsDisplayBackgroundGeometry(nsDisplayBackgroundImage* aItem,
                                                          nsDisplayListBuilder* aBuilder)
   : nsDisplayItemGeometry(aItem, aBuilder)
+  , nsImageGeometryMixin(aItem, aBuilder)
   , mPositioningArea(aItem->GetPositioningArea())
 {}
 
@@ -108,3 +115,17 @@ nsDisplaySVGEffectsGeometry::MoveBy(const nsPoint& aOffset)
   mBounds.MoveBy(aOffset);
   mFrameOffsetToReferenceFrame += aOffset;
 }
+
+nsCharClipGeometry::nsCharClipGeometry(nsCharClipDisplayItem* aItem, nsDisplayListBuilder* aBuilder)
+  : nsDisplayItemGenericGeometry(aItem, aBuilder)
+  , mVisIStartEdge(aItem->mVisIStartEdge)
+  , mVisIEndEdge(aItem->mVisIEndEdge)
+{}
+
+nsDisplayTableItemGeometry::nsDisplayTableItemGeometry(nsDisplayTableItem* aItem,
+                                                       nsDisplayListBuilder* aBuilder,
+                                                       const nsPoint& aFrameOffsetToViewport)
+  : nsDisplayItemGenericGeometry(aItem, aBuilder)
+  , nsImageGeometryMixin(aItem, aBuilder)
+  , mFrameOffsetToViewport(aFrameOffsetToViewport)
+{}

@@ -14,6 +14,7 @@
 #include "AudioDestinationNode.h"
 #include "AudioParamTimeline.h"
 #include <limits>
+#include <algorithm>
 
 namespace mozilla {
 namespace dom {
@@ -23,6 +24,7 @@ NS_IMPL_CYCLE_COLLECTION_CLASS(AudioBufferSourceNode)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(AudioBufferSourceNode)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mBuffer)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mPlaybackRate)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mDetune)
   if (tmp->Context()) {
     // AudioNode's Unlink implementation disconnects us from the graph
     // too, but we need to do this right here to make sure that
@@ -36,6 +38,7 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_END_INHERITED(AudioNode)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(AudioBufferSourceNode, AudioNode)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mBuffer)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mPlaybackRate)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mDetune)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(AudioBufferSourceNode)
@@ -50,11 +53,11 @@ NS_IMPL_RELEASE_INHERITED(AudioBufferSourceNode, AudioNode)
  * AudioNodeStream::SetBuffer) and a non-zero mBufferEnd has been set (via
  * AudioNodeStream::SetInt32Parameter).
  */
-class AudioBufferSourceNodeEngine : public AudioNodeEngine
+class AudioBufferSourceNodeEngine final : public AudioNodeEngine
 {
 public:
-  explicit AudioBufferSourceNodeEngine(AudioNode* aNode,
-                                       AudioDestinationNode* aDestination) :
+  AudioBufferSourceNodeEngine(AudioNode* aNode,
+                              AudioDestinationNode* aDestination) :
     AudioNodeEngine(aNode),
     mStart(0.0), mBeginProcessing(0),
     mStop(STREAM_TIME_MAX),
@@ -64,7 +67,9 @@ public:
     mBufferSampleRate(0), mBufferPosition(0), mChannels(0),
     mDopplerShift(1.0f),
     mDestination(static_cast<AudioNodeStream*>(aDestination->Stream())),
-    mPlaybackRateTimeline(1.0f), mLoop(false)
+    mPlaybackRateTimeline(1.0f),
+    mDetuneTimeline(0.0f),
+    mLoop(false)
   {}
 
   ~AudioBufferSourceNodeEngine()
@@ -81,18 +86,22 @@ public:
 
   virtual void SetTimelineParameter(uint32_t aIndex,
                                     const dom::AudioParamTimeline& aValue,
-                                    TrackRate aSampleRate) MOZ_OVERRIDE
+                                    TrackRate aSampleRate) override
   {
     switch (aIndex) {
     case AudioBufferSourceNode::PLAYBACKRATE:
       mPlaybackRateTimeline = aValue;
       WebAudioUtils::ConvertAudioParamToTicks(mPlaybackRateTimeline, mSource, mDestination);
       break;
+    case AudioBufferSourceNode::DETUNE:
+      mDetuneTimeline = aValue;
+      WebAudioUtils::ConvertAudioParamToTicks(mDetuneTimeline, mSource, mDestination);
+      break;
     default:
       NS_ERROR("Bad AudioBufferSourceNodeEngine TimelineParameter");
     }
   }
-  virtual void SetStreamTimeParameter(uint32_t aIndex, StreamTime aParam) MOZ_OVERRIDE
+  virtual void SetStreamTimeParameter(uint32_t aIndex, StreamTime aParam) override
   {
     switch (aIndex) {
     case AudioBufferSourceNode::STOP: mStop = aParam; break;
@@ -100,7 +109,7 @@ public:
       NS_ERROR("Bad AudioBufferSourceNodeEngine StreamTimeParameter");
     }
   }
-  virtual void SetDoubleParameter(uint32_t aIndex, double aParam) MOZ_OVERRIDE
+  virtual void SetDoubleParameter(uint32_t aIndex, double aParam) override
   {
     switch (aIndex) {
     case AudioBufferSourceNode::START:
@@ -117,7 +126,7 @@ public:
       NS_ERROR("Bad AudioBufferSourceNodeEngine double parameter.");
     };
   }
-  virtual void SetInt32Parameter(uint32_t aIndex, int32_t aParam) MOZ_OVERRIDE
+  virtual void SetInt32Parameter(uint32_t aIndex, int32_t aParam) override
   {
     switch (aIndex) {
     case AudioBufferSourceNode::SAMPLE_RATE: mBufferSampleRate = aParam; break;
@@ -134,7 +143,7 @@ public:
       NS_ERROR("Bad AudioBufferSourceNodeEngine Int32Parameter");
     }
   }
-  virtual void SetBuffer(already_AddRefed<ThreadSharedFloatArrayBufferList> aBuffer) MOZ_OVERRIDE
+  virtual void SetBuffer(already_AddRefed<ThreadSharedFloatArrayBufferList> aBuffer) override
   {
     mBuffer = aBuffer;
   }
@@ -226,7 +235,7 @@ public:
   }
 
   // Resamples input data to an output buffer, according to |mBufferSampleRate| and
-  // the playbackRate.
+  // the playbackRate/detune.
   // The number of frames consumed/produced depends on the amount of space
   // remaining in both the input and output buffer, and the playback rate (that
   // is, the ratio between the output samplerate and the input samplerate).
@@ -397,37 +406,46 @@ public:
     }
   }
 
-  int32_t ComputeFinalOutSampleRate(float aPlaybackRate)
+  int32_t ComputeFinalOutSampleRate(float aPlaybackRate, float aDetune)
   {
+    float computedPlaybackRate = aPlaybackRate * pow(2, aDetune / 1200.f);
     // Make sure the playback rate and the doppler shift are something
     // our resampler can work with.
     int32_t rate = WebAudioUtils::
       TruncateFloatToInt<int32_t>(mSource->SampleRate() /
-                                  (aPlaybackRate * mDopplerShift));
+                                  (computedPlaybackRate * mDopplerShift));
     return rate ? rate : mBufferSampleRate;
   }
 
   void UpdateSampleRateIfNeeded(uint32_t aChannels)
   {
     float playbackRate;
+    float detune;
 
     if (mPlaybackRateTimeline.HasSimpleValue()) {
       playbackRate = mPlaybackRateTimeline.GetValue();
     } else {
       playbackRate = mPlaybackRateTimeline.GetValueAtTime(mSource->GetCurrentPosition());
     }
+    if (mDetuneTimeline.HasSimpleValue()) {
+      detune = mDetuneTimeline.GetValue();
+    } else {
+      detune = mDetuneTimeline.GetValueAtTime(mSource->GetCurrentPosition());
+    }
     if (playbackRate <= 0 || mozilla::IsNaN(playbackRate)) {
       playbackRate = 1.0f;
     }
 
-    int32_t outRate = ComputeFinalOutSampleRate(playbackRate);
+    detune = std::min(std::max(-1200.f, detune), 1200.f);
+
+    int32_t outRate = ComputeFinalOutSampleRate(playbackRate, detune);
     UpdateResampler(outRate, aChannels);
   }
 
   virtual void ProcessBlock(AudioNodeStream* aStream,
                             const AudioChunk& aInput,
                             AudioChunk* aOutput,
-                            bool* aFinished) MOZ_OVERRIDE
+                            bool* aFinished) override
   {
     if (!mBuffer || !mBufferEnd) {
       aOutput->SetNull(WEBAUDIO_BLOCK_SIZE);
@@ -440,9 +458,6 @@ public:
       return;
     }
 
-    // WebKit treats the playbackRate as a k-rate parameter in their code,
-    // despite the spec saying that it should be an a-rate parameter. We treat
-    // it as k-rate. Spec bug: https://www.w3.org/Bugs/Public/show_bug.cgi?id=21592
     UpdateSampleRateIfNeeded(channels);
 
     uint32_t written = 0;
@@ -483,11 +498,12 @@ public:
     }
   }
 
-  virtual size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const MOZ_OVERRIDE
+  virtual size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     // Not owned:
     // - mBuffer - shared w/ AudioNode
     // - mPlaybackRateTimeline - shared w/ AudioNode
+    // - mDetuneTimeline - shared w/ AudioNode
 
     size_t amount = AudioNodeEngine::SizeOfExcludingThis(aMallocSizeOf);
 
@@ -503,7 +519,7 @@ public:
     return amount;
   }
 
-  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const MOZ_OVERRIDE
+  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
   }
@@ -530,6 +546,7 @@ public:
   AudioNodeStream* mDestination;
   AudioNodeStream* mSource;
   AudioParamTimeline mPlaybackRateTimeline;
+  AudioParamTimeline mDetuneTimeline;
   bool mLoop;
 };
 
@@ -541,10 +558,10 @@ AudioBufferSourceNode::AudioBufferSourceNode(AudioContext* aContext)
   , mLoopStart(0.0)
   , mLoopEnd(0.0)
   // mOffset and mDuration are initialized in Start().
-  , mPlaybackRate(new AudioParam(this, SendPlaybackRateToStream, 1.0f))
+  , mPlaybackRate(new AudioParam(this, SendPlaybackRateToStream, 1.0f, "playbackRate"))
+  , mDetune(new AudioParam(this, SendDetuneToStream, 0.0f, "detune"))
   , mLoop(false)
   , mStartCalled(false)
-  , mStopped(false)
 {
   AudioBufferSourceNodeEngine* engine = new AudioBufferSourceNodeEngine(this, aContext->Destination());
   mStream = aContext->Graph()->CreateAudioNodeStream(engine, MediaStreamGraph::SOURCE_STREAM);
@@ -568,6 +585,7 @@ AudioBufferSourceNode::SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const
   }
 
   amount += mPlaybackRate->SizeOfIncludingThis(aMallocSizeOf);
+  amount += mDetune->SizeOfIncludingThis(aMallocSizeOf);
   return amount;
 }
 
@@ -578,9 +596,9 @@ AudioBufferSourceNode::SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const
 }
 
 JSObject*
-AudioBufferSourceNode::WrapObject(JSContext* aCx)
+AudioBufferSourceNode::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return AudioBufferSourceNodeBinding::Wrap(aCx, this);
+  return AudioBufferSourceNodeBinding::Wrap(aCx, this, aGivenProto);
 }
 
 void
@@ -691,38 +709,35 @@ AudioBufferSourceNode::Stop(double aWhen, ErrorResult& aRv)
 }
 
 void
-AudioBufferSourceNode::NotifyMainThreadStateChanged()
+AudioBufferSourceNode::NotifyMainThreadStreamFinished()
 {
-  if (mStream->IsFinished()) {
-    class EndedEventDispatcher : public nsRunnable
-    {
-    public:
-      explicit EndedEventDispatcher(AudioBufferSourceNode* aNode)
-        : mNode(aNode) {}
-      NS_IMETHODIMP Run()
-      {
-        // If it's not safe to run scripts right now, schedule this to run later
-        if (!nsContentUtils::IsSafeToRunScript()) {
-          nsContentUtils::AddScriptRunner(this);
-          return NS_OK;
-        }
+  MOZ_ASSERT(mStream->IsFinished());
 
-        mNode->DispatchTrustedEvent(NS_LITERAL_STRING("ended"));
+  class EndedEventDispatcher final : public nsRunnable
+  {
+  public:
+    explicit EndedEventDispatcher(AudioBufferSourceNode* aNode)
+      : mNode(aNode) {}
+    NS_IMETHODIMP Run() override
+    {
+      // If it's not safe to run scripts right now, schedule this to run later
+      if (!nsContentUtils::IsSafeToRunScript()) {
+        nsContentUtils::AddScriptRunner(this);
         return NS_OK;
       }
-    private:
-      nsRefPtr<AudioBufferSourceNode> mNode;
-    };
-    if (!mStopped) {
-      // Only dispatch the ended event once
-      NS_DispatchToMainThread(new EndedEventDispatcher(this));
-      mStopped = true;
-    }
 
-    // Drop the playing reference
-    // Warning: The below line might delete this.
-    MarkInactive();
-  }
+      mNode->DispatchTrustedEvent(NS_LITERAL_STRING("ended"));
+      return NS_OK;
+    }
+  private:
+    nsRefPtr<AudioBufferSourceNode> mNode;
+  };
+
+  NS_DispatchToMainThread(new EndedEventDispatcher(this));
+
+  // Drop the playing reference
+  // Warning: The below line might delete this.
+  MarkInactive();
 }
 
 void
@@ -730,6 +745,13 @@ AudioBufferSourceNode::SendPlaybackRateToStream(AudioNode* aNode)
 {
   AudioBufferSourceNode* This = static_cast<AudioBufferSourceNode*>(aNode);
   SendTimelineParameterToStream(This, PLAYBACKRATE, *This->mPlaybackRate);
+}
+
+void
+AudioBufferSourceNode::SendDetuneToStream(AudioNode* aNode)
+{
+  AudioBufferSourceNode* This = static_cast<AudioBufferSourceNode*>(aNode);
+  SendTimelineParameterToStream(This, DETUNE, *This->mDetune);
 }
 
 void

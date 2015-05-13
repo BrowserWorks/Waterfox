@@ -1,5 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -37,7 +37,8 @@ public:
     OPCODE_FORMATTED_AT_RESPONSE = 0x0b,
     OPCODE_AT_RESPONSE = 0x0c,
     OPCODE_CLCC_RESPONSE = 0x0d,
-    OPCODE_PHONE_STATE_CHANGE = 0x0e
+    OPCODE_PHONE_STATE_CHANGE = 0x0e,
+    OPCODE_CONFIGURE_WBS = 0x0f
   };
 
   virtual nsresult Send(BluetoothDaemonPDU* aPDU, void* aUserData) = 0;
@@ -200,6 +201,10 @@ protected:
   void PhoneStateChangeRsp(const BluetoothDaemonPDUHeader& aHeader,
                            BluetoothDaemonPDU& aPDU,
                            BluetoothHandsfreeResultHandler* aRes);
+
+  void ConfigureWbsRsp(const BluetoothDaemonPDUHeader& aHeader,
+                       BluetoothDaemonPDU& aPDU,
+                       BluetoothHandsfreeResultHandler* aRes);
 
   void HandleRsp(const BluetoothDaemonPDUHeader& aHeader,
                  BluetoothDaemonPDU& aPDU,
@@ -376,7 +381,7 @@ protected:
 #endif
 };
 
-class BluetoothDaemonHandsfreeInterface MOZ_FINAL
+class BluetoothDaemonHandsfreeInterface final
   : public BluetoothHandsfreeInterface
 {
   class CleanupResultHandler;
@@ -467,6 +472,7 @@ public:
 private:
   void DispatchError(BluetoothHandsfreeResultHandler* aRes,
                      BluetoothStatus aStatus);
+  void DispatchError(BluetoothHandsfreeResultHandler* aRes, nsresult aRv);
 
   BluetoothDaemonHandsfreeModule* mModule;
 };

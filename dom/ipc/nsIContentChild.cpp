@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -15,7 +15,6 @@
 #include "mozilla/dom/ipc/BlobChild.h"
 #include "mozilla/ipc/InputStreamUtils.h"
 
-#include "JavaScriptChild.h"
 #include "nsIJSRuntimeService.h"
 #include "nsPrintfCString.h"
 
@@ -35,17 +34,13 @@ nsIContentChild::AllocPJavaScriptChild()
   svc->GetRuntime(&rt);
   NS_ENSURE_TRUE(svc, nullptr);
 
-  nsAutoPtr<JavaScriptChild> child(new JavaScriptChild(rt));
-  if (!child->init()) {
-    return nullptr;
-  }
-  return child.forget();
+  return NewJavaScriptChild(rt);
 }
 
 bool
 nsIContentChild::DeallocPJavaScriptChild(PJavaScriptChild* aChild)
 {
-  static_cast<JavaScriptChild*>(aChild)->decref();
+  ReleaseJavaScriptChild(aChild);
   return true;
 }
 
@@ -98,15 +93,24 @@ nsIContentChild::DeallocPBlobChild(PBlobChild* aActor)
 }
 
 BlobChild*
-nsIContentChild::GetOrCreateActorForBlob(File* aBlob)
+nsIContentChild::GetOrCreateActorForBlob(Blob* aBlob)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aBlob);
 
-  nsRefPtr<FileImpl> blobImpl = aBlob->Impl();
+  nsRefPtr<BlobImpl> blobImpl = aBlob->Impl();
   MOZ_ASSERT(blobImpl);
 
-  BlobChild* actor = BlobChild::GetOrCreate(this, blobImpl);
+  return GetOrCreateActorForBlobImpl(blobImpl);
+}
+
+BlobChild*
+nsIContentChild::GetOrCreateActorForBlobImpl(BlobImpl* aImpl)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(aImpl);
+
+  BlobChild* actor = BlobChild::GetOrCreate(this, aImpl);
   NS_ENSURE_TRUE(actor, nullptr);
 
   return actor;
@@ -115,14 +119,14 @@ nsIContentChild::GetOrCreateActorForBlob(File* aBlob)
 bool
 nsIContentChild::RecvAsyncMessage(const nsString& aMsg,
                                   const ClonedMessageData& aData,
-                                  const InfallibleTArray<CpowEntry>& aCpows,
+                                  InfallibleTArray<CpowEntry>&& aCpows,
                                   const IPC::Principal& aPrincipal)
 {
-  nsRefPtr<nsFrameMessageManager> cpm = nsFrameMessageManager::sChildProcessManager;
+  nsRefPtr<nsFrameMessageManager> cpm = nsFrameMessageManager::GetChildProcessManager();
   if (cpm) {
     StructuredCloneData cloneData = ipc::UnpackClonedMessageDataForChild(aData);
-    CpowIdHolder cpows(this, aCpows);
-    cpm->ReceiveMessage(static_cast<nsIContentFrameMessageManager*>(cpm.get()),
+    CrossProcessCpowHolder cpows(this, aCpows);
+    cpm->ReceiveMessage(static_cast<nsIContentFrameMessageManager*>(cpm.get()), nullptr,
                         aMsg, false, &cloneData, &cpows, aPrincipal, nullptr);
   }
   return true;

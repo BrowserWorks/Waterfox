@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim:set ts=2 sw=2 sts=2 et cindent: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -180,6 +180,11 @@ private:
   // Block double multiplier (slower, imprecise if long duration) - Bug 853398.
   // If required, use MultDouble explicitly and with care.
   BaseTimeDuration operator*(const double aMultiplier) const = delete;
+
+  // Block double divisor (for the same reason, and because dividing by
+  // fractional values would otherwise invoke the int64_t variant, and rounding
+  // the passed argument can then cause divide-by-zero) - Bug 1147491.
+  BaseTimeDuration operator/(const double aDivisor) const = delete;
 
 public:
   BaseTimeDuration MultDouble(double aMultiplier) const
@@ -392,7 +397,8 @@ public:
    * retrieved by mozilla::TimeStamp. Since we need this for
    * vsync timestamps, we enable the creation of mozilla::TimeStamps
    * on platforms that support vsync aligned refresh drivers / compositors
-   * Verified true as of Nov 7, 2014: B2G and OS X
+   * Verified true as of Jan 31, 2015: B2G and OS X
+   * False on Windows 7
    * UNTESTED ON OTHER PLATFORMS
    */
 #if defined(MOZ_WIDGET_GONK) || defined(MOZ_WIDGET_COCOA)

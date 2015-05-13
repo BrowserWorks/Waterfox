@@ -13,6 +13,7 @@
 #include "Relation.h"
 #include "Role.h"
 #include "States.h"
+#include "nsQueryObject.h"
 
 #include "nsIBoxObject.h"
 #include "nsIMutableArray.h"
@@ -275,7 +276,11 @@ NS_IMPL_RELEASE_INHERITED(XULTreeGridRowAccessible,
 void
 XULTreeGridRowAccessible::Shutdown()
 {
-  ClearCache(mAccessibleCache);
+  if (!mDoc->IsDefunct()) {
+    mAccessibleCache.Enumerate(UnbindCacheEntryFromDocument<XULTreeGridCellAccessible>,
+                               nullptr);
+  }
+
   XULTreeItemAccessibleBase::Shutdown();
 }
 

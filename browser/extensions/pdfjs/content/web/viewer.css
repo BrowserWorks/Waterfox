@@ -20,6 +20,7 @@
   right: 0;
   bottom: 0;
   overflow: hidden;
+  opacity: 0.2;
 }
 
 .textLayer > div {
@@ -55,6 +56,9 @@
   background-color: rgb(0, 100, 0);
 }
 
+.textLayer ::selection { background: rgb(0,0,255); }
+.textLayer ::-moz-selection { background: rgb(0,0,255); }
+
 .pdfViewer .canvasWrapper {
   overflow: hidden;
 }
@@ -70,6 +74,11 @@
   background-clip: content-box;
   border-image: url(images/shadow.png) 9 9 repeat;
   background-color: white;
+}
+
+.pdfViewer.removePageBorders .page {
+  margin: 0px auto 10px auto;
+  border: none;
 }
 
 .pdfViewer .page canvas {
@@ -93,12 +102,12 @@
   box-shadow: 0px 2px 10px #ff0;
 }
 
-:-moz-full-screen .pdfViewer .page {
+.pdfPresentationMode:-moz-full-screen .pdfViewer .page {
   margin-bottom: 100%;
   border: 0;
 }
 
-:fullscreen .pdfViewer .page {
+.pdfPresentationMode:fullscreen .pdfViewer .page {
   margin-bottom: 100%;
   border: 0;
 }
@@ -175,7 +184,7 @@ select {
   display: none !important;
 }
 
-#viewerContainer:-moz-full-screen {
+#viewerContainer.pdfPresentationMode:-moz-full-screen {
   top: 0px;
   border-top: 2px solid transparent;
   background-color: #000;
@@ -186,7 +195,7 @@ select {
   -moz-user-select: none;
 }
 
-#viewerContainer:fullscreen {
+#viewerContainer.pdfPresentationMode:fullscreen {
   top: 0px;
   border-top: 2px solid transparent;
   background-color: #000;
@@ -197,24 +206,24 @@ select {
   -moz-user-select: none;
 }
 
-:-moz-full-screen a:not(.internalLink) {
+.pdfPresentationMode:-moz-full-screen a:not(.internalLink) {
   display: none;
 }
 
-:fullscreen a:not(.internalLink) {
+.pdfPresentationMode:fullscreen a:not(.internalLink) {
   display: none;
 }
 
-:-moz-full-screen .textLayer > div {
+.pdfPresentationMode:-moz-full-screen .textLayer > div {
   cursor: none;
 }
 
-:fullscreen .textLayer > div {
+.pdfPresentationMode:fullscreen .textLayer > div {
   cursor: none;
 }
 
-#viewerContainer.presentationControls,
-#viewerContainer.presentationControls .textLayer > div {
+.pdfPresentationMode.pdfPresentationModeControls > *,
+.pdfPresentationMode.pdfPresentationModeControls .textLayer > div {
   cursor: default;
 }
 
@@ -1153,9 +1162,13 @@ html[dir='rtl'] .verticalToolbarSeparator {
   margin-bottom: 10px;
 }
 
+#thumbnailView > a:last-of-type > .thumbnail:not([data-loaded]) {
+  margin-bottom: 9px;
+}
+
 .thumbnail:not([data-loaded]) {
   border: 1px dashed rgba(255, 255, 255, 0.5);
-  margin-bottom: 10px;
+  margin: -1px -1px 4px -1px;
 }
 
 .thumbnailImage {
@@ -1164,6 +1177,8 @@ html[dir='rtl'] .verticalToolbarSeparator {
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
   opacity: 0.8;
   z-index: 99;
+  background-color: white;
+  background-clip: content-box;
 }
 
 .thumbnailSelectionRing {
@@ -1294,18 +1309,11 @@ html[dir='rtl'] .attachmentsItem > button {
   cursor: default;
 }
 
-
 /* TODO: file FF bug to support ::-moz-selection:window-inactive
    so we can override the opaque grey background when the window is inactive;
    see https://bugzilla.mozilla.org/show_bug.cgi?id=706209 */
 ::selection { background: rgba(0,0,255,0.3); }
 ::-moz-selection { background: rgba(0,0,255,0.3); }
-
-.textLayer ::selection { background: rgb(0,0,255); }
-.textLayer ::-moz-selection { background: rgb(0,0,255); }
-.textLayer {
-  opacity: 0.2;
-}
 
 #errorWrapper {
   background: none repeat scroll 0 0 #FF5555;
@@ -1747,10 +1755,6 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
     top: 0;
     left: 0;
     display: block;
-  }
-  #printContainer div {
-    page-break-after: always;
-    page-break-inside: avoid;
   }
 }
 

@@ -44,13 +44,14 @@
 
 #include "MediaCodec.h"
 #include "SurfaceTexture.h"
+#include "GLContextProvider.h"
 
 using namespace mozilla;
 using namespace mozilla::gfx;
 using namespace mozilla::jni;
 using namespace mozilla::widget;
 
-AndroidBridge* AndroidBridge::sBridge;
+AndroidBridge* AndroidBridge::sBridge = nullptr;
 pthread_t AndroidBridge::sJavaUiThread = -1;
 static unsigned sJavaEnvThreadIndex = 0;
 static jobject sGlobalContext = nullptr;
@@ -149,7 +150,7 @@ jfieldID AndroidBridge::GetStaticFieldID(JNIEnv* env, jclass jClass,
 }
 
 void
-AndroidBridge::ConstructBridge(JNIEnv *jEnv, Object::Param clsLoader)
+AndroidBridge::ConstructBridge(JNIEnv *jEnv, Object::Param clsLoader, Object::Param msgQueue)
 {
     /* NSS hack -- bionic doesn't handle recursive unloads correctly,
      * because library finalizer functions are called with the dynamic
@@ -161,14 +162,22 @@ AndroidBridge::ConstructBridge(JNIEnv *jEnv, Object::Param clsLoader)
 
     PR_NewThreadPrivateIndex(&sJavaEnvThreadIndex, JavaThreadDetachFunc);
 
-    AndroidBridge *bridge = new AndroidBridge();
-    if (!bridge->Init(jEnv, clsLoader)) {
-        delete bridge;
-    }
-    sBridge = bridge;
+    MOZ_ASSERT(!sBridge);
+    sBridge = new AndroidBridge;
+    sBridge->Init(jEnv, clsLoader); // Success or crash
+
+    auto msgQueueClass = ClassObject::LocalRef::Adopt(
+            jEnv, jEnv->GetObjectClass(msgQueue.Get()));
+    sBridge->mMessageQueue = msgQueue;
+    // mMessageQueueNext must not be null
+    sBridge->mMessageQueueNext = GetMethodID(
+            jEnv, msgQueueClass.Get(), "next", "()Landroid/os/Message;");
+    // mMessageQueueMessages may be null (e.g. due to proguard optimization)
+    sBridge->mMessageQueueMessages = jEnv->GetFieldID(
+            msgQueueClass.Get(), "mMessages", "Landroid/os/Message;");
 }
 
-bool
+void
 AndroidBridge::Init(JNIEnv *jEnv, Object::Param clsLoader)
 {
     ALOG_BRIDGE("AndroidBridge::Init");
@@ -185,7 +194,7 @@ AndroidBridge::Init(JNIEnv *jEnv, Object::Param clsLoader)
             "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
 
     mJNIEnv = nullptr;
-    mThread = -1;
+    mThread = pthread_t();
     mGLControllerObj = nullptr;
     mOpenedGraphicsLibraries = false;
     mHasNativeBitmapAccess = false;
@@ -244,8 +253,6 @@ AndroidBridge::Init(JNIEnv *jEnv, Object::Param clsLoader)
     // jEnv should NOT be cached here by anything -- the jEnv here
     // is not valid for the real gecko main thread, which is set
     // at SetMainThread time.
-
-    return true;
 }
 
 bool
@@ -259,7 +266,16 @@ AndroidBridge::SetMainThread(pthread_t thr)
     }
 
     mJNIEnv = nullptr;
-    mThread = -1;
+    mThread = pthread_t();
+
+    // SetMainThread(0) is called on Gecko shutdown,
+    // so we should clean up the bridge here.
+    if (sBridge) {
+        delete sBridge;
+        // AndroidBridge destruction requires sBridge to still be valid,
+        // so we set sBridge to nullptr after deleting it.
+        sBridge = nullptr;
+    }
     return true;
 }
 
@@ -825,6 +841,8 @@ AndroidBridge::OpenGraphicsLibraries()
             ANativeWindow_setBuffersGeometry = (int (*)(void*, int, int, int)) dlsym(handle, "ANativeWindow_setBuffersGeometry");
             ANativeWindow_lock = (int (*)(void*, void*, void*)) dlsym(handle, "ANativeWindow_lock");
             ANativeWindow_unlockAndPost = (int (*)(void*))dlsym(handle, "ANativeWindow_unlockAndPost");
+            ANativeWindow_getWidth = (int (*)(void*))dlsym(handle, "ANativeWindow_getWidth");
+            ANativeWindow_getHeight = (int (*)(void*))dlsym(handle, "ANativeWindow_getHeight");
 
             // This is only available in Honeycomb and ICS. It was removed in Jelly Bean
             ANativeWindow_fromSurfaceTexture = (void* (*)(JNIEnv*, jobject))dlsym(handle, "ANativeWindow_fromSurfaceTexture");
@@ -1279,6 +1297,16 @@ AndroidBridge::ReleaseNativeWindow(void *window)
     // have nothing to do here. We should probably ref it.
 }
 
+IntSize
+AndroidBridge::GetNativeWindowSize(void* window)
+{
+  if (!window || !ANativeWindow_getWidth || !ANativeWindow_getHeight) {
+    return IntSize(0, 0);
+  }
+
+  return IntSize(ANativeWindow_getWidth(window), ANativeWindow_getHeight(window));
+}
+
 void*
 AndroidBridge::AcquireNativeWindowFromSurfaceTexture(JNIEnv* aEnv, jobject aSurfaceTexture)
 {
@@ -1468,7 +1496,7 @@ AndroidBridge::SyncViewportInfo(const LayerIntRect& aDisplayPort, const CSSToLay
             aDisplayPort.width, aDisplayPort.height,
             aDisplayResolution.scale, aLayersUpdated);
 
-    NS_ABORT_IF_FALSE(viewTransform, "No view transform object!");
+    MOZ_ASSERT(viewTransform, "No view transform object!");
 
     aScrollOffset = ParentLayerPoint(viewTransform->X(), viewTransform->Y());
     aScale.scale = viewTransform->Scale();
@@ -1500,7 +1528,7 @@ void AndroidBridge::SyncFrameMetrics(const ParentLayerPoint& aScrollOffset, floa
             aLayersUpdated, dp.x, dp.y, dp.width, dp.height, aDisplayResolution.scale,
             aIsFirstPaint);
 
-    NS_ABORT_IF_FALSE(viewTransform, "No view transform object!");
+    MOZ_ASSERT(viewTransform, "No view transform object!");
 
     aFixedLayerMargins.top = viewTransform->FixedLayerMarginTop();
     aFixedLayerMargins.right = viewTransform->FixedLayerMarginRight();
@@ -1512,7 +1540,9 @@ void AndroidBridge::SyncFrameMetrics(const ParentLayerPoint& aScrollOffset, floa
 }
 
 AndroidBridge::AndroidBridge()
-  : mLayerClient(nullptr)
+  : mLayerClient(nullptr),
+    mPresentationWindow(nullptr),
+    mPresentationSurface(nullptr)
 {
 }
 
@@ -1646,6 +1676,32 @@ AndroidBridge::GetProxyForURI(const nsACString & aSpec,
     return NS_OK;
 }
 
+bool
+AndroidBridge::PumpMessageLoop()
+{
+    JNIEnv* const env = GetJNIEnv();
+
+    if (mMessageQueueMessages) {
+        auto msg = Object::LocalRef::Adopt(env,
+                env->GetObjectField(mMessageQueue.Get(),
+                                    mMessageQueueMessages));
+        // if queue.mMessages is null, queue.next() will block, which we don't
+        // want. It turns out to be an order of magnitude more performant to do
+        // this extra check here and block less vs. one fewer checks here and
+        // more blocking.
+        if (!msg) {
+            return false;
+        }
+    }
+
+    auto msg = Object::LocalRef::Adopt(
+            env, env->CallObjectMethod(mMessageQueue.Get(), mMessageQueueNext));
+    if (!msg) {
+        return false;
+    }
+
+    return GeckoAppShell::PumpMessageLoop(msg);
+}
 
 /* attribute nsIAndroidBrowserApp browserApp; */
 NS_IMETHODIMP nsAndroidBridge::GetBrowserApp(nsIAndroidBrowserApp * *aBrowserApp)
@@ -1702,6 +1758,89 @@ AndroidBridge::GetFrameNameJavaProfiling(uint32_t aThreadId, uint32_t aSampleId,
 
     aResult = nsCString(jstrSampleName);
     return true;
+}
+
+static float
+GetScaleFactor(nsPresContext* aPresContext) {
+    nsIPresShell* presShell = aPresContext->PresShell();
+    LayoutDeviceToLayerScale cumulativeResolution(presShell->GetCumulativeResolution());
+    return cumulativeResolution.scale;
+}
+
+nsresult
+AndroidBridge::CaptureZoomedView(nsIDOMWindow *window, nsIntRect zoomedViewRect, Object::Param buffer,
+                                  float zoomFactor) {
+    nsresult rv;
+
+    if (!buffer)
+        return NS_ERROR_FAILURE;
+
+    nsCOMPtr <nsIDOMWindowUtils> utils = do_GetInterface(window);
+    if (!utils)
+        return NS_ERROR_FAILURE;
+
+    JNIEnv* env = GetJNIEnv();
+
+    AutoLocalJNIFrame jniFrame(env, 0);
+
+    nsCOMPtr <nsPIDOMWindow> win = do_QueryInterface(window);
+    if (!win) {
+        return NS_ERROR_FAILURE;
+    }
+    nsRefPtr <nsPresContext> presContext;
+
+    nsIDocShell* docshell = win->GetDocShell();
+
+    if (docshell) {
+        docshell->GetPresContext(getter_AddRefs(presContext));
+    }
+
+    if (!presContext) {
+        return NS_ERROR_FAILURE;
+    }
+    nsCOMPtr <nsIPresShell> presShell = presContext->PresShell();
+
+    float scaleFactor = GetScaleFactor(presContext) ;
+
+    nscolor bgColor = NS_RGB(255, 255, 255);
+    uint32_t renderDocFlags = (nsIPresShell::RENDER_IGNORE_VIEWPORT_SCROLLING | nsIPresShell::RENDER_DOCUMENT_RELATIVE);
+    nsRect r(presContext->DevPixelsToAppUnits(zoomedViewRect.x / scaleFactor),
+             presContext->DevPixelsToAppUnits(zoomedViewRect.y / scaleFactor ),
+             presContext->DevPixelsToAppUnits(zoomedViewRect.width / scaleFactor ),
+             presContext->DevPixelsToAppUnits(zoomedViewRect.height / scaleFactor ));
+
+    bool is24bit = (GetScreenDepth() == 24);
+    SurfaceFormat format = is24bit ? SurfaceFormat::B8G8R8X8 : SurfaceFormat::R5G6B5;
+    gfxImageFormat iFormat = gfx::SurfaceFormatToImageFormat(format);
+    uint32_t stride = gfxASurface::FormatStrideForWidth(iFormat, zoomedViewRect.width);
+
+    uint8_t* data = static_cast<uint8_t*> (env->GetDirectBufferAddress(buffer.Get()));
+    if (!data) {
+        return NS_ERROR_FAILURE;
+    }
+
+    MOZ_ASSERT (gfxPlatform::GetPlatform()->SupportsAzureContentForType(BackendType::CAIRO),
+              "Need BackendType::CAIRO support");
+    RefPtr < DrawTarget > dt = Factory::CreateDrawTargetForData(
+        BackendType::CAIRO, data, IntSize(zoomedViewRect.width, zoomedViewRect.height), stride,
+        format);
+    if (!dt) {
+        ALOG_BRIDGE("Error creating DrawTarget");
+        return NS_ERROR_FAILURE;
+    }
+    nsRefPtr <gfxContext> context = new gfxContext(dt);
+    context->SetMatrix(context->CurrentMatrix().Scale(zoomFactor, zoomFactor));
+
+    rv = presShell->RenderDocument(r, renderDocFlags, bgColor, context);
+
+    if (is24bit) {
+        gfxUtils::ConvertBGRAtoRGBA(data, stride * zoomedViewRect.height);
+    }
+
+    LayerView::updateZoomedView(buffer);
+
+    NS_ENSURE_SUCCESS(rv, rv);
+    return NS_OK;
 }
 
 nsresult AndroidBridge::CaptureThumbnail(nsIDOMWindow *window, int32_t bufW, int32_t bufH, int32_t tabId, Object::Param buffer, bool &shouldStore)
@@ -1955,6 +2094,51 @@ AndroidBridge::RunDelayedUiThreadTasks()
         task->Run();
     }
     return -1;
+}
+
+void*
+AndroidBridge::GetPresentationWindow()
+{
+    return mPresentationWindow;
+}
+
+void
+AndroidBridge::SetPresentationWindow(void* aPresentationWindow)
+{
+     if (mPresentationWindow) {
+         const bool wasAlreadyPaused = nsWindow::IsCompositionPaused();
+         if (!wasAlreadyPaused) {
+             nsWindow::SchedulePauseComposition();
+         }
+
+         mPresentationWindow = aPresentationWindow;
+         if (mPresentationSurface) {
+             // destroy the egl surface!
+             // The compositor is paused so it should be okay to destroy
+             // the surface here.
+             mozilla::gl::GLContextProvider::DestroyEGLSurface(mPresentationSurface);
+             mPresentationSurface = nullptr;
+         }
+
+         if (!wasAlreadyPaused) {
+             nsWindow::ScheduleResumeComposition();
+         }
+     }
+     else {
+         mPresentationWindow = aPresentationWindow;
+     }
+}
+
+EGLSurface
+AndroidBridge::GetPresentationSurface()
+{
+    return mPresentationSurface;
+}
+
+void
+AndroidBridge::SetPresentationSurface(EGLSurface aPresentationSurface)
+{
+    mPresentationSurface = aPresentationSurface;
 }
 
 Object::LocalRef AndroidBridge::ChannelCreate(Object::Param stream) {

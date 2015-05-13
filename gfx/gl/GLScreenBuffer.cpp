@@ -314,6 +314,23 @@ GLScreenBuffer::BeforeReadCall()
 }
 
 bool
+GLScreenBuffer::CopyTexImage2D(GLenum target, GLint level, GLenum internalformat, GLint x,
+                               GLint y, GLsizei width, GLsizei height, GLint border)
+{
+    SharedSurface* surf;
+    if (GetReadFB() == 0) {
+        surf = SharedSurf();
+    } else {
+        surf = mGL->mFBOMapping[GetReadFB()];
+    }
+    if (surf) {
+        return surf->CopyTexImage2D(target, level, internalformat,  x, y, width, height, border);
+    }
+
+    return false;
+}
+
+bool
 GLScreenBuffer::ReadPixels(GLint x, GLint y,
                            GLsizei width, GLsizei height,
                            GLenum format, GLenum type,
@@ -403,7 +420,18 @@ GLScreenBuffer::Attach(SharedSurface* surf, const gfx::IntSize& size)
     } else {
         // Else something changed, so resize:
         UniquePtr<DrawBuffer> draw;
-        bool drawOk = CreateDraw(size, &draw);  // Can be null.
+        bool drawOk = true;
+
+        /* Don't change out the draw buffer unless we resize. In the
+         * preserveDrawingBuffer:true case, prior contents of the buffer must
+         * be retained. If we're using a draw buffer, it's an MSAA buffer, so
+         * even if we copy the previous frame into the (single-sampled) read
+         * buffer, if we need to re-resolve from draw to read (as triggered by
+         * drawing), we'll need the old MSAA content to still be in the draw
+         * buffer.
+         */
+        if (!mDraw || size != Size())
+            drawOk = CreateDraw(size, &draw);  // Can be null.
 
         UniquePtr<ReadBuffer> read = CreateRead(surf);
         bool readOk = !!read;
@@ -414,12 +442,22 @@ GLScreenBuffer::Attach(SharedSurface* surf, const gfx::IntSize& size)
             return false;
         }
 
-        mDraw = Move(draw);
+        if (draw)
+            mDraw = Move(draw);
+
         mRead = Move(read);
     }
 
     // Check that we're all set up.
     MOZ_ASSERT(SharedSurf() == surf);
+
+    // Update the ReadBuffer mode.
+    if (mGL->IsSupported(gl::GLFeature::read_buffer)) {
+        BindFB(0);
+        mRead->SetReadBuffer(mUserReadBufferMode);
+    }
+
+    RequireBlit();
 
     return true;
 }
@@ -438,21 +476,35 @@ GLScreenBuffer::Swap(const gfx::IntSize& size)
     mFront = mBack;
     mBack = newBack;
 
-    // Fence before copying.
-    if (mFront) {
-        mFront->Surf()->ProducerRelease();
-    }
     if (mBack) {
         mBack->Surf()->ProducerAcquire();
     }
 
     if (ShouldPreserveBuffer() &&
         mFront &&
-        mBack)
+        mBack &&
+        !mDraw)
     {
         auto src  = mFront->Surf();
         auto dest = mBack->Surf();
+
+        //uint32_t srcPixel = ReadPixel(src);
+        //uint32_t destPixel = ReadPixel(dest);
+        //printf_stderr("Before: src: 0x%08x, dest: 0x%08x\n", srcPixel, destPixel);
+
         SharedSurface::ProdCopy(src, dest, mFactory.get());
+
+        //srcPixel = ReadPixel(src);
+        //destPixel = ReadPixel(dest);
+        //printf_stderr("After: src: 0x%08x, dest: 0x%08x\n", srcPixel, destPixel);
+    }
+
+    // XXX: We would prefer to fence earlier on platforms that don't need
+    // the full ProducerAcquire/ProducerRelease semantics, so that the fence
+    // doesn't include the copy operation. Unfortunately, the current API
+    // doesn't expose a good way to do that.
+    if (mFront) {
+        mFront->Surf()->ProducerRelease();
     }
 
     return true;
@@ -509,40 +561,13 @@ GLScreenBuffer::CreateRead(SharedSurface* surf)
 }
 
 void
-GLScreenBuffer::Readback(SharedSurface* src, gfx::DataSourceSurface* dest)
+GLScreenBuffer::SetReadBuffer(GLenum mode)
 {
-  MOZ_ASSERT(src && dest);
-  MOZ_ASSERT(dest->GetSize() == src->mSize);
-  MOZ_ASSERT(dest->GetFormat() == (src->mHasAlpha ? SurfaceFormat::B8G8R8A8
-                                                  : SurfaceFormat::B8G8R8X8));
+    MOZ_ASSERT(mGL->IsSupported(gl::GLFeature::read_buffer));
+    MOZ_ASSERT(GetReadFB() == 0);
 
-  mGL->MakeCurrent();
-
-  bool needsSwap = src != SharedSurf();
-  if (needsSwap) {
-      SharedSurf()->UnlockProd();
-      src->LockProd();
-  }
-
-  {
-      // Even though we're reading. We're doing it on
-      // the producer side. So we call ProducerAcquire
-      // instead of ConsumerAcquire.
-      src->ProducerAcquire();
-
-      UniquePtr<ReadBuffer> buffer = CreateRead(src);
-      MOZ_ASSERT(buffer);
-
-      ScopedBindFramebuffer autoFB(mGL, buffer->mFB);
-      ReadPixelsIntoDataSurface(mGL, dest);
-
-      src->ProducerRelease();
-  }
-
-  if (needsSwap) {
-      src->UnlockProd();
-      SharedSurf()->LockProd();
-  }
+    mUserReadBufferMode = mode;
+    mRead->SetReadBuffer(mUserReadBufferMode);
 }
 
 bool
@@ -664,7 +689,6 @@ ReadBuffer::Create(GLContext* gl,
 
     if (surf->mAttachType == AttachmentType::Screen) {
         // Don't need anything. Our read buffer will be the 'screen'.
-
         return UniquePtr<ReadBuffer>( new ReadBuffer(gl, 0, 0, 0,
                                                      surf) );
     }
@@ -766,6 +790,32 @@ const gfx::IntSize&
 ReadBuffer::Size() const
 {
     return mSurf->mSize;
+}
+
+void
+ReadBuffer::SetReadBuffer(GLenum userMode) const
+{
+    if (!mGL->IsSupported(GLFeature::read_buffer))
+        return;
+
+    GLenum internalMode;
+
+    switch (userMode) {
+    case LOCAL_GL_BACK:
+        internalMode = (mFB == 0) ? LOCAL_GL_BACK
+                                  : LOCAL_GL_COLOR_ATTACHMENT0;
+        break;
+
+    case LOCAL_GL_NONE:
+        internalMode = LOCAL_GL_NONE;
+        break;
+
+    default:
+        MOZ_CRASH("Bad value.");
+    }
+
+    mGL->MakeCurrent();
+    mGL->fReadBuffer(internalMode);
 }
 
 } /* namespace gl */

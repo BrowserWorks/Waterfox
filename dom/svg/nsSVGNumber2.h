@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -68,7 +69,7 @@ private:
   bool mIsBaseSet;
 
 public:
-  struct DOMAnimatedNumber MOZ_FINAL : public mozilla::dom::SVGAnimatedNumber
+  struct DOMAnimatedNumber final : public mozilla::dom::SVGAnimatedNumber
   {
     DOMAnimatedNumber(nsSVGNumber2* aVal, nsSVGElement* aSVGElement)
       : mozilla::dom::SVGAnimatedNumber(aSVGElement)
@@ -78,11 +79,11 @@ public:
 
     nsSVGNumber2* mVal; // kept alive because it belongs to content
 
-    virtual float BaseVal() MOZ_OVERRIDE
+    virtual float BaseVal() override
     {
       return mVal->GetBaseValue();
     }
-    virtual void SetBaseVal(float aValue) MOZ_OVERRIDE
+    virtual void SetBaseVal(float aValue) override
     {
       MOZ_ASSERT(mozilla::IsFinite(aValue));
       mVal->SetBaseValue(aValue, mSVGElement);
@@ -90,7 +91,7 @@ public:
 
     // Script may have modified animation parameters or timeline -- DOM getters
     // need to flush any resample requests to reflect these modifications.
-    virtual float AnimVal() MOZ_OVERRIDE
+    virtual float AnimVal() override
     {
       mSVGElement->FlushAnimations();
       return mVal->GetAnimValue();
@@ -113,10 +114,10 @@ public:
     virtual nsresult ValueFromString(const nsAString& aStr,
                                      const mozilla::dom::SVGAnimationElement* aSrcElement,
                                      nsSMILValue& aValue,
-                                     bool& aPreventCachingOfSandwich) const MOZ_OVERRIDE;
-    virtual nsSMILValue GetBaseValue() const MOZ_OVERRIDE;
-    virtual void ClearAnimValue() MOZ_OVERRIDE;
-    virtual nsresult SetAnimValue(const nsSMILValue& aValue) MOZ_OVERRIDE;
+                                     bool& aPreventCachingOfSandwich) const override;
+    virtual nsSMILValue GetBaseValue() const override;
+    virtual void ClearAnimValue() override;
+    virtual nsresult SetAnimValue(const nsSMILValue& aValue) override;
   };
 };
 

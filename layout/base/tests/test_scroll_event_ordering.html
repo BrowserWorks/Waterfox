@@ -21,7 +21,6 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=785588
 SimpleTest.waitForExplicitFinish();
 
 var smoothScrollPref = "general.smoothScroll";
-SpecialPowers.setBoolPref(smoothScrollPref, false);
 
 var d = document.getElementById("d");
 d.scrollTop = 0;
@@ -38,7 +37,6 @@ function onFrame() {
 function onScroll() {
   is(state, "didOnFrame", "Must have got requestAnimationFrame callback already");
   ok(d.scrollTop > 0, "Must have scrolled by some amount (got " + d.scrollTop + ")");
-  SpecialPowers.clearUserPref(smoothScrollPref);
   SimpleTest.finish();
 }
 
@@ -49,7 +47,16 @@ function doTest() {
   sendKey("DOWN");
 }
 
-SimpleTest.waitForFocus(doTest);
+function prepareTest() {
+  // Start the test after we've gotten at least one rAF callback, to make sure
+  // that rAF is no longer throttled. (See bug 1145439.)
+  window.mozRequestAnimationFrame(function() {
+    SpecialPowers.pushPrefEnv({"set":[[smoothScrollPref, false]]}, doTest);
+  });
+}
+
+SimpleTest.waitForFocus(prepareTest);
+
 </script>
 </pre>
 </body>

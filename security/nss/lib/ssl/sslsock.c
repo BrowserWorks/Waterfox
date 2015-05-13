@@ -89,13 +89,13 @@ static sslOptions ssl_defaults = {
  * default range of enabled SSL/TLS protocols
  */
 static SSLVersionRange versions_defaults_stream = {
-    SSL_LIBRARY_VERSION_3_0,
-    SSL_LIBRARY_VERSION_TLS_1_0
+    SSL_LIBRARY_VERSION_TLS_1_0,
+    SSL_LIBRARY_VERSION_TLS_1_2
 };
 
 static SSLVersionRange versions_defaults_datagram = {
     SSL_LIBRARY_VERSION_TLS_1_1,
-    SSL_LIBRARY_VERSION_TLS_1_1
+    SSL_LIBRARY_VERSION_TLS_1_2
 };
 
 #define VERSIONS_DEFAULTS(variant) \

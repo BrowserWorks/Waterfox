@@ -15,7 +15,6 @@
 
 using namespace mozilla;
 
-#ifdef PR_LOGGING
 static PRLogModuleInfo*
 GetThreadPoolLog()
 {
@@ -25,7 +24,6 @@ GetThreadPoolLog()
   }
   return sLog;
 }
-#endif
 #ifdef LOG
 #undef LOG
 #endif
@@ -84,7 +82,10 @@ nsThreadPool::PutEvent(nsIRunnable* aEvent)
     MOZ_ASSERT(mIdleCount <= (uint32_t)mThreads.Count(), "oops");
 
     // Make sure we have a thread to service this event.
-    if (mIdleCount == 0 && mThreads.Count() < (int32_t)mThreadLimit) {
+    if (mThreads.Count() < (int32_t)mThreadLimit &&
+        // Spawn a new thread if we don't have enough idle threads to serve
+        // pending events immediately.
+        mEvents.Count() >= mIdleCount) {
       spawnThread = true;
     }
 
@@ -122,7 +123,7 @@ nsThreadPool::PutEvent(nsIRunnable* aEvent)
     // of nsStreamCopier. To prevent this situation, dispatch a shutdown event
     // to the current thread instead of calling nsIThread::Shutdown() directly.
 
-    nsRefPtr<nsIRunnable> r = NS_NewRunnableMethod(thread,
+    nsCOMPtr<nsIRunnable> r = NS_NewRunnableMethod(thread,
                                                    &nsIThread::Shutdown);
     NS_DispatchToCurrentThread(r);
   } else {
@@ -142,7 +143,7 @@ nsThreadPool::ShutdownThread(nsIThread* aThread)
 
   MOZ_ASSERT(!NS_IsMainThread(), "wrong thread");
 
-  nsRefPtr<nsIRunnable> r = NS_NewRunnableMethod(aThread, &nsIThread::Shutdown);
+  nsCOMPtr<nsIRunnable> r = NS_NewRunnableMethod(aThread, &nsIThread::Shutdown);
   NS_DispatchToMainThread(r);
 }
 

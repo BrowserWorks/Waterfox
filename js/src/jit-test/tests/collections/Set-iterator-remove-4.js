@@ -3,7 +3,7 @@
 load(libdir + "iteration.js");
 
 // Make a set.
-var set = Set();
+var set = new Set();
 var SIZE = 7;
 for (var j = 0; j < SIZE; j++)
     set.add(j);
@@ -12,7 +12,7 @@ for (var j = 0; j < SIZE; j++)
 var NITERS = 5;
 var iters = [];
 for (var i = 0; i < NITERS; i++) {
-    var iter = set[std_iterator]();
+    var iter = set[Symbol.iterator]();
     assertIteratorNext(iter, 0);
     assertIteratorNext(iter, 1);
     iters[i] = iter;

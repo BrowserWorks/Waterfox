@@ -6,13 +6,14 @@
 
 #include "jit/PerfSpewer.h"
 
+#include "mozilla/IntegerPrintfMacros.h"
+
 #if defined(__linux__)
 # include <unistd.h>
 #endif
 
 #ifdef JS_ION_PERF
 # include "jit/JitSpewer.h"
-# include "jit/LinearScan.h"
 # include "jit/LIR.h"
 # include "jit/MIR.h"
 # include "jit/MIRGraph.h"
@@ -48,12 +49,12 @@ static uint32_t PerfMode = 0;
 
 static bool PerfChecked = false;
 
-static FILE *PerfFilePtr = nullptr;
+static FILE* PerfFilePtr = nullptr;
 
-static PRLock *PerfMutex;
+static PRLock* PerfMutex;
 
 static bool
-openPerfMap(const char *dir)
+openPerfMap(const char* dir)
 {
     const ssize_t bufferSize = 256;
     char filenameBuffer[bufferSize];
@@ -73,7 +74,7 @@ openPerfMap(const char *dir)
 void
 js::jit::CheckPerf() {
     if (!PerfChecked) {
-        const char *env = getenv("IONPERF");
+        const char* env = getenv("IONPERF");
         if (env == nullptr) {
             PerfMode = PERF_MODE_NONE;
             fprintf(stderr, "Warning: JIT perf reporting requires IONPERF set to \"block\" or \"func\". ");
@@ -151,13 +152,13 @@ unlockPerfMap()
 uint32_t PerfSpewer::nextFunctionIndex = 0;
 
 bool
-PerfSpewer::startBasicBlock(MBasicBlock *blk,
-                            MacroAssembler &masm)
+PerfSpewer::startBasicBlock(MBasicBlock* blk,
+                            MacroAssembler& masm)
 {
     if (!PerfBlockEnabled())
         return true;
 
-    const char *filename = blk->info().script()->filename();
+    const char* filename = blk->info().script()->filename();
     unsigned lineNumber, columnNumber;
     if (blk->pc()) {
         lineNumber = PCToLineNumber(blk->info().script(),
@@ -173,7 +174,7 @@ PerfSpewer::startBasicBlock(MBasicBlock *blk,
 }
 
 bool
-PerfSpewer::endBasicBlock(MacroAssembler &masm)
+PerfSpewer::endBasicBlock(MacroAssembler& masm)
 {
     if (!PerfBlockEnabled())
         return true;
@@ -183,7 +184,7 @@ PerfSpewer::endBasicBlock(MacroAssembler &masm)
 }
 
 bool
-PerfSpewer::noteEndInlineCode(MacroAssembler &masm)
+PerfSpewer::noteEndInlineCode(MacroAssembler& masm)
 {
     if (!PerfBlockEnabled())
         return true;
@@ -193,9 +194,9 @@ PerfSpewer::noteEndInlineCode(MacroAssembler &masm)
 }
 
 void
-PerfSpewer::writeProfile(JSScript *script,
-                         JitCode *code,
-                         MacroAssembler &masm)
+PerfSpewer::writeProfile(JSScript* script,
+                         JitCode* code,
+                         MacroAssembler& masm)
 {
     if (PerfFuncEnabled()) {
         if (!lockPerfMap())
@@ -205,8 +206,8 @@ PerfSpewer::writeProfile(JSScript *script,
 
         size_t size = code->instructionsSize();
         if (size > 0) {
-            fprintf(PerfFilePtr, "%zx %zx %s:%zu: Func%02d\n",
-                    reinterpret_cast<uintptr_t>(code->raw()),
+            fprintf(PerfFilePtr, "%p %" PRIxSIZE " %s:%" PRIuSIZE ": Func%02d\n",
+                    code->raw(),
                     size,
                     script->filename(),
                     script->lineno(),
@@ -229,22 +230,21 @@ PerfSpewer::writeProfile(JSScript *script,
         size_t prologueSize = masm.actualOffset(basicBlocks_[0].start.offset());
 
         if (prologueSize > 0) {
-            fprintf(PerfFilePtr, "%zx %zx %s:%zu: Func%02d-Prologue\n",
+            fprintf(PerfFilePtr, "%" PRIxSIZE " %" PRIxSIZE " %s:%" PRIuSIZE ": Func%02d-Prologue\n",
                     funcStart, prologueSize, script->filename(), script->lineno(), thisFunctionIndex);
         }
 
         uintptr_t cur = funcStart + prologueSize;
         for (uint32_t i = 0; i < basicBlocks_.length(); i++) {
-            Record &r = basicBlocks_[i];
+            Record& r = basicBlocks_[i];
 
             uintptr_t blockStart = funcStart + masm.actualOffset(r.start.offset());
             uintptr_t blockEnd = funcStart + masm.actualOffset(r.end.offset());
 
             MOZ_ASSERT(cur <= blockStart);
             if (cur < blockStart) {
-                fprintf(PerfFilePtr, "%zx %zx %s:%zu: Func%02d-Block?\n",
-                        static_cast<uintptr_t>(cur),
-                        static_cast<uintptr_t>(blockStart - cur),
+                fprintf(PerfFilePtr, "%" PRIxPTR " %" PRIxPTR " %s:%" PRIuSIZE ": Func%02d-Block?\n",
+                        cur, blockStart - cur,
                         script->filename(), script->lineno(),
                         thisFunctionIndex);
             }
@@ -253,8 +253,8 @@ PerfSpewer::writeProfile(JSScript *script,
             size_t size = blockEnd - blockStart;
 
             if (size > 0) {
-                fprintf(PerfFilePtr, "%zx %zx %s:%d:%d: Func%02d-Block%d\n",
-                        static_cast<uintptr_t>(blockStart), size,
+                fprintf(PerfFilePtr, "%" PRIxPTR " %" PRIxSIZE " %s:%d:%d: Func%02d-Block%d\n",
+                        blockStart, size,
                         r.filename, r.lineNumber, r.columnNumber,
                         thisFunctionIndex, r.id);
             }
@@ -262,7 +262,7 @@ PerfSpewer::writeProfile(JSScript *script,
 
         MOZ_ASSERT(cur <= funcEndInlineCode);
         if (cur < funcEndInlineCode) {
-            fprintf(PerfFilePtr, "%zx %zx %s:%zu: Func%02d-Epilogue\n",
+            fprintf(PerfFilePtr, "%" PRIxPTR " %" PRIxPTR " %s:%" PRIuSIZE ": Func%02d-Epilogue\n",
                     cur, funcEndInlineCode - cur,
                     script->filename(), script->lineno(),
                     thisFunctionIndex);
@@ -270,7 +270,7 @@ PerfSpewer::writeProfile(JSScript *script,
 
         MOZ_ASSERT(funcEndInlineCode <= funcEnd);
         if (funcEndInlineCode < funcEnd) {
-            fprintf(PerfFilePtr, "%zx %zx %s:%zu: Func%02d-OOL\n",
+            fprintf(PerfFilePtr, "%" PRIxPTR " %" PRIxPTR " %s:%" PRIuSIZE ": Func%02d-OOL\n",
                     funcEndInlineCode, funcEnd - funcEndInlineCode,
                     script->filename(), script->lineno(),
                     thisFunctionIndex);
@@ -282,7 +282,7 @@ PerfSpewer::writeProfile(JSScript *script,
 }
 
 void
-js::jit::writePerfSpewerBaselineProfile(JSScript *script, JitCode *code)
+js::jit::writePerfSpewerBaselineProfile(JSScript* script, JitCode* code)
 {
     if (!PerfEnabled())
         return;
@@ -292,7 +292,7 @@ js::jit::writePerfSpewerBaselineProfile(JSScript *script, JitCode *code)
 
     size_t size = code->instructionsSize();
     if (size > 0) {
-        fprintf(PerfFilePtr, "%zx %zx %s:%zu: Baseline\n",
+        fprintf(PerfFilePtr, "%" PRIxPTR " %" PRIxSIZE " %s:%" PRIuSIZE ": Baseline\n",
                 reinterpret_cast<uintptr_t>(code->raw()),
                 size, script->filename(), script->lineno());
     }
@@ -301,7 +301,7 @@ js::jit::writePerfSpewerBaselineProfile(JSScript *script, JitCode *code)
 }
 
 void
-js::jit::writePerfSpewerJitCodeProfile(JitCode *code, const char *msg)
+js::jit::writePerfSpewerJitCodeProfile(JitCode* code, const char* msg)
 {
     if (!code || !PerfEnabled())
         return;
@@ -311,7 +311,7 @@ js::jit::writePerfSpewerJitCodeProfile(JitCode *code, const char *msg)
 
     size_t size = code->instructionsSize();
     if (size > 0) {
-        fprintf(PerfFilePtr, "%zx %zx %s (%p 0x%zx)\n",
+        fprintf(PerfFilePtr, "%" PRIxPTR " %" PRIxSIZE " %s (%p 0x%" PRIxSIZE ")\n",
                 reinterpret_cast<uintptr_t>(code->raw()),
                 size, msg, code->raw(), size);
     }
@@ -321,8 +321,8 @@ js::jit::writePerfSpewerJitCodeProfile(JitCode *code, const char *msg)
 
 void
 js::jit::writePerfSpewerAsmJSFunctionMap(uintptr_t base, uintptr_t size,
-                                         const char *filename, unsigned lineno, unsigned colIndex,
-                                         const char *funcName)
+                                         const char* filename, unsigned lineno, unsigned colIndex,
+                                         const char* funcName)
 {
     if (!PerfFuncEnabled() || size == 0U)
         return;
@@ -330,13 +330,14 @@ js::jit::writePerfSpewerAsmJSFunctionMap(uintptr_t base, uintptr_t size,
     if (!lockPerfMap())
         return;
 
-    fprintf(PerfFilePtr, "%zx %zx %s:%d:%d: Function %s\n", base, size, filename, lineno, colIndex, funcName);
+    fprintf(PerfFilePtr, "%" PRIxPTR " %" PRIxPTR " %s:%u:%u: Function %s\n",
+            base, size, filename, lineno, colIndex, funcName);
 
     unlockPerfMap();
 }
 
 bool
-AsmJSPerfSpewer::startBasicBlock(MBasicBlock *blk, MacroAssembler &masm)
+AsmJSPerfSpewer::startBasicBlock(MBasicBlock* blk, MacroAssembler& masm)
 {
     if (!PerfBlockEnabled())
         return true;
@@ -353,7 +354,7 @@ AsmJSPerfSpewer::noteBlocksOffsets()
         return;
 
     for (uint32_t i = 0; i < basicBlocks_.length(); i++) {
-        Record &r = basicBlocks_[i];
+        Record& r = basicBlocks_[i];
         r.startOffset = r.start.offset();
         r.endOffset = r.end.offset();
     }
@@ -362,8 +363,8 @@ AsmJSPerfSpewer::noteBlocksOffsets()
 void
 js::jit::writePerfSpewerAsmJSBlocksMap(uintptr_t baseAddress, size_t funcStartOffset,
                                        size_t funcEndInlineOffset, size_t funcSize,
-                                       const char *filename, const char *funcName,
-                                       const js::jit::BasicBlocksVector &basicBlocks)
+                                       const char* filename, const char* funcName,
+                                       const js::jit::BasicBlocksVector& basicBlocks)
 {
     if (!PerfBlockEnabled() || basicBlocks.empty())
         return;
@@ -378,19 +379,19 @@ js::jit::writePerfSpewerAsmJSBlocksMap(uintptr_t baseAddress, size_t funcStartOf
     size_t funcEnd = baseAddress + funcStartOffset + funcSize;
 
     if (prologueSize > 0) {
-        fprintf(PerfFilePtr, "%zx %zx %s: Function %s - Prologue\n",
+        fprintf(PerfFilePtr, "%" PRIxSIZE " %" PRIxSIZE " %s: Function %s - Prologue\n",
                 baseAddress + funcStartOffset, prologueSize, filename, funcName);
     }
 
     for (uint32_t i = 0; i < basicBlocks.length(); i++) {
-        const Record &r = basicBlocks[i];
+        const Record& r = basicBlocks[i];
 
         size_t blockStart = baseAddress + r.startOffset;
         size_t blockEnd = baseAddress + r.endOffset;
 
         MOZ_ASSERT(cur <= blockStart);
         if (cur < blockStart) {
-            fprintf(PerfFilePtr, "%zx %zx %s: Function %s - unknown block\n",
+            fprintf(PerfFilePtr, "%" PRIxSIZE " %" PRIxSIZE " %s: Function %s - unknown block\n",
                     cur, blockStart - cur,
                     filename,
                     funcName);
@@ -399,7 +400,7 @@ js::jit::writePerfSpewerAsmJSBlocksMap(uintptr_t baseAddress, size_t funcStartOf
 
         size_t size = blockEnd - blockStart;
         if (size > 0) {
-            fprintf(PerfFilePtr, "%zx %zx %s:%d:%d: Function %s - Block %d\n",
+            fprintf(PerfFilePtr, "%" PRIxSIZE " %" PRIxSIZE " %s:%u:%u: Function %s - Block %d\n",
                     blockStart, size,
                     filename, r.lineNumber, r.columnNumber,
                     funcName, r.id);
@@ -408,12 +409,12 @@ js::jit::writePerfSpewerAsmJSBlocksMap(uintptr_t baseAddress, size_t funcStartOf
 
     MOZ_ASSERT(cur <= funcEndInlineCode);
     if (cur < funcEndInlineCode)
-        fprintf(PerfFilePtr, "%zx %zx %s: Function %s - Epilogue\n",
+        fprintf(PerfFilePtr, "%" PRIxSIZE " %" PRIxSIZE " %s: Function %s - Epilogue\n",
                 cur, funcEndInlineCode - cur, filename, funcName);
 
     MOZ_ASSERT(funcEndInlineCode <= funcEnd);
     if (funcEndInlineCode < funcEnd) {
-        fprintf(PerfFilePtr, "%zx %zx %s: Function %s - OOL\n",
+        fprintf(PerfFilePtr, "%" PRIxSIZE " %" PRIxSIZE " %s: Function %s - OOL\n",
                 funcEndInlineCode, funcEnd - funcEndInlineCode, filename, funcName);
     }
 
@@ -429,7 +430,8 @@ js::jit::writePerfSpewerAsmJSEntriesAndExits(uintptr_t base, size_t size)
     if (!lockPerfMap())
         return;
 
-    fprintf(PerfFilePtr, "%zx %zx AsmJS Entries and Exits (0x%zx 0x%zx)\n", base, size, base, size);
+    fprintf(PerfFilePtr, "%" PRIxPTR " %" PRIxSIZE " AsmJS Entries and Exits (0x%" PRIxPTR " 0x%" PRIxSIZE ")\n",
+            base, size, base, size);
 
     unlockPerfMap();
 }

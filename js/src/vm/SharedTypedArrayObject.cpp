@@ -40,14 +40,12 @@
 #include "vm/WrapperObject.h"
 
 #include "jsatominlines.h"
-#include "jsinferinlines.h"
 #include "jsobjinlines.h"
 
 #include "vm/Shape-inl.h"
 
 using namespace js;
 using namespace js::gc;
-using namespace js::types;
 
 using mozilla::IsNaN;
 using mozilla::NegativeInfinity;
@@ -64,7 +62,7 @@ TypedArrayLayout SharedTypedArrayObject::layout_(true, // shared
                                                  &SharedTypedArrayObject::classes[Scalar::MaxTypedArrayViewType]);
 
 inline void
-InitSharedArrayBufferViewDataPointer(SharedTypedArrayObject *obj, SharedArrayBufferObject *buffer, size_t byteOffset)
+InitSharedArrayBufferViewDataPointer(SharedTypedArrayObject* obj, SharedArrayBufferObject* buffer, size_t byteOffset)
 {
     /*
      * N.B. The base of the array's data is stored in the object's
@@ -105,19 +103,19 @@ class SharedTypedArrayObjectTemplate : public SharedTypedArrayObject
 
     static const size_t BYTES_PER_ELEMENT = sizeof(ElementType);
 
-    static inline const Class *protoClass()
+    static inline const Class* protoClass()
     {
         return &SharedTypedArrayObject::protoClasses[ArrayTypeID()];
     }
 
-    static JSObject *CreatePrototype(JSContext *cx, JSProtoKey key)
+    static JSObject* CreatePrototype(JSContext* cx, JSProtoKey key)
     {
         return cx->global()->createBlankPrototype(cx, protoClass());
     }
 
-    static bool FinishClassInit(JSContext *cx, HandleObject ctor, HandleObject proto);
+    static bool FinishClassInit(JSContext* cx, HandleObject ctor, HandleObject proto);
 
-    static inline const Class *instanceClass()
+    static inline const Class* instanceClass()
     {
         return &SharedTypedArrayObject::classes[ArrayTypeID()];
     }
@@ -126,8 +124,8 @@ class SharedTypedArrayObjectTemplate : public SharedTypedArrayObject
         return v.isObject() && v.toObject().hasClass(instanceClass());
     }
 
-    static SharedTypedArrayObject *
-    makeProtoInstance(JSContext *cx, HandleObject proto, AllocKind allocKind)
+    static SharedTypedArrayObject*
+    makeProtoInstance(JSContext* cx, HandleObject proto, AllocKind allocKind)
     {
         MOZ_ASSERT(proto);
 
@@ -135,16 +133,16 @@ class SharedTypedArrayObjectTemplate : public SharedTypedArrayObject
         if (!obj)
             return nullptr;
 
-        types::TypeObject *type = cx->getNewType(obj->getClass(), TaggedProto(proto.get()));
-        if (!type)
+        ObjectGroup* group = ObjectGroup::defaultNewGroup(cx, obj->getClass(), TaggedProto(proto.get()));
+        if (!group)
             return nullptr;
-        obj->setType(type);
+        obj->setGroup(group);
 
         return &obj->as<SharedTypedArrayObject>();
     }
 
-    static SharedTypedArrayObject *
-    makeTypedInstance(JSContext *cx, uint32_t len, AllocKind allocKind)
+    static SharedTypedArrayObject*
+    makeTypedInstance(JSContext* cx, uint32_t len, AllocKind allocKind)
     {
         MOZ_ASSERT(len <= MAX_LENGTH / sizeof(NativeType));
 
@@ -154,25 +152,26 @@ class SharedTypedArrayObjectTemplate : public SharedTypedArrayObject
                                             SingletonObject)->as<SharedTypedArrayObject>();
         }
 
-        jsbytecode *pc;
+        jsbytecode* pc;
         RootedScript script(cx, cx->currentScript(&pc));
-        NewObjectKind newKind = script
-                                ? UseNewTypeForInitializer(script, pc, instanceClass())
-                                : GenericObject;
+        NewObjectKind newKind = GenericObject;
+        if (script && ObjectGroup::useSingletonForAllocationSite(script, pc, instanceClass()))
+            newKind = SingletonObject;
         RootedObject obj(cx, NewBuiltinClassInstance(cx, instanceClass(), allocKind, newKind));
         if (!obj)
             return nullptr;
 
-        if (script) {
-            if (!types::SetInitializerObjectType(cx, script, pc, obj, newKind))
-                return nullptr;
+        if (script && !ObjectGroup::setAllocationSiteObjectGroup(cx, script, pc, obj,
+                                                                 newKind == SingletonObject))
+        {
+            return nullptr;
         }
 
         return &obj->as<SharedTypedArrayObject>();
     }
 
-    static JSObject *
-    makeInstance(JSContext *cx, Handle<SharedArrayBufferObject *> buffer, uint32_t byteOffset, uint32_t len,
+    static JSObject*
+    makeInstance(JSContext* cx, Handle<SharedArrayBufferObject*> buffer, uint32_t byteOffset, uint32_t len,
                  HandleObject proto)
     {
         MOZ_ASSERT(buffer);
@@ -212,8 +211,8 @@ class SharedTypedArrayObjectTemplate : public SharedTypedArrayObject
         return obj;
     }
 
-    static JSObject *
-    makeInstance(JSContext *cx, Handle<SharedArrayBufferObject *> bufobj, uint32_t byteOffset, uint32_t len)
+    static JSObject*
+    makeInstance(JSContext* cx, Handle<SharedArrayBufferObject*> bufobj, uint32_t byteOffset, uint32_t len)
     {
         RootedObject nullproto(cx, nullptr);
         return makeInstance(cx, bufobj, byteOffset, len, nullproto);
@@ -226,7 +225,7 @@ class SharedTypedArrayObjectTemplate : public SharedTypedArrayObject
      * new Shared{Type}Array(SharedArrayBuffer, [optional] byteOffset, [optional] length)
      */
     static bool
-    class_constructor(JSContext *cx, unsigned argc, Value *vp)
+    class_constructor(JSContext* cx, unsigned argc, Value* vp)
     {
         CallArgs args = CallArgsFromVp(argc, vp);
 
@@ -239,19 +238,19 @@ class SharedTypedArrayObjectTemplate : public SharedTypedArrayObject
                 args.rval().set(args[0]);
                 return true;
             }
-            JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_SHARED_TYPED_ARRAY_BAD_LENGTH);
+            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_SHARED_TYPED_ARRAY_BAD_LENGTH);
             return false;
         }
 
-        JSObject *obj = create(cx, args);
+        JSObject* obj = create(cx, args);
         if (!obj)
             return false;
         args.rval().setObject(*obj);
         return true;
     }
 
-    static JSObject *
-    create(JSContext *cx, const CallArgs& args)
+    static JSObject*
+    create(JSContext* cx, const CallArgs& args)
     {
         if (args.length() == 0)
             return fromLength(cx, 0);
@@ -264,7 +263,7 @@ class SharedTypedArrayObjectTemplate : public SharedTypedArrayObject
             if (!ToLengthClamped(cx, args[0], &length, &overflow)) {
                 // Bug 1068458: Limit length to 2^31-1.
                 if (overflow || length > INT32_MAX)
-                    JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_BAD_ARRAY_LENGTH);
+                    JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_BAD_ARRAY_LENGTH);
                 return nullptr;
             }
             return fromLength(cx, length);
@@ -274,7 +273,7 @@ class SharedTypedArrayObjectTemplate : public SharedTypedArrayObject
         RootedObject dataObj(cx, &args.get(0).toObject());
 
         if (!UncheckedUnwrap(dataObj)->is<SharedArrayBufferObject>()) {
-            JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_SHARED_TYPED_ARRAY_BAD_OBJECT);
+            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_SHARED_TYPED_ARRAY_BAD_OBJECT);
             return nullptr;
         }
 
@@ -286,7 +285,7 @@ class SharedTypedArrayObjectTemplate : public SharedTypedArrayObject
                 return nullptr;
 
             if (numByteOffset < 0 || numByteOffset > MAX_BYTEOFFSET) {
-                JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr,
+                JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
                                      JSMSG_SHARED_TYPED_ARRAY_ARG_RANGE, "'byteOffset'");
                 return nullptr;
             }
@@ -297,7 +296,7 @@ class SharedTypedArrayObjectTemplate : public SharedTypedArrayObject
                 if (!ToLengthClamped(cx, args[2], &length, &overflow)) {
                     // Bug 1068458: Limit length to 2^31-1.
                     if (overflow || length > INT32_MAX)
-                        JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr,
+                        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
                                              JSMSG_SHARED_TYPED_ARRAY_ARG_RANGE, "'length'");
                     return nullptr;
                 }
@@ -307,9 +306,9 @@ class SharedTypedArrayObjectTemplate : public SharedTypedArrayObject
         return fromBuffer(cx, dataObj, byteOffset, length);
     }
 
-    template<Value ValueGetter(SharedTypedArrayObject *tarr)>
+    template<Value ValueGetter(SharedTypedArrayObject* tarr)>
     static bool
-    GetterImpl(JSContext *cx, CallArgs args)
+    GetterImpl(JSContext* cx, CallArgs args)
     {
         MOZ_ASSERT(is(args.thisv()));
         args.rval().set(ValueGetter(&args.thisv().toObject().as<SharedTypedArrayObject>()));
@@ -319,25 +318,25 @@ class SharedTypedArrayObjectTemplate : public SharedTypedArrayObject
     // ValueGetter is a function that takes an unwrapped typed array object and
     // returns a Value. Given such a function, Getter<> is a native that
     // retrieves a given Value, probably from a slot on the object.
-    template<Value ValueGetter(SharedTypedArrayObject *tarr)>
+    template<Value ValueGetter(SharedTypedArrayObject* tarr)>
     static bool
-    Getter(JSContext *cx, unsigned argc, Value *vp)
+    Getter(JSContext* cx, unsigned argc, Value* vp)
     {
         CallArgs args = CallArgsFromVp(argc, vp);
         return CallNonGenericMethod(cx, is, GetterImpl<ValueGetter>, args);
     }
 
     static bool
-    BufferGetterImpl(JSContext *cx, CallArgs args)
+    BufferGetterImpl(JSContext* cx, CallArgs args)
     {
         MOZ_ASSERT(is(args.thisv()));
-        Rooted<SharedTypedArrayObject *> tarray(cx, &args.thisv().toObject().as<SharedTypedArrayObject>());
+        Rooted<SharedTypedArrayObject*> tarray(cx, &args.thisv().toObject().as<SharedTypedArrayObject>());
         args.rval().set(bufferValue(tarray));
         return true;
     }
 
     static bool
-    BufferGetter(JSContext *cx, unsigned argc, Value *vp)
+    BufferGetter(JSContext* cx, unsigned argc, Value* vp)
     {
         CallArgs args = CallArgsFromVp(argc, vp);
         return CallNonGenericMethod(cx, is, BufferGetterImpl, args);
@@ -345,32 +344,31 @@ class SharedTypedArrayObjectTemplate : public SharedTypedArrayObject
 
     // Define an accessor for a read-only property that invokes a native getter
     static bool
-    DefineGetter(JSContext *cx, HandleNativeObject proto, PropertyName *name, Native native)
+    DefineGetter(JSContext* cx, HandleNativeObject proto, PropertyName* name, Native native)
     {
         RootedId id(cx, NameToId(name));
         unsigned attrs = JSPROP_SHARED | JSPROP_GETTER;
 
         Rooted<GlobalObject*> global(cx, cx->compartment()->maybeGlobal());
-        JSObject *getter = NewFunction(cx, NullPtr(), native, 0,
-                                       JSFunction::NATIVE_FUN, global, NullPtr());
+        JSObject* getter = NewNativeFunction(cx, native, 0, NullPtr());
         if (!getter)
             return false;
 
-        return DefineNativeProperty(cx, proto, id, UndefinedHandleValue,
-                                    JS_DATA_TO_FUNC_PTR(PropertyOp, getter), nullptr,
+        return NativeDefineProperty(cx, proto, id, UndefinedHandleValue,
+                                    JS_DATA_TO_FUNC_PTR(GetterOp, getter), nullptr,
                                     attrs);
     }
 
     static const NativeType
-    getIndex(JSObject *obj, uint32_t index)
+    getIndex(JSObject* obj, uint32_t index)
     {
-        SharedTypedArrayObject &tarray = obj->as<SharedTypedArrayObject>();
+        SharedTypedArrayObject& tarray = obj->as<SharedTypedArrayObject>();
         MOZ_ASSERT(index < tarray.length());
         return static_cast<const NativeType*>(tarray.viewData())[index];
     }
 
     static void
-    setIndexValue(SharedTypedArrayObject &tarray, uint32_t index, double d)
+    setIndexValue(SharedTypedArrayObject& tarray, uint32_t index, double d)
     {
         // If the array is an integer array, we only handle up to
         // 32-bit ints from this point on.  if we want to handle
@@ -395,25 +393,25 @@ class SharedTypedArrayObjectTemplate : public SharedTypedArrayObject
     }
 
     static void
-    setIndex(SharedTypedArrayObject &tarray, uint32_t index, NativeType val)
+    setIndex(SharedTypedArrayObject& tarray, uint32_t index, NativeType val)
     {
         MOZ_ASSERT(index < tarray.length());
         static_cast<NativeType*>(tarray.viewData())[index] = val;
     }
 
-    static Value getIndexValue(JSObject *tarray, uint32_t index);
+    static Value getIndexValue(JSObject* tarray, uint32_t index);
 
-    static bool fun_subarray(JSContext *cx, unsigned argc, Value *vp);
-    static bool fun_copyWithin(JSContext *cx, unsigned argc, Value *vp);
-    static bool fun_set(JSContext *cx, unsigned argc, Value *vp);
+    static bool fun_subarray(JSContext* cx, unsigned argc, Value* vp);
+    static bool fun_copyWithin(JSContext* cx, unsigned argc, Value* vp);
+    static bool fun_set(JSContext* cx, unsigned argc, Value* vp);
 
   public:
-    static JSObject *
-    fromBufferWithProto(JSContext *cx, HandleObject bufobj, uint32_t byteOffset, uint32_t length,
+    static JSObject*
+    fromBufferWithProto(JSContext* cx, HandleObject bufobj, uint32_t byteOffset, uint32_t length,
                         HandleObject proto)
     {
         if (!ObjectClassIs(bufobj, ESClass_SharedArrayBuffer, cx)) {
-            JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_SHARED_TYPED_ARRAY_BAD_OBJECT);
+            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_SHARED_TYPED_ARRAY_BAD_OBJECT);
             return nullptr; // must be SharedArrayBuffer
         }
 
@@ -423,11 +421,11 @@ class SharedTypedArrayObjectTemplate : public SharedTypedArrayObject
             return nullptr;
         }
 
-        Rooted<SharedArrayBufferObject *> buffer(cx, &AsSharedArrayBuffer(bufobj));
+        Rooted<SharedArrayBufferObject*> buffer(cx, &AsSharedArrayBuffer(bufobj));
 
         if (byteOffset > buffer->byteLength() || byteOffset % sizeof(NativeType) != 0) {
             // Invalid byteOffset.
-            JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_SHARED_TYPED_ARRAY_BAD_ARGS);
+            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_SHARED_TYPED_ARRAY_BAD_ARGS);
             return nullptr;
         }
 
@@ -435,35 +433,35 @@ class SharedTypedArrayObjectTemplate : public SharedTypedArrayObject
 
         if (length == LENGTH_NOT_PROVIDED) {
             if (bytesAvailable % sizeof(NativeType) != 0) {
-                JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_SHARED_TYPED_ARRAY_BAD_ARGS);
+                JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_SHARED_TYPED_ARRAY_BAD_ARGS);
                 return nullptr;
             }
             length = bytesAvailable / sizeof(NativeType);
         }
 
         if (length > MAX_LENGTH / sizeof(NativeType) || length * sizeof(NativeType) > bytesAvailable) {
-            JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_BAD_ARRAY_LENGTH);
+            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_BAD_ARRAY_LENGTH);
             return nullptr;
         }
 
         return makeInstance(cx, buffer, byteOffset, length, proto);
     }
 
-    static JSObject *
-    fromBuffer(JSContext *cx, HandleObject bufobj, uint32_t byteOffset, uint32_t length)
+    static JSObject*
+    fromBuffer(JSContext* cx, HandleObject bufobj, uint32_t byteOffset, uint32_t length)
     {
         RootedObject proto(cx, nullptr);
         return fromBufferWithProto(cx, bufobj, byteOffset, length, proto);
     }
 
-    static JSObject *
-    fromLength(JSContext *cx, uint32_t nelements)
+    static JSObject*
+    fromLength(JSContext* cx, uint32_t nelements)
     {
         if (nelements > MAX_LENGTH / sizeof(NativeType)) {
-            JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_BAD_ARRAY_LENGTH);
+            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_BAD_ARRAY_LENGTH);
             return nullptr;
         }
-        Rooted<SharedArrayBufferObject *> buffer(
+        Rooted<SharedArrayBufferObject*> buffer(
             cx, SharedArrayBufferObject::New(cx, nelements * sizeof(NativeType)));
         if (!buffer)
             return nullptr;
@@ -559,7 +557,7 @@ struct SharedTypedArrayObject::OfType
 
 #define IMPL_SHARED_TYPED_ARRAY_STATICS(_typedArray)                               \
 bool                                                                               \
-Shared##_typedArray##Object_subarray(JSContext *cx, unsigned argc, Value *vp)      \
+Shared##_typedArray##Object_subarray(JSContext* cx, unsigned argc, Value* vp)      \
 {                                                                                  \
     CallArgs args = CallArgsFromVp(argc, vp);                                      \
     return CallNonGenericMethod<Shared##_typedArray##Object::is,                   \
@@ -567,7 +565,7 @@ Shared##_typedArray##Object_subarray(JSContext *cx, unsigned argc, Value *vp)   
 }                                                                                  \
                                                                                    \
 bool                                                                               \
-Shared##_typedArray##Object_copyWithin(JSContext *cx, unsigned argc, Value *vp)    \
+Shared##_typedArray##Object_copyWithin(JSContext* cx, unsigned argc, Value* vp)    \
 {                                                                                  \
     CallArgs args = CallArgsFromVp(argc, vp);                                      \
     return CallNonGenericMethod<Shared##_typedArray##Object::is,                   \
@@ -575,7 +573,7 @@ Shared##_typedArray##Object_copyWithin(JSContext *cx, unsigned argc, Value *vp) 
 }                                                                                  \
                                                                                    \
 bool                                                                               \
-Shared##_typedArray##Object_set(JSContext *cx, unsigned argc, Value *vp)           \
+Shared##_typedArray##Object_set(JSContext* cx, unsigned argc, Value* vp)           \
 {                                                                                  \
     CallArgs args = CallArgsFromVp(argc, vp);                                      \
     return CallNonGenericMethod<Shared##_typedArray##Object::is,                   \
@@ -592,20 +590,20 @@ const JSFunctionSpec Shared##_typedArray##Object::jsfuncs[] = {                 
    B2G ICS. Older GCC versions have a bug in which they fail to compile            \
    reinterpret_casts of templated functions with the message: "insufficient        \
    contextual information to determine type". JS_PSG needs to                      \
-   reinterpret_cast<JSPropertyOp>, so this causes problems for us here.            \
+   reinterpret_cast<JSGetterOp>, so this causes problems for us here.              \
                                                                                    \
    We could restructure all this code to make this nicer, but since ICS isn't      \
    going to be around forever (and since this bug is fixed with the newer GCC      \
    versions we use on JB and KK), the workaround here is designed for ease of      \
    removal. When you stop seeing ICS Emulator builds on TBPL, remove these 3       \
    JSNatives and insert the templated callee directly into the JS_PSG below. */    \
-bool Shared##_typedArray##_lengthGetter(JSContext *cx, unsigned argc, Value *vp) {         \
+bool Shared##_typedArray##_lengthGetter(JSContext* cx, unsigned argc, Value* vp) {         \
     return Shared##_typedArray##Object::Getter<Shared##_typedArray##Object::lengthValue>(cx, argc, vp); \
 }                                                                                  \
-bool Shared##_typedArray##_byteLengthGetter(JSContext *cx, unsigned argc, Value *vp) {     \
+bool Shared##_typedArray##_byteLengthGetter(JSContext* cx, unsigned argc, Value* vp) {     \
     return Shared##_typedArray##Object::Getter<Shared##_typedArray##Object::byteLengthValue>(cx, argc, vp); \
 }                                                                                  \
-bool Shared##_typedArray##_byteOffsetGetter(JSContext *cx, unsigned argc, Value *vp) {     \
+bool Shared##_typedArray##_byteOffsetGetter(JSContext* cx, unsigned argc, Value* vp) {     \
     return Shared##_typedArray##Object::Getter<Shared##_typedArray##Object::byteOffsetValue>(cx, argc, vp); \
 }                                                                                  \
 const JSPropertySpec Shared##_typedArray##Object::jsprops[] = {                            \
@@ -617,30 +615,30 @@ const JSPropertySpec Shared##_typedArray##Object::jsprops[] = {                 
 };
 
 #define IMPL_SHARED_TYPED_ARRAY_JSAPI_CONSTRUCTORS(Name,NativeType)                             \
-  JS_FRIEND_API(JSObject *) JS_NewShared ## Name ## Array(JSContext *cx, uint32_t nelements)    \
+  JS_FRIEND_API(JSObject*) JS_NewShared ## Name ## Array(JSContext* cx, uint32_t nelements)    \
   {                                                                                             \
       return SharedTypedArrayObjectTemplate<NativeType>::fromLength(cx, nelements);             \
   }                                                                                             \
-  JS_FRIEND_API(JSObject *) JS_NewShared ## Name ## ArrayWithBuffer(JSContext *cx,              \
+  JS_FRIEND_API(JSObject*) JS_NewShared ## Name ## ArrayWithBuffer(JSContext* cx,              \
                                HandleObject arrayBuffer, uint32_t byteOffset, uint32_t length)  \
   {                                                                                             \
       return SharedTypedArrayObjectTemplate<NativeType>::fromBuffer(cx, arrayBuffer, byteOffset,\
                                                                     length);                    \
   }                                                                                             \
-  JS_FRIEND_API(bool) JS_IsShared ## Name ## Array(JSObject *obj)                               \
+  JS_FRIEND_API(bool) JS_IsShared ## Name ## Array(JSObject* obj)                               \
   {                                                                                             \
       if (!(obj = CheckedUnwrap(obj)))                                                          \
           return false;                                                                         \
-      const Class *clasp = obj->getClass();                                                     \
+      const Class* clasp = obj->getClass();                                                     \
       const Scalar::Type id = SharedTypedArrayObjectTemplate<NativeType>::ArrayTypeID();        \
       return clasp == &SharedTypedArrayObject::classes[id];                                     \
   } \
-  JS_FRIEND_API(JSObject *) js::UnwrapShared ## Name ## Array(JSObject *obj)                    \
+  JS_FRIEND_API(JSObject*) js::UnwrapShared ## Name ## Array(JSObject* obj)                    \
   {                                                                                             \
       obj = CheckedUnwrap(obj);                                                                 \
       if (!obj)                                                                                 \
           return nullptr;                                                                       \
-      const Class *clasp = obj->getClass();                                                     \
+      const Class* clasp = obj->getClass();                                                     \
       const Scalar::Type id = SharedTypedArrayObjectTemplate<NativeType>::ArrayTypeID();        \
       if (clasp == &SharedTypedArrayObject::classes[id])                                        \
           return obj;                                                                           \
@@ -660,21 +658,21 @@ IMPL_SHARED_TYPED_ARRAY_JSAPI_CONSTRUCTORS(Float32, float)
 IMPL_SHARED_TYPED_ARRAY_JSAPI_CONSTRUCTORS(Float64, double)
 
 #define IMPL_SHARED_TYPED_ARRAY_COMBINED_UNWRAPPERS(Name, ExternalType, InternalType)       \
-  JS_FRIEND_API(JSObject *) JS_GetObjectAsShared ## Name ## Array(JSObject *obj,            \
-                                                                  uint32_t *length,         \
-                                                                  ExternalType **data)      \
+  JS_FRIEND_API(JSObject*) JS_GetObjectAsShared ## Name ## Array(JSObject* obj,            \
+                                                                  uint32_t* length,         \
+                                                                  ExternalType** data)      \
   {                                                                                         \
       if (!(obj = CheckedUnwrap(obj)))                                                      \
           return nullptr;                                                                   \
                                                                                             \
-      const Class *clasp = obj->getClass();                                                 \
+      const Class* clasp = obj->getClass();                                                 \
       const Scalar::Type id = SharedTypedArrayObjectTemplate<InternalType>::ArrayTypeID();  \
       if (clasp != &SharedTypedArrayObject::classes[id])                                    \
           return nullptr;                                                                   \
                                                                                             \
-      SharedTypedArrayObject *tarr = &obj->as<SharedTypedArrayObject>();                    \
+      SharedTypedArrayObject* tarr = &obj->as<SharedTypedArrayObject>();                    \
       *length = tarr->length();                                                             \
-      *data = static_cast<ExternalType *>(tarr->viewData());                                \
+      *data = static_cast<ExternalType*>(tarr->viewData());                                \
                                                                                             \
       return obj;                                                                           \
   }
@@ -692,8 +690,9 @@ IMPL_SHARED_TYPED_ARRAY_COMBINED_UNWRAPPERS(Float64, double, double)
 #define SHARED_TYPED_ARRAY_CLASS_SPEC(_typedArray)                             \
 {                                                                              \
     GenericCreateConstructor<Shared##_typedArray##Object::class_constructor, 3, \
-                             JSFunction::FinalizeKind>,                        \
+                             gc::AllocKind::FUNCTION>,                         \
     Shared##_typedArray##Object::CreatePrototype,                              \
+    nullptr,                                                                   \
     nullptr,                                                                   \
     Shared##_typedArray##Object::jsfuncs,                                      \
     Shared##_typedArray##Object::jsprops,                                      \
@@ -712,6 +711,7 @@ IMPL_SHARED_TYPED_ARRAY_COMBINED_UNWRAPPERS(Float64, double, double)
     nullptr,                 /* setProperty */                                 \
     nullptr,                 /* enumerate   */                                 \
     nullptr,                 /* resolve     */                                 \
+    nullptr,                 /* mayResolve  */                                 \
     nullptr,                 /* convert     */                                 \
     nullptr,                 /* finalize    */                                 \
     nullptr,                 /* call        */                                 \
@@ -733,6 +733,7 @@ IMPL_SHARED_TYPED_ARRAY_COMBINED_UNWRAPPERS(Float64, double, double)
     nullptr,                 /* setProperty */                                 \
     nullptr,                 /* enumerate   */                                 \
     nullptr,                 /* resolve     */                                 \
+    nullptr,                 /* mayResolve  */                                 \
     nullptr,                 /* convert     */                                 \
     nullptr,                 /* finalize    */                                 \
     nullptr,                 /* call        */                                 \
@@ -744,16 +745,16 @@ IMPL_SHARED_TYPED_ARRAY_COMBINED_UNWRAPPERS(Float64, double, double)
 
 template<typename NativeType>
 bool
-SharedTypedArrayObjectTemplate<NativeType>::FinishClassInit(JSContext *cx,
+SharedTypedArrayObjectTemplate<NativeType>::FinishClassInit(JSContext* cx,
                                                             HandleObject ctor,
                                                             HandleObject proto)
 {
     RootedValue bytesValue(cx, Int32Value(BYTES_PER_ELEMENT));
 
-    if (!JSObject::defineProperty(cx, ctor, cx->names().BYTES_PER_ELEMENT, bytesValue,
-                                  nullptr, nullptr, JSPROP_PERMANENT | JSPROP_READONLY) ||
-        !JSObject::defineProperty(cx, proto, cx->names().BYTES_PER_ELEMENT, bytesValue,
-                                  nullptr, nullptr, JSPROP_PERMANENT | JSPROP_READONLY))
+    if (!DefineProperty(cx, ctor, cx->names().BYTES_PER_ELEMENT, bytesValue,
+                        nullptr, nullptr, JSPROP_PERMANENT | JSPROP_READONLY) ||
+        !DefineProperty(cx, proto, cx->names().BYTES_PER_ELEMENT, bytesValue,
+                        nullptr, nullptr, JSPROP_PERMANENT | JSPROP_READONLY))
     {
         return false;
     }
@@ -799,7 +800,7 @@ const Class SharedTypedArrayObject::protoClasses[Scalar::MaxTypedArrayViewType] 
 // less than 32-bits in size.
 template<typename NativeType>
 Value
-SharedTypedArrayObjectTemplate<NativeType>::getIndexValue(JSObject *tarray, uint32_t index)
+SharedTypedArrayObjectTemplate<NativeType>::getIndexValue(JSObject* tarray, uint32_t index)
 {
     JS_STATIC_ASSERT(sizeof(NativeType) < 4);
 
@@ -809,14 +810,14 @@ SharedTypedArrayObjectTemplate<NativeType>::getIndexValue(JSObject *tarray, uint
 // and we need to specialize for 32-bit integers and floats
 template<>
 Value
-SharedTypedArrayObjectTemplate<int32_t>::getIndexValue(JSObject *tarray, uint32_t index)
+SharedTypedArrayObjectTemplate<int32_t>::getIndexValue(JSObject* tarray, uint32_t index)
 {
     return Int32Value(getIndex(tarray, index));
 }
 
 template<>
 Value
-SharedTypedArrayObjectTemplate<uint32_t>::getIndexValue(JSObject *tarray, uint32_t index)
+SharedTypedArrayObjectTemplate<uint32_t>::getIndexValue(JSObject* tarray, uint32_t index)
 {
     uint32_t val = getIndex(tarray, index);
     return NumberValue(val);
@@ -824,7 +825,7 @@ SharedTypedArrayObjectTemplate<uint32_t>::getIndexValue(JSObject *tarray, uint32
 
 template<>
 Value
-SharedTypedArrayObjectTemplate<float>::getIndexValue(JSObject *tarray, uint32_t index)
+SharedTypedArrayObjectTemplate<float>::getIndexValue(JSObject* tarray, uint32_t index)
 {
     float val = getIndex(tarray, index);
     double dval = val;
@@ -844,7 +845,7 @@ SharedTypedArrayObjectTemplate<float>::getIndexValue(JSObject *tarray, uint32_t 
 
 template<>
 Value
-SharedTypedArrayObjectTemplate<double>::getIndexValue(JSObject *tarray, uint32_t index)
+SharedTypedArrayObjectTemplate<double>::getIndexValue(JSObject* tarray, uint32_t index)
 {
     double val = getIndex(tarray, index);
 
@@ -912,13 +913,13 @@ js::IsSharedTypedArrayConstructor(HandleValue v, uint32_t type)
 }
 
 JS_FRIEND_API(bool)
-JS_IsSharedTypedArrayObject(JSObject *obj)
+JS_IsSharedTypedArrayObject(JSObject* obj)
 {
     obj = CheckedUnwrap(obj);
     return obj && obj->is<SharedTypedArrayObject>();
 }
 
-SharedArrayBufferObject *
+SharedArrayBufferObject*
 SharedTypedArrayObject::buffer() const
 {
     return &bufferValue(const_cast<SharedTypedArrayObject*>(this)).toObject().as<SharedArrayBufferObject>();
@@ -961,7 +962,7 @@ SharedTypedArrayObject::getElement(uint32_t index)
 }
 
 void
-SharedTypedArrayObject::setElement(SharedTypedArrayObject &obj, uint32_t index, double d)
+SharedTypedArrayObject::setElement(SharedTypedArrayObject& obj, uint32_t index, double d)
 {
     MOZ_ASSERT(index < obj.length());
 

@@ -15,9 +15,9 @@ class nsIPrefBranch;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class nsContentBlocker MOZ_FINAL : public nsIContentPolicy,
-                                   public nsIObserver,
-                                   public nsSupportsWeakReference
+class nsContentBlocker final : public nsIContentPolicy,
+                               public nsIObserver,
+                               public nsSupportsWeakReference
 {
 public:
 

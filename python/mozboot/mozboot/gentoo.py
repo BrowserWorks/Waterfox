@@ -2,13 +2,12 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-import os
-
 from mozboot.base import BaseBootstrapper
 
+
 class GentooBootstrapper(BaseBootstrapper):
-    def __init__(self, version, dist_id):
-        BaseBootstrapper.__init__(self)
+    def __init__(self, version, dist_id, **kwargs):
+        BaseBootstrapper.__init__(self, **kwargs)
 
         self.version = version
         self.dist_id = dist_id

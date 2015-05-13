@@ -13,6 +13,7 @@
 #include "mozilla/ipc/ListenSocket.h"
 #include "mozilla/ipc/StreamSocket.h"
 #include "mozilla/ipc/UnixSocketConnector.h"
+#include "nsNSSShutDown.h"
 
 namespace mozilla {
 namespace ipc {
@@ -36,10 +37,16 @@ enum ResponseCode {
 
 void FormatCaData(const uint8_t *aCaData, int aCaDataLength,
                   const char *aName, const uint8_t **aFormatData,
-                  int *aFormatDataLength);
+                  size_t *aFormatDataLength);
 
 ResponseCode getCertificate(const char *aCertName, const uint8_t **aCertData,
-                            int *aCertDataLength);
+                            size_t *aCertDataLength);
+ResponseCode getPrivateKey(const char *aKeyName, const uint8_t **aKeyData,
+                           size_t *aKeyDataLength);
+ResponseCode getPublicKey(const char *aKeyName, const uint8_t **aKeyData,
+                          size_t *aKeyDataLength);
+ResponseCode signData(const char *aKeyName, const uint8_t *data, size_t length,
+                      uint8_t **out, size_t *outLength);
 
 bool checkPermission(uid_t uid);
 
@@ -92,7 +99,7 @@ public:
                              nsAString& aAddrStr);
 };
 
-class KeyStore MOZ_FINAL
+class KeyStore final : public nsNSSShutDownObject
 {
 public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(KeyStore)
@@ -101,13 +108,16 @@ public:
 
   void Shutdown();
 
+protected:
+  virtual void virtualDestroyNSSReference() {}
+
 private:
   enum SocketType {
     LISTEN_SOCKET,
     STREAM_SOCKET
   };
 
-  class ListenSocket MOZ_FINAL : public mozilla::ipc::ListenSocket
+  class ListenSocket final : public mozilla::ipc::ListenSocket
   {
   public:
     ListenSocket(KeyStore* aKeyStore);
@@ -116,15 +126,15 @@ private:
     // SocketBase
     //
 
-    void OnConnectSuccess() MOZ_OVERRIDE;
-    void OnConnectError() MOZ_OVERRIDE;
-    void OnDisconnect() MOZ_OVERRIDE;
+    void OnConnectSuccess() override;
+    void OnConnectError() override;
+    void OnDisconnect() override;
 
   private:
     KeyStore* mKeyStore;
   };
 
-  class StreamSocket MOZ_FINAL : public mozilla::ipc::StreamSocket
+  class StreamSocket final : public mozilla::ipc::StreamSocket
   {
   public:
     StreamSocket(KeyStore* aKeyStore);
@@ -133,16 +143,16 @@ private:
     // SocketConsumerBase
     //
 
-    void OnConnectSuccess() MOZ_OVERRIDE;
-    void OnConnectError() MOZ_OVERRIDE;
-    void OnDisconnect() MOZ_OVERRIDE;
+    void OnConnectSuccess() override;
+    void OnConnectError() override;
+    void OnDisconnect() override;
 
-    void ReceiveSocketData(nsAutoPtr<UnixSocketRawData>& aMessage) MOZ_OVERRIDE;
+    void ReceiveSocketData(nsAutoPtr<UnixSocketBuffer>& aBuffer) override;
 
     // ConnectionOrientedSocket
     //
 
-    ConnectionOrientedSocketIO* GetIO() MOZ_OVERRIDE;
+    ConnectionOrientedSocketIO* GetIO() override;
 
   private:
     KeyStore* mKeyStore;
@@ -150,7 +160,7 @@ private:
 
   ~KeyStore();
 
-  void ReceiveSocketData(nsAutoPtr<UnixSocketRawData>& aMessage);
+  void ReceiveSocketData(nsAutoPtr<UnixSocketBuffer>& aMessage);
 
   void OnConnectSuccess(enum SocketType aSocketType);
   void OnConnectError(enum SocketType aSocketType);
@@ -166,10 +176,10 @@ private:
   void ResetHandlerInfo();
   void Listen();
 
-  bool CheckSize(UnixSocketRawData *aMessage, size_t aExpectSize);
-  ResponseCode ReadCommand(UnixSocketRawData *aMessage);
-  ResponseCode ReadLength(UnixSocketRawData *aMessage);
-  ResponseCode ReadData(UnixSocketRawData *aMessage);
+  bool CheckSize(UnixSocketBuffer *aMessage, size_t aExpectSize);
+  ResponseCode ReadCommand(UnixSocketBuffer *aMessage);
+  ResponseCode ReadLength(UnixSocketBuffer *aMessage);
+  ResponseCode ReadData(UnixSocketBuffer *aMessage);
   void SendResponse(ResponseCode response);
   void SendData(const uint8_t *data, int length);
 

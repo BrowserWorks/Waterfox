@@ -1,0 +1,27 @@
+$inherits:
+  from: 'tasks/builds/b2g_emulator_base.yml'
+  variables:
+    build_name: 'emulator-jb'
+    build_type: 'opt'
+task:
+  workerType: emulator-jb
+  scopes:
+    - 'docker-worker:cache:workspace-emulator-jb-opt'
+  metadata:
+    name: '[TC] B2G JB Emulator: (Opt)'
+
+  extra:
+    treeherderEnv:
+      - production
+      - staging
+    # Disable "TC" prefix...
+    treeherder:
+      groupSymbol: "?"
+      machine:
+        platform: b2g-emu-jb
+
+  payload:
+    cache:
+      workspace-emulator-jb-opt: /home/worker/workspace
+    env:
+      TARGET: 'emulator-jb'

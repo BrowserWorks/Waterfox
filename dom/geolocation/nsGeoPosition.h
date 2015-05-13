@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -23,7 +24,7 @@
 /**
  * Simple object that holds a single point in space.
  */
-class nsGeoPositionCoords MOZ_FINAL : public nsIDOMGeoPositionCoords
+class nsGeoPositionCoords final : public nsIDOMGeoPositionCoords
 {
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
@@ -43,7 +44,7 @@ private:
 // nsGeoPosition
 ////////////////////////////////////////////////////
 
-class nsGeoPosition MOZ_FINAL : public nsIDOMGeoPosition
+class nsGeoPosition final : public nsIDOMGeoPosition
 {
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
@@ -76,8 +77,8 @@ namespace dom {
 
 class Coordinates;
 
-class Position MOZ_FINAL : public nsISupports,
-                           public nsWrapperCache
+class Position final : public nsISupports,
+                       public nsWrapperCache
 {
   ~Position();
 
@@ -90,7 +91,7 @@ public:
 
   nsISupports* GetParentObject() const;
 
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   Coordinates* Coords();
 
@@ -104,8 +105,8 @@ private:
   nsCOMPtr<nsIDOMGeoPosition> mGeoPosition;
 };
 
-class Coordinates MOZ_FINAL : public nsISupports,
-                              public nsWrapperCache
+class Coordinates final : public nsISupports,
+                          public nsWrapperCache
 {
   ~Coordinates();
 
@@ -118,7 +119,7 @@ public:
 
   Position* GetParentObject() const;
 
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   double Latitude() const;
 

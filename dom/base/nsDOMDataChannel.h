@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set sw=2 ts=8 et tw=80 : */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -18,15 +18,15 @@
 
 namespace mozilla {
 namespace dom {
-class File;
+class Blob;
 }
 
 class DataChannel;
 };
 
-class nsDOMDataChannel : public mozilla::DOMEventTargetHelper,
-                         public nsIDOMDataChannel,
-                         public mozilla::DataChannelListener
+class nsDOMDataChannel final : public mozilla::DOMEventTargetHelper,
+                               public nsIDOMDataChannel,
+                               public mozilla::DataChannelListener
 {
 public:
   nsDOMDataChannel(already_AddRefed<mozilla::DataChannel>& aDataChannel,
@@ -42,8 +42,8 @@ public:
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(nsDOMDataChannel,
                                            mozilla::DOMEventTargetHelper)
 
-  virtual JSObject* WrapObject(JSContext* aCx)
-    MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
+    override;
   nsPIDOMWindow* GetParentObject() const
   {
     return GetOwner();
@@ -70,7 +70,7 @@ public:
       static_cast<int>(aType));
   }
   void Send(const nsAString& aData, mozilla::ErrorResult& aRv);
-  void Send(mozilla::dom::File& aData, mozilla::ErrorResult& aRv);
+  void Send(mozilla::dom::Blob& aData, mozilla::ErrorResult& aRv);
   void Send(const mozilla::dom::ArrayBuffer& aData, mozilla::ErrorResult& aRv);
   void Send(const mozilla::dom::ArrayBufferView& aData,
             mozilla::ErrorResult& aRv);
@@ -84,18 +84,18 @@ public:
   DoOnMessageAvailable(const nsACString& aMessage, bool aBinary);
 
   virtual nsresult
-  OnMessageAvailable(nsISupports* aContext, const nsACString& aMessage) MOZ_OVERRIDE;
+  OnMessageAvailable(nsISupports* aContext, const nsACString& aMessage) override;
 
   virtual nsresult
-  OnBinaryMessageAvailable(nsISupports* aContext, const nsACString& aMessage) MOZ_OVERRIDE;
+  OnBinaryMessageAvailable(nsISupports* aContext, const nsACString& aMessage) override;
 
   virtual nsresult OnSimpleEvent(nsISupports* aContext, const nsAString& aName);
 
   virtual nsresult
-  OnChannelConnected(nsISupports* aContext) MOZ_OVERRIDE;
+  OnChannelConnected(nsISupports* aContext) override;
 
   virtual nsresult
-  OnChannelClosed(nsISupports* aContext) MOZ_OVERRIDE;
+  OnChannelClosed(nsISupports* aContext) override;
 
   virtual void
   AppReady();

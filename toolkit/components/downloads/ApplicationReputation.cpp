@@ -43,6 +43,10 @@
 #include "nsThreadUtils.h"
 #include "nsXPCOMStrings.h"
 
+#include "nsIContentPolicy.h"
+#include "nsILoadInfo.h"
+#include "nsContentUtils.h"
+
 using mozilla::Preferences;
 using mozilla::TimeStamp;
 using mozilla::Telemetry::Accumulate;
@@ -76,7 +80,7 @@ class PendingDBLookup;
 // nsIApplicationReputationQuery and an nsIApplicationReputationCallback. Once
 // created by ApplicationReputationService, it is guaranteed to call mCallback.
 // This class is private to ApplicationReputationService.
-class PendingLookup MOZ_FINAL : public nsIStreamListener
+class PendingLookup final : public nsIStreamListener
 {
 public:
   NS_DECL_ISUPPORTS
@@ -137,8 +141,11 @@ private:
   // NULLs.
   nsCString mResponse;
 
-  // Returns true if the file is likely to be binary on Windows.
+  // Returns true if the file is likely to be binary.
   bool IsBinaryFile();
+
+  // Returns the type of download binary for the file.
+  ClientDownloadRequest::DownloadType GetDownloadType(const nsAString& aFilename);
 
   // Clean up and call the callback. PendingLookup must not be used after this
   // function is called.
@@ -205,7 +212,7 @@ private:
 
 // A single-use class for looking up a single URI in the safebrowsing DB. This
 // class is private to PendingLookup.
-class PendingDBLookup MOZ_FINAL : public nsIUrlClassifierCallback
+class PendingDBLookup final : public nsIUrlClassifierCallback
 {
 public:
   NS_DECL_ISUPPORTS
@@ -292,6 +299,8 @@ PendingDBLookup::LookupSpecInternal(const nsACString& aSpec)
   LOG(("Checking DB service for principal %s [this = %p]", mSpec.get(), this));
   nsCOMPtr<nsIUrlClassifierDBService> dbService =
     do_GetService(NS_URLCLASSIFIERDBSERVICE_CONTRACTID, &rv);
+  NS_ENSURE_SUCCESS(rv, rv);
+
   nsAutoCString tables;
   nsAutoCString allowlist;
   Preferences::GetCString(PREF_DOWNLOAD_ALLOW_TABLE, &allowlist);
@@ -369,9 +378,10 @@ PendingLookup::IsBinaryFile()
   LOG(("Suggested filename: %s [this = %p]",
        NS_ConvertUTF16toUTF8(fileName).get(), this));
   return
-    // Executable extensions for MS Windows, from
-    // https://code.google.com/p/chromium/codesearch#chromium/src/chrome/common/safe_browsing/download_protection_util.cc&l=14
+    // From https://code.google.com/p/chromium/codesearch#chromium/src/chrome/common/safe_browsing/download_protection_util.cc&l=14
+    // Android extensions
     StringEndsWith(fileName, NS_LITERAL_STRING(".apk")) ||
+    // Windows extensions
     StringEndsWith(fileName, NS_LITERAL_STRING(".bas")) ||
     StringEndsWith(fileName, NS_LITERAL_STRING(".bat")) ||
     StringEndsWith(fileName, NS_LITERAL_STRING(".cab")) ||
@@ -385,7 +395,32 @@ PendingLookup::IsBinaryFile()
     StringEndsWith(fileName, NS_LITERAL_STRING(".scr")) ||
     StringEndsWith(fileName, NS_LITERAL_STRING(".vb")) ||
     StringEndsWith(fileName, NS_LITERAL_STRING(".vbs")) ||
+    // Mac extensions
+    StringEndsWith(fileName, NS_LITERAL_STRING(".app")) ||
+    StringEndsWith(fileName, NS_LITERAL_STRING(".dmg")) ||
+    StringEndsWith(fileName, NS_LITERAL_STRING(".osx")) ||
+    StringEndsWith(fileName, NS_LITERAL_STRING(".pkg")) ||
+    // Archives _may_ contain binaries
     StringEndsWith(fileName, NS_LITERAL_STRING(".zip"));
+}
+
+ClientDownloadRequest::DownloadType
+PendingLookup::GetDownloadType(const nsAString& aFilename) {
+  MOZ_ASSERT(IsBinaryFile());
+
+  // From https://code.google.com/p/chromium/codesearch#chromium/src/chrome/common/safe_browsing/download_protection_util.cc&l=46
+  if (StringEndsWith(aFilename, NS_LITERAL_STRING(".zip"))) {
+    return ClientDownloadRequest::ZIPPED_EXECUTABLE;
+  } else if (StringEndsWith(aFilename, NS_LITERAL_STRING(".apk"))) {
+    return ClientDownloadRequest::ANDROID_APK;
+  } else if (StringEndsWith(aFilename, NS_LITERAL_STRING(".app")) ||
+             StringEndsWith(aFilename, NS_LITERAL_STRING(".dmg")) ||
+             StringEndsWith(aFilename, NS_LITERAL_STRING(".osx")) ||
+             StringEndsWith(aFilename, NS_LITERAL_STRING(".pkg"))) {
+    return ClientDownloadRequest::MAC_EXECUTABLE;
+  }
+
+  return ClientDownloadRequest::WIN_EXECUTABLE; // default to Windows binaries
 }
 
 nsresult
@@ -423,23 +458,17 @@ PendingLookup::LookupNext()
     nsRefPtr<PendingDBLookup> lookup(new PendingDBLookup(this));
     return lookup->LookupSpec(spec, true);
   }
-#ifdef XP_WIN
   // There are no more URIs to check against local list. If the file is
   // not eligible for remote lookup, bail.
   if (!IsBinaryFile()) {
     LOG(("Not eligible for remote lookups [this=%x]", this));
     return OnComplete(false, NS_OK);
   }
-  // Send the remote query if we are on Windows.
   nsresult rv = SendRemoteQuery();
   if (NS_FAILED(rv)) {
     return OnComplete(false, rv);
   }
   return NS_OK;
-#else
-  LOG(("PendingLookup: Nothing left to check [this=%p]", this));
-  return OnComplete(false, NS_OK);
-#endif
 }
 
 nsCString
@@ -779,7 +808,7 @@ PendingLookup::ParseCertificates(nsIArray* aSigArray)
 
       // Add this certificate to the protobuf to send remotely.
       certChain->add_element()->set_certificate(data, len);
-      nsMemory::Free(data);
+      free(data);
 
       rv = chainElt->HasMoreElements(&hasMoreCerts);
       NS_ENSURE_SUCCESS(rv, rv);
@@ -812,6 +841,7 @@ PendingLookup::SendRemoteQueryInternal()
 {
   // If we aren't supposed to do remote lookups, bail.
   if (!Preferences::GetBool(PREF_SB_DOWNLOADS_REMOTE_ENABLED, false)) {
+    LOG(("Remote lookups are disabled [this = %p]", this));
     return NS_ERROR_NOT_AVAILABLE;
   }
   // If the remote lookup URL is empty or absent, bail.
@@ -819,6 +849,7 @@ PendingLookup::SendRemoteQueryInternal()
   NS_ENSURE_SUCCESS(Preferences::GetCString(PREF_SB_APP_REP_URL, &serviceUrl),
                     NS_ERROR_NOT_AVAILABLE);
   if (serviceUrl.EqualsLiteral("")) {
+    LOG(("Remote lookup URL is empty [this = %p]", this));
     return NS_ERROR_NOT_AVAILABLE;
   }
 
@@ -828,13 +859,18 @@ PendingLookup::SendRemoteQueryInternal()
   NS_ENSURE_SUCCESS(Preferences::GetCString(PREF_DOWNLOAD_BLOCK_TABLE, &table),
                     NS_ERROR_NOT_AVAILABLE);
   if (table.EqualsLiteral("")) {
+    LOG(("Blocklist is empty [this = %p]", this));
     return NS_ERROR_NOT_AVAILABLE;
   }
+#ifdef XP_WIN
+  // The allowlist is only needed to do signature verification on Windows
   NS_ENSURE_SUCCESS(Preferences::GetCString(PREF_DOWNLOAD_ALLOW_TABLE, &table),
                     NS_ERROR_NOT_AVAILABLE);
   if (table.EqualsLiteral("")) {
+    LOG(("Allowlist is empty [this = %p]", this));
     return NS_ERROR_NOT_AVAILABLE;
   }
+#endif
 
   LOG(("Sending remote query for application reputation [this = %p]",
        this));
@@ -869,6 +905,7 @@ PendingLookup::SendRemoteQueryInternal()
   rv = mQuery->GetSuggestedFileName(fileName);
   NS_ENSURE_SUCCESS(rv, rv);
   mRequest.set_file_basename(NS_ConvertUTF16toUTF8(fileName).get());
+  mRequest.set_download_type(GetDownloadType(fileName));
 
   if (mRequest.signature().trusted()) {
     LOG(("Got signed binary for remote application reputation check "
@@ -885,6 +922,8 @@ PendingLookup::SendRemoteQueryInternal()
   if (!mRequest.SerializeToString(&serialized)) {
     return NS_ERROR_UNEXPECTED;
   }
+  LOG(("Serialized protocol buffer [this = %p]: (length=%d) %s", this,
+       serialized.length(), serialized.c_str()));
 
   // Set the input stream to the serialized protocol buffer
   nsCOMPtr<nsIStringInputStream> sstream =
@@ -897,7 +936,15 @@ PendingLookup::SendRemoteQueryInternal()
   // Set up the channel to transmit the request to the service.
   nsCOMPtr<nsIChannel> channel;
   nsCOMPtr<nsIIOService> ios = do_GetService(NS_IOSERVICE_CONTRACTID, &rv);
-  rv = ios->NewChannel(serviceUrl, nullptr, nullptr, getter_AddRefs(channel));
+  rv = ios->NewChannel2(serviceUrl,
+                        nullptr,
+                        nullptr,
+                        nullptr, // aLoadingNode
+                        nsContentUtils::GetSystemPrincipal(),
+                        nullptr, // aTriggeringPrincipal
+                        nsILoadInfo::SEC_NORMAL,
+                        nsIContentPolicy::TYPE_OTHER,
+                        getter_AddRefs(channel));
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsCOMPtr<nsIHttpChannel> httpChannel(do_QueryInterface(channel, &rv));
@@ -1006,7 +1053,7 @@ PendingLookup::OnStopRequestInternal(nsIRequest *aRequest,
   std::string buf(mResponse.Data(), mResponse.Length());
   safe_browsing::ClientDownloadResponse response;
   if (!response.ParseFromString(buf)) {
-    NS_WARNING("Could not parse protocol buffer");
+    LOG(("Invalid protocol buffer response [this = %p]: %s", this, buf.c_str()));
     Accumulate(mozilla::Telemetry::APPLICATION_REPUTATION_SERVER,
                                    SERVER_RESPONSE_INVALID);
     return NS_ERROR_CANNOT_CONVERT_DATA;

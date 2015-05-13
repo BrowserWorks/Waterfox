@@ -20,8 +20,6 @@ void DisableMD5();
 
 extern const char BUILTIN_ROOTS_MODULE_DEFAULT_NAME[];
 
-void PORT_Free_string(char* str);
-
 // The dir parameter is the path to the directory containing the NSS builtin
 // roots module. Usually this is the same as the path to the other NSS shared
 // libraries. If it is null then the (library) path will be searched.
@@ -54,33 +52,45 @@ public:
 
   NSSCertDBTrustDomain(SECTrustType certDBTrustType, OCSPFetching ocspFetching,
                        OCSPCache& ocspCache, void* pinArg,
-                       CertVerifier::ocsp_get_config ocspGETConfig,
+                       CertVerifier::OcspGetConfig ocspGETConfig,
                        CertVerifier::PinningMode pinningMode,
-                       bool forEV,
+                       unsigned int minRSABits,
           /*optional*/ const char* hostname = nullptr,
       /*optional out*/ ScopedCERTCertList* builtChain = nullptr);
 
   virtual Result FindIssuer(mozilla::pkix::Input encodedIssuerName,
                             IssuerChecker& checker,
-                            mozilla::pkix::Time time) MOZ_OVERRIDE;
+                            mozilla::pkix::Time time) override;
 
   virtual Result GetCertTrust(mozilla::pkix::EndEntityOrCA endEntityOrCA,
                               const mozilla::pkix::CertPolicyId& policy,
                               mozilla::pkix::Input candidateCertDER,
                               /*out*/ mozilla::pkix::TrustLevel& trustLevel)
-                              MOZ_OVERRIDE;
+                              override;
 
-  virtual Result CheckPublicKey(mozilla::pkix::Input subjectPublicKeyInfo)
-                                MOZ_OVERRIDE;
+  virtual Result CheckSignatureDigestAlgorithm(
+                   mozilla::pkix::DigestAlgorithm digestAlg) override;
 
-  virtual Result VerifySignedData(
-                   const mozilla::pkix::SignedDataWithSignature& signedData,
-                   mozilla::pkix::Input subjectPublicKeyInfo)
-                   MOZ_OVERRIDE;
+  virtual Result CheckRSAPublicKeyModulusSizeInBits(
+                   mozilla::pkix::EndEntityOrCA endEntityOrCA,
+                   unsigned int modulusSizeInBits) override;
+
+  virtual Result VerifyRSAPKCS1SignedDigest(
+                   const mozilla::pkix::SignedDigest& signedDigest,
+                   mozilla::pkix::Input subjectPublicKeyInfo) override;
+
+  virtual Result CheckECDSACurveIsAcceptable(
+                   mozilla::pkix::EndEntityOrCA endEntityOrCA,
+                   mozilla::pkix::NamedCurve curve) override;
+
+  virtual Result VerifyECDSASignedDigest(
+                   const mozilla::pkix::SignedDigest& signedDigest,
+                   mozilla::pkix::Input subjectPublicKeyInfo) override;
 
   virtual Result DigestBuf(mozilla::pkix::Input item,
+                           mozilla::pkix::DigestAlgorithm digestAlg,
                            /*out*/ uint8_t* digestBuf,
-                           size_t digestBufLen) MOZ_OVERRIDE;
+                           size_t digestBufLen) override;
 
   virtual Result CheckRevocation(
                    mozilla::pkix::EndEntityOrCA endEntityOrCA,
@@ -88,10 +98,10 @@ public:
                    mozilla::pkix::Time time,
       /*optional*/ const mozilla::pkix::Input* stapledOCSPResponse,
       /*optional*/ const mozilla::pkix::Input* aiaExtension)
-                   MOZ_OVERRIDE;
+                   override;
 
   virtual Result IsChainValid(const mozilla::pkix::DERArray& certChain,
-                              mozilla::pkix::Time time) MOZ_OVERRIDE;
+                              mozilla::pkix::Time time) override;
 
   CertVerifier::OCSPStaplingStatus GetOCSPStaplingStatus() const
   {
@@ -116,9 +126,9 @@ private:
   const OCSPFetching mOCSPFetching;
   OCSPCache& mOCSPCache; // non-owning!
   void* mPinArg; // non-owning!
-  const CertVerifier::ocsp_get_config mOCSPGetConfig;
+  const CertVerifier::OcspGetConfig mOCSPGetConfig;
   CertVerifier::PinningMode mPinningMode;
-  const unsigned int mMinimumNonECCBits;
+  const unsigned int mMinRSABits;
   const char* mHostname; // non-owning - only used for pinning checks
   ScopedCERTCertList* mBuiltChain; // non-owning
   nsCOMPtr<nsICertBlocklist> mCertBlocklist;

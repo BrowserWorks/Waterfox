@@ -56,6 +56,8 @@ function test() {
         SIMPLE_SJS, "The url summary tooltiptext is incorrect.");
       is(tabpanel.querySelector("#headers-summary-method-value").getAttribute("value"),
         "GET", "The method summary value is incorrect.");
+      is(tabpanel.querySelector("#headers-summary-address-value").getAttribute("value"),
+        "127.0.0.1:8888", "The remote address summary value is incorrect.");
       is(tabpanel.querySelector("#headers-summary-status-circle").getAttribute("code"),
         "200", "The status summary code is incorrect.");
       is(tabpanel.querySelector("#headers-summary-status-value").getAttribute("value"),
@@ -77,7 +79,7 @@ function test() {
         L10N.getFormatStr("networkMenu.sizeKB", L10N.numberWithDecimals(330/1024, 3)) + ")",
         "The response headers scope doesn't have the correct title.");
 
-      ok(requestScope.querySelector(".name").getAttribute("value").contains(
+      ok(requestScope.querySelector(".name").getAttribute("value").includes(
         L10N.getStr("requestHeaders") + " (0"),
         "The request headers scope doesn't have the correct title.");
       // Can't test for full request headers title because the size may

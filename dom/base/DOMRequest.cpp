@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -25,7 +25,7 @@ using mozilla::AutoSafeJSContext;
 DOMRequest::DOMRequest(nsPIDOMWindow* aWindow)
   : DOMEventTargetHelper(aWindow->IsInnerWindow() ?
                            aWindow : aWindow->GetCurrentInnerWindow())
-  , mResult(JSVAL_VOID)
+  , mResult(JS::UndefinedValue())
   , mDone(false)
 {
 }
@@ -48,7 +48,7 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(DOMRequest,
                                                 DOMEventTargetHelper)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mError)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mPromise)
-  tmp->mResult = JSVAL_VOID;
+  tmp->mResult.setUndefined();
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN_INHERITED(DOMRequest,
@@ -66,9 +66,9 @@ NS_IMPL_ADDREF_INHERITED(DOMRequest, DOMEventTargetHelper)
 NS_IMPL_RELEASE_INHERITED(DOMRequest, DOMEventTargetHelper)
 
 /* virtual */ JSObject*
-DOMRequest::WrapObject(JSContext* aCx)
+DOMRequest::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return DOMRequestBinding::Wrap(aCx, this);
+  return DOMRequestBinding::Wrap(aCx, this, aGivenProto);
 }
 
 NS_IMPL_EVENT_HANDLER(DOMRequest, success)
@@ -111,7 +111,7 @@ DOMRequest::FireSuccess(JS::Handle<JS::Value> aResult)
 {
   NS_ASSERTION(!mDone, "mDone shouldn't have been set to true already!");
   NS_ASSERTION(!mError, "mError shouldn't have been set!");
-  NS_ASSERTION(mResult == JSVAL_VOID, "mResult shouldn't have been set!");
+  NS_ASSERTION(mResult.isUndefined(), "mResult shouldn't have been set!");
 
   mDone = true;
   if (aResult.isGCThing()) {
@@ -131,7 +131,7 @@ DOMRequest::FireError(const nsAString& aError)
 {
   NS_ASSERTION(!mDone, "mDone shouldn't have been set to true already!");
   NS_ASSERTION(!mError, "mError shouldn't have been set!");
-  NS_ASSERTION(mResult == JSVAL_VOID, "mResult shouldn't have been set!");
+  NS_ASSERTION(mResult.isUndefined(), "mResult shouldn't have been set!");
 
   mDone = true;
   mError = new DOMError(GetOwner(), aError);
@@ -148,7 +148,7 @@ DOMRequest::FireError(nsresult aError)
 {
   NS_ASSERTION(!mDone, "mDone shouldn't have been set to true already!");
   NS_ASSERTION(!mError, "mError shouldn't have been set!");
-  NS_ASSERTION(mResult == JSVAL_VOID, "mResult shouldn't have been set!");
+  NS_ASSERTION(mResult.isUndefined(), "mResult shouldn't have been set!");
 
   mDone = true;
   mError = new DOMError(GetOwner(), aError);
@@ -165,7 +165,7 @@ DOMRequest::FireDetailedError(DOMError* aError)
 {
   NS_ASSERTION(!mDone, "mDone shouldn't have been set to true already!");
   NS_ASSERTION(!mError, "mError shouldn't have been set!");
-  NS_ASSERTION(mResult == JSVAL_VOID, "mResult shouldn't have been set!");
+  NS_ASSERTION(mResult.isUndefined(), "mResult shouldn't have been set!");
   NS_ASSERTION(aError, "No detailed error provided");
 
   mDone = true;

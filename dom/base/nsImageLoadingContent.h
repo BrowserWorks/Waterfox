@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-// vim: ft=cpp tw=78 sw=2 et ts=2
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -27,8 +27,6 @@
 
 class nsIURI;
 class nsIDocument;
-class imgILoader;
-class nsIIOService;
 class nsPresContext;
 class nsIContent;
 class imgRequestProxy;
@@ -316,9 +314,12 @@ protected:
 
   /**
    * Cancels and nulls-out the "current" and "pending" requests if they exist.
+   * 
+   * @param aNonvisibleAction An action to take if the image is no longer
+   *                          visible as a result; see |UntrackImage|.
    */
-  void ClearCurrentRequest(nsresult aReason, uint32_t aFlags);
-  void ClearPendingRequest(nsresult aReason, uint32_t aFlags);
+  void ClearCurrentRequest(nsresult aReason, uint32_t aNonvisibleAction);
+  void ClearPendingRequest(nsresult aReason, uint32_t aNonvisibleAction);
 
   /**
    * Retrieve a pointer to the 'registered with the refresh driver' flag for
@@ -347,14 +348,14 @@ protected:
    *
    * No-op if aImage is null.
    *
-   * REQUEST_DISCARD passed to UntrackImage means we request the discard of the
-   * decoded data of the image.
+   * @param aNonvisibleAction What to do if the image's visibility count is now
+   *                          zero. If ON_NONVISIBLE_NO_ACTION, nothing will be
+   *                          done. If ON_NONVISIBLE_REQUEST_DISCARD, the image
+   *                          will be asked to discard its surfaces if possible.
    */
   void TrackImage(imgIRequest* aImage);
-  enum {
-    REQUEST_DISCARD = 0x1
-  };
-  void UntrackImage(imgIRequest* aImage, uint32_t aFlags = 0);
+  void UntrackImage(imgIRequest* aImage,
+                    uint32_t aNonvisibleAction = ON_NONVISIBLE_NO_ACTION);
 
   /* MEMBERS */
   nsRefPtr<imgRequestProxy> mCurrentRequest;

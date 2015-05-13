@@ -301,33 +301,17 @@ nsHTMLCSSUtils::~nsHTMLCSSUtils()
 // Answers true if we have some CSS equivalence for the HTML style defined
 // by aProperty and/or aAttribute for the node aNode
 bool
-nsHTMLCSSUtils::IsCSSEditableProperty(nsIDOMNode* aNode,
-                                      nsIAtom* aProperty,
-                                      const nsAString* aAttribute)
-{
-  NS_ASSERTION(aNode, "Shouldn't you pass aNode? - Bug 214025");
-
-  nsCOMPtr<nsIContent> content = do_QueryInterface(aNode);
-  NS_ENSURE_TRUE(content, false);
-  return IsCSSEditableProperty(content, aProperty, aAttribute);
-}
-
-bool
-nsHTMLCSSUtils::IsCSSEditableProperty(nsIContent* aNode,
-                                      nsIAtom* aProperty,
+nsHTMLCSSUtils::IsCSSEditableProperty(nsINode* aNode, nsIAtom* aProperty,
                                       const nsAString* aAttribute)
 {
   MOZ_ASSERT(aNode);
 
-  nsIContent* content = aNode;
+  nsINode* node = aNode;
   // we need an element node here
-  if (content->NodeType() == nsIDOMNode::TEXT_NODE) {
-    content = content->GetParent();
-    NS_ENSURE_TRUE(content, false);
+  if (node->NodeType() == nsIDOMNode::TEXT_NODE) {
+    node = node->GetParentNode();
+    NS_ENSURE_TRUE(node, false);
   }
-
-  nsIAtom *tagName = content->Tag();
-  // brade: shouldn't some of the above go below the next block?
 
   // html inline styles B I TT U STRIKE and COLOR/FACE on FONT
   if (nsGkAtoms::b == aProperty ||
@@ -343,41 +327,42 @@ nsHTMLCSSUtils::IsCSSEditableProperty(nsIContent* aNode,
 
   // ALIGN attribute on elements supporting it
   if (aAttribute && (aAttribute->EqualsLiteral("align")) &&
-      (nsGkAtoms::div == tagName ||
-       nsGkAtoms::p   == tagName ||
-       nsGkAtoms::h1  == tagName ||
-       nsGkAtoms::h2  == tagName ||
-       nsGkAtoms::h3  == tagName ||
-       nsGkAtoms::h4  == tagName ||
-       nsGkAtoms::h5  == tagName ||
-       nsGkAtoms::h6  == tagName ||
-       nsGkAtoms::td  == tagName ||
-       nsGkAtoms::th  == tagName ||
-       nsGkAtoms::table  == tagName ||
-       nsGkAtoms::hr  == tagName ||
-       // brade: for the above, why not use nsHTMLEditUtils::SupportsAlignAttr
-       // brade: but it also checks for tbody, tfoot, thead
-       // Let's add the following elements here even if ALIGN has not
-       // the same meaning for them
-       nsGkAtoms::legend  == tagName ||
-       nsGkAtoms::caption == tagName)) {
+      node->IsAnyOfHTMLElements(nsGkAtoms::div,
+                                nsGkAtoms::p,
+                                nsGkAtoms::h1,
+                                nsGkAtoms::h2,
+                                nsGkAtoms::h3,
+                                nsGkAtoms::h4,
+                                nsGkAtoms::h5,
+                                nsGkAtoms::h6,
+                                nsGkAtoms::td,
+                                nsGkAtoms::th,
+                                nsGkAtoms::table,
+                                nsGkAtoms::hr,
+                                // For the above, why not use
+                                // nsHTMLEditUtils::SupportsAlignAttr?
+                                // It also checks for tbody, tfoot, thead.
+                                // Let's add the following elements here even
+                                // if "align" has a different meaning for them
+                                nsGkAtoms::legend,
+                                nsGkAtoms::caption)) {
     return true;
   }
 
   if (aAttribute && (aAttribute->EqualsLiteral("valign")) &&
-      (nsGkAtoms::col == tagName ||
-       nsGkAtoms::colgroup   == tagName ||
-       nsGkAtoms::tbody  == tagName ||
-       nsGkAtoms::td  == tagName ||
-       nsGkAtoms::th  == tagName ||
-       nsGkAtoms::tfoot  == tagName ||
-       nsGkAtoms::thead  == tagName ||
-       nsGkAtoms::tr  == tagName)) {
+      node->IsAnyOfHTMLElements(nsGkAtoms::col,
+                                nsGkAtoms::colgroup,
+                                nsGkAtoms::tbody,
+                                nsGkAtoms::td,
+                                nsGkAtoms::th,
+                                nsGkAtoms::tfoot,
+                                nsGkAtoms::thead,
+                                nsGkAtoms::tr)) {
     return true;
   }
 
   // attributes TEXT, BACKGROUND and BGCOLOR on BODY
-  if (aAttribute && nsGkAtoms::body == tagName &&
+  if (aAttribute && node->IsHTMLElement(nsGkAtoms::body) &&
       (aAttribute->EqualsLiteral("text")
        || aAttribute->EqualsLiteral("background")
        || aAttribute->EqualsLiteral("bgcolor"))) {
@@ -390,7 +375,8 @@ nsHTMLCSSUtils::IsCSSEditableProperty(nsIContent* aNode,
   }
 
   // attributes HEIGHT, WIDTH and NOWRAP on TD and TH
-  if (aAttribute && (nsGkAtoms::td == tagName || nsGkAtoms::th == tagName) &&
+  if (aAttribute &&
+      node->IsAnyOfHTMLElements(nsGkAtoms::td, nsGkAtoms::th) &&
       (aAttribute->EqualsLiteral("height")
        || aAttribute->EqualsLiteral("width")
        || aAttribute->EqualsLiteral("nowrap"))) {
@@ -398,14 +384,14 @@ nsHTMLCSSUtils::IsCSSEditableProperty(nsIContent* aNode,
   }
 
   // attributes HEIGHT and WIDTH on TABLE
-  if (aAttribute && nsGkAtoms::table == tagName &&
+  if (aAttribute && node->IsHTMLElement(nsGkAtoms::table) &&
       (aAttribute->EqualsLiteral("height")
        || aAttribute->EqualsLiteral("width"))) {
     return true;
   }
 
   // attributes SIZE and WIDTH on HR
-  if (aAttribute && nsGkAtoms::hr == tagName &&
+  if (aAttribute && node->IsHTMLElement(nsGkAtoms::hr) &&
       (aAttribute->EqualsLiteral("size")
        || aAttribute->EqualsLiteral("width"))) {
     return true;
@@ -413,12 +399,13 @@ nsHTMLCSSUtils::IsCSSEditableProperty(nsIContent* aNode,
 
   // attribute TYPE on OL UL LI
   if (aAttribute &&
-      (nsGkAtoms::ol == tagName || nsGkAtoms::ul == tagName ||
-       nsGkAtoms::li == tagName) && aAttribute->EqualsLiteral("type")) {
+      node->IsAnyOfHTMLElements(nsGkAtoms::ol, nsGkAtoms::ul,
+                                nsGkAtoms::li) &&
+      aAttribute->EqualsLiteral("type")) {
     return true;
   }
 
-  if (aAttribute && nsGkAtoms::img == tagName &&
+  if (aAttribute && node->IsHTMLElement(nsGkAtoms::img) &&
       (aAttribute->EqualsLiteral("border")
        || aAttribute->EqualsLiteral("width")
        || aAttribute->EqualsLiteral("height"))) {
@@ -428,15 +415,14 @@ nsHTMLCSSUtils::IsCSSEditableProperty(nsIContent* aNode,
   // other elements that we can align using CSS even if they
   // can't carry the html ALIGN attribute
   if (aAttribute && aAttribute->EqualsLiteral("align") &&
-      (nsGkAtoms::ul == tagName ||
-       nsGkAtoms::ol == tagName ||
-       nsGkAtoms::dl == tagName ||
-       nsGkAtoms::li == tagName ||
-       nsGkAtoms::dd == tagName ||
-       nsGkAtoms::dt == tagName ||
-       nsGkAtoms::address == tagName ||
-       nsGkAtoms::pre == tagName ||
-       nsGkAtoms::ul == tagName)) {
+      node->IsAnyOfHTMLElements(nsGkAtoms::ul,
+                                nsGkAtoms::ol,
+                                nsGkAtoms::dl,
+                                nsGkAtoms::li,
+                                nsGkAtoms::dd,
+                                nsGkAtoms::dt,
+                                nsGkAtoms::address,
+                                nsGkAtoms::pre)) {
     return true;
   }
 
@@ -493,26 +479,17 @@ nsHTMLCSSUtils::CreateCSSPropertyTxn(Element& aElement, nsIAtom& aAttribute,
 }
 
 nsresult
-nsHTMLCSSUtils::GetSpecifiedProperty(nsIDOMNode *aNode, nsIAtom *aProperty,
-                                     nsAString & aValue)
+nsHTMLCSSUtils::GetSpecifiedProperty(nsINode& aNode, nsIAtom& aProperty,
+                                     nsAString& aValue)
 {
-  return GetCSSInlinePropertyBase(aNode, aProperty, aValue, eSpecified);
+  return GetCSSInlinePropertyBase(&aNode, &aProperty, aValue, eSpecified);
 }
 
 nsresult
-nsHTMLCSSUtils::GetComputedProperty(nsIDOMNode *aNode, nsIAtom *aProperty,
-                                    nsAString & aValue)
+nsHTMLCSSUtils::GetComputedProperty(nsINode& aNode, nsIAtom& aProperty,
+                                    nsAString& aValue)
 {
-  return GetCSSInlinePropertyBase(aNode, aProperty, aValue, eComputed);
-}
-
-nsresult
-nsHTMLCSSUtils::GetCSSInlinePropertyBase(nsIDOMNode* aNode, nsIAtom* aProperty,
-                                         nsAString& aValue,
-                                         StyleType aStyleType)
-{
-  nsCOMPtr<nsINode> node = do_QueryInterface(aNode);
-  return GetCSSInlinePropertyBase(node, aProperty, aValue, aStyleType);
+  return GetCSSInlinePropertyBase(&aNode, &aProperty, aValue, eComputed);
 }
 
 nsresult
@@ -553,13 +530,6 @@ nsHTMLCSSUtils::GetCSSInlinePropertyBase(nsINode* aNode, nsIAtom* aProperty,
 }
 
 already_AddRefed<nsComputedDOMStyle>
-nsHTMLCSSUtils::GetComputedStyle(nsIDOMElement* aElement)
-{
-  nsCOMPtr<dom::Element> element = do_QueryInterface(aElement);
-  return GetComputedStyle(element);
-}
-
-already_AddRefed<nsComputedDOMStyle>
 nsHTMLCSSUtils::GetComputedStyle(dom::Element* aElement)
 {
   MOZ_ASSERT(aElement);
@@ -588,7 +558,7 @@ nsHTMLCSSUtils::RemoveCSSInlineStyle(nsIDOMNode *aNode, nsIAtom *aProperty, cons
   nsresult res = RemoveCSSProperty(*element, *aProperty, aPropertyValue);
   NS_ENSURE_SUCCESS(res, res);
 
-  if (!element->IsHTML(nsGkAtoms::span) ||
+  if (!element->IsHTMLElement(nsGkAtoms::span) ||
       nsHTMLEditor::HasAttributes(element)) {
     return NS_OK;
   }
@@ -596,12 +566,12 @@ nsHTMLCSSUtils::RemoveCSSInlineStyle(nsIDOMNode *aNode, nsIAtom *aProperty, cons
   return mHTMLEditor->RemoveContainer(element);
 }
 
-// Answers true is the property can be removed by setting a "none" CSS value
+// Answers true if the property can be removed by setting a "none" CSS value
 // on a node
 bool
-nsHTMLCSSUtils::IsCSSInvertable(nsIAtom *aProperty, const nsAString *aAttribute)
+nsHTMLCSSUtils::IsCSSInvertible(nsIAtom& aProperty, const nsAString* aAttribute)
 {
-  return nsGkAtoms::b == aProperty;
+  return nsGkAtoms::b == &aProperty;
 }
 
 // Get the default browser background color if we need it for GetCSSBackgroundColorState
@@ -810,7 +780,6 @@ nsHTMLCSSUtils::GenerateCSSDeclarationsFromHTMLStyle(dom::Element* aElement,
                                                      bool aGetOrRemoveRequest)
 {
   MOZ_ASSERT(aElement);
-  nsIAtom* tagName = aElement->Tag();
   const nsHTMLCSSUtils::CSSEquivTable* equivTable = nullptr;
 
   if (nsGkAtoms::b == aHTMLProperty) {
@@ -839,12 +808,12 @@ nsHTMLCSSUtils::GenerateCSSDeclarationsFromHTMLStyle(dom::Element* aElement,
     } else if (aAttribute->EqualsLiteral("border")) {
       equivTable = borderEquivTable;
     } else if (aAttribute->EqualsLiteral("align")) {
-      if (nsGkAtoms::table  == tagName) {
+      if (aElement->IsHTMLElement(nsGkAtoms::table)) {
         equivTable = tableAlignEquivTable;
-      } else if (nsGkAtoms::hr  == tagName) {
+      } else if (aElement->IsHTMLElement(nsGkAtoms::hr)) {
         equivTable = hrAlignEquivTable;
-      } else if (nsGkAtoms::legend  == tagName ||
-                 nsGkAtoms::caption == tagName) {
+      } else if (aElement->IsAnyOfHTMLElements(nsGkAtoms::legend,
+                                               nsGkAtoms::caption)) {
         equivTable = captionAlignEquivTable;
       } else {
         equivTable = textAlignEquivTable;
@@ -856,13 +825,13 @@ nsHTMLCSSUtils::GenerateCSSDeclarationsFromHTMLStyle(dom::Element* aElement,
     } else if (aAttribute->EqualsLiteral("width")) {
       equivTable = widthEquivTable;
     } else if (aAttribute->EqualsLiteral("height") ||
-               (nsGkAtoms::hr == tagName &&
+               (aElement->IsHTMLElement(nsGkAtoms::hr) &&
                 aAttribute->EqualsLiteral("size"))) {
       equivTable = heightEquivTable;
     } else if (aAttribute->EqualsLiteral("type") &&
-               (nsGkAtoms::ol == tagName ||
-                nsGkAtoms::ul == tagName ||
-                nsGkAtoms::li == tagName)) {
+               aElement->IsAnyOfHTMLElements(nsGkAtoms::ol,
+                                             nsGkAtoms::ul,
+                                             nsGkAtoms::li)) {
       equivTable = listStyleTypeEquivTable;
     }
   }
@@ -1032,19 +1001,30 @@ nsHTMLCSSUtils::GetCSSEquivalentToHTMLInlineStyleSet(nsINode* aNode,
 // The nsIContent variant returns aIsSet instead of using an out parameter, and
 // does not modify aValue.
 bool
-nsHTMLCSSUtils::IsCSSEquivalentToHTMLInlineStyleSet(nsIContent* aContent,
+nsHTMLCSSUtils::IsCSSEquivalentToHTMLInlineStyleSet(nsINode* aNode,
                                                     nsIAtom* aProperty,
                                                     const nsAString* aAttribute,
                                                     const nsAString& aValue,
                                                     StyleType aStyleType)
 {
-  MOZ_ASSERT(aContent && aProperty);
-  bool isSet;
+  // Use aValue as only an in param, not in-out
   nsAutoString value(aValue);
-  nsresult res = IsCSSEquivalentToHTMLInlineStyleSet(aContent->AsDOMNode(),
+  return IsCSSEquivalentToHTMLInlineStyleSet(aNode, aProperty, aAttribute,
+                                             value, aStyleType);
+}
+
+bool
+nsHTMLCSSUtils::IsCSSEquivalentToHTMLInlineStyleSet(nsINode* aNode,
+                                                    nsIAtom* aProperty,
+                                                    const nsAString* aAttribute,
+                                                    nsAString& aValue,
+                                                    StyleType aStyleType)
+{
+  MOZ_ASSERT(aNode && aProperty);
+  bool isSet;
+  nsresult res = IsCSSEquivalentToHTMLInlineStyleSet(aNode->AsDOMNode(),
                                                      aProperty, aAttribute,
-                                                     isSet, value, aStyleType);
-  NS_ASSERTION(NS_SUCCEEDED(res), "IsCSSEquivalentToHTMLInlineStyleSet failed");
+                                                     isSet, aValue, aStyleType);
   NS_ENSURE_SUCCESS(res, false);
   return isSet;
 }
@@ -1167,11 +1147,7 @@ nsHTMLCSSUtils::IsCSSEquivalentToHTMLInlineStyleSet(nsIDOMNode *aNode,
         aIsSet = htmlValueString.Equals(valueStringNorm,
                                         nsCaseInsensitiveStringComparator());
       } else {
-        // ignore this, it's TT or our default
-        nsAutoString valueStringLower;
-        ToLowerCase(valueString, valueStringLower);
-        aIsSet = !valueStringLower.EqualsLiteral("monospace") &&
-                 !valueStringLower.EqualsLiteral("serif");
+        aIsSet = true;
       }
       return NS_OK;
     } else if (aHTMLAttribute && aHTMLAttribute->EqualsLiteral("align")) {

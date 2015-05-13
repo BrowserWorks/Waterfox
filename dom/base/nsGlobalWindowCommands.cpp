@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -112,9 +114,9 @@ class nsSelectionCommandsBase : public nsIControllerCommand
 {
 public:
   NS_DECL_ISUPPORTS
-  NS_IMETHOD IsCommandEnabled(const char* aCommandName, nsISupports* aCommandContext, bool* _retval) MOZ_OVERRIDE;
-  NS_IMETHOD GetCommandStateParams(const char* aCommandName, nsICommandParams* aParams, nsISupports* aCommandContext) MOZ_OVERRIDE;
-  NS_IMETHOD DoCommandParams(const char* aCommandName, nsICommandParams* aParams, nsISupports* aCommandContext) MOZ_OVERRIDE;
+  NS_IMETHOD IsCommandEnabled(const char* aCommandName, nsISupports* aCommandContext, bool* _retval) override;
+  NS_IMETHOD GetCommandStateParams(const char* aCommandName, nsICommandParams* aParams, nsISupports* aCommandContext) override;
+  NS_IMETHOD DoCommandParams(const char* aCommandName, nsICommandParams* aParams, nsISupports* aCommandContext) override;
 
 protected:
   virtual ~nsSelectionCommandsBase() {}
@@ -465,7 +467,7 @@ nsPhysicalSelectCommand::DoCommand(const char *aCommandName,
 #pragma mark -
 #endif
 
-class nsClipboardCommand MOZ_FINAL : public nsIControllerCommand
+class nsClipboardCommand final : public nsIControllerCommand
 {
   ~nsClipboardCommand() {}
 
@@ -631,8 +633,7 @@ nsSelectionCommand::GetContentViewerEditFromContext(nsISupports *aContext,
   nsCOMPtr<nsIContentViewerEdit> edit(do_QueryInterface(viewer));
   NS_ENSURE_TRUE(edit, NS_ERROR_FAILURE);
 
-  *aEditInterface = edit;
-  NS_ADDREF(*aEditInterface);
+  edit.forget(aEditInterface);
   return NS_OK;
 }
 
@@ -875,7 +876,7 @@ nsGoBackCommand::DoWebNavCommand(const char *aCommandName, nsIWebNavigation* aWe
 
 ----------------------------------------------------------------------------*/
 
-class nsClipboardDragDropHookCommand MOZ_FINAL : public nsIControllerCommand
+class nsClipboardDragDropHookCommand final : public nsIControllerCommand
 {
   ~nsClipboardDragDropHookCommand() {}
 

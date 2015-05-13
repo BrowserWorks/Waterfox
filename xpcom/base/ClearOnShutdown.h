@@ -56,7 +56,7 @@ public:
   {
   }
 
-  virtual void Shutdown()
+  virtual void Shutdown() override
   {
     if (mPtr) {
       *mPtr = nullptr;

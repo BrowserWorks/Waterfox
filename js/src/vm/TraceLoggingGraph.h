@@ -62,24 +62,38 @@
  *         0x240: [start, end, dictId, 0, 4]    0x300 [start, end, dictId, 0, 0]
  */
 
+namespace js {
+void DestroyTraceLoggerGraphState();
+}
+
 class TraceLoggerGraphState
 {
     uint32_t numLoggers;
 
     // File pointer to the "tl-data.json" file. (Explained above).
-    FILE *out;
+    FILE* out;
+
+#ifdef DEBUG
+    bool initialized;
+#endif
 
   public:
-    PRLock *lock;
+    PRLock* lock;
 
   public:
-    TraceLoggerGraphState();
+    TraceLoggerGraphState()
+      : numLoggers(0),
+        out(nullptr),
+#ifdef DEBUG
+        initialized(false),
+#endif
+        lock(nullptr)
+    {}
+
+    bool init();
     ~TraceLoggerGraphState();
 
     uint32_t nextLoggerId();
-
-  private:
-    bool ensureInitialized();
 };
 
 class TraceLoggerGraph
@@ -197,10 +211,10 @@ class TraceLoggerGraph
     bool init(uint64_t timestamp);
 
     // Link a textId with a particular text.
-    void addTextId(uint32_t id, const char *text);
+    void addTextId(uint32_t id, const char* text);
 
     // Create a tree out of all the given events.
-    void log(ContinuousSpace<EventEntry> &events);
+    void log(ContinuousSpace<EventEntry>& events);
 
     static size_t treeSizeFlushLimit() {
         // Allow tree size to grow to 100MB.
@@ -212,9 +226,9 @@ class TraceLoggerGraph
     bool enabled;
     mozilla::DebugOnly<uint32_t> nextTextId;
 
-    FILE *dictFile;
-    FILE *treeFile;
-    FILE *eventFile;
+    FILE* dictFile;
+    FILE* treeFile;
+    FILE* eventFile;
 
     ContinuousSpace<TreeEntry> tree;
     ContinuousSpace<StackEntry> stack;
@@ -222,15 +236,15 @@ class TraceLoggerGraph
 
     // Helper functions that convert a TreeEntry in different endianness
     // in place.
-    void entryToBigEndian(TreeEntry *entry);
-    void entryToSystemEndian(TreeEntry *entry);
+    void entryToBigEndian(TreeEntry* entry);
+    void entryToSystemEndian(TreeEntry* entry);
 
     // Helper functions to get/save a tree from file.
-    bool getTreeEntry(uint32_t treeId, TreeEntry *entry);
-    bool saveTreeEntry(uint32_t treeId, TreeEntry *entry);
+    bool getTreeEntry(uint32_t treeId, TreeEntry* entry);
+    bool saveTreeEntry(uint32_t treeId, TreeEntry* entry);
 
     // Return the first StackEntry that is active.
-    StackEntry &getActiveAncestor();
+    StackEntry& getActiveAncestor();
 
     // This contains the meat of startEvent, except the test for enough space,
     // the test if tracelogger is enabled and the timestamp computation.

@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -56,7 +57,7 @@ SVGZoomEvent::SVGZoomEvent(EventTarget* aOwner,
         // (e.g. if this event was created by calling createEvent on a
         // non-SVGDocument), then the "New" and "Previous"
         // properties will be left null which is probably what we want.
-        if (rootElement->IsSVG(nsGkAtoms::svg)) {
+        if (rootElement->IsSVGElement(nsGkAtoms::svg)) {
           SVGSVGElement *SVGSVGElem =
             static_cast<SVGSVGElement*>(rootElement);
 

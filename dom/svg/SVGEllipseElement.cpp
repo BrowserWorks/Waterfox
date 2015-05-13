@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -17,9 +18,9 @@ namespace mozilla {
 namespace dom {
 
 JSObject*
-SVGEllipseElement::WrapNode(JSContext *aCx)
+SVGEllipseElement::WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return SVGEllipseElementBinding::Wrap(aCx, this);
+  return SVGEllipseElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 nsSVGElement::LengthInfo SVGEllipseElement::sLengthInfo[4] =
@@ -93,25 +94,24 @@ SVGEllipseElement::GetLengthInfo()
 // nsSVGPathGeometryElement methods
 
 bool
-SVGEllipseElement::GetGeometryBounds(Rect* aBounds, Float aStrokeWidth,
-                                     const Matrix& aTransform)
+SVGEllipseElement::GetGeometryBounds(
+  Rect* aBounds, const StrokeOptions& aStrokeOptions, const Matrix& aTransform)
 {
   float x, y, rx, ry;
   GetAnimatedLengthValues(&x, &y, &rx, &ry, nullptr);
 
   if (rx <= 0.f || ry <= 0.f) {
     // Rendering of the element is disabled
-    aBounds->MoveTo(x, y);
-    aBounds->SetEmpty();
+    *aBounds = Rect(aTransform * Point(x, y), Size());
     return true;
   }
 
   if (aTransform.IsRectilinear()) {
     // Optimize the case where we can treat the ellipse as a rectangle and
     // still get tight bounds.
-    if (aStrokeWidth > 0.f) {
-      rx += aStrokeWidth / 2.f;
-      ry += aStrokeWidth / 2.f;
+    if (aStrokeOptions.mLineWidth > 0.f) {
+      rx += aStrokeOptions.mLineWidth / 2.f;
+      ry += aStrokeOptions.mLineWidth / 2.f;
     }
     Rect rect(x - rx, y - ry, 2 * rx, 2 * ry);
     *aBounds = aTransform.TransformBounds(rect);

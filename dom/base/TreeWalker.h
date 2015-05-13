@@ -23,7 +23,7 @@ class nsIDOMNode;
 namespace mozilla {
 namespace dom {
 
-class TreeWalker MOZ_FINAL : public nsIDOMTreeWalker, public nsTraversal
+class TreeWalker final : public nsIDOMTreeWalker, public nsTraversal
 {
     virtual ~TreeWalker();
 
@@ -65,7 +65,7 @@ public:
     already_AddRefed<nsINode> PreviousNode(ErrorResult& aResult);
     already_AddRefed<nsINode> NextNode(ErrorResult& aResult);
 
-    bool WrapObject(JSContext *aCx, JS::MutableHandle<JSObject*> aReflector);
+    bool WrapObject(JSContext *aCx, JS::Handle<JSObject*> aGivenProto, JS::MutableHandle<JSObject*> aReflector);
 
 private:
     nsCOMPtr<nsINode> mCurrentNode;
@@ -97,7 +97,7 @@ private:
         mozilla::ErrorResult rv;
         nsCOMPtr<nsINode> node = (this->*aGetter)(rv);
         if (rv.Failed()) {
-            return rv.ErrorCode();
+            return rv.StealNSResult();
         }
         *aRetval = node ? node.forget().take()->AsDOMNode() : nullptr;
         return NS_OK;

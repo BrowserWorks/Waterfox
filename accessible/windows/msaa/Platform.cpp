@@ -10,6 +10,8 @@
 #include "Compatibility.h"
 #include "HyperTextAccessibleWrap.h"
 #include "nsWinUtils.h"
+#include "mozilla/a11y/ProxyAccessible.h"
+#include "ProxyWrappers.h"
 
 #include "mozilla/ClearOnShutdown.h"
 
@@ -35,13 +37,21 @@ a11y::PlatformShutdown()
 }
 
 void
-a11y::ProxyCreated(ProxyAccessible*)
+a11y::ProxyCreated(ProxyAccessible* aProxy, uint32_t)
 {
+  ProxyAccessibleWrap* wrapper = new ProxyAccessibleWrap(aProxy);
+  wrapper->AddRef();
+  aProxy->SetWrapper(reinterpret_cast<uintptr_t>(wrapper));
 }
 
 void
-a11y::ProxyDestroyed(ProxyAccessible*)
+a11y::ProxyDestroyed(ProxyAccessible* aProxy)
 {
+  ProxyAccessibleWrap* wrapper =
+    reinterpret_cast<ProxyAccessibleWrap*>(aProxy->GetWrapper());
+  wrapper->Shutdown();
+  aProxy->SetWrapper(0);
+  wrapper->Release();
 }
 
 void

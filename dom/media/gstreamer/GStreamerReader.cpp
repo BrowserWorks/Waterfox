@@ -116,26 +116,7 @@ GStreamerReader::GStreamerReader(AbstractMediaDecoder* aDecoder)
 GStreamerReader::~GStreamerReader()
 {
   MOZ_COUNT_DTOR(GStreamerReader);
-  ResetDecode();
-
-  if (mPlayBin) {
-    gst_app_src_end_of_stream(mSource);
-    if (mSource)
-      gst_object_unref(mSource);
-    gst_element_set_state(mPlayBin, GST_STATE_NULL);
-    gst_object_unref(mPlayBin);
-    mPlayBin = nullptr;
-    mVideoSink = nullptr;
-    mVideoAppSink = nullptr;
-    mAudioSink = nullptr;
-    mAudioAppSink = nullptr;
-    gst_object_unref(mBus);
-    mBus = nullptr;
-#if GST_VERSION_MAJOR >= 1
-    g_object_unref(mAllocator);
-    g_object_unref(mBufferPool);
-#endif
-  }
+  NS_ASSERTION(!mPlayBin, "No Shutdown() after Init()");
 }
 
 nsresult GStreamerReader::Init(MediaDecoderReader* aCloneDonor)
@@ -195,7 +176,37 @@ nsresult GStreamerReader::Init(MediaDecoderReader* aCloneDonor)
   g_signal_connect(G_OBJECT(mPlayBin), "element-added",
                    G_CALLBACK(GStreamerReader::PlayElementAddedCb), this);
 
+  g_signal_connect(G_OBJECT(mPlayBin), "element-added",
+                   G_CALLBACK(GStreamerReader::ElementAddedCb), this);
+
   return NS_OK;
+}
+
+nsRefPtr<ShutdownPromise>
+GStreamerReader::Shutdown()
+{
+  ResetDecode();
+
+  if (mPlayBin) {
+    gst_app_src_end_of_stream(mSource);
+    if (mSource)
+      gst_object_unref(mSource);
+    gst_element_set_state(mPlayBin, GST_STATE_NULL);
+    gst_object_unref(mPlayBin);
+    mPlayBin = nullptr;
+    mVideoSink = nullptr;
+    mVideoAppSink = nullptr;
+    mAudioSink = nullptr;
+    mAudioAppSink = nullptr;
+    gst_object_unref(mBus);
+    mBus = nullptr;
+#if GST_VERSION_MAJOR >= 1
+    g_object_unref(mAllocator);
+    g_object_unref(mBufferPool);
+#endif
+  }
+
+  return MediaDecoderReader::Shutdown();
 }
 
 GstBusSyncReply
@@ -212,6 +223,47 @@ GStreamerReader::Error(GstBus *aBus, GstMessage *aMessage)
   }
 
   return GST_BUS_PASS;
+}
+
+void GStreamerReader::ElementAddedCb(GstBin *aPlayBin,
+                                     GstElement *aElement,
+                                     gpointer aUserData)
+{
+  const gchar *name =
+    gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(gst_element_get_factory(aElement)));
+
+  if (!strcmp(name, "uridecodebin")) {
+    g_signal_connect(G_OBJECT(aElement), "autoplug-sort",
+                     G_CALLBACK(GStreamerReader::ElementFilterCb), aUserData);
+  }
+}
+
+GValueArray *GStreamerReader::ElementFilterCb(GstURIDecodeBin *aBin,
+                                              GstPad *aPad,
+                                              GstCaps *aCaps,
+                                              GValueArray *aFactories,
+                                              gpointer aUserData)
+{
+  return ((GStreamerReader*)aUserData)->ElementFilter(aBin, aPad, aCaps, aFactories);
+}
+
+GValueArray *GStreamerReader::ElementFilter(GstURIDecodeBin *aBin,
+                                            GstPad *aPad,
+                                            GstCaps *aCaps,
+                                            GValueArray *aFactories)
+{
+  GValueArray *filtered = g_value_array_new(aFactories->n_values);
+
+  for (unsigned int i = 0; i < aFactories->n_values; i++) {
+    GValue *value = &aFactories->values[i];
+    GstPluginFeature *factory = GST_PLUGIN_FEATURE(g_value_peek_pointer(value));
+
+    if (!GStreamerFormatHelper::IsPluginFeatureBlacklisted(factory)) {
+      g_value_array_append(filtered, value);
+    }
+  }
+
+  return filtered;
 }
 
 void GStreamerReader::PlayBinSourceSetupCb(GstElement* aPlayBin,
@@ -314,7 +366,7 @@ GStreamerReader::GetDataLength()
 nsresult GStreamerReader::ReadMetadata(MediaInfo* aInfo,
                                        MetadataTags** aTags)
 {
-  NS_ASSERTION(mDecoder->OnDecodeThread(), "Should be on decode thread.");
+  MOZ_ASSERT(OnTaskQueue());
   nsresult ret = NS_OK;
 
   /*
@@ -443,9 +495,13 @@ nsresult GStreamerReader::ReadMetadata(MediaInfo* aInfo,
 
   int n_video = 0, n_audio = 0;
   g_object_get(mPlayBin, "n-video", &n_video, "n-audio", &n_audio, nullptr);
-  mInfo.mVideo.mHasVideo = n_video != 0;
-  mInfo.mAudio.mHasAudio = n_audio != 0;
 
+  if (!n_video) {
+    mInfo.mVideo = VideoInfo();
+  }
+  if (!n_audio) {
+    mInfo.mAudio = AudioInfo();
+  }
   *aInfo = mInfo;
 
   *aTags = nullptr;
@@ -544,7 +600,6 @@ nsresult GStreamerReader::CheckSupportedFormats()
       }
       case GST_ITERATOR_RESYNC:
         unsupported = false;
-        done = false;
         break;
       case GST_ITERATOR_ERROR:
         done = true;
@@ -554,6 +609,8 @@ nsresult GStreamerReader::CheckSupportedFormats()
         break;
     }
   }
+
+  gst_iterator_free(it);
 
   return unsupported ? NS_ERROR_FAILURE : NS_OK;
 }
@@ -586,7 +643,7 @@ nsresult GStreamerReader::ResetDecode()
 
 bool GStreamerReader::DecodeAudioData()
 {
-  NS_ASSERTION(mDecoder->OnDecodeThread(), "Should be on decode thread.");
+  MOZ_ASSERT(OnTaskQueue());
 
   GstBuffer *buffer = nullptr;
 
@@ -672,7 +729,7 @@ bool GStreamerReader::DecodeAudioData()
 bool GStreamerReader::DecodeVideoFrame(bool &aKeyFrameSkip,
                                        int64_t aTimeThreshold)
 {
-  NS_ASSERTION(mDecoder->OnDecodeThread(), "Should be on decode thread.");
+  MOZ_ASSERT(OnTaskQueue());
 
   GstBuffer *buffer = nullptr;
 
@@ -705,7 +762,7 @@ bool GStreamerReader::DecodeVideoFrame(bool &aKeyFrameSkip,
       }
     }
 
-    mDecoder->NotifyDecodedFrames(0, 1);
+    mDecoder->NotifyDecodedFrames(0, 1, 0);
 
 #if GST_VERSION_MAJOR >= 1
     GstSample *sample = gst_app_sink_pull_sample(mVideoAppSink);
@@ -719,6 +776,7 @@ bool GStreamerReader::DecodeVideoFrame(bool &aKeyFrameSkip,
 
   bool isKeyframe = !GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_DELTA_UNIT);
   if ((aKeyFrameSkip && !isKeyframe)) {
+    mDecoder->NotifyDecodedFrames(0, 0, 1);
     gst_buffer_unref(buffer);
     return true;
   }
@@ -789,12 +847,9 @@ bool GStreamerReader::DecodeVideoFrame(bool &aKeyFrameSkip,
 }
 
 nsRefPtr<MediaDecoderReader::SeekPromise>
-GStreamerReader::Seek(int64_t aTarget,
-                      int64_t aStartTime,
-                      int64_t aEndTime,
-                      int64_t aCurrentTime)
+GStreamerReader::Seek(int64_t aTarget, int64_t aEndTime)
 {
-  NS_ASSERTION(mDecoder->OnDecodeThread(), "Should be on decode thread.");
+  MOZ_ASSERT(OnTaskQueue());
 
   gint64 seekPos = aTarget * GST_USECOND;
   LOG(PR_LOG_DEBUG, "%p About to seek to %" GST_TIME_FORMAT,
@@ -1002,7 +1057,7 @@ gboolean GStreamerReader::SeekData(GstAppSrc* aSrc, guint64 aOffset)
 }
 
 GstFlowReturn GStreamerReader::NewPrerollCb(GstAppSink* aSink,
-                                              gpointer aUserData)
+                                            gpointer aUserData)
 {
   GStreamerReader* reader = reinterpret_cast<GStreamerReader*>(aUserData);
 
@@ -1031,7 +1086,6 @@ void GStreamerReader::AudioPreroll()
   NS_ASSERTION(mInfo.mAudio.mChannels != 0, ("audio channels is zero"));
   NS_ASSERTION(mInfo.mAudio.mChannels > 0 && mInfo.mAudio.mChannels <= MAX_CHANNELS,
       "invalid audio channels number");
-  mInfo.mAudio.mHasAudio = true;
   gst_caps_unref(caps);
   gst_object_unref(sinkpad);
 }
@@ -1071,8 +1125,7 @@ void GStreamerReader::VideoPreroll()
   if (IsValidVideoRegion(frameSize, pictureRect, displaySize)) {
     GstStructure* structure = gst_caps_get_structure(caps, 0);
     gst_structure_get_fraction(structure, "framerate", &fpsNum, &fpsDen);
-    mInfo.mVideo.mDisplay = ThebesIntSize(displaySize.ToIntSize());
-    mInfo.mVideo.mHasVideo = true;
+    mInfo.mVideo.mDisplay = displaySize;
   } else {
     LOG(PR_LOG_DEBUG, "invalid video region");
     Eos();
@@ -1101,7 +1154,7 @@ void GStreamerReader::NewVideoBuffer()
    * and notify the decode thread potentially blocked in DecodeVideoFrame
    */
 
-  mDecoder->NotifyDecodedFrames(1, 0);
+  mDecoder->NotifyDecodedFrames(1, 0, 0);
   mVideoSinkBufferCount++;
   mon.NotifyAll();
 }
@@ -1151,7 +1204,7 @@ void GStreamerReader::Eos(GstAppSink* aSink)
  * This callback is called while the pipeline is automatically built, after a
  * new element has been added to the pipeline. We use it to find the
  * uridecodebin instance used by playbin and connect to it to apply our
- * whitelist.
+ * blacklist.
  */
 void
 GStreamerReader::PlayElementAddedCb(GstBin *aBin, GstElement *aElement,
@@ -1188,9 +1241,8 @@ GStreamerReader::ShouldAutoplugFactory(GstElementFactory* aFactory, GstCaps* aCa
 
 /**
  * This is called by uridecodebin (running inside playbin), after it has found
- * candidate factories to continue decoding the stream. We apply the whitelist
- * here, allowing only demuxers and decoders that output the formats we want to
- * support.
+ * candidate factories to continue decoding the stream. We apply the blacklist
+ * here, disallowing known-crashy plugins.
  */
 GValueArray*
 GStreamerReader::AutoplugSortCb(GstElement* aElement, GstPad* aPad,
@@ -1226,19 +1278,21 @@ void GStreamerReader::NotifyDataArrived(const char *aBuffer,
                                         int64_t aOffset)
 {
   MOZ_ASSERT(NS_IsMainThread());
-
   if (HasVideo()) {
     return;
   }
-
   if (!mMP3FrameParser.NeedsData()) {
     return;
   }
 
   mMP3FrameParser.Parse(aBuffer, aLength, aOffset);
+  if (!mMP3FrameParser.IsMP3()) {
+    return;
+  }
 
   int64_t duration = mMP3FrameParser.GetDuration();
   if (duration != mLastParserDuration && mUseParserDuration) {
+    MOZ_ASSERT(mDecoder);
     ReentrantMonitorAutoEnter mon(mDecoder->GetReentrantMonitor());
     mLastParserDuration = duration;
     mDecoder->UpdateEstimatedMediaDuration(mLastParserDuration);

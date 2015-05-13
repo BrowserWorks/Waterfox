@@ -1,5 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -265,8 +265,9 @@ BluetoothDaemonAvrcpModule::RegisterNotificationRspCmd(
                            1 + // Data length
                            256)); // Maximum data length
 
-  nsresult rv = PackPDU(aEvent, aType,
-                        BluetoothAvrcpEventParamPair(aEvent, aParam), *pdu);
+  BluetoothAvrcpEventParamPair data(aEvent, aParam);
+  nsresult rv = PackPDU(aEvent, aType, static_cast<uint8_t>(data.GetLength()),
+                        data, *pdu);
   if (NS_FAILED(rv)) {
     return rv;
   }
@@ -467,7 +468,7 @@ BluetoothDaemonAvrcpModule::HandleRsp(
 //
 
 // Returns the current notification handler to a notification runnable
-class BluetoothDaemonAvrcpModule::NotificationHandlerWrapper MOZ_FINAL
+class BluetoothDaemonAvrcpModule::NotificationHandlerWrapper final
 {
 public:
   typedef BluetoothAvrcpNotificationHandler ObjectType;
@@ -481,7 +482,7 @@ public:
 };
 
 // Init operator class for RemoteFeatureNotification
-class BluetoothDaemonAvrcpModule::RemoteFeatureInitOp MOZ_FINAL
+class BluetoothDaemonAvrcpModule::RemoteFeatureInitOp final
   : private PDUInitOp
 {
 public:
@@ -550,7 +551,7 @@ BluetoothDaemonAvrcpModule::ListPlayerAppValuesNtf(
 }
 
 // Init operator class for GetPlayerAppValueNotification
-class BluetoothDaemonAvrcpModule::GetPlayerAppValueInitOp MOZ_FINAL
+class BluetoothDaemonAvrcpModule::GetPlayerAppValueInitOp final
   : private PDUInitOp
 {
 public:
@@ -591,7 +592,7 @@ BluetoothDaemonAvrcpModule::GetPlayerAppValueNtf(
 }
 
 // Init operator class for GetPlayerAppAttrsTextNotification
-class BluetoothDaemonAvrcpModule::GetPlayerAppAttrsTextInitOp MOZ_FINAL
+class BluetoothDaemonAvrcpModule::GetPlayerAppAttrsTextInitOp final
   : private PDUInitOp
 {
 public:
@@ -632,7 +633,7 @@ BluetoothDaemonAvrcpModule::GetPlayerAppAttrsTextNtf(
 }
 
 // Init operator class for GetPlayerAppValuesTextNotification
-class BluetoothDaemonAvrcpModule::GetPlayerAppValuesTextInitOp MOZ_FINAL
+class BluetoothDaemonAvrcpModule::GetPlayerAppValuesTextInitOp final
   : private PDUInitOp
 {
 public:
@@ -687,7 +688,7 @@ BluetoothDaemonAvrcpModule::SetPlayerAppValueNtf(
 }
 
 // Init operator class for GetElementAttrNotification
-class BluetoothDaemonAvrcpModule::GetElementAttrInitOp MOZ_FINAL
+class BluetoothDaemonAvrcpModule::GetElementAttrInitOp final
   : private PDUInitOp
 {
 public:
@@ -747,7 +748,7 @@ BluetoothDaemonAvrcpModule::VolumeChangeNtf(
 }
 
 // Init operator class for PassthroughCmdNotification
-class BluetoothDaemonAvrcpModule::PassthroughCmdInitOp MOZ_FINAL
+class BluetoothDaemonAvrcpModule::PassthroughCmdInitOp final
   : private PDUInitOp
 {
 public:
@@ -840,7 +841,7 @@ BluetoothDaemonAvrcpInterface::BluetoothDaemonAvrcpInterface(
 BluetoothDaemonAvrcpInterface::~BluetoothDaemonAvrcpInterface()
 { }
 
-class BluetoothDaemonAvrcpInterface::InitResultHandler MOZ_FINAL
+class BluetoothDaemonAvrcpInterface::InitResultHandler final
   : public BluetoothSetupResultHandler
 {
 public:
@@ -850,14 +851,14 @@ public:
     MOZ_ASSERT(mRes);
   }
 
-  void OnError(BluetoothStatus aStatus) MOZ_OVERRIDE
+  void OnError(BluetoothStatus aStatus) override
   {
     MOZ_ASSERT(NS_IsMainThread());
 
     mRes->OnError(aStatus);
   }
 
-  void RegisterModule() MOZ_OVERRIDE
+  void RegisterModule() override
   {
     MOZ_ASSERT(NS_IsMainThread());
 
@@ -893,11 +894,11 @@ BluetoothDaemonAvrcpInterface::Init(
     BluetoothDaemonAvrcpModule::MAX_NUM_CLIENTS, 0x00, res);
 
   if (NS_FAILED(rv) && aRes) {
-    DispatchError(aRes, STATUS_FAIL);
+    DispatchError(aRes, rv);
   }
 }
 
-class BluetoothDaemonAvrcpInterface::CleanupResultHandler MOZ_FINAL
+class BluetoothDaemonAvrcpInterface::CleanupResultHandler final
   : public BluetoothSetupResultHandler
 {
 public:
@@ -909,7 +910,7 @@ public:
     MOZ_ASSERT(mModule);
   }
 
-  void OnError(BluetoothStatus aStatus) MOZ_OVERRIDE
+  void OnError(BluetoothStatus aStatus) override
   {
     MOZ_ASSERT(NS_IsMainThread());
 
@@ -918,7 +919,7 @@ public:
     }
   }
 
-  void UnregisterModule() MOZ_OVERRIDE
+  void UnregisterModule() override
   {
     MOZ_ASSERT(NS_IsMainThread());
 
@@ -943,8 +944,12 @@ BluetoothDaemonAvrcpInterface::Cleanup(
 {
   MOZ_ASSERT(mModule);
 
-  mModule->UnregisterModule(BluetoothDaemonAvrcpModule::SERVICE_ID,
-                            new CleanupResultHandler(mModule, aRes));
+  nsresult rv = mModule->UnregisterModule(
+    BluetoothDaemonAvrcpModule::SERVICE_ID,
+    new CleanupResultHandler(mModule, aRes));
+  if (NS_FAILED(rv)) {
+    DispatchError(aRes, rv);
+  }
 }
 
 void
@@ -954,7 +959,11 @@ BluetoothDaemonAvrcpInterface::GetPlayStatusRsp(
 {
   MOZ_ASSERT(mModule);
 
-  mModule->GetPlayStatusRspCmd(aPlayStatus, aSongLen, aSongPos, aRes);
+  nsresult rv = mModule->GetPlayStatusRspCmd(aPlayStatus, aSongLen,
+                                             aSongPos, aRes);
+  if (NS_FAILED(rv)) {
+    DispatchError(aRes, rv);
+  }
 }
 
 void
@@ -964,7 +973,10 @@ BluetoothDaemonAvrcpInterface::ListPlayerAppAttrRsp(
 {
   MOZ_ASSERT(mModule);
 
-  mModule->ListPlayerAppAttrRspCmd(aNumAttr, aPAttrs, aRes);
+  nsresult rv = mModule->ListPlayerAppAttrRspCmd(aNumAttr, aPAttrs, aRes);
+  if (NS_FAILED(rv)) {
+    DispatchError(aRes, rv);
+  }
 }
 
 void
@@ -973,7 +985,10 @@ BluetoothDaemonAvrcpInterface::ListPlayerAppValueRsp(
 {
   MOZ_ASSERT(mModule);
 
-  mModule->ListPlayerAppValueRspCmd(aNumVal, aPVals, aRes);
+  nsresult rv = mModule->ListPlayerAppValueRspCmd(aNumVal, aPVals, aRes);
+  if (NS_FAILED(rv)) {
+    DispatchError(aRes, rv);
+  }
 }
 
 void
@@ -983,7 +998,11 @@ BluetoothDaemonAvrcpInterface::GetPlayerAppValueRsp(
 {
   MOZ_ASSERT(mModule);
 
-  mModule->GetPlayerAppValueRspCmd(aNumAttrs, aIds, aValues, aRes);
+  nsresult rv = mModule->GetPlayerAppValueRspCmd(aNumAttrs, aIds,
+                                                 aValues, aRes);
+  if (NS_FAILED(rv)) {
+    DispatchError(aRes, rv);
+  }
 }
 
 void
@@ -993,7 +1012,11 @@ BluetoothDaemonAvrcpInterface::GetPlayerAppAttrTextRsp(
 {
   MOZ_ASSERT(mModule);
 
-  mModule->GetPlayerAppAttrTextRspCmd(aNumAttr, aIds, aTexts, aRes);
+  nsresult rv = mModule->GetPlayerAppAttrTextRspCmd(aNumAttr, aIds,
+                                                    aTexts, aRes);
+  if (NS_FAILED(rv)) {
+    DispatchError(aRes, rv);
+  }
 }
 
 void
@@ -1003,7 +1026,11 @@ BluetoothDaemonAvrcpInterface::GetPlayerAppValueTextRsp(
 {
   MOZ_ASSERT(mModule);
 
-  mModule->GetPlayerAppValueTextRspCmd(aNumVal, aIds, aTexts, aRes);
+  nsresult rv = mModule->GetPlayerAppValueTextRspCmd(aNumVal, aIds,
+                                                     aTexts, aRes);
+  if (NS_FAILED(rv)) {
+    DispatchError(aRes, rv);
+  }
 }
 
 void
@@ -1013,7 +1040,10 @@ BluetoothDaemonAvrcpInterface::GetElementAttrRsp(
 {
   MOZ_ASSERT(mModule);
 
-  mModule->GetElementAttrRspCmd(aNumAttr, aAttr, aRes);
+  nsresult rv = mModule->GetElementAttrRspCmd(aNumAttr, aAttr, aRes);
+  if (NS_FAILED(rv)) {
+    DispatchError(aRes, rv);
+  }
 }
 
 void
@@ -1022,7 +1052,10 @@ BluetoothDaemonAvrcpInterface::SetPlayerAppValueRsp(
 {
   MOZ_ASSERT(mModule);
 
-  mModule->SetPlayerAppValueRspCmd(aRspStatus, aRes);
+  nsresult rv = mModule->SetPlayerAppValueRspCmd(aRspStatus, aRes);
+  if (NS_FAILED(rv)) {
+    DispatchError(aRes, rv);
+  }
 }
 
 void
@@ -1034,7 +1067,11 @@ BluetoothDaemonAvrcpInterface::RegisterNotificationRsp(
 {
   MOZ_ASSERT(mModule);
 
-  mModule->RegisterNotificationRspCmd(aEvent, aType, aParam, aRes);
+  nsresult rv = mModule->RegisterNotificationRspCmd(aEvent, aType,
+                                                    aParam, aRes);
+  if (NS_FAILED(rv)) {
+    DispatchError(aRes, rv);
+  }
 }
 
 void
@@ -1043,7 +1080,10 @@ BluetoothDaemonAvrcpInterface::SetVolume(
 {
   MOZ_ASSERT(mModule);
 
-  mModule->SetVolumeCmd(aVolume, aRes);
+  nsresult rv = mModule->SetVolumeCmd(aVolume, aRes);
+  if (NS_FAILED(rv)) {
+    DispatchError(aRes, rv);
+  }
 }
 
 void
@@ -1054,6 +1094,18 @@ BluetoothDaemonAvrcpInterface::DispatchError(
                            BluetoothStatus, BluetoothStatus>::Dispatch(
     aRes, &BluetoothAvrcpResultHandler::OnError,
     ConstantInitOp1<BluetoothStatus>(aStatus));
+}
+
+void
+BluetoothDaemonAvrcpInterface::DispatchError(
+  BluetoothAvrcpResultHandler* aRes, nsresult aRv)
+{
+  BluetoothStatus status;
+
+  if (NS_WARN_IF(NS_FAILED(Convert(aRv, status)))) {
+    status = STATUS_FAIL;
+  }
+  DispatchError(aRes, status);
 }
 
 END_BLUETOOTH_NAMESPACE

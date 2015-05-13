@@ -20,20 +20,22 @@
 
 #include "jsatom.h"
 #include "jsclist.h"
-#ifdef DEBUG
-# include "jsproxy.h"
-#endif
 #include "jsscript.h"
 
 #ifdef XP_MACOSX
 # include "asmjs/AsmJSSignalHandlers.h"
 #endif
+#include "builtin/AtomicsObject.h"
 #include "ds/FixedSizeHash.h"
 #include "frontend/ParseMaps.h"
 #include "gc/GCRuntime.h"
 #include "gc/Tracer.h"
 #include "irregexp/RegExpStack.h"
+#include "js/Debug.h"
 #include "js/HashTable.h"
+#ifdef DEBUG
+# include "js/Proxy.h" // For AutoEnterPolicy
+#endif
 #include "js/Vector.h"
 #include "vm/CommonPropertyNames.h"
 #include "vm/DateTime.h"
@@ -41,7 +43,6 @@
 #include "vm/SPSProfiler.h"
 #include "vm/Stack.h"
 #include "vm/Symbol.h"
-#include "vm/ThreadPool.h"
 
 #ifdef _MSC_VER
 #pragma warning(push)
@@ -64,16 +65,16 @@ extern mozilla::ThreadLocal<PerThreadData*> TlsPerThreadData;
 
 struct DtoaState;
 
-extern void
-js_ReportOutOfMemory(js::ExclusiveContext *cx);
-
-extern void
-js_ReportAllocationOverflow(js::ExclusiveContext *maybecx);
-
-extern void
-js_ReportOverRecursed(js::ExclusiveContext *cx);
-
 namespace js {
+
+extern MOZ_COLD void
+ReportOutOfMemory(ExclusiveContext* cx);
+
+extern MOZ_COLD void
+ReportAllocationOverflow(ExclusiveContext* maybecx);
+
+extern MOZ_COLD void
+ReportOverRecursed(ExclusiveContext* cx);
 
 class Activation;
 class ActivationIterator;
@@ -86,8 +87,8 @@ class JitRuntime;
 class JitActivation;
 struct PcScriptCache;
 class Simulator;
-class SimulatorRuntime;
 struct AutoFlushICache;
+class CompileRuntime;
 }
 
 /*
@@ -97,12 +98,12 @@ struct AutoFlushICache;
  * by offset from the bytecode with which they were generated.
  */
 struct GSNCache {
-    typedef HashMap<jsbytecode *,
-                    jssrcnote *,
-                    PointerHasher<jsbytecode *, 0>,
+    typedef HashMap<jsbytecode*,
+                    jssrcnote*,
+                    PointerHasher<jsbytecode*, 0>,
                     SystemAllocPolicy> Map;
 
-    jsbytecode      *code;
+    jsbytecode*     code;
     Map             map;
 
     GSNCache() : code(nullptr) { }
@@ -120,7 +121,7 @@ struct ScopeCoordinateNameCache {
                     DefaultHasher<uint32_t>,
                     SystemAllocPolicy> Map;
 
-    Shape *shape;
+    Shape* shape;
     Map map;
 
     ScopeCoordinateNameCache() : shape(nullptr) {}
@@ -131,27 +132,27 @@ typedef Vector<ScriptAndCounts, 0, SystemAllocPolicy> ScriptAndCountsVector;
 
 struct EvalCacheEntry
 {
-    JSLinearString *str;
-    JSScript *script;
-    JSScript *callerScript;
-    jsbytecode *pc;
+    JSLinearString* str;
+    JSScript* script;
+    JSScript* callerScript;
+    jsbytecode* pc;
 };
 
 struct EvalCacheLookup
 {
-    explicit EvalCacheLookup(JSContext *cx) : str(cx), callerScript(cx) {}
+    explicit EvalCacheLookup(JSContext* cx) : str(cx), callerScript(cx) {}
     RootedLinearString str;
     RootedScript callerScript;
     JSVersion version;
-    jsbytecode *pc;
+    jsbytecode* pc;
 };
 
 struct EvalCacheHashPolicy
 {
     typedef EvalCacheLookup Lookup;
 
-    static HashNumber hash(const Lookup &l);
-    static bool match(const EvalCacheEntry &entry, const EvalCacheLookup &l);
+    static HashNumber hash(const Lookup& l);
+    static bool match(const EvalCacheEntry& entry, const EvalCacheLookup& l);
 };
 
 typedef HashSet<EvalCacheEntry, EvalCacheHashPolicy, SystemAllocPolicy> EvalCache;
@@ -159,29 +160,29 @@ typedef HashSet<EvalCacheEntry, EvalCacheHashPolicy, SystemAllocPolicy> EvalCach
 struct LazyScriptHashPolicy
 {
     struct Lookup {
-        JSContext *cx;
-        LazyScript *lazy;
+        JSContext* cx;
+        LazyScript* lazy;
 
-        Lookup(JSContext *cx, LazyScript *lazy)
+        Lookup(JSContext* cx, LazyScript* lazy)
           : cx(cx), lazy(lazy)
         {}
     };
 
     static const size_t NumHashes = 3;
 
-    static void hash(const Lookup &lookup, HashNumber hashes[NumHashes]);
-    static bool match(JSScript *script, const Lookup &lookup);
+    static void hash(const Lookup& lookup, HashNumber hashes[NumHashes]);
+    static bool match(JSScript* script, const Lookup& lookup);
 
     // Alternate methods for use when removing scripts from the hash without an
     // explicit LazyScript lookup.
-    static void hash(JSScript *script, HashNumber hashes[NumHashes]);
-    static bool match(JSScript *script, JSScript *lookup) { return script == lookup; }
+    static void hash(JSScript* script, HashNumber hashes[NumHashes]);
+    static bool match(JSScript* script, JSScript* lookup) { return script == lookup; }
 
-    static void clear(JSScript **pscript) { *pscript = nullptr; }
-    static bool isCleared(JSScript *script) { return !script; }
+    static void clear(JSScript** pscript) { *pscript = nullptr; }
+    static bool isCleared(JSScript* script) { return !script; }
 };
 
-typedef FixedSizeHashSet<JSScript *, LazyScriptHashPolicy, 769> LazyScriptCache;
+typedef FixedSizeHashSet<JSScript*, LazyScriptHashPolicy, 769> LazyScriptCache;
 
 class PropertyIteratorObject;
 
@@ -190,7 +191,7 @@ class NativeIterCache
     static const size_t SIZE = size_t(1) << 8;
 
     /* Cached native iterators. */
-    PropertyIteratorObject *data[SIZE];
+    PropertyIteratorObject* data[SIZE];
 
     static size_t getIndex(uint32_t key) {
         return size_t(key) % SIZE;
@@ -198,7 +199,7 @@ class NativeIterCache
 
   public:
     /* Native iterator most recently started. */
-    PropertyIteratorObject *last;
+    PropertyIteratorObject* last;
 
     NativeIterCache()
       : last(nullptr)
@@ -211,11 +212,11 @@ class NativeIterCache
         mozilla::PodArrayZero(data);
     }
 
-    PropertyIteratorObject *get(uint32_t key) const {
+    PropertyIteratorObject* get(uint32_t key) const {
         return data[getIndex(key)];
     }
 
-    void set(uint32_t key, PropertyIteratorObject *iterobj) {
+    void set(uint32_t key, PropertyIteratorObject* iterobj) {
         data[getIndex(key)] = iterobj;
     }
 };
@@ -232,13 +233,13 @@ class NewObjectCache
 
     static void staticAsserts() {
         JS_STATIC_ASSERT(NewObjectCache::MAX_OBJ_SIZE == sizeof(JSObject_Slots16));
-        JS_STATIC_ASSERT(gc::FINALIZE_OBJECT_LAST == gc::FINALIZE_OBJECT16_BACKGROUND);
+        JS_STATIC_ASSERT(gc::AllocKind::OBJECT_LAST == gc::AllocKind::OBJECT16_BACKGROUND);
     }
 
     struct Entry
     {
         /* Class of the constructed object. */
-        const Class *clasp;
+        const Class* clasp;
 
         /*
          * Key with one of three possible values:
@@ -253,7 +254,7 @@ class NewObjectCache
          * - Type for the object. The object's parent will be the type's
          *   prototype's parent.
          */
-        gc::Cell *key;
+        gc::Cell* key;
 
         /* Allocation kind for the constructed object. */
         gc::AllocKind kind;
@@ -278,18 +279,18 @@ class NewObjectCache
     void purge() { mozilla::PodZero(this); }
 
     /* Remove any cached items keyed on moved objects. */
-    void clearNurseryObjects(JSRuntime *rt);
+    void clearNurseryObjects(JSRuntime* rt);
 
     /*
      * Get the entry index for the given lookup, return whether there was a hit
      * on an existing entry.
      */
-    inline bool lookupProto(const Class *clasp, JSObject *proto, gc::AllocKind kind, EntryIndex *pentry);
-    inline bool lookupGlobal(const Class *clasp, js::GlobalObject *global, gc::AllocKind kind,
-                             EntryIndex *pentry);
+    inline bool lookupProto(const Class* clasp, JSObject* proto, gc::AllocKind kind, EntryIndex* pentry);
+    inline bool lookupGlobal(const Class* clasp, js::GlobalObject* global, gc::AllocKind kind,
+                             EntryIndex* pentry);
 
-    bool lookupType(js::types::TypeObject *type, gc::AllocKind kind, EntryIndex *pentry) {
-        return lookup(type->clasp(), type, kind, pentry);
+    bool lookupGroup(js::ObjectGroup* group, gc::AllocKind kind, EntryIndex* pentry) {
+        return lookup(group->clasp(), group, kind, pentry);
     }
 
     /*
@@ -297,45 +298,44 @@ class NewObjectCache
      * nullptr if returning the object could possibly trigger GC (does not
      * indicate failure).
      */
-    template <AllowGC allowGC>
-    inline JSObject *newObjectFromHit(JSContext *cx, EntryIndex entry, js::gc::InitialHeap heap);
+    inline NativeObject* newObjectFromHit(JSContext* cx, EntryIndex entry, js::gc::InitialHeap heap);
 
     /* Fill an entry after a cache miss. */
-    void fillProto(EntryIndex entry, const Class *clasp, js::TaggedProto proto,
-                   gc::AllocKind kind, NativeObject *obj);
+    void fillProto(EntryIndex entry, const Class* clasp, js::TaggedProto proto,
+                   gc::AllocKind kind, NativeObject* obj);
 
-    inline void fillGlobal(EntryIndex entry, const Class *clasp, js::GlobalObject *global,
-                           gc::AllocKind kind, NativeObject *obj);
+    inline void fillGlobal(EntryIndex entry, const Class* clasp, js::GlobalObject* global,
+                           gc::AllocKind kind, NativeObject* obj);
 
-    void fillType(EntryIndex entry, js::types::TypeObject *type, gc::AllocKind kind,
-                  NativeObject *obj)
+    void fillGroup(EntryIndex entry, js::ObjectGroup* group, gc::AllocKind kind,
+                   NativeObject* obj)
     {
-        MOZ_ASSERT(obj->type() == type);
-        return fill(entry, type->clasp(), type, kind, obj);
+        MOZ_ASSERT(obj->group() == group);
+        return fill(entry, group->clasp(), group, kind, obj);
     }
 
     /* Invalidate any entries which might produce an object with shape/proto. */
-    void invalidateEntriesForShape(JSContext *cx, HandleShape shape, HandleObject proto);
+    void invalidateEntriesForShape(JSContext* cx, HandleShape shape, HandleObject proto);
 
   private:
-    EntryIndex makeIndex(const Class *clasp, gc::Cell *key, gc::AllocKind kind) {
-        uintptr_t hash = (uintptr_t(clasp) ^ uintptr_t(key)) + kind;
+    EntryIndex makeIndex(const Class* clasp, gc::Cell* key, gc::AllocKind kind) {
+        uintptr_t hash = (uintptr_t(clasp) ^ uintptr_t(key)) + size_t(kind);
         return hash % mozilla::ArrayLength(entries);
     }
 
-    bool lookup(const Class *clasp, gc::Cell *key, gc::AllocKind kind, EntryIndex *pentry) {
+    bool lookup(const Class* clasp, gc::Cell* key, gc::AllocKind kind, EntryIndex* pentry) {
         *pentry = makeIndex(clasp, key, kind);
-        Entry *entry = &entries[*pentry];
+        Entry* entry = &entries[*pentry];
 
         /* N.B. Lookups with the same clasp/key but different kinds map to different entries. */
         return entry->clasp == clasp && entry->key == key;
     }
 
-    void fill(EntryIndex entry_, const Class *clasp, gc::Cell *key, gc::AllocKind kind,
-              NativeObject *obj) {
+    void fill(EntryIndex entry_, const Class* clasp, gc::Cell* key, gc::AllocKind kind,
+              NativeObject* obj) {
         MOZ_ASSERT(unsigned(entry_) < mozilla::ArrayLength(entries));
         MOZ_ASSERT(entry_ == makeIndex(clasp, key, kind));
-        Entry *entry = &entries[entry_];
+        Entry* entry = &entries[entry_];
 
         entry->clasp = clasp;
         entry->key = key;
@@ -345,10 +345,10 @@ class NewObjectCache
         js_memcpy(&entry->templateObject, obj, entry->nbytes);
     }
 
-    static void copyCachedToObject(JSObject *dst, JSObject *src, gc::AllocKind kind) {
+    static void copyCachedToObject(NativeObject* dst, NativeObject* src, gc::AllocKind kind) {
         js_memcpy(dst, src, gc::Arena::thingSize(kind));
         Shape::writeBarrierPost(dst->shape_, &dst->shape_);
-        types::TypeObject::writeBarrierPost(dst->type_, &dst->type_);
+        ObjectGroup::writeBarrierPost(dst->group_, &dst->group_);
     }
 };
 
@@ -361,15 +361,15 @@ class NewObjectCache
  */
 class FreeOp : public JSFreeOp
 {
-    Vector<void *, 0, SystemAllocPolicy> freeLaterList;
+    Vector<void*, 0, SystemAllocPolicy> freeLaterList;
     ThreadType threadType;
 
   public:
-    static FreeOp *get(JSFreeOp *fop) {
-        return static_cast<FreeOp *>(fop);
+    static FreeOp* get(JSFreeOp* fop) {
+        return static_cast<FreeOp*>(fop);
     }
 
-    explicit FreeOp(JSRuntime *rt, ThreadType thread = MainThread)
+    explicit FreeOp(JSRuntime* rt, ThreadType thread = MainThread)
       : JSFreeOp(rt), threadType(thread)
     {}
 
@@ -382,11 +382,11 @@ class FreeOp : public JSFreeOp
         return threadType == BackgroundThread;
     }
 
-    inline void free_(void *p);
-    inline void freeLater(void *p);
+    inline void free_(void* p);
+    inline void freeLater(void* p);
 
     template <class T>
-    inline void delete_(T *p) {
+    inline void delete_(T* p) {
         if (p) {
             p->~T();
             free_(p);
@@ -410,7 +410,7 @@ struct JSAtomState
     JS_FOR_EACH_PROTOTYPE(PROPERTYNAME_FIELD)
 #undef PROPERTYNAME_FIELD
 
-    js::ImmutablePropertyNamePtr *wellKnownSymbolDescriptions() {
+    js::ImmutablePropertyNamePtr* wellKnownSymbolDescriptions() {
         return &Symbol_iterator;
     }
 };
@@ -429,14 +429,15 @@ namespace js {
 struct WellKnownSymbols
 {
     js::ImmutableSymbolPtr iterator;
+    js::ImmutableSymbolPtr match;
 
-    const ImmutableSymbolPtr &get(size_t u) const {
+    const ImmutableSymbolPtr& get(size_t u) const {
         MOZ_ASSERT(u < JS::WellKnownSymbolLimit);
-        const ImmutableSymbolPtr *symbols = reinterpret_cast<const ImmutableSymbolPtr *>(this);
+        const ImmutableSymbolPtr* symbols = reinterpret_cast<const ImmutableSymbolPtr*>(this);
         return symbols[u];
     }
 
-    const ImmutableSymbolPtr &get(JS::SymbolCode code) const {
+    const ImmutableSymbolPtr& get(JS::SymbolCode code) const {
         return get(size_t(code));
     }
 };
@@ -444,9 +445,9 @@ struct WellKnownSymbols
 #define NAME_OFFSET(name)       offsetof(JSAtomState, name)
 
 inline HandlePropertyName
-AtomStateOffsetToName(const JSAtomState &atomState, size_t offset)
+AtomStateOffsetToName(const JSAtomState& atomState, size_t offset)
 {
-    return *reinterpret_cast<js::ImmutablePropertyNamePtr *>((char*)&atomState + offset);
+    return *reinterpret_cast<js::ImmutablePropertyNamePtr*>((char*)&atomState + offset);
 }
 
 // There are several coarse locks in the enum below. These may be either
@@ -481,6 +482,11 @@ void DisableExtraThreads();
  */
 class PerThreadData : public PerThreadDataFriendFields
 {
+#ifdef DEBUG
+    // Grant access to runtime_.
+    friend void js::AssertCurrentThreadCanLock(RuntimeLock which);
+#endif
+
     /*
      * Backpointer to the full shared JSRuntime* with which this
      * thread is associated.  This is private because accessing the
@@ -488,125 +494,23 @@ class PerThreadData : public PerThreadDataFriendFields
      * intention is that access will be mediated through safe
      * functions like |runtimeFromMainThread| and |associatedWith()| below.
      */
-    JSRuntime *runtime_;
+    JSRuntime* runtime_;
 
   public:
-    /*
-     * We save all conservative scanned roots in this vector so that
-     * conservative scanning can be "replayed" deterministically. In DEBUG mode,
-     * this allows us to run a non-incremental GC after every incremental GC to
-     * ensure that no objects were missed.
-     */
-#ifdef DEBUG
-    struct SavedGCRoot {
-        void *thing;
-        JSGCTraceKind kind;
-
-        SavedGCRoot(void *thing, JSGCTraceKind kind) : thing(thing), kind(kind) {}
-    };
-    js::Vector<SavedGCRoot, 0, js::SystemAllocPolicy> gcSavedRoots;
-#endif
-
-    /*
-     * If Baseline or Ion code is on the stack, and has called into C++, this
-     * will be aligned to an exit frame.
-     */
-    uint8_t             *jitTop;
-
-    /*
-     * The current JSContext when entering JIT code. This field may only be used
-     * from JIT code and C++ directly called by JIT code (otherwise it may refer
-     * to the wrong JSContext).
-     */
-    JSContext           *jitJSContext;
-
-    /* See comment for JSRuntime::interrupt_. */
-  private:
-    mozilla::Atomic<uintptr_t, mozilla::Relaxed> jitStackLimit_;
-    void resetJitStackLimit();
-    friend struct ::JSRuntime;
-  public:
-    void initJitStackLimit();
-    void initJitStackLimitPar(uintptr_t limit);
-
-    uintptr_t jitStackLimit() const { return jitStackLimit_; }
-
-    // For read-only JIT use:
-    void *addressOfJitStackLimit() { return &jitStackLimit_; }
-    static size_t offsetOfJitStackLimit() { return offsetof(PerThreadData, jitStackLimit_); }
-
-    // Information about the heap allocated backtrack stack used by RegExp JIT code.
-    irregexp::RegExpStack regexpStack;
-
 #ifdef JS_TRACE_LOGGING
-    TraceLoggerThread   *traceLogger;
+    TraceLoggerThread*  traceLogger;
 #endif
-
-  private:
-    friend class js::Activation;
-    friend class js::ActivationIterator;
-    friend class js::jit::JitActivation;
-    friend class js::AsmJSActivation;
-#ifdef DEBUG
-    friend void js::AssertCurrentThreadCanLock(RuntimeLock which);
-#endif
-
-    /*
-     * Points to the most recent activation running on the thread.
-     * See Activation comment in vm/Stack.h.
-     */
-    js::Activation *activation_;
-
-    /*
-     * Points to the most recent profiling activation running on the
-     * thread.
-     */
-    js::Activation * volatile profilingActivation_;
-
-    /* See AsmJSActivation comment. */
-    js::AsmJSActivation * volatile asmJSActivationStack_;
 
     /* Pointer to the current AutoFlushICache. */
-    js::jit::AutoFlushICache *autoFlushICache_;
-
-#if defined(JS_ARM_SIMULATOR) || defined(JS_MIPS_SIMULATOR)
-    js::jit::Simulator *simulator_;
-    uintptr_t simulatorStackLimit_;
-#endif
+    js::jit::AutoFlushICache* autoFlushICache_;
 
   public:
-    js::Activation *const *addressOfActivation() const {
-        return &activation_;
-    }
-    static unsigned offsetOfAsmJSActivationStackReadOnly() {
-        return offsetof(PerThreadData, asmJSActivationStack_);
-    }
-    static unsigned offsetOfActivation() {
-        return offsetof(PerThreadData, activation_);
-    }
-
-    js::Activation *profilingActivation() const {
-        return profilingActivation_;
-    }
-
-    js::AsmJSActivation *asmJSActivationStack() const {
-        return asmJSActivationStack_;
-    }
-    static js::AsmJSActivation *innermostAsmJSActivation() {
-        PerThreadData *ptd = TlsPerThreadData.get();
-        return ptd ? ptd->asmJSActivationStack_ : nullptr;
-    }
-
-    js::Activation *activation() const {
-        return activation_;
-    }
-
     /* State used by jsdtoa.cpp. */
-    DtoaState           *dtoaState;
+    DtoaState*          dtoaState;
 
     /*
      * When this flag is non-zero, any attempt to GC will be skipped. It is used
-     * to suppress GC when reporting an OOM (see js_ReportOutOfMemory) and in
+     * to suppress GC when reporting an OOM (see ReportOutOfMemory) and in
      * debugging facilities that cannot tolerate a GC and would rather OOM
      * immediately, such as utilities exposed to GDB. Setting this flag is
      * extremely dangerous and should only be used when in an OOM situation or
@@ -617,19 +521,22 @@ class PerThreadData : public PerThreadDataFriendFields
 #ifdef DEBUG
     // Whether this thread is actively Ion compiling.
     bool ionCompiling;
+
+    // Whether this thread is currently sweeping GC things.
+    bool gcSweeping;
 #endif
 
     // Number of active bytecode compilation on this thread.
     unsigned activeCompilations;
 
-    explicit PerThreadData(JSRuntime *runtime);
+    explicit PerThreadData(JSRuntime* runtime);
     ~PerThreadData();
 
     bool init();
 
-    bool associatedWith(const JSRuntime *rt) { return runtime_ == rt; }
-    inline JSRuntime *runtimeFromMainThread();
-    inline JSRuntime *runtimeIfOnOwnerThread();
+    bool associatedWith(const JSRuntime* rt) { return runtime_ == rt; }
+    inline JSRuntime* runtimeFromMainThread();
+    inline JSRuntime* runtimeIfOnOwnerThread();
 
     inline bool exclusiveThreadsPresent();
     inline void addActiveCompilation();
@@ -639,45 +546,30 @@ class PerThreadData : public PerThreadDataFriendFields
     // on the work they are doing.
     class MOZ_STACK_CLASS AutoEnterRuntime
     {
-        PerThreadData *pt;
+        PerThreadData* pt;
 
       public:
-        AutoEnterRuntime(PerThreadData *pt, JSRuntime *rt)
+        AutoEnterRuntime(PerThreadData* pt, JSRuntime* rt)
           : pt(pt)
         {
             MOZ_ASSERT(!pt->runtime_);
             pt->runtime_ = rt;
-#if defined(JS_ARM_SIMULATOR) || defined(JS_MIPS_SIMULATOR)
-            // The simulator has a pointer to its SimulatorRuntime, but helper threads
-            // don't have a simulator as they don't run JIT code so this pointer need not
-            // be updated. All the paths that the helper threads use access the
-            // SimulatorRuntime via the PerThreadData.
-            MOZ_ASSERT(!pt->simulator_);
-#endif
         }
 
         ~AutoEnterRuntime() {
             pt->runtime_ = nullptr;
-#if defined(JS_ARM_SIMULATOR) || defined(JS_MIPS_SIMULATOR)
-            // Check that helper threads have not run JIT code and/or added a simulator.
-            MOZ_ASSERT(!pt->simulator_);
-#endif
         }
     };
 
-    js::jit::AutoFlushICache *autoFlushICache() const;
-    void setAutoFlushICache(js::jit::AutoFlushICache *afc);
+    js::jit::AutoFlushICache* autoFlushICache() const;
+    void setAutoFlushICache(js::jit::AutoFlushICache* afc);
 
 #if defined(JS_ARM_SIMULATOR) || defined(JS_MIPS_SIMULATOR)
-    js::jit::Simulator *simulator() const;
-    void setSimulator(js::jit::Simulator *sim);
-    js::jit::SimulatorRuntime *simulatorRuntime() const;
-    uintptr_t *addressOfSimulatorStackLimit();
+    js::jit::Simulator* simulator() const;
 #endif
 };
 
 class AutoLockForExclusiveAccess;
-
 } // namespace js
 
 struct JSRuntime : public JS::shadow::Runtime,
@@ -696,14 +588,176 @@ struct JSRuntime : public JS::shadow::Runtime,
     js::PerThreadData mainThread;
 
     /*
+     * If Baseline or Ion code is on the stack, and has called into C++, this
+     * will be aligned to an exit frame.
+     */
+    uint8_t*            jitTop;
+
+    /*
+     * The current JSContext when entering JIT code. This field may only be used
+     * from JIT code and C++ directly called by JIT code (otherwise it may refer
+     * to the wrong JSContext).
+     */
+    JSContext*          jitJSContext;
+
+     /*
+     * Points to the most recent JitActivation pushed on the thread.
+     * See JitActivation constructor in vm/Stack.cpp
+     */
+    js::jit::JitActivation* jitActivation;
+
+    /* See comment for JSRuntime::interrupt_. */
+  private:
+    mozilla::Atomic<uintptr_t, mozilla::Relaxed> jitStackLimit_;
+    void resetJitStackLimit();
+
+  public:
+    void initJitStackLimit();
+
+    uintptr_t jitStackLimit() const { return jitStackLimit_; }
+
+    // For read-only JIT use:
+    void* addressOfJitStackLimit() { return &jitStackLimit_; }
+    static size_t offsetOfJitStackLimit() { return offsetof(JSRuntime, jitStackLimit_); }
+
+    // Information about the heap allocated backtrack stack used by RegExp JIT code.
+    js::irregexp::RegExpStack regexpStack;
+
+  private:
+    friend class js::Activation;
+    friend class js::ActivationIterator;
+    friend class js::jit::JitActivation;
+    friend class js::AsmJSActivation;
+    friend class js::jit::CompileRuntime;
+#ifdef DEBUG
+    friend void js::AssertCurrentThreadCanLock(js::RuntimeLock which);
+#endif
+
+    /*
+     * Points to the most recent activation running on the thread.
+     * See Activation comment in vm/Stack.h.
+     */
+    js::Activation* activation_;
+
+    /*
+     * Points to the most recent profiling activation running on the
+     * thread.
+     */
+    js::Activation * volatile profilingActivation_;
+
+    /*
+     * The profiler sampler generation after the latest sample.
+     *
+     * The lapCount indicates the number of largest number of 'laps'
+     * (wrapping from high to low) that occurred when writing entries
+     * into the sample buffer.  All JitcodeGlobalMap entries referenced
+     * from a given sample are assigned the generation of the sample buffer
+     * at the START of the run.  If multiple laps occur, then some entries
+     * (towards the end) will be written out with the "wrong" generation.
+     * The lapCount indicates the required fudge factor to use to compare
+     * entry generations with the sample buffer generation.
+     */
+    mozilla::Atomic<uint32_t, mozilla::ReleaseAcquire> profilerSampleBufferGen_;
+    mozilla::Atomic<uint32_t, mozilla::ReleaseAcquire> profilerSampleBufferLapCount_;
+
+    /* See AsmJSActivation comment. */
+    js::AsmJSActivation * volatile asmJSActivationStack_;
+
+  public:
+    /*
+     * Youngest frame of a saved stack that will be picked up as an async stack
+     * by any new Activation, and is nullptr when no async stack should be used.
+     *
+     * The JS::AutoSetAsyncStackForNewCalls class can be used to set this.
+     *
+     * New activations will reset this to nullptr on construction after getting
+     * the current value, and will restore the previous value on destruction.
+     */
+    js::SavedFrame* asyncStackForNewActivations;
+
+    /*
+     * Value of asyncCause to be attached to asyncStackForNewActivations.
+     */
+    JSString* asyncCauseForNewActivations;
+
+    js::Activation* const* addressOfActivation() const {
+        return &activation_;
+    }
+    static unsigned offsetOfActivation() {
+        return offsetof(JSRuntime, activation_);
+    }
+
+    js::Activation* profilingActivation() const {
+        return profilingActivation_;
+    }
+    void* addressOfProfilingActivation() {
+        return (void*) &profilingActivation_;
+    }
+    static unsigned offsetOfProfilingActivation() {
+        return offsetof(JSRuntime, profilingActivation_);
+    }
+
+    uint32_t profilerSampleBufferGen() {
+        return profilerSampleBufferGen_;
+    }
+    void resetProfilerSampleBufferGen() {
+        profilerSampleBufferGen_ = 0;
+    }
+    void setProfilerSampleBufferGen(uint32_t gen) {
+        // May be called from sampler thread or signal handler; use
+        // compareExchange to make sure we have monotonic increase.
+        for (;;) {
+            uint32_t curGen = profilerSampleBufferGen_;
+            if (curGen >= gen)
+                break;
+
+            if (profilerSampleBufferGen_.compareExchange(curGen, gen))
+                break;
+        }
+    }
+
+    uint32_t profilerSampleBufferLapCount() {
+        MOZ_ASSERT(profilerSampleBufferLapCount_ > 0);
+        return profilerSampleBufferLapCount_;
+    }
+    void resetProfilerSampleBufferLapCount() {
+        profilerSampleBufferLapCount_ = 1;
+    }
+    void updateProfilerSampleBufferLapCount(uint32_t lapCount) {
+        MOZ_ASSERT(profilerSampleBufferLapCount_ > 0);
+
+        // May be called from sampler thread or signal handler; use
+        // compareExchange to make sure we have monotonic increase.
+        for (;;) {
+            uint32_t curLapCount = profilerSampleBufferLapCount_;
+            if (curLapCount >= lapCount)
+                break;
+
+            if (profilerSampleBufferLapCount_.compareExchange(curLapCount, lapCount))
+                break;
+        }
+    }
+
+    js::AsmJSActivation* asmJSActivationStack() const {
+        return asmJSActivationStack_;
+    }
+    static js::AsmJSActivation* innermostAsmJSActivation() {
+        js::PerThreadData* ptd = js::TlsPerThreadData.get();
+        return ptd ? ptd->runtimeFromMainThread()->asmJSActivationStack_ : nullptr;
+    }
+
+    js::Activation* activation() const {
+        return activation_;
+    }
+
+    /*
      * If non-null, another runtime guaranteed to outlive this one and whose
      * permanent data may be used by this one where possible.
      */
-    JSRuntime *parentRuntime;
+    JSRuntime* parentRuntime;
 
   private:
     mozilla::Atomic<uint32_t, mozilla::Relaxed> interrupt_;
-    mozilla::Atomic<uint32_t, mozilla::Relaxed> interruptPar_;
 
     /* Call this to accumulate telemetry data. */
     JSAccumulateTelemetryDataCallback telemetryCallback;
@@ -711,9 +765,9 @@ struct JSRuntime : public JS::shadow::Runtime,
     // Accumulates data for Firefox telemetry. |id| is the ID of a JS_TELEMETRY_*
     // histogram. |key| provides an additional key to identify the histogram.
     // |sample| is the data to add to the histogram.
-    void addTelemetry(int id, uint32_t sample, const char *key = nullptr);
+    void addTelemetry(int id, uint32_t sample, const char* key = nullptr);
 
-    void setTelemetryCallback(JSRuntime *rt, JSAccumulateTelemetryDataCallback callback);
+    void setTelemetryCallback(JSRuntime* rt, JSAccumulateTelemetryDataCallback callback);
 
     enum InterruptMode {
         RequestInterruptUrgent,
@@ -740,23 +794,16 @@ struct JSRuntime : public JS::shadow::Runtime,
     // called twice in succession after a single requestInterrupt call, but
     // that's fine.
     void requestInterrupt(InterruptMode mode);
-    bool handleInterrupt(JSContext *cx);
+    bool handleInterrupt(JSContext* cx);
 
     MOZ_ALWAYS_INLINE bool hasPendingInterrupt() const {
         return interrupt_;
     }
-    MOZ_ALWAYS_INLINE bool hasPendingInterruptPar() const {
-        return interruptPar_;
-    }
 
     // For read-only JIT use:
-    void *addressOfInterruptUint32() {
+    void* addressOfInterruptUint32() {
         static_assert(sizeof(interrupt_) == sizeof(uint32_t), "Assumed by JIT callers");
         return &interrupt_;
-    }
-    void *addressOfInterruptParUint32() {
-        static_assert(sizeof(interruptPar_) == sizeof(uint32_t), "Assumed by JIT callers");
-        return &interruptPar_;
     }
 
     /* Set when handling a signal for a thread associated with this runtime. */
@@ -779,8 +826,8 @@ struct JSRuntime : public JS::shadow::Runtime,
      * Locking this only occurs if there is actually a thread other than the
      * main thread with an ExclusiveContext which could access such data.
      */
-    PRLock *exclusiveAccessLock;
-    mozilla::DebugOnly<PRThread *> exclusiveAccessOwner;
+    PRLock* exclusiveAccessLock;
+    mozilla::DebugOnly<PRThread*> exclusiveAccessOwner;
     mozilla::DebugOnly<bool> mainThreadHasExclusiveAccess;
 
     /* Number of non-main threads with an ExclusiveContext. */
@@ -789,8 +836,8 @@ struct JSRuntime : public JS::shadow::Runtime,
     friend class js::AutoLockForExclusiveAccess;
 
   public:
-    void setUsedByExclusiveThread(JS::Zone *zone);
-    void clearUsedByExclusiveThread(JS::Zone *zone);
+    void setUsedByExclusiveThread(JS::Zone* zone);
+    void clearUsedByExclusiveThread(JS::Zone* zone);
 
 #ifdef DEBUG
     bool currentThreadHasExclusiveAccess() {
@@ -803,26 +850,28 @@ struct JSRuntime : public JS::shadow::Runtime,
         return numExclusiveThreads > 0;
     }
 
-    /* How many compartments there are across all zones. */
+    // How many compartments there are across all zones. This number includes
+    // ExclusiveContext compartments, so it isn't necessarily equal to the
+    // number of compartments visited by CompartmentsIter.
     size_t              numCompartments;
 
     /* Locale-specific callbacks for string conversion. */
-    const JSLocaleCallbacks *localeCallbacks;
+    const JSLocaleCallbacks* localeCallbacks;
 
     /* Default locale for Internationalization API */
-    char *defaultLocale;
+    char* defaultLocale;
 
     /* Default JSVersion. */
     JSVersion defaultVersion_;
 
-    /* Futex API, if installed */
-    JS::PerRuntimeFutexAPI *futexAPI_;
+    /* Futex state, used by futexWait and futexWake on the Atomics object */
+    js::FutexRuntime fx;
 
   private:
     /* See comment for JS_AbortIfWrongThread in jsapi.h. */
-    void *ownerThread_;
+    void* ownerThread_;
     size_t ownerThreadNative_;
-    friend bool js::CurrentThreadCanAccessRuntime(JSRuntime *rt);
+    friend bool js::CurrentThreadCanAccessRuntime(JSRuntime* rt);
   public:
 
     size_t ownerThreadNative() const {
@@ -834,49 +883,33 @@ struct JSRuntime : public JS::shadow::Runtime,
     js::LifoAlloc tempLifoAlloc;
 
   private:
-    /*
-     * Both of these allocators are used for regular expression code which is shared at the
-     * thread-data level.
-     */
-    js::jit::ExecutableAllocator *execAlloc_;
-    js::jit::JitRuntime *jitRuntime_;
+    js::jit::JitRuntime* jitRuntime_;
 
     /*
      * Self-hosting state cloned on demand into other compartments. Shared with the parent
      * runtime if there is one.
      */
-    js::NativeObject *selfHostingGlobal_;
+    js::NativeObject* selfHostingGlobal_;
 
-    static js::GlobalObject *
-    createSelfHostingGlobal(JSContext *cx);
+    static js::GlobalObject*
+    createSelfHostingGlobal(JSContext* cx);
 
     /* Space for interpreter frames. */
     js::InterpreterStack interpreterStack_;
 
-    js::jit::ExecutableAllocator *createExecutableAllocator(JSContext *cx);
-    js::jit::JitRuntime *createJitRuntime(JSContext *cx);
+    js::jit::JitRuntime* createJitRuntime(JSContext* cx);
 
   public:
-    js::jit::ExecutableAllocator *getExecAlloc(JSContext *cx) {
-        return execAlloc_ ? execAlloc_ : createExecutableAllocator(cx);
-    }
-    js::jit::ExecutableAllocator &execAlloc() {
-        MOZ_ASSERT(execAlloc_);
-        return *execAlloc_;
-    }
-    js::jit::ExecutableAllocator *maybeExecAlloc() {
-        return execAlloc_;
-    }
-    js::jit::JitRuntime *getJitRuntime(JSContext *cx) {
+    js::jit::JitRuntime* getJitRuntime(JSContext* cx) {
         return jitRuntime_ ? jitRuntime_ : createJitRuntime(cx);
     }
-    js::jit::JitRuntime *jitRuntime() const {
+    js::jit::JitRuntime* jitRuntime() const {
         return jitRuntime_;
     }
     bool hasJitRuntime() const {
         return !!jitRuntime_;
     }
-    js::InterpreterStack &interpreterStack() {
+    js::InterpreterStack& interpreterStack() {
         return interpreterStack_;
     }
 
@@ -884,17 +917,17 @@ struct JSRuntime : public JS::shadow::Runtime,
     // Self-hosting support
     //-------------------------------------------------------------------------
 
-    bool initSelfHosting(JSContext *cx);
+    bool initSelfHosting(JSContext* cx);
     void finishSelfHosting();
-    void markSelfHostingGlobal(JSTracer *trc);
-    bool isSelfHostingGlobal(JSObject *global) {
+    void markSelfHostingGlobal(JSTracer* trc);
+    bool isSelfHostingGlobal(JSObject* global) {
         return global == selfHostingGlobal_;
     }
-    bool isSelfHostingCompartment(JSCompartment *comp);
-    bool isSelfHostingZone(JS::Zone *zone);
-    bool cloneSelfHostedFunctionScript(JSContext *cx, js::Handle<js::PropertyName*> name,
+    bool isSelfHostingCompartment(JSCompartment* comp) const;
+    bool isSelfHostingZone(const JS::Zone* zone) const;
+    bool cloneSelfHostedFunctionScript(JSContext* cx, js::Handle<js::PropertyName*> name,
                                        js::Handle<JSFunction*> targetFun);
-    bool cloneSelfHostedValue(JSContext *cx, js::Handle<js::PropertyName*> name,
+    bool cloneSelfHostedValue(JSContext* cx, js::Handle<js::PropertyName*> name,
                               js::MutableHandleValue vp);
 
     //-------------------------------------------------------------------------
@@ -908,13 +941,13 @@ struct JSRuntime : public JS::shadow::Runtime,
      * specify their own locales.
      * The locale string remains owned by the caller.
      */
-    bool setDefaultLocale(const char *locale);
+    bool setDefaultLocale(const char* locale);
 
     /* Reset the default locale to OS defaults. */
     void resetDefaultLocale();
 
     /* Gets current default locale. String remains owned by context. */
-    const char *getDefaultLocale();
+    const char* getDefaultLocale();
 
     JSVersion defaultVersion() { return defaultVersion_; }
     void setDefaultVersion(JSVersion v) { defaultVersion_ = v; }
@@ -927,7 +960,7 @@ struct JSRuntime : public JS::shadow::Runtime,
 
     /* Context create/destroy callback. */
     JSContextCallback   cxCallback;
-    void               *cxCallbackData;
+    void*              cxCallbackData;
 
     /* Compartment destroy callback. */
     JSDestroyCompartmentCallback destroyCompartmentCallback;
@@ -942,7 +975,7 @@ struct JSRuntime : public JS::shadow::Runtime,
     JSCompartmentNameCallback compartmentNameCallback;
 
     js::ActivityCallback  activityCallback;
-    void                 *activityCallbackArg;
+    void*                activityCallbackArg;
     void triggerActivityCallback(bool active);
 
     /* The request depth for this thread. */
@@ -957,7 +990,7 @@ struct JSRuntime : public JS::shadow::Runtime,
      * to a non-null value, the assertSameCompartment machinery does double-
      * duty (in debug builds) to verify that it matches the cx being used.
      */
-    JSContext          *activeContext;
+    JSContext*         activeContext;
 #endif
 
     /* Garbage collector state, used by jsgc.c. */
@@ -984,7 +1017,7 @@ struct JSRuntime : public JS::shadow::Runtime,
     }
 
 #if defined(JS_ARM_SIMULATOR) || defined(JS_MIPS_SIMULATOR)
-    js::jit::SimulatorRuntime *simulatorRuntime_;
+    js::jit::Simulator* simulator_;
 #endif
 
   public:
@@ -993,19 +1026,19 @@ struct JSRuntime : public JS::shadow::Runtime,
     }
 
 #if defined(JS_ARM_SIMULATOR) || defined(JS_MIPS_SIMULATOR)
-    js::jit::SimulatorRuntime *simulatorRuntime() const;
-    void setSimulatorRuntime(js::jit::SimulatorRuntime *srt);
+    js::jit::Simulator* simulator() const;
+    uintptr_t* addressOfSimulatorStackLimit();
 #endif
 
     /* Strong references on scripts held for PCCount profiling API. */
-    js::ScriptAndCountsVector *scriptAndCountsVector;
+    js::ScriptAndCountsVector* scriptAndCountsVector;
 
     /* Well-known numbers held for use by this runtime's contexts. */
     const js::Value     NaNValue;
     const js::Value     negativeInfinityValue;
     const js::Value     positiveInfinityValue;
 
-    js::PropertyName    *emptyString;
+    js::PropertyName*   emptyString;
 
     /* List of active contexts sharing this runtime. */
     mozilla::LinkedList<JSContext> contextList;
@@ -1016,10 +1049,6 @@ struct JSRuntime : public JS::shadow::Runtime,
 
     mozilla::UniquePtr<js::SourceHook> sourceHook;
 
-#ifdef NIGHTLY_BUILD
-    js::AssertOnScriptEntryHook assertOnScriptEntryHook_;
-#endif
-
     /* SPS profiling metadata */
     js::SPSProfiler     spsProfiler;
 
@@ -1028,7 +1057,7 @@ struct JSRuntime : public JS::shadow::Runtime,
 
     /* Whether sampling should be enabled or not. */
   private:
-    bool                suppressProfilerSampling;
+    mozilla::Atomic<bool, mozilla::SequentiallyConsistent> suppressProfilerSampling;
 
   public:
     bool isProfilerSamplingEnabled() const {
@@ -1047,6 +1076,12 @@ struct JSRuntime : public JS::shadow::Runtime,
     /* A context has been created on this runtime. */
     bool                haveCreatedContext;
 
+    /*
+     * Allow relazifying functions in compartments that are active. This is
+     * only used by the relazifyFunctions() testing function.
+     */
+    bool                allowRelazificationForTesting;
+
     /* Linked list of all Debugger objects in the runtime. */
     mozilla::LinkedList<js::Debugger> debuggerList;
 
@@ -1057,9 +1092,9 @@ struct JSRuntime : public JS::shadow::Runtime,
     JSCList             onNewGlobalObjectWatchers;
 
     /* Client opaque pointers */
-    void                *data;
+    void*               data;
 
-#ifdef XP_MACOSX
+#if defined(XP_MACOSX) && defined(ASMJS_MAY_USE_SIGNAL_HANDLERS_FOR_OOB)
     js::AsmJSMachExceptionHandler asmJSMachExceptionHandler;
 #endif
 
@@ -1084,18 +1119,18 @@ struct JSRuntime : public JS::shadow::Runtime,
     js::FreeOp          defaultFreeOp_;
 
   public:
-    js::FreeOp *defaultFreeOp() {
+    js::FreeOp* defaultFreeOp() {
         return &defaultFreeOp_;
     }
 
     uint32_t            debuggerMutations;
 
-    const JSSecurityCallbacks *securityCallbacks;
-    const js::DOMCallbacks *DOMcallbacks;
+    const JSSecurityCallbacks* securityCallbacks;
+    const js::DOMCallbacks* DOMcallbacks;
     JSDestroyPrincipalsOp destroyPrincipals;
 
     /* Structured data callbacks are runtime-wide. */
-    const JSStructuredCloneCallbacks *structuredCloneCallbacks;
+    const JSStructuredCloneCallbacks* structuredCloneCallbacks;
 
     /* Optional error reporter. */
     JSErrorReporter     errorReporter;
@@ -1104,7 +1139,7 @@ struct JSRuntime : public JS::shadow::Runtime,
     JS::AsmJSCacheOps   asmJSCacheOps;
 
     /* Head of the linked list of linked asm.js modules. */
-    js::AsmJSModule    *linkedAsmJSModules;
+    js::AsmJSModule*   linkedAsmJSModules;
 
     /*
      * The propertyRemovals counter is incremented for every JSObject::clear,
@@ -1115,19 +1150,19 @@ struct JSRuntime : public JS::shadow::Runtime,
 
 #if !EXPOSE_INTL_API
     /* Number localization, used by jsnum.cpp. */
-    const char          *thousandsSeparator;
-    const char          *decimalSeparator;
-    const char          *numGrouping;
+    const char*         thousandsSeparator;
+    const char*         decimalSeparator;
+    const char*         numGrouping;
 #endif
 
   private:
-    js::MathCache *mathCache_;
-    js::MathCache *createMathCache(JSContext *cx);
+    js::MathCache* mathCache_;
+    js::MathCache* createMathCache(JSContext* cx);
   public:
-    js::MathCache *getMathCache(JSContext *cx) {
+    js::MathCache* getMathCache(JSContext* cx) {
         return mathCache_ ? mathCache_ : createMathCache(cx);
     }
-    js::MathCache *maybeGetMathCache() {
+    js::MathCache* maybeGetMathCache() {
         return mathCache_;
     }
 
@@ -1149,7 +1184,7 @@ struct JSRuntime : public JS::shadow::Runtime,
     js::frontend::ParseMapPool parseMapPool_;
     unsigned activeCompilations_;
   public:
-    js::frontend::ParseMapPool &parseMapPool() {
+    js::frontend::ParseMapPool& parseMapPool() {
         MOZ_ASSERT(currentThreadHasExclusiveAccess());
         return parseMapPool_;
     }
@@ -1184,10 +1219,10 @@ struct JSRuntime : public JS::shadow::Runtime,
     }
 
   private:
-    const JSPrincipals  *trustedPrincipals_;
+    const JSPrincipals* trustedPrincipals_;
   public:
-    void setTrustedPrincipals(const JSPrincipals *p) { trustedPrincipals_ = p; }
-    const JSPrincipals *trustedPrincipals() const { return trustedPrincipals_; }
+    void setTrustedPrincipals(const JSPrincipals* p) { trustedPrincipals_ = p; }
+    const JSPrincipals* trustedPrincipals() const { return trustedPrincipals_; }
 
   private:
     bool beingDestroyed_;
@@ -1200,13 +1235,13 @@ struct JSRuntime : public JS::shadow::Runtime,
     // Set of all atoms other than those in permanentAtoms and staticStrings.
     // Reading or writing this set requires the calling thread to have an
     // ExclusiveContext and hold a lock. Use AutoLockForExclusiveAccess.
-    js::AtomSet *atoms_;
+    js::AtomSet* atoms_;
 
     // Compartment and associated zone containing all atoms in the runtime, as
     // well as runtime wide IonCode stubs. Modifying the contents of this
     // compartment requires the calling thread to have an ExclusiveContext and
     // hold a lock. Use AutoLockForExclusiveAccess.
-    JSCompartment *atomsCompartment_;
+    JSCompartment* atomsCompartment_;
 
     // Set of all live symbols produced by Symbol.for(). All such symbols are
     // allocated in the atomsCompartment. Reading or writing the symbol
@@ -1215,30 +1250,30 @@ struct JSRuntime : public JS::shadow::Runtime,
     js::SymbolRegistry symbolRegistry_;
 
   public:
-    bool initializeAtoms(JSContext *cx);
+    bool initializeAtoms(JSContext* cx);
     void finishAtoms();
 
     void sweepAtoms();
 
-    js::AtomSet &atoms() {
+    js::AtomSet& atoms() {
         MOZ_ASSERT(currentThreadHasExclusiveAccess());
         return *atoms_;
     }
-    JSCompartment *atomsCompartment() {
+    JSCompartment* atomsCompartment() {
         MOZ_ASSERT(currentThreadHasExclusiveAccess());
         return atomsCompartment_;
     }
 
-    bool isAtomsCompartment(JSCompartment *comp) {
+    bool isAtomsCompartment(JSCompartment* comp) {
         return comp == atomsCompartment_;
     }
 
     // The atoms compartment is the only one in its zone.
-    inline bool isAtomsZone(JS::Zone *zone);
+    inline bool isAtomsZone(const JS::Zone* zone) const;
 
     bool activeGCInAtomsZone();
 
-    js::SymbolRegistry &symbolRegistry() {
+    js::SymbolRegistry& symbolRegistry() {
         MOZ_ASSERT(currentThreadHasExclusiveAccess());
         return symbolRegistry_;
     }
@@ -1249,21 +1284,23 @@ struct JSRuntime : public JS::shadow::Runtime,
     // can be freely accessed with no locking necessary.
 
     // Permanent atoms pre-allocated for general use.
-    js::StaticStrings *staticStrings;
+    js::StaticStrings* staticStrings;
 
     // Cached pointers to various permanent property names.
-    JSAtomState *commonNames;
+    JSAtomState* commonNames;
 
     // All permanent atoms in the runtime, other than those in staticStrings.
-    js::AtomSet *permanentAtoms;
+    // Unlike |atoms_|, access to this does not require
+    // AutoLockForExclusiveAccess because it is frozen and thus read-only.
+    js::FrozenAtomSet* permanentAtoms;
 
-    bool transformToPermanentAtoms();
+    bool transformToPermanentAtoms(JSContext* cx);
 
     // Cached well-known symbols (ES6 rev 24 6.1.5.1). Like permanent atoms,
     // these are shared with the parentRuntime, if any.
-    js::WellKnownSymbols *wellKnownSymbols;
+    js::WellKnownSymbols* wellKnownSymbols;
 
-    const JSWrapObjectCallbacks            *wrapObjectCallbacks;
+    const JSWrapObjectCallbacks*           wrapObjectCallbacks;
     js::PreserveWrapperCallback            preserveWrapperCallback;
 
     // Table of bytecode and other data that may be shared across scripts
@@ -1272,7 +1309,7 @@ struct JSRuntime : public JS::shadow::Runtime,
   private:
     js::ScriptDataTable scriptDataTable_;
   public:
-    js::ScriptDataTable &scriptDataTable() {
+    js::ScriptDataTable& scriptDataTable() {
         MOZ_ASSERT(currentThreadHasExclusiveAccess());
         return scriptDataTable_;
     }
@@ -1281,17 +1318,11 @@ struct JSRuntime : public JS::shadow::Runtime,
     bool                jitSupportsSimd;
 
     // Cache for jit::GetPcScript().
-    js::jit::PcScriptCache *ionPcScriptCache;
-
-    js::ThreadPool threadPool;
+    js::jit::PcScriptCache* ionPcScriptCache;
 
     js::DefaultJSContextCallback defaultJSContextCallback;
 
     js::CTypesActivityCallback  ctypesActivityCallback;
-
-    // Non-zero if this is a ForkJoin warmup execution.  See
-    // js::ForkJoin() for more information.
-    uint32_t forkJoinWarmup;
 
   private:
     static mozilla::Atomic<size_t> liveRuntimesCount;
@@ -1301,12 +1332,12 @@ struct JSRuntime : public JS::shadow::Runtime,
         return liveRuntimesCount > 0;
     }
 
-    explicit JSRuntime(JSRuntime *parentRuntime);
+    explicit JSRuntime(JSRuntime* parentRuntime);
     ~JSRuntime();
 
     bool init(uint32_t maxbytes, uint32_t maxNurseryBytes);
 
-    JSRuntime *thisFromCtor() { return this; }
+    JSRuntime* thisFromCtor() { return this; }
 
     /*
      * Call this after allocating memory held by GC things, to update memory
@@ -1317,9 +1348,9 @@ struct JSRuntime : public JS::shadow::Runtime,
      * the caller must ensure that no deadlock possible during OOM reporting.
      */
     void updateMallocCounter(size_t nbytes);
-    void updateMallocCounter(JS::Zone *zone, size_t nbytes);
+    void updateMallocCounter(JS::Zone* zone, size_t nbytes);
 
-    void reportAllocationOverflow() { js_ReportAllocationOverflow(nullptr); }
+    void reportAllocationOverflow() { js::ReportAllocationOverflow(nullptr); }
 
     /*
      * The function must be called outside the GC lock.
@@ -1327,20 +1358,20 @@ struct JSRuntime : public JS::shadow::Runtime,
     JS_FRIEND_API(void) onTooMuchMalloc();
 
     /*
-     * This should be called after system malloc/realloc returns nullptr to try
-     * to recove some memory or to report an error. Failures in malloc and
-     * calloc are signaled by p == null and p == reinterpret_cast<void *>(1).
-     * Other values of p mean a realloc failure.
+     * This should be called after system malloc/calloc/realloc returns nullptr
+     * to try to recove some memory or to report an error.  For realloc, the
+     * original pointer must be passed as reallocPtr.
      *
      * The function must be called outside the GC lock.
      */
-    JS_FRIEND_API(void *) onOutOfMemory(void *p, size_t nbytes);
-    JS_FRIEND_API(void *) onOutOfMemory(void *p, size_t nbytes, JSContext *cx);
+    JS_FRIEND_API(void*) onOutOfMemory(js::AllocFunction allocator, size_t nbytes,
+                                       void* reallocPtr = nullptr, JSContext* maybecx = nullptr);
 
     /*  onOutOfMemory but can call the largeAllocationFailureCallback. */
-    JS_FRIEND_API(void *) onOutOfMemoryCanGC(void *p, size_t bytes);
+    JS_FRIEND_API(void*) onOutOfMemoryCanGC(js::AllocFunction allocator, size_t nbytes,
+                                            void* reallocPtr = nullptr);
 
-    void addSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf, JS::RuntimeSizes *runtime);
+    void addSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf, JS::RuntimeSizes* runtime);
 
   private:
     JS::RuntimeOptions options_;
@@ -1366,25 +1397,25 @@ struct JSRuntime : public JS::shadow::Runtime,
         return parallelParsingEnabled_;
     }
 
-    const JS::RuntimeOptions &options() const {
+    const JS::RuntimeOptions& options() const {
         return options_;
     }
-    JS::RuntimeOptions &options() {
+    JS::RuntimeOptions& options() {
         return options_;
     }
 
 #ifdef DEBUG
   public:
-    js::AutoEnterPolicy *enteredPolicy;
+    js::AutoEnterPolicy* enteredPolicy;
 #endif
 
     /* See comment for JS::SetLargeAllocationFailureCallback in jsapi.h. */
     JS::LargeAllocationFailureCallback largeAllocationFailureCallback;
-    void *largeAllocationFailureCallbackData;
+    void* largeAllocationFailureCallbackData;
 
     /* See comment for JS::SetOutOfMemoryCallback in jsapi.h. */
     JS::OutOfMemoryCallback oomCallback;
-    void *oomCallbackData;
+    void* oomCallbackData;
 
     /*
      * These variations of malloc/calloc/realloc will call the
@@ -1394,27 +1425,27 @@ struct JSRuntime : public JS::shadow::Runtime,
     static const unsigned LARGE_ALLOCATION = 25 * 1024 * 1024;
 
     template <typename T>
-    T *pod_callocCanGC(size_t numElems) {
-        T *p = pod_calloc<T>(numElems);
+    T* pod_callocCanGC(size_t numElems) {
+        T* p = pod_calloc<T>(numElems);
         if (MOZ_LIKELY(!!p))
             return p;
         if (numElems & mozilla::tl::MulOverflowMask<sizeof(T)>::value) {
             reportAllocationOverflow();
             return nullptr;
         }
-        return (T *)onOutOfMemoryCanGC(reinterpret_cast<void *>(1), numElems * sizeof(T));
+        return (T*)onOutOfMemoryCanGC(js::AllocFunction::Calloc, numElems * sizeof(T));
     }
 
     template <typename T>
-    T *pod_reallocCanGC(T *p, size_t oldSize, size_t newSize) {
-        T *p2 = pod_realloc<T>(p, oldSize, newSize);
+    T* pod_reallocCanGC(T* p, size_t oldSize, size_t newSize) {
+        T* p2 = pod_realloc<T>(p, oldSize, newSize);
         if (MOZ_LIKELY(!!p2))
             return p2;
         if (newSize & mozilla::tl::MulOverflowMask<sizeof(T)>::value) {
             reportAllocationOverflow();
             return nullptr;
         }
-        return (T *)onOutOfMemoryCanGC(p, newSize * sizeof(T));
+        return (T*)onOutOfMemoryCanGC(js::AllocFunction::Realloc, newSize * sizeof(T), p);
     }
 
     /*
@@ -1422,6 +1453,138 @@ struct JSRuntime : public JS::shadow::Runtime,
      * function to assess the size of malloc'd blocks of memory.
      */
     mozilla::MallocSizeOf debuggerMallocSizeOf;
+
+    /* Last time at which an animation was played for this runtime. */
+    int64_t lastAnimationTime;
+
+  public:
+
+    /* ------------------------------------------
+       Performance measurements
+       ------------------------------------------ */
+    struct Stopwatch {
+        /**
+         * The number of times we have entered the event loop.
+         * Used to reset counters whenever we enter the loop,
+         * which may be caused either by having completed the
+         * previous run of the event loop, or by entering a
+         * nested loop.
+         *
+         * Always incremented by 1, may safely overflow.
+         */
+        uint64_t iteration;
+
+        /**
+         * `true` if no stopwatch has been registered for the
+         * current run of the event loop, `false` until then.
+         */
+        bool isEmpty;
+
+        /**
+         * Performance data on the entire runtime.
+         */
+        js::PerformanceData performance;
+
+        Stopwatch()
+          : iteration(0)
+          , isEmpty(true)
+          , isActive_(false)
+        { }
+
+        /**
+         * Reset the stopwatch.
+         *
+         * This method is meant to be called whenever we start processing
+         * an event, to ensure that stop any ongoing measurement that would
+         * otherwise provide irrelevant results.
+         */
+        void reset() {
+            ++iteration;
+            isEmpty = true;
+        }
+
+        /**
+         * Activate/deactivate stopwatch measurement.
+         *
+         * Noop if `value` is `true` and the stopwatch is already active,
+         * or if `value` is `false` and the stopwatch is already inactive.
+         *
+         * Otherwise, any pending measurements are dropped, but previous
+         * measurements remain stored.
+         *
+         * May return `false` if the underlying hashtable cannot be allocated.
+         */
+        bool setIsActive(bool value) {
+            if (isActive_ != value)
+                reset();
+
+            if (value && !groups_.initialized()) {
+                if (!groups_.init(128))
+                    return false;
+            }
+
+            isActive_ = value;
+            return true;
+        }
+
+        /**
+         * `true` if the stopwatch is currently monitoring, `false` otherwise.
+         */
+        bool isActive() const {
+            return isActive_;
+        }
+
+        // Some systems have non-monotonic clocks. While we cannot
+        // improve the precision, we can make sure that our measures
+        // are monotonic nevertheless. We do this by storing the
+        // result of the latest call to the clock and making sure
+        // that the next timestamp is greater or equal.
+        struct MonotonicTimeStamp {
+            MonotonicTimeStamp()
+              : latestGood_(0)
+            {}
+            inline uint64_t monotonize(uint64_t stamp)
+            {
+                if (stamp <= latestGood_)
+                    return latestGood_;
+                latestGood_ = stamp;
+                return stamp;
+            }
+          private:
+            uint64_t latestGood_;
+        };
+        MonotonicTimeStamp systemTimeFix;
+        MonotonicTimeStamp userTimeFix;
+
+    private:
+        /**
+         * A map used to collapse compartments belonging to the same
+         * add-on (respectively to the same webpage, to the platform)
+         * into a single group.
+         *
+         * Keys: for system compartments, a `JSAddonId*` (which may be
+         * `nullptr`), and for webpages, a `JSPrincipals*` (which may
+         * not). Note that compartments may start as non-system
+         * compartments and become compartments later during their
+         * lifetime, which requires an invalidation.
+         *
+         * This map is meant to be accessed only by instances of
+         * PerformanceGroupHolder, which handle both reference-counting
+         * of the values and invalidation of the key/value pairs.
+         */
+        typedef js::HashMap<void*, js::PerformanceGroup*,
+                            js::DefaultHasher<void*>,
+                            js::SystemAllocPolicy> Groups;
+
+        Groups groups_;
+        friend struct js::PerformanceGroupHolder;
+
+        /**
+         * `true` if stopwatch monitoring is active, `false` otherwise.
+         */
+        bool isActive_;
+    };
+    Stopwatch stopwatch;
 };
 
 namespace js {
@@ -1431,10 +1594,10 @@ namespace js {
 // that the caller is JIT code or C++ called directly from JIT code. This
 // function should not be called from arbitrary locations since the JSContext
 // may be the wrong one.
-static inline JSContext *
+static inline JSContext*
 GetJSContextFromJitCode()
 {
-    JSContext *cx = TlsPerThreadData.get()->jitJSContext;
+    JSContext* cx = js::TlsPerThreadData.get()->runtimeFromMainThread()->jitJSContext;
     MOZ_ASSERT(cx);
     return cx;
 }
@@ -1464,7 +1627,7 @@ VersionExtractFlags(JSVersion version)
 }
 
 static inline void
-VersionCopyFlags(JSVersion *version, JSVersion from)
+VersionCopyFlags(JSVersion* version, JSVersion from)
 {
     *version = JSVersion(VersionNumber(*version) | VersionExtractFlags(from));
 }
@@ -1482,13 +1645,13 @@ VersionIsKnown(JSVersion version)
 }
 
 inline void
-FreeOp::free_(void *p)
+FreeOp::free_(void* p)
 {
     js_free(p);
 }
 
 inline void
-FreeOp::freeLater(void *p)
+FreeOp::freeLater(void* p)
 {
     // FreeOps other than the defaultFreeOp() are constructed on the stack,
     // and won't hold onto the pointers to free indefinitely.
@@ -1507,7 +1670,7 @@ FreeOp::freeLater(void *p)
 class MOZ_STACK_CLASS AutoLockGC
 {
   public:
-    explicit AutoLockGC(JSRuntime *rt
+    explicit AutoLockGC(JSRuntime* rt
                         MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
       : runtime_(rt), wasUnlocked_(false)
     {
@@ -1535,7 +1698,7 @@ class MOZ_STACK_CLASS AutoLockGC
 #endif
 
   private:
-    JSRuntime *runtime_;
+    JSRuntime* runtime_;
     mozilla::DebugOnly<bool> wasUnlocked_;
     MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
 
@@ -1568,16 +1731,16 @@ class MOZ_STACK_CLASS AutoUnlockGC
 
 class MOZ_STACK_CLASS AutoKeepAtoms
 {
-    PerThreadData *pt;
+    PerThreadData* pt;
     MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
 
   public:
-    explicit AutoKeepAtoms(PerThreadData *pt
+    explicit AutoKeepAtoms(PerThreadData* pt
                            MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
       : pt(pt)
     {
         MOZ_GUARD_OBJECT_NOTIFIER_INIT;
-        if (JSRuntime *rt = pt->runtimeIfOnOwnerThread()) {
+        if (JSRuntime* rt = pt->runtimeIfOnOwnerThread()) {
             rt->keepAtoms_++;
         } else {
             // This should be a thread with an exclusive context, which will
@@ -1586,21 +1749,23 @@ class MOZ_STACK_CLASS AutoKeepAtoms
         }
     }
     ~AutoKeepAtoms() {
-        if (JSRuntime *rt = pt->runtimeIfOnOwnerThread()) {
+        if (JSRuntime* rt = pt->runtimeIfOnOwnerThread()) {
             MOZ_ASSERT(rt->keepAtoms_);
             rt->keepAtoms_--;
+            if (rt->gc.fullGCForAtomsRequested() && !rt->keepAtoms())
+                rt->gc.triggerFullGCForAtoms();
         }
     }
 };
 
-inline JSRuntime *
+inline JSRuntime*
 PerThreadData::runtimeFromMainThread()
 {
     MOZ_ASSERT(CurrentThreadCanAccessRuntime(runtime_));
     return runtime_;
 }
 
-inline JSRuntime *
+inline JSRuntime*
 PerThreadData::runtimeIfOnOwnerThread()
 {
     return (runtime_ && CurrentThreadCanAccessRuntime(runtime_)) ? runtime_ : nullptr;
@@ -1630,64 +1795,64 @@ PerThreadData::removeActiveCompilation()
 /************************************************************************/
 
 static MOZ_ALWAYS_INLINE void
-MakeRangeGCSafe(Value *vec, size_t len)
+MakeRangeGCSafe(Value* vec, size_t len)
 {
     mozilla::PodZero(vec, len);
 }
 
 static MOZ_ALWAYS_INLINE void
-MakeRangeGCSafe(Value *beg, Value *end)
+MakeRangeGCSafe(Value* beg, Value* end)
 {
     mozilla::PodZero(beg, end - beg);
 }
 
 static MOZ_ALWAYS_INLINE void
-MakeRangeGCSafe(jsid *beg, jsid *end)
+MakeRangeGCSafe(jsid* beg, jsid* end)
 {
-    for (jsid *id = beg; id != end; ++id)
+    for (jsid* id = beg; id != end; ++id)
         *id = INT_TO_JSID(0);
 }
 
 static MOZ_ALWAYS_INLINE void
-MakeRangeGCSafe(jsid *vec, size_t len)
+MakeRangeGCSafe(jsid* vec, size_t len)
 {
     MakeRangeGCSafe(vec, vec + len);
 }
 
 static MOZ_ALWAYS_INLINE void
-MakeRangeGCSafe(Shape **beg, Shape **end)
+MakeRangeGCSafe(Shape** beg, Shape** end)
 {
     mozilla::PodZero(beg, end - beg);
 }
 
 static MOZ_ALWAYS_INLINE void
-MakeRangeGCSafe(Shape **vec, size_t len)
+MakeRangeGCSafe(Shape** vec, size_t len)
 {
     mozilla::PodZero(vec, len);
 }
 
 static MOZ_ALWAYS_INLINE void
-SetValueRangeToUndefined(Value *beg, Value *end)
+SetValueRangeToUndefined(Value* beg, Value* end)
 {
-    for (Value *v = beg; v != end; ++v)
+    for (Value* v = beg; v != end; ++v)
         v->setUndefined();
 }
 
 static MOZ_ALWAYS_INLINE void
-SetValueRangeToUndefined(Value *vec, size_t len)
+SetValueRangeToUndefined(Value* vec, size_t len)
 {
     SetValueRangeToUndefined(vec, vec + len);
 }
 
 static MOZ_ALWAYS_INLINE void
-SetValueRangeToNull(Value *beg, Value *end)
+SetValueRangeToNull(Value* beg, Value* end)
 {
-    for (Value *v = beg; v != end; ++v)
+    for (Value* v = beg; v != end; ++v)
         v->setNull();
 }
 
 static MOZ_ALWAYS_INLINE void
-SetValueRangeToNull(Value *vec, size_t len)
+SetValueRangeToNull(Value* vec, size_t len)
 {
     SetValueRangeToNull(vec, vec + len);
 }
@@ -1705,27 +1870,27 @@ SetValueRangeToNull(Value *vec, size_t len)
  */
 class RuntimeAllocPolicy
 {
-    JSRuntime *const runtime;
+    JSRuntime* const runtime;
 
   public:
-    MOZ_IMPLICIT RuntimeAllocPolicy(JSRuntime *rt) : runtime(rt) {}
+    MOZ_IMPLICIT RuntimeAllocPolicy(JSRuntime* rt) : runtime(rt) {}
 
     template <typename T>
-    T *pod_malloc(size_t numElems) {
+    T* pod_malloc(size_t numElems) {
         return runtime->pod_malloc<T>(numElems);
     }
 
     template <typename T>
-    T *pod_calloc(size_t numElems) {
+    T* pod_calloc(size_t numElems) {
         return runtime->pod_calloc<T>(numElems);
     }
 
     template <typename T>
-    T *pod_realloc(T *p, size_t oldSize, size_t newSize) {
+    T* pod_realloc(T* p, size_t oldSize, size_t newSize) {
         return runtime->pod_realloc<T>(p, oldSize, newSize);
     }
 
-    void free_(void *p) { js_free(p); }
+    void free_(void* p) { js_free(p); }
     void reportAllocOverflow() const {}
 };
 
@@ -1740,7 +1905,7 @@ class AutoEnterIonCompilation
         MOZ_GUARD_OBJECT_NOTIFIER_INIT;
 
 #ifdef DEBUG
-        PerThreadData *pt = js::TlsPerThreadData.get();
+        PerThreadData* pt = js::TlsPerThreadData.get();
         MOZ_ASSERT(!pt->ionCompiling);
         pt->ionCompiling = true;
 #endif
@@ -1748,7 +1913,7 @@ class AutoEnterIonCompilation
 
     ~AutoEnterIonCompilation() {
 #ifdef DEBUG
-        PerThreadData *pt = js::TlsPerThreadData.get();
+        PerThreadData* pt = js::TlsPerThreadData.get();
         MOZ_ASSERT(pt->ionCompiling);
         pt->ionCompiling = false;
 #endif

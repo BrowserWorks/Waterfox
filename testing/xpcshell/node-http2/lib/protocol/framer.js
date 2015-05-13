@@ -146,7 +146,7 @@ Deserializer.prototype._transform = function _transform(chunk, encoding, done) {
   done();
 };
 
-// [Frame Header](http://tools.ietf.org/html/draft-ietf-httpbis-http2-14#section-4.1)
+// [Frame Header](http://tools.ietf.org/html/draft-ietf-httpbis-http2-16#section-4.1)
 // --------------------------------------------------------------
 //
 // HTTP/2.0 frames share a common base format consisting of a 9-byte header followed by 0 to 2^24 - 1
@@ -269,7 +269,7 @@ Deserializer.commonHeader = function readCommonHeader(buffer, frame) {
 // * `typeSpecificAttributes`: a register of frame specific frame object attributes (used by
 //   logging code and also serves as documentation for frame objects)
 
-// [DATA Frames](http://tools.ietf.org/html/draft-ietf-httpbis-http2-14#section-6.1)
+// [DATA Frames](http://tools.ietf.org/html/draft-ietf-httpbis-http2-16#section-6.1)
 // ------------------------------------------------------------
 //
 // DATA frames (type=0x0) convey arbitrary, variable-length sequences of octets associated with a
@@ -308,7 +308,7 @@ Deserializer.DATA = function readData(buffer, frame) {
   }
 };
 
-// [HEADERS](http://tools.ietf.org/html/draft-ietf-httpbis-http2-14#section-6.2)
+// [HEADERS](http://tools.ietf.org/html/draft-ietf-httpbis-http2-16#section-6.2)
 // --------------------------------------------------------------
 //
 // The HEADERS frame (type=0x1) allows the sender to create a stream.
@@ -390,7 +390,7 @@ Deserializer.HEADERS = function readHeadersPriority(buffer, frame) {
   }
 };
 
-// [PRIORITY](http://tools.ietf.org/html/draft-ietf-httpbis-http2-14#section-6.3)
+// [PRIORITY](http://tools.ietf.org/html/draft-ietf-httpbis-http2-16#section-6.3)
 // -------------------------------------------------------
 //
 // The PRIORITY frame (type=0x2) specifies the sender-advised priority of a stream.
@@ -435,7 +435,7 @@ Deserializer.PRIORITY = function readPriority(buffer, frame) {
   frame.priorityWeight = buffer.readUInt8(4);
 };
 
-// [RST_STREAM](http://tools.ietf.org/html/draft-ietf-httpbis-http2-14#section-6.4)
+// [RST_STREAM](http://tools.ietf.org/html/draft-ietf-httpbis-http2-16#section-6.4)
 // -----------------------------------------------------------
 //
 // The RST_STREAM frame (type=0x3) allows for abnormal termination of a stream.
@@ -473,7 +473,7 @@ Deserializer.RST_STREAM = function readRstStream(buffer, frame) {
   }
 };
 
-// [SETTINGS](http://tools.ietf.org/html/draft-ietf-httpbis-http2-14#section-6.5)
+// [SETTINGS](http://tools.ietf.org/html/draft-ietf-httpbis-http2-16#section-6.5)
 // -------------------------------------------------------
 //
 // The SETTINGS frame (type=0x4) conveys configuration parameters that affect how endpoints
@@ -580,7 +580,7 @@ definedSettings[4] = { name: 'SETTINGS_INITIAL_WINDOW_SIZE', flag: false };
 //   indicates the maximum size of a frame the receiver will allow.
 definedSettings[5] = { name: 'SETTINGS_MAX_FRAME_SIZE', flag: false };
 
-// [PUSH_PROMISE](http://tools.ietf.org/html/draft-ietf-httpbis-http2-14#section-6.6)
+// [PUSH_PROMISE](http://tools.ietf.org/html/draft-ietf-httpbis-http2-16#section-6.6)
 // ---------------------------------------------------------------
 //
 // The PUSH_PROMISE frame (type=0x5) is used to notify the peer endpoint in advance of streams the
@@ -641,7 +641,7 @@ Deserializer.PUSH_PROMISE = function readPushPromise(buffer, frame) {
   }
 };
 
-// [PING](http://tools.ietf.org/html/draft-ietf-httpbis-http2-14#section-6.7)
+// [PING](http://tools.ietf.org/html/draft-ietf-httpbis-http2-16#section-6.7)
 // -----------------------------------------------
 //
 // The PING frame (type=0x6) is a mechanism for measuring a minimal round-trip time from the
@@ -671,7 +671,7 @@ Deserializer.PING = function readPing(buffer, frame) {
   frame.data = buffer;
 };
 
-// [GOAWAY](http://tools.ietf.org/html/draft-ietf-httpbis-http2-14#section-6.8)
+// [GOAWAY](http://tools.ietf.org/html/draft-ietf-httpbis-http2-16#section-6.8)
 // ---------------------------------------------------
 //
 // The GOAWAY frame (type=0x7) informs the remote peer to stop creating streams on this connection.
@@ -722,7 +722,7 @@ Deserializer.GOAWAY = function readGoaway(buffer, frame) {
   }
 };
 
-// [WINDOW_UPDATE](http://tools.ietf.org/html/draft-ietf-httpbis-http2-14#section-6.9)
+// [WINDOW_UPDATE](http://tools.ietf.org/html/draft-ietf-httpbis-http2-16#section-6.9)
 // -----------------------------------------------------------------
 //
 // The WINDOW_UPDATE frame (type=0x8) is used to implement flow control.
@@ -760,7 +760,7 @@ Deserializer.WINDOW_UPDATE = function readWindowUpdate(buffer, frame) {
   }
 };
 
-// [CONTINUATION](http://tools.ietf.org/html/draft-ietf-httpbis-http2-14#section-6.10)
+// [CONTINUATION](http://tools.ietf.org/html/draft-ietf-httpbis-http2-16#section-6.10)
 // ------------------------------------------------------------
 //
 // The CONTINUATION frame (type=0x9) is used to continue a sequence of header block fragments.
@@ -785,7 +785,7 @@ Deserializer.CONTINUATION = function readContinuation(buffer, frame) {
   frame.data = buffer;
 };
 
-// [ALTSVC](http://tools.ietf.org/html/draft-ietf-httpbis-http2-14#section-6.11)
+// [ALTSVC](http://tools.ietf.org/html/draft-ietf-httpbis-alt-svc-06#section-4)
 // ------------------------------------------------------------
 //
 // The ALTSVC frame (type=0xA) advertises the availability of an alternative service to the client.
@@ -799,82 +799,222 @@ frameFlags.ALTSVC = [];
 //     0                   1                   2                   3
 //     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 //    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//    |                          Max-Age (32)                         |
+//    |         Origin-Len (16)       | Origin? (*)                 ...
 //    +-------------------------------+----------------+--------------+
-//    |            Port (16)          |  Reserved (8)  | PID_LEN (8)  |
-//    +-------------------------------+----------------+--------------+
-//    |                        Protocol-ID (*)                        |
-//    +---------------+-----------------------------------------------+
-//    | HOST_LEN (8)  |                   Host (*)                  ...
-//    +---------------+-----------------------------------------------+
-//    |                          Origin? (*)                        ...
+//    |                   Alt-Svc-Field-Value (*)                   ...
 //    +---------------------------------------------------------------+
 //
 // The ALTSVC frame contains the following fields:
 //
-// Max-Age: An unsigned, 32-bit integer indicating the freshness
-//    lifetime of the alternative service association, as per [ALT-SVC](http://tools.ietf.org/html/draft-ietf-httpbis-alt-svc-01)
-//    section 2.2.
+// Origin-Len: An unsigned, 16-bit integer indicating the length, in
+//    octets, of the Origin field.
 //
-// Port: An unsigned, 16-bit integer indicating the port that the
-//    alternative service is available upon.
-//
-// Reserved: For future use. Senders MUST set these bits to '0', and
-//    recipients MUST ignore them.
-//
-// PID_LEN: An unsigned, 8-bit integer indicating the length, in
-//    octets, of the Protocol-ID field.
-//
-// Protocol-ID: A sequence of bytes (length determined by PID_LEN)
-//    containing the ALPN protocol identifier of the alternative
-//    service.
-//
-// HOST_LEN: An unsigned, 8-bit integer indicating the length, in
-//    octets, of the Host field.
-//
-// Host: A sequence of characters (length determined by HOST_LEN)
-//    containing an ASCII string indicating the host that the
-//    alternative service is available upon. An internationalized
-//    domain [IDNA] MUST be expressed using A-labels.
-//
-// Origin: An optional sequence of characters (length determined by
-//    subtracting the length of all lpreceding fields from the frame
-//    length) containing ASCII serialisation of an origin ([RFC6454](http://tools.ietf.org/html/rfc6454),
+// Origin: An OPTIONAL sequence of characters containing ASCII
+//    serialisation of an origin ([RFC6454](http://tools.ietf.org/html/rfc6454),
 //    Section 6.2) that the alternate service is applicable to.
+//
+// Alt-Svc-Field-Value: A sequence of octets (length determined by
+//    subtracting the length of all preceding fields from the frame
+//    length) containing a value identical to the Alt-Svc field value
+//    defined in (Section 3)[http://tools.ietf.org/html/draft-ietf-httpbis-alt-svc-06#section-3]
+//    (ABNF production "Alt-Svc").
 
 typeSpecificAttributes.ALTSVC = ['maxAge', 'port', 'protocolID', 'host',
                                  'origin'];
 
+function istchar(c) {
+  return ('!#$&\'*+-.^_`|~1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.indexOf(c) > -1);
+}
+
+function hexencode(s) {
+  var t = '';
+  for (var i = 0; i < s.length; i++) {
+    if (!istchar(s[i])) {
+      t += '%';
+      t += new Buffer(s[i]).toString('hex');
+    } else {
+      t += s[i];
+    }
+  }
+  return t;
+}
+
 Serializer.ALTSVC = function writeAltSvc(frame, buffers) {
-  var buffer = new Buffer(8);
-  buffer.writeUInt32BE(frame.maxAge, 0);
-  buffer.writeUInt16BE(frame.port, 4);
-  buffer.writeUInt8(0, 6);
-  buffer.writeUInt8(frame.protocolID.length, 7);
+  var buffer = new Buffer(2);
+  buffer.writeUInt16BE(frame.origin.length, 0);
   buffers.push(buffer);
-
-  buffers.push(new Buffer(frame.protocolID, 'ascii'));
-
-  buffer = new Buffer(1);
-  buffer.writeUInt8(frame.host.length, 0);
-  buffers.push(buffer);
-
-  buffers.push(new Buffer(frame.host, 'ascii'));
-
   buffers.push(new Buffer(frame.origin, 'ascii'));
+
+  var fieldValue = hexencode(frame.protocolID) + '="' + frame.host + ':' + frame.port + '"';
+  if (frame.maxAge !== 86400) { // 86400 is the default
+    fieldValue += "; ma=" + frame.maxAge;
+  }
+
+  buffers.push(new Buffer(fieldValue, 'ascii'));
 };
+
+function stripquotes(s) {
+  var start = 0;
+  var end = s.length;
+  while ((start < end) && (s[start] === '"')) {
+    start++;
+  }
+  while ((end > start) && (s[end - 1] === '"')) {
+    end--;
+  }
+  if (start >= end) {
+    return "";
+  }
+  return s.substring(start, end);
+}
+
+function splitNameValue(nvpair) {
+  var eq = -1;
+  var inQuotes = false;
+
+  for (var i = 0; i < nvpair.length; i++) {
+    if (nvpair[i] === '"') {
+      inQuotes = !inQuotes;
+      continue;
+    }
+    if (inQuotes) {
+      continue;
+    }
+    if (nvpair[i] === '=') {
+      eq = i;
+      break;
+    }
+  }
+
+  if (eq === -1) {
+    return {'name': nvpair, 'value': null};
+  }
+
+  var name = stripquotes(nvpair.substring(0, eq).trim());
+  var value = stripquotes(nvpair.substring(eq + 1).trim());
+  return {'name': name, 'value': value};
+}
+
+function splitHeaderParameters(hv) {
+  return parseHeaderValue(hv, ';', splitNameValue);
+}
+
+function parseHeaderValue(hv, separator, callback) {
+  var start = 0;
+  var inQuotes = false;
+  var values = [];
+
+  for (var i = 0; i < hv.length; i++) {
+    if (hv[i] === '"') {
+      inQuotes = !inQuotes;
+      continue;
+    }
+    if (inQuotes) {
+      // Just skip this
+      continue;
+    }
+    if (hv[i] === separator) {
+      var newValue = hv.substring(start, i).trim();
+      if (newValue.length > 0) {
+        newValue = callback(newValue);
+        values.push(newValue);
+      }
+      start = i + 1;
+    }
+  }
+
+  var newValue = hv.substring(start).trim();
+  if (newValue.length > 0) {
+    newValue = callback(newValue);
+    values.push(newValue);
+  }
+
+  return values;
+}
+
+function rsplit(s, delim, count) {
+  var nsplits = 0;
+  var end = s.length;
+  var rval = [];
+  for (var i = s.length - 1; i >= 0; i--) {
+    if (s[i] === delim) {
+      var t = s.substring(i + 1, end);
+      end = i;
+      rval.unshift(t);
+      nsplits++;
+      if (nsplits === count) {
+        break;
+      }
+    }
+  }
+  if (end !== 0) {
+    rval.unshift(s.substring(0, end));
+  }
+  return rval;
+}
+
+function ishex(c) {
+  return ('0123456789ABCDEFabcdef'.indexOf(c) > -1);
+}
+
+function unescape(s) {
+  var i = 0;
+  var t = '';
+  while (i < s.length) {
+    if (s[i] != '%' || !ishex(s[i + 1]) || !ishex(s[i + 2])) {
+      t += s[i];
+    } else {
+      ++i;
+      var hexvalue = '';
+      if (i < s.length) {
+        hexvalue += s[i];
+        ++i;
+      }
+      if (i < s.length) {
+        hexvalue += s[i];
+      }
+      if (hexvalue.length > 0) {
+        t += new Buffer(hexvalue, 'hex').toString();
+      } else {
+        t += '%';
+      }
+    }
+
+    ++i;
+  }
+  return t;
+}
 
 Deserializer.ALTSVC = function readAltSvc(buffer, frame) {
-  frame.maxAge = buffer.readUInt32BE(0);
-  frame.port = buffer.readUInt16BE(4);
-  var pidLength = buffer.readUInt8(7);
-  frame.protocolID = buffer.toString('ascii', 8, 8 + pidLength);
-  var hostLength = buffer.readUInt8(8 + pidLength);
-  frame.host = buffer.toString('ascii', 9 + pidLength, 9 + pidLength + hostLength);
-  frame.origin = buffer.toString('ascii', 9 + pidLength + hostLength);
+  var originLength = buffer.readUInt16BE(0);
+  frame.origin = buffer.toString('ascii', 2, 2 + originLength);
+  var fieldValue = buffer.toString('ascii', 2 + originLength);
+  var values = parseHeaderValue(fieldValue, ',', splitHeaderParameters);
+  if (values.length > 1) {
+    // TODO - warn that we only use one here
+  }
+  if (values.length === 0) {
+    // Well that's a malformed frame. Just ignore it.
+    return;
+  }
+
+  var chosenAltSvc = values[0];
+  frame.maxAge = 86400; // Default
+  for (var i = 0; i < chosenAltSvc.length; i++) {
+    if (i === 0) {
+      // This corresponds to the protocolID="<host>:<port>" item
+      frame.protocolID = unescape(chosenAltSvc[i].name);
+      var hostport = rsplit(chosenAltSvc[i].value, ':', 1);
+      frame.host = hostport[0];
+      frame.port = parseInt(hostport[1], 10);
+    } else if (chosenAltSvc[i].name == 'ma') {
+      frame.maxAge = parseInt(chosenAltSvc[i].value, 10);
+    }
+    // Otherwise, we just ignore this
+  }
 };
 
-// [BLOCKED](http://tools.ietf.org/html/draft-ietf-httpbis-http2-14#section-6.12)
+// BLOCKED
 // ------------------------------------------------------------
 //
 // The BLOCKED frame (type=0xB) indicates that the sender is unable to send data
@@ -894,7 +1034,7 @@ Serializer.BLOCKED = function writeBlocked(frame, buffers) {
 Deserializer.BLOCKED = function readBlocked(buffer, frame) {
 };
 
-// [Error Codes](http://tools.ietf.org/html/draft-ietf-httpbis-http2-14#section-7)
+// [Error Codes](http://tools.ietf.org/html/draft-ietf-httpbis-http2-16#section-7)
 // ------------------------------------------------------------
 
 var errorCodes = [

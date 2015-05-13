@@ -168,7 +168,6 @@ NS_INTERFACE_MAP_BEGIN(nsNavHistory)
   NS_INTERFACE_MAP_ENTRY(nsIObserver)
   NS_INTERFACE_MAP_ENTRY(nsISupportsWeakReference)
   NS_INTERFACE_MAP_ENTRY(nsPIPlacesDatabase)
-  NS_INTERFACE_MAP_ENTRY(nsPIPlacesHistoryListenersNotifier)
   NS_INTERFACE_MAP_ENTRY(mozIStorageVacuumParticipant)
   NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsINavHistoryService)
   NS_IMPL_QUERY_CLASSINFO(nsNavHistory)
@@ -2291,7 +2290,7 @@ nsNavHistory::GetObservers(uint32_t* _count,
     return NS_OK;
 
   *_observers = static_cast<nsINavHistoryObserver**>
-    (nsMemory::Alloc(observers.Count() * sizeof(nsINavHistoryObserver*)));
+    (moz_xmalloc(observers.Count() * sizeof(nsINavHistoryObserver*)));
   NS_ENSURE_TRUE(*_observers, NS_ERROR_OUT_OF_MEMORY);
 
   *_count = observers.Count();
@@ -2591,12 +2590,6 @@ nsNavHistory::RemovePagesFromHost(const nsACString& aHost, bool aEntireDomain)
   nsAutoString host16;
   if (!aHost.Equals(localFiles))
     CopyUTF8toUTF16(aHost, host16);
-
-  // nsISupports version of the host string for passing to observers
-  nsCOMPtr<nsISupportsString> hostSupports(do_CreateInstance(NS_SUPPORTS_STRING_CONTRACTID, &rv));
-  NS_ENSURE_SUCCESS(rv, rv);
-  rv = hostSupports->SetData(host16);
-  NS_ENSURE_SUCCESS(rv, rv);
 
   // see BindQueryClauseParameters for how this host selection works
   nsAutoString revHostDot;
@@ -3051,9 +3044,7 @@ nsNavHistory::AsyncExecuteLegacyQueries(nsINavHistoryQuery** aQueries,
 }
 
 
-// nsPIPlacesHistoryListenersNotifier ******************************************
-
-NS_IMETHODIMP
+nsresult
 nsNavHistory::NotifyOnPageExpired(nsIURI *aURI, PRTime aVisitTime,
                                   bool aWholeEntry, const nsACString& aGUID,
                                   uint16_t aReason, uint32_t aTransitionType)
@@ -4195,10 +4186,13 @@ nsNavHistory::URIToResultNode(nsIURI* aURI,
                      true, tagsFragment);
   // Should match kGetInfoIndex_*
   nsCOMPtr<mozIStorageStatement> stmt = mDB->GetStatement(NS_LITERAL_CSTRING(
-    "SELECT h.id, :page_url, h.title, h.rev_host, h.visit_count, "
-           "h.last_visit_date, f.url, null, null, null, null, "
-           ) + tagsFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid "
+    "SELECT h.id, :page_url, COALESCE(b.title, h.title), "
+           "h.rev_host, h.visit_count, h.last_visit_date, f.url, "
+           "b.id, b.dateAdded, b.lastModified, b.parent, "
+           ) + tagsFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid, "
+           "b.guid, b.position, b.type, b.fk "
     "FROM moz_places h "
+    "LEFT JOIN moz_bookmarks b ON b.fk = h.id "
     "LEFT JOIN moz_favicons f ON h.favicon_id = f.id "
     "WHERE h.url = :page_url ")
   );

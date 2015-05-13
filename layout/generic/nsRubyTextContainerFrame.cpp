@@ -7,10 +7,11 @@
 /* rendering object for CSS "display: ruby-text-container" */
 
 #include "nsRubyTextContainerFrame.h"
+
+#include "mozilla/UniquePtr.h"
+#include "mozilla/WritingModes.h"
 #include "nsPresContext.h"
 #include "nsStyleContext.h"
-#include "WritingModes.h"
-#include "mozilla/UniquePtr.h"
 
 using namespace mozilla;
 
@@ -121,6 +122,7 @@ nsRubyTextContainerFrame::Reflow(nsPresContext* aPresContext,
                                  const nsHTMLReflowState& aReflowState,
                                  nsReflowStatus& aStatus)
 {
+  MarkInReflow();
   DO_GLOBAL_REFLOW_COUNT("nsRubyTextContainerFrame");
   DISPLAY_REFLOW(aPresContext, this, aReflowState, aDesiredSize, aStatus);
 
@@ -130,17 +132,44 @@ nsRubyTextContainerFrame::Reflow(nsPresContext* aPresContext,
   // will take care of our continuations.
   aStatus = NS_FRAME_COMPLETE;
   WritingMode lineWM = aReflowState.mLineLayout->GetWritingMode();
-  aDesiredSize.SetSize(lineWM, mLineSize);
 
-  if (lineWM.IsVerticalRL()) {
-    nscoord deltaWidth = -mLineSize.Width(lineWM);
-    LogicalPoint translation(lineWM, 0, deltaWidth);
+  nscoord minBCoord = nscoord_MAX;
+  nscoord maxBCoord = nscoord_MIN;
+  for (nsFrameList::Enumerator e(mFrames); !e.AtEnd(); e.Next()) {
+    nsIFrame* child = e.get();
+    MOZ_ASSERT(child->GetType() == nsGkAtoms::rubyTextFrame);
+    // The container width is still unknown yet.
+    LogicalRect rect = child->GetLogicalRect(lineWM, 0);
+    LogicalMargin margin = child->GetLogicalUsedMargin(lineWM);
+    nscoord blockStart = rect.BStart(lineWM) - margin.BStart(lineWM);
+    minBCoord = std::min(minBCoord, blockStart);
+    nscoord blockEnd = rect.BEnd(lineWM) + margin.BEnd(lineWM);
+    maxBCoord = std::max(maxBCoord, blockEnd);
+  }
 
+  LogicalSize size(lineWM, mISize, 0);
+  if (!mFrames.IsEmpty()) {
+    if (MOZ_UNLIKELY(minBCoord > maxBCoord)) {
+      // XXX When bug 765861 gets fixed, this warning should be upgraded.
+      NS_WARNING("bad block coord");
+      minBCoord = maxBCoord = 0;
+    }
+    size.BSize(lineWM) = maxBCoord - minBCoord;
+    nscoord containerWidth = size.Width(lineWM);
     for (nsFrameList::Enumerator e(mFrames); !e.AtEnd(); e.Next()) {
       nsIFrame* child = e.get();
-      MOZ_ASSERT(child->GetType() == nsGkAtoms::rubyTextFrame);
-      child->MovePositionBy(lineWM, translation);
+      // We reflowed the child with container width 0, as the true width
+      // was not yet known at that time.
+      LogicalPoint pos = child->GetLogicalPosition(lineWM, 0);
+      // Adjust block position to account for minBCoord,
+      // then reposition child based on the true container width.
+      pos.B(lineWM) -= minBCoord;
+      // Relative positioning hasn't happened yet.
+      // So MovePositionBy should not be used here.
+      child->SetPosition(lineWM, pos, containerWidth);
       nsContainerFrame::PlaceFrameView(child);
     }
   }
+
+  aDesiredSize.SetSize(lineWM, size);
 }

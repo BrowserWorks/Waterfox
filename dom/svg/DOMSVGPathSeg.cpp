@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -80,10 +81,9 @@ DOMSVGPathSeg::DOMSVGPathSeg(DOMSVGPathSegList *aList,
   , mIsAnimValItem(aIsAnimValItem)
 {
   // These shifts are in sync with the members in the header.
-  NS_ABORT_IF_FALSE(aList &&
-                    aListIndex <= MaxListIndex(), "bad arg");
+  MOZ_ASSERT(aList && aListIndex <= MaxListIndex(), "bad arg");
 
-  NS_ABORT_IF_FALSE(IndexIsValid(), "Bad index for DOMSVGPathSeg!");
+  MOZ_ASSERT(IndexIsValid(), "Bad index for DOMSVGPathSeg!");
 }
 
 DOMSVGPathSeg::DOMSVGPathSeg()
@@ -98,13 +98,13 @@ DOMSVGPathSeg::InsertingIntoList(DOMSVGPathSegList *aList,
                                  uint32_t aListIndex,
                                  bool aIsAnimValItem)
 {
-  NS_ABORT_IF_FALSE(!HasOwner(), "Inserting item that is already in a list");
+  MOZ_ASSERT(!HasOwner(), "Inserting item that is already in a list");
 
   mList = aList;
   mListIndex = aListIndex;
   mIsAnimValItem = aIsAnimValItem;
 
-  NS_ABORT_IF_FALSE(IndexIsValid(), "Bad index for DOMSVGPathSeg!");
+  MOZ_ASSERT(IndexIsValid(), "Bad index for DOMSVGPathSeg!");
 }
 
 void
@@ -120,7 +120,7 @@ DOMSVGPathSeg::RemovingFromList()
 void
 DOMSVGPathSeg::ToSVGPathSegEncodedData(float* aRaw)
 {
-  NS_ABORT_IF_FALSE(aRaw, "null pointer");
+  MOZ_ASSERT(aRaw, "null pointer");
   uint32_t argCount = SVGPathSegUtils::ArgCountForType(Type());
   if (IsInList()) {
     // 1 + argCount, because we're copying the encoded seg type and args

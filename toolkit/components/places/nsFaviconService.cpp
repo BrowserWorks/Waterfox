@@ -27,6 +27,9 @@
 #include "nsIClassInfoImpl.h"
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Preferences.h"
+#include "nsILoadInfo.h"
+#include "nsIContentPolicy.h"
+#include "nsContentUtils.h"
 
 // For large favicons optimization.
 #include "imgITools.h"
@@ -328,8 +331,15 @@ nsFaviconService::ReplaceFaviconDataFromDataURL(nsIURI* aFaviconURI,
   rv = ioService->GetProtocolHandler("data", getter_AddRefs(protocolHandler));
   NS_ENSURE_SUCCESS(rv, rv);
 
+  nsCOMPtr<nsILoadInfo> loadInfo =
+    new mozilla::LoadInfo(nsContentUtils::GetSystemPrincipal(),
+                          nullptr, // aTriggeringPrincipal
+                          nullptr, // aLoadingNode
+                          nsILoadInfo::SEC_NORMAL,
+                          nsIContentPolicy::TYPE_IMAGE);
+
   nsCOMPtr<nsIChannel> channel;
-  rv = protocolHandler->NewChannel(dataURI, getter_AddRefs(channel));
+  rv = protocolHandler->NewChannel2(dataURI, loadInfo, getter_AddRefs(channel));
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Blocking stream is OK for data URIs.
@@ -346,26 +356,26 @@ nsFaviconService::ReplaceFaviconDataFromDataURL(nsIURI* aFaviconURI,
 
   // Read all the decoded data.
   uint8_t* buffer = static_cast<uint8_t*>
-                               (nsMemory::Alloc(sizeof(uint8_t) * available));
+                               (moz_xmalloc(sizeof(uint8_t) * available));
   if (!buffer)
     return NS_ERROR_OUT_OF_MEMORY;
   uint32_t numRead;
   rv = stream->Read(TO_CHARBUFFER(buffer), available, &numRead);
   if (NS_FAILED(rv) || numRead != available) {
-    nsMemory::Free(buffer);
+    free(buffer);
     return rv;
   }
 
   nsAutoCString mimeType;
   rv = channel->GetContentType(mimeType);
   if (NS_FAILED(rv)) {
-    nsMemory::Free(buffer);
+    free(buffer);
     return rv;
   }
 
   // ReplaceFaviconData can now do the dirty work.
   rv = ReplaceFaviconData(aFaviconURI, buffer, available, mimeType, aExpiration);
-  nsMemory::Free(buffer);
+  free(buffer);
   NS_ENSURE_SUCCESS(rv, rv);
 
   return NS_OK;

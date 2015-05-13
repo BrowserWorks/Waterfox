@@ -22,6 +22,7 @@
 #include "gfxPlatform.h"
 #include "gfxTypes.h"
 #include "mozilla/Attributes.h"
+#include "mozilla/Atomics.h"
 #include "nsTArray.h"
 #include "nsDataHashtable.h"
 
@@ -56,14 +57,12 @@ struct IDirect3DDevice9;
 struct ID3D11Device;
 struct IDXGIAdapter1;
 
-class nsIMemoryReporter;
-
 /**
  * Utility to get a Windows HDC from a Moz2D DrawTarget.  If the DrawTarget is
  * not backed by a HDC this will get the HDC for the screen device context
  * instead.
  */
-class MOZ_STACK_CLASS DCFromDrawTarget MOZ_FINAL
+class MOZ_STACK_CLASS DCFromDrawTarget final
 {
 public:
     DCFromDrawTarget(mozilla::gfx::DrawTarget& aDrawTarget);
@@ -117,7 +116,7 @@ public:
 
     virtual already_AddRefed<gfxASurface>
       CreateOffscreenSurface(const IntSize& size,
-                             gfxContentType contentType) MOZ_OVERRIDE;
+                             gfxContentType contentType) override;
 
     virtual mozilla::TemporaryRef<mozilla::gfx::ScaledFont>
       GetScaledFontForFont(mozilla::gfx::DrawTarget* aTarget, gfxFont *aFont);
@@ -209,11 +208,7 @@ public:
      */
     virtual bool IsFontFormatSupported(nsIURI *aFontURI, uint32_t aFormatFlags);
 
-    virtual bool DidRenderingDeviceReset();
-
-    /* Find a FontFamily/FontEntry object that represents a font on your system given a name */
-    gfxFontFamily *FindFontFamily(const nsAString& aName);
-    gfxFontEntry *FindFontEntry(const nsAString& aName, const gfxFontStyle& aFontStyle);
+    virtual bool DidRenderingDeviceReset(DeviceResetReason* aResetReason = nullptr);
 
     // ClearType is not always enabled even when available (e.g. Windows XP)
     // if either of these prefs are enabled and apply, use ClearType rendering
@@ -249,10 +244,27 @@ public:
 #endif
     ID3D11Device *GetD3D11Device();
     ID3D11Device *GetD3D11ContentDevice();
+    ID3D11Device *GetD3D11MediaDevice();
+
+    // Create a D3D11 device to be used for DXVA decoding.
+    mozilla::TemporaryRef<ID3D11Device> CreateD3D11DecoderDevice();
 
     mozilla::layers::ReadbackManagerD3D11* GetReadbackManager();
 
     static bool IsOptimus();
+
+    bool IsWARP() { return mIsWARP; }
+
+    bool SupportsApzWheelInput() const override {
+      return true;
+    }
+    bool SupportsApzTouchInput() const override;
+
+    virtual already_AddRefed<mozilla::gfx::VsyncSource> CreateHardwareVsyncSource() override;
+    static mozilla::Atomic<size_t> sD3D11MemoryUsed;
+    static mozilla::Atomic<size_t> sD3D9MemoryUsed;
+    static mozilla::Atomic<size_t> sD3D9SurfaceImageUsed;
+    static mozilla::Atomic<size_t> sD3D9SharedTextureUsed;
 
 protected:
     RenderMode mRenderMode;
@@ -264,6 +276,7 @@ private:
     void Init();
     void InitD3D11Devices();
     IDXGIAdapter1 *GetDXGIAdapter();
+    bool IsDeviceReset(HRESULT hr, DeviceResetReason* aReason);
 
     bool mUseDirectWrite;
     bool mUsingGDIFonts;
@@ -281,8 +294,13 @@ private:
     nsRefPtr<mozilla::layers::DeviceManagerD3D9> mDeviceManager;
     mozilla::RefPtr<ID3D11Device> mD3D11Device;
     mozilla::RefPtr<ID3D11Device> mD3D11ContentDevice;
+    mozilla::RefPtr<ID3D11Device> mD3D11MediaDevice;
     bool mD3D11DeviceInitialized;
     mozilla::RefPtr<mozilla::layers::ReadbackManagerD3D11> mD3D11ReadbackManager;
+    bool mIsWARP;
+    bool mCanInitMediaDevice;
+    bool mHasDeviceReset;
+    DeviceResetReason mDeviceResetReason;
 
     virtual void GetPlatformCMSOutputProfile(void* &mem, size_t &size);
 };

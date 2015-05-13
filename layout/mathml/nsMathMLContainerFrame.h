@@ -31,7 +31,10 @@ class nsMathMLContainerFrame : public nsContainerFrame,
                                public nsMathMLFrame {
   friend class nsMathMLmfencedFrame;
 public:
-  explicit nsMathMLContainerFrame(nsStyleContext* aContext) : nsContainerFrame(aContext) {}
+  explicit nsMathMLContainerFrame(nsStyleContext* aContext)
+    : nsContainerFrame(aContext)
+    , mIntrinsicWidth(NS_INTRINSIC_WIDTH_UNKNOWN)
+  {}
 
   NS_DECL_QUERYFRAME_TARGET(nsMathMLContainerFrame)
   NS_DECL_QUERYFRAME
@@ -44,13 +47,13 @@ public:
   Stretch(nsRenderingContext& aRenderingContext,
           nsStretchDirection   aStretchDirection,
           nsBoundingMetrics&   aContainerSize,
-          nsHTMLReflowMetrics& aDesiredStretchSize) MOZ_OVERRIDE;
+          nsHTMLReflowMetrics& aDesiredStretchSize) override;
 
   NS_IMETHOD
   UpdatePresentationDataFromChildAt(int32_t         aFirstIndex,
                                     int32_t         aLastIndex,
                                     uint32_t        aFlagsValues,
-                                    uint32_t        aFlagsToUpdate) MOZ_OVERRIDE
+                                    uint32_t        aFlagsToUpdate) override
   {
     PropagatePresentationDataFromChildAt(this, aFirstIndex, aLastIndex,
       aFlagsValues, aFlagsToUpdate);
@@ -72,7 +75,7 @@ public:
   // --------------------------------------------------------------------------
   // Overloaded nsContainerFrame methods -- see documentation in nsIFrame.h
 
-  virtual bool IsFrameOfType(uint32_t aFlags) const MOZ_OVERRIDE
+  virtual bool IsFrameOfType(uint32_t aFlags) const override
   {
     return !(aFlags & nsIFrame::eLineParticipant) &&
       nsContainerFrame::IsFrameOfType(aFlags &
@@ -81,23 +84,23 @@ public:
 
   virtual void
   AppendFrames(ChildListID     aListID,
-               nsFrameList&    aFrameList) MOZ_OVERRIDE;
+               nsFrameList&    aFrameList) override;
 
   virtual void
   InsertFrames(ChildListID     aListID,
                nsIFrame*       aPrevFrame,
-               nsFrameList&    aFrameList) MOZ_OVERRIDE;
+               nsFrameList&    aFrameList) override;
 
   virtual void
   RemoveFrame(ChildListID     aListID,
-              nsIFrame*       aOldFrame) MOZ_OVERRIDE;
+              nsIFrame*       aOldFrame) override;
 
   /**
    * Both GetMinISize and GetPrefISize use the intrinsic width metrics
    * returned by GetIntrinsicMetrics, including ink overflow.
    */
-  virtual nscoord GetMinISize(nsRenderingContext *aRenderingContext) MOZ_OVERRIDE;
-  virtual nscoord GetPrefISize(nsRenderingContext *aRenderingContext) MOZ_OVERRIDE;
+  virtual nscoord GetMinISize(nsRenderingContext* aRenderingContext) override;
+  virtual nscoord GetPrefISize(nsRenderingContext* aRenderingContext) override;
 
   /**
    * Return the intrinsic horizontal metrics of the frame's content area.
@@ -110,18 +113,11 @@ public:
   Reflow(nsPresContext*          aPresContext,
          nsHTMLReflowMetrics&     aDesiredSize,
          const nsHTMLReflowState& aReflowState,
-         nsReflowStatus&          aStatus) MOZ_OVERRIDE;
-
-  virtual void
-  WillReflow(nsPresContext* aPresContext) MOZ_OVERRIDE
-  {
-    mPresentationData.flags &= ~NS_MATHML_ERROR;
-    nsContainerFrame::WillReflow(aPresContext);
-  }
+         nsReflowStatus&          aStatus) override;
 
   virtual void DidReflow(nsPresContext*           aPresContext,
             const nsHTMLReflowState*  aReflowState,
-            nsDidReflowStatus         aStatus) MOZ_OVERRIDE
+            nsDidReflowStatus         aStatus) override
 
   {
     mPresentationData.flags &= ~NS_MATHML_STRETCH_DONE;
@@ -130,9 +126,11 @@ public:
 
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                                 const nsRect&           aDirtyRect,
-                                const nsDisplayListSet& aLists) MOZ_OVERRIDE;
+                                const nsDisplayListSet& aLists) override;
 
-  virtual bool UpdateOverflow() MOZ_OVERRIDE;
+  virtual bool UpdateOverflow() override;
+
+  virtual void MarkIntrinsicISizesDirty() override;
 
   // Notification when an attribute is changed. The MathML module uses the
   // following paradigm:
@@ -154,7 +152,7 @@ public:
   virtual nsresult
   AttributeChanged(int32_t         aNameSpaceID,
                    nsIAtom*        aAttribute,
-                   int32_t         aModType) MOZ_OVERRIDE;
+                   int32_t         aModType) override;
 
   // helper function to apply mirroring to a horizontal coordinate, if needed.
   nscoord
@@ -391,6 +389,13 @@ protected:
    */
   static void DidReflowChildren(nsIFrame* aFirst, nsIFrame* aStop = nullptr);
 
+  /**
+   * Recompute mIntrinsicWidth if it's not already up to date.
+   */
+  void UpdateIntrinsicWidth(nsRenderingContext* aRenderingContext);
+
+  nscoord mIntrinsicWidth;
+
 private:
   class RowChildFrameIterator;
   friend class RowChildFrameIterator;
@@ -418,7 +423,7 @@ public:
   // cannot use mFrames{.FirstChild()|.etc} since the block code doesn't set mFrames
   virtual void
   SetInitialChildList(ChildListID     aListID,
-                      nsFrameList&    aChildList) MOZ_OVERRIDE
+                      nsFrameList&    aChildList) override
   {
     NS_ASSERTION(aListID == kPrincipalList, "unexpected frame list");
     nsBlockFrame::SetInitialChildList(aListID, aChildList);
@@ -428,7 +433,7 @@ public:
 
   virtual void
   AppendFrames(ChildListID     aListID,
-               nsFrameList&    aFrameList) MOZ_OVERRIDE
+               nsFrameList&    aFrameList) override
   {
     NS_ASSERTION(aListID == kPrincipalList || aListID == kNoReflowPrincipalList,
                  "unexpected frame list");
@@ -440,7 +445,7 @@ public:
   virtual void
   InsertFrames(ChildListID     aListID,
                nsIFrame*       aPrevFrame,
-               nsFrameList&    aFrameList) MOZ_OVERRIDE
+               nsFrameList&    aFrameList) override
   {
     NS_ASSERTION(aListID == kPrincipalList || aListID == kNoReflowPrincipalList,
                  "unexpected frame list");
@@ -451,7 +456,7 @@ public:
 
   virtual void
   RemoveFrame(ChildListID     aListID,
-              nsIFrame*       aOldFrame) MOZ_OVERRIDE
+              nsIFrame*       aOldFrame) override
   {
     NS_ASSERTION(aListID == kPrincipalList || aListID == kNoReflowPrincipalList,
                  "unexpected frame list");
@@ -460,7 +465,7 @@ public:
       nsMathMLContainerFrame::ReLayoutChildren(this);
   }
 
-  virtual bool IsFrameOfType(uint32_t aFlags) const MOZ_OVERRIDE {
+  virtual bool IsFrameOfType(uint32_t aFlags) const override {
     return nsBlockFrame::IsFrameOfType(aFlags &
               ~(nsIFrame::eMathML | nsIFrame::eExcludesIgnorableWhitespace));
   }
@@ -494,7 +499,7 @@ public:
 
   virtual void
   SetInitialChildList(ChildListID     aListID,
-                      nsFrameList&    aChildList) MOZ_OVERRIDE
+                      nsFrameList&    aChildList) override
   {
     NS_ASSERTION(aListID == kPrincipalList, "unexpected frame list");
     nsInlineFrame::SetInitialChildList(aListID, aChildList);
@@ -504,7 +509,7 @@ public:
 
   virtual void
   AppendFrames(ChildListID     aListID,
-               nsFrameList&    aFrameList) MOZ_OVERRIDE
+               nsFrameList&    aFrameList) override
   {
     NS_ASSERTION(aListID == kPrincipalList || aListID == kNoReflowPrincipalList,
                  "unexpected frame list");
@@ -516,7 +521,7 @@ public:
   virtual void
   InsertFrames(ChildListID     aListID,
                nsIFrame*       aPrevFrame,
-               nsFrameList&    aFrameList) MOZ_OVERRIDE
+               nsFrameList&    aFrameList) override
   {
     NS_ASSERTION(aListID == kPrincipalList || aListID == kNoReflowPrincipalList,
                  "unexpected frame list");
@@ -527,7 +532,7 @@ public:
 
   virtual void
   RemoveFrame(ChildListID     aListID,
-              nsIFrame*       aOldFrame) MOZ_OVERRIDE
+              nsIFrame*       aOldFrame) override
   {
     NS_ASSERTION(aListID == kPrincipalList || aListID == kNoReflowPrincipalList,
                  "unexpected frame list");
@@ -536,13 +541,13 @@ public:
       nsMathMLContainerFrame::ReLayoutChildren(this);
   }
 
-  virtual bool IsFrameOfType(uint32_t aFlags) const MOZ_OVERRIDE {
+  virtual bool IsFrameOfType(uint32_t aFlags) const override {
       return nsInlineFrame::IsFrameOfType(aFlags &
                 ~(nsIFrame::eMathML | nsIFrame::eExcludesIgnorableWhitespace));
   }
 
   bool
-  IsMrowLike() MOZ_OVERRIDE {
+  IsMrowLike() override {
     return mFrames.FirstChild() != mFrames.LastChild() ||
            !mFrames.FirstChild();
   }

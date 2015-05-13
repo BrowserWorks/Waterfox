@@ -7,6 +7,8 @@ const { Cc, Ci, Cu, Cr } = require("chrome");
 
 loader.lazyRequireGetter(this, "Services");
 loader.lazyRequireGetter(this, "promise");
+loader.lazyRequireGetter(this, "RecordingUtils",
+  "devtools/performance/recording-utils", true);
 
 loader.lazyImporter(this, "FileUtils",
   "resource://gre/modules/FileUtils.jsm");
@@ -74,7 +76,15 @@ let PerformanceIO = {
   loadRecordingFromFile: function(file) {
     let deferred = promise.defer();
 
-    let channel = NetUtil.newChannel(file);
+    let channel = NetUtil.newChannel2(file,
+                                      null,
+                                      null,
+                                      null,      // aLoadingNode
+                                      Services.scriptSecurityManager.getSystemPrincipal(),
+                                      null,      // aTriggeringPrincipal
+                                      Ci.nsILoadInfo.SEC_NORMAL,
+                                      Ci.nsIContentPolicy.TYPE_OTHER);
+
     channel.contentType = "text/plain";
 
     NetUtil.asyncFetch(channel, (inputStream, status) => {
@@ -95,6 +105,9 @@ let PerformanceIO = {
       }
       if (recordingData.version === PERF_TOOL_SERIALIZER_LEGACY_VERSION) {
         recordingData = convertLegacyData(recordingData);
+      }
+      if (recordingData.profile.meta.version === 2) {
+        RecordingUtils.deflateProfile(recordingData.profile);
       }
       deferred.resolve(recordingData);
     });
@@ -119,7 +132,6 @@ function isValidSerializerVersion (version) {
   ].indexOf(version);
 }
 
-
 /**
  * Takes recording data (with version `1`, from the original profiler tool), and
  * massages the data to be line with the current performance tool's property names
@@ -131,20 +143,24 @@ function isValidSerializerVersion (version) {
 function convertLegacyData (legacyData) {
   let { profilerData, ticksData, recordingDuration } = legacyData;
 
-  // The `profilerData` stays, and the previously unrecorded fields
-  // just are empty arrays.
+  // The `profilerData` and `ticksData` stay, but the previously unrecorded
+  // fields just are empty arrays or objects.
   let data = {
+    label: profilerData.profilerLabel,
+    duration: recordingDuration,
     markers: [],
     frames: [],
     memory: [],
     ticks: ticksData,
-    profilerData: profilerData,
-    // Data from the original profiler won't contain `interval` fields,
-    // but a recording duration, as well as the current time, which can be used
-    // to infer the interval startTime and endTime.
-    interval: {
-      startTime: profilerData.currentTime - recordingDuration,
-      endTime: profilerData.currentTime
+    allocations: { sites: [], timestamps: [], frames: [], counts: [] },
+    profile: profilerData.profile,
+    // Fake a configuration object here if there's tick data,
+    // so that it can be rendered
+    configuration: {
+      withTicks: !!ticksData.length,
+      withMarkers: false,
+      withMemory: false,
+      withAllocations: false
     }
   };
 

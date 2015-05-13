@@ -5,21 +5,27 @@
  * Test basic functionality of PerformanceFront
  */
 
-let WAIT = 1000;
+let WAIT_TIME = 1000;
 
 function spawnTest () {
   let { target, front } = yield initBackend(SIMPLE_URL);
 
-  yield front.startRecording();
-  yield busyWait(WAIT);
-  let { recordingDuration, profilerData, endTime } = yield front.stopRecording();
+  let startModel = yield front.startRecording();
+  let { profilerStartTime, timelineStartTime, memoryStartTime } = startModel;
 
-  ok(recordingDuration > 500,
-    "A `recordingDuration` property exists in the recording data.");
-  ok(profilerData,
-    "A `profilerData` property exists in the recording data.");
-  ok(endTime,
-    "A `endTime` property exists in the recording data.");
+  ok(startModel._profilerStartTime !== undefined,
+    "A `_profilerStartTime` property exists in the recording model.");
+  ok(startModel._timelineStartTime !== undefined,
+    "A `_timelineStartTime` property exists in the recording model.");
+  ise(startModel._memoryStartTime, 0,
+    "A `_memoryStartTime` property exists in the recording model, but it's 0.");
+
+  yield busyWait(WAIT_TIME);
+
+  let stopModel = yield front.stopRecording(startModel);
+
+  ok(stopModel.getProfile(), "recording model has a profile after stopping.");
+  ok(stopModel.getDuration(), "recording model has a duration after stopping.");
 
   yield removeTab(target.tab);
   finish();

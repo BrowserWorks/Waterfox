@@ -38,16 +38,7 @@ commandline.add_logging_group(_parser)
 def run_marionette(tests, b2g_path=None, emulator=None, testtype=None,
     address=None, binary=None, topsrcdir=None, **kwargs):
 
-    # Import the harness directly and under a different name here to avoid
-    # "marionette" being importable from two locations when "testing/marionette/client"
-    # is on sys.path.
-    # See bug 1050511.
-    path = os.path.join(topsrcdir, 'testing/marionette/client/marionette/runtests.py')
-    with open(path, 'r') as fh:
-        imp.load_module('marionetteharness', fh, path,
-                        ('.py', 'r', imp.PY_SOURCE))
-
-    from marionetteharness import (
+    from marionette.runtests import (
         MarionetteTestRunner,
         BaseMarionetteOptions,
         startTestRunner
@@ -97,6 +88,10 @@ class B2GCommands(MachCommandBase):
     @CommandArgument('--type',
         default='b2g',
         help='Test type, usually one of: browser, b2g, b2g-qemu.')
+    @CommandArgument('--tag', action='append', dest='test_tags',
+        help='Filter out tests that don\'t have the given tag. Can be used '
+             'multiple times in which case the test must contain at least one '
+             'of the given tags.')
     @CommandArgument('tests', nargs='*', metavar='TESTS',
         help='Path to test(s) to run.')
     def run_marionette_webapi(self, tests, **kwargs):
@@ -132,6 +127,15 @@ class MachCommands(MachCommandBase):
         help='Path to gecko log file, or "-" for stdout.')
     @CommandArgument('--jsdebugger', action='store_true',
         help='Enable the jsdebugger for marionette javascript.')
+    @CommandArgument('--pydebugger',
+        help='Enable python post-mortem debugger when a test fails.'
+             ' Pass in the debugger you want to use, eg pdb or ipdb.')
+    @CommandArgument('--e10s', action='store_true',
+        help='Enable electrolysis for marionette tests (desktop only).')
+    @CommandArgument('--tag', action='append', dest='test_tags',
+        help='Filter out tests that don\'t have the given tag. Can be used '
+             'multiple times in which case the test must contain at least one '
+             'of the given tags.')
     @CommandArgument('tests', nargs='*', metavar='TESTS',
         help='Path to test(s) to run.')
     def run_marionette_test(self, tests, **kwargs):

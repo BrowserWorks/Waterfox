@@ -14,8 +14,6 @@
 
 #include "vm/Shape.h"
 
-#include "jsgcinlines.h"
-
 #include "vm/Shape-inl.h"
 
 using namespace js;
@@ -24,21 +22,21 @@ using namespace js::gc;
 using mozilla::DebugOnly;
 
 inline HashNumber
-ShapeHasher::hash(const Lookup &l)
+ShapeHasher::hash(const Lookup& l)
 {
     return l.hash();
 }
 
 inline bool
-ShapeHasher::match(const Key k, const Lookup &l)
+ShapeHasher::match(const Key k, const Lookup& l)
 {
     return k->matches(l);
 }
 
-static KidsHash *
-HashChildren(Shape *kid1, Shape *kid2)
+static KidsHash*
+HashChildren(Shape* kid1, Shape* kid2)
 {
-    KidsHash *hash = js_new<KidsHash>();
+    KidsHash* hash = js_new<KidsHash>();
     if (!hash || !hash->init(2)) {
         js_delete(hash);
         return nullptr;
@@ -50,7 +48,7 @@ HashChildren(Shape *kid1, Shape *kid2)
 }
 
 bool
-PropertyTree::insertChild(ExclusiveContext *cx, Shape *parent, Shape *child)
+PropertyTree::insertChild(ExclusiveContext* cx, Shape* parent, Shape* child)
 {
     MOZ_ASSERT(!parent->inDictionary());
     MOZ_ASSERT(!child->parent);
@@ -58,7 +56,7 @@ PropertyTree::insertChild(ExclusiveContext *cx, Shape *parent, Shape *child)
     MOZ_ASSERT(child->compartment() == parent->compartment());
     MOZ_ASSERT(cx->isInsideCurrentCompartment(this));
 
-    KidsPointer *kidp = &parent->kids;
+    KidsPointer* kidp = &parent->kids;
 
     if (kidp->isNull()) {
         child->setParent(parent);
@@ -67,13 +65,13 @@ PropertyTree::insertChild(ExclusiveContext *cx, Shape *parent, Shape *child)
     }
 
     if (kidp->isShape()) {
-        Shape *shape = kidp->toShape();
+        Shape* shape = kidp->toShape();
         MOZ_ASSERT(shape != child);
         MOZ_ASSERT(!shape->matches(child));
 
-        KidsHash *hash = HashChildren(shape, child);
+        KidsHash* hash = HashChildren(shape, child);
         if (!hash) {
-            js_ReportOutOfMemory(cx);
+            ReportOutOfMemory(cx);
             return false;
         }
         kidp->setHash(hash);
@@ -82,7 +80,7 @@ PropertyTree::insertChild(ExclusiveContext *cx, Shape *parent, Shape *child)
     }
 
     if (!kidp->toHash()->putNew(StackShape(child), child)) {
-        js_ReportOutOfMemory(cx);
+        ReportOutOfMemory(cx);
         return false;
     }
 
@@ -91,12 +89,12 @@ PropertyTree::insertChild(ExclusiveContext *cx, Shape *parent, Shape *child)
 }
 
 void
-Shape::removeChild(Shape *child)
+Shape::removeChild(Shape* child)
 {
     MOZ_ASSERT(!child->inDictionary());
     MOZ_ASSERT(child->parent == this);
 
-    KidsPointer *kidp = &kids;
+    KidsPointer* kidp = &kids;
 
     if (kidp->isShape()) {
         MOZ_ASSERT(kidp->toShape() == child);
@@ -105,7 +103,7 @@ Shape::removeChild(Shape *child)
         return;
     }
 
-    KidsHash *hash = kidp->toHash();
+    KidsHash* hash = kidp->toHash();
     MOZ_ASSERT(hash->count() >= 2);      /* otherwise kidp->isShape() should be true */
 
 #ifdef DEBUG
@@ -120,20 +118,20 @@ Shape::removeChild(Shape *child)
     if (hash->count() == 1) {
         /* Convert from HASH form back to SHAPE form. */
         KidsHash::Range r = hash->all();
-        Shape *otherChild = r.front();
+        Shape* otherChild = r.front();
         MOZ_ASSERT((r.popFront(), r.empty()));    /* No more elements! */
         kidp->setShape(otherChild);
         js_delete(hash);
     }
 }
 
-Shape *
-PropertyTree::getChild(ExclusiveContext *cx, Shape *parentArg, StackShape &unrootedChild)
+Shape*
+PropertyTree::getChild(ExclusiveContext* cx, Shape* parentArg, StackShape& unrootedChild)
 {
     RootedShape parent(cx, parentArg);
     MOZ_ASSERT(parent);
 
-    Shape *existingShape = nullptr;
+    Shape* existingShape = nullptr;
 
     /*
      * The property tree has extremely low fan-out below its root in
@@ -143,9 +141,9 @@ PropertyTree::getChild(ExclusiveContext *cx, Shape *parentArg, StackShape &unroo
      * |this| can significantly increase fan-out below the property
      * tree root -- see bug 335700 for details.
      */
-    KidsPointer *kidp = &parent->kids;
+    KidsPointer* kidp = &parent->kids;
     if (kidp->isShape()) {
-        Shape *kid = kidp->toShape();
+        Shape* kid = kidp->toShape();
         if (kid->matches(unrootedChild))
             existingShape = kid;
     } else if (kidp->isHash()) {
@@ -156,14 +154,14 @@ PropertyTree::getChild(ExclusiveContext *cx, Shape *parentArg, StackShape &unroo
     }
 
     if (existingShape) {
-        JS::Zone *zone = existingShape->zone();
+        JS::Zone* zone = existingShape->zone();
         if (zone->needsIncrementalBarrier()) {
             /*
              * We need a read barrier for the shape tree, since these are weak
              * pointers.
              */
-            Shape *tmp = existingShape;
-            MarkShapeUnbarriered(zone->barrierTracer(), &tmp, "read barrier");
+            Shape* tmp = existingShape;
+            TraceManuallyBarrieredEdge(zone->barrierTracer(), &tmp, "read barrier");
             MOZ_ASSERT(tmp == existingShape);
         } else if (zone->isGCSweeping() && !existingShape->isMarked() &&
                    !existingShape->arenaHeader()->allocatedDuringIncremental)
@@ -183,7 +181,7 @@ PropertyTree::getChild(ExclusiveContext *cx, Shape *parentArg, StackShape &unroo
     if (existingShape)
         return existingShape;
 
-    Shape *shape = Shape::new_(cx, unrootedChild, parent->numFixedSlots());
+    Shape* shape = Shape::new_(cx, unrootedChild, parent->numFixedSlots());
     if (!shape)
         return nullptr;
 
@@ -196,43 +194,31 @@ PropertyTree::getChild(ExclusiveContext *cx, Shape *parentArg, StackShape &unroo
 void
 Shape::sweep()
 {
-    if (inDictionary())
-        return;
-
     /*
      * We detach the child from the parent if the parent is reachable.
      *
-     * Note that due to incremental sweeping, the parent pointer may point
-     * to the original reachable parent, or it may point to a new live
-     * object allocated in the same cell that used to hold the parent.
-     *
-     * There are three cases:
-     *
-     * Case 1: parent is not marked - parent is unreachable, may have been
-     *         finalized, and the cell may subsequently have been
-     *         reallocated to a compartment that is not being marked (cells
-     *         are marked when allocated in a compartment that is currenly
-     *         being marked by the collector).
-     *
-     * Case 2: parent is marked and is in a different compartment - parent
-     *         has been freed and reallocated to compartment that was being
-     *         marked.
-     *
-     * Case 3: parent is marked and is in the same compartment - parent is
-     *         stil reachable and we need to detach from it.
+     * This test depends on shape arenas not being freed until after we finish
+     * incrementally sweeping them. If that were not the case the parent pointer
+     * could point to a marked cell that had been deallocated and then
+     * reallocated, since allocating a cell in a zone that is being marked will
+     * set the mark bit for that cell.
      */
-    if (parent && parent->isMarked() && parent->compartment() == compartment())
-        parent->removeChild(this);
+    if (parent && parent->isMarked()) {
+        if (inDictionary()) {
+            if (parent->listp == &parent)
+                parent->listp = nullptr;
+        } else {
+            parent->removeChild(this);
+        }
+    }
 }
 
 void
-Shape::finalize(FreeOp *fop)
+Shape::finalize(FreeOp* fop)
 {
     if (!inDictionary() && kids.isHash())
         fop->delete_(kids.toHash());
 }
-
-#ifdef JSGC_COMPACTING
 
 void
 Shape::fixupDictionaryShapeAfterMovingGC()
@@ -240,29 +226,33 @@ Shape::fixupDictionaryShapeAfterMovingGC()
     if (!listp)
         return;
 
+    // Get a fake cell pointer to use for the calls below. This might not point
+    // to the beginning of a cell, but will point into the right arena and will
+    // have the right alignment.
+    Cell* cell = reinterpret_cast<Cell*>(uintptr_t(listp) & ~CellMask);
+
     // It's possible that this shape is unreachable and that listp points to the
     // location of a dead object in the nursery, in which case we should never
     // touch it again.
-    if (IsInsideNursery(reinterpret_cast<Cell *>(listp))) {
+    if (IsInsideNursery(cell)) {
         listp = nullptr;
         return;
     }
 
-    MOZ_ASSERT(!IsInsideNursery(reinterpret_cast<Cell *>(listp)));
-    AllocKind kind = TenuredCell::fromPointer(listp)->getAllocKind();
-    MOZ_ASSERT(kind == FINALIZE_SHAPE ||
-               kind == FINALIZE_ACCESSOR_SHAPE ||
-               kind <= FINALIZE_OBJECT_LAST);
-    if (kind == FINALIZE_SHAPE || kind == FINALIZE_ACCESSOR_SHAPE) {
+    AllocKind kind = TenuredCell::fromPointer(cell)->getAllocKind();
+    MOZ_ASSERT(kind == AllocKind::SHAPE ||
+               kind == AllocKind::ACCESSOR_SHAPE ||
+               IsObjectAllocKind(kind));
+    if (kind == AllocKind::SHAPE || kind == AllocKind::ACCESSOR_SHAPE) {
         // listp points to the parent field of the next shape.
-        Shape *next = reinterpret_cast<Shape *>(uintptr_t(listp) -
+        Shape* next = reinterpret_cast<Shape*>(uintptr_t(listp) -
                                                 offsetof(Shape, parent));
         listp = &gc::MaybeForwarded(next)->parent;
     } else {
         // listp points to the shape_ field of an object.
-        JSObject *last = reinterpret_cast<JSObject *>(uintptr_t(listp) -
-                                                      offsetof(JSObject, shape_));
-        listp = &gc::MaybeForwarded(last)->shape_;
+        JSObject* last = reinterpret_cast<JSObject*>(uintptr_t(listp) -
+                                                      JSObject::offsetOfShape());
+        listp = &gc::MaybeForwarded(last)->as<NativeObject>().shape_;
     }
 }
 
@@ -279,29 +269,29 @@ Shape::fixupShapeTreeAfterMovingGC()
     }
 
     MOZ_ASSERT(kids.isHash());
-    KidsHash *kh = kids.toHash();
+    KidsHash* kh = kids.toHash();
     for (KidsHash::Enum e(*kh); !e.empty(); e.popFront()) {
-        Shape *key = e.front();
+        Shape* key = e.front();
         if (IsForwarded(key))
             key = Forwarded(key);
 
-        BaseShape *base = key->base();
+        BaseShape* base = key->base();
         if (IsForwarded(base))
             base = Forwarded(base);
-        UnownedBaseShape *unowned = base->unowned();
+        UnownedBaseShape* unowned = base->unowned();
         if (IsForwarded(unowned))
             unowned = Forwarded(unowned);
 
-        PropertyOp getter = key->getter();
+        GetterOp getter = key->getter();
         if (key->hasGetterObject())
-            getter = PropertyOp(MaybeForwarded(key->getterObject()));
+            getter = GetterOp(MaybeForwarded(key->getterObject()));
 
-        StrictPropertyOp setter = key->setter();
+        SetterOp setter = key->setter();
         if (key->hasSetterObject())
-            setter = StrictPropertyOp(MaybeForwarded(key->setterObject()));
+            setter = SetterOp(MaybeForwarded(key->setterObject()));
 
         StackShape lookup(unowned,
-                          const_cast<Shape *>(key)->propidRef(),
+                          const_cast<Shape*>(key)->propidRef(),
                           key->slotInfo & Shape::SLOT_MASK,
                           key->attrs,
                           key->flags);
@@ -319,54 +309,46 @@ Shape::fixupAfterMovingGC()
         fixupShapeTreeAfterMovingGC();
 }
 
-#endif // JSGC_COMPACTING
-
 void
-ShapeGetterSetterRef::mark(JSTracer *trc)
+Shape::fixupGetterSetterForBarrier(JSTracer* trc)
 {
-    // Update the current shape's entry in the parent KidsHash table if needed.
-    // This is necessary as the computed hash includes the getter/setter
-    // pointers.
-
-    JSObject *obj = *objp;
-    JSObject *prior = obj;
-    if (!prior)
-        return;
-
-    trc->setTracingLocation(&*prior);
-    gc::Mark(trc, &obj, "AccessorShape getter or setter");
-    if (obj == *objp)
-        return;
-
-    Shape *parent = shape->parent;
-    if (shape->inDictionary() || !parent->kids.isHash()) {
-        *objp = obj;
-        return;
+    // Relocating the getterObj or setterObj will change our location in our
+    // parent's KidsHash, so remove ourself first if we're going to get moved.
+    if (parent && !parent->inDictionary() && parent->kids.isHash()) {
+        KidsHash* kh = parent->kids.toHash();
+        MOZ_ASSERT(kh->lookup(StackShape(this)));
+        kh->remove(StackShape(this));
     }
 
-    KidsHash *kh = parent->kids.toHash();
-    kh->remove(StackShape(shape));
-    *objp = obj;
-    MOZ_ALWAYS_TRUE(kh->putNew(StackShape(shape), shape));
+    if (hasGetterObject())
+        TraceManuallyBarrieredEdge(trc, &asAccessorShape().getterObj, "getterObj");
+    if (hasSetterObject())
+        TraceManuallyBarrieredEdge(trc, &asAccessorShape().setterObj, "setterObj");
+
+    if (parent && !parent->inDictionary() && parent->kids.isHash()) {
+        KidsHash* kh = parent->kids.toHash();
+        MOZ_ASSERT(!kh->lookup(StackShape(this)));
+        MOZ_ALWAYS_TRUE(kh->putNew(StackShape(this), this));
+    }
 }
 
 #ifdef DEBUG
 
 void
-KidsPointer::checkConsistency(Shape *aKid) const
+KidsPointer::checkConsistency(Shape* aKid) const
 {
     if (isShape()) {
         MOZ_ASSERT(toShape() == aKid);
     } else {
         MOZ_ASSERT(isHash());
-        KidsHash *hash = toHash();
+        KidsHash* hash = toHash();
         KidsHash::Ptr ptr = hash->lookup(StackShape(aKid));
         MOZ_ASSERT(*ptr == aKid);
     }
 }
 
 void
-Shape::dump(JSContext *cx, FILE *fp) const
+Shape::dump(JSContext* cx, FILE* fp) const
 {
     /* This is only used from gdb, so allowing GC here would just be confusing. */
     gc::AutoSuppressGC suppress(cx);
@@ -378,7 +360,7 @@ Shape::dump(JSContext *cx, FILE *fp) const
     if (JSID_IS_INT(propid)) {
         fprintf(fp, "[%ld]", (long) JSID_TO_INT(propid));
     } else if (JSID_IS_ATOM(propid)) {
-        if (JSLinearString *str = JSID_TO_ATOM(propid))
+        if (JSLinearString* str = JSID_TO_ATOM(propid))
             FileEscapedString(fp, str, '"');
         else
             fputs("<error>", fp);
@@ -388,8 +370,8 @@ Shape::dump(JSContext *cx, FILE *fp) const
     }
 
     fprintf(fp, " g/s %p/%p slot %d attrs %x ",
-            JS_FUNC_TO_DATA_PTR(void *, getter()),
-            JS_FUNC_TO_DATA_PTR(void *, setter()),
+            JS_FUNC_TO_DATA_PTR(void*, getter()),
+            JS_FUNC_TO_DATA_PTR(void*, setter()),
             hasSlot() ? slot() : -1, attrs);
 
     if (attrs) {
@@ -418,7 +400,7 @@ Shape::dump(JSContext *cx, FILE *fp) const
 }
 
 void
-Shape::dumpSubtree(JSContext *cx, int level, FILE *fp) const
+Shape::dumpSubtree(JSContext* cx, int level, FILE* fp) const
 {
     if (!parent) {
         MOZ_ASSERT(level == 0);
@@ -432,13 +414,13 @@ Shape::dumpSubtree(JSContext *cx, int level, FILE *fp) const
     if (!kids.isNull()) {
         ++level;
         if (kids.isShape()) {
-            Shape *kid = kids.toShape();
+            Shape* kid = kids.toShape();
             MOZ_ASSERT(kid->parent == this);
             kid->dumpSubtree(cx, level, fp);
         } else {
-            const KidsHash &hash = *kids.toHash();
+            const KidsHash& hash = *kids.toHash();
             for (KidsHash::Range range = hash.all(); !range.empty(); range.popFront()) {
-                Shape *kid = range.front();
+                Shape* kid = range.front();
 
                 MOZ_ASSERT(kid->parent == this);
                 kid->dumpSubtree(cx, level, fp);

@@ -497,13 +497,11 @@
   ERROR(NS_ERROR_RANGE_ERR,                        FAILURE(27)),
   /* StringEncoding API errors from http://wiki.whatwg.org/wiki/StringEncoding */
   ERROR(NS_ERROR_DOM_ENCODING_NOT_SUPPORTED_ERR,   FAILURE(28)),
-  ERROR(NS_ERROR_DOM_ENCODING_NOT_UTF_ERR,         FAILURE(29)),
-  ERROR(NS_ERROR_DOM_ENCODING_DECODE_ERR,          FAILURE(30)),
-  ERROR(NS_ERROR_DOM_INVALID_POINTER_ERR,          FAILURE(31)),
+  ERROR(NS_ERROR_DOM_INVALID_POINTER_ERR,          FAILURE(29)),
   /* WebCrypto API errors from http://www.w3.org/TR/WebCryptoAPI/ */
-  ERROR(NS_ERROR_DOM_UNKNOWN_ERR,                  FAILURE(32)),
-  ERROR(NS_ERROR_DOM_DATA_ERR,                     FAILURE(33)),
-  ERROR(NS_ERROR_DOM_OPERATION_ERR,                FAILURE(34)),
+  ERROR(NS_ERROR_DOM_UNKNOWN_ERR,                  FAILURE(30)),
+  ERROR(NS_ERROR_DOM_DATA_ERR,                     FAILURE(31)),
+  ERROR(NS_ERROR_DOM_OPERATION_ERR,                FAILURE(32)),
   /* DOM error codes defined by us */
   ERROR(NS_ERROR_DOM_SECMAN_ERR,                   FAILURE(1001)),
   ERROR(NS_ERROR_DOM_WRONG_TYPE_ERR,               FAILURE(1002)),
@@ -520,6 +518,9 @@
   ERROR(NS_ERROR_DOM_RETVAL_UNDEFINED,             FAILURE(1013)),
   ERROR(NS_ERROR_DOM_QUOTA_REACHED,                FAILURE(1014)),
   ERROR(NS_ERROR_DOM_JS_EXCEPTION,                 FAILURE(1015)),
+
+  /* A way to represent uncatchable exceptions */
+  ERROR(NS_ERROR_UNCATCHABLE_EXCEPTION,            FAILURE(1016)),
 
   /* May be used to indicate when e.g. setting a property value didn't
    * actually change the value, like for obj.foo = "bar"; obj.foo = "bar";
@@ -677,6 +678,7 @@
   ERROR(NS_ERROR_MALWARE_URI,           FAILURE(30)),
   ERROR(NS_ERROR_PHISHING_URI,          FAILURE(31)),
   ERROR(NS_ERROR_TRACKING_URI,          FAILURE(34)),
+  ERROR(NS_ERROR_UNWANTED_URI,          FAILURE(35)),
   /* Used when "Save Link As..." doesn't see the headers quickly enough to
    * choose a filename.  See nsContextMenu.js. */
   ERROR(NS_ERROR_SAVE_LINK_AS_TIMEOUT,  FAILURE(32)),
@@ -907,7 +909,6 @@
    * the application should be restarted.  This condition corresponds to the
    * case in which nsIAppStartup::Quit was called with the eRestart flag. */
   ERROR(NS_SUCCESS_RESTART_APP,          SUCCESS(1)),
-  ERROR(NS_SUCCESS_RESTART_METRO_APP,    SUCCESS(2)),
   ERROR(NS_SUCCESS_RESTART_APP_NOT_SAME_PROFILE,    SUCCESS(3)),
   ERROR(NS_SUCCESS_UNORM_NOTFOUND,  SUCCESS(17)),
 

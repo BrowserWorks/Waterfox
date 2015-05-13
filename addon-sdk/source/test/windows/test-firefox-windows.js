@@ -7,15 +7,19 @@ const { Cc, Ci } = require('chrome');
 const { setTimeout } = require('sdk/timers');
 const { Loader } = require('sdk/test/loader');
 const { onFocus, getMostRecentWindow, windows, isBrowser, getWindowTitle, isFocused } = require('sdk/window/utils');
-const { open, close, focus } = require('sdk/window/helpers');
+const { open, close, focus, promise: windowPromise } = require('sdk/window/helpers');
 const { browserWindows } = require("sdk/windows");
 const tabs = require("sdk/tabs");
 const winUtils = require("sdk/deprecated/window-utils");
-const { WindowTracker } = winUtils;
 const { isPrivate } = require('sdk/private-browsing');
 const { isWindowPBSupported } = require('sdk/private-browsing/utils');
 const { viewFor } = require("sdk/view/core");
 const { defer } = require("sdk/lang/functional");
+const { cleanUI } = require("sdk/test/utils");
+const { after } = require("sdk/test/utils");
+const { merge } = require("sdk/util/object");
+const self = require("sdk/self");
+const { openTab } = require("../tabs/utils");
 
 // TEST: open & close window
 exports.testOpenAndCloseWindow = function(assert, done) {
@@ -52,17 +56,14 @@ exports.testNeWindowIsFocused = function(assert, done) {
         assert.ok(isFocused(window), 'the new window is focused');
         assert.ok(isFocused(browserWindows.activeWindow), 'the active window is focused');
         assert.ok(!isFocused(mainWindow), 'the main window is not focused');
-        close(window).then(done).catch(assert.fail);
+        done();
       })
     }
   });
 }
 
-exports.testOpenRelativePathWindow = function(assert, done) {
+exports.testOpenRelativePathWindow = function*(assert) {
   assert.equal(browserWindows.length, 1, "Only one window open");
-
-  const { merge } = require("sdk/util/object");
-  const self = require("sdk/self");
 
   let loader = Loader(module, null, null, {
     modules: {
@@ -71,18 +72,31 @@ exports.testOpenRelativePathWindow = function(assert, done) {
       })
     }
   });
+  assert.pass("Created a new loader");
 
-  loader.require("sdk/windows").browserWindows.open({
-    url: "./test.html",
-    onOpen: (window) => {
-      window.tabs.activeTab.once("ready", (tab) => {
-        assert.equal(tab.title, "foo",
-          "tab opened a document with relative path");
+  let tabReady = new Promise(resolve => {
+    loader.require("sdk/tabs").on("ready", (tab) => {
+      if (!/test\.html$/.test(tab.url))
+        return;
+      assert.equal(tab.title, "foo",
+        "tab opened a document with relative path");
+      resolve();
+    });
+  });
 
-        window.close(done);
-      });
-    }
-  })
+
+  yield new Promise(resolve => {
+    loader.require("sdk/windows").browserWindows.open({
+      url: "./test.html",
+      onOpen: (window) => {
+        assert.pass("Created a new window");
+        resolve();
+      }
+    })
+  });
+
+  yield tabReady;
+  loader.unload();
 }
 
 exports.testAutomaticDestroy = function(assert, done) {
@@ -105,8 +119,7 @@ exports.testAutomaticDestroy = function(assert, done) {
     onOpen: function(window) {
       setTimeout(function () {
         assert.ok(!called, "Unloaded windows instance is destroyed and inactive");
-
-        window.close(done);
+        done();
       });
     }
   });
@@ -217,102 +230,65 @@ exports.testOnOpenOnCloseListeners = function(assert, done) {
   });
 };
 
-exports.testActiveWindow = function(assert, done) {
+exports.testActiveWindow = function*(assert) {
   let windows = browserWindows;
-
-  // API window objects
-  let window2, window3;
+  let window = getMostRecentWindow();
 
   // Raw window objects
-  let rawWindow2, rawWindow3;
+  let rawWindow2 =  yield windowPromise(window.OpenBrowserWindow(), "load").then(focus);
+  assert.pass("Window 2 was created");
 
-  let testSteps = [
-    () => {
-      assert.equal(windows.length, 3, "Correct number of browser windows");
+  // open a tab in window 2
+  yield openTab(rawWindow2, "data:text/html;charset=utf-8,<title>window 2</title>");
 
-      let count = 0;
-      for (let window in windows)
-        count++;
-      assert.equal(count, 3, "Correct number of windows returned by iterator");
+  assert.equal(rawWindow2.content.document.title, "window 2", "Got correct raw window 2");
+  assert.equal(rawWindow2.document.title, windows[1].title, "Saw correct title on window 2");
 
-      assert.equal(windows.activeWindow.title, window3.title, "Correct active window - 3");
+  let rawWindow3 =  yield windowPromise(window.OpenBrowserWindow(), "load").then(focus);;
+  assert.pass("Window 3 was created");
 
-      continueAfterFocus(rawWindow2);
-      rawWindow2.focus();
-    }, () => {
-      assert.equal(windows.activeWindow.title, window2.title, "Correct active window - 2");
+  // open a tab in window 3
+  yield openTab(rawWindow3, "data:text/html;charset=utf-8,<title>window 3</title>");
 
-      continueAfterFocus(rawWindow2);
-      window2.activate();
-    }, () => {
-      assert.equal(windows.activeWindow.title, window2.title, "Correct active window - 2");
+  assert.equal(rawWindow3.content.document.title, "window 3", "Got correct raw window 3");
+  assert.equal(rawWindow3.document.title, windows[2].title, "Saw correct title on window 3");
 
-      continueAfterFocus(rawWindow3);
-      window3.activate();
-    }, () => {
-      assert.equal(windows.activeWindow.title, window3.title, "Correct active window - 3");
-      finishTest();
-    }
-  ];
+  assert.equal(windows.length, 3, "Correct number of browser windows");
 
-  let newWindow = null;
-  let tracker = new WindowTracker({
-    onTrack: function(window) {
-      newWindow = window;
-    }
-  });
-
-  windows.open({
-    url: "data:text/html;charset=utf-8,<title>window 2</title>",
-    onOpen: (window) => {
-      assert.pass('window 2 open');
-
-      window.tabs.activeTab.once('ready', () => {
-        assert.pass('window 2 tab activated');
-
-        window2 = window;
-        assert.ok(newWindow, "A new window was opened");
-        rawWindow2 = newWindow;
-        newWindow = null;
-
-        assert.equal(rawWindow2.content.document.title, "window 2", "Got correct raw window 2");
-        assert.equal(rawWindow2.document.title, window2.title, "Saw correct title on window 2");
-
-        windows.open({
-          url: "data:text/html;charset=utf-8,<title>window 3</title>",
-          onOpen: (window) => {
-            assert.pass('window 3 open');
-
-            window.tabs.activeTab.once('ready', () => {
-              assert.pass('window 3 tab activated');
-
-              window3 = window;
-              assert.ok(newWindow, "A new window was opened");
-              rawWindow3 = newWindow;
-              tracker.unload();
-
-              assert.equal(rawWindow3.content.document.title, "window 3", "Got correct raw window 3");
-              assert.equal(rawWindow3.document.title, window3.title, "Saw correct title on window 3");
-
-              continueAfterFocus(rawWindow3);
-            });
-          }
-        });
-      });
-    }
-  });
-
-  let nextStep = () => testSteps.length ? setTimeout(testSteps.shift()) : null;
-  let continueAfterFocus = (w) => onFocus(w).then(nextStep);
-
-  function finishTest() {
-    // close unactive window first to avoid unnecessary focus changing
-    window2.close(() => window3.close(() => {
-      assert.equal(rawWindow2.closed, true, 'window 2 is closed');
-      assert.equal(rawWindow3.closed, true, 'window 3 is closed');
-      done();
-    }));
+  let count = 0;
+  for (let window in windows) {
+    count++;
   }
+  assert.equal(count, 3, "Correct number of windows returned by iterator");
+  assert.equal(windows.activeWindow.title, windows[2].title, "Correct active window title - 3");
+  let window3 = windows[2];
+
+  yield focus(rawWindow2);
+
+  assert.equal(windows.activeWindow.title, windows[1].title, "Correct active window title - 2");
+  let window2 = windows[1];
+
+  yield new Promise(resolve => {
+    onFocus(rawWindow2).then(resolve);
+    window2.activate();
+    assert.pass("activating window2");
+  });
+
+  assert.equal(windows.activeWindow.title, windows[1].title, "Correct active window - 2");
+
+  yield new Promise(resolve => {
+    onFocus(rawWindow3).then(resolve);
+    window3.activate();
+    assert.pass("activating window3");
+  });
+
+  assert.equal(windows.activeWindow.title, window3.title, "Correct active window - 3");
+
+  yield close(rawWindow2);
+  assert.equal(rawWindow2.closed, true, 'window 2 is closed');
+
+  yield close(rawWindow3);
+  assert.equal(rawWindow3.closed, true, 'window 3 is closed');
 };
 
 exports.testTrackWindows = function(assert, done) {
@@ -405,52 +381,64 @@ exports.testTrackWindows = function(assert, done) {
 }
 
 // test that it is not possible to open a private window by default
-exports.testWindowOpenPrivateDefault = function(assert, done) {
-  browserWindows.open({
-    url: 'about:mozilla',
+exports.testWindowOpenPrivateDefault = function*(assert) {
+  const TITLE = "yo";
+  const URL = "data:text/html,<title>" + TITLE + "</title>";
+
+  let tabReady = new Promise(resolve => {
+    tabs.on('ready', function onTabReady(tab) {
+      if (tab.url != URL)
+        return;
+
+      tabs.removeListener('ready', onTabReady);
+      assert.equal(tab.title, TITLE, 'opened correct tab');
+      assert.equal(isPrivate(tab), false, 'tab is not private');
+      resolve();
+    });
+  })
+
+  yield new Promise(resolve => browserWindows.open({
+    url: URL,
     isPrivate: true,
     onOpen: function(window) {
-      let tab = window.tabs[0];
-
-      tab.once('ready', function() {
-        assert.equal(tab.url, 'about:mozilla', 'opened correct tab');
-        assert.equal(isPrivate(tab), false, 'tab is not private');
-
-        window.close(done);
-      });
+      assert.pass("the new window was opened");
+      resolve();
     }
-  });
+  }));
+
+  yield tabReady;
 }
 
 // test that it is not possible to find a private window in
 // windows module's iterator
-exports.testWindowIteratorPrivateDefault = function(assert, done) {
+exports.testWindowIteratorPrivateDefault = function*(assert) {
   assert.equal(browserWindows.length, 1, 'only one window open');
 
-  open('chrome://browser/content/browser.xul', {
+  let window = yield open('chrome://browser/content/browser.xul', {
     features: {
       private: true,
       chrome: true
     }
-  }).then(focus).then(function(window) {
-    // test that there is a private window opened
-    assert.equal(isPrivate(window), isWindowPBSupported, 'there is a private window open');
-    assert.strictEqual(window, winUtils.activeWindow);
-    assert.strictEqual(window, getMostRecentWindow());
-
-    assert.ok(!isPrivate(browserWindows.activeWindow));
-
-    assert.equal(browserWindows.length, 1, 'only one window in browserWindows');
-    assert.equal(windows().length, 1, 'only one window in windows()');
-
-    assert.equal(windows(null, { includePrivate: true }).length, 2);
-
-    // test that all windows in iterator are not private
-    for (let window of browserWindows)
-      assert.ok(!isPrivate(window), 'no window in browserWindows is private');
-
-    close(window).then(done);
   });
+
+  yield focus(window);
+
+  // test that there is a private window opened
+  assert.equal(isPrivate(window), true, 'there is a private window open');
+  assert.strictEqual(window, winUtils.activeWindow);
+  assert.strictEqual(window, getMostRecentWindow());
+
+  assert.ok(!isPrivate(browserWindows.activeWindow));
+
+  assert.equal(browserWindows.length, 1, 'only one window in browserWindows');
+  assert.equal(windows().length, 1, 'only one window in windows()');
+
+  assert.equal(windows(null, { includePrivate: true }).length, 2);
+
+  // test that all windows in iterator are not private
+  for (let window of browserWindows) {
+    assert.ok(!isPrivate(window), 'no window in browserWindows is private');
+  }
 };
 
 exports["test getView(window)"] = function(assert, done) {
@@ -472,5 +460,130 @@ exports["test getView(window)"] = function(assert, done) {
 
   browserWindows.open({ url: "data:text/html,<title>yo</title>" });
 };
+
+// Tests that the this property is correct in event listeners called from
+// the windows API.
+exports.testWindowEventBindings = function(assert, done) {
+  let loader = Loader(module);
+  let { browserWindows } = loader.require("sdk/windows");
+  let firstWindow = browserWindows.activeWindow;
+  let { viewFor } = loader.require("sdk/view/core");
+
+  let EVENTS = ["open", "close", "activate", "deactivate"];
+
+  let windowBoundEventHandler = (event) => function(window) {
+    // Close event listeners are always bound to browserWindows.
+    if (event == "close")
+      assert.equal(this, browserWindows, "window listener for " + event + " event should be bound to the browserWindows object.");
+    else
+      assert.equal(this, window, "window listener for " + event + " event should be bound to the window object.");
+  };
+
+  let windowsBoundEventHandler = (event) => function(window) {
+    assert.equal(this, browserWindows, "windows listener for " + event + " event should be bound to the browserWindows object.");
+  }
+  for (let event of EVENTS)
+    browserWindows.on(event, windowsBoundEventHandler(event));
+
+  let windowsOpenEventHandler = (event) => function(window) {
+    // Open and close event listeners are always bound to browserWindows.
+    if (event == "open" || event == "close")
+      assert.equal(this, browserWindows, "windows open listener for " + event + " event should be bound to the browserWindows object.");
+    else
+      assert.equal(this, window, "windows open listener for " + event + " event should be bound to the window object.");
+  }
+
+  let openArgs = {
+    url: "data:text/html;charset=utf-8,binding-test",
+    onOpen: function(window) {
+      windowsOpenEventHandler("open").call(this, window);
+
+      for (let event of EVENTS)
+        window.on(event, windowBoundEventHandler(event));
+
+      let rawWindow = viewFor(window);
+      onFocus(rawWindow).then(() => {
+        window.once("deactivate", () => {
+          window.once("close", () => {
+            loader.unload();
+            done();
+          });
+
+          window.close();
+        });
+
+        firstWindow.activate();
+      });
+    }
+  };
+  // Listen to everything except onOpen
+  for (let event of EVENTS.slice(1)) {
+    openArgs["on" + event.slice(0, 1).toUpperCase() + event.slice(1)] = windowsOpenEventHandler(event);
+  }
+
+  browserWindows.open(openArgs);
+}
+
+// Tests that the this property is correct in event listeners called from
+// manipulating window.tabs.
+exports.testWindowTabEventBindings = function(assert, done) {
+  let loader = Loader(module);
+  let { browserWindows } = loader.require("sdk/windows");
+  let firstWindow = browserWindows.activeWindow;
+  let tabs = loader.require("sdk/tabs");
+  let windowTabs = firstWindow.tabs;
+  let firstTab = firstWindow.tabs.activeTab;
+
+  let EVENTS = ["open", "close", "activate", "deactivate",
+                "load", "ready", "pageshow"];
+
+  let tabBoundEventHandler = (event) => function(tab) {
+    assert.equal(this, tab, "tab listener for " + event + " event should be bound to the tab object.");
+  };
+
+  let windowTabsBoundEventHandler = (event) => function(tab) {
+    assert.equal(this, windowTabs, "window tabs listener for " + event + " event should be bound to the windowTabs object.");
+  }
+  for (let event of EVENTS)
+    windowTabs.on(event, windowTabsBoundEventHandler(event));
+
+  let windowTabsOpenEventHandler = (event) => function(tab) {
+    assert.equal(this, tab, "window tabs open listener for " + event + " event should be bound to the tab object.");
+  }
+
+  let openArgs = {
+    url: "data:text/html;charset=utf-8,binding-test",
+    onOpen: function(tab) {
+      windowTabsOpenEventHandler("open").call(this, tab);
+
+      for (let event of EVENTS)
+        tab.on(event, tabBoundEventHandler(event));
+
+      tab.once("pageshow", () => {
+        tab.once("deactivate", () => {
+          tab.once("close", () => {
+            loader.unload();
+            done();
+          });
+
+          tab.close();
+        });
+
+        firstTab.activate();
+      });
+    }
+  };
+  // Listen to everything except onOpen
+  for (let event of EVENTS.slice(1)) {
+    let eventProperty = "on" + event.slice(0, 1).toUpperCase() + event.slice(1);
+    openArgs[eventProperty] = windowTabsOpenEventHandler(event);
+  }
+
+  windowTabs.open(openArgs);
+}
+
+after(exports, function*(name, assert) {
+  yield cleanUI();
+});
 
 require('sdk/test').run(exports);

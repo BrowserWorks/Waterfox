@@ -20,6 +20,8 @@ toolkit.jar:
    content/global/aboutRights-unbranded.xhtml (aboutRights-unbranded.xhtml)
    content/global/aboutNetworking.js
    content/global/aboutNetworking.xhtml
+   content/global/aboutServiceWorkers.js
+   content/global/aboutServiceWorkers.xhtml
    content/global/aboutwebrtc/aboutWebrtc.css   (aboutwebrtc/aboutWebrtc.css)
    content/global/aboutwebrtc/aboutWebrtc.js    (aboutwebrtc/aboutWebrtc.js)
    content/global/aboutwebrtc/aboutWebrtc.xhtml (aboutwebrtc/aboutWebrtc.xhtml)
@@ -31,7 +33,7 @@ toolkit.jar:
    content/global/directionDetector.html
    content/global/plugins.html
    content/global/plugins.css
-*  content/global/browser-child.js            (browser-child.js)
+   content/global/browser-child.js            (browser-child.js)
    content/global/browser-content.js          (browser-content.js)
 *+  content/global/buildconfig.html            (buildconfig.html)
 *  content/global/contentAreaUtils.js         (contentAreaUtils.js)
@@ -48,6 +50,7 @@ toolkit.jar:
 *+ content/global/globalOverlay.js            (globalOverlay.js)
 +  content/global/mozilla.xhtml               (mozilla.xhtml)
    content/global/nsDragAndDrop.js            (nsDragAndDrop.js)
+   content/global/process-content.js          (process-content.js)
    content/global/resetProfile.css            (resetProfile.css)
    content/global/resetProfile.js             (resetProfile.js)
    content/global/resetProfile.xul            (resetProfile.xul)

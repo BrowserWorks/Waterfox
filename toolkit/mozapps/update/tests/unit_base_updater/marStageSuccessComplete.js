@@ -25,20 +25,12 @@ function run_test() {
   }
 
   createUpdaterINI(false);
-
-  // For Mac OS X set the last modified time for the root directory to a date in
-  // the past to test that the last modified time is updated on a successful
-  // update (bug 600098).
-  if (IS_MACOSX) {
-    let now = Date.now();
-    let yesterday = now - (1000 * 60 * 60 * 24);
-    let applyToDir = getApplyDirFile();
-    applyToDir.lastModifiedTime = yesterday;
-  }
+  setAppBundleModTime();
 
   // Don't test symlinks on Mac OS X in this test since it tends to timeout.
   // It is tested on Mac OS X in marAppInUseStageSuccessComplete_unix.js
-  if (IS_UNIX && !IS_MACOSX) {
+  // The tests don't support symlinks on gonk.
+  if (IS_UNIX && !IS_MACOSX && !IS_TOOLKIT_GONK) {
     removeSymlink();
     createSymlink();
     do_register_cleanup(removeSymlink);
@@ -60,18 +52,13 @@ function run_test() {
 
   checkFilesAfterUpdateSuccess(getStageDirFile, true, false);
   checkUpdateLogContents(LOG_COMPLETE_SUCCESS);
-
-  if (IS_WIN || IS_MACOSX) {
-    // Check that the post update process was not launched when staging an
-    // update.
-    do_check_false(getPostUpdateFile(".running").exists());
-  }
+  checkPostUpdateRunningFile(false);
 
   // Switch the application to the staged application that was updated.
   gStageUpdate = false;
   gSwitchApp = true;
   do_timeout(TEST_CHECK_TIMEOUT, function() {
-    runUpdate(0, STATE_SUCCEEDED);
+    runUpdate(0, STATE_SUCCEEDED, checkUpdateApplied);
   });
 }
 
@@ -93,42 +80,34 @@ function checkUpdateApplied() {
  * the test.
  */
 function finishCheckUpdateApplied() {
-  if (IS_MACOSX) {
-    logTestInfo("testing last modified time on the apply to directory has " +
-                "changed after a successful update (bug 600098)");
-    let now = Date.now();
-    let applyToDir = getApplyDirFile();
-    let timeDiff = Math.abs(applyToDir.lastModifiedTime - now);
-    do_check_true(timeDiff < MAC_MAX_TIME_DIFFERENCE);
-  }
+  checkPostUpdateRunningFile(true);
 
   if (IS_MACOSX) {
-    logTestInfo("testing that the distribution directory is removed from the " +
-                "old location when there is a distribution directory in the " +
-                "new location");
     let distributionDir = getApplyDirFile(DIR_MACOS + "distribution", true);
-    logTestInfo("testing " + distributionDir.path + " shouldn't exist");
-    do_check_false(distributionDir.exists());
-
+    Assert.ok(!distributionDir.exists(), MSG_SHOULD_NOT_EXIST);
     checkUpdateLogContains("removing old distribution directory");
   }
 
-  if (IS_UNIX && !IS_MACOSX) {
+  // The tests don't support symlinks on gonk.
+  if (IS_UNIX && !IS_MACOSX && !IS_TOOLKIT_GONK) {
     checkSymlink();
   }
+  checkAppBundleModTime();
   checkFilesAfterUpdateSuccess(getApplyDirFile, false, false);
   checkUpdateLogContents(LOG_COMPLETE_SUCCESS);
+  standardInit();
   checkCallbackAppLog();
 }
 
 function runHelperProcess(args) {
   let helperBin = getTestDirFile(FILE_HELPER_BIN);
-  let process = AUS_Cc["@mozilla.org/process/util;1"].
-                createInstance(AUS_Ci.nsIProcess);
+  let process = Cc["@mozilla.org/process/util;1"].
+                createInstance(Ci.nsIProcess);
   process.init(helperBin);
-  logTestInfo("Running " + helperBin.path + " " + args.join(" "));
+  debugDump("Running " + helperBin.path + " " + args.join(" "));
   process.run(true, args, args.length);
-  do_check_eq(process.exitValue, 0);
+  Assert.equal(process.exitValue, 0,
+               "the helper process exit value should be 0");
 }
 
 function createSymlink() {

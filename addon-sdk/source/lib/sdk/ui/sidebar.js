@@ -1,6 +1,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
-* License, v. 2.0. If a copy of the MPL was not distributed with this
-* file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 'use strict';
 
 module.metadata = {
@@ -24,7 +24,7 @@ const { isBrowser, getMostRecentBrowserWindow, windows, isWindowPrivate } = requ
 const { ns } = require('../core/namespace');
 const { remove: removeFromArray } = require('../util/array');
 const { show, hide, toggle } = require('./sidebar/actions');
-const { Worker } = require('../content/worker');
+const { Worker } = require('../deprecated/sync-worker');
 const { contract: sidebarContract } = require('./sidebar/contract');
 const { create, dispose, updateTitle, updateURL, isSidebarShowing, showSidebar, hideSidebar } = require('./sidebar/view');
 const { defer } = require('../core/promise');

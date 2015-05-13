@@ -1,0 +1,36 @@
+---
+$inherits:
+  from: 'tasks/test.yml'
+task:
+  metadata:
+    name: '[TC] Mochitest'
+    description: Mochitest Media test run
+
+  workerType: b2gtest-emulator
+  payload:
+    command:
+      - entrypoint
+      - >
+        python ./mozharness/scripts/b2g_emulator_unittest.py
+        --config-file ./mozharness/configs/b2g/emulator_automation_config.py
+        --config-file ./mozharness_configs/gaia_integration_override.py
+        --config-file ./mozharness_configs/emulator_override.py
+        --config-file ./mozharness_configs/remove_executables.py
+        --download-symbols ondemand
+        --test-suite mochitest
+        --test-path dom/media/tests/
+        --installer-url {{build_url}}
+        --test-url {{tests_url}}
+        --xre-url https://queue.taskcluster.net/v1/task/wXAHAaxDQpqxoWF1iljJjg/runs/0/artifacts/public/cache/xulrunner-sdk-40.zip
+    artifacts:
+      'public/build':
+        type: directory
+        path: '/home/worker/artifacts/'
+        expires: '{{#from_now}}1 year{{/from_now}}'
+
+  extra:
+    treeherder:
+      groupName: Mochitest
+      groupSymbol: tc-M
+      symbol: M
+      productName: b2g

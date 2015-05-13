@@ -9,6 +9,7 @@
 #include "mozilla/layers/Effects.h"     // for Effect, EffectChain, etc
 #include "mozilla/mozalloc.h"           // for operator delete, etc
 #include "gfx2DGlue.h"
+#include "nsAppRunner.h"
 
 namespace mozilla {
 namespace gfx {
@@ -21,30 +22,32 @@ namespace layers {
 /* static */ LayersBackend
 Compositor::GetBackend()
 {
-  AssertOnCompositorThread();
+  if (sBackend != LayersBackend::LAYERS_NONE) {
+    AssertOnCompositorThread();
+  }
   return sBackend;
 }
 
 /* static */ void
 Compositor::SetBackend(LayersBackend backend)
 {
-  if (sBackend != LayersBackend::LAYERS_NONE && sBackend != backend) {
+  if (!gIsGtest && sBackend != backend &&
+      sBackend != LayersBackend::LAYERS_NONE &&
+      backend != LayersBackend::LAYERS_NONE) {
     // Assert this once we figure out bug 972891.
-    //MOZ_CRASH("Trying to use more than one OMTC compositor.");
-
 #ifdef XP_MACOSX
-    printf("ERROR: Changing compositor from %u to %u.\n",
-           unsigned(sBackend), unsigned(backend));
+    gfxWarning() << "Changing compositor from " << unsigned(sBackend) << " to " << unsigned(backend);
 #endif
   }
+
   sBackend = backend;
 }
 
 /* static */ void
 Compositor::AssertOnCompositorThread()
 {
-  MOZ_ASSERT(CompositorParent::CompositorLoop() ==
-             MessageLoop::current(),
+  MOZ_ASSERT(!CompositorParent::CompositorLoop() ||
+             CompositorParent::CompositorLoop() == MessageLoop::current(),
              "Can only call this from the compositor thread!");
 }
 
@@ -78,7 +81,7 @@ Compositor::DrawDiagnostics(DiagnosticFlags aFlags,
   if (aVisibleRegion.GetNumRects() > 1) {
     nsIntRegionRectIterator screenIter(aVisibleRegion);
 
-    while (const nsIntRect* rect = screenIter.Next())
+    while (const gfx::IntRect* rect = screenIter.Next())
     {
       DrawDiagnostics(aFlags | DiagnosticFlags::REGION_RECT,
                       ToRect(*rect), aClipRect, aTransform, aFlashCounter);

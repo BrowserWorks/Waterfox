@@ -8,7 +8,7 @@
 #ifndef mozilla_layers_ShadowLayerParent_h
 #define mozilla_layers_ShadowLayerParent_h
 
-#include "mozilla/Attributes.h"         // for MOZ_OVERRIDE
+#include "mozilla/Attributes.h"         // for override
 #include "mozilla/ipc/ProtocolUtils.h"
 #include "mozilla/layers/PLayerParent.h"  // for PLayerParent
 #include "nsAutoPtr.h"                  // for nsRefPtr
@@ -18,7 +18,6 @@ namespace layers {
 
 class ContainerLayer;
 class Layer;
-class LayerManager;
 
 class CanvasLayerComposite;
 class ColorLayerComposite;
@@ -47,7 +46,7 @@ public:
   PaintedLayerComposite* AsPaintedLayerComposite() const;
 
 private:
-  virtual void ActorDestroy(ActorDestroyReason why) MOZ_OVERRIDE;
+  virtual void ActorDestroy(ActorDestroyReason why) override;
 
   nsRefPtr<Layer> mLayer;
 };

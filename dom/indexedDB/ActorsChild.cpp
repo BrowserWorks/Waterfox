@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -19,6 +21,7 @@
 #include "mozilla/BasicEvents.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/TypeTraits.h"
+#include "mozilla/dom/Element.h"
 #include "mozilla/dom/PermissionMessageUtils.h"
 #include "mozilla/dom/TabChild.h"
 #include "mozilla/dom/indexedDB/PBackgroundIDBDatabaseFileChild.h"
@@ -37,6 +40,8 @@
 #include "PermissionRequestBase.h"
 #include "ProfilerHelpers.h"
 #include "ReportInternalError.h"
+#include "WorkerPrivate.h"
+#include "WorkerRunnable.h"
 
 #ifdef DEBUG
 #include "IndexedDatabaseManager.h"
@@ -54,7 +59,13 @@
 #endif // DEBUG || GC_ON_IPC_MESSAGES
 
 namespace mozilla {
+
+using ipc::PrincipalInfo;
+
 namespace dom {
+
+using namespace workers;
+
 namespace indexedDB {
 
 /*******************************************************************************
@@ -71,6 +82,12 @@ ThreadLocal::ThreadLocal(const nsID& aBackgroundChildLoggingId)
   MOZ_ASSERT(mOwningThread);
 
   MOZ_COUNT_CTOR(mozilla::dom::indexedDB::ThreadLocal);
+
+  // NSID_LENGTH counts the null terminator, SetLength() does not.
+  mLoggingIdString.SetLength(NSID_LENGTH - 1);
+
+  aBackgroundChildLoggingId.ToProvidedString(
+    *reinterpret_cast<char(*)[NSID_LENGTH]>(mLoggingIdString.BeginWriting()));
 }
 
 ThreadLocal::~ThreadLocal()
@@ -130,7 +147,7 @@ MaybeCollectGarbageOnIPCMessage()
 #endif // BUILD_GC_ON_IPC_MESSAGES
 }
 
-class MOZ_STACK_CLASS AutoSetCurrentTransaction MOZ_FINAL
+class MOZ_STACK_CLASS AutoSetCurrentTransaction final
 {
   typedef mozilla::ipc::BackgroundChildImpl BackgroundChildImpl;
 
@@ -180,7 +197,7 @@ public:
   }
 };
 
-class MOZ_STACK_CLASS ResultHelper MOZ_FINAL
+class MOZ_STACK_CLASS ResultHelper final
   : public IDBRequest::ResultCallback
 {
   IDBRequest* mRequest;
@@ -340,7 +357,7 @@ public:
   }
 
   virtual nsresult
-  GetResult(JSContext* aCx, JS::MutableHandle<JS::Value> aResult) MOZ_OVERRIDE
+  GetResult(JSContext* aCx, JS::MutableHandle<JS::Value> aResult) override
   {
     MOZ_ASSERT(aCx);
     MOZ_ASSERT(mRequest);
@@ -452,7 +469,8 @@ private:
           return rv;
         }
 
-        if (NS_WARN_IF(!JS_SetElement(aCx, array, index, value))) {
+        if (NS_WARN_IF(!JS_DefineElement(aCx, array, index, value,
+                                         JSPROP_ENUMERATE))) {
           IDB_REPORT_INTERNAL_ERR();
           return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
         }
@@ -505,7 +523,8 @@ private:
           return rv;
         }
 
-        if (NS_WARN_IF(!JS_SetElement(aCx, array, index, value))) {
+        if (NS_WARN_IF(!JS_DefineElement(aCx, array, index, value,
+                                         JSPROP_ENUMERATE))) {
           IDB_REPORT_INTERNAL_ERR();
           return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
         }
@@ -517,7 +536,7 @@ private:
   }
 };
 
-class PermissionRequestMainProcessHelper MOZ_FINAL
+class PermissionRequestMainProcessHelper final
   : public PermissionRequestBase
 {
   BackgroundFactoryRequestChild* mActor;
@@ -526,9 +545,9 @@ class PermissionRequestMainProcessHelper MOZ_FINAL
 public:
   PermissionRequestMainProcessHelper(BackgroundFactoryRequestChild* aActor,
                                      IDBFactory* aFactory,
-                                     nsPIDOMWindow* aWindow,
+                                     Element* aOwnerElement,
                                      nsIPrincipal* aPrincipal)
-    : PermissionRequestBase(aWindow, aPrincipal)
+    : PermissionRequestBase(aOwnerElement, aPrincipal)
     , mActor(aActor)
     , mFactory(aFactory)
   {
@@ -543,10 +562,10 @@ protected:
 
 private:
   virtual void
-  OnPromptComplete(PermissionValue aPermissionValue) MOZ_OVERRIDE;
+  OnPromptComplete(PermissionValue aPermissionValue) override;
 };
 
-class PermissionRequestChildProcessActor MOZ_FINAL
+class PermissionRequestChildProcessActor final
   : public PIndexedDBPermissionRequestChild
 {
   BackgroundFactoryRequestChild* mActor;
@@ -568,7 +587,7 @@ protected:
   { }
 
   virtual bool
-  Recv__delete__(const uint32_t& aPermission) MOZ_OVERRIDE;
+  Recv__delete__(const uint32_t& aPermission) override;
 };
 
 void
@@ -592,10 +611,10 @@ ConvertActorsToBlobs(IDBDatabase* aDatabase,
     for (uint32_t index = 0; index < count; index++) {
       BlobChild* actor = static_cast<BlobChild*>(blobs[index]);
 
-      nsRefPtr<FileImpl> blobImpl = actor->GetBlobImpl();
+      nsRefPtr<BlobImpl> blobImpl = actor->GetBlobImpl();
       MOZ_ASSERT(blobImpl);
 
-      nsRefPtr<File> blob = new File(aDatabase->GetOwner(), blobImpl);
+      nsRefPtr<Blob> blob = Blob::Create(aDatabase->GetOwner(), blobImpl);
 
       nsRefPtr<FileInfo> fileInfo;
       if (!fileInfos.IsEmpty()) {
@@ -612,7 +631,7 @@ ConvertActorsToBlobs(IDBDatabase* aDatabase,
       StructuredCloneFile* file = aFiles.AppendElement();
       MOZ_ASSERT(file);
 
-      file->mFile.swap(blob);
+      file->mBlob.swap(blob);
       file->mFileInfo.swap(fileInfo);
     }
   }
@@ -764,6 +783,235 @@ DispatchSuccessEvent(ResultHelper* aResultHelper,
       internalEvent->mFlags.mExceptionHasBeenRisen) {
     transaction->Abort(NS_ERROR_DOM_INDEXEDDB_ABORT_ERR);
   }
+}
+
+class WorkerPermissionChallenge;
+
+// This class calles WorkerPermissionChallenge::OperationCompleted() in the
+// worker thread.
+class WorkerPermissionOperationCompleted final : public WorkerRunnable
+{
+  nsRefPtr<WorkerPermissionChallenge> mChallenge;
+
+public:
+  WorkerPermissionOperationCompleted(WorkerPrivate* aWorkerPrivate,
+                                     WorkerPermissionChallenge* aChallenge)
+    : WorkerRunnable(aWorkerPrivate, WorkerThreadUnchangedBusyCount)
+    , mChallenge(aChallenge)
+  {
+    MOZ_ASSERT(NS_IsMainThread());
+  }
+
+  virtual bool
+  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override;
+};
+
+// This class used to do prompting in the main thread and main process.
+class WorkerPermissionRequest final : public PermissionRequestBase
+{
+  nsRefPtr<WorkerPermissionChallenge> mChallenge;
+
+public:
+  WorkerPermissionRequest(Element* aElement,
+                          nsIPrincipal* aPrincipal,
+                          WorkerPermissionChallenge* aChallenge)
+    : PermissionRequestBase(aElement, aPrincipal)
+    , mChallenge(aChallenge)
+  {
+    MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+    MOZ_ASSERT(NS_IsMainThread());
+    MOZ_ASSERT(aChallenge);
+  }
+
+private:
+  ~WorkerPermissionRequest()
+  {
+    MOZ_ASSERT(NS_IsMainThread());
+  }
+
+  virtual void
+  OnPromptComplete(PermissionValue aPermissionValue) override;
+};
+
+// This class is used in the main thread of all child processes.
+class WorkerPermissionRequestChildProcessActor final
+  : public PIndexedDBPermissionRequestChild
+{
+  nsRefPtr<WorkerPermissionChallenge> mChallenge;
+
+public:
+  explicit WorkerPermissionRequestChildProcessActor(
+                                          WorkerPermissionChallenge* aChallenge)
+    : mChallenge(aChallenge)
+  {
+    MOZ_ASSERT(XRE_GetProcessType() != GeckoProcessType_Default);
+    MOZ_ASSERT(NS_IsMainThread());
+    MOZ_ASSERT(aChallenge);
+  }
+
+protected:
+  ~WorkerPermissionRequestChildProcessActor()
+  {}
+
+  virtual bool
+  Recv__delete__(const uint32_t& aPermission) override;
+};
+
+class WorkerPermissionChallenge final : public nsRunnable
+                                      , public WorkerFeature
+{
+public:
+  WorkerPermissionChallenge(WorkerPrivate* aWorkerPrivate,
+                            BackgroundFactoryRequestChild* aActor,
+                            IDBFactory* aFactory,
+                            const PrincipalInfo& aPrincipalInfo)
+    : mWorkerPrivate(aWorkerPrivate)
+    , mActor(aActor)
+    , mFactory(aFactory)
+    , mPrincipalInfo(aPrincipalInfo)
+  {
+    MOZ_ASSERT(mWorkerPrivate);
+    MOZ_ASSERT(aActor);
+    MOZ_ASSERT(aFactory);
+    mWorkerPrivate->AssertIsOnWorkerThread();
+  }
+
+  NS_IMETHOD
+  Run() override
+  {
+    bool completed = RunInternal();
+    if (completed) {
+      OperationCompleted();
+    }
+
+    return NS_OK;
+  }
+
+  virtual bool
+  Notify(JSContext* aCx, workers::Status aStatus) override
+  {
+    // We don't care about the notification. We just want to keep the
+    // mWorkerPrivate alive.
+    return true;
+  }
+
+  void
+  OperationCompleted()
+  {
+    if (NS_IsMainThread()) {
+      nsRefPtr<WorkerPermissionOperationCompleted> runnable =
+        new WorkerPermissionOperationCompleted(mWorkerPrivate, this);
+
+      if (!runnable->Dispatch(nullptr)) {
+        NS_WARNING("Failed to dispatch a runnable to the worker thread.");
+        return;
+      }
+
+      return;
+    }
+
+    MOZ_ASSERT(mActor);
+    mActor->AssertIsOnOwningThread();
+
+    MaybeCollectGarbageOnIPCMessage();
+
+    nsRefPtr<IDBFactory> factory;
+    mFactory.swap(factory);
+
+    mActor->SendPermissionRetry();
+    mActor = nullptr;
+
+    mWorkerPrivate->AssertIsOnWorkerThread();
+    JSContext* cx = mWorkerPrivate->GetJSContext();
+    mWorkerPrivate->RemoveFeature(cx, this);
+  }
+
+private:
+  bool
+  RunInternal()
+  {
+    MOZ_ASSERT(NS_IsMainThread());
+
+    // Walk up to our containing page
+    WorkerPrivate* wp = mWorkerPrivate;
+    while (wp->GetParent()) {
+      wp = wp->GetParent();
+    }
+
+    nsPIDOMWindow* window = wp->GetWindow();
+    if (!window) {
+      return true;
+    }
+
+    nsresult rv;
+    nsCOMPtr<nsIPrincipal> principal =
+      mozilla::ipc::PrincipalInfoToPrincipal(mPrincipalInfo, &rv);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return true;
+    }
+
+    if (XRE_GetProcessType() == GeckoProcessType_Default) {
+      nsCOMPtr<Element> ownerElement =
+        do_QueryInterface(window->GetChromeEventHandler());
+      if (NS_WARN_IF(!ownerElement)) {
+        return true;
+      }
+
+      nsRefPtr<WorkerPermissionRequest> helper =
+        new WorkerPermissionRequest(ownerElement, principal, this);
+
+      PermissionRequestBase::PermissionValue permission;
+      if (NS_WARN_IF(NS_FAILED(helper->PromptIfNeeded(&permission)))) {
+        return true;
+      }
+
+      MOZ_ASSERT(permission == PermissionRequestBase::kPermissionAllowed ||
+                 permission == PermissionRequestBase::kPermissionDenied ||
+                 permission == PermissionRequestBase::kPermissionPrompt);
+
+      return permission != PermissionRequestBase::kPermissionPrompt;
+    }
+
+    TabChild* tabChild = TabChild::GetFrom(window);
+    MOZ_ASSERT(tabChild);
+
+    IPC::Principal ipcPrincipal(principal);
+
+    auto* actor = new WorkerPermissionRequestChildProcessActor(this);
+    tabChild->SendPIndexedDBPermissionRequestConstructor(actor, ipcPrincipal);
+    return false;
+  }
+
+private:
+  WorkerPrivate* mWorkerPrivate;
+  BackgroundFactoryRequestChild* mActor;
+  nsRefPtr<IDBFactory> mFactory;
+  PrincipalInfo mPrincipalInfo;
+};
+
+void
+WorkerPermissionRequest::OnPromptComplete(PermissionValue aPermissionValue)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  mChallenge->OperationCompleted();
+}
+
+bool
+WorkerPermissionOperationCompleted::WorkerRun(JSContext* aCx,
+                                              WorkerPrivate* aWorkerPrivate)
+{
+  aWorkerPrivate->AssertIsOnWorkerThread();
+  mChallenge->OperationCompleted();
+  return true;
+}
+
+bool
+WorkerPermissionRequestChildProcessActor::Recv__delete__(
+                                              const uint32_t& /* aPermission */)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  mChallenge->OperationCompleted();
+  return true;
 }
 
 } // anonymous namespace
@@ -1094,7 +1342,7 @@ BackgroundFactoryRequestChild::Recv__delete__(
 
   IDBOpenDBRequest* request = GetOpenDBRequest();
   MOZ_ASSERT(request);
-  
+
   request->NoteComplete();
 
   if (NS_WARN_IF(!result)) {
@@ -1113,7 +1361,23 @@ BackgroundFactoryRequestChild::RecvPermissionChallenge(
   MaybeCollectGarbageOnIPCMessage();
 
   if (!NS_IsMainThread()) {
-    MOZ_CRASH("Implement me for workers!");
+    WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();
+    MOZ_ASSERT(workerPrivate);
+    workerPrivate->AssertIsOnWorkerThread();
+
+    nsRefPtr<WorkerPermissionChallenge> challenge =
+      new WorkerPermissionChallenge(workerPrivate, this, mFactory,
+                                    aPrincipalInfo);
+
+    JSContext* cx = workerPrivate->GetJSContext();
+    MOZ_ASSERT(cx);
+
+    if (!workerPrivate->AddFeature(cx, challenge)) {
+      return false;
+    }
+
+    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToMainThread(challenge)));
+    return true;
   }
 
   nsresult rv;
@@ -1127,8 +1391,14 @@ BackgroundFactoryRequestChild::RecvPermissionChallenge(
     nsCOMPtr<nsPIDOMWindow> window = mFactory->GetParentObject();
     MOZ_ASSERT(window);
 
+    nsCOMPtr<Element> ownerElement =
+      do_QueryInterface(window->GetChromeEventHandler());
+    if (NS_WARN_IF(!ownerElement)) {
+      return false;
+    }
+
     nsRefPtr<PermissionRequestMainProcessHelper> helper =
-      new PermissionRequestMainProcessHelper(this, mFactory, window, principal);
+      new PermissionRequestMainProcessHelper(this, mFactory, ownerElement, principal);
 
     PermissionRequestBase::PermissionValue permission;
     if (NS_WARN_IF(NS_FAILED(helper->PromptIfNeeded(&permission)))) {
@@ -1826,18 +2096,14 @@ BackgroundRequestChild::BackgroundRequestChild(IDBRequest* aRequest)
   mTransaction->AssertIsOnOwningThread();
 
   MOZ_COUNT_CTOR(indexedDB::BackgroundRequestChild);
-
-  mTransaction->OnNewRequest();
 }
 
 BackgroundRequestChild::~BackgroundRequestChild()
 {
   AssertIsOnOwningThread();
-  MOZ_ASSERT_IF(!IsActorDestroyed(), mTransaction);
+  MOZ_ASSERT(!mTransaction);
 
   MOZ_COUNT_DTOR(indexedDB::BackgroundRequestChild);
-
-  MaybeFinishTransactionEarly();
 }
 
 void
@@ -1851,19 +2117,6 @@ BackgroundRequestChild::HoldFileInfosUntilComplete(
 }
 
 void
-BackgroundRequestChild::MaybeFinishTransactionEarly()
-{
-  AssertIsOnOwningThread();
-
-  if (mTransaction) {
-    mTransaction->AssertIsOnOwningThread();
-
-    mTransaction->OnRequestFinished();
-    mTransaction = nullptr;
-  }
-}
-
-bool
 BackgroundRequestChild::HandleResponse(nsresult aResponse)
 {
   AssertIsOnOwningThread();
@@ -1872,10 +2125,9 @@ BackgroundRequestChild::HandleResponse(nsresult aResponse)
   MOZ_ASSERT(mTransaction);
 
   DispatchErrorEvent(mRequest, aResponse, mTransaction);
-  return true;
 }
 
-bool
+void
 BackgroundRequestChild::HandleResponse(const Key& aResponse)
 {
   AssertIsOnOwningThread();
@@ -1883,10 +2135,9 @@ BackgroundRequestChild::HandleResponse(const Key& aResponse)
   ResultHelper helper(mRequest, mTransaction, &aResponse);
 
   DispatchSuccessEvent(&helper);
-  return true;
 }
 
-bool
+void
 BackgroundRequestChild::HandleResponse(const nsTArray<Key>& aResponse)
 {
   AssertIsOnOwningThread();
@@ -1894,10 +2145,9 @@ BackgroundRequestChild::HandleResponse(const nsTArray<Key>& aResponse)
   ResultHelper helper(mRequest, mTransaction, &aResponse);
 
   DispatchSuccessEvent(&helper);
-  return true;
 }
 
-bool
+void
 BackgroundRequestChild::HandleResponse(
                              const SerializedStructuredCloneReadInfo& aResponse)
 {
@@ -1917,10 +2167,9 @@ BackgroundRequestChild::HandleResponse(
   ResultHelper helper(mRequest, mTransaction, &cloneReadInfo);
 
   DispatchSuccessEvent(&helper);
-  return true;
 }
 
-bool
+void
 BackgroundRequestChild::HandleResponse(
                    const nsTArray<SerializedStructuredCloneReadInfo>& aResponse)
 {
@@ -1955,10 +2204,9 @@ BackgroundRequestChild::HandleResponse(
   ResultHelper helper(mRequest, mTransaction, &cloneReadInfos);
 
   DispatchSuccessEvent(&helper);
-  return true;
 }
 
-bool
+void
 BackgroundRequestChild::HandleResponse(JS::Handle<JS::Value> aResponse)
 {
   AssertIsOnOwningThread();
@@ -1966,10 +2214,9 @@ BackgroundRequestChild::HandleResponse(JS::Handle<JS::Value> aResponse)
   ResultHelper helper(mRequest, mTransaction, &aResponse);
 
   DispatchSuccessEvent(&helper);
-  return true;
 }
 
-bool
+void
 BackgroundRequestChild::HandleResponse(uint64_t aResponse)
 {
   AssertIsOnOwningThread();
@@ -1979,7 +2226,6 @@ BackgroundRequestChild::HandleResponse(uint64_t aResponse)
   ResultHelper helper(mRequest, mTransaction, &response);
 
   DispatchSuccessEvent(&helper);
-  return true;
 }
 
 void
@@ -1989,9 +2235,17 @@ BackgroundRequestChild::ActorDestroy(ActorDestroyReason aWhy)
 
   MaybeCollectGarbageOnIPCMessage();
 
-  MaybeFinishTransactionEarly();
-
   NoteActorDestroyed();
+
+  if (mTransaction) {
+    mTransaction->AssertIsOnOwningThread();
+
+    mTransaction->OnRequestFinished(/* aActorDestroyedNormally */
+                                    aWhy == Deletion);
+#ifdef DEBUG
+    mTransaction = nullptr;
+#endif
+  }
 }
 
 bool
@@ -2003,69 +2257,87 @@ BackgroundRequestChild::Recv__delete__(const RequestResponse& aResponse)
 
   MaybeCollectGarbageOnIPCMessage();
 
-  // Always fire an "error" event with ABORT_ERR if the transaction was aborted,
-  // even if the request succeeded or failed with another error.
   if (mTransaction->IsAborted()) {
-    return HandleResponse(NS_ERROR_DOM_INDEXEDDB_ABORT_ERR);
+    // Always fire an "error" event with ABORT_ERR if the transaction was
+    // aborted, even if the request succeeded or failed with another error.
+    HandleResponse(NS_ERROR_DOM_INDEXEDDB_ABORT_ERR);
+  } else {
+    switch (aResponse.type()) {
+      case RequestResponse::Tnsresult:
+        HandleResponse(aResponse.get_nsresult());
+        break;
+
+      case RequestResponse::TObjectStoreAddResponse:
+        HandleResponse(aResponse.get_ObjectStoreAddResponse().key());
+        break;
+
+      case RequestResponse::TObjectStorePutResponse:
+        HandleResponse(aResponse.get_ObjectStorePutResponse().key());
+        break;
+
+      case RequestResponse::TObjectStoreGetResponse:
+        HandleResponse(aResponse.get_ObjectStoreGetResponse().cloneInfo());
+        break;
+
+      case RequestResponse::TObjectStoreGetAllResponse:
+        HandleResponse(aResponse.get_ObjectStoreGetAllResponse().cloneInfos());
+        break;
+
+      case RequestResponse::TObjectStoreGetAllKeysResponse:
+        HandleResponse(aResponse.get_ObjectStoreGetAllKeysResponse().keys());
+        break;
+
+      case RequestResponse::TObjectStoreDeleteResponse:
+        HandleResponse(JS::UndefinedHandleValue);
+        break;
+
+      case RequestResponse::TObjectStoreClearResponse:
+        HandleResponse(JS::UndefinedHandleValue);
+        break;
+
+      case RequestResponse::TObjectStoreCountResponse:
+        HandleResponse(aResponse.get_ObjectStoreCountResponse().count());
+        break;
+
+      case RequestResponse::TIndexGetResponse:
+        HandleResponse(aResponse.get_IndexGetResponse().cloneInfo());
+        break;
+
+      case RequestResponse::TIndexGetKeyResponse:
+        HandleResponse(aResponse.get_IndexGetKeyResponse().key());
+        break;
+
+      case RequestResponse::TIndexGetAllResponse:
+        HandleResponse(aResponse.get_IndexGetAllResponse().cloneInfos());
+        break;
+
+      case RequestResponse::TIndexGetAllKeysResponse:
+        HandleResponse(aResponse.get_IndexGetAllKeysResponse().keys());
+        break;
+
+      case RequestResponse::TIndexCountResponse:
+        HandleResponse(aResponse.get_IndexCountResponse().count());
+        break;
+
+      default:
+        MOZ_CRASH("Unknown response type!");
+    }
   }
 
-  switch (aResponse.type()) {
-    case RequestResponse::Tnsresult:
-      return HandleResponse(aResponse.get_nsresult());
+  mTransaction->OnRequestFinished(/* aActorDestroyedNormally */ true);
 
-    case RequestResponse::TObjectStoreAddResponse:
-      return HandleResponse(aResponse.get_ObjectStoreAddResponse().key());
+  // Null this out so that we don't try to call OnRequestFinished() again in
+  // ActorDestroy.
+  mTransaction = nullptr;
 
-    case RequestResponse::TObjectStorePutResponse:
-      return HandleResponse(aResponse.get_ObjectStorePutResponse().key());
-
-    case RequestResponse::TObjectStoreGetResponse:
-      return HandleResponse(aResponse.get_ObjectStoreGetResponse().cloneInfo());
-
-    case RequestResponse::TObjectStoreGetAllResponse:
-      return HandleResponse(aResponse.get_ObjectStoreGetAllResponse()
-                                     .cloneInfos());
-
-    case RequestResponse::TObjectStoreGetAllKeysResponse:
-      return HandleResponse(aResponse.get_ObjectStoreGetAllKeysResponse()
-                                     .keys());
-
-    case RequestResponse::TObjectStoreDeleteResponse:
-      return HandleResponse(JS::UndefinedHandleValue);
-
-    case RequestResponse::TObjectStoreClearResponse:
-      return HandleResponse(JS::UndefinedHandleValue);
-
-    case RequestResponse::TObjectStoreCountResponse:
-      return HandleResponse(aResponse.get_ObjectStoreCountResponse().count());
-
-    case RequestResponse::TIndexGetResponse:
-      return HandleResponse(aResponse.get_IndexGetResponse().cloneInfo());
-
-    case RequestResponse::TIndexGetKeyResponse:
-      return HandleResponse(aResponse.get_IndexGetKeyResponse().key());
-
-    case RequestResponse::TIndexGetAllResponse:
-      return HandleResponse(aResponse.get_IndexGetAllResponse().cloneInfos());
-
-    case RequestResponse::TIndexGetAllKeysResponse:
-      return HandleResponse(aResponse.get_IndexGetAllKeysResponse().keys());
-
-    case RequestResponse::TIndexCountResponse:
-      return HandleResponse(aResponse.get_IndexCountResponse().count());
-
-    default:
-      MOZ_CRASH("Unknown response type!");
-  }
-
-  MOZ_CRASH("Should never get here!");
+  return true;
 }
 
 /*******************************************************************************
  * BackgroundCursorChild
  ******************************************************************************/
 
-class BackgroundCursorChild::DelayedDeleteRunnable MOZ_FINAL
+class BackgroundCursorChild::DelayedDeleteRunnable final
   : public nsICancelableRunnable
 {
   BackgroundCursorChild* mActor;
@@ -2368,7 +2640,8 @@ BackgroundCursorChild::ActorDestroy(ActorDestroyReason aWhy)
   MaybeCollectGarbageOnIPCMessage();
 
   if (mStrongRequest && !mStrongCursor && mTransaction) {
-    mTransaction->OnRequestFinished();
+    mTransaction->OnRequestFinished(/* aActorDestroyedNormally */
+                                    aWhy == Deletion);
   }
 
   if (mCursor) {
@@ -2433,7 +2706,7 @@ BackgroundCursorChild::RecvResponse(const CursorResponse& aResponse)
       MOZ_CRASH("Should never get here!");
   }
 
-  mTransaction->OnRequestFinished();
+  mTransaction->OnRequestFinished(/* aActorDestroyedNormally */ true);
 
   return true;
 }

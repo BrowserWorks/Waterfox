@@ -20,11 +20,15 @@ let CustomChromeProtocol = {
     return uri;
   },
 
-  newChannel: function CCP_newChannel(aURI) {
-    let url = "chrome:" + aURI.path;
-    let ch = NetUtil.newChannel(url);
+  newChannel2: function CCP_newChannel2(aURI, aLoadInfo) {
+    let url = Services.io.newURI("chrome:" + aURI.path, null, null);
+    let ch = Services.io.newChannelFromURIWithLoadInfo(url, aLoadInfo);
     ch.originalURI = aURI;
     return ch;
+  },
+
+  newChannel: function CCP_newChannel(aURI) {
+    return newChannel2(aURI, null);
   },
 
   allowPort: function CCP_allowPort(aPort, aScheme) {

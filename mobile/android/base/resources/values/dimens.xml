@@ -5,13 +5,18 @@
 
 <resources>
 
+    <dimen name="button_corner_radius">3dp</dimen>
+
     <dimen name="autocomplete_min_width">200dp</dimen>
     <dimen name="autocomplete_row_height">32dp</dimen>
 
     <dimen name="browser_toolbar_height">48dp</dimen>
+    <!-- We use two different values for browser_toolbar_height on tablet
+         which is inconsistent. Temporary value until bug 1150730 is fixed. -->
+    <dimen name="browser_toolbar_height_flipper">48dp</dimen>
     <dimen name="browser_toolbar_button_padding">12dp</dimen>
     <dimen name="browser_toolbar_icon_width">48dp</dimen>
-    <dimen name="browser_toolbar_site_security_width">12dp</dimen>
+
     <!-- favicon_size includes 4dp of right padding. We can't use margin (which would allow us to
          specify the actual size) because that would decrease the size of our hit target. -->
     <dimen name="browser_toolbar_favicon_size">21.33dip</dimen>
@@ -22,19 +27,14 @@
     <dimen name="new_tablet_nav_button_width_half">21dp</dimen>
     <dimen name="new_tablet_nav_button_width_plus_half">63dp</dimen>
 
+    <!-- This is the system default for the vertical padding for the divider of the TabWidget.
+         Used to mimic the divider padding on the tablet tabs panel back button. -->
+    <dimen name="new_tablet_tab_panel_divider_vertical_padding">12dp</dimen>
+
     <dimen name="new_tablet_tab_strip_height">48dp</dimen>
     <dimen name="new_tablet_tab_strip_item_width">208dp</dimen>
     <dimen name="new_tablet_tab_strip_item_margin">-28dp</dimen>
-    <dimen name="new_tablet_tab_strip_favicon_size">16dp</dimen>
     <dimen name="new_tablet_tab_strip_fading_edge_size">15dp</dimen>
-    <dimen name="new_tablet_site_security_height">60dp</dimen>
-    <dimen name="new_tablet_site_security_width">34dp</dimen>
-    <!-- We primarily use padding (instead of margins) to increase the hit area. -->
-    <dimen name="new_tablet_site_security_padding_vertical">21dp</dimen>
-    <dimen name="new_tablet_site_security_padding_horizontal">8dp</dimen>
-    <dimen name="new_tablet_site_security_right_margin">1dp</dimen>
-    <dimen name="new_tablet_browser_toolbar_height">60dp</dimen>
-    <dimen name="new_tablet_browser_toolbar_menu_right_margin">6dp</dimen>
     <dimen name="new_tablet_browser_toolbar_menu_item_width">56dp</dimen>
     <!-- Padding combines with an 18dp image to form the menu item width and height. -->
     <dimen name="new_tablet_browser_toolbar_menu_item_padding_horizontal">19dp</dimen>
@@ -42,7 +42,6 @@
     <dimen name="new_tablet_browser_toolbar_menu_item_inset_horizontal">3dp</dimen>
     <dimen name="new_tablet_browser_toolbar_menu_item_corner_radius">5dp</dimen>
     <dimen name="new_tablet_tab_strip_button_inset">5dp</dimen>
-    <dimen name="new_tablet_private_tabs_panel_empty_width">300dp</dimen>
     <dimen name="forward_default_offset">-13dip</dimen>
 
     <!-- Dimensions used by Favicons and FaviconView -->
@@ -58,11 +57,24 @@
          value.-->
     <dimen name="favicon_largest_interesting_size">32dp</dimen>
 
+    <dimen name="firstrun_content_width">300dp</dimen>
+    <dimen name="firstrun_min_height">180dp</dimen>
+
+    <dimen name="tab_queue_content_width">260dp</dimen>
+    <dimen name="tab_queue_button_width">148dp</dimen>
+    <dimen name="tab_queue_container_width">@dimen/match_parent</dimen>
+
     <!-- Site security icon -->
+    <dimen name="browser_toolbar_site_security_height">@dimen/match_parent</dimen>
+    <dimen name="browser_toolbar_site_security_width">12dp</dimen>
+    <dimen name="browser_toolbar_site_security_margin_right">4dp</dimen>
+    <dimen name="browser_toolbar_site_security_padding_vertical">0dp</dimen>
+    <dimen name="browser_toolbar_site_security_padding_horizontal">0dp</dimen>
+
     <!-- If one of these values changes, they all should. -->
-    <dimen name="site_security_bottom_margin">.5dp</dimen>
-    <dimen name="new_tablet_site_security_unknown_inset_top">1dp</dimen>
-    <dimen name="new_tablet_site_security_unknown_inset_bottom">-1dp</dimen>
+    <dimen name="browser_toolbar_site_security_margin_bottom">.5dp</dimen>
+    <dimen name="site_security_unknown_inset_top">1dp</dimen>
+    <dimen name="site_security_unknown_inset_bottom">-1dp</dimen>
 
     <!-- Regular page row on about:home -->
     <dimen name="page_row_height">64dp</dimen>
@@ -87,9 +99,19 @@
     <!-- Padding at the top of the site identity popup, when no identity data is available. -->
     <dimen name="identity_padding_top">5dp</dimen>
 
+    <dimen name="doorhanger_width">300dp</dimen>
     <dimen name="doorhanger_input_width">250dp</dimen>
     <dimen name="doorhanger_spinner_textsize">9sp</dimen>
     <dimen name="doorhanger_padding">15dp</dimen>
+    <dimen name="doorhanger_offsetX">12dp</dimen>
+    <dimen name="doorhanger_offsetY">67dp</dimen>
+    <dimen name="doorhanger_GB_offsetY">7dp</dimen>
+    <dimen name="doorhanger_drawable_padding">5dp</dimen>
+    <dimen name="doorhanger_section_padding_small">20dp</dimen>
+    <dimen name="doorhanger_section_padding_large">30dp</dimen>
+    <dimen name="doorhanger_icon_size">60dp</dimen>
+
+    <dimen name="context_menu_item_horizontal_padding">10dp</dimen>
 
     <dimen name="flow_layout_spacing">6dp</dimen>
     <dimen name="menu_item_icon">21dp</dimen>
@@ -118,8 +140,9 @@
     <dimen name="tabs_counter_size">22sp</dimen>
     <dimen name="tabs_panel_indicator_width">60dp</dimen>
     <dimen name="tabs_panel_list_padding">16dip</dimen>
+    <dimen name="private_tabs_panel_empty_width">@dimen/match_parent</dimen>
+    <dimen name="private_tabs_panel_empty_height">@dimen/match_parent</dimen>
     <dimen name="tabs_list_divider_height">2dp</dimen>
-    <dimen name="tabs_sidebar_width">200dp</dimen>
     <dimen name="tabs_strip_height">40dp</dimen>
     <dimen name="tabs_strip_button_width">100dp</dimen>
     <dimen name="tabs_strip_button_padding">18dp</dimen>
@@ -159,19 +182,11 @@
     <!-- PanelGridView dimensions -->
     <dimen name="panel_grid_view_column_width">150dp</dimen>
 
-    <!-- TabsGridView dimensions -->
-    <dimen name="tabs_grid_view_column_width">200dp</dimen>
-
     <!-- PanelItemView dimensions -->
     <dimen name="panel_article_item_height">95dp</dimen>
 
     <!-- Button toast dimenstions. -->
     <dimen name="toast_button_corner_radius">2dp</dimen>
-
-    <!-- ArrowPopup dimensions. -->
-    <dimen name="arrow_popup_arrow_width">40dip</dimen>
-    <dimen name="arrow_popup_arrow_height">12dip</dimen>
-    <dimen name="arrow_popup_arrow_offset">8dp</dimen>
 
     <!-- TabHistoryItemRow dimensions. -->
     <dimen name="tab_history_timeline_width">3dp</dimen>
@@ -188,6 +203,12 @@
     <dimen name="tab_history_bg_width">2dp</dimen>
     <dimen name="tab_history_border_padding">2dp</dimen>
 
+    <dimen name="horizontal_drag_area">256dp</dimen>
+
+    <!-- ZoomedView dimensions. -->
+    <dimen name="zoomed_view_toolbar_height">44dp</dimen>
+    <dimen name="drawable_dropshadow_size">3dp</dimen>
+
     <!-- Find-In-Page dialog dimensions. -->
     <dimen name="find_in_page_text_margin_left">5dip</dimen>
     <dimen name="find_in_page_text_margin_right">12dip</dimen>
@@ -196,5 +217,18 @@
     <dimen name="find_in_page_status_margin_right">10dip</dimen>
     <dimen name="find_in_page_matchcase_padding">10dip</dimen>
     <dimen name="find_in_page_control_margin_top">2dip</dimen>
+
+    <!-- The share icon asset has no padding while the other action bar items do
+         so we dynamically add padding to compensate. To be removed in bug 1122752. -->
+    <dimen name="ab_share_padding">12dp</dimen>
+
+    <dimen name="progress_bar_scroll_offset">1.5dp</dimen>
+
+    <!-- This is a 4:7 ratio (as per UX decision). -->
+    <item name="thumbnail_aspect_ratio" format="float" type="dimen">0.571</item>
+
+    <!-- http://blog.danlew.net/2015/01/06/handling-android-resources-with-non-standard-formats/ -->
+    <item name="match_parent" type="dimen">-1</item>
+    <item name="wrap_content" type="dimen">-2</item>
 
 </resources>

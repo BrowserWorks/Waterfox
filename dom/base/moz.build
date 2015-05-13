@@ -9,6 +9,7 @@ TEST_DIRS += ['test']
 XPIDL_SOURCES += [
     'nsIConsoleAPIStorage.idl',
     'nsIContentPolicy.idl',
+    'nsIContentPolicyBase.idl',
     'nsIDocumentEncoder.idl',
     'nsIDOMDataChannel.idl',
     'nsIDOMDOMCursor.idl',
@@ -32,6 +33,7 @@ XPIDL_SOURCES += [
     'nsISelectionDisplay.idl',
     'nsISelectionListener.idl',
     'nsISelectionPrivate.idl',
+    'nsISimpleContentPolicy.idl',
     'nsISiteSpecificUserAgent.idl',
     'nsISlowScriptDebug.idl',
     'nsIXMLHttpRequest.idl',
@@ -71,13 +73,15 @@ EXPORTS += [
     'nsDOMJSUtils.h',
     'nsDOMNavigationTiming.h',
     'nsDOMString.h',
-    'nsElementFrameLoaderOwner.h',
     'nsFocusManager.h',
+    'nsFormData.h',
     'nsFrameMessageManager.h',
     'nsGenericDOMDataNode.h',
     'nsGkAtomList.h',
     'nsGkAtoms.h',
     'nsHostObjectProtocolHandler.h',
+    'nsHostObjectURI.h',
+    'nsIAnimationObserver.h',
     'nsIAttribute.h',
     'nsIContent.h',
     'nsIContentInlines.h',
@@ -116,6 +120,7 @@ EXPORTS += [
     'nsSandboxFlags.h',
     'nsScriptLoader.h',
     'nsStructuredCloneContainer.h',
+    'nsStubAnimationObserver.h',
     'nsStubDocumentObserver.h',
     'nsStubMutationObserver.h',
     'nsStyledElement.h',
@@ -138,6 +143,7 @@ if CONFIG['MOZ_WEBRTC']:
 EXPORTS.mozilla += [
     'CORSMode.h',
     'FeedWriterEnabled.h',
+    'TextInputProcessor.h',
 ]
 
 EXPORTS.mozilla.dom += [
@@ -180,8 +186,12 @@ EXPORTS.mozilla.dom += [
     'NodeInfoInlines.h',
     'NodeIterator.h',
     'PerformanceEntry.h',
+    'PerformanceMark.h',
+    'PerformanceMeasure.h',
     'PerformanceResourceTiming.h',
+    'ProcessGlobal.h',
     'ResponsiveImageSelector.h',
+    'SameProcessMessageQueue.h',
     'ScreenOrientation.h',
     'ScriptSettings.h',
     'ShadowRoot.h',
@@ -201,7 +211,6 @@ UNIFIED_SOURCES += [
     'BarProps.cpp',
     'ChildIterator.cpp',
     'Comment.cpp',
-    'CompositionStringSynthesizer.cpp',
     'Console.cpp',
     'Crypto.cpp',
     'DirectionalityUtils.cpp',
@@ -228,7 +237,7 @@ UNIFIED_SOURCES += [
     'Link.cpp',
     'MessageChannel.cpp',
     'MessagePortList.cpp',
-    'MultipartFileImpl.cpp',
+    'MultipartBlobImpl.cpp',
     'Navigator.cpp',
     'NodeInfo.cpp',
     'NodeIterator.cpp',
@@ -258,11 +267,9 @@ UNIFIED_SOURCES += [
     'nsDOMSettableTokenList.cpp',
     'nsDOMTokenList.cpp',
     'nsDOMWindowList.cpp',
-    'nsElementFrameLoaderOwner.cpp',
     'nsFocusManager.cpp',
     'nsFormData.cpp',
     'nsFrameLoader.cpp',
-    'nsFrameMessageManager.cpp',
     'nsGenConImageContent.cpp',
     'nsGenericDOMDataNode.cpp',
     'nsGkAtoms.cpp',
@@ -298,6 +305,7 @@ UNIFIED_SOURCES += [
     'nsScriptLoader.cpp',
     'nsScriptNameSpaceManager.cpp',
     'nsStructuredCloneContainer.cpp',
+    'nsStubAnimationObserver.cpp',
     'nsStubDocumentObserver.cpp',
     'nsStubMutationObserver.cpp',
     'nsStyledElement.cpp',
@@ -316,13 +324,18 @@ UNIFIED_SOURCES += [
     'nsXMLHttpRequest.cpp',
     'nsXMLNameSpaceMap.cpp',
     'PerformanceEntry.cpp',
+    'PerformanceMark.cpp',
+    'PerformanceMeasure.cpp',
     'PerformanceResourceTiming.cpp',
+    'ProcessGlobal.cpp',
     'ResponsiveImageSelector.cpp',
+    'SameProcessMessageQueue.cpp',
     'ScriptSettings.cpp',
     'ShadowRoot.cpp',
     'StyleSheetList.cpp',
     'SubtleCrypto.cpp',
     'Text.cpp',
+    'TextInputProcessor.cpp',
     'ThirdPartyUtil.cpp',
     'TreeWalker.cpp',
     'URL.cpp',
@@ -344,6 +357,8 @@ SOURCES += [
     'nsContentUtils.cpp',
     # this file doesn't like windows.h
     'nsDOMWindowUtils.cpp',
+    # Conflicts with windows.h's definition of SendMessage.
+    'nsFrameMessageManager.cpp',
     # This file has a #error "Never include windows.h in this file!"
     'nsGlobalWindow.cpp',
     # Conflicts with windows.h's definition of LoadImage.
@@ -373,14 +388,19 @@ EXTRA_COMPONENTS += [
     'SlowScriptDebug.manifest',
 ]
 
+# Firefox for Android provides an alternate version of this component
+if CONFIG['MOZ_BUILD_APP'] != 'mobile/android':
+    EXTRA_COMPONENTS += [
+        'SiteSpecificUserAgent.js',
+        'SiteSpecificUserAgent.manifest',
+    ]
+
 EXTRA_JS_MODULES += [
     'DOMRequestHelper.jsm',
     'IndexedDBHelper.jsm',
 ]
 
 FAIL_ON_WARNINGS = True
-
-MSVC_ENABLE_PGO = True
 
 LOCAL_INCLUDES += [
     '../battery',
@@ -402,8 +422,8 @@ LOCAL_INCLUDES += [
     '/dom/xml',
     '/dom/xslt/xpath',
     '/dom/xul',
+    '/gfx/2d',
     '/image/src',
-    '/js/ipc',
     '/js/xpconnect/src',
     '/js/xpconnect/wrappers',
     '/layout/base',
@@ -411,10 +431,19 @@ LOCAL_INCLUDES += [
     '/layout/style',
     '/layout/svg',
     '/layout/xul',
-    '/netwerk/base/src',
+    '/netwerk/base',
     '/widget',
     '/xpcom/ds',
 ]
+
+if CONFIG['MOZ_B2G_BT_API_V2']:
+    LOCAL_INCLUDES += [
+        '../bluetooth/bluetooth2',
+    ]
+else:
+    LOCAL_INCLUDES += [
+        '../bluetooth/bluetooth1',
+    ]
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
     LOCAL_INCLUDES += [

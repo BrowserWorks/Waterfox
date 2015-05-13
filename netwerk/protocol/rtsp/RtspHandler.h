@@ -15,15 +15,17 @@ namespace mozilla {
 namespace net {
 
 
-class RtspHandler MOZ_FINAL : public nsIProtocolHandler
+class RtspHandler final : public nsIProtocolHandler
 {
  public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSIPROTOCOLHANDLER
 
   RtspHandler() { }
-  ~RtspHandler() { }
   const static int32_t kDefaultRtspPort = 554;
+
+protected:
+  ~RtspHandler() { }
 };
 
 } // namespace net

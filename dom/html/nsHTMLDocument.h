@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 sw=2 et tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -22,7 +22,6 @@
 #include "mozilla/dom/HTMLSharedElement.h"
 
 class nsIEditor;
-class nsIParser;
 class nsIURI;
 class nsIDocShell;
 class nsICachingChannel;
@@ -44,19 +43,19 @@ public:
   using nsDocument::GetPlugins;
 
   nsHTMLDocument();
-  virtual nsresult Init() MOZ_OVERRIDE;
+  virtual nsresult Init() override;
 
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(nsHTMLDocument, nsDocument)
 
   // nsIDocument
-  virtual void Reset(nsIChannel* aChannel, nsILoadGroup* aLoadGroup) MOZ_OVERRIDE;
+  virtual void Reset(nsIChannel* aChannel, nsILoadGroup* aLoadGroup) override;
   virtual void ResetToURI(nsIURI* aURI, nsILoadGroup* aLoadGroup,
-                          nsIPrincipal* aPrincipal) MOZ_OVERRIDE;
+                          nsIPrincipal* aPrincipal) override;
 
   virtual already_AddRefed<nsIPresShell> CreateShell(nsPresContext* aContext,
                                                      nsViewManager* aViewManager,
-                                                     nsStyleSet* aStyleSet) MOZ_OVERRIDE;
+                                                     nsStyleSet* aStyleSet) override;
 
   virtual nsresult StartDocumentLoad(const char* aCommand,
                                      nsIChannel* aChannel,
@@ -64,23 +63,23 @@ public:
                                      nsISupports* aContainer,
                                      nsIStreamListener **aDocListener,
                                      bool aReset = true,
-                                     nsIContentSink* aSink = nullptr) MOZ_OVERRIDE;
-  virtual void StopDocumentLoad() MOZ_OVERRIDE;
+                                     nsIContentSink* aSink = nullptr) override;
+  virtual void StopDocumentLoad() override;
 
-  virtual void BeginLoad() MOZ_OVERRIDE;
-  virtual void EndLoad() MOZ_OVERRIDE;
+  virtual void BeginLoad() override;
+  virtual void EndLoad() override;
 
   // nsIHTMLDocument
-  virtual void SetCompatibilityMode(nsCompatibility aMode) MOZ_OVERRIDE;
+  virtual void SetCompatibilityMode(nsCompatibility aMode) override;
 
-  virtual bool IsWriting() MOZ_OVERRIDE
+  virtual bool IsWriting() override
   {
     return mWriteLevel != uint32_t(0);
   }
 
-  virtual nsContentList* GetForms() MOZ_OVERRIDE;
+  virtual nsContentList* GetForms() override;
 
-  virtual nsContentList* GetFormControls() MOZ_OVERRIDE;
+  virtual nsContentList* GetFormControls() override;
 
   // nsIDOMDocument interface
   using nsDocument::CreateElement;
@@ -105,28 +104,28 @@ public:
 
   nsISupports* ResolveName(const nsAString& aName, nsWrapperCache **aCache);
 
-  virtual void AddedForm() MOZ_OVERRIDE;
-  virtual void RemovedForm() MOZ_OVERRIDE;
-  virtual int32_t GetNumFormsSynchronous() MOZ_OVERRIDE;
-  virtual void TearingDownEditor(nsIEditor *aEditor) MOZ_OVERRIDE;
-  virtual void SetIsXHTML(bool aXHTML) MOZ_OVERRIDE
+  virtual void AddedForm() override;
+  virtual void RemovedForm() override;
+  virtual int32_t GetNumFormsSynchronous() override;
+  virtual void TearingDownEditor(nsIEditor *aEditor) override;
+  virtual void SetIsXHTML(bool aXHTML) override
   {
     mType = (aXHTML ? eXHTML : eHTML);
   }
-  virtual void SetDocWriteDisabled(bool aDisabled) MOZ_OVERRIDE
+  virtual void SetDocWriteDisabled(bool aDisabled) override
   {
     mDisableDocWrite = aDisabled;
   }
 
-  nsresult ChangeContentEditableCount(nsIContent *aElement, int32_t aChange) MOZ_OVERRIDE;
+  nsresult ChangeContentEditableCount(nsIContent *aElement, int32_t aChange) override;
   void DeferredContentEditableCountChange(nsIContent *aElement);
 
-  virtual EditingState GetEditingState() MOZ_OVERRIDE
+  virtual EditingState GetEditingState() override
   {
     return mEditingState;
   }
 
-  virtual void DisableCookieAccess() MOZ_OVERRIDE
+  virtual void DisableCookieAccess() override
   {
     mDisableCookieAccess = true;
   }
@@ -147,27 +146,27 @@ public:
   };
   friend class nsAutoEditingState;
 
-  void EndUpdate(nsUpdateType aUpdateType) MOZ_OVERRIDE;
+  void EndUpdate(nsUpdateType aUpdateType) override;
 
-  virtual nsresult SetEditingState(EditingState aState) MOZ_OVERRIDE;
+  virtual nsresult SetEditingState(EditingState aState) override;
 
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
 
-  virtual void RemovedFromDocShell() MOZ_OVERRIDE;
+  virtual void RemovedFromDocShell() override;
 
-  virtual mozilla::dom::Element *GetElementById(const nsAString& aElementId) MOZ_OVERRIDE
+  virtual mozilla::dom::Element *GetElementById(const nsAString& aElementId) override
   {
     return nsDocument::GetElementById(aElementId);
   }
 
-  virtual void DocAddSizeOfExcludingThis(nsWindowSizes* aWindowSizes) const MOZ_OVERRIDE;
+  virtual void DocAddSizeOfExcludingThis(nsWindowSizes* aWindowSizes) const override;
   // DocAddSizeOfIncludingThis is inherited from nsIDocument.
 
-  virtual bool WillIgnoreCharsetOverride() MOZ_OVERRIDE;
+  virtual bool WillIgnoreCharsetOverride() override;
 
   // WebIDL API
-  virtual JSObject* WrapNode(JSContext* aCx)
-    MOZ_OVERRIDE;
+  virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
+    override;
   void SetDomain(const nsAString& aDomain, mozilla::ErrorResult& rv);
   void GetCookie(nsAString& aCookie, mozilla::ErrorResult& rv);
   void SetCookie(const nsAString& aCookie, mozilla::ErrorResult& rv);
@@ -242,7 +241,7 @@ public:
     return nsIDocument::GetLocation();
   }
 
-  virtual nsHTMLDocument* AsHTMLDocument() MOZ_OVERRIDE { return this; }
+  virtual nsHTMLDocument* AsHTMLDocument() override { return this; }
 
 protected:
   ~nsHTMLDocument();
@@ -274,6 +273,9 @@ protected:
 
   nsresult CreateAndAddWyciwygChannel(void);
   nsresult RemoveWyciwygChannel(void);
+
+  // This should *ONLY* be used in GetCookie/SetCookie.
+  already_AddRefed<nsIChannel> CreateDummyChannelForCookies(nsIURI* aCodebaseURI);
 
   /**
    * Like IsEditingOn(), but will flush as needed first.
@@ -314,7 +316,7 @@ protected:
   static void TryFallback(int32_t& aCharsetSource, nsACString& aCharset);
 
   // Override so we can munge the charset on our wyciwyg channel as needed.
-  virtual void SetDocumentCharacterSet(const nsACString& aCharSetID) MOZ_OVERRIDE;
+  virtual void SetDocumentCharacterSet(const nsACString& aCharSetID) override;
 
   // Tracks if we are currently processing any document.write calls (either
   // implicit or explicit). Note that if a write call writes out something which

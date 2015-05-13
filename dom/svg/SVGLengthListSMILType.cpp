@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -21,7 +22,7 @@ namespace mozilla {
 void
 SVGLengthListSMILType::Init(nsSMILValue &aValue) const
 {
-  NS_ABORT_IF_FALSE(aValue.IsNull(), "Unexpected value type");
+  MOZ_ASSERT(aValue.IsNull(), "Unexpected value type");
 
   SVGLengthListAndInfo* lengthList = new SVGLengthListAndInfo();
 
@@ -110,8 +111,8 @@ SVGLengthListSMILType::Add(nsSMILValue& aDest,
                  valueToAdd.CanZeroPadList()); // propagate target element info!
     return NS_OK;
   }
-  NS_ABORT_IF_FALSE(dest.Element() == valueToAdd.Element(),
-                    "adding values from different elements...?");
+  MOZ_ASSERT(dest.Element() == valueToAdd.Element(),
+             "adding values from different elements...?");
 
   // Zero-pad our |dest| list, if necessary.
   if (dest.Length() < valueToAdd.Length()) {
@@ -120,8 +121,8 @@ SVGLengthListSMILType::Add(nsSMILValue& aDest,
       return NS_ERROR_FAILURE;
     }
 
-    NS_ABORT_IF_FALSE(valueToAdd.CanZeroPadList(),
-                      "values disagree about attribute's zero-paddibility");
+    MOZ_ASSERT(valueToAdd.CanZeroPadList(),
+               "values disagree about attribute's zero-paddibility");
 
     uint32_t i = dest.Length();
     if (!dest.SetLength(valueToAdd.Length())) {

@@ -56,12 +56,13 @@ function checkPage() {
   // the actual example.com.
   Services.prefs.setIntPref("network.proxy.type", proxyPrefValue);
 
+  Services.obs.addObserver(function observer(aSubject, aTopic) {
+    ok(!Services.io.offline, "After clicking the Try Again button, we're back " +
+                             "online.");
+    Services.obs.removeObserver(observer, "network:offline-status-changed", false);
+    finish();
+  }, "network:offline-status-changed", false);
   gBrowser.contentDocument.getElementById("errorTryAgain").click();
-
-  ok(!Services.io.offline, "After clicking the Try Again button, we're back " +
-                           "online.");
-
-  finish();
 }
 
 registerCleanupFunction(function() {

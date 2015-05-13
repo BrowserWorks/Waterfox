@@ -18,8 +18,8 @@ class nsPrintEngine;
 //---------------------------------------------------
 //-- Page Timer Class
 //---------------------------------------------------
-class nsPagePrintTimer MOZ_FINAL : public nsRunnable,
-                                   public nsITimerCallback
+class nsPagePrintTimer final : public nsRunnable,
+                               public nsITimerCallback
 {
 public:
 
@@ -43,7 +43,7 @@ public:
 
   nsresult Start(nsPrintObject* aPO);
 
-  NS_IMETHOD Run() MOZ_OVERRIDE;
+  NS_IMETHOD Run() override;
 
   void Stop();
 

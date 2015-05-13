@@ -4,16 +4,19 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "mozilla/dom/HTMLMediaElement.h"
 #include "mozilla/dom/MediaKeys.h"
+#include "GMPService.h"
+#include "mozilla/EventDispatcher.h"
+#include "mozilla/dom/HTMLMediaElement.h"
 #include "mozilla/dom/MediaKeysBinding.h"
 #include "mozilla/dom/MediaKeyMessageEvent.h"
 #include "mozilla/dom/MediaKeyError.h"
 #include "mozilla/dom/MediaKeySession.h"
 #include "mozilla/dom/DOMException.h"
+#include "mozilla/dom/PluginCrashedEvent.h"
 #include "mozilla/dom/UnionTypes.h"
 #include "mozilla/CDMProxy.h"
-#include "mozilla/EMELog.h"
+#include "mozilla/EMEUtils.h"
 #include "nsContentUtils.h"
 #include "nsIScriptObjectPrincipal.h"
 #include "mozilla/Preferences.h"
@@ -26,7 +29,8 @@
 #endif
 #include "nsContentCID.h"
 #include "nsServiceManagerUtils.h"
-#include "mozIGeckoMediaPluginService.h"
+#include "mozilla/dom/MediaKeySystemAccess.h"
+#include "nsPrintfCString.h"
 
 namespace mozilla {
 
@@ -50,6 +54,8 @@ MediaKeys::MediaKeys(nsPIDOMWindow* aParent, const nsAString& aKeySystem)
   , mKeySystem(aKeySystem)
   , mCreatePromiseId(0)
 {
+  EME_LOG("MediaKeys[%p] constructed keySystem=%s",
+          this, NS_ConvertUTF16toUTF8(mKeySystem).get());
 }
 
 static PLDHashOperator
@@ -58,12 +64,14 @@ RejectPromises(const uint32_t& aKey,
                void* aClosure)
 {
   aPromise->MaybeReject(NS_ERROR_DOM_INVALID_STATE_ERR);
+  ((MediaKeys*)aClosure)->Release();
   return PL_DHASH_NEXT;
 }
 
 MediaKeys::~MediaKeys()
 {
   Shutdown();
+  EME_LOG("MediaKeys[%p] destroyed", this);
 }
 
 static PLDHashOperator
@@ -88,6 +96,8 @@ CloseSessions(const nsAString& aKey,
 void
 MediaKeys::Terminated()
 {
+  EME_LOG("MediaKeys[%p] CDM crashed unexpectedly", this);
+
   KeySessionHashMap keySessions;
   // Remove entries during iteration will screw it. Make a copy first.
   mKeySessions.Enumerate(&CopySessions, &keySessions);
@@ -111,7 +121,9 @@ MediaKeys::Shutdown()
     mProxy = nullptr;
   }
 
-  mPromises.Enumerate(&RejectPromises, nullptr);
+  nsRefPtr<MediaKeys> kungFuDeathGrip = this;
+
+  mPromises.Enumerate(&RejectPromises, this);
   mPromises.Clear();
 }
 
@@ -122,9 +134,9 @@ MediaKeys::GetParentObject() const
 }
 
 JSObject*
-MediaKeys::WrapObject(JSContext* aCx)
+MediaKeys::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return MediaKeysBinding::Wrap(aCx, this);
+  return MediaKeysBinding::Wrap(aCx, this, aGivenProto);
 }
 
 void
@@ -139,6 +151,12 @@ MediaKeys::SetServerCertificate(const ArrayBufferViewOrArrayBuffer& aCert, Error
   nsRefPtr<Promise> promise(MakePromise(aRv));
   if (aRv.Failed()) {
     return nullptr;
+  }
+
+  if (!mProxy) {
+    NS_WARNING("Tried to use a MediaKeys without a CDM");
+    promise->MaybeReject(NS_ERROR_DOM_INVALID_STATE_ERR);
+    return promise.forget();
   }
 
   nsTArray<uint8_t> data;
@@ -169,6 +187,13 @@ MediaKeys::StorePromise(Promise* aPromise)
   static uint32_t sEMEPromiseCount = 1;
   MOZ_ASSERT(aPromise);
   uint32_t id = sEMEPromiseCount++;
+
+  EME_LOG("MediaKeys[%p]::StorePromise() id=%d", this, id);
+
+  // Keep MediaKeys alive for the lifetime of its promises. Any still-pending
+  // promises are rejected in Shutdown().
+  AddRef();
+
   mPromises.Put(id, aPromise);
   return id;
 }
@@ -176,18 +201,23 @@ MediaKeys::StorePromise(Promise* aPromise)
 already_AddRefed<Promise>
 MediaKeys::RetrievePromise(PromiseId aId)
 {
-  MOZ_ASSERT(mPromises.Contains(aId));
+  if (!mPromises.Contains(aId)) {
+    NS_WARNING(nsPrintfCString("Tried to retrieve a non-existent promise id=%d", aId).get());
+    return nullptr;
+  }
   nsRefPtr<Promise> promise;
   mPromises.Remove(aId, getter_AddRefs(promise));
+  Release();
   return promise.forget();
 }
 
 void
 MediaKeys::RejectPromise(PromiseId aId, nsresult aExceptionCode)
 {
+  EME_LOG("MediaKeys[%p]::RejectPromise(%d, 0x%x)", this, aId, aExceptionCode);
+
   nsRefPtr<Promise> promise(RetrievePromise(aId));
   if (!promise) {
-    NS_WARNING("MediaKeys tried to reject a non-existent promise");
     return;
   }
   if (mPendingSessions.Contains(aId)) {
@@ -232,9 +262,10 @@ MediaKeys::OnSessionIdReady(MediaKeySession* aSession)
 void
 MediaKeys::ResolvePromise(PromiseId aId)
 {
+  EME_LOG("MediaKeys[%p]::ResolvePromise(%d)", this, aId);
+
   nsRefPtr<Promise> promise(RetrievePromise(aId));
   if (!promise) {
-    NS_WARNING("MediaKeys tried to resolve a non-existent promise");
     return;
   }
   if (mPendingSessions.Contains(aId)) {
@@ -318,7 +349,8 @@ MediaKeys::Init(ErrorResult& aRv)
   nsIDocument* doc = window->GetExtantDoc();
   const bool inPrivateBrowsing = nsContentUtils::IsInPrivateBrowsing(doc);
 
-  EME_LOG("MediaKeys::Create() (%s, %s), %s",
+  EME_LOG("MediaKeys[%p]::Create() (%s, %s), %s",
+          this,
           NS_ConvertUTF16toUTF8(origin).get(),
           NS_ConvertUTF16toUTF8(topLevelOrigin).get(),
           (inPrivateBrowsing ? "PrivateBrowsing" : "NonPrivateBrowsing"));
@@ -342,31 +374,145 @@ MediaKeys::Init(ErrorResult& aRv)
   return promise.forget();
 }
 
+class CrashHandler : public gmp::GeckoMediaPluginService::PluginCrashCallback
+{
+public:
+  CrashHandler(const uint32_t aPluginId,
+               nsPIDOMWindow* aParentWindow,
+               nsIDocument* aDocument)
+    : gmp::GeckoMediaPluginService::PluginCrashCallback(aPluginId)
+    , mPluginId(aPluginId)
+    , mParentWindowWeakPtr(do_GetWeakReference(aParentWindow))
+    , mDocumentWeakPtr(do_GetWeakReference(aDocument))
+  {
+  }
+
+  virtual void Run(const nsACString& aPluginName) override
+  {
+    PluginCrashedEventInit init;
+    init.mPluginID = mPluginId;
+    init.mBubbles = true;
+    init.mCancelable = true;
+    init.mGmpPlugin = true;
+    CopyUTF8toUTF16(aPluginName, init.mPluginName);
+    init.mSubmittedCrashReport = false;
+
+    // The following PluginCrashedEvent fields stay empty:
+    // init.mBrowserDumpID
+    // init.mPluginFilename
+    // TODO: Can/should we fill them?
+
+    nsCOMPtr<nsPIDOMWindow> parentWindow;
+    nsCOMPtr<nsIDocument> document;
+    if (!GetParentWindowAndDocumentIfValid(parentWindow, document)) {
+      return;
+    }
+
+    nsRefPtr<PluginCrashedEvent> event =
+      PluginCrashedEvent::Constructor(document, NS_LITERAL_STRING("PluginCrashed"), init);
+    event->SetTrusted(true);
+    event->GetInternalNSEvent()->mFlags.mOnlyChromeDispatch = true;
+
+    EventDispatcher::DispatchDOMEvent(parentWindow, nullptr, event, nullptr, nullptr);
+  }
+
+  virtual bool IsStillValid() override
+  {
+    nsCOMPtr<nsPIDOMWindow> parentWindow;
+    nsCOMPtr<nsIDocument> document;
+    return GetParentWindowAndDocumentIfValid(parentWindow, document);
+  }
+
+private:
+  virtual ~CrashHandler()
+  { }
+
+  bool
+  GetParentWindowAndDocumentIfValid(nsCOMPtr<nsPIDOMWindow>& parentWindow,
+                                    nsCOMPtr<nsIDocument>& document)
+  {
+    parentWindow = do_QueryReferent(mParentWindowWeakPtr);
+    if (!parentWindow) {
+      return false;
+    }
+    document = do_QueryReferent(mDocumentWeakPtr);
+    if (!document) {
+      return false;
+    }
+    nsCOMPtr<nsIDocument> parentWindowDocument = parentWindow->GetExtantDoc();
+    if (!parentWindowDocument || document.get() != parentWindowDocument.get()) {
+      return false;
+    }
+    return true;
+  }
+
+  uint32_t mPluginId;
+  nsWeakPtr mParentWindowWeakPtr;
+  nsWeakPtr mDocumentWeakPtr;
+};
+
 void
-MediaKeys::OnCDMCreated(PromiseId aId, const nsACString& aNodeId)
+MediaKeys::OnCDMCreated(PromiseId aId, const nsACString& aNodeId, const uint32_t aPluginId)
 {
   nsRefPtr<Promise> promise(RetrievePromise(aId));
   if (!promise) {
-    NS_WARNING("MediaKeys tried to resolve a non-existent promise");
     return;
   }
   mNodeId = aNodeId;
   nsRefPtr<MediaKeys> keys(this);
+  EME_LOG("MediaKeys[%p]::OnCDMCreated() resolve promise id=%d", this, aId);
   promise->MaybeResolve(keys);
   if (mCreatePromiseId == aId) {
     Release();
   }
+
+  MediaKeySystemAccess::NotifyObservers(mParent,
+                                        mKeySystem,
+                                        MediaKeySystemStatus::Cdm_created);
+
+  if (aPluginId) {
+    // Prepare plugin crash reporter.
+    nsRefPtr<gmp::GeckoMediaPluginService> service =
+      gmp::GeckoMediaPluginService::GetGeckoMediaPluginService();
+    if (NS_WARN_IF(!service)) {
+      return;
+    }
+    if (NS_WARN_IF(!mParent)) {
+      return;
+    }
+    nsCOMPtr<nsIDocument> doc = mParent->GetExtantDoc();
+    if (NS_WARN_IF(!doc)) {
+      return;
+    }
+    service->AddPluginCrashCallback(new CrashHandler(aPluginId, mParent, doc));
+    EME_LOG("MediaKeys[%p]::OnCDMCreated() registered crash handler for pluginId '%i'",
+            this, aPluginId);
+  }
 }
 
 already_AddRefed<MediaKeySession>
-MediaKeys::CreateSession(SessionType aSessionType,
+MediaKeys::CreateSession(JSContext* aCx,
+                         SessionType aSessionType,
                          ErrorResult& aRv)
 {
-  nsRefPtr<MediaKeySession> session = new MediaKeySession(GetParentObject(),
+  if (!mProxy) {
+    NS_WARNING("Tried to use a MediaKeys which lost its CDM");
+    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
+    return nullptr;
+  }
+
+  EME_LOG("MediaKeys[%p] Creating session", this);
+
+  nsRefPtr<MediaKeySession> session = new MediaKeySession(aCx,
+                                                          GetParentObject(),
                                                           this,
                                                           mKeySystem,
                                                           aSessionType,
                                                           aRv);
+
+  if (aRv.Failed()) {
+    return nullptr;
+  }
 
   // Add session to the set of sessions awaiting their sessionId being ready.
   mPendingSessions.Put(session->Token(), session);
@@ -379,9 +525,10 @@ MediaKeys::OnSessionLoaded(PromiseId aId, bool aSuccess)
 {
   nsRefPtr<Promise> promise(RetrievePromise(aId));
   if (!promise) {
-    NS_WARNING("MediaKeys tried to resolve a non-existent promise");
     return;
   }
+  EME_LOG("MediaKeys[%p]::OnSessionLoaded() resolve promise id=%d", this, aId);
+
   promise->MaybeResolve(aSuccess);
 }
 
@@ -433,33 +580,6 @@ MediaKeys::Bind(HTMLMediaElement* aElement)
   }
 
   mElement = aElement;
-  nsresult rv = CheckPrincipals();
-  if (NS_FAILED(rv)) {
-    mElement = nullptr;
-    return rv;
-  }
-
-  return NS_OK;
-}
-
-nsresult
-MediaKeys::CheckPrincipals()
-{
-  MOZ_ASSERT(NS_IsMainThread());
-  if (!IsBoundToMediaElement()) {
-    return NS_ERROR_FAILURE;
-  }
-
-  nsRefPtr<nsIPrincipal> elementPrincipal(mElement->GetCurrentPrincipal());
-  nsRefPtr<nsIPrincipal> elementTopLevelPrincipal(mElement->GetTopLevelPrincipal());
-  if (!elementPrincipal ||
-      !mPrincipal ||
-      !elementPrincipal->Equals(mPrincipal) ||
-      !elementTopLevelPrincipal ||
-      !mTopLevelPrincipal ||
-      !elementTopLevelPrincipal->Equals(mTopLevelPrincipal)) {
-    return NS_ERROR_FAILURE;
-  }
 
   return NS_OK;
 }

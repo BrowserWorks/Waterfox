@@ -1,7 +1,8 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #ifndef nsIScrollObserver_h___
 #define nsIScrollObserver_h___
@@ -10,8 +11,8 @@
 #include "Units.h"
 
 #define NS_ISCROLLOBSERVER_IID \
-  { 0x00bc10e3, 0xaa59, 0x4aa3, \
-    { 0x88, 0xe9, 0x43, 0x0a, 0x01, 0xa3, 0x88, 0x04 } }
+  { 0xaa5026eb, 0x2f88, 0x4026, \
+    { 0xa4, 0x6b, 0xf4, 0x59, 0x6b, 0x4e, 0xdf, 0x00 } }
 
 class nsIScrollObserver : public nsISupports
 {
@@ -27,13 +28,13 @@ public:
    * Called when an async panning/zooming transform has started being applied
    * and passed the scroll offset
    */
-  virtual void AsyncPanZoomStarted(const mozilla::CSSIntPoint scrollPos){};
+  virtual void AsyncPanZoomStarted() {};
 
   /**
    * Called when an async panning/zooming transform is no longer applied
    * and passed the scroll offset
    */
-  virtual void AsyncPanZoomStopped(const mozilla::CSSIntPoint scrollPos){};
+  virtual void AsyncPanZoomStopped() {};
 };
 
 NS_DEFINE_STATIC_IID_ACCESSOR(nsIScrollObserver, NS_ISCROLLOBSERVER_IID)

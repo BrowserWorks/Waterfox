@@ -30,8 +30,6 @@ if CONFIG['_MSC_VER']:
 
 FAIL_ON_WARNINGS = True
 
-MSVC_ENABLE_PGO = True
-
 include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
@@ -39,6 +37,5 @@ FINAL_LIBRARY = 'xul'
 LOCAL_INCLUDES += [
     '../../../dom/base',
     '../src',
-    '/js/ipc',
 ]
 

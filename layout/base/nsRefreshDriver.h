@@ -28,10 +28,12 @@ class nsPresContext;
 class nsIPresShell;
 class nsIDocument;
 class imgIRequest;
-class nsIRunnable;
 
 namespace mozilla {
 class RefreshDriverTimer;
+namespace layout {
+class VsyncChild;
+}
 }
 
 /**
@@ -63,8 +65,9 @@ public:
   virtual void DidRefresh() = 0;
 };
 
-class nsRefreshDriver MOZ_FINAL : public mozilla::layers::TransactionIdAllocator,
-                                  public nsARefreshObserver {
+class nsRefreshDriver final : public mozilla::layers::TransactionIdAllocator,
+                              public nsARefreshObserver
+{
 public:
   explicit nsRefreshDriver(nsPresContext *aPresContext);
   ~nsRefreshDriver();
@@ -256,6 +259,14 @@ public:
    */
   nsPresContext* PresContext() const { return mPresContext; }
 
+  /**
+   * PBackgroundChild actor is created asynchronously in content process.
+   * We can't create vsync-based timers during PBackground startup. This
+   * function will be called when PBackgroundChild actor is created. Then we can
+   * do the pending vsync-based timer creation.
+   */
+  static void PVsyncActorCreated(mozilla::layout::VsyncChild* aVsyncChild);
+
 #ifdef DEBUG
   /**
    * Check whether the given observer is an observer for the given flush type
@@ -272,17 +283,17 @@ public:
   bool IsInRefresh() { return mInRefresh; }
 
   // mozilla::layers::TransactionIdAllocator
-  virtual uint64_t GetTransactionId() MOZ_OVERRIDE;
-  void NotifyTransactionCompleted(uint64_t aTransactionId) MOZ_OVERRIDE;
-  void RevokeTransactionId(uint64_t aTransactionId) MOZ_OVERRIDE;
-  mozilla::TimeStamp GetTransactionStart() MOZ_OVERRIDE;
+  virtual uint64_t GetTransactionId() override;
+  void NotifyTransactionCompleted(uint64_t aTransactionId) override;
+  void RevokeTransactionId(uint64_t aTransactionId) override;
+  mozilla::TimeStamp GetTransactionStart() override;
 
   bool IsWaitingForPaint(mozilla::TimeStamp aTime);
 
   // nsARefreshObserver
-  NS_IMETHOD_(MozExternalRefCountType) AddRef(void) MOZ_OVERRIDE { return TransactionIdAllocator::AddRef(); }
-  NS_IMETHOD_(MozExternalRefCountType) Release(void) MOZ_OVERRIDE { return TransactionIdAllocator::Release(); }
-  virtual void WillRefresh(mozilla::TimeStamp aTime) MOZ_OVERRIDE;
+  NS_IMETHOD_(MozExternalRefCountType) AddRef(void) override { return TransactionIdAllocator::AddRef(); }
+  NS_IMETHOD_(MozExternalRefCountType) Release(void) override { return TransactionIdAllocator::Release(); }
+  virtual void WillRefresh(mozilla::TimeStamp aTime) override;
 private:
   typedef nsTObserverArray<nsARefreshObserver*> ObserverArray;
   typedef nsTHashtable<nsISupportsHashKey> RequestTable;
@@ -295,6 +306,8 @@ private:
     RequestTable mEntries;
   };
   typedef nsClassHashtable<nsUint32HashKey, ImageStartData> ImageStartTable;
+
+  void RunFrameRequestCallbacks(int64_t aNowEpoch, mozilla::TimeStamp aNowTime);
 
   void Tick(int64_t aNowEpoch, mozilla::TimeStamp aNowTime);
 
@@ -324,7 +337,7 @@ private:
 
   double GetRefreshTimerInterval() const;
   double GetRegularTimerInterval(bool *outIsDefault = nullptr) const;
-  double GetThrottledTimerInterval() const;
+  static double GetThrottledTimerInterval();
 
   bool HaveFrameRequestCallbacks() const {
     return mFrameRequestCallbackDocs.Length() != 0;
@@ -333,7 +346,7 @@ private:
   void FinishedWaitingForTransaction();
 
   mozilla::RefreshDriverTimer* ChooseTimer() const;
-  mozilla::RefreshDriverTimer *mActiveTimer;
+  mozilla::RefreshDriverTimer* mActiveTimer;
 
   ProfilerBacktrace* mReflowCause;
   ProfilerBacktrace* mStyleCause;
@@ -349,6 +362,11 @@ private:
   uint64_t mCompletedTransaction;
 
   uint32_t mFreezeCount;
+
+  // How long we wait between ticks for throttled (which generally means
+  // non-visible) documents registered with a non-throttled refresh driver.
+  const mozilla::TimeDuration mThrottledFrameRequestInterval;
+
   bool mThrottled;
   bool mTestControllingRefreshes;
   bool mViewManagerFlushIsPending;
@@ -367,6 +385,7 @@ private:
   mozilla::TimeStamp mMostRecentRefresh;
   mozilla::TimeStamp mMostRecentTick;
   mozilla::TimeStamp mTickStart;
+  mozilla::TimeStamp mNextThrottledFrameRequestTick;
 
   // separate arrays for each flush type we support
   ObserverArray mObservers[3];
@@ -378,6 +397,7 @@ private:
   nsAutoTArray<nsIPresShell*, 16> mPresShellsToInvalidateIfHidden;
   // nsTArray on purpose, because we want to be able to swap.
   nsTArray<nsIDocument*> mFrameRequestCallbackDocs;
+  nsTArray<nsIDocument*> mThrottledFrameRequestCallbackDocs;
   nsTArray<nsAPostRefreshObserver*> mPostRefreshObservers;
 
   // Helper struct for processing image requests

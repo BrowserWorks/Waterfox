@@ -15,6 +15,8 @@
   {0x8929ff60, 0x1c9c, 0x4d87, \
     { 0xac, 0x02, 0x09, 0x14, 0x15, 0x3b, 0x48, 0xc4 }}
 
+class nsXULTemplateQueryProcessorRDF;
+
 /**
  * A compiled query in the RDF query processor. This interface should not be
  * used directly outside of the RDF query processor.
@@ -37,7 +39,7 @@ public:
     virtual void ClearCachedResults() = 0;
 };
 
-class nsRDFQuery MOZ_FINAL : public nsITemplateRDFQuery
+class nsRDFQuery final : public nsITemplateRDFQuery
 {
     ~nsRDFQuery() { Finish(); }
 
@@ -61,7 +63,7 @@ public:
 
     void SetRoot(TestNode* aRoot) { mRoot = aRoot; }
 
-    void GetQueryNode(nsIDOMNode** aQueryNode) MOZ_OVERRIDE
+    void GetQueryNode(nsIDOMNode** aQueryNode) override
     {
        *aQueryNode = mQueryNode;
        NS_IF_ADDREF(*aQueryNode);
@@ -86,14 +88,14 @@ public:
     void UseCachedResults(nsISimpleEnumerator** aResults);
 
     // clear the cached results
-    void ClearCachedResults() MOZ_OVERRIDE
+    void ClearCachedResults() override
     {
         mCachedResults = nullptr;
     }
 
-    nsXULTemplateQueryProcessorRDF* Processor() MOZ_OVERRIDE { return mProcessor; }
+    nsXULTemplateQueryProcessorRDF* Processor() override { return mProcessor; }
 
-    nsIAtom* GetMemberVariable() MOZ_OVERRIDE { return mMemberVariable; }
+    nsIAtom* GetMemberVariable() override { return mMemberVariable; }
 
     bool IsSimple() { return mSimple; }
 

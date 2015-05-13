@@ -113,7 +113,7 @@ CreateDrawTargetForSurface(gfxASurface *aSurface)
   }
   RefPtr<DrawTarget> drawTarget =
     Factory::CreateDrawTargetForCairoSurface(aSurface->CairoSurface(),
-                                             ToIntSize(gfxIntSize(aSurface->GetSize())),
+                                             aSurface->GetSize(),
                                              &format);
   aSurface->SetData(&kDrawTarget, drawTarget, nullptr);
   return drawTarget;
@@ -394,7 +394,9 @@ PluginInstanceChild::NPN_GetValue(NPNVariable aVar,
         if (!CallNPN_GetValue_NPNVdocumentOrigin(&v, &result)) {
             return NPERR_GENERIC_ERROR;
         }
-        if (result == NPERR_NO_ERROR) {
+        if (result == NPERR_NO_ERROR ||
+            (GetQuirks() &
+                PluginModuleChild::QUIRK_FLASH_RETURN_EMPTY_DOCUMENT_ORIGIN)) {
             *static_cast<char**>(aValue) = ToNewCString(v);
         }
         return result;
@@ -851,7 +853,7 @@ PluginInstanceChild::AnswerNPP_HandleEvent(const NPRemoteEvent& event,
 
 bool
 PluginInstanceChild::AnswerNPP_HandleEvent_Shmem(const NPRemoteEvent& event,
-                                                 Shmem& mem,
+                                                 Shmem&& mem,
                                                  int16_t* handled,
                                                  Shmem* rtnmem)
 {
@@ -915,7 +917,7 @@ PluginInstanceChild::AnswerNPP_HandleEvent_Shmem(const NPRemoteEvent& event,
 #else
 bool
 PluginInstanceChild::AnswerNPP_HandleEvent_Shmem(const NPRemoteEvent& event,
-                                                 Shmem& mem,
+                                                 Shmem&& mem,
                                                  int16_t* handled,
                                                  Shmem* rtnmem)
 {
@@ -2338,7 +2340,7 @@ public:
     {
     }
 
-    void Run() MOZ_OVERRIDE
+    void Run() override
     {
         RemoveFromAsyncList();
 
@@ -2365,11 +2367,7 @@ PluginInstanceChild::RecvAsyncNPP_NewStream(PBrowserStreamChild* actor,
     BrowserStreamChild* child = static_cast<BrowserStreamChild*>(actor);
     NewStreamAsyncCall* task = new NewStreamAsyncCall(this, child, mimeType,
                                                       seekable);
-    {
-        MutexAutoLock lock(mAsyncCallMutex);
-        mPendingAsyncCalls.AppendElement(task);
-    }
-    MessageLoop::current()->PostTask(FROM_HERE, task);
+    PostChildAsyncCall(task);
     return true;
 }
 
@@ -2665,8 +2663,8 @@ PluginInstanceChild::DoAsyncSetWindow(const gfxSurfaceType& aSurfaceType,
 bool
 PluginInstanceChild::CreateOptSurface(void)
 {
-    NS_ABORT_IF_FALSE(mSurfaceType != gfxSurfaceType::Max,
-                      "Need a valid surface type here");
+    MOZ_ASSERT(mSurfaceType != gfxSurfaceType::Max,
+               "Need a valid surface type here");
     NS_ASSERTION(!mCurrentSurface, "mCurrentSurfaceActor can get out of sync.");
 
     nsRefPtr<gfxASurface> retsurf;
@@ -3087,7 +3085,7 @@ PluginInstanceChild::PaintRectToSurface(const nsIntRect& aRect,
         RefPtr<DrawTarget> dt = CreateDrawTargetForSurface(aSurface);
         RefPtr<SourceSurface> surface =
             gfxPlatform::GetSourceSurfaceForSurface(dt, renderSurface);
-        dt->CopySurface(surface, ToIntRect(aRect), ToIntPoint(aRect.TopLeft()));
+        dt->CopySurface(surface, aRect, aRect.TopLeft());
     }
 }
 
@@ -3095,8 +3093,8 @@ void
 PluginInstanceChild::PaintRectWithAlphaExtraction(const nsIntRect& aRect,
                                                   gfxASurface* aSurface)
 {
-    NS_ABORT_IF_FALSE(aSurface->GetContentType() == gfxContentType::COLOR_ALPHA,
-                      "Refusing to pointlessly recover alpha");
+    MOZ_ASSERT(aSurface->GetContentType() == gfxContentType::COLOR_ALPHA,
+               "Refusing to pointlessly recover alpha");
 
     nsIntRect rect(aRect);
     // If |aSurface| can be used to paint and can have alpha values
@@ -3145,7 +3143,7 @@ PluginInstanceChild::PaintRectWithAlphaExtraction(const nsIntRect& aRect,
         RefPtr<DrawTarget> dt = CreateDrawTargetForSurface(whiteImage);
         RefPtr<SourceSurface> surface =
             gfxPlatform::GetSourceSurfaceForSurface(dt, aSurface);
-        dt->CopySurface(surface, ToIntRect(rect), IntPoint());
+        dt->CopySurface(surface, rect, IntPoint());
     }
 
     // Paint the plugin directly onto the target, with a black
@@ -3175,7 +3173,7 @@ PluginInstanceChild::PaintRectWithAlphaExtraction(const nsIntRect& aRect,
     PaintRectToSurface(rect, blackImage, gfxRGBA(0.0, 0.0, 0.0));
 #endif
 
-    NS_ABORT_IF_FALSE(whiteImage && blackImage, "Didn't paint enough!");
+    MOZ_ASSERT(whiteImage && blackImage, "Didn't paint enough!");
 
     // Extract alpha from black and white image and store to black
     // image
@@ -3191,7 +3189,7 @@ PluginInstanceChild::PaintRectWithAlphaExtraction(const nsIntRect& aRect,
             gfxPlatform::GetSourceSurfaceForSurface(dt, blackImage);
         dt->CopySurface(surface,
                         IntRect(0, 0, rect.width, rect.height),
-                        ToIntPoint(rect.TopLeft()));
+                        rect.TopLeft());
     }
 }
 
@@ -3328,9 +3326,7 @@ PluginInstanceChild::ShowPluginFrame()
             RefPtr<DrawTarget> dt = CreateDrawTargetForSurface(surface);
             RefPtr<SourceSurface> backgroundSurface =
                 gfxPlatform::GetSourceSurfaceForSurface(dt, mBackground);
-            dt->CopySurface(backgroundSurface,
-                            ToIntRect(rect),
-                            ToIntPoint(rect.TopLeft()));
+            dt->CopySurface(backgroundSurface, rect, rect.TopLeft());
         }
         // ... and hand off to the plugin
         // BEWARE: mBackground may die during this call
@@ -3393,7 +3389,7 @@ PluginInstanceChild::ShowPluginFrame()
         SharedDIBSurface* s = static_cast<SharedDIBSurface*>(mCurrentSurface.get());
         if (!mCurrentSurfaceActor) {
             base::SharedMemoryHandle handle = nullptr;
-            s->ShareToProcess(OtherProcess(), &handle);
+            s->ShareToProcess(OtherPid(), &handle);
 
             mCurrentSurfaceActor =
                 SendPPluginSurfaceConstructor(handle,
@@ -3463,7 +3459,7 @@ PluginInstanceChild::ReadbackDifferenceRect(const nsIntRect& rect)
     nsIntRegionRectIterator iter(result);
     const nsIntRect* r;
     while ((r = iter.Next()) != nullptr) {
-        dt->CopySurface(source, ToIntRect(*r), ToIntPoint(r->TopLeft()));
+        dt->CopySurface(source, *r, r->TopLeft());
     }
 
     return true;
@@ -3539,7 +3535,7 @@ bool
 PluginInstanceChild::RecvUpdateBackground(const SurfaceDescriptor& aBackground,
                                           const nsIntRect& aRect)
 {
-    NS_ABORT_IF_FALSE(mIsTransparent, "Only transparent plugins use backgrounds");
+    MOZ_ASSERT(mIsTransparent, "Only transparent plugins use backgrounds");
 
     if (!mBackground) {
         // XXX refactor me
@@ -3647,12 +3643,17 @@ void
 PluginInstanceChild::AsyncCall(PluginThreadCallback aFunc, void* aUserData)
 {
     ChildAsyncCall* task = new ChildAsyncCall(this, aFunc, aUserData);
+    PostChildAsyncCall(task);
+}
 
+void
+PluginInstanceChild::PostChildAsyncCall(ChildAsyncCall* aTask)
+{
     {
         MutexAutoLock lock(mAsyncCallMutex);
-        mPendingAsyncCalls.AppendElement(task);
+        mPendingAsyncCalls.AppendElement(aTask);
     }
-    ProcessChild::message_loop()->PostTask(FROM_HERE, task);
+    ProcessChild::message_loop()->PostTask(FROM_HERE, aTask);
 }
 
 static PLDHashOperator

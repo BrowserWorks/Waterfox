@@ -15,7 +15,6 @@ FooComponent.prototype =
   contractID:       "@mozilla.org/tests/module-importer;1",
 
   // nsIClassInfo
-  implementationLanguage: Components.interfaces.nsIProgrammingLanguage.JAVASCRIPT,
   flags: 0,
 
   getInterfaces: function getInterfaces(aCount) {
@@ -28,14 +27,14 @@ FooComponent.prototype =
       thereIsNoSuchIdentifier;
       threw = false;
     } catch (ex) {
-      do_check_true(ex.lineNumber == 28);
+      do_check_true(ex.lineNumber == 27);
     }
     do_check_true(threw);
-    
+
     return interfaces;
   },
 
-  getHelperForLanguage: function getHelperForLanguage(aLanguage) {
+  getScriptableHelper: function getScriptableHelper() {
     return null;
   },
 
@@ -59,7 +58,6 @@ BarComponent.prototype =
   contractID: "@mozilla.org/tests/module-importer;2",
 
   // nsIClassInfo
-  implementationLanguage: Components.interfaces.nsIProgrammingLanguage.JAVASCRIPT,
   flags: 0,
 
   getInterfaces: function getInterfaces(aCount) {
@@ -68,7 +66,7 @@ BarComponent.prototype =
     return interfaces;
   },
 
-  getHelperForLanguage: function getHelperForLanguage(aLanguage) {
+  getScriptableHelper: function getScriptableHelper() {
     return null;
   },
 

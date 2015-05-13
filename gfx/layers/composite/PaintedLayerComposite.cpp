@@ -19,12 +19,9 @@
 #include "mozilla/layers/Effects.h"     // for EffectChain
 #include "mozilla/mozalloc.h"           // for operator delete
 #include "nsAString.h"
-#include "nsAutoPtr.h"                  // for nsRefPtr
+#include "nsRefPtr.h"                   // for nsRefPtr
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_CTOR, etc
 #include "nsMathUtils.h"                // for NS_lround
-#include "nsPoint.h"                    // for nsIntPoint
-#include "nsRect.h"                     // for nsIntRect
-#include "nsSize.h"                     // for nsIntSize
 #include "nsString.h"                   // for nsAutoCString
 #include "TextRenderer.h"
 #include "GeckoProfiler.h"
@@ -53,7 +50,6 @@ bool
 PaintedLayerComposite::SetCompositableHost(CompositableHost* aHost)
 {
   switch (aHost->GetType()) {
-    case CompositableType::CONTENT_INC:
     case CompositableType::CONTENT_TILED:
     case CompositableType::CONTENT_SINGLE:
     case CompositableType::CONTENT_DOUBLE:
@@ -90,7 +86,7 @@ PaintedLayerComposite::SetLayerManager(LayerManagerComposite* aManager)
 {
   LayerComposite::SetLayerManager(aManager);
   mManager = aManager;
-  if (mBuffer) {
+  if (mBuffer && mCompositor) {
     mBuffer->SetCompositor(mCompositor);
   }
 }
@@ -115,7 +111,7 @@ PaintedLayerComposite::GetRenderState()
 }
 
 void
-PaintedLayerComposite::RenderLayer(const nsIntRect& aClipRect)
+PaintedLayerComposite::RenderLayer(const gfx::IntRect& aClipRect)
 {
   if (!mBuffer || !mBuffer->IsAttached()) {
     return;

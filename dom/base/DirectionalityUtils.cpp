@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 sw=2 et tw=78: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -236,7 +236,7 @@ static bool
 DoesNotParticipateInAutoDirection(const Element* aElement)
 {
   mozilla::dom::NodeInfo* nodeInfo = aElement->NodeInfo();
-  return (!aElement->IsHTML() ||
+  return (!aElement->IsHTMLElement() ||
           nodeInfo->Equals(nsGkAtoms::script) ||
           nodeInfo->Equals(nsGkAtoms::style) ||
           nodeInfo->Equals(nsGkAtoms::textarea) ||
@@ -249,7 +249,7 @@ IsBdiWithoutDirAuto(const Element* aElement)
   // We are testing for bdi elements without explicit dir="auto", so we can't
   // use the HasDirAuto() flag, since that will return true for bdi element with
   // no dir attribute or an invalid dir attribute
-  return (aElement->IsHTML(nsGkAtoms::bdi) &&
+  return (aElement->IsHTMLElement(nsGkAtoms::bdi) &&
           (!aElement->HasValidDir() || aElement->HasFixedDir()));
 }
 
@@ -506,7 +506,7 @@ private:
     nsINode* oldTextNode = static_cast<Element*>(aData);
     Element* rootNode = aEntry->GetKey();
     nsINode* newTextNode = nullptr;
-    if (oldTextNode && rootNode->HasDirAuto()) {
+    if (rootNode->GetParentNode() && rootNode->HasDirAuto()) {
       newTextNode = WalkDescendantsSetDirectionFromText(rootNode, true,
                                                         oldTextNode);
     }
@@ -531,11 +531,6 @@ public:
   void UpdateAutoDirection(Directionality aDir)
   {
     mElements.EnumerateEntries(SetNodeDirection, &aDir);
-  }
-
-  void ClearAutoDirection()
-  {
-    mElements.EnumerateEntries(ResetNodeDirection, nullptr);
   }
 
   void ResetAutoDirection(nsINode* aTextNode)
@@ -572,13 +567,6 @@ public:
     MOZ_ASSERT(aTextNode->HasTextNodeDirectionalityMap(),
                "Map missing in UpdateTextNodeDirection");
     GetDirectionalityMap(aTextNode)->UpdateAutoDirection(aDir);
-  }
-
-  static void ClearTextNodeDirection(nsINode* aTextNode)
-  {
-    MOZ_ASSERT(aTextNode->HasTextNodeDirectionalityMap(),
-               "Map missing in ResetTextNodeDirection");
-    GetDirectionalityMap(aTextNode)->ClearAutoDirection();
   }
 
   static void ResetTextNodeDirection(nsINode* aTextNode)
@@ -888,7 +876,7 @@ SetDirectionFromNewTextNode(nsIContent* aTextNode)
 }
 
 void
-ResetDirectionSetByTextNode(nsTextNode* aTextNode, bool aNullParent)
+ResetDirectionSetByTextNode(nsTextNode* aTextNode)
 {
   if (!NodeAffectsDirAutoAncestor(aTextNode)) {
     nsTextNodeDirectionalityMap::EnsureMapIsClearFor(aTextNode);
@@ -897,11 +885,7 @@ ResetDirectionSetByTextNode(nsTextNode* aTextNode, bool aNullParent)
 
   Directionality dir = GetDirectionFromText(aTextNode->GetText());
   if (dir != eDir_NotSet && aTextNode->HasTextNodeDirectionalityMap()) {
-    if (aNullParent) {
-      nsTextNodeDirectionalityMap::ClearTextNodeDirection(aTextNode);
-    } else {
-      nsTextNodeDirectionalityMap::ResetTextNodeDirection(aTextNode);
-    }
+    nsTextNodeDirectionalityMap::ResetTextNodeDirection(aTextNode);
   }
 }
 
@@ -922,7 +906,7 @@ void
 OnSetDirAttr(Element* aElement, const nsAttrValue* aNewValue,
              bool hadValidDir, bool hadDirAuto, bool aNotify)
 {
-  if (aElement->IsHTML(nsGkAtoms::input)) {
+  if (aElement->IsHTMLElement(nsGkAtoms::input)) {
     return;
   }
 
@@ -977,7 +961,7 @@ SetDirOnBind(mozilla::dom::Element* aElement, nsIContent* aParent)
   // Set the AncestorHasDirAuto flag, unless this element shouldn't affect
   // ancestors that have dir=auto
   if (!DoesNotParticipateInAutoDirection(aElement) &&
-      !aElement->IsHTML(nsGkAtoms::bdi) &&
+      !aElement->IsHTMLElement(nsGkAtoms::bdi) &&
       aParent && aParent->NodeOrAncestorHasDirAuto()) {
     aElement->SetAncestorHasDirAuto();
 

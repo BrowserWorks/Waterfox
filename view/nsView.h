@@ -11,6 +11,7 @@
 #include "nsPoint.h"
 #include "nsRegion.h"
 #include "nsCRT.h"
+#include "nsCOMPtr.h"
 #include "nsWidgetInitData.h" // for nsWindowType
 #include "nsIWidgetListener.h"
 #include "mozilla/EventForwards.h"
@@ -51,7 +52,7 @@ enum nsViewVisibility {
  * of a view, go through nsViewManager.
  */
 
-class nsView MOZ_FINAL : public nsIWidgetListener
+class nsView final : public nsIWidgetListener
 {
 public:
   friend class nsViewManager;
@@ -289,6 +290,8 @@ public:
     mForcedRepaint = aForceRepaint; 
   }
 
+  void SetNeedsWindowPropertiesSync();
+
   /**
    * Make aWidget direct its events to this view.
    * The caller must call DetachWidgetEventHandler before this view
@@ -362,18 +365,18 @@ public:
   }
 
   // nsIWidgetListener
-  virtual nsIPresShell* GetPresShell() MOZ_OVERRIDE;
-  virtual nsView* GetView() MOZ_OVERRIDE { return this; }
-  virtual bool WindowMoved(nsIWidget* aWidget, int32_t x, int32_t y) MOZ_OVERRIDE;
-  virtual bool WindowResized(nsIWidget* aWidget, int32_t aWidth, int32_t aHeight) MOZ_OVERRIDE;
-  virtual bool RequestWindowClose(nsIWidget* aWidget) MOZ_OVERRIDE;
-  virtual void WillPaintWindow(nsIWidget* aWidget) MOZ_OVERRIDE;
-  virtual bool PaintWindow(nsIWidget* aWidget, nsIntRegion aRegion) MOZ_OVERRIDE;
-  virtual void DidPaintWindow() MOZ_OVERRIDE;
-  virtual void DidCompositeWindow() MOZ_OVERRIDE;
-  virtual void RequestRepaint() MOZ_OVERRIDE;
+  virtual nsIPresShell* GetPresShell() override;
+  virtual nsView* GetView() override { return this; }
+  virtual bool WindowMoved(nsIWidget* aWidget, int32_t x, int32_t y) override;
+  virtual bool WindowResized(nsIWidget* aWidget, int32_t aWidth, int32_t aHeight) override;
+  virtual bool RequestWindowClose(nsIWidget* aWidget) override;
+  virtual void WillPaintWindow(nsIWidget* aWidget) override;
+  virtual bool PaintWindow(nsIWidget* aWidget, nsIntRegion aRegion) override;
+  virtual void DidPaintWindow() override;
+  virtual void DidCompositeWindow() override;
+  virtual void RequestRepaint() override;
   virtual nsEventStatus HandleEvent(mozilla::WidgetGUIEvent* aEvent,
-                                    bool aUseAttachedEvents) MOZ_OVERRIDE;
+                                    bool aUseAttachedEvents) override;
 
   virtual ~nsView();
 
@@ -446,7 +449,7 @@ private:
 
   nsViewManager    *mViewManager;
   nsView           *mParent;
-  nsIWidget        *mWindow;
+  nsCOMPtr<nsIWidget> mWindow;
   nsView           *mNextSibling;
   nsView           *mFirstChild;
   nsIFrame         *mFrame;
@@ -462,6 +465,7 @@ private:
   uint32_t          mVFlags;
   bool              mWidgetIsTopLevel;
   bool              mForcedRepaint;
+  bool              mNeedsWindowPropertiesSync;
 };
 
 #endif

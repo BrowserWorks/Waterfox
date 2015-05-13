@@ -2,6 +2,8 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
+Components.utils.import("resource://testing-common/MockRegistrar.jsm");
+
 /**
  * Test that nsIUpdatePrompt doesn't display UI for showUpdateInstalled,
  * showUpdateAvailable, and showUpdateError when the app.update.silent
@@ -11,29 +13,31 @@
 function run_test() {
   setupTestCommon();
 
-  logTestInfo("testing nsIUpdatePrompt notifications should not be seen " +
-              "when the " + PREF_APP_UPDATE_SILENT + " preference is true");
+  debugDump("testing nsIUpdatePrompt notifications should not be seen " +
+            "when the " + PREF_APP_UPDATE_SILENT + " preference is true");
 
   Services.prefs.setBoolPref(PREF_APP_UPDATE_SILENT, true);
 
-  let registrar = Components.manager.QueryInterface(AUS_Ci.nsIComponentRegistrar);
-  registrar.registerFactory(Components.ID("{1dfeb90a-2193-45d5-9cb8-864928b2af55}"),
-                            "Fake Window Watcher",
-                            "@mozilla.org/embedcomp/window-watcher;1",
-                            WindowWatcherFactory);
+  let windowWatcherCID =
+    MockRegistrar.register("@mozilla.org/embedcomp/window-watcher;1",
+                           WindowWatcher);
+  do_register_cleanup(() => {
+    MockRegistrar.unregister(windowWatcherCID);
+  });
 
   standardInit();
 
-  logTestInfo("testing showUpdateInstalled should not call openWindow");
+  debugDump("testing showUpdateInstalled should not call openWindow");
   Services.prefs.setBoolPref(PREF_APP_UPDATE_SHOW_INSTALLED_UI, true);
 
   gCheckFunc = check_showUpdateInstalled;
   gUP.showUpdateInstalled();
   // Report a successful check after the call to showUpdateInstalled since it
   // didn't throw and otherwise it would report no tests run.
-  do_check_true(true);
+  Assert.ok(true,
+            "calling showUpdateInstalled should not attempt to open a window");
 
-  logTestInfo("testing showUpdateAvailable should not call openWindow");
+  debugDump("testing showUpdateAvailable should not call openWindow");
   writeUpdatesToXMLFile(getLocalUpdatesXMLString(""), false);
   let patches = getLocalPatchString(null, null, null, null, null, null,
                                     STATE_FAILED);
@@ -47,19 +51,17 @@ function run_test() {
   gUP.showUpdateAvailable(update);
   // Report a successful check after the call to showUpdateAvailable since it
   // didn't throw and otherwise it would report no tests run.
-  do_check_true(true);
+  Assert.ok(true,
+            "calling showUpdateAvailable should not attempt to open a window");
 
-  logTestInfo("testing showUpdateError should not call getNewPrompter");
+  debugDump("testing showUpdateError should not call getNewPrompter");
   gCheckFunc = check_showUpdateError;
   update.errorCode = WRITE_ERROR;
   gUP.showUpdateError(update);
   // Report a successful check after the call to showUpdateError since it
   // didn't throw and otherwise it would report no tests run.
-  do_check_true(true);
-
-  registrar = Components.manager.QueryInterface(AUS_Ci.nsIComponentRegistrar);
-  registrar.unregisterFactory(Components.ID("{1dfeb90a-2193-45d5-9cb8-864928b2af55}"),
-                              WindowWatcherFactory);
+  Assert.ok(true,
+            "calling showUpdateError should not attempt to open a window");
 
   doTestFinish();
 }
@@ -76,7 +78,7 @@ function check_showUpdateError() {
   do_throw("showUpdateError should not have seen getNewPrompter!");
 }
 
-var WindowWatcher = {
+const WindowWatcher = {
   openWindow: function(aParent, aUrl, aName, aFeatures, aArgs) {
     gCheckFunc();
   },
@@ -85,19 +87,5 @@ var WindowWatcher = {
     gCheckFunc();
   },
 
-  QueryInterface: function(aIID) {
-    if (aIID.equals(AUS_Ci.nsIWindowWatcher) ||
-        aIID.equals(AUS_Ci.nsISupports))
-      return this;
-
-    throw AUS_Cr.NS_ERROR_NO_INTERFACE;
-  }
-}
-
-var WindowWatcherFactory = {
-  createInstance: function createInstance(aOuter, aIID) {
-    if (aOuter != null)
-      throw AUS_Cr.NS_ERROR_NO_AGGREGATION;
-    return WindowWatcher.QueryInterface(aIID);
-  }
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIWindowWatcher])
 };

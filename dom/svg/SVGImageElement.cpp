@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -23,9 +24,9 @@ namespace mozilla {
 namespace dom {
 
 JSObject*
-SVGImageElement::WrapNode(JSContext *aCx)
+SVGImageElement::WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return SVGImageElementBinding::Wrap(aCx, this);
+  return SVGImageElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 nsSVGElement::LengthInfo SVGImageElement::sLengthInfo[4] =
@@ -101,9 +102,7 @@ SVGImageElement::Height()
 already_AddRefed<DOMSVGAnimatedPreserveAspectRatio>
 SVGImageElement::PreserveAspectRatio()
 {
-  nsRefPtr<DOMSVGAnimatedPreserveAspectRatio> ratio;
-  mPreserveAspectRatio.ToDOMAnimatedPreserveAspectRatio(getter_AddRefs(ratio), this);
-  return ratio.forget();
+  return mPreserveAspectRatio.ToDOMAnimatedPreserveAspectRatio(this);
 }
 
 already_AddRefed<SVGAnimatedString>
@@ -226,6 +225,23 @@ SVGImageElement::IsAttributeMapped(const nsIAtom* name) const
 
 /* For the purposes of the update/invalidation logic pretend to
    be a rectangle. */
+bool
+SVGImageElement::GetGeometryBounds(
+  Rect* aBounds, const StrokeOptions& aStrokeOptions, const Matrix& aTransform)
+{
+  Rect rect;
+  GetAnimatedLengthValues(&rect.x, &rect.y, &rect.width,
+                          &rect.height, nullptr);
+
+  if (rect.IsEmpty()) {
+    // Rendering of the element disabled
+    rect.SetEmpty(); // Make sure width/height are zero and not negative
+  }
+
+  *aBounds = aTransform.TransformBounds(rect);
+  return true;
+}
+
 TemporaryRef<Path>
 SVGImageElement::BuildPath(PathBuilder* aBuilder)
 {

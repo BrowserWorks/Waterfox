@@ -1907,7 +1907,10 @@ this.DownloadCopySaver.prototype = {
 
           // Create a channel from the source, and listen to progress
           // notifications.
-          let channel = NetUtil.newChannel(NetUtil.newURI(download.source.url));
+          let channel = NetUtil.newChannel({
+            uri: download.source.url,
+            loadUsingSystemPrincipal: true,
+          });
           if (channel instanceof Ci.nsIPrivateBrowsingChannel) {
             channel.setPrivate(download.source.isPrivate);
           }

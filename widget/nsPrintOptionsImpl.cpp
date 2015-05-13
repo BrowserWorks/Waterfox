@@ -4,6 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/embedding/PPrinting.h"
+#include "nsPrintingProxy.h"
 #include "nsPrintOptionsImpl.h"
 #include "nsReadableUtils.h"
 #include "nsPrintSettingsImpl.h"
@@ -221,6 +222,18 @@ nsPrintOptions::SerializeToPrintData(nsIPrintSettings* aSettings,
   aSettings->GetIsInitializedFromPrinter(&data->isInitializedFromPrinter());
   aSettings->GetIsInitializedFromPrefs(&data->isInitializedFromPrefs());
   aSettings->GetPersistMarginBoxSettings(&data->persistMarginBoxSettings());
+
+  // Initialize the platform-specific values that don't
+  // default-initialize, so that we don't send uninitialized data over
+  // IPC (which leads to valgrind warnings, and, for bools, fatal
+  // assertions).
+  // data->driverName() default-initializes
+  // data->deviceName() default-initializes
+  data->isFramesetDocument() = false;
+  data->isFramesetFrameSelected() = false;
+  data->isIFrameSelected() = false;
+  data->isRangeSelection() = false;
+  // data->GTKPrintSettings() default-initializes
 
   return NS_OK;
 }
@@ -1297,6 +1310,15 @@ nsPrintOptions::SavePrintSettingsToPrefs(nsIPrintSettings *aPS,
                                          uint32_t aFlags)
 {
   NS_ENSURE_ARG_POINTER(aPS);
+
+  if (GeckoProcessType_Content == XRE_GetProcessType()) {
+    // If we're in the content process, we can't directly write to the
+    // Preferences service - we have to proxy the save up to the
+    // parent process.
+    nsRefPtr<nsPrintingProxy> proxy = nsPrintingProxy::GetInstance();
+    return proxy->SavePrintSettings(aPS, aUsePrinterNamePrefix, aFlags);
+  }
+
   nsAutoString prtName;
 
   // Do not use printer name in Linux because GTK backend does not support

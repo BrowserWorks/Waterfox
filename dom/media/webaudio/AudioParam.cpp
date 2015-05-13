@@ -45,11 +45,13 @@ NS_IMPL_CYCLE_COLLECTION_UNROOT_NATIVE(AudioParam, Release)
 
 AudioParam::AudioParam(AudioNode* aNode,
                        AudioParam::CallbackType aCallback,
-                       float aDefaultValue)
+                       float aDefaultValue,
+                       const char* aName)
   : AudioParamTimeline(aDefaultValue)
   , mNode(aNode)
   , mCallback(aCallback)
   , mDefaultValue(aDefaultValue)
+  , mName(aName)
 {
 }
 
@@ -59,9 +61,9 @@ AudioParam::~AudioParam()
 }
 
 JSObject*
-AudioParam::WrapObject(JSContext* aCx)
+AudioParam::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return AudioParamBinding::Wrap(aCx, this);
+  return AudioParamBinding::Wrap(aCx, this, aGivenProto);
 }
 
 void

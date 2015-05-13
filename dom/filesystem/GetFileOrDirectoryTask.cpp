@@ -1,5 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -82,8 +82,7 @@ GetFileOrDirectoryTask::GetSuccessRequestResult() const
     return FileSystemDirectoryResponse(mTargetRealPath);
   }
 
-  nsRefPtr<File> file = new File(mFileSystem->GetWindow(), mTargetFileImpl);
-  BlobParent* actor = GetBlobParent(file);
+  BlobParent* actor = GetBlobParent(mTargetBlobImpl);
   if (!actor) {
     return FileSystemErrorResponse(NS_ERROR_DOM_FILESYSTEM_UNKNOWN_ERR);
   }
@@ -100,7 +99,7 @@ GetFileOrDirectoryTask::SetSuccessRequestResult(const FileSystemResponseValue& a
     case FileSystemResponseValue::TFileSystemFileResponse: {
       FileSystemFileResponse r = aValue;
       BlobChild* actor = static_cast<BlobChild*>(r.blobChild());
-      mTargetFileImpl = actor->GetBlobImpl();
+      mTargetBlobImpl = actor->GetBlobImpl();
       mIsDirectory = false;
       break;
     }
@@ -185,7 +184,7 @@ GetFileOrDirectoryTask::Work()
     return NS_ERROR_DOM_SECURITY_ERR;
   }
 
-  mTargetFileImpl = new FileImplFile(file);
+  mTargetBlobImpl = new BlobImplFile(file);
 
   return NS_OK;
 }
@@ -214,8 +213,8 @@ GetFileOrDirectoryTask::HandlerCallback()
     return;
   }
 
-  nsRefPtr<File> file = new File(mFileSystem->GetWindow(), mTargetFileImpl);
-  mPromise->MaybeResolve(file);
+  nsRefPtr<Blob> blob = Blob::Create(mFileSystem->GetWindow(), mTargetBlobImpl);
+  mPromise->MaybeResolve(blob);
   mPromise = nullptr;
 }
 

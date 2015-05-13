@@ -24,6 +24,7 @@
 #include "nsIStandardURL.h"
 #include "nsNetUtil.h"
 #include "nsString.h"
+#include "nsStandardURL.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -69,32 +70,28 @@ nsChromeProtocolHandler::NewURI(const nsACString &aSpec,
                                 nsIURI *aBaseURI,
                                 nsIURI **result)
 {
-    nsresult rv;
 
     // Chrome: URLs (currently) have no additional structure beyond that provided
     // by standard URLs, so there is no "outer" given to CreateInstance
 
-    nsCOMPtr<nsIStandardURL> surl(do_CreateInstance(NS_STANDARDURL_CONTRACTID, &rv));
-    NS_ENSURE_SUCCESS(rv, rv);
+    nsRefPtr<nsStandardURL> surl = new nsStandardURL();
 
-    rv = surl->Init(nsIStandardURL::URLTYPE_STANDARD, -1, aSpec, aCharset, aBaseURI);
+    nsresult rv = surl->Init(nsIStandardURL::URLTYPE_STANDARD, -1, aSpec,
+                             aCharset, aBaseURI);
     if (NS_FAILED(rv))
         return rv;
-
-    nsCOMPtr<nsIURL> url(do_QueryInterface(surl, &rv));
-    NS_ENSURE_SUCCESS(rv, rv);
 
     // Canonify the "chrome:" URL; e.g., so that we collapse
     // "chrome://navigator/content/" and "chrome://navigator/content"
     // and "chrome://navigator/content/navigator.xul".
 
-    rv = nsChromeRegistry::Canonify(url);
+    rv = nsChromeRegistry::Canonify(surl);
     if (NS_FAILED(rv))
         return rv;
 
     surl->SetMutable(false);
 
-    NS_ADDREF(*result = url);
+    surl.forget(result);
     return NS_OK;
 }
 
@@ -147,20 +144,9 @@ nsChromeProtocolHandler::NewChannel2(nsIURI* aURI,
         return rv;
     }
 
-    // Bug 1087720 (and Bug 1099296):
-    // Once all callsites have been updated to call NewChannel2() instead of NewChannel()
-    // we should have a non-null loadInfo consistently. Until then we have to branch on the
-    // loadInfo.
-    if (aLoadInfo) {
-        rv = NS_NewChannelInternal(getter_AddRefs(result),
-                                   resolvedURI,
-                                   aLoadInfo);
-    }
-    else {
-        nsCOMPtr<nsIIOService> ioServ(do_GetIOService(&rv));
-        NS_ENSURE_SUCCESS(rv, rv);
-        rv = ioServ->NewChannelFromURI(resolvedURI, getter_AddRefs(result));
-    }
+    rv = NS_NewChannelInternal(getter_AddRefs(result),
+                               resolvedURI,
+                               aLoadInfo);
     NS_ENSURE_SUCCESS(rv, rv);
 
 #ifdef DEBUG

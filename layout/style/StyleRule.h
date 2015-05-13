@@ -22,7 +22,6 @@
 
 class nsIAtom;
 struct nsCSSSelectorList;
-class nsCSSCompressedDataBlock;
 
 namespace mozilla {
 class CSSStyleSheet;
@@ -72,7 +71,7 @@ public:
     //      (if nsCSSPseudoClasses::HasNthPairArg(mType))
     //   d. a selector list, which means mSelectors is non-null
     //      (if nsCSSPseudoClasses::HasSelectorListArg(mType))
-    void*           mMemory; // mString and mNumbers use NS_Alloc/NS_Free
+    void*           mMemory; // mString and mNumbers use moz_xmalloc/free
     char16_t*      mString;
     int32_t*        mNumbers;
     nsCSSSelectorList* mSelectors;
@@ -282,16 +281,16 @@ class DOMCSSStyleRule;
 
 class StyleRule;
 
-class ImportantRule MOZ_FINAL : public nsIStyleRule {
+class ImportantRule final : public nsIStyleRule {
 public:
   explicit ImportantRule(Declaration *aDeclaration);
 
   NS_DECL_ISUPPORTS
 
   // nsIStyleRule interface
-  virtual void MapRuleInfoInto(nsRuleData* aRuleData) MOZ_OVERRIDE;
+  virtual void MapRuleInfoInto(nsRuleData* aRuleData) override;
 #ifdef DEBUG
-  virtual void List(FILE* out = stdout, int32_t aIndent = 0) const MOZ_OVERRIDE;
+  virtual void List(FILE* out = stdout, int32_t aIndent = 0) const override;
 #endif
 
 protected:
@@ -305,7 +304,7 @@ protected:
   friend class StyleRule;
 };
 
-class StyleRule MOZ_FINAL : public Rule
+class StyleRule final : public Rule
 {
  public:
   StyleRule(nsCSSSelectorList* aSelector,
@@ -353,22 +352,22 @@ public:
   void GetSelectorText(nsAString& aSelectorText);
   void SetSelectorText(const nsAString& aSelectorText);
 
-  virtual int32_t GetType() const MOZ_OVERRIDE;
+  virtual int32_t GetType() const override;
 
-  virtual already_AddRefed<Rule> Clone() const MOZ_OVERRIDE;
+  virtual already_AddRefed<Rule> Clone() const override;
 
-  virtual nsIDOMCSSRule* GetDOMRule() MOZ_OVERRIDE;
+  virtual nsIDOMCSSRule* GetDOMRule() override;
 
-  virtual nsIDOMCSSRule* GetExistingDOMRule() MOZ_OVERRIDE;
+  virtual nsIDOMCSSRule* GetExistingDOMRule() override;
 
   // The new mapping function.
-  virtual void MapRuleInfoInto(nsRuleData* aRuleData) MOZ_OVERRIDE;
+  virtual void MapRuleInfoInto(nsRuleData* aRuleData) override;
 
 #ifdef DEBUG
-  virtual void List(FILE* out = stdout, int32_t aIndent = 0) const MOZ_OVERRIDE;
+  virtual void List(FILE* out = stdout, int32_t aIndent = 0) const override;
 #endif
 
-  virtual size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const MOZ_OVERRIDE;
+  virtual size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const override;
 
 private:
   ~StyleRule();

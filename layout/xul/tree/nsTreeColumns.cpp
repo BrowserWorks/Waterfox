@@ -353,9 +353,9 @@ nsTreeColumn::GetParentObject() const
 }
 
 /* virtual */ JSObject*
-nsTreeColumn::WrapObject(JSContext* aCx)
+nsTreeColumn::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return dom::TreeColumnBinding::Wrap(aCx, this);
+  return dom::TreeColumnBinding::Wrap(aCx, this, aGivenProto);
 }
 
 mozilla::dom::Element*
@@ -393,8 +393,7 @@ nsTreeColumn::Invalidate(mozilla::ErrorResult& aRv)
 }
 
 nsTreeColumns::nsTreeColumns(nsTreeBodyFrame* aTree)
-  : mTree(aTree),
-    mFirstColumn(nullptr)
+  : mTree(aTree)
 {
 }
 
@@ -422,9 +421,9 @@ nsTreeColumns::GetParentObject() const
 }
 
 /* virtual */ JSObject*
-nsTreeColumns::WrapObject(JSContext* aCx)
+nsTreeColumns::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return dom::TreeColumnsBinding::Wrap(aCx, this);
+  return dom::TreeColumnsBinding::Wrap(aCx, this, aGivenProto);
 }
 
 dom::TreeBoxObject*
@@ -669,7 +668,7 @@ nsTreeColumns::InvalidateColumns()
        currCol = currCol->GetNext()) {
     currCol->SetColumns(nullptr);
   }
-  NS_IF_RELEASE(mFirstColumn);
+  mFirstColumn = nullptr;
   return NS_OK;
 }
 
@@ -759,7 +758,7 @@ nsTreeColumns::EnsureColumns()
           col->SetPrevious(currCol);
         }
         else {
-          NS_ADDREF(mFirstColumn = col);
+          mFirstColumn = col;
         }
         currCol = col;
       }

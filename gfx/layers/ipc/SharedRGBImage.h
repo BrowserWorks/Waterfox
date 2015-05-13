@@ -9,24 +9,18 @@
 #include <stdint.h>                     // for uint8_t
 #include "ImageContainer.h"             // for ISharedImage, Image, etc
 #include "gfxTypes.h"
-#include "mozilla/Attributes.h"         // for MOZ_OVERRIDE
+#include "mozilla/Attributes.h"         // for override
 #include "mozilla/RefPtr.h"             // for RefPtr
 #include "mozilla/gfx/Point.h"          // for IntSize
 #include "mozilla/gfx/Types.h"          // for SurfaceFormat
 #include "nsCOMPtr.h"                   // for already_AddRefed
 
 namespace mozilla {
-namespace ipc {
-class Shmem;
-}
-
 namespace layers {
 
 class BufferTextureClient;
 class ImageClient;
-class ISurfaceAllocator;
 class TextureClient;
-class SurfaceDescriptor;
 
 already_AddRefed<Image> CreateSharedRGBImage(ImageContainer* aImageContainer,
                                              nsIntSize aSize,
@@ -37,7 +31,6 @@ already_AddRefed<Image> CreateSharedRGBImage(ImageContainer* aImageContainer,
  * It is assumed that the image width and stride are equal
  */
 class SharedRGBImage : public Image
-                     , public ISharedImage
 {
 public:
   explicit SharedRGBImage(ImageClient* aCompositable);
@@ -46,17 +39,15 @@ protected:
   ~SharedRGBImage();
 
 public:
-  virtual ISharedImage* AsSharedImage() MOZ_OVERRIDE { return this; }
+  virtual TextureClient* GetTextureClient(CompositableClient* aClient) override;
 
-  virtual TextureClient* GetTextureClient(CompositableClient* aClient) MOZ_OVERRIDE;
+  virtual uint8_t* GetBuffer() override;
 
-  virtual uint8_t* GetBuffer() MOZ_OVERRIDE;
-
-  gfx::IntSize GetSize() MOZ_OVERRIDE;
+  gfx::IntSize GetSize() override;
 
   size_t GetBufferSize();
 
-  TemporaryRef<gfx::SourceSurface> GetAsSourceSurface() MOZ_OVERRIDE;
+  TemporaryRef<gfx::SourceSurface> GetAsSourceSurface() override;
 
   bool Allocate(gfx::IntSize aSize, gfx::SurfaceFormat aFormat);
 private:

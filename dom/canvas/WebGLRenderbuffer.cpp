@@ -41,9 +41,9 @@ NeedsDepthStencilEmu(gl::GLContext* gl, GLenum internalFormat)
 }
 
 JSObject*
-WebGLRenderbuffer::WrapObject(JSContext* cx)
+WebGLRenderbuffer::WrapObject(JSContext* cx, JS::Handle<JSObject*> aGivenProto)
 {
-    return dom::WebGLRenderbufferBinding::Wrap(cx, this);
+    return dom::WebGLRenderbufferBinding::Wrap(cx, this, aGivenProto);
 }
 
 WebGLRenderbuffer::WebGLRenderbuffer(WebGLContext* webgl)
@@ -54,6 +54,7 @@ WebGLRenderbuffer::WebGLRenderbuffer(WebGLContext* webgl)
     , mInternalFormat(0)
     , mInternalFormatForGL(0)
     , mImageDataStatus(WebGLImageDataStatus::NoImageData)
+    , mSamples(1)
 {
     mContext->MakeContextCurrent();
 
@@ -156,11 +157,34 @@ WebGLRenderbuffer::BindRenderbuffer() const
     mContext->gl->fBindRenderbuffer(LOCAL_GL_RENDERBUFFER, mPrimaryRB);
 }
 
-void
-WebGLRenderbuffer::RenderbufferStorage(GLenum internalFormat, GLsizei width,
-                                       GLsizei height) const
+static void
+RenderbufferStorageMaybeMultisample(gl::GLContext* gl, GLsizei samples,
+                                    GLenum internalFormat, GLsizei width,
+                                    GLsizei height)
 {
+    MOZ_ASSERT_IF(samples >= 1, gl->IsSupported(gl::GLFeature::framebuffer_multisample));
+    MOZ_ASSERT(samples >= 0);
+    MOZ_ASSERT(samples <= gl->MaxSamples());
+
+    if (samples > 0) {
+        gl->fRenderbufferStorageMultisample(LOCAL_GL_RENDERBUFFER, samples,
+                                            internalFormat, width, height);
+    } else {
+        gl->fRenderbufferStorage(LOCAL_GL_RENDERBUFFER, internalFormat, width,
+                                 height);
+    }
+}
+
+void
+WebGLRenderbuffer::RenderbufferStorage(GLsizei samples, GLenum internalFormat,
+                                       GLsizei width, GLsizei height) const
+{
+    MOZ_ASSERT(mContext->mBoundRenderbuffer == this);
+
+    InvalidateStatusOfAttachedFBs();
+
     gl::GLContext* gl = mContext->gl;
+    MOZ_ASSERT(samples >= 0 && samples <= 256); // Sanity check.
 
     GLenum primaryFormat = internalFormat;
     GLenum secondaryFormat = 0;
@@ -170,7 +194,8 @@ WebGLRenderbuffer::RenderbufferStorage(GLenum internalFormat, GLsizei width,
         secondaryFormat = LOCAL_GL_STENCIL_INDEX8;
     }
 
-    gl->fRenderbufferStorage(LOCAL_GL_RENDERBUFFER, primaryFormat, width, height);
+    RenderbufferStorageMaybeMultisample(gl, samples, primaryFormat, width,
+                                        height);
 
     if (!mSecondaryRB) {
         MOZ_ASSERT(!secondaryFormat);
@@ -182,9 +207,10 @@ WebGLRenderbuffer::RenderbufferStorage(GLenum internalFormat, GLsizei width,
     // non-depth-stencil attachment point.
     gl::ScopedBindRenderbuffer autoRB(gl, mSecondaryRB);
     if (secondaryFormat) {
-        gl->fRenderbufferStorage(LOCAL_GL_RENDERBUFFER, secondaryFormat, width, height);
+        RenderbufferStorageMaybeMultisample(gl, samples, secondaryFormat, width,
+                                            height);
     } else {
-        gl->fRenderbufferStorage(LOCAL_GL_RENDERBUFFER, LOCAL_GL_RGBA4, 1, 1);
+        RenderbufferStorageMaybeMultisample(gl, samples, LOCAL_GL_RGBA4, 1, 1);
     }
 }
 

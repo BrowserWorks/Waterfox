@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -9,15 +10,13 @@
 #include "nsGenericHTMLElement.h"
 #include "nsIDOMHTMLTableCellElement.h"
 
-class nsIDOMHTMLTableRowElement;
-
 namespace mozilla {
 namespace dom {
 
 class HTMLTableElement;
 
-class HTMLTableCellElement MOZ_FINAL : public nsGenericHTMLElement,
-                                       public nsIDOMHTMLTableCellElement
+class HTMLTableCellElement final : public nsGenericHTMLElement,
+                                   public nsIDOMHTMLTableCellElement
 {
 public:
   explicit HTMLTableCellElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
@@ -49,7 +48,7 @@ public:
     SetHTMLIntAttr(nsGkAtoms::rowspan, aRowSpan, aError);
   }
   //already_AddRefed<nsDOMSettableTokenList> Headers() const;
-  void GetHeaders(nsString& aHeaders)
+  void GetHeaders(DOMString& aHeaders)
   {
     GetHTMLAttr(nsGkAtoms::headers, aHeaders);
   }
@@ -59,7 +58,7 @@ public:
   }
   int32_t CellIndex() const;
 
-  void GetAbbr(nsString& aAbbr)
+  void GetAbbr(DOMString& aAbbr)
   {
     GetHTMLAttr(nsGkAtoms::abbr, aAbbr);
   }
@@ -67,7 +66,7 @@ public:
   {
     SetHTMLAttr(nsGkAtoms::abbr, aAbbr, aError);
   }
-  void GetScope(nsString& aScope)
+  void GetScope(DOMString& aScope)
   {
     GetHTMLAttr(nsGkAtoms::scope, aScope);
   }
@@ -75,12 +74,12 @@ public:
   {
     SetHTMLAttr(nsGkAtoms::scope, aScope, aError);
   }
-  void GetAlign(nsString& aAlign);
+  void GetAlign(DOMString& aAlign);
   void SetAlign(const nsAString& aAlign, ErrorResult& aError)
   {
     SetHTMLAttr(nsGkAtoms::align, aAlign, aError);
   }
-  void GetAxis(nsString& aAxis)
+  void GetAxis(DOMString& aAxis)
   {
     GetHTMLAttr(nsGkAtoms::axis, aAxis);
   }
@@ -88,7 +87,7 @@ public:
   {
     SetHTMLAttr(nsGkAtoms::axis, aAxis, aError);
   }
-  void GetHeight(nsString& aHeight)
+  void GetHeight(DOMString& aHeight)
   {
     GetHTMLAttr(nsGkAtoms::height, aHeight);
   }
@@ -96,7 +95,7 @@ public:
   {
     SetHTMLAttr(nsGkAtoms::height, aHeight, aError);
   }
-  void GetWidth(nsString& aWidth)
+  void GetWidth(DOMString& aWidth)
   {
     GetHTMLAttr(nsGkAtoms::width, aWidth);
   }
@@ -104,7 +103,7 @@ public:
   {
     SetHTMLAttr(nsGkAtoms::width, aWidth, aError);
   }
-  void GetCh(nsString& aCh)
+  void GetCh(DOMString& aCh)
   {
     GetHTMLAttr(nsGkAtoms::_char, aCh);
   }
@@ -112,7 +111,7 @@ public:
   {
     SetHTMLAttr(nsGkAtoms::_char, aCh, aError);
   }
-  void GetChOff(nsString& aChOff)
+  void GetChOff(DOMString& aChOff)
   {
     GetHTMLAttr(nsGkAtoms::charoff, aChOff);
   }
@@ -128,7 +127,7 @@ public:
   {
     SetHTMLBoolAttr(nsGkAtoms::nowrap, aNoWrap, aError);
   }
-  void GetVAlign(nsString& aVAlign)
+  void GetVAlign(DOMString& aVAlign)
   {
     GetHTMLAttr(nsGkAtoms::valign, aVAlign);
   }
@@ -136,7 +135,7 @@ public:
   {
     SetHTMLAttr(nsGkAtoms::valign, aVAlign, aError);
   }
-  void GetBgColor(nsString& aBgColor)
+  void GetBgColor(DOMString& aBgColor)
   {
     GetHTMLAttr(nsGkAtoms::bgcolor, aBgColor);
   }
@@ -148,17 +147,17 @@ public:
   virtual bool ParseAttribute(int32_t aNamespaceID,
                               nsIAtom* aAttribute,
                               const nsAString& aValue,
-                              nsAttrValue& aResult) MOZ_OVERRIDE;
-  virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const MOZ_OVERRIDE;
-  NS_IMETHOD WalkContentStyleRules(nsRuleWalker* aRuleWalker) MOZ_OVERRIDE;
-  NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const MOZ_OVERRIDE;
+                              nsAttrValue& aResult) override;
+  virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const override;
+  NS_IMETHOD WalkContentStyleRules(nsRuleWalker* aRuleWalker) override;
+  NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const override;
 
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
 
 protected:
   virtual ~HTMLTableCellElement();
 
-  virtual JSObject* WrapNode(JSContext *aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   HTMLTableElement* GetTable() const;
 

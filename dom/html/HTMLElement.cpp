@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -10,19 +11,19 @@
 namespace mozilla {
 namespace dom {
 
-class HTMLElement MOZ_FINAL : public nsGenericHTMLElement
+class HTMLElement final : public nsGenericHTMLElement
 {
 public:
   explicit HTMLElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
   virtual ~HTMLElement();
 
-  NS_IMETHOD GetInnerHTML(nsAString& aInnerHTML) MOZ_OVERRIDE;
+  NS_IMETHOD GetInnerHTML(nsAString& aInnerHTML) override;
 
   virtual nsresult Clone(mozilla::dom::NodeInfo* aNodeInfo,
-                         nsINode** aResult) const MOZ_OVERRIDE;
+                         nsINode** aResult) const override;
 
 protected:
-  virtual JSObject* WrapNode(JSContext *aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 };
 
 HTMLElement::HTMLElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
@@ -58,9 +59,9 @@ HTMLElement::GetInnerHTML(nsAString& aInnerHTML)
 }
 
 JSObject*
-HTMLElement::WrapNode(JSContext *aCx)
+HTMLElement::WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return dom::HTMLElementBinding::Wrap(aCx, this);
+  return dom::HTMLElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 } // namespace dom

@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -82,9 +83,9 @@ SVGAnimationElement::GetTargetElementContent()
   if (HasAttr(kNameSpaceID_XLink, nsGkAtoms::href)) {
     return mHrefTarget.get();
   }
-  NS_ABORT_IF_FALSE(!mHrefTarget.get(),
-                    "We shouldn't have an xlink:href target "
-                    "if we don't have an xlink:href attribute");
+  MOZ_ASSERT(!mHrefTarget.get(),
+             "We shouldn't have an xlink:href target "
+             "if we don't have an xlink:href attribute");
 
   // No "xlink:href" attribute --> I should target my parent.
   nsIContent* parent = GetFlattenedTreeParent();
@@ -138,7 +139,8 @@ SVGAnimationElement::GetTargetElement()
   // We'll just call the other GetTargetElement method, and QI to the right type
   nsIContent* target = GetTargetElementContent();
 
-  return (target && target->IsSVG()) ? static_cast<nsSVGElement*>(target) : nullptr;
+  return (target && target->IsSVGElement())
+           ? static_cast<nsSVGElement*>(target) : nullptr;
 }
 
 float
@@ -191,9 +193,8 @@ SVGAnimationElement::BindToTree(nsIDocument* aDocument,
                                 nsIContent* aBindingParent,
                                 bool aCompileEventHandlers)
 {
-  NS_ABORT_IF_FALSE(!mHrefTarget.get(),
-                    "Shouldn't have href-target yet "
-                    "(or it should've been cleared)");
+  MOZ_ASSERT(!mHrefTarget.get(),
+             "Shouldn't have href-target yet (or it should've been cleared)");
   nsresult rv = SVGAnimationElementBase::BindToTree(aDocument, aParent,
                                                     aBindingParent,
                                                     aCompileEventHandlers);
@@ -314,8 +315,8 @@ SVGAnimationElement::AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
     mHrefTarget.Unlink();
     AnimationTargetChanged();
   } else if (IsInDoc()) {
-    NS_ABORT_IF_FALSE(aValue->Type() == nsAttrValue::eString,
-                      "Expected href attribute to be string type");
+    MOZ_ASSERT(aValue->Type() == nsAttrValue::eString,
+               "Expected href attribute to be string type");
     UpdateHrefTarget(this, aValue->GetStringValue());
   } // else: we're not yet in a document -- we'll update the target on
     // next BindToTree call.

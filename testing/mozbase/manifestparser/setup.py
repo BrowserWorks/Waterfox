@@ -5,7 +5,7 @@
 from setuptools import setup
 
 PACKAGE_NAME = "manifestparser"
-PACKAGE_VERSION = '0.9'
+PACKAGE_VERSION = '1.1'
 
 setup(name=PACKAGE_NAME,
       version=PACKAGE_VERSION,
@@ -22,6 +22,6 @@ setup(name=PACKAGE_NAME,
       install_requires=[],
       entry_points="""
       [console_scripts]
-      manifestparser = manifestparser.manifestparser:main
+      manifestparser = manifestparser.cli:main
       """,
      )

@@ -79,7 +79,7 @@
       <property name="finder" readonly="true">
         <getter><![CDATA[
           if (!this._remoteFinder) {
-            // Don't attempt to create the remote web progress if the
+            // Don't attempt to create the remote finder if the
             // messageManager has already gone away
             if (!this.messageManager)
               return null;
@@ -163,12 +163,6 @@
                 onget="return this.contentWindowAsCPOW ? this.contentWindowAsCPOW.document : null"
                 readonly="true"/>
 
-      <field name="_syncHandler">null</field>
-
-      <property name="syncHandler"
-                onget="return this._syncHandler"
-                readonly="true"/>
-
       <field name="_imageDocument">null</field>
 
       <property name="imageDocument"
@@ -203,6 +197,11 @@
           return this._isSyntheticDocument;
         ]]></getter>
       </property>
+
+      <field name="_outerWindowID">null</field>
+      <property name="outerWindowID"
+                onget="return this._outerWindowID"
+                readonly="true"/>
 
       <property name="autoCompletePopup"
                 onget="return document.getElementById(this.getAttribute('autocompletepopup'))"
@@ -239,7 +238,6 @@
           this.messageManager.addMessageListener("Browser:Init", this);
           this.messageManager.addMessageListener("DOMTitleChanged", this);
           this.messageManager.addMessageListener("ImageDocumentLoaded", this);
-          this.messageManager.addMessageListener("SetSyncHandler", this);
           this.messageManager.addMessageListener("DocumentInserted", this);
           this.messageManager.addMessageListener("FullZoomChange", this);
           this.messageManager.addMessageListener("TextZoomChange", this);
@@ -248,7 +246,7 @@
           this.messageManager.addMessageListener("DOMFullscreen:RequestRollback", this);
           this.messageManager.loadFrameScript("chrome://global/content/browser-child.js", true);
 
-          if (this.hasAttribute("selectpopup")) {
+          if (this.hasAttribute("selectmenulist")) {
             this.messageManager.addMessageListener("Forms:ShowDropDown", this);
             this.messageManager.addMessageListener("Forms:HideDropDown", this);
             this.messageManager.loadFrameScript("chrome://global/content/select-child.js", true);
@@ -289,6 +287,7 @@
           let data = aMessage.data;
           switch (aMessage.name) {
             case "Browser:Init":
+              this._outerWindowID = data.outerWindowID;
               let result = {};
               result.useGlobalHistory = !this.hasAttribute("disableglobalhistory");
               result.initPopup = this.autoCompletePopup != null;
@@ -304,21 +303,13 @@
               };
               break;
 
-            case "SetSyncHandler":
-              this._syncHandler = aMessage.objects.handler;
-              break;
-
             case "Forms:ShowDropDown": {
               Cu.import("resource://gre/modules/SelectParentHelper.jsm");
-              let dropdown = document.getElementById(this.getAttribute("selectpopup"));
-              SelectParentHelper.populate(dropdown, data.options, data.selectedIndex);
-              SelectParentHelper.open(this, dropdown, data.rect);
+              let menulist = document.getElementById(this.getAttribute("selectmenulist"));
+              SelectParentHelper.populate(menulist, data.options, data.selectedIndex);
+              SelectParentHelper.open(this, menulist, data.rect);
               break;
             }
-
-            case "DocumentInserted":
-              this._isSyntheticDocument = data.synthetic;
-              break;
 
             case "FullZoomChange": {
               this._fullZoom = data.value;
@@ -345,8 +336,8 @@
 
             case "Forms:HideDropDown": {
               Cu.import("resource://gre/modules/SelectParentHelper.jsm");
-              let dropdown = document.getElementById(this.getAttribute("selectpopup"));
-              SelectParentHelper.hide(dropdown);
+              let menulist = document.getElementById(this.getAttribute("selectmenulist"));
+              SelectParentHelper.hide(menulist);
               break;
             }
 
@@ -383,27 +374,6 @@
             }
           }
         ]]></body>
-      </method>
-
-      <!--
-        For out-of-process code, event.screen[XY] is relative to the
-        left/top of the content view. For in-process code,
-        event.screen[XY] is relative to the left/top of the screen. We
-        use this method to map screen coordinates received from a
-        (possibly out-of-process) <browser> element to coordinates
-        that are relative to the screen. This code handles the
-        out-of-process case, where we need to translate by the screen
-        position of the <browser> element.
-      -->
-      <method name="mapScreenCoordinatesFromContent">
-        <parameter name="aScreenX"/>
-        <parameter name="aScreenY"/>
-        <body>
-        <![CDATA[
-          return { x: aScreenX + this.boxObject.screenX,
-                   y: aScreenY + this.boxObject.screenY };
-        ]]>
-        </body>
       </method>
 
       <method name="enableDisableCommands">

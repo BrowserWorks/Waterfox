@@ -13,7 +13,7 @@ from mozpack.chrome.manifest import (
     is_manifest,
     parse_manifest,
 )
-import mozpack.path
+import mozpack.path as mozpath
 from collections import deque
 
 
@@ -234,10 +234,12 @@ class SimplePackager(object):
         self._chrome_queue = CallDeque()
         # Queue for formatter.add() calls.
         self._file_queue = CallDeque()
+        # All paths containing addons.
+        self._addons = set()
         # All manifest paths imported.
         self._manifests = set()
         # All manifest paths included from some other manifest.
-        self._included_manifests = set()
+        self._included_manifests = {}
         self._closed = False
 
     def add(self, path, file):
@@ -251,6 +253,8 @@ class SimplePackager(object):
             self._queue.append(self.formatter.add_interfaces, path, file)
         else:
             self._file_queue.append(self.formatter.add, path, file)
+            if mozpath.basename(path) == 'install.rdf':
+                self._addons.add(mozpath.dirname(path))
 
     def _add_manifest_file(self, path, file):
         '''
@@ -260,7 +264,7 @@ class SimplePackager(object):
         base = ''
         if hasattr(file, 'path'):
             # Find the directory the given path is relative to.
-            b = mozpack.path.normsep(file.path)
+            b = mozpath.normsep(file.path)
             if b.endswith('/' + path) or b == path:
                 base = os.path.normpath(b[:-len(path)])
         for e in parse_manifest(base, path, file.open()):
@@ -276,24 +280,42 @@ class SimplePackager(object):
                 if e.flags:
                     errors.fatal('Flags are not supported on ' +
                                  '"manifest" entries')
-                self._included_manifests.add(e.path)
+                self._included_manifests[e.path] = path
 
-    def get_bases(self):
+    def get_bases(self, addons=True):
         '''
         Return all paths under which root manifests have been found. Root
         manifests are manifests that are included in no other manifest.
+        `addons` indicates whether to include addon bases as well.
         '''
-        return set(mozpack.path.dirname(m)
-                   for m in self._manifests - self._included_manifests)
+        all_bases = set(mozpath.dirname(m)
+                        for m in self._manifests
+                                 - set(self._included_manifests))
+        if not addons:
+            all_bases -= self._addons
+        else:
+            # If for some reason some detected addon doesn't have a
+            # non-included manifest.
+            all_bases |= self._addons
+        return all_bases
 
     def close(self):
         '''
         Push all instructions to the formatter.
         '''
         self._closed = True
-        for base in self.get_bases():
+
+        bases = self.get_bases()
+        broken_bases = sorted(
+            m for m, includer in self._included_manifests.iteritems()
+            if mozpath.basedir(m, bases) != mozpath.basedir(includer, bases))
+        for m in broken_bases:
+            errors.fatal('"%s" is included from "%s", which is outside "%s"' %
+                         (m, self._included_manifests[m],
+                          mozpath.basedir(m, bases)))
+        for base in bases:
             if base:
-                self.formatter.add_base(base)
+                self.formatter.add_base(base, base in self._addons)
         self._chrome_queue.execute()
         self._queue.execute()
         self._file_queue.execute()
@@ -324,8 +346,8 @@ class SimpleManifestSink(object):
         '''
         Remove any bin/ prefix.
         '''
-        if mozpack.path.basedir(path, ['bin']) == 'bin':
-            return mozpack.path.relpath(path, 'bin')
+        if mozpath.basedir(path, ['bin']) == 'bin':
+            return mozpath.relpath(path, 'bin')
         return path
 
     def add(self, component, pattern):
@@ -338,7 +360,7 @@ class SimpleManifestSink(object):
             added = True
             if is_manifest(p):
                 self._manifests.add(p)
-            dest = mozpack.path.join(component.destdir, SimpleManifestSink.normalize_path(p))
+            dest = mozpath.join(component.destdir, SimpleManifestSink.normalize_path(p))
             self.packager.add(dest, f)
         if not added:
             errors.error('Missing file(s): %s' % pattern)
@@ -357,9 +379,9 @@ class SimpleManifestSink(object):
         if auto_root_manifest:
             # Simple package manifests don't contain the root manifests, so
             # find and add them.
-            paths = [mozpack.path.dirname(m) for m in self._manifests]
-            path = mozpack.path.dirname(mozpack.path.commonprefix(paths))
-            for p, f in self._finder.find(mozpack.path.join(path,
+            paths = [mozpath.dirname(m) for m in self._manifests]
+            path = mozpath.dirname(mozpath.commonprefix(paths))
+            for p, f in self._finder.find(mozpath.join(path,
                                           'chrome.manifest')):
                 if not p in self._manifests:
                     self.packager.add(SimpleManifestSink.normalize_path(p), f)

@@ -43,11 +43,16 @@
 #include "nsDebug.h"                    // for NS_ASSERTION, etc
 #include "nsISupportsImpl.h"            // for gfxContext::Release, etc
 #include "nsPoint.h"                    // for nsIntPoint
-#include "nsRect.h"                     // for nsIntRect
+#include "nsRect.h"                     // for mozilla::gfx::IntRect
 #include "nsRegion.h"                   // for nsIntRegion, etc
 #include "nsTArray.h"                   // for nsAutoTArray
+#ifdef MOZ_ENABLE_SKIA
 #include "skia/SkCanvas.h"              // for SkCanvas
 #include "skia/SkBitmapDevice.h"        // for SkBitmapDevice
+#else
+#define PIXMAN_DONT_DEFINE_STDINT
+#include "pixman.h"                     // for pixman_f_transform, etc
+#endif
 class nsIWidget;
 
 namespace mozilla {
@@ -62,7 +67,7 @@ using namespace mozilla::gfx;
  * aRect.
  */
 static bool
-ClipToContain(gfxContext* aContext, const nsIntRect& aRect)
+ClipToContain(gfxContext* aContext, const IntRect& aRect)
 {
   gfxRect userRect(aRect.x, aRect.y, aRect.width, aRect.height);
   gfxRect deviceRect = aContext->UserToDevice(userRect);
@@ -110,12 +115,12 @@ BasicLayerManager::PushGroupForLayer(gfxContext* aContext, Layer* aLayer,
   return result.forget();
 }
 
-static nsIntRect
+static IntRect
 ToInsideIntRect(const gfxRect& aRect)
 {
   gfxRect r = aRect;
   r.RoundIn();
-  return nsIntRect(r.X(), r.Y(), r.Width(), r.Height());
+  return IntRect(r.X(), r.Y(), r.Width(), r.Height());
 }
 
 // A context helper for BasicLayerManager::PaintLayer() that holds all the
@@ -164,7 +169,7 @@ public:
   void AnnotateOpaqueRect()
   {
     const nsIntRegion& visibleRegion = mLayer->GetEffectiveVisibleRegion();
-    const nsIntRect& bounds = visibleRegion.GetBounds();
+    const IntRect& bounds = visibleRegion.GetBounds();
 
     DrawTarget *dt = mTarget->GetDrawTarget();
     const IntRect& targetOpaqueRect = dt->GetOpaqueRect();
@@ -276,8 +281,8 @@ BasicLayerManager::BeginTransactionWithTarget(gfxContext* aTarget)
 }
 
 static void
-TransformIntRect(nsIntRect& aRect, const Matrix& aMatrix,
-                 nsIntRect (*aRoundMethod)(const gfxRect&))
+TransformIntRect(IntRect& aRect, const Matrix& aMatrix,
+                 IntRect (*aRoundMethod)(const gfxRect&))
 {
   Rect gr = Rect(aRect.x, aRect.y, aRect.width, aRect.height);
   gr = aMatrix.TransformBounds(gr);
@@ -304,12 +309,12 @@ enum {
     ALLOW_OPAQUE = 0x01,
 };
 static void
-MarkLayersHidden(Layer* aLayer, const nsIntRect& aClipRect,
-                 const nsIntRect& aDirtyRect,
+MarkLayersHidden(Layer* aLayer, const IntRect& aClipRect,
+                 const IntRect& aDirtyRect,
                  nsIntRegion& aOpaqueRegion,
                  uint32_t aFlags)
 {
-  nsIntRect newClipRect(aClipRect);
+  IntRect newClipRect(aClipRect);
   uint32_t newFlags = aFlags;
 
   // Allow aLayer or aLayer's descendants to cover underlying layers
@@ -319,9 +324,9 @@ MarkLayersHidden(Layer* aLayer, const nsIntRect& aClipRect,
   }
 
   {
-    const nsIntRect* clipRect = aLayer->GetEffectiveClipRect();
+    const Maybe<ParentLayerIntRect>& clipRect = aLayer->GetEffectiveClipRect();
     if (clipRect) {
-      nsIntRect cr = *clipRect;
+      IntRect cr = ParentLayerIntRect::ToUntyped(*clipRect);
       // clipRect is in the container's coordinate system. Get it into the
       // global coordinate system.
       if (aLayer->GetParent()) {
@@ -351,7 +356,7 @@ MarkLayersHidden(Layer* aLayer, const nsIntRect& aClipRect,
     }
 
     nsIntRegion region = aLayer->GetEffectiveVisibleRegion();
-    nsIntRect r = region.GetBounds();
+    IntRect r = region.GetBounds();
     TransformIntRect(r, transform, ToOutsideIntRect);
     r.IntersectRect(r, aDirtyRect);
     data->SetHidden(aOpaqueRegion.Contains(r));
@@ -361,7 +366,7 @@ MarkLayersHidden(Layer* aLayer, const nsIntRect& aClipRect,
     if ((aLayer->GetContentFlags() & Layer::CONTENT_OPAQUE) &&
         (newFlags & ALLOW_OPAQUE)) {
       nsIntRegionRectIterator it(region);
-      while (const nsIntRect* sr = it.Next()) {
+      while (const IntRect* sr = it.Next()) {
         r = *sr;
         TransformIntRect(r, transform, ToInsideIntRect);
 
@@ -390,18 +395,18 @@ MarkLayersHidden(Layer* aLayer, const nsIntRect& aClipRect,
  * clipped and in the dirty rect), in the root coordinate system.
  */
 static void
-ApplyDoubleBuffering(Layer* aLayer, const nsIntRect& aVisibleRect)
+ApplyDoubleBuffering(Layer* aLayer, const IntRect& aVisibleRect)
 {
   BasicImplData* data = ToData(aLayer);
   if (data->IsHidden())
     return;
 
-  nsIntRect newVisibleRect(aVisibleRect);
+  IntRect newVisibleRect(aVisibleRect);
 
   {
-    const nsIntRect* clipRect = aLayer->GetEffectiveClipRect();
+    const Maybe<ParentLayerIntRect>& clipRect = aLayer->GetEffectiveClipRect();
     if (clipRect) {
-      nsIntRect cr = *clipRect;
+      IntRect cr = ParentLayerIntRect::ToUntyped(*clipRect);
       // clipRect is in the container's coordinate system. Get it into the
       // global coordinate system.
       if (aLayer->GetParent()) {
@@ -509,7 +514,7 @@ BasicLayerManager::EndTransactionInternal(DrawPaintedLayerCallback aCallback,
   if (mTarget && mRoot &&
       !(aFlags & END_NO_IMMEDIATE_REDRAW) &&
       !(aFlags & END_NO_COMPOSITE)) {
-    nsIntRect clipRect;
+    IntRect clipRect;
 
     {
       gfxContextMatrixAutoSaveRestore save(mTarget);
@@ -528,7 +533,7 @@ BasicLayerManager::EndTransactionInternal(DrawPaintedLayerCallback aCallback,
     PaintLayer(mTarget, mRoot, aCallback, aCallbackData);
     if (!mRegionToClear.IsEmpty()) {
       nsIntRegionRectIterator iter(mRegionToClear);
-      const nsIntRect *r;
+      const IntRect *r;
       while ((r = iter.Next())) {
         mTarget->GetDrawTarget()->ClearRect(Rect(r->x, r->y, r->width, r->height));
       }
@@ -606,6 +611,7 @@ BasicLayerManager::SetRoot(Layer* aLayer)
   mRoot = aLayer;
 }
 
+#ifdef MOZ_ENABLE_SKIA
 static SkMatrix
 BasicLayerManager_Matrix3DToSkia(const gfx3DMatrix& aMatrix)
 {
@@ -624,16 +630,16 @@ BasicLayerManager_Matrix3DToSkia(const gfx3DMatrix& aMatrix)
 }
 
 static void
-SkiaTransform(const gfxImageSurface* aDest,
-              RefPtr<DataSourceSurface> aSrc,
-              const gfx3DMatrix& aTransform,
-              gfxPoint aDestOffset)
+Transform(const gfxImageSurface* aDest,
+          RefPtr<DataSourceSurface> aSrc,
+          const gfx3DMatrix& aTransform,
+          gfxPoint aDestOffset)
 {
   if (aTransform.IsSingular()) {
     return;
   }
 
-  IntSize destSize = ToIntSize(aDest->GetSize());
+  IntSize destSize = aDest->GetSize();
   SkImageInfo destInfo = SkImageInfo::Make(destSize.width,
                                            destSize.height,
                                            kBGRA_8888_SkColorType,
@@ -663,6 +669,78 @@ SkiaTransform(const gfxImageSurface* aDest,
   SkRect destRect = SkRect::MakeXYWH(0, 0, srcSize.width, srcSize.height);
   destCanvas.drawBitmapRectToRect(src, nullptr, destRect, &paint);
 }
+#else
+static pixman_transform
+BasicLayerManager_Matrix3DToPixman(const gfx3DMatrix& aMatrix)
+{
+  pixman_f_transform transform;
+
+  transform.m[0][0] = aMatrix._11;
+  transform.m[0][1] = aMatrix._21;
+  transform.m[0][2] = aMatrix._41;
+  transform.m[1][0] = aMatrix._12;
+  transform.m[1][1] = aMatrix._22;
+  transform.m[1][2] = aMatrix._42;
+  transform.m[2][0] = aMatrix._14;
+  transform.m[2][1] = aMatrix._24;
+  transform.m[2][2] = aMatrix._44;
+
+  pixman_transform result;
+  pixman_transform_from_pixman_f_transform(&result, &transform);
+
+  return result;
+}
+
+static void
+Transform(const gfxImageSurface* aDest,
+          RefPtr<DataSourceSurface> aSrc,
+          const gfx3DMatrix& aTransform,
+          gfxPoint aDestOffset)
+{
+  IntSize destSize = aDest->GetSize();
+  pixman_image_t* dest = pixman_image_create_bits(aDest->Format() == gfxImageFormat::ARGB32 ? PIXMAN_a8r8g8b8 : PIXMAN_x8r8g8b8,
+                                                  destSize.width,
+                                                  destSize.height,
+                                                  (uint32_t*)aDest->Data(),
+                                                  aDest->Stride());
+
+  IntSize srcSize = aSrc->GetSize();
+  pixman_image_t* src = pixman_image_create_bits(aSrc->GetFormat() == SurfaceFormat::B8G8R8A8 ? PIXMAN_a8r8g8b8 : PIXMAN_x8r8g8b8,
+                                                 srcSize.width,
+                                                 srcSize.height,
+                                                 (uint32_t*)aSrc->GetData(),
+                                                 aSrc->Stride());
+
+  MOZ_ASSERT(src != 0 && dest !=0, "Failed to create pixman images?");
+
+  pixman_transform pixTransform = BasicLayerManager_Matrix3DToPixman(aTransform);
+  pixman_transform pixTransformInverted;
+
+  // If the transform is singular then nothing would be drawn anyway, return here
+  if (!pixman_transform_invert(&pixTransformInverted, &pixTransform)) {
+    pixman_image_unref(dest);
+    pixman_image_unref(src);
+    return;
+  }
+  pixman_image_set_transform(src, &pixTransformInverted);
+
+  pixman_image_composite32(PIXMAN_OP_SRC,
+                           src,
+                           nullptr,
+                           dest,
+                           aDestOffset.x,
+                           aDestOffset.y,
+                           0,
+                           0,
+                           0,
+                           0,
+                           destSize.width,
+                           destSize.height);
+
+  pixman_image_unref(dest);
+  pixman_image_unref(src);
+}
+#endif
 
 /**
  * Transform a surface using a gfx3DMatrix and blit to the destination if
@@ -704,7 +782,7 @@ Transform3D(RefPtr<SourceSurface> aSource,
   gfx3DMatrix translation = gfx3DMatrix::Translation(aBounds.x, aBounds.y, 0);
 
   // Transform the content and offset it such that the content begins at the origin.
-  SkiaTransform(destImage, aSource->GetDataSurface(), translation * aTransform, offset);
+  Transform(destImage, aSource->GetDataSurface(), translation * aTransform, offset);
 
   // If we haven't actually drawn to aDest then return our temporary image so
   // that the caller can do this.
@@ -787,7 +865,7 @@ BasicLayerManager::PaintLayer(gfxContext* aTarget,
 
   RenderTraceScope trace("BasicLayerManager::PaintLayer", "707070");
 
-  const nsIntRect* clipRect = aLayer->GetEffectiveClipRect();
+  const Maybe<ParentLayerIntRect>& clipRect = aLayer->GetEffectiveClipRect();
   BasicContainerLayer* container =
     static_cast<BasicContainerLayer*>(aLayer->AsContainerLayer());
   bool needsGroup = container && container->UseIntermediateSurface();
@@ -805,7 +883,7 @@ BasicLayerManager::PaintLayer(gfxContext* aTarget,
   gfxMatrix transform;
   // Will return an identity matrix for 3d transforms, and is handled separately below.
   bool is2D = paintLayerContext.Setup2DTransform();
-  NS_ABORT_IF_FALSE(is2D || needsGroup || !container, "Must PushGroup for 3d transforms!");
+  MOZ_ASSERT(is2D || needsGroup || !container, "Must PushGroup for 3d transforms!");
 
   bool needsSaveRestore =
     needsGroup || clipRect || needsClipToVisibleRegion || !is2D;
@@ -850,7 +928,7 @@ BasicLayerManager::PaintLayer(gfxContext* aTarget,
       PaintSelfOrChildren(paintLayerContext, aTarget);
     }
   } else {
-    const nsIntRect& bounds = visibleRegion.GetBounds();
+    const IntRect& bounds = visibleRegion.GetBounds();
     RefPtr<DrawTarget> untransformedDT =
       gfxPlatform::GetPlatform()->CreateOffscreenContentDrawTarget(IntSize(bounds.width, bounds.height),
                                                                    SurfaceFormat::B8G8R8A8);
@@ -865,8 +943,8 @@ BasicLayerManager::PaintLayer(gfxContext* aTarget,
 
     // Temporary fast fix for bug 725886
     // Revert these changes when 725886 is ready
-    NS_ABORT_IF_FALSE(untransformedDT,
-                      "We should always allocate an untransformed surface with 3d transforms!");
+    MOZ_ASSERT(untransformedDT,
+               "We should always allocate an untransformed surface with 3d transforms!");
     gfxRect destRect;
 #ifdef DEBUG
     if (aLayer->GetDebugColorIndex() != 0) {

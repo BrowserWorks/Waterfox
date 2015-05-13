@@ -14,8 +14,6 @@
 #include "nsClassHashtable.h"
 #include "nsWrapperCache.h"
 
-class nsPIDOMWindow;
-
 namespace mozilla {
 
 class ErrorResult;
@@ -23,9 +21,8 @@ class ErrorResult;
 namespace dom {
 
 template<typename T> class MozMap;
-class HeadersOrByteStringSequenceSequenceOrByteStringMozMap;
 
-class InternalHeaders MOZ_FINAL
+class InternalHeaders final
 {
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(InternalHeaders)
 
@@ -61,6 +58,9 @@ public:
     MOZ_ASSERT(!result.Failed());
   }
 
+  explicit InternalHeaders(const nsTArray<Entry>&& aHeaders,
+                           HeadersGuardEnum aGuard = HeadersGuardEnum::None);
+
   void Append(const nsACString& aName, const nsACString& aValue,
               ErrorResult& aRv);
   void Delete(const nsACString& aName, ErrorResult& aRv);
@@ -89,11 +89,12 @@ public:
 
   void
   GetEntries(nsTArray<InternalHeaders::Entry>& aEntries) const;
+
+  void
+  GetUnsafeHeaders(nsTArray<nsCString>& aNames) const;
 private:
   virtual ~InternalHeaders();
 
-  static bool IsSimpleHeader(const nsACString& aName,
-                             const nsACString& aValue);
   static bool IsInvalidName(const nsACString& aName, ErrorResult& aRv);
   static bool IsInvalidValue(const nsACString& aValue, ErrorResult& aRv);
   bool IsImmutable(ErrorResult& aRv) const;
@@ -120,6 +121,9 @@ private:
            IsForbiddenRequestNoCorsHeader(aName, aValue) ||
            IsForbiddenResponseHeader(aName);
   }
+
+  static bool IsSimpleHeader(const nsACString& aName,
+                             const nsACString& aValue);
 };
 
 } // namespace dom

@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 sw=2 et tw=79: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -50,6 +50,7 @@
 #include "nsThreadUtils.h"
 #include "mozilla/dom/NodeListBinding.h"
 #include "mozilla/dom/ScriptSettings.h"
+#include "mozilla/unused.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -250,7 +251,7 @@ nsBindingManager::ResolveTag(nsIContent* aContent, int32_t* aNameSpaceID)
   }
 
   *aNameSpaceID = aContent->GetNameSpaceID();
-  return aContent->Tag();
+  return aContent->NodeInfo()->NameAtom();
 }
 
 nsresult
@@ -344,8 +345,7 @@ nsBindingManager::RemoveFromAttachedQueue(nsXBLBinding* aBinding)
 nsresult
 nsBindingManager::AddToAttachedQueue(nsXBLBinding* aBinding)
 {
-  if (!mAttachedStack.AppendElement(aBinding))
-    return NS_ERROR_OUT_OF_MEMORY;
+  mAttachedStack.AppendElement(aBinding);
 
   // If we're in the middle of processing our queue already, don't
   // bother posting the event.
@@ -406,7 +406,9 @@ nsBindingManager::DoProcessAttachedQueue()
     }
     if (NS_SUCCEEDED(rv)) {
       NS_ADDREF_THIS();
-      NS_ADDREF(timer);
+      // We drop our reference to the timer here, since the timer callback is
+      // responsible for releasing the object.
+      unused << timer.forget().take();
     }
   }
 

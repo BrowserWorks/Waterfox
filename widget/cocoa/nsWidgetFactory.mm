@@ -7,6 +7,7 @@
 #include "nsISupports.h"
 #include "nsIComponentManager.h"
 #include "mozilla/ModuleUtils.h"
+#include "mozilla/WidgetUtils.h"
 
 #include "nsWidgetsCID.h"
 
@@ -37,8 +38,6 @@
 #include "nsPrintDialogX.h"
 #include "nsPrintSession.h"
 #include "nsToolkitCompsCID.h"
-
-#include "mozilla/Module.h"
 
 using namespace mozilla;
 using namespace mozilla::widget;
@@ -136,7 +135,8 @@ static const mozilla::Module::CIDEntry kWidgetCIDs[] = {
   { &kNS_CLIPBOARDHELPER_CID, false, NULL, nsClipboardHelperConstructor },
   { &kNS_DRAGSERVICE_CID, false, NULL, nsDragServiceConstructor,
     mozilla::Module::MAIN_PROCESS_ONLY },
-  { &kNS_BIDIKEYBOARD_CID, false, NULL, nsBidiKeyboardConstructor },
+  { &kNS_BIDIKEYBOARD_CID, false, NULL, nsBidiKeyboardConstructor,
+    mozilla::Module::MAIN_PROCESS_ONLY },
   { &kNS_THEMERENDERER_CID, false, NULL, nsNativeThemeCocoaConstructor },
   { &kNS_SCREENMANAGER_CID, false, NULL, nsScreenManagerCocoaConstructor,
     mozilla::Module::MAIN_PROCESS_ONLY },
@@ -173,7 +173,8 @@ static const mozilla::Module::ContractIDEntry kWidgetContracts[] = {
   { "@mozilla.org/widget/clipboardhelper;1", &kNS_CLIPBOARDHELPER_CID },
   { "@mozilla.org/widget/dragservice;1", &kNS_DRAGSERVICE_CID,
     mozilla::Module::MAIN_PROCESS_ONLY },
-  { "@mozilla.org/widget/bidikeyboard;1", &kNS_BIDIKEYBOARD_CID },
+  { "@mozilla.org/widget/bidikeyboard;1", &kNS_BIDIKEYBOARD_CID,
+    mozilla::Module::MAIN_PROCESS_ONLY },
   { "@mozilla.org/chrome/chrome-native-theme;1", &kNS_THEMERENDERER_CID },
   { "@mozilla.org/gfx/screenmanager;1", &kNS_SCREENMANAGER_CID,
     mozilla::Module::MAIN_PROCESS_ONLY },
@@ -195,6 +196,9 @@ static const mozilla::Module::ContractIDEntry kWidgetContracts[] = {
 static void
 nsWidgetCocoaModuleDtor()
 {
+  // Shutdown all XP level widget classes.
+  WidgetUtils::Shutdown();
+
   NativeKeyBindings::Shutdown();
   nsLookAndFeel::Shutdown();
   nsToolkit::Shutdown();

@@ -39,8 +39,7 @@ nsresult RawReader::ResetDecode()
 nsresult RawReader::ReadMetadata(MediaInfo* aInfo,
                                  MetadataTags** aTags)
 {
-  NS_ASSERTION(mDecoder->OnDecodeThread(),
-               "Should be on decode thread.");
+  MOZ_ASSERT(OnTaskQueue());
 
   MediaResource* resource = mDecoder->GetResource();
   NS_ASSERTION(resource, "Decoder has no media resource");
@@ -76,7 +75,6 @@ nsresult RawReader::ReadMetadata(MediaInfo* aInfo,
     return NS_ERROR_FAILURE;
   }
 
-  mInfo.mVideo.mHasVideo = true;
   mInfo.mVideo.mDisplay = display;
 
   mFrameRate = static_cast<float>(mMetadata.framerateNumerator) /
@@ -121,8 +119,7 @@ RawReader::IsMediaSeekable()
 
  bool RawReader::DecodeAudioData()
 {
-  NS_ASSERTION(mDecoder->OnStateMachineThread() || mDecoder->OnDecodeThread(),
-               "Should be on state machine thread or decode thread.");
+  MOZ_ASSERT(OnTaskQueue() || mDecoder->OnStateMachineTaskQueue());
   return false;
 }
 
@@ -152,13 +149,11 @@ bool RawReader::ReadFromResource(MediaResource *aResource, uint8_t* aBuf,
 bool RawReader::DecodeVideoFrame(bool &aKeyframeSkip,
                                      int64_t aTimeThreshold)
 {
-  NS_ASSERTION(mDecoder->OnDecodeThread(),
-               "Should be on decode thread.");
+  MOZ_ASSERT(OnTaskQueue());
 
   // Record number of frames decoded and parsed. Automatically update the
   // stats counters using the AutoNotifyDecoded stack-based class.
-  uint32_t parsed = 0, decoded = 0;
-  AbstractMediaDecoder::AutoNotifyDecoded autoNotify(mDecoder, parsed, decoded);
+  AbstractMediaDecoder::AutoNotifyDecoded a(mDecoder);
 
   if (!mFrameSize)
     return false; // Metadata read failed.  We should refuse to play.
@@ -185,7 +180,7 @@ bool RawReader::DecodeVideoFrame(bool &aKeyframeSkip,
       return false;
     }
 
-    parsed++;
+    a.mParsed++;
 
     if (currentFrameTime >= aTimeThreshold)
       break;
@@ -223,20 +218,19 @@ bool RawReader::DecodeVideoFrame(bool &aKeyframeSkip,
                                             b,
                                             1, // In raw video every frame is a keyframe
                                             -1,
-                                            ToIntRect(mPicture));
+                                            mPicture);
   if (!v)
     return false;
 
   mVideoQueue.Push(v);
   mCurrentFrame++;
-  decoded++;
-  currentFrameTime += USECS_PER_S / mFrameRate;
+  a.mDecoded++;
 
   return true;
 }
 
 nsRefPtr<MediaDecoderReader::SeekPromise>
-RawReader::Seek(int64_t aTime, int64_t aStartTime, int64_t aEndTime, int64_t aCurrentTime)
+RawReader::Seek(int64_t aTime, int64_t aEndTime)
 {
   nsresult res = SeekInternal(aTime);
   if (NS_FAILED(res)) {
@@ -248,8 +242,7 @@ RawReader::Seek(int64_t aTime, int64_t aStartTime, int64_t aEndTime, int64_t aCu
 
 nsresult RawReader::SeekInternal(int64_t aTime)
 {
-  NS_ASSERTION(mDecoder->OnDecodeThread(),
-               "Should be on decode thread.");
+  MOZ_ASSERT(OnTaskQueue());
 
   MediaResource *resource = mDecoder->GetResource();
   NS_ASSERTION(resource, "Decoder has no media resource");

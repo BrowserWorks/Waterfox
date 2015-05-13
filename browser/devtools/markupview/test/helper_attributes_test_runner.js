@@ -26,8 +26,6 @@ function runAddAttributesTests(tests, nodeOrSelector, inspector) {
     for (let test of tests) {
       yield runAddAttributesTest(test, "div", inspector);
     }
-
-    yield inspector.once("inspector-updated");
   });
 }
 
@@ -58,7 +56,7 @@ function* runAddAttributesTest(test, selector, inspector) {
   yield addNewAttributes(selector, test.text, inspector);
 
   info("Assert that the attribute(s) has/have been applied correctly");
-  assertAttributes(element, test.expectedAttributes);
+  yield assertAttributes(selector, test.expectedAttributes);
 
   if (test.validate) {
     let container = yield getContainerForSelector(selector, inspector);
@@ -69,7 +67,7 @@ function* runAddAttributesTest(test, selector, inspector) {
   yield undoChange(inspector);
 
   info("Assert that the attribute(s) has/have been removed correctly");
-  assertAttributes(element, {});
+  yield assertAttributes(selector, {});
 }
 
 /**
@@ -123,7 +121,7 @@ function* runEditAttributesTest(test, inspector) {
   yield selectNode(test.node, inspector);
 
   info("Asserting that the node has the right attributes to start with");
-  assertAttributes(test.node, test.originalAttributes);
+  yield assertAttributes(test.node, test.originalAttributes);
 
   info("Editing attribute " + test.name + " with value " + test.value);
 
@@ -133,18 +131,18 @@ function* runEditAttributesTest(test, inspector) {
 
   info("Listening for the markupmutation event");
   let nodeMutated = inspector.once("markupmutation");
-  let attr = container.editor.attrs[test.name].querySelector(".editable");
+  let attr = container.editor.attrElements.get(test.name).querySelector(".editable");
   setEditableFieldValue(attr, test.value, inspector);
   yield nodeMutated;
 
   info("Asserting the new attributes after edition");
-  assertAttributes(test.node, test.expectedAttributes);
+  yield assertAttributes(test.node, test.expectedAttributes);
 
   info("Undo the change and assert that the attributes have been changed back");
   yield undoChange(inspector);
-  assertAttributes(test.node, test.originalAttributes);
+  yield assertAttributes(test.node, test.originalAttributes);
 
   info("Redo the change and assert that the attributes have been changed again");
   yield redoChange(inspector);
-  assertAttributes(test.node, test.expectedAttributes);
+  yield assertAttributes(test.node, test.expectedAttributes);
 }

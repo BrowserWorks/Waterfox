@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -6,15 +8,12 @@
 #define mozilla_dom_indexeddb_actorsparent_h__
 
 template <class> struct already_AddRefed;
-class nsCString;
-struct nsID;
 class nsIPrincipal;
-class nsPIDOMWindow;
 
 namespace mozilla {
 namespace dom {
 
-class TabParent;
+class Element;
 
 namespace quota {
 
@@ -39,7 +38,7 @@ bool
 DeallocPBackgroundIDBFactoryParent(PBackgroundIDBFactoryParent* aActor);
 
 PIndexedDBPermissionRequestParent*
-AllocPIndexedDBPermissionRequestParent(nsPIDOMWindow* aWindow,
+AllocPIndexedDBPermissionRequestParent(Element* aOwnerElement,
                                        nsIPrincipal* aPrincipal);
 
 bool

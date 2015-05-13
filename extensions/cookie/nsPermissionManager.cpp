@@ -185,7 +185,7 @@ GetNextSubDomainForHost(const nsACString& aHost)
   return subDomain;
 }
 
-class AppClearDataObserver MOZ_FINAL : public nsIObserver {
+class AppClearDataObserver final : public nsIObserver {
   ~AppClearDataObserver() {}
 
 public:
@@ -193,7 +193,7 @@ public:
 
   // nsIObserver implementation.
   NS_IMETHODIMP
-  Observe(nsISupports *aSubject, const char *aTopic, const char16_t *data) MOZ_OVERRIDE
+  Observe(nsISupports *aSubject, const char *aTopic, const char16_t *data) override
   {
     MOZ_ASSERT(!nsCRT::strcmp(aTopic, "webapps-clear-data"));
 
@@ -247,7 +247,7 @@ nsPermissionManager::PermissionKey::PermissionKey(nsIPrincipal* aPrincipal)
  * Note: Once the callback has been called this DeleteFromMozHostListener cannot
  * be reused.
  */
-class CloseDatabaseListener MOZ_FINAL : public mozIStorageCompletionCallback
+class CloseDatabaseListener final : public mozIStorageCompletionCallback
 {
   ~CloseDatabaseListener() {}
 
@@ -298,7 +298,7 @@ CloseDatabaseListener::Complete(nsresult, nsISupports*)
  * Note: Once the callback has been called this DeleteFromMozHostListener cannot
  * be reused.
  */
-class DeleteFromMozHostListener MOZ_FINAL : public mozIStorageStatementCallback
+class DeleteFromMozHostListener final : public mozIStorageStatementCallback
 {
   ~DeleteFromMozHostListener() {}
 
@@ -362,10 +362,8 @@ static const char kPermissionsFileName[] = "permissions.sqlite";
 static const char kHostpermFileName[] = "hostperm.1";
 
 // Default permissions are read from a URL - this is the preference we read
-// to find that URL.
+// to find that URL. If not set, don't use any default permissions.
 static const char kDefaultsUrlPrefName[] = "permissions.manager.defaultsUrl";
-// If the pref above doesn't exist, the URL we use by default.
-static const char kDefaultsUrl[] = "resource://app/chrome/browser/default_permissions";
 
 static const char kPermissionChangeNotification[] = PERM_CHANGE_NOTIFICATION;
 
@@ -421,34 +419,26 @@ nsPermissionManager::Init()
   }
 
   if (IsChildProcess()) {
-    // Get the permissions from the parent process
-    InfallibleTArray<IPC::Permission> perms;
-    ChildProcess()->SendReadPermissions(&perms);
-
-    for (uint32_t i = 0; i < perms.Length(); i++) {
-      const IPC::Permission &perm = perms[i];
-
-      nsCOMPtr<nsIPrincipal> principal;
-      rv = GetPrincipal(perm.host, perm.appId, perm.isInBrowserElement, getter_AddRefs(principal));
-      NS_ENSURE_SUCCESS(rv, rv);
-
-      // The child process doesn't care about modification times - it neither
-      // reads nor writes, nor removes them based on the date - so 0 (which
-      // will end up as now()) is fine.
-      uint64_t modificationTime = 0;
-      AddInternal(principal, perm.type, perm.capability, 0, perm.expireType,
-                  perm.expireTime, modificationTime, eNotify, eNoDBOperation,
-                  true /* ignoreSessionPermissions */);
-    }
-
     // Stop here; we don't need the DB in the child process
-    return NS_OK;
+    return FetchPermissions();
   }
 
   // ignore failure here, since it's non-fatal (we can run fine without
   // persistent storage - e.g. if there's no profile).
   // XXX should we tell the user about this?
   InitDB(false);
+
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsPermissionManager::RefreshPermission() {
+  NS_ENSURE_TRUE(IsChildProcess(), NS_ERROR_FAILURE);
+
+  nsresult rv = RemoveAllFromMemory();
+  NS_ENSURE_SUCCESS(rv, rv);
+  rv = FetchPermissions();
+  NS_ENSURE_SUCCESS(rv, rv);
 
   return NS_OK;
 }
@@ -1892,27 +1882,21 @@ nsPermissionManager::Import()
 nsresult
 nsPermissionManager::ImportDefaults()
 {
-  // We allow prefs to override the default permissions URI, mainly as a hook
-  // for testing.
-  nsCString defaultsURL;
-  if (mozilla::Preferences::HasUserValue(kDefaultsUrlPrefName)) {
-    defaultsURL = mozilla::Preferences::GetCString(kDefaultsUrlPrefName);
-  } else {
-    defaultsURL = NS_LITERAL_CSTRING(kDefaultsUrl);
+  nsCString defaultsURL = mozilla::Preferences::GetCString(kDefaultsUrlPrefName);
+  if (defaultsURL.IsEmpty()) { // == Don't use built-in permissions.
+    return NS_OK;
   }
 
-  nsresult rv;
-  nsCOMPtr<nsIIOService> ioservice =
-    do_GetService("@mozilla.org/network/io-service;1", &rv);
-  NS_ENSURE_SUCCESS(rv, rv);
-
   nsCOMPtr<nsIURI> defaultsURI;
-  rv = NS_NewURI(getter_AddRefs(defaultsURI), defaultsURL,
-                 nullptr, nullptr, ioservice);
+  nsresult rv = NS_NewURI(getter_AddRefs(defaultsURI), defaultsURL);
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsCOMPtr<nsIChannel> channel;
-  rv = ioservice->NewChannelFromURI(defaultsURI, getter_AddRefs(channel));
+  rv = NS_NewChannel(getter_AddRefs(channel),
+                     defaultsURI,
+                     nsContentUtils::GetSystemPrincipal(),
+                     nsILoadInfo::SEC_NORMAL,
+                     nsIContentPolicy::TYPE_OTHER);
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsCOMPtr<nsIInputStream> inputStream;
@@ -2219,6 +2203,32 @@ nsPermissionManager::UpdateExpireTime(nsIPrincipal* aPrincipal,
     perm.mExpireTime = aPersistentExpireTime;
   } else if (perm.mExpireType == EXPIRE_SESSION && perm.mExpireTime != 0) {
     perm.mExpireTime = aSessionExpireTime;
+  }
+  return NS_OK;
+}
+
+nsresult
+nsPermissionManager::FetchPermissions() {
+  MOZ_ASSERT(IsChildProcess(), "FetchPermissions can only be invoked in child process");
+  // Get the permissions from the parent process
+  InfallibleTArray<IPC::Permission> perms;
+  ChildProcess()->SendReadPermissions(&perms);
+
+  for (uint32_t i = 0; i < perms.Length(); i++) {
+    const IPC::Permission &perm = perms[i];
+
+    nsCOMPtr<nsIPrincipal> principal;
+    nsresult rv = GetPrincipal(perm.host, perm.appId,
+                               perm.isInBrowserElement, getter_AddRefs(principal));
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    // The child process doesn't care about modification times - it neither
+    // reads nor writes, nor removes them based on the date - so 0 (which
+    // will end up as now()) is fine.
+    uint64_t modificationTime = 0;
+    AddInternal(principal, perm.type, perm.capability, 0, perm.expireType,
+                perm.expireTime, modificationTime, eNotify, eNoDBOperation,
+                true /* ignoreSessionPermissions */);
   }
   return NS_OK;
 }

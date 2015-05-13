@@ -425,8 +425,7 @@ nsXULTemplateQueryProcessorRDF::CompileQuery(nsIXULTemplateBuilder* aBuilder,
 
     mQueries.AppendElement(query);
 
-    *_retval = query;
-    NS_ADDREF(*_retval);
+    query.forget(_retval);
 
     return NS_OK;
 }
@@ -484,7 +483,6 @@ nsXULTemplateQueryProcessorRDF::GenerateResults(nsISupports* aDatasource,
                 mLastRef = aRef;
             }
 
-#ifdef PR_LOGGING
             if (PR_LOG_TEST(gXULTemplateLog, PR_LOG_DEBUG)) {
                 nsAutoString id;
                 aRef->GetId(id);
@@ -500,7 +498,6 @@ nsXULTemplateQueryProcessorRDF::GenerateResults(nsISupports* aDatasource,
                        NS_ConvertUTF16toUTF8(rvar).get(),
                        NS_ConvertUTF16toUTF8(mvar).get()));
             }
-#endif
 
             if (root) {
                 // the seed is the initial instantiation, which has a single
@@ -584,12 +581,11 @@ nsXULTemplateQueryProcessorRDF::TranslateRef(nsISupports* aDatasource,
     nsCOMPtr<nsIRDFResource> uri;
     gRDFService->GetUnicodeResource(aRefString, getter_AddRefs(uri));
 
-    nsXULTemplateResultRDF* refresult = new nsXULTemplateResultRDF(uri);
+    nsRefPtr<nsXULTemplateResultRDF> refresult = new nsXULTemplateResultRDF(uri);
     if (! refresult)
         return NS_ERROR_OUT_OF_MEMORY;
 
-    *aRef = refresult;
-    NS_ADDREF(*aRef);
+    refresult.forget(aRef);
 
     return NS_OK;
 }
@@ -867,7 +863,6 @@ nsXULTemplateQueryProcessorRDF::Propagate(nsIRDFResource* aSource,
 
     ReteNodeSet livenodes;
 
-#ifdef PR_LOGGING
     if (PR_LOG_TEST(gXULTemplateLog, PR_LOG_DEBUG)) {
         const char* sourceStr;
         aSource->GetValueConst(&sourceStr);
@@ -880,7 +875,6 @@ nsXULTemplateQueryProcessorRDF::Propagate(nsIRDFResource* aSource,
                ("nsXULTemplateQueryProcessorRDF::Propagate: [%s] -> [%s] -> [%s]\n",
                sourceStr, propertyStr, NS_ConvertUTF16toUTF8(targetStr).get()));
     }
-#endif
 
     {
         ReteNodeSet::Iterator last = mRDFTests.Last();
@@ -956,7 +950,6 @@ nsXULTemplateQueryProcessorRDF::Retract(nsIRDFResource* aSource,
                                         nsIRDFNode* aTarget)
 {
 
-#ifdef PR_LOGGING
     if (PR_LOG_TEST(gXULTemplateLog, PR_LOG_DEBUG)) {
         const char* sourceStr;
         aSource->GetValueConst(&sourceStr);
@@ -969,7 +962,6 @@ nsXULTemplateQueryProcessorRDF::Retract(nsIRDFResource* aSource,
                ("nsXULTemplateQueryProcessorRDF::Retract: [%s] -> [%s] -> [%s]\n",
                sourceStr, propertyStr, NS_ConvertUTF16toUTF8(targetStr).get()));
     }
-#endif
 
     // Retract any currently active rules that will no longer be matched.
     ReteNodeSet::ConstIterator lastnode = mRDFTests.Last();
@@ -1025,7 +1017,6 @@ nsXULTemplateQueryProcessorRDF::SynchronizeAll(nsIRDFResource* aSource,
     return NS_OK;
 }
 
-#ifdef PR_LOGGING
 nsresult
 nsXULTemplateQueryProcessorRDF::Log(const char* aOperation,
                                     nsIRDFResource* aSource,
@@ -1062,7 +1053,6 @@ nsXULTemplateQueryProcessorRDF::Log(const char* aOperation,
     }
     return NS_OK;
 }
-#endif
 
 nsresult
 nsXULTemplateQueryProcessorRDF::CheckContainer(nsIRDFResource* aResource,
@@ -1220,7 +1210,7 @@ nsXULTemplateQueryProcessorRDF::CompileExtendedQuery(nsRDFQuery* aQuery,
          condition = condition->GetNextSibling()) {
 
         // the <content> condition should always be the first child
-        if (condition->Tag() == nsGkAtoms::content) {
+        if (condition->IsXULElement(nsGkAtoms::content)) {
             if (condition != aConditions->GetFirstChild()) {
                 nsXULContentUtils::LogTemplateError(ERROR_TEMPLATE_CONTENT_NOT_FIRST);
                 continue;
@@ -1245,8 +1235,8 @@ nsXULTemplateQueryProcessorRDF::CompileExtendedQuery(nsRDFQuery* aQuery,
         }
 
         TestNode* testnode = nullptr;
-        nsresult rv = CompileQueryChild(condition->Tag(), aQuery, condition,
-                                        prevnode, &testnode);
+        nsresult rv = CompileQueryChild(condition->NodeInfo()->NameAtom(),
+                                        aQuery, condition, prevnode, &testnode);
         if (NS_FAILED(rv))
             return rv;
 
@@ -1271,7 +1261,7 @@ nsXULTemplateQueryProcessorRDF::CompileQueryChild(nsIAtom* aTag,
                                                   TestNode* aParentNode,
                                                   TestNode** aResult)
 {
-    nsresult rv;
+    nsresult rv = NS_OK;
 
     if (aTag == nsGkAtoms::triple) {
         rv = CompileTripleCondition(aQuery, aCondition, aParentNode, aResult);
@@ -1279,8 +1269,7 @@ nsXULTemplateQueryProcessorRDF::CompileQueryChild(nsIAtom* aTag,
     else if (aTag == nsGkAtoms::member) {
         rv = CompileMemberCondition(aQuery, aCondition, aParentNode, aResult);
     }
-    else {
-#ifdef PR_LOGGING
+    else if (PR_LOG_TEST(gXULTemplateLog, PR_LOG_ALWAYS)) {
         nsAutoString tagstr;
         aTag->ToString(tagstr);
 
@@ -1289,9 +1278,6 @@ nsXULTemplateQueryProcessorRDF::CompileQueryChild(nsIAtom* aTag,
         PR_LOG(gXULTemplateLog, PR_LOG_ALWAYS,
                ("xultemplate[%p] unrecognized condition test <%s>",
                 this, tagstrC.get()));
-#endif
-
-        rv = NS_OK;
     }
 
     return rv;
@@ -1314,14 +1300,14 @@ nsXULTemplateQueryProcessorRDF::ParseLiteral(const nsString& aParseType,
         rv = gRDFService->GetIntLiteral(intValue, getter_AddRefs(intLiteral));
         if (NS_FAILED(rv)) 
             return rv;
-        rv = CallQueryInterface(intLiteral, aResult);
+        intLiteral.forget(aResult);
     }
     else {
         nsCOMPtr<nsIRDFLiteral> literal;
         rv = gRDFService->GetLiteral(aValue.get(), getter_AddRefs(literal));
         if (NS_FAILED(rv)) 
             return rv;
-        rv = CallQueryInterface(literal, aResult);
+        literal.forget(aResult);
     }
     return rv;
 }

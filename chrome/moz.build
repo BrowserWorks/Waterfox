@@ -24,8 +24,6 @@ UNIFIED_SOURCES += [
     'nsChromeRegistryContent.cpp',
 ]
 
-MSVC_ENABLE_PGO = True
-
 include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
@@ -35,7 +33,7 @@ GENERATED_INCLUDES += [
 ]
 
 LOCAL_INCLUDES += [
-    '/netwerk/base/src',
+    '/netwerk/base',
     '/netwerk/protocol/res',
     '/xpcom/components'
 ]

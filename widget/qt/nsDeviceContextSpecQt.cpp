@@ -32,10 +32,8 @@
 
 #include "gfxPDFSurface.h"
 
-#ifdef PR_LOGGING
 static PRLogModuleInfo* DeviceContextSpecQtLM =
     PR_NewLogModule("DeviceContextSpecQt");
-#endif /* PR_LOGGING */
 /* Macro to make lines shorter */
 #define DO_PR_DEBUG_LOG(x) PR_LOG(DeviceContextSpecQtLM, PR_LOG_DEBUG, x)
 
@@ -124,7 +122,7 @@ NS_IMETHODIMP nsDeviceContextSpecQt::GetSurfaceForPrinter(
         return NS_ERROR_NOT_IMPLEMENTED;
     }
 
-    NS_ABORT_IF_FALSE(surface, "valid address expected");
+    MOZ_ASSERT(surface, "valid address expected");
 
     surface.swap(*aSurface);
     return NS_OK;
@@ -148,12 +146,6 @@ NS_IMETHODIMP nsDeviceContextSpecQt::Init(nsIWidget* aWidget,
     nsCOMPtr<nsPrintSettingsQt> printSettingsQt(do_QueryInterface(aPS));
     if (!printSettingsQt)
         return NS_ERROR_NO_INTERFACE;
-    return NS_OK;
-}
-
-NS_IMETHODIMP nsDeviceContextSpecQt::GetPath(const char** aPath)
-{
-    *aPath = mPath;
     return NS_OK;
 }
 

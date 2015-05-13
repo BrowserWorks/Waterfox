@@ -29,7 +29,6 @@
 
 class CSSRuleListImpl;
 class nsCSSRuleProcessor;
-class nsICSSRuleList;
 class nsIPrincipal;
 class nsIURI;
 class nsMediaList;
@@ -116,10 +115,10 @@ private:
  { 0x84, 0x67, 0x80, 0x3f, 0xb3, 0x2a, 0xf2, 0x0a } }
 
 
-class CSSStyleSheet MOZ_FINAL : public nsIStyleSheet,
-                                public nsIDOMCSSStyleSheet,
-                                public nsICSSLoaderObserver,
-                                public nsWrapperCache
+class CSSStyleSheet final : public nsIStyleSheet,
+                            public nsIDOMCSSStyleSheet,
+                            public nsICSSLoaderObserver,
+                            public nsWrapperCache
 {
 public:
   typedef net::ReferrerPolicy ReferrerPolicy;
@@ -132,23 +131,23 @@ public:
   NS_DECLARE_STATIC_IID_ACCESSOR(NS_CSS_STYLE_SHEET_IMPL_CID)
 
   // nsIStyleSheet interface
-  virtual nsIURI* GetSheetURI() const MOZ_OVERRIDE;
-  virtual nsIURI* GetBaseURI() const MOZ_OVERRIDE;
-  virtual void GetTitle(nsString& aTitle) const MOZ_OVERRIDE;
-  virtual void GetType(nsString& aType) const MOZ_OVERRIDE;
-  virtual bool HasRules() const MOZ_OVERRIDE;
-  virtual bool IsApplicable() const MOZ_OVERRIDE;
-  virtual void SetEnabled(bool aEnabled) MOZ_OVERRIDE;
-  virtual bool IsComplete() const MOZ_OVERRIDE;
-  virtual void SetComplete() MOZ_OVERRIDE;
-  virtual nsIStyleSheet* GetParentSheet() const MOZ_OVERRIDE;  // may be null
-  virtual nsIDocument* GetOwningDocument() const MOZ_OVERRIDE;  // may be null
-  virtual void SetOwningDocument(nsIDocument* aDocument) MOZ_OVERRIDE;
+  virtual nsIURI* GetSheetURI() const override;
+  virtual nsIURI* GetBaseURI() const override;
+  virtual void GetTitle(nsString& aTitle) const override;
+  virtual void GetType(nsString& aType) const override;
+  virtual bool HasRules() const override;
+  virtual bool IsApplicable() const override;
+  virtual void SetEnabled(bool aEnabled) override;
+  virtual bool IsComplete() const override;
+  virtual void SetComplete() override;
+  virtual nsIStyleSheet* GetParentSheet() const override;  // may be null
+  virtual nsIDocument* GetOwningDocument() const override;  // may be null
+  virtual void SetOwningDocument(nsIDocument* aDocument) override;
 
   // Find the ID of the owner inner window.
   uint64_t FindOwningWindowInnerID() const;
 #ifdef DEBUG
-  virtual void List(FILE* out = stdout, int32_t aIndent = 0) const MOZ_OVERRIDE;
+  virtual void List(FILE* out = stdout, int32_t aIndent = 0) const override;
 #endif
 
   void AppendStyleSheet(CSSStyleSheet* aSheet);
@@ -225,7 +224,7 @@ public:
 
   // nsICSSLoaderObserver interface
   NS_IMETHOD StyleSheetLoaded(CSSStyleSheet* aSheet, bool aWasAlternate,
-                              nsresult aStatus) MOZ_OVERRIDE;
+                              nsresult aStatus) override;
 
   enum EnsureUniqueInnerResult {
     // No work was needed to ensure a unique inner.
@@ -254,7 +253,7 @@ public:
   // list after we clone a unique inner for ourselves.
   static bool RebuildChildList(css::Rule* aRule, void* aBuilder);
 
-  size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const MOZ_OVERRIDE;
+  size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override;
 
   // Get this style sheet's CORS mode
   CORSMode GetCORSMode() const { return mInner->mCORSMode; }
@@ -310,7 +309,7 @@ public:
 
     return dom::ParentObject(static_cast<nsIStyleSheet*>(mParent), mParent);
   }
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 private:
   CSSStyleSheet(const CSSStyleSheet& aCopy,

@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -57,7 +58,7 @@ SVGPathData::GetValueAsString(nsAString& aValue) const
     aValue.Append(segAsString);
     i += 1 + SVGPathSegUtils::ArgCountForType(mData[i]);
     if (i >= mData.Length()) {
-      NS_ABORT_IF_FALSE(i == mData.Length(), "Very, very bad - mData corrupt");
+      MOZ_ASSERT(i == mData.Length(), "Very, very bad - mData corrupt");
       return;
     }
     aValue.Append(' ');
@@ -106,7 +107,7 @@ SVGPathData::GetPathLength() const
     i += 1 + SVGPathSegUtils::ArgCountForType(mData[i]);
   }
 
-  NS_ABORT_IF_FALSE(i == mData.Length(), "Very, very bad - mData corrupt");
+  MOZ_ASSERT(i == mData.Length(), "Very, very bad - mData corrupt");
 
   return state.length;
 }
@@ -122,7 +123,7 @@ SVGPathData::CountItems() const
     count++;
   }
 
-  NS_ABORT_IF_FALSE(i == mData.Length(), "Very, very bad - mData corrupt");
+  MOZ_ASSERT(i == mData.Length(), "Very, very bad - mData corrupt");
 
   return count;
 }
@@ -145,7 +146,7 @@ SVGPathData::GetSegmentLengths(nsTArray<double> *aLengths) const
     i += 1 + SVGPathSegUtils::ArgCountForType(mData[i]);
   }
 
-  NS_ABORT_IF_FALSE(i == mData.Length(), "Very, very bad - mData corrupt");
+  MOZ_ASSERT(i == mData.Length(), "Very, very bad - mData corrupt");
 
   return true;
 }
@@ -181,7 +182,7 @@ SVGPathData::GetDistancesFromOriginToEndsOfVisibleSegments(FallibleTArray<double
     i += 1 + SVGPathSegUtils::ArgCountForType(segType);
   }
 
-  NS_ABORT_IF_FALSE(i == mData.Length(), "Very, very bad - mData corrupt?");
+  MOZ_ASSERT(i == mData.Length(), "Very, very bad - mData corrupt?");
 
   return true;
 }
@@ -206,7 +207,7 @@ SVGPathData::GetPathSegAtLength(float aDistance) const
     segIndex++;
   }
 
-  NS_ABORT_IF_FALSE(i == mData.Length(), "Very, very bad - mData corrupt");
+  MOZ_ASSERT(i == mData.Length(), "Very, very bad - mData corrupt");
 
   return std::max(0U, segIndex - 1); // -1 because while loop takes us 1 too far
 }
@@ -497,9 +498,9 @@ SVGPathData::BuildPath(PathBuilder* builder,
     segStart = segEnd;
   }
 
-  NS_ABORT_IF_FALSE(i == mData.Length(), "Very, very bad - mData corrupt");
-  NS_ABORT_IF_FALSE(prevSegType == segType,
-                    "prevSegType should be left at the final segType");
+  MOZ_ASSERT(i == mData.Length(), "Very, very bad - mData corrupt");
+  MOZ_ASSERT(prevSegType == segType,
+             "prevSegType should be left at the final segType");
 
   MAYBE_APPROXIMATE_ZERO_LENGTH_SUBPATH_SQUARE_CAPS_TO_DT;
 
@@ -537,9 +538,9 @@ AngleOfVector(const Point& aVector)
 }
 
 static float
-AngleOfVectorF(const Point& aVector)
+AngleOfVector(const Point& cp1, const Point& cp2)
 {
-  return static_cast<float>(AngleOfVector(aVector));
+  return static_cast<float>(AngleOfVector(cp1 - cp2));
 }
 
 void
@@ -573,7 +574,7 @@ SVGPathData::GetMarkerPositioningData(nsTArray<nsSVGMark> *aMarks) const
     {
     case PATHSEG_CLOSEPATH:
       segEnd = pathStart;
-      segStartAngle = segEndAngle = AngleOfVectorF(segEnd - segStart);
+      segStartAngle = segEndAngle = AngleOfVector(segEnd, segStart);
       break;
 
     case PATHSEG_MOVETO_ABS:
@@ -586,7 +587,7 @@ SVGPathData::GetMarkerPositioningData(nsTArray<nsSVGMark> *aMarks) const
       pathStart = segEnd;
       // If authors are going to specify multiple consecutive moveto commands
       // with markers, me might as well make the angle do something useful:
-      segStartAngle = segEndAngle = AngleOfVectorF(segEnd - segStart);
+      segStartAngle = segEndAngle = AngleOfVector(segEnd, segStart);
       i += 2;
       break;
 
@@ -597,7 +598,7 @@ SVGPathData::GetMarkerPositioningData(nsTArray<nsSVGMark> *aMarks) const
       } else {
         segEnd = segStart + Point(mData[i], mData[i+1]);
       }
-      segStartAngle = segEndAngle = AngleOfVectorF(segEnd - segStart);
+      segStartAngle = segEndAngle = AngleOfVector(segEnd, segStart);
       i += 2;
       break;
 
@@ -615,14 +616,10 @@ SVGPathData::GetMarkerPositioningData(nsTArray<nsSVGMark> *aMarks) const
         segEnd = segStart + Point(mData[i+4], mData[i+5]);
       }
       prevCP = cp2;
-      if (cp1 == segStart) {
-        cp1 = cp2;
-      }
-      if (cp2 == segEnd) {
-        cp2 = cp1;
-      }
-      segStartAngle = AngleOfVectorF(cp1 - segStart);
-      segEndAngle = AngleOfVectorF(segEnd - cp2);
+      segStartAngle =
+        AngleOfVector(cp1 == segStart ? (cp1 == cp2 ? segEnd : cp2) : cp1, segStart);
+      segEndAngle =
+        AngleOfVector(segEnd, cp2 == segEnd ? (cp1 == cp2 ? segStart : cp1) : cp2);
       i += 6;
       break;
     }
@@ -630,7 +627,7 @@ SVGPathData::GetMarkerPositioningData(nsTArray<nsSVGMark> *aMarks) const
     case PATHSEG_CURVETO_QUADRATIC_ABS:
     case PATHSEG_CURVETO_QUADRATIC_REL:
     {
-      Point cp1, cp2; // control points
+      Point cp1; // control point
       if (segType == PATHSEG_CURVETO_QUADRATIC_ABS) {
         cp1 = Point(mData[i], mData[i+1]);
         segEnd = Point(mData[i+2], mData[i+3]);
@@ -639,8 +636,8 @@ SVGPathData::GetMarkerPositioningData(nsTArray<nsSVGMark> *aMarks) const
         segEnd = segStart + Point(mData[i+2], mData[i+3]);
       }
       prevCP = cp1;
-      segStartAngle = AngleOfVectorF(cp1 - segStart);
-      segEndAngle = AngleOfVectorF(segEnd - cp1);
+      segStartAngle = AngleOfVector(cp1 == segStart ? segEnd : cp1, segStart);
+      segEndAngle = AngleOfVector(segEnd, cp1 == segEnd ? segStart : cp1);
       i += 4;
       break;
     }
@@ -680,7 +677,7 @@ SVGPathData::GetMarkerPositioningData(nsTArray<nsSVGMark> *aMarks) const
 
       if (rx == 0.0 || ry == 0.0) {
         // F.6.6 step 1 - straight line or coincidental points
-        segStartAngle = segEndAngle = AngleOfVectorF(segEnd - segStart);
+        segStartAngle = segEndAngle = AngleOfVector(segEnd, segStart);
         i += 7;
         break;
       }
@@ -755,7 +752,7 @@ SVGPathData::GetMarkerPositioningData(nsTArray<nsSVGMark> *aMarks) const
       } else {
         segEnd = segStart + Point(mData[i++], 0.0f);
       }
-      segStartAngle = segEndAngle = AngleOfVectorF(segEnd - segStart);
+      segStartAngle = segEndAngle = AngleOfVector(segEnd, segStart);
       break;
 
     case PATHSEG_LINETO_VERTICAL_ABS:
@@ -765,7 +762,7 @@ SVGPathData::GetMarkerPositioningData(nsTArray<nsSVGMark> *aMarks) const
       } else {
         segEnd = segStart + Point(0.0f, mData[i++]);
       }
-      segStartAngle = segEndAngle = AngleOfVectorF(segEnd - segStart);
+      segStartAngle = segEndAngle = AngleOfVector(segEnd, segStart);
       break;
 
     case PATHSEG_CURVETO_CUBIC_SMOOTH_ABS:
@@ -782,14 +779,10 @@ SVGPathData::GetMarkerPositioningData(nsTArray<nsSVGMark> *aMarks) const
         segEnd = segStart + Point(mData[i+2], mData[i+3]);
       }
       prevCP = cp2;
-      if (cp1 == segStart) {
-        cp1 = cp2;
-      }
-      if (cp2 == segEnd) {
-        cp2 = cp1;
-      }
-      segStartAngle = AngleOfVectorF(cp1 - segStart);
-      segEndAngle = AngleOfVectorF(segEnd - cp2);
+      segStartAngle =
+        AngleOfVector(cp1 == segStart ? (cp1 == cp2 ? segEnd : cp2) : cp1, segStart);
+      segEndAngle =
+        AngleOfVector(segEnd, cp2 == segEnd ? (cp1 == cp2 ? segStart : cp1) : cp2);
       i += 4;
       break;
     }
@@ -799,15 +792,14 @@ SVGPathData::GetMarkerPositioningData(nsTArray<nsSVGMark> *aMarks) const
     {
       Point cp1 = SVGPathSegUtils::IsQuadraticType(prevSegType) ?
                        segStart * 2 - prevCP : segStart;
-      Point cp2;
       if (segType == PATHSEG_CURVETO_QUADRATIC_SMOOTH_ABS) {
         segEnd = Point(mData[i], mData[i+1]);
       } else {
         segEnd = segStart + Point(mData[i], mData[i+1]);
       }
       prevCP = cp1;
-      segStartAngle = AngleOfVectorF(cp1 - segStart);
-      segEndAngle = AngleOfVectorF(segEnd - cp1);
+      segStartAngle = AngleOfVector(cp1 == segStart ? segEnd : cp1, segStart);
+      segEndAngle = AngleOfVector(segEnd, cp1 == segEnd ? segStart : cp1);
       i += 2;
       break;
     }
@@ -815,7 +807,7 @@ SVGPathData::GetMarkerPositioningData(nsTArray<nsSVGMark> *aMarks) const
     default:
       // Leave any existing marks in aMarks so we have a visual indication of
       // when things went wrong.
-      NS_ABORT_IF_FALSE(false, "Unknown segment type - path corruption?");
+      MOZ_ASSERT(false, "Unknown segment type - path corruption?");
       return;
     }
 
@@ -857,7 +849,7 @@ SVGPathData::GetMarkerPositioningData(nsTArray<nsSVGMark> *aMarks) const
     prevSegEndAngle = segEndAngle;
   }
 
-  NS_ABORT_IF_FALSE(i == mData.Length(), "Very, very bad - mData corrupt");
+  MOZ_ASSERT(i == mData.Length(), "Very, very bad - mData corrupt");
 
   if (aMarks->Length()) {
     if (prevSegType != PATHSEG_CLOSEPATH) {

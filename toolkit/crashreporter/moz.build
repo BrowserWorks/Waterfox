@@ -78,8 +78,6 @@ EXTRA_JS_MODULES += [
     'KeyValueParser.jsm',
 ]
 
-MSVC_ENABLE_PGO = True
-
 include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
@@ -106,3 +104,6 @@ LOCAL_INCLUDES += [
 include('/toolkit/crashreporter/crashreporter.mozbuild')
 
 FAIL_ON_WARNINGS = True
+
+with Files('**'):
+    BUG_COMPONENT = ('Toolkit', 'Breakpad Integration')

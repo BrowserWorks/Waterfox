@@ -5,7 +5,8 @@ const prefs = {
   "net": [
     "network",
     "netwarn",
-    "networkinfo",
+    "netxhr",
+    "networkinfo"
   ],
   "css": [
     "csserror",
@@ -21,7 +22,10 @@ const prefs = {
      "error",
      "warn",
      "info",
-     "log"
+     "log",
+     "serviceworkers",
+     "sharedworkers",
+     "windowlessworkers"
   ]
 };
 

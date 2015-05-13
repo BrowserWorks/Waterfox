@@ -42,7 +42,7 @@ struct RectCornerRadii;
  * Note that the gfxContext takes coordinates in device pixels,
  * as opposed to app units.
  */
-class gfxContext MOZ_FINAL {
+class gfxContext final {
     typedef mozilla::gfx::CapStyle CapStyle;
     typedef mozilla::gfx::JoinStyle JoinStyle;
     typedef mozilla::gfx::FillRule FillRule;
@@ -319,17 +319,7 @@ public:
      */
     void Mask(gfxASurface *surface, const gfxPoint& offset = gfxPoint(0.0, 0.0));
 
-    void Mask(mozilla::gfx::SourceSurface *surface, const mozilla::gfx::Point& offset = mozilla::gfx::Point());
-
-    /**
-     ** Shortcuts
-     **/
-
-    /**
-     * Creates a new path with a rectangle from 0,0 to size.w,size.h
-     * and calls cairo_fill.
-     */
-    void DrawSurface(gfxASurface *surface, const gfxSize& size);
+    void Mask(mozilla::gfx::SourceSurface *surface, float alpha = 1.0f, const mozilla::gfx::Point& offset = mozilla::gfx::Point());
 
     /**
      ** Line Properties
@@ -440,12 +430,6 @@ public:
     void Clip();
 
     /**
-     * Undoes any clipping. Further drawings will only be restricted by the
-     * surface dimensions.
-     */
-    void ResetClip();
-
-    /**
      * Helper functions that will create a rect path and call Clip().
      * Any current path will be destroyed by these functions!
      */
@@ -456,16 +440,15 @@ public:
     void PopClip();
 
     /**
-     * This will ensure that the surface actually has its clip set.
-     * Useful if you are doing native drawing.
-     */
-    void UpdateSurfaceClip();
-
-    /**
      * This will return the current bounds of the clip region in user
      * space.
      */
     gfxRect GetClipExtents();
+
+    /**
+     * Whether the current clip is not a simple rectangle.
+     */
+    bool HasComplexClip() const;
 
     /**
      * Returns true if the given rectangle is fully contained in the current clip. 

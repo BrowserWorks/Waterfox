@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -358,11 +359,11 @@ UIEvent::DuplicatePrivateData()
   mPagePoint =
     Event::GetPageCoords(mPresContext, mEvent, mEvent->refPoint, mClientPoint);
   // GetScreenPoint converts mEvent->refPoint to right coordinates.
-  nsIntPoint screenPoint =
+  LayoutDeviceIntPoint screenPoint =
     Event::GetScreenCoords(mPresContext, mEvent, mEvent->refPoint);
   nsresult rv = Event::DuplicatePrivateData();
   if (NS_SUCCEEDED(rv)) {
-    mEvent->refPoint = LayoutDeviceIntPoint::FromUntyped(screenPoint);
+    mEvent->refPoint = screenPoint;
   }
   return rv;
 }
@@ -403,10 +404,12 @@ static const ModifierPair kPairs[] = {
   { MODIFIER_CAPSLOCK,   NS_DOM_KEYNAME_CAPSLOCK },
   { MODIFIER_CONTROL,    NS_DOM_KEYNAME_CONTROL },
   { MODIFIER_FN,         NS_DOM_KEYNAME_FN },
+  { MODIFIER_FNLOCK,     NS_DOM_KEYNAME_FNLOCK },
   { MODIFIER_META,       NS_DOM_KEYNAME_META },
   { MODIFIER_NUMLOCK,    NS_DOM_KEYNAME_NUMLOCK },
   { MODIFIER_SCROLLLOCK, NS_DOM_KEYNAME_SCROLLLOCK },
   { MODIFIER_SHIFT,      NS_DOM_KEYNAME_SHIFT },
+  { MODIFIER_SYMBOL,     NS_DOM_KEYNAME_SYMBOL },
   { MODIFIER_SYMBOLLOCK, NS_DOM_KEYNAME_SYMBOLLOCK },
   { MODIFIER_OS,         NS_DOM_KEYNAME_OS }
 };
@@ -450,46 +453,44 @@ UIEvent::GetModifierStateInternal(const nsAString& aKey)
 {
   WidgetInputEvent* inputEvent = mEvent->AsInputEvent();
   MOZ_ASSERT(inputEvent, "mEvent must be WidgetInputEvent or derived class");
-  if (aKey.EqualsLiteral("Accel")) {
-    return inputEvent->IsAccel();
+  return ((inputEvent->modifiers & WidgetInputEvent::GetModifier(aKey)) != 0);
+}
+
+void
+UIEvent::InitModifiers(const EventModifierInit& aParam)
+{
+  if (NS_WARN_IF(!mEvent)) {
+    return;
   }
-  if (aKey.EqualsLiteral(NS_DOM_KEYNAME_SHIFT)) {
-    return inputEvent->IsShift();
-  }
-  if (aKey.EqualsLiteral(NS_DOM_KEYNAME_CONTROL)) {
-    return inputEvent->IsControl();
-  }
-  if (aKey.EqualsLiteral(NS_DOM_KEYNAME_META)) {
-    return inputEvent->IsMeta();
-  }
-  if (aKey.EqualsLiteral(NS_DOM_KEYNAME_ALT)) {
-    return inputEvent->IsAlt();
+  WidgetInputEvent* inputEvent = mEvent->AsInputEvent();
+  MOZ_ASSERT(inputEvent,
+             "This method shouldn't be called if it doesn't have modifiers");
+  if (NS_WARN_IF(!inputEvent)) {
+    return;
   }
 
-  if (aKey.EqualsLiteral(NS_DOM_KEYNAME_ALTGRAPH)) {
-    return inputEvent->IsAltGraph();
-  }
-  if (aKey.EqualsLiteral(NS_DOM_KEYNAME_OS)) {
-    return inputEvent->IsOS();
-  }
+  inputEvent->modifiers = MODIFIER_NONE;
 
-  if (aKey.EqualsLiteral(NS_DOM_KEYNAME_CAPSLOCK)) {
-    return inputEvent->IsCapsLocked();
-  }
-  if (aKey.EqualsLiteral(NS_DOM_KEYNAME_NUMLOCK)) {
-    return inputEvent->IsNumLocked();
-  }
+#define SET_MODIFIER(aName, aValue) \
+  if (aParam.m##aName) { \
+    inputEvent->modifiers |= aValue; \
+  } \
 
-  if (aKey.EqualsLiteral(NS_DOM_KEYNAME_FN)) {
-    return inputEvent->IsFn();
-  }
-  if (aKey.EqualsLiteral(NS_DOM_KEYNAME_SCROLLLOCK)) {
-    return inputEvent->IsScrollLocked();
-  }
-  if (aKey.EqualsLiteral(NS_DOM_KEYNAME_SYMBOLLOCK)) {
-    return inputEvent->IsSymbolLocked();
-  }
-  return false;
+  SET_MODIFIER(CtrlKey,                 MODIFIER_CONTROL)
+  SET_MODIFIER(ShiftKey,                MODIFIER_SHIFT)
+  SET_MODIFIER(AltKey,                  MODIFIER_ALT)
+  SET_MODIFIER(MetaKey,                 MODIFIER_META)
+  SET_MODIFIER(ModifierAltGraph,        MODIFIER_ALTGRAPH)
+  SET_MODIFIER(ModifierCapsLock,        MODIFIER_CAPSLOCK)
+  SET_MODIFIER(ModifierFn,              MODIFIER_FN)
+  SET_MODIFIER(ModifierFnLock,          MODIFIER_FNLOCK)
+  SET_MODIFIER(ModifierNumLock,         MODIFIER_NUMLOCK)
+  SET_MODIFIER(ModifierOS,              MODIFIER_OS)
+  SET_MODIFIER(ModifierScrollLock,      MODIFIER_SCROLLLOCK)
+  SET_MODIFIER(ModifierSymbol,          MODIFIER_SYMBOL)
+  SET_MODIFIER(ModifierSymbolLock,      MODIFIER_SYMBOLLOCK)
+
+#undef SET_MODIFIER
 }
 
 } // namespace dom

@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -71,9 +72,9 @@ NS_INTERFACE_MAP_END
 // DOMSVGTransformList methods:
 
 JSObject*
-DOMSVGTransformList::WrapObject(JSContext *cx)
+DOMSVGTransformList::WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto)
 {
-  return mozilla::dom::SVGTransformListBinding::Wrap(cx, this);
+  return mozilla::dom::SVGTransformListBinding::Wrap(cx, this, aGivenProto);
 }
 
 //----------------------------------------------------------------------
@@ -393,7 +394,7 @@ DOMSVGTransformList::GetItemAt(uint32_t aIndex)
 void
 DOMSVGTransformList::MaybeInsertNullInAnimValListAt(uint32_t aIndex)
 {
-  NS_ABORT_IF_FALSE(!IsAnimValList(), "call from baseVal to animVal");
+  MOZ_ASSERT(!IsAnimValList(), "call from baseVal to animVal");
 
   DOMSVGTransformList* animVal = mAList->mAnimVal;
 
@@ -402,8 +403,8 @@ DOMSVGTransformList::MaybeInsertNullInAnimValListAt(uint32_t aIndex)
     return;
   }
 
-  NS_ABORT_IF_FALSE(animVal->mItems.Length() == mItems.Length(),
-                    "animVal list not in sync!");
+  MOZ_ASSERT(animVal->mItems.Length() == mItems.Length(),
+             "animVal list not in sync!");
 
   animVal->mItems.InsertElementAt(aIndex,
                                   static_cast<SVGTransform*>(nullptr));
@@ -414,7 +415,7 @@ DOMSVGTransformList::MaybeInsertNullInAnimValListAt(uint32_t aIndex)
 void
 DOMSVGTransformList::MaybeRemoveItemFromAnimValListAt(uint32_t aIndex)
 {
-  NS_ABORT_IF_FALSE(!IsAnimValList(), "call from baseVal to animVal");
+  MOZ_ASSERT(!IsAnimValList(), "call from baseVal to animVal");
 
   // This needs to be a strong reference; otherwise, the RemovingFromList call
   // below might drop the last reference to animVal before we're done with it.
@@ -425,8 +426,8 @@ DOMSVGTransformList::MaybeRemoveItemFromAnimValListAt(uint32_t aIndex)
     return;
   }
 
-  NS_ABORT_IF_FALSE(animVal->mItems.Length() == mItems.Length(),
-                    "animVal list not in sync!");
+  MOZ_ASSERT(animVal->mItems.Length() == mItems.Length(),
+             "animVal list not in sync!");
 
   if (animVal->mItems[aIndex]) {
     animVal->mItems[aIndex]->RemovingFromList();

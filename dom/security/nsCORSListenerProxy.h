@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -18,8 +19,8 @@
 #include "mozilla/Attributes.h"
 
 class nsIURI;
-class nsIParser;
 class nsIPrincipal;
+class nsINetworkInterceptController;
 
 nsresult
 NS_StartCORSPreflight(nsIChannel* aRequestChannel,
@@ -29,10 +30,16 @@ NS_StartCORSPreflight(nsIChannel* aRequestChannel,
                       nsTArray<nsCString>& aACUnsafeHeaders,
                       nsIChannel** aPreflightChannel);
 
-class nsCORSListenerProxy MOZ_FINAL : public nsIStreamListener,
-                                      public nsIInterfaceRequestor,
-                                      public nsIChannelEventSink,
-                                      public nsIAsyncVerifyRedirectCallback
+enum class DataURIHandling
+{
+  Allow,
+  Disallow
+};
+
+class nsCORSListenerProxy final : public nsIStreamListener,
+                                  public nsIInterfaceRequestor,
+                                  public nsIChannelEventSink,
+                                  public nsIAsyncVerifyRedirectCallback
 {
 public:
   nsCORSListenerProxy(nsIStreamListener* aOuter,
@@ -56,12 +63,14 @@ public:
 
   static void Shutdown();
 
-  nsresult Init(nsIChannel* aChannel, bool aAllowDataURI = false);
+  nsresult Init(nsIChannel* aChannel, DataURIHandling aAllowDataURI);
+
+  void SetInterceptController(nsINetworkInterceptController* aInterceptController);
 
 private:
   ~nsCORSListenerProxy();
 
-  nsresult UpdateChannel(nsIChannel* aChannel, bool aAllowDataURI = false);
+  nsresult UpdateChannel(nsIChannel* aChannel, DataURIHandling aAllowDataURI);
   nsresult CheckRequestApproved(nsIRequest* aRequest);
 
   nsCOMPtr<nsIStreamListener> mOuterListener;
@@ -71,6 +80,7 @@ private:
   // This can get changed during redirects, unlike mRequestingPrincipal.
   nsCOMPtr<nsIPrincipal> mOriginHeaderPrincipal;
   nsCOMPtr<nsIInterfaceRequestor> mOuterNotificationCallbacks;
+  nsCOMPtr<nsINetworkInterceptController> mInterceptController;
   bool mWithCredentials;
   bool mRequestApproved;
   bool mHasBeenCrossSite;

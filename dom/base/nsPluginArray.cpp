@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -51,9 +52,9 @@ nsPluginArray::GetParentObject() const
 }
 
 JSObject*
-nsPluginArray::WrapObject(JSContext* aCx)
+nsPluginArray::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return PluginArrayBinding::Wrap(aCx, this);
+  return PluginArrayBinding::Wrap(aCx, this, aGivenProto);
 }
 
 NS_IMPL_CYCLE_COLLECTING_ADDREF(nsPluginArray)
@@ -399,9 +400,9 @@ nsPluginElement::GetParentObject() const
 }
 
 JSObject*
-nsPluginElement::WrapObject(JSContext* aCx)
+nsPluginElement::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return PluginBinding::Wrap(aCx, this);
+  return PluginBinding::Wrap(aCx, this, aGivenProto);
 }
 
 void

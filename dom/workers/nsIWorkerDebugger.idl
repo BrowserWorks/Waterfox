@@ -2,13 +2,22 @@
 
 interface nsIDOMWindow;
 
-[scriptable, uuid(54fd2dd3-c01b-4f71-888f-462f37a54f57)]
+[scriptable, uuid(530db841-1b2c-485a-beeb-f2b1acb9714e)]
 interface nsIWorkerDebuggerListener : nsISupports
 {
   void onClose();
+
+  void onError(in DOMString filename, in unsigned long lineno,
+               in DOMString message);
+
+  void onFreeze();
+
+  void onMessage(in DOMString message);
+
+  void onThaw();
 };
 
-[scriptable, builtinclass, uuid(0833b363-bffe-4cdb-ad50-1c4563e0C8ff)]
+[scriptable, builtinclass, uuid(d7c73e54-3c41-4393-9d13-fa2ed4Ba6764)]
 interface nsIWorkerDebugger : nsISupports
 {
   const unsigned long TYPE_DEDICATED = 0;
@@ -19,6 +28,8 @@ interface nsIWorkerDebugger : nsISupports
 
   readonly attribute bool isChrome;
 
+  readonly attribute bool isFrozen;
+
   readonly attribute nsIWorkerDebugger parent;
 
   readonly attribute unsigned long type;
@@ -26,6 +37,12 @@ interface nsIWorkerDebugger : nsISupports
   readonly attribute DOMString url;
 
   readonly attribute nsIDOMWindow window;
+
+  [implicit_jscontext]
+  void initialize(in DOMString url);
+
+  [implicit_jscontext, binaryname(PostMessageMoz)]
+  void postMessage(in DOMString message);
 
   void addListener(in nsIWorkerDebuggerListener listener);
 

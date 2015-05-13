@@ -13,9 +13,7 @@
 #include "nsProxyRelease.h"
 #include "nsStandardURL.h"
 
-#if defined(PR_LOGGING)
 PRLogModuleInfo *webSocketLog = nullptr;
-#endif
 
 namespace mozilla {
 namespace net {
@@ -29,10 +27,8 @@ BaseWebSocketChannel::BaseWebSocketChannel()
   , mPingInterval(0)
   , mPingResponseTimeout(10000)
 {
-#if defined(PR_LOGGING)
   if (!webSocketLog)
     webSocketLog = PR_NewLogModule("nsWebSocket");
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -182,6 +178,19 @@ BaseWebSocketChannel::SetPingTimeout(uint32_t aSeconds)
   return NS_OK;
 }
 
+NS_IMETHODIMP
+BaseWebSocketChannel::InitLoadInfo(nsIDOMNode* aLoadingNode,
+                                   nsIPrincipal* aLoadingPrincipal,
+                                   nsIPrincipal* aTriggeringPrincipal,
+                                   uint32_t aSecurityFlags,
+                                   uint32_t aContentPolicyType)
+{
+  nsCOMPtr<nsINode> node = do_QueryInterface(aLoadingNode);
+  mLoadInfo = new LoadInfo(aLoadingPrincipal, aTriggeringPrincipal,
+                           node, aSecurityFlags, aContentPolicyType);
+  return NS_OK;
+}
+
 //-----------------------------------------------------------------------------
 // BaseWebSocketChannel::nsIProtocolHandler
 //-----------------------------------------------------------------------------
@@ -237,7 +246,7 @@ BaseWebSocketChannel::NewURI(const nsACString & aSpec, const char *aOriginCharse
                 aOriginCharset, aBaseURI);
   if (NS_FAILED(rv))
     return rv;
-  NS_ADDREF(*_retval = url);
+  url.forget(_retval);
   return NS_OK;
 }
 

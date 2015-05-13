@@ -10,15 +10,19 @@ import unittest
 from mozunit import main
 
 from mozbuild.frontend.data import (
+    BrandingFiles,
     ConfigFileSubstitution,
     Defines,
+    DistFiles,
     DirectoryTraversal,
     Exports,
+    GeneratedFile,
     GeneratedInclude,
     GeneratedSources,
     HostSources,
     IPDLFile,
     JARManifest,
+    JsPreferenceFile,
     LocalInclude,
     Program,
     ReaderSummary,
@@ -157,10 +161,9 @@ class TestEmitterBasic(unittest.TestCase):
 
         wanted = {
             'DISABLE_STL_WRAPPING': True,
-            'EXTRA_COMPONENTS': ['fans.js', 'tans.js'],
+            'EXTRA_COMPONENTS': ['dummy.manifest', 'fans.js', 'tans.js'],
             'EXTRA_PP_COMPONENTS': ['fans.pp.js', 'tans.pp.js'],
             'FAIL_ON_WARNINGS': True,
-            'MSVC_ENABLE_PGO': True,
             'NO_DIST_INSTALL': True,
             'VISIBILITY_FLAGS': '',
             'RCFILE': 'foo.rc',
@@ -180,6 +183,67 @@ class TestEmitterBasic(unittest.TestCase):
         self.maxDiff = None
         self.assertEqual(wanted, variables)
         self.maxDiff = maxDiff
+
+    def test_generated_files(self):
+        reader = self.reader('generated-files')
+        objs = self.read_topsrcdir(reader)
+
+        self.assertEqual(len(objs), 2)
+        for o in objs:
+            self.assertIsInstance(o, GeneratedFile)
+
+        expected = ['bar.c', 'foo.c']
+        for o, expected_filename in zip(objs, expected):
+            self.assertEqual(o.output, expected_filename)
+            self.assertEqual(o.script, None)
+            self.assertEqual(o.method, None)
+            self.assertEqual(o.inputs, [])
+
+    def test_generated_files_method_names(self):
+        reader = self.reader('generated-files-method-names')
+        objs = self.read_topsrcdir(reader)
+
+        self.assertEqual(len(objs), 2)
+        for o in objs:
+            self.assertIsInstance(o, GeneratedFile)
+
+        expected = ['bar.c', 'foo.c']
+        expected_method_names = ['make_bar', 'main']
+        for o, expected_filename, expected_method in zip(objs, expected, expected_method_names):
+            self.assertEqual(o.output, expected_filename)
+            self.assertEqual(o.method, expected_method)
+            self.assertEqual(o.inputs, [])
+
+    def test_generated_files_absolute_script(self):
+        reader = self.reader('generated-files-absolute-script')
+        objs = self.read_topsrcdir(reader)
+
+        self.assertEqual(len(objs), 1)
+
+        o = objs[0]
+        self.assertIsInstance(o, GeneratedFile)
+        self.assertEqual(o.output, 'bar.c')
+        self.assertRegexpMatches(o.script, 'script.py$')
+        self.assertEqual(o.method, 'make_bar')
+        self.assertEqual(o.inputs, [])
+
+    def test_generated_files_no_script(self):
+        reader = self.reader('generated-files-no-script')
+        with self.assertRaisesRegexp(SandboxValidationError,
+            'Script for generating bar.c does not exist'):
+            objs = self.read_topsrcdir(reader)
+
+    def test_generated_files_no_inputs(self):
+        reader = self.reader('generated-files-no-inputs')
+        with self.assertRaisesRegexp(SandboxValidationError,
+            'Input for generating foo.c does not exist'):
+            objs = self.read_topsrcdir(reader)
+
+    def test_generated_files_no_python_script(self):
+        reader = self.reader('generated-files-no-python-script')
+        with self.assertRaisesRegexp(SandboxValidationError,
+            'Script for generating bar.c does not end in .py'):
+            objs = self.read_topsrcdir(reader)
 
     def test_exports(self):
         reader = self.reader('exports')
@@ -282,6 +346,38 @@ class TestEmitterBasic(unittest.TestCase):
         overwrite = resources._children['overwrite']
         self.assertEqual(overwrite._strings, ['new.res'])
 
+    def test_branding_files(self):
+        reader = self.reader('branding-files')
+        objs = self.read_topsrcdir(reader)
+
+        self.assertEqual(len(objs), 1)
+        self.assertIsInstance(objs[0], BrandingFiles)
+
+        files = objs[0].files
+
+        self.assertEqual(files._strings, ['app.ico', 'bar.ico', 'baz.png', 'foo.xpm'])
+        self.assertEqual(files['app.ico'].source, 'test/bar.ico')
+
+        self.assertIn('icons', files._children)
+        icons = files._children['icons']
+
+        self.assertEqual(icons._strings, ['quux.icns'])
+
+    def test_preferences_js(self):
+        reader = self.reader('js_preference_files')
+        objs = self.read_topsrcdir(reader)
+
+        prefs = [o.path for o in objs if isinstance(o, JsPreferenceFile)]
+
+        prefsByDir = [
+            'valid_val/prefs.js',
+            'ww/ww.js',
+            'xx/xx.js',
+            'yy/yy.js',
+            ]
+
+        self.assertEqual(sorted(prefs), prefsByDir)
+
     def test_program(self):
         reader = self.reader('program')
         objs = self.read_topsrcdir(reader)
@@ -371,6 +467,24 @@ class TestEmitterBasic(unittest.TestCase):
         ]
         paths = sorted([v[0] for v in o.installs.values()])
         self.assertEqual(paths, expected)
+
+    def test_test_manifest_includes(self):
+        """Ensure that manifest objects from the emitter list a correct manifest.
+        """
+        reader = self.reader('test-manifest-emitted-includes')
+        [obj] = self.read_topsrcdir(reader)
+
+        # Expected manifest leafs for our tests.
+        expected_manifests = {
+            'reftest1.html': 'reftest.list',
+            'reftest1-ref.html': 'reftest.list',
+            'reftest2.html': 'included-reftest.list',
+            'reftest2-ref.html': 'included-reftest.list',
+        }
+
+        for t in obj.tests:
+            self.assertTrue(t['manifest'].endswith(expected_manifests[t['name']]))
+
 
     def test_test_manifest_keys_extracted(self):
         """Ensure all metadata from test manifests is extracted."""
@@ -709,7 +823,50 @@ class TestEmitterBasic(unittest.TestCase):
         for suffix, files in expected.items():
             sources = suffix_map[suffix]
             self.assertEqual(sources.files, files)
-            self.assertEqual(sources.files_per_unified_file, 32)
+            self.assertTrue(sources.have_unified_mapping)
+
+    def test_unified_sources_non_unified(self):
+        """Test that UNIFIED_SOURCES with FILES_PER_UNIFIED_FILE=1 works properly."""
+        reader = self.reader('unified-sources-non-unified')
+        objs = self.read_topsrcdir(reader)
+
+        self.assertEqual(len(objs), 3)
+        for o in objs:
+            self.assertIsInstance(o, UnifiedSources)
+
+        suffix_map = {obj.canonical_suffix: obj for obj in objs}
+        self.assertEqual(len(suffix_map), 3)
+
+        expected = {
+            '.cpp': ['bar.cxx', 'foo.cpp', 'quux.cc'],
+            '.mm': ['objc1.mm', 'objc2.mm'],
+            '.c': ['c1.c', 'c2.c'],
+        }
+        for suffix, files in expected.items():
+            sources = suffix_map[suffix]
+            self.assertEqual(sources.files, files)
+            self.assertFalse(sources.have_unified_mapping)
+
+    def test_dist_files(self):
+        """Test that DIST_FILES works properly."""
+        reader = self.reader('dist-files')
+        objs = self.read_topsrcdir(reader)
+
+        self.assertEqual(len(objs), 1)
+        self.assertIsInstance(objs[0], DistFiles)
+
+        self.assertEqual(len(objs[0].files), 2)
+
+        expected = {'install.rdf', 'main.js'}
+        for f in objs[0].files:
+            self.assertTrue(f in expected)
+
+    def test_missing_dist_files(self):
+        """Test that DIST_FILES with missing files throws errors."""
+        with self.assertRaisesRegexp(SandboxValidationError, 'File listed in '
+            'DIST_FILES does not exist'):
+            reader = self.reader('dist-files-missing')
+            self.read_topsrcdir(reader)
 
 if __name__ == '__main__':
     main()

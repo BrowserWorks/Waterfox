@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -47,7 +47,7 @@ public:
     return GetOwner();
   }
 
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // WebIDL Interface
   DOMRequestReadyState ReadyState() const
@@ -58,7 +58,7 @@ public:
 
   void GetResult(JSContext*, JS::MutableHandle<JS::Value> aRetval) const
   {
-    NS_ASSERTION(mDone || mResult == JSVAL_VOID,
+    NS_ASSERTION(mDone || mResult.isUndefined(),
                  "Result should be undefined when pending");
     JS::ExposeValueToActiveJS(mResult);
     aRetval.set(mResult);
@@ -93,7 +93,7 @@ protected:
   void RootResultVal();
 };
 
-class DOMRequestService MOZ_FINAL : public nsIDOMRequestService
+class DOMRequestService final : public nsIDOMRequestService
 {
   ~DOMRequestService() {}
 

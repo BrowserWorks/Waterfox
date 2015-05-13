@@ -2,54 +2,43 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-const TESTCASE_URI = TEST_BASE + "simple.html";
+// Test that resizing the source editor container doesn't move the caret.
 
-let gOriginalWidth; // these are set by runTests()
-let gOriginalHeight;
+const TESTCASE_URI = TEST_BASE_HTTP + "simple.html";
 
-function test()
-{
-  waitForExplicitFinish();
+add_task(function* () {
+  let { toolbox, ui } = yield openStyleEditorForURL(TESTCASE_URI);
 
-  addTabAndOpenStyleEditors(2, panel => runTests(panel.UI));
+  is(ui.editors.length, 2, "There are 2 style sheets initially");
 
-  content.location = TESTCASE_URI;
-}
+  info("Changing toolbox host to a window.");
+  yield toolbox.switchHost(devtools.Toolbox.HostType.WINDOW);
 
-function runTests(aUI)
-{
-  is(aUI.editors.length, 2,
-     "there is 2 stylesheets initially");
+  let editor = yield ui.editors[0].getSourceEditor();
+  let originalSourceEditor = editor.sourceEditor;
 
-  aUI.editors[0].getSourceEditor().then(aEditor => {
-    executeSoon(function () {
-      waitForFocus(function () {
-        // queue a resize to inverse aspect ratio
-        // this will trigger a detach and reattach (to workaround bug 254144)
-        let originalSourceEditor = aEditor.sourceEditor;
-        let editor = aEditor.sourceEditor;
-        editor.setCursor(editor.getPosition(4)); // to check the caret is preserved
+  let hostWindow = toolbox._host._window;
+  let originalWidth = hostWindow.outerWidth;
+  let originalHeight = hostWindow.outerHeight;
 
-        gOriginalWidth = gPanelWindow.outerWidth;
-        gOriginalHeight = gPanelWindow.outerHeight;
-        gPanelWindow.resizeTo(120, 480);
+  // to check the caret is preserved
+  originalSourceEditor.setCursor(originalSourceEditor.getPosition(4));
 
-        executeSoon(function () {
-          is(aEditor.sourceEditor, originalSourceEditor,
-             "the editor still references the same Editor instance");
-          let editor = aEditor.sourceEditor;
-          is(editor.getOffset(editor.getCursor()), 4,
-             "the caret position has been preserved");
+  info("Resizing window.");
+  hostWindow.resizeTo(120, 480);
 
-          // queue a resize to original aspect ratio
-          waitForFocus(function () {
-            gPanelWindow.resizeTo(gOriginalWidth, gOriginalHeight);
-            executeSoon(function () {
-              finish();
-            });
-          }, gPanelWindow);
-        });
-      }, gPanelWindow);
-    });
-  });
-}
+  let sourceEditor = ui.editors[0].sourceEditor;
+  is(sourceEditor, originalSourceEditor,
+     "the editor still references the same Editor instance");
+
+  is(sourceEditor.getOffset(sourceEditor.getCursor()), 4,
+     "the caret position has been preserved");
+
+  info("Restoring window to original size.");
+  hostWindow.resizeTo(originalWidth, originalHeight);
+});
+
+registerCleanupFunction(() => {
+  // Restore the host type for other tests.
+  Services.prefs.clearUserPref("devtools.toolbox.host");
+});

@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -30,9 +31,9 @@ class DOMRectList;
 }
 }
 
-class nsRange MOZ_FINAL : public nsIDOMRange,
-                          public nsStubMutationObserver,
-                          public nsWrapperCache
+class nsRange final : public nsIDOMRange,
+                      public nsStubMutationObserver,
+                      public nsWrapperCache
 {
   typedef mozilla::ErrorResult ErrorResult;
   typedef mozilla::dom::DOMRect DOMRect;
@@ -49,6 +50,7 @@ public:
     , mIsDetached(false)
     , mMaySpanAnonymousSubtrees(false)
     , mInSelection(false)
+    , mIsGenerated(false)
     , mStartOffsetWasIncremented(false)
     , mEndOffsetWasIncremented(false)
     , mEnableGravitationOnElementRemoval(true)
@@ -153,6 +155,27 @@ public:
     }
   }
 
+  /**
+   * Return true if this range was generated.
+   * @see SetIsGenerated
+   */
+  bool IsGenerated() const
+  {
+    return mIsGenerated;
+  }
+
+  /**
+   * Mark this range as being generated or not.
+   * Currently it is used for marking ranges that are created when splitting up
+   * a range to exclude a -moz-user-select:none region.
+   * @see Selection::AddItem
+   * @see ExcludeNonSelectableNodes
+   */
+  void SetIsGenerated(bool aIsGenerated)
+  {
+    mIsGenerated = aIsGenerated;
+  }
+
   nsINode* GetCommonAncestor() const;
   void Reset();
   nsresult SetStart(nsINode* aParent, int32_t aOffset);
@@ -222,7 +245,7 @@ public:
                                                bool aFlushLayout = true);
 
   nsINode* GetParentObject() const { return mOwner; }
-  virtual JSObject* WrapObject(JSContext* cx) MOZ_OVERRIDE MOZ_FINAL;
+  virtual JSObject* WrapObject(JSContext* cx, JS::Handle<JSObject*> aGivenProto) override final;
 
 private:
   // no copy's or assigns
@@ -329,13 +352,14 @@ protected:
   int32_t mStartOffset;
   int32_t mEndOffset;
 
-  bool mIsPositioned;
-  bool mIsDetached;
-  bool mMaySpanAnonymousSubtrees;
-  bool mInSelection;
-  bool mStartOffsetWasIncremented;
-  bool mEndOffsetWasIncremented;
-  bool mEnableGravitationOnElementRemoval;
+  bool mIsPositioned : 1;
+  bool mIsDetached : 1;
+  bool mMaySpanAnonymousSubtrees : 1;
+  bool mInSelection : 1;
+  bool mIsGenerated : 1;
+  bool mStartOffsetWasIncremented : 1;
+  bool mEndOffsetWasIncremented : 1;
+  bool mEnableGravitationOnElementRemoval : 1;
 #ifdef DEBUG
   int32_t  mAssertNextInsertOrAppendIndex;
   nsINode* mAssertNextInsertOrAppendNode;

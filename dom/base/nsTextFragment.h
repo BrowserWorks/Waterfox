@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -19,7 +21,6 @@
 #include "nsISupportsImpl.h"
 
 class nsString;
-class nsCString;
 
 // XXX should this normalize the code to keep a \u0000 at the end?
 
@@ -34,7 +35,7 @@ class nsCString;
  * This class does not have a virtual destructor therefore it is not
  * meant to be subclassed.
  */
-class nsTextFragment MOZ_FINAL {
+class nsTextFragment final {
 public:
   static nsresult Init();
   static void Shutdown();
@@ -125,7 +126,7 @@ public:
    * Append the contents of this string fragment to aString
    */
   void AppendTo(nsAString& aString) const {
-    if (!AppendTo(aString, mozilla::fallible_t())) {
+    if (!AppendTo(aString, mozilla::fallible)) {
       aString.AllocFailed(aString.Length() + GetLength());
     }
   }
@@ -134,10 +135,11 @@ public:
    * Append the contents of this string fragment to aString
    * @return false if an out of memory condition is detected, true otherwise
    */
+  MOZ_WARN_UNUSED_RESULT
   bool AppendTo(nsAString& aString,
-                const mozilla::fallible_t&) const NS_WARN_UNUSED_RESULT {
+                const mozilla::fallible_t& aFallible) const {
     if (mState.mIs2b) {
-      bool ok = aString.Append(m2b, mState.mLength, mozilla::fallible_t());
+      bool ok = aString.Append(m2b, mState.mLength, aFallible);
       if (!ok) {
         return false;
       }
@@ -145,7 +147,7 @@ public:
       return true;
     } else {
       return AppendASCIItoUTF16(Substring(m1b, mState.mLength), aString,
-                                mozilla::fallible_t());
+                                aFallible);
     }
   }
 
@@ -155,7 +157,7 @@ public:
    * @param aLength the length of the substring
    */
   void AppendTo(nsAString& aString, int32_t aOffset, int32_t aLength) const {
-    if (!AppendTo(aString, aOffset, aLength, mozilla::fallible_t())) {
+    if (!AppendTo(aString, aOffset, aLength, mozilla::fallible)) {
       aString.AllocFailed(aString.Length() + aLength);
     }
   }
@@ -167,11 +169,12 @@ public:
    * @param aLength the length of the substring
    * @return false if an out of memory condition is detected, true otherwise
    */
+  MOZ_WARN_UNUSED_RESULT
   bool AppendTo(nsAString& aString, int32_t aOffset, int32_t aLength,
-                const mozilla::fallible_t&) const NS_WARN_UNUSED_RESULT
+                const mozilla::fallible_t& aFallible) const
   {
     if (mState.mIs2b) {
-      bool ok = aString.Append(m2b + aOffset, aLength, mozilla::fallible_t());
+      bool ok = aString.Append(m2b + aOffset, aLength, aFallible);
       if (!ok) {
         return false;
       }
@@ -179,7 +182,7 @@ public:
       return true;
     } else {
       return AppendASCIItoUTF16(Substring(m1b + aOffset, aLength), aString,
-                                mozilla::fallible_t());
+                                aFallible);
     }
   }
 

@@ -26,34 +26,48 @@ GonkDecoderModule::Init()
   MOZ_ASSERT(NS_IsMainThread(), "Must be on main thread.");
 }
 
-nsresult
-GonkDecoderModule::Shutdown()
-{
-  return NS_OK;
-}
-
 already_AddRefed<MediaDataDecoder>
-GonkDecoderModule::CreateVideoDecoder(const mp4_demuxer::VideoDecoderConfig& aConfig,
+GonkDecoderModule::CreateVideoDecoder(const VideoInfo& aConfig,
                                      mozilla::layers::LayersBackend aLayersBackend,
                                      mozilla::layers::ImageContainer* aImageContainer,
-                                     MediaTaskQueue* aVideoTaskQueue,
+                                     FlushableMediaTaskQueue* aVideoTaskQueue,
                                      MediaDataDecoderCallback* aCallback)
 {
   nsRefPtr<MediaDataDecoder> decoder =
-  new GonkMediaDataDecoder(new GonkVideoDecoderManager(aImageContainer,aConfig),
+  new GonkMediaDataDecoder(new GonkVideoDecoderManager(aImageContainer, aConfig),
                            aVideoTaskQueue, aCallback);
   return decoder.forget();
 }
 
 already_AddRefed<MediaDataDecoder>
-GonkDecoderModule::CreateAudioDecoder(const mp4_demuxer::AudioDecoderConfig& aConfig,
-                                      MediaTaskQueue* aAudioTaskQueue,
+GonkDecoderModule::CreateAudioDecoder(const AudioInfo& aConfig,
+                                      FlushableMediaTaskQueue* aAudioTaskQueue,
                                       MediaDataDecoderCallback* aCallback)
 {
   nsRefPtr<MediaDataDecoder> decoder =
-  new GonkMediaDataDecoder(new GonkAudioDecoderManager(aConfig), aAudioTaskQueue,
-                           aCallback);
+  new GonkMediaDataDecoder(new GonkAudioDecoderManager(aConfig),
+                           aAudioTaskQueue, aCallback);
   return decoder.forget();
 }
 
+PlatformDecoderModule::ConversionRequired
+GonkDecoderModule::DecoderNeedsConversion(const TrackInfo& aConfig) const
+{
+  if (aConfig.IsVideo()) {
+    return kNeedAnnexB;
+  } else {
+    return kNeedNone;
+  }
+}
+
+bool
+GonkDecoderModule::SupportsMimeType(const nsACString& aMimeType)
+{
+  return aMimeType.EqualsLiteral("audio/mp4a-latm") ||
+    aMimeType.EqualsLiteral("audio/3gpp") ||
+    aMimeType.EqualsLiteral("audio/amr-wb") ||
+    aMimeType.EqualsLiteral("video/mp4") ||
+    aMimeType.EqualsLiteral("video/mp4v-es") ||
+    aMimeType.EqualsLiteral("video/avc");
+}
 } // namespace mozilla

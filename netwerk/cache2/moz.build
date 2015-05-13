@@ -48,12 +48,10 @@ SOURCES += [
 ]
 
 LOCAL_INCLUDES += [
-    '../base/src',
-    '../cache',
+    '/netwerk/base',
+    '/netwerk/cache',
 ]
 
 FAIL_ON_WARNINGS = True
-
-MSVC_ENABLE_PGO = True
 
 FINAL_LIBRARY = 'xul'

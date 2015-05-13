@@ -9,16 +9,7 @@
  */
 
 const Profiler = Cc["@mozilla.org/tools/profiler;1"].getService(Ci.nsIProfiler);
-
-function connect_client(callback)
-{
-  let client = new DebuggerClient(DebuggerServer.connectPipe());
-  client.connect(() => {
-    client.listTabs(response => {
-      callback(client, response.profilerActor);
-    });
-  });
-}
+const MAX_PROFILER_ENTRIES = 10000000;
 
 function run_test()
 {
@@ -26,11 +17,10 @@ function run_test()
   // happen if the MOZ_PROFILER_STARTUP environment variable is set).
   Profiler.StopProfiler();
 
-  DebuggerServer.init();
-  DebuggerServer.addBrowserActors();
-
-  connect_client((client1, actor1) => {
-    connect_client((client2, actor2) => {
+  get_chrome_actors((client1, form1) => {
+    let actor1 = form1.profilerActor;
+    get_chrome_actors((client2, form2) => {
+      let actor2 = form2.profilerActor;
       test_activate(client1, actor1, client2, actor2, () => {
         do_test_finished();
       });
@@ -46,17 +36,30 @@ function test_activate(client1, actor1, client2, actor2, callback) {
     do_check_false(Profiler.IsActive());
     do_check_false(response.isActive);
     do_check_eq(response.currentTime, undefined);
+    do_check_true(typeof response.position === "number");
+    do_check_true(typeof response.totalSize === "number");
+    do_check_true(typeof response.generation === "number");
 
     // Start the profiler on the first connection....
-    client1.request({ to: actor1, type: "startProfiler" }, response => {
+    client1.request({ to: actor1, type: "startProfiler", entries: MAX_PROFILER_ENTRIES }, response => {
       do_check_true(Profiler.IsActive());
       do_check_true(response.started);
+      do_check_true(typeof response.position === "number");
+      do_check_true(typeof response.totalSize === "number");
+      do_check_true(typeof response.generation === "number");
+      do_check_true(response.position >= 0 && response.position < response.totalSize);
+      do_check_true(response.totalSize === MAX_PROFILER_ENTRIES);
 
       // On the next connection just make sure the actor has been instantiated.
       client2.request({ to: actor2, type: "isActive" }, response => {
         do_check_true(Profiler.IsActive());
         do_check_true(response.isActive);
         do_check_true(response.currentTime > 0);
+        do_check_true(typeof response.position === "number");
+        do_check_true(typeof response.totalSize === "number");
+        do_check_true(typeof response.generation === "number");
+        do_check_true(response.position >= 0 && response.position < response.totalSize);
+        do_check_true(response.totalSize === MAX_PROFILER_ENTRIES);
 
         let origConnectionClosed = DebuggerServer._connectionClosed;
 

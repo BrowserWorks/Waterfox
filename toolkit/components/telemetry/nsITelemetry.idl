@@ -12,7 +12,7 @@ interface nsIFetchTelemetryDataCallback : nsISupports
   void complete();
 };
 
-[scriptable, uuid(3869a5cd-f886-40e6-b298-e4b3efc79d3b)]
+[scriptable, uuid(68e82b42-cad2-411f-857b-b64ea9377929)]
 interface nsITelemetry : nsISupports
 {
   /**
@@ -29,7 +29,17 @@ interface nsITelemetry : nsISupports
   const unsigned long HISTOGRAM_FLAG = 3;
   const unsigned long HISTOGRAM_COUNT = 4;
 
-  /*
+  /**
+   * Dataset types:
+   * DATASET_RELEASE_CHANNEL_OPTOUT - the basic dataset that is on-by-default on all channels
+   * DATASET_RELEASE_CHANNEL_OPTIN - the extended dataset that is opt-in on release,
+   *                                 opt-out on pre-release channels.
+   */
+  const unsigned long DATASET_RELEASE_CHANNEL_OPTOUT = 0;
+  const unsigned long DATASET_RELEASE_CHANNEL_OPTIN = 1;
+
+
+  /**
    * An object containing a snapshot from all of the currently registered histograms.
    * { name1: {data1}, name2:{data2}...}
    * where data is consists of the following properties:
@@ -44,6 +54,14 @@ interface nsITelemetry : nsISupports
    */
   [implicit_jscontext]
   readonly attribute jsval histogramSnapshots;
+
+  /**
+   * Get a snapshot of the internally duplicated subsession histograms.
+   * @param clear Whether to clear out the subsession histograms after snapshotting.
+   * @return An object as histogramSnapshots, except this contains the internally duplicated histograms for subsession telemetry.
+   */
+  [implicit_jscontext]
+  jsval snapshotSubsessionHistograms([optional] in boolean clear);
 
   /**
    * The amount of time, in milliseconds, that the last session took
@@ -134,8 +152,11 @@ interface nsITelemetry : nsISupports
   /**
    * Returns an array whose values are the names of histograms defined
    * in Histograms.json.
+   *
+   * @param dataset - DATASET_RELEASE_CHANNEL_OPTOUT or DATASET_RELEASE_CHANNEL_OPTIN
    */
-  void registeredHistograms(out uint32_t count,
+  void registeredHistograms(in uint32_t dataset,
+                            out uint32_t count,
                             [retval, array, size_is(count)] out string histograms);
 
   /**
@@ -151,6 +172,7 @@ interface nsITelemetry : nsISupports
    *   add(int) - Adds an int value to the appropriate bucket
    *   snapshot() - Returns a snapshot of the histogram with the same data fields as in histogramSnapshots()
    *   clear() - Zeros out the histogram's buckets and sum
+   *   dataset() - identifies what dataset this is in: DATASET_RELEASE_CHANNEL_OPTOUT or ...OPTIN
    */
   [implicit_jscontext, optional_argc]
   jsval newHistogram(in ACString name, in ACString expiration,
@@ -200,6 +222,7 @@ interface nsITelemetry : nsISupports
    *   snapshot([optional] string key) - If key is provided, returns a snapshot for the histogram with that key or null. If key is not provided, returns the snapshots of all the registered keys in the form {key1: snapshot1, key2: snapshot2, ...}.
    *   keys() - Returns an array with the string keys of the currently registered histograms
    *   clear() - Clears the registered histograms from this.
+   *   dataset() - identifies what dataset this is in: DATASET_RELEASE_CHANNEL_OPTOUT or ...OPTIN
    */
   [implicit_jscontext, optional_argc]
   jsval newKeyedHistogram(in ACString name,
@@ -212,8 +235,10 @@ interface nsITelemetry : nsISupports
   /**
    * Returns an array whose values are the names of histograms defined
    * in Histograms.json.
+   *
+   * @param dataset - DATASET_RELEASE_CHANNEL_OPTOUT or ...OPTIN
    */
-  void registeredKeyedHistograms(out uint32_t count,
+  void registeredKeyedHistograms(in uint32_t dataset, out uint32_t count,
                                  [retval, array, size_is(count)] out string histograms);
 
   /**
@@ -226,14 +251,31 @@ interface nsITelemetry : nsISupports
   jsval getKeyedHistogramById(in ACString id);
 
   /**
-   * Set this to false to disable gathering of telemetry statistics.
+   * A flag indicating if Telemetry can record base data (FHR data). This is true if the
+   * FHR data reporting service or self-support are enabled.
+   *
+   * In the unlikely event that adding a new base probe is needed, please check the data
+   * collection wiki at https://wiki.mozilla.org/Firefox/Data_Collection and talk to the
+   * Telemetry team.
    */
-  attribute boolean canRecord;
+  attribute boolean canRecordBase;
 
   /**
-   * A flag indicating whether Telemetry can submit official results.
+   * A flag indicating if Telemetry is allowed to record extended data. Returns false if
+   * the user hasn't opted into "extended Telemetry" on the Release channel, when the
+   * user has explicitly opted out of Telemetry on Nightly/Aurora/Beta or if manually
+   * set to false during tests.
+   *
+   * Set this to false in tests to disable gathering of extended telemetry statistics.
    */
-  readonly attribute boolean canSend;
+  attribute boolean canRecordExtended;
+
+  /**
+   * A flag indicating whether Telemetry can submit official results (for base or extended
+   * data). This is true on official builds with built in support for Mozilla Telemetry
+   * reporting.
+   */
+  readonly attribute boolean isOfficialTelemetry;
 
   /** Addon telemetry hooks */
 

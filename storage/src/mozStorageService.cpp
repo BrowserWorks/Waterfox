@@ -324,9 +324,23 @@ Service::unregisterConnection(Connection *aConnection)
   {
     mRegistrationMutex.AssertNotCurrentThreadOwns();
     MutexAutoLock mutex(mRegistrationMutex);
-    DebugOnly<bool> removed = mConnections.RemoveElement(aConnection);
-    // Assert if we try to unregister a non-existent connection.
-    MOZ_ASSERT(removed);
+
+    for (uint32_t i = 0 ; i < mConnections.Length(); ++i) {
+      if (mConnections[i] == aConnection) {
+        nsCOMPtr<nsIThread> thread = mConnections[i]->threadOpenedOn;
+
+        // Ensure the connection is released on its opening thread.  Note, we
+        // must use .forget().take() so that we can manually cast to an
+        // unambiguous nsISupports type.
+        NS_ProxyRelease(thread,
+          static_cast<mozIStorageConnection*>(mConnections[i].forget().take()));
+
+        mConnections.RemoveElementAt(i);
+        return;
+      }
+    }
+
+    MOZ_ASSERT_UNREACHABLE("Attempt to unregister unknown storage connection!");
   }
 }
 
@@ -347,22 +361,32 @@ Service::minimizeMemory()
 
   for (uint32_t i = 0; i < connections.Length(); i++) {
     nsRefPtr<Connection> conn = connections[i];
-    if (conn->connectionReady()) {
-      NS_NAMED_LITERAL_CSTRING(shrinkPragma, "PRAGMA shrink_memory");
-      nsCOMPtr<mozIStorageConnection> syncConn = do_QueryInterface(
-        NS_ISUPPORTS_CAST(mozIStorageAsyncConnection*, conn));
-      DebugOnly<nsresult> rv;
+    if (!conn->connectionReady())
+      continue;
 
-      if (!syncConn) {
-        nsCOMPtr<mozIStoragePendingStatement> ps;
-        rv = connections[i]->ExecuteSimpleSQLAsync(shrinkPragma, nullptr,
-          getter_AddRefs(ps));
-      } else {
-        rv = connections[i]->ExecuteSimpleSQL(shrinkPragma);
-      }
+    NS_NAMED_LITERAL_CSTRING(shrinkPragma, "PRAGMA shrink_memory");
+    nsCOMPtr<mozIStorageConnection> syncConn = do_QueryInterface(
+      NS_ISUPPORTS_CAST(mozIStorageAsyncConnection*, conn));
+    bool onOpenedThread = false;
 
-      MOZ_ASSERT(NS_SUCCEEDED(rv),
-        "Should have been able to purge sqlite caches");
+    if (!syncConn) {
+      // This is a mozIStorageAsyncConnection, it can only be used on the main
+      // thread, so we can do a straight API call.
+      nsCOMPtr<mozIStoragePendingStatement> ps;
+      DebugOnly<nsresult> rv =
+        conn->ExecuteSimpleSQLAsync(shrinkPragma, nullptr, getter_AddRefs(ps));
+      MOZ_ASSERT(NS_SUCCEEDED(rv), "Should have purged sqlite caches");
+    } else if (NS_SUCCEEDED(conn->threadOpenedOn->IsOnCurrentThread(&onOpenedThread)) &&
+               onOpenedThread) {
+      // We are on the opener thread, so we can just proceed.
+      conn->ExecuteSimpleSQL(shrinkPragma);
+    } else {
+      // We are on the wrong thread, the query should be executed on the
+      // opener thread, so we must dispatch to it.
+      nsCOMPtr<nsIRunnable> event =
+        NS_NewRunnableMethodWithArg<const nsCString>(
+          conn, &Connection::ExecuteSimpleSQL, shrinkPragma);
+      conn->threadOpenedOn->Dispatch(event, NS_DISPATCH_NORMAL);
     }
   }
 }
@@ -392,10 +416,10 @@ namespace {
 // allocated for a given request.  SQLite uses this function before all
 // allocations, and may be able to use any excess bytes caused by the rounding.
 //
-// Note: the wrappers for moz_malloc, moz_realloc and moz_malloc_usable_size
-// are necessary because the sqlite_mem_methods type signatures differ slightly
+// Note: the wrappers for malloc, realloc and moz_malloc_usable_size are
+// necessary because the sqlite_mem_methods type signatures differ slightly
 // from the standard ones -- they use int instead of size_t.  But we don't need
-// a wrapper for moz_free.
+// a wrapper for free.
 
 #ifdef MOZ_DMD
 
@@ -419,7 +443,7 @@ MOZ_DEFINE_MALLOC_SIZE_OF_ON_FREE(SqliteMallocSizeOfOnFree)
 
 static void *sqliteMemMalloc(int n)
 {
-  void* p = ::moz_malloc(n);
+  void* p = ::malloc(n);
 #ifdef MOZ_DMD
   gSqliteMemoryUsed += SqliteMallocSizeOfOnAlloc(p);
 #endif
@@ -431,14 +455,14 @@ static void sqliteMemFree(void *p)
 #ifdef MOZ_DMD
   gSqliteMemoryUsed -= SqliteMallocSizeOfOnFree(p);
 #endif
-  ::moz_free(p);
+  ::free(p);
 }
 
 static void *sqliteMemRealloc(void *p, int n)
 {
 #ifdef MOZ_DMD
   gSqliteMemoryUsed -= SqliteMallocSizeOfOnFree(p);
-  void *pnew = ::moz_realloc(p, n);
+  void *pnew = ::realloc(p, n);
   if (pnew) {
     gSqliteMemoryUsed += SqliteMallocSizeOfOnAlloc(pnew);
   } else {
@@ -447,7 +471,7 @@ static void *sqliteMemRealloc(void *p, int n)
   }
   return pnew;
 #else
-  return ::moz_realloc(p, n);
+  return ::realloc(p, n);
 #endif
 }
 
@@ -653,7 +677,7 @@ Service::OpenSpecialDatabase(const char *aStorageKey,
 
 namespace {
 
-class AsyncInitDatabase MOZ_FINAL : public nsRunnable
+class AsyncInitDatabase final : public nsRunnable
 {
 public:
   AsyncInitDatabase(Connection* aConnection,
@@ -674,6 +698,14 @@ public:
     nsresult rv = mStorageFile ? mConnection->initialize(mStorageFile)
                                : mConnection->initialize();
     if (NS_FAILED(rv)) {
+      nsCOMPtr<nsIRunnable> closeRunnable =
+        NS_NewRunnableMethodWithArg<mozIStorageCompletionCallback*>(
+          mConnection.get(),
+          &Connection::AsyncClose,
+          nullptr);
+      MOZ_ASSERT(closeRunnable);
+      MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToMainThread(closeRunnable)));
+
       return DispatchResult(rv, nullptr);
     }
 

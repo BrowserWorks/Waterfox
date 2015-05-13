@@ -39,9 +39,9 @@ nsIContent* PopupBoxObject::GetParentObject() const
   return BoxObject::GetParentObject();
 }
 
-JSObject* PopupBoxObject::WrapObject(JSContext* aCx)
+JSObject* PopupBoxObject::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return PopupBoxObjectBinding::Wrap(aCx, this);
+  return PopupBoxObjectBinding::Wrap(aCx, this, aGivenProto);
 }
 
 nsPopupSetFrame*
@@ -271,7 +271,7 @@ PopupBoxObject::GetOuterScreenRect()
       widget->GetScreenBounds(screenRect);
 
       int32_t pp = menuPopupFrame->PresContext()->AppUnitsPerDevPixel();
-      rect->SetLayoutRect(screenRect.ToAppUnits(pp));
+      rect->SetLayoutRect(ToAppUnits(screenRect, pp));
     }
   }
   return rect.forget();

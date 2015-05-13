@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -124,16 +125,17 @@ void
 nsSMILValue::InitAndCheckPostcondition(const nsISMILType* aNewType)
 {
   aNewType->Init(*this);
-  NS_ABORT_IF_FALSE(mType == aNewType,
-                    "Post-condition of Init failed. nsSMILValue is invalid");
+  MOZ_ASSERT(mType == aNewType,
+             "Post-condition of Init failed. nsSMILValue is invalid");
 }
                 
 void
 nsSMILValue::DestroyAndCheckPostcondition()
 {
   mType->Destroy(*this);
-  NS_ABORT_IF_FALSE(IsNull(), "Post-condition of Destroy failed. "
-                    "nsSMILValue not null after destroying");
+  MOZ_ASSERT(IsNull(),
+             "Post-condition of Destroy failed. "
+             "nsSMILValue not null after destroying");
 }
 
 void

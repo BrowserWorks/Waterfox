@@ -14,7 +14,7 @@ namespace dom {
 
 NS_IMPL_ISUPPORTS_INHERITED0(ChannelSplitterNode, AudioNode)
 
-class ChannelSplitterNodeEngine : public AudioNodeEngine
+class ChannelSplitterNodeEngine final : public AudioNodeEngine
 {
 public:
   explicit ChannelSplitterNodeEngine(ChannelSplitterNode* aNode)
@@ -26,7 +26,7 @@ public:
   virtual void ProcessBlocksOnPorts(AudioNodeStream* aStream,
                                     const OutputChunks& aInput,
                                     OutputChunks& aOutput,
-                                    bool* aFinished) MOZ_OVERRIDE
+                                    bool* aFinished) override
   {
     MOZ_ASSERT(aInput.Length() == 1, "Should only have one input port");
 
@@ -46,7 +46,7 @@ public:
     }
   }
 
-  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const MOZ_OVERRIDE
+  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
   }
@@ -69,9 +69,9 @@ ChannelSplitterNode::~ChannelSplitterNode()
 }
 
 JSObject*
-ChannelSplitterNode::WrapObject(JSContext* aCx)
+ChannelSplitterNode::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return ChannelSplitterNodeBinding::Wrap(aCx, this);
+  return ChannelSplitterNodeBinding::Wrap(aCx, this, aGivenProto);
 }
 
 }

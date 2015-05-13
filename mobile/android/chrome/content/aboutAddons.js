@@ -348,6 +348,10 @@ var Addons = {
             let event = document.createEvent("Events");
             event.initEvent("AddonOptionsLoad", true, false);
             window.dispatchEvent(event);
+          } else {
+            // Reset the options URL to hide the options header if there are no
+            // valid settings to show.
+            detailItem.setAttribute("optionsURL", "");
           }
 
           // Also send a notification to match the behavior of desktop Firefox
@@ -522,6 +526,19 @@ var Addons = {
     let element = this._getElementForAddon(aAddon.id);
     if (!element) {
       element = this._createItemForAddon(aAddon);
+
+      // Themes aren't considered active on install, so set existing as disabled, and new one enabled.
+      if (aAddon.type == "theme") {
+        let item = list.firstElementChild;
+        while (item) {
+          if (item.addon && (item.addon.type == "theme")) {
+            item.setAttribute("isDisabled", true);
+          }
+          item = item.nextSibling;
+        }
+        element.setAttribute("isDisabled", false);
+      }
+
       list.insertBefore(element, list.firstElementChild);
     }
   },

@@ -87,7 +87,7 @@ elif CONFIG['OS_ARCH'] in ('DragonFly', 'FreeBSD', 'NetBSD', 'OpenBSD'):
     UNIFIED_SOURCES += [
         'ProcessUtils_bsd.cpp'
     ]
-elif CONFIG['OS_ARCH'] in ('Darwin'):
+elif CONFIG['OS_ARCH'] == 'Darwin':
     UNIFIED_SOURCES += [
         'ProcessUtils_mac.mm'
     ]
@@ -130,6 +130,8 @@ SOURCES += [
 ]
 
 LOCAL_INCLUDES += [
+    '/caps',
+    '/dom/broadcastchannel',
     '/dom/indexedDB',
     '/xpcom/build',
 ]
@@ -163,8 +165,10 @@ LOCAL_INCLUDES += [
     '/toolkit/crashreporter',
 ]
 
-if CONFIG['OS_ARCH'] == 'WINNT':
+if CONFIG['MOZ_SANDBOX'] and CONFIG['OS_ARCH'] == 'WINNT':
     LOCAL_INCLUDES += [
+        '/security/sandbox/chromium',
+        '/security/sandbox/chromium-shim',
         '/security/sandbox/win/src/sandboxbroker',
     ]
 

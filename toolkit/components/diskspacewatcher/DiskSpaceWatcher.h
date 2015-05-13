@@ -8,8 +8,8 @@
 #include "nsIObserver.h"
 #include "nsCOMPtr.h"
 
-class DiskSpaceWatcher MOZ_FINAL : public nsIDiskSpaceWatcher,
-                                   public nsIObserver
+class DiskSpaceWatcher final : public nsIDiskSpaceWatcher,
+                               public nsIObserver
 {
 public:
   NS_DECL_ISUPPORTS

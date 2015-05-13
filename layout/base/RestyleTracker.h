@@ -16,6 +16,11 @@
 #include "nsContainerFrame.h"
 #include "mozilla/SplayTree.h"
 #include "mozilla/RestyleLogging.h"
+#include "GeckoProfiler.h"
+
+#if defined(MOZ_ENABLE_PROFILER_SPS) && !defined(MOZILLA_XPCOMRT_API)
+#include "ProfilerBacktrace.h"
+#endif
 
 namespace mozilla {
 
@@ -42,13 +47,6 @@ public:
      * and we need to call UpdateOverflow on the frame.
      */
     CHILDREN_CHANGED,
-    /**
-     * The overflow areas of children have changed
-     * and we need to call UpdateOverflow on the frame.
-     * Also call UpdateOverflow on the parent even if the
-     * overflow areas of the frame does not change.
-     */
-    CHILDREN_AND_PARENT_CHANGED
   };
 
   OverflowChangedTracker() :
@@ -121,12 +119,7 @@ public:
       nsIFrame *frame = entry->mFrame;
 
       bool overflowChanged = false;
-      if (entry->mChangeKind == CHILDREN_AND_PARENT_CHANGED) {
-        // Need to union the overflow areas of the children.
-        // Always update the parent, even if the overflow does not change.
-        frame->UpdateOverflow();
-        overflowChanged = true;
-      } else if (entry->mChangeKind == CHILDREN_CHANGED) {
+      if (entry->mChangeKind == CHILDREN_CHANGED) {
         // Need to union the overflow areas of the children.
         // Only update the parent if the overflow changes.
         overflowChanged = frame->UpdateOverflow();
@@ -270,13 +263,7 @@ public:
   /**
    * Process the restyles we've been tracking.
    */
-  void ProcessRestyles() {
-    // Fast-path the common case (esp. for the animation restyle
-    // tracker) of not having anything to do.
-    if (mPendingRestyles.Count()) {
-      DoProcessRestyles();
-    }
-  }
+  void DoProcessRestyles();
 
   // Return our ELEMENT_HAS_PENDING_(ANIMATION_)RESTYLE bit
   uint32_t RestyleBit() const {
@@ -309,6 +296,9 @@ public:
     // that we called AddPendingRestyle for and found the element this is
     // the RestyleData for as its nearest restyle root.
     nsTArray<nsRefPtr<Element>> mDescendants;
+#if defined(MOZ_ENABLE_PROFILER_SPS) && !defined(MOZILLA_XPCOMRT_API)
+    UniquePtr<ProfilerBacktrace> mBacktrace;
+#endif
   };
 
   /**
@@ -362,11 +352,6 @@ private:
                                 nsRestyleHint aRestyleHint,
                                 nsChangeHint aChangeHint);
 
-  /**
-   * The guts of our restyle processing.
-   */
-  void DoProcessRestyles();
-
   typedef nsClassHashtable<nsISupportsHashKey, RestyleData> PendingRestyleTable;
   typedef nsAutoTArray< nsRefPtr<Element>, 32> RestyleRootArray;
   // Our restyle bits.  These will be a subset of ELEMENT_ALL_RESTYLE_FLAGS, and
@@ -411,8 +396,13 @@ RestyleTracker::AddPendingRestyleToTable(Element* aElement,
   }
 
   if (!existingData) {
-    mPendingRestyles.Put(aElement,
-                         new RestyleData(aRestyleHint, aMinChangeHint));
+    RestyleData* rd = new RestyleData(aRestyleHint, aMinChangeHint);
+#if defined(MOZ_ENABLE_PROFILER_SPS) && !defined(MOZILLA_XPCOMRT_API)
+    if (profiler_feature_active("restyle")) {
+      rd->mBacktrace.reset(profiler_get_backtrace());
+    }
+#endif
+    mPendingRestyles.Put(aElement, rd);
     return false;
   }
 

@@ -2,14 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-%define WINDOWS_AERO
-%include browser.css
-%undef WINDOWS_AERO
-
 %define glassActiveBorderColor rgb(37, 44, 51)
 %define glassInactiveBorderColor rgb(102, 102, 102)
-
-%include downloads/indicator-aero.css
 
 @media not all and (-moz-windows-classic) {
   #main-window[sizemode="normal"] > #tab-view-deck > #browser-panel > #navigator-toolbox > #toolbar-menubar {
@@ -83,7 +77,7 @@
       background-color: @customToolbarColor@;
     }
 
-    .tab-background-middle[selected=true]:not(:-moz-lwtheme) {
+    .tab-background-middle[visuallyselected=true]:not(:-moz-lwtheme) {
       background-color: @customToolbarColor@;
     }
 
@@ -320,74 +314,6 @@
     #nav-bar .toolbarbutton-1[buttonover] > .toolbarbutton-menubutton-button:hover > .toolbarbutton-icon {
       background-color: hsla(210,4%,10%,.08);
       border-color: hsla(210,4%,10%,.1);
-    }
-  }
-}
-
-/* ::::: fullscreen window controls ::::: */
-
-#window-controls {
-  -moz-box-align: start;
-}
-
-#minimize-button,
-#restore-button,
-#close-button {
-  -moz-appearance: none;
-  border-style: none;
-  margin: 0;
-}
-#close-button {
-  -moz-image-region: rect(0, 49px, 16px, 32px);
-}
-#close-button:hover {
-  -moz-image-region: rect(16px, 49px, 32px, 32px);
-}
-#close-button:hover:active {
-  -moz-image-region: rect(32px, 49px, 48px, 32px);
-}
-
-#minimize-button:-moz-locale-dir(rtl),
-#restore-button:-moz-locale-dir(rtl),
-#close-button:-moz-locale-dir(rtl) {
-  transform: scaleX(-1);
-}
-
-/* ::::: private browsing indicator ::::: */
-
-@media (-moz-os-version: windows-vista),
-       (-moz-os-version: windows-win7) {
-  #TabsToolbar > .private-browsing-indicator {
-    background-image: url("chrome://browser/skin/privatebrowsing-mask-tabstrip-XPVista7.png");
-  }
-
-  /* We're intentionally using the titlebar asset here for fullscreen mode.
-   * See bug 1008183.
-   */
-  #private-browsing-indicator-titlebar > .private-browsing-indicator,
-  #main-window[inFullscreen] #TabsToolbar > .private-browsing-indicator {
-    background-image: url("chrome://browser/skin/privatebrowsing-mask-titlebar-XPVista7.png");
-  }
-}
-
-@media (-moz-windows-glass) {
-  #main-window[sizemode="normal"] > #titlebar > #titlebar-content > #titlebar-buttonbox-container > #private-browsing-indicator-titlebar > .private-browsing-indicator {
-    top: 1px;
-  }
-  #main-window[sizemode="maximized"] > #titlebar > #titlebar-content > #titlebar-buttonbox-container > #private-browsing-indicator-titlebar > .private-browsing-indicator {
-    top: -1px;
-  }
-}
-
-/**
- * This next block targets Aero Basic, which has different positioning for the
- * window caption buttons, and therefore needs to be special-cased.
- */
-@media (-moz-windows-default-theme) {
-  @media not all and (-moz-windows-compositor) {
-    #main-window[sizemode="normal"] > #titlebar > #titlebar-content > #titlebar-buttonbox-container > #private-browsing-indicator-titlebar > .private-browsing-indicator {
-      background-image: url("chrome://browser/skin/privatebrowsing-mask-titlebar-XPVista7-tall.png");
-      height: 28px;
     }
   }
 }

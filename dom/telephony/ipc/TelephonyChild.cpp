@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -47,26 +48,20 @@ TelephonyChild::DeallocPTelephonyRequestChild(PTelephonyRequestChild* aActor)
 }
 
 bool
-TelephonyChild::RecvNotifyCallError(const uint32_t& aClientId,
-                                    const int32_t& aCallIndex,
-                                    const nsString& aError)
+TelephonyChild::RecvNotifyCallStateChanged(nsTArray<nsITelephonyCallInfo*>&& aAllInfo)
 {
-  MOZ_ASSERT(mService);
-
-  mService->NotifyError(aClientId, aCallIndex, aError);
-  return true;
-}
-
-bool
-TelephonyChild::RecvNotifyCallStateChanged(nsITelephonyCallInfo* const& aInfo)
-{
-  // Use dont_AddRef here because this instances has already been AddRef-ed in
-  // TelephonyIPCSerializer.h
-  nsCOMPtr<nsITelephonyCallInfo> info = dont_AddRef(aInfo);
+  uint32_t length = aAllInfo.Length();
+  nsTArray<nsCOMPtr<nsITelephonyCallInfo>> results;
+  for (uint32_t i = 0; i < length; ++i) {
+    // Use dont_AddRef here because this instance has already been AddRef-ed in
+    // TelephonyIPCSerializer.h
+    nsCOMPtr<nsITelephonyCallInfo> info = dont_AddRef(aAllInfo[i]);
+    results.AppendElement(info);
+  }
 
   MOZ_ASSERT(mService);
 
-  mService->CallStateChanged(aInfo);
+  mService->CallStateChanged(length, const_cast<nsITelephonyCallInfo**>(aAllInfo.Elements()));
 
   return true;
 }

@@ -194,7 +194,7 @@ GetXULRunnerStubPath(const char* argv0, nsIFile* *aResult)
   if (NS_FAILED(rv))
     return rv;
 
-  NS_ADDREF(*aResult = static_cast<nsIFile*>(lfm.get()));
+  lfm.forget(aResult);
   return NS_OK;
 }
 #endif /* XP_MACOSX */
@@ -331,19 +331,6 @@ IsOlderVersion(nsIFile *versionFile, const char *appVersion)
   return false;
 }
 
-#if defined(XP_WIN) && defined(MOZ_METRO)
-static bool
-IsWindowsMetroUpdateRequest(int appArgc, char **appArgv)
-{
-  for (int index = 0; index < appArgc; index++) {
-    if (!strcmp(appArgv[index], "--metro-update")) {
-      return true;
-    }
-  }
-  return false;
-}
-#endif
-
 static bool
 CopyFileIntoUpdateDir(nsIFile *parentDir, const char *leafName, nsIFile *updateDir)
 {
@@ -413,6 +400,36 @@ CopyUpdaterIntoUpdateDir(nsIFile *greDir, nsIFile *appDir, nsIFile *updateDir,
 }
 
 /**
+ * Appends the specified path to the library path.
+ * This is used so that updater can find libmozsqlite3.so and other shared libs.
+ *
+ * @param pathToAppend A new library path to prepend to LD_LIBRARY_PATH
+ */
+#if defined(MOZ_VERIFY_MAR_SIGNATURE) && !defined(XP_WIN) && !defined(XP_MACOSX)
+#include "prprf.h"
+#define PATH_SEPARATOR ":"
+#define LD_LIBRARY_PATH_ENVVAR_NAME "LD_LIBRARY_PATH"
+static void
+AppendToLibPath(const char *pathToAppend)
+{
+  char *pathValue = getenv(LD_LIBRARY_PATH_ENVVAR_NAME);
+  if (nullptr == pathValue || '\0' == *pathValue) {
+    char *s = PR_smprintf("%s=%s", LD_LIBRARY_PATH_ENVVAR_NAME, pathToAppend);
+    PR_SetEnv(s);
+  } else if (!strstr(pathValue, pathToAppend)) {
+    char *s = PR_smprintf("%s=%s" PATH_SEPARATOR "%s",
+                    LD_LIBRARY_PATH_ENVVAR_NAME, pathToAppend, pathValue);
+    PR_SetEnv(s);
+  }
+
+  // The memory used by PR_SetEnv is not copied to the environment on all
+  // platform, it can be used by reference directly. So we purposely do not
+  // call PR_smprintf_free on s.  Subsequent calls to PR_SetEnv will free
+  // the old memory first.
+}
+#endif
+
+/**
  * Switch an existing application directory to an updated version that has been
  * staged.
  *
@@ -429,9 +446,10 @@ SwitchToUpdatedApp(nsIFile *greDir, nsIFile *updateDir,
   nsresult rv;
 
   // Steps:
-  //  - copy updater into updates/0/MozUpdater/bgupdate/ dir
+  //  - copy updater into updates/0/MozUpdater/bgupdate/ dir on all platforms
+  //    except Windows
   //  - run updater with the correct arguments
-
+#ifndef XP_WIN
   nsCOMPtr<nsIFile> mozUpdaterDir;
   rv = updateDir->Clone(getter_AddRefs(mozUpdaterDir));
   if (NS_FAILED(rv)) {
@@ -454,6 +472,7 @@ SwitchToUpdatedApp(nsIFile *greDir, nsIFile *updateDir,
     LOG(("failed copying updater\n"));
     return;
   }
+#endif
 
   // We need to use the value returned from XRE_GetBinaryPath when attempting
   // to restart the running application.
@@ -473,15 +492,28 @@ SwitchToUpdatedApp(nsIFile *greDir, nsIFile *updateDir,
 #ifdef XP_WIN
   nsAutoString appFilePathW;
   rv = appFile->GetPath(appFilePathW);
-  if (NS_FAILED(rv))
+  if (NS_FAILED(rv)) {
     return;
+  }
   NS_ConvertUTF16toUTF8 appFilePath(appFilePathW);
+
+  nsCOMPtr<nsIFile> updater;
+  rv = greDir->Clone(getter_AddRefs(updater));
+  if (NS_FAILED(rv)) {
+    return;
+  }
+
+  nsDependentCString leaf(kUpdaterBin);
+  rv = updater->AppendNative(leaf);
+  if (NS_FAILED(rv)) {
+    return;
+  }
 
   nsAutoString updaterPathW;
   rv = updater->GetPath(updaterPathW);
-  if (NS_FAILED(rv))
+  if (NS_FAILED(rv)) {
     return;
-
+  }
   NS_ConvertUTF16toUTF8 updaterPath(updaterPathW);
 #else
 
@@ -570,13 +602,6 @@ SwitchToUpdatedApp(nsIFile *greDir, nsIFile *updateDir,
   pid.AppendLiteral("/replace");
 
   int immersiveArgc = 0;
-#if defined(XP_WIN) && defined(MOZ_METRO)
-  // If this is desktop doing an update for metro, or if we're the metro browser
-  // we want to launch the metro browser after we're finished.
-  if (IsWindowsMetroUpdateRequest(appArgc, appArgv) || IsRunningInWindowsMetro()) {
-    immersiveArgc = 1;
-  }
-#endif
   int argc = appArgc + 6 + immersiveArgc;
   char **argv = new char*[argc + 1];
   if (!argv)
@@ -605,6 +630,9 @@ SwitchToUpdatedApp(nsIFile *greDir, nsIFile *updateDir,
   if (gSafeMode) {
     PR_SetEnv("MOZ_SAFE_MODE_RESTART=1");
   }
+#if defined(MOZ_VERIFY_MAR_SIGNATURE) && !defined(XP_WIN) && !defined(XP_MACOSX)
+  AppendToLibPath(installDirPath.get());
+#endif
 
   LOG(("spawning updater process for replacing [%s]\n", updaterPath.get()));
 
@@ -705,14 +733,15 @@ ApplyUpdate(nsIFile *greDir, nsIFile *updateDir, nsIFile *statusFile,
 
   // Steps:
   //  - mark update as 'applying'
-  //  - copy updater into update dir
+  //  - copy updater into update dir on all platforms except Windows
   //  - run updater w/ appDir as the current working dir
-
+#ifndef XP_WIN
   nsCOMPtr<nsIFile> updater;
   if (!CopyUpdaterIntoUpdateDir(greDir, appDir, updateDir, updater)) {
     LOG(("failed copying updater\n"));
     return;
   }
+#endif
 
   // We need to use the value returned from XRE_GetBinaryPath when attempting
   // to restart the running application.
@@ -732,17 +761,29 @@ ApplyUpdate(nsIFile *greDir, nsIFile *updateDir, nsIFile *statusFile,
 #ifdef XP_WIN
   nsAutoString appFilePathW;
   rv = appFile->GetPath(appFilePathW);
-  if (NS_FAILED(rv))
+  if (NS_FAILED(rv)) {
     return;
+  }
   NS_ConvertUTF16toUTF8 appFilePath(appFilePathW);
+
+  nsCOMPtr<nsIFile> updater;
+  rv = greDir->Clone(getter_AddRefs(updater));
+  if (NS_FAILED(rv)) {
+    return;
+  }
+
+  nsDependentCString leaf(kUpdaterBin);
+  rv = updater->AppendNative(leaf);
+  if (NS_FAILED(rv)) {
+    return;
+  }
 
   nsAutoString updaterPathW;
   rv = updater->GetPath(updaterPathW);
-  if (NS_FAILED(rv))
+  if (NS_FAILED(rv)) {
     return;
-
+  }
   NS_ConvertUTF16toUTF8 updaterPath(updaterPathW);
-
 #else
   nsAutoCString appFilePath;
   rv = appFile->GetNativePath(appFilePath);
@@ -842,13 +883,6 @@ ApplyUpdate(nsIFile *greDir, nsIFile *updateDir, nsIFile *statusFile,
   }
 
   int immersiveArgc = 0;
-#if defined(XP_WIN) && defined(MOZ_METRO)
-  // If this is desktop doing an update for metro, or if we're the metro browser
-  // we want to launch the metro browser after we're finished.
-  if (IsWindowsMetroUpdateRequest(appArgc, appArgv) || IsRunningInWindowsMetro()) {
-    immersiveArgc = 1;
-  }
-#endif
   int argc = appArgc + 6 + immersiveArgc;
   char **argv = new char*[argc + 1 ];
   if (!argv)
@@ -877,6 +911,9 @@ ApplyUpdate(nsIFile *greDir, nsIFile *updateDir, nsIFile *statusFile,
   if (gSafeMode) {
     PR_SetEnv("MOZ_SAFE_MODE_RESTART=1");
   }
+#if defined(MOZ_VERIFY_MAR_SIGNATURE) && !defined(XP_WIN) && !defined(XP_MACOSX)
+  AppendToLibPath(installDirPath.get());
+#endif
 
   if (isOSUpdate) {
     PR_SetEnv("MOZ_OS_UPDATE=1");
@@ -896,7 +933,10 @@ ApplyUpdate(nsIFile *greDir, nsIFile *updateDir, nsIFile *statusFile,
                                             kAppUpdaterIOPrioLevelDefault);
   nsPrintfCString prioEnv("MOZ_UPDATER_PRIO=%d/%d/%d/%d",
                           prioVal, oomScoreAdj, ioprioClass, ioprioLevel);
-  PR_SetEnv(prioEnv.get());
+  // Note: we allocate a new string on heap and pass that to PR_SetEnv, since
+  // the string can be used after this function returns.  This means that we
+  // will intentionally leak this buffer.
+  PR_SetEnv(ToNewCString(prioEnv));
 #endif
 
   LOG(("spawning updater process [%s]\n", updaterPath.get()));
@@ -1170,9 +1210,7 @@ nsUpdateProcessor::ProcessUpdate(nsIUpdate* aUpdate)
   }
 #endif
 
-  mUpdate = aUpdate;
-
-  NS_ABORT_IF_FALSE(NS_IsMainThread(), "not main thread");
+  MOZ_ASSERT(NS_IsMainThread(), "not main thread");
   return NS_NewThread(getter_AddRefs(mProcessWatcher),
                       NS_NewRunnableMethod(this, &nsUpdateProcessor::StartStagedUpdate));
 }
@@ -1182,7 +1220,7 @@ nsUpdateProcessor::ProcessUpdate(nsIUpdate* aUpdate)
 void
 nsUpdateProcessor::StartStagedUpdate()
 {
-  NS_ABORT_IF_FALSE(!NS_IsMainThread(), "main thread");
+  MOZ_ASSERT(!NS_IsMainThread(), "main thread");
 
   nsresult rv = ProcessUpdates(mInfo.mGREDir,
                                mInfo.mAppDir,
@@ -1212,16 +1250,15 @@ nsUpdateProcessor::StartStagedUpdate()
 void
 nsUpdateProcessor::ShutdownWatcherThread()
 {
-  NS_ABORT_IF_FALSE(NS_IsMainThread(), "not main thread");
+  MOZ_ASSERT(NS_IsMainThread(), "not main thread");
   mProcessWatcher->Shutdown();
   mProcessWatcher = nullptr;
-  mUpdate = nullptr;
 }
 
 void
 nsUpdateProcessor::WaitForProcess()
 {
-  NS_ABORT_IF_FALSE(!NS_IsMainThread(), "main thread");
+  MOZ_ASSERT(!NS_IsMainThread(), "main thread");
   ::WaitForProcess(mUpdaterPID);
   NS_DispatchToMainThread(NS_NewRunnableMethod(this, &nsUpdateProcessor::UpdateDone));
 }
@@ -1229,12 +1266,12 @@ nsUpdateProcessor::WaitForProcess()
 void
 nsUpdateProcessor::UpdateDone()
 {
-  NS_ABORT_IF_FALSE(NS_IsMainThread(), "not main thread");
+  MOZ_ASSERT(NS_IsMainThread(), "not main thread");
 
   nsCOMPtr<nsIUpdateManager> um =
     do_GetService("@mozilla.org/updates/update-manager;1");
-  if (um && mUpdate) {
-    um->RefreshUpdateStatus(mUpdate);
+  if (um) {
+    um->RefreshUpdateStatus();
   }
 
   ShutdownWatcherThread();

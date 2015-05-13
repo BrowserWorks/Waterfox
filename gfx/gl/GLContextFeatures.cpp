@@ -3,7 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-
 #include "GLContext.h"
 #include "nsPrintfCString.h"
 
@@ -16,7 +15,7 @@ namespace gl {
 
 const size_t kMAX_EXTENSION_GROUP_SIZE = 5;
 
-MOZ_BEGIN_ENUM_CLASS(GLVersion, uint32_t)
+enum class GLVersion : uint32_t {
     NONE  = 0,   // Feature is not supported natively by GL
     GL1_2 = 120,
     GL1_3 = 130,
@@ -30,14 +29,14 @@ MOZ_BEGIN_ENUM_CLASS(GLVersion, uint32_t)
     GL4_1 = 410,
     GL4_2 = 420,
     GL4_3 = 430,
-MOZ_END_ENUM_CLASS(GLVersion)
+};
 
-MOZ_BEGIN_ENUM_CLASS(GLESVersion, uint32_t)
+enum class GLESVersion : uint32_t {
     NONE  = 0,   // Feature is not support natively by GL ES
     ES2   = 200,
     ES3   = 300,
     ES3_1 = 310,
-MOZ_END_ENUM_CLASS(GLESVersion)
+};
 
 // ARB_ES2_compatibility is natively supported in OpenGL 4.1.
 static const GLVersion kGLCoreVersionForES2Compat = GLVersion::GL4_1;
@@ -275,6 +274,16 @@ static const FeatureInfo sFeatureInfoArr[] = {
          */
     },
     {
+        "get_string_indexed",
+        GLVersion::GL3,
+        GLESVersion::ES3,
+        GLContext::Extension_None,
+        {
+            GLContext::Extensions_End
+        }
+        // glGetStringi
+    },
+    {
         "gpu_shader4",
         GLVersion::GL3,
         GLESVersion::ES3,
@@ -399,6 +408,15 @@ static const FeatureInfo sFeatureInfoArr[] = {
          */
     },
     {
+        "read_buffer",
+        GLVersion::GL2,
+        GLESVersion::ES3,
+        GLContext::Extension_None,
+        {
+            GLContext::Extensions_End
+        }
+    },
+    {
         "renderbuffer_color_float",
         GLVersion::GL3,
         GLESVersion::ES3,
@@ -432,12 +450,24 @@ static const FeatureInfo sFeatureInfoArr[] = {
         }
     },
     {
-        "sRGB",
+        "sRGB_framebuffer",
         GLVersion::GL3,
+        GLESVersion::ES3,
+        GLContext::ARB_framebuffer_sRGB,
+        {
+            GLContext::EXT_framebuffer_sRGB,
+            GLContext::EXT_sRGB_write_control,
+            GLContext::Extensions_End
+        }
+    },
+    {
+        "sRGB_texture",
+        GLVersion::GL2_1,
         GLESVersion::ES3,
         GLContext::Extension_None,
         {
             GLContext::EXT_sRGB,
+            GLContext::EXT_texture_sRGB,
             GLContext::Extensions_End
         }
     },
@@ -634,11 +664,10 @@ ProfileVersionForFeature(GLFeature feature, ContextProfile profile)
 
     const FeatureInfo& featureInfo = GetFeatureInfo(feature);
 
-    if (profile == ContextProfile::OpenGLES) {
-        return (uint32_t) featureInfo.mOpenGLESVersion;
-    }
+    if (profile == ContextProfile::OpenGLES)
+        return (uint32_t)featureInfo.mOpenGLESVersion;
 
-    return (uint32_t) featureInfo.mOpenGLVersion;
+    return (uint32_t)featureInfo.mOpenGLVersion;
 }
 
 bool
@@ -672,72 +701,49 @@ GLContext::GetFeatureName(GLFeature feature)
     return GetFeatureInfo(feature).mName;
 }
 
-static bool
-CanReadSRGBFromFBOTexture(GLContext* gl)
-{
-    if (!gl->WorkAroundDriverBugs())
-        return true;
-
-#ifdef XP_MACOSX
-    // Bug 843668:
-    // MacOSX 10.6 reports to support EXT_framebuffer_sRGB and
-    // EXT_texture_sRGB but fails to convert from sRGB to linear
-    // when writing to an sRGB texture attached to an FBO.
-    if (!nsCocoaFeatures::OnLionOrLater()) {
-        return false;
-    }
-#endif // XP_MACOSX
-    return true;
-}
-
 void
 GLContext::InitFeatures()
 {
-    for (size_t feature_index = 0; feature_index < size_t(GLFeature::EnumMax); feature_index++)
-    {
-        GLFeature feature = GLFeature(feature_index);
+    for (size_t featureId = 0; featureId < size_t(GLFeature::EnumMax); featureId++) {
+        GLFeature feature = GLFeature(featureId);
 
         if (IsFeaturePartOfProfileVersion(feature, mProfile, mVersion)) {
-            mAvailableFeatures[feature_index] = true;
+            mAvailableFeatures[featureId] = true;
             continue;
         }
 
-        mAvailableFeatures[feature_index] = false;
+        mAvailableFeatures[featureId] = false;
 
         const FeatureInfo& featureInfo = GetFeatureInfo(feature);
 
-        if (IsExtensionSupported(featureInfo.mARBExtensionWithoutARBSuffix))
-        {
-            mAvailableFeatures[feature_index] = true;
+        if (IsExtensionSupported(featureInfo.mARBExtensionWithoutARBSuffix)) {
+            mAvailableFeatures[featureId] = true;
             continue;
         }
 
-        for (size_t j = 0; true; j++)
-        {
-            MOZ_ASSERT(j < kMAX_EXTENSION_GROUP_SIZE, "kMAX_EXTENSION_GROUP_SIZE too small");
+        for (size_t j = 0; true; j++) {
+            MOZ_ASSERT(j < kMAX_EXTENSION_GROUP_SIZE,
+                       "kMAX_EXTENSION_GROUP_SIZE too small");
 
-            if (featureInfo.mExtensions[j] == GLContext::Extensions_End) {
+            if (featureInfo.mExtensions[j] == GLContext::Extensions_End)
                 break;
-            }
 
             if (IsExtensionSupported(featureInfo.mExtensions[j])) {
-                mAvailableFeatures[feature_index] = true;
+                mAvailableFeatures[featureId] = true;
                 break;
             }
         }
     }
 
-    // Bug 843668: Work around limitation of the feature system.
-    // For sRGB support under OpenGL to match OpenGL ES spec, check for both
-    // EXT_texture_sRGB and EXT_framebuffer_sRGB is required.
-    const bool aresRGBExtensionsAvailable =
-        IsExtensionSupported(EXT_texture_sRGB) &&
-        (IsExtensionSupported(ARB_framebuffer_sRGB) ||
-         IsExtensionSupported(EXT_framebuffer_sRGB));
-
-    mAvailableFeatures[size_t(GLFeature::sRGB)] =
-        aresRGBExtensionsAvailable &&
-        CanReadSRGBFromFBOTexture(this);
+    if (WorkAroundDriverBugs()) {
+#ifdef XP_MACOSX
+        // MacOSX 10.6 reports to support EXT_framebuffer_sRGB and EXT_texture_sRGB but
+        // fails to convert from sRGB to linear when reading from an sRGB texture attached
+        // to an FBO. (bug 843668)
+        if (!nsCocoaFeatures::OnLionOrLater())
+            MarkUnsupported(GLFeature::sRGB_framebuffer);
+#endif // XP_MACOSX
+    }
 }
 
 void
@@ -747,20 +753,19 @@ GLContext::MarkUnsupported(GLFeature feature)
 
     const FeatureInfo& featureInfo = GetFeatureInfo(feature);
 
-    for (size_t i = 0; true; i++)
-    {
+    for (size_t i = 0; true; i++) {
         MOZ_ASSERT(i < kMAX_EXTENSION_GROUP_SIZE, "kMAX_EXTENSION_GROUP_SIZE too small");
 
-        if (featureInfo.mExtensions[i] == GLContext::Extensions_End) {
+        if (featureInfo.mExtensions[i] == GLContext::Extensions_End)
             break;
-        }
 
         MarkExtensionUnsupported(featureInfo.mExtensions[i]);
     }
 
     MOZ_ASSERT(!IsSupported(feature), "GLContext::MarkUnsupported has failed!");
 
-    NS_WARNING(nsPrintfCString("%s marked as unsupported", GetFeatureName(feature)).get());
+    NS_WARNING(nsPrintfCString("%s marked as unsupported",
+                               GetFeatureName(feature)).get());
 }
 
 } /* namespace gl */

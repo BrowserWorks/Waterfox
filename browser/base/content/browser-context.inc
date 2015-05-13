@@ -156,7 +156,7 @@
       <menuitem id="context-video-fullscreen"
                 accesskey="&videoFullScreen.accesskey;"
                 label="&videoFullScreen.label;"
-                oncommand="gContextMenu.fullScreenVideo();"/>
+                oncommand="gContextMenu.mediaCommand('fullscreen');"/>
       <menuitem id="context-leave-dom-fullscreen"
                 accesskey="&leaveDOMFullScreen.accesskey;"
                 label="&leaveDOMFullScreen.label;"
@@ -266,6 +266,10 @@
                 label="&savePageCmd.label;"
                 accesskey="&savePageCmd.accesskey2;"
                 oncommand="gContextMenu.savePageAs();"/>
+      <menuitem id="context-pocket"
+                label="&saveToPocketCmd.label;"
+                accesskey="&saveToPocketCmd.accesskey;"
+                oncommand="gContextMenu.saveToPocket();"/>
       <menu id="context-markpageMenu" label="&social.markpageMenu.label;"
             accesskey="&social.markpageMenu.accesskey;">
         <menupopup/>
@@ -312,7 +316,7 @@
       <menuitem id="context-shareselect"
                 label="&shareSelect.label;"
                 accesskey="&shareSelect.accesskey;"
-                oncommand="gContextMenu.shareSelect(getBrowserSelection());"/>
+                oncommand="gContextMenu.shareSelect();"/>
       <menuseparator id="frame-sep"/>
       <menu id="frame" label="&thisFrameMenu.label;" accesskey="&thisFrameMenu.accesskey;">
         <menupopup>
@@ -373,7 +377,7 @@
       <menuitem id="context-viewsource"
                 label="&viewPageSourceCmd.label;"
                 accesskey="&viewPageSourceCmd.accesskey;"
-                oncommand="BrowserViewSourceOfDocument(gContextMenu.browser.contentDocumentAsCPOW);"
+                oncommand="BrowserViewSource(gContextMenu.browser);"
                 observes="isImage"/>
       <menuitem id="context-viewinfo"
                 label="&viewPageInfoCmd.label;"
@@ -415,3 +419,11 @@
                 label="&inspectContextMenu.label;"
                 accesskey="&inspectContextMenu.accesskey;"
                 oncommand="gContextMenu.inspectNode();"/>
+      <menuseparator id="context-media-eme-separator" hidden="true"/>
+      <menuitem id="context-media-eme-learnmore"
+                class="menuitem-iconic"
+                hidden="true"
+                label="&emeLearnMoreContextMenu.label;"
+                accesskey="&emeLearnMoreContextMenu.accesskey;"
+                oncommand="gContextMenu.drmLearnMore(event);"
+                onclick="checkForMiddleClick(this, event);"/>

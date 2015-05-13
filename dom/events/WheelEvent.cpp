@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -148,33 +148,6 @@ WheelEvent::GetDeltaMode(uint32_t* aDeltaMode)
   return NS_OK;
 }
 
-static void
-GetModifierList(bool aCtrl, bool aShift, bool aAlt, bool aMeta,
-                nsAString& aModifierList)
-{
-  if (aCtrl) {
-    aModifierList.AppendLiteral(NS_DOM_KEYNAME_CONTROL);
-  }
-  if (aShift) {
-    if (!aModifierList.IsEmpty()) {
-      aModifierList.Append(' ');
-    }
-    aModifierList.AppendLiteral(NS_DOM_KEYNAME_SHIFT);
-  }
-  if (aAlt) {
-    if (!aModifierList.IsEmpty()) {
-      aModifierList.Append(' ');
-    }
-    aModifierList.AppendLiteral(NS_DOM_KEYNAME_ALT);
-  }
-  if (aMeta) {
-    if (!aModifierList.IsEmpty()) {
-      aModifierList.Append(' ');
-    }
-    aModifierList.AppendLiteral(NS_DOM_KEYNAME_META);
-  }
-}
-
 already_AddRefed<WheelEvent>
 WheelEvent::Constructor(const GlobalObject& aGlobal,
                         const nsAString& aType,
@@ -184,17 +157,14 @@ WheelEvent::Constructor(const GlobalObject& aGlobal,
   nsCOMPtr<EventTarget> t = do_QueryInterface(aGlobal.GetAsSupports());
   nsRefPtr<WheelEvent> e = new WheelEvent(t, nullptr, nullptr);
   bool trusted = e->Init(t);
-  nsAutoString modifierList;
-  GetModifierList(aParam.mCtrlKey, aParam.mShiftKey,
-                  aParam.mAltKey, aParam.mMetaKey,
-                  modifierList);
   aRv = e->InitWheelEvent(aType, aParam.mBubbles, aParam.mCancelable,
                           aParam.mView, aParam.mDetail,
                           aParam.mScreenX, aParam.mScreenY,
                           aParam.mClientX, aParam.mClientY,
                           aParam.mButton, aParam.mRelatedTarget,
-                          modifierList, aParam.mDeltaX,
+                          EmptyString(), aParam.mDeltaX,
                           aParam.mDeltaY, aParam.mDeltaZ, aParam.mDeltaMode);
+  e->InitModifiers(aParam);
   e->mEvent->AsWheelEvent()->buttons = aParam.mButtons;
   e->SetTrusted(trusted);
   return e.forget();

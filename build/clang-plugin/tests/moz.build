@@ -7,10 +7,15 @@
 SOURCES += [
     'TestBadImplicitConversionCtor.cpp',
     'TestCustomHeap.cpp',
+    'TestExplicitOperatorBool.cpp',
     'TestGlobalClass.cpp',
     'TestMustOverride.cpp',
+    'TestNANTestingExpr.cpp',
+    'TestNANTestingExprC.c',
+    'TestNoAddRefReleaseOnReturn.cpp',
     'TestNoArithmeticExprInArgument.cpp',
     'TestNonHeapClass.cpp',
+    'TestNoRefcountedInsideLambdas.cpp',
     'TestStackClass.cpp',
     'TestTrivialCtorDtor.cpp',
 ]

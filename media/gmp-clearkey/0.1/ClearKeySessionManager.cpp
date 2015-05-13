@@ -1,9 +1,22 @@
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+/*
+ * Copyright 2015, Mozilla Foundation and contributors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "ClearKeyDecryptionManager.h"
 #include "ClearKeySessionManager.h"
@@ -11,16 +24,19 @@
 #include "ClearKeyStorage.h"
 #include "ClearKeyPersistence.h"
 #include "gmp-task-utils.h"
+#if defined(ENABLE_WMF)
+#include "WMFUtils.h"
+#include <versionhelpers.h>
+#endif
 
-#include "mozilla/Assertions.h"
+#include <assert.h>
 
-using namespace mozilla;
 using namespace std;
 
 ClearKeySessionManager::ClearKeySessionManager()
   : mDecryptionManager(ClearKeyDecryptionManager::Get())
 {
-  CK_LOGD("ClearKeySessionManager ctor");
+  CK_LOGD("ClearKeySessionManager ctor %p", this);
   AddRef();
 
   if (GetPlatform()->createthread(&mThread) != GMPNoErr) {
@@ -31,8 +47,27 @@ ClearKeySessionManager::ClearKeySessionManager()
 
 ClearKeySessionManager::~ClearKeySessionManager()
 {
-  CK_LOGD("ClearKeySessionManager dtor");
-   MOZ_ASSERT(!mRefCount);
+  CK_LOGD("ClearKeySessionManager dtor %p", this);
+}
+
+static bool
+ShouldBeAbleToDecode()
+{
+#if !defined(ENABLE_WMF)
+  return false;
+#else
+  return IsWindowsVistaOrGreater();
+#endif
+}
+
+static bool
+CanDecode()
+{
+  return
+#if defined(ENABLE_WMF)
+    wmf::EnsureLibs() ||
+#endif
+    false;
 }
 
 void
@@ -40,8 +75,18 @@ ClearKeySessionManager::Init(GMPDecryptorCallback* aCallback)
 {
   CK_LOGD("ClearKeySessionManager::Init");
   mCallback = aCallback;
-  mCallback->SetCapabilities(GMP_EME_CAP_DECRYPT_AUDIO |
-                             GMP_EME_CAP_DECRYPT_VIDEO);
+  if (ShouldBeAbleToDecode()) {
+    if (!CanDecode()) {
+      const char* err = "EME plugin can't load system decoder!";
+      mCallback->SessionError(nullptr, 0, kGMPAbortError, 0, err, strlen(err));
+    } else {
+      mCallback->SetCapabilities(GMP_EME_CAP_DECRYPT_AND_DECODE_AUDIO |
+                                 GMP_EME_CAP_DECRYPT_AND_DECODE_VIDEO);
+    }
+  } else {
+    mCallback->SetCapabilities(GMP_EME_CAP_DECRYPT_AUDIO |
+                               GMP_EME_CAP_DECRYPT_VIDEO);
+  }
   ClearKeyPersistence::EnsureInitialized();
 }
 
@@ -73,7 +118,7 @@ ClearKeySessionManager::CreateSession(uint32_t aCreateSessionToken,
   }
 
   string sessionId = ClearKeyPersistence::GetNewSessionId(aSessionType);
-  MOZ_ASSERT(mSessions.find(sessionId) == mSessions.end());
+  assert(mSessions.find(sessionId) == mSessions.end());
 
   ClearKeySession* session = new ClearKeySession(sessionId, mCallback, aSessionType);
   session->Init(aCreateSessionToken, aPromiseId, aInitData, aInitDataSize);
@@ -99,8 +144,8 @@ ClearKeySessionManager::CreateSession(uint32_t aCreateSessionToken,
   string request;
   ClearKeyUtils::MakeKeyRequest(neededKeys, request, aSessionType);
   mCallback->SessionMessage(&sessionId[0], sessionId.length(),
-                            (uint8_t*)&request[0], request.length(),
-                            "" /* destination url */, 0);
+                            kGMPLicenseRequest,
+                            (uint8_t*)&request[0], request.length());
 }
 
 void
@@ -157,18 +202,19 @@ ClearKeySessionManager::PersistentSessionDataLoaded(GMPErr aStatus,
     const uint8_t* base = aKeyData + 2 * CLEARKEY_KEY_LEN * i;
 
     KeyId keyId(base, base + CLEARKEY_KEY_LEN);
-    MOZ_ASSERT(keyId.size() == CLEARKEY_KEY_LEN);
+    assert(keyId.size() == CLEARKEY_KEY_LEN);
 
     Key key(base + CLEARKEY_KEY_LEN, base + 2 * CLEARKEY_KEY_LEN);
-    MOZ_ASSERT(key.size() == CLEARKEY_KEY_LEN);
+    assert(key.size() == CLEARKEY_KEY_LEN);
 
     session->AddKeyId(keyId);
 
     mDecryptionManager->ExpectKeyId(keyId);
     mDecryptionManager->InitKey(keyId, key);
     mKeyIds.insert(key);
-    mCallback->KeyIdUsable(&aSessionId[0], aSessionId.size(),
-                           &keyId[0], keyId.size());
+    mCallback->KeyStatusChanged(&aSessionId[0], aSessionId.size(),
+                                &keyId[0], keyId.size(),
+                                kGMPUsable);
   }
 
   mCallback->ResolveLoadSessionPromise(aPromiseId, true);
@@ -203,8 +249,9 @@ ClearKeySessionManager::UpdateSession(uint32_t aPromiseId,
   for (auto it = keyPairs.begin(); it != keyPairs.end(); it++) {
     mDecryptionManager->InitKey(it->mKeyId, it->mKey);
     mKeyIds.insert(it->mKeyId);
-    mCallback->KeyIdUsable(aSessionId, aSessionIdLength,
-                           &it->mKeyId[0], it->mKeyId.size());
+    mCallback->KeyStatusChanged(aSessionId, aSessionIdLength,
+                                &it->mKeyId[0], it->mKeyId.size(),
+                                kGMPUsable);
   }
 
   if (session->Type() != kGMPPersistentSession) {
@@ -237,10 +284,10 @@ ClearKeySessionManager::Serialize(const ClearKeySession* aSession,
     if (!mDecryptionManager->HasKeyForKeyId(keyId)) {
       continue;
     }
-    MOZ_ASSERT(keyId.size() == CLEARKEY_KEY_LEN);
+    assert(keyId.size() == CLEARKEY_KEY_LEN);
     aOutKeyData.insert(aOutKeyData.end(), keyId.begin(), keyId.end());
     const Key& key = mDecryptionManager->GetDecryptionKey(keyId);
-    MOZ_ASSERT(key.size() == CLEARKEY_KEY_LEN);
+    assert(key.size() == CLEARKEY_KEY_LEN);
     aOutKeyData.insert(aOutKeyData.end(), key.begin(), key.end());
   }
 }
@@ -261,7 +308,7 @@ ClearKeySessionManager::CloseSession(uint32_t aPromiseId,
   }
 
   ClearKeySession* session = itr->second;
-  MOZ_ASSERT(session);
+  assert(session);
 
   ClearInMemorySessionData(session);
   mCallback->ResolvePromise(aPromiseId);
@@ -271,18 +318,6 @@ ClearKeySessionManager::CloseSession(uint32_t aPromiseId,
 void
 ClearKeySessionManager::ClearInMemorySessionData(ClearKeySession* aSession)
 {
-  MOZ_ASSERT(aSession);
-
-  const vector<KeyId>& keyIds = aSession->GetKeyIds();
-  for (auto it = keyIds.begin(); it != keyIds.end(); it++) {
-    MOZ_ASSERT(mDecryptionManager->HasKeyForKeyId(*it));
-    mDecryptionManager->ReleaseKeyId(*it);
-
-    const string& sessionId = aSession->Id();
-    mCallback->KeyIdNotUsable(&sessionId[0], sessionId.size(),
-                              &(*it)[0], it->size());
-  }
-
   mSessions.erase(aSession->Id());
   delete aSession;
 }
@@ -302,7 +337,7 @@ ClearKeySessionManager::RemoveSession(uint32_t aPromiseId,
   }
 
   ClearKeySession* session = itr->second;
-  MOZ_ASSERT(session);
+  assert(session);
   string sid = session->Id();
   bool isPersistent = session->Type() == kGMPPersistentSession;
   ClearInMemorySessionData(session);
@@ -351,9 +386,9 @@ ClearKeySessionManager::Decrypt(GMPBuffer* aBuffer,
     return;
   }
 
-  mThread->Post(WrapTask(this,
-                         &ClearKeySessionManager::DoDecrypt,
-                         aBuffer, aMetadata));
+  mThread->Post(WrapTaskRefCounted(this,
+                                   &ClearKeySessionManager::DoDecrypt,
+                                   aBuffer, aMetadata));
 }
 
 void
@@ -371,7 +406,7 @@ ClearKeySessionManager::DoDecrypt(GMPBuffer* aBuffer,
 void
 ClearKeySessionManager::Shutdown()
 {
-  CK_LOGD("ClearKeySessionManager::Shutdown");
+  CK_LOGD("ClearKeySessionManager::Shutdown %p", this);
 
   for (auto it = mSessions.begin(); it != mSessions.end(); it++) {
     delete it->second;
@@ -382,7 +417,7 @@ ClearKeySessionManager::Shutdown()
 void
 ClearKeySessionManager::DecryptingComplete()
 {
-  CK_LOGD("ClearKeySessionManager::DecryptingComplete");
+  CK_LOGD("ClearKeySessionManager::DecryptingComplete %p", this);
 
   GMPThread* thread = mThread;
   thread->Join();

@@ -20,12 +20,12 @@
 // Forward declare pointers
 class nsIURI;
 
-class nsUrlClassifierStreamUpdater MOZ_FINAL : public nsIUrlClassifierStreamUpdater,
-                                               public nsIUrlClassifierUpdateObserver,
-                                               public nsIStreamListener,
-                                               public nsIObserver,
-                                               public nsIInterfaceRequestor,
-                                               public nsITimerCallback
+class nsUrlClassifierStreamUpdater final : public nsIUrlClassifierStreamUpdater,
+                                           public nsIUrlClassifierUpdateObserver,
+                                           public nsIStreamListener,
+                                           public nsIObserver,
+                                           public nsIInterfaceRequestor,
+                                           public nsITimerCallback
 {
 public:
   nsUrlClassifierStreamUpdater();

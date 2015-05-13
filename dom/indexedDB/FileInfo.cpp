@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -24,7 +24,7 @@ using namespace mozilla::dom::quota;
 namespace {
 
 template <typename IdType>
-class FileInfoImpl MOZ_FINAL
+class FileInfoImpl final
   : public FileInfo
 {
   IdType mFileId;
@@ -43,13 +43,13 @@ private:
   { }
 
   virtual int64_t
-  Id() const MOZ_OVERRIDE
+  Id() const override
   {
     return int64_t(mFileId);
   }
 };
 
-class CleanupFileRunnable MOZ_FINAL
+class CleanupFileRunnable final
   : public nsRunnable
 {
   nsRefPtr<FileManager> mFileManager;

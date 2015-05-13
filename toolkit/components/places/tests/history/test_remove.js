@@ -1,8 +1,5 @@
 /* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim:set ts=2 sw=2 sts=2 et: */
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // Tests for `History.remove`, as implemented in History.jsm
 
@@ -13,8 +10,12 @@ Cu.importGlobalProperties(["URL"]);
 
 // Test removing a single page
 add_task(function* test_remove_single() {
+  yield PlacesTestUtils.clearHistory();
+  yield PlacesUtils.bookmarks.eraseEverything();
+
+
   let WITNESS_URI = NetUtil.newURI("http://mozilla.com/test_browserhistory/test_remove/" + Math.random());
-  yield promiseAddVisits(WITNESS_URI);
+  yield PlacesTestUtils.addVisits(WITNESS_URI);
   Assert.ok(page_in_database(WITNESS_URI));
 
   let remover = Task.async(function*(name, filter, options) {
@@ -24,7 +25,7 @@ add_task(function* test_remove_single() {
 
     let uri = NetUtil.newURI("http://mozilla.com/test_browserhistory/test_remove/" + Math.random());
     let title = "Visit " + Math.random();
-    yield promiseAddVisits({uri: uri, title: title});
+    yield PlacesTestUtils.addVisits({uri: uri, title: title});
     Assert.ok(visits_in_database(uri), "History entry created");
 
     let removeArg = yield filter(uri);
@@ -89,13 +90,13 @@ add_task(function* test_remove_single() {
     let removed = false;
     if (options.useCallback) {
       let onRowCalled = false;
+      let guid = do_get_guid_for_uri(uri);
       removed = yield PlacesUtils.history.remove(removeArg, page => {
         Assert.equal(onRowCalled, false, "Callback has not been called yet");
         onRowCalled = true;
         Assert.equal(page.url.href, uri.spec, "Callback provides the correct url");
-        Assert.equal(page.guid, do_get_guid_for_uri(uri), "Callback provides the correct guid");
+        Assert.equal(page.guid, guid, "Callback provides the correct guid");
         Assert.equal(page.title, title, "Callback provides the correct title");
-        Assert.equal(page.frecency, frecencyForUrl(uri), "Callback provides the correct frecency");
       });
       Assert.ok(onRowCalled, "Callback has been called");
     } else {
@@ -130,7 +131,7 @@ add_task(function* test_remove_single() {
       }
     }
   } finally {
-    yield promiseClearHistory();
+    yield PlacesTestUtils.clearHistory();
   }
   return;
 });
@@ -139,9 +140,12 @@ add_task(function* test_remove_single() {
 add_task(function* test_remove_many() {
   const SIZE = 10;
 
+  yield PlacesTestUtils.clearHistory();
+  yield PlacesUtils.bookmarks.eraseEverything();
+
   do_print("Adding a witness page");
   let WITNESS_URI = NetUtil.newURI("http://mozilla.com/test_browserhistory/test_remove/" + Math.random());;
-  yield promiseAddVisits(WITNESS_URI);
+  yield PlacesTestUtils.addVisits(WITNESS_URI);
   Assert.ok(page_in_database(WITNESS_URI), "Witness page added");
 
   do_print("Generating samples");
@@ -167,7 +171,7 @@ add_task(function* test_remove_many() {
     do_print("Pushing: " + uri.spec);
     pages.push(page);
 
-    yield promiseAddVisits(page);
+    yield PlacesTestUtils.addVisits(page);
     page.guid = do_get_guid_for_uri(uri);
     if (hasBookmark) {
       PlacesUtils.bookmarks.insertBookmark(
@@ -266,10 +270,11 @@ add_task(function* test_remove_many() {
 
   Assert.notEqual(visits_in_database(WITNESS_URI), 0, "Witness URI still has visits");
   Assert.notEqual(page_in_database(WITNESS_URI), 0, "Witness URI is still here");
+});
 
-  do_print("Cleaning up");
-  yield promiseClearHistory();
-
+add_task(function* cleanup() {
+  yield PlacesTestUtils.clearHistory();
+  yield PlacesUtils.bookmarks.eraseEverything();  
 });
 
 // Test the various error cases

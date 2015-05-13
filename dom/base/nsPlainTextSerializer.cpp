@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -22,12 +23,14 @@
 #include "mozilla/dom/Element.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/BinarySearch.h"
+#include "nsComputedDOMStyle.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
 
 #define PREF_STRUCTS "converter.html2txt.structs"
 #define PREF_HEADER_STRATEGY "converter.html2txt.header_strategy"
+#define PREF_ALWAYS_INCLUDE_RUBY "converter.html2txt.always_include_ruby"
 
 static const  int32_t kTabSize=4;
 static const  int32_t kIndentSizeHeaders = 2;  /* Indention of h1, if
@@ -52,14 +55,12 @@ static int32_t GetUnicharStringWidth(const char16_t* pwcs, int32_t n);
 static const uint32_t TagStackSize = 500;
 static const uint32_t OLStackSize = 100;
 
-nsresult NS_NewPlainTextSerializer(nsIContentSerializer** aSerializer)
+nsresult
+NS_NewPlainTextSerializer(nsIContentSerializer** aSerializer)
 {
-  nsPlainTextSerializer* it = new nsPlainTextSerializer();
-  if (!it) {
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
-
-  return CallQueryInterface(it, aSerializer);
+  nsRefPtr<nsPlainTextSerializer> it = new nsPlainTextSerializer();
+  it.forget(aSerializer);
+  return NS_OK;
 }
 
 nsPlainTextSerializer::nsPlainTextSerializer()
@@ -87,8 +88,11 @@ nsPlainTextSerializer::nsPlainTextSerializer()
   // Flow
   mEmptyLines = 1; // The start of the document is an "empty line" in itself,
   mInWhitespace = false;
-  mPreFormatted = false;
+  mPreFormattedMail = false;
   mStartedOutput = false;
+
+  mPreformattedBlockBoundary = false;
+  mWithRubyAnnotation = false;  // will be read from pref and flag later
 
   // initialize the tag stack to zero:
   // The stack only ever contains pointers to static atoms, so they don't
@@ -166,6 +170,8 @@ nsPlainTextSerializer::Init(uint32_t aFlags, uint32_t aWrapColumn,
   mLineBreakDue = false;
   mFloatingLines = -1;
 
+  mPreformattedBlockBoundary = false;
+
   if (mFlags & nsIDocumentEncoder::OutputFormatted) {
     // Get some prefs that controls how we do formatted output
     mStructs = Preferences::GetBool(PREF_STRUCTS, mStructs);
@@ -182,6 +188,13 @@ nsPlainTextSerializer::Init(uint32_t aFlags, uint32_t aWrapColumn,
                              mDontWrapAnyQuotes);
     }
   }
+
+  // The pref is default inited to false in libpref, but we use true
+  // as fallback value because we don't want to affect behavior in
+  // other places which use this serializer currently.
+  mWithRubyAnnotation =
+    Preferences::GetBool(PREF_ALWAYS_INCLUDE_RUBY, true) ||
+    (mFlags & nsIDocumentEncoder::OutputRubyAnnotation);
 
   // XXX We should let the caller decide whether to do this or not
   mFlags &= ~nsIDocumentEncoder::OutputNoFramesContent;
@@ -248,6 +261,19 @@ nsPlainTextSerializer::ShouldReplaceContainerWithPlaceholder(nsIAtom* aTag)
     (aTag == nsGkAtoms::object) ||
     (aTag == nsGkAtoms::svg) ||
     (aTag == nsGkAtoms::video);
+}
+
+bool
+nsPlainTextSerializer::IsIgnorableRubyAnnotation(nsIAtom* aTag)
+{
+  if (mWithRubyAnnotation) {
+    return false;
+  }
+
+  return
+    aTag == nsGkAtoms::rp ||
+    aTag == nsGkAtoms::rt ||
+    aTag == nsGkAtoms::rtc;
 }
 
 NS_IMETHODIMP 
@@ -350,12 +376,13 @@ nsPlainTextSerializer::AppendElementStart(Element* aElement,
   nsresult rv;
   nsIAtom* id = GetIdForContent(mElement);
 
-  bool isContainer = !nsContentUtils::IsHTMLVoid(id);
+  bool isContainer = !FragmentOrElement::IsHTMLVoid(id);
 
   mOutputString = &aStr;
 
   if (isContainer) {
     rv = DoOpenContainer(id);
+    mPreformatStack.push(IsElementPreformatted(mElement));
   }
   else {
     rv = DoAddLeaf(id);
@@ -382,13 +409,14 @@ nsPlainTextSerializer::AppendElementEnd(Element* aElement,
   nsresult rv;
   nsIAtom* id = GetIdForContent(mElement);
 
-  bool isContainer = !nsContentUtils::IsHTMLVoid(id);
+  bool isContainer = !FragmentOrElement::IsHTMLVoid(id);
 
   mOutputString = &aStr;
 
   rv = NS_OK;
   if (isContainer) {
     rv = DoCloseContainer(id);
+    mPreformatStack.pop();
   }
 
   mElement = nullptr;
@@ -424,7 +452,7 @@ nsPlainTextSerializer::DoOpenContainer(nsIAtom* aTag)
 {
   // Check if we need output current node as placeholder character and ignore
   // child nodes.
-  if (ShouldReplaceContainerWithPlaceholder(mElement->Tag())) {
+  if (ShouldReplaceContainerWithPlaceholder(mElement->NodeInfo()->NameAtom())) {
     if (mIgnoredChildNodeLevel == 0) {
       // Serialize current node as placeholder character
       Write(NS_LITERAL_STRING("\xFFFC"));
@@ -432,6 +460,22 @@ nsPlainTextSerializer::DoOpenContainer(nsIAtom* aTag)
     // Ignore child nodes.
     mIgnoredChildNodeLevel++;
     return NS_OK;
+  }
+  if (IsIgnorableRubyAnnotation(aTag)) {
+    // Ignorable ruby annotation shouldn't be replaced by a placeholder
+    // character, neither any of its descendants.
+    mIgnoredChildNodeLevel++;
+    return NS_OK;
+  }
+
+  if (mFlags & nsIDocumentEncoder::OutputForPlainTextClipboardCopy) {
+    if (mPreformattedBlockBoundary && DoOutput()) {
+      // Should always end a line, but get no more whitespace
+      if (mFloatingLines < 0)
+        mFloatingLines = 0;
+      mLineBreakDue = true;
+    }
+    mPreformattedBlockBoundary = false;
   }
 
   if (mFlags & nsIDocumentEncoder::OutputRaw) {
@@ -482,7 +526,7 @@ nsPlainTextSerializer::DoOpenContainer(nsIAtom* aTag)
 
   if (aTag == nsGkAtoms::body) {
     // Try to figure out here whether we have a
-    // preformatted style attribute.
+    // preformatted style attribute set by Thunderbird.
     //
     // Trigger on the presence of a "pre-wrap" in the
     // style attribute. That's a very simplistic way to do
@@ -496,9 +540,9 @@ nsPlainTextSerializer::DoOpenContainer(nsIAtom* aTag)
 
       if (kNotFound != style.Find("pre-wrap", true, whitespace)) {
 #ifdef DEBUG_preformatted
-        printf("Set mPreFormatted based on style pre-wrap\n");
+        printf("Set mPreFormattedMail based on style pre-wrap\n");
 #endif
-        mPreFormatted = true;
+        mPreFormattedMail = true;
         int32_t widthOffset = style.Find("width:");
         if (widthOffset >= 0) {
           // We have to search for the ch before the semicolon,
@@ -524,16 +568,16 @@ nsPlainTextSerializer::DoOpenContainer(nsIAtom* aTag)
       }
       else if (kNotFound != style.Find("pre", true, whitespace)) {
 #ifdef DEBUG_preformatted
-        printf("Set mPreFormatted based on style pre\n");
+        printf("Set mPreFormattedMail based on style pre\n");
 #endif
-        mPreFormatted = true;
+        mPreFormattedMail = true;
         mWrapColumn = 0;
       }
     } 
     else {
       /* See comment at end of function. */
       mInWhitespace = true;
-      mPreFormatted = false;
+      mPreFormattedMail = false;
     }
 
     return NS_OK;
@@ -667,7 +711,7 @@ nsPlainTextSerializer::DoOpenContainer(nsIAtom* aTag)
 
   // Else make sure we'll separate block level tags,
   // even if we're about to leave, before doing any other formatting.
-  else if (nsContentUtils::IsHTMLBlock(aTag)) {
+  else if (IsElementBlock(mElement)) {
     EnsureVerticalSpace(0);
   }
 
@@ -759,9 +803,21 @@ nsPlainTextSerializer::DoOpenContainer(nsIAtom* aTag)
 nsresult
 nsPlainTextSerializer::DoCloseContainer(nsIAtom* aTag)
 {
-  if (ShouldReplaceContainerWithPlaceholder(mElement->Tag())) {
+  if (ShouldReplaceContainerWithPlaceholder(mElement->NodeInfo()->NameAtom())) {
     mIgnoredChildNodeLevel--;
     return NS_OK;
+  }
+  if (IsIgnorableRubyAnnotation(aTag)) {
+    mIgnoredChildNodeLevel--;
+    return NS_OK;
+  }
+
+  if (mFlags & nsIDocumentEncoder::OutputForPlainTextClipboardCopy) {
+    if (DoOutput() && IsInPre() && IsElementBlock(mElement)) {
+      // If we're closing a preformatted block element, output a line break
+      // when we find a new container.
+      mPreformattedBlockBoundary = true;
+    }
   }
 
   if (mFlags & nsIDocumentEncoder::OutputRaw) {
@@ -884,8 +940,7 @@ nsPlainTextSerializer::DoCloseContainer(nsIAtom* aTag)
   else if (aTag == nsGkAtoms::q) {
     Write(NS_LITERAL_STRING("\""));
   }
-  else if (nsContentUtils::IsHTMLBlock(aTag)
-           && aTag != nsGkAtoms::script) {
+  else if (IsElementBlock(mElement) && aTag != nsGkAtoms::script) {
     // All other blocks get 1 vertical space after them
     // in formatted mode, otherwise 0.
     // This is hard. Sometimes 0 is a better number, but
@@ -1011,7 +1066,7 @@ nsPlainTextSerializer::DoAddText(bool aIsLineBreak, const nsAString& aText)
     // prettyprinting to mimic the html format, and in neither case
     // does the formatting of the html source help us.
     if ((mFlags & nsIDocumentEncoder::OutputPreformatted) ||
-        (mPreFormatted && !mWrapColumn) ||
+        (mPreFormattedMail && !mWrapColumn) ||
         IsInPre()) {
       EnsureVerticalSpace(mEmptyLines+1);
     }
@@ -1034,6 +1089,8 @@ nsPlainTextSerializer::DoAddText(bool aIsLineBreak, const nsAString& aText)
 nsresult
 nsPlainTextSerializer::DoAddLeaf(nsIAtom* aTag)
 {
+  mPreformattedBlockBoundary = false;
+
   // If we don't want any output, just return
   if (!DoOutput()) {
     return NS_OK;
@@ -1530,14 +1587,14 @@ nsPlainTextSerializer::Write(const nsAString& aStr)
   // We have two major codepaths here. One that does preformatted text and one
   // that does normal formatted text. The one for preformatted text calls
   // Output directly while the other code path goes through AddToLine.
-  if ((mPreFormatted && !mWrapColumn) || IsInPre()
+  if ((mPreFormattedMail && !mWrapColumn) || (IsInPre() && !mPreFormattedMail)
       || ((mSpanLevel > 0 || mDontWrapAnyQuotes)
           && mEmptyLines >= 0 && str.First() == char16_t('>'))) {
     // No intelligent wrapping.
 
     // This mustn't be mixed with intelligent wrapping without clearing
     // the mCurrentLine buffer before!!!
-    NS_ASSERTION(mCurrentLine.IsEmpty(),
+    NS_ASSERTION(mCurrentLine.IsEmpty() || (IsInPre() && !mPreFormattedMail),
                  "Mixed wrapping data and nonwrapping data on the same line");
     if (!mCurrentLine.IsEmpty()) {
       FlushLine();
@@ -1652,7 +1709,7 @@ nsPlainTextSerializer::Write(const nsAString& aStr)
     foo = ToNewCString(remaining);
     //    printf("Next line: bol = %d, newlinepos = %d, totLen = %d, string = '%s'\n",
     //           bol, nextpos, totLen, foo);
-    nsMemory::Free(foo);
+    free(foo);
 #endif
 
     if (nextpos == kNotFound) {
@@ -1675,7 +1732,7 @@ nsPlainTextSerializer::Write(const nsAString& aStr)
         }
       }
       // If we're already in whitespace and not preformatted, just skip it:
-      if (mInWhitespace && (nextpos == bol) && !mPreFormatted &&
+      if (mInWhitespace && (nextpos == bol) && !mPreFormattedMail &&
           !(mFlags & nsIDocumentEncoder::OutputPreformatted)) {
         // Skip whitespace
         bol++;
@@ -1694,7 +1751,7 @@ nsPlainTextSerializer::Write(const nsAString& aStr)
       mInWhitespace = true;
       
       offsetIntoBuffer = str.get() + bol;
-      if (mPreFormatted || (mFlags & nsIDocumentEncoder::OutputPreformatted)) {
+      if (mPreFormattedMail || (mFlags & nsIDocumentEncoder::OutputPreformatted)) {
         // Preserve the real whitespace character
         nextpos++;
         AddToLine(offsetIntoBuffer, nextpos-bol);
@@ -1747,37 +1804,46 @@ nsPlainTextSerializer::IsCurrentNodeConverted()
 nsIAtom*
 nsPlainTextSerializer::GetIdForContent(nsIContent* aContent)
 {
-  if (!aContent->IsHTML()) {
+  if (!aContent->IsHTMLElement()) {
     return nullptr;
   }
 
-  nsIAtom* localName = aContent->Tag();
+  nsIAtom* localName = aContent->NodeInfo()->NameAtom();
   return localName->IsStaticAtom() ? localName : nullptr;
 }
 
-/**
- * Returns true if we currently are inside a <pre>. The check is done
- * by traversing the tag stack looking for <pre> until we hit a block
- * level tag which is assumed to override any <pre>:s below it in
- * the stack. To do this correctly to a 100% would require access
- * to style which we don't support in this converter.
- */  
 bool
 nsPlainTextSerializer::IsInPre()
 {
-  int32_t i = mTagStackIndex;
-  while(i > 0) {
-    if (mTagStack[i - 1] == nsGkAtoms::pre)
-      return true;
-    if (nsContentUtils::IsHTMLBlock(mTagStack[i - 1])) {
-      // We assume that every other block overrides a <pre>
-      return false;
-    }
-    --i;
-  }
+  return !mPreformatStack.empty() && mPreformatStack.top();
+}
 
-  // Not a <pre> in the whole stack
-  return false;
+bool
+nsPlainTextSerializer::IsElementPreformatted(Element* aElement)
+{
+  nsRefPtr<nsStyleContext> styleContext =
+    nsComputedDOMStyle::GetStyleContextForElementNoFlush(aElement, nullptr,
+                                                         nullptr);
+  if (styleContext) {
+    const nsStyleText* textStyle = styleContext->StyleText();
+    return textStyle->WhiteSpaceOrNewlineIsSignificant();
+  }
+  // Fall back to looking at the tag, in case there is no style information.
+  return GetIdForContent(aElement) == nsGkAtoms::pre;
+}
+
+bool
+nsPlainTextSerializer::IsElementBlock(Element* aElement)
+{
+  nsRefPtr<nsStyleContext> styleContext =
+    nsComputedDOMStyle::GetStyleContextForElementNoFlush(aElement, nullptr,
+                                                         nullptr);
+  if (styleContext) {
+    const nsStyleDisplay* displayStyle = styleContext->StyleDisplay();
+    return displayStyle->IsBlockOutsideStyle();
+  }
+  // Fall back to looking at the tag, in case there is no style information.
+  return nsContentUtils::IsHTMLBlock(aElement);
 }
 
 /**

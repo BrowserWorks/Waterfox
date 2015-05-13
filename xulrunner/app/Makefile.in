@@ -3,7 +3,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-PREF_JS_EXPORTS = $(srcdir)/xulrunner.js
 GARBAGE += $(addprefix $(DIST)/bin/defaults/pref/,xulrunner.js)
 
 ifeq (cocoa,$(MOZ_WIDGET_TOOLKIT))
@@ -38,19 +37,6 @@ endif
 # XXX applications would need to supply this file
 #export:: brand.dtd.in
 #	$(call py_action,preprocessor,$(DEFINES) $(ACDEFINES) $^ -o brand.dtd)
-
-export::
-	$(NSINSTALL) -D $(DIST)/branding
-ifeq ($(OS_ARCH),WINNT)
-	cp $(srcdir)/xulrunner.ico   $(DIST)/branding/xulrunner.ico
-	cp $(srcdir)/xulrunner.ico   $(DIST)/branding/app.ico
-	cp $(srcdir)/document.ico  $(DIST)/branding/document.ico
-endif
-ifdef MOZ_WIDGET_GTK
-	cp $(srcdir)/default16.png   $(DIST)/branding/default16.png
-	cp $(srcdir)/default32.png   $(DIST)/branding/default32.png
-	cp $(srcdir)/default48.png   $(DIST)/branding/default48.png
-endif
 
 ifeq (cocoa,$(MOZ_WIDGET_TOOLKIT))
 

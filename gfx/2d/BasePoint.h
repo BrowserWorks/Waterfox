@@ -9,6 +9,8 @@
 #include <cmath>
 #include "mozilla/Attributes.h"
 #include "mozilla/ToString.h"
+#include "mozilla/FloatingPoint.h"
+#include "mozilla/TypeTraits.h"
 
 namespace mozilla {
 namespace gfx {
@@ -78,6 +80,20 @@ struct BasePoint {
     x = Coord(floor(T(x) + T(0.5)));
     y = Coord(floor(T(y) + T(0.5)));
     return *static_cast<Sub*>(this);
+  }
+
+  // "Finite" means not inf and not NaN
+  bool IsFinite() const
+  {
+    typedef typename mozilla::Conditional<mozilla::IsSame<T, float>::value, float, double>::Type FloatType;
+    return (mozilla::IsFinite(FloatType(x)) && mozilla::IsFinite(FloatType(y)));
+    return true;
+  }
+
+  void Clamp(T aMaxAbsValue)
+  {
+    x = std::max(std::min(x, aMaxAbsValue), -aMaxAbsValue);
+    y = std::max(std::min(y, aMaxAbsValue), -aMaxAbsValue);
   }
 
   friend std::ostream& operator<<(std::ostream& stream, const BasePoint<T, Sub, Coord>& aPoint) {

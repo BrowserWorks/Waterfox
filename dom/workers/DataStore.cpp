@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -42,9 +44,9 @@ WorkerDataStore::Constructor(GlobalObject& aGlobal, ErrorResult& aRv)
 }
 
 JSObject*
-WorkerDataStore::WrapObject(JSContext* aCx)
+WorkerDataStore::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return DataStoreBinding_workers::Wrap(aCx, this);
+  return DataStoreBinding_workers::Wrap(aCx, this, aGivenProto);
 }
 
 // A WorkerMainThreadRunnable which holds a reference to WorkerDataStore.
@@ -69,7 +71,7 @@ public:
 //   - DataStore::GetOwner(...)
 //   - DataStore::GetRevisionId(...)
 // on the main thread.
-class DataStoreGetStringRunnable MOZ_FINAL : public DataStoreRunnable
+class DataStoreGetStringRunnable final : public DataStoreRunnable
 {
   typedef void
   (DataStore::*FuncType)(nsAString&, ErrorResult&);
@@ -95,7 +97,7 @@ public:
 
 protected:
   virtual bool
-  MainThreadRun() MOZ_OVERRIDE
+  MainThreadRun() override
   {
     AssertIsOnMainThread();
 
@@ -108,7 +110,7 @@ protected:
 
 // A DataStoreRunnable to run DataStore::GetReadOnly(...) on the main
 // thread.
-class DataStoreGetReadOnlyRunnable MOZ_FINAL : public DataStoreRunnable
+class DataStoreGetReadOnlyRunnable final : public DataStoreRunnable
 {
   ErrorResult& mRv;
 
@@ -128,7 +130,7 @@ public:
 
 protected:
   virtual bool
-  MainThreadRun() MOZ_OVERRIDE
+  MainThreadRun() override
   {
     AssertIsOnMainThread();
 
@@ -169,7 +171,7 @@ protected:
 };
 
 // A DataStoreRunnable to run DataStore::Get(...) on the main thread.
-class DataStoreGetRunnable MOZ_FINAL : public DataStoreProxyRunnable
+class DataStoreGetRunnable final : public DataStoreProxyRunnable
 {
   Sequence<OwningStringOrUnsignedLong> mId;
   ErrorResult& mRv;
@@ -193,7 +195,7 @@ public:
 
 protected:
   virtual bool
-  MainThreadRun() MOZ_OVERRIDE
+  MainThreadRun() override
   {
     AssertIsOnMainThread();
 
@@ -204,7 +206,7 @@ protected:
 };
 
 // A DataStoreRunnable to run DataStore::Put(...) on the main thread.
-class DataStorePutRunnable MOZ_FINAL : public DataStoreProxyRunnable
+class DataStorePutRunnable final : public DataStoreProxyRunnable
 {
   JSAutoStructuredCloneBuffer mObjBuffer;
   const StringOrUnsignedLong& mId;
@@ -237,7 +239,7 @@ public:
 
 protected:
   virtual bool
-  MainThreadRun() MOZ_OVERRIDE
+  MainThreadRun() override
   {
     AssertIsOnMainThread();
 
@@ -267,7 +269,7 @@ protected:
 };
 
 // A DataStoreRunnable to run DataStore::Add(...) on the main thread.
-class DataStoreAddRunnable MOZ_FINAL : public DataStoreProxyRunnable
+class DataStoreAddRunnable final : public DataStoreProxyRunnable
 {
   JSAutoStructuredCloneBuffer mObjBuffer;
   const Optional<StringOrUnsignedLong>& mId;
@@ -300,7 +302,7 @@ public:
 
 protected:
   virtual bool
-  MainThreadRun() MOZ_OVERRIDE
+  MainThreadRun() override
   {
     AssertIsOnMainThread();
 
@@ -331,7 +333,7 @@ protected:
 
 // A DataStoreRunnable to run DataStore::Remove(...) on the main
 // thread.
-class DataStoreRemoveRunnable MOZ_FINAL : public DataStoreProxyRunnable
+class DataStoreRemoveRunnable final : public DataStoreProxyRunnable
 {
   const StringOrUnsignedLong& mId;
   const nsString mRevisionId;
@@ -355,7 +357,7 @@ public:
 
 protected:
   virtual bool
-  MainThreadRun() MOZ_OVERRIDE
+  MainThreadRun() override
   {
     AssertIsOnMainThread();
 
@@ -366,7 +368,7 @@ protected:
 };
 
 // A DataStoreRunnable to run DataStore::Clear(...) on the main thread.
-class DataStoreClearRunnable MOZ_FINAL : public DataStoreProxyRunnable
+class DataStoreClearRunnable final : public DataStoreProxyRunnable
 {
   const nsString mRevisionId;
   ErrorResult& mRv;
@@ -387,7 +389,7 @@ public:
 
 protected:
   virtual bool
-  MainThreadRun() MOZ_OVERRIDE
+  MainThreadRun() override
   {
     AssertIsOnMainThread();
 
@@ -398,7 +400,7 @@ protected:
 };
 
 // A DataStoreRunnable to run DataStore::Sync(...) on the main thread.
-class DataStoreSyncStoreRunnable MOZ_FINAL : public DataStoreRunnable
+class DataStoreSyncStoreRunnable final : public DataStoreRunnable
 {
   WorkerDataStoreCursor* mWorkerCursor;
   const nsString mRevisionId;
@@ -421,7 +423,7 @@ public:
 
 protected:
   virtual bool
-  MainThreadRun() MOZ_OVERRIDE
+  MainThreadRun() override
   {
     AssertIsOnMainThread();
 
@@ -637,7 +639,7 @@ WorkerDataStore::GetRevisionId(JSContext* aCx,
 }
 
 // A DataStoreRunnable to run DataStore::GetLength(...) on the main thread.
-class DataStoreGetLengthRunnable MOZ_FINAL : public DataStoreProxyRunnable
+class DataStoreGetLengthRunnable final : public DataStoreProxyRunnable
 {
   ErrorResult& mRv;
 
@@ -655,7 +657,7 @@ public:
 
 protected:
   virtual bool
-  MainThreadRun() MOZ_OVERRIDE
+  MainThreadRun() override
   {
     AssertIsOnMainThread();
 
@@ -716,12 +718,6 @@ WorkerDataStore::Sync(JSContext* aCx,
 }
 
 void
-WorkerDataStore::SetDataStoreImpl(DataStoreImpl& aStore, ErrorResult& aRv)
-{
-  NS_NOTREACHED("We don't use this for the WorkerDataStore!");
-}
-
-void
 WorkerDataStore::SetBackingDataStore(
   const nsMainThreadPtrHandle<DataStore>& aBackingStore)
 {
@@ -756,7 +752,7 @@ public:
   }
 
   virtual bool
-  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
+  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
     MOZ_ASSERT(aWorkerPrivate);
     aWorkerPrivate->AssertIsOnWorkerThread();

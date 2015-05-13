@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set sw=2 ts=8 et ft=cpp : */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -27,7 +27,7 @@ class ContentParent;
  * set their initial priority.  The ProcessPriorityManager takes care of the
  * rest.
  */
-class ProcessPriorityManager MOZ_FINAL
+class ProcessPriorityManager final
 {
 public:
   /**
@@ -75,16 +75,15 @@ public:
   static bool AnyProcessHasHighPriority();
 
   /**
-   * Used to remove a ContentParent from background LRU pool when
-   * it is destroyed or its priority changed from BACKGROUND to others.
+   * Prevents processes from changing priority until unfrozen.
    */
-  static void RemoveFromBackgroundLRUPool(dom::ContentParent* aContentParent);
+  static void Freeze();
 
   /**
-   * Used to add a ContentParent into background LRU pool when
-   * its priority changed to BACKGROUND from others.
+   * Allow process' priorities to change again.  This will immediately adjust
+   * processes whose priority change did not happen because of the freeze.
    */
-  static void AddIntoBackgroundLRUPool(dom::ContentParent* aContentParent);
+  static void Unfreeze();
 
 private:
   ProcessPriorityManager();

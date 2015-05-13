@@ -17,7 +17,6 @@
 #include "nsCSSValue.h"
 
 class nsPresContext;
-class nsCSSCounterStyleRule;
 
 namespace mozilla {
 
@@ -103,43 +102,46 @@ protected:
   int32_t mStyle;
 };
 
-class AnonymousCounterStyle MOZ_FINAL : public CounterStyle
+class AnonymousCounterStyle final : public CounterStyle
 {
 public:
+  explicit AnonymousCounterStyle(const nsSubstring& aContent);
   explicit AnonymousCounterStyle(const nsCSSValue::Array* aValue);
 
-  virtual void GetPrefix(nsAString& aResult) MOZ_OVERRIDE;
-  virtual void GetSuffix(nsAString& aResult) MOZ_OVERRIDE;
-  virtual bool IsBullet() MOZ_OVERRIDE;
+  virtual void GetPrefix(nsAString& aResult) override;
+  virtual void GetSuffix(nsAString& aResult) override;
+  virtual bool IsBullet() override;
 
-  virtual void GetNegative(NegativeType& aResult) MOZ_OVERRIDE;
-  virtual bool IsOrdinalInRange(CounterValue aOrdinal) MOZ_OVERRIDE;
-  virtual bool IsOrdinalInAutoRange(CounterValue aOrdinal) MOZ_OVERRIDE;
-  virtual void GetPad(PadType& aResult) MOZ_OVERRIDE;
-  virtual CounterStyle* GetFallback() MOZ_OVERRIDE;
-  virtual uint8_t GetSpeakAs() MOZ_OVERRIDE;
-  virtual bool UseNegativeSign() MOZ_OVERRIDE;
+  virtual void GetNegative(NegativeType& aResult) override;
+  virtual bool IsOrdinalInRange(CounterValue aOrdinal) override;
+  virtual bool IsOrdinalInAutoRange(CounterValue aOrdinal) override;
+  virtual void GetPad(PadType& aResult) override;
+  virtual CounterStyle* GetFallback() override;
+  virtual uint8_t GetSpeakAs() override;
+  virtual bool UseNegativeSign() override;
 
   virtual bool GetInitialCounterText(CounterValue aOrdinal,
                                      WritingMode aWritingMode,
                                      nsSubstring& aResult,
-                                     bool& aIsRTL) MOZ_OVERRIDE;
+                                     bool& aIsRTL) override;
 
-  virtual AnonymousCounterStyle* AsAnonymous() MOZ_OVERRIDE { return this; }
+  virtual AnonymousCounterStyle* AsAnonymous() override { return this; }
 
+  bool IsSingleString() const { return mSingleString; }
   uint8_t GetSystem() const { return mSystem; }
   const nsTArray<nsString>& GetSymbols() const { return mSymbols; }
 
-  NS_INLINE_DECL_REFCOUNTING(AnonymousCounterStyle, MOZ_OVERRIDE)
+  NS_INLINE_DECL_REFCOUNTING(AnonymousCounterStyle, override)
 
 private:
   ~AnonymousCounterStyle() {}
 
+  bool mSingleString;
   uint8_t mSystem;
   nsTArray<nsString> mSymbols;
 };
 
-class CounterStyleManager MOZ_FINAL
+class CounterStyleManager final
 {
 private:
   ~CounterStyleManager();
@@ -157,7 +159,6 @@ public:
   }
 
   CounterStyle* BuildCounterStyle(const nsSubstring& aName);
-  CounterStyle* BuildCounterStyle(const nsCSSValue::Array* aParams);
 
   static CounterStyle* GetBuiltinStyle(int32_t aStyle);
   static CounterStyle* GetNoneStyle()

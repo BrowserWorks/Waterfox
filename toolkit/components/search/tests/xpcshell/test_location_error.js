@@ -2,28 +2,11 @@
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
 function run_test() {
-  removeMetadata();
-  removeCacheFile();
+  installTestEngine();
 
-  do_check_false(Services.search.isInitialized);
+  // using a port > 2^32 causes an error to be reported.
+  let url = "http://localhost:111111111";
 
-  let engineDummyFile = gProfD.clone();
-  engineDummyFile.append("searchplugins");
-  engineDummyFile.append("test-search-engine.xml");
-  let engineDir = engineDummyFile.parent;
-  engineDir.create(Ci.nsIFile.DIRECTORY_TYPE, FileUtils.PERMS_DIRECTORY);
-
-  do_get_file("data/engine.xml").copyTo(engineDir, "engine.xml");
-
-  do_register_cleanup(function() {
-    removeMetadata();
-    removeCacheFile();
-  });
-
-  // this will cause an "unknown host" error, but not report an external
-  // network connection in the tests (note that the hosts listed in
-  // server-locations.txt are *not* loaded for xpcshell tests...)
-  let url = "https://nocert.example.com:443";
   Services.prefs.setCharPref("browser.search.geoip.url", url);
   Services.search.init(() => {
     try {

@@ -32,7 +32,7 @@ protected:
 }; // VsyncObserver
 
 // Used to dispatch vsync events in the parent process to compositors
-class CompositorVsyncDispatcher MOZ_FINAL
+class CompositorVsyncDispatcher final
 {
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(CompositorVsyncDispatcher)
 
@@ -46,15 +46,23 @@ public:
   void SetCompositorVsyncObserver(VsyncObserver* aVsyncObserver);
   void Shutdown();
 
+  // This can be used to enable or disable thread assertions.
+  // This is useful for gtests because usually things run
+  // in only one thread in that environment
+  static void SetThreadAssertionsEnabled(bool aEnable);
+
 private:
+  void AssertOnCompositorThread();
   virtual ~CompositorVsyncDispatcher();
+  void ObserveVsync(bool aEnable);
 
   Mutex mCompositorObserverLock;
   nsRefPtr<VsyncObserver> mCompositorVsyncObserver;
+  bool mDidShutdown;
 };
 
 // Dispatch vsync event to ipc actor parent and chrome RefreshTimer.
-class RefreshTimerVsyncDispatcher MOZ_FINAL
+class RefreshTimerVsyncDispatcher final
 {
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(RefreshTimerVsyncDispatcher)
 
@@ -77,6 +85,8 @@ public:
 
 private:
   virtual ~RefreshTimerVsyncDispatcher();
+  void UpdateVsyncStatus();
+  bool NeedsVsync();
 
   Mutex mRefreshTimersLock;
   nsRefPtr<VsyncObserver> mParentRefreshTimer;

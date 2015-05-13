@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim:set ts=2 sw=2 sts=2 et cindent: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -44,9 +44,9 @@ void
 HTMLPictureElement::RemoveChildAt(uint32_t aIndex, bool aNotify)
 {
   // Find all img siblings after this <source> to notify them of its demise
-  nsCOMPtr<nsINode> child = GetChildAt(aIndex);
+  nsCOMPtr<nsIContent> child = GetChildAt(aIndex);
   nsCOMPtr<nsIContent> nextSibling;
-  if (child && child->Tag() == nsGkAtoms::source) {
+  if (child && child->IsHTMLElement(nsGkAtoms::source)) {
     nextSibling = child->GetNextSibling();
   }
 
@@ -70,9 +70,9 @@ HTMLPictureElement::IsPictureEnabled()
 }
 
 JSObject*
-HTMLPictureElement::WrapNode(JSContext* aCx)
+HTMLPictureElement::WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return HTMLPictureElementBinding::Wrap(aCx, this);
+  return HTMLPictureElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 } // namespace dom

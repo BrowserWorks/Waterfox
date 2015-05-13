@@ -25,8 +25,8 @@ function run_test() {
   lockFileRelPath = lockFileRelPath.join("/") + "/" + gTestFiles[2].fileName;
   let args = [getApplyDirPath() + DIR_RESOURCES, "input", "output", "-s",
               HELPER_SLEEP_TIMEOUT, lockFileRelPath];
-  let lockFileProcess = AUS_Cc["@mozilla.org/process/util;1"].
-                     createInstance(AUS_Ci.nsIProcess);
+  let lockFileProcess = Cc["@mozilla.org/process/util;1"].
+                        createInstance(Ci.nsIProcess);
   lockFileProcess.init(helperBin);
   lockFileProcess.run(false, args, args.length);
 
@@ -34,15 +34,16 @@ function run_test() {
 }
 
 function doUpdate() {
-  runUpdate(1, STATE_FAILED_READ_ERROR);
+  runUpdate(1, STATE_FAILED_READ_ERROR, checkUpdateFinished);
 }
 
-function checkUpdateApplied() {
+function checkUpdateFinished() {
   setupHelperFinish();
 }
 
 function checkUpdate() {
   checkFilesAfterUpdateFailure(getApplyDirFile, false, false);
   checkUpdateLogContains(ERR_UNABLE_OPEN_DEST);
+  standardInit();
   checkCallbackAppLog();
 }

@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -12,7 +13,7 @@
 #include "nsCOMPtr.h"
 #include "nsString.h"
 
-class nsSupportsIDImpl MOZ_FINAL : public nsISupportsID
+class nsSupportsIDImpl final : public nsISupportsID
 {
 public:
   NS_DECL_ISUPPORTS
@@ -29,7 +30,7 @@ private:
 
 /***************************************************************************/
 
-class nsSupportsCStringImpl MOZ_FINAL : public nsISupportsCString
+class nsSupportsCStringImpl final : public nsISupportsCString
 {
 public:
   NS_DECL_ISUPPORTS
@@ -46,7 +47,7 @@ private:
 
 /***************************************************************************/
 
-class nsSupportsStringImpl MOZ_FINAL : public nsISupportsString
+class nsSupportsStringImpl final : public nsISupportsString
 {
 public:
   NS_DECL_ISUPPORTS
@@ -63,7 +64,7 @@ private:
 
 /***************************************************************************/
 
-class nsSupportsPRBoolImpl MOZ_FINAL : public nsISupportsPRBool
+class nsSupportsPRBoolImpl final : public nsISupportsPRBool
 {
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
@@ -80,7 +81,7 @@ private:
 
 /***************************************************************************/
 
-class nsSupportsPRUint8Impl MOZ_FINAL : public nsISupportsPRUint8
+class nsSupportsPRUint8Impl final : public nsISupportsPRUint8
 {
 public:
   NS_DECL_ISUPPORTS
@@ -97,7 +98,7 @@ private:
 
 /***************************************************************************/
 
-class nsSupportsPRUint16Impl MOZ_FINAL : public nsISupportsPRUint16
+class nsSupportsPRUint16Impl final : public nsISupportsPRUint16
 {
 public:
   NS_DECL_ISUPPORTS
@@ -114,7 +115,7 @@ private:
 
 /***************************************************************************/
 
-class nsSupportsPRUint32Impl MOZ_FINAL : public nsISupportsPRUint32
+class nsSupportsPRUint32Impl final : public nsISupportsPRUint32
 {
 public:
   NS_DECL_ISUPPORTS
@@ -131,7 +132,7 @@ private:
 
 /***************************************************************************/
 
-class nsSupportsPRUint64Impl MOZ_FINAL : public nsISupportsPRUint64
+class nsSupportsPRUint64Impl final : public nsISupportsPRUint64
 {
 public:
   NS_DECL_ISUPPORTS
@@ -148,7 +149,7 @@ private:
 
 /***************************************************************************/
 
-class nsSupportsPRTimeImpl MOZ_FINAL : public nsISupportsPRTime
+class nsSupportsPRTimeImpl final : public nsISupportsPRTime
 {
 public:
   NS_DECL_ISUPPORTS
@@ -165,7 +166,7 @@ private:
 
 /***************************************************************************/
 
-class nsSupportsCharImpl MOZ_FINAL : public nsISupportsChar
+class nsSupportsCharImpl final : public nsISupportsChar
 {
 public:
   NS_DECL_ISUPPORTS
@@ -182,7 +183,7 @@ private:
 
 /***************************************************************************/
 
-class nsSupportsPRInt16Impl MOZ_FINAL : public nsISupportsPRInt16
+class nsSupportsPRInt16Impl final : public nsISupportsPRInt16
 {
 public:
   NS_DECL_ISUPPORTS
@@ -199,7 +200,7 @@ private:
 
 /***************************************************************************/
 
-class nsSupportsPRInt32Impl MOZ_FINAL : public nsISupportsPRInt32
+class nsSupportsPRInt32Impl final : public nsISupportsPRInt32
 {
 public:
   NS_DECL_ISUPPORTS
@@ -216,7 +217,7 @@ private:
 
 /***************************************************************************/
 
-class nsSupportsPRInt64Impl MOZ_FINAL : public nsISupportsPRInt64
+class nsSupportsPRInt64Impl final : public nsISupportsPRInt64
 {
 public:
   NS_DECL_ISUPPORTS
@@ -233,7 +234,7 @@ private:
 
 /***************************************************************************/
 
-class nsSupportsFloatImpl MOZ_FINAL : public nsISupportsFloat
+class nsSupportsFloatImpl final : public nsISupportsFloat
 {
 public:
   NS_DECL_ISUPPORTS
@@ -250,7 +251,7 @@ private:
 
 /***************************************************************************/
 
-class nsSupportsDoubleImpl MOZ_FINAL : public nsISupportsDouble
+class nsSupportsDoubleImpl final : public nsISupportsDouble
 {
 public:
   NS_DECL_ISUPPORTS
@@ -267,7 +268,7 @@ private:
 
 /***************************************************************************/
 
-class nsSupportsVoidImpl MOZ_FINAL : public nsISupportsVoid
+class nsSupportsVoidImpl final : public nsISupportsVoid
 {
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
@@ -284,7 +285,7 @@ private:
 
 /***************************************************************************/
 
-class nsSupportsInterfacePointerImpl MOZ_FINAL : public nsISupportsInterfacePointer
+class nsSupportsInterfacePointerImpl final : public nsISupportsInterfacePointer
 {
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
@@ -308,7 +309,7 @@ private:
  * Only use this class with static buffers, or arena-allocated buffers of
  * permanent lifetime!
  */
-class nsSupportsDependentCString MOZ_FINAL : public nsISupportsCString
+class nsSupportsDependentCString final : public nsISupportsCString
 {
 public:
   NS_DECL_ISUPPORTS

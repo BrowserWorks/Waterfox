@@ -19,7 +19,6 @@
 namespace mozilla {
 
 class MediaResource;
-class ReadRequest;
 class OutputPin;
 
 
@@ -47,9 +46,9 @@ public:
 
   // BaseFilter overrides.
   // Only one output - the byte stream.
-  int GetPinCount() MOZ_OVERRIDE { return 1; }
+  int GetPinCount() override { return 1; }
 
-  media::BasePin* GetPin(int n) MOZ_OVERRIDE;
+  media::BasePin* GetPin(int n) override;
 
   // Get's the media type we're supplying.
   const media::MediaType* GetMediaType() const;

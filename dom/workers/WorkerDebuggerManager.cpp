@@ -1,4 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -11,7 +12,7 @@
 
 USING_WORKERS_NAMESPACE
 
-class RegisterDebuggerRunnable MOZ_FINAL : public nsRunnable
+class RegisterDebuggerRunnable final : public nsRunnable
 {
   nsRefPtr<WorkerDebuggerManager> mManager;
   nsRefPtr<WorkerDebugger> mDebugger;
@@ -31,7 +32,7 @@ private:
   { }
 
   NS_IMETHOD
-  Run() MOZ_OVERRIDE
+  Run() override
   {
     mManager->RegisterDebuggerOnMainThread(mDebugger, mHasListeners);
 
@@ -43,7 +44,7 @@ NS_IMPL_ISUPPORTS(RegisterDebuggerRunnable, nsIRunnable);
 
 BEGIN_WORKERS_NAMESPACE
 
-class WorkerDebuggerEnumerator MOZ_FINAL : public nsISimpleEnumerator
+class WorkerDebuggerEnumerator final : public nsISimpleEnumerator
 {
   nsTArray<nsCOMPtr<nsISupports>> mDebuggers;
   uint32_t mIndex;
@@ -139,6 +140,16 @@ WorkerDebuggerManager::RemoveListener(
 
   mListeners.RemoveElement(aListener);
   return NS_OK;
+}
+
+void
+WorkerDebuggerManager::ClearListeners()
+{
+  AssertIsOnMainThread();
+
+  MutexAutoLock lock(mMutex);
+
+  mListeners.Clear();
 }
 
 void

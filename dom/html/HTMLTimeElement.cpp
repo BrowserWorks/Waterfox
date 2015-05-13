@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -26,13 +27,13 @@ HTMLTimeElement::~HTMLTimeElement()
 NS_IMPL_ELEMENT_CLONE(HTMLTimeElement)
 
 JSObject*
-HTMLTimeElement::WrapNode(JSContext* cx)
+HTMLTimeElement::WrapNode(JSContext* cx, JS::Handle<JSObject*> aGivenProto)
 {
-  return HTMLTimeElementBinding::Wrap(cx, this);
+  return HTMLTimeElementBinding::Wrap(cx, this, aGivenProto);
 }
 
 void
-HTMLTimeElement::GetItemValueText(nsAString& text)
+HTMLTimeElement::GetItemValueText(DOMString& text)
 {
   if (HasAttr(kNameSpaceID_None, nsGkAtoms::datetime)) {
     GetDateTime(text);

@@ -72,8 +72,8 @@ bool
 MediaQueryList::Matches()
 {
   if (!mMatchesValid) {
-    NS_ABORT_IF_FALSE(!HasListeners(),
-                      "when listeners present, must keep mMatches current");
+    MOZ_ASSERT(!HasListeners(),
+               "when listeners present, must keep mMatches current");
     RecomputeMatches();
   }
 
@@ -91,8 +91,8 @@ MediaQueryList::AddListener(MediaQueryListListener& aListener)
   }
 
   if (!mMatchesValid) {
-    NS_ABORT_IF_FALSE(!HasListeners(),
-                      "when listeners present, must keep mMatches current");
+    MOZ_ASSERT(!HasListeners(),
+               "when listeners present, must keep mMatches current");
     RecomputeMatches();
   }
 
@@ -196,9 +196,9 @@ MediaQueryList::GetParentObject() const
 }
 
 JSObject*
-MediaQueryList::WrapObject(JSContext* aCx)
+MediaQueryList::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return MediaQueryListBinding::Wrap(aCx, this);
+  return MediaQueryListBinding::Wrap(aCx, this, aGivenProto);
 }
 
 } // namespace dom

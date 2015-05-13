@@ -1,0 +1,30 @@
+$inherits:
+  from: 'tasks/builds/b2g_emulator_base.yml'
+  variables:
+    build_name: 'emulator-l'
+    build_type: 'opt'
+task:
+  workerType: emulator-l-debug
+  scopes:
+    - 'docker-worker:cache:workspace-emulator-l-debug'
+  metadata:
+    name: '[TC] B2G Emulator L (Debug)'
+
+  extra:
+    treeherderEnv:
+      - production
+      - staging
+    treeherder:
+      # Disable "TC" prefix...
+      groupSymbol: "?"
+      collection:
+        debug: true
+      machine:
+        platform: b2g-emu-l
+
+  payload:
+    cache:
+      workspace-emulator-l-debug: /home/worker/workspace
+    env:
+      TARGET: 'emulator-l'
+      B2G_DEBUG: 1

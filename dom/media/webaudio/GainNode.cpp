@@ -23,7 +23,7 @@ NS_INTERFACE_MAP_END_INHERITING(AudioNode)
 NS_IMPL_ADDREF_INHERITED(GainNode, AudioNode)
 NS_IMPL_RELEASE_INHERITED(GainNode, AudioNode)
 
-class GainNodeEngine : public AudioNodeEngine
+class GainNodeEngine final : public AudioNodeEngine
 {
 public:
   GainNodeEngine(AudioNode* aNode, AudioDestinationNode* aDestination)
@@ -45,7 +45,7 @@ public:
   };
   void SetTimelineParameter(uint32_t aIndex,
                             const AudioParamTimeline& aValue,
-                            TrackRate aSampleRate) MOZ_OVERRIDE
+                            TrackRate aSampleRate) override
   {
     switch (aIndex) {
     case GAIN:
@@ -61,7 +61,7 @@ public:
   virtual void ProcessBlock(AudioNodeStream* aStream,
                             const AudioChunk& aInput,
                             AudioChunk* aOutput,
-                            bool* aFinished) MOZ_OVERRIDE
+                            bool* aFinished) override
   {
     MOZ_ASSERT(mSource == aStream, "Invalid source stream");
 
@@ -84,11 +84,12 @@ public:
       AllocateAudioBlock(aInput.mChannelData.Length(), aOutput);
 
       // Compute the gain values for the duration of the input AudioChunk
-      // XXX we need to add a method to AudioEventTimeline to compute this buffer directly.
+      StreamTime tick = aStream->GetCurrentPosition();
       float computedGain[WEBAUDIO_BLOCK_SIZE];
+      mGain.GetValuesAtTime(tick, computedGain, WEBAUDIO_BLOCK_SIZE);
+
       for (size_t counter = 0; counter < WEBAUDIO_BLOCK_SIZE; ++counter) {
-        StreamTime tick = aStream->GetCurrentPosition();
-        computedGain[counter] = mGain.GetValueAtTime(tick, counter) * aInput.mVolume;
+        computedGain[counter] *= aInput.mVolume;
       }
 
       // Apply the gain to the output buffer
@@ -101,7 +102,7 @@ public:
     }
   }
 
-  virtual size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const MOZ_OVERRIDE
+  virtual size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     // Not owned:
     // - mSource (probably)
@@ -110,7 +111,7 @@ public:
     return AudioNodeEngine::SizeOfExcludingThis(aMallocSizeOf);
   }
 
-  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const MOZ_OVERRIDE
+  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
   }
@@ -125,7 +126,7 @@ GainNode::GainNode(AudioContext* aContext)
               2,
               ChannelCountMode::Max,
               ChannelInterpretation::Speakers)
-  , mGain(new AudioParam(this, SendGainToStream, 1.0f))
+  , mGain(new AudioParam(this, SendGainToStream, 1.0f, "gain"))
 {
   GainNodeEngine* engine = new GainNodeEngine(this, aContext->Destination());
   mStream = aContext->Graph()->CreateAudioNodeStream(engine, MediaStreamGraph::INTERNAL_STREAM);
@@ -151,9 +152,9 @@ GainNode::SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const
 }
 
 JSObject*
-GainNode::WrapObject(JSContext* aCx)
+GainNode::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return GainNodeBinding::Wrap(aCx, this);
+  return GainNodeBinding::Wrap(aCx, this, aGivenProto);
 }
 
 void

@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -37,10 +38,10 @@
 #include "prlog.h"
 #include "mozilla/dom/CSPReportBinding.h"
 #include "mozilla/net/ReferrerPolicy.h"
+#include "nsINetworkInterceptController.h"
 
 using namespace mozilla;
 
-#if defined(PR_LOGGING)
 static PRLogModuleInfo *
 GetCspContextLog()
 {
@@ -49,9 +50,9 @@ GetCspContextLog()
     gCspContextPRLog = PR_NewLogModule("CSPContext");
   return gCspContextPRLog;
 }
-#endif
 
-#define CSPCONTEXTLOG(args) PR_LOG(GetCspContextLog(), 4, args)
+#define CSPCONTEXTLOG(args) PR_LOG(GetCspContextLog(), PR_LOG_DEBUG, args)
+#define CSPCONTEXTLOGENABLED() PR_LOG_TEST(GetCspContextLog(), PR_LOG_DEBUG)
 
 static const uint32_t CSP_CACHE_URI_CUTOFF_SIZE = 512;
 
@@ -105,13 +106,11 @@ nsCSPContext::ShouldLoad(nsContentPolicyType aContentType,
                          nsISupports*        aExtra,
                          int16_t*            outDecision)
 {
-#ifdef PR_LOGGING
-  {
-  nsAutoCString spec;
-  aContentLocation->GetSpec(spec);
-  CSPCONTEXTLOG(("nsCSPContext::ShouldLoad, aContentLocation: %s", spec.get()));
+  if (CSPCONTEXTLOGENABLED()) {
+    nsAutoCString spec;
+    aContentLocation->GetSpec(spec);
+    CSPCONTEXTLOG(("nsCSPContext::ShouldLoad, aContentLocation: %s", spec.get()));
   }
-#endif
 
   nsresult rv = NS_OK;
 
@@ -195,13 +194,11 @@ nsCSPContext::ShouldLoad(nsContentPolicyType aContentType,
     mShouldLoadCache.Put(cacheKey, *outDecision);
   }
 
-#ifdef PR_LOGGING
-  {
-  nsAutoCString spec;
-  aContentLocation->GetSpec(spec);
-  CSPCONTEXTLOG(("nsCSPContext::ShouldLoad, decision: %s, aContentLocation: %s", *outDecision ? "load" : "deny", spec.get()));
+  if (CSPCONTEXTLOGENABLED()) {
+    nsAutoCString spec;
+    aContentLocation->GetSpec(spec);
+    CSPCONTEXTLOG(("nsCSPContext::ShouldLoad, decision: %s, aContentLocation: %s", *outDecision ? "load" : "deny", spec.get()));
   }
-#endif
   return NS_OK;
 }
 
@@ -767,8 +764,14 @@ nsCSPContext::SendReports(nsISupports* aBlockedContentSource,
       continue; // don't return yet, there may be more URIs
     }
 
+    nsIDocShell* docShell = nullptr;
+
     // try to create a new channel for every report-uri
     if (loadingNode) {
+      nsIDocument* doc = loadingNode->OwnerDoc();
+      if (doc) {
+        docShell = doc->GetDocShell();
+      }
       rv = NS_NewChannel(getter_AddRefs(reportChannel),
                          reportURI,
                          loadingNode,
@@ -776,9 +779,8 @@ nsCSPContext::SendReports(nsISupports* aBlockedContentSource,
                          nsIContentPolicy::TYPE_CSP_REPORT);
     }
     else {
-      nsCOMPtr<nsIPrincipal> nullPrincipal =
-        do_CreateInstance("@mozilla.org/nullprincipal;1", &rv);
-      NS_ENSURE_SUCCESS(rv, rv);
+      nsCOMPtr<nsIPrincipal> nullPrincipal = nsNullPrincipal::Create();
+      NS_ENSURE_TRUE(nullPrincipal, NS_ERROR_FAILURE);
       rv = NS_NewChannel(getter_AddRefs(reportChannel),
                          reportURI,
                          nullPrincipal,
@@ -817,6 +819,10 @@ nsCSPContext::SendReports(nsISupports* aBlockedContentSource,
     // we need to set an nsIChannelEventSink on the channel object
     // so we can tell it to not follow redirects when posting the reports
     nsRefPtr<CSPReportRedirectSink> reportSink = new CSPReportRedirectSink();
+    if (docShell) {
+      nsCOMPtr<nsINetworkInterceptController> interceptController = do_QueryInterface(docShell);
+      reportSink->SetInterceptController(interceptController);
+    }
     reportChannel->SetNotificationCallbacks(reportSink);
 
     // apply the loadgroup from the channel taken by setRequestContext.  If
@@ -893,7 +899,7 @@ nsCSPContext::SendReports(nsISupports* aBlockedContentSource,
 /**
  * Dispatched from the main thread to send reports for one CSP violation.
  */
-class CSPReportSenderRunnable MOZ_FINAL : public nsRunnable
+class CSPReportSenderRunnable final : public nsRunnable
 {
   public:
     CSPReportSenderRunnable(nsISupports* aBlockedContentSource,
@@ -1102,13 +1108,11 @@ nsCSPContext::PermitsAncestry(nsIDocShell* aDocShell, bool* outPermitsAncestry)
       // there was one.
       uriClone->SetUserPass(EmptyCString());
 
-#ifdef PR_LOGGING
-      {
-      nsAutoCString spec;
-      uriClone->GetSpec(spec);
-      CSPCONTEXTLOG(("nsCSPContext::PermitsAncestry, found ancestor: %s", spec.get()));
+      if (CSPCONTEXTLOGENABLED()) {
+        nsAutoCString spec;
+        uriClone->GetSpec(spec);
+        CSPCONTEXTLOG(("nsCSPContext::PermitsAncestry, found ancestor: %s", spec.get()));
       }
-#endif
       ancestorsArray.AppendElement(uriClone);
     }
 
@@ -1124,13 +1128,11 @@ nsCSPContext::PermitsAncestry(nsIDocShell* aDocShell, bool* outPermitsAncestry)
   // restriction not placed on subresource loads.
 
   for (uint32_t a = 0; a < ancestorsArray.Length(); a++) {
-#ifdef PR_LOGGING
-    {
-    nsAutoCString spec;
-    ancestorsArray[a]->GetSpec(spec);
-    CSPCONTEXTLOG(("nsCSPContext::PermitsAncestry, checking ancestor: %s", spec.get()));
+    if (CSPCONTEXTLOGENABLED()) {
+      nsAutoCString spec;
+      ancestorsArray[a]->GetSpec(spec);
+      CSPCONTEXTLOG(("nsCSPContext::PermitsAncestry, checking ancestor: %s", spec.get()));
     }
-#endif
     // omit the ancestor URI in violation reports if cross-origin as per spec
     // (it is a violation of the same-origin policy).
     bool okToSendAncestor = NS_SecurityCompareURIs(ancestorsArray[a], mSelfURI, true);
@@ -1173,15 +1175,13 @@ nsCSPContext::Permits(nsIURI* aURI,
                                 true,     // send violation reports
                                 true);    // send blocked URI in violation reports
 
-#ifdef PR_LOGGING
-  {
-    nsAutoCString spec;
-    aURI->GetSpec(spec);
-    CSPCONTEXTLOG(("nsCSPContext::Permits, aUri: %s, aDir: %d, isAllowed: %s",
-                  spec.get(), aDir,
-                  *outPermits ? "allow" : "deny"));
+  if (CSPCONTEXTLOGENABLED()) {
+      nsAutoCString spec;
+      aURI->GetSpec(spec);
+      CSPCONTEXTLOG(("nsCSPContext::Permits, aUri: %s, aDir: %d, isAllowed: %s",
+                    spec.get(), aDir,
+                    *outPermits ? "allow" : "deny"));
   }
-#endif
 
   return NS_OK;
 }
@@ -1282,7 +1282,21 @@ CSPReportRedirectSink::AsyncOnChannelRedirect(nsIChannel* aOldChannel,
 NS_IMETHODIMP
 CSPReportRedirectSink::GetInterface(const nsIID& aIID, void** aResult)
 {
+  if (aIID.Equals(NS_GET_IID(nsINetworkInterceptController)) &&
+      mInterceptController) {
+    nsCOMPtr<nsINetworkInterceptController> copy(mInterceptController);
+    *aResult = copy.forget().take();
+
+    return NS_OK;
+  }
+
   return QueryInterface(aIID, aResult);
+}
+
+void
+CSPReportRedirectSink::SetInterceptController(nsINetworkInterceptController* aInterceptController)
+{
+  mInterceptController = aInterceptController;
 }
 
 /* ===== nsISerializable implementation ====== */

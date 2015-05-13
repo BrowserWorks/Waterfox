@@ -1,7 +1,6 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-Components.utils.import("resource://gre/modules/PlacesUtils.jsm");
 Components.utils.import("resource://gre/modules/NetUtil.jsm");
 
 const ABOUT_PERMISSIONS_SPEC = "about:permissions";
@@ -24,6 +23,7 @@ const TEST_PERMS = {
   "password": PERM_ALLOW,
   "cookie": PERM_ALLOW,
   "geo": PERM_UNKNOWN,
+  "push": PERM_DENY,
   "indexedDB": PERM_UNKNOWN,
   "popup": PERM_DENY,
   "fullscreen" : PERM_UNKNOWN,
@@ -38,14 +38,14 @@ const NO_GLOBAL_ALLOW = [
 ];
 
 // number of managed permissions in the interface
-const TEST_PERMS_COUNT = 8;
+const TEST_PERMS_COUNT = 9;
 
 function test() {
   waitForExplicitFinish();
   registerCleanupFunction(cleanUp);
 
   // add test history visit
-  addVisits(TEST_URI_1, function() {
+  PlacesTestUtils.addVisits(TEST_URI_1).then(() => {
     // set permissions ourselves to avoid problems with different defaults
     // from test harness configuration
     for (let type in TEST_PERMS) {
@@ -81,7 +81,7 @@ function cleanUp() {
 
 function runNextTest() {
   if (gTestIndex == tests.length) {
-    waitForClearHistory(finish);
+    PlacesTestUtils.clearHistory().then(finish);
     return;
   }
 
@@ -275,7 +275,7 @@ var tests = [
   function test_forget_site() {
     // click "Forget About This Site" button
     gBrowser.contentDocument.getElementById("forget-site-button").doCommand();
-    waitForClearHistory(function() {
+    PlacesTestUtils.clearHistory().then(() => {
       is(gSiteLabel.value, "", "site label cleared");
 
       let allSitesItem = gBrowser.contentDocument.getElementById("all-sites-item");
@@ -328,16 +328,4 @@ function addWindowListener(aURL, aCallback) {
     onCloseWindow: function(aXULWindow) { },
     onWindowTitleChange: function(aXULWindow, aNewTitle) { }
   });
-}
-
-// copied from toolkit/components/places/tests/head_common.js
-function waitForClearHistory(aCallback) {
-  let observer = {
-    observe: function(aSubject, aTopic, aData) {
-      Services.obs.removeObserver(this, PlacesUtils.TOPIC_EXPIRATION_FINISHED);
-      aCallback();
-    }
-  };
-  Services.obs.addObserver(observer, PlacesUtils.TOPIC_EXPIRATION_FINISHED, false);
-  PlacesUtils.bhistory.removeAllPages();
 }

@@ -21,7 +21,7 @@ MOZ_PKG_PLATFORM := $(TARGET_OS)-$(TARGET_CPU)
 # TARGET_OS/TARGET_CPU may be unintuitive, so we hardcode some special formats
 ifeq ($(OS_ARCH),WINNT)
 ifeq ($(TARGET_CPU),x86_64)
-MOZ_PKG_PLATFORM := win64-$(TARGET_CPU)
+MOZ_PKG_PLATFORM := win64
 else
 MOZ_PKG_PLATFORM := win32
 endif
@@ -148,7 +148,7 @@ MOZ_SOURCE_STAMP = $(firstword $(shell hg -R $(MOZILLA_DIR) parent --template="{
 # bug: 746277 - preserve existing functionality.
 # MOZILLA_DIR="": cd $(SPACE); hg # succeeds if ~/.hg exists
 ###########################################################################
-ifdef MOZILLA_OFFICIAL
+ifdef MOZ_INCLUDE_SOURCE_INFO
 MOZ_SOURCE_REPO = $(call getSourceRepo,$(MOZILLA_DIR)$(NULL) $(NULL))
 endif
 

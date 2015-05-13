@@ -164,6 +164,11 @@ be temporary, and you can try again later.</li>
 <p>Website owners who believe their site has been reported as an attack site in error may <a href='http://www.stopbadware.org/home/reviewinfo' >request a review</a>.</p>
 ">
 
+<!ENTITY unwantedBlocked.title "Suspected Unwanted Software Site!">
+<!ENTITY unwantedBlocked.longDesc "
+<p>Unwanted software pages try to install software that can be deceptive and affect your system in unexpected ways.</p>
+">
+
 <!ENTITY phishingBlocked.title "Suspected Web Forgery!">
 <!ENTITY phishingBlocked.longDesc "
 <p>Entering any personal information on this page may result in identity theft or other fraud.</p>
@@ -205,11 +210,8 @@ functionality specific to firefox. -->
 <!ENTITY remoteXUL.title "Remote XUL">
 <!ENTITY remoteXUL.longDesc "<p><ul><li>Please contact the website owners to inform them of this problem.</li></ul></p>">
 
-<!ENTITY oldSecurityProtocol.title "Unable to Connect Securely">
-<!-- LOCALIZATION NOTE (oldSecurityProtocol.longDesc) - Do not translate the
-     <span id='hostname'></span>. -->
-<!ENTITY oldSecurityProtocol.longDesc2 "&brandShortName; cannot guarantee the safety of your data on <span id='hostname'></span> because it uses SSLv3, a broken security protocol.">
-<!-- LOCALIZATION NOTE (oldSecurityProtocol.advancedInfo) - Do not translate
-     the <span id='errorcode'></span>. -->
-<!ENTITY oldSecurityProtocol.advancedInfo "Advanced info: <span id='errorcode'></span>">
-<!ENTITY oldSecurityProtocol.learnMore "Learn More…">
+<!ENTITY sslv3Used.title "Unable to Connect Securely">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc) - Do not translate
+     "ssl_error_unsupported_version". -->
+<!ENTITY sslv3Used.longDesc "Advanced info: ssl_error_unsupported_version">
+<!ENTITY sslv3Used.learnMore "Learn More…">

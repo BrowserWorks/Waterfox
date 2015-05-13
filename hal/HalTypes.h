@@ -25,29 +25,6 @@ const uint64_t CONTENT_PROCESS_ID_MAIN = 0;
  * in the gonk subsystem.
  * If these change and are exposed to JS, make sure nsIHal.idl is updated as well.
  */
-enum LightType {
-  eHalLightID_Backlight     = 0,
-  eHalLightID_Keyboard      = 1,
-  eHalLightID_Buttons       = 2,
-  eHalLightID_Battery       = 3,
-  eHalLightID_Notifications = 4,
-  eHalLightID_Attention     = 5,
-  eHalLightID_Bluetooth     = 6,
-  eHalLightID_Wifi          = 7,
-  eHalLightID_Count         = 8  // This should stay at the end
-};
-enum LightMode {
-  eHalLightMode_User   = 0,  // brightness is managed by user setting
-  eHalLightMode_Sensor = 1,  // brightness is managed by a light sensor
-  eHalLightMode_Count
-};
-enum FlashMode {
-  eHalLightFlash_None     = 0,
-  eHalLightFlash_Timed    = 1,  // timed flashing.  Use flashOnMS and flashOffMS for timing
-  eHalLightFlash_Hardware = 2,  // hardware assisted flashing
-  eHalLightFlash_Count
-};
-
 enum ShutdownMode {
   eHalShutdownMode_Unknown  = -1,
   eHalShutdownMode_PowerOff = 0,
@@ -96,12 +73,6 @@ enum ProcessPriority {
   NUM_PROCESS_PRIORITY
 };
 
-enum ProcessCPUPriority {
-  PROCESS_CPU_PRIORITY_LOW,
-  PROCESS_CPU_PRIORITY_NORMAL,
-  NUM_PROCESS_CPU_PRIORITY
-};
-
 /**
  * Values that can be passed to hal::SetCurrentThreadPriority().  These should be
  * functional in nature, such as COMPOSITOR, instead of levels, like LOW/HIGH.
@@ -115,19 +86,14 @@ enum ThreadPriority {
 };
 
 /**
- * Convert a ProcessPriority enum value (with an optional ProcessCPUPriority)
- * to a string.  The strings returned by this function are statically
- * allocated; do not attempt to free one!
+ * Convert a ProcessPriority enum value to a string.  The strings returned by
+ * this function are statically allocated; do not attempt to free one!
  *
  * If you pass an unknown process priority, we fatally assert in debug
  * builds and otherwise return "???".
  */
 const char*
 ProcessPriorityToString(ProcessPriority aPriority);
-
-const char*
-ProcessPriorityToString(ProcessPriority aPriority,
-                        ProcessCPUPriority aCPUPriority);
 
 /**
  * Convert a ThreadPriority enum value to a string.  The strings returned by
@@ -232,39 +198,6 @@ typedef Observer<FMRadioRDSGroup> FMRadioRDSObserver;
 } // namespace mozilla
 
 namespace IPC {
-
-/**
- * Light type serializer.
- */
-template <>
-struct ParamTraits<mozilla::hal::LightType>
-  : public ContiguousEnumSerializer<
-             mozilla::hal::LightType,
-             mozilla::hal::eHalLightID_Backlight,
-             mozilla::hal::eHalLightID_Count>
-{};
-
-/**
- * Light mode serializer.
- */
-template <>
-struct ParamTraits<mozilla::hal::LightMode>
-  : public ContiguousEnumSerializer<
-             mozilla::hal::LightMode,
-             mozilla::hal::eHalLightMode_User,
-             mozilla::hal::eHalLightMode_Count>
-{};
-
-/**
- * Flash mode serializer.
- */
-template <>
-struct ParamTraits<mozilla::hal::FlashMode>
-  : public ContiguousEnumSerializer<
-             mozilla::hal::FlashMode,
-             mozilla::hal::eHalLightFlash_None,
-             mozilla::hal::eHalLightFlash_Count>
-{};
 
 /**
  * Serializer for ShutdownMode.

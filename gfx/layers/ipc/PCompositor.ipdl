@@ -6,6 +6,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 include LayersSurfaces;
+include LayersMessages;
 include protocol PLayerTransaction;
 include "mozilla/GfxMessageUtils.h";
 include "nsRegion.h";
@@ -28,9 +29,7 @@ namespace layers {
  * the main thread and the compositor thread context. It's primary
  * purpose is to manage the PLayerTransaction sub protocol.
  */
-// This should really be 'sync', but we're using 'rpc' as a workaround
-// for Bug 716631.
-intr protocol PCompositor
+sync protocol PCompositor
 {
   // A Compositor manages a single Layer Manager (PLayerTransaction)
   manages PLayerTransaction;
@@ -56,8 +55,22 @@ child:
    */
   async RemotePaintIsReady();
 
-parent:
+  /**
+   * Bounce plugin widget configurations over to the main thread for
+   * application on the widgets. Used on Windows and Linux in managing
+   * plugin widgets.
+   */
+  async UpdatePluginConfigurations(IntPoint aContentOffset,
+                                   nsIntRegion aVisibleRegion,
+                                   PluginWindowData[] aPlugins);
 
+  /**
+   * Sets the list of currently visible plugin windows based on a
+   * list of plugin window ids.
+   */
+  async UpdatePluginVisibility(uintptr_t[] aVisibleIdList);
+
+parent:
   // Child sends the parent a request for fill ratio numbers.
   async RequestOverfill();
 
@@ -82,7 +95,7 @@ parent:
   //
   // NB: this message will result in animations, transforms, effects,
   // and so forth being interpolated.  That's what we want to happen.
-  sync MakeSnapshot(SurfaceDescriptor inSnapshot, nsIntRect dirtyRect);
+  sync MakeSnapshot(SurfaceDescriptor inSnapshot, IntRect dirtyRect);
 
   // Make sure any pending composites are started immediately and
   // block until they are completed.
@@ -118,7 +131,7 @@ parent:
 child:
   // Send back Compositor Frame Metrics from APZCs so tiled layers can
   // update progressively.
-  async SharedCompositorFrameMetrics(Handle metrics, CrossProcessMutexHandle mutex, uint32_t aAPZCId);
+  async SharedCompositorFrameMetrics(Handle metrics, CrossProcessMutexHandle mutex, uint64_t aLayersId, uint32_t aAPZCId);
   async ReleaseSharedCompositorFrameMetrics(ViewID aId, uint32_t aAPZCId);
 };
 

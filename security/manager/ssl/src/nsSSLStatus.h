@@ -15,7 +15,7 @@
 #include "nsIClassInfo.h"
 #include "nsNSSCertificate.h" // For EVStatus
 
-class nsSSLStatus MOZ_FINAL
+class nsSSLStatus final
   : public nsISSLStatus
   , public nsISerializable
   , public nsIClassInfo
@@ -30,7 +30,8 @@ public:
 
   nsSSLStatus();
 
-  void SetServerCert(nsIX509Cert* aServerCert, nsNSSCertificate::EVStatus aEVStatus);
+  void SetServerCert(nsNSSCertificate* aServerCert,
+                     nsNSSCertificate::EVStatus aEVStatus);
 
   bool HasServerCert() {
     return mServerCert != nullptr;

@@ -12,10 +12,11 @@ function run_test() {
 
   gCallbackBinFile = "exe0.exe";
 
-  runUpdate(0, STATE_SUCCEEDED);
+  runUpdate(0, STATE_SUCCEEDED, checkUpdateFinished);
 }
 
-function checkUpdateApplied() {
+function checkUpdateFinished() {
   checkFilesAfterUpdateSuccess(getApplyDirFile, false, false);
+  standardInit();
   checkCallbackAppLog();
 }

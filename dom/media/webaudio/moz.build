@@ -4,6 +4,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files('*'):
+    BUG_COMPONENT = ('Core', 'Web Audio')
+
 DIRS += ['blink']
 
 TEST_DIRS += ['compiledtest']
@@ -18,6 +21,7 @@ MOCHITEST_CHROME_MANIFESTS += ['test/chrome.ini']
 BROWSER_CHROME_MANIFESTS += ['test/browser.ini']
 
 EXPORTS += [
+    'AlignedTArray.h',
     'AudioContext.h',
     'AudioEventTimeline.h',
     'AudioNodeEngine.h',
@@ -31,6 +35,7 @@ EXPORTS += [
 
 EXPORTS.mozilla += [
     'FFTBlock.h',
+    'MediaStreamAudioDestinationNode.h',
 ]
 
 EXPORTS.mozilla.dom += [
@@ -103,6 +108,9 @@ UNIFIED_SOURCES += [
 if CONFIG['CPU_ARCH'] == 'arm' and CONFIG['BUILD_ARM_NEON']:
     SOURCES += ['AudioNodeEngineNEON.cpp']
     SOURCES['AudioNodeEngineNEON.cpp'].flags += ['-mfpu=neon']
+    LOCAL_INCLUDES += [
+        '/media/openmax_dl/dl/api/'
+    ]
 
 FAIL_ON_WARNINGS = True
 
@@ -112,3 +120,4 @@ FINAL_LIBRARY = 'xul'
 LOCAL_INCLUDES += [
     '..'
 ]
+

@@ -4,8 +4,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef nsGIFDecoder2_h
-#define nsGIFDecoder2_h
+#ifndef mozilla_image_decoders_nsGIFDecoder2_h
+#define mozilla_image_decoders_nsGIFDecoder2_h
 
 #include "Decoder.h"
 
@@ -23,12 +23,12 @@ class nsGIFDecoder2 : public Decoder
 {
 public:
 
-  explicit nsGIFDecoder2(RasterImage& aImage);
+  explicit nsGIFDecoder2(RasterImage* aImage);
   ~nsGIFDecoder2();
 
-  virtual void WriteInternal(const char* aBuffer, uint32_t aCount) MOZ_OVERRIDE;
-  virtual void FinishInternal() MOZ_OVERRIDE;
-  virtual Telemetry::ID SpeedHistogram() MOZ_OVERRIDE;
+  virtual void WriteInternal(const char* aBuffer, uint32_t aCount) override;
+  virtual void FinishInternal() override;
+  virtual Telemetry::ID SpeedHistogram() override;
 
 private:
   // These functions will be called when the decoder has a decoded row,
@@ -69,4 +69,4 @@ private:
 } // namespace image
 } // namespace mozilla
 
-#endif // nsGIFDecoder2_h
+#endif // mozilla_image_decoders_nsGIFDecoder2_h

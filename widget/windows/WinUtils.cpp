@@ -40,19 +40,13 @@
 #include "nsIThread.h"
 #include "MainThreadUtils.h"
 #include "gfxColor.h"
-#ifdef MOZ_METRO
-#include "winrt/MetroInput.h"
-#include "winrt/MetroUtils.h"
-#endif // MOZ_METRO
 
 #ifdef NS_ENABLE_TSF
 #include <textstor.h>
 #include "nsTextStore.h"
 #endif // #ifdef NS_ENABLE_TSF
 
-#ifdef PR_LOGGING
 PRLogModuleInfo* gWindowsLog = nullptr;
-#endif
 
 using namespace mozilla::gfx;
 
@@ -430,16 +424,15 @@ WinUtils::DwmSetWindowAttributeProc WinUtils::dwmSetWindowAttributePtr = nullptr
 WinUtils::DwmInvalidateIconicBitmapsProc WinUtils::dwmInvalidateIconicBitmapsPtr = nullptr;
 WinUtils::DwmDefWindowProcProc WinUtils::dwmDwmDefWindowProcPtr = nullptr;
 WinUtils::DwmGetCompositionTimingInfoProc WinUtils::dwmGetCompositionTimingInfoPtr = nullptr;
+WinUtils::DwmFlushProc WinUtils::dwmFlushProcPtr = nullptr;
 
 /* static */
 void
 WinUtils::Initialize()
 {
-#ifdef PR_LOGGING
   if (!gWindowsLog) {
     gWindowsLog = PR_NewLogModule("Widget");
   }
-#endif
   if (!sDwmDll && IsVistaOrLater()) {
     sDwmDll = ::LoadLibraryW(kDwmLibraryName);
 
@@ -453,6 +446,7 @@ WinUtils::Initialize()
       dwmInvalidateIconicBitmapsPtr = (DwmInvalidateIconicBitmapsProc)::GetProcAddress(sDwmDll, "DwmInvalidateIconicBitmaps");
       dwmDwmDefWindowProcPtr = (DwmDefWindowProcProc)::GetProcAddress(sDwmDll, "DwmDefWindowProc");
       dwmGetCompositionTimingInfoPtr = (DwmGetCompositionTimingInfoProc)::GetProcAddress(sDwmDll, "DwmGetCompositionTimingInfo");
+      dwmFlushProcPtr = (DwmFlushProc)::GetProcAddress(sDwmDll, "DwmFlush");
     }
   }
 }
@@ -479,20 +473,17 @@ WinUtils::LogW(const wchar_t *fmt, ...)
   OutputDebugStringW(buffer);
   OutputDebugStringW(L"\n");
 
-  int len = wcslen(buffer);
+  int len = WideCharToMultiByte(CP_ACP, 0, buffer, -1, nullptr, 0, nullptr, nullptr);
   if (len) {
-    char* utf8 = new char[len+1];
-    memset(utf8, 0, sizeof(utf8));
+    char* utf8 = new char[len];
     if (WideCharToMultiByte(CP_ACP, 0, buffer,
-                            -1, utf8, len+1, nullptr,
+                            -1, utf8, len, nullptr,
                             nullptr) > 0) {
       // desktop console
       printf("%s\n", utf8);
-#ifdef PR_LOGGING
       NS_ASSERTION(gWindowsLog, "Called WinUtils Log() but Widget "
                                    "log module doesn't exist!");
       PR_LOG(gWindowsLog, PR_LOG_ALWAYS, (utf8));
-#endif
     }
     delete[] utf8;
   }
@@ -524,11 +515,9 @@ WinUtils::Log(const char *fmt, ...)
   // desktop console
   printf("%s\n", buffer);
 
-#ifdef PR_LOGGING
   NS_ASSERTION(gWindowsLog, "Called WinUtils Log() but Widget "
                                "log module doesn't exist!");
   PR_LOG(gWindowsLog, PR_LOG_ALWAYS, (buffer));
-#endif
   delete[] buffer;
 }
 
@@ -537,26 +526,18 @@ double
 WinUtils::LogToPhysFactor()
 {
   // dpi / 96.0
-  if (XRE_GetWindowsEnvironment() == WindowsEnvironmentType_Metro) {
-#ifdef MOZ_METRO
-    return MetroUtils::LogToPhysFactor();
-#else
-    return 1.0;
-#endif
-  } else {
-    HDC hdc = ::GetDC(nullptr);
-    double result = ::GetDeviceCaps(hdc, LOGPIXELSY) / 96.0;
-    ::ReleaseDC(nullptr, hdc);
+  HDC hdc = ::GetDC(nullptr);
+  double result = ::GetDeviceCaps(hdc, LOGPIXELSY) / 96.0;
+  ::ReleaseDC(nullptr, hdc);
 
-    if (result == 0) {
-      // Bug 1012487 - This can occur when the Screen DC is used off the
-      // main thread on windows. For now just assume a 100% DPI for this
-      // drawing call.
-      // XXX - fixme!
-      result = 1.0;
-    }
-    return result;
+  if (result == 0) {
+    // Bug 1012487 - This can occur when the Screen DC is used off the
+    // main thread on windows. For now just assume a 100% DPI for this
+    // drawing call.
+    // XXX - fixme!
+    result = 1.0;
   }
+  return result;
 }
 
 /* static */
@@ -753,7 +734,7 @@ GetNSWindowPropName()
 {
   static wchar_t sPropName[40] = L"";
   if (!*sPropName) {
-    _snwprintf(sPropName, 39, L"MozillansIWidgetPtr%p",
+    _snwprintf(sPropName, 39, L"MozillansIWidgetPtr%u",
                ::GetCurrentProcessId());
     sPropName[39] = '\0';
   }
@@ -954,14 +935,16 @@ WinUtils::GetMouseInputSource()
   return static_cast<uint16_t>(inputSource);
 }
 
+/* static */
 bool
 WinUtils::GetIsMouseFromTouch(uint32_t aEventType)
 {
-#define MOUSEEVENTF_FROMTOUCH 0xFF515700
-  return (aEventType == NS_MOUSE_BUTTON_DOWN ||
-          aEventType == NS_MOUSE_BUTTON_UP ||
-          aEventType == NS_MOUSE_MOVE) &&
-          (GetMessageExtraInfo() & MOUSEEVENTF_FROMTOUCH);
+  const int MOZ_T_I_SIGNATURE = TABLET_INK_TOUCH | TABLET_INK_SIGNATURE;
+  const int MOZ_T_I_CHECK_TCH = TABLET_INK_TOUCH | TABLET_INK_CHECK;
+  return ((aEventType == NS_MOUSE_MOVE ||
+           aEventType == NS_MOUSE_BUTTON_DOWN ||
+           aEventType == NS_MOUSE_BUTTON_UP) &&
+         (GetMessageExtraInfo() & MOZ_T_I_SIGNATURE) == MOZ_T_I_CHECK_TCH);
 }
 
 /* static */
@@ -1026,12 +1009,60 @@ WinUtils::SHGetKnownFolderPath(REFKNOWNFOLDERID rfid,
   return sGetKnownFolderPath(rfid, dwFlags, hToken, ppszPath);
 }
 
+static BOOL
+WINAPI EnumFirstChild(HWND hwnd, LPARAM lParam)
+{
+  *((HWND*)lParam) = hwnd;
+  return FALSE;
+}
+
+/* static */
+void
+WinUtils::InvalidatePluginAsWorkaround(nsIWidget *aWidget, const nsIntRect &aRect)
+{
+  aWidget->Invalidate(aRect);
+
+  // XXX - Even more evil workaround!! See bug 762948, flash's bottom
+  // level sandboxed window doesn't seem to get our invalidate. We send
+  // an invalidate to it manually. This is totally specialized for this
+  // bug, for other child window structures this will just be a more or
+  // less bogus invalidate but since that should not have any bad
+  // side-effects this will have to do for now.
+  HWND current = (HWND)aWidget->GetNativeData(NS_NATIVE_WINDOW);
+
+  RECT windowRect;
+  RECT parentRect;
+
+  ::GetWindowRect(current, &parentRect);
+
+  HWND next = current;
+  do {
+    current = next;
+    ::EnumChildWindows(current, &EnumFirstChild, (LPARAM)&next);
+    ::GetWindowRect(next, &windowRect);
+    // This is relative to the screen, adjust it to be relative to the
+    // window we're reconfiguring.
+    windowRect.left -= parentRect.left;
+    windowRect.top -= parentRect.top;
+  } while (next != current && windowRect.top == 0 && windowRect.left == 0);
+
+  if (windowRect.top == 0 && windowRect.left == 0) {
+    RECT rect;
+    rect.left   = aRect.x;
+    rect.top    = aRect.y;
+    rect.right  = aRect.XMost();
+    rect.bottom = aRect.YMost();
+
+    ::InvalidateRect(next, &rect, FALSE);
+  }
+}
+
 #ifdef MOZ_PLACES
-/************************************************************************/
-/* Constructs as AsyncFaviconDataReady Object
-/* @param aIOThread : the thread which performs the action
-/* @param aURLShortcut : Differentiates between (false)Jumplistcache and (true)Shortcutcache
-/************************************************************************/
+/************************************************************************
+ * Constructs as AsyncFaviconDataReady Object
+ * @param aIOThread : the thread which performs the action
+ * @param aURLShortcut : Differentiates between (false)Jumplistcache and (true)Shortcutcache
+ ************************************************************************/
 
 AsyncFaviconDataReady::AsyncFaviconDataReady(nsIURI *aNewURI, 
                                              nsCOMPtr<nsIThread> &aIOThread, 
@@ -1149,6 +1180,10 @@ AsyncFaviconDataReady::OnComplete(nsIURI *aFaviconURI,
                                        dataSurface->GetSize(),
                                        map.mStride,
                                        dataSurface->GetFormat());
+    if (!dt) {
+      gfxWarning() << "AsyncFaviconDataReady::OnComplete failed in CreateDrawTargetForData";
+      return NS_ERROR_OUT_OF_MEMORY;
+    }
     dt->FillRect(Rect(0, 0, size.width, size.height),
                  ColorPattern(Color(1.0f, 1.0f, 1.0f, 1.0f)));
     dt->DrawSurface(surface,
@@ -1632,11 +1667,6 @@ WinUtils::SetupKeyModifiersSequence(nsTArray<KeyPair>* aArray,
 bool
 WinUtils::ShouldHideScrollbars()
 {
-#ifdef MOZ_METRO
-  if (XRE_GetWindowsEnvironment() == WindowsEnvironmentType_Metro) {
-    return widget::winrt::MetroInput::IsInputModeImprecise();
-  }
-#endif // MOZ_METRO
   return false;
 }
 

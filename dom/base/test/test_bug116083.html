@@ -16,9 +16,36 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=116083
 <div style="white-space: pre-wrap">foo  bar</div>
 <div style="white-space: pre-line">foo  bar</div>
 <div style="white-space: -moz-pre-space">foo  bar</div>
+<div data-result="bar  baz"><span style="white-space: pre">bar  </span>baz</div>
+<div data-result="bar  baz"><span style="white-space: pre-wrap">bar  </span>baz</div>
+<div data-result="bar  baz"><span style="white-space: pre-line">bar  </span>baz</div>
+<div data-result="bar  baz"><span style="white-space: -moz-pre-space">bar  </span>baz</div>
+<div data-result="foo  &#10;  bar&#10;&#10;!&#10;&#10;&#10;baz" style="white-space: pre"><div>foo  </div><div>  bar</div><div><br></div><div>!</div><div><br><br></div><div>baz</div></div>
+<div data-result="foo &#10; bar&#10;&#10;!&#10;&#10;&#10;baz" style="white-space: pre" contenteditable><div>foo </div><div> bar</div><div><br></div><div>!</div><div><br><br></div><div>baz</div></div>
+<div data-result="foo  &#10;  bar&#10;&#10;!&#10;&#10;&#10;baz" style="white-space: pre-wrap"><div>foo  </div><div>  bar</div><div><br></div><div>!</div><div><br><br></div><div>baz</div></div>
+<div data-result="foo &#10; bar&#10;&#10;!&#10;&#10;&#10;baz" style="white-space: pre-wrap" contenteditable><div>foo </div><div> bar</div><div><br></div><div>!</div><div><br><br></div><div>baz</div></div>
+<div data-result="foo  &#10;  bar&#10;&#10;!&#10;&#10;&#10;baz" style="white-space: pre-line"><div>foo  </div><div>  bar</div><div><br></div><div>!</div><div><br><br></div><div>baz</div></div>
+<div data-result="foo &#10; bar&#10;&#10;!&#10;&#10;&#10;baz" style="white-space: pre-line" contenteditable><div>foo </div><div> bar</div><div><br></div><div>!</div><div><br><br></div><div>baz</div></div>
+<div data-result="foo  &#10;  bar&#10;&#10;!&#10;&#10;&#10;baz" style="white-space: -moz-pre-space"><div>foo  </div><div>  bar</div><div><br></div><div>!</div><div><br><br></div><div>baz</div></div>
+<div data-result="foo &#10; bar&#10;&#10;!&#10;&#10;&#10;baz" style="white-space: -moz-pre-space" contenteditable><div>foo </div><div> bar</div><div><br></div><div>!</div><div><br><br></div><div>baz</div></div>
 <div data-result="&#10;foo bar&#10;">foo  bar</div>
 </div>
 <script type="application/javascript">
+
+const Cc = SpecialPowers.Cc;
+const Ci = SpecialPowers.Ci;
+
+function hasExpectedFlavors() {
+  var flavors = [
+    "text/plain",
+    "text/html",
+    "application/x-moz-nativehtml",
+  ];
+  var cb = Cc["@mozilla.org/widget/clipboard;1"].
+           getService(Ci.nsIClipboard);
+  return cb.hasDataMatchingFlavors(flavors, flavors.length,
+                                   cb.kGlobalClipboard);
+}
 
 SimpleTest.waitForExplicitFinish();
 SimpleTest.waitForFocus(function nextTest() {
@@ -35,6 +62,7 @@ SimpleTest.waitForFocus(function nextTest() {
     synthesizeKey("C", {accelKey: true});
   }, function() {
     ok(true, div.getAttribute("style") + " passed");
+    ok(hasExpectedFlavors(), "The clipboard has the expected flavors");
     div.parentNode.removeChild(div);
     nextTest();
   }, function() {

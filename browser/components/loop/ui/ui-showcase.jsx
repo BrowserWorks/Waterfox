@@ -17,8 +17,9 @@
   // 1. Desktop components
   // 1.1 Panel
   var PanelView = loop.panel.PanelView;
+  var SignInRequestView = loop.panel.SignInRequestView;
   // 1.2. Conversation Window
-  var IncomingCallView = loop.conversationViews.IncomingCallView;
+  var AcceptCallView = loop.conversationViews.AcceptCallView;
   var DesktopPendingConversationView = loop.conversationViews.PendingConversationView;
   var CallFailedView = loop.conversationViews.CallFailedView;
   var DesktopRoomConversationView = loop.roomViews.DesktopRoomConversationView;
@@ -43,6 +44,7 @@
   // Store constants
   var ROOM_STATES = loop.store.ROOM_STATES;
   var FEEDBACK_STATES = loop.store.FEEDBACK_STATES;
+  var CALL_TYPES = loop.shared.utils.CALL_TYPES;
 
   // Local helpers
   function returnTrue() {
@@ -55,6 +57,28 @@
 
   function noop(){}
 
+  // We save the visibility change listeners so that we can fake an event
+  // to the panel once we've loaded all the views.
+  var visibilityListeners = [];
+  var rootObject = window;
+
+  rootObject.document.addEventListener = function(eventName, func) {
+    if (eventName === "visibilitychange") {
+      visibilityListeners.push(func);
+    }
+    window.addEventListener(eventName, func);
+  };
+
+  rootObject.document.removeEventListener = function(eventName, func) {
+    if (eventName === "visibilitychange") {
+      var index = visibilityListeners.indexOf(func);
+      visibilityListeners.splice(index, 1);
+    }
+    window.removeEventListener(eventName, func);
+  };
+
+  loop.shared.mixins.setRootObject(rootObject);
+
   // Feedback API client configured to send data to the stage input server,
   // which is available at https://input.allizom.org
   var stageFeedbackApiClient = new loop.FeedbackAPIClient(
@@ -63,10 +87,12 @@
     }
   );
 
+  var mockSDK = _.extend({}, Backbone.Events);
+
   var dispatcher = new loop.Dispatcher();
   var activeRoomStore = new loop.store.ActiveRoomStore(dispatcher, {
     mozLoop: navigator.mozLoop,
-    sdkDriver: {}
+    sdkDriver: mockSDK
   });
   var roomStore = new loop.store.RoomStore(dispatcher, {
     mozLoop: navigator.mozLoop
@@ -77,13 +103,17 @@
   var conversationStore = new loop.store.ConversationStore(dispatcher, {
     client: {},
     mozLoop: navigator.mozLoop,
-    sdkDriver: {}
+    sdkDriver: mockSDK
+  });
+
+  loop.store.StoreMixin.register({
+    conversationStore: conversationStore,
+    feedbackStore: feedbackStore
   });
 
   // Local mocks
 
   var mockMozLoopRooms = _.extend({}, navigator.mozLoop);
-  mockMozLoopRooms.roomsEnabled = true;
 
   var mockContact = {
     name: ["Mr Smith"],
@@ -93,11 +123,8 @@
   };
 
   var mockClient = {
-    requestCallUrl: noop,
     requestCallUrlInfo: noop
   };
-
-  var mockSDK = {};
 
   var mockConversationModel = new loop.shared.models.ConversationModel({
     callerId: "Mrs Jones",
@@ -119,40 +146,59 @@
     level: "error",
     message: "Could Not Authenticate",
     details: "Did you change your password?",
-    detailsButtonLabel: "Retry",
+    detailsButtonLabel: "Retry"
   });
 
   var SVGIcon = React.createClass({
     render: function() {
+      var sizeUnit = this.props.size.split("x")[0] + "px";
       return (
         <span className="svg-icon" style={{
-          "background-image": "url(/content/shared/img/icons-16x16.svg#" + this.props.shapeId + ")"
+          "backgroundImage": "url(../content/shared/img/icons-" + this.props.size +
+                              ".svg#" + this.props.shapeId + ")",
+          "backgroundSize": sizeUnit + " " + sizeUnit
         }} />
       );
     }
   });
 
   var SVGIcons = React.createClass({
-    shapes: [
-      "audio", "audio-hover", "audio-active", "block",
-      "block-red", "block-hover", "block-active", "contacts", "contacts-hover",
-      "contacts-active", "copy", "checkmark", "google", "google-hover",
-      "google-active", "history", "history-hover", "history-active", "leave",
-      "precall", "precall-hover", "precall-active", "settings", "settings-hover",
-      "settings-active", "tag", "tag-hover", "tag-active", "trash", "unblock",
-      "unblock-hover", "unblock-active", "video", "video-hover", "video-active"
-    ],
+    shapes: {
+      "10x10": ["close", "close-active", "close-disabled", "dropdown",
+        "dropdown-white", "dropdown-active", "dropdown-disabled", "edit",
+        "edit-active", "edit-disabled", "expand", "expand-active", "expand-disabled",
+        "minimize", "minimize-active", "minimize-disabled"
+      ],
+      "14x14": ["audio", "audio-active", "audio-disabled", "facemute",
+        "facemute-active", "facemute-disabled", "hangup", "hangup-active",
+        "hangup-disabled", "incoming", "incoming-active", "incoming-disabled",
+        "link", "link-active", "link-disabled", "mute", "mute-active",
+        "mute-disabled", "pause", "pause-active", "pause-disabled", "video",
+        "video-white", "video-active", "video-disabled", "volume", "volume-active",
+        "volume-disabled"
+      ],
+      "16x16": ["add", "add-hover", "add-active", "audio", "audio-hover", "audio-active",
+        "block", "block-red", "block-hover", "block-active", "contacts", "contacts-hover",
+        "contacts-active", "copy", "checkmark", "delete", "google", "google-hover",
+        "google-active", "history", "history-hover", "history-active", "leave",
+        "precall", "precall-hover", "precall-active", "screen-white", "screenmute-white",
+        "settings", "settings-hover", "settings-active", "share-darkgrey", "tag",
+        "tag-hover", "tag-active", "trash", "unblock", "unblock-hover", "unblock-active",
+        "video", "video-hover", "video-active", "tour"
+      ]
+    },
 
     render: function() {
+      var icons = this.shapes[this.props.size].map(function(shapeId, i) {
+        return (
+          <li key={this.props.size + "-" + i} className="svg-icon-entry">
+            <p><SVGIcon shapeId={shapeId} size={this.props.size} /></p>
+            <p>{shapeId}</p>
+          </li>
+        );
+      }, this);
       return (
-        <div className="svg-icon-list">{
-          this.shapes.map(function(shapeId, i) {
-            return <div key={i} className="svg-icon-entry">
-              <p><SVGIcon shapeId={shapeId} /></p>
-              <p>{shapeId}</p>
-            </div>;
-          }, this)
-        }</div>
+        <ul className="svg-icon-list">{icons}</ul>
       );
     }
   });
@@ -171,7 +217,7 @@
             <a href={this.makeId("#")}>&nbsp;¶</a>
           </h3>
           <div className={cx({comp: true, dashed: this.props.dashed})}
-               style={this.props.style || {}}>
+               style={this.props.style}>
             {this.props.children}
           </div>
         </div>
@@ -182,7 +228,7 @@
   var Section = React.createClass({
     render: function() {
       return (
-        <section id={this.props.name}>
+        <section id={this.props.name} className={this.props.className}>
           <h1>{this.props.name}</h1>
           {this.props.children}
         </section>
@@ -220,33 +266,24 @@
             <p className="note">
               <strong>Note:</strong> 332px wide.
             </p>
-            <Example summary="Call URL retrieved" dashed="true" style={{width: "332px"}}>
-              <PanelView client={mockClient} notifications={notifications}
-                         callUrl="http://invalid.example.url/"
-                         mozLoop={navigator.mozLoop}
-                         dispatcher={dispatcher}
-                         roomStore={roomStore} />
+            <Example summary="Re-sign-in view" dashed="true" style={{width: "332px"}}>
+              <SignInRequestView mozLoop={mockMozLoopRooms} />
             </Example>
-            <Example summary="Call URL retrieved - authenticated" dashed="true" style={{width: "332px"}}>
-              <PanelView client={mockClient} notifications={notifications}
-                         callUrl="http://invalid.example.url/"
-                         userProfile={{email: "test@example.com"}}
-                         mozLoop={navigator.mozLoop}
-                         dispatcher={dispatcher}
-                         roomStore={roomStore} />
-            </Example>
-            <Example summary="Pending call url retrieval" dashed="true" style={{width: "332px"}}>
-              <PanelView client={mockClient} notifications={notifications}
-                         mozLoop={navigator.mozLoop}
-                         dispatcher={dispatcher}
-                         roomStore={roomStore} />
-            </Example>
-            <Example summary="Pending call url retrieval - authenticated" dashed="true" style={{width: "332px"}}>
+            <Example summary="Room list tab" dashed="true" style={{width: "332px"}}>
               <PanelView client={mockClient} notifications={notifications}
                          userProfile={{email: "test@example.com"}}
-                         mozLoop={navigator.mozLoop}
+                         mozLoop={mockMozLoopRooms}
                          dispatcher={dispatcher}
-                         roomStore={roomStore} />
+                         roomStore={roomStore}
+                         selectedTab="rooms" />
+            </Example>
+            <Example summary="Contact list tab" dashed="true" style={{width: "332px"}}>
+              <PanelView client={mockClient} notifications={notifications}
+                         userProfile={{email: "test@example.com"}}
+                         mozLoop={mockMozLoopRooms}
+                         dispatcher={dispatcher}
+                         roomStore={roomStore}
+                         selectedTab="contacts" />
             </Example>
             <Example summary="Error Notification" dashed="true" style={{width: "332px"}}>
               <PanelView client={mockClient} notifications={errNotifications}
@@ -261,37 +298,52 @@
                          dispatcher={dispatcher}
                          roomStore={roomStore} />
             </Example>
-            <Example summary="Room list tab" dashed="true" style={{width: "332px"}}>
-              <PanelView client={mockClient} notifications={notifications}
+            <Example summary="Contact import success" dashed="true" style={{width: "332px"}}>
+              <PanelView notifications={new loop.shared.models.NotificationCollection([{level: "success", message: "Import success"}])}
                          userProfile={{email: "test@example.com"}}
                          mozLoop={mockMozLoopRooms}
                          dispatcher={dispatcher}
                          roomStore={roomStore}
-                         selectedTab="rooms" />
+                         selectedTab="contacts" />
+            </Example>
+            <Example summary="Contact import error" dashed="true" style={{width: "332px"}}>
+              <PanelView notifications={new loop.shared.models.NotificationCollection([{level: "error", message: "Import error"}])}
+                         userProfile={{email: "test@example.com"}}
+                         mozLoop={mockMozLoopRooms}
+                         dispatcher={dispatcher}
+                         roomStore={roomStore}
+                         selectedTab="contacts" />
             </Example>
           </Section>
 
-          <Section name="IncomingCallView">
-            <Example summary="Default / incoming video call" dashed="true" style={{width: "260px", height: "254px"}}>
+          <Section name="AcceptCallView">
+            <Example summary="Default / incoming video call" dashed="true" style={{width: "300px", height: "272px"}}>
               <div className="fx-embedded">
-                <IncomingCallView model={mockConversationModel}
-                                  video={true} />
+                <AcceptCallView callType={CALL_TYPES.AUDIO_VIDEO}
+                                callerId="Mr Smith"
+                                dispatcher={dispatcher}
+                                mozLoop={mockMozLoopRooms} />
               </div>
             </Example>
 
-            <Example summary="Default / incoming audio only call" dashed="true" style={{width: "260px", height: "254px"}}>
+            <Example summary="Default / incoming audio only call" dashed="true" style={{width: "300px", height: "272px"}}>
               <div className="fx-embedded">
-                <IncomingCallView model={mockConversationModel}
-                                  video={false} />
+                <AcceptCallView callType={CALL_TYPES.AUDIO_ONLY}
+                                callerId="Mr Smith"
+                                dispatcher={dispatcher}
+                                mozLoop={mockMozLoopRooms} />
               </div>
             </Example>
           </Section>
 
-          <Section name="IncomingCallView-ActiveState">
-            <Example summary="Default" dashed="true" style={{width: "260px", height: "254px"}}>
+          <Section name="AcceptCallView-ActiveState">
+            <Example summary="Default" dashed="true" style={{width: "300px", height: "272px"}}>
               <div className="fx-embedded" >
-                <IncomingCallView  model={mockConversationModel}
-                                   showMenu={true} />
+                <AcceptCallView callType={CALL_TYPES.AUDIO_VIDEO}
+                                callerId="Mr Smith"
+                                dispatcher={dispatcher}
+                                mozLoop={mockMozLoopRooms}
+                                showMenu={true} />
               </div>
             </Example>
           </Section>
@@ -299,19 +351,19 @@
           <Section name="ConversationToolbar">
             <h2>Desktop Conversation Window</h2>
             <div className="fx-embedded override-position">
-              <Example summary="Default (260x265)" dashed="true">
+              <Example summary="Default" dashed="true" style={{width: "300px", height: "272px"}}>
                 <ConversationToolbar video={{enabled: true}}
                                      audio={{enabled: true}}
                                      hangup={noop}
                                      publishStream={noop} />
               </Example>
-              <Example summary="Video muted">
+              <Example summary="Video muted" style={{width: "300px", height: "272px"}}>
                 <ConversationToolbar video={{enabled: false}}
                                      audio={{enabled: true}}
                                      hangup={noop}
                                      publishStream={noop} />
               </Example>
-              <Example summary="Audio muted">
+              <Example summary="Audio muted" style={{width: "300px", height: "272px"}}>
                 <ConversationToolbar video={{enabled: true}}
                                      audio={{enabled: false}}
                                      hangup={noop}
@@ -368,7 +420,7 @@
 
           <Section name="PendingConversationView (Desktop)">
             <Example summary="Connecting" dashed="true"
-                     style={{width: "260px", height: "265px"}}>
+                     style={{width: "300px", height: "272px"}}>
               <div className="fx-embedded">
                 <DesktopPendingConversationView callState={"gather"}
                                                 contact={mockContact}
@@ -378,16 +430,27 @@
           </Section>
 
           <Section name="CallFailedView">
-            <Example summary="Call Failed" dashed="true"
-                     style={{width: "260px", height: "265px"}}>
+            <Example summary="Call Failed - Incoming" dashed="true"
+                     style={{width: "300px", height: "272px"}}>
               <div className="fx-embedded">
-                <CallFailedView dispatcher={dispatcher} store={conversationStore} />
+                <CallFailedView dispatcher={dispatcher}
+                                outgoing={false}
+                                store={conversationStore} />
+              </div>
+            </Example>
+            <Example summary="Call Failed - Outgoing" dashed="true"
+                     style={{width: "300px", height: "272px"}}>
+              <div className="fx-embedded">
+                <CallFailedView dispatcher={dispatcher}
+                                outgoing={true}
+                                store={conversationStore} />
               </div>
             </Example>
             <Example summary="Call Failed — with call URL error" dashed="true"
-                     style={{width: "260px", height: "265px"}}>
+                     style={{width: "300px", height: "272px"}}>
               <div className="fx-embedded">
                 <CallFailedView dispatcher={dispatcher} emailLinkError={true}
+                                outgoing={true}
                                 store={conversationStore} />
               </div>
             </Example>
@@ -415,7 +478,7 @@
 
           <Section name="ConversationView">
             <Example summary="Desktop conversation window" dashed="true"
-                     style={{width: "260px", height: "265px"}}>
+                     style={{width: "300px", height: "272px"}}>
               <div className="fx-embedded">
                 <ConversationView sdk={mockSDK}
                                   model={mockConversationModel}
@@ -437,7 +500,7 @@
             </Example>
 
             <Example summary="Desktop conversation window local audio stream"
-                     dashed="true" style={{width: "260px", height: "265px"}}>
+                     dashed="true" style={{width: "300px", height: "272px"}}>
               <div className="fx-embedded">
                 <ConversationView sdk={mockSDK}
                                   video={{enabled: false}}
@@ -488,23 +551,23 @@
               <strong>Note:</strong> For the useable demo, you can access submitted data at&nbsp;
               <a href="https://input.allizom.org/">input.allizom.org</a>.
             </p>
-            <Example summary="Default (useable demo)" dashed="true" style={{width: "260px"}}>
+            <Example summary="Default (useable demo)" dashed="true" style={{width: "300px", height: "272px"}}>
               <FeedbackView feedbackStore={feedbackStore} />
             </Example>
-            <Example summary="Detailed form" dashed="true" style={{width: "260px"}}>
+            <Example summary="Detailed form" dashed="true" style={{width: "300px", height: "272px"}}>
               <FeedbackView feedbackStore={feedbackStore} feedbackState={FEEDBACK_STATES.DETAILS} />
             </Example>
-            <Example summary="Thank you!" dashed="true" style={{width: "260px"}}>
+            <Example summary="Thank you!" dashed="true" style={{width: "300px", height: "272px"}}>
               <FeedbackView feedbackStore={feedbackStore} feedbackState={FEEDBACK_STATES.SENT} />
             </Example>
           </Section>
 
           <Section name="CallUrlExpiredView">
             <Example summary="Firefox User">
-              <CallUrlExpiredView helper={{isFirefox: returnTrue}} />
+              <CallUrlExpiredView isFirefox={true} />
             </Example>
             <Example summary="Non-Firefox User">
-              <CallUrlExpiredView helper={{isFirefox: returnFalse}} />
+              <CallUrlExpiredView isFirefox={false} />
             </Example>
           </Section>
 
@@ -551,7 +614,7 @@
           <Section name="UnsupportedBrowserView">
             <Example summary="Standalone Unsupported Browser">
               <div className="standalone">
-                <UnsupportedBrowserView helper={{isFirefox: returnFalse}}/>
+                <UnsupportedBrowserView isFirefox={false}/>
               </div>
             </Example>
           </Section>
@@ -559,7 +622,7 @@
           <Section name="UnsupportedDeviceView">
             <Example summary="Standalone Unsupported Device">
               <div className="standalone">
-                <UnsupportedDeviceView />
+                <UnsupportedDeviceView platform="ios"/>
               </div>
             </Example>
           </Section>
@@ -571,6 +634,7 @@
                 <DesktopRoomConversationView
                   roomStore={roomStore}
                   dispatcher={dispatcher}
+                  mozLoop={navigator.mozLoop}
                   roomState={ROOM_STATES.INIT} />
               </div>
             </Example>
@@ -581,6 +645,7 @@
                 <DesktopRoomConversationView
                   roomStore={roomStore}
                   dispatcher={dispatcher}
+                  mozLoop={navigator.mozLoop}
                   roomState={ROOM_STATES.HAS_PARTICIPANTS} />
               </div>
             </Example>
@@ -593,7 +658,7 @@
                   dispatcher={dispatcher}
                   activeRoomStore={activeRoomStore}
                   roomState={ROOM_STATES.READY}
-                  helper={{isFirefox: returnTrue}} />
+                  isFirefox={true} />
               </div>
             </Example>
 
@@ -603,7 +668,7 @@
                   dispatcher={dispatcher}
                   activeRoomStore={activeRoomStore}
                   roomState={ROOM_STATES.JOINED}
-                  helper={{isFirefox: returnTrue}} />
+                  isFirefox={true} />
               </div>
             </Example>
 
@@ -613,7 +678,7 @@
                   dispatcher={dispatcher}
                   activeRoomStore={activeRoomStore}
                   roomState={ROOM_STATES.HAS_PARTICIPANTS}
-                  helper={{isFirefox: returnTrue}} />
+                  isFirefox={true} />
               </div>
             </Example>
 
@@ -623,7 +688,7 @@
                   dispatcher={dispatcher}
                   activeRoomStore={activeRoomStore}
                   roomState={ROOM_STATES.FULL}
-                  helper={{isFirefox: returnTrue}} />
+                  isFirefox={true} />
               </div>
             </Example>
 
@@ -633,7 +698,7 @@
                   dispatcher={dispatcher}
                   activeRoomStore={activeRoomStore}
                   roomState={ROOM_STATES.FULL}
-                  helper={{isFirefox: returnFalse}} />
+                  isFirefox={false} />
               </div>
             </Example>
 
@@ -644,7 +709,7 @@
                   activeRoomStore={activeRoomStore}
                   feedbackStore={feedbackStore}
                   roomState={ROOM_STATES.ENDED}
-                  helper={{isFirefox: returnFalse}} />
+                  isFirefox={false} />
               </div>
             </Example>
 
@@ -654,14 +719,20 @@
                   dispatcher={dispatcher}
                   activeRoomStore={activeRoomStore}
                   roomState={ROOM_STATES.FAILED}
-                  helper={{isFirefox: returnFalse}} />
+                  isFirefox={false} />
               </div>
             </Example>
           </Section>
 
-          <Section name="SVG icons preview">
+          <Section name="SVG icons preview" className="svg-icons">
+            <Example summary="10x10">
+              <SVGIcons size="10x10"/>
+            </Example>
+            <Example summary="14x14">
+              <SVGIcons size="14x14" />
+            </Example>
             <Example summary="16x16">
-              <SVGIcons />
+              <SVGIcons size="16x16"/>
             </Example>
           </Section>
 
@@ -711,15 +782,33 @@
 
   window.addEventListener("DOMContentLoaded", function() {
     try {
-      React.render(<App />, document.body);
+      React.renderComponent(<App />, document.getElementById("main"));
+
+      for (var listener of visibilityListeners) {
+        listener({target: {hidden: false}});
+      }
     } catch(err) {
-      console.log(err);
+      console.error(err);
+      uncaughtError = err;
     }
 
     _renderComponentsInIframes();
 
     // Put the title back, in case views changed it.
     document.title = "Loop UI Components Showcase";
+
+    // This simulates the mocha layout for errors which means we can run
+    // this alongside our other unit tests but use the same harness.
+    if (uncaughtError) {
+      $("#results").append("<div class='failures'><em>1</em></div>");
+      $("#results").append("<li class='test fail'>" +
+        "<h2>Errors rendering UI-Showcase</h2>" +
+        "<pre class='error'>" + uncaughtError + "\n" + uncaughtError.stack + "</pre>" +
+        "</li>");
+    } else {
+      $("#results").append("<div class='failures'><em>0</em></div>");
+    }
+    $("#results").append("<p id='complete'>Complete.</p>");
   });
 
 })();

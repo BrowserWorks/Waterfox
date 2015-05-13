@@ -28,7 +28,6 @@ namespace mozilla {
 
 class AudioTrackMetadata;
 class VideoTrackMetadata;
-class ES_Descriptor;
 class ISOControl;
 
 /**
@@ -49,9 +48,9 @@ protected:
 
 public:
   // MuxerOperation methods
-  nsresult Write() MOZ_OVERRIDE;
+  nsresult Write() override;
   nsresult Find(const nsACString& aType,
-                nsTArray<nsRefPtr<MuxerOperation>>& aOperations) MOZ_OVERRIDE;
+                nsTArray<nsRefPtr<MuxerOperation>>& aOperations) override;
 
   // This helper class will compare the written size in Write() and the size in
   // Generate(). If their are not equal, it will assert.
@@ -88,7 +87,7 @@ public:
   std::bitset<24> flags; //
 
   // MuxerOperation methods
-  nsresult Write() MOZ_OVERRIDE;
+  nsresult Write() override;
 
 protected:
   // FullBox methods
@@ -110,10 +109,10 @@ protected:
 class DefaultContainerImpl : public Box {
 public:
   // MuxerOperation methods
-  nsresult Generate(uint32_t* aBoxSize) MOZ_OVERRIDE;
-  nsresult Write() MOZ_OVERRIDE;
+  nsresult Generate(uint32_t* aBoxSize) override;
+  nsresult Write() override;
   nsresult Find(const nsACString& aType,
-                nsTArray<nsRefPtr<MuxerOperation>>& aOperations) MOZ_OVERRIDE;
+                nsTArray<nsRefPtr<MuxerOperation>>& aOperations) override;
 
 protected:
   // DefaultContainerImpl methods
@@ -133,8 +132,8 @@ public:
   nsTArray<nsCString> compatible_brands;
 
   // MuxerOperation methods
-  nsresult Generate(uint32_t* aBoxSize) MOZ_OVERRIDE;
-  nsresult Write() MOZ_OVERRIDE;
+  nsresult Generate(uint32_t* aBoxSize) override;
+  nsresult Write() override;
 
   // FileTypeBox methods
   FileTypeBox(ISOControl* aControl);
@@ -168,8 +167,8 @@ public:
   uint32_t next_track_ID;
 
   // MuxerOperation methods
-  nsresult Generate(uint32_t* aBoxSize) MOZ_OVERRIDE;
-  nsresult Write() MOZ_OVERRIDE;
+  nsresult Generate(uint32_t* aBoxSize) override;
+  nsresult Write() override;
 
   // MovieHeaderBox methods
   MovieHeaderBox(ISOControl* aControl);
@@ -193,8 +192,8 @@ public:
   uint16_t pre_defined;
 
   // MuxerOperation methods
-  nsresult Generate(uint32_t* aBoxSize) MOZ_OVERRIDE;
-  nsresult Write() MOZ_OVERRIDE;
+  nsresult Generate(uint32_t* aBoxSize) override;
+  nsresult Write() override;
 
   // MediaHeaderBox methods
   MediaHeaderBox(uint32_t aType, ISOControl* aControl);
@@ -219,8 +218,8 @@ public:
 class MediaDataBox : public Box {
 public:
   // MuxerOperation methods
-  nsresult Generate(uint32_t* aBoxSize) MOZ_OVERRIDE;
-  nsresult Write() MOZ_OVERRIDE;
+  nsresult Generate(uint32_t* aBoxSize) override;
+  nsresult Write() override;
 
   // MediaDataBox methods
   uint32_t GetAllSampleSize() { return mAllSampleSize; }
@@ -266,8 +265,8 @@ public:
   nsAutoArrayPtr<tbl> sample_info_table;
 
   // MuxerOperation methods
-  nsresult Generate(uint32_t* aBoxSize) MOZ_OVERRIDE;
-  nsresult Write() MOZ_OVERRIDE;
+  nsresult Generate(uint32_t* aBoxSize) override;
+  nsresult Write() override;
 
   // TrackRunBox methods
   uint32_t GetAllSampleSize() { return mAllSampleSize; }
@@ -302,8 +301,8 @@ public:
   uint32_t default_sample_duration;
 
   // MuxerOperation methods
-  nsresult Generate(uint32_t* aBoxSize) MOZ_OVERRIDE;
-  nsresult Write() MOZ_OVERRIDE;
+  nsresult Generate(uint32_t* aBoxSize) override;
+  nsresult Write() override;
 
   // TrackFragmentHeaderBox methods
   nsresult UpdateBaseDataOffset(uint64_t aOffset); // The offset of the first
@@ -336,8 +335,8 @@ public:
   uint32_t sequence_number;
 
   // MuxerOperation methods
-  nsresult Generate(uint32_t* aBoxSize) MOZ_OVERRIDE;
-  nsresult Write() MOZ_OVERRIDE;
+  nsresult Generate(uint32_t* aBoxSize) override;
+  nsresult Write() override;
 
   // MovieFragmentHeaderBox methods
   MovieFragmentHeaderBox(uint32_t aType, ISOControl* aControl);
@@ -353,7 +352,7 @@ protected:
 class MovieFragmentBox : public DefaultContainerImpl {
 public:
   // MuxerOperation methods
-  nsresult Generate(uint32_t* aBoxSize) MOZ_OVERRIDE;
+  nsresult Generate(uint32_t* aBoxSize) override;
 
   // MovieFragmentBox methods
   MovieFragmentBox(uint32_t aType, ISOControl* aControl);
@@ -375,8 +374,8 @@ public:
   uint32_t default_sample_flags;
 
   // MuxerOperation methods
-  nsresult Generate(uint32_t* aBoxSize) MOZ_OVERRIDE;
-  nsresult Write() MOZ_OVERRIDE;
+  nsresult Generate(uint32_t* aBoxSize) override;
+  nsresult Write() override;
 
   // TrackExtendsBox methods
   TrackExtendsBox(uint32_t aType, ISOControl* aControl);
@@ -408,8 +407,8 @@ public:
   nsAutoArrayPtr<tbl> sample_tbl;
 
   // MuxerOperation methods
-  nsresult Generate(uint32_t* aBoxSize) MOZ_OVERRIDE;
-  nsresult Write() MOZ_OVERRIDE;
+  nsresult Generate(uint32_t* aBoxSize) override;
+  nsresult Write() override;
 
   // ChunkOffsetBox methods
   ChunkOffsetBox(uint32_t aType, ISOControl* aControl);
@@ -434,8 +433,8 @@ public:
   nsAutoArrayPtr<tbl> sample_tbl;
 
   // MuxerOperation methods
-  nsresult Generate(uint32_t* aBoxSize) MOZ_OVERRIDE;
-  nsresult Write() MOZ_OVERRIDE;
+  nsresult Generate(uint32_t* aBoxSize) override;
+  nsresult Write() override;
 
   // SampleToChunkBox methods
   SampleToChunkBox(uint32_t aType, ISOControl* aControl);
@@ -459,8 +458,8 @@ public:
   nsAutoArrayPtr<tbl> sample_tbl;
 
   // MuxerOperation methods
-  nsresult Generate(uint32_t* aBoxSize) MOZ_OVERRIDE;
-  nsresult Write() MOZ_OVERRIDE;
+  nsresult Generate(uint32_t* aBoxSize) override;
+  nsresult Write() override;
 
   // TimeToSampleBox methods
   TimeToSampleBox(uint32_t aType, ISOControl* aControl);
@@ -499,7 +498,7 @@ public:
   SampleEntryBox(const nsACString& aFormat, ISOControl* aControl);
 
   // MuxerOperation methods
-  nsresult Write() MOZ_OVERRIDE;
+  nsresult Write() override;
 
 protected:
   SampleEntryBox() = delete;
@@ -514,8 +513,8 @@ public:
   nsRefPtr<SampleEntryBox> sample_entry_box;
 
   // MuxerOperation methods
-  nsresult Generate(uint32_t* aBoxSize) MOZ_OVERRIDE;
-  nsresult Write() MOZ_OVERRIDE;
+  nsresult Generate(uint32_t* aBoxSize) override;
+  nsresult Write() override;
 
   // SampleDescriptionBox methods
   SampleDescriptionBox(uint32_t aType, ISOControl* aControl);
@@ -543,7 +542,7 @@ public:
   uint32_t timeScale;  // (sample rate of media) <<16
 
   // MuxerOperation methods
-  nsresult Write() MOZ_OVERRIDE;
+  nsresult Write() override;
 
   ~AudioSampleEntry();
 
@@ -571,7 +570,7 @@ public:
   uint16_t pre_defined; // -1, defined in 14496-12 8.5.2.2;
 
   // MuxerOperation methods
-  nsresult Write() MOZ_OVERRIDE;
+  nsresult Write() override;
 
   // VisualSampleEntry methods
   ~VisualSampleEntry();
@@ -589,8 +588,8 @@ public:
   uint32_t sample_count;
 
   // MuxerOperation methods
-  nsresult Generate(uint32_t* aBoxSize) MOZ_OVERRIDE;
-  nsresult Write() MOZ_OVERRIDE;
+  nsresult Generate(uint32_t* aBoxSize) override;
+  nsresult Write() override;
 
   // SampleSizeBox methods
   SampleSizeBox(ISOControl* aControl);
@@ -622,8 +621,8 @@ public:
   nsCString location;
 
   // MuxerOperation methods
-  nsresult Generate(uint32_t* aBoxSize) MOZ_OVERRIDE;
-  nsresult Write() MOZ_OVERRIDE;
+  nsresult Generate(uint32_t* aBoxSize) override;
+  nsresult Write() override;
 
   // DataEntryUrlBox methods
   DataEntryUrlBox();
@@ -641,8 +640,8 @@ public:
   nsTArray<nsAutoPtr<DataEntryUrlBox>> urls;
 
   // MuxerOperation methods
-  nsresult Generate(uint32_t* aBoxSize) MOZ_OVERRIDE;
-  nsresult Write() MOZ_OVERRIDE;
+  nsresult Generate(uint32_t* aBoxSize) override;
+  nsresult Write() override;
 
   // DataReferenceBox methods
   DataReferenceBox(ISOControl* aControl);
@@ -667,8 +666,8 @@ public:
   uint16_t opcolor[3];
 
   // MuxerOperation methods
-  nsresult Generate(uint32_t* aBoxSize) MOZ_OVERRIDE;
-  nsresult Write() MOZ_OVERRIDE;
+  nsresult Generate(uint32_t* aBoxSize) override;
+  nsresult Write() override;
 
   // VideoMediaHeaderBox methods
   VideoMediaHeaderBox(ISOControl* aControl);
@@ -684,8 +683,8 @@ public:
   uint16_t reserved;
 
   // MuxerOperation methods
-  nsresult Generate(uint32_t* aBoxSize) MOZ_OVERRIDE;
-  nsresult Write() MOZ_OVERRIDE;
+  nsresult Generate(uint32_t* aBoxSize) override;
+  nsresult Write() override;
 
   // SoundMediaHeaderBox methods
   SoundMediaHeaderBox(ISOControl* aControl);
@@ -732,8 +731,8 @@ public:
   uint32_t height;
 
   // MuxerOperation methods
-  nsresult Generate(uint32_t* aBoxSize) MOZ_OVERRIDE;
-  nsresult Write() MOZ_OVERRIDE;
+  nsresult Generate(uint32_t* aBoxSize) override;
+  nsresult Write() override;
 
   // TrackHeaderBox methods
   TrackHeaderBox(uint32_t aType, ISOControl* aControl);
@@ -754,8 +753,8 @@ public:
   nsCString name;
 
   // MuxerOperation methods
-  nsresult Generate(uint32_t* aBoxSize) MOZ_OVERRIDE;
-  nsresult Write() MOZ_OVERRIDE;
+  nsresult Generate(uint32_t* aBoxSize) override;
+  nsresult Write() override;
 
   // HandlerBox methods
   HandlerBox(uint32_t aType, ISOControl* aControl);

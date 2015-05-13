@@ -30,7 +30,7 @@ add_task(function test_formdata() {
       yield setInputValue(browser, {id: "txt", value: INNER_VALUE, frame: 0});
 
       // Remove the tab.
-      gBrowser.removeTab(tab);
+      yield promiseRemoveTab(tab);
     });
   }
 
@@ -59,56 +59,6 @@ add_task(function test_formdata() {
 });
 
 /**
- * This test ensures that we maintain backwards compatibility with the form
- * data format used pre Fx 29.
- */
-add_task(function test_old_format() {
-  const URL = "data:text/html;charset=utf-8,<input%20id=input>";
-  const VALUE = "value-" + Math.random();
-
-  // Create a tab with an iframe containing an input field.
-  let tab = gBrowser.addTab(URL);
-  let browser = tab.linkedBrowser;
-  yield promiseBrowserLoaded(browser);
-
-  // Check that the form value is restored.
-  let state = {entries: [{url: URL, formdata: {id: {input: VALUE}}}]};
-  ss.setTabState(tab, JSON.stringify(state));
-  yield promiseTabRestored(tab);
-  is((yield getInputValue(browser, "input")), VALUE, "form data restored");
-
-  // Cleanup.
-  gBrowser.removeTab(tab);
-});
-
-/**
- * This test ensures that we maintain backwards compatibility with the form
- * data form used pre Fx 29, esp. the .innerHTML property for editable docs.
- */
-add_task(function test_old_format_inner_html() {
-  const URL = "data:text/html;charset=utf-8,<h1>mozilla</h1>" +
-              "<script>document.designMode='on'</script>";
-  const VALUE = "<h1>value-" + Math.random() + "</h1>";
-
-  // Create a tab with an iframe containing an input field.
-  let tab = gBrowser.addTab(URL);
-  let browser = tab.linkedBrowser;
-  yield promiseBrowserLoaded(browser);
-
-  // Restore the tab state.
-  let state = {entries: [{url: URL, innerHTML: VALUE}]};
-  ss.setTabState(tab, JSON.stringify(state));
-  yield promiseTabRestored(tab);
-
-  // Check that the innerHTML value was restored.
-  let html = yield getInnerHTML(browser);
-  is(html, VALUE, "editable document has been restored correctly");
-
-  // Cleanup.
-  gBrowser.removeTab(tab);
-});
-
-/**
  * This test ensures that a malicious website can't trick us into restoring
  * form data into a wrong website and that we always check the stored URL
  * before doing so.
@@ -130,8 +80,7 @@ add_task(function test_url_check() {
       state.formdata.url = url;
     }
 
-    ss.setTabState(tab, JSON.stringify(state));
-    return promiseTabRestored(tab).then(() => getInputValue(browser, "input"));
+    return promiseTabState(tab, state).then(() => getInputValue(browser, "input"));
   }
 
   // Check that the form value is restored with the correct URL.
@@ -170,7 +119,7 @@ add_task(function test_nested() {
   yield sendMessage(browser, "ss-test:sendKeyEvent", {key: "m", frame: 0});
 
   // Remove the tab and check that we stored form data correctly.
-  gBrowser.removeTab(tab);
+  yield promiseRemoveTab(tab);
   let [{state: {formdata}}] = JSON.parse(ss.getClosedTabData(window));
   is(JSON.stringify(formdata), JSON.stringify(FORM_DATA),
     "formdata for iframe stored correctly");
@@ -207,7 +156,7 @@ add_task(function test_design_mode() {
   yield sendMessage(browser, "ss-test:sendKeyEvent", {key: "m"});
 
   // Close and restore the tab.
-  gBrowser.removeTab(tab);
+  yield promiseRemoveTab(tab);
   tab = ss.undoCloseTab(window, 0);
   browser = tab.linkedBrowser;
   yield promiseTabRestored(tab);
@@ -218,7 +167,7 @@ add_task(function test_design_mode() {
   is(html, expected, "editable document has been restored correctly");
 
   // Close and restore the tab.
-  gBrowser.removeTab(tab);
+  yield promiseRemoveTab(tab);
   tab = ss.undoCloseTab(window, 0);
   browser = tab.linkedBrowser;
   yield promiseTabRestored(tab);
@@ -283,7 +232,7 @@ add_task(function test_ccNumbers() {
     yield setInputValue(browser, {id: "txt", value: formValue});
 
     // Remove the tab.
-    gBrowser.removeTab(tab);
+    yield promiseRemoveTab(tab);
   }
 
   // Test that valid CC numbers are not collected.

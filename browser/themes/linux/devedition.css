@@ -27,13 +27,17 @@
 }
 
 /* Square back and forward buttons */
-#back-button:not(:-moz-lwtheme) > .toolbarbutton-icon,
-#forward-button:not(:-moz-lwtheme) > .toolbarbutton-icon {
+#back-button > .toolbarbutton-icon,
+#forward-button > .toolbarbutton-icon {
   margin: 0;
-  border: none;
-  padding: 2px 6px;
+  border: 1px solid var(--chrome-nav-bar-controls-border-color);
+  padding: 2px 5px;
   background: var(--chrome-nav-buttons-background);
   box-shadow: none !important;
+}
+
+#forward-button > .toolbarbutton-icon {
+  -moz-border-start: none;
 }
 
 /* Override a box shadow for disabled back button */
@@ -70,4 +74,10 @@
 /* Prevent double border below tabs toolbar */
 #TabsToolbar:not([collapsed="true"]) + #nav-bar {
   border-top-width: 0 !important;
+}
+
+/* Prevent devedition foreground color from seeping into the sidebar-box (since
+ * its background colors aren't affected by the devedition theme) */
+#sidebar-box {
+  color: initial;
 }

@@ -21,6 +21,8 @@
 
 using namespace js;
 
+using mozilla::UniquePtr;
+
 const Class WeakSetObject::class_ = {
     "WeakSet",
     JSCLASS_IMPLEMENTS_BARRIERS | JSCLASS_HAS_CACHED_PROTO(JSProto_WeakSet) |
@@ -39,17 +41,15 @@ const JSFunctionSpec WeakSetObject::methods[] = {
     JS_FS_END
 };
 
-JSObject *
-WeakSetObject::initClass(JSContext *cx, JSObject *obj)
+JSObject*
+WeakSetObject::initClass(JSContext* cx, JSObject* obj)
 {
     Rooted<GlobalObject*> global(cx, &obj->as<GlobalObject>());
-    // Todo: WeakSet.prototype should not be a WeakSet!
-    Rooted<WeakSetObject*> proto(cx, global->createBlankPrototype<WeakSetObject>(cx));
+    RootedPlainObject proto(cx, NewBuiltinClassInstance<PlainObject>(cx));
     if (!proto)
         return nullptr;
-    proto->setReservedSlot(WEAKSET_MAP_SLOT, UndefinedValue());
 
-    Rooted<JSFunction*> ctor(cx, global->createConstructor(cx, construct, ClassName(JSProto_WeakSet, cx), 1));
+    Rooted<JSFunction*> ctor(cx, global->createConstructor(cx, construct, ClassName(JSProto_WeakSet, cx), 0));
     if (!ctor ||
         !LinkConstructorAndPrototype(cx, ctor, proto) ||
         !DefinePropertiesAndFunctions(cx, proto, properties, methods) ||
@@ -61,9 +61,9 @@ WeakSetObject::initClass(JSContext *cx, JSObject *obj)
 }
 
 WeakSetObject*
-WeakSetObject::create(JSContext *cx)
+WeakSetObject::create(JSContext* cx)
 {
-    Rooted<WeakSetObject *> obj(cx, NewBuiltinClassInstance<WeakSetObject>(cx));
+    Rooted<WeakSetObject*> obj(cx, NewBuiltinClassInstance<WeakSetObject>(cx));
     if (!obj)
         return nullptr;
 
@@ -76,7 +76,7 @@ WeakSetObject::create(JSContext *cx)
 }
 
 bool
-WeakSetObject::construct(JSContext *cx, unsigned argc, Value *vp)
+WeakSetObject::construct(JSContext* cx, unsigned argc, Value* vp)
 {
     Rooted<WeakSetObject*> obj(cx, WeakSetObject::create(cx));
     if (!obj)
@@ -86,7 +86,7 @@ WeakSetObject::construct(JSContext *cx, unsigned argc, Value *vp)
     CallArgs args = CallArgsFromVp(argc, vp);
 
     if (!args.isConstructing()) {
-        JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_NOT_FUNCTION, "WeakSet");
+        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_NOT_FUNCTION, "WeakSet");
         return false;
     }
 
@@ -94,18 +94,18 @@ WeakSetObject::construct(JSContext *cx, unsigned argc, Value *vp)
         RootedObject map(cx, &obj->getReservedSlot(WEAKSET_MAP_SLOT).toObject());
 
         RootedValue adderVal(cx);
-        if (!JSObject::getProperty(cx, obj, obj, cx->names().add, &adderVal))
+        if (!GetProperty(cx, obj, obj, cx->names().add, &adderVal))
             return false;
 
         if (!IsCallable(adderVal))
             return ReportIsNotFunction(cx, adderVal);
 
-        JSFunction *adder;
+        JSFunction* adder;
         bool isOriginalAdder = IsFunctionObject(adderVal, &adder) &&
                                IsSelfHostedFunctionWithName(adder, cx->names().WeakSet_add);
         RootedValue setVal(cx, ObjectValue(*obj));
         FastInvokeGuard fig(cx, adderVal);
-        InvokeArgs &args2 = fig.args();
+        InvokeArgs& args2 = fig.args();
 
         JS::ForOfIterator iter(cx);
         if (!iter.init(args[0]))
@@ -123,7 +123,11 @@ WeakSetObject::construct(JSContext *cx, unsigned argc, Value *vp)
 
             if (isOriginalAdder) {
                 if (keyVal.isPrimitive()) {
-                    JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_NOT_NONNULL_OBJECT);
+                    UniquePtr<char[], JS::FreePolicy> bytes =
+                        DecompileValueGenerator(cx, JSDVG_SEARCH_STACK, keyVal, NullPtr());
+                    if (!bytes)
+                        return false;
+                    JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_NOT_NONNULL_OBJECT, bytes.get());
                     return false;
                 }
 
@@ -149,8 +153,8 @@ WeakSetObject::construct(JSContext *cx, unsigned argc, Value *vp)
 }
 
 
-JSObject *
-js_InitWeakSetClass(JSContext *cx, HandleObject obj)
+JSObject*
+js::InitWeakSetClass(JSContext* cx, HandleObject obj)
 {
     return WeakSetObject::initClass(cx, obj);
 }

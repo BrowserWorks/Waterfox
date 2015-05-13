@@ -23,14 +23,11 @@
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/net/ReferrerPolicy.h"
 
-class nsIAtom;
 class nsICSSLoaderObserver;
 class nsIContent;
 class nsIDocument;
-class nsCSSParser;
 class nsMediaList;
 class nsIStyleSheetLinkingElement;
-class nsCycleCollectionTraversalCallback;
 
 namespace mozilla {
 class CSSStyleSheet;
@@ -145,7 +142,7 @@ enum StyleSheetState {
   eSheetComplete
 };
 
-class Loader MOZ_FINAL {
+class Loader final {
   typedef mozilla::net::ReferrerPolicy ReferrerPolicy;
 
 public:

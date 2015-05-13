@@ -336,23 +336,23 @@ void nsRegion::SimplifyOutwardByArea(uint32_t aThreshold)
       // merge the rects into tmpRect
       rect = MergeRects(topRects, topRectsEnd, bottomRects, bottomRectsEnd, tmpRect);
 
+      // set topRects to where the newly merged rects will be so that we use them
+      // as our next set of topRects
+      topRects = destRect;
       // copy the merged rects back into the destination
       topRectsEnd = CopyRow(destRect, tmpRect, rect);
-      topRects = destRect;
-      bottomRects = bottomRectsEnd;
-      destRect = topRects;
     } else {
       // copy the unmerged rects
       destRect = CopyRow(destRect, topRects, topRectsEnd);
 
       topRects = bottomRects;
       topRectsEnd = bottomRectsEnd;
-      bottomRects = bottomRectsEnd;
       if (bottomRectsEnd == end) {
         // copy the last row when we are done
         topRectsEnd = CopyRow(destRect, topRects, topRectsEnd);
       }
     }
+    bottomRects = bottomRectsEnd;
   } while (bottomRectsEnd != end);
 
 
@@ -372,7 +372,7 @@ void nsRegion::SimplifyOutwardByArea(uint32_t aThreshold)
 
 typedef void (*visit_fn)(void *closure, VisitSide side, int x1, int y1, int x2, int y2);
 
-static void VisitNextEdgeBetweenRect(visit_fn visit, void *closure, VisitSide side,
+static bool VisitNextEdgeBetweenRect(visit_fn visit, void *closure, VisitSide side,
 				     pixman_box32_t *&r1, pixman_box32_t *&r2, const int y, int &x1)
 {
   // check for overlap
@@ -388,12 +388,17 @@ static void VisitNextEdgeBetweenRect(visit_fn visit, void *closure, VisitSide si
       x1 = r2->x2;
       r2++;
     }
+    return true;
   } else {
     MOZ_ASSERT(r1->x2 < r2->x2);
     // we handle the corners by just extending the top and bottom edges
     visit(closure, side, x1, y, r1->x2+1, y);
     r1++;
+    // we assign x1 because we can assume that x1 <= r2->x1 - 1
+    // However the caller may know better and if so, may update
+    // x1 to r1->x1
     x1 = r2->x1 - 1;
+    return false;
   }
 }
 
@@ -437,19 +442,22 @@ VisitInbetween(visit_fn visit, void *closure, pixman_box32_t *r1,
   const int y = r1->y2;
   int x1;
 
-  /* Find the left-most edge */
-  if (r1->x1 < r2->x1) {
-    x1 = r1->x1 - 1;
-  } else {
-    x1 = r2->x1 - 1;
-  }
-
+  bool overlap = false;
   while (r1 != r1_end && r2 != r2_end) {
+    if (!overlap) {
+      /* Find the left-most edge */
+      if (r1->x1 < r2->x1) {
+	x1 = r1->x1 - 1;
+      } else {
+	x1 = r2->x1 - 1;
+      }
+    }
+
     MOZ_ASSERT((x1 >= (r1->x1 - 1)) || (x1 >= (r2->x1 - 1)));
     if (r1->x1 < r2->x1) {
-      VisitNextEdgeBetweenRect(visit, closure, VisitSide::BOTTOM, r1, r2, y, x1);
+      overlap = VisitNextEdgeBetweenRect(visit, closure, VisitSide::BOTTOM, r1, r2, y, x1);
     } else {
-      VisitNextEdgeBetweenRect(visit, closure, VisitSide::TOP, r2, r1, y, x1);
+      overlap = VisitNextEdgeBetweenRect(visit, closure, VisitSide::TOP, r2, r1, y, x1);
     }
   }
 
@@ -557,6 +565,11 @@ uint64_t nsRegion::Area () const
 
 nsRegion& nsRegion::ScaleRoundOut (float aXScale, float aYScale)
 {
+  if (mozilla::gfx::FuzzyEqual(aXScale, 1.0f) &&
+      mozilla::gfx::FuzzyEqual(aYScale, 1.0f)) {
+    return *this;
+  }
+
   int n;
   pixman_box32_t *boxes = pixman_region32_rectangles(&mImpl, &n);
   for (int i=0; i<n; i++) {
@@ -593,20 +606,20 @@ nsRegion& nsRegion::ScaleInverseRoundOut (float aXScale, float aYScale)
   return *this;
 }
 
-static nsIntRect
-TransformRect(const nsIntRect& aRect, const gfx3DMatrix& aTransform)
+static mozilla::gfx::IntRect
+TransformRect(const mozilla::gfx::IntRect& aRect, const gfx3DMatrix& aTransform)
 {
     if (aRect.IsEmpty()) {
-        return nsIntRect();
+        return mozilla::gfx::IntRect();
     }
 
     gfxRect rect(aRect.x, aRect.y, aRect.width, aRect.height);
     rect = aTransform.TransformBounds(rect);
     rect.RoundOut();
 
-    nsIntRect intRect;
+    mozilla::gfx::IntRect intRect;
     if (!gfxUtils::GfxRectToIntRect(rect, &intRect)) {
-        return nsIntRect();
+        return mozilla::gfx::IntRect();
     }
 
     return intRect;
@@ -631,7 +644,7 @@ nsRegion& nsRegion::Transform (const gfx3DMatrix &aTransform)
 }
 
 
-nsRegion nsRegion::ConvertAppUnitsRoundOut (int32_t aFromAPP, int32_t aToAPP) const
+nsRegion nsRegion::ScaleToOtherAppUnitsRoundOut (int32_t aFromAPP, int32_t aToAPP) const
 {
   if (aFromAPP == aToAPP) {
     return *this;
@@ -642,7 +655,7 @@ nsRegion nsRegion::ConvertAppUnitsRoundOut (int32_t aFromAPP, int32_t aToAPP) co
   pixman_box32_t *boxes = pixman_region32_rectangles(&region.mImpl, &n);
   for (int i=0; i<n; i++) {
     nsRect rect = BoxToRect(boxes[i]);
-    rect = rect.ConvertAppUnitsRoundOut(aFromAPP, aToAPP);
+    rect = rect.ScaleToOtherAppUnitsRoundOut(aFromAPP, aToAPP);
     boxes[i] = RectToBox(rect);
   }
 
@@ -655,7 +668,7 @@ nsRegion nsRegion::ConvertAppUnitsRoundOut (int32_t aFromAPP, int32_t aToAPP) co
   return region;
 }
 
-nsRegion nsRegion::ConvertAppUnitsRoundIn (int32_t aFromAPP, int32_t aToAPP) const
+nsRegion nsRegion::ScaleToOtherAppUnitsRoundIn (int32_t aFromAPP, int32_t aToAPP) const
 {
   if (aFromAPP == aToAPP) {
     return *this;
@@ -666,7 +679,7 @@ nsRegion nsRegion::ConvertAppUnitsRoundIn (int32_t aFromAPP, int32_t aToAPP) con
   pixman_box32_t *boxes = pixman_region32_rectangles(&region.mImpl, &n);
   for (int i=0; i<n; i++) {
     nsRect rect = BoxToRect(boxes[i]);
-    rect = rect.ConvertAppUnitsRoundIn(aFromAPP, aToAPP);
+    rect = rect.ScaleToOtherAppUnitsRoundIn(aFromAPP, aToAPP);
     boxes[i] = RectToBox(rect);
   }
 
@@ -686,7 +699,7 @@ nsIntRegion nsRegion::ToPixels (nscoord aAppUnitsPerPixel, bool aOutsidePixels) 
   pixman_box32_t *boxes = pixman_region32_rectangles(&region.mImpl, &n);
   for (int i=0; i<n; i++) {
     nsRect rect = BoxToRect(boxes[i]);
-    nsIntRect deviceRect;
+    mozilla::gfx::IntRect deviceRect;
     if (aOutsidePixels)
       deviceRect = rect.ToOutsidePixels(aAppUnitsPerPixel);
     else
@@ -720,7 +733,7 @@ nsIntRegion nsRegion::ScaleToNearestPixels (float aScaleX, float aScaleY,
   nsRegionRectIterator rgnIter(*this);
   const nsRect* currentRect;
   while ((currentRect = rgnIter.Next())) {
-    nsIntRect deviceRect =
+    mozilla::gfx::IntRect deviceRect =
       currentRect->ScaleToNearestPixels(aScaleX, aScaleY, aAppUnitsPerPixel);
     result.Or(result, deviceRect);
   }
@@ -734,7 +747,7 @@ nsIntRegion nsRegion::ScaleToOutsidePixels (float aScaleX, float aScaleY,
   nsRegionRectIterator rgnIter(*this);
   const nsRect* currentRect;
   while ((currentRect = rgnIter.Next())) {
-    nsIntRect deviceRect =
+    mozilla::gfx::IntRect deviceRect =
       currentRect->ScaleToOutsidePixels(aScaleX, aScaleY, aAppUnitsPerPixel);
     result.Or(result, deviceRect);
   }
@@ -765,14 +778,14 @@ nsIntRegion nsRegion::ScaleToInsidePixels (float aScaleX, float aScaleY,
   nsIntRegion intRegion;
   if (n) {
     nsRect first = BoxToRect(boxes[0]);
-    nsIntRect firstDeviceRect =
+    mozilla::gfx::IntRect firstDeviceRect =
       first.ScaleToInsidePixels(aScaleX, aScaleY, aAppUnitsPerPixel);
 
     for (int i=1; i<n; i++) {
       nsRect rect = nsRect(boxes[i].x1, boxes[i].y1,
 	  boxes[i].x2 - boxes[i].x1,
 	  boxes[i].y2 - boxes[i].y1);
-      nsIntRect deviceRect =
+      mozilla::gfx::IntRect deviceRect =
 	rect.ScaleToInsidePixels(aScaleX, aScaleY, aAppUnitsPerPixel);
 
       if (rect.y <= first.YMost()) {
@@ -1132,17 +1145,4 @@ std::ostream& operator<<(std::ostream& stream, const nsRegion& m) {
 nsCString
 nsRegion::ToString() const {
   return nsCString(mozilla::ToString(this).c_str());
-}
-
-
-nsRegion nsIntRegion::ToAppUnits (nscoord aAppUnitsPerPixel) const
-{
-  nsRegion result;
-  nsIntRegionRectIterator rgnIter(*this);
-  const nsIntRect* currentRect;
-  while ((currentRect = rgnIter.Next())) {
-    nsRect appRect = currentRect->ToAppUnits(aAppUnitsPerPixel);
-    result.Or(result, appRect);
-  }
-  return result;
 }

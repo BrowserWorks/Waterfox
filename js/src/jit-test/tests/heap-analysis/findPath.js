@@ -21,8 +21,8 @@ print(uneval(findPath(a, o)));
 function C() {}
 C.prototype.obj = {};
 var c = new C;
-Match.Pattern([{node: {}, edge: "type"},
-               {node: Match.Pattern.ANY, edge: "type_proto"},
+Match.Pattern([{node: {}, edge: "group"},
+               {node: Match.Pattern.ANY, edge: "group_proto"},
                {node: { constructor: Match.Pattern.ANY }, edge: "obj"}])
   .assert(findPath(c, c.obj));
 print(uneval(findPath(c, c.obj)));
@@ -37,15 +37,13 @@ print(uneval(findPath(gc, o)));
 
 Match.Pattern([{node: {}, edge: "shape"},
                {node: Match.Pattern.ANY, edge: "base"},
-               {node: Match.Pattern.ANY, edge: "parent"},
+               {node: Match.Pattern.ANY, edge: "global"},
                {node: {}, edge: "o"}])
   .assert(findPath(o, o));
 print(findPath(o, o).map((e) => e.edge).toString());
 
-if (typeof Symbol === "function") {
-    // Check that we can generate ubi::Nodes for Symbols.
-    var so = { sym: Symbol() };
-    Match.Pattern([{node: {}, edge: "sym" }])
-      .assert(findPath(so, so.sym));
-    print(findPath(so, so.sym).map((e) => e.edge).toString());
-}
+// Check that we can generate ubi::Nodes for Symbols.
+var so = { sym: Symbol() };
+Match.Pattern([{node: {}, edge: "sym" }])
+  .assert(findPath(so, so.sym));
+print(findPath(so, so.sym).map((e) => e.edge).toString());

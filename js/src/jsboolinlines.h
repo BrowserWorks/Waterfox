@@ -14,22 +14,10 @@
 
 namespace js {
 
-bool
-BooleanGetPrimitiveValueSlow(HandleObject);
-
 inline bool
-BooleanGetPrimitiveValue(HandleObject obj)
+EmulatesUndefined(JSObject* obj)
 {
-    if (obj->is<BooleanObject>())
-        return obj->as<BooleanObject>().unbox();
-
-    return BooleanGetPrimitiveValueSlow(obj);
-}
-
-inline bool
-EmulatesUndefined(JSObject *obj)
-{
-    JSObject *actual = MOZ_LIKELY(!obj->is<WrapperObject>()) ? obj : UncheckedUnwrap(obj);
+    JSObject* actual = MOZ_LIKELY(!obj->is<WrapperObject>()) ? obj : UncheckedUnwrap(obj);
     return actual->getClass()->emulatesUndefined();
 }
 

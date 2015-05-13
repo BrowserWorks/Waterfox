@@ -5,11 +5,12 @@
 "use strict";
 
 const Cu = Components.utils;
-let {gDevTools} = Cu.import("resource:///modules/devtools/gDevTools.jsm", {});
-let {devtools} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
-let {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
-let TargetFactory = devtools.TargetFactory;
-let {console} = Components.utils.import("resource://gre/modules/devtools/Console.jsm", {});
+const {gDevTools} = Cu.import("resource:///modules/devtools/gDevTools.jsm", {});
+const {devtools} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+const {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
+const TargetFactory = devtools.TargetFactory;
+const {console} = Components.utils.import("resource://gre/modules/devtools/Console.jsm", {});
+const {ViewHelpers} = Cu.import("resource:///modules/devtools/ViewHelpers.jsm", {});
 
 // All tests are asynchronous
 waitForExplicitFinish();
@@ -17,6 +18,7 @@ waitForExplicitFinish();
 const TEST_URL_ROOT = "http://example.com/browser/browser/devtools/animationinspector/test/";
 const ROOT_TEST_DIR = getRootDirectory(gTestPath);
 const FRAME_SCRIPT_URL = ROOT_TEST_DIR + "doc_frame_script.js";
+const COMMON_FRAME_SCRIPT_URL = "chrome://browser/content/devtools/frame-script-utils.js";
 
 // Auto clean-up when a test ends
 registerCleanupFunction(function*() {
@@ -62,6 +64,9 @@ function addTab(url) {
   info("Loading the helper frame script " + FRAME_SCRIPT_URL);
   browser.messageManager.loadFrameScript(FRAME_SCRIPT_URL, false);
 
+  info("Loading the helper frame script " + COMMON_FRAME_SCRIPT_URL);
+  browser.messageManager.loadFrameScript(COMMON_FRAME_SCRIPT_URL, false);
+
   browser.addEventListener("load", function onload() {
     browser.removeEventListener("load", onload, true);
     info("URL '" + url + "' loading complete");
@@ -73,17 +78,10 @@ function addTab(url) {
 }
 
 /**
- * Simple DOM node accesor function that takes either a node or a string css
- * selector as argument and returns the corresponding node
- * @param {String|DOMNode} nodeOrSelector
- * @return {DOMNode|CPOW} Note that in e10s mode a CPOW object is returned which
- * doesn't implement *all* of the DOMNode's properties
+ * Reload the current tab location.
  */
-function getNode(nodeOrSelector) {
-  info("Getting the node for '" + nodeOrSelector + "'");
-  return typeof nodeOrSelector === "string" ?
-    content.document.querySelector(nodeOrSelector) :
-    nodeOrSelector;
+function reloadTab() {
+  return executeInContent("devtools:test:reload", {}, {}, false);
 }
 
 /**
@@ -122,6 +120,29 @@ let selectNode = Task.async(function*(data, inspector, reason="test") {
 });
 
 /**
+ * Takes an Inspector panel that was just created, and waits
+ * for a "inspector-updated" event as well as the animation inspector
+ * sidebar to be ready. Returns a promise once these are completed.
+ *
+ * @param {InspectorPanel} inspector
+ * @return {Promise}
+ */
+let waitForAnimationInspectorReady = Task.async(function*(inspector) {
+  let win = inspector.sidebar.getWindowForTab("animationinspector");
+  let updated = inspector.once("inspector-updated");
+
+  // In e10s, if we wait for underlying toolbox actors to
+  // load (by setting gDevTools.testing to true), we miss the "animationinspector-ready"
+  // event on the sidebar, so check to see if the iframe
+  // is already loaded.
+  let tabReady = win.document.readyState === "complete" ?
+                 promise.resolve() :
+                 inspector.sidebar.once("animationinspector-ready");
+
+  return promise.all([updated, tabReady]);
+});
+
+/**
  * Open the toolbox, with the inspector tool visible and the animationinspector
  * sidebar selected.
  * @return a promise that resolves when the inspector is ready
@@ -131,26 +152,29 @@ let openAnimationInspector = Task.async(function*() {
 
   info("Opening the toolbox with the inspector selected");
   let toolbox = yield gDevTools.showToolbox(target, "inspector");
-  yield waitForToolboxFrameFocus(toolbox);
 
   info("Switching to the animationinspector");
   let inspector = toolbox.getPanel("inspector");
-  let initPromises = [
-    inspector.once("inspector-updated"),
-    inspector.sidebar.once("animationinspector-ready")
-  ];
+
+  let panelReady = waitForAnimationInspectorReady(inspector);
+
+  info("Waiting for toolbox focus");
+  yield waitForToolboxFrameFocus(toolbox);
+
   inspector.sidebar.select("animationinspector");
 
   info("Waiting for the inspector and sidebar to be ready");
-  yield promise.all(initPromises);
+  yield panelReady;
 
   let win = inspector.sidebar.getWindowForTab("animationinspector");
   let {AnimationsController, AnimationsPanel} = win;
 
-  yield promise.all([
-    AnimationsController.initialized,
-    AnimationsPanel.initialized
-  ]);
+  info("Waiting for the animation controller and panel to be ready");
+  if (AnimationsPanel.initialized) {
+    yield AnimationsPanel.initialized;
+  } else {
+    yield AnimationsPanel.once(AnimationsPanel.PANEL_INITIALIZED);
+  }
 
   return {
     toolbox: toolbox,
@@ -259,16 +283,109 @@ function executeInContent(name, data={}, objects={}, expectResponse=true) {
   }
 }
 
+function onceNextPlayerRefresh(player) {
+  let onRefresh = promise.defer();
+  player.once(player.AUTO_REFRESH_EVENT, onRefresh.resolve);
+  return onRefresh.promise;
+}
+
 /**
  * Simulate a click on the playPause button of a playerWidget.
  */
 let togglePlayPauseButton = Task.async(function*(widget) {
+  let nextState = widget.player.state.playState === "running" ? "paused" : "running";
+
   // Note that instead of simulating a real event here, the callback is just
   // called. This is better because the callback returns a promise, so we know
   // when the player is paused, and we don't really care to test that simulating
   // a DOM event actually works.
-  yield widget.onPlayPauseBtnClick();
+  let onClicked = widget.onPlayPauseBtnClick();
 
-  // Wait for the next sate change event to make sure the state is updated
-  yield widget.player.once(widget.player.AUTO_REFRESH_EVENT);
+  // Verify that the button's state is changed immediately, even if it will be
+  // changed anyway with the next auto-refresh.
+  ok(widget.el.classList.contains(nextState),
+    "The button's state was changed in the UI before the request was sent");
+
+  yield onClicked;
+
+  // Wait until the state changes.
+  yield waitForPlayState(widget.player, nextState);
 });
+
+/**
+ * Wait for a player's auto-refresh events and stop when a condition becomes
+ * truthy.
+ * @param {AnimationPlayerFront} player
+ * @param {Function} conditionCheck Will be called over and over again when the
+ * player state changes, passing the state as argument. This method must return
+ * a truthy value to stop waiting.
+ * @param {String} desc If provided, this will be logged with info(...) every
+ * time the state is refreshed, until the condition passes.
+ * @return {Promise} Resolves when the condition passes.
+ */
+let waitForStateCondition = Task.async(function*(player, conditionCheck, desc="") {
+  if (desc) {
+    desc = "(" + desc + ")";
+  }
+  info("Waiting for a player's auto-refresh event " + desc);
+  let def = promise.defer();
+  player.on(player.AUTO_REFRESH_EVENT, function onNewState() {
+    info("State refreshed, checking condition ... " + desc);
+    if (conditionCheck(player.state)) {
+      player.off(player.AUTO_REFRESH_EVENT, onNewState);
+      def.resolve();
+    }
+  });
+  return def.promise;
+});
+
+/**
+ * Wait for a player's auto-refresh events and stop when the playState is the
+ * provided string.
+ * @param {AnimationPlayerFront} player
+ * @param {String} playState The playState to expect.
+ * @return {Promise} Resolves when the playState has changed to the expected value.
+ */
+function waitForPlayState(player, playState) {
+  return waitForStateCondition(player, state => {
+    return state.playState === playState;
+  }, "Waiting for animation to be " + playState);
+}
+
+/**
+ * Wait for the player's auto-refresh events until the animation is paused.
+ * When done, check its currentTime.
+ * @param {PlayerWidget} widget.
+ * @param {Numer} time.
+ * @return {Promise} Resolves when the animation is paused and tests have ran.
+ */
+let checkPausedAt = Task.async(function*(widget, time) {
+  info("Wait for the next auto-refresh");
+
+  yield waitForStateCondition(widget.player, state => {
+    return state.playState === "paused" && state.currentTime === time;
+  }, "Waiting for animation to pause at " + time + "ms");
+
+  ok(widget.el.classList.contains("paused"), "The widget is in paused mode");
+  is(widget.player.state.currentTime, time,
+    "The player front's currentTime was set to " + time);
+  is(widget.currentTimeEl.value, time, "The input's value was set to " + time);
+});
+
+/**
+ * Get the current playState of an animation player on a given node.
+ */
+let getAnimationPlayerState = Task.async(function*(selector, animationIndex=0) {
+  let playState = yield executeInContent("Test:GetAnimationPlayerState",
+                                         {selector, animationIndex});
+  return playState;
+});
+
+/**
+ * Is the given node visible in the page (rendered in the frame tree).
+ * @param {DOMNode}
+ * @return {Boolean}
+ */
+function isNodeVisible(node) {
+  return !!node.getClientRects().length;
+}

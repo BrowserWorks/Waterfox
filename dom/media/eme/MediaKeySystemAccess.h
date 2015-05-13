@@ -14,13 +14,15 @@
 
 #include "mozilla/dom/Promise.h"
 #include "mozilla/dom/MediaKeySystemAccessBinding.h"
+#include "mozilla/dom/MediaKeysRequestStatusBinding.h"
+
 #include "js/TypeDecls.h"
 
 namespace mozilla {
 namespace dom {
 
-class MediaKeySystemAccess MOZ_FINAL : public nsISupports,
-                                       public nsWrapperCache
+class MediaKeySystemAccess final : public nsISupports,
+                                   public nsWrapperCache
 {
 public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -36,16 +38,21 @@ protected:
 public:
   nsPIDOMWindow* GetParentObject() const;
 
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   void GetKeySystem(nsString& aRetVal) const;
 
   already_AddRefed<Promise> CreateMediaKeys(ErrorResult& aRv);
 
-  static bool IsKeySystemSupported(const nsAString& aKeySystem);
+  static MediaKeySystemStatus GetKeySystemStatus(const nsAString& aKeySystem,
+                                                 int32_t aMinCdmVersion);
 
   static bool IsSupported(const nsAString& aKeySystem,
                           const Sequence<MediaKeySystemOptions>& aOptions);
+
+  static void NotifyObservers(nsIDOMWindow* aWindow,
+                              const nsAString& aKeySystem,
+                              MediaKeySystemStatus aStatus);
 
 private:
   nsCOMPtr<nsPIDOMWindow> mParent;

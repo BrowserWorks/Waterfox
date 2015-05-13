@@ -49,6 +49,7 @@
 #include "nativewindow/FakeSurfaceComposer.h"
 #endif
 #include "nsAppShell.h"
+#include "mozilla/DebugOnly.h"
 #include "mozilla/dom/Touch.h"
 #include "nsGkAtoms.h"
 #include "nsIObserverService.h"
@@ -212,6 +213,7 @@ private:
     char16_t mUnmodifiedChar;
 
     uint32_t mDOMKeyCode;
+    uint32_t mDOMKeyLocation;
     KeyNameIndex mDOMKeyNameIndex;
     CodeNameIndex mDOMCodeNameIndex;
     char16_t mDOMPrintableKeyValue;
@@ -246,9 +248,12 @@ private:
 };
 
 KeyEventDispatcher::KeyEventDispatcher(const UserInputData& aData,
-                                       KeyCharacterMap* aKeyCharMap) :
-    mData(aData), mKeyCharMap(aKeyCharMap), mChar(0), mUnmodifiedChar(0),
-    mDOMPrintableKeyValue(0)
+                                       KeyCharacterMap* aKeyCharMap)
+    : mData(aData)
+    , mKeyCharMap(aKeyCharMap)
+    , mChar(0)
+    , mUnmodifiedChar(0)
+    , mDOMPrintableKeyValue(0)
 {
     // XXX Printable key's keyCode value should be computed with actual
     //     input character.
@@ -256,6 +261,8 @@ KeyEventDispatcher::KeyEventDispatcher(const UserInputData& aData,
         kKeyMapping[mData.key.keyCode] : 0;
     mDOMKeyNameIndex = GetKeyNameIndex(mData.key.keyCode);
     mDOMCodeNameIndex = GetCodeNameIndex(mData.key.scanCode);
+    mDOMKeyLocation =
+        WidgetKeyboardEvent::ComputeLocationFromCodeValue(mDOMCodeNameIndex);
 
     if (!mKeyCharMap.get()) {
         return;
@@ -308,9 +315,9 @@ KeyEventDispatcher::DispatchKeyEventInternal(uint32_t aEventMessage)
     }
     event.mCodeNameIndex = mDOMCodeNameIndex;
     event.modifiers = getDOMModifiers(mData.metaState);
-    event.location = nsIDOMKeyEvent::DOM_KEY_LOCATION_MOBILE;
+    event.location = mDOMKeyLocation;
     event.time = mData.timeMs;
-    return nsWindow::DispatchInputEvent(event);
+    return nsWindow::DispatchKeyInput(event);
 }
 
 void
@@ -500,7 +507,7 @@ public:
         , mKeyEventsFiltered(false)
         , mPowerWakelock(false)
     {
-        mTouchDispatcher = new GeckoTouchDispatcher();
+        mTouchDispatcher = GeckoTouchDispatcher::GetInstance();
     }
 
     virtual void dump(String8& dump);
@@ -569,18 +576,25 @@ GeckoInputReaderPolicy::setDisplayInfo()
                   DISPLAY_ORIENTATION_270,
                   "Orientation enums not matched!");
 
+    nsRefPtr<nsScreenGonk> screen = nsScreenManagerGonk::GetPrimaryScreen();
+
+    uint32_t rotation = nsIScreen::ROTATION_0_DEG;
+    DebugOnly<nsresult> rv = screen->GetRotation(&rotation);
+    MOZ_ASSERT(NS_SUCCEEDED(rv));
+    nsIntRect screenBounds = screen->GetNaturalBounds();
+
     DisplayViewport viewport;
     viewport.displayId = 0;
-    viewport.orientation = nsScreenGonk::GetRotation();
-    viewport.physicalRight = viewport.deviceWidth = gScreenBounds.width;
-    viewport.physicalBottom = viewport.deviceHeight = gScreenBounds.height;
+    viewport.orientation = rotation;
+    viewport.physicalRight = viewport.deviceWidth = screenBounds.width;
+    viewport.physicalBottom = viewport.deviceHeight = screenBounds.height;
     if (viewport.orientation == DISPLAY_ORIENTATION_90 ||
         viewport.orientation == DISPLAY_ORIENTATION_270) {
-        viewport.logicalRight = gScreenBounds.height;
-        viewport.logicalBottom = gScreenBounds.width;
+        viewport.logicalRight = screenBounds.height;
+        viewport.logicalBottom = screenBounds.width;
     } else {
-        viewport.logicalRight = gScreenBounds.width;
-        viewport.logicalBottom = gScreenBounds.height;
+        viewport.logicalRight = screenBounds.width;
+        viewport.logicalBottom = screenBounds.height;
     }
     mConfig.setDisplayInfo(false, viewport);
 }
@@ -1047,5 +1061,6 @@ nsAppShell::NotifyScreenRotation()
     gAppShell->mReaderPolicy->setDisplayInfo();
     gAppShell->mReader->requestRefreshConfiguration(InputReaderConfiguration::CHANGE_DISPLAY_INFO);
 
-    hal::NotifyScreenConfigurationChange(nsScreenGonk::GetConfiguration());
+    nsRefPtr<nsScreenGonk> screen = nsScreenManagerGonk::GetPrimaryScreen();
+    hal::NotifyScreenConfigurationChange(screen->GetConfiguration());
 }

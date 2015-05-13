@@ -12,10 +12,11 @@
 #include "mozilla/Assertions.h"
 #include "mozilla/EventForwards.h"
 #include "mozilla/TimeStamp.h"
+#include "Units.h"
 #include <windows.h>
+#include "nsPoint.h"
 
 class nsWindowBase;
-struct nsIntPoint;
 
 namespace mozilla {
 namespace widget {
@@ -43,7 +44,7 @@ public:
    * this method.
    */
   static nsresult SynthesizeNativeMouseScrollEvent(nsWindowBase* aWidget,
-                                                   const nsIntPoint& aPoint,
+                                                   const LayoutDeviceIntPoint& aPoint,
                                                    uint32_t aNativeMessage,
                                                    int32_t aDelta,
                                                    uint32_t aModifierFlags,
@@ -66,13 +67,6 @@ private:
   bool mIsWaitingInternalMessage;
 
   static MouseScrollHandler* sInstance;
-
-  /**
-   * DispatchEvent() dispatches aEvent on aWidget.
-   *
-   * @return TRUE if the event was consumed.  Otherwise, FALSE.
-   */
-  static bool DispatchEvent(nsWindowBase* aWidget, WidgetGUIEvent& aEvent);
 
   /**
    * InitEvent() initializes the aEvent.  If aPoint is null, the result of
@@ -288,8 +282,8 @@ private:
     bool IsPageScroll(bool aForVertical) const
     {
       MOZ_ASSERT(mInitialized, "SystemSettings must be initialized");
-      return aForVertical ? (mScrollLines == WHEEL_PAGESCROLL) :
-                            (mScrollChars == WHEEL_PAGESCROLL);
+      return aForVertical ? (uint32_t(mScrollLines) == WHEEL_PAGESCROLL) :
+                            (uint32_t(mScrollChars) == WHEEL_PAGESCROLL);
     }
 
   private:
@@ -389,7 +383,6 @@ private:
     };
     Status mStatus;
 
-#ifdef PR_LOGGING
     const char* GetStatusName()
     {
       switch (mStatus) {
@@ -405,7 +398,6 @@ private:
           return "Unknown";
       }
     }
-#endif
 
     void Finish();
   }; // SynthesizingEvent

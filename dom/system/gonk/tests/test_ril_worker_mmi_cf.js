@@ -26,9 +26,7 @@ function setCallForwardSuccess(procedure, serviceCode, sia, sib, sic) {
   let context = worker.ContextPool._contexts[0];
 
   context.RIL.setCallForward = function fakeSetCallForward(options) {
-    context.RIL[REQUEST_SET_CALL_FORWARD](0, {
-      rilRequestError: ERROR_SUCCESS
-    });
+    context.RIL[REQUEST_SET_CALL_FORWARD](0, {});
   };
 
   context.RIL.radioState = GECKO_RADIOSTATE_ENABLED;
@@ -37,8 +35,7 @@ function setCallForwardSuccess(procedure, serviceCode, sia, sib, sic) {
 
   let postedMessage = workerhelper.postedMessage;
 
-  do_check_eq(postedMessage.errorMsg, undefined);
-  do_check_true(postedMessage.success);
+  equal(postedMessage.errorMsg, undefined);
 }
 
 add_test(function test_sendMMI_call_forwarding_activation() {
@@ -75,9 +72,7 @@ add_test(function test_sendMMI_call_forwarding_interrogation() {
       1,   // rules.active
       1    // rulesLength
     ];
-    context.RIL[REQUEST_QUERY_CALL_FORWARD_STATUS](1, {
-      rilRequestError: ERROR_SUCCESS
-    });
+    context.RIL[REQUEST_QUERY_CALL_FORWARD_STATUS](1, {});
   };
 
   context.RIL.radioState = GECKO_RADIOSTATE_ENABLED;
@@ -85,13 +80,12 @@ add_test(function test_sendMMI_call_forwarding_interrogation() {
 
   let postedMessage = workerhelper.postedMessage;
 
-  do_check_eq(postedMessage.errorMsg, undefined);
-  do_check_true(postedMessage.success);
-  do_check_true(Array.isArray(postedMessage.rules));
-  do_check_eq(postedMessage.rules.length, 1);
-  do_check_true(postedMessage.rules[0].active);
-  do_check_eq(postedMessage.rules[0].reason, CALL_FORWARD_REASON_UNCONDITIONAL);
-  do_check_eq(postedMessage.rules[0].number, "+34666222333");
+  equal(postedMessage.errorMsg, undefined);
+  ok(Array.isArray(postedMessage.rules));
+  equal(postedMessage.rules.length, 1);
+  ok(postedMessage.rules[0].active);
+  equal(postedMessage.rules[0].reason, CALL_FORWARD_REASON_UNCONDITIONAL);
+  equal(postedMessage.rules[0].number, "+34666222333");
   run_next_test();
 });
 
@@ -105,9 +99,7 @@ add_test(function test_sendMMI_call_forwarding_interrogation_no_rules() {
   };
 
   context.RIL.queryCallForwardStatus = function fakeQueryCallForward(options) {
-    context.RIL[REQUEST_QUERY_CALL_FORWARD_STATUS](1, {
-      rilRequestError: ERROR_SUCCESS
-    });
+    context.RIL[REQUEST_QUERY_CALL_FORWARD_STATUS](1, {});
   };
 
   context.RIL.radioState = GECKO_RADIOSTATE_ENABLED;
@@ -115,8 +107,7 @@ add_test(function test_sendMMI_call_forwarding_interrogation_no_rules() {
 
   let postedMessage = workerhelper.postedMessage;
 
-  do_check_eq(postedMessage.errorMsg, GECKO_ERROR_GENERIC_FAILURE);
-  do_check_false(postedMessage.success);
+  equal(postedMessage.errorMsg, GECKO_ERROR_GENERIC_FAILURE);
 
   run_next_test();
 });

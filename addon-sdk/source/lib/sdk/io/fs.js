@@ -692,8 +692,6 @@ function writeSync(fd, buffer, offset, length, position) {
   else if (length + offset !== buffer.length) {
     buffer = buffer.slice(offset, offset + length);
   }
-  let writeStream = new WriteStream(fd, { position: position,
-                                          length: length });
 
   let output = BinaryOutputStream(nsIFileOutputStream(fd));
   nsIBinaryOutputStream(fd, output);
@@ -886,6 +884,7 @@ exports.writeFile = writeFile;
  * The synchronous version of `fs.writeFile`.
  */
 function writeFileSync(filename, data, encoding) {
+  // TODO: Implement this in bug 1148209 https://bugzilla.mozilla.org/show_bug.cgi?id=1148209
   throw Error("Not implemented");
 };
 exports.writeFileSync = writeFileSync;

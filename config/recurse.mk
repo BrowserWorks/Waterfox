@@ -6,10 +6,6 @@ ifndef INCLUDED_RULES_MK
 include $(topsrcdir)/config/rules.mk
 endif
 
-# Make sure that anything that needs to be defined in moz.build wasn't
-# overwritten after including rules.mk.
-_eval_for_side_effects := $(CHECK_MOZBUILD_VARIABLES)
-
 # The traditional model of directory traversal with make is as follows:
 #   make -C foo
 #     Entering foo
@@ -53,7 +49,7 @@ CURRENT_TIER := $(subst recurse_,,$(CURRENT_TIER:-deps=))
 # The rules here are doing directory traversal, so we don't want further
 # recursion to happen when running make -C subdir $tier. But some make files
 # further call make -C something else, and sometimes expect recursion to
-# happen in that case (see browser/metro/locales/Makefile.in for example).
+# happen in that case.
 # Conveniently, every invocation of make increases MAKELEVEL, so only stop
 # recursion from happening at current MAKELEVEL + 1.
 ifdef CURRENT_TIER
@@ -96,8 +92,10 @@ $(addsuffix /$(CURRENT_TIER),$(filter-out config,$(CURRENT_DIRS))): config/$(CUR
 # is done with the config/host target. Note the config/host target only exists if
 # nsinstall is actually built, which it is not on Windows, because we use
 # nsinstall.py there.
+ifdef COMPILE_ENVIRONMENT
 ifneq (,$(filter config/host, $(compile_targets)))
 $(addsuffix /$(CURRENT_TIER),$(CURRENT_DIRS)): config/host
+endif
 endif
 endif
 
@@ -126,7 +124,9 @@ endef
 $(foreach subtier,$(filter-out compile,$(TIERS)),$(eval $(call CREATE_SUBTIER_TRAVERSAL_RULE,$(subtier))))
 
 ifndef TOPLEVEL_BUILD
+ifdef COMPILE_ENVIRONMENT
 libs:: target host
+endif # COMPILE_ENVIRONMENT
 endif
 
 endif # ifeq ($(NO_RECURSE_MAKELEVEL),$(MAKELEVEL))
@@ -165,5 +165,8 @@ endif
 ifdef MOZ_CRT
 mozglue/crt/target: mozglue/build/target
 endif
-
+# js/src/target can end up invoking js/src/host rules (through object files
+# depending on jsautokw.h, which depends on host_jskwgen, and that can't
+# happen at the same time (bug #1146738)
+js/src/target: js/src/host
 endif

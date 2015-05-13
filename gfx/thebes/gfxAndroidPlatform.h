@@ -12,8 +12,6 @@
 #include "nsCOMPtr.h"
 #include "nsTArray.h"
 
-class nsIMemoryReporter;
-
 namespace mozilla {
     namespace dom {
         class FontListEntry;
@@ -42,7 +40,7 @@ public:
       GetScaledFontForFont(mozilla::gfx::DrawTarget* aTarget, gfxFont *aFont);
 
     // to support IPC font list (sharing between chrome and content)
-    void GetFontList(InfallibleTArray<FontListEntry>* retValue);
+    void GetSystemFontList(InfallibleTArray<FontListEntry>* retValue);
 
     // platform implementations of font functions
     virtual bool IsFontFormatSupported(nsIURI *aFontURI, uint32_t aFormatFlags);
@@ -76,25 +74,29 @@ public:
                     const gfxFontStyle *aStyle,
                     gfxUserFontSet* aUserFontSet);
 
-    virtual bool FontHintingEnabled() MOZ_OVERRIDE;
-    virtual bool RequiresLinearZoom() MOZ_OVERRIDE;
+    virtual bool FontHintingEnabled() override;
+    virtual bool RequiresLinearZoom() override;
 
     FT_Library GetFTLibrary();
 
     virtual int GetScreenDepth() const;
 
-    virtual bool CanRenderContentToDataSurface() const MOZ_OVERRIDE {
+    virtual bool CanRenderContentToDataSurface() const override {
       return true;
     }
 
-    virtual bool HaveChoiceOfHWAndSWCanvas() MOZ_OVERRIDE;
-    virtual bool UseAcceleratedSkiaCanvas() MOZ_OVERRIDE;
-    virtual already_AddRefed<mozilla::gfx::VsyncSource> CreateHardwareVsyncSource() MOZ_OVERRIDE;
+    virtual bool HaveChoiceOfHWAndSWCanvas() override;
+    virtual bool UseAcceleratedSkiaCanvas() override;
+    virtual already_AddRefed<mozilla::gfx::VsyncSource> CreateHardwareVsyncSource() override;
 
 
 #ifdef MOZ_WIDGET_GONK
     virtual bool IsInGonkEmulator() const { return mIsInGonkEmulator; }
 #endif
+
+    virtual bool SupportsApzTouchInput() const override {
+      return true;
+    }
 
 private:
     int mScreenDepth;

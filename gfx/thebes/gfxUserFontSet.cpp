@@ -24,7 +24,6 @@
 
 using namespace mozilla;
 
-#ifdef PR_LOGGING
 PRLogModuleInfo*
 gfxUserFontSet::GetUserFontsLog()
 {
@@ -33,7 +32,6 @@ gfxUserFontSet::GetUserFontsLog()
         sLog = PR_NewLogModule("userfonts");
     return sLog;
 }
-#endif /* PR_LOGGING */
 
 #define LOG(args) PR_LOG(gfxUserFontSet::GetUserFontsLog(), PR_LOG_DEBUG, args)
 #define LOG_ENABLED() PR_LOG_TEST(gfxUserFontSet::GetUserFontsLog(), PR_LOG_DEBUG)
@@ -47,15 +45,15 @@ class ExpandingMemoryStream : public ots::OTSStream {
 public:
     ExpandingMemoryStream(size_t initial, size_t limit)
         : mLength(initial), mLimit(limit), mOff(0) {
-        mPtr = NS_Alloc(mLength);
+        mPtr = moz_xmalloc(mLength);
     }
 
     ~ExpandingMemoryStream() {
-        NS_Free(mPtr);
+        free(mPtr);
     }
 
     // return the buffer, and give up ownership of it
-    // so the caller becomes responsible to call NS_Free
+    // so the caller becomes responsible to call free
     // when finished with it
     void* forget() {
         void* p = mPtr;
@@ -76,7 +74,7 @@ public:
             if (newLength > mLimit) {
                 newLength = mLimit;
             }
-            mPtr = NS_Realloc(mPtr, newLength);
+            mPtr = moz_xrealloc(mPtr, newLength);
             mLength = newLength;
             return WriteRaw(data, length);
         }
@@ -183,7 +181,7 @@ public:
     explicit gfxOTSContext(gfxUserFontEntry* aUserFontEntry)
         : mUserFontEntry(aUserFontEntry) {}
 
-    virtual ots::TableAction GetTableAction(uint32_t aTag) MOZ_OVERRIDE {
+    virtual ots::TableAction GetTableAction(uint32_t aTag) override {
         // preserve Graphite, color glyph and SVG tables
         if (aTag == TRUETYPE_TAG('S', 'i', 'l', 'f') ||
             aTag == TRUETYPE_TAG('S', 'i', 'l', 'l') ||
@@ -199,7 +197,7 @@ public:
     }
 
     virtual void Message(int level, const char* format,
-                         ...) MSGFUNC_FMT_ATTR MOZ_OVERRIDE {
+                         ...) MSGFUNC_FMT_ATTR override {
         va_list va;
         va_start(va, format);
 
@@ -501,7 +499,6 @@ gfxUserFontEntry::LoadNextSrc()
                         bool loadOK = NS_SUCCEEDED(rv);
 
                         if (loadOK) {
-#ifdef PR_LOGGING
                             if (LOG_ENABLED()) {
                                 nsAutoCString fontURI;
                                 currSrc.mURI->GetSpec(fontURI);
@@ -509,7 +506,6 @@ gfxUserFontEntry::LoadNextSrc()
                                      mFontSet, mSrcIndex, fontURI.get(),
                                      NS_ConvertUTF16toUTF8(mFamilyName).get()));
                             }
-#endif
                             return;
                         } else {
                             mFontSet->LogMessage(this,
@@ -646,21 +642,19 @@ gfxUserFontEntry::LoadPlatformFont(const uint8_t* aFontData, uint32_t& aLength)
         fe->mFamilyName = mFamilyName;
         StoreUserFontData(fe, mFontSet->GetPrivateBrowsing(), originalFullName,
                           &metadata, metaOrigLen, compression);
-#ifdef PR_LOGGING
         if (LOG_ENABLED()) {
             nsAutoCString fontURI;
             mSrcList[mSrcIndex].mURI->GetSpec(fontURI);
-            LOG(("userfonts (%p) [src %d] loaded uri: (%s) for (%s) gen: %8.8x\n",
+            LOG(("userfonts (%p) [src %d] loaded uri: (%s) for (%s) (%p) gen: %8.8x\n",
                  mFontSet, mSrcIndex, fontURI.get(),
                  NS_ConvertUTF16toUTF8(mFamilyName).get(),
+                 this,
                  uint32_t(mFontSet->mGeneration)));
         }
-#endif
         mPlatformFontEntry = fe;
         SetLoadState(STATUS_LOADED);
         gfxUserFontSet::UserFontCache::CacheFont(fe);
     } else {
-#ifdef PR_LOGGING
         if (LOG_ENABLED()) {
             nsAutoCString fontURI;
             mSrcList[mSrcIndex].mURI->GetSpec(fontURI);
@@ -669,12 +663,11 @@ gfxUserFontEntry::LoadPlatformFont(const uint8_t* aFontData, uint32_t& aLength)
                  mFontSet, mSrcIndex, fontURI.get(),
                  NS_ConvertUTF16toUTF8(mFamilyName).get()));
         }
-#endif
     }
 
     // The downloaded data can now be discarded; the font entry is using the
     // sanitized copy
-    moz_free((void*)aFontData);
+    free((void*)aFontData);
 
     return fe != nullptr;
 }
@@ -689,7 +682,7 @@ gfxUserFontEntry::Load()
 
 // This is called when a font download finishes.
 // Ownership of aFontData passes in here, and the font set must
-// ensure that it is eventually deleted via moz_free().
+// ensure that it is eventually deleted via free().
 bool
 gfxUserFontEntry::FontDataDownloadComplete(const uint8_t* aFontData,
                                            uint32_t aLength,
@@ -717,7 +710,7 @@ gfxUserFontEntry::FontDataDownloadComplete(const uint8_t* aFontData,
     }
 
     if (aFontData) {
-        moz_free((void*)aFontData);
+        free((void*)aFontData);
     }
 
     // error occurred, load next src
@@ -739,11 +732,6 @@ gfxUserFontSet::gfxUserFontSet()
     if (fp) {
         fp->AddUserFontSet(this);
     }
-
-    // This is a one-time global switch for OTS. However, as long as we use
-    // a preference to control the availability of WOFF2 support, we will
-    // not actually pass any WOFF2 data to OTS unless the pref is on.
-    ots::EnableWOFF2();
 }
 
 gfxUserFontSet::~gfxUserFontSet()
@@ -786,17 +774,6 @@ gfxUserFontSet::FindOrCreateUserFontEntry(
                                   aItalicStyle, aFeatureSettings,
                                   aLanguageOverride, aUnicodeRanges);
       entry->mFamilyName = aFamilyName;
-
-#ifdef PR_LOGGING
-      if (LOG_ENABLED()) {
-          LOG(("userfonts (%p) created \"%s\" (%p) with style: %s weight: %d "
-               "stretch: %d",
-               this, NS_ConvertUTF16toUTF8(aFamilyName).get(), entry.get(),
-               (aItalicStyle & NS_FONT_STYLE_ITALIC ? "italic" :
-                   (aItalicStyle & NS_FONT_STYLE_OBLIQUE ? "oblique" : "normal")),
-               aWeight, aStretch));
-      }
-#endif
     }
 
     return entry.forget();
@@ -863,12 +840,13 @@ gfxUserFontSet::AddUserFontEntry(const nsAString& aFamilyName,
     gfxUserFontFamily* family = GetFamily(aFamilyName);
     family->AddFontEntry(aUserFontEntry);
 
-#ifdef PR_LOGGING
     if (LOG_ENABLED()) {
-        LOG(("userfonts (%p) added \"%s\" (%p)",
-             this, NS_ConvertUTF16toUTF8(aFamilyName).get(), aUserFontEntry));
+        LOG(("userfonts (%p) added to \"%s\" (%p) style: %s weight: %d "
+             "stretch: %d",
+             this, NS_ConvertUTF16toUTF8(aFamilyName).get(), aUserFontEntry,
+             (aUserFontEntry->IsItalic() ? "italic" : "normal"),
+             aUserFontEntry->Weight(), aUserFontEntry->Stretch()));
     }
-#endif
 }
 
 gfxUserFontEntry*
@@ -925,6 +903,21 @@ gfxUserFontSet::LookupFamily(const nsAString& aFamilyName) const
     ToLowerCase(key);
 
     return mFontFamilies.GetWeak(key);
+}
+
+bool
+gfxUserFontSet::ContainsUserFontSetFonts(const FontFamilyList& aFontList) const
+{
+    for (const FontFamilyName& name : aFontList.GetFontlist()) {
+        if (name.mType != eFamily_named &&
+            name.mType != eFamily_named_quoted) {
+            continue;
+        }
+        if (LookupFamily(name.mName)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 gfxUserFontFamily*
@@ -1074,6 +1067,11 @@ gfxUserFontSet::UserFontCache::CacheFont(gfxFontEntry* aFontEntry,
     NS_ASSERTION(aFontEntry->mFamilyName.Length() != 0,
                  "caching a font associated with no family yet");
 
+    // if caching is disabled, simply return
+    if (Preferences::GetBool("gfx.downloadable_fonts.disable_cache")) {
+        return;
+    }
+
     gfxUserFontData* data = aFontEntry->mUserFontData;
     if (data->mIsBuffer) {
 #ifdef DEBUG_USERFONT_CACHE
@@ -1150,7 +1148,8 @@ gfxUserFontSet::UserFontCache::GetFont(nsIURI* aSrcURI,
                                        gfxUserFontEntry* aUserFontEntry,
                                        bool aPrivate)
 {
-    if (!sUserFonts) {
+    if (!sUserFonts ||
+        Preferences::GetBool("gfx.downloadable_fonts.disable_cache")) {
         return nullptr;
     }
 

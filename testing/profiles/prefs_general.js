@@ -14,6 +14,8 @@ user_pref("dom.forms.color", true); // on for testing
 user_pref("dom.max_script_run_time", 0); // no slow script dialogs
 user_pref("hangmonitor.timeout", 0); // no hang monitor
 user_pref("dom.max_chrome_script_run_time", 0);
+user_pref("dom.max_child_script_run_time", 0);
+user_pref("dom.ipc.reportProcessHangs", false); // process hang monitor
 user_pref("dom.popup_maximum", -1);
 user_pref("dom.send_after_paint_to_content", true);
 user_pref("dom.successive_dialog_time_limit", 0);
@@ -41,13 +43,14 @@ user_pref("media.volume_scale", "0.01");
 user_pref("security.warn_viewing_mixed", false);
 user_pref("app.update.enabled", false);
 user_pref("app.update.staging.enabled", false);
+user_pref("app.update.url.android", "");
 // Make sure GMPInstallManager won't hit the network.
 user_pref("media.gmp-manager.url.override", "http://%(server)s/dummy-gmp-manager.xml");
 user_pref("browser.panorama.experienced_first_run", true); // Assume experienced
 user_pref("dom.w3c_touch_events.enabled", 1);
 user_pref("dom.undo_manager.enabled", true);
 user_pref("dom.webcomponents.enabled", true);
-user_pref("dom.animations-api.core.enabled", true);
+user_pref("dom.htmlimports.enabled", true);
 // Set a future policy version to avoid the telemetry prompt.
 user_pref("toolkit.telemetry.prompted", 999);
 user_pref("toolkit.telemetry.notifiedOptOut", 999);
@@ -72,6 +75,8 @@ user_pref("extensions.getAddons.cache.enabled", false);
 user_pref("extensions.installDistroAddons", false);
 // XPI extensions are required for test harnesses to load
 user_pref("extensions.defaultProviders.enabled", true);
+// Disable signature requirements where possible
+user_pref("xpinstall.signatures.required", false);
 
 user_pref("geo.wifi.uri", "http://%(server)s/tests/dom/tests/mochitest/geolocation/network_geolocation.sjs");
 user_pref("geo.wifi.timeToWaitBeforeSending", 2000);
@@ -149,15 +154,13 @@ user_pref("layout.css.object-fit-and-position.enabled", true);
 // Enable CSS Ruby for testing
 user_pref("layout.css.ruby.enabled", true);
 
-// Enable CSS Font Loading API for testing
-user_pref("layout.css.font-loading-api.enabled", true);
+// Enable unicode-range for testing
+user_pref("layout.css.unicode-range.enabled", true);
 
 // Disable spammy layout warnings because they pollute test logs
 user_pref("layout.spammy_warnings.enabled", false);
 
 // Enable Media Source Extensions for testing
-user_pref("media.mediasource.enabled", true);
-user_pref("media.mediasource.youtubeonly", false);
 user_pref("media.mediasource.mp4.enabled", true);
 user_pref("media.mediasource.webm.enabled", true);
 
@@ -190,10 +193,6 @@ user_pref("browser.download.panel.shown", true);
 // which test runs first and happens to open about:newtab
 user_pref("browser.newtabpage.introShown", true);
 
-// prefs for firefox metro.
-// Disable first-tun tab
-user_pref("browser.firstrun.count", 0);
-
 // Tell the PBackground infrastructure to run a test at startup.
 user_pref("pbackground.testing", true);
 
@@ -211,6 +210,9 @@ user_pref("general.useragent.updates.enabled", false);
 // Disable webapp updates.  Yes, it is supposed to be an integer.
 user_pref("browser.webapps.checkForUpdates", 0);
 
+// Enable debug logging in the tcp presentation server.
+user_pref("dom.presentation.tcp_server.debug", true);
+
 // Don't connect to Yahoo! for RSS feed tests.
 // en-US only uses .types.0.uri, but set all of them just to be sure.
 user_pref('browser.contentHandlers.types.0.uri', 'http://test1.example.org/rss?url=%%s')
@@ -226,6 +228,11 @@ user_pref('browser.tiles.reportURL', 'http://%(server)s/tests/robocop/robocop_ti
 // We want to collect telemetry, but we don't want to send in the results.
 user_pref('toolkit.telemetry.server', 'https://%(server)s/telemetry-dummy/');
 
+// A couple of preferences with default values to test that telemetry preference
+// watching is working.
+user_pref('toolkit.telemetry.test.pref1', true);
+user_pref('toolkit.telemetry.test.pref2', false);
+
 // We don't want to hit the real Firefox Accounts server for tests.  We don't
 // actually need a functioning FxA server, so just set it to something that
 // resolves and accepts requests, even if they all fail.
@@ -236,6 +243,7 @@ user_pref("identity.fxaccounts.remote.signup.uri", "https://%(server)s/fxa-signu
 user_pref("identity.fxaccounts.remote.force_auth.uri", "https://%(server)s/fxa-force-auth");
 user_pref("identity.fxaccounts.remote.signin.uri", "https://%(server)s/fxa-signin");
 user_pref("identity.fxaccounts.settings.uri", "https://%(server)s/fxa-settings");
+user_pref('identity.fxaccounts.remote.webchannel.uri', 'https://%(server)s/');
 
 // Enable logging of APZ test data (see bug 961289).
 user_pref('apz.test.logging_enabled', true);
@@ -260,6 +268,7 @@ user_pref("browser.newtabpage.directory.source", 'data:application/json,{"testin
 user_pref("browser.newtabpage.directory.ping", "");
 
 // Enable Loop
+user_pref("loop.debug.loglevel", "All");
 user_pref("loop.enabled", true);
 user_pref("loop.throttled", false);
 user_pref("loop.oauth.google.URL", "http://%(server)s/browser/browser/components/loop/test/mochitest/google_service.sjs?action=");
@@ -272,18 +281,43 @@ user_pref("loop.CSP","default-src 'self' about: file: chrome: data: wss://* http
 user_pref("browser.uitour.pinnedTabUrl", "http://%(server)s/uitour-dummy/pinnedTab");
 user_pref("browser.uitour.url", "http://%(server)s/uitour-dummy/tour");
 
-// Don't show the search first run UI by default
-user_pref("browser.search.highlightCount", 0);
 // Tell the search service we are running in the US.  This also has the desired
 // side-effect of preventing our geoip lookup.
 user_pref("browser.search.isUS", true);
 user_pref("browser.search.countryCode", "US");
 
+// Make sure the self support tab doesn't hit the network.
+user_pref("browser.selfsupport.url", "https://%(server)s/selfsupport-dummy/");
+
 user_pref("media.eme.enabled", true);
+
+#if defined(XP_WIN)
+user_pref("media.decoder.heuristic.dormant.timeout", 0);
+#endif
 
 // Don't prompt about e10s
 user_pref("browser.displayedE10SPrompt.1", 5);
 // Don't use auto-enabled e10s
 user_pref("browser.tabs.remote.autostart.1", false);
+user_pref("browser.tabs.remote.autostart.2", false);
 // Don't forceably kill content processes after a timeout
 user_pref("dom.ipc.tabs.shutdownTimeoutSecs", 0);
+
+// Avoid performing Reading List and Reader Mode intros during tests.
+user_pref("browser.readinglist.introShown", true);
+user_pref("browser.reader.detectedFirstArticle", true);
+
+// Don't let PAC generator to set PAC, as mochitest framework has its own PAC
+// rules during testing.
+user_pref("network.proxy.pac_generator", false);
+
+// Make tests run consistently on DevEdition (which has a lightweight theme
+// selected by default).
+user_pref("lightweightThemes.selectedThemeID", "");
+user_pref("browser.devedition.theme.enabled", false);
+
+// Disable periodic updates of service workers.
+user_pref("dom.serviceWorkers.periodic-updates.enabled", false);
+
+// Enable speech synth test service, and disable built in platform services.
+user_pref("media.webspeech.synth.test", true);

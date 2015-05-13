@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim:set ts=2 sw=2 sts=2 et cindent: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -16,7 +16,7 @@ namespace dom {
 
 class FileSystemBase;
 
-class FileSystemRequestParent MOZ_FINAL
+class FileSystemRequestParent final
   : public PFileSystemRequestParent
 {
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(FileSystemRequestParent)
@@ -33,7 +33,7 @@ public:
   Dispatch(ContentParent* aParent, const FileSystemParams& aParams);
 
   virtual void
-  ActorDestroy(ActorDestroyReason why) MOZ_OVERRIDE;
+  ActorDestroy(ActorDestroyReason why) override;
 
 private:
   // Private destructor, to discourage deletion outside of Release():

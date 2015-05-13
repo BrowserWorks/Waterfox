@@ -75,23 +75,6 @@ class MOZ_STACK_CLASS nsSetSelectionAfterTableEdit
     void CancelSetCaret() {mEd = nullptr; mTable = nullptr;}
 };
 
-// Stack-class to turn on/off selection batching for table selection
-class MOZ_STACK_CLASS nsSelectionBatcherForTable
-{
-private:
-  nsRefPtr<mozilla::dom::Selection> mSelection;
-public:
-  explicit nsSelectionBatcherForTable(Selection* aSelection)
-  {
-    mSelection = aSelection;
-    if (mSelection)  mSelection->StartBatchChanges();
-  }
-  virtual ~nsSelectionBatcherForTable() 
-  { 
-    if (mSelection) mSelection->EndBatchChanges();
-  }
-};
-
 // Table Editing helper utilities (not exposed in IDL)
 
 NS_IMETHODIMP
@@ -236,18 +219,16 @@ nsHTMLEditor::GetFirstRow(nsIDOMElement* aTableElement, nsIDOMNode** aRowNode)
     nsCOMPtr<nsIContent> content = do_QueryInterface(tableChild);
     if (content)
     {
-      nsIAtom *atom = content->Tag();
-
-      if (atom == nsGkAtoms::tr) {
+      if (content->IsHTMLElement(nsGkAtoms::tr)) {
         // Found a row directly under <table>
         *aRowNode = tableChild;
         NS_ADDREF(*aRowNode);
         return NS_OK;
       }
       // Look for row in one of the row container elements      
-      if (atom == nsGkAtoms::tbody ||
-          atom == nsGkAtoms::thead ||
-          atom == nsGkAtoms::tfoot) {
+      if (content->IsAnyOfHTMLElements(nsGkAtoms::tbody,
+                                       nsGkAtoms::thead,
+                                       nsGkAtoms::tfoot)) {
         nsCOMPtr<nsIDOMNode> rowNode;
         res = tableChild->GetFirstChild(getter_AddRefs(rowNode));
         NS_ENSURE_SUCCESS(res, res);
@@ -1448,7 +1429,7 @@ nsHTMLEditor::SelectBlockOfCells(nsIDOMElement *aStartCell, nsIDOMElement *aEndC
 
   // Suppress nsISelectionListener notification
   //  until all selection changes are finished
-  nsSelectionBatcherForTable selectionBatcher(selection);
+  SelectionBatcher selectionBatcher(selection);
 
   // Examine all cell nodes in current selection and 
   //  remove those outside the new block cell region
@@ -1529,7 +1510,7 @@ nsHTMLEditor::SelectAllTableCells()
 
   // Suppress nsISelectionListener notification
   //  until all selection changes are finished
-  nsSelectionBatcherForTable selectionBatcher(selection);
+  SelectionBatcher selectionBatcher(selection);
 
   // It is now safe to clear the selection
   // BE SURE TO RESET IT BEFORE LEAVING!
@@ -1599,7 +1580,7 @@ nsHTMLEditor::SelectTableRow()
 
   // Suppress nsISelectionListener notification
   //  until all selection changes are finished
-  nsSelectionBatcherForTable selectionBatcher(selection);
+  SelectionBatcher selectionBatcher(selection);
 
   // It is now safe to clear the selection
   // BE SURE TO RESET IT BEFORE LEAVING!
@@ -1662,7 +1643,7 @@ nsHTMLEditor::SelectTableColumn()
 
   // Suppress nsISelectionListener notification
   //  until all selection changes are finished
-  nsSelectionBatcherForTable selectionBatcher(selection);
+  SelectionBatcher selectionBatcher(selection);
 
   // It is now safe to clear the selection
   // BE SURE TO RESET IT BEFORE LEAVING!
@@ -2973,7 +2954,7 @@ nsHTMLEditor::GetNextSelectedCell(nsIDOMRange **aRange, nsIDOMElement **aCell)
   nsRefPtr<Selection> selection = GetSelection();
   NS_ENSURE_TRUE(selection, NS_ERROR_FAILURE);
 
-  int32_t rangeCount = selection->GetRangeCount();
+  int32_t rangeCount = selection->RangeCount();
 
   // Don't even try if index exceeds range count
   if (mSelectedCellIndex >= rangeCount) 
@@ -3386,7 +3367,7 @@ nsHTMLEditor::IsEmptyCell(dom::Element* aCell)
 
   // We insert a single break into a cell by default
   //   to have some place to locate a cursor -- it is dispensable
-  if (cellChild->IsElement() && cellChild->AsElement()->IsHTML(nsGkAtoms::br)) {
+  if (cellChild->IsHTMLElement(nsGkAtoms::br)) {
     return true;
   }
 

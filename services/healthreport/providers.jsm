@@ -1166,6 +1166,42 @@ DailyCrashesMeasurement5.prototype = Object.freeze({
   },
 });
 
+function DailyCrashesMeasurement6() {
+  Metrics.Measurement.call(this);
+}
+
+DailyCrashesMeasurement6.prototype = Object.freeze({
+  __proto__: Metrics.Measurement.prototype,
+
+  name: "crashes",
+  version: 6,
+
+  fields: {
+    "main-crash": DAILY_LAST_NUMERIC_FIELD,
+    "main-crash-oom": DAILY_LAST_NUMERIC_FIELD,
+    "main-crash-submission-succeeded": DAILY_LAST_NUMERIC_FIELD,
+    "main-crash-submission-failed": DAILY_LAST_NUMERIC_FIELD,
+    "main-hang": DAILY_LAST_NUMERIC_FIELD,
+    "main-hang-submission-succeeded": DAILY_LAST_NUMERIC_FIELD,
+    "main-hang-submission-failed": DAILY_LAST_NUMERIC_FIELD,
+    "content-crash": DAILY_LAST_NUMERIC_FIELD,
+    "content-crash-submission-succeeded": DAILY_LAST_NUMERIC_FIELD,
+    "content-crash-submission-failed": DAILY_LAST_NUMERIC_FIELD,
+    "content-hang": DAILY_LAST_NUMERIC_FIELD,
+    "content-hang-submission-succeeded": DAILY_LAST_NUMERIC_FIELD,
+    "content-hang-submission-failed": DAILY_LAST_NUMERIC_FIELD,
+    "plugin-crash": DAILY_LAST_NUMERIC_FIELD,
+    "plugin-crash-submission-succeeded": DAILY_LAST_NUMERIC_FIELD,
+    "plugin-crash-submission-failed": DAILY_LAST_NUMERIC_FIELD,
+    "plugin-hang": DAILY_LAST_NUMERIC_FIELD,
+    "plugin-hang-submission-succeeded": DAILY_LAST_NUMERIC_FIELD,
+    "plugin-hang-submission-failed": DAILY_LAST_NUMERIC_FIELD,
+    "gmplugin-crash": DAILY_LAST_NUMERIC_FIELD,
+    "gmplugin-crash-submission-succeeded": DAILY_LAST_NUMERIC_FIELD,
+    "gmplugin-crash-submission-failed": DAILY_LAST_NUMERIC_FIELD,
+  },
+});
+
 this.CrashesProvider = function () {
   Metrics.Provider.call(this);
 
@@ -1184,6 +1220,7 @@ CrashesProvider.prototype = Object.freeze({
     DailyCrashesMeasurement3,
     DailyCrashesMeasurement4,
     DailyCrashesMeasurement5,
+    DailyCrashesMeasurement6,
   ],
 
   pullOnly: true,
@@ -1222,8 +1259,8 @@ CrashesProvider.prototype = Object.freeze({
       }
     }
 
-    let m = this.getMeasurement("crashes", 5);
-    let fields = DailyCrashesMeasurement5.prototype.fields;
+    let m = this.getMeasurement("crashes", 6);
+    let fields = DailyCrashesMeasurement6.prototype.fields;
 
     for (let [day, types] of crashCounts) {
       let date = Metrics.daysToDate(day);
@@ -1277,7 +1314,7 @@ UpdateHotfixMeasurement1.prototype = Object.freeze({
   // Our fields have dynamic names from the hotfix version that supplied them.
   // We need to override the default behavior to deal with unknown fields.
   shouldIncludeField: function (name) {
-    return name.contains(".");
+    return name.includes(".");
   },
 
   fieldType: function (name) {
@@ -1526,7 +1563,7 @@ SearchCountMeasurementBase.prototype = Object.freeze({
    * data.
    */
   shouldIncludeField: function (name) {
-    return name.contains(".");
+    return name.includes(".");
   },
 
   /**
@@ -1631,11 +1668,6 @@ this.SearchesProvider.prototype = Object.freeze({
 
   collectDailyData: function () {
     return this.storage.enqueueTransaction(function getDaily() {
-      // We currently only record this if Telemetry is enabled.
-      if (!isTelemetryEnabled(this._prefs)) {
-        return;
-      }
-
       let m = this.getMeasurement(SearchEnginesMeasurement1.prototype.name,
                                   SearchEnginesMeasurement1.prototype.version);
 

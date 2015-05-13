@@ -21,10 +21,6 @@
 
 namespace mozilla {
 
-namespace layers {
-class Layer;
-}
-
 typedef void * EGLDisplay;
 typedef void * EGLSurface;
 
@@ -40,28 +36,31 @@ public:
 
     virtual void* GetHWCDevice() = 0;
 
-    virtual void* GetFBSurface() = 0;
+    virtual void* GetDispSurface() = 0;
 
+    /**
+     * Only GonkDisplayICS uses arguments.
+     */
     virtual bool SwapBuffers(EGLDisplay dpy, EGLSurface sur) = 0;
 
     virtual ANativeWindowBuffer* DequeueBuffer() = 0;
 
     virtual bool QueueBuffer(ANativeWindowBuffer* buf) = 0;
 
-    virtual void UpdateFBSurface(EGLDisplay dpy, EGLSurface sur) = 0;
+    virtual void UpdateDispSurface(EGLDisplay dpy, EGLSurface sur) = 0;
 
     /**
      * Set FramebufferSurface ReleaseFence's file descriptor.
      * ReleaseFence will be signaled after the HWC has finished reading
      * from a buffer.
      */
-    virtual void SetFBReleaseFd(int fd) = 0;
+    virtual void SetDispReleaseFd(int fd) = 0;
 
     /**
      * Get FramebufferSurface AcquireFence's file descriptor
      * AcquireFence will be signaled when a buffer's content is available.
      */
-    virtual int GetPrevFBAcquireFd() = 0;
+    virtual int GetPrevDispAcquireFd() = 0;
 
     float xdpi;
     int32_t surfaceformat;

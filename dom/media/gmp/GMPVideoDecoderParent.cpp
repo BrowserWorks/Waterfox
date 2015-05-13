@@ -8,9 +8,10 @@
 #include "mozilla/unused.h"
 #include "nsAutoRef.h"
 #include "nsThreadUtils.h"
+#include "GMPUtils.h"
 #include "GMPVideoEncodedFrameImpl.h"
 #include "GMPVideoi420FrameImpl.h"
-#include "GMPParent.h"
+#include "GMPContentParent.h"
 #include "GMPMessageUtils.h"
 #include "mozilla/gmp/GMPTypes.h"
 
@@ -42,10 +43,11 @@ namespace gmp {
 //    on Shutdown -> Dead
 // Dead: mIsOpen == false
 
-GMPVideoDecoderParent::GMPVideoDecoderParent(GMPParent* aPlugin)
+GMPVideoDecoderParent::GMPVideoDecoderParent(GMPContentParent* aPlugin)
   : GMPSharedMemManager(aPlugin)
   , mIsOpen(false)
   , mShuttingDown(false)
+  , mActorDestroyed(false)
   , mPlugin(aPlugin)
   , mCallback(nullptr)
   , mVideoHost(this)
@@ -68,7 +70,7 @@ void
 GMPVideoDecoderParent::Close()
 {
   LOGD(("%s: %p", __FUNCTION__, this));
-  MOZ_ASSERT(mPlugin->GMPThread() == NS_GetCurrentThread());
+  MOZ_ASSERT(!mPlugin || mPlugin->GMPThread() == NS_GetCurrentThread());
   // Consumer is done with us; we can shut down.  No more callbacks should
   // be made to mCallback.  Note: do this before Shutdown()!
   mCallback = nullptr;
@@ -108,7 +110,7 @@ GMPVideoDecoderParent::InitDecode(const GMPVideoCodec& aCodecSettings,
 }
 
 nsresult
-GMPVideoDecoderParent::Decode(UniquePtr<GMPVideoEncodedFrame> aInputFrame,
+GMPVideoDecoderParent::Decode(GMPUniquePtr<GMPVideoEncodedFrame> aInputFrame,
                               bool aMissingFrames,
                               const nsTArray<uint8_t>& aCodecSpecificInfo,
                               int64_t aRenderTimeMs)
@@ -120,7 +122,7 @@ GMPVideoDecoderParent::Decode(UniquePtr<GMPVideoEncodedFrame> aInputFrame,
 
   MOZ_ASSERT(mPlugin->GMPThread() == NS_GetCurrentThread());
 
-  UniquePtr<GMPVideoEncodedFrameImpl> inputFrameImpl(
+  GMPUniquePtr<GMPVideoEncodedFrameImpl> inputFrameImpl(
     static_cast<GMPVideoEncodedFrameImpl*>(aInputFrame.release()));
 
   // Very rough kill-switch if the plugin stops processing.  If it's merely
@@ -181,12 +183,24 @@ GMPVideoDecoderParent::Drain()
   return NS_OK;
 }
 
+const nsCString&
+GMPVideoDecoderParent::GetDisplayName() const
+{
+  if (!mIsOpen) {
+    NS_WARNING("Trying to use an dead GMP video decoder");
+  }
+
+  MOZ_ASSERT(mPlugin->GMPThread() == NS_GetCurrentThread());
+
+  return mPlugin->GetDisplayName();
+}
+
 // Note: Consider keeping ActorDestroy sync'd up when making changes here.
 nsresult
 GMPVideoDecoderParent::Shutdown()
 {
   LOGD(("%s: %p", __FUNCTION__, this));
-  MOZ_ASSERT(mPlugin->GMPThread() == NS_GetCurrentThread());
+  MOZ_ASSERT(!mPlugin || mPlugin->GMPThread() == NS_GetCurrentThread());
 
   if (mShuttingDown) {
     return NS_OK;
@@ -198,10 +212,11 @@ GMPVideoDecoderParent::Shutdown()
     mCallback->Terminated();
     mCallback = nullptr;
   }
-  mVideoHost.DoneWithAPI();
 
   mIsOpen = false;
-  unused << SendDecodingComplete();
+  if (!mActorDestroyed) {
+    unused << SendDecodingComplete();
+  }
 
   return NS_OK;
 }
@@ -211,6 +226,9 @@ void
 GMPVideoDecoderParent::ActorDestroy(ActorDestroyReason aWhy)
 {
   mIsOpen = false;
+  mActorDestroyed = true;
+  mVideoHost.DoneWithAPI();
+
   if (mCallback) {
     // May call Close() (and Shutdown()) immediately or with a delay
     mCallback->Terminated();
@@ -322,7 +340,14 @@ GMPVideoDecoderParent::RecvError(const GMPErr& aError)
 }
 
 bool
-GMPVideoDecoderParent::RecvParentShmemForPool(Shmem& aEncodedBuffer)
+GMPVideoDecoderParent::RecvShutdown()
+{
+  Shutdown();
+  return true;
+}
+
+bool
+GMPVideoDecoderParent::RecvParentShmemForPool(Shmem&& aEncodedBuffer)
 {
   if (aEncodedBuffer.IsWritable()) {
     mVideoHost.SharedMemMgr()->MgrDeallocShmem(GMPSharedMem::kGMPEncodedData,

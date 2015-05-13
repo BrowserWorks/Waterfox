@@ -98,6 +98,8 @@ function goUpdateConsoleCommands() {
                         prefKey="network"/>
               <menuitem label="&btnConsoleWarnings;" type="checkbox" autocheck="false"
                         prefKey="netwarn"/>
+              <menuitem label="&btnConsoleXhr;" type="checkbox" autocheck="false"
+                        prefKey="netxhr"/>
               <menuitem label="&btnConsoleLog;" type="checkbox" autocheck="false"
                         prefKey="networkinfo"/>
               <menuseparator id="saveBodiesSeparator" />
@@ -159,6 +161,13 @@ function goUpdateConsoleCommands() {
                         prefKey="info"/>
               <menuitem label="&btnConsoleLog;" type="checkbox" autocheck="false"
                         prefKey="log"/>
+              <menuseparator />
+              <menuitem label="&btnConsoleSharedWorkers;" type="checkbox"
+                        autocheck="false" prefKey="sharedworkers"/>
+              <menuitem label="&btnConsoleServiceWorkers;" type="checkbox"
+                        autocheck="false" prefKey="serviceworkers"/>
+              <menuitem label="&btnConsoleWindowlessWorkers;" type="checkbox"
+                        autocheck="false" prefKey="windowlessworkers"/>
             </menupopup>
           </toolbarbutton>
         </hbox>

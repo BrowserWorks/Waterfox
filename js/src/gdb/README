@@ -137,11 +137,11 @@ Running the unit tests
 
 These extensions have unit tests, invoked as follows:
 
-$ python run-tests.py [OPTIONS] LIBDIR [TESTS...]
+$ python run-tests.py [OPTIONS] OBJDIR [TESTS...]
 
-where LIBDIR is a directory containing a compiled SpiderMonkey library,
-libmozjs.so; TESTS are names of selected tests to run (if omitted, we run
-them all); and OPTIONS are drawn from the list below.
+where OBJDIR is a directory containing a standalone SpiderMonkey build; TESTS
+are names of selected tests to run (if omitted, we run them all); and OPTIONS
+are drawn from the list below.
 
 --gdb=EXECUTABLE
   Instead of running whatever 'gdb' we find in our search path, use
@@ -184,7 +184,7 @@ C++ code. Running tests works like this:
 
 - Then, for each '.py' test script in js/src/gdb/tests, the harness starts
   GDB on the 'gdb-tests' executable, and then has GDB run
-  js/src/gdb/lib-for-tests/prolog.py, passing it the test script's path as
+  js/src/gdb/lib-for-tests/prologue.py, passing it the test script's path as
   its first command-line argument.
 
 Thanks To:

@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -13,10 +14,6 @@
 #define NS_IDOM_SCRIPT_OBJECT_FACTORY_IID \
 { 0x2a50e17c, 0x46ff, 0x4150, \
   { 0xbb, 0x46, 0xd8, 0x07, 0xb3, 0x36, 0xde, 0xab } }
-
-class nsIScriptContext;
-class nsIScriptGlobalObject;
-class nsIDOMEventListener;
 
 typedef nsXPCClassInfo* (*nsDOMClassInfoExternalConstructorFnc)
   (const char* aName);

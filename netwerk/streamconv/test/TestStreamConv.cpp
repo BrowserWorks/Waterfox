@@ -47,7 +47,7 @@ static NS_DEFINE_CID(kStreamConverterServiceCID, NS_STREAMCONVERTERSERVICE_CID);
 //   receives the fully converted data, although it doesn't do anything with
 //   the data.
 ////////////////////////////////////////////////////////////////////////
-class EndListener MOZ_FINAL : public nsIStreamListener {
+class EndListener final : public nsIStreamListener {
     ~EndListener() {}
 public:
     // nsISupports declaration
@@ -57,7 +57,7 @@ public:
 
     // nsIStreamListener method
     NS_IMETHOD OnDataAvailable(nsIRequest* request, nsISupports *ctxt, nsIInputStream *inStr, 
-                               uint64_t sourceOffset, uint32_t count)
+                               uint64_t sourceOffset, uint32_t count) override
     {
         nsresult rv;
         uint32_t read;
@@ -66,7 +66,7 @@ public:
         if (NS_FAILED(rv)) return rv;
         uint32_t len = (uint32_t)std::min(len64, (uint64_t)(UINT32_MAX - 1));
 
-        char *buffer = (char*)nsMemory::Alloc(len + 1);
+        char *buffer = (char*)moz_xmalloc(len + 1);
         if (!buffer) return NS_ERROR_OUT_OF_MEMORY;
 
         rv = inStr->Read(buffer, len, &read);
@@ -75,16 +75,16 @@ public:
             printf("CONTEXT %p: Received %u bytes and the following data: \n %s\n\n",
                    static_cast<void*>(ctxt), read, buffer);
         }
-        nsMemory::Free(buffer);
+        free(buffer);
 
         return NS_OK;
     }
 
     // nsIRequestObserver methods
-    NS_IMETHOD OnStartRequest(nsIRequest* request, nsISupports *ctxt) { return NS_OK; }
+    NS_IMETHOD OnStartRequest(nsIRequest* request, nsISupports *ctxt) override { return NS_OK; }
 
     NS_IMETHOD OnStopRequest(nsIRequest* request, nsISupports *ctxt, 
-                             nsresult aStatus) { return NS_OK; }
+                             nsresult aStatus) override { return NS_OK; }
 };
 
 NS_IMPL_ISUPPORTS(EndListener,

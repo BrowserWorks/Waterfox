@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -152,20 +153,11 @@ MouseEvent::Constructor(const GlobalObject& aGlobal,
                     aParam.mCtrlKey, aParam.mAltKey, aParam.mShiftKey,
                     aParam.mMetaKey, aParam.mButton, aParam.mRelatedTarget,
                     aRv);
+  e->InitModifiers(aParam);
   e->SetTrusted(trusted);
-
-  switch (e->mEvent->mClass) {
-    case eMouseEventClass:
-    case eMouseScrollEventClass:
-    case eWheelEventClass:
-    case eDragEventClass:
-    case ePointerEventClass:
-    case eSimpleGestureEventClass:
-      e->mEvent->AsMouseEventBase()->buttons = aParam.mButtons;
-      break;
-    default:
-      break;
-  }
+  MOZ_RELEASE_ASSERT(e->mEvent->AsMouseEventBase(),
+                     "mEvent of MouseEvent must inherit WidgetMouseEventBase");
+  e->mEvent->AsMouseEventBase()->buttons = aParam.mButtons;
 
   return e.forget();
 }
@@ -386,6 +378,20 @@ MouseEvent::ClientY()
                                 mClientPoint).y;
 }
 
+int32_t
+MouseEvent::OffsetX()
+{
+  return Event::GetOffsetCoords(mPresContext, mEvent, mEvent->refPoint,
+                                mClientPoint).x;
+}
+
+int32_t
+MouseEvent::OffsetY()
+{
+  return Event::GetOffsetCoords(mPresContext, mEvent, mEvent->refPoint,
+                                mClientPoint).y;
+}
+
 bool
 MouseEvent::AltKey()
 {
@@ -464,6 +470,12 @@ MouseEvent::GetMozPressure(float* aPressure)
   NS_ENSURE_ARG_POINTER(aPressure);
   *aPressure = MozPressure();
   return NS_OK;
+}
+
+bool
+MouseEvent::HitCluster() const
+{
+  return mEvent->AsMouseEventBase()->hitCluster;
 }
 
 uint16_t

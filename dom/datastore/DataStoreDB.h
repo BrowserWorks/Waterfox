@@ -1,5 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -21,14 +21,13 @@ namespace dom {
 namespace indexedDB {
 class IDBDatabase;
 class IDBFactory;
-class IDBObjectStore;
 class IDBOpenDBRequest;
 class IDBTransaction;
 }
 
 class DataStoreDBCallback;
 
-class DataStoreDB MOZ_FINAL : public nsIDOMEventListener
+class DataStoreDB final : public nsIDOMEventListener
 {
 public:
   NS_DECL_ISUPPORTS
@@ -43,7 +42,7 @@ public:
   indexedDB::IDBTransaction* Transaction() const;
 
   // nsIDOMEventListener
-  NS_IMETHOD HandleEvent(nsIDOMEvent* aEvent) MOZ_OVERRIDE;
+  NS_IMETHOD HandleEvent(nsIDOMEvent* aEvent) override;
 
 private:
   ~DataStoreDB();

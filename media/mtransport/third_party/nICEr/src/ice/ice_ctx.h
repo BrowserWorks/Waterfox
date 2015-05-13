@@ -44,6 +44,7 @@ extern "C" {
 #include "nr_socket.h"
 #include "nr_resolver.h"
 #include "nr_interface_prioritizer.h"
+#include "nr_socket_wrapper.h"
 #include "stun_client_ctx.h"
 #include "stun_server_ctx.h"
 #include "turn_client_ctx.h"
@@ -112,10 +113,6 @@ typedef STAILQ_HEAD(nr_ice_stun_id_head_,nr_ice_stun_id_) nr_ice_stun_id_head;
 
 struct nr_ice_ctx_ {
   UINT4 flags;
-  int state;
-#define NR_ICE_STATE_CREATED          1
-#define NR_ICE_STATE_INITIALIZING     2
-#define NR_ICE_STATE_INITIALIZED      3
   char *label;
 
   char *ufrag;
@@ -132,6 +129,7 @@ struct nr_ice_ctx_ {
 
   nr_resolver *resolver;                      /* The resolver to use */
   nr_interface_prioritizer *interface_prioritizer;  /* Priority decision logic */
+  nr_socket_wrapper_factory *turn_tcp_socket_wrapper; /* The TURN TCP socket wrapper to use */
 
   nr_ice_foundation_head foundations;
 
@@ -160,10 +158,11 @@ int nr_ice_ctx_create(char *label, UINT4 flags, nr_ice_ctx **ctxp);
 #define NR_ICE_CTX_FLAGS_LITE                              (1<<3)
 
 int nr_ice_ctx_destroy(nr_ice_ctx **ctxp);
-int nr_ice_initialize(nr_ice_ctx *ctx, NR_async_cb done_cb, void *cb_arg);
+int nr_ice_gather(nr_ice_ctx *ctx, NR_async_cb done_cb, void *cb_arg);
 int nr_ice_add_candidate(nr_ice_ctx *ctx, nr_ice_candidate *cand);
-void nr_ice_initialize_finished_cb(NR_SOCKET s, int h, void *cb_arg);
+void nr_ice_gather_finished_cb(NR_SOCKET s, int h, void *cb_arg);
 int nr_ice_add_media_stream(nr_ice_ctx *ctx,char *label,int components, nr_ice_media_stream **streamp);
+int nr_ice_remove_media_stream(nr_ice_ctx *ctx,nr_ice_media_stream **streamp);
 int nr_ice_get_global_attributes(nr_ice_ctx *ctx,char ***attrsp, int *attrctp);
 int nr_ice_ctx_deliver_packet(nr_ice_ctx *ctx, nr_ice_component *comp, nr_transport_addr *source_addr, UCHAR *data, int len);
 int nr_ice_ctx_is_known_id(nr_ice_ctx *ctx, UCHAR id[12]);
@@ -173,6 +172,7 @@ int nr_ice_ctx_set_stun_servers(nr_ice_ctx *ctx,nr_ice_stun_server *servers, int
 int nr_ice_ctx_set_turn_servers(nr_ice_ctx *ctx,nr_ice_turn_server *servers, int ct);
 int nr_ice_ctx_set_resolver(nr_ice_ctx *ctx, nr_resolver *resolver);
 int nr_ice_ctx_set_interface_prioritizer(nr_ice_ctx *ctx, nr_interface_prioritizer *prioritizer);
+int nr_ice_ctx_set_turn_tcp_socket_wrapper(nr_ice_ctx *ctx, nr_socket_wrapper_factory *wrapper);
 int nr_ice_ctx_set_trickle_cb(nr_ice_ctx *ctx, nr_ice_trickle_candidate_cb cb, void *cb_arg);
 
 #define NR_ICE_MAX_ATTRIBUTE_SIZE 256

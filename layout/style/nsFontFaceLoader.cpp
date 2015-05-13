@@ -25,20 +25,9 @@
 
 using namespace mozilla;
 
-#ifdef PR_LOGGING
-PRLogModuleInfo*
-nsFontFaceLoader::GetFontDownloaderLog()
-{
-  static PRLogModuleInfo* sLog;
-  if (!sLog)
-    sLog = PR_NewLogModule("fontdownloader");
-  return sLog;
-}
-#endif /* PR_LOGGING */
-
-#define LOG(args) PR_LOG(GetFontDownloaderLog(), PR_LOG_DEBUG, args)
-#define LOG_ENABLED() PR_LOG_TEST(GetFontDownloaderLog(), PR_LOG_DEBUG)
-
+#define LOG(args) PR_LOG(gfxUserFontSet::GetUserFontsLog(), PR_LOG_DEBUG, args)
+#define LOG_ENABLED() PR_LOG_TEST(gfxUserFontSet::GetUserFontsLog(), \
+                                  PR_LOG_DEBUG)
 
 nsFontFaceLoader::nsFontFaceLoader(gfxUserFontEntry* aUserFontEntry,
                                    nsIURI* aFontURI,
@@ -119,7 +108,7 @@ nsFontFaceLoader::LoadTimerCallback(nsITimer* aTimer, void* aClosure)
                                                delay >> 1,
                                                nsITimer::TYPE_ONE_SHOT);
       updateUserFontSet = false;
-      LOG(("fontdownloader (%p) 75%% done, resetting timer\n", loader));
+      LOG(("userfonts (%p) 75%% done, resetting timer\n", loader));
     }
   }
 
@@ -132,8 +121,8 @@ nsFontFaceLoader::LoadTimerCallback(nsITimer* aTimer, void* aClosure)
     NS_ASSERTION(ctx, "userfontset doesn't have a presContext?");
     if (ctx) {
       loader->mFontFaceSet->IncrementGeneration();
-      ctx->UserFontSetUpdated();
-      LOG(("fontdownloader (%p) timeout reflow\n", loader));
+      ctx->UserFontSetUpdated(loader->GetUserFontEntry());
+      LOG(("userfonts (%p) timeout reflow\n", loader));
     }
   }
 }
@@ -154,19 +143,17 @@ nsFontFaceLoader::OnStreamComplete(nsIStreamLoader* aLoader,
 
   mFontFaceSet->RemoveLoader(this);
 
-#ifdef PR_LOGGING
   if (LOG_ENABLED()) {
     nsAutoCString fontURI;
     mFontURI->GetSpec(fontURI);
     if (NS_SUCCEEDED(aStatus)) {
-      LOG(("fontdownloader (%p) download completed - font uri: (%s)\n", 
+      LOG(("userfonts (%p) download completed - font uri: (%s)\n",
            this, fontURI.get()));
     } else {
-      LOG(("fontdownloader (%p) download failed - font uri: (%s) error: %8.8x\n", 
+      LOG(("userfonts (%p) download failed - font uri: (%s) error: %8.8x\n",
            this, fontURI.get(), aStatus));
     }
   }
-#endif
 
   nsPresContext* ctx = mFontFaceSet->GetPresContext();
   NS_ASSERTION(ctx && !ctx->PresShell()->IsDestroying(),
@@ -204,8 +191,8 @@ nsFontFaceLoader::OnStreamComplete(nsIStreamLoader* aLoader,
   if (fontUpdate) {
     // Update layout for the presence of the new font.  Since this is
     // asynchronous, reflows will coalesce.
-    ctx->UserFontSetUpdated();
-    LOG(("fontdownloader (%p) reflow\n", this));
+    ctx->UserFontSetUpdated(mUserFontEntry);
+    LOG(("userfonts (%p) reflow\n", this));
   }
 
   // done with font set

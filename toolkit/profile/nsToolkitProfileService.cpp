@@ -43,7 +43,7 @@
 
 using namespace mozilla;
 
-class nsToolkitProfile MOZ_FINAL : public nsIToolkitProfile
+class nsToolkitProfile final : public nsIToolkitProfile
 {
 public:
     NS_DECL_ISUPPORTS
@@ -71,7 +71,7 @@ private:
     bool                       mForExternalApp;
 };
 
-class nsToolkitProfileLock MOZ_FINAL : public nsIProfileLock
+class nsToolkitProfileLock final : public nsIProfileLock
 {
 public:
     NS_DECL_ISUPPORTS
@@ -93,7 +93,7 @@ private:
     nsProfileLock mLock;
 };
 
-class nsToolkitProfileFactory MOZ_FINAL : public nsIFactory
+class nsToolkitProfileFactory final : public nsIFactory
 {
     ~nsToolkitProfileFactory() {}
 public:
@@ -101,7 +101,7 @@ public:
     NS_DECL_NSIFACTORY
 };
 
-class nsToolkitProfileService MOZ_FINAL : public nsIToolkitProfileService
+class nsToolkitProfileService final : public nsIToolkitProfileService
 {
 public:
     NS_DECL_ISUPPORTS
@@ -149,7 +149,7 @@ private:
 
     static nsToolkitProfileService *gService;
 
-    class ProfileEnumerator MOZ_FINAL : public nsISimpleEnumerator
+    class ProfileEnumerator final : public nsISimpleEnumerator
     {
     public:
         NS_DECL_ISUPPORTS
@@ -676,7 +676,7 @@ NS_LockProfilePath(nsIFile* aPath, nsIFile* aTempPath,
     nsresult rv = lock->Init(aPath, aTempPath, aUnlocker);
     if (NS_FAILED(rv)) return rv;
 
-    NS_ADDREF(*aResult = lock);
+    lock.forget(aResult);
     return NS_OK;
 }
 
@@ -904,7 +904,7 @@ nsToolkitProfileService::CreateProfileInternal(nsIFile* aRootDir,
         new nsToolkitProfile(aName, rootDir, localDir, last, aForExternalApp);
     if (!profile) return NS_ERROR_OUT_OF_MEMORY;
 
-    NS_ADDREF(*aResult = profile);
+    profile.forget(aResult);
     return NS_OK;
 }
 
@@ -1108,8 +1108,9 @@ XRE_GetFileFromPath(const char *aPath, nsIFile* *aResult)
         nsCOMPtr<nsILocalFileMac> lfMac = do_QueryInterface(lf, &rv);
         if (NS_SUCCEEDED(rv)) {
             rv = lfMac->InitWithCFURL(fullPath);
-            if (NS_SUCCEEDED(rv))
-                NS_ADDREF(*aResult = lf);
+            if (NS_SUCCEEDED(rv)) {
+                lf.forget(aResult);
+            }
         }
     }
     CFRelease(fullPath);

@@ -4,7 +4,12 @@
 
 <!-- Content panel -->
 
-<preferences id="contentPreferences">
+<preferences id="contentPreferences" hidden="true" data-category="paneContent">
+
+  <!-- DRM content -->
+  <preference id="media.eme.enabled"
+              name="media.eme.enabled"
+              type="bool"/>
 
   <!-- Popups -->
   <preference id="dom.disable_open_during_load"
@@ -22,9 +27,9 @@
               type="bool"/>
 </preferences>
 
-<script type="application/javascript" 
+<script type="application/javascript"
         src="chrome://mozapps/content/preferences/fontbuilder.js"/>
-<script type="application/javascript" 
+<script type="application/javascript"
         src="chrome://browser/content/preferences/in-content/content.js"/>
 
 <hbox id="header-content"
@@ -34,9 +39,29 @@
   <label class="header-name">&paneContent.title;</label>
 </hbox>
 
+<groupbox id="drmGroup" data-category="paneContent" hidden="true">
+  <caption><label>&drmContent.label;</label></caption>
+  <grid id="contentGrid2">
+    <columns>
+      <column flex="1"/>
+      <column/>
+    </columns>
+    <rows id="contentRows-2">
+      <row id="playDRMContentRow">
+        <vbox align="start">
+          <checkbox id="playDRMContent" preference="media.eme.enabled"
+                    label="&playDRMContent.label;" accesskey="&playDRMContent.accesskey;"/>
+        </vbox>
+        <hbox pack="end" align="center">
+          <label id="playDRMContentLink" class="text-link" value="&playDRMContent.learnMore.label;"/>
+        </hbox>
+      </row>
+    </rows>
+  </grid>
+</groupbox>
+
 <groupbox id="miscGroup" data-category="paneContent" hidden="true">
   <caption><label>&popups.label;</label></caption>
-
   <grid id="contentGrid">
     <columns>
       <column flex="1"/>
@@ -50,8 +75,10 @@
                     onsyncfrompreference="return gContentPane.updateButtons('popupPolicyButton',
                                                                         'dom.disable_open_during_load');"/>
         </vbox>
-        <button id="popupPolicyButton" label="&popupExceptions.label;"
-                accesskey="&popupExceptions.accesskey;"/>
+        <hbox pack="end">
+          <button id="popupPolicyButton" label="&popupExceptions.label;"
+                  accesskey="&popupExceptions.accesskey;"/>
+        </hbox>
       </row>
     </rows>
   </grid>
@@ -71,7 +98,7 @@
         <hbox align="center">
           <label control="defaultFont" accesskey="&defaultFont.accesskey;">&defaultFont.label;</label>
           <menulist id="defaultFont" />
-          <label control="defaultFontSize" accesskey="&defaultSize.accesskey;">&defaultSize.label;</label>
+          <label id="defaultFontSizeLabel" control="defaultFontSize" accesskey="&defaultSize.accesskey;">&defaultSize.label;</label>
           <menulist id="defaultFontSize">
             <menupopup>
               <menuitem value="9" label="9"/>

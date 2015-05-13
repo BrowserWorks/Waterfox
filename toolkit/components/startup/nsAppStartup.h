@@ -22,17 +22,15 @@
 #endif //defined(XP_WIN)
 
 
-struct PLEvent;
-
 // {7DD4D320-C84B-4624-8D45-7BB9B2356977}
 #define NS_TOOLKIT_APPSTARTUP_CID \
 { 0x7dd4d320, 0xc84b, 0x4624, { 0x8d, 0x45, 0x7b, 0xb9, 0xb2, 0x35, 0x69, 0x77 } }
 
 
-class nsAppStartup MOZ_FINAL : public nsIAppStartup,
-                               public nsIWindowCreator2,
-                               public nsIObserver,
-                               public nsSupportsWeakReference
+class nsAppStartup final : public nsIAppStartup,
+                           public nsIWindowCreator2,
+                           public nsIObserver,
+                           public nsSupportsWeakReference
 {
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
@@ -62,7 +60,6 @@ private:
   bool mInterrupted;    // Was startup interrupted by an interactive prompt?
   bool mIsSafeModeNecessary;       // Whether safe mode is necessary
   bool mStartupCrashTrackingEnded; // Whether startup crash tracking has already ended
-  bool mRestartTouchEnvironment;   // Quit (eRestartTouchEnvironment)
   bool mRestartNotSameProfile;     // Quit(eRestartNotSameProfile)
 
 #if defined(XP_WIN)

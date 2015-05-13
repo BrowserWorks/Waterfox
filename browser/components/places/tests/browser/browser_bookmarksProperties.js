@@ -79,7 +79,7 @@ gTests.push({
   finish: function() {
     // Close window, toggle sidebar and goto next test.
     this.window.document.documentElement.cancelDialog();
-    toggleSidebar(this.sidebar, false);
+    SidebarUI.hide();
     runNextTest();
   },
 
@@ -113,8 +113,7 @@ gTests.push({
 
   run: function() {
     // Check that the dialog is read-only.
-    ok(this.window.BookmarkPropertiesPanel._readOnly, "Dialog is read-only");
-
+    ok(this.window.gEditItemOverlay.readOnly, "Dialog is read-only");
     // Check that accept button is disabled
     var acceptButton = this.window.document.documentElement.getButton("accept");
     ok(acceptButton.disabled, "Accept button is disabled");
@@ -126,7 +125,7 @@ gTests.push({
        PlacesUtils.bookmarks.getItemTitle(PlacesUtils.unfiledBookmarksFolderId),
        "Node title is correct");
     // Blur the field and ensure root's name has not been changed.
-    this.window.gEditItemOverlay.onNamePickerBlur();
+    this.window.gEditItemOverlay._namePicker.blur();
     is(namepicker.value,
        PlacesUtils.bookmarks.getItemTitle(PlacesUtils.unfiledBookmarksFolderId),
        "Root title is correct");
@@ -138,7 +137,7 @@ gTests.push({
 
   finish: function() {
     this.window.document.documentElement.cancelDialog();
-    toggleSidebar(this.sidebar, false);
+    SidebarUI.hide();
     runNextTest();
   },
 
@@ -149,7 +148,6 @@ gTests.push({
 
 //------------------------------------------------------------------------------
 // Bug 462662 - Pressing Enter to select tag from autocomplete closes bookmarks properties dialog
-
 gTests.push({
   desc: "Bug 462662 - Pressing Enter to select tag from autocomplete closes bookmarks properties dialog",
   sidebar: SIDEBAR_BOOKMARKS_ID,
@@ -226,13 +224,15 @@ gTests.push({
 
     // Open tags autocomplete popup.
     info("About to focus the tagsField");
-    tagsField.focus();
-    tagsField.value = "";
-    EventUtils.synthesizeKey("t", {}, this.window);
+    executeSoon(() => {
+                  tagsField.focus();
+                  tagsField.value = "";
+                  EventUtils.synthesizeKey("t", {}, this.window);
+                });
   },
 
   finish: function() {
-    toggleSidebar(this.sidebar, false);
+    SidebarUI.hide();
     runNextTest();
   },
 
@@ -247,9 +247,9 @@ gTests.push({
   }
 });
 
+
 //------------------------------------------------------------------------------
 // Bug 475529 -  Add button in new folder dialog not default anymore
-
 gTests.push({
   desc: "Bug 475529 - Add button in new folder dialog not default anymore",
   sidebar: SIDEBAR_BOOKMARKS_ID,
@@ -271,7 +271,7 @@ gTests.push({
   },
 
   run: function() {
-    this._itemId = this.window.gEditItemOverlay._itemId;
+    this._itemId = this.window.gEditItemOverlay._paneInfo.itemId;
     // Change folder name
     var namePicker = this.window.document.getElementById("editBMPanel_namePicker");
     var self = this;
@@ -283,15 +283,16 @@ gTests.push({
       });
     }, false);
 
-    namePicker.value = "n";
     info("About to focus the namePicker field");
     namePicker.focus();
+    namePicker.select();
+    EventUtils.synthesizeKey("n", {}, this.window);
     EventUtils.synthesizeKey("VK_RETURN", {}, this.window);
   },
 
   finish: function() {
     // Window is already closed.
-    toggleSidebar(this.sidebar, false);
+    SidebarUI.hide();
     runNextTest();
   },
 
@@ -390,7 +391,7 @@ gTests.push({
   },
 
   finish: function() {
-    toggleSidebar(this.sidebar, false);
+    SidebarUI.hide();
     runNextTest();
   },
 
@@ -418,11 +419,10 @@ gTests.push({
 
   setup: function(aCallback) {
     // Add a visit.
-    addVisits(
+    PlacesTestUtils.addVisits(
       {uri: PlacesUtils._uri(TEST_URL),
-        transition: PlacesUtils.history.TRANSITION_TYPED},
-      window,
-      aCallback);
+        transition: PlacesUtils.history.TRANSITION_TYPED}
+      ).then(aCallback);
   },
 
   selectNode: function(tree) {
@@ -469,13 +469,12 @@ gTests.push({
   },
 
   finish: function() {
-    toggleSidebar(this.sidebar, false);
+    SidebarUI.hide();
     runNextTest();
   },
 
   cleanup: function() {
-    var bh = PlacesUtils.history.QueryInterface(Ci.nsIBrowserHistory);
-    bh.removeAllPages();
+    return PlacesTestUtils.clearHistory();
   }
 });
 
@@ -498,10 +497,11 @@ function test() {
 function runNextTest() {
   // Cleanup from previous test.
   if (gCurrentTest) {
-    gCurrentTest.cleanup();
-    info("End of test: " + gCurrentTest.desc);
-    gCurrentTest = null;
-    waitForAsyncUpdates(runNextTest);
+    Promise.resolve(gCurrentTest.cleanup()).then(() => {
+      info("End of test: " + gCurrentTest.desc);
+      gCurrentTest = null;
+      waitForAsyncUpdates(runNextTest);
+    });
     return;
   }
 
@@ -530,7 +530,7 @@ function execute_test_in_sidebar() {
       // Need to executeSoon since the tree is initialized on sidebar load.
       executeSoon(open_properties_dialog);
     }, true);
-    toggleSidebar(gCurrentTest.sidebar, true);
+    SidebarUI.show(gCurrentTest.sidebar);
 }
 
 function open_properties_dialog() {
@@ -563,7 +563,7 @@ function open_properties_dialog() {
         // Windows has been loaded, execute our test now.
         executeSoon(function () {
           // Ensure overlay is loaded
-          ok(win.gEditItemOverlay._initialized, "EditItemOverlay is initialized");
+          ok(win.gEditItemOverlay.initialized, "EditItemOverlay is initialized");
           gCurrentTest.window = win;
           try {
             gCurrentTest.run();

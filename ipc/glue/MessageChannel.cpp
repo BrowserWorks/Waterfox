@@ -177,6 +177,11 @@ public:
         return INTR_SEMS == mMesageSemantics && OUT_MESSAGE == mDirection;
     }
 
+    bool IsOutgoingSync() const {
+        return (mMesageSemantics == INTR_SEMS || mMesageSemantics == SYNC_SEMS) &&
+               mDirection == OUT_MESSAGE;
+    }
+
     void Describe(int32_t* id, const char** dir, const char** sems,
                   const char** name) const
     {
@@ -186,6 +191,11 @@ public:
                 (SYNC_SEMS == mMesageSemantics) ? "sync" :
                 "async";
         *name = mMessageName;
+    }
+
+    int32_t GetRoutingId() const
+    {
+        return mMessageRoutingId;
     }
 
 private:
@@ -218,6 +228,9 @@ public:
         if (frame.IsInterruptIncall())
             mThat.EnteredCall();
 
+        if (frame.IsOutgoingSync())
+            mThat.EnteredSyncSend();
+
         mThat.mSawInterruptOutMsg |= frame.IsInterruptOutcall();
     }
 
@@ -226,7 +239,9 @@ public:
 
         MOZ_ASSERT(!mThat.mCxxStackFrames.empty());
 
-        bool exitingCall = mThat.mCxxStackFrames.back().IsInterruptIncall();
+        const InterruptFrame& frame = mThat.mCxxStackFrames.back();
+        bool exitingSync = frame.IsOutgoingSync();
+        bool exitingCall = frame.IsInterruptIncall();
         mThat.mCxxStackFrames.shrinkBy(1);
 
         bool exitingStack = mThat.mCxxStackFrames.empty();
@@ -238,6 +253,9 @@ public:
 
         if (exitingCall)
             mThat.ExitedCall();
+
+        if (exitingSync)
+            mThat.ExitedSyncSend();
 
         if (exitingStack)
             mThat.ExitedCxxStack();
@@ -295,6 +313,7 @@ MessageChannel::MessageChannel(MessageListener *aListener)
     mDispatchingAsyncMessagePriority(0),
     mCurrentTransaction(0),
     mTimedOutMessageSeqno(0),
+    mTimedOutMessagePriority(0),
     mRecvdErrors(0),
     mRemoteStackDepthGuess(false),
     mSawInterruptOutMsg(false),
@@ -503,7 +522,7 @@ MessageChannel::Echo(Message* aMsg)
     MonitorAutoLock lock(*mMonitor);
 
     if (!Connected()) {
-        ReportConnectionError("MessageChannel");
+        ReportConnectionError("MessageChannel", msg);
         return false;
     }
 
@@ -526,7 +545,7 @@ MessageChannel::Send(Message* aMsg)
 
     MonitorAutoLock lock(*mMonitor);
     if (!Connected()) {
-        ReportConnectionError("MessageChannel");
+        ReportConnectionError("MessageChannel", msg);
         return false;
     }
     mLink->SendMessage(msg.forget());
@@ -647,10 +666,23 @@ MessageChannel::OnMessageReceivedFromLink(const Message& aMsg)
     }
 
     // Prioritized messages cannot be compressed.
-    MOZ_ASSERT(!aMsg.compress() || aMsg.priority() == IPC::Message::PRIORITY_NORMAL);
+    MOZ_ASSERT_IF(aMsg.compress_type() != IPC::Message::COMPRESSION_NONE,
+                  aMsg.priority() == IPC::Message::PRIORITY_NORMAL);
 
-    bool compress = (aMsg.compress() && !mPending.empty());
-    if (compress) {
+    bool compress = false;
+    if (aMsg.compress_type() == IPC::Message::COMPRESSION_ENABLED) {
+        compress = (!mPending.empty() &&
+                    mPending.back().type() == aMsg.type() &&
+                    mPending.back().routing_id() == aMsg.routing_id());
+        if (compress) {
+            // This message type has compression enabled, and the back of the
+            // queue was the same message type and routed to the same destination.
+            // Replace it with the newer message.
+            MOZ_ASSERT(mPending.back().compress_type() ==
+                       IPC::Message::COMPRESSION_ENABLED);
+            mPending.pop_back();
+        }
+    } else if (aMsg.compress_type() == IPC::Message::COMPRESSION_ALL) {
         // Check the message queue for another message with this type/destination.
         auto it = std::find_if(mPending.rbegin(), mPending.rend(),
                                MatchingKinds(aMsg.type(), aMsg.routing_id()));
@@ -659,11 +691,9 @@ MessageChannel::OnMessageReceivedFromLink(const Message& aMsg)
             // a message with the same message type and routed to the same destination.
             // Erase it.  Note that, since we always compress these redundancies, There Can
             // Be Only One.
-            MOZ_ASSERT((*it).compress());
+            compress = true;
+            MOZ_ASSERT((*it).compress_type() == IPC::Message::COMPRESSION_ALL);
             mPending.erase((++it).base());
-        } else {
-            // No other messages with the same type/destination exist.
-            compress = false;
         }
     }
 
@@ -706,6 +736,33 @@ MessageChannel::OnMessageReceivedFromLink(const Message& aMsg)
             // its pending task.
             mWorkerLoop->PostTask(FROM_HERE, new DequeueTask(mDequeueOneTask));
         }
+    }
+}
+
+void
+MessageChannel::ProcessPendingRequests()
+{
+    // Loop until there aren't any more priority messages to process.
+    for (;;) {
+        mozilla::Vector<Message> toProcess;
+
+        for (MessageQueue::iterator it = mPending.begin(); it != mPending.end(); ) {
+            Message &msg = *it;
+            if (!ShouldDeferMessage(msg)) {
+                toProcess.append(Move(msg));
+                it = mPending.erase(it);
+                continue;
+            }
+            it++;
+        }
+
+        if (toProcess.empty())
+            break;
+
+        // Processing these messages could result in more messages, so we
+        // loop around to check for more afterwards.
+        for (auto it = toProcess.begin(); it != toProcess.end(); it++)
+            ProcessPendingRequest(*it);
     }
 }
 
@@ -752,47 +809,29 @@ MessageChannel::Send(Message* aMsg, Message* aReply)
     nsAutoPtr<Message> msg(aMsg);
 
     if (!Connected()) {
-        ReportConnectionError("MessageChannel::SendAndWait");
+        ReportConnectionError("MessageChannel::SendAndWait", msg);
         return false;
     }
 
     msg->set_seqno(NextSeqno());
 
     int32_t seqno = msg->seqno();
+    int prio = msg->priority();
     DebugOnly<msgid_t> replyType = msg->type() + 1;
 
     AutoSetValue<bool> replies(mAwaitingSyncReply, true);
-    AutoSetValue<int> prio(mAwaitingSyncReplyPriority, msg->priority());
+    AutoSetValue<int> prioSet(mAwaitingSyncReplyPriority, prio);
     AutoEnterTransaction transact(this, seqno);
 
     int32_t transaction = mCurrentTransaction;
     msg->set_transaction_id(transaction);
 
+    ProcessPendingRequests();
+
     mLink->SendMessage(msg.forget());
 
     while (true) {
-        // Loop until there aren't any more priority messages to process.
-        for (;;) {
-            mozilla::Vector<Message> toProcess;
-
-            for (MessageQueue::iterator it = mPending.begin(); it != mPending.end(); ) {
-                Message &msg = *it;
-                if (!ShouldDeferMessage(msg)) {
-                    toProcess.append(Move(msg));
-                    it = mPending.erase(it);
-                    continue;
-                }
-                it++;
-            }
-
-            if (toProcess.empty())
-                break;
-
-            // Processing these messages could result in more messages, so we
-            // loop around to check for more afterwards.
-            for (auto it = toProcess.begin(); it != toProcess.end(); it++)
-                ProcessPendingRequest(*it);
-        }
+        ProcessPendingRequests();
 
         // See if we've received a reply.
         if (mRecvdErrors) {
@@ -801,15 +840,7 @@ MessageChannel::Send(Message* aMsg, Message* aReply)
         }
 
         if (mRecvd) {
-            MOZ_ASSERT(mRecvd->is_reply(), "expected reply");
-            MOZ_ASSERT(!mRecvd->is_reply_error());
-            MOZ_ASSERT(mRecvd->type() == replyType, "wrong reply type");
-            MOZ_ASSERT(mRecvd->seqno() == seqno);
-            MOZ_ASSERT(mRecvd->is_sync());
-
-            *aReply = Move(*mRecvd);
-            mRecvd = nullptr;
-            return true;
+            break;
         }
 
         MOZ_ASSERT(!mTimedOutMessageSeqno);
@@ -825,11 +856,33 @@ MessageChannel::Send(Message* aMsg, Message* aReply)
         // if neither side has any other message Sends on the stack).
         bool canTimeOut = transaction == seqno;
         if (maybeTimedOut && canTimeOut && !ShouldContinueFromTimeout()) {
+            // We might have received a reply during WaitForSyncNotify or inside
+            // ShouldContinueFromTimeout (which drops the lock). We need to make
+            // sure not to set mTimedOutMessageSeqno if that happens, since then
+            // there would be no way to unset it.
+            if (mRecvdErrors) {
+                mRecvdErrors--;
+                return false;
+            }
+            if (mRecvd) {
+                break;
+            }
+
             mTimedOutMessageSeqno = seqno;
+            mTimedOutMessagePriority = prio;
             return false;
         }
     }
 
+    MOZ_ASSERT(mRecvd);
+    MOZ_ASSERT(mRecvd->is_reply(), "expected reply");
+    MOZ_ASSERT(!mRecvd->is_reply_error());
+    MOZ_ASSERT(mRecvd->type() == replyType, "wrong reply type");
+    MOZ_ASSERT(mRecvd->seqno() == seqno);
+    MOZ_ASSERT(mRecvd->is_sync());
+
+    *aReply = Move(*mRecvd);
+    mRecvd = nullptr;
     return true;
 }
 
@@ -849,7 +902,7 @@ MessageChannel::Call(Message* aMsg, Message* aReply)
 
     MonitorAutoLock lock(*mMonitor);
     if (!Connected()) {
-        ReportConnectionError("MessageChannel::Call");
+        ReportConnectionError("MessageChannel::Call", aMsg);
         return false;
     }
 
@@ -1170,12 +1223,20 @@ MessageChannel::DispatchSyncMessage(const Message& aMsg)
     bool& blockingVar = ShouldBlockScripts() ? gParentIsBlocked : dummy;
 
     Result rv;
-    if (mTimedOutMessageSeqno) {
+    if (mTimedOutMessageSeqno && mTimedOutMessagePriority >= prio) {
         // If the other side sends a message in response to one of our messages
         // that we've timed out, then we reply with an error.
         //
-        // We even reject messages that were sent before the other side even got
-        // to our timed out message.
+        // We do this because want to avoid a situation where we process an
+        // incoming message from the child here while it simultaneously starts
+        // processing our timed-out CPOW. It's very bad for both sides to
+        // be processing sync messages concurrently.
+        //
+        // The only exception is if the incoming message has urgent priority and
+        // our timed-out message had only high priority. In that case it's safe
+        // to process the incoming message because we know that the child won't
+        // process anything (the child will defer incoming messages when waiting
+        // for a response to its urgent message).
         rv = MsgNotAllowed;
     } else {
         AutoSetValue<bool> blocked(blockingVar, true);
@@ -1236,8 +1297,9 @@ MessageChannel::DispatchInterruptMessage(const Message& aMsg, size_t stackDepth)
         // processing of the other side's in-call.
         bool defer;
         const char* winner;
-        switch (mListener->MediateInterruptRace((mSide == ChildSide) ? aMsg : mInterruptStack.top(),
-                                          (mSide != ChildSide) ? mInterruptStack.top() : aMsg))
+        const Message& parentMsg = (mSide == ChildSide) ? aMsg : mInterruptStack.top();
+        const Message& childMsg = (mSide == ChildSide) ? mInterruptStack.top() : aMsg;
+        switch (mListener->MediateInterruptRace(parentMsg, childMsg))
         {
           case RIPChildWins:
             winner = "child";
@@ -1493,11 +1555,11 @@ void
 MessageChannel::ReportMessageRouteError(const char* channelName) const
 {
     PrintErrorMessage(mSide, channelName, "Need a route");
-    mListener->OnProcessingError(MsgRouteError);
+    mListener->OnProcessingError(MsgRouteError, "MsgRouteError");
 }
 
 void
-MessageChannel::ReportConnectionError(const char* aChannelName) const
+MessageChannel::ReportConnectionError(const char* aChannelName, Message* aMsg) const
 {
     AssertWorkerThread();
     mMonitor->AssertCurrentThreadOwns();
@@ -1524,10 +1586,19 @@ MessageChannel::ReportConnectionError(const char* aChannelName) const
         NS_RUNTIMEABORT("unreached");
     }
 
-    PrintErrorMessage(mSide, aChannelName, errorMsg);
+    if (aMsg) {
+        char reason[512];
+        PR_snprintf(reason, sizeof(reason),
+                    "(msgtype=0x%lX,name=%s) %s",
+                    aMsg->type(), aMsg->name(), errorMsg);
+
+        PrintErrorMessage(mSide, aChannelName, reason);
+    } else {
+        PrintErrorMessage(mSide, aChannelName, errorMsg);
+    }
 
     MonitorAutoUnlock unlock(*mMonitor);
-    mListener->OnProcessingError(MsgDropped);
+    mListener->OnProcessingError(MsgDropped, errorMsg);
 }
 
 bool
@@ -1562,14 +1633,14 @@ MessageChannel::MaybeHandleError(Result code, const Message& aMsg, const char* c
         return false;
     }
 
-    char printedMsg[512];
-    PR_snprintf(printedMsg, sizeof(printedMsg),
+    char reason[512];
+    PR_snprintf(reason, sizeof(reason),
                 "(msgtype=0x%lX,name=%s) %s",
                 aMsg.type(), aMsg.name(), errorMsg);
 
-    PrintErrorMessage(mSide, channelName, printedMsg);
+    PrintErrorMessage(mSide, channelName, reason);
 
-    mListener->OnProcessingError(code);
+    mListener->OnProcessingError(code, reason);
 
     return false;
 }
@@ -1831,6 +1902,17 @@ MessageChannel::DumpInterruptStack(const char* const pfx) const
         printf_stderr("%s[(%u) %s %s %s(actor=%d) ]\n", pfx,
                       i, dir, sems, name, id);
     }
+}
+
+int32_t
+MessageChannel::GetTopmostMessageRoutingId() const
+{
+    MOZ_ASSERT(MessageLoop::current() == mWorkerLoop);
+    if (mCxxStackFrames.empty()) {
+        return MSG_ROUTING_NONE;
+    }
+    const InterruptFrame& frame = mCxxStackFrames.back();
+    return frame.GetRoutingId();
 }
 
 bool

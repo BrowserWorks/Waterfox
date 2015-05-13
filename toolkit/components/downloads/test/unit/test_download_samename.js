@@ -57,21 +57,20 @@ let DownloadListener = {
         do_check_neq(file.leafName, prevFile.leafName);
       }
       this.prevFiles.push(file);
-    
+
       // get the contents of the file
       let fis = Cc["@mozilla.org/network/file-input-stream;1"].createInstance(Ci.nsIFileInputStream);
       fis.init(file, -1, -1, 0);
       var cstream = Cc["@mozilla.org/intl/converter-input-stream;1"].createInstance(Ci.nsIConverterInputStream);
       cstream.init(fis, "UTF-8", 0, 0);
-    
+
       let val = "";
-      let (str = {}) {  
-        let read = 0;
-        do {
-          read = cstream.readString(0xffffffff, str);
-          val += str.value;  
-        } while (read != 0);  
-      }
+      let str = {};
+      let read = 0;
+      do {
+        read = cstream.readString(0xffffffff, str);
+        val += str.value;
+      } while (read != 0);
       cstream.close();
 
       // check if the file contents match the expected ones
@@ -110,10 +109,17 @@ function runNextTest()
   }
   let set = DownloadListener.set = tests[currentTest];
   currentTest++;
-
-  let channel = NetUtil.newChannel("http://localhost:" +
-                                   httpserver.identity.primaryPort +
-                                   set.serverURL);
+  let uri = "http://localhost:" +
+            httpserver.identity.primaryPort +
+            set.serverURL;
+  let channel = NetUtil.newChannel2(uri,
+                                    null,
+                                    null,
+                                    null,      // aLoadingNode
+                                    Services.scriptSecurityManager.getSystemPrincipal(),
+                                    null,      // aTriggeringPrincipal
+                                    Ci.nsILoadInfo.SEC_NORMAL,
+                                    Ci.nsIContentPolicy.TYPE_OTHER);
   let uriloader = Cc["@mozilla.org/uriloader;1"].getService(Ci.nsIURILoader);
   uriloader.openURI(channel, Ci.nsIURILoader.IS_CONTENT_PREFERRED,
                     new WindowContext());

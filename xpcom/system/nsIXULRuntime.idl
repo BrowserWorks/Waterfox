@@ -23,7 +23,7 @@ bool BrowserTabsRemoteAutostart();
  *                    stable/frozen, please contact Benjamin Smedberg.
  */
 
-[scriptable, uuid(15b0e6cf-83da-4672-814e-cfa0b06ba31b)]
+[scriptable, uuid(ce9d05f4-0c20-4f52-87e1-3a425e61e2f3)]
 interface nsIXULRuntime : nsISupports
 {
   /**
@@ -97,11 +97,15 @@ interface nsIXULRuntime : nsISupports
   readonly attribute boolean accessibilityEnabled;
 
   /**
-   * This returns a very rough approximation of whether IME is likely
-   * to be used for the browser session. DO NOT USE! This is temporary
-   * and will be removed.
+   * Indicates if the active accessibility client is blacklisted for e10s.
+   * DO NOT USE! This is temporary and will be removed.
    */
-  readonly attribute boolean keyboardMayHaveIME;
+  readonly attribute boolean accessibilityIsBlacklistedForE10S;
+
+  /**
+   * Indicates whether the current Firefox build is 64-bit.
+   */
+  readonly attribute boolean is64Bit;
 
   /**
    * Signal the apprunner to invalidate caches on the next restart.

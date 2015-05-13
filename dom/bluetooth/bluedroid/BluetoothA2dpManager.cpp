@@ -1,5 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -26,6 +26,8 @@ USING_BLUETOOTH_NAMESPACE
 #define AVRC_ID_FAST_FOR 0x49
 #define AVRC_KEY_PRESS_STATE  1
 #define AVRC_KEY_RELEASE_STATE  0
+// bluedroid bt_rc.h
+#define AVRC_MAX_ATTR_STR_LEN 255
 
 namespace {
   StaticRefPtr<BluetoothA2dpManager> sBluetoothA2dpManager;
@@ -47,12 +49,27 @@ ConvertAttributeString(BluetoothAvrcpMediaAttribute aAttrId,
   switch (aAttrId) {
     case AVRCP_MEDIA_ATTRIBUTE_TITLE:
       a2dp->GetTitle(aAttrStr);
+      /*
+       * bluedroid can only send string length AVRC_MAX_ATTR_STR_LEN - 1
+       */
+      if (aAttrStr.Length() >= AVRC_MAX_ATTR_STR_LEN) {
+        aAttrStr.Truncate(AVRC_MAX_ATTR_STR_LEN - 1);
+        BT_WARNING("Truncate media item attribute title, length is over 255");
+      }
       break;
     case AVRCP_MEDIA_ATTRIBUTE_ARTIST:
       a2dp->GetArtist(aAttrStr);
+      if (aAttrStr.Length() >= AVRC_MAX_ATTR_STR_LEN) {
+        aAttrStr.Truncate(AVRC_MAX_ATTR_STR_LEN - 1);
+        BT_WARNING("Truncate media item attribute artist, length is over 255");
+      }
       break;
     case AVRCP_MEDIA_ATTRIBUTE_ALBUM:
       a2dp->GetAlbum(aAttrStr);
+      if (aAttrStr.Length() >= AVRC_MAX_ATTR_STR_LEN) {
+        aAttrStr.Truncate(AVRC_MAX_ATTR_STR_LEN - 1);
+        BT_WARNING("Truncate media item attribute album, length is over 255");
+      }
       break;
     case AVRCP_MEDIA_ATTRIBUTE_TRACK_NUM:
       aAttrStr.AppendInt(a2dp->GetMediaNumber());
@@ -120,14 +137,15 @@ AvStatusToSinkString(BluetoothA2dpConnectionState aState, nsAString& aString)
   }
 }
 
-class InitAvrcpResultHandler MOZ_FINAL : public BluetoothAvrcpResultHandler
+class BluetoothA2dpManager::InitAvrcpResultHandler final
+  : public BluetoothAvrcpResultHandler
 {
 public:
   InitAvrcpResultHandler(BluetoothProfileResultHandler* aRes)
-  : mRes(aRes)
+    : mRes(aRes)
   { }
 
-  void OnError(BluetoothStatus aStatus) MOZ_OVERRIDE
+  void OnError(BluetoothStatus aStatus) override
   {
     BT_WARNING("BluetoothAvrcpInterface::Init failed: %d",
                (int)aStatus);
@@ -144,7 +162,7 @@ public:
     }
   }
 
-  void Init() MOZ_OVERRIDE
+  void Init() override
   {
     if (mRes) {
       mRes->Init();
@@ -155,14 +173,15 @@ private:
   nsRefPtr<BluetoothProfileResultHandler> mRes;
 };
 
-class InitA2dpResultHandler MOZ_FINAL : public BluetoothA2dpResultHandler
+class BluetoothA2dpManager::InitA2dpResultHandler final
+  : public BluetoothA2dpResultHandler
 {
 public:
   InitA2dpResultHandler(BluetoothProfileResultHandler* aRes)
-  : mRes(aRes)
+    : mRes(aRes)
   { }
 
-  void OnError(BluetoothStatus aStatus) MOZ_OVERRIDE
+  void OnError(BluetoothStatus aStatus) override
   {
     BT_WARNING("BluetoothA2dpInterface::Init failed: %d",
                (int)aStatus);
@@ -171,7 +190,7 @@ public:
     }
   }
 
-  void Init() MOZ_OVERRIDE
+  void Init() override
   {
     BluetoothInterface* btInf = BluetoothInterface::GetInstance();
     if (NS_WARN_IF(!btInf)) {
@@ -193,18 +212,19 @@ private:
   nsRefPtr<BluetoothProfileResultHandler> mRes;
 };
 
-class OnErrorProfileResultHandlerRunnable MOZ_FINAL : public nsRunnable
+class BluetoothA2dpManager::OnErrorProfileResultHandlerRunnable final
+  : public nsRunnable
 {
 public:
   OnErrorProfileResultHandlerRunnable(BluetoothProfileResultHandler* aRes,
                                       nsresult aRv)
-  : mRes(aRes)
-  , mRv(aRv)
+    : mRes(aRes)
+    , mRv(aRv)
   {
     MOZ_ASSERT(mRes);
   }
 
-  NS_IMETHOD Run() MOZ_OVERRIDE
+  NS_IMETHOD Run() override
   {
     mRes->OnError(mRv);
     return NS_OK;
@@ -324,17 +344,21 @@ BluetoothA2dpManager::Get()
   return sBluetoothA2dpManager;
 }
 
-class CleanupAvrcpResultHandler MOZ_FINAL : public BluetoothAvrcpResultHandler
+class BluetoothA2dpManager::CleanupAvrcpResultHandler final
+  : public BluetoothAvrcpResultHandler
 {
 public:
   CleanupAvrcpResultHandler(BluetoothProfileResultHandler* aRes)
-  : mRes(aRes)
+    : mRes(aRes)
   { }
 
-  void OnError(BluetoothStatus aStatus) MOZ_OVERRIDE
+  void OnError(BluetoothStatus aStatus) override
   {
     BT_WARNING("BluetoothAvrcpInterface::Cleanup failed: %d",
                (int)aStatus);
+
+    sBtAvrcpInterface = nullptr;
+
     if (mRes) {
       if (aStatus == STATUS_UNSUPPORTED) {
         /* Not all versions of Bluedroid support AVRCP. So if the
@@ -348,7 +372,7 @@ public:
     }
   }
 
-  void Cleanup() MOZ_OVERRIDE
+  void Cleanup() override
   {
     sBtAvrcpInterface = nullptr;
     if (mRes) {
@@ -360,23 +384,27 @@ private:
   nsRefPtr<BluetoothProfileResultHandler> mRes;
 };
 
-class CleanupA2dpResultHandler MOZ_FINAL : public BluetoothA2dpResultHandler
+class BluetoothA2dpManager::CleanupA2dpResultHandler final
+  : public BluetoothA2dpResultHandler
 {
 public:
   CleanupA2dpResultHandler(BluetoothProfileResultHandler* aRes)
-  : mRes(aRes)
+    : mRes(aRes)
   { }
 
-  void OnError(BluetoothStatus aStatus) MOZ_OVERRIDE
+  void OnError(BluetoothStatus aStatus) override
   {
     BT_WARNING("BluetoothA2dpInterface::Cleanup failed: %d",
                (int)aStatus);
+
+    sBtA2dpInterface = nullptr;
+
     if (mRes) {
       mRes->OnError(NS_ERROR_FAILURE);
     }
   }
 
-  void Cleanup() MOZ_OVERRIDE
+  void Cleanup() override
   {
     sBtA2dpInterface = nullptr;
     if (sBtAvrcpInterface) {
@@ -393,14 +421,15 @@ private:
   nsRefPtr<BluetoothProfileResultHandler> mRes;
 };
 
-class CleanupA2dpResultHandlerRunnable MOZ_FINAL : public nsRunnable
+class BluetoothA2dpManager::CleanupA2dpResultHandlerRunnable final
+  : public nsRunnable
 {
 public:
   CleanupA2dpResultHandlerRunnable(BluetoothProfileResultHandler* aRes)
-  : mRes(aRes)
+    : mRes(aRes)
   { }
 
-  NS_IMETHOD Run() MOZ_OVERRIDE
+  NS_IMETHOD Run() override
   {
     sBtA2dpInterface = nullptr;
     if (sBtAvrcpInterface) {
@@ -457,10 +486,11 @@ BluetoothA2dpManager::OnConnectError()
   mDeviceAddress.Truncate();
 }
 
-class ConnectResultHandler MOZ_FINAL : public BluetoothA2dpResultHandler
+class BluetoothA2dpManager::ConnectResultHandler final
+  : public BluetoothA2dpResultHandler
 {
 public:
-  void OnError(BluetoothStatus aStatus) MOZ_OVERRIDE
+  void OnError(BluetoothStatus aStatus) override
   {
     BT_LOGR("BluetoothA2dpInterface::Connect failed: %d", (int)aStatus);
 
@@ -504,14 +534,16 @@ void
 BluetoothA2dpManager::OnDisconnectError()
 {
   MOZ_ASSERT(NS_IsMainThread());
+  NS_ENSURE_TRUE_VOID(mController);
 
   mController->NotifyCompletion(NS_LITERAL_STRING(ERR_DISCONNECTION_FAILED));
 }
 
-class DisconnectResultHandler MOZ_FINAL : public BluetoothA2dpResultHandler
+class BluetoothA2dpManager::DisconnectResultHandler final
+  : public BluetoothA2dpResultHandler
 {
 public:
-  void OnError(BluetoothStatus aStatus) MOZ_OVERRIDE
+  void OnError(BluetoothStatus aStatus) override
   {
     BT_LOGR("BluetoothA2dpInterface::Disconnect failed: %d", (int)aStatus);
 
@@ -547,7 +579,9 @@ BluetoothA2dpManager::Disconnect(BluetoothProfileController* aController)
 
   if (!sBtA2dpInterface) {
     BT_LOGR("sBluetoothA2dpInterface is null");
-    aController->NotifyCompletion(NS_LITERAL_STRING(ERR_NO_AVAILABLE_RESOURCE));
+    if (aController) {
+      aController->NotifyCompletion(NS_LITERAL_STRING(ERR_NO_AVAILABLE_RESOURCE));
+    }
     return;
   }
 
@@ -686,6 +720,19 @@ BluetoothA2dpManager::HandleSinkPropertyChanged(const BluetoothSignal& aSignal)
       break;
     default:
       break;
+  }
+}
+
+/*
+ * Reset connection state to DISCONNECTED to handle backend error. The state
+ * change triggers UI status bar update as ordinary bluetooth turn-off sequence.
+ */
+void
+BluetoothA2dpManager::HandleBackendError()
+{
+  if (mSinkState != SinkState::SINK_DISCONNECTED) {
+    ConnectionStateNotification(A2DP_CONNECTION_STATE_DISCONNECTED,
+      mDeviceAddress);
   }
 }
 
@@ -895,6 +942,14 @@ BluetoothA2dpManager::UpdateRegisterNotification(BluetoothAvrcpEvent aEvent,
       }
       mPlaybackInterval = aParam;
       break;
+    case AVRCP_EVENT_APP_SETTINGS_CHANGED:
+      mAppSettingsChangedNotifyType = AVRCP_NTF_INTERIM;
+      param.mNumAttr = 2;
+      param.mIds[0] = AVRCP_PLAYER_ATTRIBUTE_REPEAT;
+      param.mValues[0] = AVRCP_PLAYER_VAL_OFF_REPEAT;
+      param.mIds[1] = AVRCP_PLAYER_ATTRIBUTE_SHUFFLE;
+      param.mValues[1] = AVRCP_PLAYER_VAL_OFF_SHUFFLE;
+      break;
     default:
       break;
   }
@@ -1010,10 +1065,15 @@ BluetoothA2dpManager::GetPlayStatusNotification()
     return;
   }
 
+#ifdef MOZ_B2G_BT_API_V2
+  bs->DistributeSignal(NS_LITERAL_STRING(REQUEST_MEDIA_PLAYSTATUS_ID),
+                       NS_LITERAL_STRING(KEY_ADAPTER));
+#else
   bs->DistributeSignal(
     BluetoothSignal(NS_LITERAL_STRING(REQUEST_MEDIA_PLAYSTATUS_ID),
                     NS_LITERAL_STRING(KEY_ADAPTER),
                     InfallibleTArray<BluetoothNamedValue>()));
+#endif
 }
 
 /* Player application settings is optional for AVRCP 1.3. B2G

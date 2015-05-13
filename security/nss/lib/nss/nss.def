@@ -1062,3 +1062,17 @@ PK11_PrivDecrypt;
 ;+    local:
 ;+       *;
 ;+};
+;+NSS_3.18 { 	# NSS 3.18 release
+;+    global:
+__PK11_SetCertificateNickname;
+SEC_CheckCrlTimes;
+SEC_GetCrlTimes;
+;+    local:
+;+       *;
+;+};
+;+NSS_3.19 { 	# NSS 3.19 release
+;+    global:
+CERT_GetImposedNameConstraints;
+;+    local:
+;+       *;
+;+};

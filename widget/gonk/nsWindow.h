@@ -22,43 +22,29 @@
 #include "nsIIdleServiceInternal.h"
 #include "Units.h"
 
-extern nsIntRect gScreenBounds;
-
-namespace mozilla {
-namespace gl {
-class GLContext;
-}
-namespace layers {
-class LayersManager;
-}
-}
-
 class ANativeWindowBuffer;
-
-namespace android {
-class FramebufferNativeWindow;
-}
 
 namespace widget {
 struct InputContext;
 struct InputContextAction;
 }
 
+class nsScreenGonk;
+
 class nsWindow : public nsBaseWidget
 {
 public:
     nsWindow();
-    virtual ~nsWindow();
 
-    static void NotifyVsync(mozilla::TimeStamp aVsyncTimestamp);
+    NS_DECL_ISUPPORTS_INHERITED
+
     static void DoDraw(void);
-    static nsEventStatus DispatchInputEvent(mozilla::WidgetGUIEvent& aEvent);
+    static nsEventStatus DispatchKeyInput(mozilla::WidgetKeyboardEvent& aEvent);
     static void DispatchTouchInput(mozilla::MultiTouchInput& aInput);
 
     NS_IMETHOD Create(nsIWidget *aParent,
                       void *aNativeParent,
                       const nsIntRect &aRect,
-                      nsDeviceContext *aContext,
                       nsWidgetInitData *aInitData);
     NS_IMETHOD Destroy(void);
 
@@ -83,14 +69,26 @@ public:
     NS_IMETHOD ConfigureChildren(const nsTArray<nsIWidget::Configuration>&);
     NS_IMETHOD Invalidate(const nsIntRect &aRect);
     virtual void* GetNativeData(uint32_t aDataType);
+    virtual void SetNativeData(uint32_t aDataType, uintptr_t aVal);
     NS_IMETHOD SetTitle(const nsAString& aTitle)
     {
         return NS_OK;
     }
-    virtual nsIntPoint WidgetToScreenOffset();
+    virtual mozilla::LayoutDeviceIntPoint WidgetToScreenOffset();
     void DispatchTouchInputViaAPZ(mozilla::MultiTouchInput& aInput);
+    void DispatchTouchEventForAPZ(const mozilla::MultiTouchInput& aInput,
+                                  const ScrollableLayerGuid& aGuid,
+                                  const uint64_t aInputBlockId,
+                                  nsEventStatus aApzResponse);
     NS_IMETHOD DispatchEvent(mozilla::WidgetGUIEvent* aEvent,
                              nsEventStatus& aStatus);
+    virtual nsresult SynthesizeNativeTouchPoint(uint32_t aPointerId,
+                                                TouchPointerState aPointerState,
+                                                nsIntPoint aPointerScreenPoint,
+                                                double aPointerPressure,
+                                                uint32_t aPointerOrientation,
+                                                nsIObserver* aObserver) override;
+
     NS_IMETHOD CaptureRollupEvents(nsIRollupListener *aListener,
                                    bool aDoCapture)
     {
@@ -98,11 +96,11 @@ public:
     }
     NS_IMETHOD ReparentNativeWidget(nsIWidget* aNewParent);
 
-    NS_IMETHOD MakeFullScreen(bool aFullScreen, nsIScreen* aTargetScreen = nullptr) /*MOZ_OVERRIDE*/;
+    NS_IMETHOD MakeFullScreen(bool aFullScreen, nsIScreen* aTargetScreen = nullptr) /*override*/;
 
     virtual mozilla::TemporaryRef<mozilla::gfx::DrawTarget>
-        StartRemoteDrawing() MOZ_OVERRIDE;
-    virtual void EndRemoteDrawing() MOZ_OVERRIDE;
+        StartRemoteDrawing() override;
+    virtual void EndRemoteDrawing() override;
 
     virtual float GetDPI();
     virtual double GetDefaultScaleInternal();
@@ -116,12 +114,14 @@ public:
                                       const InputContextAction& aAction);
     NS_IMETHOD_(InputContext) GetInputContext();
 
-    virtual uint32_t GetGLFrameBufferFormat() MOZ_OVERRIDE;
+    virtual uint32_t GetGLFrameBufferFormat() override;
 
-    virtual nsIntRect GetNaturalBounds() MOZ_OVERRIDE;
+    virtual nsIntRect GetNaturalBounds() override;
     virtual bool NeedsPaint();
 
-    virtual Composer2D* GetComposer2D() MOZ_OVERRIDE;
+    virtual Composer2D* GetComposer2D() override;
+
+    void ConfigureAPZControllerThread() override;
 
 protected:
     nsWindow* mParent;
@@ -143,11 +143,20 @@ protected:
     // destruction.
     mozilla::RefPtr<mozilla::gfx::DrawTarget> mBackBuffer;
 
+    virtual ~nsWindow();
+
     void BringToTop();
 
     // Call this function when the users activity is the direct cause of an
     // event (like a keypress or mouse click).
     void UserActivity();
+
+private:
+    // This is used by SynthesizeNativeTouchPoint to maintain state between
+    // multiple synthesized points
+    nsAutoPtr<mozilla::MultiTouchInput> mSynthesizedTouchInput;
+
+    nsRefPtr<nsScreenGonk> mScreen;
 };
 
 #endif /* nsWindow_h */

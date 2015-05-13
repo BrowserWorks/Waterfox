@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -38,7 +39,7 @@ public:
   NS_FORWARD_NSIDOMNODE_TO_NSINODE
 };
 
-class DocumentType MOZ_FINAL : public DocumentTypeForward
+class DocumentType final : public DocumentTypeForward
 {
 public:
   DocumentType(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo,
@@ -56,28 +57,28 @@ public:
   NS_DECL_NSIDOMDOCUMENTTYPE
 
   // nsINode
-  virtual bool IsNodeOfType(uint32_t aFlags) const MOZ_OVERRIDE;
-  virtual void GetNodeValueInternal(nsAString& aNodeValue) MOZ_OVERRIDE
+  virtual bool IsNodeOfType(uint32_t aFlags) const override;
+  virtual void GetNodeValueInternal(nsAString& aNodeValue) override
   {
     SetDOMStringToNull(aNodeValue);
   }
   virtual void SetNodeValueInternal(const nsAString& aNodeValue,
-                                    mozilla::ErrorResult& aError) MOZ_OVERRIDE
+                                    mozilla::ErrorResult& aError) override
   {
   }
 
   // nsIContent overrides
-  virtual const nsTextFragment* GetText() MOZ_OVERRIDE;
+  virtual const nsTextFragment* GetText() override;
 
   virtual nsGenericDOMDataNode* CloneDataNode(mozilla::dom::NodeInfo *aNodeInfo,
-                                              bool aCloneText) const MOZ_OVERRIDE;
+                                              bool aCloneText) const override;
 
-  virtual nsIDOMNode* AsDOMNode() MOZ_OVERRIDE { return this; }
+  virtual nsIDOMNode* AsDOMNode() override { return this; }
 
 protected:
   virtual ~DocumentType();
 
-  virtual JSObject* WrapNode(JSContext *cx) MOZ_OVERRIDE;
+  virtual JSObject* WrapNode(JSContext *cx, JS::Handle<JSObject*> aGivenProto) override;
 
   nsString mPublicId;
   nsString mSystemId;

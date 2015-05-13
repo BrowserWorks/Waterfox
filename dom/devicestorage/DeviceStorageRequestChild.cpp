@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -103,12 +104,13 @@ DeviceStorageRequestChild::
     {
       BlobResponse r = aValue;
       BlobChild* actor = static_cast<BlobChild*>(r.blobChild());
-      nsRefPtr<FileImpl> bloblImpl = actor->GetBlobImpl();
-      nsRefPtr<File> blob = new File(mRequest->GetParentObject(), bloblImpl);
+      nsRefPtr<BlobImpl> bloblImpl = actor->GetBlobImpl();
+      nsRefPtr<Blob> blob = Blob::Create(mRequest->GetParentObject(),
+                                         bloblImpl);
 
       AutoJSContext cx;
 
-      JS::Rooted<JSObject*> obj(cx, blob->WrapObject(cx));
+      JS::Rooted<JSObject*> obj(cx, blob->WrapObject(cx, JS::NullPtr()));
       MOZ_ASSERT(obj);
 
       JS::Rooted<JS::Value> result(cx, JS::ObjectValue(*obj));

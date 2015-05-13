@@ -929,14 +929,8 @@ extern SECStatus CERT_FindNSCertTypeExtension
 
 extern char * CERT_FindNSStringExtension (CERTCertificate *cert, int oidtag);
 
-extern SECStatus CERT_FindIssuerCertExtension
-   (CERTCertificate *cert, int tag, SECItem *value);
-
 extern SECStatus CERT_FindCertExtensionByOID
    (CERTCertificate *cert, SECItem *oid, SECItem *value);
-
-extern char *CERT_FindCertURLExtension (CERTCertificate *cert, int tag, 
-								int catag);
 
 /* Returns the decoded value of the authKeyID extension.
 **   Note that this uses passed in the arena to allocate storage for the result
@@ -1177,6 +1171,20 @@ CERT_GetNextGeneralName(CERTGeneralName *current);
 
 extern CERTGeneralName *
 CERT_GetPrevGeneralName(CERTGeneralName *current);
+
+/*
+ * Look up name constraints for some certs that do not include name constraints
+ * (Most importantly, root certificates)
+ *
+ * If a matching subject is found, |extensions| will be populated with a copy of the
+ * DER-encoded name constraints extension. The data in |extensions| will point to
+ * memory that the caller owns.
+ *
+ * There is no mechanism to configure imposed name constraints right now.  All
+ * imposed name constraints are built into NSS.
+ */
+SECStatus
+CERT_GetImposedNameConstraints(const SECItem *derSubject, SECItem *extensions);
 
 CERTNameConstraint *
 CERT_GetNextNameConstraint(CERTNameConstraint *current);
@@ -1549,6 +1557,9 @@ CERT_CheckNameSpace(PLArenaPool          *arena,
 
 /*
  * Extract and allocate the name constraints extension from the CA cert.
+ * If the certificate contains no name constraints extension, but
+ * CERT_GetImposedNameConstraints returns a name constraints extension
+ * for the subject of the certificate, then that extension will be returned.
  */
 extern SECStatus
 CERT_FindNameConstraintsExten(PLArenaPool      *arena,

@@ -4,7 +4,10 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-DIRS += ['standalone', 'nomozalloc']
+with Files('nsString*'):
+    BUG_COMPONENT = ('Core', 'String')
+
+DIRS += ['standalone']
 
 # On win we build two glue libs - glue linked to crt dlls here and in staticruntime we build
 # a statically linked glue lib.
@@ -57,7 +60,6 @@ EXPORTS += [
     'nsTPriorityQueue.h',
     'nsTWeakRef.h',
     'nsVersionComparator.h',
-    'nsVoidArray.h',
     'nsWeakReference.h',
     'nsXPTCUtils.h',
     'pldhash.h',
@@ -72,16 +74,11 @@ EXPORTS.mozilla += [
     'EnumeratedArrayCycleCollection.h',
     'FileUtils.h',
     'GenericFactory.h',
-    'HoldDropJSObjects.h',
     'IntentionalCrash.h',
     'Monitor.h',
     'Mutex.h',
     'Observer.h',
     'ReentrantMonitor.h',
-]
-
-EXPORTS.mozilla.threads += [
-    'nsThreadIDs.h',
 ]
 
 include('objs.mozbuild')
@@ -112,3 +109,15 @@ LOCAL_INCLUDES += [
 
 if CONFIG['ENABLE_TESTS']:
     DIRS += ['tests/gtest']
+
+FAIL_ON_WARNINGS = True
+
+# Include fallible for third party code using the xpcom glue
+USE_LIBS += [
+    'fallible',
+]
+
+# Force to build a static library only
+NO_EXPAND_LIBS = True
+
+DIST_INSTALL = True

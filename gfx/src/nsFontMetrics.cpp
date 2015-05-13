@@ -12,13 +12,14 @@
 #include "gfxRect.h"                    // for gfxRect
 #include "gfxTypes.h"                   // for gfxFloat
 #include "nsBoundingMetrics.h"          // for nsBoundingMetrics
-#include "nsDebug.h"                    // for NS_ERROR, NS_ABORT_IF_FALSE
+#include "nsDebug.h"                    // for NS_ERROR
 #include "nsDeviceContext.h"            // for nsDeviceContext
 #include "nsIAtom.h"                    // for nsIAtom
 #include "nsMathUtils.h"                // for NS_round
 #include "nsRenderingContext.h"         // for nsRenderingContext
-#include "nsString.h"               // for nsString
+#include "nsString.h"                   // for nsString
 #include "nsStyleConsts.h"              // for NS_STYLE_HYPHENS_NONE
+#include "mozilla/Assertions.h"         // for MOZ_ASSERT
 
 class gfxUserFontSet;
 
@@ -126,7 +127,7 @@ nsFontMetrics::Init(const nsFont& aFont,
                     gfxUserFontSet *aUserFontSet,
                     gfxTextPerfMetrics *aTextPerf)
 {
-    NS_ABORT_IF_FALSE(mP2A == 0, "already initialized");
+    MOZ_ASSERT(mP2A == 0, "already initialized");
 
     mFont = aFont;
     mLanguage = aLanguage;
@@ -215,8 +216,8 @@ static gfxFloat ComputeMaxDescent(const gfxFont::Metrics& aMetrics,
 {
     gfxFloat offset = floor(-aFontGroup->GetUnderlineOffset() + 0.5);
     gfxFloat size = NS_round(aMetrics.underlineSize);
-    gfxFloat minDescent = floor(offset + size + 0.5);
-    return std::max(minDescent, aMetrics.maxDescent);
+    gfxFloat minDescent = offset + size;
+    return floor(std::max(minDescent, aMetrics.maxDescent) + 0.5);
 }
 
 static gfxFloat ComputeMaxAscent(const gfxFont::Metrics& aMetrics)

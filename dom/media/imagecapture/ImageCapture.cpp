@@ -97,14 +97,14 @@ ImageCapture::TakePhotoByMediaEngine()
       mStream->AddPrincipalChangeObserver(this);
     }
 
-    void PrincipalChanged(DOMMediaStream* aMediaStream) MOZ_OVERRIDE
+    void PrincipalChanged(DOMMediaStream* aMediaStream) override
     {
       mPrincipalChanged = true;
     }
 
-    nsresult PhotoComplete(already_AddRefed<File> aBlob) MOZ_OVERRIDE
+    nsresult PhotoComplete(already_AddRefed<Blob> aBlob) override
     {
-      nsRefPtr<File> blob = aBlob;
+      nsRefPtr<Blob> blob = aBlob;
 
       if (mPrincipalChanged) {
         return PhotoError(NS_ERROR_DOM_SECURITY_ERR);
@@ -112,7 +112,7 @@ ImageCapture::TakePhotoByMediaEngine()
       return mImageCapture->PostBlobEvent(blob);
     }
 
-    nsresult PhotoError(nsresult aRv) MOZ_OVERRIDE
+    nsresult PhotoError(nsresult aRv) override
     {
       return mImageCapture->PostErrorEvent(ImageCaptureError::PHOTO_ERROR, aRv);
     }
@@ -172,7 +172,7 @@ ImageCapture::TakePhoto(ErrorResult& aResult)
 }
 
 nsresult
-ImageCapture::PostBlobEvent(File* aBlob)
+ImageCapture::PostBlobEvent(Blob* aBlob)
 {
   MOZ_ASSERT(NS_IsMainThread());
   if (!CheckPrincipal()) {

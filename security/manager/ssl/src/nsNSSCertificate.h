@@ -10,7 +10,6 @@
 #include "nsIX509CertDB.h"
 #include "nsIX509CertList.h"
 #include "nsIASN1Object.h"
-#include "nsIIdentityInfo.h"
 #include "nsCOMPtr.h"
 #include "nsNSSShutDown.h"
 #include "nsISimpleEnumerator.h"
@@ -25,16 +24,14 @@ class nsAutoString;
 class nsINSSComponent;
 class nsIASN1Sequence;
 
-class nsNSSCertificate MOZ_FINAL : public nsIX509Cert,
-                                   public nsIIdentityInfo,
-                                   public nsISerializable,
-                                   public nsIClassInfo,
-                                   public nsNSSShutDownObject
+class nsNSSCertificate final : public nsIX509Cert,
+                               public nsISerializable,
+                               public nsIClassInfo,
+                               public nsNSSShutDownObject
 {
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSIX509CERT
-  NS_DECL_NSIIDENTITYINFO
   NS_DECL_NSISERIALIZABLE
   NS_DECL_NSICLASSINFO
 
@@ -48,6 +45,7 @@ public:
   static nsNSSCertificate* Create(CERTCertificate*cert = nullptr,
                                   SECOidTag* evOidPolicy = nullptr);
   static nsNSSCertificate* ConstructFromDER(char* certDER, int derLen);
+  nsresult GetIsExtendedValidation(bool* aIsEV);
 
   enum EVStatus {
     ev_status_invalid = 0,
@@ -65,7 +63,7 @@ private:
   nsresult CreateTBSCertificateASN1Struct(nsIASN1Sequence** retSequence,
                                           nsINSSComponent* nssComponent);
   nsresult GetSortableDate(PRTime aTime, nsAString& _aSortableDate);
-  virtual void virtualDestroyNSSReference() MOZ_OVERRIDE;
+  virtual void virtualDestroyNSSReference() override;
   void destructorSafeDestroyNSSReference();
   bool InitFromDER(char* certDER, int derLen);  // return false on failure
 
@@ -105,7 +103,7 @@ public:
                                      proofOfLock);
 private:
    virtual ~nsNSSCertList();
-   virtual void virtualDestroyNSSReference() MOZ_OVERRIDE;
+   virtual void virtualDestroyNSSReference() override;
    void destructorSafeDestroyNSSReference();
 
    mozilla::ScopedCERTCertList mCertList;
@@ -125,7 +123,7 @@ public:
                            const nsNSSShutDownPreventionLock& proofOfLock);
 private:
    virtual ~nsNSSCertListEnumerator();
-   virtual void virtualDestroyNSSReference() MOZ_OVERRIDE;
+   virtual void virtualDestroyNSSReference() override;
    void destructorSafeDestroyNSSReference();
 
    mozilla::ScopedCERTCertList mCertList;

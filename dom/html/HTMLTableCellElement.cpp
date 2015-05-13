@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -23,9 +24,9 @@ HTMLTableCellElement::~HTMLTableCellElement()
 }
 
 JSObject*
-HTMLTableCellElement::WrapNode(JSContext *aCx)
+HTMLTableCellElement::WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return HTMLTableCellElementBinding::Wrap(aCx, this);
+  return HTMLTableCellElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 NS_IMPL_ISUPPORTS_INHERITED(HTMLTableCellElement, nsGenericHTMLElement,
@@ -56,14 +57,14 @@ HTMLTableCellElement::GetTable() const
     return nullptr;
   }
 
-  if (section->IsHTML(nsGkAtoms::table)) {
+  if (section->IsHTMLElement(nsGkAtoms::table)) {
     // XHTML, without a row group.
     return static_cast<HTMLTableElement*>(section);
   }
 
   // We have a row group.
   nsIContent* result = section->GetParent();
-  if (result && result->IsHTML(nsGkAtoms::table)) {
+  if (result && result->IsHTMLElement(nsGkAtoms::table)) {
     return static_cast<HTMLTableElement*>(result);
   }
 
@@ -121,15 +122,15 @@ HTMLTableCellElement::SetAbbr(const nsAString& aAbbr)
 {
   ErrorResult rv;
   SetAbbr(aAbbr, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 NS_IMETHODIMP
 HTMLTableCellElement::GetAbbr(nsAString& aAbbr)
 {
-  nsString abbr;
+  DOMString abbr;
   GetAbbr(abbr);
-  aAbbr = abbr;
+  abbr.ToString(aAbbr);
   return NS_OK;
 }
 
@@ -138,15 +139,15 @@ HTMLTableCellElement::SetAxis(const nsAString& aAxis)
 {
   ErrorResult rv;
   SetAxis(aAxis, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 NS_IMETHODIMP
 HTMLTableCellElement::GetAxis(nsAString& aAxis)
 {
-  nsString axis;
+  DOMString axis;
   GetAxis(axis);
-  aAxis = axis;
+  axis.ToString(aAxis);
   return NS_OK;
 }
 
@@ -155,15 +156,15 @@ HTMLTableCellElement::SetAlign(const nsAString& aAlign)
 {
   ErrorResult rv;
   SetAlign(aAlign, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 NS_IMETHODIMP
 HTMLTableCellElement::GetAlign(nsAString& aAlign)
 {
-  nsString align;
+  DOMString align;
   GetAlign(align);
-  aAlign = align;
+  align.ToString(aAlign);
   return NS_OK;
 }
 
@@ -172,15 +173,15 @@ HTMLTableCellElement::SetVAlign(const nsAString& aVAlign)
 {
   ErrorResult rv;
   SetVAlign(aVAlign, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 NS_IMETHODIMP
 HTMLTableCellElement::GetVAlign(nsAString& aVAlign)
 {
-  nsString vAlign;
+  DOMString vAlign;
   GetVAlign(vAlign);
-  aVAlign = vAlign;
+  vAlign.ToString(aVAlign);
   return NS_OK;
 }
 
@@ -189,15 +190,15 @@ HTMLTableCellElement::SetCh(const nsAString& aCh)
 {
   ErrorResult rv;
   SetCh(aCh, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 NS_IMETHODIMP
 HTMLTableCellElement::GetCh(nsAString& aCh)
 {
-  nsString ch;
+  DOMString ch;
   GetCh(ch);
-  aCh = ch;
+  ch.ToString(aCh);
   return NS_OK;
 }
 
@@ -206,15 +207,15 @@ HTMLTableCellElement::SetChOff(const nsAString& aChOff)
 {
   ErrorResult rv;
   SetChOff(aChOff, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 NS_IMETHODIMP
 HTMLTableCellElement::GetChOff(nsAString& aChOff)
 {
-  nsString chOff;
+  DOMString chOff;
   GetChOff(chOff);
-  aChOff = chOff;
+  chOff.ToString(aChOff);
   return NS_OK;
 }
 
@@ -223,15 +224,15 @@ HTMLTableCellElement::SetBgColor(const nsAString& aBgColor)
 {
   ErrorResult rv;
   SetBgColor(aBgColor, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 NS_IMETHODIMP
 HTMLTableCellElement::GetBgColor(nsAString& aBgColor)
 {
-  nsString bgColor;
+  DOMString bgColor;
   GetBgColor(bgColor);
-  aBgColor = bgColor;
+  bgColor.ToString(aBgColor);
   return NS_OK;
 }
 
@@ -240,15 +241,15 @@ HTMLTableCellElement::SetHeight(const nsAString& aHeight)
 {
   ErrorResult rv;
   SetHeight(aHeight, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 NS_IMETHODIMP
 HTMLTableCellElement::GetHeight(nsAString& aHeight)
 {
-  nsString height;
+  DOMString height;
   GetHeight(height);
-  aHeight = height;
+  height.ToString(aHeight);
   return NS_OK;
 }
 
@@ -257,15 +258,15 @@ HTMLTableCellElement::SetWidth(const nsAString& aWidth)
 {
   ErrorResult rv;
   SetWidth(aWidth, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 NS_IMETHODIMP
 HTMLTableCellElement::GetWidth(nsAString& aWidth)
 {
-  nsString width;
+  DOMString width;
   GetWidth(width);
-  aWidth = width;
+  width.ToString(aWidth);
   return NS_OK;
 }
 
@@ -274,7 +275,7 @@ HTMLTableCellElement::SetNoWrap(bool aNoWrap)
 {
   ErrorResult rv;
   SetNoWrap(aNoWrap, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 NS_IMETHODIMP
@@ -289,15 +290,15 @@ HTMLTableCellElement::SetScope(const nsAString& aScope)
 {
   ErrorResult rv;
   SetScope(aScope, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 NS_IMETHODIMP
 HTMLTableCellElement::GetScope(nsAString& aScope)
 {
-  nsString scope;
+  DOMString scope;
   GetScope(scope);
-  aScope = scope;
+  scope.ToString(aScope);
   return NS_OK;
 }
 
@@ -306,15 +307,15 @@ HTMLTableCellElement::SetHeaders(const nsAString& aHeaders)
 {
   ErrorResult rv;
   SetHeaders(aHeaders, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 NS_IMETHODIMP
 HTMLTableCellElement::GetHeaders(nsAString& aHeaders)
 {
-  nsString headers;
+  DOMString headers;
   GetHeaders(headers);
-  aHeaders = headers;
+  headers.ToString(aHeaders);
   return NS_OK;
 }
 
@@ -323,7 +324,7 @@ HTMLTableCellElement::SetColSpan(int32_t aColSpan)
 {
   ErrorResult rv;
   SetColSpan(aColSpan, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 NS_IMETHODIMP
@@ -338,7 +339,7 @@ HTMLTableCellElement::SetRowSpan(int32_t aRowSpan)
 {
   ErrorResult rv;
   SetRowSpan(aRowSpan, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 NS_IMETHODIMP
@@ -349,7 +350,7 @@ HTMLTableCellElement::GetRowSpan(int32_t* aRowSpan)
 }
 
 void
-HTMLTableCellElement::GetAlign(nsString& aValue)
+HTMLTableCellElement::GetAlign(DOMString& aValue)
 {
   if (!GetAttr(kNameSpaceID_None, nsGkAtoms::align, aValue)) {
     // There's no align attribute, ask the row for the alignment.
@@ -390,7 +391,7 @@ HTMLTableCellElement::ParseAttribute(int32_t aNamespaceID,
         // quirks mode does not honor the special html 4 value of 0
         if (val > MAX_COLSPAN || val < 0 ||
             (0 == val && InNavQuirksMode(OwnerDoc()))) {
-          aResult.SetTo(1);
+          aResult.SetTo(1, &aValue);
         }
       }
       return res;
@@ -401,7 +402,7 @@ HTMLTableCellElement::ParseAttribute(int32_t aNamespaceID,
         int32_t val = aResult.GetIntegerValue();
         // quirks mode does not honor the special html 4 value of 0
         if (val < 0 || (0 == val && InNavQuirksMode(OwnerDoc()))) {
-          aResult.SetTo(1);
+          aResult.SetTo(1, &aValue);
         }
       }
       return res;

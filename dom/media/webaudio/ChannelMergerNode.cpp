@@ -14,7 +14,7 @@ namespace dom {
 
 NS_IMPL_ISUPPORTS_INHERITED0(ChannelMergerNode, AudioNode)
 
-class ChannelMergerNodeEngine : public AudioNodeEngine
+class ChannelMergerNodeEngine final : public AudioNodeEngine
 {
 public:
   explicit ChannelMergerNodeEngine(ChannelMergerNode* aNode)
@@ -26,7 +26,7 @@ public:
   virtual void ProcessBlocksOnPorts(AudioNodeStream* aStream,
                                     const OutputChunks& aInput,
                                     OutputChunks& aOutput,
-                                    bool* aFinished) MOZ_OVERRIDE
+                                    bool* aFinished) override
   {
     MOZ_ASSERT(aInput.Length() >= 1, "Should have one or more input ports");
 
@@ -59,7 +59,7 @@ public:
     }
   }
 
-  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const MOZ_OVERRIDE
+  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
   }
@@ -82,9 +82,9 @@ ChannelMergerNode::~ChannelMergerNode()
 }
 
 JSObject*
-ChannelMergerNode::WrapObject(JSContext* aCx)
+ChannelMergerNode::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return ChannelMergerNodeBinding::Wrap(aCx, this);
+  return ChannelMergerNodeBinding::Wrap(aCx, this, aGivenProto);
 }
 
 }

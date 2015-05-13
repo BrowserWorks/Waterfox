@@ -47,6 +47,12 @@
 #include "mozilla/MouseEvents.h"
 #include "mozilla/unused.h"
 
+#ifdef XP_WIN
+#define COMBOBOX_ROLLUP_CONSUME_EVENT 0
+#else
+#define COMBOBOX_ROLLUP_CONSUME_EVENT 1
+#endif
+
 using namespace mozilla;
 using namespace mozilla::gfx;
 
@@ -87,7 +93,7 @@ private:
 public:
   NS_DECL_ISUPPORTS
 
-  NS_IMETHOD HandleEvent(nsIDOMEvent*) MOZ_OVERRIDE
+  NS_IMETHOD HandleEvent(nsIDOMEvent*) override
   {
     mComboBox->ShowDropDown(!mComboBox->IsDroppedDown());
     return NS_OK;
@@ -367,7 +373,7 @@ nsComboboxControlFrame::ShowList(bool aShowList)
   return weakFrame.IsAlive();
 }
 
-class nsResizeDropdownAtFinalPosition MOZ_FINAL
+class nsResizeDropdownAtFinalPosition final
   : public nsIReflowCallback, public nsRunnable
 {
 public:
@@ -384,19 +390,19 @@ protected:
   }
 
 public:
-  virtual bool ReflowFinished() MOZ_OVERRIDE
+  virtual bool ReflowFinished() override
   {
     Run();
     NS_RELEASE_THIS();
     return false;
   }
 
-  virtual void ReflowCallbackCanceled() MOZ_OVERRIDE
+  virtual void ReflowCallbackCanceled() override
   {
     NS_RELEASE_THIS();
   }
 
-  NS_IMETHODIMP Run() MOZ_OVERRIDE
+  NS_IMETHODIMP Run() override
   {
     if (mFrame.IsAlive()) {
       static_cast<nsComboboxControlFrame*>(mFrame.GetFrame())->
@@ -775,6 +781,7 @@ nsComboboxControlFrame::Reflow(nsPresContext*          aPresContext,
                                const nsHTMLReflowState& aReflowState,
                                nsReflowStatus&          aStatus)
 {
+  MarkInReflow();
   // Constraints we try to satisfy:
 
   // 1) Default width of button is the vertical scrollbar size
@@ -1108,6 +1115,18 @@ nsComboboxControlFrame::HandleEvent(nsPresContext* aPresContext,
     return NS_OK;
   }
 
+#if COMBOBOX_ROLLUP_CONSUME_EVENT == 0
+  if (aEvent->message == NS_MOUSE_BUTTON_DOWN) {
+    nsIWidget* widget = GetNearestWidget();
+    if (widget && GetContent() == widget->GetLastRollup()) {
+      // This event did a Rollup on this control - prevent it from opening
+      // the dropdown again!
+      *aEventStatus = nsEventStatus_eConsumeNoDefault;
+      return NS_OK;
+    }
+  }
+#endif
+
   // If we have style that affects how we are selected, feed event down to
   // nsFrame::HandleEvent so that selection takes place when appropriate.
   const nsStyleUserInterface* uiStyle = StyleUserInterface();
@@ -1218,9 +1237,9 @@ public:
 
   // Need this so that line layout knows that this block's width
   // depends on the available width.
-  virtual nsIAtom* GetType() const MOZ_OVERRIDE;
+  virtual nsIAtom* GetType() const override;
 
-  virtual bool IsFrameOfType(uint32_t aFlags) const MOZ_OVERRIDE
+  virtual bool IsFrameOfType(uint32_t aFlags) const override
   {
     return nsBlockFrame::IsFrameOfType(aFlags &
       ~(nsIFrame::eReplacedContainsBlock));
@@ -1229,11 +1248,11 @@ public:
   virtual void Reflow(nsPresContext*           aPresContext,
                           nsHTMLReflowMetrics&     aDesiredSize,
                           const nsHTMLReflowState& aReflowState,
-                          nsReflowStatus&          aStatus) MOZ_OVERRIDE;
+                          nsReflowStatus&          aStatus) override;
 
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                                 const nsRect&           aDirtyRect,
-                                const nsDisplayListSet& aLists) MOZ_OVERRIDE;
+                                const nsDisplayListSet& aLists) override;
 
 protected:
   nsComboboxControlFrame* mComboBox;
@@ -1399,10 +1418,7 @@ nsComboboxControlFrame::Rollup(uint32_t aCount, bool aFlush,
     return false;
   }
 
-  bool consume = true;
-#ifdef XP_WIN
-  consume = false;
-#endif
+  bool consume = !!COMBOBOX_ROLLUP_CONSUME_EVENT;
   nsWeakFrame weakFrame(this);
   mListControlFrame->AboutToRollup(); // might destroy us
   if (!weakFrame.IsAlive()) {
@@ -1420,6 +1436,9 @@ nsComboboxControlFrame::Rollup(uint32_t aCount, bool aFlush,
     viewManager->UpdateWidgetGeometry();
   }
 
+  if (aLastRolledUp) {
+    *aLastRolledUp = GetContent();
+  }
   return consume;
 }
 
@@ -1461,7 +1480,7 @@ public:
 #endif
 
   virtual void Paint(nsDisplayListBuilder* aBuilder,
-                     nsRenderingContext* aCtx) MOZ_OVERRIDE;
+                     nsRenderingContext* aCtx) override;
   NS_DISPLAY_DECL_NAME("ComboboxFocus", TYPE_COMBOBOX_FOCUS)
 };
 
@@ -1469,7 +1488,7 @@ void nsDisplayComboboxFocus::Paint(nsDisplayListBuilder* aBuilder,
                                    nsRenderingContext* aCtx)
 {
   static_cast<nsComboboxControlFrame*>(mFrame)
-    ->PaintFocus(*aCtx, ToReferenceFrame());
+    ->PaintFocus(*aCtx->GetDrawTarget(), ToReferenceFrame());
 }
 
 void
@@ -1511,7 +1530,7 @@ nsComboboxControlFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
   DisplaySelectionOverlay(aBuilder, aLists.Content());
 }
 
-void nsComboboxControlFrame::PaintFocus(nsRenderingContext& aRenderingContext,
+void nsComboboxControlFrame::PaintFocus(DrawTarget& aDrawTarget,
                                         nsPoint aPt)
 {
   /* Do we need to do anything? */
@@ -1519,13 +1538,12 @@ void nsComboboxControlFrame::PaintFocus(nsRenderingContext& aRenderingContext,
   if (eventStates.HasState(NS_EVENT_STATE_DISABLED) || sFocused != this)
     return;
 
-  gfxContext* gfx = aRenderingContext.ThebesContext();
+  int32_t appUnitsPerDevPixel = PresContext()->AppUnitsPerDevPixel();
 
-  gfx->Save();
   nsRect clipRect = mDisplayFrame->GetRect() + aPt;
-  gfx->Clip(NSRectToSnappedRect(clipRect,
-                                PresContext()->AppUnitsPerDevPixel(),
-                                *aRenderingContext.GetDrawTarget()));
+  aDrawTarget.PushClipRect(NSRectToSnappedRect(clipRect,
+                                               appUnitsPerDevPixel,
+                                               aDrawTarget));
 
   // REVIEW: Why does the old code paint mDisplayFrame again? We've
   // already painted it in the children above. So clipping it here won't do
@@ -1540,12 +1558,10 @@ void nsComboboxControlFrame::PaintFocus(nsRenderingContext& aRenderingContext,
   nscoord onePixel = nsPresContext::CSSPixelsToAppUnits(1);
   clipRect.width -= onePixel;
   clipRect.height -= onePixel;
-  Rect r =
-    ToRect(nsLayoutUtils::RectToGfxRect(clipRect, PresContext()->AppUnitsPerDevPixel()));
-  StrokeSnappedEdgesOfRect(r, *aRenderingContext.GetDrawTarget(),
-                           color, strokeOptions);
+  Rect r = ToRect(nsLayoutUtils::RectToGfxRect(clipRect, appUnitsPerDevPixel));
+  StrokeSnappedEdgesOfRect(r, aDrawTarget, color, strokeOptions);
 
-  gfx->Restore();
+  aDrawTarget.PopClip();
 }
 
 //---------------------------------------------------------

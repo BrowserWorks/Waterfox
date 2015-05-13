@@ -35,9 +35,12 @@ elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk' and CONFIG['MOZ_B2G_RIL']:
         'gonk/MmsService.manifest',
         'gonk/MobileMessageDatabaseService.js',
         'gonk/MobileMessageDatabaseService.manifest',
-        'gonk/SmsService.js',
-        'gonk/SmsService.manifest',
     ]
+    if not CONFIG['DISABLE_MOZ_RIL_GEOLOC']:
+        EXTRA_COMPONENTS += [
+            'gonk/SmsService.js',
+            'gonk/SmsService.manifest',
+        ]
 
 EXPORTS.mozilla.dom += [
     'DOMMobileMessageError.h',
@@ -47,6 +50,7 @@ EXPORTS.mozilla.dom += [
 ]
 
 UNIFIED_SOURCES += [
+    'Assertions.cpp',
     'Constants.cpp',
     'DeletedMessageInfo.cpp',
     'DOMMobileMessageError.cpp',
@@ -70,8 +74,6 @@ IPDL_SOURCES += [
 ]
 
 FAIL_ON_WARNINGS = True
-
-MSVC_ENABLE_PGO = True
 
 LOCAL_INCLUDES += [
     '/dom/base',

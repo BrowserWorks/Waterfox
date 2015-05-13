@@ -385,9 +385,26 @@ function executeInContent(name, data={}, objects={}, expectResponse=true) {
  */
 function* getComputedStyleProperty(selector, pseudo, propName) {
  return yield executeInContent("Test:GetComputedStylePropertyValue",
-                               {selector: selector,
-                                pseudo: pseudo,
+                               {selector,
+                                pseudo,
                                 name: propName});
+}
+
+/**
+ * Send an async message to the frame script and wait until the requested
+ * computed style property has the expected value.
+ * @param {String} selector: The selector used to obtain the element.
+ * @param {String} pseudo: pseudo id to query, or null.
+ * @param {String} prop: name of the property.
+ * @param {String} expected: expected value of property
+ * @param {String} name: the name used in test message
+ */
+function* waitForComputedStyleProperty(selector, pseudo, name, expected) {
+ return yield executeInContent("Test:WaitForComputedStylePropertyValue",
+                               {selector,
+                                pseudo,
+                                expected,
+                                name});
 }
 
 /**
@@ -502,8 +519,7 @@ function fireCopyEvent(element) {
  *
  * @param {Function} validatorFn A validator function that returns a boolean.
  * This is called every few milliseconds to check if the result is true. When
- * it is true, the promise resolves. If validatorFn never returns true, then
- * polling timeouts after several tries and the promise rejects.
+ * it is true, the promise resolves.
  * @param {String} name Optional name of the test. This is used to generate
  * the success and failure messages.
  * @return a promise that resolves when the function returned true or rejects
@@ -511,7 +527,6 @@ function fireCopyEvent(element) {
  */
 function waitForSuccess(validatorFn, name="untitled") {
   let def = promise.defer();
-  let start = Date.now();
 
   function wait(validatorFn) {
     if (validatorFn()) {
@@ -569,6 +584,17 @@ let getFontFamilyDataURL = Task.async(function*(font, nodeFront) {
   let dataURL = yield data.string();
   return dataURL;
 });
+
+/**
+ * Simulate the key input for the given input in the window.
+ * @param {String} input The string value to input
+ * @param {Window} win The window containing the panel
+ */
+function synthesizeKeys(input, win) {
+  for (let key of input.split("")) {
+     EventUtils.synthesizeKey(key, {}, win);
+  }
+}
 
 /* *********************************************
  * RULE-VIEW
@@ -653,6 +679,18 @@ function getRuleViewSelector(view, selectorText) {
 }
 
 /**
+ * Get a reference to the selectorhighlighter icon DOM element corresponding to
+ * a given selector in the rule-view
+ * @param {CssRuleView} view The instance of the rule-view panel
+ * @param {String} selectorText The selector in the rule-view to look for
+ * @return {DOMNode} The selectorhighlighter icon DOM element
+ */
+function getRuleViewSelectorHighlighterIcon(view, selectorText) {
+  let rule = getRuleViewRule(view, selectorText);
+  return rule.querySelector(".ruleview-selectorhighlighter");
+}
+
+/**
  * Simulate a color change in a given color picker tooltip, and optionally wait
  * for a given element in the page to have its style changed as a result
  * @param {SwatchColorPickerTooltip} colorPicker
@@ -691,6 +729,17 @@ let simulateColorPickerChange = Task.async(function*(colorPicker, newRgba, expec
 function getRuleViewLinkByIndex(view, index) {
   let links = view.doc.querySelectorAll(".ruleview-rule-source");
   return links[index];
+}
+
+/**
+ * Get rule-link text from the rule-view given its index
+ * @param {CssRuleView} view The instance of the rule-view panel
+ * @param {Number} index The index of the link to get
+ * @return {String} The string at this index
+ */
+function getRuleViewLinkTextByIndex(view, index) {
+  let link = getRuleViewLinkByIndex(view, index);
+  return link.querySelector(".source-link-label").value;
 }
 
 /**
@@ -893,21 +942,37 @@ function waitForStyleEditor(toolbox, href) {
   let def = promise.defer();
 
   info("Waiting for the toolbox to switch to the styleeditor");
-  toolbox.once("styleeditor-ready").then(() => {
+  toolbox.once("styleeditor-selected").then(() => {
     let panel = toolbox.getCurrentPanel();
     ok(panel && panel.UI, "Styleeditor panel switched to front");
 
-    panel.UI.on("editor-selected", function onEditorSelected(event, editor) {
+    // A helper that resolves the promise once it receives an editor that
+    // matches the expected href. Returns false if the editor was not correct.
+    let gotEditor = (event, editor) => {
       let currentHref = editor.styleSheet.href;
       if (!href || (href && currentHref.endsWith(href))) {
         info("Stylesheet editor selected");
-        panel.UI.off("editor-selected", onEditorSelected);
+        panel.UI.off("editor-selected", gotEditor);
+
         editor.getSourceEditor().then(editor => {
           info("Stylesheet editor fully loaded");
           def.resolve(editor);
         });
+
+        return true;
       }
-    });
+
+      info("The editor was incorrect. Waiting for editor-selected event.");
+      return false;
+    };
+
+    // The expected editor may already be selected. Check the if the currently
+    // selected editor is the expected one and if not wait for an
+    // editor-selected event.
+    if (!gotEditor("styleeditor-selected", panel.UI.selectedEditor)) {
+      // The expected editor is not selected (yet). Wait for it.
+      panel.UI.on("editor-selected", gotEditor);
+    }
   });
 
   return def.promise;

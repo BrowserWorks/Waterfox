@@ -20,8 +20,8 @@ namespace dom {
 struct TreeCellInfo;
 class DOMRect;
 
-class TreeBoxObject MOZ_FINAL : public BoxObject,
-                                public nsITreeBoxObject
+class TreeBoxObject final : public BoxObject,
+                            public nsITreeBoxObject
 {
 public:
   NS_DECL_ISUPPORTS_INHERITED
@@ -34,11 +34,11 @@ public:
   nsTreeBodyFrame* GetCachedTreeBodyFrame() { return mTreeBody; }
 
   //NS_PIBOXOBJECT interfaces
-  virtual void Clear() MOZ_OVERRIDE;
-  virtual void ClearCachedValues() MOZ_OVERRIDE;
+  virtual void Clear() override;
+  virtual void ClearCachedValues() override;
 
   // WebIDL
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   already_AddRefed<nsTreeColumns> GetColumns();
 

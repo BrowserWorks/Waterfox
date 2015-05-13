@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -311,21 +312,29 @@ nsHTMLDNSPrefetch::nsDeferrals::SubmitQueue()
       // Only prefetch here if request was deferred and deferral not cancelled
       if (link && link->HasDeferredDNSPrefetchRequest()) {
         nsCOMPtr<nsIURI> hrefURI(link ? link->GetURI() : nullptr);
-        if (hrefURI)
-          hrefURI->GetAsciiHost(hostName);
+        bool isLocalResource = false;
+        nsresult rv;
 
-        if (!hostName.IsEmpty()) {
+        hostName.Truncate();
+        if (hrefURI) {
+          hrefURI->GetAsciiHost(hostName);
+          rv = NS_URIChainHasFlags(hrefURI,
+                                   nsIProtocolHandler::URI_IS_LOCAL_RESOURCE,
+                                   &isLocalResource);
+        }
+
+        if (!hostName.IsEmpty() && NS_SUCCEEDED(rv) && !isLocalResource) {
           if (IsNeckoChild()) {
             gNeckoChild->SendHTMLDNSPrefetch(NS_ConvertUTF8toUTF16(hostName),
                                            mEntries[mTail].mFlags);
           } else {
             nsCOMPtr<nsICancelable> tmpOutstanding;
 
-            nsresult rv = sDNSService->AsyncResolve(hostName, 
-                                    mEntries[mTail].mFlags
-                                    | nsIDNSService::RESOLVE_SPECULATE,
-                                    sDNSListener, nullptr,
-                                    getter_AddRefs(tmpOutstanding));
+            rv = sDNSService->AsyncResolve(hostName,
+                                           mEntries[mTail].mFlags
+                                           | nsIDNSService::RESOLVE_SPECULATE,
+                                           sDNSListener, nullptr,
+                                           getter_AddRefs(tmpOutstanding));
             // Tell link that deferred prefetch was requested
             if (NS_SUCCEEDED(rv))
               link->OnDNSPrefetchRequested();

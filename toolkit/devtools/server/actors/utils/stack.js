@@ -20,7 +20,7 @@ let StackFrameCache = Class({
     this._framesToCounts = null;
     this._framesToIndices = null;
     this._framesToForms = null;
-    this._lastEventSize = -1;
+    this._lastEventSize = 0;
   },
 
   /**
@@ -35,7 +35,7 @@ let StackFrameCache = Class({
     this._framesToCounts = new Map();
     this._framesToIndices = new Map();
     this._framesToForms = new Map();
-    this._lastEventSize = -1;
+    this._lastEventSize = 0;
   },
 
   /**
@@ -48,7 +48,7 @@ let StackFrameCache = Class({
     this._framesToIndices = null;
     this._framesToForms.clear();
     this._framesToForms = null;
-    this._lastEventSize = -1;
+    this._lastEventSize = 0;
   },
 
   /**
@@ -111,6 +111,8 @@ let StackFrameCache = Class({
    *   source: <filename string for this frame>,
    *   functionDisplayName: <this frame's inferred function name function or null>,
    *   parent: <frame ID -- an index into the concatenated array mentioned above>
+   *   asyncCause: the async cause, or null
+   *   asyncParent: <frame ID -- an index into the concatenated array mentioned above>
    * }
    *
    * The intent of this approach is to make it simpler to efficiently
@@ -127,8 +129,8 @@ let StackFrameCache = Class({
 
     let packet = Array(size - this._lastEventSize).fill(null);
     for (let [stack, index] of this._framesToIndices) {
-      if (index > this._lastEventSize) {
-        packet[index - this._lastEventSize - 1] = this._framesToForms.get(stack);
+      if (index >= this._lastEventSize) {
+        packet[index - this._lastEventSize] = this._framesToForms.get(stack);
       }
     }
 
@@ -151,6 +153,7 @@ let StackFrameCache = Class({
 
     if (frame) {
       this._assignFrameIndices(frame.parent);
+      this._assignFrameIndices(frame.asyncParent);
     }
 
     const index = this._framesToIndices.size;
@@ -175,9 +178,12 @@ let StackFrameCache = Class({
         column: frame.column,
         source: frame.source,
         functionDisplayName: frame.functionDisplayName,
-        parent: this._framesToIndices.get(frame.parent)
+        parent: this._framesToIndices.get(frame.parent),
+        asyncParent: this._framesToIndices.get(frame.asyncParent),
+        asyncCause: frame.asyncCause
       };
       this._createFrameForms(frame.parent);
+      this._createFrameForms(frame.asyncParent);
     }
 
     this._framesToForms.set(frame, form);

@@ -134,21 +134,23 @@ NS_IMPL_ISUPPORTS(nsNPAPIPluginStreamListener,
 nsNPAPIPluginStreamListener::nsNPAPIPluginStreamListener(nsNPAPIPluginInstance* inst, 
                                                          void* notifyData,
                                                          const char* aURL)
-: mStreamBuffer(nullptr),
-mNotifyURL(aURL ? PL_strdup(aURL) : nullptr),
-mInst(inst),
-mStreamBufferSize(0),
-mStreamBufferByteCount(0),
-mStreamType(NP_NORMAL),
-mStreamStarted(false),
-mStreamCleanedUp(false),
-mCallNotify(notifyData ? true : false),
-mIsSuspended(false),
-mIsPluginInitJSStream(mInst->mInPluginInitCall &&
-                      aURL && strncmp(aURL, "javascript:",
-                                      sizeof("javascript:") - 1) == 0),
-mRedirectDenied(false),
-mResponseHeaderBuf(nullptr)
+  : mStreamBuffer(nullptr)
+  , mNotifyURL(aURL ? PL_strdup(aURL) : nullptr)
+  , mInst(inst)
+  , mStreamBufferSize(0)
+  , mStreamBufferByteCount(0)
+  , mStreamType(NP_NORMAL)
+  , mStreamState(eStreamStopped)
+  , mStreamCleanedUp(false)
+  , mCallNotify(notifyData ? true : false)
+  , mIsSuspended(false)
+  , mIsPluginInitJSStream(mInst->mInPluginInitCall &&
+                          aURL && strncmp(aURL, "javascript:",
+                                          sizeof("javascript:") - 1) == 0)
+  , mRedirectDenied(false)
+  , mResponseHeaderBuf(nullptr)
+  , mStreamStopMode(eNormalStop)
+  , mPendingStopBindingStatus(NS_OK)
 {
   mNPStreamWrapper = new nsNPAPIStreamWrapper(nullptr, this);
   mNPStreamWrapper->mNPStream.notifyData = notifyData;
@@ -208,7 +210,7 @@ nsNPAPIPluginStreamListener::CleanUpStream(NPReason reason)
 
   // Seekable streams have an extra addref when they are created which must
   // be matched here.
-  if (NP_SEEK == mStreamType && mStreamStarted)
+  if (NP_SEEK == mStreamType && mStreamState == eStreamTypeSet)
     NS_RELEASE_THIS();
 
   if (mStreamListenerPeer) {
@@ -230,7 +232,7 @@ nsNPAPIPluginStreamListener::CleanUpStream(NPReason reason)
   NPP npp;
   mInst->GetNPP(&npp);
 
-  if (mStreamStarted && pluginFunctions->destroystream) {
+  if (mStreamState >= eNewStreamCalled && pluginFunctions->destroystream) {
     NPPAutoPusher nppPusher(npp);
 
     NPError error;
@@ -245,7 +247,7 @@ nsNPAPIPluginStreamListener::CleanUpStream(NPReason reason)
       rv = NS_OK;
   }
   
-  mStreamStarted = false;
+  mStreamState = eStreamStopped;
   
   // fire notification back to plugin, just like before
   CallURLNotify(reason);
@@ -332,9 +334,9 @@ nsNPAPIPluginStreamListener::OnStartBinding(nsPluginStreamListenerPeer* streamPe
   if (error != NPERR_NO_ERROR)
     return NS_ERROR_FAILURE;
 
-  if (streamType == nsPluginStreamListenerPeer::STREAM_TYPE_UNKNOWN) {
-    SuspendRequest();
-  } else if (!SetStreamType(streamType, false)) {
+  mStreamState = eNewStreamCalled;
+
+  if (!SetStreamType(streamType, false)) {
     return NS_ERROR_FAILURE;
   }
 
@@ -364,10 +366,17 @@ nsNPAPIPluginStreamListener::SetStreamType(uint16_t aType, bool aNeedsResume)
       // instance is destroyed.
       NS_ADDREF_THIS();
       break;
+    case nsPluginStreamListenerPeer::STREAM_TYPE_UNKNOWN:
+      MOZ_ASSERT(!aNeedsResume);
+      mStreamType = nsPluginStreamListenerPeer::STREAM_TYPE_UNKNOWN;
+      SuspendRequest();
+      mStreamStopMode = eDoDeferredStop;
+      // In this case we do not want to execute anything else in this function.
+      return true;
     default:
       return false;
   }
-  mStreamStarted = true;
+  mStreamState = eStreamTypeSet;
   if (aNeedsResume) {
     if (mStreamListenerPeer) {
       mStreamListenerPeer->OnStreamTypeSet(mStreamType);
@@ -591,7 +600,7 @@ nsNPAPIPluginStreamListener::OnDataAvailable(nsPluginStreamListenerPeer* streamP
                         "return(towrite)=%d, url=%s\n",
                         this, npp, numtowrite, mNPStreamWrapper->mNPStream.url));
         
-        if (!mStreamStarted) {
+        if (mStreamState == eStreamStopped) {
           // The plugin called NPN_DestroyStream() from within
           // NPP_WriteReady(), kill the stream.
           
@@ -643,7 +652,7 @@ nsNPAPIPluginStreamListener::OnDataAvailable(nsPluginStreamListenerPeer* streamP
                       this, npp, streamPosition, numtowrite,
                       ptrStreamBuffer, writeCount, mNPStreamWrapper->mNPStream.url));
       
-      if (!mStreamStarted) {
+      if (mStreamState == eStreamStopped) {
         // The plugin called NPN_DestroyStream() from within
         // NPP_Write(), kill the stream.
         return NS_BINDING_ABORTED;
@@ -757,8 +766,6 @@ nsresult
 nsNPAPIPluginStreamListener::OnStopBinding(nsPluginStreamListenerPeer* streamPeer, 
                                            nsresult status)
 {
-  StopDataPump();
-  
   if (NS_FAILED(status)) {
     // The stream was destroyed, or died for some reason. Make sure we
     // cancel the underlying request.
@@ -766,9 +773,24 @@ nsNPAPIPluginStreamListener::OnStopBinding(nsPluginStreamListenerPeer* streamPee
       mStreamListenerPeer->CancelRequests(status);
     }
   }
-  
-  if (!mInst || !mInst->CanFireNotifications())
+
+  if (!mInst || !mInst->CanFireNotifications()) {
+    StopDataPump();
     return NS_ERROR_FAILURE;
+  }
+
+  // We need to detect that the stop is due to async stream init completion.
+  if (mStreamStopMode == eDoDeferredStop) {
+    // We shouldn't be delivering this until async init is done
+    mStreamStopMode = eStopPending;
+    mPendingStopBindingStatus = status;
+    if (!mDataPumpTimer) {
+      StartDataPump();
+    }
+    return NS_OK;
+  }
+
+  StopDataPump();
 
   NPReason reason = NS_FAILED(status) ? NPRES_NETWORK_ERR : NPRES_DONE;
   if (mRedirectDenied || status == NS_BINDING_ABORTED) {
@@ -798,6 +820,17 @@ nsNPAPIPluginStreamListener::GetStreamType(int32_t *result)
   return NS_OK;
 }
 
+bool
+nsNPAPIPluginStreamListener::MaybeRunStopBinding()
+{
+  if (mIsSuspended || mStreamStopMode != eStopPending) {
+    return false;
+  }
+  OnStopBinding(mStreamListenerPeer, mPendingStopBindingStatus);
+  mStreamStopMode = eNormalStop;
+  return true;
+}
+
 NS_IMETHODIMP
 nsNPAPIPluginStreamListener::Notify(nsITimer *aTimer)
 {
@@ -809,12 +842,13 @@ nsNPAPIPluginStreamListener::Notify(nsITimer *aTimer)
   
   if (NS_FAILED(rv)) {
     // We ran into an error, no need to keep firing this timer then.
-    aTimer->Cancel();
+    StopDataPump();
+    MaybeRunStopBinding();
     return NS_OK;
   }
   
   if (mStreamBufferByteCount != oldStreamBufferByteCount &&
-      ((mStreamStarted && mStreamBufferByteCount < 1024) ||
+      ((mStreamState == eStreamTypeSet && mStreamBufferByteCount < 1024) ||
        mStreamBufferByteCount == 0)) {
         // The plugin read some data and we've got less than 1024 bytes in
         // our buffer (or its empty and the stream is already
@@ -824,7 +858,8 @@ nsNPAPIPluginStreamListener::Notify(nsITimer *aTimer)
         // Necko will pump data now that we've resumed the request.
         StopDataPump();
       }
-  
+
+  MaybeRunStopBinding();
   return NS_OK;
 }
 

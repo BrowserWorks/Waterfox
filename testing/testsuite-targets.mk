@@ -29,34 +29,32 @@ endif
 
 RUN_MOCHITEST_B2G_DESKTOP = \
   rm -f ./$@.log && \
-  $(PYTHON) _tests/testing/mochitest/runtestsb2g.py --autorun --close-when-done \
-    --console-level=INFO --log-tbpl=./$@.log \
+  $(PYTHON) _tests/testing/mochitest/runtestsb2g.py \
+    --log-tbpl=./$@.log \
     --desktop --profile ${GAIA_PROFILE_DIR} \
     --failure-file=$(abspath _tests/testing/mochitest/makefailures.json) \
     $(TEST_PATH_ARG) $(EXTRA_TEST_ARGS)
 
 RUN_MOCHITEST = \
   rm -f ./$@.log && \
-  $(PYTHON) _tests/testing/mochitest/runtests.py --autorun --close-when-done \
-    --console-level=INFO --log-tbpl=./$@.log \
+  $(PYTHON) _tests/testing/mochitest/runtests.py \
+    --log-tbpl=./$@.log \
     --failure-file=$(abspath _tests/testing/mochitest/makefailures.json) \
     --testing-modules-dir=$(abspath _tests/modules) \
-    --extra-profile-file=$(DIST)/plugins \
     $(SYMBOLS_PATH) $(TEST_PATH_ARG) $(EXTRA_TEST_ARGS)
 
 RERUN_MOCHITEST = \
   rm -f ./$@.log && \
-  $(PYTHON) _tests/testing/mochitest/runtests.py --autorun --close-when-done \
-    --console-level=INFO --log-tbpl=./$@.log \
+  $(PYTHON) _tests/testing/mochitest/runtests.py \
+    --log-tbpl=./$@.log \
     --run-only-tests=makefailures.json \
     --testing-modules-dir=$(abspath _tests/modules) \
-    --extra-profile-file=$(DIST)/plugins \
     $(SYMBOLS_PATH) $(TEST_PATH_ARG) $(EXTRA_TEST_ARGS)
 
 RUN_MOCHITEST_REMOTE = \
   rm -f ./$@.log && \
-  $(PYTHON) _tests/testing/mochitest/runtestsremote.py --autorun --close-when-done \
-    --console-level=INFO --log-tbpl=./$@.log $(DM_FLAGS) --dm_trans=$(DM_TRANS) \
+  $(PYTHON) _tests/testing/mochitest/runtestsremote.py \
+    --log-tbpl=./$@.log $(DM_FLAGS) --dm_trans=$(DM_TRANS) \
     --app=$(TEST_PACKAGE_NAME) --deviceIP=${TEST_DEVICE} --xre-path=${MOZ_HOST_BIN} \
     --testing-modules-dir=$(abspath _tests/modules) \
     $(SYMBOLS_PATH) $(TEST_PATH_ARG) $(EXTRA_TEST_ARGS)
@@ -66,8 +64,8 @@ RUN_MOCHITEST_ROBOCOP = \
   $(PYTHON) _tests/testing/mochitest/runtestsremote.py \
     --robocop-apk=$(DEPTH)/build/mobile/robocop/robocop-debug.apk \
     --robocop-ids=$(DEPTH)/mobile/android/base/fennec_ids.txt \
-    --robocop-ini=$(DEPTH)/build/mobile/robocop/robocop.ini \
-    --console-level=INFO --log-tbpl=./$@.log $(DM_FLAGS) --dm_trans=$(DM_TRANS) \
+    --robocop-ini=_tests/testing/mochitest/robocop.ini \
+    --log-tbpl=./$@.log $(DM_FLAGS) --dm_trans=$(DM_TRANS) \
     --app=$(TEST_PACKAGE_NAME) --deviceIP=${TEST_DEVICE} --xre-path=${MOZ_HOST_BIN} \
     $(SYMBOLS_PATH) $(TEST_PATH_ARG) $(EXTRA_TEST_ARGS)
 
@@ -406,9 +404,12 @@ package-tests: \
   stage-marionette \
   stage-cppunittests \
   stage-jittest \
-  stage-steeplechase \
   stage-web-platform-tests \
+  stage-luciddream \
   $(NULL)
+ifdef MOZ_WEBRTC
+package-tests: stage-steeplechase
+endif
 else
 # This staging area has been built for us by universal/flight.mk
 PKG_STAGE = $(DIST)/universal/test-stage
@@ -419,11 +420,10 @@ package-tests:
 ifndef UNIVERSAL_BINARY
 	$(NSINSTALL) -D $(DIST)/$(PKG_PATH)
 endif
-	find $(PKG_STAGE) -name '*.pyc' -exec rm {} \;
 	$(MKDIR) -p $(abspath $(DIST))/$(PKG_PATH) && \
 	cd $(PKG_STAGE) && \
 	  zip -rq9D '$(abspath $(DIST))/$(PKG_PATH)$(TEST_PACKAGE)' \
-	  * -x \*/.mkdir.done
+	  * -x \*/.mkdir.done \*.pyc
 
 ifeq ($(MOZ_WIDGET_TOOLKIT),android)
 package-tests: stage-android
@@ -532,12 +532,19 @@ stage-steeplechase: make-stage-dir
 	cp -RL $(DIST)/xpi-stage/specialpowers $(PKG_STAGE)/steeplechase
 	cp -RL $(topsrcdir)/testing/profiles/prefs_general.js $(PKG_STAGE)/steeplechase
 
+LUCIDDREAM_DIR=$(PKG_STAGE)/luciddream
+stage-luciddream: make-stage-dir
+	$(NSINSTALL) -D $(LUCIDDREAM_DIR)
+	@(cd $(topsrcdir)/testing/luciddream && tar $(TAR_CREATE_FLAGS) - *) | (cd $(LUCIDDREAM_DIR)/ && tar -xf -)
+
 MARIONETTE_DIR=$(PKG_STAGE)/marionette
 stage-marionette: make-stage-dir
 	$(NSINSTALL) -D $(MARIONETTE_DIR)/tests
 	$(NSINSTALL) -D $(MARIONETTE_DIR)/transport
+	$(NSINSTALL) -D $(MARIONETTE_DIR)/driver
 	@(cd $(topsrcdir)/testing/marionette/client && tar --exclude marionette/tests $(TAR_CREATE_FLAGS) - *) | (cd $(MARIONETTE_DIR)/ && tar -xf -)
 	@(cd $(topsrcdir)/testing/marionette/transport && tar $(TAR_CREATE_FLAGS) - *) | (cd $(MARIONETTE_DIR)/transport && tar -xf -)
+	@(cd $(topsrcdir)/testing/marionette/driver && tar $(TAR_CREATE_FLAGS) - *) | (cd $(MARIONETTE_DIR)/driver && tar -xf -)
 	$(PYTHON) $(topsrcdir)/testing/marionette/client/marionette/tests/print-manifest-dirs.py \
           $(topsrcdir) \
           $(topsrcdir)/testing/marionette/client/marionette/tests/unit-tests.ini \
@@ -586,5 +593,6 @@ stage-instrumentation-tests: make-stage-dir
   stage-steeplechase \
   stage-web-platform-tests \
   stage-instrumentation-tests \
+  stage-luciddream \
   $(NULL)
 

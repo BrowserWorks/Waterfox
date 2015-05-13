@@ -87,11 +87,12 @@ using mozilla::DefaultXDisplay;
 #include "GLContext.h"
 #endif
 
+#include "mozilla/dom/TabChild.h"
+
 #ifdef CreateEvent // Thank you MS.
 #undef CreateEvent
 #endif
 
-#ifdef PR_LOGGING 
 static PRLogModuleInfo *
 GetObjectFrameLog()
 {
@@ -100,7 +101,6 @@ GetObjectFrameLog()
     sLog = PR_NewLogModule("nsPluginFrame");
   return sLog;
 }
-#endif /* PR_LOGGING */
 
 using namespace mozilla;
 using namespace mozilla::gfx;
@@ -376,8 +376,8 @@ nsPluginFrame::GetMinISize(nsRenderingContext *aRenderingContext)
   nscoord result = 0;
 
   if (!IsHidden(false)) {
-    nsIAtom *atom = mContent->Tag();
-    if (atom == nsGkAtoms::applet || atom == nsGkAtoms::embed) {
+    if (mContent->IsAnyOfHTMLElements(nsGkAtoms::applet,
+                                      nsGkAtoms::embed)) {
       bool vertical = GetWritingMode().IsVertical();
       result = nsPresContext::CSSPixelsToAppUnits(
         vertical ? EMBED_DEF_HEIGHT : EMBED_DEF_WIDTH);
@@ -392,6 +392,34 @@ nsPluginFrame::GetMinISize(nsRenderingContext *aRenderingContext)
 nsPluginFrame::GetPrefISize(nsRenderingContext *aRenderingContext)
 {
   return nsPluginFrame::GetMinISize(aRenderingContext);
+}
+
+void
+nsPluginFrame::GetWidgetConfiguration(nsTArray<nsIWidget::Configuration>* aConfigurations)
+{
+  if (!mWidget) {
+    return;
+  }
+
+  if (!mWidget->GetParent()) {
+    // Plugin widgets should not be toplevel except when they're out of the
+    // document, in which case the plugin should not be registered for
+    // geometry updates and this should not be called. But apparently we
+    // have bugs where mWidget sometimes is toplevel here. Bail out.
+    NS_ERROR("Plugin widgets registered for geometry updates should not be toplevel");
+    return;
+  }
+
+  nsIWidget::Configuration* configuration = aConfigurations->AppendElement();
+  configuration->mChild = mWidget;
+  configuration->mBounds = mNextConfigurationBounds;
+  configuration->mClipRegion = mNextConfigurationClipRegion;
+#if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
+  if (XRE_GetProcessType() == GeckoProcessType_Content) {
+    configuration->mWindowID = (uintptr_t)mWidget->GetNativeData(NS_NATIVE_PLUGIN_PORT);
+    configuration->mVisible = mWidget->IsVisible();
+  }
+#endif // defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
 }
 
 void
@@ -410,8 +438,8 @@ nsPluginFrame::GetDesiredSize(nsPresContext* aPresContext,
   aMetrics.Height() = aReflowState.ComputedHeight();
 
   // for EMBED and APPLET, default to 240x200 for compatibility
-  nsIAtom *atom = mContent->Tag();
-  if (atom == nsGkAtoms::applet || atom == nsGkAtoms::embed) {
+  if (mContent->IsAnyOfHTMLElements(nsGkAtoms::applet,
+                                    nsGkAtoms::embed)) {
     if (aMetrics.Width() == NS_UNCONSTRAINEDSIZE) {
       aMetrics.Width() = clamped(nsPresContext::CSSPixelsToAppUnits(EMBED_DEF_WIDTH),
                                aReflowState.ComputedMinWidth(),
@@ -465,6 +493,7 @@ nsPluginFrame::Reflow(nsPresContext*           aPresContext,
                       const nsHTMLReflowState& aReflowState,
                       nsReflowStatus&          aStatus)
 {
+  MarkInReflow();
   DO_GLOBAL_REFLOW_COUNT("nsPluginFrame");
   DISPLAY_REFLOW(aPresContext, this, aReflowState, aMetrics, aStatus);
 
@@ -594,6 +623,12 @@ nsPluginFrame::CallSetWindow(bool aCheckIsHidden)
   nsRect bounds = GetContentRectRelativeToSelf() + GetOffsetToCrossDoc(rootFrame);
   nsIntRect intBounds = bounds.ToNearestPixels(appUnitsPerDevPixel);
 
+  // In e10s, this returns the offset to the top level window, in non-e10s
+  // it return 0,0.
+  LayoutDeviceIntPoint intOffset = GetRemoteTabChromeOffset();
+  intBounds.x += intOffset.x;
+  intBounds.y += intOffset.y;
+
   // window must be in "display pixels"
   double scaleFactor = 1.0;
   if (NS_FAILED(mInstanceOwner->GetContentsScaleFactor(&scaleFactor))) {
@@ -701,7 +736,7 @@ nsPluginFrame::IsHidden(bool aCheckVisibilityStyle) const
   }
 
   // only <embed> tags support the HIDDEN attribute
-  if (mContent->Tag() == nsGkAtoms::embed) {
+  if (mContent->IsHTMLElement(nsGkAtoms::embed)) {
     // Yes, these are really the kooky ways that you could tell 4.x
     // not to hide the <embed> once you'd put the 'hidden' attribute
     // on the tag...
@@ -722,7 +757,30 @@ nsPluginFrame::IsHidden(bool aCheckVisibilityStyle) const
   return false;
 }
 
-nsIntPoint nsPluginFrame::GetWindowOriginInPixels(bool aWindowless)
+mozilla::LayoutDeviceIntPoint
+nsPluginFrame::GetRemoteTabChromeOffset()
+{
+  LayoutDeviceIntPoint offset;
+  if (XRE_GetProcessType() == GeckoProcessType_Content) {
+    nsCOMPtr<nsIDOMWindow> window = do_QueryInterface(GetContent()->OwnerDoc()->GetWindow());
+    if (window) {
+      nsCOMPtr<nsIDOMWindow> topWindow;
+      window->GetTop(getter_AddRefs(topWindow));
+      if (topWindow) {
+        dom::TabChild* tc = dom::TabChild::GetFrom(topWindow);
+        if (tc) {
+          LayoutDeviceIntPoint chromeOffset;
+          tc->SendGetTabOffset(&chromeOffset);
+          offset -= chromeOffset;
+        }
+      }
+    }
+  }
+  return offset;
+}
+
+nsIntPoint
+nsPluginFrame::GetWindowOriginInPixels(bool aWindowless)
 {
   nsView * parentWithView;
   nsPoint origin(0,0);
@@ -738,8 +796,19 @@ nsIntPoint nsPluginFrame::GetWindowOriginInPixels(bool aWindowless)
   }
   origin += GetContentRectRelativeToSelf().TopLeft();
 
-  return nsIntPoint(PresContext()->AppUnitsToDevPixels(origin.x),
-                    PresContext()->AppUnitsToDevPixels(origin.y));
+  nsIntPoint pt(PresContext()->AppUnitsToDevPixels(origin.x),
+                PresContext()->AppUnitsToDevPixels(origin.y));
+
+  // If we're in the content process offsetToWidget is tied to the top level
+  // widget we can access in the child process, which is the tab. We need the
+  // offset all the way up to the top level native window here. (If this is
+  // non-e10s this routine will return 0,0.)
+  if (aWindowless) {
+    mozilla::LayoutDeviceIntPoint lpt = GetRemoteTabChromeOffset();
+    pt += nsIntPoint(lpt.x, lpt.y);
+  }
+
+  return pt;
 }
 
 void
@@ -810,20 +879,20 @@ public:
 #endif
 
   virtual nsRect GetBounds(nsDisplayListBuilder* aBuilder,
-                           bool* aSnap) MOZ_OVERRIDE;
+                           bool* aSnap) override;
 
   NS_DISPLAY_DECL_NAME("PluginReadback", TYPE_PLUGIN_READBACK)
 
   virtual already_AddRefed<Layer> BuildLayer(nsDisplayListBuilder* aBuilder,
                                              LayerManager* aManager,
-                                             const ContainerLayerParameters& aContainerParameters) MOZ_OVERRIDE
+                                             const ContainerLayerParameters& aContainerParameters) override
   {
     return static_cast<nsPluginFrame*>(mFrame)->BuildLayer(aBuilder, aManager, this, aContainerParameters);
   }
 
   virtual LayerState GetLayerState(nsDisplayListBuilder* aBuilder,
                                    LayerManager* aManager,
-                                   const ContainerLayerParameters& aParameters) MOZ_OVERRIDE
+                                   const ContainerLayerParameters& aParameters) override
   {
     return LAYER_ACTIVE;
   }
@@ -859,20 +928,20 @@ public:
 #endif
 
   virtual nsRect GetBounds(nsDisplayListBuilder* aBuilder,
-                           bool* aSnap) MOZ_OVERRIDE;
+                           bool* aSnap) override;
 
   NS_DISPLAY_DECL_NAME("PluginVideo", TYPE_PLUGIN_VIDEO)
 
   virtual already_AddRefed<Layer> BuildLayer(nsDisplayListBuilder* aBuilder,
                                              LayerManager* aManager,
-                                             const ContainerLayerParameters& aContainerParameters) MOZ_OVERRIDE
+                                             const ContainerLayerParameters& aContainerParameters) override
   {
     return static_cast<nsPluginFrame*>(mFrame)->BuildLayer(aBuilder, aManager, this, aContainerParameters);
   }
 
   virtual LayerState GetLayerState(nsDisplayListBuilder* aBuilder,
                                    LayerManager* aManager,
-                                   const ContainerLayerParameters& aParameters) MOZ_OVERRIDE
+                                   const ContainerLayerParameters& aParameters) override
   {
     return LAYER_ACTIVE;
   }
@@ -1003,7 +1072,11 @@ nsPluginFrame::NotifyPluginReflowObservers()
 void
 nsPluginFrame::DidSetWidgetGeometry()
 {
-#ifndef XP_MACOSX
+#if defined(XP_MACOSX)
+  if (mInstanceOwner && !IsHidden()) {
+    mInstanceOwner->FixUpPluginWindow(nsPluginInstanceOwner::ePluginPaintEnable);
+  }
+#else
   if (!mWidget && mInstanceOwner) {
     // UpdateWindowVisibility will notify the plugin of position changes
     // by updating the NPWindow and calling NPP_SetWindow/AsyncSetWindow.
@@ -1014,8 +1087,6 @@ nsPluginFrame::DidSetWidgetGeometry()
       nsLayoutUtils::IsPopup(nsLayoutUtils::GetDisplayRootFrame(this)) ||
       !mNextConfigurationBounds.IsEmpty());
   }
-#else
-  CallSetWindow(false);
 #endif
 }
 
@@ -1392,7 +1463,7 @@ nsPluginFrame::BuildLayer(nsDisplayListBuilder* aBuilder,
   } else {
     NS_ASSERTION(aItem->GetType() == nsDisplayItem::TYPE_PLUGIN_READBACK,
                  "Unknown item type");
-    NS_ABORT_IF_FALSE(!IsOpaque(), "Opaque plugins don't use backgrounds");
+    MOZ_ASSERT(!IsOpaque(), "Opaque plugins don't use backgrounds");
 
     if (!layer) {
       layer = aManager->CreateReadbackLayer();
@@ -1402,11 +1473,11 @@ nsPluginFrame::BuildLayer(nsDisplayListBuilder* aBuilder,
     NS_ASSERTION(layer->GetType() == Layer::TYPE_READBACK, "Bad layer type");
 
     ReadbackLayer* readback = static_cast<ReadbackLayer*>(layer.get());
-    if (readback->GetSize() != ThebesIntSize(size)) {
+    if (readback->GetSize() != size) {
       // This will destroy any old background sink and notify us that the
       // background is now unknown
       readback->SetSink(nullptr);
-      readback->SetSize(ThebesIntSize(size));
+      readback->SetSize(size);
 
       if (mBackgroundSink) {
         // Maybe we still have a background sink associated with another
@@ -1710,7 +1781,7 @@ nsPluginFrame::HandleEvent(nsPresContext* aPresContext,
 
 #ifdef XP_MACOSX
   // we want to process some native mouse events in the cocoa event model
-  if ((anEvent->message == NS_MOUSE_ENTER ||
+  if ((anEvent->message == NS_MOUSE_ENTER_WIDGET ||
        anEvent->message == NS_WHEEL_WHEEL) &&
       mInstanceOwner->GetEventModel() == NPEventModelCocoa) {
     *anEventStatus = mInstanceOwner->ProcessEvent(*anEvent);

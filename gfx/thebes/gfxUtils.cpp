@@ -14,6 +14,7 @@
 #include "mozilla/Base64.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/gfx/DataSurfaceHelpers.h"
+#include "mozilla/gfx/Logging.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/Vector.h"
@@ -388,7 +389,7 @@ IsSafeImageTransformComponent(gfxFloat aValue)
   return aValue >= -32768 && aValue <= 32767;
 }
 
-#ifndef MOZ_GFX_OPTIMIZE_MOBILE
+#if !defined(MOZ_GFX_OPTIMIZE_MOBILE) && !defined(MOZ_WIDGET_COCOA)
 /**
  * This returns the fastest operator to use for solid surfaces which have no
  * alpha channel or their alpha channel is uniformly opaque.
@@ -440,8 +441,7 @@ CreateSamplingRestrictedDrawable(gfxDrawable* aDrawable,
     gfxIntSize size(int32_t(needed.Width()), int32_t(needed.Height()));
 
     RefPtr<DrawTarget> target =
-      gfxPlatform::GetPlatform()->CreateOffscreenContentDrawTarget(ToIntSize(size),
-                                                                   aFormat);
+      gfxPlatform::GetPlatform()->CreateOffscreenContentDrawTarget(size, aFormat);
     if (!target) {
       return nullptr;
     }
@@ -455,7 +455,7 @@ CreateSamplingRestrictedDrawable(gfxDrawable* aDrawable,
     nsRefPtr<gfxDrawable> drawable = new gfxSurfaceDrawable(surface, size, gfxMatrix::Translation(-needed.TopLeft()));
     return drawable.forget();
 }
-#endif // !MOZ_GFX_OPTIMIZE_MOBILE
+#endif // !MOZ_GFX_OPTIMIZE_MOBILE && !MOZ_WIDGET_COCOA
 
 // working around cairo/pixman bug (bug 364968)
 // Our device-space-to-image-space transform may not be acceptable to pixman.
@@ -650,7 +650,7 @@ gfxUtils::DrawPixelSnapped(gfxContext*         aContext,
             // On Mobile, we don't ever want to do this; it has the potential for
             // allocating very large temporary surfaces, especially since we'll
             // do full-page snapshots often (see bug 749426).
-#ifndef MOZ_GFX_OPTIMIZE_MOBILE
+#if !defined(MOZ_GFX_OPTIMIZE_MOBILE) && !defined(MOZ_WIDGET_COCOA)
             nsRefPtr<gfxDrawable> restrictedDrawable =
               CreateSamplingRestrictedDrawable(aDrawable, aContext,
                                                aRegion, aFormat);
@@ -690,7 +690,7 @@ PathFromRegionInternal(gfxContext* aContext, const nsIntRegion& aRegion)
 {
   aContext->NewPath();
   nsIntRegionRectIterator iter(aRegion);
-  const nsIntRect* r;
+  const IntRect* r;
   while ((r = iter.Next()) != nullptr) {
     aContext->Rectangle(gfxRect(r->x, r->y, r->width, r->height));
   }
@@ -709,7 +709,7 @@ PathFromRegionInternal(DrawTarget* aTarget, const nsIntRegion& aRegion)
   RefPtr<PathBuilder> pb = aTarget->CreatePathBuilder();
   nsIntRegionRectIterator iter(aRegion);
 
-  const nsIntRect* r;
+  const IntRect* r;
   while ((r = iter.Next()) != nullptr) {
     pb->MoveTo(Point(r->x, r->y));
     pb->LineTo(Point(r->XMost(), r->y));
@@ -725,7 +725,7 @@ static void
 ClipToRegionInternal(DrawTarget* aTarget, const nsIntRegion& aRegion)
 {
   if (!aRegion.IsComplex()) {
-    nsIntRect rect = aRegion.GetBounds();
+    IntRect rect = aRegion.GetBounds();
     aTarget->PushClipRect(Rect(rect.x, rect.y, rect.width, rect.height));
     return;
   }
@@ -847,9 +847,9 @@ gfxUtils::TransformRectToRect(const gfxRect& aFrom, const IntPoint& aToTopLeft,
  * to ints then convert those ints back to doubles to make sure that
  * they equal the doubles that we got in. */
 bool
-gfxUtils::GfxRectToIntRect(const gfxRect& aIn, nsIntRect* aOut)
+gfxUtils::GfxRectToIntRect(const gfxRect& aIn, IntRect* aOut)
 {
-  *aOut = nsIntRect(int32_t(aIn.X()), int32_t(aIn.Y()),
+  *aOut = IntRect(int32_t(aIn.X()), int32_t(aIn.Y()),
   int32_t(aIn.Width()), int32_t(aIn.Height()));
   return gfxRect(aOut->x, aOut->y, aOut->width, aOut->height).IsEqualEdges(aIn);
 }
@@ -868,7 +868,7 @@ gfxUtils::GetYCbCrToRGBDestFormatAndSize(const PlanarYCbCrData& aData,
   // 'prescale' is true if the scaling is to be done as part of the
   // YCbCr to RGB conversion rather than on the RGB data when rendered.
   bool prescale = aSuggestedSize.width > 0 && aSuggestedSize.height > 0 &&
-                    ToIntSize(aSuggestedSize) != aData.mPicSize;
+                    aSuggestedSize != aData.mPicSize;
 
   if (aSuggestedFormat == gfxImageFormat::RGB16_565) {
 #if defined(HAVE_YCBCR_TO_RGB565)
@@ -904,7 +904,7 @@ gfxUtils::GetYCbCrToRGBDestFormatAndSize(const PlanarYCbCrData& aData,
       prescale = false;
   }
   if (!prescale) {
-    ToIntSize(aSuggestedSize) = aData.mPicSize;
+    aSuggestedSize = aData.mPicSize;
   }
 }
 
@@ -928,7 +928,7 @@ gfxUtils::ConvertYCbCrToRGB(const PlanarYCbCrData& aData,
                       aData.mCbCrSize.height);
 
   // Convert from YCbCr to RGB now, scaling the image if needed.
-  if (ToIntSize(aDestSize) != aData.mPicSize) {
+  if (aDestSize != aData.mPicSize) {
 #if defined(HAVE_YCBCR_TO_RGB565)
     if (aDestFormat == gfxImageFormat::RGB16_565) {
       ScaleYCbCrToRGB565(aData.mYChannel,
@@ -995,7 +995,7 @@ gfxUtils::ConvertYCbCrToRGB(const PlanarYCbCrData& aData,
 }
 
 /* static */ void gfxUtils::ClearThebesSurface(gfxASurface* aSurface,
-                                               nsIntRect* aRect,
+                                               IntRect* aRect,
                                                const gfxRGBA& aColor)
 {
   if (aSurface->CairoStatus()) {
@@ -1008,11 +1008,11 @@ gfxUtils::ConvertYCbCrToRGB(const PlanarYCbCrData& aData,
   cairo_t* ctx = cairo_create(surf);
   cairo_set_source_rgba(ctx, aColor.r, aColor.g, aColor.b, aColor.a);
   cairo_set_operator(ctx, CAIRO_OPERATOR_SOURCE);
-  nsIntRect bounds;
+  IntRect bounds;
   if (aRect) {
     bounds = *aRect;
   } else {
-    bounds = nsIntRect(nsIntPoint(0, 0), aSurface->GetSize());
+    bounds = IntRect(nsIntPoint(0, 0), aSurface->GetSize());
   }
   cairo_rectangle(ctx, bounds.x, bounds.y, bounds.width, bounds.height);
   cairo_fill(ctx);
@@ -1037,6 +1037,11 @@ gfxUtils::CopySurfaceToDataSourceSurfaceWithFormat(SourceSurface* aSurface,
     // GPU.
     RefPtr<DrawTarget> dt = gfxPlatform::GetPlatform()->
       CreateOffscreenContentDrawTarget(aSurface->GetSize(), aFormat);
+    if (!dt) {
+      gfxWarning() << "gfxUtils::CopySurfaceToDataSourceSurfaceWithFormat failed in CreateOffscreenContentDrawTarget";
+      return nullptr;
+    }
+
     // Using DrawSurface() here rather than CopySurface() because CopySurface
     // is optimized for memcpy and therefore isn't good for format conversion.
     // Using OP_OVER since in our case it's equivalent to OP_SOURCE and
@@ -1314,7 +1319,7 @@ gfxUtils::WriteAsPNG(SourceSurface* aSurface, const char* aFile)
       }
     }
     if (!file) {
-      NS_WARNING("Failed to open file to create PNG!\n");
+      NS_WARNING("Failed to open file to create PNG!");
       return;
     }
   }
@@ -1447,10 +1452,14 @@ FILE *gfxUtils::sDumpPaintFile = stderr;
 
 #ifdef MOZ_DUMP_PAINTING
 bool gfxUtils::sDumpPainting = getenv("MOZ_DUMP_PAINT") != 0;
+bool gfxUtils::sDumpPaintingIntermediate = getenv("MOZ_DUMP_PAINT_INTERMEDIATE") != 0;
 bool gfxUtils::sDumpPaintingToFile = getenv("MOZ_DUMP_PAINT_TO_FILE") != 0;
+bool gfxUtils::sDumpPaintItems = getenv("MOZ_DUMP_PAINT_ITEMS") != 0;
 #else
 bool gfxUtils::sDumpPainting = false;
+bool gfxUtils::sDumpPaintingIntermediate = false;
 bool gfxUtils::sDumpPaintingToFile = false;
+bool gfxUtils::sDumpPaintItems = false;
 #endif
 
 namespace mozilla {

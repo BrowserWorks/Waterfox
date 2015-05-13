@@ -15,7 +15,7 @@ namespace mozilla {
 
 namespace dom {
 
-class MediaStreamAudioSourceNodeEngine : public AudioNodeEngine
+class MediaStreamAudioSourceNodeEngine final : public AudioNodeEngine
 {
 public:
   explicit MediaStreamAudioSourceNodeEngine(AudioNode* aNode)
@@ -25,7 +25,7 @@ public:
   enum Parameters {
     ENABLE
   };
-  virtual void SetInt32Parameter(uint32_t aIndex, int32_t aValue) MOZ_OVERRIDE
+  virtual void SetInt32Parameter(uint32_t aIndex, int32_t aValue) override
   {
     switch (aIndex) {
     case ENABLE:
@@ -35,6 +35,7 @@ public:
       NS_ERROR("MediaStreamAudioSourceNodeEngine bad parameter index");
     }
   }
+
 private:
   bool mEnabled;
 };
@@ -48,21 +49,21 @@ public:
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(MediaStreamAudioSourceNode, AudioNode)
 
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
-  virtual void DestroyMediaStream() MOZ_OVERRIDE;
+  virtual void DestroyMediaStream() override;
 
-  virtual uint16_t NumberOfInputs() const MOZ_OVERRIDE { return 0; }
+  virtual uint16_t NumberOfInputs() const override { return 0; }
 
-  virtual const char* NodeType() const MOZ_OVERRIDE
+  virtual const char* NodeType() const override
   {
     return "MediaStreamAudioSourceNode";
   }
 
-  virtual size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const MOZ_OVERRIDE;
-  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const MOZ_OVERRIDE;
+  virtual size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override;
+  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override;
 
-  virtual void PrincipalChanged(DOMMediaStream* aMediaStream) MOZ_OVERRIDE;
+  virtual void PrincipalChanged(DOMMediaStream* aMediaStream) override;
 
 protected:
   virtual ~MediaStreamAudioSourceNode();

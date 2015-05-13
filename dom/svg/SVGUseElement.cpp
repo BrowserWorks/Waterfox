@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -21,9 +22,9 @@ namespace mozilla {
 namespace dom {
 
 JSObject*
-SVGUseElement::WrapNode(JSContext *aCx)
+SVGUseElement::WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return SVGUseElementBinding::Wrap(aCx, this);
+  return SVGUseElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -216,25 +217,24 @@ SVGUseElement::CreateAnonymousContent()
 
   LookupHref();
   nsIContent* targetContent = mSource.get();
-  if (!targetContent || !targetContent->IsSVG())
+  if (!targetContent)
     return nullptr;
 
   // make sure target is valid type for <use>
   // QIable nsSVGGraphicsElement would eliminate enumerating all elements
-  nsIAtom *tag = targetContent->Tag();
-  if (tag != nsGkAtoms::svg &&
-      tag != nsGkAtoms::symbol &&
-      tag != nsGkAtoms::g &&
-      tag != nsGkAtoms::path &&
-      tag != nsGkAtoms::text &&
-      tag != nsGkAtoms::rect &&
-      tag != nsGkAtoms::circle &&
-      tag != nsGkAtoms::ellipse &&
-      tag != nsGkAtoms::line &&
-      tag != nsGkAtoms::polyline &&
-      tag != nsGkAtoms::polygon &&
-      tag != nsGkAtoms::image &&
-      tag != nsGkAtoms::use)
+  if (!targetContent->IsAnyOfSVGElements(nsGkAtoms::svg,
+                                         nsGkAtoms::symbol,
+                                         nsGkAtoms::g,
+                                         nsGkAtoms::path,
+                                         nsGkAtoms::text,
+                                         nsGkAtoms::rect,
+                                         nsGkAtoms::circle,
+                                         nsGkAtoms::ellipse,
+                                         nsGkAtoms::line,
+                                         nsGkAtoms::polyline,
+                                         nsGkAtoms::polygon,
+                                         nsGkAtoms::image,
+                                         nsGkAtoms::use))
     return nullptr;
 
   // circular loop detection
@@ -248,7 +248,7 @@ SVGUseElement::CreateAnonymousContent()
     for (nsCOMPtr<nsIContent> content = GetParent();
          content;
          content = content->GetParent()) {
-      if (content->IsSVG(nsGkAtoms::use) &&
+      if (content->IsSVGElement(nsGkAtoms::use) &&
           static_cast<SVGUseElement*>(content.get())->mOriginal == mOriginal) {
         return nullptr;
       }
@@ -268,7 +268,7 @@ SVGUseElement::CreateAnonymousContent()
   if (!newcontent)
     return nullptr;
 
-  if (newcontent->IsSVG(nsGkAtoms::symbol)) {
+  if (newcontent->IsSVGElement(nsGkAtoms::symbol)) {
     nsIDocument *document = GetComposedDoc();
     if (!document)
       return nullptr;
@@ -312,8 +312,7 @@ SVGUseElement::CreateAnonymousContent()
     newcontent = svgNode;
   }
 
-  if (newcontent->IsSVG() && (newcontent->Tag() == nsGkAtoms::svg ||
-                              newcontent->Tag() == nsGkAtoms::symbol)) {
+  if (newcontent->IsAnyOfSVGElements(nsGkAtoms::svg, nsGkAtoms::symbol)) {
     nsSVGElement *newElement = static_cast<nsSVGElement*>(newcontent.get());
 
     if (mLengthAttributes[ATTR_WIDTH].IsExplicitlySet())
@@ -342,8 +341,7 @@ SVGUseElement::DestroyAnonymousContent()
 bool
 SVGUseElement::OurWidthAndHeightAreUsed() const
 {
-  return mClone && mClone->IsSVG() && (mClone->Tag() == nsGkAtoms::svg ||
-                                       mClone->Tag() == nsGkAtoms::symbol);
+  return mClone && mClone->IsAnyOfSVGElements(nsGkAtoms::svg, nsGkAtoms::symbol);
 }
 
 //----------------------------------------------------------------------
@@ -364,7 +362,7 @@ SVGUseElement::SyncWidthOrHeight(nsIAtom* aName)
       target->SetLength(aName, mLengthAttributes[index]);
       return;
     }
-    if (mClone->Tag() == nsGkAtoms::svg) {
+    if (mClone->IsSVGElement(nsGkAtoms::svg)) {
       // Our width/height attribute is now no longer explicitly set, so we
       // need to revert the clone's width/height to the width/height of the
       // content that's being cloned.
@@ -438,7 +436,7 @@ SVGUseElement::PrependLocalTransformsTo(const gfxMatrix &aMatrix,
   if (aWhich == eChildToUserSpace) {
     return toUserSpace * aMatrix;
   }
-  NS_ABORT_IF_FALSE(aWhich == eAllTransforms, "Unknown TransformTypes");
+  MOZ_ASSERT(aWhich == eAllTransforms, "Unknown TransformTypes");
   return toUserSpace * fromUserSpace;
 }
 

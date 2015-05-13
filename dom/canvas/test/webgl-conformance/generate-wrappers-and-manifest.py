@@ -30,13 +30,14 @@ EXTRA_SUPPORT_FILES = [
 ]
 
 ACCEPTABLE_ERRATA_KEYS = set([
-  'skip-if',
   'fail-if',
+  'skip-if',
+  'subsuite',
 ])
 
 GENERATED_HEADER = '''
 # This is a GENERATED FILE. Do not edit it directly.
-# Regenerated it by using `python generate-wrapper-and-manifest.py`.
+# Regenerated it by using `python generate-wrappers-and-manifest.py`.
 # Mark skipped tests in mochitest-errata.ini.
 # Mark failing tests in mochi-single.html.
 '''.strip()
@@ -251,7 +252,8 @@ def WriteWrappers(testWebPathList):
 
 def PathFromManifestDir(path):
     print('path: ' + path)
-    return os.path.join(FILE_PATH_PREFIX, path)
+    ret = os.path.join(FILE_PATH_PREFIX, path)
+    return ret.replace(os.sep, '/')
 
 
 def WriteManifest(wrapperManifestPathList, supportFilePathList):

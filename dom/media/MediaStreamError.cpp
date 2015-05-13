@@ -27,6 +27,9 @@ BaseMediaMgrError::BaseMediaMgrError(const nsAString& aName,
           "accessed due to a hardware error (e.g. lock from another process).");
     } else if (mName.EqualsLiteral("InternalError")) {
       mMessage.AssignLiteral("Internal error.");
+    } else if (mName.EqualsLiteral("NotSupportedError")) {
+      mMessage.AssignLiteral("Constraints with no audio or video in it are not "
+          "supported");
     }
   }
 }
@@ -54,9 +57,9 @@ NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(MediaStreamError)
 NS_INTERFACE_MAP_END
 
 JSObject*
-MediaStreamError::WrapObject(JSContext* aCx)
+MediaStreamError::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return MediaStreamErrorBinding::Wrap(aCx, this);
+  return MediaStreamErrorBinding::Wrap(aCx, this, aGivenProto);
 }
 
 void

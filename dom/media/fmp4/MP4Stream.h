@@ -24,10 +24,10 @@ public:
   virtual ~MP4Stream();
   bool BlockingReadIntoCache(int64_t aOffset, size_t aCount, Monitor* aToUnlock);
   virtual bool ReadAt(int64_t aOffset, void* aBuffer, size_t aCount,
-                      size_t* aBytesRead) MOZ_OVERRIDE;
+                      size_t* aBytesRead) override;
   virtual bool CachedReadAt(int64_t aOffset, void* aBuffer, size_t aCount,
-                            size_t* aBytesRead) MOZ_OVERRIDE;
-  virtual bool Length(int64_t* aSize) MOZ_OVERRIDE;
+                            size_t* aBytesRead) override;
+  virtual bool Length(int64_t* aSize) override;
 
   struct ReadRecord {
     ReadRecord(int64_t aOffset, size_t aCount) : mOffset(aOffset), mCount(aCount) {}
@@ -44,6 +44,8 @@ public:
 
     return false;
   }
+
+  void ClearFailedRead() { mFailedRead.reset(); }
 
   void Pin()
   {
@@ -68,10 +70,24 @@ private:
 
   struct CacheBlock {
     CacheBlock(int64_t aOffset, size_t aCount)
-      : mOffset(aOffset), mCount(aCount), mBuffer(new uint8_t[aCount]) {}
+      : mOffset(aOffset), mCount(aCount), mBuffer(nullptr) {}
     int64_t mOffset;
     size_t mCount;
-    nsAutoArrayPtr<uint8_t> mBuffer;
+
+    bool Init()
+    {
+      mBuffer = new (fallible) char[mCount];
+      return !!mBuffer;
+    }
+
+    char* Buffer()
+    {
+      MOZ_ASSERT(mBuffer.get());
+      return mBuffer.get();
+    }
+
+  private:
+    nsAutoArrayPtr<char> mBuffer;
   };
   nsTArray<CacheBlock> mCache;
 };

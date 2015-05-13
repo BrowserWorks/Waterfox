@@ -27,9 +27,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * ---------------------------------------------------------------------------
  */
-static const char _NR[] = {
-	0x4e,0x61,0x62,0x69,0x6c,0x20,0x53,0x2e,0x20,
-	0x41,0x6c,0x20,0x52,0x61,0x6d,0x6c,0x69,0x00 };
 
 #include <stdlib.h>
 #include <stddef.h>
@@ -282,20 +279,6 @@ static OAES_RET oaes_inv_sub_byte( uint8_t * byte )
 	_y &= 0xf0;
 	_y >>= 4;
 	*byte = oaes_inv_sub_byte_value[_y][_x];
-	
-	return OAES_RET_SUCCESS;
-}
-
-static OAES_RET oaes_word_rot_right( uint8_t word[OAES_COL_LEN] )
-{
-	uint8_t _temp[OAES_COL_LEN];
-	
-	if( NULL == word )
-		return OAES_RET_ARG1;
-
-	memcpy( _temp + 1, word, OAES_COL_LEN - 1 );
-	_temp[0] = word[OAES_COL_LEN - 1];
-	memcpy( word, _temp, OAES_COL_LEN );
 	
 	return OAES_RET_SUCCESS;
 }
@@ -629,7 +612,10 @@ static OAES_RET oaes_key_gen( OAES_CTX * ctx, size_t key_size )
 	_key->data = (uint8_t *) calloc( key_size, sizeof( uint8_t ));
 	
 	if( NULL == _key->data )
+	{
+		oaes_key_destroy( &_key );
 		return OAES_RET_MEM;
+	}
 	
 	for( _i = 0; _i < key_size; _i++ )
 		_key->data[_i] = (uint8_t) OAES_RAND(_ctx->rctx);

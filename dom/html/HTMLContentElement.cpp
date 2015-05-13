@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -43,9 +44,9 @@ NS_INTERFACE_MAP_END_INHERITING(nsGenericHTMLElement)
 NS_IMPL_ELEMENT_CLONE(HTMLContentElement)
 
 JSObject*
-HTMLContentElement::WrapNode(JSContext *aCx)
+HTMLContentElement::WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return HTMLContentElementBinding::Wrap(aCx, this);
+  return HTMLContentElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 nsresult
@@ -65,8 +66,7 @@ HTMLContentElement::BindToTree(nsIDocument* aDocument,
   if (containingShadow && !oldContainingShadow) {
     nsINode* parentNode = nsINode::GetParentNode();
     while (parentNode && parentNode != containingShadow) {
-      if (parentNode->IsElement() &&
-          parentNode->AsElement()->IsHTML(nsGkAtoms::content)) {
+      if (parentNode->IsHTMLElement(nsGkAtoms::content)) {
         // Content element in fallback content is not an insertion point.
         return NS_OK;
       }
@@ -363,8 +363,8 @@ DistributedContentList::IndexOf(nsIContent* aContent)
 }
 
 JSObject*
-DistributedContentList::WrapObject(JSContext* aCx)
+DistributedContentList::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return NodeListBinding::Wrap(aCx, this);
+  return NodeListBinding::Wrap(aCx, this, aGivenProto);
 }
 

@@ -1,229 +1,173 @@
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
-MARIONETTE_HEAD_JS = "stk_helper.js";
+MARIONETTE_TIMEOUT = 60000;
+MARIONETTE_HEAD_JS = "head.js";
 
-function testSendUSSD(command, expect) {
-  log("STK CMD " + JSON.stringify(command));
-  is(command.typeOfCommand, iccManager.STK_CMD_SEND_USSD, expect.name);
-  is(command.commandQualifier, expect.commandQualifier, expect.name);
-  is(command.options.text, expect.title, expect.name);
-
-  let icons = command.options.icons;
-  if (icons) {
-    isIcons(icons, expect.icons, expect.name);
-
-    let iconSelfExplanatory = command.options.iconSelfExplanatory;
-    is(iconSelfExplanatory, expect.iconSelfExplanatory, expect.name);
-  }
-
-  runNextTest();
-}
-
-let tests = [
-  {command: "d050810301120082028183850a372d62697420555353448a39f041e19058341e9149e592d9743ea151e9945ab55eb1596d2b2c1e93cbe6333aad5eb3dbee373c2e9fd3ebf63b3eaf6fc564335acd76c3e560",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_1_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "7-bit USSD"}},
-  {command: "d0448103011200820281838a39f041e19058341e9149e592d9743ea151e9945ab55eb1596d2b2c1e93cbe6333aad5eb3dbee373c2e9fd3ebf63b3eaf6fc564335acd76c3e560",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_1_without_alpha_identifier",
-            commandQualifier: 0x00}},
-  {command: "d058810301120082028183850a382d62697420555353448a41444142434445464748494a4b4c4d4e4f505152535455565758595a2d6162636465666768696a6b6c6d6e6f707172737475767778797a2d31323334353637383930",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_2_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "8-bit USSD"}},
-  {command: "d04c8103011200820281838a41444142434445464748494a4b4c4d4e4f505152535455565758595a2d6162636465666768696a6b6c6d6e6f707172737475767778797a2d31323334353637383930",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_2_without_alpha_identifier",
-            commandQualifier: 0x00}},
-  {command: "d02f81030112008202818385095543533220555353448a1948041704140420041004120421042204120423041904220415",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_3_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "UCS2 USSD"}},
-  {command: "d0248103011200820281838a1948041704140420041004120421042204120423041904220415",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_3_without_alpha_identifier",
-            commandQualifier: 0x00}},
-  {command: "d081fd8103011200820281838581b66f6e636520612052454c4541534520434f4d504c455445206d65737361676520636f6e7461696e696e672074686520555353442052657475726e20526573756c74206d657373616765206e6f7420636f6e7461696e696e6720616e206572726f7220686173206265656e2072656365697665642066726f6d20746865206e6574776f726b2c20746865204d45207368616c6c20696e666f726d207468652053494d20746861742074686520636f6d6d616e64206861738a39f041e19058341e9149e592d9743ea151e9945ab55eb1596d2b2c1e93cbe6333aad5eb3dbee373c2e9fd3ebf63b3eaf6fc564335acd76c3e560",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_4_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "once a RELEASE COMPLETE message containing the USSD Return Result message not containing an error has been received from the network, the ME shall inform the SIM that the command has"}},
-  // send_ussd_cmd_4_without_alpha_identifier has the same pdu as
-  // send_ussd_cmd_1_without_alpha_identifier.
-  {command: "d04681030112008202818385008a39f041e19058341e9149e592d9743ea151e9945ab55eb1596d2b2c1e93cbe6333aad5eb3dbee373c2e9fd3ebf63b3eaf6fc564335acd76c3e560",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_5_with_alpha_identifier",
-         commandQualifier: 0x00,
-         title: ""}},
-  // send_ussd_cmd_5_without_alpha_identifier has the same pdu as
-  // send_ussd_cmd_1_without_alpha_identifier.
-  {command: "d054810301120082028183850a42617369632049636f6e8a39f041e19058341e9149e592d9743ea151e9945ab55eb1596d2b2c1e93cbe6333aad5eb3dbee373c2e9fd3ebf63b3eaf6fc564335acd76c3e5609e020001",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_6_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "Basic Icon",
+const TEST_DATA = [
+  {command: "D050" + // Length
+            "8103011200" + // Command details
+            "82028183" + // Device identities
+            "850A372D6269742055535344" + // Alpha identifier
+            "8A39F041E19058341E9149E592D9743EA151E9945AB55E" + // USSD string
+            "B1596D2B2C1E93CBE6333AAD5EB3DBEE373C2E9FD3EBF6" +
+            "3B3EAF6FC564335ACD76C3E560",
+   expect: {commandQualifier: 0x00,
+            text: "7-bit USSD"}},
+  {command: "D044" + // Length
+            "8103011200" + // Command details
+            "82028183" + // Device identities
+            "8A39F041E19058341E9149E592D9743EA151E9945AB55E" + // USSD string
+            "B1596D2B2C1E93CBE6333AAD5EB3DBEE373C2E9FD3EBF6" +
+            "3B3EAF6FC564335ACD76C3E560",
+   expect: {commandQualifier: 0x00}},
+  {command: "D058" + // Length
+            "8103011200" + // Command details
+            "82028183" + // Device identities
+            "850A382D6269742055535344" + // Alpha identifier
+            "8A41444142434445464748494A4B4C4D4E4F5051525354" + // USSD string
+            "55565758595A2D6162636465666768696A6B6C6D6E6F70" +
+            "7172737475767778797A2D31323334353637383930",
+   expect: {commandQualifier: 0x00,
+            text: "8-bit USSD"}},
+  {command: "D02F" + // Length
+            "8103011200" + // Command details
+            "82028183" + // Device identities
+            "8509554353322055535344" + // Alpha identifier
+            "8A1948041704140420041004120421042204120423041904220415", // USSD string
+   expect: {commandQualifier: 0x00,
+            text: "UCS2 USSD"}},
+  {command: "D081FD" + // Length
+            "8103011200" + // Command details
+            "82028183" + // Device identities
+            "8581B66F6E636520612052454C4541534520434F4D" + // Alpha identifier
+            "504C455445206D65737361676520636F6E7461696E" +
+            "696E672074686520555353442052657475726E2052" +
+            "6573756C74206D657373616765206E6F7420636F6E" +
+            "7461696E696E6720616E206572726F722068617320" +
+            "6265656E2072656365697665642066726F6D207468" +
+            "65206E6574776F726B2C20746865204D4520736861" +
+            "6C6C20696E666F726D207468652053494D20746861" +
+            "742074686520636F6D6D616E6420686173" +
+            "8A39F041E19058341E9149E592D9743EA151E9945AB55E" + // USSD string
+            "B1596D2B2C1E93CBE6333AAD5EB3DBEE373C2E9FD3EBF6" +
+            "3B3EAF6FC564335ACD76C3E560",
+   expect: {commandQualifier: 0x00,
+            text: "once a RELEASE COMPLETE message containing the USSD " +
+                  "Return Result message not containing an error has been " +
+                  "received from the network, the ME shall inform the SIM " +
+                  "that the command has"}},
+  {command: "D046" + // Length
+            "8103011200" + // Command details
+            "82028183" + // Device identities
+            "8500" + // Alpha identifier
+            "8A39F041E19058341E9149E592D9743EA151E9945AB55E" + // USSD string
+            "B1596D2B2C1E93CBE6333AAD5EB3DBEE373C2E9FD3EBF6" +
+            "3B3EAF6FC564335ACD76C3E560",
+   expect: {commandQualifier: 0x00,
+            text: ""}},
+  {command: "D054" + // Length
+            "8103011200" + // Command details
+            "82028183" + // Device identities
+            "850A42617369632049636F6E" + // Alpha identifier
+            "8A39F041E19058341E9149E592D9743EA151E9945AB55E" + // USSD string
+            "B1596D2B2C1E93CBE6333AAD5EB3DBEE373C2E9FD3EBF6" +
+            "3B3EAF6FC564335ACD76C3E560" +
+            "9E020001", // Icon identifier
+   expect: {commandQualifier: 0x00,
+            text: "Basic Icon",
             iconSelfExplanatory: true,
-            icons: [basicIcon]}},
-  {command: "d0488103011200820281838a39f041e19058341e9149e592d9743ea151e9945ab55eb1596d2b2c1e93cbe6333aad5eb3dbee373c2e9fd3ebf63b3eaf6fc564335acd76c3e5609e020001",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_6_without_alpha_identifier",
-            commandQualifier: 0x00,
-            iconSelfExplanatory: true,
-            icons: [basicIcon]}},
-  {command: "d054810301120082028183850a436f6c6f722049636f6e8a39f041e19058341e9149e592d9743ea151e9945ab55eb1596d2b2c1e93cbe6333aad5eb3dbee373c2e9fd3ebf63b3eaf6fc564335acd76c3e5609e020003",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_7_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "Color Icon",
-            iconSelfExplanatory: true,
-            icons: [colorIcon]}},
-  {command: "d0488103011200820281838a39f041e19058341e9149e592d9743ea151e9945ab55eb1596d2b2c1e93cbe6333aad5eb3dbee373c2e9fd3ebf63b3eaf6fc564335acd76c3e5609e020003",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_7_without_alpha_identifier",
-            commandQualifier: 0x00,
-            iconSelfExplanatory: true,
-            icons: [colorIcon]}},
-  {command: "d054810301120082028183850a42617369632049636f6e8a39f041e19058341e9149e592d9743ea151e9945ab55eb1596d2b2c1e93cbe6333aad5eb3dbee373c2e9fd3ebf63b3eaf6fc564335acd76c3e5609e020101",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_8_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "Basic Icon",
+            icons: [BASIC_ICON]}},
+  {command: "D048" + // Length
+            "8103011200" + // Command details
+            "82028183" + // Device identities
+            "8A39F041E19058341E9149E592D9743EA151E9945AB55E" + // USSD string
+            "B1596D2B2C1E93CBE6333AAD5EB3DBEE373C2E9FD3EBF6" +
+            "3B3EAF6FC564335ACD76C3E560" +
+            "9E020103", // Icon identifier
+   expect: {commandQualifier: 0x00,
             iconSelfExplanatory: false,
-            icons: [basicIcon]}},
-  {command: "d0488103011200820281838a39f041e19058341e9149e592d9743ea151e9945ab55eb1596d2b2c1e93cbe6333aad5eb3dbee373c2e9fd3ebf63b3eaf6fc564335acd76c3e5609e020101",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_8_without_alpha_identifier",
-            commandQualifier: 0x00,
-            iconSelfExplanatory: false,
-            icons: [basicIcon]}},
-  {command: "d05f8103011200820281838519800417041404200410041204210422041204230419042204158a39f041e19058341e9149e592d9743ea151e9945ab55eb1596d2b2c1e93cbe6333aad5eb3dbee373c2e9fd3ebf63b3eaf6fc564335acd76c3e560",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_9_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "ЗДРАВСТВУЙТЕ"}},
-  // send_ussd_cmd_9_without_alpha_identifier has the same pdu as
-  // send_ussd_cmd_1_without_alpha_identifier.
-  {command: "d05c8103011200820281838510546578742041747472696275746520318a39f041e19058341e9149e592d9743ea151e9945ab55eb1596d2b2c1e93cbe6333aad5eb3dbee373c2e9fd3ebf63b3eaf6fc564335acd76c3e560d004001000b4",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_10_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "Text Attribute 1"}},
-  {command: "d04a8103011200820281838a39f041e19058341e9149e592d9743ea151e9945ab55eb1596d2b2c1e93cbe6333aad5eb3dbee373c2e9fd3ebf63b3eaf6fc564335acd76c3e560d004001000b4",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_10_without_alpha_identifier",
-            commandQualifier: 0x00}},
-  {command: "d0568103011200820281838510546578742041747472696275746520328a39f041e19058341e9149e592d9743ea151e9945ab55eb1596d2b2c1e93cbe6333aad5eb3dbee373c2e9fd3ebf63b3eaf6fc564335acd76c3e560",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_11_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "Text Attribute 2"}},
-  // send_ussd_cmd_11_without_alpha_identifier has the same pdu as
-  // send_ussd_cmd_1_without_alpha_identifier.
-  {command: "d05c8103011200820281838510546578742041747472696275746520318a39f041e19058341e9149e592d9743ea151e9945ab55eb1596d2b2c1e93cbe6333aad5eb3dbee373c2e9fd3ebf63b3eaf6fc564335acd76c3e560d004001001b4",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_12_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "Text Attribute 1"}},
-  {command: "d04a8103011200820281838a39f041e19058341e9149e592d9743ea151e9945ab55eb1596d2b2c1e93cbe6333aad5eb3dbee373c2e9fd3ebf63b3eaf6fc564335acd76c3e560d004001001b4",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_12_without_alpha_identifier",
-            commandQualifier: 0x00}},
-  {command: "d05c8103011200820281838510546578742041747472696275746520318a39f041e19058341e9149e592d9743ea151e9945ab55eb1596d2b2c1e93cbe6333aad5eb3dbee373c2e9fd3ebf63b3eaf6fc564335acd76c3e560d004001002b4",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_13_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "Text Attribute 1"}},
-  {command: "d04a8103011200820281838a39f041e19058341e9149e592d9743ea151e9945ab55eb1596d2b2c1e93cbe6333aad5eb3dbee373c2e9fd3ebf63b3eaf6fc564335acd76c3e560d004001002b4",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_13_without_alpha_identifier",
-            commandQualifier: 0x00}},
-  {command: "d05c8103011200820281838510546578742041747472696275746520318a39f041e19058341e9149e592d9743ea151e9945ab55eb1596d2b2c1e93cbe6333aad5eb3dbee373c2e9fd3ebf63b3eaf6fc564335acd76c3e560d004001004b4",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_14_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "Text Attribute 1"}},
-  {command: "d04a8103011200820281838a39f041e19058341e9149e592d9743ea151e9945ab55eb1596d2b2c1e93cbe6333aad5eb3dbee373c2e9fd3ebf63b3eaf6fc564335acd76c3e560d004001004b4",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_14_without_alpha_identifier",
-            commandQualifier: 0x00}},
-  {command: "d05c8103011200820281838510546578742041747472696275746520328a39f041e19058341e9149e592d9743ea151e9945ab55eb1596d2b2c1e93cbe6333aad5eb3dbee373c2e9fd3ebf63b3eaf6fc564335acd76c3e560d004001000b4",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_15_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "Text Attribute 2"}},
-  // send_ussd_cmd_15_without_alpha_identifier has the same pdu as
-  // send_ussd_cmd_10_with_alpha_identifier.
-  {command: "d0568103011200820281838510546578742041747472696275746520338a39f041e19058341e9149e592d9743ea151e9945ab55eb1596d2b2c1e93cbe6333aad5eb3dbee373c2e9fd3ebf63b3eaf6fc564335acd76c3e560",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_16_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "Text Attribute 3"}},
-  // send_ussd_cmd_16_without_alpha_identifier has the same pdu as
-  // send_ussd_cmd_1_without_alpha_identifier.
-  {command: "d05c8103011200820281838510546578742041747472696275746520318a39f041e19058341e9149e592d9743ea151e9945ab55eb1596d2b2c1e93cbe6333aad5eb3dbee373c2e9fd3ebf63b3eaf6fc564335acd76c3e560d004001008b4",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_17_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "Text Attribute 1"}},
-  {command: "d04a8103011200820281838a39f041e19058341e9149e592d9743ea151e9945ab55eb1596d2b2c1e93cbe6333aad5eb3dbee373c2e9fd3ebf63b3eaf6fc564335acd76c3e560d004001008b4",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_17_without_alpha_identifier",
-            commandQualifier: 0x00}},
-  {command: "d05c8103011200820281838510546578742041747472696275746520318a39f041e19058341e9149e592d9743ea151e9945ab55eb1596d2b2c1e93cbe6333aad5eb3dbee373c2e9fd3ebf63b3eaf6fc564335acd76c3e560d004001010b4",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_18_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "Text Attribute 1"}},
-  {command: "d04a8103011200820281838a39f041e19058341e9149e592d9743ea151e9945ab55eb1596d2b2c1e93cbe6333aad5eb3dbee373c2e9fd3ebf63b3eaf6fc564335acd76c3e560d004001010b4",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_18_without_alpha_identifier",
-            commandQualifier: 0x00}},
-  {command: "d05c8103011200820281838510546578742041747472696275746520318a39f041e19058341e9149e592d9743ea151e9945ab55eb1596d2b2c1e93cbe6333aad5eb3dbee373c2e9fd3ebf63b3eaf6fc564335acd76c3e560d004001020b4",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_19_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "Text Attribute 1"}},
-  {command: "d04a8103011200820281838a39f041e19058341e9149e592d9743ea151e9945ab55eb1596d2b2c1e93cbe6333aad5eb3dbee373c2e9fd3ebf63b3eaf6fc564335acd76c3e560d004001020b4",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_19_without_alpha_identifier",
-            commandQualifier: 0x00}},
-  {command: "d05c8103011200820281838510546578742041747472696275746520318a39f041e19058341e9149e592d9743ea151e9945ab55eb1596d2b2c1e93cbe6333aad5eb3dbee373c2e9fd3ebf63b3eaf6fc564335acd76c3e560d004001040b4",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_20_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "Text Attribute 1"}},
-  {command: "d04a8103011200820281838a39f041e19058341e9149e592d9743ea151e9945ab55eb1596d2b2c1e93cbe6333aad5eb3dbee373c2e9fd3ebf63b3eaf6fc564335acd76c3e560d004001040b4",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_20_without_alpha_identifier",
-            commandQualifier: 0x00}},
-  {command: "d05c8103011200820281838510546578742041747472696275746520318a39f041e19058341e9149e592d9743ea151e9945ab55eb1596d2b2c1e93cbe6333aad5eb3dbee373c2e9fd3ebf63b3eaf6fc564335acd76c3e560d004001080b4",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_21_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "Text Attribute 1"}},
-  {command: "d04a8103011200820281838a39f041e19058341e9149e592d9743ea151e9945ab55eb1596d2b2c1e93cbe6333aad5eb3dbee373c2e9fd3ebf63b3eaf6fc564335acd76c3e560d004001080b4",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_21_without_alpha_identifier",
-            commandQualifier: 0x00}},
-  {command: "d04b8103011200820281838505804f60597d8a39f041e19058341e9149e592d9743ea151e9945ab55eb1596d2b2c1e93cbe6333aad5eb3dbee373c2e9fd3ebf63b3eaf6fc564335acd76c3e560",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_22_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "你好"}},
-  // send_ussd_cmd_22_without_alpha_identifier has the same pdu as
-  // send_ussd_cmd_1_without_alpha_identifier.
-  {command: "d04981030112008202818385038030eb8a39f041e19058341e9149e592d9743ea151e9945ab55eb1596d2b2c1e93cbe6333aad5eb3dbee373c2e9fd3ebf63b3eaf6fc564335acd76c3e560",
-   func: testSendUSSD,
-   expect: {name: "send_ussd_cmd_23_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "ル"}},
-  // send_ussd_cmd_23_without_alpha_identifier has the same pdu as
-  // send_ussd_cmd_1_without_alpha_identifier.
+            icons: [COLOR_ICON]}},
+  {command: "D05F" + // Length
+            "8103011200" + // Command details
+            "82028183" + // Device identities
+            "851980041704140420041004120421042204120423041904220415" + // Alpha identifier
+            "8A39F041E19058341E9149E592D9743EA151E9945AB55E" + // USSD string
+            "B1596D2B2C1E93CBE6333AAD5EB3DBEE373C2E9FD3EBF6" +
+            "3B3EAF6FC564335ACD76C3E560",
+   expect: {commandQualifier: 0x00,
+            text: "ЗДРАВСТВУЙТЕ"}},
+  {command: "D05C" + // Length
+            "8103011200" + // Command details
+            "82028183" + // Device identities
+            "851054657874204174747269627574652031" + // Alpha identifier
+            "8A39F041E19058341E9149E592D9743EA151E9945AB55E" + // USSD string
+            "B1596D2B2C1E93CBE6333AAD5EB3DBEE373C2E9FD3EBF6" +
+            "3B3EAF6FC564335ACD76C3E560" +
+            "D004001000B4", // Text attribute
+   expect: {commandQualifier: 0x00,
+            text: "Text Attribute 1"}},
+  {command: "D04A" + // Length
+            "8103011200" + // Command details
+            "82028183" + // Device identities
+            "8A39F041E19058341E9149E592D9743EA151E9945AB55E" + // USSD string
+            "B1596D2B2C1E93CBE6333AAD5EB3DBEE373C2E9FD3EBF6" +
+            "3B3EAF6FC564335ACD76C3E560" +
+            "D004001000B4", // Text attribute
+   expect: {commandQualifier: 0x00}},
+  {command: "D04B" + // Length
+            "8103011200" + // Command details
+            "82028183" + // Device identities
+            "8505804F60597D" + // Alpha identifier
+            "8A39F041E19058341E9149E592D9743EA151E9945AB55E" + // USSD string
+            "B1596D2B2C1E93CBE6333AAD5EB3DBEE373C2E9FD3EBF6" +
+            "3B3EAF6FC564335ACD76C3E560",
+   expect: {commandQualifier: 0x00,
+            text: "你好"}},
 ];
 
-runNextTest();
+function testSendUSSD(aCommand, aExpect) {
+  is(aCommand.commandNumber, 0x01, "commandNumber");
+  is(aCommand.typeOfCommand, MozIccManager.STK_CMD_SEND_USSD, "typeOfCommand");
+  is(aCommand.commandQualifier, aExpect.commandQualifier, "commandQualifier");
+
+  // text is optional.
+  if ("text" in aExpect) {
+    is(aCommand.options.text, aExpect.text, "options.text");
+  }
+
+  // icons is optional.
+  if ("icons" in aExpect) {
+    isIcons(aCommand.options.icons, aExpect.icons);
+    is(aCommand.options.iconSelfExplanatory, aExpect.iconSelfExplanatory,
+       "options.iconSelfExplanatory");
+  }
+}
+
+// Start tests
+startTestCommon(function() {
+  let icc = getMozIcc();
+  let promise = Promise.resolve();
+  for (let i = 0; i < TEST_DATA.length; i++) {
+    let data = TEST_DATA[i];
+    promise = promise.then(() => {
+      log("send_ussd_cmd: " + data.command);
+
+      let promises = [];
+      // Wait onstkcommand event.
+      promises.push(waitForTargetEvent(icc, "stkcommand")
+        .then((aEvent) => testSendUSSD(aEvent.command, data.expect)));
+      // Wait icc-stkcommand system message.
+      promises.push(waitForSystemMessage("icc-stkcommand")
+        .then((aMessage) => {
+          is(aMessage.iccId, icc.iccInfo.iccid, "iccId");
+          testSendUSSD(aMessage.command, data.expect);
+        }));
+      // Send emulator command to generate stk unsolicited event.
+      promises.push(sendEmulatorStkPdu(data.command));
+
+      return Promise.all(promises);
+    });
+  }
+  return promise;
+});

@@ -16,8 +16,8 @@ namespace mozilla {
 
 namespace dom {
 
-class DOMCameraDetectedFace MOZ_FINAL : public nsISupports
-                                      , public nsWrapperCache
+class DOMCameraDetectedFace final : public nsISupports
+                                  , public nsWrapperCache
 {
 public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -29,6 +29,10 @@ public:
   // HasSupport() method in each header. We can get rid of these with the
   // Great Renaming proposed in bug 983177.
   static bool HasSupport(JSContext* aCx, JSObject* aGlobal);
+
+  static already_AddRefed<DOMCameraDetectedFace> Constructor(const GlobalObject& aGlobal,
+                                                             const dom::CameraDetectedFaceInit& aFace,
+                                                             ErrorResult& aRv);
 
   DOMCameraDetectedFace(nsISupports* aParent, const ICameraControl::Face& aFace);
 
@@ -51,9 +55,10 @@ public:
     return mParent;
   }
 
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 protected:
+  DOMCameraDetectedFace(nsISupports* aParent, const dom::CameraDetectedFaceInit& aFace);
   virtual ~DOMCameraDetectedFace() { }
 
   nsCOMPtr<nsISupports> mParent;

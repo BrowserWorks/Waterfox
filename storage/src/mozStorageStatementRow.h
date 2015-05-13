@@ -16,8 +16,8 @@ namespace storage {
 
 class Statement;
 
-class StatementRow MOZ_FINAL : public mozIStorageStatementRow
-                             , public nsIXPCScriptable
+class StatementRow final : public mozIStorageStatementRow
+                         , public nsIXPCScriptable
 {
 public:
   NS_DECL_ISUPPORTS
@@ -31,7 +31,7 @@ protected:
 
   Statement *mStatement;
 
-  friend class Statement;
+  friend class StatementRowHolder;
 };
 
 } // namespace storage

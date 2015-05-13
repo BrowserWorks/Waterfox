@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set sw=2 ts=8 et tw=80 : */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -13,8 +13,6 @@
 #include "mozilla/dom/Element.h"
 #include "nsIInterfaceRequestor.h"
 #include "nsILoadContext.h"
-
-class mozIApplication;
 
 namespace mozilla {
 
@@ -31,8 +29,9 @@ namespace mozilla {
  * to separate the safebrowsing cookie.
  */
 
-class LoadContext MOZ_FINAL : public nsILoadContext,
-                              public nsIInterfaceRequestor
+class LoadContext final
+  : public nsILoadContext
+  , public nsIInterfaceRequestor
 {
 public:
   NS_DECL_ISUPPORTS
@@ -54,7 +53,8 @@ public:
 #ifdef DEBUG
     , mIsNotNull(aToCopy.mIsNotNull)
 #endif
-  {}
+  {
+  }
 
   // AppId/inBrowser arguments override those in SerializedLoadContext provided
   // by child process.
@@ -71,7 +71,8 @@ public:
 #ifdef DEBUG
     , mIsNotNull(aToCopy.mIsNotNull)
 #endif
-  {}
+  {
+  }
 
   LoadContext(dom::Element* aTopFrameElement,
               uint32_t aAppId,
@@ -89,7 +90,8 @@ public:
 #ifdef DEBUG
     , mIsNotNull(true)
 #endif
-  {}
+  {
+  }
 
   // Constructor taking reserved appId for the safebrowsing cookie.
   explicit LoadContext(uint32_t aAppId)
@@ -103,28 +105,29 @@ public:
 #ifdef DEBUG
     , mIsNotNull(true)
 #endif
-  {}
+  {
+  }
 
   // Constructor for creating a LoadContext with a given principal's appId and
   // browser flag.
-  explicit LoadContext(nsIPrincipal* aPrincipal);
+  explicit LoadContext(nsIPrincipal* aPrincipal,
+                       nsILoadContext* aOptionalBase = nullptr);
 
 private:
   ~LoadContext() {}
 
-  nsWeakPtr     mTopFrameElement;
-  uint64_t      mNestedFrameId;
-  uint32_t      mAppId;
-  bool          mIsContent;
-  bool          mUsePrivateBrowsing;
-  bool          mUseRemoteTabs;
-  bool          mIsInBrowserElement;
+  nsWeakPtr mTopFrameElement;
+  uint64_t mNestedFrameId;
+  uint32_t mAppId;
+  bool mIsContent;
+  bool mUsePrivateBrowsing;
+  bool mUseRemoteTabs;
+  bool mIsInBrowserElement;
 #ifdef DEBUG
-  bool          mIsNotNull;
+  bool mIsNotNull;
 #endif
 };
 
 } // namespace mozilla
 
 #endif // LoadContext_h
-

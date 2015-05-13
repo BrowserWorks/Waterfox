@@ -21,8 +21,8 @@ function run_test() {
                                      gTestFiles[11].fileName);
   let args = [getApplyDirPath() + DIR_RESOURCES, "input", "output", "-s",
               HELPER_SLEEP_TIMEOUT];
-  let fileInUseProcess = AUS_Cc["@mozilla.org/process/util;1"].
-                         createInstance(AUS_Ci.nsIProcess);
+  let fileInUseProcess = Cc["@mozilla.org/process/util;1"].
+                         createInstance(Ci.nsIProcess);
   fileInUseProcess.init(fileInUseBin);
   fileInUseProcess.run(false, args, args.length);
 
@@ -42,7 +42,7 @@ function checkUpdateFinished() {
   gStageUpdate = false;
   gSwitchApp = true;
   gDisableReplaceFallback = true;
-  runUpdate(1, STATE_FAILED_WRITE_ERROR);
+  runUpdate(1, STATE_FAILED_WRITE_ERROR, checkUpdateApplied);
 }
 
 function checkUpdateApplied() {
@@ -52,5 +52,6 @@ function checkUpdateApplied() {
 function checkUpdate() {
   checkFilesAfterUpdateFailure(getApplyDirFile, true, false);
   checkUpdateLogContains(ERR_RENAME_FILE);
+  standardInit();
   checkCallbackAppLog();
 }

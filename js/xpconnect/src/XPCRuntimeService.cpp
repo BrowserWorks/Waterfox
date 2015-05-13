@@ -8,13 +8,9 @@
 
 #include "nsContentUtils.h"
 #include "BackstagePass.h"
-#include "nsIProgrammingLanguage.h"
 #include "nsDOMClassInfo.h"
 #include "nsIPrincipal.h"
-
-#include "mozilla/dom/ResolveSystemBinding.h"
-
-using mozilla::dom::ResolveSystemBinding;
+#include "mozilla/dom/BindingUtils.h"
 
 NS_INTERFACE_MAP_BEGIN(BackstagePass)
   NS_INTERFACE_MAP_ENTRY(nsIGlobalObject)
@@ -45,7 +41,7 @@ NS_IMPL_RELEASE(BackstagePass)
 #include "xpc_map_end.h" /* This will #undef the above */
 
 
-JSObject *
+JSObject*
 BackstagePass::GetGlobalJSObject()
 {
     if (mWrapper)
@@ -62,67 +58,43 @@ BackstagePass::SetGlobalObject(JSObject* global)
 }
 
 NS_IMETHODIMP
-BackstagePass::Resolve(nsIXPConnectWrappedNative *wrapper,
+BackstagePass::Resolve(nsIXPConnectWrappedNative* wrapper,
                        JSContext * cx, JSObject * objArg,
-                       jsid idArg, bool *resolvedp,
-                       bool *_retval)
+                       jsid idArg, bool* resolvedp,
+                       bool* _retval)
 {
     JS::RootedObject obj(cx, objArg);
     JS::RootedId id(cx, idArg);
-
-    bool resolved;
-    *_retval = !!JS_ResolveStandardClass(cx, obj, id, &resolved);
-    NS_ENSURE_TRUE(*_retval, NS_ERROR_FAILURE);
-
-    if (resolved) {
-        *resolvedp = true;
-        return NS_OK;
-    }
-
-    *_retval = ResolveSystemBinding(cx, obj, id, &resolved);
-    NS_ENSURE_TRUE(*_retval, NS_ERROR_FAILURE);
-
-    if (resolved) {
-        *resolvedp = true;
-        return NS_OK;
-    }
-
-    return NS_OK;
+    *_retval = mozilla::dom::SystemGlobalResolve(cx, obj, id, resolvedp);
+    return *_retval ? NS_OK : NS_ERROR_FAILURE;
 }
 
 NS_IMETHODIMP
-BackstagePass::Enumerate(nsIXPConnectWrappedNative *wrapper, JSContext *cx,
-                         JSObject *objArg, bool *_retval)
+BackstagePass::Enumerate(nsIXPConnectWrappedNative* wrapper, JSContext* cx,
+                         JSObject* objArg, bool* _retval)
 {
     JS::RootedObject obj(cx, objArg);
-
-    *_retval = JS_EnumerateStandardClasses(cx, obj);
-    NS_ENSURE_TRUE(*_retval, NS_ERROR_FAILURE);
-
-    bool ignored = false;
-    *_retval = ResolveSystemBinding(cx, obj, JSID_VOIDHANDLE, &ignored);
-    NS_ENSURE_TRUE(*_retval, NS_ERROR_FAILURE);
-
-    return NS_OK;
+    *_retval = mozilla::dom::SystemGlobalEnumerate(cx, obj);
+    return *_retval ? NS_OK : NS_ERROR_FAILURE;
 }
 
 /***************************************************************************/
 /* void getInterfaces (out uint32_t count, [array, size_is (count), retval]
                        out nsIIDPtr array); */
 NS_IMETHODIMP
-BackstagePass::GetInterfaces(uint32_t *aCount, nsIID * **aArray)
+BackstagePass::GetInterfaces(uint32_t* aCount, nsIID * **aArray)
 {
     const uint32_t count = 2;
     *aCount = count;
-    nsIID **array;
-    *aArray = array = static_cast<nsIID**>(nsMemory::Alloc(count * sizeof(nsIID*)));
+    nsIID** array;
+    *aArray = array = static_cast<nsIID**>(moz_xmalloc(count * sizeof(nsIID*)));
     if (!array)
         return NS_ERROR_OUT_OF_MEMORY;
 
     uint32_t index = 0;
     nsIID* clone;
 #define PUSH_IID(id)                                                          \
-    clone = static_cast<nsIID *>(nsMemory::Clone(&NS_GET_IID( id ),           \
+    clone = static_cast<nsIID*>(nsMemory::Clone(&NS_GET_IID( id ),           \
                                                  sizeof(nsIID)));             \
     if (!clone)                                                               \
         goto oom;                                                             \
@@ -135,20 +107,18 @@ BackstagePass::GetInterfaces(uint32_t *aCount, nsIID * **aArray)
     return NS_OK;
 oom:
     while (index)
-        nsMemory::Free(array[--index]);
-    nsMemory::Free(array);
+        free(array[--index]);
+    free(array);
     *aArray = nullptr;
     return NS_ERROR_OUT_OF_MEMORY;
 }
 
-/* nsISupports getHelperForLanguage (in uint32_t language); */
+/* nsIXPCScriptable getScriptableHelper (); */
 NS_IMETHODIMP
-BackstagePass::GetHelperForLanguage(uint32_t language,
-                                    nsISupports **retval)
+BackstagePass::GetScriptableHelper(nsIXPCScriptable** retval)
 {
-    nsCOMPtr<nsISupports> supports =
-        do_QueryInterface(static_cast<nsIGlobalObject *>(this));
-    supports.forget(retval);
+    nsCOMPtr<nsIXPCScriptable> scriptable = this;
+    scriptable.forget(retval);
     return NS_OK;
 }
 
@@ -177,17 +147,9 @@ BackstagePass::GetClassID(nsCID * *aClassID)
     return NS_OK;
 }
 
-/* readonly attribute uint32_t implementationLanguage; */
-NS_IMETHODIMP
-BackstagePass::GetImplementationLanguage(uint32_t *aImplementationLanguage)
-{
-    *aImplementationLanguage = nsIProgrammingLanguage::CPLUSPLUS;
-    return NS_OK;
-}
-
 /* readonly attribute uint32_t flags; */
 NS_IMETHODIMP
-BackstagePass::GetFlags(uint32_t *aFlags)
+BackstagePass::GetFlags(uint32_t* aFlags)
 {
     *aFlags = nsIClassInfo::MAIN_THREAD_ONLY;
     return NS_OK;
@@ -195,13 +157,13 @@ BackstagePass::GetFlags(uint32_t *aFlags)
 
 /* [notxpcom] readonly attribute nsCID classIDNoAlloc; */
 NS_IMETHODIMP
-BackstagePass::GetClassIDNoAlloc(nsCID *aClassIDNoAlloc)
+BackstagePass::GetClassIDNoAlloc(nsCID* aClassIDNoAlloc)
 {
     return NS_ERROR_NOT_AVAILABLE;
 }
 
 NS_IMETHODIMP
-BackstagePass::Finalize(nsIXPConnectWrappedNative *wrapper, JSFreeOp * fop, JSObject * obj)
+BackstagePass::Finalize(nsIXPConnectWrappedNative* wrapper, JSFreeOp * fop, JSObject * obj)
 {
     nsCOMPtr<nsIGlobalObject> bsp(do_QueryWrappedNative(wrapper));
     MOZ_ASSERT(bsp);
@@ -210,8 +172,8 @@ BackstagePass::Finalize(nsIXPConnectWrappedNative *wrapper, JSFreeOp * fop, JSOb
 }
 
 NS_IMETHODIMP
-BackstagePass::PreCreate(nsISupports *nativeObj, JSContext *cx,
-                         JSObject *globalObj, JSObject **parentObj)
+BackstagePass::PreCreate(nsISupports* nativeObj, JSContext* cx,
+                         JSObject* globalObj, JSObject** parentObj)
 {
     // We do the same trick here as for WindowSH. Return the js global
     // as parent, so XPConenct can find the right scope and the wrapper
@@ -219,7 +181,7 @@ BackstagePass::PreCreate(nsISupports *nativeObj, JSContext *cx,
     nsCOMPtr<nsIGlobalObject> global(do_QueryInterface(nativeObj));
     MOZ_ASSERT(global, "nativeObj not a global object!");
 
-    JSObject *jsglobal = global->GetGlobalJSObject();
+    JSObject* jsglobal = global->GetGlobalJSObject();
     if (jsglobal)
         *parentObj = jsglobal;
     return NS_OK;

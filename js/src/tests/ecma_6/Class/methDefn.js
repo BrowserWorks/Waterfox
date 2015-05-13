@@ -102,12 +102,10 @@ assertEq(a.foo3(), 3);
 assertEq(a.foo4(), 4);
 
 // Symbols.
-if (typeof Symbol === "function") {
-    var unique_sym = Symbol("1"), registered_sym = Symbol.for("2");
-    a = { [unique_sym](){return 2;}, [registered_sym](){return 3;} };
-    assertEq(a[unique_sym](), 2);
-    assertEq(a[registered_sym](), 3);
-}
+var unique_sym = Symbol("1"), registered_sym = Symbol.for("2");
+a = { [unique_sym](){return 2;}, [registered_sym](){return 3;} };
+assertEq(a[unique_sym](), 2);
+assertEq(a[registered_sym](), 3);
 
 // Method characteristics.
 a = { b(){ return 4;} };
@@ -166,6 +164,30 @@ a = {b(c){"use strict";return c;}};
 assertEq(a.b(1), 1);
 a = {["b"](c){"use strict";return c;}};
 assertEq(a.b(1), 1);
+
+// Allow strict-reserved names as methods in objects.
+// (Bug 1124362)
+a = { static() { return 4; } };
+assertEq(a.static(), 4);
+
+a = { get static() { return 4; } };
+assertEq(a.static, 4);
+
+a = { set static(x) { assertEq(x, 4); } };
+a.static = 4;
+
+function testStrictMode() {
+    "use strict";
+    var obj = { static() { return 4; } };
+    assertEq(obj.static(), 4);
+
+    obj = { get static() { return 4; } };
+    assertEq(obj.static, 4);
+
+    obj = { set static(x) { assertEq(x, 4); } };
+    obj.static = 4;
+}
+testStrictMode();
 
 // Tests provided by benvie in the bug to distinguish from ES5 desugar.
 assertEq(({ method() {} }).method.name, "method");

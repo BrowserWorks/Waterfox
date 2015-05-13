@@ -16,9 +16,10 @@
 #include "DOMCameraControl.h"
 #include "nsDOMClassInfo.h"
 #include "CameraCommon.h"
+#include "CameraPreferences.h"
 #include "mozilla/dom/BindingUtils.h"
-#include "mozilla/dom/CameraManagerBinding.h"
 #include "mozilla/dom/PermissionMessageUtils.h"
+#include "nsQueryObject.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -151,6 +152,7 @@ public:
     , mCameraId(aCameraId)
     , mInitialConfig(aInitialConfig)
     , mPromise(aPromise)
+    , mRequester(new nsContentPermissionRequester(mWindow))
   { }
 
 protected:
@@ -165,6 +167,7 @@ protected:
   uint32_t mCameraId;
   CameraConfiguration mInitialConfig;
   nsRefPtr<Promise> mPromise;
+  nsCOMPtr<nsIContentPermissionRequester> mRequester;
 };
 
 NS_IMPL_CYCLE_COLLECTION(CameraPermissionRequest, mWindow, mPromise)
@@ -216,6 +219,16 @@ CameraPermissionRequest::Allow(JS::HandleValue aChoices)
 {
   MOZ_ASSERT(aChoices.isUndefined());
   return DispatchCallback(nsIPermissionManager::ALLOW_ACTION);
+}
+
+NS_IMETHODIMP
+CameraPermissionRequest::GetRequester(nsIContentPermissionRequester** aRequester)
+{
+  NS_ENSURE_ARG_POINTER(aRequester);
+
+  nsCOMPtr<nsIContentPermissionRequester> requester = mRequester;
+  requester.forget(aRequester);
+  return NS_OK;
 }
 
 nsresult
@@ -299,7 +312,11 @@ nsDOMCameraManager::GetCamera(const nsAString& aCamera,
   // which gets us a performance win.
   uint16_t status = nsIPrincipal::APP_STATUS_NOT_INSTALLED;
   principal->GetAppStatus(&status);
-  if (status == nsIPrincipal::APP_STATUS_CERTIFIED && CheckPermission(mWindow)) {
+  // Unprivileged mochitests always fail the dispatched permission check,
+  // even if permission to the camera has been granted.
+  bool immediateCheck = false;
+  CameraPreferences::GetPref("camera.control.test.permission", immediateCheck);
+  if ((status == nsIPrincipal::APP_STATUS_CERTIFIED || immediateCheck) && CheckPermission(mWindow)) {
     PermissionAllowed(cameraId, aInitialConfig, promise);
     return promise.forget();
   }
@@ -432,7 +449,7 @@ nsDOMCameraManager::IsWindowStillActive(uint64_t aWindowId)
 }
 
 JSObject*
-nsDOMCameraManager::WrapObject(JSContext* aCx)
+nsDOMCameraManager::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return CameraManagerBinding::Wrap(aCx, this);
+  return CameraManagerBinding::Wrap(aCx, this, aGivenProto);
 }

@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -43,7 +44,7 @@ public:
     MOZ_ASSERT(mParent);
     return mParent;
   }
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   virtual double X() const = 0;
   virtual double Y() const = 0;
@@ -75,8 +76,8 @@ protected:
   nsCOMPtr<nsISupports> mParent;
 };
 
-class DOMRect MOZ_FINAL : public DOMRectReadOnly
-                        , public nsIDOMClientRect
+class DOMRect final : public DOMRectReadOnly
+                    , public nsIDOMClientRect
 {
 public:
   explicit DOMRect(nsISupports* aParent, double aX = 0, double aY = 0,
@@ -98,26 +99,26 @@ public:
   Constructor(const GlobalObject& aGlobal, double aX, double aY,
               double aWidth, double aHeight, ErrorResult& aRV);
 
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   void SetRect(float aX, float aY, float aWidth, float aHeight) {
     mX = aX; mY = aY; mWidth = aWidth; mHeight = aHeight;
   }
   void SetLayoutRect(const nsRect& aLayoutRect);
 
-  virtual double X() const MOZ_OVERRIDE
+  virtual double X() const override
   {
     return mX;
   }
-  virtual double Y() const MOZ_OVERRIDE
+  virtual double Y() const override
   {
     return mY;
   }
-  virtual double Width() const MOZ_OVERRIDE
+  virtual double Width() const override
   {
     return mWidth;
   }
-  virtual double Height() const MOZ_OVERRIDE
+  virtual double Height() const override
   {
     return mHeight;
   }
@@ -146,8 +147,8 @@ private:
   ~DOMRect() {};
 };
 
-class DOMRectList MOZ_FINAL : public nsIDOMClientRectList,
-                              public nsWrapperCache
+class DOMRectList final : public nsIDOMClientRectList,
+                          public nsWrapperCache
 {
   ~DOMRectList() {}
 
@@ -161,7 +162,7 @@ public:
 
   NS_DECL_NSIDOMCLIENTRECTLIST
   
-  virtual JSObject* WrapObject(JSContext *cx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto) override;
 
   nsISupports* GetParentObject()
   {

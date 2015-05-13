@@ -88,20 +88,20 @@ public:
   NS_IMETHOD AsyncOpen(nsIURI *aURI,
                        const nsACString &aOrigin,
                        nsIWebSocketListener *aListener,
-                       nsISupports *aContext) MOZ_OVERRIDE;
-  NS_IMETHOD Close(uint16_t aCode, const nsACString & aReason) MOZ_OVERRIDE;
-  NS_IMETHOD SendMsg(const nsACString &aMsg) MOZ_OVERRIDE;
-  NS_IMETHOD SendBinaryMsg(const nsACString &aMsg) MOZ_OVERRIDE;
-  NS_IMETHOD SendBinaryStream(nsIInputStream *aStream, uint32_t length) MOZ_OVERRIDE;
-  NS_IMETHOD GetSecurityInfo(nsISupports **aSecurityInfo) MOZ_OVERRIDE;
+                       nsISupports *aContext) override;
+  NS_IMETHOD Close(uint16_t aCode, const nsACString & aReason) override;
+  NS_IMETHOD SendMsg(const nsACString &aMsg) override;
+  NS_IMETHOD SendBinaryMsg(const nsACString &aMsg) override;
+  NS_IMETHOD SendBinaryStream(nsIInputStream *aStream, uint32_t length) override;
+  NS_IMETHOD GetSecurityInfo(nsISupports **aSecurityInfo) override;
 
   WebSocketChannel();
   static void Shutdown();
   bool IsOnTargetThread();
 
   // Off main thread URI access.
-  void GetEffectiveURL(nsAString& aEffectiveURL) const MOZ_OVERRIDE;
-  bool IsEncrypted() const MOZ_OVERRIDE;
+  void GetEffectiveURL(nsAString& aEffectiveURL) const override;
+  bool IsEncrypted() const override;
 
   enum {
     // Non Control Frames
@@ -143,6 +143,9 @@ private:
   void DeleteCurrentOutGoingMessage();
   void GeneratePong(uint8_t *payload, uint32_t len);
   void GeneratePing();
+
+  nsresult OnNetworkChanged();
+  nsresult StartPinging();
 
   void     BeginOpen();
   nsresult HandleExtensions();
@@ -278,6 +281,7 @@ private:
   uint64_t                        mCountRecv;
   uint64_t                        mCountSent;
   uint32_t                        mAppId;
+  bool                            mIsInBrowser;
 #ifdef MOZ_WIDGET_GONK
   nsMainThreadPtrHandle<nsINetworkInterface> mActiveNetwork;
 #endif

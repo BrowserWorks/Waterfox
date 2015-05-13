@@ -1,4 +1,5 @@
-/* a*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -17,9 +18,9 @@ namespace mozilla {
 namespace dom {
 
 JSObject*
-SVGFEConvolveMatrixElement::WrapNode(JSContext* aCx)
+SVGFEConvolveMatrixElement::WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return SVGFEConvolveMatrixElementBinding::Wrap(aCx, this);
+  return SVGFEConvolveMatrixElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 nsSVGElement::NumberInfo SVGFEConvolveMatrixElement::sNumberInfo[2] =
@@ -202,7 +203,6 @@ SVGFEConvolveMatrixElement::GetPrimitiveDescription(nsSVGFilterInstance* aInstan
   if (orderX > NS_SVG_OFFSCREEN_MAX_DIMENSION ||
       orderY > NS_SVG_OFFSCREEN_MAX_DIMENSION)
     return failureDescription;
-  const fallible_t fallible = fallible_t();
   nsAutoArrayPtr<float> kernel(new (fallible) float[orderX * orderY]);
   if (!kernel)
     return failureDescription;

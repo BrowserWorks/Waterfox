@@ -25,6 +25,12 @@ ifdef MOZ_NO_DEBUG_RTL
 DEFINES += -DMOZ_PACKAGE_MSVC_DLLS=1
 DEFINES += -DMSVC_C_RUNTIME_DLL=$(MSVC_C_RUNTIME_DLL)
 DEFINES += -DMSVC_CXX_RUNTIME_DLL=$(MSVC_CXX_RUNTIME_DLL)
+ifdef MSVC_APPCRT_DLL
+DEFINES += -DMSVC_APPCRT_DLL=$(MSVC_APPCRT_DLL)
+endif
+ifdef MSVC_DESKTOPCRT_DLL
+DEFINES += -DMSVC_DESKTOPCRT_DLL=$(MSVC_DESKTOPCRT_DLL)
+endif
 endif
 endif
 
@@ -49,6 +55,9 @@ endif
 ifndef _BINPATH
 _BINPATH = /$(_APPNAME)/Contents/MacOS
 endif
+ifndef _RESPATH
+_RESPATH = /$(_APPNAME)/Contents/Resources
+endif
 endif
 
 include $(topsrcdir)/toolkit/mozapps/installer/packager.mk
@@ -64,12 +73,16 @@ endif
 
 ifeq (bundle, $(MOZ_FS_LAYOUT))
 BINPATH = $(_BINPATH)
+RESPATH = $(_RESPATH)
 DEFINES += -DAPPNAME=$(_APPNAME)
 else
 # Every other platform just winds up in dist/bin
 BINPATH = bin
+RESPATH = bin
 endif
 DEFINES += -DBINPATH=$(BINPATH)
+DEFINES += -DRESPATH=$(RESPATH)
+
 
 ifneq (,$(filter WINNT Darwin Android,$(OS_TARGET)))
 DEFINES += -DMOZ_SHARED_MOZGLUE=1

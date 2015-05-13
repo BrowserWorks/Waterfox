@@ -278,7 +278,7 @@ protected:
     virtual gfxFont *CreateFontInstance(const gfxFontStyle *aFontStyle, bool aNeedsBold);
 
     virtual nsresult CopyFontTable(uint32_t aTableTag,
-                                   FallibleTArray<uint8_t>& aBuffer) MOZ_OVERRIDE;
+                                   FallibleTArray<uint8_t>& aBuffer) override;
 
     LOGFONTW mLogFont;
 };
@@ -310,6 +310,7 @@ public:
     virtual gfxFontFamily* GetDefaultFont(const gfxFontStyle* aStyle);
 
     virtual gfxFontFamily* FindFamily(const nsAString& aFamily,
+                                      nsIAtom* aLanguage = nullptr,
                                       bool aUseSystemFonts = false);
 
     virtual gfxFontEntry* LookupLocalFont(const nsAString& aFontName,

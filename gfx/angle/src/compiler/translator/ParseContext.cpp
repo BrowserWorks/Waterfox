@@ -1004,12 +1004,12 @@ void TParseContext::handleExtensionDirective(const TSourceLoc& loc, const char* 
     directiveHandler.handleExtension(srcLoc, extName, behavior);
 }
 
-void TParseContext::handlePragmaDirective(const TSourceLoc& loc, const char* name, const char* value)
+void TParseContext::handlePragmaDirective(const TSourceLoc& loc, const char* name, const char* value, bool stdgl)
 {
     pp::SourceLocation srcLoc;
     srcLoc.file = loc.first_file;
     srcLoc.line = loc.first_line;
-    directiveHandler.handlePragma(srcLoc, name, value);
+    directiveHandler.handlePragma(srcLoc, name, value, stdgl);
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -1364,11 +1364,18 @@ TIntermAggregate* TParseContext::parseInvariantDeclaration(const TSourceLoc &inv
     {
         error(identifierLoc, "undeclared identifier declared as invariant", identifier->c_str());
         recover();
-
         return NULL;
     }
     else
     {
+        const TString kGlFrontFacing("gl_FrontFacing");
+        if (*identifier == kGlFrontFacing)
+        {
+            error(identifierLoc, "identifier should not be declared as invariant", identifier->c_str());
+            recover();
+            return NULL;
+        }
+        symbolTable.addInvariantVarying(std::string(identifier->c_str()));
         const TVariable *variable = getNamedVariable(identifierLoc, identifier, symbol);
         ASSERT(variable);
         const TType &type = variable->getType();
@@ -2021,9 +2028,11 @@ TIntermTyped* TParseContext::addIndexExpression(TIntermTyped *baseExpression, co
         recover();
     }
 
-    if (indexExpression->getQualifier() == EvqConst)
+    TIntermConstantUnion *indexConstantUnion = indexExpression->getAsConstantUnion();
+
+    if (indexExpression->getQualifier() == EvqConst && indexConstantUnion)
     {
-        int index = indexExpression->getAsConstantUnion()->getIConst(0);
+        int index = indexConstantUnion->getIConst(0);
         if (index < 0)
         {
             std::stringstream infoStream;
@@ -2084,7 +2093,7 @@ TIntermTyped* TParseContext::addIndexExpression(TIntermTyped *baseExpression, co
                 index = baseExpression->getType().getNominalSize() - 1;
             }
 
-            indexExpression->getAsConstantUnion()->getUnionArrayPointer()->setIConst(index);
+            indexConstantUnion->getUnionArrayPointer()->setIConst(index);
             indexedExpression = intermediate.addIndex(EOpIndexDirect, baseExpression, indexExpression, location);
         }
     }

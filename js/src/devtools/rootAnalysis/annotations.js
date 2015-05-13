@@ -57,7 +57,7 @@ function indirectCallCannotGC(fullCaller, fullVariable)
 
 // Ignore calls through functions pointers with these types
 var ignoreClasses = {
-    "JSTracer" : true,
+    "JS::CallbackTracer" : true,
     "JSStringFinalizer" : true,
     "SprintfState" : true,
     "SprintfStateStr" : true,
@@ -81,6 +81,8 @@ var ignoreCallees = {
     "PLDHashTableOps.hashKey" : true,
     "z_stream_s.zfree" : true,
     "GrGLInterface.fCallback" : true,
+    "std::strstreambuf._M_alloc_fun" : true,
+    "std::strstreambuf._M_free_fun" : true
 };
 
 function fieldCallCannotGC(csu, fullfield)
@@ -137,6 +139,13 @@ var ignoreFunctions = {
     "JSObject* js::GetWeakmapKeyDelegate(JSObject*)" : true, // FIXME: mark with AutoSuppressGCAnalysis instead
     "uint8 NS_IsMainThread()" : true,
 
+    // Has an indirect call under it by the name "__f", which seemed too
+    // generic to ignore by itself.
+    "void* std::_Locale_impl::~_Locale_impl(int32)" : true,
+
+    // Bug 1056410 - devirtualization prevents the standard nsISupports::Release heuristic from working
+    "uint32 nsXPConnect::Release()" : true,
+
     // FIXME!
     "NS_LogInit": true,
     "NS_LogTerm": true,
@@ -165,6 +174,12 @@ var ignoreFunctions = {
     // And these are workarounds to avoid even more analysis work,
     // which would sadly still be needed even with bug 898815.
     "void js::AutoCompartment::AutoCompartment(js::ExclusiveContext*, JSCompartment*)": true,
+
+    // The nsScriptNameSpaceManager functions can't actually GC.  They
+    // just use a pldhash which has function pointers, which makes the
+    // analysis think maybe they can.
+    "nsGlobalNameStruct* nsScriptNameSpaceManager::LookupNavigatorName(nsAString_internal*)": true,
+    "nsGlobalNameStruct* nsScriptNameSpaceManager::LookupName(nsAString_internal*, uint16**)": true,
 };
 
 function ignoreGCFunction(mangled)
@@ -274,4 +289,49 @@ function isOverridableField(initialCSU, csu, field)
     }
 
     return true;
+}
+
+function listGCTypes() {
+    return [
+        'JSObject',
+        'JSString',
+        'js::Shape',
+        'js::BaseShape',
+        'JSScript',
+        'js::LazyScript',
+        'js::ion::IonCode',
+    ];
+}
+
+function listGCPointers() {
+    return [
+        'JS::Value',
+        'jsid',
+
+        // AutoCheckCannotGC should also not be held live across a GC function.
+        'JS::AutoCheckCannotGC',
+    ];
+}
+
+function listNonGCTypes() {
+    return [
+    ];
+}
+
+function listNonGCPointers() {
+    return [
+        // Both of these are safe only because jsids are currently only made
+        // from "interned" (pinned) strings. Once that changes, both should be
+        // removed from the list.
+        'NPIdentifier',
+        'XPCNativeMember',
+    ];
+}
+
+// Flexible mechanism for deciding an arbitrary type is a GCPointer. Its one
+// use turned out to be unnecessary due to another change, but the mechanism
+// seems useful for something like /Vector.*Something/.
+function isGCPointer(typeName)
+{
+    return false;
 }

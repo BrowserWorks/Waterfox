@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -265,6 +266,8 @@ private:
 #define NS_EVENT_STATE_TYPE_PLAY_PREVIEW NS_DEFINE_EVENT_STATE_MACRO(44)
 // Element is highlighted (devtools inspector)
 #define NS_EVENT_STATE_DEVTOOLS_HIGHLIGHTED NS_DEFINE_EVENT_STATE_MACRO(45)
+// Element is an unresolved custom element candidate
+#define NS_EVENT_STATE_UNRESOLVED NS_DEFINE_EVENT_STATE_MACRO(46)
 
 // Event state that is used for values that need to be parsed but do nothing.
 #define NS_EVENT_STATE_IGNORE NS_DEFINE_EVENT_STATE_MACRO(63)
@@ -278,7 +281,8 @@ private:
 #define ESM_MANAGED_STATES (NS_EVENT_STATE_ACTIVE | NS_EVENT_STATE_FOCUS |     \
                             NS_EVENT_STATE_HOVER | NS_EVENT_STATE_DRAGOVER |   \
                             NS_EVENT_STATE_URLTARGET | NS_EVENT_STATE_FOCUSRING | \
-                            NS_EVENT_STATE_FULL_SCREEN | NS_EVENT_STATE_FULL_SCREEN_ANCESTOR)
+                            NS_EVENT_STATE_FULL_SCREEN | NS_EVENT_STATE_FULL_SCREEN_ANCESTOR | \
+                            NS_EVENT_STATE_UNRESOLVED)
 
 #define INTRINSIC_STATES (~ESM_MANAGED_STATES)
 

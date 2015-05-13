@@ -17,6 +17,7 @@
 #include "ImageContainer.h"
 #include "Layers.h"
 #include "mozilla/layers/LayersTypes.h"
+#include "gfxWindowsPlatform.h"
 
 #ifndef MOZ_SAMPLE_TYPE_FLOAT32
 #error We expect 32bit float audio samples on desktop for the Windows Media Foundation media backend.
@@ -52,12 +53,12 @@ WMFReader::WMFReader(AbstractMediaDecoder* aDecoder)
     mVideoWidth(0),
     mVideoHeight(0),
     mVideoStride(0),
-    mAudioFrameSum(0),
     mAudioFrameOffset(0),
+    mAudioFrameSum(0),
+    mMustRecaptureAudioPosition(true),
     mHasAudio(false),
     mHasVideo(false),
     mUseHwAccel(false),
-    mMustRecaptureAudioPosition(true),
     mIsMP3Enabled(WMFDecoder::IsMP3Supported()),
     mCOMInitialized(false)
 {
@@ -83,9 +84,11 @@ WMFReader::~WMFReader()
 bool
 WMFReader::InitializeDXVA()
 {
-  if (!Preferences::GetBool("media.windows-media-foundation.use-dxva", false)) {
+  if (gfxWindowsPlatform::GetPlatform()->IsWARP() ||
+      !gfxPlatform::CanUseHardwareVideoDecoding()) {
     return false;
   }
+
   MOZ_ASSERT(mDecoder->GetImageContainer());
 
   // Extract the layer manager backend type so that we can determine
@@ -105,12 +108,11 @@ WMFReader::InitializeDXVA()
 
   LayersBackend backend = layerManager->GetCompositorBackendType();
   if (backend != LayersBackend::LAYERS_D3D9 &&
-      backend != LayersBackend::LAYERS_D3D10 &&
       backend != LayersBackend::LAYERS_D3D11) {
     return false;
   }
 
-  mDXVA2Manager = DXVA2Manager::Create();
+  mDXVA2Manager = DXVA2Manager::CreateD3D9DXVA();
 
   return mDXVA2Manager != nullptr;
 }
@@ -148,14 +150,14 @@ WMFReader::Init(MediaDecoderReader* aCloneDonor)
 bool
 WMFReader::HasAudio()
 {
-  NS_ASSERTION(mDecoder->OnDecodeThread(), "Should be on decode thread.");
+  MOZ_ASSERT(OnTaskQueue());
   return mHasAudio;
 }
 
 bool
 WMFReader::HasVideo()
 {
-  NS_ASSERTION(mDecoder->OnDecodeThread(), "Should be on decode thread.");
+  MOZ_ASSERT(OnTaskQueue());
   return mHasVideo;
 }
 
@@ -363,7 +365,7 @@ WMFReader::ConfigureVideoDecoder()
 
   DECODER_LOG("Successfully configured video stream");
 
-  mHasVideo = mInfo.mVideo.mHasVideo = true;
+  mHasVideo = true;
 
   return S_OK;
 }
@@ -432,7 +434,7 @@ WMFReader::ConfigureAudioDecoder()
 
   mInfo.mAudio.mChannels = mAudioChannels;
   mInfo.mAudio.mRate = mAudioRate;
-  mHasAudio = mInfo.mAudio.mHasAudio = true;
+  mHasAudio = true;
 
   DECODER_LOG("Successfully configured audio stream. rate=%u channels=%u bitsPerSample=%u",
               mAudioRate, mAudioChannels, mAudioBytesPerSample);
@@ -470,7 +472,7 @@ WMFReader::CreateSourceReader()
   hr = ConfigureAudioDecoder();
   NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
 
-  if (mUseHwAccel && mInfo.mVideo.mHasVideo) {
+  if (mUseHwAccel && mInfo.HasVideo()) {
     RefPtr<IMFTransform> videoDecoder;
     hr = mSourceReader->GetServiceForStream(MF_SOURCE_READER_FIRST_VIDEO_STREAM,
                                             GUID_NULL,
@@ -501,7 +503,7 @@ nsresult
 WMFReader::ReadMetadata(MediaInfo* aInfo,
                         MetadataTags** aTags)
 {
-  NS_ASSERTION(mDecoder->OnDecodeThread(), "Should be on decode thread.");
+  MOZ_ASSERT(OnTaskQueue());
 
   DECODER_LOG("WMFReader::ReadMetadata()");
   HRESULT hr;
@@ -569,7 +571,7 @@ WMFReader::IsMediaSeekable()
 bool
 WMFReader::DecodeAudioData()
 {
-  NS_ASSERTION(mDecoder->OnDecodeThread(), "Should be on decode thread.");
+  MOZ_ASSERT(OnTaskQueue());
 
   HRESULT hr;
   hr = mSourceReader->ReadSample(MF_SOURCE_READER_FIRST_AUDIO_STREAM,
@@ -744,7 +746,7 @@ WMFReader::CreateBasicVideoFrame(IMFSample* aSample,
                                             b,
                                             false,
                                             -1,
-                                            ToIntRect(mPictureRegion));
+                                            mPictureRegion);
   if (twoDBuffer) {
     twoDBuffer->Unlock2D();
   } else {
@@ -786,7 +788,7 @@ WMFReader::CreateD3DVideoFrame(IMFSample* aSample,
                                                      image.forget(),
                                                      false,
                                                      -1,
-                                                     ToIntRect(mPictureRegion));
+                                                     mPictureRegion);
 
   NS_ENSURE_TRUE(v, E_FAIL);
   v.forget(aOutVideoData);
@@ -798,12 +800,11 @@ bool
 WMFReader::DecodeVideoFrame(bool &aKeyframeSkip,
                             int64_t aTimeThreshold)
 {
-  NS_ASSERTION(mDecoder->OnDecodeThread(), "Should be on decode thread.");
+  MOZ_ASSERT(OnTaskQueue());
 
   // Record number of frames decoded and parsed. Automatically update the
   // stats counters using the AutoNotifyDecoded stack-based class.
-  uint32_t parsed = 0, decoded = 0;
-  AbstractMediaDecoder::AutoNotifyDecoded autoNotify(mDecoder, parsed, decoded);
+  AbstractMediaDecoder::AutoNotifyDecoded a(mDecoder);
 
   HRESULT hr;
 
@@ -870,8 +871,8 @@ WMFReader::DecodeVideoFrame(bool &aKeyframeSkip,
   }
   NS_ENSURE_TRUE(SUCCEEDED(hr) && v, false);
 
-  parsed++;
-  decoded++;
+  a.mParsed++;
+  a.mDecoded++;
   mVideoQueue.Push(v);
 
   #ifdef LOG_SAMPLE_DECODE
@@ -889,10 +890,7 @@ WMFReader::DecodeVideoFrame(bool &aKeyframeSkip,
 }
 
 nsRefPtr<MediaDecoderReader::SeekPromise>
-WMFReader::Seek(int64_t aTargetUs,
-                int64_t aStartTime,
-                int64_t aEndTime,
-                int64_t aCurrentTime)
+WMFReader::Seek(int64_t aTargetUs, int64_t aEndTime)
 {
   nsresult res = SeekInternal(aTargetUs);
   if (NS_FAILED(res)) {
@@ -907,7 +905,7 @@ WMFReader::SeekInternal(int64_t aTargetUs)
 {
   DECODER_LOG("WMFReader::Seek() %lld", aTargetUs);
 
-  NS_ASSERTION(mDecoder->OnDecodeThread(), "Should be on decode thread.");
+  MOZ_ASSERT(OnTaskQueue());
 #ifdef DEBUG
   bool canSeek = false;
   GetSourceReaderCanSeek(mSourceReader, canSeek);

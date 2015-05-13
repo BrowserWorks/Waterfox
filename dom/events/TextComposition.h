@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 sw=2 et tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -31,7 +31,7 @@ class IMEStateManager;
  * this class, the instances use the stored event target.
  */
 
-class TextComposition MOZ_FINAL
+class TextComposition final
 {
   friend class IMEStateManager;
 
@@ -221,6 +221,13 @@ private:
   // discarded by PresShell due to not safe to dispatch events.
   bool mWasNativeCompositionEndEventDiscarded;
 
+  // Allow control characters appear in composition string.
+  // When this is false, control characters except
+  // CHARACTER TABULATION (horizontal tab) are removed from
+  // both composition string and data attribute of compositionupdate
+  // and compositionend events.
+  bool mAllowControlCharacters;
+
   // Hide the default constructor and copy constructor.
   TextComposition() {}
   TextComposition(const TextComposition& aOther);
@@ -321,7 +328,7 @@ private:
                                uint32_t aEventMessage,
                                const nsAString& aData,
                                bool aIsSynthesizedEvent = false);
-    NS_IMETHOD Run() MOZ_OVERRIDE;
+    NS_IMETHOD Run() override;
 
   private:
     nsRefPtr<TextComposition> mTextComposition;
@@ -361,7 +368,7 @@ private:
  * in the array can be destroyed by calling some methods of itself.
  */
 
-class TextCompositionArray MOZ_FINAL :
+class TextCompositionArray final :
   public nsAutoTArray<nsRefPtr<TextComposition>, 2>
 {
 public:

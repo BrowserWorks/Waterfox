@@ -12,6 +12,8 @@
 #include <stdarg.h>
 #include "mozilla/ThreadLocal.h"
 #include "mozilla/Assertions.h"
+#include "mozilla/GuardObjects.h"
+#include "mozilla/UniquePtr.h"
 #include "nscore.h"
 #include "GeckoProfilerFunc.h"
 #include "PseudoStack.h"
@@ -35,7 +37,6 @@
 #endif
 
 class TableTicker;
-class JSCustomObject;
 
 namespace mozilla {
 class TimeStamp;
@@ -143,15 +144,15 @@ void profiler_set_frame_number(int frameNumber)
 }
 
 static inline
-char* profiler_get_profile()
+char* profiler_get_profile(float aSinceTime = 0)
 {
-  return mozilla_sampler_get_profile();
+  return mozilla_sampler_get_profile(aSinceTime);
 }
 
 static inline
-JSObject* profiler_get_profile_jsobject(JSContext* aCx)
+JSObject* profiler_get_profile_jsobject(JSContext* aCx, float aSinceTime = 0)
 {
-  return mozilla_sampler_get_profile_data(aCx);
+  return mozilla_sampler_get_profile_data(aCx, aSinceTime);
 }
 
 static inline
@@ -167,13 +168,10 @@ const char** profiler_get_features()
 }
 
 static inline
-void profiler_print_location()
+void profiler_get_buffer_info(uint32_t *aCurrentPosition, uint32_t *aTotalSize,
+                              uint32_t *aGeneration)
 {
-  if (!sps_version2()) {
-    return mozilla_sampler_print_location1();
-  } else {
-    return mozilla_sampler_print_location2();
-  }
+  return mozilla_sampler_get_buffer_info(aCurrentPosition, aTotalSize, aGeneration);
 }
 
 static inline
@@ -278,7 +276,9 @@ static inline void profiler_tracing(const char* aCategory, const char* aInfo,
 // ac_add_options --enable-systace
 //#define MOZ_USE_SYSTRACE
 #ifdef MOZ_USE_SYSTRACE
+#ifndef ATRACE_TAG
 # define ATRACE_TAG ATRACE_TAG_ALWAYS
+#endif
 // We need HAVE_ANDROID_OS to be defined for Trace.h.
 // If its not set we will set it temporary and remove it.
 # ifndef HAVE_ANDROID_OS
@@ -363,6 +363,28 @@ static inline void profiler_tracing(const char* aCategory, const char* aInfo,
 #define PROFILE_DEFAULT_FEATURE_COUNT 0
 
 namespace mozilla {
+
+class MOZ_STACK_CLASS GeckoProfilerTracingRAII {
+public:
+  GeckoProfilerTracingRAII(const char* aCategory, const char* aInfo,
+                           mozilla::UniquePtr<ProfilerBacktrace> aBacktrace
+                           MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
+    : mCategory(aCategory)
+    , mInfo(aInfo)
+  {
+    MOZ_GUARD_OBJECT_NOTIFIER_INIT;
+    profiler_tracing(mCategory, mInfo, aBacktrace.release(), TRACING_INTERVAL_START);
+  }
+
+  ~GeckoProfilerTracingRAII() {
+    profiler_tracing(mCategory, mInfo, TRACING_INTERVAL_END);
+  }
+
+protected:
+  MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
+  const char* mCategory;
+  const char* mInfo;
+};
 
 class MOZ_STACK_CLASS SamplerStackFrameRAII {
 public:

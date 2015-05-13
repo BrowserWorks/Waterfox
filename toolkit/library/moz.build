@@ -6,8 +6,6 @@
 
 @template
 def Libxul(name):
-    MSVC_ENABLE_PGO = True
-
     if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
         # This is going to be a framework named "XUL", not an ordinary library named
         # "libxul.dylib"
@@ -27,13 +25,6 @@ def Libxul(name):
         'wininet.dll',
         'winspool.drv'
     ]
-
-    if CONFIG['MOZ_METRO']:
-        DELAYLOAD_DLLS += [
-            'API-MS-WIN-CORE-WINRT-L' + CONFIG['CRTEXPDLLVERSION'] + '.DLL',
-            'API-MS-WIN-CORE-WINRT-STRING-L' + CONFIG['CRTEXPDLLVERSION'] + '.DLL',
-            'uiautomationcore.dll'
-        ]
 
     if CONFIG['ACCESSIBILITY']:
         DELAYLOAD_DLLS += ['oleacc.dll']
@@ -69,8 +60,6 @@ STATIC_LIBRARY_NAME = 'xul_s'
 SOURCES += [
     'StaticXULComponentsStart.cpp',
 ]
-
-MSVC_ENABLE_PGO = True
 
 # This, combined with the fact the file is first, makes the start pointer
 # it contains first in Windows PGO builds.
@@ -113,7 +102,6 @@ if CONFIG['MOZ_SANDBOX'] and CONFIG['OS_ARCH'] == 'WINNT':
 
 USE_LIBS += [
     'gkmedias',
-    'mozalloc',
     'nspr',
     'nss',
     'sqlite',
@@ -166,6 +154,7 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
         '-framework IOKit',
         '-F%s' % CONFIG['MACOS_PRIVATE_FRAMEWORKS_DIR'],
         '-framework CoreUI',
+        '-framework CoreSymbolication',
         'cups',
     ]
 
@@ -202,7 +191,7 @@ if CONFIG['MOZ_B2G_BT_BLUEZ'] and CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
         'dbus',
     ]
 
-if CONFIG['MOZ_B2G_CAMERA']:
+if CONFIG['MOZ_B2G_CAMERA'] and CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
     OS_LIBS += [
         'stagefright',
         'stagefright_omx',
@@ -350,15 +339,11 @@ if CONFIG['OS_ARCH'] == 'WINNT':
         'wbemuuid',
         'wintrust',
         'wtsapi32',
+        'locationapi'
     ]
     if CONFIG['ACCESSIBILITY']:
         OS_LIBS += [
             'oleacc',
-        ]
-    if CONFIG['MOZ_METRO']:
-        OS_LIBS += [
-            'uiautomationcore',
-            'runtimeobject',
         ]
 
 if CONFIG['MOZ_ENABLE_QT']:

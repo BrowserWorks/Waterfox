@@ -15,13 +15,13 @@
 #include "nspr.h"
 #include "png.h"
 #include "RasterImage.h"
+#include "mozilla/Telemetry.h"
 
 #include <algorithm>
 
 namespace mozilla {
 namespace image {
 
-#ifdef PR_LOGGING
 static PRLogModuleInfo*
 GetPNGLog()
 {
@@ -41,7 +41,6 @@ GetPNGDecoderAccountingLog()
   }
   return sPNGDecoderAccountingLog;
 }
-#endif
 
 // Limit image dimensions (bug #251381, #591822, and #967656)
 #ifndef MOZ_PNG_MAX_DIMENSION
@@ -107,7 +106,7 @@ nsPNGDecoder::AnimFrameInfo::AnimFrameInfo(png_structp aPNG, png_infop aInfo)
 const uint8_t
 nsPNGDecoder::pngSignatureBytes[] = { 137, 80, 78, 71, 13, 10, 26, 10 };
 
-nsPNGDecoder::nsPNGDecoder(RasterImage& aImage)
+nsPNGDecoder::nsPNGDecoder(RasterImage* aImage)
  : Decoder(aImage),
    mPNG(nullptr), mInfo(nullptr),
    mCMSLine(nullptr), interlacebuf(nullptr),
@@ -125,10 +124,10 @@ nsPNGDecoder::~nsPNGDecoder()
     png_destroy_read_struct(&mPNG, mInfo ? &mInfo : nullptr, nullptr);
   }
   if (mCMSLine) {
-    nsMemory::Free(mCMSLine);
+    free(mCMSLine);
   }
   if (interlacebuf) {
-    nsMemory::Free(interlacebuf);
+    free(interlacebuf);
   }
   if (mInProfile) {
     qcms_profile_release(mInProfile);
@@ -168,7 +167,6 @@ void nsPNGDecoder::CreateFrame(png_uint_32 x_offset, png_uint_32 y_offset,
   }
 
   mFrameRect = neededRect;
-  mFrameHasNoAlpha = true;
 
   PR_LOG(GetPNGDecoderAccountingLog(), PR_LOG_DEBUG,
          ("PNGDecoderAccounting: nsPNGDecoder::CreateFrame -- created "
@@ -200,7 +198,7 @@ nsPNGDecoder::EndImageFrame()
   mNumFrames++;
 
   Opacity opacity = Opacity::SOME_TRANSPARENCY;
-  if (format == gfx::SurfaceFormat::B8G8R8X8 || mFrameHasNoAlpha) {
+  if (format == gfx::SurfaceFormat::B8G8R8X8) {
     opacity = Opacity::OPAQUE;
   }
 
@@ -226,11 +224,11 @@ nsPNGDecoder::InitInternal()
   }
 
   mCMSMode = gfxPlatform::GetCMSMode();
-  if ((mDecodeFlags & DECODER_NO_COLORSPACE_CONVERSION) != 0) {
+  if (GetDecodeFlags() & imgIContainer::FLAG_DECODE_NO_COLORSPACE_CONVERSION) {
     mCMSMode = eCMSMode_Off;
   }
-  mDisablePremultipliedAlpha = (mDecodeFlags & DECODER_NO_PREMULTIPLY_ALPHA)
-                                != 0;
+  mDisablePremultipliedAlpha =
+    GetDecodeFlags() & imgIContainer::FLAG_DECODE_NO_PREMULTIPLY_ALPHA;
 
 #ifdef PNG_HANDLE_AS_UNKNOWN_SUPPORTED
   static png_byte color_chunks[]=
@@ -281,21 +279,19 @@ nsPNGDecoder::InitInternal()
                               (int)sizeof(unused_chunks)/5);
 #endif
 
-#ifdef PNG_SET_CHUNK_MALLOC_LIMIT_SUPPORTED
+#ifdef PNG_SET_USER_LIMITS_SUPPORTED
   if (mCMSMode != eCMSMode_Off) {
     png_set_chunk_malloc_max(mPNG, 4000000L);
   }
 #endif
 
 #ifdef PNG_READ_CHECK_FOR_INVALID_INDEX_SUPPORTED
-#ifndef PR_LOGGING
   // Disallow palette-index checking, for speed; we would ignore the warning
-  // anyhow unless we have defined PR_LOGGING.  This feature was added at
-  // libpng version 1.5.10 and is disabled in the embedded libpng but enabled
-  // by default in the system libpng.  This call also disables it in the
-  // system libpng, for decoding speed.  Bug #745202.
+  // anyhow.  This feature was added at libpng version 1.5.10 and is disabled
+  // in the embedded libpng but enabled by default in the system libpng.  This
+  // call also disables it in the system libpng, for decoding speed.
+  // Bug #745202.
   png_set_check_for_invalid_index(mPNG, 0);
-#endif
 #endif
 
 #if defined(PNG_SET_OPTION_SUPPORTED) && defined(PNG_sRGB_PROFILE_CHECKS) && \
@@ -315,7 +311,7 @@ nsPNGDecoder::InitInternal()
 void
 nsPNGDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
 {
-  NS_ABORT_IF_FALSE(!HasError(), "Shouldn't call WriteInternal after error!");
+  MOZ_ASSERT(!HasError(), "Shouldn't call WriteInternal after error!");
 
   // If we only want width/height, we don't need to go through libpng
   if (IsSizeDecode()) {
@@ -551,22 +547,25 @@ nsPNGDecoder::info_callback(png_structp png_ptr, png_infop info_ptr)
   }
 
   if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) {
-    int sample_max = (1 << bit_depth);
     png_color_16p trans_values;
     png_get_tRNS(png_ptr, info_ptr, &trans, &num_trans, &trans_values);
     // libpng doesn't reject a tRNS chunk with out-of-range samples
     // so we check it here to avoid setting up a useless opacity
-    // channel or producing unexpected transparent pixels when using
-    // libpng-1.2.19 through 1.2.26 (bug #428045)
-    if ((color_type == PNG_COLOR_TYPE_GRAY &&
-         (int)trans_values->gray > sample_max) ||
-         (color_type == PNG_COLOR_TYPE_RGB &&
-         ((int)trans_values->red > sample_max ||
-         (int)trans_values->green > sample_max ||
-         (int)trans_values->blue > sample_max))) {
-      // clear the tRNS valid flag and release tRNS memory
-      png_free_data(png_ptr, info_ptr, PNG_FREE_TRNS, 0);
-    } else {
+    // channel or producing unexpected transparent pixels (bug #428045)
+    if (bit_depth < 16) {
+      png_uint_16 sample_max = (1 << bit_depth) - 1;
+      if ((color_type == PNG_COLOR_TYPE_GRAY &&
+           trans_values->gray > sample_max) ||
+           (color_type == PNG_COLOR_TYPE_RGB &&
+           (trans_values->red > sample_max ||
+           trans_values->green > sample_max ||
+           trans_values->blue > sample_max))) {
+        // clear the tRNS valid flag and release tRNS memory
+        png_free_data(png_ptr, info_ptr, PNG_FREE_TRNS, 0);
+        num_trans = 0;
+      }
+    }
+    if (num_trans != 0) {
       png_set_expand(png_ptr);
     }
   }
@@ -658,7 +657,7 @@ nsPNGDecoder::info_callback(png_structp png_ptr, png_infop info_ptr)
       (channels <= 2 || interlace_type == PNG_INTERLACE_ADAM7)) {
     uint32_t bpp[] = { 0, 3, 4, 3, 4 };
     decoder->mCMSLine =
-      (uint8_t*)moz_malloc(bpp[channels] * width);
+      (uint8_t*)malloc(bpp[channels] * width);
     if (!decoder->mCMSLine) {
       png_longjmp(decoder->mPNG, 5); // NS_ERROR_OUT_OF_MEMORY
     }
@@ -666,7 +665,7 @@ nsPNGDecoder::info_callback(png_structp png_ptr, png_infop info_ptr)
 
   if (interlace_type == PNG_INTERLACE_ADAM7) {
     if (height < INT32_MAX / (width * channels)) {
-      decoder->interlacebuf = (uint8_t*)moz_malloc(channels * width * height);
+      decoder->interlacebuf = (uint8_t*)malloc(channels * width * height);
     }
     if (!decoder->interlacebuf) {
       png_longjmp(decoder->mPNG, 5); // NS_ERROR_OUT_OF_MEMORY
@@ -735,7 +734,6 @@ nsPNGDecoder::row_callback(png_structp png_ptr, png_bytep new_row,
 
     uint32_t bpr = width * sizeof(uint32_t);
     uint32_t* cptr32 = (uint32_t*)(decoder->mImageData + (row_num*bpr));
-    bool rowHasNoAlpha = true;
 
     if (decoder->mTransform) {
       if (decoder->mCMSLine) {
@@ -784,18 +782,12 @@ nsPNGDecoder::row_callback(png_structp png_ptr, png_bytep new_row,
         if (!decoder->mDisablePremultipliedAlpha) {
           for (uint32_t x=width; x>0; --x) {
             *cptr32++ = gfxPackedPixel(line[3], line[0], line[1], line[2]);
-            if (line[3] != 0xff) {
-              rowHasNoAlpha = false;
-            }
             line += 4;
           }
         } else {
           for (uint32_t x=width; x>0; --x) {
             *cptr32++ = gfxPackedPixelNoPreMultiply(line[3], line[0], line[1],
                                                     line[2]);
-            if (line[3] != 0xff) {
-              rowHasNoAlpha = false;
-            }
             line += 4;
           }
         }
@@ -803,10 +795,6 @@ nsPNGDecoder::row_callback(png_structp png_ptr, png_bytep new_row,
       break;
       default:
         png_longjmp(decoder->mPNG, 1);
-    }
-
-    if (!rowHasNoAlpha) {
-      decoder->mFrameHasNoAlpha = false;
     }
 
     if (decoder->mNumFrames <= 1) {
@@ -869,7 +857,7 @@ nsPNGDecoder::end_callback(png_structp png_ptr, png_infop info_ptr)
                static_cast<nsPNGDecoder*>(png_get_progressive_ptr(png_ptr));
 
   // We shouldn't get here if we've hit an error
-  NS_ABORT_IF_FALSE(!decoder->HasError(), "Finishing up PNG but hit error!");
+  MOZ_ASSERT(!decoder->HasError(), "Finishing up PNG but hit error!");
 
   int32_t loop_count = 0;
 #ifdef PNG_APNG_SUPPORTED

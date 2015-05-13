@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -93,11 +94,12 @@ DOMSVGNumber::DOMSVGNumber(DOMSVGNumberList *aList,
   , mValue(0.0f)
 {
   // These shifts are in sync with the members in the header.
-  NS_ABORT_IF_FALSE(aList &&
-                    aAttrEnum < (1 << 4) &&
-                    aListIndex <= MaxListIndex(), "bad arg");
+  MOZ_ASSERT(aList &&
+             aAttrEnum < (1 << 4) &&
+             aListIndex <= MaxListIndex(),
+             "bad arg");
 
-  NS_ABORT_IF_FALSE(IndexIsValid(), "Bad index for DOMSVGNumber!");
+  MOZ_ASSERT(IndexIsValid(), "Bad index for DOMSVGNumber!");
 }
 
 DOMSVGNumber::DOMSVGNumber(nsISupports* aParent)
@@ -180,7 +182,7 @@ DOMSVGNumber::InsertingIntoList(DOMSVGNumberList *aList,
   mListIndex = aListIndex;
   mIsAnimValItem = aIsAnimValItem;
 
-  NS_ABORT_IF_FALSE(IndexIsValid(), "Bad index for DOMSVGNumber!");
+  MOZ_ASSERT(IndexIsValid(), "Bad index for DOMSVGNumber!");
 }
 
 void
@@ -219,9 +221,9 @@ DOMSVGNumber::IndexIsValid()
 #endif
 
 JSObject*
-DOMSVGNumber::WrapObject(JSContext* aCx)
+DOMSVGNumber::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return dom::SVGNumberBinding::Wrap(aCx, this);
+  return dom::SVGNumberBinding::Wrap(aCx, this, aGivenProto);
 }
 
 } // namespace mozilla

@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -42,9 +44,10 @@ WorkerDataStoreCursor::Constructor(GlobalObject& aGlobal, ErrorResult& aRv)
 
 bool
 WorkerDataStoreCursor::WrapObject(JSContext* aCx,
+                                  JS::Handle<JSObject*> aGivenProto,
                                   JS::MutableHandle<JSObject*> aReflector)
 {
-  return DataStoreCursorBinding_workers::Wrap(aCx, this, aReflector);
+  return DataStoreCursorBinding_workers::Wrap(aCx, this, aGivenProto, aReflector);
 }
 
 // A WorkerMainThreadRunnable which holds a reference to DataStoreCursor.
@@ -66,7 +69,7 @@ public:
 
 // A DataStoreCursorRunnable to run DataStoreCursor::Next(...) on the main
 // thread.
-class DataStoreCursorNextRunnable MOZ_FINAL : public DataStoreCursorRunnable
+class DataStoreCursorNextRunnable final : public DataStoreCursorRunnable
 {
   nsRefPtr<PromiseWorkerProxy> mPromiseWorkerProxy;
   ErrorResult& mRv;
@@ -100,7 +103,7 @@ public:
 
 protected:
   virtual bool
-  MainThreadRun() MOZ_OVERRIDE
+  MainThreadRun() override
   {
     AssertIsOnMainThread();
 
@@ -112,7 +115,7 @@ protected:
 
 // A DataStoreCursorRunnable to run DataStoreCursor::Close(...) on the main
 // thread.
-class DataStoreCursorCloseRunnable MOZ_FINAL : public DataStoreCursorRunnable
+class DataStoreCursorCloseRunnable final : public DataStoreCursorRunnable
 {
   ErrorResult& mRv;
 
@@ -129,7 +132,7 @@ public:
 
 protected:
   virtual bool
-  MainThreadRun() MOZ_OVERRIDE
+  MainThreadRun() override
   {
     AssertIsOnMainThread();
 
@@ -185,12 +188,6 @@ WorkerDataStoreCursor::Close(JSContext* aCx, ErrorResult& aRv)
   nsRefPtr<DataStoreCursorCloseRunnable> runnable =
     new DataStoreCursorCloseRunnable(workerPrivate, mBackingCursor, aRv);
   runnable->Dispatch(aCx);
-}
-
-void
-WorkerDataStoreCursor::SetDataStoreCursorImpl(DataStoreCursorImpl& aCursor)
-{
-  NS_NOTREACHED("We don't use this for the WorkerDataStoreCursor!");
 }
 
 void

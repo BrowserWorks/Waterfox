@@ -1,7 +1,6 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
- * vim:cindent:ts=2:et:sw=2:
- *
- * This Source Code Form is subject to the terms of the Mozilla Public
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
@@ -94,9 +93,10 @@ nsPropertyTable::TransferOrDeleteAllPropertiesFor(nsPropertyOwner aObject,
   nsresult rv = NS_OK;
   for (PropertyList* prop = mPropertyList; prop; prop = prop->mNext) {
     if (prop->mTransfer) {
-      PropertyListMapEntry *entry = static_cast<PropertyListMapEntry*>
-                                               (PL_DHashTableLookup(&prop->mObjectValueMap, aObject));
-      if (PL_DHASH_ENTRY_IS_BUSY(entry)) {
+      PropertyListMapEntry *entry =
+          static_cast<PropertyListMapEntry*>
+                     (PL_DHashTableSearch(&prop->mObjectValueMap, aObject));
+      if (entry) {
         rv = aOtherTable->SetProperty(aObject, prop->mName,
                                       entry->value, prop->mDtorFunc,
                                       prop->mDtorData, prop->mTransfer);
@@ -125,10 +125,10 @@ nsPropertyTable::Enumerate(nsPropertyOwner aObject,
   PropertyList* prop;
   for (prop = mPropertyList; prop; prop = prop->mNext) {
     PropertyListMapEntry *entry = static_cast<PropertyListMapEntry*>
-      (PL_DHashTableLookup(&prop->mObjectValueMap, aObject));
-    if (PL_DHASH_ENTRY_IS_BUSY(entry)) {
+      (PL_DHashTableSearch(&prop->mObjectValueMap, aObject));
+    if (entry) {
       aCallback(const_cast<void*>(aObject.get()), prop->mName, entry->value,
-                 aData);
+                aData);
     }
   }
 }
@@ -172,9 +172,10 @@ nsPropertyTable::GetPropertyInternal(nsPropertyOwner aObject,
 
   PropertyList* propertyList = GetPropertyListFor(aPropertyName);
   if (propertyList) {
-    PropertyListMapEntry *entry = static_cast<PropertyListMapEntry*>
-                                             (PL_DHashTableLookup(&propertyList->mObjectValueMap, aObject));
-    if (PL_DHASH_ENTRY_IS_BUSY(entry)) {
+    PropertyListMapEntry *entry =
+        static_cast<PropertyListMapEntry*>
+                   (PL_DHashTableSearch(&propertyList->mObjectValueMap, aObject));
+    if (entry) {
       propValue = entry->value;
       if (aRemove) {
         // don't call propertyList->mDtorFunc.  That's the caller's job now.
@@ -215,7 +216,7 @@ nsPropertyTable::SetPropertyInternal(nsPropertyOwner     aObject,
   } else {
     propertyList = new PropertyList(aPropertyName, aPropDtorFunc,
                                     aPropDtorData, aTransfer);
-    if (!propertyList || !propertyList->mObjectValueMap.ops) {
+    if (!propertyList || !propertyList->mObjectValueMap.IsInitialized()) {
       delete propertyList;
       return NS_ERROR_OUT_OF_MEMORY;
     }
@@ -228,7 +229,7 @@ nsPropertyTable::SetPropertyInternal(nsPropertyOwner     aObject,
   // value is destroyed
   nsresult result = NS_OK;
   PropertyListMapEntry *entry = static_cast<PropertyListMapEntry*>
-                                           (PL_DHashTableAdd(&propertyList->mObjectValueMap, aObject));
+    (PL_DHashTableAdd(&propertyList->mObjectValueMap, aObject, fallible));
   if (!entry)
     return NS_ERROR_OUT_OF_MEMORY;
   // A nullptr entry->key is the sign that the entry has just been allocated
@@ -280,33 +281,30 @@ nsPropertyTable::GetPropertyListFor(nsIAtom* aPropertyName) const
 }
 
 //----------------------------------------------------------------------
-    
+
 nsPropertyTable::PropertyList::PropertyList(nsIAtom            *aName,
                                             NSPropertyDtorFunc  aDtorFunc,
                                             void               *aDtorData,
                                             bool                aTransfer)
   : mName(aName),
+    mObjectValueMap(PL_DHashGetStubOps(), sizeof(PropertyListMapEntry)),
     mDtorFunc(aDtorFunc),
     mDtorData(aDtorData),
     mTransfer(aTransfer),
     mNext(nullptr)
 {
-  PL_DHashTableInit(&mObjectValueMap, PL_DHashGetStubOps(), this,
-                    sizeof(PropertyListMapEntry));
 }
 
 nsPropertyTable::PropertyList::~PropertyList()
 {
-  PL_DHashTableFinish(&mObjectValueMap);
 }
-
 
 static PLDHashOperator
 DestroyPropertyEnumerator(PLDHashTable *table, PLDHashEntryHdr *hdr,
                           uint32_t number, void *arg)
 {
   nsPropertyTable::PropertyList *propList =
-      static_cast<nsPropertyTable::PropertyList*>(table->data);
+      static_cast<nsPropertyTable::PropertyList*>(arg);
   PropertyListMapEntry* entry = static_cast<PropertyListMapEntry*>(hdr);
 
   propList->mDtorFunc(const_cast<void*>(entry->key), propList->mName,
@@ -319,16 +317,16 @@ nsPropertyTable::PropertyList::Destroy()
 {
   // Enumerate any remaining object/value pairs and destroy the value object
   if (mDtorFunc)
-    PL_DHashTableEnumerate(&mObjectValueMap, DestroyPropertyEnumerator,
-                           nullptr);
+    PL_DHashTableEnumerate(&mObjectValueMap, DestroyPropertyEnumerator, this);
 }
 
 bool
 nsPropertyTable::PropertyList::DeletePropertyFor(nsPropertyOwner aObject)
 {
-  PropertyListMapEntry *entry = static_cast<PropertyListMapEntry*>
-                                           (PL_DHashTableLookup(&mObjectValueMap, aObject));
-  if (!PL_DHASH_ENTRY_IS_BUSY(entry))
+  PropertyListMapEntry *entry =
+      static_cast<PropertyListMapEntry*>
+                 (PL_DHashTableSearch(&mObjectValueMap, aObject));
+  if (!entry)
     return false;
 
   void* value = entry->value;

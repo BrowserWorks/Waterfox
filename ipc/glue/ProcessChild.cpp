@@ -15,13 +15,13 @@ namespace ipc {
 
 ProcessChild* ProcessChild::gProcessChild;
 
-ProcessChild::ProcessChild(ProcessHandle parentHandle)
+ProcessChild::ProcessChild(ProcessId aParentPid)
   : ChildProcess(new IOThreadChild())
   , mUILoop(MessageLoop::current())
-  , mParentHandle(parentHandle)
+  , mParentPid(aParentPid)
 {
-  NS_ABORT_IF_FALSE(mUILoop, "UILoop should be created by now");
-  NS_ABORT_IF_FALSE(!gProcessChild, "should only be one ProcessChild");
+  MOZ_ASSERT(mUILoop, "UILoop should be created by now");
+  MOZ_ASSERT(!gProcessChild, "should only be one ProcessChild");
   gProcessChild = this;
 }
 

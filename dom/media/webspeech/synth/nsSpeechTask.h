@@ -45,10 +45,16 @@ public:
 
   void SetIndirectAudio(bool aIndirectAudio) { mIndirectAudio = aIndirectAudio; }
 
+  void BindStream(ProcessedMediaStream* aStream);
+
+  void SetChosenVoiceURI(const nsAString& aUri);
+
 protected:
   virtual ~nsSpeechTask();
 
-  virtual nsresult DispatchStartImpl();
+  nsresult DispatchStartImpl();
+
+  virtual nsresult DispatchStartImpl(const nsAString& aUri);
 
   virtual nsresult DispatchEndImpl(float aElapsedTime, uint32_t aCharIndex);
 
@@ -78,6 +84,8 @@ private:
 
   nsRefPtr<SourceMediaStream> mStream;
 
+  nsRefPtr<MediaInputPort> mPort;
+
   nsCOMPtr<nsISpeechTaskCallback> mCallback;
 
   uint32_t mChannels;
@@ -85,6 +93,8 @@ private:
   nsRefPtr<SpeechSynthesis> mSpeechSynthesis;
 
   bool mIndirectAudio;
+
+  nsString mChosenVoiceURI;
 };
 
 } // namespace dom

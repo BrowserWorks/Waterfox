@@ -641,7 +641,7 @@ public:
   // cache size is over limit and also returns a total number of all entries in
   // the index minus the number of forced valid entries that we encounter
   // when searching (see below)
-  static nsresult GetEntryForEviction(SHA1Sum::Hash *aHash, uint32_t *aCnt);
+  static nsresult GetEntryForEviction(bool aIgnoreEmptyEntries, SHA1Sum::Hash *aHash, uint32_t *aCnt);
 
   // Checks if a cache entry is currently forced valid. Used to prevent an entry
   // (that has been forced valid) from being evicted when the cache size reaches
@@ -650,6 +650,9 @@ public:
 
   // Returns cache size in kB.
   static nsresult GetCacheSize(uint32_t *_retval);
+
+  // Returns number of entry files in the cache
+  static nsresult GetEntryFileCount(uint32_t *_retval);
 
   // Synchronously returns the disk occupation and number of entries per-context.
   // Callable on any thread.
@@ -683,15 +686,15 @@ private:
 
   virtual ~CacheIndex();
 
-  NS_IMETHOD OnFileOpened(CacheFileHandle *aHandle, nsresult aResult) MOZ_OVERRIDE;
+  NS_IMETHOD OnFileOpened(CacheFileHandle *aHandle, nsresult aResult) override;
   nsresult   OnFileOpenedInternal(FileOpenHelper *aOpener,
                                   CacheFileHandle *aHandle, nsresult aResult);
   NS_IMETHOD OnDataWritten(CacheFileHandle *aHandle, const char *aBuf,
-                           nsresult aResult) MOZ_OVERRIDE;
-  NS_IMETHOD OnDataRead(CacheFileHandle *aHandle, char *aBuf, nsresult aResult) MOZ_OVERRIDE;
-  NS_IMETHOD OnFileDoomed(CacheFileHandle *aHandle, nsresult aResult) MOZ_OVERRIDE;
-  NS_IMETHOD OnEOFSet(CacheFileHandle *aHandle, nsresult aResult) MOZ_OVERRIDE;
-  NS_IMETHOD OnFileRenamed(CacheFileHandle *aHandle, nsresult aResult) MOZ_OVERRIDE;
+                           nsresult aResult) override;
+  NS_IMETHOD OnDataRead(CacheFileHandle *aHandle, char *aBuf, nsresult aResult) override;
+  NS_IMETHOD OnFileDoomed(CacheFileHandle *aHandle, nsresult aResult) override;
+  NS_IMETHOD OnEOFSet(CacheFileHandle *aHandle, nsresult aResult) override;
+  NS_IMETHOD OnFileRenamed(CacheFileHandle *aHandle, nsresult aResult) override;
 
   void     Lock();
   void     Unlock();
@@ -903,9 +906,7 @@ private:
     SHUTDOWN = 6
   };
 
-#ifdef PR_LOGGING
   static char const * StateString(EState aState);
-#endif
   void ChangeState(EState aNewState);
 
   // Allocates and releases buffer used for reading and writing index.
@@ -914,9 +915,7 @@ private:
 
   // Methods used by CacheIndexEntryAutoManage to keep the arrays up to date.
   void InsertRecordToFrecencyArray(CacheIndexRecord *aRecord);
-  void InsertRecordToExpirationArray(CacheIndexRecord *aRecord);
   void RemoveRecordFromFrecencyArray(CacheIndexRecord *aRecord);
-  void RemoveRecordFromExpirationArray(CacheIndexRecord *aRecord);
 
   // Methods used by CacheIndexEntryAutoManage to keep the iterators up to date.
   void AddRecordToIterators(CacheIndexRecord *aRecord);
@@ -1018,14 +1017,11 @@ private:
   // of the journal fails or the hash does not match.
   nsTHashtable<CacheIndexEntry> mTmpJournal;
 
-  // Arrays that keep entry records ordered by eviction preference. When looking
-  // for an entry to evict, we first try to find an expired entry. If there is
-  // no expired entry, we take the entry with lowest valid frecency. Zero
-  // frecency is an initial value and such entries are stored at the end of the
-  // array. Uninitialized entries and entries marked as deleted are not present
-  // in these arrays.
+  // An array that keeps entry records ordered by eviction preference; we take
+  // the entry with lowest valid frecency. Zero frecency is an initial value
+  // and such entries are stored at the end of the array. Uninitialized entries
+  // and entries marked as deleted are not present in this array.
   nsTArray<CacheIndexRecord *>  mFrecencyArray;
-  nsTArray<CacheIndexRecord *>  mExpirationArray;
 
   nsTArray<CacheIndexIterator *> mIterators;
 
@@ -1050,7 +1046,20 @@ private:
   private:
     explicit DiskConsumptionObserver(nsWeakPtr const &aWeakObserver)
       : mObserver(aWeakObserver) { }
-    virtual ~DiskConsumptionObserver() { }
+    virtual ~DiskConsumptionObserver() {
+      if (mObserver && !NS_IsMainThread()) {
+        nsIWeakReference *obs;
+        mObserver.forget(&obs);
+
+        nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
+        if (mainThread) {
+          NS_ProxyRelease(mainThread, obs);
+        } else {
+          NS_WARNING("Cannot get main thread, leaking weak reference to "
+                     "CacheStorageConsumptionObserver.");
+        }
+      }
+    }
 
     NS_IMETHODIMP Run()
     {
@@ -1058,6 +1067,8 @@ private:
 
       nsCOMPtr<nsICacheStorageConsumptionObserver> observer =
         do_QueryReferent(mObserver);
+
+      mObserver = nullptr;
 
       if (observer) {
         observer->OnNetworkCacheDiskConsumption(mSize);

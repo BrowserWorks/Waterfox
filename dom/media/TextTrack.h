@@ -19,7 +19,6 @@ namespace dom {
 class TextTrackList;
 class TextTrackCue;
 class TextTrackCueList;
-class TextTrackRegion;
 class HTMLTrackElement;
 
 enum TextTrackSource {
@@ -36,7 +35,7 @@ enum TextTrackReadyState {
   FailedToLoad = 3U
 };
 
-class TextTrack MOZ_FINAL : public DOMEventTargetHelper
+class TextTrack final : public DOMEventTargetHelper
 {
 public:
   NS_DECL_ISUPPORTS_INHERITED
@@ -60,7 +59,7 @@ public:
 
   void SetDefaultSettings();
 
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   TextTrackKind Kind() const
   {

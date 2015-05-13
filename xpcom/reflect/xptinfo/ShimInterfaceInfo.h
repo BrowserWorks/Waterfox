@@ -19,12 +19,11 @@
 
 namespace mozilla {
 namespace dom {
-struct ConstantSpec;
 struct NativePropertyHooks;
 }
 }
 
-class ShimInterfaceInfo MOZ_FINAL : public nsIInterfaceInfo
+class ShimInterfaceInfo final : public nsIInterfaceInfo
 {
 public:
     NS_DECL_ISUPPORTS

@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -142,14 +143,6 @@
 #define XRE_OS_UPDATE_APPLY_TO_DIR "OSUpdApplyToD"
 
 /**
- * Platform flag values for XRE_main.
- *
- * XRE_MAIN_FLAG_USE_METRO - On Windows, use the winrt backend. Defaults
- * to win32 backend.
- */
-#define XRE_MAIN_FLAG_USE_METRO 0x01
-
-/**
  * Begin an XUL application. Does not return until the user exits the
  * application.
  *
@@ -247,15 +240,19 @@ XRE_API(nsresult,
  * @param aFileCount the number of items in the aFiles array.
  * @note appdir/components is registered automatically.
  *
- * NS_COMPONENT_LOCATION specifies a location to search for binary XPCOM
+ * NS_APP_LOCATION specifies a location to search for binary XPCOM
  * components as well as component/chrome manifest files.
+ *
+ * NS_EXTENSION_LOCATION excludes binary XPCOM components but allows other
+ * manifest instructions.
  *
  * NS_SKIN_LOCATION specifies a location to search for chrome manifest files
  * which are only allowed to register only skin packages and style overlays.
  */
 enum NSLocationType
 {
-  NS_COMPONENT_LOCATION,
+  NS_APP_LOCATION,
+  NS_EXTENSION_LOCATION,
   NS_SKIN_LOCATION,
   NS_BOOTSTRAPPED_LOCATION
 };
@@ -460,24 +457,6 @@ XRE_API(void,
                           nsIFile* aAppOmni))
 XRE_API(void,
         XRE_StopLateWriteChecks, (void))
-
-#ifdef XP_WIN
-/**
- * Valid environment types for XRE_GetWindowsEnvironment.
- */
-enum WindowsEnvironmentType
-{
-  WindowsEnvironmentType_Desktop = 0,
-  WindowsEnvironmentType_Metro = 1
-};
-
-/**
- * Retrieve the Windows desktop environment libXUL is running
- * under. Valid after a call to XRE_main.
- */
-XRE_API(WindowsEnvironmentType,
-        XRE_GetWindowsEnvironment, ())
-#endif // XP_WIN
 
 #ifdef MOZ_B2G_LOADER
 XRE_API(int,

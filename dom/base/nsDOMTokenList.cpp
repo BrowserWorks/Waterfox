@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -182,7 +184,7 @@ void
 nsDOMTokenList::RemoveInternal(const nsAttrValue* aAttr,
                                const nsTArray<nsString>& aTokens)
 {
-  NS_ABORT_IF_FALSE(aAttr, "Need an attribute");
+  MOZ_ASSERT(aAttr, "Need an attribute");
 
   nsAutoString input;
   aAttr->ToString(input);
@@ -204,7 +206,7 @@ nsDOMTokenList::RemoveInternal(const nsAttrValue* aAttr,
     if (iter == end) {
       // At this point we're sure the last seen token (if any) wasn't to be
       // removed. So the trailing spaces will need to be kept.
-      NS_ABORT_IF_FALSE(!lastTokenRemoved, "How did this happen?");
+      MOZ_ASSERT(!lastTokenRemoved, "How did this happen?");
 
       output.Append(Substring(copyStart, end));
       break;
@@ -227,8 +229,8 @@ nsDOMTokenList::RemoveInternal(const nsAttrValue* aAttr,
     } else {
 
       if (lastTokenRemoved && !output.IsEmpty()) {
-        NS_ABORT_IF_FALSE(!nsContentUtils::IsHTMLWhitespace(
-          output.Last()), "Invalid last output token");
+        MOZ_ASSERT(!nsContentUtils::IsHTMLWhitespace(output.Last()),
+                   "Invalid last output token");
         output.Append(char16_t(' '));
       }
       lastTokenRemoved = false;
@@ -309,8 +311,8 @@ nsDOMTokenList::Stringify(nsAString& aResult)
 }
 
 JSObject*
-nsDOMTokenList::WrapObject(JSContext *cx)
+nsDOMTokenList::WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto)
 {
-  return DOMTokenListBinding::Wrap(cx, this);
+  return DOMTokenListBinding::Wrap(cx, this, aGivenProto);
 }
 

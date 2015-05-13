@@ -19,7 +19,7 @@
             for (var i = 0; i < a.length; ++i) {
               window.parent.postMessage({ type: "check", status: a[i] instanceof ServiceWorkerRegistration,
                                           msg: "getRegistrations returns an array of ServiceWorkerRegistration objects" }, "*");
-              if (a[i].scope.match(/simpleregister\/\*/)) {
+              if (a[i].scope.match(/simpleregister\//)) {
                 a[i].onupdatefound = function(e) {
                   eventReceived();
                 }
@@ -30,15 +30,6 @@
           navigator.serviceWorker.getRegistration('http://mochi.test:8888/tests/dom/workers/test/serviceworkers/simpleregister/')
             .then(function(a) {
             window.parent.postMessage({ type: "check", status: a instanceof ServiceWorkerRegistration,
-                                        msg: "getRegistration returns a ServiceWorkerRegistration" }, "*");
-            a.onupdatefound = function(e) {
-              eventReceived();
-            }
-          });
-
-          navigator.serviceWorker.getRegistration('http://mochi.test:8888/with_star/*')
-            .then(function(a) {
-            window.parent.postMessage({ type: "check", status: true,
                                         msg: "getRegistration returns a ServiceWorkerRegistration" }, "*");
             a.onupdatefound = function(e) {
               eventReceived();

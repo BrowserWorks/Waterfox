@@ -10,10 +10,7 @@ const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/AddonManager.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-
-#ifdef MOZ_CRASHREPORTER
-Cu.import("resource://gre/modules/CrashReports.jsm");
-#endif
+Cu.import("resource://gre/modules/AppConstants.jsm");
 
 let Experiments;
 try {
@@ -28,8 +25,25 @@ catch (e) {
 // under the "accessibility.*" branch.
 const PREFS_WHITELIST = [
   "accessibility.",
+  "apz.",
   "browser.cache.",
   "browser.display.",
+  "browser.download.folderList",
+  "browser.download.hide_plugins_without_extensions",
+  "browser.download.importedFromSqlite",
+  "browser.download.lastDir.savePerSite",
+  "browser.download.manager.addToRecentDocs",
+  "browser.download.manager.alertOnEXEOpen",
+  "browser.download.manager.closeWhenDone",
+  "browser.download.manager.displayedHistoryDays",
+  "browser.download.manager.quitBehavior",
+  "browser.download.manager.resumeOnWakeDelay",
+  "browser.download.manager.retention",
+  "browser.download.manager.scanWhenDone",
+  "browser.download.manager.showAlertOnComplete",
+  "browser.download.manager.showWhenStarting",
+  "browser.download.preferred.",
+  "browser.download.useDownloadDir",
   "browser.fixup.",
   "browser.history_expire_",
   "browser.link.open_newwindow",
@@ -131,10 +145,15 @@ let dataProviders = {
     let data = {
       name: Services.appinfo.name,
       version: Services.appinfo.version,
+      buildID: Services.appinfo.appBuildID,
       userAgent: Cc["@mozilla.org/network/protocol;1?name=http"].
                  getService(Ci.nsIHttpProtocolHandler).
                  userAgent,
     };
+
+    if (AppConstants.MOZ_UPDATER)
+      data.updateChannel = Cu.import("resource://gre/modules/UpdateChannel.jsm", {}).UpdateChannel.get();
+
     try {
       data.vendor = Services.prefs.getCharPref("app.support.vendor");
     }
@@ -161,20 +180,10 @@ let dataProviders = {
       }
     }
 
-    done(data);
-  },
+    data.remoteAutoStart = Services.appinfo.browserTabsRemoteAutostart;
 
-#ifdef MOZ_CRASHREPORTER
-  crashes: function crashes(done) {
-    let reports = CrashReports.getReports();
-    let now = new Date();
-    let reportsNew = reports.filter(report => (now - report.date < Troubleshoot.kMaxCrashAge));
-    let reportsSubmitted = reportsNew.filter(report => (!report.pending));
-    let reportsPendingCount = reportsNew.length - reportsSubmitted.length;
-    let data = {submitted : reportsSubmitted, pending : reportsPendingCount};
     done(data);
   },
-#endif
 
   extensions: function extensions(done) {
     AddonManager.getAddonsByTypes(["extension"], function (extensions) {
@@ -304,6 +313,7 @@ let dataProviders = {
       try {
         data.windowLayerManagerType = winUtils.layerManagerType;
         data.windowLayerManagerRemote = winUtils.layerManagerRemote;
+        data.supportsHardwareH264 = winUtils.supportsHardwareH264Decoding;
       }
       catch (e) {
         continue;
@@ -313,12 +323,9 @@ let dataProviders = {
     }
 
     if (!data.numAcceleratedWindows && gfxInfo) {
-      let feature =
-#ifdef XP_WIN
-        gfxInfo.FEATURE_DIRECT3D_9_LAYERS;
-#else
-        gfxInfo.FEATURE_OPENGL_LAYERS;
-#endif
+      let win = AppConstants.platform == "win";
+      let feature = win ? gfxInfo.FEATURE_DIRECT3D_9_LAYERS :
+                          gfxInfo.FEATURE_OPENGL_LAYERS;
       data.numAcceleratedWindowsMessage = statusMsgForFeature(feature);
     }
 
@@ -389,20 +396,20 @@ let dataProviders = {
                            + " -- "
                            + gl.getParameter(ext.UNMASKED_RENDERER_WEBGL);
     } else {
-      let feature =
-#ifdef XP_WIN
+      let feature;
+      if (AppConstants.platform == "win") {
         // If ANGLE is not available but OpenGL is, we want to report on the
         // OpenGL feature, because that's what's going to get used.  In all
         // other cases we want to report on the ANGLE feature.
-        gfxInfo.getFeatureStatus(Ci.nsIGfxInfo.FEATURE_WEBGL_ANGLE) !=
-          Ci.nsIGfxInfo.FEATURE_STATUS_OK &&
-        gfxInfo.getFeatureStatus(Ci.nsIGfxInfo.FEATURE_WEBGL_OPENGL) ==
-          Ci.nsIGfxInfo.FEATURE_STATUS_OK ?
-        Ci.nsIGfxInfo.FEATURE_WEBGL_OPENGL :
-        Ci.nsIGfxInfo.FEATURE_WEBGL_ANGLE;
-#else
-        Ci.nsIGfxInfo.FEATURE_WEBGL_OPENGL;
-#endif
+        let angle = gfxInfo.getFeatureStatus(gfxInfo.FEATURE_WEBGL_ANGLE) ==
+                    gfxInfo.FEATURE_STATUS_OK;
+        let opengl = gfxInfo.getFeatureStatus(gfxInfo.FEATURE_WEBGL_OPENGL) ==
+                     gfxInfo.FEATURE_STATUS_OK;
+        feature = !angle && opengl ? gfxInfo.FEATURE_WEBGL_OPENGL :
+                                     gfxInfo.FEATURE_WEBGL_ANGLE;
+      } else {
+        feature = gfxInfo.FEATURE_WEBGL_OPENGL;
+      }
       data.webglRendererMessage = statusMsgForFeature(feature);
     }
 
@@ -410,9 +417,16 @@ let dataProviders = {
     if (infoInfo)
       data.info = infoInfo;
 
-    let failures = gfxInfo.getFailures();
-    if (failures.length)
+    let failureCount = {};
+    let failureIndices = {};
+
+    let failures = gfxInfo.getFailures(failureCount, failureIndices);
+    if (failures.length) {
       data.failures = failures;
+      if (failureIndices.value.length == failures.length) {
+        data.indices = failureIndices.value;
+      }
+    }
 
     done(data);
   },
@@ -468,21 +482,36 @@ let dataProviders = {
     done({
       exists: userJSFile.exists() && userJSFile.fileSize > 0,
     });
-  },
+  }
+};
 
-#if defined(XP_LINUX) && defined (MOZ_SANDBOX)
-  sandbox: function sandbox(done) {
-    const keys = ["hasSeccompBPF", "canSandboxContent", "canSandboxMedia"];
+if (AppConstants.MOZ_CRASHREPORTER) {
+  dataProviders.crashes = function crashes(done) {
+    let CrashReports = Cu.import("resource://gre/modules/CrashReports.jsm").CrashReports;
+    let reports = CrashReports.getReports();
+    let now = new Date();
+    let reportsNew = reports.filter(report => (now - report.date < Troubleshoot.kMaxCrashAge));
+    let reportsSubmitted = reportsNew.filter(report => (!report.pending));
+    let reportsPendingCount = reportsNew.length - reportsSubmitted.length;
+    let data = {submitted : reportsSubmitted, pending : reportsPendingCount};
+    done(data);
+  }
+}
+
+if (AppConstants.platform == "linux" && AppConstants.MOZ_SANDBOX) {
+  dataProviders.sandbox = function sandbox(done) {
+    const keys = ["hasSeccompBPF", "hasSeccompTSync",
+                  "hasPrivilegedUserNamespaces", "hasUserNamespaces",
+                  "canSandboxContent", "canSandboxMedia"];
 
     let sysInfo = Cc["@mozilla.org/system-info;1"].
                   getService(Ci.nsIPropertyBag2);
     let data = {};
-    for (key of keys) {
+    for (let key of keys) {
       if (sysInfo.hasKey(key)) {
         data[key] = sysInfo.getPropertyAsBool(key);
       }
     }
     done(data);
   }
-#endif
-};
+}

@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -43,14 +44,14 @@ public:
   NS_DECL_ISUPPORTS_INHERITED
 
   virtual bool AttributeAffectsRendering(
-          int32_t aNameSpaceID, nsIAtom* aAttribute) const MOZ_OVERRIDE;
+          int32_t aNameSpaceID, nsIAtom* aAttribute) const override;
 
   virtual int32_t GetChannel() = 0;
 
   AttributeMap ComputeAttributes();
 
   // WebIDL
-  virtual JSObject* WrapNode(JSContext* aCx) MOZ_OVERRIDE = 0;
+  virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override = 0;
   already_AddRefed<SVGAnimatedEnumeration> Type();
   already_AddRefed<DOMSVGAnimatedNumberList> TableValues();
   already_AddRefed<SVGAnimatedNumber> Slope();
@@ -60,9 +61,9 @@ public:
   already_AddRefed<SVGAnimatedNumber> Offset();
 
 protected:
-  virtual NumberAttributesInfo GetNumberInfo() MOZ_OVERRIDE;
-  virtual EnumAttributesInfo GetEnumInfo() MOZ_OVERRIDE;
-  virtual NumberListAttributesInfo GetNumberListInfo() MOZ_OVERRIDE;
+  virtual NumberAttributesInfo GetNumberInfo() override;
+  virtual EnumAttributesInfo GetEnumInfo() override;
+  virtual NumberListAttributesInfo GetNumberListInfo() override;
 
   enum { TABLEVALUES };
   SVGAnimatedNumberList mNumberListAttributes[1];
@@ -98,11 +99,11 @@ protected:
     : SVGComponentTransferFunctionElement(aNodeInfo) {}
 
 public:
-  virtual int32_t GetChannel() MOZ_OVERRIDE { return 0; }
+  virtual int32_t GetChannel() override { return 0; }
 
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
 
-  virtual JSObject* WrapNode(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 };
 
 } // namespace dom
@@ -123,11 +124,11 @@ protected:
     : SVGComponentTransferFunctionElement(aNodeInfo) {}
 
 public:
-  virtual int32_t GetChannel() MOZ_OVERRIDE { return 1; }
+  virtual int32_t GetChannel() override { return 1; }
 
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
 
-  virtual JSObject* WrapNode(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 };
 
 } // namespace dom
@@ -148,11 +149,11 @@ protected:
     : SVGComponentTransferFunctionElement(aNodeInfo) {}
 
 public:
-  virtual int32_t GetChannel() MOZ_OVERRIDE { return 2; }
+  virtual int32_t GetChannel() override { return 2; }
 
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
 
-  virtual JSObject* WrapNode(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 };
 
 } // namespace dom
@@ -173,11 +174,11 @@ protected:
     : SVGComponentTransferFunctionElement(aNodeInfo) {}
 
 public:
-  virtual int32_t GetChannel() MOZ_OVERRIDE { return 3; }
+  virtual int32_t GetChannel() override { return 3; }
 
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
 
-  virtual JSObject* WrapNode(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 };
 
 } // namespace dom

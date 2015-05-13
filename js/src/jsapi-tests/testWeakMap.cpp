@@ -9,7 +9,7 @@
 
 #include "jsapi-tests/tests.h"
 
-JSObject *keyDelegate = nullptr;
+JSObject* keyDelegate = nullptr;
 
 BEGIN_TEST(testWeakMap_basicOperations)
 {
@@ -47,9 +47,9 @@ BEGIN_TEST(testWeakMap_basicOperations)
     return true;
 }
 
-JSObject *newKey()
+JSObject* newKey()
 {
-    return JS_NewObject(cx, nullptr, JS::NullPtr(), JS::NullPtr());
+    return JS_NewPlainObject(cx);
 }
 
 bool
@@ -65,10 +65,6 @@ checkSize(JS::HandleObject map, uint32_t expected)
     return true;
 }
 END_TEST(testWeakMap_basicOperations)
-
-// TODO: this test stores object pointers in a private slot which is not marked
-// and so doesn't work with compacting GC.
-#ifndef JSGC_COMPACTING
 
 BEGIN_TEST(testWeakMap_keyDelegates)
 {
@@ -127,18 +123,21 @@ BEGIN_TEST(testWeakMap_keyDelegates)
     return true;
 }
 
-static void DelegateObjectMoved(JSObject *obj, const JSObject *old)
+static void DelegateObjectMoved(JSObject* obj, const JSObject* old)
 {
+    if (!keyDelegate)
+        return;  // Object got moved before we set keyDelegate to point to it.
+
     MOZ_RELEASE_ASSERT(keyDelegate == old);
     keyDelegate = obj;
 }
 
-static JSObject *GetKeyDelegate(JSObject *obj)
+static JSObject* GetKeyDelegate(JSObject* obj)
 {
     return keyDelegate;
 }
 
-JSObject *newKey()
+JSObject* newKey()
 {
     static const js::Class keyClass = {
         "keyWithDelgate",
@@ -149,6 +148,7 @@ JSObject *newKey()
         nullptr, /* setProperty */
         nullptr, /* enumerate */
         nullptr, /* resolve */
+        nullptr, /* mayResolve */
         nullptr, /* convert */
         nullptr, /* finalize */
         nullptr, /* call */
@@ -165,18 +165,14 @@ JSObject *newKey()
         JS_NULL_OBJECT_OPS
     };
 
-    JS::RootedObject key(cx);
-    key = JS_NewObject(cx,
-                       Jsvalify(&keyClass),
-                       JS::NullPtr(),
-                       JS::NullPtr());
+    JS::RootedObject key(cx, JS_NewObject(cx, Jsvalify(&keyClass)));
     if (!key)
         return nullptr;
 
     return key;
 }
 
-JSObject *newCCW(JS::HandleObject sourceZone, JS::HandleObject destZone)
+JSObject* newCCW(JS::HandleObject sourceZone, JS::HandleObject destZone)
 {
     /*
      * Now ensure that this zone will be swept first by adding a cross
@@ -186,7 +182,7 @@ JSObject *newCCW(JS::HandleObject sourceZone, JS::HandleObject destZone)
     JS::RootedObject object(cx);
     {
         JSAutoCompartment ac(cx, destZone);
-        object = JS_NewObject(cx, nullptr, JS::NullPtr(), JS::NullPtr());
+        object = JS_NewPlainObject(cx);
         if (!object)
             return nullptr;
     }
@@ -198,7 +194,7 @@ JSObject *newCCW(JS::HandleObject sourceZone, JS::HandleObject destZone)
     return object;
 }
 
-JSObject *newDelegate()
+JSObject* newDelegate()
 {
     static const js::Class delegateClass = {
         "delegate",
@@ -209,6 +205,7 @@ JSObject *newDelegate()
         nullptr, /* setProperty */
         nullptr, /* enumerate */
         nullptr, /* resolve */
+        nullptr, /* mayResolve */
         nullptr, /* convert */
         nullptr, /* finalize */
         nullptr, /* call */
@@ -234,12 +231,6 @@ JSObject *newDelegate()
                                 options);
     JS_SetReservedSlot(global, 0, JS::Int32Value(42));
 
-    /*
-     * Ensure the delegate is not in the nursery because for the purpose of this
-     * test we're going to put it in a private slot where it won't get updated.
-     */
-    JS_GC(rt);
-
     return global;
 }
 
@@ -256,5 +247,3 @@ checkSize(JS::HandleObject map, uint32_t expected)
     return true;
 }
 END_TEST(testWeakMap_keyDelegates)
-
-#endif

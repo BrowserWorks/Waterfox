@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -16,19 +17,18 @@
 
 #include "mozilla/DebugOnly.h"
 #include "mozilla/ErrorResult.h"
+#include "mozilla/dom/Promise.h"
 #include "mozilla/dom/RequestBinding.h"
 #include "mozilla/dom/workers/bindings/WorkerFeature.h"
 
-class nsIOutputStream;
 class nsIGlobalObject;
 
 namespace mozilla {
 namespace dom {
 
-class ArrayBufferOrArrayBufferViewOrBlobOrUSVStringOrURLSearchParams;
+class ArrayBufferOrArrayBufferViewOrBlobOrFormDataOrUSVStringOrURLSearchParams;
 class InternalRequest;
-class OwningArrayBufferOrArrayBufferViewOrBlobOrUSVStringOrURLSearchParams;
-class Promise;
+class OwningArrayBufferOrArrayBufferViewOrBlobOrFormDataOrUSVStringOrURLSearchParams;
 class RequestOrUSVString;
 
 namespace workers {
@@ -40,7 +40,7 @@ FetchRequest(nsIGlobalObject* aGlobal, const RequestOrUSVString& aInput,
              const RequestInit& aInit, ErrorResult& aRv);
 
 nsresult
-GetRequestReferrer(nsIGlobalObject* aGlobal, const InternalRequest* aRequest, nsCString& aReferrer);
+UpdateRequestReferrer(nsIGlobalObject* aGlobal, InternalRequest* aRequest);
 
 /*
  * Creates an nsIInputStream based on the fetch specifications 'extract a byte
@@ -48,7 +48,7 @@ GetRequestReferrer(nsIGlobalObject* aGlobal, const InternalRequest* aRequest, ns
  * Stores content type in out param aContentType.
  */
 nsresult
-ExtractByteStreamFromBody(const OwningArrayBufferOrArrayBufferViewOrBlobOrUSVStringOrURLSearchParams& aBodyInit,
+ExtractByteStreamFromBody(const OwningArrayBufferOrArrayBufferViewOrBlobOrFormDataOrUSVStringOrURLSearchParams& aBodyInit,
                           nsIInputStream** aStream,
                           nsCString& aContentType);
 
@@ -56,7 +56,7 @@ ExtractByteStreamFromBody(const OwningArrayBufferOrArrayBufferViewOrBlobOrUSVStr
  * Non-owning version.
  */
 nsresult
-ExtractByteStreamFromBody(const ArrayBufferOrArrayBufferViewOrBlobOrUSVStringOrURLSearchParams& aBodyInit,
+ExtractByteStreamFromBody(const ArrayBufferOrArrayBufferViewOrBlobOrFormDataOrUSVStringOrURLSearchParams& aBodyInit,
                           nsIInputStream** aStream,
                           nsCString& aContentType);
 
@@ -99,7 +99,7 @@ template <class Derived>
 class FetchBody {
 public:
   bool
-  BodyUsed() { return mBodyUsed; }
+  BodyUsed() const { return mBodyUsed; }
 
   already_AddRefed<Promise>
   ArrayBuffer(ErrorResult& aRv)
@@ -111,6 +111,12 @@ public:
   Blob(ErrorResult& aRv)
   {
     return ConsumeBody(CONSUME_BLOB, aRv);
+  }
+
+  already_AddRefed<Promise>
+  FormData(ErrorResult& aRv)
+  {
+    return ConsumeBody(CONSUME_FORMDATA, aRv);
   }
 
   already_AddRefed<Promise>
@@ -135,6 +141,12 @@ public:
   void
   CancelPump();
 
+  void
+  SetBodyUsed()
+  {
+    mBodyUsed = true;
+  }
+
   // Always set whenever the FetchBody is created on the worker thread.
   workers::WorkerPrivate* mWorkerPrivate;
 
@@ -145,24 +157,16 @@ public:
 protected:
   FetchBody();
 
-  virtual ~FetchBody()
-  {
-  }
+  virtual ~FetchBody();
 
   void
-  SetBodyUsed()
-  {
-    mBodyUsed = true;
-  }
-
-  void
-  SetMimeType(ErrorResult& aRv);
+  SetMimeType();
 private:
   enum ConsumeType
   {
     CONSUME_ARRAYBUFFER,
     CONSUME_BLOB,
-    // FormData not supported right now,
+    CONSUME_FORMDATA,
     CONSUME_JSON,
     CONSUME_TEXT,
   };

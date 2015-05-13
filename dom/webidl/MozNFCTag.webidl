@@ -19,7 +19,8 @@ enum NFCTechType {
   "ISO-DEP",  // NFCForum-TS-DigitalProtocol-1.1 ISO-DEP.
   "MIFARE-Classic",  // MIFARE Classic from NXP.
   "MIFARE-Ultralight",  // MIFARE Ultralight from NXP.
-  "NFC-Barcode" // NFC Barcode from Kovio.
+  "NFC-Barcode", // NFC Barcode from Kovio.
+  "Unknown"
 };
 
 /**
@@ -47,7 +48,7 @@ interface MozNFCTag {
   /**
    * The identifier of this tag.
    */
-  [Pure, Constant] readonly attribute Uint8Array? id;
+  [Constant] readonly attribute Uint8Array? id;
 
   /**
    * The type of this tag, null if unknown.

@@ -545,53 +545,6 @@ tests.push({
 //------------------------------------------------------------------------------
 
 tests.push({
-  name: "D.5",
-  desc: "Fix wrong keywords",
-
-  _validKeywordItemId: null,
-  _invalidKeywordItemId: null,
-  _validKeywordId: 1,
-  _invalidKeywordId: 8888,
-  _placeId: null,
-
-  setup: function() {
-    // Insert a keyword
-    let stmt = mDBConn.createStatement("INSERT INTO moz_keywords (id, keyword) VALUES(:id, :keyword)");
-    stmt.params["id"] = this._validKeywordId;
-    stmt.params["keyword"] = "used";
-    stmt.execute();
-    stmt.finalize();
-    // Add a place to ensure place_id = 1 is valid
-    this._placeId = addPlace();
-    // Add a bookmark using the keyword
-    this._validKeywordItemId = addBookmark(this._placeId, bs.TYPE_BOOKMARK, bs.unfiledBookmarksFolder, this._validKeywordId);
-    // Add a bookmark using a nonexistent keyword
-    this._invalidKeywordItemId = addBookmark(this._placeId, bs.TYPE_BOOKMARK, bs.unfiledBookmarksFolder, this._invalidKeywordId);
-  },
-
-  check: function() {
-    // Check that item with valid keyword is there
-    let stmt = mDBConn.createStatement("SELECT id FROM moz_bookmarks WHERE id = :item_id AND keyword_id = :keyword");
-    stmt.params["item_id"] = this._validKeywordItemId;
-    stmt.params["keyword"] = this._validKeywordId;
-    do_check_true(stmt.executeStep());
-    stmt.reset();
-    // Check that item with invalid keyword has been corrected
-    stmt.params["item_id"] = this._invalidKeywordItemId;
-    stmt.params["keyword"] = this._invalidKeywordId;
-    do_check_false(stmt.executeStep());
-    stmt.finalize();
-    // Check that item with invalid keyword has not been removed
-    stmt = mDBConn.createStatement("SELECT id FROM moz_bookmarks WHERE id = :item_id");
-    stmt.params["item_id"] = this._invalidKeywordItemId;
-    do_check_true(stmt.executeStep());
-    stmt.finalize();
-  }
-});
-
-//------------------------------------------------------------------------------
-
-tests.push({
   name: "D.6",
   desc: "Fix wrong item types | bookmarks",
 
@@ -1053,27 +1006,17 @@ tests.push({
 
   setup: function() {
     // Insert 2 keywords
-    let stmt = mDBConn.createStatement("INSERT INTO moz_keywords (id, keyword) VALUES(:id, :keyword)");
+    let stmt = mDBConn.createStatement("INSERT INTO moz_keywords (id, keyword, place_id) VALUES(:id, :keyword, :place_id)");
     stmt.params["id"] = 1;
-    stmt.params["keyword"] = "used";
-    stmt.execute();
-    stmt.reset();
-    stmt.params["id"] = 2;
     stmt.params["keyword"] = "unused";
+    stmt.params["place_id"] = 100;
     stmt.execute();
     stmt.finalize();
-    // Add a place to ensure place_id = 1 is valid
-    this._placeId = addPlace();
-    // Insert a bookmark using the "used" keyword
-    this._bookmarkId = addBookmark(this._placeId, bs.TYPE_BOOKMARK, bs.unfiledBookmarksFolder, 1);
   },
 
   check: function() {
     // Check that "used" keyword is still there
     let stmt = mDBConn.createStatement("SELECT id FROM moz_keywords WHERE keyword = :keyword");
-    stmt.params["keyword"] = "used";
-    do_check_true(stmt.executeStep());
-    stmt.reset();
     // Check that "unused" keyword has gone
     stmt.params["keyword"] = "unused";
     do_check_false(stmt.executeStep());
@@ -1154,18 +1097,18 @@ tests.push({
     let now = Date.now() * 1000;
     // Add a page with 1 visit.
     let url = "http://1.moz.org/";
-    yield promiseAddVisits({ uri: uri(url), visitDate: now++ });
+    yield PlacesTestUtils.addVisits({ uri: uri(url), visitDate: now++ });
     // Add a page with 1 visit and set wrong visit_count.
     url = "http://2.moz.org/";
-    yield promiseAddVisits({ uri: uri(url), visitDate: now++ });
+    yield PlacesTestUtils.addVisits({ uri: uri(url), visitDate: now++ });
     setVisitCount(url, 10);
     // Add a page with 1 visit and set wrong last_visit_date.
     url = "http://3.moz.org/";
-    yield promiseAddVisits({ uri: uri(url), visitDate: now++ });
+    yield PlacesTestUtils.addVisits({ uri: uri(url), visitDate: now++ });
     setLastVisitDate(url, now++);
     // Add a page with 1 visit and set wrong stats.
     url = "http://4.moz.org/";
-    yield promiseAddVisits({ uri: uri(url), visitDate: now++ });
+    yield PlacesTestUtils.addVisits({ uri: uri(url), visitDate: now++ });
     setVisitCount(url, 10);
     setLastVisitDate(url, now++);
 
@@ -1209,7 +1152,7 @@ tests.push({
   desc: "recalculate hidden for redirects.",
 
   setup: function() {
-    promiseAddVisits([
+    PlacesTestUtils.addVisits([
       { uri: NetUtil.newURI("http://l3.moz.org/"),
         transition: TRANSITION_TYPED },
       { uri: NetUtil.newURI("http://l3.moz.org/redirecting/"),
@@ -1223,30 +1166,32 @@ tests.push({
     ]);
   },
 
-  asyncCheck: function(aCallback) {
-    let stmt = mDBConn.createAsyncStatement(
-      "SELECT h.url FROM moz_places h WHERE h.hidden = 1"
-    );
-    stmt.executeAsync({
-      _count: 0,
-      handleResult: function(aResultSet) {
-        for (let row; (row = aResultSet.getNextRow());) {
-          let url = row.getResultByIndex(0);
-          do_check_true(/redirecting/.test(url));
-          this._count++;
+  check: function () {
+    return new Promise(resolve => {
+      let stmt = mDBConn.createAsyncStatement(
+        "SELECT h.url FROM moz_places h WHERE h.hidden = 1"
+      );
+      stmt.executeAsync({
+        _count: 0,
+        handleResult: function(aResultSet) {
+          for (let row; (row = aResultSet.getNextRow());) {
+            let url = row.getResultByIndex(0);
+            do_check_true(/redirecting/.test(url));
+            this._count++;
+          }
+        },
+        handleError: function(aError) {
+        },
+        handleCompletion: function(aReason) {
+          dump_table("moz_places");
+          dump_table("moz_historyvisits");
+          do_check_eq(aReason, Ci.mozIStorageStatementCallback.REASON_FINISHED);
+          do_check_eq(this._count, 2);
+          resolve();
         }
-      },
-      handleError: function(aError) {
-      },
-      handleCompletion: function(aReason) {
-        dump_table("moz_places");
-        dump_table("moz_historyvisits");
-        do_check_eq(aReason, Ci.mozIStorageStatementCallback.REASON_FINISHED);
-        do_check_eq(this._count, 2);
-        aCallback();
-      }
+      });
+      stmt.finalize();
     });
-    stmt.finalize();
   }
 });
 
@@ -1262,9 +1207,9 @@ tests.push({
   _bookmarkId: null,
   _separatorId: null,
 
-  setup: function() {
+  setup: function* () {
     // use valid api calls to create a bunch of items
-    yield promiseAddVisits([
+    yield PlacesTestUtils.addVisits([
       { uri: this._uri1 },
       { uri: this._uri2 },
     ]);
@@ -1281,36 +1226,35 @@ tests.push({
     ts.tagURI(this._uri1, ["testtag"]);
     fs.setAndFetchFaviconForPage(this._uri2, SMALLPNG_DATA_URI, false,
                                  PlacesUtils.favicons.FAVICON_LOAD_NON_PRIVATE);
-    bs.setKeywordForBookmark(this._bookmarkId, "testkeyword");
+    yield PlacesUtils.keywords.insert({ url: this._uri1.spec, keyword: "testkeyword" });
     as.setPageAnnotation(this._uri2, "anno", "anno", 0, as.EXPIRE_NEVER);
     as.setItemAnnotation(this._bookmarkId, "anno", "anno", 0, as.EXPIRE_NEVER);
   },
 
-  asyncCheck: function (aCallback) {
+  check: Task.async(function* () {
     // Check that all items are correct
-    PlacesUtils.asyncHistory.isURIVisited(this._uri1, function(aURI, aIsVisited) {
-      do_check_true(aIsVisited);
-      PlacesUtils.asyncHistory.isURIVisited(this._uri2, function(aURI, aIsVisited) {
-        do_check_true(aIsVisited);
+    let isVisited = yield promiseIsURIVisited(this._uri1);
+    do_check_true(isVisited);
+    isVisited = yield promiseIsURIVisited(this._uri2);
+    do_check_true(isVisited);
 
-        do_check_eq(bs.getBookmarkURI(this._bookmarkId).spec, this._uri1.spec);
-        do_check_eq(bs.getItemIndex(this._folderId), 0);
+    do_check_eq(bs.getBookmarkURI(this._bookmarkId).spec, this._uri1.spec);
+    do_check_eq(bs.getItemIndex(this._folderId), 0);
+    do_check_eq(bs.getItemType(this._folderId), bs.TYPE_FOLDER);
+    do_check_eq(bs.getItemType(this._separatorId), bs.TYPE_SEPARATOR);
 
-        do_check_eq(bs.getItemType(this._folderId), bs.TYPE_FOLDER);
-        do_check_eq(bs.getItemType(this._separatorId), bs.TYPE_SEPARATOR);
+    do_check_eq(ts.getTagsForURI(this._uri1).length, 1);
+    do_check_eq((yield PlacesUtils.keywords.fetch({ url: this._uri1.spec })).keyword, "testkeyword");
+    do_check_eq(as.getPageAnnotation(this._uri2, "anno"), "anno");
+    do_check_eq(as.getItemAnnotation(this._bookmarkId, "anno"), "anno");
 
-        do_check_eq(ts.getTagsForURI(this._uri1).length, 1);
-        do_check_eq(bs.getKeywordForBookmark(this._bookmarkId), "testkeyword");
-        do_check_eq(as.getPageAnnotation(this._uri2, "anno"), "anno");
-        do_check_eq(as.getItemAnnotation(this._bookmarkId, "anno"), "anno");
-
-        fs.getFaviconURLForPage(this._uri2, function (aFaviconURI) {
-          do_check_true(aFaviconURI.equals(SMALLPNG_DATA_URI));
-          aCallback();
-        });
-      }.bind(this));
-    }.bind(this));
-  }
+    yield new Promise(resolve => {
+      fs.getFaviconURLForPage(this._uri2, aFaviconURI => {
+        do_check_true(aFaviconURI.equals(SMALLPNG_DATA_URI));
+        resolve();
+      });
+    });
+  })
 });
 
 //------------------------------------------------------------------------------
@@ -1325,7 +1269,7 @@ add_task(function test_preventive_maintenance()
 {
   // Force initialization of the bookmarks hash. This test could cause
   // it to go out of sync due to direct queries on the database.
-  yield promiseAddVisits(uri("http://force.bookmarks.hash"));
+  yield PlacesTestUtils.addVisits(uri("http://force.bookmarks.hash"));
   do_check_false(bs.isBookmarked(uri("http://force.bookmarks.hash")));
 
   // Get current bookmarks max ID for cleanup
@@ -1335,25 +1279,22 @@ add_task(function test_preventive_maintenance()
   stmt.finalize();
   do_check_true(defaultBookmarksMaxId > 0);
 
-  for ([, test] in Iterator(tests)) {
+  for (let [, test] in Iterator(tests)) {
     dump("\nExecuting test: " + test.name + "\n" + "*** " + test.desc + "\n");
     yield test.setup();
 
     let promiseMaintenanceFinished =
         promiseTopicObserved(FINISHED_MAINTENANCE_NOTIFICATION_TOPIC);
-    PlacesDBUtils.maintenanceOnIdle();
+    Services.prefs.clearUserPref("places.database.lastMaintenance");
+    let callbackInvoked = false;
+    PlacesDBUtils.maintenanceOnIdle(() => callbackInvoked = true);
     yield promiseMaintenanceFinished;
+    do_check_true(callbackInvoked);
 
     // Check the lastMaintenance time has been saved.
     do_check_neq(Services.prefs.getIntPref("places.database.lastMaintenance"), null);
 
-    if (test.asyncCheck) {
-      let deferred = Promise.defer();
-      test.asyncCheck(deferred.resolve);
-      yield deferred.promise;
-    } else {
-      test.check();
-    }
+    yield test.check();
 
     cleanDatabase();
   }

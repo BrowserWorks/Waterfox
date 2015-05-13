@@ -146,7 +146,7 @@ const DEFAULT_SNIPPETS_URLS = [
 , "https://addons.mozilla.org/firefox/?utm_source=snippet&utm_medium=snippet&utm_campaign=addons"
 ];
 
-const SNIPPETS_UPDATE_INTERVAL_MS = 86400000; // 1 Day.
+const SNIPPETS_UPDATE_INTERVAL_MS = 14400000; // 4 hours.
 
 // IndexedDB storage constants.
 const DATABASE_NAME = "abouthome";
@@ -307,10 +307,11 @@ function onSearchSubmit(aEvent)
   if (engineName && searchTerms.length > 0) {
     // Send an event that will perform a search and Firefox Health Report will
     // record that a search from about:home has occurred.
-
+    let useNewTab = aEvent && aEvent.button == 1;
     let eventData = {
       engineName: engineName,
-      searchTerms: searchTerms
+      searchTerms: searchTerms,
+      useNewTab: useNewTab,
     };
 
     if (searchText.hasAttribute("selection-index")) {

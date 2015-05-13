@@ -21,14 +21,14 @@ SetElemICInspector::sawOOBDenseWrite() const
     if (!icEntry_)
         return false;
 
-    // Check for a SetElem_DenseAdd stub.
-    for (ICStub *stub = icEntry_->firstStub(); stub; stub = stub->next()) {
-        if (stub->isSetElem_DenseAdd())
+    // Check for an element adding stub.
+    for (ICStub* stub = icEntry_->firstStub(); stub; stub = stub->next()) {
+        if (stub->isSetElem_DenseOrUnboxedArrayAdd())
             return true;
     }
 
     // Check for a write hole bit on the SetElem_Fallback stub.
-    ICStub *stub = icEntry_->fallbackStub();
+    ICStub* stub = icEntry_->fallbackStub();
     if (stub->isSetElem_Fallback())
         return stub->toSetElem_Fallback()->hasArrayWriteHole();
 
@@ -42,7 +42,7 @@ SetElemICInspector::sawOOBTypedArrayWrite() const
         return false;
 
     // Check for SetElem_TypedArray stubs with expectOutOfBounds set.
-    for (ICStub *stub = icEntry_->firstStub(); stub; stub = stub->next()) {
+    for (ICStub* stub = icEntry_->firstStub(); stub; stub = stub->next()) {
         if (!stub->isSetElem_TypedArray())
             continue;
         if (stub->toSetElem_TypedArray()->expectOutOfBounds())
@@ -58,8 +58,8 @@ SetElemICInspector::sawDenseWrite() const
         return false;
 
     // Check for a SetElem_DenseAdd or SetElem_Dense stub.
-    for (ICStub *stub = icEntry_->firstStub(); stub; stub = stub->next()) {
-        if (stub->isSetElem_DenseAdd() || stub->isSetElem_Dense())
+    for (ICStub* stub = icEntry_->firstStub(); stub; stub = stub->next()) {
+        if (stub->isSetElem_DenseOrUnboxedArrayAdd() || stub->isSetElem_DenseOrUnboxedArray())
             return true;
     }
     return false;
@@ -72,50 +72,72 @@ SetElemICInspector::sawTypedArrayWrite() const
         return false;
 
     // Check for a SetElem_TypedArray stub.
-    for (ICStub *stub = icEntry_->firstStub(); stub; stub = stub->next()) {
+    for (ICStub* stub = icEntry_->firstStub(); stub; stub = stub->next()) {
         if (stub->isSetElem_TypedArray())
             return true;
     }
     return false;
 }
 
-bool
-BaselineInspector::maybeShapesForPropertyOp(jsbytecode *pc, ShapeVector &shapes)
+template <typename S, typename T>
+static bool
+VectorAppendNoDuplicate(S& list, T value)
 {
-    // Return a list of shapes seen by the baseline IC for the current op.
-    // An empty list indicates no shapes are known, or there was an uncacheable
-    // access.
-    MOZ_ASSERT(shapes.empty());
+    for (size_t i = 0; i < list.length(); i++) {
+        if (list[i] == value)
+            return true;
+    }
+    return list.append(value);
+}
+
+static bool
+AddReceiver(const ReceiverGuard& receiver,
+            BaselineInspector::ReceiverVector& receivers,
+            BaselineInspector::ObjectGroupVector& convertUnboxedGroups)
+{
+    if (receiver.group && receiver.group->maybeUnboxedLayout()) {
+        if (receiver.group->unboxedLayout().nativeGroup())
+            return VectorAppendNoDuplicate(convertUnboxedGroups, receiver.group);
+    }
+    return VectorAppendNoDuplicate(receivers, receiver);
+}
+
+bool
+BaselineInspector::maybeInfoForPropertyOp(jsbytecode* pc, ReceiverVector& receivers,
+                                          ObjectGroupVector& convertUnboxedGroups)
+{
+    // Return a list of the receivers seen by the baseline IC for the current
+    // op. Empty lists indicate no receivers are known, or there was an
+    // uncacheable access. convertUnboxedGroups is used for unboxed object
+    // groups which have been seen, but have had instances converted to native
+    // objects and should be eagerly converted by Ion.
+    MOZ_ASSERT(receivers.empty());
+    MOZ_ASSERT(convertUnboxedGroups.empty());
 
     if (!hasBaselineScript())
         return true;
 
     MOZ_ASSERT(isValidPC(pc));
-    const ICEntry &entry = icEntryFromPC(pc);
+    const ICEntry& entry = icEntryFromPC(pc);
 
-    ICStub *stub = entry.firstStub();
+    ICStub* stub = entry.firstStub();
     while (stub->next()) {
-        Shape *shape;
+        ReceiverGuard receiver;
         if (stub->isGetProp_Native()) {
-            shape = stub->toGetProp_Native()->shape();
+            receiver = stub->toGetProp_Native()->receiverGuard();
         } else if (stub->isSetProp_Native()) {
-            shape = stub->toSetProp_Native()->shape();
+            receiver = ReceiverGuard(stub->toSetProp_Native()->group(),
+                                     stub->toSetProp_Native()->shape());
+        } else if (stub->isGetProp_Unboxed()) {
+            receiver = ReceiverGuard(stub->toGetProp_Unboxed()->group(), nullptr);
+        } else if (stub->isSetProp_Unboxed()) {
+            receiver = ReceiverGuard(stub->toSetProp_Unboxed()->group(), nullptr);
         } else {
-            shapes.clear();
+            receivers.clear();
             return true;
         }
 
-        // Don't add the same shape twice (this can happen if there are multiple
-        // SetProp_Native stubs with different TypeObject's).
-        bool found = false;
-        for (size_t i = 0; i < shapes.length(); i++) {
-            if (shapes[i] == shape) {
-                found = true;
-                break;
-            }
-        }
-
-        if (!found && !shapes.append(shape))
+        if (!AddReceiver(receiver, receivers, convertUnboxedGroups))
             return false;
 
         stub = stub->next();
@@ -123,29 +145,29 @@ BaselineInspector::maybeShapesForPropertyOp(jsbytecode *pc, ShapeVector &shapes)
 
     if (stub->isGetProp_Fallback()) {
         if (stub->toGetProp_Fallback()->hadUnoptimizableAccess())
-            shapes.clear();
+            receivers.clear();
     } else {
         if (stub->toSetProp_Fallback()->hadUnoptimizableAccess())
-            shapes.clear();
+            receivers.clear();
     }
 
-    // Don't inline if there are more than 5 shapes.
-    if (shapes.length() > 5)
-        shapes.clear();
+    // Don't inline if there are more than 5 receivers.
+    if (receivers.length() > 5)
+        receivers.clear();
 
     return true;
 }
 
-ICStub *
-BaselineInspector::monomorphicStub(jsbytecode *pc)
+ICStub*
+BaselineInspector::monomorphicStub(jsbytecode* pc)
 {
     if (!hasBaselineScript())
         return nullptr;
 
-    const ICEntry &entry = icEntryFromPC(pc);
+    const ICEntry& entry = icEntryFromPC(pc);
 
-    ICStub *stub = entry.firstStub();
-    ICStub *next = stub->next();
+    ICStub* stub = entry.firstStub();
+    ICStub* next = stub->next();
 
     if (!next || !next->isFallback())
         return nullptr;
@@ -154,16 +176,16 @@ BaselineInspector::monomorphicStub(jsbytecode *pc)
 }
 
 bool
-BaselineInspector::dimorphicStub(jsbytecode *pc, ICStub **pfirst, ICStub **psecond)
+BaselineInspector::dimorphicStub(jsbytecode* pc, ICStub** pfirst, ICStub** psecond)
 {
     if (!hasBaselineScript())
         return false;
 
-    const ICEntry &entry = icEntryFromPC(pc);
+    const ICEntry& entry = icEntryFromPC(pc);
 
-    ICStub *stub = entry.firstStub();
-    ICStub *next = stub->next();
-    ICStub *after = next ? next->next() : nullptr;
+    ICStub* stub = entry.firstStub();
+    ICStub* next = stub->next();
+    ICStub* after = next ? next->next() : nullptr;
 
     if (!after || !after->isFallback())
         return false;
@@ -174,12 +196,12 @@ BaselineInspector::dimorphicStub(jsbytecode *pc, ICStub **pfirst, ICStub **pseco
 }
 
 MIRType
-BaselineInspector::expectedResultType(jsbytecode *pc)
+BaselineInspector::expectedResultType(jsbytecode* pc)
 {
     // Look at the IC entries for this op to guess what type it will produce,
     // returning MIRType_None otherwise.
 
-    ICStub *stub = monomorphicStub(pc);
+    ICStub* stub = monomorphicStub(pc);
     if (!stub)
         return MIRType_None;
 
@@ -220,20 +242,21 @@ CanUseInt32Compare(ICStub::Kind kind)
 }
 
 MCompare::CompareType
-BaselineInspector::expectedCompareType(jsbytecode *pc)
+BaselineInspector::expectedCompareType(jsbytecode* pc)
 {
-    ICStub *first = monomorphicStub(pc), *second = nullptr;
+    ICStub* first = monomorphicStub(pc);
+    ICStub* second = nullptr;
     if (!first && !dimorphicStub(pc, &first, &second))
         return MCompare::Compare_Unknown;
 
-    if (ICStub *fallback = second ? second->next() : first->next()) {
+    if (ICStub* fallback = second ? second->next() : first->next()) {
         MOZ_ASSERT(fallback->isFallback());
         if (fallback->toCompare_Fallback()->hadUnoptimizableAccess())
             return MCompare::Compare_Unknown;
     }
 
     if (CanUseInt32Compare(first->kind()) && (!second || CanUseInt32Compare(second->kind()))) {
-        ICCompare_Int32WithBoolean *coerce =
+        ICCompare_Int32WithBoolean* coerce =
             first->isCompare_Int32WithBoolean()
             ? first->toCompare_Int32WithBoolean()
             : ((second && second->isCompare_Int32WithBoolean())
@@ -248,7 +271,7 @@ BaselineInspector::expectedCompareType(jsbytecode *pc)
     }
 
     if (CanUseDoubleCompare(first->kind()) && (!second || CanUseDoubleCompare(second->kind()))) {
-        ICCompare_NumberWithUndefined *coerce =
+        ICCompare_NumberWithUndefined* coerce =
             first->isCompare_NumberWithUndefined()
             ? first->toCompare_NumberWithUndefined()
             : (second && second->isCompare_NumberWithUndefined())
@@ -266,9 +289,9 @@ BaselineInspector::expectedCompareType(jsbytecode *pc)
 }
 
 static bool
-TryToSpecializeBinaryArithOp(ICStub **stubs,
+TryToSpecializeBinaryArithOp(ICStub** stubs,
                              uint32_t nstubs,
-                             MIRType *result)
+                             MIRType* result)
 {
     DebugOnly<bool> sawInt32 = false;
     bool sawDouble = false;
@@ -308,16 +331,16 @@ TryToSpecializeBinaryArithOp(ICStub **stubs,
 }
 
 MIRType
-BaselineInspector::expectedBinaryArithSpecialization(jsbytecode *pc)
+BaselineInspector::expectedBinaryArithSpecialization(jsbytecode* pc)
 {
     if (!hasBaselineScript())
         return MIRType_None;
 
     MIRType result;
-    ICStub *stubs[2];
+    ICStub* stubs[2];
 
-    const ICEntry &entry = icEntryFromPC(pc);
-    ICStub *stub = entry.fallbackStub();
+    const ICEntry& entry = icEntryFromPC(pc);
+    ICStub* stub = entry.fallbackStub();
     if (stub->isBinaryArith_Fallback() &&
         stub->toBinaryArith_Fallback()->hadUnoptimizableOperands())
     {
@@ -339,13 +362,13 @@ BaselineInspector::expectedBinaryArithSpecialization(jsbytecode *pc)
 }
 
 bool
-BaselineInspector::hasSeenNonNativeGetElement(jsbytecode *pc)
+BaselineInspector::hasSeenNonNativeGetElement(jsbytecode* pc)
 {
     if (!hasBaselineScript())
         return false;
 
-    const ICEntry &entry = icEntryFromPC(pc);
-    ICStub *stub = entry.fallbackStub();
+    const ICEntry& entry = icEntryFromPC(pc);
+    ICStub* stub = entry.fallbackStub();
 
     if (stub->isGetElem_Fallback())
         return stub->toGetElem_Fallback()->hasNonNativeAccess();
@@ -353,13 +376,13 @@ BaselineInspector::hasSeenNonNativeGetElement(jsbytecode *pc)
 }
 
 bool
-BaselineInspector::hasSeenNegativeIndexGetElement(jsbytecode *pc)
+BaselineInspector::hasSeenNegativeIndexGetElement(jsbytecode* pc)
 {
     if (!hasBaselineScript())
         return false;
 
-    const ICEntry &entry = icEntryFromPC(pc);
-    ICStub *stub = entry.fallbackStub();
+    const ICEntry& entry = icEntryFromPC(pc);
+    ICStub* stub = entry.fallbackStub();
 
     if (stub->isGetElem_Fallback())
         return stub->toGetElem_Fallback()->hasNegativeIndex();
@@ -367,13 +390,13 @@ BaselineInspector::hasSeenNegativeIndexGetElement(jsbytecode *pc)
 }
 
 bool
-BaselineInspector::hasSeenAccessedGetter(jsbytecode *pc)
+BaselineInspector::hasSeenAccessedGetter(jsbytecode* pc)
 {
     if (!hasBaselineScript())
         return false;
 
-    const ICEntry &entry = icEntryFromPC(pc);
-    ICStub *stub = entry.fallbackStub();
+    const ICEntry& entry = icEntryFromPC(pc);
+    ICStub* stub = entry.fallbackStub();
 
     if (stub->isGetProp_Fallback())
         return stub->toGetProp_Fallback()->hasAccessedGetter();
@@ -381,27 +404,27 @@ BaselineInspector::hasSeenAccessedGetter(jsbytecode *pc)
 }
 
 bool
-BaselineInspector::hasSeenNonStringIterMore(jsbytecode *pc)
+BaselineInspector::hasSeenNonStringIterMore(jsbytecode* pc)
 {
     MOZ_ASSERT(JSOp(*pc) == JSOP_MOREITER);
 
     if (!hasBaselineScript())
         return false;
 
-    const ICEntry &entry = icEntryFromPC(pc);
-    ICStub *stub = entry.fallbackStub();
+    const ICEntry& entry = icEntryFromPC(pc);
+    ICStub* stub = entry.fallbackStub();
 
     return stub->toIteratorMore_Fallback()->hasNonStringResult();
 }
 
 bool
-BaselineInspector::hasSeenDoubleResult(jsbytecode *pc)
+BaselineInspector::hasSeenDoubleResult(jsbytecode* pc)
 {
     if (!hasBaselineScript())
         return false;
 
-    const ICEntry &entry = icEntryFromPC(pc);
-    ICStub *stub = entry.fallbackStub();
+    const ICEntry& entry = icEntryFromPC(pc);
+    ICStub* stub = entry.fallbackStub();
 
     MOZ_ASSERT(stub->isUnaryArith_Fallback() || stub->isBinaryArith_Fallback());
 
@@ -413,14 +436,14 @@ BaselineInspector::hasSeenDoubleResult(jsbytecode *pc)
     return false;
 }
 
-NativeObject *
-BaselineInspector::getTemplateObject(jsbytecode *pc)
+JSObject*
+BaselineInspector::getTemplateObject(jsbytecode* pc)
 {
     if (!hasBaselineScript())
         return nullptr;
 
-    const ICEntry &entry = icEntryFromPC(pc);
-    for (ICStub *stub = entry.firstStub(); stub; stub = stub->next()) {
+    const ICEntry& entry = icEntryFromPC(pc);
+    for (ICStub* stub = entry.firstStub(); stub; stub = stub->next()) {
         switch (stub->kind()) {
           case ICStub::NewArray_Fallback:
             return stub->toNewArray_Fallback()->templateObject();
@@ -429,7 +452,7 @@ BaselineInspector::getTemplateObject(jsbytecode *pc)
           case ICStub::Rest_Fallback:
             return stub->toRest_Fallback()->templateObject();
           case ICStub::Call_Scripted:
-            if (NativeObject *obj = stub->toCall_Scripted()->templateObject())
+            if (JSObject* obj = stub->toCall_Scripted()->templateObject())
                 return obj;
             break;
           default:
@@ -440,31 +463,91 @@ BaselineInspector::getTemplateObject(jsbytecode *pc)
     return nullptr;
 }
 
-NativeObject *
-BaselineInspector::getTemplateObjectForNative(jsbytecode *pc, Native native)
+ObjectGroup*
+BaselineInspector::getTemplateObjectGroup(jsbytecode* pc)
 {
     if (!hasBaselineScript())
         return nullptr;
 
-    const ICEntry &entry = icEntryFromPC(pc);
-    for (ICStub *stub = entry.firstStub(); stub; stub = stub->next()) {
-        if (stub->isCall_Native() && stub->toCall_Native()->callee()->native() == native)
-            return stub->toCall_Native()->templateObject();
-        if (stub->isCall_StringSplit() && native == js::str_split)
-            return stub->toCall_StringSplit()->templateObject();
+    const ICEntry& entry = icEntryFromPC(pc);
+    for (ICStub* stub = entry.firstStub(); stub; stub = stub->next()) {
+        switch (stub->kind()) {
+          case ICStub::NewArray_Fallback:
+            return stub->toNewArray_Fallback()->templateGroup();
+          default:
+            break;
+        }
     }
 
     return nullptr;
 }
 
-JSObject *
-BaselineInspector::getTemplateObjectForClassHook(jsbytecode *pc, const Class *clasp)
+JSFunction*
+BaselineInspector::getSingleCallee(jsbytecode* pc)
+{
+    MOZ_ASSERT(*pc == JSOP_NEW);
+
+    if (!hasBaselineScript())
+        return nullptr;
+
+    const ICEntry& entry = icEntryFromPC(pc);
+    ICStub* stub = entry.firstStub();
+
+    if (entry.fallbackStub()->toCall_Fallback()->hadUnoptimizableCall())
+        return nullptr;
+
+    if (!stub->isCall_Scripted() || stub->next() != entry.fallbackStub())
+        return nullptr;
+
+    return stub->toCall_Scripted()->callee();
+}
+
+JSObject*
+BaselineInspector::getTemplateObjectForNative(jsbytecode* pc, Native native)
 {
     if (!hasBaselineScript())
         return nullptr;
 
-    const ICEntry &entry = icEntryFromPC(pc);
-    for (ICStub *stub = entry.firstStub(); stub; stub = stub->next()) {
+    const ICEntry& entry = icEntryFromPC(pc);
+    for (ICStub* stub = entry.firstStub(); stub; stub = stub->next()) {
+        if (stub->isCall_Native() && stub->toCall_Native()->callee()->native() == native)
+            return stub->toCall_Native()->templateObject();
+    }
+
+    return nullptr;
+}
+
+bool
+BaselineInspector::isOptimizableCallStringSplit(jsbytecode* pc, JSString** stringOut, JSString** stringArg,
+                                                NativeObject** objOut)
+{
+    if (!hasBaselineScript())
+        return false;
+
+    const ICEntry& entry = icEntryFromPC(pc);
+
+    // If StringSplit stub is attached, must have only one stub attached.
+    if (entry.fallbackStub()->numOptimizedStubs() != 1)
+        return false;
+
+    ICStub* stub = entry.firstStub();
+    if (stub->kind() != ICStub::Call_StringSplit)
+        return false;
+
+    *stringOut = stub->toCall_StringSplit()->expectedThis();
+    *stringArg = stub->toCall_StringSplit()->expectedArg();
+    *objOut = stub->toCall_StringSplit()->templateObject();
+    return true;
+}
+
+JSObject*
+BaselineInspector::getTemplateObjectForClassHook(jsbytecode* pc, const Class* clasp)
+{
+    if (!hasBaselineScript())
+        return nullptr;
+
+    const ICEntry& entry = icEntryFromPC(pc);
+    for (ICStub* stub = entry.firstStub(); stub; stub = stub->next()) {
         if (stub->isCall_ClassHook() && stub->toCall_ClassHook()->clasp() == clasp)
             return stub->toCall_ClassHook()->templateObject();
     }
@@ -472,130 +555,163 @@ BaselineInspector::getTemplateObjectForClassHook(jsbytecode *pc, const Class *cl
     return nullptr;
 }
 
-DeclEnvObject *
+DeclEnvObject*
 BaselineInspector::templateDeclEnvObject()
 {
     if (!hasBaselineScript())
         return nullptr;
 
-    JSObject *res = &templateCallObject()->as<ScopeObject>().enclosingScope();
+    JSObject* res = &templateCallObject()->as<ScopeObject>().enclosingScope();
     MOZ_ASSERT(res);
 
     return &res->as<DeclEnvObject>();
 }
 
-CallObject *
+CallObject*
 BaselineInspector::templateCallObject()
 {
     if (!hasBaselineScript())
         return nullptr;
 
-    JSObject *res = baselineScript()->templateScope();
+    JSObject* res = baselineScript()->templateScope();
     MOZ_ASSERT(res);
 
     return &res->as<CallObject>();
 }
 
-static Shape *GlobalShapeForGetPropFunction(ICStub *stub)
+static Shape*
+GlobalShapeForGetPropFunction(ICStub* stub)
 {
-    if (stub->isGetProp_CallNativePrototype()) {
-        ICGetProp_CallNativePrototype *nstub =
-            stub->toGetProp_CallNativePrototype();
-        if (nstub->receiverShape()->getObjectClass()->flags & JSCLASS_IS_GLOBAL)
-            return nstub->receiverShape();
+    if (stub->isGetProp_CallNative()) {
+        ICGetProp_CallNative* nstub = stub->toGetProp_CallNative();
+        if (nstub->isOwnGetter())
+            return nullptr;
+
+        const HeapReceiverGuard& guard = nstub->receiverGuard();
+        if (Shape* shape = guard.shape()) {
+            if (shape->getObjectClass()->flags & JSCLASS_IS_GLOBAL)
+                return shape;
+        }
     }
     return nullptr;
 }
 
-JSObject *
-BaselineInspector::commonGetPropFunction(jsbytecode *pc, Shape **lastProperty, JSFunction **commonGetter,
-                                         Shape **globalShape)
+bool
+BaselineInspector::commonGetPropFunction(jsbytecode* pc, JSObject** holder, Shape** holderShape,
+                                         JSFunction** commonGetter, Shape** globalShape,
+                                         bool* isOwnProperty,
+                                         ReceiverVector& receivers,
+                                         ObjectGroupVector& convertUnboxedGroups)
 {
     if (!hasBaselineScript())
-        return nullptr;
+        return false;
 
-    const ICEntry &entry = icEntryFromPC(pc);
-    JSObject* holder = nullptr;
-    Shape *holderShape = nullptr;
-    JSFunction *getter = nullptr;
-    Shape *global = nullptr;
-    for (ICStub *stub = entry.firstStub(); stub; stub = stub->next()) {
-        if (stub->isGetProp_CallScripted()  ||
-            stub->isGetProp_CallNative()    ||
-            stub->isGetProp_CallNativePrototype())
+    MOZ_ASSERT(receivers.empty());
+    MOZ_ASSERT(convertUnboxedGroups.empty());
+
+    *holder = nullptr;
+    const ICEntry& entry = icEntryFromPC(pc);
+
+    for (ICStub* stub = entry.firstStub(); stub; stub = stub->next()) {
+        if (stub->isGetProp_CallScripted() ||
+            stub->isGetProp_CallNative())
         {
-            ICGetPropCallGetter *nstub = static_cast<ICGetPropCallGetter *>(stub);
-            if (!holder) {
-                holder = nstub->holder();
-                holderShape = nstub->holderShape();
-                getter = nstub->getter();
-                global = GlobalShapeForGetPropFunction(nstub);
-            } else if (nstub->holderShape() != holderShape ||
-                       GlobalShapeForGetPropFunction(nstub) != global)
+            ICGetPropCallGetter* nstub = static_cast<ICGetPropCallGetter*>(stub);
+            bool isOwn = nstub->isOwnGetter();
+            if (!isOwn && !AddReceiver(nstub->receiverGuard(), receivers, convertUnboxedGroups))
+                return false;
+
+            if (!*holder) {
+                *holder = nstub->holder();
+                *holderShape = nstub->holderShape();
+                *commonGetter = nstub->getter();
+                *globalShape = GlobalShapeForGetPropFunction(nstub);
+                *isOwnProperty = isOwn;
+            } else if (nstub->holderShape() != *holderShape ||
+                       GlobalShapeForGetPropFunction(nstub) != *globalShape ||
+                       isOwn != *isOwnProperty)
             {
-                return nullptr;
+                return false;
             } else {
-                MOZ_ASSERT(getter == nstub->getter());
+                MOZ_ASSERT(*commonGetter == nstub->getter());
             }
-        } else if (stub->isGetProp_Fallback() &&
-                   stub->toGetProp_Fallback()->hadUnoptimizableAccess())
-        {
-            // We have an unoptimizable access, so don't try to optimize.
-            return nullptr;
+        } else if (stub->isGetProp_Fallback()) {
+            // If we have an unoptimizable access, don't try to optimize.
+            if (stub->toGetProp_Fallback()->hadUnoptimizableAccess())
+                return false;
+        } else if (stub->isGetName_Fallback()) {
+            if (stub->toGetName_Fallback()->hadUnoptimizableAccess())
+                return false;
+        } else {
+            return false;
         }
     }
-    *lastProperty = holderShape;
-    *commonGetter = getter;
-    *globalShape = global;
-    return holder;
-}
 
-JSObject *
-BaselineInspector::commonSetPropFunction(jsbytecode *pc, Shape **lastProperty, JSFunction **commonSetter)
-{
-    if (!hasBaselineScript())
-        return nullptr;
+    if (!*holder)
+        return false;
 
-    const ICEntry &entry = icEntryFromPC(pc);
-    JSObject *holder = nullptr;
-    Shape *holderShape = nullptr;
-    JSFunction *setter = nullptr;
-    for (ICStub *stub = entry.firstStub(); stub; stub = stub->next()) {
-        if (stub->isSetProp_CallScripted() || stub->isSetProp_CallNative()) {
-            ICSetPropCallSetter *nstub = static_cast<ICSetPropCallSetter *>(stub);
-            if (!holder) {
-                holder = nstub->holder();
-                holderShape = nstub->holderShape();
-                setter = nstub->setter();
-            } else if (nstub->holderShape() != holderShape) {
-                return nullptr;
-            } else {
-                MOZ_ASSERT(setter == nstub->setter());
-            }
-        } else if (stub->isSetProp_Fallback() &&
-                   stub->toSetProp_Fallback()->hadUnoptimizableAccess())
-        {
-            // We have an unoptimizable access, so don't try to optimize.
-            return nullptr;
-        }
-    }
-    *lastProperty = holderShape;
-    *commonSetter = setter;
-    return holder;
+    MOZ_ASSERT(*isOwnProperty == (receivers.empty() && convertUnboxedGroups.empty()));
+    return true;
 }
 
 bool
-BaselineInspector::instanceOfData(jsbytecode *pc, Shape **shape, uint32_t *slot,
-                                  JSObject **prototypeObject)
+BaselineInspector::commonSetPropFunction(jsbytecode* pc, JSObject** holder, Shape** holderShape,
+                                         JSFunction** commonSetter, bool* isOwnProperty,
+                                         ReceiverVector& receivers,
+                                         ObjectGroupVector& convertUnboxedGroups)
+{
+    if (!hasBaselineScript())
+        return false;
+
+    MOZ_ASSERT(receivers.empty());
+    MOZ_ASSERT(convertUnboxedGroups.empty());
+
+    *holder = nullptr;
+    const ICEntry& entry = icEntryFromPC(pc);
+
+    for (ICStub* stub = entry.firstStub(); stub; stub = stub->next()) {
+        if (stub->isSetProp_CallScripted() || stub->isSetProp_CallNative()) {
+            ICSetPropCallSetter* nstub = static_cast<ICSetPropCallSetter*>(stub);
+            bool isOwn = nstub->isOwnSetter();
+            if (!isOwn && !AddReceiver(nstub->receiverGuard(), receivers, convertUnboxedGroups))
+                return false;
+
+            if (!*holder) {
+                *holder = nstub->holder();
+                *holderShape = nstub->holderShape();
+                *commonSetter = nstub->setter();
+                *isOwnProperty = isOwn;
+            } else if (nstub->holderShape() != *holderShape || isOwn != *isOwnProperty) {
+                return false;
+            } else {
+                MOZ_ASSERT(*commonSetter == nstub->setter());
+            }
+        } else if (!stub->isSetProp_Fallback() ||
+                   stub->toSetProp_Fallback()->hadUnoptimizableAccess())
+        {
+            // We have an unoptimizable access, so don't try to optimize.
+            return false;
+        }
+    }
+
+    if (!*holder)
+        return false;
+
+    return true;
+}
+
+bool
+BaselineInspector::instanceOfData(jsbytecode* pc, Shape** shape, uint32_t* slot,
+                                  JSObject** prototypeObject)
 {
     MOZ_ASSERT(*pc == JSOP_INSTANCEOF);
 
     if (!hasBaselineScript())
         return false;
 
-    const ICEntry &entry = icEntryFromPC(pc);
+    const ICEntry& entry = icEntryFromPC(pc);
 
-    ICStub *stub = entry.firstStub();
+    ICStub* stub = entry.firstStub();
     if (!stub->isInstanceOf_Function() ||
         !stub->next()->isInstanceOf_Fallback() ||
         stub->next()->toInstanceOf_Fallback()->hadUnoptimizableAccess())
@@ -603,7 +719,7 @@ BaselineInspector::instanceOfData(jsbytecode *pc, Shape **shape, uint32_t *slot,
         return false;
     }
 
-    ICInstanceOf_Function *optStub = stub->toInstanceOf_Function();
+    ICInstanceOf_Function* optStub = stub->toInstanceOf_Function();
     *shape = optStub->shape();
     *prototypeObject = optStub->prototypeObject();
     *slot = optStub->slot();

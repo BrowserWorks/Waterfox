@@ -21,9 +21,12 @@
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_CTOR, etc
 
 namespace mozilla {
-namespace layers {
 
-class CanvasClientWebGL;
+namespace gl {
+class SharedSurface;
+}
+
+namespace layers {
 
 /**
  * A shared CanvasLayer implementation that supports copying
@@ -38,9 +41,9 @@ protected:
   virtual ~CopyableCanvasLayer();
 
 public:
-  virtual void Initialize(const Data& aData) MOZ_OVERRIDE;
+  virtual void Initialize(const Data& aData) override;
 
-  virtual bool IsDataValid(const Data& aData) MOZ_OVERRIDE;
+  virtual bool IsDataValid(const Data& aData) override;
 
   bool IsGLLayer() { return !!mGLContext; }
 

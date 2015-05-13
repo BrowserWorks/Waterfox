@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 sw=2 et tw=78: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -19,6 +19,13 @@ namespace dom {
 static bool
 ShouldExposeChildWindow(nsString& aNameBeingResolved, nsIDOMWindow *aChild)
 {
+  nsCOMPtr<nsPIDOMWindow> piWin = do_QueryInterface(aChild);
+  NS_ENSURE_TRUE(piWin, false);
+  Element* e = piWin->GetFrameElementInternal();
+  if (e && e->IsInShadowTree()) {
+    return false;
+  }
+
   // If we're same-origin with the child, go ahead and expose it.
   nsCOMPtr<nsIScriptObjectPrincipal> sop = do_QueryInterface(aChild);
   NS_ENSURE_TRUE(sop, false);
@@ -63,9 +70,6 @@ ShouldExposeChildWindow(nsString& aNameBeingResolved, nsIDOMWindow *aChild)
   // allow the child to arbitrarily pollute the parent namespace, and requires
   // cross-origin communication only in a limited set of cases that can be
   // computed independently by the parent.
-  nsCOMPtr<nsPIDOMWindow> piWin = do_QueryInterface(aChild);
-  NS_ENSURE_TRUE(piWin, false);
-  Element* e = piWin->GetFrameElementInternal();
   return e && e->AttrValueIs(kNameSpaceID_None, nsGkAtoms::name,
                              aNameBeingResolved, eCaseMatters);
 }
@@ -155,11 +159,12 @@ bool
 WindowNamedPropertiesHandler::defineProperty(JSContext* aCx,
                                              JS::Handle<JSObject*> aProxy,
                                              JS::Handle<jsid> aId,
-                                             JS::MutableHandle<JSPropertyDescriptor> aDesc) const
+                                             JS::Handle<JSPropertyDescriptor> aDesc,
+                                             JS::ObjectOpResult &result) const
 {
   ErrorResult rv;
   rv.ThrowTypeError(MSG_DEFINEPROPERTY_ON_GSP);
-  rv.ReportTypeError(aCx);
+  rv.ReportErrorWithMessage(aCx);
   return false;
 }
 
@@ -205,10 +210,10 @@ WindowNamedPropertiesHandler::ownPropNames(JSContext* aCx,
 bool
 WindowNamedPropertiesHandler::delete_(JSContext* aCx,
                                       JS::Handle<JSObject*> aProxy,
-                                      JS::Handle<jsid> aId, bool* aBp) const
+                                      JS::Handle<jsid> aId,
+                                      JS::ObjectOpResult &aResult) const
 {
-  *aBp = false;
-  return true;
+  return aResult.failCantDeleteWindowNamedProperty();
 }
 
 static bool
@@ -276,7 +281,6 @@ WindowNamedPropertiesHandler::Create(JSContext* aCx,
   options.setClass(&WindowNamedPropertiesClass.mBase);
   return js::NewProxyObject(aCx, WindowNamedPropertiesHandler::getInstance(),
                             JS::NullHandleValue, aProto,
-                            js::GetGlobalForObjectCrossCompartment(aProto),
                             options);
 }
 

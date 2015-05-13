@@ -9,6 +9,7 @@
 #include "mozilla/LinkedList.h"
 #include "mozilla/Monitor.h"
 #include "mozilla/Move.h"
+#include "mozilla/Preferences.h"
 #include "mozilla/StaticPtr.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/ThreadHangStats.h"
@@ -20,8 +21,15 @@
 #include "prinrval.h"
 #include "prthread.h"
 #include "ThreadStackHelper.h"
+#include "nsIObserverService.h"
+#include "nsIObserver.h"
+#include "mozilla/Services.h"
+#include "nsXULAppAPI.h"
 
 #include <algorithm>
+
+// Activate BHR only for one every BHR_BETA_MOD users.
+#define BHR_BETA_MOD 100;
 
 namespace mozilla {
 
@@ -29,7 +37,7 @@ namespace mozilla {
  * BackgroundHangManager is the global object that
  * manages all instances of BackgroundHangThread.
  */
-class BackgroundHangManager
+class BackgroundHangManager : public nsIObserver
 {
 private:
   // Background hang monitor thread function
@@ -61,9 +69,11 @@ private:
   void RunMonitorThread();
 
 public:
-  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(BackgroundHangManager)
+  NS_DECL_THREADSAFE_ISUPPORTS
+  NS_DECL_NSIOBSERVER
   static StaticRefPtr<BackgroundHangManager> sInstance;
   static bool sProhibited;
+  static bool sDisabled;
 
   // Lock for access to members of this class
   Monitor mLock;
@@ -90,8 +100,22 @@ public:
 
   BackgroundHangManager();
 private:
-  ~BackgroundHangManager();
+  virtual ~BackgroundHangManager();
 };
+
+NS_IMPL_ISUPPORTS(BackgroundHangManager, nsIObserver)
+
+NS_IMETHODIMP
+BackgroundHangManager::Observe(nsISupports* aSubject, const char* aTopic, const char16_t* aData) {
+  NS_ENSURE_TRUE(!strcmp(aTopic, "profile-after-change"), NS_ERROR_UNEXPECTED);
+  BackgroundHangMonitor::DisableOnBeta();
+
+  nsCOMPtr<nsIObserverService> observerService = mozilla::services::GetObserverService();
+  MOZ_ASSERT(observerService);
+  observerService->RemoveObserver(this, "profile-after-change");
+
+  return NS_OK;
+}
 
 /**
  * BackgroundHangThread is a per-thread object that is used
@@ -140,6 +164,10 @@ public:
   Telemetry::HangStack mHangStack;
   // Statistics for telemetry
   Telemetry::ThreadHangStats mStats;
+  // Annotations for the current hang
+  UniquePtr<HangMonitor::HangAnnotations> mAnnotations;
+  // Annotators registered for this thread
+  HangMonitor::Observer::Annotators mAnnotators;
 
   BackgroundHangThread(const char* aName,
                        uint32_t aTimeoutMs,
@@ -162,6 +190,7 @@ public:
 
 StaticRefPtr<BackgroundHangManager> BackgroundHangManager::sInstance;
 bool BackgroundHangManager::sProhibited = false;
+bool BackgroundHangManager::sDisabled = false;
 
 ThreadLocal<BackgroundHangThread*> BackgroundHangThread::sTlsKey;
 
@@ -274,6 +303,8 @@ BackgroundHangManager::RunMonitorThread()
           currentThread->mStackHelper.GetStack(currentThread->mHangStack);
           currentThread->mHangStart = interval;
           currentThread->mHanging = true;
+          currentThread->mAnnotations =
+            currentThread->mAnnotators.GatherAnnotations();
         }
       } else {
         if (MOZ_LIKELY(interval != currentThread->mHangStart)) {
@@ -372,12 +403,12 @@ BackgroundHangThread::ReportHang(PRIntervalTime aHangTime)
        oldHistogram != mStats.mHangs.end(); oldHistogram++) {
     if (newHistogram == *oldHistogram) {
       // New histogram matches old one
-      oldHistogram->Add(aHangTime);
+      oldHistogram->Add(aHangTime, Move(mAnnotations));
       return *oldHistogram;
     }
   }
   // Add new histogram
-  newHistogram.Add(aHangTime);
+  newHistogram.Add(aHangTime, Move(mAnnotations));
   mStats.mHangs.append(Move(newHistogram));
   return mStats.mHangs.back();
 }
@@ -421,7 +452,7 @@ BackgroundHangThread::FindThread()
 {
 #ifdef MOZ_ENABLE_BACKGROUND_HANG_MONITOR
   if (BackgroundHangManager::sInstance == nullptr) {
-    MOZ_ASSERT(BackgroundHangManager::sProhibited,
+    MOZ_ASSERT(BackgroundHangManager::sProhibited || BackgroundHangManager::sDisabled,
                "BackgroundHandleManager is not initialized");
     return nullptr;
   }
@@ -450,6 +481,38 @@ BackgroundHangThread::FindThread()
   return nullptr;
 }
 
+bool
+BackgroundHangMonitor::ShouldDisableOnBeta(const nsCString &clientID) {
+  MOZ_ASSERT(clientID.Length() == 36, "clientID is invalid");
+  const char *suffix = clientID.get() + clientID.Length() - 4;
+  return strtol(suffix, NULL, 16) % BHR_BETA_MOD;
+}
+
+bool
+BackgroundHangMonitor::IsDisabled() {
+#ifdef MOZ_ENABLE_BACKGROUND_HANG_MONITOR
+  return BackgroundHangManager::sDisabled;
+#else
+  return true;
+#endif
+}
+
+bool
+BackgroundHangMonitor::DisableOnBeta() {
+  nsAdoptingCString clientID = Preferences::GetCString("toolkit.telemetry.cachedClientID");
+  bool telemetryEnabled = Preferences::GetBool("toolkit.telemetry.enabled");
+
+  if (!telemetryEnabled || !clientID || BackgroundHangMonitor::ShouldDisableOnBeta(clientID)) {
+    if (XRE_IsParentProcess()) {
+      BackgroundHangMonitor::Shutdown();
+    } else {
+      BackgroundHangManager::sDisabled = true;
+    }
+    return true;
+  }
+
+  return false;
+}
 
 void
 BackgroundHangMonitor::Startup()
@@ -457,6 +520,23 @@ BackgroundHangMonitor::Startup()
 #ifdef MOZ_ENABLE_BACKGROUND_HANG_MONITOR
   MOZ_ASSERT(!BackgroundHangManager::sProhibited, "Prohibited");
   MOZ_ASSERT(!BackgroundHangManager::sInstance, "Already initialized");
+
+  if (!strcmp(NS_STRINGIFY(MOZ_UPDATE_CHANNEL), "beta")) {
+    if (XRE_IsParentProcess()) { // cached ClientID hasn't been read yet
+      ThreadStackHelper::Startup();
+      BackgroundHangThread::Startup();
+      BackgroundHangManager::sInstance = new BackgroundHangManager();
+
+      nsCOMPtr<nsIObserverService> observerService = mozilla::services::GetObserverService();
+      MOZ_ASSERT(observerService);
+
+      observerService->AddObserver(BackgroundHangManager::sInstance, "profile-after-change", false);
+      return;
+    } else if(DisableOnBeta()){
+      return;
+    }
+  }
+
   ThreadStackHelper::Startup();
   BackgroundHangThread::Startup();
   BackgroundHangManager::sInstance = new BackgroundHangManager();
@@ -467,6 +547,11 @@ void
 BackgroundHangMonitor::Shutdown()
 {
 #ifdef MOZ_ENABLE_BACKGROUND_HANG_MONITOR
+  if (BackgroundHangManager::sDisabled) {
+    MOZ_ASSERT(!BackgroundHangManager::sInstance, "Initialized");
+    return;
+  }
+
   MOZ_ASSERT(!BackgroundHangManager::sProhibited, "Prohibited");
   MOZ_ASSERT(BackgroundHangManager::sInstance, "Not initialized");
   /* Scope our lock inside Shutdown() because the sInstance object can
@@ -475,6 +560,7 @@ BackgroundHangMonitor::Shutdown()
   BackgroundHangManager::sInstance->Shutdown();
   BackgroundHangManager::sInstance = nullptr;
   ThreadStackHelper::Shutdown();
+  BackgroundHangManager::sDisabled = true;
 #endif
 }
 
@@ -484,7 +570,7 @@ BackgroundHangMonitor::BackgroundHangMonitor(const char* aName,
   : mThread(BackgroundHangThread::FindThread())
 {
 #ifdef MOZ_ENABLE_BACKGROUND_HANG_MONITOR
-  if (!BackgroundHangManager::sProhibited && !mThread) {
+  if (!BackgroundHangManager::sDisabled && !BackgroundHangManager::sProhibited && !mThread) {
     // If sProhibit is true, mThread would be null, and no monitoring.
     mThread = new BackgroundHangThread(aName, aTimeoutMs, aMaxTimeoutMs);
   }
@@ -495,6 +581,10 @@ BackgroundHangMonitor::BackgroundHangMonitor()
   : mThread(BackgroundHangThread::FindThread())
 {
 #ifdef MOZ_ENABLE_BACKGROUND_HANG_MONITOR
+  if (BackgroundHangManager::sDisabled) {
+    return;
+  }
+
   MOZ_ASSERT(!BackgroundHangManager::sProhibited || mThread,
              "This thread is not initialized for hang monitoring");
 #endif
@@ -509,12 +599,13 @@ BackgroundHangMonitor::NotifyActivity()
 {
 #ifdef MOZ_ENABLE_BACKGROUND_HANG_MONITOR
   if (mThread == nullptr) {
-    MOZ_ASSERT(BackgroundHangManager::sProhibited,
+    MOZ_ASSERT(BackgroundHangManager::sProhibited ||
+               BackgroundHangManager::sDisabled,
                "This thread is not initialized for hang monitoring");
     return;
   }
 
-  if (Telemetry::CanRecord()) {
+  if (Telemetry::CanRecordExtended()) {
     mThread->NotifyActivity();
   }
 #endif
@@ -525,12 +616,13 @@ BackgroundHangMonitor::NotifyWait()
 {
 #ifdef MOZ_ENABLE_BACKGROUND_HANG_MONITOR
   if (mThread == nullptr) {
-    MOZ_ASSERT(BackgroundHangManager::sProhibited,
+    MOZ_ASSERT(BackgroundHangManager::sProhibited ||
+               BackgroundHangManager::sDisabled,
                "This thread is not initialized for hang monitoring");
     return;
   }
 
-  if (Telemetry::CanRecord()) {
+  if (Telemetry::CanRecordExtended()) {
     mThread->NotifyWait();
   }
 #endif
@@ -556,6 +648,33 @@ BackgroundHangMonitor::Allow()
 #endif
 }
 
+bool
+BackgroundHangMonitor::RegisterAnnotator(HangMonitor::Annotator& aAnnotator)
+{
+#ifdef MOZ_ENABLE_BACKGROUND_HANG_MONITOR
+  BackgroundHangThread* thisThread = BackgroundHangThread::FindThread();
+  if (!thisThread) {
+    return false;
+  }
+  return thisThread->mAnnotators.Register(aAnnotator);
+#else
+  return false;
+#endif
+}
+
+bool
+BackgroundHangMonitor::UnregisterAnnotator(HangMonitor::Annotator& aAnnotator)
+{
+#ifdef MOZ_ENABLE_BACKGROUND_HANG_MONITOR
+  BackgroundHangThread* thisThread = BackgroundHangThread::FindThread();
+  if (!thisThread) {
+    return false;
+  }
+  return thisThread->mAnnotators.Unregister(aAnnotator);
+#else
+  return false;
+#endif
+}
 
 /* Because we are iterating through the BackgroundHangThread linked list,
    we need to take a lock. Using MonitorAutoLock as a base class makes
@@ -567,7 +686,9 @@ BackgroundHangMonitor::ThreadHangStatsIterator::ThreadHangStatsIterator()
             nullptr)
 {
 #ifdef MOZ_ENABLE_BACKGROUND_HANG_MONITOR
-  MOZ_ASSERT(BackgroundHangManager::sInstance || BackgroundHangManager::sProhibited,
+  MOZ_ASSERT(BackgroundHangManager::sInstance ||
+             BackgroundHangManager::sProhibited ||
+             BackgroundHangManager::sDisabled,
              "Inconsistent state");
 #endif
 }

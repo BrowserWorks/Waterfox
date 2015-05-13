@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -131,9 +132,10 @@ AnonymousContent::GetElementById(const nsAString& aElementId)
 
 bool
 AnonymousContent::WrapObject(JSContext* aCx,
+                             JS::Handle<JSObject*> aGivenProto,
                              JS::MutableHandle<JSObject*> aReflector)
 {
-  return AnonymousContentBinding::Wrap(aCx, this, aReflector);
+  return AnonymousContentBinding::Wrap(aCx, this, aGivenProto, aReflector);
 }
 
 } // dom namespace

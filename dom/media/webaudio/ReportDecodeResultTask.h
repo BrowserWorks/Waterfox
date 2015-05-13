@@ -12,7 +12,7 @@
 
 namespace mozilla {
 
-class ReportDecodeResultTask : public nsRunnable
+class ReportDecodeResultTask final : public nsRunnable
 {
 public:
   ReportDecodeResultTask(DecodeJob& aDecodeJob,
@@ -23,7 +23,7 @@ public:
     MOZ_ASSERT(aFunction);
   }
 
-  NS_IMETHOD Run() MOZ_OVERRIDE
+  NS_IMETHOD Run() override
   {
     MOZ_ASSERT(NS_IsMainThread());
 

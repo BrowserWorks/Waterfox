@@ -116,6 +116,8 @@ public:
     SharedSurface* SharedSurf() const {
         return mSurf;
     }
+
+    void SetReadBuffer(GLenum mode) const;
 };
 
 
@@ -142,6 +144,8 @@ protected:
 
     bool mNeedsBlit;
 
+    GLenum mUserReadBufferMode;
+
     // Below are the parts that help us pretend to be framebuffer 0:
     GLuint mUserDrawFB;
     GLuint mUserReadFB;
@@ -160,6 +164,7 @@ protected:
         , mCaps(caps)
         , mFactory(Move(factory))
         , mNeedsBlit(true)
+        , mUserReadBufferMode(LOCAL_GL_BACK)
         , mUserDrawFB(0)
         , mUserReadFB(0)
         , mInternalDrawFB(0)
@@ -223,6 +228,11 @@ public:
     void AfterDrawCall();
     void BeforeReadCall();
 
+    bool CopyTexImage2D(GLenum target, GLint level, GLenum internalformat, GLint x,
+                        GLint y, GLsizei width, GLsizei height, GLint border);
+
+    void SetReadBuffer(GLenum userMode);
+
     /**
      * Attempts to read pixels from the current bound framebuffer, if
      * it is backed by a SharedSurface.
@@ -244,8 +254,6 @@ public:
     bool PublishFrame(const gfx::IntSize& size);
 
     bool Resize(const gfx::IntSize& size);
-
-    void Readback(SharedSurface* src, gfx::DataSourceSurface* dest);
 
 protected:
     bool Attach(SharedSurface* surf, const gfx::IntSize& size);

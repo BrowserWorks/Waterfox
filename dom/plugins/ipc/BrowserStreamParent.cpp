@@ -35,6 +35,7 @@ BrowserStreamParent::BrowserStreamParent(PluginInstanceParent* npp,
 
 BrowserStreamParent::~BrowserStreamParent()
 {
+  mStream->pdata = nullptr;
 }
 
 void
@@ -51,7 +52,6 @@ BrowserStreamParent::RecvAsyncNPP_NewStreamResult(const NPError& rv,
   PluginAsyncSurrogate* surrogate = mNPP->GetAsyncSurrogate();
   MOZ_ASSERT(surrogate);
   surrogate->AsyncCallArriving();
-  nsRefPtr<nsNPAPIPluginStreamListener> streamListener = mStreamListener.forget();
   if (mState == DEFERRING_DESTROY) {
     // We've been asked to destroy ourselves before init was complete.
     mState = DYING;
@@ -61,10 +61,10 @@ BrowserStreamParent::RecvAsyncNPP_NewStreamResult(const NPError& rv,
 
   NPError error = rv;
   if (error == NPERR_NO_ERROR) {
-    if (!streamListener) {
+    if (!mStreamListener) {
       return false;
     }
-    if (streamListener->SetStreamType(stype)) {
+    if (mStreamListener->SetStreamType(stype)) {
       mState = ALIVE;
     } else {
       error = NPERR_GENERIC_ERROR;
@@ -72,8 +72,7 @@ BrowserStreamParent::RecvAsyncNPP_NewStreamResult(const NPError& rv,
   }
 
   if (error != NPERR_NO_ERROR) {
-    // We need to clean up the stream
-    parent::_destroystream(mNPP->GetNPP(), mStream, NPRES_DONE);
+    surrogate->DestroyAsyncStream(mStream);
     unused << PBrowserStreamParent::Send__delete__(this);
   }
 

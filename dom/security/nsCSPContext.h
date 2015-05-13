@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -23,6 +24,8 @@
 #define NS_CSPCONTEXT_CID \
 { 0x09d9ed1a, 0xe5d4, 0x4004, \
   { 0xbf, 0xe0, 0x27, 0xce, 0xb9, 0x23, 0xd9, 0xac } }
+
+class nsINetworkInterceptController;
 
 class nsCSPContext : public nsIContentSecurityPolicy
 {
@@ -98,8 +101,8 @@ class CSPViolationReportListener : public nsIStreamListener
 // The POST of the violation report (if it happens) should not follow
 // redirects, per the spec. hence, we implement an nsIChannelEventSink
 // with an object so we can tell XHR to abort if a redirect happens.
-class CSPReportRedirectSink MOZ_FINAL : public nsIChannelEventSink,
-                                        public nsIInterfaceRequestor
+class CSPReportRedirectSink final : public nsIChannelEventSink,
+                                    public nsIInterfaceRequestor
 {
   public:
     NS_DECL_NSICHANNELEVENTSINK
@@ -109,8 +112,13 @@ class CSPReportRedirectSink MOZ_FINAL : public nsIChannelEventSink,
   public:
     CSPReportRedirectSink();
 
+    void SetInterceptController(nsINetworkInterceptController* aInterceptController);
+
   protected:
     virtual ~CSPReportRedirectSink();
+
+  private:
+    nsCOMPtr<nsINetworkInterceptController> mInterceptController;
 };
 
 #endif /* nsCSPContext_h___ */

@@ -10,6 +10,7 @@
 #include "mozilla/unused.h"
 #include "mozilla/dom/BindingUtils.h"
 #include "jsfriendapi.h"
+#include "js/CharacterEncoding.h"
 #include "xpcprivate.h"
 #include "CPOWTimer.h"
 #include "WrapperFactory.h"
@@ -26,51 +27,60 @@ struct AuxCPOWData
     ObjectId id;
     bool isCallable;
     bool isConstructor;
+    bool isDOMObject;
 
     // The object tag is just some auxilliary information that clients can use
     // however they see fit.
     nsCString objectTag;
 
-    AuxCPOWData(ObjectId id, bool isCallable, bool isConstructor, const nsACString &objectTag)
+    // The class name for WrapperOwner::className, below.
+    nsCString className;
+
+    AuxCPOWData(ObjectId id,
+                bool isCallable,
+                bool isConstructor,
+                bool isDOMObject,
+                const nsACString& objectTag)
       : id(id),
         isCallable(isCallable),
         isConstructor(isConstructor),
+        isDOMObject(isDOMObject),
         objectTag(objectTag)
     {}
 };
 
-WrapperOwner::WrapperOwner(JSRuntime *rt)
+WrapperOwner::WrapperOwner(JSRuntime* rt)
   : JavaScriptShared(rt),
     inactive_(false)
 {
 }
 
-static inline AuxCPOWData *
-AuxCPOWDataOf(JSObject *obj)
+static inline AuxCPOWData*
+AuxCPOWDataOf(JSObject* obj)
 {
     MOZ_ASSERT(IsCPOW(obj));
-    return static_cast<AuxCPOWData *>(GetProxyExtra(obj, 1).toPrivate());
+    return static_cast<AuxCPOWData*>(GetProxyExtra(obj, 1).toPrivate());
 }
 
-static inline WrapperOwner *
-OwnerOf(JSObject *obj)
+static inline WrapperOwner*
+OwnerOf(JSObject* obj)
 {
     MOZ_ASSERT(IsCPOW(obj));
-    return reinterpret_cast<WrapperOwner *>(GetProxyExtra(obj, 0).toPrivate());
+    return reinterpret_cast<WrapperOwner*>(GetProxyExtra(obj, 0).toPrivate());
 }
 
 ObjectId
-WrapperOwner::idOfUnchecked(JSObject *obj)
+WrapperOwner::idOfUnchecked(JSObject* obj)
 {
     MOZ_ASSERT(IsCPOW(obj));
 
-    AuxCPOWData *aux = AuxCPOWDataOf(obj);
+    AuxCPOWData* aux = AuxCPOWDataOf(obj);
     MOZ_ASSERT(!aux->id.isNull());
     return aux->id;
 }
 
 ObjectId
-WrapperOwner::idOf(JSObject *obj)
+WrapperOwner::idOf(JSObject* obj)
 {
     ObjectId objId = idOfUnchecked(obj);
     MOZ_ASSERT(findCPOWById(objId) == obj);
@@ -83,43 +93,47 @@ class CPOWProxyHandler : public BaseProxyHandler
     MOZ_CONSTEXPR CPOWProxyHandler()
       : BaseProxyHandler(&family) {}
 
-    virtual bool finalizeInBackground(Value priv) const MOZ_OVERRIDE {
+    virtual bool finalizeInBackground(Value priv) const override {
         return false;
     }
 
-    virtual bool getOwnPropertyDescriptor(JSContext *cx, HandleObject proxy, HandleId id,
-                                          MutableHandle<JSPropertyDescriptor> desc) const MOZ_OVERRIDE;
-    virtual bool defineProperty(JSContext *cx, HandleObject proxy, HandleId id,
-                                MutableHandle<JSPropertyDescriptor> desc) const MOZ_OVERRIDE;
-    virtual bool ownPropertyKeys(JSContext *cx, HandleObject proxy,
-                                 AutoIdVector &props) const MOZ_OVERRIDE;
-    virtual bool delete_(JSContext *cx, HandleObject proxy, HandleId id, bool *bp) const MOZ_OVERRIDE;
-    virtual bool enumerate(JSContext *cx, HandleObject proxy, MutableHandleObject objp) const MOZ_OVERRIDE;
-    virtual bool preventExtensions(JSContext *cx, HandleObject proxy, bool *succeeded) const MOZ_OVERRIDE;
-    virtual bool isExtensible(JSContext *cx, HandleObject proxy, bool *extensible) const MOZ_OVERRIDE;
-    virtual bool has(JSContext *cx, HandleObject proxy, HandleId id, bool *bp) const MOZ_OVERRIDE;
-    virtual bool get(JSContext *cx, HandleObject proxy, HandleObject receiver,
-                     HandleId id, MutableHandleValue vp) const MOZ_OVERRIDE;
-    virtual bool set(JSContext *cx, JS::HandleObject proxy, JS::HandleObject receiver,
-                     JS::HandleId id, bool strict, JS::MutableHandleValue vp) const MOZ_OVERRIDE;
-    virtual bool call(JSContext *cx, HandleObject proxy, const CallArgs &args) const MOZ_OVERRIDE;
-    virtual bool construct(JSContext *cx, HandleObject proxy, const CallArgs &args) const MOZ_OVERRIDE;
+    virtual bool getOwnPropertyDescriptor(JSContext* cx, HandleObject proxy, HandleId id,
+                                          MutableHandle<JSPropertyDescriptor> desc) const override;
+    virtual bool defineProperty(JSContext* cx, HandleObject proxy, HandleId id,
+                                Handle<JSPropertyDescriptor> desc,
+                                ObjectOpResult& result) const override;
+    virtual bool ownPropertyKeys(JSContext* cx, HandleObject proxy,
+                                 AutoIdVector& props) const override;
+    virtual bool delete_(JSContext* cx, HandleObject proxy, HandleId id,
+                         ObjectOpResult& result) const override;
+    virtual bool enumerate(JSContext* cx, HandleObject proxy, MutableHandleObject objp) const override;
+    virtual bool preventExtensions(JSContext* cx, HandleObject proxy,
+                                   ObjectOpResult& result) const override;
+    virtual bool isExtensible(JSContext* cx, HandleObject proxy, bool* extensible) const override;
+    virtual bool has(JSContext* cx, HandleObject proxy, HandleId id, bool* bp) const override;
+    virtual bool get(JSContext* cx, HandleObject proxy, HandleObject receiver,
+                     HandleId id, MutableHandleValue vp) const override;
+    virtual bool set(JSContext* cx, JS::HandleObject proxy, JS::HandleId id, JS::HandleValue v,
+                     JS::HandleValue receiver, JS::ObjectOpResult& result) const override;
+    virtual bool call(JSContext* cx, HandleObject proxy, const CallArgs& args) const override;
+    virtual bool construct(JSContext* cx, HandleObject proxy, const CallArgs& args) const override;
 
-    virtual bool getPropertyDescriptor(JSContext *cx, HandleObject proxy, HandleId id,
-                                       MutableHandle<JSPropertyDescriptor> desc) const MOZ_OVERRIDE;
-    virtual bool hasOwn(JSContext *cx, HandleObject proxy, HandleId id, bool *bp) const MOZ_OVERRIDE;
-    virtual bool getOwnEnumerablePropertyKeys(JSContext *cx, HandleObject proxy,
-                                              AutoIdVector &props) const MOZ_OVERRIDE;
-    virtual bool hasInstance(JSContext *cx, HandleObject proxy,
-                             MutableHandleValue v, bool *bp) const MOZ_OVERRIDE;
+    virtual bool getPropertyDescriptor(JSContext* cx, HandleObject proxy, HandleId id,
+                                       MutableHandle<JSPropertyDescriptor> desc) const override;
+    virtual bool hasOwn(JSContext* cx, HandleObject proxy, HandleId id, bool* bp) const override;
+    virtual bool getOwnEnumerablePropertyKeys(JSContext* cx, HandleObject proxy,
+                                              AutoIdVector& props) const override;
+    virtual bool hasInstance(JSContext* cx, HandleObject proxy,
+                             MutableHandleValue v, bool* bp) const override;
     virtual bool objectClassIs(HandleObject obj, js::ESClassValue classValue,
-                               JSContext *cx) const MOZ_OVERRIDE;
-    virtual const char* className(JSContext *cx, HandleObject proxy) const MOZ_OVERRIDE;
-    virtual bool regexp_toShared(JSContext *cx, HandleObject proxy, RegExpGuard *g) const MOZ_OVERRIDE;
-    virtual void finalize(JSFreeOp *fop, JSObject *proxy) const MOZ_OVERRIDE;
-    virtual void objectMoved(JSObject *proxy, const JSObject *old) const MOZ_OVERRIDE;
-    virtual bool isCallable(JSObject *obj) const MOZ_OVERRIDE;
-    virtual bool isConstructor(JSObject *obj) const MOZ_OVERRIDE;
+                               JSContext* cx) const override;
+    virtual const char* className(JSContext* cx, HandleObject proxy) const override;
+    virtual bool regexp_toShared(JSContext* cx, HandleObject proxy, RegExpGuard* g) const override;
+    virtual void finalize(JSFreeOp* fop, JSObject* proxy) const override;
+    virtual void objectMoved(JSObject* proxy, const JSObject* old) const override;
+    virtual bool isCallable(JSObject* obj) const override;
+    virtual bool isConstructor(JSObject* obj) const override;
+    virtual bool getPrototype(JSContext* cx, HandleObject proxy, MutableHandleObject protop) const override;
 
     static const char family;
     static const CPOWProxyHandler singleton;
@@ -129,7 +143,7 @@ const char CPOWProxyHandler::family = 0;
 const CPOWProxyHandler CPOWProxyHandler::singleton;
 
 #define FORWARD(call, args)                                             \
-    WrapperOwner *owner = OwnerOf(proxy);                               \
+    WrapperOwner* owner = OwnerOf(proxy);                               \
     if (!owner->active()) {                                             \
         JS_ReportError(cx, "cannot use a CPOW whose process is gone");  \
         return false;                                                   \
@@ -140,15 +154,15 @@ const CPOWProxyHandler CPOWProxyHandler::singleton;
     }
 
 bool
-CPOWProxyHandler::getPropertyDescriptor(JSContext *cx, HandleObject proxy, HandleId id,
+CPOWProxyHandler::getPropertyDescriptor(JSContext* cx, HandleObject proxy, HandleId id,
                                         MutableHandle<JSPropertyDescriptor> desc) const
 {
     FORWARD(getPropertyDescriptor, (cx, proxy, id, desc));
 }
 
 bool
-WrapperOwner::getPropertyDescriptor(JSContext *cx, HandleObject proxy, HandleId id,
-				    MutableHandle<JSPropertyDescriptor> desc)
+WrapperOwner::getPropertyDescriptor(JSContext* cx, HandleObject proxy, HandleId id,
+                                    MutableHandle<JSPropertyDescriptor> desc)
 {
     ObjectId objId = idOf(proxy);
 
@@ -170,15 +184,15 @@ WrapperOwner::getPropertyDescriptor(JSContext *cx, HandleObject proxy, HandleId 
 }
 
 bool
-CPOWProxyHandler::getOwnPropertyDescriptor(JSContext *cx, HandleObject proxy, HandleId id,
+CPOWProxyHandler::getOwnPropertyDescriptor(JSContext* cx, HandleObject proxy, HandleId id,
                                            MutableHandle<JSPropertyDescriptor> desc) const
 {
     FORWARD(getOwnPropertyDescriptor, (cx, proxy, id, desc));
 }
 
 bool
-WrapperOwner::getOwnPropertyDescriptor(JSContext *cx, HandleObject proxy, HandleId id,
-				       MutableHandle<JSPropertyDescriptor> desc)
+WrapperOwner::getOwnPropertyDescriptor(JSContext* cx, HandleObject proxy, HandleId id,
+                                       MutableHandle<JSPropertyDescriptor> desc)
 {
     ObjectId objId = idOf(proxy);
 
@@ -200,15 +214,17 @@ WrapperOwner::getOwnPropertyDescriptor(JSContext *cx, HandleObject proxy, Handle
 }
 
 bool
-CPOWProxyHandler::defineProperty(JSContext *cx, HandleObject proxy, HandleId id,
-                                 MutableHandle<JSPropertyDescriptor> desc) const
+CPOWProxyHandler::defineProperty(JSContext* cx, HandleObject proxy, HandleId id,
+                                 Handle<JSPropertyDescriptor> desc,
+                                 ObjectOpResult& result) const
 {
-    FORWARD(defineProperty, (cx, proxy, id, desc));
+    FORWARD(defineProperty, (cx, proxy, id, desc, result));
 }
 
 bool
-WrapperOwner::defineProperty(JSContext *cx, HandleObject proxy, HandleId id,
-			     MutableHandle<JSPropertyDescriptor> desc)
+WrapperOwner::defineProperty(JSContext* cx, HandleObject proxy, HandleId id,
+                             Handle<JSPropertyDescriptor> desc,
+                             ObjectOpResult& result)
 {
     ObjectId objId = idOf(proxy);
 
@@ -226,30 +242,31 @@ WrapperOwner::defineProperty(JSContext *cx, HandleObject proxy, HandleId id,
 
     LOG_STACK();
 
-    return ok(cx, status);
+    return ok(cx, status, result);
 }
 
 bool
-CPOWProxyHandler::ownPropertyKeys(JSContext *cx, HandleObject proxy,
-                                  AutoIdVector &props) const
+CPOWProxyHandler::ownPropertyKeys(JSContext* cx, HandleObject proxy,
+                                  AutoIdVector& props) const
 {
     FORWARD(ownPropertyKeys, (cx, proxy, props));
 }
 
 bool
-WrapperOwner::ownPropertyKeys(JSContext *cx, HandleObject proxy, AutoIdVector &props)
+WrapperOwner::ownPropertyKeys(JSContext* cx, HandleObject proxy, AutoIdVector& props)
 {
     return getPropertyKeys(cx, proxy, JSITER_OWNONLY | JSITER_HIDDEN | JSITER_SYMBOLS, props);
 }
 
 bool
-CPOWProxyHandler::delete_(JSContext *cx, HandleObject proxy, HandleId id, bool *bp) const
+CPOWProxyHandler::delete_(JSContext* cx, HandleObject proxy, HandleId id,
+                          ObjectOpResult& result) const
 {
-    FORWARD(delete_, (cx, proxy, id, bp));
+    FORWARD(delete_, (cx, proxy, id, result));
 }
 
 bool
-WrapperOwner::delete_(JSContext *cx, HandleObject proxy, HandleId id, bool *bp)
+WrapperOwner::delete_(JSContext* cx, HandleObject proxy, HandleId id, ObjectOpResult& result)
 {
     ObjectId objId = idOf(proxy);
 
@@ -258,16 +275,16 @@ WrapperOwner::delete_(JSContext *cx, HandleObject proxy, HandleId id, bool *bp)
         return false;
 
     ReturnStatus status;
-    if (!SendDelete(objId, idVar, &status, bp))
+    if (!SendDelete(objId, idVar, &status))
         return ipcfail(cx);
 
     LOG_STACK();
 
-    return ok(cx, status);
+    return ok(cx, status, result);
 }
 
 bool
-CPOWProxyHandler::enumerate(JSContext *cx, HandleObject proxy, MutableHandleObject objp) const
+CPOWProxyHandler::enumerate(JSContext* cx, HandleObject proxy, MutableHandleObject objp) const
 {
     // Using a CPOW for the Iterator would slow down for .. in performance, instead
     // call the base hook, that will use our implementation of getOwnEnumerablePropertyKeys
@@ -276,13 +293,13 @@ CPOWProxyHandler::enumerate(JSContext *cx, HandleObject proxy, MutableHandleObje
 }
 
 bool
-CPOWProxyHandler::has(JSContext *cx, HandleObject proxy, HandleId id, bool *bp) const
+CPOWProxyHandler::has(JSContext* cx, HandleObject proxy, HandleId id, bool* bp) const
 {
     FORWARD(has, (cx, proxy, id, bp));
 }
 
 bool
-WrapperOwner::has(JSContext *cx, HandleObject proxy, HandleId id, bool *bp)
+WrapperOwner::has(JSContext* cx, HandleObject proxy, HandleId id, bool* bp)
 {
     ObjectId objId = idOf(proxy);
 
@@ -300,13 +317,13 @@ WrapperOwner::has(JSContext *cx, HandleObject proxy, HandleId id, bool *bp)
 }
 
 bool
-CPOWProxyHandler::hasOwn(JSContext *cx, HandleObject proxy, HandleId id, bool *bp) const
+CPOWProxyHandler::hasOwn(JSContext* cx, HandleObject proxy, HandleId id, bool* bp) const
 {
     FORWARD(hasOwn, (cx, proxy, id, bp));
 }
 
 bool
-WrapperOwner::hasOwn(JSContext *cx, HandleObject proxy, HandleId id, bool *bp)
+WrapperOwner::hasOwn(JSContext* cx, HandleObject proxy, HandleId id, bool* bp)
 {
     ObjectId objId = idOf(proxy);
 
@@ -324,14 +341,27 @@ WrapperOwner::hasOwn(JSContext *cx, HandleObject proxy, HandleId id, bool *bp)
 }
 
 bool
-CPOWProxyHandler::get(JSContext *cx, HandleObject proxy, HandleObject receiver,
+CPOWProxyHandler::get(JSContext* cx, HandleObject proxy, HandleObject receiver,
                       HandleId id, MutableHandleValue vp) const
 {
     FORWARD(get, (cx, proxy, receiver, id, vp));
 }
 
 static bool
-CPOWToString(JSContext *cx, unsigned argc, Value *vp)
+CPOWDOMQI(JSContext* cx, unsigned argc, Value* vp)
+{
+    CallArgs args = CallArgsFromVp(argc, vp);
+    if (!args.thisv().isObject() || !IsCPOW(&args.thisv().toObject())) {
+        JS_ReportError(cx, "bad this object passed to special QI");
+        return false;
+    }
+
+    RootedObject proxy(cx, &args.thisv().toObject());
+    FORWARD(DOMQI, (cx, proxy, args));
+}
+
+static bool
+CPOWToString(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
     RootedObject callee(cx, &args.callee());
@@ -349,7 +379,7 @@ CPOWToString(JSContext *cx, unsigned argc, Value *vp)
 }
 
 bool
-WrapperOwner::toString(JSContext *cx, HandleObject cpow, JS::CallArgs &args)
+WrapperOwner::toString(JSContext* cx, HandleObject cpow, JS::CallArgs& args)
 {
     // Ask the other side to call its toString method. Update the callee so that
     // it points to the CPOW and not to the synthesized CPOWToString function.
@@ -376,7 +406,7 @@ WrapperOwner::toString(JSContext *cx, HandleObject cpow, JS::CallArgs &args)
         result += toStringResult;
     }
 
-    JSString *str = JS_NewUCStringCopyN(cx, result.get(), result.Length());
+    JSString* str = JS_NewUCStringCopyN(cx, result.get(), result.Length());
     if (!str)
         return false;
 
@@ -385,7 +415,50 @@ WrapperOwner::toString(JSContext *cx, HandleObject cpow, JS::CallArgs &args)
 }
 
 bool
-WrapperOwner::get(JSContext *cx, HandleObject proxy, HandleObject receiver,
+WrapperOwner::DOMQI(JSContext* cx, JS::HandleObject proxy, JS::CallArgs& args)
+{
+    // Someone's calling us, handle nsISupports specially to avoid unnecessary
+    // CPOW traffic.
+    HandleValue id = args[0];
+    if (id.isObject()) {
+        RootedObject idobj(cx, &id.toObject());
+        nsCOMPtr<nsIJSID> jsid;
+
+        nsresult rv = UnwrapArg<nsIJSID>(idobj, getter_AddRefs(jsid));
+        if (NS_SUCCEEDED(rv)) {
+            MOZ_ASSERT(jsid, "bad wrapJS");
+            const nsID* idptr = jsid->GetID();
+            if (idptr->Equals(NS_GET_IID(nsISupports))) {
+                args.rval().set(args.thisv());
+                return true;
+            }
+
+            // Webidl-implemented DOM objects never have nsIClassInfo.
+            if (idptr->Equals(NS_GET_IID(nsIClassInfo)))
+                return Throw(cx, NS_ERROR_NO_INTERFACE);
+        }
+    }
+
+    // It wasn't nsISupports, call into the other process to do the QI for us
+    // (since we don't know what other interfaces our object supports). Note
+    // that we have to use JS_GetPropertyDescriptor here to avoid infinite
+    // recursion back into CPOWDOMQI via WrapperOwner::get().
+    // We could stash the actual QI function on our own function object to avoid
+    // if we're called multiple times, but since we're transient, there's no
+    // point right now.
+    JS::Rooted<JSPropertyDescriptor> propDesc(cx);
+    if (!JS_GetPropertyDescriptor(cx, proxy, "QueryInterface", &propDesc))
+        return false;
+
+    if (!propDesc.value().isObject()) {
+        MOZ_ASSERT_UNREACHABLE("We didn't get QueryInterface off a node");
+        return Throw(cx, NS_ERROR_UNEXPECTED);
+    }
+    return JS_CallFunctionValue(cx, proxy, propDesc.value(), args, args.rval());
+}
+
+bool
+WrapperOwner::get(JSContext* cx, HandleObject proxy, HandleObject receiver,
                   HandleId id, MutableHandleValue vp)
 {
     ObjectId objId = idOf(proxy);
@@ -397,6 +470,22 @@ WrapperOwner::get(JSContext *cx, HandleObject proxy, HandleObject receiver,
     JSIDVariant idVar;
     if (!toJSIDVariant(cx, id, &idVar))
         return false;
+
+    AuxCPOWData* data = AuxCPOWDataOf(proxy);
+    if (data->isDOMObject &&
+        idVar.type() == JSIDVariant::TnsString &&
+        idVar.get_nsString().EqualsLiteral("QueryInterface"))
+    {
+        // Handle QueryInterface on DOM Objects specially since we can assume
+        // certain things about their implementation.
+        RootedFunction qi(cx, JS_NewFunction(cx, CPOWDOMQI, 1, 0,
+                                             "QueryInterface"));
+        if (!qi)
+            return false;
+
+        vp.set(ObjectValue(*JS_GetFunctionObject(qi)));
+        return true;
+    }
 
     JSVariant val;
     ReturnStatus status;
@@ -413,7 +502,8 @@ WrapperOwner::get(JSContext *cx, HandleObject proxy, HandleObject receiver,
 
     if (idVar.type() == JSIDVariant::TnsString &&
         idVar.get_nsString().EqualsLiteral("toString")) {
-        RootedFunction toString(cx, JS_NewFunction(cx, CPOWToString, 0, 0, proxy, "toString"));
+        RootedFunction toString(cx, JS_NewFunction(cx, CPOWToString, 0, 0,
+                                                   "toString"));
         if (!toString)
             return false;
 
@@ -429,84 +519,80 @@ WrapperOwner::get(JSContext *cx, HandleObject proxy, HandleObject receiver,
 }
 
 bool
-CPOWProxyHandler::set(JSContext *cx, JS::HandleObject proxy, JS::HandleObject receiver,
-                      JS::HandleId id, bool strict, JS::MutableHandleValue vp) const
+CPOWProxyHandler::set(JSContext* cx, JS::HandleObject proxy, JS::HandleId id, JS::HandleValue v,
+                      JS::HandleValue receiver, JS::ObjectOpResult& result) const
 {
-    FORWARD(set, (cx, proxy, receiver, id, strict, vp));
+    FORWARD(set, (cx, proxy, id, v, receiver, result));
 }
 
 bool
-WrapperOwner::set(JSContext *cx, JS::HandleObject proxy, JS::HandleObject receiver,
-                  JS::HandleId id, bool strict, JS::MutableHandleValue vp)
+WrapperOwner::set(JSContext* cx, JS::HandleObject proxy, JS::HandleId id, JS::HandleValue v,
+                  JS::HandleValue receiver, JS::ObjectOpResult& result)
 {
     ObjectId objId = idOf(proxy);
-
-    ObjectVariant receiverVar;
-    if (!toObjectVariant(cx, receiver, &receiverVar))
-        return false;
 
     JSIDVariant idVar;
     if (!toJSIDVariant(cx, id, &idVar))
         return false;
 
     JSVariant val;
-    if (!toVariant(cx, vp, &val))
+    if (!toVariant(cx, v, &val))
+        return false;
+
+    JSVariant receiverVar;
+    if (!toVariant(cx, receiver, &receiverVar))
         return false;
 
     ReturnStatus status;
-    JSVariant result;
-    if (!SendSet(objId, receiverVar, idVar, strict, val, &status, &result))
+    if (!SendSet(objId, idVar, val, receiverVar, &status))
         return ipcfail(cx);
 
     LOG_STACK();
 
-    if (!ok(cx, status))
-        return false;
-
-    return fromVariant(cx, result, vp);
+    return ok(cx, status, result);
 }
 
 bool
-CPOWProxyHandler::getOwnEnumerablePropertyKeys(JSContext *cx, HandleObject proxy,
-                                               AutoIdVector &props) const
+CPOWProxyHandler::getOwnEnumerablePropertyKeys(JSContext* cx, HandleObject proxy,
+                                               AutoIdVector& props) const
 {
     FORWARD(getOwnEnumerablePropertyKeys, (cx, proxy, props));
 }
 
 bool
-WrapperOwner::getOwnEnumerablePropertyKeys(JSContext *cx, HandleObject proxy, AutoIdVector &props)
+WrapperOwner::getOwnEnumerablePropertyKeys(JSContext* cx, HandleObject proxy, AutoIdVector& props)
 {
     return getPropertyKeys(cx, proxy, JSITER_OWNONLY, props);
 }
 
 bool
-CPOWProxyHandler::preventExtensions(JSContext *cx, HandleObject proxy, bool *succeeded) const
+CPOWProxyHandler::preventExtensions(JSContext* cx, HandleObject proxy, ObjectOpResult& result) const
 {
-    FORWARD(preventExtensions, (cx, proxy, succeeded));
+    FORWARD(preventExtensions, (cx, proxy, result));
 }
 
 bool
-WrapperOwner::preventExtensions(JSContext *cx, HandleObject proxy, bool *succeeded)
+WrapperOwner::preventExtensions(JSContext* cx, HandleObject proxy, ObjectOpResult& result)
 {
     ObjectId objId = idOf(proxy);
 
     ReturnStatus status;
-    if (!SendPreventExtensions(objId, &status, succeeded))
+    if (!SendPreventExtensions(objId, &status))
         return ipcfail(cx);
 
     LOG_STACK();
 
-    return ok(cx, status);
+    return ok(cx, status, result);
 }
 
 bool
-CPOWProxyHandler::isExtensible(JSContext *cx, HandleObject proxy, bool *extensible) const
+CPOWProxyHandler::isExtensible(JSContext* cx, HandleObject proxy, bool* extensible) const
 {
     FORWARD(isExtensible, (cx, proxy, extensible));
 }
 
 bool
-WrapperOwner::isExtensible(JSContext *cx, HandleObject proxy, bool *extensible)
+WrapperOwner::isExtensible(JSContext* cx, HandleObject proxy, bool* extensible)
 {
     ObjectId objId = idOf(proxy);
 
@@ -520,19 +606,19 @@ WrapperOwner::isExtensible(JSContext *cx, HandleObject proxy, bool *extensible)
 }
 
 bool
-CPOWProxyHandler::call(JSContext *cx, HandleObject proxy, const CallArgs &args) const
+CPOWProxyHandler::call(JSContext* cx, HandleObject proxy, const CallArgs& args) const
 {
     FORWARD(callOrConstruct, (cx, proxy, args, false));
 }
 
 bool
-CPOWProxyHandler::construct(JSContext *cx, HandleObject proxy, const CallArgs &args) const
+CPOWProxyHandler::construct(JSContext* cx, HandleObject proxy, const CallArgs& args) const
 {
     FORWARD(callOrConstruct, (cx, proxy, args, true));
 }
 
 bool
-WrapperOwner::callOrConstruct(JSContext *cx, HandleObject proxy, const CallArgs &args,
+WrapperOwner::callOrConstruct(JSContext* cx, HandleObject proxy, const CallArgs& args,
                               bool construct)
 {
     ObjectId objId = idOf(proxy);
@@ -609,13 +695,13 @@ WrapperOwner::callOrConstruct(JSContext *cx, HandleObject proxy, const CallArgs 
 }
 
 bool
-CPOWProxyHandler::hasInstance(JSContext *cx, HandleObject proxy, MutableHandleValue v, bool *bp) const
+CPOWProxyHandler::hasInstance(JSContext* cx, HandleObject proxy, MutableHandleValue v, bool* bp) const
 {
     FORWARD(hasInstance, (cx, proxy, v, bp));
 }
 
 bool
-WrapperOwner::hasInstance(JSContext *cx, HandleObject proxy, MutableHandleValue v, bool *bp)
+WrapperOwner::hasInstance(JSContext* cx, HandleObject proxy, MutableHandleValue v, bool* bp)
 {
     ObjectId objId = idOf(proxy);
 
@@ -634,13 +720,13 @@ WrapperOwner::hasInstance(JSContext *cx, HandleObject proxy, MutableHandleValue 
 }
 
 bool
-CPOWProxyHandler::objectClassIs(HandleObject proxy, js::ESClassValue classValue, JSContext *cx) const
+CPOWProxyHandler::objectClassIs(HandleObject proxy, js::ESClassValue classValue, JSContext* cx) const
 {
     FORWARD(objectClassIs, (cx, proxy, classValue));
 }
 
 bool
-WrapperOwner::objectClassIs(JSContext *cx, HandleObject proxy, js::ESClassValue classValue)
+WrapperOwner::objectClassIs(JSContext* cx, HandleObject proxy, js::ESClassValue classValue)
 {
     ObjectId objId = idOf(proxy);
 
@@ -655,37 +741,65 @@ WrapperOwner::objectClassIs(JSContext *cx, HandleObject proxy, js::ESClassValue 
     return result;
 }
 
-const char *
-CPOWProxyHandler::className(JSContext *cx, HandleObject proxy) const
+const char*
+CPOWProxyHandler::className(JSContext* cx, HandleObject proxy) const
 {
-    WrapperOwner *parent = OwnerOf(proxy);
+    WrapperOwner* parent = OwnerOf(proxy);
     if (!parent->active())
         return "<dead CPOW>";
     return parent->className(cx, proxy);
 }
 
-const char *
-WrapperOwner::className(JSContext *cx, HandleObject proxy)
+const char*
+WrapperOwner::className(JSContext* cx, HandleObject proxy)
 {
-    ObjectId objId = idOf(proxy);
+    AuxCPOWData* data = AuxCPOWDataOf(proxy);
+    if (data->className.IsEmpty()) {
+        ObjectId objId = idOf(proxy);
 
-    nsString name;
-    if (!SendClassName(objId, &name))
-        return "<error>";
+        if (!SendClassName(objId, &data->className))
+            return "<error>";
 
-    LOG_STACK();
+        LOG_STACK();
+    }
 
-    return ToNewCString(name);
+    return data->className.get();
 }
 
 bool
-CPOWProxyHandler::regexp_toShared(JSContext *cx, HandleObject proxy, RegExpGuard *g) const
+CPOWProxyHandler::getPrototype(JSContext* cx, HandleObject proxy, MutableHandleObject objp) const
+{
+    FORWARD(getPrototype, (cx, proxy, objp));
+}
+
+bool
+WrapperOwner::getPrototype(JSContext* cx, HandleObject proxy, MutableHandleObject objp)
+{
+    ObjectId objId = idOf(proxy);
+
+    ObjectOrNullVariant val;
+    ReturnStatus status;
+    if (!SendGetPrototype(objId, &status, &val))
+        return ipcfail(cx);
+
+    LOG_STACK();
+
+    if (!ok(cx, status))
+        return false;
+
+    objp.set(fromObjectOrNullVariant(cx, val));
+
+    return true;
+}
+
+bool
+CPOWProxyHandler::regexp_toShared(JSContext* cx, HandleObject proxy, RegExpGuard* g) const
 {
     FORWARD(regexp_toShared, (cx, proxy, g));
 }
 
 bool
-WrapperOwner::regexp_toShared(JSContext *cx, HandleObject proxy, RegExpGuard *g)
+WrapperOwner::regexp_toShared(JSContext* cx, HandleObject proxy, RegExpGuard* g)
 {
     ObjectId objId = idOf(proxy);
 
@@ -710,9 +824,9 @@ WrapperOwner::regexp_toShared(JSContext *cx, HandleObject proxy, RegExpGuard *g)
 }
 
 void
-CPOWProxyHandler::finalize(JSFreeOp *fop, JSObject *proxy) const
+CPOWProxyHandler::finalize(JSFreeOp* fop, JSObject* proxy) const
 {
-    AuxCPOWData *aux = AuxCPOWDataOf(proxy);
+    AuxCPOWData* aux = AuxCPOWDataOf(proxy);
 
     OwnerOf(proxy)->drop(proxy);
 
@@ -721,27 +835,27 @@ CPOWProxyHandler::finalize(JSFreeOp *fop, JSObject *proxy) const
 }
 
 void
-CPOWProxyHandler::objectMoved(JSObject *proxy, const JSObject *old) const
+CPOWProxyHandler::objectMoved(JSObject* proxy, const JSObject* old) const
 {
     OwnerOf(proxy)->updatePointer(proxy, old);
 }
 
 bool
-CPOWProxyHandler::isCallable(JSObject *proxy) const
+CPOWProxyHandler::isCallable(JSObject* proxy) const
 {
-    AuxCPOWData *aux = AuxCPOWDataOf(proxy);
+    AuxCPOWData* aux = AuxCPOWDataOf(proxy);
     return aux->isCallable;
 }
 
 bool
-CPOWProxyHandler::isConstructor(JSObject *proxy) const
+CPOWProxyHandler::isConstructor(JSObject* proxy) const
 {
-    AuxCPOWData *aux = AuxCPOWDataOf(proxy);
+    AuxCPOWData* aux = AuxCPOWDataOf(proxy);
     return aux->isConstructor;
 }
 
 void
-WrapperOwner::drop(JSObject *obj)
+WrapperOwner::drop(JSObject* obj)
 {
     ObjectId objId = idOf(obj);
 
@@ -752,7 +866,7 @@ WrapperOwner::drop(JSObject *obj)
 }
 
 void
-WrapperOwner::updatePointer(JSObject *obj, const JSObject *old)
+WrapperOwner::updatePointer(JSObject* obj, const JSObject* old)
 {
     ObjectId objId = idOfUnchecked(obj);
     MOZ_ASSERT(findCPOWById(objId) == old);
@@ -769,7 +883,7 @@ WrapperOwner::init()
 }
 
 bool
-WrapperOwner::getPropertyKeys(JSContext *cx, HandleObject proxy, uint32_t flags, AutoIdVector &props)
+WrapperOwner::getPropertyKeys(JSContext* cx, HandleObject proxy, uint32_t flags, AutoIdVector& props)
 {
     ObjectId objId = idOf(proxy);
 
@@ -798,42 +912,42 @@ namespace mozilla {
 namespace jsipc {
 
 bool
-IsCPOW(JSObject *obj)
+IsCPOW(JSObject* obj)
 {
     return IsProxy(obj) && GetProxyHandler(obj) == &CPOWProxyHandler::singleton;
 }
 
 bool
-IsWrappedCPOW(JSObject *obj)
+IsWrappedCPOW(JSObject* obj)
 {
-    JSObject *unwrapped = js::UncheckedUnwrap(obj, true);
+    JSObject* unwrapped = js::UncheckedUnwrap(obj, true);
     if (!unwrapped)
         return false;
     return IsCPOW(unwrapped);
 }
 
 void
-GetWrappedCPOWTag(JSObject *obj, nsACString &out)
+GetWrappedCPOWTag(JSObject* obj, nsACString& out)
 {
-    JSObject *unwrapped = js::UncheckedUnwrap(obj, true);
+    JSObject* unwrapped = js::UncheckedUnwrap(obj, true);
     MOZ_ASSERT(IsCPOW(unwrapped));
 
-    AuxCPOWData *aux = AuxCPOWDataOf(unwrapped);
+    AuxCPOWData* aux = AuxCPOWDataOf(unwrapped);
     if (aux)
         out = aux->objectTag;
 }
 
 nsresult
-InstanceOf(JSObject *proxy, const nsID *id, bool *bp)
+InstanceOf(JSObject* proxy, const nsID* id, bool* bp)
 {
-    WrapperOwner *parent = OwnerOf(proxy);
+    WrapperOwner* parent = OwnerOf(proxy);
     if (!parent->active())
         return NS_ERROR_UNEXPECTED;
     return parent->instanceOf(proxy, id, bp);
 }
 
 bool
-DOMInstanceOf(JSContext *cx, JSObject *proxy, int prototypeID, int depth, bool *bp)
+DOMInstanceOf(JSContext* cx, JSObject* proxy, int prototypeID, int depth, bool* bp)
 {
     FORWARD(domInstanceOf, (cx, proxy, prototypeID, depth, bp));
 }
@@ -842,7 +956,7 @@ DOMInstanceOf(JSContext *cx, JSObject *proxy, int prototypeID, int depth, bool *
 } /* namespace mozilla */
 
 nsresult
-WrapperOwner::instanceOf(JSObject *obj, const nsID *id, bool *bp)
+WrapperOwner::instanceOf(JSObject* obj, const nsID* id, bool* bp)
 {
     ObjectId objId = idOf(obj);
 
@@ -860,7 +974,7 @@ WrapperOwner::instanceOf(JSObject *obj, const nsID *id, bool *bp)
 }
 
 bool
-WrapperOwner::domInstanceOf(JSContext *cx, JSObject *obj, int prototypeID, int depth, bool *bp)
+WrapperOwner::domInstanceOf(JSContext* cx, JSObject* obj, int prototypeID, int depth, bool* bp)
 {
     ObjectId objId = idOf(obj);
 
@@ -877,17 +991,21 @@ void
 WrapperOwner::ActorDestroy(ActorDestroyReason why)
 {
     inactive_ = true;
+
+    objects_.clear();
+    unwaivedObjectIds_.clear();
+    waivedObjectIds_.clear();
 }
 
 bool
-WrapperOwner::ipcfail(JSContext *cx)
+WrapperOwner::ipcfail(JSContext* cx)
 {
     JS_ReportError(cx, "child process crashed or timedout");
     return false;
 }
 
 bool
-WrapperOwner::ok(JSContext *cx, const ReturnStatus &status)
+WrapperOwner::ok(JSContext* cx, const ReturnStatus& status)
 {
     if (status.type() == ReturnStatus::TReturnSuccess)
         return true;
@@ -903,8 +1021,18 @@ WrapperOwner::ok(JSContext *cx, const ReturnStatus &status)
     return false;
 }
 
+bool
+WrapperOwner::ok(JSContext* cx, const ReturnStatus& status, ObjectOpResult& result)
+{
+    if (status.type() == ReturnStatus::TReturnObjectOpResult)
+        return result.fail(status.get_ReturnObjectOpResult().code());
+    if (!ok(cx, status))
+        return false;
+    return result.succeed();
+}
+
 static RemoteObject
-MakeRemoteObject(JSContext *cx, ObjectId id, HandleObject obj)
+MakeRemoteObject(JSContext* cx, ObjectId id, HandleObject obj)
 {
     nsCString objectTag;
 
@@ -918,11 +1046,12 @@ MakeRemoteObject(JSContext *cx, ObjectId id, HandleObject obj)
     return RemoteObject(id.serialize(),
                         JS::IsCallable(obj),
                         JS::IsConstructor(obj),
+                        dom::IsDOMObject(obj),
                         objectTag);
 }
 
 bool
-WrapperOwner::toObjectVariant(JSContext *cx, JSObject *objArg, ObjectVariant *objVarp)
+WrapperOwner::toObjectVariant(JSContext* cx, JSObject* objArg, ObjectVariant* objVarp)
 {
     RootedObject obj(cx, objArg);
     MOZ_ASSERT(obj);
@@ -961,8 +1090,8 @@ WrapperOwner::toObjectVariant(JSContext *cx, JSObject *objArg, ObjectVariant *ob
     return true;
 }
 
-JSObject *
-WrapperOwner::fromObjectVariant(JSContext *cx, ObjectVariant objVar)
+JSObject*
+WrapperOwner::fromObjectVariant(JSContext* cx, ObjectVariant objVar)
 {
     if (objVar.type() == ObjectVariant::TRemoteObject) {
         return fromRemoteObjectVariant(cx, objVar.get_RemoteObject());
@@ -971,8 +1100,8 @@ WrapperOwner::fromObjectVariant(JSContext *cx, ObjectVariant objVar)
     }
 }
 
-JSObject *
-WrapperOwner::fromRemoteObjectVariant(JSContext *cx, RemoteObject objVar)
+JSObject*
+WrapperOwner::fromRemoteObjectVariant(JSContext* cx, RemoteObject objVar)
 {
     ObjectId objId = ObjectId::deserialize(objVar.serializedId());
     RootedObject obj(cx, findCPOWById(objId));
@@ -982,11 +1111,14 @@ WrapperOwner::fromRemoteObjectVariant(JSContext *cx, RemoteObject objVar)
         RootedObject junkScope(cx, xpc::PrivilegedJunkScope());
         JSAutoCompartment ac(cx, junkScope);
         RootedValue v(cx, UndefinedValue());
+        // We need to setLazyProto for the getPrototype hook.
+        ProxyOptions options;
+        options.setLazyProto(true);
         obj = NewProxyObject(cx,
                              &CPOWProxyHandler::singleton,
                              v,
                              nullptr,
-                             junkScope);
+                             options);
         if (!obj)
             return nullptr;
 
@@ -996,9 +1128,10 @@ WrapperOwner::fromRemoteObjectVariant(JSContext *cx, RemoteObject objVar)
         // Incref once we know the decref will be called.
         incref();
 
-        AuxCPOWData *aux = new AuxCPOWData(objId,
+        AuxCPOWData* aux = new AuxCPOWData(objId,
                                            objVar.isCallable(),
                                            objVar.isConstructor(),
+                                           objVar.isDOMObject(),
                                            objVar.objectTag());
 
         SetProxyExtra(obj, 0, PrivateValue(this));
@@ -1010,8 +1143,8 @@ WrapperOwner::fromRemoteObjectVariant(JSContext *cx, RemoteObject objVar)
     return obj;
 }
 
-JSObject *
-WrapperOwner::fromLocalObjectVariant(JSContext *cx, LocalObject objVar)
+JSObject*
+WrapperOwner::fromLocalObjectVariant(JSContext* cx, LocalObject objVar)
 {
     ObjectId id = ObjectId::deserialize(objVar.serializedId());
     Rooted<JSObject*> obj(cx, findObjectById(cx, id));

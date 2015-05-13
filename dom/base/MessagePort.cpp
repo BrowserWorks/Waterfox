@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -110,9 +111,9 @@ PostMessageReadStructuredClone(JSContext* cx,
   if (tag == SCTAG_DOM_BLOB) {
     NS_ASSERTION(!data, "Data should be empty");
 
-    // What we get back from the reader is a FileImpl.
+    // What we get back from the reader is a BlobImpl.
     // From that we create a new File.
-    FileImpl* blobImpl;
+    BlobImpl* blobImpl;
     if (JS_ReadBytes(reader, &blobImpl, sizeof(blobImpl))) {
       MOZ_ASSERT(blobImpl);
 
@@ -123,9 +124,9 @@ PostMessageReadStructuredClone(JSContext* cx,
       // while destructors are running.
       JS::Rooted<JS::Value> val(cx);
       {
-        nsRefPtr<File> blob = new File(scInfo->mPort->GetParentObject(),
-                                             blobImpl);
-        if (!GetOrCreateDOMReflector(cx, blob, &val)) {
+        nsRefPtr<Blob> blob = Blob::Create(scInfo->mPort->GetParentObject(),
+                                           blobImpl);
+        if (!ToJSValue(cx, blob, &val)) {
           return nullptr;
         }
       }
@@ -167,9 +168,9 @@ PostMessageWriteStructuredClone(JSContext* cx,
 
   // See if this is a File/Blob object.
   {
-    File* blob = nullptr;
+    Blob* blob = nullptr;
     if (NS_SUCCEEDED(UNWRAP_OBJECT(Blob, obj, blob))) {
-      FileImpl* blobImpl = blob->Impl();
+      BlobImpl* blobImpl = blob->Impl();
       if (JS_WriteUint32Pair(writer, SCTAG_DOM_BLOB, 0) &&
           JS_WriteBytes(writer, &blobImpl, sizeof(blobImpl))) {
         scInfo->mEvent->StoreISupports(blobImpl);
@@ -223,7 +224,7 @@ PostMessageReadTransferStructuredClone(JSContext* aCx,
     port->BindToOwner(scInfo->mPort->GetOwner());
     scInfo->mPorts.Put(port, nullptr);
 
-    JS::Rooted<JSObject*> obj(aCx, port->WrapObject(aCx));
+    JS::Rooted<JSObject*> obj(aCx, port->WrapObject(aCx, JS::NullPtr()));
     if (!obj || !JS_WrapObject(aCx, &obj)) {
       return false;
     }
@@ -414,9 +415,9 @@ MessagePort::~MessagePort()
 }
 
 JSObject*
-MessagePort::WrapObject(JSContext* aCx)
+MessagePort::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return MessagePortBinding::Wrap(aCx, this);
+  return MessagePortBinding::Wrap(aCx, this, aGivenProto);
 }
 
 void

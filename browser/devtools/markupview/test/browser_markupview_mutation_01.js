@@ -33,13 +33,36 @@ const TEST_DATA = [
       node1.removeAttribute("newattr");
     },
     check: function*(inspector) {
-      // The markup-view is a little weird in that it doesn't remove the
-      // attribute but only hides it with display:none
+      let {editor} = yield getContainerForSelector("#node1", inspector);
+      ok(![...editor.attrList.querySelectorAll(".attreditor")].some(attr => {
+        return attr.textContent.trim() === "newattr=\"newattrval\"";
+      }), "newattr attribute removed");
+    }
+  },
+  {
+    desc: "Re-adding an attribute",
+    test: () => {
+      let node1 = getNode("#node1");
+      node1.setAttribute("newattr", "newattrval");
+    },
+    check: function*(inspector) {
       let {editor} = yield getContainerForSelector("#node1", inspector);
       ok([...editor.attrList.querySelectorAll(".attreditor")].some(attr => {
-        return attr.textContent.trim() === "newattr=\"newattrval\"" &&
-               attr.style.display === "none";
-      }), "newattr attribute removed");
+        return attr.textContent.trim() === "newattr=\"newattrval\"";
+      }), "newattr attribute found");
+    }
+  },
+  {
+    desc: "Changing an attribute",
+    test: () => {
+      let node1 = getNode("#node1");
+      node1.setAttribute("newattr", "newattrchanged");
+    },
+    check: function*(inspector) {
+      let {editor} = yield getContainerForSelector("#node1", inspector);
+      ok([...editor.attrList.querySelectorAll(".attreditor")].some(attr => {
+        return attr.textContent.trim() === "newattr=\"newattrchanged\"";
+      }), "newattr attribute found");
     }
   },
   {
@@ -156,10 +179,9 @@ add_task(function*() {
     info("Starting test: " + desc);
 
     info("Executing the test markup mutation");
-    let onUpdated = inspector.once("inspector-updated");
     let onMutation = inspector.once("markupmutation");
     test();
-    yield onUpdated.then(onMutation);
+    yield onMutation;
 
     info("Expanding all markup-view nodes to make sure new nodes are imported");
     yield inspector.markup.expandAll();

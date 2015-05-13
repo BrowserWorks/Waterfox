@@ -12,20 +12,32 @@ include protocol PBrowser;
 include protocol PCellBroadcast;
 include protocol PCompositor;
 include protocol PContentBridge;
+include protocol PContentPermissionRequest;
 include protocol PCycleCollectWithLogs;
 include protocol PCrashReporter;
 include protocol PDocAccessible;
+include protocol PPSMContentDownloader;
 include protocol PExternalHelperApp;
 include protocol PDeviceStorageRequest;
 include protocol PFileDescriptorSet;
 include protocol PFMRadio;
 include protocol PFileSystemRequest;
 include protocol PHal;
+include protocol PIcc;
+include protocol PProcessHangMonitor;
 include protocol PImageBridge;
 include protocol PMemoryReportRequest;
 include protocol PMobileConnection;
 include protocol PNecko;
+// FIXME This is pretty ridiculous, but we have to keep the order of the
+//       following 4 includes, or the parser is confused about PGMPContent
+//       bridging PContent and PGMP. As soon as it registers the bridge between
+//       PContent and PPluginModule it seems to think that PContent's parent and
+//       child live in the same process!
+include protocol PGMPContent;
+include protocol PGMPService;
 include protocol PPluginModule;
+include protocol PGMP;
 include protocol PPrinting;
 include protocol POfflineCacheUpdate;
 include protocol PScreenManager;
@@ -38,6 +50,7 @@ include protocol PTestShell;
 include protocol PVoicemail;
 include protocol PJavaScript;
 include protocol PRemoteSpellcheckEngine;
+include protocol PWebrtcGlobal;
 include DOMTypes;
 include JavaScriptTypes;
 include InputStreamParams;
@@ -45,6 +58,8 @@ include PTabContext;
 include URIParams;
 include PluginTypes;
 include ProtocolTypes;
+include PContentPermission;
+include BrowserConfiguration;
 
 // Workaround to prevent error if PContentChild.cpp & PContentBridgeParent.cpp
 // are put into different UnifiedProtocolsXX.cpp files.
@@ -74,6 +89,8 @@ using mozilla::hal::ProcessPriority from "mozilla/HalTypes.h";
 using gfxIntSize from "nsSize.h";
 using mozilla::dom::TabId from "mozilla/dom/ipc/IdType.h";
 using mozilla::dom::ContentParentId from "mozilla/dom/ipc/IdType.h";
+using struct LookAndFeelInt from "mozilla/widget/WidgetMessageUtils.h";
+using struct mozilla::OwningSerializedStructuredCloneBuffer from "ipc/IPCMessageUtils.h";
 
 union ChromeRegistryItem
 {
@@ -334,19 +351,67 @@ union MaybeFileDesc {
     void_t;
 };
 
+union FileDescOrError {
+    FileDescriptor;
+    nsresult;
+};
+
 union OptionalContentId
 {
   ContentParentId;
   void_t;
 };
 
-prio(normal upto urgent) intr protocol PContent
+struct DomainPolicyClone
+{
+    bool        active;
+    URIParams[] blacklist;
+    URIParams[] whitelist;
+    URIParams[] superBlacklist;
+    URIParams[] superWhitelist;
+};
+
+struct GamepadAdded {
+    nsString id;
+    uint32_t index;
+    uint32_t mapping;
+    uint32_t num_buttons;
+    uint32_t num_axes;
+};
+
+struct GamepadRemoved {
+    uint32_t index;
+};
+
+struct GamepadAxisInformation {
+    uint32_t index;
+    uint32_t axis;
+    double value;
+};
+
+struct GamepadButtonInformation {
+    uint32_t index;
+    uint32_t button;
+    bool pressed;
+    double value;
+};
+
+union GamepadChangeEvent {
+    GamepadAdded;
+    GamepadRemoved;
+    GamepadAxisInformation;
+    GamepadButtonInformation;
+};
+
+prio(normal upto urgent) sync protocol PContent
 {
     parent spawns PPluginModule;
 
     parent opens PCompositor;
+    parent opens PProcessHangMonitor;
     parent opens PSharedBufferManager;
     parent opens PImageBridge;
+    parent opens PGMPService;
     child opens PBackground;
 
     manages PAsmJSCacheEntry;
@@ -354,15 +419,18 @@ prio(normal upto urgent) intr protocol PContent
     manages PBluetooth;
     manages PBrowser;
     manages PCellBroadcast;
+    manages PContentPermissionRequest;
     manages PCrashReporter;
     manages PCycleCollectWithLogs;
     manages PDocAccessible;
     manages PDeviceStorageRequest;
     manages PFileSystemRequest;
+    manages PPSMContentDownloader;
     manages PExternalHelperApp;
     manages PFileDescriptorSet;
     manages PFMRadio;
     manages PHal;
+    manages PIcc;
     manages PMemoryReportRequest;
     manages PMobileConnection;
     manages PNecko;
@@ -377,6 +445,7 @@ prio(normal upto urgent) intr protocol PContent
     manages PVoicemail;
     manages PJavaScript;
     manages PRemoteSpellcheckEngine;
+    manages PWebrtcGlobal;
 
 both:
     // Depending on exactly how the new browser is being created, it might be
@@ -429,6 +498,18 @@ child:
 
     async SpeakerManagerNotify();
 
+    /**
+     * Communication between the PuppetBidiKeyboard and the actual
+     * BidiKeyboard hosted by the parent
+     */
+    async BidiKeyboardNotify(bool isLangRTL);
+
+    async UpdateServiceWorkerRegistrations();
+
+    async RemoveServiceWorkerRegistrationsForDomain(nsString aDomain);
+
+    async RemoveServiceWorkerRegistrations();
+
     async DataStoreNotify(uint32_t aAppId, nsString aName,
                           nsString aManifestURL);
 
@@ -449,6 +530,7 @@ child:
     RegisterChromeItem(ChromeRegistryItem item);
 
     async SetOffline(bool offline);
+    async SetConnectivity(bool connectivity);
 
     async NotifyVisited(URIParams uri);
 
@@ -468,6 +550,8 @@ child:
     AddPermission(Permission permission);
 
     ScreenSizeChanged(gfxIntSize size);
+
+    Volumes(VolumeInfo[] volumes);
 
     FlushMemory(nsString reason);
 
@@ -494,6 +578,9 @@ child:
                      int32_t mountGeneration, bool isMediaPresent,
                      bool isSharing, bool isFormatting, bool isFake,
                      bool isUnmounting, bool isRemovable, bool isHotSwappable);
+
+    // Notify volume is removed.
+    VolumeRemoved(nsString fsName);
 
     // Ask the Nuwa process to create a new child process.
     NuwaFork();
@@ -541,7 +628,12 @@ child:
     prio(high) sync GetProfile()
       returns (nsCString aProfile);
 
+    InvokeDragSession(IPCDataTransfer[] transfers, uint32_t action);
+
+    EndDragSession(bool aDoneDrag, bool aUserCancelled);
     NuwaFreeze();
+
+    async DomainSetChanged(uint32_t aSetType, uint32_t aChangeType, OptionalURIParams aDomain);
 
     /**
      * Notify the child to shutdown. The child will in turn call FinishShutdown
@@ -549,6 +641,18 @@ child:
      */
     async Shutdown();
 
+    async LoadProcessScript(nsString url);
+
+    /**
+     * Requests a full native update of a native plugin child window. This is
+     * a Windows specific call.
+     */
+    async UpdateWindow(uintptr_t aChildId);
+
+    /**
+     * Send gamepad status update to child.
+     */
+    GamepadUpdate(GamepadChangeEvent aGamepadEvent);
 parent:
     /**
      * Tell the parent process a new accessible document has been created.
@@ -574,8 +678,10 @@ parent:
     sync GetProcessAttributes()
         returns (ContentParentId cpId, bool isForApp, bool isForBrowser);
     sync GetXPCOMProcessAttributes()
-        returns (bool isOffline, nsString[] dictionaries,
-                 ClipboardCapabilities clipboardCaps);
+        returns (bool isOffline, bool isConnected, bool isLangRTL, nsString[] dictionaries,
+                 ClipboardCapabilities clipboardCaps,
+                 DomainPolicyClone domainPolicy,
+                 OwningSerializedStructuredCloneBuffer initialData);
 
     sync CreateChildProcess(IPCTabContext context,
                             ProcessPriority priority,
@@ -583,14 +689,30 @@ parent:
         returns (ContentParentId cpId, bool isForApp, bool isForBrowser, TabId tabId);
     sync BridgeToChildProcess(ContentParentId cpId);
 
+    async CreateGMPService();
+    sync GetGMPPluginVersionForAPI(nsCString api, nsCString[] tags)
+        returns (bool hasPlugin, nsCString version);
+
     /**
      * This call connects the content process to a plugin process. While this
      * call runs, a new PluginModuleParent will be created in the ContentChild
      * via bridging. The corresponding PluginModuleChild will live in the plugin
-     * process. We use intr semantics here to ensure that the PluginModuleParent
-     * allocation message is dispatched before LoadPlugin returns.
+     * process.
      */
-    sync LoadPlugin(uint32_t pluginId);
+    sync LoadPlugin(uint32_t aPluginId) returns (nsresult aResult, uint32_t aRunID);
+
+    /**
+     * This call is used by asynchronous plugin instantiation to notify the
+     * content parent that it is now safe to initiate the plugin bridge for
+     * the specified plugin id. When this call returns, the requested bridge
+     * connection has been made.
+     */
+    sync ConnectPluginBridge(uint32_t aPluginId) returns (nsresult rv);
+
+    /**
+     * Return the current blocklist state for a particular plugin.
+     */
+    sync GetBlocklistState(uint32_t aPluginId) returns (uint32_t aState);
 
     /**
      * This call returns the set of plugins loaded in the chrome
@@ -608,7 +730,7 @@ parent:
 
     async PJavaScript();
 
-    sync PRemoteSpellcheckEngine();
+    PRemoteSpellcheckEngine();
     PDeviceStorageRequest(DeviceStorageParams params);
 
     PFileSystemRequest(FileSystemParams params);
@@ -623,7 +745,11 @@ parent:
     sync IsSecureURI(uint32_t type, URIParams uri, uint32_t flags)
         returns (bool isSecureURI);
 
+    sync GetLookAndFeelCache(LookAndFeelInt[] lookAndFeelIntCache);
+
     PHal();
+
+    PIcc(uint32_t serviceId);
 
     PMobileConnection(uint32_t clientId);
 
@@ -654,6 +780,8 @@ parent:
 
     PAsmJSCacheEntry(OpenMode openMode, WriteParams write, Principal principal);
 
+    PWebrtcGlobal();
+
     // Services remoting
 
     async StartVisitedQuery(URIParams uri);
@@ -669,11 +797,11 @@ parent:
 
     sync SyncMessage(nsString aMessage, ClonedMessageData aData,
                      CpowEntry[] aCpows, Principal aPrincipal)
-      returns (nsString[] retval);
+      returns (OwningSerializedStructuredCloneBuffer[] retval);
 
     prio(high) sync RpcMessage(nsString aMessage, ClonedMessageData aData,
                                CpowEntry[] aCpows, Principal aPrincipal)
-      returns (nsString[] retval);
+      returns (OwningSerializedStructuredCloneBuffer[] retval);
 
     ShowAlertNotification(nsString imageUrl,
                           nsString title,
@@ -688,6 +816,8 @@ parent:
                           bool inPrivateBrowsing);
 
     CloseAlert(nsString name, Principal principal);
+
+    PPSMContentDownloader(uint32_t aCertType);
 
     PExternalHelperApp(OptionalURIParams uri,
                        nsCString aMimeContentType,
@@ -711,12 +841,22 @@ parent:
     // nsIPermissionManager messages
     sync ReadPermissions() returns (Permission[] permissions);
 
-    SetClipboardText(nsString text, bool isPrivateData, int32_t whichClipboard);
-    sync GetClipboardText(int32_t whichClipboard)
-        returns (nsString text);
-    EmptyClipboard(int32_t whichClipboard);
-    sync ClipboardHasText(int32_t whichClipboard)
-        returns (bool hasText);
+    // Places the items within dataTransfer on the clipboard.
+    SetClipboard(IPCDataTransfer aDataTransfer,
+                 bool aIsPrivateData,
+                 int32_t aWhichClipboard);
+
+    // Given a list of supported types, returns the clipboard data for the
+    // first type that matches.
+    sync GetClipboard(nsCString[] aTypes, int32_t aWhichClipboard)
+        returns (IPCDataTransfer dataTransfer);
+
+    // Clears the clipboard.
+    EmptyClipboard(int32_t aWhichClipboard);
+
+    // Returns true if data of one of the specified types is on the clipboard.
+    sync ClipboardHasType(nsCString[] aTypes, int32_t aWhichClipboard)
+        returns (bool hasType);
 
     sync GetSystemColors(uint32_t colorsCount)
         returns (uint32_t[] colors);
@@ -754,8 +894,6 @@ parent:
                                nsString aFilepath,
                                nsCString aReason);
 
-    sync GetVolumes() returns (VolumeInfo[] volumes);
-
     // Notify the parent that the child has finished handling a system message.
     async SystemMessageHandled();
 
@@ -769,11 +907,14 @@ parent:
     // called by the child (test code only) to propagate volume changes to the parent
     async CreateFakeVolume(nsString fsName, nsString mountPoint);
     async SetFakeVolumeState(nsString fsName, int32_t fsState);
+    async RemoveFakeVolume(nsString fsName);
 
     sync KeywordToURI(nsCString keyword)
         returns (nsString providerName, OptionalInputStreamParams postData, OptionalURIParams uri);
 
     sync NotifyKeywordSearchLoading(nsString providerName, nsString keyword);
+
+    async CopyFavicon(URIParams oldURI, URIParams newURI, bool isPrivate);
 
     // Tell the compositor to allocate a layer tree id for nested remote mozbrowsers.
     sync AllocateLayerTreeId()
@@ -815,7 +956,7 @@ parent:
      */
     BackUpXResources(FileDescriptor aXSocketFd);
 
-    sync OpenAnonymousTemporaryFile() returns (FileDescriptor aFD);
+    sync OpenAnonymousTemporaryFile() returns (FileDescOrError aFD);
 
     /**
      * Keygen requires us to call it after a <keygen> element is parsed and
@@ -889,6 +1030,42 @@ parent:
      * its shutdown tasks.
      */
     async FinishShutdown();
+
+    UpdateDropEffect(uint32_t aDragAction, uint32_t aDropEffect);
+
+    /**
+     * Initiates an asynchronous request for permission for the
+     * provided principal.
+     *
+     * @param aRequests
+     *   The array of permissions to request.
+     * @param aPrincipal
+     *   The principal of the request.
+     * @param tabId
+     *   To identify which tab issues this request.
+     *
+     * NOTE: The principal is untrusted in the parent process. Only
+     *       principals that can live in the content process should
+     *       provided.
+     */
+    PContentPermissionRequest(PermissionRequest[] aRequests, Principal aPrincipal,
+                              TabId tabId);
+
+    /**
+     * Send ServiceWorkerRegistrationData to child process.
+     */
+    sync GetBrowserConfiguration(nsCString aUri)
+        returns (BrowserConfiguration aConfig);
+
+    /*
+     * Tells the parent to start the gamepad listening service if it hasn't already.
+     */
+    GamepadListenerAdded();
+
+    /**
+     * Tells the parent to stop the gamepad listening service if it hasn't already.
+     */
+    GamepadListenerRemoved();
 
 both:
      AsyncMessage(nsString aMessage, ClonedMessageData aData,

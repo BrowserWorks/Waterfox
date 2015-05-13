@@ -1,6 +1,8 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
+"use strict";
+
 const FAKE_FXA_TOKEN_DATA = JSON.stringify({
   "token_type": "bearer",
   "access_token": "1bad3e44b12f77a88fe09f016f6a37c42e40f974bc7a8b432bb0d2f0e37e1752",
@@ -13,17 +15,17 @@ const FAKE_FXA_PROFILE = JSON.stringify({
 });
 const LOOP_FXA_TOKEN_PREF = "loop.fxa_oauth.tokendata";
 const LOOP_FXA_PROFILE_PREF = "loop.fxa_oauth.profile";
-const LOOP_URL_EXPIRY_PREF = "loop.urlsExpiryTimeSeconds";
+const LOOP_CREATED_ROOM_PREF = "loop.createdRoom";
 const LOOP_INITIAL_DELAY_PREF = "loop.initialDelay";
 
 /**
  * This file is to test restart+reauth.
  */
 
-add_task(function test_initialize_with_expired_urls_and_no_auth_token() {
+add_task(function* test_initialize_with_no_guest_rooms_and_no_auth_token() {
   // Set time to be 2 seconds in the past.
   var nowSeconds = Date.now() / 1000;
-  Services.prefs.setIntPref(LOOP_URL_EXPIRY_PREF, nowSeconds - 2);
+  Services.prefs.setBoolPref(LOOP_CREATED_ROOM_PREF, false);
   Services.prefs.clearUserPref(LOOP_FXA_TOKEN_PREF);
 
   yield MozLoopService.initialize().then((msg) => {
@@ -34,8 +36,8 @@ add_task(function test_initialize_with_expired_urls_and_no_auth_token() {
   });
 });
 
-add_task(function test_initialize_with_urls_and_no_auth_token() {
-  Services.prefs.setIntPref(LOOP_URL_EXPIRY_PREF, Date.now() / 1000 + 10);
+add_task(function* test_initialize_with_created_room_and_no_auth_token() {
+  Services.prefs.setBoolPref(LOOP_CREATED_ROOM_PREF, true);
   Services.prefs.clearUserPref(LOOP_FXA_TOKEN_PREF);
 
   loopServer.registerPathHandler("/registration", (request, response) => {
@@ -50,7 +52,7 @@ add_task(function test_initialize_with_urls_and_no_auth_token() {
   });
 });
 
-add_task(function test_initialize_with_invalid_fxa_token() {
+add_task(function* test_initialize_with_invalid_fxa_token() {
   Services.prefs.setCharPref(LOOP_FXA_PROFILE_PREF, FAKE_FXA_PROFILE);
   Services.prefs.setCharPref(LOOP_FXA_TOKEN_PREF, FAKE_FXA_TOKEN_DATA);
 
@@ -62,7 +64,7 @@ add_task(function test_initialize_with_invalid_fxa_token() {
       code: 401,
       errno: 110,
       error: "Unauthorized",
-      message: "Unknown credentials",
+      message: "Unknown credentials"
     }));
   });
 
@@ -77,10 +79,13 @@ add_task(function test_initialize_with_invalid_fxa_token() {
                  "FXA profile pref should be cleared if token was invalid");
     Assert.ok(MozLoopServiceInternal.errors.has("login"),
               "Initialization error should have been reported to UI");
+    Assert.ok(MozLoopServiceInternal.errors.has("login"));
+    Assert.ok(MozLoopServiceInternal.errors.get("login").friendlyDetailsButtonCallback,
+              "Check that there is a retry callback");
   });
 });
 
-add_task(function test_initialize_with_fxa_token() {
+add_task(function* test_initialize_with_fxa_token() {
   Services.prefs.setCharPref(LOOP_FXA_PROFILE_PREF, FAKE_FXA_PROFILE);
   Services.prefs.setCharPref(LOOP_FXA_TOKEN_PREF, FAKE_FXA_TOKEN_DATA);
 
@@ -111,8 +116,8 @@ function run_test() {
     Services.prefs.clearUserPref(LOOP_INITIAL_DELAY_PREF);
     Services.prefs.clearUserPref(LOOP_FXA_TOKEN_PREF);
     Services.prefs.clearUserPref(LOOP_FXA_PROFILE_PREF);
-    Services.prefs.clearUserPref(LOOP_URL_EXPIRY_PREF);
+    Services.prefs.clearUserPref(LOOP_CREATED_ROOM_PREF);
   });
 
   run_next_test();
-};
+}

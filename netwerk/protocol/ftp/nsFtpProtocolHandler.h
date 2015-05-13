@@ -13,13 +13,11 @@
 #include "nsIObserver.h"
 #include "nsWeakReference.h"
 
-class nsICacheSession;
-
 //-----------------------------------------------------------------------------
 
-class nsFtpProtocolHandler MOZ_FINAL : public nsIProxiedProtocolHandler
-                                     , public nsIObserver
-                                     , public nsSupportsWeakReference
+class nsFtpProtocolHandler final : public nsIProxiedProtocolHandler
+                                 , public nsIObserver
+                                 , public nsSupportsWeakReference
 {
 public:
     NS_DECL_THREADSAFE_ISUPPORTS
@@ -54,7 +52,7 @@ private:
             if (timer)
                 timer->Cancel();
             if (key)
-                nsMemory::Free(key);
+                free(key);
             if (conn) {
                 conn->Disconnect(NS_ERROR_ABORT);
                 NS_RELEASE(conn);
@@ -67,7 +65,6 @@ private:
 
     nsTArray<timerStruct*> mRootConnectionList;
 
-    nsCOMPtr<nsICacheSession> mCacheSession;
     int32_t mIdleTimeout;
 
     // When "clear active logins" is performed, all idle connection are dropped
@@ -85,8 +82,6 @@ private:
 
 extern nsFtpProtocolHandler *gFtpHandler;
 
-#ifdef PR_LOGGING
 extern PRLogModuleInfo* gFTPLog;
-#endif
 
 #endif // !nsFtpProtocolHandler_h__

@@ -13,13 +13,14 @@ DIRS += [
     'loop',
     'migration',
     'places',
+    'pocket',
     'preferences',
     'privatebrowsing',
+    'readinglist',
     'search',
     'sessionstore',
     'shell',
     'selfsupport',
-    'sidebar',
     'tabview',
     'uitour',
     'translation',
@@ -50,3 +51,6 @@ BROWSER_CHROME_MANIFESTS += [
 
 if CONFIG['MOZ_SAFE_BROWSING']:
     BROWSER_CHROME_MANIFESTS += ['safebrowsing/content/test/browser.ini']
+
+with Files('safebrowsing/*'):
+    BUG_COMPONENT = ('Toolkit', 'Phishing Protection')

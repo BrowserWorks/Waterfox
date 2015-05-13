@@ -6,7 +6,7 @@
 
 "use strict";
 
-const {Cc, Ci, Cu} = require("chrome");
+const {Cc, Ci, Cu, Cr} = require("chrome");
 const {setTimeout, clearTimeout} = require('sdk/timers');
 const EventEmitter = require("devtools/toolkit/event-emitter");
 const DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
@@ -16,6 +16,8 @@ Cu.import("resource://gre/modules/devtools/dbg-client.jsm");
 Cu.import("resource://gre/modules/devtools/dbg-server.jsm");
 DevToolsUtils.defineLazyModuleGetter(this, "Task",
   "resource://gre/modules/Task.jsm");
+
+const REMOTE_TIMEOUT = "devtools.debugger.remote-timeout";
 
 /**
  * Connection Manager.
@@ -52,7 +54,14 @@ DevToolsUtils.defineLazyModuleGetter(this, "Task",
  *  . logs                  Current logs. "newlog" event notifies new available logs
  *  . store                 Reference to a local data store (see below)
  *  . keepConnecting        Should the connection keep trying to connect?
+ *  . timeoutDelay          When should we give up (in ms)?
+ *                          0 means wait forever.
  *  . encryption            Should the connection be encrypted?
+ *  . authentication        What authentication scheme should be used?
+ *  . authenticator         The |Authenticator| instance used.  Overriding
+ *                          properties of this instance may be useful to
+ *                          customize authentication UX for a specific use case.
+ *  . advertisement         The server's advertisement if found by discovery
  *  . status                Connection status:
  *                            Connection.Status.CONNECTED
  *                            Connection.Status.DISCONNECTED
@@ -179,9 +188,63 @@ Connection.prototype = {
     this.emit(Connection.Events.PORT_CHANGED);
   },
 
+  get authentication() {
+    return this._authentication;
+  },
+
+  set authentication(value) {
+    this._authentication = value;
+    // Create an |Authenticator| of this type
+    if (!value) {
+      this.authenticator = null;
+      return;
+    }
+    let AuthenticatorType = DebuggerClient.Authenticators.get(value);
+    this.authenticator = new AuthenticatorType.Client();
+  },
+
+  get advertisement() {
+    return this._advertisement;
+  },
+
+  set advertisement(advertisement) {
+    // The full advertisement may contain more info than just the standard keys
+    // below, so keep a copy for use during connection later.
+    this._advertisement = advertisement;
+    if (advertisement) {
+      ["host", "port", "encryption", "authentication"].forEach(key => {
+        this[key] = advertisement[key];
+      });
+    }
+  },
+
+  /**
+   * Settings to be passed to |socketConnect| at connection time.
+   */
+  get socketSettings() {
+    let settings = {};
+    if (this.advertisement) {
+      // Use the advertisement as starting point if it exists, as it may contain
+      // extra data, like the server's cert.
+      Object.assign(settings, this.advertisement);
+    }
+    Object.assign(settings, {
+      host: this.host,
+      port: this.port,
+      encryption: this.encryption,
+      authenticator: this.authenticator
+    });
+    return settings;
+  },
+
+  timeoutDelay: Services.prefs.getIntPref(REMOTE_TIMEOUT),
+
   resetOptions() {
     this.keepConnecting = false;
+    this.timeoutDelay = Services.prefs.getIntPref(REMOTE_TIMEOUT);
     this.encryption = false;
+    this.authentication = null;
+    this.advertisement = null;
   },
 
   disconnect: function(force) {
@@ -193,7 +256,9 @@ Connection.prototype = {
         this.status == Connection.Status.CONNECTING) {
       this.log("disconnecting");
       this._setStatus(Connection.Status.DISCONNECTING);
-      this._client.close();
+      if (this._client) {
+        this._client.close();
+      }
     }
   },
 
@@ -210,8 +275,9 @@ Connection.prototype = {
       }
       this._setStatus(Connection.Status.CONNECTING);
 
-      let delay = Services.prefs.getIntPref("devtools.debugger.remote-timeout");
-      this._timeoutID = setTimeout(this._onTimeout, delay);
+      if (this.timeoutDelay > 0) {
+        this._timeoutID = setTimeout(this._onTimeout, this.timeoutDelay);
+      }
       this._clientConnect();
     } else {
       let msg = "Can't connect. Client is not fully disconnected";
@@ -238,11 +304,8 @@ Connection.prototype = {
     if (!this.host) {
       return DebuggerServer.connectPipe();
     }
-    let transport = yield DebuggerClient.socketConnect({
-      host: this.host,
-      port: this.port,
-      encryption: this.encryption
-    });
+    let settings = this.socketSettings;
+    let transport = yield DebuggerClient.socketConnect(settings);
     return transport;
   }),
 
@@ -255,7 +318,11 @@ Connection.prototype = {
       this._client.addOneTimeListener("closed", this._onDisconnected);
       this._client.connect(this._onConnected);
     }, e => {
-      console.error(e);
+      // If we're continuously trying to connect, we expect the connection to be
+      // rejected a couple times, so don't log these.
+      if (!this.keepConnecting || e.result !== Cr.NS_ERROR_CONNECTION_REFUSED) {
+        console.error(e);
+      }
       // In some cases, especially on Mac, the openOutputStream call in
       // DebuggerClient.socketConnect may throw NS_ERROR_NOT_INITIALIZED.
       // It occurs when we connect agressively to the simulator,

@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -16,13 +17,12 @@
 #include "nsIContentIterator.h"
 #include "nsIWordBreaker.h"
 
-class nsIAtom;
 class nsIContent;
 
 #define NS_FIND_CONTRACTID "@mozilla.org/embedcomp/rangefind;1"
 
 #define NS_FIND_CID \
- {0x471f4944, 0x1dd2, 0x11b2, {0x87, 0xac, 0x90, 0xbe, 0x0a, 0x51, 0xd6, 0x09}}
+  {0x471f4944, 0x1dd2, 0x11b2, {0x87, 0xac, 0x90, 0xbe, 0x0a, 0x51, 0xd6, 0x09}}
 
 class nsFindContentIterator;
 
@@ -58,7 +58,7 @@ protected:
   bool IsTextNode(nsIDOMNode* aNode);
   bool IsBlockNode(nsIContent* aNode);
   bool SkipNode(nsIContent* aNode);
-  bool IsVisibleNode(nsIDOMNode *aNode);
+  bool IsVisibleNode(nsIDOMNode* aNode);
 
   // Move in the right direction for our search:
   nsresult NextNode(nsIDOMRange* aSearchRange,

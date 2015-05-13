@@ -8,7 +8,7 @@
 
 #include "nsIClipboard.h"
 
-class nsClipboard MOZ_FINAL : public nsIClipboard
+class nsClipboard final : public nsIClipboard
 {
   nsAutoString mClipboard;
 public:
@@ -16,6 +16,9 @@ public:
   NS_DECL_NSICLIPBOARD
 
   nsClipboard();
+
+protected:
+  ~nsClipboard() {}
 };
 
 #endif

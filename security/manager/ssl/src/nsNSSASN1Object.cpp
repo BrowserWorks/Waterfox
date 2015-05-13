@@ -126,11 +126,17 @@ buildASN1ObjectFromDER(unsigned char *data,
     if (tagnum == SEC_ASN1_HIGH_TAG_NUMBER) {
       return NS_ERROR_FAILURE;
     }
+
     data++;
     len = getDERItemLength(data, end, &bytesUsed, &indefinite);
-    data += bytesUsed;
-    if ((len < 0) || ((data+len) > end))
+    if (len < 0) {
       return NS_ERROR_FAILURE;
+    }
+
+    data += bytesUsed;
+    if (data + len > end) {
+      return NS_ERROR_FAILURE;
+    }
 
     if (code & SEC_ASN1_CONSTRUCTED) {
       if (len > 0 || indefinite) {
@@ -318,7 +324,6 @@ nsNSSASN1Sequence::SetIsExpanded(bool aIsExpanded)
   return NS_OK;
 }
 
-
 nsNSSASN1PrintableItem::nsNSSASN1PrintableItem() : mType(0),
                                                    mTag(0),
                                                    mData(nullptr),
@@ -331,7 +336,7 @@ nsNSSASN1PrintableItem::~nsNSSASN1PrintableItem()
 {
   /* destructor code */
   if (mData)
-    nsMemory::Free(mData);
+    free(mData);
 }
 
 /* readonly attribute wstring value; */
@@ -382,7 +387,7 @@ nsNSSASN1PrintableItem::SetData(char *data, uint32_t len)
 {
   if (len > 0) {
     if (mLen < len) {
-      unsigned char* newData = (unsigned char*)nsMemory::Realloc(mData, len);
+      unsigned char* newData = (unsigned char*)moz_xrealloc(mData, len);
       if (!newData)
         return NS_ERROR_OUT_OF_MEMORY;
 
@@ -392,7 +397,7 @@ nsNSSASN1PrintableItem::SetData(char *data, uint32_t len)
     memcpy(mData, data, len);
   } else if (len == 0) {
     if (mData) {
-      nsMemory::Free(mData);
+      free(mData);
       mData = nullptr;
     }
   }
@@ -425,4 +430,3 @@ nsNSSASN1PrintableItem::SetDisplayName(const nsAString &aDisplayName)
   mDisplayName = aDisplayName;
   return NS_OK;
 }
-

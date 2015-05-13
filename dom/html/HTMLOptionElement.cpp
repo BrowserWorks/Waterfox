@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 sw=2 et tw=78: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -273,7 +273,8 @@ HTMLOptionElement::GetText(nsAString& aText)
         child->NodeType() == nsIDOMNode::CDATA_SECTION_NODE) {
       child->AppendTextTo(text);
     }
-    if (child->IsHTML(nsGkAtoms::script) || child->IsSVG(nsGkAtoms::script)) {
+    if (child->IsHTMLElement(nsGkAtoms::script) ||
+        child->IsSVGElement(nsGkAtoms::script)) {
       child = child->GetNextNonChildNode(this);
     } else {
       child = child->GetNextNode(this);
@@ -336,7 +337,7 @@ HTMLOptionElement::IntrinsicState() const
     state &= ~NS_EVENT_STATE_ENABLED;
   } else {
     nsIContent* parent = GetParent();
-    if (parent && parent->IsHTML(nsGkAtoms::optgroup) &&
+    if (parent && parent->IsHTMLElement(nsGkAtoms::optgroup) &&
         parent->HasAttr(kNameSpaceID_None, nsGkAtoms::disabled)) {
       state |= NS_EVENT_STATE_DISABLED;
       state &= ~NS_EVENT_STATE_ENABLED;
@@ -355,12 +356,12 @@ HTMLOptionElement::GetSelect()
 {
   nsIContent* parent = this;
   while ((parent = parent->GetParent()) &&
-         parent->IsHTML()) {
+         parent->IsHTMLElement()) {
     HTMLSelectElement* select = HTMLSelectElement::FromContent(parent);
     if (select) {
       return select;
     }
-    if (parent->Tag() != nsGkAtoms::optgroup) {
+    if (!parent->IsHTMLElement(nsGkAtoms::optgroup)) {
       break;
     }
   }
@@ -447,9 +448,9 @@ HTMLOptionElement::CopyInnerTo(Element* aDest)
 }
 
 JSObject*
-HTMLOptionElement::WrapNode(JSContext* aCx)
+HTMLOptionElement::WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return HTMLOptionElementBinding::Wrap(aCx, this);
+  return HTMLOptionElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 } // namespace dom

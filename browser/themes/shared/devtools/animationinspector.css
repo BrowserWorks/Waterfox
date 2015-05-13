@@ -1,25 +1,65 @@
+html {
+  height: 100%;
+}
+
 body {
   margin: 0;
   padding: 0;
+  display : flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  color: var(--theme-content-color3);
+}
+
+/* The top toolbar, containing the toggle-all button */
+
+#toolbar {
+  border-bottom: 1px solid var(--theme-splitter-color);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  height: 20px;
+}
+
+#toolbar .label {
+  padding: 1px 4px;
+}
+
+#toggle-all {
+  border-width: 0 0 0 1px;
+  min-height: 20px;
 }
 
 /* The error message, shown when an invalid/unanimated element is selected */
 
 #error-message {
-  margin-top: 10%;
+  padding-top: 10%;
   text-align: center;
+  flex: 1;
+  overflow: auto;
 
   /* The error message is hidden by default */
   display: none;
 }
 
-/* Element picker button */
+/* The animation players container */
 
-#element-picker {
+#players {
+  flex: 1;
+  overflow: auto;
+}
+
+/* Element picker and toggle-all buttons */
+
+#element-picker,
+#toggle-all {
   position: relative;
 }
 
-#element-picker::before {
+#element-picker::before,
+#toggle-all::before {
   content: "";
   display: block;
   width: 16px;
@@ -31,23 +71,68 @@ body {
   background-image: url("chrome://browser/skin/devtools/command-pick.png");
 }
 
+#toggle-all::before {
+  background-image: url("debugger-pause.png");
+}
+
 #element-picker[checked]::before {
   background-position: -48px 0;
   filter: none; /* Icon is blue when checked, don't invert for light theme */
 }
 
-@media (min-resolution: 2dppx) {
+#toggle-all.paused::before {
+  background-image: url("debugger-play.png");
+}
+
+@media (min-resolution: 1.25dppx) {
   #element-picker::before {
     background-image: url("chrome://browser/skin/devtools/command-pick@2x.png");
     background-size: 64px;
   }
+
+  #toggle-all::before {
+    background-image: url("debugger-pause@2x.png");
+  }
+
+  #toggle-all.paused::before {
+    background-image: url("debugger-play@2x.png");
+  }
+}
+
+/* Animation target node gutter, contains a preview of the dom node */
+
+.animation-target {
+  background-color: var(--theme-toolbar-background);
+  padding: 1px 4px;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.animation-target .attribute-name {
+  padding-left: 4px;
+}
+
+.animation-target .node-selector {
+  background: url("chrome://browser/skin/devtools/vview-open-inspector.png") no-repeat 0 0;
+  padding-left: 16px;
+  margin-right: 5px;
+  cursor: pointer;
+}
+
+.animation-target .node-selector:hover {
+  background-position: -32px 0;
+}
+
+.animation-target .node-selector:active {
+  background-position: -16px 0;
 }
 
 /* Animation title gutter, contains the name, duration, iteration */
 
 .animation-title {
   background-color: var(--theme-toolbar-background);
-  color: var(--theme-content-color3);
   border-bottom: 1px solid var(--theme-splitter-color);
   padding: 1px 4px;
   word-wrap: break-word;
@@ -73,7 +158,6 @@ body {
 }
 
 .timeline .playback-controls {
-  width: 50px;
   display: flex;
   flex-direction: row;
 }
@@ -85,24 +169,47 @@ body {
   border-width: 0 1px 0 0;
 }
 
-/* Play/pause button */
-
 .timeline .toggle::before {
   background-image: url(debugger-pause.png);
 }
 
-.paused .timeline .toggle::before {
+.paused .timeline .toggle::before,
+.finished .timeline .toggle::before {
   background-image: url(debugger-play.png);
 }
 
-@media (min-resolution: 2dppx) {
+.timeline .ff::before {
+  background-image: url(fast-forward.png);
+}
+
+.timeline .rw::before {
+  background-image: url(rewind.png);
+}
+
+@media (min-resolution: 1.25dppx) {
   .timeline .toggle::before {
     background-image: url(debugger-pause@2x.png);
   }
 
-  .paused .timeline .toggle::before {
+  .paused .timeline .toggle::before,
+  .finished .timeline .toggle::before {
     background-image: url(debugger-play@2x.png);
   }
+
+  .timeline .ff::before {
+    background-image: url(fast-forward@2x.png);
+  }
+
+  .timeline .rw::before {
+    background-image: url(rewind@2x.png);
+  }
+}
+
+.timeline .rate {
+  -moz-appearance: none;
+  text-align: center;
+  color: var(--theme-body-color);
+  border-right: 1px solid var(--theme-splitter-color);
 }
 
 /* Slider (input type range) container */

@@ -23,6 +23,7 @@
 #include <sys/syscall.h>
 #include <vector>
 
+#include "mozilla/Alignment.h"
 #include "mozilla/LinkedList.h"
 #include "mozilla/TaggedAnonymousMemory.h"
 #include "Nuwa.h"
@@ -56,6 +57,7 @@ int __real_pthread_cond_timedwait(pthread_cond_t *cond,
                                   pthread_mutex_t *mtx,
                                   const struct timespec *abstime);
 int __real_pthread_mutex_lock(pthread_mutex_t *mtx);
+int __real_pthread_mutex_trylock(pthread_mutex_t *mtx);
 int __real_poll(struct pollfd *fds, nfds_t nfds, int timeout);
 int __real_epoll_create(int size);
 int __real_socketpair(int domain, int type, int protocol, int sv[2]);
@@ -74,6 +76,7 @@ int __real_close(int aFd);
  * threads are frozen.
  */
 static bool sIsNuwaProcess = false; // This process is a Nuwa process.
+static bool sIsNuwaChildProcess = false; // This process is spawned from Nuwa.
 static bool sIsFreezing = false; // Waiting for all threads getting frozen.
 static bool sNuwaReady = false;  // Nuwa process is ready.
 static bool sNuwaPendingSpawn = false; // Are there any pending spawn requests?
@@ -103,12 +106,10 @@ static size_t getPageSize(void) {
 }
 
 /**
- * The stack size is chosen carefully so the frozen threads doesn't consume too
- * much memory in the Nuwa process. The threads shouldn't run deep recursive
- * methods or do large allocations on the stack to avoid stack overflow.
+ * Use 1 MiB stack size as Android does.
  */
 #ifndef NUWA_STACK_SIZE
-#define NUWA_STACK_SIZE (1024 * 128)
+#define NUWA_STACK_SIZE (1024 * 1024)
 #endif
 
 #define NATIVE_THREAD_NAME_LENGTH 16
@@ -170,6 +171,8 @@ struct thread_info : public mozilla::LinkedListElement<thread_info> {
   pthread_mutex_t *condMutex;
   bool condMutexNeedsBalancing;
 
+  size_t stackSize;
+  size_t guardSize;
   void *stk;
 
   pid_t origNativeThreadID;
@@ -215,8 +218,41 @@ RunCustomRecreation() {
 static std::vector<nuwa_construct_t> sConstructors;
 static std::vector<nuwa_construct_t> sFinalConstructors;
 
-typedef std::map<pthread_key_t, void (*)(void *)> TLSKeySet;
-static TLSKeySet sTLSKeys;
+class TLSKey
+: public std::pair<pthread_key_t, void (*)(void*)>
+, public LinkedListElement<TLSKey>
+{
+public:
+  TLSKey() {}
+
+  TLSKey(pthread_key_t aKey, void (*aDestructor)(void*))
+  : std::pair<pthread_key_t, void (*)(void*)>(aKey, aDestructor)
+  {}
+
+  static void* operator new(size_t size) {
+    if (sUsed)
+      return ::operator new(size);
+    sUsed = true;
+    return sFirstElement.addr();
+  }
+
+  static void operator delete(void* ptr) {
+    if (ptr == sFirstElement.addr()) {
+      sUsed = false;
+      return;
+    }
+    ::operator delete(ptr);
+  }
+
+private:
+  static bool sUsed;
+  static AlignedStorage2<TLSKey> sFirstElement;
+};
+
+bool TLSKey::sUsed = false;
+AlignedStorage2<TLSKey> TLSKey::sFirstElement;
+
+static AutoCleanLinkedList<TLSKey> sTLSKeys;
 
 /**
  * This mutex is used to block the running threads and freeze their contexts.
@@ -232,13 +268,13 @@ static int sThreadFreezeCount = 0;
 
 // Bug 1008254: LinkedList's destructor asserts that the list is empty.
 // But here, on exit, when the global sAllThreads list
-// is destroyed, it may or may be empty. Bug 1008254 comment 395 has a log
+// is destroyed, it may or may not be empty. Bug 1008254 comment 395 has a log
 // when there were 8 threads remaining on exit. So this assertion was
 // intermittently (almost every second time) failing.
 // As a work-around to avoid this intermittent failure, we clear the list on
 // exit just before it gets destroyed. This is the only purpose of that
 // AllThreadsListType subclass.
-struct AllThreadsListType : public LinkedList<thread_info_t>
+struct AllThreadsListType : public AutoCleanLinkedList<thread_info_t>
 {
   ~AllThreadsListType()
   {
@@ -263,10 +299,10 @@ struct AllThreadsListType : public LinkedList<thread_info_t>
                           sThreadCount,
                           sThreadFreezeCount);
     }
-    clear();
   }
 };
 static AllThreadsListType sAllThreads;
+static AllThreadsListType sExitingThreads;
 
 /**
  * This mutex protects the access to thread info:
@@ -297,12 +333,20 @@ static bool sForkWaitCondChanged = false;
  * This mutex protects the access to sTLSKeys, which keeps track of existing
  * TLS Keys.
  */
-static pthread_mutex_t sTLSKeyLock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t sTLSKeyLock = PTHREAD_ERRORCHECK_MUTEX_INITIALIZER;
 static int sThreadSkipCount = 0;
 
 static thread_info_t *
 GetThreadInfoInner(pthread_t threadID) {
   for (thread_info_t *tinfo = sAllThreads.getFirst();
+       tinfo;
+       tinfo = tinfo->getNext()) {
+    if (pthread_equal(tinfo->origThreadID, threadID)) {
+      return tinfo;
+    }
+  }
+
+  for (thread_info_t *tinfo = sExitingThreads.getFirst();
        tinfo;
        tinfo = tinfo->getNext()) {
     if (pthread_equal(tinfo->origThreadID, threadID)) {
@@ -320,13 +364,11 @@ GetThreadInfoInner(pthread_t threadID) {
  */
 static thread_info_t *
 GetThreadInfo(pthread_t threadID) {
-  if (sIsNuwaProcess) {
-    REAL(pthread_mutex_lock)(&sThreadCountLock);
-  }
+  REAL(pthread_mutex_lock)(&sThreadCountLock);
+
   thread_info_t *tinfo = GetThreadInfoInner(threadID);
-  if (sIsNuwaProcess) {
-    pthread_mutex_unlock(&sThreadCountLock);
-  }
+
+  pthread_mutex_unlock(&sThreadCountLock);
   return tinfo;
 }
 
@@ -504,20 +546,10 @@ thread_info_new(void) {
   tinfo->recreatedNativeThreadID = 0;
   tinfo->condMutex = nullptr;
   tinfo->condMutexNeedsBalancing = false;
-  tinfo->stk = MozTaggedAnonymousMmap(nullptr,
-                                      NUWA_STACK_SIZE + getPageSize(),
-                                      PROT_READ | PROT_WRITE,
-                                      MAP_PRIVATE | MAP_ANONYMOUS,
-                                      /* fd */ -1,
-                                      /* offset */ 0,
-                                      "nuwa-thread-stack");
 
-  // We use a smaller stack size. Add protection to stack overflow: mprotect()
-  // stack top (the page at the lowest address) so we crash instead of corrupt
-  // other content that is malloc()'d.
-  mprotect(tinfo->stk, getPageSize(), PROT_NONE);
-
-  pthread_attr_init(&tinfo->threadAttr);
+  // Default stack and guard size.
+  tinfo->stackSize = NUWA_STACK_SIZE;
+  tinfo->guardSize = getPageSize();
 
   REAL(pthread_mutex_lock)(&sThreadCountLock);
   // Insert to the tail.
@@ -531,6 +563,44 @@ thread_info_new(void) {
 }
 
 static void
+thread_attr_init(thread_info_t *tinfo, const pthread_attr_t *tattr)
+{
+  pthread_attr_init(&tinfo->threadAttr);
+
+  if (tattr) {
+    // Override default thread stack and guard size with tattr.
+    pthread_attr_getstacksize(tattr, &tinfo->stackSize);
+    pthread_attr_getguardsize(tattr, &tinfo->guardSize);
+
+    size_t pageSize = getPageSize();
+
+    tinfo->stackSize = (tinfo->stackSize + pageSize - 1) % pageSize;
+    tinfo->guardSize = (tinfo->guardSize + pageSize - 1) % pageSize;
+
+    int detachState = 0;
+    pthread_attr_getdetachstate(tattr, &detachState);
+    pthread_attr_setdetachstate(&tinfo->threadAttr, detachState);
+  }
+
+  tinfo->stk = MozTaggedAnonymousMmap(nullptr,
+                                      tinfo->stackSize + tinfo->guardSize,
+                                      PROT_READ | PROT_WRITE,
+                                      MAP_PRIVATE | MAP_ANONYMOUS,
+                                      /* fd */ -1,
+                                      /* offset */ 0,
+                                      "nuwa-thread-stack");
+
+  // Add protection to stack overflow: mprotect() stack top (the page at the
+  // lowest address) so we crash instead of corrupt other content that is
+  // malloc()'d.
+  mprotect(tinfo->stk, tinfo->guardSize, PROT_NONE);
+
+  pthread_attr_setstack(&tinfo->threadAttr,
+                        (char*)tinfo->stk + tinfo->guardSize,
+                        tinfo->stackSize);
+}
+
+static void
 thread_info_cleanup(void *arg) {
   if (sNuwaForking) {
     // We shouldn't have any thread exiting when we are forking a new process.
@@ -540,7 +610,7 @@ thread_info_cleanup(void *arg) {
   thread_info_t *tinfo = (thread_info_t *)arg;
   pthread_attr_destroy(&tinfo->threadAttr);
 
-  munmap(tinfo->stk, NUWA_STACK_SIZE + getPageSize());
+  munmap(tinfo->stk, tinfo->stackSize + tinfo->guardSize);
 
   REAL(pthread_mutex_lock)(&sThreadCountLock);
   /* unlink tinfo from sAllThreads */
@@ -563,24 +633,69 @@ thread_info_cleanup(void *arg) {
   pthread_mutex_unlock(&sThreadCountLock);
 }
 
-static void*
-cleaner_thread(void *arg) {
-  thread_info_t *tinfo = (thread_info_t *)arg;
-  pthread_t *thread = sIsNuwaProcess ? &tinfo->origThreadID
-                                     : &tinfo->recreatedThreadID;
-  // Wait until target thread end.
-  while (!pthread_kill(*thread, 0)) {
+static void
+EnsureThreadExited(thread_info_t *tinfo) {
+  pid_t thread = sIsNuwaProcess ? tinfo->origNativeThreadID
+                                     : tinfo->recreatedNativeThreadID;
+  // Wait until the target thread exits. Note that we use tgkill() instead of
+  // pthread_kill() because of:
+  // 1. Use after free inside pthread implementation.
+  // 2. Race due to pthread_t reuse when a thread is created.
+  while (!syscall(__NR_tgkill, getpid(), thread, 0)) {
     sched_yield();
   }
+}
+
+static void*
+safe_thread_info_cleanup(void *arg)
+{
+  thread_info_t *tinfo = (thread_info_t *)arg;
+
+  // We need to ensure the thread is really dead before cleaning up tinfo.
+  EnsureThreadExited(tinfo);
   thread_info_cleanup(tinfo);
+
   return nullptr;
 }
 
 static void
-thread_cleanup(void *arg) {
+MaybeCleanUpDetachedThread(thread_info_t *tinfo)
+{
+  if (pthread_getattr_np(REAL(pthread_self()), &tinfo->threadAttr)) {
+    return;
+  }
+
+  int detachState = 0;
+  if (pthread_attr_getdetachstate(&tinfo->threadAttr, &detachState) ||
+      detachState == PTHREAD_CREATE_JOINABLE) {
+    // We only clean up tinfo of a detached thread. A joinable thread
+    // will be cleaned up in __wrap_pthread_join().
+    return;
+  }
+
+  // Create a detached thread to safely clean up the current thread.
   pthread_t thread;
-  REAL(pthread_create)(&thread, nullptr, &cleaner_thread, arg);
-  pthread_detach(thread);
+  if (!REAL(pthread_create)(&thread,
+                            nullptr,
+                            safe_thread_info_cleanup,
+                            tinfo)) {
+    pthread_detach(thread);
+  }
+}
+
+static void
+invalidate_thread_info(void *arg) {
+  REAL(pthread_mutex_lock)(&sThreadCountLock);
+
+  // Unlink tinfo from sAllThreads to make it invisible from CUR_THREAD_INFO so
+  // it won't be misused by a newly created thread.
+  thread_info_t *tinfo = (thread_info_t*) arg;
+  tinfo->remove();
+  sExitingThreads.insertBack(tinfo);
+
+  pthread_mutex_unlock(&sThreadCountLock);
+
+  MaybeCleanUpDetachedThread(tinfo);
 }
 
 static void *
@@ -596,15 +711,7 @@ _thread_create_startup(void *arg) {
   tinfo->origThreadID = REAL(pthread_self)();
   tinfo->origNativeThreadID = gettid();
 
-  pthread_cleanup_push(thread_cleanup, tinfo);
-
   r = tinfo->startupFunc(tinfo->startupArg);
-
-  if (!sIsNuwaProcess) {
-    return r;
-  }
-
-  pthread_cleanup_pop(1);
 
   return r;
 }
@@ -636,7 +743,12 @@ thread_create_startup(void *arg) {
     abort();                    // Did not reserve enough stack space.
   }
 
+  // Get tinfo before invalidating it. Note that we cannot use arg directly here
+  // because thread_recreate_startup() also runs on the same stack area and
+  // could corrupt the value.
   thread_info_t *tinfo = CUR_THREAD_INFO;
+  invalidate_thread_info(tinfo);
+
   if (!sIsNuwaProcess) {
     longjmp(tinfo->retEnv, 1);
 
@@ -657,11 +769,9 @@ __wrap_pthread_create(pthread_t *thread,
   }
 
   thread_info_t *tinfo = thread_info_new();
+  thread_attr_init(tinfo, attr);
   tinfo->startupFunc = start_routine;
   tinfo->startupArg = arg;
-  pthread_attr_setstack(&tinfo->threadAttr,
-                        (char*)tinfo->stk + getPageSize(),
-                        NUWA_STACK_SIZE);
 
   int rv = REAL(pthread_create)(thread,
                                 &tinfo->threadAttr,
@@ -684,11 +794,9 @@ __wrap_pthread_create(pthread_t *thread,
  */
 static void
 SaveTLSInfo(thread_info_t *tinfo) {
-  REAL(pthread_mutex_lock)(&sTLSKeyLock);
+  MOZ_RELEASE_ASSERT(REAL(pthread_mutex_lock)(&sTLSKeyLock) == 0);
   tinfo->tlsInfo.clear();
-  for (TLSKeySet::const_iterator it = sTLSKeys.begin();
-       it != sTLSKeys.end();
-       it++) {
+  for (TLSKey *it = sTLSKeys.getFirst(); it != nullptr; it = it->getNext()) {
     void *value = pthread_getspecific(it->first);
     if (value == nullptr) {
       continue;
@@ -697,7 +805,7 @@ SaveTLSInfo(thread_info_t *tinfo) {
     pthread_key_t key = it->first;
     tinfo->tlsInfo.push_back(TLSInfoList::value_type(key, value));
   }
-  pthread_mutex_unlock(&sTLSKeyLock);
+  MOZ_RELEASE_ASSERT(pthread_mutex_unlock(&sTLSKeyLock) == 0);
 }
 
 /**
@@ -726,24 +834,30 @@ __wrap_pthread_key_create(pthread_key_t *key, void (*destructor)(void*)) {
   if (rv != 0) {
     return rv;
   }
-  REAL(pthread_mutex_lock)(&sTLSKeyLock);
-  sTLSKeys.insert(TLSKeySet::value_type(*key, destructor));
-  pthread_mutex_unlock(&sTLSKeyLock);
+  MOZ_RELEASE_ASSERT(REAL(pthread_mutex_lock)(&sTLSKeyLock) == 0);
+  sTLSKeys.insertBack(new TLSKey(*key, destructor));
+  MOZ_RELEASE_ASSERT(pthread_mutex_unlock(&sTLSKeyLock) == 0);
   return 0;
 }
 
 extern "C" MFBT_API int
 __wrap_pthread_key_delete(pthread_key_t key) {
-  if (!sIsNuwaProcess) {
-    return REAL(pthread_key_delete)(key);
-  }
-  int rv = REAL(pthread_key_delete)(key);
+  // Don't call pthread_key_delete() for Nuwa-forked processes because bionic's
+  // pthread_key_delete() implementation can touch the thread stack that was
+  // freed in thread_info_cleanup().
+  int rv = sIsNuwaChildProcess ?
+             0 : REAL(pthread_key_delete)(key);
   if (rv != 0) {
     return rv;
   }
-  REAL(pthread_mutex_lock)(&sTLSKeyLock);
-  sTLSKeys.erase(key);
-  pthread_mutex_unlock(&sTLSKeyLock);
+  MOZ_RELEASE_ASSERT(REAL(pthread_mutex_lock)(&sTLSKeyLock) == 0);
+  for (TLSKey *it = sTLSKeys.getFirst(); it != nullptr; it = it->getNext()) {
+    if (key == it->first) {
+      delete it;
+      break;
+    }
+  }
+  MOZ_RELEASE_ASSERT(pthread_mutex_unlock(&sTLSKeyLock) == 0);
   return 0;
 }
 
@@ -764,8 +878,23 @@ __wrap_pthread_join(pthread_t thread, void **retval) {
   if (tinfo == nullptr) {
     return REAL(pthread_join)(thread, retval);
   }
-  // pthread_join() need to use the real thread ID in the spawned process.
-  return REAL(pthread_join)(tinfo->recreatedThreadID, retval);
+
+  pthread_t thread_info_t::*threadIDptr =
+        (sIsNuwaProcess ?
+           &thread_info_t::origThreadID :
+           &thread_info_t::recreatedThreadID);
+
+  // pthread_join() uses the origThreadID or recreatedThreadID depending on
+  // whether we are in Nuwa or forked processes.
+  int rc = REAL(pthread_join)(tinfo->*threadIDptr, retval);
+
+  // Before Android L, bionic wakes up the caller of pthread_join() with
+  // pthread_cond_signal() so the thread can still use the stack for some while.
+  // Call safe_thread_info_cleanup() to destroy tinfo after the thread really
+  // exits.
+  safe_thread_info_cleanup(tinfo);
+
+  return rc;
 }
 
 /**
@@ -1098,6 +1227,20 @@ __wrap_pthread_cond_timedwait(pthread_cond_t *cond,
   return rv;
 }
 
+
+extern "C" MFBT_API int
+__wrap_pthread_mutex_trylock(pthread_mutex_t *mtx) {
+  int rv = 0;
+
+  THREAD_FREEZE_POINT1();
+  if (freezePoint2) {
+    return rv;
+  }
+  rv = REAL(pthread_mutex_trylock)(mtx);
+  THREAD_FREEZE_POINT2();
+
+  return rv;
+}
 
 extern "C" MFBT_API int
 __wrap_pthread_mutex_lock(pthread_mutex_t *mtx) {
@@ -1595,6 +1738,7 @@ ForkIPCProcess() {
     CloseAllProtoSockets(sProtoFdInfos, sProtoFdInfosSize);
   } else {
     // in the child
+    sIsNuwaChildProcess = true;
     if (getenv("MOZ_DEBUG_CHILD_PROCESS")) {
       printf("\n\nNUWA CHILDCHILDCHILDCHILD\n  debug me @ %d\n\n", getpid());
       sleep(30);

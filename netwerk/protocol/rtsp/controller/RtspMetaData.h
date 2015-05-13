@@ -15,16 +15,18 @@
 namespace mozilla {
 namespace net {
 
-class RtspMetaData MOZ_FINAL : public nsIStreamingProtocolMetaData
+class RtspMetaData final : public nsIStreamingProtocolMetaData
 {
  public:
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSISTREAMINGPROTOCOLMETADATA
 
   RtspMetaData();
-  ~RtspMetaData();
 
   nsresult DeserializeRtspMetaData(const InfallibleTArray<RtspMetadataParam>& metaArray);
+
+ protected:
+  ~RtspMetaData();
 
  private:
   uint32_t  mFrameType;

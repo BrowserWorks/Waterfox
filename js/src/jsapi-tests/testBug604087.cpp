@@ -25,8 +25,8 @@ const js::Class OuterWrapperClass =
             nullptr  /* objectMoved */
         ));
 
-static JSObject *
-wrap(JSContext *cx, JS::HandleObject toWrap, JS::HandleObject target)
+static JSObject*
+wrap(JSContext* cx, JS::HandleObject toWrap, JS::HandleObject target)
 {
     JSAutoCompartment ac(cx, target);
     JS::RootedObject wrapper(cx, toWrap);
@@ -35,19 +35,18 @@ wrap(JSContext *cx, JS::HandleObject toWrap, JS::HandleObject target)
     return wrapper;
 }
 
-static JSObject *
-PreWrap(JSContext *cx, JS::HandleObject scope, JS::HandleObject obj,
+static JSObject*
+PreWrap(JSContext* cx, JS::HandleObject scope, JS::HandleObject obj,
         JS::HandleObject objectPassedToWrap)
 {
     JS_GC(JS_GetRuntime(cx));
     return obj;
 }
 
-static JSObject *
-Wrap(JSContext *cx, JS::HandleObject existing, JS::HandleObject obj,
-     JS::HandleObject parent)
+static JSObject*
+Wrap(JSContext* cx, JS::HandleObject existing, JS::HandleObject obj)
 {
-    return js::Wrapper::New(cx, obj, parent, &js::CrossCompartmentWrapper::singleton);
+    return js::Wrapper::New(cx, obj, &js::CrossCompartmentWrapper::singleton);
 }
 
 static const JSWrapObjectCallbacks WrapObjectCallbacks = {
@@ -60,7 +59,7 @@ BEGIN_TEST(testBug604087)
     js::WrapperOptions options;
     options.setClass(&OuterWrapperClass);
     options.setSingleton(true);
-    JS::RootedObject outerObj(cx, js::Wrapper::New(cx, global, global, &js::Wrapper::singleton, options));
+    JS::RootedObject outerObj(cx, js::Wrapper::New(cx, global, &js::Wrapper::singleton, options));
     JS::RootedObject compartment2(cx, JS_NewGlobalObject(cx, getGlobalClass(), nullptr, JS::FireOnNewGlobalHook));
     JS::RootedObject compartment3(cx, JS_NewGlobalObject(cx, getGlobalClass(), nullptr, JS::FireOnNewGlobalHook));
     JS::RootedObject compartment4(cx, JS_NewGlobalObject(cx, getGlobalClass(), nullptr, JS::FireOnNewGlobalHook));
@@ -81,7 +80,7 @@ BEGIN_TEST(testBug604087)
     JS::RootedObject next(cx);
     {
         JSAutoCompartment ac(cx, compartment2);
-        next = js::Wrapper::New(cx, compartment2, compartment2, &js::Wrapper::singleton, options);
+        next = js::Wrapper::New(cx, compartment2, &js::Wrapper::singleton, options);
         CHECK(next);
     }
 

@@ -54,8 +54,12 @@ interface nsIDOMBlob : nsISupports
   [notxpcom] bool isMemoryFile();
 };
 
-[scriptable, builtinclass, uuid(4e7d1a8b-e2d5-4304-a753-4affb731660c)]
-interface nsIDOMFile : nsIDOMBlob
+// We want to avoid multiple inheritance of nsIDOMBlob so we can downcast from
+// nsIDOMBlob to Blob safely.  Our chain is:
+//  - Blob -> nsIDOMBlob
+//  - File -> nsIDOMFile and Blob
+[scriptable, builtinclass, uuid(cc28cf12-f1d4-44ff-843f-9289aa14613b)]
+interface nsIDOMFile : nsISupports
 {
   readonly attribute DOMString name;
 
@@ -69,5 +73,5 @@ interface nsIDOMFile : nsIDOMBlob
   // This performs no security checks!
   [noscript] readonly attribute DOMString mozFullPathInternal;
 
-  [noscript] readonly attribute uint64_t mozLastModifiedDate;
+  [noscript] readonly attribute int64_t mozLastModifiedDate;
 };

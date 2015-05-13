@@ -24,24 +24,24 @@ template <>
 class FFmpegDataDecoder<LIBAV_VER> : public MediaDataDecoder
 {
 public:
-  FFmpegDataDecoder(MediaTaskQueue* aTaskQueue, AVCodecID aCodecID);
+  FFmpegDataDecoder(FlushableMediaTaskQueue* aTaskQueue, AVCodecID aCodecID);
   virtual ~FFmpegDataDecoder();
 
   static bool Link();
 
-  virtual nsresult Init() MOZ_OVERRIDE;
-  virtual nsresult Input(mp4_demuxer::MP4Sample* aSample) = 0;
-  virtual nsresult Flush() MOZ_OVERRIDE;
-  virtual nsresult Drain() = 0;
-  virtual nsresult Shutdown() MOZ_OVERRIDE;
+  virtual nsresult Init() override;
+  virtual nsresult Input(MediaRawData* aSample) override = 0;
+  virtual nsresult Flush() override;
+  virtual nsresult Drain() override = 0;
+  virtual nsresult Shutdown() override;
 
 protected:
   AVFrame*        PrepareFrame();
 
-  MediaTaskQueue* mTaskQueue;
+  FlushableMediaTaskQueue* mTaskQueue;
   AVCodecContext* mCodecContext;
   AVFrame*        mFrame;
-  nsRefPtr<mp4_demuxer::ByteBuffer> mExtraData;
+  nsRefPtr<MediaByteBuffer> mExtraData;
 
 private:
   static bool sFFmpegInitDone;

@@ -141,7 +141,6 @@ protected:
   bool GetTypeFromExtras(const nsACString& aExtension,
                                        nsACString& aMIMEType);
 
-#ifdef PR_LOGGING
   /**
    * NSPR Logging Module. Usage: set NSPR_LOG_MODULES=HelperAppService:level,
    * where level should be 2 for errors, 3 for debug messages from the cross-
@@ -149,7 +148,6 @@ protected:
    */
   static PRLogModuleInfo* mLog;
 
-#endif
   // friend, so that it can access the nspr log module.
   friend class nsExternalAppHandler;
 
@@ -201,10 +199,10 @@ private:
  * stored the data into.  We create a handler every time we have to process
  * data using a helper app.
  */
-class nsExternalAppHandler MOZ_FINAL : public nsIStreamListener,
-                                       public nsIHelperAppLauncher,
-                                       public nsITimerCallback,
-                                       public nsIBackgroundFileSaverObserver
+class nsExternalAppHandler final : public nsIStreamListener,
+                                   public nsIHelperAppLauncher,
+                                   public nsITimerCallback,
+                                   public nsIBackgroundFileSaverObserver
 {
 public:
   NS_DECL_THREADSAFE_ISUPPORTS

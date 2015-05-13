@@ -199,7 +199,6 @@ BrowserElementParent.prototype = {
       "got-set-input-method-active": this._gotDOMRequestResult,
       "selectionstatechanged": this._handleSelectionStateChanged,
       "scrollviewchange": this._handleScrollViewChange,
-      "touchcarettap": this._handleTouchCaretTap
     };
 
     let mmSecuritySensitiveCalls = {
@@ -215,7 +214,8 @@ BrowserElementParent.prototype = {
       "metachange": this._fireEventFromMsg,
       "resize": this._fireEventFromMsg,
       "activitydone": this._fireEventFromMsg,
-      "scroll": this._fireEventFromMsg
+      "scroll": this._fireEventFromMsg,
+      "opentab": this._fireEventFromMsg
     };
 
     this._mm.addMessageListener('browser-element-api:call', function(aMsg) {
@@ -273,7 +273,8 @@ BrowserElementParent.prototype = {
     /* username and password */
     let detail = {
       host:     authDetail.host,
-      realm:    authDetail.realm
+      realm:    authDetail.realm,
+      isProxy:  authDetail.isProxy
     };
 
     evt = this._createEvent('usernameandpasswordrequired', detail,
@@ -439,12 +440,6 @@ BrowserElementParent.prototype = {
     this._frameElement.dispatchEvent(evt);
   },
 
-  _handleTouchCaretTap: function(data) {
-    let evt = this._createEvent("touchcarettap", data.json,
-                                /* cancelable = */ false);
-    this._frameElement.dispatchEvent(evt);
-  },
-
   _createEvent: function(evtName, detail, cancelable) {
     // This will have to change if we ever want to send a CustomEvent with null
     // detail.  For now, it's OK.
@@ -545,7 +540,24 @@ BrowserElementParent.prototype = {
     return this._frameLoader.visible;
   },
 
+  getChildProcessOffset: function() {
+    let offset = { x: 0, y: 0 };
+    let tabParent = this._frameLoader.tabParent;
+    if (tabParent) {
+      let offsetX = {};
+      let offsetY = {};
+      tabParent.getChildProcessOffset(offsetX, offsetY);
+      offset.x = offsetX.value;
+      offset.y = offsetY.value;
+    }
+    return offset;
+  },
+
   sendMouseEvent: defineNoReturnMethod(function(type, x, y, button, clickCount, modifiers) {
+    let offset = this.getChildProcessOffset();
+    x += offset.x;
+    y += offset.y;
+
     this._sendAsyncMsg("send-mouse-event", {
       "type": type,
       "x": x,
@@ -573,6 +585,13 @@ BrowserElementParent.prototype = {
                                  count,
                                  modifiers);
     } else {
+      let offset = this.getChildProcessOffset();
+      for (var i = 0; i < touchesX.length; i++) {
+        touchesX[i] += offset.x;
+      }
+      for (var i = 0; i < touchesY.length; i++) {
+        touchesY[i] += offset.y;
+      }
       this._sendAsyncMsg("send-touch-event", {
         "type": type,
         "identifiers": identifiers,
@@ -625,10 +644,11 @@ BrowserElementParent.prototype = {
     if (!this._isAlive()) {
       return null;
     }
-    let ioService =
-      Cc['@mozilla.org/network/io-service;1'].getService(Ci.nsIIOService);
-    let uri = ioService.newURI(_url, null, null);
+    
+    let uri = Services.io.newURI(_url, null, null);
     let url = uri.QueryInterface(Ci.nsIURL);
+
+    debug('original _options = ' + uneval(_options));
 
     // Ensure we have _options, we always use it to send the filename.
     _options = _options || {};
@@ -636,7 +656,7 @@ BrowserElementParent.prototype = {
       _options.filename = url.fileName;
     }
 
-    debug('_options = ' + uneval(_options));
+    debug('final _options = ' + uneval(_options));
 
     // Ensure we have a filename.
     if (!_options.filename) {
@@ -714,7 +734,37 @@ BrowserElementParent.prototype = {
                                              Ci.nsIRequestObserver])
     };
 
-    let channel = ioService.newChannelFromURI(url);
+    // If we have a URI we'll use it to get the triggering principal to use, 
+    // if not available a null principal is acceptable.
+    let referrer = null;
+    let principal = null;
+    if (_options.referrer) {
+      // newURI can throw on malformed URIs.
+      try {
+        referrer = Services.io.newURI(_options.referrer, null, null);
+      }
+      catch(e) {
+        debug('Malformed referrer -- ' + e);
+      }
+      // This simply returns null if there is no principal available
+      // for the requested uri. This is an acceptable fallback when
+      // calling newChannelFromURI2.
+      principal = 
+        Services.scriptSecurityManager.getAppCodebasePrincipal(
+          referrer, 
+          this._frameLoader.loadContext.appId, 
+          this._frameLoader.loadContext.isInBrowserElement);
+    }
+
+    debug('Using principal? ' + !!principal);
+
+    let channel = 
+      Services.io.newChannelFromURI2(url,
+                                     null,       // No document. 
+                                     principal,  // Loading principal
+                                     principal,  // Triggering principal
+                                     Ci.nsILoadInfo.SEC_NORMAL,
+                                     Ci.nsIContentPolicy.TYPE_OTHER);
 
     // XXX We would set private browsing information prior to calling this.
     channel.notificationCallbacks = interfaceRequestor;
@@ -731,8 +781,8 @@ BrowserElementParent.prototype = {
     channel.loadFlags |= flags;
 
     if (channel instanceof Ci.nsIHttpChannel) {
-      debug('Setting HTTP referrer = ' + this._window.document.documentURIObject);
-      channel.referrer = this._window.document.documentURIObject;
+      debug('Setting HTTP referrer = ' + (referrer && referrer.spec)); 
+      channel.referrer = referrer;
       if (channel instanceof Ci.nsIHttpChannelInternal) {
         channel.forceAllowThirdPartyCookie = true;
       }
@@ -832,6 +882,35 @@ BrowserElementParent.prototype = {
 
     return this._sendDOMRequest('set-input-method-active',
                                 {isActive: isActive});
+  },
+
+  setNFCFocus: function(isFocus) {
+    if (!this._isAlive()) {
+      throw Components.Exception("Dead content process",
+                                 Cr.NS_ERROR_DOM_INVALID_STATE_ERR);
+    }
+
+    // For now, we use tab id as an identifier to let NFC module know
+    // which app is in foreground. But this approach will not work in
+    // in-process mode because tab id doesn't exist. Fix bug 1116449
+    // if we are going to support in-process mode.
+    try {
+      var tabId = this._frameLoader.QueryInterface(Ci.nsIFrameLoader)
+                                   .tabParent
+                                   .tabId;
+    } catch(e) {
+      debug("SetNFCFocus for in-process mode is not yet supported");
+      throw Components.Exception("SetNFCFocus for in-process mode is not yet supported",
+                                 Cr.NS_ERROR_NOT_IMPLEMENTED);
+    }
+
+    try {
+      let nfcContentHelper =
+        Cc["@mozilla.org/nfc/content-helper;1"].getService(Ci.nsINfcBrowserAPI);
+      nfcContentHelper.setFocusApp(tabId, isFocus);
+    } catch(e) {
+      // Not all platforms support NFC
+    }
   },
 
   /**

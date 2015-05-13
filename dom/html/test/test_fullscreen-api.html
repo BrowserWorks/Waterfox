@@ -22,14 +22,6 @@
 <script type="application/javascript">
 
 /** Tests for Bug 545812 **/
-
-// Ensure the full-screen api is enabled, and will be disabled on test exit.
-SpecialPowers.setBoolPref("full-screen-api.enabled", true);
-
-// Disable the requirement for trusted contexts only, so the tests are easier
-// to write.
-SpecialPowers.setBoolPref("full-screen-api.allow-trusted-requests-only", false);
-
 SimpleTest.requestFlakyTimeout("untriaged");
 
 // Run the tests which go full-screen in new windows, as mochitests normally
@@ -39,6 +31,7 @@ var gTestWindows = [
   "file_fullscreen-ancestor-stacking-context.html",
   "file_fullscreen-multiple.html",
   "file_fullscreen-rollback.html",
+  "file_fullscreen-esc-context-menu.html",
   "file_fullscreen-esc-exit.html",
   "file_fullscreen-denied.html",
   "file_fullscreen-api.html",
@@ -57,6 +50,7 @@ var gTestIndex = 0;
 const isWinXP = navigator.userAgent.indexOf("Windows NT 5.1") != -1;
 const isOSXLion = navigator.userAgent.indexOf("Mac OS X 10.7") != -1;
 const isOSXMtnLion = navigator.userAgent.indexOf("Mac OS X 10.8") != -1;
+const isOSXYosemite = navigator.userAgent.indexOf("Mac OS X 10.10") != -1;
 
 function nextTest() {
   if (isWinXP) {
@@ -66,7 +60,7 @@ function nextTest() {
   }
   if (testWindow) {
     testWindow.close();
-    if (isOSXLion || isOSXMtnLion) {
+    if (isOSXLion || isOSXMtnLion || isOSXYosemite) {
       // On OS X Lion, tests cause problems. Timeouts are a bad way to get around
       // the problem and may lead to future [orange], but they are the only option
       // at this point.
@@ -92,13 +86,11 @@ function runNextTest() {
     }, false);
     gTestIndex++;
   } else {
-    SpecialPowers.clearUserPref("full-screen-api.enabled");
-    SpecialPowers.clearUserPref("full-screen-api.allow-trusted-requests-only");
     SimpleTest.finish();
   }
 }
 
-if (isOSXLion || isOSXMtnLion) {
+if (isOSXLion || isOSXMtnLion || isOSXYosemite) {
   todo(false, "Can't reliably run full-screen tests on OS X (bug 900453 comment 18 & bug 802504)");
 } else {
   try {
@@ -106,11 +98,16 @@ if (isOSXLion || isOSXMtnLion) {
   } catch (e) {
   }
   is(window.fullScreen, false, "Shouldn't be able to set window fullscreen from content");
-
-  addLoadEvent(nextTest);
+  // Ensure the full-screen api is enabled, and will be disabled on test exit.
+  // Disable the requirement for trusted contexts only, so the tests are easier
+  // to write
+  addLoadEvent(function() {
+    SpecialPowers.pushPrefEnv({
+      "set":[["full-screen-api.enabled", true],
+             ["full-screen-api.allow-trusted-requests-only", false]]}, nextTest);
+  });
   SimpleTest.waitForExplicitFinish();
 }
-
 </script>
 </pre>
 </body>

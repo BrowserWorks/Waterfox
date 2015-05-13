@@ -286,7 +286,7 @@ function getLocale() {
  *         just the AsyncObjectCaller
  */
 function AsyncObjectCaller(aObjects, aMethod, aListener) {
-  this.objects = aObjects.slice(0);
+  this.objects = [...aObjects];
   this.method = aMethod;
   this.listener = aListener;
 
@@ -508,6 +508,7 @@ var gHotfixID = null;
 var gShutdownBarrier = null;
 var gRepoShutdownState = "";
 var gShutdownInProgress = false;
+var gPluginPageListener = null;
 
 /**
  * This is the real manager, kept here rather than in AddonManager to keep its
@@ -518,7 +519,8 @@ var AddonManagerInternal = {
   installListeners: [],
   addonListeners: [],
   typeListeners: [],
-  providers: [],
+  pendingProviders: new Set(),
+  providers: new Set(),
   providerShutdowns: new Map(),
   types: {},
   startupChanges: {},
@@ -666,10 +668,20 @@ var AddonManagerInternal = {
       throw Components.Exception("AddonManager is not initialized",
                                  Cr.NS_ERROR_NOT_INITIALIZED);
 
+    logger.debug(`Starting provider: ${providerName(aProvider)}`);
     callProvider(aProvider, "startup", null, aAppChanged, aOldAppVersion, aOldPlatformVersion);
     if ('shutdown' in aProvider) {
       let name = providerName(aProvider);
       let AMProviderShutdown = () => {
+        // If the provider has been unregistered, it will have been removed from
+        // this.providers. If it hasn't been unregistered, then this is a normal
+        // shutdown - and we move it to this.pendingProviders incase we're
+        // running in a test that will start AddonManager again.
+        if (this.providers.has(aProvider)) {
+          this.providers.delete(aProvider);
+          this.pendingProviders.add(aProvider);
+        }
+
         return new Promise((resolve, reject) => {
             logger.debug("Calling shutdown blocker for " + name);
             resolve(aProvider.shutdown());
@@ -683,6 +695,10 @@ var AddonManagerInternal = {
       this.providerShutdowns.set(aProvider, AMProviderShutdown);
       AddonManager.shutdown.addBlocker(name, AMProviderShutdown);
     }
+
+    this.pendingProviders.delete(aProvider);
+    this.providers.add(aProvider);
+    logger.debug(`Provider finished startup: ${providerName(aProvider)}`);
   },
 
   /**
@@ -805,6 +821,7 @@ var AddonManagerInternal = {
 
         try {
           Components.utils.import(url, {});
+          logger.debug(`Loaded provider scope for ${url}`);
         }
         catch (e) {
           AddonManagerPrivate.recordException("AMI", "provider " + url + " load failed", e);
@@ -822,7 +839,7 @@ var AddonManagerInternal = {
       // Once we start calling providers we must allow all normal methods to work.
       gStarted = true;
 
-      for (let provider of this.providers) {
+      for (let provider of this.pendingProviders) {
         this._startProvider(provider, appChanged, oldAppVersion, oldPlatformVersion);
       }
 
@@ -832,6 +849,13 @@ var AddonManagerInternal = {
           delete this.startupChanges[type];
       }
 
+      // Support for remote about:plugins. Note that this module isn't loaded
+      // at the top because Services.appinfo is defined late in tests.
+      Cu.import("resource://gre/modules/RemotePageManager.jsm");
+
+      gPluginPageListener = new RemotePages("about:plugins");
+      gPluginPageListener.addMessageListener("RequestPlugins", this.requestPlugins);
+
       gStartupComplete = true;
       this.recordTimestamp("AMI_startup_end");
     }
@@ -839,6 +863,9 @@ var AddonManagerInternal = {
       logger.error("startup failed", e);
       AddonManagerPrivate.recordException("AMI", "startup failed", e);
     }
+
+    logger.debug("Completed startup sequence");
+    this.callManagerListeners("onStartup");
   },
 
   /**
@@ -858,7 +885,7 @@ var AddonManagerInternal = {
       throw Components.Exception("aTypes must be an array or null",
                                  Cr.NS_ERROR_INVALID_ARG);
 
-    this.providers.push(aProvider);
+    this.pendingProviders.add(aProvider);
 
     if (aTypes) {
       aTypes.forEach(function(aType) {
@@ -906,13 +933,11 @@ var AddonManagerInternal = {
       throw Components.Exception("aProvider must be specified",
                                  Cr.NS_ERROR_INVALID_ARG);
 
-    let pos = 0;
-    while (pos < this.providers.length) {
-      if (this.providers[pos] == aProvider)
-        this.providers.splice(pos, 1);
-      else
-        pos++;
-    }
+    this.providers.delete(aProvider);
+    // The test harness will unregister XPIProvider *after* shutdown, which is
+    // after the provider will have been moved from providers to
+    // pendingProviders.
+    this.pendingProviders.delete(aProvider);
 
     for (let type in this.types) {
       this.types[type].providers = this.types[type].providers.filter(function filterProvider(p) p != aProvider);
@@ -945,6 +970,39 @@ var AddonManagerInternal = {
   },
 
   /**
+   * Mark a provider as safe to access via AddonManager APIs, before its
+   * startup has completed.
+   *
+   * Normally a provider isn't marked as safe until after its (synchronous)
+   * startup() method has returned. Until a provider has been marked safe,
+   * it won't be used by any of the AddonManager APIs. markProviderSafe()
+   * allows a provider to mark itself as safe during its startup; this can be
+   * useful if the provider wants to perform tasks that block startup, which
+   * happen after its required initialization tasks and therefore when the
+   * provider is in a safe state.
+   *
+   * @param aProvider Provider object to mark safe
+   */
+  markProviderSafe: function AMI_markProviderSafe(aProvider) {
+    if (!gStarted) {
+      throw Components.Exception("AddonManager is not initialized",
+                                 Cr.NS_ERROR_NOT_INITIALIZED);
+    }
+
+    if (!aProvider || typeof aProvider != "object") {
+      throw Components.Exception("aProvider must be specified",
+                                 Cr.NS_ERROR_INVALID_ARG);
+    }
+
+    if (!this.pendingProviders.has(aProvider)) {
+      return;
+    }
+
+    this.pendingProviders.delete(aProvider);
+    this.providers.add(aProvider);
+  },
+
+  /**
    * Calls a method on all registered providers if it exists and consumes any
    * thrown exception. Return values are ignored. Any parameters after the
    * method parameter are passed to the provider's method.
@@ -960,7 +1018,7 @@ var AddonManagerInternal = {
       throw Components.Exception("aMethod must be a non-empty string",
                                  Cr.NS_ERROR_INVALID_ARG);
 
-    let providers = this.providers.slice(0);
+    let providers = [...this.providers];
     for (let provider of providers) {
       try {
         if (aMethod in provider)
@@ -998,6 +1056,8 @@ var AddonManagerInternal = {
    */
   shutdownManager: Task.async(function* () {
     logger.debug("shutdown");
+    this.callManagerListeners("onShutdown");
+
     gRepoShutdownState = "pending";
     gShutdownInProgress = true;
     // Clean up listeners
@@ -1007,6 +1067,8 @@ var AddonManagerInternal = {
     Services.prefs.removeObserver(PREF_EM_UPDATE_ENABLED, this);
     Services.prefs.removeObserver(PREF_EM_AUTOUPDATE_DEFAULT, this);
     Services.prefs.removeObserver(PREF_EM_HOTFIX_ID, this);
+    gPluginPageListener.destroy();
+    gPluginPageListener = null;
 
     let savedError = null;
     // Only shut down providers if they've been started.
@@ -1049,6 +1111,24 @@ var AddonManagerInternal = {
       throw savedError;
     }
   }),
+
+  requestPlugins: function({ target: port }) {
+    // Lists all the properties that plugins.html needs
+    const NEEDED_PROPS = ["name", "pluginLibraries", "pluginFullpath", "version",
+                          "isActive", "blocklistState", "description",
+                          "pluginMimeTypes"];
+    function filterProperties(plugin) {
+      let filtered = {};
+      for (let prop of NEEDED_PROPS) {
+        filtered[prop] = plugin[prop];
+      }
+      return filtered;
+    }
+
+    AddonManager.getAddonsByTypes(["plugin"], function (aPlugins) {
+      port.sendAsyncMessage("PluginList", [filterProperties(p) for (p of aPlugins)]);
+    });
+  },
 
   /**
    * Notified when a preference we're interested in has changed.
@@ -1324,6 +1404,18 @@ var AddonManagerInternal = {
 
             aInstall.addListener({
               onDownloadEnded: function BUC_onDownloadEnded(aInstall) {
+                if (aInstall.addon.id != hotfixID) {
+                  logger.warn("The downloaded hotfix add-on did not have the " +
+                              "expected ID and so will not be installed.");
+                  aInstall.cancel();
+                  return;
+                }
+
+                // If XPIProvider has reported the hotfix as properly signed then
+                // there is nothing more to do here
+                if (aInstall.addon.signedState == AddonManager.SIGNEDSTATE_SIGNED)
+                  return;
+
                 try {
                   if (!Services.prefs.getBoolPref(PREF_EM_CERT_CHECKATTRIBUTES))
                     return;
@@ -1560,7 +1652,23 @@ var AddonManagerInternal = {
       throw Components.Exception("aType must be a non-empty string",
                                  Cr.NS_ERROR_INVALID_ARG);
 
-    this.callProviders("addonChanged", aID, aType, aPendingRestart);
+    // Temporary hack until bug 520124 lands.
+    // We can get here during synchronous startup, at which point it's
+    // considered unsafe (and therefore disallowed by AddonManager.jsm) to
+    // access providers that haven't been initialized yet. Since this is when
+    // XPIProvider is starting up, XPIProvider can't access itself via APIs
+    // going through AddonManager.jsm. Furthermore, LightweightThemeManager may
+    // not be initialized until after XPIProvider is, and therefore would also
+    // be unaccessible during XPIProvider startup. Thankfully, these are the
+    // only two uses of this API, and we know it's safe to use this API with
+    // both providers; so we have this hack to allow bypassing the normal
+    // safetey guard.
+    // The notifyAddonChanged/addonChanged API will be unneeded and therefore
+    // removed by bug 520124, so this is a temporary quick'n'dirty hack.
+    let providers = [...this.providers, ...this.pendingProviders];
+    for (let provider of providers) {
+      callProvider(provider, "addonChanged", null, aID, aType, aPendingRestart);
+    }
   },
 
   /**
@@ -1671,7 +1779,7 @@ var AddonManagerInternal = {
       throw Components.Exception("aBrowser must be a nsIDOMElement or null",
                                  Cr.NS_ERROR_INVALID_ARG);
 
-    let providers = this.providers.slice(0);
+    let providers = [...this.providers];
     for (let provider of providers) {
       if (callProvider(provider, "supportsMimetype", false, aMimetype)) {
         callProviderAsync(provider, "getInstallForURL",
@@ -1803,8 +1911,9 @@ var AddonManagerInternal = {
       throw Components.Exception("aURI is not a nsIURI",
                                  Cr.NS_ERROR_INVALID_ARG);
     }
+
     // Try all providers
-    let providers = this.providers.slice(0);
+    let providers = [...this.providers];
     for (let provider of providers) {
       var id = callProvider(provider, "mapURIToAddonID", null, aURI);
       if (id !== null) {
@@ -1831,7 +1940,7 @@ var AddonManagerInternal = {
       throw Components.Exception("aMimetype must be a non-empty string",
                                  Cr.NS_ERROR_INVALID_ARG);
 
-    let providers = this.providers.slice(0);
+    let providers = [...this.providers];
     for (let provider of providers) {
       if (callProvider(provider, "supportsMimetype", false, aMimetype) &&
           callProvider(provider, "isInstallEnabled"))
@@ -1863,7 +1972,7 @@ var AddonManagerInternal = {
       throw Components.Exception("aURI must be a nsIURI or null",
                                  Cr.NS_ERROR_INVALID_ARG);
 
-    let providers = this.providers.slice(0);
+    let providers = [...this.providers];
     for (let provider of providers) {
       if (callProvider(provider, "supportsMimetype", false, aMimetype) &&
           callProvider(provider, "isInstallAllowed", null, aURI))
@@ -2412,6 +2521,10 @@ this.AddonManagerPrivate = {
     AddonManagerInternal.unregisterProvider(aProvider);
   },
 
+  markProviderSafe: function AMP_markProviderSafe(aProvider) {
+    AddonManagerInternal.markProviderSafe(aProvider);
+  },
+
   backgroundUpdateCheck: function AMP_backgroundUpdateCheck() {
     return AddonManagerInternal.backgroundUpdateCheck();
   },
@@ -2571,6 +2684,8 @@ this.AddonManager = {
   ERROR_CORRUPT_FILE: -3,
   // An error occured trying to write to the filesystem.
   ERROR_FILE_ACCESS: -4,
+  // The add-on must be signed and isn't.
+  ERROR_SIGNEDSTATE_REQUIRED: -5,
 
   // These must be kept in sync with AddonUpdateChecker.
   // No error was encountered.
@@ -2706,6 +2821,20 @@ this.AddonManager = {
   // add-ons that were pending being enabled the last time the application ran.
   STARTUP_CHANGE_ENABLED: "enabled",
 
+  // Constants for Addon.signedState. Any states that should cause an add-on
+  // to be unusable in builds that require signing should have negative values.
+  // Add-on is signed but signature verification has failed.
+  SIGNEDSTATE_BROKEN: -2,
+  // Add-on may be signed but by an certificate that doesn't chain to our
+  // our trusted certificate.
+  SIGNEDSTATE_UNKNOWN: -1,
+  // Add-on is unsigned.
+  SIGNEDSTATE_MISSING: 0,
+  // Add-on is preliminarily reviewed.
+  SIGNEDSTATE_PRELIMINARY: 1,
+  // Add-on is fully reviewed.
+  SIGNEDSTATE_SIGNED: 2,
+
   // Constants for the Addon.userDisabled property
   // Indicates that the userDisabled state of this add-on is currently
   // ask-to-activate. That is, it can be conditionally enabled on a
@@ -2717,6 +2846,10 @@ this.AddonManager = {
     return AddonManagerInternal;
   },
 #endif
+
+  get isReady() {
+    return gStartupComplete && !gShutdownInProgress;
+  },
 
   getInstallForURL: function AM_getInstallForURL(aUrl, aCallback, aMimetype,
                                                  aHash, aName, aIcons,

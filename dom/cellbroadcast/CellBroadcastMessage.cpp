@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -102,9 +103,9 @@ CellBroadcastMessage::CellBroadcastMessage(nsPIDOMWindow* aWindow,
 }
 
 JSObject*
-CellBroadcastMessage::WrapObject(JSContext* aCx)
+CellBroadcastMessage::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return MozCellBroadcastMessageBinding::Wrap(aCx, this);
+  return MozCellBroadcastMessageBinding::Wrap(aCx, this, aGivenProto);
 }
 
 already_AddRefed<CellBroadcastEtwsInfo>
@@ -144,9 +145,9 @@ CellBroadcastEtwsInfo::CellBroadcastEtwsInfo(nsPIDOMWindow* aWindow,
 }
 
 JSObject*
-CellBroadcastEtwsInfo::WrapObject(JSContext* aCx)
+CellBroadcastEtwsInfo::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return MozCellBroadcastEtwsInfoBinding::Wrap(aCx, this);
+  return MozCellBroadcastEtwsInfoBinding::Wrap(aCx, this, aGivenProto);
 }
 
 } // namespace dom

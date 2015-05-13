@@ -13,6 +13,13 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 var global = this;
 
+
+// Lazily load the finder code
+addMessageListener("Finder:Initialize", function () {
+  let {RemoteFinderListener} = Cu.import("resource://gre/modules/RemoteFinder.jsm", {});
+  new RemoteFinderListener(global);
+});
+
 let ClickEventHandler = {
   init: function init() {
     this._scrollable = null;
@@ -23,9 +30,7 @@ let ClickEventHandler = {
     this._screenY = null;
     this._lastFrame = null;
 
-    Cc["@mozilla.org/eventlistenerservice;1"]
-      .getService(Ci.nsIEventListenerService)
-      .addSystemEventListener(global, "mousedown", this, true);
+    Services.els.addSystemEventListener(global, "mousedown", this, true);
 
     addMessageListener("Autoscroll:Stop", this);
   },
@@ -127,9 +132,7 @@ let ClickEventHandler = {
       return;
     }
 
-    Cc["@mozilla.org/eventlistenerservice;1"]
-      .getService(Ci.nsIEventListenerService)
-      .addSystemEventListener(global, "mousemove", this, true);
+    Services.els.addSystemEventListener(global, "mousemove", this, true);
     addEventListener("pagehide", this, true);
 
     this._ignoreMouseEvents = true;
@@ -146,11 +149,10 @@ let ClickEventHandler = {
 
   stopScroll: function() {
     if (this._scrollable) {
+      this._scrollable.mozScrollSnap();
       this._scrollable = null;
 
-      Cc["@mozilla.org/eventlistenerservice;1"]
-        .getService(Ci.nsIEventListenerService)
-        .removeSystemEventListener(global, "mousemove", this, true);
+      Services.els.removeSystemEventListener(global, "mousemove", this, true);
       removeEventListener("pagehide", this, true);
     }
   },
@@ -378,12 +380,17 @@ let Printing = {
     this.MESSAGES.forEach(msgName => addMessageListener(msgName, this));
   },
 
+  get shouldSavePrintSettings() {
+    return Services.prefs.getBoolPref("print.use_global_printsettings", false) &&
+           Services.prefs.getBoolPref("print.save_print_settings", false);
+  },
+
   receiveMessage(message) {
     let objects = message.objects;
     let data = message.data;
     switch(message.name) {
       case "Printing:Preview:Enter": {
-        this.enterPrintPreview(objects.printSettings, objects.contentWindow);
+        this.enterPrintPreview(objects.contentWindow);
         break;
       }
 
@@ -403,19 +410,37 @@ let Printing = {
       }
 
       case "Printing:Print": {
-        this.print(objects.printSettings, objects.contentWindow);
+        this.print(objects.contentWindow);
         break;
       }
     }
   },
 
-  enterPrintPreview(printSettings, contentWindow) {
-    // Bug 1088070 - we should instantiate nsIPrintSettings here in the
-    // content script instead of passing it down as a CPOW.
-    if (Cu.isCrossProcessWrapper(printSettings)) {
-      printSettings = null;
+  getPrintSettings() {
+    try {
+      let PSSVC = Cc["@mozilla.org/gfx/printsettings-service;1"]
+                    .getService(Ci.nsIPrintSettingsService);
+
+      let printSettings = PSSVC.globalPrintSettings;
+      if (!printSettings.printerName) {
+        printSettings.printerName = PSSVC.defaultPrinterName;
+      }
+      // First get any defaults from the printer
+      PSSVC.initPrintSettingsFromPrinter(printSettings.printerName,
+                                         printSettings);
+      // now augment them with any values from last time
+      PSSVC.initPrintSettingsFromPrefs(printSettings, true,
+                                       printSettings.kInitSaveAll);
+
+      return printSettings;
+    } catch(e) {
+      Components.utils.reportError(e);
     }
 
+    return null;
+  },
+
+  enterPrintPreview(contentWindow) {
     // We'll call this whenever we've finished reflowing the document, or if
     // we errored out while attempting to print preview (in which case, we'll
     // notify the parent that we've failed).
@@ -438,6 +463,7 @@ let Printing = {
     addEventListener("printPreviewUpdate", onPrintPreviewReady);
 
     try {
+      let printSettings = this.getPrintSettings();
       docShell.printPreview.printPreview(printSettings, contentWindow, this);
     } catch(error) {
       // This might fail if we, for example, attempt to print a XUL document.
@@ -451,16 +477,31 @@ let Printing = {
     docShell.printPreview.exitPrintPreview();
   },
 
-  print(printSettings, contentWindow) {
-    // Bug 1088070 - we should instantiate nsIPrintSettings here in the
-    // content script instead of passing it down as a CPOW.
-    if (Cu.isCrossProcessWrapper(printSettings)) {
-      printSettings = null;
+  print(contentWindow) {
+    let printSettings = this.getPrintSettings();
+    let rv = Cr.NS_OK;
+    try {
+      let print = contentWindow.QueryInterface(Ci.nsIInterfaceRequestor)
+                               .getInterface(Ci.nsIWebBrowserPrint);
+      print.print(printSettings, null);
+    } catch(e) {
+      // Pressing cancel is expressed as an NS_ERROR_ABORT return value,
+      // causing an exception to be thrown which we catch here.
+      if (e.result != Cr.NS_ERROR_ABORT) {
+        Cu.reportError(`In Printing:Print:Done handler, got unexpected rv
+                        ${e.result}.`);
+      }
     }
 
-    let print = contentWindow.QueryInterface(Ci.nsIInterfaceRequestor)
-                             .getInterface(Ci.nsIWebBrowserPrint);
-    print.print(printSettings, null);
+    if (this.shouldSavePrintSettings) {
+      let PSSVC = Cc["@mozilla.org/gfx/printsettings-service;1"]
+                    .getService(Ci.nsIPrintSettingsService);
+
+      PSSVC.savePrintSettingsToPrefs(printSettings, true,
+                                     printSettings.kInitSaveAll);
+      PSSVC.savePrintSettingsToPrefs(printSettings, false,
+                                     printSettings.kInitSavePrinterName);
+    }
   },
 
   updatePageCount() {
@@ -500,3 +541,107 @@ let Printing = {
 }
 Printing.init();
 
+function SwitchDocumentDirection(aWindow) {
+ // document.dir can also be "auto", in which case it won't change
+  if (aWindow.document.dir == "ltr" || aWindow.document.dir == "") {
+    aWindow.document.dir = "rtl";
+  } else if (aWindow.document.dir == "rtl") {
+    aWindow.document.dir = "ltr";
+  }
+  for (let run = 0; run < aWindow.frames.length; run++) {
+    SwitchDocumentDirection(aWindow.frames[run]);
+  }
+}
+
+addMessageListener("SwitchDocumentDirection", () => {
+  SwitchDocumentDirection(content.window);
+});
+
+let FindBar = {
+  /* Please keep in sync with toolkit/content/widgets/findbar.xml */
+  FIND_NORMAL: 0,
+  FIND_TYPEAHEAD: 1,
+  FIND_LINKS: 2,
+  FAYT_LINKS_KEY: "'".charCodeAt(0),
+  FAYT_TEXT_KEY: "/".charCodeAt(0),
+
+  _findMode: 0,
+  get _findAsYouType() {
+    return Services.prefs.getBoolPref("accessibility.typeaheadfind");
+  },
+
+  init() {
+    addMessageListener("Findbar:UpdateState", this);
+    Services.els.addSystemEventListener(global, "keypress", this, false);
+    Services.els.addSystemEventListener(global, "mouseup", this, false);
+  },
+
+  receiveMessage(msg) {
+    switch (msg.name) {
+      case "Findbar:UpdateState":
+        this._findMode = msg.data.findMode;
+        this._findAsYouType = msg.data.findAsYouType;
+        break;
+    }
+  },
+
+  handleEvent(event) {
+    switch (event.type) {
+      case "keypress":
+        this._onKeypress(event);
+        break;
+      case "mouseup":
+        this._onMouseup(event);
+        break;
+    }
+  },
+
+  /**
+   * Returns whether FAYT can be used for the given event in
+   * the current content state.
+   */
+  _shouldFastFind() {
+    //XXXgijs: why all these shenanigans? Why not use the event's target?
+    let focusedWindow = {};
+    let elt = Services.focus.getFocusedElementForWindow(content, true, focusedWindow);
+    let win = focusedWindow.value;
+    let {BrowserUtils} = Cu.import("resource://gre/modules/BrowserUtils.jsm", {});
+    return BrowserUtils.shouldFastFind(elt, win);
+  },
+
+  _onKeypress(event) {
+    // Useless keys:
+    if (event.ctrlKey || event.altKey || event.metaKey || event.defaultPrevented) {
+      return;
+    }
+    // Not interested in random keypresses most of the time:
+    if (this._findMode == this.FIND_NORMAL && !this._findAsYouType &&
+        event.charCode != this.FAYT_LINKS_KEY && event.charCode != this.FAYT_TEXT_KEY) {
+      return;
+    }
+
+    // Check the focused element etc.
+    if (!this._shouldFastFind()) {
+      return;
+    }
+
+    let fakeEvent = {};
+    for (let k in event) {
+      if (typeof event[k] != "object" && typeof event[k] != "function") {
+        fakeEvent[k] = event[k];
+      }
+    }
+    // sendSyncMessage returns an array of the responses from all listeners
+    let rv = sendSyncMessage("Findbar:Keypress", fakeEvent);
+    if (rv.indexOf(false) !== -1) {
+      event.preventDefault();
+      return false;
+    }
+  },
+
+  _onMouseup(event) {
+    if (this._findMode != this.FIND_NORMAL)
+      sendAsyncMessage("Findbar:Mouseup");
+  },
+};
+FindBar.init();

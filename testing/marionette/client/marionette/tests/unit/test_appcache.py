@@ -13,8 +13,8 @@
 #See the License for the specific language governing permissions and
 #limitations under the License.
 
-from application_cache import ApplicationCache
-from marionette_test import MarionetteTestCase
+from marionette_driver.application_cache import ApplicationCache
+from marionette import MarionetteTestCase
 
 
 class AppCacheTests(MarionetteTestCase):
@@ -24,7 +24,7 @@ class AppCacheTests(MarionetteTestCase):
         self.marionette.navigate(test_url)
         app_cache = self.marionette.application_cache
 
-        status = app_cache.status 
+        status = app_cache.status
         while status == ApplicationCache.DOWNLOADING:
             status = app_cache.status
 

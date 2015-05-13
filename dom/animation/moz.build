@@ -9,21 +9,24 @@ MOCHITEST_CHROME_MANIFESTS += ['test/chrome.ini']
 
 EXPORTS.mozilla.dom += [
     'Animation.h',
-    'AnimationEffect.h',
-    'AnimationPlayer.h',
+    'AnimationEffectReadOnly.h',
     'AnimationTimeline.h',
+    'DocumentTimeline.h',
+    'KeyframeEffect.h',
 ]
 
 EXPORTS.mozilla += [
-    'PendingPlayerTracker.h',
+    'AnimationUtils.h',
+    'PendingAnimationTracker.h',
 ]
 
 UNIFIED_SOURCES += [
     'Animation.cpp',
-    'AnimationEffect.cpp',
-    'AnimationPlayer.cpp',
+    'AnimationEffectReadOnly.cpp',
     'AnimationTimeline.cpp',
-    'PendingPlayerTracker.cpp',
+    'DocumentTimeline.cpp',
+    'KeyframeEffect.cpp',
+    'PendingAnimationTracker.cpp',
 ]
 
 FAIL_ON_WARNINGS = True

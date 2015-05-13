@@ -14,12 +14,13 @@
 #include "WebGLContext.h"
 #include "WebGLContextUtils.h"
 #include "WebGLTexelConversions.h"
+#include "mozilla/gfx/Logging.h"
 
 namespace mozilla {
 
 JSObject*
-WebGLTexture::WrapObject(JSContext* cx) {
-    return dom::WebGLTextureBinding::Wrap(cx, this);
+WebGLTexture::WrapObject(JSContext* cx, JS::Handle<JSObject*> aGivenProto) {
+    return dom::WebGLTextureBinding::Wrap(cx, this, aGivenProto);
 }
 
 WebGLTexture::WebGLTexture(WebGLContext* webgl, GLuint tex)
@@ -181,6 +182,8 @@ WebGLTexture::SetImageInfo(TexImageTarget texImageTarget, GLint level,
     MOZ_ASSERT(depth == 1 || texImageTarget == LOCAL_GL_TEXTURE_3D);
     MOZ_ASSERT(TexImageTargetToTexTarget(texImageTarget) == mTarget);
 
+    InvalidateStatusOfAttachedFBs();
+
     EnsureMaxLevelWithCustomImagesAtLeast(level);
 
     ImageInfoAt(texImageTarget, level) = ImageInfo(width, height, depth,
@@ -189,9 +192,6 @@ WebGLTexture::SetImageInfo(TexImageTarget texImageTarget, GLint level,
 
     if (level > 0)
         SetCustomMipmap();
-
-    // Invalidate framebuffer status cache.
-    NotifyFBsStatusChanged();
 
     SetFakeBlackStatus(WebGLTextureFakeBlackStatus::Unknown);
 }
@@ -530,7 +530,7 @@ ClearByMask(WebGLContext* webgl, GLbitfield mask)
         colorAttachmentsMask[0] = true;
     }
 
-    webgl->ForceClearFramebufferWithDefaultValues(mask, colorAttachmentsMask);
+    webgl->ForceClearFramebufferWithDefaultValues(false, mask, colorAttachmentsMask);
     return true;
 }
 
@@ -599,10 +599,10 @@ ClearWithTempFB(WebGLContext* webgl, GLuint tex,
 
     gl::ScopedRenderbuffer rb(gl);
     {
-        gl::ScopedBindRenderbuffer(gl, rb.RB());
-        gl->fRenderbufferStorage(LOCAL_GL_RENDERBUFFER,
-                                 LOCAL_GL_RGBA4,
-                                 width, height);
+        // Only GLES guarantees RGBA4.
+        GLenum format = gl->IsGLES() ? LOCAL_GL_RGBA4 : LOCAL_GL_RGBA8;
+        gl::ScopedBindRenderbuffer rbBinding(gl, rb.RB());
+        gl->fRenderbufferStorage(LOCAL_GL_RENDERBUFFER, format, width, height);
     }
 
     gl->fFramebufferRenderbuffer(LOCAL_GL_FRAMEBUFFER, LOCAL_GL_COLOR_ATTACHMENT0,
@@ -690,6 +690,7 @@ WebGLTexture::EnsureNoUninitializedImageData(TexImageTarget imageTarget,
     if (error) {
         // Should only be OUT_OF_MEMORY. Anyway, there's no good way to recover
         // from this here.
+        gfxCriticalError() << "GL context GetAndFlushUnderlyingGLErrors " << gfx::hexa(error);
         printf_stderr("Error: 0x%4x\n", error);
         MOZ_CRASH(); // Errors on texture upload have been related to video
                      // memory exposure in the past.

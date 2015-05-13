@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -8,8 +9,6 @@
 
 #include "mozilla/gfx/2D.h"
 #include "SVGGraphicsElement.h"
-
-class gfxMatrix;
 
 struct nsSVGMark {
   enum Type {
@@ -31,6 +30,7 @@ typedef mozilla::dom::SVGGraphicsElement nsSVGPathGeometryElementBase;
 class nsSVGPathGeometryElement : public nsSVGPathGeometryElementBase
 {
 protected:
+  typedef mozilla::gfx::CapStyle CapStyle;
   typedef mozilla::gfx::DrawTarget DrawTarget;
   typedef mozilla::gfx::FillRule FillRule;
   typedef mozilla::gfx::Float Float;
@@ -39,18 +39,19 @@ protected:
   typedef mozilla::gfx::Point Point;
   typedef mozilla::gfx::PathBuilder PathBuilder;
   typedef mozilla::gfx::Rect Rect;
+  typedef mozilla::gfx::StrokeOptions StrokeOptions;
 
 public:
   explicit nsSVGPathGeometryElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
 
   virtual nsresult AfterSetAttr(int32_t aNamespaceID, nsIAtom* aName,
-                                const nsAttrValue* aValue, bool aNotify) MOZ_OVERRIDE;
+                                const nsAttrValue* aValue, bool aNotify) override;
 
   /**
    * Causes this element to discard any Path object that GetOrBuildPath may
    * have cached.
    */
-  virtual void ClearAnyCachedPath() MOZ_OVERRIDE MOZ_FINAL {
+  virtual void ClearAnyCachedPath() override final {
     mCachedPath = nullptr;
   }
 
@@ -76,7 +77,7 @@ public:
    * shapes and simple transforms where the Moz2D Path backends can fail to
    * produce the clean integer bounds that content authors expect in some cases.
    */
-  virtual bool GetGeometryBounds(Rect* aBounds, Float aStrokeWidth,
+  virtual bool GetGeometryBounds(Rect* aBounds, const StrokeOptions& aStrokeOptions,
                                  const Matrix& aTransform) {
     return false;
   }

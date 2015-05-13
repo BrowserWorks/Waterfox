@@ -25,19 +25,18 @@ function* testCollapsedLongAttribute(inspector) {
 
   info("Adding test attributes to the node");
   let onMutated = inspector.once("markupmutation");
-  let node = getNode("#node24");
-  node.setAttribute("class", "");
-  node.setAttribute("data-long", LONG_ATTRIBUTE);
+  yield setNodeAttribute("#node24", "class", "");
+  yield setNodeAttribute("#node24", "data-long", LONG_ATTRIBUTE);
   yield onMutated;
 
-  assertAttributes("#node24", {
+  yield assertAttributes("#node24", {
     id: "node24",
     "class": "",
     "data-long": LONG_ATTRIBUTE
   });
 
   let {editor} = yield getContainerForSelector("#node24", inspector);
-  let attr = editor.attrs["data-long"].querySelector(".editable");
+  let attr = editor.attrElements.get("data-long").querySelector(".editable");
 
   // Check to make sure it has expanded after focus
   attr.focus();
@@ -49,10 +48,10 @@ function* testCollapsedLongAttribute(inspector) {
   setEditableFieldValue(attr, input.value + ' data-short="ABC"', inspector);
   yield inspector.once("markupmutation");
 
-  let visibleAttrText = editor.attrs["data-long"].querySelector(".attr-value").textContent;
+  let visibleAttrText = editor.attrElements.get("data-long").querySelector(".attr-value").textContent;
   is (visibleAttrText, LONG_ATTRIBUTE_COLLAPSED)
 
-  assertAttributes("#node24", {
+  yield assertAttributes("#node24", {
     id: "node24",
     class: "",
     'data-long': LONG_ATTRIBUTE,
@@ -63,14 +62,14 @@ function* testCollapsedLongAttribute(inspector) {
 function* testModifyInlineStyleWithQuotes(inspector) {
   info("Modify inline style containing \"");
 
-  assertAttributes("#node26", {
+  yield assertAttributes("#node26", {
     id: "node26",
     style: 'background-image: url("moz-page-thumb://thumbnail?url=http%3A%2F%2Fwww.mozilla.org%2F");'
   });
 
   let onMutated = inspector.once("markupmutation");
   let {editor} = yield getContainerForSelector("#node26", inspector);
-  let attr = editor.attrs["style"].querySelector(".editable");
+  let attr = editor.attrElements.get("style").querySelector(".editable");
 
   attr.focus();
   EventUtils.sendKey("return", inspector.panelWin);
@@ -90,7 +89,7 @@ function* testModifyInlineStyleWithQuotes(inspector) {
 
   yield onMutated;
 
-  assertAttributes("#node26", {
+  yield assertAttributes("#node26", {
     id: "node26",
     style: 'background-image: url("moz-page-thumb://thumbnail?url=http%3A%2F%2Fwww.mozilla.com%2F");'
   });
@@ -99,14 +98,14 @@ function* testModifyInlineStyleWithQuotes(inspector) {
 function* testEditingAttributeWithMixedQuotes(inspector) {
   info("Modify class containing \" and \'");
 
-  assertAttributes("#node27", {
+  yield assertAttributes("#node27", {
     "id": "node27",
     "class": 'Double " and single \''
   });
 
   let onMutated = inspector.once("markupmutation");
   let {editor} = yield getContainerForSelector("#node27", inspector);
-  let attr = editor.attrs["class"].querySelector(".editable");
+  let attr = editor.attrElements.get("class").querySelector(".editable");
 
   attr.focus();
   EventUtils.sendKey("return", inspector.panelWin);
@@ -123,7 +122,7 @@ function* testEditingAttributeWithMixedQuotes(inspector) {
 
   yield onMutated;
 
-  assertAttributes("#node27", {
+  yield assertAttributes("#node27", {
     id: "node27",
     class: '" " and \' \''
   });

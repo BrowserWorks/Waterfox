@@ -23,7 +23,7 @@
 #include "mozilla/ReentrantMonitor.h"
 #include "mozilla/Mutex.h"
 
-#ifdef MOZILLA_INTERNAL_API
+#if defined(MOZILLA_INTERNAL_API) && !defined(MOZILLA_XPCOMRT_API)
 #include "GeckoProfiler.h"
 #endif //MOZILLA_INTERNAL_API
 
@@ -121,20 +121,20 @@ PrintCycle(const BlockingResourceBase::DDT::ResourceAcquisitionArray* aCycle,
 }
 
 #ifndef MOZ_CALLSTACK_DISABLED
-struct CodeAddressServiceLock MOZ_FINAL
+struct CodeAddressServiceLock final
 {
   static void Unlock() { }
   static void Lock() { }
   static bool IsLocked() { return true; }
 };
 
-struct CodeAddressServiceStringAlloc MOZ_FINAL
+struct CodeAddressServiceStringAlloc final
 {
   static char* copy(const char* aString) { return ::strdup(aString); }
   static void free(char* aString) { ::free(aString); }
 };
 
-class CodeAddressServiceStringTable MOZ_FINAL
+class CodeAddressServiceStringTable final
 {
 public:
   CodeAddressServiceStringTable() : mSet(32) {}
@@ -212,7 +212,7 @@ BlockingResourceBase::BlockingResourceBase(
   , mAcquired()
 #endif
 {
-  NS_ABORT_IF_FALSE(mName, "Name must be nonnull");
+  MOZ_ASSERT(mName, "Name must be nonnull");
   // PR_CallOnce guaranatees that InitStatics is called in a
   // thread-safe way
   if (PR_SUCCESS != PR_CallOnce(&sCallOnce, InitStatics)) {
@@ -461,7 +461,7 @@ ReentrantMonitor::Wait(PRIntervalTime aInterval)
   mChainPrev = 0;
 
   nsresult rv;
-#ifdef MOZILLA_INTERNAL_API
+#if defined(MOZILLA_INTERNAL_API) && !defined(MOZILLA_XPCOMRT_API)
   {
     GeckoProfilerSleepRAII profiler_sleep;
 #endif //MOZILLA_INTERNAL_API
@@ -470,7 +470,7 @@ ReentrantMonitor::Wait(PRIntervalTime aInterval)
     rv = PR_Wait(mReentrantMonitor, aInterval) == PR_SUCCESS ? NS_OK :
                                                                NS_ERROR_FAILURE;
 
-#ifdef MOZILLA_INTERNAL_API
+#if defined(MOZILLA_INTERNAL_API) && !defined(MOZILLA_XPCOMRT_API)
   }
 #endif //MOZILLA_INTERNAL_API
 

@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -16,7 +17,7 @@ namespace dom {
 
 class SVGForeignObjectElement;
 
-class SVGDocument MOZ_FINAL : public XMLDocument
+class SVGDocument final : public XMLDocument
 {
   friend class SVGForeignObjectElement; // To call EnsureNonSVGUserAgentStyleSheetsLoaded
 
@@ -29,21 +30,21 @@ public:
   }
 
   virtual nsresult InsertChildAt(nsIContent* aKid, uint32_t aIndex,
-                                 bool aNotify) MOZ_OVERRIDE;
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
+                                 bool aNotify) override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
 
   // WebIDL API
   void GetDomain(nsAString& aDomain, ErrorResult& aRv);
   nsSVGElement* GetRootElement(ErrorResult& aRv);
 
-  virtual SVGDocument* AsSVGDocument() MOZ_OVERRIDE {
+  virtual SVGDocument* AsSVGDocument() override {
     return this;
   }
 
 private:
   void EnsureNonSVGUserAgentStyleSheetsLoaded();
 
-  virtual JSObject* WrapNode(JSContext *aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   bool mHasLoadedNonSVGUserAgentStyleSheets;
 };

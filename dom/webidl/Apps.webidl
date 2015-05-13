@@ -11,7 +11,7 @@ dictionary InstallParameters {
 
 dictionary LanguageDesc {
   DOMString target;
-  DOMString version;
+  long revision;
   DOMString name;
 };
 
@@ -24,7 +24,7 @@ enum LocaleResourceType {
 [NoInterfaceObject, NavigatorProperty="mozApps",
  JSImplementation="@mozilla.org/webapps;1"]
 interface DOMApplicationsRegistry {
-  [CheckPermissions="webapps-manage"]
+  [CheckPermissions="webapps-manage homescreen-webapps-manage"]
   readonly attribute DOMApplicationsManager mgmt;
   DOMRequest install(DOMString url, optional InstallParameters params);
   DOMRequest installPackage(DOMString url, optional InstallParameters params);
@@ -106,21 +106,35 @@ interface DOMApplication : EventTarget {
 
   // Export this app as a shareable Blob.
   Promise<Blob> export();
+
+  // Returns the localized value of a property, using either the manifest or
+  // a langpack if one is available.
+  Promise<DOMString> getLocalizedValue(DOMString property,
+                                       DOMString locale,
+                                       optional DOMString entryPoint);
 };
 
 [JSImplementation="@mozilla.org/webapps/manager;1",
  ChromeOnly,
- CheckPermissions="webapps-manage"]
+ CheckPermissions="webapps-manage homescreen-webapps-manage"]
 interface DOMApplicationsManager : EventTarget {
   DOMRequest getAll();
+
+  [CheckPermissions="webapps-manage"]
   DOMRequest getNotInstalled();
+  [CheckPermissions="webapps-manage"]
   void applyDownload(DOMApplication app);
   DOMRequest uninstall(DOMApplication app);
 
+  [CheckPermissions="webapps-manage"]
   Promise<DOMApplication> import(Blob blob);
+  [CheckPermissions="webapps-manage"]
   Promise<any> extractManifest(Blob blob);
 
+  [CheckPermissions="webapps-manage"]
   void setEnabled(DOMApplication app, boolean state);
+  Promise<Blob> getIcon(DOMApplication app, DOMString iconID,
+                        optional DOMString entryPoint);
 
   attribute EventHandler oninstall;
   attribute EventHandler onuninstall;

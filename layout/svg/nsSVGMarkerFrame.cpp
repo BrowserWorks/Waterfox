@@ -54,7 +54,7 @@ nsSVGMarkerFrame::Init(nsIContent*       aContent,
                        nsContainerFrame* aParent,
                        nsIFrame*         aPrevInFlow)
 {
-  NS_ASSERTION(aContent->IsSVG(nsGkAtoms::marker), "Content is not an SVG marker");
+  NS_ASSERTION(aContent->IsSVGElement(nsGkAtoms::marker), "Content is not an SVG marker");
 
   nsSVGMarkerFrameBase::Init(aContent, aParent, aPrevInFlow);
 }
@@ -265,8 +265,8 @@ nsSVGMarkerAnonChildFrame::Init(nsIContent*       aContent,
                                 nsContainerFrame* aParent,
                                 nsIFrame*         aPrevInFlow)
 {
-  NS_ABORT_IF_FALSE(aParent->GetType() == nsGkAtoms::svgMarkerFrame,
-                    "Unexpected parent");
+  MOZ_ASSERT(aParent->GetType() == nsGkAtoms::svgMarkerFrame,
+             "Unexpected parent");
   nsSVGMarkerAnonChildFrameBase::Init(aContent, aParent, aPrevInFlow);
 }
 #endif

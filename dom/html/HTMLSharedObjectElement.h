@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-// vim:set et sw=2 sts=2 cin:
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -18,10 +18,10 @@
 namespace mozilla {
 namespace dom {
 
-class HTMLSharedObjectElement MOZ_FINAL : public nsGenericHTMLElement
-                                        , public nsObjectLoadingContent
-                                        , public nsIDOMHTMLAppletElement
-                                        , public nsIDOMHTMLEmbedElement
+class HTMLSharedObjectElement final : public nsGenericHTMLElement
+                                    , public nsObjectLoadingContent
+                                    , public nsIDOMHTMLAppletElement
+                                    , public nsIDOMHTMLEmbedElement
 {
 public:
   explicit HTMLSharedObjectElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo,
@@ -30,7 +30,12 @@ public:
   // nsISupports
   NS_DECL_ISUPPORTS_INHERITED
 
-  virtual int32_t TabIndexDefault() MOZ_OVERRIDE;
+  virtual int32_t TabIndexDefault() override;
+
+#ifdef XP_MACOSX
+  // nsIDOMEventTarget
+  NS_IMETHOD PostHandleEvent(EventChainPostVisitor& aVisitor) override;
+#endif
 
   // nsIDOMHTMLAppletElement
   NS_DECL_NSIDOMHTMLAPPLETELEMENT
@@ -39,39 +44,39 @@ public:
   // NS_DECL_NSIDOMHTMLAPPLETELEMENT.
 
   // nsIDOMHTMLEmbedElement
-  NS_IMETHOD GetSrc(nsAString &aSrc) MOZ_OVERRIDE;
-  NS_IMETHOD SetSrc(const nsAString &aSrc) MOZ_OVERRIDE;
-  NS_IMETHOD GetType(nsAString &aType) MOZ_OVERRIDE;
-  NS_IMETHOD SetType(const nsAString &aType) MOZ_OVERRIDE;
+  NS_IMETHOD GetSrc(nsAString &aSrc) override;
+  NS_IMETHOD SetSrc(const nsAString &aSrc) override;
+  NS_IMETHOD GetType(nsAString &aType) override;
+  NS_IMETHOD SetType(const nsAString &aType) override;
 
   virtual nsresult BindToTree(nsIDocument *aDocument, nsIContent *aParent,
                               nsIContent *aBindingParent,
-                              bool aCompileEventHandlers) MOZ_OVERRIDE;
+                              bool aCompileEventHandlers) override;
   virtual void UnbindFromTree(bool aDeep = true,
-                              bool aNullParent = true) MOZ_OVERRIDE;
+                              bool aNullParent = true) override;
   virtual nsresult SetAttr(int32_t aNameSpaceID, nsIAtom *aName,
                            nsIAtom *aPrefix, const nsAString &aValue,
-                           bool aNotify) MOZ_OVERRIDE;
+                           bool aNotify) override;
 
-  virtual bool IsHTMLFocusable(bool aWithMouse, bool *aIsFocusable, int32_t *aTabIndex) MOZ_OVERRIDE;
-  virtual IMEState GetDesiredIMEState() MOZ_OVERRIDE;
+  virtual bool IsHTMLFocusable(bool aWithMouse, bool *aIsFocusable, int32_t *aTabIndex) override;
+  virtual IMEState GetDesiredIMEState() override;
 
-  virtual void DoneAddingChildren(bool aHaveNotified) MOZ_OVERRIDE;
-  virtual bool IsDoneAddingChildren() MOZ_OVERRIDE;
+  virtual void DoneAddingChildren(bool aHaveNotified) override;
+  virtual bool IsDoneAddingChildren() override;
 
   virtual bool ParseAttribute(int32_t aNamespaceID,
                                 nsIAtom *aAttribute,
                                 const nsAString &aValue,
-                                nsAttrValue &aResult) MOZ_OVERRIDE;
-  virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const MOZ_OVERRIDE;
-  NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom *aAttribute) const MOZ_OVERRIDE;
-  virtual EventStates IntrinsicState() const MOZ_OVERRIDE;
-  virtual void DestroyContent() MOZ_OVERRIDE;
+                                nsAttrValue &aResult) override;
+  virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const override;
+  NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom *aAttribute) const override;
+  virtual EventStates IntrinsicState() const override;
+  virtual void DestroyContent() override;
 
   // nsObjectLoadingContent
-  virtual uint32_t GetCapabilities() const MOZ_OVERRIDE;
+  virtual uint32_t GetCapabilities() const override;
 
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
 
   nsresult CopyInnerTo(Element* aDest);
 
@@ -206,10 +211,10 @@ private:
   // always true for <embed>, per the documentation in nsIContent.h.
   bool mIsDoneAddingChildren;
 
-  virtual void GetItemValueText(nsAString& text) MOZ_OVERRIDE;
-  virtual void SetItemValueText(const nsAString& text) MOZ_OVERRIDE;
+  virtual void GetItemValueText(DOMString& text) override;
+  virtual void SetItemValueText(const nsAString& text) override;
 
-  virtual JSObject* WrapNode(JSContext *aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   static void MapAttributesIntoRule(const nsMappedAttributes* aAttributes,
                                     nsRuleData* aData);

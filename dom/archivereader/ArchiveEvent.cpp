@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -105,7 +105,7 @@ ArchiveReaderEvent::RunShare(nsresult aStatus)
 void
 ArchiveReaderEvent::ShareMainThread()
 {
-  nsTArray<nsCOMPtr<nsIDOMFile> > fileList;
+  nsTArray<nsRefPtr<File>> fileList;
 
   if (!NS_FAILED(mStatus)) {
     // This extra step must run in the main thread:
@@ -131,7 +131,7 @@ ArchiveReaderEvent::ShareMainThread()
       }
 
       // This is a File:
-      nsRefPtr<nsIDOMFile> file = item->File(mArchiveReader);
+      nsRefPtr<File> file = item->GetFile(mArchiveReader);
       if (file) {
         fileList.AppendElement(file);
       }

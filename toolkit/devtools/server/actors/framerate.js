@@ -20,10 +20,13 @@ let FramerateActor = exports.FramerateActor = protocol.ActorClass({
   initialize: function(conn, tabActor) {
     protocol.Actor.prototype.initialize.call(this, conn);
     this.tabActor = tabActor;
-    this._chromeWin = getChromeWin(tabActor.window);
+    this._contentWin = tabActor.window;
     this._onRefreshDriverTick = this._onRefreshDriverTick.bind(this);
+    this._onGlobalCreated = this._onGlobalCreated.bind(this);
+    on(this.tabActor, "window-ready", this._onGlobalCreated);
   },
   destroy: function(conn) {
+    off(this.tabActor, "window-ready", this._onGlobalCreated);
     protocol.Actor.prototype.destroy.call(this, conn);
     this.stopRecording();
   },
@@ -38,8 +41,8 @@ let FramerateActor = exports.FramerateActor = protocol.ActorClass({
     this._recording = true;
     this._ticks = [];
 
-    this._startTime = this._chromeWin.performance.now();
-    this._rafID = this._chromeWin.requestAnimationFrame(this._onRefreshDriverTick);
+    this._startTime = this._contentWin.performance.now();
+    this._rafID = this._contentWin.requestAnimationFrame(this._onRefreshDriverTick);
   }, {
   }),
 
@@ -65,7 +68,7 @@ let FramerateActor = exports.FramerateActor = protocol.ActorClass({
    * Stops monitoring framerate, without returning the recorded values.
    */
   cancelRecording: method(function() {
-    this._chromeWin.cancelAnimationFrame(this._rafID);
+    this._contentWin.cancelAnimationFrame(this._rafID);
     this._recording = false;
     this._ticks = null;
     this._rafID = -1;
@@ -104,12 +107,27 @@ let FramerateActor = exports.FramerateActor = protocol.ActorClass({
     if (!this._recording) {
       return;
     }
-    this._rafID = this._chromeWin.requestAnimationFrame(this._onRefreshDriverTick);
+    this._rafID = this._contentWin.requestAnimationFrame(this._onRefreshDriverTick);
 
     // Store the amount of time passed since the recording started.
-    let currentTime = this._chromeWin.performance.now();
-    let elapsedTime = currentTime - this._startTime;
-    this._ticks.push(elapsedTime);
+    let currentTime = this._contentWin.performance.now();
+
+    // Store _elapsedTime so we can use this as a new starting time on a page refresh
+    // to normalize times.
+    this._elapsedTime = currentTime - this._startTime;
+    this._ticks.push(this._elapsedTime);
+  },
+
+  /**
+   * When the content window for the tab actor is created.
+   */
+  _onGlobalCreated: function (win) {
+    if (this._recording) {
+      // Set _startTime to the currently elapsed time so we can get a wholistic
+      // elapsed time in _onRefreshDriverTick.
+      this._startTime = -this._elapsedTime;
+      this._rafID = this._contentWin.requestAnimationFrame(this._onRefreshDriverTick);
+    }
   }
 });
 
@@ -122,67 +140,3 @@ let FramerateFront = exports.FramerateFront = protocol.FrontClass(FramerateActor
     this.manage(this);
   }
 });
-
-/**
- * Plots the frames per second on a timeline.
- *
- * @param array ticks
- *        The raw data received from the framerate actor, which represents
- *        the elapsed time on each refresh driver tick.
- * @param number interval
- *        The maximum amount of time to wait between calculations.
- * @param number clamp
- *        The maximum allowed framerate value.
- * @return array
- *         A collection of { delta, value } objects representing the
- *         framerate value at every delta time.
- */
-FramerateFront.plotFPS = function(ticks, interval = 100, clamp = 60) {
-  let timeline = [];
-  let totalTicks = ticks.length;
-
-  // If the refresh driver didn't get a chance to tick before the
-  // recording was stopped, assume framerate was 0.
-  if (totalTicks == 0) {
-    timeline.push({ delta: 0, value: 0 });
-    timeline.push({ delta: interval, value: 0 });
-    return timeline;
-  }
-
-  let frameCount = 0;
-  let prevTime = ticks[0];
-
-  for (let i = 1; i < totalTicks; i++) {
-    let currTime = ticks[i];
-    frameCount++;
-
-    let elapsedTime = currTime - prevTime;
-    if (elapsedTime < interval) {
-      continue;
-    }
-
-    let framerate = Math.min(1000 / (elapsedTime / frameCount), clamp);
-    timeline.push({ delta: prevTime, value: framerate });
-    timeline.push({ delta: currTime, value: framerate });
-
-    frameCount = 0;
-    prevTime = currTime;
-  }
-
-  return timeline;
-};
-
-/**
- * Gets the top level browser window from a content window.
- *
- * @param nsIDOMWindow innerWin
- *        The content window to query.
- * @return nsIDOMWindow
- *         The top level browser window.
- */
-function getChromeWin(innerWin) {
-  return innerWin
-    .QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIWebNavigation)
-    .QueryInterface(Ci.nsIDocShellTreeItem).rootTreeItem
-    .QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindow);
-}

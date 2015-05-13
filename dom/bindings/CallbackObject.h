@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim:set ts=2 sw=2 sts=2 et cindent: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -88,7 +88,10 @@ public:
     // binding object for a DOMError or DOMException from the caller's scope,
     // otherwise report it.
     eRethrowContentExceptions,
-    // Throw any exception to the caller code.
+    // Throw exceptions to the caller code, unless the caller compartment is
+    // provided, the exception is not a DOMError or DOMException from the
+    // caller compartment, and the caller compartment does not subsume our
+    // unwrapped callback.
     eRethrowExceptions
   };
 
@@ -168,7 +171,13 @@ protected:
   public:
     // If aExceptionHandling == eRethrowContentExceptions then aCompartment
     // needs to be set to the compartment in which exceptions will be rethrown.
+    //
+    // If aExceptionHandling == eRethrowExceptions then aCompartment may be set
+    // to the compartment in which exceptions will be rethrown.  In that case
+    // they will only be rethrown if that compartment's principal subsumes the
+    // principal of our (unwrapped) callback.
     CallSetup(CallbackObject* aCallback, ErrorResult& aRv,
+              const char* aExecutionReason,
               ExceptionHandling aExceptionHandling,
               JSCompartment* aCompartment = nullptr,
               bool aIsJSImplementedWebIDL = false);
@@ -189,7 +198,7 @@ protected:
     JSContext* mCx;
 
     // Caller's compartment. This will only have a sensible value if
-    // mExceptionHandling == eRethrowContentExceptions.
+    // mExceptionHandling == eRethrowContentExceptions or eRethrowExceptions.
     JSCompartment* mCompartment;
 
     // And now members whose construction/destruction order we need to control.
@@ -296,7 +305,7 @@ public:
   }
 
   // Boolean conversion operator so people can use this in boolean tests
-  operator bool() const
+  explicit operator bool() const
   {
     return GetISupports();
   }

@@ -14,30 +14,27 @@ Cu.import("resource://gre/modules/devtools/Loader.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "promise",
                                   "resource://gre/modules/Promise.jsm", "Promise");
-
 XPCOMUtils.defineLazyModuleGetter(this, "console",
                                   "resource://gre/modules/devtools/Console.jsm");
-
 XPCOMUtils.defineLazyModuleGetter(this, "CustomizableUI",
                                   "resource:///modules/CustomizableUI.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "DebuggerServer",
                                   "resource://gre/modules/devtools/dbg-server.jsm");
-
 XPCOMUtils.defineLazyModuleGetter(this, "DebuggerClient",
                                   "resource://gre/modules/devtools/dbg-client.jsm");
 
 const EventEmitter = devtools.require("devtools/toolkit/event-emitter");
+const Telemetry = devtools.require("devtools/shared/telemetry");
+
+const TABS_OPEN_PEAK_HISTOGRAM = "DEVTOOLS_TABS_OPEN_PEAK_LINEAR";
+const TABS_OPEN_AVG_HISTOGRAM = "DEVTOOLS_TABS_OPEN_AVERAGE_LINEAR";
+const TABS_PINNED_PEAK_HISTOGRAM = "DEVTOOLS_TABS_PINNED_PEAK_LINEAR";
+const TABS_PINNED_AVG_HISTOGRAM = "DEVTOOLS_TABS_PINNED_AVERAGE_LINEAR";
+
 const FORBIDDEN_IDS = new Set(["toolbox", ""]);
 const MAX_ORDINAL = 99;
 
 const bundle = Services.strings.createBundle("chrome://browser/locale/devtools/toolbox.properties");
-
-/**
- * The method name to use for ES6 iteration. If symbols are enabled in this
- * build, use Symbol.iterator; otherwise "@@iterator".
- */
-const JS_HAS_SYMBOLS = typeof Symbol === "function";
-const ITERATOR_SYMBOL = JS_HAS_SYMBOLS ? Symbol.iterator : "@@iterator";
 
 /**
  * DevTools is a class that represents a set of developer tools, it holds a
@@ -47,6 +44,7 @@ this.DevTools = function DevTools() {
   this._tools = new Map();     // Map<toolId, tool>
   this._themes = new Map();    // Map<themeId, theme>
   this._toolboxes = new Map(); // Map<target, toolbox>
+  this._telemetry = new Telemetry();
 
   // destroy() is an observer's handler so we need to preserve context.
   this.destroy = this.destroy.bind(this);
@@ -72,13 +70,22 @@ DevTools.prototype = {
   },
 
   set testing(state) {
+    let oldState = this._testing;
     this._testing = state;
 
-    if (state) {
-      // dom.send_after_paint_to_content is set to true (non-default) in
-      // testing/profiles/prefs_general.js so lets set it to the same as it is
-      // in a default browser profile for the duration of the test.
-      Services.prefs.setBoolPref("dom.send_after_paint_to_content", false);
+    if (state !== oldState) {
+      if (state) {
+        this._savedSendAfterPaintToContentPref =
+          Services.prefs.getBoolPref("dom.send_after_paint_to_content");
+
+        // dom.send_after_paint_to_content is set to true (non-default) in
+        // testing/profiles/prefs_general.js so lets set it to the same as it is
+        // in a default browser profile for the duration of the test.
+        Services.prefs.setBoolPref("dom.send_after_paint_to_content", false);
+      } else {
+        Services.prefs.setBoolPref("dom.send_after_paint_to_content",
+                                   this._savedSendAfterPaintToContentPref);
+      }
     }
   },
 
@@ -421,6 +428,8 @@ DevTools.prototype = {
       // No toolbox for target, create one
       toolbox = new devtools.Toolbox(target, toolId, hostType, hostOptions);
 
+      this.emit("toolbox-created", toolbox);
+
       this._toolboxes.set(target, toolbox);
 
       toolbox.once("destroy", () => {
@@ -472,6 +481,23 @@ DevTools.prototype = {
     return toolbox.destroy().then(() => true);
   },
 
+  _pingTelemetry: function() {
+    let mean = function(arr) {
+      if (arr.length === 0) {
+        return 0;
+      }
+
+      let total = arr.reduce((a, b) => a + b);
+      return Math.ceil(total / arr.length);
+    };
+
+    let tabStats = gDevToolsBrowser._tabStats;
+    this._telemetry.log(TABS_OPEN_PEAK_HISTOGRAM, tabStats.peakOpen);
+    this._telemetry.log(TABS_OPEN_AVG_HISTOGRAM, mean(tabStats.histOpen));
+    this._telemetry.log(TABS_PINNED_PEAK_HISTOGRAM, tabStats.peakPinned);
+    this._telemetry.log(TABS_PINNED_AVG_HISTOGRAM, mean(tabStats.histPinned));
+  },
+
   /**
    * Called to tear down a tools provider.
    */
@@ -492,6 +518,9 @@ DevTools.prototype = {
       this.unregisterTool(key, true);
     }
 
+    this._pingTelemetry();
+    this._telemetry = null;
+
     // Cleaning down the toolboxes: i.e.
     //   for (let [target, toolbox] of this._toolboxes) toolbox.destroy();
     // Is taken care of by the gDevToolsBrowser.forgetBrowserWindow
@@ -500,7 +529,7 @@ DevTools.prototype = {
   /**
    * Iterator that yields each of the toolboxes.
    */
-  *[ITERATOR_SYMBOL]() {
+  *[Symbol.iterator]() {
     for (let toolbox of this._toolboxes) {
       yield toolbox;
     }
@@ -527,6 +556,13 @@ let gDevToolsBrowser = {
    */
   _trackedBrowserWindows: new Set(),
 
+  _tabStats: {
+    peakOpen: 0,
+    peakPinned: 0,
+    histOpen: [],
+    histPinned: []
+  },
+
   /**
    * This function is for the benefit of Tools:DevToolbox in
    * browser/base/content/browser-sets.inc and should not be used outside
@@ -536,7 +572,11 @@ let gDevToolsBrowser = {
     let target = devtools.TargetFactory.forTab(gBrowser.selectedTab);
     let toolbox = gDevTools.getToolbox(target);
 
-    toolbox ? toolbox.destroy() : gDevTools.showToolbox(target);
+    // If a toolbox exists, using toggle from the Main window :
+    // - should close a docked toolbox
+    // - should focus a windowed toolbox
+    let isDocked = toolbox && toolbox.hostType != devtools.Toolbox.HostType.WINDOW;
+    isDocked ? toolbox.destroy() : gDevTools.showToolbox(target);
   },
 
   toggleBrowserToolboxCommand: function(gBrowser) {
@@ -597,8 +637,7 @@ let gDevToolsBrowser = {
     // Enable Browser Toolbox?
     let chromeEnabled = Services.prefs.getBoolPref("devtools.chrome.enabled");
     let devtoolsRemoteEnabled = Services.prefs.getBoolPref("devtools.debugger.remote-enabled");
-    let remoteEnabled = chromeEnabled && devtoolsRemoteEnabled &&
-                        Services.prefs.getBoolPref("devtools.debugger.chrome-enabled");
+    let remoteEnabled = chromeEnabled && devtoolsRemoteEnabled;
     toggleCmd("Tools:BrowserToolbox", remoteEnabled);
     toggleCmd("Tools:BrowserContentToolbox", remoteEnabled && win.gMultiProcessBrowser);
 
@@ -702,6 +741,7 @@ let gDevToolsBrowser = {
       DebuggerServer.init();
       DebuggerServer.addBrowserActors();
     }
+    DebuggerServer.allowChromeProcess = true;
 
     let transport = DebuggerServer.connectPipe();
     let client = new DebuggerClient(transport);
@@ -718,12 +758,13 @@ let gDevToolsBrowser = {
           return;
         }
         // Otherwise, arbitrary connect to the unique content process.
-        client.attachProcess(contentProcesses[0].id)
+        client.getProcess(contentProcesses[0].id)
               .then(response => {
                 let options = {
                   form: response.form,
                   client: client,
-                  chrome: true
+                  chrome: true,
+                  isTabActor: false
                 };
                 return devtools.TargetFactory.forRemoteTab(options);
               })
@@ -784,6 +825,11 @@ let gDevToolsBrowser = {
   },
 
   /**
+   * The deferred promise will be resolved by WebIDE's UI.init()
+   */
+  isWebIDEInitialized: promise.defer(),
+
+  /**
    * Uninstall WebIDE widget
    */
   uninstallWebIDEWidget: function() {
@@ -817,9 +863,12 @@ let gDevToolsBrowser = {
       broadcaster.removeAttribute("key");
     }
 
-    let tabContainer = win.document.getElementById("tabbrowser-tabs")
-    tabContainer.addEventListener("TabSelect",
-                                  gDevToolsBrowser._updateMenuCheckbox, false);
+    let tabContainer = win.document.getElementById("tabbrowser-tabs");
+    tabContainer.addEventListener("TabSelect", this, false);
+    tabContainer.addEventListener("TabOpen", this, false);
+    tabContainer.addEventListener("TabClose", this, false);
+    tabContainer.addEventListener("TabPinned", this, false);
+    tabContainer.addEventListener("TabUnpinned", this, false);
   },
 
   /**
@@ -854,17 +903,9 @@ let gDevToolsBrowser = {
                          .getService(Ci.nsISlowScriptDebug);
     let tm = Cc["@mozilla.org/thread-manager;1"].getService(Ci.nsIThreadManager);
 
-    debugService.activationHandler = function(aWindow) {
-      let chromeWindow = aWindow.QueryInterface(Ci.nsIInterfaceRequestor)
-                                .getInterface(Ci.nsIWebNavigation)
-                                .QueryInterface(Ci.nsIDocShellTreeItem)
-                                .rootTreeItem
-                                .QueryInterface(Ci.nsIInterfaceRequestor)
-                                .getInterface(Ci.nsIDOMWindow)
-                                .QueryInterface(Ci.nsIDOMChromeWindow);
-      let target = devtools.TargetFactory.forTab(chromeWindow.gBrowser.selectedTab);
+    function slowScriptDebugHandler(aTab, aCallback) {
+      let target = devtools.TargetFactory.forTab(aTab);
 
-      let setupFinished = false;
       gDevTools.showToolbox(target, "jsdebugger").then(toolbox => {
         let threadClient = toolbox.getCurrentPanel().panelWin.gThreadClient;
 
@@ -874,13 +915,13 @@ let gDevToolsBrowser = {
           case "paused":
             // When the debugger is already paused.
             threadClient.breakOnNext();
-            setupFinished = true;
+            aCallback();
             break;
           case "attached":
             // When the debugger is already open.
             threadClient.interrupt(() => {
               threadClient.breakOnNext();
-              setupFinished = true;
+              aCallback();
             });
             break;
           case "resuming":
@@ -888,7 +929,7 @@ let gDevToolsBrowser = {
             threadClient.addOneTimeListener("resumed", () => {
               threadClient.interrupt(() => {
                 threadClient.breakOnNext();
-                setupFinished = true;
+                aCallback();
               });
             });
             break;
@@ -897,6 +938,20 @@ let gDevToolsBrowser = {
                         threadClient.state);
           }
       });
+    }
+
+    debugService.activationHandler = function(aWindow) {
+      let chromeWindow = aWindow.QueryInterface(Ci.nsIInterfaceRequestor)
+                                .getInterface(Ci.nsIWebNavigation)
+                                .QueryInterface(Ci.nsIDocShellTreeItem)
+                                .rootTreeItem
+                                .QueryInterface(Ci.nsIInterfaceRequestor)
+                                .getInterface(Ci.nsIDOMWindow)
+                                .QueryInterface(Ci.nsIDOMChromeWindow);
+
+      let setupFinished = false;
+      slowScriptDebugHandler(chromeWindow.gBrowser.selectedTab,
+                             () => { setupFinished = true; });
 
       // Don't return from the interrupt handler until the debugger is brought
       // up; no reason to continue executing the slow script.
@@ -907,6 +962,18 @@ let gDevToolsBrowser = {
         tm.currentThread.processNextEvent(true);
       }
       utils.leaveModalState();
+    };
+
+    debugService.remoteActivationHandler = function(aBrowser, aCallback) {
+      let chromeWindow = aBrowser.ownerDocument.defaultView;
+      let tab = chromeWindow.gBrowser.getTabForBrowser(aBrowser);
+      chromeWindow.gBrowser.selected = tab;
+
+      function callback() {
+        aCallback.finishDebuggerStartup();
+      }
+
+      slowScriptDebugHandler(tab, callback);
     };
   },
 
@@ -1156,16 +1223,6 @@ let gDevToolsBrowser = {
   },
 
   /**
-   * Connects to the SPS profiler when the developer tools are open. This is
-   * necessary because of the WebConsole's `profile` and `profileEnd` methods.
-   */
-  _connectToProfiler: function DT_connectToProfiler(event, toolbox) {
-    let SharedProfilerUtils = devtools.require("devtools/profiler/shared");
-    let connection = SharedProfilerUtils.getProfilerConnection(toolbox);
-    connection.open();
-  },
-
-  /**
    * Remove the menuitem for a tool to all open browser windows.
    *
    * @param {string} toolId
@@ -1233,16 +1290,46 @@ let gDevToolsBrowser = {
       }
     }
 
-    let tabContainer = win.document.getElementById("tabbrowser-tabs")
-    tabContainer.removeEventListener("TabSelect",
-                                     gDevToolsBrowser._updateMenuCheckbox, false);
+    let tabContainer = win.document.getElementById("tabbrowser-tabs");
+    tabContainer.removeEventListener("TabSelect", this, false);
+    tabContainer.removeEventListener("TabOpen", this, false);
+    tabContainer.removeEventListener("TabClose", this, false);
+    tabContainer.removeEventListener("TabPinned", this, false);
+    tabContainer.removeEventListener("TabUnpinned", this, false);
+  },
+
+  handleEvent: function(event) {
+    switch (event.type) {
+      case "TabOpen":
+      case "TabClose":
+      case "TabPinned":
+      case "TabUnpinned":
+        let open = 0;
+        let pinned = 0;
+
+        for (let win of this._trackedBrowserWindows) {
+          let tabContainer = win.gBrowser.tabContainer;
+          let numPinnedTabs = tabContainer.tabbrowser._numPinnedTabs;
+          let numTabs = tabContainer.itemCount - numPinnedTabs;
+
+          open += numTabs;
+          pinned += numPinnedTabs;
+        }
+
+        this._tabStats.histOpen.push(open);
+        this._tabStats.histPinned.push(pinned);
+        this._tabStats.peakOpen = Math.max(open, this._tabStats.peakOpen);
+        this._tabStats.peakPinned = Math.max(pinned, this._tabStats.peakPinned);
+      break;
+      case "TabSelect":
+        gDevToolsBrowser._updateMenuCheckbox();
+    }
   },
 
   /**
    * All browser windows have been closed, tidy up remaining objects.
    */
   destroy: function() {
-    gDevTools.off("toolbox-ready", gDevToolsBrowser._connectToProfiler);
     Services.prefs.removeObserver("devtools.", gDevToolsBrowser);
     Services.obs.removeObserver(gDevToolsBrowser.destroy, "quit-application");
   },
@@ -1263,7 +1350,6 @@ gDevTools.on("tool-unregistered", function(ev, toolId) {
 });
 
 gDevTools.on("toolbox-ready", gDevToolsBrowser._updateMenuCheckbox);
-gDevTools.on("toolbox-ready", gDevToolsBrowser._connectToProfiler);
 gDevTools.on("toolbox-destroyed", gDevToolsBrowser._updateMenuCheckbox);
 
 Services.obs.addObserver(gDevToolsBrowser.destroy, "quit-application", false);

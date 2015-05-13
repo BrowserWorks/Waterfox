@@ -56,10 +56,6 @@ static inline mozilla::css::Side operator++(mozilla::css::Side& side, int) {
 #define NS_SIDE_TO_HALF_CORNER(side_, second_, parallel_) \
   ((((side_) + !!(second_))*2 + ((side_) + !(parallel_))%2) % 8)
 
-// {margin,border-{width,style,color},padding}-{left,right}-{ltr,rtl}-source
-#define NS_BOXPROP_SOURCE_PHYSICAL 0
-#define NS_BOXPROP_SOURCE_LOGICAL  1
-
 // box-sizing
 #define NS_STYLE_BOX_SIZING_CONTENT       0
 #define NS_STYLE_BOX_SIZING_PADDING       1
@@ -151,9 +147,10 @@ static inline mozilla::css::Side operator++(mozilla::css::Side& side, int) {
 #define NS_STYLE_BOX_ORIENT_VERTICAL   1
 
 // orient
-#define NS_STYLE_ORIENT_HORIZONTAL 0
-#define NS_STYLE_ORIENT_VERTICAL   1
-#define NS_STYLE_ORIENT_AUTO       2
+#define NS_STYLE_ORIENT_INLINE     0
+#define NS_STYLE_ORIENT_BLOCK      1
+#define NS_STYLE_ORIENT_HORIZONTAL 2
+#define NS_STYLE_ORIENT_VERTICAL   3
 
 #define NS_RADIUS_FARTHEST_SIDE 0
 #define NS_RADIUS_CLOSEST_SIDE  1
@@ -401,9 +398,11 @@ static inline mozilla::css::Side operator++(mozilla::css::Side& side, int) {
 #define NS_STYLE_DIRECTION_RTL                  1
 
 // See nsStyleVisibility
+// WritingModes.h depends on the particular values used here
 #define NS_STYLE_WRITING_MODE_HORIZONTAL_TB     0
-#define NS_STYLE_WRITING_MODE_VERTICAL_LR       1
-#define NS_STYLE_WRITING_MODE_VERTICAL_RL       2
+#define NS_STYLE_WRITING_MODE_VERTICAL_RL       1
+// #define NS_STYLE_WRITING_MODE_HORIZONTAL_BT  2  // hypothetical
+#define NS_STYLE_WRITING_MODE_VERTICAL_LR       3
 
 // See nsStyleDisplay
 #define NS_STYLE_DISPLAY_NONE                   0
@@ -746,6 +745,7 @@ static inline mozilla::css::Side operator++(mozilla::css::Side& side, int) {
 // is never present in stylesheets or computed data.
 #define NS_STYLE_TEXT_ALIGN_MOZ_CENTER_OR_INHERIT 11
 #define NS_STYLE_TEXT_ALIGN_TRUE                  12
+#define NS_STYLE_TEXT_ALIGN_MATCH_PARENT          13
 // Note: make sure that the largest NS_STYLE_TEXT_ALIGN_* value is smaller than
 // the smallest NS_STYLE_VERTICAL_ALIGN_* value below!
 
@@ -802,15 +802,15 @@ static inline mozilla::css::Side operator++(mozilla::css::Side& side, int) {
 // Note: these values pickup after the text-align values because there
 // are a few html cases where an object can have both types of
 // alignment applied with a single attribute
-#define NS_STYLE_VERTICAL_ALIGN_BASELINE             13
-#define NS_STYLE_VERTICAL_ALIGN_SUB                  14
-#define NS_STYLE_VERTICAL_ALIGN_SUPER                15
-#define NS_STYLE_VERTICAL_ALIGN_TOP                  16
-#define NS_STYLE_VERTICAL_ALIGN_TEXT_TOP             17
-#define NS_STYLE_VERTICAL_ALIGN_MIDDLE               18
-#define NS_STYLE_VERTICAL_ALIGN_TEXT_BOTTOM          19
-#define NS_STYLE_VERTICAL_ALIGN_BOTTOM               20
-#define NS_STYLE_VERTICAL_ALIGN_MIDDLE_WITH_BASELINE 21
+#define NS_STYLE_VERTICAL_ALIGN_BASELINE             14
+#define NS_STYLE_VERTICAL_ALIGN_SUB                  15
+#define NS_STYLE_VERTICAL_ALIGN_SUPER                16
+#define NS_STYLE_VERTICAL_ALIGN_TOP                  17
+#define NS_STYLE_VERTICAL_ALIGN_TEXT_TOP             18
+#define NS_STYLE_VERTICAL_ALIGN_MIDDLE               19
+#define NS_STYLE_VERTICAL_ALIGN_TEXT_BOTTOM          20
+#define NS_STYLE_VERTICAL_ALIGN_BOTTOM               21
+#define NS_STYLE_VERTICAL_ALIGN_MIDDLE_WITH_BASELINE 22
 
 // See nsStyleVisibility
 #define NS_STYLE_VISIBILITY_HIDDEN              0
@@ -842,14 +842,16 @@ static inline mozilla::css::Side operator++(mozilla::css::Side& side, int) {
 #define NS_STYLE_HYPHENS_MANUAL                 1
 #define NS_STYLE_HYPHENS_AUTO                   2
 
+// ruby-align, see nsStyleText
+#define NS_STYLE_RUBY_ALIGN_START               0
+#define NS_STYLE_RUBY_ALIGN_CENTER              1
+#define NS_STYLE_RUBY_ALIGN_SPACE_BETWEEN       2
+#define NS_STYLE_RUBY_ALIGN_SPACE_AROUND        3
+
 // ruby-position, see nsStyleText
-#define NS_STYLE_RUBY_POSITION_OVER             0x01
-#define NS_STYLE_RUBY_POSITION_UNDER            0x02
-#define NS_STYLE_RUBY_POSITION_INTER_CHARACTER  0x04 // placeholder, not yet parsed
-#define NS_STYLE_RUBY_POSITION_RIGHT            0x08
-#define NS_STYLE_RUBY_POSITION_LEFT             0x10
-#define NS_STYLE_RUBY_POSITION_INITIAL \
-  (NS_STYLE_RUBY_POSITION_OVER | NS_STYLE_RUBY_POSITION_RIGHT)
+#define NS_STYLE_RUBY_POSITION_OVER             0
+#define NS_STYLE_RUBY_POSITION_UNDER            1
+#define NS_STYLE_RUBY_POSITION_INTER_CHARACTER  2 /* placeholder, not yet parsed */
 
 // See nsStyleText
 #define NS_STYLE_TEXT_SIZE_ADJUST_NONE          0
@@ -1073,6 +1075,11 @@ static inline mozilla::css::Side operator++(mozilla::css::Side& side, int) {
 // See nsStyleDisplay::mScrollBehavior
 #define NS_STYLE_SCROLL_BEHAVIOR_AUTO       0
 #define NS_STYLE_SCROLL_BEHAVIOR_SMOOTH     1
+
+// See nsStyleDisplay::mScrollSnapType{X,Y}
+#define NS_STYLE_SCROLL_SNAP_TYPE_NONE              0
+#define NS_STYLE_SCROLL_SNAP_TYPE_MANDATORY         1
+#define NS_STYLE_SCROLL_SNAP_TYPE_PROXIMITY         2
 
 /*****************************************************************************
  * Constants for media features.                                             *

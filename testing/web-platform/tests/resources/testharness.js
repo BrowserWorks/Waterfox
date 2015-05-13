@@ -71,13 +71,22 @@ policies and contribution forms [3].
 
     WindowTestEnvironment.prototype._dispatch = function(selector, callback_args, message_arg) {
         this._forEach_windows(
-                function(w, is_same_origin) {
-                    if (is_same_origin && selector in w) {
+                function(w, same_origin) {
+                    if (same_origin) {
                         try {
-                            w[selector].apply(undefined, callback_args);
-                        } catch (e) {
-                            if (debug) {
-                                throw e;
+                            var has_selector = selector in w;
+                        } catch(e) {
+                            // If document.domain was set at some point same_origin can be
+                            // wrong and the above will fail.
+                            has_selector = false;
+                        }
+                        if (has_selector) {
+                            try {
+                                w[selector].apply(undefined, callback_args);
+                            } catch (e) {
+                                if (debug) {
+                                    throw e;
+                                }
                             }
                         }
                     }
@@ -359,8 +368,20 @@ policies and contribution forms [3].
         self.addEventListener("message",
                 function(event) {
                     if (event.data.type && event.data.type === "connect") {
-                        this_obj._add_message_port(event.ports[0]);
-                        event.ports[0].start();
+                        if (event.ports && event.ports[0]) {
+                            // If a MessageChannel was passed, then use it to
+                            // send results back to the main window.  This
+                            // allows the tests to work even if the browser
+                            // does not fully support MessageEvent.source in
+                            // ServiceWorkers yet.
+                            this_obj._add_message_port(event.ports[0]);
+                            event.ports[0].start();
+                        } else {
+                            // If there is no MessageChannel, then attempt to
+                            // use the MessageEvent.source to send results
+                            // back to the main window.
+                            this_obj._add_message_port(event.source);
+                        }
                     }
                 });
 
@@ -464,6 +485,80 @@ policies and contribution forms [3].
                 }));
     }
 
+    function promise_rejects(test, expected, promise) {
+        return promise.then(test.unreached_func("Should have rejected.")).catch(function(e) {
+            assert_throws(expected, function() { throw e });
+        });
+    }
+
+    /**
+     * This constructor helper allows DOM events to be handled using Promises,
+     * which can make it a lot easier to test a very specific series of events,
+     * including ensuring that unexpected events are not fired at any point.
+     */
+    function EventWatcher(test, watchedNode, eventTypes)
+    {
+        if (typeof eventTypes == 'string') {
+            eventTypes = [eventTypes];
+        }
+
+        var waitingFor = null;
+
+        var eventHandler = test.step_func(function(evt) {
+            assert_true(!!waitingFor,
+                        'Not expecting event, but got ' + evt.type + ' event');
+            assert_equals(evt.type, waitingFor.types[0],
+                          'Expected ' + waitingFor.types[0] + ' event, but got ' +
+                          evt.type + ' event instead');
+            if (waitingFor.types.length > 1) {
+                // Pop first event from array
+                waitingFor.types.shift();
+                return;
+            }
+            // We need to null out waitingFor before calling the resolve function
+            // since the Promise's resolve handlers may call wait_for() which will
+            // need to set waitingFor.
+            var resolveFunc = waitingFor.resolve;
+            waitingFor = null;
+            resolveFunc(evt);
+        });
+
+        for (var i = 0; i < eventTypes.length; i++) {
+            watchedNode.addEventListener(eventTypes[i], eventHandler);
+        }
+
+        /**
+         * Returns a Promise that will resolve after the specified event or
+         * series of events has occured.
+         */
+        this.wait_for = function(types) {
+            if (waitingFor) {
+                return Promise.reject('Already waiting for an event or events');
+            }
+            if (typeof types == 'string') {
+                types = [types];
+            }
+            return new Promise(function(resolve, reject) {
+                waitingFor = {
+                    types: types,
+                    resolve: resolve,
+                    reject: reject
+                };
+            });
+        };
+
+        function stop_watching() {
+            for (var i = 0; i < eventTypes.length; i++) {
+                watchedNode.removeEventListener(eventTypes[i], eventHandler);
+            }
+        };
+
+        test.add_cleanup(stop_watching);
+
+        return this;
+    }
+    expose(EventWatcher, 'EventWatcher');
+
     function setup(func_or_properties, maybe_properties)
     {
         var func = null;
@@ -511,6 +606,7 @@ policies and contribution forms [3].
     expose(test, 'test');
     expose(async_test, 'async_test');
     expose(promise_test, 'promise_test');
+    expose(promise_rejects, 'promise_rejects');
     expose(generate_tests, 'generate_tests');
     expose(setup, 'setup');
     expose(done, 'done');
@@ -836,6 +932,24 @@ policies and contribution forms [3].
     }
     expose(assert_greater_than, "assert_greater_than");
 
+    function assert_between_exclusive(actual, lower, upper, description)
+    {
+        /*
+         * Test if a primitive number is between two others
+         */
+        assert(typeof actual === "number",
+               "assert_between_exclusive", description,
+               "expected a number but got a ${type_actual}",
+               {type_actual:typeof actual});
+
+        assert(actual > lower && actual < upper,
+               "assert_between_exclusive", description,
+               "expected a number greater than ${lower} " +
+               "and less than ${upper} but got ${actual}",
+               {lower:lower, upper:upper, actual:actual});
+    }
+    expose(assert_between_exclusive, "assert_between_exclusive");
+
     function assert_less_than_equal(actual, expected, description)
     {
         /*
@@ -847,7 +961,7 @@ policies and contribution forms [3].
                {type_actual:typeof actual});
 
         assert(actual <= expected,
-               "assert_less_than", description,
+               "assert_less_than_equal", description,
                "expected a number less than or equal to ${expected} but got ${actual}",
                {expected:expected, actual:actual});
     }
@@ -869,6 +983,24 @@ policies and contribution forms [3].
                {expected:expected, actual:actual});
     }
     expose(assert_greater_than_equal, "assert_greater_than_equal");
+
+    function assert_between_inclusive(actual, lower, upper, description)
+    {
+        /*
+         * Test if a primitive number is between to two others or equal to either of them
+         */
+        assert(typeof actual === "number",
+               "assert_between_inclusive", description,
+               "expected a number but got a ${type_actual}",
+               {type_actual:typeof actual});
+
+        assert(actual >= lower && actual <= upper,
+               "assert_between_inclusive", description,
+               "expected a number greater than or equal to ${lower} " +
+               "and less than or equal to ${upper} but got ${actual}",
+               {lower:lower, upper:upper, actual:actual});
+    }
+    expose(assert_between_inclusive, "assert_between_inclusive");
 
     function assert_regexp_match(actual, expected, description) {
         /*
@@ -1021,12 +1153,15 @@ policies and contribution forms [3].
                 InvalidNodeTypeError: 24,
                 DataCloneError: 25,
 
+                EncodingError: 0,
+                NotReadableError: 0,
                 UnknownError: 0,
                 ConstraintError: 0,
                 DataError: 0,
                 TransactionInactiveError: 0,
                 ReadOnlyError: 0,
-                VersionError: 0
+                VersionError: 0,
+                OperationError: 0,
             };
 
             if (!(name in name_code_map)) {
@@ -1036,7 +1171,10 @@ policies and contribution forms [3].
             var required_props = { code: name_code_map[name] };
 
             if (required_props.code === 0 ||
-               ("name" in e && e.name !== e.name.toUpperCase() && e.name !== "DOMException")) {
+               (typeof e == "object" &&
+                "name" in e &&
+                e.name !== e.name.toUpperCase() &&
+                e.name !== "DOMException")) {
                 // New style exception: also test the name property.
                 required_props.name = name;
             }
@@ -1110,6 +1248,7 @@ policies and contribution forms [3].
         }
 
         this.message = null;
+        this.stack = null;
 
         this.steps = [];
 
@@ -1146,6 +1285,7 @@ policies and contribution forms [3].
         }
         this._structured_clone.status = this.status;
         this._structured_clone.message = this.message;
+        this._structured_clone.stack = this.stack;
         this._structured_clone.index = this.index;
         return this._structured_clone;
     };
@@ -1178,15 +1318,10 @@ policies and contribution forms [3].
             if (this.phase >= this.phases.HAS_RESULT) {
                 return;
             }
-            var message = (typeof e === "object" && e !== null) ? e.message : e;
-            if (typeof e.stack != "undefined" && typeof e.message == "string") {
-                //Try to make it more informative for some exceptions, at least
-                //in Gecko and WebKit.  This results in a stack dump instead of
-                //just errors like "Cannot read property 'parentNode' of null"
-                //or "root is null".  Makes it a lot longer, of course.
-                message += "(stack: " + e.stack + ")";
-            }
-            this.set_status(this.FAIL, message);
+            var message = String((typeof e === "object" && e !== null) ? e.message : e);
+            var stack = e.stack ? e.stack : null;
+
+            this.set_status(this.FAIL, message, stack);
             this.phase = this.phases.HAS_RESULT;
             this.done();
         }
@@ -1252,10 +1387,11 @@ policies and contribution forms [3].
         }
     };
 
-    Test.prototype.set_status = function(status, message)
+    Test.prototype.set_status = function(status, message, stack)
     {
         this.status = status;
         this.message = message;
+        this.stack = stack ? stack : null;
     };
 
     Test.prototype.timeout = function()
@@ -1328,6 +1464,7 @@ policies and contribution forms [3].
     RemoteTest.prototype.update_state_from = function(clone) {
         this.status = clone.status;
         this.message = clone.message;
+        this.stack = clone.stack;
         if (this.phase === this.phases.INITIAL) {
             this.phase = this.phases.STARTED;
         }
@@ -1351,15 +1488,24 @@ policies and contribution forms [3].
         var message_port;
 
         if (is_service_worker(worker)) {
-            // The ServiceWorker's implicit MessagePort is currently not
-            // reliably accessible from the ServiceWorkerGlobalScope due to
-            // Blink setting MessageEvent.source to null for messages sent via
-            // ServiceWorker.postMessage(). Until that's resolved, create an
-            // explicit MessageChannel and pass one end to the worker.
-            var message_channel = new MessageChannel();
-            message_port = message_channel.port1;
-            message_port.start();
-            worker.postMessage({type: "connect"}, [message_channel.port2]);
+            if (window.MessageChannel) {
+                // The ServiceWorker's implicit MessagePort is currently not
+                // reliably accessible from the ServiceWorkerGlobalScope due to
+                // Blink setting MessageEvent.source to null for messages sent
+                // via ServiceWorker.postMessage(). Until that's resolved,
+                // create an explicit MessageChannel and pass one end to the
+                // worker.
+                var message_channel = new MessageChannel();
+                message_port = message_channel.port1;
+                message_port.start();
+                worker.postMessage({type: "connect"}, [message_channel.port2]);
+            } else {
+                // If MessageChannel is not available, then try the
+                // ServiceWorker.postMessage() approach using MessageEvent.source
+                // on the other end.
+                message_port = navigator.serviceWorker;
+                worker.postMessage({type: "connect"});
+            }
         } else if (is_shared_worker(worker)) {
             message_port = worker.port;
         } else {
@@ -1387,7 +1533,8 @@ policies and contribution forms [3].
         this.worker_done({
             status: {
                 status: tests.status.ERROR,
-                message: "Error in worker" + filename + ": " + message
+                message: "Error in worker" + filename + ": " + message,
+                stack: error.stack
             }
         });
         error.preventDefault();
@@ -1415,6 +1562,7 @@ policies and contribution forms [3].
             data.status.status !== data.status.OK) {
             tests.status.status = data.status.status;
             tests.status.message = data.status.message;
+            tests.status.stack = data.status.stack;
         }
         this.running = false;
         this.worker = null;
@@ -1437,6 +1585,7 @@ policies and contribution forms [3].
     {
         this.status = null;
         this.message = null;
+        this.stack = null;
     }
 
     TestsStatus.statuses = {
@@ -1454,7 +1603,8 @@ policies and contribution forms [3].
             msg = msg ? String(msg) : msg;
             this._structured_clone = merge({
                 status:this.status,
-                message:msg
+                message:msg,
+                stack:this.stack
             }, TestsStatus.statuses);
         }
         return this._structured_clone;
@@ -1544,6 +1694,7 @@ policies and contribution forms [3].
             } catch (e) {
                 this.status.status = this.status.ERROR;
                 this.status.message = String(e);
+                this.status.stack = e.stack ? e.stack : null;
             }
         }
         this.set_timeout();
@@ -1901,6 +2052,9 @@ policies and contribution forms [3].
 
                                     if (harness_status.status === harness_status.ERROR) {
                                         rv[0].push(["pre", {}, harness_status.message]);
+                                        if (harness_status.stack) {
+                                            rv[0].push(["pre", {}, harness_status.stack]);
+                                        }
                                     }
                                     return rv;
                                 },
@@ -1998,6 +2152,9 @@ policies and contribution forms [3].
                 "</td><td>" +
                 (assertions ? escape_html(get_assertion(tests[i])) + "</td><td>" : "") +
                 escape_html(tests[i].message ? tests[i].message : " ") +
+                (tests[i].stack ? "<pre>" +
+                 escape_html(tests[i].stack) +
+                 "</pre>": "") +
                 "</td></tr>";
         }
         html += "</tbody></table>";
@@ -2193,11 +2350,34 @@ policies and contribution forms [3].
     function AssertionError(message)
     {
         this.message = message;
+        this.stack = this.get_stack();
     }
 
-    AssertionError.prototype.toString = function() {
-        return this.message;
-    };
+    AssertionError.prototype = Object.create(Error.prototype);
+
+    AssertionError.prototype.get_stack = function() {
+        var stack = new Error().stack;
+        if (!stack) {
+            try {
+                throw new Error();
+            } catch (e) {
+                stack = e.stack;
+            }
+        }
+        var lines = stack.split("\n");
+        var rv = [];
+        var re = /\/resources\/testharness\.js/;
+        var i = 0;
+        // Fire remove any preamble that doesn't match the regexp
+        while (!re.test(lines[i])) {
+            i++
+        }
+        // Then remove top frames in testharness.js itself
+        while (re.test(lines[i])) {
+            i++
+        }
+        return lines.slice(i).join("\n");
+    }
 
     function make_message(function_name, description, error, substitutions)
     {
@@ -2336,14 +2516,14 @@ policies and contribution forms [3].
             if (test.phase >= test.phases.HAS_RESULT) {
                 return;
             }
-            var message = e.message;
-            test.set_status(test.FAIL, message);
+            test.set_status(test.FAIL, e.message, e.stack);
             test.phase = test.phases.HAS_RESULT;
             test.done();
             done();
         } else if (!tests.allow_uncaught_exception) {
             tests.status.status = tests.status.ERROR;
             tests.status.message = e.message;
+            tests.status.stack = e.stack;
         }
     });
 

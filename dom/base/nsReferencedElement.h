@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 sw=2 et tw=78: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -15,7 +15,6 @@
 #include "nsAutoPtr.h"
 
 class nsIURI;
-class nsCycleCollectionCallback;
 
 /**
  * Class to track what element is referenced by a given ID.
@@ -134,15 +133,15 @@ private:
     {}
 
     NS_DECL_ISUPPORTS_INHERITED
-    NS_IMETHOD Run() MOZ_OVERRIDE {
+    NS_IMETHOD Run() override {
       if (mTarget) {
         mTarget->mPendingNotification = nullptr;
         mTarget->ElementChanged(mFrom, mTo);
       }
       return NS_OK;
     }
-    virtual void SetTo(Element* aTo) MOZ_OVERRIDE { mTo = aTo; }
-    virtual void Clear() MOZ_OVERRIDE
+    virtual void SetTo(Element* aTo) override { mTo = aTo; }
+    virtual void Clear() override
     {
       Notification::Clear(); mFrom = nullptr; mTo = nullptr;
     }
@@ -172,7 +171,7 @@ private:
   private:
     virtual ~DocumentLoadNotification() {}
 
-    virtual void SetTo(Element* aTo) MOZ_OVERRIDE { }
+    virtual void SetTo(Element* aTo) override { }
 
     nsString mRef;
   };

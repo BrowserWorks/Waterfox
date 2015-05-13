@@ -205,12 +205,12 @@ public:
         cairo_font_face_destroy(mFontFace);
     }
 
-    virtual void ForgetHBFace();
-    virtual void ReleaseGrFace(gr_face* aFace);
+    virtual void ForgetHBFace() override;
+    virtual void ReleaseGrFace(gr_face* aFace) override;
 
 protected:
     virtual nsresult
-    CopyFontTable(uint32_t aTableTag, FallibleTArray<uint8_t>& aBuffer) MOZ_OVERRIDE;
+    CopyFontTable(uint32_t aTableTag, FallibleTArray<uint8_t>& aBuffer) override;
 
     void MaybeReleaseFTFace();
 
@@ -466,14 +466,14 @@ public:
     // Returns true on success
     bool SetCairoFace(cairo_font_face_t *aFace);
 
-    virtual hb_blob_t* GetFontTable(uint32_t aTableTag) MOZ_OVERRIDE;
+    virtual hb_blob_t* GetFontTable(uint32_t aTableTag) override;
 
 protected:
     void InitPattern();
 
     // mFontData holds the data used to instantiate the FT_Face;
     // this has to persist until we are finished with the face,
-    // then be released with NS_Free().
+    // then be released with free().
     const uint8_t* mFontData;
 
     FT_Face mFace;
@@ -522,7 +522,7 @@ gfxDownloadedFcFontEntry::~gfxDownloadedFcFontEntry()
         FcPatternDel(mPatterns[0], FC_FT_FACE);
     }
     FT_Done_Face(mFace);
-    NS_Free((void*)mFontData);
+    free((void*)mFontData);
 }
 
 typedef FcPattern* (*QueryFaceFunction)(const FT_Face face,
@@ -666,17 +666,17 @@ public:
 
 #ifdef USE_SKIA
     virtual mozilla::TemporaryRef<mozilla::gfx::GlyphRenderingOptions>
-        GetGlyphRenderingOptions(const TextRunDrawParams* aRunParams = nullptr) MOZ_OVERRIDE;
+        GetGlyphRenderingOptions(const TextRunDrawParams* aRunParams = nullptr) override;
 #endif
 
     // return a cloned font resized and offset to simulate sub/superscript glyphs
     virtual already_AddRefed<gfxFont>
-    GetSubSuperscriptFont(int32_t aAppUnitsPerDevPixel);
+    GetSubSuperscriptFont(int32_t aAppUnitsPerDevPixel) override;
 
 protected:
     virtual already_AddRefed<gfxFont> MakeScaledFont(gfxFontStyle *aFontStyle,
                                                      gfxFloat aFontScale);
-    virtual already_AddRefed<gfxFont> GetSmallCapsFont();
+    virtual already_AddRefed<gfxFont> GetSmallCapsFont() override;
 
 private:
     gfxFcFont(cairo_scaled_font_t *aCairoFont, gfxFcFontEntry *aFontEntry,
@@ -693,7 +693,7 @@ private:
  * (fontconfig cache data) and (when needed) fonts.
  */
 
-class gfxFcFontSet MOZ_FINAL {
+class gfxFcFontSet final {
 public:
     NS_INLINE_DECL_REFCOUNTING(gfxFcFontSet)
     
@@ -1262,6 +1262,7 @@ gfxPangoFontGroup::gfxPangoFontGroup(const FontFamilyList& aFontFamilyList,
 
     // dummy entry, will be replaced when actually needed
     mFonts.AppendElement(FamilyFace());
+    mSkipUpdateUserFonts = true;
 }
 
 gfxPangoFontGroup::~gfxPangoFontGroup()
@@ -1706,7 +1707,7 @@ gfxPangoFontGroup::NewFontEntry(const nsAString& aFontName,
     FT_Error error =
         FT_New_Memory_Face(GetFTLibrary(), aFontData, aLength, 0, &face);
     if (error != 0) {
-        NS_Free((void*)aFontData);
+        free((void*)aFontData);
         return nullptr;
     }
 
@@ -1853,7 +1854,7 @@ gfxPangoFontGroup::GetBaseFontSet()
         MakeFontSet(mPangoLanguage, mSizeAdjustFactor, &pattern);
 
     double size = GetPixelSize(pattern);
-    if (size != 0.0 && mStyle.sizeAdjust != 0.0) {
+    if (size != 0.0 && mStyle.sizeAdjust > 0.0) {
         gfxFcFont *font = fontSet->GetFontAt(0, GetStyle());
         if (font) {
             const gfxFont::Metrics& metrics =

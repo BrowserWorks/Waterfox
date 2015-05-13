@@ -8,13 +8,11 @@
 #define nsUpdateDriver_h__
 
 #include "nscore.h"
-#ifdef MOZ_UPDATER
 #include "nsIUpdateService.h"
 #include "nsIThread.h"
 #include "nsCOMPtr.h"
 #include "nsString.h"
 #include "mozilla/Attributes.h"
-#endif
 
 class nsIFile;
 
@@ -57,12 +55,11 @@ nsresult ProcessUpdates(nsIFile *greDir, nsIFile *appDir,
                                     nsIFile *osApplyToDir = nullptr,
                                     ProcessType *pid = nullptr);
 
-#ifdef MOZ_UPDATER
 // The implementation of the update processor handles the task of loading the
 // updater application for staging an update.
 // XXX ehsan this is living in this file in order to make use of the existing
 // stuff here, we might want to move it elsewhere in the future.
-class nsUpdateProcessor MOZ_FINAL : public nsIUpdateProcessor
+class nsUpdateProcessor final : public nsIUpdateProcessor
 {
 public:
   nsUpdateProcessor();
@@ -105,9 +102,6 @@ private:
 private:
   ProcessType mUpdaterPID;
   nsCOMPtr<nsIThread> mProcessWatcher;
-  nsCOMPtr<nsIUpdate> mUpdate;
   StagedUpdateInfo mInfo;
 };
-#endif
-
 #endif  // nsUpdateDriver_h__

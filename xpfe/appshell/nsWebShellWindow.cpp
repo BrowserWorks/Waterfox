@@ -71,6 +71,8 @@
 #include "mozilla/DebugOnly.h"
 #include "mozilla/MouseEvents.h"
 
+#include "nsPIWindowRoot.h"
+
 #ifdef XP_MACOSX
 #include "nsINativeMenuService.h"
 #define USE_NATIVE_MENUS
@@ -172,7 +174,6 @@ nsresult nsWebShellWindow::Initialize(nsIXULWindow* aParent,
   mWindow->Create((nsIWidget *)parentWidget,          // Parent nsIWidget
                   nullptr,                            // Native parent widget
                   r,                                  // Widget dimensions
-                  nullptr,                            // Device context
                   &widgetInitData);                   // Widget initialization data
   mWindow->GetClientBounds(r);
   // Match the default background color of content. Important on windows
@@ -256,6 +257,15 @@ nsWebShellWindow::WindowMoved(nsIWidget* aWidget, int32_t x, int32_t y)
     nsCOMPtr<nsPIDOMWindow> window =
       mDocShell ? mDocShell->GetWindow() : nullptr;
     pm->AdjustPopupsOnWindowChange(window);
+  }
+
+  // Notify all tabs that the widget moved.
+  if (mDocShell && mDocShell->GetWindow()) {
+    nsCOMPtr<EventTarget> eventTarget = mDocShell->GetWindow()->GetTopWindowRoot();
+    nsContentUtils::DispatchChromeEvent(mDocShell->GetDocument(),
+                                        eventTarget,
+                                        NS_LITERAL_STRING("MozUpdateWindowPos"),
+                                        false, false, nullptr);
   }
 
   // Persist position, but not immediately, in case this OS is firing
@@ -419,6 +429,11 @@ nsWebShellWindow::WindowDeactivated()
 #ifdef USE_NATIVE_MENUS
 static void LoadNativeMenus(nsIDOMDocument *aDOMDoc, nsIWidget *aParentWindow)
 {
+  nsCOMPtr<nsINativeMenuService> nms = do_GetService("@mozilla.org/widget/nativemenuservice;1");
+  if (!nms) {
+    return;
+  }
+
   // Find the menubar tag (if there is more than one, we ignore all but
   // the first).
   nsCOMPtr<nsIDOMNodeList> menubarElements;
@@ -429,19 +444,19 @@ static void LoadNativeMenus(nsIDOMDocument *aDOMDoc, nsIWidget *aParentWindow)
   nsCOMPtr<nsIDOMNode> menubarNode;
   if (menubarElements)
     menubarElements->Item(0, getter_AddRefs(menubarNode));
-  if (!menubarNode)
-    return;
 
-  nsCOMPtr<nsINativeMenuService> nms = do_GetService("@mozilla.org/widget/nativemenuservice;1");
-  nsCOMPtr<nsIContent> menubarContent(do_QueryInterface(menubarNode));
-  if (nms && menubarContent)
+  if (menubarNode) {
+    nsCOMPtr<nsIContent> menubarContent(do_QueryInterface(menubarNode));
     nms->CreateNativeMenuBar(aParentWindow, menubarContent);
+  } else {
+    nms->CreateNativeMenuBar(aParentWindow, nullptr);
+  }
 }
 #endif
 
 namespace mozilla {
 
-class WebShellWindowTimerCallback MOZ_FINAL : public nsITimerCallback
+class WebShellWindowTimerCallback final : public nsITimerCallback
 {
 public:
   explicit WebShellWindowTimerCallback(nsWebShellWindow* aWindow)
@@ -450,7 +465,7 @@ public:
 
   NS_DECL_THREADSAFE_ISUPPORTS
 
-  NS_IMETHOD Notify(nsITimer* aTimer) MOZ_OVERRIDE
+  NS_IMETHOD Notify(nsITimer* aTimer) override
   {
     // Although this object participates in a refcount cycle (this -> mWindow
     // -> mSPTimer -> this), mSPTimer is a one-shot timer and releases this
@@ -658,7 +673,7 @@ void nsWebShellWindow::LoadContentAreas() {
                           nullptr,
                           nullptr,
                           nullptr);
-            nsMemory::Free(urlChar);
+            free(urlChar);
           }
         }
       }

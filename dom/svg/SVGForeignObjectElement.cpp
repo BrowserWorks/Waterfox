@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -16,9 +17,9 @@ namespace mozilla {
 namespace dom {
 
 JSObject*
-SVGForeignObjectElement::WrapNode(JSContext *aCx)
+SVGForeignObjectElement::WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return SVGForeignObjectElementBinding::Wrap(aCx, this);
+  return SVGForeignObjectElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 nsSVGElement::LengthInfo SVGForeignObjectElement::sLengthInfo[4] =
@@ -89,7 +90,7 @@ SVGForeignObjectElement::PrependLocalTransformsTo(const gfxMatrix &aMatrix,
   if (aWhich == eChildToUserSpace) {
     return toUserSpace * aMatrix;
   }
-  NS_ABORT_IF_FALSE(aWhich == eAllTransforms, "Unknown TransformTypes");
+  MOZ_ASSERT(aWhich == eAllTransforms, "Unknown TransformTypes");
   return toUserSpace * fromUserSpace;
 }
 
@@ -117,7 +118,7 @@ SVGForeignObjectElement::BindToTree(nsIDocument* aDocument,
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsIDocument* doc = GetComposedDoc();
-  if (doc && doc->IsSVG()) {
+  if (doc && doc->IsSVGDocument()) {
     // We assume that we're going to have HTML content, so we ensure that the
     // UA style sheets that nsDocumentViewer::CreateStyleSet skipped when
     // it saw the document was an SVG document are loaded.

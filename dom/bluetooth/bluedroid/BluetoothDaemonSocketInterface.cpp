@@ -1,5 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -36,7 +36,7 @@ BluetoothDaemonSocketModule::ListenCmd(BluetoothSocketType aType,
     aType,
     PackConversion<nsAString, BluetoothServiceName>(aServiceName),
     PackArray<uint8_t>(aServiceUuid, 16),
-    PackConversion<int, uint16_t>(aChannel),
+    PackConversion<int, int32_t>(aChannel),
     SocketFlags(aEncrypt, aAuth), *pdu);
   if (NS_FAILED(rv)) {
     return rv;
@@ -65,7 +65,7 @@ BluetoothDaemonSocketModule::ConnectCmd(const nsAString& aBdAddr,
     PackConversion<nsAString, BluetoothAddress>(aBdAddr),
     aType,
     PackArray<uint8_t>(aUuid, 16),
-    PackConversion<int, int16_t>(aChannel),
+    PackConversion<int, int32_t>(aChannel),
     SocketFlags(aEncrypt, aAuth), *pdu);
   if (NS_FAILED(rv)) {
     return rv;
@@ -81,14 +81,14 @@ BluetoothDaemonSocketModule::ConnectCmd(const nsAString& aBdAddr,
 /* |DeleteTask| deletes a class instance on the I/O thread
  */
 template <typename T>
-class DeleteTask MOZ_FINAL : public Task
+class DeleteTask final : public Task
 {
 public:
   DeleteTask(T* aPtr)
   : mPtr(aPtr)
   { }
 
-  void Run() MOZ_OVERRIDE
+  void Run() override
   {
     mPtr = nullptr;
   }
@@ -104,7 +104,7 @@ private:
  * connection, Bluedroid sends the 2nd message with the socket
  * info and socket file descriptor.
  */
-class BluetoothDaemonSocketModule::AcceptWatcher MOZ_FINAL
+class BluetoothDaemonSocketModule::AcceptWatcher final
   : public SocketMessageWatcher
 {
 public:
@@ -112,7 +112,7 @@ public:
   : SocketMessageWatcher(aFd, aRes)
   { }
 
-  void Proceed(BluetoothStatus aStatus) MOZ_OVERRIDE
+  void Proceed(BluetoothStatus aStatus) override
   {
     if (aStatus == STATUS_SUCCESS) {
       IntStringIntResultRunnable::Dispatch(
@@ -211,7 +211,7 @@ BluetoothDaemonSocketModule::ErrorRsp(const BluetoothDaemonPDUHeader& aHeader,
     aRes, &BluetoothSocketResultHandler::OnError, UnpackPDUInitOp(aPDU));
 }
 
-class BluetoothDaemonSocketModule::ListenInitOp MOZ_FINAL : private PDUInitOp
+class BluetoothDaemonSocketModule::ListenInitOp final : private PDUInitOp
 {
 public:
   ListenInitOp(BluetoothDaemonPDU& aPDU)
@@ -247,7 +247,7 @@ BluetoothDaemonSocketModule::ListenRsp(const BluetoothDaemonPDUHeader& aHeader,
  * Bluedroid and forwarding the connected socket to the
  * resource handler.
  */
-class BluetoothDaemonSocketModule::ConnectWatcher MOZ_FINAL
+class BluetoothDaemonSocketModule::ConnectWatcher final
   : public SocketMessageWatcher
 {
 public:
@@ -255,7 +255,7 @@ public:
   : SocketMessageWatcher(aFd, aRes)
   { }
 
-  void Proceed(BluetoothStatus aStatus) MOZ_OVERRIDE
+  void Proceed(BluetoothStatus aStatus) override
   {
     if (aStatus == STATUS_SUCCESS) {
       IntStringIntResultRunnable::Dispatch(
@@ -315,8 +315,11 @@ BluetoothDaemonSocketInterface::Listen(BluetoothSocketType aType,
 {
   MOZ_ASSERT(mModule);
 
-  mModule->ListenCmd(aType, aServiceName, aServiceUuid, aChannel,
-                     aEncrypt, aAuth, aRes);
+  nsresult rv = mModule->ListenCmd(aType, aServiceName, aServiceUuid,
+                                   aChannel, aEncrypt, aAuth, aRes);
+  if (NS_FAILED(rv))  {
+    DispatchError(aRes, rv);
+  }
 }
 
 void
@@ -329,7 +332,11 @@ BluetoothDaemonSocketInterface::Connect(const nsAString& aBdAddr,
 {
   MOZ_ASSERT(mModule);
 
-  mModule->ConnectCmd(aBdAddr, aType, aUuid, aChannel, aEncrypt, aAuth, aRes);
+  nsresult rv = mModule->ConnectCmd(aBdAddr, aType, aUuid, aChannel,
+                                    aEncrypt, aAuth, aRes);
+  if (NS_FAILED(rv))  {
+    DispatchError(aRes, rv);
+  }
 }
 
 void
@@ -338,7 +345,10 @@ BluetoothDaemonSocketInterface::Accept(int aFd,
 {
   MOZ_ASSERT(mModule);
 
-  mModule->AcceptCmd(aFd, aRes);
+  nsresult rv = mModule->AcceptCmd(aFd, aRes);
+  if (NS_FAILED(rv))  {
+    DispatchError(aRes, rv);
+  }
 }
 
 void
@@ -346,7 +356,32 @@ BluetoothDaemonSocketInterface::Close(BluetoothSocketResultHandler* aRes)
 {
   MOZ_ASSERT(mModule);
 
-  mModule->CloseCmd(aRes);
+  nsresult rv = mModule->CloseCmd(aRes);
+  if (NS_FAILED(rv))  {
+    DispatchError(aRes, rv);
+  }
+}
+
+void
+BluetoothDaemonSocketInterface::DispatchError(
+  BluetoothSocketResultHandler* aRes, BluetoothStatus aStatus)
+{
+  BluetoothResultRunnable1<BluetoothSocketResultHandler, void,
+                           BluetoothStatus, BluetoothStatus>::Dispatch(
+    aRes, &BluetoothSocketResultHandler::OnError,
+    ConstantInitOp1<BluetoothStatus>(aStatus));
+}
+
+void
+BluetoothDaemonSocketInterface::DispatchError(
+  BluetoothSocketResultHandler* aRes, nsresult aRv)
+{
+  BluetoothStatus status;
+
+  if (NS_WARN_IF(NS_FAILED(Convert(aRv, status)))) {
+    status = STATUS_FAIL;
+  }
+  DispatchError(aRes, status);
 }
 
 END_BLUETOOTH_NAMESPACE

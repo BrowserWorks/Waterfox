@@ -21,6 +21,10 @@ struct TestTiledLayerTile {
   bool operator!= (const TestTiledLayerTile& o) const {
     return value != o.value;
   }
+
+  bool IsPlaceholderTile() const {
+    return value == -1;
+  }
 };
 
 class TestTiledLayerBuffer : public TiledLayerBuffer<TestTiledLayerBuffer, TestTiledLayerTile>
@@ -77,7 +81,7 @@ TEST(TiledLayerBuffer, EmptyUpdate) {
 
   TestTiledLayerBuffer buffer;
 
-  nsIntRegion validRegion(nsIntRect(0, 0, 10, 10));
+  nsIntRegion validRegion(gfx::IntRect(0, 0, 10, 10));
   buffer.TestUpdate(validRegion, validRegion);
 
   ASSERT_EQ(buffer.GetValidRegion(), validRegion);

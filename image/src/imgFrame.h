@@ -4,13 +4,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef imgFrame_h
-#define imgFrame_h
+#ifndef mozilla_image_src_imgFrame_h
+#define mozilla_image_src_imgFrame_h
 
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/Monitor.h"
 #include "mozilla/Move.h"
-#include "mozilla/TypedEnum.h"
 #include "mozilla/VolatileBuffer.h"
 #include "gfxDrawable.h"
 #include "imgIContainer.h"
@@ -23,7 +22,7 @@ class ImageRegion;
 class DrawableFrameRef;
 class RawAccessFrameRef;
 
-MOZ_BEGIN_ENUM_CLASS(BlendMethod, int8_t)
+enum class BlendMethod : int8_t {
   // All color components of the frame, including alpha, overwrite the current
   // contents of the frame's output buffer region.
   SOURCE,
@@ -31,21 +30,20 @@ MOZ_BEGIN_ENUM_CLASS(BlendMethod, int8_t)
   // The frame should be composited onto the output buffer based on its alpha,
   // using a simple OVER operation.
   OVER
-MOZ_END_ENUM_CLASS(BlendMethod)
+};
 
-MOZ_BEGIN_ENUM_CLASS(DisposalMethod, int8_t)
+enum class DisposalMethod : int8_t {
   CLEAR_ALL = -1,  // Clear the whole image, revealing what's underneath.
   NOT_SPECIFIED,   // Leave the frame and let the new frame draw on top.
   KEEP,            // Leave the frame and let the new frame draw on top.
   CLEAR,           // Clear the frame's area, revealing what's underneath.
   RESTORE_PREVIOUS // Restore the previous (composited) frame.
-MOZ_END_ENUM_CLASS(DisposalMethod)
+};
 
-MOZ_BEGIN_ENUM_CLASS(Opacity, uint8_t)
+enum class Opacity : uint8_t {
   OPAQUE,
   SOME_TRANSPARENCY
-MOZ_END_ENUM_CLASS(Opacity)
-
+};
 
 /**
  * AnimationData contains all of the information necessary for using an imgFrame
@@ -159,6 +157,19 @@ public:
                             GraphicsFilter aFilter,
                             uint32_t aImageFlags);
 
+  /**
+   * Reinitializes an existing imgFrame with new parameters. You must be holding
+   * a RawAccessFrameRef to the imgFrame, and it must never have been written
+   * to, marked finished, or aborted.
+   *
+   * XXX(seth): We will remove this in bug 1117607.
+   */
+  nsresult ReinitForDecoder(const nsIntSize& aImageSize,
+                            const nsIntRect& aRect,
+                            SurfaceFormat aFormat,
+                            uint8_t aPaletteDepth = 0,
+                            bool aNonPremult = false);
+
   DrawableFrameRef DrawableRef();
   RawAccessFrameRef RawAccessRef();
 
@@ -177,7 +188,7 @@ public:
   bool Draw(gfxContext* aContext, const ImageRegion& aRegion,
             GraphicsFilter aFilter, uint32_t aImageFlags);
 
-  nsresult ImageUpdated(const nsIntRect &aUpdateRect);
+  nsresult ImageUpdated(const nsIntRect& aUpdateRect);
 
   /**
    * Mark this imgFrame as completely decoded, and set final options.
@@ -225,15 +236,23 @@ public:
    */
   void WaitUntilComplete() const;
 
-  IntSize GetImageSize() { return mImageSize; }
+  /**
+   * Returns the number of bytes per pixel this imgFrame requires.  This is a
+   * worst-case value that does not take into account the effects of format
+   * changes caused by Optimize(), since an imgFrame is not optimized throughout
+   * its lifetime.
+   */
+  uint32_t GetBytesPerPixel() const { return GetIsPaletted() ? 1 : 4; }
+
+  IntSize GetImageSize() const { return mImageSize; }
   nsIntRect GetRect() const;
   IntSize GetSize() const { return mSize; }
   bool NeedsPadding() const { return mOffset != nsIntPoint(0, 0); }
-  void GetImageData(uint8_t **aData, uint32_t *length) const;
+  void GetImageData(uint8_t** aData, uint32_t* length) const;
   uint8_t* GetImageData() const;
 
   bool GetIsPaletted() const;
-  void GetPaletteData(uint32_t **aPalette, uint32_t *length) const;
+  void GetPaletteData(uint32_t** aPalette, uint32_t* length) const;
   uint32_t* GetPaletteData() const;
   uint8_t GetPaletteDepth() const { return mPaletteDepth; }
 
@@ -274,7 +293,7 @@ private: // methods
 
   bool IsImageCompleteInternal() const;
   nsresult ImageUpdatedInternal(const nsIntRect& aUpdateRect);
-  void GetImageDataInternal(uint8_t **aData, uint32_t *length) const;
+  void GetImageDataInternal(uint8_t** aData, uint32_t* length) const;
   uint32_t GetImageBytesPerRow() const;
   uint32_t GetImageDataLength() const;
   int32_t GetStride() const;
@@ -282,16 +301,17 @@ private: // methods
 
   uint32_t PaletteDataLength() const
   {
-    return mPaletteDepth ? (1 << mPaletteDepth) * sizeof(uint32_t)
+    return mPaletteDepth ? (size_t(1) << mPaletteDepth) * sizeof(uint32_t)
                          : 0;
   }
 
   struct SurfaceWithFormat {
     nsRefPtr<gfxDrawable> mDrawable;
     SurfaceFormat mFormat;
-    SurfaceWithFormat() {}
+    SurfaceWithFormat() { }
     SurfaceWithFormat(gfxDrawable* aDrawable, SurfaceFormat aFormat)
-     : mDrawable(aDrawable), mFormat(aFormat) {}
+      : mDrawable(aDrawable), mFormat(aFormat)
+    { }
     bool IsValid() { return !!mDrawable; }
   };
 
@@ -372,12 +392,8 @@ private: // data
  * allowing drawing. If you have a DrawableFrameRef |ref| and |if (ref)| returns
  * true, then calls to Draw() and GetSurface() are guaranteed to succeed.
  */
-class DrawableFrameRef MOZ_FINAL
+class DrawableFrameRef final
 {
-  // Implementation details for safe boolean conversion.
-  typedef void (DrawableFrameRef::* ConvertibleToBool)(float*****, double*****);
-  void nonNull(float*****, double*****) {}
-
 public:
   DrawableFrameRef() { }
 
@@ -404,10 +420,7 @@ public:
     return *this;
   }
 
-  operator ConvertibleToBool() const
-  {
-    return bool(mFrame) ? &DrawableFrameRef::nonNull : 0;
-  }
+  explicit operator bool() const { return bool(mFrame); }
 
   imgFrame* operator->()
   {
@@ -447,12 +460,8 @@ private:
  * so only use this when you need to read or write the raw underlying image data
  * that the imgFrame holds.
  */
-class RawAccessFrameRef MOZ_FINAL
+class RawAccessFrameRef final
 {
-  // Implementation details for safe boolean conversion.
-  typedef void (RawAccessFrameRef::* ConvertibleToBool)(float*****, double*****);
-  void nonNull(float*****, double*****) {}
-
 public:
   RawAccessFrameRef() { }
 
@@ -491,10 +500,7 @@ public:
     return *this;
   }
 
-  operator ConvertibleToBool() const
-  {
-    return bool(mFrame) ? &RawAccessFrameRef::nonNull : 0;
-  }
+  explicit operator bool() const { return bool(mFrame); }
 
   imgFrame* operator->()
   {
@@ -526,4 +532,4 @@ private:
 } // namespace image
 } // namespace mozilla
 
-#endif /* imgFrame_h */
+#endif // mozilla_image_src_imgFrame_h

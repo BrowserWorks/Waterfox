@@ -5,17 +5,54 @@
 // the "exported" symbols
 let LoopUI;
 
-XPCOMUtils.defineLazyModuleGetter(this, "injectLoopAPI", "resource:///modules/loop/MozLoopAPI.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "LoopRooms", "resource:///modules/loop/LoopRooms.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "MozLoopService", "resource:///modules/loop/MozLoopService.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "PanelFrame", "resource:///modules/PanelFrame.jsm");
-
-
 (function() {
+  const kNSXUL = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+  const kBrowserSharingNotificationId = "loop-sharing-notification";
+  const kPrefBrowserSharingInfoBar = "browserSharing.showInfoBar";
+
   LoopUI = {
+    /**
+     * @var {XULWidgetSingleWrapper} toolbarButton Getter for the Loop toolbarbutton
+     *                                             instance for this window.
+     */
     get toolbarButton() {
       delete this.toolbarButton;
       return this.toolbarButton = CustomizableUI.getWidget("loop-button").forWindow(window);
+    },
+
+    /**
+     * @var {XULElement} panel Getter for the Loop panel element.
+     */
+    get panel() {
+      delete this.panel;
+      return this.panel = document.getElementById("loop-notification-panel");
+    },
+
+    /**
+     * @var {XULElement|null} browser Getter for the Loop panel browser element.
+     *                                Will be NULL if the panel hasn't loaded yet.
+     */
+    get browser() {
+      let browser = document.querySelector("#loop-notification-panel > #loop-panel-iframe");
+      if (browser) {
+        delete this.browser;
+        this.browser = browser;
+      }
+      return browser;
+    },
+
+    /**
+     * @var {String|null} selectedTab Getter for the name of the currently selected
+     *                                tab inside the Loop panel. Will be NULL if
+     *                                the panel hasn't loaded yet.
+     */
+    get selectedTab() {
+      if (!this.browser) {
+        return null;
+      }
+
+      let selectedTab = this.browser.contentDocument.querySelector(".tab-view > .selected");
+      return selectedTab && selectedTab.getAttribute("data-tab-name");
     },
 
     /**
@@ -32,6 +69,26 @@ XPCOMUtils.defineLazyModuleGetter(this, "PanelFrame", "resource:///modules/Panel
           resolve();
         });
       });
+    },
+
+    /**
+     * Toggle between opening or hiding the Loop panel.
+     *
+     * @param {DOMEvent} [event] Optional event that triggered the call to this
+     *                           function.
+     * @param {String}   [tabId] Optional name of the tab to select after the panel
+     *                           has opened. Does nothing when the panel is hidden.
+     * @return {Promise}
+     */
+    togglePanel: function(event, tabId = null) {
+      if (this.panel.state == "open") {
+        return new Promise(resolve => {
+          this.panel.hidePopup();
+          resolve();
+        });
+      }
+
+      return this.openCallPanel(event, tabId);
     },
 
     /**
@@ -71,15 +128,16 @@ XPCOMUtils.defineLazyModuleGetter(this, "PanelFrame", "resource:///modules/Panel
             return;
           }
 
-          iframe.addEventListener("DOMContentLoaded", function documentDOMLoaded() {
+          let documentDOMLoaded = () => {
             iframe.removeEventListener("DOMContentLoaded", documentDOMLoaded, true);
-            injectLoopAPI(iframe.contentWindow);
-            iframe.contentWindow.addEventListener("loopPanelInitialized", function loopPanelInitialized() {
+  	    this.injectLoopAPI(iframe.contentWindow);
+  	    iframe.contentWindow.addEventListener("loopPanelInitialized", function loopPanelInitialized() {
               iframe.contentWindow.removeEventListener("loopPanelInitialized",
                                                        loopPanelInitialized);
               showTab();
-            });
-          }, true);
+	    });
+	  };
+	  iframe.addEventListener("DOMContentLoaded", documentDOMLoaded, true); 
         };
 
         // Used to clear the temporary "login" state from the button.
@@ -90,12 +148,12 @@ XPCOMUtils.defineLazyModuleGetter(this, "PanelFrame", "resource:///modules/Panel
             // Assume the conversation with the visitor wasn't open since we would
             // have resumed the tour as soon as the visitor joined if it was (and
             // the pref would have been set to false already.
-            MozLoopService.resumeTour("waiting");
+            this.MozLoopService.resumeTour("waiting");
             resolve();
             return;
           }
 
-          PanelFrame.showPopup(window, event ? event.target : this.toolbarButton.node,
+          this.PanelFrame.showPopup(window, event ? event.target : this.toolbarButton.node,
                                "loop", null, "about:looppanel", null, callback);
         });
       });
@@ -116,7 +174,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "PanelFrame", "resource:///modules/Panel
         return false;
       }
 
-      if (!LoopRooms.participantsCount) {
+      if (!this.LoopRooms.participantsCount) {
         // Nobody is in the rooms
         return false;
       }
@@ -135,7 +193,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "PanelFrame", "resource:///modules/Panel
      */
     roomsWithNonOwners: function() {
       return new Promise(resolve => {
-        LoopRooms.getAll((error, rooms) => {
+        this.LoopRooms.getAll((error, rooms) => {
           let roomsWithNonOwners = [];
           for (let room of rooms) {
             if (!("participants" in room)) {
@@ -160,7 +218,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "PanelFrame", "resource:///modules/Panel
       // Add observer notifications before the service is initialized
       Services.obs.addObserver(this, "loop-status-changed", false);
 
-      MozLoopService.initialize();
+      this.MozLoopService.initialize();
       this.updateToolbarState();
     },
 
@@ -191,13 +249,15 @@ XPCOMUtils.defineLazyModuleGetter(this, "PanelFrame", "resource:///modules/Panel
         return;
       }
       let state = "";
-      if (MozLoopService.errors.size) {
+      if (this.MozLoopService.errors.size) {
         state = "error";
-      } else if (aReason == "login" && MozLoopService.userProfile) {
+      } else if (this.MozLoopService.screenShareActive) {
+        state = "action";
+      } else if (aReason == "login" && this.MozLoopService.userProfile) {
         state = "active";
-      } else if (MozLoopService.doNotDisturb) {
+      } else if (this.MozLoopService.doNotDisturb) {
         state = "disabled";
-      } else if (MozLoopService.roomsParticipantsCount > 0) {
+      } else if (this.MozLoopService.roomsParticipantsCount > 0) {
         state = "active";
       }
       this.toolbarButton.node.setAttribute("state", state);
@@ -220,7 +280,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "PanelFrame", "resource:///modules/Panel
      *                                                  Opens the panel by default.
      */
     showNotification: function(options) {
-      if (MozLoopService.doNotDisturb) {
+      if (this.MozLoopService.doNotDisturb) {
         return;
       }
 
@@ -271,7 +331,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "PanelFrame", "resource:///modules/Panel
      * @param {String} name Name of the sound, like 'ringtone' or 'room-joined'
      */
     playSound: function(name) {
-      if (this.ActiveSound || MozLoopService.doNotDisturb) {
+      if (this.ActiveSound || this.MozLoopService.doNotDisturb) {
         return;
       }
 
@@ -282,5 +342,172 @@ XPCOMUtils.defineLazyModuleGetter(this, "PanelFrame", "resource:///modules/Panel
 
       this.activeSound.addEventListener("ended", () => this.activeSound = undefined, false);
     },
+
+    /**
+     * Adds a listener for browser sharing. It will inform the listener straight
+     * away for the current windowId, and then on every tab change.
+     *
+     * Listener parameters:
+     * - {Object}  err       If there is a error this will be defined, null otherwise.
+     * - {Integer} windowId  The new windowId for the browser.
+     *
+     * @param {Function} listener The listener to receive information on when the
+     *                            windowId changes.
+     */
+    addBrowserSharingListener: function(listener) {
+      if (!this._tabChangeListeners) {
+        this._tabChangeListeners = new Set();
+        gBrowser.tabContainer.addEventListener("TabSelect", this);
+      }
+
+      this._tabChangeListeners.add(listener);
+      this._maybeShowBrowserSharingInfoBar();
+
+      // Get the first window Id for the listener.
+      listener(null, gBrowser.selectedBrowser.outerWindowID);
+    },
+
+    /**
+     * Removes a listener from browser sharing.
+     *
+     * @param {Function} listener The listener to remove from the list.
+     */
+    removeBrowserSharingListener: function(listener) {
+      if (!this._tabChangeListeners) {
+        return;
+      }
+
+      if (this._tabChangeListeners.has(listener)) {
+        this._tabChangeListeners.delete(listener);
+      }
+
+      if (!this._tabChangeListeners.size) {
+        this._hideBrowserSharingInfoBar();
+        gBrowser.tabContainer.removeEventListener("TabSelect", this);
+        delete this._tabChangeListeners;
+      }
+    },
+
+    /**
+     * Helper function to fetch a localized string via the MozLoopService API.
+     * It's currently inconveniently wrapped inside a string of stringified JSON.
+     *
+     * @param  {String} key The element id to get strings for.
+     * @return {String}
+     */
+    _getString: function(key) {
+      let str = this.MozLoopService.getStrings(key);
+      if (str) {
+        str = JSON.parse(str).textContent;
+      }
+      return str;
+    },
+
+    /**
+     * Shows an infobar notification at the top of the browser window that warns
+     * the user that their browser tabs are being broadcasted through the current
+     * conversation.
+     */
+    _maybeShowBrowserSharingInfoBar: function() {
+      this._hideBrowserSharingInfoBar();
+
+      // Don't show the infobar if it's been permanently disabled from the menu.
+      if (!this.MozLoopService.getLoopPref(kPrefBrowserSharingInfoBar)) {
+        return;
+      }
+
+      // Create the menu that is shown when the menu-button' dropmarker is clicked
+      // inside the notification bar.
+      let menuPopup = document.createElementNS(kNSXUL, "menupopup");
+      let menuItem = menuPopup.appendChild(document.createElementNS(kNSXUL, "menuitem"));
+      menuItem.setAttribute("label", this._getString("infobar_menuitem_dontshowagain_label"));
+      menuItem.setAttribute("accesskey", this._getString("infobar_menuitem_dontshowagain_accesskey"));
+      menuItem.addEventListener("command", () => {
+        // We're being told to hide the bar permanently.
+        this._hideBrowserSharingInfoBar(true);
+      });
+
+      let box = gBrowser.getNotificationBox();
+      let bar = box.appendNotification(
+        this._getString("infobar_screenshare_browser_message"),
+        kBrowserSharingNotificationId,
+        // Icon is defined in browser theme CSS.
+        null,
+        box.PRIORITY_WARNING_LOW,
+        [{
+          label: this._getString("infobar_button_gotit_label"),
+          accessKey: this._getString("infobar_button_gotit_accesskey"),
+          type: "menu-button",
+          popup: menuPopup,
+          anchor: "dropmarker",
+          callback: () => {
+            this._hideBrowserSharingInfoBar();
+          }
+        }]
+      );
+
+      // Keep showing the notification bar until the user explicitly closes it.
+      bar.persistence = -1;
+    },
+
+    /**
+     * Hides the infobar, permanantly if requested.
+     *
+     * @param {Boolean} permanently Flag that determines if the infobar will never
+     *                              been shown again. Defaults to `false`.
+     * @return {Boolean} |true| if the infobar was hidden here.
+     */
+    _hideBrowserSharingInfoBar: function(permanently = false, browser) {
+      browser = browser || gBrowser.selectedBrowser;
+      let box = gBrowser.getNotificationBox(browser);
+      let notification = box.getNotificationWithValue(kBrowserSharingNotificationId);
+      let removed = false;
+      if (notification) {
+        box.removeNotification(notification);
+        removed = true;
+      }
+
+      if (permanently) {
+        this.MozLoopService.setLoopPref(kPrefBrowserSharingInfoBar, false);
+      }
+
+      return removed;
+    },
+
+    /**
+     * Handles events from gBrowser.
+     */
+    handleEvent: function(event) {
+      // We only should get "select" events.
+      if (event.type != "TabSelect") {
+        return;
+      }
+
+      let wasVisible = false;
+      // Hide the infobar from the previous tab.
+      if (event.detail.previousTab) {
+        wasVisible = this._hideBrowserSharingInfoBar(false, event.detail.previousTab.linkedBrowser);
+      }
+
+      // We've changed the tab, so get the new window id.
+      for (let listener of this._tabChangeListeners) {
+        try {
+          listener(null, gBrowser.selectedBrowser.outerWindowID);
+        } catch (ex) {
+          Cu.reportError("Tab switch caused an error: " + ex.message);
+        }
+      };
+
+      if (wasVisible) {
+        // If the infobar was visible before, we should show it again after the
+        // switch.
+        this._maybeShowBrowserSharingInfoBar();
+      }
+    },
   };
 })();
+
+XPCOMUtils.defineLazyModuleGetter(LoopUI, "injectLoopAPI", "resource:///modules/loop/MozLoopAPI.jsm");
+XPCOMUtils.defineLazyModuleGetter(LoopUI, "LoopRooms", "resource:///modules/loop/LoopRooms.jsm");
+XPCOMUtils.defineLazyModuleGetter(LoopUI, "MozLoopService", "resource:///modules/loop/MozLoopService.jsm");
+XPCOMUtils.defineLazyModuleGetter(LoopUI, "PanelFrame", "resource:///modules/PanelFrame.jsm");

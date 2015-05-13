@@ -193,8 +193,9 @@ add_task(function test_basic_tryToKeepPartialData()
  */
 add_task(function test_unix_permissions()
 {
-  // This test is only executed on Linux and Mac.
-  if (Services.appinfo.OS != "Darwin" && Services.appinfo.OS != "Linux") {
+  // This test is only executed on some Desktop systems.
+  if (Services.appinfo.OS != "Darwin" && Services.appinfo.OS != "Linux" &&
+      Services.appinfo.OS != "WINNT") {
     do_print("Skipping test.");
     return;
   }
@@ -228,12 +229,20 @@ add_task(function test_unix_permissions()
           yield promiseDownloadStopped(download);
         }
 
-        // Temporary downloads should be read-only and not accessible to other
-        // users, while permanently downloaded files should be readable and
-        // writable as specified by the system umask.
         let isTemporary = launchWhenSucceeded && (autoDelete || isPrivate);
-        do_check_eq((yield OS.File.stat(download.target.path)).unixMode,
-                    isTemporary ? 0o400 : (0o666 & ~OS.Constants.Sys.umask));
+        let stat = yield OS.File.stat(download.target.path);
+        if (Services.appinfo.OS == "WINNT") {
+          // On Windows
+          // Temporary downloads should be read-only
+          do_check_eq(stat.winAttributes.readOnly, isTemporary ? true : false);
+        } else {
+          // On Linux, Mac
+          // Temporary downloads should be read-only and not accessible to other
+          // users, while permanently downloaded files should be readable and
+          // writable as specified by the system umask.
+          do_check_eq(stat.unixMode,
+                      isTemporary ? 0o400 : (0o666 & ~OS.Constants.Sys.umask));
+        }
       }
     }
   }
@@ -2116,7 +2125,7 @@ add_task(function test_history()
   mustInterruptResponses();
 
   // We will wait for the visit to be notified during the download.
-  yield promiseClearHistory();
+  yield PlacesTestUtils.clearHistory();
   let promiseVisit = promiseWaitForVisit(httpUrl("interruptible.txt"));
 
   // Start a download that is not allowed to finish yet.
@@ -2128,7 +2137,7 @@ add_task(function test_history()
   do_check_eq(transitionType, Ci.nsINavHistoryService.TRANSITION_DOWNLOAD);
 
   // Restart and complete the download after clearing history.
-  yield promiseClearHistory();
+  yield PlacesTestUtils.clearHistory();
   download.cancel();
   continueResponses();
   yield download.start();
@@ -2144,7 +2153,7 @@ add_task(function test_history()
 add_task(function test_history_tryToKeepPartialData()
 {
   // We will wait for the visit to be notified during the download.
-  yield promiseClearHistory();
+  yield PlacesTestUtils.clearHistory();
   let promiseVisit =
       promiseWaitForVisit(httpUrl("interruptible_resumable.txt"));
 

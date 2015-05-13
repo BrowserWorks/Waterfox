@@ -164,84 +164,183 @@ function synthesizeDragStart(element, expectedDragData, aWindow, x, y)
 }
 
 /**
- * Emulate a drop by emulating a dragstart and firing events dragenter, dragover, and drop.
- *  srcElement - the element to use to start the drag, usually the same as destElement
- *               but if destElement isn't suitable to start a drag on pass a suitable
- *               element for srcElement
- *  destElement - the element to fire the dragover, dragleave and drop events
- *  dragData - the data to supply for the data transfer
- *                     This data is in the format:
- *                       [ [ {type: value, data: value}, ...], ... ]
- *  dropEffect - the drop effect to set during the dragstart event, or 'move' if null
- *  aWindow - optional; defaults to the current window object.
- *  aDestWindow - optional; defaults to aWindow.
- *                Used when destElement is in a different window than srcElement.
+ * INTERNAL USE ONLY
+ * Create an event object to pass to EventUtils.sendDragEvent.
  *
- * Returns the drop effect that was desired.
+ * @param aType          The string represents drag event type.
+ * @param aDestElement   The element to fire the drag event, used to calculate
+ *                       screenX/Y and clientX/Y.
+ * @param aDestWindow    Optional; Defaults to the current window object.
+ * @param aDataTransfer  dataTransfer for current drag session.
+ * @param aDragEvent     The object contains properties to override the event
+ *                       object
+ * @return               An object to pass to EventUtils.sendDragEvent.
  */
-function synthesizeDrop(srcElement, destElement, dragData, dropEffect, aWindow, aDestWindow)
+function createDragEventObject(aType, aDestElement, aDestWindow, aDataTransfer,
+                               aDragEvent)
+{
+  var destRect = aDestElement.getBoundingClientRect();
+  var destClientX = destRect.left + destRect.width / 2;
+  var destClientY = destRect.top + destRect.height / 2;
+  var destScreenX = aDestWindow.mozInnerScreenX + destClientX;
+  var destScreenY = aDestWindow.mozInnerScreenY + destClientY;
+  if ("clientX" in aDragEvent && !("screenX" in aDragEvent)) {
+    aDragEvent.screenX = aDestWindow.mozInnerScreenX + aDragEvent.clientX;
+  }
+  if ("clientY" in aDragEvent && !("screenY" in aDragEvent)) {
+    aDragEvent.screenY = aDestWindow.mozInnerScreenY + aDragEvent.clientY;
+  }
+  return Object.assign({ type: aType,
+                         screenX: destScreenX, screenY: destScreenY,
+                         clientX: destClientX, clientY: destClientY,
+                         dataTransfer: aDataTransfer }, aDragEvent);
+}
+
+/**
+ * Emulate a event sequence of dragstart, dragenter, and dragover.
+ *
+ * @param aSrcElement   The element to use to start the drag.
+ * @param aDestElement  The element to fire the dragover, dragenter events
+ * @param aDragData     The data to supply for the data transfer.
+ *                      This data is in the format:
+ *                        [ [ {type: value, data: value}, ...], ... ]
+ *                      Pass null to avoid modifying dataTransfer.
+ * @param aDropEffect   The drop effect to set during the dragstart event, or
+ *                      'move' if null.
+ * @param aWindow       Optional; Defaults to the current window object.
+ * @param aDestWindow   Optional; Defaults to aWindow.
+ *                      Used when aDestElement is in a different window than
+ *                      aSrcElement.
+ * @param aDragEvent    Optional; Defaults to empty object. Overwrites an object
+ *                      passed to EventUtils.sendDragEvent.
+ * @return              A two element array, where the first element is the
+ *                      value returned from EventUtils.sendDragEvent for
+ *                      dragover event, and the second element is the
+ *                      dataTransfer for the current drag session.
+ */
+function synthesizeDragOver(aSrcElement, aDestElement, aDragData, aDropEffect, aWindow, aDestWindow, aDragEvent={})
 {
   if (!aWindow)
     aWindow = window;
   if (!aDestWindow)
     aDestWindow = aWindow;
 
-  var gWindowUtils = aDestWindow.QueryInterface(Components.interfaces.nsIInterfaceRequestor).
-                                 getInterface(Components.interfaces.nsIDOMWindowUtils);
-  var ds = Components.classes["@mozilla.org/widget/dragservice;1"].
-           getService(Components.interfaces.nsIDragService);
-
   var dataTransfer;
   var trapDrag = function(event) {
     dataTransfer = event.dataTransfer;
-    for (var i = 0; i < dragData.length; i++) {
-      var item = dragData[i];
-      for (var j = 0; j < item.length; j++) {
-        dataTransfer.mozSetDataAt(item[j].type, item[j].data, i);
+    if (aDragData) {
+      for (var i = 0; i < aDragData.length; i++) {
+        var item = aDragData[i];
+        for (var j = 0; j < item.length; j++) {
+          dataTransfer.mozSetDataAt(item[j].type, item[j].data, i);
+        }
       }
     }
-    dataTransfer.dropEffect = dropEffect || "move";
+    dataTransfer.dropEffect = aDropEffect || "move";
     event.preventDefault();
-    event.stopPropagation();
+  };
+
+  // need to use real mouse action
+  aWindow.addEventListener("dragstart", trapDrag, true);
+  EventUtils.synthesizeMouseAtCenter(aSrcElement, { type: "mousedown" }, aWindow);
+
+  var rect = aSrcElement.getBoundingClientRect();
+  var x = rect.width / 2;
+  var y = rect.height / 2;
+  EventUtils.synthesizeMouse(aSrcElement, x, y, { type: "mousemove" }, aWindow);
+  EventUtils.synthesizeMouse(aSrcElement, x+10, y+10, { type: "mousemove" }, aWindow);
+  aWindow.removeEventListener("dragstart", trapDrag, true);
+
+  var event = createDragEventObject("dragenter", aDestElement, aDestWindow,
+                                    dataTransfer, aDragEvent);
+  EventUtils.sendDragEvent(event, aDestElement, aDestWindow);
+
+  event = createDragEventObject("dragover", aDestElement, aDestWindow,
+                                dataTransfer, aDragEvent);
+  var result = EventUtils.sendDragEvent(event, aDestElement, aDestWindow);
+
+  return [result, dataTransfer];
+}
+
+/**
+ * Emulate the drop event and mouseup event.
+ * This should be called after synthesizeDragOver.
+ *
+ * @param aResult        The first element of the array returned from
+ *                       synthesizeDragOver.
+ * @param aDataTransfer  The second element of the array returned from
+ *                       synthesizeDragOver.
+ * @param aDestElement   The element to fire the drop event.
+ * @param aDestWindow    Optional; Defaults to the current window object.
+ * @param aDragEvent     Optional; Defaults to empty object. Overwrites an
+ *                       object passed to EventUtils.sendDragEvent.
+ * @return               "none" if aResult is true,
+ *                       aDataTransfer.dropEffect otherwise.
+ */
+function synthesizeDropAfterDragOver(aResult, aDataTransfer, aDestElement, aDestWindow, aDragEvent={})
+{
+  if (!aDestWindow)
+    aDestWindow = window;
+
+  var effect = aDataTransfer.dropEffect;
+  var event;
+
+  if (aResult) {
+    effect = "none";
+  } else if (effect != "none") {
+    event = createDragEventObject("drop", aDestElement, aDestWindow,
+                                  aDataTransfer, aDragEvent);
+    EventUtils.sendDragEvent(event, aDestElement, aDestWindow);
   }
+
+  EventUtils.synthesizeMouseAtCenter(aDestElement, { type: "mouseup" }, aDestWindow);
+
+  return effect;
+}
+
+/**
+ * Emulate a drag and drop by emulating a dragstart and firing events dragenter,
+ * dragover, and drop.
+ *
+ * @param aSrcElement   The element to use to start the drag.
+ * @param aDestElement  The element to fire the dragover, dragenter events
+ * @param aDragData     The data to supply for the data transfer.
+ *                      This data is in the format:
+ *                        [ [ {type: value, data: value}, ...], ... ]
+ *                      Pass null to avoid modifying dataTransfer.
+ * @param aDropEffect   The drop effect to set during the dragstart event, or
+ *                      'move' if null.
+ * @param aWindow       Optional; Defaults to the current window object.
+ * @param aDestWindow   Optional; Defaults to aWindow.
+ *                      Used when aDestElement is in a different window than
+ *                      aSrcElement.
+ * @param aDragEvent    Optional; Defaults to empty object. Overwrites an object
+ *                      passed to EventUtils.sendDragEvent.
+ * @return              The drop effect that was desired.
+ */
+function synthesizeDrop(aSrcElement, aDestElement, aDragData, aDropEffect, aWindow, aDestWindow, aDragEvent={})
+{
+  if (!aWindow)
+    aWindow = window;
+  if (!aDestWindow)
+    aDestWindow = aWindow;
+
+  var ds = Components.classes["@mozilla.org/widget/dragservice;1"].
+           getService(Components.interfaces.nsIDragService);
 
   ds.startDragSession();
 
   try {
-    // need to use real mouse action
-    aWindow.addEventListener("dragstart", trapDrag, true);
-    EventUtils.synthesizeMouseAtCenter(srcElement, { type: "mousedown" }, aWindow);
-
-    var rect = srcElement.getBoundingClientRect();
-    var x = rect.width / 2;
-    var y = rect.height / 2;
-    EventUtils.synthesizeMouse(srcElement, x, y, { type: "mousemove" }, aWindow);
-    EventUtils.synthesizeMouse(srcElement, x+10, y+10, { type: "mousemove" }, aWindow);
-    aWindow.removeEventListener("dragstart", trapDrag, true);
-
-    event = aDestWindow.document.createEvent("DragEvents");
-    event.initDragEvent("dragenter", true, true, aDestWindow, 0, 0, 0, 0, 0, false, false, false, false, 0, null, dataTransfer);
-    gWindowUtils.dispatchDOMEventViaPresShell(destElement, event, true);
-    var event = aDestWindow.document.createEvent("DragEvents");
-    event.initDragEvent("dragover", true, true, aDestWindow, 0, 0, 0, 0, 0, false, false, false, false, 0, null, dataTransfer);
-    if (gWindowUtils.dispatchDOMEventViaPresShell(destElement, event, true)) {
-      EventUtils.synthesizeMouseAtCenter(destElement, { type: "mouseup" }, aDestWindow);
-      return "none";
-    }
-
-    if (dataTransfer.dropEffect != "none") {
-      event = aDestWindow.document.createEvent("DragEvents");
-      event.initDragEvent("drop", true, true, aDestWindow, 0, 0, 0, 0, 0, false, false, false, false, 0, null, dataTransfer);
-      gWindowUtils.dispatchDOMEventViaPresShell(destElement, event, true);
-    }
-
-    EventUtils.synthesizeMouseAtCenter(destElement, { type: "mouseup" }, aDestWindow);
-
-    return dataTransfer.dropEffect;
+    var [result, dataTransfer] = synthesizeDragOver(aSrcElement, aDestElement,
+                                                    aDragData, aDropEffect,
+                                                    aWindow, aDestWindow,
+                                                    aDragEvent);
+    return synthesizeDropAfterDragOver(result, dataTransfer, aDestElement,
+                                       aDestWindow, aDragEvent);
   } finally {
     ds.endDragSession(true);
   }
-};
+}
 
 var PluginUtils =
 {

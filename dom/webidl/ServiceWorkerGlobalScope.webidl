@@ -13,20 +13,8 @@
 [Global=(Worker,ServiceWorker),
  Exposed=ServiceWorker]
 interface ServiceWorkerGlobalScope : WorkerGlobalScope {
-  // FIXME(nsm): Bug 982725
-  // readonly attribute CacheList caches;
-
-  readonly attribute ServiceWorkerClients clients;
-
-  [Unforgeable] readonly attribute DOMString scope;
-
-  // FIXME(nsm): Bug 995484
-  // ResponsePromise<any> fetch((Request or [EnsureUTF16] DOMString) request);
-
-  void update();
-
-  [Throws]
-  Promise<boolean> unregister();
+  readonly attribute Clients clients;
+  readonly attribute ServiceWorkerRegistration registration;
 
   attribute EventHandler oninstall;
   attribute EventHandler onactivate;
@@ -36,10 +24,11 @@ interface ServiceWorkerGlobalScope : WorkerGlobalScope {
 
   // The event.source of these MessageEvents are instances of Client
   attribute EventHandler onmessage;
-
-  // close() method inherited from WorkerGlobalScope is not exposed.
-  // FIXME(nsm): For now, overridden so it can be a no-op.
-  void close();
 };
 
+// These are from w3c.github.io/push-api/
+partial interface ServiceWorkerGlobalScope {
+  attribute EventHandler onpush;
+  attribute EventHandler onpushsubscriptionchange;
+};
 

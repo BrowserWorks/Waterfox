@@ -37,7 +37,6 @@ const kPrefCustomizationState        = "browser.uiCustomization.state";
 const kPrefCustomizationAutoAdd      = "browser.uiCustomization.autoAdd";
 const kPrefCustomizationDebug        = "browser.uiCustomization.debug";
 const kPrefDrawInTitlebar            = "browser.tabs.drawInTitlebar";
-const kPrefDeveditionTheme           = "browser.devedition.theme.enabled";
 const kPrefWebIDEInNavbar            = "devtools.webide.widget.inNavbarByDefault";
 
 /**
@@ -49,13 +48,6 @@ const kSubviewEvents = [
   "ViewShowing",
   "ViewHiding"
 ];
-
-/**
- * The method name to use for ES6 iteration. If Symbols are enabled in
- * this build, use Symbol.iterator; otherwise "@@iterator".
- */
-const JS_HAS_SYMBOLS = typeof Symbol === "function";
-const kIteratorSymbol = JS_HAS_SYMBOLS ? Symbol.iterator : "@@iterator";
 
 /**
  * The current version. We can use this to auto-add new default widgets as necessary.
@@ -180,10 +172,6 @@ let CustomizableUIInternal = {
 #endif
     ];
 
-    if (gPalette.has("switch-to-metro-button")) {
-      panelPlacements.push("switch-to-metro-button");
-    }
-
 #ifdef E10S_TESTING_ONLY
     if (gPalette.has("e10s-button")) {
       let newWindowIndex = panelPlacements.indexOf("new-window-button");
@@ -220,6 +208,15 @@ let CustomizableUIInternal = {
       "loop-button",
     ];
 
+    // Insert the Pocket button after the bookmarks button if it's present.
+    for (let widgetDefinition of CustomizableWidgets) {
+      if (widgetDefinition.id == "pocket-button") {
+        let idx = navbarPlacements.indexOf("bookmarks-menu-button") + 1;
+        navbarPlacements.splice(idx, 0, widgetDefinition.id);
+        break;
+      }
+    }
+
     if (Services.prefs.getBoolPref(kPrefWebIDEInNavbar)) {
       navbarPlacements.push("webide-button");
     }
@@ -248,8 +245,9 @@ let CustomizableUIInternal = {
         return Services.appinfo.OS == "WINNT" &&
                Services.sysinfo.getProperty("version") != "5.1";
 #endif
-#endif
+#else
         return false;
+#endif
       }
     }, true);
 #endif
@@ -299,19 +297,40 @@ let CustomizableUIInternal = {
   },
 
   _introduceNewBuiltinWidgets: function() {
-    if (!gSavedState || gSavedState.currentVersion >= kVersion) {
+    // We should still enter even if gSavedState.currentVersion >= kVersion
+    // because the per-widget pref facility is independent of versioning.
+    if (!gSavedState) {
       return;
     }
 
     let currentVersion = gSavedState.currentVersion;
     for (let [id, widget] of gPalette) {
-      if (widget._introducedInVersion > currentVersion &&
-          widget.defaultArea) {
-        let futurePlacements = gFuturePlacements.get(widget.defaultArea);
-        if (futurePlacements) {
-          futurePlacements.add(id);
-        } else {
-          gFuturePlacements.set(widget.defaultArea, new Set([id]));
+      if (widget.defaultArea) {
+        let shouldAdd = false;
+        let shouldSetPref = false;
+        let prefId = "browser.toolbarbuttons.introduced." + widget.id;
+        if (widget._introducedInVersion === "pref") {
+          try {
+            shouldAdd = !Services.prefs.getBoolPref(prefId);
+          } catch (ex) {
+            // Pref doesn't exist:
+            shouldAdd = true;
+          }
+          shouldSetPref = shouldAdd;
+        } else if (widget._introducedInVersion > currentVersion) {
+          shouldAdd = true;
+        }
+
+        if (shouldAdd) {
+          let futurePlacements = gFuturePlacements.get(widget.defaultArea);
+          if (futurePlacements) {
+            futurePlacements.add(id);
+          } else {
+            gFuturePlacements.set(widget.defaultArea, new Set([id]));
+          }
+          if (shouldSetPref) {
+            Services.prefs.setBoolPref(prefId, true);
+          }
         }
       }
     }
@@ -323,6 +342,57 @@ let CustomizableUIInternal = {
 
     if (currentVersion < 4) {
       CustomizableUI.removeWidgetFromArea("loop-button-throttled");
+    }
+  },
+
+  _placeNewDefaultWidgetsInArea: function(aArea) {
+    let futurePlacedWidgets = gFuturePlacements.get(aArea);
+    let savedPlacements = gSavedState && gSavedState.placements && gSavedState.placements[aArea];
+    let defaultPlacements = gAreas.get(aArea).get("defaultPlacements");
+    if (!savedPlacements || !savedPlacements.length || !futurePlacedWidgets || !defaultPlacements ||
+        !defaultPlacements.length) {
+      return;
+    }
+    let defaultWidgetIndex = -1;
+
+    for (let widgetId of futurePlacedWidgets) {
+      let widget = gPalette.get(widgetId);
+      if (!widget || widget.source !== CustomizableUI.SOURCE_BUILTIN ||
+          !widget.defaultArea || !widget._introducedInVersion ||
+          savedPlacements.indexOf(widget.id) !== -1) {
+        continue;
+      }
+      defaultWidgetIndex = defaultPlacements.indexOf(widget.id);
+      if (defaultWidgetIndex === -1) {
+        continue;
+      }
+      // Now we know that this widget should be here by default, was newly introduced,
+      // and we have a saved state to insert into, and a default state to work off of.
+      // Try introducing after widgets that come before it in the default placements:
+      for (let i = defaultWidgetIndex; i >= 0; i--) {
+        // Special case: if the defaults list this widget as coming first, insert at the beginning:
+        if (i === 0 && i === defaultWidgetIndex) {
+          savedPlacements.splice(0, 0, widget.id);
+          // Before you ask, yes, deleting things inside a let x of y loop where y is a Set is
+          // safe, and we won't skip any items.
+          futurePlacedWidgets.delete(widget.id);
+          break;
+        }
+        // Otherwise, if we're somewhere other than the beginning, check if the previous
+        // widget is in the saved placements.
+        if (i) {
+          let previousWidget = defaultPlacements[i - 1];
+          let previousWidgetIndex = savedPlacements.indexOf(previousWidget);
+          if (previousWidgetIndex != -1) {
+            savedPlacements.splice(previousWidgetIndex + 1, 0, widget.id);
+            futurePlacedWidgets.delete(widget.id);
+            break;
+          }
+        }
+      }
+      // The loop above either inserts the item or doesn't - either way, we can get away
+      // with doing nothing else now; if the item remains in gFuturePlacements, we'll
+      // add it at the end in restoreStateForArea.
     }
   },
 
@@ -405,6 +475,9 @@ let CustomizableUIInternal = {
 
     if (!areaIsKnown) {
       gAreas.set(aName, props);
+
+      // Reconcile new default widgets. Have to do this before we start restoring things.
+      this._placeNewDefaultWidgetsInArea(aName);
 
       if (props.get("legacy") && !gPlacements.has(aName)) {
         // Guarantee this area exists in gFuturePlacements, to avoid checking it in
@@ -2098,6 +2171,14 @@ let CustomizableUIInternal = {
     // opened - so we know there's no build areas to handle. Also, builtin
     // widgets are expected to be (mostly) static, so shouldn't affect the
     // current placement settings.
+
+    // This allows a widget to be both built-in by default but also able to be
+    // destroyed based on criteria that may not be available when the widget is
+    // created -- for example, because some other feature in the browser
+    // supersedes the widget.
+    let conditionalDestroyPromise = aData.conditionalDestroyPromise || null;
+    delete aData.conditionalDestroyPromise;
+
     let widget = this.normalizeWidget(aData, CustomizableUI.SOURCE_BUILTIN);
     if (!widget) {
       ERROR("Error creating builtin widget: " + aData.id);
@@ -2106,6 +2187,16 @@ let CustomizableUIInternal = {
 
     LOG("Creating built-in widget with id: " + widget.id);
     gPalette.set(widget.id, widget);
+
+    if (conditionalDestroyPromise) {
+      conditionalDestroyPromise.then(shouldDestroy => {
+        if (shouldDestroy) {
+          this.destroyWidget(widget.id);
+        }
+      }, err => {
+        Cu.reportError(err);
+      });
+    }
   },
 
   // Returns true if the area will eventually lazily restore (but hasn't yet).
@@ -2339,7 +2430,6 @@ let CustomizableUIInternal = {
   _resetUIState: function() {
     try {
       gUIStateBeforeReset.drawInTitlebar = Services.prefs.getBoolPref(kPrefDrawInTitlebar);
-      gUIStateBeforeReset.deveditionTheme = Services.prefs.getBoolPref(kPrefDeveditionTheme);
       gUIStateBeforeReset.uiCustomizationState = Services.prefs.getCharPref(kPrefCustomizationState);
     } catch(e) { }
 
@@ -2347,7 +2437,6 @@ let CustomizableUIInternal = {
 
     Services.prefs.clearUserPref(kPrefCustomizationState);
     Services.prefs.clearUserPref(kPrefDrawInTitlebar);
-    Services.prefs.clearUserPref(kPrefDeveditionTheme);
     LOG("State reset");
 
     // Reset placements to make restoring default placements possible.
@@ -2409,15 +2498,13 @@ let CustomizableUIInternal = {
    */
   undoReset: function() {
     if (gUIStateBeforeReset.uiCustomizationState == null ||
-        gUIStateBeforeReset.drawInTitlebar == null ||
-        gUIStateBeforeReset.deveditionTheme == null) {
+        gUIStateBeforeReset.drawInTitlebar == null) {
       return;
     }
     gUndoResetting = true;
 
     let uiCustomizationState = gUIStateBeforeReset.uiCustomizationState;
     let drawInTitlebar = gUIStateBeforeReset.drawInTitlebar;
-    let deveditionTheme = gUIStateBeforeReset.deveditionTheme;
 
     // Need to clear the previous state before setting the prefs
     // because pref observers may check if there is a previous UI state.
@@ -2425,7 +2512,6 @@ let CustomizableUIInternal = {
 
     Services.prefs.setCharPref(kPrefCustomizationState, uiCustomizationState);
     Services.prefs.setBoolPref(kPrefDrawInTitlebar, drawInTitlebar);
-    Services.prefs.setBoolPref(kPrefDeveditionTheme, deveditionTheme);
     this.loadSavedState();
     // If the user just customizes toolbar/titlebar visibility, gSavedState will be null
     // and we don't need to do anything else here:
@@ -2603,10 +2689,6 @@ let CustomizableUIInternal = {
       LOG(kPrefDrawInTitlebar + " pref is non-default");
       return false;
     }
-    if (Services.prefs.prefHasUserValue(kPrefDeveditionTheme)) {
-      LOG(kPrefDeveditionTheme + " pref is non-default");
-      return false;
-    }
 
     return true;
   },
@@ -2710,7 +2792,7 @@ this.CustomizableUI = {
    *     for (let window of CustomizableUI.windows) { ... }
    */
   windows: {
-    *[kIteratorSymbol]() {
+    *[Symbol.iterator]() {
       for (let [window,] of gBuildWindows)
         yield window;
     }
@@ -3307,8 +3389,7 @@ this.CustomizableUI = {
    */
   get canUndoReset() {
     return gUIStateBeforeReset.uiCustomizationState != null ||
-           gUIStateBeforeReset.drawInTitlebar != null ||
-           gUIStateBeforeReset.deveditionTheme != null;
+           gUIStateBeforeReset.drawInTitlebar != null;
   },
 
   /**
@@ -3567,7 +3648,7 @@ function WidgetGroupWrapper(aWidget) {
   this.isGroup = true;
 
   const kBareProps = ["id", "source", "type", "disabled", "label", "tooltiptext",
-                      "showInPrivateBrowsing"];
+                      "showInPrivateBrowsing", "viewId"];
   for (let prop of kBareProps) {
     let propertyName = prop;
     this.__defineGetter__(propertyName, function() aWidget[propertyName]);
@@ -3809,7 +3890,7 @@ function XULWidgetSingleWrapper(aWidgetId, aNode, aDocument) {
 }
 
 const LAZY_RESIZE_INTERVAL_MS = 200;
-const OVERFLOW_PANEL_HIDE_DELAY_MS = 500
+const OVERFLOW_PANEL_HIDE_DELAY_MS = 500;
 
 function OverflowableToolbar(aToolbarNode) {
   this._toolbar = aToolbarNode;
@@ -3969,8 +4050,12 @@ OverflowableToolbar.prototype = {
   },
 
   onOverflow: function(aEvent) {
+    // The rangeParent check is here because of bug 1111986 and ensuring that
+    // overflow events from the bookmarks toolbar items or similar things that
+    // manage their own overflow don't trigger an overflow on the entire toolbar
     if (!this._enabled ||
-        (aEvent && aEvent.target != this._toolbar.customizationTarget))
+        (aEvent && aEvent.target != this._toolbar.customizationTarget) ||
+        (aEvent && aEvent.rangeParent))
       return;
 
     let child = this._target.lastChild;
@@ -4200,17 +4285,17 @@ OverflowableToolbar.prototype = {
 
   _hideTimeoutId: null,
   _showWithTimeout: function() {
-    this.show();
-    let window = this._toolbar.ownerDocument.defaultView;
-    if (this._hideTimeoutId) {
-      window.clearTimeout(this._hideTimeoutId);
-      this._hideTimeoutId = null;
-    }
-    this._hideTimeoutId = window.setTimeout(() => {
-      if (!this._panel.firstChild.matches(":hover")) {
-        this._panel.hidePopup();
+    this.show().then(function () {
+      let window = this._toolbar.ownerDocument.defaultView;
+      if (this._hideTimeoutId) {
+        window.clearTimeout(this._hideTimeoutId);
       }
-    }, OVERFLOW_PANEL_HIDE_DELAY_MS);
+      this._hideTimeoutId = window.setTimeout(() => {
+        if (!this._panel.firstChild.matches(":hover")) {
+          this._panel.hidePopup();
+        }
+      }, OVERFLOW_PANEL_HIDE_DELAY_MS);
+    }.bind(this));
   },
 };
 

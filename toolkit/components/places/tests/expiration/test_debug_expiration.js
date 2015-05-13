@@ -10,18 +10,24 @@
 
 let gNow = getExpirablePRTime();
 
-add_task(function test_expire_orphans()
+add_task(function* test_expire_orphans()
 {
   // Add visits to 2 pages and force a orphan expiration. Visits should survive.
-  yield promiseAddVisits({ uri: uri("http://page1.mozilla.org/"),
-                           visitDate: gNow++ });
-  yield promiseAddVisits({ uri: uri("http://page2.mozilla.org/"),
-                           visitDate: gNow++ });
+  yield PlacesTestUtils.addVisits({
+    uri: uri("http://page1.mozilla.org/"),
+    visitDate: gNow++
+  });
+  yield PlacesTestUtils.addVisits({
+    uri: uri("http://page2.mozilla.org/"),
+    visitDate: gNow++
+  });
   // Create a orphan place.
-  let id = PlacesUtils.bookmarks.insertBookmark(PlacesUtils.unfiledBookmarksFolderId,
-                                                NetUtil.newURI("http://page3.mozilla.org/"),
-                                                PlacesUtils.bookmarks.DEFAULT_INDEX, "");
-  PlacesUtils.bookmarks.removeItem(id);
+  let bm = yield PlacesUtils.bookmarks.insert({
+    parentGuid: PlacesUtils.bookmarks.unfiledGuid,
+    url: "http://page3.mozilla.org/",
+    title: ""
+  });
+  yield PlacesUtils.bookmarks.remove(bm);
 
   // Expire now.
   yield promiseForceExpirationStep(0);
@@ -32,21 +38,27 @@ add_task(function test_expire_orphans()
   do_check_false(page_in_database("http://page3.mozilla.org/"));
 
   // Clean up.
-  yield promiseClearHistory();
+  yield PlacesTestUtils.clearHistory();
 });
 
-add_task(function test_expire_orphans_optionalarg()
+add_task(function* test_expire_orphans_optionalarg()
 {
   // Add visits to 2 pages and force a orphan expiration. Visits should survive.
-  yield promiseAddVisits({ uri: uri("http://page1.mozilla.org/"),
-                           visitDate: gNow++ });
-  yield promiseAddVisits({ uri: uri("http://page2.mozilla.org/"),
-                           visitDate: gNow++ });
+  yield PlacesTestUtils.addVisits({
+    uri: uri("http://page1.mozilla.org/"),
+    visitDate: gNow++
+  });
+  yield PlacesTestUtils.addVisits({
+    uri: uri("http://page2.mozilla.org/"),
+    visitDate: gNow++
+  });
   // Create a orphan place.
-  let id = PlacesUtils.bookmarks.insertBookmark(PlacesUtils.unfiledBookmarksFolderId,
-                                                NetUtil.newURI("http://page3.mozilla.org/"),
-                                                PlacesUtils.bookmarks.DEFAULT_INDEX, "");
-  PlacesUtils.bookmarks.removeItem(id);
+  let bm = yield PlacesUtils.bookmarks.insert({
+    parentGuid: PlacesUtils.bookmarks.unfiledGuid,
+    url: "http://page3.mozilla.org/",
+    title: ""
+  });
+  yield PlacesUtils.bookmarks.remove(bm);
 
   // Expire now.
   yield promiseForceExpirationStep();
@@ -57,17 +69,21 @@ add_task(function test_expire_orphans_optionalarg()
   do_check_false(page_in_database("http://page3.mozilla.org/"));
 
   // Clean up.
-  yield promiseClearHistory();
+  yield PlacesTestUtils.clearHistory();
 });
 
 add_task(function test_expire_limited()
 {
   // Add visits to 2 pages and force a single expiration.
   // Only 1 page should survive.
-  yield promiseAddVisits({ uri: uri("http://page1.mozilla.org/"),
-                           visitDate: gNow++ });
-  yield promiseAddVisits({ uri: uri("http://page2.mozilla.org/"),
-                           visitDate: gNow++ });
+  yield PlacesTestUtils.addVisits({
+    uri: uri("http://page1.mozilla.org/"),
+    visitDate: gNow++
+  });
+  yield PlacesTestUtils.addVisits({
+    uri: uri("http://page2.mozilla.org/"),
+    visitDate: gNow++
+  });
 
   // Expire now.
   yield promiseForceExpirationStep(1);
@@ -77,17 +93,21 @@ add_task(function test_expire_limited()
   do_check_eq(visits_in_database("http://page2.mozilla.org/"), 1);
 
   // Clean up.
-  yield promiseClearHistory();
+  yield PlacesTestUtils.clearHistory();
 });
 
 add_task(function test_expire_unlimited()
 {
   // Add visits to 2 pages and force a single expiration.
   // Only 1 page should survive.
-  yield promiseAddVisits({ uri: uri("http://page1.mozilla.org/"),
-                           visitDate: gNow++ });
-  yield promiseAddVisits({ uri: uri("http://page2.mozilla.org/"),
-                           visitDate: gNow++ });
+  yield PlacesTestUtils.addVisits({
+    uri: uri("http://page1.mozilla.org/"),
+    visitDate: gNow++
+  });
+  yield PlacesTestUtils.addVisits({
+    uri: uri("http://page2.mozilla.org/"),
+    visitDate: gNow++
+  });
 
   // Expire now.
   yield promiseForceExpirationStep(-1);
@@ -97,7 +117,7 @@ add_task(function test_expire_unlimited()
   do_check_false(page_in_database("http://page2.mozilla.org/"));
 
   // Clean up.
-  yield promiseClearHistory();
+  yield PlacesTestUtils.clearHistory();
 });
 
 function run_test()

@@ -17,8 +17,8 @@
                                               android:layout_height="@dimen/tabs_strip_height"
                                               android:layout_gravity="top"
                                               android:gravity="center_vertical"
-                                              android:background="@color/background_light"
-                                              gecko:tabIndicatorColor="@color/text_color_highlight"
+                                              android:background="@color/about_page_header_grey"
+                                              gecko:tabIndicatorColor="@color/fennec_ui_orange"
                                               android:textAppearance="@style/TextAppearance.Widget.HomePagerTabStrip"/>
 
 </org.mozilla.gecko.home.HomePager>

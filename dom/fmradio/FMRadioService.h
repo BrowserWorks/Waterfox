@@ -1,5 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -147,10 +147,10 @@ enum FMRadioState
   Seeking
 };
 
-class FMRadioService MOZ_FINAL : public IFMRadioService
-                               , public hal::FMRadioObserver
-                               , public hal::FMRadioRDSObserver
-                               , public nsIObserver
+class FMRadioService final : public IFMRadioService
+                           , public hal::FMRadioObserver
+                           , public hal::FMRadioRDSObserver
+                           , public nsIObserver
 {
   friend class ReadAirplaneModeSettingTask;
   friend class EnableRunnable;
@@ -159,48 +159,48 @@ class FMRadioService MOZ_FINAL : public IFMRadioService
 
 public:
   static FMRadioService* Singleton();
-  virtual ~FMRadioService();
 
   NS_DECL_ISUPPORTS
 
-  virtual bool IsEnabled() const MOZ_OVERRIDE;
-  virtual bool IsRDSEnabled() const MOZ_OVERRIDE;
-  virtual double GetFrequency() const MOZ_OVERRIDE;
-  virtual double GetFrequencyUpperBound() const MOZ_OVERRIDE;
-  virtual double GetFrequencyLowerBound() const MOZ_OVERRIDE;
-  virtual double GetChannelWidth() const MOZ_OVERRIDE;
-  virtual Nullable<unsigned short> GetPi() const MOZ_OVERRIDE;
-  virtual Nullable<uint8_t> GetPty() const MOZ_OVERRIDE;
-  virtual bool GetPs(nsString& aPsname) MOZ_OVERRIDE;
-  virtual bool GetRt(nsString& aRadiotext) MOZ_OVERRIDE;
-  virtual bool GetRdsgroup(uint64_t& aRDSGroup) MOZ_OVERRIDE;
+  virtual bool IsEnabled() const override;
+  virtual bool IsRDSEnabled() const override;
+  virtual double GetFrequency() const override;
+  virtual double GetFrequencyUpperBound() const override;
+  virtual double GetFrequencyLowerBound() const override;
+  virtual double GetChannelWidth() const override;
+  virtual Nullable<unsigned short> GetPi() const override;
+  virtual Nullable<uint8_t> GetPty() const override;
+  virtual bool GetPs(nsString& aPsname) override;
+  virtual bool GetRt(nsString& aRadiotext) override;
+  virtual bool GetRdsgroup(uint64_t& aRDSGroup) override;
 
   virtual void Enable(double aFrequency,
-                      FMRadioReplyRunnable* aReplyRunnable) MOZ_OVERRIDE;
-  virtual void Disable(FMRadioReplyRunnable* aReplyRunnable) MOZ_OVERRIDE;
+                      FMRadioReplyRunnable* aReplyRunnable) override;
+  virtual void Disable(FMRadioReplyRunnable* aReplyRunnable) override;
   virtual void SetFrequency(double aFrequency,
-                            FMRadioReplyRunnable* aReplyRunnable) MOZ_OVERRIDE;
+                            FMRadioReplyRunnable* aReplyRunnable) override;
   virtual void Seek(mozilla::hal::FMRadioSeekDirection aDirection,
-                    FMRadioReplyRunnable* aReplyRunnable) MOZ_OVERRIDE;
-  virtual void CancelSeek(FMRadioReplyRunnable* aReplyRunnable) MOZ_OVERRIDE;
-  virtual void SetRDSGroupMask(uint32_t aRDSGroupMask) MOZ_OVERRIDE;
-  virtual void EnableRDS(FMRadioReplyRunnable* aReplyRunnable) MOZ_OVERRIDE;
-  virtual void DisableRDS(FMRadioReplyRunnable* aReplyRunnable) MOZ_OVERRIDE;
+                    FMRadioReplyRunnable* aReplyRunnable) override;
+  virtual void CancelSeek(FMRadioReplyRunnable* aReplyRunnable) override;
+  virtual void SetRDSGroupMask(uint32_t aRDSGroupMask) override;
+  virtual void EnableRDS(FMRadioReplyRunnable* aReplyRunnable) override;
+  virtual void DisableRDS(FMRadioReplyRunnable* aReplyRunnable) override;
 
-  virtual void AddObserver(FMRadioEventObserver* aObserver) MOZ_OVERRIDE;
-  virtual void RemoveObserver(FMRadioEventObserver* aObserver) MOZ_OVERRIDE;
+  virtual void AddObserver(FMRadioEventObserver* aObserver) override;
+  virtual void RemoveObserver(FMRadioEventObserver* aObserver) override;
 
-  virtual void EnableAudio(bool aAudioEnabled) MOZ_OVERRIDE;
+  virtual void EnableAudio(bool aAudioEnabled) override;
 
   /* FMRadioObserver */
-  void Notify(const hal::FMRadioOperationInformation& aInfo) MOZ_OVERRIDE;
+  void Notify(const hal::FMRadioOperationInformation& aInfo) override;
   /* FMRadioRDSObserver */
-  void Notify(const hal::FMRadioRDSGroup& aRDSGroup) MOZ_OVERRIDE;
+  void Notify(const hal::FMRadioRDSGroup& aRDSGroup) override;
 
   NS_DECL_NSIOBSERVER
 
 protected:
   FMRadioService();
+  virtual ~FMRadioService();
 
 private:
   int32_t RoundFrequency(double aFrequencyInMHz);

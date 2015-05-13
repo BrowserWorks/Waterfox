@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -469,7 +470,9 @@ nsCategoryManager::nsCategoryManager()
 void
 nsCategoryManager::InitMemoryReporter()
 {
+#if !defined(MOZILLA_XPCOMRT_API)
   RegisterStrongMemoryReporter(this);
+#endif // !defined(MOZILLA_XPCOMRT_API)
 }
 
 nsCategoryManager::~nsCategoryManager()
@@ -692,7 +695,7 @@ nsCategoryManager::AddCategoryEntry(const char* aCategoryName,
     if (aOldValue) {
       *aOldValue = oldEntry;
     } else {
-      NS_Free(oldEntry);
+      free(oldEntry);
     }
   }
 }
@@ -862,8 +865,10 @@ NS_CreateServicesFromCategory(const char* aCategory,
 
     nsCOMPtr<nsISupports> instance = do_GetService(contractID);
     if (!instance) {
+#if !defined(MOZILLA_XPCOMRT_API)
       LogMessage("While creating services from category '%s', could not create service for entry '%s', contract ID '%s'",
                  aCategory, entryString.get(), contractID.get());
+#endif // !defined(MOZILLA_XPCOMRT_API)
       continue;
     }
 
@@ -873,8 +878,10 @@ NS_CreateServicesFromCategory(const char* aCategory,
       if (observer) {
         observer->Observe(aOrigin, aObserverTopic, EmptyString().get());
       } else {
+#if !defined(MOZILLA_XPCOMRT_API)
         LogMessage("While creating services from category '%s', service for entry '%s', contract ID '%s' does not implement nsIObserver.",
                    aCategory, entryString.get(), contractID.get());
+#endif // !defined(MOZILLA_XPCOMRT_API)
       }
     }
   }

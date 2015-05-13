@@ -1,5 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -15,14 +15,14 @@ namespace mozilla {
 namespace dom {
 
 class Promise;
-struct RegistrationOptionList;
+struct RegistrationOptions;
 
 namespace workers {
 class ServiceWorker;
 }
 
 // Lightweight serviceWorker APIs collection.
-class ServiceWorkerContainer MOZ_FINAL : public DOMEventTargetHelper
+class ServiceWorkerContainer final : public DOMEventTargetHelper
 {
 public:
   NS_DECL_ISUPPORTS_INHERITED
@@ -31,15 +31,16 @@ public:
   IMPL_EVENT_HANDLER(controllerchange)
   IMPL_EVENT_HANDLER(reloadpage)
   IMPL_EVENT_HANDLER(error)
+  IMPL_EVENT_HANDLER(message)
 
   explicit ServiceWorkerContainer(nsPIDOMWindow* aWindow);
 
   virtual JSObject*
-  WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   already_AddRefed<Promise>
   Register(const nsAString& aScriptURL,
-           const RegistrationOptionList& aOptions,
+           const RegistrationOptions& aOptions,
            ErrorResult& aRv);
 
   already_AddRefed<workers::ServiceWorker>
@@ -56,21 +57,11 @@ public:
   GetReady(ErrorResult& aRv);
 
   // Testing only.
-  already_AddRefed<Promise>
-  ClearAllServiceWorkerData(ErrorResult& aRv);
-
-  // Testing only.
   void
   GetScopeForUrl(const nsAString& aUrl, nsString& aScope, ErrorResult& aRv);
 
-  // Testing only.
-  void
-  GetControllingWorkerScriptURLForPath(const nsAString& aPath,
-                                       nsString& aScriptURL,
-                                       ErrorResult& aRv);
-
   // DOMEventTargetHelper
-  void DisconnectFromOwner() MOZ_OVERRIDE;
+  void DisconnectFromOwner() override;
 
 private:
   ~ServiceWorkerContainer();

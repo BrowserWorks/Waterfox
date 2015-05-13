@@ -134,6 +134,10 @@ let NotificationTracker = {
 
     this._registered.delete(watcher);
   },
+
+  getCount(component1) {
+    return this.findPaths([component1]).length;
+  },
 };
 
 // This code registers an nsIContentPolicy in the child process. When
@@ -203,11 +207,14 @@ let ContentPolicyChild = {
 
 // This is a shim channel whose only purpose is to return some string
 // data from an about: protocol handler.
-function AboutProtocolChannel(uri, contractID)
+function AboutProtocolChannel(uri, contractID, loadInfo)
 {
   this.URI = uri;
   this.originalURI = uri;
   this._contractID = contractID;
+  this._loadingPrincipal = loadInfo.loadingPrincipal;
+  this._securityFlags = loadInfo.securityFlags;
+  this._contentPolicyType = loadInfo.contentPolicyType;
 }
 
 AboutProtocolChannel.prototype = {
@@ -227,7 +234,10 @@ AboutProtocolChannel.prototype = {
                .getService(Ci.nsISyncMessageSender);
     let rval = cpmm.sendRpcMessage("Addons:AboutProtocol:OpenChannel", {
       uri: this.URI.spec,
-      contractID: this._contractID
+      contractID: this._contractID,
+      loadingPrincipal: this._loadingPrincipal,
+      securityFlags: this._securityFlags,
+      contentPolicyType: this._contentPolicyType
     }, {
       notificationCallbacks: this.notificationCallbacks,
       loadGroupNotificationCallbacks: this.loadGroup ? this.loadGroup.notificationCallbacks : null,
@@ -287,7 +297,7 @@ AboutProtocolChannel.prototype = {
 function AboutProtocolInstance(contractID)
 {
   this._contractID = contractID;
-  this._uriFlags = null;
+  this._uriFlags = undefined;
 }
 
 AboutProtocolInstance.prototype = {
@@ -327,8 +337,8 @@ AboutProtocolInstance.prototype = {
   // available to CPOWs. Consequently, we return a shim channel that,
   // when opened, asks the parent to open the channel and read out all
   // the data.
-  newChannel: function(uri) {
-    return new AboutProtocolChannel(uri, this._contractID);
+  newChannel: function(uri, loadInfo) {
+    return new AboutProtocolChannel(uri, this._contractID, loadInfo);
   },
 
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIFactory, Ci.nsIAboutModule])
@@ -496,11 +506,21 @@ let RemoteAddonsChild = {
   _ready: false,
 
   makeReady: function() {
-    Prefetcher.init();
-    NotificationTracker.init();
-    ContentPolicyChild.init();
-    AboutProtocolChild.init();
-    ObserverChild.init();
+    let shims = [
+      Prefetcher,
+      NotificationTracker,
+      ContentPolicyChild,
+      AboutProtocolChild,
+      ObserverChild,
+    ];
+
+    for (let shim of shims) {
+      try {
+        shim.init();
+      } catch(e) {
+        Cu.reportError(e);
+      }
+    }
   },
 
   init: function(global) {
@@ -520,7 +540,15 @@ let RemoteAddonsChild = {
 
   uninit: function(perTabShims) {
     for (let shim of perTabShims) {
-      shim.uninit();
+      try {
+        shim.uninit();
+      } catch(e) {
+        Cu.reportError(e);
+      }
     }
+  },
+
+  get useSyncWebProgress() {
+    return NotificationTracker.getCount("web-progress") > 0;
   },
 };

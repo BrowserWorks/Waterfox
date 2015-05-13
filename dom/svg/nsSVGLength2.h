@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -47,7 +48,7 @@ class UserSpaceMetricsWithSize : public UserSpaceMetrics
 {
 public:
   virtual gfx::Size GetSize() const = 0;
-  virtual float GetAxisLength(uint8_t aCtxType) const MOZ_OVERRIDE;
+  virtual float GetAxisLength(uint8_t aCtxType) const override;
 };
 
 class SVGElementMetrics : public UserSpaceMetrics
@@ -56,9 +57,9 @@ public:
   explicit SVGElementMetrics(nsSVGElement* aSVGElement,
                              mozilla::dom::SVGSVGElement* aCtx = nullptr);
 
-  virtual float GetEmLength() const MOZ_OVERRIDE;
-  virtual float GetExLength() const MOZ_OVERRIDE;
-  virtual float GetAxisLength(uint8_t aCtxType) const MOZ_OVERRIDE;
+  virtual float GetEmLength() const override;
+  virtual float GetExLength() const override;
+  virtual float GetAxisLength(uint8_t aCtxType) const override;
 
 private:
   bool EnsureCtx() const;
@@ -72,9 +73,9 @@ class NonSVGFrameUserSpaceMetrics : public UserSpaceMetricsWithSize
 public:
   explicit NonSVGFrameUserSpaceMetrics(nsIFrame* aFrame);
 
-  virtual float GetEmLength() const MOZ_OVERRIDE;
-  virtual float GetExLength() const MOZ_OVERRIDE;
-  virtual gfx::Size GetSize() const MOZ_OVERRIDE;
+  virtual float GetEmLength() const override;
+  virtual float GetExLength() const override;
+  virtual gfx::Size GetSize() const override;
 
 private:
   nsIFrame* mFrame;
@@ -199,10 +200,10 @@ public:
     virtual nsresult ValueFromString(const nsAString& aStr,
                                      const mozilla::dom::SVGAnimationElement* aSrcElement,
                                      nsSMILValue &aValue,
-                                     bool& aPreventCachingOfSandwich) const MOZ_OVERRIDE;
-    virtual nsSMILValue GetBaseValue() const MOZ_OVERRIDE;
-    virtual void ClearAnimValue() MOZ_OVERRIDE;
-    virtual nsresult SetAnimValue(const nsSMILValue& aValue) MOZ_OVERRIDE;
+                                     bool& aPreventCachingOfSandwich) const override;
+    virtual nsSMILValue GetBaseValue() const override;
+    virtual void ClearAnimValue() override;
+    virtual nsresult SetAnimValue(const nsSMILValue& aValue) override;
   };
 };
 

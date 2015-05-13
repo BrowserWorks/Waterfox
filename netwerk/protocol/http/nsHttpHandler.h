@@ -39,14 +39,20 @@ class nsHttpConnectionInfo;
 class nsHttpTransaction;
 class AltSvcMapping;
 
+enum FrameCheckLevel {
+    FRAMECHECK_LAX,
+    FRAMECHECK_BARELY,
+    FRAMECHECK_STRICT
+};
+
 //-----------------------------------------------------------------------------
 // nsHttpHandler - protocol handler for HTTP and HTTPS
 //-----------------------------------------------------------------------------
 
-class nsHttpHandler MOZ_FINAL : public nsIHttpProtocolHandler
-                              , public nsIObserver
-                              , public nsSupportsWeakReference
-                              , public nsISpeculativeConnect
+class nsHttpHandler final : public nsIHttpProtocolHandler
+                          , public nsIObserver
+                          , public nsSupportsWeakReference
+                          , public nsISpeculativeConnect
 {
 public:
     NS_DECL_THREADSAFE_ISUPPORTS
@@ -105,6 +111,7 @@ public:
     uint32_t       SpdySendingChunkSize() { return mSpdySendingChunkSize; }
     uint32_t       SpdySendBufferSize()      { return mSpdySendBufferSize; }
     uint32_t       SpdyPushAllowance()       { return mSpdyPushAllowance; }
+    uint32_t       DefaultSpdyConcurrent()   { return mDefaultSpdyConcurrent; }
     PRIntervalTime SpdyPingThreshold() { return mSpdyPingThreshold; }
     PRIntervalTime SpdyPingTimeout() { return mSpdyPingTimeout; }
     bool           AllowPush()   { return mAllowPush; }
@@ -150,8 +157,9 @@ public:
       return mTCPKeepaliveLongLivedIdleTimeS;
     }
 
-    // returns the network.http.enforce-framing.http1 preference
-    bool GetEnforceH1Framing() { return mEnforceH1Framing; }
+    // returns the HTTP framing check level preference, as controlled with
+    // network.http.enforce-framing.http1 and network.http.enforce-framing.soft
+    FrameCheckLevel GetEnforceH1Framing() { return mEnforceH1Framing; }
 
     nsHttpAuthCache     *AuthCache(bool aPrivate) {
         return aPrivate ? &mPrivateAuthCache : &mAuthCache;
@@ -318,6 +326,7 @@ public:
     PRIntervalTime GetPipelineTimeout()   { return mPipelineReadTimeout; }
 
     SpdyInformation *SpdyInfo() { return &mSpdyInfo; }
+    bool IsH2MandatorySuiteEnabled() { return mH2MandatorySuiteEnabled; }
 
     // returns true in between Init and Shutdown states
     bool Active() { return mHandlerActive; }
@@ -386,6 +395,7 @@ private:
     uint16_t mMaxRequestDelay;
     uint16_t mIdleSynTimeout;
 
+    bool     mH2MandatorySuiteEnabled;
     bool     mPipeliningEnabled;
     uint16_t mMaxConnections;
     uint8_t  mMaxPersistentConnectionsPerServer;
@@ -485,6 +495,7 @@ private:
     uint32_t       mSpdySendingChunkSize;
     uint32_t       mSpdySendBufferSize;
     uint32_t       mSpdyPushAllowance;
+    uint32_t       mDefaultSpdyConcurrent;
     PRIntervalTime mSpdyPingThreshold;
     PRIntervalTime mSpdyPingTimeout;
 
@@ -496,7 +507,7 @@ private:
     // when starting a new speculative connection.
     uint32_t       mParallelSpeculativeConnectLimit;
 
-    // For Rate Pacing of HTTP/1 requests through a netwerk/base/src/EventTokenBucket
+    // For Rate Pacing of HTTP/1 requests through a netwerk/base/EventTokenBucket
     // Active requests <= *MinParallelism are not subject to the rate pacing
     bool           mRequestTokenBucketEnabled;
     uint16_t       mRequestTokenBucketMinParallelism;
@@ -527,7 +538,7 @@ private:
 
     // if true, generate NS_ERROR_PARTIAL_TRANSFER for h1 responses with
     // incorrect content lengths or malformed chunked encodings
-    bool mEnforceH1Framing;
+    FrameCheckLevel mEnforceH1Framing;
 
 private:
     // For Rate Pacing Certain Network Events. Only assign this pointer on
@@ -554,6 +565,11 @@ public:
 private:
     nsRefPtr<Tickler> mWifiTickler;
     void TickleWifi(nsIInterfaceRequestor *cb);
+
+private:
+    nsresult SpeculativeConnectInternal(nsIURI *aURI,
+                                        nsIInterfaceRequestor *aCallbacks,
+                                        bool anonymous);
 };
 
 extern nsHttpHandler *gHttpHandler;

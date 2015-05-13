@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -38,9 +39,9 @@ DOMQuad::~DOMQuad()
 }
 
 JSObject*
-DOMQuad::WrapObject(JSContext* aCx)
+DOMQuad::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return DOMQuadBinding::Wrap(aCx, this);
+  return DOMQuadBinding::Wrap(aCx, this, aGivenProto);
 }
 
 already_AddRefed<DOMQuad>
@@ -73,7 +74,7 @@ DOMQuad::Constructor(const GlobalObject& aGlobal, const DOMRectReadOnly& aRect,
   return obj.forget();
 }
 
-class DOMQuad::QuadBounds MOZ_FINAL : public DOMRectReadOnly
+class DOMQuad::QuadBounds final : public DOMRectReadOnly
 {
 public:
   explicit QuadBounds(DOMQuad* aQuad)
@@ -84,25 +85,25 @@ public:
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(QuadBounds, DOMRectReadOnly)
   NS_DECL_ISUPPORTS_INHERITED
 
-  virtual double X() const MOZ_OVERRIDE
+  virtual double X() const override
   {
     double x1, x2;
     GetHorizontalMinMax(&x1, &x2);
     return x1;
   }
-  virtual double Y() const MOZ_OVERRIDE
+  virtual double Y() const override
   {
     double y1, y2;
     GetVerticalMinMax(&y1, &y2);
     return y1;
   }
-  virtual double Width() const MOZ_OVERRIDE
+  virtual double Width() const override
   {
     double x1, x2;
     GetHorizontalMinMax(&x1, &x2);
     return x2 - x1;
   }
-  virtual double Height() const MOZ_OVERRIDE
+  virtual double Height() const override
   {
     double y1, y2;
     GetVerticalMinMax(&y1, &y2);

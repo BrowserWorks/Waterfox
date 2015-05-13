@@ -38,7 +38,7 @@ public:
 typedef mozilla::ObserverList<Volume*> VolumeObserverList;
 #endif
 
-class Volume MOZ_FINAL
+class Volume final
 {
 public:
   NS_INLINE_DECL_REFCOUNTING(Volume)
@@ -90,6 +90,9 @@ public:
   // NOTE: that observers must live in the IOThread.
   static void RegisterVolumeObserver(EventObserver* aObserver, const char* aName);
   static void UnregisterVolumeObserver(EventObserver* aObserver, const char* aName);
+
+protected:
+  ~Volume() {}
 
 private:
   friend class AutoMounter;         // Calls StartXxx

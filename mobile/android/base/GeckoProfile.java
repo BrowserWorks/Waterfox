@@ -5,9 +5,11 @@
 
 package org.mozilla.gecko;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
@@ -17,13 +19,17 @@ import java.util.Hashtable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.json.JSONException;
+import org.json.JSONArray;
 import org.mozilla.gecko.GeckoProfileDirectories.NoMozillaDirectoryException;
 import org.mozilla.gecko.GeckoProfileDirectories.NoSuchProfileException;
 import org.mozilla.gecko.db.BrowserDB;
 import org.mozilla.gecko.db.LocalBrowserDB;
 import org.mozilla.gecko.db.StubBrowserDB;
 import org.mozilla.gecko.distribution.Distribution;
+import org.mozilla.gecko.mozglue.ContextUtils;
 import org.mozilla.gecko.mozglue.RobocopTarget;
+import org.mozilla.gecko.firstrun.FirstrunPane;
 import org.mozilla.gecko.util.INIParser;
 import org.mozilla.gecko.util.INISection;
 
@@ -148,7 +154,7 @@ public final class GeckoProfile {
 
         final String args;
         if (context instanceof Activity) {
-            args = ((Activity) context).getIntent().getStringExtra("args");
+            args = ContextUtils.getStringExtra(((Activity) context).getIntent(), "args");
         } else {
             args = null;
         }
@@ -221,6 +227,8 @@ public final class GeckoProfile {
             // It's a bit of a broken abstraction, but very tightly coupled, so we work around it
             // for now. We can't just have GeckoView set this, because then it would collide in
             // Fennec's use of GeckoView.
+            // We should never see this in Fennec itself, because GeckoApplication sets the factory
+            // in onCreate.
             Log.d(LOGTAG, "Defaulting to StubBrowserDB.");
             sDBFactory = StubBrowserDB.getFactory();
         }
@@ -611,6 +619,42 @@ public final class GeckoProfile {
         return null;
     }
 
+    public void writeFile(final String filename, final String data) {
+        File file = new File(getDir(), filename);
+        BufferedWriter bufferedWriter = null;
+        try {
+            bufferedWriter = new BufferedWriter(new FileWriter(file, false));
+            bufferedWriter.write(data);
+        } catch (IOException e) {
+            Log.e(LOGTAG, "Unable to write to file", e);
+        } finally {
+            try {
+                if (bufferedWriter != null) {
+                    bufferedWriter.close();
+                }
+            } catch (IOException e) {
+                Log.e(LOGTAG, "Error closing writer while writing to file", e);
+            }
+        }
+    }
+
+    public JSONArray readJSONArrayFromFile(final String filename) {
+        String fileContent;
+        try {
+            fileContent = readFile(filename);
+        } catch (IOException expected) {
+            return new JSONArray();
+        }
+
+        JSONArray jsonArray;
+        try {
+            jsonArray = new JSONArray(fileContent);
+        } catch (JSONException e) {
+            jsonArray = new JSONArray();
+        }
+        return jsonArray;
+    }
+
     public String readFile(String filename) throws IOException {
         File dir = getDir();
         if (dir == null) {
@@ -634,6 +678,14 @@ public final class GeckoProfile {
         } finally {
             fr.close();
         }
+    }
+
+    public boolean deleteFileFromProfileDir(String fileName) throws IllegalArgumentException {
+        if (TextUtils.isEmpty(fileName)) {
+            throw new IllegalArgumentException("Filename cannot be empty.");
+        }
+        File file = new File(getDir(), fileName);
+        return file.delete();
     }
 
     private boolean remove() {
@@ -807,7 +859,7 @@ public final class GeckoProfile {
         // Initialize pref flag for displaying the start pane for a new non-webapp profile.
         if (!mIsWebAppProfile) {
             final SharedPreferences prefs = GeckoSharedPrefs.forProfile(mApplicationContext);
-            prefs.edit().putBoolean(BrowserApp.PREF_STARTPANE_ENABLED, true).apply();
+            prefs.edit().putBoolean(FirstrunPane.PREF_FIRSTRUN_ENABLED, true).apply();
         }
 
         return profileDir;
@@ -829,9 +881,14 @@ public final class GeckoProfile {
 
         // Add everything when we're done loading the distribution.
         final Distribution distribution = Distribution.getInstance(context);
-        distribution.addOnDistributionReadyCallback(new Runnable() {
+        distribution.addOnDistributionReadyCallback(new Distribution.ReadyCallback() {
             @Override
-            public void run() {
+            public void distributionNotFound() {
+                this.distributionFound(null);
+            }
+
+            @Override
+            public void distributionFound(Distribution distribution) {
                 Log.d(LOGTAG, "Running post-distribution task: bookmarks.");
 
                 final ContentResolver cr = context.getContentResolver();
@@ -851,8 +908,27 @@ public final class GeckoProfile {
                     // bookmarks as there are favicons, we can also guarantee that
                     // the favicon IDs won't overlap.
                     final LocalBrowserDB db = new LocalBrowserDB(getName());
-                    final int offset = db.addDistributionBookmarks(cr, distribution, 0);
+                    final int offset = distribution == null ? 0 : db.addDistributionBookmarks(cr, distribution, 0);
                     db.addDefaultBookmarks(context, cr, offset);
+                }
+            }
+
+            @Override
+            public void distributionArrivedLate(Distribution distribution) {
+                Log.d(LOGTAG, "Running late distribution task: bookmarks.");
+                // Recover as best we can.
+                synchronized (GeckoProfile.this) {
+                    // Skip initialization if the profile directory has been removed.
+                    if (!profileDir.exists()) {
+                        return;
+                    }
+
+                    final LocalBrowserDB db = new LocalBrowserDB(getName());
+                    // We assume we've been called very soon after startup, and so our offset
+                    // into "Mobile Bookmarks" is the number of bookmarks in the DB.
+                    final ContentResolver cr = context.getContentResolver();
+                    final int offset = db.getCount(cr, "bookmarks");
+                    db.addDistributionBookmarks(cr, distribution, offset);
                 }
             }
         });

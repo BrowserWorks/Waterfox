@@ -21,8 +21,8 @@ namespace dom {
 class GlobalObject;
 class TextTrack;
 
-class TextTrackRegion MOZ_FINAL : public nsISupports,
-                                  public nsWrapperCache
+class TextTrackRegion final : public nsISupports,
+                              public nsWrapperCache
 {
 public:
 
@@ -35,7 +35,7 @@ public:
            Preferences::GetBool("media.webvtt.regions.enabled");
   }
 
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   nsISupports* GetParentObject() const
   {

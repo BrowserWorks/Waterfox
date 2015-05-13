@@ -1,267 +1,151 @@
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
-MARIONETTE_HEAD_JS = "stk_helper.js";
+MARIONETTE_TIMEOUT = 60000;
+MARIONETTE_HEAD_JS = "head.js";
 
-function testLaunchBrowser(command, expect) {
-  log("STK CMD " + JSON.stringify(command));
-  is(command.typeOfCommand, iccManager.STK_CMD_LAUNCH_BROWSER, expect.name);
-  is(command.commandQualifier, expect.commandQualifier, expect.name);
-  is(command.options.url, expect.url, expect.name);
-  if (expect.confirmMessage) {
-    isStkText(command.options.confirmMessage, expect.confirmMessage, expect.name);
-  }
-
-  runNextTest();
-}
-
-let tests = [
-  {command: "d0188103011500820281823100050b44656661756c742055524c",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_1",
-            commandQualifier: 0x00,
+const TEST_DATA = [
+  {command: "D018" + // Length
+            "8103011500" + // Command details
+            "82028182" + // Device identities
+            "3100" + // URL
+            "050B44656661756C742055524C", // Alpha identifier
+   expect: {commandQualifier: 0x00,
             url: "",
+            mode: MozIccManager.STK_BROWSER_MODE_LAUNCH_IF_NOT_ALREADY_LAUNCHED,
             confirmMessage: { text: "Default URL" }}},
-  {command: "d01f8103011500820281823112687474703a2f2f7878782e7979792e7a7a7a0500",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_2",
-            commandQualifier: 0x00,
+  {command: "D01F" + // Length
+            "8103011500" + // Command details
+            "82028182" + // Device identities
+            "3112687474703A2F2F7878782E7979792E7A7A7A" + // URL
+            "0500", // Alpha identifier
+   expect: {commandQualifier: 0x00,
             url: "http://xxx.yyy.zzz",
+            mode: MozIccManager.STK_BROWSER_MODE_LAUNCH_IF_NOT_ALREADY_LAUNCHED,
             confirmMessage: { text: "" }}},
-  {command: "d00e8103011500820281823001003100",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_3",
-            commandQualifier: 0x00,
-            url: ""}},
-  {command: "d0208103011500820281823100320103" +
-            "0d10046162632e6465662e6768692e6a6b6c", // "0D" String TLV is useless for Launch Browser.
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_4",
-            commandQualifier: 0x00,
-            url: ""}},
-  {command: "d0188103011502820281823100050b44656661756c742055524c",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_5",
-            commandQualifier: 0x02,
+  {command: "D023" + // Length
+            "8103011500" + // Command details
+            "82028182" + // Device identities
+            "300100" + // Browser identity
+            "3100" + // URL
+            "320103" + // Bear
+            "0D10046162632E6465662E6768692E6A6B6C", // Text string
+   expect: {commandQualifier: 0x00,
+            // Browser identity, Bear and Text string are useless.
             url: "",
+            mode: MozIccManager.STK_BROWSER_MODE_LAUNCH_IF_NOT_ALREADY_LAUNCHED}},
+  {command: "D018" + // Length
+            "8103011502" + // Command details
+            "82028182" + // Device identities
+            "3100" + // URL
+            "050B44656661756C742055524C", // Alpha identifier
+   expect: {commandQualifier: 0x02,
+            url: "",
+            mode: MozIccManager.STK_BROWSER_MODE_USING_EXISTING_BROWSER,
             confirmMessage: { text: "Default URL" }}},
-  {command: "d0188103011503820281823100050b44656661756c742055524c",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_6",
-            commandQualifier: 0x03,
+  {command: "D018" + // Length
+            "8103011503" + // Command details
+            "82028182" + // Device identities
+            "3100" + // URL
+            "050B44656661756C742055524C", // Alpha identifier
+   expect: {commandQualifier: 0x03,
             url: "",
+            mode: MozIccManager.STK_BROWSER_MODE_USING_NEW_BROWSER,
             confirmMessage: { text: "Default URL"}}},
-  {command: "d00b8103011500820281823100",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_7",
-            commandQualifier: 0x00,
-            url: ""}},
-  {command: "d0268103011502820281823100051980041704140420041004120421042204120423041904220415",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_8",
-            commandQualifier: 0x02,
+  {command: "D026" + // Length
+            "8103011502" + // Command details
+            "82028182" + // Device identities
+            "3100" + // URL
+            "051980041704140420041004120421042204120423" + // Alpha identifier
+            "041904220415",
+   expect: {commandQualifier: 0x02,
             url: "",
+            mode: MozIccManager.STK_BROWSER_MODE_USING_EXISTING_BROWSER,
             confirmMessage: { text: "ЗДРАВСТВУЙТЕ" }}},
-  {command: "d021810301150282028182310005104e6f742073656c66206578706c616e2e1e020101",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_9",
-            commandQualifier: 0x02,
+  {command: "D021" + // Length
+            "8103011502" + // Command details
+            "82028182" + // Device identities
+            "3100" + // URL
+            "05104E6F742073656C66206578706C616E2E" + // Alpha identifier
+            "1E020101", // Icon identifier
+   expect: {commandQualifier: 0x02,
             url: "",
+            mode: MozIccManager.STK_BROWSER_MODE_USING_EXISTING_BROWSER,
             confirmMessage: { text: "Not self explan.",
                               iconSelfExplanatory: false,
-                              icons : [basicIcon] }
+                              icons : [BASIC_ICON] }
             }},
-  {command: "d01d8103011502820281823100050c53656c66206578706c616e2e1e020001",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_10",
-            commandQualifier: 0x02,
+  {command: "D012" + // Length
+            "8103011502" + // Command details
+            "82028182" + // Device identities
+            "3100" + // URL
+            "0505804F60597D", // Alpha identifier
+   expect: {commandQualifier: 0x02,
             url: "",
-            confirmMessage: { text: "Self explan.",
-                              iconSelfExplanatory: true,
-                              icons : [basicIcon] }
-            }},
-  {command: "d0208103011500820281823100050d44656661756c742055524c2031d004000d00b4",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_11",
-            commandQualifier: 0x00,
-            url: "",
-            confirmMessage: { text: "Default URL 1" }}},
-  {command: "d01a8103011500820281823100050d44656661756c742055524c2032",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_12",
-            commandQualifier: 0x00,
-            url: "",
-            confirmMessage: { text: "Default URL 2" }}},
-  {command: "d0208103011500820281823100050d44656661756c742055524c2031d004000d01b4",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_13",
-            commandQualifier: 0x00,
-            url: "",
-            confirmMessage: { text: "Default URL 1" }}},
-  {command: "d01a8103011500820281823100050d44656661756c742055524c2032",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_14",
-            commandQualifier: 0x00,
-            url: "",
-            confirmMessage: { text: "Default URL 2" }}},
-  {command: "d0208103011500820281823100050d44656661756c742055524c2031d004000d02b4",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_15",
-            commandQualifier: 0x00,
-            url: "",
-            confirmMessage: { text: "Default URL 1" }}},
-  {command: "d01a8103011500820281823100050d44656661756c742055524c2032",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_16",
-            commandQualifier: 0x00,
-            url: "",
-            confirmMessage: { text: "Default URL 2" }}},
-   {command: "d0208103011500820281823100050d44656661756c742055524c2031d004000d04b4",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_17",
-            commandQualifier: 0x00,
-            url: "",
-            confirmMessage: { text: "Default URL 1" }}},
-  {command: "d0208103011500820281823100050d44656661756c742055524c2032d004000d00b4",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_18",
-            commandQualifier: 0x00,
-            url: "",
-            confirmMessage: { text: "Default URL 2" }}},
-  {command: "d01a8103011500820281823100050d44656661756c742055524c2033",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_19",
-            commandQualifier: 0x00,
-            url: "",
-            confirmMessage: { text: "Default URL 3" }}},
-   {command: "d0208103011500820281823100050d44656661756c742055524c2031d004000d08b4",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_20",
-            commandQualifier: 0x00,
-            url: "",
-            confirmMessage: { text: "Default URL 1" }}},
-  {command: "d0208103011500820281823100050d44656661756c742055524c2032d004000d00b4",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_21",
-            commandQualifier: 0x00,
-            url: "",
-            confirmMessage: { text: "Default URL 2" }}},
-  {command: "d01a8103011500820281823100050d44656661756c742055524c2033",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_22",
-            commandQualifier: 0x00,
-            url: "",
-            confirmMessage: { text: "Default URL 3" }}},
-   {command: "d0208103011500820281823100050d44656661756c742055524c2031d004000d10b4",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_23",
-            commandQualifier: 0x00,
-            url: "",
-            confirmMessage: { text: "Default URL 1" }}},
-  {command: "d0208103011500820281823100050d44656661756c742055524c2032d004000d00b4",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_24",
-            commandQualifier: 0x00,
-            url: "",
-            confirmMessage: { text: "Default URL 2" }}},
-  {command: "d01a8103011500820281823100050d44656661756c742055524c2033",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_25",
-            commandQualifier: 0x00,
-            url: "",
-            confirmMessage: { text: "Default URL 3" }}},
-   {command: "d0208103011500820281823100050d44656661756c742055524c2031d004000d20b4",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_26",
-            commandQualifier: 0x00,
-            url: "",
-            confirmMessage: { text: "Default URL 1" }}},
-  {command: "d0208103011500820281823100050d44656661756c742055524c2032d004000d00b4",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_27",
-            commandQualifier: 0x00,
-            url: "",
-            confirmMessage: { text: "Default URL 2" }}},
-  {command: "d01a8103011500820281823100050d44656661756c742055524c2033",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_28",
-            commandQualifier: 0x00,
-            url: "",
-            confirmMessage: { text: "Default URL 3" }}},
-   {command: "d0208103011500820281823100050d44656661756c742055524c2031d004000d40b4",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_29",
-            commandQualifier: 0x00,
-            url: "",
-            confirmMessage: { text: "Default URL 1" }}},
-  {command: "d0208103011500820281823100050d44656661756c742055524c2032d004000d00b4",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_30",
-            commandQualifier: 0x00,
-            url: "",
-            confirmMessage: { text: "Default URL 2" }}},
-  {command: "d01a8103011500820281823100050d44656661756c742055524c2033",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_31",
-            commandQualifier: 0x00,
-            url: "",
-            confirmMessage: { text: "Default URL 3" }}},
-   {command: "d0208103011500820281823100050d44656661756c742055524c2031d004000d80b4",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_32",
-            commandQualifier: 0x00,
-            url: "",
-            confirmMessage: { text: "Default URL 1" }}},
-  {command: "d0208103011500820281823100050d44656661756c742055524c2032d004000d00b4",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_33",
-            commandQualifier: 0x00,
-            url: "",
-            confirmMessage: { text: "Default URL 2" }}},
-  {command: "d01a8103011500820281823100050d44656661756c742055524c2033",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_34",
-            commandQualifier: 0x00,
-            url: "",
-            confirmMessage: { text: "Default URL 3" }}},
-   {command: "d0208103011500820281823100050d44656661756c742055524c2031d004000d00b4",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_35",
-            commandQualifier: 0x00,
-            url: "",
-            confirmMessage: { text: "Default URL 1" }}},
-  {command: "d01a8103011500820281823100050d44656661756c742055524c2032",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_36",
-            commandQualifier: 0x00,
-            url: "",
-            confirmMessage: { text: "Default URL 2" }}},
-   {command: "d01281030115028202818231000505804f60597d",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_37",
-            commandQualifier: 0x02,
-            url: "",
+            mode: MozIccManager.STK_BROWSER_MODE_USING_EXISTING_BROWSER,
             confirmMessage: { text: "你好" }}},
-  {command: "d010810301150282028182310005038030eb",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_38",
-            commandQualifier: 0x02,
+  {command: "D00F" + // Length
+            "8103011500" + // Command details
+            "82028182" + // Device identities
+            "3100" + // URL
+            "1E020001", // Icon identifier
+   expect: {commandQualifier: 0x00,
             url: "",
-            confirmMessage: { text: "ル" }}},
-  {command: "d01281030115008202818230010031001e020001",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_39",
-            commandQualifier: 0x00,
-            url: "",
+            mode: MozIccManager.STK_BROWSER_MODE_LAUNCH_IF_NOT_ALREADY_LAUNCHED,
             confirmMessage: { iconSelfExplanatory: true,
-                              icons: [basicIcon] }}},
-  {command: "d01281030115008202818230010031001e020003",
-   func: testLaunchBrowser,
-   expect: {name: "launch_browser_cmd_40",
-            commandQualifier: 0x00,
+                              icons: [BASIC_ICON] }}},
+  {command: "D00F" + // Length
+            "8103011500" + // Command details
+            "82028182" + // Device identities
+            "3100" + // URL
+            "1E020003", // Icon identifier
+   expect: {commandQualifier: 0x00,
             url: "",
+            mode: MozIccManager.STK_BROWSER_MODE_LAUNCH_IF_NOT_ALREADY_LAUNCHED,
             confirmMessage: { iconSelfExplanatory: true,
-                              icons: [colorIcon] }}},
+                              icons: [COLOR_ICON] }}},
 ];
 
-runNextTest();
+function testLaunchBrowser(aCommand, aExpect) {
+  is(aCommand.commandNumber, 0x01, "commandNumber");
+  is(aCommand.typeOfCommand, MozIccManager.STK_CMD_LAUNCH_BROWSER,
+     "typeOfCommand");
+  is(aCommand.commandQualifier, aExpect.commandQualifier, "commandQualifier");
+
+  is(aCommand.options.url, aExpect.url, "options.url");
+  is(aCommand.options.mode, aExpect.mode, "options.mode");
+
+  // confirmMessage is optional
+  if ("confirmMessage" in aExpect) {
+    isStkText(aCommand.options.confirmMessage, aExpect.confirmMessage,
+              "options.confirmMessage");
+  }
+}
+
+// Start tests
+startTestCommon(function() {
+  let icc = getMozIcc();
+  let promise = Promise.resolve();
+  for (let i = 0; i < TEST_DATA.length; i++) {
+    let data = TEST_DATA[i];
+    promise = promise.then(() => {
+      log("launch_browser_cmd: " + data.command);
+
+      let promises = [];
+      // Wait onstkcommand event.
+      promises.push(waitForTargetEvent(icc, "stkcommand")
+        .then((aEvent) => testLaunchBrowser(aEvent.command, data.expect)));
+      // Wait icc-stkcommand system message.
+      promises.push(waitForSystemMessage("icc-stkcommand")
+        .then((aMessage) => {
+          is(aMessage.iccId, icc.iccInfo.iccid, "iccId");
+          testLaunchBrowser(aMessage.command, data.expect);
+        }));
+      // Send emulator command to generate stk unsolicited event.
+      promises.push(sendEmulatorStkPdu(data.command));
+
+      return Promise.all(promises);
+    });
+  }
+  return promise;
+});

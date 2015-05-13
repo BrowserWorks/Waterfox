@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -15,7 +16,7 @@
 class nsXBLPrototypeBinding;
 class nsXBLProtoImplAnonymousMethod;
 
-class nsXBLProtoImpl MOZ_FINAL
+class nsXBLProtoImpl final
 {
 public:
   nsXBLProtoImpl()
@@ -101,7 +102,7 @@ protected:
   void DestroyMembers();
 
 public:
-  nsCString mClassName; // The name of the class.
+  nsString mClassName; // The name of the class.
 
 protected:
   JSObject* mPrecompiledMemberHolder; // The class object for the binding. We'll use this to pre-compile properties

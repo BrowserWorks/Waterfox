@@ -12,6 +12,7 @@
 #include "SharedThreadPool.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Base64.h"
+#include "mozilla/Telemetry.h"
 #include "nsIRandomGenerator.h"
 #include "nsIServiceManager.h"
 #include "MediaTaskQueue.h"
@@ -196,10 +197,22 @@ IsValidVideoRegion(const nsIntSize& aFrame, const nsIntRect& aPicture,
     aDisplay.width * aDisplay.height != 0;
 }
 
-TemporaryRef<SharedThreadPool> GetMediaDecodeThreadPool()
+TemporaryRef<SharedThreadPool> GetMediaThreadPool(MediaThreadType aType)
 {
-  return SharedThreadPool::Get(NS_LITERAL_CSTRING("Media Decode"),
-                               Preferences::GetUint("media.num-decode-threads", 25));
+  const char *name;
+  switch (aType) {
+    case MediaThreadType::PLATFORM_DECODER:
+      name = "MediaPDecoder";
+      break;
+    default:
+      MOZ_ASSERT(false);
+    case MediaThreadType::PLAYBACK:
+      name = "MediaPlayback";
+      break;
+  }
+  return SharedThreadPool::
+    Get(nsDependentCString(name),
+        Preferences::GetUint("media.num-decode-threads", 12));
 }
 
 bool
@@ -224,7 +237,7 @@ ExtractH264CodecDetails(const nsAString& aCodec,
     return false;
   }
 
-  // Extract the profile_idc, constrains, and level_idc.
+  // Extract the profile_idc and level_idc.
   nsresult rv = NS_OK;
   aProfile = PromiseFlatString(Substring(aCodec, 5, 2)).ToInteger(&rv, 16);
   NS_ENSURE_SUCCESS(rv, false);
@@ -232,22 +245,44 @@ ExtractH264CodecDetails(const nsAString& aCodec,
   aLevel = PromiseFlatString(Substring(aCodec, 9, 2)).ToInteger(&rv, 16);
   NS_ENSURE_SUCCESS(rv, false);
 
+  if (aLevel == 9) {
+    aLevel = H264_LEVEL_1_b;
+  } else if (aLevel <= 5) {
+    aLevel *= 10;
+  }
+
+  // Capture the constraint_set flag value for the purpose of Telemetry.
+  // We don't NS_ENSURE_SUCCESS here because ExtractH264CodecDetails doesn't
+  // care about this, but we make sure constraints is above 4 (constraint_set5_flag)
+  // otherwise collect 0 for unknown.
+  uint8_t constraints = PromiseFlatString(Substring(aCodec, 7, 2)).ToInteger(&rv, 16);
+  Telemetry::Accumulate(Telemetry::VIDEO_CANPLAYTYPE_H264_CONSTRAINT_SET_FLAG,
+                        constraints >= 4 ? constraints : 0);
+
+  // 244 is the highest meaningful profile value (High 4:4:4 Intra Profile)
+  // that can be represented as single hex byte, otherwise collect 0 for unknown.
+  Telemetry::Accumulate(Telemetry::VIDEO_CANPLAYTYPE_H264_PROFILE,
+                        aProfile <= 244 ? aProfile : 0);
+
+  // Make sure aLevel represents a value between levels 1 and 5.2,
+  // otherwise collect 0 for unknown.
+  Telemetry::Accumulate(Telemetry::VIDEO_CANPLAYTYPE_H264_LEVEL,
+                        (aLevel >= 10 && aLevel <= 52) ? aLevel : 0);
+
   return true;
 }
 
 nsresult
-GenerateRandomPathName(nsCString& aOutSalt, uint32_t aLength)
+GenerateRandomName(nsCString& aOutSalt, uint32_t aLength)
 {
   nsresult rv;
   nsCOMPtr<nsIRandomGenerator> rg =
     do_GetService("@mozilla.org/security/random-generator;1", &rv);
   if (NS_FAILED(rv)) return rv;
 
-  // For each three bytes of random data we will get four bytes of
-  // ASCII. Request a bit more to be safe and truncate to the length
-  // we want at the end.
+  // For each three bytes of random data we will get four bytes of ASCII.
   const uint32_t requiredBytesLength =
-    static_cast<uint32_t>((aLength + 1) / 4 * 3);
+    static_cast<uint32_t>((aLength + 3) / 4 * 3);
 
   uint8_t* buffer;
   rv = rg->GenerateRandomBytes(requiredBytesLength, &buffer);
@@ -257,18 +292,23 @@ GenerateRandomPathName(nsCString& aOutSalt, uint32_t aLength)
   nsDependentCSubstring randomData(reinterpret_cast<const char*>(buffer),
                                    requiredBytesLength);
   rv = Base64Encode(randomData, temp);
-  NS_Free(buffer);
+  free(buffer);
   buffer = nullptr;
   if (NS_FAILED (rv)) return rv;
 
-  temp.Truncate(aLength);
+  aOutSalt = temp;
+  return NS_OK;
+}
+
+nsresult
+GenerateRandomPathName(nsCString& aOutSalt, uint32_t aLength)
+{
+  nsresult rv = GenerateRandomName(aOutSalt, aLength);
+  if (NS_FAILED(rv)) return rv;
 
   // Base64 characters are alphanumeric (a-zA-Z0-9) and '+' and '/', so we need
   // to replace illegal characters -- notably '/'
-  temp.ReplaceChar(FILE_PATH_SEPARATOR FILE_ILLEGAL_CHARACTERS, '_');
-
-  aOutSalt = temp;
-
+  aOutSalt.ReplaceChar(FILE_PATH_SEPARATOR FILE_ILLEGAL_CHARACTERS, '_');
   return NS_OK;
 }
 
@@ -276,10 +316,22 @@ class CreateTaskQueueTask : public nsRunnable {
 public:
   NS_IMETHOD Run() {
     MOZ_ASSERT(NS_IsMainThread());
-    mTaskQueue = new MediaTaskQueue(GetMediaDecodeThreadPool());
+    mTaskQueue =
+      new MediaTaskQueue(GetMediaThreadPool(MediaThreadType::PLATFORM_DECODER));
     return NS_OK;
   }
   nsRefPtr<MediaTaskQueue> mTaskQueue;
+};
+
+class CreateFlushableTaskQueueTask : public nsRunnable {
+public:
+  NS_IMETHOD Run() {
+    MOZ_ASSERT(NS_IsMainThread());
+    mTaskQueue =
+      new FlushableMediaTaskQueue(GetMediaThreadPool(MediaThreadType::PLATFORM_DECODER));
+    return NS_OK;
+  }
+  nsRefPtr<FlushableMediaTaskQueue> mTaskQueue;
 };
 
 already_AddRefed<MediaTaskQueue>
@@ -287,6 +339,16 @@ CreateMediaDecodeTaskQueue()
 {
   // We must create the MediaTaskQueue/SharedThreadPool on the main thread.
   nsRefPtr<CreateTaskQueueTask> t(new CreateTaskQueueTask());
+  nsresult rv = NS_DispatchToMainThread(t, NS_DISPATCH_SYNC);
+  NS_ENSURE_SUCCESS(rv, nullptr);
+  return t->mTaskQueue.forget();
+}
+
+already_AddRefed<FlushableMediaTaskQueue>
+CreateFlushableMediaDecodeTaskQueue()
+{
+  // We must create the MediaTaskQueue/SharedThreadPool on the main thread.
+  nsRefPtr<CreateFlushableTaskQueueTask> t(new CreateFlushableTaskQueueTask());
   nsresult rv = NS_DispatchToMainThread(t, NS_DISPATCH_SYNC);
   NS_ENSURE_SUCCESS(rv, nullptr);
   return t->mTaskQueue.forget();

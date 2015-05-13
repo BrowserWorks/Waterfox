@@ -22,18 +22,21 @@ private:
 public:
     virtual ~WebGL1Context();
 
-    virtual bool IsWebGL2() const MOZ_OVERRIDE {
+    virtual bool IsWebGL2() const override {
         return false;
     }
 
     // nsWrapperCache
-    virtual JSObject* WrapObject(JSContext* cx) MOZ_OVERRIDE;
+    virtual JSObject* WrapObject(JSContext* cx, JS::Handle<JSObject*> aGivenProto) override;
 
 private:
-    virtual bool ValidateAttribPointerType(bool integerMode, GLenum type, GLsizei* alignment, const char* info) MOZ_OVERRIDE;
-    virtual bool ValidateBufferTarget(GLenum target, const char* info) MOZ_OVERRIDE;
-    virtual bool ValidateBufferIndexedTarget(GLenum target, const char* info) MOZ_OVERRIDE;
-    virtual bool ValidateBufferForTarget(GLenum target, WebGLBuffer* buffer, const char* info) MOZ_OVERRIDE;
+    virtual bool ValidateAttribPointerType(bool integerMode, GLenum type, GLsizei* alignment, const char* info) override;
+    virtual bool ValidateBufferTarget(GLenum target, const char* info) override;
+    virtual bool ValidateBufferIndexedTarget(GLenum target, const char* info) override;
+    virtual bool ValidateBufferForTarget(GLenum target, WebGLBuffer* buffer, const char* info) override;
+    virtual bool ValidateBufferUsageEnum(GLenum usage, const char* info) override;
+    virtual bool ValidateQueryTarget(GLenum target, const char* info) override;
+    virtual bool ValidateUniformMatrixTranspose(bool transpose, const char* info) override;
 };
 
 } // namespace mozilla

@@ -7,7 +7,6 @@
 #include "mozilla/Assertions.h"
 #include "mozilla/Compiler.h"
 #include "mozilla/Move.h"
-#include "mozilla/NullPtr.h"
 #include "mozilla/TypeTraits.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/Vector.h"
@@ -15,7 +14,6 @@
 #include <stddef.h>
 
 using mozilla::DefaultDelete;
-using mozilla::IsNullPointer;
 using mozilla::IsSame;
 using mozilla::MakeUnique;
 using mozilla::Swap;
@@ -24,7 +22,7 @@ using mozilla::Vector;
 
 #define CHECK(c) \
   do { \
-    bool cond = (c); \
+    bool cond = !!(c); \
     MOZ_ASSERT(cond, "Failed assertion: " #c); \
     if (!cond) { \
       return false; \
@@ -382,24 +380,8 @@ TestFunctionReferenceDeleter()
   return true;
 }
 
-template<typename T, bool = IsNullPointer<decltype(nullptr)>::value>
-struct AppendNullptrTwice;
-
 template<typename T>
-struct AppendNullptrTwice<T, false>
-{
-  AppendNullptrTwice() {}
-
-  bool operator()(Vector<T>& vec)
-  {
-    CHECK(vec.append(static_cast<typename T::Pointer>(nullptr)));
-    CHECK(vec.append(static_cast<typename T::Pointer>(nullptr)));
-    return true;
-  }
-};
-
-template<typename T>
-struct AppendNullptrTwice<T, true>
+struct AppendNullptrTwice
 {
   AppendNullptrTwice() {}
 

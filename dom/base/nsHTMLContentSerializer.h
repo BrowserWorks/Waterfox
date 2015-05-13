@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -20,23 +21,24 @@
 class nsIContent;
 class nsIAtom;
 
-class nsHTMLContentSerializer : public nsXHTMLContentSerializer {
+class nsHTMLContentSerializer final : public nsXHTMLContentSerializer {
  public:
   nsHTMLContentSerializer();
   virtual ~nsHTMLContentSerializer();
 
   NS_IMETHOD AppendElementStart(mozilla::dom::Element* aElement,
                                 mozilla::dom::Element* aOriginalElement,
-                                nsAString& aStr) MOZ_OVERRIDE;
+                                nsAString& aStr) override;
 
   NS_IMETHOD AppendElementEnd(mozilla::dom::Element* aElement,
-                              nsAString& aStr) MOZ_OVERRIDE;
+                              nsAString& aStr) override;
 
   NS_IMETHOD AppendDocumentStart(nsIDocument *aDocument,
-                                 nsAString& aStr) MOZ_OVERRIDE;
+                                 nsAString& aStr) override;
  protected:
 
-  virtual void SerializeHTMLAttributes(nsIContent* aContent,
+  MOZ_WARN_UNUSED_RESULT
+  virtual bool SerializeHTMLAttributes(nsIContent* aContent,
                                        nsIContent *aOriginalElement,
                                        nsAString& aTagPrefix,
                                        const nsAString& aTagNamespaceURI,
@@ -44,8 +46,9 @@ class nsHTMLContentSerializer : public nsXHTMLContentSerializer {
                                        int32_t aNamespace,
                                        nsAString& aStr);
 
-  virtual void AppendAndTranslateEntities(const nsAString& aStr,
-                                          nsAString& aOutputStr) MOZ_OVERRIDE;
+  MOZ_WARN_UNUSED_RESULT
+  virtual bool AppendAndTranslateEntities(const nsAString& aStr,
+                                          nsAString& aOutputStr) override;
 
 };
 

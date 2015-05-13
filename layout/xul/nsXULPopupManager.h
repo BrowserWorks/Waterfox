@@ -24,6 +24,7 @@
 #include "nsStyleConsts.h"
 #include "nsWidgetInitData.h"
 #include "mozilla/Attributes.h"
+#include "Units.h"
 
 // X.h defines KeyPress
 #ifdef KeyPress
@@ -189,7 +190,7 @@ public:
     NS_ASSERTION(aPopup, "null popup supplied to nsXULPopupShowingEvent constructor");
   }
 
-  NS_IMETHOD Run() MOZ_OVERRIDE;
+  NS_IMETHOD Run() override;
 
 private:
   nsCOMPtr<nsIContent> mPopup;
@@ -218,7 +219,7 @@ public:
     // aNextPopup and aLastPopup may be null
   }
 
-  NS_IMETHOD Run() MOZ_OVERRIDE;
+  NS_IMETHOD Run() override;
 
 private:
   nsCOMPtr<nsIContent> mPopup;
@@ -254,7 +255,7 @@ public:
     NS_ASSERTION(aMenu, "null menu supplied to nsXULMenuCommandEvent constructor");
   }
 
-  NS_IMETHOD Run() MOZ_OVERRIDE;
+  NS_IMETHOD Run() override;
 
   void SetCloseMenuMode(CloseMenuMode aCloseMenuMode) { mCloseMenuMode = aCloseMenuMode; }
 
@@ -270,10 +271,10 @@ private:
   CloseMenuMode mCloseMenuMode;
 };
 
-class nsXULPopupManager MOZ_FINAL : public nsIDOMEventListener,
-                                    public nsIRollupListener,
-                                    public nsITimerCallback,
-                                    public nsIObserver
+class nsXULPopupManager final : public nsIDOMEventListener,
+                                public nsIRollupListener,
+                                public nsITimerCallback,
+                                public nsIObserver
 {
 
 public:
@@ -289,13 +290,13 @@ public:
 
   // nsIRollupListener
   virtual bool Rollup(uint32_t aCount, bool aFlush,
-                      const nsIntPoint* pos, nsIContent** aLastRolledUp) MOZ_OVERRIDE;
-  virtual bool ShouldRollupOnMouseWheelEvent() MOZ_OVERRIDE;
-  virtual bool ShouldConsumeOnMouseWheelEvent() MOZ_OVERRIDE;
-  virtual bool ShouldRollupOnMouseActivate() MOZ_OVERRIDE;
-  virtual uint32_t GetSubmenuWidgetChain(nsTArray<nsIWidget*> *aWidgetChain) MOZ_OVERRIDE;
-  virtual void NotifyGeometryChange() MOZ_OVERRIDE {}
-  virtual nsIWidget* GetRollupWidget() MOZ_OVERRIDE;
+                      const nsIntPoint* pos, nsIContent** aLastRolledUp) override;
+  virtual bool ShouldRollupOnMouseWheelEvent() override;
+  virtual bool ShouldConsumeOnMouseWheelEvent() override;
+  virtual bool ShouldRollupOnMouseActivate() override;
+  virtual uint32_t GetSubmenuWidgetChain(nsTArray<nsIWidget*> *aWidgetChain) override;
+  virtual void NotifyGeometryChange() override {}
+  virtual nsIWidget* GetRollupWidget() override;
 
   static nsXULPopupManager* sInstance;
 
@@ -531,9 +532,9 @@ public:
 
   /**
    * Indicate that the popup associated with aView has been resized to the
-   * specified screen width and height.
+   * given device pixel size aSize.
    */
-  void PopupResized(nsIFrame* aFrame, nsIntSize ASize);
+  void PopupResized(nsIFrame* aFrame, mozilla::LayoutDeviceIntSize aSize);
 
   /**
    * Called when a popup frame is destroyed. In this case, just remove the
@@ -743,7 +744,7 @@ protected:
   int32_t mRangeOffset;
   // Device pixels relative to the showing popup's presshell's
   // root prescontext's root frame.
-  nsIntPoint mCachedMousePoint;
+  mozilla::LayoutDeviceIntPoint mCachedMousePoint;
 
   // cached modifiers
   mozilla::Modifiers mCachedModifiers;

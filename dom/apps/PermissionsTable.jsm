@@ -306,15 +306,6 @@ this.PermissionsTable =  { geolocation: {
                              privileged: ALLOW_ACTION,
                              certified: ALLOW_ACTION
                            },
-                           "storage": {
-                             app: ALLOW_ACTION,
-                             trusted: ALLOW_ACTION,
-                             privileged: ALLOW_ACTION,
-                             certified: ALLOW_ACTION,
-                             substitute: [
-                               "indexedDB-unlimited"
-                             ]
-                           },
                            "background-sensors": {
                              app: DENY_ACTION,
                              trusted: DENY_ACTION,
@@ -505,7 +496,7 @@ this.PermissionsTable =  { geolocation: {
                            "settings:wallpaper.image": {
                              app: DENY_ACTION,
                              trusted: DENY_ACTION,
-                             privileged: PROMPT_ACTION,
+                             privileged: ALLOW_ACTION,
                              certified: ALLOW_ACTION,
                              access: ["read", "write"],
                              additional: ["settings-api"]
@@ -518,6 +509,7 @@ this.PermissionsTable =  { geolocation: {
                            },
                            "tv": {
                              app: DENY_ACTION,
+                             trusted: DENY_ACTION,
                              privileged: DENY_ACTION,
                              certified: ALLOW_ACTION
                            },
@@ -528,6 +520,24 @@ this.PermissionsTable =  { geolocation: {
                              certified: ALLOW_ACTION
                            },
                            "presentation-device-manage": {
+                             app: DENY_ACTION,
+                             trusted: DENY_ACTION,
+                             privileged: DENY_ACTION,
+                             certified: ALLOW_ACTION
+                           },
+                           "requestsync-manager": {
+                             app: DENY_ACTION,
+                             trusted: DENY_ACTION,
+                             privileged: DENY_ACTION,
+                             certified: ALLOW_ACTION
+                           },
+                           "secureelement-manage": {
+                             app: DENY_ACTION,
+                             trusted: DENY_ACTION,
+                             privileged: DENY_ACTION,
+                             certified: ALLOW_ACTION
+                           },
+                           "inputport": {
                              app: DENY_ACTION,
                              trusted: DENY_ACTION,
                              privileged: DENY_ACTION,
@@ -670,7 +680,7 @@ this.AllPossiblePermissions = [];
     AllPossiblePermissions.concat(["indexedDB", "offline-app", "pin-app"]);
 })();
 
-this.isExplicitInPermissionsTable = function(aPermName, aIntStatus) {
+this.isExplicitInPermissionsTable = function(aPermName, aIntStatus, aAppKind) {
 
   // Check to see if the 'webapp' is app/privileged/certified.
   let appStatus;
@@ -682,7 +692,7 @@ this.isExplicitInPermissionsTable = function(aPermName, aIntStatus) {
       appStatus = "privileged";
       break;
     default: // If it isn't certified or privileged, it's app
-      appStatus = "app";
+      appStatus = aAppKind == "hosted-trusted" ? "trusted" : "app";
       break;
   }
 

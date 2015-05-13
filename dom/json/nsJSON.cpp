@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 sw=2 et tw=79: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -344,7 +344,7 @@ nsJSONWriter::WriteToStream(nsIOutputStream *aStream,
   NS_ENSURE_SUCCESS(rv, rv);
 
   // create the buffer we need
-  char* destBuf = (char *) NS_Alloc(aDestLength);
+  char* destBuf = (char *) moz_xmalloc(aDestLength);
   if (!destBuf)
     return NS_ERROR_OUT_OF_MEMORY;
 
@@ -352,7 +352,7 @@ nsJSONWriter::WriteToStream(nsIOutputStream *aStream,
   if (NS_SUCCEEDED(rv))
     rv = aStream->Write(destBuf, aDestLength, &bytesWritten);
 
-  NS_Free(destBuf);
+  free(destBuf);
   mDidWrite = true;
 
   return rv;
@@ -411,9 +411,8 @@ nsJSON::DecodeInternal(JSContext* cx,
   }
 
   nsresult rv;
-  nsCOMPtr<nsIPrincipal> nullPrincipal =
-    do_CreateInstance("@mozilla.org/nullprincipal;1", &rv);
-  NS_ENSURE_SUCCESS(rv, rv);
+  nsCOMPtr<nsIPrincipal> nullPrincipal = nsNullPrincipal::Create();
+  NS_ENSURE_TRUE(nullPrincipal, NS_ERROR_FAILURE);
 
   rv = NS_NewInputStreamChannel(getter_AddRefs(jsonChannel),
                                 mURI,
@@ -536,7 +535,7 @@ nsJSONListener::OnStopRequest(nsIRequest *aRequest, nsISupports *aContext,
 
   JS::ConstTwoByteChars chars(reinterpret_cast<const char16_t*>(mBufferedChars.Elements()),
                               mBufferedChars.Length());
-  bool ok = JS_ParseJSONWithReviver(mCx, chars.get(),
+  bool ok = JS_ParseJSONWithReviver(mCx, chars.start().get(),
                                       uint32_t(mBufferedChars.Length()),
                                       reviver, &value);
 
@@ -645,7 +644,7 @@ nsJSONListener::ConsumeConverted(const char* aBuffer, uint32_t aByteLength)
   rv = mDecoder->Convert(aBuffer, &srcLen, endelems, &unicharLength);
   if (NS_FAILED(rv))
     return rv;
-  NS_ABORT_IF_FALSE(preLength >= unicharLength, "GetMaxLength lied");
+  MOZ_ASSERT(preLength >= unicharLength, "GetMaxLength lied");
   if (preLength > unicharLength)
     mBufferedChars.TruncateLength(mBufferedChars.Length() - (preLength - unicharLength));
   return NS_OK;

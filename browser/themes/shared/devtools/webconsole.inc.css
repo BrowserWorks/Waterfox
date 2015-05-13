@@ -52,7 +52,7 @@ a {
   display: inline-block;
 }
 
-@media (min-resolution: 2dppx) {
+@media (min-resolution: 1.25dppx) {
   .message > .icon::before {
     background-image: url(chrome://browser/skin/devtools/webconsole@2x.png);
   }
@@ -117,7 +117,7 @@ a {
   display: flex;
 }
 
-.message-body {
+.message-body > * {
   white-space: pre-wrap;
   word-wrap: break-word;
 }
@@ -262,6 +262,17 @@ a {
   margin: 0 6px;
 }
 
+.message[category=network] .xhr {
+  background-color: var(--theme-body-color-alt);
+  color: var(--theme-body-background);
+  border-radius: 3px;
+  font-weight: bold;
+  font-size: 10px;
+  padding: 2px;
+  line-height: 10px;
+  -moz-margin-end: 1ex;
+}
+
 /* CSS styles */
 .webconsole-filter-button[category="css"] > .toolbarbutton-menubutton-button:before {
   background-image: linear-gradient(#2DC3F3, #00B6F0);
@@ -350,7 +361,7 @@ a {
   background-size: 16px 16px;
 }
 
-@media (min-resolution: 2dppx) {
+@media (min-resolution: 1.25dppx) {
   .jsterm-input-node {
     background-image: -moz-image-rect(url('chrome://browser/skin/devtools/commandline-icon@2x.png'), 0, 64, 32, 32);
   }
@@ -364,6 +375,9 @@ a {
 .inlined-variables-view .message-body {
   display: flex;
   flex-direction: column;
+  resize: vertical;
+  overflow: auto;
+  min-height: 200px;
 }
 .inlined-variables-view iframe {
   display: block;

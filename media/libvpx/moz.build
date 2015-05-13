@@ -4,6 +4,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files('*'):
+    BUG_COMPONENT = ('Core', 'Video/Audio')
+
 include('sources.mozbuild')
 
 EXPORTS.vpx += files['EXPORTS']
@@ -15,11 +18,7 @@ if CONFIG['VPX_NEED_OBJ_INT_EXTRACT']:
 
     HostProgram('host_obj_int_extract')
 
-# Unify fewer files together to reduce the chance of name collision
-FILES_PER_UNIFIED_FILE = 8
-
 SOURCES += files['SOURCES']
-UNIFIED_SOURCES += files['UNIFIED_SOURCES']
 
 if CONFIG['MOZ_VPX_ERROR_CONCEALMENT']:
     SOURCES += files['ERROR_CONCEALMENT']
@@ -42,8 +41,8 @@ if CONFIG['VPX_X86_ASM']:
         SOURCES += files['X86-64_ASM']
 
     # AVX2 only supported on
-    # Darwin and mingw toolchains right now
-    if CONFIG['OS_TARGET'] == 'Darwin' or (CONFIG['OS_TARGET'] == 'WINNT' and CONFIG['GNU_CC']):
+    # Darwin and Windows toolchains right now
+    if CONFIG['OS_TARGET'] in ('Darwin', 'WINNT'):
         SOURCES += files['AVX2']
 
     #postproc is only enabled on x86 with asm
@@ -73,8 +72,6 @@ if 'vp8/encoder/arm/armv5te/boolhuff_armv5te.asm' not in arm_asm_files:
     SOURCES += [
         'vp8/encoder/boolhuff.c',
     ]
-
-MSVC_ENABLE_PGO = True
 
 if CONFIG['GKMEDIAS_SHARED_LIBRARY']:
     NO_VISIBILITY_FLAGS = True
@@ -108,3 +105,16 @@ if CONFIG['CLANG_CL'] or not CONFIG['_MSC_VER']:
 # Suppress warnings in third-party code.
 if CONFIG['GNU_CC']:
     CFLAGS += ['-Wno-sign-compare']
+
+ASFLAGS += CONFIG['VPX_ASFLAGS']
+ASFLAGS += [
+    '-I.',
+    '-I%s/media/libvpx/' % TOPSRCDIR,
+    '-I%s/media/libvpx/vpx_ports/' % TOPSRCDIR,
+]
+
+if CONFIG['OS_TARGET'] == 'Android':
+    # For LIBVPX_RAND
+    ASFLAGS += [
+        '-D__ANDROID__'
+    ]

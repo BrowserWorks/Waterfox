@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -69,9 +70,9 @@ NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(DOMSVGLengthList)
 NS_INTERFACE_MAP_END
 
 JSObject*
-DOMSVGLengthList::WrapObject(JSContext *cx)
+DOMSVGLengthList::WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto)
 {
-  return mozilla::dom::SVGLengthListBinding::Wrap(cx, this);
+  return mozilla::dom::SVGLengthListBinding::Wrap(cx, this, aGivenProto);
 }
 
 //----------------------------------------------------------------------
@@ -367,7 +368,7 @@ DOMSVGLengthList::GetItemAt(uint32_t aIndex)
 void
 DOMSVGLengthList::MaybeInsertNullInAnimValListAt(uint32_t aIndex)
 {
-  NS_ABORT_IF_FALSE(!IsAnimValList(), "call from baseVal to animVal");
+  MOZ_ASSERT(!IsAnimValList(), "call from baseVal to animVal");
 
   DOMSVGLengthList* animVal = mAList->mAnimVal;
 
@@ -376,8 +377,8 @@ DOMSVGLengthList::MaybeInsertNullInAnimValListAt(uint32_t aIndex)
     return;
   }
 
-  NS_ABORT_IF_FALSE(animVal->mItems.Length() == mItems.Length(),
-                    "animVal list not in sync!");
+  MOZ_ASSERT(animVal->mItems.Length() == mItems.Length(),
+             "animVal list not in sync!");
 
   animVal->mItems.InsertElementAt(aIndex, static_cast<DOMSVGLength*>(nullptr));
 
@@ -387,7 +388,7 @@ DOMSVGLengthList::MaybeInsertNullInAnimValListAt(uint32_t aIndex)
 void
 DOMSVGLengthList::MaybeRemoveItemFromAnimValListAt(uint32_t aIndex)
 {
-  NS_ABORT_IF_FALSE(!IsAnimValList(), "call from baseVal to animVal");
+  MOZ_ASSERT(!IsAnimValList(), "call from baseVal to animVal");
 
   // This needs to be a strong reference; otherwise, the RemovingFromList call
   // below might drop the last reference to animVal before we're done with it.
@@ -398,8 +399,8 @@ DOMSVGLengthList::MaybeRemoveItemFromAnimValListAt(uint32_t aIndex)
     return;
   }
 
-  NS_ABORT_IF_FALSE(animVal->mItems.Length() == mItems.Length(),
-                    "animVal list not in sync!");
+  MOZ_ASSERT(animVal->mItems.Length() == mItems.Length(),
+             "animVal list not in sync!");
 
   if (animVal->mItems[aIndex]) {
     animVal->mItems[aIndex]->RemovingFromList();

@@ -204,8 +204,8 @@ SocialUI = {
     let docElem = document.documentElement;
     // extrachrome is not restored during session restore, so we need
     // to check for the toolbar as well.
-    let chromeless = docElem.getAttribute("chromehidden").contains("extrachrome") ||
-                     docElem.getAttribute('chromehidden').contains("toolbar");
+    let chromeless = docElem.getAttribute("chromehidden").includes("extrachrome") ||
+                     docElem.getAttribute('chromehidden').includes("toolbar");
     // This property is "fixed" for a window, so avoid doing the check above
     // multiple times...
     delete this._chromeless;
@@ -637,8 +637,8 @@ SocialShare = {
     // containing the open graph data.
     let _dataFn;
     if (!pageData || sharedURI == gBrowser.currentURI) {
-      messageManager.addMessageListener("Social:PageDataResult", _dataFn = (msg) => {
-        messageManager.removeMessageListener("Social:PageDataResult", _dataFn);
+      messageManager.addMessageListener("PageMetadata:PageDataResult", _dataFn = (msg) => {
+        messageManager.removeMessageListener("PageMetadata:PageDataResult", _dataFn);
         let pageData = msg.json;
         if (graphData) {
           // overwrite data retreived from page with data given to us as a param
@@ -648,17 +648,17 @@ SocialShare = {
         }
         this.sharePage(providerOrigin, pageData, target);
       });
-      gBrowser.selectedBrowser.messageManager.sendAsyncMessage("Social:GetPageData");
+      gBrowser.selectedBrowser.messageManager.sendAsyncMessage("PageMetadata:GetPageData");
       return;
     }
     // if this is a share of a selected item, get any microdata
     if (!pageData.microdata && target) {
-      messageManager.addMessageListener("Social:PageDataResult", _dataFn = (msg) => {
-        messageManager.removeMessageListener("Social:PageDataResult", _dataFn);
+      messageManager.addMessageListener("PageMetadata:MicrodataResult", _dataFn = (msg) => {
+        messageManager.removeMessageListener("PageMetadata:MicrodataResult", _dataFn);
         pageData.microdata = msg.data;
         this.sharePage(providerOrigin, pageData, target);
       });
-      gBrowser.selectedBrowser.messageManager.sendAsyncMessage("Social:GetMicrodata", null, target);
+      gBrowser.selectedBrowser.messageManager.sendAsyncMessage("PageMetadata:GetMicrodata", null, { target });
       return;
     }
     this.currentShare = pageData;

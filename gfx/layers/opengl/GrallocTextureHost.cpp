@@ -127,6 +127,7 @@ GrallocTextureHostOGL::~GrallocTextureHostOGL()
 void
 GrallocTextureHostOGL::SetCompositor(Compositor* aCompositor)
 {
+  MOZ_ASSERT(aCompositor);
   mCompositor = static_cast<CompositorOGL*>(aCompositor);
   if (mGLTextureSource) {
     mGLTextureSource->SetCompositor(mCompositor);
@@ -219,7 +220,7 @@ GrallocTextureHostOGL::GetRenderState()
       flags |= LayerRenderStateFlags::FORMAT_RB_SWAP;
     }
     return LayerRenderState(graphicBuffer,
-                            gfx::ThebesIntSize(mDescriptorSize),
+                            mDescriptorSize,
                             flags,
                             this);
   }
@@ -243,12 +244,6 @@ GrallocTextureHostOGL::GetAsSurface() {
   return surf.forget();
 }
 
-TextureSource*
-GrallocTextureHostOGL::GetTextureSources()
-{
-  return nullptr;
-}
-
 void
 GrallocTextureHostOGL::UnbindTextureSource()
 {
@@ -263,6 +258,19 @@ GrallocTextureHostOGL::UnbindTextureSource()
   // TextureSource, which has the effect of unlocking the gralloc buffer. So when
   // this is called we know we are going to be unlocked soon.
   mGLTextureSource = nullptr;
+}
+
+FenceHandle
+GrallocTextureHostOGL::GetAndResetReleaseFenceHandle()
+{
+#if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION >= 17
+  android::sp<android::Fence> fence = GetAndResetReleaseFence();
+  if (fence.get() && fence->isValid()) {
+    FenceHandle handle = FenceHandle(fence);
+    return handle;
+  }
+#endif
+  return FenceHandle();
 }
 
 GLenum GetTextureTarget(gl::GLContext* aGL, android::PixelFormat aFormat) {

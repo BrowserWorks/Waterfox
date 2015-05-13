@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -15,6 +16,7 @@
 #include "nsCOMPtr.h"
 #include "nsClassHashtable.h"
 #include "nsIFile.h"
+#include "nsIThreadInternal.h"
 
 class mozIStorageConnection;
 
@@ -88,7 +90,7 @@ public:
 // This class is resposible for collecting and processing asynchronous 
 // DB operations over caches (DOMStorageCache) communicating though 
 // DOMStorageCacheBridge interface class
-class DOMStorageDBThread MOZ_FINAL : public DOMStorageDBBridge
+class DOMStorageDBThread final : public DOMStorageDBBridge
 {
 public:
   class PendingOperations;
@@ -208,6 +210,34 @@ public:
     uint32_t mFlushFailureCount;
   };
 
+  class ThreadObserver final : public nsIThreadObserver
+  {
+    NS_DECL_THREADSAFE_ISUPPORTS
+    NS_DECL_NSITHREADOBSERVER
+
+    ThreadObserver()
+      : mHasPendingEvents(false)
+      , mMonitor("DOMStorageThreadMonitor")
+    {
+    }
+
+    bool HasPendingEvents() {
+      mMonitor.AssertCurrentThreadOwns();
+      return mHasPendingEvents;
+    }
+    void ClearPendingEvents() {
+      mMonitor.AssertCurrentThreadOwns();
+      mHasPendingEvents = false;
+    }
+    Monitor& GetMonitor() { return mMonitor; }
+
+  private:
+    virtual ~ThreadObserver() {}
+    bool mHasPendingEvents;
+    // The monitor we drive the thread with
+    Monitor mMonitor;
+  };
+
 public:
   DOMStorageDBThread();
   virtual ~DOMStorageDBThread() {}
@@ -250,10 +280,11 @@ private:
   nsCOMPtr<nsIFile> mDatabaseFile;
   PRThread* mThread;
 
-  // The monitor we drive the thread with
-  Monitor mMonitor;
+  // Used to observe runnables dispatched to our thread and to monitor it.
+  nsRefPtr<ThreadObserver> mThreadObserver;
 
-  // Flag to stop, protected by the monitor
+  // Flag to stop, protected by the monitor returned by
+  // mThreadObserver->GetMonitor().
   bool mStopIOThread;
 
   // Whether WAL is enabled

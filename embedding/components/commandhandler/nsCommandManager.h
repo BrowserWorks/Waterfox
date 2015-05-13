@@ -1,11 +1,11 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #ifndef nsCommandManager_h__
 #define nsCommandManager_h__
-
 
 #include "nsString.h"
 #include "nsClassHashtable.h"
@@ -18,41 +18,33 @@
 class nsIController;
 template<class E> class nsCOMArray;
 
-
-class nsCommandManager :  public nsICommandManager,
-                          public nsPICommandUpdater,
-                          public nsSupportsWeakReference
-
+class nsCommandManager
+  : public nsICommandManager
+  , public nsPICommandUpdater
+  , public nsSupportsWeakReference
 {
 public:
   typedef nsTArray<nsCOMPtr<nsIObserver> > ObserverList;
 
-                        nsCommandManager();
+  nsCommandManager();
 
-  // nsISupports
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_CLASS_AMBIGUOUS(nsCommandManager, nsICommandManager)
-  
-  // nsICommandManager
+
   NS_DECL_NSICOMMANDMANAGER
-  
-  // nsPICommandUpdater
   NS_DECL_NSPICOMMANDUPDATER
 
-
 protected:
-  virtual               ~nsCommandManager();
+  virtual ~nsCommandManager();
 
-  nsresult  GetControllerForCommand(const char * aCommand,
-                                    nsIDOMWindow *aDirectedToThisWindow,
-                                    nsIController** outController);
-
+  nsresult GetControllerForCommand(const char* aCommand,
+                                   nsIDOMWindow* aDirectedToThisWindow,
+                                   nsIController** aResult);
 
 protected:
   nsClassHashtable<nsCharPtrHashKey, ObserverList> mObserversTable;
 
-  nsIDOMWindow*         mWindow;      // weak ptr. The window should always outlive us
+  nsIDOMWindow* mWindow; // weak ptr. The window should always outlive us
 };
-
 
 #endif // nsCommandManager_h__

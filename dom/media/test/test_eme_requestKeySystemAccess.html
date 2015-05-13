@@ -266,27 +266,34 @@ var tests = [
     ],
     shouldPass: false,
   },
+  {
+    name: "CDM version less than",
+    keySystem: CLEARKEY_ID + ".0",
+    shouldPass: true
+  },
+  {
+    name: "CDM version equal to",
+    keySystem: CLEARKEY_ID + ".1",
+    shouldPass: true
+  },
+  {
+    name: "CDM version greater than",
+    keySystem: CLEARKEY_ID + ".2",
+    shouldPass: false
+  },
+  {
+    name: "Non-whole number CDM version",
+    keySystem: CLEARKEY_ID + ".0.1",
+    shouldPass: false
+  },
 ];
 
 function beginTest() {
   Promise.all(tests.map(Test)).then(function() { SimpleTest.finish(); });
 }
 
-var prefs = [
-  [ "media.mediasource.enabled", true ],
-  [ "media.mediasource.youtubeonly", false ],
-  [ "media.mediasource.mp4.enabled", true ],
-];
-
-if (/Linux/.test(navigator.userAgent) ||
-    !document.createElement('video').canPlayType("video/mp4")) {
-  // XXX remove once we have mp4 PlatformDecoderModules on all platforms.
-  prefs.push([ "media.fragmented-mp4.exposed", true ]);
-  prefs.push([ "media.fragmented-mp4.use-blank-decoder", true ]);
-}
-
 SimpleTest.waitForExplicitFinish();
-SpecialPowers.pushPrefEnv({ "set" : prefs }, beginTest);
+SetupEMEPref(beginTest);
 
 </script>
 </pre>

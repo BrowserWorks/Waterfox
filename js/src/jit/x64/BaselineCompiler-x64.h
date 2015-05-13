@@ -7,7 +7,7 @@
 #ifndef jit_x64_BaselineCompiler_x64_h
 #define jit_x64_BaselineCompiler_x64_h
 
-#include "jit/shared/BaselineCompiler-x86-shared.h"
+#include "jit/x86-shared/BaselineCompiler-x86-shared.h"
 
 namespace js {
 namespace jit {
@@ -15,7 +15,7 @@ namespace jit {
 class BaselineCompilerX64 : public BaselineCompilerX86Shared
 {
   protected:
-    BaselineCompilerX64(JSContext *cx, TempAllocator &alloc, JSScript *script);
+    BaselineCompilerX64(JSContext* cx, TempAllocator& alloc, JSScript* script);
 };
 
 typedef BaselineCompilerX64 BaselineCompilerSpecific;

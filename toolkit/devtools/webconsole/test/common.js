@@ -8,6 +8,10 @@ const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 const XHTML_NS = "http://www.w3.org/1999/xhtml";
 
 Cu.import("resource://gre/modules/Services.jsm");
+const {Task} = Cu.import("resource://gre/modules/Task.jsm", {});
+
+// This gives logging to stdout for tests
+var {console} = Cu.import("resource://gre/modules/devtools/Console.jsm", {});
 
 let devtools = Cu.import("resource://gre/modules/devtools/Loader.jsm", {}).devtools;
 let WebConsoleUtils = devtools.require("devtools/toolkit/webconsole/utils").Utils;
@@ -32,6 +36,7 @@ function initDebuggerServer()
     DebuggerServer.init();
     DebuggerServer.addBrowserActors();
   }
+  DebuggerServer.allowChromeProcess = true;
 }
 
 function connectToDebugger(aCallback)
@@ -68,20 +73,27 @@ function attachConsole(aListeners, aCallback, aAttachToTab)
       return;
     }
 
-    aState.dbgClient.listTabs(function _onListTabs(aResponse) {
-      if (aResponse.error) {
-        Cu.reportError("listTabs failed: " + aResponse.error + " " +
-                       aResponse.message);
-        aCallback(aState, aResponse);
-        return;
-      }
-      let consoleActor = aAttachToTab ?
-                         aResponse.tabs[aResponse.selected].consoleActor :
-                         aResponse.consoleActor;
-      aState.actor = consoleActor;
-      aState.dbgClient.attachConsole(consoleActor, aListeners,
-                                     _onAttachConsole.bind(null, aState));
-    });
+    if (aAttachToTab) {
+      aState.dbgClient.listTabs(function _onListTabs(aResponse) {
+        if (aResponse.error) {
+          Cu.reportError("listTabs failed: " + aResponse.error + " " +
+                         aResponse.message);
+          aCallback(aState, aResponse);
+          return;
+        }
+        let consoleActor = aResponse.tabs[aResponse.selected].consoleActor;
+        aState.actor = consoleActor;
+        aState.dbgClient.attachConsole(consoleActor, aListeners,
+                                       _onAttachConsole.bind(null, aState));
+      });
+    } else {
+      aState.dbgClient.getProcess().then(response => {
+        let consoleActor = response.form.consoleActor;
+        aState.actor = consoleActor;
+        aState.dbgClient.attachConsole(consoleActor, aListeners,
+                                       _onAttachConsole.bind(null, aState));
+      });
+    }
   });
 }
 
@@ -158,6 +170,24 @@ function checkHeadersOrCookies(aArray, aExpected)
       ok(false, header + " was not found");
     }
   }
+}
+
+function checkRawHeaders(aText, aExpected)
+{
+  let headers = aText.split(/\r\n|\n|\r/);
+  let arr = [];
+  for (let header of headers) {
+    let index = header.indexOf(": ");
+    if (index < 0) {
+      continue;
+    }
+    arr.push({
+      name: header.substr(0, index),
+      value: header.substr(index + 2)
+    });
+  }
+
+  checkHeadersOrCookies(arr, aExpected);
 }
 
 var gTestState = {};

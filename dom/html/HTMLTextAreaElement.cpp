@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set sw=2 ts=2 et tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -303,7 +303,9 @@ HTMLTextAreaElement::SetValueInternal(const nsAString& aValue,
   // nsTextControlFrame::UpdateValueDisplay retrieves the correct value
   // if needed.
   SetValueChanged(true);
-  mState.SetValue(aValue, aUserInput, true);
+  if (!mState.SetValue(aValue, aUserInput, true)) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
 
   return NS_OK;
 }
@@ -321,7 +323,8 @@ HTMLTextAreaElement::SetValue(const nsAString& aValue)
   nsAutoString currentValue;
   GetValueInternal(currentValue, true);
 
-  SetValueInternal(aValue, false);
+  nsresult rv = SetValueInternal(aValue, false);
+  NS_ENSURE_SUCCESS(rv, rv);
 
   if (mFocusedValue.Equals(currentValue)) {
     GetValueInternal(mFocusedValue, true);
@@ -336,8 +339,7 @@ HTMLTextAreaElement::SetUserInput(const nsAString& aValue)
   if (!nsContentUtils::IsCallerChrome()) {
     return NS_ERROR_DOM_SECURITY_ERR;
   }
-  SetValueInternal(aValue, true);
-  return NS_OK;
+  return SetValueInternal(aValue, true);
 }
 
 NS_IMETHODIMP
@@ -371,7 +373,7 @@ HTMLTextAreaElement::SetDefaultValue(const nsAString& aDefaultValue)
 {
   ErrorResult error;
   SetDefaultValue(aDefaultValue, error);
-  return error.ErrorCode();
+  return error.StealNSResult();
 }
 
 void
@@ -630,7 +632,7 @@ HTMLTextAreaElement::GetControllers(nsIControllers** aResult)
   *aResult = GetControllers(error);
   NS_IF_ADDREF(*aResult);
 
-  return error.ErrorCode();
+  return error.StealNSResult();
 }
 
 uint32_t
@@ -657,7 +659,7 @@ HTMLTextAreaElement::GetSelectionStart(int32_t *aSelectionStart)
 
   ErrorResult error;
   *aSelectionStart = GetSelectionStart(error);
-  return error.ErrorCode();
+  return error.StealNSResult();
 }
 
 uint32_t
@@ -680,7 +682,7 @@ HTMLTextAreaElement::SetSelectionStart(int32_t aSelectionStart)
 {
   ErrorResult error;
   SetSelectionStart(aSelectionStart, error);
-  return error.ErrorCode();
+  return error.StealNSResult();
 }
 
 void
@@ -720,7 +722,7 @@ HTMLTextAreaElement::GetSelectionEnd(int32_t *aSelectionEnd)
 
   ErrorResult error;
   *aSelectionEnd = GetSelectionEnd(error);
-  return error.ErrorCode();
+  return error.StealNSResult();
 }
 
 uint32_t
@@ -743,7 +745,7 @@ HTMLTextAreaElement::SetSelectionEnd(int32_t aSelectionEnd)
 {
   ErrorResult error;
   SetSelectionEnd(aSelectionEnd, error);
-  return error.ErrorCode();
+  return error.StealNSResult();
 }
 
 void
@@ -808,7 +810,7 @@ HTMLTextAreaElement::GetSelectionDirection(nsAString& aDirection)
 {
   ErrorResult error;
   GetSelectionDirection(aDirection, error);
-  return error.ErrorCode();
+  return error.StealNSResult();
 }
 
 void
@@ -839,7 +841,7 @@ HTMLTextAreaElement::SetSelectionDirection(const nsAString& aDirection)
 {
   ErrorResult error;
   SetSelectionDirection(aDirection, error);
-  return error.ErrorCode();
+  return error.StealNSResult();
 }
 
 void
@@ -875,7 +877,7 @@ HTMLTextAreaElement::SetSelectionRange(int32_t aSelectionStart,
   Optional<nsAString> dir;
   dir = &aDirection;
   SetSelectionRange(aSelectionStart, aSelectionEnd, dir, error);
-  return error.ErrorCode();
+  return error.StealNSResult();
 }
 
 void
@@ -966,7 +968,11 @@ HTMLTextAreaElement::SetRangeText(const nsAString& aReplacement,
 
   if (aStart <= aEnd) {
     value.Replace(aStart, aEnd - aStart, aReplacement);
-    SetValueInternal(value, false);
+    nsresult rv = SetValueInternal(value, false);
+    if (NS_FAILED(rv)) {
+      aRv.Throw(rv);
+      return;
+    }
   }
 
   uint32_t newEnd = aStart + aReplacement.Length();
@@ -1019,7 +1025,8 @@ HTMLTextAreaElement::Reset()
 
   // To get the initial spellchecking, reset value to
   // empty string before setting the default value.
-  SetValue(EmptyString());
+  rv = SetValue(EmptyString());
+  NS_ENSURE_SUCCESS(rv, rv);
   nsAutoString resetVal;
   GetDefaultValue(resetVal);
   rv = SetValue(resetVal);
@@ -1110,7 +1117,8 @@ HTMLTextAreaElement::RestoreState(nsPresState* aState)
   if (state) {
     nsAutoString data;
     state->GetData(data);
-    SetValue(data);
+    nsresult rv = SetValue(data);
+    NS_ENSURE_SUCCESS(rv, false);
   }
 
   if (aState->IsDisabledSet()) {
@@ -1294,7 +1302,7 @@ HTMLTextAreaElement::CopyInnerTo(Element* aDest)
   if (aDest->OwnerDoc()->IsStaticDocument()) {
     nsAutoString value;
     GetValueInternal(value, true);
-    static_cast<HTMLTextAreaElement*>(aDest)->SetValue(value);
+    return static_cast<HTMLTextAreaElement*>(aDest)->SetValue(value);
   }
   return NS_OK;
 }
@@ -1453,15 +1461,7 @@ HTMLTextAreaElement::IsPasswordTextControl() const
 NS_IMETHODIMP_(int32_t)
 HTMLTextAreaElement::GetCols()
 {
-  const nsAttrValue* attr = GetParsedAttr(nsGkAtoms::cols);
-  if (attr) {
-    int32_t cols = attr->Type() == nsAttrValue::eInteger ?
-                   attr->GetIntegerValue() : 0;
-    // XXX why a default of 1 char, why hide it
-    return (cols <= 0) ? 1 : cols;
-  }
-
-  return DEFAULT_COLS;
+  return Cols();
 }
 
 NS_IMETHODIMP_(int32_t)
@@ -1472,7 +1472,7 @@ HTMLTextAreaElement::GetWrapCols()
   nsITextControlElement::GetWrapPropertyEnum(this, wrapProp);
   if (wrapProp == nsITextControlElement::eHTMLTextWrap_Off) {
     // do not wrap when wrap=off
-    return -1;
+    return 0;
   }
 
   // Otherwise we just wrap at the given number of columns
@@ -1546,9 +1546,9 @@ HTMLTextAreaElement::FieldSetDisabledChanged(bool aNotify)
 }
 
 JSObject*
-HTMLTextAreaElement::WrapNode(JSContext* aCx)
+HTMLTextAreaElement::WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return HTMLTextAreaElementBinding::Wrap(aCx, this);
+  return HTMLTextAreaElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 } // namespace dom

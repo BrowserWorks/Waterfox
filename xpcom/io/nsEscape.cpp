@@ -104,14 +104,11 @@ nsEscapeCount(const char* aStr, nsEscapeMask aFlags, size_t* aOutLen)
   }
 
   // fail if we need more than 4GB
-  // size_t is likely to be long unsigned int but nsMemory::Alloc(size_t)
-  // calls NS_Alloc_P(size_t) which calls PR_Malloc(uint32_t), so there is
-  // no chance to allocate more than 4GB using nsMemory::Alloc()
   if (dstSize > UINT32_MAX) {
     return 0;
   }
 
-  char* result = (char*)nsMemory::Alloc(dstSize);
+  char* result = (char*)moz_xmalloc(dstSize);
   if (!result) {
     return 0;
   }
@@ -233,7 +230,7 @@ nsEscapeHTML(const char* aString)
     return nullptr;
   }
 
-  rv = (char*)NS_Alloc((6 * len) + 1);
+  rv = (char*)moz_xmalloc((6 * len) + 1);
   char* ptr = rv;
 
   if (rv) {
@@ -291,7 +288,7 @@ nsEscapeHTML2(const char16_t* aSourceBuffer, int32_t aSourceBufferLen)
     return nullptr;
   }
 
-  char16_t* resultBuffer = (char16_t*)nsMemory::Alloc(
+  char16_t* resultBuffer = (char16_t*)moz_xmalloc(
     aSourceBufferLen * 6 * sizeof(char16_t) + sizeof(char16_t('\0')));
   char16_t* ptr = resultBuffer;
 
@@ -360,10 +357,10 @@ static const uint32_t EscapeChars[256] =
 {
      0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,  // 0x
      0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,  // 1x
-     0,1023,   0, 512,1023,   0,1023,   0,1023,1023,1023,1023,1023,1023, 953, 784,  // 2x   !"#$%&'()*+,-./
+     0,1023,   0, 512,1023,   0,1023, 112,1023,1023,1023,1023,1023,1023, 953, 784,  // 2x   !"#$%&'()*+,-./
   1023,1023,1023,1023,1023,1023,1023,1023,1023,1023,1008,1008,   0,1008,   0, 768,  // 3x  0123456789:;<=>?
   1008,1023,1023,1023,1023,1023,1023,1023,1023,1023,1023,1023,1023,1023,1023,1023,  // 4x  @ABCDEFGHIJKLMNO
-  1023,1023,1023,1023,1023,1023,1023,1023,1023,1023,1023,   0, 896,   0, 896,1023,  // 5x  PQRSTUVWXYZ[\]^_
+  1023,1023,1023,1023,1023,1023,1023,1023,1023,1023,1023, 896, 896, 896, 896,1023,  // 5x  PQRSTUVWXYZ[\]^_
      0,1023,1023,1023,1023,1023,1023,1023,1023,1023,1023,1023,1023,1023,1023,1023,  // 6x  `abcdefghijklmno
   1023,1023,1023,1023,1023,1023,1023,1023,1023,1023,1023, 896,1012, 896,1023,   0,  // 7x  pqrstuvwxyz{|}~ DEL
      0                                                                              // 80 to FF are zero
@@ -473,7 +470,7 @@ NS_EscapeURL(const char* aPart, int32_t aPartLen, uint32_t aFlags,
 const nsSubstring&
 NS_EscapeURL(const nsSubstring& aStr, uint32_t aFlags, nsSubstring& aResult)
 {
-  if (T_EscapeURL(aStr.Data(), aStr.Length(), aFlags, aResult)) {
+  if (T_EscapeURL<nsSubstring>(aStr.Data(), aStr.Length(), aFlags, aResult)) {
     return aResult;
   }
   return aStr;

@@ -7,9 +7,16 @@ const {Cc, Ci, Cu, Cr} = require("chrome");
 const Services = require("Services");
 const DevToolsUtils = require("devtools/toolkit/DevToolsUtils.js");
 
-let DEFAULT_PROFILER_ENTRIES = 1000000;
-let DEFAULT_PROFILER_INTERVAL = 1;
-let DEFAULT_PROFILER_FEATURES = ["js"];
+let DEFAULT_PROFILER_OPTIONS = {
+  // When using the DevTools Performance Tools, this will be overridden
+  // by the pref `devtools.performance.profiler.buffer-size`.
+  entries: Math.pow(10, 7),
+  // When using the DevTools Performance Tools, this will be overridden
+  // by the pref `devtools.performance.profiler.sample-rate-khz`.
+  interval: 1,
+  features: ["js"],
+  threadFilters: ["GeckoMain"]
+};
 
 /**
  * The nsIProfiler is target agnostic and interacts with the whole platform.
@@ -17,9 +24,6 @@ let DEFAULT_PROFILER_FEATURES = ["js"];
  * consumers (i.e. "toolboxes") don't interfere with each other.
  */
 let gProfilerConsumers = 0;
-let gProfilingStartTime = -1;
-Services.obs.addObserver(() => gProfilingStartTime = Date.now(), "profiler-started", false);
-Services.obs.addObserver(() => gProfilingStartTime = -1, "profiler-stopped", false);
 
 loader.lazyGetter(this, "nsIProfilerModule", () => {
   return Cc["@mozilla.org/tools/profiler;1"].getService(Ci.nsIProfiler);
@@ -47,21 +51,65 @@ ProfilerActor.prototype = {
   },
 
   /**
+   * Returns an array of feature strings, describing the profiler features
+   * that are available on this platform. Can be called while the profiler
+   * is stopped.
+   */
+  onGetFeatures: function() {
+    return { features: nsIProfilerModule.GetFeatures([]) };
+  },
+
+  /**
+   * Returns an object with the values of the current status of the
+   * circular buffer in the profiler, returning `position`, `totalSize`,
+   * and the current `generation` of the buffer.
+   */
+  onGetBufferInfo: function() {
+    let position = {}, totalSize = {}, generation = {};
+    nsIProfilerModule.GetBufferInfo(position, totalSize, generation);
+    return {
+      position: position.value,
+      totalSize: totalSize.value,
+      generation: generation.value
+    }
+  },
+
+  /**
+   * Returns the configuration used that was originally passed in to start up the
+   * profiler. Used for tests, and does not account for others using nsIProfiler.
+   */
+  onGetStartOptions: function() {
+    return this._profilerStartOptions || {};
+  },
+
+  /**
    * Starts the nsIProfiler module. Doing so will discard any samples
    * that might have been accumulated so far.
    *
    * @param number entries [optional]
    * @param number interval [optional]
    * @param array:string features [optional]
+   * @param array:string threadFilters [description]
    */
   onStartProfiler: function(request = {}) {
-    nsIProfilerModule.StartProfiler(
-      (request.entries || DEFAULT_PROFILER_ENTRIES),
-      (request.interval || DEFAULT_PROFILER_INTERVAL),
-      (request.features || DEFAULT_PROFILER_FEATURES),
-      (request.features || DEFAULT_PROFILER_FEATURES).length);
+    let options = this._profilerStartOptions = {
+      entries: request.entries || DEFAULT_PROFILER_OPTIONS.entries,
+      interval: request.interval || DEFAULT_PROFILER_OPTIONS.interval,
+      features: request.features || DEFAULT_PROFILER_OPTIONS.features,
+      threadFilters: request.threadFilters || DEFAULT_PROFILER_OPTIONS.threadFilters,
+    };
 
-    return { started: true };
+    nsIProfilerModule.StartProfiler(
+      options.entries,
+      options.interval,
+      options.features,
+      options.features.length,
+      options.threadFilters,
+      options.threadFilters.length
+    );
+    let { position, totalSize, generation } = this.onGetBufferInfo();
+
+    return { started: true, position, totalSize, generation };
   },
 
   /**
@@ -84,8 +132,18 @@ ProfilerActor.prototype = {
    */
   onIsActive: function() {
     let isActive = nsIProfilerModule.IsActive();
-    let elapsedTime = isActive ? getElapsedTime() : undefined;
-    return { isActive: isActive, currentTime: elapsedTime };
+    let elapsedTime = isActive ? nsIProfilerModule.getElapsedTime() : undefined;
+    let { position, totalSize, generation } = this.onGetBufferInfo();
+    return { isActive: isActive, currentTime: elapsedTime, position, totalSize, generation };
+  },
+
+  /**
+   * Returns a stringified JSON object that describes the shared libraries
+   * which are currently loaded into our process. Can be called while the
+   * profiler is stopped.
+   */
+  onGetSharedLibraryInformation: function() {
+    return { sharedLibraryInformation: nsIProfilerModule.getSharedLibraryInformation() };
   },
 
   /**
@@ -111,10 +169,18 @@ ProfilerActor.prototype = {
    *     } ... ]
    *   } ... ]
    * }
+   *
+   *
+   * @param number startTime
+   *        Since the circular buffer will only grow as long as the profiler lives,
+   *        the buffer can contain unwanted samples. Pass in a `startTime` to only retrieve
+   *        samples that took place after the `startTime`, with 0 being when the profiler
+   *        just started.
    */
-  onGetProfile: function() {
-    let profile = nsIProfilerModule.getProfileData();
-    return { profile: profile, currentTime: getElapsedTime() };
+  onGetProfile: function(request) {
+    let startTime = request.startTime || 0;
+    let profile = nsIProfilerModule.getProfileData(startTime);
+    return { profile: profile, currentTime: nsIProfilerModule.getElapsedTime() };
   },
 
   /**
@@ -207,35 +273,38 @@ ProfilerActor.prototype = {
   _handleConsoleEvent: function(subject, data) {
     // An optional label may be specified when calling `console.profile`.
     // If that's the case, stringify it and send it over with the response.
-    let args = subject.arguments;
+    let { action, arguments: args } = subject;
     let profileLabel = args.length > 0 ? args[0] + "" : undefined;
 
     // If the event was generated from `console.profile` or `console.profileEnd`
     // we need to start the profiler right away and then just notify the client.
     // Otherwise, we'll lose precious samples.
 
-    if (subject.action == "profile") {
+    if (action === "profile" || action === "profileEnd") {
       let { isActive, currentTime } = this.onIsActive();
 
       // Start the profiler only if it wasn't already active. Otherwise, any
       // samples that might have been accumulated so far will be discarded.
-      if (!isActive) {
+      if (!isActive && action === "profile") {
         this.onStartProfiler();
         return {
           profileLabel: profileLabel,
           currentTime: 0
         };
       }
+      // Otherwise, if inactive and a call to profile end, send
+      // an empty object because we can't do anything with this.
+      else if (!isActive) {
+        return {};
+      }
+
+      // Otherwise, the profiler is already active, so just send
+      // to the front the current time, label, and the notification
+      // adds the action as well.
       return {
         profileLabel: profileLabel,
         currentTime: currentTime
       };
-    }
-
-    if (subject.action == "profileEnd") {
-      let details = this.onGetProfile();
-      details.profileLabel = profileLabel;
-      return details;
     }
   }
 };
@@ -253,39 +322,6 @@ function cycleBreaker(key, value) {
 }
 
 /**
- * Gets the time elapsed since the profiler was last started.
- * @return number
- */
-function getElapsedTime() {
-  // Assign `gProfilingStartTime` now if no client of this actor has actually
-  // started it yet, but the built-in profiler module is somehow already active
-  // (it could happen if the MOZ_PROFILER_STARTUP environment variable is set,
-  // or the Gecko Profiler add-on is installed and isn't using this actor).
-  // Otherwise, the returned value is bogus and messes up the samples filtering.
-  if (gProfilingStartTime == -1) {
-    let profile = nsIProfilerModule.getProfileData();
-    let lastSampleTime = findOldestSampleTime(profile);
-    gProfilingStartTime = Date.now() - lastSampleTime;
-  }
-  return Date.now() - gProfilingStartTime;
-}
-
-/**
- * Finds the oldest sample time in the provided profile.
- * @param object profile
- * @return number
- */
-function findOldestSampleTime(profile) {
-  let firstThreadSamples = profile.threads[0].samples;
-
-  for (let i = firstThreadSamples.length - 1; i >= 0; i--) {
-    if ("time" in firstThreadSamples[i]) {
-      return firstThreadSamples[i].time;
-    }
-  }
-}
-
-/**
  * Asserts the value sanity of `gProfilerConsumers`.
  */
 function checkProfilerConsumers() {
@@ -297,12 +333,19 @@ function checkProfilerConsumers() {
 
 /**
  * The request types this actor can handle.
+ * At the moment there are two known users of the Profiler actor:
+ * the devtools and the Gecko Profiler addon, which uses the debugger
+ * protocol to get profiles from Fennec.
  */
 ProfilerActor.prototype.requestTypes = {
+  "getBufferInfo": ProfilerActor.prototype.onGetBufferInfo,
+  "getFeatures": ProfilerActor.prototype.onGetFeatures,
   "startProfiler": ProfilerActor.prototype.onStartProfiler,
   "stopProfiler": ProfilerActor.prototype.onStopProfiler,
   "isActive": ProfilerActor.prototype.onIsActive,
+  "getSharedLibraryInformation": ProfilerActor.prototype.onGetSharedLibraryInformation,
   "getProfile": ProfilerActor.prototype.onGetProfile,
   "registerEventNotifications": ProfilerActor.prototype.onRegisterEventNotifications,
-  "unregisterEventNotifications": ProfilerActor.prototype.onUnregisterEventNotifications
+  "unregisterEventNotifications": ProfilerActor.prototype.onUnregisterEventNotifications,
+  "getStartOptions": ProfilerActor.prototype.onGetStartOptions
 };

@@ -13,18 +13,17 @@
 #include "MediaSourceReader.h"
 #include "MediaSourceResource.h"
 #include "MediaSourceUtils.h"
+#include "SourceBufferDecoder.h"
+#include "VideoUtils.h"
 
 #ifdef PR_LOGGING
 extern PRLogModuleInfo* GetMediaSourceLog();
-extern PRLogModuleInfo* GetMediaSourceAPILog();
 
-#define MSE_DEBUG(...) PR_LOG(GetMediaSourceLog(), PR_LOG_DEBUG, (__VA_ARGS__))
-#define MSE_DEBUGV(...) PR_LOG(GetMediaSourceLog(), PR_LOG_DEBUG+1, (__VA_ARGS__))
-#define MSE_API(...) PR_LOG(GetMediaSourceAPILog(), PR_LOG_DEBUG, (__VA_ARGS__))
+#define MSE_DEBUG(arg, ...) PR_LOG(GetMediaSourceLog(), PR_LOG_DEBUG, ("MediaSourceDecoder(%p)::%s: " arg, this, __func__, ##__VA_ARGS__))
+#define MSE_DEBUGV(arg, ...) PR_LOG(GetMediaSourceLog(), PR_LOG_DEBUG + 1, ("MediaSourceDecoder(%p)::%s: " arg, this, __func__, ##__VA_ARGS__))
 #else
 #define MSE_DEBUG(...)
 #define MSE_DEBUGV(...)
-#define MSE_API(...)
 #endif
 
 namespace mozilla {
@@ -55,18 +54,18 @@ MediaSourceDecoder::CreateStateMachine()
 nsresult
 MediaSourceDecoder::Load(nsIStreamListener**, MediaDecoder*)
 {
-  MOZ_ASSERT(!mDecoderStateMachine);
-  mDecoderStateMachine = CreateStateMachine();
-  if (!mDecoderStateMachine) {
+  MOZ_ASSERT(!GetStateMachine());
+  SetStateMachine(CreateStateMachine());
+  if (!GetStateMachine()) {
     NS_WARNING("Failed to create state machine!");
     return NS_ERROR_FAILURE;
   }
 
-  nsresult rv = mDecoderStateMachine->Init(nullptr);
+  nsresult rv = GetStateMachine()->Init(nullptr);
   NS_ENSURE_SUCCESS(rv, rv);
 
   SetStateMachineParameters();
-  return ScheduleStateMachineThread();
+  return ScheduleStateMachine();
 }
 
 nsresult
@@ -87,14 +86,14 @@ MediaSourceDecoder::GetSeekable(dom::TimeRanges* aSeekable)
   } else {
     aSeekable->Add(0, duration);
   }
-  MSE_DEBUG("MediaSourceDecoder(%p)::GetSeekable ranges=%s", this, DumpTimeRanges(aSeekable).get());
+  MSE_DEBUG("ranges=%s", DumpTimeRanges(aSeekable).get());
   return NS_OK;
 }
 
 void
 MediaSourceDecoder::Shutdown()
 {
-  MSE_DEBUG("MediaSourceDecoder(%p)::Shutdown", this);
+  MSE_DEBUG("Shutdown");
   // Detach first so that TrackBuffers are unused on the main thread when
   // shut down on the decode task queue.
   if (mMediaSource) {
@@ -117,7 +116,7 @@ MediaSourceDecoder::CreateResource(nsIPrincipal* aPrincipal)
 void
 MediaSourceDecoder::AttachMediaSource(dom::MediaSource* aMediaSource)
 {
-  MOZ_ASSERT(!mMediaSource && !mDecoderStateMachine && NS_IsMainThread());
+  MOZ_ASSERT(!mMediaSource && !GetStateMachine() && NS_IsMainThread());
   mMediaSource = aMediaSource;
 }
 
@@ -157,10 +156,11 @@ MediaSourceDecoder::OnTrackBufferConfigured(TrackBuffer* aTrackBuffer, const Med
 }
 
 void
-MediaSourceDecoder::Ended()
+MediaSourceDecoder::Ended(bool aEnded)
 {
   ReentrantMonitorAutoEnter mon(GetReentrantMonitor());
-  mReader->Ended();
+  static_cast<MediaSourceResource*>(GetResource())->SetEnded(aEnded);
+  mReader->Ended(aEnded);
   mon.NotifyAll();
 }
 
@@ -173,15 +173,15 @@ MediaSourceDecoder::IsExpectingMoreData()
 
 class DurationChangedRunnable : public nsRunnable {
 public:
-  explicit DurationChangedRunnable(MediaSourceDecoder* aDecoder,
-                                   double aOldDuration,
-                                   double aNewDuration)
+  DurationChangedRunnable(MediaSourceDecoder* aDecoder,
+                          double aOldDuration,
+                          double aNewDuration)
     : mDecoder(aDecoder)
     , mOldDuration(aOldDuration)
     , mNewDuration(aNewDuration)
   { }
 
-  NS_IMETHOD Run() MOZ_OVERRIDE MOZ_FINAL {
+  NS_IMETHOD Run() override final {
     mDecoder->DurationChanged(mOldDuration, mNewDuration);
     return NS_OK;
   }
@@ -205,7 +205,7 @@ MediaSourceDecoder::DurationChanged(double aOldDuration, double aNewDuration)
 }
 
 void
-MediaSourceDecoder::SetDecodedDuration(int64_t aDuration)
+MediaSourceDecoder::SetInitialDuration(int64_t aDuration)
 {
   // Only use the decoded duration if one wasn't already
   // set.
@@ -214,23 +214,58 @@ MediaSourceDecoder::SetDecodedDuration(int64_t aDuration)
     return;
   }
   double duration = aDuration;
-  duration /= USECS_PER_S;
-  SetMediaSourceDuration(duration);
+  // A duration of -1 is +Infinity.
+  if (aDuration >= 0) {
+    duration /= USECS_PER_S;
+  }
+  SetMediaSourceDuration(duration, MSRangeRemovalAction::SKIP);
 }
 
 void
-MediaSourceDecoder::SetMediaSourceDuration(double aDuration)
+MediaSourceDecoder::SetMediaSourceDuration(double aDuration, MSRangeRemovalAction aAction)
 {
   ReentrantMonitorAutoEnter mon(GetReentrantMonitor());
   double oldDuration = mMediaSourceDuration;
-  mMediaSourceDuration = aDuration;
-  mDecoderStateMachine->SetDuration(aDuration * USECS_PER_S);
-  if (NS_IsMainThread()) {
-    DurationChanged(oldDuration, aDuration);
+  if (aDuration >= 0) {
+    int64_t checkedDuration;
+    if (NS_FAILED(SecondsToUsecs(aDuration, checkedDuration))) {
+      // INT64_MAX is used as infinity by the state machine.
+      // We want a very bigger number, but not infinity.
+      checkedDuration = INT64_MAX - 1;
+    }
+    GetStateMachine()->SetDuration(checkedDuration);
+    mMediaSourceDuration = aDuration;
   } else {
-    nsRefPtr<nsIRunnable> task =
-      new DurationChangedRunnable(this, oldDuration, aDuration);
-    NS_DispatchToMainThread(task);
+    GetStateMachine()->SetDuration(INT64_MAX);
+    mMediaSourceDuration = PositiveInfinity<double>();
+  }
+  if (mReader) {
+    mReader->SetMediaSourceDuration(mMediaSourceDuration);
+  }
+  ScheduleDurationChange(oldDuration, aDuration, aAction);
+}
+
+void
+MediaSourceDecoder::ScheduleDurationChange(double aOldDuration,
+                                           double aNewDuration,
+                                           MSRangeRemovalAction aAction)
+{
+  if (aAction == MSRangeRemovalAction::SKIP) {
+    if (NS_IsMainThread()) {
+      MediaDecoder::DurationChanged();
+    } else {
+      nsCOMPtr<nsIRunnable> task =
+        NS_NewRunnableMethod(this, &MediaDecoder::DurationChanged);
+      NS_DispatchToMainThread(task);
+    }
+  } else {
+    if (NS_IsMainThread()) {
+      DurationChanged(aOldDuration, aNewDuration);
+    } else {
+      nsCOMPtr<nsIRunnable> task =
+        new DurationChangedRunnable(this, aOldDuration, aNewDuration);
+      NS_DispatchToMainThread(task);
+    }
   }
 }
 
@@ -255,6 +290,12 @@ MediaSourceDecoder::PrepareReaderInitialization()
   mReader->PrepareInitialization();
 }
 
+void
+MediaSourceDecoder::GetMozDebugReaderData(nsAString& aString)
+{
+  mReader->GetMozDebugReaderData(aString);
+}
+
 #ifdef MOZ_EME
 nsresult
 MediaSourceDecoder::SetCDMProxy(CDMProxy* aProxy)
@@ -264,8 +305,64 @@ MediaSourceDecoder::SetCDMProxy(CDMProxy* aProxy)
   rv = mReader->SetCDMProxy(aProxy);
   NS_ENSURE_SUCCESS(rv, rv);
 
+  if (aProxy) {
+    // The sub readers can't decrypt EME content until they have a CDMProxy,
+    // and the CDMProxy knows the capabilities of the CDM. The MediaSourceReader
+    // remains in "waiting for resources" state until then. We need to kick the
+    // reader out of waiting if the CDM gets added with known capabilities.
+    CDMCaps::AutoLock caps(aProxy->Capabilites());
+    if (!caps.AreCapsKnown()) {
+      nsCOMPtr<nsIRunnable> task(
+        NS_NewRunnableMethod(this, &MediaDecoder::NotifyWaitingForResourcesStatusChanged));
+      caps.CallOnMainThreadWhenCapsAvailable(task);
+    }
+  }
   return NS_OK;
 }
 #endif
+
+bool
+MediaSourceDecoder::IsActiveReader(MediaDecoderReader* aReader)
+{
+  return mReader->IsActiveReader(aReader);
+}
+
+double
+MediaSourceDecoder::GetDuration()
+{
+  ReentrantMonitorAutoEnter mon(GetReentrantMonitor());
+  return mMediaSourceDuration;
+}
+
+already_AddRefed<SourceBufferDecoder>
+MediaSourceDecoder::SelectDecoder(int64_t aTarget,
+                                  int64_t aTolerance,
+                                  const nsTArray<nsRefPtr<SourceBufferDecoder>>& aTrackDecoders)
+{
+  ReentrantMonitorAutoEnter mon(GetReentrantMonitor());
+
+  // Consider decoders in order of newest to oldest, as a newer decoder
+  // providing a given buffered range is expected to replace an older one.
+  for (int32_t i = aTrackDecoders.Length() - 1; i >= 0; --i) {
+    nsRefPtr<SourceBufferDecoder> newDecoder = aTrackDecoders[i];
+
+    nsRefPtr<dom::TimeRanges> ranges = new dom::TimeRanges();
+    newDecoder->GetBuffered(ranges);
+    if (ranges->Find(double(aTarget) / USECS_PER_S,
+                     double(aTolerance) / USECS_PER_S) == dom::TimeRanges::NoIndex) {
+      MSE_DEBUGV("SelectDecoder(%lld fuzz:%lld) newDecoder=%p (%d/%d) target not in ranges=%s",
+                 aTarget, aTolerance, newDecoder.get(), i+1,
+                 aTrackDecoders.Length(), DumpTimeRanges(ranges).get());
+      continue;
+    }
+
+    return newDecoder.forget();
+  }
+
+  return nullptr;
+}
+
+#undef MSE_DEBUG
+#undef MSE_DEBUGV
 
 } // namespace mozilla

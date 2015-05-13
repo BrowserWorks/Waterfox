@@ -4,6 +4,7 @@
 
 #include "ActiveLayerTracker.h"
 
+#include "mozilla/ArrayUtils.h"
 #include "nsExpirationTracker.h"
 #include "nsContainerFrame.h"
 #include "nsIContent.h"
@@ -84,7 +85,7 @@ public:
   bool mContentActive;
 };
 
-class LayerActivityTracker MOZ_FINAL : public nsExpirationTracker<LayerActivity,4> {
+class LayerActivityTracker final : public nsExpirationTracker<LayerActivity,4> {
 public:
   // 75-100ms is a good timeout period. We use 4 generations of 25ms each.
   enum { GENERATION_MS = 100 };
@@ -107,13 +108,8 @@ LayerActivity::~LayerActivity()
   }
 }
 
-static void DestroyLayerActivity(void* aPropertyValue)
-{
-  delete static_cast<LayerActivity*>(aPropertyValue);
-}
-
 // Frames with this property have NS_FRAME_HAS_LAYER_ACTIVITY_PROPERTY set
-NS_DECLARE_FRAME_PROPERTY(LayerActivityProperty, DestroyLayerActivity)
+NS_DECLARE_FRAME_PROPERTY(LayerActivityProperty, DeleteValue<LayerActivity>)
 
 void
 LayerActivityTracker::NotifyExpired(LayerActivity* aObject)
@@ -292,7 +288,7 @@ ActiveLayerTracker::IsStyleAnimated(nsDisplayListBuilder* aBuilder,
   }
   nsIContent* content = aFrame->GetContent();
   if (content) {
-    return nsLayoutUtils::HasCurrentAnimationsForProperty(content, aProperty);
+    return nsLayoutUtils::HasCurrentAnimationsForProperties(content, &aProperty, 1);
   }
 
   return false;
@@ -314,6 +310,11 @@ ActiveLayerTracker::IsOffsetOrMarginStyleAnimated(nsIFrame* aFrame)
       return true;
     }
   }
+  // We should also check for running CSS animations of these properties once
+  // bug 1009693 is fixed. Until that happens, layerization isn't useful for
+  // animations of these properties because we'll invalidate the layer contents
+  // on every change anyway.
+  // See bug 1151346 for a patch that adds a check for CSS animations.
   return false;
 }
 

@@ -146,7 +146,9 @@ add_identity_test(this, function test_overQuota() {
   let engine = engineManager.get("catapult");
   engine.enabled = true;
   engine.exception = {status: 400,
-                      toString: function() "14"};
+                      toString() {
+                        return "14";
+                      }};
 
   try {
     do_check_eq(Status.sync, SYNC_SUCCEEDED);
@@ -198,6 +200,7 @@ add_identity_test(this, function test_service_offline() {
   let deferred = Promise.defer();
   server.stop(() => {
     Services.io.offline = true;
+    Services.prefs.setBoolPref("network.dns.offline-localhost", false);
 
     try {
       do_check_eq(Status.sync, SYNC_SUCCEEDED);
@@ -212,6 +215,7 @@ add_identity_test(this, function test_service_offline() {
       Service.startOver();
     }
     Services.io.offline = false;
+    Services.prefs.clearUserPref("network.dns.offline-localhost");
     deferred.resolve();
   });
   yield deferred.promise;

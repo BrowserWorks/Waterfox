@@ -9,7 +9,6 @@ XPIDL_SOURCES += [
     'nsIConsoleMessage.idl',
     'nsIConsoleService.idl',
     'nsICycleCollectorListener.idl',
-    'nsIDebug.idl',
     'nsIDebug2.idl',
     'nsIErrorService.idl',
     'nsIException.idl',
@@ -42,6 +41,7 @@ EXPORTS += [
     'CodeAddressService.h',
     'ErrorList.h',
     'nsAgg.h',
+    'nsAlgorithm.h',
     'nsAutoPtr.h',
     'nsAutoRef.h',
     'nsCom.h',
@@ -54,8 +54,8 @@ EXPORTS += [
     'nsInterfaceRequestorAgg.h',
     'nsISizeOf.h',
     'nsISupportsBase.h',
-    'nsISupportsObsolete.h',
     'nsObjCExceptions.h',
+    'nsQueryObject.h',
     'nsRefPtr.h',
     'nsStackWalk.h',
     'nsTraceRefcnt.h',
@@ -76,7 +76,10 @@ EXPORTS.mozilla += [
     'CountingAllocatorBase.h',
     'CycleCollectedJSRuntime.h',
     'Debug.h',
+    'DebuggerOnGCRunnable.h',
+    'DeferredFinalize.h',
     'ErrorNames.h',
+    'HoldDropJSObjects.h',
     'LinuxUtils.h',
     'nsMemoryInfoDumper.h',
     'StackWalk.h',
@@ -98,7 +101,10 @@ UNIFIED_SOURCES += [
     'ClearOnShutdown.cpp',
     'CycleCollectedJSRuntime.cpp',
     'Debug.cpp',
+    'DebuggerOnGCRunnable.cpp',
+    'DeferredFinalize.cpp',
     'ErrorNames.cpp',
+    'HoldDropJSObjects.cpp',
     'nsConsoleMessage.cpp',
     'nsConsoleService.cpp',
     'nsCycleCollector.cpp',
@@ -144,12 +150,6 @@ elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
         'nsCrashOnException.cpp',
     ]
 
-UNIFIED_SOURCES += [
-    'nsErrorAssertsC.c',
-]
-
-MSVC_ENABLE_PGO = True
-
 include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
@@ -162,5 +162,4 @@ LOCAL_INCLUDES += [
 if CONFIG['MOZ_WIDGET_GTK']:
     CXXFLAGS += CONFIG['TK_CFLAGS']
 
-if CONFIG['_MSC_VER']:
-    FAIL_ON_WARNINGS = True
+FAIL_ON_WARNINGS = True

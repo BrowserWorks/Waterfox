@@ -28,6 +28,8 @@ Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/TelemetryStopwatch.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "TelemetryController",
+                                  "resource://gre/modules/TelemetryController.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "UpdateChannel",
                                   "resource://gre/modules/UpdateChannel.jsm");
 
@@ -285,7 +287,7 @@ HealthReporterState.prototype = Object.freeze({
       yield this.save();
       prefs.reset(["lastSubmitID", "lastPingTime"]);
     } else {
-      this._log.warn("No prefs data found.");
+      this._log.debug("No prefs data found.");
     }
   },
 });
@@ -545,7 +547,7 @@ AbstractHealthReporter.prototype = Object.freeze({
       // HealthReporter instances, we need to encode a unique identifier in
       // the timer ID.
       try {
-        let timerName = this._branch.replace(".", "-", "g") + "lastDailyCollection";
+        let timerName = this._branch.replace(/\./g, "-") + "lastDailyCollection";
         let tm = Cc["@mozilla.org/updates/timer-manager;1"]
                    .getService(Ci.nsIUpdateTimerManager);
         tm.registerTimer(timerName, this.collectMeasurements.bind(this),
@@ -762,16 +764,21 @@ AbstractHealthReporter.prototype = Object.freeze({
     // where UAppData is underneath the profile directory (or vice-versa) so we
     // don't substitute incomplete strings.
 
+    // Return a /g regex that matches the provided string exactly.
+    function regexify(s) {
+      return new RegExp(s.replace(/[-\\^$*+?.()|[\]{}]/g, "\\$&"), "g");
+    }
+
     function replace(uri, path, thing) {
       // Try is because .spec can throw on invalid URI.
       try {
-        recordMessage = recordMessage.replace(uri.spec, '<' + thing + 'URI>', 'g');
+        recordMessage = recordMessage.replace(regexify(uri.spec), "<" + thing + "URI>");
       } catch (ex) { }
 
-      recordMessage = recordMessage.replace(path, '<' + thing + 'Path>', 'g');
+      recordMessage = recordMessage.replace(regexify(path), "<" + thing + "Path>");
     }
 
-    if (appData.path.contains(profile.path)) {
+    if (appData.path.includes(profile.path)) {
       replace(appDataURI, appData.path, 'AppData');
       replace(profileURI, profile.path, 'Profile');
     } else {
@@ -1182,11 +1189,11 @@ AbstractHealthReporter.prototype = Object.freeze({
  * @param policy
  *        (HealthReportPolicy) Policy driving execution of HealthReporter.
  */
-this.HealthReporter = function (branch, policy, sessionRecorder, stateLeaf=null) {
+this.HealthReporter = function (branch, policy, stateLeaf=null) {
   this._stateLeaf = stateLeaf;
   this._uploadInProgress = false;
 
-  AbstractHealthReporter.call(this, branch, policy, sessionRecorder);
+  AbstractHealthReporter.call(this, branch, policy, TelemetryController.getSessionRecorder());
 
   if (!this.serverURI) {
     throw new Error("No server URI defined. Did you forget to define the pref?");

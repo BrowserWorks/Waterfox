@@ -1,6 +1,6 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
- * vim: sw=2 ts=2 et lcs=trail\:.,tab\:>~ :
- * This Source Code Form is subject to the terms of the Mozilla Public
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -62,9 +62,9 @@ NS_IMPL_CYCLE_COLLECTION_ROOT_NATIVE(SVGTransform, AddRef)
 NS_IMPL_CYCLE_COLLECTION_UNROOT_NATIVE(SVGTransform, Release)
 
 JSObject*
-SVGTransform::WrapObject(JSContext* aCx)
+SVGTransform::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return SVGTransformBinding::Wrap(aCx, this);
+  return SVGTransformBinding::Wrap(aCx, this, aGivenProto);
 }
 
 //----------------------------------------------------------------------
@@ -113,10 +113,9 @@ SVGTransform::SVGTransform(DOMSVGTransformList *aList,
   , mTransform(nullptr)
 {
   // These shifts are in sync with the members in the header.
-  NS_ABORT_IF_FALSE(aList &&
-                    aListIndex <= MaxListIndex(), "bad arg");
+  MOZ_ASSERT(aList && aListIndex <= MaxListIndex(), "bad arg");
 
-  NS_ABORT_IF_FALSE(IndexIsValid(), "Bad index for DOMSVGNumber!");
+  MOZ_ASSERT(IndexIsValid(), "Bad index for DOMSVGNumber!");
 }
 
 SVGTransform::SVGTransform()
@@ -261,7 +260,7 @@ SVGTransform::SetSkewX(float angle, ErrorResult& rv)
   }
 
   if (!IsFinite(tan(angle * kRadPerDegree))) {
-    rv.Throw(NS_ERROR_RANGE_ERR);
+    rv.ThrowRangeError(MSG_INVALID_TRANSFORM_ANGLE_ERROR);
     return;
   }
 
@@ -284,7 +283,7 @@ SVGTransform::SetSkewY(float angle, ErrorResult& rv)
   }
 
   if (!IsFinite(tan(angle * kRadPerDegree))) {
-    rv.Throw(NS_ERROR_RANGE_ERR);
+    rv.ThrowRangeError(MSG_INVALID_TRANSFORM_ANGLE_ERROR);
     return;
   }
 
@@ -301,21 +300,21 @@ SVGTransform::InsertingIntoList(DOMSVGTransformList *aList,
                                 uint32_t aListIndex,
                                 bool aIsAnimValItem)
 {
-  NS_ABORT_IF_FALSE(!HasOwner(), "Inserting item that is already in a list");
+  MOZ_ASSERT(!HasOwner(), "Inserting item that is already in a list");
 
   mList = aList;
   mListIndex = aListIndex;
   mIsAnimValItem = aIsAnimValItem;
   mTransform = nullptr;
 
-  NS_ABORT_IF_FALSE(IndexIsValid(), "Bad index for DOMSVGLength!");
+  MOZ_ASSERT(IndexIsValid(), "Bad index for DOMSVGLength!");
 }
 
 void
 SVGTransform::RemovingFromList()
 {
-  NS_ABORT_IF_FALSE(!mTransform,
-      "Item in list also has another non-list value associated with it");
+  MOZ_ASSERT(!mTransform,
+             "Item in list also has another non-list value associated with it");
 
   mTransform = new nsSVGTransform(InternalItem());
   mList = nullptr;
@@ -356,8 +355,8 @@ SVGTransform::IndexIsValid()
 void
 SVGTransform::SetMatrix(const gfxMatrix& aMatrix)
 {
-  NS_ABORT_IF_FALSE(!mIsAnimValItem,
-      "Attempting to modify read-only transform");
+  MOZ_ASSERT(!mIsAnimValItem,
+             "Attempting to modify read-only transform");
 
   if (Transform().Type() == SVG_TRANSFORM_MATRIX &&
       nsSVGTransform::MatricesEqual(Matrixgfx(), aMatrix)) {

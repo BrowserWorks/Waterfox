@@ -36,13 +36,12 @@ using mozilla::Maybe;
 using mozilla::Move;
 using mozilla::Nothing;
 
-/* static */ DebuggerMemory *
-DebuggerMemory::create(JSContext *cx, Debugger *dbg)
+/* static */ DebuggerMemory*
+DebuggerMemory::create(JSContext* cx, Debugger* dbg)
 {
-
-    Value memoryProto = dbg->object->getReservedSlot(Debugger::JSSLOT_DEBUG_MEMORY_PROTO);
-    RootedNativeObject memory(cx, NewNativeObjectWithGivenProto(cx, &class_,
-                                                                &memoryProto.toObject(), nullptr));
+    Value memoryProtoValue = dbg->object->getReservedSlot(Debugger::JSSLOT_DEBUG_MEMORY_PROTO);
+    RootedObject memoryProto(cx, &memoryProtoValue.toObject());
+    RootedNativeObject memory(cx, NewNativeObjectWithGivenProto(cx, &class_, memoryProto));
     if (!memory)
         return nullptr;
 
@@ -52,17 +51,17 @@ DebuggerMemory::create(JSContext *cx, Debugger *dbg)
     return &memory->as<DebuggerMemory>();
 }
 
-Debugger *
+Debugger*
 DebuggerMemory::getDebugger()
 {
-    const Value &dbgVal = getReservedSlot(JSSLOT_DEBUGGER);
+    const Value& dbgVal = getReservedSlot(JSSLOT_DEBUGGER);
     return Debugger::fromJSObject(&dbgVal.toObject());
 }
 
 /* static */ bool
-DebuggerMemory::construct(JSContext *cx, unsigned argc, Value *vp)
+DebuggerMemory::construct(JSContext* cx, unsigned argc, Value* vp)
 {
-    JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_NO_CONSTRUCTOR,
+    JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_NO_CONSTRUCTOR,
                          "Debugger.Memory");
     return false;
 }
@@ -73,19 +72,19 @@ DebuggerMemory::construct(JSContext *cx, unsigned argc, Value *vp)
     JSCLASS_HAS_RESERVED_SLOTS(JSSLOT_COUNT)
 };
 
-/* static */ DebuggerMemory *
-DebuggerMemory::checkThis(JSContext *cx, CallArgs &args, const char *fnName)
+/* static */ DebuggerMemory*
+DebuggerMemory::checkThis(JSContext* cx, CallArgs& args, const char* fnName)
 {
-    const Value &thisValue = args.thisv();
+    const Value& thisValue = args.thisv();
 
     if (!thisValue.isObject()) {
-        JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_NOT_NONNULL_OBJECT);
+        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_NOT_NONNULL_OBJECT, InformalValueTypeName(thisValue));
         return nullptr;
     }
 
-    JSObject &thisObject = thisValue.toObject();
+    JSObject& thisObject = thisValue.toObject();
     if (!thisObject.is<DebuggerMemory>()) {
-        JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_INCOMPATIBLE_PROTO,
+        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_INCOMPATIBLE_PROTO,
                              class_.name, fnName, thisObject.getClass()->name);
         return nullptr;
     }
@@ -95,7 +94,7 @@ DebuggerMemory::checkThis(JSContext *cx, CallArgs &args, const char *fnName)
     // of Debugger.Memory. It is the only object that is<DebuggerMemory>() but
     // doesn't have a Debugger instance.
     if (thisObject.as<DebuggerMemory>().getReservedSlot(JSSLOT_DEBUGGER).isUndefined()) {
-        JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_INCOMPATIBLE_PROTO,
+        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_INCOMPATIBLE_PROTO,
                              class_.name, fnName, "prototype object");
         return nullptr;
     }
@@ -104,69 +103,63 @@ DebuggerMemory::checkThis(JSContext *cx, CallArgs &args, const char *fnName)
 }
 
 /**
- * Get the |DebuggerMemory *| from the current this value and handle any errors
+ * Get the |DebuggerMemory*| from the current this value and handle any errors
  * that might occur therein.
  *
  * These parameters must already exist when calling this macro:
- * - JSContext *cx
+ * - JSContext* cx
  * - unsigned argc
- * - Value *vp
- * - const char *fnName
+ * - Value* vp
+ * - const char* fnName
  * These parameters will be defined after calling this macro:
  * - CallArgs args
- * - DebuggerMemory *memory (will be non-null)
+ * - DebuggerMemory* memory (will be non-null)
  */
 #define THIS_DEBUGGER_MEMORY(cx, argc, vp, fnName, args, memory)        \
     CallArgs args = CallArgsFromVp(argc, vp);                           \
-    Rooted<DebuggerMemory *> memory(cx, checkThis(cx, args, fnName));   \
+    Rooted<DebuggerMemory*> memory(cx, checkThis(cx, args, fnName));    \
     if (!memory)                                                        \
         return false
 
-/* static */ bool
-DebuggerMemory::setTrackingAllocationSites(JSContext *cx, unsigned argc, Value *vp)
+static bool
+undefined(CallArgs& args)
 {
-    THIS_DEBUGGER_MEMORY(cx, argc, vp, "(set trackingAllocationSites)", args, memory);
-    if (!args.requireAtLeast(cx, "(set trackingAllocationSites)", 1))
-        return false;
-
-    Debugger *dbg = memory->getDebugger();
-    bool enabling = ToBoolean(args[0]);
-
-    if (enabling == dbg->trackingAllocationSites) {
-        // Nothing to do here...
-        args.rval().setUndefined();
-        return true;
-    }
-
-    if (enabling) {
-        for (GlobalObjectSet::Range r = dbg->debuggees.all(); !r.empty(); r.popFront()) {
-            JSCompartment *compartment = r.front()->compartment();
-            if (compartment->hasObjectMetadataCallback()) {
-                JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr,
-                                     JSMSG_OBJECT_METADATA_CALLBACK_ALREADY_SET);
-                return false;
-            }
-        }
-    }
-
-    for (GlobalObjectSet::Range r = dbg->debuggees.all(); !r.empty(); r.popFront()) {
-        if (enabling) {
-            r.front()->compartment()->setObjectMetadataCallback(SavedStacksMetadataCallback);
-        } else {
-            r.front()->compartment()->forgetObjectMetadataCallback();
-        }
-    }
-
-    if (!enabling)
-        dbg->emptyAllocationsLog();
-
-    dbg->trackingAllocationSites = enabling;
     args.rval().setUndefined();
     return true;
 }
 
 /* static */ bool
-DebuggerMemory::getTrackingAllocationSites(JSContext *cx, unsigned argc, Value *vp)
+DebuggerMemory::setTrackingAllocationSites(JSContext* cx, unsigned argc, Value* vp)
+{
+    THIS_DEBUGGER_MEMORY(cx, argc, vp, "(set trackingAllocationSites)", args, memory);
+    if (!args.requireAtLeast(cx, "(set trackingAllocationSites)", 1))
+        return false;
+
+    Debugger* dbg = memory->getDebugger();
+    bool enabling = ToBoolean(args[0]);
+
+    if (enabling == dbg->trackingAllocationSites)
+        return undefined(args);
+
+    dbg->trackingAllocationSites = enabling;
+
+    if (!dbg->enabled)
+        return undefined(args);
+
+    if (enabling) {
+        if (!dbg->addAllocationsTrackingForAllDebuggees(cx)) {
+            dbg->trackingAllocationSites = false;
+            return false;
+        }
+    } else {
+        dbg->removeAllocationsTrackingForAllDebuggees();
+    }
+
+    return undefined(args);
+}
+
+/* static */ bool
+DebuggerMemory::getTrackingAllocationSites(JSContext* cx, unsigned argc, Value* vp)
 {
     THIS_DEBUGGER_MEMORY(cx, argc, vp, "(get trackingAllocationSites)", args, memory);
     args.rval().setBoolean(memory->getDebugger()->trackingAllocationSites);
@@ -174,13 +167,13 @@ DebuggerMemory::getTrackingAllocationSites(JSContext *cx, unsigned argc, Value *
 }
 
 /* static */ bool
-DebuggerMemory::drainAllocationsLog(JSContext *cx, unsigned argc, Value *vp)
+DebuggerMemory::drainAllocationsLog(JSContext* cx, unsigned argc, Value* vp)
 {
     THIS_DEBUGGER_MEMORY(cx, argc, vp, "drainAllocationsLog", args, memory);
     Debugger* dbg = memory->getDebugger();
 
     if (!dbg->trackingAllocationSites) {
-        JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_NOT_TRACKING_ALLOCATIONS,
+        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_NOT_TRACKING_ALLOCATIONS,
                              "drainAllocationsLog");
         return false;
     }
@@ -201,13 +194,26 @@ DebuggerMemory::drainAllocationsLog(JSContext *cx, unsigned argc, Value *vp)
         // the GC to find the AllocationSite, but are not barried, so we must
         // edit them with great care. Use the queue entry in place, and then
         // pop and delete together.
-        Debugger::AllocationSite *allocSite = dbg->allocationsLog.getFirst();
+        Debugger::AllocationSite* allocSite = dbg->allocationsLog.getFirst();
         RootedValue frame(cx, ObjectOrNullValue(allocSite->frame));
-        if (!JSObject::defineProperty(cx, obj, cx->names().frame, frame))
+        if (!DefineProperty(cx, obj, cx->names().frame, frame))
             return false;
 
         RootedValue timestampValue(cx, NumberValue(allocSite->when));
-        if (!JSObject::defineProperty(cx, obj, cx->names().timestamp, timestampValue))
+        if (!DefineProperty(cx, obj, cx->names().timestamp, timestampValue))
+            return false;
+
+        RootedString className(cx, Atomize(cx, allocSite->className, strlen(allocSite->className)));
+        if (!className)
+            return false;
+        RootedValue classNameValue(cx, StringValue(className));
+        if (!DefineProperty(cx, obj, cx->names().class_, classNameValue))
+            return false;
+
+        RootedValue ctorName(cx, NullValue());
+        if (allocSite->ctorName)
+            ctorName.setString(allocSite->ctorName);
+        if (!DefineProperty(cx, obj, cx->names().constructor, ctorName))
             return false;
 
         result->setDenseElement(i, ObjectValue(*obj));
@@ -219,13 +225,14 @@ DebuggerMemory::drainAllocationsLog(JSContext *cx, unsigned argc, Value *vp)
         js_delete(allocSite);
     }
 
+    dbg->allocationsLogOverflowed = false;
     dbg->allocationsLogLength = 0;
     args.rval().setObject(*result);
     return true;
 }
 
 /* static */ bool
-DebuggerMemory::getMaxAllocationsLogLength(JSContext *cx, unsigned argc, Value *vp)
+DebuggerMemory::getMaxAllocationsLogLength(JSContext* cx, unsigned argc, Value* vp)
 {
     THIS_DEBUGGER_MEMORY(cx, argc, vp, "(get maxAllocationsLogLength)", args, memory);
     args.rval().setInt32(memory->getDebugger()->maxAllocationsLogLength);
@@ -233,7 +240,7 @@ DebuggerMemory::getMaxAllocationsLogLength(JSContext *cx, unsigned argc, Value *
 }
 
 /* static */ bool
-DebuggerMemory::setMaxAllocationsLogLength(JSContext *cx, unsigned argc, Value *vp)
+DebuggerMemory::setMaxAllocationsLogLength(JSContext* cx, unsigned argc, Value* vp)
 {
     THIS_DEBUGGER_MEMORY(cx, argc, vp, "(set maxAllocationsLogLength)", args, memory);
     if (!args.requireAtLeast(cx, "(set maxAllocationsLogLength)", 1))
@@ -244,13 +251,13 @@ DebuggerMemory::setMaxAllocationsLogLength(JSContext *cx, unsigned argc, Value *
         return false;
 
     if (max < 1) {
-        JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_UNEXPECTED_TYPE,
+        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_UNEXPECTED_TYPE,
                              "(set maxAllocationsLogLength)'s parameter",
                              "not a positive integer");
         return false;
     }
 
-    Debugger *dbg = memory->getDebugger();
+    Debugger* dbg = memory->getDebugger();
     dbg->maxAllocationsLogLength = max;
 
     while (dbg->allocationsLogLength > dbg->maxAllocationsLogLength) {
@@ -263,7 +270,7 @@ DebuggerMemory::setMaxAllocationsLogLength(JSContext *cx, unsigned argc, Value *
 }
 
 /* static */ bool
-DebuggerMemory::getAllocationSamplingProbability(JSContext *cx, unsigned argc, Value *vp)
+DebuggerMemory::getAllocationSamplingProbability(JSContext* cx, unsigned argc, Value* vp)
 {
     THIS_DEBUGGER_MEMORY(cx, argc, vp, "(get allocationSamplingProbability)", args, memory);
     args.rval().setDouble(memory->getDebugger()->allocationSamplingProbability);
@@ -271,7 +278,7 @@ DebuggerMemory::getAllocationSamplingProbability(JSContext *cx, unsigned argc, V
 }
 
 /* static */ bool
-DebuggerMemory::setAllocationSamplingProbability(JSContext *cx, unsigned argc, Value *vp)
+DebuggerMemory::setAllocationSamplingProbability(JSContext* cx, unsigned argc, Value* vp)
 {
     THIS_DEBUGGER_MEMORY(cx, argc, vp, "(set allocationSamplingProbability)", args, memory);
     if (!args.requireAtLeast(cx, "(set allocationSamplingProbability)", 1))
@@ -282,7 +289,7 @@ DebuggerMemory::setAllocationSamplingProbability(JSContext *cx, unsigned argc, V
         return false;
 
     if (probability < 0.0 || probability > 1.0) {
-        JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_UNEXPECTED_TYPE,
+        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_UNEXPECTED_TYPE,
                              "(set allocationSamplingProbability)'s parameter",
                              "not a number between 0 and 1");
         return false;
@@ -293,11 +300,33 @@ DebuggerMemory::setAllocationSamplingProbability(JSContext *cx, unsigned argc, V
     return true;
 }
 
+/* static */ bool
+DebuggerMemory::getAllocationsLogOverflowed(JSContext* cx, unsigned argc, Value* vp)
+{
+    THIS_DEBUGGER_MEMORY(cx, argc, vp, "(get allocationsLogOverflowed)", args, memory);
+    args.rval().setBoolean(memory->getDebugger()->allocationsLogOverflowed);
+    return true;
+}
+
+/* static */ bool
+DebuggerMemory::getOnGarbageCollection(JSContext* cx, unsigned argc, Value* vp)
+{
+    THIS_DEBUGGER_MEMORY(cx, argc, vp, "(get onGarbageCollection)", args, memory);
+    return Debugger::getHookImpl(cx, args, *memory->getDebugger(), Debugger::OnGarbageCollection);
+}
+
+/* static */ bool
+DebuggerMemory::setOnGarbageCollection(JSContext* cx, unsigned argc, Value* vp)
+{
+    THIS_DEBUGGER_MEMORY(cx, argc, vp, "(set onGarbageCollection)", args, memory);
+    return Debugger::setHookImpl(cx, args, *memory->getDebugger(), Debugger::OnGarbageCollection);
+}
+
 
 /* Debugger.Memory.prototype.takeCensus */
 
 void
-JS::dbg::SetDebuggerMallocSizeOf(JSRuntime *rt, mozilla::MallocSizeOf mallocSizeOf) {
+JS::dbg::SetDebuggerMallocSizeOf(JSRuntime* rt, mozilla::MallocSizeOf mallocSizeOf) {
     rt->debuggerMallocSizeOf = mallocSizeOf;
 }
 
@@ -308,9 +337,9 @@ namespace dbg {
 struct Census {
     JSContext * const cx;
     JS::ZoneSet debuggeeZones;
-    Zone *atomsZone;
+    Zone* atomsZone;
 
-    explicit Census(JSContext *cx) : cx(cx), atomsZone(nullptr) { }
+    explicit Census(JSContext* cx) : cx(cx), atomsZone(nullptr) { }
 
     bool init() {
         AutoLockForExclusiveAccess lock(cx);
@@ -322,23 +351,23 @@ struct Census {
 // An *assorter* class is one with the following constructors, destructor,
 // and member functions:
 //
-//   Assorter(Census &census);
-//   Assorter(Assorter &&)
-//   Assorter &operator=(Assorter &&)
+//   Assorter(Census& census);
+//   Assorter(Assorter&&)
+//   Assorter& operator=(Assorter&&)
 //   ~Assorter()
 //      Construction given a Census; move construction and assignment, for being
 //      stored in containers; and destruction.
 //
-//   bool init(Census &census);
+//   bool init(Census& census);
 //      A fallible initializer.
 //
-//   bool count(Census &census, const Node &node);
+//   bool count(Census& census, const Node& node);
 //      Categorize and count |node| as appropriate for this kind of assorter.
 //
 //   size_t total() const;
 //      Return the number of times 'count' has been called.
 //
-//   bool report(Census &census, MutableHandleValue report);
+//   bool report(Census& census, MutableHandleValue report);
 //      Construct a JavaScript object reporting the counts this assorter has
 //      seen, and store it in |report|.
 //
@@ -350,24 +379,24 @@ class Tally {
     size_t total_;
 
   public:
-    explicit Tally(Census &census) : total_(0) { }
-    Tally(Tally &&rhs) : total_(rhs.total_) { }
-    Tally &operator=(Tally &&rhs) { total_ = rhs.total_; return *this; }
+    explicit Tally(Census& census) : total_(0) { }
+    Tally(Tally&& rhs) : total_(rhs.total_) { }
+    Tally& operator=(Tally&& rhs) { total_ = rhs.total_; return *this; }
 
-    bool init(Census &census) { return true; }
+    bool init(Census& census) { return true; }
 
-    bool count(Census &census, const Node &node) {
+    bool count(Census& census, const Node& node) {
         total_++;
         return true;
     }
 
     size_t total() const { return total_; }
 
-    bool report(Census &census, MutableHandleValue report) {
+    bool report(Census& census, MutableHandleValue report) {
         RootedPlainObject obj(census.cx, NewBuiltinClassInstance<PlainObject>(census.cx));
         RootedValue countValue(census.cx, NumberValue(total_));
         if (!obj ||
-            !JSObject::defineProperty(census.cx, obj, census.cx->names().count, countValue))
+            !DefineProperty(census.cx, obj, census.cx->names().count, countValue))
         {
             return false;
         }
@@ -394,35 +423,35 @@ class ByJSType {
     EachOther other;
 
   public:
-    explicit ByJSType(Census &census)
+    explicit ByJSType(Census& census)
       : total_(0),
         objects(census),
         scripts(census),
         strings(census),
         other(census)
     { }
-    ByJSType(ByJSType &&rhs)
+    ByJSType(ByJSType&& rhs)
       : total_(rhs.total_),
         objects(Move(rhs.objects)),
         scripts(move(rhs.scripts)),
         strings(move(rhs.strings)),
         other(move(rhs.other))
     { }
-    ByJSType &operator=(ByJSType &&rhs) {
+    ByJSType& operator=(ByJSType&& rhs) {
         MOZ_ASSERT(&rhs != this);
         this->~ByJSType();
         new (this) ByJSType(Move(rhs));
         return *this;
     }
 
-    bool init(Census &census) {
+    bool init(Census& census) {
         return objects.init(census) &&
                scripts.init(census) &&
                strings.init(census) &&
                other.init(census);
     }
 
-    bool count(Census &census, const Node &node) {
+    bool count(Census& census, const Node& node) {
         total_++;
         if (node.is<JSObject>())
             return objects.count(census, node);
@@ -433,8 +462,8 @@ class ByJSType {
         return other.count(census, node);
     }
 
-    bool report(Census &census, MutableHandleValue report) {
-        JSContext *cx = census.cx;
+    bool report(Census& census, MutableHandleValue report) {
+        JSContext* cx = census.cx;
 
         RootedPlainObject obj(cx, NewBuiltinClassInstance<PlainObject>(cx));
         if (!obj)
@@ -442,22 +471,22 @@ class ByJSType {
 
         RootedValue objectsReport(cx);
         if (!objects.report(census, &objectsReport) ||
-            !JSObject::defineProperty(cx, obj, cx->names().objects, objectsReport))
+            !DefineProperty(cx, obj, cx->names().objects, objectsReport))
             return false;
 
         RootedValue scriptsReport(cx);
         if (!scripts.report(census, &scriptsReport) ||
-            !JSObject::defineProperty(cx, obj, cx->names().scripts, scriptsReport))
+            !DefineProperty(cx, obj, cx->names().scripts, scriptsReport))
             return false;
 
         RootedValue stringsReport(cx);
         if (!strings.report(census, &stringsReport) ||
-            !JSObject::defineProperty(cx, obj, cx->names().strings, stringsReport))
+            !DefineProperty(cx, obj, cx->names().strings, stringsReport))
             return false;
 
         RootedValue otherReport(cx);
         if (!other.report(census, &otherReport) ||
-            !JSObject::defineProperty(cx, obj, cx->names().other, otherReport))
+            !DefineProperty(cx, obj, cx->names().other, otherReport))
             return false;
 
         report.setObject(*obj);
@@ -465,37 +494,37 @@ class ByJSType {
     }
 };
 
-// An assorter that categorizes nodes that are JSObjects by their class, and
-// places all other nodes in an 'other' category. The template arguments must be
-// assorter types; each JSObject class gets an EachClass assorter, and the
-// 'other' category gets an EachOther assorter.
+// An assorter that categorizes nodes that are JSObjects by their class name,
+// and places all other nodes in an 'other' category. The template arguments
+// must be assorter types; each JSObject class gets an EachClass assorter, and
+// the 'other' category gets an EachOther assorter.
 template<typename EachClass = Tally,
          typename EachOther = Tally>
 class ByObjectClass {
     size_t total_;
 
-    // A hash policy that compares js::Classes by name.
+    // A hash policy that compares C strings.
     struct HashPolicy {
-        typedef const js::Class *Lookup;
-        static js::HashNumber hash(Lookup l) { return mozilla::HashString(l->name); }
-        static bool match(const js::Class *key, Lookup lookup) {
-            return strcmp(key->name, lookup->name) == 0;
+        typedef const char* Lookup;
+        static js::HashNumber hash(Lookup l) { return mozilla::HashString(l); }
+        static bool match(const char* key, Lookup lookup) {
+            return strcmp(key, lookup) == 0;
         }
     };
 
-    // A table mapping classes to their counts. Note that this table treats
-    // js::Class instances with the same name as equal keys. If you have several
+    // A table mapping class names to their counts. Note that we treat js::Class
+    // instances with the same name as equal keys. If you have several
     // js::Classes with equal names (and we do; as of this writing there were
-    // six named "Object"), you will get several different Classes being counted
-    // in the same table entry.
-    typedef HashMap<const js::Class *, EachClass, HashPolicy, SystemAllocPolicy> Table;
+    // six named "Object"), you will get several different js::Classes being
+    // counted in the same table entry.
+    typedef HashMap<const char*, EachClass, HashPolicy, SystemAllocPolicy> Table;
     typedef typename Table::Entry Entry;
     Table table;
     EachOther other;
 
-    static int compareEntries(const void *lhsVoid, const void *rhsVoid) {
-        size_t lhs = (*static_cast<const Entry * const *>(lhsVoid))->value().total();
-        size_t rhs = (*static_cast<const Entry * const *>(rhsVoid))->value().total();
+    static int compareEntries(const void* lhsVoid, const void* rhsVoid) {
+        size_t lhs = (*static_cast<const Entry * const*>(lhsVoid))->value().total();
+        size_t rhs = (*static_cast<const Entry * const*>(rhsVoid))->value().total();
 
         // qsort sorts in "ascending" order, so we should describe entries with
         // smaller counts as being "greater than" entries with larger counts. We
@@ -508,28 +537,29 @@ class ByObjectClass {
     }
 
   public:
-    explicit ByObjectClass(Census &census) : total_(0), other(census) { }
-    ByObjectClass(ByObjectClass &&rhs)
+    explicit ByObjectClass(Census& census) : total_(0), other(census) { }
+    ByObjectClass(ByObjectClass&& rhs)
       : total_(rhs.total_), table(Move(rhs.table)), other(Move(rhs.other))
     { }
-    ByObjectClass &operator=(ByObjectClass &&rhs) {
+    ByObjectClass& operator=(ByObjectClass&& rhs) {
         MOZ_ASSERT(&rhs != this);
         this->~ByObjectClass();
         new (this) ByObjectClass(Move(rhs));
         return *this;
     }
 
-    bool init(Census &census) { return table.init() && other.init(census); }
+    bool init(Census& census) { return table.init() && other.init(census); }
 
-    bool count(Census &census, const Node &node) {
+    bool count(Census& census, const Node& node) {
         total_++;
-        if (!node.is<JSObject>())
+        const char* className = node.jsObjectClassName();
+
+        if (!className)
             return other.count(census, node);
 
-        const js::Class *key = node.as<JSObject>()->getClass();
-        typename Table::AddPtr p = table.lookupForAdd(key);
+        typename Table::AddPtr p = table.lookupForAdd(className);
         if (!p) {
-            if (!table.add(p, key, EachClass(census)))
+            if (!table.add(p, className, EachClass(census)))
                 return false;
             if (!p->value().init(census))
                 return false;
@@ -539,13 +569,13 @@ class ByObjectClass {
 
     size_t total() const { return total_; }
 
-    bool report(Census &census, MutableHandleValue report) {
-        JSContext *cx = census.cx;
+    bool report(Census& census, MutableHandleValue report) {
+        JSContext* cx = census.cx;
 
         // Build a vector of pointers to entries; sort by total; and then use
         // that to build the result object. This makes the ordering of entries
         // more interesting, and a little less non-deterministic.
-        mozilla::Vector<Entry *> entries;
+        mozilla::Vector<Entry*> entries;
         if (!entries.reserve(table.count()))
             return false;
         for (typename Table::Range r = table.all(); !r.empty(); r.popFront())
@@ -556,16 +586,16 @@ class ByObjectClass {
         RootedPlainObject obj(cx, NewBuiltinClassInstance<PlainObject>(cx));
         if (!obj)
             return false;
-        for (Entry **entryPtr = entries.begin(); entryPtr < entries.end(); entryPtr++) {
-            Entry &entry = **entryPtr;
-            EachClass &assorter = entry.value();
+        for (Entry** entryPtr = entries.begin(); entryPtr < entries.end(); entryPtr++) {
+            Entry& entry = **entryPtr;
+            EachClass& assorter = entry.value();
             RootedValue assorterReport(cx);
             if (!assorter.report(census, &assorterReport))
                 return false;
 
-            const char *name = entry.key()->name;
+            const char* name = entry.key();
             MOZ_ASSERT(name);
-            JSAtom *atom = Atomize(census.cx, name, strlen(name));
+            JSAtom* atom = Atomize(census.cx, name, strlen(name));
             if (!atom)
                 return false;
             RootedId entryId(cx, AtomToId(atom));
@@ -584,7 +614,7 @@ class ByObjectClass {
             }
 #endif
 
-            if (!JSObject::defineGeneric(cx, obj, entryId, assorterReport))
+            if (!DefineProperty(cx, obj, entryId, assorterReport))
                 return false;
         }
 
@@ -602,26 +632,26 @@ class ByUbinodeType {
     // Note that, because ubi::Node::typeName promises to return a specific
     // pointer, not just any string whose contents are correct, we can use their
     // addresses as hash table keys.
-    typedef HashMap<const char16_t *, EachType, DefaultHasher<const char16_t *>,
+    typedef HashMap<const char16_t*, EachType, DefaultHasher<const char16_t*>,
                     SystemAllocPolicy> Table;
     typedef typename Table::Entry Entry;
     Table table;
 
   public:
-    explicit ByUbinodeType(Census &census) : total_(0) { }
-    ByUbinodeType(ByUbinodeType &&rhs) : total_(rhs.total_), table(Move(rhs.table)) { }
-    ByUbinodeType &operator=(ByUbinodeType &&rhs) {
+    explicit ByUbinodeType(Census& census) : total_(0) { }
+    ByUbinodeType(ByUbinodeType&& rhs) : total_(rhs.total_), table(Move(rhs.table)) { }
+    ByUbinodeType& operator=(ByUbinodeType&& rhs) {
         MOZ_ASSERT(&rhs != this);
         this->~ByUbinodeType();
         new (this) ByUbinodeType(Move(rhs));
         return *this;
     }
 
-    bool init(Census &census) { return table.init(); }
+    bool init(Census& census) { return table.init(); }
 
-    bool count(Census &census, const Node &node) {
+    bool count(Census& census, const Node& node) {
         total_++;
-        const char16_t *key = node.typeName();
+        const char16_t* key = node.typeName();
         typename Table::AddPtr p = table.lookupForAdd(key);
         if (!p) {
             if (!table.add(p, key, EachType(census)))
@@ -634,9 +664,9 @@ class ByUbinodeType {
 
     size_t total() const { return total_; }
 
-    static int compareEntries(const void *lhsVoid, const void *rhsVoid) {
-        size_t lhs = (*static_cast<const Entry * const *>(lhsVoid))->value().total();
-        size_t rhs = (*static_cast<const Entry * const *>(rhsVoid))->value().total();
+    static int compareEntries(const void* lhsVoid, const void* rhsVoid) {
+        size_t lhs = (*static_cast<const Entry * const*>(lhsVoid))->value().total();
+        size_t rhs = (*static_cast<const Entry * const*>(rhsVoid))->value().total();
 
         // qsort sorts in "ascending" order, so we should describe entries with
         // smaller counts as being "greater than" entries with larger counts. We
@@ -648,13 +678,13 @@ class ByUbinodeType {
         return 0;
     }
 
-    bool report(Census &census, MutableHandleValue report) {
-        JSContext *cx = census.cx;
+    bool report(Census& census, MutableHandleValue report) {
+        JSContext* cx = census.cx;
 
         // Build a vector of pointers to entries; sort by total; and then use
         // that to build the result object. This makes the ordering of entries
         // more interesting, and a little less non-deterministic.
-        mozilla::Vector<Entry *> entries;
+        mozilla::Vector<Entry*> entries;
         if (!entries.reserve(table.count()))
             return false;
         for (typename Table::Range r = table.all(); !r.empty(); r.popFront())
@@ -665,21 +695,21 @@ class ByUbinodeType {
         RootedPlainObject obj(cx, NewBuiltinClassInstance<PlainObject>(cx));
         if (!obj)
             return false;
-        for (Entry **entryPtr = entries.begin(); entryPtr < entries.end(); entryPtr++) {
-            Entry &entry = **entryPtr;
-            EachType &assorter = entry.value();
+        for (Entry** entryPtr = entries.begin(); entryPtr < entries.end(); entryPtr++) {
+            Entry& entry = **entryPtr;
+            EachType& assorter = entry.value();
             RootedValue assorterReport(cx);
             if (!assorter.report(census, &assorterReport))
                 return false;
 
-            const char16_t *name = entry.key();
+            const char16_t* name = entry.key();
             MOZ_ASSERT(name);
-            JSAtom *atom = AtomizeChars(cx, name, js_strlen(name));
+            JSAtom* atom = AtomizeChars(cx, name, js_strlen(name));
             if (!atom)
                 return false;
             RootedId entryId(cx, AtomToId(atom));
 
-            if (!JSObject::defineGeneric(cx, obj, entryId, assorterReport))
+            if (!DefineProperty(cx, obj, entryId, assorterReport))
                 return false;
         }
 
@@ -693,23 +723,23 @@ class ByUbinodeType {
 // to categorize and count each node.
 template<typename Assorter>
 class CensusHandler {
-    Census &census;
+    Census& census;
     Assorter assorter;
 
   public:
-    explicit CensusHandler(Census &census) : census(census), assorter(census) { }
+    explicit CensusHandler(Census& census) : census(census), assorter(census) { }
 
-    bool init(Census &census) { return assorter.init(census); }
-    bool report(Census &census, MutableHandleValue report) {
+    bool init(Census& census) { return assorter.init(census); }
+    bool report(Census& census, MutableHandleValue report) {
         return assorter.report(census, report);
     }
 
     // This class needs to retain no per-node data.
     class NodeData { };
 
-    bool operator() (BreadthFirst<CensusHandler> &traversal,
-                     Node origin, const Edge &edge,
-                     NodeData *referentData, bool first)
+    bool operator() (BreadthFirst<CensusHandler>& traversal,
+                     Node origin, const Edge& edge,
+                     NodeData* referentData, bool first)
     {
         // We're only interested in the first time we reach edge.referent, not
         // in every edge arriving at that node.
@@ -722,8 +752,8 @@ class CensusHandler {
         // Symbols are always allocated in the atoms zone, even if they were
         // created for exactly one compartment and never shared; this rule will
         // include such nodes in the count.
-        const Node &referent = edge.referent;
-        Zone *zone = referent.zone();
+        const Node& referent = edge.referent;
+        Zone* zone = referent.zone();
 
         if (census.debuggeeZones.has(zone)) {
             return assorter.count(census, referent);
@@ -753,7 +783,7 @@ typedef BreadthFirst<DefaultCensusHandler> DefaultCensusTraversal;
 } // namespace js
 
 bool
-DebuggerMemory::takeCensus(JSContext *cx, unsigned argc, Value *vp)
+DebuggerMemory::takeCensus(JSContext* cx, unsigned argc, Value* vp)
 {
     THIS_DEBUGGER_MEMORY(cx, argc, vp, "Debugger.Memory.prototype.census", args, memory);
 
@@ -765,11 +795,11 @@ DebuggerMemory::takeCensus(JSContext *cx, unsigned argc, Value *vp)
     if (!handler.init(census))
         return false;
 
-    Debugger *dbg = memory->getDebugger();
+    Debugger* dbg = memory->getDebugger();
     RootedObject dbgObj(cx, dbg->object);
 
     // Populate our target set of debuggee zones.
-    for (GlobalObjectSet::Range r = dbg->allDebuggees(); !r.empty(); r.popFront()) {
+    for (WeakGlobalObjectSet::Range r = dbg->allDebuggees(); !r.empty(); r.popFront()) {
         if (!census.debuggeeZones.put(r.front()->zone()))
             return false;
     }
@@ -804,6 +834,8 @@ DebuggerMemory::takeCensus(JSContext *cx, unsigned argc, Value *vp)
     JS_PSGS("trackingAllocationSites", getTrackingAllocationSites, setTrackingAllocationSites, 0),
     JS_PSGS("maxAllocationsLogLength", getMaxAllocationsLogLength, setMaxAllocationsLogLength, 0),
     JS_PSGS("allocationSamplingProbability", getAllocationSamplingProbability, setAllocationSamplingProbability, 0),
+    JS_PSG("allocationsLogOverflowed", getAllocationsLogOverflowed, 0),
+    JS_PSGS("onGarbageCollection", getOnGarbageCollection, setOnGarbageCollection, 0),
     JS_PS_END
 };
 

@@ -49,6 +49,20 @@
 
   <body>
 
+    <div id="root" class="devtools-monospace">
+      <div class="devtools-toolbar">
+        <div class="devtools-searchbox">
+          <input id="computedview-searchbox"
+                 class="devtools-searchinput devtools-rule-searchbox"
+                 type="search" placeholder="&filterStylesPlaceholder;"/>
+          <button id="computedview-searchinput-clear" class="devtools-searchinput-clear"></button>
+        </div>
+        <xul:checkbox id="browser-style-checkbox"
+                      class="includebrowserstyles"
+                      checked="false" label="&browserStylesLabel;"/>
+      </div>
+    </div>
+
     <!-- The output from #templateProperty (below) is appended here. -->
     <div id="propertyContainer" class="devtools-monospace">
     </div>
@@ -56,59 +70,6 @@
     <!-- When no properties are found the following block is displayed. -->
     <div id="noResults" hidden="">
       &noPropertiesFound;
-    </div>
-
-    <!-- The output from #templateRoot (below) is inserted here. -->
-    <div id="root" class="devtools-monospace"></div>
-
-    <!--
-    To visually debug the templates without running firefox, alter the display:none
-    -->
-    <div style="display:none;">
-      <!--
-      templateRoot sits at the top of the window and contains the "include default
-      styles" checkbox. For data it needs an instance of CssHtmlTree.
-      -->
-      <div id="templateRoot">
-        <xul:hbox class="devtools-toolbar" flex="1" align="center">
-          <xul:checkbox class="includebrowserstyles"
-                        save="${includeBrowserStylesCheckbox}"
-                        oncommand="${includeBrowserStylesChanged}" checked="false"
-                        label="&browserStylesLabel;"/>
-          <xul:textbox class="devtools-searchinput" type="search" save="${searchField}"
-                      placeholder="&userStylesSearch;" flex="1"
-                      oncommand="${filterChanged}"/>
-        </xul:hbox>
-      </div>
-
-
-      <!--
-      A templateMatchedSelectors sits inside each templateProperties showing the
-      list of selectors that affect that property. Each needs data like this:
-      {
-        matchedSelectorViews: ..., // from cssHtmlTree.propertyViews[name].matchedSelectorViews
-      }
-      This is a template so the parent does not need to be a table, except that
-      using a div as the parent causes the DOM to muck with the tr elements
-      -->
-      <div id="templateMatchedSelectors">
-        <loop foreach="selector in ${matchedSelectorViews}">
-          <p>
-            <span class="rule-link">
-              <a target="_blank" class="link theme-link"
-                  onclick="${selector.openStyleEditor}"
-                  onkeydown="${selector.maybeOpenStyleEditor}"
-                  title="${selector.href}"
-                  sourcelocation="${selector.source}"
-                  tabindex="0">${selector.source}</a>
-            </span>
-            <span dir="ltr" class="rule-text ${selector.statusClass} theme-fg-color3" title="${selector.statusText}">
-              ${selector.sourceText}
-              <span class="other-property-value theme-fg-color1">${selector.outputFragment}</span>
-            </span>
-          </p>
-        </loop>
-      </div>
     </div>
 
   </body>

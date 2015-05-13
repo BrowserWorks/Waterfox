@@ -60,9 +60,9 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(nsROCSSPrimitiveValue)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 JSObject*
-nsROCSSPrimitiveValue::WrapObject(JSContext *cx)
+nsROCSSPrimitiveValue::WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto)
 {
-  return dom::CSSPrimitiveValueBinding::Wrap(cx, this);
+  return dom::CSSPrimitiveValueBinding::Wrap(cx, this, aGivenProto);
 }
 
 // nsIDOMCSSValue
@@ -428,7 +428,7 @@ nsROCSSPrimitiveValue::GetFloatValue(uint16_t aType, float *aVal)
 {
   ErrorResult rv;
   *aVal = GetFloatValue(aType, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 
@@ -508,7 +508,7 @@ nsROCSSPrimitiveValue::GetRectValue(nsIDOMRect** aRect)
 {
   ErrorResult error;
   NS_IF_ADDREF(*aRect = GetRectValue(error));
-  return error.ErrorCode();
+  return error.StealNSResult();
 }
 
 nsDOMCSSRGBColor*
@@ -697,7 +697,7 @@ nsROCSSPrimitiveValue::Reset()
     case CSS_ATTR:
     case CSS_COUNTER: // FIXME: Counter should use an object
       NS_ASSERTION(mValue.mString, "Null string should never happen");
-      nsMemory::Free(mValue.mString);
+      free(mValue.mString);
       mValue.mString = nullptr;
       break;
     case CSS_URI:

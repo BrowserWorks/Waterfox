@@ -43,7 +43,8 @@ loop.shared.actions = (function() {
      * Extract the token information and type for the standalone window
      */
     ExtractTokenInfo: Action.define("extractTokenInfo", {
-      windowPath: String
+      windowPath: String,
+      windowHash: String
     }),
 
     /**
@@ -65,6 +66,7 @@ loop.shared.actions = (function() {
      * token.
      */
     FetchServerData: Action.define("fetchServerData", {
+      // cryptoKey: String - Optional.
       token: String,
       windowType: String
     }),
@@ -94,6 +96,20 @@ loop.shared.actions = (function() {
      * Used to retry a failed call.
      */
     RetryCall: Action.define("retryCall", {
+    }),
+
+    /**
+     * Signals when the user wishes to accept a call.
+     */
+    AcceptCall: Action.define("acceptCall", {
+      callType: String
+    }),
+
+    /**
+     * Signals when the user declines a call.
+     */
+    DeclineCall: Action.define("declineCall", {
+      blockCaller: Boolean
     }),
 
     /**
@@ -160,6 +176,9 @@ loop.shared.actions = (function() {
       publisherConfig: Object,
       // The local stream element
       getLocalElementFunc: Function,
+      // The screen share element; optional until all conversation
+      // types support it.
+      // getScreenShareElementFunc: Function,
       // The remote stream element
       getRemoteElementFunc: Function
     }),
@@ -177,6 +196,16 @@ loop.shared.actions = (function() {
     }),
 
     /**
+     * Used for notifying that the dimensions of a stream just changed. Also
+     * dispatched when a stream connects for the first time.
+     */
+    VideoDimensionsChanged: Action.define("videoDimensionsChanged", {
+      isLocal: Boolean,
+      videoType: String,
+      dimensions: Object
+    }),
+
+    /**
      * Used to mute or unmute a stream
      */
     SetMute: Action.define("setMute", {
@@ -184,6 +213,35 @@ loop.shared.actions = (function() {
       type: String,
       // Whether or not to enable the stream.
       enabled: Boolean
+    }),
+
+    /**
+     * Used to start a screen share.
+     */
+    StartScreenShare: Action.define("startScreenShare", {
+      // The part of the screen to share, e.g. "window" or "browser".
+      type: String
+    }),
+
+    /**
+     * Used to end a screen share.
+     */
+    EndScreenShare: Action.define("endScreenShare", {
+    }),
+
+    /**
+     * Used to notifiy that screen sharing is active or not.
+     */
+    ScreenSharingState: Action.define("screenSharingState", {
+      // One of loop.shared.utils.SCREEN_SHARE_STATES.
+      state: String
+    }),
+
+    /**
+     * Used to notify that a shared screen is being received (or not).
+     */
+    ReceivingScreenShare: Action.define("receivingScreenShare", {
+      receiving: Boolean
     }),
 
     /**
@@ -195,6 +253,8 @@ loop.shared.actions = (function() {
       // (eg. "Conversation {{conversationLabel}}").
       nameTemplate: String,
       roomOwner: String
+      // See https://wiki.mozilla.org/Loop/Architecture/Context#Format_of_context.value
+      // urls: Object - Optional
     }),
 
     /**
@@ -270,19 +330,21 @@ loop.shared.actions = (function() {
     }),
 
     /**
-     * Renames a room.
+     * Updates the context data attached to a room.
      * XXX: should move to some roomActions module - refs bug 1079284
      */
-    RenameRoom: Action.define("renameRoom", {
+    UpdateRoomContext: Action.define("updateRoomContext", {
       roomToken: String,
       newRoomName: String
+      // newRoomDescription: String, Optional.
+      // newRoomThumbnail: String, Optional.
+      // newRoomURL: String Optional.
     }),
 
     /**
-     * Renaming a room error.
-     * XXX: should move to some roomActions module - refs bug 1079284
+     * Updating the context data attached to a room error.
      */
-    RenameRoomError: Action.define("renameRoomError", {
+    UpdateRoomContextError: Action.define("updateRoomContextError", {
       error: [Error, Object]
     }),
 
@@ -300,13 +362,39 @@ loop.shared.actions = (function() {
      */
     EmailRoomUrl: Action.define("emailRoomUrl", {
       roomUrl: String
+      // roomDescription: String, Optional.
+    }),
+
+    /**
+     * Share a room url via the Social API.
+     * XXX: should move to some roomActions module - refs bug 1079284
+     */
+    ShareRoomUrl: Action.define("shareRoomUrl", {
+      provider: Object,
+      roomUrl: String
+    }),
+
+    /**
+     * Add the Social Share button to the browser toolbar.
+     * XXX: should move to some roomActions module - refs bug 1079284
+     */
+    AddSocialShareButton: Action.define("addSocialShareButton", {
+    }),
+
+    /**
+     * Open the share panel to add a Social share provider.
+     * XXX: should move to some roomActions module - refs bug 1079284
+     */
+    AddSocialShareProvider: Action.define("addSocialShareProvider", {
     }),
 
     /**
      * XXX: should move to some roomActions module - refs bug 1079284
      */
     RoomFailure: Action.define("roomFailure", {
-      error: Object
+      error: Object,
+      // True when the failures occurs in the join room request to the loop-server.
+      failedJoinRequest: Boolean
     }),
 
     /**
@@ -316,10 +404,14 @@ loop.shared.actions = (function() {
      * @see https://wiki.mozilla.org/Loop/Architecture/Rooms#GET_.2Frooms.2F.7Btoken.7D
      */
     SetupRoomInfo: Action.define("setupRoomInfo", {
-      roomName: String,
+      // roomContextUrls: Array - Optional.
+      // roomDescription: String - Optional.
+      // roomName: String - Optional.
       roomOwner: String,
       roomToken: String,
-      roomUrl: String
+      roomUrl: String,
+      socialShareButtonAvailable: Boolean,
+      socialShareProviders: Array
     }),
 
     /**
@@ -329,9 +421,21 @@ loop.shared.actions = (function() {
      * @see https://wiki.mozilla.org/Loop/Architecture/Rooms#GET_.2Frooms.2F.7Btoken.7D
      */
     UpdateRoomInfo: Action.define("updateRoomInfo", {
-      roomName: String,
+      // description: String - Optional.
+      // roomName: String - Optional.
       roomOwner: String,
       roomUrl: String
+      // urls: Array - Optional.
+      // See https://wiki.mozilla.org/Loop/Architecture/Context#Format_of_context.value
+    }),
+
+    /**
+     * Updates the Social API information when it is received.
+     * XXX: should move to some roomActions module - refs bug 1079284
+     */
+    UpdateSocialShareInfo: Action.define("updateSocialShareInfo", {
+      socialShareButtonAvailable: Boolean,
+      socialShareProviders: Array
     }),
 
     /**
@@ -368,6 +472,17 @@ loop.shared.actions = (function() {
     }),
 
     /**
+     * Used to record a link click for metrics purposes.
+     */
+    RecordClick: Action.define("recordClick", {
+      // Note: for ToS and Privacy links, this should be the link, for
+      // other links this should be a generic description so that we don't
+      // record what users are clicking, just the information about the fact
+      // they clicked the link in that spot (e.g. "Shared URL").
+      linkInfo: String
+    }),
+
+    /**
      * Requires detailed information on sad feedback.
      */
     RequireFeedbackDetails: Action.define("requireFeedbackDetails", {
@@ -387,6 +502,18 @@ loop.shared.actions = (function() {
      */
     SendFeedbackError: Action.define("sendFeedbackError", {
       error: Error
+    }),
+
+    /**
+     * Used to inform of the current session, publisher and connection
+     * status.
+     */
+    ConnectionStatus: Action.define("connectionStatus", {
+      event: String,
+      state: String,
+      connections: Number,
+      sendStreams: Number,
+      recvStreams: Number
     })
   };
 })();

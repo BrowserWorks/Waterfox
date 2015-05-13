@@ -1,7 +1,20 @@
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+/*
+ * Copyright 2015, Mozilla Foundation and contributors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
+#include "RefCounted.h"
 
 // 0 arguments --
 template<typename M> class gmp_task_args_nm_0 : public gmp_task_args_base {
@@ -1896,3 +1909,30 @@ gmp_task_args_m_14_ret<C, M, A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A
     (o, m, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, r);
 }
 
+class RefCountTaskWrapper : public gmp_task_args_base {
+public:
+  RefCountTaskWrapper(GMPTask* aTask, RefCounted* aRefCounted)
+    : mTask(aTask)
+    , mRefCounted(aRefCounted)
+  {}
+  virtual void Run() override {
+    mTask->Run();
+  }
+  virtual void Destroy() override {
+    mTask->Destroy();
+    gmp_task_args_base::Destroy();
+  }
+private:
+  ~RefCountTaskWrapper() {}
+
+  GMPTask* mTask;
+  RefPtr<RefCounted> mRefCounted;
+};
+
+template<typename Type, typename Method, typename... Args>
+GMPTask*
+WrapTaskRefCounted(Type* aType, Method aMethod, Args... args)
+{
+  GMPTask* t = WrapTask(aType, aMethod, args...);
+  return new RefCountTaskWrapper(t, aType);
+}

@@ -13,8 +13,6 @@
 #include "MediaQueue.h"
 #include "AudioCompactor.h"
 
-#include "mozilla/TypedEnum.h"
-
 namespace mozilla {
 
 namespace dom {
@@ -24,15 +22,34 @@ class TimeRanges;
 class MediaDecoderReader;
 class SharedDecoderManager;
 
-struct WaitForDataRejectValue {
+struct WaitForDataRejectValue
+{
   enum Reason {
-    SHUTDOWN
+    SHUTDOWN,
+    CANCELED
   };
 
   WaitForDataRejectValue(MediaData::Type aType, Reason aReason)
     :mType(aType), mReason(aReason) {}
   MediaData::Type mType;
   Reason mReason;
+};
+
+class MetadataHolder
+{
+public:
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(MetadataHolder)
+  MediaInfo mInfo;
+  nsAutoPtr<MetadataTags> mTags;
+
+private:
+  virtual ~MetadataHolder() {}
+};
+
+enum class ReadMetadataFailureReason : int8_t
+{
+  WAITING_FOR_RESOURCES,
+  METADATA_ERROR
 };
 
 // Encapsulates the decoding and reading of media data. Reading can either
@@ -50,13 +67,21 @@ public:
     CANCELED
   };
 
-  typedef MediaPromise<nsRefPtr<AudioData>, NotDecodedReason> AudioDataPromise;
-  typedef MediaPromise<nsRefPtr<VideoData>, NotDecodedReason> VideoDataPromise;
-  typedef MediaPromise<int64_t, nsresult> SeekPromise;
-  typedef MediaPromise<MediaData::Type, WaitForDataRejectValue> WaitForDataPromise;
+  typedef MediaPromise<nsRefPtr<MetadataHolder>, ReadMetadataFailureReason, /* IsExclusive = */ true> MetadataPromise;
+  typedef MediaPromise<nsRefPtr<AudioData>, NotDecodedReason, /* IsExclusive = */ true> AudioDataPromise;
+  typedef MediaPromise<nsRefPtr<VideoData>, NotDecodedReason, /* IsExclusive = */ true> VideoDataPromise;
+  typedef MediaPromise<int64_t, nsresult, /* IsExclusive = */ true> SeekPromise;
+
+  // Note that, conceptually, WaitForData makes sense in a non-exclusive sense.
+  // But in the current architecture it's only ever used exclusively (by MDSM),
+  // so we mark it that way to verify our assumptions. If you have a use-case
+  // for multiple WaitForData consumers, feel free to flip the exclusivity here.
+  typedef MediaPromise<MediaData::Type, WaitForDataRejectValue, /* IsExclusive = */ true> WaitForDataPromise;
 
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(MediaDecoderReader)
 
+  // The caller must ensure that Shutdown() is called before aDecoder is
+  // destroyed.
   explicit MediaDecoderReader(AbstractMediaDecoder* aDecoder);
 
   // Initializes the reader, returns NS_OK on success, or NS_ERROR_FAILURE
@@ -87,7 +112,7 @@ public:
 
   MediaTaskQueue* EnsureTaskQueue();
 
-  virtual bool OnDecodeThread()
+  virtual bool OnTaskQueue()
   {
     return !GetTaskQueue() || GetTaskQueue()->IsCurrentThreadIn();
   }
@@ -100,11 +125,14 @@ public:
   }
 
   // Resets all state related to decoding, emptying all buffers etc.
-  // Cancels all pending Request*Data() request callbacks, and flushes the
-  // decode pipeline. The decoder must not call any of the callbacks for
-  // outstanding Request*Data() calls after this is called. Calls to
-  // Request*Data() made after this should be processed as usual.
+  // Cancels all pending Request*Data() request callbacks, rejects any
+  // outstanding seek promises, and flushes the decode pipeline. The
+  // decoder must not call any of the callbacks for outstanding
+  // Request*Data() calls after this is called. Calls to Request*Data()
+  // made after this should be processed as usual.
+  //
   // Normally this call preceedes a Seek() call, or shutdown.
+  //
   // The first samples of every stream produced after a ResetDecode() call
   // *must* be marked as "discontinuities". If it's not, seeking work won't
   // properly!
@@ -127,6 +155,9 @@ public:
   virtual nsRefPtr<VideoDataPromise>
   RequestVideoData(bool aSkipToNextKeyframe, int64_t aTimeThreshold);
 
+  friend class ReRequestVideoWithSkipTask;
+  friend class ReRequestAudioTask;
+
   // By default, the state machine polls the reader once per second when it's
   // in buffering mode. Some readers support a promise-based mechanism by which
   // they notify the state machine when the data arrives.
@@ -135,6 +166,11 @@ public:
 
   virtual bool HasAudio() = 0;
   virtual bool HasVideo() = 0;
+
+  // The default implementation of AsyncReadMetadata is implemented in terms of
+  // synchronous PreReadMetadata() / ReadMetadata() calls. Implementations may also
+  // override AsyncReadMetadata to create a more proper async implementation.
+  virtual nsRefPtr<MetadataPromise> AsyncReadMetadata();
 
   // A function that is called before ReadMetadata() call.
   virtual void PreReadMetadata() {};
@@ -150,12 +186,11 @@ public:
   // ReadUpdatedMetadata will always be called once ReadMetadata has succeeded.
   virtual void ReadUpdatedMetadata(MediaInfo* aInfo) { };
 
-  // Moves the decode head to aTime microseconds. aStartTime and aEndTime
-  // denote the start and end times of the media in usecs, and aCurrentTime
-  // is the current playback position in microseconds.
+  // Moves the decode head to aTime microseconds. aEndTime denotes the end
+  // time of the media in usecs. This is only needed for OggReader, and should
+  // probably be removed somehow.
   virtual nsRefPtr<SeekPromise>
-  Seek(int64_t aTime, int64_t aStartTime,
-       int64_t aEndTime, int64_t aCurrentTime) = 0;
+  Seek(int64_t aTime, int64_t aEndTime) = 0;
 
   // Called to move the reader into idle state. When the reader is
   // created it is assumed to be active (i.e. not idle). When the media
@@ -239,15 +274,17 @@ public:
     return mTaskQueue;
   }
 
-  void ClearDecoder() {
-    mDecoder = nullptr;
-  }
-
   // Returns true if the reader implements RequestAudioData()
   // and RequestVideoData() asynchronously, rather than using the
   // implementation in this class to adapt the old synchronous to
   // the newer async model.
   virtual bool IsAsync() const { return false; }
+
+  // Returns true if this decoder reader uses hardware accelerated video
+  // decoding.
+  virtual bool VideoIsHardwareAccelerated() const { return false; }
+
+  virtual void DisableHardwareAcceleration() {}
 
 protected:
   virtual ~MediaDecoderReader();

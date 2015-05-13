@@ -19,6 +19,22 @@ MOZ_ARG_WITH_BOOL(system-icu,
 if test -n "$MOZ_NATIVE_ICU"; then
     PKG_CHECK_MODULES(MOZ_ICU, icu-i18n >= 50.1)
     MOZ_SHARED_ICU=1
+elif test -n "$gonkdir" -a "$ANDROID_VERSION" -ge 17; then
+    dnl Use system's ICU since version is 50.1+.
+    if test -d "$gonkdir/external/icu/icu4c/source"; then
+        dnl gonk-L (API version is 21)
+        MOZ_ICU_GONK_PATH="$gonkdir/external/icu/icu4c/source"
+    elif test -d "$gonkdir/external/icu4c"; then
+        MOZ_ICU_GONK_PATH="$gonkdir/external/icu4c"
+    else
+        AC_MSG_ERROR([Cannot find ICU source code under gonk])
+    fi
+    MOZ_ICU_CFLAGS="-I$MOZ_ICU_GONK_PATH/common -I$MOZ_ICU_GONK_PATH/i18n"
+    dnl icudata is a datafile under /usr/icu/icudt<version number>l.dat,
+    dnl not shared library.  So we don't link to icudata on B2G.
+    MOZ_ICU_LIBS='-licui18n -licuuc'
+    MOZ_NATIVE_ICU=1
+    MOZ_SHARED_ICU=1
 else
     MOZ_ICU_CFLAGS='-I$(topsrcdir)/intl/icu/source/common -I$(topsrcdir)/intl/icu/source/i18n'
     AC_SUBST_LIST(MOZ_ICU_CFLAGS)
@@ -79,6 +95,10 @@ if test -n "$USE_ICU"; then
     fi
     MOZ_ICU_VERSION="$version"
 
+    if test "$OS_TARGET" = WINNT; then
+        MOZ_SHARED_ICU=1
+    fi
+
     if test -z "${JS_STANDALONE}" -a -n "${JS_SHARED_LIBRARY}${MOZ_NATIVE_ICU}"; then
         MOZ_SHARED_ICU=1
     fi
@@ -95,7 +115,13 @@ if test -n "$USE_ICU"; then
                     MOZ_ICU_DBG_SUFFIX=d
                 fi
                 ;;
-            Darwin|Linux|DragonFly|FreeBSD|NetBSD|OpenBSD|GNU/kFreeBSD)
+            Android)
+                if test -z "$gonkdir"; then
+                    AC_MSG_ERROR([ECMAScript Internationalization API is not yet supported on this platform])
+                fi
+                ICU_LIB_NAMES="icui18n icuuc icudata"
+                ;;
+            Darwin|Linux|DragonFly|FreeBSD|NetBSD|OpenBSD|GNU/kFreeBSD|SunOS)
                 ICU_LIB_NAMES="icui18n icuuc icudata"
                 ;;
             *)
@@ -267,6 +293,10 @@ if test -z "$BUILDING_JS" -o -n "$JS_STANDALONE"; then
     	fi
         fi
 
+        if test -n "$gonkdir"; then
+            ICU_CXXFLAGS="-I$gonkdir/abi/cpp/include $ICU_CXXFLAGS"
+        fi
+
         if test -z "$MOZ_SHARED_ICU"; then
           ICU_CXXFLAGS="$ICU_CXXFLAGS -DU_STATIC_IMPLEMENTATION"
           ICU_CFLAGS="$ICU_CFLAGS -DU_STATIC_IMPLEMENTATION"
@@ -286,7 +316,7 @@ if test -z "$BUILDING_JS" -o -n "$JS_STANDALONE"; then
          export CXXFLAGS="$ICU_CXXFLAGS"
          export LDFLAGS="$ICU_LDFLAGS $LDFLAGS"
          ac_configure_args="$ICU_BUILD_OPTS $ICU_CROSS_BUILD_OPT $ICU_LINK_OPTS $ICU_TARGET_OPT"
-         ac_configure_args="$ac_configure_args --disable-extras --disable-icuio --disable-layout --disable-tests --disable-samples"
+         ac_configure_args="$ac_configure_args --disable-extras --disable-icuio --disable-layout --disable-tests --disable-samples --disable-strict"
          AC_OUTPUT_SUBDIRS(intl/icu/source:intl/icu/target)
         ) || exit 1
     fi

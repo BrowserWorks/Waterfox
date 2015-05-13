@@ -20,7 +20,6 @@
 #include "nsBidiPresUtils.h"
 
 class nsRange;
-class nsTableOuterFrame;
 
 // IID for the nsFrameSelection interface
 // 3c6ae2d0-4cf1-44a1-9e9d-2411867f19c6
@@ -68,6 +67,7 @@ struct MOZ_STACK_CLASS nsPeekOffsetStruct
                      bool aScrollViewStop,
                      bool aIsKeyboardSelect,
                      bool aVisual,
+                     bool aExtend,
                      mozilla::EWordMovementType aWordMovementType = mozilla::eDefaultBehavior);
 
   // Note: Most arguments (input and output) are only used with certain values
@@ -123,6 +123,9 @@ struct MOZ_STACK_CLASS nsPeekOffsetStruct
   //          Used with: eSelectCharacter, eSelectWord, eSelectBeginLine, eSelectEndLine.
   bool mVisual;
 
+  // mExtend: Whether the selection is being extended or moved.
+  bool mExtend;
+
   /*** Output arguments ***/
 
   // mResultContent: Content reached as a result of the peek.
@@ -174,7 +177,7 @@ class nsIScrollableFrame;
  * or they may cause other objects to be deleted.
  */
 
-class nsFrameSelection MOZ_FINAL {
+class nsFrameSelection final {
 public:
   typedef mozilla::CaretAssociationHint CaretAssociateHint;
 
@@ -513,6 +516,13 @@ public:
     return mDelayedMouseEventClickCount;
   }
 
+  bool MouseDownRecorded()
+  {
+    return !GetDragState() &&
+           HasDelayedCaretData() &&
+           GetClickCountInDelayedCaretData() < 2;
+  }
+
   /** Get the content node that limits the selection
    *  When searching up a nodes for parents, as in a text edit field
    *    in an browser page, we must stop at this node else we reach into the 
@@ -638,6 +648,7 @@ private:
   }
 
   friend class mozilla::dom::Selection;
+  friend struct mozilla::AutoPrepareFocusRange;
 #ifdef DEBUG
   void printSelection();       // for debugging
 #endif /* DEBUG */

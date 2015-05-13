@@ -19,9 +19,9 @@ const { isPrivate } = require('sdk/private-browsing');
 const { isWindowPBSupported } = require('sdk/private-browsing/utils');
 const { defer, all } = require('sdk/core/promise');
 const { getMostRecentBrowserWindow } = require('sdk/window/utils');
-const { getWindow } = require('sdk/panel/window');
 const { URL } = require('sdk/url');
 const { wait } = require('./event/helpers');
+const packaging = require('@loader/options');
 
 const fixtures = require('./fixtures')
 
@@ -587,6 +587,10 @@ exports["test Show Then Destroy"] = makeEventOrderTest({
   }
 });
 
+
+// TODO: Re-enable and fix this intermittent test
+// See Bug 1111695 https://bugzilla.mozilla.org/show_bug.cgi?id=1111695
+/*
 exports["test Show Then Hide Then Destroy"] = makeEventOrderTest({
   test: function(assert, done, expect, panel) {
     panel.show();
@@ -594,28 +598,28 @@ exports["test Show Then Hide Then Destroy"] = makeEventOrderTest({
       then('hide', function() { panel.destroy(); done(); });
   }
 });
+*/
 
 exports["test Content URL Option"] = function(assert) {
   const { Panel } = require('sdk/panel');
 
   const URL_STRING = "about:buildconfig";
   const HTML_CONTENT = "<html><title>Test</title><p>This is a test.</p></html>";
-
-  let (panel = Panel({ contentURL: URL_STRING })) {
-    assert.pass("contentURL accepts a string URL.");
-    assert.equal(panel.contentURL, URL_STRING,
-                "contentURL is the string to which it was set.");
-  }
-
   let dataURL = "data:text/html;charset=utf-8," + encodeURIComponent(HTML_CONTENT);
-  let (panel = Panel({ contentURL: dataURL })) {
-    assert.pass("contentURL accepts a data: URL.");
-  }
 
-  let (panel = Panel({})) {
-    assert.ok(panel.contentURL == null,
-                "contentURL is undefined.");
-  }
+  let panel = Panel({ contentURL: URL_STRING });
+  assert.pass("contentURL accepts a string URL.");
+  assert.equal(panel.contentURL, URL_STRING,
+              "contentURL is the string to which it was set.");
+  panel.destroy();
+
+  panel = Panel({ contentURL: dataURL });
+  assert.pass("contentURL accepts a data: URL.");
+  panel.destroy();
+
+  panel = Panel({});
+  assert.ok(panel.contentURL == null, "contentURL is undefined.");
+  panel.destroy();
 
   assert.throws(function () Panel({ contentURL: "foo" }),
                     /The `contentURL` option must be a valid URL./,
@@ -889,34 +893,34 @@ exports['test passing DOM node as first argument'] = function (assert, done) {
 
   let { loader } = LoaderWithHookedConsole(module, onMessage);
   let { Panel } = loader.require('sdk/panel');
-  let { Widget } = loader.require('sdk/widget');
+  let { ActionButton } = loader.require('sdk/ui/button/action');
+  let { getNodeView } = loader.require('sdk/view/core');
   let { document } = getMostRecentBrowserWindow();
-  let widgetId = 'widget:' + self.id + '-panel-widget';
 
   let panel = Panel({
     onShow: function() {
       let panelNode = document.getElementById('mainPopupSet').lastChild;
 
-      assert.equal(panelNode.anchorNode, widgetNode,
-        'the panel is properly anchored to the widget');
+      assert.equal(panelNode.anchorNode, buttonNode,
+        'the panel is properly anchored to the button');
 
       shown.resolve();
     }
   });
 
-  let widget = Widget({
-    id: 'panel-widget',
-    label: 'panel widget',
-    content: '<i></i>',
+  let button = ActionButton({
+    id: 'panel-button',
+    label: 'panel button',
+    icon: './icon.png'
   });
 
-  let widgetNode = document.getElementById(widgetId);
+  let buttonNode = getNodeView(button);
 
   all([warned.promise, shown.promise]).
     then(loader.unload).
     then(done, assert.fail)
 
-  panel.show(widgetNode);
+  panel.show(buttonNode);
 };
 
 // This test is checking that `onpupshowing` events emitted by panel's children
@@ -1293,7 +1297,6 @@ exports["test panel addon global object"] = function*(assert) {
 exports["test panel load doesn't show"] = function*(assert) {
   let loader = Loader(module);
 
-  let showCount = 0;
   let panel = loader.require("sdk/panel").Panel({
     contentScript: "addEventListener('load', function(event) { self.postMessage('load'); });",
     contentScriptWhen: "start",
@@ -1331,20 +1334,28 @@ exports["test panel load doesn't show"] = function*(assert) {
   loader.unload();
 }
 
-if (isWindowPBSupported) {
-  exports.testGetWindow = function(assert, done) {
-    let activeWindow = getMostRecentBrowserWindow();
-    open(null, { features: {
-      toolbar: true,
-      chrome: true,
-      private: true
-    } }).then(window => {
-      assert.ok(isPrivate(window), 'window is private');
-      assert.equal(getWindow(window.gBrowser), null, 'private window elements returns null');
-      assert.equal(getWindow(activeWindow.gBrowser), activeWindow, 'non-private window elements returns window');
-      return window;
-    }).then(close).then(done).then(null, assert.fail);
-  }
+exports["test Panel without contentURL and contentScriptWhen=start should show"] = function*(assert) {
+  let loader = Loader(module);
+
+  let panel = loader.require("sdk/panel").Panel({
+    contentScriptWhen: "start",
+    // No contentURL, the bug only shows up when contentURL is not explicitly set.
+  });
+
+  yield new Promise(resolve => {
+    panel.once("show", resolve);
+    panel.show();
+  });
+
+  assert.pass("Received show event");
+
+  loader.unload();
+}
+
+if (packaging.isNative) {
+  module.exports = {
+    "test skip on jpm": (assert) => assert.pass("skipping this file with jpm")
+  };
 }
 
 require("sdk/test").run(exports);

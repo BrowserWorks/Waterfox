@@ -18,7 +18,7 @@
 
 namespace mozilla {
 
-class MediaTaskQueue;
+class FlushableMediaTaskQueue;
 class MediaDataDecoderCallback;
 namespace layers {
   class ImageContainer;
@@ -34,12 +34,12 @@ public:
     int64_t byte_offset;
     bool is_sync_point;
 
-    explicit AppleFrameRef(const mp4_demuxer::MP4Sample& aSample)
-    : decode_timestamp(aSample.decode_timestamp)
-    , composition_timestamp(aSample.composition_timestamp)
-    , duration(aSample.duration)
-    , byte_offset(aSample.byte_offset)
-    , is_sync_point(aSample.is_sync_point)
+    explicit AppleFrameRef(const MediaRawData& aSample)
+      : decode_timestamp(aSample.mTimecode)
+      , composition_timestamp(aSample.mTime)
+      , duration(aSample.mDuration)
+      , byte_offset(aSample.mOffset)
+      , is_sync_point(aSample.mKeyframe)
     {
     }
 
@@ -48,11 +48,11 @@ public:
                   Microseconds aDuration,
                   int64_t aByte_offset,
                   bool aIs_sync_point)
-    : decode_timestamp(aDts)
-    , composition_timestamp(aPts)
-    , duration(aDuration)
-    , byte_offset(aByte_offset)
-    , is_sync_point(aIs_sync_point)
+      : decode_timestamp(aDts)
+      , composition_timestamp(aPts)
+      , duration(aDuration)
+      , byte_offset(aByte_offset)
+      , is_sync_point(aIs_sync_point)
     {
     }
   };
@@ -60,38 +60,44 @@ public:
   // Return a new created AppleVDADecoder or nullptr if media or hardware is
   // not supported by current configuration.
   static already_AddRefed<AppleVDADecoder> CreateVDADecoder(
-    const mp4_demuxer::VideoDecoderConfig& aConfig,
-    MediaTaskQueue* aVideoTaskQueue,
+    const VideoInfo& aConfig,
+    FlushableMediaTaskQueue* aVideoTaskQueue,
     MediaDataDecoderCallback* aCallback,
     layers::ImageContainer* aImageContainer);
 
-  AppleVDADecoder(const mp4_demuxer::VideoDecoderConfig& aConfig,
-                  MediaTaskQueue* aVideoTaskQueue,
+  AppleVDADecoder(const VideoInfo& aConfig,
+                  FlushableMediaTaskQueue* aVideoTaskQueue,
                   MediaDataDecoderCallback* aCallback,
                   layers::ImageContainer* aImageContainer);
   virtual ~AppleVDADecoder();
-  virtual nsresult Init() MOZ_OVERRIDE;
-  virtual nsresult Input(mp4_demuxer::MP4Sample* aSample) MOZ_OVERRIDE;
-  virtual nsresult Flush() MOZ_OVERRIDE;
-  virtual nsresult Drain() MOZ_OVERRIDE;
-  virtual nsresult Shutdown() MOZ_OVERRIDE;
+  virtual nsresult Init() override;
+  virtual nsresult Input(MediaRawData* aSample) override;
+  virtual nsresult Flush() override;
+  virtual nsresult Drain() override;
+  virtual nsresult Shutdown() override;
+  virtual bool IsHardwareAccelerated() const override
+  {
+    return true;
+  }
 
   nsresult OutputFrame(CVPixelBufferRef aImage,
                        nsAutoPtr<AppleFrameRef> aFrameRef);
 
  protected:
-  AppleFrameRef* CreateAppleFrameRef(const mp4_demuxer::MP4Sample* aSample);
+  AppleFrameRef* CreateAppleFrameRef(const MediaRawData* aSample);
   void DrainReorderedFrames();
   void ClearReorderedFrames();
   CFDictionaryRef CreateOutputConfiguration();
 
-  const mp4_demuxer::VideoDecoderConfig& mConfig;
-  nsRefPtr<MediaTaskQueue> mTaskQueue;
+  nsRefPtr<MediaByteBuffer> mExtraData;
+  nsRefPtr<FlushableMediaTaskQueue> mTaskQueue;
   MediaDataDecoderCallback* mCallback;
   nsRefPtr<layers::ImageContainer> mImageContainer;
   ReorderQueue mReorderQueue;
   uint32_t mPictureWidth;
   uint32_t mPictureHeight;
+  uint32_t mDisplayWidth;
+  uint32_t mDisplayHeight;
   uint32_t mMaxRefFrames;
 
 private:
@@ -99,7 +105,7 @@ private:
   bool mIs106;
 
   // Method to pass a frame to VideoToolbox for decoding.
-  nsresult SubmitFrame(mp4_demuxer::MP4Sample* aSample);
+  nsresult SubmitFrame(MediaRawData* aSample);
   // Method to set up the decompression session.
   nsresult InitializeSession();
   CFDictionaryRef CreateDecoderSpecification();

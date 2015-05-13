@@ -190,7 +190,6 @@ struct nsListIter
 #define SET_COOKIE true
 #define GET_COOKIE false
 
-#ifdef PR_LOGGING
 static PRLogModuleInfo *
 GetCookieLog()
 {
@@ -322,13 +321,6 @@ LogSuccess(bool aSetCookie, nsIURI *aHostURI, const nsAFlatCString &aCookieStrin
   LogSuccess(aSetCookie, aHostURI, aCookieString.get(), aCookie, aReplacing);
 }
 
-#else
-#define COOKIE_LOGFAILURE(a, b, c, d)    PR_BEGIN_MACRO /* nothing */ PR_END_MACRO
-#define COOKIE_LOGSUCCESS(a, b, c, d, e) PR_BEGIN_MACRO /* nothing */ PR_END_MACRO
-#define COOKIE_LOGEVICTED(a, b)          PR_BEGIN_MACRO /* nothing */ PR_END_MACRO
-#define COOKIE_LOGSTRING(a, b)           PR_BEGIN_MACRO /* nothing */ PR_END_MACRO
-#endif
-
 #ifdef DEBUG
 #define NS_ASSERT_SUCCESS(res)                                               \
   PR_BEGIN_MACRO                                                             \
@@ -357,19 +349,19 @@ protected:
   virtual const char *GetOpType() = 0;
 
 public:
-  NS_IMETHOD HandleError(mozIStorageError* aError) MOZ_OVERRIDE
+  NS_IMETHOD HandleError(mozIStorageError* aError) override
   {
-    int32_t result = -1;
-    aError->GetResult(&result);
+    if (PR_LOG_TEST(GetCookieLog(), PR_LOG_WARNING)) {
+      int32_t result = -1;
+      aError->GetResult(&result);
 
-#ifdef PR_LOGGING
-    nsAutoCString message;
-    aError->GetMessage(message);
-    COOKIE_LOGSTRING(PR_LOG_WARNING,
-      ("DBListenerErrorHandler::HandleError(): Error %d occurred while "
-       "performing operation '%s' with message '%s'; rebuilding database.",
-       result, GetOpType(), message.get()));
-#endif
+      nsAutoCString message;
+      aError->GetMessage(message);
+      COOKIE_LOGSTRING(PR_LOG_WARNING,
+        ("DBListenerErrorHandler::HandleError(): Error %d occurred while "
+         "performing operation '%s' with message '%s'; rebuilding database.",
+         result, GetOpType(), message.get()));
+    }
 
     // Rebuild the database.
     gCookieService->HandleCorruptDB(mDBState);
@@ -382,10 +374,10 @@ public:
  * InsertCookieDBListener impl:
  * mozIStorageStatementCallback used to track asynchronous insertion operations.
  ******************************************************************************/
-class InsertCookieDBListener MOZ_FINAL : public DBListenerErrorHandler
+class InsertCookieDBListener final : public DBListenerErrorHandler
 {
 private:
-  virtual const char *GetOpType() MOZ_OVERRIDE { return "INSERT"; }
+  virtual const char *GetOpType() override { return "INSERT"; }
 
   ~InsertCookieDBListener() {}
 
@@ -393,12 +385,12 @@ public:
   NS_DECL_ISUPPORTS
 
   explicit InsertCookieDBListener(DBState* dbState) : DBListenerErrorHandler(dbState) { }
-  NS_IMETHOD HandleResult(mozIStorageResultSet*) MOZ_OVERRIDE
+  NS_IMETHOD HandleResult(mozIStorageResultSet*) override
   {
     NS_NOTREACHED("Unexpected call to InsertCookieDBListener::HandleResult");
     return NS_OK;
   }
-  NS_IMETHOD HandleCompletion(uint16_t aReason) MOZ_OVERRIDE
+  NS_IMETHOD HandleCompletion(uint16_t aReason) override
   {
     // If we were rebuilding the db and we succeeded, make our corruptFlag say
     // so.
@@ -418,10 +410,10 @@ NS_IMPL_ISUPPORTS(InsertCookieDBListener, mozIStorageStatementCallback)
  * UpdateCookieDBListener impl:
  * mozIStorageStatementCallback used to track asynchronous update operations.
  ******************************************************************************/
-class UpdateCookieDBListener MOZ_FINAL : public DBListenerErrorHandler
+class UpdateCookieDBListener final : public DBListenerErrorHandler
 {
 private:
-  virtual const char *GetOpType() MOZ_OVERRIDE { return "UPDATE"; }
+  virtual const char *GetOpType() override { return "UPDATE"; }
 
   ~UpdateCookieDBListener() {}
 
@@ -429,12 +421,12 @@ public:
   NS_DECL_ISUPPORTS
 
   explicit UpdateCookieDBListener(DBState* dbState) : DBListenerErrorHandler(dbState) { }
-  NS_IMETHOD HandleResult(mozIStorageResultSet*) MOZ_OVERRIDE
+  NS_IMETHOD HandleResult(mozIStorageResultSet*) override
   {
     NS_NOTREACHED("Unexpected call to UpdateCookieDBListener::HandleResult");
     return NS_OK;
   }
-  NS_IMETHOD HandleCompletion(uint16_t aReason) MOZ_OVERRIDE
+  NS_IMETHOD HandleCompletion(uint16_t aReason) override
   {
     return NS_OK;
   }
@@ -446,10 +438,10 @@ NS_IMPL_ISUPPORTS(UpdateCookieDBListener, mozIStorageStatementCallback)
  * RemoveCookieDBListener impl:
  * mozIStorageStatementCallback used to track asynchronous removal operations.
  ******************************************************************************/
-class RemoveCookieDBListener MOZ_FINAL : public DBListenerErrorHandler
+class RemoveCookieDBListener final : public DBListenerErrorHandler
 {
 private:
-  virtual const char *GetOpType() MOZ_OVERRIDE { return "REMOVE"; }
+  virtual const char *GetOpType() override { return "REMOVE"; }
 
   ~RemoveCookieDBListener() {}
 
@@ -457,12 +449,12 @@ public:
   NS_DECL_ISUPPORTS
 
   explicit RemoveCookieDBListener(DBState* dbState) : DBListenerErrorHandler(dbState) { }
-  NS_IMETHOD HandleResult(mozIStorageResultSet*) MOZ_OVERRIDE
+  NS_IMETHOD HandleResult(mozIStorageResultSet*) override
   {
     NS_NOTREACHED("Unexpected call to RemoveCookieDBListener::HandleResult");
     return NS_OK;
   }
-  NS_IMETHOD HandleCompletion(uint16_t aReason) MOZ_OVERRIDE
+  NS_IMETHOD HandleCompletion(uint16_t aReason) override
   {
     return NS_OK;
   }
@@ -474,10 +466,10 @@ NS_IMPL_ISUPPORTS(RemoveCookieDBListener, mozIStorageStatementCallback)
  * ReadCookieDBListener impl:
  * mozIStorageStatementCallback used to track asynchronous removal operations.
  ******************************************************************************/
-class ReadCookieDBListener MOZ_FINAL : public DBListenerErrorHandler
+class ReadCookieDBListener final : public DBListenerErrorHandler
 {
 private:
-  virtual const char *GetOpType() MOZ_OVERRIDE { return "READ"; }
+  virtual const char *GetOpType() override { return "READ"; }
   bool mCanceled;
 
   ~ReadCookieDBListener() {}
@@ -493,7 +485,7 @@ public:
 
   void Cancel() { mCanceled = true; }
 
-  NS_IMETHOD HandleResult(mozIStorageResultSet *aResult) MOZ_OVERRIDE
+  NS_IMETHOD HandleResult(mozIStorageResultSet *aResult) override
   {
     nsCOMPtr<mozIStorageRow> row;
 
@@ -513,7 +505,7 @@ public:
 
     return NS_OK;
   }
-  NS_IMETHOD HandleCompletion(uint16_t aReason) MOZ_OVERRIDE
+  NS_IMETHOD HandleCompletion(uint16_t aReason) override
   {
     // Process the completion of the read operation. If we have been canceled,
     // we cannot assume that the cookieservice still has an open connection
@@ -556,7 +548,7 @@ NS_IMPL_ISUPPORTS(ReadCookieDBListener, mozIStorageStatementCallback)
  * Static mozIStorageCompletionCallback used to notify when the database is
  * successfully closed.
  ******************************************************************************/
-class CloseCookieDBListener MOZ_FINAL :  public mozIStorageCompletionCallback
+class CloseCookieDBListener final :  public mozIStorageCompletionCallback
 {
   ~CloseCookieDBListener() {}
 
@@ -565,7 +557,7 @@ public:
   nsRefPtr<DBState> mDBState;
   NS_DECL_ISUPPORTS
 
-  NS_IMETHOD Complete(nsresult, nsISupports*) MOZ_OVERRIDE
+  NS_IMETHOD Complete(nsresult, nsISupports*) override
   {
     gCookieService->HandleDBClosed(mDBState);
     return NS_OK;
@@ -576,7 +568,7 @@ NS_IMPL_ISUPPORTS(CloseCookieDBListener, mozIStorageCompletionCallback)
 
 namespace {
 
-class AppClearDataObserver MOZ_FINAL : public nsIObserver {
+class AppClearDataObserver final : public nsIObserver {
 
   ~AppClearDataObserver() {}
 
@@ -585,7 +577,7 @@ public:
 
   // nsIObserver implementation.
   NS_IMETHODIMP
-  Observe(nsISupports *aSubject, const char *aTopic, const char16_t *data) MOZ_OVERRIDE
+  Observe(nsISupports *aSubject, const char *aTopic, const char16_t *data) override
   {
     MOZ_ASSERT(!nsCRT::strcmp(aTopic, TOPIC_WEB_APP_CLEAR_DATA));
 
@@ -696,7 +688,7 @@ nsCookieService::GetSingleton()
 /* static */ void
 nsCookieService::AppClearDataObserverInit()
 {
-  nsCOMPtr<nsIObserverService> observerService = do_GetService("@mozilla.org/observer-service;1");
+  nsCOMPtr<nsIObserverService> observerService = services::GetObserverService();
   nsCOMPtr<nsIObserver> obs = new AppClearDataObserver();
   observerService->AddObserver(obs, TOPIC_WEB_APP_CLEAR_DATA,
                                /* holdsWeak= */ false);
@@ -3778,12 +3770,10 @@ nsCookieService::PurgeCookies(int64_t aCurrentTimeInUsec)
   NS_ASSERTION(mDBState->hostTable.Count() > 0, "table is empty");
   EnsureReadComplete();
 
-#ifdef PR_LOGGING
   uint32_t initialCookieCount = mDBState->cookieCount;
   COOKIE_LOGSTRING(PR_LOG_DEBUG,
     ("PurgeCookies(): beginning purge with %ld cookies and %lld oldest age",
      mDBState->cookieCount, aCurrentTimeInUsec - mDBState->cookieOldestTime));
-#endif
 
   nsAutoTArray<nsListIter, kMaxNumberOfCookies> purgeList;
 
@@ -3801,9 +3791,7 @@ nsCookieService::PurgeCookies(int64_t aCurrentTimeInUsec)
     aCurrentTimeInUsec - mCookiePurgeAge, purgeList, removedList, paramsArray);
   mDBState->hostTable.EnumerateEntries(purgeCookiesCallback, &data);
 
-#ifdef PR_LOGGING
   uint32_t postExpiryCookieCount = mDBState->cookieCount;
-#endif
 
   // now we have a list of iterators for cookies over the age limit.
   // sort them by age, and then we'll see how many to remove...

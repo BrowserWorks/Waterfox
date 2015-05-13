@@ -14,7 +14,7 @@
 #include "TiledLayerBuffer.h"           // for TiledLayerBuffer
 #include "Units.h"                      // for CSSPoint
 #include "gfxTypes.h"
-#include "mozilla/Attributes.h"         // for MOZ_OVERRIDE
+#include "mozilla/Attributes.h"         // for override
 #include "mozilla/RefPtr.h"             // for RefPtr
 #include "mozilla/ipc/Shmem.h"          // for Shmem
 #include "mozilla/ipc/SharedMemory.h"   // for SharedMemory
@@ -29,7 +29,7 @@
 #include "nsAutoPtr.h"                  // for nsRefPtr
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_DTOR
 #include "nsPoint.h"                    // for nsIntPoint
-#include "nsRect.h"                     // for nsIntRect
+#include "nsRect.h"                     // for mozilla::gfx::IntRect
 #include "nsRegion.h"                   // for nsIntRegion
 #include "nsTArray.h"                   // for nsTArray, nsTArray_Impl, etc
 #include "nsExpirationTracker.h"
@@ -41,7 +41,6 @@
 namespace mozilla {
 namespace layers {
 
-class BasicTileDescriptor;
 class ClientTiledPaintedLayer;
 class ClientLayerManager;
 
@@ -77,15 +76,15 @@ protected:
   ~gfxMemorySharedReadLock();
 
 public:
-  virtual int32_t ReadLock() MOZ_OVERRIDE;
+  virtual int32_t ReadLock() override;
 
-  virtual int32_t ReadUnlock() MOZ_OVERRIDE;
+  virtual int32_t ReadUnlock() override;
 
-  virtual int32_t GetReadCount() MOZ_OVERRIDE;
+  virtual int32_t GetReadCount() override;
 
-  virtual gfxSharedReadLockType GetType() MOZ_OVERRIDE { return TYPE_MEMORY; }
+  virtual gfxSharedReadLockType GetType() override { return TYPE_MEMORY; }
 
-  virtual bool IsValid() const MOZ_OVERRIDE { return true; };
+  virtual bool IsValid() const override { return true; };
 
 private:
   int32_t mReadCount;
@@ -104,15 +103,15 @@ protected:
   ~gfxShmSharedReadLock();
 
 public:
-  virtual int32_t ReadLock() MOZ_OVERRIDE;
+  virtual int32_t ReadLock() override;
 
-  virtual int32_t ReadUnlock() MOZ_OVERRIDE;
+  virtual int32_t ReadUnlock() override;
 
-  virtual int32_t GetReadCount() MOZ_OVERRIDE;
+  virtual int32_t GetReadCount() override;
 
-  virtual bool IsValid() const MOZ_OVERRIDE { return mAllocSuccess; };
+  virtual bool IsValid() const override { return mAllocSuccess; };
 
-  virtual gfxSharedReadLockType GetType() MOZ_OVERRIDE { return TYPE_SHMEM; }
+  virtual gfxSharedReadLockType GetType() override { return TYPE_SHMEM; }
 
   mozilla::layers::ShmemSection& GetShmemSection() { return mShmemSection; }
 
@@ -182,7 +181,7 @@ struct TileClient
     mCompositableClient = aCompositableClient;
   }
 
-  bool IsPlaceholderTile()
+  bool IsPlaceholderTile() const
   {
     return mBackBuffer == nullptr && mFrontBuffer == nullptr;
   }
@@ -212,6 +211,11 @@ struct TileClient
   nsExpirationState *GetExpirationState() { return &mExpirationState; }
 
   TileDescriptor GetTileDescriptor();
+
+  /**
+   * For debugging.
+   */
+  void Dump(std::stringstream& aStream);
 
   /**
   * Swaps the front and back buffers.
@@ -318,7 +322,7 @@ struct BasicTiledLayerPaintData {
    * The render resolution of the document that the content this layer
    * represents is in.
    */
-  CSSToParentLayerScale mResolution;
+  CSSToParentLayerScale2D mResolution;
 
   /*
    * The composition bounds of the layer, in Layer coordinates. This is
@@ -420,9 +424,9 @@ public:
 
   void DiscardBuffers();
 
-  const CSSToParentLayerScale& GetFrameResolution() { return mFrameResolution; }
+  const CSSToParentLayerScale2D& GetFrameResolution() { return mFrameResolution; }
 
-  void SetFrameResolution(const CSSToParentLayerScale& aResolution) { mFrameResolution = aResolution; }
+  void SetFrameResolution(const CSSToParentLayerScale2D& aResolution) { mFrameResolution = aResolution; }
 
   bool HasFormatChanged() const;
 
@@ -461,7 +465,7 @@ private:
   ClientLayerManager* mManager;
   LayerManager::DrawPaintedLayerCallback mCallback;
   void* mCallbackData;
-  CSSToParentLayerScale mFrameResolution;
+  CSSToParentLayerScale2D mFrameResolution;
   gfxContentType mLastPaintContentType;
   SurfaceMode mLastPaintSurfaceMode;
 
@@ -537,12 +541,12 @@ protected:
                     bool aDumpHtml=false);
 
 public:
-  virtual TextureInfo GetTextureInfo() const MOZ_OVERRIDE
+  virtual TextureInfo GetTextureInfo() const override
   {
     return TextureInfo(CompositableType::CONTENT_TILED);
   }
 
-  virtual void ClearCachedResources() MOZ_OVERRIDE;
+  virtual void ClearCachedResources() override;
 
   enum TiledBufferType {
     TILED_BUFFER,

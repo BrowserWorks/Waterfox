@@ -11,6 +11,7 @@
 <script class="testbody" type="text/javascript">
 
 SimpleTest.waitForExplicitFinish();
+SimpleTest.requestLongerTimeout(2);
 
 var cloneiframe;
 
@@ -74,7 +75,7 @@ function run() {
 
         for (var i = 0; i < should_match.length; ++i) {
             var e = should_match[i];
-            is(ifwin.getComputedStyle(e, "").zIndex, zi,
+            is(ifwin.getComputedStyle(e, "").zIndex, String(zi),
                "element in " + body_contents + " matched " + selector);
         }
         for (var i = 0; i < should_not_match.length; ++i) {
@@ -92,7 +93,7 @@ function run() {
         style_text.data = namespaces + ser1 + "{ z-index: " + zi + " }";
         for (var i = 0; i < should_match.length; ++i) {
             var e = should_match[i];
-            is(ifwin.getComputedStyle(e, "").zIndex, zi,
+            is(ifwin.getComputedStyle(e, "").zIndex, String(zi),
                "element in " + body_contents + " matched " + ser1 +
                " which is the reserialization of " + selector);
         }
@@ -150,7 +151,7 @@ function run() {
 
             for (var i = 0; i < should_match.length; ++i) {
                 var e = should_match[i];
-                is(clonewin.getComputedStyle(e, "").zIndex, zi,
+                is(clonewin.getComputedStyle(e, "").zIndex, String(zi),
                    "element in " + body_contents + " matched clone of " +
                    selector);
             }
@@ -193,7 +194,7 @@ function run() {
         var ser1 = style_elem.sheet.cssRules[0].selectorText;
         zi = ++gCounter;
         style_text.data = ser1 + "{ z-index: " + zi + " }";
-        is(ifwin.getComputedStyle(should_match, "").zIndex, zi,
+        is(ifwin.getComputedStyle(should_match, "").zIndex, String(zi),
            "serialization " + ser1 + " of selector p, " + selector +
            " was parsed");
         var ser2 = style_elem.sheet.cssRules[0].selectorText;
@@ -224,7 +225,7 @@ function run() {
             links[0].parentNode.removeChild(links[0]);
 
             should_match = clonedoc.getElementsByTagName("p")[0];
-            is(clonewin.getComputedStyle(should_match, "").zIndex, zi,
+            is(clonewin.getComputedStyle(should_match, "").zIndex, String(zi),
                "selector " + selector + " was cloned correctly");
             var ser3 = links[0].sheet.cssRules[1].selectorText;
             is(ser3, ser1,
@@ -269,7 +270,7 @@ function run() {
         var should_match = ifdoc.getElementsByTagName("div")[0];
         is(ifwin.getComputedStyle(should_not_match, "").zIndex, "auto",
            "selector " + selector + " was a parser error");
-        is(ifwin.getComputedStyle(should_match, "").zIndex, zi2,
+        is(ifwin.getComputedStyle(should_match, "").zIndex, String(zi2),
            "selector " + selector + " error was recovered from");
         ifdoc.body.innerHTML = "";
         style_text.data = "";
@@ -292,6 +293,9 @@ function run() {
         test_unparseable_via_api(selector);
     }
 
+    // [attr] selector
+    test_parseable("[attr]")
+    test_parseable_via_api("[attr");
 
     // [attr= ] selector
     test_parseable("[attr=\"x\"]");
@@ -300,6 +304,7 @@ function run() {
     test_parseable("[attr=\"\"]");
     test_parseable("[attr='']");
     test_parseable("[attr=\"foo bar\"]");
+    test_parseable_via_api("[attr=x");
 
     test_balanced_unparseable("[attr=]");
     test_balanced_unparseable("[attr=foo bar]");
@@ -319,6 +324,7 @@ function run() {
     test_parseable("[attr~=\"\"]");
     test_parseable("[attr~='']");
     test_parseable("[attr~=\"foo bar\"]");
+    test_parseable_via_api("[attr~=x");
 
     test_balanced_unparseable("[attr~=]");
     test_balanced_unparseable("[attr~=foo bar]");
@@ -334,6 +340,7 @@ function run() {
     test_parseable('[attr|="x"]');
     test_parseable("[attr|='x']");
     test_parseable('[attr|=x]');
+    test_parseable_via_api("[attr|=x");
 
     test_parseable('[attr|=""]');
     test_parseable("[attr|='']");
@@ -354,6 +361,7 @@ function run() {
     test_parseable("[attr$=\"\"]");
     test_parseable("[attr$='']");
     test_parseable("[attr$=\"foo bar\"]");
+    test_parseable_via_api("[attr$=x");
 
     test_balanced_unparseable("[attr$=]");
     test_balanced_unparseable("[attr$=foo bar]");
@@ -365,6 +373,7 @@ function run() {
     test_parseable("[attr^=\"\"]");
     test_parseable("[attr^='']");
     test_parseable("[attr^=\"foo bar\"]");
+    test_parseable_via_api("[attr^=x");
 
     test_balanced_unparseable("[attr^=]");
     test_balanced_unparseable("[attr^=foo bar]");
@@ -376,6 +385,7 @@ function run() {
     test_parseable("[attr*=\"\"]");
     test_parseable("[attr*='']");
     test_parseable("[attr*=\"foo bar\"]");
+    test_parseable_via_api("[attr^=x");
 
     test_balanced_unparseable("[attr*=]");
     test_balanced_unparseable("[attr*=foo bar]");

@@ -38,16 +38,6 @@ describe("loop.store.StandaloneAppStore", function () {
       }).to.Throw(/sdk/);
     });
 
-    it("should throw an error if helper is missing", function() {
-      expect(function() {
-        new loop.store.StandaloneAppStore({
-          dispatcher: dispatcher,
-          sdk: {},
-          conversation: {}
-        });
-      }).to.Throw(/helper/);
-    });
-
     it("should throw an error if conversation is missing", function() {
       expect(function() {
         new loop.store.StandaloneAppStore({
@@ -64,11 +54,12 @@ describe("loop.store.StandaloneAppStore", function () {
 
     beforeEach(function() {
       fakeGetWindowData = {
-        windowPath: ""
+        windowPath: "",
+        windowHash: ""
       };
 
-      helper = new sharedUtils.Helper();
-      sandbox.stub(helper, "isIOS").returns(false);
+      sandbox.stub(loop.shared.utils, "getUnsupportedPlatform").returns();
+      sandbox.stub(loop.shared.utils, "isFirefox").returns(true);
 
       fakeSdk = {
         checkSystemRequirements: sinon.stub().returns(true)
@@ -88,16 +79,39 @@ describe("loop.store.StandaloneAppStore", function () {
       });
     });
 
-    it("should set windowType to `unsupportedDevice` for IOS", function() {
-      // The stub should return true for this test.
-      helper.isIOS.returns(true);
+    it("should set isFirefox to true for Firefox", function() {
+      store.extractTokenInfo(
+        new sharedActions.ExtractTokenInfo(fakeGetWindowData));
+
+      expect(store.getStoreState().isFirefox).eql(true);
+    });
+
+    it("should set isFirefox to false for non-Firefox", function() {
+      loop.shared.utils.isFirefox.returns(false);
 
       store.extractTokenInfo(
         new sharedActions.ExtractTokenInfo(fakeGetWindowData));
 
-      expect(store.getStoreState()).eql({
-        windowType: "unsupportedDevice"
-      });
+      expect(store.getStoreState().isFirefox).eql(false);
+    });
+
+    it("should store the platform for unsupported platforms", function() {
+      loop.shared.utils.getUnsupportedPlatform.returns("fake");
+
+      store.extractTokenInfo(
+        new sharedActions.ExtractTokenInfo(fakeGetWindowData));
+
+      expect(store.getStoreState().unsupportedPlatform).eql("fake");
+    });
+
+    it("should set windowType to `unsupportedDevice` for ios", function() {
+      // The stub should return a platform for this test.
+      loop.shared.utils.getUnsupportedPlatform.returns("ios");
+
+      store.extractTokenInfo(
+        new sharedActions.ExtractTokenInfo(fakeGetWindowData));
+
+      expect(store.getStoreState().windowType).eql("unsupportedDevice");
     });
 
     it("should set windowType to `unsupportedBrowser` for browsers the sdk does not support",
@@ -108,31 +122,16 @@ describe("loop.store.StandaloneAppStore", function () {
         store.extractTokenInfo(
           new sharedActions.ExtractTokenInfo(fakeGetWindowData));
 
-        expect(store.getStoreState()).eql({
-          windowType: "unsupportedBrowser"
-        });
+        expect(store.getStoreState().windowType).eql("unsupportedBrowser");
       });
 
-    it("should set windowType to `outgoing` for old style call hashes", function() {
-      fakeGetWindowData.windowPath = "#call/faketoken";
-
-      store.extractTokenInfo(
-        new sharedActions.ExtractTokenInfo(fakeGetWindowData));
-
-      expect(store.getStoreState()).eql({
-        windowType: "outgoing"
-      });
-    });
-
-    it("should set windowType to `outgoing` for new style call paths", function() {
+    it("should set windowType to `outgoing` for call paths", function() {
       fakeGetWindowData.windowPath = "/c/fakecalltoken";
 
       store.extractTokenInfo(
         new sharedActions.ExtractTokenInfo(fakeGetWindowData));
 
-      expect(store.getStoreState()).eql({
-        windowType: "outgoing"
-      });
+      expect(store.getStoreState().windowType).eql("outgoing");
     });
 
     it("should set windowType to `room` for room paths", function() {
@@ -141,9 +140,7 @@ describe("loop.store.StandaloneAppStore", function () {
       store.extractTokenInfo(
         new sharedActions.ExtractTokenInfo(fakeGetWindowData));
 
-      expect(store.getStoreState()).eql({
-        windowType: "room"
-      });
+      expect(store.getStoreState().windowType).eql("room");
     });
 
     it("should set windowType to `home` for unknown paths", function() {
@@ -152,25 +149,10 @@ describe("loop.store.StandaloneAppStore", function () {
       store.extractTokenInfo(
         new sharedActions.ExtractTokenInfo(fakeGetWindowData));
 
-      expect(store.getStoreState()).eql({
-        windowType: "home"
-      });
+      expect(store.getStoreState().windowType).eql("home");
     });
 
-    it("should set the loopToken on the conversation for old style call hashes",
-      function() {
-        fakeGetWindowData.windowPath = "#call/faketoken";
-
-        store.extractTokenInfo(
-          new sharedActions.ExtractTokenInfo(fakeGetWindowData));
-
-        sinon.assert.calledOnce(fakeConversation.set);
-        sinon.assert.calledWithExactly(fakeConversation.set, {
-          loopToken: "faketoken"
-        });
-      });
-
-    it("should set the loopToken on the conversation for new style call paths",
+    it("should set the loopToken on the conversation for call paths",
       function() {
         fakeGetWindowData.windowPath = "/c/fakecalltoken";
 
@@ -196,22 +178,7 @@ describe("loop.store.StandaloneAppStore", function () {
         });
       });
 
-    it("should dispatch a SetupWindowData action for old style call hashes",
-      function() {
-        fakeGetWindowData.windowPath = "#call/faketoken";
-
-        store.extractTokenInfo(
-          new sharedActions.ExtractTokenInfo(fakeGetWindowData));
-
-        sinon.assert.calledOnce(dispatcher.dispatch);
-        sinon.assert.calledWithExactly(dispatcher.dispatch,
-          new sharedActions.FetchServerData({
-            windowType: "outgoing",
-            token: "faketoken"
-          }));
-      });
-
-    it("should set the loopToken on the conversation for new style call paths",
+    it("should dispatch a FetchServerData action for call paths",
       function() {
         fakeGetWindowData.windowPath = "/c/fakecalltoken";
 
@@ -221,14 +188,15 @@ describe("loop.store.StandaloneAppStore", function () {
         sinon.assert.calledOnce(dispatcher.dispatch);
         sinon.assert.calledWithExactly(dispatcher.dispatch,
           new sharedActions.FetchServerData({
+            cryptoKey: null,
             windowType: "outgoing",
             token: "fakecalltoken"
           }));
       });
 
-    it("should set the loopToken on the conversation for room paths",
+    it("should dispatch a FetchServerData action for room paths",
       function() {
-        fakeGetWindowData.windowPath = "/c/fakeroomtoken";
+        fakeGetWindowData.windowPath = "/fakeroomtoken";
 
         store.extractTokenInfo(
           new sharedActions.ExtractTokenInfo(fakeGetWindowData));
@@ -236,11 +204,29 @@ describe("loop.store.StandaloneAppStore", function () {
         sinon.assert.calledOnce(dispatcher.dispatch);
         sinon.assert.calledWithExactly(dispatcher.dispatch,
           new sharedActions.FetchServerData({
-            windowType: "outgoing",
+            cryptoKey: null,
+            windowType: "room",
             token: "fakeroomtoken"
           }));
       });
 
+    it("should dispatch a FetchServerData action with a crypto key extracted from the hash", function() {
+      fakeGetWindowData = {
+        windowPath: "/fakeroomtoken",
+        windowHash: "#fakeKey"
+      };
+
+      store.extractTokenInfo(
+        new sharedActions.ExtractTokenInfo(fakeGetWindowData));
+
+      sinon.assert.calledOnce(dispatcher.dispatch);
+      sinon.assert.calledWithExactly(dispatcher.dispatch,
+        new sharedActions.FetchServerData({
+          cryptoKey: "fakeKey",
+          windowType: "room",
+          token: "fakeroomtoken"
+        }));
+    });
   });
 
 });

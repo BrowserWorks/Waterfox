@@ -50,13 +50,12 @@ public:
   bool mIsInfinite;
 };
 
-struct NewLayerEntry;
-
 struct ContainerLayerParameters {
   ContainerLayerParameters()
     : mXScale(1)
     , mYScale(1)
     , mLayerContentsVisibleRect(nullptr)
+    , mBackgroundColor(NS_RGBA(0,0,0,0))
     , mInTransformedSubtree(false)
     , mInActiveTransformedSubtree(false)
     , mDisableSubpixelAntialiasingInDescendants(false)
@@ -66,6 +65,7 @@ struct ContainerLayerParameters {
     : mXScale(aXScale)
     , mYScale(aYScale)
     , mLayerContentsVisibleRect(nullptr)
+    , mBackgroundColor(NS_RGBA(0,0,0,0))
     , mInTransformedSubtree(false)
     , mInActiveTransformedSubtree(false)
     , mDisableSubpixelAntialiasingInDescendants(false)
@@ -78,22 +78,35 @@ struct ContainerLayerParameters {
     , mYScale(aYScale)
     , mLayerContentsVisibleRect(nullptr)
     , mOffset(aOffset)
+    , mBackgroundColor(aParent.mBackgroundColor)
     , mInTransformedSubtree(aParent.mInTransformedSubtree)
     , mInActiveTransformedSubtree(aParent.mInActiveTransformedSubtree)
     , mDisableSubpixelAntialiasingInDescendants(aParent.mDisableSubpixelAntialiasingInDescendants)
     , mInLowPrecisionDisplayPort(aParent.mInLowPrecisionDisplayPort)
   {}
+
   float mXScale, mYScale;
+
+  LayoutDeviceToLayerScale2D Scale() const {
+    return LayoutDeviceToLayerScale2D(mXScale, mYScale);
+  }
+
   /**
    * If non-null, the rectangle in which BuildContainerLayerFor stores the
    * visible rect of the layer, in the coordinate system of the created layer.
    */
   nsIntRect* mLayerContentsVisibleRect;
+
   /**
    * An offset to apply to all child layers created.
    */
   nsIntPoint mOffset;
 
+  LayerIntPoint Offset() const {
+    return LayerIntPoint::FromUntyped(mOffset);
+  }
+
+  nscolor mBackgroundColor;
   bool mInTransformedSubtree;
   bool mInActiveTransformedSubtree;
   bool mDisableSubpixelAntialiasingInDescendants;
@@ -196,7 +209,16 @@ public:
   void DidEndTransaction();
 
   enum {
-    CONTAINER_NOT_CLIPPED_BY_ANCESTORS = 0x01
+    CONTAINER_NOT_CLIPPED_BY_ANCESTORS = 0x01,
+
+    /**
+     * Set this when pulling an opaque background color from behind the
+     * container layer into the container doesn't change the visual results,
+     * given the effects you're going to apply to the container layer.
+     * For example, this is compatible with opacity or clipping/masking, but
+     * not with non-OVER blend modes or filters.
+     */
+    CONTAINER_ALLOW_PULL_BACKGROUND_COLOR = 0x02
   };
   /**
    * Build a container layer for a display item that contains a child
@@ -274,6 +296,17 @@ public:
    */
   static void DumpRetainedLayerTree(LayerManager* aManager, std::stringstream& aStream, bool aDumpHtml = false);
 
+  /**
+   * Returns the most recently allocated geometry item for the given display
+   * item.
+   *
+   * XXX(seth): The current implementation must iterate through all display
+   * items allocated for this display item's frame. This may lead to O(n^2)
+   * behavior in some situations.
+   */
+  static nsDisplayItemGeometry* GetMostRecentGeometry(nsDisplayItem* aItem);
+
+
   /******* PRIVATE METHODS to FrameLayerBuilder.cpp ********/
   /* These are only in the public section because they need
    * to be called by file-scope helper functions in FrameLayerBuilder.cpp.
@@ -305,16 +338,9 @@ public:
   void AddPaintedDisplayItem(PaintedLayerData* aLayer,
                             nsDisplayItem* aItem,
                             const DisplayItemClip& aClip,
-                            const nsIntRect& aItemVisibleRect,
-                            const ContainerState& aContainerState,
+                            ContainerState& aContainerState,
                             LayerState aLayerState,
                             const nsPoint& aTopLeft);
-
-  /**
-   * Gets the frame property descriptor for the given manager, or for the current
-   * widget layer manager if nullptr is passed.
-   */
-  static const FramePropertyDescriptor* GetDescriptorForManager(LayerManager* aManager);
 
   /**
    * Calls GetOldLayerForFrame on the underlying frame of the display item,
@@ -328,6 +354,14 @@ public:
   void ClearCachedGeometry(nsDisplayItem* aItem);
 
   static Layer* GetDebugOldLayerFor(nsIFrame* aFrame, uint32_t aDisplayItemKey);
+
+  /**
+   * Return the layer that all display items of aFrame were assigned to in the
+   * last paint, or nullptr if there was no single layer assigned to all of the
+   * frame's display items (i.e. zero, or more than one).
+   * This function is for testing purposes and not performance sensitive.
+   */
+  static Layer* GetDebugSingleOldLayerForFrame(nsIFrame* aFrame);
 
   /**
    * Destroy any stored LayerManagerDataProperty and the associated data for
@@ -397,19 +431,20 @@ public:
   /**
    * Retained data for a display item.
    */
-  class DisplayItemData MOZ_FINAL {
+  class DisplayItemData final {
   public:
     friend class FrameLayerBuilder;
 
     uint32_t GetDisplayItemKey() { return mDisplayItemKey; }
     Layer* GetLayer() { return mLayer; }
+    nsDisplayItemGeometry* GetGeometry() const { return mGeometry.get(); }
     void Invalidate() { mIsInvalid = true; }
 
   private:
     DisplayItemData(LayerManagerData* aParent,
                     uint32_t aKey,
+                    Layer* aLayer,
                     nsIFrame* aFrame = nullptr);
-    DisplayItemData(DisplayItemData &toCopy);
 
     /**
      * Removes any references to this object from frames
@@ -646,10 +681,6 @@ public:
   void ComputeGeometryChangeForItem(DisplayItemData* aData);
 
 protected:
-  void RemoveThebesItemsAndOwnerDataForLayerSubtree(Layer* aLayer,
-                                                    bool aRemoveThebesItems,
-                                                    bool aRemoveOwnerData);
-
   static PLDHashOperator ProcessRemovedDisplayItems(nsRefPtrHashKey<DisplayItemData>* aEntry,
                                                     void* aUserArg);
   static PLDHashOperator RestoreDisplayItemData(nsRefPtrHashKey<DisplayItemData>* aEntry,
@@ -689,7 +720,7 @@ protected:
    * When building layers for an inactive layer, this is where the
    * inactive layer will be placed.
    */
-  PaintedLayerData*                    mContainingPaintedLayer;
+  PaintedLayerData*                   mContainingPaintedLayer;
 
   /**
    * Saved generation counter so we can detect DOM changes.

@@ -18,10 +18,14 @@
 
 #include <fontconfig/fontconfig.h>
 #include "gfxPlatformGtk.h"
+#include "nsScreenGtk.h"
 
 #include "gtkdrawing.h"
 #include "nsStyleConsts.h"
 #include "gfxFontConstants.h"
+
+#include <dlfcn.h>
+
 #include "mozilla/gfx/2D.h"
 
 using mozilla::LookAndFeel;
@@ -97,6 +101,7 @@ nsLookAndFeel::NativeGetColor(ColorID aID, nscolor& aColor)
     case eColorID_window:
     case eColorID_windowframe:
     case eColorID__moz_dialog:
+    case eColorID__moz_combobox:
         aColor = sMozWindowBackground;
         break;
     case eColorID_WindowForeground:
@@ -400,9 +405,11 @@ nsLookAndFeel::NativeGetColor(ColorID aID, nscolor& aColor)
     case eColorID__moz_comboboxtext:
         aColor = sComboBoxText;
         break;
+#if (MOZ_WIDGET_GTK == 2)
     case eColorID__moz_combobox:
         aColor = sComboBoxBackground;
         break;
+#endif
     case eColorID__moz_menubartext:
         aColor = sMenuBarText;
         break;
@@ -733,6 +740,11 @@ GetSystemFontInfo(GtkWidget *aWidget,
         size *= float(gfxPlatformGtk::GetDPI()) / POINTS_PER_INCH_FLOAT;
     }
 
+    // Scale fonts up on HiDPI displays.
+    // This would be done automatically with cairo, but we manually manage
+    // the display scale for platform consistency.
+    size *= nsScreenGtk::GetGtkMonitorScaleFactor();
+
     // |size| is now pixels
 
     aFontStyle->size = size;
@@ -784,7 +796,7 @@ GetSystemFontInfo(LookAndFeel::FontID aID,
         gtk_widget_destroy(window);  // no unref, windows are different
 
     } else {
-        NS_ABORT_IF_FALSE(aID == LookAndFeel::eFont_Menu, "unexpected font ID");
+        MOZ_ASSERT(aID == LookAndFeel::eFont_Menu, "unexpected font ID");
         GtkWidget *accel_label = gtk_accel_label_new("M");
         GtkWidget *menuitem = gtk_menu_item_new();
         GtkWidget *menu = gtk_menu_new();
@@ -1139,14 +1151,10 @@ nsLookAndFeel::Init()
     gtk_style_context_get_color(style, GTK_STATE_FLAG_PRELIGHT, &color);
     sButtonHoverText = GDK_RGBA_TO_NS_RGBA(color);
 
-    // Combobox label and background colors
+    // Combobox text color
     style = gtk_widget_get_style_context(comboboxLabel);
     gtk_style_context_get_color(style, GTK_STATE_FLAG_NORMAL, &color);
     sComboBoxText = GDK_RGBA_TO_NS_RGBA(color);
-
-    style = gtk_widget_get_style_context(combobox);
-    gtk_style_context_get_background_color(style, GTK_STATE_FLAG_NORMAL, &color);
-    sComboBoxBackground = GDK_RGBA_TO_NS_RGBA(color);
 
     // Menubar text and hover text colors    
     style = gtk_widget_get_style_context(menuBar);

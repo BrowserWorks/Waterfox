@@ -28,11 +28,13 @@ class TwoByteCharsZ;
 class UTF8Chars;
 class UTF8CharsZ;
 
-class AutoFunctionVector;
-class AutoIdVector;
-class AutoObjectVector;
-class AutoScriptVector;
-class AutoValueVector;
+template <typename T>
+class AutoVectorRooter;
+typedef AutoVectorRooter<Value> AutoValueVector;
+typedef AutoVectorRooter<jsid> AutoIdVector;
+typedef AutoVectorRooter<JSObject*> AutoObjectVector;
+typedef AutoVectorRooter<JSFunction*> AutoFunctionVector;
+typedef AutoVectorRooter<JSScript*> AutoVector;
 
 class AutoIdArray;
 
@@ -45,6 +47,7 @@ class MOZ_STACK_CLASS SourceBufferHolder;
 
 class HandleValueArray;
 
+class ObjectOpResult;
 }
 
 // Do the importing.
@@ -55,7 +58,6 @@ using JS::BooleanValue;
 using JS::DoubleValue;
 using JS::Float32Value;
 using JS::Int32Value;
-using JS::IsPoisonedValue;
 using JS::MagicValue;
 using JS::NullValue;
 using JS::NumberValue;
@@ -66,8 +68,6 @@ using JS::PrivateValue;
 using JS::StringValue;
 using JS::UndefinedValue;
 
-using JS::IsPoisonedPtr;
-
 using JS::Latin1Char;
 using JS::Latin1Chars;
 using JS::Latin1CharsZ;
@@ -77,17 +77,17 @@ using JS::TwoByteCharsZ;
 using JS::UTF8Chars;
 using JS::UTF8CharsZ;
 
-using JS::AutoFunctionVector;
-using JS::AutoIdVector;
-using JS::AutoObjectVector;
-using JS::AutoScriptVector;
-using JS::AutoValueVector;
+using JS::AutoVectorRooter;
+typedef AutoVectorRooter<Value> AutoValueVector;
+typedef AutoVectorRooter<jsid> AutoIdVector;
+typedef AutoVectorRooter<JSObject*> AutoObjectVector;
+typedef AutoVectorRooter<JSFunction*> AutoFunctionVector;
+typedef AutoVectorRooter<JSScript*> AutoScriptVector;
 
 using JS::AutoIdArray;
 
 using JS::AutoHashMapRooter;
 using JS::AutoHashSetRooter;
-using JS::AutoVectorRooter;
 using JS::RootedGeneric;
 
 using JS::CallArgs;
@@ -142,6 +142,8 @@ using JS::TrueHandleValue;
 using JS::FalseHandleValue;
 
 using JS::HandleValueArray;
+
+using JS::ObjectOpResult;
 
 using JS::Zone;
 

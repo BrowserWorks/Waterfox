@@ -21,20 +21,31 @@ public:
     static bool RunTestInThreads() { return false; }
 
     void Main();
-    void FinishTesting();
+    void SecondStage();
+    void ThirdStage();
 
     bool RecvTest1_2();
     bool RecvTestInner();
+    bool RecvTestInnerUrgent();
 
-    bool ShouldContinueFromReplyTimeout() MOZ_OVERRIDE
+    bool ShouldContinueFromReplyTimeout() override
     {
       return false;
     }
-    virtual void ActorDestroy(ActorDestroyReason why) MOZ_OVERRIDE
+    virtual void ActorDestroy(ActorDestroyReason why) override
     {
+	if (mInnerCount != 1) {
+	    fail("wrong mInnerCount");
+	}
+	if (mInnerUrgentCount != 2) {
+	    fail("wrong mInnerUrgentCount");
+	}
         passed("ok");
         QuitParent();
     }
+
+private:
+    size_t mInnerCount, mInnerUrgentCount;
 };
 
 
@@ -51,8 +62,10 @@ public:
     bool RecvTest3();
     bool RecvTest4();
     bool RecvTest4_1();
+    bool RecvTest5();
+    bool RecvTest5_1();
 
-    virtual void ActorDestroy(ActorDestroyReason why) MOZ_OVERRIDE
+    virtual void ActorDestroy(ActorDestroyReason why) override
     {
         QuitChild();
     }

@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -9,7 +10,6 @@
 #include "nsString.h"
 
 class nsIDocument;
-class nsSVGViewElement;
 
 namespace mozilla {
 
@@ -29,7 +29,9 @@ class SVGFragmentIdentifier
 public:
   /**
    * Process the SVG fragment identifier, if there is one.
-   * @return true if we found something we recognised
+   * @return true if we found a valid svgView()-style fragment identifier,
+   * in which case further processing by the caller can stop. Otherwise return
+   * false as we may have an ordinary anchor which needs to be :target matched.
    */
   static bool ProcessFragmentIdentifier(nsIDocument *aDocument,
                                         const nsAString &aAnchorName);

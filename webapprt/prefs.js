@@ -36,7 +36,6 @@ pref("full-screen-api.enabled", true);
 
 // IndexedDB
 pref("dom.indexedDB.enabled", true);
-pref("dom.indexedDB.warningQuota", 50);
 
 // Offline cache prefs
 pref("browser.offline-apps.notify", false);
@@ -80,6 +79,8 @@ pref("dom.always_allow_move_resize_window", true);
 // Disable all plugins.  This has to be a non-empty string to disable plugins;
 // otherwise, nsPluginHost::IsTypeWhitelisted assumes all plugins are enabled.
 pref("plugin.allowed_types", " ");
+// Suppress the check for outdated plugins from opening a window.
+pref("extensions.blocklist.suppressUI", true);
 
 pref("devtools.debugger.remote-enabled", true);
 pref("devtools.debugger.force-local", true);

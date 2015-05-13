@@ -93,7 +93,6 @@ loop.StandaloneMozLoop = (function(mozL10n) {
         try {
           // We currently only require things we need rather than everything possible.
           callback(null, validate(responseData, {
-            roomName: String,
             roomOwner: String,
             roomUrl: String
           }));
@@ -223,6 +222,29 @@ loop.StandaloneMozLoop = (function(mozL10n) {
       }, null, false, callback);
     },
 
+    /**
+     * Forwards connection status to the server.
+     *
+     * @param {String} roomToken     The room token.
+     * @param {String} sessionToken  The session token for the session that has been
+     *                               joined.
+     * @param {sharedActions.SdkStatus} status  The connection status.
+     */
+    sendConnectionStatus: function(roomToken, sessionToken, status) {
+      this._postToRoom(roomToken, sessionToken, {
+        action: "status",
+        event: status.event,
+        state: status.state,
+        connections: status.connections,
+        sendStreams: status.sendStreams,
+        recvStreams: status.recvStreams
+      }, null, true, function(error) {
+        if (error) {
+          console.error(error);
+        }
+      });
+    },
+
     // Dummy functions to reflect those in the desktop mozLoop.rooms that we
     // don't currently use.
     on: function() {},
@@ -268,9 +290,10 @@ loop.StandaloneMozLoop = (function(mozL10n) {
       return localStorage.getItem(prefName);
     },
 
-    // Dummy function to reflect those in the desktop mozLoop that we
-    // don't currently use.
-    addConversationContext: function() {}
+    // Dummy functions to reflect those in the desktop mozLoop that we
+    // don't currently use in standalone.
+    addConversationContext: function() {},
+    setScreenShareState: function() {}
   };
 
   return StandaloneMozLoop;

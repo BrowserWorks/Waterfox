@@ -244,6 +244,17 @@ nsresult nsZipHandle::Init(nsZipArchive *zip, const char *entry,
   return NS_OK;
 }
 
+nsresult nsZipHandle::Init(const uint8_t* aData, uint32_t aLen,
+                           nsZipHandle **aRet)
+{
+  nsRefPtr<nsZipHandle> handle = new nsZipHandle();
+
+  handle->mFileData = aData;
+  handle->mLen = aLen;
+  handle.forget(aRet);
+  return NS_OK;
+}
+
 int64_t nsZipHandle::SizeOfMapping()
 {
     return mLen;
@@ -1157,7 +1168,7 @@ nsZipItemPtr_base::nsZipItemPtr_base(nsZipArchive *aZip, const char * aEntryName
   uint32_t size = 0;
   if (item->Compression() == DEFLATED) {
     size = item->RealSize();
-    mAutoBuf = new ((fallible_t())) uint8_t[size];
+    mAutoBuf = new (fallible) uint8_t[size];
     if (!mAutoBuf) {
       return;
     }

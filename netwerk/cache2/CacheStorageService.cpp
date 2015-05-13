@@ -1206,9 +1206,7 @@ CacheStorageService::PurgeOverMemoryLimit()
 void
 CacheStorageService::MemoryPool::PurgeOverMemoryLimit()
 {
-#ifdef PR_LOGGING
   TimeStamp start(TimeStamp::Now());
-#endif
 
   uint32_t const memoryLimit = Limit();
   if (mMemorySize > memoryLimit) {
@@ -1261,11 +1259,10 @@ CacheStorageService::MemoryPool::PurgeExpired()
     nsRefPtr<CacheEntry> entry = mExpirationArray[i];
 
     uint32_t expirationTime = entry->GetExpirationTime();
-    if (expirationTime > 0 && expirationTime <= now) {
-      LOG(("  dooming expired entry=%p, exptime=%u (now=%u)",
+    if (expirationTime > 0 && expirationTime <= now &&
+        entry->Purge(CacheEntry::PURGE_WHOLE)) {
+      LOG(("  purged expired, entry=%p, exptime=%u (now=%u)",
         entry.get(), entry->GetExpirationTime(), now));
-
-      entry->PurgeAndDoom();
       continue;
     }
 
@@ -1445,12 +1442,12 @@ CacheStorageService::CheckStorageEntry(CacheStorage const* aStorage,
     AppendMemoryStorageID(contextKey);
   }
 
-#ifdef PR_LOGGING
-  nsAutoCString uriSpec;
-  aURI->GetAsciiSpec(uriSpec);
-  LOG(("CacheStorageService::CheckStorageEntry [uri=%s, eid=%s, contextKey=%s]",
-    uriSpec.get(), aIdExtension.BeginReading(), contextKey.get()));
-#endif
+  if (LOG_ENABLED()) {
+    nsAutoCString uriSpec;
+    aURI->GetAsciiSpec(uriSpec);
+    LOG(("CacheStorageService::CheckStorageEntry [uri=%s, eid=%s, contextKey=%s]",
+      uriSpec.get(), aIdExtension.BeginReading(), contextKey.get()));
+  }
 
   {
     mozilla::MutexAutoLock lock(mLock);
@@ -1506,12 +1503,12 @@ public:
 private:
   virtual ~CacheEntryDoomByKeyCallback();
 
-  NS_IMETHOD OnFileOpened(CacheFileHandle *aHandle, nsresult aResult) MOZ_OVERRIDE { return NS_OK; }
-  NS_IMETHOD OnDataWritten(CacheFileHandle *aHandle, const char *aBuf, nsresult aResult) MOZ_OVERRIDE { return NS_OK; }
-  NS_IMETHOD OnDataRead(CacheFileHandle *aHandle, char *aBuf, nsresult aResult) MOZ_OVERRIDE { return NS_OK; }
-  NS_IMETHOD OnFileDoomed(CacheFileHandle *aHandle, nsresult aResult) MOZ_OVERRIDE;
-  NS_IMETHOD OnEOFSet(CacheFileHandle *aHandle, nsresult aResult) MOZ_OVERRIDE { return NS_OK; }
-  NS_IMETHOD OnFileRenamed(CacheFileHandle *aHandle, nsresult aResult) MOZ_OVERRIDE { return NS_OK; }
+  NS_IMETHOD OnFileOpened(CacheFileHandle *aHandle, nsresult aResult) override { return NS_OK; }
+  NS_IMETHOD OnDataWritten(CacheFileHandle *aHandle, const char *aBuf, nsresult aResult) override { return NS_OK; }
+  NS_IMETHOD OnDataRead(CacheFileHandle *aHandle, char *aBuf, nsresult aResult) override { return NS_OK; }
+  NS_IMETHOD OnFileDoomed(CacheFileHandle *aHandle, nsresult aResult) override;
+  NS_IMETHOD OnEOFSet(CacheFileHandle *aHandle, nsresult aResult) override { return NS_OK; }
+  NS_IMETHOD OnFileRenamed(CacheFileHandle *aHandle, nsresult aResult) override { return NS_OK; }
 
   nsCOMPtr<nsICacheEntryDoomCallback> mCallback;
   nsresult mResult;

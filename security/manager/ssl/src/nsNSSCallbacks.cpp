@@ -28,9 +28,7 @@
 using namespace mozilla;
 using namespace mozilla::psm;
 
-#ifdef PR_LOGGING
 extern PRLogModuleInfo* gPIPNSSLog;
-#endif
 
 static void AccumulateCipherSuite(Telemetry::ID probe,
                                   const SSLChannelInfo& channelInfo);
@@ -86,7 +84,15 @@ nsHTTPDownloadEvent::Run()
   NS_ENSURE_STATE(ios);
 
   nsCOMPtr<nsIChannel> chan;
-  ios->NewChannel(mRequestSession->mURL, nullptr, nullptr, getter_AddRefs(chan));
+  ios->NewChannel2(mRequestSession->mURL,
+                   nullptr,
+                   nullptr,
+                   nullptr, // aLoadingNode
+                   nsContentUtils::GetSystemPrincipal(),
+                   nullptr, // aTriggeringPrincipal
+                   nsILoadInfo::SEC_NORMAL,
+                   nsIContentPolicy::TYPE_OTHER,
+                   getter_AddRefs(chan));
   NS_ENSURE_STATE(chan);
 
   // Security operations scheduled through normal HTTP channels are given
@@ -326,7 +332,6 @@ SECStatus nsNSSHttpRequestSession::trySendAndReceiveFcn(PRPollDesc **pPollDesc,
   while (retryable_error &&
          retry_count < max_retries);
 
-#ifdef PR_LOGGING
   if (retry_count > 1)
   {
     if (retryable_error)
@@ -337,7 +342,6 @@ SECStatus nsNSSHttpRequestSession::trySendAndReceiveFcn(PRPollDesc **pPollDesc,
              ("nsNSSHttpRequestSession::trySendAndReceiveFcn - success at attempt %d\n",
               retry_count));
   }
-#endif
 
   return result_sec_status;
 }
@@ -601,7 +605,7 @@ nsHTTPListener::~nsHTTPListener()
     send_done_signal();
 
   if (mResultData) {
-    moz_free(const_cast<uint8_t *>(mResultData));
+    free(const_cast<uint8_t *>(mResultData));
   }
 
   if (mLoader) {
@@ -654,13 +658,11 @@ nsHTTPListener::OnStreamComplete(nsIStreamLoader* aLoader,
 
   nsresult rv = aLoader->GetRequest(getter_AddRefs(req));
   
-#ifdef PR_LOGGING
   if (NS_FAILED(aStatus))
   {
     PR_LOG(gPIPNSSLog, PR_LOG_DEBUG,
            ("nsHTTPListener::OnStreamComplete status failed %d", aStatus));
   }
-#endif
 
   if (NS_SUCCEEDED(rv))
     hchan = do_QueryInterface(req, &rv);
@@ -827,7 +829,7 @@ void PK11PasswordPromptRunnable::RunOnTargetThread()
   rv = nssComponent->PIPBundleFormatStringFromName("CertPassPrompt",
                                       formatStrings, 1,
                                       promptString);
-  nsMemory::Free(const_cast<char16_t*>(formatStrings[0]));
+  free(const_cast<char16_t*>(formatStrings[0]));
 
   if (NS_FAILED(rv))
     return;
@@ -848,7 +850,7 @@ void PK11PasswordPromptRunnable::RunOnTargetThread()
   
   if (NS_SUCCEEDED(rv) && value) {
     mResult = ToNewUTF8String(nsDependentString(password));
-    NS_Free(password);
+    free(password);
   }
 }
 
@@ -1132,15 +1134,15 @@ void HandshakeCallback(PRFileDesc* fd, void* client_data) {
                                            infoObject->GetPort(),
                                            versions.max);
 
-  bool usesWeakProtocol = false;
   bool usesWeakCipher = false;
   SSLChannelInfo channelInfo;
   rv = SSL_GetChannelInfo(fd, &channelInfo, sizeof(channelInfo));
   MOZ_ASSERT(rv == SECSuccess);
   if (rv == SECSuccess) {
     // Get the protocol version for telemetry
-    // 0=ssl3, 1=tls1, 2=tls1.1, 3=tls1.2
+    // 1=tls1, 2=tls1.1, 3=tls1.2
     unsigned int versionEnum = channelInfo.protocolVersion & 0xFF;
+    MOZ_ASSERT(versionEnum > 0);
     Telemetry::Accumulate(Telemetry::SSL_HANDSHAKE_VERSION, versionEnum);
     AccumulateCipherSuite(
       infoObject->IsFullHandshake() ? Telemetry::SSL_CIPHER_SUITE_FULL
@@ -1152,8 +1154,6 @@ void HandshakeCallback(PRFileDesc* fd, void* client_data) {
                                 sizeof cipherInfo);
     MOZ_ASSERT(rv == SECSuccess);
     if (rv == SECSuccess) {
-      usesWeakProtocol =
-        channelInfo.protocolVersion <= SSL_LIBRARY_VERSION_3_0;
       usesWeakCipher = cipherInfo.symCipher == ssl_calg_rc4;
 
       // keyExchange null=0, rsa=1, dh=2, fortezza=3, ecdh=4
@@ -1230,11 +1230,8 @@ void HandshakeCallback(PRFileDesc* fd, void* client_data) {
                              ioLayerHelpers.treatUnsafeNegotiationAsBroken();
 
   uint32_t state;
-  if (usesWeakProtocol || usesWeakCipher || renegotiationUnsafe) {
+  if (usesWeakCipher || renegotiationUnsafe) {
     state = nsIWebProgressListener::STATE_IS_BROKEN;
-    if (usesWeakProtocol) {
-      state |= nsIWebProgressListener::STATE_USES_SSL_3;
-    }
     if (usesWeakCipher) {
       state |= nsIWebProgressListener::STATE_USES_WEAK_CRYPTO;
     }
@@ -1261,8 +1258,6 @@ void HandshakeCallback(PRFileDesc* fd, void* client_data) {
     nsContentUtils::LogSimpleConsoleError(msg, "SSL");
   }
 
-  ScopedCERTCertificate serverCert(SSL_PeerCertificate(fd));
-
   /* Set the SSL Status information */
   RefPtr<nsSSLStatus> status(infoObject->SSLStatus());
   if (!status) {
@@ -1273,33 +1268,15 @@ void HandshakeCallback(PRFileDesc* fd, void* client_data) {
   RememberCertErrorsTable::GetInstance().LookupCertErrorBits(infoObject,
                                                              status);
 
-  RefPtr<nsNSSCertificate> nssc(nsNSSCertificate::Create(serverCert.get()));
-  nsCOMPtr<nsIX509Cert> prevcert;
-  infoObject->GetPreviousCert(getter_AddRefs(prevcert));
-
-  bool equals_previous = false;
-  if (prevcert && nssc) {
-    nsresult rv = nssc->Equals(prevcert, &equals_previous);
-    if (NS_FAILED(rv)) {
-      equals_previous = false;
-    }
-  }
-
-  if (equals_previous) {
+  if (status->HasServerCert()) {
     PR_LOG(gPIPNSSLog, PR_LOG_DEBUG,
-            ("HandshakeCallback using PREV cert %p\n", prevcert.get()));
-    status->SetServerCert(prevcert, nsNSSCertificate::ev_status_unknown);
-  }
-  else {
-    if (status->HasServerCert()) {
-      PR_LOG(gPIPNSSLog, PR_LOG_DEBUG,
-              ("HandshakeCallback KEEPING existing cert\n"));
-    }
-    else {
-      PR_LOG(gPIPNSSLog, PR_LOG_DEBUG,
-              ("HandshakeCallback using NEW cert %p\n", nssc.get()));
-      status->SetServerCert(nssc, nsNSSCertificate::ev_status_unknown);
-    }
+           ("HandshakeCallback KEEPING existing cert\n"));
+  } else {
+    ScopedCERTCertificate serverCert(SSL_PeerCertificate(fd));
+    RefPtr<nsNSSCertificate> nssc(nsNSSCertificate::Create(serverCert.get()));
+    PR_LOG(gPIPNSSLog, PR_LOG_DEBUG,
+           ("HandshakeCallback using NEW cert %p\n", nssc.get()));
+    status->SetServerCert(nssc, nsNSSCertificate::ev_status_unknown);
   }
 
   infoObject->NoteTimeUntilReady();

@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -190,11 +191,11 @@ EVENT(dragenter,
       EventNameType_HTMLXUL,
       eDragEventClass)
 EVENT(dragleave,
-      NS_DRAGDROP_LEAVE_SYNTH,
+      NS_DRAGDROP_LEAVE,
       EventNameType_HTMLXUL,
       eDragEventClass)
 EVENT(dragover,
-      NS_DRAGDROP_OVER_SYNTH,
+      NS_DRAGDROP_OVER,
       EventNameType_HTMLXUL,
       eDragEventClass)
 EVENT(dragstart,
@@ -282,11 +283,11 @@ EVENT(mousemove,
       EventNameType_All,
       eMouseEventClass)
 EVENT(mouseout,
-      NS_MOUSE_EXIT_SYNTH,
+      NS_MOUSE_OUT,
       EventNameType_All,
       eMouseEventClass)
 EVENT(mouseover,
-      NS_MOUSE_ENTER_SYNTH,
+      NS_MOUSE_OVER,
       EventNameType_All,
       eMouseEventClass)
 EVENT(mouseup,
@@ -458,6 +459,10 @@ FORWARDED_EVENT(load,
                 NS_LOAD,
                 EventNameType_All,
                 eBasicEventClass)
+FORWARDED_EVENT(resize,
+                NS_RESIZE_EVENT,
+                EventNameType_All,
+                eBasicEventClass)
 FORWARDED_EVENT(scroll,
                 NS_SCROLL_EVENT,
                 (EventNameType_HTMLXUL | EventNameType_SVGSVG),
@@ -512,11 +517,6 @@ WINDOW_EVENT(popstate,
              eBasicEventClass)
 // Not supported yet
 // WINDOW_EVENT(redo)
-WINDOW_EVENT(resize,
-             NS_RESIZE_EVENT,
-             (EventNameType_XUL | EventNameType_SVGSVG |
-              EventNameType_HTMLBodyOrFramesetOnly),
-             eBasicEventClass)
 // Not supported yet
 // WINDOW_EVENT(storage)
 // Not supported yet
@@ -720,7 +720,7 @@ NON_IDL_EVENT(commandupdate,
               EventNameType_XUL,
               eBasicEventClass)
 NON_IDL_EVENT(dragexit,
-              NS_DRAGDROP_EXIT_SYNTH,
+              NS_DRAGDROP_EXIT,
               EventNameType_XUL,
               eDragEventClass)
 NON_IDL_EVENT(dragdrop,

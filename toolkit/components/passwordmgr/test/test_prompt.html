@@ -26,6 +26,7 @@ var tmplogin, login1, login2A, login2B, login2C, login2D, login2E, login3A, logi
 var mozproxy, proxiedHost = "http://mochi.test:8888";
 var proxyChannel;
 var testNum = 1;
+var systemPrincipal = SpecialPowers.Services.scriptSecurityManager.getSystemPrincipal();
 
 function initLogins(pi) {
   observerService = Cc["@mozilla.org/observer-service;1"].
@@ -159,7 +160,14 @@ var resolveCallback = SpecialPowers.wrapCallbackObject({
     // The proxyChannel needs to move to at least on-modify-request to
     // have valid ProxyInfo, but we use OnStartRequest during startup()
     // for simplicity.
-    proxyChannel = ioService.newChannel(proxiedHost, null, null);
+    proxyChannel = ioService.newChannel2(proxiedHost,
+                                         null,
+                                         null,
+                                         null,      // aLoadingNode
+                                         systemPrincipal,
+                                         null,      // aTriggeringPrincipal
+                                         Ci.nsILoadInfo.SEC_NORMAL,
+                                         Ci.nsIContentPolicy.TYPE_OTHER);
     proxyChannel.asyncOpen(SpecialPowers.wrapCallbackObject(new proxyChannelListener()), null);
   }
 });
@@ -171,8 +179,15 @@ function startup() {
 
   var pps = SpecialPowers.Cc["@mozilla.org/network/protocol-proxy-service;1"].getService();
 
-  var uri = ios.newURI("http://example.com", null, null);
-  pps.asyncResolve(uri, 0, resolveCallback);
+  var channel = ios.newChannel2("http://example.com",
+                                null,
+                                null,
+                                null,      // aLoadingNode
+                                systemPrincipal,
+                                null,      // aTriggeringPrincipal
+                                Ci.nsILoadInfo.SEC_NORMAL,
+                                Ci.nsIContentPolicy.TYPE_OTHER);
+  pps.asyncResolve(channel, 0, resolveCallback);
 }
 
 function addNotificationCallback(cb) {
@@ -891,8 +906,24 @@ function doTests() {
   is(uname.value, "fill2user", "Checking returned username");
   is(pword.value, "fill2pass", "Checking returned password");
 
-  var channel1 = ioService.newChannel("http://example.com", null, null);
-  var channel2 = ioService.newChannel("http://example2.com", null, null);
+  var channel1 = ioService.newChannel2("http://example.com",
+                                       null,
+                                       null,
+                                       null,      // aLoadingNode
+                                       SpecialPowers.Services.
+                                       scriptSecurityManager.getSystemPrincipal(),
+                                       null,      // aTriggeringPrincipal
+                                       Ci.nsILoadInfo.SEC_NORMAL,
+                                       Ci.nsIContentPolicy.TYPE_OTHER);
+  var channel2 = ioService.newChannel2("http://example2.com",
+                                       null,
+                                       null,
+                                       null,      // aLoadingNode
+                                       SpecialPowers.Services.
+                                       scriptSecurityManager.getSystemPrincipal(),
+                                       null,      // aTriggeringPrincipal
+                                       Ci.nsILoadInfo.SEC_NORMAL,
+                                       Ci.nsIContentPolicy.TYPE_OTHER);
 
   var level = Ci.nsIAuthPrompt2.LEVEL_NONE;
 

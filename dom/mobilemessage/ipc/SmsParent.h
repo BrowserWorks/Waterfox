@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -32,10 +33,10 @@ public:
 
 protected:
   virtual bool
-  RecvAddSilentNumber(const nsString& aNumber) MOZ_OVERRIDE;
+  RecvAddSilentNumber(const nsString& aNumber) override;
 
   virtual bool
-  RecvRemoveSilentNumber(const nsString& aNumber) MOZ_OVERRIDE;
+  RecvRemoveSilentNumber(const nsString& aNumber) override;
 
   SmsParent();
   virtual ~SmsParent()
@@ -44,27 +45,27 @@ protected:
   }
 
   virtual void
-  ActorDestroy(ActorDestroyReason aWhy) MOZ_OVERRIDE;
+  ActorDestroy(ActorDestroyReason aWhy) override;
 
   virtual bool
   RecvPSmsRequestConstructor(PSmsRequestParent* aActor,
-                             const IPCSmsRequest& aRequest) MOZ_OVERRIDE;
+                             const IPCSmsRequest& aRequest) override;
 
   virtual PSmsRequestParent*
-  AllocPSmsRequestParent(const IPCSmsRequest& aRequest) MOZ_OVERRIDE;
+  AllocPSmsRequestParent(const IPCSmsRequest& aRequest) override;
 
   virtual bool
-  DeallocPSmsRequestParent(PSmsRequestParent* aActor) MOZ_OVERRIDE;
+  DeallocPSmsRequestParent(PSmsRequestParent* aActor) override;
 
   virtual bool
   RecvPMobileMessageCursorConstructor(PMobileMessageCursorParent* aActor,
-                                      const IPCMobileMessageCursor& aCursor) MOZ_OVERRIDE;
+                                      const IPCMobileMessageCursor& aCursor) override;
 
   virtual PMobileMessageCursorParent*
-  AllocPMobileMessageCursorParent(const IPCMobileMessageCursor& aCursor) MOZ_OVERRIDE;
+  AllocPMobileMessageCursorParent(const IPCMobileMessageCursor& aCursor) override;
 
   virtual bool
-  DeallocPMobileMessageCursorParent(PMobileMessageCursorParent* aActor) MOZ_OVERRIDE;
+  DeallocPMobileMessageCursorParent(PMobileMessageCursorParent* aActor) override;
 
 private:
   nsTArray<nsString> mSilentNumbers;
@@ -94,7 +95,7 @@ protected:
   }
 
   virtual void
-  ActorDestroy(ActorDestroyReason aWhy) MOZ_OVERRIDE;
+  ActorDestroy(ActorDestroyReason aWhy) override;
 
   bool
   DoRequest(const SendMessageRequest& aRequest);
@@ -116,6 +117,9 @@ protected:
 
   bool
   DoRequest(const GetSmscAddressRequest& aRequest);
+
+  bool
+  DoRequest(const SetSmscAddressRequest& aRequest);
 
   nsresult
   SendReply(const MessageReply& aReply);
@@ -144,10 +148,10 @@ protected:
   }
 
   virtual void
-  ActorDestroy(ActorDestroyReason aWhy) MOZ_OVERRIDE;
+  ActorDestroy(ActorDestroyReason aWhy) override;
 
   virtual bool
-  RecvContinue() MOZ_OVERRIDE;
+  RecvContinue() override;
 
   bool
   DoRequest(const CreateMessageCursorRequest& aRequest);

@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -87,11 +89,24 @@ TCPSocketParent::GetAppId()
   const PContentParent *content = Manager()->Manager();
   const InfallibleTArray<PBrowserParent*>& browsers = content->ManagedPBrowserParent();
   if (browsers.Length() > 0) {
-    TabParent *tab = static_cast<TabParent*>(browsers[0]);
+    TabParent *tab = TabParent::GetFrom(browsers[0]);
     appId = tab->OwnAppId();
   }
   return appId;
 };
+
+bool
+TCPSocketParent::GetInBrowser()
+{
+  bool inBrowser = false;
+  const PContentParent *content = Manager()->Manager();
+  const InfallibleTArray<PBrowserParent*>& browsers = content->ManagedPBrowserParent();
+  if (browsers.Length() > 0) {
+    TabParent *tab = TabParent::GetFrom(browsers[0]);
+    inBrowser = tab->IsBrowserElement();
+  }
+  return inBrowser;
+}
 
 nsresult
 TCPSocketParent::OfflineNotification(nsISupports *aSubject)
@@ -162,6 +177,7 @@ TCPSocketParent::RecvOpen(const nsString& aHost, const uint16_t& aPort, const bo
 
   // Obtain App ID
   uint32_t appId = GetAppId();
+  bool     inBrowser = GetInBrowser();
 
   if (NS_IsAppOffline(appId)) {
     NS_ERROR("Can't open socket because app is offline");
@@ -177,7 +193,7 @@ TCPSocketParent::RecvOpen(const nsString& aHost, const uint16_t& aPort, const bo
   }
 
   rv = mIntermediary->Open(this, aHost, aPort, aUseSSL, aBinaryType, appId,
-                           getter_AddRefs(mSocket));
+                           inBrowser, getter_AddRefs(mSocket));
   if (NS_FAILED(rv) || !mSocket) {
     FireInteralError(this, __LINE__);
     return true;

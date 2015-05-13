@@ -15,16 +15,6 @@
  */
 
 var release = true;
-var SHUMWAY_ROOT = "resource://shumway/";
-
-var viewerPlayerglobalInfo = {
-  abcs: SHUMWAY_ROOT + "playerglobal/playerglobal.abcs",
-  catalog: SHUMWAY_ROOT + "playerglobal/playerglobal.json"
-};
-
-var avm2Root = SHUMWAY_ROOT + "avm2/";
-var builtinPath = avm2Root + "generated/builtin/builtin.abc";
-var avm1Path = avm2Root + "generated/avm1lib/avm1lib.abc";
 
 window.print = function(msg) {
   console.log(msg);
@@ -38,123 +28,46 @@ function runSwfPlayer(flashParams) {
   var appMode = compilerSettings.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
   var asyncLoading = true;
   var baseUrl = flashParams.baseUrl;
-  var movieParams = flashParams.movieParams;
   var objectParams = flashParams.objectParams;
   var movieUrl = flashParams.url;
 
   Shumway.frameRateOption.value = flashParams.turboMode ? 60 : -1;
   Shumway.AVM2.Verifier.enabled.value = compilerSettings.verifier;
 
-  Shumway.createAVM2(builtinPath, viewerPlayerglobalInfo, avm1Path, sysMode, appMode, function (avm2) {
-    function runSWF(file) {
-      var player = new Shumway.Player.Window.WindowPlayer(window, window.parent);
+  Shumway.createAVM2(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Playerglobal, sysMode, appMode).then(function (avm2) {
+    function runSWF(file, buffer, baseUrl) {
+      var gfxService = new Shumway.Player.Window.WindowGFXService(window, window.parent);
+      var player = new Shumway.Player.Player(gfxService, flashParams.env);
       player.defaultStageColor = flashParams.bgcolor;
+      player.movieParams = flashParams.movieParams;
+      player.stageAlign = (objectParams && (objectParams.salign || objectParams.align)) || '';
+      player.stageScale = (objectParams && objectParams.scale) || 'showall';
+      player.displayParameters = flashParams.displayParameters;
 
-      Shumway.ExternalInterfaceService.instance = player.createExternalInterfaceService();
-
-      player.load(file);
+      player.pageUrl = baseUrl;
+      player.load(file, buffer);
     }
-    file = Shumway.FileLoadingService.instance.setBaseUrl(baseUrl);
+
+    Shumway.FileLoadingService.instance.init(baseUrl);
     if (asyncLoading) {
-      runSWF(movieUrl);
+      runSWF(movieUrl, undefined, baseUrl);
     } else {
       new Shumway.BinaryFileReader(movieUrl).readAll(null, function(buffer, error) {
         if (!buffer) {
-          throw "Unable to open the file " + file + ": " + error;
+          throw "Unable to open the file " + movieUrl + ": " + error;
         }
-        runSWF(movieUrl, buffer);
+        runSWF(movieUrl, buffer, baseUrl);
       });
     }
   });
 }
 
-var LOADER_WORKER_PATH = SHUMWAY_ROOT + 'web/worker.js';
-
 function setupServices() {
-  Shumway.Telemetry.instance = {
-    reportTelemetry: function (data) {
-      window.parent.postMessage({
-        callback: 'reportTelemetry',
-        data: data
-      }, '*');
-    }
-  };
-
-  Shumway.ClipboardService.instance = {
-    setClipboard: function (data) {
-      window.parent.postMessage({
-        callback: 'setClipboard',
-        data: data
-      }, '*');
-    }
-  };
-
-  Shumway.FileLoadingService.instance = {
-    baseUrl: null,
-    nextSessionId: 1, // 0 - is reserved
-    sessions: [],
-    createSession: function () {
-      var sessionId = this.nextSessionId++;
-      return this.sessions[sessionId] = {
-        open: function (request) {
-          var self = this;
-          var path = Shumway.FileLoadingService.instance.resolveUrl(request.url);
-          console.log('Session #' + sessionId + ': loading ' + path);
-          window.parent.postMessage({
-            callback: 'loadFileRequest',
-            data: {url: path, method: request.method,
-              mimeType: request.mimeType, postData: request.data,
-              checkPolicyFile: request.checkPolicyFile, sessionId: sessionId}
-          }, '*');
-        },
-        notify: function (args) {
-          switch (args.topic) {
-            case "open":
-              this.onopen();
-              break;
-            case "close":
-              this.onclose();
-              Shumway.FileLoadingService.instance.sessions[sessionId] = null;
-              console.log('Session #' + sessionId + ': closed');
-              break;
-            case "error":
-              this.onerror && this.onerror(args.error);
-              break;
-            case "progress":
-              console.log('Session #' + sessionId + ': loaded ' + args.loaded + '/' + args.total);
-              this.onprogress && this.onprogress(args.array, {bytesLoaded: args.loaded, bytesTotal: args.total});
-              break;
-          }
-        }
-      };
-    },
-    setBaseUrl: function (url) {
-      var baseUrl;
-      if (typeof URL !== 'undefined') {
-        baseUrl = new URL(url, document.location.href).href;
-      } else {
-        var a = document.createElement('a');
-        a.href = url || '#';
-        a.setAttribute('style', 'display: none;');
-        document.body.appendChild(a);
-        baseUrl = a.href;
-        document.body.removeChild(a);
-      }
-      Shumway.FileLoadingService.instance.baseUrl = baseUrl;
-      return baseUrl;
-    },
-    resolveUrl: function (url) {
-      if (url.indexOf('://') >= 0) return url;
-
-      var base = Shumway.FileLoadingService.instance.baseUrl;
-      base = base.lastIndexOf('/') >= 0 ? base.substring(0, base.lastIndexOf('/') + 1) : '';
-      if (url.indexOf('/') === 0) {
-        var m = /^[^:]+:\/\/[^\/]+/.exec(base);
-        if (m) base = m[0];
-      }
-      return base + url;
-    }
-  };
+  Shumway.Telemetry.instance = new Shumway.Player.ShumwayComTelemetryService();
+  Shumway.ExternalInterfaceService.instance = new Shumway.Player.ShumwayComExternalInterface();
+  Shumway.ClipboardService.instance = new Shumway.Player.ShumwayComClipboardService();
+  Shumway.FileLoadingService.instance = new Shumway.Player.ShumwayComFileLoadingService();
+  Shumway.SystemResourcesLoadingService.instance = new Shumway.Player.ShumwayComResourcesLoadingService(true);
 }
 
 window.addEventListener('message', function onWindowMessage(e) {
@@ -163,13 +76,6 @@ window.addEventListener('message', function onWindowMessage(e) {
     return;
   }
   switch (data.type) {
-    case "loadFileResponse":
-      var args = data.args;
-      var session = Shumway.FileLoadingService.instance.sessions[args.sessionId];
-      if (session) {
-        session.notify(args);
-      }
-      break;
     case "runSwf":
       if (data.settings) {
         Shumway.Settings.setSettings(data.settings);

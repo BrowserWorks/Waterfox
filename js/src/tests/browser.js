@@ -332,6 +332,14 @@ function jsTestDriverBrowserInit()
     {
       properties.version = '1.8';
     }
+    else if (properties.test.match(/^ecma_6\/Class/))
+    {
+      properties.version = '1.8';
+    }
+    else if (properties.test.match(/^ecma_6\/extensions/))
+    {
+      properties.version = '1.8';
+    }
   }
 
   // default to language=type;text/javascript. required for

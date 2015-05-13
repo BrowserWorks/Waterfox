@@ -36,7 +36,6 @@ public final class ThreadUtils {
     // Once Bug 709230 is resolved we should reconsider this as ProGuard should be able to optimise
     // this out at compile time.
     public static Handler sGeckoHandler;
-    public static MessageQueue sGeckoQueue;
     public static volatile Thread sGeckoThread;
 
     // Delayed Runnable that resets the Gecko thread priority.
@@ -94,6 +93,14 @@ public final class ThreadUtils {
 
     public static void postToUiThread(Runnable runnable) {
         sUiHandler.post(runnable);
+    }
+
+    public static void postDelayedToUiThread(Runnable runnable, long timeout) {
+        sUiHandler.postDelayed(runnable, timeout);
+    }
+
+    public static void removeCallbacksFromUiThread(Runnable runnable) {
+        sUiHandler.removeCallbacks(runnable);
     }
 
     public static Thread getBackgroundThread() {

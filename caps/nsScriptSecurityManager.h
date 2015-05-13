@@ -17,13 +17,10 @@
 
 #include <stdint.h>
 
-class nsIDocShell;
 class nsCString;
-class nsIClassInfo;
 class nsIIOService;
 class nsIStringBundle;
 class nsSystemPrincipal;
-class ClassInfoData;
 
 /////////////////////////////
 // nsScriptSecurityManager //
@@ -32,9 +29,9 @@ class ClassInfoData;
 { 0x7ee2a4c0, 0x4b93, 0x17d3, \
 { 0xba, 0x18, 0x00, 0x60, 0xb0, 0xf1, 0x99, 0xa2 }}
 
-class nsScriptSecurityManager MOZ_FINAL : public nsIScriptSecurityManager,
-                                          public nsIChannelEventSink,
-                                          public nsIObserver
+class nsScriptSecurityManager final : public nsIScriptSecurityManager,
+                                      public nsIChannelEventSink,
+                                      public nsIObserver
 {
 public:
     static void Shutdown();

@@ -35,11 +35,6 @@ Tests of DOM Worker Navigator
       return;
     }
 
-    if (args.name === "taintEnabled") {
-      is(navigator[args.name](), args.value, args.name + "() returns false.");
-      return;
-    }
-
     if (args.name === "getDataStores") {
       var type = typeof navigator[args.name];
       is(type, args.value, "getDataStores() exists and it's a function.");
@@ -59,6 +54,8 @@ Tests of DOM Worker Navigator
     ok(false, "Worker had an error: " + event.message);
     SimpleTest.finish();
   }
+
+  worker.postMessage({ 'isB2G': SpecialPowers.isB2G });
 
   SimpleTest.waitForExplicitFinish();
 

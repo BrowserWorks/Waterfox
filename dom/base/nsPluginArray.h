@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 sw=2 et tw=79: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -17,9 +17,9 @@
 class nsPluginElement;
 class nsMimeType;
 
-class nsPluginArray MOZ_FINAL : public nsIObserver,
-                                public nsSupportsWeakReference,
-                                public nsWrapperCache
+class nsPluginArray final : public nsIObserver,
+                            public nsSupportsWeakReference,
+                            public nsWrapperCache
 {
 public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -31,7 +31,7 @@ public:
 
   explicit nsPluginArray(nsPIDOMWindow* aWindow);
   nsPIDOMWindow* GetParentObject() const;
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // nsPluginArray registers itself as an observer with a weak reference.
   // This can't be done in the constructor, because at that point its
@@ -75,8 +75,8 @@ private:
   nsTArray<nsRefPtr<nsPluginElement> > mHiddenPlugins;
 };
 
-class nsPluginElement MOZ_FINAL : public nsISupports,
-                                  public nsWrapperCache
+class nsPluginElement final : public nsISupports,
+                              public nsWrapperCache
 {
 public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -85,7 +85,7 @@ public:
   nsPluginElement(nsPIDOMWindow* aWindow, nsPluginTag* aPluginTag);
 
   nsPIDOMWindow* GetParentObject() const;
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   nsPluginTag* PluginTag() const
   {

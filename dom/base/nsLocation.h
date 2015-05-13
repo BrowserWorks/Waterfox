@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 sw=2 et tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -25,9 +25,9 @@ class nsIDocShellLoadInfo;
 // nsLocation: Script "location" object
 //*****************************************************************************
 
-class nsLocation MOZ_FINAL : public nsIDOMLocation
-                           , public nsWrapperCache
-                           , public mozilla::dom::URLSearchParamsObserver
+class nsLocation final : public nsIDOMLocation
+                       , public nsWrapperCache
+                       , public mozilla::dom::URLSearchParamsObserver
 {
   typedef mozilla::ErrorResult ErrorResult;
 
@@ -142,10 +142,10 @@ public:
   {
     return mInnerWindow;
   }
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // URLSearchParamsObserver
-  void URLSearchParamsUpdated(mozilla::dom::URLSearchParams* aSearchParams) MOZ_OVERRIDE;
+  void URLSearchParamsUpdated(mozilla::dom::URLSearchParams* aSearchParams) override;
 
 protected:
   virtual ~nsLocation();

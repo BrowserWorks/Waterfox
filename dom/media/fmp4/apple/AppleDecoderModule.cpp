@@ -33,77 +33,9 @@ bool AppleDecoderModule::sIsVTHWAvailable = false;
 bool AppleDecoderModule::sIsVDAAvailable = false;
 bool AppleDecoderModule::sForceVDA = false;
 
-AppleDecoderModule::AppleDecoderModule()
-{
-}
-
-AppleDecoderModule::~AppleDecoderModule()
-{
-}
-
-/* static */
-void
-AppleDecoderModule::Init()
-{
-  MOZ_ASSERT(NS_IsMainThread(), "Must be on main thread.");
-
-  sForceVDA = Preferences::GetBool("media.apple.forcevda", false);
-
-  if (sInitialized) {
-    return;
-  }
-
-  // dlopen VideoDecodeAcceleration.framework if it's available.
-  sIsVDAAvailable = AppleVDALinker::Link();
-
-  // dlopen CoreMedia.framework if it's available.
-  bool haveCoreMedia = AppleCMLinker::Link();
-  // dlopen VideoToolbox.framework if it's available.
-  // We must link both CM and VideoToolbox framework to allow for proper
-  // paired Link/Unlink calls
-  bool haveVideoToolbox = AppleVTLinker::Link();
-  sIsVTAvailable = haveCoreMedia && haveVideoToolbox;
-
-  sIsVTHWAvailable = AppleVTLinker::skPropHWAccel != nullptr;
-
-  if (sIsVDAAvailable) {
-    AppleVDALinker::Unlink();
-  }
-  if (sIsVTAvailable) {
-    AppleVTLinker::Unlink();
-    AppleCMLinker::Unlink();
-  }
-  sInitialized = true;
-}
-
-class InitTask : public nsRunnable {
-public:
-  NS_IMETHOD Run() MOZ_OVERRIDE {
-    MOZ_ASSERT(NS_IsMainThread(), "Must be on main thread.");
-    AppleDecoderModule::Init();
-    return NS_OK;
-  }
-};
-
-/* static */
-nsresult
-AppleDecoderModule::CanDecode()
-{
-  if (!sInitialized) {
-    if (NS_IsMainThread()) {
-      Init();
-    } else {
-      nsRefPtr<nsIRunnable> task(new InitTask());
-      NS_DispatchToMainThread(task, NS_DISPATCH_SYNC);
-    }
-  }
-
-  return (sIsVDAAvailable || sIsVTAvailable) ? NS_OK : NS_ERROR_NO_INTERFACE;
-}
-
 class LinkTask : public nsRunnable {
 public:
-  NS_IMETHOD Run() MOZ_OVERRIDE {
+  NS_IMETHOD Run() override {
     MOZ_ASSERT(NS_IsMainThread(), "Must be on main thread.");
     MOZ_ASSERT(AppleDecoderModule::sInitialized);
     if (AppleDecoderModule::sIsVDAAvailable) {
@@ -117,22 +49,9 @@ public:
   }
 };
 
-nsresult
-AppleDecoderModule::Startup()
-{
-  if (!sIsVDAAvailable && !sIsVTAvailable) {
-    return NS_ERROR_FAILURE;
-  }
-
-  nsRefPtr<nsIRunnable> task(new LinkTask());
-  NS_DispatchToMainThread(task, NS_DISPATCH_SYNC);
-
-  return NS_OK;
-}
-
 class UnlinkTask : public nsRunnable {
 public:
-  NS_IMETHOD Run() MOZ_OVERRIDE {
+  NS_IMETHOD Run() override {
     MOZ_ASSERT(NS_IsMainThread(), "Must be on main thread.");
     MOZ_ASSERT(AppleDecoderModule::sInitialized);
     if (AppleDecoderModule::sIsVDAAvailable) {
@@ -146,19 +65,104 @@ public:
   }
 };
 
-nsresult
-AppleDecoderModule::Shutdown()
+AppleDecoderModule::AppleDecoderModule()
 {
-  nsRefPtr<nsIRunnable> task(new UnlinkTask());
-  NS_DispatchToMainThread(task);
+}
+
+AppleDecoderModule::~AppleDecoderModule()
+{
+  nsCOMPtr<nsIRunnable> task(new UnlinkTask());
+  if (!NS_IsMainThread()) {
+    NS_DispatchToMainThread(task);
+  } else {
+    task->Run();
+  }
+}
+
+/* static */
+void
+AppleDecoderModule::Init()
+{
+  MOZ_ASSERT(NS_IsMainThread(), "Must be on main thread.");
+
+  if (sInitialized) {
+    return;
+  }
+
+  Preferences::AddBoolVarCache(&sForceVDA, "media.apple.forcevda", false);
+
+  // dlopen VideoDecodeAcceleration.framework if it's available.
+  sIsVDAAvailable = AppleVDALinker::Link();
+
+  // dlopen CoreMedia.framework if it's available.
+  bool haveCoreMedia = AppleCMLinker::Link();
+  // dlopen VideoToolbox.framework if it's available.
+  // We must link both CM and VideoToolbox framework to allow for proper
+  // paired Link/Unlink calls
+  bool haveVideoToolbox = AppleVTLinker::Link();
+  sIsVTAvailable = haveCoreMedia && haveVideoToolbox;
+
+  sIsVTHWAvailable = AppleVTLinker::skPropEnableHWAccel != nullptr;
+
+  if (sIsVDAAvailable) {
+    AppleVDALinker::Unlink();
+  }
+  if (sIsVTAvailable) {
+    AppleVTLinker::Unlink();
+    AppleCMLinker::Unlink();
+  }
+  sInitialized = true;
+}
+
+class InitTask : public nsRunnable {
+public:
+  NS_IMETHOD Run() override {
+    MOZ_ASSERT(NS_IsMainThread(), "Must be on main thread.");
+    AppleDecoderModule::Init();
+    return NS_OK;
+  }
+};
+
+/* static */
+nsresult
+AppleDecoderModule::CanDecode()
+{
+  if (!sInitialized) {
+    // Note: We can be called on the main thread from MP4Decoder::CanHandleMediaType().
+    if (NS_IsMainThread()) {
+      Init();
+    } else {
+      nsCOMPtr<nsIRunnable> task(new InitTask());
+      NS_DispatchToMainThread(task, NS_DISPATCH_SYNC);
+    }
+  }
+
+  return (sIsVDAAvailable || sIsVTAvailable) ? NS_OK : NS_ERROR_NO_INTERFACE;
+}
+
+nsresult
+AppleDecoderModule::Startup()
+{
+  if (!sIsVDAAvailable && !sIsVTAvailable) {
+    return NS_ERROR_FAILURE;
+  }
+
+  // Note: We can be called on the main thread from MP4Decoder::CanHandleMediaType().
+  nsCOMPtr<nsIRunnable> task(new LinkTask());
+  if (!NS_IsMainThread()) {
+    NS_DispatchToMainThread(task, NS_DISPATCH_SYNC);
+  } else {
+    task->Run();
+  }
+
   return NS_OK;
 }
 
 already_AddRefed<MediaDataDecoder>
-AppleDecoderModule::CreateVideoDecoder(const mp4_demuxer::VideoDecoderConfig& aConfig,
+AppleDecoderModule::CreateVideoDecoder(const VideoInfo& aConfig,
                                        layers::LayersBackend aLayersBackend,
                                        layers::ImageContainer* aImageContainer,
-                                       MediaTaskQueue* aVideoTaskQueue,
+                                       FlushableMediaTaskQueue* aVideoTaskQueue,
                                        MediaDataDecoderCallback* aCallback)
 {
   nsRefPtr<MediaDataDecoder> decoder;
@@ -183,8 +187,8 @@ AppleDecoderModule::CreateVideoDecoder(const mp4_demuxer::VideoDecoderConfig& aC
 }
 
 already_AddRefed<MediaDataDecoder>
-AppleDecoderModule::CreateAudioDecoder(const mp4_demuxer::AudioDecoderConfig& aConfig,
-                                       MediaTaskQueue* aAudioTaskQueue,
+AppleDecoderModule::CreateAudioDecoder(const AudioInfo& aConfig,
+                                       FlushableMediaTaskQueue* aAudioTaskQueue,
                                        MediaDataDecoderCallback* aCallback)
 {
   nsRefPtr<MediaDataDecoder> decoder =
@@ -193,15 +197,20 @@ AppleDecoderModule::CreateAudioDecoder(const mp4_demuxer::AudioDecoderConfig& aC
 }
 
 bool
-AppleDecoderModule::SupportsAudioMimeType(const char* aMimeType)
+AppleDecoderModule::SupportsMimeType(const nsACString& aMimeType)
 {
-  return !strcmp(aMimeType, "audio/mp4a-latm") || !strcmp(aMimeType, "audio/mpeg");
+  return aMimeType.EqualsLiteral("audio/mpeg") ||
+    PlatformDecoderModule::SupportsMimeType(aMimeType);
 }
 
-bool
-AppleDecoderModule::DecoderNeedsAVCC(const mp4_demuxer::VideoDecoderConfig& aConfig)
+PlatformDecoderModule::ConversionRequired
+AppleDecoderModule::DecoderNeedsConversion(const TrackInfo& aConfig) const
 {
-  return true;
+  if (aConfig.IsVideo()) {
+    return kNeedAVCC;
+  } else {
+    return kNeedNone;
+  }
 }
 
 } // namespace mozilla

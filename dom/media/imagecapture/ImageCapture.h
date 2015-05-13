@@ -11,8 +11,6 @@
 #include "mozilla/dom/ImageCaptureBinding.h"
 #include "prlog.h"
 
-class nsIDOMBlob;
-
 namespace mozilla {
 
 #ifdef PR_LOGGING
@@ -32,7 +30,7 @@ PRLogModuleInfo* GetICLog();
 
 namespace dom {
 
-class File;
+class Blob;
 class VideoStreamTrack;
 
 /**
@@ -49,7 +47,7 @@ class VideoStreamTrack;
  *  to the MediaStreamGraph way.
  */
 
-class ImageCapture MOZ_FINAL : public DOMEventTargetHelper
+class ImageCapture final : public DOMEventTargetHelper
 {
 public:
   NS_DECL_ISUPPORTS_INHERITED
@@ -65,9 +63,9 @@ public:
   VideoStreamTrack* GetVideoStreamTrack() const;
 
   // nsWrapperCache member
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override
   {
-    return ImageCaptureBinding::Wrap(aCx, this);
+    return ImageCaptureBinding::Wrap(aCx, this, aGivenProto);
   }
 
   // ImageCapture class members
@@ -80,7 +78,7 @@ public:
   ImageCapture(VideoStreamTrack* aVideoStreamTrack, nsPIDOMWindow* aOwnerWindow);
 
   // Post a Blob event to script.
-  nsresult PostBlobEvent(File* aBlob);
+  nsresult PostBlobEvent(Blob* aBlob);
 
   // Post an error event to script.
   // aErrorCode should be one of error codes defined in ImageCaptureError.h.

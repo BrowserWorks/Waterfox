@@ -35,9 +35,9 @@ AudioProcessingEvent::~AudioProcessingEvent()
 }
 
 JSObject*
-AudioProcessingEvent::WrapObjectInternal(JSContext* aCx)
+AudioProcessingEvent::WrapObjectInternal(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return AudioProcessingEventBinding::Wrap(aCx, this);
+  return AudioProcessingEventBinding::Wrap(aCx, this, aGivenProto);
 }
 
 already_AddRefed<AudioBuffer>
@@ -55,7 +55,7 @@ AudioProcessingEvent::LazilyCreateBuffer(uint32_t aNumberOfChannels,
     AudioBuffer::Create(mNode->Context(), aNumberOfChannels,
                         mNode->BufferSize(),
                         mNode->Context()->SampleRate(), cx, aRv);
-  MOZ_ASSERT(buffer || aRv.ErrorCode() == NS_ERROR_OUT_OF_MEMORY);
+  MOZ_ASSERT(buffer || aRv.ErrorCodeIs(NS_ERROR_OUT_OF_MEMORY));
   return buffer.forget();
 }
 

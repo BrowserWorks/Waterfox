@@ -29,9 +29,10 @@ SuggestAutoComplete.prototype = {
   },
 
   get _suggestionLabel() {
-    delete this._suggestionLabel;
     let bundle = Services.strings.createBundle("chrome://global/locale/search/search.properties");
-    return this._suggestionLabel = bundle.GetStringFromName("suggestion_label");
+    let label = bundle.GetStringFromName("suggestion_label");
+    Object.defineProperty(SuggestAutoComplete.prototype, "_suggestionLabel", {value: label});
+    return label;
   },
 
   /**
@@ -71,13 +72,6 @@ SuggestAutoComplete.prototype = {
       // now put the history results above the suggestions
       finalResults = finalResults.concat(results.remote);
       finalComments = finalComments.concat(comments);
-    }
-
-    // If no result, add the search term so that the panel of the new UI is shown anyway.
-    if (!finalResults.length &&
-        Services.prefs.getBoolPref("browser.search.showOneOffButtons")) {
-      finalResults.push(results.term);
-      finalComments.push("");
     }
 
     // Notify the FE of our new results

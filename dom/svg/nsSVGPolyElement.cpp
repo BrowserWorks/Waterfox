@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -121,8 +122,8 @@ nsSVGPolyElement::GetMarkPoints(nsTArray<nsSVGMark> *aMarks)
 }
 
 bool
-nsSVGPolyElement::GetGeometryBounds(Rect* aBounds, Float aStrokeWidth,
-                                    const Matrix& aTransform)
+nsSVGPolyElement::GetGeometryBounds(
+  Rect* aBounds, const StrokeOptions& aStrokeOptions, const Matrix& aTransform)
 {
   const SVGPointList &points = mPoints.GetAnimValue();
 
@@ -132,7 +133,7 @@ nsSVGPolyElement::GetGeometryBounds(Rect* aBounds, Float aStrokeWidth,
     return true;
   }
 
-  if (aStrokeWidth > 0) {
+  if (aStrokeOptions.mLineWidth > 0) {
     // We don't handle stroke-miterlimit etc. yet
     return false;
   }

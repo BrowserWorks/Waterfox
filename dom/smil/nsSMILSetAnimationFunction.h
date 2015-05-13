@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -32,7 +33,7 @@ public:
    *          attribute; false otherwise.
    */
   virtual bool SetAttr(nsIAtom* aAttribute, const nsAString& aValue,
-                         nsAttrValue& aResult, nsresult* aParseResult = nullptr) MOZ_OVERRIDE;
+                         nsAttrValue& aResult, nsresult* aParseResult = nullptr) override;
 
   /*
    * Unsets the given attribute.
@@ -40,26 +41,26 @@ public:
    * @returns true if aAttribute is a recognized animation-related
    *          attribute; false otherwise.
    */
-  virtual bool UnsetAttr(nsIAtom* aAttribute) MOZ_OVERRIDE;
+  virtual bool UnsetAttr(nsIAtom* aAttribute) override;
 
 protected:
   // Although <set> animation might look like to-animation, unlike to-animation,
   // it never interpolates values.
   // Returning false here will mean this animation function gets treated as
   // a single-valued function and no interpolation will be attempted.
-  virtual bool IsToAnimation() const MOZ_OVERRIDE {
+  virtual bool IsToAnimation() const override {
     return false;
   }
 
   // <set> applies the exact same value across the simple duration.
-  virtual bool IsValueFixedForSimpleDuration() const MOZ_OVERRIDE {
+  virtual bool IsValueFixedForSimpleDuration() const override {
     return true;
   }
-  virtual bool               HasAttr(nsIAtom* aAttName) const MOZ_OVERRIDE;
-  virtual const nsAttrValue* GetAttr(nsIAtom* aAttName) const MOZ_OVERRIDE;
+  virtual bool               HasAttr(nsIAtom* aAttName) const override;
+  virtual const nsAttrValue* GetAttr(nsIAtom* aAttName) const override;
   virtual bool               GetAttr(nsIAtom* aAttName,
-                                     nsAString& aResult) const MOZ_OVERRIDE;
-  virtual bool WillReplace() const MOZ_OVERRIDE;
+                                     nsAString& aResult) const override;
+  virtual bool WillReplace() const override;
 
   bool IsDisallowedAttribute(const nsIAtom* aAttribute) const;
 };

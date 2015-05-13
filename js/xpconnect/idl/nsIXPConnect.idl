@@ -11,6 +11,8 @@
 %{ C++
 #include "jspubtd.h"
 #include "js/TypeDecls.h"
+#include "mozilla/Attributes.h"
+#include "nsCOMPtr.h"
 
 struct JSFreeOp;
 
@@ -27,7 +29,6 @@ class nsAXPCNativeCallContext;
 [ptr] native JSFreeOpPtr(JSFreeOp);
 [ptr] native JSObjectPtr(JSObject);
 [ptr] native JSValConstPtr(const JS::Value);
-      native JSPropertyOp(JSPropertyOp);
       native JSEqualityOp(JSEqualityOp);
 [ptr] native JSScriptPtr(JSScript);
 [ptr] native voidPtrPtr(void*);
@@ -53,13 +54,13 @@ interface nsIObjectInputStream;
 interface nsIObjectOutputStream;
 
 /***************************************************************************/
-[uuid(909e8641-7c54-4dff-9b94-ba631f057b33)]
+[uuid(73e6ff4a-ab99-4d99-ac00-ba39ccb8e4d7)]
 interface nsIXPConnectJSObjectHolder : nsISupports
 {
     [notxpcom, nostdcall] JSObjectPtr GetJSObject();
 };
 
-[uuid(cf6b00de-8ff4-443a-932c-b72ff341367a)]
+[uuid(e787be29-db5d-4a45-a3d6-1de1d6b85c30)]
 interface nsIXPConnectWrappedNative : nsIXPConnectJSObjectHolder
 {
     /* attribute 'JSObject' inherited from nsIXPConnectJSObjectHolder */
@@ -89,13 +90,12 @@ interface nsIXPConnectWrappedNative : nsIXPConnectJSObjectHolder
     nsISupports* Native() const { return mIdentity; }
 
 protected:
-    nsISupports *mIdentity;
+    nsCOMPtr<nsISupports> mIdentity;
 public:
 %}
 };
 
 %{C++
-#include "nsCOMPtr.h"
 
 inline
 const nsQueryInterface
@@ -115,7 +115,7 @@ do_QueryWrappedNative(nsIXPConnectWrappedNative *aWrappedNative,
 
 %}
 
-[uuid(BED52030-BCA6-11d2-BA79-00805F8A5DD7)]
+[uuid(3a01b0d6-074b-49ed-bac3-08c76366cae4)]
 interface nsIXPConnectWrappedJS : nsIXPConnectJSObjectHolder
 {
     /* attribute 'JSObject' inherited from nsIXPConnectJSObjectHolder */
@@ -266,7 +266,7 @@ interface nsIXPCFunctionThisTranslator : nsISupports
     { 0xbd, 0xd6, 0x0, 0x0, 0x64, 0x65, 0x73, 0x74 } }
 %}
 
-[noscript, uuid(a632b020-331f-11e4-8c21-0800200c9a66)]
+[noscript, uuid(241fbefa-89dc-42b2-b180-08167d4b351b)]
 interface nsIXPConnect : nsISupports
 {
 %{ C++
@@ -407,14 +407,6 @@ interface nsIXPConnect : nsISupports
     getNativeOfWrapper(in JSContextPtr aJSContext,
                        in JSObjectPtr  aJSObj);
 
-    nsIStackFrame
-    createStackFrameLocation(in uint32_t       aLanguage,
-                             in string         aFilename,
-                             in string         aFunctionName,
-                             in int32_t        aLineNumber,
-                             in nsIStackFrame  aCaller);
-
-
     [noscript,notxpcom,nostdcall] JSContextPtr getCurrentJSContext();
     [noscript,notxpcom,nostdcall] JSContextPtr getSafeJSContext();
 
@@ -463,14 +455,6 @@ interface nsIXPConnect : nsISupports
     void
     setFunctionThisTranslator(in nsIIDRef aIID,
                               in nsIXPCFunctionThisTranslator aTranslator);
-
-    void
-    reparentWrappedNativeIfFound(in JSContextPtr aJSContext,
-                                 in JSObjectPtr  aScope,
-                                 in JSObjectPtr  aNewParent,
-                                 in nsISupports  aCOMObj);
-    void
-    rescueOrphansInScope(in JSContextPtr aJSContext, in JSObjectPtr  aScope);
 
     nsIXPConnectJSObjectHolder
     getWrappedNativePrototype(in JSContextPtr aJSContext,
@@ -543,13 +527,6 @@ interface nsIXPConnect : nsISupports
                                     bool showLocals,
                                     bool showThisProps) = 0;
 %}
-
-    /**
-     * Creates a JS object holder around aObject that will hold the object
-     * alive for as long as the holder stays alive.
-     */
-    nsIXPConnectJSObjectHolder holdObject(in JSContextPtr aJSContext,
-                                          in JSObjectPtr aObject);
 
     [noscript] void writeScript(in nsIObjectOutputStream aStream,
                                 in JSContextPtr aJSContext,

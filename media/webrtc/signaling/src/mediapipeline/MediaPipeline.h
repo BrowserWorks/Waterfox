@@ -27,7 +27,7 @@
 #include "runnable_utils.h"
 #include "transportflow.h"
 
-#ifdef MOZILLA_INTERNAL_API
+#if defined(MOZILLA_INTERNAL_API)
 #include "VideoSegment.h"
 #endif
 
@@ -77,7 +77,7 @@ class MediaPipeline : public sigslot::has_slots<> {
                 nsCOMPtr<nsIEventTarget> main_thread,
                 nsCOMPtr<nsIEventTarget> sts_thread,
                 MediaStream *stream,
-                TrackID track_id,
+                const std::string& track_id,
                 int level,
                 RefPtr<MediaSessionConduit> conduit,
                 RefPtr<TransportFlow> rtp_transport,
@@ -110,7 +110,7 @@ class MediaPipeline : public sigslot::has_slots<> {
 
       // PipelineTransport() will access this->sts_thread_; moved here for safety
       transport_ = new PipelineTransport(this);
-  }
+    }
 
   // Must be called on the STS thread.  Must be called after ShutdownMedia_m().
   void ShutdownTransport_s();
@@ -119,6 +119,12 @@ class MediaPipeline : public sigslot::has_slots<> {
   void ShutdownMedia_m() {
     ASSERT_ON_THREAD(main_thread_);
 
+    if (direction_ == RECEIVE) {
+      conduit_->StopReceiving();
+    } else {
+      conduit_->StopTransmitting();
+    }
+
     if (stream_) {
       DetachMediaStream();
     }
@@ -126,13 +132,20 @@ class MediaPipeline : public sigslot::has_slots<> {
 
   virtual nsresult Init();
 
-  MediaPipelineFilter* UpdateFilterFromRemoteDescription_s(
-      nsAutoPtr<MediaPipelineFilter> filter);
+  void UpdateTransport_m(int level,
+                         RefPtr<TransportFlow> rtp_transport,
+                         RefPtr<TransportFlow> rtcp_transport,
+                         nsAutoPtr<MediaPipelineFilter> filter);
+
+  void UpdateTransport_s(int level,
+                         RefPtr<TransportFlow> rtp_transport,
+                         RefPtr<TransportFlow> rtcp_transport,
+                         nsAutoPtr<MediaPipelineFilter> filter);
 
   virtual Direction direction() const { return direction_; }
-  virtual TrackID trackid() const { return track_id_; }
+  virtual const std::string& trackid() const { return track_id_; }
   virtual int level() const { return level_; }
-  virtual bool IsVideo() const { return false; }
+  virtual bool IsVideo() const = 0;
 
   bool IsDoingRtcpMux() const {
     return (rtp_.type_ == MUX);
@@ -160,6 +173,8 @@ class MediaPipeline : public sigslot::has_slots<> {
  protected:
   virtual ~MediaPipeline();
   virtual void DetachMediaStream() {}
+  nsresult AttachTransport_s();
+  void DetachTransport_s();
 
   // Separate class to allow ref counting
   class PipelineTransport : public TransportInterface {
@@ -191,6 +206,13 @@ class MediaPipeline : public sigslot::has_slots<> {
         state_(MP_CONNECTING),
         type_(type) {
         MOZ_ASSERT(flow);
+      }
+
+      void Detach()
+      {
+        transport_ = nullptr;
+        send_srtp_ = nullptr;
+        recv_srtp_ = nullptr;
       }
 
       RefPtr<TransportFlow> transport_;
@@ -233,10 +255,13 @@ class MediaPipeline : public sigslot::has_slots<> {
                                 // Written on the main thread.
                                 // Used on STS and MediaStreamGraph threads.
                                 // May be changed by rtpSender.replaceTrack()
-  TrackID track_id_;            // The track on the stream.
+  std::string track_id_;        // The track on the stream.
                                 // Written and used as with the stream_;
                                 // Not used outside initialization in MediaPipelineTransmit
-  int level_; // The m-line index (starting at 1, to match convention)
+  // The m-line index (starting at 0, to match convention) Atomic because
+  // this value is updated from STS, but read on main, and we don't want to
+  // bother with dispatches just to get an int occasionally.
+  Atomic<int> level_;
   RefPtr<MediaSessionConduit> conduit_;  // Our conduit. Written on the main
                                          // thread. Read on STS thread.
 
@@ -280,11 +305,12 @@ class GenericReceiveListener : public MediaStreamListener
 {
  public:
   GenericReceiveListener(SourceMediaStream *source, TrackID track_id,
-                         TrackRate track_rate)
+                         TrackRate track_rate, bool queue_track)
     : source_(source),
       track_id_(track_id),
       track_rate_(track_rate),
-      played_ticks_(0) {}
+      played_ticks_(0),
+      queue_track_(queue_track) {}
 
   virtual ~GenericReceiveListener() {}
 
@@ -303,6 +329,7 @@ class GenericReceiveListener : public MediaStreamListener
   TrackID track_id_;
   TrackRate track_rate_;
   TrackTicks played_ticks_;
+  bool queue_track_;
 };
 
 class TrackAddedCallback {
@@ -352,6 +379,7 @@ public:
                         nsCOMPtr<nsIEventTarget> main_thread,
                         nsCOMPtr<nsIEventTarget> sts_thread,
                         DOMMediaStream *domstream,
+                        const std::string& track_id,
                         int level,
                         bool is_video,
                         RefPtr<MediaSessionConduit> conduit,
@@ -359,7 +387,7 @@ public:
                         RefPtr<TransportFlow> rtcp_transport,
                         nsAutoPtr<MediaPipelineFilter> filter) :
       MediaPipeline(pc, TRANSMIT, main_thread, sts_thread,
-                    domstream->GetStream(), TRACK_INVALID, level,
+                    domstream->GetStream(), track_id, level,
                     conduit, rtp_transport, rtcp_transport, filter),
       listener_(new PipelineListener(conduit)),
       domstream_(domstream),
@@ -367,18 +395,18 @@ public:
   {}
 
   // Initialize (stuff here may fail)
-  virtual nsresult Init() MOZ_OVERRIDE;
+  virtual nsresult Init() override;
 
-  virtual void AttachToTrack(TrackID track_id);
+  virtual void AttachToTrack(const std::string& track_id);
 
   // Index used to refer to this before we know the TrackID
   // Note: unlike MediaPipeline::trackid(), this is threadsafe
   // Not set until first media is received
   virtual TrackID const trackid_locked() { return listener_->trackid(); }
   // written and used from MainThread
-  virtual bool IsVideo() const MOZ_OVERRIDE { return is_video_; }
+  virtual bool IsVideo() const override { return is_video_; }
 
-#ifdef MOZILLA_INTERNAL_API
+#if !defined(MOZILLA_EXTERNAL_LINKAGE)
   // when the principal of the PeerConnection changes, it calls through to here
   // so that we can determine whether to enable stream transmission
   virtual void UpdateSinkIdentity_m(nsIPrincipal* principal,
@@ -386,7 +414,7 @@ public:
 #endif
 
   // Called on the main thread.
-  virtual void DetachMediaStream() MOZ_OVERRIDE {
+  virtual void DetachMediaStream() override {
     ASSERT_ON_THREAD(main_thread_);
     domstream_->RemoveDirectListener(listener_);
     domstream_ = nullptr;
@@ -396,14 +424,14 @@ public:
   }
 
   // Override MediaPipeline::TransportReady.
-  virtual nsresult TransportReady_s(TransportInfo &info) MOZ_OVERRIDE;
+  virtual nsresult TransportReady_s(TransportInfo &info) override;
 
   // Replace a track with a different one
   // In non-compliance with the likely final spec, allow the new
   // track to be part of a different stream (since we don't support
   // multiple tracks of a type in a stream yet).  bug 1056650
   virtual nsresult ReplaceTrack(DOMMediaStream *domstream,
-                                TrackID track_id);
+                                const std::string& track_id);
 
 
   // Separate class to allow ref counting
@@ -421,7 +449,7 @@ public:
         samples_10ms_buffer_(nullptr),
         buffer_current_(0),
         samplenum_10ms_(0)
-#ifdef MOZILLA_INTERNAL_API
+#if !defined(MOZILLA_EXTERNAL_LINKAGE)
         , last_img_(-1)
 #endif // MOZILLA_INTERNAL_API
     {
@@ -438,6 +466,12 @@ public:
       }
     }
 
+    // Dispatches setting the internal TrackID to TRACK_INVALID to the media
+    // graph thread to keep it in sync with other MediaStreamGraph operations
+    // like RemoveListener() and AddListener(). The TrackID will be updated on
+    // the next NewData() callback.
+    void UnsetTrackId(MediaStreamGraphImpl* graph);
+
     void SetActive(bool active) { active_ = active; }
     void SetEnabled(bool enabled) { enabled_ = enabled; }
     TrackID trackid() {
@@ -449,16 +483,21 @@ public:
     virtual void NotifyQueuedTrackChanges(MediaStreamGraph* graph, TrackID tid,
                                           StreamTime offset,
                                           uint32_t events,
-                                          const MediaSegment& queued_media) MOZ_OVERRIDE;
-    virtual void NotifyPull(MediaStreamGraph* aGraph, StreamTime aDesiredTime) MOZ_OVERRIDE {}
+                                          const MediaSegment& queued_media) override;
+    virtual void NotifyPull(MediaStreamGraph* aGraph, StreamTime aDesiredTime) override {}
 
     // Implement MediaStreamDirectListener
     virtual void NotifyRealtimeData(MediaStreamGraph* graph, TrackID tid,
                                     StreamTime offset,
                                     uint32_t events,
-                                    const MediaSegment& media) MOZ_OVERRIDE;
+                                    const MediaSegment& media) override;
 
    private:
+    void UnsetTrackIdImpl() {
+      MutexAutoLock lock(mMutex);
+      track_id_ = track_id_external_ = TRACK_INVALID;
+    }
+
     void NewData(MediaStreamGraph* graph, TrackID tid,
                  StreamTime offset,
                  uint32_t events,
@@ -466,7 +505,7 @@ public:
 
     virtual void ProcessAudioChunk(AudioSessionConduit *conduit,
                                    TrackRate rate, AudioChunk& chunk);
-#ifdef MOZILLA_INTERNAL_API
+#if !defined(MOZILLA_EXTERNAL_LINKAGE)
     virtual void ProcessVideoChunk(VideoSessionConduit *conduit,
                                    VideoChunk& chunk);
 #endif
@@ -497,7 +536,7 @@ public:
     // The number of samples in a 10ms audio chunk.
     int64_t samplenum_10ms_;
 
-#ifdef MOZILLA_INTERNAL_API
+#if !defined(MOZILLA_EXTERNAL_LINKAGE)
     int32_t last_img_; // serial number of last Image
 #endif // MOZILLA_INTERNAL_API
   };
@@ -518,7 +557,7 @@ class MediaPipelineReceive : public MediaPipeline {
                        nsCOMPtr<nsIEventTarget> main_thread,
                        nsCOMPtr<nsIEventTarget> sts_thread,
                        MediaStream *stream,
-                       TrackID track_id,
+                       const std::string& track_id,
                        int level,
                        RefPtr<MediaSessionConduit> conduit,
                        RefPtr<TransportFlow> rtp_transport,
@@ -547,34 +586,43 @@ class MediaPipelineReceiveAudio : public MediaPipelineReceive {
                             nsCOMPtr<nsIEventTarget> main_thread,
                             nsCOMPtr<nsIEventTarget> sts_thread,
                             MediaStream *stream,
-                            TrackID track_id,
+                            // This comes from an msid attribute. Everywhere
+                            // but MediaStreamGraph uses this.
+                            const std::string& media_stream_track_id,
+                            // This is an integer identifier that is only
+                            // unique within a single DOMMediaStream, which is
+                            // used by MediaStreamGraph
+                            TrackID numeric_track_id,
                             int level,
                             RefPtr<AudioSessionConduit> conduit,
                             RefPtr<TransportFlow> rtp_transport,
                             RefPtr<TransportFlow> rtcp_transport,
-                            nsAutoPtr<MediaPipelineFilter> filter) :
+                            nsAutoPtr<MediaPipelineFilter> filter,
+                            bool queue_track) :
       MediaPipelineReceive(pc, main_thread, sts_thread,
-                           stream, track_id, level, conduit, rtp_transport,
-                           rtcp_transport, filter),
+                           stream, media_stream_track_id, level, conduit,
+                           rtp_transport, rtcp_transport, filter),
       listener_(new PipelineListener(stream->AsSourceStream(),
-                                     track_id, conduit)) {
+                                     numeric_track_id, conduit, queue_track)) {
   }
 
-  virtual void DetachMediaStream() MOZ_OVERRIDE {
+  virtual void DetachMediaStream() override {
     ASSERT_ON_THREAD(main_thread_);
     listener_->EndTrack();
     stream_->RemoveListener(listener_);
     stream_ = nullptr;
   }
 
-  virtual nsresult Init() MOZ_OVERRIDE;
+  virtual nsresult Init() override;
+  virtual bool IsVideo() const override { return false; }
 
  private:
   // Separate class to allow ref counting
   class PipelineListener : public GenericReceiveListener {
    public:
     PipelineListener(SourceMediaStream * source, TrackID track_id,
-                     const RefPtr<MediaSessionConduit>& conduit);
+                     const RefPtr<MediaSessionConduit>& conduit,
+                     bool queue_track);
 
     ~PipelineListener()
     {
@@ -591,8 +639,8 @@ class MediaPipelineReceiveAudio : public MediaPipelineReceive {
     virtual void NotifyQueuedTrackChanges(MediaStreamGraph* graph, TrackID tid,
                                           StreamTime offset,
                                           uint32_t events,
-                                          const MediaSegment& queued_media) MOZ_OVERRIDE {}
-    virtual void NotifyPull(MediaStreamGraph* graph, StreamTime desired_time) MOZ_OVERRIDE;
+                                          const MediaSegment& queued_media) override {}
+    virtual void NotifyPull(MediaStreamGraph* graph, StreamTime desired_time) override;
 
    private:
     RefPtr<MediaSessionConduit> conduit_;
@@ -610,21 +658,29 @@ class MediaPipelineReceiveVideo : public MediaPipelineReceive {
                             nsCOMPtr<nsIEventTarget> main_thread,
                             nsCOMPtr<nsIEventTarget> sts_thread,
                             MediaStream *stream,
-                            TrackID track_id,
+                            // This comes from an msid attribute. Everywhere
+                            // but MediaStreamGraph uses this.
+                            const std::string& media_stream_track_id,
+                            // This is an integer identifier that is only
+                            // unique within a single DOMMediaStream, which is
+                            // used by MediaStreamGraph
+                            TrackID numeric_track_id,
                             int level,
                             RefPtr<VideoSessionConduit> conduit,
                             RefPtr<TransportFlow> rtp_transport,
                             RefPtr<TransportFlow> rtcp_transport,
-                            nsAutoPtr<MediaPipelineFilter> filter) :
+                            nsAutoPtr<MediaPipelineFilter> filter,
+                            bool queue_track) :
       MediaPipelineReceive(pc, main_thread, sts_thread,
-                           stream, track_id, level, conduit, rtp_transport,
-                           rtcp_transport, filter),
+                           stream, media_stream_track_id, level, conduit,
+                           rtp_transport, rtcp_transport, filter),
       renderer_(new PipelineRenderer(this)),
-      listener_(new PipelineListener(stream->AsSourceStream(), track_id)) {
+      listener_(new PipelineListener(stream->AsSourceStream(),
+                                     numeric_track_id, queue_track)) {
   }
 
   // Called on the main thread.
-  virtual void DetachMediaStream() MOZ_OVERRIDE {
+  virtual void DetachMediaStream() override {
     ASSERT_ON_THREAD(main_thread_);
 
     listener_->EndTrack();
@@ -637,7 +693,8 @@ class MediaPipelineReceiveVideo : public MediaPipelineReceive {
     stream_ = nullptr;
   }
 
-  virtual nsresult Init() MOZ_OVERRIDE;
+  virtual nsresult Init() override;
+  virtual bool IsVideo() const override { return true; }
 
  private:
   class PipelineRenderer : public VideoRenderer {
@@ -671,14 +728,15 @@ class MediaPipelineReceiveVideo : public MediaPipelineReceive {
   // Separate class to allow ref counting
   class PipelineListener : public GenericReceiveListener {
    public:
-    PipelineListener(SourceMediaStream * source, TrackID track_id);
+    PipelineListener(SourceMediaStream * source, TrackID track_id,
+                     bool queue_track);
 
     // Implement MediaStreamListener
     virtual void NotifyQueuedTrackChanges(MediaStreamGraph* graph, TrackID tid,
                                           StreamTime offset,
                                           uint32_t events,
-                                          const MediaSegment& queued_media) MOZ_OVERRIDE {}
-    virtual void NotifyPull(MediaStreamGraph* graph, StreamTime desired_time) MOZ_OVERRIDE;
+                                          const MediaSegment& queued_media) override {}
+    virtual void NotifyPull(MediaStreamGraph* graph, StreamTime desired_time) override;
 
     // Accessors for external writes from the renderer
     void FrameSizeChange(unsigned int width,
@@ -699,7 +757,9 @@ class MediaPipelineReceiveVideo : public MediaPipelineReceive {
    private:
     int width_;
     int height_;
-#ifdef MOZILLA_INTERNAL_API
+#if defined(MOZILLA_XPCOMRT_API)
+    nsRefPtr<mozilla::SimpleImageBuffer> image_;
+#elif defined(MOZILLA_INTERNAL_API)
     nsRefPtr<layers::ImageContainer> image_container_;
     nsRefPtr<layers::Image> image_;
 #endif

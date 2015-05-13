@@ -1,0 +1,26 @@
+$inherits:
+  from: 'tasks/builds/b2g_emulator_base.yml'
+  variables:
+    build_type: 'opt'
+    build_name: 'emulator-ics'
+task:
+  workerType: emulator-ics
+  routes:
+    - 'index.buildbot.branches.{{project}}.emulator-ics'
+    - 'index.buildbot.revisions.{{head_rev}}.{{project}}.emulator-ics'
+  scopes:
+    - 'docker-worker:cache:workspace-emulator-ics-opt'
+  metadata:
+    name: '[TC] B2G Emulator ICS Opt'
+
+  extra:
+    treeherder:
+      machine:
+        platform: b2g-emu-ics
+
+  payload:
+    cache:
+      workspace-emulator-ics-opt: /home/worker/workspace
+
+    env:
+      TARGET: 'emulator'

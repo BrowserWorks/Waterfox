@@ -15,6 +15,8 @@ interface MouseEvent : UIEvent {
   readonly attribute long           screenY;
   readonly attribute long           clientX;
   readonly attribute long           clientY;
+  readonly attribute long           offsetX;
+  readonly attribute long           offsetY;
   readonly attribute boolean        ctrlKey;
   readonly attribute boolean        shiftKey;
   readonly attribute boolean        altKey;
@@ -52,16 +54,12 @@ partial interface MouseEvent
 };
 
 // Suggested initMouseEvent replacement initializer:
-dictionary MouseEventInit : UIEventInit {
+dictionary MouseEventInit : EventModifierInit {
   // Attributes for MouseEvent:
   long           screenX       = 0;
   long           screenY       = 0;
   long           clientX       = 0;
   long           clientY       = 0;
-  boolean        ctrlKey       = false;
-  boolean        shiftKey      = false;
-  boolean        altKey        = false;
-  boolean        metaKey       = false;
   short          button        = 0;
   // Note: "buttons" was not previously initializable through initMouseEvent!
   unsigned short buttons       = 0;
@@ -106,6 +104,8 @@ partial interface MouseEvent
                                        EventTarget? relatedTargetArg,
                                        float pressure,
                                        unsigned short inputSourceArg);
+  [ChromeOnly]
+  readonly attribute boolean hitCluster; // True when touch occurs in a cluster of links
 
 };
 

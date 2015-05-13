@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -24,7 +25,7 @@ namespace dom {
 class DOMStorageManager;
 class DOMStorageCache;
 
-class DOMStorage MOZ_FINAL
+class DOMStorage final
   : public nsIDOMStorage
   , public nsSupportsWeakReference
   , public nsWrapperCache
@@ -67,7 +68,7 @@ public:
              bool aIsPrivate);
 
   // WebIDL
-  JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   nsIDOMWindow* GetParentObject() const
   {
@@ -88,7 +89,7 @@ public:
   void GetSupportedNames(unsigned, nsTArray<nsString>& aKeys);
 
   void NamedGetter(const nsAString& aKey, bool& aFound, nsAString& aResult,
-	           ErrorResult& aRv)
+                   ErrorResult& aRv)
   {
     GetItem(aKey, aResult, aRv);
     aFound = !aResult.IsVoid();
@@ -109,7 +110,7 @@ public:
   {
     RemoveItem(aKey, aRv);
 
-    aFound = (aRv.ErrorCode() != NS_SUCCESS_DOM_NO_OPERATION);
+    aFound = !aRv.ErrorCodeIs(NS_SUCCESS_DOM_NO_OPERATION);
   }
 
   void Clear(ErrorResult& aRv);

@@ -72,12 +72,14 @@ function test() {
   waitForExplicitFinish();
 
   Services.prefs.setBoolPref(PREF_LOGGING_ENABLED, true);
+  Services.prefs.setBoolPref(PREF_INSTALL_REQUIRESECUREORIGIN, false);
   Services.wm.addListener(gAddonAndWindowListener);
   AddonManager.addInstallListener(gAddonAndWindowListener);
   registerCleanupFunction(function() {
     Services.wm.removeListener(gAddonAndWindowListener);
     AddonManager.removeInstallListener(gAddonAndWindowListener);
     Services.prefs.clearUserPref(PREF_LOGGING_ENABLED);
+    Services.prefs.clearUserPref(PREF_INSTALL_REQUIRESECUREORIGIN);
 
     Services.perms.remove("example.com", "install");
     Services.perms.remove("example.org", "install");
@@ -112,10 +114,10 @@ function endThisTest() {
   isnot(gResults[0].xpi, gResults[1].xpi, "Should not have the same XPIs.");
   for (let i = 0; i < 2; i++) {
     let {loc, xpi} = gResults[i];
-    if (loc.contains("example.org")) {
-      ok(xpi.contains("example.org"), "Should get .org XPI for .org loc");
-    } else if (loc.contains("example.com")) {
-      ok(xpi.contains("example.com"), "Should get .com XPI for .com loc");
+    if (loc.includes("example.org")) {
+      ok(xpi.includes("example.org"), "Should get .org XPI for .org loc");
+    } else if (loc.includes("example.com")) {
+      ok(xpi.includes("example.com"), "Should get .com XPI for .com loc");
     } else {
       ok(false, "Should never get anything that isn't from example.org or example.com");
     }

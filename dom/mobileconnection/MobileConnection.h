@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -11,21 +13,16 @@
 #include "mozilla/dom/MobileNetworkInfo.h"
 #include "mozilla/dom/MozMobileConnectionBinding.h"
 #include "nsCycleCollectionParticipant.h"
+#include "nsIIccService.h"
 #include "nsIMobileConnectionService.h"
 #include "nsWeakPtr.h"
-
-#ifdef MOZ_B2G_RIL
-#include "nsIIccProvider.h"
-#endif // MOZ_B2G_RIL
 
 namespace mozilla {
 namespace dom {
 
-class MobileConnection MOZ_FINAL : public DOMEventTargetHelper
-                                 , private nsIMobileConnectionListener
-#ifdef MOZ_B2G_RIL
-                                 , private nsIIccListener
-#endif // MOZ_B2G_RIL
+class MobileConnection final : public DOMEventTargetHelper
+                             , private nsIMobileConnectionListener
+                             , private nsIIccListener
 {
   /**
    * Class MobileConnection doesn't actually expose
@@ -40,9 +37,7 @@ class MobileConnection MOZ_FINAL : public DOMEventTargetHelper
 public:
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_NSIMOBILECONNECTIONLISTENER
-#ifdef MOZ_B2G_RIL
   NS_DECL_NSIICCLISTENER
-#endif // MOZ_B2G_RIL
   NS_REALLY_FORWARD_NSIDOMEVENTTARGET(DOMEventTargetHelper)
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(MobileConnection,
                                            DOMEventTargetHelper)
@@ -53,7 +48,7 @@ public:
   Shutdown();
 
   virtual void
-  DisconnectFromOwner() MOZ_OVERRIDE;
+  DisconnectFromOwner() override;
 
   nsPIDOMWindow*
   GetParentObject() const
@@ -63,7 +58,7 @@ public:
 
   // WrapperCache
   virtual JSObject*
-  WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // WebIDL interface
   void
@@ -169,9 +164,7 @@ private:
   uint32_t mClientId;
   nsString mIccId;
   nsCOMPtr<nsIMobileConnection> mMobileConnection;
-#ifdef MOZ_B2G_RIL
-  nsCOMPtr<nsIIccProvider> mIcc;
-#endif // MOZ_B2G_RIL
+  nsCOMPtr<nsIIcc> mIccHandler;
   nsRefPtr<Listener> mListener;
   nsRefPtr<MobileConnectionInfo> mVoice;
   nsRefPtr<MobileConnectionInfo> mData;

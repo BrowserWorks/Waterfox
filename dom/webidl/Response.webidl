@@ -8,20 +8,22 @@
  */
 
 [Constructor(optional BodyInit body, optional ResponseInit init),
- Exposed=(Window,Worker),
- Func="mozilla::dom::Headers::PrefEnabled"]
+ Exposed=(Window,Worker)]
 interface Response {
   [NewObject] static Response error();
-  [NewObject] static Response redirect(USVString url, optional unsigned short status = 302);
+  [Throws,
+   NewObject] static Response redirect(USVString url, optional unsigned short status = 302);
 
   readonly attribute ResponseType type;
 
   readonly attribute USVString url;
   readonly attribute unsigned short status;
+  readonly attribute boolean ok;
   readonly attribute ByteString statusText;
   [SameObject] readonly attribute Headers headers;
 
-  [NewObject] Response clone();
+  [Throws,
+   NewObject] Response clone();
 };
 Response implements Body;
 

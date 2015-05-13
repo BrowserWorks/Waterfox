@@ -947,13 +947,8 @@ nsDownloadManager::Init()
   // When MOZ_JSDOWNLOADS is undefined, we still check the preference that can
   // be used to enable the JavaScript API during the migration process.
   mUseJSTransfer = Preferences::GetBool(PREF_BD_USEJSTRANSFER, false);
-#elif defined(XP_WIN)
-    // When MOZ_JSDOWNLOADS is defined on Windows, this component is disabled
-    // unless we are running in Windows Metro.  The conversion of Windows Metro
-    // to use the JavaScript API for downloads is tracked in bug 906042.
-    mUseJSTransfer = !IsRunningInWindowsMetro();
 #else
-    mUseJSTransfer = true;
+  mUseJSTransfer = true;
 #endif
 
   if (mUseJSTransfer)
@@ -1280,7 +1275,7 @@ nsDownloadManager::GetDownloadFromDB(mozIStorageConnection* aDBConn,
   }
 
   // Addrefing and returning
-  NS_ADDREF(*retVal = dl);
+  dl.forget(retVal);
   return NS_OK;
 }
 
@@ -1675,7 +1670,7 @@ nsDownloadManager::AddDownload(DownloadType aDownloadType,
     }
   }
 
-  NS_ADDREF(*aDownload = dl);
+  dl.forget(aDownload);
 
   return NS_OK;
 }
@@ -2524,9 +2519,9 @@ nsDownloadManager::Observe(nsISupports *aSubject,
 
     ConfirmCancelDownloads(mCurrentPrivateDownloads.Count(), cancelDownloads,
                            MOZ_UTF16("leavePrivateBrowsingCancelDownloadsAlertTitle"),
-                           MOZ_UTF16("leavePrivateBrowsingWindowsCancelDownloadsAlertMsgMultiple"),
-                           MOZ_UTF16("leavePrivateBrowsingWindowsCancelDownloadsAlertMsg"),
-                           MOZ_UTF16("dontLeavePrivateBrowsingButton"));
+                           MOZ_UTF16("leavePrivateBrowsingWindowsCancelDownloadsAlertMsgMultiple2"),
+                           MOZ_UTF16("leavePrivateBrowsingWindowsCancelDownloadsAlertMsg2"),
+                           MOZ_UTF16("dontLeavePrivateBrowsingButton2"));
   }
 
   return NS_OK;

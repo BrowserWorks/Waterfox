@@ -1,9 +1,9 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
-const {classes: Cc, interfaces: Ci, results: Cr, utils: Cu} = Components;
-
 "use strict";
+
+const {classes: Cc, interfaces: Ci, results: Cr, utils: Cu} = Components;
 
 const Cm = Components.manager;
 
@@ -46,16 +46,37 @@ const MCC = "aMcc";
 const ANOTHER_MCC = "anotherMcc";
 const OPERATOR = "aOperator";
 const ANOTHER_OPERATOR = "anotherOperator";
+const ICC_INFO = {
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIGsmIccInfo,
+                                         Ci.nsIIccInfo]),
+  iccType: "usim",
+  iccid: ICC_ID,
+  mcc: MCC,
+  mnc: MNC,
+  msisdn: PHONE_NUMBER,
+  operator: OPERATOR
+};
+const ANOTHER_ICC_INFO = {
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIGsmIccInfo,
+                                         Ci.nsIIccInfo]),
+  iccType: "usim",
+  iccid: ANOTHER_ICC_ID,
+  mcc: ANOTHER_MCC,
+  mnc: ANOTHER_MNC,
+  msisdn: ANOTHER_PHONE_NUMBER,
+  operator: ANOTHER_OPERATOR
+};
+const INVALID_ICC_INFO = {
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIGsmIccInfo,
+                                         Ci.nsIIccInfo]),
+  iccType: "usim",
+  iccid: null,
+  mcc: "",
+  mnc: "",
+  msisdn: "",
+  operator: ""
+};
 const RADIO_INTERFACE = {
-  rilContext: {
-    iccInfo: {
-      iccid: ICC_ID,
-      mcc: MCC,
-      mnc: MNC,
-      msisdn: PHONE_NUMBER,
-      operator: OPERATOR
-    }
-  },
   voice: {
     network: {
       shortName: OPERATOR
@@ -69,15 +90,6 @@ const RADIO_INTERFACE = {
   }
 };
 const ANOTHER_RADIO_INTERFACE = {
-  rilContext: {
-    iccInfo: {
-      iccid: ANOTHER_ICC_ID,
-      mcc: ANOTHER_MCC,
-      mnc: ANOTHER_MNC,
-      msisdn: ANOTHER_PHONE_NUMBER,
-      operator: ANOTHER_OPERATOR
-    }
-  },
   voice: {
     network: {
       shortName: ANOTHER_OPERATOR
@@ -92,15 +104,6 @@ const ANOTHER_RADIO_INTERFACE = {
 };
 
 const INVALID_RADIO_INTERFACE = {
-  rilContext: {
-    iccInfo: {
-      iccid: null,
-      mcc: "",
-      mnc: "",
-      msisdn: "",
-      operator: ""
-    }
-  },
   voice: {
     network: {
       shortName: ""
@@ -428,7 +431,7 @@ let MobileIdentityUIGlue = {
 const XUL_APP_INFO_UUID = Components.ID("{84fdc459-d96d-421c-9bff-a8193233ae75}");
 const XUL_APP_INFO_CONTRACT_ID = "@mozilla.org/xre/app-info;1";
 
-let (XULAppInfo = {
+let XULAppInfo = {
   vendor: "Mozilla",
   name: "MobileIdTest",
   ID: "{230de50e-4cd1-11dc-8314-0800200b9a66}",
@@ -445,18 +448,18 @@ let (XULAppInfo = {
     Ci.nsIXULAppInfo,
     Ci.nsIXULRuntime,
   ])
-}) {
-  let XULAppInfoFactory = {
-    createInstance: function (outer, iid) {
-      if (outer != null) {
-        throw Cr.NS_ERROR_NO_AGGREGATION;
-      }
-      return XULAppInfo.QueryInterface(iid);
+};
+
+let XULAppInfoFactory = {
+  createInstance: function (outer, iid) {
+    if (outer != null) {
+      throw Cr.NS_ERROR_NO_AGGREGATION;
     }
-  };
-  Cm.QueryInterface(Ci.nsIComponentRegistrar)
-    .registerFactory(XUL_APP_INFO_UUID,
-                     "XULAppInfo",
-                     XUL_APP_INFO_CONTRACT_ID,
-                     XULAppInfoFactory);
-}
+    return XULAppInfo.QueryInterface(iid);
+  }
+};
+Cm.QueryInterface(Ci.nsIComponentRegistrar)
+  .registerFactory(XUL_APP_INFO_UUID,
+                   "XULAppInfo",
+                   XUL_APP_INFO_CONTRACT_ID,
+                   XULAppInfoFactory);

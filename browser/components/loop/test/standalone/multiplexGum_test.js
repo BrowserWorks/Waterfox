@@ -13,7 +13,7 @@ describe("loop.standaloneMedia._MultiplexGum", function() {
     navigator.getUserMedia ||
     navigator.mozGetUserMedia ||
     navigator.webkitGetUserMedia ||
-    (window["TBPlugin"] && TBPlugin.getUserMedia);
+    (window.TBPlugin && TBPlugin.getUserMedia);
 
   var sandbox;
   var multiplexGum;
@@ -292,7 +292,7 @@ describe("loop.standaloneMedia._MultiplexGum", function() {
           localStream: null,
           pending: false,
           errorCallbacks: [],
-          successCallbacks: [],
+          successCallbacks: []
       });
     });
 

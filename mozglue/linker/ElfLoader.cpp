@@ -510,6 +510,10 @@ ElfLoader::~ElfLoader()
 {
   LibHandleList list;
 
+  if (!Singleton.IsShutdownExpected()) {
+    MOZ_CRASH("Unexpected shutdown");
+  }
+
   /* Release self_elf and libc */
   self_elf = nullptr;
 #if defined(ANDROID)
@@ -1112,8 +1116,17 @@ SEGVHandler::FinishInitialization()
    */
   void *libc = dlopen("libc.so", RTLD_GLOBAL | RTLD_LAZY);
   if (libc) {
-    libc_sigaction =
-      reinterpret_cast<sigaction_func>(dlsym(libc, "sigaction"));
+    /*
+     * Lollipop bionic only has a small trampoline in sigaction, with the real
+     * work happening in __sigaction. Divert there instead of sigaction if it exists.
+     * Bug 1154803
+     */
+    libc_sigaction = reinterpret_cast<sigaction_func>(dlsym(libc, "__sigaction"));
+
+    if (!libc_sigaction) {
+      libc_sigaction =
+        reinterpret_cast<sigaction_func>(dlsym(libc, "sigaction"));
+    }
   } else
 #endif
   {

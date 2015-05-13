@@ -5,29 +5,30 @@
 
 const TEST_DATA = [{ delta: 112, value: 48 }, { delta: 213, value: 59 }, { delta: 313, value: 60 }, { delta: 413, value: 59 }, { delta: 530, value: 59 }, { delta: 646, value: 58 }, { delta: 747, value: 60 }, { delta: 863, value: 48 }, { delta: 980, value: 37 }, { delta: 1097, value: 30 }, { delta: 1213, value: 29 }, { delta: 1330, value: 23 }, { delta: 1430, value: 10 }, { delta: 1534, value: 17 }, { delta: 1645, value: 20 }, { delta: 1746, value: 22 }, { delta: 1846, value: 39 }, { delta: 1963, value: 26 }, { delta: 2080, value: 27 }, { delta: 2197, value: 35 }, { delta: 2312, value: 47 }, { delta: 2412, value: 53 }, { delta: 2514, value: 60 }, { delta: 2630, value: 37 }, { delta: 2730, value: 36 }, { delta: 2830, value: 37 }, { delta: 2946, value: 36 }, { delta: 3046, value: 40 }, { delta: 3163, value: 47 }, { delta: 3280, value: 41 }, { delta: 3380, value: 35 }, { delta: 3480, value: 27 }, { delta: 3580, value: 39 }, { delta: 3680, value: 42 }, { delta: 3780, value: 49 }, { delta: 3880, value: 55 }, { delta: 3980, value: 60 }, { delta: 4080, value: 60 }, { delta: 4180, value: 60 }];
 let {LineGraphWidget} = Cu.import("resource:///modules/devtools/Graphs.jsm", {});
-let {DOMHelpers} = Cu.import("resource:///modules/devtools/DOMHelpers.jsm", {});
 let {Promise} = devtools.require("resource://gre/modules/Promise.jsm");
-let {Hosts} = devtools.require("devtools/framework/toolbox-hosts");
 
-let test = Task.async(function*() {
+add_task(function*() {
   yield promiseTab("about:blank");
   yield performTest();
   gBrowser.removeCurrentTab();
-  finish();
 });
 
 function* performTest() {
   let [host, win, doc] = yield createHost();
   let graph = new LineGraphWidget(doc.body, "fps");
   yield graph.once("ready");
+  testGraph(graph, normalDragStop);
+  yield graph.destroy();
 
-  testGraph(graph);
+  let graph2 = new LineGraphWidget(doc.body, "fps");
+  yield graph2.once("ready");
+  testGraph(graph2, buggyDragStop);
+  yield graph2.destroy();
 
-  graph.destroy();
   host.destroy();
 }
 
-function testGraph(graph) {
+function testGraph(graph, dragStop) {
   graph.setData(TEST_DATA);
 
   info("Making a selection.");
@@ -171,34 +172,47 @@ function testGraph(graph) {
 function hover(graph, x, y = 1) {
   x /= window.devicePixelRatio;
   y /= window.devicePixelRatio;
-  graph._onMouseMove({ clientX: x, clientY: y });
+  graph._onMouseMove({ testX: x, testY: y });
 }
 
 function click(graph, x, y = 1) {
   x /= window.devicePixelRatio;
   y /= window.devicePixelRatio;
-  graph._onMouseMove({ clientX: x, clientY: y });
-  graph._onMouseDown({ clientX: x, clientY: y });
-  graph._onMouseUp({ clientX: x, clientY: y });
+  graph._onMouseMove({ testX: x, testY: y });
+  graph._onMouseDown({ testX: x, testY: y });
+  graph._onMouseUp({ testX: x, testY: y });
 }
 
 function dragStart(graph, x, y = 1) {
   x /= window.devicePixelRatio;
   y /= window.devicePixelRatio;
-  graph._onMouseMove({ clientX: x, clientY: y });
-  graph._onMouseDown({ clientX: x, clientY: y });
+  graph._onMouseMove({ testX: x, testY: y });
+  graph._onMouseDown({ testX: x, testY: y });
 }
 
-function dragStop(graph, x, y = 1) {
+function normalDragStop(graph, x, y = 1) {
   x /= window.devicePixelRatio;
   y /= window.devicePixelRatio;
-  graph._onMouseMove({ clientX: x, clientY: y });
-  graph._onMouseUp({ clientX: x, clientY: y });
+  graph._onMouseMove({ testX: x, testY: y });
+  graph._onMouseUp({ testX: x, testY: y });
+}
+
+function buggyDragStop(graph, x, y = 1) {
+  x /= window.devicePixelRatio;
+  y /= window.devicePixelRatio;
+
+  graph._onMouseMove({ testX: x, testY: y });
+
+  // Only fire a mousemove with no buttons instead of a mouseup.
+  // This happens when the mouseup happens outside of the window.
+  // Send different coordinates to make sure the selection is preserved,
+  // see Bugs 1066504 and 1144779.
+  graph._onMouseMove({ testX: x+1, testY: y+1, buttons: 0 });
 }
 
 function scroll(graph, wheel, x, y = 1) {
   x /= window.devicePixelRatio;
   y /= window.devicePixelRatio;
-  graph._onMouseMove({ clientX: x, clientY: y });
-  graph._onMouseWheel({ clientX: x, clientY: y, detail: wheel });
+  graph._onMouseMove({ testX: x, testY: y });
+  graph._onMouseWheel({ testX: x, testY: y, detail: wheel });
 }

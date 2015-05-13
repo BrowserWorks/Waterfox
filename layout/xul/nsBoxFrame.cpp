@@ -66,6 +66,7 @@
 #include "mozilla/Preferences.h"
 #include "nsThemeConstants.h"
 #include "nsLayoutUtils.h"
+#include "nsSliderFrame.h"
 #include <algorithm>
 
 // Needed for Print Preview
@@ -629,6 +630,7 @@ nsBoxFrame::Reflow(nsPresContext*          aPresContext,
                    const nsHTMLReflowState& aReflowState,
                    nsReflowStatus&          aStatus)
 {
+  MarkInReflow();
   // If you make changes to this method, please keep nsLeafBoxFrame::Reflow
   // in sync, if the changes are applicable there.
 
@@ -1116,11 +1118,10 @@ nsBoxFrame::AttributeChanged(int32_t aNameSpaceID,
 
   // Ignore 'width', 'height', 'screenX', 'screenY' and 'sizemode' on a
   // <window>.
-  nsIAtom *tag = mContent->Tag();
-  if ((tag == nsGkAtoms::window ||
-       tag == nsGkAtoms::page ||
-       tag == nsGkAtoms::dialog ||
-       tag == nsGkAtoms::wizard) &&
+  if (mContent->IsAnyOfXULElements(nsGkAtoms::window,
+                                   nsGkAtoms::page,
+                                   nsGkAtoms::dialog,
+                                   nsGkAtoms::wizard) &&
       (nsGkAtoms::width == aAttribute ||
        nsGkAtoms::height == aAttribute ||
        nsGkAtoms::screenX == aAttribute ||
@@ -1246,7 +1247,7 @@ nsBoxFrame::AttributeChanged(int32_t aNameSpaceID,
     RegUnregAccessKey(true);
   }
   else if (aAttribute == nsGkAtoms::rows &&
-           tag == nsGkAtoms::tree) {
+           mContent->IsXULElement(nsGkAtoms::tree)) {
     // Reflow ourselves and all our children if "rows" changes, since
     // nsTreeBodyFrame's layout reads this from its parent (this frame).
     PresContext()->PresShell()->
@@ -1309,21 +1310,11 @@ nsBoxFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                              const nsDisplayListSet& aLists)
 {
   bool forceLayer = false;
-  uint32_t flags = 0;
-  mozilla::layers::FrameMetrics::ViewID scrollTargetId =
-    mozilla::layers::FrameMetrics::NULL_SCROLL_ID;
 
-  if (GetContent()->IsXUL()) {
+  if (GetContent()->IsXULElement()) {
     // forcelayer is only supported on XUL elements with box layout
     if (GetContent()->HasAttr(kNameSpaceID_None, nsGkAtoms::layer)) {
       forceLayer = true;
-    } else {
-      nsIFrame* parent = GetParentBox(this);
-      if (parent && parent->GetType() == nsGkAtoms::sliderFrame) {
-        aBuilder->GetScrollbarInfo(&scrollTargetId, &flags);
-        forceLayer = (scrollTargetId != layers::FrameMetrics::NULL_SCROLL_ID);
-        nsLayoutUtils::SetScrollbarThumbLayerization(this, forceLayer);
-      }
     }
     // Check for frames that are marked as a part of the region used
     // in calculating glass margins on Windows.
@@ -1332,8 +1323,6 @@ nsBoxFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
       aBuilder->AddWindowExcludeGlassRegion(
           nsRect(aBuilder->ToReferenceFrame(this), GetSize()));
     }
-
-    aBuilder->AdjustWindowDraggingRegion(this);
   }
 
   nsDisplayListCollection tempLists;
@@ -1371,7 +1360,7 @@ nsBoxFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
 
     // Wrap the list to make it its own layer
     aLists.Content()->AppendNewToTop(new (aBuilder)
-      nsDisplayOwnLayer(aBuilder, this, &masterList, flags, scrollTargetId));
+      nsDisplayOwnLayer(aBuilder, this, &masterList));
   }
 }
 
@@ -1436,7 +1425,7 @@ nsBoxFrame::PaintXULDebugBackground(nsRenderingContext& aRenderingContext,
   int32_t appUnitsPerDevPixel = PresContext()->AppUnitsPerDevPixel();
 
   ColorPattern color(ToDeviceColor(isHorizontal ? Color(0.f, 0.f, 1.f, 1.f) :
-                                                  Color(1.f, 0.f, 0.f, 1.f));
+                                                  Color(1.f, 0.f, 0.f, 1.f)));
 
   DrawTarget* drawTarget = aRenderingContext.GetDrawTarget();
 
@@ -1466,13 +1455,14 @@ nsBoxFrame::PaintXULDebugBackground(nsRenderingContext& aRenderingContext,
   // place a green border around us.
   if (NS_SUBTREE_DIRTY(this)) {
     nsRect dirty(inner);
-    ColorPattern green(ToDeviceColor(Color0.f, 1.f, 0.f, 1.f)));
+    ColorPattern green(ToDeviceColor(Color(0.f, 1.f, 0.f, 1.f)));
     drawTarget->StrokeRect(NSRectToRect(dirty, appUnitsPerDevPixel), green);
   }
 }
 
 void
 nsBoxFrame::PaintXULDebugOverlay(DrawTarget& aDrawTarget, nsPoint aPt)
+{
   nsMargin border;
   GetBorder(border);
 
@@ -1878,16 +1868,13 @@ nsBoxFrame::RegUnregAccessKey(bool aDoReg)
 {
   MOZ_ASSERT(mContent);
 
-  // find out what type of element this is
-  nsIAtom *atom = mContent->Tag();
-
   // only support accesskeys for the following elements
-  if (atom != nsGkAtoms::button &&
-      atom != nsGkAtoms::toolbarbutton &&
-      atom != nsGkAtoms::checkbox &&
-      atom != nsGkAtoms::textbox &&
-      atom != nsGkAtoms::tab &&
-      atom != nsGkAtoms::radio) {
+  if (!mContent->IsAnyOfXULElements(nsGkAtoms::button,
+                                    nsGkAtoms::toolbarbutton,
+                                    nsGkAtoms::checkbox,
+                                    nsGkAtoms::textbox,
+                                    nsGkAtoms::tab,
+                                    nsGkAtoms::radio)) {
     return;
   }
 
@@ -2022,8 +2009,8 @@ public:
     : nsDisplayWrapList(aBuilder, aFrame, aList), mTargetFrame(aTargetFrame) {}
   virtual void HitTest(nsDisplayListBuilder* aBuilder, const nsRect& aRect,
                        HitTestState* aState,
-                       nsTArray<nsIFrame*> *aOutFrames) MOZ_OVERRIDE;
-  virtual bool ShouldFlattenAway(nsDisplayListBuilder* aBuilder) MOZ_OVERRIDE {
+                       nsTArray<nsIFrame*> *aOutFrames) override;
+  virtual bool ShouldFlattenAway(nsDisplayListBuilder* aBuilder) override {
     return false;
   }
   NS_DISPLAY_DECL_NAME("XULEventRedirector", TYPE_XUL_EVENT_REDIRECTOR)
@@ -2069,12 +2056,12 @@ public:
       : mTargetFrame(aTargetFrame) {}
   virtual nsDisplayItem* WrapList(nsDisplayListBuilder* aBuilder,
                                   nsIFrame* aFrame,
-                                  nsDisplayList* aList) MOZ_OVERRIDE {
+                                  nsDisplayList* aList) override {
     return new (aBuilder)
         nsDisplayXULEventRedirector(aBuilder, aFrame, aList, mTargetFrame);
   }
   virtual nsDisplayItem* WrapItem(nsDisplayListBuilder* aBuilder,
-                                  nsDisplayItem* aItem) MOZ_OVERRIDE {
+                                  nsDisplayItem* aItem) override {
     return new (aBuilder)
         nsDisplayXULEventRedirector(aBuilder, aItem->Frame(), aItem,
                                     mTargetFrame);
@@ -2094,14 +2081,15 @@ nsBoxFrame::WrapListsInRedirector(nsDisplayListBuilder*   aBuilder,
 
 bool
 nsBoxFrame::GetEventPoint(WidgetGUIEvent* aEvent, nsPoint &aPoint) {
-  nsIntPoint refPoint;
+  LayoutDeviceIntPoint refPoint;
   bool res = GetEventPoint(aEvent, refPoint);
-  aPoint = nsLayoutUtils::GetEventCoordinatesRelativeTo(aEvent, refPoint, this);
+  aPoint = nsLayoutUtils::GetEventCoordinatesRelativeTo(
+    aEvent, refPoint, this);
   return res;
 }
 
 bool
-nsBoxFrame::GetEventPoint(WidgetGUIEvent* aEvent, nsIntPoint &aPoint) {
+nsBoxFrame::GetEventPoint(WidgetGUIEvent* aEvent, LayoutDeviceIntPoint& aPoint) {
   NS_ENSURE_TRUE(aEvent, false);
 
   WidgetTouchEvent* touchEvent = aEvent->AsTouchEvent();
@@ -2118,7 +2106,7 @@ nsBoxFrame::GetEventPoint(WidgetGUIEvent* aEvent, nsIntPoint &aPoint) {
     }
     aPoint = touch->mRefPoint;
   } else {
-    aPoint = LayoutDeviceIntPoint::ToUntyped(aEvent->refPoint);
+    aPoint = aEvent->refPoint;
   }
   return true;
 }

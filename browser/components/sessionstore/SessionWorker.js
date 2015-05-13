@@ -78,18 +78,35 @@ let Agent = {
   state: null,
 
   /**
+   * Number of old upgrade backups that are being kept
+   */
+  maxUpgradeBackups: null,
+
+  /**
    * Initialize (or reinitialize) the worker
    *
    * @param {string} origin Which of sessionstore.js or its backups
    *   was used. One of the `STATE_*` constants defined above.
    * @param {object} paths The paths at which to find the various files.
+   * @param {object} prefs The preferences the worker needs to known.
    */
-  init: function (origin, paths) {
+  init(origin, paths, prefs = {}) {
     if (!(origin in paths || origin == STATE_EMPTY)) {
       throw new TypeError("Invalid origin: " + origin);
     }
+
+    // Check that all required preference values were passed.
+    for (let pref of ["maxUpgradeBackups", "maxSerializeBack", "maxSerializeForward"]) {
+      if (!prefs.hasOwnProperty(pref)) {
+        throw new TypeError(`Missing preference value for ${pref}`);
+      }
+    }
+
     this.state = origin;
     this.Paths = paths;
+    this.maxUpgradeBackups = prefs.maxUpgradeBackups;
+    this.maxSerializeBack = prefs.maxSerializeBack;
+    this.maxSerializeForward = prefs.maxSerializeForward;
     this.upgradeBackupNeeded = paths.nextUpgradeBackup != paths.upgradeBackup;
     return {result: true};
   },
@@ -99,7 +116,7 @@ let Agent = {
    * Write the session to disk, performing any necessary backup
    * along the way.
    *
-   * @param {string} stateString The state to write to disk.
+   * @param {object} state The state to write to disk.
    * @param {object} options
    *  - performShutdownCleanup If |true|, we should
    *    perform shutdown-time cleanup to ensure that private data
@@ -107,10 +124,31 @@ let Agent = {
    *  - isFinalWrite If |true|, write to Paths.clean instead of
    *    Paths.recovery
    */
-  write: function (stateString, options = {}) {
+  write: function (state, options = {}) {
     let exn;
     let telemetry = {};
 
+    // Cap the number of backward and forward shistory entries on shutdown.
+    if (options.isFinalWrite) {
+      for (let window of state.windows) {
+        for (let tab of window.tabs) {
+          let lower = 0;
+          let upper = tab.entries.length;
+
+          if (this.maxSerializeBack > -1) {
+            lower = Math.max(lower, tab.index - this.maxSerializeBack - 1);
+          }
+          if (this.maxSerializeForward > -1) {
+            upper = Math.min(upper, tab.index + this.maxSerializeForward);
+          }
+
+          tab.entries = tab.entries.slice(lower, upper);
+          tab.index -= lower;
+        }
+      }
+    }
+
+    let stateString = JSON.stringify(state);
     let data = Encoder.encode(stateString);
     let startWriteMs, stopWriteMs;
 
@@ -181,6 +219,38 @@ let Agent = {
         // Don't throw immediately
         exn = exn || ex;
       }
+
+      // Find all backups
+      let iterator;
+      let backups = [];  // array that will contain the paths to all upgrade backup
+      let upgradeBackupPrefix = this.Paths.upgradeBackupPrefix;  // access for forEach callback
+
+      try {
+        iterator = new File.DirectoryIterator(this.Paths.backups);
+        iterator.forEach(function (file) {
+          if (file.path.startsWith(upgradeBackupPrefix)) {
+            backups.push(file.path);
+          }
+        }, this);
+      } catch (ex) {
+          // Don't throw immediately
+          exn = exn || ex;
+      } finally {
+        if (iterator) {
+          iterator.close();
+        }
+      }
+
+      // If too many backups exist, delete them
+      if (backups.length > this.maxUpgradeBackups) {
+        // Use alphanumerical sort since dates are in YYYYMMDDHHMMSS format
+        backups.sort().forEach((file, i) => {
+          // remove backup file if it is among the first (n-maxUpgradeBackups) files
+          if (i < backups.length - this.maxUpgradeBackups) {
+            File.remove(file);
+          }
+        });
+      }
     }
 
     if (options.performShutdownCleanup && !exn) {
@@ -211,16 +281,6 @@ let Agent = {
         FX_SESSION_RESTORE_FILE_SIZE_BYTES: data.byteLength,
       }
     };
-  },
-
-  /**
-   * Extract all sorts of useful statistics from a state string,
-   * for use with Telemetry.
-   *
-   * @return {object}
-   */
-  gatherTelemetry: function (stateString) {
-    return Statistics.collect(stateString);
   },
 
   /**
@@ -318,131 +378,3 @@ function isNoSuchFileEx(aReason) {
 function getByteLength(str) {
   return Encoder.encode(JSON.stringify(str)).byteLength;
 }
-
-/**
- * Tools for gathering statistics on a state string.
- */
-let Statistics = {
-  collect: function(stateString) {
-    let start = Date.now();
-    let TOTAL_PREFIX = "FX_SESSION_RESTORE_TOTAL_";
-    let INDIVIDUAL_PREFIX = "FX_SESSION_RESTORE_INDIVIDUAL_";
-    let SIZE_SUFFIX = "_SIZE_BYTES";
-
-    let state = JSON.parse(stateString);
-
-    // Gather all data
-    let subsets = {};
-    this.gatherSimpleData(state, subsets);
-    this.gatherComplexData(state, subsets);
-
-    // Extract telemetry
-    let telemetry = {};
-    for (let k of Object.keys(subsets)) {
-      let obj = subsets[k];
-      telemetry[TOTAL_PREFIX + k + SIZE_SUFFIX] = getByteLength(obj);
-
-      if (Array.isArray(obj)) {
-        let size = obj.map(getByteLength);
-        telemetry[INDIVIDUAL_PREFIX + k + SIZE_SUFFIX] = size;
-      }
-    }
-
-    let stop = Date.now();
-    telemetry["FX_SESSION_RESTORE_EXTRACTING_STATISTICS_DURATION_MS"] = stop - start;
-    return {
-      telemetry: telemetry
-    };
-  },
-
-  /**
-   * Collect data that doesn't require a recursive walk through the
-   * data structure.
-   */
-  gatherSimpleData: function(state, subsets) {
-    // The subset of sessionstore.js dealing with open windows
-    subsets.OPEN_WINDOWS = state.windows;
-
-    // The subset of sessionstore.js dealing with closed windows
-    subsets.CLOSED_WINDOWS = state._closedWindows;
-
-    // The subset of sessionstore.js dealing with closed tabs
-    // in open windows
-    subsets.CLOSED_TABS_IN_OPEN_WINDOWS = [];
-
-    // The subset of sessionstore.js dealing with cookies
-    // in both open and closed windows
-    subsets.COOKIES = [];
-
-    for (let winData of state.windows) {
-      let closedTabs = winData._closedTabs || [];
-      subsets.CLOSED_TABS_IN_OPEN_WINDOWS.push(...closedTabs);
-
-      let cookies = winData.cookies || [];
-      subsets.COOKIES.push(...cookies);
-    }
-
-    for (let winData of state._closedWindows) {
-      let cookies = winData.cookies || [];
-      subsets.COOKIES.push(...cookies);
-    }
-  },
-
-  /**
-   * Walk through a data structure, recursively.
-   *
-   * @param {object} root The object from which to start walking.
-   * @param {function(key, value)} cb Callback, called for each
-   * item except the root. Returns |true| to walk the subtree rooted
-   * at |value|, |false| otherwise   */
-  walk: function(root, cb) {
-    if (!root || typeof root !== "object") {
-      return;
-    }
-    for (let k of Object.keys(root)) {
-      let obj = root[k];
-      let stepIn = cb(k, obj);
-      if (stepIn) {
-        this.walk(obj, cb);
-      }
-    }
-  },
-
-  /**
-   * Collect data that requires walking through the data structure
-   */
-  gatherComplexData: function(state, subsets) {
-    // The subset of sessionstore.js dealing with DOM storage
-    subsets.DOM_STORAGE = [];
-    // The subset of sessionstore.js storing form data
-    subsets.FORMDATA = [];
-    // The subset of sessionstore.js storing history
-    subsets.HISTORY = [];
-
-
-    this.walk(state, function(k, value) {
-      let dest;
-      switch (k) {
-        case "entries":
-          subsets.HISTORY.push(value);
-          return true;
-        case "storage":
-          subsets.DOM_STORAGE.push(value);
-          // Never visit storage, it's full of weird stuff
-          return false;
-        case "formdata":
-          subsets.FORMDATA.push(value);
-          // Never visit formdata, it's full of weird stuff
-          return false;
-        case "cookies": // Don't visit these places, they are full of weird stuff
-        case "extData":
-          return false;
-        default:
-          return true;
-      }
-    });
-
-    return subsets;
-  },
-
-};

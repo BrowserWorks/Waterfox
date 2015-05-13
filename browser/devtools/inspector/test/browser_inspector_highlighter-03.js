@@ -45,7 +45,7 @@ add_task(function* () {
   yield moveMouseOver(iframeNode, 1, 1);
 
   info("Performing checks");
-  yield isNodeCorrectlyHighlighted(iframeNode, toolbox);
+  yield isNodeCorrectlyHighlighted("iframe", toolbox);
 
   info("Scrolling the document");
   iframeNode.style.marginBottom = content.innerHeight + "px";
@@ -58,14 +58,14 @@ add_task(function* () {
 
   let highlightedNode = yield getHighlitNode(toolbox);
   is(highlightedNode, iframeBodyNode, "highlighter shows the right node");
-  yield isNodeCorrectlyHighlighted(iframeBodyNode, toolbox);
+  yield isNodeCorrectlyHighlighted("iframe || body", toolbox);
 
   info("Waiting for the element picker to deactivate.");
   yield inspector.toolbox.highlighterUtils.stopPicker();
 
   function moveMouseOver(node, x, y) {
     info("Waiting for element " + node + " to be highlighted");
-    executeInContent("Test:SynthesizeMouse", {x, y, type: "mousemove"},
+    executeInContent("Test:SynthesizeMouse", {x, y, options: {type: "mousemove"}},
                      {node}, false);
     return inspector.toolbox.once("picker-node-hovered");
   }

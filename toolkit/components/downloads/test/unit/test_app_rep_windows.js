@@ -186,11 +186,16 @@ add_task(function test_setup()
                              "goog-badbinurl-shavar");
   Services.prefs.setCharPref("urlclassifier.downloadAllowTable",
                              "goog-downloadwhite-digest256");
+  // SendRemoteQueryInternal needs locale preference.
+  let locale = Services.prefs.getCharPref("general.useragent.locale");
+  Services.prefs.setCharPref("general.useragent.locale", "en-US");
+
   do_register_cleanup(function() {
     Services.prefs.clearUserPref("browser.safebrowsing.malware.enabled");
     Services.prefs.clearUserPref("browser.safebrowsing.downloads.enabled");
     Services.prefs.clearUserPref("urlclassifier.downloadBlockTable");
     Services.prefs.clearUserPref("urlclassifier.downloadAllowTable");
+    Services.prefs.setCharPref("general.useragent.locale", locale);
   });
 
   gHttpServer = new HttpServer();
@@ -223,13 +228,13 @@ add_task(function test_setup()
     do_print("Request length: " + buf.length);
     // A garbage response. By default this produces NS_CANNOT_CONVERT_DATA as
     // the callback status.
-    let blob = "this is not a serialized protocol buffer";
+    let blob = "this is not a serialized protocol buffer (the length doesn't match our hard-coded values)";
     // We can't actually parse the protocol buffer here, so just switch on the
     // length instead of inspecting the contents.
-    if (buf.length == 65) {
+    if (buf.length == 67) {
       // evil.com
       blob = createVerdict(true);
-    } else if (buf.length == 71) {
+    } else if (buf.length == 73) {
       // mozilla.com
       blob = createVerdict(false);
     }

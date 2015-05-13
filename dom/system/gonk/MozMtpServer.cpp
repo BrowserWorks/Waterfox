@@ -39,7 +39,7 @@ using namespace android;
 using namespace mozilla;
 BEGIN_MTP_NAMESPACE
 
-class FileWatcherUpdateRunnable MOZ_FINAL : public nsRunnable
+class FileWatcherUpdateRunnable final : public nsRunnable
 {
 public:
   FileWatcherUpdateRunnable(MozMtpDatabase* aMozMtpDatabase,
@@ -70,7 +70,7 @@ private:
 
 // The FileWatcherUpdate class listens for file-watcher-update events
 // and tells the MtpServer about the changes.
-class FileWatcherUpdate MOZ_FINAL : public nsIObserver
+class FileWatcherUpdate final : public nsIObserver
 {
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
@@ -86,14 +86,6 @@ public:
 
     nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
     obs->AddObserver(this, "file-watcher-update", false);
-  }
-
-  ~FileWatcherUpdate()
-  {
-    MOZ_ASSERT(NS_IsMainThread());
-
-    nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
-    obs->RemoveObserver(this, "file-watcher-update");
   }
 
   NS_IMETHOD
@@ -132,6 +124,15 @@ public:
     return NS_OK;
   }
 
+protected:
+  ~FileWatcherUpdate()
+  {
+    MOZ_ASSERT(NS_IsMainThread());
+
+    nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
+    obs->RemoveObserver(this, "file-watcher-update");
+  }
+
 private:
   nsRefPtr<MozMtpServer> mMozMtpServer;
   nsCOMPtr<nsIThread> mIOThread;
@@ -139,7 +140,7 @@ private:
 NS_IMPL_ISUPPORTS(FileWatcherUpdate, nsIObserver)
 static StaticRefPtr<FileWatcherUpdate> sFileWatcherUpdate;
 
-class AllocFileWatcherUpdateRunnable MOZ_FINAL : public nsRunnable
+class AllocFileWatcherUpdateRunnable final : public nsRunnable
 {
 public:
   AllocFileWatcherUpdateRunnable(MozMtpServer* aMozMtpServer)
@@ -157,7 +158,7 @@ private:
   nsRefPtr<MozMtpServer> mMozMtpServer;
 };
 
-class FreeFileWatcherUpdateRunnable MOZ_FINAL : public nsRunnable
+class FreeFileWatcherUpdateRunnable final : public nsRunnable
 {
 public:
   FreeFileWatcherUpdateRunnable(MozMtpServer* aMozMtpServer)
@@ -232,7 +233,7 @@ MozMtpServer::Init()
   const char *mtpUsbFilename = "/dev/mtp_usb";
   mMtpUsbFd = open(mtpUsbFilename, O_RDWR);
   if (mMtpUsbFd.get() < 0) {
-    MTP_ERR("open of '%s' failed", mtpUsbFilename);
+    MTP_ERR("open of '%s' failed((%s))", mtpUsbFilename, strerror(errno));
     return false;
   }
   MTP_LOG("Opened '%s' fd %d", mtpUsbFilename, mMtpUsbFd.get());

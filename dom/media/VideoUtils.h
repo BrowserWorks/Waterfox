@@ -11,6 +11,8 @@
 #include "mozilla/ReentrantMonitor.h"
 #include "mozilla/CheckedInt.h"
 #include "nsIThread.h"
+#include "nsSize.h"
+#include "nsRect.h"
 
 #if !(defined(XP_WIN) || defined(XP_MACOSX) || defined(LINUX)) || \
     defined(MOZ_ASAN)
@@ -26,9 +28,6 @@ using mozilla::CheckedInt64;
 using mozilla::CheckedUint64;
 using mozilla::CheckedInt32;
 using mozilla::CheckedUint32;
-
-struct nsIntSize;
-struct nsIntRect;
 
 // This file contains stuff we'd rather put elsewhere, but which is
 // dependent on other changes which we don't want to wait for. We plan to
@@ -84,7 +83,7 @@ class ShutdownThreadEvent : public nsRunnable
 public:
   explicit ShutdownThreadEvent(nsIThread* aThread) : mThread(aThread) {}
   ~ShutdownThreadEvent() {}
-  NS_IMETHOD Run() MOZ_OVERRIDE {
+  NS_IMETHOD Run() override {
     mThread->Shutdown();
     mThread = nullptr;
     return NS_OK;
@@ -148,8 +147,11 @@ static const int64_t USECS_PER_S = 1000000;
 // Number of microseconds per millisecond.
 static const int64_t USECS_PER_MS = 1000;
 
+// Converts milliseconds to seconds.
+#define MS_TO_SECONDS(ms) ((double)(ms) / (PR_MSEC_PER_SEC))
+
 // Converts seconds to milliseconds.
-#define MS_TO_SECONDS(s) ((double)(s) / (PR_MSEC_PER_SEC))
+#define SECONDS_TO_MS(s) ((int)((s) * (PR_MSEC_PER_SEC)))
 
 // Converts from seconds to microseconds. Returns failure if the resulting
 // integer is too big to fit in an int64_t.
@@ -214,9 +216,22 @@ private:
 
 class SharedThreadPool;
 
+// The MediaDataDecoder API blocks, with implementations waiting on platform
+// decoder tasks.  These platform decoder tasks are queued on a separate
+// thread pool to ensure they can run when the MediaDataDecoder clients'
+// thread pool is blocked.  Tasks on the PLATFORM_DECODER thread pool must not
+// wait on tasks in the PLAYBACK thread pool.
+//
+// No new dependencies on this mechanism should be added, as methods are being
+// made async supported by MediaPromise, making this unnecessary and
+// permitting unifying the pool.
+enum class MediaThreadType {
+  PLAYBACK, // MediaDecoderStateMachine and MediaDecoderReader
+  PLATFORM_DECODER
+};
 // Returns the thread pool that is shared amongst all decoder state machines
 // for decoding streams.
-TemporaryRef<SharedThreadPool> GetMediaDecodeThreadPool();
+TemporaryRef<SharedThreadPool> GetMediaThreadPool(MediaThreadType aType);
 
 enum H264_PROFILE {
   H264_PROFILE_UNKNOWN                     = 0,
@@ -258,15 +273,23 @@ ExtractH264CodecDetails(const nsAString& aCodecs,
                         int16_t& aLevel);
 
 // Use a cryptographic quality PRNG to generate raw random bytes
-// and convert that to a base64 string suitable for use as a file or URL
+// and convert that to a base64 string.
+nsresult
+GenerateRandomName(nsCString& aOutSalt, uint32_t aLength);
+
+// This version returns a string suitable for use as a file or URL
 // path. This is based on code from nsExternalAppHandler::SetUpTempFile.
 nsresult
 GenerateRandomPathName(nsCString& aOutSalt, uint32_t aLength);
 
 class MediaTaskQueue;
+class FlushableMediaTaskQueue;
 
 already_AddRefed<MediaTaskQueue>
 CreateMediaDecodeTaskQueue();
+
+already_AddRefed<FlushableMediaTaskQueue>
+CreateFlushableMediaDecodeTaskQueue();
 
 } // end namespace mozilla
 

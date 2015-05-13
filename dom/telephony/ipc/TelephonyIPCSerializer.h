@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -88,10 +90,13 @@ struct ParamTraits<nsITelephonyCallInfo*>
     uint32_t clientId;
     uint32_t callIndex;
     uint16_t callState;
+    nsString disconnectedReason;
+
     nsString number;
     uint16_t numberPresentation;
     nsString name;
     uint16_t namePresentation;
+
     bool isOutgoing;
     bool isEmergency;
     bool isConference;
@@ -102,10 +107,13 @@ struct ParamTraits<nsITelephonyCallInfo*>
     if (!(ReadParam(aMsg, aIter, &clientId) &&
           ReadParam(aMsg, aIter, &callIndex) &&
           ReadParam(aMsg, aIter, &callState) &&
+          ReadParam(aMsg, aIter, &disconnectedReason) &&
+
           ReadParam(aMsg, aIter, &number) &&
           ReadParam(aMsg, aIter, &numberPresentation) &&
           ReadParam(aMsg, aIter, &name) &&
           ReadParam(aMsg, aIter, &namePresentation) &&
+
           ReadParam(aMsg, aIter, &isOutgoing) &&
           ReadParam(aMsg, aIter, &isEmergency) &&
           ReadParam(aMsg, aIter, &isConference) &&
@@ -115,10 +123,21 @@ struct ParamTraits<nsITelephonyCallInfo*>
     }
 
     nsCOMPtr<nsITelephonyCallInfo> info =
-        new TelephonyCallInfo(clientId, callIndex, callState, number,
-                              numberPresentation, name, namePresentation,
-                              isOutgoing, isEmergency, isConference,
-                              isSwitchable, isMergeable);
+        new TelephonyCallInfo(clientId,
+                              callIndex,
+                              callState,
+                              disconnectedReason,
+
+                              number,
+                              numberPresentation,
+                              name,
+                              namePresentation,
+
+                              isOutgoing,
+                              isEmergency,
+                              isConference,
+                              isSwitchable,
+                              isMergeable);
 
     info.forget(aResult);
 

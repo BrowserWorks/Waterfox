@@ -6,7 +6,6 @@
 
 #if !defined(GonkMediaDataDecoder_h_)
 #define GonkMediaDataDecoder_h_
-#include "mp4_demuxer/mp4_demuxer.h"
 #include "mozilla/RefPtr.h"
 #include "MP4Reader.h"
 
@@ -15,6 +14,7 @@ class MediaCodecProxy;
 } // namespace android
 
 namespace mozilla {
+class MediaRawData;
 
 // Manage the data flow from inputting encoded data and outputting decode data.
 class GonkDecoderManager {
@@ -25,19 +25,28 @@ public:
   // Returns nullptr on failure.
   virtual android::sp<android::MediaCodecProxy> Init(MediaDataDecoderCallback* aCallback) = 0;
 
+  // Add samples into OMX decoder or queue them if decoder is out of input buffer.
+  virtual nsresult Input(MediaRawData* aSample) = 0;
+
   // Produces decoded output, it blocks until output can be produced or a timeout
   // is expired or until EOS. Returns NS_OK on success, or NS_ERROR_NOT_AVAILABLE
   // if there's not enough data to produce more output. If this returns a failure
   // code other than NS_ERROR_NOT_AVAILABLE, an error will be reported to the
   // MP4Reader.
-  virtual nsresult Input(mp4_demuxer::MP4Sample* aSample) = 0;
+  // The overrided class should follow the same behaviour.
   virtual nsresult Output(int64_t aStreamOffset,
                           nsRefPtr<MediaData>& aOutput) = 0;
+
+  // Flush the queued sample.
   virtual nsresult Flush() = 0;
 
-  virtual void AllocateMediaResources() {};
+  // True if sample is queued.
+  virtual bool HasQueuedSample() = 0;
 
-  virtual void ReleaseMediaResources() {};
+protected:
+  nsRefPtr<MediaByteBuffer> mCodecSpecificData;
+
+  nsAutoCString mMimeType;
 };
 
 // Samples are decoded using the GonkDecoder (MediaCodec)
@@ -48,28 +57,20 @@ public:
 class GonkMediaDataDecoder : public MediaDataDecoder {
 public:
   GonkMediaDataDecoder(GonkDecoderManager* aDecoderManager,
-                       MediaTaskQueue* aTaskQueue,
+                       FlushableMediaTaskQueue* aTaskQueue,
                        MediaDataDecoderCallback* aCallback);
 
   ~GonkMediaDataDecoder();
 
-  virtual nsresult Init() MOZ_OVERRIDE;
+  virtual nsresult Init() override;
 
-  virtual nsresult Input(mp4_demuxer::MP4Sample* aSample);
+  virtual nsresult Input(MediaRawData* aSample);
 
-  virtual nsresult Flush() MOZ_OVERRIDE;
+  virtual nsresult Flush() override;
 
-  virtual nsresult Drain() MOZ_OVERRIDE;
+  virtual nsresult Drain() override;
 
-  virtual nsresult Shutdown() MOZ_OVERRIDE;
-
-  virtual bool IsWaitingMediaResources() MOZ_OVERRIDE;
-
-  virtual bool IsDormantNeeded() MOZ_OVERRIDE;
-
-  virtual void AllocateMediaResources() MOZ_OVERRIDE;
-
-  virtual void ReleaseMediaResources() MOZ_OVERRIDE;
+  virtual nsresult Shutdown() override;
 
 private:
 
@@ -77,7 +78,7 @@ private:
   // extracts output if available, if aSample is null, it means there is
   // no data from source, it will notify the decoder EOS and flush all the
   // decoded frames.
-  void ProcessDecode(mp4_demuxer::MP4Sample* aSample);
+  void ProcessDecode(MediaRawData* aSample);
 
   // Called on the task queue. Extracts output if available, and delivers
   // it to the reader. Called after ProcessDecode() and ProcessDrain().
@@ -87,7 +88,7 @@ private:
   // all available output.
   void ProcessDrain();
 
-  RefPtr<MediaTaskQueue> mTaskQueue;
+  RefPtr<FlushableMediaTaskQueue> mTaskQueue;
   MediaDataDecoderCallback* mCallback;
 
   android::sp<android::MediaCodecProxy> mDecoder;

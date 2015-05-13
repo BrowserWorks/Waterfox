@@ -1,6 +1,5 @@
-/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*-
- * vim: sw=2 ts=8 et :
- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -83,7 +82,7 @@ AssertAppProcess(PBrowserParent* aActor,
     return false;
   }
 
-  TabParent* tab = static_cast<TabParent*>(aActor);
+  TabParent* tab = TabParent::GetFrom(aActor);
   nsCOMPtr<mozIApplication> app = tab->GetOwnOrContainingApp();
 
   return CheckAppTypeHelper(app, aType, aCapability, tab->IsBrowserElement());
@@ -114,7 +113,7 @@ AssertAppStatus(PBrowserParent* aActor,
     return false;
   }
 
-  TabParent* tab = static_cast<TabParent*>(aActor);
+  TabParent* tab = TabParent::GetFrom(aActor);
   nsCOMPtr<mozIApplication> app = tab->GetOwnOrContainingApp();
 
   return CheckAppStatusHelper(app, aStatus);
@@ -157,7 +156,7 @@ AssertAppProcess(PContentParent* aActor,
       "Security problem: Content process does not have `%s'.  It will be killed.\n",
       aCapability).get());
 
-  static_cast<ContentParent*>(aActor)->KillHard();
+  static_cast<ContentParent*>(aActor)->KillHard("AssertAppProcess");
 
   return false;
 }
@@ -179,7 +178,7 @@ AssertAppStatus(PContentParent* aActor,
       "Security problem: Content process does not have `%d' status.  It will be killed.",
       aStatus).get());
 
-  static_cast<ContentParent*>(aActor)->KillHard();
+  static_cast<ContentParent*>(aActor)->KillHard("AssertAppStatus");
 
   return false;
 }
@@ -198,7 +197,7 @@ AssertAppPrincipal(PContentParent* aActor,
 {
   if (!aPrincipal) {
     NS_WARNING("Principal is invalid, killing app process");
-    static_cast<ContentParent*>(aActor)->KillHard();
+    static_cast<ContentParent*>(aActor)->KillHard("AssertAppPrincipal");
     return false;
   }
 
@@ -220,7 +219,7 @@ AssertAppPrincipal(PContentParent* aActor,
   }
 
   NS_WARNING("Principal is invalid, killing app process");
-  static_cast<ContentParent*>(aActor)->KillHard();
+  static_cast<ContentParent*>(aActor)->KillHard("AssertAppPrincipal");
   return false;
 }
 

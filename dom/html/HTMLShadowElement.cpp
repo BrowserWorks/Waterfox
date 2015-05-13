@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -50,9 +51,9 @@ NS_INTERFACE_MAP_END_INHERITING(nsGenericHTMLElement)
 NS_IMPL_ELEMENT_CLONE(HTMLShadowElement)
 
 JSObject*
-HTMLShadowElement::WrapNode(JSContext *aCx)
+HTMLShadowElement::WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return HTMLShadowElementBinding::Wrap(aCx, this);
+  return HTMLShadowElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 void
@@ -94,8 +95,7 @@ IsInFallbackContent(nsIContent* aContent)
 {
   nsINode* parentNode = aContent->GetParentNode();
   while (parentNode) {
-    if (parentNode->IsElement() &&
-        parentNode->AsElement()->IsHTML(nsGkAtoms::content)) {
+    if (parentNode->IsHTMLElement(nsGkAtoms::content)) {
       return true;
     }
     parentNode = parentNode->GetParentNode();
@@ -146,6 +146,8 @@ HTMLShadowElement::BindToTree(nsIDocument* aDocument,
     // Propagate BindToTree calls to projected shadow root children.
     ShadowRoot* projectedShadow = containingShadow->GetOlderShadowRoot();
     if (projectedShadow) {
+      projectedShadow->SetIsComposedDocParticipant(IsInComposedDoc());
+
       for (nsIContent* child = projectedShadow->GetFirstChild(); child;
            child = child->GetNextSibling()) {
         rv = child->BindToTree(nullptr, projectedShadow,
@@ -173,6 +175,8 @@ HTMLShadowElement::UnbindFromTree(bool aDeep, bool aNullParent)
            child = child->GetNextSibling()) {
         child->UnbindFromTree(true, false);
       }
+
+      projectedShadow->SetIsComposedDocParticipant(false);
     }
   }
 

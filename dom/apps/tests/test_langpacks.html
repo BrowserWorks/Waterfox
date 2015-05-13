@@ -133,7 +133,7 @@ function runTest() {
   // Opens the iframe to the test page.
   // Only the French locale is available.
   openPage("index.html",
-    [_({"fr":[{"version":201411051234,"name":"Français","target":"2.2"}]})]);
+    [_({"fr":[{"revision":201411051234,"name":"Français","target":"2.2"}]})]);
   yield undefined;
 
   // Install the de and pl langpack.
@@ -143,7 +143,7 @@ function runTest() {
   // Opens the iframe to the test page.
   // French, German and Polish locales are available.
   openPage("index.html",
-    [_({"fr":[{"version":201411051234,"name":"Français","target":"2.2"}],"de":[{"version":201411051234,"name":"Deutsch","target":"2.2"}],"pl":[{"version":201411051234,"name":"Polski","target":"2.2"}]})]);
+    [_({"fr":[{"revision":201411051234,"name":"Français","target":"2.2"}],"de":[{"revision":201411051234,"name":"Deutsch","target":"2.2"}],"pl":[{"revision":201411051234,"name":"Polski","target":"2.2"}]})]);
   yield undefined;
 
   // Uninstall the second langpack.
@@ -159,7 +159,7 @@ function runTest() {
   // Opens the iframe to the test page.
   // Only the French locale is available.
   openPage("index.html",
-    [_({"fr":[{"version":201411051234,"name":"Français","target":"2.2"}]})]);
+    [_({"fr":[{"revision":201411051234,"name":"Français","target":"2.2"}]})]);
   yield undefined;
 
   // Uninstall the first langpack.
@@ -181,9 +181,9 @@ function runTest() {
   // Opens the iframe to the event test page.
   // Will get additionallanguageschange events.
   openPage("event.html",
-    [_({"fr":[{"version":201411051234,"name":"Français","target":"2.2"}]}),
-     _({"fr":[{"version":201411051234,"name":"Français","target":"2.2"}],"de":[{"version":201411051234,"name":"Deutsch","target":"2.2"}]}),
-     _({"fr":[{"version":201411051234,"name":"Français","target":"2.2"}],"de":[{"version":201411051234,"name":"Deutsch","target":"2.2"}],"pl":[{"version":201411051234,"name":"Polski","target":"2.2"}]})]);
+    [_({"fr":[{"revision":201411051234,"name":"Français","target":"2.2"}]}),
+     _({"fr":[{"revision":201411051234,"name":"Français","target":"2.2"}],"de":[{"revision":201411051234,"name":"Deutsch","target":"2.2"}]}),
+     _({"fr":[{"revision":201411051234,"name":"Français","target":"2.2"}],"de":[{"revision":201411051234,"name":"Deutsch","target":"2.2"}],"pl":[{"revision":201411051234,"name":"Polski","target":"2.2"}]})]);
   yield undefined;
 
   // Opens the iframe to the resource test page.
@@ -195,6 +195,101 @@ function runTest() {
      "hello=Bonjour",
      "hello=Bonjour",
      _({"hello":"Bonjour"})]);
+  yield undefined;
+
+  // Clean up after ourselves by uninstalling apps.
+  info(apps.length + " applications to uninstall.");
+  while (apps.length) {
+    let app = apps.pop();
+    req = navigator.mozApps.mgmt.uninstall(app);
+    req.onsuccess = continueTest;
+    req.onerror = mozAppsError;
+    yield undefined;
+  }
+
+  // Test localized values with a x.y manifest version.
+  installApp(appManifestURL);
+  yield undefined;
+
+  // Install the fr langpack.
+  installApp(lang1ManifestURL);
+  yield undefined;
+
+  // Install the de and pl langpack.
+  installApp(lang2ManifestURL);
+  yield undefined;
+
+  // Opens the iframe to the localized values test page.
+  openPage("localizedvalues.html",
+    ["Localization test app",
+     "UnknownProperty",
+     "Version française.",
+     "dialer",
+     "téléphone"]);
+  yield undefined;
+
+  // Clean up after ourselves by uninstalling apps.
+  info(apps.length + " applications to uninstall.");
+  while (apps.length) {
+    let app = apps.pop();
+    req = navigator.mozApps.mgmt.uninstall(app);
+    req.onsuccess = continueTest;
+    req.onerror = mozAppsError;
+    yield undefined;
+  }
+
+  // Test localized values with versionless manifest.
+  appManifestURL = uriPrefix + "manifest_no_version.webapp";
+  installApp(appManifestURL);
+  yield undefined;
+
+  // Install the fr langpack.
+  installApp(lang1ManifestURL);
+  yield undefined;
+
+  // Install the de and pl langpack.
+  installApp(lang2ManifestURL);
+  yield undefined;
+
+  // Opens the iframe to the localized values test page.
+  openPage("localizedvalues.html",
+    ["Localization test app",
+     "UnknownProperty",
+     "Localization test app",
+     "dialer",
+     "dialer"]);
+  yield undefined;
+
+  // Clean up after ourselves by uninstalling apps.
+  info(apps.length + " applications to uninstall.");
+  while (apps.length) {
+    let app = apps.pop();
+    req = navigator.mozApps.mgmt.uninstall(app);
+    req.onsuccess = continueTest;
+    req.onerror = mozAppsError;
+    yield undefined;
+  }
+
+  // Test localized values with a x.y.z manifest version.
+  appManifestURL = uriPrefix + "manifest_version_xyz.webapp"
+  installApp(appManifestURL);
+  yield undefined;
+
+  // Install the fr langpack.
+  installApp(lang1ManifestURL);
+  yield undefined;
+
+  // Install the de and pl langpack.
+  installApp(lang2ManifestURL);
+  yield undefined;
+
+  // Opens the iframe to the localized values test page.
+  openPage("localizedvalues.html",
+    ["Localization test app",
+     "UnknownProperty",
+     "Version française.",
+     "dialer",
+     "téléphone"]);
   yield undefined;
 
   // Clean up after ourselves by uninstalling apps.

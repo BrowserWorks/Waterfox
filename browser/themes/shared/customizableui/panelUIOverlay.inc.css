@@ -17,6 +17,7 @@
 %define menuStateHover :not(:-moz-any([disabled],:active))[_moz-menuactive]
 %define buttonStateActive :not([disabled]):-moz-any([open],:hover:active)
 %define menuStateActive :not([disabled])[_moz-menuactive]:active
+%define menuStateMenuActive :not([disabled])[_moz-menuactive]
 
 %include ../browser.inc
 
@@ -104,6 +105,12 @@
 
 #PanelUI-button:-moz-locale-dir(rtl) {
   background-position: 100% 0, calc(100% - 1px) 0, calc(100% - 2px) 0;
+}
+
+#PanelUI-menu-button[update-status="succeeded"] .toolbarbutton-badge::after {
+  content: url(chrome://browser/skin/update-badge.svg);
+  background-color: #74BF43;
+  height: 10px;
 }
 
 .panel-subviews {
@@ -249,6 +256,11 @@ panelview:not([mainview]) .toolbarbutton-text,
   padding: 4px 0;
 }
 
+.cui-widget-panel[viewId="PanelUI-pocketView"] > .panel-arrowcontainer > .panel-arrowcontent {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
 .cui-widget-panel.cui-widget-panelWithFooter > .panel-arrowcontainer > .panel-arrowcontent {
   padding-bottom: 0;
 }
@@ -294,8 +306,10 @@ toolbarpaletteitem[place="panel"]:not([haswideitem=true]) > .toolbarbutton-1 {
 }
 
 /* Help SDK buttons fit in. */
-toolbarpaletteitem[place="palette"] > toolbarbutton[sdk-button="true"] > .toolbarbutton-icon,
-toolbarbutton[sdk-button="true"][cui-areatype="menu-panel"] > .toolbarbutton-icon {
+toolbarpaletteitem[place="palette"] > toolbarbutton[constrain-size="true"] > .toolbarbutton-icon,
+toolbarpaletteitem[place="palette"] > toolbarbutton[constrain-size="true"] > .toolbarbutton-badge-container > .toolbarbutton-icon,
+toolbarbutton[constrain-size="true"][cui-areatype="menu-panel"] > .toolbarbutton-icon,
+toolbarbutton[constrain-size="true"][cui-areatype="menu-panel"] > .toolbarbutton-badge-container > .toolbarbutton-icon {
   height: 32px;
   width: 32px;
 }
@@ -505,7 +519,7 @@ toolbarpaletteitem[place="palette"] > toolbaritem > toolbarbutton {
   min-height: 40px;
   -moz-appearance: none;
   box-shadow: none;
-  border: none;  
+  border: none;
   border-radius: 0;
   transition: background-color;
   -moz-box-orient: horizontal;
@@ -796,7 +810,7 @@ panelview .toolbarbutton-1@buttonStateHover@,
 toolbarbutton.subviewbutton@buttonStateHover@,
 menu.subviewbutton@menuStateHover@,
 menuitem.subviewbutton@menuStateHover@,
-.share-provider-button@buttonStateHover@,
+.share-provider-button@buttonStateHover@:not([checked="true"]),
 .widget-overflow-list .toolbarbutton-1@buttonStateHover@,
 .toolbaritem-combined-buttons@inAnyPanel@ > toolbarbutton@buttonStateHover@ {
   background-color: hsla(210,4%,10%,.08);
@@ -1170,7 +1184,9 @@ menuitem[checked="true"].subviewbutton > .menu-iconic-left {
 #customizationui-widget-multiview > .panel-viewcontainer,
 #customizationui-widget-multiview > .panel-viewcontainer > .panel-viewstack,
 #PanelUI-panicView > .panel-subview-body,
-#PanelUI-panicView {
+#PanelUI-panicView,
+#PanelUI-pocketView > .panel-subview-body,
+#PanelUI-pocketView {
   overflow: visible;
 }
 

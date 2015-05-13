@@ -1,4 +1,5 @@
 marionette_transport.pth:testing/marionette/transport
+marionette_driver.pth:testing/marionette/driver
 marionette.pth:testing/marionette/client
 blessings.pth:python/blessings
 configobj.pth:python/configobj
@@ -25,3 +26,4 @@ gyp.pth:media/webrtc/trunk/tools/gyp/pylib
 pyasn1.pth:python/pyasn1
 bitstring.pth:python/bitstring
 redo.pth:python/redo
+requests.pth:python/requests

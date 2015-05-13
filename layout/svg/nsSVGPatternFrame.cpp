@@ -42,7 +42,7 @@ public:
     MOZ_GUARD_OBJECT_NOTIFIER_INIT;
     // Reference loops should normally be detected in advance and handled, so
     // we're not expecting to encounter them here
-    NS_ABORT_IF_FALSE(!mFrame->mLoopFlag, "Undetected reference loop!");
+    MOZ_ASSERT(!mFrame->mLoopFlag, "Undetected reference loop!");
     mFrame->mLoopFlag = true;
   }
   ~AutoPatternReferencer() {
@@ -105,7 +105,7 @@ nsSVGPatternFrame::Init(nsIContent*       aContent,
                         nsContainerFrame* aParent,
                         nsIFrame*         aPrevInFlow)
 {
-  NS_ASSERTION(aContent->IsSVG(nsGkAtoms::pattern), "Content is not an SVG pattern");
+  NS_ASSERTION(aContent->IsSVGElement(nsGkAtoms::pattern), "Content is not an SVG pattern");
 
   nsSVGPatternFrameBase::Init(aContent, aParent, aPrevInFlow);
 }
@@ -346,7 +346,7 @@ nsSVGPatternFrame::PaintPattern(const DrawTarget* aDrawTarget,
   bool resultOverflows;
   IntSize surfaceSize =
     nsSVGUtils::ConvertToSurfaceSize(
-      transformedBBox.Size(), &resultOverflows).ToIntSize();
+      transformedBBox.Size(), &resultOverflows);
 
   // 0 disables rendering, < 0 is an error
   if (surfaceSize.width <= 0 || surfaceSize.height <= 0) {
@@ -361,9 +361,9 @@ nsSVGPatternFrame::PaintPattern(const DrawTarget* aDrawTarget,
       patternHeight != surfaceSize.height) {
     // scale drawing to pattern surface size
     gfxMatrix tempTM =
-      gfxMatrix(surfaceSize.width / patternWidth, 0.0f,
-                0.0f, surfaceSize.height / patternHeight,
-                0.0f, 0.0f);
+      gfxMatrix(surfaceSize.width / patternWidth, 0.0,
+                0.0, surfaceSize.height / patternHeight,
+                0.0, 0.0);
     patternWithChildren->mCTM->PreMultiply(tempTM);
 
     // and rescale pattern to compensate
@@ -406,7 +406,7 @@ nsSVGPatternFrame::PaintPattern(const DrawTarget* aDrawTarget,
         SVGFrame->NotifySVGChanged(nsISVGChildFrame::TRANSFORM_CHANGED);
       }
       gfxMatrix tm = *(patternWithChildren->mCTM);
-      if (kid->GetContent()->IsSVG()) {
+      if (kid->GetContent()->IsSVGElement()) {
         tm = static_cast<nsSVGElement*>(kid->GetContent())->
               PrependLocalTransformsTo(tm, nsSVGElement::eUserSpaceToParent);
       }
@@ -639,23 +639,23 @@ nsSVGPatternFrame::ConstructCTM(const nsSVGViewBox& aViewBox,
                                 const Matrix &callerCTM,
                                 nsIFrame *aTarget)
 {
-  gfxMatrix tCTM;
   SVGSVGElement *ctx = nullptr;
   nsIContent* targetContent = aTarget->GetContent();
+  gfxFloat scaleX, scaleY;
 
   // The objectBoundingBox conversion must be handled in the CTM:
   if (IncludeBBoxScale(aViewBox, aPatternContentUnits, aPatternUnits)) {
-    tCTM.Scale(callerBBox.Width(), callerBBox.Height());
+    scaleX = callerBBox.Width();
+    scaleY = callerBBox.Height();
   } else {
-    if (targetContent->IsSVG()) {
+    if (targetContent->IsSVGElement()) {
       ctx = static_cast<nsSVGElement*>(targetContent)->GetCtx();
     }
-    float scale = MaxExpansion(callerCTM);
-    tCTM.Scale(scale, scale);
+    scaleX = scaleY = MaxExpansion(callerCTM);
   }
 
   if (!aViewBox.IsExplicitlySet()) {
-    return tCTM;
+    return gfxMatrix(scaleX, 0.0, 0.0, scaleY, 0.0, 0.0);
   }
   const nsSVGViewBoxRect viewBoxRect = aViewBox.GetAnimValue();
 
@@ -664,7 +664,7 @@ nsSVGPatternFrame::ConstructCTM(const nsSVGViewBox& aViewBox,
   }
 
   float viewportWidth, viewportHeight;
-  if (targetContent->IsSVG()) {
+  if (targetContent->IsSVGElement()) {
     // If we're dealing with an SVG target only retrieve the context once.
     // Calling the nsIFrame* variant of GetAnimValue would look it up on
     // every call.
@@ -685,12 +685,12 @@ nsSVGPatternFrame::ConstructCTM(const nsSVGViewBox& aViewBox,
   }
 
   Matrix tm = SVGContentUtils::GetViewBoxTransform(
-    viewportWidth, viewportHeight,
+    viewportWidth * scaleX, viewportHeight * scaleY,
     viewBoxRect.x, viewBoxRect.y,
     viewBoxRect.width, viewBoxRect.height,
     GetPreserveAspectRatio());
 
-  return ThebesMatrix(tm) * tCTM;
+  return ThebesMatrix(tm);
 }
 
 //----------------------------------------------------------------------

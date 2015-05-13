@@ -27,7 +27,7 @@ namespace mozilla {
  * TouchCaret is also responsible for touch caret visibility. Touch caret
  * won't be shown when timer expires or while key event causes selection change.
  */
-class TouchCaret MOZ_FINAL : public nsISelectionListener
+class TouchCaret final : public nsISelectionListener
 {
 public:
   explicit TouchCaret(nsIPresShell* aPresShell);
@@ -88,6 +88,11 @@ private:
   nsCanvasFrame* GetCanvasFrame();
 
   /**
+   * Find the root frame to update the touch caret's position.
+   */
+  nsIFrame* GetRootFrame();
+
+  /**
    * Retrieve the bounding rectangle of the touch caret.
    *
    * @returns A nsRect representing the bounding rectangle of this touch caret.
@@ -112,22 +117,22 @@ private:
   nscoord GetCaretYCenterPosition();
 
   /**
-   * Retrieve the position of the touch caret.
-   * The returned point is relative to the canvas frame.
+   * Retrieve the rect of the touch caret.
+   * The returned rect is relative to the canvas frame.
    */
-  nsPoint GetTouchCaretPosition();
+  nsRect GetTouchCaretRect();
 
   /**
    * Clamp the position of the touch caret to the scroll frame boundary.
-   * The returned point is relative to the canvas frame.
+   * The returned rect is relative to the canvas frame.
    */
-  nsPoint ClampPositionToScrollFrame(const nsPoint& aPosition);
+  nsRect ClampRectToScrollFrame(const nsRect& aRect);
 
   /**
    * Set the position of the touch caret.
    * Touch caret is an absolute positioned div.
    */
-  void SetTouchFramePos(const nsPoint& aOrigin);
+  void SetTouchFramePos(const nsRect& aRect);
 
   void LaunchExpirationTimer();
   void CancelExpirationTimer();

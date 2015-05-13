@@ -92,8 +92,16 @@ void SetThisProcessName(const char *aName)
  * NOTE: The server process serves at most one load() request.
  */
 
-using namespace base;
 using namespace mozilla::dom;
+
+using base::ChildPrivileges;
+using base::InjectionArc;
+using base::InjectiveMultimap;
+using base::ProcessHandle;
+using base::ProcessId;
+using base::SetCurrentProcessPrivileges;
+using base::ShuffleFileDescriptors;
+using base::file_handle_mapping_vector;
 
 static bool sProcLoaderClientOnDeinit = false;
 static DebugOnly<bool> sProcLoaderClientInitialized = false;
@@ -121,10 +129,10 @@ public:
   ProcLoaderParent() {}
   virtual ~ProcLoaderParent() {}
 
-  virtual void ActorDestroy(ActorDestroyReason aWhy) MOZ_OVERRIDE;
+  virtual void ActorDestroy(ActorDestroyReason aWhy) override;
 
   virtual bool RecvLoadComplete(const int32_t &aPid,
-                                const int32_t &aCookie) MOZ_OVERRIDE;
+                                const int32_t &aCookie) override;
 };
 
 void
@@ -428,11 +436,11 @@ class ProcLoaderChild : public PProcLoaderChild
 public:
   ProcLoaderChild(pid_t aPeerPid) : mPeerPid(aPeerPid) {}
 
-  virtual void ActorDestroy(ActorDestroyReason aWhy) MOZ_OVERRIDE;
+  virtual void ActorDestroy(ActorDestroyReason aWhy) override;
 
-  virtual bool RecvLoad(const InfallibleTArray<nsCString>& aArgv,
-                        const InfallibleTArray<nsCString>& aEnv,
-                        const InfallibleTArray<FDRemap>& aFdsremap,
+  virtual bool RecvLoad(InfallibleTArray<nsCString>&& aArgv,
+                        InfallibleTArray<nsCString>&& aEnv,
+                        InfallibleTArray<FDRemap>&& aFdsremap,
                         const uint32_t& aPrivs,
                         const int32_t& aCookie);
 
@@ -453,9 +461,9 @@ _ProcLoaderChildDestroy(ProcLoaderChild *aChild)
 }
 
 bool
-ProcLoaderChild::RecvLoad(const InfallibleTArray<nsCString>& aArgv,
-                          const InfallibleTArray<nsCString>& aEnv,
-                          const InfallibleTArray<FDRemap>& aFdsRemap,
+ProcLoaderChild::RecvLoad(InfallibleTArray<nsCString>&& aArgv,
+                          InfallibleTArray<nsCString>&& aEnv,
+                          InfallibleTArray<FDRemap>&& aFdsRemap,
                           const uint32_t& aPrivs,
                           const int32_t& aCookie) {
   if (!sProcLoaderServing) {

@@ -15,24 +15,24 @@
 
 namespace mozilla {
 
-class MediaTaskQueue;
+class FlushableMediaTaskQueue;
 class MediaDataDecoderCallback;
 
 class AppleATDecoder : public MediaDataDecoder {
 public:
-  AppleATDecoder(const mp4_demuxer::AudioDecoderConfig& aConfig,
-                 MediaTaskQueue* aVideoTaskQueue,
+  AppleATDecoder(const AudioInfo& aConfig,
+                 FlushableMediaTaskQueue* aVideoTaskQueue,
                  MediaDataDecoderCallback* aCallback);
   virtual ~AppleATDecoder();
 
-  virtual nsresult Init() MOZ_OVERRIDE;
-  virtual nsresult Input(mp4_demuxer::MP4Sample* aSample) MOZ_OVERRIDE;
-  virtual nsresult Flush() MOZ_OVERRIDE;
-  virtual nsresult Drain() MOZ_OVERRIDE;
-  virtual nsresult Shutdown() MOZ_OVERRIDE;
+  virtual nsresult Init() override;
+  virtual nsresult Input(MediaRawData* aSample) override;
+  virtual nsresult Flush() override;
+  virtual nsresult Drain() override;
+  virtual nsresult Shutdown() override;
 
   // Callbacks also need access to the config.
-  const mp4_demuxer::AudioDecoderConfig& mConfig;
+  const AudioInfo& mConfig;
 
   // Use to extract magic cookie for HE-AAC detection.
   nsTArray<uint8_t> mMagicCookie;
@@ -41,22 +41,22 @@ public:
   bool mFileStreamError;
 
 private:
-  nsRefPtr<MediaTaskQueue> mTaskQueue;
+  nsRefPtr<FlushableMediaTaskQueue> mTaskQueue;
   MediaDataDecoderCallback* mCallback;
   AudioConverterRef mConverter;
   AudioStreamBasicDescription mOutputFormat;
   UInt32 mFormatID;
   AudioFileStreamID mStream;
-  nsTArray<nsAutoPtr<mp4_demuxer::MP4Sample>> mQueuedSamples;
+  nsTArray<nsRefPtr<MediaRawData>> mQueuedSamples;
 
-  void SubmitSample(nsAutoPtr<mp4_demuxer::MP4Sample> aSample);
-  nsresult DecodeSample(mp4_demuxer::MP4Sample* aSample);
+  void SubmitSample(MediaRawData* aSample);
+  nsresult DecodeSample(MediaRawData* aSample);
   nsresult GetInputAudioDescription(AudioStreamBasicDescription& aDesc,
                                     const nsTArray<uint8_t>& aExtraData);
   // Setup AudioConverter once all information required has been gathered.
   // Will return NS_ERROR_NOT_INITIALIZED if more data is required.
-  nsresult SetupDecoder(mp4_demuxer::MP4Sample* aSample);
-  nsresult GetImplicitAACMagicCookie(const mp4_demuxer::MP4Sample* aSample);
+  nsresult SetupDecoder(MediaRawData* aSample);
+  nsresult GetImplicitAACMagicCookie(const MediaRawData* aSample);
 };
 
 } // namespace mozilla

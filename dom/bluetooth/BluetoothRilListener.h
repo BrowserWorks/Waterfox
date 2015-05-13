@@ -1,5 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -11,7 +11,7 @@
 
 #include "nsAutoPtr.h"
 
-#include "nsIIccProvider.h"
+#include "nsIIccService.h"
 #include "nsIMobileConnectionService.h"
 #include "nsITelephonyCallInfo.h"
 #include "nsITelephonyService.h"
@@ -27,10 +27,12 @@ public:
   NS_DECL_NSIICCLISTENER
 
   IccListener() { }
-  virtual ~IccListener() { }
 
   bool Listen(bool aStart);
   void SetOwner(BluetoothRilListener *aOwner);
+
+protected:
+  virtual ~IccListener() { }
 
 private:
   BluetoothRilListener* mOwner;
@@ -44,9 +46,11 @@ public:
 
   MobileConnectionListener(uint32_t aClientId)
   : mClientId(aClientId) { }
-  virtual ~MobileConnectionListener() { }
 
   bool Listen(bool aStart);
+
+protected:
+  virtual ~MobileConnectionListener() { }
 
 private:
   uint32_t mClientId;
@@ -59,9 +63,11 @@ public:
   NS_DECL_NSITELEPHONYLISTENER
 
   TelephonyListener() { }
-  virtual ~TelephonyListener() { }
 
   bool Listen(bool aStart);
+
+protected:
+  virtual ~TelephonyListener() { }
 
 private:
   nsresult HandleCallInfo(nsITelephonyCallInfo* aInfo, bool aSend);

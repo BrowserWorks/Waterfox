@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -72,11 +73,11 @@ nsIContent*
 HTMLOptGroupElement::GetSelect()
 {
   nsIContent* parent = this;
-  while ((parent = parent->GetParent()) && parent->IsHTML()) {
-    if (parent->Tag() == nsGkAtoms::select) {
+  while ((parent = parent->GetParent()) && parent->IsHTMLElement()) {
+    if (parent->IsHTMLElement(nsGkAtoms::select)) {
       return parent;
     }
-    if (parent->Tag() != nsGkAtoms::optgroup) {
+    if (!parent->IsHTMLElement(nsGkAtoms::optgroup)) {
       break;
     }
   }
@@ -114,7 +115,7 @@ HTMLOptGroupElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
     // disabled attribute. We should make sure their state is updated.
     for (nsIContent* child = nsINode::GetFirstChild(); child;
          child = child->GetNextSibling()) {
-      if (child->IsHTML(nsGkAtoms::option)) {
+      if (child->IsHTMLElement(nsGkAtoms::option)) {
         // No need to call |IsElement()| because it's an HTML element.
         child->AsElement()->UpdateState(true);
       }
@@ -142,9 +143,9 @@ HTMLOptGroupElement::IntrinsicState() const
 }
 
 JSObject*
-HTMLOptGroupElement::WrapNode(JSContext* aCx)
+HTMLOptGroupElement::WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return HTMLOptGroupElementBinding::Wrap(aCx, this);
+  return HTMLOptGroupElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 } // namespace dom

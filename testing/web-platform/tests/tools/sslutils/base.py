@@ -7,11 +7,11 @@ def get_logger(name="ssl"):
 class NoSSLEnvironment(object):
     ssl_enabled = False
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         pass
 
     def __enter__(self):
-        pass
+        return self
 
     def __exit__(self, *args, **kwargs):
         pass

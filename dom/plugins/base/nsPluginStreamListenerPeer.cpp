@@ -32,6 +32,7 @@
 #include "GeckoProfiler.h"
 #include "nsPluginInstanceOwner.h"
 #include "nsDataHashtable.h"
+#include "nsNullPrincipal.h"
 
 #define MAGIC_REQUEST_CONTEXT 0x01020304
 
@@ -572,8 +573,8 @@ nsPluginStreamListenerPeer::OnStartRequest(nsIRequest *request,
 
 NS_IMETHODIMP nsPluginStreamListenerPeer::OnProgress(nsIRequest *request,
                                                      nsISupports* aContext,
-                                                     uint64_t aProgress,
-                                                     uint64_t aProgressMax)
+                                                     int64_t aProgress,
+                                                     int64_t aProgressMax)
 {
   nsresult rv = NS_OK;
   return rv;
@@ -700,9 +701,8 @@ nsPluginStreamListenerPeer::RequestRead(NPByteRange* rangeList)
     // in this else branch we really don't know where the load is coming
     // from and in fact should use something better than just using
     // a nullPrincipal as the loadingPrincipal.
-    nsCOMPtr<nsIPrincipal> principal =
-      do_CreateInstance("@mozilla.org/nullprincipal;1", &rv);
-    NS_ENSURE_SUCCESS(rv, rv);
+    nsCOMPtr<nsIPrincipal> principal = nsNullPrincipal::Create();
+    NS_ENSURE_TRUE(principal, NS_ERROR_FAILURE);
     rv = NS_NewChannel(getter_AddRefs(channel),
                        mURL,
                        principal,
@@ -1185,6 +1185,7 @@ nsresult nsPluginStreamListenerPeer::SetUpStreamListener(nsIRequest *request,
 void
 nsPluginStreamListenerPeer::OnStreamTypeSet(const int32_t aStreamType)
 {
+  MOZ_ASSERT(aStreamType != STREAM_TYPE_UNKNOWN);
   MOZ_ASSERT(mRequest);
   mStreamType = aStreamType;
   if (!mUseLocalCache && mStreamType >= NP_ASFILE) {
@@ -1200,8 +1201,6 @@ nsPluginStreamListenerPeer::OnStreamTypeSet(const int32_t aStreamType)
     SetupPluginCacheFile(channel);
   }
 }
-
-const int32_t nsPluginStreamListenerPeer::STREAM_TYPE_UNKNOWN = UINT16_MAX;
 
 nsresult
 nsPluginStreamListenerPeer::OnFileAvailable(nsIFile* aFile)
@@ -1289,7 +1288,7 @@ public:
 
   NS_DECL_ISUPPORTS
 
-  NS_IMETHODIMP OnRedirectVerifyCallback(nsresult aResult) MOZ_OVERRIDE
+  NS_IMETHODIMP OnRedirectVerifyCallback(nsresult aResult) override
   {
     if (NS_SUCCEEDED(aResult)) {
       nsCOMPtr<nsIStreamListener> listener = do_QueryReferent(mWeakListener);

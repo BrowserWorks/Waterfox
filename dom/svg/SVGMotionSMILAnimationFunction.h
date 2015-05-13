@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -31,7 +32,7 @@ class SVGMPathElement;
 // Subclass of nsSMILAnimationFunction to support a few extra features offered
 // by the <animateMotion> element.
 //
-class SVGMotionSMILAnimationFunction MOZ_FINAL : public nsSMILAnimationFunction
+class SVGMotionSMILAnimationFunction final : public nsSMILAnimationFunction
 {
   typedef mozilla::gfx::Path Path;
 
@@ -40,8 +41,8 @@ public:
   virtual bool SetAttr(nsIAtom* aAttribute,
                        const nsAString& aValue,
                        nsAttrValue& aResult,
-                       nsresult* aParseResult = nullptr) MOZ_OVERRIDE;
-  virtual bool UnsetAttr(nsIAtom* aAttribute) MOZ_OVERRIDE;
+                       nsresult* aParseResult = nullptr) override;
+  virtual bool UnsetAttr(nsIAtom* aAttribute) override;
 
   // Method to allow our owner-element to signal us when our <mpath>
   // has changed or been added/removed.  When that happens, we need to
@@ -62,12 +63,12 @@ protected:
     ePathSourceType_Mpath
   };
 
-  virtual nsSMILCalcMode GetCalcMode() const MOZ_OVERRIDE;
+  virtual nsSMILCalcMode GetCalcMode() const override;
   virtual nsresult GetValues(const nsISMILAttr& aSMILAttr,
-                             nsSMILValueArray& aResult) MOZ_OVERRIDE;
-  virtual void CheckValueListDependentAttrs(uint32_t aNumValues) MOZ_OVERRIDE;
+                             nsSMILValueArray& aResult) override;
+  virtual void CheckValueListDependentAttrs(uint32_t aNumValues) override;
 
-  virtual bool IsToAnimation() const MOZ_OVERRIDE;
+  virtual bool IsToAnimation() const override;
 
   void     CheckKeyPoints();
   nsresult SetKeyPoints(const nsAString& aKeyPoints, nsAttrValue& aResult);

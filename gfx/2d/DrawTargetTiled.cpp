@@ -3,11 +3,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#define _USE_MATH_DEFINES
-#include <cmath>
-
 #include "DrawTargetTiled.h"
 #include "Logging.h"
+#include "PathHelpers.h"
 
 using namespace std;
 
@@ -43,6 +41,8 @@ DrawTargetTiled::Init(const TileSet& aTiles)
     mRect.y = min(mRect.y, mTiles[i].mTileOrigin.y);
     mRect.width = newXMost - mRect.x;
     mRect.height = newYMost - mRect.y;
+    mTiles[i].mDrawTarget->SetTransform(Matrix::Translation(mTiles[i].mTileOrigin.x,
+                                                            mTiles[i].mTileOrigin.y));
   }
   mFormat = mTiles[0].mDrawTarget->GetFormat();
   return true;
@@ -105,8 +105,6 @@ TILED_COMMAND(Flush)
 TILED_COMMAND4(DrawFilter, FilterNode*, const Rect&, const Point&, const DrawOptions&)
 TILED_COMMAND1(ClearRect, const Rect&)
 TILED_COMMAND4(MaskSurface, const Pattern&, SourceSurface*, Point, const DrawOptions&)
-TILED_COMMAND4(StrokeRect, const Rect&, const Pattern&, const StrokeOptions&, const DrawOptions&)
-TILED_COMMAND5(StrokeLine, const Point&, const Point&, const Pattern&, const StrokeOptions&, const DrawOptions&)
 TILED_COMMAND5(FillGlyphs, ScaledFont*, const GlyphBuffer&, const Pattern&, const DrawOptions&, const GlyphRenderingOptions*)
 TILED_COMMAND3(Mask, const Pattern&, const Pattern&, const DrawOptions&)
 
@@ -178,19 +176,14 @@ DrawTargetTiled::CopySurface(SourceSurface *aSurface,
                              const IntRect &aSourceRect,
                              const IntPoint &aDestination)
 {
-  // CopySurface ignores the transform, account for that here.
   for (size_t i = 0; i < mTiles.size(); i++) {
-    IntRect src = aSourceRect;
-    src.x += mTiles[i].mTileOrigin.x;
-    src.width -= mTiles[i].mTileOrigin.x;
-    src.y = mTiles[i].mTileOrigin.y;
-    src.height -= mTiles[i].mTileOrigin.y;
-
-    if (src.width <= 0 || src.height <= 0) {
+    IntPoint tileOrigin = mTiles[i].mTileOrigin;
+    IntSize tileSize = mTiles[i].mDrawTarget->GetSize();
+    if (!IntRect(aDestination, aSourceRect.Size()).Intersects(IntRect(tileOrigin, tileSize))) {
       continue;
     }
-
-    mTiles[i].mDrawTarget->CopySurface(aSurface, src, aDestination);
+    // CopySurface ignores the transform, account for that here.
+    mTiles[i].mDrawTarget->CopySurface(aSurface, aSourceRect, aDestination - tileOrigin);
   }
 }
 
@@ -235,40 +228,12 @@ DrawTargetTiled::FillRect(const Rect& aRect, const Pattern& aPattern, const Draw
   }
 }
 
-// The logic for this comes from _cairo_stroke_style_max_distance_from_path
-static Rect
-PathExtentsToMaxStrokeExtents(const StrokeOptions &aStrokeOptions,
-                              const Rect &aRect,
-                              const Matrix &aTransform)
-{
-  double styleExpansionFactor = 0.5f;
-
-  if (aStrokeOptions.mLineCap == CapStyle::SQUARE) {
-    styleExpansionFactor = M_SQRT1_2;
-  }
-
-  if (aStrokeOptions.mLineJoin == JoinStyle::MITER &&
-      styleExpansionFactor < M_SQRT2 * aStrokeOptions.mMiterLimit) {
-    styleExpansionFactor = M_SQRT2 * aStrokeOptions.mMiterLimit;
-  }
-
-  styleExpansionFactor *= aStrokeOptions.mLineWidth;
-
-  double dx = styleExpansionFactor * hypot(aTransform._11, aTransform._21);
-  double dy = styleExpansionFactor * hypot(aTransform._22, aTransform._12);
-
-  Rect result = aRect;
-  result.Inflate(dx, dy);
-  return result;
-}
-
 void
 DrawTargetTiled::Stroke(const Path* aPath, const Pattern& aPattern, const StrokeOptions& aStrokeOptions, const DrawOptions& aDrawOptions)
 {
   // Approximate the stroke extents, since Path::GetStrokeExtents can be slow
-  Rect deviceRect = PathExtentsToMaxStrokeExtents(aStrokeOptions,
-                                                 aPath->GetBounds(mTransform),
-                                                 mTransform);
+  Rect deviceRect = aPath->GetBounds(mTransform);
+  deviceRect.Inflate(MaxStrokeExtents(aStrokeOptions, mTransform));
   for (size_t i = 0; i < mTiles.size(); i++) {
     if (!mTiles[i].mClippedOut &&
         deviceRect.Intersects(Rect(mTiles[i].mTileOrigin.x,
@@ -276,6 +241,51 @@ DrawTargetTiled::Stroke(const Path* aPath, const Pattern& aPattern, const Stroke
                                    mTiles[i].mDrawTarget->GetSize().width,
                                    mTiles[i].mDrawTarget->GetSize().height))) {
       mTiles[i].mDrawTarget->Stroke(aPath, aPattern, aStrokeOptions, aDrawOptions);
+    }
+  }
+}
+
+void
+DrawTargetTiled::StrokeRect(const Rect& aRect, const Pattern& aPattern, const StrokeOptions &aStrokeOptions, const DrawOptions& aDrawOptions)
+{
+  Rect deviceRect = mTransform.TransformBounds(aRect);
+  Margin strokeMargin = MaxStrokeExtents(aStrokeOptions, mTransform);
+  Rect outerRect = deviceRect;
+  outerRect.Inflate(strokeMargin);
+  Rect innerRect;
+  if (mTransform.IsRectilinear()) {
+    // If rects are mapped to rects, we can compute the inner rect
+    // of the stroked rect.
+    innerRect = deviceRect;
+    innerRect.Deflate(strokeMargin);
+  }
+  for (size_t i = 0; i < mTiles.size(); i++) {
+    if (mTiles[i].mClippedOut) {
+      continue;
+    }
+    Rect tileRect(mTiles[i].mTileOrigin.x,
+                  mTiles[i].mTileOrigin.y,
+                  mTiles[i].mDrawTarget->GetSize().width,
+                  mTiles[i].mDrawTarget->GetSize().height);
+    if (outerRect.Intersects(tileRect) && !innerRect.Contains(tileRect)) {
+      mTiles[i].mDrawTarget->StrokeRect(aRect, aPattern, aStrokeOptions, aDrawOptions);
+    }
+  }
+}
+
+void
+DrawTargetTiled::StrokeLine(const Point& aStart, const Point& aEnd, const Pattern& aPattern, const StrokeOptions &aStrokeOptions, const DrawOptions& aDrawOptions)
+{
+  Rect lineBounds = Rect(aStart, Size()).UnionEdges(Rect(aEnd, Size()));
+  Rect deviceRect = mTransform.TransformBounds(lineBounds);
+  deviceRect.Inflate(MaxStrokeExtents(aStrokeOptions, mTransform));
+  for (size_t i = 0; i < mTiles.size(); i++) {
+    if (!mTiles[i].mClippedOut &&
+        deviceRect.Intersects(Rect(mTiles[i].mTileOrigin.x,
+                                   mTiles[i].mTileOrigin.y,
+                                   mTiles[i].mDrawTarget->GetSize().width,
+                                   mTiles[i].mDrawTarget->GetSize().height))) {
+      mTiles[i].mDrawTarget->StrokeLine(aStart, aEnd, aPattern, aStrokeOptions, aDrawOptions);
     }
   }
 }

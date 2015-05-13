@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -22,9 +23,9 @@ namespace dom {
 class SVGAnimatedLength;
 
 JSObject*
-SVGRectElement::WrapNode(JSContext *aCx)
+SVGRectElement::WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return SVGRectElementBinding::Wrap(aCx, this);
+  return SVGRectElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 nsSVGElement::LengthInfo SVGRectElement::sLengthInfo[6] =
@@ -111,8 +112,8 @@ SVGRectElement::GetLengthInfo()
 // nsSVGPathGeometryElement methods
 
 bool
-SVGRectElement::GetGeometryBounds(Rect* aBounds, Float aStrokeWidth,
-                                  const Matrix& aTransform)
+SVGRectElement::GetGeometryBounds(
+  Rect* aBounds, const StrokeOptions& aStrokeOptions, const Matrix& aTransform)
 {
   Rect rect;
   Float rx, ry;
@@ -122,7 +123,8 @@ SVGRectElement::GetGeometryBounds(Rect* aBounds, Float aStrokeWidth,
   if (rect.IsEmpty()) {
     // Rendering of the element disabled
     rect.SetEmpty(); // Make sure width/height are zero and not negative
-    *aBounds = rect; // We still want the x/y position from 'rect'
+    // We still want the x/y position from 'rect'
+    *aBounds = aTransform.TransformBounds(rect);
     return true;
   }
 
@@ -136,8 +138,8 @@ SVGRectElement::GetGeometryBounds(Rect* aBounds, Float aStrokeWidth,
     }
   }
 
-  if (aStrokeWidth > 0.f) {
-    rect.Inflate(aStrokeWidth / 2.f);
+  if (aStrokeOptions.mLineWidth > 0.f) {
+    rect.Inflate(aStrokeOptions.mLineWidth / 2.f);
   }
 
   *aBounds = aTransform.TransformBounds(rect);

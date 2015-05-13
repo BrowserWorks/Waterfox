@@ -104,6 +104,7 @@
 #include "nsGlobalWindow.h"
 #include "nsDOMMutationObserver.h"
 #include "GeometryUtils.h"
+#include "nsIAnimationObserver.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -112,7 +113,6 @@ nsINode::nsSlots::~nsSlots()
 {
   if (mChildNodes) {
     mChildNodes->DropReference();
-    NS_RELEASE(mChildNodes);
   }
 
   if (mWeakReference) {
@@ -132,7 +132,6 @@ nsINode::nsSlots::Unlink()
 {
   if (mChildNodes) {
     mChildNodes->DropReference();
-    NS_RELEASE(mChildNodes);
   }
 }
 
@@ -220,7 +219,7 @@ nsINode::GetTextEditorRootContent(nsIEditor** aEditor)
     *aEditor = nullptr;
   for (nsINode* node = this; node; node = node->GetParentNode()) {
     if (!node->IsElement() ||
-        !node->AsElement()->IsHTML())
+        !node->IsHTMLElement())
       continue;
 
     nsCOMPtr<nsIEditor> editor =
@@ -370,9 +369,6 @@ nsINode::ChildNodes()
   nsSlots* slots = Slots();
   if (!slots->mChildNodes) {
     slots->mChildNodes = new nsChildContentList(this);
-    if (slots->mChildNodes) {
-      NS_ADDREF(slots->mChildNodes);
-    }
   }
 
   return slots->mChildNodes;
@@ -390,17 +386,8 @@ nsINode::GetComposedDocInternal() const
   MOZ_ASSERT(HasFlag(NODE_IS_IN_SHADOW_TREE) && IsContent(),
              "Should only be caled on nodes in the shadow tree.");
 
-  // Cross ShadowRoot boundary.
   ShadowRoot* containingShadow = AsContent()->GetContainingShadow();
-
-  nsIContent* poolHost = containingShadow->GetPoolHost();
-  if (!poolHost) {
-    // This node is in an older shadow root that does not get projected into
-    // an insertion point, thus this node can not be in the composed document.
-    return nullptr;
-  }
-
-  return poolHost->GetComposedDoc();
+  return containingShadow->IsComposedDocParticipant() ?  OwnerDoc() : nullptr;
 }
 
 #ifdef DEBUG
@@ -436,7 +423,7 @@ nsINode::IsAnonymousContentInSVGUseSubtree() const
   MOZ_ASSERT(IsInAnonymousSubtree());
   nsIContent* parent = AsContent()->GetBindingParent();
   // Watch out for parentless native-anonymous subtrees.
-  return parent && parent->IsSVG(nsGkAtoms::use);
+  return parent && parent->IsSVGElement(nsGkAtoms::use);
 }
 
 nsresult
@@ -564,7 +551,7 @@ nsINode::RemoveChild(nsIDOMNode* aOldChild, nsIDOMNode** aReturn)
   if (!rv.Failed()) {
     NS_ADDREF(*aReturn = aOldChild);
   }
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 void
@@ -1062,7 +1049,7 @@ nsINode::IsEqualNode(nsINode* aOther)
         break;
       }
       default:
-        NS_ABORT_IF_FALSE(false, "Unknown node type");
+        MOZ_ASSERT(false, "Unknown node type");
     }
 
     nsINode* nextNode = node1->GetFirstChild();
@@ -1309,11 +1296,18 @@ nsINode::GetContextForEventHandlers(nsresult* aRv)
 }
 
 nsIDOMWindow*
-nsINode::GetOwnerGlobal()
+nsINode::GetOwnerGlobalForBindings()
 {
   bool dummy;
   return nsPIDOMWindow::GetOuterFromCurrentInner(
     static_cast<nsGlobalWindow*>(OwnerDoc()->GetScriptHandlingObject(dummy)));
+}
+
+nsIGlobalObject*
+nsINode::GetOwnerGlobal() const
+{
+  bool dummy;
+  return OwnerDoc()->GetScriptHandlingObject(dummy);
 }
 
 bool
@@ -1357,7 +1351,7 @@ nsINode::Traverse(nsINode *tmp, nsCycleCollectionTraversalCallback &cb)
         // return early.
         nsIContent* parent = tmp->GetParent();
         if (parent && !parent->UnoptimizableCCNode() && parent->IsBlack()) {
-          NS_ABORT_IF_FALSE(parent->IndexOf(tmp) >= 0, "Parent doesn't own us?");
+          MOZ_ASSERT(parent->IndexOf(tmp) >= 0, "Parent doesn't own us?");
           return false;
         }
       }
@@ -1681,7 +1675,7 @@ bool IsAllowedAsChild(nsIContent* aNewChild, nsINode* aParent,
         // HTML template elements and ShadowRoot hosts need
         // to be checked to ensure that they are not inserted into
         // the hosted content.
-        aNewChild->Tag() == nsGkAtoms::_template ||
+        aNewChild->NodeInfo()->NameAtom() == nsGkAtoms::_template ||
         aNewChild->GetShadowRoot()) &&
        nsContentUtils::ContentIsHostIncludingDescendantOf(aParent,
                                                           aNewChild))) {
@@ -2238,7 +2232,7 @@ nsINode::ReplaceOrInsertBefore(bool aReplace, nsIDOMNode *aNewChild,
   if (result) {
     NS_ADDREF(*aReturn = result->AsDOMNode());
   }
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 nsresult
@@ -2425,7 +2419,7 @@ nsINode::ParseSelectorList(const nsAString& aSelectorString,
     // We hit this for syntax errors, which are quite common, so don't
     // use NS_ENSURE_SUCCESS.  (For example, jQuery has an extended set
     // of selectors, but it sees if we can parse them first.)
-    MOZ_ASSERT(aRv.ErrorCode() == NS_ERROR_DOM_SYNTAX_ERR,
+    MOZ_ASSERT(aRv.ErrorCodeIs(NS_ERROR_DOM_SYNTAX_ERR),
                "Unexpected error, so cached version won't return it");
     cache.CacheList(aSelectorString, nullptr);
     return nullptr;
@@ -2491,8 +2485,7 @@ FindMatchingElementsWithId(const nsAString& aId, nsINode* aRoot,
              "document if it's in the document.  Note that document fragments "
              "can't be IsInDoc(), so should never show up here.");
 
-  const nsSmallVoidArray* elements = aRoot->OwnerDoc()->GetAllElementsForId(aId);
-
+  const nsTArray<Element*>* elements = aRoot->OwnerDoc()->GetAllElementsForId(aId);
   if (!elements) {
     // Nothing to do; we're done
     return;
@@ -2500,8 +2493,8 @@ FindMatchingElementsWithId(const nsAString& aId, nsINode* aRoot,
 
   // XXXbz: Should we fall back to the tree walk if aRoot is not the
   // document and |elements| is long, for some value of "long"?
-  for (int32_t i = 0; i < elements->Count(); ++i) {
-    Element *element = static_cast<Element*>(elements->ElementAt(i));
+  for (size_t i = 0; i < elements->Length(); ++i) {
+    Element* element = (*elements)[i];
     if (!aRoot->IsElement() ||
         (element != aRoot &&
            nsContentUtils::ContentIsDescendantOf(element, aRoot))) {
@@ -2584,7 +2577,7 @@ FindMatchingElements(nsINode* aRoot, nsCSSSelectorList* aSelectorList, T &aList,
 struct ElementHolder {
   ElementHolder() : mElement(nullptr) {}
   void AppendElement(Element* aElement) {
-    NS_ABORT_IF_FALSE(!mElement, "Should only get one element");
+    MOZ_ASSERT(!mElement, "Should only get one element");
     mElement = aElement;
   }
   void SetCapacity(uint32_t aCapacity) { MOZ_CRASH("Don't call me!"); }
@@ -2633,7 +2626,7 @@ nsINode::QuerySelector(const nsAString& aSelector, nsIDOMElement **aReturn)
   ErrorResult rv;
   Element* result = nsINode::QuerySelector(aSelector, rv);
   if (rv.Failed()) {
-    return rv.ErrorCode();
+    return rv.StealNSResult();
   }
   nsCOMPtr<nsIDOMElement> elt = do_QueryInterface(result);
   elt.forget(aReturn);
@@ -2645,7 +2638,7 @@ nsINode::QuerySelectorAll(const nsAString& aSelector, nsIDOMNodeList **aReturn)
 {
   ErrorResult rv;
   *aReturn = nsINode::QuerySelectorAll(aSelector, rv).take();
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 Element*
@@ -2672,7 +2665,7 @@ nsINode::GetElementById(const nsAString& aId)
 }
 
 JSObject*
-nsINode::WrapObject(JSContext *aCx)
+nsINode::WrapObject(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
 {
   // Make sure one of these is true
   // (1) our owner document has a script handling object,
@@ -2691,7 +2684,7 @@ nsINode::WrapObject(JSContext *aCx)
     return nullptr;
   }
 
-  JS::Rooted<JSObject*> obj(aCx, WrapNode(aCx));
+  JS::Rooted<JSObject*> obj(aCx, WrapNode(aCx, aGivenProto));
   MOZ_ASSERT_IF(ChromeOnlyAccess(),
                 xpc::IsInContentXBLScope(obj) || !xpc::UseContentXBLScope(js::GetObjectCompartment(obj)));
   return obj;
@@ -2756,4 +2749,19 @@ nsINode*
 nsINode::GetScopeChainParent() const
 {
   return nullptr;
+}
+
+void
+nsINode::AddAnimationObserver(nsIAnimationObserver* aAnimationObserver)
+{
+  AddMutationObserver(aAnimationObserver);
+  OwnerDoc()->SetMayHaveAnimationObservers();
+}
+
+void
+nsINode::AddAnimationObserverUnlessExists(
+                               nsIAnimationObserver* aAnimationObserver)
+{
+  AddMutationObserverUnlessExists(aAnimationObserver);
+  OwnerDoc()->SetMayHaveAnimationObservers();
 }

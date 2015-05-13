@@ -62,6 +62,12 @@ var policies = [
   ["blocked", "test1.example.com:8888/tests"],
   ["blocked", "test1.example.com:8888/tests/dom/base/test/csp"],
   ["blocked", "test1.example.com:8888/tests/dom/base/test/csp/file_csp_path_matching.py"],
+
+  // case insensitive matching for scheme and host, but case sensitive matching for paths
+  ["allowed", "HTTP://test1.EXAMPLE.com/tests/"],
+  ["allowed", "test1.EXAMPLE.com/tests/"],
+  ["blocked", "test1.example.com/tests/dom/base/test/CSP/?foo=val"],
+  ["blocked", "test1.example.com/tests/dom/base/test/csp/FILE_csp_path_matching.js?foo=val"],
 ]
 
 var counter = 0;
@@ -73,9 +79,14 @@ function loadNextTest() {
   }
   else {
     policy = policies[counter++];
-    var src = "file_csp_testserver.sjs";
+    var src = "file_csp_testserver.sjs?file=";
     // append the file that should be served
-    src += "?file=" + escape("tests/dom/base/test/csp/file_csp_path_matching.html");
+    src += (counter % 2 == 0)
+               // load url including ref: example.com#foo
+             ? escape("tests/dom/base/test/csp/file_csp_path_matching.html")
+               // load url including query: example.com?val=foo (bug 1147026)
+             : escape("tests/dom/base/test/csp/file_csp_path_matching_incl_query.html");
+
     // append the CSP that should be used to serve the file
     src += "&csp=" + escape("default-src 'none'; script-src " + policy[1]);
 

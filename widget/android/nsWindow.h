@@ -20,6 +20,7 @@ struct ANPEvent;
 
 namespace mozilla {
     class AndroidGeckoEvent;
+    class TextComposition;
 
     namespace layers {
         class CompositorParent;
@@ -46,9 +47,8 @@ public:
     static gfxIntSize GetAndroidScreenBounds();
     static nsWindow* TopWindow();
 
-    nsWindow* FindWindowForPoint(const nsIntPoint& pt);
-
-    void OnContextmenuEvent(mozilla::AndroidGeckoEvent *ae);
+    bool OnContextmenuEvent(mozilla::AndroidGeckoEvent *ae);
+    void OnLongTapEvent(mozilla::AndroidGeckoEvent *ae);
     bool OnMultitouchEvent(mozilla::AndroidGeckoEvent *ae);
     void OnNativeGestureEvent(mozilla::AndroidGeckoEvent *ae);
     void OnMouseEvent(mozilla::AndroidGeckoEvent *ae);
@@ -66,7 +66,6 @@ public:
     NS_IMETHOD Create(nsIWidget *aParent,
                       nsNativeWidget aNativeParent,
                       const nsIntRect &aRect,
-                      nsDeviceContext *aContext,
                       nsWidgetInitData *aInitData);
     NS_IMETHOD Destroy(void);
     NS_IMETHOD ConfigureChildren(const nsTArray<nsIWidget::Configuration>&);
@@ -100,7 +99,7 @@ public:
     NS_IMETHOD Invalidate(const nsIntRect &aRect);
     NS_IMETHOD SetFocus(bool aRaise = false);
     NS_IMETHOD GetScreenBounds(nsIntRect &aRect);
-    virtual nsIntPoint WidgetToScreenOffset();
+    virtual mozilla::LayoutDeviceIntPoint WidgetToScreenOffset();
     NS_IMETHOD DispatchEvent(mozilla::WidgetGUIEvent* aEvent,
                              nsEventStatus& aStatus);
     nsEventStatus DispatchEvent(mozilla::WidgetGUIEvent* aEvent);
@@ -132,7 +131,6 @@ public:
         return NS_ERROR_NOT_IMPLEMENTED;
     }
 
-    NS_IMETHOD NotifyIME(const IMENotification& aIMENotification) MOZ_OVERRIDE;
     NS_IMETHOD_(void) SetInputContext(const InputContext& aContext,
                                       const InputContextAction& aAction);
     NS_IMETHOD_(InputContext) GetInputContext();
@@ -151,12 +149,15 @@ public:
     virtual void DrawWindowUnderlay(LayerManagerComposite* aManager, nsIntRect aRect);
     virtual void DrawWindowOverlay(LayerManagerComposite* aManager, nsIntRect aRect);
 
-    virtual mozilla::layers::CompositorParent* NewCompositorParent(int aSurfaceWidth, int aSurfaceHeight) MOZ_OVERRIDE;
+    virtual mozilla::layers::CompositorParent* NewCompositorParent(int aSurfaceWidth, int aSurfaceHeight) override;
 
     static void SetCompositor(mozilla::layers::LayerManager* aLayerManager,
                               mozilla::layers::CompositorParent* aCompositorParent,
                               mozilla::layers::CompositorChild* aCompositorChild);
+    static bool IsCompositionPaused();
     static void ScheduleComposite();
+    static void SchedulePauseComposition();
+    static void ScheduleResumeComposition();
     static void ScheduleResumeComposition(int width, int height);
     static void ForceIsFirstPaint();
     static float ComputeRenderIntegrity();
@@ -166,39 +167,12 @@ public:
 
     virtual bool WidgetPaintsBackground();
 
+    virtual uint32_t GetMaxTouchPoints() const override;
+
 protected:
     void BringToFront();
     nsWindow *FindTopLevel();
     bool IsTopLevel();
-    void RemoveIMEComposition();
-    void PostFlushIMEChanges();
-    void FlushIMEChanges();
-
-    void ConfigureAPZCTreeManager() MOZ_OVERRIDE;
-    already_AddRefed<GeckoContentController> CreateRootContentController() MOZ_OVERRIDE;
-
-    // Call this function when the users activity is the direct cause of an
-    // event (like a keypress or mouse click).
-    void UserActivity();
-
-    bool mIsVisible;
-    nsTArray<nsWindow*> mChildren;
-    nsWindow* mParent;
-    nsWindow* mFocus;
-
-    double mStartDist;
-    double mLastDist;
-
-    nsCOMPtr<nsIIdleServiceInternal> mIdleService;
-
-    bool mIMEComposing;
-    int32_t mIMEComposingStart;
-    nsString mIMEComposingText;
-    bool mIMEMaskSelectionUpdate, mIMEMaskTextUpdate;
-    int32_t mIMEMaskEventsCount; // Mask events when > 0
-    nsRefPtr<mozilla::TextRangeArray> mIMERanges;
-    bool mIMEUpdatingContext;
-    nsAutoTArray<mozilla::AndroidGeckoEvent, 8> mIMEKeyEvents;
 
     struct IMEChange {
         int32_t mStart, mOldEnd, mNewEnd;
@@ -218,15 +192,48 @@ protected:
             MOZ_ASSERT(aIMENotification.mTextChangeData.IsInInt32Range(),
                        "The text change notification is out of range");
         }
-        bool IsEmpty()
+        bool IsEmpty() const
         {
             return mStart < 0;
         }
     };
+
+    nsRefPtr<mozilla::TextComposition> GetIMEComposition();
+    void RemoveIMEComposition();
+    void AddIMETextChange(const IMEChange& aChange);
+    void PostFlushIMEChanges();
+    void FlushIMEChanges();
+
+    void ConfigureAPZCTreeManager() override;
+    void ConfigureAPZControllerThread() override;
+
+    already_AddRefed<GeckoContentController> CreateRootContentController() override;
+
+    // Call this function when the users activity is the direct cause of an
+    // event (like a keypress or mouse click).
+    void UserActivity();
+
+    bool mIsVisible;
+    nsTArray<nsWindow*> mChildren;
+    nsWindow* mParent;
+
+    double mStartDist;
+    double mLastDist;
+
+    nsCOMPtr<nsIIdleServiceInternal> mIdleService;
+
+    bool mIMEMaskSelectionUpdate;
+    int32_t mIMEMaskEventsCount; // Mask events when > 0
+    nsRefPtr<mozilla::TextRangeArray> mIMERanges;
+    bool mIMEUpdatingContext;
+    nsAutoTArray<mozilla::AndroidGeckoEvent, 8> mIMEKeyEvents;
     nsAutoTArray<IMEChange, 4> mIMETextChanges;
     bool mIMESelectionChanged;
 
     InputContext mInputContext;
+
+    virtual nsresult NotifyIMEInternal(
+                         const IMENotification& aIMENotification) override;
 
     static void DumpWindows();
     static void DumpWindows(const nsTArray<nsWindow*>& wins, int indent = 0);
@@ -236,8 +243,6 @@ private:
     void InitKeyEvent(mozilla::WidgetKeyboardEvent& event,
                       mozilla::AndroidGeckoEvent& key,
                       ANPEvent* pluginEvent);
-    void DispatchGestureEvent(uint32_t msg, uint32_t direction, double delta,
-                              const nsIntPoint &refPoint, uint64_t time);
     void HandleSpecialKey(mozilla::AndroidGeckoEvent *ae);
     void CreateLayerManager(int aCompositorWidth, int aCompositorHeight);
     void RedrawAll();

@@ -66,29 +66,16 @@ struct already_AddRefed
 
   explicit already_AddRefed(T* aRawPtr) : mRawPtr(aRawPtr) {}
 
-  // Disallowed. Use move semantics instead.
+  // Disallow copy constructor and copy assignment operator: move semantics used instead.
   already_AddRefed(const already_AddRefed<T>& aOther) = delete;
+  already_AddRefed<T>& operator=(const already_AddRefed<T>& aOther) = delete;
 
   already_AddRefed(already_AddRefed<T>&& aOther) : mRawPtr(aOther.take()) {}
 
-  ~already_AddRefed() { MOZ_ASSERT(!mRawPtr); }
-
-  // Specialize the unused operator<< for already_AddRefed, to allow
-  // nsCOMPtr<nsIFoo> foo;
-  // unused << foo.forget();
-  // Note that nsCOMPtr is the XPCOM reference counting smart pointer class.
-  friend void operator<<(const mozilla::unused_t& aUnused,
-                         const already_AddRefed<T>& aRhs)
+  already_AddRefed<T>& operator=(already_AddRefed<T>&& aOther)
   {
-    auto mutableAlreadyAddRefed = const_cast<already_AddRefed<T>*>(&aRhs);
-    aUnused << mutableAlreadyAddRefed->take();
-  }
-
-  MOZ_WARN_UNUSED_RESULT T* take()
-  {
-    T* rawPtr = mRawPtr;
-    mRawPtr = nullptr;
-    return rawPtr;
+    mRawPtr = aOther.take();
+    return *this;
   }
 
   /**
@@ -108,12 +95,27 @@ struct already_AddRefed
    *
    * Note that nsRefPtr is the XPCOM reference counting smart pointer class.
    */
-  template<class U>
-  operator already_AddRefed<U>()
+  template <typename U>
+  already_AddRefed(already_AddRefed<U>&& aOther) : mRawPtr(aOther.take()) {}
+
+  ~already_AddRefed() { MOZ_ASSERT(!mRawPtr); }
+
+  // Specialize the unused operator<< for already_AddRefed, to allow
+  // nsCOMPtr<nsIFoo> foo;
+  // unused << foo.forget();
+  // Note that nsCOMPtr is the XPCOM reference counting smart pointer class.
+  friend void operator<<(const mozilla::unused_t& aUnused,
+                         const already_AddRefed<T>& aRhs)
   {
-    U* tmp = mRawPtr;
+    auto mutableAlreadyAddRefed = const_cast<already_AddRefed<T>*>(&aRhs);
+    aUnused << mutableAlreadyAddRefed->take();
+  }
+
+  MOZ_WARN_UNUSED_RESULT T* take()
+  {
+    T* rawPtr = mRawPtr;
     mRawPtr = nullptr;
-    return already_AddRefed<U>(tmp);
+    return rawPtr;
   }
 
   /**

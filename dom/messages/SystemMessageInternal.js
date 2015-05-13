@@ -47,7 +47,7 @@ const kMessages =["SystemMessageManager:GetPendingMessages",
                   "SystemMessageManager:AskReadyToRegister",
                   "SystemMessageManager:HandleMessagesDone",
                   "SystemMessageManager:HandleMessageDone",
-                  "child-process-shutdown"]
+                  "child-process-shutdown"];
 
 function debug(aMsg) {
   // dump("-- SystemMessageInternal " + Date.now() + " : " + aMsg + "\n");
@@ -178,6 +178,19 @@ SystemMessageInternal.prototype = {
     return page;
   },
 
+  _findCacheForApp: function(aManifestURL) {
+    let cache = [];
+    this._pages.forEach(function(aPage) {
+      if (aPage.manifestURL === aManifestURL &&
+          aPage.pendingMessages.length != 0) {
+        cache.push({ type: aPage.type,
+                     pageURL: aPage.pageURL,
+                     manifestURL: aPage.manifestURL });
+      }
+    });
+    return cache;
+  },
+
   sendMessage: function(aType, aMessage, aPageURI, aManifestURI, aExtra) {
     return new Promise((aResolve, aReject) => {
       this.sendMessageInternal(aType, aMessage, aPageURI, aManifestURI, aExtra,
@@ -238,22 +251,12 @@ SystemMessageInternal.prototype = {
                                            aExtra);
       debug("Returned status of sending message: " + result);
 
-      // Don't need to open the pages and queue the system message
-      // which was not allowed to be sent.
       if (result === MSG_SENT_FAILURE_PERM_DENIED) {
         return;
       }
 
       // For each page we must receive a confirm.
       ++pendingPromise.counter;
-
-      let page = this._findPage(aType, aPageURL, manifestURL);
-      if (page) {
-        // Queue this message in the corresponding pages.
-        this._queueMessage(page, aMessage, messageID);
-
-        this._openAppPage(page, aMessage, aExtra, result);
-      }
 
     }, this);
 
@@ -296,18 +299,6 @@ SystemMessageInternal.prototype = {
                                              aPage.manifestURL,
                                              aExtra);
         debug("Returned status of sending message: " + result);
-
-
-        // Don't need to open the pages and queue the system message
-        // which was not allowed to be sent.
-        if (result === MSG_SENT_FAILURE_PERM_DENIED) {
-          return;
-        }
-
-        // Queue this message in the corresponding pages.
-        this._queueMessage(aPage, aMessage, messageID);
-
-        this._openAppPage(aPage, aMessage, aExtra, result);
       };
 
       if ('function' !== typeof shouldDispatchFunc) {
@@ -347,6 +338,18 @@ SystemMessageInternal.prototype = {
                        pageURL: pageURL,
                        manifestURL: manifestURL,
                        pendingMessages: [] });
+  },
+
+  refreshCache: function(aChildMM, aManifestURI) {
+    if (!aManifestURI) {
+      throw Cr.NS_ERROR_INVALID_ARG;
+    }
+    this._refreshCacheInternal(aChildMM, aManifestURI.spec);
+  },
+
+  _refreshCacheInternal: function(aChildMM, aManifestURL) {
+    let cache = this._findCacheForApp(aManifestURL);
+    aChildMM.sendAsyncMessage("SystemMessageCache:RefreshCache", cache);
   },
 
   _findTargetIndex: function(aTargets, aTarget) {
@@ -456,6 +459,7 @@ SystemMessageInternal.prototype = {
           }
         }
 
+        this._refreshCacheInternal(aMessage.target, msg.manifestURL);
         debug("listeners for " + msg.manifestURL +
               " innerWinID " + msg.innerWindowID);
         break;
@@ -497,10 +501,10 @@ SystemMessageInternal.prototype = {
           return;
         }
 
-        // Return the |msg| of each pending message (drop the |msgID|).
+        // Return the |msg| of each pending message.
         let pendingMessages = [];
         page.pendingMessages.forEach(function(aMessage) {
-          pendingMessages.push(aMessage.msg);
+          pendingMessages.push({ msg: aMessage.msg, msgID: aMessage.msgID });
         });
 
         // Clear the pending queue for this page. This is OK since we'll store
@@ -514,12 +518,17 @@ SystemMessageInternal.prototype = {
                                     manifestURL: msg.manifestURL,
                                     pageURL: msg.pageURL,
                                     msgQueue: pendingMessages });
+        this._refreshCacheInternal(aMessage.target, msg.manifestURL);
         break;
       }
       case "SystemMessageManager:HasPendingMessages":
       {
         debug("received SystemMessageManager:HasPendingMessages " + msg.type +
-          " for " + msg.pageURL + " @ " + msg.manifestURL);
+              " for " + msg.pageURL + " @ " + msg.manifestURL);
+
+        // NB: Sync message SystemMessageManager:HasPendingMessages
+        // should only be used by in-process app. For out-of-process
+        // app, SystemMessageCache should be used.
 
         // This is a sync call used to return if a page has pending messages.
         // Find the right page to get its corresponding pending messages.
@@ -697,7 +706,7 @@ SystemMessageInternal.prototype = {
   _isPageMatched: function(aPage, aType, aPageURL, aManifestURL) {
     return (aPage.type === aType &&
             aPage.manifestURL === aManifestURL &&
-            aPage.pageURL === aPageURL)
+            aPage.pageURL === aPageURL);
   },
 
   _createKeyForPage: function _createKeyForPage(aPage) {
@@ -728,15 +737,32 @@ SystemMessageInternal.prototype = {
       return MSG_SENT_FAILURE_PERM_DENIED;
     }
 
+    // Queue this message in the corresponding pages.
+    let page = this._findPage(aType, aPageURL, aManifestURL);
+    if (!page) {
+      debug("Message " + aType + " is not registered for " +
+            aPageURL + " @ " + aManifestURL);
+      // FIXME bug 1140275 should only send message to page registered in manifest
+      // return MSG_SENT_FAILURE_PERM_DENIED;
+    }
+    if (page)
+      this._queueMessage(page, aMessage, aMessageID);
+
     let appPageIsRunning = false;
     let pageKey = this._createKeyForPage({ type: aType,
                                            manifestURL: aManifestURL,
                                            pageURL: aPageURL });
 
+    let cache = this._findCacheForApp(aManifestURL);
     let targets = this._listeners[aManifestURL];
     if (targets) {
       for (let index = 0; index < targets.length; ++index) {
         let target = targets[index];
+        let manager = target.target;
+
+        // Ensure hasPendingMessage cache is refreshed before we open app
+        manager.sendAsyncMessage("SystemMessageCache:RefreshCache", cache);
+
         // We only need to send the system message to the targets (processes)
         // which contain the window page that matches the manifest/page URL of
         // the destination of system message.
@@ -755,7 +781,6 @@ SystemMessageInternal.prototype = {
         // Multiple windows can share the same target (process), the content
         // window needs to check if the manifest/page URL is matched. Only
         // *one* window should handle the system message.
-        let manager = target.target;
         manager.sendAsyncMessage("SystemMessageManager:Message",
                                  { type: aType,
                                    msg: aMessage,
@@ -765,6 +790,7 @@ SystemMessageInternal.prototype = {
       }
     }
 
+    let result = MSG_SENT_SUCCESS;
     if (!appPageIsRunning) {
       // The app page isn't running and relies on the 'open-app' chrome event to
       // wake it up. We still need to acquire a CPU wake lock for that page and
@@ -772,12 +798,12 @@ SystemMessageInternal.prototype = {
       // or a "SystemMessageManager:HandleMessageDone" message when the page
       // finishes handling the system message with other pending messages. At
       // that point, we'll release the lock we acquired.
+      result = MSG_SENT_FAILURE_APP_NOT_RUNNING;
       this._acquireCpuWakeLock(pageKey);
-      return MSG_SENT_FAILURE_APP_NOT_RUNNING;
-    } else {
-      return MSG_SENT_SUCCESS;
     }
-
+    if (page)
+      this._openAppPage(page, aMessage, aExtra, result);
+    return result;
   },
 
   _resolvePendingPromises: function(aMessageID) {

@@ -9,12 +9,13 @@ Cu.import("resource:///modules/devtools/ViewHelpers.jsm");
 const promise = Cu.import("resource://gre/modules/Promise.jsm", {}).Promise;
 const {Task} = Cu.import("resource://gre/modules/Task.jsm", {});
 const {EventEmitter} = Cu.import("resource://gre/modules/devtools/event-emitter.js", {});
+const {DevToolsWorker} = Cu.import("resource:///modules/devtools/shared/worker.js", {});
 
 this.EXPORTED_SYMBOLS = [
   "GraphCursor",
-  "GraphSelection",
-  "GraphSelectionDragger",
-  "GraphSelectionResizer",
+  "GraphArea",
+  "GraphAreaDragger",
+  "GraphAreaResizer",
   "AbstractCanvasGraph",
   "LineGraphWidget",
   "BarGraphWidget",
@@ -49,7 +50,6 @@ const GRAPH_STRIPE_PATTERN_LINE_SPACING = 4; // px
 // Line graph constants.
 
 const LINE_GRAPH_DAMPEN_VALUES = 0.85;
-const LINE_GRAPH_MIN_SQUARED_DISTANCE_BETWEEN_POINTS = 1; // px
 const LINE_GRAPH_TOOLTIP_SAFE_BOUNDS = 8; // px
 const LINE_GRAPH_MIN_MAX_TOOLTIP_DISTANCE = 14; // px
 
@@ -102,17 +102,17 @@ this.GraphCursor = function() {
   this.y = null;
 };
 
-this.GraphSelection = function() {
+this.GraphArea = function() {
   this.start = null;
   this.end = null;
 };
 
-this.GraphSelectionDragger = function() {
+this.GraphAreaDragger = function(anchor = new GraphArea()) {
   this.origin = null;
-  this.anchor = new GraphSelection();
+  this.anchor = anchor;
 };
 
-this.GraphSelectionResizer = function() {
+this.GraphAreaResizer = function() {
   this.margin = null;
 };
 
@@ -158,6 +158,7 @@ this.AbstractCanvasGraph = function(parent, name, sharpness) {
   AbstractCanvasGraph.createIframe(GRAPH_SRC, parent, iframe => {
     this._iframe = iframe;
     this._window = iframe.contentWindow;
+    this._topWindow = this._window.top;
     this._document = iframe.contentDocument;
     this._pixelRatio = sharpness || this._window.devicePixelRatio;
 
@@ -179,9 +180,10 @@ this.AbstractCanvasGraph = function(parent, name, sharpness) {
     this._ctx.mozImageSmoothingEnabled = false;
 
     this._cursor = new GraphCursor();
-    this._selection = new GraphSelection();
-    this._selectionDragger = new GraphSelectionDragger();
-    this._selectionResizer = new GraphSelectionResizer();
+    this._selection = new GraphArea();
+    this._selectionDragger = new GraphAreaDragger();
+    this._selectionResizer = new GraphAreaResizer();
+    this._isMouseActive = false;
 
     this._onAnimationFrame = this._onAnimationFrame.bind(this);
     this._onMouseMove = this._onMouseMove.bind(this);
@@ -192,11 +194,10 @@ this.AbstractCanvasGraph = function(parent, name, sharpness) {
     this._onResize = this._onResize.bind(this);
     this.refresh = this.refresh.bind(this);
 
-    container.addEventListener("mousemove", this._onMouseMove);
-    container.addEventListener("mousedown", this._onMouseDown);
-    container.addEventListener("mouseup", this._onMouseUp);
-    container.addEventListener("MozMousePixelScroll", this._onMouseWheel);
-    container.addEventListener("mouseout", this._onMouseOut);
+    this._window.addEventListener("mousemove", this._onMouseMove);
+    this._window.addEventListener("mousedown", this._onMouseDown);
+    this._window.addEventListener("MozMousePixelScroll", this._onMouseWheel);
+    this._window.addEventListener("mouseout", this._onMouseOut);
 
     let ownerWindow = this._parent.ownerDocument.defaultView;
     ownerWindow.addEventListener("resize", this._onResize);
@@ -221,6 +222,14 @@ AbstractCanvasGraph.prototype = {
   },
 
   /**
+   * Return true if the mouse is actively messing with the selection, false
+   * otherwise.
+   */
+  get isMouseActive() {
+    return this._isMouseActive;
+  },
+
+  /**
    * Returns a promise resolved once this graph is ready to receive data.
    */
   ready: function() {
@@ -230,16 +239,20 @@ AbstractCanvasGraph.prototype = {
   /**
    * Destroys this graph.
    */
-  destroy: function() {
-    let container = this._container;
-    container.removeEventListener("mousemove", this._onMouseMove);
-    container.removeEventListener("mousedown", this._onMouseDown);
-    container.removeEventListener("mouseup", this._onMouseUp);
-    container.removeEventListener("MozMousePixelScroll", this._onMouseWheel);
-    container.removeEventListener("mouseout", this._onMouseOut);
+  destroy: Task.async(function *() {
+    yield this.ready();
+
+    this._topWindow.removeEventListener("mousemove", this._onMouseMove);
+    this._topWindow.removeEventListener("mouseup", this._onMouseUp);
+    this._window.removeEventListener("mousemove", this._onMouseMove);
+    this._window.removeEventListener("mousedown", this._onMouseDown);
+    this._window.removeEventListener("MozMousePixelScroll", this._onMouseWheel);
+    this._window.removeEventListener("mouseout", this._onMouseOut);
 
     let ownerWindow = this._parent.ownerDocument.defaultView;
-    ownerWindow.removeEventListener("resize", this._onResize);
+    if (ownerWindow) {
+      ownerWindow.removeEventListener("resize", this._onResize);
+    }
 
     this._window.cancelAnimationFrame(this._animationId);
     this._iframe.remove();
@@ -261,7 +274,7 @@ AbstractCanvasGraph.prototype = {
     gCachedStripePattern.clear();
 
     this.emit("destroyed");
-  },
+  }),
 
   /**
    * Rendering options. Subclasses should override these.
@@ -445,34 +458,67 @@ AbstractCanvasGraph.prototype = {
   },
 
   /**
+   * Sets the selection bounds, scaled to correlate with the data source ranges,
+   * such that a [0, max width] selection maps to [first value, last value].
+   *
+   * @param object selection
+   *        The selection's { start, end } values.
+   * @param object { mapStart, mapEnd } mapping [optional]
+   *        Invoked when retrieving the numbers in the data source representing
+   *        the first and last values, on the X axis.
+   */
+  setMappedSelection: function(selection, mapping = {}) {
+    if (!this.hasData()) {
+      throw "A data source is necessary for retrieving a mapped selection.";
+    }
+    if (!selection || selection.start == null || selection.end == null) {
+      throw "Invalid selection coordinates";
+    }
+
+    let { mapStart, mapEnd } = mapping;
+    let startTime = (mapStart || (e => e.delta))(this._data[0]);
+    let endTime = (mapEnd || (e => e.delta))(this._data[this._data.length - 1]);
+
+    // The selection's start and end values are not guaranteed to be ascending.
+    // Also make sure that the selection bounds fit inside the data bounds.
+    let min = Math.max(Math.min(selection.start, selection.end), startTime);
+    let max = Math.min(Math.max(selection.start, selection.end), endTime);
+    min = map(min, startTime, endTime, 0, this._width);
+    max = map(max, startTime, endTime, 0, this._width);
+
+    this.setSelection({ start: min, end: max });
+  },
+
+  /**
    * Gets the selection bounds, scaled to correlate with the data source ranges,
    * such that a [0, max width] selection maps to [first value, last value].
    *
-   * @param function unpack [optional]
+   * @param object { mapStart, mapEnd } mapping [optional]
    *        Invoked when retrieving the numbers in the data source representing
-   *        the first and last values, on the X axis. Currently, all graphs
-   *        store this in a "delta" property for all entries, but in the future
-   *        this may change as new graphs with different data source format
-   *        requirements are implemented.
+   *        the first and last values, on the X axis.
    * @return object
    *         The mapped selection's { min, max } values.
    */
-  getMappedSelection: function(unpack = e => e.delta) {
-    if (!this.hasData() || !this.hasSelection()) {
+  getMappedSelection: function(mapping = {}) {
+    if (!this.hasData()) {
+      throw "A data source is necessary for retrieving a mapped selection.";
+    }
+    if (!this.hasSelection() && !this.hasSelectionInProgress()) {
       return { min: null, max: null };
     }
-    let selection = this.getSelection();
-    let totalTicks = this._data.length;
-    let firstTick = unpack(this._data[0]);
-    let lastTick = unpack(this._data[totalTicks - 1]);
+
+    let { mapStart, mapEnd } = mapping;
+    let startTime = (mapStart || (e => e.delta))(this._data[0]);
+    let endTime = (mapEnd || (e => e.delta))(this._data[this._data.length - 1]);
 
     // The selection's start and end values are not guaranteed to be ascending.
     // This can happen, for example, when click & dragging from right to left.
     // Also make sure that the selection bounds fit inside the canvas bounds.
+    let selection = this.getSelection();
     let min = Math.max(Math.min(selection.start, selection.end), 0);
     let max = Math.min(Math.max(selection.start, selection.end), this._width);
-    min = map(min, 0, this._width, firstTick, lastTick);
-    max = map(max, 0, this._width, firstTick, lastTick);
+    min = map(min, 0, this._width, startTime, endTime);
+    max = map(max, 0, this._width, startTime, endTime);
 
     return { min: min, max: max };
   },
@@ -895,35 +941,63 @@ AbstractCanvasGraph.prototype = {
   },
 
   /**
-   * Gets the offset of this graph's container relative to the owner window.
-   *
-   * @return object
-   *         The { left, top } offset.
+   * Given a MouseEvent, make it relative to this._canvas.
+   * @return object {mouseX,mouseY}
    */
-  _getContainerOffset: function() {
-    let node = this._canvas;
-    let x = 0;
-    let y = 0;
-
-    while (node = node.offsetParent) {
-      x += node.offsetLeft;
-      y += node.offsetTop;
+  _getRelativeEventCoordinates: function(e) {
+    // For ease of testing, testX and testY can be passed in as the event
+    // object.  If so, just return this.
+    if ("testX" in e && "testY" in e) {
+      return {
+        mouseX: e.testX * this._pixelRatio,
+        mouseY: e.testY * this._pixelRatio
+      };
     }
 
-    return { left: x, top: y };
+    let quad = this._canvas.getBoxQuads({
+      relativeTo: this._topWindow.document
+    })[0];
+
+    let x = (e.screenX - this._topWindow.screenX) - quad.p1.x;
+    let y = (e.screenY - this._topWindow.screenY) - quad.p1.y;
+
+    // Don't allow the event coordinates to be bigger than the canvas
+    // or less than 0.
+    let maxX = quad.p2.x - quad.p1.x;
+    let maxY = quad.p3.y - quad.p1.y;
+    let mouseX = Math.max(0, Math.min(x, maxX)) * this._pixelRatio;
+    let mouseY = Math.max(0, Math.min(x, maxY)) * this._pixelRatio;
+
+    return {mouseX,mouseY};
   },
 
   /**
    * Listener for the "mousemove" event on the graph's container.
    */
   _onMouseMove: function(e) {
-    let offset = this._getContainerOffset();
-    let mouseX = (e.clientX - offset.left) * this._pixelRatio;
-    let mouseY = (e.clientY - offset.top) * this._pixelRatio;
+    let resizer = this._selectionResizer;
+    let dragger = this._selectionDragger;
+
+    // Need to stop propagation here, since this function can be bound
+    // to both this._window and this._topWindow.  It's only attached to
+    // this._topWindow during a drag event.  Null check here since tests
+    // don't pass this method into the event object.
+    if (e.stopPropagation && this._isMouseActive) {
+      e.stopPropagation();
+    }
+
+    // If a mouseup happened outside the window and the current operation
+    // is causing the selection to change, then end it.
+    if (e.buttons == 0 && (this.hasSelectionInProgress() ||
+                           resizer.margin != null ||
+                           dragger.origin != null)) {
+      return this._onMouseUp();
+    }
+
+    let {mouseX,mouseY} = this._getRelativeEventCoordinates(e);
     this._cursor.x = mouseX;
     this._cursor.y = mouseY;
 
-    let resizer = this._selectionResizer;
     if (resizer.margin != null) {
       this._selection[resizer.margin] = mouseX;
       this._shouldRedraw = true;
@@ -931,7 +1005,6 @@ AbstractCanvasGraph.prototype = {
       return;
     }
 
-    let dragger = this._selectionDragger;
     if (dragger.origin != null) {
       this._selection.start = dragger.anchor.start - dragger.origin + mouseX;
       this._selection.end = dragger.anchor.end - dragger.origin + mouseX;
@@ -978,8 +1051,8 @@ AbstractCanvasGraph.prototype = {
    * Listener for the "mousedown" event on the graph's container.
    */
   _onMouseDown: function(e) {
-    let offset = this._getContainerOffset();
-    let mouseX = (e.clientX - offset.left) * this._pixelRatio;
+    this._isMouseActive = true;
+    let {mouseX} = this._getRelativeEventCoordinates(e);
 
     switch (this._canvas.getAttribute("input")) {
       case "hovering-background":
@@ -1008,6 +1081,11 @@ AbstractCanvasGraph.prototype = {
         break;
     }
 
+    // During a drag, bind to the top level window so that mouse movement
+    // outside of this frame will still work.
+    this._topWindow.addEventListener("mousemove", this._onMouseMove);
+    this._topWindow.addEventListener("mouseup", this._onMouseUp);
+
     this._shouldRedraw = true;
     this.emit("mousedown");
   },
@@ -1015,10 +1093,8 @@ AbstractCanvasGraph.prototype = {
   /**
    * Listener for the "mouseup" event on the graph's container.
    */
-  _onMouseUp: function(e) {
-    let offset = this._getContainerOffset();
-    let mouseX = (e.clientX - offset.left) * this._pixelRatio;
-
+  _onMouseUp: function() {
+    this._isMouseActive = false;
     switch (this._canvas.getAttribute("input")) {
       case "hovering-background":
       case "hovering-region":
@@ -1037,7 +1113,7 @@ AbstractCanvasGraph.prototype = {
             this.emit("deselecting");
           }
         } else {
-          this._selection.end = mouseX;
+          this._selection.end = this._cursor.x;
           this.emit("selecting");
         }
         break;
@@ -1053,6 +1129,10 @@ AbstractCanvasGraph.prototype = {
         break;
     }
 
+    // No longer dragging, no need to bind to the top level window.
+    this._topWindow.removeEventListener("mousemove", this._onMouseMove);
+    this._topWindow.removeEventListener("mouseup", this._onMouseUp);
+
     this._shouldRedraw = true;
     this.emit("mouseup");
   },
@@ -1065,8 +1145,7 @@ AbstractCanvasGraph.prototype = {
       return;
     }
 
-    let offset = this._getContainerOffset();
-    let mouseX = (e.clientX - offset.left) * this._pixelRatio;
+    let {mouseX} = this._getRelativeEventCoordinates(e);
     let focusX = mouseX;
 
     let selection = this._selection;
@@ -1128,19 +1207,15 @@ AbstractCanvasGraph.prototype = {
 
   /**
    * Listener for the "mouseout" event on the graph's container.
+   * Clear any active cursors if a drag isn't happening.
    */
-  _onMouseOut: function() {
-    if (this.hasSelectionInProgress()) {
-      this.dropSelection();
+  _onMouseOut: function(e) {
+    if (!this._isMouseActive) {
+      this._cursor.x = null;
+      this._cursor.y = null;
+      this._canvas.removeAttribute("input");
+      this._shouldRedraw = true;
     }
-
-    this._cursor.x = null;
-    this._cursor.y = null;
-    this._selectionResizer.margin = null;
-    this._selectionDragger.origin = null;
-
-    this._canvas.removeAttribute("input");
-    this._shouldRedraw = true;
   },
 
   /**
@@ -1227,16 +1302,15 @@ LineGraphWidget.prototype = Heritage.extend(AbstractCanvasGraph.prototype, {
   dataOffsetX: 0,
 
   /**
-   * The scalar used to multiply the graph values to leave some headroom
-   * on the top.
+   * Optionally uses this value instead of the last tick in the data source
+   * to compute the horizontal scaling.
    */
-  dampenValuesFactor: LINE_GRAPH_DAMPEN_VALUES,
+  dataDuration: 0,
 
   /**
-   * Points that are too close too each other in the graph will not be rendered.
-   * This scalar specifies the required minimum squared distance between points.
+   * The scalar used to multiply the graph values to leave some headroom.
    */
-  minSquaredDistanceBetweenPoints: LINE_GRAPH_MIN_SQUARED_DISTANCE_BETWEEN_POINTS,
+  dampenValuesFactor: LINE_GRAPH_DAMPEN_VALUES,
 
   /**
    * Specifies if min/max/avg tooltips have arrow handlers on their sides.
@@ -1260,19 +1334,15 @@ LineGraphWidget.prototype = Heritage.extend(AbstractCanvasGraph.prototype, {
    *        represents the elapsed time on each refresh driver tick.
    * @param number interval
    *        The maximum amount of time to wait between calculations.
+   * @param number duration
+   *        The duration of the recording in milliseconds.
    */
-  setDataFromTimestamps: Task.async(function*(timestamps, interval) {
+  setDataFromTimestamps: Task.async(function*(timestamps, interval, duration) {
     let {
       plottedData,
       plottedMinMaxSum
     } = yield CanvasGraphUtils._performTaskInWorker("plotTimestampsGraph", {
-      width: this._width,
-      height: this._height,
-      dataOffsetX: this.dataOffsetX,
-      dampenValuesFactor: this.dampenValuesFactor,
-      minSquaredDistanceBetweenPoints: this.minSquaredDistanceBetweenPoints,
-      timestamps: timestamps,
-      interval: interval
+      timestamps, interval, duration
     });
 
     this._tempMinMaxSum = plottedMinMaxSum;
@@ -1294,16 +1364,11 @@ LineGraphWidget.prototype = Heritage.extend(AbstractCanvasGraph.prototype, {
     let maxValue = Number.MIN_SAFE_INTEGER;
     let minValue = Number.MAX_SAFE_INTEGER;
     let avgValue = 0;
-    let forceDrawAllPoints = false;
 
     if (this._tempMinMaxSum) {
       maxValue = this._tempMinMaxSum.maxValue;
       minValue = this._tempMinMaxSum.minValue;
       avgValue = this._tempMinMaxSum.avgValue;
-      // If we use cached `minValue`, `maxValue`, `avgValue` then we can assume
-      // that we've already removed points that did not meet the
-      // `minSquaredDistanceBetweenPoints` requirement.
-      forceDrawAllPoints = true;
     } else {
       let sumValues = 0;
       for (let { delta, value } of this._data) {
@@ -1314,7 +1379,8 @@ LineGraphWidget.prototype = Heritage.extend(AbstractCanvasGraph.prototype, {
       avgValue = sumValues / totalTicks;
     }
 
-    let dataScaleX = this.dataScaleX = width / (lastTick - this.dataOffsetX);
+    let duration = this.dataDuration || lastTick;
+    let dataScaleX = this.dataScaleX = width / (duration - this.dataOffsetX);
     let dataScaleY = this.dataScaleY = height / maxValue * this.dampenValuesFactor;
 
     // Draw the background.
@@ -1332,10 +1398,6 @@ LineGraphWidget.prototype = Heritage.extend(AbstractCanvasGraph.prototype, {
     ctx.lineWidth = this.strokeWidth * this._pixelRatio;
     ctx.beginPath();
 
-    let prevX = 0;
-    let prevY = 0;
-    let minSqDist = this.minSquaredDistanceBetweenPoints;
-
     for (let { delta, value } of this._data) {
       let currX = (delta - this.dataOffsetX) * dataScaleX;
       let currY = height - value * dataScaleY;
@@ -1345,11 +1407,7 @@ LineGraphWidget.prototype = Heritage.extend(AbstractCanvasGraph.prototype, {
         ctx.lineTo(-LINE_GRAPH_STROKE_WIDTH, currY);
       }
 
-      if (forceDrawAllPoints || distSquared(prevX, prevY, currX, currY) >= minSqDist) {
-        ctx.lineTo(currX, currY);
-        prevX = currX;
-        prevY = currY;
-      }
+      ctx.lineTo(currX, currY);
 
       if (delta == lastTick) {
         ctx.lineTo(width + LINE_GRAPH_STROKE_WIDTH, currY);
@@ -2089,40 +2147,14 @@ this.CanvasGraphUtils = {
    *
    * @param string task
    *        The task name. Currently supported: "plotTimestampsGraph".
-   * @param any args
+   * @param any data
    *        Extra arguments to pass to the worker.
-   * @param array transferrable [optional]
-   *        A list of transferrable objects, if any.
    * @return object
    *         A promise that is resolved once the worker finishes the task.
    */
-  _performTaskInWorker: function(task, args, transferrable) {
-    let worker = this._graphUtilsWorker || new ChromeWorker(WORKER_URL);
-    let id = this._graphUtilsTaskId++;
-    worker.postMessage({ task, id, args }, transferrable);
-    return this._waitForWorkerResponse(worker, id);
-  },
-
-  /**
-   * Waits for the specified worker to finish a task.
-   *
-   * @param ChromeWorker worker
-   *        The worker for which to add a message listener.
-   * @param number id
-   *        The worker task id.
-   */
-  _waitForWorkerResponse: function(worker, id) {
-    let deferred = promise.defer();
-
-    worker.addEventListener("message", function listener({ data }) {
-      if (data.id != id) {
-        return;
-      }
-      worker.removeEventListener("message", listener);
-      deferred.resolve(data);
-    });
-
-    return deferred.promise;
+  _performTaskInWorker: function(task, data) {
+    let worker = this._graphUtilsWorker || new DevToolsWorker(WORKER_URL);
+    return worker.performTask(task, data);
   }
 };
 

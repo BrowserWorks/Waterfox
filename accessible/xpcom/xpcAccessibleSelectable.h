@@ -25,14 +25,17 @@ class xpcAccessibleSelectable : public nsIAccessibleSelectable
 {
 public:
   // nsIAccessibleSelectable
-  NS_IMETHOD GetSelectedItems(nsIArray** aSelectedItems) MOZ_FINAL;
-  NS_IMETHOD GetSelectedItemCount(uint32_t* aSelectedItemCount) MOZ_FINAL;
-  NS_IMETHOD GetSelectedItemAt(uint32_t aIndex, nsIAccessible** aItem) MOZ_FINAL;
-  NS_IMETHOD IsItemSelected(uint32_t aIndex, bool* aIsSelected) MOZ_FINAL;
-  NS_IMETHOD AddItemToSelection(uint32_t aIndex) MOZ_FINAL;
-  NS_IMETHOD RemoveItemFromSelection(uint32_t aIndex) MOZ_FINAL;
-  NS_IMETHOD SelectAll(bool* aIsMultiSelect) MOZ_FINAL;
-  NS_IMETHOD UnselectAll() MOZ_FINAL;
+  NS_IMETHOD GetSelectedItems(nsIArray** aSelectedItems) final override;
+  NS_IMETHOD GetSelectedItemCount(uint32_t* aSelectedItemCount)
+    final override;
+  NS_IMETHOD GetSelectedItemAt(uint32_t aIndex, nsIAccessible** aItem)
+    final override;
+  NS_IMETHOD IsItemSelected(uint32_t aIndex, bool* aIsSelected)
+    final override;
+  NS_IMETHOD AddItemToSelection(uint32_t aIndex) final override;
+  NS_IMETHOD RemoveItemFromSelection(uint32_t aIndex) final override;
+  NS_IMETHOD SelectAll(bool* aIsMultiSelect) final override;
+  NS_IMETHOD UnselectAll() final override;
 
 protected:
   xpcAccessibleSelectable() { }

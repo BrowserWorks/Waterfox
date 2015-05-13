@@ -7,280 +7,193 @@ module.metadata = {
   "stability": "unstable"
 };
 
+const { emit } = require('../event/core');
+const { omit, merge } = require('../util/object');
 const { Class } = require('../core/heritage');
-const { EventTarget } = require('../event/target');
-const { on, off, emit, setListeners } = require('../event/core');
-const {
-  attach, detach, destroy
-} = require('./utils');
 const { method } = require('../lang/functional');
-const { Ci, Cu, Cc } = require('chrome');
-const unload = require('../system/unload');
-const events = require('../system/events');
-const { getInnerId } = require("../window/utils");
-const { WorkerSandbox } = require('./sandbox');
-const { getTabForWindow } = require('../tabs/helpers');
+const { getInnerId } = require('../window/utils');
+const { EventTarget } = require('../event/target');
 const { isPrivate } = require('../private-browsing/utils');
+const { getTabForBrowser, getTabForContentWindow, getBrowserForTab } = require('../tabs/utils');
+const { attach, connect, detach, destroy } = require('./utils');
+const { ensure } = require('../system/unload');
+const { on: observe } = require('../system/events');
+const { uuid } = require('../util/uuid');
+const { Ci } = require('chrome');
+const { modelFor: tabFor } = require('sdk/model/core');
+const { remoteRequire, processes, frames } = require('../remote/parent');
+remoteRequire('sdk/content/worker-child');
 
-// A weak map of workers to hold private attributes that
-// should not be exposed
 const workers = new WeakMap();
-
 let modelFor = (worker) => workers.get(worker);
 
-const ERR_DESTROYED =
-  "Couldn't find the worker to receive this message. " +
+const ERR_DESTROYED = "Couldn't find the worker to receive this message. " +
   "The script may not be initialized yet, or may already have been unloaded.";
 
-const ERR_FROZEN = "The page is currently hidden and can no longer be used " +
-                   "until it is visible again.";
-
-/**
- * Message-passing facility for communication between code running
- * in the content and add-on process.
- * @see https://developer.mozilla.org/en-US/Add-ons/SDK/Low-Level_APIs/content_worker
- */
+// a handle for communication between content script and addon code
 const Worker = Class({
   implements: [EventTarget],
-  initialize: function WorkerConstructor (options) {
-    // Save model in weak map to not expose properties
-    let model = createModel();
+
+  initialize(options = {}) {
+    ensure(this, 'detach');
+
+    let model = {
+      attached: false,
+      destroyed: false,
+      earlyEvents: [],        // fired before worker was attached
+      frozen: true,           // document is not yet active
+      options,
+    };
     workers.set(this, model);
 
-    options = options || {};
+    this.on('detach', this.detach);
+    EventTarget.prototype.initialize.call(this, options);
 
-    if ('contentScriptFile' in options)
-      this.contentScriptFile = options.contentScriptFile;
-    if ('contentScriptOptions' in options)
-      this.contentScriptOptions = options.contentScriptOptions;
-    if ('contentScript' in options)
-      this.contentScript = options.contentScript;
-    if ('injectInDocument' in options)
-      this.injectInDocument = !!options.injectInDocument;
+    this.receive = this.receive.bind(this);
 
-    setListeners(this, options);
+    this.port = EventTarget();
+    this.port.emit = this.send.bind(this, 'event');
+    this.postMessage = this.send.bind(this, 'message');
 
-    unload.ensure(this, "destroy");
-
-    // Ensure that worker.port is initialized for contentWorker to be able
-    // to send events during worker initialization.
-    this.port = createPort(this);
-
-    model.documentUnload = documentUnload.bind(this);
-    model.pageShow = pageShow.bind(this);
-    model.pageHide = pageHide.bind(this);
-
-    if ('window' in options)
-      attach(this, options.window);
+    if ('window' in options) {
+      let window = options.window;
+      delete options.window;
+      attach(this, window);
+    }
   },
 
-  /**
-   * Sends a message to the worker's global scope. Method takes single
-   * argument, which represents data to be sent to the worker. The data may
-   * be any primitive type value or `JSON`. Call of this method asynchronously
-   * emits `message` event with data value in the global scope of this
-   * symbiont.
-   *
-   * `message` event listeners can be set either by calling
-   * `self.on` with a first argument string `"message"` or by
-   * implementing `onMessage` function in the global scope of this worker.
-   * @param {Number|String|JSON} data
-   */
-  postMessage: function (...data) {
+  // messages
+  receive(process, id, args) {
     let model = modelFor(this);
-    let args = ['message'].concat(data);
-    if (!model.inited) {
+    if (id !== model.id || !model.attached)
+      return;
+    args = JSON.parse(args);
+    if (model.destroyed && args[0] != 'detach')
+      return;
+
+    if (args[0] === 'event')
+      emit(this.port, ...args.slice(1))
+    else
+      emit(this, ...args);
+  },
+
+  send(...args) {
+    let model = modelFor(this);
+    if (model.destroyed && args[0] !== 'detach')
+      throw new Error(ERR_DESTROYED);
+
+    if (!model.attached) {
       model.earlyEvents.push(args);
       return;
     }
-    processMessage.apply(null, [this].concat(args));
+
+    processes.port.emit('sdk/worker/message', model.id, JSON.stringify(args));
   },
 
-  get url () {
-    let model = modelFor(this);
-    // model.window will be null after detach
-    return model.window ? model.window.document.location.href : null;
+  // properties
+  get url() {
+    let { url } = modelFor(this);
+    return url;
   },
 
-  get contentURL () {
-    let model = modelFor(this);
-    return model.window ? model.window.document.URL : null;
+  get contentURL() {
+    return this.url;
   },
 
-  get tab () {
-    let model = modelFor(this);
-    // model.window will be null after detach
-    if (model.window)
-      return getTabForWindow(model.window);
-    return null;
+  get tab() {
+    require('sdk/tabs');
+    let { frame } = modelFor(this);
+    if (!frame)
+      return null;
+    let rawTab = getTabForBrowser(frame.frameElement);
+    return rawTab && tabFor(rawTab);
   },
 
-  // Implemented to provide some of the previous features of exposing sandbox
-  // so that Worker can be extended
-  getSandbox: function () {
-    return modelFor(this).contentWorker;
-  },
+  toString: () => '[object Worker]',
 
-  toString: function () { return '[object Worker]'; },
-  attach: method(attach),
   detach: method(detach),
-  destroy: method(destroy)
-});
+  destroy: method(destroy),
+})
 exports.Worker = Worker;
 
-attach.define(Worker, function (worker, window) {
+attach.define(Worker, function(worker, window) {
+  // This method of attaching should be deprecated
   let model = modelFor(worker);
+  if (model.attached)
+    detach(worker);
+
   model.window = window;
-  // Track document unload to destroy this worker.
-  // We can't watch for unload event on page's window object as it
-  // prevents bfcache from working:
-  // https://developer.mozilla.org/En/Working_with_BFCache
-  model.windowID = getInnerId(model.window);
-  events.on("inner-window-destroyed", model.documentUnload);
+  let frame = null;
+  let tab = getTabForContentWindow(window.top);
+  if (tab)
+    frame = frames.getFrameForBrowser(getBrowserForTab(tab));
 
-  // will set model.contentWorker pointing to the private API:
-  model.contentWorker = WorkerSandbox(worker, model.window);
+  function makeStringArray(arrayOrValue) {
+    if (!arrayOrValue)
+      return [];
+    return [String(v) for (v of [].concat(arrayOrValue))];
+  }
 
-  // Listen to pagehide event in order to freeze the content script
-  // while the document is frozen in bfcache:
-  model.window.addEventListener("pageshow", model.pageShow, true);
-  model.window.addEventListener("pagehide", model.pageHide, true);
+  let id = String(uuid());
+  let childOptions = {
+    id,
+    windowId: getInnerId(window),
+    contentScript: makeStringArray(model.options.contentScript),
+    contentScriptFile: makeStringArray(model.options.contentScriptFile),
+    contentScriptOptions: model.options.contentScriptOptions ?
+                          JSON.stringify(model.options.contentScriptOptions) :
+                          null,
+  }
 
-  // Mainly enable worker.port.emit to send event to the content worker
-  model.inited = true;
+  processes.port.emit('sdk/worker/create', childOptions);
+
+  connect(worker, frame, { id, url: String(window.location) });
+})
+
+connect.define(Worker, function(worker, frame, { id, url }) {
+  let model = modelFor(worker);
+  if (model.attached)
+    detach(worker);
+
+  model.id = id;
+  model.frame = frame;
+  model.url = url;
+
+  // Messages from content -> chrome come through the process message manager
+  // since that lives longer than the frame message manager
+  processes.port.on('sdk/worker/event', worker.receive);
+
+  model.attached = true;
+  model.destroyed = false;
   model.frozen = false;
 
-  // Fire off `attach` event
-  emit(worker, 'attach', window);
-
-  // Process all events and messages that were fired before the
-  // worker was initialized.
-  model.earlyEvents.forEach(args => processMessage.apply(null, [worker].concat(args)));
+  model.earlyEvents.forEach(args => worker.send(...args));
+  model.earlyEvents = [];
+  emit(worker, 'attach', model.window);
 });
 
-/**
- * Remove all internal references to the attached document
- * Tells _port to unload itself and removes all the references from itself.
- */
-detach.define(Worker, function (worker, reason) {
+// unload and release the child worker, release window reference
+detach.define(Worker, function(worker) {
   let model = modelFor(worker);
+  if (!model.attached)
+    return;
 
-  // maybe unloaded before content side is created
-  if (model.contentWorker) {
-    model.contentWorker.destroy(reason);
-  }
-
-  model.contentWorker = null;
-  if (model.window) {
-    model.window.removeEventListener("pageshow", model.pageShow, true);
-    model.window.removeEventListener("pagehide", model.pageHide, true);
-  }
+  processes.port.off('sdk/worker/event', worker.receive);
+  model.attached = false;
+  model.destroyed = true;
   model.window = null;
-  // This method may be called multiple times,
-  // avoid dispatching `detach` event more than once
-  if (model.windowID) {
-    model.windowID = null;
-    events.off("inner-window-destroyed", model.documentUnload);
-    model.earlyEvents.length = 0;
-    emit(worker, 'detach');
-  }
-  model.inited = false;
+  emit(worker, 'detach');
 });
 
 isPrivate.define(Worker, ({ tab }) => isPrivate(tab));
 
-/**
- * Tells content worker to unload itself and
- * removes all the references from itself.
- */
-destroy.define(Worker, function (worker, reason) {
-  detach(worker, reason);
-  modelFor(worker).inited = true;
-  // Specifying no type or listener removes all listeners
-  // from target
-  off(worker);
-  off(worker.port);
-});
-
-/**
- * Events fired by workers
- */
-function documentUnload ({ subject, data }) {
-  let model = modelFor(this);
-  let innerWinID = subject.QueryInterface(Ci.nsISupportsPRUint64).data;
-  if (innerWinID != model.windowID) return false;
-  detach(this);
-  return true;
-}
-
-function pageShow () {
-  let model = modelFor(this);
-  model.contentWorker.emitSync('pageshow');
-  emit(this, 'pageshow');
-  model.frozen = false;
-}
-
-function pageHide () {
-  let model = modelFor(this);
-  model.contentWorker.emitSync('pagehide');
-  emit(this, 'pagehide');
-  model.frozen = true;
-}
-
-/**
- * Fired from postMessage and emitEventToContent, or from the earlyMessage
- * queue when fired before the content is loaded. Sends arguments to
- * contentWorker if able
- */
-
-function processMessage (worker, ...args) {
-  let model = modelFor(worker) || {};
-  if (!model.contentWorker)
-    throw new Error(ERR_DESTROYED);
-  if (model.frozen)
-    throw new Error(ERR_FROZEN);
-  model.contentWorker.emit.apply(null, args);
-}
-
-function createModel () {
-  return {
-    // List of messages fired before worker is initialized
-    earlyEvents: [],
-    // Is worker connected to the content worker sandbox ?
-    inited: false,
-    // Is worker being frozen? i.e related document is frozen in bfcache.
-    // Content script should not be reachable if frozen.
-    frozen: true,
-    /**
-     * Reference to the content side of the worker.
-     * @type {WorkerGlobalScope}
-     */
-    contentWorker: null,
-    /**
-     * Reference to the window that is accessible from
-     * the content scripts.
-     * @type {Object}
-     */
-    window: null
-  };
-}
-
-function createPort (worker) {
-  let port = EventTarget();
-  port.emit = emitEventToContent.bind(null, worker);
-  return port;
-}
-
-/**
- * Emit a custom event to the content script,
- * i.e. emit this event on `self.port`
- */
-function emitEventToContent (worker, ...eventArgs) {
+// Something in the parent side has destroyed the worker, tell the child to
+// detach, the child will respond when it has detached
+destroy.define(Worker, function(worker, reason) {
   let model = modelFor(worker);
-  let args = ['event'].concat(eventArgs);
-  if (!model.inited) {
-    model.earlyEvents.push(args);
+  model.destroyed = true;
+  if (!model.attached)
     return;
-  }
-  processMessage.apply(null, [worker].concat(args));
-}
+
+  worker.send('detach', reason);
+});

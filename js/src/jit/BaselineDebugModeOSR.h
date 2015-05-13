@@ -28,7 +28,7 @@ namespace jit {
 // It is usually used in fallback stubs which may trigger on-stack
 // recompilation by calling out into the VM. Example use:
 //
-//     DebugModeOSRVolatileStub<FallbackStubT *> stub(frame, stub_)
+//     DebugModeOSRVolatileStub<FallbackStubT*> stub(frame, stub_)
 //
 //     // Call out to the VM
 //     // Other effectful operations like TypeScript::Monitor
@@ -42,30 +42,31 @@ template <typename T>
 class DebugModeOSRVolatileStub
 {
     T stub_;
-    BaselineFrame *frame_;
+    BaselineFrame* frame_;
     uint32_t pcOffset_;
 
   public:
-    DebugModeOSRVolatileStub(BaselineFrame *frame, ICFallbackStub *stub)
+    DebugModeOSRVolatileStub(BaselineFrame* frame, ICFallbackStub* stub)
       : stub_(static_cast<T>(stub)),
         frame_(frame),
         pcOffset_(stub->icEntry()->pcOffset())
     { }
 
     bool invalid() const {
-        ICEntry &entry = frame_->script()->baselineScript()->icEntryFromPCOffset(pcOffset_);
+        MOZ_ASSERT(!frame_->isHandlingException());
+        ICEntry& entry = frame_->script()->baselineScript()->icEntryFromPCOffset(pcOffset_);
         return stub_ != entry.fallbackStub();
     }
 
     operator const T&() const { MOZ_ASSERT(!invalid()); return stub_; }
     T operator->() const { MOZ_ASSERT(!invalid()); return stub_; }
-    T *address() { MOZ_ASSERT(!invalid()); return &stub_; }
-    const T *address() const { MOZ_ASSERT(!invalid()); return &stub_; }
-    T &get() { MOZ_ASSERT(!invalid()); return stub_; }
-    const T &get() const { MOZ_ASSERT(!invalid()); return stub_; }
+    T* address() { MOZ_ASSERT(!invalid()); return &stub_; }
+    const T* address() const { MOZ_ASSERT(!invalid()); return &stub_; }
+    T& get() { MOZ_ASSERT(!invalid()); return stub_; }
+    const T& get() const { MOZ_ASSERT(!invalid()); return stub_; }
 
-    bool operator!=(const T &other) const { MOZ_ASSERT(!invalid()); return stub_ != other; }
-    bool operator==(const T &other) const { MOZ_ASSERT(!invalid()); return stub_ == other; }
+    bool operator!=(const T& other) const { MOZ_ASSERT(!invalid()); return stub_ != other; }
+    bool operator==(const T& other) const { MOZ_ASSERT(!invalid()); return stub_ == other; }
 };
 
 //
@@ -74,10 +75,11 @@ class DebugModeOSRVolatileStub
 //
 class DebugModeOSRVolatileJitFrameIterator : public JitFrameIterator
 {
-    DebugModeOSRVolatileJitFrameIterator **stack, *prev;
+    DebugModeOSRVolatileJitFrameIterator** stack;
+    DebugModeOSRVolatileJitFrameIterator* prev;
 
   public:
-    explicit DebugModeOSRVolatileJitFrameIterator(JSContext *cx)
+    explicit DebugModeOSRVolatileJitFrameIterator(JSContext* cx)
       : JitFrameIterator(cx)
     {
         stack = &cx->liveVolatileJitFrameIterators_;
@@ -90,7 +92,7 @@ class DebugModeOSRVolatileJitFrameIterator : public JitFrameIterator
         *stack = prev;
     }
 
-    static void forwardLiveIterators(JSContext *cx, uint8_t *oldAddr, uint8_t *newAddr);
+    static void forwardLiveIterators(JSContext* cx, uint8_t* oldAddr, uint8_t* newAddr);
 };
 
 //
@@ -98,8 +100,8 @@ class DebugModeOSRVolatileJitFrameIterator : public JitFrameIterator
 //
 struct BaselineDebugModeOSRInfo
 {
-    uint8_t *resumeAddr;
-    jsbytecode *pc;
+    uint8_t* resumeAddr;
+    jsbytecode* pc;
     PCMappingSlotInfo slotInfo;
     ICEntry::Kind frameKind;
 
@@ -108,7 +110,7 @@ struct BaselineDebugModeOSRInfo
     Value valueR0;
     Value valueR1;
 
-    BaselineDebugModeOSRInfo(jsbytecode *pc, ICEntry::Kind kind)
+    BaselineDebugModeOSRInfo(jsbytecode* pc, ICEntry::Kind kind)
       : resumeAddr(nullptr),
         pc(pc),
         slotInfo(0),
@@ -118,12 +120,12 @@ struct BaselineDebugModeOSRInfo
         valueR1(UndefinedValue())
     { }
 
-    void popValueInto(PCMappingSlotInfo::SlotLocation loc, Value *vp);
+    void popValueInto(PCMappingSlotInfo::SlotLocation loc, Value* vp);
 };
 
 bool
-RecompileOnStackBaselineScriptsForDebugMode(JSContext *cx,
-                                            const Debugger::ExecutionObservableSet &obs,
+RecompileOnStackBaselineScriptsForDebugMode(JSContext* cx,
+                                            const Debugger::ExecutionObservableSet& obs,
                                             Debugger::IsObserving observing);
 
 } // namespace jit

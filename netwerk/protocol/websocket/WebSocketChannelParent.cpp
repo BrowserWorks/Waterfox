@@ -9,6 +9,7 @@
 #include "nsIAuthPromptProvider.h"
 #include "mozilla/ipc/InputStreamUtils.h"
 #include "mozilla/ipc/URIUtils.h"
+#include "mozilla/ipc/BackgroundUtils.h"
 #include "SerializedLoadContext.h"
 #include "nsIOService.h"
 #include "mozilla/net/NeckoCommon.h"
@@ -32,10 +33,8 @@ WebSocketChannelParent::WebSocketChannelParent(nsIAuthPromptProvider* aAuthProvi
 {
   // Websocket channels can't have a private browsing override
   MOZ_ASSERT_IF(!aLoadContext, aOverrideStatus == kPBOverride_Unset);
-#if defined(PR_LOGGING)
   if (!webSocketLog)
     webSocketLog = PR_NewLogModule("nsWebSocket");
-#endif
   mObserver = new OfflineObserver(this);
 }
 
@@ -66,13 +65,15 @@ WebSocketChannelParent::RecvAsyncOpen(const URIParams& aURI,
                                       const uint32_t& aPingInterval,
                                       const bool& aClientSetPingInterval,
                                       const uint32_t& aPingTimeout,
-                                      const bool& aClientSetPingTimeout)
+                                      const bool& aClientSetPingTimeout,
+                                      const WebSocketLoadInfoArgs& aLoadInfoArgs)
 {
   LOG(("WebSocketChannelParent::RecvAsyncOpen() %p\n", this));
 
   nsresult rv;
   nsCOMPtr<nsIURI> uri;
-
+  nsCOMPtr<nsIPrincipal> requestingPrincipal, triggeringPrincipal;
+  nsCOMPtr<nsILoadInfo> loadInfo;
 
   bool appOffline = false;
   uint32_t appId = GetAppId();
@@ -93,6 +94,28 @@ WebSocketChannelParent::RecvAsyncOpen(const URIParams& aURI,
   }
   if (NS_FAILED(rv))
     goto fail;
+
+  requestingPrincipal =
+    mozilla::ipc::PrincipalInfoToPrincipal(aLoadInfoArgs.requestingPrincipalInfo(), &rv);
+  if (NS_FAILED(rv)) {
+    goto fail;
+  }
+
+  triggeringPrincipal =
+    mozilla::ipc::PrincipalInfoToPrincipal(aLoadInfoArgs.triggeringPrincipalInfo(), &rv);
+  if (NS_FAILED(rv)) {
+    goto fail;
+  }
+
+  loadInfo = new LoadInfo(requestingPrincipal,
+                          triggeringPrincipal,
+                          aLoadInfoArgs.securityFlags(),
+                          aLoadInfoArgs.contentPolicyType(),
+                          aLoadInfoArgs.innerWindowID());
+  rv = mChannel->SetLoadInfo(loadInfo);
+  if (NS_FAILED(rv)) {
+    goto fail;
+  }
 
   rv = mChannel->SetNotificationCallbacks(this);
   if (NS_FAILED(rv))

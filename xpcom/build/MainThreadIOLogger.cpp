@@ -12,6 +12,7 @@
 #include "mozilla/StaticPtr.h"
 #include "mozilla/TimeStamp.h"
 #include "nsAutoPtr.h"
+#include "nsNativeCharsetUtils.h"
 
 /**
  * This code uses NSPR stuff and STL containers because it must be detached
@@ -43,11 +44,7 @@ struct ObservationWithStack
   nsString                                  mFilename;
 };
 
-} // anonymous namespace
-
-namespace mozilla {
-
-class MainThreadIOLoggerImpl MOZ_FINAL : public IOInterposeObserver
+class MainThreadIOLoggerImpl final : public mozilla::IOInterposeObserver
 {
 public:
   MainThreadIOLoggerImpl();
@@ -203,6 +200,10 @@ MainThreadIOLoggerImpl::Observe(Observation& aObservation)
   mObservations.push_back(ObservationWithStack(aObservation, nullptr));
   lock.Notify();
 }
+
+} // anonymous namespace
+
+namespace mozilla {
 
 namespace MainThreadIOLogger {
 

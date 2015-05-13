@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -10,7 +11,7 @@
 #ifndef nsNodeInfoManager_h___
 #define nsNodeInfoManager_h___
 
-#include "mozilla/Attributes.h"           // for MOZ_FINAL
+#include "mozilla/Attributes.h"           // for final
 #include "nsCOMPtr.h"                     // for member
 #include "nsAutoPtr.h"                    // for nsRefPtr
 #include "nsCycleCollectionParticipant.h" // for NS_DECL_CYCLE_*
@@ -32,7 +33,7 @@ class NodeInfo;
 }
 }
 
-class nsNodeInfoManager MOZ_FINAL
+class nsNodeInfoManager final
 {
 private:
   ~nsNodeInfoManager();
@@ -129,13 +130,13 @@ private:
                                      void *arg);
 
   PLHashTable *mNodeInfoHash;
-  nsIDocument *mDocument; // WEAK
+  nsIDocument * MOZ_NON_OWNING_REF mDocument; // WEAK
   uint32_t mNonDocumentNodeInfos;
   nsCOMPtr<nsIPrincipal> mPrincipal; // Never null after Init() succeeds.
   nsCOMPtr<nsIPrincipal> mDefaultPrincipal; // Never null after Init() succeeds
-  mozilla::dom::NodeInfo *mTextNodeInfo; // WEAK to avoid circular ownership
-  mozilla::dom::NodeInfo *mCommentNodeInfo; // WEAK to avoid circular ownership
-  mozilla::dom::NodeInfo *mDocumentNodeInfo; // WEAK to avoid circular ownership
+  mozilla::dom::NodeInfo * MOZ_NON_OWNING_REF mTextNodeInfo; // WEAK to avoid circular ownership
+  mozilla::dom::NodeInfo * MOZ_NON_OWNING_REF mCommentNodeInfo; // WEAK to avoid circular ownership
+  mozilla::dom::NodeInfo * MOZ_NON_OWNING_REF mDocumentNodeInfo; // WEAK to avoid circular ownership
   nsRefPtr<nsBindingManager> mBindingManager;
 };
 

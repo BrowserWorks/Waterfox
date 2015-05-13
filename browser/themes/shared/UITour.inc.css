@@ -148,50 +148,140 @@
   background-color: rgb(105,173,61);
 }
 
-.SearchHighlight {
-  -moz-margin-end: 6px;
-  font-size: 110%;
-  width: 225px;
+/* Notification overrides for Heartbeat UI */
+
+notification.heartbeat {
+%ifdef XP_MACOSX
+  background-image: linear-gradient(-179deg, #FBFBFB 0%, #EBEBEB 100%);
+%else
+  background-color: #F1F1F1;
+%endif
+  border-bottom: 1px solid #C1C1C1;
+  height: 40px;
 }
 
-.SearchHighlight label,
-.SearchHighlight description {
-  color: #535353;
-  margin: 0 0 8px 0;
-  padding: 0;
-}
+/* In themes/osx/global/notification.css the close icon is inverted because notifications
+   on OSX are usually dark. Heartbeat is light, so override that behaviour. */
 
-.SearchHighlightTitle {
-  font-weight: bold;
+%ifdef XP_MACOSX
+notification.heartbeat[type="info"] .close-icon:not(:hover) {
+  -moz-image-region: rect(0, 16px, 16px, 0px) !important;
 }
-
-.SearchHighlight .dot {
-  width: 7px;
-  height: 7px;
-  background-image: -moz-image-rect(url("chrome://browser/skin/dots.png"), 0, 100%, 100%, 9);
-  background-size: 7px;
-  background-position: center center;
-  background-repeat: no-repeat;
-  -moz-margin-end: 2px;
-}
-
-.SearchHighlight .dot.filled {
-  background-image: -moz-image-rect(url("chrome://browser/skin/dots.png"), 0, 7, 100%, 0);
-}
-
-.SearchHighlight button {
-  margin: 0;
-  /* On some platforms clicking the button will steal focus from the search box
-     causing the popup to close. */
-  -moz-user-focus: ignore;
-}
-
-@media not all and (max-resolution: 1dppx) {
-  .SearchHighlight .dot {
-    background-image: -moz-image-rect(url("chrome://browser/skin/dots@2x.png"), 0, 100%, 100%, 18);
+@media (min-resolution: 2dppx) {
+  notification.heartbeat[type="info"] .close-icon:not(:hover) {
+    -moz-image-region: rect(0, 32px, 32px, 0px) !important;
   }
+}
+%endif
 
-  .SearchHighlight .dot.filled {
-    background-image: -moz-image-rect(url("chrome://browser/skin/dots@2x.png"), 0, 14, 100%, 0);
-  }
+@keyframes pulse-onshow {
+ 0% {
+   opacity: 0;
+   transform: scale(1.0);
+ }
+ 25% {
+   opacity: 1;
+   transform: scale(1.1);
+ }
+ 50% {
+   transform: scale(1.0);
+ }
+ 75% {
+   transform: scale(1.1);
+ }
+ 100% {
+   transform: scale(1.0);
+ }
+}
+
+@keyframes pulse-twice {
+ 0% {
+   transform: scale(1.1);
+ }
+ 50% {
+   transform: scale(0.8);
+ }
+ 100% {
+   transform: scale(1);
+ }
+}
+
+.messageText.heartbeat {
+  color: #333333;
+  text-shadow: none;
+  -moz-margin-start: 0px;
+  /* The !important is required to override OSX default style. */
+  -moz-margin-end: 12px !important;
+}
+
+.messageImage.heartbeat {
+  width: 24px;
+  height: 24px;
+  -moz-margin-start: 8px;
+  -moz-margin-end: 8px;
+}
+
+.messageImage.heartbeat.pulse-onshow {
+  animation-name: pulse-onshow;
+  animation-duration: 1.5s;
+  animation-iteration-count: 1;
+  animation-timing-function: cubic-bezier(.7,1.8,.9,1.1);
+}
+
+.messageImage.heartbeat.pulse-twice {
+  animation-name: pulse-twice;
+  animation-duration: 1s;
+  animation-iteration-count: 2;
+  animation-timing-function: linear;
+}
+
+/* Learn More link styles */
+.heartbeat > .text-link {
+  color: #0095DD;
+  -moz-margin-start: 0px;
+}
+
+.heartbeat > .text-link:hover {
+  color: #008ACB;
+  text-decoration: none;
+}
+
+.heartbeat > .text-link:hover:active {
+  color: #006B9D;
+}
+
+/* Heartbeat UI Rating Star Classes */
+.heartbeat > #star-rating-container {
+  display: -moz-box;
+  margin-bottom: 4px;
+}
+
+.heartbeat > #star-rating-container > #star5 {
+  -moz-box-ordinal-group: 5;
+}
+
+.heartbeat > #star-rating-container > #star4 {
+  -moz-box-ordinal-group: 4;
+}
+
+.heartbeat > #star-rating-container > #star3 {
+  -moz-box-ordinal-group: 3;
+}
+
+.heartbeat > #star-rating-container > #star2 {
+  -moz-box-ordinal-group: 2;
+}
+
+.heartbeat > #star-rating-container > .star-x  {
+  background: url("chrome://browser/skin/heartbeat-star-off.svg");
+  cursor: pointer;
+  /* Overrides the -moz-margin-end for all platforms defined in the .plain class */
+  -moz-margin-end: 4px !important;
+  width: 16px;
+  height: 16px;
+}
+
+.heartbeat > #star-rating-container > .star-x:hover,
+.heartbeat > #star-rating-container > .star-x:hover ~ .star-x {
+  background: url("chrome://browser/skin/heartbeat-star-lit.svg");
 }

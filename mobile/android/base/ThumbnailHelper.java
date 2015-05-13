@@ -5,14 +5,14 @@
 
 package org.mozilla.gecko;
 
-import org.mozilla.gecko.db.BrowserDB;
 import org.mozilla.gecko.gfx.BitmapUtils;
 import org.mozilla.gecko.mozglue.DirectBufferAllocator;
 import org.mozilla.gecko.mozglue.generatorannotations.WrapElementForJNI;
 
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.util.Log;
-import android.content.res.Resources;
+import android.util.TypedValue;
 
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
@@ -31,9 +31,6 @@ public final class ThumbnailHelper {
     private static final String LOGTAG = "GeckoThumbnailHelper";
 
     public static final float THUMBNAIL_ASPECT_RATIO = 0.571f;  // this is a 4:7 ratio (as per UX decision)
-
-    // Should actually be more like 0.83 (140/168) but various roundings mean that 0.9 works better
-    public static final float NEW_TABLET_THUMBNAIL_ASPECT_RATIO = 0.9f;
 
     public static enum CachePolicy {
         STORE,
@@ -58,36 +55,26 @@ public final class ThumbnailHelper {
     private int mWidth;
     private int mHeight;
     private ByteBuffer mBuffer;
+    private final float mThumbnailAspectRatio;
 
     private ThumbnailHelper() {
+        final Resources res = GeckoAppShell.getContext().getResources();
+
+        final TypedValue outValue = new TypedValue();
+        res.getValue(R.dimen.thumbnail_aspect_ratio, outValue, true);
+        mThumbnailAspectRatio = outValue.getFloat();
+
         mPendingThumbnails = new LinkedList<Tab>();
         try {
-            mPendingWidth = new AtomicInteger((int)GeckoAppShell.getContext().getResources().getDimension(R.dimen.tab_thumbnail_width));
+            mPendingWidth = new AtomicInteger((int) res.getDimension(R.dimen.tab_thumbnail_width));
         } catch (Resources.NotFoundException nfe) { mPendingWidth = new AtomicInteger(0); }
         mWidth = -1;
         mHeight = -1;
     }
 
-    public void getAndProcessThumbnailFor(Tab tab, final BrowserDB db) {
+    public void getAndProcessThumbnailFor(Tab tab) {
         if (AboutPages.isAboutHome(tab.getURL())) {
             tab.updateThumbnail(null, CachePolicy.NO_STORE);
-            return;
-        }
-
-        // If we don't have a database, there's nothing left to do.
-        if (db == null) {
-            return;
-        }
-
-        if (tab.getState() == Tab.STATE_DELAYED) {
-            String url = tab.getURL();
-            if (url != null) {
-                byte[] thumbnail = db.getThumbnailForUrl(GeckoAppShell.getContext().getContentResolver(), url);
-                if (thumbnail != null) {
-                    // Since this thumbnail is from the database, its ok to store it
-                    setTabThumbnail(tab, null, thumbnail, CachePolicy.STORE);
-                }
-            }
             return;
         }
 
@@ -124,12 +111,7 @@ public final class ThumbnailHelper {
     private void updateThumbnailSize() {
         // Apply any pending width updates.
         mWidth = mPendingWidth.get();
-
-        if(NewTabletUI.isEnabled(GeckoAppShell.getContext())) {
-            mHeight = Math.round(mWidth * NEW_TABLET_THUMBNAIL_ASPECT_RATIO);
-        } else {
-            mHeight = Math.round(mWidth * THUMBNAIL_ASPECT_RATIO);
-        }
+        mHeight = Math.round(mWidth * mThumbnailAspectRatio);
 
         int pixelSize = (GeckoAppShell.getScreenDepth() == 24) ? 4 : 2;
         int capacity = mWidth * mHeight * pixelSize;

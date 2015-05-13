@@ -166,11 +166,11 @@ add_task(function test_bookmarks() {
 
   // check lastModified after we set the title
   let lastModified2 = bs.getItemLastModified(newId);
-  LOG("test setItemTitle");
-  LOG("dateAdded = " + dateAdded);
-  LOG("beforeSetTitle = " + beforeSetTitle);
-  LOG("lastModified = " + lastModified);
-  LOG("lastModified2 = " + lastModified2);
+  do_print("test setItemTitle");
+  do_print("dateAdded = " + dateAdded);
+  do_print("beforeSetTitle = " + beforeSetTitle);
+  do_print("lastModified = " + lastModified);
+  do_print("lastModified2 = " + lastModified2);
   do_check_true(is_time_ordered(lastModified, lastModified2));
   do_check_true(is_time_ordered(dateAdded, lastModified2));
 
@@ -242,7 +242,7 @@ add_task(function test_bookmarks() {
   do_check_eq(bookmarksObserver._itemAddedId, newId4);
   do_check_eq(bookmarksObserver._itemAddedParent, workFolder);
   do_check_eq(bookmarksObserver._itemAddedIndex, 1);
-  
+
   // create folder
   let homeFolder = bs.createFolder(testRoot, "Home", bs.DEFAULT_INDEX);
   do_check_eq(bookmarksObserver._itemAddedId, homeFolder);
@@ -314,40 +314,15 @@ add_task(function test_bookmarks() {
   do_check_eq(bookmarksObserver._itemMovedNewParent, testRoot);
   do_check_eq(bookmarksObserver._itemMovedNewIndex, 3);
 
-  // test get folder's index 
+  // test get folder's index
   let tmpFolder = bs.createFolder(testRoot, "tmp", 2);
   do_check_eq(bs.getItemIndex(tmpFolder), 2);
 
   // test setKeywordForBookmark
   let kwTestItemId = bs.insertBookmark(testRoot, uri("http://keywordtest.com"),
                                        bs.DEFAULT_INDEX, "");
-  try {
-    let dateAdded = bs.getItemDateAdded(kwTestItemId);
-    // after just inserting, modified should not be set
-    let lastModified = bs.getItemLastModified(kwTestItemId);
-    do_check_eq(lastModified, dateAdded);
+  bs.setKeywordForBookmark(kwTestItemId, "bar");
 
-    // Workaround possible VM timers issues moving lastModified and dateAdded
-    // to the past.
-    lastModified -= 1000;
-    bs.setItemLastModified(kwTestItemId, --lastModified);
-    dateAdded -= 1000;
-    bs.setItemDateAdded(kwTestItemId, dateAdded);
-
-    bs.setKeywordForBookmark(kwTestItemId, "bar");
-
-    let lastModified2 = bs.getItemLastModified(kwTestItemId);
-    LOG("test setKeywordForBookmark");
-    LOG("dateAdded = " + dateAdded);
-    LOG("lastModified = " + lastModified);
-    LOG("lastModified2 = " + lastModified2);
-    do_check_true(is_time_ordered(lastModified, lastModified2));
-    do_check_true(is_time_ordered(dateAdded, lastModified2));
-  } catch(ex) {
-    do_throw("setKeywordForBookmark: " + ex);
-  }
-
-  let lastModified3 = bs.getItemLastModified(kwTestItemId);
   // test getKeywordForBookmark
   let k = bs.getKeywordForBookmark(kwTestItemId);
   do_check_eq("bar", k);
@@ -400,7 +375,7 @@ add_task(function test_bookmarks() {
     let rootNode = result.root;
     rootNode.containerOpen = true;
     let cc = rootNode.childCount;
-    LOG("bookmark itemId test: CC = " + cc);
+    do_print("bookmark itemId test: CC = " + cc);
     do_check_true(cc > 0);
     for (let i=0; i < cc; ++i) {
       let node = rootNode.getChild(i);
@@ -467,10 +442,10 @@ add_task(function test_bookmarks() {
 
   // check that lastModified is set after we change the bookmark uri
   lastModified2 = bs.getItemLastModified(newId10);
-  LOG("test changeBookmarkURI");
-  LOG("dateAdded = " + dateAdded);
-  LOG("lastModified = " + lastModified);
-  LOG("lastModified2 = " + lastModified2);
+  do_print("test changeBookmarkURI");
+  do_print("dateAdded = " + dateAdded);
+  do_print("lastModified = " + lastModified);
+  do_print("lastModified2 = " + lastModified2);
   do_check_true(is_time_ordered(lastModified, lastModified2));
   do_check_true(is_time_ordered(dateAdded, lastModified2));
 
@@ -557,7 +532,7 @@ add_task(function test_bookmarks() {
 
     do_check_eq(typeof node.dateAdded, "number");
     do_check_true(node.dateAdded > 0);
-    
+
     do_check_eq(typeof node.lastModified, "number");
     do_check_true(node.lastModified > 0);
 
@@ -608,7 +583,7 @@ add_task(function test_bookmarks() {
   bs.setItemDateAdded(newId14, 4321000000000000);
   let fakeDateAdded = bs.getItemDateAdded(newId14);
   do_check_eq(fakeDateAdded, 4321000000000000);
-  
+
   // ensure that removing an item removes its annotations
   do_check_true(anno.itemHasAnnotation(newId3, "test-annotation"));
   bs.removeItem(newId3);
@@ -617,7 +592,7 @@ add_task(function test_bookmarks() {
   // bug 378820
   let uri1 = uri("http://foo.tld/a");
   bs.insertBookmark(testRoot, uri1, bs.DEFAULT_INDEX, "");
-  yield promiseAddVisits(uri1);
+  yield PlacesTestUtils.addVisits(uri1);
 
   // bug 646993 - test bookmark titles longer than the maximum allowed length
   let title15 = Array(TITLE_LENGTH_MAX + 5).join("X");
@@ -649,9 +624,9 @@ function testSimpleFolderResult() {
   let parent = bs.createFolder(root, "test", bs.DEFAULT_INDEX);
 
   let dateCreated = bs.getItemDateAdded(parent);
-  LOG("check that the folder was created with a valid dateAdded");
-  LOG("beforeCreate = " + beforeCreate);
-  LOG("dateCreated = " + dateCreated);
+  do_print("check that the folder was created with a valid dateAdded");
+  do_print("beforeCreate = " + beforeCreate);
+  do_print("dateCreated = " + dateCreated);
   do_check_true(is_time_ordered(beforeCreate, dateCreated));
 
   // the time before we insert, in microseconds
@@ -659,13 +634,13 @@ function testSimpleFolderResult() {
   let beforeInsert = Date.now() * 1000 - 1;
   do_check_true(beforeInsert > 0);
 
-  // insert a separator 
+  // insert a separator
   let sep = bs.insertSeparator(parent, bs.DEFAULT_INDEX);
 
   let dateAdded = bs.getItemDateAdded(sep);
-  LOG("check that the separator was created with a valid dateAdded");
-  LOG("beforeInsert = " + beforeInsert);
-  LOG("dateAdded = " + dateAdded);
+  do_print("check that the separator was created with a valid dateAdded");
+  do_print("beforeInsert = " + beforeInsert);
+  do_print("dateAdded = " + dateAdded);
   do_check_true(is_time_ordered(beforeInsert, dateAdded));
 
   // re-set item title separately so can test nodes' last modified

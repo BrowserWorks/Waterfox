@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -14,18 +15,17 @@
 #include "nsWeakReference.h"
 
 class nsPIDOMWindow;
-class nsIScriptContext;
 
 BEGIN_FMRADIO_NAMESPACE
 
 class DOMRequest;
 
-class FMRadio MOZ_FINAL : public DOMEventTargetHelper
-                        , public hal::SwitchObserver
-                        , public FMRadioEventObserver
-                        , public nsSupportsWeakReference
-                        , public nsIAudioChannelAgentCallback
-                        , public nsIDOMEventListener
+class FMRadio final : public DOMEventTargetHelper
+                    , public hal::SwitchObserver
+                    , public FMRadioEventObserver
+                    , public nsSupportsWeakReference
+                    , public nsIAudioChannelAgentCallback
+                    , public nsIDOMEventListener
 
 {
   friend class FMRadioRequest;
@@ -42,16 +42,16 @@ public:
   void Shutdown();
 
   /* hal::SwitchObserver */
-  virtual void Notify(const hal::SwitchEvent& aEvent) MOZ_OVERRIDE;
+  virtual void Notify(const hal::SwitchEvent& aEvent) override;
   /* FMRadioEventObserver */
-  virtual void Notify(const FMRadioEventType& aType) MOZ_OVERRIDE;
+  virtual void Notify(const FMRadioEventType& aType) override;
 
   nsPIDOMWindow* GetParentObject() const
   {
     return GetOwner();
   }
 
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   static bool Enabled();
 

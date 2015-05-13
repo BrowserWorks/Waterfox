@@ -212,7 +212,6 @@ gfxDWriteFontFamily::FindStyleVariations(FontInfoData *aFontInfoData)
             }
         }
 
-#ifdef PR_LOGGING
         if (LOG_FONTLIST_ENABLED()) {
             LOG_FONTLIST(("(fontlist) added (%s) to family (%s)"
                  " with style: %s weight: %d stretch: %d psname: %s fullname: %s",
@@ -223,7 +222,6 @@ gfxDWriteFontFamily::FindStyleVariations(FontInfoData *aFontInfoData)
                  NS_ConvertUTF16toUTF8(psname).get(),
                  NS_ConvertUTF16toUTF8(fullname).get()));
         }
-#endif
     }
 
     // assume that if no error, all postscript/fullnames were initialized
@@ -457,9 +455,12 @@ class FontTableRec {
 public:
     FontTableRec(IDWriteFontFace *aFontFace, void *aContext)
         : mFontFace(aFontFace), mContext(aContext)
-    { }
+    {
+        MOZ_COUNT_CTOR(FontTableRec);
+    }
 
     ~FontTableRec() {
+        MOZ_COUNT_DTOR(FontTableRec);
         mFontFace->ReleaseFontTable(mContext);
     }
 
@@ -553,7 +554,6 @@ gfxDWriteFontEntry::ReadCMAP(FontInfoData *aFontInfoData)
         mCharacterMap = new gfxCharacterMap();
     }
 
-#ifdef PR_LOGGING
     LOG_FONTLIST(("(fontlist-cmap) name: %s, size: %d hash: %8.8x%s\n",
                   NS_ConvertUTF16toUTF8(mName).get(),
                   charmap->SizeOfIncludingThis(moz_malloc_size_of),
@@ -564,7 +564,6 @@ gfxDWriteFontEntry::ReadCMAP(FontInfoData *aFontInfoData)
                 NS_ConvertUTF16toUTF8(mName).get());
         charmap->Dump(prefix, eGfxLog_cmapdata);
     }
-#endif
 
     return rv;
 }
@@ -776,14 +775,14 @@ gfxDWriteFontList::MakePlatformFont(const nsAString& aFontName,
     nsAutoString uniqueName;
     rv = gfxFontUtils::MakeUniqueUserFontName(uniqueName);
     if (NS_FAILED(rv)) {
-        NS_Free((void*)aFontData);
+        free((void*)aFontData);
         return nullptr;
     }
 
     FallibleTArray<uint8_t> newFontData;
 
     rv = gfxFontUtils::RenameFont(uniqueName, aFontData, aLength, &newFontData);
-    NS_Free((void*)aFontData);
+    free((void*)aFontData);
 
     if (NS_FAILED(rv)) {
         return nullptr;
@@ -1021,7 +1020,6 @@ gfxDWriteFontList::DelayedInitFontList()
                 faces[i]->mFamilyName = gillSansMTFamily->Name();
                 gillSansMTFamily->AddFontEntry(faces[i]);
 
-#ifdef PR_LOGGING
                 if (LOG_FONTLIST_ENABLED()) {
                     gfxFontEntry *fe = faces[i];
                     LOG_FONTLIST(("(fontlist) moved (%s) to family (%s)"
@@ -1031,7 +1029,6 @@ gfxDWriteFontList::DelayedInitFontList()
                          (fe->IsItalic()) ? "italic" : "normal",
                          fe->Weight(), fe->Stretch()));
                 }
-#endif
             }
 
             // remove Gills Sans
@@ -1307,7 +1304,9 @@ gfxDWriteFontList::GetStandardFamilyName(const nsAString& aFontName,
 }
 
 gfxFontFamily*
-gfxDWriteFontList::FindFamily(const nsAString& aFamily, bool aUseSystemFonts)
+gfxDWriteFontList::FindFamily(const nsAString& aFamily,
+                              nsIAtom* aLanguage,
+                              bool aUseSystemFonts)
 {
     if (!mInitialized) {
         mInitialized = true;
@@ -1541,7 +1540,7 @@ gfxDWriteFontList::GlobalFontFallback(const uint32_t aCh,
         gfxFontEntry *fontEntry;
         bool needsBold;  // ignored in the system fallback case
         fontEntry = family->FindFontForStyle(*aMatchStyle, needsBold);
-        if (fontEntry && fontEntry->TestCharacterMap(aCh)) {
+        if (fontEntry && fontEntry->HasCharacter(aCh)) {
             *aMatchedFamily = family;
             return fontEntry;
         }

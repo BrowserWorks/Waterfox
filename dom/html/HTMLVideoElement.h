@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim:set ts=2 sw=2 sts=2 et cindent: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -16,7 +16,7 @@ namespace dom {
 class WakeLock;
 class VideoPlaybackQuality;
 
-class HTMLVideoElement MOZ_FINAL : public HTMLMediaElement
+class HTMLVideoElement final : public HTMLMediaElement
 {
 public:
   typedef mozilla::dom::NodeInfo NodeInfo;
@@ -27,27 +27,30 @@ public:
 
   using HTMLMediaElement::GetPaused;
 
-  NS_IMETHOD_(bool) IsVideo() MOZ_OVERRIDE {
+  NS_IMETHOD_(bool) IsVideo() override {
     return true;
   }
 
   virtual bool ParseAttribute(int32_t aNamespaceID,
                               nsIAtom* aAttribute,
                               const nsAString& aValue,
-                              nsAttrValue& aResult) MOZ_OVERRIDE;
-  NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const MOZ_OVERRIDE;
+                              nsAttrValue& aResult) override;
+  NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const override;
 
   static void Init();
 
-  virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const MOZ_OVERRIDE;
+  virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const override;
 
-  virtual nsresult Clone(NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(NodeInfo *aNodeInfo, nsINode **aResult) const override;
 
   // Set size with the current video frame's height and width.
   // If there is no video frame, returns NS_ERROR_FAILURE.
   nsresult GetVideoSize(nsIntSize* size);
 
-  virtual nsresult SetAcceptHeader(nsIHttpChannel* aChannel) MOZ_OVERRIDE;
+  virtual nsresult SetAcceptHeader(nsIHttpChannel* aChannel) override;
+
+  // Element
+  virtual bool IsInteractiveHTMLContent(bool aIgnoreTabindex) const override;
 
   // WebIDL
 
@@ -73,12 +76,12 @@ public:
 
   uint32_t VideoWidth() const
   {
-    return mMediaSize.width == -1 ? 0 : mMediaSize.width;
+    return mMediaInfo.HasVideo() ? mMediaInfo.mVideo.mDisplay.width : 0;
   }
 
   uint32_t VideoHeight() const
   {
-    return mMediaSize.height == -1 ? 0 : mMediaSize.height;
+    return mMediaInfo.HasVideo() ? mMediaInfo.mVideo.mDisplay.height : 0;
   }
 
   void GetPoster(nsAString& aValue)
@@ -102,17 +105,17 @@ public:
 
   bool MozHasAudio() const;
 
-  void NotifyOwnerDocumentActivityChanged() MOZ_OVERRIDE;
+  void NotifyOwnerDocumentActivityChanged() override;
 
   already_AddRefed<VideoPlaybackQuality> GetVideoPlaybackQuality();
 
 protected:
   virtual ~HTMLVideoElement();
 
-  virtual JSObject* WrapNode(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
-  virtual void WakeLockCreate() MOZ_OVERRIDE;
-  virtual void WakeLockRelease() MOZ_OVERRIDE;
+  virtual void WakeLockCreate() override;
+  virtual void WakeLockRelease() override;
   void UpdateScreenWakeLock();
 
   nsRefPtr<WakeLock> mScreenWakeLock;

@@ -174,7 +174,7 @@ class UUIDProvider(object):
         import os
         import xpidl
         from mozpack.files import FileFinder
-        import mozpack.path
+        import mozpack.path as mozpath
         from tempfile import mkdtemp
 
         finder = FileFinder(path, find_executables=False)
@@ -184,7 +184,7 @@ class UUIDProvider(object):
             parser = xpidl.IDLParser(outputdir=tmpdir)
             registry = InterfaceRegistry()
             for p, f in finder.find('**/*.idl'):
-                p = mozpack.path.join(path, p)
+                p = mozpath.join(path, p)
                 try:
                     content = f.open().read()
                     idl = parser.parse(content, filename=p)
@@ -210,7 +210,7 @@ class PastebinProvider(object):
         description='Command line interface to pastebin.mozilla.org.')
     @CommandArgument('--language', default=None,
                      help='Language to use for syntax highlighting')
-    @CommandArgument('--poster', default=None,
+    @CommandArgument('--poster', default='',
                      help='Specify your name for use with pastebin.mozilla.org')
     @CommandArgument('--duration', default='day',
                      choices=['d', 'day', 'm', 'month', 'f', 'forever'],
@@ -222,7 +222,7 @@ class PastebinProvider(object):
         import sys
         import urllib
 
-        URL = 'http://pastebin.mozilla.org/'
+        URL = 'https://pastebin.mozilla.org/'
 
         FILE_TYPES = [{'value': 'text', 'name': 'None', 'extension': 'txt'},
         {'value': 'bash', 'name': 'Bash', 'extension': 'sh'},

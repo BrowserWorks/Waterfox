@@ -5,7 +5,7 @@
 
 const TEST_URI = "http://example.com/browser/dom/tests/browser/test-console-api.html";
 
-var gWindow, gLevel, gArgs, gTestDriver, gStyle;
+var gWindow, gLevel, gArgs, gStyle;
 
 function test() {
   waitForExplicitFinish();
@@ -15,7 +15,7 @@ function test() {
   var browser = gBrowser.selectedBrowser;
 
   registerCleanupFunction(function () {
-    gWindow = gLevel = gArgs = gTestDriver = null;
+    gWindow = gLevel = gArgs = null;
     gBrowser.removeTab(tab);
   });
 
@@ -26,8 +26,7 @@ function test() {
     executeSoon(function test_executeSoon() {
       gWindow = browser.contentWindow;
       consoleAPISanityTest();
-      gTestDriver = observeConsoleTest();
-      gTestDriver.next();
+      observeConsoleTest();
     });
 
   }, false);
@@ -74,8 +73,6 @@ function testConsoleData(aMessageObject) {
       }
     }
   }
-
-  gTestDriver.next();
 }
 
 function testLocationData(aMessageObject) {
@@ -174,10 +171,10 @@ function testConsoleGroup(aMessageObject) {
 function startTraceTest() {
   gLevel = "trace";
   gArgs = [
-    {columnNumber: 8, filename: TEST_URI, functionName: "window.foobar585956c", language: 2, lineNumber: 6},
-    {columnNumber: 15, filename: TEST_URI, functionName: "foobar585956b", language: 2, lineNumber: 11},
-    {columnNumber: 15, filename: TEST_URI, functionName: "foobar585956a", language: 2, lineNumber: 15},
-    {columnNumber: 0, filename: TEST_URI, functionName: "onclick", language: 2, lineNumber: 1}
+    {columnNumber: 9, filename: TEST_URI, functionName: "window.foobar585956c", language: 2, lineNumber: 6},
+    {columnNumber: 16, filename: TEST_URI, functionName: "foobar585956b", language: 2, lineNumber: 11},
+    {columnNumber: 16, filename: TEST_URI, functionName: "foobar585956a", language: 2, lineNumber: 15},
+    {columnNumber: 1, filename: TEST_URI, functionName: "onclick", language: 2, lineNumber: 1}
   ];
 
   let button = gWindow.document.getElementById("test-trace");
@@ -215,127 +212,100 @@ function observeConsoleTest() {
   let win = XPCNativeWrapper.unwrap(gWindow);
   expect("log", "arg");
   win.console.log("arg");
-  yield undefined;
 
   expect("info", "arg", "extra arg");
   win.console.info("arg", "extra arg");
-  yield undefined;
 
   expect("warn", "Lesson 1: PI is approximately equal to 3");
   win.console.warn("Lesson %d: %s is approximately equal to %1.0f",
                    1,
                    "PI",
                    3.14159);
-  yield undefined;
 
   expect("warn", "Lesson 1: PI is approximately equal to 3.14");
   win.console.warn("Lesson %d: %s is approximately equal to %1.2f",
                    1,
                    "PI",
                    3.14159);
-  yield undefined;
 
   expect("warn", "Lesson 1: PI is approximately equal to 3.141590");
   win.console.warn("Lesson %d: %s is approximately equal to %f",
                    1,
                    "PI",
                    3.14159);
-  yield undefined;
 
   expect("warn", "Lesson 1: PI is approximately equal to 3.1415900");
   win.console.warn("Lesson %d: %s is approximately equal to %0.7f",
                    1,
                    "PI",
                    3.14159);
-  yield undefined;
 
   expect("log", "%d, %s, %l");
   win.console.log("%d, %s, %l");
-  yield undefined;
 
   expect("log", "%a %b %g");
   win.console.log("%a %b %g");
-  yield undefined;
 
   expect("log", "%a %b %g", "a", "b");
   win.console.log("%a %b %g", "a", "b");
-  yield undefined;
 
   expect("log", "2, a, %l", 3);
   win.console.log("%d, %s, %l", 2, "a", 3);
-  yield undefined;
 
   // Bug #692550 handle null and undefined.
   expect("log", "null, undefined");
   win.console.log("%s, %s", null, undefined);
-  yield undefined;
 
   // Bug #696288 handle object as first argument.
   let obj = { a: 1 };
   expect("log", obj, "a");
   win.console.log(obj, "a");
-  yield undefined;
 
   expect("dir", win.toString());
   win.console.dir(win);
-  yield undefined;
 
   expect("error", "arg");
   win.console.error("arg");
-  yield undefined;
 
   expect("exception", "arg");
   win.console.exception("arg");
-  yield undefined;
 
   expect("log", "foobar");
   gStyle = ["color:red;foobar;;"];
   win.console.log("%cfoobar", gStyle[0]);
-  yield undefined;
 
   let obj4 = { d: 4 };
   expect("warn", "foobar", obj4, "test", "bazbazstr", "last");
   gStyle = [null, null, null, "color:blue;", "color:red"];
   win.console.warn("foobar%Otest%cbazbaz%s%clast", obj4, gStyle[3], "str", gStyle[4]);
-  yield undefined;
 
   let obj3 = { c: 3 };
   expect("info", "foobar", "bazbaz", obj3, "%comg", "color:yellow");
   gStyle = [null, "color:pink;"];
   win.console.info("foobar%cbazbaz", gStyle[1], obj3, "%comg", "color:yellow");
-  yield undefined;
 
   gStyle = null;
   let obj2 = { b: 2 };
   expect("log", "omg ", obj, " foo ", 4, obj2);
   win.console.log("omg %o foo %o", obj, 4, obj2);
-  yield undefined;
 
   expect("assert", "message");
   win.console.assert(false, "message");
-  yield undefined;
 
   expect("count", { label: "label a", count: 1 })
   win.console.count("label a");
-  yield undefined;
 
   expect("count", { label: "label b", count: 1 })
   win.console.count("label b");
-  yield undefined;
 
   expect("count", { label: "label a", count: 2 })
   win.console.count("label a");
-  yield undefined;
 
   expect("count", { label: "label b", count: 2 })
   win.console.count("label b");
-  yield undefined;
 
   startTraceTest();
-  yield undefined;
-
   startLocationTest();
-  yield undefined;
 }
 
 function consoleAPISanityTest() {
@@ -355,6 +325,7 @@ function consoleAPISanityTest() {
   ok(win.console.groupEnd, "console.groupEnd is here");
   ok(win.console.time, "console.time is here");
   ok(win.console.timeEnd, "console.timeEnd is here");
+  ok(win.console.timeStamp, "console.timeStamp is here");
   ok(win.console.assert, "console.assert is here");
   ok(win.console.count, "console.count is here");
 }
@@ -445,6 +416,85 @@ function testConsoleTimeEnd(aMessageObject) {
   gArgs[0].arguments.forEach(function (a, i) {
     is(aMessageObject.arguments[i], a, "correct arg " + i);
   });
+
+  startTimeStampTest();
+}
+
+function startTimeStampTest() {
+  // Reset the observer function to cope with the fabricated test data.
+  ConsoleObserver.observe = function CO_observe(aSubject, aTopic, aData) {
+    try {
+      testConsoleTimeStamp(aSubject.wrappedJSObject);
+    } catch (ex) {
+      // XXX Bug 906593 - Exceptions in this function currently aren't
+      // reported, because of some XPConnect weirdness, so report them manually
+      ok(false, "Exception thrown in CO_observe: " + ex);
+    }
+  };
+  gLevel = "timeStamp";
+  gArgs = [
+    {filename: TEST_URI, lineNumber: 58, functionName: "timeStamp",
+     arguments: ["!!!"]
+    }
+  ];
+
+  let button = gWindow.document.getElementById("test-timeStamp");
+  ok(button, "found #test-timeStamp button");
+  EventUtils.synthesizeMouseAtCenter(button, {}, gWindow);
+}
+
+function testConsoleTimeStamp(aMessageObject) {
+  let messageWindow = Services.wm.getOuterWindowWithId(aMessageObject.ID);
+  is(messageWindow, gWindow, "found correct window by window ID");
+
+  is(aMessageObject.level, gLevel, "expected level received");
+
+  is(aMessageObject.filename, gArgs[0].filename, "filename matches");
+  is(aMessageObject.lineNumber, gArgs[0].lineNumber, "lineNumber matches");
+  is(aMessageObject.functionName, gArgs[0].functionName, "functionName matches");
+  ok(aMessageObject.timeStamp > 0, "timeStamp is a positive value");
+
+  gArgs[0].arguments.forEach(function (a, i) {
+    is(aMessageObject.arguments[i], a, "correct arg " + i);
+  });
+
+  startEmptyTimeStampTest();
+}
+
+function startEmptyTimeStampTest () {
+  // Reset the observer function to cope with the fabricated test data.
+  ConsoleObserver.observe = function CO_observe(aSubject, aTopic, aData) {
+    try {
+      testEmptyConsoleTimeStamp(aSubject.wrappedJSObject);
+    } catch (ex) {
+      // XXX Bug 906593 - Exceptions in this function currently aren't
+      // reported, because of some XPConnect weirdness, so report them manually
+      ok(false, "Exception thrown in CO_observe: " + ex);
+    }
+  };
+  gLevel = "timeStamp";
+  gArgs = [
+    {filename: TEST_URI, lineNumber: 58, functionName: "timeStamp",
+     arguments: []
+    }
+  ];
+
+  let button = gWindow.document.getElementById("test-emptyTimeStamp");
+  ok(button, "found #test-emptyTimeStamp button");
+  EventUtils.synthesizeMouseAtCenter(button, {}, gWindow);
+}
+
+function testEmptyConsoleTimeStamp(aMessageObject) {
+  let messageWindow = Services.wm.getOuterWindowWithId(aMessageObject.ID);
+  is(messageWindow, gWindow, "found correct window by window ID");
+
+  is(aMessageObject.level, gLevel, "expected level received");
+
+  is(aMessageObject.filename, gArgs[0].filename, "filename matches");
+  is(aMessageObject.lineNumber, gArgs[0].lineNumber, "lineNumber matches");
+  is(aMessageObject.functionName, gArgs[0].functionName, "functionName matches");
+  ok(aMessageObject.timeStamp > 0, "timeStamp is a positive value");
+  is(aMessageObject.arguments.length, 0, "we don't have arguments");
 
   startEmptyTimerTest();
 }

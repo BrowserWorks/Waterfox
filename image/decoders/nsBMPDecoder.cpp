@@ -22,7 +22,6 @@
 namespace mozilla {
 namespace image {
 
-#ifdef PR_LOGGING
 static PRLogModuleInfo*
 GetBMPLog()
 {
@@ -32,13 +31,12 @@ GetBMPLog()
   }
   return sBMPLog;
 }
-#endif
 
 // Convert from row (1..height) to absolute line (0..height-1)
 #define LINE(row) ((mBIH.height < 0) ? (-mBIH.height - (row)) : ((row) - 1))
 #define PIXEL_OFFSET(row, col) (LINE(row) * mBIH.width + col)
 
-nsBMPDecoder::nsBMPDecoder(RasterImage& aImage)
+nsBMPDecoder::nsBMPDecoder(RasterImage* aImage)
   : Decoder(aImage)
   , mPos(0)
   , mLOH(WIN_V3_HEADER_LENGTH)
@@ -60,7 +58,7 @@ nsBMPDecoder::~nsBMPDecoder()
 {
   delete[] mColors;
   if (mRow) {
-      moz_free(mRow);
+      free(mRow);
   }
 }
 
@@ -136,10 +134,10 @@ void
 nsBMPDecoder::FinishInternal()
 {
     // We shouldn't be called in error cases
-    NS_ABORT_IF_FALSE(!HasError(), "Can't call FinishInternal on error!");
+    MOZ_ASSERT(!HasError(), "Can't call FinishInternal on error!");
 
     // We should never make multiple frames
-    NS_ABORT_IF_FALSE(GetFrameCount() <= 1, "Multiple BMP frames?");
+    MOZ_ASSERT(GetFrameCount() <= 1, "Multiple BMP frames?");
 
     // Send notifications if appropriate
     if (!IsSizeDecode() && HasSize()) {
@@ -201,7 +199,7 @@ nsBMPDecoder::CalcBitShift()
 void
 nsBMPDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
 {
-  NS_ABORT_IF_FALSE(!HasError(), "Shouldn't call WriteInternal after error!");
+  MOZ_ASSERT(!HasError(), "Shouldn't call WriteInternal after error!");
 
   // aCount=0 means EOF, mCurLine=0 means we're past end of image
   if (!aCount || !mCurLine) {
@@ -430,7 +428,7 @@ nsBMPDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
       if (mBIH.compression != BI_RLE8 && mBIH.compression != BI_RLE4 &&
           mBIH.compression != BI_ALPHABITFIELDS) {
         // mRow is not used for RLE encoded images
-        mRow = (uint8_t*)moz_malloc((mBIH.width * mBIH.bpp) / 8 + 4);
+        mRow = (uint8_t*)malloc((mBIH.width * mBIH.bpp) / 8 + 4);
         // + 4 because the line is padded to a 4 bit boundary, but
         // I don't want to make exact calculations here, that's unnecessary.
         // Also, it compensates rounding error.
@@ -869,8 +867,7 @@ nsBMPDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
             continue;
 
           default :
-            NS_ABORT_IF_FALSE(0,
-                           "BMP RLE decompression: unknown state!");
+            MOZ_ASSERT(0, "BMP RLE decompression: unknown state!");
             PostDecoderError(NS_ERROR_UNEXPECTED);
             return;
         }

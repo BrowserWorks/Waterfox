@@ -15,6 +15,8 @@ Cu.import("resource://gre/modules/Services.jsm", this);
 Cu.import("resource://gre/modules/XPCOMUtils.jsm", this);
 Cu.import("resource://gre/modules/TelemetryStopwatch.jsm", this);
 
+XPCOMUtils.defineLazyModuleGetter(this, "AppConstants",
+  "resource://gre/modules/AppConstants.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "console",
   "resource://gre/modules/devtools/Console.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PrivacyFilter",
@@ -205,23 +207,23 @@ let SessionSaverInternal = {
       delete state.deferredInitialState;
     }
 
-#ifndef XP_MACOSX
-    // We want to restore closed windows that are marked with _shouldRestore.
-    // We're doing this here because we want to control this only when saving
-    // the file.
-    while (state._closedWindows.length) {
-      let i = state._closedWindows.length - 1;
+    if (AppConstants.platform != "macosx") {
+      // We want to restore closed windows that are marked with _shouldRestore.
+      // We're doing this here because we want to control this only when saving
+      // the file.
+      while (state._closedWindows.length) {
+        let i = state._closedWindows.length - 1;
 
-      if (!state._closedWindows[i]._shouldRestore) {
-        // We only need to go until _shouldRestore
-        // is falsy since we're going in reverse.
-        break;
+        if (!state._closedWindows[i]._shouldRestore) {
+          // We only need to go until _shouldRestore
+          // is falsy since we're going in reverse.
+          break;
+        }
+
+        delete state._closedWindows[i]._shouldRestore;
+        state.windows.unshift(state._closedWindows.pop());
       }
-
-      delete state._closedWindows[i]._shouldRestore;
-      state.windows.unshift(state._closedWindows.pop());
     }
-#endif
 
     stopWatchFinish("COLLECT_DATA_MS", "COLLECT_DATA_LONGEST_OP_MS");
     return this._writeState(state);
@@ -244,13 +246,6 @@ let SessionSaverInternal = {
    * Write the given state object to disk.
    */
   _writeState: function (state) {
-    // Inform observers
-    notify(null, "sessionstore-state-write");
-
-    stopWatchStart("SERIALIZE_DATA_MS", "SERIALIZE_DATA_LONGEST_OP_MS", "WRITE_STATE_LONGEST_OP_MS");
-    let data = JSON.stringify(state);
-    stopWatchFinish("SERIALIZE_DATA_MS", "SERIALIZE_DATA_LONGEST_OP_MS");
-
     // We update the time stamp before writing so that we don't write again
     // too soon, if saving is requested before the write completes. Without
     // this update we may save repeatedly if actions cause a runDelayed
@@ -260,15 +255,9 @@ let SessionSaverInternal = {
     // Write (atomically) to a session file, using a tmp file. Once the session
     // file is successfully updated, save the time stamp of the last save and
     // notify the observers.
-    stopWatchStart("SEND_SERIALIZED_STATE_LONGEST_OP_MS");
-    let promise = SessionFile.write(data);
-    stopWatchFinish("WRITE_STATE_LONGEST_OP_MS",
-                    "SEND_SERIALIZED_STATE_LONGEST_OP_MS");
-    promise = promise.then(() => {
+    return SessionFile.write(state).then(() => {
       this.updateLastSaveTime();
       notify(null, "sessionstore-state-write-complete");
     }, console.error);
-
-    return promise;
   },
 };

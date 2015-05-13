@@ -7,11 +7,11 @@
 #include "builtin/SymbolObject.h"
 
 #include "vm/StringBuffer.h"
+#include "vm/Symbol.h"
 
 #include "jsobjinlines.h"
 
 #include "vm/NativeObject-inl.h"
-#include "vm/Symbol-inl.h"
 
 using JS::Symbol;
 using namespace js;
@@ -25,16 +25,17 @@ const Class SymbolObject::class_ = {
     nullptr, /* setProperty */
     nullptr, /* enumerate */
     nullptr, /* resolve */
+    nullptr, /* mayResolve */
     convert
 };
 
-SymbolObject *
-SymbolObject::create(JSContext *cx, JS::Symbol *symbol)
+SymbolObject*
+SymbolObject::create(JSContext* cx, JS::HandleSymbol symbol)
 {
-    JSObject *obj = NewBuiltinClassInstance(cx, &class_);
+    JSObject* obj = NewBuiltinClassInstance(cx, &class_);
     if (!obj)
         return nullptr;
-    SymbolObject &symobj = obj->as<SymbolObject>();
+    SymbolObject& symobj = obj->as<SymbolObject>();
     symobj.setPrimitiveValue(symbol);
     return &symobj;
 }
@@ -55,8 +56,8 @@ const JSFunctionSpec SymbolObject::staticMethods[] = {
     JS_FS_END
 };
 
-JSObject *
-SymbolObject::initClass(JSContext *cx, HandleObject obj)
+JSObject*
+SymbolObject::initClass(JSContext* cx, HandleObject obj)
 {
     Rooted<GlobalObject*> global(cx, &obj->as<GlobalObject>());
 
@@ -73,13 +74,13 @@ SymbolObject::initClass(JSContext *cx, HandleObject obj)
         return nullptr;
 
     // Define the well-known symbol properties, such as Symbol.iterator.
-    ImmutablePropertyNamePtr *names = &cx->names().iterator;
+    ImmutablePropertyNamePtr* names = &cx->names().iterator;
     RootedValue value(cx);
     unsigned attrs = JSPROP_READONLY | JSPROP_PERMANENT;
-    WellKnownSymbols *wks = cx->runtime()->wellKnownSymbols;
+    WellKnownSymbols* wks = cx->runtime()->wellKnownSymbols;
     for (size_t i = 0; i < JS::WellKnownSymbolLimit; i++) {
         value.setSymbol(wks->get(i));
-        if (!DefineNativeProperty(cx, ctor, names[i], value, nullptr, nullptr, attrs))
+        if (!NativeDefineProperty(cx, ctor, names[i], value, nullptr, nullptr, attrs))
             return nullptr;
     }
 
@@ -95,7 +96,7 @@ SymbolObject::initClass(JSContext *cx, HandleObject obj)
 
 // ES6 rev 24 (2014 Apr 27) 19.4.1.1 and 19.4.1.2
 bool
-SymbolObject::construct(JSContext *cx, unsigned argc, Value *vp)
+SymbolObject::construct(JSContext* cx, unsigned argc, Value* vp)
 {
     // According to a note in the draft standard, "Symbol has ordinary
     // [[Construct]] behaviour but the definition of its @@create method causes
@@ -103,7 +104,7 @@ SymbolObject::construct(JSContext *cx, unsigned argc, Value *vp)
     // yet, so just throw a TypeError.
     CallArgs args = CallArgsFromVp(argc, vp);
     if (args.isConstructing()) {
-        JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_NOT_CONSTRUCTOR, "Symbol");
+        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_NOT_CONSTRUCTOR, "Symbol");
         return false;
     }
 
@@ -125,7 +126,7 @@ SymbolObject::construct(JSContext *cx, unsigned argc, Value *vp)
 
 // Stand-in for Symbol.prototype[@@toPrimitive], ES6 rev 26 (2014 Jul 18) 19.4.3.4
 bool
-SymbolObject::convert(JSContext *cx, HandleObject obj, JSType hint, MutableHandleValue vp)
+SymbolObject::convert(JSContext* cx, HandleObject obj, JSType hint, MutableHandleValue vp)
 {
     vp.setSymbol(obj->as<SymbolObject>().unbox());
     return true;
@@ -133,7 +134,7 @@ SymbolObject::convert(JSContext *cx, HandleObject obj, JSType hint, MutableHandl
 
 // ES6 rev 24 (2014 Apr 27) 19.4.2.2
 bool
-SymbolObject::for_(JSContext *cx, unsigned argc, Value *vp)
+SymbolObject::for_(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
 
@@ -143,7 +144,7 @@ SymbolObject::for_(JSContext *cx, unsigned argc, Value *vp)
         return false;
 
     // steps 3-7
-    JS::Symbol *symbol = JS::Symbol::for_(cx, stringKey);
+    JS::Symbol* symbol = JS::Symbol::for_(cx, stringKey);
     if (!symbol)
         return false;
     args.rval().setSymbol(symbol);
@@ -152,15 +153,15 @@ SymbolObject::for_(JSContext *cx, unsigned argc, Value *vp)
 
 // ES6 rev 25 (2014 May 22) 19.4.2.7
 bool
-SymbolObject::keyFor(JSContext *cx, unsigned argc, Value *vp)
+SymbolObject::keyFor(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
 
     // step 1
     HandleValue arg = args.get(0);
     if (!arg.isSymbol()) {
-        js_ReportValueErrorFlags(cx, JSREPORT_ERROR, JSMSG_UNEXPECTED_TYPE, JSDVG_SEARCH_STACK,
-                                 arg, js::NullPtr(), "not a symbol", nullptr);
+        ReportValueErrorFlags(cx, JSREPORT_ERROR, JSMSG_UNEXPECTED_TYPE, JSDVG_SEARCH_STACK,
+                              arg, js::NullPtr(), "not a symbol", nullptr);
         return false;
     }
 
@@ -188,7 +189,7 @@ IsSymbol(HandleValue v)
 
 // ES6 rev 27 (2014 Aug 24) 19.4.3.2
 bool
-SymbolObject::toString_impl(JSContext *cx, CallArgs args)
+SymbolObject::toString_impl(JSContext* cx, CallArgs args)
 {
     // steps 1-3
     HandleValue thisv = args.thisv();
@@ -202,7 +203,7 @@ SymbolObject::toString_impl(JSContext *cx, CallArgs args)
 }
 
 bool
-SymbolObject::toString(JSContext *cx, unsigned argc, Value *vp)
+SymbolObject::toString(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
     return CallNonGenericMethod<IsSymbol, toString_impl>(cx, args);
@@ -210,7 +211,7 @@ SymbolObject::toString(JSContext *cx, unsigned argc, Value *vp)
 
 //ES6 rev 24 (2014 Apr 27) 19.4.3.3
 bool
-SymbolObject::valueOf_impl(JSContext *cx, CallArgs args)
+SymbolObject::valueOf_impl(JSContext* cx, CallArgs args)
 {
     // Step 3, the error case, is handled by CallNonGenericMethod.
     HandleValue thisv = args.thisv();
@@ -223,14 +224,14 @@ SymbolObject::valueOf_impl(JSContext *cx, CallArgs args)
 }
 
 bool
-SymbolObject::valueOf(JSContext *cx, unsigned argc, Value *vp)
+SymbolObject::valueOf(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
     return CallNonGenericMethod<IsSymbol, valueOf_impl>(cx, args);
 }
 
-JSObject *
-js_InitSymbolClass(JSContext *cx, HandleObject obj)
+JSObject*
+js::InitSymbolClass(JSContext* cx, HandleObject obj)
 {
     return SymbolObject::initClass(cx, obj);
 }

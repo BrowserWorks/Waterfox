@@ -16,8 +16,8 @@
 
 namespace mozilla {
 
-class SnappyCompressOutputStream MOZ_FINAL : public nsIOutputStream
-                                           , protected detail::SnappyFrameUtils
+class SnappyCompressOutputStream final : public nsIOutputStream
+                                       , protected detail::SnappyFrameUtils
 {
 public:
   // Maximum compression block size.

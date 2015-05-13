@@ -74,15 +74,15 @@ class StackEntry : public js::ProfileEntry
 class ProfilerMarkerPayload;
 template<typename T>
 class ProfilerLinkedList;
-class JSStreamWriter;
-class JSCustomArray;
-class ThreadProfile;
+class SpliceableJSONWriter;
+class UniqueStacks;
+
 class ProfilerMarker {
   friend class ProfilerLinkedList<ProfilerMarker>;
 public:
   explicit ProfilerMarker(const char* aMarkerName,
-         ProfilerMarkerPayload* aPayload = nullptr,
-         float aTime = 0);
+                          ProfilerMarkerPayload* aPayload = nullptr,
+                          float aTime = 0);
 
   ~ProfilerMarker();
 
@@ -90,41 +90,22 @@ public:
     return mMarkerName;
   }
 
-  void
-  StreamJSObject(JSStreamWriter& b) const;
+  void StreamJSON(SpliceableJSONWriter& aWriter, UniqueStacks& aUniqueStacks) const;
 
-  void SetGeneration(int aGenID);
+  void SetGeneration(uint32_t aGenID);
 
-  bool HasExpired(int aGenID) const {
+  bool HasExpired(uint32_t aGenID) const {
     return mGenID + 2 <= aGenID;
   }
 
-  float GetTime();
+  float GetTime() const;
 
 private:
   char* mMarkerName;
   ProfilerMarkerPayload* mPayload;
   ProfilerMarker* mNext;
   float mTime;
-  int mGenID;
-};
-
-// Foward declaration
-typedef struct _UnwinderThreadBuffer UnwinderThreadBuffer;
-
-/**
- * This struct is used to add a mNext field to UnwinderThreadBuffer objects for
- * use with ProfilerLinkedList. It is done this way so that UnwinderThreadBuffer
- * may continue to be opaque with respect to code outside of UnwinderThread2.cpp
- */
-struct LinkedUWTBuffer
-{
-  LinkedUWTBuffer()
-    :mNext(nullptr)
-  {}
-  virtual ~LinkedUWTBuffer() {}
-  virtual UnwinderThreadBuffer* GetBuffer() = 0;
-  LinkedUWTBuffer*  mNext;
+  uint32_t mGenID;
 };
 
 template<typename T>
@@ -174,92 +155,63 @@ private:
 };
 
 typedef ProfilerLinkedList<ProfilerMarker> ProfilerMarkerLinkedList;
-typedef ProfilerLinkedList<LinkedUWTBuffer> UWTBufferLinkedList;
 
-class PendingMarkers {
+template<typename T>
+class ProfilerSignalSafeLinkedList {
 public:
-  PendingMarkers()
+  ProfilerSignalSafeLinkedList()
     : mSignalLock(false)
   {}
 
-  ~PendingMarkers();
-
-  void addMarker(ProfilerMarker *aMarker);
-
-  void updateGeneration(int aGenID);
-
-  /**
-   * Track a marker which has been inserted into the ThreadProfile.
-   * This marker can safely be deleted once the generation has
-   * expired.
-   */
-  void addStoredMarker(ProfilerMarker *aStoredMarker);
-
-  // called within signal. Function must be reentrant
-  ProfilerMarkerLinkedList* getPendingMarkers()
+  ~ProfilerSignalSafeLinkedList()
   {
-    // if mSignalLock then the stack is inconsistent because it's being
-    // modified by the profiled thread. Post pone these markers
-    // for the next sample. The odds of a livelock are nearly impossible
-    // and would show up in a profile as many sample in 'addMarker' thus
-    // we ignore this scenario.
     if (mSignalLock) {
-      return nullptr;
+      // Some thread is modifying the list. We should only be released on that
+      // thread.
+      abort();
     }
-    return &mPendingMarkers;
-  }
 
-  void clearMarkers()
-  {
-    while (mPendingMarkers.peek()) {
-      delete mPendingMarkers.popHead();
-    }
-    while (mStoredMarkers.peek()) {
-      delete mStoredMarkers.popHead();
+    while (mList.peek()) {
+      delete mList.popHead();
     }
   }
 
-private:
-  // Keep a list of active markers to be applied to the next sample taken
-  ProfilerMarkerLinkedList mPendingMarkers;
-  ProfilerMarkerLinkedList mStoredMarkers;
-  // If this is set then it's not safe to read mStackPointer from the signal handler
-  volatile bool mSignalLock;
-  // We don't want to modify _markers from within the signal so we allow
-  // it to queue a clear operation.
-  volatile mozilla::sig_safe_t mGenID;
-};
+  // Insert an item into the list.
+  // Must only be called from the owning thread.
+  // Must not be called while the list from accessList() is being accessed.
+  // In the profiler, we ensure that by interrupting the profiled thread
+  // (which is the one that owns this list and calls insert() on it) until
+  // we're done reading the list from the signal handler.
+  void insert(T* aElement) {
+    MOZ_ASSERT(aElement);
 
-class PendingUWTBuffers
-{
-public:
-  PendingUWTBuffers()
-    : mSignalLock(false)
-  {
-  }
-
-  void addLinkedUWTBuffer(LinkedUWTBuffer* aBuff)
-  {
-    MOZ_ASSERT(aBuff);
     mSignalLock = true;
     STORE_SEQUENCER();
-    mPendingUWTBuffers.insert(aBuff);
+
+    mList.insert(aElement);
+
     STORE_SEQUENCER();
     mSignalLock = false;
   }
 
-  // called within signal. Function must be reentrant
-  UWTBufferLinkedList* getLinkedUWTBuffers()
+  // Called within signal, from any thread, possibly while insert() is in the
+  // middle of modifying the list (on the owning thread). Will return null if
+  // that is the case.
+  // Function must be reentrant.
+  ProfilerLinkedList<T>* accessList()
   {
     if (mSignalLock) {
       return nullptr;
     }
-    return &mPendingUWTBuffers;
+    return &mList;
   }
 
 private:
-  UWTBufferLinkedList mPendingUWTBuffers;
-  volatile bool       mSignalLock;
+  ProfilerLinkedList<T> mList;
+
+  // If this is set, then it's not safe to read the list because its contents
+  // are being changed.
+  volatile bool mSignalLock;
 };
 
 // Stub eventMarker function for js-engine event generation.
@@ -283,34 +235,19 @@ public:
     mSleepId++;
   }
 
-  void addLinkedUWTBuffer(LinkedUWTBuffer* aBuff)
-  {
-    mPendingUWTBuffers.addLinkedUWTBuffer(aBuff);
-  }
-
-  UWTBufferLinkedList* getLinkedUWTBuffers()
-  {
-    return mPendingUWTBuffers.getLinkedUWTBuffers();
-  }
-
   void addMarker(const char *aMarkerStr, ProfilerMarkerPayload *aPayload, float aTime)
   {
     ProfilerMarker* marker = new ProfilerMarker(aMarkerStr, aPayload, aTime);
-    mPendingMarkers.addMarker(marker);
-  }
-
-  void addStoredMarker(ProfilerMarker *aStoredMarker) {
-    mPendingMarkers.addStoredMarker(aStoredMarker);
-  }
-
-  void updateGeneration(int aGenID) {
-    mPendingMarkers.updateGeneration(aGenID);
+    mPendingMarkers.insert(marker);
   }
 
   // called within signal. Function must be reentrant
   ProfilerMarkerLinkedList* getPendingMarkers()
   {
-    return mPendingMarkers.getPendingMarkers();
+    // The profiled thread is interrupted, so we can access the list safely.
+    // Unless the profiled thread was in the middle of changing the list when
+    // we interrupted it - in that case, accessList() will return null.
+    return mPendingMarkers.accessList();
   }
 
   void push(const char *aName, js::ProfileEntry::Category aCategory, uint32_t line)
@@ -382,10 +319,16 @@ public:
     return sMin(mStackPointer, mozilla::sig_safe_t(mozilla::ArrayLength(mStack)));
   }
 
-  void sampleRuntime(JSRuntime *runtime) {
+  void sampleRuntime(JSRuntime* runtime) {
+    if (mRuntime && !runtime) {
+      // On JS shut down, flush the current buffer as stringifying JIT samples
+      // requires a live JSRuntime.
+      flushSamplerOnJSShutdown();
+    }
+
     mRuntime = runtime;
+
     if (!runtime) {
-      // JS shut down
       return;
     }
 
@@ -394,7 +337,7 @@ public:
     js::SetRuntimeProfilingStack(runtime,
                                  (js::ProfileEntry*) mStack,
                                  (uint32_t*) &mStackPointer,
-                                 uint32_t(mozilla::ArrayLength(mStack)));
+                                 (uint32_t) mozilla::ArrayLength(mStack));
     if (mStartJSSampling)
       enableJSSampling();
   }
@@ -448,11 +391,11 @@ public:
   PseudoStack(const PseudoStack&) = delete;
   void operator=(const PseudoStack&) = delete;
 
+  void flushSamplerOnJSShutdown();
+
   // Keep a list of pending markers that must be moved
   // to the circular buffer
-  PendingMarkers mPendingMarkers;
-  // List of LinkedUWTBuffers that must be processed on the next tick
-  PendingUWTBuffers mPendingUWTBuffers;
+  ProfilerSignalSafeLinkedList<ProfilerMarker> mPendingMarkers;
   // This may exceed the length of mStack, so instead use the stackSize() method
   // to determine the number of valid samples in mStack
   mozilla::sig_safe_t mStackPointer;

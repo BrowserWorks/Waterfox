@@ -265,6 +265,7 @@ class TestRecursiveMakeBackend(BackendTester):
             ],
             'EXTRA_COMPONENTS': [
                 'EXTRA_COMPONENTS += bar.js',
+                'EXTRA_COMPONENTS += dummy.manifest',
                 'EXTRA_COMPONENTS += foo.js',
             ],
             'EXTRA_PP_COMPONENTS': [
@@ -273,9 +274,6 @@ class TestRecursiveMakeBackend(BackendTester):
             ],
             'FAIL_ON_WARNINGS': [
                 'FAIL_ON_WARNINGS := 1',
-            ],
-            'MSVC_ENABLE_PGO': [
-                'MSVC_ENABLE_PGO := 1',
             ],
             'VISIBILITY_FLAGS': [
                 'VISIBILITY_FLAGS :=',
@@ -369,6 +367,28 @@ class TestRecursiveMakeBackend(BackendTester):
         self.assertIn('mozilla/mozilla1.h', m)
         self.assertIn('mozilla/dom/dom2.h', m)
 
+    def test_generated_files(self):
+        """Ensure GENERATED_FILES is handled properly."""
+        env = self._consume('generated-files', RecursiveMakeBackend)
+
+        backend_path = mozpath.join(env.topobjdir, 'backend.mk')
+        lines = [l.strip() for l in open(backend_path, 'rt').readlines()[2:]]
+
+        expected = [
+            'GENERATED_FILES += bar.c',
+            'bar.c: %s/generate-bar.py' % env.topsrcdir,
+            '$(call py_action,file_generate,%s/generate-bar.py baz bar.c)' % env.topsrcdir,
+            '',
+            'GENERATED_FILES += foo.c',
+            'foo.c: %s/generate-foo.py %s/foo-data' % (env.topsrcdir, env.topsrcdir),
+            '$(call py_action,file_generate,%s/generate-foo.py main foo.c %s/foo-data)' % (env.topsrcdir, env.topsrcdir),
+            '',
+            'GENERATED_FILES += quux.c',
+        ]
+
+        self.maxDiff = None
+        self.assertEqual(lines, expected)
+
     def test_resources(self):
         """Ensure RESOURCE_FILES is handled properly."""
         env = self._consume('resources', RecursiveMakeBackend)
@@ -384,6 +404,37 @@ class TestRecursiveMakeBackend(BackendTester):
         self.assertIn('res/bar.res', m)
         self.assertIn('res/tests/test.manifest', m)
         self.assertIn('res/tests/extra.manifest', m)
+
+    def test_branding_files(self):
+        """Ensure BRANDING_FILES is handled properly."""
+        env = self._consume('branding-files', RecursiveMakeBackend)
+
+        #BRANDING_FILES should appear in the dist_branding install manifest.
+        m = InstallManifest(path=os.path.join(env.topobjdir,
+            '_build_manifests', 'install', 'dist_branding'))
+        self.assertEqual(len(m), 4)
+        self.assertIn('app.ico', m)
+        self.assertIn('bar.ico', m)
+        self.assertIn('quux.png', m)
+        self.assertIn('icons/foo.ico', m)
+
+    def test_js_preference_files(self):
+        """Ensure PREF_JS_EXPORTS is written out correctly."""
+        env = self._consume('js_preference_files', RecursiveMakeBackend)
+
+        backend_path = os.path.join(env.topobjdir, 'backend.mk')
+        lines = [l.strip() for l in open(backend_path, 'rt').readlines()]
+
+        # Avoid positional parameter and async related breakage
+        var = 'PREF_JS_EXPORTS'
+        found = [val for val in lines if val.startswith(var)]
+
+        # Assignment[aa], append[cc], conditional[valid]
+        expected = ('aa/aa.js', 'bb/bb.js', 'cc/cc.js', 'dd/dd.js', 'valid_val/prefs.js')
+        expected_top = ('ee/ee.js', 'ff/ff.js')
+        self.assertEqual(found,
+            ['PREF_JS_EXPORTS += $(topsrcdir)/%s' % val for val in expected_top] +
+            ['PREF_JS_EXPORTS += $(srcdir)/%s' % val for val in expected])
 
     def test_test_manifests_files_written(self):
         """Ensure test manifests get turned into files."""
@@ -586,6 +637,21 @@ class TestRecursiveMakeBackend(BackendTester):
                 str.startswith('FINAL_TARGET') or str.startswith('XPI_NAME') or
                 str.startswith('DIST_SUBDIR')]
             self.assertEqual(found, expected_rules)
+
+    def test_dist_files(self):
+        """Test that DIST_FILES is written to backend.mk correctly."""
+        env = self._consume('dist-files', RecursiveMakeBackend)
+
+        backend_path = mozpath.join(env.topobjdir, 'backend.mk')
+        lines = [l.strip() for l in open(backend_path, 'rt').readlines()[2:]]
+
+        expected = [
+            'DIST_FILES += install.rdf',
+            'DIST_FILES += main.js',
+        ]
+
+        found = [str for str in lines if str.startswith('DIST_FILES')]
+        self.assertEqual(found, expected)
 
     def test_config(self):
         """Test that CONFIGURE_SUBST_FILES and CONFIGURE_DEFINE_FILES are

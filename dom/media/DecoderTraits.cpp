@@ -221,6 +221,7 @@ static const char* const gOmxTypes[] = {
   "audio/mp4",
   "audio/amr",
   "audio/3gpp",
+  "audio/flac",
   "video/mp4",
   "video/3gpp",
   "video/3gpp2",
@@ -349,16 +350,10 @@ static bool
 IsMP4SupportedType(const nsACString& aType,
                    const nsAString& aCodecs = EmptyString())
 {
-// Currently on B2G, FMP4 is only working for MSE playback.
-// For other normal MP4, it still uses current omx decoder.
-// Bug 1061034 is a follow-up bug to enable all MP4s with MOZ_FMP4
-#ifdef MOZ_OMX_DECODER
-  return false;
-#else
+  // MP4Decoder/Reader is currently used for MSE and mp4 files local playback.
   bool haveAAC, haveMP3, haveH264;
   return Preferences::GetBool("media.fragmented-mp4.exposed", false) &&
          MP4Decoder::CanHandleMediaType(aType, aCodecs, haveAAC, haveH264, haveMP3);
-#endif
 }
 #endif
 
@@ -416,6 +411,7 @@ DecoderTraits::CanHandleMediaType(const char* aMIMEType,
                                   bool aHaveRequestedCodecs,
                                   const nsAString& aRequestedCodecs)
 {
+  MOZ_ASSERT(NS_IsMainThread());
   char const* const* codecList = nullptr;
   CanPlayStatus result = CANPLAY_NO;
 #ifdef MOZ_RAW
@@ -494,7 +490,7 @@ DecoderTraits::CanHandleMediaType(const char* aMIMEType,
 #endif
 #ifdef MOZ_ANDROID_OMX
   if (MediaDecoder::IsAndroidMediaEnabled() &&
-      GetAndroidMediaPluginHost()->FindDecoder(nsDependentCString(aMIMEType), &codecList))
+      EnsureAndroidMediaPluginHost()->FindDecoder(nsDependentCString(aMIMEType), &codecList))
     result = CANPLAY_MAYBE;
 #endif
 #ifdef NECKO_PROTOCOL_rtsp
@@ -531,6 +527,7 @@ static
 already_AddRefed<MediaDecoder>
 InstantiateDecoder(const nsACString& aType, MediaDecoderOwner* aOwner)
 {
+  MOZ_ASSERT(NS_IsMainThread());
   nsRefPtr<MediaDecoder> decoder;
 
 #ifdef MOZ_FMP4
@@ -602,7 +599,7 @@ InstantiateDecoder(const nsACString& aType, MediaDecoderOwner* aOwner)
 #endif
 #ifdef MOZ_ANDROID_OMX
   if (MediaDecoder::IsAndroidMediaEnabled() &&
-      GetAndroidMediaPluginHost()->FindDecoder(aType, nullptr)) {
+      EnsureAndroidMediaPluginHost()->FindDecoder(aType, nullptr)) {
     decoder = new AndroidMediaDecoder(aType);
     return decoder.forget();
   }
@@ -643,6 +640,7 @@ InstantiateDecoder(const nsACString& aType, MediaDecoderOwner* aOwner)
 already_AddRefed<MediaDecoder>
 DecoderTraits::CreateDecoder(const nsACString& aType, MediaDecoderOwner* aOwner)
 {
+  MOZ_ASSERT(NS_IsMainThread());
   nsRefPtr<MediaDecoder> decoder(InstantiateDecoder(aType, aOwner));
   NS_ENSURE_TRUE(decoder != nullptr, nullptr);
   NS_ENSURE_TRUE(decoder->Init(aOwner), nullptr);
@@ -653,8 +651,12 @@ DecoderTraits::CreateDecoder(const nsACString& aType, MediaDecoderOwner* aOwner)
 /* static */
 MediaDecoderReader* DecoderTraits::CreateReader(const nsACString& aType, AbstractMediaDecoder* aDecoder)
 {
+  MOZ_ASSERT(NS_IsMainThread());
   MediaDecoderReader* decoderReader = nullptr;
 
+  if (!aDecoder) {
+    return decoderReader;
+  }
 #ifdef MOZ_FMP4
   if (IsMP4SupportedType(aType)) {
     decoderReader = new MP4Reader(aDecoder);
@@ -691,7 +693,7 @@ MediaDecoderReader* DecoderTraits::CreateReader(const nsACString& aType, Abstrac
 #endif
 #ifdef MOZ_ANDROID_OMX
   if (MediaDecoder::IsAndroidMediaEnabled() &&
-      GetAndroidMediaPluginHost()->FindDecoder(aType, nullptr)) {
+      EnsureAndroidMediaPluginHost()->FindDecoder(aType, nullptr)) {
     decoderReader = new AndroidMediaReader(aDecoder, aType);
   } else
 #endif

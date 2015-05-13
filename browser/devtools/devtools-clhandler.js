@@ -5,7 +5,6 @@
 const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 const kDebuggerPrefs = [
   "devtools.debugger.remote-enabled",
-  "devtools.debugger.chrome-enabled",
   "devtools.chrome.enabled"
 ];
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
@@ -110,6 +109,7 @@ devtoolsCommandlineHandler.prototype = {
       let debuggerServer = serverLoader.DebuggerServer;
       debuggerServer.init();
       debuggerServer.addBrowserActors();
+      debuggerServer.allowChromeProcess = true;
 
       let listener = debuggerServer.createListener();
       listener.portOrPath = portOrPath;

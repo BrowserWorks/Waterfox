@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -34,22 +35,22 @@ public:
 protected:
   // nsISMILType Methods
   // -------------------
-  virtual void     Init(nsSMILValue& aValue) const MOZ_OVERRIDE;
-  virtual void     Destroy(nsSMILValue&) const MOZ_OVERRIDE;
+  virtual void     Init(nsSMILValue& aValue) const override;
+  virtual void     Destroy(nsSMILValue&) const override;
   virtual nsresult Assign(nsSMILValue& aDest,
-                          const nsSMILValue& aSrc) const MOZ_OVERRIDE;
+                          const nsSMILValue& aSrc) const override;
   virtual bool     IsEqual(const nsSMILValue& aLeft,
-                           const nsSMILValue& aRight) const MOZ_OVERRIDE;
+                           const nsSMILValue& aRight) const override;
   virtual nsresult Add(nsSMILValue& aDest,
                        const nsSMILValue& aValueToAdd,
-                       uint32_t aCount) const MOZ_OVERRIDE;
+                       uint32_t aCount) const override;
   virtual nsresult ComputeDistance(const nsSMILValue& aFrom,
                                    const nsSMILValue& aTo,
-                                   double& aDistance) const MOZ_OVERRIDE;
+                                   double& aDistance) const override;
   virtual nsresult Interpolate(const nsSMILValue& aStartVal,
                                const nsSMILValue& aEndVal,
                                double aUnitDistance,
-                               nsSMILValue& aResult) const MOZ_OVERRIDE;
+                               nsSMILValue& aResult) const override;
 
 public:
   // Helper Methods

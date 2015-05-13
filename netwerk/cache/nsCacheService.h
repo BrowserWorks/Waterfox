@@ -62,8 +62,8 @@ private:
  *  nsCacheService
  ******************************************************************************/
 
-class nsCacheService MOZ_FINAL : public nsICacheServiceInternal,
-                                 public nsIMemoryReporter
+class nsCacheService final : public nsICacheServiceInternal,
+                             public nsIMemoryReporter
 {
     virtual ~nsCacheService();
 
@@ -182,7 +182,7 @@ public:
     /**
      * Methods called by nsCacheProfilePrefObserver
      */
-    static void      OnProfileShutdown(bool cleanse);
+    static void      OnProfileShutdown();
     static void      OnProfileChanged();
 
     static void      SetDiskCacheEnabled(bool    enabled);
@@ -325,9 +325,7 @@ private:
     PLDHashOperator  ShutdownCustomCacheDeviceEnum(const nsAString& aProfileDir,
                                                    nsRefPtr<nsOfflineCacheDevice>& aDevice,
                                                    void* aUserArg);
-#if defined(PR_LOGGING)
     void LogCacheStatistics();
-#endif
 
     nsresult         SetDiskSmartSize_Locked();
 

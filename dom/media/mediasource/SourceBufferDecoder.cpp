@@ -4,20 +4,23 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "MediaSourceUtils.h"
 #include "SourceBufferDecoder.h"
 #include "prlog.h"
 #include "AbstractMediaDecoder.h"
 #include "MediaDecoderReader.h"
+#include "mozilla/dom/TimeRanges.h"
 
 #ifdef PR_LOGGING
 extern PRLogModuleInfo* GetMediaSourceLog();
-extern PRLogModuleInfo* GetMediaSourceAPILog();
+/* Polyfill __func__ on MSVC to pass to the log. */
+#ifdef _MSC_VER
+#define __func__ __FUNCTION__
+#endif
 
-#define MSE_DEBUG(...) PR_LOG(GetMediaSourceLog(), PR_LOG_DEBUG, (__VA_ARGS__))
-#define MSE_API(...) PR_LOG(GetMediaSourceAPILog(), PR_LOG_DEBUG, (__VA_ARGS__))
+#define MSE_DEBUG(arg, ...) PR_LOG(GetMediaSourceLog(), PR_LOG_DEBUG, ("SourceBufferDecoder(%p:%s)::%s: " arg, this, mResource->GetContentType().get(), __func__, ##__VA_ARGS__))
 #else
 #define MSE_DEBUG(...)
-#define MSE_API(...)
 #endif
 
 namespace mozilla {
@@ -40,6 +43,8 @@ SourceBufferDecoder::SourceBufferDecoder(MediaResource* aResource,
   , mReader(nullptr)
   , mTimestampOffset(aTimestampOffset)
   , mMediaDuration(-1)
+  , mRealMediaDuration(0)
+  , mTrimmedOffset(-1)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_COUNT_CTOR(SourceBufferDecoder);
@@ -54,14 +59,14 @@ bool
 SourceBufferDecoder::IsShutdown() const
 {
   // SourceBufferDecoder cannot be shut down.
-  MSE_DEBUG("SourceBufferDecoder(%p)::IsShutdown UNIMPLEMENTED", this);
+  MSE_DEBUG("UNIMPLEMENTED");
   return false;
 }
 
 void
 SourceBufferDecoder::NotifyBytesConsumed(int64_t aBytes, int64_t aOffset)
 {
-  MSE_DEBUG("SourceBufferDecoder(%p)::NotifyBytesConsumed UNIMPLEMENTED", this);
+  MSE_DEBUG("UNIMPLEMENTED");
 }
 
 int64_t
@@ -73,35 +78,37 @@ SourceBufferDecoder::GetMediaDuration()
 VideoFrameContainer*
 SourceBufferDecoder::GetVideoFrameContainer()
 {
-  MSE_DEBUG("SourceBufferDecoder(%p)::GetVideoFrameContainer UNIMPLEMENTED", this);
+  MSE_DEBUG("UNIMPLEMENTED");
   return nullptr;
 }
 
 bool
 SourceBufferDecoder::IsTransportSeekable()
 {
-  MSE_DEBUG("SourceBufferDecoder(%p)::IsTransportSeekable UNIMPLEMENTED", this);
+  MSE_DEBUG("UNIMPLEMENTED");
   return false;
 }
 
 bool
 SourceBufferDecoder::IsMediaSeekable()
 {
-  MSE_DEBUG("SourceBufferDecoder(%p)::IsMediaSeekable UNIMPLEMENTED", this);
+  MSE_DEBUG("UNIMPLEMENTED");
   return false;
 }
 
 void
 SourceBufferDecoder::MetadataLoaded(nsAutoPtr<MediaInfo> aInfo,
-                                    nsAutoPtr<MetadataTags> aTags)
+                                    nsAutoPtr<MetadataTags> aTags,
+                                    MediaDecoderEventVisibility aEventVisibility)
 {
-  MSE_DEBUG("SourceBufferDecoder(%p)::MetadataLoaded UNIMPLEMENTED", this);
+  MSE_DEBUG("UNIMPLEMENTED");
 }
 
 void
-SourceBufferDecoder::FirstFrameLoaded(nsAutoPtr<MediaInfo> aInfo)
+SourceBufferDecoder::FirstFrameLoaded(nsAutoPtr<MediaInfo> aInfo,
+                                      MediaDecoderEventVisibility aEventVisibility)
 {
-  MSE_DEBUG("SourceBufferDecoder(%p)::FirstFrameLoaded UNIMPLEMENTED", this);
+  MSE_DEBUG("UNIMPLEMENTED");
 }
 
 void
@@ -109,25 +116,19 @@ SourceBufferDecoder::QueueMetadata(int64_t aTime,
                                    nsAutoPtr<MediaInfo> aInfo,
                                    nsAutoPtr<MetadataTags> aTags)
 {
-  MSE_DEBUG("SourceBufferDecoder(%p)::QueueMetadata UNIMPLEMENTED", this);
+  MSE_DEBUG("UNIMPLEMENTED");
 }
 
 void
 SourceBufferDecoder::RemoveMediaTracks()
 {
-  MSE_DEBUG("SourceBufferDecoder(%p)::RemoveMediaTracks UNIMPLEMENTED", this);
+  MSE_DEBUG("UNIMPLEMENTED");
 }
 
 void
 SourceBufferDecoder::SetMediaEndTime(int64_t aTime)
 {
-  MSE_DEBUG("SourceBufferDecoder(%p)::SetMediaEndTime UNIMPLEMENTED", this);
-}
-
-void
-SourceBufferDecoder::UpdatePlaybackPosition(int64_t aTime)
-{
-  MSE_DEBUG("SourceBufferDecoder(%p)::UpdatePlaybackPosition UNIMPLEMENTED", this);
+  MSE_DEBUG("UNIMPLEMENTED");
 }
 
 bool
@@ -139,13 +140,13 @@ SourceBufferDecoder::HasInitializationData()
 void
 SourceBufferDecoder::OnReadMetadataCompleted()
 {
-  MSE_DEBUG("SourceBufferDecoder(%p)::OnReadMetadataCompleted UNIMPLEMENTED", this);
+  MSE_DEBUG("UNIMPLEMENTED");
 }
 
 void
 SourceBufferDecoder::NotifyWaitingForResourcesStatusChanged()
 {
-  MSE_DEBUG("SourceBufferDecoder(%p)::NotifyWaitingForResourcesStatusChanged UNIMPLEMENTED", this);
+  MSE_DEBUG("UNIMPLEMENTED");
 }
 
 ReentrantMonitor&
@@ -155,19 +156,19 @@ SourceBufferDecoder::GetReentrantMonitor()
 }
 
 bool
-SourceBufferDecoder::OnStateMachineThread() const
+SourceBufferDecoder::OnStateMachineTaskQueue() const
 {
-  return mParentDecoder->OnStateMachineThread();
+  return mParentDecoder->OnStateMachineTaskQueue();
 }
 
 bool
-SourceBufferDecoder::OnDecodeThread() const
+SourceBufferDecoder::OnDecodeTaskQueue() const
 {
   // During initialization we run on our TrackBuffer's task queue.
   if (mTaskQueue) {
     return mTaskQueue->IsCurrentThreadIn();
   }
-  return mParentDecoder->OnDecodeThread();
+  return mParentDecoder->OnDecodeTaskQueue();
 }
 
 SourceBufferResource*
@@ -177,9 +178,10 @@ SourceBufferDecoder::GetResource() const
 }
 
 void
-SourceBufferDecoder::NotifyDecodedFrames(uint32_t aParsed, uint32_t aDecoded)
+SourceBufferDecoder::NotifyDecodedFrames(uint32_t aParsed, uint32_t aDecoded,
+                                         uint32_t aDropped)
 {
-  return mParentDecoder->NotifyDecodedFrames(aParsed, aDecoded);
+  return mParentDecoder->NotifyDecodedFrames(aParsed, aDecoded, aDropped);
 }
 
 void
@@ -189,15 +191,27 @@ SourceBufferDecoder::SetMediaDuration(int64_t aDuration)
 }
 
 void
+SourceBufferDecoder::SetRealMediaDuration(int64_t aDuration)
+{
+  mRealMediaDuration = aDuration;
+}
+
+void
+SourceBufferDecoder::Trim(int64_t aDuration)
+{
+  mTrimmedOffset = (double)aDuration / USECS_PER_S;
+}
+
+void
 SourceBufferDecoder::UpdateEstimatedMediaDuration(int64_t aDuration)
 {
-  MSE_DEBUG("SourceBufferDecoder(%p)::UpdateEstimatedMediaDuration UNIMPLEMENTED", this);
+  MSE_DEBUG("UNIMPLEMENTED");
 }
 
 void
 SourceBufferDecoder::SetMediaSeekable(bool aMediaSeekable)
 {
-  MSE_DEBUG("SourceBufferDecoder(%p)::SetMediaSeekable UNIMPLEMENTED", this);
+  MSE_DEBUG("UNIMPLEMENTED");
 }
 
 layers::ImageContainer*
@@ -227,13 +241,28 @@ SourceBufferDecoder::NotifyDataArrived(const char* aBuffer, uint32_t aLength, in
 nsresult
 SourceBufferDecoder::GetBuffered(dom::TimeRanges* aBuffered)
 {
-  return mReader->GetBuffered(aBuffered);
+  nsresult rv = mReader->GetBuffered(aBuffered);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+
+  // Adjust buffered range according to timestamp offset.
+  aBuffered->Shift((double)mTimestampOffset / USECS_PER_S);
+
+  if (!WasTrimmed()) {
+    return NS_OK;
+  }
+  nsRefPtr<dom::TimeRanges> tr = new dom::TimeRanges();
+  tr->Add(0, mTrimmedOffset);
+  aBuffered->Intersection(tr);
+  return NS_OK;
 }
 
 int64_t
 SourceBufferDecoder::ConvertToByteOffset(double aTime)
 {
-  int64_t readerOffset = mReader->GetEvictionOffset(aTime);
+  int64_t readerOffset =
+    mReader->GetEvictionOffset(aTime - double(mTimestampOffset) / USECS_PER_S);
   if (readerOffset >= 0) {
     return readerOffset;
   }
@@ -242,13 +271,16 @@ SourceBufferDecoder::ConvertToByteOffset(double aTime)
   // purposes of eviction this should be adequate since we have the
   // byte threshold as well to ensure data actually gets evicted and
   // we ensure we don't evict before the current playable point.
-  if (mMediaDuration <= 0) {
+  if (mRealMediaDuration <= 0) {
     return -1;
   }
   int64_t length = GetResource()->GetLength();
   MOZ_ASSERT(length > 0);
-  int64_t offset = (aTime / (double(mMediaDuration) / USECS_PER_S)) * length;
+  int64_t offset =
+    ((aTime - double(mTimestampOffset) / USECS_PER_S) /
+      (double(mRealMediaDuration) / USECS_PER_S)) * length;
   return offset;
 }
 
+#undef MSE_DEBUG
 } // namespace mozilla

@@ -70,7 +70,7 @@ nsScriptError::InitializeOnMainThread()
 
 // nsIConsoleMessage methods
 NS_IMETHODIMP
-nsScriptError::GetMessageMoz(char16_t **result) {
+nsScriptError::GetMessageMoz(char16_t** result) {
     nsresult rv;
 
     nsAutoCString message;
@@ -89,8 +89,13 @@ nsScriptError::GetMessageMoz(char16_t **result) {
 NS_IMETHODIMP
 nsScriptError::GetLogLevel(uint32_t* aLogLevel)
 {
-  *aLogLevel = mFlags & (uint32_t)nsIScriptError::errorFlag ?
-               nsIConsoleMessage::error : nsIConsoleMessage::warn;
+  if (mFlags & (uint32_t)nsIScriptError::infoFlag) {
+    *aLogLevel = nsIConsoleMessage::info;
+  } else if (mFlags & (uint32_t)nsIScriptError::warningFlag) {
+    *aLogLevel = nsIConsoleMessage::warn;
+  } else {
+    *aLogLevel = nsIConsoleMessage::error;
+  }
   return NS_OK;
 }
 
@@ -114,25 +119,25 @@ nsScriptError::GetSourceLine(nsAString& aResult) {
 }
 
 NS_IMETHODIMP
-nsScriptError::GetLineNumber(uint32_t *result) {
+nsScriptError::GetLineNumber(uint32_t* result) {
     *result = mLineNumber;
     return NS_OK;
 }
 
 NS_IMETHODIMP
-nsScriptError::GetColumnNumber(uint32_t *result) {
+nsScriptError::GetColumnNumber(uint32_t* result) {
     *result = mColumnNumber;
     return NS_OK;
 }
 
 NS_IMETHODIMP
-nsScriptError::GetFlags(uint32_t *result) {
+nsScriptError::GetFlags(uint32_t* result) {
     *result = mFlags;
     return NS_OK;
 }
 
 NS_IMETHODIMP
-nsScriptError::GetCategory(char **result) {
+nsScriptError::GetCategory(char** result) {
     *result = ToNewCString(mCategory);
     return NS_OK;
 }
@@ -144,7 +149,7 @@ nsScriptError::Init(const nsAString& message,
                     uint32_t lineNumber,
                     uint32_t columnNumber,
                     uint32_t flags,
-                    const char *category)
+                    const char* category)
 {
     return InitWithWindowID(message, sourceName, sourceLine, lineNumber,
                             columnNumber, flags,
@@ -203,9 +208,11 @@ nsScriptError::ToString(nsACString& /*UTF8*/ aResult)
     if (!mMessage.IsEmpty())
         tempMessage = ToNewUTF8String(mMessage);
     if (!mSourceName.IsEmpty())
-        tempSourceName = ToNewUTF8String(mSourceName);
+        // Use at most 512 characters from mSourceName.
+        tempSourceName = ToNewUTF8String(StringHead(mSourceName, 512));
     if (!mSourceLine.IsEmpty())
-        tempSourceLine = ToNewUTF8String(mSourceLine);
+        // Use at most 512 characters from mSourceLine.
+        tempSourceLine = ToNewUTF8String(StringHead(mSourceLine, 512));
 
     if (nullptr != tempSourceName && nullptr != tempSourceLine)
         temp = JS_smprintf(format0,
@@ -227,11 +234,11 @@ nsScriptError::ToString(nsACString& /*UTF8*/ aResult)
                            tempMessage);
 
     if (nullptr != tempMessage)
-        nsMemory::Free(tempMessage);
+        free(tempMessage);
     if (nullptr != tempSourceName)
-        nsMemory::Free(tempSourceName);
+        free(tempSourceName);
     if (nullptr != tempSourceLine)
-        nsMemory::Free(tempSourceLine);
+        free(tempSourceLine);
 
     if (!temp)
         return NS_ERROR_OUT_OF_MEMORY;
@@ -242,7 +249,7 @@ nsScriptError::ToString(nsACString& /*UTF8*/ aResult)
 }
 
 NS_IMETHODIMP
-nsScriptError::GetOuterWindowID(uint64_t *aOuterWindowID)
+nsScriptError::GetOuterWindowID(uint64_t* aOuterWindowID)
 {
     NS_WARN_IF_FALSE(NS_IsMainThread() || mInitializedOnMainThread,
                      "This can't be safely determined off the main thread, "
@@ -257,21 +264,21 @@ nsScriptError::GetOuterWindowID(uint64_t *aOuterWindowID)
 }
 
 NS_IMETHODIMP
-nsScriptError::GetInnerWindowID(uint64_t *aInnerWindowID)
+nsScriptError::GetInnerWindowID(uint64_t* aInnerWindowID)
 {
     *aInnerWindowID = mInnerWindowID;
     return NS_OK;
 }
 
 NS_IMETHODIMP
-nsScriptError::GetTimeStamp(int64_t *aTimeStamp)
+nsScriptError::GetTimeStamp(int64_t* aTimeStamp)
 {
     *aTimeStamp = mTimeStamp;
     return NS_OK;
 }
 
 NS_IMETHODIMP
-nsScriptError::GetIsFromPrivateWindow(bool *aIsFromPrivateWindow)
+nsScriptError::GetIsFromPrivateWindow(bool* aIsFromPrivateWindow)
 {
     NS_WARN_IF_FALSE(NS_IsMainThread() || mInitializedOnMainThread,
                      "This can't be safely determined off the main thread, "

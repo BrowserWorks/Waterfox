@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -15,7 +16,7 @@
 
 class nsIUnicharInputStream;
 
-class nsPersistentProperties MOZ_FINAL : public nsIPersistentProperties
+class nsPersistentProperties final : public nsIPersistentProperties
 {
 public:
   nsPersistentProperties();
@@ -32,12 +33,11 @@ private:
 protected:
   nsCOMPtr<nsIUnicharInputStream> mIn;
 
-  nsIPersistentProperties* mSubclass;
-  struct PLDHashTable mTable;
+  PLDHashTable mTable;
   PLArenaPool mArena;
 };
 
-class nsPropertyElement MOZ_FINAL : public nsIPropertyElement
+class nsPropertyElement final : public nsIPropertyElement
 {
 public:
   nsPropertyElement()

@@ -7,14 +7,12 @@
 function run_test() {
   setupTestCommon();
 
-  logTestInfo("testing cleanup of an update download in progress for an " +
-              "older version of the application on startup (Bug 485624)");
+  debugDump("testing cleanup of an update download in progress for an " +
+            "older version of the application on startup (Bug 485624)");
 
-  var patches, updates;
-
-  patches = getLocalPatchString(null, null, null, null, null, null,
-                                STATE_DOWNLOADING);
-  updates = getLocalUpdateString(patches, null, null, "version 0.9", "0.9");
+  let patches = getLocalPatchString(null, null, null, null, null, null,
+                                    STATE_DOWNLOADING);
+  let updates = getLocalUpdateString(patches, null, null, "version 0.9", "0.9");
   writeUpdatesToXMLFile(getLocalUpdatesXMLString(updates), true);
   writeStatusFile(STATE_DOWNLOADING);
 
@@ -26,11 +24,14 @@ function run_test() {
     // Gonk doesn't resume downloads at boot time, so the update
     // will remain active until the user chooses a new one, at
     // which point, the old update will be removed.
-    do_check_neq(gUpdateManager.activeUpdate, null);
+    Assert.ok(!!gUpdateManager.activeUpdate,
+              "there should be an active update");
   } else {
-    do_check_eq(gUpdateManager.activeUpdate, null);
+    Assert.ok(!gUpdateManager.activeUpdate,
+              "there should not be an active update");
   }
-  do_check_eq(gUpdateManager.updateCount, 0);
+  Assert.equal(gUpdateManager.updateCount, 0,
+               "the update manager update count" + MSG_SHOULD_EQUAL);
 
   doTestFinish();
 }

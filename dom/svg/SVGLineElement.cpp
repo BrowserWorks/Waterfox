@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -15,9 +16,9 @@ namespace mozilla {
 namespace dom {
 
 JSObject*
-SVGLineElement::WrapNode(JSContext *aCx)
+SVGLineElement::WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return SVGLineElementBinding::Wrap(aCx, this);
+  return SVGLineElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 nsSVGElement::LengthInfo SVGLineElement::sLengthInfo[4] =
@@ -124,6 +125,67 @@ SVGLineElement::BuildPath(PathBuilder* aBuilder)
   aBuilder->LineTo(Point(x2, y2));
 
   return aBuilder->Finish();
+}
+
+bool
+SVGLineElement::GetGeometryBounds(
+  Rect* aBounds, const StrokeOptions& aStrokeOptions, const Matrix& aTransform)
+{
+  float x1, y1, x2, y2;
+  GetAnimatedLengthValues(&x1, &y1, &x2, &y2, nullptr);
+
+  if (aStrokeOptions.mLineWidth <= 0) {
+    *aBounds = Rect(aTransform * Point(x1, y1), Size());
+    aBounds->ExpandToEnclose(aTransform * Point(x2, y2));
+    return true;
+  }
+
+  if (aStrokeOptions.mLineCap == CapStyle::ROUND) {
+    if (!aTransform.IsRectilinear()) {
+      // TODO: handle this case.
+      return false;
+    }
+    Rect bounds(Point(x1, y1), Size());
+    bounds.ExpandToEnclose(Point(x2, y2));
+    bounds.Inflate(aStrokeOptions.mLineWidth / 2.f);
+    *aBounds = aTransform.TransformBounds(bounds);
+    return true;
+  }
+
+  Float length = Float(NS_hypot(x2 - x1, y2 - y1));
+  Float xDelta;
+  Float yDelta;
+
+  if (aStrokeOptions.mLineCap == CapStyle::BUTT) {
+    if (length == 0.f) {
+      xDelta = yDelta = 0.f;
+    } else {
+      Float ratio = aStrokeOptions.mLineWidth / 2.f / length;
+      xDelta = ratio * (y2 - y1);
+      yDelta = ratio * (x2 - x1);
+    }
+  } else {
+    MOZ_ASSERT(aStrokeOptions.mLineCap == CapStyle::SQUARE);
+    if (length == 0.f) {
+      xDelta = yDelta = aStrokeOptions.mLineWidth / 2.f;
+    } else {
+      Float ratio = aStrokeOptions.mLineWidth / 2.f / length;
+      xDelta = yDelta = ratio * (fabs(y2 - y1) + fabs(x2 - x1));
+    }
+  }
+
+  Point points[4];
+
+  points[0] = Point(x1 - xDelta, y1 - yDelta);
+  points[1] = Point(x1 + xDelta, y1 + yDelta);
+  points[2] = Point(x2 + xDelta, y2 + yDelta);
+  points[3] = Point(x2 - xDelta, y2 - yDelta);
+
+  *aBounds = Rect(aTransform * points[0], Size());
+  for (uint32_t i = 1; i < 4; ++i) {
+    aBounds->ExpandToEnclose(aTransform * points[i]);
+  }
+  return true;
 }
 
 } // namespace dom

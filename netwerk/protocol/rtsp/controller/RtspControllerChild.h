@@ -30,17 +30,16 @@ class RtspControllerChild : public nsIStreamingProtocolController
   NS_DECL_NSISTREAMINGPROTOCOLLISTENER
 
   RtspControllerChild(nsIChannel *channel);
-  ~RtspControllerChild();
 
   bool RecvOnConnected(const uint8_t& index,
-                       const InfallibleTArray<RtspMetadataParam>& meta);
+                       InfallibleTArray<RtspMetadataParam>&& meta);
 
   bool RecvOnMediaDataAvailable(
          const uint8_t& index,
          const nsCString& data,
          const uint32_t& length,
          const uint32_t& offset,
-         const InfallibleTArray<RtspMetadataParam>& meta);
+         InfallibleTArray<RtspMetadataParam>&& meta);
 
   bool RecvOnDisconnected(const uint8_t& index,
                           const nsresult& reason);
@@ -57,6 +56,9 @@ class RtspControllerChild : public nsIStreamingProtocolController
   // These callbacks will be called when mPlayTimer/mPauseTimer fires.
   static void PlayTimerCallback(nsITimer *aTimer, void *aClosure);
   static void PauseTimerCallback(nsITimer *aTimer, void *aClosure);
+
+ protected:
+  ~RtspControllerChild();
 
  private:
   bool mIPCOpen;

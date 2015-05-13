@@ -11,10 +11,7 @@ function test() {
   waitForExplicitFinish();
 
   gBrowser.selectedTab = gBrowser.addTab();
-  gBrowser.selectedBrowser.addEventListener("load", function onload() {
-    gBrowser.selectedBrowser.removeEventListener("load", onload, true);
-    waitForFocus(startTest, content);
-  }, true);
+  gBrowser.selectedBrowser.addEventListener("load", startTest, true);
 
   content.location = "data:text/html;charset=utf-8,<html><style>" +
     "div {" +
@@ -34,12 +31,13 @@ function test() {
   }
 
   function startTest() {
+    gBrowser.selectedBrowser.removeEventListener("load", startTest, true);
     document.getElementById("Tools:ResponsiveUI").doCommand();
     executeSoon(onUIOpen);
   }
 
   function onUIOpen() {
-    instance = gBrowser.selectedTab.__responsiveUI;
+    instance = mgr.getResponsiveUIForTab(gBrowser.selectedTab);
     ok(instance, "instance of the module is attached to the tab.");
 
     instance.stack.setAttribute("notransition", "true");
@@ -66,8 +64,8 @@ function test() {
 
     is(numberOfRules(), 2, "Should have two rules initially.");
 
-    ruleView.element.addEventListener("CssRuleViewRefreshed", function refresh() {
-      ruleView.element.removeEventListener("CssRuleViewRefreshed", refresh, false);
+    ruleView.on("ruleview-refreshed", function refresh() {
+      ruleView.off("ruleview-refreshed", refresh, false);
       is(numberOfRules(), 3, "Should have three rules after shrinking.");
       testGrow();
     }, false);
@@ -76,8 +74,8 @@ function test() {
   }
 
   function testGrow() {
-    ruleView.element.addEventListener("CssRuleViewRefreshed", function refresh() {
-      ruleView.element.removeEventListener("CssRuleViewRefreshed", refresh, false);
+    ruleView.on("ruleview-refreshed", function refresh() {
+      ruleView.off("ruleview-refreshed", refresh, false);
       is(numberOfRules(), 2, "Should have two rules after growing.");
       testEscapeOpensSplitConsole();
     }, false);

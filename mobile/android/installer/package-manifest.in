@@ -42,7 +42,6 @@
 @BINPATH@/@DLL_PREFIX@plds4@DLL_SUFFIX@
 @BINPATH@/@DLL_PREFIX@nspr4@DLL_SUFFIX@
 #endif
-@BINPATH@/@DLL_PREFIX@mozalloc@DLL_SUFFIX@
 @BINPATH@/@DLL_PREFIX@omxplugin@DLL_SUFFIX@
 @BINPATH@/@DLL_PREFIX@omxplugingb@DLL_SUFFIX@
 @BINPATH@/@DLL_PREFIX@omxplugingb235@DLL_SUFFIX@
@@ -190,7 +189,6 @@
 @BINPATH@/components/html5.xpt
 @BINPATH@/components/htmlparser.xpt
 @BINPATH@/components/imglib2.xpt
-@BINPATH@/components/imgicon.xpt
 @BINPATH@/components/inspector.xpt
 @BINPATH@/components/intl.xpt
 @BINPATH@/components/jar.xpt
@@ -255,6 +253,9 @@
 @BINPATH@/components/toolkit_finalizationwitness.xpt
 @BINPATH@/components/toolkit_formautofill.xpt
 @BINPATH@/components/toolkit_osfile.xpt
+#ifdef NIGHTLY_BUILD
+@BINPATH@/components/toolkit_perfmonitoring.xpt
+#endif
 @BINPATH@/components/toolkit_xulstore.xpt
 @BINPATH@/components/toolkitprofile.xpt
 #ifdef MOZ_ENABLE_XREMOTE
@@ -329,8 +330,6 @@
 @BINPATH@/components/nsLoginInfo.js
 @BINPATH@/components/nsLoginManager.js
 @BINPATH@/components/nsLoginManagerPrompter.js
-@BINPATH@/components/SiteSpecificUserAgent.js
-@BINPATH@/components/SiteSpecificUserAgent.manifest
 @BINPATH@/components/storage-mozStorage.js
 @BINPATH@/components/crypto-SDR.js
 @BINPATH@/components/jsconsole-clhandler.manifest
@@ -391,6 +390,8 @@
 @BINPATH@/components/formautofill.manifest
 @BINPATH@/components/FormAutofillContentService.js
 @BINPATH@/components/FormAutofillStartup.js
+@BINPATH@/components/CSSUnprefixingService.js
+@BINPATH@/components/CSSUnprefixingService.manifest
 @BINPATH@/components/contentAreaDropListener.manifest
 @BINPATH@/components/contentAreaDropListener.js
 @BINPATH@/components/messageWakeupService.js
@@ -458,6 +459,11 @@
 
 @BINPATH@/components/PresentationDeviceInfoManager.manifest
 @BINPATH@/components/PresentationDeviceInfoManager.js
+@BINPATH@/components/BuiltinProviders.manifest
+@BINPATH@/components/TCPPresentationServer.js
+
+@BINPATH@/components/PACGenerator.js
+@BINPATH@/components/PACGenerator.manifest
 
 ; Modules
 @BINPATH@/modules/*
@@ -507,7 +513,6 @@
 @BINPATH@/@PREF_DIR@/mobile-branding.js
 @BINPATH@/@PREF_DIR@/channel-prefs.js
 @BINPATH@/greprefs.js
-@BINPATH@/defaults/autoconfig/platform.js
 @BINPATH@/defaults/autoconfig/prefcalls.js
 @BINPATH@/defaults/profile/prefs.js
 
@@ -539,7 +544,6 @@
 @BINPATH@/res/grabber.gif
 @BINPATH@/res/dtd/*
 @BINPATH@/res/html/*
-@BINPATH@/res/langGroups.properties
 @BINPATH@/res/language.properties
 @BINPATH@/res/entityTables/*
 
@@ -595,12 +599,6 @@ bin/libfreebl_32int64_3.so
 @BINPATH@/crashreporter-override.ini
 #endif
 
-; [Extensions]
-;
-#ifdef MOZ_ENABLE_GNOMEVFS
-bin/components/@DLL_PREFIX@nkgnomevfs@DLL_SUFFIX@
-#endif
-
 [mobile]
 @BINPATH@/chrome/icons/
 @BINPATH@/chrome/chrome@JAREXT@
@@ -622,12 +620,15 @@ bin/components/@DLL_PREFIX@nkgnomevfs@DLL_SUFFIX@
 @BINPATH@/components/PromptService.js
 @BINPATH@/components/SessionStore.js
 @BINPATH@/components/Sidebar.js
+@BINPATH@/components/SiteSpecificUserAgent.js
 @BINPATH@/components/Snippets.js
 
 @BINPATH@/components/Payment.js
 @BINPATH@/components/PaymentFlowInfo.js
+@BINPATH@/components/PaymentProvider.js
 @BINPATH@/components/Payment.manifest
 @BINPATH@/components/PaymentsUI.js
+@BINPATH@/components/PaymentProviderStrategy.js
 
 #ifdef MOZ_SAFE_BROWSING
 @BINPATH@/components/SafeBrowsing.jsm

@@ -17,6 +17,7 @@
 #include "prprf.h"
 #include "nsThreadUtils.h"
 #include "nsNetCID.h"
+#include "nsQueryObject.h"
 
 //Interfaces needed to be included
 #include "nsIAppShell.h"
@@ -34,6 +35,7 @@
 #include "nsIInterfaceRequestor.h"
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsIIOService.h"
+#include "nsILoadContext.h"
 #include "nsIObserverService.h"
 #include "nsIWindowMediator.h"
 #include "nsIScreenManager.h"
@@ -54,6 +56,7 @@
 #include "prenv.h"
 #include "mozilla/AutoRestore.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/Services.h"
 #include "mozilla/dom/BarProps.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/Event.h"
@@ -508,8 +511,7 @@ NS_IMETHODIMP nsXULWindow::Destroy()
        is destroyed, because onunload handlers fire then, and those being
        script, anything could happen. A new window could open, even.
        See bug 130719. */
-    nsCOMPtr<nsIObserverService> obssvc =
-        do_GetService("@mozilla.org/observer-service;1");
+    nsCOMPtr<nsIObserverService> obssvc = services::GetObserverService();
     NS_ASSERTION(obssvc, "Couldn't get observer service?");
 
     if (obssvc)
@@ -815,8 +817,7 @@ NS_IMETHODIMP nsXULWindow::SetVisibility(bool aVisibility)
      windowMediator->UpdateWindowTimeStamp(static_cast<nsIXULWindow*>(this));
 
   // notify observers so that we can hide the splash screen if possible
-  nsCOMPtr<nsIObserverService> obssvc
-    (do_GetService("@mozilla.org/observer-service;1"));
+  nsCOMPtr<nsIObserverService> obssvc = services::GetObserverService();
   NS_ASSERTION(obssvc, "Couldn't get observer service.");
   if (obssvc) {
     obssvc->NotifyObservers(nullptr, "xul-window-visible", nullptr); 
@@ -1391,10 +1392,6 @@ void nsXULWindow::SyncAttributesToWidget()
     mWindow->SetNonClientMargins(margins);
   }
 
-  // "accelerated" attribute
-  bool isAccelerated = windowElement->HasAttribute(NS_LITERAL_STRING("accelerated"));
-  mWindow->SetLayersAcceleration(isAccelerated);
-
   // "windowtype" attribute
   windowElement->GetAttribute(WINDOWTYPE_ATTRIBUTE, attr);
   if (!attr.IsEmpty()) {
@@ -1468,7 +1465,7 @@ NS_IMETHODIMP nsXULWindow::SavePersistentAttributes()
 
   // fetch docShellElement's ID and XUL owner document
   ownerXULDoc = do_QueryInterface(docShellElement->OwnerDoc());
-  if (docShellElement->IsXUL()) {
+  if (docShellElement->IsXULElement()) {
     docShellElement->GetId(windowElementId);
   }
 
@@ -1798,18 +1795,9 @@ NS_IMETHODIMP nsXULWindow::CreateNewContentWindow(int32_t aChromeFlags,
       if (!NS_ProcessNextEvent(thread))
         break;
     }
- }
-
-  // If aOpeningTab is not null, it means that we're creating a new window
-  // with a remote browser, which doesn't have a primary docshell. In that
-  // case, we check for the chrome window docshell and make sure that a new
-  // remote tab was opened and stashed in that docshell.
-  if (aOpeningTab) {
-    NS_ENSURE_STATE(xulWin->mDocShell);
-    NS_ENSURE_STATE(xulWin->mDocShell->GetOpenedRemote());
-  } else {
-    NS_ENSURE_STATE(xulWin->mPrimaryContentShell);
   }
+
+  NS_ENSURE_STATE(xulWin->mPrimaryContentShell);
 
   *_retval = newWindow;
   NS_ADDREF(*_retval);

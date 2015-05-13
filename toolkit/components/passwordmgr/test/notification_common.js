@@ -39,7 +39,11 @@ function getPopupNotifications(aWindow) {
  */
 function getPopup(aPopupNote, aKind) {
     ok(true, "Looking for " + aKind + " popup notification");
-    return aPopupNote.getNotification(aKind);
+    var notification = aPopupNote.getNotification("password");
+    if (notification) {
+      is(notification.options.passwordNotificationType, aKind);
+    }
+    return notification;
 }
 
 
@@ -60,7 +64,7 @@ function clickPopupButton(aPopup, aButtonIndex) {
         ok(true, "Triggering main action");
         notification.button.doCommand();
     } else if (aButtonIndex <= aPopup.secondaryActions.length) {
-        var index = aButtonIndex - 1;
+        var index = aButtonIndex;
         ok(true, "Triggering secondary action " + index);
         notification.childNodes[index].doCommand();
     }

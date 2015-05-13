@@ -367,6 +367,11 @@ class FirefoxProfile(Profile):
                    'toolkit.startup.max_resumed_crashes' : -1,
                    # Don't report telemetry information
                    'toolkit.telemetry.enabled' : False,
+                   # Don't send Telemetry reports to the production server. This is
+                   # needed as Telemetry sends pings also if FHR upload is enabled.
+                   'toolkit.telemetry.server' : 'http://%(server)s/telemetry-dummy/',
+                   # Disable periodic updates of service workers
+                   'dom.serviceWorkers.periodic-updates.enabled': False,
                    }
 
 class MetroFirefoxProfile(Profile):
@@ -410,6 +415,11 @@ class MetroFirefoxProfile(Profile):
                    'toolkit.startup.max_resumed_crashes' : -1,
                    # Don't report telemetry information
                    'toolkit.telemetry.enabled' : False,
+                   # Don't send Telemetry reports to the production server. This is
+                   # needed as Telemetry sends pings also if FHR upload is enabled.
+                   'toolkit.telemetry.server' : 'http://%(server)s/telemetry-dummy/',
+                   # Disable periodic updates of service workers
+                   'dom.serviceWorkers.periodic-updates.enabled': False,
                    }
 
 class ThunderbirdProfile(Profile):

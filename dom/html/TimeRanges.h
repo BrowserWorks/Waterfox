@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim:set ts=2 sw=2 sts=2 et cindent: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -25,7 +25,7 @@ namespace dom {
 
 // Implements media TimeRanges:
 // http://www.whatwg.org/specs/web-apps/current-work/multipage/video.html#timeranges
-class TimeRanges MOZ_FINAL : public nsIDOMTimeRanges
+class TimeRanges final : public nsIDOMTimeRanges
 {
 public:
   NS_DECL_ISUPPORTS
@@ -42,15 +42,15 @@ public:
   double GetEndTime();
 
   // See http://www.whatwg.org/html/#normalized-timeranges-object
-  void Normalize(double aError = 0.0);
+  void Normalize(double aTolerance = 0.0);
 
   // Mutate this TimeRange to be the union of this and aOtherRanges.
-  void Union(const TimeRanges* aOtherRanges, double aError);
+  void Union(const TimeRanges* aOtherRanges, double aTolerance);
 
   // Mutate this TimeRange to be the intersection of this and aOtherRanges.
   void Intersection(const TimeRanges* aOtherRanges);
 
-  bool WrapObject(JSContext* aCx, JS::MutableHandle<JSObject*> aReflector);
+  bool WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto, JS::MutableHandle<JSObject*> aReflector);
 
   uint32_t Length() const
   {
@@ -60,6 +60,9 @@ public:
   virtual double Start(uint32_t aIndex, ErrorResult& aRv);
 
   virtual double End(uint32_t aIndex, ErrorResult& aRv);
+
+  // Shift all values by aOffset seconds.
+  void Shift(double aOffset);
 
 private:
   ~TimeRanges();
@@ -91,7 +94,7 @@ public:
   typedef nsTArray<TimeRange>::index_type index_type;
   static const index_type NoIndex = index_type(-1);
 
-  index_type Find(double aTime, double aError = 0);
+  index_type Find(double aTime, double aTolerance = 0);
 
   bool Contains(double aStart, double aEnd) {
     index_type target = Find(aStart);

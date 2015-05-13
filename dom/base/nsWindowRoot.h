@@ -1,6 +1,6 @@
-/* -*- Mode: C++; tab-width: 3; indent-tabs-mode: nil; c-basic-offset: 2 -*-
- *
- * This Source Code Form is subject to the terms of the Mozilla Public
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -8,14 +8,8 @@
 #define nsWindowRoot_h__
 
 class nsPIDOMWindow;
-class nsIDOMEventListener;
 class nsIDOMEvent;
 class nsIGlobalObject;
-
-namespace mozilla {
-class EventChainPostVisitor;
-class EventChainPreVisitor;
-} // namespace mozilla
 
 #include "mozilla/Attributes.h"
 #include "mozilla/EventListenerManager.h"
@@ -26,7 +20,7 @@ class EventChainPreVisitor;
 #include "nsTHashtable.h"
 #include "nsHashKeys.h"
 
-class nsWindowRoot : public nsPIWindowRoot
+class nsWindowRoot final : public nsPIWindowRoot
 {
 public:
   explicit nsWindowRoot(nsPIDOMWindow* aWindow);
@@ -35,41 +29,42 @@ public:
   NS_DECL_NSIDOMEVENTTARGET
 
   virtual mozilla::EventListenerManager*
-    GetExistingListenerManager() const MOZ_OVERRIDE;
+    GetExistingListenerManager() const override;
   virtual mozilla::EventListenerManager*
-    GetOrCreateListenerManager() MOZ_OVERRIDE;
+    GetOrCreateListenerManager() override;
 
   using mozilla::dom::EventTarget::RemoveEventListener;
   virtual void AddEventListener(const nsAString& aType,
                                 mozilla::dom::EventListener* aListener,
                                 bool aUseCapture,
                                 const mozilla::dom::Nullable<bool>& aWantsUntrusted,
-                                mozilla::ErrorResult& aRv) MOZ_OVERRIDE;
+                                mozilla::ErrorResult& aRv) override;
 
   // nsPIWindowRoot
 
-  virtual nsPIDOMWindow* GetWindow() MOZ_OVERRIDE;
+  virtual nsPIDOMWindow* GetWindow() override;
 
-  virtual nsresult GetControllers(nsIControllers** aResult) MOZ_OVERRIDE;
+  virtual nsresult GetControllers(nsIControllers** aResult) override;
   virtual nsresult GetControllerForCommand(const char * aCommand,
-                                           nsIController** _retval) MOZ_OVERRIDE;
+                                           nsIController** _retval) override;
 
   virtual void GetEnabledDisabledCommands(nsTArray<nsCString>& aEnabledCommands,
-                                          nsTArray<nsCString>& aDisabledCommands) MOZ_OVERRIDE;
+                                          nsTArray<nsCString>& aDisabledCommands) override;
 
-  virtual nsIDOMNode* GetPopupNode() MOZ_OVERRIDE;
-  virtual void SetPopupNode(nsIDOMNode* aNode) MOZ_OVERRIDE;
+  virtual nsIDOMNode* GetPopupNode() override;
+  virtual void SetPopupNode(nsIDOMNode* aNode) override;
 
-  virtual void SetParentTarget(mozilla::dom::EventTarget* aTarget) MOZ_OVERRIDE
+  virtual void SetParentTarget(mozilla::dom::EventTarget* aTarget) override
   {
     mParent = aTarget;
   }
-  virtual mozilla::dom::EventTarget* GetParentTarget() MOZ_OVERRIDE { return mParent; }
-  virtual nsIDOMWindow* GetOwnerGlobal() MOZ_OVERRIDE;
+  virtual mozilla::dom::EventTarget* GetParentTarget() override { return mParent; }
+  virtual nsIDOMWindow* GetOwnerGlobalForBindings() override;
+  virtual nsIGlobalObject* GetOwnerGlobal() const override;
 
   nsIGlobalObject* GetParentObject();
 
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS_AMBIGUOUS(nsWindowRoot,
                                                          nsIDOMEventTarget)

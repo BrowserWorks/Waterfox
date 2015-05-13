@@ -13,6 +13,8 @@
 #define SANDBOX_EXPORT __declspec(dllimport)
 #endif
 
+#include <stdint.h>
+
 namespace sandbox {
   class BrokerServices;
   class TargetPolicy;
@@ -32,9 +34,9 @@ public:
 
   // Security levels for different types of processes
 #if defined(MOZ_CONTENT_SANDBOX)
-  bool SetSecurityLevelForContentProcess(bool aMoreStrict);
+  bool SetSecurityLevelForContentProcess(int32_t aSandboxLevel);
 #endif
-  bool SetSecurityLevelForPluginProcess();
+  bool SetSecurityLevelForPluginProcess(int32_t aSandboxLevel);
   bool SetSecurityLevelForIPDLUnitTestProcess();
   bool SetSecurityLevelForGMPlugin();
 

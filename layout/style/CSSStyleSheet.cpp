@@ -21,6 +21,7 @@
 #include "nsIDocument.h"
 #include "nsPresContext.h"
 #include "nsGkAtoms.h"
+#include "nsQueryObject.h"
 #include "nsString.h"
 #include "nsTArray.h"
 #include "nsIDOMCSSStyleSheet.h"
@@ -43,6 +44,7 @@
 #include "mozilla/Likely.h"
 #include "mozilla/dom/CSSStyleSheetBinding.h"
 #include "nsComponentManagerUtils.h"
+#include "nsNullPrincipal.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -50,17 +52,17 @@ using namespace mozilla::dom;
 // -------------------------------
 // Style Rule List for the DOM
 //
-class CSSRuleListImpl MOZ_FINAL : public CSSRuleList
+class CSSRuleListImpl final : public CSSRuleList
 {
 public:
   explicit CSSRuleListImpl(CSSStyleSheet *aStyleSheet);
 
-  virtual CSSStyleSheet* GetParentObject() MOZ_OVERRIDE;
+  virtual CSSStyleSheet* GetParentObject() override;
 
   virtual nsIDOMCSSRule*
-  IndexedGetter(uint32_t aIndex, bool& aFound) MOZ_OVERRIDE;
+  IndexedGetter(uint32_t aIndex, bool& aFound) override;
   virtual uint32_t
-  Length() MOZ_OVERRIDE;
+  Length() override;
 
   void DropReference() { mStyleSheet = nullptr; }
 
@@ -497,9 +499,9 @@ nsMediaList::~nsMediaList()
 }
 
 /* virtual */ JSObject*
-nsMediaList::WrapObject(JSContext* aCx)
+nsMediaList::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return MediaListBinding::Wrap(aCx, this);
+  return MediaListBinding::Wrap(aCx, this, aGivenProto);
 }
 
 void
@@ -733,7 +735,7 @@ CSSStyleSheetInner::CSSStyleSheetInner(CSSStyleSheet* aPrimarySheet,
   MOZ_COUNT_CTOR(CSSStyleSheetInner);
   mSheets.AppendElement(aPrimarySheet);
 
-  mPrincipal = do_CreateInstance("@mozilla.org/nullprincipal;1");
+  mPrincipal = nsNullPrincipal::Create();
   if (!mPrincipal) {
     NS_RUNTIMEABORT("OOM");
   }
@@ -1490,8 +1492,8 @@ CSSStyleSheet::EnsureUniqueInner()
 {
   mDirty = true;
 
-  NS_ABORT_IF_FALSE(mInner->mSheets.Length() != 0,
-                    "unexpected number of outers");
+  MOZ_ASSERT(mInner->mSheets.Length() != 0,
+             "unexpected number of outers");
   if (mInner->mSheets.Length() == 1) {
     return eUniqueInner_AlreadyUnique;
   }
@@ -1614,8 +1616,8 @@ CSSStyleSheet::WillDirty()
 void
 CSSStyleSheet::DidDirty()
 {
-  NS_ABORT_IF_FALSE(!mInner->mComplete || mDirty,
-                    "caller must have called WillDirty()");
+  MOZ_ASSERT(!mInner->mComplete || mDirty,
+             "caller must have called WillDirty()");
   ClearRuleCascades();
 }
 
@@ -1768,7 +1770,7 @@ CSSStyleSheet::GetCssRules(nsIDOMCSSRuleList** aCssRules)
   ErrorResult rv;
   nsCOMPtr<nsIDOMCSSRuleList> rules = GetCssRules(rv);
   rules.forget(aCssRules);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 CSSRuleList*
@@ -2181,9 +2183,9 @@ CSSStyleSheet::GetOriginalURI() const
 
 /* virtual */
 JSObject*
-CSSStyleSheet::WrapObject(JSContext* aCx)
+CSSStyleSheet::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return CSSStyleSheetBinding::Wrap(aCx, this);
+  return CSSStyleSheetBinding::Wrap(aCx, this, aGivenProto);
 }
 
 } // namespace mozilla

@@ -9,10 +9,12 @@ Cu.import('resource://gre/modules/Services.jsm');
 Cu.import("resource://gre/modules/FileUtils.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 
-const {Promise: promise} = Cu.import("resource://gre/modules/devtools/deprecated-sync-thenables.js", {});
 const {devtools} = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
+const {gDevTools} = Cu.import("resource:///modules/devtools/gDevTools.jsm", {});
 const {require} = devtools;
+const promise = require("promise");
 const {AppProjects} = require("devtools/app-manager/app-projects");
+gDevTools.testing = true;
 
 let TEST_BASE;
 if (window.location === "chrome://browser/content/browser.xul") {
@@ -23,19 +25,27 @@ if (window.location === "chrome://browser/content/browser.xul") {
 
 Services.prefs.setBoolPref("devtools.webide.enabled", true);
 Services.prefs.setBoolPref("devtools.webide.enableLocalRuntime", true);
+Services.prefs.setBoolPref("devtools.webide.enableRuntimeConfiguration", true);
 
 Services.prefs.setCharPref("devtools.webide.addonsURL", TEST_BASE + "addons/simulators.json");
 Services.prefs.setCharPref("devtools.webide.simulatorAddonsURL", TEST_BASE + "addons/fxos_#SLASHED_VERSION#_simulator-#OS#.xpi");
 Services.prefs.setCharPref("devtools.webide.adbAddonURL", TEST_BASE + "addons/adbhelper-#OS#.xpi");
 Services.prefs.setCharPref("devtools.webide.adaptersAddonURL", TEST_BASE + "addons/fxdt-adapters-#OS#.xpi");
 Services.prefs.setCharPref("devtools.webide.templatesURL", TEST_BASE + "templates.json");
+Services.prefs.setCharPref("devtools.devices.url", TEST_BASE + "browser_devices.json");
 
-
-SimpleTest.registerCleanupFunction(() => {
+let registerCleanupFunction = registerCleanupFunction ||
+                              SimpleTest.registerCleanupFunction;
+registerCleanupFunction(() => {
+  gDevTools.testing = false;
   Services.prefs.clearUserPref("devtools.webide.enabled");
   Services.prefs.clearUserPref("devtools.webide.enableLocalRuntime");
   Services.prefs.clearUserPref("devtools.webide.autoinstallADBHelper");
   Services.prefs.clearUserPref("devtools.webide.autoinstallFxdtAdapters");
+  Services.prefs.clearUserPref("devtools.webide.sidebars");
+  Services.prefs.clearUserPref("devtools.webide.busyTimeout");
+  Services.prefs.clearUserPref("devtools.webide.lastSelectedProject");
+  Services.prefs.clearUserPref("devtools.webide.lastConnectedRuntime");
 });
 
 function openWebIDE(autoInstallAddons) {
@@ -103,8 +113,10 @@ function nextTick() {
 }
 
 function waitForUpdate(win, update) {
+  info("Wait: " + update);
   let deferred = promise.defer();
   win.AppManager.on("app-manager-update", function onUpdate(e, what) {
+    info("Got: " + what);
     if (what !== update) {
       return;
     }
@@ -134,6 +146,15 @@ function documentIsLoaded(doc) {
       }
     });
   }
+  return deferred.promise;
+}
+
+function lazyIframeIsLoaded(iframe) {
+  let deferred = promise.defer();
+  iframe.addEventListener("load", function onLoad() {
+    iframe.removeEventListener("load", onLoad, true);
+    deferred.resolve(nextTick());
+  }, true);
   return deferred.promise;
 }
 
@@ -175,23 +196,35 @@ function removeTab(aTab, aWindow) {
   return deferred.promise;
 }
 
+function getRuntimeDocument(win) {
+  return win.document.querySelector("#runtime-listing-panel-details").contentDocument;
+}
+
+function getProjectDocument(win) {
+  return win.document.querySelector("#project-listing-panel-details").contentDocument;
+}
+
 function connectToLocalRuntime(aWindow) {
   info("Loading local runtime.");
 
-  let panelNode = aWindow.document.querySelector("#runtime-panel");
+  let panelNode;
+  let runtimePanel;
+
+  // If we are currently toggled to the sidebar panel display in WebIDE then
+  // the runtime panel is in an iframe.
+  if (aWindow.runtimeList.sidebarsEnabled) {
+    runtimePanel = getRuntimeDocument(aWindow);
+  } else {
+    runtimePanel = aWindow.document;
+  }
+
+  panelNode = runtimePanel.querySelector("#runtime-panel");
   let items = panelNode.querySelectorAll(".runtime-panel-item-other");
   is(items.length, 2, "Found 2 custom runtime buttons");
 
-  let deferred = promise.defer();
-  aWindow.AppManager.on("app-manager-update", function onUpdate(e,w) {
-    if (w == "list-tabs-response") {
-      aWindow.AppManager.off("app-manager-update", onUpdate);
-      deferred.resolve();
-    }
-  });
-
+  let updated = waitForUpdate(aWindow, "runtime-global-actors");
   items[1].click();
-  return deferred.promise;
+  return updated;
 }
 
 function handleError(aError) {

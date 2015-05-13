@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -99,7 +100,8 @@ DOMEventTargetHelper::BindToOwner(nsPIDOMWindow* aOwner)
 void
 DOMEventTargetHelper::BindToOwner(nsIGlobalObject* aOwner)
 {
-  if (mParentObject) {
+  nsCOMPtr<nsIGlobalObject> parentObject = do_QueryReferent(mParentObject);
+  if (parentObject) {
     if (mOwnerWindow) {
       static_cast<nsGlobalWindow*>(mOwnerWindow)->RemoveEventTargetObject(this);
       mOwnerWindow = nullptr;
@@ -108,7 +110,8 @@ DOMEventTargetHelper::BindToOwner(nsIGlobalObject* aOwner)
     mHasOrHasHadOwnerWindow = false;
   }
   if (aOwner) {
-    mParentObject = aOwner;
+    mParentObject = do_GetWeakReference(aOwner);
+    MOZ_ASSERT(mParentObject, "All nsIGlobalObjects must support nsISupportsWeakReference");
     // Let's cache the result of this QI for fast access and off main thread usage
     mOwnerWindow = nsCOMPtr<nsPIDOMWindow>(do_QueryInterface(aOwner)).get();
     if (mOwnerWindow) {
@@ -131,9 +134,10 @@ DOMEventTargetHelper::BindToOwner(DOMEventTargetHelper* aOther)
   if (aOther) {
     mHasOrHasHadOwnerWindow = aOther->HasOrHasHadOwner();
     if (aOther->GetParentObject()) {
-      mParentObject = aOther->GetParentObject();
+      mParentObject = do_GetWeakReference(aOther->GetParentObject());
+      MOZ_ASSERT(mParentObject, "All nsIGlobalObjects must support nsISupportsWeakReference");
       // Let's cache the result of this QI for fast access and off main thread usage
-      mOwnerWindow = nsCOMPtr<nsPIDOMWindow>(do_QueryInterface(mParentObject)).get();
+      mOwnerWindow = nsCOMPtr<nsPIDOMWindow>(do_QueryInterface(aOther->GetParentObject())).get();
       if (mOwnerWindow) {
         MOZ_ASSERT(mOwnerWindow->IsInnerWindow());
         mHasOrHasHadOwnerWindow = true;

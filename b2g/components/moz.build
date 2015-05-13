@@ -12,6 +12,7 @@ EXTRA_COMPONENTS += [
     'B2GAboutRedirector.js',
     'B2GAppMigrator.js',
     'B2GPresentationDevicePrompt.js',
+    'BootstrapCommandLine.js',
     'ContentPermissionPrompt.js',
     'FilePicker.js',
     'FxAccountsUIGlue.js',
@@ -21,6 +22,7 @@ EXTRA_COMPONENTS += [
     'MobileIdentityUIGlue.js',
     'OMAContentHandler.js',
     'PaymentGlue.js',
+    'PaymentProviderStrategy.js',
     'ProcessGlobal.js',
     'SmsProtocolHandler.js',
     'SystemMessageGlue.js',
@@ -47,7 +49,9 @@ if CONFIG['MOZ_UPDATER']:
     ]
 
 EXTRA_JS_MODULES += [
+    'AboutServiceWorkers.jsm',
     'AlertsHelper.jsm',
+    'Bootstraper.jsm',
     'ContentRequestHelper.jsm',
     'DebuggerActors.js',
     'ErrorPage.jsm',
@@ -56,6 +60,8 @@ EXTRA_JS_MODULES += [
     'LogCapture.jsm',
     'LogParser.jsm',
     'LogShake.jsm',
+    'OrientationChangeHandler.jsm',
+    'Screenshot.jsm',
     'SignInToWebsite.jsm',
     'SystemAppProxy.jsm',
     'TelURIParser.jsm',

@@ -27,7 +27,7 @@ NS_INTERFACE_MAP_END_INHERITING(AudioNode)
 NS_IMPL_ADDREF_INHERITED(StereoPannerNode, AudioNode)
 NS_IMPL_RELEASE_INHERITED(StereoPannerNode, AudioNode)
 
-class StereoPannerNodeEngine : public AudioNodeEngine
+class StereoPannerNodeEngine final : public AudioNodeEngine
 {
 public:
   StereoPannerNodeEngine(AudioNode* aNode,
@@ -51,7 +51,7 @@ public:
   };
   void SetTimelineParameter(uint32_t aIndex,
                             const AudioParamTimeline& aValue,
-                            TrackRate aSampleRate) MOZ_OVERRIDE
+                            TrackRate aSampleRate) override
   {
     switch (aIndex) {
     case PAN:
@@ -111,7 +111,7 @@ public:
   virtual void ProcessBlock(AudioNodeStream* aStream,
                             const AudioChunk& aInput,
                             AudioChunk* aOutput,
-                            bool *aFinished) MOZ_OVERRIDE
+                            bool *aFinished) override
   {
     MOZ_ASSERT(mSource == aStream, "Invalid source stream");
 
@@ -145,15 +145,17 @@ public:
       float computedGain[2][WEBAUDIO_BLOCK_SIZE];
       bool onLeft[WEBAUDIO_BLOCK_SIZE];
 
+      float values[WEBAUDIO_BLOCK_SIZE];
+      StreamTime tick = aStream->GetCurrentPosition();
+      mPan.GetValuesAtTime(tick, values, WEBAUDIO_BLOCK_SIZE);
+
       for (size_t counter = 0; counter < WEBAUDIO_BLOCK_SIZE; ++counter) {
-        StreamTime tick = aStream->GetCurrentPosition();
         float left, right;
-        float panning = mPan.GetValueAtTime(tick, counter);
-        GetGainValuesForPanning(panning, monoToStereo, left, right);
+        GetGainValuesForPanning(values[counter], monoToStereo, left, right);
 
         computedGain[0][counter] = left * aInput.mVolume;
         computedGain[1][counter] = right * aInput.mVolume;
-        onLeft[counter] = panning <= 0;
+        onLeft[counter] = values[counter] <= 0;
       }
 
       // Apply the gain to the output buffer
@@ -161,7 +163,7 @@ public:
     }
   }
 
-  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const MOZ_OVERRIDE
+  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
   }
@@ -176,7 +178,7 @@ StereoPannerNode::StereoPannerNode(AudioContext* aContext)
               2,
               ChannelCountMode::Clamped_max,
               ChannelInterpretation::Speakers)
-  , mPan(new AudioParam(this, SendPanToStream, 0.f))
+  , mPan(new AudioParam(this, SendPanToStream, 0.f, "pan"))
 {
   StereoPannerNodeEngine* engine = new StereoPannerNodeEngine(this, aContext->Destination());
   mStream = aContext->Graph()->CreateAudioNodeStream(engine,
@@ -203,9 +205,9 @@ StereoPannerNode::SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const
 }
 
 JSObject*
-StereoPannerNode::WrapObject(JSContext* aCx)
+StereoPannerNode::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return StereoPannerNodeBinding::Wrap(aCx, this);
+  return StereoPannerNodeBinding::Wrap(aCx, this, aGivenProto);
 }
 
 void

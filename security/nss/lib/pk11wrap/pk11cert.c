@@ -293,13 +293,11 @@ PK11_MakeCertFromHandle(PK11SlotInfo *slot,CK_OBJECT_HANDLE certID,
     char * nickname = NULL;
     CERTCertificate *cert = NULL;
     CERTCertTrust *trust;
-    PRBool isFortezzaRootCA = PR_FALSE;
-    PRBool swapNickname = PR_FALSE;
 
     cert = pk11_fastCert(slot,certID,privateLabel, &nickname);
     if (cert == NULL) 
     	goto loser;
-	
+
     if (nickname) {
 	if (cert->nickname != NULL) {
 	    cert->dbnickname = cert->nickname;
@@ -307,7 +305,6 @@ PK11_MakeCertFromHandle(PK11SlotInfo *slot,CK_OBJECT_HANDLE certID,
 	cert->nickname = PORT_ArenaStrdup(cert->arena,nickname);
 	PORT_Free(nickname);
 	nickname = NULL;
-	swapNickname = PR_TRUE;
     }
 
     /* remember where this cert came from.... If we have just looked
@@ -343,7 +340,6 @@ PK11_MakeCertFromHandle(PK11SlotInfo *slot,CK_OBJECT_HANDLE certID,
 		 * full trust on explicitly */
 		if (PK11_DoesMechanism(slot,CKM_KEA_KEY_DERIVE)) {
 		    trust->objectSigningFlags |= CERTDB_VALID_CA;
-		    isFortezzaRootCA = PR_TRUE;
 		}
 	    }
 	    if ((type & NS_CERT_TYPE_SSL_CA) == NS_CERT_TYPE_SSL_CA) {
@@ -2685,4 +2681,26 @@ PK11_GetAllSlotsForCert(CERTCertificate *cert, void *arg)
 
     nssCryptokiObjectArray_Destroy(instances);
     return slotList;
+}
+
+/*
+ * Using __PK11_SetCertificateNickname is *DANGEROUS*.
+ *
+ * The API will update the NSS database, but it *will NOT* update the in-memory data.
+ * As a result, after calling this API, there will be INCONSISTENCY between
+ * in-memory data and the database.
+ *
+ * Use of the API should be limited to short-lived tools, which will exit immediately
+ * after using this API.
+ *
+ * If you ignore this warning, your process is TAINTED and will most likely misbehave.
+ */
+SECStatus
+__PK11_SetCertificateNickname(CERTCertificate *cert, const char *nickname)
+{
+    /* Can't set nickname of temp cert. */
+    if (!cert->slot || cert->pkcs11ID == CK_INVALID_HANDLE) {
+        return SEC_ERROR_INVALID_ARGS;
+    }
+    return PK11_SetObjectNickname(cert->slot, cert->pkcs11ID, nickname);
 }

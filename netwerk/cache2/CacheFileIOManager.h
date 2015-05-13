@@ -23,7 +23,6 @@ class nsIFile;
 class nsITimer;
 class nsIDirectoryEnumerator;
 class nsILoadContextInfo;
-class nsICacheStorageVisitor;
 
 namespace mozilla {
 namespace net {
@@ -90,7 +89,7 @@ public:
   CacheFileHandles();
   ~CacheFileHandles();
 
-  nsresult GetHandle(const SHA1Sum::Hash *aHash, bool aReturnDoomed, CacheFileHandle **_retval);
+  nsresult GetHandle(const SHA1Sum::Hash *aHash, CacheFileHandle **_retval);
   nsresult NewHandle(const SHA1Sum::Hash *aHash, bool aPriority, CacheFileHandle **_retval);
   void     RemoveHandle(CacheFileHandle *aHandlle);
   void     GetAllHandles(nsTArray<nsRefPtr<CacheFileHandle> > *_retval);
@@ -174,7 +173,6 @@ private:
 ////////////////////////////////////////////////////////////////////////////////
 
 class OpenFileEvent;
-class CloseFileEvent;
 class ReadEvent;
 class WriteEvent;
 class MetadataWriteScheduleEvent;
@@ -247,7 +245,7 @@ public:
                        CacheFileIOListener *aCallback);
   static nsresult Write(CacheFileHandle *aHandle, int64_t aOffset,
                         const char *aBuf, int32_t aCount, bool aValidate,
-                        CacheFileIOListener *aCallback);
+                        bool aTruncate, CacheFileIOListener *aCallback);
   static nsresult DoomFile(CacheFileHandle *aHandle,
                            CacheFileIOListener *aCallback);
   static nsresult DoomFileByKey(const nsACString &aKey,
@@ -328,10 +326,10 @@ private:
   nsresult ReadInternal(CacheFileHandle *aHandle, int64_t aOffset,
                         char *aBuf, int32_t aCount);
   nsresult WriteInternal(CacheFileHandle *aHandle, int64_t aOffset,
-                         const char *aBuf, int32_t aCount, bool aValidate);
+                         const char *aBuf, int32_t aCount, bool aValidate,
+                         bool aTruncate);
   nsresult DoomFileInternal(CacheFileHandle *aHandle);
-  nsresult DoomFileByKeyInternal(const SHA1Sum::Hash *aHash,
-                                 bool aFailIfAlreadyDoomed);
+  nsresult DoomFileByKeyInternal(const SHA1Sum::Hash *aHash);
   nsresult ReleaseNSPRHandleInternal(CacheFileHandle *aHandle);
   nsresult TruncateSeekSetEOFInternal(CacheFileHandle *aHandle,
                                       int64_t aTruncatePos, int64_t aEOFPos);

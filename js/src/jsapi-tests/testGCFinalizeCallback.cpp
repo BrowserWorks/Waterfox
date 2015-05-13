@@ -120,14 +120,14 @@ BEGIN_TEST(testGCFinalizeCallback)
     return true;
 }
 
-JSObject *createTestGlobal()
+JSObject* createTestGlobal()
 {
     JS::CompartmentOptions options;
     options.setVersion(JSVERSION_LATEST);
     return JS_NewGlobalObject(cx, getGlobalClass(), nullptr, JS::FireOnNewGlobalHook, options);
 }
 
-virtual bool init() MOZ_OVERRIDE
+virtual bool init() override
 {
     if (!JSAPITest::init())
         return false;
@@ -136,7 +136,7 @@ virtual bool init() MOZ_OVERRIDE
     return true;
 }
 
-virtual void uninit() MOZ_OVERRIDE
+virtual void uninit() override
 {
     JS_RemoveFinalizeCallback(rt, FinalizeCallback);
     JSAPITest::uninit();
@@ -184,7 +184,7 @@ bool checkFinalizeIsCompartmentGC(bool isCompartmentGC)
 }
 
 static void
-FinalizeCallback(JSFreeOp *fop, JSFinalizeStatus status, bool isCompartmentGC, void *data)
+FinalizeCallback(JSFreeOp* fop, JSFinalizeStatus status, bool isCompartmentGC, void* data)
 {
     if (FinalizeCalls < BufferSize) {
         StatusBuffer[FinalizeCalls] = status;

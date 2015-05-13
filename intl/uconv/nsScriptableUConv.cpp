@@ -39,7 +39,7 @@ nsScriptableUnicodeConverter::ConvertFromUnicodeWithLength(const nsAString& aSrc
   const nsAFlatString& flatSrc = PromiseFlatString(aSrc);
   rv = mEncoder->GetMaxLength(flatSrc.get(), inLength, aOutLen);
   if (NS_SUCCEEDED(rv)) {
-    *_retval = (char*)moz_malloc(*aOutLen+1);
+    *_retval = (char*)malloc(*aOutLen+1);
     if (!*_retval)
       return NS_ERROR_OUT_OF_MEMORY;
 
@@ -49,7 +49,7 @@ nsScriptableUnicodeConverter::ConvertFromUnicodeWithLength(const nsAString& aSrc
       (*_retval)[*aOutLen] = '\0';
       return NS_OK;
     }
-    moz_free(*_retval);
+    free(*_retval);
   }
   *_retval = nullptr;
   return NS_ERROR_FAILURE;
@@ -65,10 +65,10 @@ nsScriptableUnicodeConverter::ConvertFromUnicode(const nsAString& aSrc,
   nsresult rv = ConvertFromUnicodeWithLength(aSrc, &len, &str);
   if (NS_SUCCEEDED(rv)) {
     // No Adopt on nsACString :(
-    if (!_retval.Assign(str, len, mozilla::fallible_t())) {
+    if (!_retval.Assign(str, len, mozilla::fallible)) {
       rv = NS_ERROR_OUT_OF_MEMORY;
     }
-    moz_free(str);
+    free(str);
   }
   return rv;
 }
@@ -81,7 +81,7 @@ nsScriptableUnicodeConverter::FinishWithLength(char **_retval, int32_t* aLength)
 
   int32_t finLength = 32;
 
-  *_retval = (char *)moz_malloc(finLength);
+  *_retval = (char *)malloc(finLength);
   if (!*_retval)
     return NS_ERROR_OUT_OF_MEMORY;
 
@@ -89,7 +89,7 @@ nsScriptableUnicodeConverter::FinishWithLength(char **_retval, int32_t* aLength)
   if (NS_SUCCEEDED(rv))
     *aLength = finLength;
   else
-    moz_free(*_retval);
+    free(*_retval);
 
   return rv;
 
@@ -114,10 +114,10 @@ nsScriptableUnicodeConverter::Finish(nsACString& _retval)
   nsresult rv = FinishWithLength(&str, &len);
   if (NS_SUCCEEDED(rv)) {
     // No Adopt on nsACString :(
-    if (!_retval.Assign(str, len, mozilla::fallible_t())) {
+    if (!_retval.Assign(str, len, mozilla::fallible)) {
       rv = NS_ERROR_OUT_OF_MEMORY;
     }
-    moz_free(str);
+    free(str);
   }
   return rv;
 }
@@ -151,7 +151,7 @@ nsScriptableUnicodeConverter::ConvertFromByteArray(const uint8_t* aData,
                               inLength, &outLength);
   if (NS_SUCCEEDED(rv))
   {
-    char16_t* buf = (char16_t*)moz_malloc((outLength+1)*sizeof(char16_t));
+    char16_t* buf = (char16_t*)malloc((outLength+1) * sizeof(char16_t));
     if (!buf)
       return NS_ERROR_OUT_OF_MEMORY;
 
@@ -160,11 +160,11 @@ nsScriptableUnicodeConverter::ConvertFromByteArray(const uint8_t* aData,
     if (NS_SUCCEEDED(rv))
     {
       buf[outLength] = 0;
-      if (!_retval.Assign(buf, outLength, mozilla::fallible_t())) {
+      if (!_retval.Assign(buf, outLength, mozilla::fallible)) {
         rv = NS_ERROR_OUT_OF_MEMORY;
       }
     }
-    moz_free(buf);
+    free(buf);
     return rv;
   }
   return NS_ERROR_FAILURE;
@@ -193,9 +193,9 @@ nsScriptableUnicodeConverter::ConvertToByteArray(const nsAString& aString,
     return rv;
 
   str.Append(data, len);
-  moz_free(data);
+  free(data);
   // NOTE: this being a byte array, it needs no null termination
-  *_aData = reinterpret_cast<uint8_t*>(moz_malloc(str.Length()));
+  *_aData = reinterpret_cast<uint8_t*>(malloc(str.Length()));
   if (!*_aData)
     return NS_ERROR_OUT_OF_MEMORY;
   memcpy(*_aData, str.get(), str.Length());
@@ -222,7 +222,7 @@ nsScriptableUnicodeConverter::ConvertToInputStream(const nsAString& aString,
 
   rv = inputStream->AdoptData(reinterpret_cast<char*>(data), dataLen);
   if (NS_FAILED(rv)) {
-    moz_free(data);
+    free(data);
     return rv;
   }
 

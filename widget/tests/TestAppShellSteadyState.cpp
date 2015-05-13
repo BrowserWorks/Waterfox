@@ -159,7 +159,7 @@ public:
   }
 };
 
-class EventListener MOZ_FINAL : public nsIDOMEventListener
+class EventListener final : public nsIDOMEventListener
 {
   nsCOMPtr<nsIAppShell> mAppShell;
 
@@ -176,7 +176,7 @@ public:
   { }
 
   NS_IMETHOD
-  HandleEvent(nsIDOMEvent* aEvent) MOZ_OVERRIDE
+  HandleEvent(nsIDOMEvent* aEvent) override
   {
     nsString type;
     if (NS_FAILED(aEvent->GetType(type))) {
@@ -253,7 +253,7 @@ public:
       int32_t keyCode = 0x41; // VK_A
       NS_NAMED_LITERAL_STRING(a, "a");
 
-      if (NS_FAILED(utils->SendNativeKeyEvent(layout, keyCode, 0, a, a))) {
+      if (NS_FAILED(utils->SendNativeKeyEvent(layout, keyCode, 0, a, a, nullptr))) {
         fail("Failed to synthesize native event");
       }
 

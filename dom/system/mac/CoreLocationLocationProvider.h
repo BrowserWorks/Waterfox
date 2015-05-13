@@ -1,10 +1,12 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsCOMPtr.h"
 #include "nsIGeolocationProvider.h"
+
 
 /*
  * The CoreLocationObjects class contains the CoreLocation objects
@@ -21,6 +23,7 @@
  * for nsGeolocation.cpp, which is C++-only, to include this header.
  */
 class CoreLocationObjects;
+class MLSFallback;
 
 class CoreLocationLocationProvider
   : public nsIGeolocationProvider
@@ -32,9 +35,26 @@ public:
   CoreLocationLocationProvider();
   void NotifyError(uint16_t aErrorCode);
   void Update(nsIDOMGeoPosition* aSomewhere);
+  void CreateMLSFallbackProvider();
+  void CancelMLSFallbackProvider();
+
 private:
-  virtual ~CoreLocationLocationProvider() {};
+  virtual ~CoreLocationLocationProvider();
 
   CoreLocationObjects* mCLObjects;
   nsCOMPtr<nsIGeolocationUpdate> mCallback;
+  nsRefPtr<MLSFallback> mMLSFallbackProvider;
+
+  class MLSUpdate : public nsIGeolocationUpdate
+  {
+  public:
+    NS_DECL_ISUPPORTS
+    NS_DECL_NSIGEOLOCATIONUPDATE
+
+    explicit MLSUpdate(CoreLocationLocationProvider& parentProvider);
+
+  private:
+    CoreLocationLocationProvider& mParentLocationProvider;
+    virtual ~MLSUpdate();
+  };
 };

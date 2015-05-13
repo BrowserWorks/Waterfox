@@ -49,7 +49,6 @@ EXPORTS += [
     'gfxTypes.h',
     'gfxUserFontSet.h',
     'gfxUtils.h',
-    'gfxVR.h',
     'GraphicsFilter.h',
     'RoundedRect.h',
     'SoftwareVsyncSource.h',
@@ -112,6 +111,7 @@ elif CONFIG['MOZ_WIDGET_GTK']:
     ]
 
     SOURCES += [
+        'gfxFcPlatformFontList.cpp',
         'gfxFontconfigUtils.cpp',
         'gfxFT2FontBase.cpp',
         'gfxFT2Utils.cpp',
@@ -244,7 +244,6 @@ UNIFIED_SOURCES += [
     'gfxTextRun.cpp',
     'gfxUserFontSet.cpp',
     'gfxUtils.cpp',
-    'gfxVR.cpp',
     'nsUnicodeRange.cpp',
     'SoftwareVsyncSource.cpp',
     'VsyncSource.cpp',
@@ -255,9 +254,16 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
         'gfxMacPlatformFontList.mm',
     ]
 
-FAIL_ON_WARNINGS = not CONFIG['_MSC_VER']
+# We prefer to use ICU for normalization functions, but currently it is only
+# available if we're building with the Intl API enabled:
+if CONFIG['ENABLE_INTL_API']:
+    CXXFLAGS += CONFIG['MOZ_ICU_CFLAGS']
+    CFLAGS += CONFIG['MOZ_ICU_CFLAGS']
+    USE_LIBS += [
+        'icu',
+    ]
 
-MSVC_ENABLE_PGO = True
+FAIL_ON_WARNINGS = not CONFIG['_MSC_VER']
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
@@ -302,3 +308,6 @@ DEFINES['GRAPHITE2_STATIC'] = True
 
 if CONFIG['GKMEDIAS_SHARED_LIBRARY']:
     DEFINES['OTS_DLL'] = True
+
+if CONFIG['OS_ARCH'] == 'WINNT':
+    del DEFINES['UNICODE']

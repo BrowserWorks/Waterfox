@@ -13,26 +13,28 @@ function spawnTest () {
   let { panel } = yield initPerformance(SIMPLE_URL);
   let front = panel.panelWin.gFront;
 
-  yield front.startRecording();
+  let rec = yield front.startRecording();
   busyWait(WAIT_TIME); // allow the profiler module to sample some cpu activity
 
-  let recordingData = yield front.stopRecording();
-  let profile = recordingData.profilerData.profile;
-
+  yield front.stopRecording(rec);
+  let profile = rec.getProfile();
   let sampleCount = 0;
 
   for (let thread of profile.threads) {
     info("Checking thread: " + thread.name);
 
-    for (let sample of thread.samples) {
+    for (let sample of thread.samples.data) {
       sampleCount++;
-      if (sample.frames[0].location != "(root)") {
-        ok(false, "The sample " + sample.toSource() + " doesn't have a root node.");
+
+      let stack = getInflatedStackLocations(thread, sample);
+      if (stack[0] != "(root)") {
+        ok(false, "The sample " + stack.toSource() + " doesn't have a root node.");
       }
     }
   }
 
-  ok(sampleCount > 0, "Atleast some samples have been iterated over, checking for root nodes.");
+  ok(sampleCount > 0,
+    "At least some samples have been iterated over, checking for root nodes.");
 
   yield teardown(panel);
   finish();

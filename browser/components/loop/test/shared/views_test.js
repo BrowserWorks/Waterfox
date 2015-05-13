@@ -12,10 +12,11 @@ var TestUtils = React.addons.TestUtils;
 describe("loop.shared.views", function() {
   "use strict";
 
-  var sharedModels = loop.shared.models,
-      sharedViews = loop.shared.views,
-      getReactElementByClass = TestUtils.findRenderedDOMComponentWithClass,
-      sandbox, fakeAudioXHR;
+  var sharedModels = loop.shared.models;
+  var sharedViews = loop.shared.views;
+  var SCREEN_SHARE_STATES = loop.shared.utils.SCREEN_SHARE_STATES;
+  var getReactElementByClass = TestUtils.findRenderedDOMComponentWithClass;
+  var sandbox, fakeAudioXHR, dispatcher, OS, OSVersion;
 
   beforeEach(function() {
     sandbox = sinon.sandbox.create();
@@ -23,18 +24,32 @@ describe("loop.shared.views", function() {
     sandbox.stub(l10n, "get", function(x) {
       return "translated:" + x;
     });
+
+    dispatcher = new loop.Dispatcher();
+    sandbox.stub(dispatcher, "dispatch");
+
     fakeAudioXHR = {
       open: sinon.spy(),
       send: function() {},
       abort: function() {},
       getResponseHeader: function(header) {
-        if (header === "Content-Type")
+        if (header === "Content-Type") {
           return "audio/ogg";
+        }
       },
       responseType: null,
       response: new ArrayBuffer(10),
       onload: null
     };
+
+    OS = "mac";
+    OSVersion = { major: 10, minor: 10 };
+    sandbox.stub(loop.shared.utils, "getOS", function() {
+      return OS;
+    });
+    sandbox.stub(loop.shared.utils, "getOSVersion", function() {
+      return OSVersion;
+    });
   });
 
   afterEach(function() {
@@ -90,6 +105,154 @@ describe("loop.shared.views", function() {
 
       expect(comp.getDOMNode().classList.contains("muted")).eql(true);
     });
+  });
+
+  describe("ScreenShareControlButton", function() {
+    it("should render a visible share button", function() {
+      var comp = TestUtils.renderIntoDocument(
+        React.createElement(sharedViews.ScreenShareControlButton, {
+          dispatcher: dispatcher,
+          visible: true,
+          state: SCREEN_SHARE_STATES.INACTIVE
+        }));
+
+      expect(comp.getDOMNode().classList.contains("active")).eql(false);
+      expect(comp.getDOMNode().classList.contains("disabled")).eql(false);
+    });
+
+    it("should render a disabled share button when share is pending", function() {
+      var comp = TestUtils.renderIntoDocument(
+        React.createElement(sharedViews.ScreenShareControlButton, {
+          dispatcher: dispatcher,
+          visible: true,
+          state: SCREEN_SHARE_STATES.PENDING
+        }));
+
+      var node = comp.getDOMNode().querySelector(".btn-screen-share");
+      expect(node.classList.contains("active")).eql(false);
+      expect(node.classList.contains("disabled")).eql(true);
+    });
+
+    it("should render an active share button", function() {
+      var comp = TestUtils.renderIntoDocument(
+        React.createElement(sharedViews.ScreenShareControlButton, {
+          dispatcher: dispatcher,
+          visible: true,
+          state: SCREEN_SHARE_STATES.ACTIVE
+        }));
+
+      var node = comp.getDOMNode().querySelector(".btn-screen-share");
+      expect(node.classList.contains("active")).eql(true);
+      expect(node.classList.contains("disabled")).eql(false);
+    });
+
+    it("should show the screenshare dropdown on click when the state is not active",
+       function() {
+        var comp = TestUtils.renderIntoDocument(
+          React.createElement(sharedViews.ScreenShareControlButton, {
+            dispatcher: dispatcher,
+            visible: true,
+            state: SCREEN_SHARE_STATES.INACTIVE
+          }));
+
+        expect(comp.state.showMenu).eql(false);
+
+        TestUtils.Simulate.click(comp.getDOMNode().querySelector(".btn-screen-share"));
+
+        expect(comp.state.showMenu).eql(true);
+      });
+
+    it("should dispatch a 'browser' StartScreenShare action on option click",
+      function() {
+        var comp = TestUtils.renderIntoDocument(
+          React.createElement(sharedViews.ScreenShareControlButton, {
+            dispatcher: dispatcher,
+            visible: true,
+            state: SCREEN_SHARE_STATES.INACTIVE
+          }));
+
+        TestUtils.Simulate.click(comp.getDOMNode().querySelector(
+          ".conversation-window-dropdown > li"));
+
+        sinon.assert.calledOnce(dispatcher.dispatch);
+        sinon.assert.calledWithExactly(dispatcher.dispatch,
+          new sharedActions.StartScreenShare({ type: "browser" }));
+      });
+
+    it("should dispatch a 'window' StartScreenShare action on option click",
+      function() {
+        var comp = TestUtils.renderIntoDocument(
+          React.createElement(sharedViews.ScreenShareControlButton, {
+            dispatcher: dispatcher,
+            visible: true,
+            state: SCREEN_SHARE_STATES.INACTIVE
+          }));
+
+        TestUtils.Simulate.click(comp.getDOMNode().querySelector(
+          ".conversation-window-dropdown > li:last-child"));
+
+        sinon.assert.calledOnce(dispatcher.dispatch);
+        sinon.assert.calledWithExactly(dispatcher.dispatch,
+          new sharedActions.StartScreenShare({ type: "window" }));
+      });
+
+    it("should have the 'window' option enabled", function() {
+      var comp = TestUtils.renderIntoDocument(
+        React.createElement(sharedViews.ScreenShareControlButton, {
+          dispatcher: dispatcher,
+          visible: true,
+          state: SCREEN_SHARE_STATES.INACTIVE
+        }));
+
+      var node = comp.getDOMNode().querySelector(".conversation-window-dropdown > li:last-child");
+      expect(node.classList.contains("disabled")).eql(false);
+    });
+
+    it("should disable the 'window' option on Windows XP", function() {
+      OS = "win";
+      OSVersion = { major: 5, minor: 1 };
+
+      var comp = TestUtils.renderIntoDocument(
+        React.createElement(sharedViews.ScreenShareControlButton, {
+          dispatcher: dispatcher,
+          visible: true,
+          state: SCREEN_SHARE_STATES.INACTIVE
+        }));
+
+      var node = comp.getDOMNode().querySelector(".conversation-window-dropdown > li:last-child");
+      expect(node.classList.contains("disabled")).eql(true);
+    });
+
+    it("should disable the 'window' option on OSX 10.6", function() {
+      OS = "mac";
+      OSVersion = { major: 10, minor: 6 };
+
+      var comp = TestUtils.renderIntoDocument(
+        React.createElement(sharedViews.ScreenShareControlButton, {
+          dispatcher: dispatcher,
+          visible: true,
+          state: SCREEN_SHARE_STATES.INACTIVE
+        }));
+
+      var node = comp.getDOMNode().querySelector(".conversation-window-dropdown > li:last-child");
+      expect(node.classList.contains("disabled")).eql(true);
+    });
+
+    it("should dispatch a EndScreenShare action on click when the state is active",
+      function() {
+        var comp = TestUtils.renderIntoDocument(
+          React.createElement(sharedViews.ScreenShareControlButton, {
+            dispatcher: dispatcher,
+            visible: true,
+            state: SCREEN_SHARE_STATES.ACTIVE
+          }));
+
+        TestUtils.Simulate.click(comp.getDOMNode().querySelector(".btn-screen-share"));
+
+        sinon.assert.calledOnce(dispatcher.dispatch);
+        sinon.assert.calledWithExactly(dispatcher.dispatch,
+          new sharedActions.EndScreenShare({}));
+      });
   });
 
   describe("ConversationToolbar", function() {
@@ -233,7 +396,8 @@ describe("loop.shared.views", function() {
       }, Backbone.Events);
       fakeSDK = {
         initPublisher: sandbox.stub().returns(fakePublisher),
-        initSession: sandbox.stub().returns(fakeSession)
+        initSession: sandbox.stub().returns(fakeSession),
+        on: sandbox.stub()
       };
       model = new sharedModels.ConversationModel(fakeSessionData, {
         sdk: fakeSDK
@@ -264,18 +428,6 @@ describe("loop.shared.views", function() {
         });
 
         sinon.assert.notCalled(model.startSession);
-      });
-
-      it("should set the correct stream publish options", function() {
-
-        var component = mountTestComponent({
-          sdk: fakeSDK,
-          model: model,
-          video: {enabled: false}
-        });
-
-        expect(component.publisherConfig.publishVideo).to.eql(false);
-
       });
     });
 
@@ -401,8 +553,9 @@ describe("loop.shared.views", function() {
 
           beforeEach(function() {
             // In standalone, navigator.mozLoop does not exists
-            if (navigator.hasOwnProperty("mozLoop"))
+            if (navigator.hasOwnProperty("mozLoop")) {
               sandbox.stub(navigator, "mozLoop", undefined);
+            }
           });
 
           it("should play a connected sound, once, on session:connected",
@@ -570,6 +723,97 @@ describe("loop.shared.views", function() {
         coll.reset();
 
         sinon.assert.calledOnce(view.render);
+      });
+    });
+  });
+
+  describe("Checkbox", function() {
+    var view;
+
+    afterEach(function() {
+      view = null;
+    });
+
+    function mountTestComponent(props) {
+      props = _.extend({ onChange: function() {} }, props);
+      return TestUtils.renderIntoDocument(
+        React.createElement(sharedViews.Checkbox, props));
+    }
+
+    describe("#render", function() {
+      it("should render a checkbox with only required props supplied", function() {
+        view = mountTestComponent();
+
+        var node = view.getDOMNode();
+        expect(node).to.not.eql(null);
+        expect(node.classList.contains("checkbox-wrapper")).to.eql(true);
+        expect(node.hasAttribute("disabled")).to.eql(false);
+        expect(node.childNodes.length).to.eql(1);
+      });
+
+      it("should render a label when it's supplied", function() {
+        view = mountTestComponent({ label: "Some label" });
+
+        var node = view.getDOMNode();
+        expect(node.lastChild.localName).to.eql("label");
+        expect(node.lastChild.textContent).to.eql("Some label");
+      });
+
+      it("should render the checkbox as disabled when told to", function() {
+        view = mountTestComponent({
+          disabled: true
+        });
+
+        var node = view.getDOMNode();
+        expect(node.classList.contains("disabled")).to.eql(true);
+        expect(node.hasAttribute("disabled")).to.eql(true);
+      });
+    });
+
+    describe("#_handleClick", function() {
+      var onChange;
+
+      beforeEach(function() {
+        onChange = sinon.stub();
+      });
+
+      afterEach(function() {
+        onChange = null;
+      });
+
+      it("should invoke the `onChange` function on click", function() {
+        view = mountTestComponent({ onChange: onChange });
+
+        expect(view.state.checked).to.eql(false);
+
+        var node = view.getDOMNode();
+        TestUtils.Simulate.click(node);
+
+        expect(view.state.checked).to.eql(true);
+        sinon.assert.calledOnce(onChange);
+        sinon.assert.calledWithExactly(onChange, {
+          checked: true,
+          value: ""
+        });
+      });
+
+      it("should signal a value change on click", function() {
+        view = mountTestComponent({
+          onChange: onChange,
+          value: "some-value"
+        });
+
+        expect(view.state.value).to.eql("");
+
+        var node = view.getDOMNode();
+        TestUtils.Simulate.click(node);
+
+        expect(view.state.value).to.eql("some-value");
+        sinon.assert.calledOnce(onChange);
+        sinon.assert.calledWithExactly(onChange, {
+          checked: true,
+          value: "some-value"
+        });
       });
     });
   });

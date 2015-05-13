@@ -27,7 +27,7 @@ class TimeRanges;
 
 } // namespace dom
 
-class SourceBufferDecoder MOZ_FINAL : public AbstractMediaDecoder
+class SourceBufferDecoder final : public AbstractMediaDecoder
 {
 public:
   // This class holds a weak pointer to MediaResource.  It's the responsibility
@@ -37,35 +37,38 @@ public:
 
   NS_DECL_THREADSAFE_ISUPPORTS
 
-  virtual bool IsMediaSeekable() MOZ_FINAL MOZ_OVERRIDE;
-  virtual bool IsShutdown() const MOZ_FINAL MOZ_OVERRIDE;
-  virtual bool IsTransportSeekable() MOZ_FINAL MOZ_OVERRIDE;
-  virtual bool OnDecodeThread() const MOZ_FINAL MOZ_OVERRIDE;
-  virtual bool OnStateMachineThread() const MOZ_FINAL MOZ_OVERRIDE;
-  virtual int64_t GetTimestampOffset() const MOZ_FINAL MOZ_OVERRIDE { return mTimestampOffset; }
-  virtual int64_t GetMediaDuration() MOZ_FINAL MOZ_OVERRIDE;
-  virtual layers::ImageContainer* GetImageContainer() MOZ_FINAL MOZ_OVERRIDE;
-  virtual MediaDecoderOwner* GetOwner() MOZ_FINAL MOZ_OVERRIDE;
-  virtual SourceBufferResource* GetResource() const MOZ_FINAL MOZ_OVERRIDE;
-  virtual ReentrantMonitor& GetReentrantMonitor() MOZ_FINAL MOZ_OVERRIDE;
-  virtual VideoFrameContainer* GetVideoFrameContainer() MOZ_FINAL MOZ_OVERRIDE;
-  virtual void MetadataLoaded(nsAutoPtr<MediaInfo> aInfo, nsAutoPtr<MetadataTags> aTags) MOZ_FINAL MOZ_OVERRIDE;
-  virtual void FirstFrameLoaded(nsAutoPtr<MediaInfo> aInfo) MOZ_FINAL MOZ_OVERRIDE;
-  virtual void NotifyBytesConsumed(int64_t aBytes, int64_t aOffset) MOZ_FINAL MOZ_OVERRIDE;
-  virtual void NotifyDataArrived(const char* aBuffer, uint32_t aLength, int64_t aOffset) MOZ_FINAL MOZ_OVERRIDE;
-  virtual void NotifyDecodedFrames(uint32_t aParsed, uint32_t aDecoded) MOZ_FINAL MOZ_OVERRIDE;
-  virtual void NotifyWaitingForResourcesStatusChanged() MOZ_FINAL MOZ_OVERRIDE;
-  virtual void OnReadMetadataCompleted() MOZ_FINAL MOZ_OVERRIDE;
-  virtual void QueueMetadata(int64_t aTime, nsAutoPtr<MediaInfo> aInfo, nsAutoPtr<MetadataTags> aTags) MOZ_FINAL MOZ_OVERRIDE;
-  virtual void RemoveMediaTracks() MOZ_FINAL MOZ_OVERRIDE;
-  virtual void SetMediaDuration(int64_t aDuration) MOZ_FINAL MOZ_OVERRIDE;
-  virtual void SetMediaEndTime(int64_t aTime) MOZ_FINAL MOZ_OVERRIDE;
-  virtual void SetMediaSeekable(bool aMediaSeekable) MOZ_FINAL MOZ_OVERRIDE;
-  virtual void UpdateEstimatedMediaDuration(int64_t aDuration) MOZ_FINAL MOZ_OVERRIDE;
-  virtual void UpdatePlaybackPosition(int64_t aTime) MOZ_FINAL MOZ_OVERRIDE;
-  virtual bool HasInitializationData() MOZ_FINAL MOZ_OVERRIDE;
+  virtual bool IsMediaSeekable() final override;
+  virtual bool IsShutdown() const final override;
+  virtual bool IsTransportSeekable() final override;
+  virtual bool OnDecodeTaskQueue() const final override;
+  virtual bool OnStateMachineTaskQueue() const final override;
+  virtual int64_t GetMediaDuration() final override;
+  virtual layers::ImageContainer* GetImageContainer() final override;
+  virtual MediaDecoderOwner* GetOwner() final override;
+  virtual SourceBufferResource* GetResource() const final override;
+  virtual ReentrantMonitor& GetReentrantMonitor() final override;
+  virtual VideoFrameContainer* GetVideoFrameContainer() final override;
+  virtual void MetadataLoaded(nsAutoPtr<MediaInfo> aInfo,
+                              nsAutoPtr<MetadataTags> aTags,
+                              MediaDecoderEventVisibility aEventVisibility) final override;
+  virtual void FirstFrameLoaded(nsAutoPtr<MediaInfo> aInfo,
+                                MediaDecoderEventVisibility aEventVisibility) final override;
+  virtual void NotifyBytesConsumed(int64_t aBytes, int64_t aOffset) final override;
+  virtual void NotifyDataArrived(const char* aBuffer, uint32_t aLength, int64_t aOffset) final override;
+  virtual void NotifyDecodedFrames(uint32_t aParsed, uint32_t aDecoded, uint32_t aDropped) final override;
+  virtual void NotifyWaitingForResourcesStatusChanged() final override;
+  virtual void OnReadMetadataCompleted() final override;
+  virtual void QueueMetadata(int64_t aTime, nsAutoPtr<MediaInfo> aInfo, nsAutoPtr<MetadataTags> aTags) final override;
+  virtual void RemoveMediaTracks() final override;
+  virtual void SetMediaDuration(int64_t aDuration) final override;
+  virtual void SetMediaEndTime(int64_t aTime) final override;
+  virtual void SetMediaSeekable(bool aMediaSeekable) final override;
+  virtual void UpdateEstimatedMediaDuration(int64_t aDuration) final override;
+  virtual bool HasInitializationData() final override;
 
   // SourceBufferResource specific interface below.
+  int64_t GetTimestampOffset() const { return mTimestampOffset; }
+  void SetTimestampOffset(int64_t aOffset)  { mTimestampOffset = aOffset; }
 
   // Warning: this mirrors GetBuffered in MediaDecoder, but this class's base is
   // AbstractMediaDecoder, which does not supply this interface.
@@ -77,7 +80,7 @@ public:
     mReader = aReader;
   }
 
-  MediaDecoderReader* GetReader()
+  MediaDecoderReader* GetReader() const
   {
     return mReader;
   }
@@ -101,7 +104,7 @@ public:
   }
 
 #ifdef MOZ_EME
-  virtual nsresult SetCDMProxy(CDMProxy* aProxy) MOZ_OVERRIDE
+  virtual nsresult SetCDMProxy(CDMProxy* aProxy) override
   {
     MOZ_ASSERT(NS_IsMainThread());
     ReentrantMonitorAutoEnter mon(GetReentrantMonitor());
@@ -109,9 +112,9 @@ public:
     return NS_OK;
   }
 
-  virtual CDMProxy* GetCDMProxy() MOZ_OVERRIDE
+  virtual CDMProxy* GetCDMProxy() override
   {
-    MOZ_ASSERT(OnDecodeThread() || NS_IsMainThread());
+    MOZ_ASSERT(OnDecodeTaskQueue() || NS_IsMainThread());
     ReentrantMonitorAutoEnter mon(GetReentrantMonitor());
     return mCDMProxy;
   }
@@ -120,6 +123,26 @@ public:
   // Given a time convert it into an approximate byte offset from the
   // cached data. Returns -1 if no such value is computable.
   int64_t ConvertToByteOffset(double aTime);
+
+  // All durations are in usecs.
+
+  // We can't at this stage, accurately remove coded frames.
+  // Trim is a work around that hides data located after a given time by
+  // preventing playback beyond the trim point.
+  // No data is actually removed.
+  // aDuration is were data will be trimmed from.
+  void Trim(int64_t aDuration);
+  bool WasTrimmed()
+  {
+    return mTrimmedOffset >= 0;
+  }
+
+  // returns the real duration of the resource, including trimmed data.
+  void SetRealMediaDuration(int64_t aDuration);
+  int64_t GetRealMediaDuration()
+  {
+    return mRealMediaDuration;
+  }
 
 private:
   virtual ~SourceBufferDecoder();
@@ -131,8 +154,14 @@ private:
 
   AbstractMediaDecoder* mParentDecoder;
   nsRefPtr<MediaDecoderReader> mReader;
+  // in microseconds
   int64_t mTimestampOffset;
+  // mMediaDuration contains the apparent buffer duration, excluding trimmed data.
   int64_t mMediaDuration;
+  // mRealMediaDuration contains the real buffer duration, including trimmed data.
+  int64_t mRealMediaDuration;
+  // in seconds
+  double mTrimmedOffset;
 
 #ifdef MOZ_EME
   nsRefPtr<CDMProxy> mCDMProxy;

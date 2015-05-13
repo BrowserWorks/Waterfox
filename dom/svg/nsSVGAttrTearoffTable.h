@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -25,7 +26,7 @@ public:
 #ifdef DEBUG
   ~nsSVGAttrTearoffTable()
   {
-    NS_ABORT_IF_FALSE(!mTable, "Tear-off objects remain in hashtable at shutdown.");
+    MOZ_ASSERT(!mTable, "Tear-off objects remain in hashtable at shutdown.");
   }
 #endif
 
@@ -55,8 +56,8 @@ nsSVGAttrTearoffTable<SimpleType, TearoffType>::GetTearoff(SimpleType* aSimple)
   bool found =
 #endif
     mTable->Get(aSimple, &tearoff);
-  NS_ABORT_IF_FALSE(!found || tearoff,
-      "NULL pointer stored in attribute tear-off map");
+  MOZ_ASSERT(!found || tearoff,
+             "null pointer stored in attribute tear-off map");
 
   return tearoff;
 }
@@ -73,7 +74,7 @@ nsSVGAttrTearoffTable<SimpleType, TearoffType>::AddTearoff(SimpleType* aSimple,
   // We shouldn't be adding a tear-off if there already is one. If that happens,
   // something is wrong.
   if (mTable->Get(aSimple, nullptr)) {
-    NS_ABORT_IF_FALSE(false, "There is already a tear-off for this object.");
+    MOZ_ASSERT(false, "There is already a tear-off for this object.");
     return;
   }
 

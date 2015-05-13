@@ -407,9 +407,8 @@ loadListener.prototype = {
   onStatus: function (aRequest, aContext, aStatus, aStatusArg) {}
 }
 
-// Hacky method that tries to determine if this user is in a US geography, and
-// using an en-US build.
-function getIsUS() {
+// Method to determine if we should be using geo-specific defaults
+function geoSpecificDefaultsEnabled() {
   let geoSpecificDefaults = false;
   try {
     geoSpecificDefaults = Services.prefs.getBoolPref("browser.search.geoSpecificDefaults");
@@ -420,25 +419,87 @@ function getIsUS() {
     distroID = Services.prefs.getCharPref("distribution.id");
   } catch (e) {}
 
-  if (!geoSpecificDefaults || distroID) {
+  return (geoSpecificDefaults && !distroID);
+}
+
+// Some notes on countryCode and region prefs:
+// * A "countryCode" pref is set via a geoip lookup.  It always reflects the
+//   result of that geoip request.
+// * A "region" pref, once set, is the region actually used for search.  In
+//   most cases it will be identical to the countryCode pref.
+// * The value of "region" and "countryCode" will only not agree in one edge
+//   case - 34/35 users who have previously been configured to use US defaults
+//   based purely on a timezone check will have "region" forced to US,
+//   regardless of what countryCode geoip returns.
+// * We may want to know if we are in the US before we have *either*
+//   countryCode or region - in which case we fallback to a timezone check,
+//   but we don't persist that value anywhere in the expectation we will
+//   eventually get a countryCode/region.
+
+// A method that "migrates" prefs if necessary.
+function migrateRegionPrefs() {
+  // If we already have a "region" pref there's nothing to do.
+  if (Services.prefs.prefHasUserValue("browser.search.region")) {
+    return;
+  }
+
+  // If we have 'isUS' but no 'countryCode' then we are almost certainly
+  // a profile from Fx 34/35 that set 'isUS' based purely on a timezone
+  // check. If this said they were US, we force region to be US.
+  // (But if isUS was false, we leave region alone - we will do a geoip request
+  // and set the region accordingly)
+  try {
+    if (Services.prefs.getBoolPref("browser.search.isUS") &&
+        !Services.prefs.prefHasUserValue("browser.search.countryCode")) {
+      Services.prefs.setCharPref("browser.search.region", "US");
+    }
+  } catch (ex) {
+    // no isUS pref, nothing to do.
+  }
+  // If we have a countryCode pref but no region pref, just force region
+  // to be the countryCode.
+  try {
+    let countryCode = Services.prefs.getCharPref("browser.search.countryCode");
+    if (!Services.prefs.prefHasUserValue("browser.search.region")) {
+      Services.prefs.setCharPref("browser.search.region", countryCode);
+    }
+  } catch (ex) {
+    // no countryCode pref, nothing to do.
+  }
+}
+
+// A method to determine if we are in the United States (US) for the search
+// service.
+// It uses a browser.search.region pref (which typically comes from a geoip
+// request) or if that doesn't exist, falls back to a hacky timezone check.
+function getIsUS() {
+  // Regardless of the region or countryCode, non en-US builds are not
+  // considered to be in the US from the POV of the search service.
+  if (getLocale() != "en-US") {
     return false;
   }
 
-  // If we've set the pref before, just return that result.
-  let cachePref = "browser.search.isUS";
+  // If we've got a region pref, trust it.
   try {
-    return Services.prefs.getBoolPref(cachePref);
+    return Services.prefs.getCharPref("browser.search.region") == "US";
   } catch(e) {}
 
-  if (getLocale() != "en-US") {
-    Services.prefs.setBoolPref(cachePref, false);
-    return false;
-  }
+  // So we are en-US but have no region pref - fallback to hacky timezone check.
   let isNA = isUSTimezone();
-  Services.prefs.setBoolPref(cachePref, isNA);
+  LOG("getIsUS() fell back to a timezone check with the result=" + isNA);
   return isNA;
 }
 
+// Helper method to modify preference keys with geo-specific modifiers, if needed.
+function getGeoSpecificPrefName(basepref) {
+  if (!geoSpecificDefaultsEnabled())
+    return basepref;
+  if (getIsUS())
+    return basepref + ".US";
+  return basepref;
+}
+
+// A method that tries to determine if this user is in a US geography.
 function isUSTimezone() {
   // Timezone assumptions! We assume that if the system clock's timezone is
   // between Newfoundland and Hawaii, that the user is in North America.
@@ -481,11 +542,9 @@ let ensureKnownCountryCode = Task.async(function* () {
 function storeCountryCode(cc) {
   // Set the country-code itself.
   Services.prefs.setCharPref("browser.search.countryCode", cc);
-  // and update our "isUS" cache pref if it is US - that will prevent a
-  // fallback to the timezone check.
-  // However, only do this if the locale also matches.
-  if (getLocale() == "en-US") {
-    Services.prefs.setBoolPref("browser.search.isUS", (cc == "US"));
+  // And set the region pref if we don't already have a value.
+  if (!Services.prefs.prefHasUserValue("browser.search.region")) {
+    Services.prefs.setCharPref("browser.search.region", cc);
   }
   // and telemetry...
   let isTimezoneUS = isUSTimezone();
@@ -494,6 +553,40 @@ function storeCountryCode(cc) {
   }
   if (cc != "US" && isTimezoneUS) {
     Services.telemetry.getHistogramById("SEARCH_SERVICE_US_TIMEZONE_MISMATCHED_COUNTRY").add(1);
+  }
+  // telemetry to compare our geoip response with platform-specific country data.
+  // On Mac and Windows, we can get a country code via nsIGfxInfo2
+  let gfxInfo2;
+  try {
+    gfxInfo2 = Cc["@mozilla.org/gfx/info;1"].getService(Ci.nsIGfxInfo2);
+  } catch (ex) {
+    // not available on this platform.
+  }
+  if (gfxInfo2) {
+    let probeUSMismatched, probeNonUSMismatched;
+    switch (Services.appinfo.OS) {
+      case "Darwin":
+        probeUSMismatched = "SEARCH_SERVICE_US_COUNTRY_MISMATCHED_PLATFORM_OSX";
+        probeNonUSMismatched = "SEARCH_SERVICE_NONUS_COUNTRY_MISMATCHED_PLATFORM_OSX";
+        break;
+      case "WINNT":
+        probeUSMismatched = "SEARCH_SERVICE_US_COUNTRY_MISMATCHED_PLATFORM_WIN";
+        probeNonUSMismatched = "SEARCH_SERVICE_NONUS_COUNTRY_MISMATCHED_PLATFORM_WIN";
+        break;
+      default:
+        Cu.reportError("Platform " + Services.appinfo.OS + " has nsIGfxInfo2 but no search service telemetry probes");
+        break;
+    }
+    if (probeUSMismatched && probeNonUSMismatched) {
+      let platformCC = gfxInfo2.countryCode;
+      if (cc == "US" || platformCC == "US") {
+        // one of the 2 said US, so record if they are the same.
+        Services.telemetry.getHistogramById(probeUSMismatched).add(cc != platformCC);
+      } else {
+        // different country - record if they are the same
+        Services.telemetry.getHistogramById(probeNonUSMismatched).add(cc != platformCC);
+      }
+    }
   }
 }
 
@@ -510,6 +603,7 @@ function fetchCountryCode() {
     // generic catch-all that doesn't fit into other categories.
   };
   let endpoint = Services.urlFormatter.formatURLPref("browser.search.geoip.url");
+  LOG("_fetchCountryCode starting with endpoint " + endpoint);
   // As an escape hatch, no endpoint means no geoip.
   if (!endpoint) {
     return Promise.resolve();
@@ -1377,7 +1471,12 @@ Engine.prototype = {
 
     LOG("_initFromURIAndLoad: Downloading engine from: \"" + this._uri.spec + "\".");
 
-    var chan = NetUtil.ioService.newChannelFromURI(this._uri);
+    var chan = NetUtil.ioService.newChannelFromURI2(this._uri,
+                                                    null,      // aLoadingNode
+                                                    Services.scriptSecurityManager.getSystemPrincipal(),
+                                                    null,      // aTriggeringPrincipal
+                                                    Ci.nsILoadInfo.SEC_NORMAL,
+                                                    Ci.nsIContentPolicy.TYPE_OTHER);
 
     if (this._engineToUpdate && (chan instanceof Ci.nsIHttpChannel)) {
       var lastModified = engineMetadataService.getAttr(this._engineToUpdate,
@@ -1440,7 +1539,12 @@ Engine.prototype = {
 
     LOG("_initFromURISync: Loading engine from: \"" + this._uri.spec + "\".");
 
-    var chan = NetUtil.ioService.newChannelFromURI(this._uri);
+    var chan = NetUtil.ioService.newChannelFromURI2(this._uri,
+                                                    null,      // aLoadingNode
+                                                    Services.scriptSecurityManager.getSystemPrincipal(),
+                                                    null,      // aTriggeringPrincipal
+                                                    Ci.nsILoadInfo.SEC_NORMAL,
+                                                    Ci.nsIContentPolicy.TYPE_OTHER);
 
     var stream = chan.open();
     var parser = Cc["@mozilla.org/xmlextras/domparser;1"].
@@ -1757,7 +1861,12 @@ Engine.prototype = {
             getBoolPref(BROWSER_SEARCH_PREF + "cache.enabled", true)) {
           LOG("_setIcon: Downloading icon: \"" + uri.spec +
               "\" for engine: \"" + this.name + "\"");
-          var chan = NetUtil.ioService.newChannelFromURI(uri);
+          var chan = NetUtil.ioService.newChannelFromURI2(uri,
+                                                          null,      // aLoadingNode
+                                                          Services.scriptSecurityManager.getSystemPrincipal(),
+                                                          null,      // aTriggeringPrincipal
+                                                          Ci.nsILoadInfo.SEC_NORMAL,
+                                                          Ci.nsIContentPolicy.TYPE_IMAGE);
 
           let iconLoadCallback = function (aByteArray, aEngine) {
             // This callback may run after we've already set a preferred icon,
@@ -1963,10 +2072,7 @@ Engine.prototype = {
     let defaultPrefB = Services.prefs.getDefaultBranch(BROWSER_SEARCH_PREF);
     let nsIPLS = Ci.nsIPrefLocalizedString;
     let defaultEngine;
-    let pref = "defaultenginename";
-    if (getIsUS()) {
-      pref += ".US";
-    }
+    let pref = getGeoSpecificPrefName("defaultenginename");
     try {
       defaultEngine = defaultPrefB.getComplexValue(pref, nsIPLS).data;
     } catch (ex) {}
@@ -3122,6 +3228,7 @@ SearchService.prototype = {
   _syncInit: function SRCH_SVC__syncInit() {
     LOG("_syncInit start");
     this._initStarted = true;
+    migrateRegionPrefs();
     try {
       this._syncLoadEngines();
     } catch (ex) {
@@ -3147,6 +3254,7 @@ SearchService.prototype = {
    * succeeds.
    */
   _asyncInit: function SRCH_SVC__asyncInit() {
+    migrateRegionPrefs();
     return Task.spawn(function() {
       LOG("_asyncInit start");
       try {
@@ -3186,13 +3294,7 @@ SearchService.prototype = {
     let nsIPLS = Ci.nsIPrefLocalizedString;
     let defaultEngine;
 
-    let defPref;
-    if (getIsUS()) {
-      defPref = "defaultenginename.US";
-    } else {
-      defPref = "defaultenginename";
-    }
-
+    let defPref = getGeoSpecificPrefName("defaultenginename");
     try {
       defaultEngine = defaultPrefB.getComplexValue(defPref, nsIPLS).data;
     } catch (ex) {
@@ -3200,6 +3302,10 @@ SearchService.prototype = {
       // getEngineByName will just return null, which is the best we can do.
     }
     return this.getEngineByName(defaultEngine);
+  },
+
+  resetToOriginalDefaultEngine: function SRCH_SVC__resetToOriginalDefaultEngine() {
+    this.defaultEngine = this._originalDefaultEngine;
   },
 
   _buildCache: function SRCH_SVC__buildCache() {
@@ -3472,7 +3578,7 @@ SearchService.prototype = {
     this._defaultEngine = null;
 
     // Clear the metadata service.
-    engineMetadataService._initState = engineMetadataService._InitStates.NOT_STARTED;
+    engineMetadataService._initialized = false;
     engineMetadataService._initializer = null;
 
     Task.spawn(function* () {
@@ -3799,7 +3905,12 @@ SearchService.prototype = {
       let listURL = root + "list.txt";
       let names = [];
       try {
-        let chan = NetUtil.ioService.newChannelFromURI(makeURI(listURL));
+        let chan = NetUtil.ioService.newChannelFromURI2(makeURI(listURL),
+                                                        null,      // aLoadingNode
+                                                        Services.scriptSecurityManager.getSystemPrincipal(),
+                                                        null,      // aTriggeringPrincipal
+                                                        Ci.nsILoadInfo.SEC_NORMAL,
+                                                        Ci.nsIContentPolicy.TYPE_OTHER);
         let sis = Cc["@mozilla.org/scriptableinputstream;1"].
                   createInstance(Ci.nsIScriptableInputStream);
         sis.init(chan.open());
@@ -3973,12 +4084,10 @@ SearchService.prototype = {
       }
       catch (e) { }
 
+      let prefNameBase = getGeoSpecificPrefName(BROWSER_SEARCH_PREF + "order");
       while (true) {
-        prefName = BROWSER_SEARCH_PREF + "order.";
-        if (getIsUS()) {
-          prefName += "US.";
-        }
-        engineName = getLocalizedPref(prefName + (++i));
+        prefName = prefNameBase + "." + (++i);
+        engineName = getLocalizedPref(prefName);
         if (!engineName)
           break;
 
@@ -4139,12 +4248,9 @@ SearchService.prototype = {
     }
 
     // Now look through the "browser.search.order" branch.
+    let prefNameBase = getGeoSpecificPrefName(BROWSER_SEARCH_PREF + "order");
     for (var j = 1; ; j++) {
-      var prefName = BROWSER_SEARCH_PREF + "order.";
-      if (getIsUS()) {
-        prefName += "US.";
-      }
-      prefName += j;
+      let prefName = prefNameBase + "." + j;
       engineName = getLocalizedPref(prefName);
       if (!engineName)
         break;
@@ -4357,7 +4463,7 @@ SearchService.prototype = {
   get defaultEngine() {
     this._ensureInitialized();
     if (!this._defaultEngine) {
-      let defPref = BROWSER_SEARCH_PREF + "defaultenginename";
+      let defPref = getGeoSpecificPrefName(BROWSER_SEARCH_PREF + "defaultenginename");
       let defaultEngine = this.getEngineByName(getLocalizedPref(defPref, ""))
       if (!defaultEngine)
         defaultEngine = this._getSortedEngines(false)[0] || null;
@@ -4385,7 +4491,8 @@ SearchService.prototype = {
 
     this._defaultEngine = newDefaultEngine;
 
-    let defPref = BROWSER_SEARCH_PREF + "defaultenginename";
+    let defPref = getGeoSpecificPrefName(BROWSER_SEARCH_PREF + "defaultenginename");
+
     // If we change the default engine in the future, that change should impact
     // users who have switched away from and then back to the build's "default"
     // engine. So clear the user pref when the defaultEngine is set to the
@@ -4600,7 +4707,7 @@ SearchService.prototype = {
     try {
       terms = gTextToSubURI.UnEscapeAndConvert(
                                        mapEntry.engine.queryCharset,
-                                       encodedTerms.replace("+", " ", "g"));
+                                       encodedTerms.replace(/\+/g, " "));
     } catch (ex) {
       // Decoding errors will cause this match to be ignored.
       LOG("Parameter decoding failed. Charset: " +
@@ -4764,29 +4871,8 @@ SearchService.prototype = {
 var engineMetadataService = {
   _jsonFile: OS.Path.join(OS.Constants.Path.profileDir, "search-metadata.json"),
 
-  /**
-   * Possible values for |_initState|.
-   *
-   * We have two paths to perform initialization: a default asynchronous
-   * path and a fallback synchronous path that can interrupt the async
-   * path. For this reason, initialization is actually something of a
-   * finite state machine, represented with the following states:
-   *
-   * @enum
-   */
-  _InitStates: {
-    NOT_STARTED: "NOT_STARTED"
-      /**Initialization has not started*/,
-    FINISHED_SUCCESS: "FINISHED_SUCCESS"
-      /**Setup complete, with a success*/
-  },
-
-  /**
-   * The latest step completed by initialization. One of |InitStates|
-   *
-   * @type {engineMetadataService._InitStates}
-   */
-  _initState: null,
+  // Boolean flag that is true if initialization was successful.
+  _initialized: false,
 
   // A promise fulfilled once initialization is complete
   _initializer: null,
@@ -4802,34 +4888,32 @@ var engineMetadataService = {
       let initializer = this._initializer = Promise.defer();
       Task.spawn((function task_init() {
         LOG("metadata init: starting");
-        switch (this._initState) {
-          case engineMetadataService._InitStates.NOT_STARTED:
-            // 1. Load json file if it exists
-            try {
-              let contents = yield OS.File.read(this._jsonFile);
-              if (this._initState == engineMetadataService._InitStates.FINISHED_SUCCESS) {
-                // No need to pursue asynchronous initialization,
-                // synchronous fallback was called and has finished.
-                return;
-              }
-              this._store = JSON.parse(new TextDecoder().decode(contents));
-            } catch (ex) {
-              if (this._initState == engineMetadataService._InitStates.FINISHED_SUCCESS) {
-                // No need to pursue asynchronous initialization,
-                // synchronous fallback was called and has finished.
-                return;
-              }
-              // Couldn't load json, use an empty store
-              LOG("metadata init: could not load JSON file " + ex);
-              this._store = {};
-            }
-            break;
-
-          default:
-            throw new Error("metadata init: invalid state " + this._initState);
+        if (this._initialized) {
+          throw new Error("metadata init: invalid state, _initialized is " +
+                          "true but initialization promise has not been " +
+                          "resolved");
+        }
+        // 1. Load json file if it exists
+        try {
+          let contents = yield OS.File.read(this._jsonFile);
+          if (this._initialized) {
+            // No need to pursue asynchronous initialization,
+            // synchronous fallback was called and has finished.
+            return;
+          }
+          this._store = JSON.parse(new TextDecoder().decode(contents));
+        } catch (ex) {
+          if (this._initialized) {
+            // No need to pursue asynchronous initialization,
+            // synchronous fallback was called and has finished.
+            return;
+          }
+          // Couldn't load json, use an empty store
+          LOG("metadata init: could not load JSON file " + ex);
+          this._store = {};
         }
 
-        this._initState = this._InitStates.FINISHED_SUCCESS;
+        this._initialized = true;
         LOG("metadata init: complete");
       }).bind(this)).then(
         // 3. Inform any observers
@@ -4854,33 +4938,31 @@ var engineMetadataService = {
    */
   syncInit: function epsSyncInit() {
     LOG("metadata syncInit start");
-    if (this._initState == engineMetadataService._InitStates.FINISHED_SUCCESS) {
+    if (this._initialized) {
       return;
     }
-    switch (this._initState) {
-      case engineMetadataService._InitStates.NOT_STARTED:
-        let jsonFile = new FileUtils.File(this._jsonFile);
-        // 1. Load json file if it exists
-        if (jsonFile.exists()) {
-          try {
-            let uri = Services.io.newFileURI(jsonFile);
-            let stream = Services.io.newChannelFromURI(uri).open();
-            this._store = parseJsonFromStream(stream);
-          } catch (x) {
-            LOG("metadata syncInit: could not load JSON file " + x);
-            this._store = {};
-          }
-        } else {
-          LOG("metadata syncInit: using an empty store");
-          this._store = {};
-        }
-
-        this._initState = this._InitStates.FINISHED_SUCCESS;
-        break;
-
-      default:
-        throw new Error("metadata syncInit: invalid state " + this._initState);
+    let jsonFile = new FileUtils.File(this._jsonFile);
+    // 1. Load json file if it exists
+    if (jsonFile.exists()) {
+      try {
+        let uri = Services.io.newFileURI(jsonFile);
+        let stream = Services.io.newChannelFromURI2(uri,
+                                                    null,      // aLoadingNode
+                                                    Services.scriptSecurityManager.getSystemPrincipal(),
+                                                    null,      // aTriggeringPrincipal
+                                                    Ci.nsILoadInfo.SEC_NORMAL,
+                                                    Ci.nsIContentPolicy.TYPE_OTHER).open();
+        this._store = parseJsonFromStream(stream);
+      } catch (x) {
+        LOG("metadata syncInit: could not load JSON file " + x);
+        this._store = {};
+      }
+    } else {
+      LOG("metadata syncInit: using an empty store");
+      this._store = {};
     }
+
+    this._initialized = true;
 
     // 3. Inform any observers
     if (this._initializer) {
@@ -5015,7 +5097,7 @@ var engineMetadataService = {
   _lazyWriter: null
 };
 
-engineMetadataService._initState = engineMetadataService._InitStates.NOT_STARTED;
+engineMetadataService._initialized = false;
 
 const SEARCH_UPDATE_LOG_PREFIX = "*** Search update: ";
 

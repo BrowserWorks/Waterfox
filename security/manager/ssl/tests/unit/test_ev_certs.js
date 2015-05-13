@@ -50,8 +50,8 @@ function check_cert_err(cert_name, expected_error) {
   let cert = certdb.findCertByNickname(null, cert_name);
   let hasEVPolicy = {};
   let verifiedChain = {};
-  let error = certdb.verifyCertNow(cert, certificateUsageSSLServer,
-                                   NO_FLAGS, verifiedChain, hasEVPolicy);
+  let error = certdb.verifyCertNow(cert, certificateUsageSSLServer, NO_FLAGS,
+                                   null, verifiedChain, hasEVPolicy);
   do_check_eq(error,  expected_error);
 }
 
@@ -60,10 +60,10 @@ function check_ee_for_ev(cert_name, expected_ev) {
     let cert = certdb.findCertByNickname(null, cert_name);
     let hasEVPolicy = {};
     let verifiedChain = {};
-    let error = certdb.verifyCertNow(cert, certificateUsageSSLServer,
-                                     NO_FLAGS, verifiedChain, hasEVPolicy);
+    let error = certdb.verifyCertNow(cert, certificateUsageSSLServer, NO_FLAGS,
+                                     null, verifiedChain, hasEVPolicy);
     do_check_eq(hasEVPolicy.value, expected_ev);
-    do_check_eq(0, error);
+    do_check_eq(error, PRErrorCodeSuccess);
 }
 
 function run_test() {
@@ -154,6 +154,47 @@ function run_test() {
     check_no_ocsp_requests("no-ocsp-url-cert", SEC_ERROR_POLICY_VALIDATION_FAILED);
   });
 
+  // Check OneCRL OCSP request skipping works correctly
+  add_test(function () {
+    // enable OneCRL OCSP skipping - allow staleness of up to 1 day
+    Services.prefs.setIntPref("security.onecrl.maximum_staleness_in_seconds", 86400);
+    // set the blocklist-background-update-timer value to the recent past
+    Services.prefs.setIntPref("app.update.lastUpdateTime.blocklist-background-update-timer",
+                              Math.floor(Date.now() / 1000) - 1);
+    clearOCSPCache();
+    // the intermediate should not have an associated OCSP request
+    let ocspResponder = start_ocsp_responder(["ev-valid"]);
+    check_ee_for_ev("ev-valid", gEVExpected);
+    Services.prefs.clearUserPref("security.onecrl.maximum_staleness_in_seconds");
+    ocspResponder.stop(run_next_test);
+  });
+
+  add_test(function () {
+    // disable OneCRL OCSP Skipping (no staleness allowed)
+    Services.prefs.setIntPref("security.onecrl.maximum_staleness_in_seconds", 0);
+    clearOCSPCache();
+    let ocspResponder = start_ocsp_responder(
+                          gEVExpected ? ["int-ev-valid", "ev-valid"]
+                                      : ["ev-valid"]);
+    check_ee_for_ev("ev-valid", gEVExpected);
+    Services.prefs.clearUserPref("security.onecrl.maximum_staleness_in_seconds");
+    ocspResponder.stop(run_next_test);
+  });
+
+  add_test(function () {
+    // enable OneCRL OCSP skipping - allow staleness of up to 1 day
+    Services.prefs.setIntPref("security.onecrl.maximum_staleness_in_seconds", 86400);
+    // set the blocklist-background-update-timer value to the more distant past
+    Services.prefs.setIntPref("app.update.lastUpdateTime.blocklist-background-update-timer",
+                              Math.floor(Date.now() / 1000) - 86480);
+    clearOCSPCache();
+    let ocspResponder = start_ocsp_responder(
+                          gEVExpected ? ["int-ev-valid", "ev-valid"]
+                                      : ["ev-valid"]);
+    check_ee_for_ev("ev-valid", gEVExpected);
+    Services.prefs.clearUserPref("security.onecrl.maximum_staleness_in_seconds");
+    ocspResponder.stop(run_next_test);
+  });
 
   // Test the EV continues to work with flags after successful EV verification
   add_test(function () {
@@ -171,11 +212,12 @@ function run_test() {
       let flags = Ci.nsIX509CertDB.FLAG_LOCAL_ONLY |
                   Ci.nsIX509CertDB.FLAG_MUST_BE_EV;
 
-      let error = certdb.verifyCertNow(cert, certificateUsageSSLServer,
-                                       flags, verifiedChain, hasEVPolicy);
+      let error = certdb.verifyCertNow(cert, certificateUsageSSLServer, flags,
+                                       null, verifiedChain, hasEVPolicy);
       do_check_eq(hasEVPolicy.value, gEVExpected);
       do_check_eq(error,
-                  gEVExpected ? 0 : SEC_ERROR_POLICY_VALIDATION_FAILED);
+                  gEVExpected ? PRErrorCodeSuccess
+                              : SEC_ERROR_POLICY_VALIDATION_FAILED);
       failingOcspResponder.stop(run_next_test);
     });
   });
@@ -251,13 +293,9 @@ function check_no_ocsp_requests(cert_name, expected_error) {
   let flags = Ci.nsIX509CertDB.FLAG_LOCAL_ONLY |
               Ci.nsIX509CertDB.FLAG_MUST_BE_EV;
   let error = certdb.verifyCertNow(cert, certificateUsageSSLServer, flags,
-                                   verifiedChain, hasEVPolicy);
+                                   null, verifiedChain, hasEVPolicy);
   // Since we're not doing OCSP requests, no certificate will be EV.
   do_check_eq(hasEVPolicy.value, false);
   do_check_eq(expected_error, error);
-  // Also check that isExtendedValidation doesn't cause OCSP requests.
-  let identityInfo = cert.QueryInterface(Ci.nsIIdentityInfo);
-  do_check_eq(identityInfo.isExtendedValidation, false);
   ocspResponder.stop(run_next_test);
 }
-

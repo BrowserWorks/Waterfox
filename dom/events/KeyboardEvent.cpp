@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -255,9 +256,9 @@ KeyboardEvent::InitWithKeyboardEventInit(EventTarget* aOwner,
 {
   bool trusted = Init(aOwner);
   aRv = InitKeyEvent(aType, aParam.mBubbles, aParam.mCancelable,
-                     aParam.mView, aParam.mCtrlKey, aParam.mAltKey,
-                     aParam.mShiftKey, aParam.mMetaKey,
+                     aParam.mView, false, false, false, false,
                      aParam.mKeyCode, aParam.mCharCode);
+  InitModifiers(aParam);
   SetTrusted(trusted);
   mDetail = aParam.mDetail;
   mInitializedByCtor = true;
@@ -267,10 +268,16 @@ KeyboardEvent::InitWithKeyboardEventInit(EventTarget* aOwner,
   internalEvent->location = aParam.mLocation;
   internalEvent->mIsRepeat = aParam.mRepeat;
   internalEvent->mIsComposing = aParam.mIsComposing;
-  internalEvent->mKeyNameIndex = KEY_NAME_INDEX_USE_STRING;
-  internalEvent->mCodeNameIndex = CODE_NAME_INDEX_USE_STRING;
-  internalEvent->mKeyValue = aParam.mKey;
-  internalEvent->mCodeValue = aParam.mCode;
+  internalEvent->mKeyNameIndex =
+    WidgetKeyboardEvent::GetKeyNameIndex(aParam.mKey);
+  if (internalEvent->mKeyNameIndex == KEY_NAME_INDEX_USE_STRING) {
+    internalEvent->mKeyValue = aParam.mKey;
+  }
+  internalEvent->mCodeNameIndex =
+    WidgetKeyboardEvent::GetCodeNameIndex(aParam.mCode);
+  if (internalEvent->mCodeNameIndex == CODE_NAME_INDEX_USE_STRING) {
+    internalEvent->mCodeValue = aParam.mCode;
+  }
 }
 
 NS_IMETHODIMP

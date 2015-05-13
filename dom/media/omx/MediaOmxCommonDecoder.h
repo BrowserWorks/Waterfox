@@ -23,25 +23,28 @@ class MediaOmxCommonDecoder : public MediaDecoder
 public:
   MediaOmxCommonDecoder();
 
-  virtual void FirstFrameLoaded(nsAutoPtr<MediaInfo> aInfo);
-  virtual void ChangeState(PlayState aState);
-  virtual void ApplyStateToStateMachine(PlayState aState);
-  virtual void SetVolume(double aVolume);
-  virtual void PlaybackPositionChanged();
-  virtual void UpdateReadyStateForData();
-  virtual void SetElementVisibility(bool aIsVisible);
-  virtual void SetPlatformCanOffloadAudio(bool aCanOffloadAudio);
-  virtual bool CheckDecoderCanOffloadAudio();
+  virtual void FirstFrameLoaded(nsAutoPtr<MediaInfo> aInfo,
+                                MediaDecoderEventVisibility aEventVisibility) override;
+  virtual void ChangeState(PlayState aState) override;
+  virtual void CallSeek(const SeekTarget& aTarget) override;
+  virtual void SetVolume(double aVolume) override;
+  virtual int64_t CurrentPosition() override;
+  virtual MediaDecoderOwner::NextFrameStatus NextFrameStatus() override;
+  virtual void SetElementVisibility(bool aIsVisible) override;
+  virtual void SetPlatformCanOffloadAudio(bool aCanOffloadAudio) override;
+  virtual bool CheckDecoderCanOffloadAudio() override;
   virtual void AddOutputStream(ProcessedMediaStream* aStream,
-                               bool aFinishWhenEnded);
-  virtual void SetPlaybackRate(double aPlaybackRate);
+                               bool aFinishWhenEnded) override;
+  virtual void SetPlaybackRate(double aPlaybackRate) override;
 
   void AudioOffloadTearDown();
 
-  virtual MediaDecoderStateMachine* CreateStateMachine();
+  virtual MediaDecoderStateMachine* CreateStateMachine() override;
 
   virtual MediaOmxCommonReader* CreateReader() = 0;
   virtual MediaDecoderStateMachine* CreateStateMachineFromReader(MediaOmxCommonReader* aReader) = 0;
+
+  void NotifyOffloadPlayerPositionChanged() { UpdateLogicalPosition(); }
 
 protected:
   virtual ~MediaOmxCommonDecoder();

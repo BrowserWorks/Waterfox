@@ -16,29 +16,26 @@ public:
   AppleDecoderModule();
   virtual ~AppleDecoderModule();
 
-  virtual nsresult Startup() MOZ_OVERRIDE;
-
-  // Called when the decoders have shutdown. Main thread only.
-  // Does this really need to be main thread only????
-  virtual nsresult Shutdown() MOZ_OVERRIDE;
+  virtual nsresult Startup() override;
 
   // Decode thread.
   virtual already_AddRefed<MediaDataDecoder>
-  CreateVideoDecoder(const mp4_demuxer::VideoDecoderConfig& aConfig,
+  CreateVideoDecoder(const VideoInfo& aConfig,
                      layers::LayersBackend aLayersBackend,
                      layers::ImageContainer* aImageContainer,
-                     MediaTaskQueue* aVideoTaskQueue,
-                     MediaDataDecoderCallback* aCallback) MOZ_OVERRIDE;
+                     FlushableMediaTaskQueue* aVideoTaskQueue,
+                     MediaDataDecoderCallback* aCallback) override;
 
   // Decode thread.
   virtual already_AddRefed<MediaDataDecoder>
-  CreateAudioDecoder(const mp4_demuxer::AudioDecoderConfig& aConfig,
-                     MediaTaskQueue* aAudioTaskQueue,
-                     MediaDataDecoderCallback* aCallback) MOZ_OVERRIDE;
+  CreateAudioDecoder(const AudioInfo& aConfig,
+                     FlushableMediaTaskQueue* aAudioTaskQueue,
+                     MediaDataDecoderCallback* aCallback) override;
 
-  virtual bool SupportsAudioMimeType(const char* aMimeType) MOZ_OVERRIDE;
-  virtual bool
-  DecoderNeedsAVCC(const mp4_demuxer::VideoDecoderConfig& aConfig) MOZ_OVERRIDE;
+  virtual bool SupportsMimeType(const nsACString& aMimeType) override;
+
+  virtual ConversionRequired
+  DecoderNeedsConversion(const TrackInfo& aConfig) const override;
 
   static void Init();
   static nsresult CanDecode();

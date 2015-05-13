@@ -5,7 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "WMFAudioMFTManager.h"
-#include "mp4_demuxer/DecoderData.h"
+#include "MediaInfo.h"
 #include "VideoUtils.h"
 #include "WMFUtils.h"
 #include "nsTArray.h"
@@ -68,23 +68,22 @@ AACAudioSpecificConfigToUserData(uint8_t aAACProfileLevelIndication,
 }
 
 WMFAudioMFTManager::WMFAudioMFTManager(
-  const mp4_demuxer::AudioDecoderConfig& aConfig)
-  : mAudioChannels(aConfig.channel_count)
-  , mAudioBytesPerSample(aConfig.bits_per_sample / 8)
-  , mAudioRate(aConfig.samples_per_second)
+  const AudioInfo& aConfig)
+  : mAudioChannels(aConfig.mChannels)
+  , mAudioRate(aConfig.mRate)
   , mAudioFrameOffset(0)
   , mAudioFrameSum(0)
   , mMustRecaptureAudioPosition(true)
 {
   MOZ_COUNT_CTOR(WMFAudioMFTManager);
 
-  if (!strcmp(aConfig.mime_type, "audio/mpeg")) {
+  if (aConfig.mMimeType.EqualsLiteral("audio/mpeg")) {
     mStreamType = MP3;
-  } else if (!strcmp(aConfig.mime_type, "audio/mp4a-latm")) {
+  } else if (aConfig.mMimeType.EqualsLiteral("audio/mp4a-latm")) {
     mStreamType = AAC;
-    AACAudioSpecificConfigToUserData(aConfig.aac_profile,
-                                     aConfig.audio_specific_config->Elements(),
-                                     aConfig.audio_specific_config->Length(),
+    AACAudioSpecificConfigToUserData(aConfig.mProfile,
+                                     aConfig.mCodecSpecificConfig->Elements(),
+                                     aConfig.mCodecSpecificConfig->Length(),
                                      mUserData);
   } else {
     mStreamType = Unknown;
@@ -129,34 +128,47 @@ WMFAudioMFTManager::Init()
   NS_ENSURE_TRUE(SUCCEEDED(hr), nullptr);
 
   // Setup input/output media types
-  RefPtr<IMFMediaType> type;
+  RefPtr<IMFMediaType> inputType;
 
-  hr = wmf::MFCreateMediaType(byRef(type));
+  hr = wmf::MFCreateMediaType(byRef(inputType));
   NS_ENSURE_TRUE(SUCCEEDED(hr), nullptr);
 
-  hr = type->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio);
+  hr = inputType->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio);
   NS_ENSURE_TRUE(SUCCEEDED(hr), nullptr);
 
-  hr = type->SetGUID(MF_MT_SUBTYPE, GetMediaSubtypeGUID());
+  hr = inputType->SetGUID(MF_MT_SUBTYPE, GetMediaSubtypeGUID());
   NS_ENSURE_TRUE(SUCCEEDED(hr), nullptr);
 
-  hr = type->SetUINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, mAudioRate);
+  hr = inputType->SetUINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, mAudioRate);
   NS_ENSURE_TRUE(SUCCEEDED(hr), nullptr);
 
-  hr = type->SetUINT32(MF_MT_AUDIO_NUM_CHANNELS, mAudioChannels);
+  hr = inputType->SetUINT32(MF_MT_AUDIO_NUM_CHANNELS, mAudioChannels);
   NS_ENSURE_TRUE(SUCCEEDED(hr), nullptr);
 
   if (mStreamType == AAC) {
-    hr = type->SetUINT32(MF_MT_AAC_PAYLOAD_TYPE, 0x0); // Raw AAC packet
+    hr = inputType->SetUINT32(MF_MT_AAC_PAYLOAD_TYPE, 0x0); // Raw AAC packet
     NS_ENSURE_TRUE(SUCCEEDED(hr), nullptr);
 
-    hr = type->SetBlob(MF_MT_USER_DATA,
-                       mUserData.Elements(),
-                       mUserData.Length());
+    hr = inputType->SetBlob(MF_MT_USER_DATA,
+                            mUserData.Elements(),
+                            mUserData.Length());
     NS_ENSURE_TRUE(SUCCEEDED(hr), nullptr);
   }
 
-  hr = decoder->SetMediaTypes(type, MFAudioFormat_PCM);
+  RefPtr<IMFMediaType> outputType;
+  hr = wmf::MFCreateMediaType(byRef(outputType));
+  NS_ENSURE_TRUE(SUCCEEDED(hr), nullptr);
+
+  hr = outputType->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio);
+  NS_ENSURE_TRUE(SUCCEEDED(hr), nullptr);
+
+  hr = outputType->SetGUID(MF_MT_SUBTYPE, MFAudioFormat_PCM);
+  NS_ENSURE_TRUE(SUCCEEDED(hr), nullptr);
+
+  hr = outputType->SetUINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16);
+  NS_ENSURE_TRUE(SUCCEEDED(hr), nullptr);
+
+  hr = decoder->SetMediaTypes(inputType, outputType);
   NS_ENSURE_TRUE(SUCCEEDED(hr), nullptr);
 
   mDecoder = decoder;
@@ -165,11 +177,11 @@ WMFAudioMFTManager::Init()
 }
 
 HRESULT
-WMFAudioMFTManager::Input(mp4_demuxer::MP4Sample* aSample)
+WMFAudioMFTManager::Input(MediaRawData* aSample)
 {
-  const uint8_t* data = reinterpret_cast<const uint8_t*>(aSample->data);
-  uint32_t length = aSample->size;
-  return mDecoder->Input(data, length, aSample->composition_timestamp);
+  return mDecoder->Input(aSample->mData,
+                         uint32_t(aSample->mSize),
+                         aSample->mTime);
 }
 
 HRESULT
@@ -239,7 +251,6 @@ WMFAudioMFTManager::Output(int64_t aStreamOffset,
   // reset the frame counters, and capture the timestamp. Future timestamps
   // will be offset from this block's timestamp.
   UINT32 discontinuity = false;
-  int32_t numFramesToStrip = 0;
   sample->GetUINT32(MFSampleExtension_Discontinuity, &discontinuity);
   if (mMustRecaptureAudioPosition || discontinuity) {
     // Update the output type, in case this segment has a different
@@ -255,20 +266,11 @@ WMFAudioMFTManager::Output(int64_t aStreamOffset,
     NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
     hr = HNsToFrames(timestampHns, mAudioRate, &mAudioFrameOffset);
     NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
-    if (mAudioFrameOffset < 0) {
-      // First sample has a negative timestamp. Strip off the samples until
-      // we reach positive territory.
-      numFramesToStrip = -mAudioFrameOffset;
-      mAudioFrameOffset = 0;
-    }
     mMustRecaptureAudioPosition = false;
   }
-  MOZ_ASSERT(numFramesToStrip >= 0);
-  int32_t numSamples = currentLength / mAudioBytesPerSample;
+  // We can assume PCM 16 output.
+  int32_t numSamples = currentLength / 2;
   int32_t numFrames = numSamples / mAudioChannels;
-  int32_t offset = std::min<int32_t>(numFramesToStrip, numFrames);
-  numFrames -= offset;
-  numSamples -= offset * mAudioChannels;
   MOZ_ASSERT(numFrames >= 0);
   MOZ_ASSERT(numSamples >= 0);
   if (numFrames == 0) {
@@ -279,12 +281,7 @@ WMFAudioMFTManager::Output(int64_t aStreamOffset,
 
   nsAutoArrayPtr<AudioDataValue> audioData(new AudioDataValue[numSamples]);
 
-  // Just assume PCM output for now...
-  MOZ_ASSERT(mAudioBytesPerSample == 2);
-  int16_t* pcm = ((int16_t*)data) + (offset * mAudioChannels);
-  MOZ_ASSERT(pcm >= (int16_t*)data);
-  MOZ_ASSERT(pcm <= (int16_t*)(data + currentLength));
-  MOZ_ASSERT(pcm+numSamples <= (int16_t*)(data + currentLength));
+  int16_t* pcm = (int16_t*)data;
   for (int32_t i = 0; i < numSamples; ++i) {
     audioData[i] = AudioSampleToFloat(pcm[i]);
   }

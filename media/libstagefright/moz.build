@@ -1,4 +1,4 @@
-# /*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
 # vim: set filetype=python:
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -50,15 +50,26 @@ if CONFIG['OS_TARGET'] != 'Android':
 EXPORTS.mp4_demuxer += [
     'binding/include/mp4_demuxer/Adts.h',
     'binding/include/mp4_demuxer/AnnexB.h',
+    'binding/include/mp4_demuxer/Atom.h',
     'binding/include/mp4_demuxer/AtomType.h',
     'binding/include/mp4_demuxer/BufferStream.h',
     'binding/include/mp4_demuxer/ByteReader.h',
     'binding/include/mp4_demuxer/ByteWriter.h',
     'binding/include/mp4_demuxer/DecoderData.h',
     'binding/include/mp4_demuxer/H264.h',
+    'binding/include/mp4_demuxer/Index.h',
     'binding/include/mp4_demuxer/Interval.h',
     'binding/include/mp4_demuxer/MoofParser.h',
     'binding/include/mp4_demuxer/mp4_demuxer.h',
+    'binding/include/mp4_demuxer/MP4Metadata.h',
+    'binding/include/mp4_demuxer/MP4TrackDemuxer.h',
+    'binding/include/mp4_demuxer/ResourceStream.h',
+    'binding/include/mp4_demuxer/SinfParser.h',
+    'binding/include/mp4_demuxer/Stream.h',
+]
+
+EXPORTS.demuxer += [
+    'binding/include/demuxer/TrackDemuxer.h',
 ]
 
 SOURCES += [
@@ -80,6 +91,10 @@ UNIFIED_SOURCES += [
     'binding/Index.cpp',
     'binding/MoofParser.cpp',
     'binding/mp4_demuxer.cpp',
+    'binding/MP4Metadata.cpp',
+    'binding/MP4TrackDemuxer.cpp',
+    'binding/ResourceStream.cpp',
+    'binding/SinfParser.cpp',
     'frameworks/av/media/libstagefright/DataSource.cpp',
     'frameworks/av/media/libstagefright/ESDS.cpp',
     'frameworks/av/media/libstagefright/foundation/AAtomizer.cpp',
@@ -147,4 +162,5 @@ elif CONFIG['GNU_CXX']:
         CXXFLAGS += [
             '-Wno-mismatched-tags',
             '-Wno-tautological-constant-out-of-range-compare',
+            '-Wno-unreachable-code-return',
         ]

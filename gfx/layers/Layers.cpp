@@ -14,13 +14,14 @@
 #include "LayerSorter.h"                // for SortLayersBy3DZOrder
 #include "LayersLogging.h"              // for AppendToString
 #include "ReadbackLayer.h"              // for ReadbackLayer
+#include "UnitTransforms.h"             // for ViewAs
 #include "gfxPlatform.h"                // for gfxPlatform
 #include "gfxPrefs.h"
 #include "gfxUtils.h"                   // for gfxUtils, etc
 #include "gfx2DGlue.h"
 #include "mozilla/DebugOnly.h"          // for DebugOnly
 #include "mozilla/Telemetry.h"          // for Accumulate
-#include "mozilla/dom/AnimationPlayer.h" // for ComputedTimingFunction
+#include "mozilla/dom/Animation.h"      // for ComputedTimingFunction
 #include "mozilla/gfx/2D.h"             // for DrawTarget
 #include "mozilla/gfx/BaseSize.h"       // for BaseSize
 #include "mozilla/gfx/Matrix.h"         // for Matrix4x4
@@ -201,13 +202,14 @@ Layer::Layer(LayerManager* aManager, void* aImplData) :
   mMixBlendMode(CompositionOp::OP_OVER),
   mForceIsolatedGroup(false),
   mContentFlags(0),
-  mUseClipRect(false),
   mUseTileSourceRect(false),
   mIsFixedPosition(false),
   mMargins(0, 0, 0, 0),
   mStickyPositionData(nullptr),
   mScrollbarTargetId(FrameMetrics::NULL_SCROLL_ID),
   mScrollbarDirection(ScrollDirection::NONE),
+  mScrollbarThumbRatio(0.0f),
+  mIsScrollbarContainer(false),
   mDebugColorIndex(0),
   mAnimationGeneration(0)
 {}
@@ -265,6 +267,12 @@ Layer::ClearAnimationsForNextTransaction()
   mPendingAnimations->Clear();
 }
 
+static inline void
+SetCSSAngle(const CSSAngle& aAngle, nsCSSValue& aValue)
+{
+  aValue.SetFloatValue(aAngle.value(), nsCSSUnit(aAngle.unit()));
+}
+
 static nsCSSValueSharedList*
 CreateCSSValueList(const InfallibleTArray<TransformFunction>& aFunctions)
 {
@@ -275,34 +283,34 @@ CreateCSSValueList(const InfallibleTArray<TransformFunction>& aFunctions)
     switch (aFunctions[i].type()) {
       case TransformFunction::TRotationX:
       {
-        float theta = aFunctions[i].get_RotationX().radians();
+        const CSSAngle& angle = aFunctions[i].get_RotationX().angle();
         arr = StyleAnimationValue::AppendTransformFunction(eCSSKeyword_rotatex,
                                                            resultTail);
-        arr->Item(1).SetFloatValue(theta, eCSSUnit_Radian);
+        SetCSSAngle(angle, arr->Item(1));
         break;
       }
       case TransformFunction::TRotationY:
       {
-        float theta = aFunctions[i].get_RotationY().radians();
+        const CSSAngle& angle = aFunctions[i].get_RotationY().angle();
         arr = StyleAnimationValue::AppendTransformFunction(eCSSKeyword_rotatey,
                                                            resultTail);
-        arr->Item(1).SetFloatValue(theta, eCSSUnit_Radian);
+        SetCSSAngle(angle, arr->Item(1));
         break;
       }
       case TransformFunction::TRotationZ:
       {
-        float theta = aFunctions[i].get_RotationZ().radians();
+        const CSSAngle& angle = aFunctions[i].get_RotationZ().angle();
         arr = StyleAnimationValue::AppendTransformFunction(eCSSKeyword_rotatez,
                                                            resultTail);
-        arr->Item(1).SetFloatValue(theta, eCSSUnit_Radian);
+        SetCSSAngle(angle, arr->Item(1));
         break;
       }
       case TransformFunction::TRotation:
       {
-        float theta = aFunctions[i].get_Rotation().radians();
+        const CSSAngle& angle = aFunctions[i].get_Rotation().angle();
         arr = StyleAnimationValue::AppendTransformFunction(eCSSKeyword_rotate,
                                                            resultTail);
-        arr->Item(1).SetFloatValue(theta, eCSSUnit_Radian);
+        SetCSSAngle(angle, arr->Item(1));
         break;
       }
       case TransformFunction::TRotation3D:
@@ -310,14 +318,14 @@ CreateCSSValueList(const InfallibleTArray<TransformFunction>& aFunctions)
         float x = aFunctions[i].get_Rotation3D().x();
         float y = aFunctions[i].get_Rotation3D().y();
         float z = aFunctions[i].get_Rotation3D().z();
-        float theta = aFunctions[i].get_Rotation3D().radians();
+        const CSSAngle& angle = aFunctions[i].get_Rotation3D().angle();
         arr =
           StyleAnimationValue::AppendTransformFunction(eCSSKeyword_rotate3d,
                                                        resultTail);
         arr->Item(1).SetFloatValue(x, eCSSUnit_Number);
         arr->Item(2).SetFloatValue(y, eCSSUnit_Number);
         arr->Item(3).SetFloatValue(z, eCSSUnit_Number);
-        arr->Item(4).SetFloatValue(theta, eCSSUnit_Radian);
+        SetCSSAngle(angle, arr->Item(4));
         break;
       }
       case TransformFunction::TScale:
@@ -342,26 +350,28 @@ CreateCSSValueList(const InfallibleTArray<TransformFunction>& aFunctions)
       }
       case TransformFunction::TSkewX:
       {
-        float x = aFunctions[i].get_SkewX().x();
+        const CSSAngle& x = aFunctions[i].get_SkewX().x();
         arr = StyleAnimationValue::AppendTransformFunction(eCSSKeyword_skewx,
                                                            resultTail);
-        arr->Item(1).SetFloatValue(x, eCSSUnit_Radian);
+        SetCSSAngle(x, arr->Item(1));
         break;
       }
       case TransformFunction::TSkewY:
       {
-        float y = aFunctions[i].get_SkewY().y();
+        const CSSAngle& y = aFunctions[i].get_SkewY().y();
         arr = StyleAnimationValue::AppendTransformFunction(eCSSKeyword_skewy,
                                                            resultTail);
-        arr->Item(1).SetFloatValue(y, eCSSUnit_Radian);
+        SetCSSAngle(y, arr->Item(1));
         break;
       }
       case TransformFunction::TSkew:
       {
+        const CSSAngle& x = aFunctions[i].get_Skew().x();
+        const CSSAngle& y = aFunctions[i].get_Skew().y();
         arr = StyleAnimationValue::AppendTransformFunction(eCSSKeyword_skew,
                                                            resultTail);
-        arr->Item(1).SetFloatValue(aFunctions[i].get_Skew().x(), eCSSUnit_Radian);
-        arr->Item(2).SetFloatValue(aFunctions[i].get_Skew().y(), eCSSUnit_Radian);
+        SetCSSAngle(x, arr->Item(1));
+        SetCSSAngle(y, arr->Item(2));
         break;
       }
       case TransformFunction::TTransformMatrix:
@@ -545,7 +555,7 @@ Layer::CanUseOpaqueSurface()
 
 // NB: eventually these methods will be defined unconditionally, and
 // can be moved into Layers.h
-const nsIntRect*
+const Maybe<ParentLayerIntRect>&
 Layer::GetEffectiveClipRect()
 {
   if (LayerComposite* shadow = AsLayerComposite()) {
@@ -671,7 +681,9 @@ Layer::CalculateScissorRect(const RenderTargetIntRect& aCurrentScissorRect)
     return currentClip;
   }
 
-  const RenderTargetIntRect clipRect = RenderTargetPixel::FromUntyped(*GetEffectiveClipRect());
+  const RenderTargetIntRect clipRect =
+    ViewAs<RenderTargetPixel>(*GetEffectiveClipRect(),
+                              PixelCastJustification::RenderTargetIsParentLayerForRoot);
   if (clipRect.IsEmpty()) {
     // We might have a non-translation transform in the container so we can't
     // use the code path below.
@@ -688,11 +700,11 @@ Layer::CalculateScissorRect(const RenderTargetIntRect& aCurrentScissorRect)
     gfx::Rect r(scissor.x, scissor.y, scissor.width, scissor.height);
     gfxRect trScissor = gfx::ThebesRect(matrix.TransformBounds(r));
     trScissor.Round();
-    nsIntRect tmp;
+    IntRect tmp;
     if (!gfxUtils::GfxRectToIntRect(trScissor, &tmp)) {
       return RenderTargetIntRect(currentClip.TopLeft(), RenderTargetIntSize(0, 0));
     }
-    scissor = RenderTargetPixel::FromUntyped(tmp);
+    scissor = ViewAs<RenderTargetPixel>(tmp);
 
     // Find the nearest ancestor with an intermediate surface
     do {
@@ -759,6 +771,17 @@ Layer::GetLocalTransform()
   }
 
   return transform;
+}
+
+bool
+Layer::HasTransformAnimation() const
+{
+  for (uint32_t i = 0; i < mAnimations.Length(); i++) {
+    if (mAnimations[i].property() == eCSSProperty_transform) {
+      return true;
+    }
+  }
+  return false;
 }
 
 void
@@ -828,14 +851,10 @@ Layer::ComputeEffectiveTransformForMaskLayer(const Matrix4x4& aTransformToSurfac
     bool maskIs2D = mMaskLayer->GetTransform().CanDraw2D();
     NS_ASSERTION(maskIs2D, "How did we end up with a 3D transform here?!");
 #endif
-    // Use our shadow transform and base transform to compute a delta for the
-    // mask layer's effective transform, as though it was also transformed by
-    // the APZ.
-    //
-    // Note: This will fail if the base transform is degenerate. Currently, this
-    //       is not expected for OMTA transformed layers.
-    mMaskLayer->mEffectiveTransform = mMaskLayer->GetTransform() *
-      GetTransform().Inverse() * GetLocalTransform() *
+    // The mask layer can have an async transform applied to it in some
+    // situations, so be sure to use its GetLocalTransform() rather than
+    // its GetTransform().
+    mMaskLayer->mEffectiveTransform = mMaskLayer->GetLocalTransform() *
       mMaskLayer->mEffectiveTransform;
   }
 }
@@ -848,6 +867,66 @@ Layer::TransformRectToRenderTarget(const LayerIntRect& aRect)
     GetEffectiveTransform().TransformBounds(
       LayerPixel::ToUnknown(rect)));
   return quad;
+}
+
+bool
+Layer::GetVisibleRegionRelativeToRootLayer(nsIntRegion& aResult,
+                                           nsIntPoint* aLayerOffset)
+{
+  MOZ_ASSERT(aLayerOffset, "invalid offset pointer");
+
+  IntPoint offset;
+  aResult = GetEffectiveVisibleRegion();
+  for (Layer* layer = this; layer; layer = layer->GetParent()) {
+    gfx::Matrix matrix;
+    if (!layer->GetLocalTransform().Is2D(&matrix) ||
+        !matrix.IsTranslation()) {
+      return false;
+    }
+
+    // The offset of |layer| to its parent.
+    IntPoint currentLayerOffset = RoundedToInt(matrix.GetTranslation());
+
+    // Translate the accumulated visible region of |this| by the offset of
+    // |layer|.
+    aResult.MoveBy(currentLayerOffset.x, currentLayerOffset.y);
+
+    // If the parent layer clips its lower layers, clip the visible region
+    // we're accumulating.
+    if (layer->GetEffectiveClipRect()) {
+      aResult.AndWith(ParentLayerIntRect::ToUntyped(*layer->GetEffectiveClipRect()));
+    }
+
+    // Now we need to walk across the list of siblings for this parent layer,
+    // checking to see if any of these layer trees obscure |this|. If so,
+    // remove these areas from the visible region as well. This will pick up
+    // chrome overlays like a tab modal prompt.
+    Layer* sibling;
+    for (sibling = layer->GetNextSibling(); sibling;
+         sibling = sibling->GetNextSibling()) {
+      gfx::Matrix siblingMatrix;
+      if (!sibling->GetLocalTransform().Is2D(&siblingMatrix) ||
+          !siblingMatrix.IsTranslation()) {
+        return false;
+      }
+
+      // Retreive the translation from sibling to |layer|. The accumulated
+      // visible region is currently oriented with |layer|.
+      IntPoint siblingOffset = RoundedToInt(siblingMatrix.GetTranslation());
+      nsIntRegion siblingVisibleRegion(sibling->GetEffectiveVisibleRegion());
+      // Translate the siblings region to |layer|'s origin.
+      siblingVisibleRegion.MoveBy(-siblingOffset.x, -siblingOffset.y);
+      // Subtract the sibling visible region from the visible region of |this|.
+      aResult.SubOut(siblingVisibleRegion);
+    }
+
+    // Keep track of the total offset for aLayerOffset.  We use this in plugin
+    // positioning code.
+    offset += currentLayerOffset;
+  }
+
+  *aLayerOffset = nsIntPoint(offset.x, offset.y);
+  return true;
 }
 
 ContainerLayer::ContainerLayer(LayerManager* aManager, void* aImplData)
@@ -863,7 +942,8 @@ ContainerLayer::ContainerLayer(LayerManager* aManager, void* aImplData)
     mUseIntermediateSurface(false),
     mSupportsComponentAlphaChildren(false),
     mMayHaveReadbackChild(false),
-    mChildrenChanged(false)
+    mChildrenChanged(false),
+    mEventRegionsOverride(EventRegionsOverride::NoOverride)
 {
   mContentFlags = 0; // Clear NO_TEXT, NO_TEXT_OVER_TRANSPARENT
 }
@@ -1020,6 +1100,7 @@ ContainerLayer::FillSpecificAttributes(SpecificLayerAttributes& aAttrs)
   aAttrs = ContainerLayerAttributes(mPreXScale, mPreYScale,
                                     mInheritedXScale, mInheritedYScale,
                                     mPresShellResolution, mScaleToResolution,
+                                    mEventRegionsOverride,
                                     reinterpret_cast<uint64_t>(mHMDInfo.get()));
 }
 
@@ -1028,7 +1109,7 @@ ContainerLayer::HasMultipleChildren()
 {
   uint32_t count = 0;
   for (Layer* child = GetFirstChild(); child; child = child->GetNextSibling()) {
-    const nsIntRect *clipRect = child->GetEffectiveClipRect();
+    const Maybe<ParentLayerIntRect>& clipRect = child->GetEffectiveClipRect();
     if (clipRect && clipRect->IsEmpty())
       continue;
     if (child->GetVisibleRegion().IsEmpty())
@@ -1077,7 +1158,7 @@ ContainerLayer::DefaultComputeEffectiveTransforms(const Matrix4x4& aTransformToS
       GetForceIsolatedGroup()) {
     useIntermediateSurface = true;
 #ifdef MOZ_DUMP_PAINTING
-  } else if (gfxUtils::sDumpPainting) {
+  } else if (gfxUtils::sDumpPaintingIntermediate) {
     useIntermediateSurface = true;
 #endif
   } else {
@@ -1095,7 +1176,7 @@ ContainerLayer::DefaultComputeEffectiveTransforms(const Matrix4x4& aTransformToS
         gfx::ThebesMatrix(contTransform).HasNonIntegerTranslation()) {
 #endif
         for (Layer* child = GetFirstChild(); child; child = child->GetNextSibling()) {
-          const nsIntRect *clipRect = child->GetEffectiveClipRect();
+          const Maybe<ParentLayerIntRect>& clipRect = child->GetEffectiveClipRect();
           /* We can't (easily) forward our transform to children with a non-empty clip
            * rect since it would need to be adjusted for the transform. See
            * the calculations performed by CalculateScissorRect above.
@@ -1211,7 +1292,7 @@ ContainerLayer::DidInsertChild(Layer* aLayer)
 void
 RefLayer::FillSpecificAttributes(SpecificLayerAttributes& aAttrs)
 {
-  aAttrs = RefLayerAttributes(GetReferentId());
+  aAttrs = RefLayerAttributes(GetReferentId(), mEventRegionsOverride);
 }
 
 /** 
@@ -1346,11 +1427,11 @@ void WriteSnapshotToDumpFile_internal(T* aObj, DataSourceSurface* aSurf)
   nsCString string(aObj->Name());
   string.Append('-');
   string.AppendInt((uint64_t)aObj);
-  if (gfxUtils::sDumpPaintFile) {
+  if (gfxUtils::sDumpPaintFile != stderr) {
     fprintf_stderr(gfxUtils::sDumpPaintFile, "array[\"%s\"]=\"", string.BeginReading());
   }
   gfxUtils::DumpAsDataURI(aSurf, gfxUtils::sDumpPaintFile);
-  if (gfxUtils::sDumpPaintFile) {
+  if (gfxUtils::sDumpPaintFile != stderr) {
     fprintf_stderr(gfxUtils::sDumpPaintFile, "\";");
   }
 }
@@ -1494,8 +1575,8 @@ Layer::PrintInfo(std::stringstream& aStream, const char* aPrefix)
 
   layers::PrintInfo(aStream, AsLayerComposite());
 
-  if (mUseClipRect) {
-    AppendToString(aStream, mClipRect, " [clip=", "]");
+  if (mClipRect) {
+    AppendToString(aStream, *mClipRect, " [clip=", "]");
   }
   if (1.0 != mPostXScale || 1.0 != mPostYScale) {
     aStream << nsPrintfCString(" [postScale=%g, %g]", mPostXScale, mPostYScale).get();
@@ -1578,9 +1659,11 @@ DumpTransform(layerscope::LayersPacket::Layer::Matrix* aLayerMatrix, const Matri
   }
 }
 
-// The static helper function sets the nsIntRect into the packet
+// The static helper function sets the IntRect into the packet
+template <typename T, typename Sub, typename Point, typename SizeT, typename MarginT>
 static void
-DumpRect(layerscope::LayersPacket::Layer::Rect* aLayerRect, const nsIntRect& aRect)
+DumpRect(layerscope::LayersPacket::Layer::Rect* aLayerRect,
+         const BaseRect<T, Sub, Point, SizeT, MarginT>& aRect)
 {
   aLayerRect->set_x(aRect.x);
   aLayerRect->set_y(aRect.y);
@@ -1593,7 +1676,7 @@ static void
 DumpRegion(layerscope::LayersPacket::Layer::Region* aLayerRegion, const nsIntRegion& aRegion)
 {
   nsIntRegionRectIterator it(aRegion);
-  while (const nsIntRect* sr = it.Next()) {
+  while (const IntRect* sr = it.Next()) {
     DumpRect(aLayerRegion->add_r(), *sr);
   }
 }
@@ -1611,7 +1694,7 @@ Layer::DumpPacket(layerscope::LayersPacket* aPacket, const void* aParent)
   // Shadow
   if (LayerComposite* lc = AsLayerComposite()) {
     LayersPacket::Layer::Shadow* s = layer->mutable_shadow();
-    if (const nsIntRect* clipRect = lc->GetShadowClipRect()) {
+    if (const Maybe<ParentLayerIntRect>& clipRect = lc->GetShadowClipRect()) {
       DumpRect(s->mutable_clip(), *clipRect);
     }
     if (!lc->GetShadowTransform().IsIdentity()) {
@@ -1622,8 +1705,8 @@ Layer::DumpPacket(layerscope::LayersPacket* aPacket, const void* aParent)
     }
   }
   // Clip
-  if (mUseClipRect) {
-    DumpRect(layer->mutable_clip(), mClipRect);
+  if (mClipRect) {
+    DumpRect(layer->mutable_clip(), *mClipRect);
   }
   // Transform
   if (!mTransform.IsIdentity()) {
@@ -1686,6 +1769,12 @@ ContainerLayer::PrintInfo(std::stringstream& aStream, const char* aPrefix)
   }
   if (mScaleToResolution) {
     aStream << nsPrintfCString(" [presShellResolution=%g]", mPresShellResolution).get();
+  }
+  if (mEventRegionsOverride & EventRegionsOverride::ForceDispatchToContent) {
+    aStream << " [force-dtc]";
+  }
+  if (mEventRegionsOverride & EventRegionsOverride::ForceEmptyHitRegion) {
+    aStream << " [force-ehr]";
   }
   if (mHMDInfo) {
     aStream << nsPrintfCString(" [hmd=%p]", mHMDInfo.get()).get();
@@ -1959,8 +2048,8 @@ LayerManager::InitLog()
 /*static*/ bool
 LayerManager::IsLogEnabled()
 {
-  NS_ABORT_IF_FALSE(!!sLog,
-                    "layer manager must be created before logging is allowed");
+  MOZ_ASSERT(!!sLog,
+             "layer manager must be created before logging is allowed");
   return PR_LOG_TEST(sLog, PR_LOG_DEBUG);
 }
 
@@ -1970,7 +2059,7 @@ PrintInfo(std::stringstream& aStream, LayerComposite* aLayerComposite)
   if (!aLayerComposite) {
     return;
   }
-  if (const nsIntRect* clipRect = aLayerComposite->GetShadowClipRect()) {
+  if (const Maybe<ParentLayerIntRect>& clipRect = aLayerComposite->GetShadowClipRect()) {
     AppendToString(aStream, *clipRect, " [shadow-clip=", "]");
   }
   if (!aLayerComposite->GetShadowTransform().IsIdentity()) {
@@ -1990,7 +2079,7 @@ SetAntialiasingFlags(Layer* aLayer, DrawTarget* aTarget)
     return;
   }
 
-  const nsIntRect& bounds = aLayer->GetVisibleRegion().GetBounds();
+  const IntRect& bounds = aLayer->GetVisibleRegion().GetBounds();
   gfx::Rect transformedBounds = aTarget->GetTransform().TransformBounds(gfx::Rect(Float(bounds.x), Float(bounds.y),
                                                                                   Float(bounds.width), Float(bounds.height)));
   transformedBounds.RoundOut();
@@ -2001,12 +2090,12 @@ SetAntialiasingFlags(Layer* aLayer, DrawTarget* aTarget)
   aTarget->SetPermitSubpixelAA(permitSubpixelAA);
 }
 
-nsIntRect
+IntRect
 ToOutsideIntRect(const gfxRect &aRect)
 {
   gfxRect r = aRect;
   r.RoundOut();
-  return nsIntRect(r.X(), r.Y(), r.Width(), r.Height());
+  return IntRect(r.X(), r.Y(), r.Width(), r.Height());
 }
 
 PRLogModuleInfo* LayerManager::sLog;

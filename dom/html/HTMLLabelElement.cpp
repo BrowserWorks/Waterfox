@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -12,6 +13,7 @@
 #include "mozilla/dom/HTMLLabelElementBinding.h"
 #include "nsFocusManager.h"
 #include "nsIDOMMouseEvent.h"
+#include "nsQueryObject.h"
 
 // construction, destruction
 
@@ -25,9 +27,9 @@ HTMLLabelElement::~HTMLLabelElement()
 }
 
 JSObject*
-HTMLLabelElement::WrapNode(JSContext *aCx)
+HTMLLabelElement::WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return HTMLLabelElementBinding::Wrap(aCx, this);
+  return HTMLLabelElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 // nsISupports
@@ -58,7 +60,7 @@ HTMLLabelElement::SetHtmlFor(const nsAString& aHtmlFor)
 {
   ErrorResult rv;
   SetHtmlFor(aHtmlFor, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 NS_IMETHODIMP
@@ -83,19 +85,14 @@ HTMLLabelElement::Focus(ErrorResult& aError)
 }
 
 static bool
-EventTargetIn(WidgetEvent* aEvent, nsIContent* aChild, nsIContent* aStop)
+InInteractiveHTMLContent(nsIContent* aContent, nsIContent* aStop)
 {
-  nsCOMPtr<nsIContent> c = do_QueryInterface(aEvent->target);
-  nsIContent *content = c;
-  while (content) {
-    if (content == aChild) {
+  nsIContent* content = aContent;
+  while (content && content != aStop) {
+    if (content->IsElement() &&
+        content->AsElement()->IsInteractiveHTMLContent(true)) {
       return true;
     }
-
-    if (content == aStop) {
-      break;
-    }
-
     content = content->GetParent();
   }
   return false;
@@ -115,10 +112,15 @@ HTMLLabelElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
     return NS_OK;
   }
 
+  nsCOMPtr<nsIContent> target = do_QueryInterface(aVisitor.mEvent->target);
+  if (InInteractiveHTMLContent(target, this)) {
+    return NS_OK;
+  }
+
   // Strong ref because event dispatch is going to happen.
   nsRefPtr<Element> content = GetLabeledElement();
 
-  if (content && !EventTargetIn(aVisitor.mEvent, content, this)) {
+  if (content) {
     mHandlingEvent = true;
     switch (aVisitor.mEvent->message) {
       case NS_MOUSE_BUTTON_DOWN:

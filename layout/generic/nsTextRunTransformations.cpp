@@ -6,10 +6,10 @@
 #include "nsTextRunTransformations.h"
 
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/Move.h"
 
 #include "nsGkAtoms.h"
 #include "nsStyleConsts.h"
-#include "nsStyleContext.h"
 #include "nsUnicharUtils.h"
 #include "nsUnicodeProperties.h"
 #include "nsSpecialCasingData.h"
@@ -19,6 +19,8 @@
 #include "nsNetUtil.h"
 #include "GreekCasing.h"
 #include "IrishCasing.h"
+
+using namespace mozilla;
 
 // Unicode characters needing special casing treatment in tr/az languages
 #define LATIN_CAPITAL_LETTER_I_WITH_DOT_ABOVE  0x0130
@@ -36,7 +38,8 @@ nsTransformedTextRun::Create(const gfxTextRunFactory::Parameters* aParams,
                              nsTransformingTextRunFactory* aFactory,
                              gfxFontGroup* aFontGroup,
                              const char16_t* aString, uint32_t aLength,
-                             const uint32_t aFlags, nsStyleContext** aStyles,
+                             const uint32_t aFlags,
+                             nsTArray<nsRefPtr<nsTransformedCharStyle>>&& aStyles,
                              bool aOwnsFactory)
 {
   NS_ASSERTION(!(aFlags & gfxTextRunFactory::TEXT_IS_8BIT),
@@ -49,7 +52,8 @@ nsTransformedTextRun::Create(const gfxTextRunFactory::Parameters* aParams,
 
   return new (storage) nsTransformedTextRun(aParams, aFactory, aFontGroup,
                                             aString, aLength,
-                                            aFlags, aStyles, aOwnsFactory);
+                                            aFlags, Move(aStyles),
+                                            aOwnsFactory);
 }
 
 void
@@ -101,24 +105,27 @@ nsTransformedTextRun*
 nsTransformingTextRunFactory::MakeTextRun(const char16_t* aString, uint32_t aLength,
                                           const gfxTextRunFactory::Parameters* aParams,
                                           gfxFontGroup* aFontGroup, uint32_t aFlags,
-                                          nsStyleContext** aStyles, bool aOwnsFactory)
+                                          nsTArray<nsRefPtr<nsTransformedCharStyle>>&& aStyles,
+                                          bool aOwnsFactory)
 {
   return nsTransformedTextRun::Create(aParams, this, aFontGroup,
-                                      aString, aLength, aFlags, aStyles, aOwnsFactory);
+                                      aString, aLength, aFlags, Move(aStyles),
+                                      aOwnsFactory);
 }
 
 nsTransformedTextRun*
 nsTransformingTextRunFactory::MakeTextRun(const uint8_t* aString, uint32_t aLength,
                                           const gfxTextRunFactory::Parameters* aParams,
                                           gfxFontGroup* aFontGroup, uint32_t aFlags,
-                                          nsStyleContext** aStyles, bool aOwnsFactory)
+                                          nsTArray<nsRefPtr<nsTransformedCharStyle>>&& aStyles,
+                                          bool aOwnsFactory)
 {
   // We'll only have a Unicode code path to minimize the amount of code needed
   // for these rarely used features
   NS_ConvertASCIItoUTF16 unicodeString(reinterpret_cast<const char*>(aString), aLength);
   return MakeTextRun(unicodeString.get(), aLength, aParams, aFontGroup,
                      aFlags & ~(gfxFontGroup::TEXT_IS_PERSISTENT | gfxFontGroup::TEXT_IS_8BIT),
-                     aStyles, aOwnsFactory);
+                     Move(aStyles), aOwnsFactory);
 }
 
 void
@@ -277,7 +284,7 @@ nsCaseTransformTextRunFactory::TransformString(
     nsTArray<bool>& aDeletedCharsArray,
     nsTransformedTextRun* aTextRun,
     nsTArray<uint8_t>* aCanBreakBeforeArray,
-    nsTArray<nsStyleContext*>* aStyleArray)
+    nsTArray<nsRefPtr<nsTransformedCharStyle>>* aStyleArray)
 {
   NS_PRECONDITION(!aTextRun || (aCanBreakBeforeArray && aStyleArray),
                   "either none or all three optional parameters required");
@@ -305,15 +312,14 @@ nsCaseTransformTextRunFactory::TransformString(
   for (uint32_t i = 0; i < length; ++i) {
     uint32_t ch = str[i];
 
-    nsStyleContext* styleContext;
+    nsRefPtr<nsTransformedCharStyle> charStyle;
     if (aTextRun) {
-      styleContext = aTextRun->mStyles[i];
+      charStyle = aTextRun->mStyles[i];
       style = aAllUppercase ? NS_STYLE_TEXT_TRANSFORM_UPPERCASE :
-        styleContext->StyleText()->mTextTransform;
+        charStyle->mTextTransform;
 
-      const nsStyleFont* styleFont = styleContext->StyleFont();
-      nsIAtom* newLang = styleFont->mExplicitLanguage
-                         ? styleFont->mLanguage : nullptr;
+      nsIAtom* newLang = charStyle->mExplicitLanguage
+                         ? charStyle->mLanguage : nullptr;
       if (lang != newLang) {
         lang = newLang;
         languageSpecificCasing = GetCasingFor(lang);
@@ -564,9 +570,10 @@ nsCaseTransformTextRunFactory::TransformString(
       aDeletedCharsArray.AppendElement(false);
       aCharsToMergeArray.AppendElement(false);
       if (aTextRun) {
-        aStyleArray->AppendElement(styleContext);
-        aCanBreakBeforeArray->AppendElement(inhibitBreakBefore ? false :
-                                            aTextRun->CanBreakLineBefore(i));
+        aStyleArray->AppendElement(charStyle);
+        aCanBreakBeforeArray->AppendElement(
+          inhibitBreakBefore ? gfxShapedText::CompressedGlyph::FLAG_BREAK_TYPE_NONE
+                             : aTextRun->CanBreakBefore(i));
       }
 
       if (IS_IN_BMP(ch)) {
@@ -584,8 +591,9 @@ nsCaseTransformTextRunFactory::TransformString(
         mergeNeeded = true;
         aCharsToMergeArray.AppendElement(true);
         if (aTextRun) {
-          aStyleArray->AppendElement(styleContext);
-          aCanBreakBeforeArray->AppendElement(false);
+          aStyleArray->AppendElement(charStyle);
+          aCanBreakBeforeArray->AppendElement(
+            gfxShapedText::CompressedGlyph::FLAG_BREAK_TYPE_NONE);
         }
       }
     }
@@ -602,7 +610,7 @@ nsCaseTransformTextRunFactory::RebuildTextRun(nsTransformedTextRun* aTextRun,
   nsAutoTArray<bool,50> charsToMergeArray;
   nsAutoTArray<bool,50> deletedCharsArray;
   nsAutoTArray<uint8_t,50> canBreakBeforeArray;
-  nsAutoTArray<nsStyleContext*,50> styleArray;
+  nsAutoTArray<nsRefPtr<nsTransformedCharStyle>,50> styleArray;
 
   bool mergeNeeded = TransformString(aTextRun->mString,
                                      convertedString,
@@ -626,7 +634,7 @@ nsCaseTransformTextRunFactory::RebuildTextRun(nsTransformedTextRun* aTextRun,
   if (mInnerTransformingTextRunFactory) {
     transformedChild = mInnerTransformingTextRunFactory->MakeTextRun(
         convertedString.BeginReading(), convertedString.Length(),
-        &innerParams, fontGroup, flags, styleArray.Elements(), false);
+        &innerParams, fontGroup, flags, Move(styleArray), false);
     child = transformedChild.get();
   } else {
     cachedChild = fontGroup->MakeTextRun(

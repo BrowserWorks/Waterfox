@@ -15,15 +15,14 @@
 #include "nsString.h"
 #include "nsTArray.h"
 #include "nsRefPtrHashtable.h"
+#include "nsRect.h"
 
 struct nsRoleMapEntry;
 
 struct nsRect;
 class nsIFrame;
 class nsIAtom;
-struct nsIntRect;
 class nsIPersistentProperties;
-class nsView;
 
 namespace mozilla {
 namespace a11y {
@@ -39,6 +38,7 @@ class HTMLLIAccessible;
 class HyperTextAccessible;
 class ImageAccessible;
 class KeyBinding;
+class ProxyAccessible;
 class Relation;
 class RootAccessible;
 class TableAccessible;
@@ -228,6 +228,11 @@ public:
    * roles).
    */
   mozilla::a11y::role ARIARole();
+
+  /**
+   * Return a landmark role if applied.
+   */
+  virtual nsIAtom* LandmarkRole() const;
 
   /**
    * Returns enumerated accessible role from native markup (see constants in
@@ -559,8 +564,7 @@ public:
 
   inline bool IsAbbreviation() const
   {
-    return mContent->IsHTML() &&
-      (mContent->Tag() == nsGkAtoms::abbr || mContent->Tag() == nsGkAtoms::acronym);
+    return mContent->IsAnyOfHTMLElements(nsGkAtoms::abbr, nsGkAtoms::acronym);
   }
 
   bool IsApplication() const { return mType == eApplicationType; }
@@ -578,6 +582,7 @@ public:
   bool IsDoc() const { return HasGenericType(eDocument); }
   DocAccessible* AsDoc();
 
+  bool IsGenericHyperText() const { return mType == eHyperTextType; }
   bool IsHyperText() const { return HasGenericType(eHyperText); }
   HyperTextAccessible* AsHyperText();
 
@@ -607,10 +612,19 @@ public:
 
   bool IsMenuPopup() const { return mType == eMenuPopupType; }
 
+  bool IsProxy() const { return mType == eProxyType; }
+  ProxyAccessible* Proxy() const
+  {
+    MOZ_ASSERT(IsProxy());
+    return mBits.proxy;
+  }
+
   bool IsProgress() const { return mType == eProgressType; }
 
   bool IsRoot() const { return mType == eRootType; }
   a11y::RootAccessible* AsRoot();
+
+  bool IsSearchbox() const;
 
   bool IsSelect() const { return HasGenericType(eSelect); }
 
@@ -886,6 +900,13 @@ public:
   bool HasNameDependentParent() const
     { return mContextFlags & eHasNameDependentParent; }
 
+  /**
+   * Return true if aria-hidden="true" is applied to the accessible or inherited
+   * from the parent.
+   */
+  bool IsARIAHidden() const { return mContextFlags & eARIAHidden; }
+  void SetARIAHidden(bool aIsDefined);
+
 protected:
 
   virtual ~Accessible();
@@ -972,8 +993,9 @@ protected:
    */
   enum ContextFlags {
     eHasNameDependentParent = 1 << 0, // Parent's name depends on this accessible.
+    eARIAHidden = 1 << 1,
 
-    eLastContextFlag = eHasNameDependentParent
+    eLastContextFlag = eARIAHidden
   };
 
 protected:
@@ -1079,9 +1101,9 @@ protected:
 
   static const uint8_t kChildrenFlagsBits = 2;
   static const uint8_t kStateFlagsBits = 9;
-  static const uint8_t kContextFlagsBits = 1;
+  static const uint8_t kContextFlagsBits = 2;
   static const uint8_t kTypeBits = 6;
-  static const uint8_t kGenericTypesBits = 13;
+  static const uint8_t kGenericTypesBits = 14;
 
   /**
    * Keep in sync with ChildrenFlags, StateFlags, ContextFlags, and AccTypes.
@@ -1103,7 +1125,11 @@ protected:
   int32_t mIndexOfEmbeddedChild;
   friend class EmbeddedObjCollector;
 
-  nsAutoPtr<AccGroupInfo> mGroupInfo;
+  union
+  {
+    AccGroupInfo* groupInfo;
+    ProxyAccessible* proxy;
+  } mBits;
   friend class AccGroupInfo;
 
   /**

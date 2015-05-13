@@ -16,6 +16,7 @@
 #include <stagefright/MediaErrors.h>
 
 #include "AudioChannelFormat.h"
+#include "GrallocImages.h"
 #include <mozilla/Monitor.h>
 #include "mozilla/layers/GrallocTextureClient.h"
 
@@ -582,7 +583,7 @@ OMXAudioEncoder::Configure(int aChannels, int aInputSampleRate,
   return result == OK ? NS_OK : NS_ERROR_FAILURE;
 }
 
-class InputBufferHelper MOZ_FINAL {
+class InputBufferHelper final {
 public:
   InputBufferHelper(sp<MediaCodec>& aCodec, Vector<sp<ABuffer> >& aBuffers,
                     OMXAudioEncoder& aEncoder, int aInputFlags)

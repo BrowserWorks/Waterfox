@@ -3,8 +3,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef nsIconChannel_h_
-#define nsIconChannel_h_
+#ifndef mozilla_image_encoders_icon_qt_nsIconChannel_h
+#define mozilla_image_encoders_icon_qt_nsIconChannel_h
 
 #include "mozilla/Attributes.h"
 
@@ -17,7 +17,7 @@
 /// This class is the gnome implementation of nsIconChannel. It basically asks
 /// qt for an icon, and creates a new channel for
 /// that file to which all calls will be proxied.
-class nsIconChannel MOZ_FINAL : public nsIChannel {
+class nsIconChannel final : public nsIChannel {
   public:
     NS_DECL_ISUPPORTS
     NS_FORWARD_NSIREQUEST(mRealChannel->)
@@ -37,4 +37,4 @@ class nsIconChannel MOZ_FINAL : public nsIChannel {
     nsCOMPtr<nsIChannel> mRealChannel;
 };
 
-#endif
+#endif // mozilla_image_encoders_icon_qt_nsIconChannel_h

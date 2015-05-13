@@ -50,7 +50,6 @@
 
 using namespace mozilla;
 
-#ifdef PR_LOGGING
 static PRLogModuleInfo *
 GetFontInfoLog()
 {
@@ -59,7 +58,6 @@ GetFontInfoLog()
         sLog = PR_NewLogModule("fontInfoLog");
     return sLog;
 }
-#endif /* PR_LOGGING */
 
 #undef LOG
 #define LOG(args) PR_LOG(GetFontInfoLog(), PR_LOG_DEBUG, args)
@@ -107,7 +105,7 @@ public:
             NS_ASSERTION(item, "failed to find zip entry");
 
             uint32_t bufSize = item->RealSize();
-            mFontDataBuf = static_cast<uint8_t*>(moz_malloc(bufSize));
+            mFontDataBuf = static_cast<uint8_t*>(malloc(bufSize));
             if (mFontDataBuf) {
                 nsZipCursor cursor(item, reader, mFontDataBuf, bufSize);
                 cursor.Copy(&bufSize);
@@ -136,7 +134,7 @@ public:
         if (mFace && mOwnsFace) {
             FT_Done_Face(mFace);
             if (mFontDataBuf) {
-                moz_free(mFontDataBuf);
+                free(mFontDataBuf);
             }
         }
     }
@@ -266,12 +264,12 @@ FT2FontEntry::CreateFontEntry(const nsAString& aFontName,
         FT_New_Memory_Face(gfxToolkitPlatform::GetPlatform()->GetFTLibrary(),
                            aFontData, aLength, 0, &face);
     if (error != FT_Err_Ok) {
-        NS_Free((void*)aFontData);
+        free((void*)aFontData);
         return nullptr;
     }
     if (FT_Err_Ok != FT_Select_Charmap(face, FT_ENCODING_UNICODE)) {
         FT_Done_Face(face);
-        NS_Free((void*)aFontData);
+        free((void*)aFontData);
         return nullptr;
     }
     // Create our FT2FontEntry, which inherits the name of the userfont entry
@@ -299,7 +297,7 @@ public:
     {
         FT_Done_Face(mFace);
         if (mFontData) {
-            NS_Free((void*)mFontData);
+            free((void*)mFontData);
         }
     }
 
@@ -619,23 +617,12 @@ FT2FontFamily::AddFacesToFontList(InfallibleTArray<FontListEntry>* aFontList,
 class FontNameCache {
 public:
     FontNameCache()
-        : mWriteNeeded(false)
+        : mMap(&sMapOps, sizeof(FNCMapEntry), 0)
+        , mWriteNeeded(false)
     {
-        mOps = (PLDHashTableOps) {
-            PL_DHashAllocTable,
-            PL_DHashFreeTable,
-            StringHash,
-            HashMatchEntry,
-            MoveEntry,
-            PL_DHashClearEntryStub,
-            PL_DHashFinalizeStub,
-            nullptr
-        };
-
-        PL_DHashTableInit(&mMap, &mOps, nullptr, sizeof(FNCMapEntry), 0);
-
-        NS_ABORT_IF_FALSE(XRE_GetProcessType() == GeckoProcessType_Default,
-                          "StartupCacheFontNameCache should only be used in chrome process");
+        MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default,
+                   "StartupCacheFontNameCache should only be used in chrome "
+                   "process");
         mCache = mozilla::scache::StartupCache::GetSingleton();
 
         Init();
@@ -643,23 +630,18 @@ public:
 
     ~FontNameCache()
     {
-        if (!mMap.ops) {
-            return;
-        }
         if (!mWriteNeeded || !mCache) {
-            PL_DHashTableFinish(&mMap);
             return;
         }
 
         nsAutoCString buf;
         PL_DHashTableEnumerate(&mMap, WriteOutMap, &buf);
-        PL_DHashTableFinish(&mMap);
         mCache->PutBuffer(CACHE_KEY, buf.get(), buf.Length() + 1);
     }
 
     void Init()
     {
-        if (!mMap.ops || !mCache) {
+        if (!mMap.IsInitialized() || !mCache) {
             return;
         }
         uint32_t size;
@@ -690,9 +672,8 @@ public:
             }
             uint32_t filesize = strtoul(beginning, nullptr, 10);
 
-            FNCMapEntry* mapEntry =
-                static_cast<FNCMapEntry*>
-                (PL_DHashTableAdd(&mMap, filename.get()));
+            FNCMapEntry* mapEntry = static_cast<FNCMapEntry*>
+                (PL_DHashTableAdd(&mMap, filename.get(), fallible));
             if (mapEntry) {
                 mapEntry->mFilename.Assign(filename);
                 mapEntry->mTimestamp = timestamp;
@@ -715,16 +696,13 @@ public:
     GetInfoForFile(const nsCString& aFileName, nsCString& aFaceList,
                    uint32_t *aTimestamp, uint32_t *aFilesize)
     {
-        if (!mMap.ops) {
+        if (!mMap.IsInitialized()) {
             return;
         }
-        PLDHashEntryHdr *hdr =
-            PL_DHashTableLookup(&mMap, aFileName.get());
-        if (!hdr) {
-            return;
-        }
-        FNCMapEntry* entry = static_cast<FNCMapEntry*>(hdr);
-        if (entry && entry->mFilesize) {
+        FNCMapEntry *entry =
+            static_cast<FNCMapEntry*>(PL_DHashTableSearch(&mMap,
+                                                          aFileName.get()));
+        if (entry) {
             *aTimestamp = entry->mTimestamp;
             *aFilesize = entry->mFilesize;
             aFaceList.Assign(entry->mFaces);
@@ -739,12 +717,11 @@ public:
     CacheFileInfo(const nsCString& aFileName, const nsCString& aFaceList,
                   uint32_t aTimestamp, uint32_t aFilesize)
     {
-        if (!mMap.ops) {
+        if (!mMap.IsInitialized()) {
             return;
         }
-        FNCMapEntry* entry =
-            static_cast<FNCMapEntry*>
-            (PL_DHashTableAdd(&mMap, aFileName.get()));
+        FNCMapEntry* entry = static_cast<FNCMapEntry*>
+            (PL_DHashTableAdd(&mMap, aFileName.get(), fallible));
         if (entry) {
             entry->mFilename.Assign(aFileName);
             entry->mTimestamp = aTimestamp;
@@ -760,7 +737,7 @@ private:
     PLDHashTable mMap;
     bool mWriteNeeded;
 
-    PLDHashTableOps mOps;
+    static const PLDHashTableOps sMapOps;
 
     static PLDHashOperator WriteOutMap(PLDHashTable *aTable,
                                        PLDHashEntryHdr *aHdr,
@@ -817,6 +794,15 @@ private:
         to->mFaces.Assign(from->mFaces);
         to->mFileExists = from->mFileExists;
     }
+};
+
+/* static */ const PLDHashTableOps FontNameCache::sMapOps =
+{
+    FontNameCache::StringHash,
+    FontNameCache::HashMatchEntry,
+    FontNameCache::MoveEntry,
+    PL_DHashClearEntryStub,
+    nullptr
 };
 
 /***************************************************************
@@ -1067,7 +1053,6 @@ gfxFT2FontList::AddFaceToList(const nsCString& aEntryName, uint32_t aIndex,
         fe->CheckForBrokenFont(family);
 
         AppendToFaceList(aFaceList, name, fe);
-#ifdef PR_LOGGING
         if (LOG_ENABLED()) {
             LOG(("(fontinit) added (%s) to family (%s)"
                  " with style: %s weight: %d stretch: %d",
@@ -1076,7 +1061,6 @@ gfxFT2FontList::AddFaceToList(const nsCString& aEntryName, uint32_t aIndex,
                  fe->IsItalic() ? "italic" : "normal",
                  fe->Weight(), fe->Stretch()));
         }
-#endif
     }
 }
 
@@ -1102,7 +1086,6 @@ gfxFT2FontList::AppendFacesFromOmnijarEntry(nsZipArchive* aArchive,
     uint32_t bufSize = item->RealSize();
     // We use fallible allocation here; if there's not enough RAM, we'll simply
     // ignore the bundled fonts and fall back to the device's installed fonts.
-    static const fallible_t fallible = fallible_t();
     nsAutoArrayPtr<uint8_t> buf(new (fallible) uint8_t[bufSize]);
     if (!buf) {
         return;
@@ -1369,7 +1352,7 @@ AddHiddenFamilyToFontList(nsStringHashKey::KeyType aKey,
 }
 
 void
-gfxFT2FontList::GetFontList(InfallibleTArray<FontListEntry>* retValue)
+gfxFT2FontList::GetSystemFontList(InfallibleTArray<FontListEntry>* retValue)
 {
     mFontFamilies.Enumerate(AddFamilyToFontList, retValue);
     mHiddenFontFamilies.Enumerate(AddHiddenFamilyToFontList, retValue);

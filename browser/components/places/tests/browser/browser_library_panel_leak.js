@@ -25,7 +25,7 @@ function test() {
     isnot(organizer.PlacesOrganizer, null, "Sanity check: PlacesOrganizer should exist");
     isnot(organizer.gEditItemOverlay, null, "Sanity check: gEditItemOverlay should exist");
 
-    ok(organizer.gEditItemOverlay._initialized, "gEditItemOverlay is initialized");
+    ok(organizer.gEditItemOverlay.initialized, "gEditItemOverlay is initialized");
     isnot(organizer.gEditItemOverlay.itemId, -1, "Editing a bookmark");
 
     // Select History in the left pane.
@@ -39,17 +39,16 @@ function test() {
     // Close Library window.
     organizer.close();
     // Clean up history.
-    waitForClearHistory(finish);
+    PlacesTestUtils.clearHistory().then(finish);
   }
 
   waitForExplicitFinish();
   // Add an history entry.
   ok(PlacesUtils, "checking PlacesUtils, running in chrome context?");
-  addVisits(
+  PlacesTestUtils.addVisits(
     {uri: PlacesUtils._uri(TEST_URI), visitDate: Date.now() * 1000,
-      transition: PlacesUtils.history.TRANSITION_TYPED},
-    window,
-    function() {
+      transition: PlacesUtils.history.TRANSITION_TYPED}
+    ).then(() => {
       openLibrary(onLibraryReady);
     });
 }

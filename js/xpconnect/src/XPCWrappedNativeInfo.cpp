@@ -11,6 +11,7 @@
 
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/XPTInterfaceInfoManager.h"
+#include "nsPrintfCString.h"
 
 using namespace JS;
 using namespace mozilla;
@@ -26,11 +27,12 @@ XPCNativeMember::GetCallInfo(JSObject* funobj,
                              XPCNativeMember**    pMember)
 {
     funobj = js::UncheckedUnwrap(funobj);
-    jsval ifaceVal = js::GetFunctionNativeReserved(funobj, 0);
-    jsval memberVal = js::GetFunctionNativeReserved(funobj, 1);
+    jsval memberVal =
+        js::GetFunctionNativeReserved(funobj,
+                                      XPC_FUNCTION_NATIVE_MEMBER_SLOT);
 
-    *pInterface = (XPCNativeInterface*) ifaceVal.toPrivate();
-    *pMember = (XPCNativeMember*) memberVal.toPrivate();
+    *pMember = static_cast<XPCNativeMember*>(memberVal.toPrivate());
+    *pInterface = (*pMember)->GetInterface();
 
     return true;
 }
@@ -47,8 +49,9 @@ XPCNativeMember::NewFunctionObject(XPCCallContext& ccx,
 
 bool
 XPCNativeMember::Resolve(XPCCallContext& ccx, XPCNativeInterface* iface,
-                         HandleObject parent, jsval *vp)
+                         HandleObject parent, jsval* vp)
 {
+    MOZ_ASSERT(iface == GetInterface());
     if (IsConstant()) {
         RootedValue resultVal(ccx);
         nsXPIDLCString name;
@@ -83,7 +86,7 @@ XPCNativeMember::Resolve(XPCCallContext& ccx, XPCNativeInterface* iface,
         callback = XPC_WN_GetterSetter;
     }
 
-    JSFunction *fun = js::NewFunctionByIdWithReserved(ccx, callback, argc, 0, parent, GetName());
+    JSFunction* fun = js::NewFunctionByIdWithReserved(ccx, callback, argc, 0, GetName());
     if (!fun)
         return false;
 
@@ -91,8 +94,10 @@ XPCNativeMember::Resolve(XPCCallContext& ccx, XPCNativeInterface* iface,
     if (!funobj)
         return false;
 
-    js::SetFunctionNativeReserved(funobj, 0, PRIVATE_TO_JSVAL(iface));
-    js::SetFunctionNativeReserved(funobj, 1, PRIVATE_TO_JSVAL(this));
+    js::SetFunctionNativeReserved(funobj, XPC_FUNCTION_NATIVE_MEMBER_SLOT,
+                                  PrivateValue(this));
+    js::SetFunctionNativeReserved(funobj, XPC_FUNCTION_PARENT_OBJECT_SLOT,
+                                  ObjectValue(*parent));
 
     *vp = OBJECT_TO_JSVAL(funobj);
 
@@ -228,6 +233,27 @@ XPCNativeInterface::NewInstance(nsIInterfaceInfo* aInfo)
     if (NS_FAILED(aInfo->IsScriptable(&canScript)) || !canScript)
         return nullptr;
 
+    bool mainProcessScriptableOnly;
+    if (NS_FAILED(aInfo->IsMainProcessScriptableOnly(&mainProcessScriptableOnly)))
+        return nullptr;
+    if (mainProcessScriptableOnly && XRE_GetProcessType() != GeckoProcessType_Default) {
+        nsCOMPtr<nsIConsoleService> console(do_GetService(NS_CONSOLESERVICE_CONTRACTID));
+        if (console) {
+            char* intfNameChars;
+            aInfo->GetName(&intfNameChars);
+            nsPrintfCString errorMsg("Use of %s in content process is deprecated.", intfNameChars);
+
+            nsAutoString filename;
+            uint32_t lineno = 0;
+            nsJSUtils::GetCallingLocation(cx, filename, &lineno);
+            nsCOMPtr<nsIScriptError> error(do_CreateInstance(NS_SCRIPTERROR_CONTRACTID));
+            error->Init(NS_ConvertUTF8toUTF16(errorMsg),
+                        filename, EmptyString(),
+                        lineno, 0, nsIScriptError::warningFlag, "chrome javascript");
+            console->LogMessage(error);
+        }
+    }
+
     if (NS_FAILED(aInfo->GetMethodCount(&methodCount)) ||
         NS_FAILED(aInfo->GetConstantCount(&constCount)))
         return nullptr;
@@ -287,12 +313,19 @@ XPCNativeInterface::NewInstance(nsIInterfaceInfo* aInfo)
         } else {
             // XXX need better way to find dups
             // MOZ_ASSERT(!LookupMemberByID(name),"duplicate method name");
-            cur = &members[realTotalCount++];
+            if (realTotalCount == XPCNativeMember::GetMaxIndexInInterface()) {
+                NS_WARNING("Too many members in interface");
+                failed = true;
+                break;
+            }
+            cur = &members[realTotalCount];
             cur->SetName(name);
             if (info->IsGetter())
                 cur->SetReadOnlyAttribute(i);
             else
                 cur->SetMethod(i);
+            cur->SetIndexInInterface(realTotalCount);
+            ++realTotalCount;
         }
     }
 
@@ -315,10 +348,16 @@ XPCNativeInterface::NewInstance(nsIInterfaceInfo* aInfo)
 
             // XXX need better way to find dups
             //MOZ_ASSERT(!LookupMemberByID(name),"duplicate method/constant name");
-
-            cur = &members[realTotalCount++];
+            if (realTotalCount == XPCNativeMember::GetMaxIndexInInterface()) {
+                NS_WARNING("Too many members in interface");
+                failed = true;
+                break;
+            }
+            cur = &members[realTotalCount];
             cur->SetName(name);
             cur->SetConstant(i);
+            cur->SetIndexInInterface(realTotalCount);
+            ++realTotalCount;
         }
     }
 

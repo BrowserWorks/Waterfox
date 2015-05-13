@@ -1,5 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -11,6 +11,13 @@
 #include "nsThreadUtils.h"
 
 BEGIN_BLUETOOTH_NAMESPACE
+
+//
+// Conversion
+//
+
+nsresult
+Convert(nsresult aIn, BluetoothStatus& aOut);
 
 //
 // Result handling
@@ -49,6 +56,9 @@ public:
   static void
   Dispatch(Obj* aObj, Res (Obj::*aMethod)(), const InitOp& aInitOp)
   {
+    if (!aObj) {
+      return; // silently return if no result runnable has been given
+    }
     nsRefPtr<SelfType> runnable = Create(aObj, aMethod, aInitOp);
     if (!runnable) {
       BT_LOGR("BluetoothResultRunnable0::Create failed");
@@ -56,12 +66,12 @@ public:
     }
     nsresult rv = NS_DispatchToMainThread(runnable);
     if (NS_FAILED(rv)) {
-      BT_LOGR("NS_DispatchToMainThread failed: %X", rv);
+      BT_LOGR("NS_DispatchToMainThread failed: %X", unsigned(rv));
     }
   }
 
   NS_METHOD
-  Run() MOZ_OVERRIDE
+  Run() override
   {
     ((*mObj).*mMethod)();
     return NS_OK;
@@ -108,6 +118,9 @@ public:
   static void
   Dispatch(Obj* aObj, Res (Obj::*aMethod)(Arg1), const InitOp& aInitOp)
   {
+    if (!aObj) {
+      return; // silently return if no result runnable has been given
+    }
     nsRefPtr<SelfType> runnable = Create(aObj, aMethod, aInitOp);
     if (!runnable) {
       BT_LOGR("BluetoothResultRunnable1::Create failed");
@@ -115,12 +128,12 @@ public:
     }
     nsresult rv = NS_DispatchToMainThread(runnable);
     if (NS_FAILED(rv)) {
-      BT_LOGR("NS_DispatchToMainThread failed: %X", rv);
+      BT_LOGR("NS_DispatchToMainThread failed: %X", unsigned(rv));
     }
   }
 
   NS_METHOD
-  Run() MOZ_OVERRIDE
+  Run() override
   {
     ((*mObj).*mMethod)(mArg1);
     return NS_OK;
@@ -174,6 +187,9 @@ public:
   Dispatch(Obj* aObj, Res (Obj::*aMethod)(Arg1, Arg2, Arg3),
            const InitOp& aInitOp)
   {
+    if (!aObj) {
+      return; // silently return if no result runnable has been given
+    }
     nsRefPtr<SelfType> runnable = Create(aObj, aMethod, aInitOp);
     if (!runnable) {
       BT_LOGR("BluetoothResultRunnable3::Create failed");
@@ -186,7 +202,7 @@ public:
   }
 
   NS_METHOD
-  Run() MOZ_OVERRIDE
+  Run() override
   {
     ((*mObj).*mMethod)(mArg1, mArg2, mArg3);
     return NS_OK;
@@ -266,7 +282,7 @@ public:
   }
 
   NS_METHOD
-  Run() MOZ_OVERRIDE
+  Run() override
   {
     MOZ_ASSERT(NS_IsMainThread());
 
@@ -333,7 +349,7 @@ public:
   }
 
   NS_METHOD
-  Run() MOZ_OVERRIDE
+  Run() override
   {
     MOZ_ASSERT(NS_IsMainThread());
 
@@ -406,7 +422,7 @@ public:
   }
 
   NS_METHOD
-  Run() MOZ_OVERRIDE
+  Run() override
   {
     MOZ_ASSERT(NS_IsMainThread());
 
@@ -482,7 +498,7 @@ public:
   }
 
   NS_METHOD
-  Run() MOZ_OVERRIDE
+  Run() override
   {
     MOZ_ASSERT(NS_IsMainThread());
 
@@ -560,7 +576,7 @@ public:
   }
 
   NS_METHOD
-  Run() MOZ_OVERRIDE
+  Run() override
   {
     MOZ_ASSERT(NS_IsMainThread());
 
@@ -640,7 +656,7 @@ public:
   }
 
   NS_METHOD
-  Run() MOZ_OVERRIDE
+  Run() override
   {
     MOZ_ASSERT(NS_IsMainThread());
 
@@ -689,7 +705,7 @@ private:
 //
 
 template <typename T1>
-class ConstantInitOp1 MOZ_FINAL
+class ConstantInitOp1 final
 {
 public:
   ConstantInitOp1(const T1& aArg1)
@@ -708,7 +724,7 @@ private:
 };
 
 template <typename T1, typename T2>
-class ConstantInitOp2 MOZ_FINAL
+class ConstantInitOp2 final
 {
 public:
   ConstantInitOp2(const T1& aArg1, const T2& aArg2)
@@ -730,7 +746,7 @@ private:
 };
 
 template <typename T1, typename T2, typename T3>
-class ConstantInitOp3 MOZ_FINAL
+class ConstantInitOp3 final
 {
 public:
   ConstantInitOp3(const T1& aArg1, const T2& aArg2, const T3& aArg3)

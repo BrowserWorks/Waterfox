@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -16,7 +17,7 @@ nsresult NS_NewSVGAnimateTransformElement(nsIContent **aResult,
 namespace mozilla {
 namespace dom {
 
-class SVGAnimateTransformElement MOZ_FINAL : public SVGAnimationElement
+class SVGAnimateTransformElement final : public SVGAnimationElement
 {
 protected:
   explicit SVGAnimateTransformElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
@@ -26,20 +27,20 @@ protected:
     (::NS_NewSVGAnimateTransformElement(nsIContent **aResult,
                                         already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo));
 
-  virtual JSObject* WrapNode(JSContext *aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 public:
   // nsIDOMNode specializations
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
 
   // Element specializations
   bool ParseAttribute(int32_t aNamespaceID,
                         nsIAtom* aAttribute,
                         const nsAString& aValue,
-                        nsAttrValue& aResult) MOZ_OVERRIDE;
+                        nsAttrValue& aResult) override;
 
   // SVGAnimationElement
-  virtual nsSMILAnimationFunction& AnimationFunction() MOZ_OVERRIDE;
+  virtual nsSMILAnimationFunction& AnimationFunction() override;
 };
 
 } // namespace dom

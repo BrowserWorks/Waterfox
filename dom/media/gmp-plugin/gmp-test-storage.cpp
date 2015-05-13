@@ -23,7 +23,7 @@ public:
     return mRecord->Open();
   }
 
-  virtual void OpenComplete(GMPErr aStatus) MOZ_OVERRIDE {
+  virtual void OpenComplete(GMPErr aStatus) override {
     if (GMP_SUCCEEDED(aStatus)) {
       mRecord->Write(mData.size() ? &mData.front() : nullptr, mData.size());
     } else {
@@ -34,9 +34,9 @@ public:
 
   virtual void ReadComplete(GMPErr aStatus,
                             const uint8_t* aData,
-                            uint32_t aDataSize) MOZ_OVERRIDE {}
+                            uint32_t aDataSize) override {}
 
-  virtual void WriteComplete(GMPErr aStatus) MOZ_OVERRIDE {
+  virtual void WriteComplete(GMPErr aStatus) override {
     // Note: Call Close() before running continuation, in case the
     // continuation tries to open the same record; if we call Close()
     // after running the continuation, the Close() call will arrive
@@ -103,7 +103,7 @@ public:
     return mRecord->Open();
   }
 
-  virtual void OpenComplete(GMPErr aStatus) MOZ_OVERRIDE {
+  virtual void OpenComplete(GMPErr aStatus) override {
     auto err = mRecord->Read();
     if (GMP_FAILED(err)) {
       mContinuation->ReadComplete(err, "");
@@ -113,7 +113,7 @@ public:
 
   virtual void ReadComplete(GMPErr aStatus,
                             const uint8_t* aData,
-                            uint32_t aDataSize) MOZ_OVERRIDE {
+                            uint32_t aDataSize) override {
     // Note: Call Close() before running continuation, in case the
     // continuation tries to open the same record; if we call Close()
     // after running the continuation, the Close() call will arrive
@@ -125,7 +125,7 @@ public:
     delete this;
   }
 
-  virtual void WriteComplete(GMPErr aStatus) MOZ_OVERRIDE {
+  virtual void WriteComplete(GMPErr aStatus) override {
   }
 
 private:
@@ -171,44 +171,58 @@ GMPRunOnMainThread(GMPTask* aTask)
 
 class OpenRecordClient : public GMPRecordClient {
 public:
-  GMPErr Init(GMPRecord* aRecord,
-              OpenContinuation* aContinuation) {
-    mRecord = aRecord;
-    mContinuation = aContinuation;
-    return mRecord->Open();
+  /*
+   * This function will take the memory ownership of the parameters and
+   * delete them when done.
+   */
+  static void Open(const std::string& aRecordName,
+            OpenContinuation* aContinuation) {
+    MOZ_ASSERT(aContinuation);
+    (new OpenRecordClient(aContinuation))->Do(aRecordName);
   }
 
-  virtual void OpenComplete(GMPErr aStatus) MOZ_OVERRIDE {
-    mContinuation->OpenComplete(aStatus, mRecord);
-    delete this;
+  virtual void OpenComplete(GMPErr aStatus) override {
+    Done(aStatus);
   }
 
   virtual void ReadComplete(GMPErr aStatus,
                             const uint8_t* aData,
-                            uint32_t aDataSize) MOZ_OVERRIDE { }
+                            uint32_t aDataSize) override {
+    MOZ_CRASH("Should not reach here.");
+  }
 
-  virtual void WriteComplete(GMPErr aStatus) MOZ_OVERRIDE { }
+  virtual void WriteComplete(GMPErr aStatus) override {
+    MOZ_CRASH("Should not reach here.");
+  }
 
 private:
+  explicit OpenRecordClient(OpenContinuation* aContinuation)
+    : mRecord(nullptr), mContinuation(aContinuation) {}
+
+  void Do(const std::string& aName) {
+    auto err = GMPOpenRecord(aName.c_str(), aName.size(), &mRecord, this);
+    if (GMP_FAILED(err) ||
+        GMP_FAILED(err = mRecord->Open())) {
+      Done(err);
+    }
+  }
+
+  void Done(GMPErr err) {
+    // mContinuation is responsible for closing mRecord.
+    mContinuation->OpenComplete(err, mRecord);
+    delete mContinuation;
+    delete this;
+  }
+
   GMPRecord* mRecord;
   OpenContinuation* mContinuation;
 };
 
-GMPErr
+void
 GMPOpenRecord(const std::string& aRecordName,
               OpenContinuation* aContinuation)
 {
-  MOZ_ASSERT(aContinuation);
-  GMPRecord* record;
-  OpenRecordClient* client = new OpenRecordClient();
-  auto err = GMPOpenRecord(aRecordName.c_str(),
-                           aRecordName.size(),
-                           &record,
-                           client);
-  if (GMP_FAILED(err)) {
-    return err;
-  }
-  return client->Init(record, aContinuation);
+  OpenRecordClient::Open(aRecordName, aContinuation);
 }
 
 GMPErr

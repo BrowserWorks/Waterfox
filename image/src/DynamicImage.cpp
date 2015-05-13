@@ -24,12 +24,6 @@ namespace image {
 
 // Inherited methods from Image.
 
-nsresult
-DynamicImage::Init(const char* aMimeType, uint32_t aFlags)
-{
-  return NS_OK;
-}
-
 already_AddRefed<ProgressTracker>
 DynamicImage::GetProgressTracker()
 {
@@ -42,12 +36,12 @@ DynamicImage::SizeOfSourceWithComputedFallback(MallocSizeOf aMallocSizeOf) const
   return 0;
 }
 
-size_t
-DynamicImage::SizeOfDecoded(gfxMemoryLocation aLocation,
-                            MallocSizeOf aMallocSizeOf) const
+void
+DynamicImage::CollectSizeOfSurfaces(nsTArray<SurfaceMemoryCounter>& aCounters,
+                                    MallocSizeOf aMallocSizeOf) const
 {
-  // We don't know the answer since gfxDrawable doesn't expose this information.
-  return 0;
+  // We can't report anything useful because gfxDrawable doesn't expose this
+  // information.
 }
 
 void
@@ -162,12 +156,6 @@ DynamicImage::GetType(uint16_t* aType)
   return NS_OK;
 }
 
-NS_IMETHODIMP_(uint16_t)
-DynamicImage::GetType()
-{
-  return imgIContainer::TYPE_RASTER;
-}
-
 NS_IMETHODIMP
 DynamicImage::GetAnimated(bool* aAnimated)
 {
@@ -184,14 +172,18 @@ DynamicImage::GetFrame(uint32_t aWhichFrame,
   RefPtr<DrawTarget> dt = gfxPlatform::GetPlatform()->
     CreateOffscreenContentDrawTarget(IntSize(size.width, size.height),
                                      SurfaceFormat::B8G8R8A8);
+  if (!dt) {
+    gfxWarning() <<
+      "DynamicImage::GetFrame failed in CreateOffscreenContentDrawTarget";
+    return nullptr;
+  }
   nsRefPtr<gfxContext> context = new gfxContext(dt);
 
-  nsresult rv = Draw(context, size, ImageRegion::Create(size),
+  auto result = Draw(context, size, ImageRegion::Create(size),
                      aWhichFrame, GraphicsFilter::FILTER_NEAREST,
                      Nothing(), aFlags);
 
-  NS_ENSURE_SUCCESS(rv, nullptr);
-  return dt->Snapshot();
+  return result == DrawResult::SUCCESS ? dt->Snapshot() : nullptr;
 }
 
 NS_IMETHODIMP_(bool)
@@ -202,15 +194,19 @@ DynamicImage::IsOpaque()
   return false;
 }
 
-NS_IMETHODIMP
-DynamicImage::GetImageContainer(LayerManager* aManager,
-                                ImageContainer** _retval)
+NS_IMETHODIMP_(bool)
+DynamicImage::IsImageContainerAvailable(LayerManager* aManager, uint32_t aFlags)
 {
-  *_retval = nullptr;
-  return NS_OK;
+  return false;
 }
 
-NS_IMETHODIMP
+NS_IMETHODIMP_(already_AddRefed<ImageContainer>)
+DynamicImage::GetImageContainer(LayerManager* aManager, uint32_t aFlags)
+{
+  return nullptr;
+}
+
+NS_IMETHODIMP_(DrawResult)
 DynamicImage::Draw(gfxContext* aContext,
                    const nsIntSize& aSize,
                    const ImageRegion& aRegion,
@@ -226,7 +222,7 @@ DynamicImage::Draw(gfxContext* aContext,
   if (aSize == drawableSize) {
     gfxUtils::DrawPixelSnapped(aContext, mDrawable, drawableSize, aRegion,
                                SurfaceFormat::B8G8R8A8, aFilter);
-    return NS_OK;
+    return DrawResult::SUCCESS;
   }
 
   gfxSize scale(double(aSize.width) / drawableSize.width,
@@ -240,7 +236,7 @@ DynamicImage::Draw(gfxContext* aContext,
 
   gfxUtils::DrawPixelSnapped(aContext, mDrawable, drawableSize, region,
                              SurfaceFormat::B8G8R8A8, aFilter);
-  return NS_OK;
+  return DrawResult::SUCCESS;
 }
 
 NS_IMETHODIMP
@@ -255,10 +251,10 @@ DynamicImage::StartDecoding()
   return NS_OK;
 }
 
-bool
-DynamicImage::IsDecoded()
+NS_IMETHODIMP
+DynamicImage::RequestDecodeForSize(const nsIntSize& aSize, uint32_t aFlags)
 {
-  return true;
+  return NS_OK;
 }
 
 NS_IMETHODIMP

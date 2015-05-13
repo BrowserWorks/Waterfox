@@ -125,8 +125,8 @@ public:
   PrefChangedFunc mCallback;
 };
 
-class ValueObserver MOZ_FINAL : public nsIObserver,
-                                public ValueObserverHashKey
+class ValueObserver final : public nsIObserver,
+                            public ValueObserverHashKey
 {
   ~ValueObserver() {
     Preferences::RemoveObserver(this, mPrefName.get());
@@ -235,10 +235,10 @@ Preferences::SizeOfIncludingThisAndOtherStuff(mozilla::MallocSizeOf aMallocSizeO
   NS_ENSURE_TRUE(InitStaticMembers(), 0);
 
   size_t n = aMallocSizeOf(sPreferences);
-  if (gHashTable.ops) {
+  if (gHashTable) {
     // pref keys are allocated in a private arena, which we count elsewhere.
     // pref stringvals are allocated out of the same private arena.
-    n += PL_DHashTableSizeOfExcludingThis(&gHashTable, nullptr, aMallocSizeOf);
+    n += PL_DHashTableSizeOfExcludingThis(gHashTable, nullptr, aMallocSizeOf);
   }
   if (gCacheData) {
     n += gCacheData->SizeOfIncludingThis(aMallocSizeOf);
@@ -257,7 +257,7 @@ Preferences::SizeOfIncludingThisAndOtherStuff(mozilla::MallocSizeOf aMallocSizeO
   return n;
 }
 
-class PreferenceServiceReporter MOZ_FINAL : public nsIMemoryReporter
+class PreferenceServiceReporter final : public nsIMemoryReporter
 {
   ~PreferenceServiceReporter() {}
 
@@ -738,8 +738,8 @@ Preferences::GetPreference(PrefSetting* aPref)
 void
 Preferences::GetPreferences(InfallibleTArray<PrefSetting>* aPrefs)
 {
-  aPrefs->SetCapacity(gHashTable.Capacity());
-  PL_DHashTableEnumerate(&gHashTable, pref_GetPrefs, aPrefs);
+  aPrefs->SetCapacity(gHashTable->Capacity());
+  PL_DHashTableEnumerate(gHashTable, pref_GetPrefs, aPrefs);
 }
 
 NS_IMETHODIMP
@@ -749,11 +749,9 @@ Preferences::GetBranch(const char *aPrefRoot, nsIPrefBranch **_retval)
 
   if ((nullptr != aPrefRoot) && (*aPrefRoot != '\0')) {
     // TODO: - cache this stuff and allow consumers to share branches (hold weak references I think)
-    nsPrefBranch* prefBranch = new nsPrefBranch(aPrefRoot, false);
-    if (!prefBranch)
-      return NS_ERROR_OUT_OF_MEMORY;
-
-    rv = CallQueryInterface(prefBranch, _retval);
+    nsRefPtr<nsPrefBranch> prefBranch = new nsPrefBranch(aPrefRoot, false);
+    prefBranch.forget(_retval);
+    rv = NS_OK;
   } else {
     // special case caching the default root
     nsCOMPtr<nsIPrefBranch> root(sRootBranch);
@@ -804,17 +802,8 @@ Preferences::NotifyServiceObservers(const char *aTopic)
 nsresult
 Preferences::UseDefaultPrefFile()
 {
-  nsresult rv;
   nsCOMPtr<nsIFile> aFile;
-
-#if defined(XP_WIN) && defined(MOZ_METRO)
-  if (XRE_GetWindowsEnvironment() == WindowsEnvironmentType_Metro) {
-    rv = NS_GetSpecialDirectory(NS_METRO_APP_PREFS_50_FILE, getter_AddRefs(aFile));
-  } else
-#endif
-  {
-    rv = NS_GetSpecialDirectory(NS_APP_PREFS_50_FILE, getter_AddRefs(aFile));
-  }
+  nsresult rv = NS_GetSpecialDirectory(NS_APP_PREFS_50_FILE, getter_AddRefs(aFile));
 
   if (NS_SUCCEEDED(rv)) {
     rv = ReadAndOwnUserPrefFile(aFile);
@@ -955,7 +944,7 @@ Preferences::WritePrefFile(nsIFile* aFile)
   uint32_t                  writeAmount;
   nsresult                  rv;
 
-  if (!gHashTable.ops)
+  if (!gHashTable)
     return NS_ERROR_NOT_INITIALIZED;
 
   // execute a "safe" save by saving through a tempfile
@@ -969,27 +958,28 @@ Preferences::WritePrefFile(nsIFile* aFile)
   if (NS_FAILED(rv)) 
       return rv;  
 
-  nsAutoArrayPtr<char*> valueArray(new char*[gHashTable.EntryCount()]);
-  memset(valueArray, 0, gHashTable.EntryCount() * sizeof(char*));
+  nsAutoArrayPtr<char*> valueArray(new char*[gHashTable->EntryCount()]);
+  memset(valueArray, 0, gHashTable->EntryCount() * sizeof(char*));
   pref_saveArgs saveArgs;
   saveArgs.prefArray = valueArray;
   saveArgs.saveTypes = SAVE_ALL;
-  
+
   // get the lines that we're supposed to be writing to the file
-  PL_DHashTableEnumerate(&gHashTable, pref_savePref, &saveArgs);
-    
+  PL_DHashTableEnumerate(gHashTable, pref_savePref, &saveArgs);
+
   /* Sort the preferences to make a readable file on disk */
-  NS_QuickSort(valueArray, gHashTable.EntryCount(), sizeof(char *), pref_CompareStrings, nullptr);
-  
+  NS_QuickSort(valueArray, gHashTable->EntryCount(), sizeof(char *),
+               pref_CompareStrings, nullptr);
+
   // write out the file header
   outStream->Write(outHeader, sizeof(outHeader) - 1, &writeAmount);
 
   char** walker = valueArray;
-  for (uint32_t valueIdx = 0; valueIdx < gHashTable.EntryCount(); valueIdx++, walker++) {
+  for (uint32_t valueIdx = 0; valueIdx < gHashTable->EntryCount(); valueIdx++, walker++) {
     if (*walker) {
       outStream->Write(*walker, strlen(*walker), &writeAmount);
       outStream->Write(NS_LINEBREAK, NS_LINEBREAK_LEN, &writeAmount);
-      NS_Free(*walker);
+      free(*walker);
     }
   }
 

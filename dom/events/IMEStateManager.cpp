@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 sw=2 et tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -9,7 +9,6 @@
 #include "mozilla/IMEStateManager.h"
 
 #include "mozilla/Attributes.h"
-#include "mozilla/EventListenerManager.h"
 #include "mozilla/EventStates.h"
 #include "mozilla/MouseEvents.h"
 #include "mozilla/Preferences.h"
@@ -17,6 +16,7 @@
 #include "mozilla/TextComposition.h"
 #include "mozilla/TextEvents.h"
 #include "mozilla/dom/HTMLFormElement.h"
+#include "mozilla/dom/TabParent.h"
 
 #include "HTMLInputElement.h"
 #include "IMEContentObserver.h"
@@ -146,6 +146,8 @@ GetEventMessageName(uint32_t aMessage)
       return "NS_COMPOSITION_CHANGE";
     case NS_COMPOSITION_COMMIT_AS_IS:
       return "NS_COMPOSITION_COMMIT_AS_IS";
+    case NS_COMPOSITION_COMMIT:
+      return "NS_COMPOSITION_COMMIT";
     default:
       return "unacceptable event message";
   }
@@ -182,7 +184,6 @@ nsPresContext* IMEStateManager::sPresContext = nullptr;
 bool IMEStateManager::sInstalledMenuKeyboardListener = false;
 bool IMEStateManager::sIsTestingIME = false;
 bool IMEStateManager::sIsGettingNewIMEState = false;
-bool IMEStateManager::sCheckForIMEUnawareWebApps = false;
 
 // sActiveIMEContentObserver points to the currently active IMEContentObserver.
 // sActiveIMEContentObserver is null if there is no focused editor.
@@ -198,10 +199,6 @@ IMEStateManager::Init()
     sISMLog = PR_NewLogModule("IMEStateManager");
   }
 #endif
-  Preferences::AddBoolVarCache(
-    &sCheckForIMEUnawareWebApps,
-    "intl.ime.hack.on_ime_unaware_apps.fire_key_events_for_composition",
-    false);
 }
 
 // static
@@ -394,6 +391,27 @@ IMEStateManager::OnChangeFocusInternal(nsPresContext* aPresContext,
   }
 
   IMEState newState = GetNewIMEState(aPresContext, aContent);
+
+  // In e10s, remote content may have IME focus.  The main process (i.e. this process)
+  // would attempt to set state to DISABLED if, for example, the user clicks
+  // some other remote content.  The content process would later re-ENABLE IME, meaning
+  // that all state-changes were unnecessary.
+  // Here we filter the common case where the main process knows that the remote
+  // process controls IME focus.  The DISABLED->re-ENABLED progression can
+  // still happen since remote content may be concurrently communicating its claim
+  // on focus to the main process... but this cannot cause bugs like missed keypresses.
+  // (It just means a lot of needless IPC.)
+  if ((newState.mEnabled == IMEState::DISABLED) && TabParent::GetIMETabParent()) {
+    PR_LOG(sISMLog, PR_LOG_DEBUG,
+      ("ISM:   IMEStateManager::OnChangeFocusInternal(), "
+       "Parent process cancels to set DISABLED state because the content process "
+       "has IME focus and has already sets IME state"));  
+    MOZ_ASSERT(XRE_IsParentProcess(),
+      "TabParent::GetIMETabParent() should never return non-null value "
+      "in the content process");
+    return NS_OK;
+  }
+
   if (!focusActuallyChanging) {
     // actual focus isn't changing, but if IME enabled state is changing,
     // we should do it.
@@ -753,25 +771,6 @@ private:
   uint32_t mState;
 };
 
-static bool
-MayBeIMEUnawareWebApp(nsINode* aNode)
-{
-  bool haveKeyEventsListener = false;
-
-  while (aNode) {
-    EventListenerManager* const mgr = aNode->GetExistingListenerManager();
-    if (mgr) {
-      if (mgr->MayHaveInputOrCompositionEventListener()) {
-        return false;
-      }
-      haveKeyEventsListener |= mgr->MayHaveKeyEventListener();
-    }
-    aNode = aNode->GetParentNode();
-  }
-
-  return haveKeyEventsListener;
-}
-
 // static
 void
 IMEStateManager::SetIMEState(const IMEState& aState,
@@ -794,13 +793,9 @@ IMEStateManager::SetIMEState(const IMEState& aState,
   InputContext context;
   context.mIMEState = aState;
 
-  context.mMayBeIMEUnaware = context.mIMEState.IsEditable() &&
-    sCheckForIMEUnawareWebApps && MayBeIMEUnawareWebApp(aContent);
-
-  if (aContent && aContent->GetNameSpaceID() == kNameSpaceID_XHTML &&
-      (aContent->Tag() == nsGkAtoms::input ||
-       aContent->Tag() == nsGkAtoms::textarea)) {
-    if (aContent->Tag() != nsGkAtoms::textarea) {
+  if (aContent &&
+      aContent->IsAnyOfHTMLElements(nsGkAtoms::input, nsGkAtoms::textarea)) {
+    if (!aContent->IsHTMLElement(nsGkAtoms::textarea)) {
       // <input type=number> has an anonymous <input type=text> descendant
       // that gets focus whenever anyone tries to focus the number control. We
       // need to check if aContent is one of those anonymous text controls and,
@@ -836,7 +831,7 @@ IMEStateManager::SetIMEState(const IMEState& aState,
     // If we don't have an action hint and
     // return won't submit the form, use "next".
     if (context.mActionHint.IsEmpty() &&
-        inputContent->Tag() == nsGkAtoms::input) {
+        inputContent->IsHTMLElement(nsGkAtoms::input)) {
       bool willSubmit = false;
       nsCOMPtr<nsIFormControl> control(do_QueryInterface(inputContent));
       mozilla::dom::Element* formElement = control->GetFormElement();
@@ -847,8 +842,7 @@ IMEStateManager::SetIMEState(const IMEState& aState,
             form->GetDefaultSubmitElement()) {
           willSubmit = true;
         // is this an html form and does it only have a single text input element?
-        } else if (formElement && formElement->Tag() == nsGkAtoms::form &&
-                   formElement->IsHTML() &&
+        } else if (formElement && formElement->IsHTMLElement(nsGkAtoms::form) &&
                    !static_cast<dom::HTMLFormElement*>(formElement)->
                      ImplicitSubmissionIsDisabled()) {
           willSubmit = true;

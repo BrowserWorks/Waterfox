@@ -10,11 +10,12 @@
 #include "mozilla/unused.h"
 #include "GMPMessageUtils.h"
 #include "nsAutoRef.h"
-#include "GMPParent.h"
+#include "GMPContentParent.h"
 #include "mozilla/gmp/GMPTypes.h"
 #include "nsThread.h"
 #include "nsThreadUtils.h"
 #include "runnable_utils.h"
+#include "GMPUtils.h"
 
 namespace mozilla {
 
@@ -49,10 +50,11 @@ namespace gmp {
 //    on Shutdown -> Dead
 // Dead: mIsOpen == false
 
-GMPVideoEncoderParent::GMPVideoEncoderParent(GMPParent *aPlugin)
+GMPVideoEncoderParent::GMPVideoEncoderParent(GMPContentParent *aPlugin)
 : GMPSharedMemManager(aPlugin),
   mIsOpen(false),
   mShuttingDown(false),
+  mActorDestroyed(false),
   mPlugin(aPlugin),
   mCallback(nullptr),
   mVideoHost(this)
@@ -125,7 +127,7 @@ GMPVideoEncoderParent::InitEncode(const GMPVideoCodec& aCodecSettings,
 }
 
 GMPErr
-GMPVideoEncoderParent::Encode(UniquePtr<GMPVideoi420Frame> aInputFrame,
+GMPVideoEncoderParent::Encode(GMPUniquePtr<GMPVideoi420Frame> aInputFrame,
                               const nsTArray<uint8_t>& aCodecSpecificInfo,
                               const nsTArray<GMPVideoFrameType>& aFrameTypes)
 {
@@ -136,7 +138,7 @@ GMPVideoEncoderParent::Encode(UniquePtr<GMPVideoi420Frame> aInputFrame,
 
   MOZ_ASSERT(mPlugin->GMPThread() == NS_GetCurrentThread());
 
-  UniquePtr<GMPVideoi420FrameImpl> inputFrameImpl(
+  GMPUniquePtr<GMPVideoi420FrameImpl> inputFrameImpl(
     static_cast<GMPVideoi420FrameImpl*>(aInputFrame.release()));
 
   // Very rough kill-switch if the plugin stops processing.  If it's merely
@@ -214,6 +216,12 @@ GMPVideoEncoderParent::SetPeriodicKeyFrames(bool aEnable)
   return GMPNoErr;
 }
 
+const uint32_t
+GMPVideoEncoderParent::ParentID()
+{
+  return mPlugin ? mPlugin->GetPluginId() : 0;
+}
+
 // Note: Consider keeping ActorDestroy sync'd up when making changes here.
 void
 GMPVideoEncoderParent::Shutdown()
@@ -234,7 +242,9 @@ GMPVideoEncoderParent::Shutdown()
   mVideoHost.DoneWithAPI();
 
   mIsOpen = false;
-  unused << SendEncodingComplete();
+  if (!mActorDestroyed) {
+    unused << SendEncodingComplete();
+  }
 }
 
 static void
@@ -249,6 +259,7 @@ GMPVideoEncoderParent::ActorDestroy(ActorDestroyReason aWhy)
 {
   LOGD(("%s::%s: %p (%d)", __CLASS__, __FUNCTION__, this, (int) aWhy));
   mIsOpen = false;
+  mActorDestroyed = true;
   if (mCallback) {
     // May call Close() (and Shutdown()) immediately or with a delay
     mCallback->Terminated();
@@ -288,7 +299,7 @@ EncodedCallback(GMPVideoEncoderCallbackProxy* aCallback,
 
 bool
 GMPVideoEncoderParent::RecvEncoded(const GMPVideoEncodedFrameData& aEncodedFrame,
-                                   const nsTArray<uint8_t>& aCodecSpecificInfo)
+                                   InfallibleTArray<uint8_t>&& aCodecSpecificInfo)
 {
   if (!mCallback) {
     return false;
@@ -320,7 +331,14 @@ GMPVideoEncoderParent::RecvError(const GMPErr& aError)
 }
 
 bool
-GMPVideoEncoderParent::RecvParentShmemForPool(Shmem& aFrameBuffer)
+GMPVideoEncoderParent::RecvShutdown()
+{
+  Shutdown();
+  return true;
+}
+
+bool
+GMPVideoEncoderParent::RecvParentShmemForPool(Shmem&& aFrameBuffer)
 {
   if (aFrameBuffer.IsWritable()) {
     mVideoHost.SharedMemMgr()->MgrDeallocShmem(GMPSharedMem::kGMPFrameData,

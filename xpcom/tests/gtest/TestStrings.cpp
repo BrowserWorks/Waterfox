@@ -1,4 +1,5 @@
-/* vim:set ts=2 sw=2 et cindent: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -11,12 +12,11 @@
 #include "nsCRTGlue.h"
 #include "nsRefPtr.h"
 #include "nsTArray.h"
-#include "mozilla/fallible.h"
 #include "gtest/gtest.h"
 
 namespace TestStrings {
 
-using mozilla::fallible_t;
+using mozilla::fallible;
 
 void test_assign_helper(const nsACString& in, nsACString &_retval)
 {
@@ -44,6 +44,7 @@ TEST(Strings, test1)
   nsAutoString buf(aStr);
 
   int32_t n = buf.FindChar(',');
+  EXPECT_EQ(n, kNotFound);
 
   n = buf.Length();
 
@@ -132,7 +133,7 @@ TEST(Strings, findinreadable)
   // Should match the first "!/" but not the last
   EXPECT_NE(delim_end, end);
   EXPECT_STREQ(r, "!/");
-  nsMemory::Free(r);
+  free(r);
 
   delim_begin = begin;
   delim_end = end;
@@ -144,7 +145,7 @@ TEST(Strings, findinreadable)
   // Should not match the first jar:, but the second one
   EXPECT_EQ(delim_begin, begin);
   EXPECT_STREQ(r, "jar:");
-  nsMemory::Free(r);
+  free(r);
 
   // Search for jar: in a Substring
   delim_begin = begin; delim_begin++;
@@ -155,7 +156,7 @@ TEST(Strings, findinreadable)
   // Should not match the first jar:, but the second one
   EXPECT_NE(delim_begin, begin);
   EXPECT_STREQ(r, "jar:");
-  nsMemory::Free(r);
+  free(r);
 
   // Should not find a match
   EXPECT_FALSE(FindInReadable(NS_LITERAL_CSTRING("gecko"), delim_begin, delim_end));
@@ -197,7 +198,7 @@ TEST(Strings, rfindinreadable)
   // Should match the last "!/"
   EXPECT_EQ(delim_end, end);
   EXPECT_STREQ(r, "!/");
-  nsMemory::Free(r);
+  free(r);
 
   delim_begin = begin;
   delim_end = end;
@@ -209,7 +210,7 @@ TEST(Strings, rfindinreadable)
   // Should not match the first jar:, but the second one
   EXPECT_NE(delim_begin, begin);
   EXPECT_STREQ(r, "jar:");
-  nsMemory::Free(r);
+  free(r);
 
   // Search for jar: in a Substring
   delim_begin = begin;
@@ -220,7 +221,7 @@ TEST(Strings, rfindinreadable)
   // Should not match the first jar:, but the second one
   EXPECT_EQ(delim_begin, begin);
   EXPECT_STREQ(r, "jar:");
-  nsMemory::Free(r);
+  free(r);
 
   // Should not find a match
   delim_begin = begin;
@@ -473,7 +474,7 @@ TEST(Strings, xpidl_string)
   a.EndReading(end);
   char *r = ToNewCString(Substring(begin, end));
   EXPECT_STREQ(r, "");
-  nsMemory::Free(r);
+  free(r);
 
   a.Adopt(0);
   EXPECT_TRUE(a.IsVoid());
@@ -851,75 +852,75 @@ TEST(Strings, huge_capacity)
   // Ignore the result if the address space is less than 64-bit because
   // some of the allocations above will exhaust the address space.
   if (sizeof(void*) >= 8) {
-    EXPECT_TRUE(a.SetCapacity(1, fallible_t()));
-    EXPECT_FALSE(a.SetCapacity(nsString::size_type(-1)/2, fallible_t()));
-    EXPECT_TRUE(a.SetCapacity(0, fallible_t()));  // free the allocated memory
+    EXPECT_TRUE(a.SetCapacity(1, fallible));
+    EXPECT_FALSE(a.SetCapacity(nsString::size_type(-1)/2, fallible));
+    EXPECT_TRUE(a.SetCapacity(0, fallible));  // free the allocated memory
 
-    EXPECT_TRUE(b.SetCapacity(1, fallible_t()));
-    EXPECT_FALSE(b.SetCapacity(nsString::size_type(-1)/2 - 1, fallible_t()));
-    EXPECT_TRUE(b.SetCapacity(0, fallible_t()));
+    EXPECT_TRUE(b.SetCapacity(1, fallible));
+    EXPECT_FALSE(b.SetCapacity(nsString::size_type(-1)/2 - 1, fallible));
+    EXPECT_TRUE(b.SetCapacity(0, fallible));
 
-    EXPECT_TRUE(c.SetCapacity(1, fallible_t()));
-    EXPECT_FALSE(c.SetCapacity(nsString::size_type(-1)/2, fallible_t()));
-    EXPECT_TRUE(c.SetCapacity(0, fallible_t()));
+    EXPECT_TRUE(c.SetCapacity(1, fallible));
+    EXPECT_FALSE(c.SetCapacity(nsString::size_type(-1)/2, fallible));
+    EXPECT_TRUE(c.SetCapacity(0, fallible));
 
-    EXPECT_FALSE(d.SetCapacity(nsString::size_type(-1)/2 - 1, fallible_t()));
-    EXPECT_FALSE(d.SetCapacity(nsString::size_type(-1)/2, fallible_t()));
-    EXPECT_TRUE(d.SetCapacity(0, fallible_t()));
+    EXPECT_FALSE(d.SetCapacity(nsString::size_type(-1)/2 - 1, fallible));
+    EXPECT_FALSE(d.SetCapacity(nsString::size_type(-1)/2, fallible));
+    EXPECT_TRUE(d.SetCapacity(0, fallible));
 
-    EXPECT_FALSE(e.SetCapacity(nsString::size_type(-1)/4, fallible_t()));
-    EXPECT_FALSE(e.SetCapacity(nsString::size_type(-1)/4 + 1, fallible_t()));
-    EXPECT_TRUE(e.SetCapacity(0, fallible_t()));
+    EXPECT_FALSE(e.SetCapacity(nsString::size_type(-1)/4, fallible));
+    EXPECT_FALSE(e.SetCapacity(nsString::size_type(-1)/4 + 1, fallible));
+    EXPECT_TRUE(e.SetCapacity(0, fallible));
 
-    EXPECT_FALSE(f.SetCapacity(nsString::size_type(-1)/2, fallible_t()));
-    EXPECT_TRUE(f.SetCapacity(0, fallible_t()));
+    EXPECT_FALSE(f.SetCapacity(nsString::size_type(-1)/2, fallible));
+    EXPECT_TRUE(f.SetCapacity(0, fallible));
 
-    EXPECT_FALSE(g.SetCapacity(nsString::size_type(-1)/4 + 1000, fallible_t()));
-    EXPECT_FALSE(g.SetCapacity(nsString::size_type(-1)/4 + 1001, fallible_t()));
-    EXPECT_TRUE(g.SetCapacity(0, fallible_t()));
+    EXPECT_FALSE(g.SetCapacity(nsString::size_type(-1)/4 + 1000, fallible));
+    EXPECT_FALSE(g.SetCapacity(nsString::size_type(-1)/4 + 1001, fallible));
+    EXPECT_TRUE(g.SetCapacity(0, fallible));
 
-    EXPECT_FALSE(h.SetCapacity(nsString::size_type(-1)/4+1, fallible_t()));
-    EXPECT_FALSE(h.SetCapacity(nsString::size_type(-1)/2, fallible_t()));
-    EXPECT_TRUE(h.SetCapacity(0, fallible_t()));
+    EXPECT_FALSE(h.SetCapacity(nsString::size_type(-1)/4+1, fallible));
+    EXPECT_FALSE(h.SetCapacity(nsString::size_type(-1)/2, fallible));
+    EXPECT_TRUE(h.SetCapacity(0, fallible));
 
-    EXPECT_TRUE(i.SetCapacity(1, fallible_t()));
-    EXPECT_TRUE(i.SetCapacity(nsString::size_type(-1)/4 - 1000, fallible_t()));
-    EXPECT_FALSE(i.SetCapacity(nsString::size_type(-1)/4 + 1, fallible_t()));
-    EXPECT_TRUE(i.SetCapacity(0, fallible_t()));
+    EXPECT_TRUE(i.SetCapacity(1, fallible));
+    EXPECT_TRUE(i.SetCapacity(nsString::size_type(-1)/4 - 1000, fallible));
+    EXPECT_FALSE(i.SetCapacity(nsString::size_type(-1)/4 + 1, fallible));
+    EXPECT_TRUE(i.SetCapacity(0, fallible));
 
-    EXPECT_TRUE(j.SetCapacity(nsString::size_type(-1)/4 - 1000, fallible_t()));
-    EXPECT_FALSE(j.SetCapacity(nsString::size_type(-1)/4 + 1, fallible_t()));
-    EXPECT_TRUE(j.SetCapacity(0, fallible_t()));
+    EXPECT_TRUE(j.SetCapacity(nsString::size_type(-1)/4 - 1000, fallible));
+    EXPECT_FALSE(j.SetCapacity(nsString::size_type(-1)/4 + 1, fallible));
+    EXPECT_TRUE(j.SetCapacity(0, fallible));
 
-    EXPECT_TRUE(k.SetCapacity(nsString::size_type(-1)/8 - 1000, fallible_t()));
-    EXPECT_TRUE(k.SetCapacity(nsString::size_type(-1)/4 - 1001, fallible_t()));
-    EXPECT_TRUE(k.SetCapacity(nsString::size_type(-1)/4 - 998, fallible_t()));
-    EXPECT_FALSE(k.SetCapacity(nsString::size_type(-1)/4 + 1, fallible_t()));
-    EXPECT_TRUE(k.SetCapacity(0, fallible_t()));
+    EXPECT_TRUE(k.SetCapacity(nsString::size_type(-1)/8 - 1000, fallible));
+    EXPECT_TRUE(k.SetCapacity(nsString::size_type(-1)/4 - 1001, fallible));
+    EXPECT_TRUE(k.SetCapacity(nsString::size_type(-1)/4 - 998, fallible));
+    EXPECT_FALSE(k.SetCapacity(nsString::size_type(-1)/4 + 1, fallible));
+    EXPECT_TRUE(k.SetCapacity(0, fallible));
 
-    EXPECT_TRUE(l.SetCapacity(nsString::size_type(-1)/8, fallible_t()));
-    EXPECT_TRUE(l.SetCapacity(nsString::size_type(-1)/8 + 1, fallible_t()));
-    EXPECT_TRUE(l.SetCapacity(nsString::size_type(-1)/8 + 2, fallible_t()));
-    EXPECT_TRUE(l.SetCapacity(0, fallible_t()));
+    EXPECT_TRUE(l.SetCapacity(nsString::size_type(-1)/8, fallible));
+    EXPECT_TRUE(l.SetCapacity(nsString::size_type(-1)/8 + 1, fallible));
+    EXPECT_TRUE(l.SetCapacity(nsString::size_type(-1)/8 + 2, fallible));
+    EXPECT_TRUE(l.SetCapacity(0, fallible));
 
-    EXPECT_TRUE(m.SetCapacity(nsString::size_type(-1)/8 + 1000, fallible_t()));
-    EXPECT_TRUE(m.SetCapacity(nsString::size_type(-1)/8 + 1001, fallible_t()));
-    EXPECT_TRUE(m.SetCapacity(0, fallible_t()));
+    EXPECT_TRUE(m.SetCapacity(nsString::size_type(-1)/8 + 1000, fallible));
+    EXPECT_TRUE(m.SetCapacity(nsString::size_type(-1)/8 + 1001, fallible));
+    EXPECT_TRUE(m.SetCapacity(0, fallible));
 
-    EXPECT_TRUE(n.SetCapacity(nsString::size_type(-1)/8+1, fallible_t()));
-    EXPECT_FALSE(n.SetCapacity(nsString::size_type(-1)/4, fallible_t()));
-    EXPECT_TRUE(n.SetCapacity(0, fallible_t()));
+    EXPECT_TRUE(n.SetCapacity(nsString::size_type(-1)/8+1, fallible));
+    EXPECT_FALSE(n.SetCapacity(nsString::size_type(-1)/4, fallible));
+    EXPECT_TRUE(n.SetCapacity(0, fallible));
 
-    EXPECT_TRUE(n.SetCapacity(0, fallible_t()));
-    EXPECT_TRUE(n.SetCapacity((nsString::size_type(-1)/2 - sizeof(nsStringBuffer)) / 2 - 2, fallible_t()));
-    EXPECT_TRUE(n.SetCapacity(0, fallible_t()));
-    EXPECT_FALSE(n.SetCapacity((nsString::size_type(-1)/2 - sizeof(nsStringBuffer)) / 2 - 1, fallible_t()));
-    EXPECT_TRUE(n.SetCapacity(0, fallible_t()));
-    EXPECT_TRUE(n1.SetCapacity(0, fallible_t()));
-    EXPECT_TRUE(n1.SetCapacity((nsCString::size_type(-1)/2 - sizeof(nsStringBuffer)) / 1 - 2, fallible_t()));
-    EXPECT_TRUE(n1.SetCapacity(0, fallible_t()));
-    EXPECT_FALSE(n1.SetCapacity((nsCString::size_type(-1)/2 - sizeof(nsStringBuffer)) / 1 - 1, fallible_t()));
-    EXPECT_TRUE(n1.SetCapacity(0, fallible_t()));
+    EXPECT_TRUE(n.SetCapacity(0, fallible));
+    EXPECT_TRUE(n.SetCapacity((nsString::size_type(-1)/2 - sizeof(nsStringBuffer)) / 2 - 2, fallible));
+    EXPECT_TRUE(n.SetCapacity(0, fallible));
+    EXPECT_FALSE(n.SetCapacity((nsString::size_type(-1)/2 - sizeof(nsStringBuffer)) / 2 - 1, fallible));
+    EXPECT_TRUE(n.SetCapacity(0, fallible));
+    EXPECT_TRUE(n1.SetCapacity(0, fallible));
+    EXPECT_TRUE(n1.SetCapacity((nsCString::size_type(-1)/2 - sizeof(nsStringBuffer)) / 1 - 2, fallible));
+    EXPECT_TRUE(n1.SetCapacity(0, fallible));
+    EXPECT_FALSE(n1.SetCapacity((nsCString::size_type(-1)/2 - sizeof(nsStringBuffer)) / 1 - 1, fallible));
+    EXPECT_TRUE(n1.SetCapacity(0, fallible));
   }
 }
 

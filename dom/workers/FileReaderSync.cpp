@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -43,15 +43,16 @@ FileReaderSync::Constructor(const GlobalObject& aGlobal, ErrorResult& aRv)
 
 bool
 FileReaderSync::WrapObject(JSContext* aCx,
+                           JS::Handle<JSObject*> aGivenProto,
                            JS::MutableHandle<JSObject*> aReflector)
 {
-  return FileReaderSyncBinding_workers::Wrap(aCx, this, aReflector);
+  return FileReaderSyncBinding_workers::Wrap(aCx, this, aGivenProto, aReflector);
 }
 
 void
 FileReaderSync::ReadAsArrayBuffer(JSContext* aCx,
                                   JS::Handle<JSObject*> aScopeObj,
-                                  File& aBlob,
+                                  Blob& aBlob,
                                   JS::MutableHandle<JSObject*> aRetval,
                                   ErrorResult& aRv)
 {
@@ -94,7 +95,7 @@ FileReaderSync::ReadAsArrayBuffer(JSContext* aCx,
 }
 
 void
-FileReaderSync::ReadAsBinaryString(File& aBlob,
+FileReaderSync::ReadAsBinaryString(Blob& aBlob,
                                    nsAString& aResult,
                                    ErrorResult& aRv)
 {
@@ -124,7 +125,7 @@ FileReaderSync::ReadAsBinaryString(File& aBlob,
 }
 
 void
-FileReaderSync::ReadAsText(File& aBlob,
+FileReaderSync::ReadAsText(Blob& aBlob,
                            const Optional<nsAString>& aEncoding,
                            nsAString& aResult,
                            ErrorResult& aRv)
@@ -194,7 +195,7 @@ FileReaderSync::ReadAsText(File& aBlob,
 }
 
 void
-FileReaderSync::ReadAsDataURL(File& aBlob, nsAString& aResult,
+FileReaderSync::ReadAsDataURL(Blob& aBlob, nsAString& aResult,
                               ErrorResult& aRv)
 {
   nsAutoString scratchResult;

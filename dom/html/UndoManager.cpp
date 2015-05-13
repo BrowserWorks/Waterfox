@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -105,8 +106,8 @@ UndoTxn::Merge(nsITransaction* aTransaction, bool* aResult)
 class UndoAttrChanged : public UndoTxn {
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_CLASS(UndoAttrChanged)
-  NS_IMETHOD RedoTransaction() MOZ_OVERRIDE;
-  NS_IMETHOD UndoTransaction() MOZ_OVERRIDE;
+  NS_IMETHOD RedoTransaction() override;
+  NS_IMETHOD UndoTransaction() override;
   nsresult Init();
   UndoAttrChanged(mozilla::dom::Element* aElement, int32_t aNameSpaceID,
                   nsIAtom* aAttribute, int32_t aModType);
@@ -216,8 +217,8 @@ struct UndoCharacterChangedData {
 class UndoTextChanged : public UndoTxn {
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_CLASS(UndoTextChanged)
-  NS_IMETHOD RedoTransaction() MOZ_OVERRIDE;
-  NS_IMETHOD UndoTransaction() MOZ_OVERRIDE;
+  NS_IMETHOD RedoTransaction() override;
+  NS_IMETHOD UndoTransaction() override;
   UndoTextChanged(nsIContent* aContent,
                   CharacterDataChangeInfo* aChange);
 protected:
@@ -331,8 +332,8 @@ class UndoContentAppend : public UndoTxn {
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_CLASS(UndoContentAppend)
   nsresult Init(int32_t aFirstIndex);
-  NS_IMETHOD RedoTransaction() MOZ_OVERRIDE;
-  NS_IMETHOD UndoTransaction() MOZ_OVERRIDE;
+  NS_IMETHOD RedoTransaction() override;
+  NS_IMETHOD UndoTransaction() override;
   explicit UndoContentAppend(nsIContent* aContent);
 protected:
   ~UndoContentAppend() {}
@@ -401,8 +402,8 @@ UndoContentAppend::UndoTransaction()
 class UndoContentInsert : public UndoTxn {
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_CLASS(UndoContentInsert)
-  NS_IMETHOD UndoTransaction() MOZ_OVERRIDE;
-  NS_IMETHOD RedoTransaction() MOZ_OVERRIDE;
+  NS_IMETHOD UndoTransaction() override;
+  NS_IMETHOD RedoTransaction() override;
   UndoContentInsert(nsIContent* aContent, nsIContent* aChild,
                     int32_t aInsertIndex);
 protected:
@@ -489,8 +490,8 @@ UndoContentInsert::UndoTransaction()
 class UndoContentRemove : public UndoTxn {
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_CLASS(UndoContentRemove)
-  NS_IMETHOD UndoTransaction() MOZ_OVERRIDE;
-  NS_IMETHOD RedoTransaction() MOZ_OVERRIDE;
+  NS_IMETHOD UndoTransaction() override;
+  NS_IMETHOD RedoTransaction() override;
   nsresult Init(int32_t aInsertIndex);
   UndoContentRemove(nsIContent* aContent, nsIContent* aChild,
                     int32_t aInsertIndex);
@@ -737,8 +738,8 @@ class FunctionCallTxn : public UndoTxn {
   static const uint32_t CALL_ON_REDO = 1;
   static const uint32_t CALL_ON_UNDO = 2;
 
-  NS_IMETHOD RedoTransaction() MOZ_OVERRIDE;
-  NS_IMETHOD UndoTransaction() MOZ_OVERRIDE;
+  NS_IMETHOD RedoTransaction() override;
+  NS_IMETHOD UndoTransaction() override;
   FunctionCallTxn(DOMTransaction* aTransaction, uint32_t aFlags);
 protected:
   ~FunctionCallTxn() {}
@@ -1028,7 +1029,7 @@ UndoManager::ItemInternal(uint32_t aIndex,
     aItems.AppendElement(static_cast<DOMTransaction*>(listData[i]));
     NS_RELEASE(listData[i]);
   }
-  NS_Free(listData);
+  free(listData);
 }
 
 void

@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -58,20 +60,23 @@ struct CommandOptions
       NDEFRecordStruct record;
       record.mTnf = currentValue[i].mTnf;
 
-      if (currentValue[i].mType.WasPassed()) {
-        const dom::Uint8Array& type = currentValue[i].mType.Value();
+      if (currentValue[i].mType.WasPassed() &&
+          !currentValue[i].mType.Value().IsNull()) {
+        const dom::Uint8Array& type = currentValue[i].mType.Value().Value();
         type.ComputeLengthAndData();
         record.mType.AppendElements(type.Data(), type.Length());
       }
 
-      if (currentValue[i].mId.WasPassed()) {
-        const dom::Uint8Array& id = currentValue[i].mId.Value();
+      if (currentValue[i].mId.WasPassed() &&
+          !currentValue[i].mId.Value().IsNull()) {
+        const dom::Uint8Array& id = currentValue[i].mId.Value().Value();
         id.ComputeLengthAndData();
         record.mId.AppendElements(id.Data(), id.Length());
       }
 
-      if (currentValue[i].mPayload.WasPassed()) {
-        const dom::Uint8Array& payload = currentValue[i].mPayload.Value();
+      if (currentValue[i].mPayload.WasPassed() &&
+          !currentValue[i].mPayload.Value().IsNull()) {
+        const dom::Uint8Array& payload = currentValue[i].mPayload.Value().Value();
         payload.ComputeLengthAndData();
         record.mPayload.AppendElements(payload.Data(), payload.Length());
       }
@@ -83,7 +88,7 @@ struct CommandOptions
 #undef COPY_OPT_FIELD
   }
 
-  nsString mType;
+  dom::NfcRequestType mType;
   int32_t mSessionId;
   nsString mRequestId;
   int32_t mRfState;
@@ -97,13 +102,16 @@ struct CommandOptions
 struct EventOptions
 {
   EventOptions()
-    : mType(EmptyString()), mStatus(-1), mErrorCode(-1), mSessionId(-1), mRequestId(EmptyString()),
+    : mRspType(dom::NfcResponseType::EndGuard_),
+      mNtfType(dom::NfcNotificationType::EndGuard_),
+      mStatus(-1), mErrorCode(-1), mSessionId(-1), mRequestId(EmptyString()),
       mMajorVersion(-1), mMinorVersion(-1), mIsP2P(-1),
       mTagType(-1), mMaxNDEFSize(-1), mIsReadOnly(-1), mIsFormatable(-1), mRfState(-1),
       mOriginType(-1), mOriginIndex(-1)
   {}
 
-  nsString mType;
+  dom::NfcResponseType mRspType;
+  dom::NfcNotificationType mNtfType;
   int32_t mStatus;
   int32_t mErrorCode;
   int32_t mSessionId;

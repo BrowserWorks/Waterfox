@@ -126,13 +126,12 @@ HTMLSelectListAccessible::CacheChildren()
   // a flat tree under the Select List.
   for (nsIContent* childContent = mContent->GetFirstChild(); childContent;
        childContent = childContent->GetNextSibling()) {
-    if (!childContent->IsHTML()) {
+    if (!childContent->IsHTMLElement()) {
       continue;
     }
 
-    nsIAtom* tag = childContent->Tag();
-    if (tag == nsGkAtoms::option ||
-        tag == nsGkAtoms::optgroup) {
+    if (childContent->IsAnyOfHTMLElements(nsGkAtoms::option,
+                                          nsGkAtoms::optgroup)) {
 
       // Get an accessible for option or optgroup and cache it.
       nsRefPtr<Accessible> accessible =
@@ -381,6 +380,17 @@ HTMLComboboxAccessible::InvalidateChildren()
     mListAccessible->InvalidateChildren();
 }
 
+bool
+HTMLComboboxAccessible::RemoveChild(Accessible* aChild)
+{
+  MOZ_ASSERT(aChild == mListAccessible);
+  if (AccessibleWrap::RemoveChild(aChild)) {
+    mListAccessible = nullptr;
+    return true;
+  }
+  return false;
+}
+
 void
 HTMLComboboxAccessible::CacheChildren()
 {
@@ -409,12 +419,10 @@ HTMLComboboxAccessible::CacheChildren()
 void
 HTMLComboboxAccessible::Shutdown()
 {
-  AccessibleWrap::Shutdown();
+  MOZ_ASSERT(mDoc->IsDefunct() || !mListAccessible);
+  mListAccessible = nullptr;
 
-  if (mListAccessible) {
-    mListAccessible->Shutdown();
-    mListAccessible = nullptr;
-  }
+  AccessibleWrap::Shutdown();
 }
 
 uint64_t

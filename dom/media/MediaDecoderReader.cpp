@@ -10,6 +10,7 @@
 #include "VideoUtils.h"
 #include "ImageContainer.h"
 
+#include "nsPrintfCString.h"
 #include "mozilla/mozalloc.h"
 #include <stdint.h>
 #include <algorithm>
@@ -27,15 +28,10 @@ extern PRLogModuleInfo* gMediaDecoderLog;
 #define DECODER_LOG(x, ...)
 #endif
 
-PRLogModuleInfo* gMediaPromiseLog;
-
-void
-EnsureMediaPromiseLog()
-{
-  if (!gMediaPromiseLog) {
-    gMediaPromiseLog = PR_NewLogModule("MediaPromise");
-  }
-}
+// Same workaround as MediaDecoderStateMachine.cpp.
+#define DECODER_WARN_HELPER(a, b) NS_WARNING b
+#define DECODER_WARN(x, ...) \
+  DECODER_WARN_HELPER(0, (nsPrintfCString("Decoder=%p " x, mDecoder, ##__VA_ARGS__).get()))
 
 class VideoQueueMemoryFunctor : public nsDequeFunctor {
 public:
@@ -80,12 +76,12 @@ MediaDecoderReader::MediaDecoderReader(AbstractMediaDecoder* aDecoder)
   , mVideoDiscontinuity(false)
 {
   MOZ_COUNT_CTOR(MediaDecoderReader);
-  EnsureMediaPromiseLog();
 }
 
 MediaDecoderReader::~MediaDecoderReader()
 {
   MOZ_ASSERT(mShutdown);
+  MOZ_ASSERT(!mDecoder);
   ResetDecode();
   MOZ_COUNT_DTOR(MediaDecoderReader);
 }
@@ -116,15 +112,16 @@ size_t MediaDecoderReader::SizeOfAudioQueueInFrames()
 
 nsresult MediaDecoderReader::ResetDecode()
 {
-  nsresult res = NS_OK;
-
   VideoQueue().Reset();
   AudioQueue().Reset();
 
   mAudioDiscontinuity = true;
   mVideoDiscontinuity = true;
 
-  return res;
+  mBaseAudioPromise.RejectIfExists(CANCELED, __func__);
+  mBaseVideoPromise.RejectIfExists(CANCELED, __func__);
+
+  return NS_OK;
 }
 
 VideoData* MediaDecoderReader::DecodeToFirstVideoData()
@@ -177,26 +174,96 @@ MediaDecoderReader::ComputeStartTime(const VideoData* aVideo, const AudioData* a
   }
   DECODER_LOG("ComputeStartTime first video frame start %lld", aVideo ? aVideo->mTime : -1);
   DECODER_LOG("ComputeStartTime first audio frame start %lld", aAudio ? aAudio->mTime : -1);
-  MOZ_ASSERT(startTime >= 0);
+  NS_ASSERTION(startTime >= 0, "Start time is negative");
   return startTime;
 }
 
-class RequestVideoWithSkipTask : public nsRunnable {
+nsRefPtr<MediaDecoderReader::MetadataPromise>
+MediaDecoderReader::AsyncReadMetadata()
+{
+  typedef ReadMetadataFailureReason Reason;
+
+  MOZ_ASSERT(OnTaskQueue());
+  mDecoder->GetReentrantMonitor().AssertNotCurrentThreadIn();
+  DECODER_LOG("MediaDecoderReader::AsyncReadMetadata");
+
+  // PreReadMetadata causes us to try to allocate various hardware and OS
+  // resources, which may not be available at the moment.
+  PreReadMetadata();
+  if (IsWaitingMediaResources()) {
+    return MetadataPromise::CreateAndReject(Reason::WAITING_FOR_RESOURCES, __func__);
+  }
+
+  // Attempt to read the metadata.
+  nsRefPtr<MetadataHolder> metadata = new MetadataHolder();
+  nsresult rv = ReadMetadata(&metadata->mInfo, getter_Transfers(metadata->mTags));
+
+  // Reading metadata can cause us to discover that we need resources (a hardware
+  // resource initialized but not yet ready for use).
+  if (IsWaitingMediaResources()) {
+    return MetadataPromise::CreateAndReject(Reason::WAITING_FOR_RESOURCES, __func__);
+  }
+
+  // We're not waiting for anything. If we didn't get the metadata, that's an
+  // error.
+  if (NS_FAILED(rv) || !metadata->mInfo.HasValidMedia()) {
+    DECODER_WARN("ReadMetadata failed, rv=%x HasValidMedia=%d", rv, metadata->mInfo.HasValidMedia());
+    return MetadataPromise::CreateAndReject(Reason::METADATA_ERROR, __func__);
+  }
+
+  // Success!
+  return MetadataPromise::CreateAndResolve(metadata, __func__);
+}
+
+class ReRequestVideoWithSkipTask : public nsRunnable
+{
 public:
-  RequestVideoWithSkipTask(MediaDecoderReader* aReader,
-                           int64_t aTimeThreshold)
+  ReRequestVideoWithSkipTask(MediaDecoderReader* aReader,
+                             int64_t aTimeThreshold)
     : mReader(aReader)
     , mTimeThreshold(aTimeThreshold)
   {
   }
-  NS_METHOD Run() {
-    bool skip = true;
-    mReader->RequestVideoData(skip, mTimeThreshold);
+
+  NS_METHOD Run()
+  {
+    MOZ_ASSERT(mReader->GetTaskQueue()->IsCurrentThreadIn());
+
+    // Make sure ResetDecode hasn't been called in the mean time.
+    if (!mReader->mBaseVideoPromise.IsEmpty()) {
+      mReader->RequestVideoData(/* aSkip = */ true, mTimeThreshold);
+    }
+
     return NS_OK;
   }
+
 private:
   nsRefPtr<MediaDecoderReader> mReader;
-  int64_t mTimeThreshold;
+  const int64_t mTimeThreshold;
+};
+
+class ReRequestAudioTask : public nsRunnable
+{
+public:
+  explicit ReRequestAudioTask(MediaDecoderReader* aReader)
+    : mReader(aReader)
+  {
+  }
+
+  NS_METHOD Run()
+  {
+    MOZ_ASSERT(mReader->GetTaskQueue()->IsCurrentThreadIn());
+
+    // Make sure ResetDecode hasn't been called in the mean time.
+    if (!mReader->mBaseAudioPromise.IsEmpty()) {
+      mReader->RequestAudioData();
+    }
+
+    return NS_OK;
+  }
+
+private:
+  nsRefPtr<MediaDecoderReader> mReader;
 };
 
 nsRefPtr<MediaDecoderReader::VideoDataPromise>
@@ -214,7 +281,7 @@ MediaDecoderReader::RequestVideoData(bool aSkipToNextKeyframe,
       // keyframe. Post another task to the decode task queue to decode
       // again. We don't just decode straight in a loop here, as that
       // would hog the decode task queue.
-      RefPtr<nsIRunnable> task(new RequestVideoWithSkipTask(this, aTimeThreshold));
+      RefPtr<nsIRunnable> task(new ReRequestVideoWithSkipTask(this, aTimeThreshold));
       mTaskQueue->Dispatch(task);
       return p;
     }
@@ -250,9 +317,8 @@ MediaDecoderReader::RequestAudioData()
     // coming in gstreamer 1.x when there is still video buffer waiting to be
     // consumed. (|mVideoSinkBufferCount| > 0)
     if (AudioQueue().GetSize() == 0 && mTaskQueue) {
-      RefPtr<nsIRunnable> task(NS_NewRunnableMethod(
-          this, &MediaDecoderReader::RequestAudioData));
-      mTaskQueue->Dispatch(task.forget());
+      RefPtr<nsIRunnable> task(new ReRequestAudioTask(this));
+      mTaskQueue->Dispatch(task);
       return p;
     }
   }
@@ -278,10 +344,9 @@ MediaDecoderReader::EnsureTaskQueue()
 {
   if (!mTaskQueue) {
     MOZ_ASSERT(!mTaskQueueIsBorrowed);
-    RefPtr<SharedThreadPool> decodePool(GetMediaDecodeThreadPool());
-    NS_ENSURE_TRUE(decodePool, nullptr);
-
-    mTaskQueue = new MediaTaskQueue(decodePool.forget());
+    RefPtr<SharedThreadPool> pool(GetMediaThreadPool(MediaThreadType::PLAYBACK));
+    MOZ_DIAGNOSTIC_ASSERT(pool);
+    mTaskQueue = new MediaTaskQueue(pool.forget());
   }
 
   return mTaskQueue;
@@ -296,7 +361,7 @@ MediaDecoderReader::BreakCycles()
 nsRefPtr<ShutdownPromise>
 MediaDecoderReader::Shutdown()
 {
-  MOZ_ASSERT(OnDecodeThread());
+  MOZ_ASSERT(OnTaskQueue());
   mShutdown = true;
 
   mBaseAudioPromise.RejectIfExists(END_OF_STREAM, __func__);
@@ -314,11 +379,16 @@ MediaDecoderReader::Shutdown()
   } else {
     // If we don't own our task queue, we resolve immediately (though
     // asynchronously).
-    p = new ShutdownPromise(__func__);
-    p->Resolve(true, __func__);
+    p = ShutdownPromise::CreateAndResolve(true, __func__);
   }
+
+  mDecoder = nullptr;
 
   return p;
 }
 
 } // namespace mozilla
+
+#undef DECODER_LOG
+#undef DECODER_WARN
+#undef DECODER_WARN_HELPER

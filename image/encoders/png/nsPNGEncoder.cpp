@@ -12,7 +12,6 @@
 
 using namespace mozilla;
 
-#ifdef PR_LOGGING
 static PRLogModuleInfo*
 GetPNGEncoderLog()
 {
@@ -22,7 +21,6 @@ GetPNGEncoderLog()
   }
   return sPNGEncoderLog;
 }
-#endif
 
 NS_IMPL_ISUPPORTS(nsPNGEncoder, imgIEncoder, nsIInputStream,
                   nsIAsyncInputStream)
@@ -36,13 +34,12 @@ nsPNGEncoder::nsPNGEncoder() : mPNG(nullptr), mPNGinfo(nullptr),
                                mCallbackTarget(nullptr), mNotifyThreshold(0),
                                mReentrantMonitor(
                                               "nsPNGEncoder.mReentrantMonitor")
-{
-}
+{ }
 
 nsPNGEncoder::~nsPNGEncoder()
 {
   if (mImageBuffer) {
-    moz_free(mImageBuffer);
+    free(mImageBuffer);
     mImageBuffer = nullptr;
   }
   // don't leak if EndImageEncode wasn't called
@@ -155,7 +152,7 @@ nsPNGEncoder::StartImageEncode(uint32_t aWidth,
   // estimated size. Note: we don't have to worry about freeing this data
   // in this function. It will be freed on object destruction.
   mImageBufferSize = 8192;
-  mImageBuffer = (uint8_t*)moz_malloc(mImageBufferSize);
+  mImageBuffer = (uint8_t*)malloc(mImageBufferSize);
   if (!mImageBuffer) {
     png_destroy_write_struct(&mPNG, &mPNGinfo);
     return NS_ERROR_OUT_OF_MEMORY;
@@ -291,7 +288,7 @@ nsPNGEncoder::AddImageFrame(const uint8_t* aData,
     // PNG requires RGBA with post-multiplied alpha, so we need to
     // convert
     uint8_t* row = new uint8_t[aWidth * 4];
-    for (uint32_t y = 0; y < aHeight; y ++) {
+    for (uint32_t y = 0; y < aHeight; y++) {
       ConvertHostARGBRow(&aData[y * aStride], row, aWidth, useTransparency);
       png_write_row(mPNG, row);
     }
@@ -300,7 +297,7 @@ nsPNGEncoder::AddImageFrame(const uint8_t* aData,
   } else if (aInputFormat == INPUT_FORMAT_RGBA && !useTransparency) {
     // RBGA, but we need to strip the alpha
     uint8_t* row = new uint8_t[aWidth * 4];
-    for (uint32_t y = 0; y < aHeight; y ++) {
+    for (uint32_t y = 0; y < aHeight; y++) {
       StripAlpha(&aData[y * aStride], row, aWidth);
       png_write_row(mPNG, row);
     }
@@ -309,7 +306,7 @@ nsPNGEncoder::AddImageFrame(const uint8_t* aData,
   } else if (aInputFormat == INPUT_FORMAT_RGB ||
              aInputFormat == INPUT_FORMAT_RGBA) {
     // simple RBG(A), no conversion needed
-    for (uint32_t y = 0; y < aHeight; y ++) {
+    for (uint32_t y = 0; y < aHeight; y++) {
       png_write_row(mPNG, (uint8_t*)&aData[y * aStride]);
     }
 
@@ -532,7 +529,7 @@ NS_IMETHODIMP
 nsPNGEncoder::Close()
 {
   if (mImageBuffer != nullptr) {
-    moz_free(mImageBuffer);
+    free(mImageBuffer);
     mImageBuffer = nullptr;
     mImageBufferSize = 0;
     mImageBufferUsed = 0;
@@ -655,19 +652,22 @@ nsPNGEncoder::ConvertHostARGBRow(const uint8_t* aSrc, uint8_t* aDest,
                                  bool aUseTransparency)
 {
   uint32_t pixelStride = aUseTransparency ? 4 : 3;
-  for (uint32_t x = 0; x < aPixelWidth; x ++) {
+  for (uint32_t x = 0; x < aPixelWidth; x++) {
     const uint32_t& pixelIn = ((const uint32_t*)(aSrc))[x];
     uint8_t* pixelOut = &aDest[x * pixelStride];
 
     uint8_t alpha = (pixelIn & 0xff000000) >> 24;
-    if (alpha == 0) {
-      pixelOut[0] = pixelOut[1] = pixelOut[2] = pixelOut[3] = 0;
+    pixelOut[pixelStride - 1] = alpha; // overwritten below if pixelStride == 3
+    if (alpha == 255) {
+      pixelOut[0] = (pixelIn & 0xff0000) >> 16;
+      pixelOut[1] = (pixelIn & 0x00ff00) >>  8;
+      pixelOut[2] = (pixelIn & 0x0000ff)      ;
+    } else if (alpha == 0) {
+      pixelOut[0] = pixelOut[1] = pixelOut[2] = 0;
     } else {
       pixelOut[0] = (((pixelIn & 0xff0000) >> 16) * 255 + alpha / 2) / alpha;
       pixelOut[1] = (((pixelIn & 0x00ff00) >>  8) * 255 + alpha / 2) / alpha;
-      pixelOut[2] = (((pixelIn & 0x0000ff) >>  0) * 255 + alpha / 2) / alpha;
-      if (aUseTransparency)
-        pixelOut[3] = alpha;
+      pixelOut[2] = (((pixelIn & 0x0000ff)      ) * 255 + alpha / 2) / alpha;
     }
   }
 }
@@ -681,7 +681,7 @@ void
 nsPNGEncoder::StripAlpha(const uint8_t* aSrc, uint8_t* aDest,
                           uint32_t aPixelWidth)
 {
-  for (uint32_t x = 0; x < aPixelWidth; x ++) {
+  for (uint32_t x = 0; x < aPixelWidth; x++) {
     const uint8_t* pixelIn = &aSrc[x * 4];
     uint8_t* pixelOut = &aDest[x * 3];
     pixelOut[0] = pixelIn[0];
@@ -730,11 +730,11 @@ nsPNGEncoder::WriteCallback(png_structp png, png_bytep data,
 
     // expand buffer, just double each time
     that->mImageBufferSize *= 2;
-    uint8_t* newBuf = (uint8_t*)moz_realloc(that->mImageBuffer,
-                                            that->mImageBufferSize);
+    uint8_t* newBuf = (uint8_t*)realloc(that->mImageBuffer,
+                                        that->mImageBufferSize);
     if (!newBuf) {
       // can't resize, just zero (this will keep us from writing more)
-      moz_free(that->mImageBuffer);
+      free(that->mImageBuffer);
       that->mImageBuffer = nullptr;
       that->mImageBufferSize = 0;
       that->mImageBufferUsed = 0;

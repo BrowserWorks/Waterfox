@@ -15,31 +15,31 @@ namespace dom {
 
 class AudioParam;
 
-class AudioBufferSourceNode : public AudioNode,
-                              public MainThreadMediaStreamListener
+class AudioBufferSourceNode final : public AudioNode,
+                                    public MainThreadMediaStreamListener
 {
 public:
   explicit AudioBufferSourceNode(AudioContext* aContext);
 
-  virtual void DestroyMediaStream() MOZ_OVERRIDE
+  virtual void DestroyMediaStream() override
   {
     if (mStream) {
       mStream->RemoveMainThreadListener(this);
     }
     AudioNode::DestroyMediaStream();
   }
-  virtual uint16_t NumberOfInputs() const MOZ_FINAL MOZ_OVERRIDE
+  virtual uint16_t NumberOfInputs() const final override
   {
     return 0;
   }
-  virtual AudioBufferSourceNode* AsAudioBufferSourceNode() MOZ_OVERRIDE
+  virtual AudioBufferSourceNode* AsAudioBufferSourceNode() override
   {
     return this;
   }
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(AudioBufferSourceNode, AudioNode)
 
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   void Start(double aWhen, double aOffset,
              const Optional<double>& aDuration, ErrorResult& aRv);
@@ -58,6 +58,10 @@ public:
   AudioParam* PlaybackRate() const
   {
     return mPlaybackRate;
+  }
+  AudioParam* Detune() const
+  {
+    return mDetune;
   }
   bool Loop() const
   {
@@ -90,15 +94,15 @@ public:
 
   IMPL_EVENT_HANDLER(ended)
 
-  virtual void NotifyMainThreadStateChanged() MOZ_OVERRIDE;
+  virtual void NotifyMainThreadStreamFinished() override;
 
-  virtual const char* NodeType() const MOZ_OVERRIDE
+  virtual const char* NodeType() const override
   {
     return "AudioBufferSourceNode";
   }
 
-  virtual size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const MOZ_OVERRIDE;
-  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const MOZ_OVERRIDE;
+  virtual size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override;
+  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override;
 
 protected:
   virtual ~AudioBufferSourceNode();
@@ -123,6 +127,7 @@ private:
     LOOPSTART,
     LOOPEND,
     PLAYBACKRATE,
+    DETUNE,
     DOPPLERSHIFT
   };
 
@@ -130,6 +135,7 @@ private:
   void SendBufferParameterToStream(JSContext* aCx);
   void SendOffsetAndDurationParametersToStream(AudioNodeStream* aStream);
   static void SendPlaybackRateToStream(AudioNode* aNode);
+  static void SendDetuneToStream(AudioNode* aNode);
 
 private:
   double mLoopStart;
@@ -138,9 +144,9 @@ private:
   double mDuration;
   nsRefPtr<AudioBuffer> mBuffer;
   nsRefPtr<AudioParam> mPlaybackRate;
+  nsRefPtr<AudioParam> mDetune;
   bool mLoop;
   bool mStartCalled;
-  bool mStopped;
 };
 
 }

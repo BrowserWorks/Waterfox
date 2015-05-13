@@ -130,6 +130,8 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
 
     testErrorObjects();
 
+    testRegExp();
+
     // We could also test DataView and Iterator here for completeness, but it's
     // more trouble than it's worth.
 
@@ -144,9 +146,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
   // DO NOT CHANGE WTIHOUT REVIEW FROM AN XPCONNECT PEER.
   var version = Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULAppInfo).version;
   var isNightlyBuild = version.endsWith("a1");
-  var isReleaseBuild = !version.contains("a");
-  const jsHasSymbols = typeof Symbol === "function";
-  const kIteratorSymbol = jsHasSymbols ? Symbol.iterator : "@@iterator";
+  var isReleaseBuild = !version.includes("a");
   var gPrototypeProperties = {};
   gPrototypeProperties['Date'] =
     ["getTime", "getTimezoneOffset", "getYear", "getFullYear", "getUTCFullYear",
@@ -160,16 +160,16 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
     "toLocaleDateString", "toLocaleTimeString", "toDateString", "toTimeString",
     "toISOString", "toJSON", "toSource", "toString", "valueOf", "constructor",
     "toGMTString"];
-  gPrototypeProperties['Object'] = /* __proto__ is intentionally excluded here, because
-                                      the JS engine filters it out of getOwnPropertyNames */
+  gPrototypeProperties['Object'] =
     ["constructor", "toSource", "toString", "toLocaleString", "valueOf", "watch",
      "unwatch", "hasOwnProperty", "isPrototypeOf", "propertyIsEnumerable",
-     "__defineGetter__", "__defineSetter__", "__lookupGetter__", "__lookupSetter__"];
+     "__defineGetter__", "__defineSetter__", "__lookupGetter__", "__lookupSetter__",
+     "__proto__"];
   gPrototypeProperties['Array'] =
     ["length", "toSource", "toString", "toLocaleString", "join", "reverse", "sort", "push",
       "pop", "shift", "unshift", "splice", "concat", "slice", "lastIndexOf", "indexOf",
       "forEach", "map", "reduce", "reduceRight", "filter", "some", "every", "find",
-      "findIndex", "copyWithin", "fill", kIteratorSymbol, "entries", "keys", "constructor"];
+      "findIndex", "copyWithin", "fill", Symbol.iterator, "entries", "keys", "constructor"];
   if (isNightlyBuild) {
     gPrototypeProperties['Array'].push('includes');
   }
@@ -177,9 +177,10 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
     gPrototypeProperties[c] = ["constructor", "BYTES_PER_ELEMENT"];
   }
   gPrototypeProperties['TypedArray'] =
-    ["length", "buffer", "byteLength", "byteOffset", kIteratorSymbol, "subarray",
-     "set", "copyWithin", "find", "findIndex", "indexOf", "lastIndexOf", "reverse",
-     "join", "every", "some", "reduce", "reduceRight", "entries", "keys", "values"];
+    ["length", "buffer", "byteLength", "byteOffset", Symbol.iterator, "subarray",
+     "set", "copyWithin", "find", "findIndex", "forEach","indexOf", "lastIndexOf", "reverse",
+     "join", "every", "some", "reduce", "reduceRight", "entries", "keys", "values", "slice",
+     "map", "filter"];
   if (isNightlyBuild) {
     gPrototypeProperties['TypedArray'].push('includes');
   }
@@ -200,6 +201,15 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
   gPrototypeProperties['Function'] =
     ["constructor", "toSource", "toString", "apply", "call", "bind",
      "isGenerator", "length", "name", "arguments", "caller"];
+
+  gPrototypeProperties['RegExp'] =
+    ["constructor", "toSource", "toString", "compile", "exec", "test",
+     "flags", "global", "ignoreCase", "multiline", "source", "sticky",
+     "lastIndex"];
+
+  if (isNightlyBuild) {
+    gPrototypeProperties['TypedArray'].push('includes');
+  }
 
   // Sort an array that may contain symbols as well as strings.
   function sortProperties(arr) {
@@ -275,12 +285,10 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
        gPrototypeProperties[classname].filter(id => typeof id === "string").toSource(),
        "A property on the " + classname +
        " prototype has changed! You need a security audit from an XPConnect peer");
-    if (jsHasSymbols) {
-      is(Object.getOwnPropertySymbols(localProto).map(uneval).sort().toSource(),
-         gPrototypeProperties[classname].filter(id => typeof id !== "string").map(uneval).sort().toSource(),
-         "A symbol-keyed property on the " + classname +
-         " prototype has been changed! You need a security audit from an XPConnect peer");
-    }
+    is(Object.getOwnPropertySymbols(localProto).map(uneval).sort().toSource(),
+       gPrototypeProperties[classname].filter(id => typeof id !== "string").map(uneval).sort().toSource(),
+       "A symbol-keyed property on the " + classname +
+       " prototype has been changed! You need a security audit from an XPConnect peer");
 
     let protoProps = filterOut(desiredProtoProps, propsToSkip);
     let protoCallables = protoProps.filter(name => propertyIsGetter(localProto, name, classname) ||
@@ -294,11 +302,9 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
     testProtoCallables(protoCallables, xray, xrayProto, localProto);
     is(Object.getOwnPropertyNames(xrayProto).sort().toSource(),
        protoProps.toSource(), "getOwnPropertyNames works");
-    if (jsHasSymbols) {
-      is(Object.getOwnPropertySymbols(xrayProto).map(uneval).sort().toSource(),
-         gPrototypeProperties[classname].filter(id => typeof id !== "string").map(uneval).sort().toSource(),
-         protoProps.toSource(), "getOwnPropertySymbols works");
-    }
+    is(Object.getOwnPropertySymbols(xrayProto).map(uneval).sort().toSource(),
+       gPrototypeProperties[classname].filter(id => typeof id !== "string").map(uneval).sort().toSource(),
+       protoProps.toSource(), "getOwnPropertySymbols works");
 
     is(xrayProto.constructor, iwin[classname], "constructor property works");
 
@@ -330,16 +336,14 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
 
     // Construct an object full of tricky things.
     let symbolProps = '';
-    if (jsHasSymbols) {
-      uniqueSymbol = iwin.eval('var uniqueSymbol = Symbol("uniqueSymbol"); uniqueSymbol');
-      symbolProps = `, [uniqueSymbol]: 43,
-                     [Symbol.for("registrySymbolProp")]: 44`;
-    }
+    uniqueSymbol = iwin.eval('var uniqueSymbol = Symbol("uniqueSymbol"); uniqueSymbol');
+    symbolProps = `, [uniqueSymbol]: 43,
+                   [Symbol.for("registrySymbolProp")]: 44`;
     var trickyObject =
       iwin.eval(`(function() {
                  var o = new Object({
                    primitiveProp: 42, objectProp: { foo: 2 },
-                   xoProp: top.location, hasOwnProperty: 10,
+                   xoProp: top, hasOwnProperty: 10,
                    get getterProp() { return 2; },
                    set setterProp(x) { },
                    get getterSetterProp() { return 3; },
@@ -366,16 +370,14 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
     testXray('Array', new iwin.Array(20), new iwin.Array(), propsToSkip);
 
     let symbolProps = '';
-    if (jsHasSymbols) {
-      uniqueSymbol = iwin.eval('var uniqueSymbol = Symbol("uniqueSymbol"); uniqueSymbol');
-      symbolProps = `trickyArray[uniqueSymbol] = 43;
-                     trickyArray[Symbol.for("registrySymbolProp")] = 44;`;
-    }
+    uniqueSymbol = iwin.eval('var uniqueSymbol = Symbol("uniqueSymbol"); uniqueSymbol');
+    symbolProps = `trickyArray[uniqueSymbol] = 43;
+                   trickyArray[Symbol.for("registrySymbolProp")] = 44;`;
     var trickyArray =
       iwin.eval(`var trickyArray = [];
                  trickyArray.primitiveProp = 42;
                  trickyArray.objectProp = { foo: 2 };
-                 trickyArray.xoProp = top.location;
+                 trickyArray.xoProp = top;
                  trickyArray.hasOwnProperty = 10;
                  Object.defineProperty(trickyArray, 'getterProp', { get: function() { return 2; }});
                  Object.defineProperty(trickyArray, 'setterProp', { set: function(x) {}});
@@ -415,7 +417,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
 
     // Make sure it looks right under the hood.
     is(trickyObject.wrappedJSObject.getterProp, 2, "Underlying object has getter");
-    is(Cu.unwaiveXrays(trickyObject.wrappedJSObject.xoProp), top.location, "Underlying object has xo property");
+    is(Cu.unwaiveXrays(trickyObject.wrappedJSObject.xoProp), top, "Underlying object has xo property");
 
     // Test getOwnPropertyNames.
     var expectedNames = ['objectProp', 'primitiveProp'];
@@ -423,21 +425,17 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
       expectedNames.push('length');
     is(Object.getOwnPropertyNames(trickyObject).sort().toSource(),
        expectedNames.sort().toSource(), "getOwnPropertyNames should be filtered correctly");
-    if (jsHasSymbols) {
-      var expectedSymbols = [Symbol.for("registrySymbolProp"), uniqueSymbol];
-      is(Object.getOwnPropertySymbols(trickyObject).map(uneval).sort().toSource(),
-         expectedSymbols.map(uneval).sort().toSource(),
-         "getOwnPropertySymbols should be filtered correctly");
-    }
+    var expectedSymbols = [Symbol.for("registrySymbolProp"), uniqueSymbol];
+    is(Object.getOwnPropertySymbols(trickyObject).map(uneval).sort().toSource(),
+       expectedSymbols.map(uneval).sort().toSource(),
+       "getOwnPropertySymbols should be filtered correctly");
 
     // Test that cloning uses the Xray view.
     var cloned = Cu.cloneInto(trickyObject, this);
     is(Object.getOwnPropertyNames(cloned).sort().toSource(),
        expectedNames.sort().toSource(), "structured clone should use the Xray view");
-    if (jsHasSymbols) {
-      is(Object.getOwnPropertySymbols(cloned).map(uneval).sort().toSource(),
-         "[]", "structured cloning doesn't clone symbol-keyed properties yet");
-    }
+    is(Object.getOwnPropertySymbols(cloned).map(uneval).sort().toSource(),
+       "[]", "structured cloning doesn't clone symbol-keyed properties yet");
 
     // Test iteration and in-place modification. Beware of 'expando', which is the property
     // we placed on the xray proto.
@@ -500,13 +498,16 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
        "Underlying object has getter");
     is(trickyObject.nonConfigurableGetterSetterProp, undefined,
        "Filtering properly over Xray here too");
+    is((trickyObject.nonConfigurableGetterSetterProp = 'redefined'), 'redefined',
+       "Assigning to non-configurable prop should fail silently in non-strict mode");
     checkThrows(function() {
-	trickyObject.nonConfigurableGetterSetterProp = 'redefined';
-    }, /config/, "Should throw when redefining non-configurable prop");
+      "use strict";
+      trickyObject.nonConfigurableGetterSetterProp = 'redefined';
+    }, /config/, "Should throw when redefining non-configurable prop in strict mode");
     is(trickyObject.nonConfigurableGetterSetterProp, undefined,
-       "Redefinition should have thrown");
+       "Redefinition should have failed");
     is(trickyObject.wrappedJSObject.nonConfigurableGetterSetterProp, 5,
-       "Redefinition really should have thrown");
+       "Redefinition really should have failed");
 
     checkThrows(function() { trickyObject.hasOwnProperty = 33; }, /shadow/,
                 "Should reject shadowing of pre-existing inherited properties over Xrays");
@@ -561,7 +562,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
     // to deal with dependent classes and fixing it up is more trouble than
     // it's worth.
     testXray('Error', new iwin.Error('some error message'), new iwin.Error(),
-             ['fileName', 'lineNumber', 'columnNumber', 'message', 'stack']);
+             ['fileName', 'lineNumber', 'columnNumber', 'message']);
 
     // Make sure that the dependent classes have their prototypes set up correctly.
     for (let c of errorObjectClasses.filter(x => x != "Error")) {
@@ -579,14 +580,67 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=933681
       }
       testProperty('message', x => x == 'some message', 'some other message', 42);
       testProperty('fileName', x => /xul/.test(x), 'otherFilename.html', new iwin.Object());
+      testProperty('columnNumber', x => x > 5 && x < 100, 99, 99.5);
+      testProperty('lineNumber', x => x > 100 && x < 10000, 50, 'foo');
+
       // Note - an Exception newed via Xrays is going to have an empty stack given the
       // current semantics and implementation. This tests the current behavior, but that
       // may change in bug 1036527 or similar.
-      testProperty('stack', x => /^\s*$/.test(x), 'some other stack', new iwin.WeakMap());
-      testProperty('columnNumber', x => x > 5 && x < 100, 99, 99.5);
-      testProperty('lineNumber', x => x > 100 && x < 10000, 50, 'foo');
+      //
+      // Furthermore, xrays should always return an error's original stack, and
+      // not overwrite it.
+      var stack = e.stack;
+      ok(/^\s*$/.test(stack), "stack property should be correct");
+      e.wrappedJSObject.stack = "not a stack";
+      is(e.stack, stack, "Xrays should never get an overwritten stack property.");
     }
   }
+
+  function testRegExp() {
+    testXray('RegExp', new iwin.RegExp('foo'), new iwin.RegExp());
+
+    // Test the self-hosted |flags| property, toString, and toSource.
+    for (var flags of ["", "g", "i", "m", "y", "gimy"]) {
+      var re = new iwin.RegExp("foo", flags);
+      is(re.flags, re.wrappedJSObject.flags, "Results match");
+
+      isnot(re.toString, Cu.unwaiveXrays(re.wrappedJSObject.toString), "Different function identities");
+      is(Cu.getGlobalForObject(re.toString), window, "Xray global is correct");
+      is(Cu.getGlobalForObject(re.wrappedJSObject.toString), iwin, "Underlying global is correct");
+      is(re.toString(), re.wrappedJSObject.toString(), "Results match");
+
+      isnot(re.toSource, Cu.unwaiveXrays(re.wrappedJSObject.toSource), "Different function identities");
+      is(Cu.getGlobalForObject(re.toSource), window, "Xray global is correct");
+      is(Cu.getGlobalForObject(re.wrappedJSObject.toSource), iwin, "Underlying global is correct");
+      is(re.toSource(), re.wrappedJSObject.toSource(), "Results match");
+
+      // Test with modified flags accessors
+      iwin.eval(`
+var props = ["global", "ignoreCase", "multiline", "sticky", "source"];
+var origDescs = {};
+for (var prop of props) {
+  origDescs[prop] = Object.getOwnPropertyDescriptor(RegExp.prototype, prop);
+  Object.defineProperty(RegExp.prototype, prop, {
+    get: function() {
+      throw new Error("modified accessor is called");
+    }
+  });
+}
+`);
+      try {
+        is(re.flags, flags, "Unmodified flags accessors are called");
+        is(re.toString(), "/foo/" + flags, "Unmodified flags and source accessors are called");
+        is(re.toSource(), "/foo/" + flags, "Unmodified flags and source accessors are called");
+      } finally {
+        iwin.eval(`
+for (var prop of props) {
+  Object.defineProperty(RegExp.prototype, prop, origDescs[prop]);
+}
+`);
+      }
+    }
+  }
+
 
   ]]>
   </script>

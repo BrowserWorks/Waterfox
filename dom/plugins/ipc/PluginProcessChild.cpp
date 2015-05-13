@@ -12,6 +12,7 @@
 #include "base/command_line.h"
 #include "base/string_util.h"
 #include "chrome/common/chrome_switches.h"
+#include "nsDebugImpl.h"
 
 #if defined(XP_MACOSX)
 #include "nsCocoaFeatures.h"
@@ -23,6 +24,10 @@ extern "C" CGError CGSSetDebugOptions(int options);
 #ifdef XP_WIN
 #include <objbase.h>
 bool ShouldProtectPluginCurrentDirectory(char16ptr_t pluginFilePath);
+#if defined(MOZ_SANDBOX)
+#define TARGET_SANDBOX_EXPORTS
+#include "mozilla/sandboxTarget.h"
+#endif
 #endif
 
 using mozilla::ipc::IOThreadChild;
@@ -49,6 +54,8 @@ namespace plugins {
 bool
 PluginProcessChild::Init()
 {
+    nsDebugImpl::SetMultiprocessMode("NPAPI");
+
 #if defined(XP_MACOSX)
     // Remove the trigger for "dyld interposing" that we added in
     // GeckoChildProcessHost::PerformAsyncLaunchInternal(), in the host
@@ -102,14 +109,14 @@ PluginProcessChild::Init()
     // (after the binary name) here is indeed the plugin module path.
     // Keep in sync with dom/plugins/PluginModuleParent.
     std::vector<std::string> values = CommandLine::ForCurrentProcess()->argv();
-    NS_ABORT_IF_FALSE(values.size() >= 2, "not enough args");
+    MOZ_ASSERT(values.size() >= 2, "not enough args");
 
     pluginFilename = UnmungePluginDsoPath(values[1]);
 
 #elif defined(OS_WIN)
     std::vector<std::wstring> values =
         CommandLine::ForCurrentProcess()->GetLooseValues();
-    NS_ABORT_IF_FALSE(values.size() >= 1, "not enough loose args");
+    MOZ_ASSERT(values.size() >= 1, "not enough loose args");
 
     if (ShouldProtectPluginCurrentDirectory(values[0].c_str())) {
         SanitizeEnvironmentVariables();
@@ -117,6 +124,13 @@ PluginProcessChild::Init()
     }
 
     pluginFilename = WideToUTF8(values[0]);
+
+#if defined(MOZ_SANDBOX)
+    // This is probably the earliest we would want to start the sandbox.
+    // As we attempt to tighten the sandbox, we may need to consider moving this
+    // to later in the plugin initialization.
+    mozilla::SandboxTarget::Instance()->StartSandbox();
+#endif
 #else
 #  error Sorry
 #endif
@@ -126,7 +140,7 @@ PluginProcessChild::Init()
       return false;
     }
 
-    bool retval = mPlugin.InitForChrome(pluginFilename, ParentHandle(),
+    bool retval = mPlugin.InitForChrome(pluginFilename, ParentPid(),
                                         IOThreadChild::message_loop(),
                                         IOThreadChild::channel());
 #if defined(XP_MACOSX)

@@ -3,15 +3,16 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-Components.utils.import("resource://gre/modules/DownloadUtils.jsm");
-Components.utils.import("resource://gre/modules/AddonManager.jsm");
-Components.utils.import("resource://gre/modules/Services.jsm");
+'use strict';
 
 // Firefox's macBrowserOverlay.xul includes scripts that define Cc, Ci, and Cr
 // so we have to use different names.
-const CoC = Components.classes;
-const CoI = Components.interfaces;
-const CoR = Components.results;
+const {classes: CoC, interfaces: CoI, results: CoR, utils: CoU} = Components;
+
+CoU.import("resource://gre/modules/DownloadUtils.jsm", this);
+CoU.import("resource://gre/modules/AddonManager.jsm", this);
+CoU.import("resource://gre/modules/Services.jsm", this);
+CoU.import("resource://gre/modules/UpdateTelemetry.jsm", this);
 
 const XMLNS_XUL = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
@@ -20,15 +21,16 @@ const PREF_APP_UPDATE_BILLBOARD_TEST_URL  = "app.update.billboard.test_url";
 const PREF_APP_UPDATE_CERT_ERRORS         = "app.update.cert.errors";
 const PREF_APP_UPDATE_ENABLED             = "app.update.enabled";
 const PREF_APP_UPDATE_LOG                 = "app.update.log";
-const PREF_APP_UPDATE_MANUAL_URL          = "app.update.url.manual";
-const PREF_APP_UPDATE_NEVER_BRANCH        = "app.update.never.";
 const PREF_APP_UPDATE_NOTIFIEDUNSUPPORTED = "app.update.notifiedUnsupported";
 const PREF_APP_UPDATE_TEST_LOOP           = "app.update.test.loop";
-const PREF_PLUGINS_UPDATEURL              = "plugins.update.url";
+const PREF_APP_UPDATE_URL_MANUAL          = "app.update.url.manual";
+
+const PREFBRANCH_APP_UPDATE_NEVER         = "app.update.never.";
 
 const PREF_EM_HOTFIX_ID                   = "extensions.hotfix.id";
+const PREF_PLUGINS_UPDATE_URL             = "plugins.update.url";
 
-const UPDATE_TEST_LOOP_INTERVAL     = 2000;
+const UPDATE_TEST_LOOP_INTERVAL = 2000;
 
 const URI_UPDATES_PROPERTIES  = "chrome://mozapps/locale/update/updates.properties";
 
@@ -143,38 +145,12 @@ var gUpdates = {
   _runUnload: true,
 
   /**
-   * Submit the last page code when the wizard exited. The pageid is used to map
-   * to an integer instead of using the pageindex since pages can be added and
-   * removed which would change the page's pageindex.
-   * @param   pageID
+   * Submit on close telemtry values for the update wizard.
+   * @param  pageID
+   *         The page id for the last page displayed.
    */
-  _sendLastPageCodePing: function(pageID) {
-    var pageMap = { invalid: 0,
-                    dummy: 1,
-                    checking: 2,
-                    pluginupdatesfound: 3,
-                    noupdatesfound: 4,
-                    manualUpdate: 5,
-                    unsupported: 6,
-                    incompatibleCheck: 7,
-                    updatesfoundbasic: 8,
-                    updatesfoundbillboard: 9,
-                    license: 10,
-                    incompatibleList: 11,
-                    downloading: 12,
-                    errors: 13,
-                    errorextra: 14,
-                    errorpatching: 15,
-                    finished: 16,
-                    finishedBackground: 17,
-                    installed: 18 };
-    try {
-      Services.telemetry.getHistogramById("UPDATER_WIZ_LAST_PAGE_CODE").
-        add(pageMap[pageID] || pageMap.invalid);
-    }
-    catch (e) {
-      Components.utils.reportError(e);
-    }
+  _submitTelemetry: function(aPageID) {
+    AUSTLMY.pingWizLastPageCode(aPageID);
   },
 
   /**
@@ -267,7 +243,7 @@ var gUpdates = {
     // If the user clicks "No Thanks", we should not prompt them to update to
     // this version again unless they manually select "Check for Updates..."
     // which will clear all of the "never" prefs.
-    var neverPrefName = PREF_APP_UPDATE_NEVER_BRANCH + this.update.appVersion;
+    var neverPrefName = PREFBRANCH_APP_UPDATE_NEVER + this.update.appVersion;
     Services.prefs.setBoolPref(neverPrefName, true);
   },
 
@@ -286,7 +262,7 @@ var gUpdates = {
     var pageid = document.documentElement.currentPage.pageid;
     if ("onWizardFinish" in this._pages[pageid])
       this._pages[pageid].onWizardFinish();
-    this._sendLastPageCodePing(pageid);
+    this._submitTelemetry(pageid);
   },
 
   /**
@@ -298,7 +274,7 @@ var gUpdates = {
     var pageid = document.documentElement.currentPage.pageid;
     if ("onWizardCancel" in this._pages[pageid])
       this._pages[pageid].onWizardCancel();
-    this._sendLastPageCodePing(pageid);
+    this._submitTelemetry(pageid);
   },
 
   /**
@@ -344,7 +320,7 @@ var gUpdates = {
   onLoad: function() {
     this.wiz = document.documentElement;
 
-    gLogEnabled = getPref("getBoolPref", PREF_APP_UPDATE_LOG, false)
+    gLogEnabled = getPref("getBoolPref", PREF_APP_UPDATE_LOG, false);
 
     this.strings = document.getElementById("updateStrings");
     var brandStrings = document.getElementById("brandStrings");
@@ -427,13 +403,8 @@ var gUpdates = {
 
         var p = this.update.selectedPatch;
         if (p) {
-          var state = p.state;
-          var patchFailed;
-          try {
-            patchFailed = this.update.getProperty("patchingFailed");
-          }
-          catch (e) {
-          }
+          let state = p.state;
+          let patchFailed = this.update.getProperty("patchingFailed");
           if (patchFailed) {
             if (patchFailed == "partial" && this.update.patchCount == 2) {
               // If the system failed to apply the partial patch, show the
@@ -453,24 +424,24 @@ var gUpdates = {
           // Now select the best page to start with, given the current state of
           // the Update.
           switch (state) {
-          case STATE_PENDING:
-          case STATE_PENDING_SVC:
-          case STATE_APPLIED:
-          case STATE_APPLIED_SVC:
-            this.sourceEvent = SRCEVT_BACKGROUND;
-            aCallback("finishedBackground");
-            return;
-          case STATE_DOWNLOADING:
-            aCallback("downloading");
-            return;
-          case STATE_FAILED:
-            window.getAttention();
-            aCallback("errorpatching");
-            return;
-          case STATE_DOWNLOAD_FAILED:
-          case STATE_APPLYING:
-            aCallback("errors");
-            return;
+            case STATE_PENDING:
+            case STATE_PENDING_SVC:
+            case STATE_APPLIED:
+            case STATE_APPLIED_SVC:
+              this.sourceEvent = SRCEVT_BACKGROUND;
+              aCallback("finishedBackground");
+              return;
+            case STATE_DOWNLOADING:
+              aCallback("downloading");
+              return;
+            case STATE_FAILED:
+              window.getAttention();
+              aCallback("errorpatching");
+              return;
+            case STATE_DOWNLOAD_FAILED:
+            case STATE_APPLYING:
+              aCallback("errors");
+              return;
           }
         }
         if (this.update.licenseURL)
@@ -553,7 +524,7 @@ var gUpdates = {
                        "or the findUpdates method!";
           if (addon.id)
             errMsg += " Add-on ID: " + addon.id;
-          Components.utils.reportError(errMsg);
+          CoU.reportError(errMsg);
           return;
         }
 
@@ -577,7 +548,7 @@ var gUpdates = {
             self.addons.push(addon);
         }
         catch (e) {
-          Components.utils.reportError(e);
+          CoU.reportError(e);
         }
       });
 
@@ -606,7 +577,7 @@ var gUpdates = {
     if (this.update)
       this.update.QueryInterface(CoI.nsIWritablePropertyBag);
   }
-}
+};
 
 /**
  * The "Checking for Updates" page. Provides feedback on the update checking
@@ -630,7 +601,7 @@ var gCheckingPage = {
     // clicked "never" for an update, selected "Check for Updates...", and
     // then canceled.  If we don't clear the "never" prefs future
     // notifications will never happen.
-    Services.prefs.deleteBranch(PREF_APP_UPDATE_NEVER_BRANCH);
+    Services.prefs.deleteBranch(PREFBRANCH_APP_UPDATE_NEVER);
 
     // The user will be notified if there is an error so clear the background
     // check error count.
@@ -741,18 +712,18 @@ var gPluginsPage = {
    * URL of the plugin updates page
    */
   _url: null,
-  
+
   /**
    * Initialize
    */
   onPageShow: function() {
     var prefs = Services.prefs;
-    if (prefs.getPrefType(PREF_PLUGINS_UPDATEURL) == prefs.PREF_INVALID) {
+    if (prefs.getPrefType(PREF_PLUGINS_UPDATE_URL) == prefs.PREF_INVALID) {
       gUpdates.wiz.goTo("noupdatesfound");
       return;
     }
-    
-    this._url = Services.urlFormatter.formatURLPref(PREF_PLUGINS_UPDATEURL);
+
+    this._url = Services.urlFormatter.formatURLPref(PREF_PLUGINS_UPDATE_URL);
     var link = document.getElementById("pluginupdateslink");
     link.setAttribute("href", this._url);
 
@@ -779,7 +750,7 @@ var gPluginsPage = {
     gUpdates.setButtons(null, null, "okButton", true);
     gUpdates.wiz.getButton("finish").focus();
   },
-  
+
   /**
    * Finish button clicked.
    */
@@ -911,7 +882,7 @@ var gIncompatibleCheckPage = {
  */
 var gManualUpdatePage = {
   onPageShow: function() {
-    var manualURL = Services.urlFormatter.formatURLPref(PREF_APP_UPDATE_MANUAL_URL);
+    var manualURL = Services.urlFormatter.formatURLPref(PREF_APP_UPDATE_URL_MANUAL);
     var manualUpdateLinkLabel = document.getElementById("manualUpdateLinkLabel");
     manualUpdateLinkLabel.value = manualURL;
     manualUpdateLinkLabel.setAttribute("url", manualURL);
@@ -1615,48 +1586,48 @@ var gDownloadingPage = {
 
     var u = gUpdates.update;
     switch (status) {
-    case CoR.NS_ERROR_CORRUPTED_CONTENT:
-    case CoR.NS_ERROR_UNEXPECTED:
-      if (u.selectedPatch.state == STATE_DOWNLOAD_FAILED &&
-          (u.isCompleteUpdate || u.patchCount != 2)) {
-        // Verification error of complete patch, informational text is held in
-        // the update object.
+      case CoR.NS_ERROR_CORRUPTED_CONTENT:
+      case CoR.NS_ERROR_UNEXPECTED:
+        if (u.selectedPatch.state == STATE_DOWNLOAD_FAILED &&
+            (u.isCompleteUpdate || u.patchCount != 2)) {
+          // Verification error of complete patch, informational text is held in
+          // the update object.
+          this.cleanUp();
+          gUpdates.wiz.goTo("errors");
+          break;
+        }
+        // Verification failed for a partial patch, complete patch is now
+        // downloading so return early and do NOT remove the download listener!
+
+        // Reset the progress meter to "undertermined" mode so that we don't
+        // show old progress for the new download of the "complete" patch.
+        this._downloadProgress.mode = "undetermined";
+        this._pauseButton.disabled = true;
+        document.getElementById("verificationFailed").hidden = false;
+        break;
+      case CoR.NS_BINDING_ABORTED:
+        LOG("gDownloadingPage", "onStopRequest - pausing download");
+        // Do not remove UI listener since the user may resume downloading again.
+        break;
+      case CoR.NS_OK:
+        LOG("gDownloadingPage", "onStopRequest - patch verification succeeded");
+        // If the background update pref is set, we should wait until the update
+        // is actually staged in the background.
+        let aus = CoC["@mozilla.org/updates/update-service;1"].
+                  getService(CoI.nsIApplicationUpdateService);
+        if (aus.canStageUpdates) {
+          this._setUpdateApplying();
+        } else {
+          this.cleanUp();
+          gUpdates.wiz.goTo("finished");
+        }
+        break;
+      default:
+        LOG("gDownloadingPage", "onStopRequest - transfer failed");
+        // Some kind of transfer error, die.
         this.cleanUp();
         gUpdates.wiz.goTo("errors");
         break;
-      }
-      // Verification failed for a partial patch, complete patch is now
-      // downloading so return early and do NOT remove the download listener!
-
-      // Reset the progress meter to "undertermined" mode so that we don't
-      // show old progress for the new download of the "complete" patch.
-      this._downloadProgress.mode = "undetermined";
-      this._pauseButton.disabled = true;
-      document.getElementById("verificationFailed").hidden = false;
-      break;
-    case CoR.NS_BINDING_ABORTED:
-      LOG("gDownloadingPage", "onStopRequest - pausing download");
-      // Do not remove UI listener since the user may resume downloading again.
-      break;
-    case CoR.NS_OK:
-      LOG("gDownloadingPage", "onStopRequest - patch verification succeeded");
-      // If the background update pref is set, we should wait until the update
-      // is actually staged in the background.
-      var aus = CoC["@mozilla.org/updates/update-service;1"].
-                getService(CoI.nsIApplicationUpdateService);
-      if (aus.canStageUpdates) {
-        this._setUpdateApplying();
-      } else {
-        this.cleanUp();
-        gUpdates.wiz.goTo("finished");
-      }
-      break;
-    default:
-      LOG("gDownloadingPage", "onStopRequest - transfer failed");
-      // Some kind of transfer error, die.
-      this.cleanUp();
-      gUpdates.wiz.goTo("errors");
-      break;
     }
   },
 
@@ -1714,7 +1685,7 @@ var gErrorsPage = {
 
     var errorReason = document.getElementById("errorReason");
     errorReason.value = statusText;
-    var manualURL = Services.urlFormatter.formatURLPref(PREF_APP_UPDATE_MANUAL_URL);
+    var manualURL = Services.urlFormatter.formatURLPref(PREF_APP_UPDATE_URL_MANUAL);
     var errorLinkLabel = document.getElementById("errorLinkLabel");
     errorLinkLabel.value = manualURL;
     errorLinkLabel.setAttribute("url", manualURL);
@@ -1753,7 +1724,7 @@ var gErrorExtraPage = {
       }
       else
         document.getElementById("genericBackgroundErrorLabel").hidden = false;
-      var manualURL = Services.urlFormatter.formatURLPref(PREF_APP_UPDATE_MANUAL_URL);
+      var manualURL = Services.urlFormatter.formatURLPref(PREF_APP_UPDATE_URL_MANUAL);
       var errorLinkLabel = document.getElementById("errorExtraLinkLabel");
       errorLinkLabel.value = manualURL;
       errorLinkLabel.setAttribute("url", manualURL);
@@ -1775,16 +1746,16 @@ var gErrorPatchingPage = {
 
   onWizardNext: function() {
     switch (gUpdates.update.selectedPatch.state) {
-    case STATE_PENDING:
-    case STATE_PENDING_SVC: 
-      gUpdates.wiz.goTo("finished");
-      break;
-    case STATE_DOWNLOADING:
-      gUpdates.wiz.goTo("downloading");
-      break;
-    case STATE_DOWNLOAD_FAILED:
-      gUpdates.wiz.goTo("errors");
-      break;
+      case STATE_PENDING:
+      case STATE_PENDING_SVC:
+        gUpdates.wiz.goTo("finished");
+        break;
+      case STATE_DOWNLOADING:
+        gUpdates.wiz.goTo("downloading");
+        break;
+      case STATE_DOWNLOAD_FAILED:
+        gUpdates.wiz.goTo("errors");
+        break;
     }
   }
 };

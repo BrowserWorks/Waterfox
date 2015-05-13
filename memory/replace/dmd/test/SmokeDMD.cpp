@@ -164,7 +164,7 @@ TestUnsampled(const char* aTestName, int aNum, const char* aMode, int aSeven)
   // Analyze 1: reported.
   // Analyze 2: freed.
   char* e = (char*) malloc(4096);
-  e = (char*) realloc(e, 4097);
+  e = (char*) realloc(e, 7169);
   Report(e);
 
   // First realloc is like malloc;  second realloc is shrinking.
@@ -259,6 +259,11 @@ TestUnsampled(const char* aTestName, int aNum, const char* aMode, int aSeven)
 //free(x);
 //free(y);
 //free(z);
+
+  // Do some allocations that will only show up in cumulative mode.
+  for (int i = 0; i < 100; i++) {
+    free(malloc(128));
+  }
 
   if (aNum == 2) {
     // Analyze 2.

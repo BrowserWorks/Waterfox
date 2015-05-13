@@ -9,15 +9,13 @@
 
 #include <stdint.h>                     // for int32_t, uint64_t
 #include "gfxTypes.h"
-#include "mozilla/Attributes.h"         // for MOZ_OVERRIDE
+#include "mozilla/Attributes.h"         // for override
 #include "mozilla/layers/CompositorTypes.h"
 #include "mozilla/layers/ISurfaceAllocator.h"  // for ISurfaceAllocator
 #include "mozilla/layers/LayersTypes.h"  // for LayersBackend
 #include "mozilla/layers/TextureClient.h"  // for TextureClient
 #include "nsRegion.h"                   // for nsIntRegion
-
-struct nsIntPoint;
-struct nsIntRect;
+#include "mozilla/gfx/Rect.h"
 
 namespace mozilla {
 namespace layers {
@@ -28,7 +26,6 @@ struct TextureFactoryIdentifier;
 class SurfaceDescriptor;
 class SurfaceDescriptorTiles;
 class ThebesBufferData;
-class ClientTiledLayerBuffer;
 class PTextureChild;
 
 /**
@@ -56,14 +53,6 @@ public:
   virtual void Connect(CompositableClient* aCompositable) = 0;
 
   /**
-   * Notify the CompositableHost that it should create host-side-only
-   * texture(s), that we will update incrementally using UpdateTextureIncremental.
-   */
-  virtual void CreatedIncrementalBuffer(CompositableClient* aCompositable,
-                                        const TextureInfo& aTextureInfo,
-                                        const nsIntRect& aBufferRect) = 0;
-
-  /**
    * Tell the CompositableHost on the compositor side what TiledLayerBuffer to
    * use for the next composition.
    */
@@ -84,27 +73,10 @@ public:
                                    const nsIntRegion& aUpdatedRegion) = 0;
 
   /**
-   * Notify the compositor to update aTextureId using aDescriptor, and take
-   * ownership of aDescriptor.
-   *
-   * aDescriptor only contains the pixels for aUpdatedRegion, and is relative
-   * to aUpdatedRegion.TopLeft().
-   *
-   * aBufferRect/aBufferRotation define the new valid region contained
-   * within the texture after the update has been applied.
-   */
-  virtual void UpdateTextureIncremental(CompositableClient* aCompositable,
-                                        TextureIdentifier aTextureId,
-                                        SurfaceDescriptor& aDescriptor,
-                                        const nsIntRegion& aUpdatedRegion,
-                                        const nsIntRect& aBufferRect,
-                                        const nsIntPoint& aBufferRotation) = 0;
-
-  /**
    * Communicate the picture rect of a YUV image in aLayer to the compositor
    */
   virtual void UpdatePictureRect(CompositableClient* aCompositable,
-                                 const nsIntRect& aRect) = 0;
+                                 const gfx::IntRect& aRect) = 0;
 
 #ifdef MOZ_WIDGET_GONK
   virtual void UseOverlaySource(CompositableClient* aCompositabl,
@@ -161,16 +133,6 @@ public:
     mTexturesToRemove.Clear();
   }
 
-  virtual void HoldTransactionsToRespond(uint64_t aTransactionId)
-  {
-    mTransactionsToRespond.push_back(aTransactionId);
-  }
-
-  virtual void ClearTransactionsToRespond()
-  {
-    mTransactionsToRespond.clear();
-  }
-
   /**
    * Tell the CompositableHost on the compositor side what texture to use for
    * the next composition.
@@ -181,36 +143,23 @@ public:
                                          TextureClient* aClientOnBlack,
                                          TextureClient* aClientOnWhite) = 0;
 
-  /**
-   * Tell the compositor side that the shared data has been modified so that
-   * it can react accordingly (upload textures, etc.).
-   */
-  virtual void UpdatedTexture(CompositableClient* aCompositable,
-                              TextureClient* aTexture,
-                              nsIntRegion* aRegion) = 0;
-
-
-  virtual void SendFenceHandle(AsyncTransactionTracker* aTracker,
-                               PTextureChild* aTexture,
-                               const FenceHandle& aFence) = 0;
-
   virtual void SendPendingAsyncMessges() = 0;
 
   void IdentifyTextureHost(const TextureFactoryIdentifier& aIdentifier);
 
-  virtual int32_t GetMaxTextureSize() const MOZ_OVERRIDE
+  virtual int32_t GetMaxTextureSize() const override
   {
     return mTextureFactoryIdentifier.mMaxTextureSize;
   }
 
-  bool IsOnCompositorSide() const MOZ_OVERRIDE { return false; }
+  bool IsOnCompositorSide() const override { return false; }
 
   /**
    * Returns the type of backend that is used off the main thread.
    * We only don't allow changing the backend type at runtime so this value can
    * be queried once and will not change until Gecko is restarted.
    */
-  virtual LayersBackend GetCompositorBackendType() const MOZ_OVERRIDE
+  virtual LayersBackend GetCompositorBackendType() const override
   {
     return mTextureFactoryIdentifier.mParentBackend;
   }
@@ -237,7 +186,6 @@ public:
 protected:
   TextureFactoryIdentifier mTextureFactoryIdentifier;
   nsTArray<RefPtr<TextureClient> > mTexturesToRemove;
-  std::vector<uint64_t> mTransactionsToRespond;
   RefPtr<SyncObject> mSyncObject;
   const int32_t mSerial;
   static mozilla::Atomic<int32_t> sSerialCounter;

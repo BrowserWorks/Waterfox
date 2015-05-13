@@ -18,21 +18,18 @@ namespace layers {
 // passed into SetData(), so that it can be accessed from other D3D devices.
 // This class also manages the synchronization of the copy, to ensure the
 // resource is ready to use.
-class D3D9SurfaceImage : public Image
-                       , public ISharedImage {
+class D3D9SurfaceImage : public Image {
 public:
 
   struct Data {
-    Data(IDirect3DSurface9* aSurface, const nsIntRect& aRegion)
+    Data(IDirect3DSurface9* aSurface, const gfx::IntRect& aRegion)
       : mSurface(aSurface), mRegion(aRegion) {}
     RefPtr<IDirect3DSurface9> mSurface;
-    nsIntRect mRegion;
+    gfx::IntRect mRegion;
   };
 
   D3D9SurfaceImage();
   virtual ~D3D9SurfaceImage();
-
-  virtual ISharedImage* AsSharedImage() MOZ_OVERRIDE { return this; }
 
   // Copies the surface into a sharable texture's surface, and initializes
   // the image.
@@ -41,18 +38,13 @@ public:
   // Returns the description of the shared surface.
   const D3DSURFACE_DESC& GetDesc() const;
 
-  // Returns the HANDLE that can be used to open the image as a shared resource.
-  // If the operation to copy the original resource to the shared resource
-  // hasn't finished yet, this function blocks until the synchronization is
-  // complete.
-  HANDLE GetShareHandle();
+  gfx::IntSize GetSize() override;
 
-  gfx::IntSize GetSize() MOZ_OVERRIDE;
+  virtual TemporaryRef<gfx::SourceSurface> GetAsSourceSurface() override;
 
-  virtual TemporaryRef<gfx::SourceSurface> GetAsSourceSurface() MOZ_OVERRIDE;
+  virtual TextureClient* GetTextureClient(CompositableClient* aClient) override;
 
-  virtual TextureClient* GetTextureClient(CompositableClient* aClient) MOZ_OVERRIDE;
-  virtual uint8_t* GetBuffer() MOZ_OVERRIDE { return nullptr; }
+  virtual bool IsValid() override;
 
 private:
 
@@ -66,6 +58,7 @@ private:
   RefPtr<TextureClient> mTextureClient;
   HANDLE mShareHandle;
   D3DSURFACE_DESC mDesc;
+  bool mValid;
 };
 
 } // namepace layers

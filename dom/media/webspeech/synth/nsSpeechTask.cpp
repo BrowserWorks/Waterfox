@@ -50,7 +50,7 @@ public:
   }
 
   virtual void NotifyEvent(MediaStreamGraph* aGraph,
-                           MediaStreamListener::MediaStreamGraphEvent event) MOZ_OVERRIDE
+                           MediaStreamListener::MediaStreamGraphEvent event) override
   {
     switch (event) {
       case EVENT_FINISHED:
@@ -68,7 +68,7 @@ public:
     }
   }
 
-  virtual void NotifyBlockingChanged(MediaStreamGraph* aGraph, Blocking aBlocked) MOZ_OVERRIDE
+  virtual void NotifyBlockingChanged(MediaStreamGraph* aGraph, Blocking aBlocked) override
   {
     if (aBlocked == MediaStreamListener::UNBLOCKED && !mStarted) {
       mStarted = true;
@@ -118,6 +118,7 @@ nsSpeechTask::nsSpeechTask(float aVolume, const nsAString& aText)
 
 nsSpeechTask::~nsSpeechTask()
 {
+  LOG(PR_LOG_DEBUG, ("~nsSpeechTask"));
   if (mStream) {
     if (!mStream->IsDestroyed()) {
       mStream->Destroy();
@@ -125,6 +126,24 @@ nsSpeechTask::~nsSpeechTask()
 
     mStream = nullptr;
   }
+
+  if (mPort) {
+    mPort->Destroy();
+    mPort = nullptr;
+  }
+}
+
+void
+nsSpeechTask::BindStream(ProcessedMediaStream* aStream)
+{
+  mStream = MediaStreamGraph::GetInstance()->CreateSourceStream(nullptr);
+  mPort = aStream->AllocateInputPort(mStream, 0);
+}
+
+void
+nsSpeechTask::SetChosenVoiceURI(const nsAString& aUri)
+{
+  mChosenVoiceURI = aUri;
 }
 
 NS_IMETHODIMP
@@ -137,16 +156,16 @@ nsSpeechTask::Setup(nsISpeechTaskCallback* aCallback,
 
   mCallback = aCallback;
 
-  if (argc < 2) {
+  if (mIndirectAudio) {
+    if (argc > 0) {
+      NS_WARNING("Audio info arguments in Setup() are ignored for indirect audio services.");
+    }
     return NS_OK;
   }
 
-  if (mIndirectAudio) {
-    NS_WARNING("Audio info arguments in Setup() are ignored for indirect audio services.");
-  }
+  // mStream is set up in BindStream() that should be called before this.
+  MOZ_ASSERT(mStream);
 
-  // XXX: Is there setup overhead here that hurtls latency?
-  mStream = MediaStreamGraph::GetInstance()->CreateSourceStream(nullptr);
   mStream->AddListener(new SynthStreamListener(this));
 
   // XXX: Support more than one channel
@@ -269,6 +288,12 @@ nsSpeechTask::DispatchStart()
 nsresult
 nsSpeechTask::DispatchStartImpl()
 {
+  return DispatchStartImpl(mChosenVoiceURI);
+}
+
+nsresult
+nsSpeechTask::DispatchStartImpl(const nsAString& aUri)
+{
   LOG(PR_LOG_DEBUG, ("nsSpeechTask::DispatchStart"));
 
   MOZ_ASSERT(mUtterance);
@@ -276,6 +301,7 @@ nsSpeechTask::DispatchStartImpl()
                  NS_ERROR_NOT_AVAILABLE);
 
   mUtterance->mState = SpeechSynthesisUtterance::STATE_SPEAKING;
+  mUtterance->mChosenVoiceURI = aUri;
   mUtterance->DispatchSpeechSynthesisEvent(NS_LITERAL_STRING("start"), 0, 0,
                                            NS_LITERAL_STRING(""));
 
@@ -461,11 +487,6 @@ nsSpeechTask::Pause()
 {
   MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
 
-  if (mUtterance->IsPaused() ||
-      mUtterance->GetState() == SpeechSynthesisUtterance::STATE_ENDED) {
-    return;
-  }
-
   if (mCallback) {
     DebugOnly<nsresult> rv = mCallback->OnPause();
     NS_WARN_IF_FALSE(NS_SUCCEEDED(rv), "Unable to call onPause() callback");
@@ -473,19 +494,14 @@ nsSpeechTask::Pause()
 
   if (mStream) {
     mStream->ChangeExplicitBlockerCount(1);
+    DispatchPauseImpl(GetCurrentTime(), GetCurrentCharOffset());
   }
-
-  DispatchPauseImpl(GetCurrentTime(), GetCurrentCharOffset());
 }
 
 void
 nsSpeechTask::Resume()
 {
   MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
-
-  if (!mUtterance->IsPaused()) {
-    return;
-  }
 
   if (mCallback) {
     DebugOnly<nsresult> rv = mCallback->OnResume();
@@ -494,9 +510,8 @@ nsSpeechTask::Resume()
 
   if (mStream) {
     mStream->ChangeExplicitBlockerCount(-1);
+    DispatchResumeImpl(GetCurrentTime(), GetCurrentCharOffset());
   }
-
-  DispatchResumeImpl(GetCurrentTime(), GetCurrentCharOffset());
 }
 
 void
@@ -513,9 +528,8 @@ nsSpeechTask::Cancel()
 
   if (mStream) {
     mStream->ChangeExplicitBlockerCount(1);
+    DispatchEndImpl(GetCurrentTime(), GetCurrentCharOffset());
   }
-
-  DispatchEndImpl(GetCurrentTime(), GetCurrentCharOffset());
 }
 
 float

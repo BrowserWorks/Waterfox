@@ -5,15 +5,12 @@
 
 const TEST_DATA = [];
 let {LineGraphWidget} = Cu.import("resource:///modules/devtools/Graphs.jsm", {});
-let {DOMHelpers} = Cu.import("resource:///modules/devtools/DOMHelpers.jsm", {});
 let {Promise} = devtools.require("resource://gre/modules/Promise.jsm");
-let {Hosts} = devtools.require("devtools/framework/toolbox-hosts");
 
-let test = Task.async(function*() {
+add_task(function*() {
   yield promiseTab("about:blank");
   yield performTest();
   gBrowser.removeCurrentTab();
-  finish();
 });
 
 function* performTest() {
@@ -22,7 +19,7 @@ function* performTest() {
 
   yield testGraph(graph);
 
-  graph.destroy();
+  yield graph.destroy();
   host.destroy();
 }
 

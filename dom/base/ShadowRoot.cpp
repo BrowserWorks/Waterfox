@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -67,7 +68,7 @@ ShadowRoot::ShadowRoot(nsIContent* aContent,
                        nsXBLPrototypeBinding* aProtoBinding)
   : DocumentFragment(aNodeInfo), mPoolHost(aContent),
     mProtoBinding(aProtoBinding), mShadowElement(nullptr),
-    mInsertionPointChanged(false)
+    mInsertionPointChanged(false), mIsComposedDocParticipant(false)
 {
   SetHost(aContent);
 
@@ -104,9 +105,9 @@ ShadowRoot::~ShadowRoot()
 }
 
 JSObject*
-ShadowRoot::WrapObject(JSContext* aCx)
+ShadowRoot::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return mozilla::dom::ShadowRootBinding::Wrap(aCx, this);
+  return mozilla::dom::ShadowRootBinding::Wrap(aCx, this, aGivenProto);
 }
 
 ShadowRoot*
@@ -565,7 +566,7 @@ ShadowRoot::ChangePoolHost(nsIContent* aNewHost)
 bool
 ShadowRoot::IsShadowInsertionPoint(nsIContent* aContent)
 {
-  if (aContent && aContent->IsHTML(nsGkAtoms::shadow)) {
+  if (aContent && aContent->IsHTMLElement(nsGkAtoms::shadow)) {
     HTMLShadowElement* shadowElem = static_cast<HTMLShadowElement*>(aContent);
     return shadowElem->IsInsertionPoint();
   }
@@ -597,7 +598,7 @@ ShadowRoot::IsPooledNode(nsIContent* aContent, nsIContent* aContainer,
     return true;
   }
 
-  if (aContainer && aContainer->IsHTML(nsGkAtoms::content)) {
+  if (aContainer && aContainer->IsHTMLElement(nsGkAtoms::content)) {
     // Fallback content will end up in pool if its parent is a child of the host.
     HTMLContentElement* content = static_cast<HTMLContentElement*>(aContainer);
     return content->IsInsertionPoint() && content->MatchedNodes().IsEmpty() &&
@@ -709,6 +710,15 @@ ShadowRoot::ContentRemoved(nsIDocument* aDocument,
   if (IsPooledNode(aChild, aContainer, mPoolHost)) {
     RemoveDistributedNode(aChild);
   }
+}
+
+void
+ShadowRoot::DestroyContent()
+{
+  if (mOlderShadow) {
+    mOlderShadow->DestroyContent();
+  }
+  DocumentFragment::DestroyContent();
 }
 
 NS_IMPL_CYCLE_COLLECTION_INHERITED(ShadowRootStyleSheetList, StyleSheetList,

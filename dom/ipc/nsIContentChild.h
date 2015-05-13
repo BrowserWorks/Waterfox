@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -32,10 +32,11 @@ class CpowEntry;
 
 namespace dom {
 
+class Blob;
 class BlobChild;
+class BlobImpl;
 class BlobConstructorParams;
 class ClonedMessageData;
-class File;
 class IPCTabContext;
 class PBlobChild;
 class PBrowserChild;
@@ -46,7 +47,8 @@ class nsIContentChild : public nsISupports
 public:
   NS_DECLARE_STATIC_IID_ACCESSOR(NS_ICONTENTCHILD_IID)
 
-  BlobChild* GetOrCreateActorForBlob(File* aBlob);
+  BlobChild* GetOrCreateActorForBlob(Blob* aBlob);
+  BlobChild* GetOrCreateActorForBlobImpl(BlobImpl* aImpl);
 
   virtual PBlobChild* SendPBlobConstructor(
     PBlobChild* aActor,
@@ -78,7 +80,7 @@ protected:
 
   virtual bool RecvAsyncMessage(const nsString& aMsg,
                                 const ClonedMessageData& aData,
-                                const InfallibleTArray<jsipc::CpowEntry>& aCpows,
+                                InfallibleTArray<jsipc::CpowEntry>&& aCpows,
                                 const IPC::Principal& aPrincipal);
 };
 

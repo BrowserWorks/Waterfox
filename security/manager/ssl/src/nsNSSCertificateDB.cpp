@@ -20,7 +20,6 @@
 #include "nsNSSCertificate.h"
 #include "nsNSSHelper.h"
 #include "nsNSSCertHelper.h"
-#include "nsNSSCertCache.h"
 #include "nsCRT.h"
 #include "nsICertificateDialogs.h"
 #include "nsNSSCertTrust.h"
@@ -52,9 +51,7 @@ using namespace mozilla;
 using namespace mozilla::psm;
 using mozilla::psm::SharedSSLState;
 
-#ifdef PR_LOGGING
 extern PRLogModuleInfo* gPIPNSSLog;
-#endif
 
 static nsresult
 attemptToLogInWithDefaultPassword()
@@ -355,7 +352,7 @@ nsNSSCertificateDB::handleCACertDownload(nsIArray *x509Certs,
     tmpCert = CERT_NewTempCertificate(certdb, &der,
                                       nullptr, false, true);
   }
-  nsMemory::Free(der.data);
+  free(der.data);
   der.data = nullptr;
   der.len = 0;
   
@@ -424,7 +421,7 @@ nsNSSCertificateDB::handleCACertDownload(nsIArray *x509Certs,
     CERTCertificate *tmpCert2 = 
       CERT_NewTempCertificate(certdb, &der, nullptr, false, true);
 
-    nsMemory::Free(der.data);
+    free(der.data);
     der.data = nullptr;
     der.len = 0;
 
@@ -1233,7 +1230,7 @@ nsNSSCertificateDB::getCertNames(CERTCertList *certList,
   }
   PR_LOG(gPIPNSSLog, PR_LOG_DEBUG, ("num certs: %d\n", numcerts));
   int nc = (numcerts == 0) ? 1 : numcerts;
-  tmpArray = (char16_t **)nsMemory::Alloc(sizeof(char16_t *) * nc);
+  tmpArray = (char16_t **)moz_xmalloc(sizeof(char16_t *) * nc);
   if (numcerts == 0) goto finish;
   for (node = CERT_LIST_HEAD(certList);
        !CERT_LIST_END(node, certList);
@@ -1620,7 +1617,7 @@ NS_IMETHODIMP nsNSSCertificateDB::AddCertFromBase64(const char* aBase64,
   if (!tmpCert)
     tmpCert = CERT_NewTempCertificate(certdb, &der,
                                       nullptr, false, true);
-  nsMemory::Free(der.data);
+  free(der.data);
   der.data = nullptr;
   der.len = 0;
 
@@ -1709,16 +1706,17 @@ NS_IMETHODIMP
 nsNSSCertificateDB::VerifyCertNow(nsIX509Cert* aCert,
                                   int64_t /*SECCertificateUsage*/ aUsage,
                                   uint32_t aFlags,
-                                  nsIX509CertList** verifiedChain,
+                                  const char* aHostname,
+                                  nsIX509CertList** aVerifiedChain,
                                   bool* aHasEVPolicy,
                                   int32_t* /*PRErrorCode*/ _retval )
 {
   NS_ENSURE_ARG_POINTER(aCert);
   NS_ENSURE_ARG_POINTER(aHasEVPolicy);
-  NS_ENSURE_ARG_POINTER(verifiedChain);
+  NS_ENSURE_ARG_POINTER(aVerifiedChain);
   NS_ENSURE_ARG_POINTER(_retval);
 
-  *verifiedChain = nullptr;
+  *aVerifiedChain = nullptr;
   *aHasEVPolicy = false;
   *_retval = PR_UNKNOWN_ERROR;
 
@@ -1743,13 +1741,25 @@ nsNSSCertificateDB::VerifyCertNow(nsIX509Cert* aCert,
   SECOidTag evOidPolicy;
   SECStatus srv;
 
-  srv = certVerifier->VerifyCert(nssCert, aUsage, mozilla::pkix::Now(),
-                                 nullptr, // Assume no context
-                                 nullptr, // hostname
-                                 aFlags,
-                                 nullptr, // stapledOCSPResponse
-                                 &resultChain,
-                                 &evOidPolicy);
+  if (aHostname && aUsage == certificateUsageSSLServer) {
+    srv = certVerifier->VerifySSLServerCert(nssCert,
+                                            nullptr, // stapledOCSPResponse
+                                            mozilla::pkix::Now(),
+                                            nullptr, // Assume no context
+                                            aHostname,
+                                            false, // don't save intermediates
+                                            aFlags,
+                                            &resultChain,
+                                            &evOidPolicy);
+  } else {
+    srv = certVerifier->VerifyCert(nssCert, aUsage, mozilla::pkix::Now(),
+                                   nullptr, // Assume no context
+                                   aHostname,
+                                   aFlags,
+                                   nullptr, // stapledOCSPResponse
+                                   &resultChain,
+                                   &evOidPolicy);
+  }
 
   PRErrorCode error = PR_GetError();
 
@@ -1768,7 +1778,7 @@ nsNSSCertificateDB::VerifyCertNow(nsIX509Cert* aCert,
     NS_ENSURE_TRUE(error != 0, NS_ERROR_FAILURE);
     *_retval = error;
   }
-  nssCertList.forget(verifiedChain);
+  nssCertList.forget(aVerifiedChain);
 
   return NS_OK;
 }

@@ -10,21 +10,16 @@
 #endif
 
 #include "nsIComponentRegistrar.h"
-#include "nsIIOService.h"
 #include "nsIServiceManager.h"
 #include "nsNetUtil.h"
 
 #include "nsIUploadChannel.h"
 
-static NS_DEFINE_CID(kIOServiceCID, NS_IOSERVICE_CID);
-
 #include "prlog.h"
-#if defined(PR_LOGGING)
 //
 // set NSPR_LOG_MODULES=Test:5
 //
 static PRLogModuleInfo *gTestLog = nullptr;
-#endif
 #define LOG(args) PR_LOG(gTestLog, PR_LOG_DEBUG, args)
 
 //-----------------------------------------------------------------------------
@@ -113,9 +108,7 @@ main(int argc, char* argv[])
     char* uriSpec  = argv[1];
     char* fileName = argv[2];
 
-#if defined(PR_LOGGING) 
     gTestLog = PR_NewLogModule("Test");
-#endif
 
     {
         nsCOMPtr<nsIServiceManager> servMan;
@@ -129,15 +122,24 @@ main(int argc, char* argv[])
                                   nsDependentCString(fileName)); // XXX UTF-8
         if (NS_FAILED(rv)) return -1;
 
-        nsCOMPtr<nsIIOService> ioService(do_GetService(kIOServiceCID, &rv));
-
         // create our url.
         nsCOMPtr<nsIURI> uri;
         rv = NS_NewURI(getter_AddRefs(uri), uriSpec);
         if (NS_FAILED(rv)) return -1;
 
+        nsCOMPtr<nsIScriptSecurityManager> secman =
+          do_GetService(NS_SCRIPTSECURITYMANAGER_CONTRACTID, &rv);
+        if (NS_FAILED(rv)) return -1;
+        nsCOMPtr<nsIPrincipal> systemPrincipal;
+        rv = secman->GetSystemPrincipal(getter_AddRefs(systemPrincipal));
+        if (NS_FAILED(rv)) return -1;
+
         nsCOMPtr<nsIChannel> channel;
-        rv = ioService->NewChannelFromURI(uri, getter_AddRefs(channel));
+        rv = NS_NewChannel(getter_AddRefs(channel),
+                           uri,
+                           systemPrincipal,
+                           nsILoadInfo::SEC_NORMAL,
+                           nsIContentPolicy::TYPE_OTHER);
         if (NS_FAILED(rv)) return -1;
 	
         // QI and set the upload stream

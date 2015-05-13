@@ -9,6 +9,7 @@
 #include "CameraPreviewMediaStream.h"
 #include "mozilla/dom/CameraManagerBinding.h"
 #include "mozilla/dom/File.h"
+#include "nsQueryObject.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -48,7 +49,7 @@ public:
   virtual void RunCallback(nsDOMCameraControl* aDOMCameraControl) = 0;
 
   NS_IMETHOD
-  Run() MOZ_OVERRIDE
+  Run() override
   {
     MOZ_ASSERT(NS_IsMainThread());
 
@@ -81,7 +82,7 @@ DOMCameraControlListener::OnHardwareStateChange(HardwareState aState,
     { }
 
     void
-    RunCallback(nsDOMCameraControl* aDOMCameraControl) MOZ_OVERRIDE
+    RunCallback(nsDOMCameraControl* aDOMCameraControl) override
     {
       aDOMCameraControl->OnHardwareStateChange(mState, mReason);
     }
@@ -107,7 +108,7 @@ DOMCameraControlListener::OnPreviewStateChange(PreviewState aState)
     { }
 
     void
-    RunCallback(nsDOMCameraControl* aDOMCameraControl) MOZ_OVERRIDE
+    RunCallback(nsDOMCameraControl* aDOMCameraControl) override
     {
       aDOMCameraControl->OnPreviewStateChange(mState);
     }
@@ -165,7 +166,7 @@ DOMCameraControlListener::OnRecorderStateChange(RecorderState aState,
     { }
 
     void
-    RunCallback(nsDOMCameraControl* aDOMCameraControl) MOZ_OVERRIDE
+    RunCallback(nsDOMCameraControl* aDOMCameraControl) override
     {
       aDOMCameraControl->OnRecorderStateChange(mState, mStatus, mTrackNum);
     }
@@ -192,7 +193,7 @@ DOMCameraControlListener::OnConfigurationChange(const CameraListenerConfiguratio
     { }
 
     void
-    RunCallback(nsDOMCameraControl* aDOMCameraControl) MOZ_OVERRIDE
+    RunCallback(nsDOMCameraControl* aDOMCameraControl) override
     {
       nsRefPtr<nsDOMCameraControl::DOMCameraConfiguration> config =
         new nsDOMCameraControl::DOMCameraConfiguration();
@@ -242,7 +243,7 @@ DOMCameraControlListener::OnAutoFocusMoving(bool aIsMoving)
     { }
 
     void
-    RunCallback(nsDOMCameraControl* aDOMCameraControl) MOZ_OVERRIDE
+    RunCallback(nsDOMCameraControl* aDOMCameraControl) override
     {
       aDOMCameraControl->OnAutoFocusMoving(mIsMoving);
     }
@@ -267,7 +268,7 @@ DOMCameraControlListener::OnFacesDetected(const nsTArray<ICameraControl::Face>& 
     { }
 
     void
-    RunCallback(nsDOMCameraControl* aDOMCameraControl) MOZ_OVERRIDE
+    RunCallback(nsDOMCameraControl* aDOMCameraControl) override
     {
       aDOMCameraControl->OnFacesDetected(mFaces);
     }
@@ -290,7 +291,7 @@ DOMCameraControlListener::OnShutter()
     { }
 
     void
-    RunCallback(nsDOMCameraControl* aDOMCameraControl) MOZ_OVERRIDE
+    RunCallback(nsDOMCameraControl* aDOMCameraControl) override
     {
       aDOMCameraControl->OnShutter();
     }
@@ -327,7 +328,7 @@ DOMCameraControlListener::OnAutoFocusComplete(bool aAutoFocusSucceeded)
     { }
 
     void
-    RunCallback(nsDOMCameraControl* aDOMCameraControl) MOZ_OVERRIDE
+    RunCallback(nsDOMCameraControl* aDOMCameraControl) override
     {
       aDOMCameraControl->OnAutoFocusComplete(mAutoFocusSucceeded);
     }
@@ -340,31 +341,40 @@ DOMCameraControlListener::OnAutoFocusComplete(bool aAutoFocusSucceeded)
 }
 
 void
-DOMCameraControlListener::OnTakePictureComplete(uint8_t* aData, uint32_t aLength, const nsAString& aMimeType)
+DOMCameraControlListener::OnTakePictureComplete(const uint8_t* aData, uint32_t aLength, const nsAString& aMimeType)
 {
   class Callback : public DOMCallback
   {
   public:
     Callback(nsMainThreadPtrHandle<nsISupports> aDOMCameraControl,
-             uint8_t* aData, uint32_t aLength, const nsAString& aMimeType)
+             const uint8_t* aData, uint32_t aLength, const nsAString& aMimeType)
       : DOMCallback(aDOMCameraControl)
-      , mData(aData)
       , mLength(aLength)
       , mMimeType(aMimeType)
-    { }
+    {
+        mData = (uint8_t*) malloc(aLength);
+        memcpy(mData, aData, aLength);
+    }
 
     void
-    RunCallback(nsDOMCameraControl* aDOMCameraControl) MOZ_OVERRIDE
+    RunCallback(nsDOMCameraControl* aDOMCameraControl) override
     {
       nsCOMPtr<nsIDOMBlob> picture =
-        File::CreateMemoryFile(mDOMCameraControl.get(),
+        Blob::CreateMemoryBlob(mDOMCameraControl.get(),
                                static_cast<void*>(mData),
                                static_cast<uint64_t>(mLength),
                                mMimeType);
       aDOMCameraControl->OnTakePictureComplete(picture);
+      mData = NULL;
     }
 
   protected:
+    virtual
+    ~Callback()
+    {
+        free(mData);
+    }
+
     uint8_t* mData;
     uint32_t mLength;
     nsString mMimeType;
@@ -388,7 +398,7 @@ DOMCameraControlListener::OnUserError(UserContext aContext, nsresult aError)
     { }
 
     virtual void
-    RunCallback(nsDOMCameraControl* aDOMCameraControl) MOZ_OVERRIDE
+    RunCallback(nsDOMCameraControl* aDOMCameraControl) override
     {
       aDOMCameraControl->OnUserError(mContext, mError);
     }

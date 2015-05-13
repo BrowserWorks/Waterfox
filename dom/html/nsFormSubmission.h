@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -8,19 +9,19 @@
 #include "mozilla/Attributes.h"
 #include "nsString.h"
 #include "nsCOMPtr.h"
+#include "nsIContent.h"
 
 class nsIURI;
 class nsIInputStream;
 class nsGenericHTMLElement;
-class nsILinkHandler;
-class nsIContent;
-class nsIFormControl;
-class nsIDOMHTMLElement;
-class nsIDocShell;
-class nsIRequest;
 class nsISaveAsCharset;
 class nsIMultiplexInputStream;
-class nsIDOMBlob;
+
+namespace mozilla {
+namespace dom {
+class File;
+} // namespace dom
+} // namespace mozilla
 
 /**
  * Class for form submissions; encompasses the function to call to submit as
@@ -47,13 +48,11 @@ public:
    * Submit a name/file pair
    *
    * @param aName the name of the parameter
-   * @param aBlob the file to submit
-   * @param aFilename the filename to be used (not void)
+   * @param aFile the file to submit. The file's name will be used
    */
   virtual nsresult AddNameFilePair(const nsAString& aName,
-                                   nsIDOMBlob* aBlob,
-                                   const nsString& aFilename) = 0;
-  
+                                   mozilla::dom::File* aFile) = 0;
+
   /**
    * Reports whether the instance supports AddIsindex().
    *
@@ -159,12 +158,11 @@ public:
   ~nsFSMultipartFormData();
  
   virtual nsresult AddNameValuePair(const nsAString& aName,
-                                    const nsAString& aValue) MOZ_OVERRIDE;
+                                    const nsAString& aValue) override;
   virtual nsresult AddNameFilePair(const nsAString& aName,
-                                   nsIDOMBlob* aBlob,
-                                   const nsString& aFilename) MOZ_OVERRIDE;
+                                   mozilla::dom::File* aFile) override;
   virtual nsresult GetEncodedSubmission(nsIURI* aURI,
-                                        nsIInputStream** aPostDataStream) MOZ_OVERRIDE;
+                                        nsIInputStream** aPostDataStream) override;
 
   void GetContentType(nsACString& aContentType)
   {

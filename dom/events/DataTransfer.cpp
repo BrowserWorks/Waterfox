@@ -24,6 +24,7 @@
 #include "nsIScriptContext.h"
 #include "nsIDocument.h"
 #include "nsIScriptGlobalObject.h"
+#include "mozilla/dom/ContentChild.h"
 #include "mozilla/dom/DataTransferBinding.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/BindingUtils.h"
@@ -82,7 +83,6 @@ DataTransfer::DataTransfer(nsISupports* aParent, uint32_t aEventType,
     mDragImageX(0),
     mDragImageY(0)
 {
-  MOZ_ASSERT(mParent);
   // For these events, we want to be able to add data to the data transfer, so
   // clear the readonly state. Otherwise, the data is already present. For
   // external usage, cache the data from the native clipboard or drag.
@@ -94,7 +94,7 @@ DataTransfer::DataTransfer(nsISupports* aParent, uint32_t aEventType,
   } else if (mIsExternal) {
     if (aEventType == NS_PASTE) {
       CacheExternalClipboardFormats();
-    } else if (aEventType >= NS_DRAGDROP_EVENT_START && aEventType <= NS_DRAGDROP_LEAVE_SYNTH) {
+    } else if (aEventType >= NS_DRAGDROP_EVENT_START && aEventType <= NS_DRAGDROP_LEAVE) {
       CacheExternalDragFormats();
     }
   }
@@ -167,9 +167,9 @@ DataTransfer::Constructor(const GlobalObject& aGlobal,
 }
 
 JSObject*
-DataTransfer::WrapObject(JSContext* aCx)
+DataTransfer::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return DataTransferBinding::Wrap(aCx, this);
+  return DataTransferBinding::Wrap(aCx, this, aGivenProto);
 }
 
 NS_IMETHODIMP
@@ -300,10 +300,20 @@ DataTransfer::GetFiles(ErrorResult& aRv)
 
       nsCOMPtr<nsIFile> file = do_QueryInterface(supports);
 
-      if (!file)
-        continue;
+      nsRefPtr<File> domFile;
+      if (file) {
+        domFile = File::CreateFromFile(GetParentObject(), file);
+      } else {
+        nsCOMPtr<BlobImpl> blobImpl = do_QueryInterface(supports);
+        if (!blobImpl) {
+          continue;
+        }
 
-      nsRefPtr<File> domFile = File::CreateFromFile(GetParentObject(), file);
+        MOZ_ASSERT(blobImpl->IsFile());
+
+        domFile = File::Create(GetParentObject(), blobImpl);
+        MOZ_ASSERT(domFile);
+      }
 
       if (!mFiles->Append(domFile)) {
         aRv.Throw(NS_ERROR_FAILURE);
@@ -320,7 +330,7 @@ DataTransfer::GetFiles(nsIDOMFileList** aFileList)
 {
   ErrorResult rv;
   NS_IF_ADDREF(*aFileList = GetFiles(rv));
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 already_AddRefed<DOMStringList>
@@ -413,7 +423,7 @@ DataTransfer::GetData(const nsAString& aFormat, nsAString& aData)
 {
   ErrorResult rv;
   GetData(aFormat, aData, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 void
@@ -436,7 +446,7 @@ DataTransfer::SetData(const nsAString& aFormat, const nsAString& aData)
 {
   ErrorResult rv;
   SetData(aFormat, aData, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 void
@@ -465,7 +475,7 @@ DataTransfer::ClearData(const nsAString& aFormat)
   format = &aFormat;
   ErrorResult rv;
   ClearData(format, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 NS_IMETHODIMP
@@ -550,7 +560,7 @@ DataTransfer::MozTypesAt(uint32_t aIndex, nsISupports** aTypes)
   ErrorResult rv;
   nsRefPtr<DOMStringList> types = MozTypesAt(aIndex, rv);
   types.forget(aTypes);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 NS_IMETHODIMP
@@ -648,6 +658,7 @@ DataTransfer::MozGetDataAt(JSContext* aCx, const nsAString& aFormat,
   }
 
   if (!data) {
+    aRetval.setNull();
     return;
   }
 
@@ -782,7 +793,7 @@ DataTransfer::MozClearDataAt(const nsAString& aFormat, uint32_t aIndex)
 {
   ErrorResult rv;
   MozClearDataAt(aFormat, aIndex, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 void
@@ -807,7 +818,7 @@ DataTransfer::SetDragImage(nsIDOMElement* aImage, int32_t aX, int32_t aY)
   if (image) {
     SetDragImage(*image, aX, aY, rv);
   }
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 void
@@ -831,7 +842,7 @@ DataTransfer::AddElement(nsIDOMElement* aElement)
 
   ErrorResult rv;
   AddElement(*element, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 nsresult
@@ -855,13 +866,6 @@ DataTransfer::GetTransferables(nsIDOMNode* aDragTarget)
 {
   MOZ_ASSERT(aDragTarget);
 
-  nsCOMPtr<nsISupportsArray> transArray =
-    do_CreateInstance("@mozilla.org/supports-array;1");
-  if (!transArray) {
-    return nullptr;
-  }
-    
-
   nsCOMPtr<nsINode> dragNode = do_QueryInterface(aDragTarget);
   if (!dragNode) {
     return nullptr;
@@ -871,12 +875,23 @@ DataTransfer::GetTransferables(nsIDOMNode* aDragTarget)
   if (!doc) {
     return nullptr;
   }
-    
-  nsILoadContext* loadContext = doc->GetLoadContext();
+
+  return GetTransferables(doc->GetLoadContext());
+}
+
+already_AddRefed<nsISupportsArray>
+DataTransfer::GetTransferables(nsILoadContext* aLoadContext)
+{
+
+  nsCOMPtr<nsISupportsArray> transArray =
+    do_CreateInstance("@mozilla.org/supports-array;1");
+  if (!transArray) {
+    return nullptr;
+  }
 
   uint32_t count = mItems.Length();
   for (uint32_t i = 0; i < count; i++) {
-    nsCOMPtr<nsITransferable> transferable = GetTransferable(i, loadContext);
+    nsCOMPtr<nsITransferable> transferable = GetTransferable(i, aLoadContext);
     if (transferable) {
       transArray->AppendElement(transferable);
     }
@@ -972,7 +987,7 @@ DataTransfer::ConvertFromVariant(nsIVariant* aVariant,
     if (fdp) {
       // for flavour data providers, use kFlavorHasDataProvider (which has the
       // value 0) as the length.
-      NS_ADDREF(*aSupports = fdp);
+      fdp.forget(aSupports);
       *aLength = nsITransferable::kFlavorHasDataProvider;
     }
     else {
@@ -983,7 +998,7 @@ DataTransfer::ConvertFromVariant(nsIVariant* aVariant,
         return false;
 
       ptrSupports->SetData(data);
-      NS_ADDREF(*aSupports = ptrSupports);
+      ptrSupports.forget(aSupports);
 
       *aLength = sizeof(nsISupportsInterfacePointer *);
     }
@@ -1007,8 +1022,7 @@ DataTransfer::ConvertFromVariant(nsIVariant* aVariant,
 
   strSupports->SetData(str);
 
-  *aSupports = strSupports;
-  NS_ADDREF(*aSupports);
+  strSupports.forget(aSupports);
 
   // each character is two bytes
   *aLength = str.Length() << 1;
@@ -1252,6 +1266,21 @@ DataTransfer::FillInExternalData(TransferItem& aItem, uint32_t aIndex)
 
     aItem.mData = variant;
   }
+
+void
+DataTransfer::FillAllExternalData()
+{
+  if (mIsExternal) {
+    for (uint32_t i = 0; i < mItems.Length(); ++i) {
+      nsTArray<TransferItem>& itemArray = mItems[i];
+      for (uint32_t j = 0; j < itemArray.Length(); ++j) {
+        if (!itemArray[j].mData) {
+          FillInExternalData(itemArray[j], i);
+        }
+      }
+    }
+  }
+}
 
 } // namespace dom
 } // namespace mozilla

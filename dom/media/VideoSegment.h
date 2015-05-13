@@ -10,7 +10,11 @@
 #include "nsCOMPtr.h"
 #include "gfxPoint.h"
 #include "nsAutoPtr.h"
+#if defined(MOZILLA_XPCOMRT_API)
+#include "SimpleImageBuffer.h"
+#else
 #include "ImageContainer.h"
+#endif
 
 namespace mozilla {
 
@@ -20,7 +24,11 @@ class Image;
 
 class VideoFrame {
 public:
+#if defined(MOZILLA_XPCOMRT_API)
+  typedef mozilla::SimpleImageBuffer Image;
+#else
   typedef mozilla::layers::Image Image;
+#endif
 
   VideoFrame(already_AddRefed<Image>& aImage, const gfxIntSize& aIntrinsicSize);
   VideoFrame();
@@ -44,8 +52,10 @@ public:
   void SetNull();
   void TakeFrom(VideoFrame* aFrame);
 
+#if !defined(MOZILLA_XPCOMRT_API)
   // Create a planar YCbCr black image.
   static already_AddRefed<Image> CreateBlackImage(const gfxIntSize& aSize);
+#endif // !defined(MOZILLA_XPCOMRT_API)
 
 protected:
   // mImage can be null to indicate "no video" (aka "empty frame"). It can
@@ -93,7 +103,11 @@ struct VideoChunk {
 
 class VideoSegment : public MediaSegmentBase<VideoSegment, VideoChunk> {
 public:
+#if defined(MOZILLA_XPCOMRT_API)
+  typedef mozilla::SimpleImageBuffer Image;
+#else
   typedef mozilla::layers::Image Image;
+#endif
   typedef mozilla::gfx::IntSize IntSize;
 
   VideoSegment();
@@ -123,7 +137,7 @@ public:
     return &c->mFrame;
   }
   // Override default impl
-  virtual void ReplaceWithDisabled() MOZ_OVERRIDE {
+  virtual void ReplaceWithDisabled() override {
     for (ChunkIterator i(*this);
          !i.IsEnded(); i.Next()) {
       VideoChunk& chunk = *i;
@@ -134,7 +148,7 @@ public:
   // Segment-generic methods not in MediaSegmentBase
   static Type StaticType() { return VIDEO; }
 
-  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const MOZ_OVERRIDE
+  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
   }

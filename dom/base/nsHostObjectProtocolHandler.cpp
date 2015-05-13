@@ -17,7 +17,7 @@
 #include "mozilla/Preferences.h"
 #include "mozilla/LoadInfo.h"
 
-using mozilla::dom::FileImpl;
+using mozilla::dom::BlobImpl;
 using mozilla::ErrorResult;
 using mozilla::LoadInfo;
 
@@ -36,7 +36,7 @@ static nsClassHashtable<nsCStringHashKey, DataInfo>* gDataTable;
 // Memory reporting for the hash table.
 namespace mozilla {
 
-class HostObjectURLsReporter MOZ_FINAL : public nsIMemoryReporter
+class HostObjectURLsReporter final : public nsIMemoryReporter
 {
   ~HostObjectURLsReporter() {}
 
@@ -44,7 +44,7 @@ class HostObjectURLsReporter MOZ_FINAL : public nsIMemoryReporter
   NS_DECL_ISUPPORTS
 
   NS_IMETHOD CollectReports(nsIHandleReportCallback* aHandleReport,
-                            nsISupports* aData, bool aAnonymize) MOZ_OVERRIDE
+                            nsISupports* aData, bool aAnonymize) override
   {
     return MOZ_COLLECT_REPORT(
       "host-object-urls", KIND_OTHER, UNITS_COUNT,
@@ -56,13 +56,13 @@ class HostObjectURLsReporter MOZ_FINAL : public nsIMemoryReporter
 
 NS_IMPL_ISUPPORTS(HostObjectURLsReporter, nsIMemoryReporter)
 
-class BlobURLsReporter MOZ_FINAL : public nsIMemoryReporter
+class BlobURLsReporter final : public nsIMemoryReporter
 {
  public:
   NS_DECL_ISUPPORTS
 
   NS_IMETHOD CollectReports(nsIHandleReportCallback* aCallback,
-                            nsISupports* aData, bool aAnonymize) MOZ_OVERRIDE
+                            nsISupports* aData, bool aAnonymize) override
   {
     EnumArg env;
     env.mCallback = aCallback;
@@ -163,6 +163,43 @@ class BlobURLsReporter MOZ_FINAL : public nsIMemoryReporter
     return PL_DHASH_NEXT;
   }
 
+  static void BuildPath(nsAutoCString& path,
+                        nsCStringHashKey::KeyType aKey,
+                        DataInfo* aInfo,
+                        bool anonymize)
+  {
+    nsCOMPtr<nsIURI> principalURI;
+    nsAutoCString url, owner;
+    if (NS_SUCCEEDED(aInfo->mPrincipal->GetURI(getter_AddRefs(principalURI))) &&
+        principalURI != nullptr &&
+        NS_SUCCEEDED(principalURI->GetSpec(owner)) &&
+        !owner.IsEmpty()) {
+      owner.ReplaceChar('/', '\\');
+      path += "owner(";
+      if (anonymize) {
+        path += "<anonymized>";
+      } else {
+        path += owner;
+      }
+      path += ")";
+    } else {
+      path += "owner unknown";
+    }
+    path += "/";
+    if (anonymize) {
+      path += "<anonymized-stack>";
+    } else {
+      path += aInfo->mStack;
+    }
+    url = aKey;
+    url.ReplaceChar('/', '\\');
+    if (anonymize) {
+      path += "<anonymized-url>";
+    } else {
+      path += url;
+    }
+  }
+
   static PLDHashOperator ReportCallback(nsCStringHashKey::KeyType aKey,
                                         DataInfo* aInfo,
                                         void* aUserArg)
@@ -195,34 +232,8 @@ class BlobURLsReporter MOZ_FINAL : public nsIMemoryReporter
       }
 
       path = isMemoryFile ? "memory-blob-urls/" : "file-blob-urls/";
-      if (NS_SUCCEEDED(aInfo->mPrincipal->GetURI(getter_AddRefs(principalURI))) &&
-          principalURI != nullptr &&
-          NS_SUCCEEDED(principalURI->GetSpec(owner)) &&
-          !owner.IsEmpty()) {
-        owner.ReplaceChar('/', '\\');
-        path += "owner(";
-        if (envp->mAnonymize) {
-          path += "<anonymized>";
-        } else {
-          path += owner;
-        }
-        path += ")";
-      } else {
-        path += "owner unknown";
-      }
-      path += "/";
-      if (envp->mAnonymize) {
-        path += "<anonymized-stack>";
-      } else {
-        path += aInfo->mStack;
-      }
-      url = aKey;
-      url.ReplaceChar('/', '\\');
-      if (envp->mAnonymize) {
-        path += "<anonymized-url>";
-      } else {
-        path += url;
-      }
+      BuildPath(path, aKey, aInfo, envp->mAnonymize);
+
       if (refCount > 1) {
         nsAutoCString addrStr;
 
@@ -268,7 +279,27 @@ class BlobURLsReporter MOZ_FINAL : public nsIMemoryReporter
             descString,
             envp->mData);
       }
+    } else {
+      // Just report the path for the DOMMediaStream or MediaSource.
+      nsCOMPtr<mozilla::dom::MediaSource> ms(do_QueryInterface(aInfo->mObject));
+      nsAutoCString path;
+      path = ms ? "media-source-urls/" : "dom-media-stream-urls/";
+      BuildPath(path, aKey, aInfo, envp->mAnonymize);
+
+      NS_NAMED_LITERAL_CSTRING
+        (desc, "An object URL allocated with URL.createObjectURL; the referenced "
+               "data cannot be freed until all URLs for it have been explicitly "
+               "invalidated with URL.revokeObjectURL.");
+
+      envp->mCallback->Callback(EmptyCString(),
+          path,
+          KIND_OTHER,
+          UNITS_COUNT,
+          1,
+          desc,
+          envp->mData);
     }
+
     return PL_DHASH_NEXT;
   }
 };
@@ -360,13 +391,13 @@ nsHostObjectProtocolHandler::GenerateURIString(const nsACString &aScheme,
   aUri.Append(':');
 
   if (aPrincipal) {
-    nsAutoString origin;
-    rv = nsContentUtils::GetUTFOrigin(aPrincipal, origin);
+    nsAutoCString origin;
+    rv = nsContentUtils::GetASCIIOrigin(aPrincipal, origin);
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
     }
 
-    AppendUTF16toUTF8(origin, aUri);
+    aUri.Append(origin);
     aUri.Append('/');
   }
 
@@ -499,7 +530,7 @@ nsHostObjectProtocolHandler::NewChannel2(nsIURI* uri,
     return NS_ERROR_DOM_BAD_URI;
   }
 
-  nsCOMPtr<FileImpl> blob = do_QueryInterface(info->mObject);
+  nsCOMPtr<BlobImpl> blob = do_QueryInterface(info->mObject);
   if (!blob) {
     return NS_ERROR_DOM_BAD_URI;
   }
@@ -518,26 +549,12 @@ nsHostObjectProtocolHandler::NewChannel2(nsIURI* uri,
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsCOMPtr<nsIChannel> channel;
-  // Bug 1087720 (and Bug 1099296):
-  // Once all callsites have been updated to call NewChannel2() instead of NewChannel()
-  // we should have a non-null loadInfo consistently. Until then we have to brach on the
-  // loadInfo and provide default arguments to create a NewInputStreamChannel.
-  if (aLoadInfo) {
-    rv = NS_NewInputStreamChannelInternal(getter_AddRefs(channel),
-                                          uri,
-                                          stream,
-                                          EmptyCString(), // aContentType
-                                          EmptyCString(), // aContentCharset
-                                          aLoadInfo);
-  }
-  else {
-    rv = NS_NewInputStreamChannel(getter_AddRefs(channel),
-                                  uri,
-                                  stream,
-                                  info->mPrincipal,
-                                  nsILoadInfo::SEC_NORMAL,
-                                  nsIContentPolicy::TYPE_OTHER);
-  }
+  rv = NS_NewInputStreamChannelInternal(getter_AddRefs(channel),
+                                        uri,
+                                        stream,
+                                        EmptyCString(), // aContentType
+                                        EmptyCString(), // aContentCharset
+                                        aLoadInfo);
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsString type;
@@ -552,7 +569,7 @@ nsHostObjectProtocolHandler::NewChannel2(nsIURI* uri,
   ErrorResult error;
   uint64_t size = blob->GetSize(error);
   if (NS_WARN_IF(error.Failed())) {
-    return error.ErrorCode();
+    return error.StealNSResult();
   }
 
   channel->SetOriginalURI(uri);
@@ -608,13 +625,13 @@ nsFontTableProtocolHandler::GetScheme(nsACString &result)
 }
 
 nsresult
-NS_GetBlobForBlobURI(nsIURI* aURI, FileImpl** aBlob)
+NS_GetBlobForBlobURI(nsIURI* aURI, BlobImpl** aBlob)
 {
   NS_ASSERTION(IsBlobURI(aURI), "Only call this with blob URIs");
 
   *aBlob = nullptr;
 
-  nsCOMPtr<FileImpl> blob = do_QueryInterface(GetDataObject(aURI));
+  nsCOMPtr<BlobImpl> blob = do_QueryInterface(GetDataObject(aURI));
   if (!blob) {
     return NS_ERROR_DOM_BAD_URI;
   }
@@ -626,7 +643,7 @@ NS_GetBlobForBlobURI(nsIURI* aURI, FileImpl** aBlob)
 nsresult
 NS_GetStreamForBlobURI(nsIURI* aURI, nsIInputStream** aStream)
 {
-  nsRefPtr<FileImpl> blobImpl;
+  nsRefPtr<BlobImpl> blobImpl;
   nsresult rv = NS_GetBlobForBlobURI(aURI, getter_AddRefs(blobImpl));
   if (NS_FAILED(rv)) {
     return rv;

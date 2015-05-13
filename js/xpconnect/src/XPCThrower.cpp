@@ -32,7 +32,7 @@ XPCThrower::Throw(nsresult rv, JSContext* cx)
 namespace xpc {
 
 bool
-Throw(JSContext *cx, nsresult rv)
+Throw(JSContext* cx, nsresult rv)
 {
     XPCThrower::Throw(rv, cx);
     return false;
@@ -47,7 +47,7 @@ Throw(JSContext *cx, nsresult rv)
  */
 // static
 bool
-XPCThrower::CheckForPendingException(nsresult result, JSContext *cx)
+XPCThrower::CheckForPendingException(nsresult result, JSContext* cx)
 {
     nsCOMPtr<nsIException> e = XPCJSRuntime::Get()->GetPendingException();
     if (!e)
@@ -100,7 +100,10 @@ XPCThrower::ThrowBadResult(nsresult rv, nsresult result, XPCCallContext& ccx)
     *  If there is a pending exception when the native call returns and
     *  it has the same error result as returned by the native call, then
     *  the native call may be passing through an error from a previous JS
-    *  call. So we'll just throw that exception into our JS.
+    *  call. So we'll just throw that exception into our JS.  Note that
+    *  we don't need to worry about NS_ERROR_UNCATCHABLE_EXCEPTION,
+    *  because presumably there would be no pending exception for that
+    *  nsresult!
     */
 
     if (CheckForPendingException(result, ccx))
@@ -158,7 +161,7 @@ XPCThrower::Verbosify(XPCCallContext& ccx,
         XPCNativeInterface* iface = ccx.GetInterface();
         jsid id = ccx.GetMember()->GetName();
         JSAutoByteString bytes;
-        const char *name = JSID_IS_VOID(id) ? "Unknown" : bytes.encodeLatin1(ccx, JSID_TO_STRING(id));
+        const char* name = JSID_IS_VOID(id) ? "Unknown" : bytes.encodeLatin1(ccx, JSID_TO_STRING(id));
         if (!name) {
             name = "";
         }

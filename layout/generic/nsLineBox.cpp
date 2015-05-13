@@ -7,15 +7,16 @@
 /* representation of one line within a block frame, a CSS line box */
 
 #include "nsLineBox.h"
-#include "prprf.h"
-#include "nsFrame.h"
-#include "nsPresArena.h"
-#include "nsBidiPresUtils.h"
-#include "nsIFrameInlines.h"
-#include "WritingModes.h"
+
 #include "mozilla/Assertions.h"
 #include "mozilla/Likely.h"
+#include "mozilla/WritingModes.h"
+#include "nsBidiPresUtils.h"
+#include "nsFrame.h"
+#include "nsIFrameInlines.h"
+#include "nsPresArena.h"
 #include "nsPrintfCString.h"
+#include "prprf.h"
 
 #ifdef DEBUG
 static int32_t ctorCount;
@@ -485,7 +486,7 @@ nsLineBox::MaybeFreeData()
 nsFloatCache*
 nsLineBox::GetFirstFloat()
 {
-  NS_ABORT_IF_FALSE(IsInline(), "block line can't have floats");
+  MOZ_ASSERT(IsInline(), "block line can't have floats");
   return mInlineData ? mInlineData->mFloats.Head() : nullptr;
 }
 
@@ -493,7 +494,7 @@ nsLineBox::GetFirstFloat()
 void
 nsLineBox::FreeFloats(nsFloatCacheFreeList& aFreeList)
 {
-  NS_ABORT_IF_FALSE(IsInline(), "block line can't have floats");
+  MOZ_ASSERT(IsInline(), "block line can't have floats");
   if (IsInline() && mInlineData) {
     if (mInlineData->mFloats.NotEmpty()) {
       aFreeList.Append(mInlineData->mFloats);
@@ -505,7 +506,7 @@ nsLineBox::FreeFloats(nsFloatCacheFreeList& aFreeList)
 void
 nsLineBox::AppendFloats(nsFloatCacheFreeList& aFreeList)
 { 
-  NS_ABORT_IF_FALSE(IsInline(), "block line can't have floats");
+  MOZ_ASSERT(IsInline(), "block line can't have floats");
   if (IsInline()) {
     if (aFreeList.NotEmpty()) {
       if (!mInlineData) {
@@ -519,7 +520,7 @@ nsLineBox::AppendFloats(nsFloatCacheFreeList& aFreeList)
 bool
 nsLineBox::RemoveFloat(nsIFrame* aFrame)
 {
-  NS_ABORT_IF_FALSE(IsInline(), "block line can't have floats");
+  MOZ_ASSERT(IsInline(), "block line can't have floats");
   if (IsInline() && mInlineData) {
     nsFloatCache* fc = mInlineData->mFloats.Find(aFrame);
     if (fc) {

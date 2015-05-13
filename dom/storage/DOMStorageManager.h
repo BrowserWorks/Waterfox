@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -46,7 +47,7 @@ protected:
 
 private:
   // DOMStorageObserverSink, handler to various chrome clearing notification
-  virtual nsresult Observe(const char* aTopic, const nsACString& aScopePrefix) MOZ_OVERRIDE;
+  virtual nsresult Observe(const char* aTopic, const nsACString& aScopePrefix) override;
 
   // Since nsTHashtable doesn't like multiple inheritance, we have to aggregate
   // DOMStorageCache into the entry.
@@ -116,7 +117,7 @@ protected:
 // top doc shell in the application since sessionStorages are isolated per top level
 // browsing context.  The code may easily by shared by both.
 
-class DOMLocalStorageManager MOZ_FINAL : public DOMStorageManager
+class DOMLocalStorageManager final : public DOMStorageManager
 {
 public:
   DOMLocalStorageManager();
@@ -129,7 +130,7 @@ private:
   static DOMLocalStorageManager* sSelf;
 };
 
-class DOMSessionStorageManager MOZ_FINAL : public DOMStorageManager
+class DOMSessionStorageManager final : public DOMStorageManager
 {
 public:
   DOMSessionStorageManager();

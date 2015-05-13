@@ -9,14 +9,14 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/FileUtils.h"
-#include "mozilla/ipc/SocketBase.h"
-#include "nsError.h"
+#include "mozilla/ipc/ConnectionOrientedSocket.h"
 #include "nsAutoPtr.h"
 
 namespace mozilla {
 namespace ipc {
 
 class BluetoothDaemonConnectionIO;
+class BluetoothDaemonPDUConsumer;
 
 /*
  * |BlutoothDaemonPDU| represents a single PDU that is transfered from or to
@@ -38,7 +38,7 @@ class BluetoothDaemonConnectionIO;
  *    https://git.kernel.org/cgit/bluetooth/bluez.git/tree/android/hal-ipc-api.txt?id=5.24
  *
  */
-class BluetoothDaemonPDU MOZ_FINAL : public UnixSocketIOBuffer
+class BluetoothDaemonPDU final : public UnixSocketIOBuffer
 {
 public:
   enum {
@@ -54,6 +54,11 @@ public:
                      uint16_t aPayloadSize);
   BluetoothDaemonPDU(size_t aPayloadSize);
 
+  void SetConsumer(BluetoothDaemonPDUConsumer* aConsumer)
+  {
+    mConsumer = aConsumer;
+  }
+
   void SetUserData(void* aUserData)
   {
     mUserData = aUserData;
@@ -67,8 +72,8 @@ public:
   void GetHeader(uint8_t& aService, uint8_t& aOpcode,
                  uint16_t& aPayloadSize);
 
-  ssize_t Send(int aFd);
-  ssize_t Receive(int aFd);
+  ssize_t Send(int aFd) override;
+  ssize_t Receive(int aFd) override;
 
   int AcquireFd();
 
@@ -78,6 +83,7 @@ private:
   size_t GetPayloadSize() const;
   void OnError(const char* aFunction, int aErrno);
 
+  BluetoothDaemonPDUConsumer* mConsumer;
   void* mUserData;
   ScopedClose mReceivedFd;
 };
@@ -104,16 +110,36 @@ protected:
  * Bluetooth daemon. It offers connection establishment and sending
  * PDUs. PDU receiving is performed by |BluetoothDaemonPDUConsumer|.
  */
-class BluetoothDaemonConnection : public SocketBase
+class BluetoothDaemonConnection : public ConnectionOrientedSocket
 {
 public:
   BluetoothDaemonConnection();
   virtual ~BluetoothDaemonConnection();
 
   nsresult ConnectSocket(BluetoothDaemonPDUConsumer* aConsumer);
-  void     CloseSocket();
 
-  nsresult Send(BluetoothDaemonPDU* aPDU);
+  // Methods for |ConnectionOrientedSocket|
+  //
+
+  virtual ConnectionOrientedSocketIO* GetIO() override;
+
+  // Methods for |DataSocket|
+  //
+
+  void SendSocketData(UnixSocketIOBuffer* aBuffer) override;
+
+  // Methods for |SocketBase|
+  //
+
+  void CloseSocket() override;
+
+protected:
+
+  // Prepares an instance of |BluetoothDaemonConnection| in DISCONNECTED
+  // state for accepting a connection. Subclasses implementing |GetIO|
+  // need to call this method.
+  ConnectionOrientedSocketIO*
+    PrepareAccept(BluetoothDaemonPDUConsumer* aConsumer);
 
 private:
   BluetoothDaemonConnectionIO* mIO;

@@ -65,6 +65,7 @@ var gTestSteps = [
     let tab = gBrowser.addTab();
     tab.linkedBrowser.addEventListener("load", function () {
       tab.linkedBrowser.removeEventListener("load", arguments.callee, true);
+      gBrowser.updateBrowserRemoteness(tabToKeep.linkedBrowser, tab.linkedBrowser.isRemoteBrowser);
       gBrowser.swapBrowsersAndCloseOther(tabToKeep, tab);
       ensure_opentabs_match_db(function () {
         gBrowser.removeTab(tabToKeep);
@@ -150,8 +151,7 @@ function nextStep() {
       gBrowser.removeCurrentTab();
     }
 
-    waitForClearHistory(finish);
-
+    PlacesTestUtils.clearHistory().then(finish);
     return;
   }
 
@@ -182,22 +182,6 @@ function ensure_opentabs_match_db(aCallback) {
   }
 
   checkAutocompleteResults(tabs, aCallback);
-}
-
-/**
- * Clears history invoking callback when done.
- */
-function waitForClearHistory(aCallback) {
-  const TOPIC_EXPIRATION_FINISHED = "places-expiration-finished";
-  let observer = {
-    observe: function(aSubject, aTopic, aData) {
-      Services.obs.removeObserver(this, TOPIC_EXPIRATION_FINISHED);
-      aCallback();
-    }
-  };
-  Services.obs.addObserver(observer, TOPIC_EXPIRATION_FINISHED, false);
-
-  PlacesUtils.bhistory.removeAllPages();
 }
 
 function checkAutocompleteResults(aExpected, aCallback)

@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -130,9 +131,9 @@ DOMSVGPointList::~DOMSVGPointList()
 }
 
 JSObject*
-DOMSVGPointList::WrapObject(JSContext *cx)
+DOMSVGPointList::WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto)
 {
-  return mozilla::dom::SVGPointListBinding::Wrap(cx, this);
+  return mozilla::dom::SVGPointListBinding::Wrap(cx, this, aGivenProto);
 }
 
 void
@@ -194,7 +195,7 @@ DOMSVGPointList::InternalList() const
 SVGAnimatedPointList&
 DOMSVGPointList::InternalAList() const
 {
-  NS_ABORT_IF_FALSE(mElement->GetAnimatedPointList(), "Internal error");
+  MOZ_ASSERT(mElement->GetAnimatedPointList(), "Internal error");
   return *mElement->GetAnimatedPointList();
 }
 
@@ -414,7 +415,7 @@ DOMSVGPointList::GetItemAt(uint32_t aIndex)
 void
 DOMSVGPointList::MaybeInsertNullInAnimValListAt(uint32_t aIndex)
 {
-  NS_ABORT_IF_FALSE(!IsAnimValList(), "call from baseVal to animVal");
+  MOZ_ASSERT(!IsAnimValList(), "call from baseVal to animVal");
 
   if (AttrIsAnimating()) {
     // animVal not a clone of baseVal
@@ -429,8 +430,8 @@ DOMSVGPointList::MaybeInsertNullInAnimValListAt(uint32_t aIndex)
     return;
   }
 
-  NS_ABORT_IF_FALSE(animVal->mItems.Length() == mItems.Length(),
-                    "animVal list not in sync!");
+  MOZ_ASSERT(animVal->mItems.Length() == mItems.Length(),
+             "animVal list not in sync!");
 
   animVal->mItems.InsertElementAt(aIndex, static_cast<nsISVGPoint*>(nullptr));
 
@@ -440,7 +441,7 @@ DOMSVGPointList::MaybeInsertNullInAnimValListAt(uint32_t aIndex)
 void
 DOMSVGPointList::MaybeRemoveItemFromAnimValListAt(uint32_t aIndex)
 {
-  NS_ABORT_IF_FALSE(!IsAnimValList(), "call from baseVal to animVal");
+  MOZ_ASSERT(!IsAnimValList(), "call from baseVal to animVal");
 
   if (AttrIsAnimating()) {
     // animVal not a clone of baseVal
@@ -456,8 +457,8 @@ DOMSVGPointList::MaybeRemoveItemFromAnimValListAt(uint32_t aIndex)
     return;
   }
 
-  NS_ABORT_IF_FALSE(animVal->mItems.Length() == mItems.Length(),
-                    "animVal list not in sync!");
+  MOZ_ASSERT(animVal->mItems.Length() == mItems.Length(),
+             "animVal list not in sync!");
 
   if (animVal->mItems[aIndex]) {
     animVal->mItems[aIndex]->RemovingFromList();

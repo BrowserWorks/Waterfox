@@ -67,6 +67,7 @@ included_inclnames_to_ignore = set([
     'js-config.h',              # generated in $OBJDIR
     'pratom.h',                 # NSPR
     'prcvar.h',                 # NSPR
+    'prerror.h',                # NSPR
     'prinit.h',                 # NSPR
     'prlink.h',                 # NSPR
     'prlock.h',                 # NSPR
@@ -242,6 +243,7 @@ def check_style():
     # - "js/src/vm/String.h"    -> "vm/String.h"
 
     mfbt_inclnames = set()      # type: set(inclname)
+    mozalloc_inclnames = set()  # type: set(inclname)
     js_names = dict()           # type: dict(filename, inclname)
 
     # Select the appropriate files.
@@ -249,6 +251,10 @@ def check_style():
         if filename.startswith('mfbt/') and filename.endswith('.h'):
             inclname = 'mozilla/' + filename.split('/')[-1]
             mfbt_inclnames.add(inclname)
+
+        if filename.startswith('memory/mozalloc/') and filename.endswith('.h'):
+            inclname = 'mozilla/' + filename.split('/')[-1]
+            mozalloc_inclnames.add(inclname)
 
         if filename.startswith('js/public/') and filename.endswith('.h'):
             inclname = 'js/' + filename[len('js/public/'):]
@@ -260,13 +266,13 @@ def check_style():
             inclname = filename[len('js/src/'):]
             js_names[filename] = inclname
 
-    all_inclnames = mfbt_inclnames | set(js_names.values())
+    all_inclnames = mfbt_inclnames | mozalloc_inclnames | set(js_names.values())
 
     edges = dict()      # type: dict(inclname, set(inclname))
 
-    # We don't care what's inside the MFBT files, but because they are
-    # #included from JS files we have to add them to the inclusion graph.
-    for inclname in mfbt_inclnames:
+    # We don't care what's inside the MFBT and MOZALLOC files, but because they
+    # are #included from JS files we have to add them to the inclusion graph.
+    for inclname in mfbt_inclnames | mozalloc_inclnames:
         edges[inclname] = set()
 
     # Process all the JS files.

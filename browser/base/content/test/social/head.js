@@ -11,10 +11,10 @@ XPCOMUtils.defineLazyModuleGetter(this, "Task",
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
   "resource://gre/modules/PlacesUtils.jsm");
 
-function waitForCondition(condition, nextTest, errorMsg) {
+function waitForCondition(condition, nextTest, errorMsg, numTries = 30) {
   var tries = 0;
   var interval = setInterval(function() {
-    if (tries >= 30) {
+    if (tries >= numTries) {
       ok(false, errorMsg);
       moveOn();
     }
@@ -604,7 +604,9 @@ function resizeAndCheckWidths(first, second, third, checks, cb) {
 }
 
 function getChatBar() {
-  return document.getElementById("pinnedchats");
+  let cb = document.getElementById("pinnedchats");
+  cb.hidden = false;
+  return cb;
 }
 
 function getPopupWidth() {

@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -143,16 +144,16 @@ HTMLSharedListElement::GetAttributeMappingFunction() const
 }
 
 JSObject*
-HTMLSharedListElement::WrapNode(JSContext *aCx)
+HTMLSharedListElement::WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
 {
   if (mNodeInfo->Equals(nsGkAtoms::ol)) {
-    return HTMLOListElementBinding::Wrap(aCx, this);
+    return HTMLOListElementBinding::Wrap(aCx, this, aGivenProto);
   }
   if (mNodeInfo->Equals(nsGkAtoms::dl)) {
-    return HTMLDListElementBinding::Wrap(aCx, this);
+    return HTMLDListElementBinding::Wrap(aCx, this, aGivenProto);
   }
   MOZ_ASSERT(mNodeInfo->Equals(nsGkAtoms::ul));
-  return HTMLUListElementBinding::Wrap(aCx, this);
+  return HTMLUListElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 } // namespace dom

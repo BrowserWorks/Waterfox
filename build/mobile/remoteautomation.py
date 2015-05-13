@@ -80,6 +80,14 @@ class RemoteAutomation(Automation):
         # Don't override the user's choice here.  See bug 1049688.
         env.setdefault('MOZ_DISABLE_NONLOCAL_CONNECTIONS', '1')
 
+        # Set WebRTC logging in case it is not set yet.
+        # On Android, environment variables cannot contain ',' so the
+        # standard WebRTC setting for NSPR_LOG_MODULES is not available.
+        # env.setdefault('NSPR_LOG_MODULES', 'signaling:5,mtransport:5,datachannel:5,jsep:5,MediaPipelineFactory:5')
+        env.setdefault('R_LOG_LEVEL', '6')
+        env.setdefault('R_LOG_DESTINATION', 'stderr')
+        env.setdefault('R_LOG_VERBOSE', '1')
+
         return env
 
     def waitForFinish(self, proc, utilityPath, timeout, maxTime, startTime, debuggerInfo, symbolsPath):
@@ -180,7 +188,13 @@ class RemoteAutomation(Automation):
         self.checkForANRs()
         self.checkForTombstones()
 
-        logcat = self._devicemanager.getLogcat(filterOutRegexps=fennecLogcatFilters)
+        try:
+            logcat = self._devicemanager.getLogcat(filterOutRegexps=fennecLogcatFilters)
+        except DMError:
+            print "getLogcat threw DMError; re-trying just once..."
+            time.sleep(1)
+            logcat = self._devicemanager.getLogcat(filterOutRegexps=fennecLogcatFilters)
+
         javaException = mozcrash.check_for_java_exception(logcat)
         if javaException:
             return True
@@ -265,8 +279,9 @@ class RemoteAutomation(Automation):
                 self.procName = app
                 print "Robocop process name: "+self.procName
 
-            # Setting timeout at 1 hour since on a remote device this takes much longer
-            self.timeout = 3600
+            # Setting timeout at 1 hour since on a remote device this takes much longer.
+            # Temporarily increased to 75 minutes because no more chunks can be created.
+            self.timeout = 4500
             # The benefit of the following sleep is unclear; it was formerly 15 seconds
             time.sleep(1)
 

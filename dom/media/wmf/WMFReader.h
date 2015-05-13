@@ -18,10 +18,6 @@ class WMFByteStream;
 class WMFSourceReaderCallback;
 class DXVA2Manager;
 
-namespace dom {
-class TimeRanges;
-}
-
 // Decoder backend for reading H.264/AAC in MP4/M4A, and MP3 files using
 // Windows Media Foundation.
 class WMFReader : public MediaDecoderReader
@@ -31,25 +27,22 @@ public:
 
   virtual ~WMFReader();
 
-  nsresult Init(MediaDecoderReader* aCloneDonor) MOZ_OVERRIDE;
+  nsresult Init(MediaDecoderReader* aCloneDonor) override;
 
-  bool DecodeAudioData() MOZ_OVERRIDE;
+  bool DecodeAudioData() override;
   bool DecodeVideoFrame(bool &aKeyframeSkip,
-                        int64_t aTimeThreshold) MOZ_OVERRIDE;
+                        int64_t aTimeThreshold) override;
 
-  bool HasAudio() MOZ_OVERRIDE;
-  bool HasVideo() MOZ_OVERRIDE;
+  bool HasAudio() override;
+  bool HasVideo() override;
 
   nsresult ReadMetadata(MediaInfo* aInfo,
-                        MetadataTags** aTags) MOZ_OVERRIDE;
+                        MetadataTags** aTags) override;
 
   nsRefPtr<SeekPromise>
-  Seek(int64_t aTime,
-       int64_t aStartTime,
-       int64_t aEndTime,
-       int64_t aCurrentTime) MOZ_OVERRIDE;
+  Seek(int64_t aTime, int64_t aEndTime) override;
 
-  bool IsMediaSeekable() MOZ_OVERRIDE;
+  bool IsMediaSeekable() override;
   
 private:
 

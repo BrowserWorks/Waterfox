@@ -4,7 +4,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-NO_DIST_INSTALL = True
+DIST_INSTALL = False
 DIRS += ['inject']
 
 if not CONFIG['CROSS_COMPILE']:
@@ -13,6 +13,10 @@ if not CONFIG['CROSS_COMPILE']:
         'test-array.c',
         'test-ctors.c',
     ]
+
+    if '-flto' in CONFIG['OS_CFLAGS']:
+        SOURCES['test-array.c'].flags += ['-fno-lto']
+        SOURCES['test-ctors.c'].flags += ['-fno-lto']
 
 HOST_SOURCES += [
     'elf.cpp',

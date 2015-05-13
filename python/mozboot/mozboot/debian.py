@@ -7,6 +7,7 @@ import sys
 
 from mozboot.base import BaseBootstrapper
 
+
 class DebianBootstrapper(BaseBootstrapper):
     # These are common packages for all Debian-derived distros (such as
     # Ubuntu).
@@ -52,11 +53,11 @@ class DebianBootstrapper(BaseBootstrapper):
     # These are common packages for building Firefox for Android
     # (mobile/android) for all Debian-derived distros (such as Ubuntu).
     MOBILE_ANDROID_COMMON_PACKAGES = [
-        'zlib1g-dev', # mobile/android requires system zlib.
+        'zlib1g-dev',  # mobile/android requires system zlib.
         'openjdk-7-jdk',
         'ant',
-        'wget', # For downloading the Android SDK and NDK.
-        'libncurses5:i386', # See comments about i386 below.
+        'wget',  # For downloading the Android SDK and NDK.
+        'libncurses5:i386',  # See comments about i386 below.
         'libstdc++6:i386',
         'zlib1g:i386',
     ]
@@ -64,8 +65,8 @@ class DebianBootstrapper(BaseBootstrapper):
     # Subclasses can add packages to this variable to have them installed.
     MOBILE_ANDROID_DISTRO_PACKAGES = []
 
-    def __init__(self, version, dist_id):
-        BaseBootstrapper.__init__(self)
+    def __init__(self, version, dist_id, **kwargs):
+        BaseBootstrapper.__init__(self, **kwargs)
 
         self.version = version
         self.dist_id = dist_id
@@ -73,6 +74,7 @@ class DebianBootstrapper(BaseBootstrapper):
         self.packages = self.COMMON_PACKAGES + self.DISTRO_PACKAGES
         self.browser_packages = self.BROWSER_COMMON_PACKAGES + self.BROWSER_DISTRO_PACKAGES
         self.mobile_android_packages = self.MOBILE_ANDROID_COMMON_PACKAGES + self.MOBILE_ANDROID_DISTRO_PACKAGES
+
 
     def install_system_packages(self):
         self.apt_install(*self.packages)
@@ -94,7 +96,8 @@ class DebianBootstrapper(BaseBootstrapper):
         # "Troubleshooting Ubuntu" at
         # http://developer.android.com/sdk/installing/index.html?pkg=tools.
         self.run_as_root(['dpkg', '--add-architecture', 'i386'])
-        # self.apt_update()
+        # After adding a new arch, the list of packages has to be updated
+        self.apt_update()
         self.apt_install(*self.mobile_android_packages)
 
         # 2. The user may have an external Android SDK (in which case we save
@@ -110,8 +113,8 @@ class DebianBootstrapper(BaseBootstrapper):
         else:
             self.ndk_url = 'https://dl.google.com/android/ndk/android-ndk-r8e-linux-x86.tar.bz2'
         android.ensure_android_sdk_and_ndk(path=mozbuild_path,
-            sdk_path=self.sdk_path, sdk_url=self.sdk_url,
-            ndk_path=self.ndk_path, ndk_url=self.ndk_url)
+                                           sdk_path=self.sdk_path, sdk_url=self.sdk_url,
+                                           ndk_path=self.ndk_path, ndk_url=self.ndk_url)
 
         # 3. We expect the |android| tool to at
         # ~/.mozbuild/android-sdk-linux/tools/android.
@@ -121,9 +124,10 @@ class DebianBootstrapper(BaseBootstrapper):
     def suggest_mobile_android_mozconfig(self):
         import android
 
-        android.suggest_mozconfig(sdk_path=self.sdk_path,
-            ndk_path=self.ndk_path)
+        # The SDK path that mozconfig wants includes platforms/android-21.
+        sdk_path = os.path.join(self.sdk_path, 'platforms', android.ANDROID_PLATFORM)
+        android.suggest_mozconfig(sdk_path=sdk_path,
+                                  ndk_path=self.ndk_path)
 
     def _update_package_manager(self):
-        self.run_as_root(['apt-get', 'update'])
-
+        self.apt_update()

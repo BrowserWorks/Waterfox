@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -19,9 +20,9 @@ using namespace mozilla::dom;
  ****************** nsAutoWindowStateHelper *********************
  ****************************************************************/
 
-nsAutoWindowStateHelper::nsAutoWindowStateHelper(nsPIDOMWindow *aWindow)
-  : mWindow(aWindow),
-    mDefaultEnabled(DispatchEventToChrome("DOMWillOpenModalDialog"))
+nsAutoWindowStateHelper::nsAutoWindowStateHelper(nsPIDOMWindow* aWindow)
+  : mWindow(aWindow)
+  , mDefaultEnabled(DispatchEventToChrome("DOMWillOpenModalDialog"))
 {
   if (mWindow) {
     mWindow->EnterModalState();
@@ -40,7 +41,7 @@ nsAutoWindowStateHelper::~nsAutoWindowStateHelper()
 }
 
 bool
-nsAutoWindowStateHelper::DispatchEventToChrome(const char *aEventName)
+nsAutoWindowStateHelper::DispatchEventToChrome(const char* aEventName)
 {
   // XXXbz should we skip dispatching the event if the inner changed?
   // That is, should we store both the inner and the outer?
@@ -60,7 +61,9 @@ nsAutoWindowStateHelper::DispatchEventToChrome(const char *aEventName)
   if (rv.Failed()) {
     return false;
   }
-  NS_ENSURE_TRUE(NS_SUCCEEDED(event->InitEvent(NS_ConvertASCIItoUTF16(aEventName), true, true)), false);
+  NS_ENSURE_TRUE(NS_SUCCEEDED(event->InitEvent(
+                   NS_ConvertASCIItoUTF16(aEventName), true, true)),
+                 false);
   event->SetTrusted(true);
   event->GetInternalNSEvent()->mFlags.mOnlyChromeDispatch = true;
 

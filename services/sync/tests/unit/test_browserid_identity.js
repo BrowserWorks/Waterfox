@@ -95,6 +95,7 @@ add_task(function test_initialializeWithNoKeys() {
     yield browseridManager.whenReadyToAuthenticate.promise;
     do_check_eq(Status.login, LOGIN_SUCCEEDED, "login succeeded even without keys");
     do_check_false(browseridManager._canFetchKeys(), "_canFetchKeys reflects lack of keys");
+    do_check_eq(browseridManager._token, null, "we don't have a token");
 });
 
 add_test(function test_getResourceAuthenticator() {
@@ -124,7 +125,7 @@ add_test(function test_getRESTRequestAuthenticator() {
     let output = authenticator(request, 'GET');
     do_check_eq(request.uri, output.uri);
     do_check_true(output._headers.authorization.startsWith('Hawk'));
-    do_check_true(output._headers.authorization.contains('nonce'));
+    do_check_true(output._headers.authorization.includes('nonce'));
     do_check_true(browseridManager.hasValidToken());
     run_next_test();
   }

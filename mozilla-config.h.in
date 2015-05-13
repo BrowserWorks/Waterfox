@@ -3,8 +3,15 @@
  * Do not edit.
  */
 
-#ifndef _MOZILLA_CONFIG_H_
-#define _MOZILLA_CONFIG_H_
+#ifndef MOZILLA_CONFIG_H
+#define MOZILLA_CONFIG_H
+
+#if defined(__clang__)
+#pragma clang diagnostic push
+#if __has_warning("-Wreserved-id-macro")
+#pragma clang diagnostic ignored "-Wreserved-id-macro"
+#endif
+#endif
 
 @ALLDEFINES@
 
@@ -23,6 +30,10 @@
 #define __STDC_CONSTANT_MACROS
 #if !defined(__STDC_FORMAT_MACROS)
 #define __STDC_FORMAT_MACROS
+#endif
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
 #endif
 
 /*
@@ -57,8 +68,7 @@
  * Note that this include path relies on the LOCAL_INCLUDES in that file.
  */
 #if defined(CHROMIUM_SANDBOX_BUILD) && defined(XP_WIN)
-#include "base/shim/sdkdecls.h"
+#include "base/win/sdkdecls.h"
 #endif
 
-#endif /* _MOZILLA_CONFIG_H_ */
-
+#endif /* MOZILLA_CONFIG_H */

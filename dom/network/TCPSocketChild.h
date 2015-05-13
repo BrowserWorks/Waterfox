@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -40,7 +42,7 @@ class TCPSocketChild : public mozilla::net::PTCPSocketChild
 {
 public:
   NS_DECL_NSITCPSOCKETCHILD
-  NS_IMETHOD_(MozExternalRefCountType) Release() MOZ_OVERRIDE;
+  NS_IMETHOD_(MozExternalRefCountType) Release() override;
 
   TCPSocketChild();
   ~TCPSocketChild();
@@ -49,10 +51,10 @@ public:
 
   virtual bool RecvCallback(const nsString& aType,
                             const CallbackData& aData,
-                            const nsString& aReadyState) MOZ_OVERRIDE;
-  virtual bool RecvRequestDelete() MOZ_OVERRIDE;
+                            const nsString& aReadyState) override;
+  virtual bool RecvRequestDelete() override;
   virtual bool RecvUpdateBufferedAmount(const uint32_t& aBufferred,
-                                        const uint32_t& aTrackingNumber) MOZ_OVERRIDE;
+                                        const uint32_t& aTrackingNumber) override;
 private:
   JSObject* mWindowObj;
   nsString mHost;

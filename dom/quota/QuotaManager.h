@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -40,13 +40,11 @@ class ContentParent;
 
 BEGIN_QUOTA_NAMESPACE
 
-class AcquireListener;
 class AsyncUsageRunnable;
-class CheckQuotaHelper;
 class CollectOriginsHelper;
 class FinalizeOriginEvictionRunnable;
 class GroupInfo;
-class GroupInfoTriple;
+class GroupInfoPair;
 class OriginClearRunnable;
 class OriginInfo;
 class OriginOrPatternString;
@@ -69,8 +67,8 @@ struct OriginParams
   bool mIsApp;
 };
 
-class QuotaManager MOZ_FINAL : public nsIQuotaManager,
-                               public nsIObserver
+class QuotaManager final : public nsIQuotaManager,
+                           public nsIObserver
 {
   friend class AsyncUsageRunnable;
   friend class CollectOriginsHelper;
@@ -118,7 +116,6 @@ public:
                      const nsACString& aGroup,
                      const nsACString& aOrigin,
                      bool aIsApp,
-                     uint64_t aLimitBytes,
                      uint64_t aUsageBytes,
                      int64_t aAccessTime);
 
@@ -135,9 +132,6 @@ public:
 
   void
   RemoveQuota();
-
-  void
-  RemoveQuotaForTemporaryStorage();
 
   void
   RemoveQuotaForOrigin(PersistenceType aPersistenceType,
@@ -159,28 +153,6 @@ public:
                  const nsACString& aGroup,
                  const nsACString& aOrigin,
                  const nsAString& aPath);
-
-  // Set the Window that the current thread is doing operations for.
-  // The caller is responsible for ensuring that aWindow is held alive.
-  static void
-  SetCurrentWindow(nsPIDOMWindow* aWindow)
-  {
-    QuotaManager* quotaManager = Get();
-    NS_ASSERTION(quotaManager, "Must have a manager here!");
-
-    quotaManager->SetCurrentWindowInternal(aWindow);
-  }
-
-  static void
-  CancelPromptsForWindow(nsPIDOMWindow* aWindow)
-  {
-    NS_ASSERTION(aWindow, "Passed null window!");
-
-    QuotaManager* quotaManager = Get();
-    NS_ASSERTION(quotaManager, "Must have a manager here!");
-
-    quotaManager->CancelPromptsForWindowInternal(aWindow);
-  }
 
   // Called when a storage is created.
   bool
@@ -224,7 +196,6 @@ public:
                             const nsACString& aGroup,
                             const nsACString& aOrigin,
                             bool aIsApp,
-                            bool aHasUnlimStoragePerm,
                             nsIFile** aDirectory);
 
   void
@@ -276,9 +247,6 @@ public:
   uint64_t
   GetGroupLimit() const;
 
-  static uint32_t
-  GetStorageQuotaMB();
-
   static void
   GetStorageId(PersistenceType aPersistenceType,
                const nsACString& aOrigin,
@@ -292,42 +260,27 @@ public:
                  bool aInMozBrowser,
                  nsACString* aGroup,
                  nsACString* aOrigin,
-                 bool* aIsApp,
-                 bool* aHasUnlimStoragePerm);
+                 bool* aIsApp);
 
   static nsresult
   GetInfoFromPrincipal(nsIPrincipal* aPrincipal,
                        nsACString* aGroup,
                        nsACString* aOrigin,
-                       bool* aIsApp,
-                       bool* aHasUnlimStoragePerm);
+                       bool* aIsApp);
 
   static nsresult
   GetInfoFromWindow(nsPIDOMWindow* aWindow,
                     nsACString* aGroup,
                     nsACString* aOrigin,
-                    bool* aIsApp,
-                    bool* aHasUnlimStoragePerm);
+                    bool* aIsApp);
 
   static void
   GetInfoForChrome(nsACString* aGroup,
                    nsACString* aOrigin,
-                   bool* aIsApp,
-                   bool* aHasUnlimStoragePerm);
+                   bool* aIsApp);
 
   static bool
   IsOriginWhitelistedForPersistentStorage(const nsACString& aOrigin);
-
-  static bool
-  IsTreatedAsPersistent(PersistenceType aPersistenceType,
-                        bool aIsApp);
-
-  static bool
-  IsTreatedAsTemporary(PersistenceType aPersistenceType,
-                       bool aIsApp)
-  {
-    return !IsTreatedAsPersistent(aPersistenceType, aIsApp);
-  }
 
   static bool
   IsFirstPromptRequired(PersistenceType aPersistenceType,
@@ -337,8 +290,7 @@ public:
   static bool
   IsQuotaEnforced(PersistenceType aPersistenceType,
                   const nsACString& aOrigin,
-                  bool aIsApp,
-                  bool aHasUnlimStoragePerm);
+                  bool aIsApp);
 
   static void
   ChromeOrigin(nsACString& aOrigin);
@@ -368,17 +320,6 @@ private:
 
   nsresult
   Init();
-
-  void
-  SetCurrentWindowInternal(nsPIDOMWindow* aWindow);
-
-  void
-  CancelPromptsForWindowInternal(nsPIDOMWindow* aWindow);
-
-  // Determine if the quota is lifted for the Window the current thread is
-  // using.
-  bool
-  LockedQuotaIsLifted();
 
   uint64_t
   LockedCollectOriginsForEviction(uint64_t aMinSizeToBeFreed,
@@ -420,7 +361,6 @@ private:
                    const nsACString& aGroup,
                    const nsACString& aOrigin,
                    bool aIsApp,
-                   bool aHasUnlimStoragePerm,
                    int64_t aAccessTime,
                    nsIFile* aDirectory);
 
@@ -467,23 +407,18 @@ private:
                          nsAutoCString& _retval);
 
   static PLDHashOperator
-  RemoveQuotaForTemporaryStorageCallback(const nsACString& aKey,
-                                         nsAutoPtr<GroupInfoTriple>& aValue,
-                                         void* aUserArg);
-
-  static PLDHashOperator
   RemoveQuotaCallback(const nsACString& aKey,
-                      nsAutoPtr<GroupInfoTriple>& aValue,
+                      nsAutoPtr<GroupInfoPair>& aValue,
                       void* aUserArg);
 
   static PLDHashOperator
   GetOriginsExceedingGroupLimit(const nsACString& aKey,
-                                GroupInfoTriple* aValue,
+                                GroupInfoPair* aValue,
                                 void* aUserArg);
 
   static PLDHashOperator
   GetAllTemporaryStorageOrigins(const nsACString& aKey,
-                                GroupInfoTriple* aValue,
+                                GroupInfoPair* aValue,
                                 void* aUserArg);
 
   static PLDHashOperator
@@ -493,25 +428,17 @@ private:
 
   static PLDHashOperator
   GetInactiveTemporaryStorageOrigins(const nsACString& aKey,
-                                     GroupInfoTriple* aValue,
+                                     GroupInfoPair* aValue,
                                      void* aUserArg);
-
-  // TLS storage index for the current thread's window.
-  unsigned int mCurrentWindowIndex;
 
   mozilla::Mutex mQuotaMutex;
 
-  nsClassHashtable<nsCStringHashKey, GroupInfoTriple> mGroupInfoTriples;
-
-  // A map of Windows to the corresponding quota helper.
-  nsRefPtrHashtable<nsPtrHashKey<nsPIDOMWindow>,
-                    CheckQuotaHelper> mCheckQuotaHelpers;
+  nsClassHashtable<nsCStringHashKey, GroupInfoPair> mGroupInfoPairs;
 
   // Maintains a list of live storages per origin.
   nsClassHashtable<nsCStringHashKey,
                    ArrayCluster<nsIOfflineStorage*> > mLiveStorages;
 
-  LiveStorageTable mPersistentLiveStorageTable;
   LiveStorageTable mTemporaryLiveStorageTable;
   LiveStorageTable mDefaultLiveStorageTable;
 
@@ -541,20 +468,6 @@ private:
   bool mTemporaryStorageInitialized;
 
   bool mStorageAreaInitialized;
-};
-
-class AutoEnterWindow
-{
-public:
-  explicit AutoEnterWindow(nsPIDOMWindow* aWindow)
-  {
-    QuotaManager::SetCurrentWindow(aWindow);
-  }
-
-  ~AutoEnterWindow()
-  {
-    QuotaManager::SetCurrentWindow(nullptr);
-  }
 };
 
 END_QUOTA_NAMESPACE

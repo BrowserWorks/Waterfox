@@ -57,12 +57,13 @@
 #include "gfxColor.h"
 #include "gfxGradientCache.h"
 #include "GraphicsFilter.h"
+#include "nsInlineFrame.h"
 #include <algorithm>
 
 using namespace mozilla;
 using namespace mozilla::css;
 using namespace mozilla::gfx;
-using mozilla::image::ImageOps;
+using namespace mozilla::image;
 using mozilla::CSSSizeOrRatio;
 
 static int gFrameTreeLockCount = 0;
@@ -97,7 +98,7 @@ struct InlineBackgroundData
    */
   nsRect GetContinuousRect(nsIFrame* aFrame)
   {
-    MOZ_ASSERT(aFrame->GetType() == nsGkAtoms::inlineFrame);
+    MOZ_ASSERT(static_cast<nsInlineFrame*>(do_QueryFrame(aFrame)));
 
     SetFrame(aFrame);
 
@@ -545,7 +546,7 @@ static nsRect
 JoinBoxesForSlice(nsIFrame* aFrame, const nsRect& aBorderArea,
                   InlineBoxOrder aOrder)
 {
-  if (aFrame->GetType() == nsGkAtoms::inlineFrame) {
+  if (static_cast<nsInlineFrame*>(do_QueryFrame(aFrame))) {
     return (aOrder == eForBorder
             ? gInlineBGData->GetBorderContinuousRect(aFrame, aBorderArea)
             : gInlineBGData->GetContinuousRect(aFrame)) +
@@ -1158,7 +1159,7 @@ FindElementBackground(nsIFrame* aForFrame, nsIFrame* aRootElementFrame,
   // was propagated to the viewport.
 
   nsIContent* content = aForFrame->GetContent();
-  if (!content || content->Tag() != nsGkAtoms::body)
+  if (!content || content->NodeInfo()->NameAtom() != nsGkAtoms::body)
     return true; // not frame for a "body" element
   // It could be a non-HTML "body" element but that's OK, we'd fail the
   // bodyContent check below
@@ -1618,7 +1619,7 @@ nsCSSRendering::PaintBoxShadowInner(nsPresContext* aPresContext,
   }
 }
 
-void
+DrawResult
 nsCSSRendering::PaintBackground(nsPresContext* aPresContext,
                                 nsRenderingContext& aRenderingContext,
                                 nsIFrame* aForFrame,
@@ -1642,21 +1643,21 @@ nsCSSRendering::PaintBackground(nsPresContext* aPresContext,
     // draw the background. The canvas really should be drawing the
     // bg, but there's no way to hook that up via css.
     if (!aForFrame->StyleDisplay()->mAppearance) {
-      return;
+      return DrawResult::SUCCESS;
     }
 
     nsIContent* content = aForFrame->GetContent();
     if (!content || content->GetParent()) {
-      return;
+      return DrawResult::SUCCESS;
     }
 
     sc = aForFrame->StyleContext();
   }
 
-  PaintBackgroundWithSC(aPresContext, aRenderingContext, aForFrame,
-                        aDirtyRect, aBorderArea, sc,
-                        *aForFrame->StyleBorder(), aFlags,
-                        aBGClipRect, aLayer);
+  return PaintBackgroundWithSC(aPresContext, aRenderingContext, aForFrame,
+                               aDirtyRect, aBorderArea, sc,
+                               *aForFrame->StyleBorder(), aFlags,
+                               aBGClipRect, aLayer);
 }
 
 static bool
@@ -1721,8 +1722,8 @@ SetupDirtyRects(const nsRect& aBGClipArea, const nsRect& aCallerDirtyRect,
   *aDirtyRectGfx = nsLayoutUtils::RectToGfxRect(*aDirtyRect, aAppUnitsPerPixel);
   NS_WARN_IF_FALSE(aDirtyRect->IsEmpty() || !aDirtyRectGfx->IsEmpty(),
                    "converted dirty rect should not be empty");
-  NS_ABORT_IF_FALSE(!aDirtyRect->IsEmpty() || aDirtyRectGfx->IsEmpty(),
-                    "second should be empty if first is");
+  MOZ_ASSERT(!aDirtyRect->IsEmpty() || aDirtyRectGfx->IsEmpty(),
+             "second should be empty if first is");
 }
 
 /* static */ void
@@ -2164,7 +2165,7 @@ ComputeRadialGradientLine(nsPresContext* aPresContext,
   }
   default:
     radiusX = radiusY = 0;
-    NS_ABORT_IF_FALSE(false, "unknown radial gradient sizing method");
+    MOZ_ASSERT(false, "unknown radial gradient sizing method");
   }
   *aRadiusX = radiusX;
   *aRadiusY = radiusY;
@@ -2459,8 +2460,8 @@ nsCSSRendering::PaintGradient(nsPresContext* aPresContext,
   gfxFloat lineLength = NS_hypot(lineEnd.x - lineStart.x,
                                   lineEnd.y - lineStart.y);
 
-  NS_ABORT_IF_FALSE(aGradient->mStops.Length() >= 2,
-                    "The parser should reject gradients with less than two stops");
+  MOZ_ASSERT(aGradient->mStops.Length() >= 2,
+             "The parser should reject gradients with less than two stops");
 
   // Build color stop array and compute stop positions
   nsTArray<ColorStop> stops;
@@ -2506,7 +2507,7 @@ nsCSSRendering::PaintGradient(nsPresContext* aPresContext,
           (NSAppUnitsToFloatPixels(calc->mLength, appUnitsPerDevPixel) / lineLength));
       break;
     default:
-      NS_ABORT_IF_FALSE(false, "Unknown stop position type");
+      MOZ_ASSERT(false, "Unknown stop position type");
     }
 
     if (i > 0) {
@@ -2580,7 +2581,7 @@ nsCSSRendering::PaintGradient(nsPresContext* aPresContext,
       }
     }
     firstStop = stops[0].mPosition;
-    NS_ABORT_IF_FALSE(firstStop >= 0.0, "Failed to fix stop offsets");
+    MOZ_ASSERT(firstStop >= 0.0, "Failed to fix stop offsets");
   }
 
   if (aGradient->mShape != NS_STYLE_GRADIENT_SHAPE_LINEAR && !aGradient->mRepeating) {
@@ -2817,7 +2818,7 @@ nsCSSRendering::PaintGradient(nsPresContext* aPresContext,
   }
 }
 
-void
+DrawResult
 nsCSSRendering::PaintBackgroundWithSC(nsPresContext* aPresContext,
                                       nsRenderingContext& aRenderingContext,
                                       nsIFrame* aForFrame,
@@ -2831,6 +2832,11 @@ nsCSSRendering::PaintBackgroundWithSC(nsPresContext* aPresContext,
 {
   NS_PRECONDITION(aForFrame,
                   "Frame is expected to be provided to PaintBackground");
+
+  // Initialize our result to success. We update it only if its value is
+  // currently DrawResult::SUCCESS, which means that as soon as we hit our first
+  // non-successful draw, we stop updating and will return that value.
+  DrawResult result = DrawResult::SUCCESS;
 
   // Check to see if we have an appearance defined.  If so, we let the theme
   // renderer draw the background and bail out.
@@ -2847,7 +2853,7 @@ nsCSSRendering::PaintBackgroundWithSC(nsPresContext* aPresContext,
       theme->DrawWidgetBackground(&aRenderingContext, aForFrame,
                                   displayData->mAppearance, aBorderArea,
                                   drawing);
-      return;
+      return DrawResult::SUCCESS;
     }
   }
 
@@ -2882,7 +2888,7 @@ nsCSSRendering::PaintBackgroundWithSC(nsPresContext* aPresContext,
   // true if and only if we are actually supposed to paint an image or
   // color into aDirtyRect, respectively.
   if (!drawBackgroundImage && !drawBackgroundColor)
-    return;
+    return DrawResult::SUCCESS;
 
   // Compute the outermost boundary of the area that might be painted.
   // Same coordinate space as aBorderArea & aBGClipRect.
@@ -2929,13 +2935,13 @@ nsCSSRendering::PaintBackgroundWithSC(nsPresContext* aPresContext,
     if (!isCanvasFrame) {
       DrawBackgroundColor(clipState, ctx, appUnitsPerPixel);
     }
-    return;
+    return DrawResult::SUCCESS;
   }
 
   if (bg->mImageCount < 1) {
     // Return if there are no background layers, all work from this point
     // onwards happens iteratively on these.
-    return;
+    return DrawResult::SUCCESS;
   }
 
   // Validate the layer range before we start iterating.
@@ -3004,10 +3010,17 @@ nsCSSRendering::PaintBackgroundWithSC(nsPresContext* aPresContext,
                          "It is assumed the initial operator is OPERATOR_OVER, when it is restored later");
             ctx->SetOperator(state.mCompositingOp);
           }
-          state.mImageRenderer.DrawBackground(aPresContext, aRenderingContext,
-                                              state.mDestArea, state.mFillArea,
-                                              state.mAnchor + paintBorderArea.TopLeft(),
-                                              clipState.mDirtyRect);
+
+          DrawResult resultForLayer =
+            state.mImageRenderer.DrawBackground(aPresContext, aRenderingContext,
+                                                state.mDestArea, state.mFillArea,
+                                                state.mAnchor + paintBorderArea.TopLeft(),
+                                                clipState.mDirtyRect);
+
+          if (result == DrawResult::SUCCESS) {
+            result = resultForLayer;
+          }
+
           if (state.mCompositingOp != gfxContext::OPERATOR_OVER) {
             ctx->SetOperator(gfxContext::OPERATOR_OVER);
           }
@@ -3015,6 +3028,8 @@ nsCSSRendering::PaintBackgroundWithSC(nsPresContext* aPresContext,
       }
     }
   }
+
+  return result;
 }
 
 static inline bool
@@ -3331,34 +3346,6 @@ nsCSSRendering::GetBackgroundLayerRect(nsPresContext* aPresContext,
       PrepareBackgroundLayer(aPresContext, aForFrame, aFlags, borderArea,
                              aClipRect, aLayer);
   return state.mFillArea;
-}
-
-/* static */ bool
-nsCSSRendering::IsBackgroundImageDecodedForStyleContextAndLayer(
-  const nsStyleBackground *aBackground, uint32_t aLayer)
-{
-  const nsStyleImage* image = &aBackground->mLayers[aLayer].mImage;
-  if (image->GetType() == eStyleImageType_Image) {
-    nsCOMPtr<imgIContainer> img;
-    if (NS_SUCCEEDED(image->GetImageData()->GetImage(getter_AddRefs(img)))) {
-      if (!img->IsDecoded()) {
-        return false;
-      }
-    }
-  }
-  return true;
-}
-
-/* static */ bool
-nsCSSRendering::AreAllBackgroundImagesDecodedForFrame(nsIFrame* aFrame)
-{
-  const nsStyleBackground *bg = aFrame->StyleContext()->StyleBackground();
-  NS_FOR_VISIBLE_BACKGROUND_LAYERS_BACK_TO_FRONT(i, bg) {
-    if (!IsBackgroundImageDecodedForStyleContextAndLayer(bg, i)) {
-      return false;
-    }
-  }
-  return true;
 }
 
 static void
@@ -4361,59 +4348,56 @@ nsCSSRendering::PaintDecorationLine(nsIFrame* aFrame,
   }
 }
 
-void
-nsCSSRendering::DecorationLineToPath(nsIFrame* aFrame,
-                                     gfxContext* aGfxContext,
-                                     const gfxRect& aDirtyRect,
-                                     const nscolor aColor,
-                                     const gfxPoint& aPt,
-                                     const gfxFloat aICoordInFrame,
-                                     const gfxSize& aLineSize,
-                                     const gfxFloat aAscent,
-                                     const gfxFloat aOffset,
+Rect
+nsCSSRendering::DecorationLineToPath(const Rect& aDirtyRect,
+                                     const Point& aPt,
+                                     const Size& aLineSize,
+                                     const Float aAscent,
+                                     const Float aOffset,
                                      const uint8_t aDecoration,
                                      const uint8_t aStyle,
                                      bool aVertical,
-                                     const gfxFloat aDescentLimit)
+                                     const Float aDescentLimit)
 {
   NS_ASSERTION(aStyle != NS_STYLE_TEXT_DECORATION_STYLE_NONE, "aStyle is none");
 
-  aGfxContext->NewPath();
+  Rect path; // To benefit from RVO, we return this from all return points
 
-  gfxRect rect =
-    GetTextDecorationRectInternal(aPt, aLineSize, aAscent, aOffset,
+  Rect rect = ToRect(
+    GetTextDecorationRectInternal(ThebesPoint(aPt), ThebesSize(aLineSize),
+                                  aAscent, aOffset,
                                   aDecoration, aStyle, aVertical,
-                                  aDescentLimit);
+                                  aDescentLimit));
   if (rect.IsEmpty() || !rect.Intersects(aDirtyRect)) {
-    return;
+    return path;
   }
 
   if (aDecoration != NS_STYLE_TEXT_DECORATION_LINE_UNDERLINE &&
       aDecoration != NS_STYLE_TEXT_DECORATION_LINE_OVERLINE &&
       aDecoration != NS_STYLE_TEXT_DECORATION_LINE_LINE_THROUGH) {
     NS_ERROR("Invalid decoration value!");
-    return;
+    return path;
   }
 
   if (aStyle != NS_STYLE_TEXT_DECORATION_STYLE_SOLID) {
     // For the moment, we support only solid text decorations.
-    return;
+    return path;
   }
 
-  gfxFloat lineThickness = std::max(NS_round(aLineSize.height), 1.0);
+  Float lineThickness = std::max(NS_round(aLineSize.height), 1.0);
 
   // The block-direction position should be set to the middle of the line.
   if (aVertical) {
     rect.x += lineThickness / 2;
-    aGfxContext->Rectangle
-      (gfxRect(gfxPoint(rect.TopLeft() - gfxPoint(lineThickness / 2, 0.0)),
-               gfxSize(lineThickness, rect.Height())));
+    path = Rect(rect.TopLeft() - Point(lineThickness / 2, 0.0),
+                Size(lineThickness, rect.Height()));
   } else {
     rect.y += lineThickness / 2;
-    aGfxContext->Rectangle
-      (gfxRect(gfxPoint(rect.TopLeft() - gfxPoint(0.0, lineThickness / 2)),
-               gfxSize(rect.Width(), lineThickness)));
+    path = Rect(rect.TopLeft() - Point(0.0, lineThickness / 2),
+                Size(rect.Width(), lineThickness));
   }
+
+  return path;
 }
 
 nsRect
@@ -4565,12 +4549,12 @@ nsCSSRendering::GetTextDecorationRectInternal(const gfxPoint& aPt,
   }
 
   if (aVertical) {
-    r.y = baseline + floor(aOffset + 0.5); // this will need updating when we
-                                           // support sideways-left orientation
+    r.y = baseline + floor(offset + 0.5); // this will need updating when we
+                                          // support sideways-left orientation
     Swap(r.x, r.y);
     Swap(r.width, r.height);
   } else {
-    r.y = baseline - floor(aOffset + 0.5);
+    r.y = baseline - floor(offset + 0.5);
   }
 
   return r;
@@ -4628,9 +4612,9 @@ nsImageRenderer::PrepareImage()
       nsCOMPtr<imgIContainer> srcImage;
       DebugOnly<nsresult> rv =
         mImage->GetImageData()->GetImage(getter_AddRefs(srcImage));
-      NS_ABORT_IF_FALSE(NS_SUCCEEDED(rv) && srcImage,
-                        "If GetImage() is failing, mImage->IsComplete() "
-                        "should have returned false");
+      MOZ_ASSERT(NS_SUCCEEDED(rv) && srcImage,
+                 "If GetImage() is failing, mImage->IsComplete() "
+                 "should have returned false");
 
       if (!mImage->GetCropRect()) {
         mImageContainer.swap(srcImage);
@@ -4725,7 +4709,7 @@ nsImageRenderer::ComputeIntrinsicSize()
     case eStyleImageType_Image:
     {
       bool haveWidth, haveHeight;
-      nsIntSize imageIntSize;
+      CSSIntSize imageIntSize;
       nsLayoutUtils::ComputeSizeForDrawing(mImageContainer, imageIntSize,
                                            result.mRatio, haveWidth, haveHeight);
       if (haveWidth) {
@@ -4753,9 +4737,10 @@ nsImageRenderer::ComputeIntrinsicSize()
           int32_t appUnitsPerDevPixel =
             mForFrame->PresContext()->AppUnitsPerDevPixel();
           result.SetSize(
-            nsSVGIntegrationUtils::GetContinuationUnionSize(mPaintServerFrame).
-              ToNearestPixels(appUnitsPerDevPixel).
-              ToAppUnits(appUnitsPerDevPixel));
+            IntSizeToAppUnits(
+              nsSVGIntegrationUtils::GetContinuationUnionSize(mPaintServerFrame).
+                ToNearestPixels(appUnitsPerDevPixel),
+              appUnitsPerDevPixel));
         }
       } else {
         NS_ASSERTION(mImageElementSurface.mSourceSurface, "Surface should be ready.");
@@ -4909,7 +4894,7 @@ ConvertImageRendererToDrawFlags(uint32_t aImageRendererFlags)
   return drawFlags;
 }
 
-void
+DrawResult
 nsImageRenderer::Draw(nsPresContext*       aPresContext,
                       nsRenderingContext&  aRenderingContext,
                       const nsRect&        aDirtyRect,
@@ -4920,11 +4905,11 @@ nsImageRenderer::Draw(nsPresContext*       aPresContext,
 {
   if (!mIsReady) {
     NS_NOTREACHED("Ensure PrepareImage() has returned true before calling me");
-    return;
+    return DrawResult::TEMPORARY_ERROR;
   }
   if (aDest.IsEmpty() || aFill.IsEmpty() ||
       mSize.width <= 0 || mSize.height <= 0) {
-    return;
+    return DrawResult::SUCCESS;
   }
 
   GraphicsFilter filter = nsLayoutUtils::GetGraphicsFilterForFrame(mForFrame);
@@ -4932,21 +4917,21 @@ nsImageRenderer::Draw(nsPresContext*       aPresContext,
   switch (mType) {
     case eStyleImageType_Image:
     {
-      nsIntSize imageSize(nsPresContext::AppUnitsToIntCSSPixels(mSize.width),
-                          nsPresContext::AppUnitsToIntCSSPixels(mSize.height));
-      nsLayoutUtils::DrawBackgroundImage(*aRenderingContext.ThebesContext(),
-                                         aPresContext,
-                                         mImageContainer, imageSize, filter,
-                                         aDest, aFill, aAnchor, aDirtyRect,
-                                         ConvertImageRendererToDrawFlags(mFlags));
-      return;
+      CSSIntSize imageSize(nsPresContext::AppUnitsToIntCSSPixels(mSize.width),
+                           nsPresContext::AppUnitsToIntCSSPixels(mSize.height));
+      return
+        nsLayoutUtils::DrawBackgroundImage(*aRenderingContext.ThebesContext(),
+                                           aPresContext,
+                                           mImageContainer, imageSize, filter,
+                                           aDest, aFill, aAnchor, aDirtyRect,
+                                           ConvertImageRendererToDrawFlags(mFlags));
     }
     case eStyleImageType_Gradient:
     {
       nsCSSRendering::PaintGradient(aPresContext, aRenderingContext,
                                     mGradientData, aDirtyRect,
                                     aDest, aFill, aSrc, mSize);
-      return;
+      return DrawResult::SUCCESS;
     }
     case eStyleImageType_Element:
     {
@@ -4954,7 +4939,7 @@ nsImageRenderer::Draw(nsPresContext*       aPresContext,
                                                           aRenderingContext);
       if (!drawable) {
         NS_WARNING("Could not create drawable for element");
-        return;
+        return DrawResult::TEMPORARY_ERROR;
       }
 
       gfxContext* ctx = aRenderingContext.ThebesContext();
@@ -4975,11 +4960,11 @@ nsImageRenderer::Draw(nsPresContext*       aPresContext,
         ctx->Paint();
       }
 
-      return;
+      return DrawResult::SUCCESS;
     }
     case eStyleImageType_Null:
     default:
-      return;
+      return DrawResult::SUCCESS;
   }
 }
 
@@ -5012,7 +4997,7 @@ nsImageRenderer::DrawableForElement(const nsRect& aImageRect,
   return drawable.forget();
 }
 
-void
+DrawResult
 nsImageRenderer::DrawBackground(nsPresContext*       aPresContext,
                                 nsRenderingContext&  aRenderingContext,
                                 const nsRect&        aDest,
@@ -5022,18 +5007,18 @@ nsImageRenderer::DrawBackground(nsPresContext*       aPresContext,
 {
   if (!mIsReady) {
     NS_NOTREACHED("Ensure PrepareImage() has returned true before calling me");
-    return;
+    return DrawResult::TEMPORARY_ERROR;
   }
   if (aDest.IsEmpty() || aFill.IsEmpty() ||
       mSize.width <= 0 || mSize.height <= 0) {
-    return;
+    return DrawResult::SUCCESS;
   }
 
-  Draw(aPresContext, aRenderingContext,
-       aDirty, aDest, aFill, aAnchor,
-       CSSIntRect(0, 0,
-                  nsPresContext::AppUnitsToIntCSSPixels(mSize.width),
-                  nsPresContext::AppUnitsToIntCSSPixels(mSize.height)));
+  return Draw(aPresContext, aRenderingContext,
+              aDirty, aDest, aFill, aAnchor,
+              CSSIntRect(0, 0,
+                         nsPresContext::AppUnitsToIntCSSPixels(mSize.width),
+                         nsPresContext::AppUnitsToIntCSSPixels(mSize.height)));
 }
 
 /**
@@ -5208,16 +5193,30 @@ nsImageRenderer::IsAnimatedImage()
   return false;
 }
 
-already_AddRefed<mozilla::layers::ImageContainer>
-nsImageRenderer::GetContainer(LayerManager* aManager)
+bool
+nsImageRenderer::IsContainerAvailable(LayerManager* aManager,
+                                      nsDisplayListBuilder* aBuilder)
 {
-  if (mType != eStyleImageType_Image || !mImageContainer)
-    return nullptr;
+  if (mType != eStyleImageType_Image || !mImageContainer) {
+    return false;
+  }
 
-  nsRefPtr<ImageContainer> container;
-  nsresult rv = mImageContainer->GetImageContainer(aManager, getter_AddRefs(container));
-  NS_ENSURE_SUCCESS(rv, nullptr);
-  return container.forget();
+  uint32_t flags = aBuilder->ShouldSyncDecodeImages()
+                 ? imgIContainer::FLAG_SYNC_DECODE
+                 : imgIContainer::FLAG_NONE;
+
+  return mImageContainer->IsImageContainerAvailable(aManager, flags);
+}
+
+already_AddRefed<imgIContainer>
+nsImageRenderer::GetImage()
+{
+  if (mType != eStyleImageType_Image || !mImageContainer) {
+    return nullptr;
+  }
+
+  nsCOMPtr<imgIContainer> image = mImageContainer;
+  return image.forget();
 }
 
 #define MAX_BLUR_RADIUS 300

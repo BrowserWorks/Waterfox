@@ -9,8 +9,10 @@
 #include "CrossProcessMutex.h"
 #include "nsDebug.h"
 #include "nsISupportsImpl.h"
+#include "ProtocolUtils.h"
 
-using namespace base;
+using base::GetCurrentProcessHandle;
+using base::ProcessHandle;
 
 namespace mozilla {
 
@@ -58,12 +60,11 @@ CrossProcessMutex::Unlock()
 }
 
 CrossProcessMutexHandle
-CrossProcessMutex::ShareToProcess(ProcessHandle aHandle)
+CrossProcessMutex::ShareToProcess(base::ProcessId aTargetPid)
 {
   HANDLE newHandle;
-  bool succeeded = ::DuplicateHandle(GetCurrentProcessHandle(),
-                                     mMutex, aHandle, &newHandle,
-                                     0, FALSE, DUPLICATE_SAME_ACCESS);
+  bool succeeded = ipc::DuplicateHandle(mMutex, aTargetPid, &newHandle,
+                                        0, DUPLICATE_SAME_ACCESS);
 
   if (!succeeded) {
     return nullptr;

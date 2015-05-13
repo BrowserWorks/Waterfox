@@ -13,9 +13,9 @@
 namespace mozilla {
 
 JSObject*
-WebGLQuery::WrapObject(JSContext* cx)
+WebGLQuery::WrapObject(JSContext* cx, JS::Handle<JSObject*> aGivenProto)
 {
-    return dom::WebGLQueryBinding::Wrap(cx, this);
+    return dom::WebGLQueryBinding::Wrap(cx, this, aGivenProto);
 }
 
 WebGLQuery::WebGLQuery(WebGLContext* webgl)
@@ -40,10 +40,9 @@ WebGLQuery::Delete()
 bool
 WebGLQuery::IsActive() const
 {
-    WebGLRefPtr<WebGLQuery>* targetSlot = mContext->GetQueryTargetSlot(mType);
+    WebGLRefPtr<WebGLQuery>& targetSlot = mContext->GetQuerySlotByTarget(mType);
 
-    MOZ_ASSERT(targetSlot, "unknown query object's type");
-    return targetSlot && *targetSlot == this;
+    return targetSlot.get() == this;
 }
 
 NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE_0(WebGLQuery)

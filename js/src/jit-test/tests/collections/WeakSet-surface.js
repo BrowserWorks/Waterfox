@@ -7,11 +7,11 @@ assertEq(desc.writable, true);
 
 assertEq(typeof WeakSet, 'function');
 assertEq(Object.keys(WeakSet).length, 0);
-assertEq(WeakSet.length, 1);
+assertEq(WeakSet.length, 0);
 assertEq(WeakSet.name, "WeakSet");
 
 assertEq(Object.getPrototypeOf(WeakSet.prototype), Object.prototype);
-assertEq(Object.prototype.toString.call(WeakSet.prototype), "[object WeakSet]");
+assertEq(Object.prototype.toString.call(WeakSet.prototype), "[object Object]");
 assertEq(Object.prototype.toString.call(new WeakSet), "[object WeakSet]");
 assertEq(Object.keys(WeakSet.prototype).length, 0);
 assertEq(WeakSet.prototype.constructor, WeakSet);

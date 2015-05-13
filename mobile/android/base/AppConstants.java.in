@@ -8,8 +8,12 @@ package org.mozilla.gecko;
 
 import android.os.Build;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+import org.mozilla.gecko.adjust.AdjustHelperInterface;
+//#ifdef MOZ_INSTALL_TRACKING
+import org.mozilla.gecko.adjust.AdjustHelper;
+//#else
+import org.mozilla.gecko.adjust.StubAdjustHelper;
+//#endif
 
 /**
  * A collection of constants that pertain to the build and runtime state of the
@@ -26,6 +30,9 @@ import java.lang.annotation.RetentionPolicy;
 public class AppConstants {
     public static final String ANDROID_PACKAGE_NAME = "@ANDROID_PACKAGE_NAME@";
     public static final String MANGLED_ANDROID_PACKAGE_NAME = "@MANGLED_ANDROID_PACKAGE_NAME@";
+
+    public static final String MOZ_ANDROID_SHARED_ACCOUNT_TYPE = "@MOZ_ANDROID_SHARED_ACCOUNT_TYPE@";
+    public static final String MOZ_ANDROID_SHARED_FXACCOUNT_TYPE = "@MOZ_ANDROID_SHARED_FXACCOUNT_TYPE@";
 
     /**
      * Encapsulates access to compile-time version definitions, allowing
@@ -65,6 +72,7 @@ public class AppConstants {
          */
         public static final boolean preLollipop = MAX_SDK_VERSION < 21 || (MIN_SDK_VERSION < 21 && Build.VERSION.SDK_INT < 21);
         public static final boolean preJBMR2 = MAX_SDK_VERSION < 18 || (MIN_SDK_VERSION < 18 && Build.VERSION.SDK_INT < 18);
+        public static final boolean preJBMR1 = MAX_SDK_VERSION < 17 || (MIN_SDK_VERSION < 17 && Build.VERSION.SDK_INT < 17);
         public static final boolean preJB = MAX_SDK_VERSION < 16 || (MIN_SDK_VERSION < 16 && Build.VERSION.SDK_INT < 16);
         public static final boolean preICS = MAX_SDK_VERSION < 14 || (MIN_SDK_VERSION < 14 && Build.VERSION.SDK_INT < 14);
         public static final boolean preHCMR2 = MAX_SDK_VERSION < 13 || (MIN_SDK_VERSION < 13 && Build.VERSION.SDK_INT < 13);
@@ -73,10 +81,17 @@ public class AppConstants {
     }
 
     /**
-     * The name of the Java class that launches the browser.
+     * The name of the Java class that represents the android application.
      */
-    public static final String BROWSER_INTENT_CLASS_NAME = "org.mozilla.gecko.BrowserApp";
-    public static final String SEARCH_INTENT_CLASS_NAME = "org.mozilla.search.SearchActivity";
+    public static final String MOZ_ANDROID_APPLICATION_CLASS = "@MOZ_ANDROID_APPLICATION_CLASS@";
+    /**
+     * The name of the Java class that launches the browser activity.
+     */
+    public static final String MOZ_ANDROID_BROWSER_INTENT_CLASS = "@MOZ_ANDROID_BROWSER_INTENT_CLASS@";
+    /**
+     * The name of the Java class that launches the search activity.
+     */
+    public static final String MOZ_ANDROID_SEARCH_INTENT_CLASS = "@MOZ_ANDROID_SEARCH_INTENT_CLASS@";
 
     public static final String GRE_MILESTONE = "@GRE_MILESTONE@";
 
@@ -92,18 +107,19 @@ public class AppConstants {
     public static final String MOZ_APP_NAME = "@MOZ_APP_NAME@";
     public static final String MOZ_APP_VENDOR = "@MOZ_APP_VENDOR@";
     public static final String MOZ_APP_VERSION = "@MOZ_APP_VERSION@";
+    public static final String MOZ_APP_DISPLAYNAME = "@MOZ_APP_DISPLAYNAME@";
 
     // MOZILLA_VERSION is already quoted when it gets substituted in. If we
     // add additional quotes we end up with ""x.y"", which is a syntax error.
     public static final String MOZILLA_VERSION = @MOZILLA_VERSION@;
 
-    public static final String MOZ_STUMBLER_API_KEY =
+    public static final String MOZ_MOZILLA_API_KEY = "@MOZ_MOZILLA_API_KEY@";
+    public static final boolean MOZ_STUMBLER_BUILD_TIME_ENABLED =
 //#ifdef MOZ_ANDROID_MLS_STUMBLER
-    "@MOZ_STUMBLER_API_KEY@";
+    true;
 //#else
-    null;
+    false;
 //#endif
-    public static final boolean MOZ_STUMBLER_BUILD_TIME_ENABLED = (MOZ_STUMBLER_API_KEY != null);
 
     public static final String MOZ_CHILD_PROCESS_NAME = "@MOZ_CHILD_PROCESS_NAME@";
     public static final String MOZ_UPDATE_CHANNEL = "@MOZ_UPDATE_CHANNEL@";
@@ -158,8 +174,22 @@ public class AppConstants {
     false;
 //#endif
 
+    public static final boolean MOZ_ANDROID_READING_LIST_SERVICE =
+//#ifdef MOZ_ANDROID_READING_LIST_SERVICE
+    true;
+//#else
+    false;
+//#endif
+
     public static final boolean MOZ_TELEMETRY_ON_BY_DEFAULT =
 //#ifdef MOZ_TELEMETRY_ON_BY_DEFAULT
+    true;
+//#else
+    false;
+//#endif
+
+    public static final boolean MOZ_ANDROID_TAB_QUEUE =
+//#ifdef MOZ_ANDROID_TAB_QUEUE
     true;
 //#else
     false;
@@ -279,4 +309,28 @@ public class AppConstants {
 //#else
     false;
 //#endif
+
+    public static final boolean MOZ_DRAGGABLE_URLBAR = false;
+
+    public static final boolean MOZ_INSTALL_TRACKING =
+//#ifdef MOZ_INSTALL_TRACKING
+    true;
+//#else
+    false;
+//#endif
+
+    public static final String MOZ_INSTALL_TRACKING_ADJUST_SDK_APP_TOKEN =
+//#ifdef MOZ_INSTALL_TRACKING_ADJUST_SDK_APP_TOKEN
+    "@MOZ_INSTALL_TRACKING_ADJUST_SDK_APP_TOKEN@";
+//#else
+    null;
+//#endif
+
+    public static AdjustHelperInterface getAdjustHelper() {
+//#ifdef MOZ_INSTALL_TRACKING
+        return new AdjustHelper();
+//#else
+        return new StubAdjustHelper();
+//#endif
+    }
 }

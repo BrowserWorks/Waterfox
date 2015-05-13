@@ -1,4 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -44,9 +45,9 @@ WorkerNavigator::Create(bool aOnLine)
 }
 
 JSObject*
-WorkerNavigator::WrapObject(JSContext* aCx)
+WorkerNavigator::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return WorkerNavigatorBinding_workers::Wrap(aCx, this);
+  return WorkerNavigatorBinding_workers::Wrap(aCx, this, aGivenProto);
 }
 
 // A WorkerMainThreadRunnable to synchronously add DataStoreChangeEventProxy on
@@ -59,7 +60,7 @@ class DataStoreAddEventListenerRunnable : public WorkerMainThreadRunnable
 
 protected:
   virtual bool
-  MainThreadRun() MOZ_OVERRIDE
+  MainThreadRun() override
   {
     AssertIsOnMainThread();
 
@@ -142,7 +143,7 @@ GetDataStoresStructuredCloneCallbacksRead(JSContext* aCx,
     if (!global) {
       MOZ_ASSERT(false, "cannot get global!");
     } else {
-      workerStoreObj = workerStore->WrapObject(aCx);
+      workerStoreObj = workerStore->WrapObject(aCx, JS::NullPtr());
       if (!JS_WrapObject(aCx, &workerStoreObj)) {
         MOZ_ASSERT(false, "cannot wrap object for workerStoreObj!");
         workerStoreObj = nullptr;
@@ -202,7 +203,7 @@ static const JSStructuredCloneCallbacks kGetDataStoresStructuredCloneCallbacks =
 
 // A WorkerMainThreadRunnable to run WorkerNavigator::GetDataStores(...) on the
 // main thread.
-class NavigatorGetDataStoresRunnable MOZ_FINAL : public WorkerMainThreadRunnable
+class NavigatorGetDataStoresRunnable final : public WorkerMainThreadRunnable
 {
   nsRefPtr<PromiseWorkerProxy> mPromiseWorkerProxy;
   const nsString mName;
@@ -245,7 +246,7 @@ public:
 
 protected:
   virtual bool
-  MainThreadRun() MOZ_OVERRIDE
+  MainThreadRun() override
   {
     AssertIsOnMainThread();
 
@@ -343,7 +344,7 @@ WorkerNavigator::GetPlatform(nsString& aPlatform) const
 
 namespace {
 
-class GetUserAgentRunnable MOZ_FINAL : public WorkerMainThreadRunnable
+class GetUserAgentRunnable final : public WorkerMainThreadRunnable
 {
   nsString& mUA;
 
@@ -356,7 +357,7 @@ public:
     aWorkerPrivate->AssertIsOnWorkerThread();
   }
 
-  virtual bool MainThreadRun() MOZ_OVERRIDE
+  virtual bool MainThreadRun() override
   {
     AssertIsOnMainThread();
 

@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -42,25 +43,23 @@ using namespace mozilla::dom;
 nsGenericDOMDataNode::nsGenericDOMDataNode(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
   : nsIContent(aNodeInfo)
 {
-  NS_ABORT_IF_FALSE(mNodeInfo->NodeType() == nsIDOMNode::TEXT_NODE ||
-                    mNodeInfo->NodeType() == nsIDOMNode::CDATA_SECTION_NODE ||
-                    mNodeInfo->NodeType() == nsIDOMNode::COMMENT_NODE ||
-                    mNodeInfo->NodeType() ==
-                      nsIDOMNode::PROCESSING_INSTRUCTION_NODE ||
-                    mNodeInfo->NodeType() == nsIDOMNode::DOCUMENT_TYPE_NODE,
-                    "Bad NodeType in aNodeInfo");
+  MOZ_ASSERT(mNodeInfo->NodeType() == nsIDOMNode::TEXT_NODE ||
+             mNodeInfo->NodeType() == nsIDOMNode::CDATA_SECTION_NODE ||
+             mNodeInfo->NodeType() == nsIDOMNode::COMMENT_NODE ||
+             mNodeInfo->NodeType() == nsIDOMNode::PROCESSING_INSTRUCTION_NODE ||
+             mNodeInfo->NodeType() == nsIDOMNode::DOCUMENT_TYPE_NODE,
+             "Bad NodeType in aNodeInfo");
 }
 
 nsGenericDOMDataNode::nsGenericDOMDataNode(already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo)
   : nsIContent(aNodeInfo)
 {
-  NS_ABORT_IF_FALSE(mNodeInfo->NodeType() == nsIDOMNode::TEXT_NODE ||
-                    mNodeInfo->NodeType() == nsIDOMNode::CDATA_SECTION_NODE ||
-                    mNodeInfo->NodeType() == nsIDOMNode::COMMENT_NODE ||
-                    mNodeInfo->NodeType() ==
-                      nsIDOMNode::PROCESSING_INSTRUCTION_NODE ||
-                    mNodeInfo->NodeType() == nsIDOMNode::DOCUMENT_TYPE_NODE,
-                    "Bad NodeType in aNodeInfo");
+  MOZ_ASSERT(mNodeInfo->NodeType() == nsIDOMNode::TEXT_NODE ||
+             mNodeInfo->NodeType() == nsIDOMNode::CDATA_SECTION_NODE ||
+             mNodeInfo->NodeType() == nsIDOMNode::COMMENT_NODE ||
+             mNodeInfo->NodeType() == nsIDOMNode::PROCESSING_INSTRUCTION_NODE ||
+             mNodeInfo->NodeType() == nsIDOMNode::DOCUMENT_TYPE_NODE,
+             "Bad NodeType in aNodeInfo");
 }
 
 nsGenericDOMDataNode::~nsGenericDOMDataNode()
@@ -114,6 +113,10 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(nsGenericDOMDataNode)
   nsINode::Unlink(tmp);
+
+  // Clear flag here because unlinking slots will clear the
+  // containing shadow root pointer.
+  tmp->UnsetFlags(NODE_IS_IN_SHADOW_TREE);
 
   nsDataSlots *slots = tmp->GetExistingDataSlots();
   if (slots) {
@@ -200,7 +203,7 @@ nsGenericDOMDataNode::SubstringData(uint32_t aStart, uint32_t aCount,
 {
   ErrorResult rv;
   SubstringData(aStart, aCount, aReturn, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 void
@@ -564,8 +567,7 @@ nsGenericDOMDataNode::UnbindFromTree(bool aDeep, bool aNullParent)
              NS_REFRAME_IF_WHITESPACE);
 
   nsIDocument* document =
-    HasFlag(NODE_FORCE_XBL_BINDINGS) || IsInShadowTree() ?
-      OwnerDoc() : GetUncomposedDoc();
+    HasFlag(NODE_FORCE_XBL_BINDINGS) ? OwnerDoc() : GetComposedDoc();
 
   if (aNullParent) {
     if (GetParent()) {
@@ -1074,9 +1076,10 @@ nsGenericDOMDataNode::AppendTextTo(nsAString& aResult)
 }
 
 bool
-nsGenericDOMDataNode::AppendTextTo(nsAString& aResult, const mozilla::fallible_t&)
+nsGenericDOMDataNode::AppendTextTo(nsAString& aResult,
+                                   const mozilla::fallible_t& aFallible)
 {
-  return mText.AppendTo(aResult, mozilla::fallible_t());
+  return mText.AppendTo(aResult, aFallible);
 }
 
 already_AddRefed<nsIAtom>

@@ -76,18 +76,23 @@
 @supports (display:ruby) {
   *|*::-moz-ruby {
     display: ruby;
+    unicode-bidi: -moz-isolate;
   }
   *|*::-moz-ruby-base {
     display: ruby-base;
+    unicode-bidi: -moz-isolate;
   }
   *|*::-moz-ruby-text {
     display: ruby-text;
+    unicode-bidi: -moz-isolate;
   }
   *|*::-moz-ruby-base-container {
     display: ruby-base-container;
+    unicode-bidi: -moz-isolate;
   }
   *|*::-moz-ruby-text-container {
     display: ruby-text-container;
+    unicode-bidi: -moz-isolate;
   }
 }
 
@@ -309,16 +314,124 @@ parsererror|sourcetext {
   font-size: 12pt;
 }
 
+div:-moz-native-anonymous.moz-accessiblecaret,
+div:-moz-native-anonymous.moz-accessiblecaret > div.image,
+div:-moz-native-anonymous.moz-accessiblecaret > div.bar {
+  position: absolute;
+  z-index: 2147483647;
+}
+
+div:-moz-native-anonymous.moz-accessiblecaret {
+  width: 44px;
+  height: 47px;
+  margin-left: -23px;
+}
+
+div:-moz-native-anonymous.moz-accessiblecaret > div.image {
+  background-position: center center;
+  background-size: 100% 100%;
+  width: 100%;
+  height: 100%;
+
+  /* Override this property in moz-custom-content-container to make dummy touch
+   * listener work. */
+  pointer-events: auto;
+}
+
+div:-moz-native-anonymous.moz-accessiblecaret > div.bar {
+  margin-left: 49%;
+  width: 2px;
+  background-color: #008aa0;
+}
+
+div:-moz-native-anonymous.moz-accessiblecaret.no-bar > div.bar {
+  display: none;
+}
+
+div:-moz-native-anonymous.moz-accessiblecaret.normal > div.image {
+  background-image: url("resource://gre/res/text_caret.png");
+}
+
+div:-moz-native-anonymous.moz-accessiblecaret.left > div.image {
+  background-image: url("resource://gre/res/text_caret_tilt_left.png");
+  margin-left: -39%;
+}
+
+div:-moz-native-anonymous.moz-accessiblecaret.right > div.image {
+  background-image: url("resource://gre/res/text_caret_tilt_right.png");
+  margin-left: 41%;
+}
+
+div:-moz-native-anonymous.moz-accessiblecaret.none {
+  display: none;
+}
+
+@media (min-resolution: 1.5dppx) {
+  div:-moz-native-anonymous.moz-accessiblecaret.normal > div.image {
+    background-image: url("resource://gre/res/text_caret@1.5x.png");
+  }
+
+  div:-moz-native-anonymous.moz-accessiblecaret.left > div.image {
+    background-image: url("resource://gre/res/text_caret_tilt_left@1.5x.png");
+  }
+
+  div:-moz-native-anonymous.moz-accessiblecaret.right > div.image {
+    background-image: url("resource://gre/res/text_caret_tilt_right@1.5x.png");
+  }
+}
+
+@media (min-resolution: 2dppx) {
+  div:-moz-native-anonymous.moz-accessiblecaret.normal > div.image {
+    background-image: url("resource://gre/res/text_caret@2x.png");
+  }
+
+  div:-moz-native-anonymous.moz-accessiblecaret.left > div.image {
+    background-image: url("resource://gre/res/text_caret_tilt_left@2x.png");
+  }
+
+  div:-moz-native-anonymous.moz-accessiblecaret.right > div.image {
+    background-image: url("resource://gre/res/text_caret_tilt_right@2x.png");
+  }
+}
+
+@media (min-resolution: 2.25dppx) {
+  div:-moz-native-anonymous.moz-accessiblecaret.normal > div.image {
+    background-image: url("resource://gre/res/text_caret@2.25x.png");
+  }
+
+  div:-moz-native-anonymous.moz-accessiblecaret.left > div.image {
+    background-image: url("resource://gre/res/text_caret_tilt_left@2.25x.png");
+  }
+
+  div:-moz-native-anonymous.moz-accessiblecaret.right > div.image {
+    background-image: url("resource://gre/res/text_caret_tilt_right@2.25x.png");
+  }
+}
+
+div:-moz-native-anonymous.moz-touchcaret,
+div:-moz-native-anonymous.moz-selectioncaret-left,
+div:-moz-native-anonymous.moz-selectioncaret-right {
+  position: fixed;
+  width: 44px;
+  height: 47px;
+}
+
+div:-moz-native-anonymous.moz-selectioncaret-left > div,
+div:-moz-native-anonymous.moz-selectioncaret-right > div {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  bottom: 0;
+}
+
 div:-moz-native-anonymous.moz-touchcaret,
 div:-moz-native-anonymous.moz-selectioncaret-left,
 div:-moz-native-anonymous.moz-selectioncaret-right,
 div:-moz-native-anonymous.moz-selectioncaret-left > div,
 div:-moz-native-anonymous.moz-selectioncaret-right > div {
-  position: absolute;
-  width: 29px;
-  height: 31px;
-  background-position: center center;
-  background-size: 100% 100%;
+  background-position: center bottom;
+  background-size: 100%;
+  background-repeat: no-repeat;
   z-index: 2147483647;
 }
 
@@ -331,17 +444,17 @@ div:-moz-native-anonymous.moz-selectioncaret-right > div {
 div:-moz-native-anonymous.moz-touchcaret,
 div:-moz-native-anonymous.moz-selectioncaret-left,
 div:-moz-native-anonymous.moz-selectioncaret-right {
-  margin-left: -15px;
+  margin-left: -23px;
 }
 
 div:-moz-native-anonymous.moz-selectioncaret-left.tilt > div {
   background-image: url("resource://gre/res/text_caret_tilt_left.png");
-  margin-left: -14px;
+  margin-left: -17px;
 }
 
 div:-moz-native-anonymous.moz-selectioncaret-right.tilt > div {
   background-image: url("resource://gre/res/text_caret_tilt_right.png");
-  margin-left: 14px;
+  margin-left: 18px;
 }
 
 @media (min-resolution: 1.5dppx) {

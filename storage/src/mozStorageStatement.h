@@ -27,9 +27,9 @@ namespace storage {
 class StatementJSHelper;
 class Connection;
 
-class Statement MOZ_FINAL : public mozIStorageStatement
-                          , public mozIStorageValueArray
-                          , public StorageBaseStatementInternal
+class Statement final : public mozIStorageStatement
+                      , public mozIStorageValueArray
+                      , public StorageBaseStatementInternal
 {
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
@@ -96,8 +96,8 @@ private:
      * The following two members are only used with the JS helper.  They cache
      * the row and params objects.
      */
-    nsCOMPtr<nsIXPConnectJSObjectHolder> mStatementParamsHolder;
-    nsCOMPtr<nsIXPConnectJSObjectHolder> mStatementRowHolder;
+    nsMainThreadPtrHandle<nsIXPConnectJSObjectHolder> mStatementParamsHolder;
+    nsMainThreadPtrHandle<nsIXPConnectJSObjectHolder> mStatementRowHolder;
 
   /**
    * Internal version of finalize that allows us to tell it if it is being
@@ -109,7 +109,7 @@ private:
    */
   nsresult internalFinalize(bool aDestructing);
 
-    friend class StatementJSHelper;
+  friend class StatementJSHelper;
 };
 
 } // storage

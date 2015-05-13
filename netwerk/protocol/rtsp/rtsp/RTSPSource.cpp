@@ -51,8 +51,9 @@ RTSPSource::RTSPSource(
       mDisconnectReplyID(0),
       mLatestPausedUnit(0),
       mPlayPending(false),
-      mSeekGeneration(0)
-
+      mSeekGeneration(0),
+      mDisconnectedToPauseLiveStream(false),
+      mPlayOnConnected(false)
 {
     CHECK(aListener != NULL);
 
@@ -71,6 +72,8 @@ RTSPSource::~RTSPSource()
 
 void RTSPSource::start()
 {
+    mDisconnectedToPauseLiveStream = false;
+
     if (mLooper == NULL) {
         mLooper = new ALooper;
         mLooper->setName("rtsp");
@@ -95,6 +98,9 @@ void RTSPSource::start()
 
 void RTSPSource::stop()
 {
+    if (mState == DISCONNECTED) {
+        return;
+    }
     sp<AMessage> msg = new AMessage(kWhatDisconnect, mReflector->id());
 
     sp<AMessage> dummy;
@@ -113,6 +119,14 @@ void RTSPSource::play()
 void RTSPSource::pause()
 {
     LOGI("RTSPSource::pause()");
+
+    // Live streams can't be paused, so we have to disconnect now.
+    if (isLiveStream()) {
+        mDisconnectedToPauseLiveStream = true;
+        stop();
+        return;
+    }
+
     sp<AMessage> msg = new AMessage(kWhatPerformPause, mReflector->id());
     msg->post();
 }
@@ -204,7 +218,11 @@ status_t RTSPSource::seekTo(int64_t seekTimeUs) {
     sp<AMessage> msg = new AMessage(kWhatPerformSeek, mReflector->id());
     msg->setInt32("generation", ++mSeekGeneration);
     msg->setInt64("timeUs", seekTimeUs);
-    msg->post(200000ll);
+    // The original code in Android posts this message for 200ms delay in order
+    // to avoid performing multiple seeks in a short period of time. This is not
+    // necessary for us because MediaDecoderStateMachine already circumvents
+    // that situation.
+    msg->post();
 
     return OK;
 }
@@ -212,6 +230,7 @@ status_t RTSPSource::seekTo(int64_t seekTimeUs) {
 void RTSPSource::performPlay(int64_t playTimeUs) {
     if (mState == DISCONNECTED) {
         LOGI("We are in a idle state, restart play");
+        mPlayOnConnected = true;
         start();
         return;
     }
@@ -410,6 +429,10 @@ void RTSPSource::onMessageReceived(const sp<AMessage> &msg) {
 
         case RtspConnectionHandler::kWhatAccessUnitComplete:
         {
+            if (!isValidState()) {
+                LOGI("We're disconnected, dropping access unit.");
+                break;
+            }
             size_t trackIndex;
             CHECK(msg->findSize("trackIndex", &trackIndex));
             CHECK_LT(trackIndex, mTracks.size());
@@ -466,6 +489,10 @@ void RTSPSource::onMessageReceived(const sp<AMessage> &msg) {
 
         case RtspConnectionHandler::kWhatEOS:
         {
+            if (!isValidState()) {
+                LOGI("We're disconnected, dropping end-of-stream message.");
+                break;
+            }
             size_t trackIndex;
             CHECK(msg->findSize("trackIndex", &trackIndex));
             CHECK_LT(trackIndex, mTracks.size());
@@ -486,6 +513,10 @@ void RTSPSource::onMessageReceived(const sp<AMessage> &msg) {
 
         case RtspConnectionHandler::kWhatSeekDiscontinuity:
         {
+            if (!isValidState()) {
+                LOGI("We're disconnected, dropping seek discontinuity message.");
+                break;
+            }
             size_t trackIndex;
             CHECK(msg->findSize("trackIndex", &trackIndex));
             CHECK_LT(trackIndex, mTracks.size());
@@ -493,7 +524,12 @@ void RTSPSource::onMessageReceived(const sp<AMessage> &msg) {
             TrackInfo *info = &mTracks.editItemAt(trackIndex);
             sp<AnotherPacketSource> source = info->mSource;
             if (source != NULL) {
+#if ANDROID_VERSION >= 21
+                source->queueDiscontinuity(ATSParser::DISCONTINUITY_TIME, NULL,
+                                           true /* discard */);
+#else
                 source->queueDiscontinuity(ATSParser::DISCONTINUITY_SEEK, NULL);
+#endif
             }
 
             break;
@@ -501,6 +537,11 @@ void RTSPSource::onMessageReceived(const sp<AMessage> &msg) {
 
         case RtspConnectionHandler::kWhatNormalPlayTimeMapping:
         {
+            if (!isValidState()) {
+                LOGI("We're disconnected, dropping normal play time mapping "
+                     "message.");
+                break;
+            }
             size_t trackIndex;
             CHECK(msg->findSize("trackIndex", &trackIndex));
             CHECK_LT(trackIndex, mTracks.size());
@@ -641,6 +682,11 @@ void RTSPSource::onConnected(bool isSeekable)
     }
 
     mState = CONNECTED;
+
+    if (mPlayOnConnected) {
+        mPlayOnConnected = false;
+        play();
+    }
 }
 
 void RTSPSource::onDisconnected(const sp<AMessage> &msg) {
@@ -659,7 +705,9 @@ void RTSPSource::onDisconnected(const sp<AMessage> &msg) {
     if (mDisconnectReplyID != 0) {
         finishDisconnectIfPossible();
     }
-    if (mListener) {
+    // If the disconnection is caused by pausing live stream,
+    // do not report back to the controller.
+    if (mListener && !mDisconnectedToPauseLiveStream) {
         nsresult reason = (err == OK) ? NS_OK : NS_ERROR_NET_TIMEOUT;
         mListener->OnDisconnected(0, reason);
         // Break the cycle reference between RtspController and us.
@@ -728,7 +776,9 @@ void RTSPSource::onTrackDataAvailable(size_t trackIndex)
 
 void RTSPSource::onTrackEndOfStream(size_t trackIndex)
 {
-    if (!mListener) {
+    // If we are disconnecting to pretend pausing a live stream,
+    // do not report the end of stream.
+    if (!mListener || mDisconnectedToPauseLiveStream) {
         return;
     }
 
@@ -740,5 +790,21 @@ void RTSPSource::onTrackEndOfStream(size_t trackIndex)
     data.AssignLiteral("END_OF_STREAM");
 
     mListener->OnMediaDataAvailable(trackIndex, data, data.Length(), 0, meta.get());
+}
+
+inline bool RTSPSource::isValidState()
+{
+    if (mState == DISCONNECTED || mTracks.size() == 0) {
+        return false;
+    }
+    return true;
+}
+
+
+
+bool RTSPSource::isLiveStream() {
+    int64_t duration = 0;
+    getDuration(&duration);
+    return duration == 0;
 }
 }  // namespace android

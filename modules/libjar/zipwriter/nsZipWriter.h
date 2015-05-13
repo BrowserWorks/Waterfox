@@ -36,8 +36,8 @@ public:
     uint32_t mPermissions;
 };
 
-class nsZipWriter MOZ_FINAL : public nsIZipWriter,
-                              public nsIRequestObserver
+class nsZipWriter final : public nsIZipWriter,
+                          public nsIRequestObserver
 {
 public:
     NS_DECL_ISUPPORTS

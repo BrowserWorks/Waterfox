@@ -18,7 +18,6 @@
 #include "nsNSSCertificate.h"
 #include "nsNSSCertificateFakeTransport.h"
 #include "nsNSSCertificateDB.h"
-#include "nsNSSCertCache.h"
 #ifdef MOZ_XUL
 #include "nsCertTree.h"
 #endif
@@ -31,7 +30,6 @@
 #include "nsCURILoader.h"
 #include "nsICategoryManager.h"
 #include "nsNTLMAuthModule.h"
-#include "nsStreamCipher.h"
 #include "nsKeyModule.h"
 #include "nsDataSignatureVerifier.h"
 #include "nsCertOverrideService.h"
@@ -93,8 +91,14 @@ _InstanceClassChrome##Constructor(nsISupports *aOuter, REFNSIID aIID,         \
         return rv;                                                            \
     }                                                                         \
                                                                               \
-    if (!EnsureNSSInitialized(ensureOperator))                                \
+    if (!NS_IS_PROCESS_DEFAULT &&                                             \
+        ensureOperator == nssEnsureChromeOrContent) {                         \
+        if (!EnsureNSSInitializedChromeOrContent()) {                         \
+            return NS_ERROR_FAILURE;                                          \
+        }                                                                     \
+    } else if (!EnsureNSSInitialized(ensureOperator)) {                       \
         return NS_ERROR_FAILURE;                                              \
+    }                                                                         \
                                                                               \
     if (NS_IS_PROCESS_DEFAULT)                                                \
         NS_NSS_INSTANTIATE(ensureOperator, _InstanceClassChrome);             \
@@ -131,14 +135,20 @@ _InstanceClassChrome##Constructor(nsISupports *aOuter, REFNSIID aIID,         \
 {                                                                             \
     nsresult rv;                                                              \
                                                                               \
-    *aResult = nullptr;                                                          \
-    if (nullptr != aOuter) {                                                     \
+    *aResult = nullptr;                                                       \
+    if (nullptr != aOuter) {                                                  \
         rv = NS_ERROR_NO_AGGREGATION;                                         \
         return rv;                                                            \
     }                                                                         \
                                                                               \
-    if (!EnsureNSSInitialized(ensureOperator))                                \
+    if (!NS_IS_PROCESS_DEFAULT &&                                             \
+        ensureOperator == nssEnsureChromeOrContent) {                         \
+        if (!EnsureNSSInitializedChromeOrContent()) {                         \
+            return NS_ERROR_FAILURE;                                          \
+        }                                                                     \
+    } else if (!EnsureNSSInitialized(ensureOperator)) {                       \
         return NS_ERROR_FAILURE;                                              \
+    }                                                                         \
                                                                               \
     if (NS_IS_PROCESS_DEFAULT)                                                \
         NS_NSS_INSTANTIATE_INIT(ensureOperator,                               \
@@ -164,7 +174,7 @@ NS_NSS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nssLoadingComponent, nsNSSComponent,
                                         Init)
 
 using namespace mozilla::psm;
-  
+
 namespace {
 
 // Use the special factory constructor for everything this module implements,
@@ -178,12 +188,11 @@ NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsure, nsTLSSocketProvider)
 NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsure, nsSecretDecoderRing)
 NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsure, nsPK11TokenDB)
 NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsure, nsPKCS11ModuleDB)
-NS_NSS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nssEnsure, PSMContentListener, init)
+NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(PSMContentListener, init)
 NS_NSS_GENERIC_FACTORY_CONSTRUCTOR_BYPROCESS(nssEnsureOnChromeOnly,
                                              nsNSSCertificate,
                                              nsNSSCertificateFakeTransport)
 NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsure, nsNSSCertificateDB)
-NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsure, nsNSSCertCache)
 NS_NSS_GENERIC_FACTORY_CONSTRUCTOR_BYPROCESS(nssEnsureOnChromeOnly,
                                              nsNSSCertList,
                                              nsNSSCertListFakeTransport)
@@ -193,11 +202,10 @@ NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsure, nsCertTree)
 NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsure, nsPkcs11)
 NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsure, nsCertPicker)
 NS_NSS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nssEnsure, nsNTLMAuthModule, InitTest)
-NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsure, nsCryptoHash)
-NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsure, nsCryptoHMAC)
-NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsure, nsStreamCipher)
-NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsure, nsKeyObject)
-NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsure, nsKeyObjectFactory)
+NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsureChromeOrContent, nsCryptoHash)
+NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsureChromeOrContent, nsCryptoHMAC)
+NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsureChromeOrContent, nsKeyObject)
+NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsureChromeOrContent, nsKeyObjectFactory)
 NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsure, nsDataSignatureVerifier)
 NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsure, nsRandomGenerator)
 NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsureOnChromeOnly, nsSSLStatus)
@@ -218,7 +226,6 @@ NS_DEFINE_NAMED_CID(NS_PSMCONTENTLISTEN_CID);
 NS_DEFINE_NAMED_CID(NS_X509CERT_CID);
 NS_DEFINE_NAMED_CID(NS_X509CERTDB_CID);
 NS_DEFINE_NAMED_CID(NS_X509CERTLIST_CID);
-NS_DEFINE_NAMED_CID(NS_NSSCERTCACHE_CID);
 NS_DEFINE_NAMED_CID(NS_FORMPROCESSOR_CID);
 #ifdef MOZ_XUL
 NS_DEFINE_NAMED_CID(NS_CERTTREE_CID);
@@ -228,7 +235,6 @@ NS_DEFINE_NAMED_CID(NS_CRYPTO_HASH_CID);
 NS_DEFINE_NAMED_CID(NS_CRYPTO_HMAC_CID);
 NS_DEFINE_NAMED_CID(NS_CERT_PICKER_CID);
 NS_DEFINE_NAMED_CID(NS_NTLMAUTHMODULE_CID);
-NS_DEFINE_NAMED_CID(NS_STREAMCIPHER_CID);
 NS_DEFINE_NAMED_CID(NS_KEYMODULEOBJECT_CID);
 NS_DEFINE_NAMED_CID(NS_KEYMODULEOBJECTFACTORY_CID);
 NS_DEFINE_NAMED_CID(NS_DATASIGNATUREVERIFIER_CID);
@@ -250,7 +256,6 @@ static const mozilla::Module::CIDEntry kNSSCIDs[] = {
   { &kNS_X509CERT_CID, false, nullptr, nsNSSCertificateConstructor },
   { &kNS_X509CERTDB_CID, false, nullptr, nsNSSCertificateDBConstructor },
   { &kNS_X509CERTLIST_CID, false, nullptr, nsNSSCertListConstructor },
-  { &kNS_NSSCERTCACHE_CID, false, nullptr, nsNSSCertCacheConstructor },
   { &kNS_FORMPROCESSOR_CID, false, nullptr, nsKeygenFormProcessor::Create },
 #ifdef MOZ_XUL
   { &kNS_CERTTREE_CID, false, nullptr, nsCertTreeConstructor },
@@ -260,7 +265,6 @@ static const mozilla::Module::CIDEntry kNSSCIDs[] = {
   { &kNS_CRYPTO_HMAC_CID, false, nullptr, nsCryptoHMACConstructor },
   { &kNS_CERT_PICKER_CID, false, nullptr, nsCertPickerConstructor },
   { &kNS_NTLMAUTHMODULE_CID, false, nullptr, nsNTLMAuthModuleConstructor },
-  { &kNS_STREAMCIPHER_CID, false, nullptr, nsStreamCipherConstructor },
   { &kNS_KEYMODULEOBJECT_CID, false, nullptr, nsKeyObjectConstructor },
   { &kNS_KEYMODULEOBJECTFACTORY_CID, false, nullptr, nsKeyObjectFactoryConstructor },
   { &kNS_DATASIGNATUREVERIFIER_CID, false, nullptr, nsDataSignatureVerifierConstructor },
@@ -285,7 +289,6 @@ static const mozilla::Module::ContractIDEntry kNSSContracts[] = {
   { NS_PSMCONTENTLISTEN_CONTRACTID, &kNS_PSMCONTENTLISTEN_CID },
   { NS_X509CERTDB_CONTRACTID, &kNS_X509CERTDB_CID },
   { NS_X509CERTLIST_CONTRACTID, &kNS_X509CERTLIST_CID },
-  { NS_NSSCERTCACHE_CONTRACTID, &kNS_NSSCERTCACHE_CID },
   { NS_FORMPROCESSOR_CONTRACTID, &kNS_FORMPROCESSOR_CID },
 #ifdef MOZ_XUL
   { NS_CERTTREE_CONTRACTID, &kNS_CERTTREE_CID },
@@ -297,7 +300,6 @@ static const mozilla::Module::ContractIDEntry kNSSContracts[] = {
   { "@mozilla.org/uriloader/psm-external-content-listener;1", &kNS_PSMCONTENTLISTEN_CID },
   { NS_CRYPTO_FIPSINFO_SERVICE_CONTRACTID, &kNS_PKCS11MODULEDB_CID },
   { NS_NTLMAUTHMODULE_CONTRACTID, &kNS_NTLMAUTHMODULE_CID },
-  { NS_STREAMCIPHER_CONTRACTID, &kNS_STREAMCIPHER_CID },
   { NS_KEYMODULEOBJECT_CONTRACTID, &kNS_KEYMODULEOBJECT_CID },
   { NS_KEYMODULEOBJECTFACTORY_CONTRACTID, &kNS_KEYMODULEOBJECTFACTORY_CID },
   { NS_DATASIGNATUREVERIFIER_CONTRACTID, &kNS_DATASIGNATUREVERIFIER_CID },

@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim:set tw=80 expandtab softtabstop=2 ts=2 sw=2: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -69,9 +69,9 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 NS_IMPL_ELEMENT_CLONE(HTMLAnchorElement)
 
 JSObject*
-HTMLAnchorElement::WrapNode(JSContext *aCx)
+HTMLAnchorElement::WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return HTMLAnchorElementBinding::Wrap(aCx, this);
+  return HTMLAnchorElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 NS_IMPL_STRING_ATTR(HTMLAnchorElement, Charset, charset)
@@ -92,7 +92,7 @@ HTMLAnchorElement::TabIndexDefault()
 }
 
 void
-HTMLAnchorElement::GetItemValueText(nsAString& aValue)
+HTMLAnchorElement::GetItemValueText(DOMString& aValue)
 {
   GetHref(aValue);
 }
@@ -193,6 +193,18 @@ HTMLAnchorElement::UnbindFromTree(bool aDeep, bool aNullParent)
   nsGenericHTMLElement::UnbindFromTree(aDeep, aNullParent);
 }
 
+static bool
+IsNodeInEditableRegion(nsINode* aNode)
+{
+  while (aNode) {
+    if (aNode->IsEditable()) {
+      return true;
+    }
+    aNode = aNode->GetParent();
+  }
+  return false;
+}
+
 bool
 HTMLAnchorElement::IsHTMLFocusable(bool aWithMouse,
                                    bool *aIsFocusable, int32_t *aTabIndex)
@@ -214,7 +226,9 @@ HTMLAnchorElement::IsHTMLFocusable(bool aWithMouse,
     }
   }
 
-  if (IsEditable()) {
+  // Links that are in an editable region should never be focusable, even if
+  // they are in a contenteditable="false" region.
+  if (IsNodeInEditableRegion(this)) {
     if (aTabIndex) {
       *aTabIndex = -1;
     }

@@ -1,6 +1,6 @@
-/* -*- Mode: C++; tab-width: 3; indent-tabs-mode: nil; c-basic-offset: 2 -*-
- *
- * This Source Code Form is subject to the terms of the Mozilla Public
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -22,13 +22,13 @@ class nsSHEntryShared;
 class nsIInputStream;
 class nsIURI;
 
-class nsSHEntry MOZ_FINAL : public nsISHEntry,
-                            public nsISHContainer,
-                            public nsISHEntryInternal
+class nsSHEntry final : public nsISHEntry,
+                        public nsISHContainer,
+                        public nsISHEntryInternal
 {
-public: 
+public:
   nsSHEntry();
-  nsSHEntry(const nsSHEntry &other);
+  nsSHEntry(const nsSHEntry& aOther);
 
   NS_DECL_ISUPPORTS
   NS_DECL_NSISHENTRY
@@ -39,7 +39,7 @@ public:
 
   static nsresult Startup();
   static void Shutdown();
-  
+
 private:
   ~nsSHEntry();
 
@@ -48,22 +48,22 @@ private:
   nsRefPtr<nsSHEntryShared> mShared;
 
   // See nsSHEntry.idl for comments on these members.
-  nsCOMPtr<nsIURI>         mURI;
-  nsCOMPtr<nsIURI>         mReferrerURI;
-  uint32_t                 mReferrerPolicy;
-  nsString                 mTitle;
+  nsCOMPtr<nsIURI> mURI;
+  nsCOMPtr<nsIURI> mReferrerURI;
+  uint32_t mReferrerPolicy;
+  nsString mTitle;
   nsCOMPtr<nsIInputStream> mPostData;
-  uint32_t                 mLoadType;
-  uint32_t                 mID;
-  int32_t                  mScrollPositionX;
-  int32_t                  mScrollPositionY;
-  nsISHEntry*              mParent;
-  nsCOMArray<nsISHEntry>   mChildren;
-  bool                     mURIWasModified;
+  uint32_t mLoadType;
+  uint32_t mID;
+  int32_t mScrollPositionX;
+  int32_t mScrollPositionY;
+  nsISHEntry* mParent;
+  nsCOMArray<nsISHEntry> mChildren;
+  bool mURIWasModified;
   nsCOMPtr<nsIStructuredCloneContainer> mStateData;
-  bool                     mIsSrcdocEntry;
-  nsString                 mSrcdocData;
-  nsCOMPtr<nsIURI>         mBaseURI;
+  bool mIsSrcdocEntry;
+  nsString mSrcdocData;
+  nsCOMPtr<nsIURI> mBaseURI;
 };
 
 #endif /* nsSHEntry_h */

@@ -1,6 +1,6 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
- *
- * This Source Code Form is subject to the terms of the Mozilla Public
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
@@ -22,8 +22,8 @@
 #include "nsIObserver.h"
 #include "mozilla/Attributes.h"
 
-class nsDOMScriptObjectFactory MOZ_FINAL : public nsIDOMScriptObjectFactory,
-                                           public nsIObserver
+class nsDOMScriptObjectFactory final : public nsIDOMScriptObjectFactory,
+                                       public nsIObserver
 {
   ~nsDOMScriptObjectFactory() {}
 
@@ -36,8 +36,8 @@ public:
   NS_DECL_NSIOBSERVER
 
   // nsIDOMScriptObjectFactory
-  NS_IMETHOD_(nsISupports *) GetClassInfoInstance(nsDOMClassInfoID aID) MOZ_OVERRIDE;
-  NS_IMETHOD_(nsISupports *) GetExternalClassInfoInstance(const nsAString& aName) MOZ_OVERRIDE;
+  NS_IMETHOD_(nsISupports *) GetClassInfoInstance(nsDOMClassInfoID aID) override;
+  NS_IMETHOD_(nsISupports *) GetExternalClassInfoInstance(const nsAString& aName) override;
 
   NS_IMETHOD RegisterDOMClassInfo(const char *aName,
                                   nsDOMClassInfoExternalConstructorFnc aConstructorFptr,
@@ -45,6 +45,6 @@ public:
                                   const nsIID **aInterfaces,
                                   uint32_t aScriptableFlags,
                                   bool aHasClassInterface,
-                                  const nsCID *aConstructorCID) MOZ_OVERRIDE;
+                                  const nsCID *aConstructorCID) override;
 };
 

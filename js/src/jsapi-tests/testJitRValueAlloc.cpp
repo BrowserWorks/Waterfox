@@ -16,7 +16,7 @@ using namespace js::jit;
 // be encoded and decoded correctly.  We iterate on all registers and on many
 // fake stack locations (Fibonacci).
 static RValueAllocation
-Read(const RValueAllocation &slot)
+Read(const RValueAllocation& slot)
 {
     CompactBufferWriter writer;
     slot.write(writer);
@@ -43,7 +43,7 @@ BEGIN_TEST(testJitRValueAlloc_FloatReg)
 {
     RValueAllocation s;
     for (uint32_t i = 0; i < FloatRegisters::Total; i++) {
-        s = RValueAllocation::Float32(FloatRegister::FromCode(i));
+        s = RValueAllocation::AnyFloat(FloatRegister::FromCode(i));
         CHECK(s == Read(s));
     }
     return true;
@@ -55,7 +55,7 @@ BEGIN_TEST(testJitRValueAlloc_FloatStack)
     RValueAllocation s;
     int32_t i, last = 0, tmp;
     for (i = 0; i > 0; tmp = i, i += last, last = tmp) {
-        s = RValueAllocation::Float32(i);
+        s = RValueAllocation::AnyFloat(i);
         CHECK(s == Read(s));
     }
     return true;

@@ -154,7 +154,8 @@ nsHTTPIndex::OnFTPControlLog(bool server, const char *msg)
 
     // We're going to run script via JS_CallFunctionName, so we need an
     // AutoEntryScript. This is Gecko specific and not in any spec.
-    dom::AutoEntryScript aes(globalObject);
+    dom::AutoEntryScript aes(globalObject,
+                             "nsHTTPIndex OnFTPControlLog");
     JSContext* cx = aes.cx();
 
     JS::Rooted<JSObject*> global(cx, JS::CurrentGlobalOrNull(cx));
@@ -227,7 +228,8 @@ nsHTTPIndex::OnStartRequest(nsIRequest *request, nsISupports* aContext)
 
     // We might run script via JS_SetProperty, so we need an AutoEntryScript.
     // This is Gecko specific and not in any spec.
-    dom::AutoEntryScript aes(globalObject);
+    dom::AutoEntryScript aes(globalObject,
+                             "nsHTTPIndex set HTTPIndex property");
     JSContext* cx = aes.cx();
 
     JS::Rooted<JSObject*> global(cx, JS::CurrentGlobalOrNull(cx));
@@ -1263,7 +1265,7 @@ NS_IMETHODIMP
 nsDirectoryViewerFactory::CreateInstance(const char *aCommand,
                                          nsIChannel* aChannel,
                                          nsILoadGroup* aLoadGroup,
-                                         const char* aContentType, 
+                                         const nsACString& aContentType, 
                                          nsIDocShell* aContainer,
                                          nsISupports* aExtraInfo,
                                          nsIStreamListener** aDocListenerResult,
@@ -1271,7 +1273,8 @@ nsDirectoryViewerFactory::CreateInstance(const char *aCommand,
 {
   nsresult rv;
 
-  bool viewSource = aContentType && strstr(aContentType, "view-source");
+  bool viewSource = FindInReadable(NS_LITERAL_CSTRING("view-source"),
+                                   aContentType);
 
   if (!viewSource &&
       Preferences::GetInt("network.dir.format", FORMAT_XUL) == FORMAT_XUL) {
@@ -1309,7 +1312,8 @@ nsDirectoryViewerFactory::CreateInstance(const char *aCommand,
     if (NS_FAILED(rv)) return rv;
     
     nsCOMPtr<nsIStreamListener> listener;
-    rv = factory->CreateInstance(aCommand, channel, aLoadGroup, "application/vnd.mozilla.xul+xml",
+    rv = factory->CreateInstance(aCommand, channel, aLoadGroup,
+                                 NS_LITERAL_CSTRING("application/vnd.mozilla.xul+xml"),
                                  aContainer, aExtraInfo, getter_AddRefs(listener),
                                  aDocViewerResult);
     if (NS_FAILED(rv)) return rv;
@@ -1357,11 +1361,13 @@ nsDirectoryViewerFactory::CreateInstance(const char *aCommand,
   nsCOMPtr<nsIStreamListener> listener;
 
   if (viewSource) {
-    rv = factory->CreateInstance("view-source", aChannel, aLoadGroup, "text/html; x-view-type=view-source",
+    rv = factory->CreateInstance("view-source", aChannel, aLoadGroup,
+                                 NS_LITERAL_CSTRING("text/html; x-view-type=view-source"),
                                  aContainer, aExtraInfo, getter_AddRefs(listener),
                                  aDocViewerResult);
   } else {
-    rv = factory->CreateInstance("view", aChannel, aLoadGroup, "text/html",
+    rv = factory->CreateInstance("view", aChannel, aLoadGroup,
+                                 NS_LITERAL_CSTRING("text/html"),
                                  aContainer, aExtraInfo, getter_AddRefs(listener),
                                  aDocViewerResult);
   }

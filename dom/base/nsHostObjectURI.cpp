@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -7,7 +9,9 @@
 #include "nsAutoPtr.h"
 #include "nsIObjectInputStream.h"
 #include "nsIObjectOutputStream.h"
-#include "nsIProgrammingLanguage.h"
+
+#include "mozilla/ipc/BackgroundUtils.h"
+#include "mozilla/ipc/URIUtils.h"
 
 static NS_DEFINE_CID(kHOSTOBJECTURICID, NS_HOSTOBJECTURI_CID);
 
@@ -81,6 +85,56 @@ nsHostObjectURI::Write(nsIObjectOutputStream* aStream)
                                         true);
 }
 
+// nsIIPCSerializableURI methods:
+void
+nsHostObjectURI::Serialize(mozilla::ipc::URIParams& aParams)
+{
+  using namespace mozilla::ipc;
+
+  HostObjectURIParams hostParams;
+  URIParams simpleParams;
+
+  nsSimpleURI::Serialize(simpleParams);
+  hostParams.simpleParams() = simpleParams;
+
+  if (mPrincipal) {
+    PrincipalInfo info;
+    nsresult rv = PrincipalToPrincipalInfo(mPrincipal, &info);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return;
+    }
+
+    hostParams.principal() = info;
+  } else {
+    hostParams.principal() = void_t();
+  }
+
+  aParams = hostParams;
+}
+
+bool
+nsHostObjectURI::Deserialize(const mozilla::ipc::URIParams& aParams)
+{
+  using namespace mozilla::ipc;
+
+  if (aParams.type() != URIParams::THostObjectURIParams) {
+      NS_ERROR("Received unknown parameters from the other process!");
+      return false;
+  }
+
+  const HostObjectURIParams& hostParams = aParams.get_HostObjectURIParams();
+
+  if (!nsSimpleURI::Deserialize(hostParams.simpleParams())) {
+    return false;
+  }
+  if (hostParams.principal().type() == OptionalPrincipalInfo::Tvoid_t) {
+    return true;
+  }
+
+  mPrincipal = PrincipalInfoToPrincipal(hostParams.principal().get_PrincipalInfo());
+  return mPrincipal != nullptr;
+}
+
 // nsIURI methods:
 nsresult
 nsHostObjectURI::CloneInternal(nsSimpleURI::RefHandlingEnum aRefHandlingMode,
@@ -94,8 +148,7 @@ nsHostObjectURI::CloneInternal(nsSimpleURI::RefHandlingEnum aRefHandlingMode,
 #ifdef DEBUG
   nsRefPtr<nsHostObjectURI> uriCheck;
   rv = simpleClone->QueryInterface(kHOSTOBJECTURICID, getter_AddRefs(uriCheck));
-  NS_ABORT_IF_FALSE(NS_SUCCEEDED(rv) && uriCheck,
-		    "Unexpected!");
+  MOZ_ASSERT(NS_SUCCEEDED(rv) && uriCheck);
 #endif
 
   nsHostObjectURI* u = static_cast<nsHostObjectURI*>(simpleClone.get());
@@ -149,7 +202,7 @@ nsHostObjectURI::GetInterfaces(uint32_t *count, nsIID * **array)
 }
 
 NS_IMETHODIMP 
-nsHostObjectURI::GetHelperForLanguage(uint32_t language, nsISupports **_retval)
+nsHostObjectURI::GetScriptableHelper(nsIXPCScriptable **_retval)
 {
   *_retval = nullptr;
   return NS_OK;
@@ -176,17 +229,10 @@ nsHostObjectURI::GetClassID(nsCID * *aClassID)
 {
   // Make sure to modify any subclasses as needed if this ever
   // changes to not call the virtual GetClassIDNoAlloc.
-  *aClassID = (nsCID*) nsMemory::Alloc(sizeof(nsCID));
+  *aClassID = (nsCID*) moz_xmalloc(sizeof(nsCID));
   NS_ENSURE_TRUE(*aClassID, NS_ERROR_OUT_OF_MEMORY);
 
   return GetClassIDNoAlloc(*aClassID);
-}
-
-NS_IMETHODIMP 
-nsHostObjectURI::GetImplementationLanguage(uint32_t *aImplementationLanguage)
-{
-  *aImplementationLanguage = nsIProgrammingLanguage::CPLUSPLUS;
-  return NS_OK;
 }
 
 NS_IMETHODIMP 

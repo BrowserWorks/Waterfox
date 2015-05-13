@@ -12,8 +12,6 @@
 namespace mozilla {
 namespace dom {
 
-class AudioTrackList;
-
 class AudioTrack : public MediaTrack
 {
 public:
@@ -23,14 +21,14 @@ public:
              const nsAString& aLanguage,
              bool aEnabled);
 
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
-  virtual AudioTrack* AsAudioTrack() MOZ_OVERRIDE
+  virtual AudioTrack* AsAudioTrack() override
   {
     return this;
   }
 
-  virtual void SetEnabledInternal(bool aEnabled, int aFlags) MOZ_OVERRIDE;
+  virtual void SetEnabledInternal(bool aEnabled, int aFlags) override;
 
   // WebIDL
   bool Enabled() const

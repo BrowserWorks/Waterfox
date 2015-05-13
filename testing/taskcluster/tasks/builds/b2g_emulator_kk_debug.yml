@@ -1,0 +1,30 @@
+$inherits:
+  from: 'tasks/builds/b2g_emulator_base.yml'
+  variables:
+    build_name: 'emulator-kk'
+    build_type: 'debug'
+task:
+  workerType: emulator-kk-debug
+  scopes:
+    - 'docker-worker:cache:workspace-emulator-kk-debug'
+  metadata:
+    name: '[TC] B2G Emulator KK (Debug)'
+
+  extra:
+    treeherderEnv:
+      - production
+      - staging
+    treeherder:
+      # Disable "TC" prefix...
+      groupSymbol: "?"
+      collection:
+        debug: true
+      machine:
+        platform: b2g-emu-kk
+
+  payload:
+    cache:
+      workspace-emulator-kk-debug: /home/worker/workspace
+    env:
+      TARGET: 'emulator-kk'
+      B2G_DEBUG: 1

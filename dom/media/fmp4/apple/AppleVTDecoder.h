@@ -15,28 +15,33 @@ namespace mozilla {
 
 class AppleVTDecoder : public AppleVDADecoder {
 public:
-  AppleVTDecoder(const mp4_demuxer::VideoDecoderConfig& aConfig,
-                 MediaTaskQueue* aVideoTaskQueue,
+  AppleVTDecoder(const VideoInfo& aConfig,
+                 FlushableMediaTaskQueue* aVideoTaskQueue,
                  MediaDataDecoderCallback* aCallback,
                  layers::ImageContainer* aImageContainer);
   virtual ~AppleVTDecoder();
-  virtual nsresult Init() MOZ_OVERRIDE;
-  virtual nsresult Input(mp4_demuxer::MP4Sample* aSample) MOZ_OVERRIDE;
-  virtual nsresult Flush() MOZ_OVERRIDE;
-  virtual nsresult Drain() MOZ_OVERRIDE;
-  virtual nsresult Shutdown() MOZ_OVERRIDE;
+  virtual nsresult Init() override;
+  virtual nsresult Input(MediaRawData* aSample) override;
+  virtual nsresult Flush() override;
+  virtual nsresult Drain() override;
+  virtual nsresult Shutdown() override;
+  virtual bool IsHardwareAccelerated() const override
+  {
+    return mIsHardwareAccelerated;
+  }
 
 private:
   CMVideoFormatDescriptionRef mFormat;
   VTDecompressionSessionRef mSession;
 
   // Method to pass a frame to VideoToolbox for decoding.
-  nsresult SubmitFrame(mp4_demuxer::MP4Sample* aSample);
+  nsresult SubmitFrame(MediaRawData* aSample);
   // Method to set up the decompression session.
   nsresult InitializeSession();
   nsresult WaitForAsynchronousFrames();
   CFDictionaryRef CreateDecoderSpecification();
   CFDictionaryRef CreateDecoderExtensions();
+  bool mIsHardwareAccelerated;
 };
 
 } // namespace mozilla

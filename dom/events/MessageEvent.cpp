@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -13,13 +14,16 @@
 #include "jsapi.h"
 #include "nsGlobalWindow.h" // So we can assign an nsGlobalWindow* to mWindowSource
 
+#include "ServiceWorker.h"
+#include "ServiceWorkerClient.h"
+
 namespace mozilla {
 namespace dom {
 
 NS_IMPL_CYCLE_COLLECTION_CLASS(MessageEvent)
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(MessageEvent, Event)
-  tmp->mData = JSVAL_VOID;
+  tmp->mData.setUndefined();
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mWindowSource)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mPortSource)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mPorts)
@@ -46,20 +50,20 @@ MessageEvent::MessageEvent(EventTarget* aOwner,
                            nsPresContext* aPresContext,
                            WidgetEvent* aEvent)
   : Event(aOwner, aPresContext, aEvent)
-  , mData(JSVAL_VOID)
+  , mData(JS::UndefinedValue())
 {
 }
 
 MessageEvent::~MessageEvent()
 {
-  mData = JSVAL_VOID;
+  mData.setUndefined();
   DropJSObjects(this);
 }
 
 JSObject*
-MessageEvent::WrapObjectInternal(JSContext* aCx)
+MessageEvent::WrapObjectInternal(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return mozilla::dom::MessageEventBinding::Wrap(aCx, this);
+  return mozilla::dom::MessageEventBinding::Wrap(aCx, this, aGivenProto);
 }
 
 NS_IMETHODIMP
@@ -67,7 +71,7 @@ MessageEvent::GetData(JSContext* aCx, JS::MutableHandle<JS::Value> aData)
 {
   ErrorResult rv;
   GetData(aCx, aData, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 void
@@ -103,12 +107,14 @@ MessageEvent::GetSource(nsIDOMWindow** aSource)
 }
 
 void
-MessageEvent::GetSource(Nullable<OwningWindowProxyOrMessagePort>& aValue) const
+MessageEvent::GetSource(Nullable<OwningWindowProxyOrMessagePortOrClient>& aValue) const
 {
   if (mWindowSource) {
     aValue.SetValue().SetAsWindowProxy() = mWindowSource;
   } else if (mPortSource) {
     aValue.SetValue().SetAsMessagePort() = mPortSource;
+  } else if (mClientSource) {
+    aValue.SetValue().SetAsClient() = mClientSource;
   }
 }
 
@@ -119,14 +125,23 @@ MessageEvent::Constructor(const GlobalObject& aGlobal,
                           ErrorResult& aRv)
 {
   nsCOMPtr<EventTarget> t = do_QueryInterface(aGlobal.GetAsSupports());
-  nsRefPtr<MessageEvent> event = new MessageEvent(t, nullptr, nullptr);
+  return Constructor(t, aType, aParam, aRv);
+}
+
+/* static */ already_AddRefed<MessageEvent>
+MessageEvent::Constructor(EventTarget* aEventTarget,
+                          const nsAString& aType,
+                          const MessageEventInit& aParam,
+                          ErrorResult& aRv)
+{
+  nsRefPtr<MessageEvent> event = new MessageEvent(aEventTarget, nullptr, nullptr);
 
   aRv = event->InitEvent(aType, aParam.mBubbles, aParam.mCancelable);
   if (aRv.Failed()) {
     return nullptr;
   }
 
-  bool trusted = event->Init(t);
+  bool trusted = event->Init(aEventTarget);
   event->SetTrusted(trusted);
 
   event->mData = aParam.mData;
@@ -189,6 +204,18 @@ MessageEvent::SetPorts(MessagePortList* aPorts)
 {
   MOZ_ASSERT(!mPorts && aPorts);
   mPorts = aPorts;
+}
+
+void
+MessageEvent::SetSource(mozilla::dom::MessagePort* aPort)
+{
+  mPortSource = aPort;
+}
+
+void
+MessageEvent::SetSource(mozilla::dom::workers::ServiceWorkerClient* aClient)
+{
+  mClientSource = aClient;
 }
 
 } // namespace dom

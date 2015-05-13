@@ -4,6 +4,7 @@
 
 package org.mozilla.gecko;
 
+import android.content.res.Resources;
 import org.mozilla.gecko.gfx.BitmapUtils;
 import org.mozilla.gecko.gfx.BitmapUtils.BitmapLoader;
 import org.mozilla.gecko.gfx.Layer;
@@ -16,6 +17,7 @@ import org.mozilla.gecko.util.FloatUtils;
 import org.mozilla.gecko.util.GeckoEventListener;
 import org.mozilla.gecko.util.ThreadUtils;
 import org.mozilla.gecko.ActionModeCompat.Callback;
+import org.mozilla.gecko.AppConstants.Versions;
 
 import android.content.Context;
 import android.app.Activity;
@@ -43,6 +45,7 @@ class TextSelection extends Layer implements GeckoEventListener {
     private final DrawListener mDrawListener;
     private boolean mDraggingHandles;
 
+    private String selectionID; // Unique ID provided for each selection action.
     private float mViewLeft;
     private float mViewTop;
     private float mViewZoom;
@@ -131,6 +134,7 @@ class TextSelection extends Layer implements GeckoEventListener {
             public void run() {
                 try {
                     if (event.equals("TextSelection:ShowHandles")) {
+                        selectionID = message.getString("selectionID");
                         final JSONArray handles = message.getJSONArray("handles");
                         for (int i=0; i < handles.length(); i++) {
                             String handle = handles.getString(i);
@@ -168,13 +172,14 @@ class TextSelection extends Layer implements GeckoEventListener {
                         anchorHandle.setVisibility(View.GONE);
                         caretHandle.setVisibility(View.GONE);
                         focusHandle.setVisibility(View.GONE);
+
                     } else if (event.equals("TextSelection:PositionHandles")) {
-                        final boolean rtl = message.getBoolean("rtl");
                         final JSONArray positions = message.getJSONArray("positions");
                         for (int i=0; i < positions.length(); i++) {
                             JSONObject position = positions.getJSONObject(i);
-                            int left = position.getInt("left");
-                            int top = position.getInt("top");
+                            final int left = position.getInt("left");
+                            final int top = position.getInt("top");
+                            final boolean rtl = position.getBoolean("rtl");
 
                             TextSelectionHandle handle = getHandle(position.getString("handle"));
                             handle.setVisibility(position.getBoolean("hidden") ? View.GONE : View.VISIBLE);
@@ -276,11 +281,23 @@ class TextSelection extends Layer implements GeckoEventListener {
                     final int actionEnum = obj.optBoolean("showAsAction") ? GeckoMenuItem.SHOW_AS_ACTION_ALWAYS : GeckoMenuItem.SHOW_AS_ACTION_NEVER;
                     menuitem.setShowAsAction(actionEnum, R.attr.menuItemActionModeStyle);
 
-                    BitmapUtils.getDrawable(anchorHandle.getContext(), obj.optString("icon"), new BitmapLoader() {
+                    final String iconString = obj.optString("icon");
+                    BitmapUtils.getDrawable(anchorHandle.getContext(), iconString, new BitmapLoader() {
                         @Override
                         public void onBitmapFound(Drawable d) {
                             if (d != null) {
                                 menuitem.setIcon(d);
+
+                                // Dynamically add padding to align the share icon on GB devices.
+                                // To be removed in bug 1122752.
+                                if (Versions.preHC && "drawable://ic_menu_share".equals(iconString)) {
+                                    final View view = menuitem.getActionView();
+
+                                    final Resources res = view.getContext().getResources();
+                                    final int padding = res.getDimensionPixelSize(R.dimen.ab_share_padding);
+
+                                    view.setPadding(padding, padding, padding, padding);
+                                }
                             }
                         }
                     });
@@ -314,7 +331,17 @@ class TextSelection extends Layer implements GeckoEventListener {
         public void onDestroyActionMode(ActionModeCompat mode) {
             mActionMode = null;
             mCallback = null;
-            GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("TextSelection:End", null));
+            final JSONObject args = new JSONObject();
+            try {
+                args.put("selectionID", selectionID);
+            } catch (JSONException e) {
+                Log.e(LOGTAG, "Error building JSON arguments for TextSelection:End", e);
+                return;
+            }
+
+            final GeckoEvent event =
+                GeckoEvent.createBroadcastEvent("TextSelection:End", args.toString());
+            GeckoAppShell.sendEventToGecko(event);
         }
     }
 }

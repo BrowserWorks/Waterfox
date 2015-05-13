@@ -3,16 +3,13 @@
 
 // Tests that flame graph widget works properly.
 
-let {FlameGraph} = Cu.import("resource:///modules/devtools/FlameGraph.jsm", {});
-let {DOMHelpers} = Cu.import("resource:///modules/devtools/DOMHelpers.jsm", {});
+let {FlameGraph} = devtools.require("devtools/shared/widgets/FlameGraph");
 let {Promise} = devtools.require("resource://gre/modules/Promise.jsm");
-let {Hosts} = devtools.require("devtools/framework/toolbox-hosts");
 
-let test = Task.async(function*() {
+add_task(function*() {
   yield promiseTab("about:blank");
   yield performTest();
   gBrowser.removeCurrentTab();
-  finish();
 });
 
 function* performTest() {
@@ -29,7 +26,7 @@ function* performTest() {
 
   testGraph(host, graph);
 
-  graph.destroy();
+  yield graph.destroy();
   host.destroy();
 }
 

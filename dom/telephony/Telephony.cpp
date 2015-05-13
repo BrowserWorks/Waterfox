@@ -96,9 +96,9 @@ Telephony::Shutdown()
 }
 
 JSObject*
-Telephony::WrapObject(JSContext* aCx)
+Telephony::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return TelephonyBinding::Wrap(aCx, this);
+  return TelephonyBinding::Wrap(aCx, this, aGivenProto);
 }
 
 // static
@@ -167,21 +167,30 @@ bool
 Telephony::IsActiveState(uint16_t aCallState) {
   return aCallState == nsITelephonyService::CALL_STATE_DIALING ||
       aCallState == nsITelephonyService::CALL_STATE_ALERTING ||
-      aCallState == nsITelephonyService::CALL_STATE_HOLDING ||
-      aCallState == nsITelephonyService::CALL_STATE_DISCONNECTING ||
       aCallState == nsITelephonyService::CALL_STATE_CONNECTED;
 }
 
 uint32_t
-Telephony::ProvidedOrDefaultServiceId(const Optional<uint32_t>& aServiceId)
+Telephony::GetServiceId(const Optional<uint32_t>& aServiceId,
+                        bool aGetIfActiveCall)
 {
   if (aServiceId.WasPassed()) {
     return aServiceId.Value();
-  } else {
-    uint32_t serviceId = 0;
-    mService->GetDefaultServiceId(&serviceId);
-    return serviceId;
+  } else if (aGetIfActiveCall) {
+    nsTArray<nsRefPtr<TelephonyCall> > &calls = mCalls;
+    if (mGroup->CallState() == nsITelephonyService::CALL_STATE_CONNECTED) {
+      calls = mGroup->CallsArray();
+    }
+    for (uint32_t i = 0; i < calls.Length(); i++) {
+      if (IsActiveState(calls[i]->CallState())) {
+        return calls[i]->mServiceId;
+      }
+    }
   }
+
+  uint32_t serviceId = 0;
+  mService->GetDefaultServiceId(&serviceId);
+  return serviceId;
 }
 
 bool
@@ -366,10 +375,14 @@ Telephony::HandleCallInfo(nsITelephonyCallInfo* aInfo)
     nsRefPtr<TelephonyCallId> id = call->Id();
     id->UpdateNumber(number);
 
+    nsAutoString disconnectedReason;
+    aInfo->GetDisconnectedReason(disconnectedReason);
+
     // State changed.
     if (call->CallState() != callState) {
       if (callState == nsITelephonyService::CALL_STATE_DISCONNECTED) {
-        call->ChangeStateInternal(callState, true);
+        call->UpdateDisconnectedReason(disconnectedReason);
+        call->ChangeState(nsITelephonyService::CALL_STATE_DISCONNECTED);
         return NS_OK;
       }
 
@@ -436,7 +449,7 @@ already_AddRefed<Promise>
 Telephony::Dial(const nsAString& aNumber, const Optional<uint32_t>& aServiceId,
                 ErrorResult& aRv)
 {
-  uint32_t serviceId = ProvidedOrDefaultServiceId(aServiceId);
+  uint32_t serviceId = GetServiceId(aServiceId);
   nsRefPtr<Promise> promise = DialInternal(serviceId, aNumber, false, aRv);
   return promise.forget();
 }
@@ -446,7 +459,7 @@ Telephony::DialEmergency(const nsAString& aNumber,
                          const Optional<uint32_t>& aServiceId,
                          ErrorResult& aRv)
 {
-  uint32_t serviceId = ProvidedOrDefaultServiceId(aServiceId);
+  uint32_t serviceId = GetServiceId(aServiceId);
   nsRefPtr<Promise> promise = DialInternal(serviceId, aNumber, true, aRv);
   return promise.forget();
 }
@@ -458,7 +471,8 @@ Telephony::SendTones(const nsAString& aDTMFChars,
                      const Optional<uint32_t>& aServiceId,
                      ErrorResult& aRv)
 {
-  uint32_t serviceId = ProvidedOrDefaultServiceId(aServiceId);
+  uint32_t serviceId = GetServiceId(aServiceId,
+                                    true /* aGetIfActiveCall */);
 
   nsCOMPtr<nsIGlobalObject> global = do_QueryInterface(GetOwner());
   if (!global) {
@@ -495,7 +509,8 @@ Telephony::StartTone(const nsAString& aDTMFChar,
                      const Optional<uint32_t>& aServiceId,
                      ErrorResult& aRv)
 {
-  uint32_t serviceId = ProvidedOrDefaultServiceId(aServiceId);
+  uint32_t serviceId = GetServiceId(aServiceId,
+                                    true /* aGetIfActiveCall */);
 
   if (aDTMFChar.IsEmpty()) {
     NS_WARNING("Empty tone string will be ignored");
@@ -513,7 +528,8 @@ Telephony::StartTone(const nsAString& aDTMFChar,
 void
 Telephony::StopTone(const Optional<uint32_t>& aServiceId, ErrorResult& aRv)
 {
-  uint32_t serviceId = ProvidedOrDefaultServiceId(aServiceId);
+  uint32_t serviceId = GetServiceId(aServiceId,
+                                    true /* aGetIfActiveCall */);
 
   if (!IsValidServiceId(serviceId)) {
     aRv.Throw(NS_ERROR_INVALID_ARG);
@@ -599,9 +615,12 @@ Telephony::GetReady(ErrorResult& aRv) const
 // nsITelephonyListener
 
 NS_IMETHODIMP
-Telephony::CallStateChanged(nsITelephonyCallInfo* aInfo)
+Telephony::CallStateChanged(uint32_t aLength, nsITelephonyCallInfo** aAllInfo)
 {
-  return HandleCallInfo(aInfo);
+  for (uint32_t i = 0; i < aLength; ++i) {
+    HandleCallInfo(aAllInfo[i]);
+  }
+  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -669,24 +688,6 @@ Telephony::SupplementaryServiceNotification(uint32_t aServiceId,
   }
 
   NS_ENSURE_SUCCESS(rv, rv);
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-Telephony::NotifyError(uint32_t aServiceId,
-                       int32_t aCallIndex,
-                       const nsAString& aError)
-{
-  nsRefPtr<TelephonyCall> callToNotify =
-    GetCallFromEverywhere(aServiceId, aCallIndex);
-  if (!callToNotify) {
-    NS_ERROR("Don't call me with a bad call index!");
-    return NS_ERROR_UNEXPECTED;
-  }
-
-  // Set the call state to 'disconnected' and remove it from the calls list.
-  callToNotify->NotifyError(aError);
-
   return NS_OK;
 }
 

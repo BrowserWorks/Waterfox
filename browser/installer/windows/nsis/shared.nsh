@@ -23,39 +23,6 @@
   !define HKEY_USERS              0x80000003
 !endif
 
-; Does metro registration for the command execute handler
-Function RegisterCEH
-!ifdef MOZ_METRO
-  ${If} ${AtLeastWin8}
-    ${CleanupMetroBrowserHandlerValues} ${DELEGATE_EXECUTE_HANDLER_ID} \
-                                        "FirefoxURL" \
-                                        "FirefoxHTML"
-    ${AddMetroBrowserHandlerValues} ${DELEGATE_EXECUTE_HANDLER_ID} \
-                                    "$INSTDIR\CommandExecuteHandler.exe" \
-                                    $AppUserModelID \
-                                    "FirefoxURL" \
-                                    "FirefoxHTML"
-  ${EndIf}
-!endif
-FunctionEnd
-
-; If we're in Win8 make sure we have a start menu shortcut and that it has
-; the correct AppuserModelID so that the Metro browser has a Metro tile.
-Function RegisterStartMenuTile
-!ifdef MOZ_METRO
-  ${If} ${AtLeastWin8}
-    CreateShortCut "$SMPROGRAMS\${BrandFullName}.lnk" "$INSTDIR\${FileMainEXE}"
-    ${If} ${FileExists} "$SMPROGRAMS\${BrandFullName}.lnk"
-      ShellLink::SetShortCutWorkingDirectory "$SMPROGRAMS\${BrandFullName}.lnk" \
-                                             "$INSTDIR"
-      ${If} "$AppUserModelID" != ""
-        ApplicationID::Set "$SMPROGRAMS\${BrandFullName}.lnk" "$AppUserModelID" "true"
-      ${EndIf}
-    ${EndIf}
-  ${EndIf}
-!endif
-FunctionEnd
-
 !macro PostUpdate
 
   ; PostUpdate is called from both session 0 and from the user session
@@ -75,10 +42,6 @@ FunctionEnd
     ${GetParent} "$0" $0
     ${If} ${FileExists} "$0"
       ${GetLongPath} "$0" $0
-    ${EndIf}
-    ${If} "$0" == "$INSTDIR"
-      ; Win8 specific registration
-      Call RegisterStartMenuTile
     ${EndIf}
   ${EndIf}
 
@@ -223,28 +186,12 @@ FunctionEnd
 !endif
 
 ; Register the DEH
-!ifdef MOZ_METRO
-  ${If} ${AtLeastWin8}
-  ${AndIf} $9 != 0 ; We're not running in session 0
-    ; If RegisterCEH is called too close to changing the shortcut AppUserModelID
-    ; and if the tile image is not already in cache.  Then Windows won't refresh
-    ; the tile image on the start screen.  So wait before calling RegisterCEH.
-    ; We only need to do this when the DEH doesn't already exist.
-    ReadRegStr $0 HKCU "Software\Classes\FirefoxURL\shell\open\command" "DelegateExecute"
-    ${If} $0 != ${DELEGATE_EXECUTE_HANDLER_ID}
-      Sleep 3000
-    ${EndIf}
-    Call RegisterCEH
-  ${EndIf}
-!else
-  ; The metro browser is not enabled by the mozconfig.
-  ${If} ${AtLeastWin8}
-    ${RemoveDEHRegistration} ${DELEGATE_EXECUTE_HANDLER_ID} \
-                             $AppUserModelID \
-                             "FirefoxURL" \
-                             "FirefoxHTML"
-  ${EndIf}
-!endif
+${If} ${AtLeastWin8}
+  ${RemoveDEHRegistration} ${DELEGATE_EXECUTE_HANDLER_ID} \
+                           $AppUserModelID \
+                           "FirefoxURL" \
+                           "FirefoxHTML"
+${EndIf}
 !macroend
 !define PostUpdate "!insertmacro PostUpdate"
 
@@ -456,8 +403,6 @@ FunctionEnd
 
   ${AddDisabledDDEHandlerValues} "FirefoxURL" "$2" "$8,1" "${AppRegName} URL" \
                                  "true"
-  Call RegisterCEH
-
   ; An empty string is used for the 4th & 5th params because the following
   ; protocol handlers already have a display name and the additional keys
   ; required for a protocol handler.
@@ -889,18 +834,6 @@ FunctionEnd
 !macroend
 !define ResetWin8PromptKeys "!insertmacro ResetWin8PromptKeys"
 
-!ifdef MOZ_METRO
-; Resets Win8+ Metro specific splash screen info. Relies
-; on AppUserModelID.
-!macro ResetWin8MetroSplash
-  ${If} ${AtLeastWin8}
-  ${AndIf} "$AppUserModelID" != ""
-    DeleteRegKey HKCR "Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel\SystemAppData\DefaultBrowser_NOPUBLISHERID\SplashScreen\DefaultBrowser_NOPUBLISHERID!$AppUserModelID"
-  ${EndIf}
-!macroend
-!define ResetWin8MetroSplash "!insertmacro ResetWin8MetroSplash"
-!endif
-
 ; Adds SE_RESTORE_NAME privs
 !macro AcquireSERestoreName
   StrCpy $R1 0
@@ -938,7 +871,7 @@ FunctionEnd
 !macroend
 !define MountRegistryIntoHKU "!insertmacro MountRegistryIntoHKU"
 !define un.MountRegistryIntoHKU "!insertmacro MountRegistryIntoHKU"
-;
+
 ; Unmounts all user ntuser.dat files into the registry as a subkey of HKU
 !macro UnmountRegistryIntoHKU
   ; $0 is used as an index for HKEY_USERS enumeration
@@ -1556,6 +1489,72 @@ FunctionEnd
 !macroend
 !define PushFilesToCheck "!insertmacro PushFilesToCheck"
 
+
+; Pushes the string "true" to the top of the stack if the Firewall service is
+; running and pushes the string "false" to the top of the stack if it isn't.
+!define SC_MANAGER_ALL_ACCESS 0x3F
+!define SERVICE_QUERY_CONFIG 0x0001
+!define SERVICE_QUERY_STATUS 0x0004
+!define SERVICE_RUNNING 0x4
+
+!macro IsFirewallSvcRunning
+  Push $R9
+  Push $R8
+  Push $R7
+  Push $R6
+  Push "false"
+
+  System::Call 'advapi32::OpenSCManagerW(n, n, i ${SC_MANAGER_ALL_ACCESS}) i.R6'
+  ${If} $R6 != 0
+    ; MpsSvc is the Firewall service on Windows Vista and above.
+    ; When opening the service with SERVICE_QUERY_CONFIG the return value will
+    ; be 0 if the service is not installed.
+    System::Call 'advapi32::OpenServiceW(i R6, t "MpsSvc", i ${SERVICE_QUERY_CONFIG}) i.R7'
+    ${If} $R7 != 0
+      System::Call 'advapi32::CloseServiceHandle(i R7) n'
+      ; Open the service with SERVICE_QUERY_CONFIG so its status can be queried.
+      System::Call 'advapi32::OpenServiceW(i R6, t "MpsSvc", i ${SERVICE_QUERY_STATUS}) i.R7'
+    ${Else}
+      ; SharedAccess is the Firewall service on Windows XP.
+      ; When opening the service with SERVICE_QUERY_CONFIG the return value will
+      ; be 0 if the service is not installed.
+      System::Call 'advapi32::OpenServiceW(i R6, t "SharedAccess", i ${SERVICE_QUERY_CONFIG}) i.R7'
+      ${If} $R7 != 0
+        System::Call 'advapi32::CloseServiceHandle(i R7) n'
+        ; Open the service with SERVICE_QUERY_CONFIG so its status can be
+        ; queried.
+        System::Call 'advapi32::OpenServiceW(i R6, t "SharedAccess", i ${SERVICE_QUERY_STATUS}) i.R7'
+      ${EndIf}
+    ${EndIf}
+    ; Did the calls to OpenServiceW succeed?
+    ${If} $R7 != 0
+      System::Call '*(i,i,i,i,i,i,i) i.R9'
+      ; Query the current status of the service.
+      System::Call 'advapi32::QueryServiceStatus(i R7, i $R9) i'
+      System::Call '*$R9(i, i.R8)'
+      System::Free $R9
+      System::Call 'advapi32::CloseServiceHandle(i R7) n'
+      IntFmt $R8 "0x%X" $R8
+      ${If} $R8 == ${SERVICE_RUNNING}
+        Pop $R9
+        Push "true"
+      ${EndIf}
+    ${EndIf}
+    System::Call 'advapi32::CloseServiceHandle(i R6) n'
+  ${EndIf}
+
+  Exch 1
+  Pop $R6
+  Exch 1
+  Pop $R7
+  Exch 1
+  Pop $R8
+  Exch 1
+  Pop $R9
+!macroend
+!define IsFirewallSvcRunning "!insertmacro IsFirewallSvcRunning"
+!define un.IsFirewallSvcRunning "!insertmacro IsFirewallSvcRunning"
+
 ; Sets this installation as the default browser by setting the registry keys
 ; under HKEY_CURRENT_USER via registry calls and using the AppAssocReg NSIS
 ; plugin for Vista and above. This is a function instead of a macro so it is
@@ -1589,7 +1588,6 @@ Function SetAsDefaultAppUserHKCU
     ${SetStartMenuInternet} "HKCU"
     ${FixShellIconHandler} "HKCU"
     ${FixClassKeys} ; Does not use SHCTX
-    Call RegisterStartMenuTile
   ${EndIf}
 
   ${SetHandlers}
@@ -1619,8 +1617,13 @@ Function FixShortcutAppModelIDs
   ${EndIf}
 FunctionEnd
 
+; Helper for adding Firewall exceptions during install and after app update.
 Function AddFirewallEntries
-	liteFirewallW::AddRule "$INSTDIR\${FileMainEXE}" "${BrandShortName} ($INSTDIR)"
+  ${IsFirewallSvcRunning}
+  Pop $0
+  ${If} "$0" == "true"
+    liteFirewallW::AddRule "$INSTDIR\${FileMainEXE}" "${BrandShortName} ($INSTDIR)"
+  ${EndIf}
 FunctionEnd
 
 ; The !ifdef NO_LOG prevents warnings when compiling the installer.nsi due to

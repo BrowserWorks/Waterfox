@@ -27,6 +27,7 @@ struct SelectionDetails;
 
 namespace mozilla {
 class ErrorResult;
+struct AutoPrepareFocusRange;
 }
 
 struct RangeData
@@ -47,9 +48,9 @@ struct RangeData
 namespace mozilla {
 namespace dom {
 
-class Selection MOZ_FINAL : public nsISelectionPrivate,
-                            public nsWrapperCache,
-                            public nsSupportsWeakReference
+class Selection final : public nsISelectionPrivate,
+                        public nsWrapperCache,
+                        public nsSupportsWeakReference
 {
 protected:
   virtual ~Selection();
@@ -114,7 +115,6 @@ public:
   nsresult      Collapse(nsINode* aParentNode, int32_t aOffset);
   nsresult      Extend(nsINode* aParentNode, int32_t aOffset);
   nsRange*      GetRangeAt(int32_t aIndex);
-  int32_t GetRangeCount() { return mRanges.Length(); }
 
   // Get the anchor-to-focus range if we don't care which end is
   // anchor and which end is focus.
@@ -126,6 +126,7 @@ public:
   void         SetDirection(nsDirection aDir){mDirection = aDir;}
   nsresult     SetAnchorFocusToRange(nsRange *aRange);
   void         ReplaceAnchorFocusRange(nsRange *aRange);
+  void         AdjustAnchorFocusForMultiRange(nsDirection aDirection);
 
   //  NS_IMETHOD   GetPrimaryFrameForRangeEndpoint(nsIDOMNode *aNode, int32_t aOffset, bool aIsEndNode, nsIFrame **aResultFrame);
   NS_IMETHOD   GetPrimaryFrameForAnchorNode(nsIFrame **aResultFrame);
@@ -141,7 +142,7 @@ public:
 
   nsresult     StopAutoScrollTimer();
 
-  JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // WebIDL methods
   nsINode*     GetAnchorNode();
@@ -226,7 +227,7 @@ public:
     MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
   };
 private:
-
+  friend struct mozilla::AutoPrepareFocusRange;
   class ScrollSelectionIntoViewEvent;
   friend class ScrollSelectionIntoViewEvent;
 
@@ -311,6 +312,28 @@ private:
    * It determines whether we exclude -moz-user-select:none nodes or not.
    */
   bool mApplyUserSelectStyle;
+};
+
+// Stack-class to turn on/off selection batching.
+class MOZ_STACK_CLASS SelectionBatcher final
+{
+private:
+  nsRefPtr<Selection> mSelection;
+public:
+  explicit SelectionBatcher(Selection* aSelection)
+  {
+    mSelection = aSelection;
+    if (mSelection) {
+      mSelection->StartBatchChanges();
+    }
+  }
+
+  ~SelectionBatcher()
+  {
+    if (mSelection) {
+      mSelection->EndBatchChanges();
+    }
+  }
 };
 
 } // namespace dom

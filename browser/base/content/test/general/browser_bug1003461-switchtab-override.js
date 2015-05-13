@@ -4,10 +4,11 @@
 
 add_task(function* test_switchtab_override() {
   // This test is only relevant if UnifiedComplete is enabled.
-  if (!Services.prefs.getBoolPref("browser.urlbar.unifiedcomplete")) {
-    todo(false, "Stop supporting old autocomplete components.");
-    return;
-  }
+  let ucpref = Services.prefs.getBoolPref("browser.urlbar.unifiedcomplete");
+  Services.prefs.setBoolPref("browser.urlbar.unifiedcomplete", true);
+  registerCleanupFunction(() => {
+    Services.prefs.setBoolPref("browser.urlbar.unifiedcomplete", ucpref);
+  });
 
   let testURL = "http://example.org/browser/browser/base/content/test/general/dummy_page.html";
 
@@ -66,5 +67,5 @@ add_task(function* test_switchtab_override() {
   EventUtils.synthesizeKey("VK_SHIFT" , { type: "keyup" });
   yield deferred.promise;
 
-  yield promiseClearHistory();
+  yield PlacesTestUtils.clearHistory();
 });

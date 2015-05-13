@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -18,7 +20,6 @@ namespace dom {
 
 class Promise;
 class DataStore;
-class DataStoreImpl;
 class StringOrUnsignedLong;
 class OwningStringOrUnsignedLong;
 
@@ -28,7 +29,7 @@ class DataStoreChangeEventProxy;
 class WorkerDataStoreCursor;
 class WorkerGlobalScope;
 
-class WorkerDataStore MOZ_FINAL : public DOMEventTargetHelper
+class WorkerDataStore final : public DOMEventTargetHelper
 {
 public:
   NS_DECL_ISUPPORTS_INHERITED
@@ -40,7 +41,7 @@ public:
   static already_AddRefed<WorkerDataStore> Constructor(GlobalObject& aGlobal,
                                                        ErrorResult& aRv);
 
-  virtual JSObject* WrapObject(JSContext *aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // WebIDL (public APIs)
 
@@ -85,9 +86,6 @@ public:
 
   IMPL_EVENT_HANDLER(change)
 
-  // We don't use this for the WorkerDataStore.
-  void SetDataStoreImpl(DataStoreImpl& aStore, ErrorResult& aRv);
-
   void SetBackingDataStore(
     const nsMainThreadPtrHandle<DataStore>& aBackingStore);
 
@@ -101,8 +99,8 @@ private:
   nsRefPtr<DataStoreChangeEventProxy> mEventProxy;
 };
 
-class DataStoreChangeEventProxy MOZ_FINAL : public nsIDOMEventListener
-                                          , public WorkerFeature
+class DataStoreChangeEventProxy final : public nsIDOMEventListener
+                                      , public WorkerFeature
 {
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
@@ -118,7 +116,7 @@ public:
 protected:
   // WorkerFeature implementation.
 
-  bool Notify(JSContext* aCx, Status aStatus) MOZ_OVERRIDE;
+  bool Notify(JSContext* aCx, Status aStatus) override;
 
 private:
   ~DataStoreChangeEventProxy() {};

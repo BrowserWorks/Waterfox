@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -25,8 +25,8 @@ namespace indexedDB {
 
 class IDBFileHandle;
 
-class IDBFileRequest MOZ_FINAL : public DOMRequest,
-                                 public FileRequestBase
+class IDBFileRequest final : public DOMRequest,
+                             public FileRequestBase
 {
 public:
   NS_DECL_ISUPPORTS_INHERITED
@@ -39,18 +39,18 @@ public:
 
   // nsIDOMEventTarget
   virtual nsresult
-  PreHandleEvent(EventChainPreVisitor& aVisitor) MOZ_OVERRIDE;
+  PreHandleEvent(EventChainPreVisitor& aVisitor) override;
 
   // FileRequest
   virtual void
-  OnProgress(uint64_t aProgress, uint64_t aProgressMax) MOZ_OVERRIDE;
+  OnProgress(uint64_t aProgress, uint64_t aProgressMax) override;
 
   virtual nsresult
-  NotifyHelperCompleted(FileHelper* aFileHelper) MOZ_OVERRIDE;
+  NotifyHelperCompleted(FileHelper* aFileHelper) override;
 
   // nsWrapperCache
   virtual JSObject*
-  WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // WebIDL
   IDBFileHandle*

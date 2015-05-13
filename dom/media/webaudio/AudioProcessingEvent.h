@@ -14,7 +14,7 @@
 namespace mozilla {
 namespace dom {
 
-class AudioProcessingEvent : public Event
+class AudioProcessingEvent final : public Event
 {
 public:
   AudioProcessingEvent(ScriptProcessorNode* aOwner,
@@ -25,7 +25,7 @@ public:
   NS_FORWARD_TO_EVENT
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(AudioProcessingEvent, Event)
 
-  virtual JSObject* WrapObjectInternal(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObjectInternal(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   void InitEvent(AudioBuffer* aInputBuffer,
                  uint32_t aNumberOfInputChannels,

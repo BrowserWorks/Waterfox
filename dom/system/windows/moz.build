@@ -6,6 +6,11 @@
 
 SOURCES += [
     'nsHapticFeedback.cpp',
+    'WindowsLocationProvider.cpp'
+]
+
+LOCAL_INCLUDES += [
+    '/dom/geolocation'
 ]
 
 FAIL_ON_WARNINGS = True

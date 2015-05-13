@@ -56,20 +56,20 @@ MediaKeyMessageEvent::AsMediaKeyMessageEvent()
 }
 
 JSObject*
-MediaKeyMessageEvent::WrapObjectInternal(JSContext* aCx)
+MediaKeyMessageEvent::WrapObjectInternal(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return MediaKeyMessageEventBinding::Wrap(aCx, this);
+  return MediaKeyMessageEventBinding::Wrap(aCx, this, aGivenProto);
 }
 
 already_AddRefed<MediaKeyMessageEvent>
 MediaKeyMessageEvent::Constructor(EventTarget* aOwner,
-                                  const nsAString& aURL,
+                                  MediaKeyMessageType aMessageType,
                                   const nsTArray<uint8_t>& aMessage)
 {
   nsRefPtr<MediaKeyMessageEvent> e = new MediaKeyMessageEvent(aOwner);
   e->InitEvent(NS_LITERAL_STRING("message"), false, false);
+  e->mMessageType = aMessageType;
   e->mRawMessage = aMessage;
-  e->mDestinationURL = aURL;
   e->SetTrusted(true);
   return e.forget();
 }
@@ -97,7 +97,7 @@ MediaKeyMessageEvent::Constructor(const GlobalObject& aGlobal,
     aRv.Throw(NS_ERROR_OUT_OF_MEMORY);
     return nullptr;
   }
-  e->mDestinationURL = aEventInitDict.mDestinationURL;
+  e->mMessageType = aEventInitDict.mMessageType;
   e->SetTrusted(trusted);
   return e.forget();
 }
@@ -119,12 +119,6 @@ MediaKeyMessageEvent::GetMessage(JSContext* cx,
   }
   JS::ExposeObjectToActiveJS(mMessage);
   aMessage.set(mMessage);
-}
-
-void
-MediaKeyMessageEvent::GetDestinationURL(nsString& aRetVal) const
-{
-  aRetVal = mDestinationURL;
 }
 
 } // namespace dom

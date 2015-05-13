@@ -10,6 +10,7 @@
 #include "nsNetUtil.h"
 #include "nsContentUtils.h"
 #include "nsIHttpHeaderVisitor.h"
+#include "nsNullPrincipal.h"
 
 NS_IMPL_ADDREF(nsViewSourceChannel)
 NS_IMPL_RELEASE(nsViewSourceChannel)
@@ -24,6 +25,7 @@ NS_INTERFACE_MAP_BEGIN(nsViewSourceChannel)
     NS_INTERFACE_MAP_ENTRY_CONDITIONAL(nsIHttpChannel, mHttpChannel)
     NS_INTERFACE_MAP_ENTRY_CONDITIONAL(nsIHttpChannelInternal, mHttpChannelInternal)
     NS_INTERFACE_MAP_ENTRY_CONDITIONAL(nsICachingChannel, mCachingChannel)
+    NS_INTERFACE_MAP_ENTRY_CONDITIONAL(nsICacheInfoChannel, mCacheInfoChannel)
     NS_INTERFACE_MAP_ENTRY_CONDITIONAL(nsIApplicationCacheChannel, mApplicationCacheChannel)
     NS_INTERFACE_MAP_ENTRY_CONDITIONAL(nsIUploadChannel, mUploadChannel)
     NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsIRequest, nsIViewSourceChannel)
@@ -55,9 +57,23 @@ nsViewSourceChannel::Init(nsIURI* uri)
       return NS_ERROR_INVALID_ARG;
     }
 
-    rv = pService->NewChannel(path, nullptr, nullptr, getter_AddRefs(mChannel));
-    if (NS_FAILED(rv))
-      return rv;
+    // This function is called from within nsViewSourceHandler::NewChannel2
+    // and sets the right loadInfo right after returning from this function.
+    // Until then we follow the principal of least privilege and use
+    // nullPrincipal as the loadingPrincipal.
+    nsCOMPtr<nsIPrincipal> nullPrincipal = nsNullPrincipal::Create();
+    NS_ENSURE_TRUE(nullPrincipal, NS_ERROR_FAILURE);
+
+    rv = pService->NewChannel2(path,
+                               nullptr, // aOriginCharset
+                               nullptr, // aCharSet
+                               nullptr, // aLoadingNode
+                               nullPrincipal,
+                               nullptr, // aTriggeringPrincipal
+                               nsILoadInfo::SEC_NORMAL,
+                               nsIContentPolicy::TYPE_OTHER,
+                               getter_AddRefs(mChannel));
+    NS_ENSURE_SUCCESS(rv, rv);
 
     mIsSrcdocChannel = false;
 
@@ -65,6 +81,7 @@ nsViewSourceChannel::Init(nsIURI* uri)
     mHttpChannel = do_QueryInterface(mChannel);
     mHttpChannelInternal = do_QueryInterface(mChannel);
     mCachingChannel = do_QueryInterface(mChannel);
+    mCacheInfoChannel = do_QueryInterface(mChannel);
     mApplicationCacheChannel = do_QueryInterface(mChannel);
     mUploadChannel = do_QueryInterface(mChannel);
     
@@ -102,6 +119,7 @@ nsViewSourceChannel::InitSrcdoc(nsIURI* aURI, const nsAString &aSrcdoc)
     mHttpChannel = do_QueryInterface(mChannel);
     mHttpChannelInternal = do_QueryInterface(mChannel);
     mCachingChannel = do_QueryInterface(mChannel);
+    mCacheInfoChannel = do_QueryInterface(mChannel);
     mApplicationCacheChannel = do_QueryInterface(mChannel);
     mUploadChannel = do_QueryInterface(mChannel);
     return NS_OK;
@@ -529,6 +547,7 @@ nsViewSourceChannel::OnStartRequest(nsIRequest *aRequest, nsISupports *aContext)
     mChannel = do_QueryInterface(aRequest);
     mHttpChannel = do_QueryInterface(aRequest);
     mCachingChannel = do_QueryInterface(aRequest);
+    mCacheInfoChannel = do_QueryInterface(mChannel);
     mUploadChannel = do_QueryInterface(aRequest);
     
     return mListener->OnStartRequest(static_cast<nsIViewSourceChannel*>
@@ -766,6 +785,13 @@ nsViewSourceChannel::IsNoCacheResponse(bool *_retval)
 {
     return !mHttpChannel ? NS_ERROR_NULL_POINTER :
         mHttpChannel->IsNoCacheResponse(_retval);
+}
+
+NS_IMETHODIMP
+nsViewSourceChannel::IsPrivateResponse(bool *_retval)
+{
+    return !mHttpChannel ? NS_ERROR_NULL_POINTER :
+        mHttpChannel->IsPrivateResponse(_retval);
 }
 
 NS_IMETHODIMP

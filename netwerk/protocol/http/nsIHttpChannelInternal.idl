@@ -25,7 +25,7 @@ interface nsIURI;
  * The callback interface for nsIHttpChannelInternal::HTTPUpgrade()
  */
 
-[scriptable, uuid(4b967b6d-cd1c-49ae-a457-23ff76f5a2e8)]
+[scriptable, uuid(7b48d081-1dc1-4d08-b7a5-81491bf28c0e)]
 interface nsIHttpUpgradeListener : nsISupports
 {
     void onTransportAvailable(in nsISocketTransport   aTransport,
@@ -38,7 +38,8 @@ interface nsIHttpUpgradeListener : nsISupports
  * using any feature exposed by this interface, be aware that this interface
  * will change and you will be broken.  You have been warned.
  */
-[scriptable, uuid(bbf9d5bb-8daf-4909-88bc-f3b2f6a886d0)]
+[scriptable, uuid(26833ec7-4555-4f23-9281-3a12d4b76db1)]
+
 interface nsIHttpChannelInternal : nsISupports
 {
     /**
@@ -207,6 +208,12 @@ interface nsIHttpChannelInternal : nsISupports
     readonly attribute nsIURI apiRedirectToURI;
 
     /**
+     * Enable/Disable use of Alternate Services with this channel.
+     * The network.http.altsvc.enabled preference is still a pre-requisite.
+     */
+    attribute boolean allowAltSvc;
+
+    /**
      * Add a new nsIPrincipal to the redirect chain. This is the only way to
      * write to nsIRedirectHistory.redirects.
      */
@@ -221,7 +228,40 @@ interface nsIHttpChannelInternal : nsISupports
     void forceNoIntercept();
 
     /**
+     * Set by nsCORSListenerProxy if credentials should be included in
+     * cross-origin requests. false indicates "same-origin", users should still
+     * check flag LOAD_ANONYMOUS!
+     */
+    attribute boolean corsIncludeCredentials;
+
+    const unsigned long CORS_MODE_SAME_ORIGIN = 0;
+    const unsigned long CORS_MODE_NO_CORS = 1;
+    const unsigned long CORS_MODE_CORS = 2;
+    const unsigned long CORS_MODE_CORS_WITH_FORCED_PREFLIGHT = 3;
+    /**
+     * Set by nsCORSListenerProxy to indicate CORS load type. Defaults to CORS_MODE_NO_CORS.
+     */
+    attribute unsigned long corsMode;
+
+    /**
      * The URI of the top-level window that's associated with this channel.
      */
     readonly attribute nsIURI topWindowURI;
+
+    /**
+     * The network interface id that's associated with this channel.
+     */
+    attribute ACString networkInterfaceId;
+
+    /**
+     * Used only by nsChannelClassifier to resume connecting or abort the
+     * channel after a remote classification verdict.
+     */
+    void continueBeginConnect();
+
+    /**
+     * Read the proxy URI, which, if non-null, will be used to resolve
+     * proxies for this channel.
+     */
+    readonly attribute nsIURI proxyURI;
 };

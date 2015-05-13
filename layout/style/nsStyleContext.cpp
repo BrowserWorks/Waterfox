@@ -23,6 +23,7 @@
 #include "GeckoProfiler.h"
 #include "nsIDocument.h"
 #include "nsPrintfCString.h"
+#include "mozilla/Preferences.h"
 
 #ifdef DEBUG
 // #define NOISY_DEBUG
@@ -32,20 +33,55 @@ using namespace mozilla;
 
 //----------------------------------------------------------------------
 
+#ifdef DEBUG
+
+// Check that the style struct IDs are in the same order as they are
+// in nsStyleStructList.h, since when we set up the IDs, we include
+// the inherited and reset structs spearately from nsStyleStructList.h
+enum DebugStyleStruct {
+#define STYLE_STRUCT(name, checkdata_cb) eDebugStyleStruct_##name,
+#include "nsStyleStructList.h"
+#undef STYLE_STRUCT
+};
+
+#define STYLE_STRUCT(name, checkdata_cb) \
+  static_assert(static_cast<int>(eDebugStyleStruct_##name) == \
+                  static_cast<int>(eStyleStruct_##name), \
+                "Style struct IDs are not declared in order?");
+#include "nsStyleStructList.h"
+#undef STYLE_STRUCT
+
+const uint32_t nsStyleContext::sDependencyTable[] = {
+#define STYLE_STRUCT(name, checkdata_cb)
+#define STYLE_STRUCT_DEP(dep) NS_STYLE_INHERIT_BIT(dep) |
+#define STYLE_STRUCT_END() 0,
+#include "nsStyleStructList.h"
+#undef STYLE_STRUCT
+#undef STYLE_STRUCT_DEP
+#undef STYLE_STRUCT_END
+};
+
+// Whether to perform expensive assertions in the nsStyleContext destructor.
+static bool sExpensiveStyleStructAssertionsEnabled;
+#endif
 
 nsStyleContext::nsStyleContext(nsStyleContext* aParent,
                                nsIAtom* aPseudoTag,
                                nsCSSPseudoElements::Type aPseudoType,
                                nsRuleNode* aRuleNode,
                                bool aSkipParentDisplayBasedStyleFixup)
-  : mParent(aParent),
-    mChild(nullptr),
-    mEmptyChild(nullptr),
-    mPseudoTag(aPseudoTag),
-    mRuleNode(aRuleNode),
-    mCachedResetData(nullptr),
-    mBits(((uint64_t)aPseudoType) << NS_STYLE_CONTEXT_TYPE_SHIFT),
-    mRefCnt(0)
+  : mParent(aParent)
+  , mChild(nullptr)
+  , mEmptyChild(nullptr)
+  , mPseudoTag(aPseudoTag)
+  , mRuleNode(aRuleNode)
+  , mCachedResetData(nullptr)
+  , mBits(((uint64_t)aPseudoType) << NS_STYLE_CONTEXT_TYPE_SHIFT)
+  , mRefCnt(0)
+#ifdef DEBUG
+  , mFrameRefCnt(0)
+  , mComputingStruct(nsStyleStructID_None)
+#endif
 {
   // This check has to be done "backward", because if it were written the
   // more natural way it wouldn't fail even when it needed to.
@@ -53,6 +89,12 @@ nsStyleContext::nsStyleContext(nsStyleContext* aParent,
                 nsCSSPseudoElements::ePseudo_MAX,
                 "pseudo element bits no longer fit in a uint64_t");
   MOZ_ASSERT(aRuleNode);
+
+#ifdef DEBUG
+  static_assert(MOZ_ARRAY_LENGTH(nsStyleContext::sDependencyTable)
+                  == nsStyleStructID_Length,
+                "Number of items in dependency table doesn't match IDs");
+#endif
 
   mNextSibling = this;
   mPrevSibling = this;
@@ -92,26 +134,26 @@ nsStyleContext::~nsStyleContext()
                "destroying style context from old rule tree too late");
 
 #ifdef DEBUG
-#if 0
-  // Assert that the style structs we are about to destroy are not referenced
-  // anywhere else in the style context tree.  These checks are expensive,
-  // which is why they are not enabled even #ifdef DEBUG.
-  nsStyleContext* root = this;
-  while (root->mParent) {
-    root = root->mParent;
+  if (sExpensiveStyleStructAssertionsEnabled) {
+    // Assert that the style structs we are about to destroy are not referenced
+    // anywhere else in the style context tree.  These checks are expensive,
+    // which is why they are not enabled by default.
+    nsStyleContext* root = this;
+    while (root->mParent) {
+      root = root->mParent;
+    }
+    root->AssertStructsNotUsedElsewhere(this,
+                                        std::numeric_limits<int32_t>::max());
+  } else {
+    // In DEBUG builds when the pref is not enabled, we perform a more limited
+    // check just of the children of this style context.
+    AssertStructsNotUsedElsewhere(this, 2);
   }
-  root->AssertStructsNotUsedElsewhere(this,
-                                      std::numeric_limits<int32_t>::max());
-#else
-  // In DEBUG builds we perform a more limited check just of the children
-  // of this style context.
-  AssertStructsNotUsedElsewhere(this, 2);
-#endif
 #endif
 
   mRuleNode->Release();
 
-  styleSet->NotifyStyleContextDestroyed(presContext, this);
+  styleSet->NotifyStyleContextDestroyed(this);
 
   if (mParent) {
     mParent->RemoveChild(this);
@@ -257,6 +299,12 @@ nsStyleContext::MoveTo(nsStyleContext* aNewParent)
 {
   MOZ_ASSERT(aNewParent != mParent);
 
+  // This function shouldn't be getting called if the parents have different
+  // values for some flags in mBits, because if that were the case we would need
+  // to recompute those bits for |this|. (TODO: add more flags to |mask|.)
+  DebugOnly<uint64_t> mask = NS_STYLE_IN_DISPLAY_NONE_SUBTREE;
+  MOZ_ASSERT((mParent->mBits & mask) == (aNewParent->mBits & mask));
+
   // Assertions checking for visited style are just to avoid some tricky
   // cases we can't be bothered handling at the moment.
   MOZ_ASSERT(!IsStyleIfVisited());
@@ -300,7 +348,7 @@ nsStyleContext::FindChildWithRules(const nsIAtom* aPseudoTag,
         } else {
           match = !child->GetStyleIfVisited();
         }
-        if (match) {
+        if (match && !(child->mBits & NS_STYLE_INELIGIBLE_FOR_SHARING)) {
           result = child;
           break;
         }
@@ -398,7 +446,6 @@ nsStyleContext::GetUniqueStyleData(const nsStyleStructID& aSID)
     break;
 
   UNIQUE_CASE(Display)
-  UNIQUE_CASE(Background)
   UNIQUE_CASE(Text)
   UNIQUE_CASE(TextReset)
 
@@ -412,6 +459,41 @@ nsStyleContext::GetUniqueStyleData(const nsStyleStructID& aSID)
   SetStyle(aSID, result);
   mBits &= ~static_cast<uint64_t>(nsCachedStyleData::GetBitForSID(aSID));
 
+  return result;
+}
+
+// This is an evil function, but less evil than GetUniqueStyleData. It
+// creates an empty style struct for this nsStyleContext.
+void*
+nsStyleContext::CreateEmptyStyleData(const nsStyleStructID& aSID)
+{
+  MOZ_ASSERT(!mChild && !mEmptyChild &&
+             !(mBits & nsCachedStyleData::GetBitForSID(aSID)) &&
+             !GetCachedStyleData(aSID),
+             "This style should not have been computed");
+
+  void* result;
+  nsPresContext* presContext = PresContext();
+  switch (aSID) {
+#define UNIQUE_CASE(c_, ...) \
+    case eStyleStruct_##c_: \
+      result = new (presContext) nsStyle##c_(__VA_ARGS__); \
+      break;
+
+  UNIQUE_CASE(Border, presContext)
+  UNIQUE_CASE(Padding)
+
+#undef UNIQUE_CASE
+
+  default:
+    NS_ERROR("Struct type not supported.");
+    return nullptr;
+  }
+
+  // The new struct is owned by this style context, but that we don't
+  // need to clear the bit in mBits because we've asserted that at the
+  // top of this function.
+  SetStyle(aSID, result);
   return result;
 }
 
@@ -439,6 +521,55 @@ nsStyleContext::SetStyle(nsStyleStructID aSID, void* aStruct)
   NS_ASSERTION(!*dataSlot || (mBits & nsCachedStyleData::GetBitForSID(aSID)),
                "Going to leak style data");
   *dataSlot = aStruct;
+}
+
+static bool
+ShouldSuppressLineBreak(const nsStyleDisplay* aStyleDisplay,
+                        const nsStyleContext* aContainerContext,
+                        const nsStyleDisplay* aContainerDisplay)
+{
+  // The display change should only occur for "in-flow" children
+  if (aStyleDisplay->IsOutOfFlowStyle()) {
+    return false;
+  }
+  if (aContainerContext->ShouldSuppressLineBreak()) {
+    // Line break suppressing bit is propagated to any children of line
+    // participants, which include inline and inline ruby boxes.
+    if (aContainerDisplay->mDisplay == NS_STYLE_DISPLAY_INLINE ||
+        aContainerDisplay->mDisplay == NS_STYLE_DISPLAY_RUBY ||
+        aContainerDisplay->mDisplay == NS_STYLE_DISPLAY_RUBY_BASE_CONTAINER) {
+      return true;
+    }
+  }
+  // Any descendant of ruby level containers is non-breakable, but
+  // the level containers themselves are breakable. We have to check
+  // the container display type against all ruby display type here
+  // because any of the ruby boxes could be anonymous.
+  // Note that, when certain HTML tags, e.g. form controls, have ruby
+  // level container display type, they could also escape from this flag
+  // while they shouldn't. However, it is generally fine since they
+  // won't usually break the assertion that there is no line break
+  // inside ruby, because:
+  // 1. their display types, the ruby level container types, are inline-
+  //    outside, which means they won't cause any forced line break; and
+  // 2. they never start an inline span, which means their children, if
+  //    any, won't be able to break the line its ruby ancestor lays; and
+  // 3. their parent frame is always a ruby content frame (due to
+  //    anonymous ruby box generation), which makes line layout suppress
+  //    any optional line break around this frame.
+  // However, there is one special case which is BR tag, because it
+  // directly affects the line layout. This case is handled by the BR
+  // frame which checks the flag of its parent frame instead of itself.
+  if ((aContainerDisplay->IsRubyDisplayType() &&
+       aStyleDisplay->mDisplay != NS_STYLE_DISPLAY_RUBY_BASE_CONTAINER &&
+       aStyleDisplay->mDisplay != NS_STYLE_DISPLAY_RUBY_TEXT_CONTAINER) ||
+      // Since ruby base and ruby text may exist themselves without any
+      // non-anonymous frame outside, we should also check them.
+      aStyleDisplay->mDisplay == NS_STYLE_DISPLAY_RUBY_BASE ||
+      aStyleDisplay->mDisplay == NS_STYLE_DISPLAY_RUBY_TEXT) {
+    return true;
+  }
+  return false;
 }
 
 void
@@ -487,7 +618,14 @@ nsStyleContext::ApplyStyleFixups(bool aSkipParentDisplayBasedStyleFixup)
   // doesn't get confused by looking at the style data.
   if (!mParent) {
     uint8_t displayVal = disp->mDisplay;
-    nsRuleNode::EnsureBlockDisplay(displayVal, true);
+    if (displayVal != NS_STYLE_DISPLAY_CONTENTS) {
+      nsRuleNode::EnsureBlockDisplay(displayVal, true);
+    } else {
+      // http://dev.w3.org/csswg/css-display/#transformations
+      // "... a display-outside of 'contents' computes to block-level
+      //  on the root element."
+      displayVal = NS_STYLE_DISPLAY_BLOCK;
+    }
     if (displayVal != disp->mDisplay) {
       nsStyleDisplay *mutable_display =
         static_cast<nsStyleDisplay*>(GetUniqueStyleData(eStyleStruct_Display));
@@ -560,12 +698,8 @@ nsStyleContext::ApplyStyleFixups(bool aSkipParentDisplayBasedStyleFixup)
       }
     }
 
-    // The display change should only occur for "in-flow" children
-    if (!disp->IsOutOfFlowStyle() &&
-        ((containerDisp->mDisplay == NS_STYLE_DISPLAY_INLINE &&
-          containerContext->IsInlineDescendantOfRuby()) ||
-         containerDisp->IsRubyDisplayType())) {
-      mBits |= NS_STYLE_IS_INLINE_DESCENDANT_OF_RUBY;
+    if (::ShouldSuppressLineBreak(disp, containerContext, containerDisp)) {
+      mBits |= NS_STYLE_SUPPRESS_LINEBREAK;
       uint8_t displayVal = disp->mDisplay;
       nsRuleNode::EnsureInlineDisplay(displayVal);
       if (displayVal != disp->mDisplay) {
@@ -573,6 +707,54 @@ nsStyleContext::ApplyStyleFixups(bool aSkipParentDisplayBasedStyleFixup)
           static_cast<nsStyleDisplay*>(GetUniqueStyleData(eStyleStruct_Display));
         mutable_display->mDisplay = displayVal;
       }
+    }
+  }
+
+  // Set the NS_STYLE_IN_DISPLAY_NONE_SUBTREE bit
+  if ((mParent && mParent->IsInDisplayNoneSubtree()) ||
+      disp->mDisplay == NS_STYLE_DISPLAY_NONE) {
+    mBits |= NS_STYLE_IN_DISPLAY_NONE_SUBTREE;
+  }
+
+  // Suppress border/padding of ruby level containers
+  if (disp->mDisplay == NS_STYLE_DISPLAY_RUBY_BASE_CONTAINER ||
+      disp->mDisplay == NS_STYLE_DISPLAY_RUBY_TEXT_CONTAINER) {
+    CreateEmptyStyleData(eStyleStruct_Border);
+    CreateEmptyStyleData(eStyleStruct_Padding);
+  }
+  if (disp->IsRubyDisplayType()) {
+    // Per CSS Ruby spec section Bidi Reordering, for all ruby boxes,
+    // the 'normal' and 'embed' values of 'unicode-bidi' should compute to
+    // 'isolate', and 'bidi-override' should compute to 'isolate-override'.
+    const nsStyleTextReset* textReset = StyleTextReset();
+    uint8_t unicodeBidi = textReset->mUnicodeBidi;
+    if (unicodeBidi == NS_STYLE_UNICODE_BIDI_NORMAL ||
+        unicodeBidi == NS_STYLE_UNICODE_BIDI_EMBED) {
+      unicodeBidi = NS_STYLE_UNICODE_BIDI_ISOLATE;
+    } else if (unicodeBidi == NS_STYLE_UNICODE_BIDI_OVERRIDE) {
+      unicodeBidi = NS_STYLE_UNICODE_BIDI_ISOLATE_OVERRIDE;
+    }
+    if (unicodeBidi != textReset->mUnicodeBidi) {
+      auto mutableTextReset = static_cast<nsStyleTextReset*>(
+        GetUniqueStyleData(eStyleStruct_TextReset));
+      mutableTextReset->mUnicodeBidi = unicodeBidi;
+    }
+  }
+
+  // Elements with display:inline whose writing-mode is orthogonal to their
+  // parent's mode will be converted to display:inline-block.
+  if (disp->mDisplay == NS_STYLE_DISPLAY_INLINE && mParent) {
+    // We don't need the full mozilla::WritingMode value (incorporating dir and
+    // text-orientation) here, all we care about is vertical vs horizontal.
+    bool thisHorizontal =
+      StyleVisibility()->mWritingMode == NS_STYLE_WRITING_MODE_HORIZONTAL_TB;
+    bool parentHorizontal = mParent->StyleVisibility()->mWritingMode ==
+                              NS_STYLE_WRITING_MODE_HORIZONTAL_TB;
+    if (thisHorizontal != parentHorizontal) {
+      nsStyleDisplay *mutable_display =
+        static_cast<nsStyleDisplay*>(GetUniqueStyleData(eStyleStruct_Display));
+      mutable_display->mOriginalDisplay = mutable_display->mDisplay =
+        NS_STYLE_DISPLAY_INLINE_BLOCK;
     }
   }
 
@@ -588,9 +770,9 @@ nsStyleContext::CalcStyleDifference(nsStyleContext* aOther,
   PROFILER_LABEL("nsStyleContext", "CalcStyleDifference",
     js::ProfileEntry::Category::CSS);
 
-  NS_ABORT_IF_FALSE(NS_IsHintSubset(aParentHintsNotHandledForDescendants,
-                                    nsChangeHint_Hints_NotHandledForDescendants),
-                    "caller is passing inherited hints, but shouldn't be");
+  MOZ_ASSERT(NS_IsHintSubset(aParentHintsNotHandledForDescendants,
+                             nsChangeHint_Hints_NotHandledForDescendants),
+             "caller is passing inherited hints, but shouldn't be");
 
   static_assert(nsStyleStructID_Length <= 32,
                 "aEqualStructs is not big enough");
@@ -769,7 +951,10 @@ nsStyleContext::CalcStyleDifference(nsStyleContext* aOther,
       const nsStyleBorder *otherVisBorder = otherVis->StyleBorder();
       NS_FOR_CSS_SIDES(side) {
         bool thisFG, otherFG;
-        nscolor thisColor, otherColor;
+        // Dummy initialisations to keep Valgrind/Memcheck happy.
+        // See bug 1122375 comment 4.
+        nscolor thisColor = NS_RGBA(0, 0, 0, 0);
+        nscolor otherColor = NS_RGBA(0, 0, 0, 0);
         thisVisBorder->GetBorderColor(side, thisColor, thisFG);
         otherVisBorder->GetBorderColor(side, otherColor, otherFG);
         if (thisFG != otherFG || (!thisFG && thisColor != otherColor)) {
@@ -809,7 +994,10 @@ nsStyleContext::CalcStyleDifference(nsStyleContext* aOther,
     if (!change && PeekStyleTextReset()) {
       const nsStyleTextReset *thisVisTextReset = thisVis->StyleTextReset();
       const nsStyleTextReset *otherVisTextReset = otherVis->StyleTextReset();
-      nscolor thisVisDecColor, otherVisDecColor;
+      // Dummy initialisations to keep Valgrind/Memcheck happy.
+      // See bug 1122375 comment 4.
+      nscolor thisVisDecColor = NS_RGBA(0, 0, 0, 0);
+      nscolor otherVisDecColor = NS_RGBA(0, 0, 0, 0);
       bool thisVisDecColorIsFG, otherVisDecColorIsFG;
       thisVisTextReset->GetDecorationColor(thisVisDecColor,
                                            thisVisDecColorIsFG);
@@ -967,8 +1155,8 @@ ExtractAnimationValue(nsCSSProperty aProperty,
   DebugOnly<bool> success =
     StyleAnimationValue::ExtractComputedValue(aProperty, aStyleContext,
                                               aResult);
-  NS_ABORT_IF_FALSE(success,
-                    "aProperty must be extractable by StyleAnimationValue");
+  MOZ_ASSERT(success,
+             "aProperty must be extractable by StyleAnimationValue");
 }
 
 static nscolor
@@ -1004,9 +1192,9 @@ nsStyleContext::GetVisitedDependentColor(nsCSSProperty aProperty)
   NS_ASSERTION(aProperty == eCSSProperty_color ||
                aProperty == eCSSProperty_background_color ||
                aProperty == eCSSProperty_border_top_color ||
-               aProperty == eCSSProperty_border_right_color_value ||
+               aProperty == eCSSProperty_border_right_color ||
                aProperty == eCSSProperty_border_bottom_color ||
-               aProperty == eCSSProperty_border_left_color_value ||
+               aProperty == eCSSProperty_border_left_color ||
                aProperty == eCSSProperty_outline_color ||
                aProperty == eCSSProperty__moz_column_rule_color ||
                aProperty == eCSSProperty_text_decoration_color ||
@@ -1174,6 +1362,7 @@ nsStyleContext::ClearCachedInheritedStyleDataOnDescendants(uint32_t aStructs)
 void
 nsStyleContext::DoClearCachedInheritedStyleDataOnDescendants(uint32_t aStructs)
 {
+  NS_ASSERTION(mFrameRefCnt == 0, "frame still referencing style context");
   for (nsStyleStructID i = nsStyleStructID_Inherited_Start;
        i < nsStyleStructID_Inherited_Start + nsStyleStructID_Inherited_Count;
        i = nsStyleStructID(i + 1)) {
@@ -1207,6 +1396,29 @@ nsStyleContext::DoClearCachedInheritedStyleDataOnDescendants(uint32_t aStructs)
   }
 
   ClearCachedInheritedStyleDataOnDescendants(aStructs);
+}
+
+void
+nsStyleContext::SetIneligibleForSharing()
+{
+  if (mBits & NS_STYLE_INELIGIBLE_FOR_SHARING) {
+    return;
+  }
+  mBits |= NS_STYLE_INELIGIBLE_FOR_SHARING;
+  if (mChild) {
+    nsStyleContext* child = mChild;
+    do {
+      child->SetIneligibleForSharing();
+      child = child->mNextSibling;
+    } while (mChild != child);
+  }
+  if (mEmptyChild) {
+    nsStyleContext* child = mEmptyChild;
+    do {
+      child->SetIneligibleForSharing();
+      child = child->mNextSibling;
+    } while (mEmptyChild != child);
+  }
 }
 
 #ifdef RESTYLE_LOGGING
@@ -1299,5 +1511,15 @@ nsStyleContext::LogStyleContextTree(bool aFirst, uint32_t aStructs)
       child = child->mNextSibling;
     } while (mEmptyChild != child);
   }
+}
+#endif
+
+#ifdef DEBUG
+/* static */ void
+nsStyleContext::Initialize()
+{
+  Preferences::AddBoolVarCache(
+      &sExpensiveStyleStructAssertionsEnabled,
+      "layout.css.expensive-style-struct-assertions.enabled");
 }
 #endif

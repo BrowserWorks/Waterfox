@@ -28,8 +28,9 @@ namespace css {
 
 struct ImageValue;
 
-class ImageLoader MOZ_FINAL : public imgINotificationObserver,
-                              public imgIOnloadBlocker {
+class ImageLoader final : public imgINotificationObserver,
+                          public imgIOnloadBlocker
+{
 public:
   typedef mozilla::css::ImageValue Image;
 

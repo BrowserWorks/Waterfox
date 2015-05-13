@@ -3,16 +3,18 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* This content script should work in any browser or iframe and should not
+ * depend on the frame being contained in tabbrowser. */
+
 let {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource:///modules/ContentWebRTC.jsm");
+Cu.import("resource:///modules/ContentObservers.jsm");
 Cu.import("resource://gre/modules/InlineSpellChecker.jsm");
 Cu.import("resource://gre/modules/InlineSpellCheckerContent.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "E10SUtils",
-  "resource:///modules/E10SUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "BrowserUtils",
   "resource://gre/modules/BrowserUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ContentLinkHandler",
@@ -27,22 +29,10 @@ XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
   "resource://gre/modules/PrivateBrowsingUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "FormSubmitObserver",
   "resource:///modules/FormSubmitObserver.jsm");
-XPCOMUtils.defineLazyGetter(this, "SimpleServiceDiscovery", function() {
-  let ssdp = Cu.import("resource://gre/modules/SimpleServiceDiscovery.jsm", {}).SimpleServiceDiscovery;
-  // Register targets
-  ssdp.registerDevice({
-    id: "roku:ecp",
-    target: "roku:ecp",
-    factory: function(aService) {
-      Cu.import("resource://gre/modules/RokuApp.jsm");
-      return new RokuApp(aService);
-    },
-    mirror: true,
-    types: ["video/mp4"],
-    extensions: ["mp4"]
-  });
-  return ssdp;
-});
+XPCOMUtils.defineLazyModuleGetter(this, "PageMetadata",
+  "resource://gre/modules/PageMetadata.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PlacesUIUtils",
+  "resource:///modules/PlacesUIUtils.jsm");
 XPCOMUtils.defineLazyGetter(this, "PageMenuChild", function() {
   let tmp = {};
   Cu.import("resource://gre/modules/PageMenu.jsm", tmp);
@@ -54,58 +44,6 @@ var global = this;
 
 // Load the form validation popup handler
 var formSubmitObserver = new FormSubmitObserver(content, this);
-
-addMessageListener("Browser:HideSessionRestoreButton", function (message) {
-  // Hide session restore button on about:home
-  let doc = content.document;
-  let container;
-  if (doc.documentURI.toLowerCase() == "about:home" &&
-      (container = doc.getElementById("sessionRestoreContainer"))) {
-    container.hidden = true;
-  }
-});
-
-addMessageListener("Browser:Reload", function(message) {
-  /* First, we'll try to use the session history object to reload so
-   * that framesets are handled properly. If we're in a special
-   * window (such as view-source) that has no session history, fall
-   * back on using the web navigation's reload method.
-   */
-
-  let webNav = docShell.QueryInterface(Ci.nsIWebNavigation);
-  try {
-    let sh = webNav.sessionHistory;
-    if (sh)
-      webNav = sh.QueryInterface(Ci.nsIWebNavigation);
-  } catch (e) {
-  }
-
-  let reloadFlags = message.data.flags;
-  let handlingUserInput;
-  try {
-    handlingUserInput = content.QueryInterface(Ci.nsIInterfaceRequestor)
-                               .getInterface(Ci.nsIDOMWindowUtils)
-                               .setHandlingUserInput(message.data.handlingUserInput);
-    webNav.reload(reloadFlags);
-  } catch (e) {
-  } finally {
-    handlingUserInput.destruct();
-  }
-});
-
-addMessageListener("MixedContent:ReenableProtection", function() {
-  docShell.mixedContentChannel = null;
-});
-
-addMessageListener("SecondScreen:tab-mirror", function(message) {
-  let app = SimpleServiceDiscovery.findAppForService(message.data.service);
-  if (app) {
-    let width = content.innerWidth;
-    let height = content.innerHeight;
-    let viewport = {cssWidth: width, cssHeight: height, width: width, height: height};
-    app.mirror(function() {}, content, viewport, function() {}, content);
-  }
-});
 
 addMessageListener("ContextMenu:DoCustomCommand", function(message) {
   PageMenuChild.executeMenu(message.data);
@@ -148,6 +86,40 @@ let handleContentContextMenu = function (event) {
   subject.wrappedJSObject = subject;
   Services.obs.notifyObservers(subject, "content-contextmenu", null);
 
+  let doc = event.target.ownerDocument;
+  let docLocation = doc.location.href;
+  let charSet = doc.characterSet;
+  let baseURI = doc.baseURI;
+  let referrer = doc.referrer;
+  let referrerPolicy = doc.referrerPolicy;
+  let frameOuterWindowID = doc.defaultView.QueryInterface(Ci.nsIInterfaceRequestor)
+                                          .getInterface(Ci.nsIDOMWindowUtils)
+                                          .outerWindowID;
+
+  // Media related cache info parent needs for saving
+  let contentType = null;
+  let contentDisposition = null;
+  if (event.target.nodeType == Ci.nsIDOMNode.ELEMENT_NODE &&
+      event.target instanceof Ci.nsIImageLoadingContent &&
+      event.target.currentURI) {
+    try {
+      let imageCache = 
+        Cc["@mozilla.org/image/tools;1"].getService(Ci.imgITools)
+                                        .getImgCacheForDocument(doc);
+      let props =
+        imageCache.findEntryProperties(event.target.currentURI);
+      try {
+        contentType = props.get("type", Ci.nsISupportsCString).data;
+      } catch(e) {}
+      try {
+        contentDisposition =
+          props.get("content-disposition", Ci.nsISupportsCString).data;
+      } catch(e) {}
+    } catch(e) {}
+  }
+
+  let selectionInfo = BrowserUtils.getSelectionDetails(content);
+
   if (Services.appinfo.processType == Services.appinfo.PROCESS_TYPE_CONTENT) {
     let editFlags = SpellCheckHelper.isEditable(event.target, content);
     let spellInfo;
@@ -157,8 +129,21 @@ let handleContentContextMenu = function (event) {
         InlineSpellCheckerContent.initContextMenu(event, editFlags, this);
     }
 
+    // Set the event target first as the copy image command needs it to
+    // determine what was context-clicked on. Then, update the state of the
+    // commands on the context menu.
+    docShell.contentViewer.QueryInterface(Ci.nsIContentViewerEdit)
+            .setCommandNode(event.target);
+    event.target.ownerDocument.defaultView.updateCommands("contentcontextmenu");
+
     let customMenuItems = PageMenuChild.build(event.target);
-    sendSyncMessage("contextmenu", { editFlags, spellInfo, customMenuItems, addonInfo }, { event, popupNode: event.target });
+    let principal = doc.nodePrincipal;
+    sendSyncMessage("contextmenu",
+                    { editFlags, spellInfo, customMenuItems, addonInfo,
+                      principal, docLocation, charSet, baseURI, referrer,
+                      referrerPolicy, contentType, contentDisposition,
+                      frameOuterWindowID, selectionInfo },
+                    { event, popupNode: event.target });
   }
   else {
     // Break out to the parent window and pass the add-on info along
@@ -170,6 +155,14 @@ let handleContentContextMenu = function (event) {
       popupNode: event.target,
       browser: browser,
       addonInfo: addonInfo,
+      documentURIObject: doc.documentURIObject,
+      docLocation: docLocation,
+      charSet: charSet,
+      referrer: referrer,
+      referrerPolicy: referrerPolicy,
+      contentType: contentType,
+      contentDisposition: contentDisposition,
+      selectionInfo: selectionInfo,
     };
   }
 }
@@ -219,6 +212,15 @@ let AboutNetErrorListener = {
     if (automatic) {
       this.onSendReport(evt);
     }
+    // hide parts of the UI we don't need yet
+    let contentDoc = content.document;
+
+    let reportSendingMsg = contentDoc.getElementById("reportSendingMessage");
+    let reportSentMsg = contentDoc.getElementById("reportSentMessage");
+    let retryBtn = contentDoc.getElementById("reportCertificateErrorRetry");
+    reportSendingMsg.style.display = "none";
+    reportSentMsg.style.display = "none";
+    retryBtn.style.display = "none";
   },
 
   onSetAutomatic: function(evt) {
@@ -245,22 +247,21 @@ let AboutNetErrorListener = {
           reportBtn.style.display = "none";
           retryBtn.style.display = "none";
           reportSentMsg.style.display = "none";
-          reportSendingMsg.style.display = "inline";
+          reportSendingMsg.style.removeProperty("display");
           break;
         case "error":
           // show the retry button
-          retryBtn.style.display = "inline";
+          retryBtn.style.removeProperty("display");
           reportSendingMsg.style.display = "none";
           break;
         case "complete":
           // Show a success indicator
-          reportSentMsg.style.display = "inline";
+          reportSentMsg.style.removeProperty("display");
           reportSendingMsg.style.display = "none";
           break;
         }
       }
     });
-
 
     let failedChannel = docShell.failedChannel;
     let location = contentDoc.location.href;
@@ -285,181 +286,13 @@ let AboutNetErrorListener = {
 
 AboutNetErrorListener.init(this);
 
-let AboutHomeListener = {
-  init: function(chromeGlobal) {
-    chromeGlobal.addEventListener('AboutHomeLoad', this, false, true);
-  },
-
-  get isAboutHome() {
-    return content.document.documentURI.toLowerCase() == "about:home";
-  },
-
-  handleEvent: function(aEvent) {
-    if (!this.isAboutHome) {
-      return;
-    }
-    switch (aEvent.type) {
-      case "AboutHomeLoad":
-        this.onPageLoad();
-        break;
-      case "AboutHomeSearchEvent":
-        this.onSearch(aEvent);
-        break;
-      case "AboutHomeSearchPanel":
-        this.onOpenSearchPanel(aEvent);
-        break;
-      case "click":
-        this.onClick(aEvent);
-        break;
-      case "pagehide":
-        this.onPageHide(aEvent);
-        break;
-    }
-  },
-
-  receiveMessage: function(aMessage) {
-    if (!this.isAboutHome) {
-      return;
-    }
-    switch (aMessage.name) {
-      case "AboutHome:Update":
-        this.onUpdate(aMessage.data);
-        break;
-      case "AboutHome:FocusInput":
-        this.onFocusInput();
-        break;
-    }
-  },
-
-  onUpdate: function(aData) {
-    let doc = content.document;
-    if (aData.showRestoreLastSession && !PrivateBrowsingUtils.isContentWindowPrivate(content))
-      doc.getElementById("launcher").setAttribute("session", "true");
-
-    // Inject search engine and snippets URL.
-    let docElt = doc.documentElement;
-    // set the following attributes BEFORE searchEngineName, which triggers to
-    // show the snippets when it's set.
-    docElt.setAttribute("snippetsURL", aData.snippetsURL);
-    if (aData.showKnowYourRights)
-      docElt.setAttribute("showKnowYourRights", "true");
-    docElt.setAttribute("snippetsVersion", aData.snippetsVersion);
-    docElt.setAttribute("searchEngineName", aData.defaultEngineName);
-  },
-
-  onPageLoad: function() {
-    let doc = content.document;
-    if (doc.documentElement.hasAttribute("hasBrowserHandlers")) {
-      return;
-    }
-
-    doc.documentElement.setAttribute("hasBrowserHandlers", "true");
-    addMessageListener("AboutHome:Update", this);
-    addMessageListener("AboutHome:FocusInput", this);
-    addEventListener("click", this, true);
-    addEventListener("pagehide", this, true);
-
-    if (!Services.prefs.getBoolPref("browser.search.showOneOffButtons")) {
-      doc.documentElement.setAttribute("searchUIConfiguration", "oldsearchui");
-    }
-
-    sendAsyncMessage("AboutHome:RequestUpdate");
-    doc.addEventListener("AboutHomeSearchEvent", this, true, true);
-    doc.addEventListener("AboutHomeSearchPanel", this, true, true);
-  },
-
-  onClick: function(aEvent) {
-    if (!aEvent.isTrusted || // Don't trust synthetic events
-        aEvent.button == 2 || aEvent.target.localName != "button") {
-      return;
-    }
-
-    let originalTarget = aEvent.originalTarget;
-    let ownerDoc = originalTarget.ownerDocument;
-    if (ownerDoc.documentURI != "about:home") {
-      // This shouldn't happen, but we're being defensive.
-      return;
-    }
-
-    let elmId = originalTarget.getAttribute("id");
-
-    switch (elmId) {
-      case "restorePreviousSession":
-        sendAsyncMessage("AboutHome:RestorePreviousSession");
-        ownerDoc.getElementById("launcher").removeAttribute("session");
-        break;
-
-      case "downloads":
-        sendAsyncMessage("AboutHome:Downloads");
-        break;
-
-      case "bookmarks":
-        sendAsyncMessage("AboutHome:Bookmarks");
-        break;
-
-      case "history":
-        sendAsyncMessage("AboutHome:History");
-        break;
-
-      case "apps":
-        sendAsyncMessage("AboutHome:Apps");
-        break;
-
-      case "addons":
-        sendAsyncMessage("AboutHome:Addons");
-        break;
-
-      case "sync":
-        sendAsyncMessage("AboutHome:Sync");
-        break;
-
-      case "settings":
-        sendAsyncMessage("AboutHome:Settings");
-        break;
-
-      case "searchIcon":
-        sendAsyncMessage("AboutHome:OpenSearchPanel", null, { anchor: originalTarget });
-        break;
-    }
-  },
-
-  onPageHide: function(aEvent) {
-    if (aEvent.target.defaultView.frameElement) {
-      return;
-    }
-    removeMessageListener("AboutHome:Update", this);
-    removeEventListener("click", this, true);
-    removeEventListener("pagehide", this, true);
-    if (aEvent.target.documentElement) {
-      aEvent.target.documentElement.removeAttribute("hasBrowserHandlers");
-    }
-  },
-
-  onSearch: function(aEvent) {
-    sendAsyncMessage("AboutHome:Search", { searchData: aEvent.detail });
-  },
-
-  onOpenSearchPanel: function(aEvent) {
-    sendAsyncMessage("AboutHome:OpenSearchPanel");
-  },
-
-  onFocusInput: function () {
-    let searchInput = content.document.getElementById("searchText");
-    if (searchInput) {
-      searchInput.focus();
-    }
-  },
-};
-AboutHomeListener.init(this);
-
-
 // An event listener for custom "WebChannelMessageToChrome" events on pages
 addEventListener("WebChannelMessageToChrome", function (e) {
   // if target is window then we want the document principal, otherwise fallback to target itself.
   let principal = e.target.nodePrincipal ? e.target.nodePrincipal : e.target.document.nodePrincipal;
 
   if (e.detail) {
-    sendAsyncMessage("WebChannelMessageToChrome", e.detail, null, principal);
+    sendAsyncMessage("WebChannelMessageToChrome", e.detail, { eventTarget: e.target }, principal);
   } else  {
     Cu.reportError("WebChannel message failed. No message detail.");
   }
@@ -468,77 +301,33 @@ addEventListener("WebChannelMessageToChrome", function (e) {
 // Add message listener for "WebChannelMessageToContent" messages from chrome scripts
 addMessageListener("WebChannelMessageToContent", function (e) {
   if (e.data) {
-    content.dispatchEvent(new content.CustomEvent("WebChannelMessageToContent", {
-      detail: Cu.cloneInto({
-        id: e.data.id,
-        message: e.data.message,
-      }, content),
-    }));
+    // e.objects.eventTarget will be defined if sending a response to
+    // a WebChannelMessageToChrome event. An unsolicited send
+    // may not have an eventTarget defined, in this case send to the
+    // main content window.
+    let eventTarget = e.objects.eventTarget || content;
+
+    // if eventTarget is window then we want the document principal,
+    // otherwise use target itself.
+    let targetPrincipal = eventTarget instanceof Ci.nsIDOMWindow ? eventTarget.document.nodePrincipal : eventTarget.nodePrincipal;
+
+    if (e.principal.subsumes(targetPrincipal)) {
+      // if eventTarget is a window, use it as the targetWindow, otherwise
+      // find the window that owns the eventTarget.
+      let targetWindow = eventTarget instanceof Ci.nsIDOMWindow ? eventTarget : eventTarget.ownerDocument.defaultView;
+
+      eventTarget.dispatchEvent(new targetWindow.CustomEvent("WebChannelMessageToContent", {
+        detail: Cu.cloneInto({
+          id: e.data.id,
+          message: e.data.message,
+        }, targetWindow),
+      }));
+    } else {
+      Cu.reportError("WebChannel message failed. Principal mismatch.");
+    }
   } else {
     Cu.reportError("WebChannel message failed. No message data.");
   }
-});
-
-
-let ContentSearchMediator = {
-
-  whitelist: new Set([
-    "about:home",
-    "about:newtab",
-  ]),
-
-  init: function (chromeGlobal) {
-    chromeGlobal.addEventListener("ContentSearchClient", this, true, true);
-    addMessageListener("ContentSearch", this);
-  },
-
-  handleEvent: function (event) {
-    if (this._contentWhitelisted) {
-      this._sendMsg(event.detail.type, event.detail.data);
-    }
-  },
-
-  receiveMessage: function (msg) {
-    if (msg.data.type == "AddToWhitelist") {
-      for (let uri of msg.data.data) {
-        this.whitelist.add(uri);
-      }
-      this._sendMsg("AddToWhitelistAck");
-      return;
-    }
-    if (this._contentWhitelisted) {
-      this._fireEvent(msg.data.type, msg.data.data);
-    }
-  },
-
-  get _contentWhitelisted() {
-    return this.whitelist.has(content.document.documentURI);
-  },
-
-  _sendMsg: function (type, data=null) {
-    sendAsyncMessage("ContentSearch", {
-      type: type,
-      data: data,
-    });
-  },
-
-  _fireEvent: function (type, data=null) {
-    let event = Cu.cloneInto({
-      detail: {
-        type: type,
-        data: data,
-      },
-    }, content);
-    content.dispatchEvent(new content.CustomEvent("ContentSearchService",
-                                                  event));
-  },
-};
-ContentSearchMediator.init(this);
-
-// Lazily load the finder code
-addMessageListener("Finder:Initialize", function () {
-  let {RemoteFinderListener} = Cu.import("resource://gre/modules/RemoteFinder.jsm", {});
-  new RemoteFinderListener(global);
 });
 
 
@@ -568,7 +357,8 @@ let ClickEventHandler = {
       this.onAboutBlocked(originalTarget, ownerDoc);
       return;
     } else if (ownerDoc.documentURI.startsWith("about:neterror")) {
-      this.onAboutNetError(originalTarget, ownerDoc);
+      this.onAboutNetError(event, ownerDoc.documentURI);
+      return;
     }
 
     let [href, node] = this._hrefAndLinkNodeForClickEvent(event);
@@ -576,7 +366,7 @@ let ClickEventHandler = {
     let json = { button: event.button, shiftKey: event.shiftKey,
                  ctrlKey: event.ctrlKey, metaKey: event.metaKey,
                  altKey: event.altKey, href: null, title: null,
-                 bookmark: false };
+                 bookmark: false, referrerPolicy: ownerDoc.referrerPolicy };
 
     if (href) {
       json.href = href;
@@ -589,8 +379,8 @@ let ClickEventHandler = {
             event.preventDefault(); // Need to prevent the pageload.
           }
         }
-        json.noReferrer = BrowserUtils.linkHasNoReferrer(node)
       }
+      json.noReferrer = BrowserUtils.linkHasNoReferrer(node)
 
       sendAsyncMessage("Content:Click", json);
       return;
@@ -627,20 +417,32 @@ let ClickEventHandler = {
   },
 
   onAboutBlocked: function (targetElement, ownerDoc) {
+    var reason = 'phishing';
+    if (/e=malwareBlocked/.test(ownerDoc.documentURI)) {
+      reason = 'malware';
+    } else if (/e=unwantedBlocked/.test(ownerDoc.documentURI)) {
+      reason = 'unwanted';
+    }
     sendAsyncMessage("Browser:SiteBlockedError", {
       location: ownerDoc.location.href,
-      isMalware: /e=malwareBlocked/.test(ownerDoc.documentURI),
+      reason: reason,
       elementId: targetElement.getAttribute("id"),
       isTopFrame: (ownerDoc.defaultView.parent === ownerDoc.defaultView)
     });
   },
 
-  onAboutNetError: function (targetElement, ownerDoc) {
-    let elmId = targetElement.getAttribute("id");
-    if (elmId != "errorTryAgain" || !/e=netOffline/.test(ownerDoc.documentURI)) {
+  onAboutNetError: function (event, documentURI) {
+    let elmId = event.originalTarget.getAttribute("id");
+    if (elmId != "errorTryAgain" || !/e=netOffline/.test(documentURI)) {
       return;
     }
-    sendSyncMessage("Browser:NetworkError", {});
+    // browser front end will handle clearing offline mode and refreshing
+    // the page *if* we're in offline mode now. Otherwise let the error page
+    // handle the click.
+    if (Services.io.offline) {
+      event.preventDefault();
+      sendAsyncMessage("Browser:EnableOnlineMode", {});
+    }
   },
 
   /**
@@ -698,203 +500,17 @@ addEventListener("DOMWebNotificationClicked", function(event) {
   sendAsyncMessage("DOMWebNotificationClicked", {});
 }, false);
 
-let PageStyleHandler = {
-  init: function() {
-    addMessageListener("PageStyle:Switch", this);
-    addMessageListener("PageStyle:Disable", this);
-
-    // Send a CPOW to the parent so that it can synchronously request
-    // the list of style sheets.
-    sendSyncMessage("PageStyle:SetSyncHandler", {}, {syncHandler: this});
-  },
-
-  get markupDocumentViewer() {
-    return docShell.contentViewer;
-  },
-
-  // Called synchronously via CPOW from the parent.
-  getStyleSheetInfo: function() {
-    let styleSheets = this._filterStyleSheets(this.getAllStyleSheets());
-    return {
-      styleSheets: styleSheets,
-      authorStyleDisabled: this.markupDocumentViewer.authorStyleDisabled,
-      preferredStyleSheetSet: content.document.preferredStyleSheetSet
-    };
-  },
-
-  // Called synchronously via CPOW from the parent.
-  getAllStyleSheets: function(frameset = content) {
-    let selfSheets = Array.slice(frameset.document.styleSheets);
-    let subSheets = Array.map(frameset.frames, frame => this.getAllStyleSheets(frame));
-    return selfSheets.concat(...subSheets);
-  },
-
-  receiveMessage: function(msg) {
-    switch (msg.name) {
-      case "PageStyle:Switch":
-        this.markupDocumentViewer.authorStyleDisabled = false;
-        this._stylesheetSwitchAll(content, msg.data.title);
-        break;
-
-      case "PageStyle:Disable":
-        this.markupDocumentViewer.authorStyleDisabled = true;
-        break;
-    }
-  },
-
-  _stylesheetSwitchAll: function (frameset, title) {
-    if (!title || this._stylesheetInFrame(frameset, title)) {
-      this._stylesheetSwitchFrame(frameset, title);
-    }
-
-    for (let i = 0; i < frameset.frames.length; i++) {
-      // Recurse into sub-frames.
-      this._stylesheetSwitchAll(frameset.frames[i], title);
-    }
-  },
-
-  _stylesheetSwitchFrame: function (frame, title) {
-    var docStyleSheets = frame.document.styleSheets;
-
-    for (let i = 0; i < docStyleSheets.length; ++i) {
-      let docStyleSheet = docStyleSheets[i];
-      if (docStyleSheet.title) {
-        docStyleSheet.disabled = (docStyleSheet.title != title);
-      } else if (docStyleSheet.disabled) {
-        docStyleSheet.disabled = false;
-      }
-    }
-  },
-
-  _stylesheetInFrame: function (frame, title) {
-    return Array.some(frame.document.styleSheets, (styleSheet) => styleSheet.title == title);
-  },
-
-  _filterStyleSheets: function(styleSheets) {
-    let result = [];
-
-    for (let currentStyleSheet of styleSheets) {
-      if (!currentStyleSheet.title)
-        continue;
-
-      // Skip any stylesheets that don't match the screen media type.
-      if (currentStyleSheet.media.length > 0) {
-        let mediaQueryList = currentStyleSheet.media.mediaText;
-        if (!content.matchMedia(mediaQueryList).matches) {
-          continue;
-        }
-      }
-
-      result.push({title: currentStyleSheet.title,
-                   disabled: currentStyleSheet.disabled});
-    }
-
-    return result;
-  },
-};
-PageStyleHandler.init();
-
-// Keep a reference to the translation content handler to avoid it it being GC'ed.
-let trHandler = null;
-if (Services.prefs.getBoolPref("browser.translation.detectLanguage")) {
-  Cu.import("resource:///modules/translation/TranslationContentHandler.jsm");
-  trHandler = new TranslationContentHandler(global, docShell);
-}
-
-let DOMFullscreenHandler = {
-  _fullscreenDoc: null,
-
-  init: function() {
-    addMessageListener("DOMFullscreen:Approved", this);
-    addMessageListener("DOMFullscreen:CleanUp", this);
-    addEventListener("MozEnteredDomFullscreen", this);
-  },
-
-  receiveMessage: function(aMessage) {
-    switch(aMessage.name) {
-      case "DOMFullscreen:Approved": {
-        if (this._fullscreenDoc) {
-          Services.obs.notifyObservers(this._fullscreenDoc,
-                                       "fullscreen-approved",
-                                       "");
-        }
-        break;
-      }
-      case "DOMFullscreen:CleanUp": {
-        this._fullscreenDoc = null;
-        break;
-      }
-    }
-  },
-
-  handleEvent: function(aEvent) {
-    if (aEvent.type == "MozEnteredDomFullscreen") {
-      this._fullscreenDoc = aEvent.target;
-      sendAsyncMessage("MozEnteredDomFullscreen", {
-        origin: this._fullscreenDoc.nodePrincipal.origin,
-      });
-    }
-  }
-};
-DOMFullscreenHandler.init();
-
 ContentWebRTC.init();
 addMessageListener("webrtc:Allow", ContentWebRTC);
 addMessageListener("webrtc:Deny", ContentWebRTC);
 addMessageListener("webrtc:StopSharing", ContentWebRTC);
-
-function gKeywordURIFixup(fixupInfo) {
-  fixupInfo.QueryInterface(Ci.nsIURIFixupInfo);
-
-  // Ignore info from other docshells
-  let parent = fixupInfo.consumer.QueryInterface(Ci.nsIDocShellTreeItem).sameTypeRootTreeItem;
-  if (parent != docShell)
-    return;
-
-  let data = {};
-  for (let f of Object.keys(fixupInfo)) {
-    if (f == "consumer" || typeof fixupInfo[f] == "function")
-      continue;
-
-    if (fixupInfo[f] && fixupInfo[f] instanceof Ci.nsIURI) {
-      data[f] = fixupInfo[f].spec;
-    } else {
-      data[f] = fixupInfo[f];
-    }
-  }
-
-  sendAsyncMessage("Browser:URIFixup", data);
-}
-Services.obs.addObserver(gKeywordURIFixup, "keyword-uri-fixup", false);
-addEventListener("unload", () => {
-  Services.obs.removeObserver(gKeywordURIFixup, "keyword-uri-fixup");
-}, false);
-
-addMessageListener("Browser:AppTab", function(message) {
-  docShell.isAppTab = message.data.isAppTab;
+addMessageListener("webrtc:StartBrowserSharing", () => {
+  let windowID = content.QueryInterface(Ci.nsIInterfaceRequestor)
+                        .getInterface(Ci.nsIDOMWindowUtils).outerWindowID;
+  sendAsyncMessage("webrtc:response:StartBrowserSharing", {
+    windowID: windowID
+  });
 });
-
-let WebBrowserChrome = {
-  onBeforeLinkTraversal: function(originalTarget, linkURI, linkNode, isAppTab) {
-    return BrowserUtils.onBeforeLinkTraversal(originalTarget, linkURI, linkNode, isAppTab);
-  },
-
-  // Check whether this URI should load in the current process
-  shouldLoadURI: function(aDocShell, aURI, aReferrer) {
-    if (!E10SUtils.shouldLoadURI(aDocShell, aURI, aReferrer)) {
-      E10SUtils.redirectLoad(aDocShell, aURI, aReferrer);
-      return false;
-    }
-
-    return true;
-  },
-};
-
-if (Services.appinfo.processType == Services.appinfo.PROCESS_TYPE_CONTENT) {
-  let tabchild = docShell.QueryInterface(Ci.nsIInterfaceRequestor)
-                         .getInterface(Ci.nsITabChild);
-  tabchild.webBrowserChrome = WebBrowserChrome;
-}
 
 addEventListener("pageshow", function(event) {
   if (event.target == content.document) {
@@ -904,30 +520,29 @@ addEventListener("pageshow", function(event) {
   }
 });
 
-let SocialMessenger = {
-  init: function() {
-    addMessageListener("Social:GetPageData", this);
-    addMessageListener("Social:GetMicrodata", this);
-
-    XPCOMUtils.defineLazyGetter(this, "og", function() {
-      let tmp = {};
-      Cu.import("resource:///modules/Social.jsm", tmp);
-      return tmp.OpenGraphBuilder;
-    });
+let PageMetadataMessenger = {
+  init() {
+    addMessageListener("PageMetadata:GetPageData", this);
+    addMessageListener("PageMetadata:GetMicrodata", this);
   },
-  receiveMessage: function(aMessage) {
-    switch(aMessage.name) {
-      case "Social:GetPageData":
-        sendAsyncMessage("Social:PageDataResult", this.og.getData(content.document));
+  receiveMessage(message) {
+    switch(message.name) {
+      case "PageMetadata:GetPageData": {
+        let result = PageMetadata.getData(content.document);
+        sendAsyncMessage("PageMetadata:PageDataResult", result);
         break;
-      case "Social:GetMicrodata":
-        let target = aMessage.objects;
-        sendAsyncMessage("Social:PageDataResult", this.og.getMicrodata(content.document, target));
+      }
+
+      case "PageMetadata:GetMicrodata": {
+        let target = message.objects.target;
+        let result = PageMetadata.getMicrodata(content.document, target);
+        sendAsyncMessage("PageMetadata:MicrodataResult", result);
         break;
+      }
     }
   }
 }
-SocialMessenger.init();
+PageMetadataMessenger.init();
 
 addEventListener("ActivateSocialFeature", function (aEvent) {
   let document = content.document;
@@ -975,4 +590,65 @@ addMessageListener("ContextMenu:SaveVideoFrameAsImage", (message) => {
   sendAsyncMessage("ContextMenu:SaveVideoFrameAsImage:Result", {
     dataURL: canvas.toDataURL("image/jpeg", ""),
   });
+});
+
+addMessageListener("ContextMenu:MediaCommand", (message) => {
+  let media = message.objects.element;
+
+  switch (message.data.command) {
+    case "play":
+      media.play();
+      break;
+    case "pause":
+      media.pause();
+      break;
+    case "mute":
+      media.muted = true;
+      break;
+    case "unmute":
+      media.muted = false;
+      break;
+    case "playbackRate":
+      media.playbackRate = message.data.data;
+      break;
+    case "hidecontrols":
+      media.removeAttribute("controls");
+      break;
+    case "showcontrols":
+      media.setAttribute("controls", "true");
+      break;
+    case "hidestats":
+    case "showstats":
+      let event = media.ownerDocument.createEvent("CustomEvent");
+      event.initCustomEvent("media-showStatistics", false, true,
+                            message.data.command == "showstats");
+      media.dispatchEvent(event);
+      break;
+    case "fullscreen":
+      if (content.document.mozFullScreenEnabled)
+        media.mozRequestFullScreen();
+      break;
+  }
+});
+
+addMessageListener("ContextMenu:Canvas:ToDataURL", (message) => {
+  let dataURL = message.objects.target.toDataURL();
+  sendAsyncMessage("ContextMenu:Canvas:ToDataURL:Result", { dataURL });
+});
+
+addMessageListener("ContextMenu:ReloadFrame", (message) => {
+  message.objects.target.ownerDocument.location.reload();
+});
+
+addMessageListener("ContextMenu:ReloadImage", (message) => {
+  let image = message.objects.target;
+  if (image instanceof Ci.nsIImageLoadingContent)
+    image.forceReload();
+});
+
+addMessageListener("ContextMenu:BookmarkFrame", (message) => {
+  let frame = message.objects.target.ownerDocument;
+  sendAsyncMessage("ContextMenu:BookmarkFrame:Result",
+                   { title: frame.title,
+                     description: PlacesUIUtils.getDescriptionFromDocument(frame) });
 });

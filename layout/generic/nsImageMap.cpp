@@ -112,7 +112,7 @@ void Area::ParseCoords(const nsAString& aSpec)
     mCoords = nullptr;
     if (*cp == '\0')
     {
-      nsMemory::Free(cp);
+      free(cp);
       return;
     }
 
@@ -126,7 +126,7 @@ void Area::ParseCoords(const nsAString& aSpec)
     }
     if (*n_str == '\0')
     {
-      nsMemory::Free(cp);
+      free(cp);
       return;
     }
 
@@ -211,7 +211,7 @@ void Area::ParseCoords(const nsAString& aSpec)
     value_list = new nscoord[cnt];
     if (!value_list)
     {
-      nsMemory::Free(cp);
+      free(cp);
       return;
     }
 
@@ -254,7 +254,7 @@ void Area::ParseCoords(const nsAString& aSpec)
     mNumCoords = cnt;
     mCoords = value_list;
 
-    nsMemory::Free(cp);
+    free(cp);
   }
 }
 
@@ -269,11 +269,11 @@ class DefaultArea : public Area {
 public:
   explicit DefaultArea(nsIContent* aArea);
 
-  virtual bool IsInside(nscoord x, nscoord y) const MOZ_OVERRIDE;
+  virtual bool IsInside(nscoord x, nscoord y) const override;
   virtual void Draw(nsIFrame* aFrame, DrawTarget& aDrawTarget,
                     const ColorPattern& aColor,
-                    const StrokeOptions& aStrokeOptions) MOZ_OVERRIDE;
-  virtual void GetRect(nsIFrame* aFrame, nsRect& aRect) MOZ_OVERRIDE;
+                    const StrokeOptions& aStrokeOptions) override;
+  virtual void GetRect(nsIFrame* aFrame, nsRect& aRect) override;
 };
 
 DefaultArea::DefaultArea(nsIContent* aArea)
@@ -313,12 +313,12 @@ class RectArea : public Area {
 public:
   explicit RectArea(nsIContent* aArea);
 
-  virtual void ParseCoords(const nsAString& aSpec) MOZ_OVERRIDE;
-  virtual bool IsInside(nscoord x, nscoord y) const MOZ_OVERRIDE;
+  virtual void ParseCoords(const nsAString& aSpec) override;
+  virtual bool IsInside(nscoord x, nscoord y) const override;
   virtual void Draw(nsIFrame* aFrame, DrawTarget& aDrawTarget,
                     const ColorPattern& aColor,
-                    const StrokeOptions& aStrokeOptions) MOZ_OVERRIDE;
-  virtual void GetRect(nsIFrame* aFrame, nsRect& aRect) MOZ_OVERRIDE;
+                    const StrokeOptions& aStrokeOptions) override;
+  virtual void GetRect(nsIFrame* aFrame, nsRect& aRect) override;
 };
 
 RectArea::RectArea(nsIContent* aArea)
@@ -419,12 +419,12 @@ class PolyArea : public Area {
 public:
   explicit PolyArea(nsIContent* aArea);
 
-  virtual void ParseCoords(const nsAString& aSpec) MOZ_OVERRIDE;
-  virtual bool IsInside(nscoord x, nscoord y) const MOZ_OVERRIDE;
+  virtual void ParseCoords(const nsAString& aSpec) override;
+  virtual bool IsInside(nscoord x, nscoord y) const override;
   virtual void Draw(nsIFrame* aFrame, DrawTarget& aDrawTarget,
                     const ColorPattern& aColor,
-                    const StrokeOptions& aStrokeOptions) MOZ_OVERRIDE;
-  virtual void GetRect(nsIFrame* aFrame, nsRect& aRect) MOZ_OVERRIDE;
+                    const StrokeOptions& aStrokeOptions) override;
+  virtual void GetRect(nsIFrame* aFrame, nsRect& aRect) override;
 };
 
 PolyArea::PolyArea(nsIContent* aArea)
@@ -574,12 +574,12 @@ class CircleArea : public Area {
 public:
   explicit CircleArea(nsIContent* aArea);
 
-  virtual void ParseCoords(const nsAString& aSpec) MOZ_OVERRIDE;
-  virtual bool IsInside(nscoord x, nscoord y) const MOZ_OVERRIDE;
+  virtual void ParseCoords(const nsAString& aSpec) override;
+  virtual bool IsInside(nscoord x, nscoord y) const override;
   virtual void Draw(nsIFrame* aFrame, DrawTarget& aDrawTarget,
                     const ColorPattern& aColor,
-                    const StrokeOptions& aStrokeOptions) MOZ_OVERRIDE;
-  virtual void GetRect(nsIFrame* aFrame, nsRect& aRect) MOZ_OVERRIDE;
+                    const StrokeOptions& aStrokeOptions) override;
+  virtual void GetRect(nsIFrame* aFrame, nsRect& aRect) override;
 };
 
 CircleArea::CircleArea(nsIContent* aArea)
@@ -759,27 +759,26 @@ nsImageMap::SearchForAreas(nsIContent* aParent, bool& aFoundArea,
   for (i = 0; i < n; i++) {
     nsIContent *child = aParent->GetChildAt(i);
 
-    if (child->IsHTML()) {
-      // If we haven't determined that the map element contains an
-      // <a> element yet, then look for <area>.
-      if (!aFoundAnchor && child->Tag() == nsGkAtoms::area) {
-        aFoundArea = true;
-        rv = AddArea(child);
-        NS_ENSURE_SUCCESS(rv, rv);
+    // If we haven't determined that the map element contains an
+    // <a> element yet, then look for <area>.
+    if (!aFoundAnchor && child->IsHTMLElement(nsGkAtoms::area)) {
+      aFoundArea = true;
+      rv = AddArea(child);
+      NS_ENSURE_SUCCESS(rv, rv);
 
-        // Continue to next child. This stops mContainsBlockContents from
-        // getting set. It also makes us ignore children of <area>s which
-        // is consistent with how we react to dynamic insertion of such
-        // children.
-        continue;
-      }
-      // If we haven't determined that the map element contains an
-      // <area> element yet, then look for <a>.
-      if (!aFoundArea && child->Tag() == nsGkAtoms::a) {
-        aFoundAnchor = true;
-        rv = AddArea(child);
-        NS_ENSURE_SUCCESS(rv, rv);
-      }
+      // Continue to next child. This stops mContainsBlockContents from
+      // getting set. It also makes us ignore children of <area>s which
+      // is consistent with how we react to dynamic insertion of such
+      // children.
+      continue;
+    }
+
+    // If we haven't determined that the map element contains an
+    // <area> element yet, then look for <a>.
+    if (!aFoundArea && child->IsHTMLElement(nsGkAtoms::a)) {
+      aFoundAnchor = true;
+      rv = AddArea(child);
+      NS_ENSURE_SUCCESS(rv, rv);
     }
 
     if (child->IsElement()) {
@@ -926,7 +925,7 @@ nsImageMap::AttributeChanged(nsIDocument*  aDocument,
   // are the only cases we care about.
   if ((aElement->NodeInfo()->Equals(nsGkAtoms::area) ||
        aElement->NodeInfo()->Equals(nsGkAtoms::a)) &&
-      aElement->IsHTML() &&
+      aElement->IsHTMLElement() &&
       aNameSpaceID == kNameSpaceID_None &&
       (aAttribute == nsGkAtoms::shape ||
        aAttribute == nsGkAtoms::coords)) {
@@ -985,8 +984,8 @@ nsImageMap::HandleEvent(nsIDOMEvent* aEvent)
   nsAutoString eventType;
   aEvent->GetType(eventType);
   bool focus = eventType.EqualsLiteral("focus");
-  NS_ABORT_IF_FALSE(focus == !eventType.EqualsLiteral("blur"),
-                    "Unexpected event type");
+  MOZ_ASSERT(focus == !eventType.EqualsLiteral("blur"),
+             "Unexpected event type");
 
   //Set which one of our areas changed focus
   nsCOMPtr<nsIContent> targetContent = do_QueryInterface(

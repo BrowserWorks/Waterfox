@@ -26,7 +26,7 @@ for (constructor of constructors) {
   Object.seal(a);
 
   // Should complain that it can't change attributes of indexed typed array properties.
-  assertThrowsInstanceOf(() => Object.freeze(a), InternalError);
+  assertThrowsInstanceOf(() => Object.freeze(a), TypeError);
 }
 
 print();
@@ -72,7 +72,7 @@ for (constructor of constructors) {
 
   // Don't define old properties.
   Object.defineProperty(a, 5, {value: 3});
-  assertEq(a[5], 0);
+  assertEq(a[5], 3);
 
   // Don't define new properties.
   Object.defineProperty(a, 20, {value: 3});

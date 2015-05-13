@@ -182,18 +182,17 @@ function commonInit(selfFilling) {
         form.appendChild(password);
 
         var observer = SpecialPowers.wrapCallback(function(subject, topic, data) {
-            var bag = subject.QueryInterface(SpecialPowers.Ci.nsIPropertyBag2);
-            var username = bag.get("usernameField");
-            if (!username || username.form.id !== 'observerforcer')
+            var form = subject.QueryInterface(SpecialPowers.Ci.nsIDOMNode);
+            if (form.id !== 'observerforcer')
                 return;
-            SpecialPowers.removeObserver(observer, "passwordmgr-found-logins");
+            SpecialPowers.removeObserver(observer, "passwordmgr-processed-form");
             form.parentNode.removeChild(form);
             SimpleTest.executeSoon(() => {
                 var event = new Event("runTests");
                 window.dispatchEvent(event);
             });
         });
-        SpecialPowers.addObserver(observer, "passwordmgr-found-logins", false);
+        SpecialPowers.addObserver(observer, "passwordmgr-processed-form", false);
 
         document.body.appendChild(form);
     });
@@ -258,4 +257,26 @@ function dumpLogin(label, login) {
     loginText += " / pfield: ";
     loginText += login.passwordField;
     ok(true, label + loginText);
+}
+
+// Code to run when loaded as a chrome script in tests via loadChromeScript
+if (this.addMessageListener) {
+  const { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components;
+  var SpecialPowers = { Cc, Ci, Cr, Cu, };
+  var ok, is;
+  // Ignore ok/is in commonInit since they aren't defined in a chrome script.
+  ok = is = () => {};
+
+  Cu.import("resource://gre/modules/Task.jsm");
+
+  addMessageListener("setupParent", () => {
+    commonInit(true);
+    sendAsyncMessage("doneSetup");
+  });
+  addMessageListener("loadRecipes", Task.async(function* loadRecipes(recipes) {
+    var { LoginManagerParent } = Cu.import("resource://gre/modules/LoginManagerParent.jsm", {});
+    var recipeParent = yield LoginManagerParent.recipeParentPromise;
+    yield recipeParent.load(recipes);
+    sendAsyncMessage("loadedRecipes", recipes);
+  }));
 }

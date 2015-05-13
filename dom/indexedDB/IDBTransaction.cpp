@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -67,7 +67,7 @@ RunBeforeNextEvent(IDBTransaction* aTransaction)
 
 } // anonymous namespace
 
-class IDBTransaction::WorkerFeature MOZ_FINAL
+class IDBTransaction::WorkerFeature final
   : public mozilla::dom::workers::WorkerFeature
 {
   WorkerPrivate* mWorkerPrivate;
@@ -100,7 +100,7 @@ public:
 
 private:
   virtual bool
-  Notify(JSContext* aCx, Status aStatus) MOZ_OVERRIDE;
+  Notify(JSContext* aCx, Status aStatus) override;
 };
 
 IDBTransaction::IDBTransaction(IDBDatabase* aDatabase,
@@ -215,7 +215,9 @@ IDBTransaction::CreateVersionChange(
   nsTArray<nsString> emptyObjectStoreNames;
 
   nsRefPtr<IDBTransaction> transaction =
-    new IDBTransaction(aDatabase, emptyObjectStoreNames, VERSION_CHANGE);
+    new IDBTransaction(aDatabase,
+                       emptyObjectStoreNames,
+                       VERSION_CHANGE);
   aOpenRequest->GetCallerLocation(transaction->mFilename,
                                   &transaction->mLineNo);
 
@@ -251,7 +253,9 @@ IDBTransaction::Create(IDBDatabase* aDatabase,
   MOZ_ASSERT(aDatabase);
   aDatabase->AssertIsOnOwningThread();
   MOZ_ASSERT(!aObjectStoreNames.IsEmpty());
-  MOZ_ASSERT(aMode == READ_ONLY || aMode == READ_WRITE);
+  MOZ_ASSERT(aMode == READ_ONLY ||
+             aMode == READ_WRITE ||
+             aMode == READ_WRITE_FLUSH);
 
   nsRefPtr<IDBTransaction> transaction =
     new IDBTransaction(aDatabase, aObjectStoreNames, aMode);
@@ -325,25 +329,31 @@ IDBTransaction::SetBackgroundActor(BackgroundTransactionChild* aBackgroundActor)
   mBackgroundActor.mNormalBackgroundActor = aBackgroundActor;
 }
 
-void
-IDBTransaction::StartRequest(BackgroundRequestChild* aBackgroundActor,
-                             const RequestParams& aParams)
+BackgroundRequestChild*
+IDBTransaction::StartRequest(IDBRequest* aRequest, const RequestParams& aParams)
 {
   AssertIsOnOwningThread();
-  MOZ_ASSERT(aBackgroundActor);
+  MOZ_ASSERT(aRequest);
   MOZ_ASSERT(aParams.type() != RequestParams::T__None);
+
+  BackgroundRequestChild* actor = new BackgroundRequestChild(aRequest);
 
   if (mMode == VERSION_CHANGE) {
     MOZ_ASSERT(mBackgroundActor.mVersionChangeBackgroundActor);
 
     mBackgroundActor.mVersionChangeBackgroundActor->
-      SendPBackgroundIDBRequestConstructor(aBackgroundActor, aParams);
+      SendPBackgroundIDBRequestConstructor(actor, aParams);
   } else {
     MOZ_ASSERT(mBackgroundActor.mNormalBackgroundActor);
 
     mBackgroundActor.mNormalBackgroundActor->
-      SendPBackgroundIDBRequestConstructor(aBackgroundActor, aParams);
+      SendPBackgroundIDBRequestConstructor(actor, aParams);
   }
+
+  // Balanced in BackgroundRequestChild::Recv__delete__().
+  OnNewRequest();
+
+  return actor;
 }
 
 void
@@ -402,7 +412,7 @@ IDBTransaction::OnNewRequest()
 }
 
 void
-IDBTransaction::OnRequestFinished()
+IDBTransaction::OnRequestFinished(bool aActorDestroyedNormally)
 {
   AssertIsOnOwningThread();
   MOZ_ASSERT(mPendingRequestCount);
@@ -412,10 +422,24 @@ IDBTransaction::OnRequestFinished()
   if (!mPendingRequestCount && !mDatabase->IsInvalidated()) {
     mReadyState = COMMITTING;
 
-    if (NS_SUCCEEDED(mAbortCode)) {
-      SendCommit();
+    if (aActorDestroyedNormally) {
+      if (NS_SUCCEEDED(mAbortCode)) {
+        SendCommit();
+      } else {
+        SendAbort(mAbortCode);
+      }
     } else {
-      SendAbort(mAbortCode);
+      // Don't try to send any more messages to the parent if the request actor
+      // was killed.
+#ifdef DEBUG
+      MOZ_ASSERT(!mSentCommitOrAbort);
+      mSentCommitOrAbort = true;
+#endif
+      IDB_LOG_MARK("IndexedDB %s: Child  Transaction[%lld]: "
+                     "Request actor was killed, transaction will be aborted",
+                   "IndexedDB %s: C T[%lld]: IDBTransaction abort",
+                   IDB_LOG_ID_STRING(),
+                   LoggingSerialNumber());
     }
   }
 }
@@ -843,6 +867,9 @@ IDBTransaction::GetMode(ErrorResult& aRv) const
     case READ_WRITE:
       return IDBTransactionMode::Readwrite;
 
+    case READ_WRITE_FLUSH:
+      return IDBTransactionMode::Readwriteflush;
+
     case VERSION_CHANGE:
       return IDBTransactionMode::Versionchange;
 
@@ -957,11 +984,11 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(IDBTransaction, IDBWrapperCache)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 JSObject*
-IDBTransaction::WrapObject(JSContext* aCx)
+IDBTransaction::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
   AssertIsOnOwningThread();
 
-  return IDBTransactionBinding::Wrap(aCx, this);
+  return IDBTransactionBinding::Wrap(aCx, this, aGivenProto);
 }
 
 nsresult

@@ -8,7 +8,6 @@
 
 #include <stdint.h>
 
-#include "nsDeque.h"
 #include "MediaDecoderReader.h"
 #include "nsAutoRef.h"
 #include "nestegg/nestegg.h"
@@ -26,87 +25,102 @@
 
 #include "OpusParser.h"
 
+namespace mozilla {
+static const unsigned NS_PER_USEC = 1000;
+static const double NS_PER_S = 1e9;
+
 // Holds a nestegg_packet, and its file offset. This is needed so we
 // know the offset in the file we've played up to, in order to calculate
 // whether it's likely we can play through to the end without needing
 // to stop to buffer, given the current download rate.
 class NesteggPacketHolder {
 public:
-  NesteggPacketHolder(nestegg_packet* aPacket, int64_t aOffset)
-    : mPacket(aPacket), mOffset(aOffset)
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(NesteggPacketHolder)
+  NesteggPacketHolder() : mPacket(nullptr), mOffset(-1), mTimestamp(-1), mIsKeyframe(false) {}
+
+  bool Init(nestegg_packet* aPacket, int64_t aOffset, unsigned aTrack, bool aIsKeyframe)
   {
-    MOZ_COUNT_CTOR(NesteggPacketHolder);
+    uint64_t timestamp_ns;
+    if (nestegg_packet_tstamp(aPacket, &timestamp_ns) == -1) {
+      return false;
+    }
+
+    // We store the timestamp as signed microseconds so that it's easily
+    // comparable to other timestamps we have in the system.
+    mTimestamp = timestamp_ns / 1000;
+    mPacket = aPacket;
+    mOffset = aOffset;
+    mTrack = aTrack;
+    mIsKeyframe = aIsKeyframe;
+
+    return true;
   }
-  ~NesteggPacketHolder() {
-    MOZ_COUNT_DTOR(NesteggPacketHolder);
+
+  nestegg_packet* Packet() { MOZ_ASSERT(IsInitialized()); return mPacket; }
+  int64_t Offset() { MOZ_ASSERT(IsInitialized()); return mOffset; }
+  int64_t Timestamp() { MOZ_ASSERT(IsInitialized()); return mTimestamp; }
+  unsigned Track() { MOZ_ASSERT(IsInitialized()); return mTrack; }
+  bool IsKeyframe() { MOZ_ASSERT(IsInitialized()); return mIsKeyframe; }
+
+private:
+  ~NesteggPacketHolder()
+  {
     nestegg_free_packet(mPacket);
   }
+
+  bool IsInitialized() { return mOffset >= 0; }
+
   nestegg_packet* mPacket;
+
   // Offset in bytes. This is the offset of the end of the Block
   // which contains the packet.
   int64_t mOffset;
-private:
+
+  // Packet presentation timestamp in microseconds.
+  int64_t mTimestamp;
+
+  // Track ID.
+  unsigned mTrack;
+
+  // Does this packet contain a keyframe?
+  bool mIsKeyframe;
+
   // Copy constructor and assignment operator not implemented. Don't use them!
   NesteggPacketHolder(const NesteggPacketHolder &aOther);
   NesteggPacketHolder& operator= (NesteggPacketHolder const& aOther);
 };
 
-template <>
-class nsAutoRefTraits<NesteggPacketHolder> : public nsPointerRefTraits<NesteggPacketHolder>
-{
-public:
-  static void Release(NesteggPacketHolder* aHolder) { delete aHolder; }
-};
-
-namespace mozilla {
 class WebMBufferedState;
-static const unsigned NS_PER_USEC = 1000;
-static const double NS_PER_S = 1e9;
 
-// Thread and type safe wrapper around nsDeque.
-class PacketQueueDeallocator : public nsDequeFunctor {
-  virtual void* operator() (void* aObject) {
-    delete static_cast<NesteggPacketHolder*>(aObject);
-    return nullptr;
-  }
-};
-
-// Typesafe queue for holding nestegg packets. It has
-// ownership of the items in the queue and will free them
-// when destroyed.
-class WebMPacketQueue : private nsDeque {
+// Queue for holding nestegg packets.
+class WebMPacketQueue {
  public:
-   WebMPacketQueue()
-     : nsDeque(new PacketQueueDeallocator())
-   {}
-
-  ~WebMPacketQueue() {
-    Reset();
+  int32_t GetSize() {
+    return mQueue.size();
   }
 
-  inline int32_t GetSize() {
-    return nsDeque::GetSize();
+  void Push(already_AddRefed<NesteggPacketHolder> aItem) {
+    mQueue.push_back(Move(aItem));
   }
 
-  inline void Push(NesteggPacketHolder* aItem) {
-    NS_ASSERTION(aItem, "NULL pushed to WebMPacketQueue");
-    nsDeque::Push(aItem);
+  void PushFront(already_AddRefed<NesteggPacketHolder> aItem) {
+    mQueue.push_front(Move(aItem));
   }
 
-  inline void PushFront(NesteggPacketHolder* aItem) {
-    NS_ASSERTION(aItem, "NULL pushed to WebMPacketQueue");
-    nsDeque::PushFront(aItem);
-  }
-
-  inline NesteggPacketHolder* PopFront() {
-    return static_cast<NesteggPacketHolder*>(nsDeque::PopFront());
+  already_AddRefed<NesteggPacketHolder> PopFront() {
+    nsRefPtr<NesteggPacketHolder> result = mQueue.front().forget();
+    mQueue.pop_front();
+    return result.forget();
   }
 
   void Reset() {
-    while (GetSize() > 0) {
-      delete PopFront();
+    while (!mQueue.empty()) {
+      mQueue.pop_front();
     }
   }
+
+private:
+  std::deque<nsRefPtr<NesteggPacketHolder>> mQueue;
 };
 
 class WebMReader;
@@ -133,37 +147,37 @@ protected:
   ~WebMReader();
 
 public:
-  virtual nsRefPtr<ShutdownPromise> Shutdown() MOZ_OVERRIDE;
-  virtual nsresult Init(MediaDecoderReader* aCloneDonor) MOZ_OVERRIDE;
-  virtual nsresult ResetDecode() MOZ_OVERRIDE;
-  virtual bool DecodeAudioData() MOZ_OVERRIDE;
+  virtual nsRefPtr<ShutdownPromise> Shutdown() override;
+  virtual nsresult Init(MediaDecoderReader* aCloneDonor) override;
+  virtual nsresult ResetDecode() override;
+  virtual bool DecodeAudioData() override;
 
   virtual bool DecodeVideoFrame(bool &aKeyframeSkip,
-                                int64_t aTimeThreshold) MOZ_OVERRIDE;
+                                int64_t aTimeThreshold) override;
 
-  virtual bool HasAudio() MOZ_OVERRIDE
+  virtual bool HasAudio() override
   {
-    NS_ASSERTION(mDecoder->OnDecodeThread(), "Should be on decode thread.");
+    MOZ_ASSERT(OnTaskQueue());
     return mHasAudio;
   }
 
-  virtual bool HasVideo() MOZ_OVERRIDE
+  virtual bool HasVideo() override
   {
-    NS_ASSERTION(mDecoder->OnDecodeThread(), "Should be on decode thread.");
+    MOZ_ASSERT(OnTaskQueue());
     return mHasVideo;
   }
 
   virtual nsresult ReadMetadata(MediaInfo* aInfo,
-                                MetadataTags** aTags) MOZ_OVERRIDE;
+                                MetadataTags** aTags) override;
   virtual nsRefPtr<SeekPromise>
-  Seek(int64_t aTime, int64_t aStartTime, int64_t aEndTime, int64_t aCurrentTime) MOZ_OVERRIDE;
+  Seek(int64_t aTime, int64_t aEndTime) override;
 
-  virtual nsresult GetBuffered(dom::TimeRanges* aBuffered) MOZ_OVERRIDE;
+  virtual nsresult GetBuffered(dom::TimeRanges* aBuffered) override;
   virtual void NotifyDataArrived(const char* aBuffer, uint32_t aLength,
-                                 int64_t aOffset) MOZ_OVERRIDE;
-  virtual int64_t GetEvictionOffset(double aTime) MOZ_OVERRIDE;
+                                 int64_t aOffset) override;
+  virtual int64_t GetEvictionOffset(double aTime) override;
 
-  virtual bool IsMediaSeekable() MOZ_OVERRIDE;
+  virtual bool IsMediaSeekable() override;
 
   // Value passed to NextPacket to determine if we are reading a video or an
   // audio packet.
@@ -175,18 +189,18 @@ public:
   // Read a packet from the nestegg file. Returns nullptr if all packets for
   // the particular track have been read. Pass VIDEO or AUDIO to indicate the
   // type of the packet we want to read.
-  nsReturnRef<NesteggPacketHolder> NextPacket(TrackType aTrackType);
+  already_AddRefed<NesteggPacketHolder> NextPacket(TrackType aTrackType);
 
   // Pushes a packet to the front of the video packet queue.
-  virtual void PushVideoPacket(NesteggPacketHolder* aItem);
+  virtual void PushVideoPacket(already_AddRefed<NesteggPacketHolder> aItem);
 
   int GetVideoCodec();
   nsIntRect GetPicture();
   nsIntSize GetInitialFrame();
-  uint64_t GetLastVideoFrameTime();
-  void SetLastVideoFrameTime(uint64_t aFrameTime);
+  int64_t GetLastVideoFrameTime();
+  void SetLastVideoFrameTime(int64_t aFrameTime);
   layers::LayersBackend GetLayersBackendType() { return mLayersBackendType; }
-  MediaTaskQueue* GetVideoTaskQueue() { return mVideoTaskQueue; }
+  FlushableMediaTaskQueue* GetVideoTaskQueue() { return mVideoTaskQueue; }
 
 protected:
   // Setup opus decoder
@@ -198,7 +212,7 @@ protected:
   // or an un-recoverable read error has occured. The reader's monitor
   // must be held during this call. The caller is responsible for freeing
   // aPacket.
-  bool DecodeAudioPacket(nestegg_packet* aPacket, int64_t aOffset);
+  bool DecodeAudioPacket(NesteggPacketHolder* aHolder);
   bool DecodeVorbis(const unsigned char* aData, size_t aLength,
                     int64_t aOffset, uint64_t aTstampUsecs,
                     int32_t* aTotalFrames);
@@ -210,12 +224,24 @@ protected:
   // reading metadata or destruction of the reader itself.
   void Cleanup();
 
-  virtual nsresult SeekInternal(int64_t aTime, int64_t aStartTime);
+  virtual nsresult SeekInternal(int64_t aTime);
 
   // Initializes mLayersBackendType if possible.
   void InitLayersBackendType();
 
+  bool ShouldSkipVideoFrame(int64_t aTimeThreshold);
+
 private:
+  // Get the timestamp of keyframe greater than aTimeThreshold.
+  int64_t GetNextKeyframeTime(int64_t aTimeThreshold);
+  // Push the packets into aOutput which's timestamp is less than aEndTime.
+  // Return false if we reach the end of stream or something wrong.
+  bool FilterPacketByTime(int64_t aEndTime, WebMPacketQueue& aOutput);
+
+  // Internal method that demuxes the next packet from the stream. The caller
+  // is responsible for making sure it doesn't get lost.
+  already_AddRefed<NesteggPacketHolder> DemuxPacket();
+
   // libnestegg context for webm container. Access on state machine thread
   // or decoder thread only.
   nestegg* mContext;
@@ -237,7 +263,7 @@ private:
   uint64_t mSeekPreroll; // Nanoseconds to discard after seeking.
 
   // Queue of video and audio packets that have been read but not decoded. These
-  // must only be accessed from the state machine thread.
+  // must only be accessed from the decode thread.
   WebMPacketQueue mVideoPackets;
   WebMPacketQueue mAudioPackets;
 
@@ -256,7 +282,7 @@ private:
 
   // Calculate the frame duration from the last decodeable frame using the
   // previous frame's timestamp.  In NS.
-  uint64_t mLastVideoFrameTime;
+  int64_t mLastVideoFrameTime;
 
   // Parser state and computed offset-time mappings.  Shared by multiple
   // readers when decoder has been cloned.  Main thread only.
@@ -277,7 +303,7 @@ private:
   layers::LayersBackend mLayersBackendType;
 
   // For hardware video decoding.
-  nsRefPtr<MediaTaskQueue> mVideoTaskQueue;
+  nsRefPtr<FlushableMediaTaskQueue> mVideoTaskQueue;
 
   // Booleans to indicate if we have audio and/or video data
   bool mHasVideo;

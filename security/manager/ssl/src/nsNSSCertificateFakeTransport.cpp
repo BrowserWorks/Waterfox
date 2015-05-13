@@ -8,7 +8,6 @@
 #include "nsIClassInfoImpl.h"
 #include "nsIObjectInputStream.h"
 #include "nsIObjectOutputStream.h"
-#include "nsIProgrammingLanguage.h"
 #include "nsISupportsPrimitives.h"
 #include "nsNSSCertificate.h"
 #include "nsString.h"
@@ -290,8 +289,7 @@ nsNSSCertificateFakeTransport::GetInterfaces(uint32_t* count, nsIID*** array)
 }
 
 NS_IMETHODIMP
-nsNSSCertificateFakeTransport::GetHelperForLanguage(uint32_t,
-                                                    nsISupports** _retval)
+nsNSSCertificateFakeTransport::GetScriptableHelper(nsIXPCScriptable** _retval)
 {
   *_retval = nullptr;
   return NS_OK;
@@ -314,18 +312,10 @@ nsNSSCertificateFakeTransport::GetClassDescription(char** aClassDescription)
 NS_IMETHODIMP
 nsNSSCertificateFakeTransport::GetClassID(nsCID** aClassID)
 {
-  *aClassID = (nsCID*) nsMemory::Alloc(sizeof(nsCID));
+  *aClassID = (nsCID*) moz_xmalloc(sizeof(nsCID));
   if (!*aClassID)
     return NS_ERROR_OUT_OF_MEMORY;
   return GetClassIDNoAlloc(*aClassID);
-}
-
-NS_IMETHODIMP
-nsNSSCertificateFakeTransport::GetImplementationLanguage(
-  uint32_t* aImplementationLanguage)
-{
-  *aImplementationLanguage = nsIProgrammingLanguage::CPLUSPLUS;
-  return NS_OK;
 }
 
 NS_IMETHODIMP

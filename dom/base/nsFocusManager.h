@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -26,20 +27,14 @@ class nsIMessageBroadcaster;
 
 struct nsDelayedBlurOrFocusEvent;
 
-enum ParentFocusType {
-  ParentFocusType_Ignore, // Parent or single process window or unknown
-  ParentFocusType_Active, // Child process window in active parent
-  ParentFocusType_Inactive, // Child process window in inactive parent
-};
-
 /**
  * The focus manager keeps track of where the focus is, that is, the node
  * which receives key events.
  */
 
-class nsFocusManager MOZ_FINAL : public nsIFocusManager,
-                                 public nsIObserver,
-                                 public nsSupportsWeakReference
+class nsFocusManager final : public nsIFocusManager,
+                             public nsIObserver,
+                             public nsSupportsWeakReference
 {
   typedef mozilla::widget::InputContextAction InputContextAction;
 
@@ -96,15 +91,6 @@ public:
    * Update the caret with current mode (whether in caret browsing mode or not).
    */
   void UpdateCaretForCaretBrowsingMode();
-
-  bool IsParentActivated()
-  {
-    if (mParentFocusType == ParentFocusType_Ignore) {
-      return mActiveWindow != nullptr;
-    }
-
-    return mParentFocusType == ParentFocusType_Active;
-  }
 
   /**
    * Returns the content node that would be focused if aWindow was in an
@@ -552,9 +538,6 @@ private:
   // and the caller can access the document node, the caller should succeed in
   // moving focus.
   nsCOMPtr<nsIDocument> mMouseButtonEventHandlingDocument;
-
-  // Indicates a child process that is in an active window.
-  ParentFocusType mParentFocusType;
 
   static bool sTestMode;
 

@@ -23,7 +23,6 @@ namespace layers
 class MediaResource;
 class ReentrantMonitor;
 class VideoFrameContainer;
-class TimedMetadata;
 class MediaDecoderOwner;
 #ifdef MOZ_EME
 class CDMProxy;
@@ -34,6 +33,11 @@ typedef nsDataHashtable<nsCStringHashKey, nsCString> MetadataTags;
 static inline bool IsCurrentThread(nsIThread* aThread) {
   return NS_GetCurrentThread() == aThread;
 }
+
+enum class MediaDecoderEventVisibility : int8_t {
+  Observable,
+  Suppressed
+};
 
 /**
  * The AbstractMediaDecoder class describes the public interface for a media decoder
@@ -49,9 +53,9 @@ public:
   // Returns true if the decoder is shut down.
   virtual bool IsShutdown() const = 0;
 
-  virtual bool OnStateMachineThread() const = 0;
+  virtual bool OnStateMachineTaskQueue() const = 0;
 
-  virtual bool OnDecodeThread() const = 0;
+  virtual bool OnDecodeTaskQueue() const = 0;
 
   // Get the current MediaResource being used. Its URI will be returned
   // by currentSrc. Returns what was passed to Load(), if Load() has been called.
@@ -61,12 +65,11 @@ public:
   // from the resource.
   virtual void NotifyBytesConsumed(int64_t aBytes, int64_t aOffset) = 0;
 
-  // Increments the parsed and decoded frame counters by the passed in counts.
+  // Increments the parsed, decoded and dropped frame counters by the passed in
+  // counts.
   // Can be called on any thread.
-  virtual void NotifyDecodedFrames(uint32_t aParsed, uint32_t aDecoded) = 0;
-
-  // For decoders with a notion of timestamp offset, returns the value in microseconds.
-  virtual int64_t GetTimestampOffset() const { return 0; }
+  virtual void NotifyDecodedFrames(uint32_t aParsed, uint32_t aDecoded,
+                                   uint32_t aDropped) = 0;
 
   // Return the duration of the media in microseconds.
   virtual int64_t GetMediaDuration() = 0;
@@ -91,20 +94,14 @@ public:
   // Return true if the transport layer supports seeking.
   virtual bool IsMediaSeekable() = 0;
 
-  virtual void MetadataLoaded(nsAutoPtr<MediaInfo> aInfo, nsAutoPtr<MetadataTags> aTags) = 0;
+  virtual void MetadataLoaded(nsAutoPtr<MediaInfo> aInfo, nsAutoPtr<MetadataTags> aTags, MediaDecoderEventVisibility aEventVisibility) = 0;
   virtual void QueueMetadata(int64_t aTime, nsAutoPtr<MediaInfo> aInfo, nsAutoPtr<MetadataTags> aTags) = 0;
-  virtual void FirstFrameLoaded(nsAutoPtr<MediaInfo> aInfo) = 0;
+  virtual void FirstFrameLoaded(nsAutoPtr<MediaInfo> aInfo, MediaDecoderEventVisibility aEventVisibility) = 0;
 
   virtual void RemoveMediaTracks() = 0;
 
   // Set the media end time in microseconds
   virtual void SetMediaEndTime(int64_t aTime) = 0;
-
-  // Make the decoder state machine update the playback position. Called by
-  // the reader on the decoder thread (Assertions for this checked by
-  // mDecoderStateMachine). This must be called with the decode monitor
-  // held.
-  virtual void UpdatePlaybackPosition(int64_t aTime) = 0;
 
   // May be called by the reader to notify this decoder that the metadata from
   // the media file has been read. Call on the decode thread only.
@@ -140,17 +137,19 @@ public:
   // to ensure all parsed and decoded frames are reported on all return paths.
   class AutoNotifyDecoded {
   public:
-    AutoNotifyDecoded(AbstractMediaDecoder* aDecoder, uint32_t& aParsed, uint32_t& aDecoded)
-      : mDecoder(aDecoder), mParsed(aParsed), mDecoded(aDecoded) {}
+    explicit AutoNotifyDecoded(AbstractMediaDecoder* aDecoder)
+      : mParsed(0), mDecoded(0), mDropped(0), mDecoder(aDecoder) {}
     ~AutoNotifyDecoded() {
       if (mDecoder) {
-        mDecoder->NotifyDecodedFrames(mParsed, mDecoded);
+        mDecoder->NotifyDecodedFrames(mParsed, mDecoded, mDropped);
       }
     }
+    uint32_t mParsed;
+    uint32_t mDecoded;
+    uint32_t mDropped;
+
   private:
     AbstractMediaDecoder* mDecoder;
-    uint32_t& mParsed;
-    uint32_t& mDecoded;
   };
 
 #ifdef MOZ_EME
@@ -164,15 +163,18 @@ class MetadataContainer
 protected:
   MetadataContainer(AbstractMediaDecoder* aDecoder,
                     nsAutoPtr<MediaInfo> aInfo,
-                    nsAutoPtr<MetadataTags> aTags)
+                    nsAutoPtr<MetadataTags> aTags,
+                    MediaDecoderEventVisibility aEventVisibility)
     : mDecoder(aDecoder),
       mInfo(aInfo),
-      mTags(aTags)
+      mTags(aTags),
+      mEventVisibility(aEventVisibility)
   {}
 
   nsRefPtr<AbstractMediaDecoder> mDecoder;
   nsAutoPtr<MediaInfo>  mInfo;
   nsAutoPtr<MetadataTags> mTags;
+  MediaDecoderEventVisibility mEventVisibility;
 };
 
 class MetadataEventRunner : public nsRunnable, private MetadataContainer
@@ -180,13 +182,14 @@ class MetadataEventRunner : public nsRunnable, private MetadataContainer
 public:
   MetadataEventRunner(AbstractMediaDecoder* aDecoder,
                       nsAutoPtr<MediaInfo> aInfo,
-                      nsAutoPtr<MetadataTags> aTags)
-    : MetadataContainer(aDecoder, aInfo, aTags)
+                      nsAutoPtr<MetadataTags> aTags,
+                      MediaDecoderEventVisibility aEventVisibility = MediaDecoderEventVisibility::Observable)
+    : MetadataContainer(aDecoder, aInfo, aTags, aEventVisibility)
   {}
 
-  NS_IMETHOD Run() MOZ_OVERRIDE
+  NS_IMETHOD Run() override
   {
-    mDecoder->MetadataLoaded(mInfo, mTags);
+    mDecoder->MetadataLoaded(mInfo, mTags, mEventVisibility);
     return NS_OK;
   }
 };
@@ -195,13 +198,14 @@ class FirstFrameLoadedEventRunner : public nsRunnable, private MetadataContainer
 {
 public:
   FirstFrameLoadedEventRunner(AbstractMediaDecoder* aDecoder,
-                              nsAutoPtr<MediaInfo> aInfo)
-    : MetadataContainer(aDecoder, aInfo, nsAutoPtr<MetadataTags>(nullptr))
+                              nsAutoPtr<MediaInfo> aInfo,
+                              MediaDecoderEventVisibility aEventVisibility = MediaDecoderEventVisibility::Observable)
+    : MetadataContainer(aDecoder, aInfo, nsAutoPtr<MetadataTags>(nullptr), aEventVisibility)
   {}
 
-  NS_IMETHOD Run() MOZ_OVERRIDE
+  NS_IMETHOD Run() override
   {
-    mDecoder->FirstFrameLoaded(mInfo);
+    mDecoder->FirstFrameLoaded(mInfo, mEventVisibility);
     return NS_OK;
   }
 };
@@ -211,16 +215,17 @@ class MetadataUpdatedEventRunner : public nsRunnable, private MetadataContainer
 public:
   MetadataUpdatedEventRunner(AbstractMediaDecoder* aDecoder,
                              nsAutoPtr<MediaInfo> aInfo,
-                             nsAutoPtr<MetadataTags> aTags)
-    : MetadataContainer(aDecoder, aInfo, aTags)
+                             nsAutoPtr<MetadataTags> aTags,
+                             MediaDecoderEventVisibility aEventVisibility = MediaDecoderEventVisibility::Observable)
+    : MetadataContainer(aDecoder, aInfo, aTags, aEventVisibility)
   {}
 
-  NS_IMETHOD Run() MOZ_OVERRIDE
+  NS_IMETHOD Run() override
   {
     nsAutoPtr<MediaInfo> info(new MediaInfo());
     *info = *mInfo;
-    mDecoder->MetadataLoaded(info, mTags);
-    mDecoder->FirstFrameLoaded(mInfo);
+    mDecoder->MetadataLoaded(info, mTags, mEventVisibility);
+    mDecoder->FirstFrameLoaded(mInfo, mEventVisibility);
     return NS_OK;
   }
 };
@@ -232,7 +237,7 @@ public:
     : mDecoder(aDecoder)
   {}
 
-  NS_IMETHOD Run() MOZ_OVERRIDE
+  NS_IMETHOD Run() override
   {
     MOZ_ASSERT(NS_IsMainThread());
 

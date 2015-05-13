@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -25,8 +26,8 @@ namespace dom {
 class ConsoleCallData;
 struct ConsoleStackEntry;
 
-class Console MOZ_FINAL : public nsIObserver
-                        , public nsWrapperCache
+class Console final : public nsIObserver
+                    , public nsWrapperCache
 {
   ~Console();
 
@@ -44,7 +45,7 @@ public:
   }
 
   virtual JSObject*
-  WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   void
   Log(JSContext* aCx, const Sequence<JS::Value>& aData);
@@ -74,6 +75,9 @@ public:
   Dir(JSContext* aCx, const Sequence<JS::Value>& aData);
 
   void
+  Dirxml(JSContext* aCx, const Sequence<JS::Value>& aData);
+
+  void
   Group(JSContext* aCx, const Sequence<JS::Value>& aData);
 
   void
@@ -89,6 +93,9 @@ public:
   TimeEnd(JSContext* aCx, const JS::Handle<JS::Value> aTime);
 
   void
+  TimeStamp(JSContext* aCx, const JS::Handle<JS::Value> aData);
+
+  void
   Profile(JSContext* aCx, const Sequence<JS::Value>& aData);
 
   void
@@ -101,7 +108,7 @@ public:
   Count(JSContext* aCx, const Sequence<JS::Value>& aData);
 
   void
-  __noSuchMethod__();
+  NoopMethod();
 
 private:
   enum MethodName
@@ -115,11 +122,13 @@ private:
     MethodTable,
     MethodTrace,
     MethodDir,
+    MethodDirxml,
     MethodGroup,
     MethodGroupCollapsed,
     MethodGroupEnd,
     MethodTime,
     MethodTimeEnd,
+    MethodTimeStamp,
     MethodAssert,
     MethodCount
   };

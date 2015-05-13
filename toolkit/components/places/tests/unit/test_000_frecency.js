@@ -89,7 +89,7 @@ function task_initializeBucket(bucket) {
         }
         else {
           matchTitle = searchTerm + "UnvisitedTyped";
-          yield promiseAddVisits({
+          yield PlacesTestUtils.addVisits({
             uri: calculatedURI,
             title: matchTitle,
             transition: visitType,
@@ -126,7 +126,7 @@ function task_initializeBucket(bucket) {
       }
       else
         matchTitle = calculatedURI.spec.substr(calculatedURI.spec.lastIndexOf("/")+1);
-      yield promiseAddVisits({
+      yield PlacesTestUtils.addVisits({
         uri: calculatedURI,
         transition: visitType,
         visitDate: dateInPeriod
@@ -135,7 +135,7 @@ function task_initializeBucket(bucket) {
 
     if (calculatedURI && frecency) {
       results.push([calculatedURI, frecency, matchTitle]);
-      yield promiseAddVisits({
+      yield PlacesTestUtils.addVisits({
         uri: calculatedURI,
         title: matchTitle,
         transition: visitType,
@@ -216,7 +216,7 @@ add_task(function test_frecency()
   // DEBUG
   //results.every(function(el) { dump("result: " + el[1] + ": " + el[0].spec + " (" + el[2] + ")\n"); return true; })
 
-  yield promiseAsyncUpdates();
+  yield PlacesTestUtils.promiseAsyncUpdates();
 
   var controller = Components.classes["@mozilla.org/autocomplete/controller;1"].
                    getService(Components.interfaces.nsIAutoCompleteController);

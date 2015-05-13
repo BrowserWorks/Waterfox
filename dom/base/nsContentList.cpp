@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 sw=2 et tw=78: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -147,13 +147,13 @@ NS_IMPL_ADDREF_INHERITED(nsSimpleContentList, nsBaseContentList)
 NS_IMPL_RELEASE_INHERITED(nsSimpleContentList, nsBaseContentList)
 
 JSObject*
-nsSimpleContentList::WrapObject(JSContext *cx)
+nsSimpleContentList::WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto)
 {
-  return NodeListBinding::Wrap(cx, this);
+  return NodeListBinding::Wrap(cx, this, aGivenProto);
 }
 
 // Hashtable for storing nsContentLists
-static PLDHashTable gContentListHashTable;
+static PLDHashTable* gContentListHashTable;
 
 #define RECENTLY_USED_CONTENT_LIST_CACHE_SIZE 31
 static nsContentList*
@@ -208,32 +208,24 @@ NS_GetContentList(nsINode* aRootNode,
 
   static const PLDHashTableOps hash_table_ops =
   {
-    PL_DHashAllocTable,
-    PL_DHashFreeTable,
     ContentListHashtableHashKey,
     ContentListHashtableMatchEntry,
     PL_DHashMoveEntryStub,
-    PL_DHashClearEntryStub,
-    PL_DHashFinalizeStub
+    PL_DHashClearEntryStub
   };
 
   // Initialize the hashtable if needed.
-  if (!gContentListHashTable.ops) {
-    PL_DHashTableInit(&gContentListHashTable, &hash_table_ops, nullptr,
-                      sizeof(ContentListHashEntry));
+  if (!gContentListHashTable) {
+    gContentListHashTable =
+      new PLDHashTable(&hash_table_ops, sizeof(ContentListHashEntry));
   }
 
   ContentListHashEntry *entry = nullptr;
   // First we look in our hashtable.  Then we create a content list if needed
-  if (gContentListHashTable.ops) {
-
-    // A PL_DHASH_ADD is equivalent to a PL_DHASH_LOOKUP for cases
-    // when the entry is already in the hashtable.
-    entry = static_cast<ContentListHashEntry *>
-                       (PL_DHashTableAdd(&gContentListHashTable, &hashKey));
-    if (entry)
-      list = entry->mContentList;
-  }
+  entry = static_cast<ContentListHashEntry *>
+    (PL_DHashTableAdd(gContentListHashTable, &hashKey, fallible));
+  if (entry)
+    list = entry->mContentList;
 
   if (!list) {
     // We need to create a ContentList and add it to our new entry, if
@@ -247,8 +239,7 @@ NS_GetContentList(nsINode* aRootNode,
     } else {
       htmlAtom = xmlAtom;
     }
-    list = new nsContentList(aRootNode, aMatchNameSpaceId,
-                             htmlAtom, xmlAtom);
+    list = new nsContentList(aRootNode, aMatchNameSpaceId, htmlAtom, xmlAtom);
     if (entry) {
       entry->mContentList = list;
     }
@@ -266,20 +257,20 @@ const nsCacheableFuncStringContentList::ContentListType
 #endif
 
 JSObject*
-nsCacheableFuncStringNodeList::WrapObject(JSContext *cx)
+nsCacheableFuncStringNodeList::WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto)
 {
-  return NodeListBinding::Wrap(cx, this);
+  return NodeListBinding::Wrap(cx, this, aGivenProto);
 }
 
 
 JSObject*
-nsCacheableFuncStringHTMLCollection::WrapObject(JSContext *cx)
+nsCacheableFuncStringHTMLCollection::WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto)
 {
-  return HTMLCollectionBinding::Wrap(cx, this);
+  return HTMLCollectionBinding::Wrap(cx, this, aGivenProto);
 }
 
 // Hashtable for storing nsCacheableFuncStringContentList
-static PLDHashTable gFuncStringContentListHashTable;
+static PLDHashTable* gFuncStringContentListHashTable;
 
 struct FuncStringContentListHashEntry : public PLDHashEntryHdr
 {
@@ -321,31 +312,25 @@ GetFuncStringContentList(nsINode* aRootNode,
 
   static const PLDHashTableOps hash_table_ops =
   {
-    PL_DHashAllocTable,
-    PL_DHashFreeTable,
     FuncStringContentListHashtableHashKey,
     FuncStringContentListHashtableMatchEntry,
     PL_DHashMoveEntryStub,
-    PL_DHashClearEntryStub,
-    PL_DHashFinalizeStub
+    PL_DHashClearEntryStub
   };
 
   // Initialize the hashtable if needed.
-  if (!gFuncStringContentListHashTable.ops) {
-    PL_DHashTableInit(&gFuncStringContentListHashTable, &hash_table_ops,
-                      nullptr, sizeof(FuncStringContentListHashEntry));
+  if (!gFuncStringContentListHashTable) {
+    gFuncStringContentListHashTable =
+      new PLDHashTable(&hash_table_ops, sizeof(FuncStringContentListHashEntry));
   }
 
   FuncStringContentListHashEntry *entry = nullptr;
   // First we look in our hashtable.  Then we create a content list if needed
-  if (gFuncStringContentListHashTable.ops) {
+  if (gFuncStringContentListHashTable) {
     nsFuncStringCacheKey hashKey(aRootNode, aFunc, aString);
 
-    // A PL_DHASH_ADD is equivalent to a PL_DHASH_LOOKUP for cases
-    // when the entry is already in the hashtable.
     entry = static_cast<FuncStringContentListHashEntry *>
-                       (PL_DHashTableAdd(&gFuncStringContentListHashTable,
-                                         &hashKey));
+      (PL_DHashTableAdd(gFuncStringContentListHashTable, &hashKey, fallible));
     if (entry) {
       list = entry->mContentList;
 #ifdef DEBUG
@@ -417,8 +402,8 @@ nsContentList::nsContentList(nsINode* aRootNode,
     mFuncMayDependOnAttr(false)
 {
   NS_ASSERTION(mRootNode, "Must have root");
-  if (nsGkAtoms::_asterix == mHTMLMatchAtom) {
-    NS_ASSERTION(mXMLMatchAtom == nsGkAtoms::_asterix, "HTML atom and XML atom are not both asterix?");
+  if (nsGkAtoms::_asterisk == mHTMLMatchAtom) {
+    NS_ASSERTION(mXMLMatchAtom == nsGkAtoms::_asterisk, "HTML atom and XML atom are not both asterisk?");
     mMatchAll = true;
   }
   else {
@@ -432,7 +417,7 @@ nsContentList::nsContentList(nsINode* aRootNode,
   // not parser-created and don't need to be flushing stuff under us
   // to get our kids right.
   nsIDocument* doc = mRootNode->GetUncomposedDoc();
-  mFlushesNeeded = doc && !doc->IsHTML();
+  mFlushesNeeded = doc && !doc->IsHTMLDocument();
 }
 
 nsContentList::nsContentList(nsINode* aRootNode,
@@ -465,7 +450,7 @@ nsContentList::nsContentList(nsINode* aRootNode,
   // not parser-created and don't need to be flushing stuff under us
   // to get our kids right.
   nsIDocument* doc = mRootNode->GetUncomposedDoc();
-  mFlushesNeeded = doc && !doc->IsHTML();
+  mFlushesNeeded = doc && !doc->IsHTMLDocument();
 }
 
 nsContentList::~nsContentList()
@@ -482,9 +467,9 @@ nsContentList::~nsContentList()
 }
 
 JSObject*
-nsContentList::WrapObject(JSContext *cx)
+nsContentList::WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto)
 {
-  return HTMLCollectionBinding::Wrap(cx, this);
+  return HTMLCollectionBinding::Wrap(cx, this, aGivenProto);
 }
 
 NS_IMPL_ISUPPORTS_INHERITED(nsContentList, nsBaseContentList,
@@ -866,7 +851,7 @@ nsContentList::Match(Element *aElement)
     return toReturn;
 
   bool matchHTML = aElement->GetNameSpaceID() == kNameSpaceID_XHTML &&
-    aElement->OwnerDoc()->IsHTML();
+    aElement->OwnerDoc()->IsHTMLDocument();
  
   if (unknown) {
     return matchHTML ? ni->QualifiedNameEquals(mHTMLMatchAtom) :
@@ -983,14 +968,14 @@ nsContentList::RemoveFromHashtable()
     sRecentlyUsedContentLists[recentlyUsedCacheIndex] = nullptr;
   }
 
-  if (!gContentListHashTable.ops)
+  if (!gContentListHashTable)
     return;
 
-  PL_DHashTableRemove(&gContentListHashTable, &key);
+  PL_DHashTableRemove(gContentListHashTable, &key);
 
-  if (gContentListHashTable.EntryCount() == 0) {
-    PL_DHashTableFinish(&gContentListHashTable);
-    gContentListHashTable.ops = nullptr;
+  if (gContentListHashTable->EntryCount() == 0) {
+    delete gContentListHashTable;
+    gContentListHashTable = nullptr;
   }
 }
 
@@ -1022,16 +1007,16 @@ nsCacheableFuncStringContentList::~nsCacheableFuncStringContentList()
 void
 nsCacheableFuncStringContentList::RemoveFromFuncStringHashtable()
 {
-  if (!gFuncStringContentListHashTable.ops) {
+  if (!gFuncStringContentListHashTable) {
     return;
   }
 
   nsFuncStringCacheKey key(mRootNode, mFunc, mString);
-  PL_DHashTableRemove(&gFuncStringContentListHashTable, &key);
+  PL_DHashTableRemove(gFuncStringContentListHashTable, &key);
 
-  if (gFuncStringContentListHashTable.EntryCount() == 0) {
-    PL_DHashTableFinish(&gFuncStringContentListHashTable);
-    gFuncStringContentListHashTable.ops = nullptr;
+  if (gFuncStringContentListHashTable->EntryCount() == 0) {
+    delete gFuncStringContentListHashTable;
+    gFuncStringContentListHashTable = nullptr;
   }
 }
 

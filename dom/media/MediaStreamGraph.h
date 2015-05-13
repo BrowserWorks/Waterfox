@@ -16,11 +16,13 @@
 #include "VideoFrameContainer.h"
 #include "VideoSegment.h"
 #include "MainThreadUtils.h"
+#include "MediaTaskQueue.h"
 #include "nsAutoRef.h"
 #include "GraphDriver.h"
 #include <speex/speex_resampler.h>
 #include "mozilla/dom/AudioChannelBinding.h"
 #include "DOMMediaStream.h"
+#include "AudioContext.h"
 
 class nsIRunnable;
 
@@ -177,6 +179,13 @@ public:
                                         StreamTime aTrackOffset,
                                         uint32_t aTrackEvents,
                                         const MediaSegment& aQueuedMedia) {}
+
+  /**
+   * Notify that all new tracks this iteration have been created.
+   * This is to ensure that tracks added atomically to MediaStreamGraph
+   * are also notified of atomically to MediaStreamListeners.
+   */
+  virtual void NotifyFinishedTrackCreation(MediaStreamGraph* aGraph) {}
 };
 
 /**
@@ -217,7 +226,7 @@ public:
  */
 class MainThreadMediaStreamListener {
 public:
-  virtual void NotifyMainThreadStateChanged() = 0;
+  virtual void NotifyMainThreadStreamFinished() = 0;
 };
 
 /**
@@ -239,7 +248,7 @@ class MediaInputPort;
 class AudioNodeEngine;
 class AudioNodeExternalInputStream;
 class AudioNodeStream;
-struct AudioChunk;
+class CameraPreviewMediaStream;
 
 /**
  * A stream of synchronized audio and video data. All (not blocked) streams
@@ -309,6 +318,7 @@ public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(MediaStream)
 
   explicit MediaStream(DOMMediaStream* aWrapper);
+  virtual dom::AudioContext::AudioContextId AudioContextId() const { return 0; }
 
 protected:
   // Protected destructor, to discourage deletion outside of Release():
@@ -355,26 +365,27 @@ public:
   // Explicitly block. Useful for example if a media element is pausing
   // and we need to stop its stream emitting its buffered data.
   virtual void ChangeExplicitBlockerCount(int32_t aDelta);
+  void BlockStreamIfNeeded();
+  void UnblockStreamIfNeeded();
   // Events will be dispatched by calling methods of aListener.
   virtual void AddListener(MediaStreamListener* aListener);
   virtual void RemoveListener(MediaStreamListener* aListener);
   // A disabled track has video replaced by black, and audio replaced by
   // silence.
   void SetTrackEnabled(TrackID aTrackID, bool aEnabled);
-  // Events will be dispatched by calling methods of aListener. It is the
+
+  // Finish event will be notified by calling methods of aListener. It is the
   // responsibility of the caller to remove aListener before it is destroyed.
-  void AddMainThreadListener(MainThreadMediaStreamListener* aListener)
-  {
-    NS_ASSERTION(NS_IsMainThread(), "Call only on main thread");
-    mMainThreadListeners.AppendElement(aListener);
-  }
+  void AddMainThreadListener(MainThreadMediaStreamListener* aListener);
   // It's safe to call this even if aListener is not currently a listener;
   // the call will be ignored.
   void RemoveMainThreadListener(MainThreadMediaStreamListener* aListener)
   {
-    NS_ASSERTION(NS_IsMainThread(), "Call only on main thread");
+    MOZ_ASSERT(NS_IsMainThread());
+    MOZ_ASSERT(aListener);
     mMainThreadListeners.RemoveElement(aListener);
   }
+
   /**
    * Ensure a runnable will run on the main thread after running all pending
    * updates that were sent from the graph thread or will be sent before the
@@ -388,7 +399,7 @@ public:
    *
    * Main thread only.
    */
-  void RunAfterPendingUpdates(nsRefPtr<nsIRunnable> aRunnable);
+  void RunAfterPendingUpdates(already_AddRefed<nsIRunnable> aRunnable);
 
   // Signal that the client is done with this MediaStream. It will be deleted later.
   virtual void Destroy();
@@ -405,6 +416,7 @@ public:
     NS_ASSERTION(NS_IsMainThread(), "Call only on main thread");
     return mMainThreadFinished;
   }
+
   bool IsDestroyed()
   {
     NS_ASSERTION(NS_IsMainThread(), "Call only on main thread");
@@ -418,6 +430,7 @@ public:
   virtual SourceMediaStream* AsSourceStream() { return nullptr; }
   virtual ProcessedMediaStream* AsProcessedStream() { return nullptr; }
   virtual AudioNodeStream* AsAudioNodeStream() { return nullptr; }
+  virtual CameraPreviewMediaStream* AsCameraPreviewStream() { return nullptr; }
 
   // media graph thread only
   void Init();
@@ -454,6 +467,22 @@ public:
   void ChangeExplicitBlockerCountImpl(GraphTime aTime, int32_t aDelta)
   {
     mExplicitBlockerCount.SetAtAndAfter(aTime, mExplicitBlockerCount.GetAt(aTime) + aDelta);
+  }
+  void BlockStreamIfNeededImpl(GraphTime aTime)
+  {
+    bool blocked = mExplicitBlockerCount.GetAt(aTime) > 0;
+    if (blocked) {
+      return;
+    }
+    ChangeExplicitBlockerCountImpl(aTime, 1);
+  }
+  void UnblockStreamIfNeededImpl(GraphTime aTime)
+  {
+    bool blocked = mExplicitBlockerCount.GetAt(aTime) > 0;
+    if (!blocked) {
+      return;
+    }
+    ChangeExplicitBlockerCountImpl(aTime, -1);
   }
   void AddListenerImpl(already_AddRefed<MediaStreamListener> aListener);
   void RemoveListenerImpl(MediaStreamListener* aListener);
@@ -567,6 +596,27 @@ protected:
     mBuffer.ForgetUpTo(aCurrentTime - mBufferStartTime);
   }
 
+  void NotifyMainThreadListeners()
+  {
+    NS_ASSERTION(NS_IsMainThread(), "Call only on main thread");
+
+    for (int32_t i = mMainThreadListeners.Length() - 1; i >= 0; --i) {
+      mMainThreadListeners[i]->NotifyMainThreadStreamFinished();
+    }
+    mMainThreadListeners.Clear();
+  }
+
+  bool ShouldNotifyStreamFinished()
+  {
+    NS_ASSERTION(NS_IsMainThread(), "Call only on main thread");
+    if (!mMainThreadFinished || mFinishedNotificationSent) {
+      return false;
+    }
+
+    mFinishedNotificationSent = true;
+    return true;
+  }
+
   // This state is all initialized on the main thread but
   // otherwise modified only on the media graph thread.
 
@@ -595,6 +645,7 @@ protected:
   TimeVarying<GraphTime,uint32_t,0> mExplicitBlockerCount;
   nsTArray<nsRefPtr<MediaStreamListener> > mListeners;
   nsTArray<MainThreadMediaStreamListener*> mMainThreadListeners;
+  nsRefPtr<nsRunnable> mNotificationMainThreadRunnable;
   nsTArray<TrackID> mDisabledTrackIDs;
 
   // Precomputed blocking status (over GraphTime).
@@ -667,6 +718,7 @@ protected:
   // Main-thread views of state
   StreamTime mMainThreadCurrentTime;
   bool mMainThreadFinished;
+  bool mFinishedNotificationSent;
   bool mMainThreadDestroyed;
 
   // Our media stream graph.  null if destroyed on the graph thread.
@@ -693,10 +745,10 @@ public:
     mNeedsMixing(false)
   {}
 
-  virtual SourceMediaStream* AsSourceStream() MOZ_OVERRIDE { return this; }
+  virtual SourceMediaStream* AsSourceStream() override { return this; }
 
   // Media graph thread only
-  virtual void DestroyImpl() MOZ_OVERRIDE;
+  virtual void DestroyImpl() override;
 
   // Call these on any thread.
   /**
@@ -718,25 +770,35 @@ public:
   void AddDirectListener(MediaStreamDirectListener* aListener);
   void RemoveDirectListener(MediaStreamDirectListener* aListener);
 
+  enum {
+    ADDTRACK_QUEUED    = 0x01 // Queue track add until FinishAddTracks()
+  };
   /**
    * Add a new track to the stream starting at the given base time (which
    * must be greater than or equal to the last time passed to
    * AdvanceKnownTracksTime). Takes ownership of aSegment. aSegment should
    * contain data starting after aStart.
    */
-  void AddTrack(TrackID aID, StreamTime aStart, MediaSegment* aSegment)
+  void AddTrack(TrackID aID, StreamTime aStart, MediaSegment* aSegment,
+                uint32_t aFlags = 0)
   {
-    AddTrackInternal(aID, GraphRate(), aStart, aSegment);
+    AddTrackInternal(aID, GraphRate(), aStart, aSegment, aFlags);
   }
 
   /**
    * Like AddTrack, but resamples audio from aRate to the graph rate.
    */
   void AddAudioTrack(TrackID aID, TrackRate aRate, StreamTime aStart,
-                     AudioSegment* aSegment)
+                     AudioSegment* aSegment, uint32_t aFlags = 0)
   {
-    AddTrackInternal(aID, aRate, aStart, aSegment);
+    AddTrackInternal(aID, aRate, aStart, aSegment, aFlags);
   }
+
+  /**
+   * Call after a series of AddTrack or AddAudioTrack calls to implement
+   * any pending track adds.
+   */
+  void FinishAddTracks();
 
   /**
    * Append media data to a track. Ownership of aSegment remains with the caller,
@@ -764,7 +826,7 @@ public:
    * does not exist. No op if a runnable is already present for this track.
    */
   void DispatchWhenNotEnoughBuffered(TrackID aID,
-      nsIEventTarget* aSignalThread, nsIRunnable* aSignalRunnable);
+      MediaTaskQueue* aSignalQueue, nsIRunnable* aSignalRunnable);
   /**
    * Indicate that a track has ended. Do not do any more API calls
    * affecting this track.
@@ -790,7 +852,7 @@ public:
 
   // Overriding allows us to hold the mMutex lock while changing the track enable status
   virtual void
-  SetTrackEnabledImpl(TrackID aTrackID, bool aEnabled) MOZ_OVERRIDE {
+  SetTrackEnabledImpl(TrackID aTrackID, bool aEnabled) override {
     MutexAutoLock lock(mMutex);
     MediaStream::SetTrackEnabledImpl(aTrackID, aEnabled);
   }
@@ -798,7 +860,7 @@ public:
   // Overriding allows us to ensure mMutex is locked while changing the track enable status
   virtual void
   ApplyTrackDisabling(TrackID aTrackID, MediaSegment* aSegment,
-                      MediaSegment* aRawSegment = nullptr) MOZ_OVERRIDE {
+                      MediaSegment* aRawSegment = nullptr) override {
     mMutex.AssertCurrentThreadOwns();
     MediaStream::ApplyTrackDisabling(aTrackID, aSegment, aRawSegment);
   }
@@ -828,13 +890,13 @@ public:
 
 protected:
   struct ThreadAndRunnable {
-    void Init(nsIEventTarget* aTarget, nsIRunnable* aRunnable)
+    void Init(MediaTaskQueue* aTarget, nsIRunnable* aRunnable)
     {
       mTarget = aTarget;
       mRunnable = aRunnable;
     }
 
-    nsCOMPtr<nsIEventTarget> mTarget;
+    nsRefPtr<MediaTaskQueue> mTarget;
     nsCOMPtr<nsIRunnable> mRunnable;
   };
   enum TrackCommands {
@@ -872,7 +934,8 @@ protected:
   void ResampleAudioToGraphSampleRate(TrackData* aTrackData, MediaSegment* aSegment);
 
   void AddTrackInternal(TrackID aID, TrackRate aRate,
-                        StreamTime aStart, MediaSegment* aSegment);
+                        StreamTime aStart, MediaSegment* aSegment,
+                        uint32_t aFlags);
 
   TrackData* FindDataForTrack(TrackID aID)
   {
@@ -903,6 +966,7 @@ protected:
   // protected by mMutex
   StreamTime mUpdateKnownTracksTime;
   nsTArray<TrackData> mUpdateTracks;
+  nsTArray<TrackData> mPendingTracks;
   nsTArray<nsRefPtr<MediaStreamDirectListener> > mDirectListeners;
   bool mPullEnabled;
   bool mUpdateFinished;
@@ -926,7 +990,7 @@ protected:
  * the Destroy message is processed on the graph manager thread we disconnect
  * the port and drop the graph's reference, destroying the object.
  */
-class MediaInputPort MOZ_FINAL {
+class MediaInputPort final {
 private:
   // Do not call this constructor directly. Instead call aDest->AllocateInputPort.
   MediaInputPort(MediaStream* aSource, ProcessedMediaStream* aDest,
@@ -1069,7 +1133,7 @@ public:
    */
   void SetAutofinish(bool aAutofinish);
 
-  virtual ProcessedMediaStream* AsProcessedStream() MOZ_OVERRIDE { return this; }
+  virtual ProcessedMediaStream* AsProcessedStream() override { return this; }
 
   friend class MediaStreamGraphImpl;
 
@@ -1087,7 +1151,7 @@ public:
   {
     return mInputs.Length();
   }
-  virtual void DestroyImpl() MOZ_OVERRIDE;
+  virtual void DestroyImpl() override;
   /**
    * This gets called after we've computed the blocking states for all
    * streams (mBlocked is up to date up to mStateComputedTime).
@@ -1120,7 +1184,7 @@ public:
   // true for echo loops, only for muted cycles.
   bool InMutedCycle() const { return mCycleMarker; }
 
-  virtual size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const MOZ_OVERRIDE
+  virtual size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     size_t amount = MediaStream::SizeOfExcludingThis(aMallocSizeOf);
     // Not owned:
@@ -1129,7 +1193,7 @@ public:
     return amount;
   }
 
-  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const MOZ_OVERRIDE
+  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
   }
@@ -1160,7 +1224,7 @@ public:
   //
 
   // Main thread only
-  static MediaStreamGraph* GetInstance(DOMMediaStream::TrackTypeHints aHint = DOMMediaStream::HINT_CONTENTS_UNKNOWN,
+  static MediaStreamGraph* GetInstance(bool aStartWithAudioDriver = false,
                                        dom::AudioChannel aChannel = dom::AudioChannel::Normal);
   static MediaStreamGraph* CreateNonRealtimeInstance(TrackRate aSampleRate);
   // Idempotent
@@ -1204,6 +1268,21 @@ public:
   AudioNodeExternalInputStream*
   CreateAudioNodeExternalInputStream(AudioNodeEngine* aEngine,
                                      TrackRate aSampleRate = 0);
+
+  /* From the main thread, ask the MSG to send back an event when the graph
+   * thread is running, and audio is being processed. */
+  void NotifyWhenGraphStarted(AudioNodeStream* aNodeStream);
+  /* From the main thread, suspend, resume or close an AudioContext.
+   * aNodeStream is the stream of the DestinationNode of the AudioContext.
+   *
+   * This can possibly pause the graph thread, releasing system resources, if
+   * all streams have been suspended/closed.
+   *
+   * When the operation is complete, aPromise is resolved.
+   */
+  void ApplyAudioContextOperation(AudioNodeStream* aNodeStream,
+                                  dom::AudioContextOperation aState,
+                                  void * aPromise);
 
   bool IsNonRealtime() const;
   /**

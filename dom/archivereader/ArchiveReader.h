@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -13,14 +13,14 @@
 
 #include "nsCOMArray.h"
 #include "nsIChannel.h"
-#include "nsIDOMFile.h"
 #include "mozilla/Attributes.h"
 
 namespace mozilla {
 namespace dom {
 struct ArchiveReaderOptions;
+class Blob;
+class BlobImpl;
 class File;
-class FileImpl;
 class GlobalObject;
 } // namespace dom
 } // namespace mozilla
@@ -32,18 +32,18 @@ class ArchiveRequest;
 /**
  * This is the ArchiveReader object
  */
-class ArchiveReader MOZ_FINAL : public nsISupports,
-                                public nsWrapperCache
+class ArchiveReader final : public nsISupports,
+                            public nsWrapperCache
 {
 public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(ArchiveReader)
 
   static already_AddRefed<ArchiveReader>
-  Constructor(const GlobalObject& aGlobal, File& aBlob,
+  Constructor(const GlobalObject& aGlobal, Blob& aBlob,
               const ArchiveReaderOptions& aOptions, ErrorResult& aError);
 
-  ArchiveReader(File& aBlob, nsPIDOMWindow* aWindow,
+  ArchiveReader(Blob& aBlob, nsPIDOMWindow* aWindow,
                 const nsACString& aEncoding);
 
   nsIDOMWindow* GetParentObject() const
@@ -51,7 +51,7 @@ public:
     return mWindow;
   }
 
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   already_AddRefed<ArchiveRequest> GetFilenames();
   already_AddRefed<ArchiveRequest> GetFile(const nsAString& filename);
@@ -64,13 +64,12 @@ public: // for the ArchiveRequest:
   nsresult RegisterRequest(ArchiveRequest* aRequest);
 
 public: // For events:
-  FileImpl* GetFileImpl() const
+  BlobImpl* GetBlobImpl() const
   {
-    return mFileImpl;
+    return mBlobImpl;
   }
 
-  void Ready(nsTArray<nsCOMPtr<nsIDOMFile> >& aFileList,
-             nsresult aStatus);
+  void Ready(nsTArray<nsRefPtr<File>>& aFileList, nsresult aStatus);
 
 private:
   ~ArchiveReader();
@@ -83,7 +82,7 @@ private:
 
 protected:
   // The archive blob/file
-  nsRefPtr<FileImpl> mFileImpl;
+  nsRefPtr<BlobImpl> mBlobImpl;
 
   // The window is needed by the requests
   nsCOMPtr<nsPIDOMWindow> mWindow;
@@ -108,7 +107,7 @@ protected:
 
   // Everything related to the blobs and the status:
   struct {
-    nsTArray<nsCOMPtr<nsIDOMFile> > fileList;
+    nsTArray<nsRefPtr<File>> fileList;
     nsresult status;
   } mData;
 

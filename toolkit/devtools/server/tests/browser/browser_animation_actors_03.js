@@ -34,8 +34,10 @@ function* playerHasAnInitialState(walker, front) {
   ok("startTime" in player.initialState, "Player's state has startTime");
   ok("currentTime" in player.initialState, "Player's state has currentTime");
   ok("playState" in player.initialState, "Player's state has playState");
+  ok("playbackRate" in player.initialState, "Player's state has playbackRate");
   ok("name" in player.initialState, "Player's state has name");
   ok("duration" in player.initialState, "Player's state has duration");
+  ok("delay" in player.initialState, "Player's state has delay");
   ok("iterationCount" in player.initialState, "Player's state has iterationCount");
   ok("isRunningOnCompositor" in player.initialState, "Player's state has isRunningOnCompositor");
 }
@@ -49,15 +51,17 @@ function* playerStateIsCorrect(walker, front) {
   // null = infinite count
   is(state.iterationCount, null, "Iteration count is correct");
   is(state.playState, "running", "PlayState is correct");
+  is(state.playbackRate, 1, "PlaybackRate is correct");
 
   info("Checking the state of the transition");
 
   state = yield getAnimationStateForNode(walker, front, ".transition", 0);
-  is(state.name, "", "Transition has no name");
+  is(state.name, "width", "Transition name matches transition property");
   is(state.duration, 5000, "Transition duration is correct");
   // transitions run only once
   is(state.iterationCount, 1, "Transition iteration count is correct");
   is(state.playState, "running", "Transition playState is correct");
+  is(state.playbackRate, 1, "Transition playbackRate is correct");
 
   info("Checking the state of one of multiple animations on a node");
 
@@ -67,6 +71,17 @@ function* playerStateIsCorrect(walker, front) {
   is(state.duration, 1000, "The 2nd animation's duration is correct");
   is(state.iterationCount, 5, "The 2nd animation's iteration count is correct");
   is(state.playState, "running", "The 2nd animation's playState is correct");
+  is(state.playbackRate, 1, "The 2nd animation's playbackRate is correct");
+
+  info("Checking the state of an animation with delay");
+
+  state = yield getAnimationStateForNode(walker, front, ".delayed-animation", 0);
+  is(state.delay, 5000, "The animation delay is correct");
+
+  info("Checking the state of an transition with delay");
+
+  state = yield getAnimationStateForNode(walker, front, ".delayed-transition", 0);
+  is(state.delay, 3000, "The transition delay is correct");
 }
 
 function* getAnimationStateForNode(walker, front, nodeSelector, playerIndex) {

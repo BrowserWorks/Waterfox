@@ -70,6 +70,7 @@ public class FxAccountSignInActivity extends FxAccountAbstractSetupActivity {
     });
 
     updateFromIntentExtras();
+    maybeEnableAnimations();
 
     TextView view = (TextView) findViewById(R.id.forgot_password_link);
     ActivityUtils.linkTextView(view, R.string.fxaccount_sign_in_forgot_password, R.string.fxaccount_link_forgot_password);
@@ -111,7 +112,7 @@ public class FxAccountSignInActivity extends FxAccountAbstractSetupActivity {
     FxAccountClient client = new FxAccountClient20(serverURI, executor);
     try {
       hideRemoteError();
-      new FxAccountSignInTask(this, this, email, passwordStretcher, client, delegate).execute();
+      new FxAccountSignInTask(this, this, email, passwordStretcher, client, getQueryParameters(), delegate).execute();
     } catch (Exception e) {
       showRemoteError(e, R.string.fxaccount_sign_in_unknown_error);
     }

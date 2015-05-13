@@ -4,14 +4,16 @@
 
 import urllib
 
-from by import By
-from errors import JavascriptException, MarionetteException
-from marionette_test import MarionetteTestCase
+from marionette_driver import By, errors
+from marionette.marionette_test import MarionetteTestCase, skip_if_b2g
+
 
 def inline(doc):
     return "data:text/html;charset=utf-8,%s" % urllib.quote(doc)
 
+
 elements = inline("<p>foo</p> <p>bar</p>")
+
 
 class TestExecuteContent(MarionetteTestCase):
     def test_stack_trace(self):
@@ -21,7 +23,7 @@ class TestExecuteContent(MarionetteTestCase):
                 return b;
                 """)
             self.assertFalse(True)
-        except JavascriptException, inst:
+        except errors.JavascriptException as inst:
             self.assertTrue('return b' in inst.stacktrace)
 
     def test_execute_simple(self):
@@ -34,11 +36,11 @@ class TestExecuteContent(MarionetteTestCase):
         self.assertEqual(self.marionette.execute_script("1;"), None)
 
     def test_execute_js_exception(self):
-        self.assertRaises(JavascriptException,
+        self.assertRaises(errors.JavascriptException,
             self.marionette.execute_script, "return foo(bar);")
 
     def test_execute_permission(self):
-        self.assertRaises(JavascriptException,
+        self.assertRaises(errors.JavascriptException,
                           self.marionette.execute_script,
                           """
 let prefs = Components.classes["@mozilla.org/preferences-service;1"]
@@ -72,6 +74,18 @@ let prefs = Components.classes["@mozilla.org/preferences-service;1"]
         self.marionette.execute_script("global.barfoo = [42, 23];")
         self.assertEqual(self.marionette.execute_script("return global.barfoo;", new_sandbox=False), [42, 23])
 
+    def test_sandbox_refresh_arguments(self):
+        self.marionette.execute_script("this.foobar = [arguments[0], arguments[1]];",
+                                       script_args=[23, 42])
+        self.assertEqual(self.marionette.execute_script("return this.foobar;", new_sandbox=False),
+                         [23, 42])
+
+        self.marionette.execute_script("global.barfoo = [arguments[0], arguments[1]];",
+                                       script_args=[42, 23],
+                                       new_sandbox=False)
+        self.assertEqual(self.marionette.execute_script("return global.barfoo;", new_sandbox=False),
+                         [42, 23])
+
     def test_that_we_can_pass_in_floats(self):
         expected_result = 1.2
         result = self.marionette.execute_script("return arguments[0]",
@@ -79,6 +93,13 @@ let prefs = Components.classes["@mozilla.org/preferences-service;1"]
         self.assertTrue(isinstance(result, float))
         self.assertEqual(result, expected_result)
 
+    def test_null_argument(self):
+        result = self.marionette.execute_script("return arguments[0]",
+                                                [None])
+        self.assertIs(result, None)
+
+
+@skip_if_b2g
 class TestExecuteChrome(TestExecuteContent):
     def setUp(self):
         super(TestExecuteChrome, self).setUp()
@@ -104,3 +125,10 @@ class TestExecuteChrome(TestExecuteContent):
         actual = self.marionette.execute_script(
             "return document.querySelectorAll('textbox')")
         self.assertEqual(expected, actual)
+
+    def test_async_script_timeout(self):
+        with self.assertRaises(errors.ScriptTimeoutException):
+            self.marionette.execute_async_script("""
+                var cb = arguments[arguments.length - 1];
+                setTimeout(function() { cb() }, 250);
+                """, script_timeout=100)

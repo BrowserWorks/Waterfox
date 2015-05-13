@@ -19,7 +19,7 @@
 #include "nsIHttpChannelInternal.h"
 #include "nsIEncodedChannel.h"
 #include "nsIUploadChannel.h"
-#include "nsICachingChannel.h"
+#include "nsICacheInfoChannel.h"
 #include "nsIFileChannel.h"
 #include "nsEscape.h"
 #include "nsUnicharUtils.h"
@@ -910,10 +910,10 @@ nsWebBrowserPersist::OnDataAvailable(
 //*****************************************************************************
 
 /* void onProgress (in nsIRequest request, in nsISupports ctxt,
-    in unsigned long long aProgress, in unsigned long long aProgressMax); */
+    in long long aProgress, in long long aProgressMax); */
 NS_IMETHODIMP nsWebBrowserPersist::OnProgress(
-    nsIRequest *request, nsISupports *ctxt, uint64_t aProgress,
-    uint64_t aProgressMax)
+    nsIRequest *request, nsISupports *ctxt, int64_t aProgress,
+    int64_t aProgressMax)
 {
     if (!mProgressListener)
     {
@@ -925,16 +925,16 @@ NS_IMETHODIMP nsWebBrowserPersist::OnProgress(
     OutputData *data = mOutputMap.Get(keyPtr);
     if (data)
     {
-        data->mSelfProgress = int64_t(aProgress);
-        data->mSelfProgressMax = int64_t(aProgressMax);
+        data->mSelfProgress = aProgress;
+        data->mSelfProgressMax = aProgressMax;
     }
     else
     {
         UploadData *upData = mUploadList.Get(keyPtr);
         if (upData)
         {
-            upData->mSelfProgress = int64_t(aProgress);
-            upData->mSelfProgressMax = int64_t(aProgressMax);
+            upData->mSelfProgress = aProgress;
+            upData->mSelfProgressMax = aProgressMax;
         }
     }
 
@@ -1274,7 +1274,7 @@ nsresult nsWebBrowserPersist::SaveURIInternal(
         }
 
         // Cache key
-        nsCOMPtr<nsICachingChannel> cacheChannel(do_QueryInterface(httpChannel));
+        nsCOMPtr<nsICacheInfoChannel> cacheChannel(do_QueryInterface(httpChannel));
         if (cacheChannel && cacheKey)
         {
             cacheChannel->SetCacheKey(cacheKey);
@@ -2087,7 +2087,8 @@ nsWebBrowserPersist::MakeFilenameFromURI(nsIURI *aURI, nsString &aFilename)
         if (mPersistFlags & PERSIST_FLAGS_DONT_CHANGE_FILENAMES)
         {
             fileName.AssignWithConversion(NS_UnescapeURL(nameFromURL).get());
-            goto end;
+            aFilename = fileName;
+            return NS_OK;
         }
         if (!nameFromURL.IsEmpty())
         {
@@ -2127,7 +2128,6 @@ nsWebBrowserPersist::MakeFilenameFromURI(nsIURI *aURI, nsString &aFilename)
         fileName.Append(char16_t('a')); // 'a' is for arbitrary
     }
 
-end:
     aFilename = fileName;
     return NS_OK;
 }
@@ -2646,7 +2646,7 @@ nsresult nsWebBrowserPersist::OnWalkDOMNode(nsIDOMNode *aNode)
         return NS_OK;
     }
 
-    if (content->IsSVG(nsGkAtoms::img))
+    if (content->IsSVGElement(nsGkAtoms::img))
     {
         StoreURIAttributeNS(aNode, "http://www.w3.org/1999/xlink", "href");
         return NS_OK;
@@ -2665,22 +2665,22 @@ nsresult nsWebBrowserPersist::OnWalkDOMNode(nsIDOMNode *aNode)
         return NS_OK;
     }
 
-    if (content->IsHTML(nsGkAtoms::body)) {
+    if (content->IsHTMLElement(nsGkAtoms::body)) {
         StoreURIAttribute(aNode, "background");
         return NS_OK;
     }
 
-    if (content->IsHTML(nsGkAtoms::table)) {
+    if (content->IsHTMLElement(nsGkAtoms::table)) {
         StoreURIAttribute(aNode, "background");
         return NS_OK;
     }
 
-    if (content->IsHTML(nsGkAtoms::tr)) {
+    if (content->IsHTMLElement(nsGkAtoms::tr)) {
         StoreURIAttribute(aNode, "background");
         return NS_OK;
     }
 
-    if (content->IsHTML(nsGkAtoms::td) || content->IsHTML(nsGkAtoms::th)) {
+    if (content->IsAnyOfHTMLElements(nsGkAtoms::td, nsGkAtoms::th)) {
         StoreURIAttribute(aNode, "background");
         return NS_OK;
     }
@@ -2692,7 +2692,7 @@ nsresult nsWebBrowserPersist::OnWalkDOMNode(nsIDOMNode *aNode)
         return NS_OK;
     }
 
-    if (content->IsSVG(nsGkAtoms::script))
+    if (content->IsSVGElement(nsGkAtoms::script))
     {
         StoreURIAttributeNS(aNode, "http://www.w3.org/1999/xlink", "href");
         return NS_OK;
@@ -2948,7 +2948,7 @@ nsWebBrowserPersist::CloneNodeWithFixedUpAttributes(
         return rv;
     }
 
-    if (content->IsHTML(nsGkAtoms::body)) {
+    if (content->IsHTMLElement(nsGkAtoms::body)) {
         rv = GetNodeToFixup(aNodeIn, aNodeOut);
         if (NS_SUCCEEDED(rv) && *aNodeOut)
         {
@@ -2957,7 +2957,7 @@ nsWebBrowserPersist::CloneNodeWithFixedUpAttributes(
         return rv;
     }
 
-    if (content->IsHTML(nsGkAtoms::table)) {
+    if (content->IsHTMLElement(nsGkAtoms::table)) {
         rv = GetNodeToFixup(aNodeIn, aNodeOut);
         if (NS_SUCCEEDED(rv) && *aNodeOut)
         {
@@ -2966,7 +2966,7 @@ nsWebBrowserPersist::CloneNodeWithFixedUpAttributes(
         return rv;
     }
 
-    if (content->IsHTML(nsGkAtoms::tr)) {
+    if (content->IsHTMLElement(nsGkAtoms::tr)) {
         rv = GetNodeToFixup(aNodeIn, aNodeOut);
         if (NS_SUCCEEDED(rv) && *aNodeOut)
         {
@@ -2975,7 +2975,7 @@ nsWebBrowserPersist::CloneNodeWithFixedUpAttributes(
         return rv;
     }
 
-    if (content->IsHTML(nsGkAtoms::td) || content->IsHTML(nsGkAtoms::th)) {
+    if (content->IsAnyOfHTMLElements(nsGkAtoms::td, nsGkAtoms::th)) {
         rv = GetNodeToFixup(aNodeIn, aNodeOut);
         if (NS_SUCCEEDED(rv) && *aNodeOut)
         {
@@ -3026,7 +3026,7 @@ nsWebBrowserPersist::CloneNodeWithFixedUpAttributes(
         return rv;
     }
 
-    if (content->IsSVG(nsGkAtoms::img))
+    if (content->IsSVGElement(nsGkAtoms::img))
     {
         rv = GetNodeToFixup(aNodeIn, aNodeOut);
         if (NS_SUCCEEDED(rv) && *aNodeOut)
@@ -3054,7 +3054,7 @@ nsWebBrowserPersist::CloneNodeWithFixedUpAttributes(
         return rv;
     }
 
-    if (content->IsSVG(nsGkAtoms::script))
+    if (content->IsSVGElement(nsGkAtoms::script))
     {
         rv = GetNodeToFixup(aNodeIn, aNodeOut);
         if (NS_SUCCEEDED(rv) && *aNodeOut)
@@ -3628,11 +3628,11 @@ nsWebBrowserPersist::CreateChannelFromURI(nsIURI *aURI, nsIChannel **aChannel)
     nsresult rv = NS_OK;
     *aChannel = nullptr;
 
-    nsCOMPtr<nsIIOService> ioserv;
-    ioserv = do_GetIOService(&rv);
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    rv = ioserv->NewChannelFromURI(aURI, aChannel);
+    rv = NS_NewChannel(aChannel,
+                       aURI,
+                       nsContentUtils::GetSystemPrincipal(),
+                       nsILoadInfo::SEC_NORMAL,
+                       nsIContentPolicy::TYPE_OTHER);
     NS_ENSURE_SUCCESS(rv, rv);
     NS_ENSURE_ARG_POINTER(*aChannel);
 

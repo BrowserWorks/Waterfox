@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -365,7 +367,7 @@ nsresult TestPaths() {
     { "connect-src http://www.example.com/foo%3bsessionid=12%2c34",
       "connect-src http://www.example.com/foo;sessionid=12,34" },
     { "connect-src http://test.com/pathIncludingAz19-._~!$&'()*+=:@",
-      "connect-src http://test.com/pathincludingaz19-._~!$&'()*+=:@" },
+      "connect-src http://test.com/pathIncludingAz19-._~!$&'()*+=:@" },
     { "script-src http://www.example.com:88/.js",
       "script-src http://www.example.com:88/.js" },
     { "script-src https://foo.com/_abc/abc_/_/_a_b_c_",

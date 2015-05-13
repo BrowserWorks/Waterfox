@@ -21,6 +21,7 @@
 #include "nsIMIMEInfo.h"
 #include "nsColor.h"
 #include "gfxRect.h"
+#include "mozilla/gfx/Point.h"
 
 #include "nsIAndroidBridge.h"
 #include "nsIMobileMessageCallback.h"
@@ -35,8 +36,6 @@
 // #define DEBUG_ANDROID_EVENTS
 // #define DEBUG_ANDROID_WIDGET
 
-class nsWindow;
-class nsIDOMMozSmsMessage;
 class nsIObserver;
 class Task;
 
@@ -60,10 +59,6 @@ namespace mobilemessage {
 struct SmsFilterData;
 } // namespace mobilemessage
 } // namespace dom
-
-namespace layers {
-class CompositorParent;
-} // namespace layers
 
 // The order and number of the members in this structure must correspond
 // to the attrsAppearance array in GeckoAppShell.getSystemColors()
@@ -115,7 +110,7 @@ private:
     mozilla::TimeStamp mRunTime;
 };
 
-class AndroidBridge MOZ_FINAL
+class AndroidBridge final
 {
 public:
     enum {
@@ -138,7 +133,9 @@ public:
         return pthread_equal(pthread_self(), sJavaUiThread);
     }
 
-    static void ConstructBridge(JNIEnv *jEnv, jni::Object::Param clsLoader);
+    static void ConstructBridge(JNIEnv *jEnv,
+                                jni::Object::Param clsLoader,
+                                jni::Object::Param msgQueue);
 
     static AndroidBridge *Bridge() {
         return sBridge;
@@ -188,6 +185,7 @@ public:
     bool GetThreadNameJavaProfiling(uint32_t aThreadId, nsCString & aResult);
     bool GetFrameNameJavaProfiling(uint32_t aThreadId, uint32_t aSampleId, uint32_t aFrameId, nsCString & aResult);
 
+    nsresult CaptureZoomedView(nsIDOMWindow *window, nsIntRect zoomedViewRect, jni::Object::Param buffer, float zoomFactor);
     nsresult CaptureThumbnail(nsIDOMWindow *window, int32_t bufW, int32_t bufH, int32_t tabId, jni::Object::Param buffer, bool &shouldStore);
     void GetDisplayPort(bool aPageSizeUpdate, bool aIsBrowserContentDisplayed, int32_t tabId, nsIAndroidViewport* metrics, nsIAndroidDisplayport** displayPort);
     void ContentDocumentChanged();
@@ -263,6 +261,7 @@ public:
 
     void *AcquireNativeWindow(JNIEnv* aEnv, jobject aSurface);
     void ReleaseNativeWindow(void *window);
+    mozilla::gfx::IntSize GetNativeWindowSize(void* window);
 
     void *AcquireNativeWindowFromSurfaceTexture(JNIEnv* aEnv, jobject aSurface);
     void ReleaseNativeWindowForSurfaceTexture(void *window);
@@ -317,6 +316,8 @@ public:
                             const int32_t      aPort,
                             nsACString & aResult);
 
+    bool PumpMessageLoop();
+
     // Utility methods.
     static jstring NewJavaString(JNIEnv* env, const char16_t* string, uint32_t len);
     static jstring NewJavaString(JNIEnv* env, const nsAString& string);
@@ -363,7 +364,7 @@ protected:
     ~AndroidBridge();
 
     void InitStubs(JNIEnv *jEnv);
-    bool Init(JNIEnv *jEnv, jni::Object::Param clsLoader);
+    void Init(JNIEnv *jEnv, jni::Object::Param clsLoader);
 
     bool mOpenedGraphicsLibraries;
     void OpenGraphicsLibraries();
@@ -413,6 +414,10 @@ protected:
     jni::Object::GlobalRef mClassLoader;
     jmethodID mClassLoaderLoadClass;
 
+    jni::Object::GlobalRef mMessageQueue;
+    jfieldID mMessageQueueMessages;
+    jmethodID mMessageQueueNext;
+
     // calls we've dlopened from libjnigraphics.so
     int (* AndroidBitmap_getInfo)(JNIEnv *env, jobject bitmap, void *info);
     int (* AndroidBitmap_lockPixels)(JNIEnv *env, jobject bitmap, void **buffer);
@@ -425,6 +430,8 @@ protected:
 
     int (* ANativeWindow_lock)(void *window, void *outBuffer, void *inOutDirtyBounds);
     int (* ANativeWindow_unlockAndPost)(void *window);
+    int (* ANativeWindow_getWidth)(void * window);
+    int (* ANativeWindow_getHeight)(void * window);
 
     int (* Surface_lock)(void* surface, void* surfaceInfo, void* region, bool block);
     int (* Surface_unlockAndPost)(void* surface);
@@ -438,6 +445,15 @@ private:
 public:
     void PostTaskToUiThread(Task* aTask, int aDelayMs);
     int64_t RunDelayedUiThreadTasks();
+
+    void* GetPresentationWindow();
+    void SetPresentationWindow(void* aPresentationWindow);
+
+    EGLSurface GetPresentationSurface();
+    void SetPresentationSurface(EGLSurface aPresentationSurface);
+private:
+    void* mPresentationWindow;
+    EGLSurface mPresentationSurface;
 };
 
 class AutoJNIClass {
@@ -592,7 +608,7 @@ private:
 { 0x0FE2321D, 0xEBD9, 0x467D, \
     { 0xA7, 0x43, 0x03, 0xA6, 0x8D, 0x40, 0x59, 0x9E } }
 
-class nsAndroidBridge MOZ_FINAL : public nsIAndroidBridge
+class nsAndroidBridge final : public nsIAndroidBridge
 {
 public:
   NS_DECL_ISUPPORTS

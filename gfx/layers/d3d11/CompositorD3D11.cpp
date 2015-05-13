@@ -73,16 +73,18 @@ struct DeviceAttachmentsD3D11
   //
   // VR pieces
   //
-  RefPtr<ID3D11InputLayout> mVRDistortionInputLayout;
-  RefPtr<ID3D11Buffer> mVRDistortionConstants;
-
+  typedef EnumeratedArray<VRHMDType, VRHMDType::NumHMDTypes, RefPtr<ID3D11InputLayout>>
+          VRDistortionInputLayoutArray;
   typedef EnumeratedArray<VRHMDType, VRHMDType::NumHMDTypes, RefPtr<ID3D11VertexShader>>
           VRVertexShaderArray;
   typedef EnumeratedArray<VRHMDType, VRHMDType::NumHMDTypes, RefPtr<ID3D11PixelShader>>
           VRPixelShaderArray;
 
+  VRDistortionInputLayoutArray mVRDistortionInputLayout;
   VRVertexShaderArray mVRDistortionVS;
   VRPixelShaderArray mVRDistortionPS;
+
+  RefPtr<ID3D11Buffer> mVRDistortionConstants;
 
   // These will be created/filled in as needed during rendering whenever the configuration
   // changes.
@@ -298,20 +300,24 @@ CompositorD3D11::Initialize()
       return false;
     }
 
-    CD3D11_TEXTURE2D_DESC desc(DXGI_FORMAT_B8G8R8A8_UNORM, 1, 1, 1, 1,
-                                D3D11_BIND_SHADER_RESOURCE |
-                                D3D11_BIND_RENDER_TARGET);
-    desc.MiscFlags = D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
+    if (!gfxWindowsPlatform::GetPlatform()->IsWARP()) {
+      // It's okay to do this on Windows 8. But for now we'll just bail
+      // whenever we're using WARP.
+      CD3D11_TEXTURE2D_DESC desc(DXGI_FORMAT_B8G8R8A8_UNORM, 1, 1, 1, 1,
+                                 D3D11_BIND_SHADER_RESOURCE |
+                                 D3D11_BIND_RENDER_TARGET);
+      desc.MiscFlags = D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
 
-    RefPtr<ID3D11Texture2D> texture;
-    hr = mDevice->CreateTexture2D(&desc, nullptr, byRef(texture));
-    if (FAILED(hr)) {
-      return false;
-    }
+      RefPtr<ID3D11Texture2D> texture;
+      hr = mDevice->CreateTexture2D(&desc, nullptr, byRef(texture));
+      if (FAILED(hr)) {
+        return false;
+      }
 
-    hr = texture->QueryInterface((IDXGIResource**)byRef(mAttachments->mSyncTexture));
-    if (FAILED(hr)) {
-      return false;
+      hr = texture->QueryInterface((IDXGIResource**)byRef(mAttachments->mSyncTexture));
+      if (FAILED(hr)) {
+        return false;
+      }
     }
     
     //
@@ -330,7 +336,12 @@ CompositorD3D11::Initialize()
                                     sizeof(vrlayout) / sizeof(D3D11_INPUT_ELEMENT_DESC),
                                     OculusVRDistortionVS,
                                     sizeof(OculusVRDistortionVS),
-                                    byRef(mAttachments->mVRDistortionInputLayout));
+                                    byRef(mAttachments->mVRDistortionInputLayout[VRHMDType::Oculus]));
+
+    // XXX shared for now, rename
+    mAttachments->mVRDistortionInputLayout[VRHMDType::Cardboard] =
+      mAttachments->mVRDistortionInputLayout[VRHMDType::Oculus];
+
     cBufferDesc.ByteWidth = sizeof(gfx::VRDistortionConstants);
     hr = mDevice->CreateBuffer(&cBufferDesc, nullptr, byRef(mAttachments->mVRDistortionConstants));
     if (FAILED(hr)) {
@@ -344,47 +355,6 @@ CompositorD3D11::Initialize()
   mDevice->QueryInterface(dxgiDevice.StartAssignment());
   dxgiDevice->GetAdapter(getter_AddRefs(dxgiAdapter));
 
-#ifdef MOZ_METRO
-  if (IsRunningInWindowsMetro()) {
-    nsRefPtr<IDXGIFactory2> dxgiFactory;
-    dxgiAdapter->GetParent(IID_PPV_ARGS(dxgiFactory.StartAssignment()));
-
-    nsIntRect rect;
-    mWidget->GetClientBounds(rect);
-
-    DXGI_SWAP_CHAIN_DESC1 swapDesc = { 0 };
-    // Automatically detect the width and the height from the winrt CoreWindow
-    swapDesc.Width = rect.width;
-    swapDesc.Height = rect.height;
-    // This is the most common swapchain format
-    swapDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-    swapDesc.Stereo = false;
-    // Don't use multi-sampling
-    swapDesc.SampleDesc.Count = 1;
-    swapDesc.SampleDesc.Quality = 0;
-    swapDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    // Use double buffering to enable flip
-    swapDesc.BufferCount = 2;
-    swapDesc.Scaling = DXGI_SCALING_NONE;
-    // All Metro style apps must use this SwapEffect
-    swapDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
-    swapDesc.Flags = 0;
-
-    /**
-     * Create a swap chain, this swap chain will contain the backbuffer for
-     * the window we draw to. The front buffer is the full screen front
-     * buffer.
-    */
-    nsRefPtr<IDXGISwapChain1> swapChain1;
-    hr = dxgiFactory->CreateSwapChainForCoreWindow(
-           dxgiDevice, (IUnknown *)mWidget->GetNativeData(NS_NATIVE_ICOREWINDOW),
-           &swapDesc, nullptr, getter_AddRefs(swapChain1));
-    if (FAILED(hr)) {
-        return false;
-    }
-    mSwapChain = swapChain1;
-  } else
-#endif
   {
     nsRefPtr<IDXGIFactory> dxgiFactory;
     dxgiAdapter->GetParent(IID_PPV_ARGS(dxgiFactory.StartAssignment()));
@@ -657,6 +627,7 @@ CompositorD3D11::DrawVRDistortion(const gfx::Rect& aRect,
   gfx::IntSize size = vrEffect->mRenderTarget->GetSize(); // XXX source->GetSize()
 
   VRHMDInfo* hmdInfo = vrEffect->mHMD;
+  VRHMDType hmdType = hmdInfo->GetType();
   VRDistortionConstants shaderConstants;
 
   // do we need to recreate the VR buffers, since the config has changed?
@@ -705,19 +676,16 @@ CompositorD3D11::DrawVRDistortion(const gfx::Rect& aRect,
 
   // Triangle lists and same layout for both eyes
   mContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-  mContext->IASetInputLayout(mAttachments->mVRDistortionInputLayout);
-
-  // Shaders for this HMD
-  mContext->VSSetShader(mAttachments->mVRDistortionVS[mAttachments->mVRConfiguration.hmdType], nullptr, 0);
-  mContext->PSSetShader(mAttachments->mVRDistortionPS[mAttachments->mVRConfiguration.hmdType], nullptr, 0);
+  mContext->IASetInputLayout(mAttachments->mVRDistortionInputLayout[hmdType]);
+  mContext->VSSetShader(mAttachments->mVRDistortionVS[hmdType], nullptr, 0);
+  mContext->PSSetShader(mAttachments->mVRDistortionPS[hmdType], nullptr, 0);
 
   // This is the source texture SRV for the pixel shader
-  // XXX, um should we cache this SRV?
+  // XXX, um should we cache this SRV on the source?
   RefPtr<ID3D11ShaderResourceView> view;
   mDevice->CreateShaderResourceView(source->GetD3D11Texture(), nullptr, byRef(view));
   ID3D11ShaderResourceView* srView = view;
   mContext->PSSetShaderResources(0, 1, &srView);
-
 
   gfx::IntSize vpSizeInt = mCurrentRT->GetSize();
   gfx::Size vpSize(vpSizeInt.width, vpSizeInt.height);
@@ -1045,11 +1013,12 @@ CompositorD3D11::BeginFrame(const nsIntRegion& aInvalidRegion,
   // this is important because resizing our buffers when mimised will fail and
   // cause a crash when we're restored.
   NS_ASSERTION(mHwnd, "Couldn't find an HWND when initialising?");
-  if (::IsIconic(mHwnd) || gfxPlatform::GetPlatform()->DidRenderingDeviceReset()) {
+  if (::IsIconic(mHwnd) || mDevice->GetDeviceRemovedReason() != S_OK) {
     *aRenderBoundsOut = Rect();
     return;
   }
 
+  nsIntSize oldSize = mSize;
   UpdateRenderTarget();
 
   // Failed to create a render target or the view.
@@ -1066,11 +1035,17 @@ CompositorD3D11::BeginFrame(const nsIntRegion& aInvalidRegion,
   UINT offset = 0;
   mContext->IASetVertexBuffers(0, 1, &buffer, &size, &offset);
 
-  nsIntRect intRect = nsIntRect(nsIntPoint(0, 0), mSize);
+  IntRect intRect = IntRect(IntPoint(0, 0), mSize);
   // Sometimes the invalid region is larger than we want to draw.
   nsIntRegion invalidRegionSafe;
-  invalidRegionSafe.And(aInvalidRegion, intRect);
-  nsIntRect invalidRect = invalidRegionSafe.GetBounds();
+
+  if (mSize != oldSize) {
+    invalidRegionSafe = intRect;
+  } else {
+    invalidRegionSafe.And(aInvalidRegion, intRect);
+  }
+
+  IntRect invalidRect = invalidRegionSafe.GetBounds();
   mInvalidRect = IntRect(invalidRect.x, invalidRect.y, invalidRect.width, invalidRect.height);
   mInvalidRegion = invalidRegionSafe;
 
@@ -1082,7 +1057,7 @@ CompositorD3D11::BeginFrame(const nsIntRegion& aInvalidRegion,
   }
 
   if (aClipRectIn) {
-    invalidRect.IntersectRect(invalidRect, nsIntRect(aClipRectIn->x, aClipRectIn->y, aClipRectIn->width, aClipRectIn->height));
+    invalidRect.IntersectRect(invalidRect, IntRect(aClipRectIn->x, aClipRectIn->y, aClipRectIn->width, aClipRectIn->height));
   }
 
   mCurrentClip = IntRect(invalidRect.x, invalidRect.y, invalidRect.width, invalidRect.height);
@@ -1094,25 +1069,38 @@ CompositorD3D11::BeginFrame(const nsIntRegion& aInvalidRegion,
   // ClearRect will set the correct blend state for us.
   ClearRect(Rect(invalidRect.x, invalidRect.y, invalidRect.width, invalidRect.height));
 
-  RefPtr<IDXGIKeyedMutex> mutex;
-  mAttachments->mSyncTexture->QueryInterface((IDXGIKeyedMutex**)byRef(mutex));
+  if (mAttachments->mSyncTexture) {
+    RefPtr<IDXGIKeyedMutex> mutex;
+    mAttachments->mSyncTexture->QueryInterface((IDXGIKeyedMutex**)byRef(mutex));
 
-  MOZ_ASSERT(mutex);
-  HRESULT hr = mutex->AcquireSync(0, 10000);
-  if (hr == WAIT_TIMEOUT) {
-    MOZ_CRASH();
+    MOZ_ASSERT(mutex);
+    HRESULT hr = mutex->AcquireSync(0, 10000);
+    if (hr == WAIT_TIMEOUT) {
+      MOZ_CRASH();
+    }
+
+    mutex->ReleaseSync(0);
   }
-
-  mutex->ReleaseSync(0);
 }
 
 void
 CompositorD3D11::EndFrame()
 {
-  mContext->Flush();
+  if (!mDefaultRT) {
+    return;
+  }
 
   nsIntSize oldSize = mSize;
   EnsureSize();
+  UINT presentInterval = 0;
+
+  if (gfxWindowsPlatform::GetPlatform()->IsWARP()) {
+    // When we're using WARP we cannot present immediately as it causes us
+    // to tear when rendering. When not using WARP it appears the DWM takes
+    // care of tearing for us.
+    presentInterval = 1;
+  }
+
   if (oldSize == mSize) {
     RefPtr<IDXGISwapChain1> chain;
     HRESULT hr = mSwapChain->QueryInterface((IDXGISwapChain1**)byRef(chain));
@@ -1124,7 +1112,7 @@ CompositorD3D11::EndFrame()
       rects.reserve(params.DirtyRectsCount);
 
       nsIntRegionRectIterator iter(mInvalidRegion);
-      const nsIntRect* r;
+      const IntRect* r;
       uint32_t i = 0;
       while ((r = iter.Next()) != nullptr) {
         RECT rect;
@@ -1137,9 +1125,9 @@ CompositorD3D11::EndFrame()
       }
 
       params.pDirtyRects = &rects.front();
-      chain->Present1(0, mDisableSequenceForNextFrame ? DXGI_PRESENT_DO_NOT_SEQUENCE : 0, &params);
+      chain->Present1(presentInterval, mDisableSequenceForNextFrame ? DXGI_PRESENT_DO_NOT_SEQUENCE : 0, &params);
     } else {
-      mSwapChain->Present(0, mDisableSequenceForNextFrame ? DXGI_PRESENT_DO_NOT_SEQUENCE : 0);
+      mSwapChain->Present(presentInterval, mDisableSequenceForNextFrame ? DXGI_PRESENT_DO_NOT_SEQUENCE : 0);
     }
     mDisableSequenceForNextFrame = false;
     if (mTarget) {
@@ -1178,7 +1166,7 @@ CompositorD3D11::PrepareViewport(const gfx::IntSize& aSize)
 void
 CompositorD3D11::EnsureSize()
 {
-  nsIntRect rect;
+  IntRect rect;
   mWidget->GetClientBounds(rect);
 
   mSize = rect.Size();
@@ -1211,16 +1199,9 @@ CompositorD3D11::VerifyBufferSize()
     mDefaultRT = nullptr;
   }
 
-  if (IsRunningInWindowsMetro()) {
-    hr = mSwapChain->ResizeBuffers(2, mSize.width, mSize.height,
-                                   DXGI_FORMAT_B8G8R8A8_UNORM,
-                                   0);
-    mDisableSequenceForNextFrame = true;
-  } else {
-    hr = mSwapChain->ResizeBuffers(1, mSize.width, mSize.height,
-                                   DXGI_FORMAT_B8G8R8A8_UNORM,
-                                   0);
-  }
+  hr = mSwapChain->ResizeBuffers(1, mSize.width, mSize.height,
+                                 DXGI_FORMAT_B8G8R8A8_UNORM,
+                                 0);
 
   return Succeeded(hr);
 }
@@ -1240,12 +1221,19 @@ CompositorD3D11::UpdateRenderTarget()
   nsRefPtr<ID3D11Texture2D> backBuf;
 
   hr = mSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)backBuf.StartAssignment());
+  if (hr == DXGI_ERROR_INVALID_CALL) {
+    // This happens on some GPUs/drivers when there's a TDR.
+    if (mDevice->GetDeviceRemovedReason() != S_OK) {
+      gfxCriticalError() << "GetBuffer returned invalid call!";
+      return;
+    }
+  }
   if (Failed(hr)) {
     return;
   }
 
   mDefaultRT = new CompositingRenderTargetD3D11(backBuf, IntPoint(0, 0));
-  mDefaultRT->SetSize(mSize.ToIntSize());
+  mDefaultRT->SetSize(mSize);
 }
 
 bool
@@ -1323,6 +1311,11 @@ CompositorD3D11::CreateShaders()
     return false;
   }
 
+  // These are shared
+  // XXX rename Oculus shaders to something more generic
+  mAttachments->mVRDistortionVS[VRHMDType::Cardboard] = mAttachments->mVRDistortionVS[VRHMDType::Oculus];
+  mAttachments->mVRDistortionPS[VRHMDType::Cardboard] = mAttachments->mVRDistortionPS[VRHMDType::Oculus];
+
   return true;
 }
 
@@ -1331,16 +1324,20 @@ CompositorD3D11::UpdateConstantBuffers()
 {
   HRESULT hr;
   D3D11_MAPPED_SUBRESOURCE resource;
+  resource.pData = nullptr;
 
   hr = mContext->Map(mAttachments->mVSConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
-  if (Failed(hr)) {
+  if (Failed(hr) || !resource.pData) {
+    gfxCriticalError() << "Failed to map VSConstantBuffer. Result: " << hr;
     return false;
   }
   *(VertexShaderConstants*)resource.pData = mVSConstants;
   mContext->Unmap(mAttachments->mVSConstantBuffer, 0);
+  resource.pData = nullptr;
 
   hr = mContext->Map(mAttachments->mPSConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
-  if (Failed(hr)) {
+  if (Failed(hr) || !resource.pData) {
+    gfxCriticalError() << "Failed to map PSConstantBuffer. Result: " << hr;
     return false;
   }
   *(PixelShaderConstants*)resource.pData = mPSConstants;
@@ -1424,17 +1421,23 @@ CompositorD3D11::HandleError(HRESULT hr, Severity aSeverity)
   if (SUCCEEDED(hr)) {
     return;
   }
-  // XXX - It would be nice to use gfxCriticalError, but it needs to
-  // be made to work off the main thread first.
-  //MOZ_ASSERT(aSeverity != DebugAssert);
 
   if (aSeverity == Critical) {
     MOZ_CRASH("Unrecoverable D3D11 error");
   }
 
-  if (mDevice && hr == DXGI_ERROR_DEVICE_REMOVED) {
+  bool deviceRemoved = hr == DXGI_ERROR_DEVICE_REMOVED;
+
+  if (deviceRemoved && mDevice) {
     hr = mDevice->GetDeviceRemovedReason();
   }
+
+  // Device reset may not be an error on our side, but can mess things up so
+  // it's useful to see it in the reports.
+  gfxCriticalError(CriticalLog::DefaultOptions(!deviceRemoved))
+    << (deviceRemoved ? "[CompositorD3D11] device removed with error code: "
+                      : "[CompositorD3D11] error code: ")
+    << hexa(hr);
 
   // Always crash if we are making invalid calls
   if (hr == DXGI_ERROR_INVALID_CALL) {

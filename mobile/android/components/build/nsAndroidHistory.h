@@ -23,9 +23,9 @@
 // Max size of History::mEmbedURIs
 #define EMBED_URI_SIZE 128
 
-class nsAndroidHistory MOZ_FINAL : public mozilla::IHistory,
-                                   public nsIRunnable,
-                                   public nsITimerCallback
+class nsAndroidHistory final : public mozilla::IHistory,
+                               public nsIRunnable,
+                               public nsITimerCallback
 {
 public:
   NS_DECL_ISUPPORTS

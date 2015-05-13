@@ -30,21 +30,21 @@ class FFmpegH264Decoder<LIBAV_VER> : public FFmpegDataDecoder<LIBAV_VER>
   };
 
 public:
-  FFmpegH264Decoder(MediaTaskQueue* aTaskQueue,
+  FFmpegH264Decoder(FlushableMediaTaskQueue* aTaskQueue,
                     MediaDataDecoderCallback* aCallback,
-                    const mp4_demuxer::VideoDecoderConfig& aConfig,
+                    const VideoInfo& aConfig,
                     ImageContainer* aImageContainer);
   virtual ~FFmpegH264Decoder();
 
-  virtual nsresult Init() MOZ_OVERRIDE;
-  virtual nsresult Input(mp4_demuxer::MP4Sample* aSample) MOZ_OVERRIDE;
-  virtual nsresult Drain() MOZ_OVERRIDE;
-  virtual nsresult Flush() MOZ_OVERRIDE;
-  static AVCodecID GetCodecId(const char* aMimeType);
+  virtual nsresult Init() override;
+  virtual nsresult Input(MediaRawData* aSample) override;
+  virtual nsresult Drain() override;
+  virtual nsresult Flush() override;
+  static AVCodecID GetCodecId(const nsACString& aMimeType);
 
 private:
-  void DecodeFrame(mp4_demuxer::MP4Sample* aSample);
-  DecodeResult DoDecodeFrame(mp4_demuxer::MP4Sample* aSample);
+  void DecodeFrame(MediaRawData* aSample);
+  DecodeResult DoDecodeFrame(MediaRawData* aSample);
   void DoDrain();
   void OutputDelayedFrames();
 
@@ -62,6 +62,8 @@ private:
 
   MediaDataDecoderCallback* mCallback;
   nsRefPtr<ImageContainer> mImageContainer;
+  uint32_t mDisplayWidth;
+  uint32_t mDisplayHeight;
 };
 
 } // namespace mozilla

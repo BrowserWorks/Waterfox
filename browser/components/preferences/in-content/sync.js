@@ -95,7 +95,9 @@ let gSyncPane = {
                   "weave:service:start-over:finish",
                   "weave:service:setup-complete",
                   "weave:service:logout:finish",
-                  FxAccountsCommon.ONVERIFIED_NOTIFICATION];
+                  FxAccountsCommon.ONVERIFIED_NOTIFICATION,
+                  FxAccountsCommon.ON_PROFILE_CHANGE_NOTIFICATION,
+                  ];
     let migrateTopic = "fxa-migration:state-changed";
 
     // Add the observers now and remove them on unload
@@ -123,6 +125,8 @@ let gSyncPane = {
     }),
 
     this.updateWeavePrefs();
+
+    this._initProfileImageUI();
   },
 
   _setupEventListeners: function() {
@@ -154,8 +158,8 @@ let gSyncPane = {
       if (this.selectedCount)
         this.clearSelection();
     });
-    setEventListener("syncComputerName", "change", function () {
-      gSyncUtils.changeName(this);
+    setEventListener("syncComputerName", "change", function (e) {
+      gSyncUtils.changeName(e.target);
     });
     setEventListener("unlinkDevice", "click", function () {
       gSyncPane.startOver(true);
@@ -203,8 +207,8 @@ let gSyncPane = {
     setEventListener("rejectUnlinkFxaAccount", "click", function () {
       gSyncPane.unlinkFirefoxAccount(true);
     });
-    setEventListener("fxaSyncComputerName", "change", function () {
-      gSyncUtils.changeName(this);
+    setEventListener("fxaSyncComputerName", "change", function (e) {
+      gSyncUtils.changeName(e.target);
     });
     setEventListener("tosPP-small-ToS", "click", gSyncPane.openToS);
     setEventListener("tosPP-small-PP", "click", gSyncPane.openPrivacyPolicy);
@@ -224,6 +228,14 @@ let gSyncPane = {
     });
   },
 
+  _initProfileImageUI: function () {
+    try {
+      if (Services.prefs.getBoolPref("identity.fxaccounts.profile_image.enabled")) {
+        document.getElementById("fxaProfileImage").hidden = false;
+      }
+    } catch (e) { }
+  },
+
   updateWeavePrefs: function () {
     // ask the migration module to broadcast its current state (and nothing will
     // happen if it's not loaded - which is good, as that means no migration
@@ -237,12 +249,18 @@ let gSyncPane = {
     // service.fxAccountsEnabled is false iff sync is already configured for
     // the legacy provider.
     if (service.fxAccountsEnabled) {
+      // unhide the reading-list engine if readinglist is enabled (note we do
+      // it here as it must remain disabled for legacy sync users)
+      if (Services.prefs.getBoolPref("browser.readinglist.enabled")) {
+        document.getElementById("readinglist-engine").removeAttribute("hidden");
+      }
       // determine the fxa status...
       this.page = PAGE_PLEASE_WAIT;
+
       fxAccounts.getSignedInUser().then(data => {
         if (!data) {
           this.page = FXA_PAGE_LOGGED_OUT;
-          return;
+          return false;
         }
         this.page = FXA_PAGE_LOGGED_IN;
         // We are logged in locally, but maybe we are in a state where the
@@ -276,7 +294,42 @@ let gSyncPane = {
         for (let checkbox of engines.querySelectorAll("checkbox")) {
           checkbox.disabled = enginesListDisabled;
         }
+
+        // Clear the profile image (if any) of the previously logged in account.
+        document.getElementById("fxaProfileImage").style.removeProperty("background-image");
+
+        // If the account is verified the next promise in the chain will
+        // fetch profile data.
+        return data.verified;
+      }).then(isVerified => {
+        if (isVerified) {
+          let enabled;
+          try {
+            enabled = Services.prefs.getBoolPref("identity.fxaccounts.profile_image.enabled");
+          } catch (ex) {}
+          if (enabled) {
+            return fxAccounts.getSignedInUserProfile();
+          }
+        }
+      }).then(data => {
+        if (data && data.avatar) {
+          // Make sure the image is available before displaying it,
+          // as we don't want to overwrite the default profile image
+          // with a broken/unavailable image
+          let img = new Image();
+          img.onload = () => {
+            let bgImage = "url('" + data.avatar + "')";
+            document.getElementById("fxaProfileImage").style.backgroundImage = bgImage;
+          };
+          img.src = data.avatar;
+        }
+      }, err => {
+        FxAccountsCommon.log.error(err);
+      }).catch(err => {
+        // If we get here something's really busted
+        Cu.reportError(String(err));
       });
+
     // If fxAccountEnabled is false and we are in a "not configured" state,
     // then fxAccounts is probably fully disabled rather than just unconfigured,
     // so handle this case.  This block can be removed once we remove support
@@ -312,6 +365,16 @@ let gSyncPane = {
                           sb.formatStringFromName("signInAfterUpgradeOnOtherDevice.description",
                                                   [email], 1) :
                           sb.GetStringFromName("needUserLong");
+
+        // The "Learn more" link.
+        if (!email) {
+          let learnMoreLink = document.createElement("label");
+          learnMoreLink.className = "text-link";
+          let { text, href } = fxaMigrator.learnMoreLink;
+          learnMoreLink.setAttribute("value", text);
+          learnMoreLink.href = href;
+          elt.appendChild(learnMoreLink);
+        }
 
         // The "upgrade" button.
         let button = document.getElementById("sync-migrate-upgrade");
@@ -362,6 +425,19 @@ let gSyncPane = {
     document.getElementById("sync-migration-deck").selectedIndex = selIndex;
   },
 
+  // Called whenever one of the sync engine preferences is changed.
+  onPreferenceChanged: function() {
+    let prefElts = document.querySelectorAll("#syncEnginePrefs > preference");
+    let syncEnabled = false;
+    for (let elt of prefElts) {
+      if (elt.name.startsWith("services.sync.") && elt.value) {
+        syncEnabled = true;
+        break;
+      }
+    }
+    Services.prefs.setBoolPref("services.sync.enabled", syncEnabled);
+  },
+
   startOver: function (showDialog) {
     if (showDialog) {
       let flags = Services.prompt.BUTTON_POS_0 * Services.prompt.BUTTON_TITLE_IS_STRING +
@@ -403,6 +479,7 @@ let gSyncPane = {
     if (buttonChoice == 1)
       return;
 
+    fxaMigrator.recordTelemetry(fxaMigrator.TELEMETRY_UNLINKED);
     Weave.Service.startOver();
     this.updateWeavePrefs();
   },
@@ -492,9 +569,22 @@ let gSyncPane = {
     });
   },
 
+  openChangeProfileImage: function() {
+    fxAccounts.promiseAccountsChangeProfileURI("avatar")
+      .then(url => {
+        this.openContentInBrowser(url, {
+          replaceQueryString: true
+        });
+      });
+  },
+
   manageFirefoxAccount: function() {
-    let url = Services.prefs.getCharPref("identity.fxaccounts.settings.uri");
-    this.openContentInBrowser(url);
+    fxAccounts.promiseAccountsManageURI()
+      .then(url => {
+        this.openContentInBrowser(url, {
+          replaceQueryString: true
+        });
+      });
   },
 
   verifyFirefoxAccount: function() {

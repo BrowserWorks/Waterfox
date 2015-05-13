@@ -8,14 +8,14 @@
 
 #include "Units.h"                      // for ScreenPoint, etc
 #include "mozilla/layers/LayerManagerComposite.h"  // for LayerManagerComposite
-#include "mozilla/Attributes.h"         // for MOZ_FINAL, etc
+#include "mozilla/Attributes.h"         // for final, etc
 #include "mozilla/RefPtr.h"             // for RefCounted
 #include "mozilla/TimeStamp.h"          // for TimeStamp
 #include "mozilla/dom/ScreenOrientation.h"  // for ScreenOrientation
 #include "mozilla/gfx/BasePoint.h"      // for BasePoint
 #include "mozilla/gfx/Matrix.h"         // for Matrix4x4
 #include "mozilla/layers/LayersMessages.h"  // for TargetConfig
-#include "nsAutoPtr.h"                  // for nsRefPtr
+#include "nsRefPtr.h"                   // for nsRefPtr
 #include "nsISupportsImpl.h"            // for LayerManager::AddRef, etc
 
 namespace mozilla {
@@ -67,7 +67,7 @@ struct ViewTransform {
  * short circuit that stuff to directly affect layers as they are composited,
  * for example, off-main thread animation, async video, async pan/zoom.
  */
-class AsyncCompositionManager MOZ_FINAL
+class AsyncCompositionManager final
 {
   friend class AutoResolveRefLayers;
   ~AsyncCompositionManager()
@@ -78,7 +78,7 @@ public:
 
   explicit AsyncCompositionManager(LayerManagerComposite* aManager)
     : mLayerManager(aManager)
-    , mIsFirstPaint(false)
+    , mIsFirstPaint(true)
     , mLayersUpdated(false)
     , mReadyForCompose(true)
   {
@@ -95,7 +95,9 @@ public:
 
   // Sample transforms for layer trees.  Return true to request
   // another animation frame.
-  bool TransformShadowTree(TimeStamp aCurrentFrame);
+  enum class TransformsToSkip : uint8_t { NoneOfThem = 0, APZ = 1 };
+  bool TransformShadowTree(TimeStamp aCurrentFrame,
+    TransformsToSkip aSkip = TransformsToSkip::NoneOfThem);
 
   // Calculates the correct rotation and applies the transform to
   // our layer manager
@@ -207,6 +209,8 @@ private:
 
   gfx::Matrix mWorldTransform;
 };
+
+MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS(AsyncCompositionManager::TransformsToSkip)
 
 class MOZ_STACK_CLASS AutoResolveRefLayers {
 public:

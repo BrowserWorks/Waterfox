@@ -22,6 +22,14 @@ var RenamePlugin = Class({
     });
   },
 
+  onContextMenuOpen: function(resource) {
+    if (resource.isRoot) {
+      this.contextMenuItem.setAttribute("hidden", "true");
+    } else {
+      this.contextMenuItem.removeAttribute("hidden");
+    }
+  },
+
   onCommand: function(cmd) {
     if (cmd === "cmd-rename") {
       let tree = this.host.projectTree;
@@ -33,7 +41,7 @@ var RenamePlugin = Class({
         if (name === oldName) {
           return resource;
         }
-        if (resource.hasChild(parent, name)) {
+        if (parent.hasChild(name)) {
           let matches = name.match(/([^\d.]*)(\d*)([^.]*)(.*)/);
           let template = matches[1] + "{1}" + matches[3] + matches[4];
           name = this.suggestName(resource, template, parseInt(matches[2]) || 2);
@@ -56,7 +64,7 @@ var RenamePlugin = Class({
     do {
       name = template.replace("\{1\}", i === 1 ? "" : i);
       i++;
-    } while (resource.hasChild(parent, name));
+    } while (parent.hasChild(name));
 
     return name;
   }

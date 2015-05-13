@@ -2,8 +2,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-Cu.import("resource://gre/modules/TelemetryStopwatch.jsm", this);
-
 // Simple gestures support
 //
 // As per bug #412486, web content must not be allowed to receive any
@@ -36,8 +34,9 @@ let gGestureSupport = {
     let addRemove = aAddListener ? window.addEventListener :
       window.removeEventListener;
 
-    gestureEvents.forEach(function (event) addRemove("Moz" + event, this, true),
-                          this);
+    for (let event of gestureEvents) {
+      addRemove("Moz" + event, this, true);
+    }
   },
 
   /**
@@ -285,10 +284,10 @@ let gGestureSupport = {
     // "meta" is preferred over "ctrl" when both buttons are pressed (and a
     // command for both don't exist)
     let keyCombos = [];
-    ["shift", "alt", "ctrl", "meta"].forEach(function (key) {
+    for (let key of ["shift", "alt", "ctrl", "meta"]) {
       if (aEvent[key + "Key"])
         keyCombos.push(key);
-    });
+    }
 
     // Try each combination of key presses in decreasing order for commands
     for (let subCombo of this._power(keyCombos)) {

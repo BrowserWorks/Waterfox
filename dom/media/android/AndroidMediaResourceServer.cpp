@@ -20,7 +20,9 @@
 
 #if defined(_MSC_VER)
 #define strtoll _strtoi64
+#if _MSC_VER < 1900
 #define snprintf _snprintf_s
+#endif
 #endif
 
 using namespace mozilla;
@@ -396,6 +398,7 @@ AndroidMediaResourceServer::AndroidMediaResourceServer() :
 NS_IMETHODIMP
 AndroidMediaResourceServer::Run()
 {
+  MOZ_DIAGNOSTIC_ASSERT(NS_IsMainThread());
   MutexAutoLock lock(mMutex);
 
   nsresult rv;
@@ -418,8 +421,9 @@ AndroidMediaResourceServer::Run()
 already_AddRefed<AndroidMediaResourceServer>
 AndroidMediaResourceServer::Start()
 {
+  MOZ_ASSERT(NS_IsMainThread());
   nsRefPtr<AndroidMediaResourceServer> server = new AndroidMediaResourceServer();
-  NS_DispatchToMainThread(server, NS_DISPATCH_SYNC);
+  server->Run();
   return server.forget();
 }
 

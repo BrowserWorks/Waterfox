@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -452,7 +453,7 @@ nsXBLPrototypeBinding::GetImmediateChild(nsIAtom* aTag)
 }
 
 nsresult
-nsXBLPrototypeBinding::InitClass(const nsCString& aClassName,
+nsXBLPrototypeBinding::InitClass(const nsString& aClassName,
                                  JSContext * aContext,
                                  JS::Handle<JSObject*> aScriptObject,
                                  JS::MutableHandle<JSObject*> aClassObject,
@@ -701,7 +702,7 @@ nsXBLPrototypeBinding::ConstructAttributeTable(nsIContent* aElement)
         token = nsCRT::strtok( newStr, ", ", &newStr );
       }
 
-      nsMemory::Free(str);
+      free(str);
     }
   }
 
@@ -807,11 +808,9 @@ nsXBLPrototypeBinding::CreateKeyHandlers()
       }
 
       if (i == count) {
-        nsRefPtr<nsXBLKeyEventHandler> newHandler;
-        NS_NewXBLKeyEventHandler(eventAtom, phase, type,
-                                 getter_AddRefs(newHandler));
-        if (newHandler)
-          mKeyHandlers.AppendObject(newHandler);
+        nsRefPtr<nsXBLKeyEventHandler> newHandler =
+          new nsXBLKeyEventHandler(eventAtom, phase, type);
+        mKeyHandlers.AppendObject(newHandler);
         handler = newHandler;
       }
 
@@ -1133,7 +1132,7 @@ nsXBLPrototypeBinding::Write(nsIObjectOutputStream* aStream)
   else {
     // Write out an empty classname. This indicates that the binding does not
     // define an implementation.
-    rv = aStream->WriteWStringZ(EmptyString().get());
+    rv = aStream->WriteUtf8Z(EmptyString().get());
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
@@ -1264,7 +1263,6 @@ nsXBLPrototypeBinding::ReadContentNode(nsIObjectInputStream* aStream,
     nsIURI* documentURI = aDocument->GetDocumentURI();
 
     nsRefPtr<nsXULPrototypeElement> prototype = new nsXULPrototypeElement();
-    NS_ENSURE_TRUE(prototype, NS_ERROR_OUT_OF_MEMORY);
 
     prototype->mNodeInfo = nodeInfo;
 
@@ -1483,7 +1481,7 @@ nsXBLPrototypeBinding::WriteContentNode(nsIObjectOutputStream* aStream,
   rv = aStream->WriteWStringZ(prefixStr.get());
   NS_ENSURE_SUCCESS(rv, rv);
 
-  rv = aStream->WriteWStringZ(nsDependentAtomString(aNode->Tag()).get());
+  rv = aStream->WriteWStringZ(nsDependentAtomString(aNode->NodeInfo()->NameAtom()).get());
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Write attributes

@@ -130,16 +130,31 @@ this.REQUEST_ACKNOWLEDGE_INCOMING_GSM_SMS_WITH_PDU = 106;
 this.REQUEST_STK_SEND_ENVELOPE_WITH_STATUS = 107;
 this.REQUEST_VOICE_RADIO_TECH = 108;
 this.REQUEST_GET_CELL_INFO_LIST = 109;
+this.REQUEST_SET_UNSOL_CELL_INFO_LIST_RATE = 110;
+this.REQUEST_SET_INITIAL_ATTACH_APN = 111;
+this.REQUEST_IMS_REGISTRATION_STATE = 112;
+this.REQUEST_IMS_SEND_SMS = 113;
+this.REQUEST_SIM_TRANSMIT_APDU_BASIC = 114;
+this.REQUEST_SIM_OPEN_CHANNEL = 115;
+this.REQUEST_SIM_CLOSE_CHANNEL = 116;
+this.REQUEST_SIM_TRANSMIT_APDU_CHANNEL = 117;
+this.REQUEST_NV_READ_ITEM = 118;
+this.REQUEST_NV_WRITE_ITEM = 119;
+this.REQUEST_NV_WRITE_CDMA_PRL = 120;
+this.REQUEST_NV_RESET_CONFIG = 121;
+this.REQUEST_SET_UICC_SUBSCRIPTION = 122;
+this.REQUEST_ALLOW_DATA = 123;
+this.REQUEST_GET_HARDWARE_CONFIG = 124;
+this.REQUEST_SIM_AUTHENTICATION = 125;
+this.REQUEST_GET_DC_RT_INFO = 126;
+this.REQUEST_SET_DC_RT_INFO_RATE = 127;
+this.REQUEST_SET_DATA_PROFILE = 128;
+this.REQUEST_SHUTDOWN = 129;
 
-// CAF specific parcel type. Synced with latest version.
-// Please see https://www.codeaurora.org/cgit/quic/la/platform/hardware/ril/tree/include/telephony/ril.h?h=b2g_kk_3.5
-this.REQUEST_SET_UICC_SUBSCRIPTION = 115;
-this.REQUEST_SET_DATA_SUBSCRIPTION = 116;
-
-// UICC Secure Access.
-this.REQUEST_SIM_OPEN_CHANNEL = 121;
-this.REQUEST_SIM_CLOSE_CHANNEL = 122;
-this.REQUEST_SIM_ACCESS_CHANNEL = 123;
+// CAF specific parcel type. It should be synced with latest version. But CAF
+// doesn't have l version for b2g yet, so we set REQUEST_SET_DATA_SUBSCRIPTION
+// to a value that won't get conflict with known AOSP parcel.
+this.REQUEST_SET_DATA_SUBSCRIPTION = 130;
 
 // Mozilla specific parcel type.
 this.REQUEST_GET_UNLOCK_RETRY_COUNT = 150;
@@ -191,6 +206,12 @@ this.UNSOLICITED_CDMA_PRL_CHANGED = 1032;
 this.UNSOLICITED_EXIT_EMERGENCY_CALLBACK_MODE = 1033;
 this.UNSOLICITED_RIL_CONNECTED = 1034;
 this.UNSOLICITED_VOICE_RADIO_TECH_CHANGED = 1035;
+this.UNSOLICITED_CELL_INFO_LIST = 1036;
+this.UNSOLICITED_RESPONSE_IMS_NETWORK_STATE_CHANGED = 1037;
+this.UNSOLICITED_UICC_SUBSCRIPTION_STATUS_CHANGED = 1038;
+this.UNSOLICITED_SRVCC_STATE_NOTIFY = 1039;
+this.UNSOLICITED_HARDWARE_CONFIG_CHANGED = 1040;
+this.UNSOLICITED_DC_RT_INFO_CHANGED = 1041;
 
 this.ERROR_SUCCESS = 0;
 this.ERROR_RADIO_NOT_AVAILABLE = 1;
@@ -208,20 +229,9 @@ this.ERROR_SUBSCRIPTION_NOT_AVAILABLE = 12;
 this.ERROR_MODE_NOT_SUPPORTED = 13;
 this.ERROR_FDN_CHECK_FAILURE = 14;
 this.ERROR_ILLEGAL_SIM_OR_ME = 15;
-this.ERROR_DIAL_MODIFIED_TO_USSD = 17;
-this.ERROR_DIAL_MODIFIED_TO_SS = 18;
-this.ERROR_DIAL_MODIFIED_TO_DIAL = 19;
-this.ERROR_USSD_MODIFIED_TO_DIAL = 20;
-this.ERROR_USSD_MODIFIED_TO_SS = 21;
-this.ERROR_USSD_MODIFIED_TO_USSD = 22;
-this.ERROR_SS_MODIFIED_TO_DIAL = 23;
-this.ERROR_SS_MODIFIED_TO_USSD = 24;
-this.ERROR_SS_MODIFIED_TO_SS = 25;
-this.ERROR_SUBSCRIPTION_NOT_SUPPORTED = 26;
-this.ERROR_INVALID_PARAMETER = 27;
-this.ERROR_REJECTED_BY_REMOTE = 28;
+this.ERROR_MISSING_RESOURCE = 16;
+this.ERROR_NO_SUCH_ELEMENT = 17;
 
-this.GECKO_ERROR_SUCCESS = null;
 this.GECKO_ERROR_RADIO_NOT_AVAILABLE = "RadioNotAvailable";
 this.GECKO_ERROR_GENERIC_FAILURE = "GenericFailure";
 this.GECKO_ERROR_PASSWORD_INCORRECT = "IncorrectPassword";
@@ -229,7 +239,6 @@ this.GECKO_ERROR_SIM_PIN2 = "SimPin2";
 this.GECKO_ERROR_SIM_PUK2 = "SimPuk2";
 this.GECKO_ERROR_REQUEST_NOT_SUPPORTED = "RequestNotSupported";
 this.GECKO_ERROR_CANCELLED = "Cancelled";
-this.GECKO_ERROR_ILLEGAL_SIM_OR_ME = "IllegalSIMorME";
 this.GECKO_ERROR_OP_NOT_ALLOWED_DURING_VOICE_CALL = "OpNotAllowedDuringVoiceCall";
 this.GECKO_ERROR_OP_NOT_ALLOWED_BEFORE_REG_TO_NW = "OpNotAllowedBeforeRegToNw";
 this.GECKO_ERROR_SMS_SEND_FAIL_RETRY = "SmsSendFailRetry";
@@ -237,21 +246,13 @@ this.GECKO_ERROR_SIM_ABSENT = "SimAbsent";
 this.GECKO_ERROR_SUBSCRIPTION_NOT_AVAILABLE = "SubscriptionNotAvailable";
 this.GECKO_ERROR_MODE_NOT_SUPPORTED = "ModeNotSupported";
 this.GECKO_ERROR_FDN_CHECK_FAILURE = "FdnCheckFailure";
-this.GECKO_ERROR_DIAL_MODIFIED_TO_USSD = "DialModifiedToUssd";
-this.GECKO_ERROR_DIAL_MODIFIED_TO_SS = "DialModifiedToSs";
-this.GECKO_ERROR_DIAL_MODIFIED_TO_DIAL = "DialModifiedToDial";
-this.GECKO_ERROR_USSD_MODIFIED_TO_DIAL = "UssdModifiedToDial";
-this.GECKO_ERROR_USSD_MODIFIED_TO_SS = "UssdModifiedToSs";
-this.GECKO_ERROR_USSD_MODIFIED_TO_USSD = "UssdModifiedToUssd";
-this.GECKO_ERROR_SS_MODIFIED_TO_DIAL = "SsModifiedToDial";
-this.GECKO_ERROR_SS_MODIFIED_TO_USSD = "SsModifiedToUssd";
-this.GECKO_ERROR_SS_MODIFIED_TO_SS = "SsModifiedToSs";
-this.GECKO_ERROR_SUBSCRIPTION_NOT_SUPPORTED = "SubscriptionNotSupported";
+this.GECKO_ERROR_ILLEGAL_SIM_OR_ME = "IllegalSIMorME";
+this.GECKO_ERROR_MISSING_RESOURCE = "MissingResource";
+this.GECKO_ERROR_NO_SUCH_ELEMENT = "NoSuchElement";
 this.GECKO_ERROR_INVALID_PARAMETER = "InvalidParameter";
-this.GECKO_ERROR_REJECTED_BY_REMOTE = "RejectedByRemote";
+this.GECKO_ERROR_UNSPECIFIED_ERROR = "UnspecifiedError";
 
 this.RIL_ERROR_TO_GECKO_ERROR = {};
-RIL_ERROR_TO_GECKO_ERROR[ERROR_SUCCESS] = GECKO_ERROR_SUCCESS;
 RIL_ERROR_TO_GECKO_ERROR[ERROR_RADIO_NOT_AVAILABLE] = GECKO_ERROR_RADIO_NOT_AVAILABLE;
 RIL_ERROR_TO_GECKO_ERROR[ERROR_GENERIC_FAILURE] = GECKO_ERROR_GENERIC_FAILURE;
 RIL_ERROR_TO_GECKO_ERROR[ERROR_PASSWORD_INCORRECT] = GECKO_ERROR_PASSWORD_INCORRECT;
@@ -267,18 +268,8 @@ RIL_ERROR_TO_GECKO_ERROR[ERROR_SUBSCRIPTION_NOT_AVAILABLE] = GECKO_ERROR_SUBSCRI
 RIL_ERROR_TO_GECKO_ERROR[ERROR_MODE_NOT_SUPPORTED] = GECKO_ERROR_MODE_NOT_SUPPORTED;
 RIL_ERROR_TO_GECKO_ERROR[ERROR_FDN_CHECK_FAILURE] = GECKO_ERROR_FDN_CHECK_FAILURE;
 RIL_ERROR_TO_GECKO_ERROR[ERROR_ILLEGAL_SIM_OR_ME] = GECKO_ERROR_ILLEGAL_SIM_OR_ME;
-RIL_ERROR_TO_GECKO_ERROR[ERROR_DIAL_MODIFIED_TO_USSD] = GECKO_ERROR_DIAL_MODIFIED_TO_USSD;
-RIL_ERROR_TO_GECKO_ERROR[ERROR_DIAL_MODIFIED_TO_SS] = GECKO_ERROR_DIAL_MODIFIED_TO_SS;
-RIL_ERROR_TO_GECKO_ERROR[ERROR_DIAL_MODIFIED_TO_DIAL] = GECKO_ERROR_DIAL_MODIFIED_TO_DIAL;
-RIL_ERROR_TO_GECKO_ERROR[ERROR_USSD_MODIFIED_TO_DIAL] = GECKO_ERROR_USSD_MODIFIED_TO_DIAL;
-RIL_ERROR_TO_GECKO_ERROR[ERROR_USSD_MODIFIED_TO_SS] = GECKO_ERROR_USSD_MODIFIED_TO_SS;
-RIL_ERROR_TO_GECKO_ERROR[ERROR_USSD_MODIFIED_TO_USSD] = GECKO_ERROR_USSD_MODIFIED_TO_USSD;
-RIL_ERROR_TO_GECKO_ERROR[ERROR_SS_MODIFIED_TO_DIAL] = GECKO_ERROR_SS_MODIFIED_TO_DIAL;
-RIL_ERROR_TO_GECKO_ERROR[ERROR_SS_MODIFIED_TO_USSD] = GECKO_ERROR_SS_MODIFIED_TO_USSD;
-RIL_ERROR_TO_GECKO_ERROR[ERROR_SS_MODIFIED_TO_SS] = GECKO_ERROR_SS_MODIFIED_TO_SS;
-RIL_ERROR_TO_GECKO_ERROR[ERROR_SUBSCRIPTION_NOT_SUPPORTED] = GECKO_ERROR_SUBSCRIPTION_NOT_SUPPORTED;
-RIL_ERROR_TO_GECKO_ERROR[ERROR_INVALID_PARAMETER] = GECKO_ERROR_INVALID_PARAMETER;
-RIL_ERROR_TO_GECKO_ERROR[ERROR_REJECTED_BY_REMOTE] = GECKO_ERROR_REJECTED_BY_REMOTE;
+RIL_ERROR_TO_GECKO_ERROR[ERROR_MISSING_RESOURCE] = GECKO_ERROR_MISSING_RESOURCE;
+RIL_ERROR_TO_GECKO_ERROR[ERROR_NO_SUCH_ELEMENT] = GECKO_ERROR_NO_SUCH_ELEMENT;
 
 // 3GPP 23.040 clause 9.2.3.6 TP-Message-Reference(TP-MR):
 // The number of times the MS automatically repeats the SMS-SUBMIT shall be in
@@ -465,16 +456,13 @@ this.NETWORK_CREG_TECH_EHRPD = 13;
 this.NETWORK_CREG_TECH_LTE = 14;
 this.NETWORK_CREG_TECH_HSPAP = 15;
 this.NETWORK_CREG_TECH_GSM = 16;
+this.NETWORK_CREG_TECH_DCHSPAP_1 = 18; // Some devices reports as 18
+this.NETWORK_CREG_TECH_DCHSPAP_2 = 19; // Some others report it as 19
 
 this.CELL_INFO_TYPE_GSM = 1;
 this.CELL_INFO_TYPE_CDMA = 2;
 this.CELL_INFO_TYPE_LTE = 3;
 this.CELL_INFO_TYPE_WCDMA = 4;
-
-// Order matters.
-this.AUDIO_STATE_NO_CALL  = 0;
-this.AUDIO_STATE_INCOMING = 1;
-this.AUDIO_STATE_IN_CALL  = 2;
 
 this.CALL_STATE_UNKNOWN = -1;
 this.CALL_STATE_ACTIVE = 0;
@@ -1419,6 +1407,30 @@ this.CB_UMTS_MESSAGE_TYPE_SCHEDULE = 2;
 this.CB_UMTS_MESSAGE_TYPE_CBS41    = 3;
 
 /**
+ * Number plan identification defined in
+ * |Table 10.5.118: Called party BCD number| of 3GPP TS 24.008.
+ */
+this.CALLED_PARTY_BCD_NPI_UNKNOWN  = 0;
+this.CALLED_PARTY_BCD_NPI_ISDN     = 1;
+this.CALLED_PARTY_BCD_NPI_DATA     = 3;
+this.CALLED_PARTY_BCD_NPI_TELEX    = 4;
+this.CALLED_PARTY_BCD_NPI_NATIONAL = 8;
+this.CALLED_PARTY_BCD_NPI_PRIVATE  = 9;
+
+/**
+ * Array of number plan identification values which can be used to map an
+ * enumeration to the corresponding value.
+ */
+this.CALLED_PARTY_BCD_NPI = [
+  CALLED_PARTY_BCD_NPI_UNKNOWN,
+  CALLED_PARTY_BCD_NPI_ISDN,
+  CALLED_PARTY_BCD_NPI_DATA,
+  CALLED_PARTY_BCD_NPI_TELEX,
+  CALLED_PARTY_BCD_NPI_NATIONAL,
+  CALLED_PARTY_BCD_NPI_PRIVATE
+];
+
+/**
  * GSM PDU constants
  */
 
@@ -1704,12 +1716,35 @@ this.PDU_NL_IDENTIFIER_TAMIL      = 11;
 this.PDU_NL_IDENTIFIER_TELUGU     = 12;
 this.PDU_NL_IDENTIFIER_URDU       = 13;
 
-// National Language Locking Shift Tables, see 3GPP TS 23.038
-this.PDU_NL_LOCKING_SHIFT_TABLES = [
-  /**
-   * National Language Identifier: 0x00
-   * 6.2.1 GSM 7 bit Default Alphabet
-   */
+// The mapping of mcc and their extra GSM national language locking / single
+// shift table tuples to enable. The default GSM alphabet and extension table
+// are always enabled and need not to be list here.
+//
+// The content should be updated when a relevant national regulatory body
+// requests. See 'NOTE 2' of 6.2.1.2.5 in 3GPP TS 23.038:
+// "
+// Encoding of a message using the national locking shift mechanism is not
+// intended to be implemented until a formal request is issued by the
+// relevant national regulatory body. This is because a receiving entity
+// not supporting the relevant locking-shift decoding will present different
+// characters from the ones intended by the sending entity.
+// "
+this.PDU_MCC_NL_TABLE_TUPLES_MAPPING = {
+  // Configuration for Turkey.
+  //
+  // The Turkish single shift table contains 7 extra characters
+  // (Ğ, İ, Ş, ç, ğ, ı, ş) than the GSM default alphabet extension table. Since
+  // all the 7 characters are also included in Turkish locking shift table, it's
+  // not necessary to enable Turkish single shift table. Using GSM default
+  // alphabet extension table instead saves 3 octets when these extension table
+  // characters present in a message.
+  286: [[PDU_NL_IDENTIFIER_TURKISH, PDU_NL_IDENTIFIER_DEFAULT]]
+};
+
+/*
+ * 3GPP TS 23.038 - 6.2.1 GSM 7 bit Default Alphabet
+ */
+this.PDU_NL_GSM_DEFAULT_ALPHABET =
   // 01.....23.....4.....5.....6.....7.....8.....9.....A.B.....C.....D.E.....F.....
     "@\u00a3$\u00a5\u00e8\u00e9\u00f9\u00ec\u00f2\u00c7\n\u00d8\u00f8\r\u00c5\u00e5"
   // 0.....12.....3.....4.....5.....6.....7.....8.....9.....A.....B.....C.....D.....E.....F.....
@@ -1725,7 +1760,15 @@ this.PDU_NL_LOCKING_SHIFT_TABLES = [
   // 0.....123456789ABCDEF
   + "\u00bfabcdefghijklmno"
   // 0123456789AB.....C.....D.....E.....F.....
-  + "pqrstuvwxyz\u00e4\u00f6\u00f1\u00fc\u00e0",
+  + "pqrstuvwxyz\u00e4\u00f6\u00f1\u00fc\u00e0";
+
+// National Language Locking Shift Tables, see 3GPP TS 23.038
+this.PDU_NL_LOCKING_SHIFT_TABLES = [
+  /**
+   * National Language Identifier: 0x00
+   * 6.2.1 GSM 7 bit Default Alphabet
+   */
+  PDU_NL_GSM_DEFAULT_ALPHABET,
 
   /**
    * National Language Identifier: 0x01
@@ -1751,23 +1794,9 @@ this.PDU_NL_LOCKING_SHIFT_TABLES = [
   /**
    * National Language Identifier: 0x02
    * A.3.2 Void
+   * Fallback to GSM Default Alphabet
    */
-  // 0123456789A.BCD.EF
-    "          \n  \r  "
-  // 0123456789AB.....CDEF
-  + "           \uffff    "
-  // 0123456789ABCDEF
-  + "                "
-  // 0123456789ABCDEF
-  + "                "
-  // 0123456789ABCDEF
-  + "                "
-  // 0123456789ABCDEF
-  + "                "
-  // 0123456789ABCDEF
-  + "                "
-  // 0123456789ABCDEF
-  + "                ",
+  PDU_NL_GSM_DEFAULT_ALPHABET,
 
   /**
    * National Language Identifier: 0x03
@@ -2567,14 +2596,12 @@ this.CALL_FAIL_ERROR_UNSPECIFIED = 0xffff;
 
 // See nsIMobileConnection::MOBILE_RADIO_STATE_*
 this.GECKO_RADIOSTATE_UNKNOWN   = -1;
-this.GECKO_RADIOSTATE_ENABLING  = 0;
-this.GECKO_RADIOSTATE_ENABLED   = 1;
-this.GECKO_RADIOSTATE_DISABLING = 2;
-this.GECKO_RADIOSTATE_DISABLED  = 3;
+this.GECKO_RADIOSTATE_ENABLED   = 0;
+this.GECKO_RADIOSTATE_DISABLED  = 1;
 
 // Only used in ril_worker.js
 this.GECKO_CARDSTATE_UNINITIALIZED = 4294967294; // UINT32_MAX - 1
-// See nsIIccProvider::CARD_STATE_*
+// See nsIIcc::CARD_STATE_*
 this.GECKO_CARDSTATE_UNDETECTED = 4294967295; // UINT32_MAX
 this.GECKO_CARDSTATE_UNKNOWN = 0;
 this.GECKO_CARDSTATE_READY = 1;
@@ -2607,7 +2634,7 @@ this.GECKO_CARDSTATE_RUIM_SERVICE_PROVIDER_PUK_REQUIRED = 27;
 this.GECKO_CARDSTATE_RUIM_PUK_REQUIRED = 28;
 this.GECKO_CARDSTATE_ILLEGAL = 29;
 
-// See nsIIccProvider::CARD_LOCK_TYPE_*
+// See nsIIcc::CARD_LOCK_TYPE_*
 this.GECKO_CARDLOCK_PIN = 0;
 this.GECKO_CARDLOCK_PIN2 = 1;
 this.GECKO_CARDLOCK_PUK = 2;
@@ -2650,17 +2677,17 @@ GECKO_CARDLOCK_TO_SEL_CODE[GECKO_CARDLOCK_SPCK] = ICC_SEL_CODE_PH_SP_PIN;
 // TODO: Bug 1116072: identify the mapping between RIL_PERSOSUBSTATE_SIM_SIM @
 //       ril.h and TS 27.007, clause 8.65 for GECKO_CARDLOCK_PCK.
 
-// See nsIIccProvider::CARD_CONTACT_TYPE_*
+// See nsIIcc::CARD_CONTACT_TYPE_*
 this.GECKO_CARDCONTACT_TYPE_ADN = 0;
 this.GECKO_CARDCONTACT_TYPE_FDN = 1;
 this.GECKO_CARDCONTACT_TYPE_SDN = 2;
 
-// See nsIIccProvider::CARD_MVNO_TYPE_*
+// See nsIIcc::CARD_MVNO_TYPE_*
 this.GECKO_CARDMVNO_TYPE_IMSI = 0;
 this.GECKO_CARDMVNO_TYPE_SPN = 1;
 this.GECKO_CARDMVNO_TYPE_GID = 2;
 
-// See nsIIccProvider::CARD_MVNO_TYPE_*
+// See nsIIcc::CARD_SERVICE_*
 this.GECKO_CARDSERVICE_FDN = 0;
 
 // See ril.h RIL_PersoSubstate
@@ -2715,6 +2742,7 @@ NETWORK_CREG_TO_GECKO_MOBILE_CONNECTION_STATE[NETWORK_CREG_STATE_DENIED_EMERGENC
 NETWORK_CREG_TO_GECKO_MOBILE_CONNECTION_STATE[NETWORK_CREG_STATE_UNKNOWN_EMERGENCY_CALLS] = GECKO_MOBILE_CONNECTION_STATE_UNKNOWN;
 
 
+// Should match enum TelephonyCallDisconnectedReason defined in TelephonyCall.webidl
 this.GECKO_CALL_ERROR_BAD_NUMBER = "BadNumberError";
 this.GECKO_CALL_ERROR_NO_ROUTE_TO_DESTINATION = "NoRouteToDestinationError";
 this.GECKO_CALL_ERROR_CHANNEL_UNACCEPTABLE = "ChannelUnacceptableError";
@@ -2725,7 +2753,7 @@ this.GECKO_CALL_ERROR_NO_USER_RESPONDING = "NoUserRespondingError";
 this.GECKO_CALL_ERROR_USER_ALERTING = "UserAlertingNoAnswerError";
 this.GECKO_CALL_ERROR_REJECTED = "CallRejectedError";
 this.GECKO_CALL_ERROR_NUMBER_CHANGED = "NumberChangedError";
-this.GECKO_CALL_ERROR_REJECTED_DETINATION_FEATURE = "CallRejectedDestinationFeature";
+this.GECKO_CALL_ERROR_REJECTED_DETINATION_FEATURE = "CallRejectedDestinationFeatureError";
 this.GECKO_CALL_ERROR_PRE_EMPTION = "PreEmptionError";
 this.GECKO_CALL_ERROR_DEST_OUT_OF_ORDER = "DestinationOutOfOrderError";
 this.GECKO_CALL_ERROR_INVALID_NUMBER_FORMAT = "InvalidNumberFormatError";
@@ -2913,7 +2941,10 @@ this.GECKO_RADIO_TECH = [
   "ehrpd",
   "lte",
   "hspa+",
-  "gsm"
+  "gsm",
+  null,
+  "hspa+", // DC-HSPA+
+  "hspa+"
 ];
 
 this.GECKO_VOICEMAIL_MESSAGE_COUNT_UNKNOWN = -1;

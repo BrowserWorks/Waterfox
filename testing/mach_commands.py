@@ -87,6 +87,10 @@ TEST_SUITES = {
         'mach_command': 'mochitest',
         'kwargs': {'flavor': 'mochitest', 'test_paths': None},
     },
+    'luciddream': {
+        'mach_command': 'luciddream',
+        'kwargs': {'test_paths': None},
+    },
     'reftest': {
         'aliases': ('RR', 'rr', 'Rr'),
         'mach_command': 'reftest',
@@ -218,11 +222,12 @@ class Test(MachCommandBase):
                 if res:
                     status = res
 
-        flavors = {}
+        buckets = {}
         for test in run_tests:
-            flavors.setdefault(test['flavor'], []).append(test)
+            key = (test['flavor'], test['subsuite'])
+            buckets.setdefault(key, []).append(test)
 
-        for flavor, tests in sorted(flavors.items()):
+        for (flavor, subsuite), tests in sorted(buckets.items()):
             if flavor not in TEST_FLAVORS:
                 print(UNKNOWN_FLAVOR % flavor)
                 status = 1
@@ -234,9 +239,12 @@ class Test(MachCommandBase):
                 status = 1
                 continue
 
+            kwargs = dict(m['kwargs'])
+            kwargs['subsuite'] = subsuite
+
             res = self._mach_context.commands.dispatch(
                     m['mach_command'], self._mach_context,
-                    test_objects=tests, **m['kwargs'])
+                    test_objects=tests, **kwargs)
             if res:
                 status = res
 
@@ -298,7 +306,7 @@ class CheckSpiderMonkeyCommand(MachCommandBase):
 
         print('Running jit-tests')
         jittest_cmd = [os.path.join(self.topsrcdir, 'js', 'src', 'jit-test', 'jit_test.py'),
-              js, '--no-slow', '--tbpl']
+              js, '--no-slow', '--jitflags=all']
         if params['valgrind']:
             jittest_cmd.append('--valgrind')
 
@@ -306,7 +314,7 @@ class CheckSpiderMonkeyCommand(MachCommandBase):
 
         print('running jstests')
         jstest_cmd = [os.path.join(self.topsrcdir, 'js', 'src', 'tests', 'jstests.py'),
-              js, '--tbpl']
+              js, '--jitflags=all']
         jstest_result = subprocess.call(jstest_cmd)
 
         print('running jsapi-tests')

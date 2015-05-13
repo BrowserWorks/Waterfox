@@ -1002,42 +1002,50 @@ add_test(function() {
     }
   };
 
-  MobileIdentityManager._iccProvider = {
+  MobileIdentityManager._iccService = {
     _listeners: [],
-    registerIccMsg: function(aClientId, aIccListener) {
-      this._listeners.push(aIccListener);
-    },
-    unregisterIccMsg: function() {
-      this._listeners.pop();
+    _iccInfos: [ICC_INFO, ANOTHER_ICC_INFO],
+    getIccByServiceId: function(aClientId) {
+      let self = this;
+      return {
+        get iccInfo() {
+          return self._iccInfos[aClientId];
+        },
+        registerListener: function(aIccListener) {
+          self._listeners.push(aIccListener);
+        },
+        unregisterListener: function() {
+          self._listeners.pop();
+        }
+      };
     }
   };
 
   let ui = new MockUi();
   ui.startFlow = function() {
     // At this point we've already built the ICC cache.
-    let interfaces = MobileIdentityManager._ril._interfaces;
-    for (let i = 0; i < interfaces.length; i++) {
-      let interfaceIccInfo = interfaces[i].rilContext.iccInfo;
+    let mockIccInfo = [ICC_INFO, ANOTHER_ICC_INFO];
+    for (let i = 0; i < mockIccInfo.length; i++) {
       let mIdIccInfo = MobileIdentityManager._iccInfo[i];
-      do_check_eq(interfaceIccInfo.iccid, mIdIccInfo.iccId);
-      do_check_eq(interfaceIccInfo.mcc, mIdIccInfo.mcc);
-      do_check_eq(interfaceIccInfo.mnc, mIdIccInfo.mnc);
-      do_check_eq(interfaceIccInfo.msisdn, mIdIccInfo.msisdn);
-      do_check_eq(interfaceIccInfo.operator, mIdIccInfo.operator);
+      do_check_eq(mockIccInfo[i].iccid, mIdIccInfo.iccId);
+      do_check_eq(mockIccInfo[i].mcc, mIdIccInfo.mcc);
+      do_check_eq(mockIccInfo[i].mnc, mIdIccInfo.mnc);
+      do_check_eq(mockIccInfo[i].msisdn, mIdIccInfo.msisdn);
+      do_check_eq(mockIccInfo[i].operator, mIdIccInfo.operator);
     }
 
     // We should have listeners for each valid icc.
-    do_check_eq(MobileIdentityManager._iccProvider._listeners.length, 2);
+    do_check_eq(MobileIdentityManager._iccService._listeners.length, 2);
 
     // We can mock an ICC change event at this point.
-    MobileIdentityManager._iccProvider._listeners[0].notifyIccInfoChanged();
+    MobileIdentityManager._iccService._listeners[0].notifyIccInfoChanged();
 
     // After the ICC change event the caches should be null.
     do_check_null(MobileIdentityManager._iccInfo);
     do_check_null(MobileIdentityManager._iccIds);
 
     // And we should have unregistered all listeners for ICC change events.
-    do_check_eq(MobileIdentityManager._iccProvider._listeners.length, 0);
+    do_check_eq(MobileIdentityManager._iccService._listeners.length, 0);
 
     do_test_finished();
     run_next_test();
@@ -1104,13 +1112,22 @@ add_test(function() {
     }
   };
 
-  MobileIdentityManager._iccProvider = {
+  MobileIdentityManager._iccService = {
     _listeners: [],
-    registerIccMsg: function(aClientId, aIccListener) {
-      this._listeners.push(aIccListener);
-    },
-    unregisterIccMsg: function() {
-      this._listeners.pop();
+    _iccInfos: [INVALID_ICC_INFO],
+    getIccByServiceId: function(aClientId) {
+      let self = this;
+      return {
+        get iccInfo() {
+          return self._iccInfos[aClientId];
+        },
+        registerListener: function(aIccListener) {
+          self._listeners.push(aIccListener);
+        },
+        unregisterListener: function() {
+          self._listeners.pop();
+        }
+      };
     }
   };
 
@@ -1121,7 +1138,7 @@ add_test(function() {
     do_check_eq(MobileIdentityManager._iccIds.length, 0);
 
     // We should have listeners for each valid icc.
-    do_check_eq(MobileIdentityManager._iccProvider._listeners.length, 0);
+    do_check_eq(MobileIdentityManager._iccService._listeners.length, 0);
 
     do_test_finished();
     run_next_test();

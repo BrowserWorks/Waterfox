@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -16,7 +17,7 @@ namespace dom {
 
 class InternalHeaders;
 
-class InternalResponse MOZ_FINAL
+class InternalResponse final
 {
   friend class FetchDriver;
 
@@ -25,35 +26,47 @@ public:
 
   InternalResponse(uint16_t aStatus, const nsACString& aStatusText);
 
+  already_AddRefed<InternalResponse> Clone();
+
   static already_AddRefed<InternalResponse>
   NetworkError()
   {
     nsRefPtr<InternalResponse> response = new InternalResponse(0, EmptyCString());
+    ErrorResult result;
+    response->Headers()->SetGuard(HeadersGuardEnum::Immutable, result);
+    MOZ_ASSERT(!result.Failed());
     response->mType = ResponseType::Error;
     return response.forget();
   }
 
-  static already_AddRefed<InternalResponse>
+  already_AddRefed<InternalResponse>
   OpaqueResponse()
   {
+    MOZ_ASSERT(!mWrappedResponse, "Can't OpaqueResponse a already wrapped response");
     nsRefPtr<InternalResponse> response = new InternalResponse(0, EmptyCString());
     response->mType = ResponseType::Opaque;
+    response->mTerminationReason = mTerminationReason;
+    response->mURL = mURL;
+    response->mFinalURL = mFinalURL;
+    response->mSecurityInfo = mSecurityInfo;
+    response->mWrappedResponse = this;
     return response.forget();
   }
 
-  // DO NOT use the inner response after filtering it since the filtered
-  // response will adopt the inner response's body.
-  static already_AddRefed<InternalResponse>
-  BasicResponse(InternalResponse* aInner);
+  already_AddRefed<InternalResponse>
+  BasicResponse();
 
-  // DO NOT use the inner response after filtering it since the filtered
-  // response will adopt the inner response's body.
-  static already_AddRefed<InternalResponse>
-  CORSResponse(InternalResponse* aInner);
+  already_AddRefed<InternalResponse>
+  CORSResponse();
 
   ResponseType
   Type() const
   {
+    MOZ_ASSERT_IF(mType == ResponseType::Error, !mWrappedResponse);
+    MOZ_ASSERT_IF(mType == ResponseType::Default, !mWrappedResponse);
+    MOZ_ASSERT_IF(mType == ResponseType::Basic, mWrappedResponse);
+    MOZ_ASSERT_IF(mType == ResponseType::Cors, mWrappedResponse);
+    MOZ_ASSERT_IF(mType == ResponseType::Opaque, mWrappedResponse);
     return mType;
   }
 
@@ -76,6 +89,18 @@ public:
     mURL.Assign(aURL);
   }
 
+  bool
+  FinalURL() const
+  {
+    return mFinalURL;
+  }
+
+  void
+  SetFinalURL(bool aFinalURL)
+  {
+    mFinalURL = aFinalURL;
+  }
+
   uint16_t
   GetStatus() const
   {
@@ -94,9 +119,28 @@ public:
     return mHeaders;
   }
 
+  InternalHeaders*
+  UnfilteredHeaders()
+  {
+    if (mWrappedResponse) {
+      return mWrappedResponse->Headers();
+    };
+
+    return Headers();
+  }
+
   void
   GetBody(nsIInputStream** aStream)
   {
+    if (Type() == ResponseType::Opaque) {
+      *aStream = nullptr;
+      return;
+    }
+
+    if (mWrappedResponse) {
+      MOZ_ASSERT(!mBody);
+      return mWrappedResponse->GetBody(aStream);
+    }
     nsCOMPtr<nsIInputStream> stream = mBody;
     stream.forget(aStream);
   }
@@ -104,27 +148,62 @@ public:
   void
   SetBody(nsIInputStream* aBody)
   {
+    if (mWrappedResponse) {
+      return mWrappedResponse->SetBody(aBody);
+    }
     // A request's body may not be reset once set.
     MOZ_ASSERT(!mBody);
     mBody = aBody;
   }
 
+  const nsCString&
+  GetSecurityInfo() const
+  {
+    return mSecurityInfo;
+  }
+
+  void
+  SetSecurityInfo(nsISupports* aSecurityInfo);
+
+  void
+  SetSecurityInfo(const nsCString& aSecurityInfo);
+
 private:
   ~InternalResponse()
   { }
 
-  // Used to create filtered responses.
-  // Does not copy headers.
-  explicit InternalResponse(const InternalResponse& aOther);
+  explicit InternalResponse(const InternalResponse& aOther) = delete;
+  InternalResponse& operator=(const InternalResponse&) = delete;
+
+  // Returns an instance of InternalResponse which is a copy of this
+  // InternalResponse, except headers, body and wrapped response (if any) which
+  // are left uninitialized. Used for cloning and filtering.
+  already_AddRefed<InternalResponse> CreateIncompleteCopy()
+  {
+    nsRefPtr<InternalResponse> copy = new InternalResponse(mStatus, mStatusText);
+    copy->mType = mType;
+    copy->mTerminationReason = mTerminationReason;
+    copy->mURL = mURL;
+    copy->mFinalURL = mFinalURL;
+    copy->mSecurityInfo = mSecurityInfo;
+    return copy.forget();
+  }
 
   ResponseType mType;
   nsCString mTerminationReason;
   nsCString mURL;
+  bool mFinalURL;
   const uint16_t mStatus;
   const nsCString mStatusText;
   nsRefPtr<InternalHeaders> mHeaders;
   nsCOMPtr<nsIInputStream> mBody;
-  nsCString mContentType;
+  nsCString mSecurityInfo;
+
+  // For filtered responses.
+  // Cache, and SW interception should always serialize/access the underlying
+  // unfiltered headers and when deserializing, create an InternalResponse
+  // with the unfiltered headers followed by wrapping it.
+  nsRefPtr<InternalResponse> mWrappedResponse;
 };
 
 } // namespace dom

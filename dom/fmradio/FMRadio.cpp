@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim:set ts=2 sw=2 sts=2 et cindent: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -32,8 +32,8 @@ using mozilla::Preferences;
 
 BEGIN_FMRADIO_NAMESPACE
 
-class FMRadioRequest MOZ_FINAL : public FMRadioReplyRunnable
-                               , public DOMRequest
+class FMRadioRequest final : public FMRadioReplyRunnable
+                           , public DOMRequest
 {
 public:
   NS_DECL_ISUPPORTS_INHERITED
@@ -59,8 +59,6 @@ public:
     mFMRadio = do_GetWeakReference(static_cast<nsIDOMEventTarget*>(aFMRadio));
     mType = aType;
   }
-
-  ~FMRadioRequest() { }
 
   NS_IMETHODIMP
   Run()
@@ -96,6 +94,9 @@ public:
 
     return NS_OK;
   }
+
+protected:
+  ~FMRadioRequest() { }
 
 private:
   FMRadioRequestArgs::Type mType;
@@ -184,9 +185,9 @@ FMRadio::Shutdown()
 }
 
 JSObject*
-FMRadio::WrapObject(JSContext* aCx)
+FMRadio::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return FMRadioBinding::Wrap(aCx, this);
+  return FMRadioBinding::Wrap(aCx, this, aGivenProto);
 }
 
 void
@@ -503,7 +504,7 @@ FMRadio::EnableAudioChannelAgent()
 NS_IMETHODIMP
 FMRadio::CanPlayChanged(int32_t aCanPlay)
 {
-  SetCanPlay(aCanPlay == AudioChannelState::AUDIO_CHANNEL_STATE_NORMAL);
+  SetCanPlay(!(aCanPlay == AudioChannelState::AUDIO_CHANNEL_STATE_MUTED));
   return NS_OK;
 }
 

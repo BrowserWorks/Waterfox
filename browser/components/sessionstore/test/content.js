@@ -25,10 +25,7 @@ gFrameTree.addObserver({
   }
 });
 
-
-docShell.QueryInterface(Ci.nsIWebNavigation).
-  sessionHistory.addSHistoryListener({
-
+let historyListener = {
   OnHistoryNewEntry: function () {
     sendAsyncMessage("ss-test:OnHistoryNewEntry");
   },
@@ -66,7 +63,12 @@ docShell.QueryInterface(Ci.nsIWebNavigation).
     Ci.nsISHistoryListener,
     Ci.nsISupportsWeakReference
   ])
-});
+};
+
+let {sessionHistory} = docShell.QueryInterface(Ci.nsIWebNavigation);
+if (sessionHistory) {
+  sessionHistory.addSHistoryListener(historyListener);
+}
 
 /**
  * This frame script is only loaded for sessionstore mochitests. It enables us
@@ -239,20 +241,6 @@ addMessageListener("ss-test:click", function ({data}) {
   sendAsyncMessage("ss-test:click");
 });
 
-addMessageListener("ss-test:historyPushState", function ({data}) {
-  content.window.history.
-    pushState(data.stateObj || {}, data.title || "", data.url);
-
-  sendAsyncMessage("ss-test:historyPushState");
-});
-
-addMessageListener("ss-test:historyReplaceState", function ({data}) {
-  content.window.history.
-    replaceState(data.stateObj || {}, data.title || "", data.url);
-
-  sendAsyncMessage("ss-test:historyReplaceState");
-});
-
 addMessageListener("ss-test:run", function({data, objects}) {
   let f = eval('(' + data.code + ')');
   let result = f(content, objects.arg);
@@ -261,5 +249,5 @@ addMessageListener("ss-test:run", function({data, objects}) {
 
 addEventListener("load", function(event) {
   let subframe = event.target != content.document;
-  sendAsyncMessage("ss-test:loadEvent", {subframe: subframe});
+  sendAsyncMessage("ss-test:loadEvent", {subframe: subframe, url: event.target.documentURI});
 }, true);

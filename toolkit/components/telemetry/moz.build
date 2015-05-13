@@ -4,6 +4,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+HAS_MISC_RULE = True
+
 XPCSHELL_TESTS_MANIFESTS += ['tests/unit/xpcshell.ini']
 
 XPIDL_SOURCES += [
@@ -28,20 +30,22 @@ EXTRA_COMPONENTS += [
 ]
 
 EXTRA_JS_MODULES += [
-    'TelemetryFile.jsm',
+    'TelemetryArchive.jsm',
     'TelemetryLog.jsm',
     'TelemetryStopwatch.jsm',
+    'TelemetryStorage.jsm',
+    'TelemetryUtils.jsm',
     'ThirdPartyCookieProbe.jsm',
     'UITelemetry.jsm',
 ]
 
 EXTRA_PP_JS_MODULES += [
-    'TelemetryPing.jsm',
+    'TelemetryController.jsm',
+    'TelemetryEnvironment.jsm',
+    'TelemetrySession.jsm',
 ]
 
 FAIL_ON_WARNINGS = True
-
-MSVC_ENABLE_PGO = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
@@ -59,3 +63,4 @@ LOCAL_INCLUDES += [
     '/xpcom/threads',
 ]
 
+SPHINX_TREES['telemetry'] = 'docs'

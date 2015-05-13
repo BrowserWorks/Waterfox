@@ -129,6 +129,7 @@ exports['test basic constructor validation'] = function(assert) {
 exports['test button added'] = function(assert) {
   let loader = Loader(module);
   let { ActionButton } = loader.require('sdk/ui');
+  let { data } = loader.require('sdk/self');
 
   let button = ActionButton({
     id: 'my-button-1',
@@ -159,9 +160,41 @@ exports['test button added'] = function(assert) {
   loader.unload();
 }
 
+exports['test button is not garbaged'] = function (assert, done) {
+  let loader = Loader(module);
+  let { ActionButton } = loader.require('sdk/ui');
+  let { data } = loader.require('sdk/self');
+
+  ActionButton({
+    id: 'my-button-1',
+    label: 'my button',
+    icon: './icon.png',
+    onClick: () => {
+      loader.unload();
+      done();
+    }
+  });
+
+  gc().then(() => {
+    let { node } = getWidget('my-button-1');
+
+    assert.ok(!!node, 'The button is in the navbar');
+
+    assert.equal('my button', node.getAttribute('label'),
+      'label is set');
+
+    assert.equal(data.url('icon.png'), node.getAttribute('image'),
+      'icon is set');
+
+    // ensure the listener is not gc'ed too
+    node.click();
+  }).catch(assert.fail);
+}
+
 exports['test button added with resource URI'] = function(assert) {
   let loader = Loader(module);
   let { ActionButton } = loader.require('sdk/ui');
+  let { data } = loader.require('sdk/self');
 
   let button = ActionButton({
     id: 'my-button-1',
@@ -257,12 +290,14 @@ exports['test button removed on dispose'] = function(assert, done) {
 exports['test button global state updated'] = function(assert) {
   let loader = Loader(module);
   let { ActionButton } = loader.require('sdk/ui');
+  let { data } = loader.require("sdk/self");
 
   let button = ActionButton({
     id: 'my-button-4',
     label: 'my button',
     icon: './icon.png',
   });
+  assert.pass('the button was created.');
 
   // Tried to use `getWidgetIdsInArea` but seems undefined, not sure if it
   // was removed or it's not in the UX build yet
@@ -366,16 +401,19 @@ exports['test button global state set and get with state method'] = function(ass
 exports['test button global state updated on multiple windows'] = function*(assert) {
   let loader = Loader(module);
   let { ActionButton } = loader.require('sdk/ui');
+  let { data } = loader.require('sdk/self');
 
   let button = ActionButton({
     id: 'my-button-5',
     label: 'my button',
     icon: './icon.png'
   });
+  assert.pass('the button was created');
 
-  let nodes = [getWidget(button.id).node];
+  let nodes = [ getWidget(button.id).node ];
 
   let window = yield openBrowserWindow();
+  assert.pass('the window was created');
 
   nodes.push(getWidget(button.id, window).node);
 
@@ -420,6 +458,7 @@ exports['test button window state'] = function*(assert) {
   let loader = Loader(module);
   let { ActionButton } = loader.require('sdk/ui');
   let { browserWindows } = loader.require('sdk/windows');
+  let { data } = loader.require('sdk/self');
 
   let button = ActionButton({
     id: 'my-button-6',
@@ -566,6 +605,7 @@ exports['test button tab state'] = function*(assert) {
   let loader = Loader(module);
   let { ActionButton } = loader.require('sdk/ui');
   let { browserWindows } = loader.require('sdk/windows');
+  let { data } = loader.require('sdk/self');
   let tabs = loader.require('sdk/tabs');
 
   let button = ActionButton({
@@ -760,6 +800,7 @@ exports['test button icon set'] = function(assert) {
   const { CustomizableUI } = Cu.import('resource:///modules/CustomizableUI.jsm', {});
   let loader = Loader(module);
   let { ActionButton } = loader.require('sdk/ui');
+  let { data } = loader.require('sdk/self');
 
   // Test remote icon set
   assert.throws(
@@ -813,6 +854,7 @@ exports['test button icon set with only one option'] = function(assert) {
   const { CustomizableUI } = Cu.import('resource:///modules/CustomizableUI.jsm', {});
   let loader = Loader(module);
   let { ActionButton } = loader.require('sdk/ui');
+  let { data } = loader.require('sdk/self');
 
   // Test remote icon set
   assert.throws(
@@ -1128,5 +1170,4 @@ exports['test button badge color'] = function(assert) {
   loader.unload();
 }
 
-
-require('sdk/test').run(exports);
+require("sdk/test").run(module.exports);

@@ -7,12 +7,12 @@
 
 #include "jsapi-tests/tests.h"
 
-class CCWTestTracer : public JSTracer {
-    static void staticCallback(JSTracer *trc, void **thingp, JSGCTraceKind kind) {
-        static_cast<CCWTestTracer *>(trc)->callback(thingp, kind);
+class CCWTestTracer : public JS::CallbackTracer {
+    static void staticCallback(JS::CallbackTracer* trc, void** thingp, JSGCTraceKind kind) {
+        static_cast<CCWTestTracer*>(trc)->callback(thingp, kind);
     }
 
-    void callback(void **thingp, JSGCTraceKind kind) {
+    void callback(void** thingp, JSGCTraceKind kind) {
         numberOfThingsTraced++;
 
         printf("*thingp         = %p\n", *thingp);
@@ -28,11 +28,11 @@ class CCWTestTracer : public JSTracer {
   public:
     bool          okay;
     size_t        numberOfThingsTraced;
-    void          **expectedThingp;
+    void**        expectedThingp;
     JSGCTraceKind expectedKind;
 
-    CCWTestTracer(JSContext *cx, void **expectedThingp, JSGCTraceKind expectedKind)
-      : JSTracer(JS_GetRuntime(cx), staticCallback),
+    CCWTestTracer(JSContext* cx, void** expectedThingp, JSGCTraceKind expectedKind)
+      : JS::CallbackTracer(JS_GetRuntime(cx), staticCallback),
         okay(true),
         numberOfThingsTraced(0),
         expectedThingp(expectedThingp),
@@ -53,7 +53,7 @@ BEGIN_TEST(testTracingIncomingCCWs)
 
     // Define an object in one zone, that is wrapped by a CCW in another zone.
 
-    JS::RootedObject obj(cx, JS_NewObject(cx, nullptr, JS::NullPtr(), JS::NullPtr()));
+    JS::RootedObject obj(cx, JS_NewPlainObject(cx));
     CHECK(obj->zone() == global1->zone());
 
     JSAutoCompartment ac(cx, global2);
@@ -68,7 +68,7 @@ BEGIN_TEST(testTracingIncomingCCWs)
     CHECK(zones.init());
     CHECK(zones.put(global1->zone()));
 
-    void *thing = obj.get();
+    void* thing = obj.get();
     CCWTestTracer trc(cx, &thing, JSTRACE_OBJECT);
     JS_TraceIncomingCCWs(&trc, zones);
     CHECK(trc.numberOfThingsTraced == 1);

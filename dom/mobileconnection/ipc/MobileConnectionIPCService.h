@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
 * License, v. 2.0. If a copy of the MPL was not distributed with this file,
 * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -13,7 +15,7 @@ namespace mozilla {
 namespace dom {
 namespace mobileconnection {
 
-class MobileConnectionIPCService MOZ_FINAL : public nsIMobileConnectionService
+class MobileConnectionIPCService final : public nsIMobileConnectionService
 {
 public:
   NS_DECL_ISUPPORTS
@@ -22,7 +24,7 @@ public:
   MobileConnectionIPCService();
 
 private:
-  // MOZ_FINAL suppresses -Werror,-Wdelete-non-virtual-dtor
+  // final suppresses -Werror,-Wdelete-non-virtual-dtor
   ~MobileConnectionIPCService();
 
   nsTArray<nsRefPtr<MobileConnectionChild>> mItems;

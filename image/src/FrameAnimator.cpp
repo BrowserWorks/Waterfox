@@ -290,6 +290,11 @@ int32_t
 FrameAnimator::GetTimeoutForFrame(uint32_t aFrameNum) const
 {
   RawAccessFrameRef frame = GetRawFrame(aFrameNum);
+  if (!frame) {
+    NS_WARNING("No frame; called GetTimeoutForFrame too early?");
+    return 100;
+  }
+
   AnimationData data = frame->GetAnimationData();
 
   // Ensure a minimal time between updates so we don't throttle the UI thread.
@@ -312,20 +317,51 @@ FrameAnimator::GetTimeoutForFrame(uint32_t aFrameNum) const
   return data.mRawTimeout;
 }
 
-size_t
-FrameAnimator::SizeOfCompositingFrames(gfxMemoryLocation aLocation,
-                                       MallocSizeOf aMallocSizeOf) const
+static void
+DoCollectSizeOfCompositingSurfaces(const RawAccessFrameRef& aSurface,
+                                   SurfaceMemoryCounterType aType,
+                                   nsTArray<SurfaceMemoryCounter>& aCounters,
+                                   MallocSizeOf aMallocSizeOf)
 {
-  size_t n = 0;
+  // Concoct a SurfaceKey for this surface.
+  SurfaceKey key = RasterSurfaceKey(aSurface->GetImageSize(),
+                                    imgIContainer::DECODE_FLAGS_DEFAULT,
+                                    /* aFrameNum = */ 0);
 
+  // Create a counter for this surface.
+  SurfaceMemoryCounter counter(key, /* aIsLocked = */ true, aType);
+
+  // Extract the surface's memory usage information.
+  size_t heap = aSurface
+    ->SizeOfExcludingThis(gfxMemoryLocation::IN_PROCESS_HEAP, aMallocSizeOf);
+  counter.Values().SetDecodedHeap(heap);
+
+  size_t nonHeap = aSurface
+    ->SizeOfExcludingThis(gfxMemoryLocation::IN_PROCESS_NONHEAP, nullptr);
+  counter.Values().SetDecodedNonHeap(nonHeap);
+
+  // Record it.
+  aCounters.AppendElement(counter);
+}
+
+void
+FrameAnimator::CollectSizeOfCompositingSurfaces(
+    nsTArray<SurfaceMemoryCounter>& aCounters,
+    MallocSizeOf aMallocSizeOf) const
+{
   if (mCompositingFrame) {
-    n += mCompositingFrame->SizeOfExcludingThis(aLocation, aMallocSizeOf);
-  }
-  if (mCompositingPrevFrame) {
-    n += mCompositingPrevFrame->SizeOfExcludingThis(aLocation, aMallocSizeOf);
+    DoCollectSizeOfCompositingSurfaces(mCompositingFrame,
+                                       SurfaceMemoryCounterType::COMPOSITING,
+                                       aCounters,
+                                       aMallocSizeOf);
   }
 
-  return n;
+  if (mCompositingPrevFrame) {
+    DoCollectSizeOfCompositingSurfaces(mCompositingPrevFrame,
+                                       SurfaceMemoryCounterType::COMPOSITING_PREV,
+                                       aCounters,
+                                       aMallocSizeOf);
+  }
 }
 
 RawAccessFrameRef
@@ -398,6 +434,7 @@ FrameAnimator::DoBlend(nsIntRect* aDirtyRect,
   // Calculate area that needs updating
   switch (prevFrameData.mDisposalMethod) {
     default:
+      MOZ_ASSERT_UNREACHABLE("Unexpected DisposalMethod");
     case DisposalMethod::NOT_SPECIFIED:
     case DisposalMethod::KEEP:
       *aDirtyRect = nextFrameData.mRect;
@@ -439,7 +476,7 @@ FrameAnimator::DoBlend(nsIntRect* aDirtyRect,
   // Create the Compositing Frame
   if (!mCompositingFrame) {
     nsRefPtr<imgFrame> newFrame = new imgFrame;
-    nsresult rv = newFrame->InitForDecoder(ThebesIntSize(mSize),
+    nsresult rv = newFrame->InitForDecoder(mSize,
                                            SurfaceFormat::B8G8R8A8);
     if (NS_FAILED(rv)) {
       mCompositingFrame.reset();
@@ -531,6 +568,9 @@ FrameAnimator::DoBlend(nsIntRect* aDirtyRect,
         break;
 
       default:
+        MOZ_ASSERT_UNREACHABLE("Unexpected DisposalMethod");
+      case DisposalMethod::NOT_SPECIFIED:
+      case DisposalMethod::KEEP:
         // Copy previous frame into compositingFrame before we put the new
         // frame on top
         // Assumes that the previous frame represents a full frame (it could be
@@ -579,7 +619,7 @@ FrameAnimator::DoBlend(nsIntRect* aDirtyRect,
     // overwrite.
     if (!mCompositingPrevFrame) {
       nsRefPtr<imgFrame> newFrame = new imgFrame;
-      nsresult rv = newFrame->InitForDecoder(ThebesIntSize(mSize),
+      nsresult rv = newFrame->InitForDecoder(mSize,
                                              SurfaceFormat::B8G8R8A8);
       if (NS_FAILED(rv)) {
         mCompositingPrevFrame.reset();
@@ -654,8 +694,10 @@ FrameAnimator::ClearFrame(uint8_t* aFrameData, const nsIntRect& aFrameRect,
 // Whether we succeed or fail will not cause a crash, and there's not much
 // we can do about a failure, so there we don't return a nsresult
 bool
-FrameAnimator::CopyFrameImage(const uint8_t* aDataSrc, const nsIntRect& aRectSrc,
-                              uint8_t* aDataDest, const nsIntRect& aRectDest)
+FrameAnimator::CopyFrameImage(const uint8_t* aDataSrc,
+                              const nsIntRect& aRectSrc,
+                              uint8_t* aDataDest,
+                              const nsIntRect& aRectDest)
 {
   uint32_t dataLengthSrc = aRectSrc.width * aRectSrc.height * 4;
   uint32_t dataLengthDest = aRectDest.width * aRectDest.height * 4;
@@ -701,7 +743,7 @@ FrameAnimator::DrawFrameTo(const uint8_t* aSrcData, const nsIntRect& aSrcRect,
 
     // clipped image size may be smaller than source, but not larger
     NS_ASSERTION((width <= aSrcRect.width) && (height <= aSrcRect.height),
-                 "FrameAnimator::DrawFrameTo: source must be smaller than dest");
+      "FrameAnimator::DrawFrameTo: source must be smaller than dest");
 
     // Get pointers to image data
     const uint8_t* srcPixels = aSrcData + aSrcPaletteLength;

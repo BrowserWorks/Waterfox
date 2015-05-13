@@ -29,6 +29,9 @@ class GStreamerFormatHelper {
     bool CanHandleContainerCaps(GstCaps* aCaps);
     bool CanHandleCodecCaps(GstCaps* aCaps);
 
+    static bool IsBlacklistEnabled();
+    static bool IsPluginFeatureBlacklisted(GstPluginFeature *aFeature);
+
     static GstCaps* ConvertFormatsToCaps(const char* aMIMEType,
                                          const nsAString* aCodecs);
 

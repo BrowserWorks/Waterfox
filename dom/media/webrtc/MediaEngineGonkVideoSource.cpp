@@ -107,15 +107,51 @@ MediaEngineGonkVideoSource::NotifyPull(MediaStreamGraph* aGraph,
   }
 }
 
-void
-MediaEngineGonkVideoSource::ChooseCapability(const VideoTrackConstraintsN& aConstraints,
-                                             const MediaEnginePrefs& aPrefs)
+size_t
+MediaEngineGonkVideoSource::NumCapabilities()
 {
-  return GuessCapability(aConstraints, aPrefs);
+  // TODO: Stop hardcoding. Use GetRecorderProfiles+GetProfileInfo (Bug 1128550)
+  //
+  // The camera-selecting constraints algorithm needs a set of capabilities to
+  // work on. In lieu of something better, here are some generic values based on
+  // http://en.wikipedia.org/wiki/Comparison_of_Firefox_OS_devices on Jan 2015.
+  // When unknown, better overdo it with choices to not block legitimate asks.
+  // TODO: Match with actual hardware or add code to query hardware.
+
+  if (mHardcodedCapabilities.IsEmpty()) {
+    const struct { int width, height; } hardcodes[] = {
+      { 800, 1280 },
+      { 720, 1280 },
+      { 600, 1024 },
+      { 540, 960 },
+      { 480, 854 },
+      { 480, 800 },
+      { 320, 480 },
+      { 240, 320 }, // sole mode supported by emulator on try
+    };
+    const int framerates[] = { 15, 30 };
+
+    for (auto& hardcode : hardcodes) {
+      webrtc::CaptureCapability c;
+      c.width = hardcode.width;
+      c.height = hardcode.height;
+      for (int framerate : framerates) {
+        c.maxFPS = framerate;
+        mHardcodedCapabilities.AppendElement(c); // portrait
+      }
+      c.width = hardcode.height;
+      c.height = hardcode.width;
+      for (int framerate : framerates) {
+        c.maxFPS = framerate;
+        mHardcodedCapabilities.AppendElement(c); // landscape
+      }
+    }
+  }
+  return mHardcodedCapabilities.Length();
 }
 
 nsresult
-MediaEngineGonkVideoSource::Allocate(const VideoTrackConstraintsN& aConstraints,
+MediaEngineGonkVideoSource::Allocate(const dom::MediaTrackConstraints& aConstraints,
                                      const MediaEnginePrefs& aPrefs)
 {
   LOG((__FUNCTION__));
@@ -138,7 +174,12 @@ nsresult
 MediaEngineGonkVideoSource::Deallocate()
 {
   LOG((__FUNCTION__));
-  if (mSources.IsEmpty()) {
+  bool empty;
+  {
+    MonitorAutoLock lock(mMonitor);
+    empty = mSources.IsEmpty();
+  }
+  if (empty) {
 
     ReentrantMonitorAutoEnter sync(mCallbackMonitor);
 
@@ -171,15 +212,20 @@ MediaEngineGonkVideoSource::Start(SourceMediaStream* aStream, TrackID aID)
     return NS_ERROR_FAILURE;
   }
 
-  mSources.AppendElement(aStream);
+  {
+    MonitorAutoLock lock(mMonitor);
+    mSources.AppendElement(aStream);
+  }
 
   aStream->AddTrack(aID, 0, new VideoSegment());
-  aStream->AdvanceKnownTracksTime(STREAM_TIME_MAX);
 
   ReentrantMonitorAutoEnter sync(mCallbackMonitor);
 
+  MOZ_ASSERT(mCameraControl, "mCameraControl is nullptr");
   if (mState == kStarted) {
     return NS_OK;
+  } else if (!mCameraControl) {
+    return NS_ERROR_FAILURE;
   }
   mTrackID = aID;
   mImageContainer = layers::LayerManager::CreateImageContainer();
@@ -192,9 +238,23 @@ MediaEngineGonkVideoSource::Start(SourceMediaStream* aStream, TrackID aID)
     return NS_ERROR_FAILURE;
   }
 
+  nsTArray<nsString> focusModes;
+  mCameraControl->Get(CAMERA_PARAM_SUPPORTED_FOCUSMODES, focusModes);
+  for (nsTArray<nsString>::index_type i = 0; i < focusModes.Length(); ++i) {
+    if (focusModes[i].EqualsASCII("continuous-video")) {
+      mCameraControl->Set(CAMERA_PARAM_FOCUSMODE, focusModes[i]);
+      mCameraControl->ResumeContinuousFocus();
+      break;
+    }
+  }
+
+  // XXX some devices support recording camera frame only in metadata mode.
+  // But GonkCameraSource requests non-metadata recording mode.
+#if ANDROID_VERSION < 21
   if (NS_FAILED(InitDirectMediaBuffer())) {
     return NS_ERROR_FAILURE;
   }
+#endif
 
   return NS_OK;
 }
@@ -239,12 +299,16 @@ nsresult
 MediaEngineGonkVideoSource::Stop(SourceMediaStream* aSource, TrackID aID)
 {
   LOG((__FUNCTION__));
-  if (!mSources.RemoveElement(aSource)) {
-    // Already stopped - this is allowed
-    return NS_OK;
-  }
-  if (!mSources.IsEmpty()) {
-    return NS_OK;
+  {
+    MonitorAutoLock lock(mMonitor);
+
+    if (!mSources.RemoveElement(aSource)) {
+      // Already stopped - this is allowed
+      return NS_OK;
+    }
+    if (!mSources.IsEmpty()) {
+      return NS_OK;
+    }
   }
 
   ReentrantMonitorAutoEnter sync(mCallbackMonitor);
@@ -295,8 +359,19 @@ MediaEngineGonkVideoSource::Shutdown()
   ReentrantMonitorAutoEnter sync(mCallbackMonitor);
 
   if (mState == kStarted) {
-    while (!mSources.IsEmpty()) {
-      Stop(mSources[0], kVideoTrack); // XXX change to support multiple tracks
+    SourceMediaStream *source;
+    bool empty;
+
+    while (1) {
+      {
+        MonitorAutoLock lock(mMonitor);
+        empty = mSources.IsEmpty();
+        if (empty) {
+          break;
+        }
+        source = mSources[0];
+      }
+      Stop(source, kVideoTrack); // XXX change to support multiple tracks
     }
     MOZ_ASSERT(mState == kStopped);
   }
@@ -398,17 +473,9 @@ MediaEngineGonkVideoSource::StartImpl(webrtc::CaptureCapability aCapability) {
   config.mMode = ICameraControl::kPictureMode;
   config.mPreviewSize.width = aCapability.width;
   config.mPreviewSize.height = aCapability.height;
+  config.mPictureSize.width = aCapability.width;
+  config.mPictureSize.height = aCapability.height;
   mCameraControl->Start(&config);
-  mCameraControl->Set(CAMERA_PARAM_PICTURE_SIZE, config.mPreviewSize);
-
-  nsTArray<nsString> focusModes;
-  mCameraControl->Get(CAMERA_PARAM_SUPPORTED_FOCUSMODES, focusModes);
-  for (nsTArray<nsString>::index_type i = 0; i < focusModes.Length(); ++i) {
-    if (focusModes[i].EqualsASCII("continuous-video")) {
-      mCameraControl->Set(CAMERA_PARAM_FOCUSMODE, focusModes[i]);
-      break;
-    }
-  }
 
   hal::RegisterScreenConfigurationObserver(this);
 }
@@ -417,8 +484,10 @@ void
 MediaEngineGonkVideoSource::StopImpl() {
   MOZ_ASSERT(NS_IsMainThread());
 
-  mCameraSource->stop();
-  mCameraSource = nullptr;
+  if (mCameraSource.get()) {
+    mCameraSource->stop();
+    mCameraSource = nullptr;
+  }
 
   hal::UnregisterScreenConfigurationObserver(this);
   mCameraControl->Stop();
@@ -521,7 +590,7 @@ MediaEngineGonkVideoSource::OnUserError(UserContext aContext, nsresult aError)
 }
 
 void
-MediaEngineGonkVideoSource::OnTakePictureComplete(uint8_t* aData, uint32_t aLength, const nsAString& aMimeType)
+MediaEngineGonkVideoSource::OnTakePictureComplete(const uint8_t* aData, uint32_t aLength, const nsAString& aMimeType)
 {
   // It needs to start preview because Gonk camera will stop preview while
   // taking picture.
@@ -532,24 +601,24 @@ MediaEngineGonkVideoSource::OnTakePictureComplete(uint8_t* aData, uint32_t aLeng
   class GenerateBlobRunnable : public nsRunnable {
   public:
     GenerateBlobRunnable(nsTArray<nsRefPtr<PhotoCallback>>& aCallbacks,
-                         uint8_t* aData,
+                         const uint8_t* aData,
                          uint32_t aLength,
                          const nsAString& aMimeType)
       : mPhotoDataLength(aLength)
     {
       mCallbacks.SwapElements(aCallbacks);
-      mPhotoData = (uint8_t*) moz_malloc(aLength);
+      mPhotoData = (uint8_t*) malloc(aLength);
       memcpy(mPhotoData, aData, mPhotoDataLength);
       mMimeType = aMimeType;
     }
 
     NS_IMETHOD Run()
     {
-      nsRefPtr<dom::File> blob =
-        dom::File::CreateMemoryFile(nullptr, mPhotoData, mPhotoDataLength, mMimeType);
+      nsRefPtr<dom::Blob> blob =
+        dom::Blob::CreateMemoryBlob(nullptr, mPhotoData, mPhotoDataLength, mMimeType);
       uint32_t callbackCounts = mCallbacks.Length();
       for (uint8_t i = 0; i < callbackCounts; i++) {
-        nsRefPtr<dom::File> tempBlob = blob;
+        nsRefPtr<dom::Blob> tempBlob = blob;
         mCallbacks[i]->PhotoComplete(tempBlob.forget());
       }
       // PhotoCallback needs to dereference on main thread.
@@ -709,7 +778,7 @@ MediaEngineGonkVideoSource::RotateImage(layers::Image* aImage, uint32_t aWidth, 
                           dstPtr + (yStride * dstHeight + (uvStride * dstHeight / 2)), uvStride,
                           dstPtr + (yStride * dstHeight), uvStride,
                           0, 0,
-                          aWidth, aHeight,
+                          graphicBuffer->getStride(), aHeight,
                           aWidth, aHeight,
                           static_cast<libyuv::RotationMode>(mRotation),
                           libyuv::FOURCC_NV21);
@@ -731,7 +800,7 @@ MediaEngineGonkVideoSource::RotateImage(layers::Image* aImage, uint32_t aWidth, 
                           dstPtr + (dstWidth * dstHeight), half_width,
                           dstPtr + (dstWidth * dstHeight * 5 / 4), half_width,
                           0, 0,
-                          aWidth, aHeight,
+                          graphicBuffer->getStride(), aHeight,
                           aWidth, aHeight,
                           static_cast<libyuv::RotationMode>(mRotation),
                           ConvertPixelFormatToFOURCC(graphicBuffer->getPixelFormat()));

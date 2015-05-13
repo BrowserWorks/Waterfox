@@ -14,47 +14,42 @@ function spawnTest () {
 
   // Perform the first recording...
 
-  yield front.startRecording();
-  let profilingStartTime = front._profilingStartTime;
-  info("Started profiling at: " + profilingStartTime);
+  let firstRecording = yield front.startRecording();
+  let firstRecordingStartTime = firstRecording._profilerStartTime;
+  info("Started profiling at: " + firstRecordingStartTime);
 
   busyWait(WAIT_TIME); // allow the profiler module to sample some cpu activity
 
-  let firstRecordingData = yield front.stopRecording();
-  let firstRecordingFinishTime = firstRecordingData.profilerData.currentTime;
+  yield front.stopRecording(firstRecording);
 
-  is(profilingStartTime, 0,
+  is(firstRecordingStartTime, 0,
     "The profiling start time should be 0 for the first recording.");
-  ok(firstRecordingData.recordingDuration >= WAIT_TIME,
+  ok(firstRecording.getDuration() >= WAIT_TIME,
     "The first recording duration is correct.");
-  ok(firstRecordingFinishTime >= WAIT_TIME,
-    "The first recording finish time is correct.");
 
   // Perform the second recording...
 
-  yield front.startRecording();
-  profilingStartTime = front._profilingStartTime;
-  info("Started profiling at: " + profilingStartTime);
+  let secondRecording = yield front.startRecording();
+  let secondRecordingStartTime = secondRecording._profilerStartTime;
+  info("Started profiling at: " + secondRecordingStartTime);
 
   busyWait(WAIT_TIME); // allow the profiler module to sample more cpu activity
 
-  let secondRecordingData = yield front.stopRecording();
-  let secondRecordingFinishTime = secondRecordingData.profilerData.currentTime;
-  let secondRecordingProfile = secondRecordingData.profilerData.profile;
-  let secondRecordingSamples = secondRecordingProfile.threads[0].samples;
+  yield front.stopRecording(secondRecording);
+  let secondRecordingProfile = secondRecording.getProfile();
+  let secondRecordingSamples = secondRecordingProfile.threads[0].samples.data;
 
-  isnot(profilingStartTime, 0,
+  isnot(secondRecording._profilerStartTime, 0,
     "The profiling start time should not be 0 on the second recording.");
-  ok(secondRecordingData.recordingDuration >= WAIT_TIME,
+  ok(secondRecording.getDuration() >= WAIT_TIME,
     "The second recording duration is correct.");
-  ok(secondRecordingFinishTime - firstRecordingFinishTime >= WAIT_TIME,
-    "The second recording finish time is correct.");
 
-  ok(secondRecordingSamples[0].time < profilingStartTime,
+  const TIME_SLOT = secondRecordingProfile.threads[0].samples.schema.time;
+  ok(secondRecordingSamples[0][TIME_SLOT] < secondRecordingStartTime,
     "The second recorded sample times were normalized.");
-  ok(secondRecordingSamples[0].time > 0,
+  ok(secondRecordingSamples[0][TIME_SLOT] > 0,
     "The second recorded sample times were normalized correctly.");
-  ok(!secondRecordingSamples.find(e => e.time + profilingStartTime <= firstRecordingFinishTime),
+  ok(!secondRecordingSamples.find(e => e[TIME_SLOT] + secondRecordingStartTime <= firstRecording.getDuration()),
     "There should be no samples from the first recording in the second one, " +
     "even though the total number of frames did not overflow.");
 

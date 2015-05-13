@@ -7,7 +7,8 @@
    there are overrides for each platform in their devedition.css files. */
 
 :root {
-  --space-above-tabbar: 1px;
+  --tab-toolbar-navbar-overlap: 0px;
+  --space-above-tabbar: 0px;
   --toolbarbutton-text-shadow: none;
   --panel-ui-button-background-size: 1px calc(100% - 1px);
   --panel-ui-button-background-position: 1px 0px;
@@ -22,6 +23,7 @@
   --chrome-nav-bar-separator-color: rgba(0,0,0,.2);
   --chrome-nav-buttons-background: #252C33;
   --chrome-nav-buttons-hover-background: #1B2127;
+  --chrome-nav-bar-controls-border-color: #1D2328;
   --chrome-selection-color: #fff;
   --chrome-selection-background-color: #074D75;
 
@@ -32,9 +34,9 @@
   --tab-separator-color: #474C50;
   --tab-selection-color: #f5f7fa;
   --tab-selection-background-color: #1a4666;
-  --tab-selection-box-shadow: 0 2px 0 #d7f1ff inset,
-                                     0 8px 3px -5px #2b82bf inset,
-                                     0 -1px 0 rgba(0,0,0,.2) inset;
+  --tab-selection-box-shadow: 0 2px 0 #D7F1FF inset,
+                              0 -2px 0 rgba(0,0,0,.05) inset,
+                              0 -1px 0 rgba(0,0,0,.3) inset;
   --pinned-tab-glow: radial-gradient(22px at center calc(100% - 2px), rgba(76,158,217,0.9) 13%, rgba(0,0,0,0.4) 16%, transparent 70%);
 
   /* Toolbar buttons */
@@ -79,11 +81,12 @@
 
   --chrome-background-color: #E3E4E6;
   --chrome-color: #18191a;
-  --chrome-secondary-background-color: #f0f1f2;
+  --chrome-secondary-background-color: #f5f6f7;
   --chrome-navigator-toolbox-separator-color: #cccccc;
   --chrome-nav-bar-separator-color: #B6B6B8;
-  --chrome-nav-buttons-background: #f0f1f2;
+  --chrome-nav-buttons-background: #fcfcfc;
   --chrome-nav-buttons-hover-background: #DADBDB;
+  --chrome-nav-bar-controls-border-color: #ccc;
   --chrome-selection-color: #f5f7fa;
   --chrome-selection-background-color: #4c9ed9;
 
@@ -92,20 +95,20 @@
   --tab-separator-color: #C6C6C7;
   --tab-selection-color: #f5f7fa;
   --tab-selection-background-color: #4c9ed9;
-  --tab-selection-box-shadow: 0 2px 0 #d7f1ff inset,
-                              0 8px 3px -5px #319BDB inset,
-                              0 -1px 0 #2A7CB1 inset;
+  --tab-selection-box-shadow: 0 2px 0 #9FDFFF inset,
+                              0 -2px 0 rgba(0,0,0,.05) inset,
+                              0 -1px 0 rgba(0,0,0,.2) inset;
   --pinned-tab-glow: radial-gradient(22px at center calc(100% - 2px), rgba(76,158,217,0.9) 13%, transparent 16%);
 
 
   /* Toolbar buttons */
-  --toolbarbutton-hover-background: #D7D7D8;
+  --toolbarbutton-hover-background: #eaeaea;
   --toolbarbutton-hover-boxshadow: none;
   --toolbarbutton-hover-bordercolor: rgba(0,0,0,0.1);
-  --toolbarbutton-active-background: rgba(76,158,217,.5) linear-gradient(rgba(76,158,217,.5), rgba(76,158,217,.5)) border-box
+  --toolbarbutton-active-background: #d7d7d8 border-box;
   --toolbarbutton-active-boxshadow: none;
-  --toolbarbutton-active-bordercolor: rgba(0,0,0,0.3);
-  --toolbarbutton-checkedhover-backgroundcolor: rgba(0,0,0,0.2);
+  --toolbarbutton-active-bordercolor: rgba(0,0,0,0.15);
+  --toolbarbutton-checkedhover-backgroundcolor: #d7d7d8;
   --toolbarbutton-combined-boxshadow: none;
   --toolbarbutton-combined-backgroundimage: linear-gradient(rgba(0,0,0,0.1) 0, rgba(0,0,0,0.1) 18px);
 
@@ -140,23 +143,24 @@
   -moz-padding-start: 0;
 }
 
-.tab-background-start[selected=true]::after,
-.tab-background-start[selected=true]::before,
+.tab-background-start[visuallyselected=true]::after,
+.tab-background-start[visuallyselected=true]::before,
 .tab-background-start,
 .tab-background-end,
-.tab-background-end[selected=true]::after,
-.tab-background-end[selected=true]::before {
+.tab-background-end[visuallyselected=true]::after,
+.tab-background-end[visuallyselected=true]::before {
   width: 0;
 }
 
-.tab-background-start[selected=true]::after,
-.tab-background-end[selected=true]::after {
+.tab-background-start[visuallyselected=true]::after,
+.tab-background-end[visuallyselected=true]::after {
   -moz-margin-start: 0;
 }
 /* End override @tabCurveHalfWidth@ and @tabCurveWidth@ */
 
 #urlbar ::-moz-selection,
-#navigator-toolbox .searchbar-textbox ::-moz-selection {
+#navigator-toolbox .searchbar-textbox ::-moz-selection,
+.browserContainer > findbar ::-moz-selection {
   background-color: var(--chrome-selection-background-color);
   color: var(--chrome-selection-color);
 }
@@ -177,8 +181,23 @@
 #navigator-toolbox > toolbar:not(#TabsToolbar):not(#toolbar-menubar),
 .browserContainer > findbar,
 #browser-bottombox {
-  background: var(--chrome-secondary-background-color) !important;
+  background-color: var(--chrome-secondary-background-color) !important;
   color: var(--chrome-color);
+}
+
+.browserContainer > findbar {
+  background-image: none;
+}
+
+.browserContainer > .findbar-textbox {
+  background-color: var(--url-and-searchbar-background-color) !important;
+  color: var(--url-and-searchbar-color);
+}
+
+/* Default findbar text color doesn't look good - Bug 1125677 */
+.browserContainer > findbar .findbar-find-status,
+.browserContainer > findbar .found-matches {
+  color: inherit;
 }
 
 #navigator-toolbox .toolbarbutton-1,
@@ -200,15 +219,18 @@ toolbar[brighttext] #downloads-indicator-counter {
 }
 
 /* URL bar and search bar*/
-/* XXX :root[devtoolstheme="dark"] is a workaround for bug 1096413 on the findbar. */
 #urlbar,
-#navigator-toolbox .searchbar-textbox,
-:root[devtoolstheme="dark"] .browserContainer > findbar .findbar-textbox {
+#navigator-toolbox .searchbar-textbox {
   background-color: var(--url-and-searchbar-background-color) !important;
   background-image: none !important;
-  color: var(--url-and-searchbar-color);
-  border: none !important;
+  color: var(--url-and-searchbar-color) !important;
+  border: 1px solid var(--chrome-nav-bar-controls-border-color) !important;
   box-shadow: none !important;
+}
+
+#urlbar {
+  -moz-border-start: none !important;
+  opacity: 1 !important;
 }
 
 window:not([chromehidden~="toolbar"]) #urlbar-wrapper {
@@ -227,9 +249,10 @@ window:not([chromehidden~="toolbar"]) #urlbar-wrapper {
 /* Nav bar specific stuff */
 #nav-bar {
   margin-top: 0 !important;
-  border: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
   border-radius: 0 !important;
-  box-shadow: 0 1px var(--chrome-nav-bar-separator-color) inset !important;
+  box-shadow: 0 -1px var(--chrome-nav-bar-separator-color) !important;
   background-image: none !important;
 }
 
@@ -238,11 +261,6 @@ window:not([chromehidden~="toolbar"]) #urlbar-wrapper {
 #nav-bar {
   padding-top: 0;
   padding-bottom: 0;
-}
-
-/* No extra border when customizing since the nav bar doesn't have one */
-#main-window[customize-entered] #customization-container {
-  border: none;
 }
 
 /* Use smaller back button icon */
@@ -260,13 +278,23 @@ searchbar:not([oneoffui]) .search-go-button {
   visibility: hidden;
 }
 
+/* Make the tab splitter 1px wide with a solid background. */
 #tabbrowser-tabs[movingtab] > .tabbrowser-tab[beforeselected]:not([last-visible-tab])::after,
-.tabbrowser-tab:not([selected]):not([afterselected-visible]):not([afterhovered]):not([first-visible-tab]):not(:hover)::before,
-#tabbrowser-tabs:not([overflow]) > .tabbrowser-tab[last-visible-tab]:not([selected]):not([beforehovered]):not(:hover)::after {
-  background-image: linear-gradient(to top, var(--tab-separator-color), var(--tab-separator-color));
-  background-position: 1px 0;
-  background-repeat: no-repeat;
-  background-size: 1px 100%;
+.tabbrowser-tab:not([visuallyselected]):not([afterselected-visible]):not([afterhovered]):not([first-visible-tab]):not(:hover)::before,
+#tabbrowser-tabs:not([overflow]) > .tabbrowser-tab[last-visible-tab]:not([visuallyselected]):not([beforehovered]):not(:hover)::after {
+  background: var(--tab-separator-color);
+  width: 1px;
+  -moz-margin-start: 0;
+  -moz-margin-end: -1px;
+}
+
+/* For the last tab separator, use margin-start of -1px to prevent jittering
+   due to the ::after element causing the width of the tab to extend, which
+   causes an overflow and makes it disappear, which removes the overflow and
+   causes it to reappear, etc, etc. */
+#tabbrowser-tabs:not([overflow]) > .tabbrowser-tab[last-visible-tab]:not([visuallyselected]):not([beforehovered]):not(:hover)::after {
+  -moz-margin-start: -1px;
+  -moz-margin-end: 0;
 }
 
 .tabbrowser-arrowscrollbox > .scrollbutton-down,
@@ -284,11 +312,9 @@ searchbar:not([oneoffui]) .search-go-button {
   /* We normally rely on other tab elements for pointer events, but this
      theme hides those so we need it set here instead */
   pointer-events: auto;
-  background-color: var(--tab-background-color);
 }
 
-.tabbrowser-tab[pinned][titlechanged]:not([selected="true"]) > .tab-stack > .tab-content {
-  /* The -2px in `calc` is the height of `tabToolbarNavbarOverlap` plus a 1px offset from the center */
+.tabbrowser-tab[pinned][titlechanged]:not([visuallyselected="true"]) > .tab-stack > .tab-content {
   background-image: var(--pinned-tab-glow);
   background-position: center;
   background-size: 100%;
@@ -300,7 +326,7 @@ searchbar:not([oneoffui]) .search-go-button {
   background-color: var(--tab-hover-background-color);
 }
 
-.tabbrowser-tab[selected] {
+.tabbrowser-tab[visuallyselected] {
   color: var(--tab-selection-color) !important; /* Override color: inherit */
   background-color: var(--tab-selection-background-color);
   box-shadow: var(--tab-selection-box-shadow);
@@ -311,14 +337,6 @@ searchbar:not([oneoffui]) .search-go-button {
   width: 36px;
 }
 
-/* Override @tabToolbarNavbarOverlap@ */
-#TabsToolbar .toolbarbutton-1,
-.tabbrowser-arrowscrollbox > .scrollbutton-up,
-.tabbrowser-arrowscrollbox > .scrollbutton-down {
-  margin-bottom: 0;
-}
-
-#TabsToolbar > #new-tab-button:hover,
 .tabs-newtab-button:hover {
   /* Important needed because !important is used in browser.css */
   background-color: var(--tab-hover-background-color) !important;

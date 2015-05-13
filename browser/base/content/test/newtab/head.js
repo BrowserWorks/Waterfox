@@ -10,11 +10,12 @@ let tmp = {};
 Cu.import("resource://gre/modules/Promise.jsm", tmp);
 Cu.import("resource://gre/modules/NewTabUtils.jsm", tmp);
 Cu.import("resource:///modules/DirectoryLinksProvider.jsm", tmp);
+Cu.import("resource://testing-common/PlacesTestUtils.jsm", tmp);
 Cc["@mozilla.org/moz/jssubscript-loader;1"]
   .getService(Ci.mozIJSSubScriptLoader)
   .loadSubScript("chrome://browser/content/sanitize.js", tmp);
 Cu.import("resource://gre/modules/Timer.jsm", tmp);
-let {Promise, NewTabUtils, Sanitizer, clearTimeout, setTimeout, DirectoryLinksProvider} = tmp;
+let {Promise, NewTabUtils, Sanitizer, clearTimeout, setTimeout, DirectoryLinksProvider, PlacesTestUtils} = tmp;
 
 let uri = Services.io.newURI("about:newtab", null, null);
 let principal = Services.scriptSecurityManager.getNoAppCodebasePrincipal(uri);
@@ -50,25 +51,28 @@ Object.keys(requiredSize).forEach(prop => {
     gBrowser.contentWindow[prop] = requiredSize[prop];
   }
 });
-let (screenHeight = {}, screenWidth = {}) {
-  Cc["@mozilla.org/gfx/screenmanager;1"].
-    getService(Ci.nsIScreenManager).
-    primaryScreen.
-    GetAvailRectDisplayPix({}, {}, screenWidth, screenHeight);
-  screenHeight = screenHeight.value;
-  screenWidth = screenWidth.value;
-  if (screenHeight < gBrowser.contentWindow.outerHeight) {
-    info("Warning: Browser outer height is now " +
-         gBrowser.contentWindow.outerHeight + ", which is larger than the " +
-         "available screen height, " + screenHeight +
-         ". That may cause problems.");
-  }
-  if (screenWidth < gBrowser.contentWindow.outerWidth) {
-    info("Warning: Browser outer width is now " +
-         gBrowser.contentWindow.outerWidth + ", which is larger than the " +
-         "available screen width, " + screenWidth +
-         ". That may cause problems.");
-  }
+
+let screenHeight = {};
+let screenWidth = {};
+Cc["@mozilla.org/gfx/screenmanager;1"].
+  getService(Ci.nsIScreenManager).
+  primaryScreen.
+  GetAvailRectDisplayPix({}, {}, screenWidth, screenHeight);
+screenHeight = screenHeight.value;
+screenWidth = screenWidth.value;
+
+if (screenHeight < gBrowser.contentWindow.outerHeight) {
+  info("Warning: Browser outer height is now " +
+       gBrowser.contentWindow.outerHeight + ", which is larger than the " +
+       "available screen height, " + screenHeight +
+       ". That may cause problems.");
+}
+
+if (screenWidth < gBrowser.contentWindow.outerWidth) {
+  info("Warning: Browser outer width is now " +
+       gBrowser.contentWindow.outerWidth + ", which is larger than the " +
+       "available screen width, " + screenWidth +
+       ". That may cause problems.");
 }
 
 registerCleanupFunction(function () {
@@ -154,7 +158,7 @@ let TestRunner = {
    */
   finish: function () {
     function cleanupAndFinish() {
-      clearHistory(function () {
+      PlacesTestUtils.clearHistory().then(() => {
         whenPagesUpdated(finish);
         NewTabUtils.restore();
       });
@@ -229,7 +233,7 @@ function setLinks(aLinks, aCallback = TestRunner.next) {
   // given entries and call populateCache() now again to make sure the cache
   // has the desired contents.
   NewTabUtils.links.populateCache(function () {
-    clearHistory(function () {
+    PlacesTestUtils.clearHistory().then(() => {
       fillHistory(links, function () {
         NewTabUtils.links.populateCache(function () {
           NewTabUtils.allPages.update();
@@ -238,15 +242,6 @@ function setLinks(aLinks, aCallback = TestRunner.next) {
       });
     });
   });
-}
-
-function clearHistory(aCallback) {
-  Services.obs.addObserver(function observe(aSubject, aTopic, aData) {
-    Services.obs.removeObserver(observe, aTopic);
-    executeSoon(aCallback);
-  }, PlacesUtils.TOPIC_EXPIRATION_FINISHED, false);
-
-  PlacesUtils.history.removeAllPages();
 }
 
 function fillHistory(aLinks, aCallback = TestRunner.next) {
@@ -301,7 +296,8 @@ function setPinnedLinks(aLinks) {
     links = aLinks.split(/\s*,\s*/).map(function (id) {
       if (id)
         return {url: "http://example" + (id != "-1" ? id : "") + ".com/",
-                title: "site#" + id};
+                title: "site#" + id,
+                type: "history"};
     });
   }
 
@@ -499,33 +495,78 @@ function simulateExternalDrop(aDestIndex) {
  * @param aCallback The function that is called when we're done.
  */
 function startAndCompleteDragOperation(aSource, aDest, aCallback) {
-  // Start by pressing the left mouse button.
-  synthesizeNativeMouseLDown(aSource);
+  // The implementation of this function varies by platform because each
+  // platform has particular quirks that we need to deal with
 
-  // Move the mouse in 5px steps until the drag operation starts.
-  let offset = 0;
-  let interval = setInterval(() => {
-    synthesizeNativeMouseDrag(aSource, offset += 5);
-  }, 10);
+  if (isMac) {
+    // On OS X once the drag starts, Cocoa manages the drag session and
+    // gives us a limited amount of time to complete the drag operation. In
+    // some cases as soon as the first mouse-move event is received (the one
+    // that starts the drag session), Cocoa becomes blind to subsequent mouse
+    // events and completes the drag session all by itself. Therefore it is
+    // important that the first mouse-move we send is already positioned at
+    // the destination.
+    synthesizeNativeMouseLDown(aSource);
+    synthesizeNativeMouseDrag(aDest);
+    // In some tests, aSource and aDest are at the same position, so to ensure
+    // a drag session is created (instead of it just turning into a click) we
+    // move the mouse 10 pixels away and then back.
+    synthesizeNativeMouseDrag(aDest, 10);
+    synthesizeNativeMouseDrag(aDest);
+    // Finally, release the drag and have it run the callback when done.
+    synthesizeNativeMouseLUp(aDest).then(aCallback, Cu.reportError);
+  } else if (isWindows) {
+    // on Windows once the drag is initiated, Windows doesn't spin our
+    // message loop at all, so with async event synthesization the async
+    // messages never get processed while a drag is in progress. So if
+    // we did a mousedown followed by a mousemove, we would never be able
+    // to successfully dispatch the mouseup. Instead, we just skip the move
+    // entirely, so and just generate the up at the destination. This way
+    // Windows does the drag and also terminates it right away. Note that
+    // this only works for tests where aSource and aDest are sufficiently
+    // far to trigger a drag, otherwise it may just end up doing a click.
+    synthesizeNativeMouseLDown(aSource);
+    synthesizeNativeMouseLUp(aDest).then(aCallback, Cu.reportError);
+  } else if (isLinux) {
+    // Start by pressing the left mouse button.
+    synthesizeNativeMouseLDown(aSource);
 
-  // When the drag operation has started we'll move
-  // the dragged element to its target position.
-  aSource.addEventListener("dragstart", function onDragStart() {
-    aSource.removeEventListener("dragstart", onDragStart);
-    clearInterval(interval);
+    // Move the mouse in 5px steps until the drag operation starts.
+    // Note that we need to do this with pauses in between otherwise the
+    // synthesized events get coalesced somewhere in the guts of GTK. In order
+    // to successfully initiate a drag session in the case where aSource and
+    // aDest are at the same position, we synthesize a bunch of drags until
+    // we know the drag session has started, and then move to the destination.
+    let offset = 0;
+    let interval = setInterval(() => {
+      synthesizeNativeMouseDrag(aSource, offset += 5);
+    }, 10);
 
-    // Place the cursor above the drag target.
-    synthesizeNativeMouseMove(aDest);
-  });
+    // When the drag operation has started we'll move
+    // the dragged element to its target position.
+    aSource.addEventListener("dragstart", function onDragStart() {
+      aSource.removeEventListener("dragstart", onDragStart);
+      clearInterval(interval);
 
-  // As soon as the dragged element hovers the target, we'll drop it.
-  aDest.addEventListener("dragenter", function onDragEnter() {
-    aDest.removeEventListener("dragenter", onDragEnter);
+      // Place the cursor above the drag target.
+      synthesizeNativeMouseMove(aDest);
+    });
 
-    // Finish the drop operation.
-    synthesizeNativeMouseLUp(aDest);
-    aCallback();
-  });
+    // As soon as the dragged element hovers the target, we'll drop it.
+    // Note that we need to actually wait for the dragenter event here, because
+    // the mousemove synthesization is "more async" than the mouseup
+    // synthesization - they use different gdk APIs. If we don't wait, the
+    // up could get processed before the moves, dropping the item in the
+    // wrong position.
+    aDest.addEventListener("dragenter", function onDragEnter() {
+      aDest.removeEventListener("dragenter", onDragEnter);
+
+      // Finish the drop operation.
+      synthesizeNativeMouseLUp(aDest).then(aCallback, Cu.reportError);
+    });
+  } else {
+    throw "Unsupported platform";
+  }
 }
 
 /**
@@ -577,7 +618,7 @@ function synthesizeNativeMouseLDown(aElement) {
  */
 function synthesizeNativeMouseLUp(aElement) {
   let msg = isWindows ? 4 : (isMac ? 2 : 7);
-  synthesizeNativeMouseEvent(aElement, msg);
+  return synthesizeNativeMouseEvent(aElement, msg);
 }
 
 /**
@@ -606,16 +647,25 @@ function synthesizeNativeMouseMove(aElement) {
  * @param aOffsetY The top offset that is added to the position (optional).
  */
 function synthesizeNativeMouseEvent(aElement, aMsg, aOffsetX = 0, aOffsetY = 0) {
-  let rect = aElement.getBoundingClientRect();
-  let win = aElement.ownerDocument.defaultView;
-  let x = aOffsetX + win.mozInnerScreenX + rect.left + rect.width / 2;
-  let y = aOffsetY + win.mozInnerScreenY + rect.top + rect.height / 2;
+  return new Promise((resolve, reject) => {
+    let rect = aElement.getBoundingClientRect();
+    let win = aElement.ownerDocument.defaultView;
+    let x = aOffsetX + win.mozInnerScreenX + rect.left + rect.width / 2;
+    let y = aOffsetY + win.mozInnerScreenY + rect.top + rect.height / 2;
 
-  let utils = win.QueryInterface(Ci.nsIInterfaceRequestor)
-                 .getInterface(Ci.nsIDOMWindowUtils);
+    let utils = win.QueryInterface(Ci.nsIInterfaceRequestor)
+                   .getInterface(Ci.nsIDOMWindowUtils);
 
-  let scale = utils.screenPixelsPerCSSPixel;
-  utils.sendNativeMouseEvent(x * scale, y * scale, aMsg, 0, null);
+    let scale = utils.screenPixelsPerCSSPixel;
+    let observer = {
+      observe: function(aSubject, aTopic, aData) {
+        if (aTopic == "mouseevent") {
+          resolve();
+        }
+      }
+    };
+    utils.sendNativeMouseEvent(x * scale, y * scale, aMsg, 0, null, observer);
+  });
 }
 
 /**
@@ -683,4 +733,35 @@ function whenSearchInitDone() {
     }
   });
   return deferred.promise;
+}
+
+/**
+ * Changes the newtab customization option and waits for the panel to open and close
+ *
+ * @param {string} aTheme
+ *        Can be any of("blank"|"classic"|"enhanced")
+ */
+function customizeNewTabPage(aTheme) {
+  let document = getContentDocument();
+  let panel = document.getElementById("newtab-customize-panel");
+  let customizeButton = document.getElementById("newtab-customize-button");
+
+  // Attache onShown the listener on panel
+  panel.addEventListener("popupshown", function onShown() {
+    panel.removeEventListener("popupshown", onShown);
+
+    // Get the element for the specific option and click on it,
+    // then trigger an escape to close the panel
+    document.getElementById("newtab-customize-" + aTheme).click();
+    executeSoon(() => { panel.hidePopup(); });
+  });
+
+  // Attache the listener for panel closing, this will resolve the promise
+  panel.addEventListener("popuphidden", function onHidden() {
+    panel.removeEventListener("popuphidden", onHidden);
+    executeSoon(TestRunner.next);
+  });
+
+  // Click on the customize button to display the panel
+  customizeButton.click();
 }

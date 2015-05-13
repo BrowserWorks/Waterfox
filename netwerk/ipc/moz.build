@@ -32,6 +32,7 @@ UNIFIED_SOURCES += [
 IPDL_SOURCES = [
     'NeckoChannelParams.ipdlh',
     'PChannelDiverter.ipdl',
+    'PDataChannel.ipdl',
     'PNecko.ipdl',
     'PRemoteOpenFile.ipdl',
     'PRtspChannel.ipdl',
@@ -45,8 +46,8 @@ include('/ipc/chromium/chromium-config.mozbuild')
 FINAL_LIBRARY = 'xul'
 
 LOCAL_INCLUDES += [
-    '../base/src',
-    '../protocol/http',
     '/caps',
     '/modules/libjar',
+    '/netwerk/base',
+    '/netwerk/protocol/http',
 ]

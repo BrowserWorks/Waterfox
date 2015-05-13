@@ -1,9 +1,12 @@
 /* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
+"use strict";
 
-const TESTCASE_URI_HTML = TEST_BASE + "simple.html";
-const TESTCASE_URI_CSS = TEST_BASE + "simple.css";
+// Test that 'Save' function works.
+
+const TESTCASE_URI_HTML = TEST_BASE_HTTP + "simple.html";
+const TESTCASE_URI_CSS = TEST_BASE_HTTP + "simple.css";
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
@@ -14,50 +17,49 @@ Components.utils.import("resource://gre/modules/NetUtil.jsm", tempScope);
 let FileUtils = tempScope.FileUtils;
 let NetUtil = tempScope.NetUtil;
 
-function test()
-{
-  waitForExplicitFinish();
+add_task(function* () {
+  let htmlFile = yield copy(TESTCASE_URI_HTML, "simple.html");
+  let cssFile = yield copy(TESTCASE_URI_CSS, "simple.css");
+  let uri = Services.io.newFileURI(htmlFile);
+  let filePath = uri.resolve("");
 
-  copy(TESTCASE_URI_HTML, "simple.html", function(htmlFile) {
-    copy(TESTCASE_URI_CSS, "simple.css", function(cssFile) {
-      addTabAndOpenStyleEditors(1, function(panel) {
-        let UI = panel.UI;
-        let editor = UI.editors[0];
-        editor.getSourceEditor().then(runTests.bind(this, editor));
-      });
+  let { ui } = yield openStyleEditorForURL(filePath);
 
-      let uri = Services.io.newFileURI(htmlFile);
-      let filePath = uri.resolve("");
-      content.location = filePath;
-    });
-  });
-}
+  let editor = ui.editors[0];
+  yield editor.getSourceEditor();
 
-function runTests(editor)
-{
-  editor.sourceEditor.once("dirty-change", () => {
-    is(editor.sourceEditor.isClean(), false, "Editor is dirty.");
-    ok(editor.summary.classList.contains("unsaved"),
-       "Star icon is present in the corresponding summary.");
-  });
+  info("Editing the style sheet.");
+  let dirty = editor.sourceEditor.once("dirty-change");
   let beginCursor = {line: 0, ch: 0};
   editor.sourceEditor.replaceText("DIRTY TEXT", beginCursor, beginCursor);
 
-  editor.sourceEditor.once("dirty-change", () => {
-    is(editor.sourceEditor.isClean(), true, "Editor is clean.");
-    ok(!editor.summary.classList.contains("unsaved"),
-       "Star icon is not present in the corresponding summary.");
-    finish();
-  });
+  yield dirty;
+
+  is(editor.sourceEditor.isClean(), false, "Editor is dirty.");
+  ok(editor.summary.classList.contains("unsaved"),
+     "Star icon is present in the corresponding summary.");
+
+  info("Saving the changes.");
+  dirty = editor.sourceEditor.once("dirty-change");
+
   editor.saveToFile(null, function (file) {
     ok(file, "file should get saved directly when using a file:// URI");
   });
-}
 
-function copy(aSrcChromeURL, aDestFileName, aCallback)
+  yield dirty;
+
+  is(editor.sourceEditor.isClean(), true, "Editor is clean.");
+  ok(!editor.summary.classList.contains("unsaved"),
+     "Star icon is not present in the corresponding summary.");
+});
+
+function copy(aSrcChromeURL, aDestFileName)
 {
+  let deferred = promise.defer();
   let destFile = FileUtils.getFile("ProfD", [aDestFileName]);
-  write(read(aSrcChromeURL), destFile, aCallback);
+  write(read(aSrcChromeURL), destFile, deferred.resolve);
+
+  return deferred.promise;
 }
 
 function read(aSrcChromeURL)
@@ -65,7 +67,14 @@ function read(aSrcChromeURL)
   let scriptableStream = Cc["@mozilla.org/scriptableinputstream;1"]
     .getService(Ci.nsIScriptableInputStream);
 
-  let channel = Services.io.newChannel(aSrcChromeURL, null, null);
+  let channel = Services.io.newChannel2(aSrcChromeURL,
+                                        null,
+                                        null,
+                                        null,      // aLoadingNode
+                                        Services.scriptSecurityManager.getSystemPrincipal(),
+                                        null,      // aTriggeringPrincipal
+                                        Ci.nsILoadInfo.SEC_NORMAL,
+                                        Ci.nsIContentPolicy.TYPE_OTHER);
   let input = channel.open();
   scriptableStream.init(input);
 

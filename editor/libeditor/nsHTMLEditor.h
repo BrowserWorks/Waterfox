@@ -7,7 +7,6 @@
 #define nsHTMLEditor_h__
 
 #include "nsCOMPtr.h"
-#include "nsCOMArray.h"
 #include "nsPlaintextEditor.h"
 #include "nsIEditor.h"
 #include "nsIHTMLEditor.h"
@@ -41,13 +40,12 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/dom/Element.h"
 
+class nsDocumentFragment;
 class nsIDOMKeyEvent;
 class nsITransferable;
-class nsIDocumentEncoder;
 class nsIClipboard;
 class TypeInState;
 class nsIContentFilter;
-class nsIURL;
 class nsILinkHandler;
 class nsTableOuterFrame;
 class nsIDOMRange;
@@ -55,6 +53,9 @@ class nsRange;
 struct PropItem;
 
 namespace mozilla {
+namespace dom {
+template<class T> class OwningNonNull;
+}
 namespace widget {
 struct IMEState;
 } // namespace widget
@@ -64,15 +65,15 @@ struct IMEState;
  * The HTML editor implementation.<br>
  * Use to edit HTML document represented as a DOM tree. 
  */
-class nsHTMLEditor MOZ_FINAL : public nsPlaintextEditor,
-                               public nsIHTMLEditor,
-                               public nsIHTMLObjectResizer,
-                               public nsIHTMLAbsPosEditor,
-                               public nsITableEditor,
-                               public nsIHTMLInlineTableEditor,
-                               public nsIEditorStyleSheets,
-                               public nsICSSLoaderObserver,
-                               public nsStubMutationObserver
+class nsHTMLEditor final : public nsPlaintextEditor,
+                           public nsIHTMLEditor,
+                           public nsIHTMLObjectResizer,
+                           public nsIHTMLAbsPosEditor,
+                           public nsITableEditor,
+                           public nsIHTMLInlineTableEditor,
+                           public nsIEditorStyleSheets,
+                           public nsICSSLoaderObserver,
+                           public nsStubMutationObserver
 {
   typedef enum {eNoOp, eReplaceParent=1, eInsertParent=2} BlockTransformationType;
 
@@ -100,18 +101,18 @@ public:
   bool GetReturnInParagraphCreatesNewParagraph();
 
   /* ------------ nsPlaintextEditor overrides -------------- */
-  NS_IMETHOD GetIsDocumentEditable(bool *aIsDocumentEditable) MOZ_OVERRIDE;
-  NS_IMETHOD BeginningOfDocument() MOZ_OVERRIDE;
-  virtual nsresult HandleKeyPressEvent(nsIDOMKeyEvent* aKeyEvent) MOZ_OVERRIDE;
-  virtual already_AddRefed<nsIContent> GetFocusedContent() MOZ_OVERRIDE;
-  virtual already_AddRefed<nsIContent> GetFocusedContentForIME() MOZ_OVERRIDE;
-  virtual bool IsActiveInDOMWindow() MOZ_OVERRIDE;
-  virtual already_AddRefed<mozilla::dom::EventTarget> GetDOMEventTarget() MOZ_OVERRIDE;
-  virtual mozilla::dom::Element* GetEditorRoot() MOZ_OVERRIDE;
-  virtual already_AddRefed<nsIContent> FindSelectionRoot(nsINode *aNode) MOZ_OVERRIDE;
-  virtual bool IsAcceptableInputEvent(nsIDOMEvent* aEvent) MOZ_OVERRIDE;
-  virtual already_AddRefed<nsIContent> GetInputEventTargetContent() MOZ_OVERRIDE;
-  virtual bool IsEditable(nsINode* aNode) MOZ_OVERRIDE;
+  NS_IMETHOD GetIsDocumentEditable(bool *aIsDocumentEditable) override;
+  NS_IMETHOD BeginningOfDocument() override;
+  virtual nsresult HandleKeyPressEvent(nsIDOMKeyEvent* aKeyEvent) override;
+  virtual already_AddRefed<nsIContent> GetFocusedContent() override;
+  virtual already_AddRefed<nsIContent> GetFocusedContentForIME() override;
+  virtual bool IsActiveInDOMWindow() override;
+  virtual already_AddRefed<mozilla::dom::EventTarget> GetDOMEventTarget() override;
+  virtual mozilla::dom::Element* GetEditorRoot() override;
+  virtual already_AddRefed<nsIContent> FindSelectionRoot(nsINode *aNode) override;
+  virtual bool IsAcceptableInputEvent(nsIDOMEvent* aEvent) override;
+  virtual already_AddRefed<nsIContent> GetInputEventTargetContent() override;
+  virtual bool IsEditable(nsINode* aNode) override;
   using nsEditor::IsEditable;
 
   /* ------------ nsStubMutationObserver overrides --------- */
@@ -120,7 +121,7 @@ public:
   NS_DECL_NSIMUTATIONOBSERVER_CONTENTREMOVED
 
   /* ------------ nsIEditorIMESupport overrides ------------ */
-  NS_IMETHOD GetPreferredIMEState(mozilla::widget::IMEState *aState) MOZ_OVERRIDE;
+  NS_IMETHOD GetPreferredIMEState(mozilla::widget::IMEState *aState) override;
 
   /* ------------ nsIHTMLEditor methods -------------- */
 
@@ -150,15 +151,15 @@ public:
 
   /* ------------ nsIEditorStyleSheets methods -------------- */
 
-  NS_IMETHOD AddStyleSheet(const nsAString & aURL) MOZ_OVERRIDE;
-  NS_IMETHOD ReplaceStyleSheet(const nsAString& aURL) MOZ_OVERRIDE;
-  NS_IMETHOD RemoveStyleSheet(const nsAString &aURL) MOZ_OVERRIDE;
+  NS_IMETHOD AddStyleSheet(const nsAString & aURL) override;
+  NS_IMETHOD ReplaceStyleSheet(const nsAString& aURL) override;
+  NS_IMETHOD RemoveStyleSheet(const nsAString &aURL) override;
 
-  NS_IMETHOD AddOverrideStyleSheet(const nsAString & aURL) MOZ_OVERRIDE;
-  NS_IMETHOD ReplaceOverrideStyleSheet(const nsAString& aURL) MOZ_OVERRIDE;
-  NS_IMETHOD RemoveOverrideStyleSheet(const nsAString &aURL) MOZ_OVERRIDE;
+  NS_IMETHOD AddOverrideStyleSheet(const nsAString & aURL) override;
+  NS_IMETHOD ReplaceOverrideStyleSheet(const nsAString& aURL) override;
+  NS_IMETHOD RemoveOverrideStyleSheet(const nsAString &aURL) override;
 
-  NS_IMETHOD EnableStyleSheet(const nsAString& aURL, bool aEnable) MOZ_OVERRIDE;
+  NS_IMETHOD EnableStyleSheet(const nsAString& aURL, bool aEnable) override;
 
   /* ------------ nsIEditorMailSupport methods -------------- */
 
@@ -166,46 +167,46 @@ public:
 
   /* ------------ nsITableEditor methods -------------- */
 
-  NS_IMETHOD InsertTableCell(int32_t aNumber, bool aAfter) MOZ_OVERRIDE;
-  NS_IMETHOD InsertTableColumn(int32_t aNumber, bool aAfter) MOZ_OVERRIDE;
-  NS_IMETHOD InsertTableRow(int32_t aNumber, bool aAfter) MOZ_OVERRIDE;
-  NS_IMETHOD DeleteTable() MOZ_OVERRIDE;
-  NS_IMETHOD DeleteTableCell(int32_t aNumber) MOZ_OVERRIDE;
-  NS_IMETHOD DeleteTableCellContents() MOZ_OVERRIDE;
-  NS_IMETHOD DeleteTableColumn(int32_t aNumber) MOZ_OVERRIDE;
-  NS_IMETHOD DeleteTableRow(int32_t aNumber) MOZ_OVERRIDE;
-  NS_IMETHOD SelectTableCell() MOZ_OVERRIDE;
-  NS_IMETHOD SelectBlockOfCells(nsIDOMElement *aStartCell, nsIDOMElement *aEndCell) MOZ_OVERRIDE;
-  NS_IMETHOD SelectTableRow() MOZ_OVERRIDE;
-  NS_IMETHOD SelectTableColumn() MOZ_OVERRIDE;
-  NS_IMETHOD SelectTable() MOZ_OVERRIDE;
-  NS_IMETHOD SelectAllTableCells() MOZ_OVERRIDE;
-  NS_IMETHOD SwitchTableCellHeaderType(nsIDOMElement *aSourceCell, nsIDOMElement **aNewCell) MOZ_OVERRIDE;
-  NS_IMETHOD JoinTableCells(bool aMergeNonContiguousContents) MOZ_OVERRIDE;
-  NS_IMETHOD SplitTableCell() MOZ_OVERRIDE;
-  NS_IMETHOD NormalizeTable(nsIDOMElement *aTable) MOZ_OVERRIDE;
+  NS_IMETHOD InsertTableCell(int32_t aNumber, bool aAfter) override;
+  NS_IMETHOD InsertTableColumn(int32_t aNumber, bool aAfter) override;
+  NS_IMETHOD InsertTableRow(int32_t aNumber, bool aAfter) override;
+  NS_IMETHOD DeleteTable() override;
+  NS_IMETHOD DeleteTableCell(int32_t aNumber) override;
+  NS_IMETHOD DeleteTableCellContents() override;
+  NS_IMETHOD DeleteTableColumn(int32_t aNumber) override;
+  NS_IMETHOD DeleteTableRow(int32_t aNumber) override;
+  NS_IMETHOD SelectTableCell() override;
+  NS_IMETHOD SelectBlockOfCells(nsIDOMElement *aStartCell, nsIDOMElement *aEndCell) override;
+  NS_IMETHOD SelectTableRow() override;
+  NS_IMETHOD SelectTableColumn() override;
+  NS_IMETHOD SelectTable() override;
+  NS_IMETHOD SelectAllTableCells() override;
+  NS_IMETHOD SwitchTableCellHeaderType(nsIDOMElement *aSourceCell, nsIDOMElement **aNewCell) override;
+  NS_IMETHOD JoinTableCells(bool aMergeNonContiguousContents) override;
+  NS_IMETHOD SplitTableCell() override;
+  NS_IMETHOD NormalizeTable(nsIDOMElement *aTable) override;
   NS_IMETHOD GetCellIndexes(nsIDOMElement *aCell,
-                            int32_t* aRowIndex, int32_t* aColIndex) MOZ_OVERRIDE;
+                            int32_t* aRowIndex, int32_t* aColIndex) override;
   NS_IMETHOD GetTableSize(nsIDOMElement *aTable,
-                          int32_t* aRowCount, int32_t* aColCount) MOZ_OVERRIDE;
-  NS_IMETHOD GetCellAt(nsIDOMElement* aTable, int32_t aRowIndex, int32_t aColIndex, nsIDOMElement **aCell) MOZ_OVERRIDE;
+                          int32_t* aRowCount, int32_t* aColCount) override;
+  NS_IMETHOD GetCellAt(nsIDOMElement* aTable, int32_t aRowIndex, int32_t aColIndex, nsIDOMElement **aCell) override;
   NS_IMETHOD GetCellDataAt(nsIDOMElement* aTable,
                            int32_t aRowIndex, int32_t aColIndex,
                            nsIDOMElement **aCell,
                            int32_t* aStartRowIndex, int32_t* aStartColIndex,
                            int32_t* aRowSpan, int32_t* aColSpan, 
                            int32_t* aActualRowSpan, int32_t* aActualColSpan, 
-                           bool* aIsSelected) MOZ_OVERRIDE;
-  NS_IMETHOD GetFirstRow(nsIDOMElement* aTableElement, nsIDOMNode** aRowNode) MOZ_OVERRIDE;
-  NS_IMETHOD GetNextRow(nsIDOMNode* aCurrentRowNode, nsIDOMNode** aRowNode) MOZ_OVERRIDE;
+                           bool* aIsSelected) override;
+  NS_IMETHOD GetFirstRow(nsIDOMElement* aTableElement, nsIDOMNode** aRowNode) override;
+  NS_IMETHOD GetNextRow(nsIDOMNode* aCurrentRowNode, nsIDOMNode** aRowNode) override;
   nsresult GetLastCellInRow(nsIDOMNode* aRowNode, nsIDOMNode** aCellNode);
 
   NS_IMETHOD SetSelectionAfterTableEdit(nsIDOMElement* aTable, int32_t aRow, int32_t aCol, 
-                                        int32_t aDirection, bool aSelected) MOZ_OVERRIDE;
+                                        int32_t aDirection, bool aSelected) override;
   NS_IMETHOD GetSelectedOrParentTableElement(nsAString& aTagName,
                                              int32_t *aSelectedCount,
-                                             nsIDOMElement** aTableElement) MOZ_OVERRIDE;
-  NS_IMETHOD GetSelectedCellsType(nsIDOMElement *aElement, uint32_t *aSelectionType) MOZ_OVERRIDE;
+                                             nsIDOMElement** aTableElement) override;
+  NS_IMETHOD GetSelectedCellsType(nsIDOMElement *aElement, uint32_t *aSelectionType) override;
 
   nsresult GetCellFromRange(nsRange* aRange, nsIDOMElement** aCell);
 
@@ -214,13 +215,13 @@ public:
   // (i.e., each cell added to selection is added in another range 
   //  in the selection's rangelist, independent of location in table)
   // aRange is optional: returns the range around the cell
-  NS_IMETHOD GetFirstSelectedCell(nsIDOMRange **aRange, nsIDOMElement **aCell) MOZ_OVERRIDE;
+  NS_IMETHOD GetFirstSelectedCell(nsIDOMRange **aRange, nsIDOMElement **aCell) override;
   // Get next cell until no more are found. Always use GetFirstSelected cell first
   // aRange is optional: returns the range around the cell
-  NS_IMETHOD GetNextSelectedCell(nsIDOMRange **aRange, nsIDOMElement **aCell) MOZ_OVERRIDE;
+  NS_IMETHOD GetNextSelectedCell(nsIDOMRange **aRange, nsIDOMElement **aCell) override;
 
   // Upper-left-most selected cell in table
-  NS_IMETHOD GetFirstSelectedCellInTable(int32_t *aRowIndex, int32_t *aColIndex, nsIDOMElement **aCell) MOZ_OVERRIDE;
+  NS_IMETHOD GetFirstSelectedCellInTable(int32_t *aRowIndex, int32_t *aColIndex, nsIDOMElement **aCell) override;
     
   /* miscellaneous */
   // This sets background on the appropriate container element (table, cell,)
@@ -247,94 +248,94 @@ public:
 
   /* ------------ Overrides of nsEditor interface methods -------------- */
 
-  nsresult EndUpdateViewBatch() MOZ_OVERRIDE;
+  nsresult EndUpdateViewBatch() override;
 
   /** prepare the editor for use */
   NS_IMETHOD Init(nsIDOMDocument *aDoc, nsIContent *aRoot,
                   nsISelectionController *aSelCon, uint32_t aFlags,
-                  const nsAString& aValue) MOZ_OVERRIDE;
-  NS_IMETHOD PreDestroy(bool aDestroyingFrames) MOZ_OVERRIDE;
+                  const nsAString& aValue) override;
+  NS_IMETHOD PreDestroy(bool aDestroyingFrames) override;
 
   /** Internal, static version */
   // aElement must not be null.
-  static bool NodeIsBlockStatic(const mozilla::dom::Element* aElement);
+  static bool NodeIsBlockStatic(const nsINode* aElement);
   static nsresult NodeIsBlockStatic(nsIDOMNode *aNode, bool *aIsBlock);
 protected:
   virtual ~nsHTMLEditor();
 
   using nsEditor::IsBlockNode;
-  virtual bool IsBlockNode(nsINode *aNode) MOZ_OVERRIDE;
+  virtual bool IsBlockNode(nsINode *aNode) override;
 
 public:
-  NS_IMETHOD SetFlags(uint32_t aFlags) MOZ_OVERRIDE;
+  NS_IMETHOD SetFlags(uint32_t aFlags) override;
 
-  NS_IMETHOD Paste(int32_t aSelectionType) MOZ_OVERRIDE;
-  NS_IMETHOD CanPaste(int32_t aSelectionType, bool *aCanPaste) MOZ_OVERRIDE;
+  NS_IMETHOD Paste(int32_t aSelectionType) override;
+  NS_IMETHOD CanPaste(int32_t aSelectionType, bool *aCanPaste) override;
 
-  NS_IMETHOD PasteTransferable(nsITransferable *aTransferable) MOZ_OVERRIDE;
-  NS_IMETHOD CanPasteTransferable(nsITransferable *aTransferable, bool *aCanPaste) MOZ_OVERRIDE;
+  NS_IMETHOD PasteTransferable(nsITransferable *aTransferable) override;
+  NS_IMETHOD CanPasteTransferable(nsITransferable *aTransferable, bool *aCanPaste) override;
 
-  NS_IMETHOD DebugUnitTests(int32_t *outNumTests, int32_t *outNumTestsFailed) MOZ_OVERRIDE;
+  NS_IMETHOD DebugUnitTests(int32_t *outNumTests, int32_t *outNumTestsFailed) override;
 
   /** All editor operations which alter the doc should be prefaced
    *  with a call to StartOperation, naming the action and direction */
   NS_IMETHOD StartOperation(EditAction opID,
-                            nsIEditor::EDirection aDirection) MOZ_OVERRIDE;
+                            nsIEditor::EDirection aDirection) override;
 
   /** All editor operations which alter the doc should be followed
    *  with a call to EndOperation */
-  NS_IMETHOD EndOperation() MOZ_OVERRIDE;
+  NS_IMETHOD EndOperation() override;
 
   /** returns true if aParentTag can contain a child of type aChildTag */
   virtual bool TagCanContainTag(nsIAtom& aParentTag, nsIAtom& aChildTag)
-    MOZ_OVERRIDE;
+    override;
   
   /** returns true if aNode is a container */
-  virtual bool IsContainer(nsINode* aNode) MOZ_OVERRIDE;
-  virtual bool IsContainer(nsIDOMNode* aNode) MOZ_OVERRIDE;
+  virtual bool IsContainer(nsINode* aNode) override;
+  virtual bool IsContainer(nsIDOMNode* aNode) override;
 
   /** make the given selection span the entire document */
-  virtual nsresult SelectEntireDocument(mozilla::dom::Selection* aSelection) MOZ_OVERRIDE;
+  virtual nsresult SelectEntireDocument(mozilla::dom::Selection* aSelection) override;
 
   NS_IMETHOD SetAttributeOrEquivalent(nsIDOMElement * aElement,
                                       const nsAString & aAttribute,
                                       const nsAString & aValue,
-                                      bool aSuppressTransaction) MOZ_OVERRIDE;
+                                      bool aSuppressTransaction) override;
   NS_IMETHOD RemoveAttributeOrEquivalent(nsIDOMElement * aElement,
                                          const nsAString & aAttribute,
-                                         bool aSuppressTransaction) MOZ_OVERRIDE;
+                                         bool aSuppressTransaction) override;
 
   /** join together any adjacent editable text nodes in the range */
   nsresult CollapseAdjacentTextNodes(nsRange* aRange);
 
   virtual bool AreNodesSameType(nsIContent* aNode1, nsIContent* aNode2)
-    MOZ_OVERRIDE;
+    override;
 
   NS_IMETHOD DeleteSelectionImpl(EDirection aAction,
-                                 EStripWrappers aStripWrappers) MOZ_OVERRIDE;
+                                 EStripWrappers aStripWrappers) override;
   nsresult DeleteNode(nsINode* aNode);
-  NS_IMETHOD DeleteNode(nsIDOMNode * aNode) MOZ_OVERRIDE;
+  NS_IMETHOD DeleteNode(nsIDOMNode * aNode) override;
   nsresult DeleteText(nsGenericDOMDataNode& aTextNode, uint32_t aOffset,
                       uint32_t aLength);
   virtual nsresult InsertTextImpl(const nsAString& aStringToInsert,
                                   nsCOMPtr<nsINode>* aInOutNode,
                                   int32_t* aInOutOffset,
-                                  nsIDocument* aDoc) MOZ_OVERRIDE;
-  NS_IMETHOD_(bool) IsModifiableNode(nsIDOMNode *aNode) MOZ_OVERRIDE;
-  virtual bool IsModifiableNode(nsINode *aNode) MOZ_OVERRIDE;
+                                  nsIDocument* aDoc) override;
+  NS_IMETHOD_(bool) IsModifiableNode(nsIDOMNode *aNode) override;
+  virtual bool IsModifiableNode(nsINode *aNode) override;
 
-  NS_IMETHOD GetIsSelectionEditable(bool* aIsSelectionEditable) MOZ_OVERRIDE;
+  NS_IMETHOD GetIsSelectionEditable(bool* aIsSelectionEditable) override;
 
-  NS_IMETHOD SelectAll() MOZ_OVERRIDE;
+  NS_IMETHOD SelectAll() override;
 
-  NS_IMETHOD GetRootElement(nsIDOMElement **aRootElement) MOZ_OVERRIDE;
+  NS_IMETHOD GetRootElement(nsIDOMElement **aRootElement) override;
 
   /* ------------ nsICSSLoaderObserver -------------- */
   NS_IMETHOD StyleSheetLoaded(mozilla::CSSStyleSheet* aSheet,
-                              bool aWasAlternate, nsresult aStatus) MOZ_OVERRIDE;
+                              bool aWasAlternate, nsresult aStatus) override;
 
   /* ------------ Utility Routines, not part of public API -------------- */
-  NS_IMETHOD TypedText(const nsAString& aString, ETypingAction aAction) MOZ_OVERRIDE;
+  NS_IMETHOD TypedText(const nsAString& aString, ETypingAction aAction) override;
   nsresult InsertNodeAtPoint( nsIDOMNode *aNode, 
                               nsCOMPtr<nsIDOMNode> *ioParent, 
                               int32_t *ioOffset, 
@@ -376,9 +377,9 @@ public:
 
   // Dealing with the internal style sheet lists:
   NS_IMETHOD GetStyleSheetForURL(const nsAString &aURL,
-                                 mozilla::CSSStyleSheet** _retval) MOZ_OVERRIDE;
+                                 mozilla::CSSStyleSheet** _retval) override;
   NS_IMETHOD GetURLForStyleSheet(mozilla::CSSStyleSheet* aStyleSheet,
-                                 nsAString& aURL) MOZ_OVERRIDE;
+                                 nsAString& aURL) override;
 
   // Add a url + known style sheet to the internal lists:
   nsresult AddNewStyleSheetToList(const nsAString &aURL,
@@ -402,13 +403,13 @@ public:
 
 protected:
 
-  NS_IMETHOD  InitRules() MOZ_OVERRIDE;
+  NS_IMETHOD  InitRules() override;
 
   // Create the event listeners for the editor to install
-  virtual void CreateEventListeners() MOZ_OVERRIDE;
+  virtual void CreateEventListeners() override;
 
-  virtual nsresult InstallEventListeners() MOZ_OVERRIDE;
-  virtual void RemoveEventListeners() MOZ_OVERRIDE;
+  virtual nsresult InstallEventListeners() override;
+  virtual void RemoveEventListeners() override;
 
   bool ShouldReplaceRootElement();
   void ResetRootElementAndEventTarget();
@@ -426,7 +427,7 @@ protected:
   already_AddRefed<mozilla::dom::Element> CreateBR(nsINode* aNode,
       int32_t aOffset, EDirection aSelect = eNone);
   NS_IMETHOD CreateBR(nsIDOMNode *aNode, int32_t aOffset, 
-                      nsCOMPtr<nsIDOMNode> *outBRNode, nsIEditor::EDirection aSelect = nsIEditor::eNone) MOZ_OVERRIDE;
+                      nsCOMPtr<nsIDOMNode> *outBRNode, nsIEditor::EDirection aSelect = nsIEditor::eNone) override;
 
 // Table Editing (implemented in nsTableEditor.cpp)
 
@@ -513,7 +514,7 @@ protected:
     *
     * The nsIContent variant returns aIsSet instead of using an out parameter.
     */
-  bool IsTextPropertySetByContent(nsIContent*      aContent,
+  bool IsTextPropertySetByContent(nsINode*         aNode,
                                   nsIAtom*         aProperty,
                                   const nsAString* aAttribute,
                                   const nsAString* aValue,
@@ -549,7 +550,7 @@ protected:
                         bool aDoDeleteSelection);
 
   // factored methods for handling insertion of data from transferables (drag&drop or clipboard)
-  NS_IMETHOD PrepareTransferable(nsITransferable **transferable) MOZ_OVERRIDE;
+  NS_IMETHOD PrepareTransferable(nsITransferable **transferable) override;
   nsresult PrepareHTMLTransferable(nsITransferable **transferable, bool havePrivFlavor);
   nsresult InsertFromTransferable(nsITransferable *transferable, 
                                     nsIDOMDocument *aSourceDoc,
@@ -563,7 +564,7 @@ protected:
                                   nsIDOMDocument *aSourceDoc,
                                   nsIDOMNode *aDestinationNode,
                                   int32_t aDestOffset,
-                                  bool aDoDeleteSelection) MOZ_OVERRIDE;
+                                  bool aDoDeleteSelection) override;
   bool HavePrivateHTMLFlavor( nsIClipboard *clipboard );
   nsresult   ParseCFHTML(nsCString & aCfhtml, char16_t **aStuffToPaste, char16_t **aCfcontext);
   nsresult   DoContentFilterCallback(const nsAString &aFlavor,
@@ -593,29 +594,27 @@ protected:
                            nsIDocument* aTargetDoc,
                            nsCOMPtr<nsIDOMNode> *outNode,
                            bool aTrustedInput);
-  nsresult   CreateListOfNodesToPaste(nsIDOMNode  *aFragmentAsNode,
-                                      nsCOMArray<nsIDOMNode>& outNodeList,
-                                      nsIDOMNode *aStartNode,
+  void       CreateListOfNodesToPaste(mozilla::dom::DocumentFragment& aFragment,
+                                      nsTArray<mozilla::dom::OwningNonNull<nsINode>>& outNodeList,
+                                      nsINode* aStartNode,
                                       int32_t aStartOffset,
-                                      nsIDOMNode *aEndNode,
+                                      nsINode* aEndNode,
                                       int32_t aEndOffset);
   nsresult CreateTagStack(nsTArray<nsString> &aTagStack,
                           nsIDOMNode *aNode);
-  nsresult GetListAndTableParents( bool aEnd, 
-                                   nsCOMArray<nsIDOMNode>& aListOfNodes,
-                                   nsCOMArray<nsIDOMNode>& outArray);
-  nsresult DiscoverPartialListsAndTables(nsCOMArray<nsIDOMNode>& aPasteNodes,
-                                         nsCOMArray<nsIDOMNode>& aListsAndTables,
-                                         int32_t *outHighWaterMark);
-  nsresult ScanForListAndTableStructure(bool aEnd,
-                                        nsCOMArray<nsIDOMNode>& aNodes,
-                                        nsIDOMNode *aListOrTable,
-                                        nsCOMPtr<nsIDOMNode> *outReplaceNode);
-  nsresult ReplaceOrphanedStructure( bool aEnd,
-                                     nsCOMArray<nsIDOMNode>& aNodeArray,
-                                     nsCOMArray<nsIDOMNode>& aListAndTableArray,
-                                     int32_t aHighWaterMark);
-  nsIDOMNode* GetArrayEndpoint(bool aEnd, nsCOMArray<nsIDOMNode>& aNodeArray);
+  enum class StartOrEnd { start, end };
+  void GetListAndTableParents(StartOrEnd aStartOrEnd,
+                              nsTArray<mozilla::dom::OwningNonNull<nsINode>>& aNodeList,
+                              nsTArray<mozilla::dom::OwningNonNull<mozilla::dom::Element>>& outArray);
+  int32_t DiscoverPartialListsAndTables(nsTArray<mozilla::dom::OwningNonNull<nsINode>>& aPasteNodes,
+                                        nsTArray<mozilla::dom::OwningNonNull<mozilla::dom::Element>>& aListsAndTables);
+  nsINode* ScanForListAndTableStructure(StartOrEnd aStartOrEnd,
+                                        nsTArray<mozilla::dom::OwningNonNull<nsINode>>& aNodes,
+                                        mozilla::dom::Element& aListOrTable);
+  void ReplaceOrphanedStructure(StartOrEnd aStartOrEnd,
+                                nsTArray<mozilla::dom::OwningNonNull<nsINode>>& aNodeArray,
+                                nsTArray<mozilla::dom::OwningNonNull<mozilla::dom::Element>>& aListAndTableArray,
+                                int32_t aHighWaterMark);
 
   /* small utility routine to test if a break node is visible to user */
   bool     IsVisBreak(nsINode* aNode);
@@ -635,7 +634,8 @@ protected:
   nsresult InsertBasicBlock(const nsAString & aBlockType);
   
   /* increase/decrease the font size of selection */
-  nsresult RelativeFontChange( int32_t aSizeChange);
+  enum class FontSize { incr, decr };
+  nsresult RelativeFontChange(FontSize aDir);
   
   /* helper routines for font size changing */
   nsresult RelativeFontChangeOnTextNode( int32_t aSizeChange, 
@@ -646,20 +646,16 @@ protected:
   nsresult RelativeFontChangeHelper(int32_t aSizeChange, nsINode* aNode);
 
   /* helper routines for inline style */
-  nsresult SetInlinePropertyOnTextNode( nsIDOMCharacterData *aTextNode, 
-                                        int32_t aStartOffset,
-                                        int32_t aEndOffset,
-                                        nsIAtom *aProperty, 
-                                        const nsAString *aAttribute,
-                                        const nsAString *aValue);
-  nsresult SetInlinePropertyOnNode( nsIDOMNode *aNode,
-                                    nsIAtom *aProperty, 
-                                    const nsAString *aAttribute,
-                                    const nsAString *aValue);
-  nsresult SetInlinePropertyOnNode(nsIContent* aNode,
-                                   nsIAtom* aProperty,
+  nsresult SetInlinePropertyOnTextNode(mozilla::dom::Text& aData,
+                                       int32_t aStartOffset,
+                                       int32_t aEndOffset,
+                                       nsIAtom& aProperty,
+                                       const nsAString* aAttribute,
+                                       const nsAString& aValue);
+  nsresult SetInlinePropertyOnNode(nsIContent& aNode,
+                                   nsIAtom& aProperty,
                                    const nsAString* aAttribute,
-                                   const nsAString* aValue);
+                                   const nsAString& aValue);
 
   nsresult PromoteInlineRange(nsRange* aRange);
   nsresult PromoteRangeIfStartsOrEndsInNamedAnchor(nsRange* aRange);
@@ -677,7 +673,8 @@ protected:
                              nsIAtom *aProperty, 
                              const nsAString *aAttribute, 
                              const bool aChildrenOnly = false);
-  nsresult RemoveInlinePropertyImpl(nsIAtom *aProperty, const nsAString *aAttribute);
+  nsresult RemoveInlinePropertyImpl(nsIAtom* aProperty,
+                                    const nsAString* aAttribute);
 
   bool NodeIsProperty(nsIDOMNode *aNode);
   bool HasAttr(nsIDOMNode *aNode, const nsAString *aAttribute);
@@ -718,14 +715,14 @@ protected:
   nsIContent* GetFirstEditableLeaf(nsINode& aNode);
   nsIContent* GetLastEditableLeaf(nsINode& aNode);
 
-  nsresult GetInlinePropertyBase(nsIAtom *aProperty, 
-                             const nsAString *aAttribute,
-                             const nsAString *aValue,
-                             bool *aFirst, 
-                             bool *aAny, 
-                             bool *aAll,
-                             nsAString *outValue,
-                             bool aCheckDefaults = true);
+  nsresult GetInlinePropertyBase(nsIAtom& aProperty,
+                                 const nsAString* aAttribute,
+                                 const nsAString* aValue,
+                                 bool* aFirst,
+                                 bool* aAny,
+                                 bool* aAll,
+                                 nsAString* outValue,
+                                 bool aCheckDefaults = true);
   bool HasStyleOrIdOrClass(mozilla::dom::Element* aElement);
   nsresult RemoveElementIfNoStyleOrIdOrClass(nsIDOMNode* aElement);
 
@@ -759,7 +756,7 @@ protected:
 // Data members
 protected:
 
-  nsCOMArray<nsIContentFilter> mContentFilters;
+  nsTArray<mozilla::dom::OwningNonNull<nsIContentFilter>> mContentFilters;
 
   nsRefPtr<TypeInState>        mTypeInState;
 
@@ -787,7 +784,7 @@ protected:
   void     RemoveListenerAndDeleteRef(const nsAString& aEvent,
                                       nsIDOMEventListener* aListener,
                                       bool aUseCapture,
-                                      nsIDOMElement* aElement,
+                                      mozilla::dom::Element* aElement,
                                       nsIContent* aParentContent,
                                       nsIPresShell* aShell);
   void     DeleteRefToAnonymousNode(nsIDOMElement* aElement,
@@ -829,27 +826,27 @@ protected:
 
   /* RESIZING */
 
-  nsCOMPtr<nsIDOMElement> mTopLeftHandle;
-  nsCOMPtr<nsIDOMElement> mTopHandle;
-  nsCOMPtr<nsIDOMElement> mTopRightHandle;
-  nsCOMPtr<nsIDOMElement> mLeftHandle;
-  nsCOMPtr<nsIDOMElement> mRightHandle;
-  nsCOMPtr<nsIDOMElement> mBottomLeftHandle;
-  nsCOMPtr<nsIDOMElement> mBottomHandle;
-  nsCOMPtr<nsIDOMElement> mBottomRightHandle;
+  nsCOMPtr<mozilla::dom::Element> mTopLeftHandle;
+  nsCOMPtr<mozilla::dom::Element> mTopHandle;
+  nsCOMPtr<mozilla::dom::Element> mTopRightHandle;
+  nsCOMPtr<mozilla::dom::Element> mLeftHandle;
+  nsCOMPtr<mozilla::dom::Element> mRightHandle;
+  nsCOMPtr<mozilla::dom::Element> mBottomLeftHandle;
+  nsCOMPtr<mozilla::dom::Element> mBottomHandle;
+  nsCOMPtr<mozilla::dom::Element> mBottomRightHandle;
 
-  nsCOMPtr<nsIDOMElement> mActivatedHandle;
+  nsCOMPtr<mozilla::dom::Element> mActivatedHandle;
 
-  nsCOMPtr<nsIDOMElement> mResizingShadow;
-  nsCOMPtr<nsIDOMElement> mResizingInfo;
+  nsCOMPtr<mozilla::dom::Element> mResizingShadow;
+  nsCOMPtr<mozilla::dom::Element> mResizingInfo;
 
-  nsCOMPtr<nsIDOMElement> mResizedObject;
+  nsCOMPtr<mozilla::dom::Element> mResizedObject;
 
   nsCOMPtr<nsIDOMEventListener>  mMouseMotionListenerP;
   nsCOMPtr<nsISelectionListener> mSelectionListenerP;
   nsCOMPtr<nsIDOMEventListener>  mResizeEventListenerP;
 
-  nsCOMArray<nsIHTMLObjectResizeListener> objectResizeEventListeners;
+  nsTArray<mozilla::dom::OwningNonNull<nsIHTMLObjectResizeListener>> mObjectResizeEventListeners;
 
   int32_t mOriginalX;
   int32_t mOriginalY;
@@ -874,17 +871,18 @@ protected:
 
   nsresult SetAllResizersPosition();
 
-  nsresult CreateResizer(nsIDOMElement ** aReturn, int16_t aLocation, nsIDOMNode * aParentNode);
+  already_AddRefed<mozilla::dom::Element>
+    CreateResizer(int16_t aLocation, nsIDOMNode* aParentNode);
   void     SetAnonymousElementPosition(int32_t aX, int32_t aY, nsIDOMElement *aResizer);
 
-  nsresult CreateShadow(nsIDOMElement ** aReturn, nsIDOMNode * aParentNode,
-                        nsIDOMElement * aOriginalObject);
-  nsresult SetShadowPosition(nsIDOMElement * aShadow,
-                             nsIDOMElement * aOriginalObject,
+  already_AddRefed<mozilla::dom::Element>
+    CreateShadow(nsIDOMNode* aParentNode, nsIDOMElement* aOriginalObject);
+  nsresult SetShadowPosition(mozilla::dom::Element* aShadow,
+                             mozilla::dom::Element* aOriginalObject,
                              int32_t aOriginalObjectX,
                              int32_t aOriginalObjectY);
 
-  nsresult CreateResizingInfo(nsIDOMElement ** aReturn, nsIDOMNode * aParentNode);
+  already_AddRefed<mozilla::dom::Element> CreateResizingInfo(nsIDOMNode* aParentNode);
   nsresult SetResizingInfoPosition(int32_t aX, int32_t aY,
                                    int32_t aW, int32_t aH);
 
@@ -912,13 +910,13 @@ protected:
   int32_t mPositionedObjectBorderLeft;
   int32_t mPositionedObjectBorderTop;
 
-  nsCOMPtr<nsIDOMElement> mAbsolutelyPositionedObject;
-  nsCOMPtr<nsIDOMElement> mGrabber;
-  nsCOMPtr<nsIDOMElement> mPositioningShadow;
+  nsCOMPtr<mozilla::dom::Element> mAbsolutelyPositionedObject;
+  nsCOMPtr<mozilla::dom::Element> mGrabber;
+  nsCOMPtr<mozilla::dom::Element> mPositioningShadow;
 
   int32_t      mGridSize;
 
-  nsresult CreateGrabber(nsIDOMNode * aParentNode, nsIDOMElement ** aReturn);
+  already_AddRefed<mozilla::dom::Element> CreateGrabber(nsINode* aParentNode);
   nsresult StartMoving(nsIDOMElement * aHandle);
   nsresult SetFinalPosition(int32_t aX, int32_t aY);
   void     AddPositioningOffset(int32_t & aX, int32_t & aY);
@@ -959,10 +957,10 @@ private:
                               nsIAtom* aProperty,
                               const nsAString* aAttribute,
                               const nsAString* aValue);
-  nsresult SetInlinePropertyOnNodeImpl(nsIContent* aNode,
-                                       nsIAtom* aProperty,
+  nsresult SetInlinePropertyOnNodeImpl(nsIContent& aNode,
+                                       nsIAtom& aProperty,
                                        const nsAString* aAttribute,
-                                       const nsAString* aValue);
+                                       const nsAString& aValue);
   typedef enum { eInserted, eAppended } InsertedOrAppended;
   void DoContentInserted(nsIDocument* aDocument, nsIContent* aContainer,
                          nsIContent* aChild, int32_t aIndexInContainer,

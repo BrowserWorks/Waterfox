@@ -15,8 +15,6 @@
 #include "nsCOMPtr.h"
 #include "nsString.h"
 
-class nsIAuthPromptProvider;
-
 namespace mozilla {
 namespace net {
 
@@ -28,7 +26,6 @@ class RtspControllerParent : public PRtspControllerParent
   NS_DECL_NSISTREAMINGPROTOCOLLISTENER
 
   RtspControllerParent();
-  ~RtspControllerParent();
 
   bool RecvAsyncOpen(const URIParams& aURI);
   bool RecvPlay();
@@ -38,6 +35,9 @@ class RtspControllerParent : public PRtspControllerParent
   bool RecvSeek(const uint64_t& offset);
   bool RecvStop();
   bool RecvPlaybackEnded();
+
+ protected:
+  ~RtspControllerParent();
 
  private:
   bool mIPCOpen;

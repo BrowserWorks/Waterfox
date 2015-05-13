@@ -9,8 +9,8 @@ class ProcessTestExecutor(TestExecutor):
     def __init__(self, *args, **kwargs):
         TestExecutor.__init__(self, *args, **kwargs)
         self.binary = self.browser.binary
-        self.debug_args = self.browser.debug_args
-        self.interactive = self.browser.interactive
+        self.interactive = (False if self.debug_info is None
+                            else self.debug_info.interactive)
 
     def setup(self, runner):
         self.runner = runner
@@ -20,5 +20,5 @@ class ProcessTestExecutor(TestExecutor):
     def is_alive(self):
         return True
 
-    def run_test(self, test):
+    def do_test(self, test):
         raise NotImplementedError

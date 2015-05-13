@@ -6,8 +6,9 @@
 #include "mp4_demuxer/Index.h"
 #include "mp4_demuxer/Interval.h"
 #include "mp4_demuxer/MoofParser.h"
-#include "media/stagefright/MediaSource.h"
-#include "MediaResource.h"
+#include "mp4_demuxer/SinfParser.h"
+#include "nsAutoPtr.h"
+#include "nsRefPtr.h"
 
 #include <algorithm>
 #include <limits>
@@ -83,49 +84,71 @@ SampleIterator::SampleIterator(Index* aIndex)
 {
 }
 
-MP4Sample* SampleIterator::GetNext()
+already_AddRefed<MediaRawData> SampleIterator::GetNext()
 {
   Sample* s(Get());
   if (!s) {
     return nullptr;
   }
 
-  nsAutoPtr<MP4Sample> sample(new MP4Sample());
-  sample->decode_timestamp = s->mDecodeTime;
-  sample->composition_timestamp = s->mCompositionRange.start;
-  sample->duration = s->mCompositionRange.Length();
-  sample->byte_offset = s->mByteRange.mStart;
-  sample->is_sync_point = s->mSync;
-  sample->size = s->mByteRange.Length();
+  nsRefPtr<MediaRawData> sample = new MediaRawData();
+  sample->mTimecode= s->mDecodeTime;
+  sample->mTime = s->mCompositionRange.start;
+  sample->mDuration = s->mCompositionRange.Length();
+  sample->mOffset = s->mByteRange.mStart;
+  sample->mKeyframe = s->mSync;
 
+  nsAutoPtr<MediaRawDataWriter> writer(sample->CreateWriter());
   // Do the blocking read
-  sample->data = sample->extra_buffer = new uint8_t[sample->size];
+  if (!writer->SetSize(s->mByteRange.Length())) {
+    return nullptr;
+  }
 
   size_t bytesRead;
-  if (!mIndex->mSource->ReadAt(sample->byte_offset, sample->data, sample->size,
-                               &bytesRead) || bytesRead != sample->size) {
+  if (!mIndex->mSource->ReadAt(sample->mOffset, writer->mData, sample->mSize,
+                               &bytesRead) || bytesRead != sample->mSize) {
     return nullptr;
   }
 
   if (!s->mCencRange.IsNull()) {
+    MoofParser* parser = mIndex->mMoofParser.get();
+
+    if (!parser || !parser->mSinf.IsValid()) {
+      return nullptr;
+    }
+
+    uint8_t ivSize = parser->mSinf.mDefaultIVSize;
+
     // The size comes from an 8 bit field
     nsAutoTArray<uint8_t, 256> cenc;
     cenc.SetLength(s->mCencRange.Length());
-    if (!mIndex->mSource->ReadAt(s->mCencRange.mStart, &cenc[0], cenc.Length(),
+    if (!mIndex->mSource->ReadAt(s->mCencRange.mStart, cenc.Elements(), cenc.Length(),
                                  &bytesRead) || bytesRead != cenc.Length()) {
       return nullptr;
     }
     ByteReader reader(cenc);
-    sample->crypto.valid = true;
-    reader.ReadArray(sample->crypto.iv, 16);
-    if (reader.Remaining()) {
+    writer->mCrypto.mValid = true;
+    writer->mCrypto.mIVSize = ivSize;
+
+    if (!reader.ReadArray(writer->mCrypto.mIV, ivSize)) {
+      return nullptr;
+    }
+
+    if (reader.CanRead16()) {
       uint16_t count = reader.ReadU16();
-      for (size_t i = 0; i < count; i++) {
-        sample->crypto.plain_sizes.AppendElement(reader.ReadU16());
-        sample->crypto.encrypted_sizes.AppendElement(reader.ReadU32());
+
+      if (reader.Remaining() < count * 6) {
+        return nullptr;
       }
-      reader.ReadArray(sample->crypto.iv, 16);
-      sample->crypto.iv_size = 16;
+
+      for (size_t i = 0; i < count; i++) {
+        writer->mCrypto.mPlainSizes.AppendElement(reader.ReadU16());
+        writer->mCrypto.mEncryptedSizes.AppendElement(reader.ReadU32());
+      }
+    } else {
+      // No subsample information means the entire sample is encrypted.
+      writer->mCrypto.mPlainSizes.AppendElement(0);
+      writer->mCrypto.mEncryptedSizes.AppendElement(sample->mSize);
     }
   }
 
@@ -137,7 +160,10 @@ MP4Sample* SampleIterator::GetNext()
 Sample* SampleIterator::Get()
 {
   if (!mIndex->mMoofParser) {
-    return nullptr;
+    MOZ_ASSERT(!mCurrentMoof);
+    return mCurrentSample < mIndex->mIndex.Length()
+      ? &mIndex->mIndex[mCurrentSample]
+      : nullptr;
   }
 
   nsTArray<Moof>& moofs = mIndex->mMoofParser->Moofs();
@@ -186,17 +212,33 @@ void SampleIterator::Seek(Microseconds aTime)
   mCurrentSample = syncSample;
 }
 
-Index::Index(const stagefright::Vector<MediaSource::Indice>& aIndex,
-             Stream* aSource, uint32_t aTrackId, Microseconds aTimestampOffset,
+Microseconds
+SampleIterator::GetNextKeyframeTime()
+{
+  SampleIterator itr(*this);
+  Sample* sample;
+  while (!!(sample = itr.Get())) {
+    if (sample->mSync) {
+      return sample->mCompositionRange.start;
+    }
+    itr.Next();
+  }
+  return -1;
+}
+
+Index::Index(const nsTArray<Indice>& aIndex,
+             Stream* aSource,
+             uint32_t aTrackId,
+             bool aIsAudio,
              Monitor* aMonitor)
   : mSource(aSource)
   , mMonitor(aMonitor)
 {
-  if (aIndex.isEmpty()) {
-    mMoofParser = new MoofParser(aSource, aTrackId, aTimestampOffset, aMonitor);
+  if (aIndex.IsEmpty()) {
+    mMoofParser = new MoofParser(aSource, aTrackId, aIsAudio, aMonitor);
   } else {
-    for (size_t i = 0; i < aIndex.size(); i++) {
-      const MediaSource::Indice& indice = aIndex[i];
+    for (size_t i = 0; i < aIndex.Length(); i++) {
+      const Indice& indice = aIndex[i];
       Sample sample;
       sample.mByteRange = MediaByteRange(indice.start_offset,
                                          indice.end_offset);

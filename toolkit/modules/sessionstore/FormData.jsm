@@ -9,7 +9,6 @@ this.EXPORTED_SYMBOLS = ["FormData"];
 const Cu = Components.utils;
 const Ci = Components.interfaces;
 
-Cu.import("resource://gre/modules/Timer.jsm");
 Cu.import("resource://gre/modules/XPathGenerator.jsm");
 
 /**
@@ -85,10 +84,6 @@ function isValidCCNumber(value) {
 this.FormData = Object.freeze({
   collect: function (frame) {
     return FormDataInternal.collect(frame);
-  },
-
-  restore: function (frame, data) {
-    FormDataInternal.restore(frame, data);
   },
 
   restoreTree: function (root, data) {
@@ -262,17 +257,10 @@ let FormDataInternal = {
     }
 
     if ("innerHTML" in data) {
-      // We know that the URL matches data.url right now, but the user
-      // may navigate away before the setTimeout handler runs. We do
-      // a simple comparison against savedURL to check for that.
-      let savedURL = doc.documentURI;
-
-      setTimeout(() => {
-        if (doc.body && doc.designMode == "on" && doc.documentURI == savedURL) {
-          doc.body.innerHTML = data.innerHTML;
-          this.fireEvent(doc.body, "input");
-        }
-      });
+      if (doc.body && doc.designMode == "on") {
+        doc.body.innerHTML = data.innerHTML;
+        this.fireEvent(doc.body, "input");
+      }
     }
   },
 
@@ -340,7 +328,12 @@ let FormDataInternal = {
       }
     } else if (aValue && aValue.fileList && aValue.type == "file" &&
       aNode.type == "file") {
-      aNode.mozSetFileNameArray(aValue.fileList, aValue.fileList.length);
+      try {
+        // FIXME (bug 1122855): This won't work in content processes.
+        aNode.mozSetFileNameArray(aValue.fileList, aValue.fileList.length);
+      } catch (e) {
+        Cu.reportError("mozSetFileNameArray: " + e);
+      }
       eventType = "input";
     } else if (Array.isArray(aValue) && aNode.options) {
       Array.forEach(aNode.options, function(opt, index) {

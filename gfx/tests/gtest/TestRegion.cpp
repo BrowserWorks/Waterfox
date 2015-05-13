@@ -143,7 +143,7 @@ TEST(Gfx, RegionScaleToInside) {
     nsRegion r(nsRect(0,44760,19096,264));
 
     nsIntRegion scaled = r.ScaleToInsidePixels(1, 1, 60);
-    nsIntRegion result(nsIntRect(0,746,318,4));
+    nsIntRegion result(mozilla::gfx::IntRect(0,746,318,4));
 
     EXPECT_TRUE(result.IsEqual(scaled)) <<
       "scaled result incorrect";
@@ -155,8 +155,8 @@ TEST(Gfx, RegionScaleToInside) {
     r.Or(r, nsRect(0,45024,19360,1056));
 
     nsIntRegion scaled = r.ScaleToInsidePixels(1, 1, 60);
-    nsIntRegion result(nsIntRect(0,746,318,5));
-    result.Or(result, nsIntRect(0,751,322,17));
+    nsIntRegion result(mozilla::gfx::IntRect(0,746,318,5));
+    result.Or(result, mozilla::gfx::IntRect(0,751,322,17));
 
     EXPECT_TRUE(result.IsEqual(scaled)) <<
       "scaled result incorrect";
@@ -167,8 +167,8 @@ TEST(Gfx, RegionScaleToInside) {
     r.Or(r, nsRect(0,45024,19096,1056));
 
     nsIntRegion scaled = r.ScaleToInsidePixels(1, 1, 60);
-    nsIntRegion result(nsIntRect(0,746,322,4));
-    result.Or(result, nsIntRect(0,750,318,18));
+    nsIntRegion result(mozilla::gfx::IntRect(0,746,322,4));
+    result.Or(result, mozilla::gfx::IntRect(0,750,318,18));
 
     EXPECT_TRUE(result.IsEqual(scaled)) <<
       "scaled result incorrect";
@@ -416,6 +416,7 @@ struct RegionBitmap {
 
 void VisitEdge(void *closure, VisitSide side, int x1, int y1, int x2, int y2)
 {
+  EXPECT_GE(x2, x1);
   RegionBitmap *visitor = static_cast<RegionBitmap*>(closure);
   unsigned char *bitmap = visitor->bitmap;
   const int width = visitor->width;
@@ -533,6 +534,29 @@ TEST(Gfx, RegionVisitEdges) {
     // vertically separated
     nsRegion r(nsRect(20, 20, 100, 100));
     r.Or(r, nsRect(120, 125, 100, 100));
+
+    TestVisit(r);
+  }
+
+  {
+    // two upper rects followed by a lower one
+    // on the same line
+    nsRegion r(nsRect(5, 5, 50, 50));
+    r.Or(r, nsRect(100, 5, 50, 50));
+    r.Or(r, nsRect(200, 50, 50, 50));
+
+    TestVisit(r);
+  }
+
+  {
+    // bug 1130978.
+    nsRegion r(nsRect(4, 1, 61, 49));
+    r.Or(r, nsRect(115, 1, 99, 49));
+    r.Or(r, nsRect(115, 49, 99, 1));
+    r.Or(r, nsRect(12, 50, 11, 5));
+    r.Or(r, nsRect(25, 50, 28, 5));
+    r.Or(r, nsRect(115, 50, 99, 5));
+    r.Or(r, nsRect(115, 55, 99, 12));
 
     TestVisit(r);
   }

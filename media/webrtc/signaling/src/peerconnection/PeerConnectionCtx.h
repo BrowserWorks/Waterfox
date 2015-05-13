@@ -7,6 +7,10 @@
 
 #include <string>
 
+#if !defined(MOZILLA_EXTERNAL_LINKAGE)
+#include "WebrtcGlobalChild.h"
+#endif
+
 #include "mozilla/Attributes.h"
 #include "StaticPtr.h"
 #include "PeerConnectionImpl.h"
@@ -39,7 +43,7 @@ class PeerConnectionCtx {
     return true;
   }
 
-  void queueJSEPOperation(nsRefPtr<nsIRunnable> aJSEPOperation);
+  void queueJSEPOperation(nsIRunnable* aJSEPOperation);
   void onGMPReady();
 
   bool gmpHasH264();
@@ -49,13 +53,14 @@ class PeerConnectionCtx {
   friend class PeerConnectionWrapper;
   friend class mozilla::dom::WebrtcGlobalInformation;
 
-#ifdef MOZILLA_INTERNAL_API
+#if !defined(MOZILLA_EXTERNAL_LINKAGE)
   // WebrtcGlobalInformation uses this; we put it here so we don't need to
   // create another shutdown observer class.
   mozilla::dom::Sequence<mozilla::dom::RTCStatsReportInternal>
     mStatsForClosedPeerConnections;
 #endif
 
+  const std::map<const std::string, PeerConnectionImpl *>& mGetPeerConnections();
  private:
   // We could make these available only via accessors but it's too much trouble.
   std::map<const std::string, PeerConnectionImpl *> mPeerConnections;
@@ -74,7 +79,7 @@ class PeerConnectionCtx {
   static void
   EverySecondTelemetryCallback_m(nsITimer* timer, void *);
 
-#ifdef MOZILLA_INTERNAL_API
+#if !defined(MOZILLA_EXTERNAL_LINKAGE)
   // Telemetry Peer conection counter
   int mConnectionCounter;
 
@@ -94,7 +99,7 @@ private:
   // ready to go, since blocking on this init is just begging for deadlock.
   nsCOMPtr<mozIGeckoMediaPluginService> mGMPService;
   bool mGMPReady;
-  nsTArray<nsRefPtr<nsIRunnable>> mQueuedJSEPOperations;
+  nsTArray<nsCOMPtr<nsIRunnable>> mQueuedJSEPOperations;
 
   static PeerConnectionCtx *gInstance;
 public:

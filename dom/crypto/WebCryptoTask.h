@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim:set ts=2 sw=2 sts=2 et cindent: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -198,11 +198,11 @@ protected:
 
   // Subclasses should override this method if they keep references to
   // any NSS objects, e.g., SECKEYPrivateKey or PK11SymKey.
-  virtual void ReleaseNSSResources() MOZ_OVERRIDE {}
+  virtual void ReleaseNSSResources() override {}
 
-  virtual nsresult CalculateResult() MOZ_OVERRIDE MOZ_FINAL;
+  virtual nsresult CalculateResult() override final;
 
-  virtual void CallCallback(nsresult rv) MOZ_OVERRIDE MOZ_FINAL;
+  virtual void CallCallback(nsresult rv) override final;
 };
 
 } // namespace dom

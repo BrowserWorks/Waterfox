@@ -24,6 +24,98 @@ const DevToolsUtils = devtools.require("devtools/toolkit/DevToolsUtils.js");
 const { DebuggerServer } = devtools.require("devtools/server/main");
 const { DebuggerServer: WorkerDebuggerServer } = worker.require("devtools/server/main");
 
+let loadSubScript = Cc[
+  '@mozilla.org/moz/jssubscript-loader;1'
+].getService(Ci.mozIJSSubScriptLoader).loadSubScript;
+
+function createTestGlobal(name) {
+  let sandbox = Cu.Sandbox(
+    Cc["@mozilla.org/systemprincipal;1"].createInstance(Ci.nsIPrincipal)
+  );
+  sandbox.__name = name;
+  return sandbox;
+}
+
+function connect(client) {
+  dump("Connecting client.\n");
+  return new Promise(function (resolve) {
+    client.connect(function () {
+      resolve();
+    });
+  });
+}
+
+function close(client) {
+  dump("Closing client.\n");
+  return new Promise(function (resolve) {
+    client.close(function () {
+      resolve();
+    });
+  });
+}
+
+function listTabs(client) {
+  dump("Listing tabs.\n");
+  return rdpRequest(client, client.listTabs);
+}
+
+function findTab(tabs, title) {
+  dump("Finding tab with title '" + title + "'.\n");
+  for (let tab of tabs) {
+    if (tab.title === title) {
+      return tab;
+    }
+  }
+  return null;
+}
+
+function attachTab(client, tab) {
+  dump("Attaching to tab with title '" + tab.title + "'.\n");
+  return rdpRequest(client, client.attachTab, tab.actor);
+}
+
+function waitForNewSource(client, url) {
+  dump("Waiting for new source with url '" + url + "'.\n");
+  return waitForEvent(client, "newSource", function (packet) {
+    return packet.source.url === url;
+  });
+}
+
+function attachThread(tabClient, options = {}) {
+  dump("Attaching to thread.\n");
+  return rdpRequest(tabClient, tabClient.attachThread, options);
+}
+
+function resume(threadClient) {
+  dump("Resuming thread.\n");
+  return rdpRequest(threadClient, threadClient.resume);
+}
+
+function getSources(threadClient) {
+  dump("Getting sources.\n");
+  return rdpRequest(threadClient, threadClient.getSources);
+}
+
+function findSource(sources, url) {
+  dump("Finding source with url '" + url + "'.\n");
+  for (let source of sources) {
+    if (source.url === url) {
+      return source;
+    }
+  }
+  return null;
+}
+
+function waitForPause(threadClient) {
+  dump("Waiting for pause.\n");
+  return waitForEvent(threadClient, "paused");
+}
+
+function setBreakpoint(sourceClient, location) {
+  dump("Setting breakpoint.\n");
+  return rdpRequest(sourceClient, sourceClient.setBreakpoint, location);
+}
+
 function dumpn(msg) {
   dump("DBG-TEST: " + msg + "\n");
 }
@@ -227,6 +319,24 @@ function finishClient(aClient)
   });
 }
 
+// Create a server, connect to it and fetch tab actors for the parent process;
+// pass |aCallback| the debugger client and tab actor form with all actor IDs.
+function get_chrome_actors(callback)
+{
+  if (!DebuggerServer.initialized) {
+    DebuggerServer.init();
+    DebuggerServer.addBrowserActors();
+  }
+  DebuggerServer.allowChromeProcess = true;
+
+  let client = new DebuggerClient(DebuggerServer.connectPipe());
+  client.connect(() => {
+    client.getProcess().then(response => {
+      callback(client, response.form);
+    });
+  });
+}
+
 /**
  * Takes a relative file path and returns the absolute file url for it.
  */
@@ -425,23 +535,27 @@ const assert = do_check_true;
  *
  * @param DebuggerClient client
  * @param String event
+ * @param Function predicate
  * @returns Promise
  */
-function waitForEvent(client, event) {
-  dumpn("Waiting for event: " + event);
-  return new Promise((resolve, reject) => {
-    client.addOneTimeListener(event, (_, packet) => resolve(packet));
-  });
-}
+function waitForEvent(client, type, predicate) {
+  return new Promise(function (resolve) {
+    function listener(type, packet) {
+      if (!predicate(packet)) {
+        return;
+      }
+      client.removeListener(listener);
+      resolve(packet);
+    }
 
-/**
- * Create a promise that is resolved on the next pause.
- *
- * @param DebuggerClient client
- * @returns Promise
- */
-function waitForPause(client) {
-  return waitForEvent(client, "paused");
+    if (predicate) {
+      client.addListener(type, listener);
+    } else {
+      client.addOneTimeListener(type, function (type, packet) {
+        resolve(packet);
+      });
+    }
+  });
 }
 
 /**
@@ -491,29 +605,6 @@ function rdpRequest(client, method, ...args) {
 }
 
 /**
- * Set a breakpoint over the Remote Debugging Protocol.
- *
- * @param SourceClient sourceClient
- * @param {url, line[, column[, condition]]} breakpointOptions
- * @returns Promise
- */
-function setBreakpoint(sourceClient, breakpointOptions) {
-  dumpn("Setting a breakpoint: " + JSON.stringify(breakpointOptions, null, 2));
-  return rdpRequest(sourceClient, sourceClient.setBreakpoint, breakpointOptions);
-}
-
-/**
- * Resume JS execution for the specified thread.
- *
- * @param ThreadClient threadClient
- * @returns Promise
- */
-function resume(threadClient) {
-  dumpn("Resuming.");
-  return rdpRequest(threadClient, threadClient.resume);
-}
-
-/**
  * Interrupt JS execution for the specified thread.
  *
  * @param ThreadClient threadClient
@@ -535,17 +626,6 @@ function interrupt(threadClient) {
 function resumeAndWaitForPause(client, threadClient) {
   const paused = waitForPause(client);
   return resume(threadClient).then(() => paused);
-}
-
-/**
- * Get the list of sources for the specified thread.
- *
- * @param ThreadClient threadClient
- * @returns Promise
- */
-function getSources(threadClient) {
-  dumpn("Getting sources.");
-  return rdpRequest(threadClient, threadClient.getSources);
 }
 
 /**
@@ -632,4 +712,35 @@ function reload(tabClient) {
   let deferred = promise.defer();
   tabClient._reload({}, deferred.resolve);
   return deferred.promise;
+}
+
+/**
+ * Returns an array of stack location strings given a thread and a sample.
+ *
+ * @param object thread
+ * @param object sample
+ * @returns object
+ */
+function getInflatedStackLocations(thread, sample) {
+  let stackTable = thread.stackTable;
+  let frameTable = thread.frameTable;
+  let stringTable = thread.stringTable;
+  let SAMPLE_STACK_SLOT = thread.samples.schema.stack;
+  let STACK_PREFIX_SLOT = stackTable.schema.prefix;
+  let STACK_FRAME_SLOT = stackTable.schema.frame;
+  let FRAME_LOCATION_SLOT = frameTable.schema.location;
+
+  // Build the stack from the raw data and accumulate the locations in
+  // an array.
+  let stackIndex = sample[SAMPLE_STACK_SLOT];
+  let locations = [];
+  while (stackIndex !== null) {
+    let stackEntry = stackTable.data[stackIndex];
+    let frame = frameTable.data[stackEntry[STACK_FRAME_SLOT]];
+    locations.push(stringTable[frame[FRAME_LOCATION_SLOT]]);
+    stackIndex = stackEntry[STACK_PREFIX_SLOT];
+  }
+
+  // The profiler tree is inverted, so reverse the array.
+  return locations.reverse();
 }

@@ -11,7 +11,7 @@
 #include "mozilla/gfx/Matrix.h"         // for Matrix4x4, Matrix
 #include "nsDebug.h"                    // for NS_ERROR
 #include "nsPoint.h"                    // for nsIntPoint
-#include "nsRect.h"                     // for nsIntRect
+#include "nsRect.h"                     // for mozilla::gfx::IntRect
 #include "nsSize.h"                     // for nsIntSize
 
 using namespace mozilla::gfx;
@@ -97,7 +97,7 @@ AppendToString(std::stringstream& aStream, const nsIntPoint& p,
 }
 
 void
-AppendToString(std::stringstream& aStream, const nsIntRect& r,
+AppendToString(std::stringstream& aStream, const IntRect& r,
                const char* pfx, const char* sfx)
 {
   aStream << pfx;
@@ -132,7 +132,7 @@ AppendToString(std::stringstream& aStream, const nsIntRegion& r,
 
   nsIntRegionRectIterator it(r);
   aStream << "< ";
-  while (const nsIntRect* sr = it.Next()) {
+  while (const IntRect* sr = it.Next()) {
     AppendToString(aStream, *sr);
     aStream << "; ";
   }
@@ -152,16 +152,16 @@ AppendToString(std::stringstream& aStream, const EventRegions& e,
   if (!e.mDispatchToContentHitRegion.IsEmpty()) {
     AppendToString(aStream, e.mDispatchToContentHitRegion, " dispatchtocontentregion=", "");
   }
+  if (!e.mNoActionRegion.IsEmpty()) {
+    AppendToString(aStream, e.mNoActionRegion, " NoActionRegion=","");
+  }
+  if (!e.mHorizontalPanRegion.IsEmpty()) {
+    AppendToString(aStream, e.mHorizontalPanRegion, " HorizontalPanRegion=", "");
+  }
+  if (!e.mVerticalPanRegion.IsEmpty()) {
+    AppendToString(aStream, e.mVerticalPanRegion, " VerticalPanRegion=", "");
+  }
   aStream << "}" << sfx;
-}
-
-void
-AppendToString(std::stringstream& aStream, const nsIntSize& sz,
-               const char* pfx, const char* sfx)
-{
-  aStream << pfx;
-  aStream << nsPrintfCString("(w=%d, h=%d)", sz.width, sz.height).get();
-  aStream << sfx;
 }
 
 void
@@ -169,7 +169,7 @@ AppendToString(std::stringstream& aStream, const FrameMetrics& m,
                const char* pfx, const char* sfx, bool detailed)
 {
   aStream << pfx;
-  AppendToString(aStream, m.mCompositionBounds, "{ [cb=");
+  AppendToString(aStream, m.GetCompositionBounds(), "{ [cb=");
   AppendToString(aStream, m.GetScrollableRect(), "] [sr=");
   AppendToString(aStream, m.GetScrollOffset(), "] [s=");
   if (m.GetDoSmoothScroll()) {
@@ -183,17 +183,19 @@ AppendToString(std::stringstream& aStream, const FrameMetrics& m,
     if (m.GetScrollParentId() != FrameMetrics::NULL_SCROLL_ID) {
       AppendToString(aStream, m.GetScrollParentId(), "] [scrollParent=");
     }
-    aStream << nsPrintfCString("] [z=%.3f] }", m.GetZoom().scale).get();
+    AppendToString(aStream, m.GetZoom(), "] [z=", "] }");
   } else {
     AppendToString(aStream, m.GetDisplayPortMargins(), " [dpm=");
     aStream << nsPrintfCString("] um=%d", m.GetUseDisplayPortMargins()).get();
     AppendToString(aStream, m.GetRootCompositionSize(), "] [rcs=");
     AppendToString(aStream, m.GetViewport(), "] [v=");
-    aStream << nsPrintfCString("] [z=(ld=%.3f r=%.3f cr=%.3f z=%.3f er=%.3f)",
-            m.GetDevPixelsPerCSSPixel().scale, m.mPresShellResolution,
-            m.GetCumulativeResolution().scale, m.GetZoom().scale,
-            m.GetExtraResolution().scale).get();
-    aStream << nsPrintfCString("] [u=(%d %d %lu)",
+    aStream << nsPrintfCString("] [z=(ld=%.3f r=%.3f",
+            m.GetDevPixelsPerCSSPixel().scale,
+            m.GetPresShellResolution()).get();
+    AppendToString(aStream, m.GetCumulativeResolution(), " cr=");
+    AppendToString(aStream, m.GetZoom(), " z=");
+    AppendToString(aStream, m.GetExtraResolution(), " er=");
+    aStream << nsPrintfCString(")] [u=(%d %d %lu)",
             m.GetScrollOffsetUpdated(), m.GetDoSmoothScroll(),
             m.GetScrollGeneration()).get();
     AppendToString(aStream, m.GetScrollParentId(), "] [p=");

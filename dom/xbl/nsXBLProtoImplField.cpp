@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -62,8 +63,8 @@ nsXBLProtoImplField::~nsXBLProtoImplField()
 {
   MOZ_COUNT_DTOR(nsXBLProtoImplField);
   if (mFieldText)
-    nsMemory::Free(mFieldText);
-  NS_Free(mName);
+    free(mFieldText);
+  free(mName);
   NS_CONTENT_DELETE_LIST_MEMBER(nsXBLProtoImplField, this, mNext);
 }
 
@@ -76,7 +77,7 @@ nsXBLProtoImplField::AppendFieldText(const nsAString& aText)
     char16_t* temp = mFieldText;
     mFieldText = ToNewUnicode(newFieldText);
     mFieldTextLength = newFieldText.Length();
-    nsMemory::Free(temp);
+    free(temp);
   }
   else {
     mFieldText = ToNewUnicode(aText);
@@ -341,7 +342,7 @@ nsXBLProtoImplField::InstallAccessors(JSContext* aCx,
 
   JS::Rooted<JSObject*> get(aCx,
     JS_GetFunctionObject(js::NewFunctionByIdWithReserved(aCx, FieldGetter,
-                                                         0, 0, scopeObject, id)));
+                                                         0, 0, id)));
   if (!get) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
@@ -351,7 +352,7 @@ nsXBLProtoImplField::InstallAccessors(JSContext* aCx,
 
   JS::Rooted<JSObject*> set(aCx,
     JS_GetFunctionObject(js::NewFunctionByIdWithReserved(aCx, FieldSetter,
-                                                          1, 0, scopeObject, id)));
+                                                          1, 0, id)));
   if (!set) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
@@ -402,7 +403,7 @@ nsXBLProtoImplField::InstallField(JS::Handle<JSObject*> aBoundNode,
 
   // We are going to run script via EvaluateString, so we need a script entry
   // point, but as this is XBL related it does not appear in the HTML spec.
-  AutoEntryScript entryScript(globalObject, true);
+  AutoEntryScript entryScript(globalObject, "XBL <field> initialization", true);
   JSContext* cx = entryScript.cx();
 
   NS_ASSERTION(!::JS_IsExceptionPending(cx),

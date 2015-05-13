@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -13,7 +14,6 @@
 #include "nsNetUtil.h"
 #include "nsReadableUtils.h"
 
-#if defined(PR_LOGGING)
 static PRLogModuleInfo*
 GetCspUtilsLog()
 {
@@ -22,9 +22,9 @@ GetCspUtilsLog()
     gCspUtilsPRLog = PR_NewLogModule("CSPUtils");
   return gCspUtilsPRLog;
 }
-#endif
 
-#define CSPUTILSLOG(args) PR_LOG(GetCspUtilsLog(), 4, args)
+#define CSPUTILSLOG(args) PR_LOG(GetCspUtilsLog(), PR_LOG_DEBUG, args)
+#define CSPUTILSLOGENABLED() PR_LOG_TEST(GetCspUtilsLog(), PR_LOG_DEBUG)
 
 void
 CSP_GetLocalizedStr(const char16_t* aName,
@@ -268,13 +268,11 @@ nsCSPBaseSrc::~nsCSPBaseSrc()
 bool
 nsCSPBaseSrc::permits(nsIURI* aUri, const nsAString& aNonce, bool aWasRedirected) const
 {
-#ifdef PR_LOGGING
-  {
+  if (CSPUTILSLOGENABLED()) {
     nsAutoCString spec;
     aUri->GetSpec(spec);
     CSPUTILSLOG(("nsCSPBaseSrc::permits, aUri: %s", spec.get()));
   }
-#endif
   return false;
 }
 
@@ -305,13 +303,11 @@ nsCSPSchemeSrc::~nsCSPSchemeSrc()
 bool
 nsCSPSchemeSrc::permits(nsIURI* aUri, const nsAString& aNonce, bool aWasRedirected) const
 {
-#ifdef PR_LOGGING
-  {
+  if (CSPUTILSLOGENABLED()) {
     nsAutoCString spec;
     aUri->GetSpec(spec);
     CSPUTILSLOG(("nsCSPSchemeSrc::permits, aUri: %s", spec.get()));
   }
-#endif
 
   NS_ASSERTION((!mScheme.EqualsASCII("")), "scheme can not be the empty string");
   nsAutoCString scheme;
@@ -343,13 +339,11 @@ nsCSPHostSrc::~nsCSPHostSrc()
 bool
 nsCSPHostSrc::permits(nsIURI* aUri, const nsAString& aNonce, bool aWasRedirected) const
 {
-#ifdef PR_LOGGING
-  {
+  if (CSPUTILSLOGENABLED()) {
     nsAutoCString spec;
     aUri->GetSpec(spec);
     CSPUTILSLOG(("nsCSPHostSrc::permits, aUri: %s", spec.get()));
   }
-#endif
 
   // we are following the enforcement rules from the spec, see:
   // http://www.w3.org/TR/CSP11/#match-source-expression
@@ -378,6 +372,21 @@ nsCSPHostSrc::permits(nsIURI* aUri, const nsAString& aNonce, bool aWasRedirected
 
   // 2) host matching: Enforce a single *
   if (mHost.EqualsASCII("*")) {
+    // The single ASTERISK character (*) does not match a URI's scheme of a type
+    // designating a globally unique identifier (such as blob:, data:, or filesystem:)
+    // At the moment firefox does not support filesystem; but for future compatibility
+    // we support it in CSP according to the spec, see: 4.2.2 Matching Source Expressions
+    // Note, that whitelisting any of these schemes would call nsCSPSchemeSrc::permits().
+    bool isBlobScheme =
+      (NS_SUCCEEDED(aUri->SchemeIs("blob", &isBlobScheme)) && isBlobScheme);
+    bool isDataScheme =
+      (NS_SUCCEEDED(aUri->SchemeIs("data", &isDataScheme)) && isDataScheme);
+    bool isFileScheme =
+      (NS_SUCCEEDED(aUri->SchemeIs("filesystem", &isFileScheme)) && isFileScheme);
+
+    if (isBlobScheme || isDataScheme || isFileScheme) {
+      return false;
+    }
     return true;
   }
 
@@ -408,12 +417,16 @@ nsCSPHostSrc::permits(nsIURI* aUri, const nsAString& aNonce, bool aWasRedirected
   // path-level matching, unless the channel got redirected, see:
   // http://www.w3.org/TR/CSP11/#source-list-paths-and-redirects
   if (!aWasRedirected && !mPath.IsEmpty()) {
-    // cloning uri so we can ignore the ref
-    nsCOMPtr<nsIURI> uri;
-    aUri->CloneIgnoringRef(getter_AddRefs(uri));
-
+    // converting aUri into nsIURL so we can strip query and ref
+    // example.com/test#foo     -> example.com/test
+    // example.com/test?val=foo -> example.com/test
+    nsCOMPtr<nsIURL> url = do_QueryInterface(aUri);
+    if (!url) {
+      NS_ASSERTION(false, "can't QI into nsIURI");
+      return false;
+    }
     nsAutoCString uriPath;
-    rv = uri->GetPath(uriPath);
+    rv = url->GetFilePath(uriPath);
     NS_ENSURE_SUCCESS(rv, false);
     // check if the last character of mPath is '/'; if so
     // we just have to check loading resource is within
@@ -510,23 +523,22 @@ void
 nsCSPHostSrc::setPort(const nsAString& aPort)
 {
   mPort = aPort;
-  ToLowerCase(mPort);
 }
 
 void
 nsCSPHostSrc::appendPath(const nsAString& aPath)
 {
   mPath.Append(aPath);
-  ToLowerCase(mPath);
 }
 
 /* ===== nsCSPKeywordSrc ===================== */
 
 nsCSPKeywordSrc::nsCSPKeywordSrc(enum CSPKeyword aKeyword)
+ : mKeyword(aKeyword)
+ , mInvalidated(false)
 {
   NS_ASSERTION((aKeyword != CSP_SELF),
                "'self' should have been replaced in the parser");
-  mKeyword = aKeyword;
 }
 
 nsCSPKeywordSrc::~nsCSPKeywordSrc()
@@ -536,8 +548,16 @@ nsCSPKeywordSrc::~nsCSPKeywordSrc()
 bool
 nsCSPKeywordSrc::allows(enum CSPKeyword aKeyword, const nsAString& aHashOrNonce) const
 {
-  CSPUTILSLOG(("nsCSPKeywordSrc::allows, aKeyWord: %s, a HashOrNonce: %s",
-              CSP_EnumToKeyword(aKeyword), NS_ConvertUTF16toUTF8(aHashOrNonce).get()));
+  CSPUTILSLOG(("nsCSPKeywordSrc::allows, aKeyWord: %s, aHashOrNonce: %s, mInvalidated: %s",
+              CSP_EnumToKeyword(aKeyword),
+              NS_ConvertUTF16toUTF8(aHashOrNonce).get(),
+              mInvalidated ? "yes" : "false"));
+  // if unsafe-inline should be ignored, then bail early
+  if (mInvalidated) {
+    NS_ASSERTION(mKeyword == CSP_UNSAFE_INLINE,
+                 "should only invalidate unsafe-inline within script-src");
+    return false;
+  }
   return mKeyword == aKeyword;
 }
 
@@ -545,6 +565,14 @@ void
 nsCSPKeywordSrc::toString(nsAString& outStr) const
 {
   outStr.AppendASCII(CSP_EnumToKeyword(mKeyword));
+}
+
+void
+nsCSPKeywordSrc::invalidate()
+{
+  mInvalidated = true;
+  NS_ASSERTION(mInvalidated == CSP_UNSAFE_INLINE,
+               "invalidate 'unsafe-inline' only within script-src");
 }
 
 /* ===== nsCSPNonceSrc ==================== */
@@ -561,14 +589,12 @@ nsCSPNonceSrc::~nsCSPNonceSrc()
 bool
 nsCSPNonceSrc::permits(nsIURI* aUri, const nsAString& aNonce, bool aWasRedirected) const
 {
-#ifdef PR_LOGGING
-  {
+  if (CSPUTILSLOGENABLED()) {
     nsAutoCString spec;
     aUri->GetSpec(spec);
     CSPUTILSLOG(("nsCSPNonceSrc::permits, aUri: %s, aNonce: %s",
                 spec.get(), NS_ConvertUTF16toUTF8(aNonce).get()));
   }
-#endif
 
   return mNonce.Equals(aNonce);
 }
@@ -691,13 +717,11 @@ nsCSPDirective::~nsCSPDirective()
 bool
 nsCSPDirective::permits(nsIURI* aUri, const nsAString& aNonce, bool aWasRedirected) const
 {
-#ifdef PR_LOGGING
-  {
+  if (CSPUTILSLOGENABLED()) {
     nsAutoCString spec;
     aUri->GetSpec(spec);
     CSPUTILSLOG(("nsCSPDirective::permits, aUri: %s", spec.get()));
   }
-#endif
 
   for (uint32_t i = 0; i < mSrcs.Length(); i++) {
     if (mSrcs[i]->permits(aUri, aNonce, aWasRedirected)) {
@@ -803,14 +827,12 @@ nsCSPPolicy::permits(CSPDirective aDir,
                      bool aSpecific,
                      nsAString& outViolatedDirective) const
 {
-#ifdef PR_LOGGING
-  {
+  if (CSPUTILSLOGENABLED()) {
     nsAutoCString spec;
     aUri->GetSpec(spec);
     CSPUTILSLOG(("nsCSPPolicy::permits, aUri: %s, aDir: %d, aSpecific: %s",
                  spec.get(), aDir, aSpecific ? "true" : "false"));
   }
-#endif
 
   NS_ASSERTION(aUri, "permits needs an uri to perform the check!");
 

@@ -1,21 +1,23 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
- * This Source Code Form is subject to the terms of the Mozilla Public
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/Likely.h"
 #include "mozilla/Services.h"
 #include "nsComponentManager.h"
+#include "nsIObserverService.h"
+#include "nsNetCID.h"
+#include "nsObserverService.h"
+#include "nsXPCOMPrivate.h"
+#if !defined(MOZILLA_XPCOMRT_API)
 #include "nsIIOService.h"
 #include "nsIDirectoryService.h"
 #ifdef ACCESSIBILITY
 #include "nsIAccessibilityService.h"
 #endif
 #include "nsIChromeRegistry.h"
-#include "nsIObserverService.h"
-#include "nsNetCID.h"
-#include "nsObserverService.h"
-#include "nsXPCOMPrivate.h"
 #include "nsIStringBundle.h"
 #include "nsIToolkitChromeRegistry.h"
 #include "nsIXULOverlayProvider.h"
@@ -25,6 +27,8 @@
 #include "nsIPermissionManager.h"
 #include "nsIServiceWorkerManager.h"
 #include "nsIAsyncShutdown.h"
+#include "nsIUUIDGenerator.h"
+#endif // !defined(MOZILLA_XPCOMRT_API)
 
 using namespace mozilla;
 using namespace mozilla::services;

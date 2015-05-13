@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -50,6 +51,7 @@
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/dom/Selection.h"
+#include "mozilla/IntegerRange.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -97,7 +99,8 @@ SelectionCopyHelper(nsISelection *aSel, nsIDocument *aDoc,
 
   // Do the first and potentially trial encoding as preformatted and raw.
   uint32_t flags = aFlags | nsIDocumentEncoder::OutputPreformatted
-                          | nsIDocumentEncoder::OutputRaw;
+                          | nsIDocumentEncoder::OutputRaw
+                          | nsIDocumentEncoder::OutputForPlainTextClipboardCopy;
 
   nsCOMPtr<nsIDOMDocument> domDoc = do_QueryInterface(aDoc);
   NS_ASSERTION(domDoc, "Need a document");
@@ -147,7 +150,8 @@ SelectionCopyHelper(nsISelection *aSel, nsIDocument *aDoc,
       nsIDocumentEncoder::OutputAbsoluteLinks |
       nsIDocumentEncoder::SkipInvisibleContent |
       nsIDocumentEncoder::OutputDropInvisibleBreak |
-      (aFlags & nsIDocumentEncoder::OutputNoScriptContent);
+      (aFlags & (nsIDocumentEncoder::OutputNoScriptContent |
+                 nsIDocumentEncoder::OutputRubyAnnotation));
 
     mimeType.AssignLiteral(kTextMime);
     rv = docEncoder->Init(domDoc, mimeType, flags);
@@ -272,11 +276,13 @@ SelectionCopyHelper(nsISelection *aSel, nsIDocument *aDoc,
 
 nsresult
 nsCopySupport::HTMLCopy(nsISelection* aSel, nsIDocument* aDoc,
-                        int16_t aClipboardID)
+                        int16_t aClipboardID, bool aWithRubyAnnotation)
 {
-  return SelectionCopyHelper(aSel, aDoc, true, aClipboardID,
-                             nsIDocumentEncoder::SkipInvisibleContent,
-                             nullptr);
+  uint32_t flags = nsIDocumentEncoder::SkipInvisibleContent;
+  if (aWithRubyAnnotation) {
+    flags |= nsIDocumentEncoder::OutputRubyAnnotation;
+  }
+  return SelectionCopyHelper(aSel, aDoc, true, aClipboardID, flags, nullptr);
 }
 
 nsresult
@@ -504,7 +510,7 @@ static nsresult AppendDOMNode(nsITransferable *aTransferable,
   nsCOMPtr<nsIHTMLDocument> htmlDoc = do_QueryInterface(document, &rv);
   NS_ENSURE_SUCCESS(rv, NS_OK);
 
-  NS_ENSURE_TRUE(document->IsHTML(), NS_OK);
+  NS_ENSURE_TRUE(document->IsHTMLDocument(), NS_OK);
 
   // init encoder with document and node
   rv = docEncoder->NativeInit(document, NS_LITERAL_STRING(kHTMLMime),
@@ -579,6 +585,38 @@ nsCopySupport::CanCopy(nsIDocument* aDocument)
   bool isCollapsed;
   sel->GetIsCollapsed(&isCollapsed);
   return !isCollapsed;
+}
+
+static bool
+IsInsideRuby(nsINode* aNode)
+{
+  for (; aNode; aNode = aNode->GetParent()) {
+    if (aNode->IsHTMLElement(nsGkAtoms::ruby)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+static bool
+IsSelectionInsideRuby(nsISelection* aSelection)
+{
+  int32_t rangeCount;
+  nsresult rv = aSelection->GetRangeCount(&rangeCount);
+  if (NS_FAILED(rv)) {
+    return false;
+  }
+  for (auto i : MakeRange(rangeCount)) {
+    nsCOMPtr<nsIDOMRange> range;
+    aSelection->GetRangeAt(i, getter_AddRefs(range));
+    nsCOMPtr<nsIDOMNode> node;
+    range->GetCommonAncestorContainer(getter_AddRefs(node));
+    nsCOMPtr<nsINode> n = do_QueryInterface(node);
+    if (!IsInsideRuby(n)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 bool
@@ -689,8 +727,13 @@ nsCopySupport::FireClipboardEvent(int32_t aType, int32_t aClipboardType, nsIPres
     if (isCollapsed) {
       return false;
     }
+    // XXX Code which decides whether we should copy text with ruby
+    // annotation is currenct depending on whether each range of the
+    // selection is inside a same ruby container. But we really should
+    // expose the full functionality in browser. See bug 1130891.
+    bool withRubyAnnotation = IsSelectionInsideRuby(sel);
     // call the copy code
-    rv = HTMLCopy(sel, doc, aClipboardType);
+    rv = HTMLCopy(sel, doc, aClipboardType, withRubyAnnotation);
     if (NS_FAILED(rv)) {
       return false;
     }

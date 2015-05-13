@@ -76,7 +76,7 @@ public:
   {
   }
 
-  NS_IMETHOD Run() MOZ_OVERRIDE
+  NS_IMETHOD Run() override
   {
     nsAutoString domEventToFire;
 
@@ -123,7 +123,7 @@ public:
   {
   }
 
-  NS_IMETHOD Run() MOZ_OVERRIDE
+  NS_IMETHOD Run() override
   {
     nsMenuFrame* frame = static_cast<nsMenuFrame*>(mFrame.GetFrame());
     NS_ENSURE_STATE(frame);
@@ -201,7 +201,7 @@ nsMenuFrame::GetMenuParent() const
   return nullptr;
 }
 
-class nsASyncMenuInitialization MOZ_FINAL : public nsIReflowCallback
+class nsASyncMenuInitialization final : public nsIReflowCallback
 {
 public:
   explicit nsASyncMenuInitialization(nsIFrame* aFrame)
@@ -209,7 +209,7 @@ public:
   {
   }
 
-  virtual bool ReflowFinished() MOZ_OVERRIDE
+  virtual bool ReflowFinished() override
   {
     bool shouldFlush = false;
     nsMenuFrame* menu = do_QueryFrame(mWeakFrame.GetFrame());
@@ -221,7 +221,7 @@ public:
     return shouldFlush;
   }
 
-  virtual void ReflowCallbackCanceled() MOZ_OVERRIDE
+  virtual void ReflowCallbackCanceled() override
   {
     delete this;
   }
@@ -462,7 +462,7 @@ nsMenuFrame::HandleEvent(nsPresContext* aPresContext,
     *aEventStatus = nsEventStatus_eConsumeNoDefault;
     Execute(aEvent);
   }
-  else if (aEvent->message == NS_MOUSE_EXIT_SYNTH) {
+  else if (aEvent->message == NS_MOUSE_OUT) {
     // Kill our timer if one is active.
     if (mOpenTimer) {
       mOpenTimer->Cancel();
@@ -1152,7 +1152,7 @@ nsMenuFrame::BuildAcceleratorText(bool aNotify)
     token = nsCRT::strtok(newStr, ", \t", &newStr);
   }
 
-  nsMemory::Free(str);
+  free(str);
 
   accelText += accelString;
 

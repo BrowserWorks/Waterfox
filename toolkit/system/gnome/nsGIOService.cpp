@@ -18,7 +18,7 @@
 #endif
 
 
-class nsGIOMimeApp MOZ_FINAL : public nsIGIOMimeApp
+class nsGIOMimeApp final : public nsIGIOMimeApp
 {
 public:
   NS_DECL_ISUPPORTS
@@ -84,7 +84,7 @@ nsGIOMimeApp::Launch(const nsACString& aUri)
   return NS_OK;
 }
 
-class GIOUTF8StringEnumerator MOZ_FINAL : public nsIUTF8StringEnumerator
+class GIOUTF8StringEnumerator final : public nsIUTF8StringEnumerator
 {
   ~GIOUTF8StringEnumerator() { }
 
@@ -142,7 +142,7 @@ nsGIOMimeApp::GetSupportedURISchemes(nsIUTF8StringEnumerator** aSchemes)
     uri_schemes++;
   }
 
-  NS_ADDREF(*aSchemes = array);
+  array.forget(aSchemes);
   return NS_OK;
 }
 

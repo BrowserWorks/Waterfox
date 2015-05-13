@@ -14,6 +14,7 @@ import java.security.GeneralSecurityException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.net.ssl.SSLContext;
 
@@ -30,6 +31,7 @@ import ch.boye.httpclientandroidlib.client.AuthCache;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 import ch.boye.httpclientandroidlib.client.methods.HttpDelete;
 import ch.boye.httpclientandroidlib.client.methods.HttpGet;
+import ch.boye.httpclientandroidlib.client.methods.HttpPatch;
 import ch.boye.httpclientandroidlib.client.methods.HttpPost;
 import ch.boye.httpclientandroidlib.client.methods.HttpPut;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
@@ -57,6 +59,7 @@ import ch.boye.httpclientandroidlib.util.EntityUtils;
  * Communicates with a ResourceDelegate to asynchronously return responses and errors.
  * Exposes simple get/post/put/delete methods.
  */
+@SuppressWarnings("deprecation")
 public class BaseResource implements Resource {
   private static final String ANDROID_LOOPBACK_IP = "10.0.2.2";
 
@@ -76,7 +79,13 @@ public class BaseResource implements Resource {
   protected HttpRequestBase request;
   public final String charset = "utf-8";
 
-  protected static WeakReference<HttpResponseObserver> httpResponseObserver = null;
+  /**
+   * We have very few writes (observers tend to be installed around sync
+   * sessions) and many iterations (every HTTP request iterates observers), so
+   * CopyOnWriteArrayList is a reasonable choice.
+   */
+  protected static final CopyOnWriteArrayList<WeakReference<HttpResponseObserver>>
+    httpResponseObservers = new CopyOnWriteArrayList<>();
 
   public BaseResource(String uri) throws URISyntaxException {
     this(uri, rewriteLocalhost);
@@ -108,18 +117,33 @@ public class BaseResource implements Resource {
     }
   }
 
-  public static synchronized HttpResponseObserver getHttpResponseObserver() {
-    if (httpResponseObserver == null) {
-      return null;
+  public static void addHttpResponseObserver(HttpResponseObserver newHttpResponseObserver) {
+    if (newHttpResponseObserver == null) {
+      return;
     }
-    return httpResponseObserver.get();
+    httpResponseObservers.add(new WeakReference<HttpResponseObserver>(newHttpResponseObserver));
   }
 
-  public static synchronized void setHttpResponseObserver(HttpResponseObserver newHttpResponseObserver) {
-    if (httpResponseObserver != null) {
-      httpResponseObserver.clear();
+  public static boolean isHttpResponseObserver(HttpResponseObserver httpResponseObserver) {
+    for (WeakReference<HttpResponseObserver> weakReference : httpResponseObservers) {
+      HttpResponseObserver innerHttpResponseObserver = weakReference.get();
+      if (innerHttpResponseObserver == httpResponseObserver) {
+        return true;
+      }
     }
-    httpResponseObserver = new WeakReference<HttpResponseObserver>(newHttpResponseObserver);
+    return false;
+  }
+
+  public static boolean removeHttpResponseObserver(HttpResponseObserver httpResponseObserver) {
+    for (WeakReference<HttpResponseObserver> weakReference : httpResponseObservers) {
+      HttpResponseObserver innerHttpResponseObserver = weakReference.get();
+      if (innerHttpResponseObserver == httpResponseObserver) {
+        // It's safe to mutate the observers while iterating.
+        httpResponseObservers.remove(weakReference);
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
@@ -273,9 +297,11 @@ public class BaseResource implements Resource {
     }
 
     // Don't retry if the observer or delegate throws!
-    HttpResponseObserver observer = getHttpResponseObserver();
-    if (observer != null) {
-      observer.observeHttpResponse(response);
+    for (WeakReference<HttpResponseObserver> weakReference : httpResponseObservers) {
+      HttpResponseObserver observer = weakReference.get();
+      if (observer != null) {
+        observer.observeHttpResponse(request, response);
+      }
     }
     delegate.handleHttpResponse(response);
   }
@@ -342,6 +368,14 @@ public class BaseResource implements Resource {
   }
 
   @Override
+  public void patch(HttpEntity body) {
+    Logger.debug(LOG_TAG, "HTTP PATCH " + this.uri.toASCIIString());
+    HttpPatch request = new HttpPatch(this.uri);
+    request.setEntity(body);
+    this.go(request);
+  }
+
+  @Override
   public void put(HttpEntity body) {
     Logger.debug(LOG_TAG, "HTTP PUT " + this.uri.toASCIIString());
     HttpPut request = new HttpPut(this.uri);
@@ -349,7 +383,7 @@ public class BaseResource implements Resource {
     this.go(request);
   }
 
-  protected static StringEntity stringEntityWithContentTypeApplicationJSON(String s) throws UnsupportedEncodingException {
+  protected static StringEntity stringEntityWithContentTypeApplicationJSON(String s) {
     StringEntity e = new StringEntity(s, "UTF-8");
     e.setContentType("application/json");
     return e;
@@ -359,7 +393,7 @@ public class BaseResource implements Resource {
    * Helper for turning a JSON object into a payload.
    * @throws UnsupportedEncodingException
    */
-  protected static StringEntity jsonEntity(JSONObject body) throws UnsupportedEncodingException {
+  protected static StringEntity jsonEntity(JSONObject body) {
     return stringEntityWithContentTypeApplicationJSON(body.toJSONString());
   }
 
@@ -367,7 +401,7 @@ public class BaseResource implements Resource {
    * Helper for turning an extended JSON object into a payload.
    * @throws UnsupportedEncodingException
    */
-  protected static StringEntity jsonEntity(ExtendedJSONObject body) throws UnsupportedEncodingException {
+  protected static StringEntity jsonEntity(ExtendedJSONObject body) {
     return stringEntityWithContentTypeApplicationJSON(body.toJSONString());
   }
 
@@ -456,11 +490,23 @@ public class BaseResource implements Resource {
     put(jsonEntity(jsonObject));
   }
 
-  public void post(ExtendedJSONObject o) throws UnsupportedEncodingException {
+  public void post(ExtendedJSONObject o) {
     post(jsonEntity(o));
   }
 
   public void post(JSONObject jsonObject) throws UnsupportedEncodingException {
     post(jsonEntity(jsonObject));
+  }
+
+  public void patch(JSONArray jsonArray) throws UnsupportedEncodingException {
+    patch(jsonEntity(jsonArray));
+  }
+
+  public void patch(ExtendedJSONObject o) {
+    patch(jsonEntity(o));
+  }
+
+  public void patch(JSONObject jsonObject) throws UnsupportedEncodingException {
+    patch(jsonEntity(jsonObject));
   }
 }

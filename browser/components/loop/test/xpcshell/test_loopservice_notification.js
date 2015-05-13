@@ -2,6 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+"use strict";
+
 XPCOMUtils.defineLazyModuleGetter(this, "Chat",
                                   "resource:///modules/Chat.jsm");
 
@@ -12,15 +14,15 @@ add_test(function test_openChatWindow_on_notification() {
 
   mockPushHandler.registrationPushURL = kEndPointUrl;
 
-  MozLoopService.promiseRegisteredWithServers().then(() => {
+  MozLoopService.promiseRegisteredWithServers(LOOP_SESSION_TYPE.FXA).then(() => {
     let opened = false;
     Chat.open = function() {
       opened = true;
     };
 
-    mockPushHandler.notify(1, MozLoopService.channelIDs.callsGuest);
+    mockPushHandler.notify(1, MozLoopService.channelIDs.callsFxA);
 
-    waitForCondition(function() opened).then(() => {
+    waitForCondition(() => opened).then(() => {
       do_check_true(opened, "should open a chat window");
 
       do_check_eq(Services.prefs.getCharPref("loop.seenToS"), "seen",
@@ -36,6 +38,8 @@ add_test(function test_openChatWindow_on_notification() {
 
 function run_test() {
   setupFakeLoopServer();
+
+  setupFakeFxAUserProfile();
 
   loopServer.registerPathHandler("/registration", (request, response) => {
     response.setStatusLine(null, 200, "OK");

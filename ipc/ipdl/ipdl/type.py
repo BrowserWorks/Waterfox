@@ -218,6 +218,12 @@ class IPDLType(Type):
             lesser.priorityRange[1] > greater.priorityRange[1]):
             return False
 
+        # Protocols that use intr semantics are not allowed to use
+        # message priorities.
+        if (greater.isInterrupt() and
+            lesser.priorityRange != (NORMAL_PRIORITY, NORMAL_PRIORITY)):
+            return False
+
         if lesser.isAsync():
             return True
         elif lesser.isSync() and not greater.isAsync():
@@ -1095,7 +1101,7 @@ class GatherDecls(TcheckVisitor):
 
         msgtype = MessageType(md.priority, md.sendSemantics, md.direction,
                               ctor=isctor, dtor=isdtor, cdtype=cdtype,
-                              compress=(md.compress == 'compress'))
+                              compress=md.compress)
 
         # replace inparam Param nodes with proper Decls
         def paramToDecl(param):

@@ -11,7 +11,6 @@
 #include "ExtendedValidation.h"
 #include "NSSCertDBTrustDomain.h"
 #include "NSSErrorsService.h"
-#include "PublicKeyPinningService.h"
 #include "cert.h"
 #include "pk11pub.h"
 #include "pkix/pkix.h"
@@ -23,22 +22,20 @@
 using namespace mozilla::pkix;
 using namespace mozilla::psm;
 
-#ifdef PR_LOGGING
 PRLogModuleInfo* gCertVerifierLog = nullptr;
-#endif
 
 namespace mozilla { namespace psm {
 
 const CertVerifier::Flags CertVerifier::FLAG_LOCAL_ONLY = 1;
 const CertVerifier::Flags CertVerifier::FLAG_MUST_BE_EV = 2;
 
-CertVerifier::CertVerifier(ocsp_download_config odc,
-                           ocsp_strict_config osc,
-                           ocsp_get_config ogc,
+CertVerifier::CertVerifier(OcspDownloadConfig odc,
+                           OcspStrictConfig osc,
+                           OcspGetConfig ogc,
                            PinningMode pinningMode)
-  : mOCSPDownloadEnabled(odc == ocsp_on)
-  , mOCSPStrict(osc == ocsp_strict)
-  , mOCSPGETEnabled(ogc == ocsp_get_enabled)
+  : mOCSPDownloadEnabled(odc == ocspOn)
+  , mOCSPStrict(osc == ocspStrict)
+  , mOCSPGETEnabled(ogc == ocspGetEnabled)
   , mPinningMode(pinningMode)
 {
 }
@@ -50,11 +47,9 @@ CertVerifier::~CertVerifier()
 void
 InitCertVerifierLog()
 {
-#ifdef PR_LOGGING
   if (!gCertVerifierLog) {
     gCertVerifierLog = PR_NewLogModule("certverifier");
   }
-#endif
 }
 
 SECStatus
@@ -79,47 +74,6 @@ IsCertBuiltInRoot(CERTCertificate* cert, bool& result) {
     }
   }
   return SECSuccess;
-}
-
-Result
-CertListContainsExpectedKeys(const CERTCertList* certList,
-                             const char* hostname, Time time,
-                             CertVerifier::PinningMode pinningMode)
-{
-  if (true || pinningMode == CertVerifier::pinningDisabled) {
-    PR_LOG(gCertVerifierLog, PR_LOG_DEBUG,
-           ("Pinning is disabled; not checking keys."));
-    return Success;
-  }
-
-  if (!certList) {
-    return Result::FATAL_ERROR_INVALID_ARGS;
-  }
-
-  CERTCertListNode* rootNode = CERT_LIST_TAIL(certList);
-  if (CERT_LIST_END(rootNode, certList)) {
-    return Result::FATAL_ERROR_INVALID_ARGS;
-  }
-
-  bool isBuiltInRoot = false;
-  SECStatus srv = IsCertBuiltInRoot(rootNode->cert, isBuiltInRoot);
-  if (srv != SECSuccess) {
-    return MapPRErrorCodeToResult(PR_GetError());
-  }
-  // If desired, the user can enable "allow user CA MITM mode", in which
-  // case key pinning is not enforced for certificates that chain to trust
-  // anchors that are not in Mozilla's root program
-  if (!isBuiltInRoot && pinningMode == CertVerifier::pinningAllowUserCAMITM) {
-    return Success;
-  }
-
-  bool enforceTestMode = (pinningMode == CertVerifier::pinningEnforceTestMode);
-  if (PublicKeyPinningService::ChainHasValidPins(certList, hostname, time,
-                                                 enforceTestMode)) {
-    return Success;
-  }
-
-  return Result::ERROR_KEY_PINNING_FAILURE;
 }
 
 static Result
@@ -156,6 +110,9 @@ BuildCertChainForOneKeyUsage(NSSCertDBTrustDomain& trustDomain, Input certDER,
   return rv;
 }
 
+static const unsigned int MIN_RSA_BITS = 2048;
+static const unsigned int MIN_RSA_BITS_WEAK = 1024;
+
 SECStatus
 CertVerifier::VerifyCert(CERTCertificate* cert, SECCertificateUsage usage,
                          Time time, void* pinArg, const char* hostname,
@@ -163,12 +120,14 @@ CertVerifier::VerifyCert(CERTCertificate* cert, SECCertificateUsage usage,
             /*optional*/ const SECItem* stapledOCSPResponseSECItem,
         /*optional out*/ ScopedCERTCertList* builtChain,
         /*optional out*/ SECOidTag* evOidPolicy,
-        /*optional out*/ OCSPStaplingStatus* ocspStaplingStatus)
+        /*optional out*/ OCSPStaplingStatus* ocspStaplingStatus,
+        /*optional out*/ KeySizeStatus* keySizeStatus)
 {
   PR_LOG(gCertVerifierLog, PR_LOG_DEBUG, ("Top of VerifyCert\n"));
 
   PR_ASSERT(cert);
   PR_ASSERT(usage == certificateUsageSSLServer || !(flags & FLAG_MUST_BE_EV));
+  PR_ASSERT(usage == certificateUsageSSLServer || !keySizeStatus);
 
   if (builtChain) {
     *builtChain = nullptr;
@@ -182,6 +141,14 @@ CertVerifier::VerifyCert(CERTCertificate* cert, SECCertificateUsage usage,
       return SECFailure;
     }
     *ocspStaplingStatus = OCSP_STAPLING_NEVER_CHECKED;
+  }
+
+  if (keySizeStatus) {
+    if (usage != certificateUsageSSLServer) {
+      PR_SetError(SEC_ERROR_INVALID_ARGS, 0);
+      return SECFailure;
+    }
+    *keySizeStatus = KeySizeStatus::NeverChecked;
   }
 
   if (!cert ||
@@ -205,8 +172,8 @@ CertVerifier::VerifyCert(CERTCertificate* cert, SECCertificateUsage usage,
     : !mOCSPStrict              ? NSSCertDBTrustDomain::FetchOCSPForDVSoftFail
                                 : NSSCertDBTrustDomain::FetchOCSPForDVHardFail;
 
-  ocsp_get_config ocspGETConfig = mOCSPGETEnabled ? ocsp_get_enabled
-                                                  : ocsp_get_disabled;
+  OcspGetConfig ocspGETConfig = mOCSPGETEnabled ? ocspGetEnabled
+                                                : ocspGetDisabled;
 
   Input stapledOCSPResponseInput;
   const Input* stapledOCSPResponse = nullptr;
@@ -227,7 +194,7 @@ CertVerifier::VerifyCert(CERTCertificate* cert, SECCertificateUsage usage,
       // just use trustEmail as it is the closest alternative.
       NSSCertDBTrustDomain trustDomain(trustEmail, ocspFetching, mOCSPCache,
                                        pinArg, ocspGETConfig, pinningDisabled,
-                                       false, nullptr, builtChain);
+                                       MIN_RSA_BITS_WEAK, nullptr, builtChain);
       rv = BuildCertChain(trustDomain, certDER, time,
                           EndEntityOrCA::MustBeEndEntity,
                           KeyUsage::digitalSignature,
@@ -252,8 +219,8 @@ CertVerifier::VerifyCert(CERTCertificate* cert, SECCertificateUsage usage,
                       ocspFetching == NSSCertDBTrustDomain::NeverFetchOCSP
                         ? NSSCertDBTrustDomain::LocalOnlyOCSPForEV
                         : NSSCertDBTrustDomain::FetchOCSPForEV,
-                      mOCSPCache, pinArg, ocspGETConfig, mPinningMode, true,
-                      hostname, builtChain);
+                      mOCSPCache, pinArg, ocspGETConfig, mPinningMode,
+                      MIN_RSA_BITS, hostname, builtChain);
         rv = BuildCertChainForOneKeyUsage(trustDomain, certDER, time,
                                           KeyUsage::digitalSignature,// (EC)DHE
                                           KeyUsage::keyEncipherment, // RSA
@@ -278,7 +245,7 @@ CertVerifier::VerifyCert(CERTCertificate* cert, SECCertificateUsage usage,
       // Now try non-EV.
       NSSCertDBTrustDomain trustDomain(trustSSL, ocspFetching, mOCSPCache,
                                        pinArg, ocspGETConfig, mPinningMode,
-                                       false, hostname, builtChain);
+                                       MIN_RSA_BITS, hostname, builtChain);
       rv = BuildCertChainForOneKeyUsage(trustDomain, certDER, time,
                                         KeyUsage::digitalSignature, // (EC)DHE
                                         KeyUsage::keyEncipherment, // RSA
@@ -287,13 +254,41 @@ CertVerifier::VerifyCert(CERTCertificate* cert, SECCertificateUsage usage,
                                         CertPolicyId::anyPolicy,
                                         stapledOCSPResponse,
                                         ocspStaplingStatus);
+      if (rv == Success) {
+        if (keySizeStatus) {
+          *keySizeStatus = KeySizeStatus::LargeMinimumSucceeded;
+        }
+        break;
+      }
+
+      // If that failed, try again with a smaller minimum key size.
+      NSSCertDBTrustDomain trustDomainWeak(trustSSL, ocspFetching, mOCSPCache,
+                                           pinArg, ocspGETConfig, mPinningMode,
+                                           MIN_RSA_BITS_WEAK, hostname,
+                                           builtChain);
+      rv = BuildCertChainForOneKeyUsage(trustDomainWeak, certDER, time,
+                                        KeyUsage::digitalSignature, // (EC)DHE
+                                        KeyUsage::keyEncipherment, // RSA
+                                        KeyUsage::keyAgreement, // (EC)DH
+                                        KeyPurposeId::id_kp_serverAuth,
+                                        CertPolicyId::anyPolicy,
+                                        stapledOCSPResponse,
+                                        ocspStaplingStatus);
+      if (keySizeStatus) {
+        if (rv == Success) {
+          *keySizeStatus = KeySizeStatus::CompatibilityRisk;
+        } else {
+          *keySizeStatus = KeySizeStatus::AlreadyBad;
+        }
+      }
+
       break;
     }
 
     case certificateUsageSSLCA: {
       NSSCertDBTrustDomain trustDomain(trustSSL, ocspFetching, mOCSPCache,
                                        pinArg, ocspGETConfig, pinningDisabled,
-                                       false, nullptr, builtChain);
+                                       MIN_RSA_BITS_WEAK, nullptr, builtChain);
       rv = BuildCertChain(trustDomain, certDER, time,
                           EndEntityOrCA::MustBeCA, KeyUsage::keyCertSign,
                           KeyPurposeId::id_kp_serverAuth,
@@ -304,7 +299,7 @@ CertVerifier::VerifyCert(CERTCertificate* cert, SECCertificateUsage usage,
     case certificateUsageEmailSigner: {
       NSSCertDBTrustDomain trustDomain(trustEmail, ocspFetching, mOCSPCache,
                                        pinArg, ocspGETConfig, pinningDisabled,
-                                       false, nullptr, builtChain);
+                                       MIN_RSA_BITS_WEAK, nullptr, builtChain);
       rv = BuildCertChain(trustDomain, certDER, time,
                           EndEntityOrCA::MustBeEndEntity,
                           KeyUsage::digitalSignature,
@@ -326,7 +321,7 @@ CertVerifier::VerifyCert(CERTCertificate* cert, SECCertificateUsage usage,
       // based on the result of the verification(s).
       NSSCertDBTrustDomain trustDomain(trustEmail, ocspFetching, mOCSPCache,
                                        pinArg, ocspGETConfig, pinningDisabled,
-                                       false, nullptr, builtChain);
+                                       MIN_RSA_BITS_WEAK, nullptr, builtChain);
       rv = BuildCertChain(trustDomain, certDER, time,
                           EndEntityOrCA::MustBeEndEntity,
                           KeyUsage::keyEncipherment, // RSA
@@ -345,8 +340,8 @@ CertVerifier::VerifyCert(CERTCertificate* cert, SECCertificateUsage usage,
     case certificateUsageObjectSigner: {
       NSSCertDBTrustDomain trustDomain(trustObjectSigning, ocspFetching,
                                        mOCSPCache, pinArg, ocspGETConfig,
-                                       pinningDisabled, false, nullptr,
-                                       builtChain);
+                                       pinningDisabled,
+                                       MIN_RSA_BITS_WEAK, nullptr, builtChain);
       rv = BuildCertChain(trustDomain, certDER, time,
                           EndEntityOrCA::MustBeEndEntity,
                           KeyUsage::digitalSignature,
@@ -374,15 +369,15 @@ CertVerifier::VerifyCert(CERTCertificate* cert, SECCertificateUsage usage,
       }
 
       NSSCertDBTrustDomain sslTrust(trustSSL, ocspFetching, mOCSPCache, pinArg,
-                                    ocspGETConfig, pinningDisabled, false,
-                                    nullptr, builtChain);
+                                    ocspGETConfig, pinningDisabled,
+                                    MIN_RSA_BITS_WEAK, nullptr, builtChain);
       rv = BuildCertChain(sslTrust, certDER, time, endEntityOrCA,
                           keyUsage, eku, CertPolicyId::anyPolicy,
                           stapledOCSPResponse);
       if (rv == Result::ERROR_UNKNOWN_ISSUER) {
         NSSCertDBTrustDomain emailTrust(trustEmail, ocspFetching, mOCSPCache,
                                         pinArg, ocspGETConfig, pinningDisabled,
-                                        false, nullptr, builtChain);
+                                        MIN_RSA_BITS_WEAK, nullptr, builtChain);
         rv = BuildCertChain(emailTrust, certDER, time, endEntityOrCA,
                             keyUsage, eku, CertPolicyId::anyPolicy,
                             stapledOCSPResponse);
@@ -390,7 +385,8 @@ CertVerifier::VerifyCert(CERTCertificate* cert, SECCertificateUsage usage,
           NSSCertDBTrustDomain objectSigningTrust(trustObjectSigning,
                                                   ocspFetching, mOCSPCache,
                                                   pinArg, ocspGETConfig,
-                                                  pinningDisabled, false,
+                                                  pinningDisabled,
+                                                  MIN_RSA_BITS_WEAK,
                                                   nullptr, builtChain);
           rv = BuildCertChain(objectSigningTrust, certDER, time,
                               endEntityOrCA, keyUsage, eku,
@@ -406,27 +402,6 @@ CertVerifier::VerifyCert(CERTCertificate* cert, SECCertificateUsage usage,
   }
 
   if (rv != Success) {
-    if (rv != Result::ERROR_KEY_PINNING_FAILURE &&
-        usage == certificateUsageSSLServer) {
-      ScopedCERTCertificate certCopy(CERT_DupCertificate(cert));
-      if (!certCopy) {
-        return SECFailure;
-      }
-      ScopedCERTCertList certList(CERT_NewCertList());
-      if (!certList) {
-        return SECFailure;
-      }
-      SECStatus srv = CERT_AddCertToListTail(certList.get(), certCopy.get());
-      if (srv != SECSuccess) {
-        return SECFailure;
-      }
-      certCopy.forget(); // now owned by certList
-      Result pinningResult = CertListContainsExpectedKeys(certList, hostname,
-                                                          time, mPinningMode);
-      if (pinningResult != Success) {
-        rv = pinningResult;
-      }
-    }
     PR_SetError(MapResultToPRErrorCode(rv), 0);
     return SECFailure;
   }
@@ -444,7 +419,8 @@ CertVerifier::VerifySSLServerCert(CERTCertificate* peerCert,
                                   Flags flags,
                  /*optional out*/ ScopedCERTCertList* builtChain,
                  /*optional out*/ SECOidTag* evOidPolicy,
-                 /*optional out*/ OCSPStaplingStatus* ocspStaplingStatus)
+                 /*optional out*/ OCSPStaplingStatus* ocspStaplingStatus,
+                 /*optional out*/ KeySizeStatus* keySizeStatus)
 {
   PR_ASSERT(peerCert);
   // XXX: PR_ASSERT(pinarg)
@@ -468,7 +444,8 @@ CertVerifier::VerifySSLServerCert(CERTCertificate* peerCert,
   // if VerifyCert succeeded.
   SECStatus rv = VerifyCert(peerCert, certificateUsageSSLServer, time, pinarg,
                             hostname, flags, stapledOCSPResponse,
-                            &builtChainTemp, evOidPolicy, ocspStaplingStatus);
+                            &builtChainTemp, evOidPolicy, ocspStaplingStatus,
+                            keySizeStatus);
   if (rv != SECSuccess) {
     return rv;
   }

@@ -19,8 +19,8 @@ function run_test() {
   callbackApp.permissions = PERMS_DIRECTORY;
   let args = [getApplyDirPath() + DIR_RESOURCES, "input", "output", "-s",
               HELPER_SLEEP_TIMEOUT];
-  let callbackAppProcess = AUS_Cc["@mozilla.org/process/util;1"].
-                           createInstance(AUS_Ci.nsIProcess);
+  let callbackAppProcess = Cc["@mozilla.org/process/util;1"].
+                           createInstance(Ci.nsIProcess);
   callbackAppProcess.init(callbackApp);
   callbackAppProcess.run(false, args, args.length);
 
@@ -32,16 +32,7 @@ function setupAppFilesFinished() {
 }
 
 function doUpdate() {
-  // For Mac OS X set the last modified time for the root directory to a date in
-  // the past to test that the last modified time is updated on a successful
-  // update (bug 600098).
-  if (IS_MACOSX) {
-    let applyToDir = getApplyDirFile();
-    let now = Date.now();
-    let yesterday = now - (1000 * 60 * 60 * 24);
-    applyToDir.lastModifiedTime = yesterday;
-  }
-
+  setAppBundleModTime();
   runUpdateUsingService(STATE_PENDING_SVC, STATE_SUCCEEDED);
 }
 
@@ -50,16 +41,9 @@ function checkUpdateFinished() {
 }
 
 function checkUpdate() {
-  if (IS_MACOSX) {
-    logTestInfo("testing last modified time on the apply to directory has " +
-                "changed after a successful update (bug 600098)");
-    let now = Date.now();
-    let applyToDir = getApplyDirFile();
-    let timeDiff = Math.abs(applyToDir.lastModifiedTime - now);
-    do_check_true(timeDiff < MAC_MAX_TIME_DIFFERENCE);
-  }
-
+  checkAppBundleModTime();
   checkFilesAfterUpdateSuccess(getApplyDirFile, false, false);
   checkUpdateLogContents(LOG_COMPLETE_SUCCESS);
+  standardInit();
   checkCallbackServiceLog();
 }

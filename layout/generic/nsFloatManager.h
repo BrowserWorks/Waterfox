@@ -10,12 +10,11 @@
 #define nsFloatManager_h_
 
 #include "mozilla/Attributes.h"
-
-#include "nsIntervalSet.h"
+#include "mozilla/WritingModes.h"
 #include "nsCoord.h"
-#include "WritingModes.h"
-#include "nsTArray.h"
 #include "nsFrameList.h" // for DEBUG_FRAME_DUMP
+#include "nsIntervalSet.h"
+#include "nsTArray.h"
 
 class nsIPresShell;
 class nsIFrame;
@@ -86,14 +85,10 @@ public:
   // Structure that stores the current state of a frame manager for
   // Save/Restore purposes.
   struct SavedState {
-    explicit SavedState(mozilla::WritingMode aWM)
-      : mWritingMode(aWM)
-      , mOffset(aWM)
-    {}
+    explicit SavedState() {}
   private:
     uint32_t mFloatInfoCount;
-    mozilla::WritingMode mWritingMode;
-    mozilla::LogicalPoint mOffset;
+    nscoord mLineLeft, mBlockStart;
     bool mPushedLeftFloatPastBreak;
     bool mPushedRightFloatPastBreak;
     bool mSplitLeftFloatAcrossBreak;
@@ -103,38 +98,15 @@ public:
   };
 
   /**
-   * Translate the current offset by the specified (dICoord, dBCoord). This
+   * Translate the current origin by the specified offsets. This
    * creates a new local coordinate space relative to the current
    * coordinate space.
    * @returns previous writing mode
    */
-  mozilla::WritingMode Translate(mozilla::WritingMode aWM,
-                                 mozilla::LogicalPoint aDOffset)
+  void Translate(nscoord aLineLeft, nscoord aBlockStart)
   {
-    mozilla::WritingMode oldWM = mWritingMode;
-    mOffset = mOffset.ConvertTo(aWM, oldWM, 0);
-    mWritingMode = aWM;
-    mOffset += aDOffset;
-    return oldWM;
-  }
-
-  /*
-   * Set the translation offset to a specified value instead of
-   * translating by a delta.
-   */
-  void SetTranslation(mozilla::WritingMode aWM,
-                      mozilla::LogicalPoint aOffset)
-  {
-    mWritingMode = aWM;
-    mOffset = aOffset;
-  }
-
-  void Untranslate(mozilla::WritingMode aWM,
-                   mozilla::LogicalPoint aDOffset)
-  {
-    mOffset -= aDOffset;
-    mOffset = mOffset.ConvertTo(aWM, mWritingMode, 0);
-    mWritingMode = aWM;
+    mLineLeft += aLineLeft;
+    mBlockStart += aBlockStart;
   }
 
   /**
@@ -142,11 +114,10 @@ public:
    * world coordinate space. This represents the accumulated calls to
    * Translate().
    */
-  void GetTranslation(mozilla::WritingMode& aWM,
-                      mozilla::LogicalPoint& aOffset) const
+  void GetTranslation(nscoord& aLineLeft, nscoord& aBlockStart) const
   {
-    aWM = mWritingMode;
-    aOffset = mOffset;
+    aLineLeft = mLineLeft;
+    aBlockStart = mBlockStart;
   }
 
   /**
@@ -255,15 +226,15 @@ public:
   void IncludeInDamage(mozilla::WritingMode aWM,
                        nscoord aIntervalBegin, nscoord aIntervalEnd)
   {
-    mFloatDamage.IncludeInterval(aIntervalBegin + mOffset.B(aWM),
-                                 aIntervalEnd + mOffset.B(aWM));
+    mFloatDamage.IncludeInterval(aIntervalBegin + mBlockStart,
+                                 aIntervalEnd + mBlockStart);
   }
 
   bool IntersectsDamage(mozilla::WritingMode aWM,
                         nscoord aIntervalBegin, nscoord aIntervalEnd) const
   {
-    return mFloatDamage.Intersects(aIntervalBegin + mOffset.B(aWM),
-                                   aIntervalEnd + mOffset.B(aWM));
+    return mFloatDamage.Intersects(aIntervalBegin + mBlockStart,
+                                   aIntervalEnd + mBlockStart);
   }
 
   /**
@@ -290,8 +261,7 @@ public:
    *
    * The result is relative to the current translation.
    */
-  nscoord GetLowestFloatTop(mozilla::WritingMode aWM,
-                            nscoord aContainerWidth) const;
+  nscoord GetLowestFloatTop() const;
 
   /**
    * Return the coordinate of the lowest float matching aBreakType in
@@ -305,8 +275,7 @@ public:
     // pushed to the next page/column.
     DONT_CLEAR_PUSHED_FLOATS = (1<<0)
   };
-  nscoord ClearFloats(mozilla::WritingMode aWM, nscoord aBCoord,
-                      uint8_t aBreakType, nscoord aContainerWidth,
+  nscoord ClearFloats(nscoord aBCoord, uint8_t aBreakType,
                       uint32_t aFlags = 0) const;
 
   /**
@@ -317,8 +286,8 @@ public:
 
   void AssertStateMatches(SavedState *aState) const
   {
-    NS_ASSERTION(aState->mWritingMode == mWritingMode &&
-                 aState->mOffset == mOffset &&
+    NS_ASSERTION(aState->mLineLeft == mLineLeft &&
+                 aState->mBlockStart == mBlockStart &&
                  aState->mPushedLeftFloatPastBreak ==
                    mPushedLeftFloatPastBreak &&
                  aState->mPushedRightFloatPastBreak ==
@@ -342,24 +311,40 @@ private:
 
   struct FloatInfo {
     nsIFrame *const mFrame;
-    mozilla::LogicalRect mRect;
-    mozilla::WritingMode mWritingMode;
     // The lowest block-ends of left/right floats up to and including
     // this one.
     nscoord mLeftBEnd, mRightBEnd;
 
-    FloatInfo(nsIFrame* aFrame, mozilla::WritingMode aWM,
-              const mozilla::LogicalRect& aRect);
+    FloatInfo(nsIFrame* aFrame, nscoord aLineLeft, nscoord aBStart,
+              nscoord aISize, nscoord aBSize);
+
+    nscoord LineLeft() const { return mRect.x; }
+    nscoord LineRight() const { return mRect.XMost(); }
+    nscoord ISize() const { return mRect.width; }
+    nscoord BStart() const { return mRect.y; }
+    nscoord BEnd() const { return mRect.YMost(); }
+    nscoord BSize() const { return mRect.height; }
+    bool IsEmpty() const { return mRect.IsEmpty(); }
+
 #ifdef NS_BUILD_REFCNT_LOGGING
     FloatInfo(const FloatInfo& aOther);
     ~FloatInfo();
 #endif
+
+  private:
+    // NB! This is really a logical rect in a writing mode suitable for
+    // placing floats, which is not necessarily the actual writing mode
+    // either of the block which created the frame manager or the block
+    // that is calling the frame manager. The inline coordinates are in
+    // the line-relative axis of the frame manager and its block
+    // coordinates are in the frame manager's real block direction.
+    nsRect mRect;
   };
 
-  mozilla::WritingMode mWritingMode;
-  mozilla::LogicalPoint mOffset;  // translation from local to global
-                                  // coordinate space
+  mozilla::DebugOnly<mozilla::WritingMode> mWritingMode;
 
+  // Translation from local to global coordinate space.
+  nscoord mLineLeft, mBlockStart;
   nsTArray<FloatInfo> mFloats;
   nsIntervalSet   mFloatDamage;
 

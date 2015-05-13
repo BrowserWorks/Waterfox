@@ -6,7 +6,7 @@
 
 #include <stdlib.h>                     // for getenv
 
-#include "mozilla/Attributes.h"         // for MOZ_FINAL
+#include "mozilla/Attributes.h"         // for final
 #include "mozilla/Preferences.h"        // for Preferences
 #include "mozilla/Services.h"           // for GetXULChromeRegistryService
 #include "mozilla/dom/Element.h"        // for Element
@@ -45,6 +45,7 @@
 #include "nsStringFwd.h"                // for nsAFlatString
 #include "nsStyleUtil.h"                // for nsStyleUtil
 #include "nsXULAppAPI.h"                // for XRE_GetProcessType
+#include "nsIPlaintextEditor.h"         // for editor flags
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -106,27 +107,10 @@ GetLoadContext(nsIEditor* aEditor)
 }
 
 /**
- * Helper function for converting underscore to dash in dictionary name,
- * ie. en_CA to en-CA. This is required for some Linux distributions which
- * use underscore as separator in system-wide installed dictionaries.
- * We use it for nsStyleUtil::DashMatchCompare.
- */
-static nsString
-GetDictNameWithDash(const nsAString& aDictName)
-{
-  nsString dictNameWithDash(aDictName);
-  int32_t underScore = dictNameWithDash.FindChar('_');
-  if (underScore != -1) {
-    dictNameWithDash.Replace(underScore, 1, '-');
-  }
-  return dictNameWithDash;
-}
-
-/**
  * Fetches the dictionary stored in content prefs and maintains state during the
  * fetch, which is asynchronous.
  */
-class DictionaryFetcher MOZ_FINAL : public nsIContentPrefCallback2
+class DictionaryFetcher final : public nsIContentPrefCallback2
 {
 public:
   NS_DECL_ISUPPORTS
@@ -138,7 +122,7 @@ public:
 
   NS_IMETHOD Fetch(nsIEditor* aEditor);
 
-  NS_IMETHOD HandleResult(nsIContentPref* aPref) MOZ_OVERRIDE
+  NS_IMETHOD HandleResult(nsIContentPref* aPref) override
   {
     nsCOMPtr<nsIVariant> value;
     nsresult rv = aPref->GetValue(getter_AddRefs(value));
@@ -147,13 +131,13 @@ public:
     return NS_OK;
   }
 
-  NS_IMETHOD HandleCompletion(uint16_t reason) MOZ_OVERRIDE
+  NS_IMETHOD HandleCompletion(uint16_t reason) override
   {
     mSpellCheck->DictionaryFetched(this);
     return NS_OK;
   }
 
-  NS_IMETHOD HandleError(nsresult error) MOZ_OVERRIDE
+  NS_IMETHOD HandleError(nsresult error) override
   {
     return NS_OK;
   }
@@ -313,7 +297,7 @@ nsEditorSpellCheck::CanSpellCheck(bool* _retval)
 }
 
 // Instances of this class can be used as either runnables or RAII helpers.
-class CallbackCaller MOZ_FINAL : public nsRunnable
+class CallbackCaller final : public nsRunnable
 {
 public:
   explicit CallbackCaller(nsIEditorSpellCheckCallback* aCallback)
@@ -561,7 +545,7 @@ nsEditorSpellCheck::GetDictionaryList(char16_t ***aDictionaryList, uint32_t *aCo
     // If there are no dictionaries, return an array containing
     // one element and a count of one.
 
-    tmpPtr = (char16_t **)nsMemory::Alloc(sizeof(char16_t *));
+    tmpPtr = (char16_t **)moz_xmalloc(sizeof(char16_t *));
 
     NS_ENSURE_TRUE(tmpPtr, NS_ERROR_OUT_OF_MEMORY);
 
@@ -572,7 +556,7 @@ nsEditorSpellCheck::GetDictionaryList(char16_t ***aDictionaryList, uint32_t *aCo
     return NS_OK;
   }
 
-  tmpPtr = (char16_t **)nsMemory::Alloc(sizeof(char16_t *) * dictList.Length());
+  tmpPtr = (char16_t **)moz_xmalloc(sizeof(char16_t *) * dictList.Length());
 
   NS_ENSURE_TRUE(tmpPtr, NS_ERROR_OUT_OF_MEMORY);
 
@@ -620,20 +604,25 @@ nsEditorSpellCheck::SetCurrentDictionary(const nsAString& aDictionary)
     } else {
       langCode.Assign(aDictionary);
     }
-    if (mPreferredLang.IsEmpty() ||
-        !nsStyleUtil::DashMatchCompare(GetDictNameWithDash(mPreferredLang), langCode, comparator)) {
-      // When user sets dictionary manually, we store this value associated
-      // with editor url.
-      StoreCurrentDictionary(mEditor, aDictionary);
-    } else {
-      // If user sets a dictionary matching (even partially), lang defined by
-      // document, we consider content pref has been canceled, and we clear it.
-      ClearCurrentDictionary(mEditor);
-    }
+    uint32_t flags = 0;
+    mEditor->GetFlags(&flags);
+    if (!(flags & nsIPlaintextEditor::eEditorMailMask)) {
+      if (mPreferredLang.IsEmpty() ||
+          !nsStyleUtil::DashMatchCompare(mPreferredLang, langCode, comparator)) {
+        // When user sets dictionary manually, we store this value associated
+        // with editor url.
+        StoreCurrentDictionary(mEditor, aDictionary);
+      } else {
+        // If user sets a dictionary matching (even partially), lang defined by
+        // document, we consider content pref has been canceled, and we clear it.
+        ClearCurrentDictionary(mEditor);
+      }
 
-    // Also store it in as a preference. It will be used as a default value
-    // when everything else fails.
-    Preferences::SetString("spellchecker.dictionary", aDictionary);
+      // Also store it in as a preference. It will be used as a default value
+      // when everything else fails but we don't want this for mail composer
+      // because it has spellchecked dictionary settings in Preferences.
+      Preferences::SetString("spellchecker.dictionary", aDictionary);
+    }
   }
   return mSpellChecker->SetCurrentDictionary(aDictionary);
 }
@@ -711,6 +700,18 @@ nsEditorSpellCheck::UpdateCurrentDictionary(nsIEditorSpellCheckCallback* aCallba
     NS_ENSURE_SUCCESS(rv, rv);
     rootContent = do_QueryInterface(rootElement);
   }
+
+  // Try to get topmost document's document element for embedded mail editor.
+  uint32_t flags = 0;
+  mEditor->GetFlags(&flags);
+  if (flags & nsIPlaintextEditor::eEditorMailMask) {
+    nsCOMPtr<nsIDocument> ownerDoc = rootContent->OwnerDoc();
+    NS_ENSURE_TRUE(ownerDoc, NS_ERROR_FAILURE);
+    nsIDocument* parentDoc = ownerDoc->GetParentDocument();
+    if (parentDoc) {
+      rootContent = do_QueryInterface(parentDoc->GetDocumentElement());
+    }
+  }
   NS_ENSURE_TRUE(rootContent, NS_ERROR_FAILURE);
 
   nsRefPtr<DictionaryFetcher> fetcher =
@@ -747,13 +748,19 @@ nsEditorSpellCheck::DictionaryFetched(DictionaryFetcher* aFetcher)
 
   // If we successfully fetched a dictionary from content prefs, do not go
   // further. Use this exact dictionary.
-  nsAutoString dictName(aFetcher->mDictionary);
-  if (!dictName.IsEmpty()) {
-    if (NS_FAILED(SetCurrentDictionary(dictName))) {
-      // may be dictionary was uninstalled ?
-      ClearCurrentDictionary(mEditor);
+  // Don't use content preferences for editor with eEditorMailMask flag.
+  nsAutoString dictName;
+  uint32_t flags;
+  mEditor->GetFlags(&flags);
+  if (!(flags & nsIPlaintextEditor::eEditorMailMask)) {
+    dictName.Assign(aFetcher->mDictionary);
+    if (!dictName.IsEmpty()) {
+      if (NS_FAILED(SetCurrentDictionary(dictName))) {
+        // May be dictionary was uninstalled ?
+        ClearCurrentDictionary(mEditor);
+      }
+      return NS_OK;
     }
-    return NS_OK;
   }
 
   if (mPreferredLang.IsEmpty()) {
@@ -806,7 +813,7 @@ nsEditorSpellCheck::DictionaryFetched(DictionaryFetcher* aFetcher)
       // try dictionary.spellchecker preference if it starts with langCode (and
       // if we haven't tried it already)
       if (!preferedDict.IsEmpty() && !dictName.Equals(preferedDict) &&
-          nsStyleUtil::DashMatchCompare(GetDictNameWithDash(preferedDict), langCode, comparator)) {
+          nsStyleUtil::DashMatchCompare(preferedDict, langCode, comparator)) {
         rv = SetCurrentDictionary(preferedDict);
       }
 
@@ -834,7 +841,7 @@ nsEditorSpellCheck::DictionaryFetched(DictionaryFetcher* aFetcher)
             // We have already tried it
             continue;
           }
-          if (nsStyleUtil::DashMatchCompare(GetDictNameWithDash(dictStr), langCode, comparator) &&
+          if (nsStyleUtil::DashMatchCompare(dictStr, langCode, comparator) &&
               NS_SUCCEEDED(SetCurrentDictionary(dictStr))) {
               break;
           }
@@ -859,10 +866,7 @@ nsEditorSpellCheck::DictionaryFetched(DictionaryFetcher* aFetcher)
         if (dot_pos != -1) {
           lang = Substring(lang, 0, dot_pos);
         }
-        // Some Linux distributions use '_' as lang/dialect separator.
-        rv = SetCurrentDictionary(lang);
         if (NS_FAILED(rv)) {
-          // Replace '_' with '-' when dictionary with underscore not found.
           int32_t underScore = lang.FindChar('_');
           if (underScore != -1) {
             lang.Replace(underScore, 1, '-');
@@ -873,14 +877,10 @@ nsEditorSpellCheck::DictionaryFetched(DictionaryFetcher* aFetcher)
       if (NS_FAILED(rv)) {
         rv = SetCurrentDictionary(NS_LITERAL_STRING("en-US"));
         if (NS_FAILED(rv)) {
-          // Some Linux distributions are using '_' as separator for dictionaries.
-          rv = SetCurrentDictionary(NS_LITERAL_STRING("en_US"));
-          if (NS_FAILED(rv)) {
-            nsTArray<nsString> dictList;
-            rv = mSpellChecker->GetDictionaryList(&dictList);
-            if (NS_SUCCEEDED(rv) && dictList.Length() > 0) {
-              SetCurrentDictionary(dictList[0]);
-            }
+          nsTArray<nsString> dictList;
+          rv = mSpellChecker->GetDictionaryList(&dictList);
+          if (NS_SUCCEEDED(rv) && dictList.Length() > 0) {
+            SetCurrentDictionary(dictList[0]);
           }
         }
       }

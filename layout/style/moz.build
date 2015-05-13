@@ -4,8 +4,29 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files('**'):
+    BUG_COMPONENT = ('Core', 'CSS Parsing and Computation')
+
+with Files('nsComputedDOMStyle.*'):
+    BUG_COMPONENT = ('Core', 'DOM: CSS Object Model')
+
+with Files('nsROCSSPrimitiveValue.*'):
+    BUG_COMPONENT = ('Core', 'DOM: CSS Object Model')
+
+with Files('CSSRuleList.*'):
+    BUG_COMPONENT = ('Core', 'DOM: CSS Object Model')
+
+with Files('nsDOM*'):
+    BUG_COMPONENT = ('Core', 'DOM: CSS Object Model')
+
 DIRS += ['xbl-marquee']
 TEST_DIRS += ['test']
+
+XPIDL_SOURCES += [
+    'nsICSSUnprefixingService.idl',
+]
+
+XPIDL_MODULE = 'layout_base'
 
 EXPORTS += [
     'AnimationCommon.h',
@@ -23,6 +44,7 @@ EXPORTS += [
     'nsCSSProperty.h',
     'nsCSSPropertySet.h',
     'nsCSSPropList.h',
+    'nsCSSPropLogicalGroupList.h',
     'nsCSSProps.h',
     'nsCSSPseudoClasses.h',
     'nsCSSPseudoClassList.h',
@@ -67,10 +89,12 @@ EXPORTS.mozilla += [
 
 EXPORTS.mozilla.dom += [
     'CSS.h',
+    'CSSLexer.h',
     'CSSRuleList.h',
     'CSSValue.h',
     'FontFace.h',
     'FontFaceSet.h',
+    'FontFaceSetIterator.h',
     'MediaQueryList.h',
 ]
 
@@ -90,6 +114,7 @@ UNIFIED_SOURCES += [
     'AnimationCommon.cpp',
     'CounterStyleManager.cpp',
     'CSS.cpp',
+    'CSSLexer.cpp',
     'CSSRuleList.cpp',
     'CSSStyleSheet.cpp',
     'CSSVariableDeclarations.cpp',
@@ -98,6 +123,7 @@ UNIFIED_SOURCES += [
     'Declaration.cpp',
     'ErrorReporter.cpp',
     'FontFace.cpp',
+    'FontFaceSetIterator.cpp',
     'ImageLoader.cpp',
     'Loader.cpp',
     'MediaQueryList.cpp',
@@ -119,6 +145,7 @@ UNIFIED_SOURCES += [
     'nsDOMCSSRGBColor.cpp',
     'nsDOMCSSValueList.cpp',
     'nsFontFaceLoader.cpp',
+    'nsFontFaceUtils.cpp',
     'nsHTMLCSSStyleSheet.cpp',
     'nsHTMLStyleSheet.cpp',
     'nsLayoutStylesheetCache.cpp',
@@ -146,9 +173,12 @@ SOURCES += [
     'nsCSSRuleProcessor.cpp',
 ]
 
-FAIL_ON_WARNINGS = True
+EXTRA_COMPONENTS += [
+    'CSSUnprefixingService.js',
+    'CSSUnprefixingService.manifest',
+]
 
-MSVC_ENABLE_PGO = True
+FAIL_ON_WARNINGS = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
@@ -157,6 +187,7 @@ FINAL_LIBRARY = 'xul'
 LOCAL_INCLUDES += [
     '../base',
     '../generic',
+    '../svg',
     '../xul',
     '/dom/base',
     '/dom/html',
@@ -173,6 +204,10 @@ RESOURCE_FILES += [
     'TopLevelImageDocument.css',
     'TopLevelVideoDocument.css',
 ]
+
+GENERATED_FILES += ['nsStyleStructList.h']
+style_struct_list = GENERATED_FILES['nsStyleStructList.h']
+style_struct_list.script = 'generate-stylestructlist.py'
 
 if CONFIG['GNU_CC']:
     CFLAGS += ['-Wshadow']

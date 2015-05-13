@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -18,7 +19,13 @@ struct MessageEventInit;
 class MessagePort;
 class MessagePortBase;
 class MessagePortList;
-class OwningWindowProxyOrMessagePort;
+class OwningWindowProxyOrMessagePortOrClient;
+
+namespace workers {
+
+class ServiceWorkerClient;
+
+}
 
 /**
  * Implements the MessageEvent event, used for cross-document messaging and
@@ -27,8 +34,8 @@ class OwningWindowProxyOrMessagePort;
  * See http://www.whatwg.org/specs/web-apps/current-work/#messageevent for
  * further details.
  */
-class MessageEvent MOZ_FINAL : public Event,
-                               public nsIDOMMessageEvent
+class MessageEvent final : public Event,
+                           public nsIDOMMessageEvent
 {
 public:
   MessageEvent(EventTarget* aOwner,
@@ -43,12 +50,12 @@ public:
   // Forward to base class
   NS_FORWARD_TO_EVENT
 
-  virtual JSObject* WrapObjectInternal(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObjectInternal(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   void GetData(JSContext* aCx, JS::MutableHandle<JS::Value> aData,
                ErrorResult& aRv);
 
-  void GetSource(Nullable<OwningWindowProxyOrMessagePort>& aValue) const;
+  void GetSource(Nullable<OwningWindowProxyOrMessagePortOrClient>& aValue) const;
 
   MessagePortList* GetPorts()
   {
@@ -58,10 +65,9 @@ public:
   void SetPorts(MessagePortList* aPorts);
 
   // Non WebIDL methods
-  void SetSource(mozilla::dom::MessagePort* aPort)
-  {
-    mPortSource = aPort;
-  }
+  void SetSource(mozilla::dom::MessagePort* aPort);
+
+  void SetSource(workers::ServiceWorkerClient* aClient);
 
   void SetSource(nsPIDOMWindow* aWindow)
   {
@@ -70,6 +76,12 @@ public:
 
   static already_AddRefed<MessageEvent>
   Constructor(const GlobalObject& aGlobal,
+              const nsAString& aType,
+              const MessageEventInit& aEventInit,
+              ErrorResult& aRv);
+
+  static already_AddRefed<MessageEvent>
+  Constructor(EventTarget* aEventTarget,
               const nsAString& aType,
               const MessageEventInit& aEventInit,
               ErrorResult& aRv);
@@ -83,6 +95,7 @@ private:
   nsString mLastEventId;
   nsCOMPtr<nsIDOMWindow> mWindowSource;
   nsRefPtr<MessagePortBase> mPortSource;
+  nsRefPtr<workers::ServiceWorkerClient> mClientSource;
   nsRefPtr<MessagePortList> mPorts;
 };
 

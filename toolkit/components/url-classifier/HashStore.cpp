@@ -123,40 +123,47 @@ namespace safebrowsing {
 const uint32_t STORE_MAGIC = 0x1231af3b;
 const uint32_t CURRENT_VERSION = 3;
 
-void
+nsresult
 TableUpdate::NewAddPrefix(uint32_t aAddChunk, const Prefix& aHash)
 {
   AddPrefix *add = mAddPrefixes.AppendElement();
+  if (!add) return NS_ERROR_OUT_OF_MEMORY;
   add->addChunk = aAddChunk;
   add->prefix = aHash;
+  return NS_OK;
 }
 
-void
+nsresult
 TableUpdate::NewSubPrefix(uint32_t aAddChunk, const Prefix& aHash, uint32_t aSubChunk)
 {
   SubPrefix *sub = mSubPrefixes.AppendElement();
+  if (!sub) return NS_ERROR_OUT_OF_MEMORY;
   sub->addChunk = aAddChunk;
   sub->prefix = aHash;
   sub->subChunk = aSubChunk;
+  return NS_OK;
 }
 
-void
+nsresult
 TableUpdate::NewAddComplete(uint32_t aAddChunk, const Completion& aHash)
 {
   AddComplete *add = mAddCompletes.AppendElement();
+  if (!add) return NS_ERROR_OUT_OF_MEMORY;
   add->addChunk = aAddChunk;
   add->complete = aHash;
+  return NS_OK;
 }
 
-void
+nsresult
 TableUpdate::NewSubComplete(uint32_t aAddChunk, const Completion& aHash, uint32_t aSubChunk)
 {
   SubComplete *sub = mSubCompletes.AppendElement();
+  if (!sub) return NS_ERROR_OUT_OF_MEMORY;
   sub->addChunk = aAddChunk;
   sub->complete = aHash;
   sub->subChunk = aSubChunk;
+  return NS_OK;
 }
-
 
 HashStore::HashStore(const nsACString& aTableName, nsIFile* aStoreDir)
   : mTableName(aTableName)
@@ -368,6 +375,7 @@ HashStore::ReadChunkNumbers()
   nsCOMPtr<nsISeekableStream> seekable = do_QueryInterface(mInputStream);
   nsresult rv = seekable->Seek(nsISeekableStream::NS_SEEK_SET,
                                sizeof(Header));
+  NS_ENSURE_SUCCESS(rv, rv);
 
   rv = mAddChunks.Read(mInputStream, mHeader.numAddChunks);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -394,6 +402,7 @@ HashStore::ReadHashes()
   uint32_t offset = sizeof(Header);
   offset += (mHeader.numAddChunks + mHeader.numSubChunks) * sizeof(uint32_t);
   nsresult rv = seekable->Seek(nsISeekableStream::NS_SEEK_SET, offset);
+  NS_ENSURE_SUCCESS(rv, rv);
 
   rv = ReadAddPrefixes();
   NS_ENSURE_SUCCESS(rv, rv);

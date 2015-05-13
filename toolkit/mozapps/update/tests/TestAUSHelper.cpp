@@ -14,7 +14,9 @@
 # define F_OK 00
 # define W_OK 02
 # define R_OK 04
-# define stat _stat
+# if _MSC_VER < 1900
+#  define stat _stat
+# endif
 # define NS_T(str) L ## str
 # define NS_tsnprintf(dest, count, fmt, ...) \
   { \
@@ -74,8 +76,9 @@ static void
 WriteMsg(const NS_tchar *path, const char *status)
 {
   FILE* outFP = NS_tfopen(path, NS_T("wb"));
-  if (!outFP)
+  if (!outFP) {
     return;
+  }
 
   fprintf(outFP, "%s\n", status);
   fclose(outFP);
@@ -96,11 +99,15 @@ CheckMsg(const NS_tchar *path, const char *expected)
 
   struct stat ms;
   if (fstat(fileno(inFP), &ms)) {
+    fclose(inFP);
+    inFP = nullptr;
     return false;
   }
 
   char *mbuf = (char *) malloc(ms.st_size + 1);
   if (!mbuf) {
+    fclose(inFP);
+    inFP = nullptr;
     return false;
   }
 
@@ -110,14 +117,19 @@ CheckMsg(const NS_tchar *path, const char *expected)
   r -= c;
   rb += c;
   if (c == 0 && r) {
+    free(mbuf);
+    fclose(inFP);
+    inFP = nullptr;
     return false;
   }
   mbuf[ms.st_size] = '\0';
   rb = mbuf;
 
+  bool isMatch = strcmp(rb, expected) == 0;
+  free(mbuf);
   fclose(inFP);
   inFP = nullptr;
-  return strcmp(rb, expected) == 0;
+  return isMatch;
 }
 
 #ifdef XP_WIN
@@ -143,7 +155,7 @@ VerifyCertificateTrustForFile(LPCWSTR filePath)
   trustData.pPolicyCallbackData = nullptr;
   trustData.pSIPClientData = nullptr;
   trustData.dwUIChoice = WTD_UI_NONE;
-  trustData.fdwRevocationChecks = WTD_REVOKE_NONE; 
+  trustData.fdwRevocationChecks = WTD_REVOKE_NONE;
   trustData.dwUnionChoice = WTD_CHOICE_FILE;
   trustData.dwStateAction = 0;
   trustData.hWVTStateData = nullptr;
@@ -233,7 +245,7 @@ int NS_main(int argc, NS_tchar **argv)
     } else {
       return 1;
     }
-#else 
+#else
     // Not implemented on non-Windows platforms
     return 1;
 #endif
@@ -311,7 +323,7 @@ int NS_main(int argc, NS_tchar **argv)
     } else {
       return serviceState;
     }
-#else 
+#else
     // Not implemented on non-Windows platforms
     return 1;
 #endif
@@ -329,7 +341,7 @@ int NS_main(int argc, NS_tchar **argv)
     } else {
       return 2;
     }
-#else 
+#else
     // Not implemented on non-Windows platforms
     return 1;
 #endif
@@ -398,4 +410,4 @@ int NS_main(int argc, NS_tchar **argv)
   }
 
   return 0;
-} 
+}

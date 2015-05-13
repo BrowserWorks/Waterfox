@@ -6,6 +6,7 @@
 
 
 #include "mozilla/dom/ContentChild.h"
+#include "mozilla/SyncRunnable.h"
 #include "nsAnonymousTemporaryFile.h"
 #include "nsDirectoryServiceUtils.h"
 #include "nsDirectoryServiceDefs.h"
@@ -82,6 +83,27 @@ GetTempDir(nsIFile** aTempDir)
   return NS_OK;
 }
 
+namespace {
+
+class nsRemoteAnonymousTemporaryFileRunnable : public nsRunnable
+{
+public:
+  dom::FileDescOrError *mResultPtr;
+  explicit nsRemoteAnonymousTemporaryFileRunnable(dom::FileDescOrError *aResultPtr)
+  : mResultPtr(aResultPtr)
+  { }
+
+protected:
+  NS_IMETHODIMP Run() {
+    dom::ContentChild* child = dom::ContentChild::GetSingleton();
+    MOZ_ASSERT(child);
+    child->SendOpenAnonymousTemporaryFile(mResultPtr);
+    return NS_OK;
+  }
+};
+
+} // namespace
+
 nsresult
 NS_OpenAnonymousTemporaryFile(PRFileDesc** aOutFileDesc)
 {
@@ -90,12 +112,22 @@ NS_OpenAnonymousTemporaryFile(PRFileDesc** aOutFileDesc)
   }
 
   if (dom::ContentChild* child = dom::ContentChild::GetSingleton()) {
-    ipc::FileDescriptor fd;
-    DebugOnly<bool> succeeded = child->SendOpenAnonymousTemporaryFile(&fd);
-    // The child process should already have been terminated if the
-    // IPC had failed.
-    MOZ_ASSERT(succeeded);
-    *aOutFileDesc = PR_ImportFile(PROsfd(fd.PlatformHandle()));
+    dom::FileDescOrError fd = NS_OK;
+    if (NS_IsMainThread()) {
+      child->SendOpenAnonymousTemporaryFile(&fd);
+    } else {
+      nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
+      MOZ_ASSERT(mainThread);
+      SyncRunnable::DispatchToThread(mainThread,
+        new nsRemoteAnonymousTemporaryFileRunnable(&fd));
+    }
+    if (fd.type() == dom::FileDescOrError::Tnsresult) {
+      nsresult rv = fd.get_nsresult();
+      MOZ_ASSERT(NS_FAILED(rv));
+      return rv;
+    }
+    *aOutFileDesc =
+      PR_ImportFile(PROsfd(fd.get_FileDescriptor().PlatformHandle()));
     return NS_OK;
   }
 
@@ -157,7 +189,7 @@ NS_OpenAnonymousTemporaryFile(PRFileDesc** aOutFileDesc)
 // idle observer and its timer on shutdown. Note: the observer and idle
 // services hold references to instances of this object, and those references
 // are what keep this object alive.
-class nsAnonTempFileRemover MOZ_FINAL : public nsIObserver
+class nsAnonTempFileRemover final : public nsIObserver
 {
 public:
   NS_DECL_ISUPPORTS

@@ -7,33 +7,11 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "mozilla/layers/LayerMetricsWrapper.h"
+#include "mozilla/layers/CompositorParent.h"
 
 using namespace mozilla;
 using namespace mozilla::gfx;
 using namespace mozilla::layers;
-
-class TestLayerManager: public LayerManager {
-public:
-  TestLayerManager()
-    : LayerManager()
-  {}
-
-  virtual bool EndEmptyTransaction(EndTransactionFlags aFlags = END_DEFAULT) { return false; }
-  virtual already_AddRefed<ContainerLayer> CreateContainerLayer() { return nullptr; }
-  virtual void GetBackendName(nsAString& aName) {}
-  virtual LayersBackend GetBackendType() { return LayersBackend::LAYERS_BASIC; }
-  virtual void BeginTransaction() {}
-  virtual already_AddRefed<ImageLayer> CreateImageLayer() { return nullptr; }
-  virtual void SetRoot(Layer* aLayer) {}
-  virtual already_AddRefed<ColorLayer> CreateColorLayer() { return nullptr; }
-  virtual void BeginTransactionWithTarget(gfxContext* aTarget) {}
-  virtual already_AddRefed<CanvasLayer> CreateCanvasLayer() { return nullptr; }
-  virtual void EndTransaction(DrawPaintedLayerCallback aCallback,
-                              void* aCallbackData,
-                              EndTransactionFlags aFlags = END_DEFAULT) {}
-  virtual int32_t GetMaxTextureSize() const { return 0; }
-  virtual already_AddRefed<PaintedLayer> CreatePaintedLayer() { return nullptr; }
-};
 
 class TestContainerLayer: public ContainerLayer {
 public:
@@ -71,6 +49,44 @@ public:
   virtual void InvalidateRegion(const nsIntRegion& aRegion) {
     MOZ_CRASH();
   }
+};
+
+class TestLayerManager: public LayerManager {
+public:
+  TestLayerManager()
+    : LayerManager()
+  {}
+
+  virtual bool EndEmptyTransaction(EndTransactionFlags aFlags = END_DEFAULT) { return false; }
+  virtual already_AddRefed<ContainerLayer> CreateContainerLayer() {
+    nsRefPtr<ContainerLayer> layer = new TestContainerLayer(this);
+    return layer.forget();
+  }
+  virtual void GetBackendName(nsAString& aName) {}
+  virtual LayersBackend GetBackendType() { return LayersBackend::LAYERS_BASIC; }
+  virtual void BeginTransaction() {}
+  virtual already_AddRefed<ImageLayer> CreateImageLayer() {
+    NS_RUNTIMEABORT("Not implemented.");
+    return nullptr;
+  }
+  virtual already_AddRefed<PaintedLayer> CreatePaintedLayer() {
+    nsRefPtr<PaintedLayer> layer = new TestPaintedLayer(this);
+    return layer.forget();
+  }
+  virtual already_AddRefed<ColorLayer> CreateColorLayer() {
+    NS_RUNTIMEABORT("Not implemented.");
+    return nullptr;
+  }
+  virtual void SetRoot(Layer* aLayer) {}
+  virtual void BeginTransactionWithTarget(gfxContext* aTarget) {}
+  virtual already_AddRefed<CanvasLayer> CreateCanvasLayer() {
+    NS_RUNTIMEABORT("Not implemented.");
+    return nullptr;
+  }
+  virtual void EndTransaction(DrawPaintedLayerCallback aCallback,
+                              void* aCallbackData,
+                              EndTransactionFlags aFlags = END_DEFAULT) {}
+  virtual int32_t GetMaxTextureSize() const { return 0; }
 };
 
 class TestUserData: public LayerUserData {
@@ -113,49 +129,52 @@ TEST(Layers, Type) {
 }
 
 TEST(Layers, UserData) {
-  TestContainerLayer* layerPtr = new TestContainerLayer(nullptr);
+  UniquePtr<TestContainerLayer> layerPtr(new TestContainerLayer(nullptr));
   TestContainerLayer& layer = *layerPtr;
 
   void* key1 = (void*)1;
   void* key2 = (void*)2;
   void* key3 = (void*)3;
 
-  TestUserData* data1 = new TestUserData;
-  TestUserData* data2 = new TestUserData;
-  TestUserData* data3 = new TestUserData;
-
   ASSERT_EQ(nullptr, layer.GetUserData(key1));
   ASSERT_EQ(nullptr, layer.GetUserData(key2));
   ASSERT_EQ(nullptr, layer.GetUserData(key3));
+
+  TestUserData* data1 = new TestUserData;
+  TestUserData* data2 = new TestUserData;
+  TestUserData* data3 = new TestUserData;
 
   layer.SetUserData(key1, data1);
   layer.SetUserData(key2, data2);
   layer.SetUserData(key3, data3);
 
   // Also checking that the user data is returned but not free'd
-  ASSERT_EQ(data1, layer.RemoveUserData(key1).forget());
-  ASSERT_EQ(data2, layer.RemoveUserData(key2).forget());
-  ASSERT_EQ(data3, layer.RemoveUserData(key3).forget());
+  UniquePtr<LayerUserData> d1(layer.RemoveUserData(key1).forget());
+  UniquePtr<LayerUserData> d2(layer.RemoveUserData(key2).forget());
+  UniquePtr<LayerUserData> d3(layer.RemoveUserData(key3).forget());
+  ASSERT_EQ(data1, d1.get());
+  ASSERT_EQ(data2, d2.get());
+  ASSERT_EQ(data3, d3.get());
 
-  layer.SetUserData(key1, data1);
-  layer.SetUserData(key2, data2);
-  layer.SetUserData(key3, data3);
+  layer.SetUserData(key1, d1.release());
+  layer.SetUserData(key2, d2.release());
+  layer.SetUserData(key3, d3.release());
 
   // Layer has ownership of data1-3, check that they are destroyed
   EXPECT_CALL(*data1, Die());
   EXPECT_CALL(*data2, Die());
   EXPECT_CALL(*data3, Die());
-  delete layerPtr;
-
 }
 
 static
 already_AddRefed<Layer> CreateLayer(char aLayerType, LayerManager* aManager) {
   nsRefPtr<Layer> layer = nullptr;
   if (aLayerType == 'c') {
-    layer = new TestContainerLayer(aManager);
+    layer = aManager->CreateContainerLayer();
   } else if (aLayerType == 't') {
-    layer = new TestPaintedLayer(aManager);
+    layer = aManager->CreatePaintedLayer();
+  } else if (aLayerType == 'o') {
+    layer = aManager->CreateColorLayer();
   }
   return layer.forget();
 }
@@ -169,7 +188,9 @@ already_AddRefed<Layer> CreateLayerTree(
 
   aLayersOut.Clear();
 
-  manager = new TestLayerManager();
+  if (!manager) {
+    manager = new TestLayerManager();
+  }
 
   nsRefPtr<Layer> rootLayer = nullptr;
   nsRefPtr<ContainerLayer> parentContainerLayer = nullptr;
@@ -215,6 +236,11 @@ already_AddRefed<Layer> CreateLayerTree(
   }
   if (rootLayer) {
     rootLayer->ComputeEffectiveTransforms(Matrix4x4());
+    manager->SetRoot(rootLayer);
+    if (rootLayer->AsLayerComposite()) {
+      // Only perform this for LayerManagerComposite
+      CompositorParent::SetShadowProperties(rootLayer);
+    }
   }
   return rootLayer.forget();
 }
@@ -222,10 +248,10 @@ already_AddRefed<Layer> CreateLayerTree(
 TEST(Layers, LayerTree) {
   const char* layerTreeSyntax = "c(c(tt))";
   nsIntRegion layerVisibleRegion[] = {
-    nsIntRegion(nsIntRect(0,0,100,100)),
-    nsIntRegion(nsIntRect(0,0,100,100)),
-    nsIntRegion(nsIntRect(0,0,100,100)),
-    nsIntRegion(nsIntRect(10,10,20,20)),
+    nsIntRegion(IntRect(0,0,100,100)),
+    nsIntRegion(IntRect(0,0,100,100)),
+    nsIntRegion(IntRect(0,0,100,100)),
+    nsIntRegion(IntRect(10,10,20,20)),
   };
   Matrix4x4 transforms[] = {
     Matrix4x4(),

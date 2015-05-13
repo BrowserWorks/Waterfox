@@ -4,6 +4,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files('**'):
+    BUG_COMPONENT = ('Core', 'Layout: Form Controls')
+
 MOCHITEST_MANIFESTS += ['test/mochitest.ini']
 MOCHITEST_CHROME_MANIFESTS += ['test/chrome.ini']
 
@@ -39,8 +42,6 @@ UNIFIED_SOURCES += [
 
 FAIL_ON_WARNINGS = True
 
-MSVC_ENABLE_PGO = True
-
 FINAL_LIBRARY = 'xul'
 
 LOCAL_INCLUDES += [
@@ -48,6 +49,7 @@ LOCAL_INCLUDES += [
     '../../editor/txmgr',
     '../base',
     '../generic',
+    '../style',
     '../xul',
     '/dom/base',
     '/dom/html',
@@ -56,8 +58,4 @@ LOCAL_INCLUDES += [
 if CONFIG['ENABLE_INTL_API']:
     # nsNumberControlFrame.cpp requires ICUUtils.h which in turn requires
     # i18n/unum.h
-    LOCAL_INCLUDES += [
-        '../../intl/icu/source/common',
-        '../../intl/icu/source/i18n',
-    ]
-
+    CXXFLAGS += CONFIG['MOZ_ICU_CFLAGS']

@@ -359,6 +359,13 @@ nsHTMLReflowState::Init(nsPresContext* aPresContext,
                    "very large sizes, not attempts at intrinsic inline-size "
                    "calculation");
 
+  if (AvailableBSize() != NS_UNCONSTRAINEDSIZE && parentReflowState &&
+      parentReflowState->GetWritingMode().IsOrthogonalTo(mWritingMode)) {
+    // Orthogonal frames are always reflowed with unconstrained block-size,
+    // to avoid incomplete reflow across an orthogonal boundary.
+    AvailableBSize() = NS_UNCONSTRAINEDSIZE;
+  }
+
   mStylePosition = frame->StylePosition();
   mStyleDisplay = frame->StyleDisplay();
   mStyleVisibility = frame->StyleVisibility();
@@ -379,52 +386,57 @@ nsHTMLReflowState::Init(nsPresContext* aPresContext,
 
   nsIFrame *parent = frame->GetParent();
   if (parent &&
-      (parent->GetStateBits() & NS_FRAME_IN_CONSTRAINED_HEIGHT) &&
+      (parent->GetStateBits() & NS_FRAME_IN_CONSTRAINED_BSIZE) &&
       !(parent->GetType() == nsGkAtoms::scrollFrame &&
         parent->StyleDisplay()->mOverflowY != NS_STYLE_OVERFLOW_HIDDEN)) {
-    frame->AddStateBits(NS_FRAME_IN_CONSTRAINED_HEIGHT);
+    frame->AddStateBits(NS_FRAME_IN_CONSTRAINED_BSIZE);
   } else if (type == nsGkAtoms::svgForeignObjectFrame) {
-    // An SVG foreignObject frame is inherently constrained height.
-    frame->AddStateBits(NS_FRAME_IN_CONSTRAINED_HEIGHT);
-  } else if ((mStylePosition->mHeight.GetUnit() != eStyleUnit_Auto ||
-              mStylePosition->mMaxHeight.GetUnit() != eStyleUnit_None) &&
-              // Don't set NS_FRAME_IN_CONSTRAINED_HEIGHT on body or html
-              // elements.
-             (frame->GetContent() &&
-            !(frame->GetContent()->IsHTML(nsGkAtoms::body) ||
-              frame->GetContent()->IsHTML(nsGkAtoms::html)))) {
+    // An SVG foreignObject frame is inherently constrained block-size.
+    frame->AddStateBits(NS_FRAME_IN_CONSTRAINED_BSIZE);
+  } else {
+    const nsStyleCoord& bSizeCoord = mStylePosition->BSize(mWritingMode);
+    const nsStyleCoord& maxBSizeCoord = mStylePosition->MaxBSize(mWritingMode);
+    if ((bSizeCoord.GetUnit() != eStyleUnit_Auto ||
+         maxBSizeCoord.GetUnit() != eStyleUnit_None) &&
+         // Don't set NS_FRAME_IN_CONSTRAINED_BSIZE on body or html elements.
+         (frame->GetContent() &&
+        !(frame->GetContent()->IsAnyOfHTMLElements(nsGkAtoms::body,
+                                                   nsGkAtoms::html)))) {
 
-    // If our height was specified as a percentage, then this could
-    // actually resolve to 'auto', based on:
-    // http://www.w3.org/TR/CSS21/visudet.html#the-height-property
-    nsIFrame* containingBlk = frame;
-    while (containingBlk) {
-      const nsStylePosition* stylePos = containingBlk->StylePosition();
-      if ((stylePos->mHeight.IsCoordPercentCalcUnit() &&
-           !stylePos->mHeight.HasPercent()) ||
-          (stylePos->mMaxHeight.IsCoordPercentCalcUnit() &&
-           !stylePos->mMaxHeight.HasPercent())) {
-        frame->AddStateBits(NS_FRAME_IN_CONSTRAINED_HEIGHT);
-        break;
-      } else if ((stylePos->mHeight.IsCoordPercentCalcUnit() &&
-                  stylePos->mHeight.HasPercent()) ||
-                 (stylePos->mMaxHeight.IsCoordPercentCalcUnit() &&
-                  stylePos->mMaxHeight.HasPercent())) {
-        if (!(containingBlk = containingBlk->GetContainingBlock())) {
-          // If we've reached the top of the tree, then we don't have
-          // a constrained height.
-          frame->RemoveStateBits(NS_FRAME_IN_CONSTRAINED_HEIGHT);
+      // If our block-size was specified as a percentage, then this could
+      // actually resolve to 'auto', based on:
+      // http://www.w3.org/TR/CSS21/visudet.html#the-height-property
+      nsIFrame* containingBlk = frame;
+      while (containingBlk) {
+        const nsStylePosition* stylePos = containingBlk->StylePosition();
+        const nsStyleCoord& bSizeCoord = stylePos->BSize(mWritingMode);
+        const nsStyleCoord& maxBSizeCoord = stylePos->MaxBSize(mWritingMode);
+        if ((bSizeCoord.IsCoordPercentCalcUnit() &&
+             !bSizeCoord.HasPercent()) ||
+            (maxBSizeCoord.IsCoordPercentCalcUnit() &&
+             !maxBSizeCoord.HasPercent())) {
+          frame->AddStateBits(NS_FRAME_IN_CONSTRAINED_BSIZE);
+          break;
+        } else if ((bSizeCoord.IsCoordPercentCalcUnit() &&
+                    bSizeCoord.HasPercent()) ||
+                   (maxBSizeCoord.IsCoordPercentCalcUnit() &&
+                    maxBSizeCoord.HasPercent())) {
+          if (!(containingBlk = containingBlk->GetContainingBlock())) {
+            // If we've reached the top of the tree, then we don't have
+            // a constrained block-size.
+            frame->RemoveStateBits(NS_FRAME_IN_CONSTRAINED_BSIZE);
+            break;
+          }
+
+          continue;
+        } else {
+          frame->RemoveStateBits(NS_FRAME_IN_CONSTRAINED_BSIZE);
           break;
         }
-
-        continue;
-      } else {
-        frame->RemoveStateBits(NS_FRAME_IN_CONSTRAINED_HEIGHT);
-        break;
       }
+    } else {
+      frame->RemoveStateBits(NS_FRAME_IN_CONSTRAINED_BSIZE);
     }
-  } else {
-    frame->RemoveStateBits(NS_FRAME_IN_CONSTRAINED_HEIGHT);
   }
 
   NS_WARN_IF_FALSE((mFrameType == NS_CSS_FRAME_TYPE_INLINE &&
@@ -495,7 +507,7 @@ nsHTMLReflowState::InitResizeFlags(nsPresContext* aPresContext, nsIAtom* aFrameT
       nsLayoutUtils::FontSizeInflationEnabled(aPresContext)) {
     // Create our font inflation data if we don't have it already, and
     // give it our current width information.
-    bool dirty = nsFontInflationData::UpdateFontInflationDataWidthFor(*this) &&
+    bool dirty = nsFontInflationData::UpdateFontInflationDataISizeFor(*this) &&
                  // Avoid running this at the box-to-block interface
                  // (where we shouldn't be inflating anyway, and where
                  // reflow state construction is probably to construct a
@@ -692,14 +704,15 @@ nsHTMLReflowState::InitResizeFlags(nsPresContext* aPresContext, nsIAtom* aFrameT
   }
 }
 
-/* static */
 nscoord
-nsHTMLReflowState::GetContainingBlockContentWidth(const nsHTMLReflowState* aReflowState)
+nsHTMLReflowState::GetContainingBlockContentISize(WritingMode aWritingMode) const
 {
-  const nsHTMLReflowState* rs = aReflowState->mCBReflowState;
-  if (!rs)
+  if (!mCBReflowState) {
     return 0;
-  return rs->ComputedWidth();
+  }
+  return mCBReflowState->GetWritingMode().IsOrthogonalTo(aWritingMode)
+    ? mCBReflowState->ComputedBSize()
+    : mCBReflowState->ComputedISize();
 }
 
 void
@@ -1790,15 +1803,13 @@ CalcQuirkContainingBlockHeight(const nsHTMLReflowState* aCBReflowState)
       if (firstAncestorRS) {
         nsIContent* frameContent = firstAncestorRS->frame->GetContent();
         if (frameContent) {
-          nsIAtom *contentTag = frameContent->Tag();
-          NS_ASSERTION(contentTag == nsGkAtoms::html, "First ancestor is not HTML");
+          NS_ASSERTION(frameContent->IsHTMLElement(nsGkAtoms::html), "First ancestor is not HTML");
         }
       }
       if (secondAncestorRS) {
         nsIContent* frameContent = secondAncestorRS->frame->GetContent();
         if (frameContent) {
-          nsIAtom *contentTag = frameContent->Tag();
-          NS_ASSERTION(contentTag == nsGkAtoms::body, "Second ancestor is not BODY");
+          NS_ASSERTION(frameContent->IsHTMLElement(nsGkAtoms::body), "Second ancestor is not BODY");
         }
       }
 #endif
@@ -2156,11 +2167,14 @@ nsHTMLReflowState::InitConstraints(nsPresContext* aPresContext,
 
       // Make sure legend frames with display:block and width:auto still
       // shrink-wrap.
+      // Also shrink-wrap blocks that are orthogonal to their container.
       if (isBlock &&
           ((aFrameType == nsGkAtoms::legendFrame &&
             frame->StyleContext()->GetPseudo() != nsCSSAnonBoxes::scrolledContent) ||
            (aFrameType == nsGkAtoms::scrollFrame &&
-            frame->GetContentInsertionFrame()->GetType() == nsGkAtoms::legendFrame))) {
+            frame->GetContentInsertionFrame()->GetType() == nsGkAtoms::legendFrame) ||
+           (mCBReflowState &&
+            mCBReflowState->GetWritingMode().IsOrthogonalTo(mWritingMode)))) {
         computeSizeFlags =
           ComputeSizeFlags(computeSizeFlags | ComputeSizeFlags::eShrinkWrap);
       }
@@ -2410,25 +2424,9 @@ nsHTMLReflowState::CalculateBlockSideMargins(nsIAtom* aFrameType)
 
   // The css2 spec clearly defines how block elements should behave
   // in section 10.3.3.
-  bool isAutoStartMargin, isAutoEndMargin;
   const nsStyleSides& styleSides = mStyleMargin->mMargin;
-  if (cbWM.IsVertical()) {
-    if (cbWM.IsBidiLTR()) {
-      isAutoStartMargin = eStyleUnit_Auto == styleSides.GetTopUnit();
-      isAutoEndMargin = eStyleUnit_Auto == styleSides.GetBottomUnit();
-    } else {
-      isAutoStartMargin = eStyleUnit_Auto == styleSides.GetBottomUnit();
-      isAutoEndMargin = eStyleUnit_Auto == styleSides.GetTopUnit();
-    }
-  } else {
-    if (cbWM.IsBidiLTR()) {
-      isAutoStartMargin = eStyleUnit_Auto == styleSides.GetLeftUnit();
-      isAutoEndMargin = eStyleUnit_Auto == styleSides.GetRightUnit();
-    } else {
-      isAutoStartMargin = eStyleUnit_Auto == styleSides.GetRightUnit();
-      isAutoEndMargin = eStyleUnit_Auto == styleSides.GetLeftUnit();
-    }
-  }
+  bool isAutoStartMargin = eStyleUnit_Auto == styleSides.GetIStartUnit(cbWM);
+  bool isAutoEndMargin = eStyleUnit_Auto == styleSides.GetIEndUnit(cbWM);
   if (!isAutoStartMargin && !isAutoEndMargin) {
     // Neither margin is 'auto' so we're over constrained. Use the
     // 'direction' property of the parent to tell which margin to

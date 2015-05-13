@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set sw=2 ts=2 et tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -13,6 +13,7 @@
 #include "nsITextControlFrame.h"
 #include "nsCycleCollectionParticipant.h"
 #include "mozilla/dom/Element.h"
+#include "mozilla/Attributes.h"
 #include "mozilla/WeakPtr.h"
 
 class nsTextInputListener;
@@ -127,7 +128,7 @@ class RestoreSelectionState;
 
 class nsTextEditorState : public mozilla::SupportsWeakPtr<nsTextEditorState> {
 public:
-  MOZ_DECLARE_REFCOUNTED_TYPENAME(nsTextEditorState)
+  MOZ_DECLARE_WEAKREFERENCE_TYPENAME(nsTextEditorState)
   explicit nsTextEditorState(nsITextControlElement* aOwningElement);
   ~nsTextEditorState();
 
@@ -142,8 +143,9 @@ public:
   nsresult PrepareEditor(const nsAString *aValue = nullptr);
   void InitializeKeyboardEventListeners();
 
-  void SetValue(const nsAString& aValue, bool aUserInput,
-                bool aSetValueAsChanged);
+  MOZ_WARN_UNUSED_RESULT bool SetValue(const nsAString& aValue,
+                                       bool aUserInput,
+                                       bool aSetValueAsChanged);
   void GetValue(nsAString& aValue, bool aIgnoreWrap) const;
   void EmptyValue() { if (mValue) mValue->Truncate(); }
   bool IsEmpty() const { return mValue ? mValue->IsEmpty() : true; }
@@ -238,7 +240,7 @@ private:
 
   nsresult InitializeRootNode();
 
-  void FinishedRestoringSelection() { mRestoringSelection = nullptr; }
+  void FinishedRestoringSelection();
 
   mozilla::dom::HTMLInputElement* GetParentNumberControl(nsFrame* aFrame) const;
 
@@ -268,14 +270,16 @@ private:
   friend class InitializationGuard;
   friend class PrepareEditorEvent;
 
-  nsITextControlElement* const mTextCtrlElement;
+  // The text control element owns this object, and ensures that this object
+  // has a smaller lifetime.
+  nsITextControlElement* const MOZ_NON_OWNING_REF mTextCtrlElement;
   nsRefPtr<nsTextInputSelectionImpl> mSelCon;
-  RestoreSelectionState* mRestoringSelection;
+  nsRefPtr<RestoreSelectionState> mRestoringSelection;
   nsCOMPtr<nsIEditor> mEditor;
   nsCOMPtr<mozilla::dom::Element> mRootNode;
   nsCOMPtr<mozilla::dom::Element> mPlaceholderDiv;
   nsTextControlFrame* mBoundFrame;
-  nsTextInputListener* mTextListener;
+  nsRefPtr<nsTextInputListener> mTextListener;
   nsAutoPtr<nsCString> mValue;
   nsRefPtr<nsAnonDivObserver> mMutationObserver;
   mutable nsString mCachedValue; // Caches non-hard-wrapped value on a multiline control.

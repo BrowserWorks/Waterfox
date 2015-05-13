@@ -19,7 +19,6 @@ from __future__ import unicode_literals
 import os
 
 from collections import OrderedDict
-from contextlib import contextmanager
 from mozbuild.util import (
     HierarchicalStringList,
     HierarchicalStringListWithFlagsFactory,
@@ -31,6 +30,7 @@ from mozbuild.util import (
     StrictOrderingOnAppendList,
     StrictOrderingOnAppendListWithFlagsFactory,
     TypedList,
+    TypedNamedTuple,
 )
 import mozpack.path as mozpath
 from types import FunctionType
@@ -60,11 +60,11 @@ class Context(KeyedDefaultDict):
     lots of empty/default values, you have a data structure with only the
     values that were read or touched.
 
-    Instances of variables classes are created by invoking class_name(),
-    except when class_name derives from ContextDerivedValue, in which
-    case class_name(instance_of_the_context) is invoked.
-    A value is added to those calls when instances are created during
-    assignment (setitem).
+    Instances of variables classes are created by invoking ``class_name()``,
+    except when class_name derives from ``ContextDerivedValue`` or
+    ``SubContext``, in which case ``class_name(instance_of_the_context)`` or
+    ``class_name(self)`` is invoked. A value is added to those calls when
+    instances are created during assignment (setitem).
 
     allowed_variables is a dict of the variables that can be set and read in
     this context instance. Keys in this dict are the strings representing keys
@@ -83,7 +83,8 @@ class Context(KeyedDefaultDict):
         # a list to be a problem.
         self._all_paths = []
         self.config = config
-        self.executed_time = 0
+        self.execution_time = 0
+        self._sandbox = None
         KeyedDefaultDict.__init__(self, self._factory)
 
     def push_source(self, path):
@@ -166,7 +167,6 @@ class Context(KeyedDefaultDict):
 
     def _factory(self, key):
         """Function called when requesting a missing key."""
-
         defaults = self._allowed_variables.get(key)
         if not defaults:
             raise KeyError('global_ns', 'get_unknown', key)
@@ -268,8 +268,41 @@ class Context(KeyedDefaultDict):
 
 
 class TemplateContext(Context):
+    def __init__(self, template=None, allowed_variables={}, config=None):
+        self.template = template
+        super(TemplateContext, self).__init__(allowed_variables, config)
+
     def _validate(self, key, value):
         return Context._validate(self, key, value, True)
+
+
+class SubContext(Context, ContextDerivedValue):
+    """A Context derived from another Context.
+
+    Sub-contexts are intended to be used as context managers.
+
+    Sub-contexts inherit paths and other relevant state from the parent
+    context.
+    """
+    def __init__(self, parent):
+        assert isinstance(parent, Context)
+
+        Context.__init__(self, allowed_variables=self.VARIABLES,
+                         config=parent.config)
+
+        # Copy state from parent.
+        for p in parent.source_stack:
+            self.push_source(p)
+        self._sandbox = parent._sandbox
+
+    def __enter__(self):
+        if not self._sandbox or self._sandbox() is None:
+            raise Exception('a sandbox is required')
+
+        self._sandbox().push_subcontext(self)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self._sandbox().pop_subcontext(self)
 
 
 class FinalTargetValue(ContextDerivedValue, unicode):
@@ -283,6 +316,21 @@ class FinalTargetValue(ContextDerivedValue, unicode):
             if context['DIST_SUBDIR']:
                 value += '/' + context['DIST_SUBDIR']
         return unicode.__new__(cls, value)
+
+
+def Enum(*values):
+    assert len(values)
+    default = values[0]
+
+    class EnumClass(object):
+        def __new__(cls, value=None):
+            if value is None:
+                return default
+            if value in values:
+                return value
+            raise ValueError('Invalid value. Allowed values are: %s'
+                             % ', '.join(repr(v) for v in values))
+    return EnumClass
 
 
 class SourcePath(ContextDerivedValue, UserString):
@@ -366,6 +414,137 @@ def ContextDerivedTypedList(type, base_class=List):
     return _TypedList
 
 
+BugzillaComponent = TypedNamedTuple('BugzillaComponent',
+                        [('product', unicode), ('component', unicode)])
+
+
+class Files(SubContext):
+    """Metadata attached to files.
+
+    It is common to want to annotate files with metadata, such as which
+    Bugzilla component tracks issues with certain files. This sub-context is
+    where we stick that metadata.
+
+    The argument to this sub-context is a file matching pattern that is applied
+    against the host file's directory. If the pattern matches a file whose info
+    is currently being sought, the metadata attached to this instance will be
+    applied to that file.
+
+    Patterns are collections of filename characters with ``/`` used as the
+    directory separate (UNIX-style paths) and ``*`` and ``**`` used to denote
+    wildcard matching.
+
+    Patterns without the ``*`` character are literal matches and will match at
+    most one entity.
+
+    Patterns with ``*`` or ``**`` are wildcard matches. ``*`` matches files
+    at least within a single directory. ``**`` matches files across several
+    directories.
+
+    ``foo.html``
+       Will match only the ``foo.html`` file in the current directory.
+    ``*.jsm``
+       Will match all ``.jsm`` files in the current directory.
+    ``**/*.cpp``
+       Will match all ``.cpp`` files in this and all child directories.
+    ``foo/*.css``
+       Will match all ``.css`` files in the ``foo/`` directory.
+    ``bar/*``
+       Will match all files in the ``bar/`` directory and all of its
+       children directories.
+    ``bar/**``
+       This is equivalent to ``bar/*`` above.
+    ``bar/**/foo``
+       Will match all ``foo`` files in the ``bar/`` directory and all of its
+       children directories.
+
+    The difference in behavior between ``*`` and ``**`` is only evident if
+    a pattern follows the ``*`` or ``**``. A pattern ending with ``*`` is
+    greedy. ``**`` is needed when you need an additional pattern after the
+    wildcard. e.g. ``**/foo``.
+    """
+
+    VARIABLES = {
+        'BUG_COMPONENT': (BugzillaComponent, tuple,
+            """The bug component that tracks changes to these files.
+
+            Values are a 2-tuple of unicode describing the Bugzilla product and
+            component. e.g. ``('Core', 'Build Config')``.
+            """, None),
+
+        'FINAL': (bool, bool,
+            """Mark variable assignments as finalized.
+
+            During normal processing, values from newer Files contexts
+            overwrite previously set values. Last write wins. This behavior is
+            not always desired. ``FINAL`` provides a mechanism to prevent
+            further updates to a variable.
+
+            When ``FINAL`` is set, the value of all variables defined in this
+            context are marked as frozen and all subsequent writes to them
+            are ignored during metadata reading.
+
+            See :ref:`mozbuild_files_metadata_finalizing` for more info.
+            """, None),
+    }
+
+    def __init__(self, parent, pattern=None):
+        super(Files, self).__init__(parent)
+        self.pattern = pattern
+        self.finalized = set()
+
+    def __iadd__(self, other):
+        assert isinstance(other, Files)
+
+        for k, v in other.items():
+            # Ignore updates to finalized flags.
+            if k in self.finalized:
+                continue
+
+            # Only finalize variables defined in this instance.
+            if k == 'FINAL':
+                self.finalized |= set(other) - {'FINAL'}
+                continue
+
+            self[k] = v
+
+        return self
+
+    def asdict(self):
+        """Return this instance as a dict with built-in data structures.
+
+        Call this to obtain an object suitable for serializing.
+        """
+        d = {}
+        if 'BUG_COMPONENT' in self:
+            bc = self['BUG_COMPONENT']
+            d['bug_component'] = (bc.product, bc.component)
+
+        return d
+
+
+# This defines functions that create sub-contexts.
+#
+# Values are classes that are SubContexts. The class name will be turned into
+# a function that when called emits an instance of that class.
+#
+# Arbitrary arguments can be passed to the class constructor. The first
+# argument is always the parent context. It is up to each class to perform
+# argument validation.
+SUBCONTEXTS = [
+    Files,
+]
+
+for cls in SUBCONTEXTS:
+    if not issubclass(cls, SubContext):
+        raise ValueError('SUBCONTEXTS entry not a SubContext class: %s' % cls)
+
+    if not hasattr(cls, 'VARIABLES'):
+        raise ValueError('SUBCONTEXTS entry does not have VARIABLES: %s' % cls)
+
+SUBCONTEXTS = {cls.__name__: cls for cls in SUBCONTEXTS}
+
+
 # This defines the set of mutable global variables.
 #
 # Each variable is a tuple of:
@@ -444,12 +623,45 @@ VARIABLES = {
         and reduce the debug info size.
         """, None),
 
-    'GENERATED_FILES': (StrictOrderingOnAppendList, list,
+    'GENERATED_FILES': (StrictOrderingOnAppendListWithFlagsFactory({
+                'script': unicode,
+                'inputs': list }), list,
         """Generic generated files.
 
-        This variable contains a list of generate files for the build system
-        to generate at export time. The rules for those files still live in
-        Makefile.in.
+        This variable contains a list of files for the build system to
+        generate at export time. The generation method may be declared
+        with optional ``script`` and ``inputs`` flags on individual entries.
+        If the optional ``script`` flag is not present on an entry, it
+        is assumed that rules for generating the file are present in
+        the associated Makefile.in.
+
+        Example::
+
+           GENERATED_FILES += ['bar.c', 'baz.c', 'foo.c']
+           bar = GENERATED_FILES['bar.c']
+           bar.script = 'generate.py'
+           bar.inputs = ['datafile-for-bar']
+           foo = GENERATED_FILES['foo.c']
+           foo.script = 'generate.py'
+           foo.inputs = ['datafile-for-foo']
+
+        This definition will generate bar.c by calling the main method of
+        generate.py with a open (for writing) file object for bar.c, and
+        the string ``datafile-for-bar``. In a similar fashion, the main
+        method of generate.py will also be called with an open
+        (for writing) file object for foo.c and the string
+        ``datafile-for-foo``. Please note that only string arguments are
+        supported for passing to scripts, and that all arguments provided
+        to the script should be filenames relative to the directory in which
+        the moz.build file is located.
+
+        To enable using the same script for generating multiple files with
+        slightly different non-filename parameters, alternative entry points
+        into ``script`` can be specified::
+
+          GENERATED_FILES += ['bar.c']
+          bar = GENERATED_FILES['bar.c']
+          bar.script = 'generate.py:make_bar'
         """, 'export'),
 
     'DEFINES': (OrderedDict, dict,
@@ -536,6 +748,12 @@ VARIABLES = {
         """Disable the wrappers for STL which allow it to work with C++ exceptions
         disabled.
         """, None),
+
+    'DIST_FILES': (StrictOrderingOnAppendList, list,
+        """Additional files to place in ``FINAL_TARGET`` (typically ``dist/bin``).
+
+        Unlike ``FINAL_TARGET_FILES``, these files are preprocessed.
+        """, 'libs'),
 
     'EXTRA_COMPONENTS': (StrictOrderingOnAppendList, list,
         """Additional component files to distribute.
@@ -648,6 +866,13 @@ VARIABLES = {
         populated by calling add_java_jar().
         """, 'libs'),
 
+    'JS_PREFERENCE_FILES': (StrictOrderingOnAppendList, list,
+        """Exported javascript files.
+
+        A list of files copied into the dist directory for packaging and installation.
+        Path will be defined for gre or application prefs dir based on what is building.
+        """, 'libs'),
+
     'LIBRARY_DEFINES': (OrderedDict, dict,
         """Dictionary of compiler defines to declare for the entire library.
 
@@ -704,10 +929,6 @@ VARIABLES = {
         """Additional directories to be searched for include files by the compiler.
         """, None),
 
-    'MSVC_ENABLE_PGO': (bool, bool,
-        """Whether profile-guided optimization is enabled for MSVC in this directory.
-        """, None),
-
     'NO_PGO': (bool, bool,
         """Whether profile-guided optimization is disable in this directory.
         """, None),
@@ -749,6 +970,27 @@ VARIABLES = {
         """The linker version script for shared libraries.
 
         This variable can only be used on Linux.
+        """, None),
+
+    'BRANDING_FILES': (HierarchicalStringListWithFlagsFactory({'source': unicode}), list,
+        """List of files to be installed into the branding directory.
+
+        ``BRANDING_FILES`` will copy (or symlink, if the platform supports it)
+        the contents of its files to the ``dist/branding`` directory. Files that
+        are destined for a subdirectory can be specified by accessing a field.
+        For example, to export ``foo.png`` to the top-level directory and
+        ``bar.png`` to the directory ``images/subdir``, append to
+        ``BRANDING_FILES`` like so::
+
+           BRANDING_FILES += ['foo.png']
+           BRANDING_FILES.images.subdir += ['bar.png']
+
+        If the source and destination have different file names, add the
+        destination name to the list and set the ``source`` property on the
+        entry, like so::
+
+           BRANDING_FILES.dir += ['baz.png']
+           BRANDING_FILES.dir['baz.png'].source = 'quux.png'
         """, None),
 
     'RESOURCE_FILES': (HierarchicalStringListWithFlagsFactory({'preprocess': bool}), list,
@@ -867,11 +1109,17 @@ VARIABLES = {
         ends with ``HOST_BIN_SUFFIX``, ``HOST_PROGRAM`` will remain unchanged.
         """, None),
 
-    'NO_DIST_INSTALL': (bool, bool,
-        """Disable installing certain files into the distribution directory.
+    'DIST_INSTALL': (Enum(None, False, True), bool,
+        """Whether to install certain files into the dist directory.
 
-        If present, some files defined by other variables won't be
-        distributed/shipped with the produced build.
+        By default, some files types are installed in the dist directory, and
+        some aren't. Set this variable to True to force the installation of
+        some files that wouldn't be installed by default. Set this variable to
+        False to force to not install some files that would be installed by
+        default.
+
+        This is confusing for historical reasons, but eventually, the behavior
+        will be made explicit.
         """, None),
 
     'JAR_MANIFESTS': (StrictOrderingOnAppendList, list,
@@ -889,7 +1137,7 @@ VARIABLES = {
         This is a list of files that define XPCOM interface definitions.
         Entries must be files that exist. Entries are almost certainly ``.idl``
         files.
-        """, 'misc'),
+        """, 'export'),
 
     'XPIDL_MODULE': (unicode, unicode,
         """XPCOM Interface Definition Module Name.
@@ -1039,6 +1287,25 @@ VARIABLES = {
         the $(DIST_SUBDIR) directory of the otherwise default value is used.
         """, None),
 
+    'USE_EXTENSION_MANIFEST': (bool, bool,
+        """Controls the name of the manifest for JAR files.
+
+        By default, the name of the manifest is ${JAR_MANIFEST}.manifest.
+        Setting this variable to ``True`` changes the name of the manifest to
+        chrome.manifest.
+        """, None),
+
+    'NO_JS_MANIFEST': (bool, bool,
+        """Explicitly disclaims responsibility for manifest listing in EXTRA_COMPONENTS.
+
+        Normally, if you have .js files listed in ``EXTRA_COMPONENTS`` or
+        ``EXTRA_PP_COMPONENTS``, you are expected to have a corresponding
+        .manifest file to go with those .js files.  Setting ``NO_JS_MANIFEST``
+        indicates that the relevant .manifest file and entries for those .js
+        files are elsehwere (jar.mn, for instance) and this state of affairs
+        is OK.
+        """, None),
+
     'GYP_DIRS': (StrictOrderingOnAppendListWithFlagsFactory({
             'variables': dict,
             'input': unicode,
@@ -1120,6 +1387,15 @@ VARIABLES = {
            appear in the moz.build file.
         """, None),
 
+    'ASFLAGS': (List, list,
+        """Flags passed to the assembler for all of the assembly source files
+           declared in this directory.
+
+           Note that the ordering of flags matters here; these flags will be
+           added to the assembler's command line in the same order as they
+           appear in the moz.build file.
+        """, None),
+
     'LDFLAGS': (List, list,
         """Flags passed to the linker when linking all of the libraries and
            executables declared in this directory.
@@ -1162,6 +1438,11 @@ VARIABLES = {
         the path(s) with a '/' character and a '!' character, respectively::
            TEST_HARNESS_FILES.path += ['/build/bar.py', '!quux.py']
         """, 'libs'),
+
+    'NO_EXPAND_LIBS': (bool, bool,
+        """Forces to build a real static library, and no corresponding fake
+           library.
+        """, None),
 }
 
 # Sanity check: we don't want any variable above to have a list as storage type.
@@ -1530,6 +1811,16 @@ DEPRECATION_HINTS = {
     'TEST_TOOL_DIRS': 'Please use the TEST_DIRS variable instead.',
 
     'PARALLEL_DIRS': 'Please use the DIRS variable instead.',
+
+    'NO_DIST_INSTALL': '''
+        Please use
+
+            DIST_INSTALL = False
+
+        instead of
+
+            NO_DIST_INSTALL = True
+    ''',
 }
 
 # Make sure that all template variables have a deprecation hint.

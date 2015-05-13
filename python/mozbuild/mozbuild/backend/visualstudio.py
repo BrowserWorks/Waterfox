@@ -110,7 +110,9 @@ class VisualStudioBackend(CommonBackend):
             self._add_sources(reldir, obj)
 
         elif isinstance(obj, UnifiedSources):
-            self._add_sources(reldir, obj)
+            # XXX we should be letting CommonBackend.consume_object call this
+            # for us instead.
+            self._process_unified_sources(obj);
 
         elif isinstance(obj, Library):
             self._libs_to_paths[obj.basename] = reldir
@@ -128,6 +130,12 @@ class VisualStudioBackend(CommonBackend):
                 includes.append(os.path.join('$(TopSrcDir)', reldir, p))
 
     def _add_sources(self, reldir, obj):
+        s = self._paths_to_sources.setdefault(reldir, set())
+        s.update(obj.files)
+
+    def _process_unified_sources(self, obj):
+        reldir = getattr(obj, 'relativedir', None)
+
         s = self._paths_to_sources.setdefault(reldir, set())
         s.update(obj.files)
 

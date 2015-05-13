@@ -23,35 +23,48 @@ namespace mozilla {
 class GonkAudioDecoderManager : public GonkDecoderManager {
 typedef android::MediaCodecProxy MediaCodecProxy;
 public:
-  GonkAudioDecoderManager(const mp4_demuxer::AudioDecoderConfig& aConfig);
-  ~GonkAudioDecoderManager();
+  GonkAudioDecoderManager(const AudioInfo& aConfig);
 
-  virtual android::sp<MediaCodecProxy> Init(MediaDataDecoderCallback* aCallback) MOZ_OVERRIDE;
+  virtual ~GonkAudioDecoderManager() override;
 
-  virtual nsresult Input(mp4_demuxer::MP4Sample* aSample) MOZ_OVERRIDE;
+  virtual android::sp<MediaCodecProxy> Init(MediaDataDecoderCallback* aCallback) override;
+
+  virtual nsresult Input(MediaRawData* aSample) override;
 
   virtual nsresult Output(int64_t aStreamOffset,
-                          nsRefPtr<MediaData>& aOutput) MOZ_OVERRIDE;
+                          nsRefPtr<MediaData>& aOutput) override;
 
-  virtual nsresult Flush() MOZ_OVERRIDE;
+  virtual nsresult Flush() override;
+
+  virtual bool HasQueuedSample() override;
+
 private:
+  bool PerformFormatSpecificProcess(MediaRawData* aSample);
 
   nsresult CreateAudioData(int64_t aStreamOffset,
                               AudioData** aOutData);
 
   void ReleaseAudioBuffer();
-  // MediaCodedc's wrapper that performs the decoding.
-  android::sp<MediaCodecProxy> mDecoder;
 
   const uint32_t mAudioChannels;
   const uint32_t mAudioRate;
   const uint32_t mAudioProfile;
-  nsTArray<uint8_t> mUserData;
   bool mUseAdts;
 
   MediaDataDecoderCallback*  mReaderCallback;
   android::MediaBuffer* mAudioBuffer;
   android::sp<ALooper> mLooper;
+
+  // MediaCodedc's wrapper that performs the decoding.
+  android::sp<android::MediaCodecProxy> mDecoder;
+
+  // This monitor protects mQueueSample.
+  Monitor mMonitor;
+
+  // An queue with the MP4 samples which are waiting to be sent into OMX.
+  // If an element is an empty MP4Sample, that menas EOS. There should not
+  // any sample be queued after EOS.
+  nsTArray<nsRefPtr<MediaRawData>> mQueueSample;
 };
 
 } // namespace mozilla

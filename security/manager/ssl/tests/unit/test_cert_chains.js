@@ -40,6 +40,21 @@ function test_cert_list_serialization() {
   do_check_true(certList.equals(deserialized));
 }
 
+function test_security_info_serialization(securityInfo, expectedErrorCode) {
+  // Serialize the securityInfo to a string
+  let serHelper = Cc["@mozilla.org/network/serialization-helper;1"]
+                    .getService(Ci.nsISerializationHelper);
+  let serialized = serHelper.serializeToString(securityInfo);
+
+  // Deserialize from the string and compare to the original object
+  let deserialized = serHelper.deserializeObject(serialized);
+  deserialized.QueryInterface(Ci.nsITransportSecurityInfo);
+  do_check_eq(securityInfo.securityState, deserialized.securityState);
+  do_check_eq(securityInfo.errorMessage, deserialized.errorMessage);
+  do_check_eq(securityInfo.errorCode, expectedErrorCode);
+  do_check_eq(deserialized.errorCode, expectedErrorCode);
+}
+
 function run_test() {
   do_get_profile();
   add_tls_server_setup("BadCertServer");
@@ -59,9 +74,10 @@ function run_test() {
   // Test successful connection (failedCertChain should be null)
   add_connection_test(
     // re-use pinning certs (keeler)
-    "good.include-subdomains.pinning.example.com", Cr.NS_OK, null,
+    "good.include-subdomains.pinning.example.com", PRErrorCodeSuccess, null,
     function withSecurityInfo(aTransportSecurityInfo) {
       aTransportSecurityInfo.QueryInterface(Ci.nsITransportSecurityInfo);
+      test_security_info_serialization(aTransportSecurityInfo, 0);
       do_check_eq(aTransportSecurityInfo.failedCertChain, null);
     }
   );
@@ -69,10 +85,11 @@ function run_test() {
   // Test overrideable connection failure (failedCertChain should be non-null)
   add_connection_test(
     "expired.example.com",
-    getXPCOMStatusFromNSS(SEC_ERROR_EXPIRED_CERTIFICATE),
+    SEC_ERROR_EXPIRED_CERTIFICATE,
     null,
     function withSecurityInfo(securityInfo) {
       securityInfo.QueryInterface(Ci.nsITransportSecurityInfo);
+      test_security_info_serialization(securityInfo, SEC_ERROR_EXPIRED_CERTIFICATE);
       do_check_neq(securityInfo.failedCertChain, null);
       let originalCertChain = build_cert_chain(["expired-ee", "test-ca"]);
       do_check_true(originalCertChain.equals(securityInfo.failedCertChain));
@@ -82,10 +99,11 @@ function run_test() {
   // Test non-overrideable error (failedCertChain should be non-null)
   add_connection_test(
     "inadequatekeyusage.example.com",
-    getXPCOMStatusFromNSS(SEC_ERROR_INADEQUATE_KEY_USAGE),
+    SEC_ERROR_INADEQUATE_KEY_USAGE,
     null,
     function withSecurityInfo(securityInfo) {
       securityInfo.QueryInterface(Ci.nsITransportSecurityInfo);
+      test_security_info_serialization(securityInfo, SEC_ERROR_INADEQUATE_KEY_USAGE);
       do_check_neq(securityInfo.failedCertChain, null);
       let originalCertChain = build_cert_chain(["inadequatekeyusage-ee", "test-ca"]);
       do_check_true(originalCertChain.equals(securityInfo.failedCertChain));

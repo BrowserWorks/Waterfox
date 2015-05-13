@@ -88,6 +88,10 @@ const SNAPSHOT_SCHEMA = {
           required: true,
           type: "string",
         },
+        buildID: {
+          required: true,
+          type: "string",
+        },
         userAgent: {
           required: true,
           type: "string",
@@ -95,8 +99,15 @@ const SNAPSHOT_SCHEMA = {
         vendor: {
           type: "string",
         },
+        updateChannel: {
+          type: "string",
+        },
         supportURL: {
           type: "string",
+        },
+        remoteAutoStart: {
+          type: "boolean",
+          required: true,
         },
         numTotalWindows: {
           type: "number",
@@ -186,6 +197,9 @@ const SNAPSHOT_SCHEMA = {
           type: "string",
         },
         windowLayerManagerRemote: {
+          type: "boolean",
+        },
+        supportsHardwareH264: {
           type: "boolean",
         },
         numAcceleratedWindowsMessage: {
@@ -389,18 +403,30 @@ const SNAPSHOT_SCHEMA = {
       required: false,
       type: "object",
       properties: {
-	hasSeccompBPF: {
-	  required: true,
-	  type: "boolean"
-	},
-	canSandboxContent: {
-	  required: false,
-	  type: "boolean"
-	},
-	canSandboxMedia: {
-	  required: false,
-	  type: "boolean"
-	},
+        hasSeccompBPF: {
+          required: true,
+          type: "boolean"
+        },
+        hasSeccompTSync: {
+          required: true,
+          type: "boolean"
+        },
+        hasUserNamespaces: {
+          required: true,
+          type: "boolean"
+        },
+        hasPrivilegedUserNamespaces: {
+          required: true,
+          type: "boolean"
+        },
+        canSandboxContent: {
+          required: false,
+          type: "boolean"
+        },
+        canSandboxMedia: {
+          required: false,
+          type: "boolean"
+        },
       },
     },
   },

@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -32,52 +33,52 @@ protected:
   }
 
   virtual void
-  ActorDestroy(ActorDestroyReason aWhy) MOZ_OVERRIDE;
+  ActorDestroy(ActorDestroyReason aWhy) override;
 
   virtual bool
-  RecvNotifyReceivedMessage(const MobileMessageData& aMessage) MOZ_OVERRIDE;
+  RecvNotifyReceivedMessage(const MobileMessageData& aMessage) override;
 
   virtual bool
-  RecvNotifyRetrievingMessage(const MobileMessageData& aMessage) MOZ_OVERRIDE;
+  RecvNotifyRetrievingMessage(const MobileMessageData& aMessage) override;
 
   virtual bool
-  RecvNotifySendingMessage(const MobileMessageData& aMessage) MOZ_OVERRIDE;
+  RecvNotifySendingMessage(const MobileMessageData& aMessage) override;
 
   virtual bool
-  RecvNotifySentMessage(const MobileMessageData& aMessage) MOZ_OVERRIDE;
+  RecvNotifySentMessage(const MobileMessageData& aMessage) override;
 
   virtual bool
-  RecvNotifyFailedMessage(const MobileMessageData& aMessage) MOZ_OVERRIDE;
+  RecvNotifyFailedMessage(const MobileMessageData& aMessage) override;
 
   virtual bool
-  RecvNotifyDeliverySuccessMessage(const MobileMessageData& aMessage) MOZ_OVERRIDE;
+  RecvNotifyDeliverySuccessMessage(const MobileMessageData& aMessage) override;
 
   virtual bool
-  RecvNotifyDeliveryErrorMessage(const MobileMessageData& aMessage) MOZ_OVERRIDE;
+  RecvNotifyDeliveryErrorMessage(const MobileMessageData& aMessage) override;
 
   virtual bool
-  RecvNotifyReceivedSilentMessage(const MobileMessageData& aMessage) MOZ_OVERRIDE;
+  RecvNotifyReceivedSilentMessage(const MobileMessageData& aMessage) override;
 
   virtual bool
-  RecvNotifyReadSuccessMessage(const MobileMessageData& aMessage) MOZ_OVERRIDE;
+  RecvNotifyReadSuccessMessage(const MobileMessageData& aMessage) override;
 
   virtual bool
-  RecvNotifyReadErrorMessage(const MobileMessageData& aMessage) MOZ_OVERRIDE;
+  RecvNotifyReadErrorMessage(const MobileMessageData& aMessage) override;
 
   virtual bool
-  RecvNotifyDeletedMessageInfo(const DeletedMessageInfoData& aDeletedInfo) MOZ_OVERRIDE;
+  RecvNotifyDeletedMessageInfo(const DeletedMessageInfoData& aDeletedInfo) override;
 
   virtual PSmsRequestChild*
-  AllocPSmsRequestChild(const IPCSmsRequest& aRequest) MOZ_OVERRIDE;
+  AllocPSmsRequestChild(const IPCSmsRequest& aRequest) override;
 
   virtual bool
-  DeallocPSmsRequestChild(PSmsRequestChild* aActor) MOZ_OVERRIDE;
+  DeallocPSmsRequestChild(PSmsRequestChild* aActor) override;
 
   virtual PMobileMessageCursorChild*
-  AllocPMobileMessageCursorChild(const IPCMobileMessageCursor& aCursor) MOZ_OVERRIDE;
+  AllocPMobileMessageCursorChild(const IPCMobileMessageCursor& aCursor) override;
 
   virtual bool
-  DeallocPMobileMessageCursorChild(PMobileMessageCursorChild* aActor) MOZ_OVERRIDE;
+  DeallocPMobileMessageCursorChild(PMobileMessageCursorChild* aActor) override;
 };
 
 class SmsRequestChild : public PSmsRequestChild
@@ -96,10 +97,10 @@ protected:
   }
 
   virtual void
-  ActorDestroy(ActorDestroyReason aWhy) MOZ_OVERRIDE;
+  ActorDestroy(ActorDestroyReason aWhy) override;
 
   virtual bool
-  Recv__delete__(const MessageReply& aReply) MOZ_OVERRIDE;
+  Recv__delete__(const MessageReply& aReply) override;
 };
 
 class MobileMessageCursorChild : public PMobileMessageCursorChild
@@ -122,13 +123,13 @@ protected:
   }
 
   virtual void
-  ActorDestroy(ActorDestroyReason aWhy) MOZ_OVERRIDE;
+  ActorDestroy(ActorDestroyReason aWhy) override;
 
   virtual bool
-  RecvNotifyResult(const MobileMessageCursorData& aData) MOZ_OVERRIDE;
+  RecvNotifyResult(const MobileMessageCursorData& aData) override;
 
   virtual bool
-  Recv__delete__(const int32_t& aError) MOZ_OVERRIDE;
+  Recv__delete__(const int32_t& aError) override;
 
 private:
   void

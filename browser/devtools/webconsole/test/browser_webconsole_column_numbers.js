@@ -30,12 +30,12 @@ function consoleOpened(aHud) {
 
 function testLocationColumn() {
   let messages = hud.outputNode.children;
-  let expected = ['10:6', '10:38', '11:8', '12:10', '13:8', '14:6'];
+  let expected = ['10:7', '10:39', '11:9', '12:11', '13:9', '14:7'];
 
   for(let i = 0, len = messages.length; i < len; i++) {
     let msg = messages[i].textContent;
 
-    is(msg.contains(expected[i]), true, 'Found expected line:column of ' + expected[i]);
+    is(msg.includes(expected[i]), true, 'Found expected line:column of ' + expected[i]);
   }
 
   finishTest();

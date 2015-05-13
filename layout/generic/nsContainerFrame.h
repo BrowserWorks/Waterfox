@@ -51,24 +51,24 @@ public:
   // nsIFrame overrides
   virtual void Init(nsIContent*       aContent,
                     nsContainerFrame* aParent,
-                    nsIFrame*         aPrevInFlow) MOZ_OVERRIDE;
-  virtual nsContainerFrame* GetContentInsertionFrame() MOZ_OVERRIDE
+                    nsIFrame*         aPrevInFlow) override;
+  virtual nsContainerFrame* GetContentInsertionFrame() override
   {
     return this;
   }
 
-  virtual const nsFrameList& GetChildList(ChildListID aList) const MOZ_OVERRIDE;
-  virtual void GetChildLists(nsTArray<ChildList>* aLists) const MOZ_OVERRIDE;
-  virtual void DestroyFrom(nsIFrame* aDestructRoot) MOZ_OVERRIDE;
-  virtual void ChildIsDirty(nsIFrame* aChild) MOZ_OVERRIDE;
+  virtual const nsFrameList& GetChildList(ChildListID aList) const override;
+  virtual void GetChildLists(nsTArray<ChildList>* aLists) const override;
+  virtual void DestroyFrom(nsIFrame* aDestructRoot) override;
+  virtual void ChildIsDirty(nsIFrame* aChild) override;
 
-  virtual bool IsLeaf() const MOZ_OVERRIDE;
-  virtual FrameSearchResult PeekOffsetNoAmount(bool aForward, int32_t* aOffset) MOZ_OVERRIDE;
+  virtual bool IsLeaf() const override;
+  virtual FrameSearchResult PeekOffsetNoAmount(bool aForward, int32_t* aOffset) override;
   virtual FrameSearchResult PeekOffsetCharacter(bool aForward, int32_t* aOffset,
-                                     bool aRespectClusters = true) MOZ_OVERRIDE;
+                                     bool aRespectClusters = true) override;
   
 #ifdef DEBUG_FRAME_DUMP
-  void List(FILE* out = stderr, const char* aPrefix = "", uint32_t aFlags = 0) const MOZ_OVERRIDE;
+  void List(FILE* out = stderr, const char* aPrefix = "", uint32_t aFlags = 0) const override;
 #endif  
 
   // nsContainerFrame methods
@@ -180,10 +180,16 @@ public:
 
   // Syncs properties to the top level view and window, like transparency and
   // shadow.
+  // The SET_ASYNC indicates that the actual nsIWidget calls to sync the window
+  // properties should be done async.
+  enum {
+    SET_ASYNC = 0x01,
+  };
   static void SyncWindowProperties(nsPresContext*       aPresContext,
                                    nsIFrame*            aFrame,
-                                   nsView*             aView,
-                                   nsRenderingContext*  aRC = nullptr);
+                                   nsView*              aView,
+                                   nsRenderingContext*  aRC,
+                                   uint32_t             aFlags);
 
   // Sets the view's attributes from the frame style.
   // - visibility
@@ -228,20 +234,22 @@ public:
                   const mozilla::LogicalSize& aMargin,
                   const mozilla::LogicalSize& aBorder,
                   const mozilla::LogicalSize& aPadding,
-                  bool aShrinkWrap) MOZ_OVERRIDE;
+                  bool aShrinkWrap) override;
 
   /**
-   * Invokes the WillReflow() function, positions the frame and its view (if
-   * requested), and then calls Reflow(). If the reflow succeeds and the child
-   * frame is complete, deletes any next-in-flows using DeleteNextInFlowChild()
+   * Positions aChildFrame and its view (if requested), and then calls Reflow().
+   * If the reflow status after reflowing the child is FULLY_COMPLETE then any
+   * next-in-flows are deleted using DeleteNextInFlowChild().
+   *
+   * @param aContainerWidth  width of the border-box of the containing frame
    *
    * Flags:
    * NS_FRAME_NO_MOVE_VIEW - don't position the frame's view. Set this if you
    *    don't want to automatically sync the frame and view
-   * NS_FRAME_NO_MOVE_FRAME - don't move the frame. aX and aY are ignored in this
+   * NS_FRAME_NO_MOVE_FRAME - don't move the frame. aPos is ignored in this
    *    case. Also implies NS_FRAME_NO_MOVE_VIEW
    */
-  void ReflowChild(nsIFrame*                      aKidFrame,
+  void ReflowChild(nsIFrame*                      aChildFrame,
                    nsPresContext*                 aPresContext,
                    nsHTMLReflowMetrics&           aDesiredSize,
                    const nsHTMLReflowState&       aReflowState,
@@ -262,8 +270,10 @@ public:
    * - sets the view's visibility, opacity, content transparency, and clip
    * - invoked the DidReflow() function
    *
+   * @param aContainerWidth  width of the border-box of the containing frame
+   *
    * Flags:
-   * NS_FRAME_NO_MOVE_FRAME - don't move the frame. aX and aY are ignored in this
+   * NS_FRAME_NO_MOVE_FRAME - don't move the frame. aPos is ignored in this
    *    case. Also implies NS_FRAME_NO_MOVE_VIEW
    * NS_FRAME_NO_MOVE_VIEW - don't position the frame's view. Set this if you
    *    don't want to automatically sync the frame and view
@@ -374,7 +384,7 @@ public:
    * Move any frames on our overflow list to the end of our principal list.
    * @return true if there were any overflow frames
    */
-  virtual bool DrainSelfOverflowList() MOZ_OVERRIDE;
+  virtual bool DrainSelfOverflowList() override;
 
   /**
    * Removes aChild without destroying it and without requesting reflow.
@@ -419,7 +429,7 @@ public:
    */
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                                 const nsRect&           aDirtyRect,
-                                const nsDisplayListSet& aLists) MOZ_OVERRIDE;
+                                const nsDisplayListSet& aLists) override;
 
   /**
    * Destructor function for the proptable-stored framelists --
@@ -606,6 +616,12 @@ protected:
                                   nsIPresShell* aPresShell,
                                   mozilla::FramePropertyTable* aPropTable,
                                   const FramePropertyDescriptor* aProp);
+
+  // ==========================================================================
+
+  // Helper used by Progress and Meter frames. Returns true if the bar should
+  // be rendered vertically, based on writing-mode and -moz-orient properties.
+  bool ResolvedOrientationIsVertical();
 
   // ==========================================================================
 

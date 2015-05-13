@@ -12,6 +12,9 @@
 #include "nsStreamUtils.h"
 #include "nsStringStream.h"
 #include "nsComponentManagerUtils.h"
+#include "nsThreadUtils.h"
+#include "mozilla/Preferences.h"
+
 
 // nsISupports implementation
 NS_IMPL_ISUPPORTS(nsHTTPCompressConv,
@@ -35,6 +38,12 @@ nsHTTPCompressConv::nsHTTPCompressConv()
     , mSkipCount(0)
     , mFlags(0)
 {
+    if (NS_IsMainThread()) {
+        mFailUncleanStops =
+            Preferences::GetBool("network.http.enforce-framing.http", false);
+    } else {
+        mFailUncleanStops = false;
+    }
 }
 
 nsHTTPCompressConv::~nsHTTPCompressConv()
@@ -42,10 +51,10 @@ nsHTTPCompressConv::~nsHTTPCompressConv()
     NS_IF_RELEASE(mListener);
 
     if (mInpBuffer)
-        nsMemory::Free(mInpBuffer);
+        free(mInpBuffer);
 
     if (mOutBuffer)
-        nsMemory::Free(mOutBuffer);
+        free(mOutBuffer);
 
     // For some reason we are not getting Z_STREAM_END.  But this was also seen
     //    for mozilla bug 198133.  Need to handle this case.
@@ -88,6 +97,14 @@ NS_IMETHODIMP
 nsHTTPCompressConv::OnStopRequest(nsIRequest* request, nsISupports *aContext, 
                                   nsresult aStatus)
 {
+    // Framing integrity is enforced for content-encoding: gzip, but not for
+    // content-encoding: deflate. Note that gzip vs deflate is NOT determined
+    // by content sniffing but only via header.
+    if (!mStreamEnded && NS_SUCCEEDED(aStatus) &&
+        (mFailUncleanStops && (mMode == HTTP_COMPRESS_GZIP)) ) {
+        // This is not a clean end of gzip stream: the transfer is incomplete.
+        aStatus = NS_ERROR_NET_PARTIAL_TRANSFER;
+    }
     return mListener->OnStopRequest(request, aContext, aStatus);
 } 
 
@@ -133,20 +150,20 @@ nsHTTPCompressConv::OnDataAvailable(nsIRequest* request,
 
             if (mInpBuffer != nullptr && streamLen > mInpBufferLen)
             {
-                mInpBuffer = (unsigned char *) moz_realloc(mInpBuffer, mInpBufferLen = streamLen);
+                mInpBuffer = (unsigned char *) realloc(mInpBuffer, mInpBufferLen = streamLen);
                
                 if (mOutBufferLen < streamLen * 2)
-                    mOutBuffer = (unsigned char *) moz_realloc(mOutBuffer, mOutBufferLen = streamLen * 3);
+                    mOutBuffer = (unsigned char *) realloc(mOutBuffer, mOutBufferLen = streamLen * 3);
 
                 if (mInpBuffer == nullptr || mOutBuffer == nullptr)
                     return NS_ERROR_OUT_OF_MEMORY;
             }
 
             if (mInpBuffer == nullptr)
-                mInpBuffer = (unsigned char *) moz_malloc(mInpBufferLen = streamLen);
+                mInpBuffer = (unsigned char *) malloc(mInpBufferLen = streamLen);
 
             if (mOutBuffer == nullptr)
-                mOutBuffer = (unsigned char *) moz_malloc(mOutBufferLen = streamLen * 3);
+                mOutBuffer = (unsigned char *) malloc(mOutBufferLen = streamLen * 3);
 
             if (mInpBuffer == nullptr || mOutBuffer == nullptr)
                 return NS_ERROR_OUT_OF_MEMORY;

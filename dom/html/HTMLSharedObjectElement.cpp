@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-// vim:set et sw=2 sts=2 cin:
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -17,6 +17,11 @@
 #include "nsIScriptError.h"
 #include "nsIWidget.h"
 #include "nsContentUtils.h"
+#ifdef XP_MACOSX
+#include "mozilla/EventDispatcher.h"
+#include "mozilla/dom/Event.h"
+#include "mozilla/dom/HTMLObjectElement.h"
+#endif
 
 NS_IMPL_NS_NEW_HTML_ELEMENT_CHECK_PARSER(SharedObject)
 
@@ -36,7 +41,7 @@ HTMLSharedObjectElement::HTMLSharedObjectElement(already_AddRefed<mozilla::dom::
 }
 
 void
-HTMLSharedObjectElement::GetItemValueText(nsAString& aValue)
+HTMLSharedObjectElement::GetItemValueText(DOMString& aValue)
 {
   if (mNodeInfo->Equals(nsGkAtoms::applet)) {
     nsGenericHTMLElement::GetItemValueText(aValue);
@@ -57,6 +62,9 @@ HTMLSharedObjectElement::SetItemValueText(const nsAString& aValue)
 
 HTMLSharedObjectElement::~HTMLSharedObjectElement()
 {
+#ifdef XP_MACOSX
+  HTMLObjectElement::OnFocusBlurPlugin(this, false);
+#endif
   UnregisterActivityObserver();
   DestroyImageLoadingContent();
 }
@@ -75,7 +83,7 @@ HTMLSharedObjectElement::DoneAddingChildren(bool aHaveNotified)
 
     // If we're already in a document, we need to trigger the load
     // Otherwise, BindToTree takes care of that.
-    if (IsInDoc()) {
+    if (IsInComposedDoc()) {
       StartObjectLoad(aHaveNotified);
     }
   }
@@ -107,6 +115,17 @@ NS_INTERFACE_TABLE_HEAD_CYCLE_COLLECTION_INHERITED(HTMLSharedObjectElement)
 NS_INTERFACE_MAP_END_INHERITING(nsGenericHTMLElement)
 
 NS_IMPL_ELEMENT_CLONE(HTMLSharedObjectElement)
+
+#ifdef XP_MACOSX
+
+NS_IMETHODIMP
+HTMLSharedObjectElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
+{
+  HTMLObjectElement::HandleFocusBlurPlugin(this, aVisitor.mEvent);
+  return NS_OK;
+}
+
+#endif // #ifdef XP_MACOSX
 
 nsresult
 HTMLSharedObjectElement::BindToTree(nsIDocument *aDocument,
@@ -143,6 +162,14 @@ void
 HTMLSharedObjectElement::UnbindFromTree(bool aDeep,
                                         bool aNullParent)
 {
+#ifdef XP_MACOSX
+  // When a page is reloaded (when an nsIDocument's content is removed), the
+  // focused element isn't necessarily sent an NS_BLUR_CONTENT event. See
+  // nsFocusManager::ContentRemoved(). This means that a widget may think it
+  // still contains a focused plugin when it doesn't -- which in turn can
+  // disable text input in the browser window. See bug 1137229.
+  HTMLObjectElement::OnFocusBlurPlugin(this, false);
+#endif
   nsObjectLoadingContent::UnbindFromTree(aDeep, aNullParent);
   nsGenericHTMLElement::UnbindFromTree(aDeep, aNullParent);
 }
@@ -164,7 +191,7 @@ HTMLSharedObjectElement::SetAttr(int32_t aNameSpaceID, nsIAtom *aName,
   // We also don't want to start loading the object when we're not yet in
   // a document, just in case that the caller wants to set additional
   // attributes before inserting the node into the document.
-  if (aNotify && IsInDoc() && mIsDoneAddingChildren &&
+  if (aNotify && IsInComposedDoc() && mIsDoneAddingChildren &&
       aNameSpaceID == kNameSpaceID_None && aName == URIAttrName()) {
     return LoadObject(aNotify, true);
   }
@@ -297,7 +324,7 @@ HTMLSharedObjectElement::StartObjectLoad(bool aNotify)
 {
   // BindToTree can call us asynchronously, and we may be removed from the tree
   // in the interim
-  if (!IsInDoc() || !OwnerDoc()->IsActive()) {
+  if (!IsInComposedDoc() || !OwnerDoc()->IsActive()) {
     return;
   }
 
@@ -343,14 +370,14 @@ HTMLSharedObjectElement::CopyInnerTo(Element* aDest)
 }
 
 JSObject*
-HTMLSharedObjectElement::WrapNode(JSContext* aCx)
+HTMLSharedObjectElement::WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
   JSObject* obj;
   if (mNodeInfo->Equals(nsGkAtoms::applet)) {
-    obj = HTMLAppletElementBinding::Wrap(aCx, this);
+    obj = HTMLAppletElementBinding::Wrap(aCx, this, aGivenProto);
   } else {
     MOZ_ASSERT(mNodeInfo->Equals(nsGkAtoms::embed));
-    obj = HTMLEmbedElementBinding::Wrap(aCx, this);
+    obj = HTMLEmbedElementBinding::Wrap(aCx, this, aGivenProto);
   }
   if (!obj) {
     return nullptr;

@@ -79,18 +79,12 @@ class TabsGridLayout extends GridView
             }
         });
 
-        setScrollBarStyle(View.SCROLLBARS_OUTSIDE_OVERLAY);
-        setStretchMode(GridView.STRETCH_SPACING);
-        setGravity(Gravity.CENTER);
-        setNumColumns(GridView.AUTO_FIT);
-
         // The clipToPadding setting in the styles.xml doesn't seem to be working (bug 1101784)
         // so lets set it manually in code for the moment as it's needed for the padding animation
         setClipToPadding(false);
 
         final Resources resources = getResources();
         mColumnWidth = resources.getDimensionPixelSize(R.dimen.new_tablet_tab_panel_column_width);
-        setColumnWidth(mColumnWidth);
 
         final int padding = resources.getDimensionPixelSize(R.dimen.new_tablet_tab_panel_grid_padding);
         final int paddingTop = resources.getDimensionPixelSize(R.dimen.new_tablet_tab_panel_grid_padding_top);
@@ -226,16 +220,33 @@ class TabsGridLayout extends GridView
                 break;
 
             case CLOSED:
-                if(mTabsAdapter.getCount() > 0) {
+                if (mTabsAdapter.getCount() > 0) {
                     animateRemoveTab(tab);
                 }
-               if (tab.isPrivate() == mIsPrivate && mTabsAdapter.getCount() > 0) {
-                   if (mTabsAdapter.removeTab(tab)) {
-                       int selected = mTabsAdapter.getPositionForTab(Tabs.getInstance().getSelectedTab());
-                       updateSelectedStyle(selected);
-                   }
-               }
-               break;
+
+                final Tabs tabsInstance = Tabs.getInstance();
+
+                if (mTabsAdapter.removeTab(tab)) {
+                    if (tab.isPrivate() == mIsPrivate && mTabsAdapter.getCount() > 0) {
+                        int selected = mTabsAdapter.getPositionForTab(tabsInstance.getSelectedTab());
+                        updateSelectedStyle(selected);
+                    }
+                    if(!tab.isPrivate()) {
+                        // Make sure we always have at least one normal tab
+                        final Iterable<Tab> tabs = tabsInstance.getTabsInOrder();
+                        boolean removedTabIsLastNormalTab = true;
+                        for (Tab singleTab : tabs) {
+                            if (!singleTab.isPrivate()) {
+                                removedTabIsLastNormalTab = false;
+                                break;
+                            }
+                        }
+                        if (removedTabIsLastNormalTab) {
+                            tabsInstance.addTab();
+                        }
+                    }
+                }
+                break;
 
             case SELECTED:
                 // Update the selected position, then fall through...

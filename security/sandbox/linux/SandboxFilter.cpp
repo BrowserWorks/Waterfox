@@ -94,7 +94,7 @@ void SandboxFilterImpl::AllowThreadClone() {
 #ifdef MOZ_CONTENT_SANDBOX
 class SandboxFilterImplContent : public SandboxFilterImpl {
 protected:
-  virtual void Build() MOZ_OVERRIDE;
+  virtual void Build() override;
 };
 
 void
@@ -154,6 +154,7 @@ SandboxFilterImplContent::Build() {
   Allow(SYSCALL(munmap));
   Allow(SYSCALL(mprotect));
   Allow(SYSCALL(writev));
+  Allow(SYSCALL(pread64));
   AllowThreadClone();
   Allow(SYSCALL(brk));
 #if SYSCALL_EXISTS(set_thread_area)
@@ -177,6 +178,7 @@ SandboxFilterImplContent::Build() {
 #else
   Allow(SYSCALL(select));
 #endif
+  Allow(SYSCALL(pselect6));
   // Some archs used to have 16-bit uid/gid instead of 32-bit.
 #if SYSCALL_EXISTS(getuid32)
   Allow(SYSCALL(getuid32));
@@ -200,17 +202,17 @@ SandboxFilterImplContent::Build() {
 
   /* Must remove all of the following in the future, when no longer used */
   /* open() is for some legacy APIs such as font loading. */
-  /* See bug 906996 for removing unlink(). */
   Allow(SYSCALL_LARGEFILE(fstat, fstat64));
   Allow(SYSCALL_LARGEFILE(stat, stat64));
   Allow(SYSCALL_LARGEFILE(lstat, lstat64));
+  Allow(SYSCALL_LARGEFILE(newfstatat, fstatat64));
   Allow(SOCKETCALL(socketpair, SOCKETPAIR));
   Deny(EACCES, SOCKETCALL(socket, SOCKET));
   Allow(SYSCALL(open));
-  Allow(SYSCALL(readlink)); /* Workaround for bug 964455 */
+  Deny(EINVAL, SYSCALL(readlink)); /* Workaround for bug 964455 */
+  Deny(EINVAL, SYSCALL(readlinkat)); /* Workaround for bug 964455 */
   Allow(SYSCALL(prctl));
   Allow(SYSCALL(access));
-  Allow(SYSCALL(unlink));
   Allow(SYSCALL(fsync));
   Allow(SYSCALL(msync));
 
@@ -351,7 +353,7 @@ SandboxFilterImplContent::Build() {
 #ifdef MOZ_GMP_SANDBOX
 class SandboxFilterImplGMP : public SandboxFilterImpl {
 protected:
-  virtual void Build() MOZ_OVERRIDE;
+  virtual void Build() override;
 };
 
 void SandboxFilterImplGMP::Build() {
@@ -368,6 +370,7 @@ void SandboxFilterImplGMP::Build() {
   Allow(SOCKETCALL(recvmsg, RECVMSG));
   Allow(SOCKETCALL(sendmsg, SENDMSG));
   Allow(SYSCALL(time));
+  Allow(SYSCALL(sched_yield));
 
   // Nothing after this line is performance-critical.
 

@@ -11,21 +11,23 @@ import mozinfo
 
 
 class Result(object):
-    def __init__(self, status, message, expected=None):
+    def __init__(self, status, message, expected=None, extra=None):
         if status not in self.statuses:
             raise ValueError("Unrecognised status %s" % status)
         self.status = status
         self.message = message
         self.expected = expected
+        self.extra = extra
 
 
 class SubtestResult(object):
-    def __init__(self, name, status, message, expected=None):
+    def __init__(self, name, status, message, stack=None, expected=None):
         self.name = name
         if status not in self.statuses:
             raise ValueError("Unrecognised status %s" % status)
         self.status = status
         self.message = message
+        self.stack = stack
         self.expected = expected
 
 
@@ -67,7 +69,7 @@ class RunInfo(dict):
         while path != os.path.expanduser('~'):
             if path in dirs:
                 break
-            dirs.add(path)
+            dirs.add(str(path))
             path = os.path.split(path)[0]
 
         mozinfo.find_and_update_from_json(*dirs)
@@ -82,14 +84,30 @@ class Test(object):
     result_cls = None
     subtest_result_cls = None
 
-    def __init__(self, url, expected_metadata, timeout=None, path=None):
+    def __init__(self, url, expected_metadata, timeout=DEFAULT_TIMEOUT, path=None,
+                 protocol="http"):
         self.url = url
         self._expected_metadata = expected_metadata
         self.timeout = timeout
         self.path = path
+        if expected_metadata:
+            prefs = expected_metadata.prefs()
+        else:
+            prefs = []
+        self.environment = {"protocol": protocol, "prefs": prefs}
 
     def __eq__(self, other):
         return self.id == other.id
+
+    @classmethod
+    def from_manifest(cls, manifest_item, expected_metadata):
+        timeout = LONG_TIMEOUT if manifest_item.timeout == "long" else DEFAULT_TIMEOUT
+        return cls(manifest_item.url,
+                   expected_metadata,
+                   timeout=timeout,
+                   path=manifest_item.path,
+                   protocol="https" if hasattr(manifest_item, "https") and manifest_item.https else "http")
+
 
     @property
     def id(self):
@@ -150,23 +168,75 @@ class ManualTest(Test):
 class ReftestTest(Test):
     result_cls = ReftestResult
 
-    def __init__(self, url, ref_url, ref_type, expected, timeout=None, path=None):
-        self.url = url
-        self.ref_url = ref_url
-        if ref_type not in ("==", "!="):
-            raise ValueError
-        self.ref_type = ref_type
-        self._expected_metadata = expected
-        self.timeout = timeout
-        self.path = path
+    def __init__(self, url, expected, references, timeout=DEFAULT_TIMEOUT, path=None, protocol="http"):
+        Test.__init__(self, url, expected, timeout, path, protocol)
+
+        for _, ref_type in references:
+            if ref_type not in ("==", "!="):
+                raise ValueError
+
+        self.references = references
+
+    @classmethod
+    def from_manifest(cls,
+                      manifest_test,
+                      expected_metadata,
+                      nodes=None,
+                      references_seen=None):
+
+        timeout = LONG_TIMEOUT if manifest_test.timeout == "long" else DEFAULT_TIMEOUT
+
+        if nodes is None:
+            nodes = {}
+        if references_seen is None:
+            references_seen = set()
+
+        url = manifest_test.url
+
+        node = cls(manifest_test.url,
+                   expected_metadata,
+                   [],
+                   timeout=timeout,
+                   path=manifest_test.path,
+                   protocol="https" if hasattr(manifest_test, "https") and manifest_test.https else "http")
+
+        nodes[url] = node
+
+        for ref_url, ref_type in manifest_test.references:
+            comparison_key = (ref_type,) + tuple(sorted([url, ref_url]))
+            if ref_url in nodes:
+                manifest_node = ref_url
+                if comparison_key in references_seen:
+                    # We have reached a cycle so stop here
+                    # Note that just seeing a node for the second time is not
+                    # enough to detect a cycle because
+                    # A != B != C != A must include C != A
+                    # but A == B == A should not include the redundant B == A.
+                    continue
+
+            references_seen.add(comparison_key)
+
+            manifest_node = manifest_test.manifest.get_reference(ref_url)
+            if manifest_node:
+                reference = ReftestTest.from_manifest(manifest_node,
+                                                      None,
+                                                      nodes,
+                                                      references_seen)
+            else:
+                reference = ReftestTest(ref_url, None, [])
+
+            node.references.append((reference, ref_type))
+
+        return node
 
     @property
     def id(self):
-        return self.url, self.ref_type, self.ref_url
+        return self.url
 
     @property
     def keys(self):
         return ("reftype", "refurl")
+
 
 manifest_test_cls = {"reftest": ReftestTest,
                      "testharness": TestharnessTest,
@@ -176,17 +246,4 @@ manifest_test_cls = {"reftest": ReftestTest,
 def from_manifest(manifest_test, expected_metadata):
     test_cls = manifest_test_cls[manifest_test.item_type]
 
-    timeout = LONG_TIMEOUT if manifest_test.timeout == "long" else DEFAULT_TIMEOUT
-
-    if test_cls == ReftestTest:
-        return test_cls(manifest_test.url,
-                        manifest_test.ref_url,
-                        manifest_test.ref_type,
-                        expected_metadata,
-                        timeout=timeout,
-                        path=manifest_test.path)
-    else:
-        return test_cls(manifest_test.url,
-                        expected_metadata,
-                        timeout=timeout,
-                        path=manifest_test.path)
+    return test_cls.from_manifest(manifest_test, expected_metadata)

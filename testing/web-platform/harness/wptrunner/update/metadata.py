@@ -39,10 +39,10 @@ class CreateMetadataPatch(Step):
 
         if sync_tree is not None:
             name = "web-platform-tests_update_%s_metadata" % sync_tree.rev
-            message = "Update web-platform-tests expected data to revision %s" % sync_tree.rev
+            message = "Update %s expected data to revision %s" % (state.suite_name, sync_tree.rev)
         else:
             name = "web-platform-tests_update_metadata"
-            message = "Update web-platform-tests expected data"
+            message = "Update %s expected data" % state.suite_name
 
         local_tree.create_patch(name, message)
 
@@ -52,6 +52,7 @@ class CreateMetadataPatch(Step):
             for path in metadata_paths:
                 local_tree.add_new(os.path.relpath(path, local_tree.root))
             local_tree.update_patch(include=metadata_paths)
+            local_tree.commit_patch()
 
 
 class MetadataUpdateRunner(StepRunner):

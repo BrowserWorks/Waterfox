@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -10,7 +11,6 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-#include "mozilla/fallible.h"
 #include "mozilla/gfx/2D.h" // for StrokeOptions
 #include "mozilla/gfx/Matrix.h"
 #include "mozilla/RangedPtr.h"
@@ -22,7 +22,6 @@ class gfxTextContextPaint;
 class nsIContent;
 class nsIDocument;
 class nsIFrame;
-class nsPresContext;
 class nsStyleContext;
 class nsStyleCoord;
 class nsSVGElement;
@@ -111,8 +110,7 @@ public:
         mDashPattern = mSmallArray;
         return mSmallArray;
       }
-      static const mozilla::fallible_t fallible = mozilla::fallible_t();
-      Float* nonConstArray = new (fallible) Float[aDashCount];
+      Float* nonConstArray = new (mozilla::fallible) Float[aDashCount];
       mDashPattern = nonConstArray;
       return nonConstArray;
     }

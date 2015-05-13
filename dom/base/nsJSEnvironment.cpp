@@ -59,6 +59,9 @@
 #include "mozilla/dom/ErrorEvent.h"
 #include "mozilla/dom/ImageDataBinding.h"
 #include "mozilla/dom/ImageData.h"
+#ifdef MOZ_NFC
+#include "mozilla/dom/MozNDEFRecord.h"
+#endif // MOZ_NFC
 #include "mozilla/dom/StructuredClone.h"
 #include "mozilla/dom/SubtleCryptoBinding.h"
 #include "mozilla/ipc/BackgroundUtils.h"
@@ -107,6 +110,10 @@ const size_t gStackSize = 8192;
 
 #define NS_FULL_GC_DELAY            60000 // ms
 
+// The amount of time to wait from the user being idle to starting a shrinking
+// GC.
+#define NS_SHRINKING_GC_DELAY       15000 // ms
+
 // Maximum amount of time that should elapse between incremental GC slices
 #define NS_INTERSLICE_GC_DELAY      100 // ms
 
@@ -139,8 +146,6 @@ static const uint32_t kMaxICCDuration = 2000; // ms
 // Trigger a CC if the purple buffer exceeds this size when we check it.
 #define NS_CC_PURPLE_LIMIT          200
 
-#define JAVASCRIPT nsIProgrammingLanguage::JAVASCRIPT
-
 // Large value used to specify that a script should run essentially forever
 #define NS_UNLIMITED_SCRIPT_RUNTIME (0x40000000LL << 32)
 
@@ -148,6 +153,7 @@ static const uint32_t kMaxICCDuration = 2000; // ms
 
 static nsITimer *sGCTimer;
 static nsITimer *sShrinkGCBuffersTimer;
+static nsITimer *sShrinkingGCTimer;
 static nsITimer *sCCTimer;
 static nsITimer *sICCTimer;
 static nsITimer *sFullGCTimer;
@@ -213,6 +219,13 @@ static nsIScriptSecurityManager *sSecurityManager;
 
 static bool sGCOnMemoryPressure;
 
+// nsJSEnvironmentObserver observes the user-interaction-inactive notifications
+// and triggers a shrinking a garbage collection if the user is still inactive
+// after NS_SHRINKING_GC_DELAY ms later, if the appropriate pref is set.
+
+static bool sCompactOnUserInactive;
+static bool sIsCompactingOnUserInactive = false;
+
 // In testing, we call RunNextCollectorTimer() to ensure that the collectors are run more
 // aggressively than they would be in regular browsing. sExpensiveCollectorPokes keeps
 // us from triggering expensive full collections too frequently.
@@ -234,6 +247,7 @@ static void
 KillTimers()
 {
   nsJSContext::KillGCTimer();
+  nsJSContext::KillShrinkingGCTimer();
   nsJSContext::KillShrinkGCBuffersTimer();
   nsJSContext::KillCCTimer();
   nsJSContext::KillICCTimer();
@@ -252,7 +266,7 @@ NeedsGCAfterCC()
     sNeedsGCAfterCC;
 }
 
-class nsJSEnvironmentObserver MOZ_FINAL : public nsIObserver
+class nsJSEnvironmentObserver final : public nsIObserver
 {
   ~nsJSEnvironmentObserver() {}
 public:
@@ -266,22 +280,34 @@ NS_IMETHODIMP
 nsJSEnvironmentObserver::Observe(nsISupports* aSubject, const char* aTopic,
                                  const char16_t* aData)
 {
-  if (sGCOnMemoryPressure && !nsCRT::strcmp(aTopic, "memory-pressure")) {
-    if(StringBeginsWith(nsDependentString(aData),
-                        NS_LITERAL_STRING("low-memory-ongoing"))) {
-      // Don't GC/CC if we are in an ongoing low-memory state since its very
-      // slow and it likely won't help us anyway.
-      return NS_OK;
-    }
-    nsJSContext::GarbageCollectNow(JS::gcreason::MEM_PRESSURE,
-                                   nsJSContext::NonIncrementalGC,
-                                   nsJSContext::ShrinkingGC);
-    nsJSContext::CycleCollectNow();
-    if (NeedsGCAfterCC()) {
+  if (!nsCRT::strcmp(aTopic, "memory-pressure")) {
+    if (sGCOnMemoryPressure) {
+      if(StringBeginsWith(nsDependentString(aData),
+                          NS_LITERAL_STRING("low-memory-ongoing"))) {
+        // Don't GC/CC if we are in an ongoing low-memory state since its very
+        // slow and it likely won't help us anyway.
+        return NS_OK;
+      }
       nsJSContext::GarbageCollectNow(JS::gcreason::MEM_PRESSURE,
                                      nsJSContext::NonIncrementalGC,
                                      nsJSContext::ShrinkingGC);
+      nsJSContext::CycleCollectNow();
+      if (NeedsGCAfterCC()) {
+        nsJSContext::GarbageCollectNow(JS::gcreason::MEM_PRESSURE,
+                                       nsJSContext::NonIncrementalGC,
+                                       nsJSContext::ShrinkingGC);
+      }
     }
+  } else if (!nsCRT::strcmp(aTopic, "user-interaction-inactive")) {
+    if (sCompactOnUserInactive) {
+      nsJSContext::PokeShrinkingGC();
+    }
+  } else if (!nsCRT::strcmp(aTopic, "user-interaction-active")) {
+    nsJSContext::KillShrinkingGCTimer();
+    if (sIsCompactingOnUserInactive) {
+      JS::AbortIncrementalGC(sRuntime);
+    }
+    MOZ_ASSERT(!sIsCompactingOnUserInactive);
   } else if (!nsCRT::strcmp(aTopic, "quit-application") ||
              !nsCRT::strcmp(aTopic, NS_XPCOM_SHUTDOWN_OBSERVER_ID)) {
     sShuttingDown = true;
@@ -301,7 +327,7 @@ public:
   }
   ~AutoFree() {
     if (mPtr)
-      nsMemory::Free(mPtr);
+      free(mPtr);
   }
   void Invalidate() {
     mPtr = 0;
@@ -1284,12 +1310,11 @@ nsJSContext::GarbageCollectNow(JS::gcreason::Reason aReason,
     return;
   }
 
+  JSGCInvocationKind gckind = aShrinking == ShrinkingGC ? GC_SHRINK : GC_NORMAL;
   JS::PrepareForFullGC(sRuntime);
   if (aIncremental == IncrementalGC) {
-    MOZ_ASSERT(aShrinking == NonShrinkingGC);
-    JS::StartIncrementalGC(sRuntime, GC_NORMAL, aReason, aSliceMillis);
+    JS::StartIncrementalGC(sRuntime, gckind, aReason, aSliceMillis);
   } else {
-    JSGCInvocationKind gckind = aShrinking == ShrinkingGC ? GC_SHRINK : GC_NORMAL;
     JS::GCForReason(sRuntime, gckind, aReason);
   }
 }
@@ -1798,6 +1823,17 @@ ShrinkGCBuffersTimerFired(nsITimer *aTimer, void *aClosure)
   nsJSContext::ShrinkGCBuffersNow();
 }
 
+// static
+void
+ShrinkingGCTimerFired(nsITimer* aTimer, void* aClosure)
+{
+  nsJSContext::KillShrinkingGCTimer();
+  sIsCompactingOnUserInactive = true;
+  nsJSContext::GarbageCollectNow(JS::gcreason::USER_INACTIVE,
+                                 nsJSContext::IncrementalGC,
+                                 nsJSContext::ShrinkingGC);
+}
+
 static bool
 ShouldTriggerCC(uint32_t aSuspected)
 {
@@ -2032,6 +2068,26 @@ nsJSContext::PokeShrinkGCBuffers()
 
 // static
 void
+nsJSContext::PokeShrinkingGC()
+{
+  if (sShrinkingGCTimer || sShuttingDown) {
+    return;
+  }
+
+  CallCreateInstance("@mozilla.org/timer;1", &sShrinkingGCTimer);
+
+  if (!sShrinkingGCTimer) {
+    // Failed to create timer (probably because we're in XPCOM shutdown)
+    return;
+  }
+
+  sShrinkingGCTimer->InitWithFuncCallback(ShrinkingGCTimerFired, nullptr,
+                                          NS_SHRINKING_GC_DELAY,
+                                          nsITimer::TYPE_ONE_SHOT);
+}
+
+// static
+void
 nsJSContext::MaybePokeCC()
 {
   if (sCCTimer || sICCTimer || sShuttingDown || !sHasRunGC) {
@@ -2088,6 +2144,16 @@ nsJSContext::KillShrinkGCBuffersTimer()
   if (sShrinkGCBuffersTimer) {
     sShrinkGCBuffersTimer->Cancel();
     NS_RELEASE(sShrinkGCBuffersTimer);
+  }
+}
+
+//static
+void
+nsJSContext::KillShrinkingGCTimer()
+{
+  if (sShrinkingGCTimer) {
+    sShrinkingGCTimer->Cancel();
+    NS_RELEASE(sShrinkingGCTimer);
   }
 }
 
@@ -2180,6 +2246,7 @@ DOMGCSliceCallback(JSRuntime *aRt, JS::GCProgress aProgress, const JS::GCDescrip
       }
 
       sCCLockedOut = false;
+      sIsCompactingOnUserInactive = false;
 
       // May need to kill the inter-slice GC timer
       nsJSContext::KillInterSliceGCTimer();
@@ -2204,8 +2271,11 @@ DOMGCSliceCallback(JSRuntime *aRt, JS::GCProgress aProgress, const JS::GCDescrip
         nsJSContext::KillFullGCTimer();
 
         // Avoid shrinking during heavy activity, which is suggested by
-        // compartment GC.
-        nsJSContext::PokeShrinkGCBuffers();
+        // compartment GC. We don't need to shrink after a shrinking GC as this
+        // happens automatically in this case.
+        if (aDesc.invocationKind_ == GC_NORMAL) {
+          nsJSContext::PokeShrinkGCBuffers();
+        }
       }
 
       if (ShouldTriggerCC(nsCycleCollector_suspectedCount())) {
@@ -2279,7 +2349,7 @@ void
 mozilla::dom::StartupJSEnvironment()
 {
   // initialize all our statics, so that we can restart XPCOM
-  sGCTimer = sFullGCTimer = sCCTimer = sICCTimer = nullptr;
+  sGCTimer = sShrinkingGCTimer = sFullGCTimer = sCCTimer = sICCTimer = nullptr;
   sCCLockedOut = false;
   sCCLockedOutTime = 0;
   sLastCCEndTime = TimeStamp();
@@ -2355,6 +2425,13 @@ SetMemoryGCSliceTimePrefChangedCallback(const char* aPrefName, void* aClosure)
 }
 
 static void
+SetMemoryGCCompactingPrefChangedCallback(const char* aPrefName, void* aClosure)
+{
+  bool pref = Preferences::GetBool(aPrefName);
+  JS_SetGCParameter(sRuntime, JSGC_COMPACTING_ENABLED, pref);
+}
+
+static void
 SetMemoryGCPrefChangedCallback(const char* aPrefName, void* aClosure)
 {
   int32_t pref = Preferences::GetInt(aPrefName, -1);
@@ -2406,7 +2483,7 @@ NS_DOMReadStructuredClone(JSContext* cx,
       if (!key->ReadStructuredClone(reader)) {
         result = nullptr;
       } else {
-        result = key->WrapObject(cx);
+        result = key->WrapObject(cx, JS::NullPtr());
       }
     }
     return result;
@@ -2450,6 +2527,24 @@ NS_DOMReadStructuredClone(JSContext* cx,
     }
 
     return result.toObjectOrNull();
+  } else if (tag == SCTAG_DOM_NFC_NDEF) {
+#ifdef MOZ_NFC
+    nsIGlobalObject *global = xpc::NativeGlobal(JS::CurrentGlobalOrNull(cx));
+    if (!global) {
+      return nullptr;
+    }
+
+    // Prevent the return value from being trashed by a GC during ~nsRefPtr.
+    JS::Rooted<JSObject*> result(cx);
+    {
+      nsRefPtr<MozNDEFRecord> ndefRecord = new MozNDEFRecord(global);
+      result = ndefRecord->ReadStructuredClone(cx, reader) ?
+               ndefRecord->WrapObject(cx, JS::NullPtr()) : nullptr;
+    }
+    return result;
+#else
+    return nullptr;
+#endif
   }
 
   // Don't know what this is. Bail.
@@ -2500,6 +2595,14 @@ NS_DOMWriteStructuredClone(JSContext* cx,
              JS_WriteBytes(writer, cInfo.spec().get(), cInfo.spec().Length());
     }
   }
+
+#ifdef MOZ_NFC
+  MozNDEFRecord* ndefRecord;
+  if (NS_SUCCEEDED(UNWRAP_OBJECT(MozNDEFRecord, obj, ndefRecord))) {
+    return JS_WriteUint32Pair(writer, SCTAG_DOM_NFC_NDEF, 0) &&
+           ndefRecord->WriteStructuredClone(cx, writer);
+  }
+#endif // MOZ_NFC
 
   // Don't know what this is
   xpc::Throw(cx, NS_ERROR_DOM_DATA_CLONE_ERR);
@@ -2616,6 +2719,9 @@ nsJSContext::EnsureStatics()
   Preferences::RegisterCallbackAndCall(SetMemoryGCSliceTimePrefChangedCallback,
                                        "javascript.options.mem.gc_incremental_slice_ms");
 
+  Preferences::RegisterCallbackAndCall(SetMemoryGCCompactingPrefChangedCallback,
+                                       "javascript.options.mem.gc_compacting");
+
   Preferences::RegisterCallbackAndCall(SetMemoryGCPrefChangedCallback,
                                        "javascript.options.mem.gc_high_frequency_time_limit_ms",
                                        (void *)JSGC_HIGH_FREQUENCY_TIME_LIMIT);
@@ -2674,8 +2780,14 @@ nsJSContext::EnsureStatics()
                                "javascript.options.gc_on_memory_pressure",
                                true);
 
+  Preferences::AddBoolVarCache(&sCompactOnUserInactive,
+                               "javascript.options.compact_on_user_inactive",
+                               true);
+
   nsIObserver* observer = new nsJSEnvironmentObserver();
   obs->AddObserver(observer, "memory-pressure", false);
+  obs->AddObserver(observer, "user-interaction-inactive", false);
+  obs->AddObserver(observer, "user-interaction-active", false);
   obs->AddObserver(observer, "quit-application", false);
   obs->AddObserver(observer, NS_XPCOM_SHUTDOWN_OBSERVER_ID, false);
 
@@ -2714,6 +2826,12 @@ mozilla::dom::GetNameSpaceManager()
   return gNameSpaceManager;
 }
 
+nsScriptNameSpaceManager*
+mozilla::dom::PeekNameSpaceManager()
+{
+  return gNameSpaceManager;
+}
+
 void
 mozilla::dom::ShutdownJSEnvironment()
 {
@@ -2739,7 +2857,7 @@ mozilla::dom::ShutdownJSEnvironment()
 // to/from nsISupports.
 // When consumed by non-JS (eg, another script language), conversion is done
 // on-the-fly.
-class nsJSArgArray MOZ_FINAL : public nsIJSArgArray {
+class nsJSArgArray final : public nsIJSArgArray {
 public:
   nsJSArgArray(JSContext *aContext, uint32_t argc, JS::Value *argv,
                nsresult *prv);
@@ -2753,7 +2871,7 @@ public:
   NS_DECL_NSIARRAY
 
   // nsIJSArgArray
-  nsresult GetArgs(uint32_t* argc, void** argv) MOZ_OVERRIDE;
+  nsresult GetArgs(uint32_t* argc, void** argv) override;
 
   void ReleaseJSObjects();
 
@@ -2773,7 +2891,6 @@ nsJSArgArray::nsJSArgArray(JSContext *aContext, uint32_t argc, JS::Value *argv,
   // copy the array - we don't know its lifetime, and ours is tied to xpcom
   // refcounting.
   if (argc) {
-    static const fallible_t fallible = fallible_t();
     mArgv = new (fallible) JS::Heap<JS::Value>[argc];
     if (!mArgv) {
       *prv = NS_ERROR_OUT_OF_MEMORY;

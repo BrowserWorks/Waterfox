@@ -7,6 +7,7 @@ this.EXPORTED_SYMBOLS = [
 const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://gre/modules/Services.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
   "resource://gre/modules/PlacesUtils.jsm");
@@ -73,4 +74,56 @@ this.PlacesTestUtils = Object.freeze({
       );
     });
   },
+
+  /**
+   * Clear all history.
+   *
+   * @return {Promise}
+   * @resolves When history was cleared successfully.
+   * @rejects JavaScript exception.
+   */
+  clearHistory() {
+    let expirationFinished = new Promise(resolve => {
+      Services.obs.addObserver(function observe(subj, topic, data) {
+        Services.obs.removeObserver(observe, topic);
+        resolve();
+      }, PlacesUtils.TOPIC_EXPIRATION_FINISHED, false);
+    });
+
+    return Promise.all([expirationFinished, PlacesUtils.history.clear()]);
+  },
+
+  /**
+   * Waits for all pending async statements on the default connection.
+   *
+   * @return {Promise}
+   * @resolves When all pending async statements finished.
+   * @rejects Never.
+   *
+   * @note The result is achieved by asynchronously executing a query requiring
+   *       a write lock.  Since all statements on the same connection are
+   *       serialized, the end of this write operation means that all writes are
+   *       complete.  Note that WAL makes so that writers don't block readers, but
+   *       this is a problem only across different connections.
+   */
+  promiseAsyncUpdates() {
+    return new Promise(resolve => {
+      let db = PlacesUtils.history.DBConnection;
+      let begin = db.createAsyncStatement("BEGIN EXCLUSIVE");
+      begin.executeAsync();
+      begin.finalize();
+
+      let commit = db.createAsyncStatement("COMMIT");
+      commit.executeAsync({
+        handleResult: function () {},
+        handleError: function () {},
+        handleCompletion: function(aReason)
+        {
+          resolve();
+        }
+      });
+      commit.finalize();
+    });
+  }
+
 });

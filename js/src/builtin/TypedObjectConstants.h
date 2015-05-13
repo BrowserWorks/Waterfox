@@ -10,6 +10,27 @@
 #define builtin_TypedObjectConstants_h
 
 ///////////////////////////////////////////////////////////////////////////
+// Values to be returned by SetFromTypedArrayApproach
+
+#define JS_SETTYPEDARRAY_SAME_TYPE 0
+#define JS_SETTYPEDARRAY_OVERLAPPING 1
+#define JS_SETTYPEDARRAY_DISJOINT 2
+
+///////////////////////////////////////////////////////////////////////////
+// Slots for objects using the typed array layout
+
+#define JS_TYPEDARRAYLAYOUT_BUFFER_SLOT 0
+#define JS_TYPEDARRAYLAYOUT_LENGTH_SLOT 1
+#define JS_TYPEDARRAYLAYOUT_BYTEOFFSET_SLOT 2
+
+///////////////////////////////////////////////////////////////////////////
+// Slots and flags for ArrayBuffer objects
+
+#define JS_ARRAYBUFFER_FLAGS_SLOT            3
+
+#define JS_ARRAYBUFFER_NEUTERED_FLAG 0x4
+
+///////////////////////////////////////////////////////////////////////////
 // Slots for typed prototypes
 
 #define JS_TYPROTO_SLOTS                 0
@@ -32,8 +53,9 @@
 #define JS_DESCR_SLOT_ARRAYPROTO         6  // Lazily created prototype for arrays
 #define JS_DESCR_SLOT_TRACE_LIST         7  // List of references for use in tracing
 
-// Slots on scalars, references, and x4s
+// Slots on scalars, references, and SIMD objects
 #define JS_DESCR_SLOT_TYPE               8  // Type code
+#define JS_DESCR_SLOT_LANES              9
 
 // Slots on array descriptors
 #define JS_DESCR_SLOT_ARRAY_ELEM_TYPE    8
@@ -85,5 +107,6 @@
 // case.
 #define JS_SIMDTYPEREPR_INT32         0
 #define JS_SIMDTYPEREPR_FLOAT32       1
+#define JS_SIMDTYPEREPR_FLOAT64       2
 
 #endif

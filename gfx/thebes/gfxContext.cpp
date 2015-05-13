@@ -297,24 +297,6 @@ gfxContext::Rectangle(const gfxRect& rect, bool snapToPixels)
   mPathBuilder->Close();
 }
 
-void
-gfxContext::DrawSurface(gfxASurface *surface, const gfxSize& size)
-{
-  // Lifetime needs to be limited here since we may wrap surface's data.
-  RefPtr<SourceSurface> surf =
-    gfxPlatform::GetPlatform()->GetSourceSurfaceForSurface(mDT, surface);
-
-  if (!surf) {
-    return;
-  }
-
-  Rect rect(0, 0, Float(size.width), Float(size.height));
-  rect.Intersect(Rect(0, 0, Float(surf->GetSize().width), Float(surf->GetSize().height)));
-
-  // XXX - Should fix pixel snapping.
-  mDT->DrawSurface(surf, rect, rect);
-}
-
 // transform stuff
 void
 gfxContext::Multiply(const gfxMatrix& matrix)
@@ -612,27 +594,6 @@ gfxContext::Clip()
 }
 
 void
-gfxContext::ResetClip()
-{
-  for (int i = mStateStack.Length() - 1; i >= 0; i--) {
-    for (unsigned int c = 0; c < mStateStack[i].pushedClips.Length(); c++) {
-      mDT->PopClip();
-    }
-
-    if (mStateStack[i].clipWasReset) {
-      break;
-    }
-  }
-  CurrentState().pushedClips.Clear();
-  CurrentState().clipWasReset = true;
-}
-
-void
-gfxContext::UpdateSurfaceClip()
-{
-}
-
-void
 gfxContext::PopClip()
 {
   MOZ_ASSERT(CurrentState().pushedClips.Length() > 0);
@@ -655,6 +616,23 @@ gfxContext::GetClipExtents()
   rect = mat.TransformBounds(rect);
 
   return ThebesRect(rect);
+}
+
+bool
+gfxContext::HasComplexClip() const
+{
+  for (int i = mStateStack.Length() - 1; i >= 0; i--) {
+    for (unsigned int c = 0; c < mStateStack[i].pushedClips.Length(); c++) {
+      const AzureState::PushedClip &clip = mStateStack[i].pushedClips[c];
+      if (clip.path || !clip.transform.IsRectilinear()) {
+        return true;
+      }
+    }
+    if (mStateStack[i].clipWasReset) {
+      break;
+    }
+  }
+  return false;
 }
 
 bool
@@ -806,17 +784,17 @@ gfxContext::Mask(gfxASurface *surface, const gfxPoint& offset)
 
   gfxPoint pt = surface->GetDeviceOffset();
 
-  Mask(sourceSurf, Point(offset.x - pt.x, offset.y - pt.y));
+  Mask(sourceSurf, 1.0f, Point(offset.x - pt.x, offset.y - pt.y));
 }
 
 void
-gfxContext::Mask(SourceSurface *surface, const Point& offset)
+gfxContext::Mask(SourceSurface *surface, float alpha, const Point& offset)
 {
   // We clip here to bind to the mask surface bounds, see above.
   mDT->MaskSurface(PatternFromState(this),
             surface,
             offset,
-            DrawOptions(1.0f, CurrentState().op, CurrentState().aaMode));
+            DrawOptions(alpha, CurrentState().op, CurrentState().aaMode));
 }
 
 void

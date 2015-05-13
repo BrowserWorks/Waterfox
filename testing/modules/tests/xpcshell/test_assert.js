@@ -209,24 +209,6 @@ function run_test() {
     }
   });
 
-  // Make sure deepEqual doesn't loop forever on circular refs
-
-  let b = {};
-  b.b = b;
-
-  let c = {};
-  c.b = c;
-
-  let gotError = false;
-  try {
-    assert.deepEqual(b, c);
-  } catch (e) {
-    gotError = true;
-  }
-
-  dump("All OK\n");
-  assert.ok(gotError);
-
   function testAssertionMessage(actual, expected) {
     try {
       assert.equal(actual, "");
@@ -297,6 +279,39 @@ function run_test() {
     expected: "foo",
     operator: "="
   }).message, "[object Object] = \"foo\"");
+
+  let message;
+  assert.greater(3, 2);
+  try {
+    assert.greater(2, 2);
+  } catch(e) {
+    message = e.toString().split("\n")[0];
+  }
+  assert.equal(message, "AssertionError: 2 > 2");
+
+  assert.greaterOrEqual(2, 2);
+  try {
+    assert.greaterOrEqual(1, 2);
+  } catch(e) {
+    message = e.toString().split("\n")[0];
+  }
+  assert.equal(message, "AssertionError: 1 >= 2");
+
+  assert.less(1, 2);
+  try {
+    assert.less(2, 2);
+  } catch(e) {
+    message = e.toString().split("\n")[0];
+  }
+  assert.equal(message, "AssertionError: 2 < 2");
+
+  assert.lessOrEqual(2, 2);
+  try {
+    assert.lessOrEqual(2, 1);
+  } catch(e) {
+    message = e.toString().split("\n")[0];
+  }
+  assert.equal(message, "AssertionError: 2 <= 1");
 
   run_next_test();
 }

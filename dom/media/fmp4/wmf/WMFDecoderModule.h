@@ -17,25 +17,31 @@ public:
   virtual ~WMFDecoderModule();
 
   // Initializes the module, loads required dynamic libraries, etc.
-  virtual nsresult Startup() MOZ_OVERRIDE;
-
-  // Called when the decoders have shutdown.
-  virtual nsresult Shutdown() MOZ_OVERRIDE;
+  virtual nsresult Startup() override;
 
   virtual already_AddRefed<MediaDataDecoder>
-  CreateVideoDecoder(const mp4_demuxer::VideoDecoderConfig& aConfig,
+  CreateVideoDecoder(const VideoInfo& aConfig,
                      layers::LayersBackend aLayersBackend,
                      layers::ImageContainer* aImageContainer,
-                     MediaTaskQueue* aVideoTaskQueue,
-                     MediaDataDecoderCallback* aCallback) MOZ_OVERRIDE;
+                     FlushableMediaTaskQueue* aVideoTaskQueue,
+                     MediaDataDecoderCallback* aCallback) override;
 
   virtual already_AddRefed<MediaDataDecoder>
-  CreateAudioDecoder(const mp4_demuxer::AudioDecoderConfig& aConfig,
-                     MediaTaskQueue* aAudioTaskQueue,
-                     MediaDataDecoderCallback* aCallback) MOZ_OVERRIDE;
+  CreateAudioDecoder(const AudioInfo& aConfig,
+                     FlushableMediaTaskQueue* aAudioTaskQueue,
+                     MediaDataDecoderCallback* aCallback) override;
 
-  bool SupportsVideoMimeType(const char* aMimeType) MOZ_OVERRIDE;
-  bool SupportsAudioMimeType(const char* aMimeType) MOZ_OVERRIDE;
+  bool SupportsMimeType(const nsACString& aMimeType) override;
+
+  virtual void DisableHardwareAcceleration() override
+  {
+    sDXVAEnabled = false;
+  }
+
+  virtual bool SupportsSharedDecoders(const VideoInfo& aConfig) const override;
+
+  virtual ConversionRequired
+  DecoderNeedsConversion(const TrackInfo& aConfig) const override;
 
   // Accessors that report whether we have the required MFTs available
   // on the system to play various codecs. Windows Vista doesn't have the
@@ -47,6 +53,8 @@ public:
   // Called on main thread.
   static void Init();
 private:
+  bool ShouldUseDXVA(const VideoInfo& aConfig) const;
+
   static bool sIsWMFEnabled;
   static bool sDXVAEnabled;
 };

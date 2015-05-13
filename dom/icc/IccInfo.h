@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -14,14 +16,20 @@ class nsPIDOMWindow;
 namespace mozilla {
 namespace dom {
 
-class IccInfo : public nsISupports
+namespace icc {
+class IccInfoData;
+} // namespace icc
+
+class IccInfo : public nsIIccInfo
               , public nsWrapperCache
 {
 public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(IccInfo)
+  NS_DECL_NSIICCINFO
 
   explicit IccInfo(nsPIDOMWindow* aWindow);
+  explicit IccInfo(const icc::IccInfoData& aData);
 
   void
   Update(nsIIccInfo* aInfo);
@@ -34,7 +42,7 @@ public:
 
   // WrapperCache
   virtual JSObject*
-  WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // WebIDL interface
   Nullable<IccType>
@@ -61,25 +69,37 @@ public:
 protected:
   virtual ~IccInfo() {}
 
-protected:
   nsCOMPtr<nsPIDOMWindow> mWindow;
-  nsCOMPtr<nsIIccInfo> mIccInfo;
+  // To prevent compiling error in OS_WIN in auto-generated UnifiedBindingsXX.cpp,
+  // we have all data fields expended here instead of having a data member of
+  // |IccInfoData| defined in PIccTypes.h which indirectly includes "windows.h"
+  // See 925382 for the restriction of including "windows.h" in UnifiedBindings.cpp.
+  nsString mIccType;
+  nsString mIccid;
+  nsString mMcc;
+  nsString mMnc;
+  nsString mSpn;
+  bool mIsDisplayNetworkNameRequired;
+  bool mIsDisplaySpnRequired;
 };
 
-class GsmIccInfo MOZ_FINAL : public IccInfo
+class GsmIccInfo final : public IccInfo
+                       , public nsIGsmIccInfo
 {
 public:
   NS_DECL_ISUPPORTS_INHERITED
-  NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(GsmIccInfo, IccInfo)
+  NS_FORWARD_NSIICCINFO(IccInfo::)
+  NS_DECL_NSIGSMICCINFO
 
   explicit GsmIccInfo(nsPIDOMWindow* aWindow);
+  explicit GsmIccInfo(const icc::IccInfoData& aData);
 
   void
   Update(nsIGsmIccInfo* aInfo);
 
   // WrapperCache
   virtual JSObject*
-  WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // MozCdmaIccInfo WebIDL
   void
@@ -88,24 +108,26 @@ public:
 private:
   ~GsmIccInfo() {}
 
-private:
-  nsCOMPtr<nsIGsmIccInfo> mGsmIccInfo;
+  nsString mPhoneNumber;
 };
 
-class CdmaIccInfo MOZ_FINAL : public IccInfo
+class CdmaIccInfo final : public IccInfo
+                        , public nsICdmaIccInfo
 {
 public:
   NS_DECL_ISUPPORTS_INHERITED
-  NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(CdmaIccInfo, IccInfo)
+  NS_FORWARD_NSIICCINFO(IccInfo::)
+  NS_DECL_NSICDMAICCINFO
 
   explicit CdmaIccInfo(nsPIDOMWindow* aWindow);
+  explicit CdmaIccInfo(const icc::IccInfoData& aData);
 
   void
   Update(nsICdmaIccInfo* aInfo);
 
   // WrapperCache
   virtual JSObject*
-  WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // MozCdmaIccInfo WebIDL
   void
@@ -117,8 +139,8 @@ public:
 private:
   ~CdmaIccInfo() {}
 
-private:
-  nsCOMPtr<nsICdmaIccInfo> mCdmaIccInfo;
+  nsString mPhoneNumber;
+  int32_t mPrlVersion;
 };
 
 } // namespace dom

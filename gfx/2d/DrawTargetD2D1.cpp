@@ -725,7 +725,7 @@ DrawTargetD2D1::CreateGradientStops(GradientStop *rawStops, uint32_t aNumStops, 
     return nullptr;
   }
 
-  return new GradientStopsD2D(stopCollection);
+  return new GradientStopsD2D(stopCollection, Factory::GetDirect3D11Device());
 }
 
 TemporaryRef<FilterNode>
@@ -739,7 +739,12 @@ DrawTargetD2D1::Init(ID3D11Texture2D* aTexture, SurfaceFormat aFormat)
 {
   HRESULT hr;
 
-  hr = Factory::GetD2D1Device()->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS, byRef(mDC));
+  ID2D1Device* device = Factory::GetD2D1Device();
+  if (!device) {
+    return false;
+  }
+
+  hr = device->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS, byRef(mDC));
 
   if (FAILED(hr)) {
     gfxCriticalError() <<"[D2D1.1] 1Failed to create a DeviceContext, code: " << hexa(hr);
@@ -783,9 +788,21 @@ DrawTargetD2D1::Init(ID3D11Texture2D* aTexture, SurfaceFormat aFormat)
     return false;
   }
 
+  // This single solid color brush system is not very 'threadsafe', however,
+  // issueing multiple drawing commands simultaneously to a single drawtarget
+  // from multiple threads is unexpected since there's no way to guarantee
+  // ordering in that situation anyway.
+  hr = mDC->CreateSolidColorBrush(D2D1::ColorF(0, 0), byRef(mSolidColorBrush));
+
+  if (FAILED(hr)) {
+    gfxCriticalError() << "[D2D1.1] Failure creating solid color brush.";
+    return false;
+  }
+
   mDC->SetTarget(mBitmap);
 
   mDC->BeginDraw();
+
   return true;
 }
 
@@ -794,7 +811,12 @@ DrawTargetD2D1::Init(const IntSize &aSize, SurfaceFormat aFormat)
 {
   HRESULT hr;
 
-  hr = Factory::GetD2D1Device()->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS, byRef(mDC));
+  ID2D1Device* device = Factory::GetD2D1Device();
+  if (!device) {
+    return false;
+  }
+
+  hr = device->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS, byRef(mDC));
 
   if (FAILED(hr)) {
     gfxCriticalError() <<"[D2D1.1] 2Failed to create a DeviceContext, code: " << hexa(hr);
@@ -827,11 +849,18 @@ DrawTargetD2D1::Init(const IntSize &aSize, SurfaceFormat aFormat)
   hr = mDC->CreateBitmap(D2DIntSize(aSize), nullptr, 0, props, (ID2D1Bitmap1**)byRef(mTempBitmap));
 
   if (FAILED(hr)) {
-    gfxCriticalError() << "[D2D1.1] failed to create new TempBitmap " << aSize << " Code: " << hexa(hr);
+    gfxCriticalError(CriticalLog::DefaultOptions(Factory::ReasonableSurfaceSize(aSize))) << "[D2D1.1] failed to create new TempBitmap " << aSize << " Code: " << hexa(hr);
     return false;
   }
 
   mDC->SetTarget(mBitmap);
+
+  hr = mDC->CreateSolidColorBrush(D2D1::ColorF(0, 0), byRef(mSolidColorBrush));
+
+  if (FAILED(hr)) {
+    gfxCriticalError() << "[D2D1.1] Failure creating solid color brush.";
+    return false;
+  }
 
   mDC->BeginDraw();
 
@@ -859,7 +888,12 @@ DrawTargetD2D1::factory()
     return mFactory;
   }
 
-  HRESULT hr = D2DFactory()->QueryInterface((ID2D1Factory1**)&mFactory);
+  ID2D1Factory* d2dFactory = D2DFactory();
+  if (!d2dFactory) {
+    return nullptr;
+  }
+
+  HRESULT hr = d2dFactory->QueryInterface((ID2D1Factory1**)&mFactory);
 
   if (FAILED(hr)) {
     return nullptr;
@@ -910,21 +944,22 @@ DrawTargetD2D1::PrepareForDrawing(CompositionOp aOp, const Pattern &aPattern)
 {
   MarkChanged();
 
-  // It's important to do this before FlushTransformToDC! As this will cause
-  // the transform to become dirty.
-  if (!mClipsArePushed) {
-    mClipsArePushed = true;
-    PushClipsToDC(mDC);
-  }
-
-  FlushTransformToDC();
-
   if (aOp == CompositionOp::OP_OVER && IsPatternSupportedByD2D(aPattern)) {
+    // It's important to do this before FlushTransformToDC! As this will cause
+    // the transform to become dirty.
+    PushAllClips();
+
+    FlushTransformToDC();
     return;
   }
 
+  PopAllClips();
+
   mDC->SetTarget(mTempBitmap);
   mDC->Clear(D2D1::ColorF(0, 0));
+
+  PushAllClips();
+  FlushTransformToDC();
 }
 
 void
@@ -936,6 +971,8 @@ DrawTargetD2D1::FinalizeDrawing(CompositionOp aOp, const Pattern &aPattern)
     return;
   }
 
+  PopAllClips();
+
   RefPtr<ID2D1Image> image;
   mDC->GetTarget(byRef(image));
 
@@ -946,7 +983,38 @@ DrawTargetD2D1::FinalizeDrawing(CompositionOp aOp, const Pattern &aPattern)
 
   if (patternSupported) {
     if (D2DSupportsCompositeMode(aOp)) {
+      D2D1_RECT_F rect;
+      bool isAligned;
+      RefPtr<ID2D1Bitmap> tmpBitmap;
+      bool clipIsComplex = mPushedClips.size() && !GetDeviceSpaceClipRect(rect, isAligned);
+
+      if (clipIsComplex) {
+        if (!IsOperatorBoundByMask(aOp)) {
+          HRESULT hr = mDC->CreateBitmap(D2DIntSize(mSize), D2D1::BitmapProperties(D2DPixelFormat(mFormat)), byRef(tmpBitmap));
+          if (FAILED(hr)) {
+            gfxCriticalError(CriticalLog::DefaultOptions(Factory::ReasonableSurfaceSize(mSize))) << "[D2D1.1] 6CreateBitmap failure " << mSize << " Code: " << hexa(hr);
+            // For now, crash in this scenario; this should happen because tmpBitmap is
+            // null and CopyFromBitmap call below dereferences it.
+            // return;
+          }
+          mDC->Flush();
+
+          tmpBitmap->CopyFromBitmap(nullptr, mBitmap, nullptr);
+        }
+      } else {
+        PushAllClips();
+      }
       mDC->DrawImage(image, D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR, D2DCompositionMode(aOp));
+
+      if (tmpBitmap) {
+        RefPtr<ID2D1BitmapBrush> brush;
+        RefPtr<ID2D1Geometry> inverseGeom = GetInverseClippedGeometry();
+        mDC->CreateBitmapBrush(tmpBitmap, byRef(brush));
+
+        mDC->SetPrimitiveBlend(D2D1_PRIMITIVE_BLEND_COPY);
+        mDC->FillGeometry(inverseGeom, brush);
+        mDC->SetPrimitiveBlend(D2D1_PRIMITIVE_BLEND_SOURCE_OVER);
+      }
       return;
     }
 
@@ -960,9 +1028,16 @@ DrawTargetD2D1::FinalizeDrawing(CompositionOp aOp, const Pattern &aPattern)
     }
 
     RefPtr<ID2D1Bitmap> tmpBitmap;
-    mDC->CreateBitmap(D2DIntSize(mSize), D2D1::BitmapProperties(D2DPixelFormat(mFormat)), byRef(tmpBitmap));
+    HRESULT hr = mDC->CreateBitmap(D2DIntSize(mSize), D2D1::BitmapProperties(D2DPixelFormat(mFormat)), byRef(tmpBitmap));
+    if (FAILED(hr)) {
+      gfxCriticalError(CriticalLog::DefaultOptions(Factory::ReasonableSurfaceSize(mSize))) << "[D2D1.1] 5CreateBitmap failure " << mSize << " Code: " << hexa(hr);
+      // For now, crash in this scenario; this should happen because tmpBitmap is
+      // null and CopyFromBitmap call below dereferences it.
+      // return;
+    }
 
     // This flush is important since the copy method will not know about the context drawing to the surface.
+    // We also need to pop all the clips to make sure any drawn content will have made it to the final bitmap.
     mDC->Flush();
 
     // We need to use a copy here because affects don't accept a surface on
@@ -973,6 +1048,8 @@ DrawTargetD2D1::FinalizeDrawing(CompositionOp aOp, const Pattern &aPattern)
     mBlendEffect->SetInput(1, mTempBitmap);
     mBlendEffect->SetValue(D2D1_BLEND_PROP_MODE, D2DBlendMode(aOp));
 
+    PushAllClips();
+
     mDC->DrawImage(mBlendEffect, D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR, D2D1_COMPOSITE_MODE_BOUNDED_SOURCE_COPY);
     return;
   }
@@ -982,6 +1059,8 @@ DrawTargetD2D1::FinalizeDrawing(CompositionOp aOp, const Pattern &aPattern)
     // Draw nothing!
     return;
   }
+
+  PushAllClips();
 
   RefPtr<ID2D1Effect> radialGradientEffect;
 
@@ -1051,6 +1130,8 @@ DrawTargetD2D1::GetClippedGeometry(IntRect *aClipBounds)
     *aClipBounds = mCurrentClipBounds;
     return mCurrentClippedGeometry;
   }
+
+  MOZ_ASSERT(mPushedClips.size());
 
   mCurrentClipBounds = IntRect(IntPoint(0, 0), mSize);
 
@@ -1131,6 +1212,24 @@ DrawTargetD2D1::GetClippedGeometry(IntRect *aClipBounds)
   return mCurrentClippedGeometry;
 }
 
+TemporaryRef<ID2D1Geometry>
+DrawTargetD2D1::GetInverseClippedGeometry()
+{
+  IntRect bounds;
+  RefPtr<ID2D1Geometry> geom = GetClippedGeometry(&bounds);
+  RefPtr<ID2D1RectangleGeometry> rectGeom;
+  RefPtr<ID2D1PathGeometry> inverseGeom;
+
+  factory()->CreateRectangleGeometry(D2D1::RectF(0, 0, mSize.width, mSize.height), byRef(rectGeom));
+  factory()->CreatePathGeometry(byRef(inverseGeom));
+  RefPtr<ID2D1GeometrySink> sink;
+  inverseGeom->Open(byRef(sink));
+  rectGeom->CombineWithGeometry(geom, D2D1_COMBINE_MODE_EXCLUDE, D2D1::IdentityMatrix(), sink);
+  sink->Close();
+
+  return inverseGeom;
+}
+
 void
 DrawTargetD2D1::PopAllClips()
 {
@@ -1138,6 +1237,16 @@ DrawTargetD2D1::PopAllClips()
     PopClipsFromDC(mDC);
   
     mClipsArePushed = false;
+  }
+}
+
+void
+DrawTargetD2D1::PushAllClips()
+{
+  if (!mClipsArePushed) {
+    PushClipsToDC(mDC);
+  
+    mClipsArePushed = true;
   }
 }
 
@@ -1172,8 +1281,14 @@ DrawTargetD2D1::PopClipsFromDC(ID2D1DeviceContext *aDC)
 TemporaryRef<ID2D1Brush>
 DrawTargetD2D1::CreateTransparentBlackBrush()
 {
-  RefPtr<ID2D1SolidColorBrush> brush;
-  mDC->CreateSolidColorBrush(D2D1::ColorF(0, 0), byRef(brush));
+  return GetSolidColorBrush(D2D1::ColorF(0, 0));
+}
+
+TemporaryRef<ID2D1SolidColorBrush>
+DrawTargetD2D1::GetSolidColorBrush(const D2D_COLOR_F& aColor)
+{
+  RefPtr<ID2D1SolidColorBrush> brush = mSolidColorBrush;
+  brush->SetColor(aColor);
   return brush;
 }
 
@@ -1181,19 +1296,12 @@ TemporaryRef<ID2D1Brush>
 DrawTargetD2D1::CreateBrushForPattern(const Pattern &aPattern, Float aAlpha)
 {
   if (!IsPatternSupportedByD2D(aPattern)) {
-    RefPtr<ID2D1SolidColorBrush> colBrush;
-    mDC->CreateSolidColorBrush(D2D1::ColorF(1.0f, 1.0f, 1.0f, 1.0f), byRef(colBrush));
-    return colBrush.forget();
+    return GetSolidColorBrush(D2D1::ColorF(1.0f, 1.0f, 1.0f, 1.0f));
   }
 
   if (aPattern.GetType() == PatternType::COLOR) {
-    RefPtr<ID2D1SolidColorBrush> colBrush;
     Color color = static_cast<const ColorPattern*>(&aPattern)->mColor;
-    mDC->CreateSolidColorBrush(D2D1::ColorF(color.r, color.g,
-                                            color.b, color.a),
-                               D2D1::BrushProperties(aAlpha),
-                               byRef(colBrush));
-    return colBrush.forget();
+    return GetSolidColorBrush(D2D1::ColorF(color.r, color.g, color.b, color.a * aAlpha));
   }
   if (aPattern.GetType() == PatternType::LINEAR_GRADIENT) {
     RefPtr<ID2D1LinearGradientBrush> gradBrush;
@@ -1208,14 +1316,11 @@ DrawTargetD2D1::CreateBrushForPattern(const Pattern &aPattern, Float aAlpha)
     }
 
     if (pat->mBegin == pat->mEnd) {
-      RefPtr<ID2D1SolidColorBrush> colBrush;
       uint32_t stopCount = stops->mStopCollection->GetGradientStopCount();
       vector<D2D1_GRADIENT_STOP> d2dStops(stopCount);
       stops->mStopCollection->GetGradientStops(&d2dStops.front(), stopCount);
-      mDC->CreateSolidColorBrush(d2dStops.back().color,
-                                 D2D1::BrushProperties(aAlpha),
-                                 byRef(colBrush));
-      return colBrush.forget();
+      d2dStops.back().color.a *= aAlpha;
+      return GetSolidColorBrush(d2dStops.back().color);
     }
 
     mDC->CreateLinearGradientBrush(D2D1::LinearGradientBrushProperties(D2DPoint(pat->mBegin),
@@ -1223,6 +1328,12 @@ DrawTargetD2D1::CreateBrushForPattern(const Pattern &aPattern, Float aAlpha)
                                    D2D1::BrushProperties(aAlpha, D2DMatrix(pat->mMatrix)),
                                    stops->mStopCollection,
                                    byRef(gradBrush));
+
+    if (!gradBrush) {
+      gfxWarning() << "Couldn't create gradient brush.";
+      return CreateTransparentBlackBrush();
+    }
+
     return gradBrush.forget();
   }
   if (aPattern.GetType() == PatternType::RADIAL_GRADIENT) {
@@ -1245,6 +1356,11 @@ DrawTargetD2D1::CreateBrushForPattern(const Pattern &aPattern, Float aAlpha)
       D2D1::BrushProperties(aAlpha, D2DMatrix(pat->mMatrix)),
                             stops->mStopCollection,
                             byRef(gradBrush));
+
+    if (!gradBrush) {
+      gfxWarning() << "Couldn't create gradient brush.";
+      return CreateTransparentBlackBrush();
+    }
 
     return gradBrush.forget();
   }
@@ -1274,6 +1390,8 @@ DrawTargetD2D1::CreateBrushForPattern(const Pattern &aPattern, Float aAlpha)
                                    Float(pat->mSurface->GetSize().height));
     }
 
+    MOZ_ASSERT(pat->mSurface->IsValid());
+
     RefPtr<ID2D1ImageBrush> imageBrush;
     RefPtr<ID2D1Image> image = GetImageForSurface(pat->mSurface, mat, pat->mExtendMode, !pat->mSamplingRect.IsEmpty() ? &pat->mSamplingRect : nullptr);
 
@@ -1288,6 +1406,12 @@ DrawTargetD2D1::CreateBrushForPattern(const Pattern &aPattern, Float aAlpha)
                                                      D2DInterpolationMode(pat->mFilter)),
                           D2D1::BrushProperties(aAlpha, D2DMatrix(mat)),
                           byRef(imageBrush));
+
+    if (!imageBrush) {
+      gfxWarning() << "Couldn't create image brush!";
+      return CreateTransparentBlackBrush();
+    }
+
     return imageBrush.forget();
   }
 

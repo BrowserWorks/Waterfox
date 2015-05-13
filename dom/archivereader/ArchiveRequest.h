@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -26,7 +26,7 @@ BEGIN_ARCHIVEREADER_NAMESPACE
 class ArchiveRequest : public mozilla::dom::DOMRequest
 {
 public:
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   ArchiveReader* Reader() const;
 
@@ -38,7 +38,7 @@ public:
                  ArchiveReader* aReader);
 
   // nsIDOMEventTarget
-  virtual nsresult PreHandleEvent(EventChainPreVisitor& aVisitor) MOZ_OVERRIDE;
+  virtual nsresult PreHandleEvent(EventChainPreVisitor& aVisitor) override;
 
 public:
   // This is called by the DOMArchiveRequestEvent
@@ -49,8 +49,7 @@ public:
   void OpGetFile(const nsAString& aFilename);
   void OpGetFiles();
 
-  nsresult ReaderReady(nsTArray<nsCOMPtr<nsIDOMFile> >& aFileList,
-                       nsresult aStatus);
+  nsresult ReaderReady(nsTArray<nsRefPtr<File>>& aFileList, nsresult aStatus);
 
 public: // static
   static already_AddRefed<ArchiveRequest> Create(nsPIDOMWindow* aOwner,
@@ -61,13 +60,13 @@ private:
 
   nsresult GetFilenamesResult(JSContext* aCx,
                               JS::Value* aValue,
-                              nsTArray<nsCOMPtr<nsIDOMFile> >& aFileList);
+                              nsTArray<nsRefPtr<File>>& aFileList);
   nsresult GetFileResult(JSContext* aCx,
                          JS::MutableHandle<JS::Value> aValue,
-                         nsTArray<nsCOMPtr<nsIDOMFile> >& aFileList);
+                         nsTArray<nsRefPtr<File>>& aFileList);
   nsresult GetFilesResult(JSContext* aCx,
                           JS::MutableHandle<JS::Value> aValue,
-                          nsTArray<nsCOMPtr<nsIDOMFile> >& aFileList);
+                          nsTArray<nsRefPtr<File>>& aFileList);
 
 protected:
   // The reader:

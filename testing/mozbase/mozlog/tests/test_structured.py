@@ -117,9 +117,10 @@ class TestStructuredLog(BaseStructuredTest):
         self.assert_log_equals({"action": "test_start",
                                 "test":"test1"})
 
-        self.logger.test_start(("test1", "==", "test1-ref"))
+        self.logger.test_start(("test1", "==", "test1-ref"), path="path/to/test")
         self.assert_log_equals({"action": "test_start",
-                                "test":("test1", "==", "test1-ref")})
+                                "test":("test1", "==", "test1-ref"),
+                                "path": "path/to/test"})
         self.logger.suite_end()
 
     def test_start_inprogress(self):
@@ -732,6 +733,22 @@ class TestCommandline(unittest.TestCase):
         logger = commandline.setup_logging("test_optparse", args, {})
         self.assertEqual(len(logger.handlers), 1)
         self.assertIsInstance(logger.handlers[0], handlers.StreamHandler)
+
+    def test_limit_formatters(self):
+        parser = argparse.ArgumentParser()
+        commandline.add_logging_group(parser, include_formatters=['raw'])
+        other_formatters = [fmt for fmt in commandline.log_formatters
+                            if fmt != 'raw']
+        # check that every formatter except raw is not present
+        for fmt in other_formatters:
+            with self.assertRaises(SystemExit):
+                parser.parse_args(["--log-%s=-" % fmt])
+            with self.assertRaises(SystemExit):
+                parser.parse_args(["--log-%s-level=error" % fmt])
+        # raw is still ok
+        args = parser.parse_args(["--log-raw=-"])
+        logger = commandline.setup_logging("test_setup_logging2", args, {})
+        self.assertEqual(len(logger.handlers), 1)
 
     def test_setup_logging_optparse_unicode(self):
         parser = optparse.OptionParser()

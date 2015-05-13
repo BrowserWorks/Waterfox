@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim:set ts=2 sw=2 sts=2 et cindent: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -7,7 +7,6 @@
 #define mozilla_dom_HTMLCanvasElement_h
 
 #include "mozilla/Attributes.h"
-#include "mozilla/TypedEnum.h"
 #include "nsIDOMHTMLCanvasElement.h"
 #include "nsGenericHTMLElement.h"
 #include "nsGkAtoms.h"
@@ -36,14 +35,14 @@ class FileCallback;
 class HTMLCanvasPrintState;
 class PrintCallback;
 
-MOZ_BEGIN_ENUM_CLASS(CanvasContextType, uint8_t)
+enum class CanvasContextType : uint8_t {
   Canvas2D,
   WebGL1,
   WebGL2
-MOZ_END_ENUM_CLASS(CanvasContextType)
+};
 
-class HTMLCanvasElement MOZ_FINAL : public nsGenericHTMLElement,
-                                    public nsIDOMHTMLCanvasElement
+class HTMLCanvasElement final : public nsGenericHTMLElement,
+                                public nsIDOMHTMLCanvasElement
 {
   enum {
     DEFAULT_CANVAS_WIDTH = 300,
@@ -171,8 +170,8 @@ public:
   virtual bool ParseAttribute(int32_t aNamespaceID,
                                 nsIAtom* aAttribute,
                                 const nsAString& aValue,
-                                nsAttrValue& aResult) MOZ_OVERRIDE;
-  nsChangeHint GetAttributeChangeHint(const nsIAtom* aAttribute, int32_t aModType) const MOZ_OVERRIDE;
+                                nsAttrValue& aResult) override;
+  nsChangeHint GetAttributeChangeHint(const nsIAtom* aAttribute, int32_t aModType) const override;
 
   // SetAttr override.  C++ is stupid, so have to override both
   // overloaded methods.
@@ -183,15 +182,15 @@ public:
   }
   virtual nsresult SetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                            nsIAtom* aPrefix, const nsAString& aValue,
-                           bool aNotify) MOZ_OVERRIDE;
+                           bool aNotify) override;
 
   virtual nsresult UnsetAttr(int32_t aNameSpaceID, nsIAtom* aName,
-                             bool aNotify) MOZ_OVERRIDE;
+                             bool aNotify) override;
 
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
   nsresult CopyInnerTo(mozilla::dom::Element* aDest);
 
-  virtual nsresult PreHandleEvent(mozilla::EventChainPreVisitor& aVisitor) MOZ_OVERRIDE;
+  virtual nsresult PreHandleEvent(mozilla::EventChainPreVisitor& aVisitor) override;
 
   /*
    * Helpers called by various users of Canvas
@@ -216,7 +215,7 @@ public:
 protected:
   virtual ~HTMLCanvasElement();
 
-  virtual JSObject* WrapNode(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   nsIntSize GetWidthHeight();
 
@@ -233,7 +232,7 @@ protected:
                          const nsAString& aMimeType,
                          const JS::Value& aEncoderOptions,
                          nsAString& aDataURL);
-  nsresult MozGetAsFileImpl(const nsAString& aName,
+  nsresult MozGetAsBlobImpl(const nsAString& aName,
                             const nsAString& aType,
                             nsIDOMFile** aResult);
   void CallPrintCallback();
@@ -262,7 +261,7 @@ public:
   HTMLCanvasElement* GetOriginalCanvas();
 };
 
-class HTMLCanvasPrintState MOZ_FINAL : public nsWrapperCache
+class HTMLCanvasPrintState final : public nsWrapperCache
 {
 public:
   HTMLCanvasPrintState(HTMLCanvasElement* aCanvas,
@@ -280,7 +279,7 @@ public:
   NS_INLINE_DECL_CYCLE_COLLECTING_NATIVE_REFCOUNTING(HTMLCanvasPrintState)
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_NATIVE_CLASS(HTMLCanvasPrintState)
 
-  virtual JSObject* WrapObject(JSContext *cx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto) override;
 
   HTMLCanvasElement* GetParentObject()
   {

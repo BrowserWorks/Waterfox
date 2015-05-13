@@ -15,7 +15,7 @@ namespace dom {
 
 class AudioContext;
 
-class OfflineAudioCompletionEvent : public Event
+class OfflineAudioCompletionEvent final : public Event
 {
 public:
   OfflineAudioCompletionEvent(AudioContext* aOwner,
@@ -26,7 +26,7 @@ public:
   NS_FORWARD_TO_EVENT
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(OfflineAudioCompletionEvent, Event)
 
-  virtual JSObject* WrapObjectInternal(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObjectInternal(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   void InitEvent(AudioBuffer* aRenderedBuffer)
   {

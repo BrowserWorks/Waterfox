@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -19,7 +20,6 @@
 class nsIDocShell;
 class nsIDOMEvent;
 class nsIEventListenerInfo;
-class nsIScriptContext;
 class nsPIDOMWindow;
 class JSTracer;
 
@@ -150,7 +150,7 @@ inline EventListenerFlags AllEventsAtSystemGroupCapture()
  * Event listener manager
  */
 
-class EventListenerManager MOZ_FINAL
+class EventListenerManager final
 {
   ~EventListenerManager();
 
@@ -162,7 +162,7 @@ public:
     nsString mTypeString; // for non-main-threads
     uint16_t mEventType;
 
-    enum ListenerType MOZ_ENUM_TYPE(uint8_t)
+    enum ListenerType : uint8_t
     {
       eNativeListener = 0,
       eJSEventListener,
@@ -394,27 +394,8 @@ public:
    */
   bool MayHaveTouchEventListener() { return mMayHaveTouchEventListener; }
 
-  /**
-   * Returns true if there may be a scroll wheel listener registered,
-   * false if there definitely isn't.
-   */
-  bool MayHaveScrollWheelEventListener() { return mMayHaveScrollWheelEventListener; }
-
   bool MayHaveMouseEnterLeaveEventListener() { return mMayHaveMouseEnterLeaveEventListener; }
   bool MayHavePointerEnterLeaveEventListener() { return mMayHavePointerEnterLeaveEventListener; }
-
-  /**
-   * Returns true if there may be a key event listener (keydown, keypress,
-   * or keyup) registered, or false if there definitely isn't.
-   */
-  bool MayHaveKeyEventListener() { return mMayHaveKeyEventListener; }
-
-  /**
-   * Returns true if there may be an advanced input event listener (input,
-   * compositionstart, compositionupdate, or compositionend) registered,
-   * or false if there definitely isn't.
-   */
-  bool MayHaveInputOrCompositionEventListener() { return mMayHaveInputOrCompositionEventListener; }
 
   size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const;
 
@@ -563,17 +544,14 @@ protected:
   uint32_t mMayHaveCapturingListeners : 1;
   uint32_t mMayHaveSystemGroupListeners : 1;
   uint32_t mMayHaveTouchEventListener : 1;
-  uint32_t mMayHaveScrollWheelEventListener : 1;
   uint32_t mMayHaveMouseEnterLeaveEventListener : 1;
   uint32_t mMayHavePointerEnterLeaveEventListener : 1;
-  uint32_t mMayHaveKeyEventListener : 1;
-  uint32_t mMayHaveInputOrCompositionEventListener : 1;
   uint32_t mClearingListeners : 1;
   uint32_t mIsMainThreadELM : 1;
-  uint32_t mNoListenerForEvent : 20;
+  uint32_t mNoListenerForEvent : 23;
 
   nsAutoTObserverArray<Listener, 2> mListeners;
-  dom::EventTarget* mTarget;  // WEAK
+  dom::EventTarget* MOZ_NON_OWNING_REF mTarget;
   nsCOMPtr<nsIAtom> mNoListenerForEventAtom;
 
   friend class ELMCreationDetector;

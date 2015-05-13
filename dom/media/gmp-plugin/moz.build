@@ -4,12 +4,14 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-NO_DIST_INSTALL = True
+DIST_INSTALL = False
 SOURCES += [
         'gmp-fake.cpp',
         'gmp-test-decryptor.cpp',
         'gmp-test-storage.cpp',
 ]
+
+DEFINES['GMP_FAKE_SUPPORT_DECRYPT'] = True
 
 SharedLibrary("fake")
 

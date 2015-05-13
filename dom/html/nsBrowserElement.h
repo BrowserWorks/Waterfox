@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -13,7 +13,6 @@
 #include "nsIBrowserElementAPI.h"
 
 class nsFrameLoader;
-class nsIObserver;
 
 namespace mozilla {
 
@@ -31,8 +30,8 @@ class ErrorResult;
 class nsBrowserElement
 {
 public:
-  nsBrowserElement();
-  virtual ~nsBrowserElement();
+  nsBrowserElement() : mOwnerIsWidget(false) {}
+  virtual ~nsBrowserElement() {}
 
   void SetVisible(bool aVisible, ErrorResult& aRv);
   already_AddRefed<dom::DOMRequest> GetVisible(ErrorResult& aRv);
@@ -89,19 +88,18 @@ public:
   already_AddRefed<dom::DOMRequest> SetInputMethodActive(bool isActive,
                                                          ErrorResult& aRv);
 
+  void SetNFCFocus(bool isFocus,
+                   ErrorResult& aRv);
+
 protected:
   NS_IMETHOD_(already_AddRefed<nsFrameLoader>) GetFrameLoader() = 0;
+  void InitBrowserElementAPI();
   nsCOMPtr<nsIBrowserElementAPI> mBrowserElementAPI;
 
 private:
-  void InitBrowserElementAPI();
   bool IsBrowserElementOrThrow(ErrorResult& aRv);
   bool IsNotWidgetOrThrow(ErrorResult& aRv);
   bool mOwnerIsWidget;
-
-  class BrowserShownObserver;
-  friend class BrowserShownObserver;
-  nsRefPtr<BrowserShownObserver> mObserver;
 };
 
 } // namespace mozilla

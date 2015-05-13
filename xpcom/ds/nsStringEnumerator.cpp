@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -14,7 +15,7 @@
 // nsStringEnumerator
 //
 
-class nsStringEnumerator MOZ_FINAL
+class nsStringEnumerator final
   : public nsIStringEnumerator
   , public nsIUTF8StringEnumerator
   , public nsISimpleEnumerator
@@ -55,7 +56,7 @@ public:
 
   // have to declare nsIStringEnumerator manually, because of
   // overlapping method names
-  NS_IMETHOD GetNext(nsAString& aResult) MOZ_OVERRIDE;
+  NS_IMETHOD GetNext(nsAString& aResult) override;
   NS_DECL_NSISIMPLEENUMERATOR
 
 private:

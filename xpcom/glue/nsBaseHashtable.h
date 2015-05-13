@@ -123,13 +123,13 @@ public:
    */
   void Put(KeyType aKey, const UserDataType& aData)
   {
-    if (!Put(aKey, aData, fallible_t())) {
+    if (!Put(aKey, aData, mozilla::fallible)) {
       NS_ABORT_OOM(this->mTable.EntrySize() * this->mTable.EntryCount());
     }
   }
 
-  NS_WARN_UNUSED_RESULT bool Put(KeyType aKey, const UserDataType& aData,
-                                 const fallible_t&)
+  MOZ_WARN_UNUSED_RESULT bool Put(KeyType aKey, const UserDataType& aData,
+                                  const fallible_t&)
   {
     EntryType* ent = this->PutEntry(aKey);
     if (!ent) {
@@ -167,7 +167,7 @@ public:
    */
   uint32_t EnumerateRead(EnumReadFunction aEnumFunc, void* aUserArg) const
   {
-    NS_ASSERTION(this->mTable.ops,
+    NS_ASSERTION(this->mTable.IsInitialized(),
                  "nsBaseHashtable was not initialized properly.");
 
     s_EnumReadArgs enumData = { aEnumFunc, aUserArg };
@@ -199,7 +199,7 @@ public:
    */
   uint32_t Enumerate(EnumFunction aEnumFunc, void* aUserArg)
   {
-    NS_ASSERTION(this->mTable.ops,
+    NS_ASSERTION(this->mTable.IsInitialized(),
                  "nsBaseHashtable was not initialized properly.");
 
     s_EnumArgs enumData = { aEnumFunc, aUserArg };
@@ -359,6 +359,7 @@ ImplCycleCollectionTraverse_EnumFunc(K aKey,
 template<class KeyClass, class DataType>
 nsBaseHashtableET<KeyClass, DataType>::nsBaseHashtableET(KeyTypePointer aKey)
   : KeyClass(aKey)
+  , mData()
 {
 }
 

@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -20,13 +20,13 @@ namespace dom {
 namespace indexedDB {
 
 // Create as a stored file
-FileImplSnapshot::FileImplSnapshot(const nsAString& aName,
+BlobImplSnapshot::BlobImplSnapshot(const nsAString& aName,
                                    const nsAString& aContentType,
                                    MetadataParameters* aMetadataParams,
                                    nsIFile* aFile,
                                    IDBFileHandle* aFileHandle,
                                    FileInfo* aFileInfo)
-  : FileImplBase(aName,
+  : BlobImplBase(aName,
                  aContentType,
                  aMetadataParams->Size(),
                  aMetadataParams->LastModified())
@@ -48,11 +48,11 @@ FileImplSnapshot::FileImplSnapshot(const nsAString& aName,
 }
 
 // Create slice
-FileImplSnapshot::FileImplSnapshot(const FileImplSnapshot* aOther,
+BlobImplSnapshot::BlobImplSnapshot(const BlobImplSnapshot* aOther,
                                    uint64_t aStart,
                                    uint64_t aLength,
                                    const nsAString& aContentType)
-  : FileImplBase(aContentType, aOther->mStart + aStart, aLength)
+  : BlobImplBase(aContentType, aOther->mStart + aStart, aLength)
   , mFile(aOther->mFile)
   , mFileHandle(aOther->mFileHandle)
   , mWholeFile(false)
@@ -72,7 +72,7 @@ FileImplSnapshot::FileImplSnapshot(const FileImplSnapshot* aOther,
   mFileInfos.AppendElement(fileInfo);
 }
 
-FileImplSnapshot::~FileImplSnapshot()
+BlobImplSnapshot::~BlobImplSnapshot()
 {
 }
 
@@ -80,7 +80,7 @@ FileImplSnapshot::~FileImplSnapshot()
 
 // static
 void
-FileImplSnapshot::AssertSanity()
+BlobImplSnapshot::AssertSanity()
 {
   MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
   MOZ_ASSERT(NS_IsMainThread());
@@ -88,10 +88,10 @@ FileImplSnapshot::AssertSanity()
 
 #endif // DEBUG
 
-NS_IMPL_ISUPPORTS_INHERITED(FileImplSnapshot, FileImpl, PIFileImplSnapshot)
+NS_IMPL_ISUPPORTS_INHERITED(BlobImplSnapshot, BlobImpl, PIBlobImplSnapshot)
 
 nsresult
-FileImplSnapshot::GetInternalStream(nsIInputStream** aStream)
+BlobImplSnapshot::GetInternalStream(nsIInputStream** aStream)
 {
   AssertSanity();
 
@@ -110,22 +110,22 @@ FileImplSnapshot::GetInternalStream(nsIInputStream** aStream)
   return NS_OK;
 }
 
-already_AddRefed<FileImpl>
-FileImplSnapshot::CreateSlice(uint64_t aStart,
+already_AddRefed<BlobImpl>
+BlobImplSnapshot::CreateSlice(uint64_t aStart,
                               uint64_t aLength,
                               const nsAString& aContentType,
                               ErrorResult& aRv)
 {
   AssertSanity();
 
-  nsRefPtr<FileImpl> impl =
-    new FileImplSnapshot(this, aStart, aLength, aContentType);
+  nsRefPtr<BlobImpl> impl =
+    new BlobImplSnapshot(this, aStart, aLength, aContentType);
 
   return impl.forget();
 }
 
 void
-FileImplSnapshot::GetMozFullPathInternal(nsAString& aFilename,
+BlobImplSnapshot::GetMozFullPathInternal(nsAString& aFilename,
                                          ErrorResult& aRv)
 {
   AssertSanity();
@@ -135,7 +135,7 @@ FileImplSnapshot::GetMozFullPathInternal(nsAString& aFilename,
 }
 
 bool
-FileImplSnapshot::IsStoredFile() const
+BlobImplSnapshot::IsStoredFile() const
 {
   AssertSanity();
 
@@ -143,7 +143,7 @@ FileImplSnapshot::IsStoredFile() const
 }
 
 bool
-FileImplSnapshot::IsWholeFile() const
+BlobImplSnapshot::IsWholeFile() const
 {
   AssertSanity();
 
@@ -151,7 +151,7 @@ FileImplSnapshot::IsWholeFile() const
 }
 
 bool
-FileImplSnapshot::IsSnapshot() const
+BlobImplSnapshot::IsSnapshot() const
 {
   AssertSanity();
 

@@ -1,7 +1,26 @@
 default-preferences pref(layout.css.grid.enabled,true)
 
-# TODO these are only for detecting assertions/crashes for now since
-# grid layout is not implemented yet
 fails == grid-whitespace-handling-1a.xhtml grid-whitespace-handling-1-ref.xhtml
 fails == grid-whitespace-handling-1b.xhtml grid-whitespace-handling-1-ref.xhtml
 == grid-whitespace-handling-2.xhtml  grid-whitespace-handling-2-ref.xhtml
+== grid-placement-definite-001.html grid-placement-definite-001-ref.html
+== grid-placement-definite-002.html grid-placement-definite-002-ref.html
+== grid-placement-auto-row-sparse-001.html grid-placement-auto-row-sparse-001-ref.html
+== grid-placement-auto-row-dense-001.html grid-placement-auto-row-dense-001-ref.html
+== grid-placement-auto-col-sparse-001.html grid-placement-auto-col-sparse-001-ref.html
+== grid-placement-auto-col-dense-001.html grid-placement-auto-col-dense-001-ref.html
+== grid-track-sizing-001.html grid-track-sizing-001-ref.html
+== grid-abspos-items-001.html grid-abspos-items-001-ref.html
+== grid-abspos-items-002.html grid-abspos-items-002-ref.html
+== grid-order-abspos-items-001.html grid-order-abspos-items-001-ref.html
+== grid-order-placement-auto-001.html grid-order-placement-auto-001-ref.html
+== grid-order-placement-definite-001.html grid-order-placement-definite-001-ref.html
+skip-if(Android) == grid-placement-definite-implicit-001.html grid-placement-definite-implicit-001-ref.html
+== grid-placement-definite-implicit-002.html grid-placement-definite-implicit-002-ref.html
+skip-if(Android) == grid-placement-auto-implicit-001.html grid-placement-auto-implicit-001-ref.html
+== grid-placement-abspos-implicit-001.html grid-placement-abspos-implicit-001-ref.html
+pref(layout.css.vertical-text.enabled,true) == rtl-grid-placement-definite-001.html rtl-grid-placement-definite-001-ref.html
+pref(layout.css.vertical-text.enabled,true) == rtl-grid-placement-auto-row-sparse-001.html rtl-grid-placement-auto-row-sparse-001-ref.html
+pref(layout.css.vertical-text.enabled,true) == vlr-grid-placement-auto-row-sparse-001.html vlr-grid-placement-auto-row-sparse-001-ref.html
+pref(layout.css.vertical-text.enabled,true) == vrl-grid-placement-auto-row-sparse-001.html vrl-grid-placement-auto-row-sparse-001-ref.html
+== grid-relpos-items-001.html grid-relpos-items-001-ref.html

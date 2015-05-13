@@ -4,13 +4,12 @@
 MARIONETTE_TIMEOUT = 60000;
 MARIONETTE_HEAD_JS = 'head.js';
 
-let connection;
 const normalNumber = "0912345678";
 const emergencyNumber = "112";
 let outCall;
 
 function testDial_NormalNumber() {
-  return gSetRadioEnabled(connection, false)
+  return gSetRadioEnabledAll(false)
     .then(() => gDial(normalNumber))
     .catch(cause => {
       is(cause, "RadioNotAvailable");
@@ -19,7 +18,7 @@ function testDial_NormalNumber() {
 }
 
 function testDial_EmergencyNumber() {
-  return gSetRadioEnabled(connection, false)
+  return gSetRadioEnabledAll(false)
     .then(() => gDial(emergencyNumber))
     .then(call => { outCall = call; })
     .then(() => gRemoteAnswer(outCall))
@@ -28,7 +27,7 @@ function testDial_EmergencyNumber() {
 }
 
 function testDialEmergency_NormalNumber() {
-  return gSetRadioEnabled(connection, false)
+  return gSetRadioEnabledAll(false)
     .then(() => gDialEmergency(normalNumber))
     .catch(cause => {
       is(cause, "RadioNotAvailable");
@@ -37,7 +36,7 @@ function testDialEmergency_NormalNumber() {
 }
 
 function testDialEmergency_EmergencyNumber() {
-  return gSetRadioEnabled(connection, false)
+  return gSetRadioEnabledAll(false)
     .then(() => gDialEmergency(emergencyNumber))
     .then(call => { outCall = call; })
     .then(() => gRemoteAnswer(outCall))
@@ -46,16 +45,13 @@ function testDialEmergency_EmergencyNumber() {
 }
 
 startTestWithPermissions(['mobileconnection'], function() {
-  connection = navigator.mozMobileConnections[0];
-  ok(connection instanceof MozMobileConnection,
-     "connection is instanceof " + connection.constructor);
-
   Promise.resolve()
     .then(() => testDial_NormalNumber())
     .then(() => testDial_EmergencyNumber())
     .then(() => testDialEmergency_NormalNumber())
     .then(() => testDialEmergency_EmergencyNumber())
-    .then(() => gSetRadioEnabled(connection, true))
+    .catch(error => ok(false, "Promise reject: " + error))
+    .then(() => gSetRadioEnabledAll(true))
     .catch(error => ok(false, "Promise reject: " + error))
     .then(finish);
 });

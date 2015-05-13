@@ -10,6 +10,7 @@
 #include "Point.h"
 #include "Rect.h"
 #include "Matrix.h"
+#include "Quaternion.h"
 #include "UserData.h"
 
 // GenericRefCountedBase allows us to hold on to refcounted objects of any type
@@ -43,7 +44,6 @@ struct ID2D1Device;
 struct IDWriteRenderingParams;
 
 class GrContext;
-struct GrGLInterface;
 
 struct CGContext;
 typedef struct CGContext *CGContextRef;
@@ -162,6 +162,7 @@ public:
   virtual ~GradientStops() {}
 
   virtual BackendType GetBackendType() const = 0;
+  virtual bool IsValid() const { return true; }
 
 protected:
   GradientStops() {}
@@ -187,11 +188,16 @@ protected:
 class ColorPattern : public Pattern
 {
 public:
+  // Explicit because consumers should generally use ToDeviceColor when
+  // creating a ColorPattern.
   explicit ColorPattern(const Color &aColor)
     : mColor(aColor)
   {}
 
-  virtual PatternType GetType() const { return PatternType::COLOR; }
+  virtual PatternType GetType() const override
+  {
+    return PatternType::COLOR;
+  }
 
   Color mColor;
 };
@@ -216,7 +222,10 @@ public:
   {
   }
 
-  virtual PatternType GetType() const { return PatternType::LINEAR_GRADIENT; }
+  virtual PatternType GetType() const override
+  {
+    return PatternType::LINEAR_GRADIENT;
+  }
 
   Point mBegin;                 //!< Start of the linear gradient
   Point mEnd;                   /**< End of the linear gradient - NOTE: In the case
@@ -253,7 +262,10 @@ public:
   {
   }
 
-  virtual PatternType GetType() const { return PatternType::RADIAL_GRADIENT; }
+  virtual PatternType GetType() const override
+  {
+    return PatternType::RADIAL_GRADIENT;
+  }
 
   Point mCenter1; //!< Center of the inner (focal) circle.
   Point mCenter2; //!< Center of the outer circle.
@@ -283,7 +295,10 @@ public:
     , mSamplingRect(aSamplingRect)
   {}
 
-  virtual PatternType GetType() const { return PatternType::SURFACE; }
+  virtual PatternType GetType() const override
+  {
+    return PatternType::SURFACE;
+  }
 
   RefPtr<SourceSurface> mSurface; //!< Surface to use for drawing
   ExtendMode mExtendMode;         /**< This determines how the image is extended
@@ -356,7 +371,7 @@ protected:
 class DataSourceSurface : public SourceSurface
 {
 public:
-  MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(DataSourceSurface)
+  MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(DataSourceSurface, override)
   DataSourceSurface()
     : mIsMapped(false)
   {
@@ -380,7 +395,7 @@ public:
     READ_WRITE
   };
 
-  virtual SurfaceType GetType() const { return SurfaceType::DATA; }
+  virtual SurfaceType GetType() const override { return SurfaceType::DATA; }
   /** @deprecated
    * Get the raw bitmap data of the surface.
    * Can return null if there was OOM allocating surface data.
@@ -394,12 +409,15 @@ public:
    */
   virtual int32_t Stride() = 0;
 
+  /**
+   * The caller is responsible for ensuring aMappedSurface is not null.
+   */
   virtual bool Map(MapType, MappedSurface *aMappedSurface)
   {
     aMappedSurface->mData = GetData();
     aMappedSurface->mStride = Stride();
-    mIsMapped = true;
-    return true;
+    mIsMapped = !!aMappedSurface->mData;
+    return mIsMapped;
   }
 
   virtual void Unmap()
@@ -412,7 +430,7 @@ public:
    * Returns a DataSourceSurface with the same data as this one, but
    * guaranteed to have surface->GetType() == SurfaceType::DATA.
    */
-  virtual TemporaryRef<DataSourceSurface> GetDataSurface();
+  virtual TemporaryRef<DataSourceSurface> GetDataSurface() override;
 
 protected:
   bool mIsMapped;
@@ -1150,6 +1168,8 @@ public:
 
   // This is a little hacky at the moment, but we want to have this data. Bug 1068613.
   static void SetLogForwarder(LogForwarder* aLogFwd);
+
+  static uint32_t GetMaxSurfaceSize(BackendType aType);
 
   static LogForwarder* GetLogForwarder() { return mLogForwarder; }
 

@@ -4,17 +4,17 @@
 
 <!-- General panel -->
 
-<script type="application/javascript" 
+<script type="application/javascript"
         src="chrome://browser/content/preferences/in-content/main.js"/>
 
-<preferences id="mainPreferences">
+<preferences id="mainPreferences" hidden="true" data-category="paneGeneral">
 
 #ifdef E10S_TESTING_ONLY
     <preference id="browser.tabs.remote.autostart"
                 name="browser.tabs.remote.autostart"
                 type="bool"/>
     <preference id="e10sTempPref"
-                name="browser.tabs.remote.autostart.1"
+                name="browser.tabs.remote.autostart.2"
                 type="bool"/>
 #endif
 
@@ -61,7 +61,7 @@
     <preference id="browser.download.dir"
                 name="browser.download.dir"
                 type="file"/>
-    <!-- Tab preferences 
+    <!-- Tab preferences
     Preferences:
 
     browser.link.open_newwindow
@@ -78,7 +78,7 @@
     - true if the user should be warned if he attempts to open a lot of tabs at
       once (e.g. a large folder of bookmarks), false otherwise
     browser.taskbar.previews.enable
-    - true if tabs are to be shown in the Windows 7 taskbar    
+    - true if tabs are to be shown in the Windows 7 taskbar
     -->
 
     <preference id="browser.link.open_newwindow"
@@ -130,7 +130,7 @@
 
 #ifdef E10S_TESTING_ONLY
   <checkbox id="e10sAutoStart"
-            label="Enable E10S (multi-process)"/>
+            label="&e10sEnabled.label;"/>
 #endif
 
 #ifdef HAVE_SHELL_SERVICE
@@ -153,54 +153,70 @@
     <separator class="thin"/>
   </vbox>
 #endif
-  <hbox align="center">
-    <label accesskey="&startupPage.accesskey;"
-           control="browserStartupPage">&startupPage.label;</label>
-    <menulist id="browserStartupPage"
-              preference="browser.startup.page">
-      <menupopup>
-      <menuitem label="&startupHomePage.label;"
-                value="1"
-                id="browserStartupHomePage"/>
-      <menuitem label="&startupBlankPage.label;"
-                value="0"
-                id="browserStartupBlank"/>
-      <menuitem label="&startupLastSession.label;"
-                value="3"
-                id="browserStartupLastSession"/>
-      </menupopup>
-    </menulist>
-  </hbox>
-  <separator class="thin"/>
-  <hbox align="center">
-    <label accesskey="&homepage.accesskey;"
-           control="browserHomePage">&homepage.label;</label>
-    <textbox id="browserHomePage"
-             class="padded uri-element"
-             flex="1"
-             type="autocomplete"
-             autocompletesearch="history"
-             onsyncfrompreference="return gMainPane.syncFromHomePref();"
-             onsynctopreference="return gMainPane.syncToHomePref(this.value);"
-             placeholder="&abouthome.pageTitle;"
-             preference="browser.startup.homepage"/>
-  </hbox>
-  <hbox align="center" pack="end">
-    <button label=""
-            accesskey="&useCurrentPage.accesskey;"
-            label1="&useCurrentPage.label;"
-            label2="&useMultiple.label;"
-            id="useCurrent"
-            preference="pref.browser.homepage.disable_button.current_page"/>
-    <button label="&chooseBookmark.label;"
-            accesskey="&chooseBookmark.accesskey;"
-            id="useBookmark"
-            preference="pref.browser.homepage.disable_button.bookmark_page"/>
-    <button label="&restoreDefault.label;"
-            accesskey="&restoreDefault.accesskey;"
-            id="restoreDefaultHomePage"
-            preference="pref.browser.homepage.disable_button.restore_default"/>
-  </hbox>
+
+  <html:table id="startupTable">
+    <html:tr>
+      <html:td class="label-cell">
+        <label accesskey="&startupPage.accesskey;"
+               control="browserStartupPage">&startupPage.label;</label>
+      </html:td>
+      <html:td class="content-cell">
+        <menulist id="browserStartupPage"
+                  class="content-cell-item"
+                  preference="browser.startup.page">
+          <menupopup>
+          <menuitem label="&startupHomePage.label;"
+                    value="1"
+                    id="browserStartupHomePage"/>
+          <menuitem label="&startupBlankPage.label;"
+                    value="0"
+                    id="browserStartupBlank"/>
+          <menuitem label="&startupLastSession.label;"
+                    value="3"
+                    id="browserStartupLastSession"/>
+          </menupopup>
+        </menulist>
+      </html:td>
+    </html:tr>
+    <html:tr>
+      <html:td class="label-cell">
+        <label accesskey="&homepage.accesskey;"
+               control="browserHomePage">&homepage.label;</label>
+      </html:td>
+      <html:td class="content-cell">
+        <textbox id="browserHomePage"
+                 class="padded uri-element content-cell-item"
+                 type="autocomplete"
+                 autocompletesearch="history"
+                 onsyncfrompreference="return gMainPane.syncFromHomePref();"
+                 onsynctopreference="return gMainPane.syncToHomePref(this.value);"
+                 placeholder="&abouthome.pageTitle;"
+                 preference="browser.startup.homepage"/>
+      </html:td>
+    </html:tr>
+    <html:tr>
+      <html:td class="label-cell" />
+      <html:td class="content-cell homepage-buttons">
+        <button id="useCurrent"
+                class="content-cell-item"
+                label=""
+                accesskey="&useCurrentPage.accesskey;"
+                label1="&useCurrentPage.label;"
+                label2="&useMultiple.label;"
+                preference="pref.browser.homepage.disable_button.current_page"/>
+        <button id="useBookmark"
+                class="content-cell-item"
+                label="&chooseBookmark.label;"
+                accesskey="&chooseBookmark.accesskey;"
+                preference="pref.browser.homepage.disable_button.bookmark_page"/>
+        <button id="restoreDefaultHomePage"
+                class="content-cell-item"
+                label="&restoreDefault.label;"
+                accesskey="&restoreDefault.accesskey;"
+                preference="pref.browser.homepage.disable_button.restore_default"/>
+      </html:td>
+    </html:tr>
+  </html:table>
 </groupbox>
 
 <!-- Downloads -->

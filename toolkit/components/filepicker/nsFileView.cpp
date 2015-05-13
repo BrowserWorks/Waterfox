@@ -34,7 +34,7 @@ class nsIDOMDataTransfer;
                             { 0x91, 0x10, 0x81, 0x46, 0x61, 0x4c, 0xa7, 0xf0 } }
 #define NS_FILECOMPLETE_CONTRACTID "@mozilla.org/autocomplete/search;1?name=file"
 
-class nsFileResult MOZ_FINAL : public nsIAutoCompleteResult
+class nsFileResult final : public nsIAutoCompleteResult
 {
 public:
   // aSearchString is the text typed into the autocomplete widget
@@ -185,7 +185,7 @@ NS_IMETHODIMP nsFileResult::RemoveValueAt(int32_t rowIndex, bool removeFromDb)
   return NS_OK;
 }
 
-class nsFileComplete MOZ_FINAL : public nsIAutoCompleteSearch
+class nsFileComplete final : public nsIAutoCompleteSearch
 {
   ~nsFileComplete() {}
 public:
@@ -293,7 +293,7 @@ nsFileView::~nsFileView()
 {
   uint32_t count = mCurrentFilters.Length();
   for (uint32_t i = 0; i < count; ++i)
-    NS_Free(mCurrentFilters[i]);
+    free(mCurrentFilters[i]);
 }
 
 nsresult
@@ -469,7 +469,7 @@ nsFileView::SetFilter(const nsAString& aFilterString)
 {
   uint32_t filterCount = mCurrentFilters.Length();
   for (uint32_t i = 0; i < filterCount; ++i)
-    NS_Free(mCurrentFilters[i]);
+    free(mCurrentFilters[i]);
   mCurrentFilters.Clear();
 
   nsAString::const_iterator start, iter, end;
@@ -498,7 +498,7 @@ nsFileView::SetFilter(const nsAString& aFilterString)
       return NS_ERROR_OUT_OF_MEMORY;
 
     if (!mCurrentFilters.AppendElement(filter)) {
-      NS_Free(filter);
+      free(filter);
       return NS_ERROR_OUT_OF_MEMORY;
     }
 
@@ -562,7 +562,7 @@ nsFileView::GetSelectedFiles(nsIArray** aFiles)
     }
   }
 
-  NS_ADDREF(*aFiles = fileArray);
+  fileArray.forget(aFiles);
   return NS_OK;
 }
 

@@ -133,11 +133,27 @@
             if (!aURI)
               aURI = "about:blank";
 
+            var aReferrerPolicy = Components.interfaces.nsIHttpChannel.REFERRER_POLICY_DEFAULT;
+
+            // Check for loadURIWithFlags(uri, { ... });
+            var params = arguments[1];
+            if (params && typeof(params) == "object") {
+              aFlags = params.flags;
+              aReferrerURI = params.referrerURI;
+              if ('referrerPolicy' in params) {
+                aReferrerPolicy = params.referrerPolicy;
+              }
+              aCharset = params.charset;
+              aPostData = params.postData;
+            }
+
             if (!(aFlags & this.webNavigation.LOAD_FLAGS_FROM_EXTERNAL))
               this.userTypedClear++;
 
             try {
-              this.webNavigation.loadURI(aURI, aFlags, aReferrerURI, aPostData, null);
+              this.webNavigation.loadURIWithOptions(
+                  aURI, aFlags, aReferrerURI, aReferrerPolicy,
+                  aPostData, null, null);
             } finally {
               if (this.userTypedClear)
                 this.userTypedClear--;
@@ -386,11 +402,14 @@
         ]]></getter>
       </property>
 
-      <field name="_permanentKey">({})</field>
-
-      <property name="permanentKey"
-                onget="return this._permanentKey;"
-                onset="this._permanentKey = val;"/>
+      <property name="outerWindowID" readonly="true">
+        <getter><![CDATA[
+          return this.contentWindow
+                     .QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+                     .getInterface(Components.interfaces.nsIDOMWindowUtils)
+                     .outerWindowID;
+        ]]></getter>
+      </property>
 
       <field name="_lastSearchString">null</field>
       <field name="_lastSearchHighlight">false</field>
@@ -633,7 +652,7 @@
 
       <field name="blockedPopups">null</field>
 
-      <!-- Obsolete name for blockedPopups. Used by metro and android. -->
+      <!-- Obsolete name for blockedPopups. Used by android. -->
       <property name="pageReport"
          onget="return this.blockedPopups;"
          readonly="true"/>
@@ -641,10 +660,6 @@
       <property name="securityUI">
         <getter>
           <![CDATA[
-            // Bug 666809 - SecurityUI support for e10s
-            if (!this.docShell)
-              return null;
-
             if (!this.docShell.securityUI) {
               const SECUREBROWSERUI_CONTRACTID = "@mozilla.org/secure_browser_ui;1";
               if (!this.hasAttribute("disablesecurity") &&
@@ -872,8 +887,7 @@
               if (!this.autoscrollEnabled) {
                 return false;
               }
-              let pos = this.mapScreenCoordinatesFromContent(data.screenX, data.screenY);
-              this.startScroll(data.scrolldir, pos.x, pos.y);
+              this.startScroll(data.scrolldir, data.screenX, data.screenY);
               return true;
             }
             case "Autoscroll:Cancel":
@@ -1054,29 +1068,19 @@
         </body>
       </method>
 
-      <!--
-        For out-of-process code, event.screen[XY] is relative to the
-        left/top of the content view. For in-process code,
-        event.screen[XY] is relative to the left/top of the screen. We
-        use this method to map screen coordinates received from a
-        (possibly out-of-process) <browser> element to coordinates
-        that are relative to the screen. This code handles the
-        in-process case, where we return the coordinates unchanged.
-      -->
-      <method name="mapScreenCoordinatesFromContent">
-        <parameter name="aScreenX"/>
-        <parameter name="aScreenY"/>
-        <body>
-        <![CDATA[
-          return { x: aScreenX, y: aScreenY };
-        ]]>
-        </body>
-      </method>
-
       <method name="swapDocShells">
         <parameter name="aOtherBrowser"/>
         <body>
         <![CDATA[
+          if (this.isRemoteBrowser != aOtherBrowser.isRemoteBrowser)
+            throw new Error("Can only swap docshells between browsers in the same process.");
+
+          // Give others a chance to swap state.
+          let event = new CustomEvent("SwapDocShells", {"detail": aOtherBrowser});
+          this.dispatchEvent(event);
+          event = new CustomEvent("SwapDocShells", {"detail": this});
+          aOtherBrowser.dispatchEvent(event);
+
           // We need to swap fields that are tied to our docshell or related to
           // the loaded page
           // Fields which are built as a result of notifactions (pageshow/hide,
@@ -1087,9 +1091,27 @@
             "_docShell",
             "_webBrowserFind",
             "_contentWindow",
-            "_webNavigation",
-            "_permanentKey"
+            "_webNavigation"
           ];
+
+          if (this.isRemoteBrowser) {
+            fieldsToSwap.push(...[
+              "_remoteWebNavigation",
+              "_remoteWebProgressManager",
+              "_remoteWebProgress",
+              "_remoteFinder",
+              "_securityUI",
+              "_documentURI",
+              "_documentContentType",
+              "_contentTitle",
+              "_characterSet",
+              "_contentPrincipal",
+              "_imageDocument",
+              "_fullZoom",
+              "_textZoom",
+              "_isSyntheticDocument",
+            ]);
+          }
 
           var ourFieldValues = {};
           var otherFieldValues = {};
@@ -1106,8 +1128,10 @@
 
           // Before we swap the actual docShell property we need to detach the
           // form fill controller from those docShells.
-          this.detachFormFill();
-          aOtherBrowser.detachFormFill();
+          if (!this.isRemoteBrowser) {
+            this.detachFormFill();
+            aOtherBrowser.detachFormFill();
+          }
 
           for each (var field in fieldsToSwap) {
             this[field] = otherFieldValues[field];
@@ -1117,15 +1141,26 @@
           // Re-attach the docShells to the form fill controller.
           if (!this.isRemoteBrowser) {
             this.attachFormFill();
-          }
-          if (!aOtherBrowser.isRemoteBrowser) {
             aOtherBrowser.attachFormFill();
-          }
 
-          // Null the current nsITypeAheadFind instances so that they're
-          // lazily re-created on access. We need to do this because they
-          // might have attached the wrong docShell.
-          this._fastFind = aOtherBrowser._fastFind = null;
+            // Null the current nsITypeAheadFind instances so that they're
+            // lazily re-created on access. We need to do this because they
+            // might have attached the wrong docShell.
+            this._fastFind = aOtherBrowser._fastFind = null;
+          }
+          else {
+            // Rewire the remote listeners
+            this._remoteWebNavigation.swapBrowser(this);
+            aOtherBrowser._remoteWebNavigation.swapBrowser(aOtherBrowser);
+
+            this._remoteWebProgressManager.swapBrowser(this);
+            aOtherBrowser._remoteWebProgressManager.swapBrowser(aOtherBrowser);
+
+            if (this._remoteFinder)
+              this._remoteFinder.swapBrowser(this);
+            if (aOtherBrowser._remoteFinder)
+              aOtherBrowser._remoteFinder.swapBrowser(aOtherBrowser);
+          }
         ]]>
         </body>
       </method>
@@ -1210,6 +1245,11 @@
           event.preventDefault();
         }
 
+        // No need to handle "dragover" in e10s, since nsDocShellTreeOwner.cpp in the child process
+        // handles that case using "@mozilla.org/content/dropped-link-handler;1" service.
+        if (this.isRemoteBrowser)
+          return;
+
         let linkHandler = Components.classes["@mozilla.org/content/dropped-link-handler;1"].
                             getService(Components.interfaces.nsIDroppedLinkHandler);
         if (linkHandler.canDropLink(event, false))
@@ -1218,7 +1258,9 @@
       </handler>
       <handler event="drop" group="system">
       <![CDATA[
-        if (!this.droppedLinkHandler || event.defaultPrevented)
+        // No need to handle "drop" in e10s, since nsDocShellTreeOwner.cpp in the child process
+        // handles that case using "@mozilla.org/content/dropped-link-handler;1" service.
+        if (!this.droppedLinkHandler || event.defaultPrevented || this.isRemoteBrowser)
           return;
 
         let name = { };

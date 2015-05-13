@@ -12,7 +12,7 @@
 #include "gmp-video-frame-encoded.h"
 
 #include "GMPCallbackBase.h"
-#include "mozilla/UniquePtr.h"
+#include "GMPUtils.h"
 
 class GMPVideoDecoderCallbackProxy : public GMPCallbackBase,
                                      public GMPVideoDecoderCallback
@@ -38,7 +38,7 @@ public:
                               const nsTArray<uint8_t>& aCodecSpecific,
                               GMPVideoDecoderCallbackProxy* aCallback,
                               int32_t aCoreCount) = 0;
-  virtual nsresult Decode(mozilla::UniquePtr<GMPVideoEncodedFrame> aInputFrame,
+  virtual nsresult Decode(mozilla::GMPUniquePtr<GMPVideoEncodedFrame> aInputFrame,
                           bool aMissingFrames,
                           const nsTArray<uint8_t>& aCodecSpecificInfo,
                           int64_t aRenderTimeMs = -1) = 0;
@@ -49,19 +49,8 @@ public:
   // Call to tell GMP/plugin the consumer will no longer use this
   // interface/codec.
   virtual void Close() = 0;
+
+  virtual const nsCString& GetDisplayName() const = 0;
 };
-
-namespace mozilla {
-
-template<>
-struct DefaultDelete<GMPVideoEncodedFrame>
-{
-  void operator()(GMPVideoEncodedFrame* aFrame) const
-  {
-    aFrame->Destroy();
-  }
-};
-
-} // namespace mozilla
 
 #endif

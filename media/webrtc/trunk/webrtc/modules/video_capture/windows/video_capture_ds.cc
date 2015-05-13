@@ -45,13 +45,14 @@ VideoCaptureDS::~VideoCaptureDS()
         if (_dvFilter)
             _graphBuilder->RemoveFilter(_dvFilter);
     }
+    RELEASE_AND_CLEAR(_inputSendPin);
+    RELEASE_AND_CLEAR(_outputCapturePin);
+
     RELEASE_AND_CLEAR(_captureFilter); // release the capture device
     RELEASE_AND_CLEAR(_sinkFilter);
     RELEASE_AND_CLEAR(_dvFilter);
 
     RELEASE_AND_CLEAR(_mediaControl);
-    RELEASE_AND_CLEAR(_inputSendPin);
-    RELEASE_AND_CLEAR(_outputCapturePin);
 
     RELEASE_AND_CLEAR(_inputDvPin);
     RELEASE_AND_CLEAR(_outputDvPin);
@@ -212,6 +213,8 @@ int32_t VideoCaptureDS::SetCameraOutputIfNeeded(
     VideoCaptureCapability capability;
     int32_t capabilityIndex;
 
+    // Store the new requested size
+    _requestedCapability = requestedCapability;
     // Match the requested capability with the supported.
     if ((capabilityIndex = _dsInfo.GetBestMatchedCapability(_deviceUniqueId,
                                                             _requestedCapability,

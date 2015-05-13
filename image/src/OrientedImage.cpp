@@ -98,7 +98,7 @@ OrientedImage::GetFrame(uint32_t aWhichFrame,
   // Create a surface to draw into.
   RefPtr<DrawTarget> target =
     gfxPlatform::GetPlatform()->
-      CreateOffscreenContentDrawTarget(ToIntSize(size), surfaceFormat);
+      CreateOffscreenContentDrawTarget(size, surfaceFormat);
   if (!target) {
     NS_ERROR("Could not create a DrawTarget");
     return nullptr;
@@ -122,9 +122,17 @@ OrientedImage::GetFrame(uint32_t aWhichFrame,
   return target->Snapshot();
 }
 
-NS_IMETHODIMP
-OrientedImage::GetImageContainer(LayerManager* aManager,
-                                 ImageContainer** _retval)
+NS_IMETHODIMP_(bool)
+OrientedImage::IsImageContainerAvailable(LayerManager* aManager, uint32_t aFlags)
+{
+  if (mOrientation.IsIdentity()) {
+    return InnerImage()->IsImageContainerAvailable(aManager, aFlags);
+  }
+  return false;
+}
+
+NS_IMETHODIMP_(already_AddRefed<ImageContainer>)
+OrientedImage::GetImageContainer(LayerManager* aManager, uint32_t aFlags)
 {
   // XXX(seth): We currently don't have a way of orienting the result of
   // GetImageContainer. We work around this by always returning null, but if it
@@ -133,11 +141,10 @@ OrientedImage::GetImageContainer(LayerManager* aManager,
   // that method for performance reasons.
 
   if (mOrientation.IsIdentity()) {
-    return InnerImage()->GetImageContainer(aManager, _retval);
+    return InnerImage()->GetImageContainer(aManager, aFlags);
   }
 
-  *_retval = nullptr;
-  return NS_OK;
+  return nullptr;
 }
 
 struct MatrixBuilder
@@ -243,7 +250,7 @@ static SVGImageContext
 OrientViewport(const SVGImageContext& aOldContext,
                const Orientation& aOrientation)
 {
-  nsIntSize viewportSize(aOldContext.GetViewportSize());
+  CSSIntSize viewportSize(aOldContext.GetViewportSize());
   if (aOrientation.SwapsWidthAndHeight()) {
     swap(viewportSize.width, viewportSize.height);
   }
@@ -251,7 +258,7 @@ OrientViewport(const SVGImageContext& aOldContext,
                          aOldContext.GetPreserveAspectRatio());
 }
 
-NS_IMETHODIMP
+NS_IMETHODIMP_(DrawResult)
 OrientedImage::Draw(gfxContext* aContext,
                     const nsIntSize& aSize,
                     const ImageRegion& aRegion,

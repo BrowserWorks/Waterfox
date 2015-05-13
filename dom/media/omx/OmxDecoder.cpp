@@ -65,7 +65,7 @@ OmxDecoder::OmxDecoder(MediaResource *aResource,
   mAudioChannels(-1),
   mAudioSampleRate(-1),
   mDurationUs(-1),
-  mVideoLastFrameTime(-1),
+  mLastSeekTime(-1),
   mVideoBuffer(nullptr),
   mAudioBuffer(nullptr),
   mIsVideoSeeking(false),
@@ -150,7 +150,7 @@ bool OmxDecoder::Init(sp<MediaExtractor>& extractor) {
 
   mResource->SetReadMode(MediaCacheStream::MODE_PLAYBACK);
 
-  if (videoTrackIndex != -1) {
+  if (videoTrackIndex != -1 && mDecoder->GetImageContainer()) {
     mVideoTrack = extractor->getTrack(videoTrackIndex);
   }
 
@@ -217,14 +217,6 @@ bool OmxDecoder::EnsureMetadata() {
   }
 
   return true;
-}
-
-bool OmxDecoder::IsDormantNeeded()
-{
-  if (mVideoTrack.get()) {
-    return true;
-  }
-  return false;
 }
 
 bool OmxDecoder::IsWaitingMediaResources()
@@ -394,6 +386,10 @@ void OmxDecoder::ReleaseMediaResources() {
 
   mNativeWindowClient.clear();
   mNativeWindow.clear();
+
+  // Reset this variable to make the first seek go to the previous keyframe
+  // when resuming
+  mLastSeekTime = -1;
 }
 
 bool OmxDecoder::SetVideoFormat() {
@@ -572,12 +568,13 @@ bool OmxDecoder::ReadVideo(VideoFrame *aFrame, int64_t aTimeUs,
     MediaSource::ReadOptions::SeekMode seekMode;
     // If the last timestamp of decoded frame is smaller than seekTime,
     // seek to next key frame. Otherwise seek to the previos one.
-    if (mVideoLastFrameTime > aTimeUs || mVideoLastFrameTime == -1) {
+    OD_LOG("SeekTime: %lld, mLastSeekTime:%lld", aTimeUs, mLastSeekTime);
+    if (mLastSeekTime == -1 || mLastSeekTime > aTimeUs) {
       seekMode = MediaSource::ReadOptions::SEEK_PREVIOUS_SYNC;
     } else {
       seekMode = MediaSource::ReadOptions::SEEK_NEXT_SYNC;
     }
-
+    mLastSeekTime = aTimeUs;
     bool findNextBuffer = true;
     while (findNextBuffer) {
       options.setSeekTo(aTimeUs, seekMode);
@@ -608,7 +605,7 @@ bool OmxDecoder::ReadVideo(VideoFrame *aFrame, int64_t aTimeUs,
       // For some codecs, the length of first decoded frame after seek is 0.
       // Need to ignore it and continue to find the next one
       if (mVideoBuffer->range_length() == 0) {
-        ReleaseVideoBuffer();
+        PostReleaseVideoBuffer(mVideoBuffer, FenceHandle());
         findNextBuffer = true;
       }
     }
@@ -683,7 +680,6 @@ bool OmxDecoder::ReadVideo(VideoFrame *aFrame, int64_t aTimeUs,
     if ((aKeyframeSkip && timeUs < aTimeUs) || length == 0) {
       aFrame->mShouldSkip = true;
     }
-    mVideoLastFrameTime = timeUs;
   }
   else if (err == INFO_FORMAT_CHANGED) {
     // If the format changed, update our cached info.

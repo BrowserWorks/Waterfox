@@ -501,12 +501,23 @@ WebGLContext::ErrorInvalidEnum(const char* fmt, ...)
 }
 
 void
-WebGLContext::ErrorInvalidEnumInfo(const char* info, GLenum enumvalue)
+WebGLContext::ErrorInvalidEnumInfo(const char* info, GLenum enumValue)
 {
     nsCString name;
-    EnumName(enumvalue, &name);
+    EnumName(enumValue, &name);
 
-    return ErrorInvalidEnum("%s: invalid enum value %s", info, name.get());
+    return ErrorInvalidEnum("%s: invalid enum value %s", info, name.BeginReading());
+}
+
+void
+WebGLContext::ErrorInvalidEnumInfo(const char* info, const char* funcName,
+                                   GLenum enumValue)
+{
+    nsCString name;
+    EnumName(enumValue, &name);
+
+    ErrorInvalidEnum("%s: %s: Invalid enum: 0x%04x (%s).", funcName, info,
+                     enumValue, name.BeginReading());
 }
 
 void
@@ -593,6 +604,7 @@ WebGLContext::EnumName(GLenum glenum)
         XX(COMPRESSED_RGB_PVRTC_2BPPV1);
         XX(COMPRESSED_RGB_PVRTC_4BPPV1);
         XX(COMPRESSED_RGB_S3TC_DXT1_EXT);
+        XX(DEPTH_ATTACHMENT);
         XX(DEPTH_COMPONENT);
         XX(DEPTH_COMPONENT16);
         XX(DEPTH_COMPONENT32);
@@ -778,6 +790,7 @@ WebGLContext::EnumName(GLenum glenum)
         XX(RENDERBUFFER_SAMPLES);
         XX(FRAMEBUFFER_ATTACHMENT_TEXTURE_LAYER);
         XX(MAX_COLOR_ATTACHMENTS);
+        XX(COLOR_ATTACHMENT0);
         XX(COLOR_ATTACHMENT1);
         XX(COLOR_ATTACHMENT2);
         XX(COLOR_ATTACHMENT3);
@@ -1043,7 +1056,7 @@ WebGLContext::AssertCachedBindings()
         AssertUintParamCorrect(gl, LOCAL_GL_FRAMEBUFFER_BINDING, bound);
     }
 
-    GLuint bound = mCurrentProgram ? mCurrentProgram->GLName() : 0;
+    GLuint bound = mCurrentProgram ? mCurrentProgram->mGLName : 0;
     AssertUintParamCorrect(gl, LOCAL_GL_CURRENT_PROGRAM, bound);
 
     // Textures
@@ -1086,11 +1099,11 @@ WebGLContext::AssertCachedState()
     }
 
     // Draw state
-    MOZ_ASSERT(gl->fIsEnabled(LOCAL_GL_SCISSOR_TEST) == mScissorTestEnabled);
     MOZ_ASSERT(gl->fIsEnabled(LOCAL_GL_DITHER) == mDitherEnabled);
     MOZ_ASSERT_IF(IsWebGL2(),
                   gl->fIsEnabled(LOCAL_GL_RASTERIZER_DISCARD) == mRasterizerDiscardEnabled);
-
+    MOZ_ASSERT(gl->fIsEnabled(LOCAL_GL_SCISSOR_TEST) == mScissorTestEnabled);
+    MOZ_ASSERT(gl->fIsEnabled(LOCAL_GL_STENCIL_TEST) == mStencilTestEnabled);
 
     realGLboolean colorWriteMask[4] = {0, 0, 0, 0};
     gl->fGetBooleanv(LOCAL_GL_COLOR_WRITEMASK, colorWriteMask);
@@ -1117,14 +1130,22 @@ WebGLContext::AssertCachedState()
     AssertUintParamCorrect(gl, LOCAL_GL_STENCIL_CLEAR_VALUE, mStencilClearValue);
 
     GLint stencilBits = 0;
-    gl->fGetIntegerv(LOCAL_GL_STENCIL_BITS, &stencilBits);
-    const GLuint stencilRefMask = (1 << stencilBits) - 1;
+    if (GetStencilBits(&stencilBits)) {
+        const GLuint stencilRefMask = (1 << stencilBits) - 1;
 
-    AssertMaskedUintParamCorrect(gl, LOCAL_GL_STENCIL_REF,      stencilRefMask, mStencilRefFront);
-    AssertMaskedUintParamCorrect(gl, LOCAL_GL_STENCIL_BACK_REF, stencilRefMask, mStencilRefBack);
+        AssertMaskedUintParamCorrect(gl, LOCAL_GL_STENCIL_REF,      stencilRefMask, mStencilRefFront);
+        AssertMaskedUintParamCorrect(gl, LOCAL_GL_STENCIL_BACK_REF, stencilRefMask, mStencilRefBack);
+    }
 
-    AssertUintParamCorrect(gl, LOCAL_GL_STENCIL_VALUE_MASK,      mStencilValueMaskFront);
-    AssertUintParamCorrect(gl, LOCAL_GL_STENCIL_BACK_VALUE_MASK, mStencilValueMaskBack);
+    // GLES 3.0.4, $4.1.4, p177:
+    //   [...] the front and back stencil mask are both set to the value `2^s - 1`, where
+    //   `s` is greater than or equal to the number of bits in the deepest stencil buffer
+    //   supported by the GL implementation.
+    const int maxStencilBits = 8;
+    const GLuint maxStencilBitsMask = (1 << maxStencilBits) - 1;
+
+    AssertMaskedUintParamCorrect(gl, LOCAL_GL_STENCIL_VALUE_MASK,      maxStencilBitsMask, mStencilValueMaskFront);
+    AssertMaskedUintParamCorrect(gl, LOCAL_GL_STENCIL_BACK_VALUE_MASK, maxStencilBitsMask, mStencilValueMaskBack);
 
     AssertUintParamCorrect(gl, LOCAL_GL_STENCIL_WRITEMASK,      mStencilWriteMaskFront);
     AssertUintParamCorrect(gl, LOCAL_GL_STENCIL_BACK_WRITEMASK, mStencilWriteMaskBack);

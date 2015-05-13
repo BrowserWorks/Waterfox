@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -41,13 +42,13 @@ SVGContentUtils::GetOuterSVGElement(nsSVGElement *aSVGElement)
   nsIContent *element = nullptr;
   nsIContent *ancestor = aSVGElement->GetFlattenedTreeParent();
 
-  while (ancestor && ancestor->IsSVG() &&
-                     ancestor->Tag() != nsGkAtoms::foreignObject) {
+  while (ancestor && ancestor->IsSVGElement() &&
+                     !ancestor->IsSVGElement(nsGkAtoms::foreignObject)) {
     element = ancestor;
     ancestor = element->GetFlattenedTreeParent();
   }
 
-  if (element && element->Tag() == nsGkAtoms::svg) {
+  if (element && element->IsSVGElement(nsGkAtoms::svg)) {
     return static_cast<SVGSVGElement*>(element);
   }
   return nullptr;
@@ -56,8 +57,8 @@ SVGContentUtils::GetOuterSVGElement(nsSVGElement *aSVGElement)
 void
 SVGContentUtils::ActivateByHyperlink(nsIContent *aContent)
 {
-  NS_ABORT_IF_FALSE(aContent->IsNodeOfType(nsINode::eANIMATION),
-                    "Expecting an animation element");
+  MOZ_ASSERT(aContent->IsNodeOfType(nsINode::eANIMATION),
+             "Expecting an animation element");
 
   static_cast<SVGAnimationElement*>(aContent)->ActivateByHyperlink();
 }
@@ -76,6 +77,7 @@ GetStrokeDashData(SVGContentUtils::AutoStrokeOptions* aStrokeOptions,
 {
   size_t dashArrayLength;
   Float totalLengthOfDashes = 0.0, totalLengthOfGaps = 0.0;
+  Float pathScale = 1.0;
 
   if (aContextPaint && aStyleSVG->mStrokeDasharrayFromObject) {
     const FallibleTArray<gfxFloat>& dashSrc = aContextPaint->GetStrokeDashArray();
@@ -100,8 +102,7 @@ GetStrokeDashData(SVGContentUtils::AutoStrokeOptions* aStrokeOptions,
     if (dashArrayLength <= 0) {
       return eContinuousStroke;
     }
-    Float pathScale = 1.0;
-    if (aElement->Tag() == nsGkAtoms::path) {
+    if (aElement->IsSVGElement(nsGkAtoms::path)) {
       pathScale = static_cast<SVGPathElement*>(aElement)->
         GetPathLengthScale(SVGPathElement::eForStroking);
       if (pathScale <= 0) {
@@ -144,9 +145,6 @@ GetStrokeDashData(SVGContentUtils::AutoStrokeOptions* aStrokeOptions,
   // stroke to essentially be continuous or to be nonexistent in which case
   // we can avoid expensive stroking operations (the underlying platform
   // graphics libraries don't seem to optimize for this).
-  if (totalLengthOfDashes <= 0 && totalLengthOfGaps <= 0) {
-    return eNoStroke;
-  }
   if (totalLengthOfGaps <= 0) {
     return eContinuousStroke;
   }
@@ -161,7 +159,8 @@ GetStrokeDashData(SVGContentUtils::AutoStrokeOptions* aStrokeOptions,
     aStrokeOptions->mDashOffset = Float(aContextPaint->GetStrokeDashOffset());
   } else {
     aStrokeOptions->mDashOffset =
-      SVGContentUtils::CoordToFloat(aElement, aStyleSVG->mStrokeDashoffset);
+      SVGContentUtils::CoordToFloat(aElement, aStyleSVG->mStrokeDashoffset) *
+      pathScale;
   }
 
   return eDashedStroke;
@@ -282,17 +281,17 @@ SVGContentUtils::GetFontSize(Element *aElement)
 float
 SVGContentUtils::GetFontSize(nsIFrame *aFrame)
 {
-  NS_ABORT_IF_FALSE(aFrame, "NULL frame in GetFontSize");
+  MOZ_ASSERT(aFrame, "NULL frame in GetFontSize");
   return GetFontSize(aFrame->StyleContext());
 }
 
 float
 SVGContentUtils::GetFontSize(nsStyleContext *aStyleContext)
 {
-  NS_ABORT_IF_FALSE(aStyleContext, "NULL style context in GetFontSize");
+  MOZ_ASSERT(aStyleContext, "NULL style context in GetFontSize");
 
   nsPresContext *presContext = aStyleContext->PresContext();
-  NS_ABORT_IF_FALSE(presContext, "NULL pres context in GetFontSize");
+  MOZ_ASSERT(presContext, "NULL pres context in GetFontSize");
 
   nscoord fontSize = aStyleContext->StyleFont()->mSize;
   return nsPresContext::AppUnitsToFloatCSSPixels(fontSize) / 
@@ -320,17 +319,17 @@ SVGContentUtils::GetFontXHeight(Element *aElement)
 float
 SVGContentUtils::GetFontXHeight(nsIFrame *aFrame)
 {
-  NS_ABORT_IF_FALSE(aFrame, "NULL frame in GetFontXHeight");
+  MOZ_ASSERT(aFrame, "NULL frame in GetFontXHeight");
   return GetFontXHeight(aFrame->StyleContext());
 }
 
 float
 SVGContentUtils::GetFontXHeight(nsStyleContext *aStyleContext)
 {
-  NS_ABORT_IF_FALSE(aStyleContext, "NULL style context in GetFontXHeight");
+  MOZ_ASSERT(aStyleContext, "NULL style context in GetFontXHeight");
 
   nsPresContext *presContext = aStyleContext->PresContext();
-  NS_ABORT_IF_FALSE(presContext, "NULL pres context in GetFontXHeight");
+  MOZ_ASSERT(presContext, "NULL pres context in GetFontXHeight");
 
   nsRefPtr<nsFontMetrics> fontMetrics;
   nsLayoutUtils::GetFontMetricsForStyleContext(aStyleContext,
@@ -365,10 +364,9 @@ SVGContentUtils::EstablishesViewport(nsIContent *aContent)
   // Although SVG 1.1 states that <image> is an element that establishes a
   // viewport, this is really only for the document it references, not
   // for any child content, which is what this function is used for.
-  return aContent && aContent->IsSVG() &&
-           (aContent->Tag() == nsGkAtoms::svg ||
-            aContent->Tag() == nsGkAtoms::foreignObject ||
-            aContent->Tag() == nsGkAtoms::symbol);
+  return aContent && aContent->IsAnyOfSVGElements(nsGkAtoms::svg,
+                                                  nsGkAtoms::foreignObject,
+                                                  nsGkAtoms::symbol);
 }
 
 nsSVGElement*
@@ -376,9 +374,9 @@ SVGContentUtils::GetNearestViewportElement(nsIContent *aContent)
 {
   nsIContent *element = aContent->GetFlattenedTreeParent();
 
-  while (element && element->IsSVG()) {
+  while (element && element->IsSVGElement()) {
     if (EstablishesViewport(element)) {
-      if (element->Tag() == nsGkAtoms::foreignObject) {
+      if (element->IsSVGElement(nsGkAtoms::foreignObject)) {
         return nullptr;
       }
       return static_cast<nsSVGElement*>(element);
@@ -396,8 +394,8 @@ GetCTMInternal(nsSVGElement *aElement, bool aScreenCTM, bool aHaveRecursed)
   nsSVGElement *element = aElement;
   nsIContent *ancestor = aElement->GetFlattenedTreeParent();
 
-  while (ancestor && ancestor->IsSVG() &&
-                     ancestor->Tag() != nsGkAtoms::foreignObject) {
+  while (ancestor && ancestor->IsSVGElement() &&
+                     !ancestor->IsSVGElement(nsGkAtoms::foreignObject)) {
     element = static_cast<nsSVGElement*>(ancestor);
     matrix *= element->PrependLocalTransformsTo(gfxMatrix()); // i.e. *A*ppend
     if (!aScreenCTM && SVGContentUtils::EstablishesViewport(element)) {
@@ -415,7 +413,7 @@ GetCTMInternal(nsSVGElement *aElement, bool aScreenCTM, bool aHaveRecursed)
     // didn't find a nearestViewportElement
     return gfx::Matrix(0.0, 0.0, 0.0, 0.0, 0.0, 0.0); // singular
   }
-  if (element->Tag() != nsGkAtoms::svg) {
+  if (!element->IsSVGElement(nsGkAtoms::svg)) {
     // Not a valid SVG fragment
     return gfx::Matrix(0.0, 0.0, 0.0, 0.0, 0.0, 0.0); // singular
   }
@@ -431,7 +429,7 @@ GetCTMInternal(nsSVGElement *aElement, bool aScreenCTM, bool aHaveRecursed)
   if (!ancestor || !ancestor->IsElement()) {
     return gfx::ToMatrix(matrix);
   }
-  if (ancestor->IsSVG()) {
+  if (ancestor->IsSVGElement()) {
     return
       gfx::ToMatrix(matrix) * GetCTMInternal(static_cast<nsSVGElement*>(ancestor), true, true);
   }

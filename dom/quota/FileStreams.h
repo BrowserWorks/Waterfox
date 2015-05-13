@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -22,10 +22,10 @@ class FileQuotaStream : public FileStreamBase
 public:
   // nsFileStreamBase override
   NS_IMETHOD
-  SetEOF() MOZ_OVERRIDE;
+  SetEOF() override;
 
   NS_IMETHOD
-  Close() MOZ_OVERRIDE;
+  Close() override;
 
 protected:
   FileQuotaStream(PersistenceType aPersistenceType, const nsACString& aGroup,
@@ -35,7 +35,7 @@ protected:
 
   // nsFileStreamBase override
   virtual nsresult
-  DoOpen() MOZ_OVERRIDE;
+  DoOpen() override;
 
   PersistenceType mPersistenceType;
   nsCString mGroup;
@@ -49,7 +49,7 @@ class FileQuotaStreamWithWrite : public FileQuotaStream<FileStreamBase>
 public:
   // nsFileStreamBase override
   NS_IMETHOD
-  Write(const char* aBuf, uint32_t aCount, uint32_t* _retval) MOZ_OVERRIDE;
+  Write(const char* aBuf, uint32_t aCount, uint32_t* _retval) override;
 
 protected:
   FileQuotaStreamWithWrite(PersistenceType aPersistenceType,

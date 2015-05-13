@@ -14,8 +14,6 @@
 #include "nsDataObj.h"
 #include "mozilla/Attributes.h"
 
-class CEnumFormatEtc;
-
 #define MULTI_MIME "Mozilla/IDataObjectCollectionFormat"
 
 EXTERN_C const IID IID_IDataObjCollection;
@@ -33,7 +31,7 @@ public:
  * associated with instances via SetDragDrop().
  */
  
-class nsDataObjCollection MOZ_FINAL : public nsIDataObjCollection, public nsDataObj
+class nsDataObjCollection final : public nsIDataObjCollection, public nsDataObj
 {
   public:
     nsDataObjCollection();
@@ -50,6 +48,10 @@ class nsDataObjCollection MOZ_FINAL : public nsIDataObjCollection, public nsData
     virtual HRESULT GetFileDescriptors(LPFORMATETC pFE, LPSTGMEDIUM pSTM);
     virtual HRESULT GetFileContents(LPFORMATETC pFE, LPSTGMEDIUM pSTM);
     virtual HRESULT GetFirstSupporting(LPFORMATETC pFE, LPSTGMEDIUM pSTM);
+
+    using nsDataObj::GetFile;
+    using nsDataObj::GetFileContents;
+    using nsDataObj::GetText;
 
     // support for clipboard
     void AddDataFlavor(const char * aDataFlavor, LPFORMATETC aFE);

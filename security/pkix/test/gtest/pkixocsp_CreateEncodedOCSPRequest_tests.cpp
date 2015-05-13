@@ -22,60 +22,27 @@
  * limitations under the License.
  */
 
-#include "gtest/gtest.h"
-#include "pkix/pkix.h"
+#include "pkixgtest.h"
 #include "pkixder.h"
-#include "pkixtestutil.h"
 
 using namespace mozilla::pkix;
 using namespace mozilla::pkix::test;
 
-class CreateEncodedOCSPRequestTrustDomain : public TrustDomain
+class CreateEncodedOCSPRequestTrustDomain final
+  : public EverythingFailsByDefaultTrustDomain
 {
 private:
-  virtual Result GetCertTrust(EndEntityOrCA, const CertPolicyId&,
-                              Input, /*out*/ TrustLevel&)
+  Result DigestBuf(Input item, DigestAlgorithm digestAlg,
+                   /*out*/ uint8_t *digestBuf, size_t digestBufLen)
+                   override
   {
-    ADD_FAILURE();
-    return Result::FATAL_ERROR_LIBRARY_FAILURE;
+    return TestDigestBuf(item, digestAlg, digestBuf, digestBufLen);
   }
 
-  virtual Result FindIssuer(Input, IssuerChecker&, Time)
+  Result CheckRSAPublicKeyModulusSizeInBits(EndEntityOrCA, unsigned int)
+                                            override
   {
-    ADD_FAILURE();
-    return Result::FATAL_ERROR_LIBRARY_FAILURE;
-  }
-
-  virtual Result CheckRevocation(EndEntityOrCA, const CertID&, Time,
-                                 const Input*, const Input*)
-  {
-    ADD_FAILURE();
-    return Result::FATAL_ERROR_LIBRARY_FAILURE;
-  }
-
-  virtual Result IsChainValid(const DERArray&, Time)
-  {
-    ADD_FAILURE();
-    return Result::FATAL_ERROR_LIBRARY_FAILURE;
-  }
-
-  virtual Result VerifySignedData(const SignedDataWithSignature&,
-                                  Input)
-  {
-    ADD_FAILURE();
-    return Result::FATAL_ERROR_LIBRARY_FAILURE;
-  }
-
-  virtual Result DigestBuf(Input item, /*out*/ uint8_t *digestBuf,
-                           size_t digestBufLen)
-  {
-    return TestDigestBuf(item, digestBuf, digestBufLen);
-  }
-
-  virtual Result CheckPublicKey(Input subjectPublicKeyInfo)
-  {
-    ADD_FAILURE();
-    return Result::FATAL_ERROR_LIBRARY_FAILURE;
+    return Success;
   }
 };
 
@@ -90,7 +57,7 @@ protected:
     ASSERT_FALSE(ENCODING_FAILED(issuerDER));
 
     ScopedTestKeyPair keyPair(GenerateKeyPair());
-    ASSERT_TRUE(keyPair);
+    ASSERT_TRUE(keyPair.get());
     issuerSPKI = keyPair->subjectPublicKeyInfo;
   }
 

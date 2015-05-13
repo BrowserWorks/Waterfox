@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim:set ts=2 sw=2 sts=2 et cindent: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -19,6 +19,10 @@
 
 namespace mozilla {
 namespace dom {
+
+NS_IMPL_ISUPPORTS(UDPSocket::ListenerProxy,
+                  nsIUDPSocketListener,
+                  nsIUDPSocketInternal)
 
 NS_IMPL_CYCLE_COLLECTION_CLASS(UDPSocket)
 
@@ -131,9 +135,9 @@ UDPSocket::~UDPSocket()
 }
 
 JSObject*
-UDPSocket::WrapObject(JSContext* aCx)
+UDPSocket::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return UDPSocketBinding::Wrap(aCx, this);
+  return UDPSocketBinding::Wrap(aCx, this, aGivenProto);
 }
 
 void
@@ -174,6 +178,11 @@ UDPSocket::CloseWithReason(nsresult aReason)
   }
 
   mReadyState = SocketReadyState::Closed;
+
+  if (mListenerProxy) {
+    mListenerProxy->Disconnect();
+    mListenerProxy = nullptr;
+  }
 
   if (mSocket) {
     mSocket->Close();
@@ -283,7 +292,7 @@ UDPSocket::DoPendingMcastCommand()
     }
 
     if (NS_WARN_IF(rv.Failed())) {
-      return rv.ErrorCode();
+      return rv.StealNSResult();
     }
   }
 
@@ -328,7 +337,7 @@ UDPSocket::Send(const StringOrBlobOrArrayBufferOrArrayBufferView& aData,
 
   nsCOMPtr<nsIInputStream> stream;
   if (aData.IsBlob()) {
-    File& blob = aData.GetAsBlob();
+    Blob& blob = aData.GetAsBlob();
 
     aRv = blob.GetInternalStream(getter_AddRefs(stream));
     if (NS_WARN_IF(aRv.Failed())) {
@@ -387,8 +396,19 @@ UDPSocket::InitLocal(const nsAString& aLocalAddress,
     return rv;
   }
 
+  nsCOMPtr<nsIGlobalObject> global = do_QueryInterface(GetOwner(), &rv);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+
+  nsCOMPtr<nsIPrincipal> principal = global->PrincipalOrNull();
+  if (!principal) {
+    return NS_ERROR_FAILURE;
+  }
+
   if (aLocalAddress.IsEmpty()) {
-    rv = sock->Init(aLocalPort, /* loopback = */ false, mAddressReuse, /* optionalArgc = */ 1);
+    rv = sock->Init(aLocalPort, /* loopback = */ false, principal,
+                    mAddressReuse, /* optionalArgc = */ 1);
   } else {
     PRNetAddr prAddr;
     PR_InitializeNetAddr(PR_IpAddrAny, aLocalPort, &prAddr);
@@ -396,7 +416,8 @@ UDPSocket::InitLocal(const nsAString& aLocalAddress,
 
     mozilla::net::NetAddr addr;
     PRNetAddrToNetAddr(&prAddr, &addr);
-    rv = sock->InitWithAddress(&addr, mAddressReuse, /* optionalArgc = */ 1);
+    rv = sock->InitWithAddress(&addr, principal, mAddressReuse,
+                               /* optionalArgc = */ 1);
   }
   if (NS_FAILED(rv)) {
     return rv;
@@ -430,7 +451,9 @@ UDPSocket::InitLocal(const nsAString& aLocalAddress,
   }
   mLocalPort.SetValue(localPort);
 
-  rv = mSocket->AsyncListen(this);
+  mListenerProxy = new ListenerProxy(this);
+
+  rv = mSocket->AsyncListen(mListenerProxy);
   if (NS_FAILED(rv)) {
     return rv;
   }
@@ -458,7 +481,25 @@ UDPSocket::InitRemote(const nsAString& aLocalAddress,
     return rv;
   }
 
-  rv = sock->Bind(this, NS_ConvertUTF16toUTF8(aLocalAddress), aLocalPort, mAddressReuse, mLoopback);
+  mListenerProxy = new ListenerProxy(this);
+
+  nsCOMPtr<nsIGlobalObject> obj = do_QueryInterface(GetOwner(), &rv);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+
+  nsCOMPtr<nsIPrincipal> principal = obj->PrincipalOrNull();
+  if (!principal) {
+    return NS_ERROR_FAILURE;
+  }
+
+  rv = sock->Bind(mListenerProxy,
+                  principal,
+                  NS_ConvertUTF16toUTF8(aLocalAddress),
+                  aLocalPort,
+                  mAddressReuse,
+                  mLoopback);
+
   if (NS_FAILED(rv)) {
     return rv;
   }
@@ -486,21 +527,21 @@ UDPSocket::Init(const nsString& aLocalAddress,
 
   mOpened = Promise::Create(global, rv);
   if (NS_WARN_IF(rv.Failed())) {
-    return rv.ErrorCode();
+    return rv.StealNSResult();
   }
 
   mClosed = Promise::Create(global, rv);
   if (NS_WARN_IF(rv.Failed())) {
-    return rv.ErrorCode();
+    return rv.StealNSResult();
   }
 
-  class OpenSocketRunnable MOZ_FINAL : public nsRunnable
+  class OpenSocketRunnable final : public nsRunnable
   {
   public:
     explicit OpenSocketRunnable(UDPSocket* aSocket) : mSocket(aSocket)
     { }
 
-    NS_IMETHOD Run() MOZ_OVERRIDE
+    NS_IMETHOD Run() override
     {
       MOZ_ASSERT(mSocket);
 

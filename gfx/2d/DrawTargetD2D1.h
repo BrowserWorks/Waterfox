@@ -15,11 +15,7 @@
 #include <vector>
 #include <sstream>
 
-#ifdef _MSC_VER
-#include <hash_set>
-#else
 #include <unordered_set>
-#endif
 
 struct IDWriteFactory;
 
@@ -27,8 +23,6 @@ namespace mozilla {
 namespace gfx {
 
 class SourceSurfaceD2D1;
-class GradientStopsD2D;
-class ScaledFontDWrite;
 
 const int32_t kLayerCacheSize1 = 5;
 
@@ -39,7 +33,7 @@ public:
   DrawTargetD2D1();
   virtual ~DrawTargetD2D1();
 
-  virtual DrawTargetType GetType() const MOZ_OVERRIDE { return DrawTargetType::HARDWARE_RASTER; }
+  virtual DrawTargetType GetType() const override { return DrawTargetType::HARDWARE_RASTER; }
   virtual BackendType GetBackendType() const { return BackendType::DIRECT2D1_1; }
   virtual TemporaryRef<SourceSurface> Snapshot();
   virtual IntSize GetSize() { return mSize; }
@@ -148,17 +142,17 @@ public:
     return stream.str();
   }
 
+  static uint32_t GetMaxSurfaceSize() {
+    return D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION;
+  }
+
   static uint64_t mVRAMUsageDT;
   static uint64_t mVRAMUsageSS;
 
 private:
   friend class SourceSurfaceD2D1;
 
-#ifdef _MSC_VER
-  typedef stdext::hash_set<DrawTargetD2D1*> TargetSet;
-#else
   typedef std::unordered_set<DrawTargetD2D1*> TargetSet;
-#endif
 
   // This function will mark the surface as changing, and make sure any
   // copy-on-write snapshots are notified.
@@ -179,13 +173,17 @@ private:
   // bounds to correctly reflect the total clip. This is in device space.
   TemporaryRef<ID2D1Geometry> GetClippedGeometry(IntRect *aClipBounds);
 
+  TemporaryRef<ID2D1Geometry> GetInverseClippedGeometry();
+
   bool GetDeviceSpaceClipRect(D2D1_RECT_F& aClipRect, bool& aIsPixelAligned);
 
   void PopAllClips();
+  void PushAllClips();
   void PushClipsToDC(ID2D1DeviceContext *aDC);
   void PopClipsFromDC(ID2D1DeviceContext *aDC);
 
   TemporaryRef<ID2D1Brush> CreateTransparentBlackBrush();
+  TemporaryRef<ID2D1SolidColorBrush> GetSolidColorBrush(const D2D_COLOR_F& aColor);
   TemporaryRef<ID2D1Brush> CreateBrushForPattern(const Pattern &aPattern, Float aAlpha = 1.0f);
 
   void PushD2DLayer(ID2D1DeviceContext *aDC, ID2D1Geometry *aGeometry, const D2D1_MATRIX_3X2_F &aTransform);
@@ -203,6 +201,8 @@ private:
   RefPtr<ID2D1Bitmap1> mBitmap;
   RefPtr<ID2D1Bitmap1> mTempBitmap;
   RefPtr<ID2D1Effect> mBlendEffect;
+
+  RefPtr<ID2D1SolidColorBrush> mSolidColorBrush;
 
   // We store this to prevent excessive SetTextRenderingParams calls.
   RefPtr<IDWriteRenderingParams> mTextRenderingParams;

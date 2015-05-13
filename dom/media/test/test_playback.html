@@ -10,9 +10,15 @@
 <pre id="test">
 <script class="testbody" type="text/javascript">
 
-//longer timeout for sometimes B2G emulator runs very slowly
-if (SpecialPowers.Services.appinfo.name == "B2G") {
+function isSlowPlatform() {
+  return SpecialPowers.Services.appinfo.name == "B2G" ||
+         navigator.userAgent.indexOf("Mobile") != -1 && androidVersion == 10;
+}
+
+// longer timeout for slow platforms
+if (isSlowPlatform()) {
   SimpleTest.requestLongerTimeout(3);
+  SimpleTest.requestCompleteLog();
 }
 
 var manager = new MediaTestManager;
@@ -22,7 +28,15 @@ function startTest(test, token) {
   v.preload = "metadata";
   v.token = token;
   v.prevTime = 0;
-  manager.started(token);
+  v.seenEnded = false;
+  v.seenSuspend = false;
+
+  var handler = {
+    "ontimeout": function() {
+      Log(token, "timed out: ended=" + v.seenEnded + ", suspend=" + v.seenSuspend);
+    }
+  };
+  manager.started(token, handler);
 
   v.src = test.name;
   v.name = test.name;
@@ -36,17 +50,7 @@ function startTest(test, token) {
     ok(false, test.name + " should not fire 'load' event");
   }}(test, v);
 
-  // Used to cancel timer callback.
-  var timer = null;
-
-  var cancelTimer = function() {
-    if (timer) {
-      clearTimeout(timer);
-    }
-  }
-
   var finish = function() {
-    cancelTimer();
     v.finished = true;
     v.removeEventListener("timeupdate", timeUpdate, false);
     removeNodeAndSource(v);
@@ -60,18 +64,6 @@ function startTest(test, token) {
     }
   }
 
-  var onTimeout = function() {
-    ok(v.seenEnded, v.name + " timed out, should get 'ended'");
-    ok(v.seenSuspend, v.name + " timed out, should get 'suspend'");
-    finish();
-  }
-
-  // Check if we time out in waiting for some events.
-  var registerTimer = function() {
-    cancelTimer();
-    timer = setTimeout(onTimeout, 30000);
-  }
-
   var checkEnded = function(test, v) { return function() {
     is(test.name, v.name, test.name + ": Name should match #2");
     checkMetadata(test.name, v, test);
@@ -82,7 +74,6 @@ function startTest(test, token) {
     ok(!v.seenEnded, test.name + " shouldn't be ended");
 
     v.seenEnded = true;
-    registerTimer();
     mayFinish();
   }}(test, v);
 
@@ -93,7 +84,6 @@ function startTest(test, token) {
     is(test.name, v.name, test.name + ": Name should match #3");
 
     v.seenSuspend = true;
-    registerTimer();
     mayFinish();
   }}(test, v);
 
@@ -103,7 +93,6 @@ function startTest(test, token) {
                 v.prevTime + " c=" + v.currentTime);
     }
     v.prevTime = v.currentTime;
-    registerTimer();
   }}(test, v);
 
   v.addEventListener("load", noLoad, false);
@@ -117,14 +106,14 @@ function startTest(test, token) {
   document.body.appendChild(v);
   v.play();
 
-  if (test.name == "vp9cake.webm") {
-    // Log events for debugging.
+  // Debug timeouts on slow platforms.
+  if (isSlowPlatform()) {
     var events = ["suspend", "play", "canplay", "canplaythrough", "loadstart", "loadedmetadata",
                   "loadeddata", "playing", "ended", "error", "stalled", "emptied", "abort",
                   "waiting", "pause"];
     function logEvent(e) {
       var v = e.target;
-      info(e.target.token + ": got " + e.type);
+      Log(e.target.token, "got " + e.type);
     }
     events.forEach(function(e) {
       v.addEventListener(e, logEvent, false);

@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -26,7 +27,7 @@ public:
 
 NS_DEFINE_STATIC_IID_ACCESSOR(IFoo, NS_IFOO_IID)
 
-class Foo MOZ_FINAL : public IFoo {
+class Foo final : public IFoo {
 public:
 
   explicit Foo(int32_t aID);
@@ -35,8 +36,8 @@ public:
   NS_DECL_ISUPPORTS
 
   // IFoo implementation
-  NS_IMETHOD_(nsrefcnt) RefCnt() MOZ_OVERRIDE { return mRefCnt; }
-  NS_IMETHOD_(int32_t) ID() MOZ_OVERRIDE { return mID; }
+  NS_IMETHOD_(nsrefcnt) RefCnt() override { return mRefCnt; }
+  NS_IMETHOD_(int32_t) ID() override { return mID; }
 
   static int32_t gCount;
 

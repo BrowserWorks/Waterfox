@@ -40,7 +40,9 @@ static bool do_preload = false;
 #if defined(XP_WIN)
 #include <windows.h>
 #include <mbstring.h>
+#if defined(_MSC_VER) && _MSC_VER < 1900
 #define snprintf _snprintf
+#endif
 
 typedef HINSTANCE LibHandleType;
 
@@ -524,7 +526,7 @@ NS_NewNativeLocalFile(const nsACString& aPath, bool aFollowLinks,
 }
 
 XPCOM_API(nsresult)
-NS_GetDebug(nsIDebug** aResult)
+NS_GetDebug(nsIDebug2** aResult)
 {
   if (!xpcomFunctions.getDebug) {
     return NS_ERROR_NOT_INITIALIZED;

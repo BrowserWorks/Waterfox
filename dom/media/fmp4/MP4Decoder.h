@@ -15,17 +15,17 @@ class MP4Decoder : public MediaDecoder
 {
 public:
 
-  virtual MediaDecoder* Clone() MOZ_OVERRIDE {
+  virtual MediaDecoder* Clone() override {
     if (!IsEnabled()) {
       return nullptr;
     }
     return new MP4Decoder();
   }
 
-  virtual MediaDecoderStateMachine* CreateStateMachine() MOZ_OVERRIDE;
+  virtual MediaDecoderStateMachine* CreateStateMachine() override;
 
 #ifdef MOZ_EME
-  virtual nsresult SetCDMProxy(CDMProxy* aProxy) MOZ_OVERRIDE;
+  virtual nsresult SetCDMProxy(CDMProxy* aProxy) override;
 #endif
 
   // Returns true if aMIMEType is a type that we think we can render with the
@@ -41,6 +41,10 @@ public:
   // Returns true if the MP4 backend is preffed on, and we're running on a
   // platform that is likely to have decoders for the contained formats.
   static bool IsEnabled();
+
+  static bool IsVideoAccelerated(layers::LayersBackend aBackend);
+  static bool CanCreateAACDecoder();
+  static bool CanCreateH264Decoder();
 };
 
 } // namespace mozilla

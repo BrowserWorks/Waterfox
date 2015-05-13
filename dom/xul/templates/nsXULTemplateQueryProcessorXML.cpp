@@ -55,7 +55,7 @@ nsXULTemplateResultSetXML::GetNext(nsISupports **aResult)
     ErrorResult rv;
     nsINode* node = mResults->SnapshotItem(mPosition, rv);
     if (rv.Failed()) {
-        return rv.ErrorCode();
+        return rv.StealNSResult();
     }
 
     nsXULTemplateResultXML* result =
@@ -252,7 +252,7 @@ nsXULTemplateQueryProcessorXML::CompileQuery(nsIXULTemplateBuilder* aBuilder,
     compiledexpr = CreateExpression(expr, content, rv);
     if (rv.Failed()) {
         nsXULContentUtils::LogTemplateError(ERROR_TEMPLATE_BAD_XPATH);
-        return rv.ErrorCode();
+        return rv.StealNSResult();
     }
 
     nsRefPtr<nsXMLQuery> query =
@@ -275,7 +275,7 @@ nsXULTemplateQueryProcessorXML::CompileQuery(nsIXULTemplateBuilder* aBuilder,
                 compiledexpr = CreateExpression(expr, condition, rv);
                 if (rv.Failed()) {
                     nsXULContentUtils::LogTemplateError(ERROR_TEMPLATE_BAD_ASSIGN_XPATH);
-                    return rv.ErrorCode();
+                    return rv.StealNSResult();
                 }
 
                 nsCOMPtr<nsIAtom> varatom = do_GetAtom(var);
@@ -285,8 +285,7 @@ nsXULTemplateQueryProcessorXML::CompileQuery(nsIXULTemplateBuilder* aBuilder,
         }
     }
 
-    *_retval = query;
-    NS_ADDREF(*_retval);
+    query.forget(_retval);
 
     return NS_OK;
 }
@@ -324,15 +323,14 @@ nsXULTemplateQueryProcessorXML::GenerateResults(nsISupports* aDatasource,
         expr->Evaluate(*context, XPathResult::ORDERED_NODE_SNAPSHOT_TYPE,
                        nullptr, rv);
     if (rv.Failed()) {
-        return rv.ErrorCode();
+        return rv.StealNSResult();
     }
 
-    nsXULTemplateResultSetXML* results =
+    nsRefPtr<nsXULTemplateResultSetXML> results =
         new nsXULTemplateResultSetXML(xmlquery, exprresults.forget(),
                                       xmlquery->GetBindingSet());
 
-    *aResults = results;
-    NS_ADDREF(*aResults);
+    results.forget(aResults);
 
     return NS_OK;
 }
@@ -386,8 +384,8 @@ nsXULTemplateQueryProcessorXML::TranslateRef(nsISupports* aDatasource,
     if (!rootElement)
         return NS_OK;
     
-    *aRef = new nsXULTemplateResultXML(nullptr, rootElement, nullptr);
-    NS_ADDREF(*aRef);
+    nsRefPtr<nsXULTemplateResultXML> result = new nsXULTemplateResultXML(nullptr, rootElement, nullptr);
+    result.forget(aRef);
 
     return NS_OK;
 }

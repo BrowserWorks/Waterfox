@@ -5,25 +5,29 @@
 
 #include "GMPVideoDecoderChild.h"
 #include "GMPVideoi420FrameImpl.h"
-#include "GMPChild.h"
+#include "GMPContentChild.h"
 #include <stdio.h>
 #include "mozilla/unused.h"
 #include "GMPVideoEncodedFrameImpl.h"
+#include "runnable_utils.h"
 
 namespace mozilla {
 namespace gmp {
 
-GMPVideoDecoderChild::GMPVideoDecoderChild(GMPChild* aPlugin)
-: GMPSharedMemManager(aPlugin),
-  mPlugin(aPlugin),
-  mVideoDecoder(nullptr),
-  mVideoHost(this)
+GMPVideoDecoderChild::GMPVideoDecoderChild(GMPContentChild* aPlugin)
+  : GMPSharedMemManager(aPlugin)
+  , mPlugin(aPlugin)
+  , mVideoDecoder(nullptr)
+  , mVideoHost(this)
+  , mNeedShmemIntrCount(0)
+  , mPendingDecodeComplete(false)
 {
   MOZ_ASSERT(mPlugin);
 }
 
 GMPVideoDecoderChild::~GMPVideoDecoderChild()
 {
+  MOZ_ASSERT(!mNeedShmemIntrCount);
 }
 
 void
@@ -107,7 +111,7 @@ GMPVideoDecoderChild::Error(GMPErr aError)
 
 bool
 GMPVideoDecoderChild::RecvInitDecode(const GMPVideoCodec& aCodecSettings,
-                                     const nsTArray<uint8_t>& aCodecSpecific,
+                                     InfallibleTArray<uint8_t>&& aCodecSpecific,
                                      const int32_t& aCoreCount)
 {
   if (!mVideoDecoder) {
@@ -126,7 +130,7 @@ GMPVideoDecoderChild::RecvInitDecode(const GMPVideoCodec& aCodecSettings,
 bool
 GMPVideoDecoderChild::RecvDecode(const GMPVideoEncodedFrameData& aInputFrame,
                                  const bool& aMissingFrames,
-                                 const nsTArray<uint8_t>& aCodecSpecificInfo,
+                                 InfallibleTArray<uint8_t>&& aCodecSpecificInfo,
                                  const int64_t& aRenderTimeMs)
 {
   if (!mVideoDecoder) {
@@ -146,7 +150,7 @@ GMPVideoDecoderChild::RecvDecode(const GMPVideoEncodedFrameData& aInputFrame,
 }
 
 bool
-GMPVideoDecoderChild::RecvChildShmemForPool(Shmem& aFrameBuffer)
+GMPVideoDecoderChild::RecvChildShmemForPool(Shmem&& aFrameBuffer)
 {
   if (aFrameBuffer.IsWritable()) {
     mVideoHost.SharedMemMgr()->MgrDeallocShmem(GMPSharedMem::kGMPFrameData,
@@ -184,6 +188,16 @@ GMPVideoDecoderChild::RecvDrain()
 bool
 GMPVideoDecoderChild::RecvDecodingComplete()
 {
+  MOZ_ASSERT(mPlugin->GMPMessageLoop() == MessageLoop::current());
+
+  if (mNeedShmemIntrCount) {
+    // There's a GMP blocked in Alloc() waiting for the CallNeedShem() to
+    // return a frame they can use. Don't call the GMP's DecodingComplete()
+    // now and don't delete the GMPVideoDecoderChild, defer processing the
+    // DecodingComplete() until once the Alloc() finishes.
+    mPendingDecodeComplete = true;
+    return true;
+  }
   if (mVideoDecoder) {
     // Ignore any return code. It is OK for this to fail without killing the process.
     mVideoDecoder->DecodingComplete();
@@ -197,6 +211,42 @@ GMPVideoDecoderChild::RecvDecodingComplete()
   unused << Send__delete__(this);
 
   return true;
+}
+
+bool
+GMPVideoDecoderChild::Alloc(size_t aSize,
+                            Shmem::SharedMemory::SharedMemoryType aType,
+                            Shmem* aMem)
+{
+  MOZ_ASSERT(mPlugin->GMPMessageLoop() == MessageLoop::current());
+
+  bool rv;
+#ifndef SHMEM_ALLOC_IN_CHILD
+  ++mNeedShmemIntrCount;
+  rv = CallNeedShmem(aSize, aMem);
+  --mNeedShmemIntrCount;
+  if (mPendingDecodeComplete) {
+    auto t = NewRunnableMethod(this, &GMPVideoDecoderChild::RecvDecodingComplete);
+    mPlugin->GMPMessageLoop()->PostTask(FROM_HERE, t);
+  }
+#else
+#ifdef GMP_SAFE_SHMEM
+  rv = AllocShmem(aSize, aType, aMem);
+#else
+  rv = AllocUnsafeShmem(aSize, aType, aMem);
+#endif
+#endif
+  return rv;
+}
+
+void
+GMPVideoDecoderChild::Dealloc(Shmem& aMem)
+{
+#ifndef SHMEM_ALLOC_IN_CHILD
+  SendParentShmemForPool(aMem);
+#else
+  DeallocShmem(aMem);
+#endif
 }
 
 } // namespace gmp

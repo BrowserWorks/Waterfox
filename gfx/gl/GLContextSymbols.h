@@ -49,7 +49,7 @@ struct GLContextSymbols
     PFNGLBINDTEXTUREPROC fBindTexture;
     typedef void (GLAPIENTRY * PFNGLBINDVERTEXARRAYPROC) (GLuint array);
     PFNGLBINDVERTEXARRAYPROC fBindVertexArray;
-    typedef void (GLAPIENTRY * PFNGLBLENDCOLORPROC) (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
+    typedef void (GLAPIENTRY * PFNGLBLENDCOLORPROC) (GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
     PFNGLBLENDCOLORPROC fBlendColor;
     typedef void (GLAPIENTRY * PFNGLBLENDEQUATIONPROC) (GLenum mode);
     PFNGLBLENDEQUATIONPROC fBlendEquation;
@@ -73,7 +73,7 @@ struct GLContextSymbols
     PFNGLCLEARBUFFERIVPROC fClearBufferiv;
     typedef void (GLAPIENTRY * PFNGLCLEARBUFFERUIVPROC) (GLenum buffer, GLint drawbuffer, const GLuint* value);
     PFNGLCLEARBUFFERUIVPROC fClearBufferuiv;
-    typedef void (GLAPIENTRY * PFNGLCLEARCOLORPROC) (GLclampf, GLclampf, GLclampf, GLclampf);
+    typedef void (GLAPIENTRY * PFNGLCLEARCOLORPROC) (GLfloat, GLfloat, GLfloat, GLfloat);
     PFNGLCLEARCOLORPROC fClearColor;
     typedef void (GLAPIENTRY * PFNGLCLEARSTENCILPROC) (GLint);
     PFNGLCLEARSTENCILPROC fClearStencil;
@@ -165,6 +165,8 @@ struct GLContextSymbols
     PFNGLGETUNIFORMFVPROC fGetUniformfv;
     typedef void (GLAPIENTRY * PFNGLGETUNIFORMIVPROC) (GLuint program, GLint location, GLint* params);
     PFNGLGETUNIFORMIVPROC fGetUniformiv;
+    typedef void (GLAPIENTRY * PFNGLGETUNIFORMUIVPROC) (GLuint program, GLint location, GLuint* params);
+    PFNGLGETUNIFORMUIVPROC fGetUniformuiv;
     typedef GLint (GLAPIENTRY * PFNGLGETUNIFORMLOCATIONPROC) (GLint programObj, const GLchar* name);
     PFNGLGETUNIFORMLOCATIONPROC fGetUniformLocation;
     typedef void (GLAPIENTRY * PFNGLGETVERTEXATTRIBFVPROC) (GLuint, GLenum, GLfloat*);
@@ -308,7 +310,7 @@ struct GLContextSymbols
     PFNGETSHADERPRECISIONFORMAT fGetShaderPrecisionFormat;
     typedef void (GLAPIENTRY * PFNGLGETSHADERSOURCEPROC) (GLint obj, GLsizei maxLength, GLsizei* length, GLchar* source);
     PFNGLGETSHADERSOURCEPROC fGetShaderSource;
-    typedef void (GLAPIENTRY * PFNGLSHADERSOURCEPROC) (GLuint shader, GLsizei count, const GLchar** strings, const GLint* lengths);
+    typedef void (GLAPIENTRY * PFNGLSHADERSOURCEPROC) (GLuint shader, GLsizei count, const GLchar* const* strings, const GLint* lengths);
     PFNGLSHADERSOURCEPROC fShaderSource;
 
     typedef void (GLAPIENTRY * PFNGLBINDFRAMEBUFFER) (GLenum target, GLuint framebuffer);
@@ -657,15 +659,19 @@ struct GLContextSymbols
                                                             GLint yoffset, GLint zoffset, GLint x,
                                                             GLint y, GLsizei width, GLsizei height);
     PFNGLCOPYTEXSUBIMAGE3DPROC fCopyTexSubImage3D;
-    typedef void (GLAPIENTRY * PFNGLCOMPRESSEDTEXIMAGE3D) (GLenum target, GLint level, GLenum internalformat,
-                                                           GLsizei width, GLsizei height, GLsizei depth,
-                                                           GLint border, GLsizei imageSize, const GLvoid* data);
-    PFNGLCOMPRESSEDTEXIMAGE3D fCompressedTexImage3D;
-    typedef void (GLAPIENTRY * PFNGLCOMPRESSEDTEXSUBIMAGE3D) (GLenum target, GLint level,
-                                                              GLint xoffset, GLint yoffset, GLint zoffset,
-                                                              GLsizei width, GLsizei height, GLsizei depth,
-                                                              GLenum format, GLsizei imageSize, const GLvoid* data);
-    PFNGLCOMPRESSEDTEXSUBIMAGE3D fCompressedTexSubImage3D;
+    typedef void (GLAPIENTRY * PFNGLCOMPRESSEDTEXIMAGE3DPROC) (GLenum target, GLint level, GLenum internalformat,
+                                                               GLsizei width, GLsizei height, GLsizei depth,
+                                                               GLint border, GLsizei imageSize, const GLvoid* data);
+    PFNGLCOMPRESSEDTEXIMAGE3DPROC fCompressedTexImage3D;
+    typedef void (GLAPIENTRY * PFNGLCOMPRESSEDTEXSUBIMAGE3DPROC) (GLenum target, GLint level,
+                                                                  GLint xoffset, GLint yoffset, GLint zoffset,
+                                                                  GLsizei width, GLsizei height, GLsizei depth,
+                                                                  GLenum format, GLsizei imageSize, const GLvoid* data);
+    PFNGLCOMPRESSEDTEXSUBIMAGE3DPROC fCompressedTexSubImage3D;
+
+    // get_string_indexed
+    typedef const GLubyte* (GLAPIENTRY * PFNGLGETSTRINGIPROC)(GLenum name, GLuint index);
+    PFNGLGETSTRINGIPROC fGetStringi;
 };
 
 }

@@ -34,8 +34,8 @@ class nsDOMCSSRGBColor;
  * Read-only CSS primitive value - a DOM object representing values in DOM
  * computed style.
  */
-class nsROCSSPrimitiveValue MOZ_FINAL : public mozilla::dom::CSSValue,
-  public nsIDOMCSSPrimitiveValue
+class nsROCSSPrimitiveValue final : public mozilla::dom::CSSValue,
+                                    public nsIDOMCSSPrimitiveValue
 {
 public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -48,9 +48,9 @@ public:
   NS_DECL_NSIDOMCSSVALUE
 
   // CSSValue
-  virtual void GetCssText(nsString& aText, mozilla::ErrorResult& aRv) MOZ_OVERRIDE MOZ_FINAL;
-  virtual void SetCssText(const nsAString& aText, mozilla::ErrorResult& aRv) MOZ_OVERRIDE MOZ_FINAL;
-  virtual uint16_t CssValueType() const MOZ_OVERRIDE MOZ_FINAL;
+  virtual void GetCssText(nsString& aText, mozilla::ErrorResult& aRv) override final;
+  virtual void SetCssText(const nsAString& aText, mozilla::ErrorResult& aRv) override final;
+  virtual uint16_t CssValueType() const override final;
 
   // CSSPrimitiveValue
   uint16_t PrimitiveType()
@@ -104,7 +104,7 @@ public:
     return nullptr;
   }
 
-  virtual JSObject *WrapObject(JSContext *cx) MOZ_OVERRIDE;
+  virtual JSObject *WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto) override;
 
 private:
   ~nsROCSSPrimitiveValue();
@@ -116,10 +116,11 @@ private:
     float           mFloat;
     int32_t         mInt32;
     uint32_t        mUint32;
-    nsDOMCSSRGBColor* mColor;
-    nsDOMCSSRect*     mRect;
+    // These can't be nsCOMPtr/nsRefPtr's because they are used inside a union.
+    nsDOMCSSRGBColor* MOZ_OWNING_REF mColor;
+    nsDOMCSSRect* MOZ_OWNING_REF mRect;
     char16_t*      mString;
-    nsIURI*         mURI;
+    nsIURI* MOZ_OWNING_REF mURI;
     nsCSSKeyword    mKeyword;
   } mValue;
 };

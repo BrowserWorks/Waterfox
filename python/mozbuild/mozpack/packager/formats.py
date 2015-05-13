@@ -10,7 +10,7 @@ from mozpack.chrome.manifest import (
     ManifestResource,
 )
 from urlparse import urlparse
-import mozpack.path
+import mozpack.path as mozpath
 from mozpack.files import (
     ManifestFile,
     XPTFile,
@@ -39,10 +39,12 @@ formats:
       elements are packaged in an omnijar file for each base directory.
 
 The base interface provides the following methods:
-    - add_base(path)
-        Register a base directory for an application or GRE. Base directories
-        usually contain a root manifest (manifests not included in any other
-        manifest) named chrome.manifest.
+    - add_base(path [, addon])
+        Register a base directory for an application or GRE, or an addon.
+        Base directories usually contain a root manifest (manifests not
+        included in any other manifest) named chrome.manifest.
+        The optional boolean addon argument tells whether the base directory
+        is that of an addon.
     - add(path, content)
         Add the given content (BaseFile instance) at the given virtual path
     - add_interfaces(path, content)
@@ -69,20 +71,23 @@ class FlatFormatter(object):
         assert isinstance(copier, FileRegistry)
         self.copier = copier
         self._bases = ['']
+        self._addons = []
         self._frozen_bases = False
 
-    def add_base(self, base):
+    def add_base(self, base, addon=False):
         # Only allow to add a base directory before calls to _get_base()
         assert not self._frozen_bases
         if not base in self._bases:
             self._bases.append(base)
+        if addon and base not in self._addons:
+            self._addons.append(base)
 
     def _get_base(self, path):
         '''
         Return the deepest base directory containing the given path.
         '''
         self._frozen_bases = True
-        return mozpack.path.basedir(path, self._bases)
+        return mozpath.basedir(path, self._bases)
 
     def add(self, path, content):
         self.copier.add(path, content)
@@ -95,18 +100,18 @@ class FlatFormatter(object):
         if entry.base == base:
             name = 'chrome'
         else:
-            name = mozpack.path.basename(entry.base)
-        path = mozpack.path.normpath(mozpack.path.join(entry.base,
+            name = mozpath.basename(entry.base)
+        path = mozpath.normpath(mozpath.join(entry.base,
                                                        '%s.manifest' % name))
         if not self.copier.contains(path):
-            assert mozpack.path.basedir(entry.base, [base]) == base
+            assert mozpath.basedir(entry.base, [base]) == base
             # Add a reference to the manifest file in the parent manifest, if
             # the manifest file is not a root manifest.
             if len(entry.base) > len(base):
-                parent = mozpack.path.dirname(entry.base)
-                relbase = mozpack.path.basename(entry.base)
-                relpath = mozpack.path.join(relbase,
-                                            mozpack.path.basename(path))
+                parent = mozpath.dirname(entry.base)
+                relbase = mozpath.basename(entry.base)
+                relpath = mozpath.join(relbase,
+                                            mozpath.basename(path))
                 FlatFormatter.add_manifest(self, Manifest(parent, relpath))
             self.copier.add(path, ManifestFile(entry.base))
         self.copier[path].add(entry)
@@ -114,11 +119,11 @@ class FlatFormatter(object):
     def add_interfaces(self, path, content):
         # Interfaces in the same directory are all linked together in an
         # interfaces.xpt file.
-        interfaces_path = mozpack.path.join(mozpack.path.dirname(path),
+        interfaces_path = mozpath.join(mozpath.dirname(path),
                                             'interfaces.xpt')
         if not self.copier.contains(interfaces_path):
             FlatFormatter.add_manifest(self, ManifestInterfaces(
-                mozpack.path.dirname(path), 'interfaces.xpt'))
+                mozpath.dirname(path), 'interfaces.xpt'))
             self.copier.add(interfaces_path, XPTFile())
         self.copier[interfaces_path].add(content)
 
@@ -147,7 +152,7 @@ class JarFormatter(FlatFormatter):
         detect under which .jar (if any) the path should go.
         '''
         self._frozen_chrome = True
-        return mozpack.path.basedir(path, self._chrome)
+        return mozpath.basedir(path, self._chrome)
 
     def add(self, path, content):
         chrome = self._chromepath(path)
@@ -155,9 +160,9 @@ class JarFormatter(FlatFormatter):
             jar = chrome + '.jar'
             if not self.copier.contains(jar):
                 self.copier.add(jar, Jarrer(self._compress, self._optimize))
-            if not self.copier[jar].contains(mozpack.path.relpath(path,
+            if not self.copier[jar].contains(mozpath.relpath(path,
                                                                   chrome)):
-                self.copier[jar].add(mozpack.path.relpath(path, chrome),
+                self.copier[jar].add(mozpath.relpath(path, chrome),
                                      content)
         else:
             FlatFormatter.add(self, path, content)
@@ -168,10 +173,10 @@ class JarFormatter(FlatFormatter):
         Return the corresponding chrome path and the new entry.
         '''
         base = entry.base
-        basepath = mozpack.path.split(relpath)[0]
-        chromepath = mozpack.path.join(base, basepath)
+        basepath = mozpath.split(relpath)[0]
+        chromepath = mozpath.join(base, basepath)
         entry = entry.rebase(chromepath) \
-            .move(mozpack.path.join(base, 'jar:%s.jar!' % basepath)) \
+            .move(mozpath.join(base, 'jar:%s.jar!' % basepath)) \
             .rebase(base)
         return chromepath, entry
 
@@ -196,80 +201,82 @@ class JarFormatter(FlatFormatter):
         if not self.copier.contains(chrome + '.jar'):
             return False
         return self.copier[chrome + '.jar']. \
-            contains(mozpack.path.relpath(path, chrome))
+            contains(mozpath.relpath(path, chrome))
 
 
-class OmniJarFormatter(FlatFormatter):
+class OmniJarFormatter(JarFormatter):
     '''
     Formatter for the omnijar package format.
     '''
     def __init__(self, copier, omnijar_name, compress=True, optimize=True,
                  non_resources=[]):
-        FlatFormatter.__init__(self, copier)
+        JarFormatter.__init__(self, copier, compress, optimize)
         self.omnijars = {}
         self._omnijar_name = omnijar_name
-        self._compress = compress
-        self._optimize = optimize
         self._non_resources = non_resources
 
-    def _get_omnijar(self, path, create=True):
+    def _get_formatter(self, path, is_resource=None):
         '''
-        Return the omnijar corresponding to the given path, its base directory
-        and the path translated to be under the omnijar..
+        Return the (sub)formatter corresponding to the given path, its base
+        directory and the path relative to that base.
         '''
         base = self._get_base(path)
+        use_omnijar = base not in self._addons
+        if use_omnijar:
+            if is_resource is None:
+                is_resource = self.is_resource(path, base)
+            use_omnijar = is_resource
+        if not use_omnijar:
+            return super(OmniJarFormatter, self), '', path
         if not base in self.omnijars:
-            if not create:
-                return None, '', path
             omnijar = Jarrer(self._compress, self._optimize)
             self.omnijars[base] = FlatFormatter(omnijar)
-            self.copier.add(mozpack.path.join(base, self._omnijar_name),
+            self.copier.add(mozpath.join(base, self._omnijar_name),
                             omnijar)
-        return self.omnijars[base], base, mozpack.path.relpath(path, base)
+        return self.omnijars[base], base, mozpath.relpath(path, base)
 
     def add(self, path, content):
-        if self.is_resource(path):
-            formatter, base, path = self._get_omnijar(path)
-        else:
-            formatter = self
-        FlatFormatter.add(formatter, path, content)
+        formatter, base, path = self._get_formatter(path)
+        formatter.add(path, content)
 
     def add_manifest(self, entry):
         if isinstance(entry, ManifestBinaryComponent):
-            formatter, base = self, ''
+            formatter, base = super(OmniJarFormatter, self), ''
         else:
-            formatter, base, path = self._get_omnijar(entry.base)
-        entry = entry.move(mozpack.path.relpath(entry.base, base))
-        FlatFormatter.add_manifest(formatter, entry)
+            formatter, base, path = self._get_formatter(entry.base,
+                                                        is_resource=True)
+        entry = entry.move(mozpath.relpath(entry.base, base))
+        formatter.add_manifest(entry)
 
     def add_interfaces(self, path, content):
-        formatter, base, path = self._get_omnijar(path)
-        FlatFormatter.add_interfaces(formatter, path, content)
+        formatter, base, path = self._get_formatter(path)
+        formatter.add_interfaces(path, content)
 
     def contains(self, path):
         assert '*' not in path
         if self.copier.contains(path):
             return True
         for base, copier in self.omnijars.iteritems():
-            if copier.contains(mozpack.path.relpath(path, base)):
+            if copier.contains(mozpath.relpath(path, base)):
                 return True
         return False
 
-    def is_resource(self, path):
+    def is_resource(self, path, base=None):
         '''
         Return whether the given path corresponds to a resource to be put in an
         omnijar archive.
         '''
-        base = self._get_base(path)
-        path = mozpack.path.relpath(path, base)
-        if any(mozpack.path.match(path, p.replace('*', '**'))
+        if base is None:
+            base = self._get_base(path)
+        path = mozpath.relpath(path, base)
+        if any(mozpath.match(path, p.replace('*', '**'))
                for p in self._non_resources):
             return False
-        path = mozpack.path.split(path)
+        path = mozpath.split(path)
         if path[0] == 'chrome':
             return len(path) == 1 or path[1] != 'icons'
         if path[0] == 'components':
-            return path[-1].endswith('.js')
+            return path[-1].endswith(('.js', '.xpt'))
         if path[0] == 'res':
             return len(path) == 1 or \
                 (path[1] != 'cursors' and path[1] != 'MainMenu.nib')

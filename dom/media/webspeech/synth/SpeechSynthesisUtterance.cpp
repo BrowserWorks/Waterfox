@@ -40,9 +40,9 @@ SpeechSynthesisUtterance::SpeechSynthesisUtterance(nsPIDOMWindow* aOwnerWindow,
 SpeechSynthesisUtterance::~SpeechSynthesisUtterance() {}
 
 JSObject*
-SpeechSynthesisUtterance::WrapObject(JSContext* aCx)
+SpeechSynthesisUtterance::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return SpeechSynthesisUtteranceBinding::Wrap(aCx, this);
+  return SpeechSynthesisUtteranceBinding::Wrap(aCx, this, aGivenProto);
 }
 
 nsISupports*
@@ -145,6 +145,12 @@ void
 SpeechSynthesisUtterance::SetPitch(float aPitch)
 {
   mPitch = aPitch;
+}
+
+void
+SpeechSynthesisUtterance::GetChosenVoiceURI(nsString& aResult) const
+{
+  aResult = mChosenVoiceURI;
 }
 
 void

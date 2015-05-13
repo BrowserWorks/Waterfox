@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -10,7 +12,6 @@
 #include "nsCOMPtr.h"
 #include "nsID.h"
 
-class nsIDOMBlob;
 class nsIEventTarget;
 class nsIRemoteBlob;
 class nsString;
@@ -24,12 +25,12 @@ class PBackgroundChild;
 
 namespace dom {
 
+class BlobImpl;
 class ContentChild;
-class FileImpl;
 class nsIContentChild;
 class PBlobStreamChild;
 
-class BlobChild MOZ_FINAL
+class BlobChild final
   : public PBlobChild
 {
   typedef mozilla::ipc::PBackgroundChild PBackgroundChild;
@@ -40,7 +41,7 @@ class BlobChild MOZ_FINAL
   class RemoteBlobSliceImpl;
   friend class RemoteBlobSliceImpl;
 
-  FileImpl* mBlobImpl;
+  BlobImpl* mBlobImpl;
   RemoteBlobImpl* mRemoteBlobImpl;
 
   // One of these will be null and the other non-null.
@@ -61,10 +62,10 @@ public:
 
   // These create functions are called on the sending side.
   static BlobChild*
-  GetOrCreate(nsIContentChild* aManager, FileImpl* aBlobImpl);
+  GetOrCreate(nsIContentChild* aManager, BlobImpl* aBlobImpl);
 
   static BlobChild*
-  GetOrCreate(PBackgroundChild* aManager, FileImpl* aBlobImpl);
+  GetOrCreate(PBackgroundChild* aManager, BlobImpl* aBlobImpl);
 
   // These create functions are called on the receiving side.
   static BlobChild*
@@ -101,11 +102,11 @@ public:
   const nsID&
   ParentID() const;
 
-  // Get the FileImpl associated with this actor. This may always be called
+  // Get the BlobImpl associated with this actor. This may always be called
   // on the sending side. It may also be called on the receiving side unless
   // this is a "mystery" blob that has not yet received a SetMysteryBlobInfo()
   // call.
-  already_AddRefed<FileImpl>
+  already_AddRefed<BlobImpl>
   GetBlobImpl();
 
   // Use this for files.
@@ -113,7 +114,7 @@ public:
   SetMysteryBlobInfo(const nsString& aName,
                      const nsString& aContentType,
                      uint64_t aLength,
-                     uint64_t aLastModifiedDate);
+                     int64_t aLastModifiedDate);
 
   // Use this for non-file blobs.
   bool
@@ -129,13 +130,13 @@ public:
 
 private:
   // These constructors are called on the sending side.
-  BlobChild(nsIContentChild* aManager, FileImpl* aBlobImpl);
+  BlobChild(nsIContentChild* aManager, BlobImpl* aBlobImpl);
 
-  BlobChild(PBackgroundChild* aManager, FileImpl* aBlobImpl);
+  BlobChild(PBackgroundChild* aManager, BlobImpl* aBlobImpl);
 
   BlobChild(nsIContentChild* aManager, BlobChild* aOther);
 
-  BlobChild(PBackgroundChild* aManager, BlobChild* aOther, FileImpl* aBlobImpl);
+  BlobChild(PBackgroundChild* aManager, BlobChild* aOther, BlobImpl* aBlobImpl);
 
   // These constructors are called on the receiving side.
   BlobChild(nsIContentChild* aManager,
@@ -157,10 +158,10 @@ private:
   ~BlobChild();
 
   void
-  CommonInit(FileImpl* aBlobImpl);
+  CommonInit(BlobImpl* aBlobImpl);
 
   void
-  CommonInit(BlobChild* aOther, FileImpl* aBlobImpl);
+  CommonInit(BlobChild* aOther, BlobImpl* aBlobImpl);
 
   void
   CommonInit(const ChildBlobConstructorParams& aParams);
@@ -170,7 +171,7 @@ private:
 
   template <class ChildManagerType>
   static BlobChild*
-  GetOrCreateFromImpl(ChildManagerType* aManager, FileImpl* aBlobImpl);
+  GetOrCreateFromImpl(ChildManagerType* aManager, BlobImpl* aBlobImpl);
 
   template <class ChildManagerType>
   static BlobChild*
@@ -186,12 +187,12 @@ private:
   static BlobChild*
   MaybeGetActorFromRemoteBlob(nsIRemoteBlob* aRemoteBlob,
                               nsIContentChild* aManager,
-                              FileImpl* aBlobImpl);
+                              BlobImpl* aBlobImpl);
 
   static BlobChild*
   MaybeGetActorFromRemoteBlob(nsIRemoteBlob* aRemoteBlob,
                               PBackgroundChild* aManager,
-                              FileImpl* aBlobImpl);
+                              BlobImpl* aBlobImpl);
 
   void
   NoteDyingRemoteBlobImpl();
@@ -207,19 +208,19 @@ private:
 
   // These methods are only called by the IPDL message machinery.
   virtual void
-  ActorDestroy(ActorDestroyReason aWhy) MOZ_OVERRIDE;
+  ActorDestroy(ActorDestroyReason aWhy) override;
 
   virtual PBlobStreamChild*
   AllocPBlobStreamChild(const uint64_t& aStart,
-                        const uint64_t& aLength) MOZ_OVERRIDE;
+                        const uint64_t& aLength) override;
 
   virtual bool
-  DeallocPBlobStreamChild(PBlobStreamChild* aActor) MOZ_OVERRIDE;
+  DeallocPBlobStreamChild(PBlobStreamChild* aActor) override;
 };
 
 // Only let ContentChild call BlobChild::Startup() and ensure that
 // ContentChild can't access any other BlobChild internals.
-class BlobChild::FriendKey MOZ_FINAL
+class BlobChild::FriendKey final
 {
   friend class ContentChild;
 

@@ -51,7 +51,6 @@ static const uint32_t kParallelLoadLimit = 15;
 // Quota for offline apps when preloading
 static const int32_t  kCustomProfileQuota = 512000;
 
-#if defined(PR_LOGGING)
 //
 // To enable logging (see prlog.h for full details):
 //
@@ -62,7 +61,6 @@ static const int32_t  kCustomProfileQuota = 512000;
 // the file offlineupdate.log
 //
 extern PRLogModuleInfo *gOfflineCacheUpdateLog;
-#endif
 
 #undef LOG
 #define LOG(args) PR_LOG(gOfflineCacheUpdateLog, 4, args)
@@ -115,9 +113,9 @@ LogToConsole(const char * message, nsOfflineCacheUpdateItem * item = nullptr)
 // nsManifestCheck
 //-----------------------------------------------------------------------------
 
-class nsManifestCheck MOZ_FINAL : public nsIStreamListener
-                                , public nsIChannelEventSink
-                                , public nsIInterfaceRequestor
+class nsManifestCheck final : public nsIStreamListener
+                            , public nsIChannelEventSink
+                            , public nsIInterfaceRequestor
 {
 public:
     nsManifestCheck(nsOfflineCacheUpdate *aUpdate,
@@ -343,13 +341,11 @@ nsOfflineCacheUpdateItem::~nsOfflineCacheUpdateItem()
 nsresult
 nsOfflineCacheUpdateItem::OpenChannel(nsOfflineCacheUpdate *aUpdate)
 {
-#if defined(PR_LOGGING)
     if (LOG_ENABLED()) {
         nsAutoCString spec;
         mURI->GetSpec(spec);
         LOG(("%p: Opening channel for %s", this, spec.get()));
     }
-#endif
 
     if (mUpdate) {
         // Holding a reference to the update means this item is already
@@ -363,8 +359,7 @@ nsOfflineCacheUpdateItem::OpenChannel(nsOfflineCacheUpdate *aUpdate)
     NS_ENSURE_SUCCESS(rv, rv);
 
     uint32_t flags = nsIRequest::LOAD_BACKGROUND |
-                     nsICachingChannel::LOAD_ONLY_IF_MODIFIED |
-                     nsICachingChannel::LOAD_CHECK_OFFLINE_CACHE;
+                     nsICachingChannel::LOAD_ONLY_IF_MODIFIED;
 
     if (mApplicationCache == mPreviousApplicationCache) {
         // Same app cache to read from and to write to is used during
@@ -467,14 +462,12 @@ nsOfflineCacheUpdateItem::OnStopRequest(nsIRequest *aRequest,
                                         nsISupports *aContext,
                                         nsresult aStatus)
 {
-#if defined(PR_LOGGING)
     if (LOG_ENABLED()) {
         nsAutoCString spec;
         mURI->GetSpec(spec);
         LOG(("%p: Done fetching offline item %s [status=%x]\n",
             this, spec.get(), aStatus));
     }
-#endif
 
     if (mBytesRead == 0 && aStatus == NS_OK) {
         // we didn't need to read (because LOAD_ONLY_IF_MODIFIED was
@@ -1880,13 +1873,11 @@ nsOfflineCacheUpdate::ProcessNextURI()
         return NS_OK;
     }
 
-#if defined(PR_LOGGING)
     if (LOG_ENABLED()) {
         nsAutoCString spec;
         runItem->mURI->GetSpec(spec);
         LOG(("%p: Opening channel for %s", this, spec.get()));
     }
-#endif
 
     ++mItemsInProgress;
     NotifyState(nsIOfflineCacheUpdateObserver::STATE_ITEMSTARTED);

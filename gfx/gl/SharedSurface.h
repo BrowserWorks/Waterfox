@@ -156,6 +156,12 @@ public:
         MOZ_CRASH("Did you forget to override this function?");
     }
 
+    virtual bool CopyTexImage2D(GLenum target, GLint level, GLenum internalformat, GLint x,
+                                GLint y, GLsizei width, GLsizei height, GLint border)
+    {
+        return false;
+    }
+
     virtual bool ReadPixels(GLint x, GLint y,
                             GLsizei width, GLsizei height,
                             GLenum format, GLenum type,
@@ -205,7 +211,7 @@ class SurfaceFactory : public SupportsWeakPtr<SurfaceFactory>
 public:
     // Should use the VIRTUAL version, but it's currently incompatible
     // with SupportsWeakPtr. (bug 1049278)
-    MOZ_DECLARE_REFCOUNTED_TYPENAME(SurfaceFactory)
+    MOZ_DECLARE_WEAKREFERENCE_TYPENAME(SurfaceFactory)
 
     GLContext* const mGL;
     const SurfaceCaps mCaps;
@@ -289,6 +295,7 @@ public:
 };
 
 bool ReadbackSharedSurface(SharedSurface* src, gfx::DrawTarget* dst);
+uint32_t ReadPixel(SharedSurface* src);
 
 } // namespace gl
 } // namespace mozilla

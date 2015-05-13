@@ -1,12 +1,12 @@
 == default-size.html default-size-ref.html
-skip-if(B2G) fuzzy-if(Android&&AndroidVersion>=15,8,1000) == size-1.html size-1-ref.html
+skip-if(B2G||Mulet) fuzzy-if(Android&&AndroidVersion>=15,8,1000) == size-1.html size-1-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
 
 == empty-transaction-1.html empty-transaction-1-ref.html
 
 == image-rendering-test.html image-rendering-ref.html
 == image-shadow.html image-shadow-ref.html
 
-skip-if(B2G) asserts-if(cocoaWidget,0-2) == size-change-1.html size-change-1-ref.html
+skip-if(B2G||Mulet) asserts-if(cocoaWidget,0-2) == size-change-1.html size-change-1-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
 
 random-if(cocoaWidget) == subpixel-1.html about:blank
 
@@ -27,8 +27,8 @@ random-if(cocoaWidget) == subpixel-1.html about:blank
 == text-ltr-alignment-test.html text-ltr-alignment-ref.html
 == text-rtl-alignment-test.html text-rtl-alignment-ref.html
 
-fuzzy-if(B2G&&azureSkiaGL,1,256) == text-horzline-with-bottom.html text-horzline.html
-fuzzy-if(B2G&&azureSkiaGL,1,256) == text-horzline-with-top.html text-horzline.html
+fuzzy-if((B2G||Mulet)&&azureSkiaGL,1,256) == text-horzline-with-bottom.html text-horzline.html # Initial mulet triage: parity with B2G/B2G Desktop
+fuzzy-if((B2G||Mulet)&&azureSkiaGL,1,256) fails-if(azureSkia&&OSX>=1008) == text-horzline-with-top.html text-horzline.html # Initial mulet triage: parity with B2G/B2G Desktop, Skia OS X failure tracked in bug 1152044
 
 != text-big-stroke.html text-blank.html
 != text-big-stroke.html text-big-fill.html
@@ -45,7 +45,7 @@ fuzzy-if(azureSkiaGL,10,400) == text-not-in-doc-test.html text-not-in-doc-ref.ht
 != text-bidi-ltr-test.html text-bidi-ltr-notref.html # for bug 698185
 == text-bidi-rtl-test.html text-bidi-rtl-ref.html
 
-skip-if(B2G) != text-font-lang.html text-font-lang-notref.html
+skip-if(B2G||Mulet) != text-font-lang.html text-font-lang-notref.html # Initial mulet triage: parity with B2G/B2G Desktop
 
 == text-measure.html text-measure-ref.html
 == text-small-caps-1.html text-small-caps-1-ref.html
@@ -59,8 +59,9 @@ random-if(!d2d) != text-subpixel-1.html text-subpixel-1-ref.html
 ## Currently fails most places due to partial backout of bug 808288, see bug 837461.
 ## (Marking "random" rather than "fails" because it would pass for people
 ## if they have an Emoji font installed when running the tests.)
-## WAS: random-if(OSX==10.7) != text-emoji.html text-emoji-notref.html
-random-if(!cocoaWidget||OSX==10.6||OSX==10.7) != text-emoji.html text-emoji-notref.html
+## WAS: random-if(OSX==1007) != text-emoji.html text-emoji-notref.html
+# With Skia canvas on OS X (bug 932958) it fails even on 10.8 and 10.10.
+random-if(cocoaWidget&&azureSkia) random-if(!cocoaWidget||OSX==1006||OSX==1007) != text-emoji.html text-emoji-notref.html
 
 # azure quartz uses CGDrawLinearGradient instead of DrawShading
 # so we have less control over degenerate behaviour as tested by this
@@ -68,7 +69,7 @@ random-if(!cocoaWidget||OSX==10.6||OSX==10.7) != text-emoji.html text-emoji-notr
 fails-if(azureSkia||azureSkiaGL||azureQuartz) == linear-gradient-1a.html linear-gradient-1-ref.html
 
 # this passes with cairo on 10.7 and 10.8 but not with azure for reasons unknown
-fails-if(!(Android&&AndroidVersion>=15)&&(OSX==10.6||(azureQuartz&&(OSX==10.7||OSX==10.8)))||azureSkiaGL||azureSkia) == linear-gradient-1b.html linear-gradient-1-ref.html
+fails-if(!(Android&&AndroidVersion>=15)&&(OSX==1006||(azureQuartz&&OSX>=1007))||azureSkiaGL||azureSkia) == linear-gradient-1b.html linear-gradient-1-ref.html
 
 == zero-dimensions.html zero-dimensions-ref.html
 
@@ -85,7 +86,7 @@ fuzzy-if(azureSkia,9,470) random-if(Android) == dash-1.html dash-1-ref.svg  # Bu
 == ctm-singular-sanity.html data:text/html,<body>Pass
 == ctm-1.html ctm-1-ref.html
 
-fails-if(OSX==10.6) == 672646-alpha-radial-gradient.html 672646-alpha-radial-gradient-ref.html # Bug 673333
+fails-if(azureQuartz&&OSX==1006) == 672646-alpha-radial-gradient.html 672646-alpha-radial-gradient-ref.html # Bug 673333
 == 674003-alpha-radial-gradient-superlum.html 674003-alpha-radial-gradient-superlum-ref.html
 
 != 693610-1.html 693610-1-notref.html # bug 693610: multiple glyph runs should not be overprinted
@@ -99,6 +100,8 @@ fails-if(OSX==10.6) == 672646-alpha-radial-gradient.html 672646-alpha-radial-gra
 == 749467-1.html 749467-1-ref.html
 
 # You get a little bit of rounding fuzz on OSX from transforming the paths between user space and device space
-fuzzy-if(azureQuartz,2,113) fuzzy-if(d2d,12,21) == 784573-1.html 784573-1-ref.html
+fuzzy-if(azureQuartz,2,128) fuzzy-if(d2d,12,21) == 784573-1.html 784573-1-ref.html
 
 == 802658-1.html 802658-1-ref.html
+
+== 1151821-1.html 1151821-1-ref.html

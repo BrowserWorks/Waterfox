@@ -25,10 +25,6 @@ namespace layers {
 class ImageContainer;
 }
 
-namespace dom {
-class TimeRanges;
-}
- 
 class AndroidMediaReader : public MediaDecoderReader
 {
   nsCString mType;
@@ -70,9 +66,9 @@ public:
   virtual nsresult ReadMetadata(MediaInfo* aInfo,
                                 MetadataTags** aTags);
   virtual nsRefPtr<SeekPromise>
-  Seek(int64_t aTime, int64_t aStartTime, int64_t aEndTime, int64_t aCurrentTime) MOZ_OVERRIDE;
+  Seek(int64_t aTime, int64_t aEndTime) override;
 
-  virtual nsRefPtr<ShutdownPromise> Shutdown() MOZ_OVERRIDE;
+  virtual nsRefPtr<ShutdownPromise> Shutdown() override;
 
   class ImageBufferCallback : public MPAPI::BufferCallback {
     typedef mozilla::layers::Image Image;
@@ -80,7 +76,7 @@ public:
   public:
     ImageBufferCallback(mozilla::layers::ImageContainer *aImageContainer);
     void *operator()(size_t aWidth, size_t aHeight,
-                     MPAPI::ColorFormat aColorFormat) MOZ_OVERRIDE;
+                     MPAPI::ColorFormat aColorFormat) override;
     already_AddRefed<Image> GetImage();
 
   private:

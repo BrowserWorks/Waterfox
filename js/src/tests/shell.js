@@ -857,6 +857,23 @@ function assertThrows(f) {
         throw new Error("Assertion failed: " + f + " did not throw as expected");
 }
 
+
+function assertThrowsInstanceOf(f, ctor, msg) {
+  var fullmsg;
+  try {
+    f();
+  } catch (exc) {
+    if (exc instanceof ctor)
+      return;
+    fullmsg = "Assertion failed: expected exception " + ctor.name + ", got " + exc;
+  }
+  if (fullmsg === undefined)
+    fullmsg = "Assertion failed: expected exception " + ctor.name + ", no exception thrown";
+  if (msg !== undefined)
+    fullmsg += " - " + msg;
+  throw new Error(fullmsg);
+};
+
 /*
  * Some tests need to know if we are in Rhino as opposed to SpiderMonkey
  */
@@ -876,6 +893,3 @@ function OptLevel( i ) {
   cx.setOptimizationLevel(i);
 }
 /* end of Rhino functions */
-
-var JS_HAS_SYMBOLS = typeof Symbol === "function";
-var std_iterator = JS_HAS_SYMBOLS ? Symbol.iterator : "@@iterator";

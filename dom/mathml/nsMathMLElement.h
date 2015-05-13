@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -25,9 +26,9 @@ class EventChainPreVisitor;
 /*
  * The base class for MathML elements.
  */
-class nsMathMLElement MOZ_FINAL : public nsMathMLElementBase,
-                                  public nsIDOMElement,
-                                  public mozilla::dom::Link
+class nsMathMLElement final : public nsMathMLElementBase,
+                              public nsIDOMElement,
+                              public mozilla::dom::Link
 {
 public:
   explicit nsMathMLElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
@@ -43,17 +44,17 @@ public:
 
   nsresult BindToTree(nsIDocument* aDocument, nsIContent* aParent,
                       nsIContent* aBindingParent,
-                      bool aCompileEventHandlers) MOZ_OVERRIDE;
+                      bool aCompileEventHandlers) override;
   virtual void UnbindFromTree(bool aDeep = true,
-                              bool aNullParent = true) MOZ_OVERRIDE;
+                              bool aNullParent = true) override;
 
   virtual bool ParseAttribute(int32_t aNamespaceID,
                                 nsIAtom* aAttribute,
                                 const nsAString& aValue,
-                                nsAttrValue& aResult) MOZ_OVERRIDE;
+                                nsAttrValue& aResult) override;
 
-  NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const MOZ_OVERRIDE;
-  virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const MOZ_OVERRIDE;
+  NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const override;
+  virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const override;
 
   enum {
     PARSE_ALLOW_UNITLESS = 0x01, // unitless 0 will be turned into 0px
@@ -74,12 +75,12 @@ public:
                                       nsRuleData* aRuleData);
   
   virtual nsresult PreHandleEvent(
-                     mozilla::EventChainPreVisitor& aVisitor) MOZ_OVERRIDE;
+                     mozilla::EventChainPreVisitor& aVisitor) override;
   virtual nsresult PostHandleEvent(
-                     mozilla::EventChainPostVisitor& aVisitor) MOZ_OVERRIDE;
-  nsresult Clone(mozilla::dom::NodeInfo*, nsINode**) const MOZ_OVERRIDE;
-  virtual mozilla::EventStates IntrinsicState() const MOZ_OVERRIDE;
-  virtual bool IsNodeOfType(uint32_t aFlags) const MOZ_OVERRIDE;
+                     mozilla::EventChainPostVisitor& aVisitor) override;
+  nsresult Clone(mozilla::dom::NodeInfo*, nsINode**) const override;
+  virtual mozilla::EventStates IntrinsicState() const override;
+  virtual bool IsNodeOfType(uint32_t aFlags) const override;
 
   // Set during reflow as necessary. Does a style change notification,
   // aNotify must be true.
@@ -88,10 +89,10 @@ public:
     return mIncrementScriptLevel;
   }
 
-  virtual bool IsFocusableInternal(int32_t* aTabIndex, bool aWithMouse) MOZ_OVERRIDE;
-  virtual bool IsLink(nsIURI** aURI) const MOZ_OVERRIDE;
-  virtual void GetLinkTarget(nsAString& aTarget) MOZ_OVERRIDE;
-  virtual already_AddRefed<nsIURI> GetHrefURI() const MOZ_OVERRIDE;
+  virtual bool IsFocusableInternal(int32_t* aTabIndex, bool aWithMouse) override;
+  virtual bool IsLink(nsIURI** aURI) const override;
+  virtual void GetLinkTarget(nsAString& aTarget) override;
+  virtual already_AddRefed<nsIURI> GetHrefURI() const override;
   nsresult SetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                    const nsAString& aValue, bool aNotify)
   {
@@ -99,16 +100,16 @@ public:
   }
   virtual nsresult SetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                            nsIAtom* aPrefix, const nsAString& aValue,
-                           bool aNotify) MOZ_OVERRIDE;
+                           bool aNotify) override;
   virtual nsresult UnsetAttr(int32_t aNameSpaceID, nsIAtom* aAttribute,
-                             bool aNotify) MOZ_OVERRIDE;
+                             bool aNotify) override;
 
-  virtual nsIDOMNode* AsDOMNode() MOZ_OVERRIDE { return this; }
+  virtual nsIDOMNode* AsDOMNode() override { return this; }
 
 protected:
   virtual ~nsMathMLElement() {}
 
-  virtual JSObject* WrapNode(JSContext *aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 private:
   bool mIncrementScriptLevel;

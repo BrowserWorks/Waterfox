@@ -1,6 +1,6 @@
-/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
- *
- * This Source Code Form is subject to the terms of the Mozilla Public
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -25,32 +25,29 @@ NS_DEFINE_NAMED_CID(NS_COMMANDHANDLER_CID);
 NS_DEFINE_NAMED_CID(NS_WEBBROWSERCONTENTPOLICY_CID);
 
 static const mozilla::Module::CIDEntry kWebBrowserCIDs[] = {
-    { &kNS_WEBBROWSER_CID, false, nullptr, nsWebBrowserConstructor },
-    { &kNS_COMMANDHANDLER_CID, false, nullptr, nsCommandHandlerConstructor },
-    { &kNS_WEBBROWSERCONTENTPOLICY_CID, false, nullptr, nsWebBrowserContentPolicyConstructor },
-    { nullptr }
+  { &kNS_WEBBROWSER_CID, false, nullptr, nsWebBrowserConstructor },
+  { &kNS_COMMANDHANDLER_CID, false, nullptr, nsCommandHandlerConstructor },
+  { &kNS_WEBBROWSERCONTENTPOLICY_CID, false, nullptr, nsWebBrowserContentPolicyConstructor },
+  { nullptr }
 };
 
 static const mozilla::Module::ContractIDEntry kWebBrowserContracts[] = {
-    { NS_WEBBROWSER_CONTRACTID, &kNS_WEBBROWSER_CID },
-    { NS_COMMANDHANDLER_CONTRACTID, &kNS_COMMANDHANDLER_CID },
-    { NS_WEBBROWSERCONTENTPOLICY_CONTRACTID, &kNS_WEBBROWSERCONTENTPOLICY_CID },
-    { nullptr }
+  { NS_WEBBROWSER_CONTRACTID, &kNS_WEBBROWSER_CID },
+  { NS_COMMANDHANDLER_CONTRACTID, &kNS_COMMANDHANDLER_CID },
+  { NS_WEBBROWSERCONTENTPOLICY_CONTRACTID, &kNS_WEBBROWSERCONTENTPOLICY_CID },
+  { nullptr }
 };
 
 static const mozilla::Module::CategoryEntry kWebBrowserCategories[] = {
-    { "content-policy", NS_WEBBROWSERCONTENTPOLICY_CONTRACTID, NS_WEBBROWSERCONTENTPOLICY_CONTRACTID },
-    { nullptr }
+  { "content-policy", NS_WEBBROWSERCONTENTPOLICY_CONTRACTID, NS_WEBBROWSERCONTENTPOLICY_CONTRACTID },
+  { nullptr }
 };
 
 static const mozilla::Module kWebBrowserModule = {
-    mozilla::Module::kVersion,
-    kWebBrowserCIDs,
-    kWebBrowserContracts,
-    kWebBrowserCategories
+  mozilla::Module::kVersion,
+  kWebBrowserCIDs,
+  kWebBrowserContracts,
+  kWebBrowserCategories
 };
 
 NSMODULE_DEFN(Browser_Embedding_Module) = &kWebBrowserModule;
-
-
-

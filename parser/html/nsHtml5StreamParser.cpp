@@ -480,7 +480,7 @@ nsHtml5StreamParser::FinalizeSniffing(const uint8_t* aFromSegment, // can be nul
       {
         (void *(*)(size_t))moz_xmalloc,
         (void *(*)(void *, size_t))moz_xrealloc,
-        moz_free
+        free
       };
 
     static const char16_t kExpatSeparator[] = { 0xFFFF, '\0' };
@@ -771,8 +771,7 @@ nsHtml5StreamParser::SniffStreamBytes(const uint8_t* aFromSegment,
   }
 
   if (!mSniffingBuffer) {
-    const mozilla::fallible_t fallible = mozilla::fallible_t();
-    mSniffingBuffer = new (fallible)
+    mSniffingBuffer = new (mozilla::fallible)
       uint8_t[NS_HTML5_STREAM_PARSER_SNIFFING_BUFFER_SIZE];
     if (!mSniffingBuffer) {
       return NS_ERROR_OUT_OF_MEMORY;
@@ -1146,8 +1145,7 @@ nsHtml5StreamParser::OnDataAvailable(nsIRequest* aRequest,
   uint32_t totalRead;
   // Main thread to parser thread dispatch requires copying to buffer first.
   if (NS_IsMainThread()) {
-    const mozilla::fallible_t fallible = mozilla::fallible_t();
-    nsAutoArrayPtr<uint8_t> data(new (fallible) uint8_t[aLength]);
+    nsAutoArrayPtr<uint8_t> data(new (mozilla::fallible) uint8_t[aLength]);
     if (!data) {
       return mExecutor->MarkAsBroken(NS_ERROR_OUT_OF_MEMORY);
     }
@@ -1317,7 +1315,11 @@ nsHtml5StreamParser::ParseAvailableData()
   if (IsTerminatedOrInterrupted()) {
     return;
   }
-  
+
+  if (mSpeculating && !IsSpeculationEnabled()) {
+    return;
+  }
+
   for (;;) {
     if (!mFirstBuffer->hasMore()) {
       if (mFirstBuffer == mLastBuffer) {
@@ -1456,6 +1458,7 @@ nsHtml5StreamParser::ContinueAfterScripts(nsHtml5Tokenizer* aTokenizer,
         !aTreeBuilder->snapshotMatches(speculation->GetSnapshot())) {
       speculationFailed = true;
       // We've got a failed speculation :-(
+      MaybeDisableFutureSpeculation();
       Interrupt(); // Make the parser thread release the tokenizer mutex sooner
       // now fall out of the speculationAutoLock into the tokenizerAutoLock block
     } else {

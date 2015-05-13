@@ -10,27 +10,31 @@ EXPORTS.mozilla.dom += [
     'MediaKeyMessageEvent.h',
     'MediaKeys.h',
     'MediaKeySession.h',
+    'MediaKeyStatusMap.h',
     'MediaKeySystemAccess.h',
+    'MediaKeySystemAccessManager.h',
 ]
 
 EXPORTS.mozilla += [
     'CDMCallbackProxy.h',
     'CDMCaps.h',
     'CDMProxy.h',
-    'EMELog.h'
+    'EMEUtils.h'
 ]
 
 UNIFIED_SOURCES += [
     'CDMCallbackProxy.cpp',
     'CDMCaps.cpp',
     'CDMProxy.cpp',
-    'EMELog.cpp',
+    'EMEUtils.cpp',
     'MediaEncryptedEvent.cpp',
     'MediaKeyError.cpp',
     'MediaKeyMessageEvent.cpp',
     'MediaKeys.cpp',
     'MediaKeySession.cpp',
+    'MediaKeyStatusMap.cpp',
     'MediaKeySystemAccess.cpp',
+    'MediaKeySystemAccessManager.cpp',
 ]
 
 FINAL_LIBRARY = 'xul'

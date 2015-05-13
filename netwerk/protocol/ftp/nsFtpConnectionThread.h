@@ -3,12 +3,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef __nsFtpState__h_
-#define __nsFtpState__h_
+#ifndef __nsFtpConnectionThread__h_
+#define __nsFtpConnectionThread__h_
 
 #include "nsBaseContentStream.h"
 
-#include "nsICacheListener.h"
 #include "nsString.h"
 #include "nsCOMPtr.h"
 #include "nsIAsyncInputStream.h"
@@ -35,8 +34,6 @@ typedef enum _FTP_STATE {
 ///////////////////////
 //// Internal states
     FTP_INIT,
-    FTP_WAIT_CACHE,
-    FTP_READ_CACHE,
     FTP_COMMAND_CONNECT,
     FTP_READ_BUF,
     FTP_ERROR,
@@ -67,7 +64,6 @@ typedef enum _FTP_ACTION {GET, PUT} FTP_ACTION;
 
 class nsFtpChannel;
 class nsICancelable;
-class nsICacheEntryDescriptor;
 class nsIProxyInfo;
 class nsIStreamListener;
 
@@ -76,38 +72,36 @@ class nsIStreamListener;
 // implements nsITransportEventSink so it can mix status events from both the
 // control connection and the data connection.
 
-class nsFtpState MOZ_FINAL : public nsBaseContentStream,
-                             public nsIInputStreamCallback,
-                             public nsITransportEventSink,
-                             public nsICacheListener,
-                             public nsIRequestObserver,
-                             public nsFtpControlConnectionListener,
-                             public nsIProtocolProxyCallback
+class nsFtpState final : public nsBaseContentStream,
+                         public nsIInputStreamCallback,
+                         public nsITransportEventSink,
+                         public nsIRequestObserver,
+                         public nsFtpControlConnectionListener,
+                         public nsIProtocolProxyCallback
 {
 public:
     NS_DECL_ISUPPORTS_INHERITED
     NS_DECL_NSIINPUTSTREAMCALLBACK
     NS_DECL_NSITRANSPORTEVENTSINK
-    NS_DECL_NSICACHELISTENER
     NS_DECL_NSIREQUESTOBSERVER
     NS_DECL_NSIPROTOCOLPROXYCALLBACK
 
     // Override input stream methods:
-    NS_IMETHOD CloseWithStatus(nsresult status) MOZ_OVERRIDE;
-    NS_IMETHOD Available(uint64_t *result) MOZ_OVERRIDE;
+    NS_IMETHOD CloseWithStatus(nsresult status) override;
+    NS_IMETHOD Available(uint64_t *result) override;
     NS_IMETHOD ReadSegments(nsWriteSegmentFun fun, void *closure,
-                            uint32_t count, uint32_t *result) MOZ_OVERRIDE;
+                            uint32_t count, uint32_t *result) override;
 
     // nsFtpControlConnectionListener methods:
-    virtual void OnControlDataAvailable(const char *data, uint32_t dataLen) MOZ_OVERRIDE;
-    virtual void OnControlError(nsresult status) MOZ_OVERRIDE;
+    virtual void OnControlDataAvailable(const char *data, uint32_t dataLen) override;
+    virtual void OnControlError(nsresult status) override;
 
     nsFtpState();
     nsresult Init(nsFtpChannel *channel);
 
 protected:
     // Notification from nsBaseContentStream::AsyncWait
-    virtual void OnCallbackPending() MOZ_OVERRIDE;
+    virtual void OnCallbackPending() override;
 
 private:
     virtual ~nsFtpState();
@@ -157,46 +151,6 @@ private:
      * AsyncOpen implementation.
      */
     void Connect();
-
-    /**
-     * This method opens a cache entry for reading or writing depending on the
-     * state of the channel and of the system (e.g., opened for reading if we
-     * are offline).  This method is responsible for setting mCacheEntry if
-     * there is a cache entry that can be used.  It returns true if it ends up
-     * waiting (asynchronously) for access to the cache entry.  In that case,
-     * the nsFtpState's OnCacheEntryAvailable method will be called once the
-     * cache entry is available or if an error occurs.
-     */
-    bool CheckCache();
-
-    /**
-     * This method returns true if the data for this URL can be read from the
-     * cache.  This method assumes that mCacheEntry is non-null.
-     */
-    bool CanReadCacheEntry();
-
-    /**
-     * This method causes the cache entry to be read.  Data from the cache
-     * entry will be fed to the channel's listener.  This method returns true
-     * if successfully reading from the cache.  This method assumes that
-     * mCacheEntry is non-null and opened with read access.
-     */
-    bool ReadCacheEntry();
-
-    /**
-     * This method configures mDataStream with an asynchronous input stream to
-     * the cache entry.  The cache entry is read on a background thread.  This
-     * method assumes that mCacheEntry is non-null and opened with read access.
-     */
-    nsresult OpenCacheDataStream();
-
-    /**
-     * This method inserts the cache entry's output stream into the stream
-     * listener chain for the FTP channel.  As a result, the cache entry
-     * receives data as data is pushed to the channel's listener.  This method
-     * assumes that mCacheEntry is non-null and opened with write access. 
-     */
-    nsresult InstallCacheListener();
 
     ///////////////////////////////////
     // Private members
@@ -249,16 +203,11 @@ private:
     bool                    mServerIsIPv6;
     bool                    mUseUTF8;
 
-    static uint32_t         mSessionStartTime;
-
     mozilla::net::NetAddr   mServerAddress;
 
     // ***** control read gvars
     nsresult                mControlStatus;
     nsCString               mControlReadCarryOverBuf;
-
-    nsCOMPtr<nsICacheEntryDescriptor> mCacheEntry;
-    bool                    mDoomCache;
 
     nsCString mSuppliedEntityID;
 
@@ -279,4 +228,4 @@ private:
     }
 };
 
-#endif //__nsFtpState__h_
+#endif //__nsFtpConnectionThread__h_

@@ -172,6 +172,23 @@ nsJAR::OpenInner(nsIZipReader *aZipReader, const nsACString &aZipEntry)
 }
 
 NS_IMETHODIMP
+nsJAR::OpenMemory(void* aData, uint32_t aLength)
+{
+  NS_ENSURE_ARG_POINTER(aData);
+  if (mOpened) return NS_ERROR_FAILURE; // Already open!
+
+  mOpened = true;
+
+  nsRefPtr<nsZipHandle> handle;
+  nsresult rv = nsZipHandle::Init(static_cast<uint8_t*>(aData), aLength,
+                                  getter_AddRefs(handle));
+  if (NS_FAILED(rv))
+    return rv;
+
+  return mZip->OpenArchive(handle);
+}
+
+NS_IMETHODIMP
 nsJAR::GetFile(nsIFile* *result)
 {
   *result = mZipFile;
@@ -848,7 +865,7 @@ void nsJAR::ReportError(const nsACString &aFilename, int16_t errorCode)
   char* messageCstr = ToNewCString(message);
   if (!messageCstr) return;
   fprintf(stderr, "%s\n", messageCstr);
-  nsMemory::Free(messageCstr);
+  free(messageCstr);
 #endif
 }
 

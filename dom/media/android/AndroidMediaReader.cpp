@@ -43,7 +43,7 @@ nsresult AndroidMediaReader::Init(MediaDecoderReader* aCloneDonor)
 nsresult AndroidMediaReader::ReadMetadata(MediaInfo* aInfo,
                                           MetadataTags** aTags)
 {
-  NS_ASSERTION(mDecoder->OnDecodeThread(), "Should be on decode thread.");
+  MOZ_ASSERT(OnTaskQueue());
 
   if (!mPlugin) {
     mPlugin = GetAndroidMediaPluginHost()->CreateDecoder(mDecoder->GetResource(), mType);
@@ -74,7 +74,7 @@ nsresult AndroidMediaReader::ReadMetadata(MediaInfo* aInfo,
     }
 
     // Video track's frame sizes will not overflow. Activate the video track.
-    mHasVideo = mInfo.mVideo.mHasVideo = true;
+    mHasVideo = true;
     mInfo.mVideo.mDisplay = displaySize;
     mPicture = pictureRect;
     mInitialFrame = frameSize;
@@ -89,7 +89,7 @@ nsresult AndroidMediaReader::ReadMetadata(MediaInfo* aInfo,
   if (mPlugin->HasAudio(mPlugin)) {
     int32_t numChannels, sampleRate;
     mPlugin->GetAudioParameters(mPlugin, &numChannels, &sampleRate);
-    mHasAudio = mInfo.mAudio.mHasAudio = true;
+    mHasAudio = true;
     mInfo.mAudio.mChannels = numChannels;
     mInfo.mAudio.mRate = sampleRate;
   }
@@ -125,8 +125,7 @@ bool AndroidMediaReader::DecodeVideoFrame(bool &aKeyframeSkip,
 {
   // Record number of frames decoded and parsed. Automatically update the
   // stats counters using the AutoNotifyDecoded stack-based class.
-  uint32_t parsed = 0, decoded = 0;
-  AbstractMediaDecoder::AutoNotifyDecoded autoNotify(mDecoder, parsed, decoded);
+  AbstractMediaDecoder::AutoNotifyDecoded a(mDecoder);
 
   // Throw away the currently buffered frame if we are seeking.
   if (mLastVideoFrame && mVideoSeekTimeUs != -1) {
@@ -162,7 +161,8 @@ bool AndroidMediaReader::DecodeVideoFrame(bool &aKeyframeSkip,
       // when a frame is a keyframe.
 #if 0
       if (!frame.mKeyFrame) {
-        ++parsed;
+        ++a.mParsed;
+        ++a.mDropped;
         continue;
       }
 #endif
@@ -174,7 +174,7 @@ bool AndroidMediaReader::DecodeVideoFrame(bool &aKeyframeSkip,
 
     currentImage = bufferCallback.GetImage();
     int64_t pos = mDecoder->GetResource()->Tell();
-    IntRect picture = ToIntRect(mPicture);
+    IntRect picture = mPicture;
 
     nsRefPtr<VideoData> v;
     if (currentImage) {
@@ -250,9 +250,9 @@ bool AndroidMediaReader::DecodeVideoFrame(bool &aKeyframeSkip,
     if (!v) {
       return false;
     }
-    parsed++;
-    decoded++;
-    NS_ASSERTION(decoded <= parsed, "Expect to decode fewer frames than parsed in AndroidMedia...");
+    a.mParsed++;
+    a.mDecoded++;
+    NS_ASSERTION(a.mDecoded <= a.mParsed, "Expect to decode fewer frames than parsed in AndroidMedia...");
 
     // Since MPAPI doesn't give us the end time of frames, we keep one frame
     // buffered in AndroidMediaReader and push it into the queue as soon
@@ -289,7 +289,7 @@ bool AndroidMediaReader::DecodeVideoFrame(bool &aKeyframeSkip,
 
 bool AndroidMediaReader::DecodeAudioData()
 {
-  NS_ASSERTION(mDecoder->OnDecodeThread(), "Should be on decode thread.");
+  MOZ_ASSERT(OnTaskQueue());
 
   // This is the approximate byte position in the stream.
   int64_t pos = mDecoder->GetResource()->Tell();
@@ -320,9 +320,9 @@ bool AndroidMediaReader::DecodeAudioData()
 }
 
 nsRefPtr<MediaDecoderReader::SeekPromise>
-AndroidMediaReader::Seek(int64_t aTarget, int64_t aStartTime, int64_t aEndTime, int64_t aCurrentTime)
+AndroidMediaReader::Seek(int64_t aTarget, int64_t aEndTime)
 {
-  NS_ASSERTION(mDecoder->OnDecodeThread(), "Should be on decode thread.");
+  MOZ_ASSERT(OnTaskQueue());
 
   if (mHasAudio && mHasVideo) {
     // The decoder seeks/demuxes audio and video streams separately. So if
@@ -369,7 +369,7 @@ AndroidMediaReader::ImageBufferCallback::operator()(size_t aWidth, size_t aHeigh
       }
 
       mImage = image;
-      return image->AsSharedImage()->GetBuffer();
+      return image->GetBuffer();
     case MPAPI::I420:
       return CreateI420Image(aWidth, aHeight);
     default:

@@ -3,6 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+const { Cu } = require("chrome");
 const cssAutoCompleter = require("devtools/sourceeditor/css-autocompleter");
 const { AutocompletePopup } = require("devtools/shared/autocomplete-popup");
 
@@ -103,11 +104,28 @@ function initializeAutoCompletion(ctx, options = {}) {
     completer = new cssAutoCompleter({walker: options.walker});
   }
 
+  function insertSelectedPopupItem() {
+    let autocompleteState = autocompleteMap.get(ed);
+    if (!popup || !popup.isOpen || !autocompleteState) {
+      return;
+    }
+
+    if (!autocompleteState.suggestionInsertedOnce && popup.selectedItem) {
+      autocompleteMap.get(ed).insertingSuggestion = true;
+      insertPopupItem(ed, popup.selectedItem);
+    }
+
+    popup.hidePopup();
+    ed.emit("popup-hidden"); // This event is used in tests.
+    return true;
+  }
+
   let popup = new AutocompletePopup(win.parent.document, {
     position: "after_start",
     fixedWidth: true,
     theme: "auto",
-    autoSelect: true
+    autoSelect: true,
+    onClick: insertSelectedPopupItem
   });
 
   let cycle = (reverse) => {
@@ -125,20 +143,8 @@ function initializeAutoCompletion(ctx, options = {}) {
     "Shift-Tab": cycle.bind(null, true),
     "Up": cycle.bind(null, true),
     "Enter": () => {
-      if (popup && popup.isOpen) {
-        if (!autocompleteMap.get(ed).suggestionInsertedOnce) {
-          autocompleteMap.get(ed).insertingSuggestion = true;
-          let {label, preLabel, text} = popup.getItemAtIndex(0);
-          let cur = ed.getCursor();
-          ed.replaceText(text.slice(preLabel.length), cur, cur);
-        }
-        popup.hidePopup();
-        // This event is used in tests
-        ed.emit("popup-hidden");
-        return;
-      }
-
-      return CodeMirror.Pass;
+      let wasHandled = insertSelectedPopupItem();
+      return wasHandled ? true : CodeMirror.Pass;
     }
   };
   let autoCompleteCallback = autoComplete.bind(null, ctx);
@@ -215,7 +221,29 @@ function autoComplete({ ed, cm }) {
     private.suggestionInsertedOnce = false;
     // This event is used in tests.
     ed.emit("after-suggest");
-  });
+  }).then(null, Cu.reportError);
+}
+
+/**
+ * Inserts a popup item into the current cursor location
+ * in the editor.
+ */
+function insertPopupItem(ed, popupItem) {
+  let {label, preLabel, text} = popupItem;
+  let cur = ed.getCursor();
+  let textBeforeCursor = ed.getText(cur.line).substring(0, cur.ch);
+  let backwardsTextBeforeCursor = textBeforeCursor.split("").reverse().join("");
+  let backwardsPreLabel = preLabel.split("").reverse().join("");
+
+  // If there is additional text in the preLabel vs the line, then
+  // just insert the entire autocomplete text.  An example:
+  // if you type 'a' and select '#about' from the autocomplete menu,
+  // then the final text needs to the end up as '#about'.
+  if (backwardsPreLabel.indexOf(backwardsTextBeforeCursor) === 0) {
+    ed.replaceText(text, {line: cur.line, ch: 0}, cur);
+  } else {
+    ed.replaceText(text.slice(preLabel.length), cur, cur);
+  }
 }
 
 /**
@@ -242,7 +270,7 @@ function cycleSuggestions(ed, reverse) {
     }
     if (popup.itemCount == 1)
       popup.hidePopup();
-    ed.replaceText(firstItem.text.slice(firstItem.preLabel.length), cur, cur);
+    insertPopupItem(ed, firstItem);
   } else {
     let fromCur = {
       line: cur.line,

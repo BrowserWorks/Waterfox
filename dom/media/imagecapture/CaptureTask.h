@@ -13,7 +13,7 @@
 namespace mozilla {
 
 namespace dom {
-class File;
+class Blob;
 class ImageCapture;
 }
 
@@ -35,13 +35,13 @@ public:
   virtual void NotifyQueuedTrackChanges(MediaStreamGraph* aGraph, TrackID aID,
                                         StreamTime aTrackOffset,
                                         uint32_t aTrackEvents,
-                                        const MediaSegment& aQueuedMedia) MOZ_OVERRIDE;
+                                        const MediaSegment& aQueuedMedia) override;
 
   virtual void NotifyEvent(MediaStreamGraph* aGraph,
-                           MediaStreamGraphEvent aEvent) MOZ_OVERRIDE;
+                           MediaStreamGraphEvent aEvent) override;
 
   // DOMMediaStream::PrincipalChangeObserver method.
-  virtual void PrincipalChanged(DOMMediaStream* aMediaStream) MOZ_OVERRIDE;
+  virtual void PrincipalChanged(DOMMediaStream* aMediaStream) override;
 
   // CaptureTask methods.
 
@@ -50,7 +50,7 @@ public:
   //
   // Note:
   //   this function should be called on main thread.
-  nsresult TaskComplete(already_AddRefed<dom::File> aBlob, nsresult aRv);
+  nsresult TaskComplete(already_AddRefed<dom::Blob> aBlob, nsresult aRv);
 
   // Add listeners into MediaStream and PrincipalChangeObserver. It should be on
   // main thread only.

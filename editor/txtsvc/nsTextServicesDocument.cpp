@@ -2000,7 +2000,7 @@ nsTextServicesDocument::GetDocumentContentRootNode(nsIDOMNode **aNode)
 
     NS_ENSURE_TRUE(bodyElement, NS_ERROR_FAILURE);
 
-    result = bodyElement->QueryInterface(NS_GET_IID(nsIDOMNode), (void **)aNode);
+    bodyElement.forget(aNode);
   }
   else
   {
@@ -2014,7 +2014,7 @@ nsTextServicesDocument::GetDocumentContentRootNode(nsIDOMNode **aNode)
 
     NS_ENSURE_TRUE(docElement, NS_ERROR_FAILURE);
 
-    result = docElement->QueryInterface(NS_GET_IID(nsIDOMNode), (void **)aNode);
+    docElement.forget(aNode);
   }
 
   return result;
@@ -2248,7 +2248,7 @@ nsTextServicesDocument::IsBlockNode(nsIContent *aContent)
     return false;
   }
 
-  nsIAtom *atom = aContent->Tag();
+  nsIAtom *atom = aContent->NodeInfo()->NameAtom();
 
   return (sAAtom       != atom &&
           sAddressAtom != atom &&

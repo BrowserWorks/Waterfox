@@ -1,5 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -35,7 +35,6 @@ public:
   static BluetoothA2dpManager* Get();
   static void InitA2dpInterface(BluetoothProfileResultHandler* aRes);
   static void DeinitA2dpInterface(BluetoothProfileResultHandler* aRes);
-  virtual ~BluetoothA2dpManager();
 
   void OnConnectError();
   void OnDisconnectError();
@@ -64,8 +63,21 @@ public:
   uint64_t GetTotalMediaNumber();
   void GetTitle(nsAString& aTitle);
   void GetArtist(nsAString& aArtist);
+  void HandleBackendError();
+
+protected:
+  virtual ~BluetoothA2dpManager();
 
 private:
+  class CleanupA2dpResultHandler;
+  class CleanupA2dpResultHandlerRunnable;
+  class CleanupAvrcpResultHandler;
+  class ConnectResultHandler;
+  class DisconnectResultHandler;
+  class InitA2dpResultHandler;
+  class InitAvrcpResultHandler;
+  class OnErrorProfileResultHandlerRunnable;
+
   BluetoothA2dpManager();
   void ResetA2dp();
   void ResetAvrcp();
@@ -74,44 +86,44 @@ private:
   void NotifyConnectionStatusChanged();
 
   void ConnectionStateNotification(BluetoothA2dpConnectionState aState,
-                                   const nsAString& aBdAddr) MOZ_OVERRIDE;
+                                   const nsAString& aBdAddr) override;
   void AudioStateNotification(BluetoothA2dpAudioState aState,
-                              const nsAString& aBdAddr) MOZ_OVERRIDE;
+                              const nsAString& aBdAddr) override;
 
-  void GetPlayStatusNotification() MOZ_OVERRIDE;
+  void GetPlayStatusNotification() override;
 
-  void ListPlayerAppAttrNotification() MOZ_OVERRIDE;
+  void ListPlayerAppAttrNotification() override;
 
   void ListPlayerAppValuesNotification(
-    BluetoothAvrcpPlayerAttribute aAttrId) MOZ_OVERRIDE;
+    BluetoothAvrcpPlayerAttribute aAttrId) override;
 
   void GetPlayerAppValueNotification(
     uint8_t aNumAttrs,
-    const BluetoothAvrcpPlayerAttribute* aAttrs) MOZ_OVERRIDE;
+    const BluetoothAvrcpPlayerAttribute* aAttrs) override;
 
   void GetPlayerAppAttrsTextNotification(
     uint8_t aNumAttrs,
-    const BluetoothAvrcpPlayerAttribute* aAttrs) MOZ_OVERRIDE;
+    const BluetoothAvrcpPlayerAttribute* aAttrs) override;
 
   void GetPlayerAppValuesTextNotification(
-    uint8_t aAttrId, uint8_t aNumVals, const uint8_t* aValues) MOZ_OVERRIDE;
+    uint8_t aAttrId, uint8_t aNumVals, const uint8_t* aValues) override;
 
   void SetPlayerAppValueNotification(
-    const BluetoothAvrcpPlayerSettings& aSettings) MOZ_OVERRIDE;
+    const BluetoothAvrcpPlayerSettings& aSettings) override;
 
   void GetElementAttrNotification(
     uint8_t aNumAttrs,
-    const BluetoothAvrcpMediaAttribute* aAttrs) MOZ_OVERRIDE;
+    const BluetoothAvrcpMediaAttribute* aAttrs) override;
 
   void RegisterNotificationNotification(
-    BluetoothAvrcpEvent aEvent, uint32_t aParam) MOZ_OVERRIDE;
+    BluetoothAvrcpEvent aEvent, uint32_t aParam) override;
 
   void RemoteFeatureNotification(
-    const nsAString& aBdAddr, unsigned long aFeatures) MOZ_OVERRIDE;
+    const nsAString& aBdAddr, unsigned long aFeatures) override;
 
-  void VolumeChangeNotification(uint8_t aVolume, uint8_t aCType) MOZ_OVERRIDE;
+  void VolumeChangeNotification(uint8_t aVolume, uint8_t aCType) override;
 
-  void PassthroughCmdNotification(int aId, int aKeyState) MOZ_OVERRIDE;
+  void PassthroughCmdNotification(int aId, int aKeyState) override;
 
   nsString mDeviceAddress;
   nsRefPtr<BluetoothProfileController> mController;
@@ -150,6 +162,7 @@ private:
   BluetoothAvrcpNotification mPlayStatusChangedNotifyType;
   BluetoothAvrcpNotification mTrackChangedNotifyType;
   BluetoothAvrcpNotification mPlayPosChangedNotifyType;
+  BluetoothAvrcpNotification mAppSettingsChangedNotifyType;
 };
 
 END_BLUETOOTH_NAMESPACE

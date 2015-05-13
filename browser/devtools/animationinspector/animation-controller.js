@@ -40,10 +40,11 @@ let startup = Task.async(function*(inspector) {
     throw new Error("AnimationsPanel was not loaded in the animationinspector window");
   }
 
-  yield promise.all([
-    AnimationsController.initialize(),
-    AnimationsPanel.initialize()
-  ]).then(null, Cu.reportError);
+  // Startup first initalizes the controller and then the panel, in sequence.
+  // If you want to know when everything's ready, do:
+  // AnimationsPanel.once(AnimationsPanel.PANEL_INITIALIZED)
+  yield AnimationsController.initialize();
+  yield AnimationsPanel.initialize();
 });
 
 /**
@@ -51,23 +52,20 @@ let startup = Task.async(function*(inspector) {
  * widget when loading/unloading the iframe into the tab.
  */
 let shutdown = Task.async(function*() {
-  yield promise.all([
-    AnimationsController.destroy(),
-    // Don't assume that AnimationsPanel is defined here, it's in another file.
-    typeof AnimationsPanel !== "undefined"
-      ? AnimationsPanel.destroy()
-      : promise.resolve()
-  ]).then(() => {
-    gToolbox = gInspector = null;
-  }, Cu.reportError);
+  yield AnimationsController.destroy();
+  // Don't assume that AnimationsPanel is defined here, it's in another file.
+  if (typeof AnimationsPanel !== "undefined") {
+    yield AnimationsPanel.destroy();
+  }
+  gToolbox = gInspector = null;
 });
 
 // This is what makes the sidebar widget able to load/unload the panel.
 function setPanel(panel) {
-  return startup(panel);
+  return startup(panel).catch(Cu.reportError);
 }
 function destroy() {
-  return shutdown();
+  return shutdown().catch(Cu.reportError);
 }
 
 /**
@@ -99,14 +97,30 @@ let AnimationsController = {
     }
     this.initialized = promise.defer();
 
+    this.onPanelVisibilityChange = this.onPanelVisibilityChange.bind(this);
+    this.onNewNodeFront = this.onNewNodeFront.bind(this);
+    this.onAnimationMutations = this.onAnimationMutations.bind(this);
+
     let target = gToolbox.target;
     this.animationsFront = new AnimationsFront(target.client, target.form);
 
-    this.onPanelVisibilityChange = this.onPanelVisibilityChange.bind(this);
-    this.onNewNodeFront = this.onNewNodeFront.bind(this);
+    // Expose actor capabilities.
+    this.hasToggleAll = yield target.actorHasMethod("animations", "toggleAll");
+    this.hasSetCurrentTime = yield target.actorHasMethod("animationplayer",
+                                                         "setCurrentTime");
+    this.hasMutationEvents = yield target.actorHasMethod("animations",
+                                                         "stopAnimationPlayerUpdates");
+    this.hasSetPlaybackRate = yield target.actorHasMethod("animationplayer",
+                                                          "setPlaybackRate");
+    this.hasTargetNode = yield target.actorHasMethod("domwalker",
+                                                     "getNodeFromActor");
+
+    if (this.destroyed) {
+      console.warn("Could not fully initialize the AnimationsController");
+      return;
+    }
 
     this.startListeners();
-
     yield this.onNewNodeFront();
 
     this.initialized.resolve();
@@ -146,6 +160,9 @@ let AnimationsController = {
     gInspector.selection.off("new-node-front", this.onNewNodeFront);
     gInspector.sidebar.off("select", this.onPanelVisibilityChange);
     gToolbox.off("select", this.onPanelVisibilityChange);
+    if (this.isListeningToMutations) {
+      this.animationsFront.off("mutations", this.onAnimationMutations);
+    }
   },
 
   isPanelVisible: function() {
@@ -186,6 +203,17 @@ let AnimationsController = {
     done();
   }),
 
+  /**
+   * Toggle (pause/play) all animations in the current target.
+   */
+  toggleAll: function() {
+    if (!this.hasToggleAll) {
+      return promis.resolve();
+    }
+
+    return this.animationsFront.toggleAll().catch(Cu.reportError);
+  },
+
   // AnimationPlayerFront objects are managed by this controller. They are
   // retrieved when refreshAnimationPlayers is called, stored in the
   // animationPlayers array, and destroyed when refreshAnimationPlayers is
@@ -197,6 +225,34 @@ let AnimationsController = {
 
     this.animationPlayers = yield this.animationsFront.getAnimationPlayersForNode(nodeFront);
     this.startAllAutoRefresh();
+
+    // Start listening for animation mutations only after the first method call
+    // otherwise events won't be sent.
+    if (!this.isListeningToMutations && this.hasMutationEvents) {
+      this.animationsFront.on("mutations", this.onAnimationMutations);
+      this.isListeningToMutations = true;
+    }
+  }),
+
+  onAnimationMutations: Task.async(function*(changes) {
+    // Insert new players into this.animationPlayers when new animations are
+    // added.
+    for (let {type, player} of changes) {
+      if (type === "added") {
+        this.animationPlayers.push(player);
+        player.startAutoRefresh();
+      }
+
+      if (type === "removed") {
+        player.stopAutoRefresh();
+        yield player.release();
+        let index = this.animationPlayers.indexOf(player);
+        this.animationPlayers.splice(index, 1);
+      }
+    }
+
+    // Let the UI know the list has been updated.
+    this.emit(this.PLAYERS_UPDATED_EVENT, this.animationPlayers);
   }),
 
   startAllAutoRefresh: function() {
@@ -212,6 +268,12 @@ let AnimationsController = {
   },
 
   destroyAnimationPlayers: Task.async(function*() {
+    // Let the server know that we're not interested in receiving updates about
+    // players for the current node. We're either being destroyed or a new node
+    // has been selected.
+    if (this.hasMutationEvents) {
+      yield this.animationsFront.stopAnimationPlayerUpdates();
+    }
     this.stopAllAutoRefresh();
     for (let front of this.animationPlayers) {
       yield front.release();

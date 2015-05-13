@@ -13,6 +13,7 @@
 #include "webrtc/modules/video_coding/main/source/generic_encoder.h"
 #include "webrtc/modules/video_coding/main/source/media_optimization.h"
 #include "webrtc/system_wrappers/interface/critical_section_wrapper.h"
+#include "webrtc/system_wrappers/interface/logging.h"
 
 namespace webrtc {
 namespace {
@@ -40,6 +41,17 @@ void CopyCodecSpecific(const CodecSpecificInfo* info, RTPVideoHeader** rtp) {
     case kVideoCodecH264:
       (*rtp)->codec = kRtpVideoH264;
       (*rtp)->simulcastIdx = info->codecSpecific.H264.simulcastIdx;
+      return;
+    case kVideoCodecVP9:
+      (*rtp)->codec = kRtpVideoVp9;
+      (*rtp)->codecHeader.VP9.InitRTPVideoHeaderVP9();
+      (*rtp)->codecHeader.VP9.pictureId = info->codecSpecific.VP9.pictureId;
+      (*rtp)->codecHeader.VP9.nonReference =
+          info->codecSpecific.VP9.nonReference;
+      (*rtp)->codecHeader.VP9.temporalIdx = info->codecSpecific.VP9.temporalIdx;
+      (*rtp)->codecHeader.VP9.layerSync = info->codecSpecific.VP9.layerSync;
+      (*rtp)->codecHeader.VP9.tl0PicIdx = info->codecSpecific.VP9.tl0PicIdx;
+      (*rtp)->codecHeader.VP9.keyIdx = info->codecSpecific.VP9.keyIdx;
       return;
     case kVideoCodecGeneric:
       (*rtp)->codec = kRtpVideoGeneric;
@@ -87,7 +99,12 @@ VCMGenericEncoder::InitEncode(const VideoCodec* settings,
     _bitRate = settings->startBitrate * 1000;
     _frameRate = settings->maxFramerate;
     _codecType = settings->codecType;
-    return _encoder.InitEncode(settings, numberOfCores, maxPayloadSize);
+    if (_encoder.InitEncode(settings, numberOfCores, maxPayloadSize) != 0) {
+      LOG(LS_ERROR) << "Failed to initialize the encoder associated with "
+                       "payload name: " << settings->plName;
+      return -1;
+    }
+    return 0;
 }
 
 int32_t

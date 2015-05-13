@@ -15,8 +15,10 @@ import org.mozilla.gecko.TelemetryContract;
 import org.mozilla.gecko.db.BrowserContract.ReadingListItems;
 import org.mozilla.gecko.db.BrowserContract.URLColumns;
 import org.mozilla.gecko.db.BrowserDB;
+import org.mozilla.gecko.db.ReadingListAccessor;
 import org.mozilla.gecko.home.HomeContextMenuInfo.RemoveItemType;
 import org.mozilla.gecko.home.HomePager.OnUrlOpenListener;
+import org.mozilla.gecko.util.HardwareUtils;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -138,22 +140,26 @@ public class ReadingListPanel extends HomeFragment {
             mEmptyView = emptyViewStub.inflate();
 
             final TextView emptyHint = (TextView) mEmptyView.findViewById(R.id.home_empty_hint);
-            String readingListHint = emptyHint.getText().toString();
+            if (HardwareUtils.isLowMemoryPlatform()) {
+                emptyHint.setVisibility(View.GONE);
+            } else {
+                String readingListHint = emptyHint.getText().toString();
 
-            // Use an ImageSpan to include the reader icon in the "Tip".
-            int imageSpanIndex = readingListHint.indexOf(MATCH_STRING);
-            if (imageSpanIndex != -1) {
-                final ImageSpan readingListIcon = new ImageSpan(getActivity(), R.drawable.reader_cropped, ImageSpan.ALIGN_BOTTOM);
-                final SpannableStringBuilder hintBuilder = new SpannableStringBuilder(readingListHint);
+                // Use an ImageSpan to include the reader icon in the "Tip".
+                int imageSpanIndex = readingListHint.indexOf(MATCH_STRING);
+                if (imageSpanIndex != -1) {
+                    final ImageSpan readingListIcon = new ImageSpan(getActivity(), R.drawable.reader_cropped, ImageSpan.ALIGN_BOTTOM);
+                    final SpannableStringBuilder hintBuilder = new SpannableStringBuilder(readingListHint);
 
-                // Add additional spacing.
-                hintBuilder.insert(imageSpanIndex + MATCH_STRING.length(), " ");
-                hintBuilder.insert(imageSpanIndex, " ");
+                    // Add additional spacing.
+                    hintBuilder.insert(imageSpanIndex + MATCH_STRING.length(), " ");
+                    hintBuilder.insert(imageSpanIndex, " ");
 
-                // Add icon.
-                hintBuilder.setSpan(readingListIcon, imageSpanIndex + 1, imageSpanIndex + MATCH_STRING.length() + 1, Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+                    // Add icon.
+                    hintBuilder.setSpan(readingListIcon, imageSpanIndex + 1, imageSpanIndex + MATCH_STRING.length() + 1, Spanned.SPAN_INCLUSIVE_INCLUSIVE);
 
-                emptyHint.setText(hintBuilder, TextView.BufferType.SPANNABLE);
+                    emptyHint.setText(hintBuilder, TextView.BufferType.SPANNABLE);
+                }
             }
 
             mList.setEmptyView(mEmptyView);
@@ -164,16 +170,16 @@ public class ReadingListPanel extends HomeFragment {
      * Cursor loader for the list of reading list items.
      */
     private static class ReadingListLoader extends SimpleCursorLoader {
-        private final BrowserDB mDB;
+        private final ReadingListAccessor accessor;
 
         public ReadingListLoader(Context context) {
             super(context);
-            mDB = GeckoProfile.get(context).getDB();
+            accessor = GeckoProfile.get(context).getDB().getReadingListAccessor();
         }
 
         @Override
         public Cursor loadCursor() {
-            return mDB.getReadingList(getContext().getContentResolver());
+            return accessor.getReadingList(getContext().getContentResolver());
         }
     }
 

@@ -13,7 +13,7 @@ const kMainKey = "Software\\Microsoft\\Internet Explorer\\Main";
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/NetUtil.jsm");
+Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource:///modules/MigrationUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
@@ -22,6 +22,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "ctypes",
                                   "resource://gre/modules/ctypes.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "WindowsRegistry",
                                   "resource://gre/modules/WindowsRegistry.jsm");
+
+Cu.importGlobalProperties(["File"]);
 
 ////////////////////////////////////////////////////////////////////////////////
 //// Helpers.
@@ -83,15 +85,17 @@ let CtypesHelpers = {
   },
 
   /**
-   * Converts a FILETIME struct (2 DWORDS), to a SYSTEMTIME struct.
+   * Converts a FILETIME struct (2 DWORDS), to a SYSTEMTIME struct,
+   * and then deduces the number of seconds since the epoch (which
+   * is the data we want for the cookie expiry date).
    *
    * @param aTimeHi
    *        Least significant DWORD.
    * @param aTimeLo
    *        Most significant DWORD.
-   * @return a Date object representing the converted datetime.
+   * @return the number of seconds since the epoch
    */
-  fileTimeToDate: function CH_fileTimeToDate(aTimeHi, aTimeLo) {
+  fileTimeToSecondsSinceEpoch(aTimeHi, aTimeLo) {
     let fileTime = this._structs.FILETIME();
     fileTime.dwLowDateTime = aTimeLo;
     fileTime.dwHighDateTime = aTimeHi;
@@ -101,13 +105,15 @@ let CtypesHelpers = {
     if (result == 0)
       throw new Error(ctypes.winLastError);
 
-    return new Date(systemTime.wYear,
-                    systemTime.wMonth - 1,
-                    systemTime.wDay,
-                    systemTime.wHour,
-                    systemTime.wMinute,
-                    systemTime.wSecond,
-                    systemTime.wMilliseconds);
+    // System time is in UTC, so we use Date.UTC to get milliseconds from epoch,
+    // then divide by 1000 to get seconds, and round down:
+    return Math.floor(Date.UTC(systemTime.wYear,
+                               systemTime.wMonth - 1,
+                               systemTime.wDay,
+                               systemTime.wHour,
+                               systemTime.wMinute,
+                               systemTime.wSecond,
+                               systemTime.wMilliseconds) / 1000);
   }
 };
 
@@ -163,23 +169,19 @@ Bookmarks.prototype = {
   },
 
   migrate: function B_migrate(aCallback) {
-    PlacesUtils.bookmarks.runInBatchMode({
-      runBatched: (function migrateBatched() {
-        // Import to the bookmarks menu.
-        let destFolderId = PlacesUtils.bookmarksMenuFolderId;
-        if (!MigrationUtils.isStartupMigration) {
-          destFolderId =
-            MigrationUtils.createImportedBookmarksFolder("IE", destFolderId);
-        }
-
-        this._migrateFolder(this._favoritesFolder, destFolderId);
-
-        aCallback(true);
-      }).bind(this)
-    }, null);
+    return Task.spawn(function* () {
+      // Import to the bookmarks menu.
+      let folderGuid = PlacesUtils.bookmarks.menuGuid;
+      if (!MigrationUtils.isStartupMigration) {
+        folderGuid =
+          yield MigrationUtils.createImportedBookmarksFolder("IE", folderGuid);
+      }
+      yield this._migrateFolder(this._favoritesFolder, folderGuid);
+    }.bind(this)).then(() => aCallback(true),
+                        e => { Cu.reportError(e); aCallback(false) });
   },
 
-  _migrateFolder: function B__migrateFolder(aSourceFolder, aDestFolderId) {
+  _migrateFolder: Task.async(function* (aSourceFolder, aDestFolderGuid) {
     // TODO (bug 741993): the favorites order is stored in the Registry, at
     // HCU\Software\Microsoft\Windows\CurrentVersion\Explorer\MenuOrder\Favorites
     // Until we support it, bookmarks are imported in alphabetical order.
@@ -192,26 +194,28 @@ Bookmarks.prototype = {
         // Don't use isSymlink(), since it would throw for invalid
         // lnk files pointing to URLs or to unresolvable paths.
         if (entry.path == entry.target && entry.isDirectory()) {
-          let destFolderId;
+          let folderGuid;
           if (entry.leafName == this._toolbarFolderName &&
               entry.parent.equals(this._favoritesFolder)) {
             // Import to the bookmarks toolbar.
-            destFolderId = PlacesUtils.toolbarFolderId;
+            folderGuid = PlacesUtils.bookmarks.toolbarGuid;
             if (!MigrationUtils.isStartupMigration) {
-              destFolderId =
-                MigrationUtils.createImportedBookmarksFolder("IE", destFolderId);
+              folderGuid =
+                yield MigrationUtils.createImportedBookmarksFolder("IE", folderGuid);
             }
           }
           else {
             // Import to a new folder.
-            destFolderId =
-              PlacesUtils.bookmarks.createFolder(aDestFolderId, entry.leafName,
-                                                 PlacesUtils.bookmarks.DEFAULT_INDEX);
+            folderGuid = (yield PlacesUtils.bookmarks.insert({
+              type: PlacesUtils.bookmarks.TYPE_FOLDER,
+              parentGuid: aDestFolderGuid,
+              title: entry.leafName
+            })).guid;
           }
 
           if (entry.isReadable()) {
             // Recursively import the folder.
-            this._migrateFolder(entry, destFolderId);
+            yield this._migrateFolder(entry, folderGuid);
           }
         }
         else {
@@ -224,17 +228,16 @@ Bookmarks.prototype = {
             let uri = fileHandler.readURLFile(entry);
             let title = matches[1];
 
-            PlacesUtils.bookmarks.insertBookmark(aDestFolderId,
-                                                 uri,
-                                                 PlacesUtils.bookmarks.DEFAULT_INDEX,
-                                                 title);
+            yield PlacesUtils.bookmarks.insert({
+              parentGuid: aDestFolderGuid, url: uri, title
+            });
           }
         }
       } catch (ex) {
         Components.utils.reportError("Unable to import IE favorite (" + entry.leafName + "): " + ex);
       }
     }
-  }
+  })
 };
 
 function History() {
@@ -410,7 +413,7 @@ Cookies.prototype = {
         aCallback(success);
       }
     }).bind(this), false);
-    fileReader.readAsText(File(aFile));
+    fileReader.readAsText(new File(aFile));
   },
 
   /**
@@ -444,6 +447,7 @@ Cookies.prototype = {
 
       let hostLen = hostpath.indexOf("/");
       let host = hostpath.substr(0, hostLen);
+      let path = hostpath.substr(hostLen);
 
       // For a non-null domain, assume it's what Mozilla considers
       // a domain cookie.  See bug 222343.
@@ -455,9 +459,8 @@ Cookies.prototype = {
           host = "." + host;
       }
 
-      let path = hostpath.substr(hostLen);
-      let expireTime = CtypesHelpers.fileTimeToDate(Number(expireTimeHi),
-                                                    Number(expireTimeLo));
+      let expireTime = CtypesHelpers.fileTimeToSecondsSinceEpoch(Number(expireTimeHi),
+                                                                 Number(expireTimeLo));
       Services.cookies.add(host,
                            path,
                            name,

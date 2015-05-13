@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -61,7 +63,7 @@ TCPServerSocketParent::Init(PNeckoParent* neckoParent, const uint16_t& aLocalPor
   }
 
   rv = mIntermediary->Listen(this, aLocalPort, aBacklog, aBinaryType, GetAppId(),
-                             getter_AddRefs(mServerSocket));
+                             GetInBrowser(), getter_AddRefs(mServerSocket));
   if (NS_FAILED(rv) || !mServerSocket) {
     FireInteralError(this, __LINE__);
     return true;
@@ -76,11 +78,24 @@ TCPServerSocketParent::GetAppId()
   const PContentParent *content = Manager()->Manager();
   const InfallibleTArray<PBrowserParent*>& browsers = content->ManagedPBrowserParent();
   if (browsers.Length() > 0) {
-    TabParent *tab = static_cast<TabParent*>(browsers[0]);
+    TabParent *tab = TabParent::GetFrom(browsers[0]);
     appId = tab->OwnAppId();
   }
   return appId;
 };
+
+bool
+TCPServerSocketParent::GetInBrowser()
+{
+  bool inBrowser = false;
+  const PContentParent *content = Manager()->Manager();
+  const InfallibleTArray<PBrowserParent*>& browsers = content->ManagedPBrowserParent();
+  if (browsers.Length() > 0) {
+    TabParent *tab = TabParent::GetFrom(browsers[0]);
+    inBrowser = tab->IsBrowserElement();
+  }
+  return inBrowser;
+}
 
 NS_IMETHODIMP
 TCPServerSocketParent::SendCallbackAccept(nsITCPSocketParent *socket)

@@ -17,7 +17,13 @@
 
 #include "nsSize.h"
 
-class gfxXlibSurface MOZ_FINAL : public gfxASurface {
+// Although the dimension parameters in the xCreatePixmapReq wire protocol are
+// 16-bit unsigned integers, the server's CreatePixmap returns BadAlloc if
+// either dimension cannot be represented by a 16-bit *signed* integer.
+#define XLIB_IMAGE_SIDE_SIZE_LIMIT 0x7fff
+
+
+class gfxXlibSurface final : public gfxASurface {
 public:
     // construct a wrapper around the specified drawable with dpy/visual.
     // Will use XGetGeometry to query the window/pixmap size.
@@ -51,10 +57,11 @@ public:
     virtual ~gfxXlibSurface();
 
     virtual already_AddRefed<gfxASurface>
-    CreateSimilarSurface(gfxContentType aType, const gfxIntSize& aSize);
-    virtual void Finish() MOZ_OVERRIDE;
+    CreateSimilarSurface(gfxContentType aType,
+                         const gfxIntSize& aSize) override;
+    virtual void Finish() override;
 
-    virtual const gfxIntSize GetSize() const;
+    virtual const gfxIntSize GetSize() const override;
 
     Display* XDisplay() { return mDisplay; }
     Screen* XScreen();
@@ -80,7 +87,7 @@ public:
 
     // This surface is a wrapper around X pixmaps, which are stored in the X
     // server, not the main application.
-    virtual gfxMemoryLocation GetMemoryLocation() const;
+    virtual gfxMemoryLocation GetMemoryLocation() const override;
 
 #if defined(GL_PROVIDER_GLX)
     GLXPixmap GetGLXPixmap();

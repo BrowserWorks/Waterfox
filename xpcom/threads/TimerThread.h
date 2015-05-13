@@ -24,7 +24,7 @@ namespace mozilla {
 class TimeStamp;
 }
 
-class TimerThread MOZ_FINAL
+class TimerThread final
   : public nsIRunnable
   , public nsIObserver
 {
@@ -92,7 +92,7 @@ struct TimerAdditionComparator
 
   bool LessThan(nsTimerImpl* aFromArray, nsTimerImpl* aNewTimer) const
   {
-    NS_ABORT_IF_FALSE(aNewTimer == timerToInsert, "Unexpected timer ordering");
+    MOZ_ASSERT(aNewTimer == timerToInsert, "Unexpected timer ordering");
 
     // Skip any overdue timers.
     return aFromArray->mTimeout <= now ||

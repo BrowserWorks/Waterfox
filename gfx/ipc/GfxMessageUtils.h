@@ -34,13 +34,7 @@
 namespace mozilla {
 
 typedef gfxImageFormat PixelFormat;
-#if defined(MOZ_HAVE_CXX11_STRONG_ENUMS)
 typedef ::GraphicsFilter GraphicsFilterType;
-#else
-// If we don't have support for enum classes, then we need to use the actual
-// enum type here instead of the simulated enum class.
-typedef GraphicsFilter::Enum GraphicsFilterType;
-#endif
 
 } // namespace mozilla
 
@@ -198,7 +192,7 @@ struct ParamTraits<gfxRect>
 
 template <>
 struct ParamTraits<gfxContentType>
-  : public ContiguousTypedEnumSerializer<
+  : public ContiguousEnumSerializer<
              gfxContentType,
              gfxContentType::COLOR,
              gfxContentType::SENTINEL>
@@ -206,7 +200,7 @@ struct ParamTraits<gfxContentType>
 
 template <>
 struct ParamTraits<gfxSurfaceType>
-  : public ContiguousTypedEnumSerializer<
+  : public ContiguousEnumSerializer<
              gfxSurfaceType,
              gfxSurfaceType::Image,
              gfxSurfaceType::Max>
@@ -222,7 +216,7 @@ struct ParamTraits<mozilla::GraphicsFilterType>
 
 template <>
 struct ParamTraits<mozilla::layers::LayersBackend>
-  : public ContiguousTypedEnumSerializer<
+  : public ContiguousEnumSerializer<
              mozilla::layers::LayersBackend,
              mozilla::layers::LayersBackend::LAYERS_NONE,
              mozilla::layers::LayersBackend::LAYERS_LAST>
@@ -230,7 +224,7 @@ struct ParamTraits<mozilla::layers::LayersBackend>
 
 template <>
 struct ParamTraits<mozilla::layers::ScaleMode>
-  : public ContiguousTypedEnumSerializer<
+  : public ContiguousEnumSerializer<
              mozilla::layers::ScaleMode,
              mozilla::layers::ScaleMode::SCALE_NONE,
              mozilla::layers::ScaleMode::SENTINEL>
@@ -238,7 +232,7 @@ struct ParamTraits<mozilla::layers::ScaleMode>
 
 template <>
 struct ParamTraits<gfxImageFormat>
-  : public ContiguousTypedEnumSerializer<
+  : public ContiguousEnumSerializer<
              gfxImageFormat,
              gfxImageFormat::ARGB32,
              gfxImageFormat::Unknown>
@@ -254,7 +248,7 @@ struct ParamTraits<mozilla::gfx::AttributeName>
 
 template <>
 struct ParamTraits<mozilla::gfx::AttributeType>
-  : public ContiguousTypedEnumSerializer<
+  : public ContiguousEnumSerializer<
              mozilla::gfx::AttributeType,
              mozilla::gfx::AttributeType::eBool,
              mozilla::gfx::AttributeType::Max>
@@ -262,7 +256,7 @@ struct ParamTraits<mozilla::gfx::AttributeType>
 
 template <>
 struct ParamTraits<mozilla::gfx::PrimitiveType>
-  : public ContiguousTypedEnumSerializer<
+  : public ContiguousEnumSerializer<
              mozilla::gfx::PrimitiveType,
              mozilla::gfx::PrimitiveType::Empty,
              mozilla::gfx::PrimitiveType::Max>
@@ -270,7 +264,7 @@ struct ParamTraits<mozilla::gfx::PrimitiveType>
 
 template <>
 struct ParamTraits<mozilla::gfx::ColorSpace>
-  : public ContiguousTypedEnumSerializer<
+  : public ContiguousEnumSerializer<
              mozilla::gfx::ColorSpace,
              mozilla::gfx::ColorSpace::SRGB,
              mozilla::gfx::ColorSpace::Max>
@@ -278,29 +272,14 @@ struct ParamTraits<mozilla::gfx::ColorSpace>
 
 template <>
 struct ParamTraits<mozilla::layers::TextureFlags>
-  : public BitFlagsTypedEnumSerializer<
+  : public BitFlagsEnumSerializer<
             mozilla::layers::TextureFlags,
             mozilla::layers::TextureFlags::ALL_BITS>
 {};
 
 template <>
-struct ParamTraits<mozilla::layers::TextureIdentifier>
-  : public ContiguousTypedEnumSerializer<
-             mozilla::layers::TextureIdentifier,
-             mozilla::layers::TextureIdentifier::Front,
-             mozilla::layers::TextureIdentifier::HighBound>
-{};
-
-template <>
-struct ParamTraits<mozilla::layers::DeprecatedTextureHostFlags>
-  : public BitFlagsTypedEnumSerializer<
-             mozilla::layers::DeprecatedTextureHostFlags,
-             mozilla::layers::DeprecatedTextureHostFlags::ALL_BITS>
-{};
-
-template <>
 struct ParamTraits<mozilla::layers::DiagnosticTypes>
-  : public BitFlagsTypedEnumSerializer<
+  : public BitFlagsEnumSerializer<
              mozilla::layers::DiagnosticTypes,
              mozilla::layers::DiagnosticTypes::ALL_BITS>
 {};
@@ -412,28 +391,6 @@ struct ParamTraits<mozilla::gfx::IntSizeTyped<T> >
   }
 };
 
-template<>
-struct ParamTraits<nsIntRect>
-{
-  typedef nsIntRect paramType;
-
-  static void Write(Message* msg, const paramType& param)
-  {
-    WriteParam(msg, param.x);
-    WriteParam(msg, param.y);
-    WriteParam(msg, param.width);
-    WriteParam(msg, param.height);
-  }
-
-  static bool Read(const Message* msg, void** iter, paramType* result)
-  {
-    return (ReadParam(msg, iter, &result->x) &&
-            ReadParam(msg, iter, &result->y) &&
-            ReadParam(msg, iter, &result->width) &&
-            ReadParam(msg, iter, &result->height));
-  }
-};
-
 template<typename Region, typename Rect, typename Iter>
 struct RegionParamTraits
 {
@@ -465,7 +422,7 @@ struct RegionParamTraits
 
 template<>
 struct ParamTraits<nsIntRegion>
-  : RegionParamTraits<nsIntRegion, nsIntRect, nsIntRegionRectIterator>
+  : RegionParamTraits<nsIntRegion, mozilla::gfx::IntRect, nsIntRegionRectIterator>
 {};
 
 template<>
@@ -531,6 +488,24 @@ struct ParamTraits< mozilla::gfx::ScaleFactor<T, U> >
   static bool Read(const Message* msg, void** iter, paramType* result)
   {
     return (ReadParam(msg, iter, &result->scale));
+  }
+};
+
+template<class T, class U>
+struct ParamTraits< mozilla::gfx::ScaleFactors2D<T, U> >
+{
+  typedef mozilla::gfx::ScaleFactors2D<T, U> paramType;
+
+  static void Write(Message* msg, const paramType& param)
+  {
+    WriteParam(msg, param.xScale);
+    WriteParam(msg, param.yScale);
+  }
+
+  static bool Read(const Message* msg, void** iter, paramType* result)
+  {
+    return (ReadParam(msg, iter, &result->xScale) &&
+            ReadParam(msg, iter, &result->yScale));
   }
 };
 
@@ -745,8 +720,6 @@ struct ParamTraits<mozilla::layers::FrameMetrics>
     WriteParam(aMsg, aParam.mCumulativeResolution);
     WriteParam(aMsg, aParam.mZoom);
     WriteParam(aMsg, aParam.mDevPixelsPerCSSPixel);
-    WriteParam(aMsg, aParam.mMayHaveTouchListeners);
-    WriteParam(aMsg, aParam.mMayHaveTouchCaret);
     WriteParam(aMsg, aParam.mPresShellId);
     WriteParam(aMsg, aParam.mIsRoot);
     WriteParam(aMsg, aParam.mHasScrollgrab);
@@ -757,6 +730,8 @@ struct ParamTraits<mozilla::layers::FrameMetrics>
     WriteParam(aMsg, aParam.mDoSmoothScroll);
     WriteParam(aMsg, aParam.mSmoothScrollOffset);
     WriteParam(aMsg, aParam.GetLineScrollAmount());
+    WriteParam(aMsg, aParam.GetPageScrollAmount());
+    WriteParam(aMsg, aParam.AllowVerticalScrollWithWheel());
     WriteParam(aMsg, aParam.GetContentDescription());
   }
 
@@ -787,8 +762,6 @@ struct ParamTraits<mozilla::layers::FrameMetrics>
             ReadParam(aMsg, aIter, &aResult->mCumulativeResolution) &&
             ReadParam(aMsg, aIter, &aResult->mZoom) &&
             ReadParam(aMsg, aIter, &aResult->mDevPixelsPerCSSPixel) &&
-            ReadParam(aMsg, aIter, &aResult->mMayHaveTouchListeners) &&
-            ReadParam(aMsg, aIter, &aResult->mMayHaveTouchCaret) &&
             ReadParam(aMsg, aIter, &aResult->mPresShellId) &&
             ReadParam(aMsg, aIter, &aResult->mIsRoot) &&
             ReadParam(aMsg, aIter, &aResult->mHasScrollgrab) &&
@@ -799,6 +772,8 @@ struct ParamTraits<mozilla::layers::FrameMetrics>
             ReadParam(aMsg, aIter, &aResult->mDoSmoothScroll) &&
             ReadParam(aMsg, aIter, &aResult->mSmoothScrollOffset) &&
             ReadParam(aMsg, aIter, &aResult->mLineScrollAmount) &&
+            ReadParam(aMsg, aIter, &aResult->mPageScrollAmount) &&
+            ReadParam(aMsg, aIter, &aResult->mAllowVerticalScrollWithWheel) &&
             ReadContentDescription(aMsg, aIter, aResult));
   }
 };
@@ -840,21 +815,19 @@ struct ParamTraits<mozilla::layers::TextureInfo>
   static void Write(Message* aMsg, const paramType& aParam)
   {
     WriteParam(aMsg, aParam.mCompositableType);
-    WriteParam(aMsg, aParam.mDeprecatedTextureHostFlags);
     WriteParam(aMsg, aParam.mTextureFlags);
   }
 
   static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
   {
     return ReadParam(aMsg, aIter, &aResult->mCompositableType) &&
-           ReadParam(aMsg, aIter, &aResult->mDeprecatedTextureHostFlags) &&
            ReadParam(aMsg, aIter, &aResult->mTextureFlags);
   }
 };
 
 template <>
 struct ParamTraits<mozilla::layers::CompositableType>
-  : public ContiguousTypedEnumSerializer<
+  : public ContiguousEnumSerializer<
              mozilla::layers::CompositableType,
              mozilla::layers::CompositableType::UNKNOWN,
              mozilla::layers::CompositableType::COUNT>
@@ -862,7 +835,7 @@ struct ParamTraits<mozilla::layers::CompositableType>
 
 template <>
 struct ParamTraits<mozilla::gfx::SurfaceFormat>
-  : public ContiguousTypedEnumSerializer<
+  : public ContiguousEnumSerializer<
              mozilla::gfx::SurfaceFormat,
              mozilla::gfx::SurfaceFormat::B8G8R8A8,
              mozilla::gfx::SurfaceFormat::UNKNOWN>
@@ -919,12 +892,18 @@ struct ParamTraits<mozilla::layers::EventRegions>
   {
     WriteParam(aMsg, aParam.mHitRegion);
     WriteParam(aMsg, aParam.mDispatchToContentHitRegion);
+    WriteParam(aMsg, aParam.mNoActionRegion);
+    WriteParam(aMsg, aParam.mHorizontalPanRegion);
+    WriteParam(aMsg, aParam.mVerticalPanRegion);
   }
 
   static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
   {
     return (ReadParam(aMsg, aIter, &aResult->mHitRegion) &&
-            ReadParam(aMsg, aIter, &aResult->mDispatchToContentHitRegion));
+            ReadParam(aMsg, aIter, &aResult->mDispatchToContentHitRegion) &&
+            ReadParam(aMsg, aIter, &aResult->mNoActionRegion) &&
+            ReadParam(aMsg, aIter, &aResult->mHorizontalPanRegion) &&
+            ReadParam(aMsg, aIter, &aResult->mVerticalPanRegion));
   }
 };
 
@@ -1125,6 +1104,13 @@ struct ParamTraits<APZStateChange>
              APZStateChange,
              APZStateChange::TransformBegin,
              APZStateChange::APZStateChangeSentinel>
+{};
+
+template<>
+struct ParamTraits<mozilla::layers::EventRegionsOverride>
+  : public BitFlagsEnumSerializer<
+            mozilla::layers::EventRegionsOverride,
+            mozilla::layers::EventRegionsOverride::ALL_BITS>
 {};
 
 } /* namespace IPC */

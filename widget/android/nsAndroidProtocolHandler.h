@@ -18,8 +18,8 @@
     {0x0b, 0x37, 0x18, 0x46, 0xbf, 0xd0}             \
 }
 
-class nsAndroidProtocolHandler MOZ_FINAL : public nsIProtocolHandler,
-                                           public nsSupportsWeakReference
+class nsAndroidProtocolHandler final : public nsIProtocolHandler,
+                                       public nsSupportsWeakReference
 {
 public:
     NS_DECL_THREADSAFE_ISUPPORTS

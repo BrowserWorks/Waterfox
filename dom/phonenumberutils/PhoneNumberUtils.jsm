@@ -23,14 +23,20 @@ XPCOMUtils.defineLazyModuleGetter(this, "MCC_ISO3166_TABLE",
 XPCOMUtils.defineLazyServiceGetter(this, "mobileConnection",
                                    "@mozilla.org/mobileconnection/mobileconnectionservice;1",
                                    "nsIMobileConnectionService");
-XPCOMUtils.defineLazyServiceGetter(this, "icc",
-                                   "@mozilla.org/ril/content-helper;1",
-                                   "nsIIccProvider");
+XPCOMUtils.defineLazyServiceGetter(this, "gIccService",
+                                   "@mozilla.org/icc/iccservice;1",
+                                   "nsIIccService");
 #endif
 
 this.PhoneNumberUtils = {
-  init: function() {
+
+  initParent: function() {
     ppmm.addMessageListener(["PhoneNumberService:FuzzyMatch"], this);
+    this._countryNameCache = Object.create(null);
+  },
+
+  initChild: function () {
+    this._countryNameCache = Object.create(null);
   },
   //  1. See whether we have a network mcc
   //  2. If we don't have that, look for the simcard mcc
@@ -46,8 +52,8 @@ this.PhoneNumberUtils = {
 
 #ifdef MOZ_B2G_RIL
     // TODO: Bug 926740 - PhoneNumberUtils for multisim
-    // In Multi-sim, there is more than one client in 
-    // iccProvider/mobileConnectionProvider. Each client represents a
+    // In Multi-sim, there is more than one client in
+    // iccService/mobileConnectionService. Each client represents a
     // icc/mobileConnection service. To maintain the backward compatibility with
     // single sim, we always use client 0 for now. Adding support for multiple
     // sim will be addressed in bug 926740, if needed.
@@ -61,7 +67,8 @@ this.PhoneNumberUtils = {
     }
 
     // Get SIM mcc
-    let iccInfo = icc.getIccInfo(clientId);
+    let icc = gIccService.getIccByServiceId(clientId);
+    let iccInfo = icc && icc.iccInfo;
     if (!mcc && iccInfo && iccInfo.mcc) {
       mcc = iccInfo.mcc;
     }
@@ -130,13 +137,31 @@ this.PhoneNumberUtils = {
   },
 
   parseWithMCC: function(aNumber, aMCC) {
+    if (DEBUG) debug("parseWithMCC " + aNumber + ", " + aMCC);
     let countryName = MCC_ISO3166_TABLE[aMCC];
     if (DEBUG) debug("found country name: " + countryName);
     return PhoneNumber.Parse(aNumber, countryName);
   },
 
-  parseWithCountryName: function(aNumber, countryName) {
-    return PhoneNumber.Parse(aNumber, countryName);
+  parseWithCountryName: function(aNumber, aCountryName) {
+    if (this._countryNameCache[aCountryName]) {
+      return PhoneNumber.Parse(aNumber, aCountryName);
+    }
+
+    if (Object.keys(this._countryNameCache).length === 0) {
+      // populate the cache
+      let keys = Object.keys(MCC_ISO3166_TABLE);
+      for (let i = 0; i < keys.length; i++) {
+        this._countryNameCache[MCC_ISO3166_TABLE[keys[i]]] = true;
+      }
+    }
+
+    if (!this._countryNameCache[aCountryName]) {
+      dump("Couldn't find country name: " + aCountryName + "\n");
+      return null;
+    }
+
+    return PhoneNumber.Parse(aNumber, aCountryName);
   },
 
   isPlainPhoneNumber: function isPlainPhoneNumber(aNumber) {
@@ -204,6 +229,8 @@ if (inParent) {
   XPCOMUtils.defineLazyServiceGetter(this, "ppmm",
                                      "@mozilla.org/parentprocessmessagemanager;1",
                                      "nsIMessageListenerManager");
-  PhoneNumberUtils.init();
+  PhoneNumberUtils.initParent();
+} else {
+  PhoneNumberUtils.initChild();
 }
 

@@ -1,6 +1,6 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
- * vim: sw=2 ts=2 et :
- * This Source Code Form is subject to the terms of the Mozilla Public
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -29,7 +29,7 @@ Link::Link(Element *aElement)
   , mNeedsRegistration(false)
   , mRegistered(false)
 {
-  NS_ABORT_IF_FALSE(mElement, "Must have an element");
+  MOZ_ASSERT(mElement, "Must have an element");
 }
 
 Link::~Link()
@@ -40,8 +40,10 @@ Link::~Link()
 bool
 Link::ElementHasHref() const
 {
-  return ((!mElement->IsSVG() && mElement->HasAttr(kNameSpaceID_None, nsGkAtoms::href))
-        || (!mElement->IsHTML() && mElement->HasAttr(kNameSpaceID_XLink, nsGkAtoms::href)));
+  return ((!mElement->IsSVGElement() &&
+           mElement->HasAttr(kNameSpaceID_None, nsGkAtoms::href))
+        || (!mElement->IsHTMLElement() &&
+            mElement->HasAttr(kNameSpaceID_XLink, nsGkAtoms::href)));
 }
 
 void
@@ -58,9 +60,9 @@ Link::SetLinkState(nsLinkState aState)
   // Per IHistory interface documentation, we are no longer registered.
   mRegistered = false;
 
-  NS_ABORT_IF_FALSE(LinkState() == NS_EVENT_STATE_VISITED ||
-                    LinkState() == NS_EVENT_STATE_UNVISITED,
-                    "Unexpected state obtained from LinkState()!");
+  MOZ_ASSERT(LinkState() == NS_EVENT_STATE_VISITED ||
+             LinkState() == NS_EVENT_STATE_UNVISITED,
+             "Unexpected state obtained from LinkState()!");
 
   // Tell the element to update its visited state
   mElement->UpdateState(true);

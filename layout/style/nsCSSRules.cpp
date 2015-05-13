@@ -48,7 +48,7 @@ using namespace mozilla::dom;
   { return this; }
 #define IMPL_STYLE_RULE_INHERIT_MAP_RULE_INFO_INTO(class_, super_) \
 /* virtual */ void class_::MapRuleInfoInto(nsRuleData* aRuleData) \
-  { NS_ABORT_IF_FALSE(false, "should not be called"); }
+  { MOZ_ASSERT(false, "should not be called"); }
 
 #define IMPL_STYLE_RULE_INHERIT(class_, super_) \
 IMPL_STYLE_RULE_INHERIT_GET_DOM_RULE_WEAK(class_, super_) \
@@ -136,17 +136,17 @@ Rule::SizeOfCOMArrayElementIncludingThis(css::Rule* aElement,
 // Style Rule List for group rules
 //
 
-class GroupRuleRuleList MOZ_FINAL : public dom::CSSRuleList
+class GroupRuleRuleList final : public dom::CSSRuleList
 {
 public:
   explicit GroupRuleRuleList(GroupRule *aGroupRule);
 
-  virtual CSSStyleSheet* GetParentObject() MOZ_OVERRIDE;
+  virtual CSSStyleSheet* GetParentObject() override;
 
   virtual nsIDOMCSSRule*
-  IndexedGetter(uint32_t aIndex, bool& aFound) MOZ_OVERRIDE;
+  IndexedGetter(uint32_t aIndex, bool& aFound) override;
   virtual uint32_t
-  Length() MOZ_OVERRIDE;
+  Length() override;
 
   void DropReference() { mGroupRule = nullptr; }
 
@@ -202,131 +202,6 @@ GroupRuleRuleList::IndexedGetter(uint32_t aIndex, bool& aFound)
   }
 
   return nullptr;
-}
-
-// -------------------------------------------
-// CharsetRule
-//
-
-CharsetRule::CharsetRule(const nsAString& aEncoding,
-                         uint32_t aLineNumber, uint32_t aColumnNumber)
-  : Rule(aLineNumber, aColumnNumber),
-    mEncoding(aEncoding)
-{
-}
-
-CharsetRule::CharsetRule(const CharsetRule& aCopy)
-  : Rule(aCopy),
-    mEncoding(aCopy.mEncoding)
-{
-}
-
-NS_IMPL_ADDREF(CharsetRule)
-NS_IMPL_RELEASE(CharsetRule)
-
-// QueryInterface implementation for CharsetRule
-NS_INTERFACE_MAP_BEGIN(CharsetRule)
-  NS_INTERFACE_MAP_ENTRY(nsIStyleRule)
-  NS_INTERFACE_MAP_ENTRY(nsIDOMCSSRule)
-  NS_INTERFACE_MAP_ENTRY(nsIDOMCSSCharsetRule)
-  NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIStyleRule)
-  NS_DOM_INTERFACE_MAP_ENTRY_CLASSINFO(CSSCharsetRule)
-NS_INTERFACE_MAP_END
-
-IMPL_STYLE_RULE_INHERIT(CharsetRule, Rule)
-
-#ifdef DEBUG
-/* virtual */ void
-CharsetRule::List(FILE* out, int32_t aIndent) const
-{
-  nsAutoCString str;
-  // Indent
-  for (int32_t indent = aIndent; --indent >= 0; ) {
-    str.AppendLiteral("  ");
-  }
-
-  str.AppendLiteral("@charset \"");
-  AppendUTF16toUTF8(mEncoding, str);
-  str.AppendLiteral("\"\n");
-  fprintf_stderr(out, "%s", str.get());
-}
-#endif
-
-/* virtual */ int32_t
-CharsetRule::GetType() const
-{
-  return Rule::CHARSET_RULE;
-}
-
-/* virtual */ already_AddRefed<Rule>
-CharsetRule::Clone() const
-{
-  nsRefPtr<Rule> clone = new CharsetRule(*this);
-  return clone.forget();
-}
-
-NS_IMETHODIMP
-CharsetRule::GetEncoding(nsAString& aEncoding)
-{
-  aEncoding = mEncoding;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-CharsetRule::SetEncoding(const nsAString& aEncoding)
-{
-  mEncoding = aEncoding;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-CharsetRule::GetType(uint16_t* aType)
-{
-  *aType = nsIDOMCSSRule::CHARSET_RULE;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-CharsetRule::GetCssText(nsAString& aCssText)
-{
-  aCssText.AssignLiteral("@charset \"");
-  aCssText.Append(mEncoding);
-  aCssText.AppendLiteral("\";");
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-CharsetRule::SetCssText(const nsAString& aCssText)
-{
-  return NS_ERROR_NOT_IMPLEMENTED;
-}
-
-NS_IMETHODIMP
-CharsetRule::GetParentStyleSheet(nsIDOMCSSStyleSheet** aSheet)
-{
-  return Rule::GetParentStyleSheet(aSheet);
-}
-
-NS_IMETHODIMP
-CharsetRule::GetParentRule(nsIDOMCSSRule** aParentRule)
-{
-  return Rule::GetParentRule(aParentRule);
-}
-
-css::Rule*
-CharsetRule::GetCSSRule()
-{
-  return Rule::GetCSSRule();
-}
-
-/* virtual */ size_t
-CharsetRule::SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const
-{
-  return aMallocSizeOf(this);
-
-  // Measurement of the following members may be added later if DMD finds it is
-  // worthwhile:
-  // - mEncoding
 }
 
 // -------------------------------------------
@@ -541,7 +416,7 @@ GroupRule::GroupRule(const GroupRule& aCopy)
 
 GroupRule::~GroupRule()
 {
-  NS_ABORT_IF_FALSE(!mSheet, "SetStyleSheet should have been called");
+  MOZ_ASSERT(!mSheet, "SetStyleSheet should have been called");
   mRules.EnumerateForwards(SetParentRuleReference, nullptr);
   if (mRuleCollection) {
     mRuleCollection->DropReference();
@@ -1667,9 +1542,9 @@ nsCSSFontFaceStyleDecl::GetParentObject()
 }
 
 JSObject*
-nsCSSFontFaceStyleDecl::WrapObject(JSContext *cx)
+nsCSSFontFaceStyleDecl::WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto)
 {
-  return mozilla::dom::CSSStyleDeclarationBinding::Wrap(cx, this);
+  return mozilla::dom::CSSStyleDeclarationBinding::Wrap(cx, this, aGivenProto);
 }
 
 // -------------------------------------------
@@ -2103,7 +1978,7 @@ NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(nsCSSKeyframeStyleDeclaration)
 NS_INTERFACE_MAP_END_INHERITING(nsDOMCSSDeclaration)
 
 css::Declaration*
-nsCSSKeyframeStyleDeclaration::GetCSSDeclaration(bool aAllocate)
+nsCSSKeyframeStyleDeclaration::GetCSSDeclaration(Operation aOperation)
 {
   if (mRule) {
     return mRule->Declaration();
@@ -2130,7 +2005,7 @@ nsCSSKeyframeStyleDeclaration::GetParentRule(nsIDOMCSSRule **aParent)
 nsresult
 nsCSSKeyframeStyleDeclaration::SetCSSDeclaration(css::Declaration* aDecl)
 {
-  NS_ABORT_IF_FALSE(aDecl, "must be non-null");
+  MOZ_ASSERT(aDecl, "must be non-null");
   mRule->ChangeDeclaration(aDecl);
   return NS_OK;
 }
@@ -2295,7 +2170,7 @@ nsCSSKeyframeRule::DoGetKeyText(nsAString& aKeyText) const
 {
   aKeyText.Truncate();
   uint32_t i = 0, i_end = mKeys.Length();
-  NS_ABORT_IF_FALSE(i_end != 0, "must have some keys");
+  MOZ_ASSERT(i_end != 0, "must have some keys");
   for (;;) {
     aKeyText.AppendFloat(mKeys[i] * 100.0f);
     aKeyText.Append(char16_t('%'));
@@ -2623,7 +2498,7 @@ nsCSSKeyframesRule::FindRule(const nsAString& aKey,
 nsCSSKeyframesRule::UseForPresentation(nsPresContext* aPresContext,
                                        nsMediaQueryResultCacheKey& aKey)
 {
-  NS_ABORT_IF_FALSE(false, "should not be called");
+  MOZ_ASSERT(false, "should not be called");
   return false;
 }
 
@@ -2664,7 +2539,7 @@ NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(nsCSSPageStyleDeclaration)
 NS_INTERFACE_MAP_END_INHERITING(nsDOMCSSDeclaration)
 
 css::Declaration*
-nsCSSPageStyleDeclaration::GetCSSDeclaration(bool aAllocate)
+nsCSSPageStyleDeclaration::GetCSSDeclaration(Operation aOperation)
 {
   if (mRule) {
     return mRule->Declaration();
@@ -2691,7 +2566,7 @@ nsCSSPageStyleDeclaration::GetParentRule(nsIDOMCSSRule** aParent)
 nsresult
 nsCSSPageStyleDeclaration::SetCSSDeclaration(css::Declaration* aDecl)
 {
-  NS_ABORT_IF_FALSE(aDecl, "must be non-null");
+  MOZ_ASSERT(aDecl, "must be non-null");
   mRule->ChangeDeclaration(aDecl);
   return NS_OK;
 }
@@ -3211,16 +3086,16 @@ const nsCSSValue&
 nsCSSCounterStyleRule::GetSystemArgument() const
 {
   const nsCSSValue& system = GetDesc(eCSSCounterDesc_System);
-  NS_ABORT_IF_FALSE(system.GetUnit() == eCSSUnit_Pair,
-                    "Invalid system value");
+  MOZ_ASSERT(system.GetUnit() == eCSSUnit_Pair,
+             "Invalid system value");
   return system.GetPairValue().mYValue;
 }
 
 void
 nsCSSCounterStyleRule::SetDesc(nsCSSCounterDesc aDescID, const nsCSSValue& aValue)
 {
-  NS_ABORT_IF_FALSE(aDescID >= 0 && aDescID < eCSSCounterDesc_COUNT,
-                    "descriptor ID out of range");
+  MOZ_ASSERT(aDescID >= 0 && aDescID < eCSSCounterDesc_COUNT,
+             "descriptor ID out of range");
 
   nsIDocument* doc = GetDocument();
   MOZ_AUTO_DOC_UPDATE(doc, UPDATE_STYLE, true);

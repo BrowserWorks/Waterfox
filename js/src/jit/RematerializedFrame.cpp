@@ -6,8 +6,11 @@
 
 #include "jit/RematerializedFrame.h"
 
+#include "mozilla/SizePrintfMacros.h"
+
 #include "jit/JitFrames.h"
 #include "vm/ArgumentsObject.h"
+#include "vm/Debugger.h"
 
 #include "jsscriptinlines.h"
 #include "jit/JitFrames-inl.h"
@@ -17,19 +20,19 @@ using namespace jit;
 
 struct CopyValueToRematerializedFrame
 {
-    Value *slots;
+    Value* slots;
 
-    explicit CopyValueToRematerializedFrame(Value *slots)
+    explicit CopyValueToRematerializedFrame(Value* slots)
       : slots(slots)
     { }
 
-    void operator()(const Value &v) {
+    void operator()(const Value& v) {
         *slots++ = v;
     }
 };
 
-RematerializedFrame::RematerializedFrame(JSContext *cx, uint8_t *top, unsigned numActualArgs,
-                                         InlineFrameIterator &iter, MaybeReadFallback &fallback)
+RematerializedFrame::RematerializedFrame(JSContext* cx, uint8_t* top, unsigned numActualArgs,
+                                         InlineFrameIterator& iter, MaybeReadFallback& fallback)
   : prevUpToDate_(false),
     isDebuggee_(iter.script()->isDebuggee()),
     top_(top),
@@ -44,9 +47,9 @@ RematerializedFrame::RematerializedFrame(JSContext *cx, uint8_t *top, unsigned n
                                 fallback);
 }
 
-/* static */ RematerializedFrame *
-RematerializedFrame::New(JSContext *cx, uint8_t *top, InlineFrameIterator &iter,
-                         MaybeReadFallback &fallback)
+/* static */ RematerializedFrame*
+RematerializedFrame::New(JSContext* cx, uint8_t* top, InlineFrameIterator& iter,
+                         MaybeReadFallback& fallback)
 {
     unsigned numFormals = iter.isFunctionFrame() ? iter.calleeTemplate()->nargs() : 0;
     unsigned argSlots = Max(numFormals, iter.numActualArgs());
@@ -54,7 +57,7 @@ RematerializedFrame::New(JSContext *cx, uint8_t *top, InlineFrameIterator &iter,
         (argSlots + iter.script()->nfixed()) * sizeof(Value) -
         sizeof(Value); // 1 Value included in sizeof(RematerializedFrame)
 
-    void *buf = cx->pod_calloc<uint8_t>(numBytes);
+    void* buf = cx->pod_calloc<uint8_t>(numBytes);
     if (!buf)
         return nullptr;
 
@@ -62,17 +65,17 @@ RematerializedFrame::New(JSContext *cx, uint8_t *top, InlineFrameIterator &iter,
 }
 
 /* static */ bool
-RematerializedFrame::RematerializeInlineFrames(JSContext *cx, uint8_t *top,
-                                               InlineFrameIterator &iter,
-                                               MaybeReadFallback &fallback,
-                                               Vector<RematerializedFrame *> &frames)
+RematerializedFrame::RematerializeInlineFrames(JSContext* cx, uint8_t* top,
+                                               InlineFrameIterator& iter,
+                                               MaybeReadFallback& fallback,
+                                               Vector<RematerializedFrame*>& frames)
 {
     if (!frames.resize(iter.frameCount()))
         return false;
 
     while (true) {
         size_t frameNo = iter.frameNo();
-        RematerializedFrame *frame = RematerializedFrame::New(cx, top, iter, fallback);
+        RematerializedFrame* frame = RematerializedFrame::New(cx, top, iter, fallback);
         if (!frame)
             return false;
         if (frame->scopeChain()) {
@@ -91,10 +94,11 @@ RematerializedFrame::RematerializeInlineFrames(JSContext *cx, uint8_t *top,
 }
 
 /* static */ void
-RematerializedFrame::FreeInVector(Vector<RematerializedFrame *> &frames)
+RematerializedFrame::FreeInVector(Vector<RematerializedFrame*>& frames)
 {
     for (size_t i = 0; i < frames.length(); i++) {
-        RematerializedFrame *f = frames[i];
+        RematerializedFrame* f = frames[i];
+        MOZ_ASSERT(!Debugger::inFrameMaps(f));
         f->RematerializedFrame::~RematerializedFrame();
         js_free(f);
     }
@@ -102,25 +106,25 @@ RematerializedFrame::FreeInVector(Vector<RematerializedFrame *> &frames)
 }
 
 /* static */ void
-RematerializedFrame::MarkInVector(JSTracer *trc, Vector<RematerializedFrame *> &frames)
+RematerializedFrame::MarkInVector(JSTracer* trc, Vector<RematerializedFrame*>& frames)
 {
     for (size_t i = 0; i < frames.length(); i++)
         frames[i]->mark(trc);
 }
 
-CallObject &
+CallObject&
 RematerializedFrame::callObj() const
 {
     MOZ_ASSERT(hasCallObj());
 
-    JSObject *scope = scopeChain();
+    JSObject* scope = scopeChain();
     while (!scope->is<CallObject>())
         scope = scope->enclosingScope();
     return scope->as<CallObject>();
 }
 
 void
-RematerializedFrame::pushOnScopeChain(ScopeObject &scope)
+RematerializedFrame::pushOnScopeChain(ScopeObject& scope)
 {
     MOZ_ASSERT(*scopeChain() == scope.enclosingScope() ||
                *scopeChain() == scope.as<CallObject>().enclosingScope().as<DeclEnvObject>().enclosingScope());
@@ -128,11 +132,11 @@ RematerializedFrame::pushOnScopeChain(ScopeObject &scope)
 }
 
 bool
-RematerializedFrame::initFunctionScopeObjects(JSContext *cx)
+RematerializedFrame::initFunctionScopeObjects(JSContext* cx)
 {
     MOZ_ASSERT(isNonEvalFunctionFrame());
     MOZ_ASSERT(fun()->isHeavyweight());
-    CallObject *callobj = CallObject::createForFunction(cx, this);
+    CallObject* callobj = CallObject::createForFunction(cx, this);
     if (!callobj)
         return false;
     pushOnScopeChain(*callobj);
@@ -141,14 +145,13 @@ RematerializedFrame::initFunctionScopeObjects(JSContext *cx)
 }
 
 void
-RematerializedFrame::mark(JSTracer *trc)
+RematerializedFrame::mark(JSTracer* trc)
 {
-    gc::MarkScriptRoot(trc, &script_, "remat ion frame script");
-    gc::MarkObjectRoot(trc, &scopeChain_, "remat ion frame scope chain");
-    gc::MarkValueRoot(trc, &returnValue_, "remat ion frame return value");
-    gc::MarkValueRoot(trc, &thisValue_, "remat ion frame this");
-    gc::MarkValueRootRange(trc, slots_, slots_ + numActualArgs_ + script_->nfixed(),
-                           "remat ion frame stack");
+    TraceRoot(trc, &script_, "remat ion frame script");
+    TraceRoot(trc, &scopeChain_, "remat ion frame scope chain");
+    TraceRoot(trc, &returnValue_, "remat ion frame return value");
+    TraceRoot(trc, &thisValue_, "remat ion frame this");
+    TraceRootRange(trc, numActualArgs_ + script_->nfixed(), slots_, "remat ion frame stack");
 }
 
 void
@@ -158,7 +161,7 @@ RematerializedFrame::dump()
     if (isFunctionFrame()) {
         fprintf(stderr, "  callee fun: ");
 #ifdef DEBUG
-        js_DumpValue(ObjectValue(*callee()));
+        DumpValue(ObjectValue(*callee()));
 #else
         fprintf(stderr, "?\n");
 #endif
@@ -166,8 +169,8 @@ RematerializedFrame::dump()
         fprintf(stderr, "  global frame, no callee\n");
     }
 
-    fprintf(stderr, "  file %s line %u offset %zu\n",
-            script()->filename(), (unsigned) script()->lineno(),
+    fprintf(stderr, "  file %s line %" PRIuSIZE " offset %" PRIuSIZE "\n",
+            script()->filename(), script()->lineno(),
             script()->pcToOffset(pc()));
 
     fprintf(stderr, "  script = %p\n", (void*) script());
@@ -175,7 +178,7 @@ RematerializedFrame::dump()
     if (isFunctionFrame()) {
         fprintf(stderr, "  scope chain: ");
 #ifdef DEBUG
-        js_DumpValue(ObjectValue(*scopeChain()));
+        DumpValue(ObjectValue(*scopeChain()));
 #else
         fprintf(stderr, "?\n");
 #endif
@@ -183,7 +186,7 @@ RematerializedFrame::dump()
         if (hasArgsObj()) {
             fprintf(stderr, "  args obj: ");
 #ifdef DEBUG
-            js_DumpValue(ObjectValue(argsObj()));
+            DumpValue(ObjectValue(argsObj()));
 #else
             fprintf(stderr, "?\n");
 #endif
@@ -191,7 +194,7 @@ RematerializedFrame::dump()
 
         fprintf(stderr, "  this: ");
 #ifdef DEBUG
-        js_DumpValue(thisValue());
+        DumpValue(thisValue());
 #else
         fprintf(stderr, "?\n");
 #endif
@@ -202,7 +205,7 @@ RematerializedFrame::dump()
             else
                 fprintf(stderr, "  overflown (arg %d): ", i);
 #ifdef DEBUG
-            js_DumpValue(argv()[i]);
+            DumpValue(argv()[i]);
 #else
             fprintf(stderr, "?\n");
 #endif
@@ -211,7 +214,7 @@ RematerializedFrame::dump()
         for (unsigned i = 0; i < script()->nfixed(); i++) {
             fprintf(stderr, "  local %d: ", i);
 #ifdef DEBUG
-            js_DumpValue(locals()[i]);
+            DumpValue(locals()[i]);
 #else
             fprintf(stderr, "?\n");
 #endif

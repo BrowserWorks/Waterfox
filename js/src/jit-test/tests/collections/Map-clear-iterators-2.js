@@ -3,8 +3,8 @@
 load(libdir + "asserts.js");
 load(libdir + "iteration.js");
 
-var m = Map([["a", 1]]);
-var it = m[std_iterator]();
+var m = new Map([["a", 1]]);
+var it = m[Symbol.iterator]();
 assertIteratorNext(it, ["a", 1]);
 m.clear();
 m.set("b", 2);

@@ -22,11 +22,21 @@
  * limitations under the License.
  */
 
+#if defined(_MSC_VER) && _MSC_VER < 1900
+// When building with -D_HAS_EXCEPTIONS=0, MSVC's <xtree> header triggers
+// warning C4702: unreachable code.
+// https://connect.microsoft.com/VisualStudio/feedback/details/809962
+#pragma warning(push)
+#pragma warning(disable: 4702)
+#endif
+
 #include <map>
-#include "cert.h"
-#include "pkix/pkix.h"
+
+#if defined(_MSC_VER) && _MSC_VER < 1900
+#pragma warning(pop)
+#endif
+
 #include "pkixgtest.h"
-#include "pkixtestutil.h"
 
 using namespace mozilla::pkix;
 using namespace mozilla::pkix::test;
@@ -55,10 +65,10 @@ CreateCert(const char* issuerCN, // null means "empty name"
 
   ScopedTestKeyPair reusedKey(CloneReusedKeyPair());
   ByteString certDER(CreateEncodedCertificate(
-                       v3, sha256WithRSAEncryption, serialNumber, issuerDER,
+                       v3, sha256WithRSAEncryption(), serialNumber, issuerDER,
                        oneDayBeforeNow, oneDayAfterNow, subjectDER,
                        *reusedKey, extensions, *reusedKey,
-                       sha256WithRSAEncryption));
+                       sha256WithRSAEncryption()));
   EXPECT_FALSE(ENCODING_FAILED(certDER));
 
   if (subjectDERToCertDER) {
@@ -68,7 +78,7 @@ CreateCert(const char* issuerCN, // null means "empty name"
   return certDER;
 }
 
-class TestTrustDomain : public TrustDomain
+class TestTrustDomain final : public DefaultCryptoTrustDomain
 {
 public:
   // The "cert chain tail" is a longish chain of certificates that is used by
@@ -101,9 +111,8 @@ public:
   ByteString GetLeafCACertDER() const { return leafCACertDER; }
 
 private:
-  virtual Result GetCertTrust(EndEntityOrCA, const CertPolicyId&,
-                              Input candidateCert,
-                              /*out*/ TrustLevel& trustLevel)
+  Result GetCertTrust(EndEntityOrCA, const CertPolicyId&, Input candidateCert,
+                      /*out*/ TrustLevel& trustLevel) override
   {
     trustLevel = InputEqualsByteString(candidateCert, rootCACertDER)
                ? TrustLevel::TrustAnchor
@@ -111,8 +120,8 @@ private:
     return Success;
   }
 
-  virtual Result FindIssuer(Input encodedIssuerName,
-                            IssuerChecker& checker, Time time)
+  Result FindIssuer(Input encodedIssuerName, IssuerChecker& checker, Time)
+                    override
   {
     ByteString subjectDER(InputToByteString(encodedIssuerName));
     ByteString certDER(subjectDERToCertDER[subjectDER]);
@@ -130,34 +139,16 @@ private:
     return Success;
   }
 
-  virtual Result CheckRevocation(EndEntityOrCA, const CertID&, Time,
-                                 /*optional*/ const Input*,
-                                 /*optional*/ const Input*)
+  Result CheckRevocation(EndEntityOrCA, const CertID&, Time,
+                         /*optional*/ const Input*, /*optional*/ const Input*)
+                         override
   {
     return Success;
   }
 
-  virtual Result IsChainValid(const DERArray&, Time)
+  Result IsChainValid(const DERArray&, Time) override
   {
     return Success;
-  }
-
-  virtual Result VerifySignedData(const SignedDataWithSignature& signedData,
-                                  Input subjectPublicKeyInfo)
-  {
-    return TestVerifySignedData(signedData, subjectPublicKeyInfo);
-  }
-
-  virtual Result DigestBuf(Input item, /*out*/ uint8_t *digestBuf,
-                           size_t digestBufLen)
-  {
-    ADD_FAILURE();
-    return Result::FATAL_ERROR_LIBRARY_FAILURE;
-  }
-
-  virtual Result CheckPublicKey(Input subjectPublicKeyInfo)
-  {
-    return TestCheckPublicKey(subjectPublicKeyInfo);
   }
 
   std::map<ByteString, ByteString> subjectDERToCertDER;
@@ -253,7 +244,7 @@ TEST_F(pkixbuild, BeyondMaxAcceptableCertChainLength)
 // is treated as a trust anchor and is assumed to have issued all certificates
 // (i.e. FindIssuer always attempts to build the next step in the chain with
 // it).
-class ExpiredCertTrustDomain : public TrustDomain
+class ExpiredCertTrustDomain final : public DefaultCryptoTrustDomain
 {
 public:
   explicit ExpiredCertTrustDomain(ByteString rootDER)
@@ -262,9 +253,8 @@ public:
   }
 
   // The CertPolicyId argument is unused because we don't care about EV.
-  virtual Result GetCertTrust(EndEntityOrCA endEntityOrCA, const CertPolicyId&,
-                              Input candidateCert,
-                              /*out*/ TrustLevel& trustLevel)
+  Result GetCertTrust(EndEntityOrCA, const CertPolicyId&, Input candidateCert,
+                      /*out*/ TrustLevel& trustLevel) override
   {
     Input rootCert;
     Result rv = rootCert.Init(rootDER.data(), rootDER.length());
@@ -279,8 +269,7 @@ public:
     return Success;
   }
 
-  virtual Result FindIssuer(Input encodedIssuerName,
-                            IssuerChecker& checker, Time time)
+  Result FindIssuer(Input, IssuerChecker& checker, Time) override
   {
     // keepGoing is an out parameter from IssuerChecker.Check. It would tell us
     // whether or not to continue attempting other potential issuers. We only
@@ -294,34 +283,9 @@ public:
     return checker.Check(rootCert, nullptr, keepGoing);
   }
 
-  virtual Result CheckRevocation(EndEntityOrCA, const CertID&, Time,
-                                 /*optional*/ const Input*,
-                                 /*optional*/ const Input*)
-  {
-    ADD_FAILURE();
-    return Result::FATAL_ERROR_LIBRARY_FAILURE;
-  }
-
-  virtual Result IsChainValid(const DERArray&, Time)
+  Result IsChainValid(const DERArray&, Time) override
   {
     return Success;
-  }
-
-  virtual Result VerifySignedData(const SignedDataWithSignature& signedData,
-                                  Input subjectPublicKeyInfo)
-  {
-    return TestVerifySignedData(signedData, subjectPublicKeyInfo);
-  }
-
-  virtual Result DigestBuf(Input, /*out*/uint8_t*, size_t)
-  {
-    ADD_FAILURE();
-    return Result::FATAL_ERROR_LIBRARY_FAILURE;
-  }
-
-  virtual Result CheckPublicKey(Input subjectPublicKeyInfo)
-  {
-    return TestCheckPublicKey(subjectPublicKeyInfo);
   }
 
 private:
@@ -342,12 +306,12 @@ TEST_F(pkixbuild, NoRevocationCheckingForExpiredCert)
   ByteString subjectDER(CNToDERName("Expired End-Entity Cert"));
   ScopedTestKeyPair reusedKey(CloneReusedKeyPair());
   ByteString certDER(CreateEncodedCertificate(
-                       v3, sha256WithRSAEncryption,
+                       v3, sha256WithRSAEncryption(),
                        serialNumber, issuerDER,
-                       oneDayBeforeNow - Time::ONE_DAY_IN_SECONDS,
+                       oneDayBeforeNow - ONE_DAY_IN_SECONDS_AS_TIME_T,
                        oneDayBeforeNow,
                        subjectDER, *reusedKey, nullptr, *reusedKey,
-                       sha256WithRSAEncryption));
+                       sha256WithRSAEncryption()));
   EXPECT_FALSE(ENCODING_FAILED(certDER));
 
   Input cert;
@@ -361,51 +325,14 @@ TEST_F(pkixbuild, NoRevocationCheckingForExpiredCert)
                            nullptr));
 }
 
-class DSSTrustDomain : public TrustDomain
+class DSSTrustDomain final : public EverythingFailsByDefaultTrustDomain
 {
 public:
-  virtual Result GetCertTrust(EndEntityOrCA, const CertPolicyId&,
-                              Input, /*out*/ TrustLevel& trustLevel)
+  Result GetCertTrust(EndEntityOrCA, const CertPolicyId&,
+                      Input, /*out*/ TrustLevel& trustLevel) override
   {
     trustLevel = TrustLevel::TrustAnchor;
     return Success;
-  }
-
-  virtual Result FindIssuer(Input, IssuerChecker&, Time)
-  {
-    ADD_FAILURE();
-    return Result::FATAL_ERROR_LIBRARY_FAILURE;
-  }
-
-  virtual Result CheckRevocation(EndEntityOrCA, const CertID&, Time,
-                                 /*optional*/ const Input*,
-                                 /*optional*/ const Input*)
-  {
-    ADD_FAILURE();
-    return Result::FATAL_ERROR_LIBRARY_FAILURE;
-  }
-
-  virtual Result IsChainValid(const DERArray&, Time)
-  {
-    return Success;
-  }
-
-  virtual Result VerifySignedData(const SignedDataWithSignature& signedData,
-                                  Input subjectPublicKeyInfo)
-  {
-    ADD_FAILURE();
-    return Result::FATAL_ERROR_LIBRARY_FAILURE;
-  }
-
-  virtual Result DigestBuf(Input, /*out*/uint8_t*, size_t)
-  {
-    ADD_FAILURE();
-    return Result::FATAL_ERROR_LIBRARY_FAILURE;
-  }
-
-  virtual Result CheckPublicKey(Input subjectPublicKeyInfo)
-  {
-    return TestCheckPublicKey(subjectPublicKeyInfo);
   }
 };
 
@@ -421,18 +348,18 @@ TEST_F(pkixbuild_DSS, DSSEndEntityKeyNotAccepted)
   ByteString subjectDER(CNToDERName("DSS"));
   ASSERT_FALSE(ENCODING_FAILED(subjectDER));
   ScopedTestKeyPair subjectKey(GenerateDSSKeyPair());
-  ASSERT_TRUE(subjectKey);
+  ASSERT_TRUE(subjectKey.get());
 
   ByteString issuerDER(CNToDERName("RSA"));
   ASSERT_FALSE(ENCODING_FAILED(issuerDER));
   ScopedTestKeyPair issuerKey(CloneReusedKeyPair());
-  ASSERT_TRUE(issuerKey);
+  ASSERT_TRUE(issuerKey.get());
 
-  ByteString cert(CreateEncodedCertificate(v3, sha256WithRSAEncryption,
+  ByteString cert(CreateEncodedCertificate(v3, sha256WithRSAEncryption(),
                                            serialNumber, issuerDER,
                                            oneDayBeforeNow, oneDayAfterNow,
                                            subjectDER, *subjectKey, nullptr,
-                                           *issuerKey, sha256WithRSAEncryption));
+                                           *issuerKey, sha256WithRSAEncryption()));
   ASSERT_FALSE(ENCODING_FAILED(cert));
   Input certDER;
   ASSERT_EQ(Success, certDER.Init(cert.data(), cert.length()));
@@ -446,7 +373,7 @@ TEST_F(pkixbuild_DSS, DSSEndEntityKeyNotAccepted)
                            nullptr/*stapledOCSPResponse*/));
 }
 
-class IssuerNameCheckTrustDomain : public TrustDomain
+class IssuerNameCheckTrustDomain final : public DefaultCryptoTrustDomain
 {
 public:
   IssuerNameCheckTrustDomain(const ByteString& issuer, bool expectedKeepGoing)
@@ -455,9 +382,8 @@ public:
   {
   }
 
-  virtual Result GetCertTrust(EndEntityOrCA endEntityOrCA,
-                              const CertPolicyId&, Input,
-                              /*out*/ TrustLevel& trustLevel)
+  Result GetCertTrust(EndEntityOrCA endEntityOrCA, const CertPolicyId&, Input,
+                      /*out*/ TrustLevel& trustLevel) override
   {
     trustLevel = endEntityOrCA == EndEntityOrCA::MustBeCA
                ? TrustLevel::TrustAnchor
@@ -465,7 +391,7 @@ public:
     return Success;
   }
 
-  virtual Result FindIssuer(Input subjectCert, IssuerChecker& checker, Time)
+  Result FindIssuer(Input, IssuerChecker& checker, Time) override
   {
     Input issuerInput;
     EXPECT_EQ(Success, issuerInput.Init(issuer.data(), issuer.length()));
@@ -477,33 +403,16 @@ public:
     return Success;
   }
 
-  virtual Result CheckRevocation(EndEntityOrCA, const CertID&, Time,
-                                 /*optional*/ const Input*,
-                                 /*optional*/ const Input*)
+  Result CheckRevocation(EndEntityOrCA, const CertID&, Time,
+                         /*optional*/ const Input*, /*optional*/ const Input*)
+                         override
   {
     return Success;
   }
 
-  virtual Result IsChainValid(const DERArray&, Time)
+  Result IsChainValid(const DERArray&, Time) override
   {
     return Success;
-  }
-
-  virtual Result VerifySignedData(const SignedDataWithSignature& signedData,
-                                  Input subjectPublicKeyInfo)
-  {
-    return TestVerifySignedData(signedData, subjectPublicKeyInfo);
-  }
-
-  virtual Result DigestBuf(Input, /*out*/uint8_t*, size_t)
-  {
-    ADD_FAILURE();
-    return Result::FATAL_ERROR_LIBRARY_FAILURE;
-  }
-
-  virtual Result CheckPublicKey(Input subjectPublicKeyInfo)
-  {
-    return TestCheckPublicKey(subjectPublicKeyInfo);
   }
 
 private:

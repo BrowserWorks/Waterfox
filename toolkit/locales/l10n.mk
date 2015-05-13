@@ -112,10 +112,13 @@ ifdef MOZ_STUB_INSTALLER
 	$(STUB_HOOK)
 endif
 	$(PYTHON) $(MOZILLA_DIR)/toolkit/mozapps/installer/l10n-repack.py $(STAGEDIST) $(DIST)/xpi-stage/locale-$(AB_CD) \
+		$(MOZ_PKG_EXTRAL10N) \
 		$(if $(filter omni,$(MOZ_PACKAGER_FORMAT)),$(if $(NON_OMNIJAR_FILES),--non-resource $(NON_OMNIJAR_FILES)))
-ifneq (en,$(AB))
+
 ifeq (cocoa,$(MOZ_WIDGET_TOOLKIT))
+ifneq (en,$(AB))
 	mv $(STAGEDIST)/en.lproj $(STAGEDIST)/$(AB).lproj
+endif
 ifdef MOZ_CRASHREPORTER
 # On Mac OS X, the crashreporter.ini file needs to be moved from under the
 # application bundle's Resources directory where all other l10n files are
@@ -125,15 +128,14 @@ ifdef MOZ_CRASHREPORTER
 	$(RM) -rf $(STAGEDIST)/crashreporter.app
 endif
 endif
-endif
+
 	$(NSINSTALL) -D $(DIST)/l10n-stage/$(PKG_PATH)
 	cd $(DIST)/l10n-stage; \
 	  $(MAKE_PACKAGE)
 ifdef MAKE_COMPLETE_MAR
 	$(MAKE) -C $(MOZDEPTH)/tools/update-packaging full-update AB_CD=$(AB_CD) \
 	  MOZ_PKG_PRETTYNAMES=$(MOZ_PKG_PRETTYNAMES) \
-	  PACKAGE_BASE_DIR='$(_ABS_DIST)/l10n-stage' \
-	  DIST='$(_ABS_DIST)'
+	  PACKAGE_BASE_DIR='$(_ABS_DIST)/l10n-stage'
 endif
 # packaging done, undo l10n stuff
 ifneq (en,$(AB))

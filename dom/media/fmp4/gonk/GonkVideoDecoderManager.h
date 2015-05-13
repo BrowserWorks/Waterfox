@@ -39,22 +39,20 @@ typedef mozilla::layers::TextureClient TextureClient;
 
 public:
   GonkVideoDecoderManager(mozilla::layers::ImageContainer* aImageContainer,
-		          const mp4_demuxer::VideoDecoderConfig& aConfig);
+                          const VideoInfo& aConfig);
 
-  ~GonkVideoDecoderManager();
+  virtual ~GonkVideoDecoderManager() override;
 
-  virtual android::sp<MediaCodecProxy> Init(MediaDataDecoderCallback* aCallback) MOZ_OVERRIDE;
+  virtual android::sp<MediaCodecProxy> Init(MediaDataDecoderCallback* aCallback) override;
 
-  virtual nsresult Input(mp4_demuxer::MP4Sample* aSample) MOZ_OVERRIDE;
+  virtual nsresult Input(MediaRawData* aSample) override;
 
   virtual nsresult Output(int64_t aStreamOffset,
-                          nsRefPtr<MediaData>& aOutput) MOZ_OVERRIDE;
+                          nsRefPtr<MediaData>& aOutput) override;
 
-  virtual nsresult Flush() MOZ_OVERRIDE;
+  virtual nsresult Flush() override;
 
-  virtual void AllocateMediaResources();
-
-  virtual void ReleaseMediaResources();
+  virtual bool HasQueuedSample() override;
 
   static void RecycleCallback(TextureClient* aClient, void* aClosure);
 
@@ -95,8 +93,8 @@ private:
     VideoResourceListener(GonkVideoDecoderManager *aManager);
     ~VideoResourceListener();
 
-    virtual void codecReserved() MOZ_OVERRIDE;
-    virtual void codecCanceled() MOZ_OVERRIDE;
+    virtual void codecReserved() override;
+    virtual void codecCanceled() override;
 
   private:
     // Forbidden
@@ -107,15 +105,6 @@ private:
     GonkVideoDecoderManager *mManager;
   };
   friend class VideoResourceListener;
-
-  // FrameTimeInfo keeps the presentation time stamp (pts) and its duration.
-  // On MediaDecoderStateMachine, it needs pts and duration to display decoded
-  // frame correctly. But OMX can carry one field of time info (kKeyTime) so
-  // we use FrameTimeInfo to keep pts and duration.
-  struct FrameTimeInfo {
-    int64_t pts;       // presentation time stamp of this frame.
-    int64_t duration;  // the playback duration.
-  };
 
   bool SetVideoFormat();
 
@@ -131,9 +120,6 @@ private:
   void ReleaseAllPendingVideoBuffers();
   void PostReleaseVideoBuffer(android::MediaBuffer *aBuffer);
 
-  void QueueFrameTimeIn(int64_t aPTS, int64_t aDuration);
-  nsresult QueueFrameTimeOut(int64_t aPTS, int64_t& aDuration);
-
   uint32_t mVideoWidth;
   uint32_t mVideoHeight;
   uint32_t mDisplayWidth;
@@ -141,9 +127,7 @@ private:
   nsIntRect mPicture;
   nsIntSize mInitialFrame;
 
-  android::sp<MediaCodecProxy> mDecoder;
   nsRefPtr<layers::ImageContainer> mImageContainer;
-  MediaDataDecoderCallback* mCallback;
 
   android::MediaBuffer* mVideoBuffer;
 
@@ -155,13 +139,7 @@ private:
   android::sp<ALooper> mManagerLooper;
   FrameInfo mFrameInfo;
 
-  // It protects mFrameTimeInfo.
-  Monitor mMonitor;
-  // Array of FrameTimeInfo whose corresponding frames are sent to OMX.
-  // Ideally, it is a FIFO. Input() adds the entry to the end element and
-  // CreateVideoData() takes the first entry. However, there are exceptions
-  // due to MediaCodec error or seeking.
-  nsTArray<FrameTimeInfo> mFrameTimeInfo;
+  int64_t mLastDecodedTime;  // The last decoded frame presentation time.
 
   // color converter
   android::I420ColorConverterHelper mColorConverter;
@@ -179,6 +157,16 @@ private:
   // The lock protects mPendingVideoBuffers.
   Mutex mPendingVideoBuffersLock;
 
+  // MediaCodedc's wrapper that performs the decoding.
+  android::sp<android::MediaCodecProxy> mDecoder;
+
+  // This monitor protects mQueueSample.
+  Monitor mMonitor;
+
+  // An queue with the MP4 samples which are waiting to be sent into OMX.
+  // If an element is an empty MP4Sample, that menas EOS. There should not
+  // any sample be queued after EOS.
+  nsTArray<nsRefPtr<MediaRawData>> mQueueSample;
 };
 
 } // namespace mozilla

@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -17,12 +18,12 @@
 namespace mozilla {
 namespace dom {
 class TabChildGlobal;
+class ProcessGlobal;
 } // namespace dom
 } // namespace mozilla
 class SandboxPrivate;
 class nsInProcessTabChildGlobal;
 class nsWindowRoot;
-class XPCWrappedNativeScope;
 
 #define NS_WRAPPERCACHE_IID \
 { 0x6f3179a1, 0x36f7, 0x4a5c, \
@@ -151,7 +152,7 @@ public:
    * Wrap the object corresponding to this wrapper cache. If non-null is
    * returned, the object has already been stored in the wrapper cache.
    */
-  virtual JSObject* WrapObject(JSContext* cx) = 0;
+  virtual JSObject* WrapObject(JSContext* cx, JS::Handle<JSObject*> aGivenProto) = 0;
 
   /**
    * Returns true if the object has a non-gray wrapper.
@@ -263,6 +264,7 @@ protected:
 
 private:
   friend class mozilla::dom::TabChildGlobal;
+  friend class mozilla::dom::ProcessGlobal;
   friend class SandboxPrivate;
   friend class nsInProcessTabChildGlobal;
   friend class nsWindowRoot;

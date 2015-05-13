@@ -205,7 +205,7 @@ function test_DataTransfer(dt)
   var draggable = $("draggable");
   dt.setData("application/-moz-node", draggable);
   checkOneDataItem(dt, ["text/plain", "text/html", "application/-moz-node"],
-                       ["New Text", "<strong>Modified Text</strong>", draggable],
+                       ["New Text", "<strong>Modified Text</strong>", draggable.toString()],
                        0, "added node");
 
   dt.clearData(""); // null means clear all

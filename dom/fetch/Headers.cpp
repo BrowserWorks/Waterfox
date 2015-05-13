@@ -23,32 +23,6 @@ NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(Headers)
 NS_INTERFACE_MAP_END
 
 // static
-bool
-Headers::PrefEnabled(JSContext* aCx, JSObject* aObj)
-{
-  using mozilla::dom::workers::WorkerPrivate;
-  using mozilla::dom::workers::GetWorkerPrivateFromContext;
-
-  if (NS_IsMainThread()) {
-    static bool sPrefCacheInit = false;
-    static bool sPrefEnabled = false;
-    if (sPrefCacheInit) {
-      return sPrefEnabled;
-    }
-    Preferences::AddBoolVarCache(&sPrefEnabled, "dom.fetch.enabled");
-    sPrefCacheInit = true;
-    return sPrefEnabled;
-  }
-
-  WorkerPrivate* workerPrivate = GetWorkerPrivateFromContext(aCx);
-  if (!workerPrivate) {
-    return false;
-  }
-
-  return workerPrivate->DOMFetchEnabled();
-}
-
-// static
 already_AddRefed<Headers>
 Headers::Constructor(const GlobalObject& aGlobal,
                      const Optional<HeadersOrByteStringSequenceSequenceOrByteStringMozMap>& aInit,
@@ -82,8 +56,17 @@ Headers::Constructor(const GlobalObject& aGlobal,
                      const OwningHeadersOrByteStringSequenceSequenceOrByteStringMozMap& aInit,
                      ErrorResult& aRv)
 {
+  nsCOMPtr<nsIGlobalObject> global = do_QueryInterface(aGlobal.GetAsSupports());
+  return Create(global, aInit, aRv);
+}
+
+/* static */ already_AddRefed<Headers>
+Headers::Create(nsIGlobalObject* aGlobal,
+                const OwningHeadersOrByteStringSequenceSequenceOrByteStringMozMap& aInit,
+                ErrorResult& aRv)
+{
   nsRefPtr<InternalHeaders> ih = new InternalHeaders();
-  nsRefPtr<Headers> headers = new Headers(aGlobal.GetAsSupports(), ih);
+  nsRefPtr<Headers> headers = new Headers(aGlobal, ih);
 
   if (aInit.IsHeaders()) {
     ih->Fill(*(aInit.GetAsHeaders().get()->mInternalHeaders), aRv);
@@ -101,9 +84,9 @@ Headers::Constructor(const GlobalObject& aGlobal,
 }
 
 JSObject*
-Headers::WrapObject(JSContext* aCx)
+Headers::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return mozilla::dom::HeadersBinding::Wrap(aCx, this);
+  return mozilla::dom::HeadersBinding::Wrap(aCx, this, aGivenProto);
 }
 
 Headers::~Headers()

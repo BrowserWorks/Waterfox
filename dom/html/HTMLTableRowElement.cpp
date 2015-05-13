@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -23,9 +24,9 @@ HTMLTableRowElement::~HTMLTableRowElement()
 }
 
 JSObject*
-HTMLTableRowElement::WrapNode(JSContext *aCx)
+HTMLTableRowElement::WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return HTMLTableRowElementBinding::Wrap(aCx, this);
+  return HTMLTableRowElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 NS_IMPL_CYCLE_COLLECTION_CLASS(HTMLTableRowElement)
@@ -51,9 +52,10 @@ HTMLTableSectionElement*
 HTMLTableRowElement::GetSection() const
 {
   nsIContent* parent = GetParent();
-  if (parent && parent->IsHTML() && (parent->Tag() == nsGkAtoms::thead ||
-                                     parent->Tag() == nsGkAtoms::tbody ||
-                                     parent->Tag() == nsGkAtoms::tfoot)) {
+  if (parent &&
+      parent->IsAnyOfHTMLElements(nsGkAtoms::thead,
+                                  nsGkAtoms::tbody,
+                                  nsGkAtoms::tfoot)) {
     return static_cast<HTMLTableSectionElement*>(parent);
   }
   return nullptr;
@@ -121,10 +123,7 @@ static bool
 IsCell(nsIContent *aContent, int32_t aNamespaceID,
        nsIAtom* aAtom, void *aData)
 {
-  nsIAtom* tag = aContent->Tag();
-
-  return ((tag == nsGkAtoms::td || tag == nsGkAtoms::th) &&
-          aContent->IsHTML());
+  return aContent->IsAnyOfHTMLElements(nsGkAtoms::td, nsGkAtoms::th);
 }
 
 nsIHTMLCollection*

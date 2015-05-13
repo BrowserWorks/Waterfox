@@ -4,6 +4,9 @@
 
 /* Application in use complete MAR file staged patch apply failure fallback test */
 
+const START_STATE = STATE_PENDING_SVC;
+const END_STATE = STATE_PENDING;
+
 function run_test() {
   if (!shouldRunServiceTest()) {
     return;
@@ -20,8 +23,8 @@ function run_test() {
   let callbackApp = getApplyDirFile(DIR_RESOURCES + gCallbackBinFile);
   let args = [getApplyDirPath() + DIR_RESOURCES, "input", "output", "-s",
               HELPER_SLEEP_TIMEOUT];
-  let callbackAppProcess = AUS_Cc["@mozilla.org/process/util;1"].
-                           createInstance(AUS_Ci.nsIProcess);
+  let callbackAppProcess = Cc["@mozilla.org/process/util;1"].
+                           createInstance(Ci.nsIProcess);
   callbackAppProcess.init(callbackApp);
   callbackAppProcess.run(false, args, args.length);
 
@@ -33,14 +36,14 @@ function setupAppFilesFinished() {
 }
 
 function doUpdate() {
-  runUpdateUsingService(STATE_PENDING_SVC, STATE_APPLIED);
+  runUpdateUsingService(START_STATE, STATE_APPLIED);
 }
 
 function checkUpdateFinished() {
   // Switch the application to the staged application that was updated.
   gStageUpdate = false;
   gSwitchApp = true;
-  runUpdate(1, STATE_PENDING);
+  runUpdate(1, END_STATE, checkUpdateApplied);
 }
 
 function checkUpdateApplied() {
@@ -50,5 +53,6 @@ function checkUpdateApplied() {
 function checkUpdate() {
   checkFilesAfterUpdateFailure(getApplyDirFile, false, false);
   checkUpdateLogContains(ERR_RENAME_FILE);
+  standardInit();
   checkCallbackAppLog();
 }

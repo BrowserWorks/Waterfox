@@ -9,7 +9,7 @@
 
 #include "base/basictypes.h"            // for DISALLOW_EVIL_CONSTRUCTORS
 #include "mozilla/Assertions.h"         // for MOZ_ASSERT_HELPER2
-#include "mozilla/Attributes.h"         // for MOZ_OVERRIDE
+#include "mozilla/Attributes.h"         // for override
 #include "mozilla/ipc/ProtocolUtils.h"
 #include "mozilla/layers/PCompositorChild.h"
 #include "nsAutoPtr.h"                  // for nsRefPtr
@@ -19,8 +19,6 @@
 #include "nsISupportsImpl.h"            // for NS_INLINE_DECL_REFCOUNTING
 #include "ThreadSafeRefcountingWithMainThreadDestruction.h"
 #include "nsWeakReference.h"
-
-class nsIObserver;
 
 namespace mozilla {
 
@@ -36,7 +34,7 @@ class ClientLayerManager;
 class CompositorParent;
 struct FrameMetrics;
 
-class CompositorChild MOZ_FINAL : public PCompositorChild
+class CompositorChild final : public PCompositorChild
 {
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING_WITH_MAIN_THREAD_DESTRUCTION(CompositorChild)
 
@@ -60,15 +58,34 @@ public:
   static PCompositorChild*
   Create(Transport* aTransport, ProcessId aOtherProcess);
 
+  /**
+   * Initialize the CompositorChild and open the connection in the non-multi-process
+   * case.
+   */
+  bool OpenSameProcess(CompositorParent* aParent);
+
   static CompositorChild* Get();
 
   static bool ChildProcessHasCompositor() { return sCompositor != nullptr; }
 
-  virtual bool RecvInvalidateAll() MOZ_OVERRIDE;
-  virtual bool RecvOverfill(const uint32_t &aOverfill) MOZ_OVERRIDE;
   void AddOverfillObserver(ClientLayerManager* aLayerManager);
 
-  virtual bool RecvDidComposite(const uint64_t& aId, const uint64_t& aTransactionId) MOZ_OVERRIDE;
+  virtual bool
+  RecvDidComposite(const uint64_t& aId, const uint64_t& aTransactionId) override;
+
+  virtual bool
+  RecvInvalidateAll() override;
+
+  virtual bool
+  RecvOverfill(const uint32_t &aOverfill) override;
+
+  virtual bool
+  RecvUpdatePluginConfigurations(const nsIntPoint& aContentOffset,
+                                 const nsIntRegion& aVisibleRegion,
+                                 nsTArray<PluginWindowData>&& aPlugins) override;
+
+  virtual bool
+  RecvUpdatePluginVisibility(nsTArray<uintptr_t>&& aWindowList) override;
 
   /**
    * Request that the parent tell us when graphics are ready on GPU.
@@ -80,7 +97,24 @@ public:
 
   void CancelNotifyAfterRemotePaint(TabChild* aTabChild);
 
-  static void ShutDown();
+  // Beware that these methods don't override their super-class equivalent (which
+  // are not virtual), they just overload them.
+  // All of these Send* methods just add a sanity check (that it is not too late
+  // send a message) and forward the call to the super-class's equivalent method.
+  // This means that it is correct to call directly the super-class methods, but
+  // you won't get the extra safety provided here.
+  bool SendWillStop();
+  bool SendPause();
+  bool SendResume();
+  bool SendNotifyChildCreated(const uint64_t& id);
+  bool SendAdoptChild(const uint64_t& id);
+  bool SendMakeSnapshot(const SurfaceDescriptor& inSnapshot, const gfx::IntRect& dirtyRect);
+  bool SendFlushRendering();
+  bool SendGetTileSize(int32_t* tileWidth, int32_t* tileHeight);
+  bool SendStartFrameTimeRecording(const int32_t& bufferSize, uint32_t* startIndex);
+  bool SendStopFrameTimeRecording(const uint32_t& startIndex, nsTArray<float>* intervals);
+  bool SendNotifyRegionInvalidated(const nsIntRegion& region);
+  bool SendRequestNotifyAfterRemotePaint();
 
 private:
   // Private destructor, to discourage deletion outside of Release():
@@ -90,21 +124,22 @@ private:
     AllocPLayerTransactionChild(const nsTArray<LayersBackend>& aBackendHints,
                                 const uint64_t& aId,
                                 TextureFactoryIdentifier* aTextureFactoryIdentifier,
-                                bool* aSuccess) MOZ_OVERRIDE;
+                                bool* aSuccess) override;
 
-  virtual bool DeallocPLayerTransactionChild(PLayerTransactionChild *aChild) MOZ_OVERRIDE;
+  virtual bool DeallocPLayerTransactionChild(PLayerTransactionChild *aChild) override;
 
-  virtual void ActorDestroy(ActorDestroyReason aWhy) MOZ_OVERRIDE;
+  virtual void ActorDestroy(ActorDestroyReason aWhy) override;
 
   virtual bool RecvSharedCompositorFrameMetrics(const mozilla::ipc::SharedMemoryBasic::Handle& metrics,
                                                 const CrossProcessMutexHandle& handle,
-                                                const uint32_t& aAPZCId) MOZ_OVERRIDE;
+                                                const uint64_t& aLayersId,
+                                                const uint32_t& aAPZCId) override;
 
   virtual bool RecvReleaseSharedCompositorFrameMetrics(const ViewID& aId,
-                                                       const uint32_t& aAPZCId) MOZ_OVERRIDE;
+                                                       const uint32_t& aAPZCId) override;
 
   virtual bool
-  RecvRemotePaintIsReady() MOZ_OVERRIDE;
+  RecvRemotePaintIsReady() override;
 
   // Class used to store the shared FrameMetrics, mutex, and APZCId  in a hash table
   class SharedFrameMetricsData {
@@ -112,12 +147,14 @@ private:
     SharedFrameMetricsData(
         const mozilla::ipc::SharedMemoryBasic::Handle& metrics,
         const CrossProcessMutexHandle& handle,
+        const uint64_t& aLayersId,
         const uint32_t& aAPZCId);
 
     ~SharedFrameMetricsData();
 
     void CopyFrameMetrics(FrameMetrics* aFrame);
     FrameMetrics::ViewID GetViewID();
+    uint64_t GetLayersId() const;
     uint32_t GetAPZCId();
 
   private:
@@ -125,11 +162,19 @@ private:
     // the shared FrameMetrics
     nsRefPtr<mozilla::ipc::SharedMemoryBasic> mBuffer;
     CrossProcessMutex* mMutex;
+    uint64_t mLayersId;
     // Unique ID of the APZC that is sharing the FrameMetrics
     uint32_t mAPZCId;
   };
 
+  static PLDHashOperator RemoveSharedMetricsForLayersId(const uint64_t& aKey,
+                                                        nsAutoPtr<SharedFrameMetricsData>& aData,
+                                                        void* aLayerTransactionChild);
+
   nsRefPtr<ClientLayerManager> mLayerManager;
+  // When not multi-process, hold a reference to the CompositorParent to keep it
+  // alive. This reference should be null in multi-process.
+  nsRefPtr<CompositorParent> mCompositorParent;
 
   // The ViewID of the FrameMetrics is used as the key for this hash table.
   // While this should be safe to use since the ViewID is unique
@@ -148,6 +193,9 @@ private:
 
   // When we receive overfill numbers, notify these client layer managers
   nsAutoTArray<ClientLayerManager*,0> mOverfillObservers;
+
+  // True until the beginning of the two-step shutdown sequence of this actor.
+  bool mCanSend;
 };
 
 } // layers

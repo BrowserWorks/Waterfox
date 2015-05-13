@@ -8,6 +8,7 @@
 #include "VideoUtils.h"
 #include "nsTArray.h"
 #include "MediaCodecProxy.h"
+#include "MediaData.h"
 
 #include "prlog.h"
 #include <android/log.h>
@@ -25,7 +26,7 @@ using namespace android;
 namespace mozilla {
 
 GonkMediaDataDecoder::GonkMediaDataDecoder(GonkDecoderManager* aManager,
-                                           MediaTaskQueue* aTaskQueue,
+                                           FlushableMediaTaskQueue* aTaskQueue,
                                            MediaDataDecoderCallback* aCallback)
   : mTaskQueue(aTaskQueue)
   , mCallback(aCallback)
@@ -44,43 +45,51 @@ GonkMediaDataDecoder::~GonkMediaDataDecoder()
 nsresult
 GonkMediaDataDecoder::Init()
 {
-  mDecoder = mManager->Init(mCallback);
+  sp<MediaCodecProxy> decoder;
+  decoder = mManager->Init(mCallback);
+  mDecoder = decoder;
   mDrainComplete = false;
-  return mDecoder.get() ? NS_OK : NS_ERROR_UNEXPECTED;
+
+  return NS_OK;
 }
 
 nsresult
 GonkMediaDataDecoder::Shutdown()
 {
+  if (!mDecoder.get()) {
+    return NS_OK;
+  }
+
   mDecoder->stop();
+  mDecoder->ReleaseMediaResources();
   mDecoder = nullptr;
   return NS_OK;
 }
 
 // Inserts data into the decoder's pipeline.
 nsresult
-GonkMediaDataDecoder::Input(mp4_demuxer::MP4Sample* aSample)
+GonkMediaDataDecoder::Input(MediaRawData* aSample)
 {
   mTaskQueue->Dispatch(
-    NS_NewRunnableMethodWithArg<nsAutoPtr<mp4_demuxer::MP4Sample>>(
+    NS_NewRunnableMethodWithArg<nsRefPtr<MediaRawData>>(
       this,
       &GonkMediaDataDecoder::ProcessDecode,
-      nsAutoPtr<mp4_demuxer::MP4Sample>(aSample)));
+      nsRefPtr<MediaRawData>(aSample)));
   return NS_OK;
 }
 
 void
-GonkMediaDataDecoder::ProcessDecode(mp4_demuxer::MP4Sample* aSample)
+GonkMediaDataDecoder::ProcessDecode(MediaRawData* aSample)
 {
   nsresult rv = mManager->Input(aSample);
   if (rv != NS_OK) {
-    NS_WARNING("GonkAudioDecoder failed to input data");
-    GMDD_LOG("Failed to input data err: %d",rv);
+    NS_WARNING("GonkMediaDataDecoder failed to input data");
+    GMDD_LOG("Failed to input data err: %d",int(rv));
     mCallback->Error();
     return;
   }
   if (aSample) {
-    mLastStreamOffset = aSample->byte_offset;
+    mLastStreamOffset = aSample->mOffset;
   }
   ProcessOutput();
 }
@@ -92,6 +101,11 @@ GonkMediaDataDecoder::ProcessOutput()
   nsresult rv = NS_ERROR_ABORT;
 
   while (!mDrainComplete) {
+    // There are samples in queue, try to send them into decoder when EOS.
+    if (mSignaledEOS && mManager->HasQueuedSample()) {
+      GMDD_LOG("ProcessOutput: drain all input samples");
+      rv = mManager->Input(nullptr);
+    }
     rv = mManager->Output(mLastStreamOffset, output);
     if (rv == NS_OK) {
       mCallback->Output(output);
@@ -105,7 +119,7 @@ GonkMediaDataDecoder::ProcessOutput()
     }
   }
 
-  if (rv == NS_ERROR_NOT_AVAILABLE) {
+  if (rv == NS_ERROR_NOT_AVAILABLE && !mSignaledEOS) {
     mCallback->InputExhausted();
     return;
   }
@@ -118,6 +132,7 @@ GonkMediaDataDecoder::ProcessOutput()
         mCallback->Output(output);
       }
       mCallback->DrainComplete();
+      MOZ_ASSERT_IF(mSignaledEOS, !mManager->HasQueuedSample());
       mSignaledEOS = false;
       mDrainComplete = true;
       return;
@@ -135,7 +150,7 @@ GonkMediaDataDecoder::Flush()
   // it's executing at all. Note the MP4Reader ignores all output while
   // flushing.
   mTaskQueue->Flush();
-
+  mDrainComplete = false;
   return mManager->Flush();
 }
 
@@ -153,28 +168,6 @@ GonkMediaDataDecoder::Drain()
 {
   mTaskQueue->Dispatch(NS_NewRunnableMethod(this, &GonkMediaDataDecoder::ProcessDrain));
   return NS_OK;
-}
-
-bool
-GonkMediaDataDecoder::IsWaitingMediaResources() {
-  return mDecoder->IsWaitingResources();
-}
-
-bool
-GonkMediaDataDecoder::IsDormantNeeded() {
-
-  return mDecoder.get() ? true : false;
-}
-
-void
-GonkMediaDataDecoder::AllocateMediaResources()
-{
-  mManager->AllocateMediaResources();
-}
-
-void
-GonkMediaDataDecoder::ReleaseMediaResources() {
-  mManager->ReleaseMediaResources();
 }
 
 } // namespace mozilla

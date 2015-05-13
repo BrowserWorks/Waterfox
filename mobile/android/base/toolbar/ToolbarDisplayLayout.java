@@ -12,8 +12,8 @@ import java.util.List;
 import org.mozilla.gecko.AboutPages;
 import org.mozilla.gecko.AppConstants.Versions;
 import org.mozilla.gecko.BrowserApp;
-import org.mozilla.gecko.NewTabletUI;
 import org.mozilla.gecko.R;
+import org.mozilla.gecko.ReaderModeUtils;
 import org.mozilla.gecko.SiteIdentity;
 import org.mozilla.gecko.SiteIdentity.SecurityMode;
 import org.mozilla.gecko.SiteIdentity.MixedMode;
@@ -23,6 +23,7 @@ import org.mozilla.gecko.animation.PropertyAnimator;
 import org.mozilla.gecko.animation.ViewHelper;
 import org.mozilla.gecko.favicons.Favicons;
 import org.mozilla.gecko.toolbar.BrowserToolbarTabletBase.ForwardButtonAnimation;
+import org.mozilla.gecko.util.HardwareUtils;
 import org.mozilla.gecko.util.StringUtils;
 import org.mozilla.gecko.widget.ThemedLinearLayout;
 import org.mozilla.gecko.widget.ThemedTextView;
@@ -44,7 +45,6 @@ import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
 import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.LinearLayout;
 
 /**
 * {@code ToolbarDisplayLayout} is the UI for when the toolbar is in
@@ -156,26 +156,8 @@ public class ToolbarDisplayLayout extends ThemedLinearLayout
         mFavicon = (ImageButton) findViewById(R.id.favicon);
         mSiteSecurity = (ImageButton) findViewById(R.id.site_security);
 
-        if (NewTabletUI.isEnabled(context)) {
+        if (HardwareUtils.isTablet()) {
             mSiteSecurity.setVisibility(View.VISIBLE);
-            // TODO: Rename this resource and remove this call when new tablet is default.
-            mSiteSecurity.setImageResource(R.drawable.new_tablet_site_security_level);
-
-            // TODO: This can likely be set statically in resources when new tablet is default.
-            // Dynamically update parameters for new tablet.
-            final LinearLayout.LayoutParams lp =
-                    (LinearLayout.LayoutParams) mSiteSecurity.getLayoutParams();
-            lp.height = res.getDimensionPixelSize(R.dimen.new_tablet_site_security_height);
-            lp.width = res.getDimensionPixelSize(R.dimen.new_tablet_site_security_width);
-            // TODO: Override a common static value when new tablet is standard.
-            lp.rightMargin = res.getDimensionPixelSize(R.dimen.new_tablet_site_security_right_margin);
-            mSiteSecurity.setLayoutParams(lp);
-            final int siteSecurityVerticalPadding =
-                    res.getDimensionPixelSize(R.dimen.new_tablet_site_security_padding_vertical);
-            final int siteSecurityHorizontalPadding =
-                    res.getDimensionPixelSize(R.dimen.new_tablet_site_security_padding_horizontal);
-            mSiteSecurity.setPadding(siteSecurityHorizontalPadding, siteSecurityVerticalPadding,
-                    siteSecurityHorizontalPadding, siteSecurityVerticalPadding);
 
             // We don't show favicons in the toolbar on new tablet. Note that while we could
             // null the favicon reference, we don't do so to avoid excessive null-checking.
@@ -190,7 +172,7 @@ public class ToolbarDisplayLayout extends ThemedLinearLayout
         mSiteSecurityVisible = (mSiteSecurity.getVisibility() == View.VISIBLE);
 
         mSiteIdentityPopup = new SiteIdentityPopup(mActivity);
-        mSiteIdentityPopup.setAnchor(mSiteSecurity);
+        mSiteIdentityPopup.setAnchor(this);
 
         mStop = (ImageButton) findViewById(R.id.stop);
         mPageActionLayout = (PageActionLayout) findViewById(R.id.page_action_layout);
@@ -203,10 +185,6 @@ public class ToolbarDisplayLayout extends ThemedLinearLayout
         Button.OnClickListener faviconListener = new Button.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (mSiteSecurity.getVisibility() != View.VISIBLE) {
-                    return;
-                }
-
                 mSiteIdentityPopup.show();
             }
         };
@@ -358,15 +336,18 @@ public class ToolbarDisplayLayout extends ThemedLinearLayout
         }
 
         // If the pref to show the title is set, use the tab's display title.
-        if (!mPrefs.shouldShowUrl(mActivity) || url == null) {
+        if (!mPrefs.shouldShowUrl() || url == null) {
             setTitle(tab.getDisplayTitle());
             return;
         }
 
-        CharSequence title = url;
+        String strippedURL = stripAboutReaderURL(url);
+
         if (mPrefs.shouldTrimUrls()) {
-            title = StringUtils.stripCommonSubdomains(StringUtils.stripScheme(url));
+            strippedURL = StringUtils.stripCommonSubdomains(StringUtils.stripScheme(strippedURL));
         }
+
+        CharSequence title = strippedURL;
 
         final String baseDomain = tab.getBaseDomain();
         if (!TextUtils.isEmpty(baseDomain)) {
@@ -385,9 +366,17 @@ public class ToolbarDisplayLayout extends ThemedLinearLayout
         setTitle(title);
     }
 
+    private String stripAboutReaderURL(final String url) {
+        if (!AboutPages.isAboutReader(url)) {
+            return url;
+        }
+
+        return ReaderModeUtils.getUrlFromAboutReader(url);
+    }
+
     private void updateFavicon(Tab tab) {
-        if (NewTabletUI.isEnabled(getContext())) {
-            // We don't display favicons in the toolbar for the new Tablet UI.
+        if (HardwareUtils.isTablet()) {
+            // We don't display favicons in the toolbar on tablet.
             return;
         }
 
@@ -412,7 +401,7 @@ public class ToolbarDisplayLayout extends ThemedLinearLayout
             image = Bitmap.createScaledBitmap(image, mFaviconSize, mFaviconSize, false);
             mFavicon.setImageBitmap(image);
         } else {
-            mFavicon.setImageResource(R.drawable.favicon);
+            mFavicon.setImageResource(R.drawable.favicon_globe);
         }
     }
 
@@ -502,8 +491,8 @@ public class ToolbarDisplayLayout extends ThemedLinearLayout
     }
 
     private void setSiteSecurityVisibility(boolean visible, EnumSet<UpdateFlags> flags) {
-        // We don't hide site security on new tablets.
-        if (visible == mSiteSecurityVisible || NewTabletUI.isEnabled(getContext())) {
+        // We don't hide site security on tablet.
+        if (visible == mSiteSecurityVisible || HardwareUtils.isTablet()) {
             return;
         }
 
@@ -547,12 +536,15 @@ public class ToolbarDisplayLayout extends ThemedLinearLayout
         mTitleChangeListener = listener;
     }
 
-    View getDoorHangerAnchor() {
-        if (!NewTabletUI.isEnabled(getContext())) {
-            return mFavicon;
-        } else {
-            return mSiteSecurity;
-        }
+    /**
+     * Update the Site Identity popup anchor.
+     *
+     * Tablet UI has a tablet-specific doorhanger anchor, so update it after all the views
+     * are inflated.
+     * @param view View to use as the anchor for the Site Identity popup.
+     */
+    void updateSiteIdentityAnchor(View view) {
+        mSiteIdentityPopup.setAnchor(view);
     }
 
     void prepareForwardAnimation(PropertyAnimator anim, ForwardButtonAnimation animation, int width) {

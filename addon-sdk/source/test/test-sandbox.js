@@ -57,7 +57,7 @@ exports['test exceptions'] = function(assert) {
     } + '();');
   }
   catch (error) {
-    assert.equal(error.fileName, '', 'no fileName reported');
+    assert.equal(error.fileName, '[System Principal]', 'No specific fileName reported');
     assert.equal(error.lineNumber, 3, 'reports correct line number');
   }
 
@@ -163,4 +163,4 @@ exports['test nuke sandbox'] = function(assert) {
   );
 }
 
-require('test').run(exports);
+require('sdk/test').run(exports);

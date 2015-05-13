@@ -32,8 +32,8 @@ LayerTransactionChild::Destroy()
   // When it happens, IPCOpen() is still true.
   // See bug 1004191.
   mDestroyed = true;
-  NS_ABORT_IF_FALSE(0 == ManagedPLayerChild().Length(),
-                    "layers should have been cleaned up by now");
+  MOZ_ASSERT(0 == ManagedPLayerChild().Length(),
+             "layers should have been cleaned up by now");
 
   for (size_t i = 0; i < ManagedPTextureChild().Length(); ++i) {
     TextureClient* texture = TextureClient::AsTextureClient(ManagedPTextureChild()[i]);
@@ -75,7 +75,7 @@ LayerTransactionChild::DeallocPCompositableChild(PCompositableChild* actor)
 }
 
 bool
-LayerTransactionChild::RecvParentAsyncMessages(const InfallibleTArray<AsyncParentMessageData>& aMessages)
+LayerTransactionChild::RecvParentAsyncMessages(InfallibleTArray<AsyncParentMessageData>&& aMessages)
 {
   for (AsyncParentMessageArray::index_type i = 0; i < aMessages.Length(); ++i) {
     const AsyncParentMessageData& message = aMessages[i];
@@ -90,19 +90,13 @@ LayerTransactionChild::RecvParentAsyncMessages(const InfallibleTArray<AsyncParen
         if (texture) {
           texture->SetReleaseFenceHandle(fence);
         }
-        if (mForwarder) {
-          mForwarder->HoldTransactionsToRespond(op.transactionId());
-        } else {
-          // Send back a response.
-          InfallibleTArray<AsyncChildMessageData> replies;
-          replies.AppendElement(OpReplyDeliverFence(op.transactionId()));
-          SendChildAsyncMessages(replies);
-        }
         break;
       }
-      case AsyncParentMessageData::TOpReplyDeliverFence: {
-        const OpReplyDeliverFence& op = message.get_OpReplyDeliverFence();
-        TransactionCompleteted(op.transactionId());
+      case AsyncParentMessageData::TOpReplyRemoveTexture: {
+        const OpReplyRemoveTexture& op = message.get_OpReplyRemoveTexture();
+
+        AsyncTransactionTrackersHolder::TransactionCompleteted(op.holderId(),
+                                                               op.transactionId());
         break;
       }
       default:
@@ -111,19 +105,6 @@ LayerTransactionChild::RecvParentAsyncMessages(const InfallibleTArray<AsyncParen
     }
   }
   return true;
-}
-
-void
-LayerTransactionChild::SendFenceHandle(AsyncTransactionTracker* aTracker,
-                                       PTextureChild* aTexture,
-                                       const FenceHandle& aFence)
-{
-  HoldUntilComplete(aTracker);
-  InfallibleTArray<AsyncChildMessageData> messages;
-  messages.AppendElement(OpDeliverFenceFromChild(aTracker->GetId(),
-                                                 nullptr, aTexture,
-                                                 FenceHandleFromChild(aFence)));
-  SendChildAsyncMessages(messages);
 }
 
 void

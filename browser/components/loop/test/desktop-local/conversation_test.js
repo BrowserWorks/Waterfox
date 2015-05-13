@@ -53,7 +53,10 @@ describe("loop.conversation", function() {
 
     fakeWindow = {
       navigator: { mozLoop: navigator.mozLoop },
-      close: sandbox.stub(),
+      close: sinon.stub(),
+      document: {},
+      addEventListener: function() {},
+      removeEventListener: function() {}
     };
     loop.shared.mixins.setRootObject(fakeWindow);
 
@@ -81,7 +84,7 @@ describe("loop.conversation", function() {
 
       sandbox.stub(loop.Dispatcher.prototype, "dispatch");
 
-      sandbox.stub(loop.shared.utils.Helper.prototype,
+      sandbox.stub(loop.shared.utils,
         "locationData").returns({
           hash: "#42",
           pathname: "/"
@@ -127,28 +130,20 @@ describe("loop.conversation", function() {
   });
 
   describe("AppControllerView", function() {
-    var conversationStore, conversation, client, ccView, oldTitle, dispatcher;
+    var conversationStore, client, ccView, dispatcher;
     var conversationAppStore, roomStore;
 
     function mountTestComponent() {
       return TestUtils.renderIntoDocument(
         React.createElement(loop.conversation.AppControllerView, {
-          client: client,
-          conversation: conversation,
           roomStore: roomStore,
-          sdk: {},
-          conversationStore: conversationStore,
-          conversationAppStore: conversationAppStore,
-          dispatcher: dispatcher
+          dispatcher: dispatcher,
+          mozLoop: navigator.mozLoop
         }));
     }
 
     beforeEach(function() {
-      oldTitle = document.title;
       client = new loop.Client();
-      conversation = new loop.shared.models.ConversationModel({}, {
-        sdk: {}
-      });
       dispatcher = new loop.Dispatcher();
       conversationStore = new loop.store.ConversationStore(
         dispatcher, {
@@ -167,42 +162,39 @@ describe("loop.conversation", function() {
       }});
 
       roomStore = new loop.store.RoomStore(dispatcher, {
-        mozLoop: navigator.mozLoop,
+        mozLoop: navigator.mozLoop
       });
       conversationAppStore = new loop.store.ConversationAppStore({
         dispatcher: dispatcher,
         mozLoop: navigator.mozLoop
       });
+
+      loop.store.StoreMixin.register({
+        conversationAppStore: conversationAppStore,
+        conversationStore: conversationStore
+      });
     });
 
     afterEach(function() {
       ccView = undefined;
-      document.title = oldTitle;
     });
 
-    it("should display the OutgoingConversationView for outgoing calls", function() {
+    it("should display the CallControllerView for outgoing calls", function() {
       conversationAppStore.setStoreState({windowType: "outgoing"});
 
       ccView = mountTestComponent();
 
       TestUtils.findRenderedComponentWithType(ccView,
-        loop.conversationViews.OutgoingConversationView);
+        loop.conversationViews.CallControllerView);
     });
 
-    it("should display the IncomingConversationView for incoming calls", function() {
-      sandbox.stub(conversation, "setIncomingSessionData");
-      sandbox.stub(loop, "CallConnectionWebSocket").returns({
-        promiseConnect: function() {
-          return new Promise(function() {});
-        },
-        on: sandbox.spy()
-      });
+    it("should display the CallControllerView for incoming calls", function() {
       conversationAppStore.setStoreState({windowType: "incoming"});
 
       ccView = mountTestComponent();
 
       TestUtils.findRenderedComponentWithType(ccView,
-        loop.conversationViews.IncomingConversationView);
+        loop.conversationViews.CallControllerView);
     });
 
     it("should display the RoomView for rooms", function() {

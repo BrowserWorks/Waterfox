@@ -15,13 +15,15 @@ import android.view.TouchDelegate;
 import android.view.View;
 import android.view.ViewTreeObserver;
 
+import org.mozilla.gecko.BrowserApp.Refreshable;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.Tab;
 import org.mozilla.gecko.Tabs;
 import org.mozilla.gecko.widget.ThemedImageButton;
 import org.mozilla.gecko.widget.ThemedLinearLayout;
 
-public class TabStrip extends ThemedLinearLayout {
+public class TabStrip extends ThemedLinearLayout
+                      implements Refreshable {
     private static final String LOGTAG = "GeckoTabStrip";
 
     private final TabStripView tabStripView;
@@ -129,6 +131,11 @@ public class TabStrip extends ThemedLinearLayout {
     }
 
     @Override
+    public void refresh() {
+        tabStripView.refresh();
+    }
+
+    @Override
     public void onLightweightThemeChanged() {
         final Drawable drawable = getTheme().getDrawable(this);
         if (drawable == null) {
@@ -136,7 +143,7 @@ public class TabStrip extends ThemedLinearLayout {
         }
 
         final StateListDrawable stateList = new StateListDrawable();
-        stateList.addState(PRIVATE_STATE_SET, getColorDrawable(R.color.background_tabs));
+        stateList.addState(PRIVATE_STATE_SET, getColorDrawable(R.color.text_and_tabs_tray_grey));
         stateList.addState(EMPTY_STATE_SET, drawable);
 
         setBackgroundDrawable(stateList);
@@ -144,7 +151,7 @@ public class TabStrip extends ThemedLinearLayout {
 
     @Override
     public void onLightweightThemeReset() {
-        final int defaultBackgroundColor = getResources().getColor(R.color.background_tabs);
+        final int defaultBackgroundColor = getResources().getColor(R.color.text_and_tabs_tray_grey);
         setBackgroundColor(defaultBackgroundColor);
     }
 }

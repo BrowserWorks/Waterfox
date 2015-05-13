@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim:set ts=2 sw=2 sts=2 et cindent: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -52,7 +52,7 @@ HTMLVideoElement::~HTMLVideoElement()
 
 nsresult HTMLVideoElement::GetVideoSize(nsIntSize* size)
 {
-  if (mMediaSize.width == -1 && mMediaSize.height == -1) {
+  if (!mMediaInfo.HasVideo()) {
     return NS_ERROR_FAILURE;
   }
 
@@ -60,8 +60,8 @@ nsresult HTMLVideoElement::GetVideoSize(nsIntSize* size)
     return NS_ERROR_FAILURE;
   }
 
-  size->height = mMediaSize.height;
-  size->width = mMediaSize.width;
+  size->height = mMediaInfo.mVideo.mDisplay.height;
+  size->width = mMediaInfo.mVideo.mDisplay.width;
   return NS_OK;
 }
 
@@ -126,6 +126,13 @@ nsresult HTMLVideoElement::SetAcceptHeader(nsIHttpChannel* aChannel)
                                     false);
 }
 
+bool
+HTMLVideoElement::IsInteractiveHTMLContent(bool aIgnoreTabindex) const
+{
+  return HasAttr(kNameSpaceID_None, nsGkAtoms::controls) ||
+         HTMLMediaElement::IsInteractiveHTMLContent(aIgnoreTabindex);
+}
+
 uint32_t HTMLVideoElement::MozParsedFrames() const
 {
   MOZ_ASSERT(NS_IsMainThread(), "Should be on main thread.");
@@ -173,13 +180,13 @@ double HTMLVideoElement::MozFrameDelay()
 bool HTMLVideoElement::MozHasAudio() const
 {
   MOZ_ASSERT(NS_IsMainThread(), "Should be on main thread.");
-  return mHasAudio;
+  return HasAudio();
 }
 
 JSObject*
-HTMLVideoElement::WrapNode(JSContext* aCx)
+HTMLVideoElement::WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return HTMLVideoElementBinding::Wrap(aCx, this);
+  return HTMLVideoElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 void
@@ -209,8 +216,8 @@ HTMLVideoElement::GetVideoPlaybackQuality()
     if (mDecoder) {
       MediaDecoder::FrameStatistics& stats = mDecoder->GetFrameStatistics();
       totalFrames = stats.GetParsedFrames();
-      droppedFrames = totalFrames - stats.GetPresentedFrames();
-      corruptedFrames = totalFrames - stats.GetDecodedFrames();
+      droppedFrames = stats.GetDroppedFrames();
+      corruptedFrames = 0;
     }
   }
 
@@ -247,7 +254,7 @@ HTMLVideoElement::UpdateScreenWakeLock()
     return;
   }
 
-  if (!mScreenWakeLock && !mPaused && !hidden && mHasVideo) {
+  if (!mScreenWakeLock && !mPaused && !hidden && HasVideo()) {
     nsRefPtr<power::PowerManagerService> pmService =
       power::PowerManagerService::GetInstance();
     NS_ENSURE_TRUE_VOID(pmService);

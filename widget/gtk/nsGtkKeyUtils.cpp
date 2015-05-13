@@ -22,9 +22,7 @@
 #include "nsIBidiKeyboard.h"
 #include "nsServiceManagerUtils.h"
 
-#ifdef PR_LOGGING
 PRLogModuleInfo* gKeymapWrapperLog = nullptr;
-#endif // PR_LOGGING
 
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/MouseEvents.h"
@@ -43,8 +41,6 @@ guint KeymapWrapper::sLastRepeatableHardwareKeyCode = 0;
 KeymapWrapper::RepeatState KeymapWrapper::sRepeatState =
     KeymapWrapper::NOT_PRESSED;
 nsIBidiKeyboard* sBidiKeyboard = nullptr;
-
-#ifdef PR_LOGGING
 
 static const char* GetBoolName(bool aBool)
 {
@@ -70,8 +66,6 @@ KeymapWrapper::GetModifierName(Modifier aModifier)
         default:           return "InvalidValue";
     }
 }
-
-#endif // PR_LOGGING
 
 /* static */ KeymapWrapper::Modifier
 KeymapWrapper::GetModifierForGDKKeyval(guint aGdkKeyval)
@@ -159,14 +153,12 @@ KeymapWrapper::KeymapWrapper() :
     mInitialized(false), mGdkKeymap(gdk_keymap_get_default()),
     mXKBBaseEventCode(0)
 {
-#ifdef PR_LOGGING
     if (!gKeymapWrapperLog) {
         gKeymapWrapperLog = PR_NewLogModule("KeymapWrapperWidgets");
     }
     PR_LOG(gKeymapWrapperLog, PR_LOG_ALWAYS,
         ("KeymapWrapper(%p): Constructor, mGdkKeymap=%p",
          this, mGdkKeymap));
-#endif // PR_LOGGING
 
     g_signal_connect(mGdkKeymap, "keys-changed",
                      (GCallback)OnKeysChanged, this);
@@ -175,7 +167,8 @@ KeymapWrapper::KeymapWrapper() :
     g_object_weak_ref(G_OBJECT(mGdkKeymap),
                       (GWeakNotify)OnDestroyKeymap, this);
 
-    InitXKBExtension();
+    if (GDK_IS_X11_DISPLAY(gdk_display_get_default()))
+        InitXKBExtension();
 
     Init();
 }
@@ -195,7 +188,8 @@ KeymapWrapper::Init()
     mModifierKeys.Clear();
     memset(mModifierMasks, 0, sizeof(mModifierMasks));
 
-    InitBySystemSettings();
+    if (GDK_IS_X11_DISPLAY(gdk_display_get_default()))
+        InitBySystemSettings();
 
     gdk_window_add_filter(nullptr, FilterEvents, this);
 
@@ -897,9 +891,10 @@ KeymapWrapper::InitKeyEvent(WidgetKeyboardEvent& aKeyEvent,
     // state.  It means if there're some pending modifier key press or
     // key release events, the result isn't what we want.
     guint modifierState = aGdkKeyEvent->state;
-    if (aGdkKeyEvent->is_modifier) {
+    GdkDisplay* gdkDisplay = gdk_display_get_default();
+    if (aGdkKeyEvent->is_modifier && GDK_IS_X11_DISPLAY(gdkDisplay)) {
         Display* display =
-            gdk_x11_display_get_xdisplay(gdk_display_get_default());
+            gdk_x11_display_get_xdisplay(gdkDisplay);
         if (XEventsQueued(display, QueuedAfterReading)) {
             XEvent nextEvent;
             XPeekEvent(display, &nextEvent);

@@ -23,11 +23,11 @@ function *promiseTabLoadEvent(tab, url)
 
 // Load a new blank tab
 add_task(function *() {
-  let tab = gBrowser.addTab();
-  gBrowser.selectedTab = tab;
+  yield BrowserTestUtils.openNewForegroundTab(gBrowser);
 
-  let browser = gBrowser.getBrowserForTab(tab);
+  gURLBar.focus();
 
+  let browser = gBrowser.selectedBrowser;
   yield SimpleTest.promiseFocus(browser.contentWindowAsCPOW, true);
 
   is(document.activeElement, browser, "Browser is focused when about:blank is loaded");
@@ -51,6 +51,19 @@ add_task(function *() {
   yield SimpleTest.promiseFocus(browser.contentWindowAsCPOW.frames[0]);
 
   is(browser.contentDocumentAsCPOW.activeElement.localName, "iframe", "Child iframe is focused");
+
+  gBrowser.removeCurrentTab();
+});
+
+// Pass a browser to promiseFocus
+add_task(function *() {
+  yield BrowserTestUtils.openNewForegroundTab(gBrowser, gBaseURL + "waitForFocusPage.html");
+
+  gURLBar.focus();
+
+  yield SimpleTest.promiseFocus(gBrowser.selectedBrowser);
+
+  is(document.activeElement, gBrowser.selectedBrowser, "Browser is focused when promiseFocus is passed a browser");
 
   gBrowser.removeCurrentTab();
 });

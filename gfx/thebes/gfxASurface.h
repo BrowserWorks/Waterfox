@@ -12,6 +12,7 @@
 #include "gfxTypes.h"
 #include "nscore.h"
 #include "nsSize.h"
+#include "mozilla/gfx/Rect.h"
 
 #ifdef MOZILLA_INTERNAL_API
 #include "nsStringFwd.h"
@@ -20,8 +21,6 @@
 #endif
 
 class gfxImageSurface;
-struct nsIntPoint;
-struct nsIntRect;
 struct gfxRect;
 struct gfxPoint;
 
@@ -229,7 +228,7 @@ public:
     }
 
     virtual ~gfxUnknownSurface() { }
-    virtual const nsIntSize GetSize() const { return mSize; }
+    virtual const nsIntSize GetSize() const override { return mSize; }
 
 private:
     nsIntSize mSize;

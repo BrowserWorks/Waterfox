@@ -1,5 +1,5 @@
-
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -21,6 +21,7 @@
 #include "nsIDOMEvent.h"
 #include "nsIDOMStyleSheet.h"
 #include "nsINode.h"
+#include "nsISpeculativeConnect.h"
 #include "nsIStyleSheet.h"
 #include "nsIStyleSheetLinkingElement.h"
 #include "nsIURL.h"
@@ -119,7 +120,7 @@ NS_IMPL_STRING_ATTR(HTMLLinkElement, Target, target)
 NS_IMPL_STRING_ATTR(HTMLLinkElement, Type, type)
 
 void
-HTMLLinkElement::GetItemValueText(nsAString& aValue)
+HTMLLinkElement::GetItemValueText(DOMString& aValue)
 {
   GetHref(aValue);
 }
@@ -145,6 +146,10 @@ HTMLLinkElement::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
   // Link must be inert in ShadowRoot.
   if (aDocument && !GetContainingShadow()) {
     aDocument->RegisterPendingLinkUpdate(this);
+  }
+
+  if (IsInComposedDoc()) {
+    UpdatePreconnect();
   }
 
   void (HTMLLinkElement::*update)() = &HTMLLinkElement::UpdateStyleSheetInternal;
@@ -275,7 +280,7 @@ HTMLLinkElement::UpdateImport()
     return;
   }
 
-  if (!nsStyleLinkElement::IsImportEnabled(NodePrincipal())) {
+  if (!nsStyleLinkElement::IsImportEnabled()) {
     // For now imports are hidden behind a pref...
     return;
   }
@@ -289,6 +294,30 @@ HTMLLinkElement::UpdateImport()
     nsAutoScriptBlocker scriptBlocker;
     // CORS check will happen at the start of the load.
     mImportLoader = manager->Get(uri, this, doc);
+  }
+}
+
+void
+HTMLLinkElement::UpdatePreconnect()
+{
+  // rel type should be preconnect
+  nsAutoString rel;
+  if (!GetAttr(kNameSpaceID_None, nsGkAtoms::rel, rel)) {
+    return;
+  }
+
+  uint32_t linkTypes = nsStyleLinkElement::ParseLinkTypes(rel, NodePrincipal());
+  if (!(linkTypes & ePRECONNECT)) {
+    return;
+  }
+
+  nsCOMPtr<nsISpeculativeConnect>
+    speculator(do_QueryInterface(nsContentUtils::GetIOService()));
+  if (speculator) {
+    nsCOMPtr<nsIURI> uri = GetHrefURI();
+    if (uri) {
+      speculator->SpeculativeConnect(uri, nullptr);
+    }
   }
 }
 
@@ -326,11 +355,16 @@ HTMLLinkElement::SetAttr(int32_t aNameSpaceID, nsIAtom* aName,
         dropSheet = !(linkTypes & nsStyleLinkElement::eSTYLESHEET);
       } else if (linkTypes & eHTMLIMPORT) {
         UpdateImport();
+      } else if ((linkTypes & ePRECONNECT) && IsInComposedDoc()) {
+        UpdatePreconnect();
       }
     }
 
     if (aName == nsGkAtoms::href) {
       UpdateImport();
+      if (IsInComposedDoc()) {
+        UpdatePreconnect();
+      }
     }
     
     UpdateStyleSheetInternal(nullptr, nullptr,
@@ -510,9 +544,9 @@ HTMLLinkElement::SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
 }
 
 JSObject*
-HTMLLinkElement::WrapNode(JSContext* aCx)
+HTMLLinkElement::WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return HTMLLinkElementBinding::Wrap(aCx, this);
+  return HTMLLinkElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 already_AddRefed<nsIDocument>

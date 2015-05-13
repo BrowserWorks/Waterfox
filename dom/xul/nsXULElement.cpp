@@ -34,6 +34,7 @@
 #include "nsIDOMXULSelectCntrlItemEl.h"
 #include "nsIDocument.h"
 #include "nsLayoutStylesheetCache.h"
+#include "mozilla/AsyncEventDispatcher.h"
 #include "mozilla/EventListenerManager.h"
 #include "mozilla/EventStateManager.h"
 #include "mozilla/EventStates.h"
@@ -93,6 +94,7 @@
 #include "nsAttrValueInlines.h"
 #include "mozilla/Attributes.h"
 #include "nsIController.h"
+#include "nsQueryObject.h"
 #include <algorithm>
 
 // The XUL doc interface
@@ -123,8 +125,8 @@ uint32_t             nsXULPrototypeAttribute::gNumCacheSets;
 uint32_t             nsXULPrototypeAttribute::gNumCacheFills;
 #endif
 
-class nsXULElementTearoff MOZ_FINAL : public nsIDOMElementCSSInlineStyle,
-                                      public nsIFrameLoaderOwner
+class nsXULElementTearoff final : public nsIDOMElementCSSInlineStyle,
+                                  public nsIFrameLoaderOwner
 {
   ~nsXULElementTearoff() {}
 
@@ -138,7 +140,7 @@ public:
   {
   }
 
-  NS_IMETHOD GetStyle(nsIDOMCSSStyleDeclaration** aStyle) MOZ_OVERRIDE
+  NS_IMETHOD GetStyle(nsIDOMCSSStyleDeclaration** aStyle) override
   {
     nsXULElement* element = static_cast<nsXULElement*>(mElement.get());
     NS_ADDREF(*aStyle = element->Style());
@@ -464,7 +466,7 @@ nsXULElement::GetElementsByAttributeNS(const nsAString& aNamespaceURI,
     ErrorResult rv;
     *aReturn =
         GetElementsByAttributeNS(aNamespaceURI, aAttribute, aValue, rv).take();
-    return rv.ErrorCode();
+    return rv.StealNSResult();
 }
 
 already_AddRefed<nsINodeList>
@@ -632,7 +634,7 @@ nsXULElement::PerformAccesskey(bool aKeyCausesActivation,
 {
     nsCOMPtr<nsIContent> content(this);
 
-    if (Tag() == nsGkAtoms::label) {
+    if (IsXULElement(nsGkAtoms::label)) {
         nsCOMPtr<nsIDOMElement> element;
 
         nsAutoString control;
@@ -660,13 +662,12 @@ nsXULElement::PerformAccesskey(bool aKeyCausesActivation,
     nsXULElement* elm = FromContent(content);
     if (elm) {
         // Define behavior for each type of XUL element.
-        nsIAtom *tag = content->Tag();
-        if (tag != nsGkAtoms::toolbarbutton) {
+        if (!content->IsXULElement(nsGkAtoms::toolbarbutton)) {
           nsIFocusManager* fm = nsFocusManager::GetFocusManager();
           if (fm) {
             nsCOMPtr<nsIDOMElement> element;
             // for radio buttons, focus the radiogroup instead
-            if (tag == nsGkAtoms::radio) {
+            if (content->IsXULElement(nsGkAtoms::radio)) {
               nsCOMPtr<nsIDOMXULSelectControlItemElement> controlItem(do_QueryInterface(content));
               if (controlItem) {
                 bool disabled;
@@ -685,7 +686,8 @@ nsXULElement::PerformAccesskey(bool aKeyCausesActivation,
               fm->SetFocus(element, nsIFocusManager::FLAG_BYKEY);
           }
         }
-        if (aKeyCausesActivation && tag != nsGkAtoms::textbox && tag != nsGkAtoms::menulist) {
+        if (aKeyCausesActivation &&
+            !content->IsAnyOfXULElements(nsGkAtoms::textbox, nsGkAtoms::menulist)) {
           elm->ClickWithInputSource(nsIDOMMouseEvent::MOZ_SOURCE_KEYBOARD);
         }
     }
@@ -857,7 +859,7 @@ nsXULElement::BindToTree(nsIDocument* aDocument,
     // We do this during binding, not element construction, because elements
     // can be moved from the document that creates them to another document.
 
-    if (!XULElementsRulesInMinimalXULSheet(Tag())) {
+    if (!XULElementsRulesInMinimalXULSheet(NodeInfo()->NameAtom())) {
       doc->EnsureOnDemandBuiltInUASheet(nsLayoutStylesheetCache::XULSheet());
       // To keep memory usage down it is important that we try and avoid
       // pulling xul.css into non-XUL documents. That should be very rare, and
@@ -1287,9 +1289,8 @@ nsresult
 nsXULElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
 {
     aVisitor.mForceContentDispatch = true; //FIXME! Bug 329119
-    nsIAtom* tag = Tag();
     if (IsRootOfNativeAnonymousSubtree() &&
-        (tag == nsGkAtoms::scrollbar || tag == nsGkAtoms::scrollcorner) &&
+        (IsAnyOfXULElements(nsGkAtoms::scrollbar, nsGkAtoms::scrollcorner)) &&
         (aVisitor.mEvent->message == NS_MOUSE_CLICK ||
          aVisitor.mEvent->message == NS_MOUSE_DOUBLECLICK ||
          aVisitor.mEvent->message == NS_XUL_COMMAND ||
@@ -1304,7 +1305,7 @@ nsXULElement::PreHandleEvent(EventChainPreVisitor& aVisitor)
     if (aVisitor.mEvent->message == NS_XUL_COMMAND &&
         aVisitor.mEvent->mClass == eInputEventClass &&
         aVisitor.mEvent->originalTarget == static_cast<nsIContent*>(this) &&
-        tag != nsGkAtoms::command) {
+        !IsXULElement(nsGkAtoms::command)) {
         // Check that we really have an xul command event. That will be handled
         // in a special way.
         nsCOMPtr<nsIDOMXULCommandEvent> xulEvent =
@@ -1370,7 +1371,7 @@ nsXULElement::GetResource(nsIRDFResource** aResource)
 {
     ErrorResult rv;
     *aResource = GetResource(rv).take();
-    return rv.ErrorCode();
+    return rv.StealNSResult();
 }
 
 already_AddRefed<nsIRDFResource>
@@ -1452,8 +1453,7 @@ nsXULElement::GetAttributeChangeHint(const nsIAtom* aAttribute,
     if (aAttribute == nsGkAtoms::value &&
         (aModType == nsIDOMMutationEvent::REMOVAL ||
          aModType == nsIDOMMutationEvent::ADDITION)) {
-      nsIAtom *tag = Tag();
-      if (tag == nsGkAtoms::label || tag == nsGkAtoms::description)
+      if (IsAnyOfXULElements(nsGkAtoms::label, nsGkAtoms::description))
         // Label and description dynamically morph between a normal
         // block and a cropping single-line XUL text frame.  If the
         // value attribute is being added or removed, then we need to
@@ -1484,7 +1484,7 @@ nsXULElement::GetControllers(nsIControllers** aResult)
 {
     ErrorResult rv;
     NS_IF_ADDREF(*aResult = GetControllers(rv));
-    return rv.ErrorCode();
+    return rv.StealNSResult();
 }
 
 nsIControllers*
@@ -1496,8 +1496,7 @@ nsXULElement::GetControllers(ErrorResult& rv)
         rv = NS_NewXULControllers(nullptr, NS_GET_IID(nsIControllers),
                                   reinterpret_cast<void**>(&slots->mControllers));
 
-        NS_ASSERTION(NS_SUCCEEDED(rv.ErrorCode()),
-                     "unable to create a controllers");
+        NS_ASSERTION(!rv.Failed(), "unable to create a controllers");
         if (rv.Failed()) {
             return nullptr;
         }
@@ -1511,7 +1510,7 @@ nsXULElement::GetBoxObject(nsIBoxObject** aResult)
 {
     ErrorResult rv;
     *aResult = GetBoxObject(rv).take();
-    return rv.ErrorCode();
+    return rv.StealNSResult();
 }
 
 already_AddRefed<BoxObject>
@@ -1584,10 +1583,8 @@ nsXULElement::LoadSrc()
 {
     // Allow frame loader only on objects for which a container box object
     // can be obtained.
-    nsIAtom* tag = Tag();
-    if (tag != nsGkAtoms::browser &&
-        tag != nsGkAtoms::editor &&
-        tag != nsGkAtoms::iframe) {
+    if (!IsAnyOfXULElements(nsGkAtoms::browser, nsGkAtoms::editor,
+                            nsGkAtoms::iframe)) {
         return NS_OK;
     }
     if (!IsInDoc() ||
@@ -1603,13 +1600,17 @@ nsXULElement::LoadSrc()
         // Usually xul elements are used in chrome, which doesn't have
         // session history at all.
         slots->mFrameLoader = nsFrameLoader::Create(this, false);
+        NS_ENSURE_TRUE(slots->mFrameLoader, NS_OK);
+
+        (new AsyncEventDispatcher(this,
+                                  NS_LITERAL_STRING("XULFrameLoaderCreated"),
+                                  /* aBubbles */ true))->RunDOMEventWhenSafe();
+
         if (AttrValueIs(kNameSpaceID_None, nsGkAtoms::prerendered,
                         NS_LITERAL_STRING("true"), eIgnoreCase)) {
             nsresult rv = slots->mFrameLoader->SetIsPrerendered();
             NS_ENSURE_SUCCESS(rv,rv);
         }
-
-        NS_ENSURE_TRUE(slots->mFrameLoader, NS_OK);
     }
 
     return slots->mFrameLoader->LoadFrame();
@@ -1651,7 +1652,7 @@ nsXULElement::SwapFrameLoaders(nsIFrameLoaderOwner* aOtherOwner)
 
     ErrorResult rv;
     SwapFrameLoaders(*otherEl, rv);
-    return rv.ErrorCode();
+    return rv.StealNSResult();
 }
 
 void
@@ -1700,7 +1701,7 @@ nsXULElement::Focus()
 {
     ErrorResult rv;
     Focus(rv);
-    return rv.ErrorCode();
+    return rv.StealNSResult();
 }
 
 void
@@ -1718,7 +1719,7 @@ nsXULElement::Blur()
 {
     ErrorResult rv;
     Blur(rv);
-    return rv.ErrorCode();
+    return rv.StealNSResult();
 }
 
 void
@@ -2121,9 +2122,9 @@ nsXULElement::IsEventAttributeName(nsIAtom *aName)
 }
 
 JSObject*
-nsXULElement::WrapNode(JSContext *aCx)
+nsXULElement::WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
 {
-    return dom::XULElementBinding::Wrap(aCx, this);
+    return dom::XULElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 NS_IMPL_CYCLE_COLLECTION_CLASS(nsXULPrototypeNode)
@@ -2830,7 +2831,7 @@ nsXULPrototypeScript::Compile(JS::SourceBufferHolder& aSrcBuf,
         NS_ADDREF(aOffThreadReceiver);
     } else {
         JS::Rooted<JSScript*> script(cx);
-        if (!JS::Compile(cx, scope, options, aSrcBuf, &script))
+        if (!JS::Compile(cx, options, aSrcBuf, &script))
             return NS_ERROR_OUT_OF_MEMORY;
         Set(script);
     }

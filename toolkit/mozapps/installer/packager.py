@@ -24,10 +24,9 @@ from mozpack.copier import (
 )
 from mozpack.errors import errors
 from mozpack.unify import UnifiedBuildFinder
-import mozpack.path
+import mozpack.path as mozpath
 import buildconfig
 from argparse import ArgumentParser
-from createprecomplete import generate_precomplete
 import os
 from StringIO import StringIO
 import subprocess
@@ -180,6 +179,8 @@ class RemovedFiles(GeneratedFile):
 
     def handle_line(self, str):
         f = str.strip()
+        if not f:
+            return
         if self.copier.contains(f):
             errors.error('Removal of packaged file(s): %s' % f)
         self.content += f + '\n'
@@ -215,11 +216,11 @@ class NoPkgFilesRemover(object):
             self._error = errors.warn
             self._msg = 'Skipping %s'
 
-    def add_base(self, base):
-        self._formatter.add_base(base)
+    def add_base(self, base, *args):
+        self._formatter.add_base(base, *args)
 
     def add(self, path, content):
-        if not any(mozpack.path.match(path, spec) for spec in self._files):
+        if not any(mozpath.match(path, spec) for spec in self._files):
             self._formatter.add(path, content)
         else:
             self._error(self._msg % path)
@@ -304,7 +305,7 @@ def main():
     if args.unify:
         def is_native(path):
             path = os.path.abspath(path)
-            return platform.machine() in mozpack.path.split(path)
+            return platform.machine() in mozpath.split(path)
 
         # Invert args.unify and args.source if args.unify points to the
         # native architecture.
@@ -345,18 +346,17 @@ def main():
         sink.close(args.manifest is not None)
 
         if args.removals:
-            lines = [l.lstrip() for l in open(args.removals).readlines()]
-            removals_in = StringIO(''.join(lines))
+            removals_in = StringIO(open(args.removals).read())
             removals_in.name = args.removals
             removals = RemovedFiles(copier)
             preprocess(removals_in, removals, defines)
-            copier.add(mozpack.path.join(respath, 'removed-files'), removals)
+            copier.add(mozpath.join(respath, 'removed-files'), removals)
 
     # shlibsign libraries
     if launcher.can_launch():
         if not mozinfo.isMac:
             for lib in SIGN_LIBS:
-                libbase = mozpack.path.join(respath, '%s%s') \
+                libbase = mozpath.join(respath, '%s%s') \
                     % (buildconfig.substs['DLL_PREFIX'], lib)
                 libname = '%s%s' % (libbase, buildconfig.substs['DLL_SUFFIX'])
                 if copier.contains(libname):
@@ -379,13 +379,17 @@ def main():
     if isinstance(formatter, OmniJarFormatter) and launcher.can_launch() \
       and buildconfig.substs['MOZ_DISABLE_STARTUPCACHE'] != '1':
         if buildconfig.substs.get('LIBXUL_SDK'):
-            gre_path = mozpack.path.join(buildconfig.substs['LIBXUL_DIST'],
+            gre_path = mozpath.join(buildconfig.substs['LIBXUL_DIST'],
                                          'bin')
         else:
             gre_path = None
-        for base in sorted([[p for p in [mozpack.path.join('bin', b), b]
-                            if os.path.exists(os.path.join(args.source, p))][0]
-                           for b in sink.packager.get_bases()]):
+        def get_bases():
+            for b in sink.packager.get_bases(addons=False):
+                for p in (mozpath.join('bin', b), b):
+                    if os.path.exists(os.path.join(args.source, p)):
+                        yield p
+                        break
+        for base in sorted(get_bases()):
             if not gre_path:
                 gre_path = base
             base_path = sink.normalize_path(base)
@@ -394,8 +398,6 @@ def main():
                                  args.source, gre_path, base)
 
     copier.copy(args.destination)
-    generate_precomplete(os.path.normpath(os.path.join(args.destination,
-                                                       respath)))
 
 
 if __name__ == '__main__':

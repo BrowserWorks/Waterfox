@@ -37,6 +37,9 @@
 #endif
     #include "webrtc/modules/audio_device/android/opensles_input.h"
     #include "webrtc/modules/audio_device/android/opensles_output.h"
+#elif defined(WEBRTC_AUDIO_SNDIO)
+    #include "audio_device_utility_sndio.h"
+    #include "audio_device_sndio.h"
 #elif defined(WEBRTC_LINUX) || defined(WEBRTC_BSD)
     #include "audio_device_utility_linux.h"
  #if defined(LINUX_ALSA)
@@ -52,8 +55,14 @@
     #include "audio_device_utility_mac.h"
     #include "audio_device_mac.h"
 #endif
+
+#if defined(WEBRTC_DUMMY_FILE_DEVICES)
+#include "webrtc/modules/audio_device/dummy/file_audio_device_factory.h"
+#endif
+
 #include "webrtc/modules/audio_device/dummy/audio_device_dummy.h"
 #include "webrtc/modules/audio_device/dummy/audio_device_utility_dummy.h"
+#include "webrtc/modules/audio_device/dummy/file_audio_device.h"
 #include "webrtc/system_wrappers/interface/critical_section_wrapper.h"
 #include "webrtc/system_wrappers/interface/trace.h"
 
@@ -166,6 +175,9 @@ int32_t AudioDeviceModuleImpl::CheckPlatform()
 #elif defined(WEBRTC_ANDROID)
     platform = kPlatformAndroid;
     WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, _id, "current platform is ANDROID");
+#elif defined(WEBRTC_AUDIO_SNDIO)
+    platform = kPlatformSndio;
+    WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, _id, "current platform is POSIX using SNDIO");
 #elif defined(WEBRTC_LINUX) || defined(WEBRTC_BSD)
     platform = kPlatformLinux;
     WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, _id, "current platform is LINUX");
@@ -206,6 +218,14 @@ int32_t AudioDeviceModuleImpl::CreatePlatformSpecificObjects()
     ptrAudioDevice = new AudioDeviceDummy(Id());
     WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, _id, "Dummy Audio APIs will be utilized");
 
+    if (ptrAudioDevice != NULL)
+    {
+        ptrAudioDeviceUtility = new AudioDeviceUtilityDummy(Id());
+    }
+#elif defined(WEBRTC_DUMMY_FILE_DEVICES)
+    ptrAudioDevice = FileAudioDeviceFactory::CreateFileAudioDevice(Id());
+    WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, _id,
+                 "Will use file-playing dummy device.");
     if (ptrAudioDevice != NULL)
     {
         ptrAudioDeviceUtility = new AudioDeviceUtilityDummy(Id());
@@ -306,6 +326,15 @@ int32_t AudioDeviceModuleImpl::CreatePlatformSpecificObjects()
     }
     // END #if defined(WEBRTC_ANDROID_OPENSLES)
 
+#elif defined(WEBRTC_AUDIO_SNDIO)
+    ptrAudioDevice = new AudioDeviceSndio(Id());
+    if (ptrAudioDevice != NULL)
+    {
+        WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, _id, "attempting to use the Sndio audio API...");
+        // Create the sndio implementation of the Device Utility.
+        ptrAudioDeviceUtility = new AudioDeviceUtilitySndio(Id());
+    }
+
     // Create the *Linux* implementation of the Audio Device
     //
 #elif defined(WEBRTC_LINUX) || defined(WEBRTC_BSD)
@@ -363,15 +392,15 @@ int32_t AudioDeviceModuleImpl::CreatePlatformSpecificObjects()
 #if defined(WEBRTC_IOS)
     if (audioLayer == kPlatformDefaultAudio)
     {
-        // Create *iPhone Audio* implementation
-        ptrAudioDevice = new AudioDeviceIPhone(Id());
+        // Create iOS Audio Device implementation.
+        ptrAudioDevice = new AudioDeviceIOS(Id());
         WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, _id, "iPhone Audio APIs will be utilized");
     }
 
     if (ptrAudioDevice != NULL)
     {
-        // Create the Mac implementation of the Device Utility.
-        ptrAudioDeviceUtility = new AudioDeviceUtilityIPhone(Id());
+        // Create iOS Device Utility implementation.
+        ptrAudioDeviceUtility = new AudioDeviceUtilityIOS(Id());
     }
     // END #if defined(WEBRTC_IOS)
 
@@ -669,27 +698,6 @@ bool AudioDeviceModuleImpl::Initialized() const
 }
 
 // ----------------------------------------------------------------------------
-//  SpeakerIsAvailable
-// ----------------------------------------------------------------------------
-
-int32_t AudioDeviceModuleImpl::SpeakerIsAvailable(bool* available)
-{
-    CHECK_INITIALIZED();
-
-    bool isAvailable(0);
-
-    if (_ptrAudioDevice->SpeakerIsAvailable(isAvailable) == -1)
-    {
-        return -1;
-    }
-
-    *available = isAvailable;
-
-    WEBRTC_TRACE(kTraceStateInfo, kTraceAudioDevice, _id, "output: available=%d", available);
-    return (0);
-}
-
-// ----------------------------------------------------------------------------
 //  InitSpeaker
 // ----------------------------------------------------------------------------
 
@@ -697,27 +705,6 @@ int32_t AudioDeviceModuleImpl::InitSpeaker()
 {
     CHECK_INITIALIZED();
     return (_ptrAudioDevice->InitSpeaker());
-}
-
-// ----------------------------------------------------------------------------
-//  MicrophoneIsAvailable
-// ----------------------------------------------------------------------------
-
-int32_t AudioDeviceModuleImpl::MicrophoneIsAvailable(bool* available)
-{
-    CHECK_INITIALIZED();
-
-    bool isAvailable(0);
-
-    if (_ptrAudioDevice->MicrophoneIsAvailable(isAvailable) == -1)
-    {
-        return -1;
-    }
-
-    *available = isAvailable;
-
-    WEBRTC_TRACE(kTraceStateInfo, kTraceAudioDevice, _id, "output: available=%d", *available);
-    return (0);
 }
 
 // ----------------------------------------------------------------------------
@@ -1778,8 +1765,6 @@ int32_t AudioDeviceModuleImpl::StopRawOutputFileRecording()
     CHECK_INITIALIZED();
 
     return (_audioDeviceBuffer.StopOutputFileRecording());
-
-    return 0;
 }
 
 // ----------------------------------------------------------------------------

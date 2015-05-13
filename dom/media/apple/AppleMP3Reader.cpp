@@ -280,7 +280,7 @@ AppleMP3Reader::AudioSampleCallback(UInt32 aNumBytes,
 bool
 AppleMP3Reader::DecodeAudioData()
 {
-  MOZ_ASSERT(mDecoder->OnDecodeThread(), "Should be on decode thread");
+  MOZ_ASSERT(OnTaskQueue());
 
   // Read AUDIO_READ_BYTES if we can
   char bytes[AUDIO_READ_BYTES];
@@ -314,7 +314,7 @@ bool
 AppleMP3Reader::DecodeVideoFrame(bool &aKeyframeSkip,
                                  int64_t aTimeThreshold)
 {
-  MOZ_ASSERT(mDecoder->OnDecodeThread(), "Should be on decode thread");
+  MOZ_ASSERT(OnTaskQueue());
   return false;
 }
 
@@ -322,14 +322,14 @@ AppleMP3Reader::DecodeVideoFrame(bool &aKeyframeSkip,
 bool
 AppleMP3Reader::HasAudio()
 {
-  MOZ_ASSERT(mDecoder->OnDecodeThread(), "Should be on decode thread");
+  MOZ_ASSERT(OnTaskQueue());
   return mStreamReady;
 }
 
 bool
 AppleMP3Reader::HasVideo()
 {
-  MOZ_ASSERT(mDecoder->OnDecodeThread(), "Should be on decode thread");
+  MOZ_ASSERT(OnTaskQueue());
   return false;
 }
 
@@ -369,7 +369,7 @@ nsresult
 AppleMP3Reader::ReadMetadata(MediaInfo* aInfo,
                              MetadataTags** aTags)
 {
-  MOZ_ASSERT(mDecoder->OnDecodeThread(), "Should be on decode thread");
+  MOZ_ASSERT(OnTaskQueue());
 
   *aTags = nullptr;
 
@@ -414,9 +414,10 @@ AppleMP3Reader::ReadMetadata(MediaInfo* aInfo,
     return NS_ERROR_FAILURE;
   }
 
-  aInfo->mAudio.mRate = mAudioSampleRate;
-  aInfo->mAudio.mChannels = mAudioChannels;
-  aInfo->mAudio.mHasAudio = mStreamReady;
+  if (mStreamReady) {
+    aInfo->mAudio.mRate = mAudioSampleRate;
+    aInfo->mAudio.mChannels = mAudioChannels;
+  }
 
   {
     ReentrantMonitorAutoEnter mon(mDecoder->GetReentrantMonitor());
@@ -493,14 +494,9 @@ AppleMP3Reader::SetupDecoder()
 
 
 nsRefPtr<MediaDecoderReader::SeekPromise>
-AppleMP3Reader::Seek(int64_t aTime,
-                     int64_t aStartTime,
-                     int64_t aEndTime,
-                     int64_t aCurrentTime)
+AppleMP3Reader::Seek(int64_t aTime, int64_t aEndTime)
 {
-  MOZ_ASSERT(mDecoder->OnDecodeThread(), "Should be on decode thread");
-  NS_ASSERTION(aStartTime < aEndTime,
-               "Seeking should happen over a positive range");
+  MOZ_ASSERT(OnTaskQueue());
 
   // Find the exact frame/packet that contains |aTime|.
   mCurrentAudioFrame = aTime * mAudioSampleRate / USECS_PER_S;
@@ -543,12 +539,16 @@ AppleMP3Reader::NotifyDataArrived(const char* aBuffer,
   }
 
   mMP3FrameParser.Parse(aBuffer, aLength, aOffset);
+  if (!mMP3FrameParser.IsMP3()) {
+    return;
+  }
 
   uint64_t duration = mMP3FrameParser.GetDuration();
   if (duration != mDuration) {
     LOGD("Updating media duration to %lluus\n", duration);
-    mDuration = duration;
+    MOZ_ASSERT(mDecoder);
     ReentrantMonitorAutoEnter mon(mDecoder->GetReentrantMonitor());
+    mDuration = duration;
     mDecoder->UpdateEstimatedMediaDuration(duration);
   }
 }

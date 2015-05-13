@@ -33,6 +33,7 @@
 #include "MediaStreamSource.h"
 #include "MediaTaskQueue.h"
 #include "MP3FrameParser.h"
+#include "nsMimeTypes.h"
 #include "nsThreadUtils.h"
 #include "ImageContainer.h"
 #include "SharedThreadPool.h"
@@ -40,13 +41,9 @@
 #include "VideoUtils.h"
 
 using namespace android;
+using namespace mozilla::layers;
 
 namespace mozilla {
-
-enum {
-  kNotifyCodecReserved = 'core',
-  kNotifyCodecCanceled = 'coca',
-};
 
 static const int64_t sInvalidDurationUs = INT64_C(-1);
 static const int64_t sInvalidTimestampUs = INT64_C(-1);
@@ -70,25 +67,6 @@ IsValidTimestampUs(int64_t aTimestamp)
   return aTimestamp >= INT64_C(0);
 }
 
-MediaCodecReader::MessageHandler::MessageHandler(MediaCodecReader* aReader)
-  : mReader(aReader)
-{
-}
-
-MediaCodecReader::MessageHandler::~MessageHandler()
-{
-  mReader = nullptr;
-}
-
-void
-MediaCodecReader::MessageHandler::onMessageReceived(
-  const sp<AMessage>& aMessage)
-{
-  if (mReader) {
-    mReader->onMessageReceived(aMessage);
-  }
-}
-
 MediaCodecReader::VideoResourceListener::VideoResourceListener(
   MediaCodecReader* aReader)
   : mReader(aReader)
@@ -104,7 +82,7 @@ void
 MediaCodecReader::VideoResourceListener::codecReserved()
 {
   if (mReader) {
-    mReader->codecReserved(mReader->mVideoTrack);
+    mReader->VideoCodecReserved();
   }
 }
 
@@ -112,7 +90,7 @@ void
 MediaCodecReader::VideoResourceListener::codecCanceled()
 {
   if (mReader) {
-    mReader->codecCanceled(mReader->mVideoTrack);
+    mReader->VideoCodecCanceled();
   }
 }
 
@@ -298,7 +276,6 @@ MediaCodecReader::MediaCodecReader(AbstractMediaDecoder* aDecoder)
   , mNextParserPosition(INT64_C(0))
   , mParsedDataLength(INT64_C(0))
 {
-  mHandler = new MessageHandler(this);
   mVideoListener = new VideoResourceListener(this);
 }
 
@@ -323,12 +300,6 @@ MediaCodecReader::UpdateIsWaitingMediaResources()
 {
   mIsWaitingResources = (mVideoTrack.mCodec != nullptr) &&
                         (!mVideoTrack.mCodec->allocated());
-}
-
-bool
-MediaCodecReader::IsDormantNeeded()
-{
-  return mVideoTrack.mSource != nullptr;
 }
 
 void
@@ -486,8 +457,13 @@ MediaCodecReader::DecodeAudioDataSync()
 void
 MediaCodecReader::DecodeAudioDataTask()
 {
-  DecodeAudioDataSync();
+  if (AudioQueue().GetSize() == 0 && !AudioQueue().IsFinished()) {
+    DecodeAudioDataSync();
+  }
   MonitorAutoLock al(mAudioTrack.mTrackMonitor);
+  if (mAudioTrack.mAudioPromise.IsEmpty()) {
+    return;
+  }
   if (AudioQueue().GetSize() > 0) {
     nsRefPtr<AudioData> a = AudioQueue().PopFront();
     if (a) {
@@ -524,13 +500,13 @@ MediaCodecReader::DecodeVideoFrameTask(int64_t aTimeThreshold)
 bool
 MediaCodecReader::HasAudio()
 {
-  return mInfo.mAudio.mHasAudio;
+  return mInfo.HasAudio();
 }
 
 bool
 MediaCodecReader::HasVideo()
 {
-  return mInfo.mVideo.mHasVideo;
+  return mInfo.HasVideo();
 }
 
 void
@@ -682,13 +658,15 @@ nsresult
 MediaCodecReader::ReadMetadata(MediaInfo* aInfo,
                                MetadataTags** aTags)
 {
-  MOZ_ASSERT(mDecoder->OnDecodeThread(), "Should be on decode thread.");
+  MOZ_ASSERT(OnTaskQueue());
 
   if (!ReallocateResources()) {
     return NS_ERROR_FAILURE;
   }
 
-  if (!TriggerIncrementalParser()) {
+  bool incrementalParserNeeded =
+    mDecoder->GetResource()->GetContentType().EqualsASCII(AUDIO_MP3);
+  if (incrementalParserNeeded && !TriggerIncrementalParser()) {
     return NS_ERROR_FAILURE;
   }
 
@@ -699,6 +677,14 @@ MediaCodecReader::ReadMetadata(MediaInfo* aInfo,
   UpdateIsWaitingMediaResources();
   if (IsWaitingMediaResources()) {
     return NS_OK;
+  }
+
+  // Configure video codec after the codecReserved.
+  if (mVideoTrack.mSource != nullptr) {
+    if (!ConfigureMediaCodec(mVideoTrack)) {
+      DestroyMediaCodec(mVideoTrack);
+      return NS_ERROR_FAILURE;
+    }
   }
 
   // TODO: start streaming
@@ -755,12 +741,20 @@ nsresult
 MediaCodecReader::ResetDecode()
 {
   if (CheckAudioResources()) {
-    mAudioTrack.mTaskQueue->AwaitIdle();
+    mAudioTrack.mTaskQueue->Flush();
+    MonitorAutoLock al(mAudioTrack.mTrackMonitor);
+    if (!mAudioTrack.mAudioPromise.IsEmpty()) {
+      mAudioTrack.mAudioPromise.Reject(CANCELED, __func__);
+    }
     FlushCodecData(mAudioTrack);
     mAudioTrack.mDiscontinuity = true;
   }
   if (CheckVideoResources()) {
-    mVideoTrack.mTaskQueue->AwaitIdle();
+    mVideoTrack.mTaskQueue->Flush();
+    MonitorAutoLock al(mVideoTrack.mTrackMonitor);
+    if (!mVideoTrack.mVideoPromise.IsEmpty()) {
+      mVideoTrack.mVideoPromise.Reject(CANCELED, __func__);
+    }
     FlushCodecData(mVideoTrack);
     mVideoTrack.mDiscontinuity = true;
   }
@@ -795,11 +789,49 @@ MediaCodecReader::TextureClientRecycleCallback(TextureClient* aClient)
     if (!mTextureClientIndexes.Get(aClient, &index)) {
       return;
     }
+
+#if MOZ_WIDGET_GONK && ANDROID_VERSION >= 17
+    sp<Fence> fence = aClient->GetReleaseFenceHandle().mFence;
+    if (fence.get() && fence->isValid()) {
+      mPendingReleaseItems.AppendElement(ReleaseItem(index, fence));
+    } else {
+      mPendingReleaseItems.AppendElement(ReleaseItem(index, nullptr));
+    }
+#else
+    mPendingReleaseItems.AppendElement(ReleaseItem(index));
+#endif
     mTextureClientIndexes.Remove(aClient);
   }
 
-  if (mVideoTrack.mCodec != nullptr) {
-    mVideoTrack.mCodec->releaseOutputBuffer(index);
+  if (mVideoTrack.mReleaseBufferTaskQueue->IsEmpty()) {
+    RefPtr<nsIRunnable> task =
+      NS_NewRunnableMethod(this,
+                           &MediaCodecReader::WaitFenceAndReleaseOutputBuffer);
+    mVideoTrack.mReleaseBufferTaskQueue->Dispatch(task);
+  }
+}
+
+void
+MediaCodecReader::WaitFenceAndReleaseOutputBuffer()
+{
+  nsTArray<ReleaseItem> releasingItems;
+  {
+    MutexAutoLock autoLock(mTextureClientIndexesLock);
+    releasingItems.AppendElements(mPendingReleaseItems);
+    mPendingReleaseItems.Clear();
+  }
+
+  for (size_t i = 0; i < releasingItems.Length(); i++) {
+#if MOZ_WIDGET_GONK && ANDROID_VERSION >= 17
+    sp<Fence> fence;
+    fence = releasingItems[i].mReleaseFence;
+    if (fence.get() && fence->isValid()) {
+      fence->waitForever("MediaCodecReader");
+    }
+#endif
+    if (mVideoTrack.mCodec != nullptr) {
+      mVideoTrack.mCodec->releaseOutputBuffer(releasingItems[i].mReleaseIndex);
+    }
   }
 }
 
@@ -974,6 +1006,8 @@ MediaCodecReader::DecodeVideoFrameSync(int64_t aTimeThreshold)
     }
 
     if (v) {
+      // Notify mDecoder that we have decoded a video frame.
+      mDecoder->NotifyDecodedFrames(0, 1, 0);
       VideoQueue().Push(v);
     } else {
       NS_WARNING("Unable to create VideoData");
@@ -995,12 +1029,9 @@ MediaCodecReader::DecodeVideoFrameSync(int64_t aTimeThreshold)
 }
 
 nsRefPtr<MediaDecoderReader::SeekPromise>
-MediaCodecReader::Seek(int64_t aTime,
-                       int64_t aStartTime,
-                       int64_t aEndTime,
-                       int64_t aCurrentTime)
+MediaCodecReader::Seek(int64_t aTime, int64_t aEndTime)
 {
-  MOZ_ASSERT(mDecoder->OnDecodeThread(), "Should be on decode thread.");
+  MOZ_ASSERT(OnTaskQueue());
 
   mVideoTrack.mSeekTimeUs = aTime;
   mAudioTrack.mSeekTimeUs = aTime;
@@ -1062,8 +1093,8 @@ MediaCodecReader::ReallocateResources()
   if (CreateLooper() &&
       CreateExtractor() &&
       CreateMediaSources() &&
-      CreateMediaCodecs() &&
-      CreateTaskQueues()) {
+      CreateTaskQueues() &&
+      CreateMediaCodecs()) {
     return true;
   }
 
@@ -1109,9 +1140,6 @@ MediaCodecReader::CreateLooper()
   sp<ALooper> looper = new ALooper;
   looper->setName("MediaCodecReader::mLooper");
 
-  // Register AMessage handler to ALooper.
-  looper->registerHandler(mHandler);
-
   // Start ALooper thread.
   if (looper->start() != OK) {
     return false;
@@ -1127,11 +1155,6 @@ MediaCodecReader::DestroyLooper()
 {
   if (mLooper == nullptr) {
     return;
-  }
-
-  // Unregister AMessage handler from ALooper.
-  if (mHandler != nullptr) {
-    mLooper->unregisterHandler(mHandler->id());
   }
 
   // Stop ALooper thread.
@@ -1216,7 +1239,8 @@ MediaCodecReader::CreateMediaSources()
     mAudioOffloadTrack.mSource = mExtractor->getTrack(audioTrackIndex);
   }
 
-  if (videoTrackIndex != invalidTrackIndex && mVideoTrack.mSource == nullptr) {
+  if (videoTrackIndex != invalidTrackIndex && mVideoTrack.mSource == nullptr &&
+      mDecoder->GetImageContainer()) {
     sp<MediaSource> videoSource = mExtractor->getTrack(videoTrackIndex);
     if (videoSource != nullptr && videoSource->start() == OK) {
       mVideoTrack.mSource = videoSource;
@@ -1242,30 +1266,35 @@ MediaCodecReader::DestroyMediaSources()
 void
 MediaCodecReader::ShutdownTaskQueues()
 {
-  if(mAudioTrack.mTaskQueue) {
+  if (mAudioTrack.mTaskQueue) {
     mAudioTrack.mTaskQueue->BeginShutdown();
     mAudioTrack.mTaskQueue->AwaitShutdownAndIdle();
     mAudioTrack.mTaskQueue = nullptr;
   }
-  if(mVideoTrack.mTaskQueue) {
+  if (mVideoTrack.mTaskQueue) {
     mVideoTrack.mTaskQueue->BeginShutdown();
     mVideoTrack.mTaskQueue->AwaitShutdownAndIdle();
     mVideoTrack.mTaskQueue = nullptr;
+  }
+  if (mVideoTrack.mReleaseBufferTaskQueue) {
+    mVideoTrack.mReleaseBufferTaskQueue->BeginShutdown();
+    mVideoTrack.mReleaseBufferTaskQueue->AwaitShutdownAndIdle();
+    mVideoTrack.mReleaseBufferTaskQueue = nullptr;
   }
 }
 
 bool
 MediaCodecReader::CreateTaskQueues()
 {
-  if (mAudioTrack.mSource != nullptr && mAudioTrack.mCodec != nullptr &&
-      !mAudioTrack.mTaskQueue) {
-    mAudioTrack.mTaskQueue = CreateMediaDecodeTaskQueue();
+  if (mAudioTrack.mSource != nullptr && !mAudioTrack.mTaskQueue) {
+    mAudioTrack.mTaskQueue = CreateFlushableMediaDecodeTaskQueue();
     NS_ENSURE_TRUE(mAudioTrack.mTaskQueue, false);
   }
-  if (mVideoTrack.mSource != nullptr && mVideoTrack.mCodec != nullptr &&
-      !mVideoTrack.mTaskQueue) {
-    mVideoTrack.mTaskQueue = CreateMediaDecodeTaskQueue();
+  if (mVideoTrack.mSource != nullptr && !mVideoTrack.mTaskQueue) {
+    mVideoTrack.mTaskQueue = CreateFlushableMediaDecodeTaskQueue();
     NS_ENSURE_TRUE(mVideoTrack.mTaskQueue, false);
+    mVideoTrack.mReleaseBufferTaskQueue = CreateMediaDecodeTaskQueue();
+    NS_ENSURE_TRUE(mVideoTrack.mReleaseBufferTaskQueue, false);
   }
 
   return true;
@@ -1293,7 +1322,7 @@ MediaCodecReader::CreateMediaCodec(sp<ALooper>& aLooper,
 
     const char* mime;
     if (sourceFormat->findCString(kKeyMIMEType, &mime)) {
-      aTrack.mCodec = MediaCodecProxy::CreateByType(aLooper, mime, false, aAsync, aListener);
+      aTrack.mCodec = MediaCodecProxy::CreateByType(aLooper, mime, false, aListener);
     }
 
     if (aTrack.mCodec == nullptr) {
@@ -1422,10 +1451,10 @@ MediaCodecReader::TriggerIncrementalParser()
     mParsedDataLength = INT64_C(0);
 
     // MP3 file duration
-    mMP3FrameParser = new MP3FrameParser(mDecoder->GetResource()->GetLength());
     const char* mime = nullptr;
     if (mMetaData->findCString(kKeyMIMEType, &mime) &&
         !strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_MPEG)) {
+      mMP3FrameParser = new MP3FrameParser(mDecoder->GetResource()->GetLength());
       {
         MonitorAutoUnlock monUnlock(mParserMonitor);
         // trigger parsing logic and wait for finishing parsing data in the beginning.
@@ -1527,7 +1556,6 @@ MediaCodecReader::UpdateAudioInfo()
   }
 
   // Update AudioInfo
-  mInfo.mAudio.mHasAudio = true;
   mInfo.mAudio.mChannels = codec_channel_count;
   mInfo.mAudio.mRate = codec_sample_rate;
 
@@ -1617,7 +1645,7 @@ MediaCodecReader::UpdateVideoInfo()
   }
 
   // Relative picture size
-  gfx::IntRect relative_picture_rect = gfx::ToIntRect(picture_rect);
+  gfx::IntRect relative_picture_rect = picture_rect;
   if (mVideoTrack.mWidth != mVideoTrack.mFrameSize.width ||
       mVideoTrack.mHeight != mVideoTrack.mFrameSize.height) {
     // Frame size is different from what the container reports. This is legal,
@@ -1634,7 +1662,6 @@ MediaCodecReader::UpdateVideoInfo()
   }
 
   // Update VideoInfo
-  mInfo.mVideo.mHasVideo = true;
   mVideoTrack.mPictureRect = picture_rect;
   mInfo.mVideo.mDisplay = display_size;
   mVideoTrack.mRelativePictureRect = relative_picture_rect;
@@ -1790,6 +1817,10 @@ MediaCodecReader::GetCodecOutputData(Track& aTrack,
     }
 
     if (status == OK) {
+      // Notify mDecoder that we have parsed a video frame.
+      if (&aTrack == &mVideoTrack) {
+        mDecoder->NotifyDecodedFrames(1, 0, 0);
+      }
       if (!IsValidTimestampUs(aThreshold) || info.mTimeUs >= aThreshold) {
         // Get a valid output buffer.
         break;
@@ -1894,58 +1925,21 @@ MediaCodecReader::ClearColorConverterBuffer()
   mColorConverterBufferSize = 0;
 }
 
-// Called on MediaCodecReader::mLooper thread.
+// Called on Binder thread.
 void
-MediaCodecReader::onMessageReceived(const sp<AMessage>& aMessage)
+MediaCodecReader::VideoCodecReserved()
 {
-  switch (aMessage->what()) {
-
-    case kNotifyCodecReserved:
-    {
-      // Our decode may have acquired the hardware resource that it needs
-      // to start. Notify the state machine to resume loading metadata.
-      mDecoder->NotifyWaitingForResourcesStatusChanged();
-      break;
-    }
-
-    case kNotifyCodecCanceled:
-    {
-      ReleaseCriticalResources();
-      break;
-    }
-
-    default:
-      TRESPASS();
-      break;
-  }
+  mDecoder->NotifyWaitingForResourcesStatusChanged();
 }
 
 // Called on Binder thread.
 void
-MediaCodecReader::codecReserved(Track& aTrack)
+MediaCodecReader::VideoCodecCanceled()
 {
-  if (!ConfigureMediaCodec(aTrack)) {
-    DestroyMediaCodec(aTrack);
-    return;
-  }
-
-  if (mHandler != nullptr) {
-    // post kNotifyCodecReserved to MediaCodecReader::mLooper thread.
-    sp<AMessage> notify = new AMessage(kNotifyCodecReserved, mHandler->id());
-    notify->post();
-  }
-}
-
-// Called on Binder thread.
-void
-MediaCodecReader::codecCanceled(Track& aTrack)
-{
-  DestroyMediaCodec(aTrack);
-
-  if (mHandler != nullptr) {
-    // post kNotifyCodecCanceled to MediaCodecReader::mLooper thread.
-    sp<AMessage> notify = new AMessage(kNotifyCodecCanceled, mHandler->id());
-    notify->post();
+  if (mVideoTrack.mTaskQueue) {
+    RefPtr<nsIRunnable> task =
+      NS_NewRunnableMethod(this, &MediaCodecReader::ReleaseCriticalResources);
+    mVideoTrack.mTaskQueue->Dispatch(task);
   }
 }
 

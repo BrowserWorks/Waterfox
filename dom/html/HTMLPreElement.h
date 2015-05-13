@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -14,8 +15,8 @@
 namespace mozilla {
 namespace dom {
 
-class HTMLPreElement MOZ_FINAL : public nsGenericHTMLElement,
-                                 public nsIDOMHTMLPreElement
+class HTMLPreElement final : public nsGenericHTMLElement,
+                             public nsIDOMHTMLPreElement
 {
 public:
   explicit HTMLPreElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
@@ -27,17 +28,17 @@ public:
   NS_DECL_ISUPPORTS_INHERITED
 
   // nsIDOMHTMLPreElement
-  NS_IMETHOD GetWidth(int32_t* aWidth) MOZ_OVERRIDE;
-  NS_IMETHOD SetWidth(int32_t aWidth) MOZ_OVERRIDE;
+  NS_IMETHOD GetWidth(int32_t* aWidth) override;
+  NS_IMETHOD SetWidth(int32_t aWidth) override;
 
   virtual bool ParseAttribute(int32_t aNamespaceID,
                                 nsIAtom* aAttribute,
                                 const nsAString& aValue,
-                                nsAttrValue& aResult) MOZ_OVERRIDE;
-  NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const MOZ_OVERRIDE;
-  virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const MOZ_OVERRIDE;
+                                nsAttrValue& aResult) override;
+  NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const override;
+  virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const override;
 
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
 
   // WebIDL API
   int32_t Width() const
@@ -52,7 +53,7 @@ public:
 protected:
   virtual ~HTMLPreElement();
 
-  virtual JSObject* WrapNode(JSContext *aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 private:
   static void MapAttributesIntoRule(const nsMappedAttributes* aAttributes,

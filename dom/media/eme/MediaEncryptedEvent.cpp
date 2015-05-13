@@ -46,9 +46,18 @@ MediaEncryptedEvent::~MediaEncryptedEvent()
 }
 
 JSObject*
-MediaEncryptedEvent::WrapObjectInternal(JSContext* aCx)
+MediaEncryptedEvent::WrapObjectInternal(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return MediaEncryptedEventBinding::Wrap(aCx, this);
+  return MediaEncryptedEventBinding::Wrap(aCx, this, aGivenProto);
+}
+
+already_AddRefed<MediaEncryptedEvent>
+MediaEncryptedEvent::Constructor(EventTarget* aOwner)
+{
+  nsRefPtr<MediaEncryptedEvent> e = new MediaEncryptedEvent(aOwner);
+  e->InitEvent(NS_LITERAL_STRING("encrypted"), false, false);
+  e->SetTrusted(true);
+  return e.forget();
 }
 
 already_AddRefed<MediaEncryptedEvent>

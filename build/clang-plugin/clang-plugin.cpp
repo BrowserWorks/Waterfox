@@ -69,21 +69,45 @@ private:
     virtual void run(const MatchFinder::MatchResult &Result);
   };
 
+  class NaNExprChecker : public MatchFinder::MatchCallback {
+  public:
+    virtual void run(const MatchFinder::MatchResult &Result);
+  };
+
+  class NoAddRefReleaseOnReturnChecker : public MatchFinder::MatchCallback {
+  public:
+    virtual void run(const MatchFinder::MatchResult &Result);
+  };
+
+  class RefCountedInsideLambdaChecker : public MatchFinder::MatchCallback {
+  public:
+    virtual void run(const MatchFinder::MatchResult &Result);
+  };
+
+  class ExplicitOperatorBoolChecker : public MatchFinder::MatchCallback {
+  public:
+    virtual void run(const MatchFinder::MatchResult &Result);
+  };
+
   ScopeChecker stackClassChecker;
   ScopeChecker globalClassChecker;
   NonHeapClassChecker nonheapClassChecker;
   ArithmeticArgChecker arithmeticArgChecker;
   TrivialCtorDtorChecker trivialCtorDtorChecker;
+  NaNExprChecker nanExprChecker;
+  NoAddRefReleaseOnReturnChecker noAddRefReleaseOnReturnChecker;
+  RefCountedInsideLambdaChecker refCountedInsideLambdaChecker;
+  ExplicitOperatorBoolChecker explicitOperatorBoolChecker;
   MatchFinder astMatcher;
 };
 
 namespace {
 
-bool isInIgnoredNamespace(const Decl *decl) {
+std::string getDeclarationNamespace(const Decl *decl) {
   const DeclContext *DC = decl->getDeclContext()->getEnclosingNamespaceContext();
   const NamespaceDecl *ND = dyn_cast<NamespaceDecl>(DC);
   if (!ND) {
-    return false;
+    return "";
   }
 
   while (const DeclContext *ParentDC = ND->getParent()) {
@@ -94,8 +118,15 @@ bool isInIgnoredNamespace(const Decl *decl) {
   }
 
   const auto& name = ND->getName();
+  return name;
+}
 
-  // namespace std and icu are ignored for now
+bool isInIgnoredNamespaceForImplicitCtor(const Decl *decl) {
+  std::string name = getDeclarationNamespace(decl);
+  if (name == "") {
+    return false;
+  }
+
   return name == "std" ||              // standard C++ lib
          name == "__gnu_cxx" ||        // gnu C++ lib
          name == "boost" ||            // boost
@@ -111,7 +142,19 @@ bool isInIgnoredNamespace(const Decl *decl) {
          name == "testing";            // gtest
 }
 
-bool isIgnoredPath(const Decl *decl) {
+bool isInIgnoredNamespaceForImplicitConversion(const Decl *decl) {
+  std::string name = getDeclarationNamespace(decl);
+  if (name == "") {
+    return false;
+  }
+
+  return name == "std" ||              // standard C++ lib
+         name == "__gnu_cxx" ||        // gnu C++ lib
+         name == "google_breakpad" ||  // breakpad
+         name == "testing";            // gtest
+}
+
+bool isIgnoredPathForImplicitCtor(const Decl *decl) {
   decl = decl->getCanonicalDecl();
   SourceLocation Loc = decl->getLocation();
   const SourceManager &SM = decl->getASTContext().getSourceManager();
@@ -132,9 +175,30 @@ bool isIgnoredPath(const Decl *decl) {
   return false;
 }
 
-bool isInterestingDecl(const Decl *decl) {
-  return !isInIgnoredNamespace(decl) &&
-         !isIgnoredPath(decl);
+bool isIgnoredPathForImplicitConversion(const Decl *decl) {
+  decl = decl->getCanonicalDecl();
+  SourceLocation Loc = decl->getLocation();
+  const SourceManager &SM = decl->getASTContext().getSourceManager();
+  SmallString<1024> FileName = SM.getFilename(Loc);
+  llvm::sys::fs::make_absolute(FileName);
+  llvm::sys::path::reverse_iterator begin = llvm::sys::path::rbegin(FileName),
+                                    end   = llvm::sys::path::rend(FileName);
+  for (; begin != end; ++begin) {
+    if (begin->compare_lower(StringRef("graphite2")) == 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool isInterestingDeclForImplicitCtor(const Decl *decl) {
+  return !isInIgnoredNamespaceForImplicitCtor(decl) &&
+         !isIgnoredPathForImplicitCtor(decl);
+}
+
+bool isInterestingDeclForImplicitConversion(const Decl *decl) {
+  return !isInIgnoredNamespaceForImplicitConversion(decl) &&
+         !isIgnoredPathForImplicitConversion(decl);
 }
 
 }
@@ -214,7 +278,7 @@ public:
       }
     }
 
-    if (isInterestingDecl(d)) {
+    if (!d->isAbstract() && isInterestingDeclForImplicitCtor(d)) {
       for (CXXRecordDecl::ctor_iterator ctor = d->ctor_begin(),
            e = d->ctor_end(); ctor != e; ++ctor) {
         // Ignore non-converting ctors
@@ -235,7 +299,10 @@ public:
         }
         unsigned ctorID = Diag.getDiagnosticIDs()->getCustomDiagID(
           DiagnosticIDs::Error, "bad implicit conversion constructor for %0");
+        unsigned noteID = Diag.getDiagnosticIDs()->getCustomDiagID(
+          DiagnosticIDs::Note, "consider adding the explicit keyword to the constructor");
         Diag.Report(ctor->getLocation(), ctorID) << d->getDeclName();
+        Diag.Report(ctor->getLocation(), noteID);
       }
     }
 
@@ -339,6 +406,72 @@ ClassAllocationNature getClassAttrs(QualType T) {
   return clazz ? getClassAttrs(clazz) : RegularClass;
 }
 
+/// A cached data of whether classes are refcounted or not.
+typedef DenseMap<const CXXRecordDecl *,
+  std::pair<const Decl *, bool> > RefCountedMap;
+RefCountedMap refCountedClasses;
+
+bool classHasAddRefRelease(const CXXRecordDecl *D) {
+  const RefCountedMap::iterator& it = refCountedClasses.find(D);
+  if (it != refCountedClasses.end()) {
+    return it->second.second;
+  }
+
+  bool seenAddRef = false;
+  bool seenRelease = false;
+  for (CXXRecordDecl::method_iterator method = D->method_begin();
+       method != D->method_end(); ++method) {
+    const auto &name = method->getName();
+    if (name == "AddRef") {
+      seenAddRef = true;
+    } else if (name == "Release") {
+      seenRelease = true;
+    }
+  }
+  refCountedClasses[D] = std::make_pair(D, seenAddRef && seenRelease);
+  return seenAddRef && seenRelease;
+}
+
+bool isClassRefCounted(QualType T);
+
+bool isClassRefCounted(const CXXRecordDecl *D) {
+  // Normalize so that D points to the definition if it exists.
+  if (!D->hasDefinition())
+    return false;
+  D = D->getDefinition();
+  // Base class: anyone with AddRef/Release is obviously a refcounted class.
+  if (classHasAddRefRelease(D))
+    return true;
+
+  // Look through all base cases to figure out if the parent is a refcounted class.
+  for (CXXRecordDecl::base_class_const_iterator base = D->bases_begin();
+       base != D->bases_end(); ++base) {
+    bool super = isClassRefCounted(base->getType());
+    if (super) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool isClassRefCounted(QualType T) {
+  while (const ArrayType *arrTy = T->getAsArrayTypeUnsafe())
+    T = arrTy->getElementType();
+  CXXRecordDecl *clazz = T->getAsCXXRecordDecl();
+  return clazz ? isClassRefCounted(clazz) : RegularClass;
+}
+
+template<class T>
+bool IsInSystemHeader(const ASTContext &AC, const T &D) {
+  auto &SourceManager = AC.getSourceManager();
+  auto ExpansionLoc = SourceManager.getExpansionLoc(D.getLocStart());
+  if (ExpansionLoc.isInvalid()) {
+    return false;
+  }
+  return SourceManager.isInSystemHeader(ExpansionLoc);
+}
+
 }
 
 namespace clang {
@@ -380,6 +513,12 @@ AST_MATCHER(CXXRecordDecl, hasTrivialCtorDtor) {
   return MozChecker::hasCustomAnnotation(&Node, "moz_trivial_ctor_dtor");
 }
 
+/// This matcher will match any function declaration that is marked to prohibit
+/// calling AddRef or Release on its return value.
+AST_MATCHER(FunctionDecl, hasNoAddRefReleaseOnReturnAttr) {
+  return MozChecker::hasCustomAnnotation(&Node, "moz_no_addref_release_on_return");
+}
+
 /// This matcher will match all arithmetic binary operators.
 AST_MATCHER(BinaryOperator, binaryArithmeticOperator) {
   BinaryOperatorKind opcode = Node.getOpcode();
@@ -416,6 +555,50 @@ AST_MATCHER(UnaryOperator, unaryArithmeticOperator) {
          opcode == UO_Minus ||
          opcode == UO_Not;
 }
+
+/// This matcher will match == and != binary operators.
+AST_MATCHER(BinaryOperator, binaryEqualityOperator) {
+  BinaryOperatorKind opcode = Node.getOpcode();
+  return opcode == BO_EQ || opcode == BO_NE;
+}
+
+/// This matcher will match floating point types.
+AST_MATCHER(QualType, isFloat) {
+  return Node->isRealFloatingType();
+}
+
+/// This matcher will match locations in system headers.  This is adopted from
+/// isExpansionInSystemHeader in newer clangs, but modified in order to work
+/// with old clangs that we use on infra.
+AST_MATCHER(BinaryOperator, isInSystemHeader) {
+  return IsInSystemHeader(Finder->getASTContext(), Node);
+}
+
+/// This matcher will match locations in SkScalar.h.  This header contains a
+/// known NaN-testing expression which we would like to whitelist.
+AST_MATCHER(BinaryOperator, isInSkScalarDotH) {
+  SourceLocation Loc = Node.getOperatorLoc();
+  auto &SourceManager = Finder->getASTContext().getSourceManager();
+  SmallString<1024> FileName = SourceManager.getFilename(Loc);
+  return llvm::sys::path::rbegin(FileName)->equals("SkScalar.h");
+}
+
+/// This matcher will match all accesses to AddRef or Release methods.
+AST_MATCHER(MemberExpr, isAddRefOrRelease) {
+  ValueDecl *Member = Node.getMemberDecl();
+  CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Member);
+  if (Method) {
+    const auto &Name = Method->getName();
+    return Name == "AddRef" || Name == "Release";
+  }
+  return false;
+}
+
+/// This matcher will select classes which are refcounted.
+AST_MATCHER(QualType, isRefCounted) {
+  return isClassRefCounted(Node);
+}
+
 }
 }
 
@@ -499,6 +682,31 @@ DiagnosticsMatcher::DiagnosticsMatcher()
 
   astMatcher.addMatcher(recordDecl(hasTrivialCtorDtor()).bind("node"),
     &trivialCtorDtorChecker);
+
+  astMatcher.addMatcher(binaryOperator(allOf(binaryEqualityOperator(),
+          hasLHS(has(declRefExpr(hasType(qualType((isFloat())))).bind("lhs"))),
+          hasRHS(has(declRefExpr(hasType(qualType((isFloat())))).bind("rhs"))),
+          unless(anyOf(isInSystemHeader(), isInSkScalarDotH()))
+      )).bind("node"),
+    &nanExprChecker);
+
+  astMatcher.addMatcher(callExpr(callee(functionDecl(hasNoAddRefReleaseOnReturnAttr()).bind("func")),
+                                 hasParent(memberExpr(isAddRefOrRelease(),
+                                                      hasParent(callExpr())).bind("member")
+      )).bind("node"),
+    &noAddRefReleaseOnReturnChecker);
+
+  astMatcher.addMatcher(lambdaExpr(
+            hasDescendant(declRefExpr(hasType(pointerType(pointee(isRefCounted())))).bind("node"))
+        ),
+    &refCountedInsideLambdaChecker);
+
+  // Older clang versions such as the ones used on the infra recognize these
+  // conversions as 'operator _Bool', but newer clang versions recognize these
+  // as 'operator bool'.
+  astMatcher.addMatcher(methodDecl(anyOf(hasName("operator bool"),
+                                         hasName("operator _Bool"))).bind("node"),
+    &explicitOperatorBoolChecker);
 }
 
 void DiagnosticsMatcher::ScopeChecker::run(
@@ -646,6 +854,88 @@ void DiagnosticsMatcher::TrivialCtorDtorChecker::run(
   bool badDtor = !node->hasTrivialDestructor();
   if (badCtor || badDtor)
     Diag.Report(node->getLocStart(), errorID) << node;
+}
+
+void DiagnosticsMatcher::NaNExprChecker::run(
+    const MatchFinder::MatchResult &Result) {
+  if (!Result.Context->getLangOpts().CPlusPlus) {
+    // mozilla::IsNaN is not usable in C, so there is no point in issuing these warnings.
+    return;
+  }
+
+  DiagnosticsEngine &Diag = Result.Context->getDiagnostics();
+  unsigned errorID = Diag.getDiagnosticIDs()->getCustomDiagID(
+      DiagnosticIDs::Error, "comparing a floating point value to itself for NaN checking can lead to incorrect results");
+  unsigned noteID = Diag.getDiagnosticIDs()->getCustomDiagID(
+      DiagnosticIDs::Note, "consider using mozilla::IsNaN instead");
+  const BinaryOperator *expr = Result.Nodes.getNodeAs<BinaryOperator>("node");
+  const DeclRefExpr *lhs = Result.Nodes.getNodeAs<DeclRefExpr>("lhs");
+  const DeclRefExpr *rhs = Result.Nodes.getNodeAs<DeclRefExpr>("rhs");
+  const ImplicitCastExpr *lhsExpr = dyn_cast<ImplicitCastExpr>(expr->getLHS());
+  const ImplicitCastExpr *rhsExpr = dyn_cast<ImplicitCastExpr>(expr->getRHS());
+  // The AST subtree that we are looking for will look like this:
+  // -BinaryOperator ==/!=
+  //  |-ImplicitCastExpr LValueToRValue
+  //  | |-DeclRefExpr
+  //  |-ImplicitCastExpr LValueToRValue
+  //    |-DeclRefExpr
+  // The check below ensures that we are dealing with the correct AST subtree shape, and
+  // also that both of the found DeclRefExpr's point to the same declaration.
+  if (lhs->getFoundDecl() == rhs->getFoundDecl() &&
+      lhsExpr && rhsExpr &&
+      std::distance(lhsExpr->child_begin(), lhsExpr->child_end()) == 1 &&
+      std::distance(rhsExpr->child_begin(), rhsExpr->child_end()) == 1 &&
+      *lhsExpr->child_begin() == lhs &&
+      *rhsExpr->child_begin() == rhs) {
+    Diag.Report(expr->getLocStart(), errorID);
+    Diag.Report(expr->getLocStart(), noteID);
+  }
+}
+
+void DiagnosticsMatcher::NoAddRefReleaseOnReturnChecker::run(
+    const MatchFinder::MatchResult &Result) {
+  DiagnosticsEngine &Diag = Result.Context->getDiagnostics();
+  unsigned errorID = Diag.getDiagnosticIDs()->getCustomDiagID(
+      DiagnosticIDs::Error, "%1 cannot be called on the return value of %0");
+  const Stmt *node = Result.Nodes.getNodeAs<Stmt>("node");
+  const FunctionDecl *func = Result.Nodes.getNodeAs<FunctionDecl>("func");
+  const MemberExpr *member = Result.Nodes.getNodeAs<MemberExpr>("member");
+  const CXXMethodDecl *method = dyn_cast<CXXMethodDecl>(member->getMemberDecl());
+
+  Diag.Report(node->getLocStart(), errorID) << func << method;
+}
+
+void DiagnosticsMatcher::RefCountedInsideLambdaChecker::run(
+    const MatchFinder::MatchResult &Result) {
+  DiagnosticsEngine &Diag = Result.Context->getDiagnostics();
+  unsigned errorID = Diag.getDiagnosticIDs()->getCustomDiagID(
+      DiagnosticIDs::Error, "Refcounted variable %0 of type %1 cannot be used inside a lambda");
+  unsigned noteID = Diag.getDiagnosticIDs()->getCustomDiagID(
+      DiagnosticIDs::Note, "Please consider using a smart pointer");
+  const DeclRefExpr *node = Result.Nodes.getNodeAs<DeclRefExpr>("node");
+
+  Diag.Report(node->getLocStart(), errorID) << node->getFoundDecl() <<
+    node->getType()->getPointeeType();
+  Diag.Report(node->getLocStart(), noteID);
+}
+
+void DiagnosticsMatcher::ExplicitOperatorBoolChecker::run(
+    const MatchFinder::MatchResult &Result) {
+  DiagnosticsEngine &Diag = Result.Context->getDiagnostics();
+  unsigned errorID = Diag.getDiagnosticIDs()->getCustomDiagID(
+      DiagnosticIDs::Error, "bad implicit conversion operator for %0");
+  unsigned noteID = Diag.getDiagnosticIDs()->getCustomDiagID(
+      DiagnosticIDs::Note, "consider adding the explicit keyword to %0");
+  const CXXConversionDecl *method = Result.Nodes.getNodeAs<CXXConversionDecl>("node");
+  const CXXRecordDecl *clazz = method->getParent();
+
+  if (!method->isExplicitSpecified() &&
+      !MozChecker::hasCustomAnnotation(method, "moz_implicit") &&
+      !IsInSystemHeader(method->getASTContext(), *method) &&
+      isInterestingDeclForImplicitConversion(method)) {
+    Diag.Report(method->getLocStart(), errorID) << clazz;
+    Diag.Report(method->getLocStart(), noteID) << "'operator bool'";
+  }
 }
 
 class MozCheckAction : public PluginASTAction {

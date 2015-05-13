@@ -20,7 +20,7 @@ IsCustomClass(JS::Handle<JS::Value> v)
 }
 
 static bool
-CustomMethodImpl(JSContext *cx, CallArgs args)
+CustomMethodImpl(JSContext* cx, CallArgs args)
 {
   MOZ_RELEASE_ASSERT(IsCustomClass(args.thisv()));
   args.rval().set(JS_GetReservedSlot(&args.thisv().toObject(), CUSTOM_SLOT));
@@ -28,7 +28,7 @@ CustomMethodImpl(JSContext *cx, CallArgs args)
 }
 
 static bool
-CustomMethod(JSContext *cx, unsigned argc, Value *vp)
+CustomMethod(JSContext* cx, unsigned argc, Value* vp)
 {
   CallArgs args = CallArgsFromVp(argc, vp);
   return CallNonGenericMethod(cx, IsCustomClass, CustomMethodImpl, args);
@@ -40,12 +40,12 @@ BEGIN_TEST(test_CallNonGenericMethodOnProxy)
   JS::RootedObject globalA(cx, JS_NewGlobalObject(cx, getGlobalClass(), nullptr, JS::FireOnNewGlobalHook));
   CHECK(globalA);
 
-  JS::RootedObject customA(cx, JS_NewObject(cx, &CustomClass, JS::NullPtr(), JS::NullPtr()));
+  JS::RootedObject customA(cx, JS_NewObject(cx, &CustomClass));
   CHECK(customA);
   JS_SetReservedSlot(customA, CUSTOM_SLOT, Int32Value(17));
 
   JS::RootedFunction customMethodA(cx, JS_NewFunction(cx, CustomMethod, 0, 0,
-                                                      customA, "customMethodA"));
+                                                      "customMethodA"));
   CHECK(customMethodA);
 
   JS::RootedValue rval(cx);
@@ -60,11 +60,12 @@ BEGIN_TEST(test_CallNonGenericMethodOnProxy)
 
     // ...and enter it.
     JSAutoCompartment enter(cx, globalB);
-    JS::RootedObject customB(cx, JS_NewObject(cx, &CustomClass, JS::NullPtr(), JS::NullPtr()));
+    JS::RootedObject customB(cx, JS_NewObject(cx, &CustomClass));
     CHECK(customB);
     JS_SetReservedSlot(customB, CUSTOM_SLOT, Int32Value(42));
 
-    JS::RootedFunction customMethodB(cx, JS_NewFunction(cx, CustomMethod, 0, 0, customB, "customMethodB"));
+    JS::RootedFunction customMethodB(cx, JS_NewFunction(cx, CustomMethod, 0, 0,
+							"customMethodB"));
     CHECK(customMethodB);
 
     JS::RootedValue rval(cx);

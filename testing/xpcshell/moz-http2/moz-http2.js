@@ -86,6 +86,21 @@ var m = {
   }
 };
 
+var runlater = function() {};
+runlater.prototype = {
+  req : null,
+  resp : null,
+
+  onTimeout : function onTimeout() {
+    this.resp.writeHead(200);
+    this.resp.end("It's all good 750ms.");
+  }
+};
+
+function executeRunLater(arg) {
+  arg.onTimeout();
+}
+
 var h11required_conn = null;
 var h11required_header = "yes";
 var didRst = false;
@@ -109,6 +124,14 @@ function handleRequest(req, res) {
     res.writeHead(200);
     res.end('ok');
     process.exit();
+  }
+
+  if (u.pathname === '/750ms') {
+    var rl = new runlater();
+    rl.req = req;
+    rl.resp = res;
+    setTimeout(executeRunLater, 750, rl);
+    return;
   }
 
   else if ((u.pathname === '/multiplex1') && (req.httpVersionMajor === 2)) {
@@ -173,8 +196,8 @@ function handleRequest(req, res) {
 
   else if (u.pathname === "/pushapi1") {
     push1 = res.push(
-	{ hostname: 'localhost:6944', port: 6944, path : '/pushapi1/1', method : 'GET',
-	  headers: {'x-pushed-request': 'true', 'x-foo' : 'bar'}});
+        { hostname: 'localhost:' + serverPort, port: serverPort, path : '/pushapi1/1', method : 'GET',
+          headers: {'x-pushed-request': 'true', 'x-foo' : 'bar'}});
     push1.writeHead(200, {
       'pushed' : 'yes',
       'content-length' : 1,
@@ -184,37 +207,37 @@ function handleRequest(req, res) {
     push1.end('1');
 
     push1a = res.push(
-	{ hostname: 'localhost:6944', port: 6944, path : '/pushapi1/1', method : 'GET',
-	  headers: {'x-foo' : 'bar', 'x-pushed-request': 'true'}});
+        { hostname: 'localhost:' + serverPort, port: serverPort, path : '/pushapi1/1', method : 'GET',
+          headers: {'x-foo' : 'bar', 'x-pushed-request': 'true'}});
     push1a.writeHead(200, {
       'pushed' : 'yes',
       'content-length' : 1,
       'subresource' : '1a',
       'X-Connection-Http2': 'yes'
-      });
+    });
     push1a.end('1');
 
     push2 = res.push(
-	{ hostname: 'localhost:6944', port: 6944, path : '/pushapi1/2', method : 'GET',
-	  headers: {'x-pushed-request': 'true'}});
+        { hostname: 'localhost:' + serverPort, port: serverPort, path : '/pushapi1/2', method : 'GET',
+          headers: {'x-pushed-request': 'true'}});
     push2.writeHead(200, {
-	  'pushed' : 'yes',
-	  'subresource' : '2',
-	  'content-length' : 1,
-	  'X-Connection-Http2': 'yes'
-      });
+      'pushed' : 'yes',
+      'subresource' : '2',
+      'content-length' : 1,
+      'X-Connection-Http2': 'yes'
+    });
     push2.end('2');
 
     push3 = res.push(
-	{ hostname: 'localhost:6944', port: 6944, path : '/pushapi1/3', method : 'GET',
-	  headers: {'x-pushed-request': 'true'}});
+        { hostname: 'localhost:' + serverPort, port: serverPort, path : '/pushapi1/3', method : 'GET',
+          headers: {'x-pushed-request': 'true'}});
     push3.writeHead(200, {
-	  'pushed' : 'yes',
-	  'content-length' : 1,
-	  'subresource' : '3',
-	  'X-Connection-Http2': 'yes'
-      });
-     push3.end('3');
+      'pushed' : 'yes',
+      'content-length' : 1,
+      'subresource' : '3',
+      'X-Connection-Http2': 'yes'
+    });
+    push3.end('3');
 
     content = '0';
   }
@@ -239,8 +262,8 @@ function handleRequest(req, res) {
     return;
   }
 
-  else if (u.pathname === "/post") {
-    if (req.method != "POST") {
+  else if (u.pathname === "/post" || u.pathname === "/patch") {
+    if (req.method != "POST" && req.method != "PATCH") {
       res.writeHead(405);
       res.end('Unexpected method: ' + req.method);
       return;
@@ -255,6 +278,29 @@ function handleRequest(req, res) {
       res.setHeader('X-Calculated-MD5', md5);
       res.writeHead(200);
       res.end(content);
+    });
+
+    return;
+  }
+
+  else if (u.pathname === "/750msPost") {
+    if (req.method != "POST") {
+      res.writeHead(405);
+      res.end('Unexpected method: ' + req.method);
+      return;
+    }
+
+    var accum = 0;
+    req.on('data', function receivePostData(chunk) {
+      accum += chunk.length;
+    });
+    req.on('end', function finishPost() {
+      res.setHeader('X-Recvd', accum);
+      var rl = new runlater();
+      rl.req = req;
+      rl.resp = res;
+      setTimeout(executeRunLater, 750, rl);
+      return;
     });
 
     return;
@@ -304,6 +350,58 @@ function handleRequest(req, res) {
     return;
   }
 
+  else if (u.pathname === "/continuedheaders") {
+    var pushRequestHeaders = {'x-pushed-request': 'true'};
+    var pushResponseHeaders = {'content-type': 'text/plain',
+                               'content-length': '2',
+                               'X-Connection-Http2': 'yes'};
+    var pushHdrTxt = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    var pullHdrTxt = pushHdrTxt.split('').reverse().join('');
+    for (var i = 0; i < 265; i++) {
+      pushRequestHeaders['X-Push-Test-Header-' + i] = pushHdrTxt;
+      res.setHeader('X-Pull-Test-Header-' + i, pullHdrTxt);
+    }
+    push = res.push({
+      hostname: 'localhost:' + serverPort,
+      port: serverPort,
+      path: '/continuedheaders/push',
+      method: 'GET',
+      headers: pushRequestHeaders
+    });
+    push.writeHead(200, pushResponseHeaders);
+    push.end("ok");
+  }
+
+  else if (u.pathname === "/altsvc1") {
+    if (req.httpVersionMajor != 2 ||
+      req.scheme != "http" ||
+      req.headers['alt-used'] != ("localhost:" + serverPort)) {
+      res.setHeader('Connection', 'close');
+      res.writeHead(400);
+      res.end("WHAT?");
+      return;
+   }
+   // test the alt svc frame for use with altsvc2
+   res.altsvc("localhost", serverPort, "h2", 3600, req.headers['x-redirect-origin']);
+  }
+
+  else if (u.pathname === "/altsvc2") {
+    if (req.httpVersionMajor != 2 ||
+      req.scheme != "http" ||
+      req.headers['alt-used'] != ("localhost:" + serverPort)) {
+      res.setHeader('Connection', 'close');
+      res.writeHead(400);
+      res.end("WHAT?");
+      return;
+   }
+  }
+
+  // for use with test_altsvc.js
+  else if (u.pathname === "/altsvc-test") {
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Alt-Svc', 'h2=' + req.headers['x-altsvc']);
+  }
+
   res.setHeader('Content-Type', 'text/html');
   if (req.httpVersionMajor != 2) {
     res.setHeader('Connection', 'close');
@@ -312,15 +410,16 @@ function handleRequest(req, res) {
   res.end(content);
 }
 
-// Set up the SSL certs for our server
+// Set up the SSL certs for our server - this server has a cert for foo.example.com
+// signed by netwerk/tests/unit/CA.cert.der
 var options = {
-  key: fs.readFileSync(__dirname + '/../moz-spdy/spdy-key.pem'),
-  cert: fs.readFileSync(__dirname + '/../moz-spdy/spdy-cert.pem'),
-  ca: fs.readFileSync(__dirname + '/../moz-spdy/spdy-ca.pem'),
+  key: fs.readFileSync(__dirname + '/http2-key.pem'),
+  cert: fs.readFileSync(__dirname + '/http2-cert.pem'),
   //, log: require('../node-http2/test/util').createLogger('server')
 };
 
 var server = http2.createServer(options, handleRequest);
+
 server.on('connection', function(socket) {
   socket.on('error', function() {
     // Ignoring SSL socket errors, since they usually represent a connection that was tore down
@@ -328,5 +427,10 @@ server.on('connection', function(socket) {
     // the first test case if done.
   });
 });
-server.listen(6944);
-console.log('HTTP2 server listening on port 6944');
+
+var serverPort;
+function listenok() {
+  serverPort = server._server.address().port;
+  console.log('HTTP2 server listening on port ' + serverPort);
+}
+server.listen(-1, "0.0.0.0", 200, listenok);

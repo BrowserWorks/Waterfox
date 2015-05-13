@@ -9,20 +9,20 @@
 #include "chrome/common/child_process_info.h"
 
 #include "mozilla/ipc/Transport.h"
+#include "mozilla/ipc/ProtocolUtils.h"
 
-using namespace base;
 using namespace std;
+
+using base::ProcessHandle;
 
 namespace mozilla {
 namespace ipc {
 
 bool
-CreateTransport(ProcessHandle aProcOne, ProcessHandle /*unused*/,
+CreateTransport(base::ProcessId aProcIdOne,
                 TransportDescriptor* aOne, TransportDescriptor* aTwo)
 {
-  // This id is used to name the IPC pipe.  The pointer passed to this
-  // function isn't significant.
-  wstring id = ChildProcessInfo::GenerateRandomChannelID(aOne);
+  wstring id = IPC::Channel::GenerateVerifiedChannelID(std::wstring());
   // Use MODE_SERVER to force creation of the pipe
   Transport t(id, Transport::MODE_SERVER, nullptr);
   HANDLE serverPipe = t.GetServerPipeHandle();
@@ -38,11 +38,7 @@ CreateTransport(ProcessHandle aProcOne, ProcessHandle /*unused*/,
   HANDLE serverDup;
   DWORD access = 0;
   DWORD options = DUPLICATE_SAME_ACCESS;
-  if (!DuplicateHandle(GetCurrentProcess(), serverPipe, aProcOne,
-                       &serverDup,
-                       access,
-                       FALSE/*not inheritable*/,
-                       options)) {
+  if (!DuplicateHandle(serverPipe, aProcIdOne, &serverDup, access, options)) {
     return false;
   }
 

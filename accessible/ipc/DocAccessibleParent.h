@@ -26,7 +26,7 @@ class DocAccessibleParent : public ProxyAccessible,
 {
 public:
   DocAccessibleParent() :
-    ProxyAccessible(this), mParentDoc(nullptr)
+    ProxyAccessible(this), mParentDoc(nullptr), mShutdown(false)
   { MOZ_COUNT_CTOR_INHERITED(DocAccessibleParent, ProxyAccessible); }
   ~DocAccessibleParent()
   {
@@ -40,12 +40,25 @@ public:
    * process it is firing an event.
    */
   virtual bool RecvEvent(const uint64_t& aID, const uint32_t& aType)
-    MOZ_OVERRIDE;
+    override;
 
-  virtual bool RecvShowEvent(const ShowEventData& aData) MOZ_OVERRIDE;
-  virtual bool RecvHideEvent(const uint64_t& aRootID) MOZ_OVERRIDE;
+  virtual bool RecvShowEvent(const ShowEventData& aData) override;
+  virtual bool RecvHideEvent(const uint64_t& aRootID) override;
 
-  virtual void ActorDestroy(ActorDestroyReason aWhy) MOZ_OVERRIDE;
+  virtual bool RecvBindChildDoc(PDocAccessibleParent* aChildDoc, const uint64_t& aID) override;
+  void Unbind()
+  {
+    mParent = nullptr;
+    mParentDoc->mChildDocs.RemoveElement(this);
+    mParentDoc = nullptr;
+  }
+
+  void Destroy();
+  virtual void ActorDestroy(ActorDestroyReason aWhy) override
+  {
+    if (!mShutdown)
+      Destroy();
+  }
 
   /*
    * Return the main processes representation of the parent document (if any)
@@ -57,7 +70,8 @@ public:
    * Called when a document in a content process notifies the main process of a
    * new child document.
    */
-  bool AddChildDoc(DocAccessibleParent* aChildDoc, uint64_t aParentID);
+  bool AddChildDoc(DocAccessibleParent* aChildDoc, uint64_t aParentID,
+                   bool aCreating = true);
 
   /*
    * Called when the document in the content process this object represents
@@ -75,6 +89,15 @@ public:
   {
     MOZ_ASSERT(mAccessibles.GetEntry(aAccessible->ID()));
     mAccessibles.RemoveEntry(aAccessible->ID());
+  }
+
+  /**
+   * Return the accessible for given id.
+   */
+  ProxyAccessible* GetAccessible(uintptr_t aID) const
+  {
+    ProxyEntry* e = mAccessibles.GetEntry(aID);
+    return e ? e->mProxy : nullptr;
   }
 
 private:
@@ -115,6 +138,7 @@ private:
    * proxy object so we can't use a real map.
    */
   nsTHashtable<ProxyEntry> mAccessibles;
+  bool mShutdown;
 };
 
 }

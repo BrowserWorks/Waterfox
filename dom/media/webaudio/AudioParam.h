@@ -20,8 +20,8 @@ namespace mozilla {
 
 namespace dom {
 
-class AudioParam MOZ_FINAL : public nsWrapperCache,
-                             public AudioParamTimeline
+class AudioParam final : public nsWrapperCache,
+                         public AudioParamTimeline
 {
   virtual ~AudioParam();
 
@@ -30,7 +30,8 @@ public:
 
   AudioParam(AudioNode* aNode,
              CallbackType aCallback,
-             float aDefaultValue);
+             float aDefaultValue,
+             const char* aName);
 
   NS_IMETHOD_(MozExternalRefCountType) AddRef(void);
   NS_IMETHOD_(MozExternalRefCountType) Release(void);
@@ -46,7 +47,7 @@ public:
     return mNode->Context()->DOMTimeToStreamTime(aTime);
   }
 
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // We override SetValueCurveAtTime to convert the Float32Array to the wrapper
   // object.
@@ -121,6 +122,16 @@ public:
     mCallback(mNode);
   }
 
+  uint32_t ParentNodeId()
+  {
+    return mNode->Id();
+  }
+
+  void GetName(nsAString& aName)
+  {
+    aName.AssignASCII(mName);
+  }
+
   float DefaultValue() const
   {
     return mDefaultValue;
@@ -151,7 +162,7 @@ public:
   // May create the stream if it doesn't exist
   MediaStream* Stream();
 
-  virtual size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const MOZ_OVERRIDE
+  virtual size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     size_t amount = AudioParamTimeline::SizeOfExcludingThis(aMallocSizeOf);
     // Not owned:
@@ -167,7 +178,7 @@ public:
     return amount;
   }
 
-  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const MOZ_OVERRIDE
+  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
   }
@@ -183,6 +194,7 @@ private:
   nsTArray<AudioNode::InputNode> mInputNodes;
   CallbackType mCallback;
   const float mDefaultValue;
+  const char* mName;
   // The input port used to connect the AudioParam's stream to its node's stream
   nsRefPtr<MediaInputPort> mNodeStreamPort;
 };

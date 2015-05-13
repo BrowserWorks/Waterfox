@@ -19,12 +19,12 @@ public:
 
   nsRefPtr<MockMediaResource> resource;
   Monitor mMonitor;
-  nsAutoPtr<MP4Demuxer> demuxer;
+  nsRefPtr<MP4Demuxer> demuxer;
 
   explicit MP4DemuxerBinding(const char* aFileName = "dash_dashinit.mp4")
     : resource(new MockMediaResource(aFileName))
     , mMonitor("TestMP4Demuxer monitor")
-    , demuxer(new MP4Demuxer(new MP4Stream(resource), 0, &mMonitor))
+    , demuxer(new MP4Demuxer(new MP4Stream(resource), &mMonitor))
   {
     EXPECT_EQ(NS_OK, resource->Open(nullptr));
   }
@@ -43,109 +43,48 @@ TEST(MP4Demuxer, Seek)
 
   EXPECT_TRUE(d->Init());
 
-  nsTArray<nsAutoPtr<MP4Sample>> samples;
-  MP4Sample* sample;
+  nsTArray<nsRefPtr<MediaRawData>> samples;
+  nsRefPtr<MediaRawData> sample;
   while (!!(sample = d->DemuxVideoSample())) {
     samples.AppendElement(sample);
     if (samples.Length() >= 2) {
-      EXPECT_LT(samples[samples.Length() - 2]->decode_timestamp,
-                samples[samples.Length() - 1]->decode_timestamp);
+      EXPECT_LT(samples[samples.Length() - 2]->mTimecode,
+                samples[samples.Length() - 1]->mTimecode);
     }
   }
   Microseconds keyFrame = 0;
   for (size_t i = 0; i < samples.Length(); i++) {
-    if (samples[i]->is_sync_point) {
-      keyFrame = samples[i]->decode_timestamp;
+    if (samples[i]->mKeyframe) {
+      keyFrame = samples[i]->mTimecode;
     }
-    d->SeekVideo(samples[i]->composition_timestamp);
+    d->SeekVideo(samples[i]->mTime);
     sample = d->DemuxVideoSample();
-    EXPECT_EQ(keyFrame, sample->decode_timestamp);
+    EXPECT_EQ(keyFrame, sample->mTimecode);
   }
 }
 
 static nsCString
-ToCryptoString(CryptoSample& aCrypto)
+ToCryptoString(const CryptoSample& aCrypto)
 {
   nsCString res;
-  if (aCrypto.valid) {
-    res.AppendPrintf("%d %d ", aCrypto.mode, aCrypto.iv_size);
-    for (size_t i = 0; i < aCrypto.key.Length(); i++) {
-      res.AppendPrintf("%02x", aCrypto.key[i]);
+  if (aCrypto.mValid) {
+    res.AppendPrintf("%d %d ", aCrypto.mMode, aCrypto.mIVSize);
+    for (size_t i = 0; i < aCrypto.mKeyId.Length(); i++) {
+      res.AppendPrintf("%02x", aCrypto.mKeyId[i]);
     }
     res.Append(" ");
-    for (size_t i = 0; i < aCrypto.iv.Length(); i++) {
-      res.AppendPrintf("%02x", aCrypto.iv[i]);
+    for (size_t i = 0; i < aCrypto.mIV.Length(); i++) {
+      res.AppendPrintf("%02x", aCrypto.mIV[i]);
     }
-    EXPECT_EQ(aCrypto.plain_sizes.Length(), aCrypto.encrypted_sizes.Length());
-    for (size_t i = 0; i < aCrypto.plain_sizes.Length(); i++) {
-      res.AppendPrintf(" %d,%d", aCrypto.plain_sizes[i],
-                       aCrypto.encrypted_sizes[i]);
+    EXPECT_EQ(aCrypto.mPlainSizes.Length(), aCrypto.mEncryptedSizes.Length());
+    for (size_t i = 0; i < aCrypto.mPlainSizes.Length(); i++) {
+      res.AppendPrintf(" %d,%d", aCrypto.mPlainSizes[i],
+                       aCrypto.mEncryptedSizes[i]);
     }
   } else {
     res.Append("no crypto");
   }
   return res;
-}
-
-TEST(MP4Demuxer, CENC)
-{
-  nsRefPtr<MP4DemuxerBinding> b = new MP4DemuxerBinding("short-cenc.mp4");
-  MonitorAutoLock mon(b->mMonitor);
-  MP4Demuxer* d = b->demuxer;
-
-  EXPECT_TRUE(d->Init());
-
-  const char* video[] = {
-    "1 16 7e571d017e571d017e571d017e571d01 00000000000000000000000000000000 5,686 5,388",
-    "1 16 7e571d017e571d017e571d017e571d01 00000000000000000000000000000044 5,717",
-    "1 16 7e571d017e571d017e571d017e571d01 00000000000000000000000000000071 5,613",
-    "1 16 7e571d017e571d017e571d017e571d01 00000000000000000000000000000098 5,196",
-    "1 16 7e571d017e571d017e571d017e571d01 000000000000000000000000000000a5 5,213",
-    "1 16 7e571d017e571d017e571d017e571d01 000000000000000000000000000000b3 5,213",
-    "1 16 7e571d017e571d017e571d017e571d01 000000000000000000000000000000c1 5,384",
-    "1 16 7e571d017e571d017e571d017e571d01 000000000000000000000000000000d9 5,256",
-    "1 16 7e571d017e571d017e571d017e571d01 000000000000000000000000000000e9 5,245",
-    "1 16 7e571d017e571d017e571d017e571d01 000000000000000000000000000000f9 5,251",
-  };
-
-  MP4Sample* sample;
-  size_t i = 0;
-  while (!!(sample = d->DemuxVideoSample())) {
-    nsCString text = ToCryptoString(sample->crypto);
-    EXPECT_STREQ(video[i++], text.get());
-  }
-  EXPECT_EQ(ArrayLength(video), i);
-
-  const char* audio[] = {
-    "1 16 7e571d027e571d027e571d027e571d02 00000000000000000000000000000000 0,371",
-    "1 16 7e571d027e571d027e571d027e571d02 00000000000000000000000000000018 0,372",
-    "1 16 7e571d027e571d027e571d027e571d02 00000000000000000000000000000030 0,371",
-    "1 16 7e571d027e571d027e571d027e571d02 00000000000000000000000000000048 0,372",
-    "1 16 7e571d027e571d027e571d027e571d02 00000000000000000000000000000060 0,371",
-    "1 16 7e571d027e571d027e571d027e571d02 00000000000000000000000000000078 0,372",
-    "1 16 7e571d027e571d027e571d027e571d02 00000000000000000000000000000090 0,371",
-    "1 16 7e571d027e571d027e571d027e571d02 000000000000000000000000000000a8 0,372",
-    "1 16 7e571d027e571d027e571d027e571d02 000000000000000000000000000000c0 0,371",
-    "1 16 7e571d027e571d027e571d027e571d02 000000000000000000000000000000d8 0,372",
-    "1 16 7e571d027e571d027e571d027e571d02 000000000000000000000000000000f0 0,371",
-    "1 16 7e571d027e571d027e571d027e571d02 00000000000000000000000000000108 0,372",
-    "1 16 7e571d027e571d027e571d027e571d02 00000000000000000000000000000120 0,371",
-    "1 16 7e571d027e571d027e571d027e571d02 00000000000000000000000000000138 0,372",
-    "1 16 7e571d027e571d027e571d027e571d02 00000000000000000000000000000150 0,371",
-    "1 16 7e571d027e571d027e571d027e571d02 00000000000000000000000000000168 0,372",
-    "1 16 7e571d027e571d027e571d027e571d02 00000000000000000000000000000180 0,371",
-    "1 16 7e571d027e571d027e571d027e571d02 00000000000000000000000000000198 0,372",
-    "1 16 7e571d027e571d027e571d027e571d02 000000000000000000000000000001b0 0,371",
-    "1 16 7e571d027e571d027e571d027e571d02 000000000000000000000000000001c8 0,372",
-    "1 16 7e571d027e571d027e571d027e571d02 000000000000000000000000000001e0 0,371",
-  };
-
-  i = 0;
-  while (!!(sample = d->DemuxAudioSample())) {
-    nsCString text = ToCryptoString(sample->crypto);
-    EXPECT_STREQ(audio[i++], text.get());
-  }
-  EXPECT_EQ(ArrayLength(audio), i);
 }
 
 TEST(MP4Demuxer, CENCFrag)
@@ -219,10 +158,10 @@ TEST(MP4Demuxer, CENCFrag)
     "1 16 7e571d037e571d037e571d037e571d03 000000000000000000000000000019cd 5,2392",
   };
 
-  MP4Sample* sample;
+  nsRefPtr<MediaRawData> sample;
   size_t i = 0;
   while (!!(sample = d->DemuxVideoSample())) {
-    nsCString text = ToCryptoString(sample->crypto);
+    nsCString text = ToCryptoString(sample->mCrypto);
     EXPECT_STREQ(video[i++], text.get());
   }
   EXPECT_EQ(ArrayLength(video), i);
@@ -326,8 +265,39 @@ TEST(MP4Demuxer, CENCFrag)
 
   i = 0;
   while (!!(sample = d->DemuxAudioSample())) {
-    nsCString text = ToCryptoString(sample->crypto);
+    nsCString text = ToCryptoString(sample->mCrypto);
     EXPECT_STREQ(audio[i++], text.get());
   }
   EXPECT_EQ(ArrayLength(audio), i);
+}
+
+TEST(MP4Demuxer, GetNextKeyframe)
+{
+  nsRefPtr<MP4DemuxerBinding> b = new MP4DemuxerBinding("gizmo-frag.mp4");
+  MonitorAutoLock mon(b->mMonitor);
+  MP4Demuxer* d = b->demuxer;
+
+  EXPECT_TRUE(d->Init());
+
+  // Insert a [0,end] buffered range, to simulate Moof's being buffered
+  // via MSE.
+  auto len = b->resource->GetLength();
+  b->resource->MockAddBufferedRange(0, len);
+
+  // Rebuild the index so that it can be used to find the keyframes.
+  nsTArray<MediaByteRange> ranges;
+  EXPECT_TRUE(NS_SUCCEEDED(b->resource->GetCachedRanges(ranges)));
+  d->UpdateIndex(ranges);
+
+  // gizmp-frag has two keyframes; one at dts=cts=0, and another at
+  // dts=cts=1000000. Verify we get expected results.
+
+  nsRefPtr<MediaRawData> sample;
+  size_t i = 0;
+  const int64_t keyframe = 1000000;
+  while (!!(sample = d->DemuxVideoSample())) {
+    int64_t expected = (sample->mTimecode < keyframe) ? keyframe : -1;
+    EXPECT_EQ(d->GetNextKeyframeTime(), expected);
+    i++;
+  }
 }

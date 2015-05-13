@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -18,8 +20,6 @@
 
 namespace mozilla {
 namespace dom {
-
-class PBrowserParent;
 
 class TCPSocketParentBase : public nsITCPSocketParent
                           , public mozilla::net::DisconnectableParent
@@ -47,25 +47,26 @@ class TCPSocketParent : public mozilla::net::PTCPSocketParent
 {
 public:
   NS_DECL_NSITCPSOCKETPARENT
-  NS_IMETHOD_(MozExternalRefCountType) Release() MOZ_OVERRIDE;
+  NS_IMETHOD_(MozExternalRefCountType) Release() override;
 
   TCPSocketParent() {}
 
   virtual bool RecvOpen(const nsString& aHost, const uint16_t& aPort,
-                        const bool& useSSL, const nsString& aBinaryType) MOZ_OVERRIDE;
+                        const bool& useSSL, const nsString& aBinaryType) override;
 
-  virtual bool RecvStartTLS() MOZ_OVERRIDE;
-  virtual bool RecvSuspend() MOZ_OVERRIDE;
-  virtual bool RecvResume() MOZ_OVERRIDE;
-  virtual bool RecvClose() MOZ_OVERRIDE;
+  virtual bool RecvStartTLS() override;
+  virtual bool RecvSuspend() override;
+  virtual bool RecvResume() override;
+  virtual bool RecvClose() override;
   virtual bool RecvData(const SendableData& aData,
-                        const uint32_t& aTrackingNumber) MOZ_OVERRIDE;
-  virtual bool RecvRequestDelete() MOZ_OVERRIDE;
-  virtual nsresult OfflineNotification(nsISupports *) MOZ_OVERRIDE;
-  virtual uint32_t GetAppId() MOZ_OVERRIDE;
+                        const uint32_t& aTrackingNumber) override;
+  virtual bool RecvRequestDelete() override;
+  virtual nsresult OfflineNotification(nsISupports *) override;
+  virtual uint32_t GetAppId() override;
+  bool GetInBrowser();
 
 private:
-  virtual void ActorDestroy(ActorDestroyReason why) MOZ_OVERRIDE;
+  virtual void ActorDestroy(ActorDestroyReason why) override;
 };
 
 } // namespace dom

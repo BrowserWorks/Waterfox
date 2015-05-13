@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim:set ts=2 sw=2 sts=2 et cindent: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -49,7 +49,6 @@
 #include "nsURIHashKey.h"
 
 class nsIDocument;
-class nsIChannel;
 class nsIPrincipal;
 class nsINode;
 class AutoError;
@@ -61,8 +60,8 @@ class ImportManager;
 
 typedef nsTHashtable<nsPtrHashKey<nsINode>> NodeTable;
 
-class ImportLoader MOZ_FINAL : public nsIStreamListener
-                             , public nsIDOMEventListener
+class ImportLoader final : public nsIStreamListener
+                         , public nsIDOMEventListener
 {
 
   // A helper inner class to decouple the logic of updating the import graph
@@ -134,7 +133,7 @@ public:
 
   // We need to listen to DOMContentLoaded event to know when the document
   // is fully leaded.
-  NS_IMETHOD HandleEvent(nsIDOMEvent *aEvent) MOZ_OVERRIDE;
+  NS_IMETHOD HandleEvent(nsIDOMEvent *aEvent) override;
 
   // Validation then opening and starting up the channel.
   void Open();
@@ -238,7 +237,7 @@ private:
   Updater mUpdater;
 };
 
-class ImportManager MOZ_FINAL : public nsISupports
+class ImportManager final : public nsISupports
 {
   typedef nsRefPtrHashtable<nsURIHashKey, ImportLoader> ImportMap;
 

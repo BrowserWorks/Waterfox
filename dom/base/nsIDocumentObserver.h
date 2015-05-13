@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -9,11 +10,9 @@
 #include "nsISupports.h"
 #include "nsIMutationObserver.h"
 
-class nsIAtom;
 class nsIContent;
 class nsIStyleSheet;
 class nsIStyleRule;
-class nsString;
 class nsIDocument;
 
 #define NS_IDOCUMENT_OBSERVER_IID \
@@ -195,56 +194,56 @@ NS_DEFINE_STATIC_IID_ACCESSOR(nsIDocumentObserver, NS_IDOCUMENT_OBSERVER_IID)
 
 #define NS_DECL_NSIDOCUMENTOBSERVER_BEGINUPDATE                              \
     virtual void BeginUpdate(nsIDocument* aDocument,                         \
-                             nsUpdateType aUpdateType) MOZ_OVERRIDE;
+                             nsUpdateType aUpdateType) override;
 
 #define NS_DECL_NSIDOCUMENTOBSERVER_ENDUPDATE                                \
-    virtual void EndUpdate(nsIDocument* aDocument, nsUpdateType aUpdateType) MOZ_OVERRIDE;
+    virtual void EndUpdate(nsIDocument* aDocument, nsUpdateType aUpdateType) override;
 
 #define NS_DECL_NSIDOCUMENTOBSERVER_BEGINLOAD                                \
-    virtual void BeginLoad(nsIDocument* aDocument) MOZ_OVERRIDE;
+    virtual void BeginLoad(nsIDocument* aDocument) override;
 
 #define NS_DECL_NSIDOCUMENTOBSERVER_ENDLOAD                                  \
-    virtual void EndLoad(nsIDocument* aDocument) MOZ_OVERRIDE;
+    virtual void EndLoad(nsIDocument* aDocument) override;
 
 #define NS_DECL_NSIDOCUMENTOBSERVER_CONTENTSTATECHANGED                      \
     virtual void ContentStateChanged(nsIDocument* aDocument,                 \
                                      nsIContent* aContent,                   \
-                                     mozilla::EventStates aStateMask) MOZ_OVERRIDE;
+                                     mozilla::EventStates aStateMask) override;
 
 #define NS_DECL_NSIDOCUMENTOBSERVER_DOCUMENTSTATESCHANGED                    \
     virtual void DocumentStatesChanged(nsIDocument* aDocument,               \
-                                       mozilla::EventStates aStateMask) MOZ_OVERRIDE;
+                                       mozilla::EventStates aStateMask) override;
 
 #define NS_DECL_NSIDOCUMENTOBSERVER_STYLESHEETADDED                          \
     virtual void StyleSheetAdded(nsIDocument* aDocument,                     \
                                  nsIStyleSheet* aStyleSheet,                 \
-                                 bool aDocumentSheet) MOZ_OVERRIDE;
+                                 bool aDocumentSheet) override;
 
 #define NS_DECL_NSIDOCUMENTOBSERVER_STYLESHEETREMOVED                        \
     virtual void StyleSheetRemoved(nsIDocument* aDocument,                   \
                                    nsIStyleSheet* aStyleSheet,               \
-                                   bool aDocumentSheet) MOZ_OVERRIDE;
+                                   bool aDocumentSheet) override;
 
 #define NS_DECL_NSIDOCUMENTOBSERVER_STYLESHEETAPPLICABLESTATECHANGED         \
     virtual void StyleSheetApplicableStateChanged(nsIDocument* aDocument,    \
                                                   nsIStyleSheet* aStyleSheet,\
-                                                  bool aApplicable) MOZ_OVERRIDE;
+                                                  bool aApplicable) override;
 
 #define NS_DECL_NSIDOCUMENTOBSERVER_STYLERULECHANGED                         \
     virtual void StyleRuleChanged(nsIDocument* aDocument,                    \
                                   nsIStyleSheet* aStyleSheet,                \
                                   nsIStyleRule* aOldStyleRule,               \
-                                  nsIStyleRule* aNewStyleRule) MOZ_OVERRIDE;
+                                  nsIStyleRule* aNewStyleRule) override;
 
 #define NS_DECL_NSIDOCUMENTOBSERVER_STYLERULEADDED                           \
     virtual void StyleRuleAdded(nsIDocument* aDocument,                      \
                                 nsIStyleSheet* aStyleSheet,                  \
-                                nsIStyleRule* aStyleRule) MOZ_OVERRIDE;
+                                nsIStyleRule* aStyleRule) override;
 
 #define NS_DECL_NSIDOCUMENTOBSERVER_STYLERULEREMOVED                         \
     virtual void StyleRuleRemoved(nsIDocument* aDocument,                    \
                                   nsIStyleSheet* aStyleSheet,                \
-                                  nsIStyleRule* aStyleRule) MOZ_OVERRIDE;
+                                  nsIStyleRule* aStyleRule) override;
 
 #define NS_DECL_NSIDOCUMENTOBSERVER                                          \
     NS_DECL_NSIDOCUMENTOBSERVER_BEGINUPDATE                                  \

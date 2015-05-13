@@ -8,6 +8,7 @@ DIRS += [
     'manifests',
     'tests',
     'ssltunnel',
+    'BrowserTestUtils',
 ]
 
 if CONFIG['MOZ_BUILD_APP'] == 'mobile/android':
@@ -16,6 +17,10 @@ if CONFIG['MOZ_BUILD_APP'] == 'mobile/android':
 XPI_NAME = 'mochijar'
 
 JAR_MANIFESTS += ['jar.mn']
+
+USE_EXTENSION_MANIFEST = True
+
+DIST_FILES += ['install.rdf']
 
 MOCHITEST_MANIFESTS += [
     'dynamic/mochitest.ini',
@@ -33,16 +38,12 @@ TEST_HARNESS_FILES.testing.mochitest += [
     '/build/pgo/server-locations.txt',
     '/build/sanitizers/lsan_suppressions.txt',
     '/netwerk/test/httpserver/httpd.js',
-    '/testing/mozbase/manifestparser/manifestparser/manifestparser.py',
     '/testing/mozbase/mozdevice/mozdevice/devicemanager.py',
     '/testing/mozbase/mozdevice/mozdevice/devicemanagerADB.py',
     '/testing/mozbase/mozdevice/mozdevice/devicemanagerSUT.py',
     '/testing/mozbase/mozdevice/mozdevice/droid.py',
     '/testing/mozbase/mozdevice/mozdevice/Zeroconf.py',
     '/testing/mozbase/moznetwork/moznetwork/moznetwork.py',
-    'android.json',
-    'android23.json',
-    'androidx86.json',
     'b2g_start_script.js',
     'bisection.py',
     'browser-harness.xul',
@@ -52,7 +53,6 @@ TEST_HARNESS_FILES.testing.mochitest += [
     'chrome-harness.js',
     'chunkifyTests.js',
     'gen_template.pl',
-    'gl.json',
     'harness.xul',
     'jetpack-addon-harness.js',
     'jetpack-addon-overlay.xul',
@@ -69,12 +69,6 @@ TEST_HARNESS_FILES.testing.mochitest += [
     'runtestsremote.py',
     'server.js',
 ]
-
-if CONFIG['MOZ_BUILD_APP'] == 'mobile/android':
-    TEST_HARNESS_FILES.testing.mochitest += [
-        '/mobile/android/base/tests/robocop.ini',
-        '/mobile/android/base/tests/robocop_autophone.ini',
-    ]
 
 TEST_HARNESS_FILES.testing.mochitest.pywebsocket += [
     'pywebsocket/standalone.py',

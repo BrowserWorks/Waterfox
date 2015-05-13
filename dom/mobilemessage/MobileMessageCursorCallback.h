@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -24,7 +25,7 @@ namespace mobilemessage {
 class MobileMessageCursorCallback;
 } // namespace mobilemessage
 
-class MobileMessageCursor MOZ_FINAL : public DOMCursor
+class MobileMessageCursor final : public DOMCursor
 {
   friend class mobilemessage::MobileMessageCursorCallback;
 
@@ -38,13 +39,13 @@ public:
 
   // Override XPIDL continue function to suppress -Werror,-Woverloaded-virtual.
   NS_IMETHOD
-  Continue(void) MOZ_OVERRIDE;
+  Continue(void) override;
 
   virtual void
-  Continue(ErrorResult& aRv) MOZ_OVERRIDE;
+  Continue(ErrorResult& aRv) override;
 
 private:
-  // MOZ_FINAL suppresses -Werror,-Wdelete-non-virtual-dtor
+  // final suppresses -Werror,-Wdelete-non-virtual-dtor
   ~MobileMessageCursor() {}
 
 private:
@@ -57,7 +58,7 @@ private:
 
 namespace mobilemessage {
 
-class MobileMessageCursorCallback MOZ_FINAL : public nsIMobileMessageCursorCallback
+class MobileMessageCursorCallback final : public nsIMobileMessageCursorCallback
 {
   friend class mozilla::dom::MobileMessageManager;
 
@@ -73,7 +74,7 @@ public:
   }
 
 private:
-  // MOZ_FINAL suppresses -Werror,-Wdelete-non-virtual-dtor
+  // final suppresses -Werror,-Wdelete-non-virtual-dtor
   ~MobileMessageCursorCallback()
   {
     MOZ_COUNT_DTOR(MobileMessageCursorCallback);

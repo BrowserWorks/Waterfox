@@ -37,6 +37,7 @@
 #include <crt_externs.h>
 #include <spawn.h>
 #include <sys/wait.h>
+#include <sys/errno.h>
 #endif
 #include <sys/types.h>
 #include <signal.h>
@@ -264,7 +265,11 @@ nsProcess::Monitor(void* aArg)
 #ifdef XP_MACOSX
   int exitCode = -1;
   int status = 0;
-  if (waitpid(process->mPid, &status, 0) == process->mPid) {
+  pid_t result;
+  do {
+    result = waitpid(process->mPid, &status, 0);
+  } while (result == -1 && errno == EINTR);
+  if (result == process->mPid) {
     if (WIFEXITED(status)) {
       exitCode = WEXITSTATUS(status);
     } else if (WIFSIGNALED(status)) {
@@ -359,7 +364,7 @@ nsProcess::CopyArgsAndRunProcess(bool aBlocking, const char** aArgs,
 {
   // Add one to the aCount for the program name and one for null termination.
   char** my_argv = nullptr;
-  my_argv = (char**)NS_Alloc(sizeof(char*) * (aCount + 2));
+  my_argv = (char**)moz_xmalloc(sizeof(char*) * (aCount + 2));
   if (!my_argv) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
@@ -374,8 +379,8 @@ nsProcess::CopyArgsAndRunProcess(bool aBlocking, const char** aArgs,
 
   nsresult rv = RunProcess(aBlocking, my_argv, aObserver, aHoldWeak, false);
 
-  NS_Free(my_argv[0]);
-  NS_Free(my_argv);
+  free(my_argv[0]);
+  free(my_argv);
   return rv;
 }
 
@@ -401,7 +406,7 @@ nsProcess::CopyArgsAndRunProcessw(bool aBlocking, const char16_t** aArgs,
 {
   // Add one to the aCount for the program name and one for null termination.
   char** my_argv = nullptr;
-  my_argv = (char**)NS_Alloc(sizeof(char*) * (aCount + 2));
+  my_argv = (char**)moz_xmalloc(sizeof(char*) * (aCount + 2));
   if (!my_argv) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
@@ -417,9 +422,9 @@ nsProcess::CopyArgsAndRunProcessw(bool aBlocking, const char16_t** aArgs,
   nsresult rv = RunProcess(aBlocking, my_argv, aObserver, aHoldWeak, true);
 
   for (uint32_t i = 0; i <= aCount; ++i) {
-    NS_Free(my_argv[i]);
+    free(my_argv[i]);
   }
-  NS_Free(my_argv);
+  free(my_argv);
   return rv;
 }
 

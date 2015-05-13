@@ -19,9 +19,11 @@ namespace mozilla {
 // Feel free to add more justifications to PixelCastJustification, along with
 // a comment that explains under what circumstances it is appropriate to use.
 
-MOZ_BEGIN_ENUM_CLASS(PixelCastJustification, uint8_t)
+enum class PixelCastJustification : uint8_t {
   // For the root layer, Screen Pixel = Parent Layer Pixel.
   ScreenIsParentLayerForRoot,
+  // For the root layer, Render Target Pixel = Parent Layer Pixel.
+  RenderTargetIsParentLayerForRoot,
   // For the root composition size we want to view it as layer pixels in any layer
   ParentLayerToLayerForRootComposition,
   // The Layer coordinate space for one layer is the ParentLayer coordinate
@@ -30,8 +32,13 @@ MOZ_BEGIN_ENUM_CLASS(PixelCastJustification, uint8_t)
   // The transform that is usually used to convert between two coordinate
   // systems is not available (for example, because the object that stores it
   // is being destroyed), so fall back to the identity.
-  TransformNotAvailable
-MOZ_END_ENUM_CLASS(PixelCastJustification)
+  TransformNotAvailable,
+  // When an OS event is initially constructed, its reference point is
+  // technically in screen pixels, as it has not yet accounted for any
+  // asynchronous transforms. This justification is for viewing the initial
+  // reference point as a screen point.
+  LayoutDeviceToScreenForUntransformedEvent
+};
 
 template <class TargetUnits, class SourceUnits>
 gfx::SizeTyped<TargetUnits> ViewAs(const gfx::SizeTyped<SourceUnits>& aSize, PixelCastJustification) {
@@ -44,6 +51,18 @@ gfx::IntSizeTyped<TargetUnits> ViewAs(const gfx::IntSizeTyped<SourceUnits>& aSiz
 template <class TargetUnits, class SourceUnits>
 gfx::PointTyped<TargetUnits> ViewAs(const gfx::PointTyped<SourceUnits>& aPoint, PixelCastJustification) {
   return gfx::PointTyped<TargetUnits>(aPoint.x, aPoint.y);
+}
+template <class TargetUnits, class SourceUnits>
+gfx::IntPointTyped<TargetUnits> ViewAs(const gfx::IntPointTyped<SourceUnits>& aPoint, PixelCastJustification) {
+  return gfx::IntPointTyped<TargetUnits>(aPoint.x, aPoint.y);
+}
+template <class TargetUnits, class SourceUnits>
+gfx::RectTyped<TargetUnits> ViewAs(const gfx::RectTyped<SourceUnits>& aRect, PixelCastJustification) {
+  return gfx::RectTyped<TargetUnits>(aRect.x, aRect.y, aRect.width, aRect.height);
+}
+template <class TargetUnits, class SourceUnits>
+gfx::IntRectTyped<TargetUnits> ViewAs(const gfx::IntRectTyped<SourceUnits>& aRect, PixelCastJustification) {
+  return gfx::IntRectTyped<TargetUnits>(aRect.x, aRect.y, aRect.width, aRect.height);
 }
 template <class NewTargetUnits, class OldTargetUnits, class SourceUnits>
 gfx::ScaleFactor<SourceUnits, NewTargetUnits> ViewTargetAs(

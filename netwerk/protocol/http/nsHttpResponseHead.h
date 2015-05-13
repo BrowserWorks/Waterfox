@@ -10,6 +10,12 @@
 #include "nsHttp.h"
 #include "nsString.h"
 
+// This needs to be forward declared here so we can include only this header
+// without also including PHttpChannelParams.h
+namespace IPC {
+    template <typename> struct ParamTraits;
+}
+
 namespace mozilla { namespace net {
 
 //-----------------------------------------------------------------------------
@@ -22,7 +28,8 @@ class nsHttpResponseHead
 public:
     nsHttpResponseHead() : mVersion(NS_HTTP_VERSION_1_1)
                          , mStatus(200)
-                         , mContentLength(UINT64_MAX)
+                         , mContentLength(-1)
+                         , mCacheControlPrivate(false)
                          , mCacheControlNoStore(false)
                          , mCacheControlNoCache(false)
                          , mPragmaNoCache(false) {}
@@ -37,6 +44,7 @@ public:
     int64_t               ContentLength() const { return mContentLength; }
     const nsAFlatCString &ContentType()   const { return mContentType; }
     const nsAFlatCString &ContentCharset() const { return mContentCharset; }
+    bool                  Private() const { return mCacheControlPrivate; }
     bool                  NoStore() const { return mCacheControlNoStore; }
     bool                  NoCache() const { return (mCacheControlNoCache || mPragmaNoCache); }
     /**
@@ -113,6 +121,21 @@ public:
         return ParseDateHeader(nsHttp::Last_Modified, result);
     }
 
+    bool operator==(const nsHttpResponseHead& aOther) const
+    {
+        return mHeaders == aOther.mHeaders &&
+               mVersion == aOther.mVersion &&
+               mStatus == aOther.mStatus &&
+               mStatusText == aOther.mStatusText &&
+               mContentLength == aOther.mContentLength &&
+               mContentType == aOther.mContentType &&
+               mContentCharset == aOther.mContentCharset &&
+               mCacheControlPrivate == aOther.mCacheControlPrivate &&
+               mCacheControlNoCache == aOther.mCacheControlNoCache &&
+               mCacheControlNoStore == aOther.mCacheControlNoStore &&
+               mPragmaNoCache == aOther.mPragmaNoCache;
+    }
+
 private:
     void     AssignDefaultStatusText();
     void     ParseVersion(const char *);
@@ -128,6 +151,7 @@ private:
     int64_t           mContentLength;
     nsCString         mContentType;
     nsCString         mContentCharset;
+    bool              mCacheControlPrivate;
     bool              mCacheControlNoStore;
     bool              mCacheControlNoCache;
     bool              mPragmaNoCache;

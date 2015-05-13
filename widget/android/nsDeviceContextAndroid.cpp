@@ -36,7 +36,7 @@ nsDeviceContextSpecAndroid::GetSurfaceForPrinter(gfxASurface** aSurface)
   surface = new gfxPDFSurface(stream, surfaceSize);
 
 
-  NS_ABORT_IF_FALSE(surface, "valid address expected");
+  MOZ_ASSERT(surface, "valid address expected");
   surface.swap(*aSurface);
   return NS_OK;
 }
@@ -82,11 +82,5 @@ nsDeviceContextSpecAndroid::EndDocument()
   NS_ENSURE_SUCCESS(rv, rv);
   
   destFile->SetPermissions(0666);
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsDeviceContextSpecAndroid::GetPath (const char** aPath)
-{
   return NS_OK;
 }

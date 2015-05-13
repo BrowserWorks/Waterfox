@@ -109,9 +109,9 @@ ActiveElementManager::HandlePanStart()
 }
 
 void
-ActiveElementManager::HandleTouchEnd(bool aWasClick)
+ActiveElementManager::HandleTouchEndEvent(bool aWasClick)
 {
-  AEM_LOG("Touch end, aWasClick: %d\n", aWasClick);
+  AEM_LOG("Touch end event, aWasClick: %d\n", aWasClick);
 
   // If the touch was a click, make mTarget :active right away.
   // nsEventStateManager will reset the active element when processing
@@ -127,6 +127,13 @@ ActiveElementManager::HandleTouchEnd(bool aWasClick)
   }
 
   ResetTouchBlockState();
+}
+
+void
+ActiveElementManager::HandleTouchEnd()
+{
+  AEM_LOG("Touch end, clearing pan state\n");
+  mCanBePanSet = false;
 }
 
 bool
@@ -157,7 +164,7 @@ ElementHasActiveStyle(dom::Element* aElement)
   }
   nsStyleSet* styleSet = pc->StyleSet();
   for (dom::Element* e = aElement; e; e = e->GetParentElement()) {
-    if (styleSet->HasStateDependentStyle(pc, e, NS_EVENT_STATE_ACTIVE)) {
+    if (styleSet->HasStateDependentStyle(e, NS_EVENT_STATE_ACTIVE)) {
       AEM_LOG("Element %p's style is dependent on the active state\n", e);
       return true;
     }

@@ -5,8 +5,8 @@
 
 /* This class wraps an SVG document, for use by VectorImage objects. */
 
-#ifndef mozilla_imagelib_SVGDocumentWrapper_h_
-#define mozilla_imagelib_SVGDocumentWrapper_h_
+#ifndef mozilla_image_src_SVGDocumentWrapper_h
+#define mozilla_image_src_SVGDocumentWrapper_h
 
 #include "mozilla/Attributes.h"
 
@@ -15,13 +15,12 @@
 #include "nsIObserver.h"
 #include "nsIContentViewer.h"
 #include "nsWeakReference.h"
+#include "nsSize.h"
 
-class nsIAtom;
 class nsIPresShell;
 class nsIRequest;
 class nsILoadGroup;
 class nsIFrame;
-struct nsIntSize;
 
 #define OBSERVER_SVC_CID "@mozilla.org/observer-service;1"
 
@@ -35,9 +34,9 @@ class SVGSVGElement;
 
 namespace image {
 
-class SVGDocumentWrapper MOZ_FINAL : public nsIStreamListener,
-                                     public nsIObserver,
-                                     nsSupportsWeakReference
+class SVGDocumentWrapper final : public nsIStreamListener,
+                                 public nsIObserver,
+                                 nsSupportsWeakReference
 {
 public:
   SVGDocumentWrapper();
@@ -51,21 +50,6 @@ public:
     eWidth,
     eHeight
   };
-
-  /**
-   * Looks up the value of the wrapped SVG document's |width| or |height|
-   * attribute in CSS pixels, and returns it by reference.  If the document has
-   * a percent value for the queried attribute, then this method fails
-   * (returns false).
-   *
-   * @param aDimension    Indicates whether the width or height is desired.
-   * @param[out] aResult  If this method succeeds, then this outparam will be
-                          populated with the width or height in CSS pixels.
-   * @return false to indicate failure, if the queried attribute has a
-   *         percent value.  Otherwise, true.
-   *
-   */
-  bool      GetWidthOrHeight(Dimension aDimension, int32_t& aResult);
 
   /**
    * Returns the wrapped document, or nullptr on failure. (No AddRef.)
@@ -147,7 +131,7 @@ public:
 private:
   ~SVGDocumentWrapper();
 
-  nsresult SetupViewer(nsIRequest *aRequest,
+  nsresult SetupViewer(nsIRequest* aRequest,
                        nsIContentViewer** aViewer,
                        nsILoadGroup** aLoadGroup);
   void     DestroyViewer();
@@ -164,4 +148,4 @@ private:
 } // namespace image
 } // namespace mozilla
 
-#endif // mozilla_imagelib_SVGDocumentWrapper_h_
+#endif // mozilla_image_src_SVGDocumentWrapper_h

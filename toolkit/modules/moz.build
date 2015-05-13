@@ -12,40 +12,53 @@ MOCHITEST_CHROME_MANIFESTS += ['tests/chrome/chrome.ini']
 SPHINX_TREES['toolkit_modules'] = 'docs'
 
 EXTRA_JS_MODULES += [
+    'addons/WebRequest.jsm',
+    'addons/WebRequestCommon.jsm',
+    'addons/WebRequestContent.js',
     'Battery.jsm',
     'BinarySearch.jsm',
     'BrowserUtils.jsm',
+    'CertUtils.jsm',
     'CharsetMenu.jsm',
+    'ClientID.jsm',
     'debug.js',
     'DeferredTask.jsm',
     'Deprecated.jsm',
-    'Dict.jsm',
     'FileUtils.jsm',
     'Finder.jsm',
     'Geometry.jsm',
+    'GMPInstallManager.jsm',
+    'GMPUtils.jsm',
     'Http.jsm',
     'InlineSpellChecker.jsm',
     'InlineSpellCheckerContent.jsm',
     'LoadContextInfo.jsm',
     'Log.jsm',
     'NewTabUtils.jsm',
+    'ObjectUtils.jsm',
     'PageMenu.jsm',
+    'PageMetadata.jsm',
     'PermissionsUtils.jsm',
     'PopupNotifications.jsm',
     'Preferences.jsm',
     'PrivateBrowsingUtils.jsm',
+    'ProfileAge.jsm',
     'Promise-backend.js',
     'Promise.jsm',
     'PromiseUtils.jsm',
     'PropertyListUtils.jsm',
     'RemoteController.jsm',
     'RemoteFinder.jsm',
+    'RemotePageManager.jsm',
     'RemoteSecurityUI.jsm',
     'RemoteWebNavigation.jsm',
     'RemoteWebProgress.jsm',
+    'ResetProfile.jsm',
+    'secondscreen/RokuApp.jsm',
     'secondscreen/SimpleServiceDiscovery.jsm',
     'SelectContentHelper.jsm',
     'SelectParentHelper.jsm',
+    'Services.jsm',
     'sessionstore/FormData.jsm',
     'sessionstore/ScrollPosition.jsm',
     'sessionstore/XPathGenerator.jsm',
@@ -56,24 +69,20 @@ EXTRA_JS_MODULES += [
     'Task.jsm',
     'TelemetryTimestamps.jsm',
     'Timer.jsm',
+    'Troubleshoot.jsm',
+    'UpdateChannel.jsm',
     'WebChannel.jsm',
+    'WindowDraggingUtils.jsm',
     'ZipUtils.jsm',
 ]
 
 EXTRA_PP_JS_MODULES += [
-    'CertUtils.jsm',
-    'GMPInstallManager.jsm',
-    'ResetProfile.jsm',
-    'secondscreen/RokuApp.jsm',
-    'Services.jsm',
-    'Troubleshoot.jsm',
-    'UpdateChannel.jsm',
-    'WindowDraggingUtils.jsm',
-    'WindowsPrefSync.jsm',
+    'AppConstants.jsm',
+    'SessionRecorder.jsm',
 ]
 
 if 'Android' != CONFIG['OS_TARGET']:
-    EXTRA_PP_JS_MODULES += [
+    EXTRA_JS_MODULES += [
         'LightweightThemeConsumer.jsm',
     ]
 else:
@@ -85,8 +94,14 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
         'WindowsRegistry.jsm',
     ]
 
-DEFINES['MOZ_APP_NAME'] = CONFIG['MOZ_APP_NAME']
-DEFINES['MOZ_BUILD_APP'] = CONFIG['MOZ_BUILD_APP']
+for var in ('ANDROID_PACKAGE_NAME',
+            'MOZ_APP_NAME',
+            'MOZ_APP_VERSION',
+            'MOZ_WIDGET_TOOLKIT'):
+            DEFINES[var] = CONFIG[var]
 
-if CONFIG['MOZ_TOOLKIT_SEARCH']:
-    DEFINES['MOZ_TOOLKIT_SEARCH'] = True
+for var in ('MOZILLA_OFFICIAL',
+            'MOZ_TOOLKIT_SEARCH',
+            'MOZ_UPDATER'):
+    if CONFIG[var]:
+        DEFINES[var] = True

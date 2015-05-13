@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -265,9 +266,9 @@ EventSource::Init(nsISupports* aOwner,
 }
 
 /* virtual */ JSObject*
-EventSource::WrapObject(JSContext* aCx)
+EventSource::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return EventSourceBinding::Wrap(aCx, this);
+  return EventSourceBinding::Wrap(aCx, this, aGivenProto);
 }
 
 /* static */ already_AddRefed<EventSource>
@@ -488,7 +489,7 @@ EventSource::OnStopRequest(nsIRequest *aRequest,
  * Simple helper class that just forwards the redirect callback back
  * to the EventSource.
  */
-class AsyncVerifyRedirectCallbackFwr MOZ_FINAL : public nsIAsyncVerifyRedirectCallback
+class AsyncVerifyRedirectCallbackFwr final : public nsIAsyncVerifyRedirectCallback
 {
 public:
   explicit AsyncVerifyRedirectCallbackFwr(EventSource* aEventsource)
@@ -500,7 +501,7 @@ public:
   NS_DECL_CYCLE_COLLECTION_CLASS(AsyncVerifyRedirectCallbackFwr)
 
   // nsIAsyncVerifyRedirectCallback implementation
-  NS_IMETHOD OnRedirectVerifyCallback(nsresult aResult) MOZ_OVERRIDE
+  NS_IMETHOD OnRedirectVerifyCallback(nsresult aResult) override
   {
     nsresult rv = mEventSource->OnRedirectVerifyCallback(aResult);
     if (NS_FAILED(rv)) {
@@ -580,9 +581,9 @@ EventSource::AsyncOnChannelRedirect(nsIChannel *aOldChannel,
 nsresult
 EventSource::OnRedirectVerifyCallback(nsresult aResult)
 {
-  NS_ABORT_IF_FALSE(mRedirectCallback, "mRedirectCallback not set in callback");
-  NS_ABORT_IF_FALSE(mNewRedirectChannel,
-                    "mNewRedirectChannel not set in callback");
+  MOZ_ASSERT(mRedirectCallback, "mRedirectCallback not set in callback");
+  MOZ_ASSERT(mNewRedirectChannel,
+             "mNewRedirectChannel not set in callback");
 
   NS_ENSURE_SUCCESS(aResult, aResult);
 
@@ -796,7 +797,7 @@ EventSource::InitChannelAndRequestEventSource()
 
   nsRefPtr<nsCORSListenerProxy> listener =
     new nsCORSListenerProxy(this, mPrincipal, mWithCredentials);
-  rv = listener->Init(mHttpChannel);
+  rv = listener->Init(mHttpChannel, DataURIHandling::Allow);
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Start reading from the channel

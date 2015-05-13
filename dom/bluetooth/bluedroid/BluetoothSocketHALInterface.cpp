@@ -1,5 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -37,7 +37,7 @@ DispatchBluetoothSocketHALResult(
 {
   MOZ_ASSERT(aRes);
 
-  nsRunnable* runnable;
+  nsRefPtr<nsRunnable> runnable;
 
   if (aStatus == STATUS_SUCCESS) {
     runnable = new BluetoothSocketHALIntResultRunnable(aRes, aMethod, aArg);
@@ -60,7 +60,7 @@ DispatchBluetoothSocketHALResult(
 {
   MOZ_ASSERT(aRes);
 
-  nsRunnable* runnable;
+  nsRefPtr<nsRunnable> runnable;
 
   if (aStatus == STATUS_SUCCESS) {
     runnable = new BluetoothSocketHALIntStringIntResultRunnable(
@@ -108,14 +108,14 @@ BluetoothSocketHALInterface::Listen(BluetoothSocketType aType,
 /* |DeleteTask| deletes a class instance on the I/O thread
  */
 template <typename T>
-class DeleteTask MOZ_FINAL : public Task
+class DeleteTask final : public Task
 {
 public:
   DeleteTask(T* aPtr)
   : mPtr(aPtr)
   { }
 
-  void Run() MOZ_OVERRIDE
+  void Run() override
   {
     mPtr = nullptr;
   }
@@ -129,7 +129,7 @@ private:
  * Bluedroid and forwarding the connected socket to the
  * resource handler.
  */
-class BluetoothSocketHALInterface::ConnectWatcher MOZ_FINAL
+class BluetoothSocketHALInterface::ConnectWatcher final
   : public SocketMessageWatcher
 {
 public:
@@ -137,7 +137,7 @@ public:
     : SocketMessageWatcher(aFd, aRes)
   { }
 
-  void Proceed(BluetoothStatus aStatus) MOZ_OVERRIDE
+  void Proceed(BluetoothStatus aStatus) override
   {
     DispatchBluetoothSocketHALResult(
       GetResultHandler(), &BluetoothSocketResultHandler::Connect,
@@ -188,7 +188,7 @@ BluetoothSocketHALInterface::Connect(const nsAString& aBdAddr,
  * connection, Bluedroid sends the 2nd message with the socket
  * info and socket file descriptor.
  */
-class BluetoothSocketHALInterface::AcceptWatcher MOZ_FINAL
+class BluetoothSocketHALInterface::AcceptWatcher final
   : public SocketMessageWatcher
 {
 public:
@@ -196,7 +196,7 @@ public:
     : SocketMessageWatcher(aFd, aRes)
   { }
 
-  void Proceed(BluetoothStatus aStatus) MOZ_OVERRIDE
+  void Proceed(BluetoothStatus aStatus) override
   {
     if ((aStatus != STATUS_SUCCESS) && (GetClientFd() != -1)) {
       mozilla::ScopedClose(GetClientFd()); // Close received socket fd on error

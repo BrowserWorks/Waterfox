@@ -153,7 +153,7 @@ public:
      */
     virtual void Resize(const gfx::IntSize& aSize) {
         mSize = aSize;
-        nsIntRegion r(nsIntRect(0, 0, aSize.width, aSize.height));
+        nsIntRegion r(gfx::IntRect(0, 0, aSize.width, aSize.height));
         BeginUpdate(r);
         EndUpdate();
     }
@@ -196,7 +196,6 @@ public:
 
     gfx::IntSize GetSize() const;
     ContentType GetContentType() const { return mContentType; }
-    ImageFormat GetImageFormat() const { return mImageFormat; }
     virtual bool InUpdate() const = 0;
     GLenum GetWrapMode() const { return mWrapMode; }
 
@@ -211,22 +210,10 @@ protected:
      * TextureImage from GLContext::CreateTextureImage().  That is,
      * clients must not be given partially-constructed TextureImages.
      */
-    TextureImage(const nsIntSize& aSize,
-                 GLenum aWrapMode, ContentType aContentType,
-                 Flags aFlags = NoFlags,
-                 ImageFormat aImageFormat = gfxImageFormat::Unknown)
-        : mSize(aSize.ToIntSize())
-        , mWrapMode(aWrapMode)
-        , mContentType(aContentType)
-        , mImageFormat(aImageFormat)
-        , mFilter(GraphicsFilter::FILTER_GOOD)
-        , mFlags(aFlags)
-    {}
-
-    // Moz2D equivalent...
     TextureImage(const gfx::IntSize& aSize,
                  GLenum aWrapMode, ContentType aContentType,
-                 Flags aFlags = NoFlags);
+                 Flags aFlags = NoFlags,
+                 ImageFormat aImageFormat = gfxImageFormat::Unknown);
 
     // Protected destructor, to discourage deletion outside of Release():
     virtual ~TextureImage() {}
@@ -236,7 +223,6 @@ protected:
     gfx::IntSize mSize;
     GLenum mWrapMode;
     ContentType mContentType;
-    ImageFormat mImageFormat;
     gfx::SurfaceFormat mTextureFormat;
     GraphicsFilter mFilter;
     Flags mFlags;
@@ -257,13 +243,6 @@ class BasicTextureImage
 public:
     virtual ~BasicTextureImage();
 
-    BasicTextureImage(GLuint aTexture,
-                      const nsIntSize& aSize,
-                      GLenum aWrapMode,
-                      ContentType aContentType,
-                      GLContext* aContext,
-                      TextureImage::Flags aFlags = TextureImage::NoFlags,
-                      TextureImage::ImageFormat aImageFormat = gfxImageFormat::Unknown);
     BasicTextureImage(GLuint aTexture,
                       const gfx::IntSize& aSize,
                       GLenum aWrapMode,
@@ -312,7 +291,7 @@ protected:
  * Aims to behave just like the real thing.
  */
 
-class TiledTextureImage MOZ_FINAL
+class TiledTextureImage final
     : public TextureImage
 {
 public:
@@ -348,7 +327,6 @@ protected:
     void* mIterationCallbackData;
     nsTArray< nsRefPtr<TextureImage> > mImages;
     bool mInUpdate;
-    gfx::IntSize mSize;
     unsigned int mTileSize;
     unsigned int mRows, mColumns;
     GLContext* mGL;

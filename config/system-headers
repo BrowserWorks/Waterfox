@@ -189,7 +189,6 @@ asm/signal.h
 ASRegistry.h
 assert.h
 atk/atk.h
-atk-bridge.h
 atlcom.h
 atlconv.h
 atlctl.cpp
@@ -239,10 +238,6 @@ bstring.h
 builtin.h
 Button.h
 byteswap.h
-#if MOZ_TREE_CAIRO!=1
-#define WRAP_CAIRO_HEADERS
-#endif
-#ifdef WRAP_CAIRO_HEADERS
 pixman.h
 cairo.h
 cairo-atsui.h
@@ -259,7 +254,6 @@ cairo-xlib-xrender.h
 cairo-directfb.h
 cairo-qpainter.h
 cairo-qt.h
-#endif
 dfiff.h
 exception
 ffi.h
@@ -471,6 +465,7 @@ freetype/ftbitmap.h
 freetype/ftxf86.h
 freetype.h
 ftcache.h
+ftfntfmt.h
 ftglyph.h
 ftsynth.h
 ftoutln.h
@@ -628,14 +623,6 @@ libgnome/libgnome.h
 libgnomeui/gnome-icon-lookup.h
 libgnomeui/gnome-icon-theme.h
 libgnomeui/gnome-ui-init.h
-libgnomevfs/gnome-vfs-file-info.h
-libgnomevfs/gnome-vfs.h
-libgnomevfs/gnome-vfs-init.h
-libgnomevfs/gnome-vfs-mime.h
-libgnomevfs/gnome-vfs-mime-handlers.h
-libgnomevfs/gnome-vfs-mime-utils.h
-libgnomevfs/gnome-vfs-ops.h
-libgnomevfs/gnome-vfs-standard-callbacks.h
 lib$routines.h
 limits
 limits.h
@@ -1354,6 +1341,7 @@ unicode/ucol.h
 unicode/udat.h
 unicode/udatpg.h
 unicode/uenum.h
+unicode/unorm.h
 unicode/unum.h
 unicode/ustring.h
 unicode/utypes.h
