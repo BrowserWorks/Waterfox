@@ -14,7 +14,6 @@
 
 @SET_MAKE@
 VPATH = @srcdir@
-
 am__is_gnu_make = test -n '$(MAKEFILE_LIST)' && test -n '$(MAKELEVEL)'
 am__make_running_with_option = \
   case $${target_option-} in \

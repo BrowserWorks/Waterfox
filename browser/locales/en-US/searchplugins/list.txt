@@ -1,7 +1,7 @@
-amazondotcom
+waterfoxsearch
 bing
 google
 startpage
-twitter
+ddg
 wikipedia
 yahoo

@@ -45,6 +45,8 @@ XPCOMUtils.defineLazyServiceGetter(this, "Favicons",
 XPCOMUtils.defineLazyServiceGetter(this, "gDNSService",
                                    "@mozilla.org/network/dns-service;1",
                                    "nsIDNSService");
+XPCOMUtils.defineLazyModuleGetter(this, "Pocket",
+                                  "resource:///modules/Pocket.jsm");
 
 const nsIWebNavigation = Ci.nsIWebNavigation;
 
@@ -4191,6 +4193,7 @@ var XULBrowserWindow = {
         BookmarkingUI.onLocationChange();
         SocialUI.updateState(location);
         UITour.onLocationChange(location);
+        Pocket.onLocationChange(browser, aLocationURI);
       }
 
       // Utility functions for disabling find
@@ -4549,7 +4552,7 @@ var TabsProgressListener = {
     if (aFlags & Ci.nsIWebProgressListener.LOCATION_CHANGE_SAME_DOCUMENT) {
       // Reader mode actually cares about these:
       let mm = gBrowser.selectedBrowser.messageManager;
-      mm.sendAsyncMessage("Reader:PushState");
+      mm.sendAsyncMessage("Reader:PushState", {isArticle: gBrowser.selectedBrowser.isArticle});
       return;
     }
 

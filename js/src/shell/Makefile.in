@@ -38,7 +38,7 @@ GARBAGE += ../$(PROGRAM)
 
 install:: $(PROGRAM)
 	$(SYSINSTALL) $^ $(DESTDIR)$(bindir)
-	
+
 ifeq ($(HOST_OS_ARCH),WINNT)
 js.$(OBJ_SUFFIX): CXXFLAGS := -O2
 js.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)

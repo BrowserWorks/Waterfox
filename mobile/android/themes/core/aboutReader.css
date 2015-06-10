@@ -69,7 +69,7 @@ body {
   font-size: 26px;
 }
 
-.message {
+#reader-message {
   margin-top: 40px;
   display: none;
   text-align: center;
@@ -276,6 +276,15 @@ body {
   list-style: decimal !important;
 }
 
+/* Hide elements with common "hidden" class names */
+#moz-reader-content .visually-hidden,
+#moz-reader-content .visuallyhidden,
+#moz-reader-content .hidden,
+#moz-reader-content .invisible,
+#moz-reader-content .sr-only {
+  display: none;
+}
+
 /*======= Controls toolbar =======*/
 
 .toolbar {
@@ -320,6 +329,10 @@ body {
 .button::-moz-focus-inner,
 .dropdown-popup > div > button::-moz-focus-inner {
   border: 0;
+}
+
+.button[hidden] {
+  display: none;
 }
 
 .dropdown {

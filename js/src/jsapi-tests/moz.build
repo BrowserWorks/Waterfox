@@ -6,7 +6,7 @@
 
 GeckoProgram('jsapi-tests', linkage=None)
 
-SOURCES += [
+UNIFIED_SOURCES += [
     'selfTest.cpp',
     'testAddPropertyPropcache.cpp',
     'testArgumentsObject.cpp',
@@ -89,7 +89,7 @@ SOURCES += [
 ]
 
 if CONFIG['ENABLE_ION']:
-    SOURCES += [
+    UNIFIED_SOURCES += [
         'testJitDCEinGVN.cpp',
         'testJitFoldsTo.cpp',
         'testJitGVN.cpp',

@@ -654,7 +654,7 @@ nsHttpHandler::BuildUserAgent()
     mUserAgent += '/';
     mUserAgent += mProductSub;
 
-    bool isFirefox = mAppName.EqualsLiteral("Firefox");
+    bool isFirefox = mAppName.EqualsLiteral("Waterfox");
     if (isFirefox || mCompatFirefoxEnabled) {
 		// App portion
         mUserAgent += ' ';

@@ -16,8 +16,6 @@ if not CONFIG['JS_DISABLE_SHELL']:
 
 TEST_DIRS += ['jsapi-tests', 'tests', 'gdb']
 
-CFLAGS += ['-O2']
-
 CONFIGURE_SUBST_FILES += [
     'devtools/rootAnalysis/Makefile',
     'js-confdefs.h',
@@ -496,7 +494,6 @@ if CONFIG['_MSC_VER']:
     # Prevent floating point errors caused by VC++ optimizations
     # XXX We should add this to CXXFLAGS, too?
     CFLAGS += ['-fp:precise']
-	
 
 if CONFIG['OS_ARCH'] not in ('WINNT', 'HP-UX'):
     OS_LIBS += [

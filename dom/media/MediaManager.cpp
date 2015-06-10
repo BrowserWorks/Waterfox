@@ -61,6 +61,8 @@
 #include "mozilla/WindowsVersion.h"
 #endif
 
+#include <map>
+
 // GetCurrentTime is defined in winbase.h as zero argument macro forwarding to
 // GetTickCount() and conflicts with MediaStream::GetCurrentTime.
 #ifdef GetCurrentTime
@@ -435,22 +437,31 @@ uint32_t
 VideoDevice::GetBestFitnessDistance(
     const nsTArray<const MediaTrackConstraintSet*>& aConstraintSets)
 {
+  // TODO: Minimal kludge to fix plain and ideal facingMode regression, for
+  // smooth landing and uplift. Proper cleanup is forthcoming (1037389).
+  uint64_t distance = 0;
+
   // Interrogate device-inherent properties first.
   for (size_t i = 0; i < aConstraintSets.Length(); i++) {
     auto& c = *aConstraintSets[i];
     if (!c.mFacingMode.IsConstrainDOMStringParameters() ||
+        c.mFacingMode.GetAsConstrainDOMStringParameters().mIdeal.WasPassed() ||
         c.mFacingMode.GetAsConstrainDOMStringParameters().mExact.WasPassed()) {
       nsString deviceFacingMode;
       GetFacingMode(deviceFacingMode);
       if (c.mFacingMode.IsString()) {
         if (c.mFacingMode.GetAsString() != deviceFacingMode) {
-          return UINT32_MAX;
+          if (i == 0) {
+            distance = 1000;
+          }
         }
       } else if (c.mFacingMode.IsStringSequence()) {
         if (!c.mFacingMode.GetAsStringSequence().Contains(deviceFacingMode)) {
-          return UINT32_MAX;
+          if (i == 0) {
+            distance = 1000;
+          }
         }
-      } else {
+      } else if (c.mFacingMode.GetAsConstrainDOMStringParameters().mExact.WasPassed()) {
         auto& exact = c.mFacingMode.GetAsConstrainDOMStringParameters().mExact.Value();
         if (exact.IsString()) {
           if (exact.GetAsString() != deviceFacingMode) {
@@ -458,6 +469,19 @@ VideoDevice::GetBestFitnessDistance(
           }
         } else if (!exact.GetAsStringSequence().Contains(deviceFacingMode)) {
           return UINT32_MAX;
+        }
+      } else if (c.mFacingMode.GetAsConstrainDOMStringParameters().mIdeal.WasPassed()) {
+        auto& ideal = c.mFacingMode.GetAsConstrainDOMStringParameters().mIdeal.Value();
+        if (ideal.IsString()) {
+          if (ideal.GetAsString() != deviceFacingMode) {
+            if (i == 0) {
+              distance = 1000;
+            }
+          }
+        } else if (!ideal.GetAsStringSequence().Contains(deviceFacingMode)) {
+          if (i == 0) {
+            distance = 1000;
+          }
         }
       }
     }
@@ -468,7 +492,8 @@ VideoDevice::GetBestFitnessDistance(
     }
   }
   // Forward request to underlying object to interrogate per-mode capabilities.
-  return GetSource()->GetBestFitnessDistance(aConstraintSets);
+  distance += uint64_t(GetSource()->GetBestFitnessDistance(aConstraintSets));
+  return uint32_t(std::min(distance, uint64_t(UINT32_MAX)));
 }
 
 AudioDevice::AudioDevice(MediaEngineAudioSource* aSource)
@@ -1001,12 +1026,22 @@ static void
   nsTArray<const MediaTrackConstraintSet*> aggregateConstraints;
   aggregateConstraints.AppendElement(&c);
 
+  std::multimap<uint32_t, nsRefPtr<DeviceType>> ordered;
+
   for (uint32_t i = 0; i < candidateSet.Length();) {
-    if (candidateSet[i]->GetBestFitnessDistance(aggregateConstraints) == UINT32_MAX) {
+    uint32_t distance = candidateSet[i]->GetBestFitnessDistance(aggregateConstraints);
+    if (distance == UINT32_MAX) {
       candidateSet.RemoveElementAt(i);
     } else {
+      ordered.insert(std::pair<uint32_t, nsRefPtr<DeviceType>>(distance,
+                                                               candidateSet[i]));
       ++i;
     }
+  }
+  // Order devices by shortest distance
+  for (auto& ordinal : ordered) {
+    candidateSet.RemoveElement(ordinal.second);
+    candidateSet.AppendElement(ordinal.second);
   }
 
   // Then apply advanced constraints.
@@ -1665,6 +1700,8 @@ MediaManager::GetUserMedia(
                                 false) ||
 #if defined(XP_MACOSX) || defined(XP_WIN)
           (
+            // Allow tab sharing for all platforms including XP and OSX 10.6
+            (src != dom::MediaSourceEnum::Browser) &&
             !Preferences::GetBool("media.getusermedia.screensharing.allow_on_old_platforms",
                                   false) &&
 #if defined(XP_MACOSX)

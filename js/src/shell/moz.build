@@ -17,8 +17,6 @@ SOURCES += [
     'OSObject.cpp'
 ]
 
-CFLAGS += ['-O2']
-
 # Building against js_static requires that we declare mfbt sybols "exported"
 # on its behalf.
 for var in ('EXPORT_JS_API', 'IMPL_MFBT'):

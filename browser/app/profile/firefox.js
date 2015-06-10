@@ -178,7 +178,7 @@ pref("app.update.silent", false);
 #ifndef RELEASE_BUILD
 pref("app.update.badge", true);
 #else
-pref("app.update.badge", false);
+pref("app.update.badge", true);
 #endif
 
 // If set to true, the Update Service will apply updates in the background
@@ -186,7 +186,11 @@ pref("app.update.badge", false);
 pref("app.update.staging.enabled", true);
 
 // Update service URL:
-pref("app.update.url", "https://aus4.mozilla.org/update/3/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/update.xml");
+#ifdef XP_WIN
+pref("app.update.url", "https://www.waterfoxproject.org/update/win64/%VERSION%/%LOCALE%/%CHANNEL%/update.xml");
+#else
+pref("app.update.url", "https://www.waterfoxproject.org/update/osx64/%VERSION%/%LOCALE%/%CHANNEL%/update.xml");
+#endif
 // app.update.url.manual is in branding section
 // app.update.url.details is in branding section
 
@@ -282,7 +286,7 @@ pref("browser.slowStartup.maxSamples", 5);
 // This url, if changed, MUST continue to point to an https url. Pulling arbitrary content to inject into
 // this page over http opens us up to a man-in-the-middle attack that we'd rather not face. If you are a downstream
 // repackager of this code using an alternate snippet url, please keep your users safe
-pref("browser.aboutHomeSnippets.updateUrl", "");
+pref("browser.aboutHomeSnippets.updateUrl", "data:application/json,{}");
 
 pref("browser.enable_automatic_image_resizing", true);
 pref("browser.casting.enabled", false);
@@ -1688,7 +1692,7 @@ pref("shumway.swf.whitelist", "http://g-ecx.images-amazon.com/*/AiryBasicRendere
 pref("image.mem.max_decoded_image_kb", 256000);
 
 pref("loop.enabled", true);
-pref("loop.screenshare.enabled", false);
+pref("loop.screenshare.enabled", true);
 pref("loop.server", "https://loop.services.mozilla.com/v0");
 pref("loop.seenToS", "unseen");
 pref("loop.showPartnerLogo", true);
@@ -1754,11 +1758,7 @@ pref("plain_text.wrap_long_lines", true);
 pref("dom.debug.propagate_gesture_events_through_content", false);
 
 // The request URL of the GeoLocation backend.
-#ifdef RELEASE_BUILD
 pref("geo.wifi.uri", "https://location.services.mozilla.com/v1/geolocate?key=%MOZILLA_API_KEY%");
-#else
-pref("geo.wifi.uri", "https://location.services.mozilla.com/v1/geolocate?key=%MOZILLA_API_KEY%");
-#endif
 
 #ifdef XP_MACOSX
 #ifdef RELEASE_BUILD
@@ -1891,11 +1891,18 @@ pref("dom.ipc.reportProcessHangs", false);
 pref("dom.ipc.reportProcessHangs", true);
 #endif
 
-pref("reader.parse-on-load.enabled", false);
 pref("browser.readinglist.enabled", false);
 pref("browser.readinglist.sidebarEverOpened", false);
 pref("readinglist.scheduler.enabled", false);
 pref("readinglist.server", "https://readinglist.services.mozilla.com/v1");
 
+pref("browser.reader.detectedFirstArticle", false);
 // Don't limit how many nodes we care about on desktop:
 pref("reader.parse-node-limit", 0);
+
+pref("browser.pocket.enabled", false);
+pref("browser.pocket.api", "api.getpocket.com");
+pref("browser.pocket.site", "getpocket.com");
+pref("browser.pocket.oAuthConsumerKey", "40249-e88c401e1b1f2242d9e441c4");
+pref("browser.pocket.useLocaleList", true);
+pref("browser.pocket.enabledLocales", "en-US de es-ES ja ja-JP-mac ru");

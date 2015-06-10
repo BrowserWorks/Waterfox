@@ -1826,9 +1826,20 @@ gfxWindowsPlatform::InitD3D11Devices()
     if (NS_SUCCEEDED(gfxInfo->GetFeatureStatus(nsIGfxInfo::FEATURE_DIRECT3D_11_LAYERS, &status))) {
       if (status != nsIGfxInfo::FEATURE_STATUS_OK) {
 
-        // It seems like nvdxgiwrapper makes a mess of WARP. See bug 1154703 for more.
-        if (gfxPrefs::LayersD3D11DisableWARP() || GetModuleHandleA("nvdxgiwrapper.dll")) {
+        // It seems like nvdxgiwrap makes a mess of WARP. See bug 1154703 for more.
+        if (gfxPrefs::LayersD3D11DisableWARP() || GetModuleHandleA("nvdxgiwrap.dll")) {
           return;
+        }
+
+        if (!IsWin8OrLater()) {
+            /* On Windows 7 WARP runs very badly on the builtin vga driver */
+            nsString driver;
+            gfxInfo->GetAdapterDriver(driver);
+            // driver can start with vga or svga so only look for "framebuf..."
+            if (driver.Find("framebuf vga256 vga64k") != kNotFound) {
+                gfxCriticalError(CriticalLog::DefaultOptions(false)) << "Disabling WARP on builtin vga driver";
+                return;
+            }
         }
 
         useWARP = true;

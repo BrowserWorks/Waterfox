@@ -13,6 +13,7 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "CustomizableUI", "resource:///modules/CustomizableUI.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils","resource://gre/modules/PlacesUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ReaderMode", "resource://gre/modules/ReaderMode.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ReadingList", "resource:///modules/readinglist/ReadingList.jsm");
@@ -21,12 +22,15 @@ XPCOMUtils.defineLazyModuleGetter(this, "UITour", "resource:///modules/UITour.js
 const gStringBundle = Services.strings.createBundle("chrome://global/locale/aboutReader.properties");
 
 let ReaderParent = {
+  _readerModeInfoPanelOpen: false,
 
   MESSAGES: [
     "Reader:AddToList",
+    "Reader:AddToPocket",
     "Reader:ArticleGet",
     "Reader:FaviconRequest",
     "Reader:ListStatusRequest",
+    "Reader:PocketEnabledGet",
     "Reader:RemoveFromList",
     "Reader:Share",
     "Reader:SystemUIVisibility",
@@ -44,7 +48,7 @@ let ReaderParent = {
 
   receiveMessage: function(message) {
     switch (message.name) {
-      case "Reader:AddToList":
+      case "Reader:AddToList": {
         let article = message.data.article;
         ReadingList.getMetadataFromBrowser(message.target).then(function(metadata) {
           if (metadata.previews.length > 0) {
@@ -59,6 +63,25 @@ let ReaderParent = {
           });
         });
         break;
+      }
+
+      case "Reader:AddToPocket": {
+        let doc = message.target.ownerDocument;
+        let pocketWidget = doc.getElementById("pocket-button");
+        let placement = CustomizableUI.getPlacementOfWidget("pocket-button");
+        if (placement) {
+          if (placement.area == CustomizableUI.AREA_PANEL) {
+            doc.defaultView.PanelUI.show().then(function() {
+              // The DOM node might not exist yet if the panel wasn't opened before.
+              pocketWidget = doc.getElementById("pocket-button");
+              pocketWidget.doCommand();
+            });
+          } else {
+            pocketWidget.doCommand();
+          }
+        }
+        break;
+      }
 
       case "Reader:ArticleGet":
         this._getArticle(message.data.url, message.target).then((article) => {
@@ -68,6 +91,13 @@ let ReaderParent = {
           }
         });
         break;
+
+      case "Reader:PocketEnabledGet": {
+        let pocketPlacement = CustomizableUI.getPlacementOfWidget("pocket-button");
+        let isPocketEnabled = pocketPlacement && pocketPlacement.area;
+        message.target.messageManager.sendAsyncMessage("Reader:PocketEnabledData", { enabled: !!isPocketEnabled});
+        break;
+      }
 
       case "Reader:FaviconRequest": {
         if (message.target.messageManager) {
@@ -156,6 +186,25 @@ let ReaderParent = {
       command.setAttribute("label", enterText);
       command.setAttribute("hidden", !browser.isArticle);
     }
+
+    let currentUriHost = browser.currentURI && browser.currentURI.asciiHost;
+    if (browser.isArticle &&
+        !Services.prefs.getBoolPref("browser.reader.detectedFirstArticle") &&
+        currentUriHost && !currentUriHost.endsWith("mozilla.org")) {
+      this.showReaderModeInfoPanel(browser);
+      Services.prefs.setBoolPref("browser.reader.detectedFirstArticle", true);
+      this._readerModeInfoPanelOpen = true;
+    } else if (this._readerModeInfoPanelOpen) {
+      if (UITour.isInfoOnTarget(win, "readerMode-urlBar")) {
+        UITour.hideInfo(win);
+      }
+      this._readerModeInfoPanelOpen = false;
+    }
+  },
+
+  forceShowReaderIcon: function(browser) {
+    browser.isArticle = true;
+    this.updateReaderButton(browser);
   },
 
   buttonClick: function(event) {
@@ -192,10 +241,16 @@ let ReaderParent = {
     let targetPromise = UITour.getTarget(win, "readerMode-urlBar");
     targetPromise.then(target => {
       let browserBundle = Services.strings.createBundle("chrome://browser/locale/browser.properties");
+      let icon = "chrome://browser/skin/";
+      if (win.devicePixelRatio > 1) {
+        icon += "reader-tour@2x.png";
+      } else {
+        icon += "reader-tour.png";
+      }
       UITour.showInfo(win, browser.messageManager, target,
-                      browserBundle.GetStringFromName("readerView.promo.firstDetectedArticle.title"),
-                      browserBundle.GetStringFromName("readerView.promo.firstDetectedArticle.body"),
-                      "chrome://browser/skin/reader-tour.png");
+                      browserBundle.GetStringFromName("readingList.promo.firstUse.readerView.title"),
+                      browserBundle.GetStringFromName("readingList.promo.firstUse.readerView.body"),
+                      icon);
     });
   },
 
@@ -208,6 +263,9 @@ let ReaderParent = {
    * @resolves JS object representing the article, or null if no article is found.
    */
   _getArticle: Task.async(function* (url, browser) {
-    return yield ReaderMode.downloadAndParseDocument(url);
+    return yield ReaderMode.downloadAndParseDocument(url).catch(e => {
+      Cu.reportError("Error downloading and parsing document: " + e);
+      return null;
+    });
   })
 };

@@ -6,12 +6,10 @@
 
 Library('editline')
 
-SOURCES += [
+UNIFIED_SOURCES += [
     'editline.c',
     'sysunix.c',
 ]
-
-CFLAGS += ['-O2']
 
 FORCE_STATIC_LIB = True
 

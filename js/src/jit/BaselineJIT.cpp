@@ -314,6 +314,7 @@ jit::CanEnterBaselineAtBranch(JSContext* cx, InterpreterFrame* fp, bool newType)
    // already compiled in baseline, execution jumps directly into baseline
    // code. This is incorrect as h's baseline script does not have debug
    // instrumentation.
+   // This is a terrible work around, but it'll have to do
    //if (fp->isDebuggee() && !Debugger::ensureExecutionObservabilityOfOsrFrame(cx, fp))
    //    return Method_Error;
 

@@ -6,6 +6,12 @@
 Components.utils.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
 Components.utils.import("resource://gre/modules/InlineSpellChecker.jsm");
 Components.utils.import("resource://gre/modules/BrowserUtils.jsm");
+Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "CustomizableUI",
+  "resource:///modules/CustomizableUI.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Pocket",
+  "resource:///modules/Pocket.jsm");
 
 var gContextMenuContentData = null;
 
@@ -228,6 +234,48 @@ nsContextMenu.prototype = {
                      SimpleServiceDiscovery.services.length > 0 &&
                      CastingApps.getServicesForVideo(this.target).length > 0;
     this.setItemAttr("context-castvideo", "disabled", !shouldShowCast);
+
+    this.initPocketItems();
+  },
+
+  initPocketItems: function CM_initPocketItems() {
+    var showSaveCurrentPageToPocket = !(this.onTextInput || this.onLink ||
+                                        this.isContentSelected || this.onImage ||
+                                        this.onCanvas || this.onVideo || this.onAudio);
+    let targetURI = (this.onSaveableLink || this.onPlainTextLink) ? this.linkURI : this.browser.currentURI;
+    let canPocket = CustomizableUI.getPlacementOfWidget("pocket-button") &&
+                    window.pktApi && window.pktApi.isUserLoggedIn();
+    canPocket = canPocket && (targetURI.schemeIs("http") || targetURI.schemeIs("https") ||
+                              (targetURI.schemeIs("about") && ReaderMode.getOriginalUrl(targetURI.spec)));
+    canPocket = canPocket && window.gBrowser && this.browser.getTabBrowser() == window.gBrowser;
+
+    if (canPocket) {
+      let locale = Cc["@mozilla.org/chrome/chrome-registry;1"].
+                   getService(Ci.nsIXULChromeRegistry).
+                   getSelectedLocale("browser");
+      if (locale != "en-US") {
+        if (locale == "ja-JP-mac")
+          locale = "ja";
+        let url = "chrome://browser/content/browser-pocket-" + locale + ".properties";
+        let bundle = Services.strings.createBundle(url);
+        let saveToPocketItem = document.getElementById("context-pocket");
+        let saveLinkToPocketItem = document.getElementById("context-savelinktopocket");
+        try {
+          saveToPocketItem.setAttribute("label", bundle.GetStringFromName("saveToPocketCmd.label"));
+          saveToPocketItem.setAttribute("accesskey", bundle.GetStringFromName("saveToPocketCmd.accesskey"));
+          saveLinkToPocketItem.setAttribute("label", bundle.GetStringFromName("saveLinkToPocketCmd.label"));
+          saveLinkToPocketItem.setAttribute("accesskey", bundle.GetStringFromName("saveLinkToPocketCmd.accesskey"));
+        } catch (err) {
+          // GetStringFromName throws when the bundle doesn't exist.  In that
+          // case, the item will retain the browser-pocket.dtd en-US string that
+          // it has in the markup.
+        }
+      }
+    }
+    this.showItem("context-pocket", canPocket && showSaveCurrentPageToPocket);
+    let showSaveLinkToPocket = canPocket && !showSaveCurrentPageToPocket &&
+                               (this.onSaveableLink || this.onPlainTextLink);
+    this.showItem("context-savelinktopocket", showSaveLinkToPocket);
   },
 
   initViewItems: function CM_initViewItems() {
@@ -1645,6 +1693,14 @@ nsContextMenu.prototype = {
 
   savePageAs: function CM_savePageAs() {
     saveDocument(this.browser.contentDocumentAsCPOW);
+  },
+
+  saveLinkToPocket: function CM_saveLinkToPocket() {
+    Pocket.savePage(this.browser, this.linkURL);
+  },
+
+  savePageToPocket: function CM_saveToPocket() {
+    Pocket.savePage(this.browser, this.browser.currentURI.spec, this.browser.contentTitle);
   },
 
   printFrame: function CM_printFrame() {

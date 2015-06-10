@@ -6,7 +6,7 @@
 
 GeckoProgram('gdb-tests', linkage=None)
 
-SOURCES += [
+UNIFIED_SOURCES += [
     'gdb-tests.cpp',
     'tests/test-jsid.cpp',
     'tests/test-JSObject.cpp',
@@ -29,8 +29,6 @@ GENERATED_INCLUDES += ['..']
 USE_LIBS += [
     'static:js',
 ]
-
-CFLAGS += ['-O2']
 
 OS_LIBS += CONFIG['MOZ_ZLIB_LIBS']
 
