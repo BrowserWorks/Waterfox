@@ -323,7 +323,7 @@ public:
   nsSVGElement* GetViewportElement();
   already_AddRefed<mozilla::dom::SVGAnimatedString> ClassName();
 protected:
-  virtual JSObject* WrapNode(JSContext *cx) override;
+  virtual JSObject* WrapNode(JSContext *cx, JS::Handle<JSObject*> aGivenProto) override;
 
 #ifdef DEBUG
   // We define BeforeSetAttr here and mark it final to ensure it is NOT used

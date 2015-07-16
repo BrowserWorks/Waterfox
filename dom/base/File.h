@@ -52,10 +52,10 @@ class FileImpl;
 class OwningArrayBufferOrArrayBufferViewOrBlobOrString;
 
 class File final : public nsIDOMFile
-                     , public nsIXHRSendable
-                     , public nsIMutable
-                     , public nsSupportsWeakReference
-                     , public nsWrapperCache
+                 , public nsIXHRSendable
+                 , public nsIMutable
+                 , public nsSupportsWeakReference
+                 , public nsWrapperCache
 {
 public:
   NS_DECL_NSIDOMBLOB
@@ -189,7 +189,7 @@ public:
               const ChromeFilePropertyBag& aBag,
               ErrorResult& aRv);
 
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   uint64_t GetSize(ErrorResult& aRv);
 
@@ -524,7 +524,8 @@ public:
     return true;
   }
 
-  class DataOwner final : public mozilla::LinkedListElement<DataOwner> {
+  class DataOwner final : public mozilla::LinkedListElement<DataOwner>
+  {
   public:
     NS_INLINE_DECL_THREADSAFE_REFCOUNTING(DataOwner)
     DataOwner(void* aMemoryBuffer, uint64_t aLength)
@@ -814,7 +815,7 @@ private:
 };
 
 class FileList final : public nsIDOMFileList,
-                           public nsWrapperCache
+                       public nsWrapperCache
 {
   ~FileList() {}
 
@@ -828,7 +829,7 @@ public:
 
   NS_DECL_NSIDOMFILELIST
 
-  virtual JSObject* WrapObject(JSContext *cx) override;
+  virtual JSObject* WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto) override;
 
   nsISupports* GetParentObject()
   {

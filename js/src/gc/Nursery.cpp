@@ -8,6 +8,7 @@
 #include "gc/Nursery-inl.h"
 
 #include "mozilla/IntegerPrintfMacros.h"
+#include "mozilla/Move.h"
 
 #include "jscompartment.h"
 #include "jsgc.h"
@@ -25,7 +26,7 @@
 #include "vm/TypedArrayObject.h"
 #include "vm/TypeInference.h"
 
-#include "jsgcinlines.h"
+#include "jsobjinlines.h"
 
 #include "vm/NativeObject-inl.h"
 
@@ -35,6 +36,20 @@ using namespace gc;
 using mozilla::ArrayLength;
 using mozilla::PodCopy;
 using mozilla::PodZero;
+
+struct js::Nursery::FreeHugeSlotsTask : public GCParallelTask
+{
+    explicit FreeHugeSlotsTask(FreeOp* fop) : fop_(fop) {}
+    bool init() { return slots_.init(); }
+    void transferSlotsToFree(HugeSlotsSet& slotsToFree);
+    ~FreeHugeSlotsTask() override { join(); }
+
+  private:
+    FreeOp* fop_;
+    HugeSlotsSet slots_;
+
+    virtual void run() override;
+};
 
 bool
 js::Nursery::init(uint32_t maxNurseryBytes)
@@ -51,6 +66,10 @@ js::Nursery::init(uint32_t maxNurseryBytes)
 
     void* heap = MapAlignedPages(nurserySize(), Alignment);
     if (!heap)
+        return false;
+
+    freeHugeSlotsTask = js_new<FreeHugeSlotsTask>(runtime()->defaultFreeOp());
+    if (!freeHugeSlotsTask || !freeHugeSlotsTask->init())
         return false;
 
     heapStart_ = uintptr_t(heap);
@@ -80,6 +99,8 @@ js::Nursery::~Nursery()
 {
     if (start())
         UnmapPages((void*)start(), nurserySize());
+
+    js_delete(freeHugeSlotsTask);
 }
 
 void
@@ -329,7 +350,7 @@ js::Nursery::allocateHugeSlots(JS::Zone* zone, size_t nslots)
 namespace js {
 namespace gc {
 
-class MinorCollectionTracer : public JSTracer
+class MinorCollectionTracer : public JS::CallbackTracer
 {
   public:
     Nursery* nursery;
@@ -359,7 +380,7 @@ class MinorCollectionTracer : public JSTracer
     }
 
     MinorCollectionTracer(JSRuntime* rt, Nursery* nursery)
-      : JSTracer(rt, Nursery::MinorGCCallback, TraceWeakMapKeysValues),
+      : JS::CallbackTracer(rt, Nursery::MinorGCCallback, TraceWeakMapKeysValues),
         nursery(nursery),
         session(rt, MinorCollecting),
         tenuredSize(0),
@@ -399,7 +420,7 @@ GetObjectAllocKindForCopy(const Nursery& nursery, JSObject* obj)
 
         /* Use minimal size object if we are just going to copy the pointer. */
         if (!nursery.isInside(aobj->getElementsHeader()))
-            return FINALIZE_OBJECT0_BACKGROUND;
+            return AllocKind::OBJECT0_BACKGROUND;
 
         size_t nelements = aobj->getDenseCapacity();
         return GetBackgroundAllocKind(GetGCArrayKind(nelements));
@@ -422,7 +443,7 @@ GetObjectAllocKindForCopy(const Nursery& nursery, JSObject* obj)
 
     // Unboxed plain objects are sized according to the data they store.
     if (obj->is<UnboxedPlainObject>()) {
-        size_t nbytes = obj->as<UnboxedPlainObject>().layout().size();
+        size_t nbytes = obj->as<UnboxedPlainObject>().layoutDontCheckGeneration().size();
         return GetGCObjectKindForBytes(UnboxedPlainObject::offsetOfData() + nbytes);
     }
 
@@ -439,7 +460,7 @@ GetObjectAllocKindForCopy(const Nursery& nursery, JSObject* obj)
 
     // Outline typed objects use the minimum allocation kind.
     if (obj->is<OutlineTypedObject>())
-        return FINALIZE_OBJECT0;
+        return AllocKind::OBJECT0;
 
     // All nursery allocatable non-native objects are handled above.
     MOZ_ASSERT(obj->isNative());
@@ -458,7 +479,8 @@ js::Nursery::allocateFromTenured(Zone* zone, AllocKind thingKind)
     if (t)
         return t;
     zone->arenas.checkEmptyFreeList(thingKind);
-    return zone->arenas.allocateFromArena(zone, thingKind);
+    AutoMaybeStartBackgroundAllocation maybeStartBackgroundAllocation;
+    return zone->arenas.allocateFromArena(zone, thingKind, maybeStartBackgroundAllocation);
 }
 
 void
@@ -671,14 +693,15 @@ js::Nursery::moveObjectToTenured(MinorCollectionTracer* trc,
         NativeObject* ndst = &dst->as<NativeObject>(), *nsrc = &src->as<NativeObject>();
         tenuredSize += moveSlotsToTenured(ndst, nsrc, dstKind);
         tenuredSize += moveElementsToTenured(ndst, nsrc, dstKind);
+
+        // The shape's list head may point into the old object. This can only
+        // happen for dictionaries, which are native objects.
+        if (&nsrc->shape_ == ndst->shape_->listp)
+            ndst->shape_->listp = &ndst->shape_;
     }
 
     if (src->is<InlineTypedObject>())
         InlineTypedObject::objectMovedDuringMinorGC(trc, dst, src);
-
-    /* The shape's list head may point into the old object. */
-    if (&src->shape_ == dst->shape_->listp)
-        dst->shape_->listp = &dst->shape_;
 
     return tenuredSize;
 }
@@ -753,7 +776,7 @@ ShouldMoveToTenured(MinorCollectionTracer* trc, void** thingp)
 }
 
 /* static */ void
-js::Nursery::MinorGCCallback(JSTracer* jstrc, void** thingp, JSGCTraceKind kind)
+js::Nursery::MinorGCCallback(JS::CallbackTracer* jstrc, void** thingp, JSGCTraceKind kind)
 {
     MinorCollectionTracer* trc = static_cast<MinorCollectionTracer*>(jstrc);
     if (ShouldMoveToTenured(trc, thingp))
@@ -783,6 +806,8 @@ js::Nursery::collect(JSRuntime* rt, JS::gcreason::Reason reason, ObjectGroupList
         sb.clear();
         return;
     }
+
+    rt->gc.incMinorGcNumber();
 
     rt->gc.stats.count(gcstats::STAT_MINOR_GC);
 
@@ -964,12 +989,47 @@ js::Nursery::collect(JSRuntime* rt, JS::gcreason::Reason reason, ObjectGroupList
 #undef TIME_TOTAL
 
 void
+js::Nursery::FreeHugeSlotsTask::transferSlotsToFree(HugeSlotsSet& slotsToFree)
+{
+    // Transfer the contents of the source set to the task's slots_ member by
+    // swapping the sets, which also clears the source.
+    MOZ_ASSERT(!isRunning());
+    MOZ_ASSERT(slots_.empty());
+    mozilla::Swap(slots_, slotsToFree);
+}
+
+void
+js::Nursery::FreeHugeSlotsTask::run()
+{
+    for (HugeSlotsSet::Range r = slots_.all(); !r.empty(); r.popFront())
+        fop_->free_(r.front());
+    slots_.clear();
+}
+
+void
 js::Nursery::freeHugeSlots()
 {
-    FreeOp* fop = runtime()->defaultFreeOp();
-    for (HugeSlotsSet::Range r = hugeSlots.all(); !r.empty(); r.popFront())
-        fop->free_(r.front());
-    hugeSlots.clear();
+    if (hugeSlots.empty())
+        return;
+
+    bool started;
+    {
+        AutoLockHelperThreadState lock;
+        freeHugeSlotsTask->joinWithLockHeld();
+        freeHugeSlotsTask->transferSlotsToFree(hugeSlots);
+        started = freeHugeSlotsTask->startWithLockHeld();
+    }
+
+    if (!started)
+        freeHugeSlotsTask->runFromMainThread(runtime());
+
+    MOZ_ASSERT(hugeSlots.empty());
+}
+
+void
+js::Nursery::waitBackgroundFreeEnd()
+{
+    freeHugeSlotsTask->join();
 }
 
 void

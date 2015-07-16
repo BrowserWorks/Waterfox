@@ -32,6 +32,7 @@
 #include "VideoUtils.h"
 #include "ImageLayers.h"
 #include "VideoSegment.h"
+#include "MediaStreamTrack.h"
 #endif
 
 class nsIPrincipal;
@@ -104,6 +105,9 @@ public:
   void DetachTransport_s();
   void DetachMedia_m();
   bool AnyCodecHasPluginID(uint64_t aPluginID);
+#ifdef MOZILLA_INTERNAL_API
+  nsRefPtr<mozilla::dom::VideoStreamTrack> GetVideoTrackByTrackId(const std::string& trackId);
+#endif
 protected:
   nsRefPtr<DOMMediaStream> mMediaStream;
   PeerConnectionMedia *mParent;
@@ -232,20 +236,15 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
   RefPtr<NrIceCtx> ice_ctx() const { return mIceCtx; }
 
   RefPtr<NrIceMediaStream> ice_media_stream(size_t i) const {
-    // TODO(ekr@rtfm.com): If someone asks for a value that doesn't exist,
-    // make one.
-    if (i >= mIceStreams.size()) {
-      return nullptr;
-    }
-    return mIceStreams[i];
+    return mIceCtx->GetStream(i);
   }
 
   size_t num_ice_media_streams() const {
-    return mIceStreams.size();
+    return mIceCtx->GetStreamCount();
   }
 
   // Create and modify transports in response to negotiation events.
-  void UpdateTransports(const JsepSession& session);
+  void UpdateTransports(const JsepSession& session, bool restartGathering);
 
   // Start ICE checks.
   void StartIceChecks(const JsepSession& session);
@@ -315,11 +314,15 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
   const nsCOMPtr<nsIThread>& GetMainThread() const { return mMainThread; }
   const nsCOMPtr<nsIEventTarget>& GetSTSThread() const { return mSTSThread; }
 
+  static size_t GetTransportFlowIndex(int aStreamIndex, bool aRtcp)
+  {
+    return aStreamIndex * 2 + (aRtcp ? 1 : 0);
+  }
+
   // Get a transport flow either RTP/RTCP for a particular stream
   // A stream can be of audio/video/datachannel/budled(?) types
-  RefPtr<TransportFlow> GetTransportFlow(int aStreamIndex,
-                                                           bool aIsRtcp) {
-    int index_inner = aStreamIndex * 2 + (aIsRtcp ? 1 : 0);
+  RefPtr<TransportFlow> GetTransportFlow(int aStreamIndex, bool aIsRtcp) {
+    int index_inner = GetTransportFlowIndex(aStreamIndex, aIsRtcp);
 
     if (mTransportFlows.find(index_inner) == mTransportFlows.end())
       return nullptr;
@@ -330,6 +333,7 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
   // Add a transport flow
   void AddTransportFlow(int aIndex, bool aRtcp,
                         const RefPtr<TransportFlow> &aFlow);
+  void RemoveTransportFlow(int aIndex, bool aRtcp);
   void ConnectDtlsListener_s(const RefPtr<TransportFlow>& aFlow);
   void DtlsConnected_s(TransportLayer* aFlow,
                        TransportLayer::State state);
@@ -418,7 +422,7 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
                               const std::vector<std::string>& aCandidateList);
   void GatherIfReady();
   void FlushIceCtxOperationQueueIfReady();
-  void PerformOrEnqueueIceCtxOperation(const nsRefPtr<nsIRunnable>& runnable);
+  void PerformOrEnqueueIceCtxOperation(nsIRunnable* runnable);
   void EnsureIceGathering_s();
   void StartIceChecks_s(bool aIsControlling,
                         bool aIsIceLite,
@@ -475,7 +479,6 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
 
   // ICE objects
   RefPtr<NrIceCtx> mIceCtx;
-  std::vector<RefPtr<NrIceMediaStream> > mIceStreams;
 
   // DNS
   nsRefPtr<NrIceResolver> mDNSResolver;
@@ -496,7 +499,7 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
   // on our ICE ctx, but are not ready to do so at the moment (eg; we are
   // waiting to get a callback with our http proxy config before we start
   // gathering or start checking)
-  std::vector<nsRefPtr<nsIRunnable>> mQueuedIceCtxOperations;
+  std::vector<nsCOMPtr<nsIRunnable>> mQueuedIceCtxOperations;
 
   // Used to cancel any ongoing proxy request.
   nsCOMPtr<nsICancelable> mProxyRequest;

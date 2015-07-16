@@ -40,9 +40,9 @@ WebGL2Context::Create()
 }
 
 JSObject*
-WebGL2Context::WrapObject(JSContext* cx)
+WebGL2Context::WrapObject(JSContext* cx, JS::Handle<JSObject*> aGivenProto)
 {
-    return dom::WebGL2RenderingContextBinding::Wrap(cx, this);
+    return dom::WebGL2RenderingContextBinding::Wrap(cx, this, aGivenProto);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -81,14 +81,14 @@ static const gl::GLFeature kRequiredFeatures[] = {
     gl::GLFeature::gpu_shader4,
     gl::GLFeature::instanced_arrays,
     gl::GLFeature::instanced_non_arrays,
-    gl::GLFeature::invalidate_framebuffer,
     gl::GLFeature::map_buffer_range,
     gl::GLFeature::occlusion_query2,
     gl::GLFeature::packed_depth_stencil,
     gl::GLFeature::query_objects,
     gl::GLFeature::renderbuffer_color_float,
     gl::GLFeature::renderbuffer_color_half_float,
-    gl::GLFeature::sRGB,
+    gl::GLFeature::sRGB_framebuffer,
+    gl::GLFeature::sRGB_texture,
     gl::GLFeature::sampler_objects,
     gl::GLFeature::standard_derivatives,
     gl::GLFeature::texture_3D,
@@ -121,12 +121,22 @@ WebGLContext::InitWebGL2()
         return false;
     }
 
+    std::vector<gl::GLFeature> missingList;
+
     for (size_t i = 0; i < ArrayLength(kRequiredFeatures); i++) {
-        if (!gl->IsSupported(kRequiredFeatures[i])) {
-            GenerateWarning("WebGL 2 unavailable. Requires feature %s.",
-                            gl::GLContext::GetFeatureName(kRequiredFeatures[i]));
-            return false;
+        if (!gl->IsSupported(kRequiredFeatures[i]))
+            missingList.push_back(kRequiredFeatures[i]);
+    }
+
+    if (missingList.size()) {
+        nsAutoCString exts;
+        for (auto itr = missingList.begin(); itr != missingList.end(); ++itr) {
+            exts.AppendLiteral("\n  ");
+            exts.Append(gl::GLContext::GetFeatureName(*itr));
         }
+        GenerateWarning("WebGL 2 unavailable. The following required features are"
+                        " unavailible: %s", exts.BeginReading());
+        return false;
     }
 
     // ok WebGL 2 is compatible, we can enable natively supported extensions.
@@ -142,15 +152,11 @@ WebGLContext::InitWebGL2()
     gl->GetUIntegerv(LOCAL_GL_MAX_UNIFORM_BUFFER_BINDINGS,
                      &mGLMaxUniformBufferBindings);
 
-    mBoundTransformFeedbackBuffers =
-        MakeUnique<WebGLRefPtr<WebGLBuffer>[]>(mGLMaxTransformFeedbackSeparateAttribs);
-    mBoundUniformBuffers =
-        MakeUnique<WebGLRefPtr<WebGLBuffer>[]>(mGLMaxUniformBufferBindings);
+    mBoundTransformFeedbackBuffers.SetLength(mGLMaxTransformFeedbackSeparateAttribs);
+    mBoundUniformBuffers.SetLength(mGLMaxUniformBufferBindings);
 
     mDefaultTransformFeedback = new WebGLTransformFeedback(this, 0);
     mBoundTransformFeedback = mDefaultTransformFeedback;
-    auto xfBuffers = new WebGLRefPtr<WebGLBuffer>[mGLMaxTransformFeedbackSeparateAttribs];
-    mBoundTransformFeedbackBuffers.reset(xfBuffers);
 
     mBypassShaderValidation = true;
 

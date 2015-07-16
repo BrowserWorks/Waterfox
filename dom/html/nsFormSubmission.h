@@ -20,7 +20,12 @@ class nsIDocShell;
 class nsIRequest;
 class nsISaveAsCharset;
 class nsIMultiplexInputStream;
-class nsIDOMBlob;
+
+namespace mozilla {
+namespace dom {
+class File;
+} // namespace dom
+} // namespace mozilla
 
 /**
  * Class for form submissions; encompasses the function to call to submit as
@@ -47,13 +52,11 @@ public:
    * Submit a name/file pair
    *
    * @param aName the name of the parameter
-   * @param aBlob the file to submit
-   * @param aFilename the filename to be used (not void)
+   * @param aBlob the file to submit. The file's name will be used
    */
   virtual nsresult AddNameFilePair(const nsAString& aName,
-                                   nsIDOMBlob* aBlob,
-                                   const nsString& aFilename) = 0;
-  
+                                   mozilla::dom::File* aBlob) = 0;
+
   /**
    * Reports whether the instance supports AddIsindex().
    *
@@ -161,8 +164,7 @@ public:
   virtual nsresult AddNameValuePair(const nsAString& aName,
                                     const nsAString& aValue) override;
   virtual nsresult AddNameFilePair(const nsAString& aName,
-                                   nsIDOMBlob* aBlob,
-                                   const nsString& aFilename) override;
+                                   mozilla::dom::File* aBlob) override;
   virtual nsresult GetEncodedSubmission(nsIURI* aURI,
                                         nsIInputStream** aPostDataStream) override;
 

@@ -7,10 +7,10 @@
 #ifndef mozilla_CycleCollectedJSRuntime_h__
 #define mozilla_CycleCollectedJSRuntime_h__
 
+#include "mozilla/DeferredFinalize.h"
 #include "mozilla/MemoryReporting.h"
 #include "jsapi.h"
 
-#include "nsCycleCollector.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsDataHashtable.h"
 #include "nsHashKeys.h"
@@ -259,7 +259,7 @@ public:
   already_AddRefed<nsIException> GetPendingException() const;
   void SetPendingException(nsIException* aException);
 
-  nsTArray<nsRefPtr<nsIRunnable>>& GetPromiseMicroTaskQueue();
+  nsTArray<nsCOMPtr<nsIRunnable>>& GetPromiseMicroTaskQueue();
 
   nsCycleCollectionParticipant* GCThingParticipant();
   nsCycleCollectionParticipant* ZoneParticipant();
@@ -309,7 +309,7 @@ private:
 
   nsCOMPtr<nsIException> mPendingException;
 
-  nsTArray<nsRefPtr<nsIRunnable>> mPromiseMicroTaskQueue;
+  nsTArray<nsCOMPtr<nsIRunnable>> mPromiseMicroTaskQueue;
 
   OOMState mOutOfMemoryState;
   OOMState mLargeAllocationFailureState;

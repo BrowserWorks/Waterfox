@@ -5,7 +5,6 @@
 
 package org.mozilla.gecko.tests;
 
-
 public class StringHelper {
     private StringHelper() {}
 
@@ -34,6 +33,7 @@ public class StringHelper {
     public static final String ABOUT_DOWNLOADS_URL = "about:downloads";
     public static final String ABOUT_HOME_URL = "about:home";
     public static final String ABOUT_ADDONS_URL = "about:addons";
+    public static final String ABOUT_PASSWORDS_URL = "about:passwords";
     public static final String ABOUT_APPS_URL = "about:apps";
     public static final String ABOUT_ABOUT_URL = "about:about";
     public static final String ABOUT_SCHEME = "about:";
@@ -54,6 +54,7 @@ public class StringHelper {
     public static final String CONTEXT_MENU_REMOVE = "Remove";
     public static final String CONTEXT_MENU_COPY_ADDRESS = "Copy Address";
     public static final String CONTEXT_MENU_EDIT_SITE_SETTINGS = "Edit Site Settings";
+    public static final String CONTEXT_MENU_SITE_SETTINGS_SAVE_PASSWORD = "Save Password";
     public static final String CONTEXT_MENU_ADD_TO_HOME_SCREEN = "Add to Home Screen";
     public static final String CONTEXT_MENU_PIN_SITE = "Pin Site";
     public static final String CONTEXT_MENU_UNPIN_SITE = "Unpin Site";
@@ -104,7 +105,8 @@ public class StringHelper {
     public static final String ROBOCOP_BLANK_PAGE_05_URL = "/robocop/robocop_blank_05.html";
     public static final String ROBOCOP_BOXES_URL = "/robocop/robocop_boxes.html";
     public static final String ROBOCOP_GEOLOCATION_URL = "/robocop/robocop_geolocation.html";
-    public static final String ROBOCOP_LOGIN_URL = "/robocop/robocop_login.html";
+    public static final String ROBOCOP_LOGIN_01_URL= "/robocop/robocop_login_01.html";
+    public static final String ROBOCOP_LOGIN_02_URL= "/robocop/robocop_login_02.html";
     public static final String ROBOCOP_POPUP_URL = "/robocop/robocop_popup.html";
     public static final String ROBOCOP_OFFLINE_STORAGE_URL = "/robocop/robocop_offline_storage.html";
     public static final String ROBOCOP_PICTURE_LINK_URL = "/robocop/robocop_picture_link.html";
@@ -112,6 +114,7 @@ public class StringHelper {
     public static final String ROBOCOP_TEXT_PAGE_URL = "/robocop/robocop_text_page.html";
     public static final String ROBOCOP_ADOBE_FLASH_URL = "/robocop/robocop_adobe_flash.html";
     public static final String ROBOCOP_INPUT_URL = "/robocop/robocop_input.html";
+    public static final String ROBOCOP_READER_MODE_BASIC_ARTICLE = "/robocop/reader_mode_pages/basic_article.html";
 
     private static final String ROBOCOP_JS_HARNESS_URL = "/robocop/robocop_javascript.html";
 
@@ -184,6 +187,7 @@ public class StringHelper {
     public static final String DNT_LABEL = "Do not track";
     public static final String COOKIES_LABEL = "Cookies";
     public static final String REMEMBER_PASSWORDS_LABEL = "Remember passwords";
+    public static final String MANAGE_LOGINS_LABEL = "Manage logins";
     public static final String MASTER_PASSWORD_LABEL = "Use master password";
     public static final String CLEAR_PRIVATE_DATA_LABEL = "Clear now";
 
@@ -226,9 +230,11 @@ public class StringHelper {
     public static final String PDF_LABEL = "Save as PDF";
     public static final String DOWNLOADS_LABEL = "Downloads";
     public static final String ADDONS_LABEL = "Add-ons";
+    public static final String LOGINS_LABEL = "Logins";
     public static final String APPS_LABEL = "Apps";
     public static final String SETTINGS_LABEL = "Settings";
     public static final String GUEST_MODE_LABEL = "New Guest Session";
+    public static final String TAB_QUEUE_LABEL = "Open later";
 
     // Android 3.0+
     public static final String TOOLS_LABEL = "Tools";
@@ -258,11 +264,14 @@ public class StringHelper {
     public static final String OFFLINE_ALLOW = "Allow";
     public static final String OFFLINE_DENY = "Don't allow";
 
-    public static final String LOGIN_MESSAGE = "Save password";
-    public static final String LOGIN_ALLOW = "Save";
-    public static final String LOGIN_DENY = "Don't save";
+    public static final String LOGIN_MESSAGE = "Would you like " + BRAND_NAME + " to remember this login?";
+    public static final String LOGIN_ALLOW = "Remember";
+    public static final String LOGIN_DENY = "Never";
 
     public static final String POPUP_MESSAGE = "prevented this site from opening";
     public static final String POPUP_ALLOW = "Show";
     public static final String POPUP_DENY = "Don't show";
+
+    // Strings used as content description, e.g. for ImageButtons
+    public static final String CONTENT_DESCRIPTION_READER_MODE_BUTTON = "Enter Reader View";
 }

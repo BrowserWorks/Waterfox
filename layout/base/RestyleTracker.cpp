@@ -40,7 +40,7 @@ FrameTagToString(dom::Element* aElement)
     nsFrame::ListTag(result, frame);
   } else {
     nsAutoString buf;
-    aElement->Tag()->ToString(buf);
+    aElement->NodeInfo()->NameAtom()->ToString(buf);
     result.AppendPrintf("(%s@%p)", NS_ConvertUTF16toUTF8(buf).get(), aElement);
   }
   return result;
@@ -83,6 +83,9 @@ CollectLaterSiblings(nsISupports* aElement,
 
 struct RestyleEnumerateData : RestyleTracker::Hints {
   nsRefPtr<dom::Element> mElement;
+#ifdef MOZ_ENABLE_PROFILER_SPS
+  UniquePtr<ProfilerBacktrace> mBacktrace;
+#endif
 };
 
 struct RestyleCollector {
@@ -140,6 +143,9 @@ CollectRestyles(nsISupports* aElement,
   currentRestyle->mElement = element;
   currentRestyle->mRestyleHint = aData->mRestyleHint;
   currentRestyle->mChangeHint = aData->mChangeHint;
+#ifdef MOZ_ENABLE_PROFILER_SPS
+  currentRestyle->mBacktrace = Move(aData->mBacktrace);
+#endif
 
 #ifdef RESTYLE_LOGGING
   collector->count++;
@@ -305,6 +311,12 @@ RestyleTracker::DoProcessRestyles()
           continue;
         }
 
+        Maybe<GeckoProfilerTracingRAII> profilerRAII;
+#ifdef MOZ_ENABLE_PROFILER_SPS
+        if (profiler_feature_active("restyle")) {
+          profilerRAII.emplace("Paint", "Styles", Move(data->mBacktrace));
+        }
+#endif
         ProcessOneRestyle(element, data->mRestyleHint, data->mChangeHint);
         AddRestyleRootsIfAwaitingRestyle(data->mDescendants);
       }
@@ -340,6 +352,13 @@ RestyleTracker::DoProcessRestyles()
                       FrameTagToString(currentRestyle->mElement).get(),
                       index++, collector.count);
           LOG_RESTYLE_INDENT();
+
+          Maybe<GeckoProfilerTracingRAII> profilerRAII;
+#ifdef MOZ_ENABLE_PROFILER_SPS
+          if (profiler_feature_active("restyle")) {
+            profilerRAII.emplace("Paint", "Styles", Move(currentRestyle->mBacktrace));
+          }
+#endif
           ProcessOneRestyle(currentRestyle->mElement,
                             currentRestyle->mRestyleHint,
                             currentRestyle->mChangeHint);

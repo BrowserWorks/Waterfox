@@ -18,6 +18,7 @@
 #include "nsLayoutUtils.h"
 #include "nsIFrame.h"
 #include "nsIDocument.h"
+#include "nsDOMMutationObserver.h"
 #include <math.h>
 
 using namespace mozilla;
@@ -95,67 +96,84 @@ CSSAnimationPlayer::QueueEvents(EventArray& aEventsToDispatch)
 
   ComputedTiming computedTiming = mSource->GetComputedTiming();
 
+  if (computedTiming.mPhase == ComputedTiming::AnimationPhase_Null) {
+    return; // do nothing
+  }
+
+  // Note that script can change the start time, so we have to handle moving
+  // backwards through the animation as well as forwards. An 'animationstart'
+  // is dispatched if we enter the active phase (regardless if that is from
+  // before or after the animation's active phase). An 'animationend' is
+  // dispatched if we leave the active phase (regardless if that is to before
+  // or after the animation's active phase).
+
+  bool wasActive = mPreviousPhaseOrIteration != PREVIOUS_PHASE_BEFORE &&
+                   mPreviousPhaseOrIteration != PREVIOUS_PHASE_AFTER;
+  bool isActive =
+         computedTiming.mPhase == ComputedTiming::AnimationPhase_Active;
+  bool isSameIteration =
+         computedTiming.mCurrentIteration == mPreviousPhaseOrIteration;
+  bool skippedActivePhase =
+    (mPreviousPhaseOrIteration == PREVIOUS_PHASE_BEFORE &&
+     computedTiming.mPhase == ComputedTiming::AnimationPhase_After) ||
+    (mPreviousPhaseOrIteration == PREVIOUS_PHASE_AFTER &&
+     computedTiming.mPhase == ComputedTiming::AnimationPhase_Before);
+
+  MOZ_ASSERT(!skippedActivePhase || (!isActive && !wasActive),
+             "skippedActivePhase only makes sense if we were & are inactive");
+
+  if (computedTiming.mPhase == ComputedTiming::AnimationPhase_Before) {
+    mPreviousPhaseOrIteration = PREVIOUS_PHASE_BEFORE;
+  } else if (computedTiming.mPhase == ComputedTiming::AnimationPhase_Active) {
+    mPreviousPhaseOrIteration = computedTiming.mCurrentIteration;
+  } else if (computedTiming.mPhase == ComputedTiming::AnimationPhase_After) {
+    mPreviousPhaseOrIteration = PREVIOUS_PHASE_AFTER;
+  }
+
   dom::Element* target;
   nsCSSPseudoElements::Type targetPseudoType;
   mSource->GetTarget(target, targetPseudoType);
 
-  switch (computedTiming.mPhase) {
-    case ComputedTiming::AnimationPhase_Null:
-    case ComputedTiming::AnimationPhase_Before:
-      // Do nothing
-      break;
+  uint32_t message;
 
-    case ComputedTiming::AnimationPhase_Active:
-      // Dispatch 'animationstart' or 'animationiteration' when needed.
-      if (computedTiming.mCurrentIteration != mLastNotification) {
-        // Notify 'animationstart' even if a negative delay puts us
-        // past the first iteration.
-        // Note that when somebody changes the animation-duration
-        // dynamically, this will fire an extra iteration event
-        // immediately in many cases.  It's not clear to me if that's the
-        // right thing to do.
-        uint32_t message = mLastNotification == LAST_NOTIFICATION_NONE
-                           ? NS_ANIMATION_START
-                           : NS_ANIMATION_ITERATION;
-        mLastNotification = computedTiming.mCurrentIteration;
-        TimeDuration iterationStart =
-          mSource->Timing().mIterationDuration *
-          computedTiming.mCurrentIteration;
-        TimeDuration elapsedTime =
-          std::max(iterationStart, mSource->InitialAdvance());
-        AnimationEventInfo ei(target, Name(), message,
-                              StickyTimeDuration(elapsedTime),
-                              PseudoTypeAsString(targetPseudoType));
-        aEventsToDispatch.AppendElement(ei);
-      }
-      break;
-
-    case ComputedTiming::AnimationPhase_After:
-      // If we skipped the animation interval entirely, dispatch
-      // 'animationstart' first
-      if (mLastNotification == LAST_NOTIFICATION_NONE) {
-        // Notifying for start of 0th iteration.
-        // (This is overwritten below but we set it here to maintain
-        // internal consistency.)
-        mLastNotification = 0;
-        StickyTimeDuration elapsedTime =
-          std::min(StickyTimeDuration(mSource->InitialAdvance()),
-                   computedTiming.mActiveDuration);
-        AnimationEventInfo ei(target, Name(), NS_ANIMATION_START,
-                              elapsedTime,
-                              PseudoTypeAsString(targetPseudoType));
-        aEventsToDispatch.AppendElement(ei);
-      }
-      // Dispatch 'animationend' when needed.
-      if (mLastNotification != LAST_NOTIFICATION_END) {
-        mLastNotification = LAST_NOTIFICATION_END;
-        AnimationEventInfo ei(target, Name(), NS_ANIMATION_END,
-                              computedTiming.mActiveDuration,
-                              PseudoTypeAsString(targetPseudoType));
-        aEventsToDispatch.AppendElement(ei);
-      }
-      break;
+  if (!wasActive && isActive) {
+    message = NS_ANIMATION_START;
+  } else if (wasActive && !isActive) {
+    message = NS_ANIMATION_END;
+  } else if (wasActive && isActive && !isSameIteration) {
+    message = NS_ANIMATION_ITERATION;
+  } else if (skippedActivePhase) {
+    // First notifying for start of 0th iteration by appending an
+    // 'animationstart':
+    StickyTimeDuration elapsedTime =
+      std::min(StickyTimeDuration(mSource->InitialAdvance()),
+               computedTiming.mActiveDuration);
+    AnimationEventInfo ei(target, Name(), NS_ANIMATION_START,
+                          elapsedTime,
+                          PseudoTypeAsString(targetPseudoType));
+    aEventsToDispatch.AppendElement(ei);
+    // Then have the shared code below append an 'animationend':
+    message = NS_ANIMATION_END;
+  } else {
+    return; // No events need to be sent
   }
+
+  StickyTimeDuration elapsedTime;
+
+  if (message == NS_ANIMATION_START ||
+      message == NS_ANIMATION_ITERATION) {
+    TimeDuration iterationStart = mSource->Timing().mIterationDuration *
+                                    computedTiming.mCurrentIteration;
+    elapsedTime = StickyTimeDuration(std::max(iterationStart,
+                                              mSource->InitialAdvance()));
+  } else {
+    MOZ_ASSERT(message == NS_ANIMATION_END);
+    elapsedTime = computedTiming.mActiveDuration;
+  }
+
+  AnimationEventInfo ei(target, Name(), message, elapsedTime,
+                        PseudoTypeAsString(targetPseudoType));
+  aEventsToDispatch.AppendElement(ei);
 }
 
 CommonAnimationManager*
@@ -243,13 +261,22 @@ nsAnimationManager::CheckAnimationRule(nsStyleContext* aStyleContext,
     return nullptr;
   }
 
+  nsAutoAnimationMutationBatch mb(aElement);
+
   // build the animations list
   dom::AnimationTimeline* timeline = aElement->OwnerDoc()->Timeline();
   AnimationPlayerPtrArray newPlayers;
-  BuildAnimations(aStyleContext, aElement, timeline, newPlayers);
+  if (!aStyleContext->IsInDisplayNoneSubtree()) {
+    BuildAnimations(aStyleContext, aElement, timeline, newPlayers);
+  }
 
   if (newPlayers.IsEmpty()) {
     if (collection) {
+      // There might be transitions that run now that animations don't
+      // override them.
+      mPresContext->TransitionManager()->
+        UpdateCascadeResultsWithAnimationsToBeDestroyed(collection);
+
       collection->Destroy();
     }
     return nullptr;
@@ -297,11 +324,16 @@ nsAnimationManager::CheckAnimationRule(nsStyleContext* aStyleContext,
           continue;
         }
 
+        bool animationChanged = false;
+
         // Update the old from the new so we can keep the original object
         // identity (and any expando properties attached to it).
         if (oldPlayer->GetSource() && newPlayer->GetSource()) {
           Animation* oldAnim = oldPlayer->GetSource();
           Animation* newAnim = newPlayer->GetSource();
+          animationChanged =
+            oldAnim->Timing() != newAnim->Timing() ||
+            oldAnim->Properties() != newAnim->Properties();
           oldAnim->Timing() = newAnim->Timing();
           oldAnim->Properties() = newAnim->Properties();
         }
@@ -316,11 +348,18 @@ nsAnimationManager::CheckAnimationRule(nsStyleContext* aStyleContext,
         // (We should check newPlayer->IsStylePaused() but that requires
         //  downcasting to CSSAnimationPlayer and we happen to know that
         //  newPlayer will only ever be paused by calling PauseFromStyle
-        //  making IsPaused synonymous in this case.)
-        if (!oldPlayer->IsStylePaused() && newPlayer->IsPaused()) {
+        //  making IsPausedOrPausing synonymous in this case.)
+        if (!oldPlayer->IsStylePaused() && newPlayer->IsPausedOrPausing()) {
           oldPlayer->PauseFromStyle();
-        } else if (oldPlayer->IsStylePaused() && !newPlayer->IsPaused()) {
+          animationChanged = true;
+        } else if (oldPlayer->IsStylePaused() &&
+                   !newPlayer->IsPausedOrPausing()) {
           oldPlayer->PlayFromStyle();
+          animationChanged = true;
+        }
+
+        if (animationChanged) {
+          nsNodeUtils::AnimationChanged(oldPlayer);
         }
 
         // Replace new animation with the (updated) old one and remove the
@@ -333,6 +372,10 @@ nsAnimationManager::CheckAnimationRule(nsStyleContext* aStyleContext,
         newPlayer = nullptr;
         newPlayers.ReplaceElementAt(newIdx, oldPlayer);
         collection->mPlayers.RemoveElementAt(oldIdx);
+
+        // We've touched the old animation's timing properties, so this
+        // could update the old player's relevance.
+        oldPlayer->UpdateRelevance();
       }
     }
   } else {
@@ -557,6 +600,7 @@ nsAnimationManager::BuildAnimations(nsStyleContext* aStyleContext,
 
       AnimationProperty &propData = *destAnim->Properties().AppendElement();
       propData.mProperty = prop;
+      propData.mWinsInCascade = true;
 
       KeyframeData *fromKeyframe = nullptr;
       nsRefPtr<nsStyleContext> fromContext;
@@ -693,6 +737,9 @@ nsAnimationManager::FlushAnimations(FlushFlags aFlags)
        l = PR_NEXT_LINK(l)) {
     AnimationPlayerCollection* collection =
       static_cast<AnimationPlayerCollection*>(l);
+
+    nsAutoAnimationMutationBatch mb(collection->mElement);
+
     collection->Tick();
     bool canThrottleTick = aFlags == Can_Throttle &&
       collection->CanPerformOnCompositorThread(

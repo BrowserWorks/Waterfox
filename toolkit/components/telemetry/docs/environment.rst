@@ -9,11 +9,19 @@ The environment data may also be submitted by other ping types.
 
 *Note:* This is not submitted with all ping types due to privacy concerns. This and other data is inspected under the `data collection policy <https://wiki.mozilla.org/Firefox/Data_Collection>`_.
 
+Some parts of the environment must be fetched asynchronously at startup. We don't want other Telemetry components to block on waiting for the environment, so some items may be missing from it until the async fetching finished.
+This currently affects the following sections:
+
+- profile
+- addons
+
+
 Structure::
 
     {
       build: {
         applicationId: <string>, // nsIXULAppInfo.ID
+        applicationName: <string>, // "Firefox"
         architecture: <string>, // e.g. "x86", build architecture for the active build
         architecturesInBinary: <string>, // e.g. "i386-x86_64", from nsIMacUtils.architecturesInBinary, only present for mac universal builds
         buildId: <string>, // e.g. "20141126041045"
@@ -24,22 +32,25 @@ Structure::
         hotfixVersion: <string>, // e.g. "20141211.01"
       },
       settings: {
-        blocklistEnabled: <bool>, // false on failure
-        isDefaultBrowser: <bool>, // null on failure
+        blocklistEnabled: <bool>, // true on failure
+        isDefaultBrowser: <bool>, // null on failure, not available on Android
         e10sEnabled: <bool>, // false on failure
         telemetryEnabled: <bool>, // false on failure
         locale: <string>, // e.g. "it", null on failure
         update: {
           channel: <string>, // e.g. "release", null on failure
-          enabled: <bool>, // false on failure
-          autoDownload: <bool>, // false on failure
+          enabled: <bool>, // true on failure
+          autoDownload: <bool>, // true on failure
         },
         userPrefs: {
-          // Two possible behaviours: values of the whitelisted prefs, or for some prefs we
-          // only record they are present with value being set to null.
+          // Only prefs which are changed from the default value are listed
+          // in this block
+          "pref.name.value": value // some prefs send the value
+          "pref.name.url": "<user-set>" // For some privacy-sensitive prefs
+            // only the fact that the value has been changed is recorded
         },
       },
-      profile: {
+      profile: { // This section is not available on Android.
         creationDate: <integer>, // integer days since UNIX epoch, e.g. 16446
         resetDate: <integer>, // integer days since UNIX epoch, e.g. 16446 - optional
       },
@@ -86,22 +97,22 @@ Structure::
         },
         hdd: {
           profile: { // hdd where the profile folder is located
-              model: <string>, // null on failure
-              revision: <string>, // null on failure
+              model: <string>, // windows only or null on failure
+              revision: <string>, // windows only or null on failure
           },
           binary:  { // hdd where the application binary is located
-              model: <string>, // null on failure
-              revision: <string>, // null on failure
+              model: <string>, // windows only or null on failure
+              revision: <string>, // windows only or null on failure
           },
           system:  { // hdd where the system files are located
-              model: <string>, // null on failure
-              revision: <string>, // null on failure
+              model: <string>, // windows only or null on failure
+              revision: <string>, // windows only or null on failure
           },
         },
         gfx: {
             D2DEnabled: <bool>, // null on failure
             DWriteEnabled: <bool>, // null on failure
-            DWriteVersion: <string>, // null on failure
+            //DWriteVersion: <string>, // temporarily removed, pending bug 1154500
             adapters: [
               {
                 description: <string>, // e.g. "Intel(R) HD Graphics 4600", null on failure
@@ -122,7 +133,7 @@ Structure::
         activeAddons: { // the currently enabled addons
           <addon id>: {
             blocklisted: <bool>,
-            description: <string>,
+            description: <string>, // null if not available
             name: <string>,
             userDisabled: <bool>,
             appDisabled: <bool>,
@@ -131,8 +142,8 @@ Structure::
             type: <string>, // "extension", "service", ...
             foreignInstall: <bool>,
             hasBinaryComponents: <bool>
-            installDay: <number>, // days since UNIX epoch
-            updateDay: <number>, // days since UNIX epoch
+            installDay: <number>, // days since UNIX epoch, 0 on failure
+            updateDay: <number>, // days since UNIX epoch, 0 on failure
           },
           ...
         },
@@ -147,8 +158,8 @@ Structure::
           scope: <integer>,
           foreignInstall: <bool>,
           hasBinaryComponents: <bool>
-          installDay: <number>, // days since UNIX epoch
-          updateDay: <number>, // days since UNIX epoch
+          installDay: <number>, // days since UNIX epoch, 0 on failure
+          updateDay: <number>, // days since UNIX epoch, 0 on failure
         },
         activePlugins: [
           {
@@ -159,7 +170,7 @@ Structure::
             disabled: <bool>,
             clicktoplay: <bool>,
             mimeTypes: [<string>, ...],
-            updateDay: <number>, // days since UNIX epoch
+            updateDay: <number>, // days since UNIX epoch, 0 on failure
           },
           ...
         ],

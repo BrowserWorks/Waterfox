@@ -67,7 +67,7 @@ public:
              bool aIsPrivate);
 
   // WebIDL
-  JSObject* WrapObject(JSContext* aCx) override;
+  JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   nsIDOMWindow* GetParentObject() const
   {

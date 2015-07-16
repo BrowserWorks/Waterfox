@@ -44,10 +44,6 @@ class ServiceWorkerContainer;
 }
 }
 
-#ifdef MOZ_B2G_RIL
-class nsIDOMMozIccManager;
-#endif // MOZ_B2G_RIL
-
 //*****************************************************************************
 // Navigator: Script "navigator" object
 //*****************************************************************************
@@ -88,12 +84,12 @@ class BluetoothManager;
 #endif // MOZ_B2G_BT
 
 #ifdef MOZ_B2G_RIL
-class IccManager;
 class MobileConnectionArray;
 #endif
 
 class PowerManager;
 class CellBroadcast;
+class IccManager;
 class Telephony;
 class Voicemail;
 class TVManager;
@@ -109,8 +105,8 @@ class AudioChannelManager;
 } // namespace system
 
 class Navigator final : public nsIDOMNavigator
-                          , public nsIMozNavigatorNetwork
-                          , public nsWrapperCache
+                      , public nsIMozNavigatorNetwork
+                      , public nsWrapperCache
 {
 public:
   explicit Navigator(nsPIDOMWindow* aInnerWindow);
@@ -224,6 +220,7 @@ public:
                          ErrorResult& aRv);
   DesktopNotificationCenter* GetMozNotification(ErrorResult& aRv);
   CellBroadcast* GetMozCellBroadcast(ErrorResult& aRv);
+  IccManager* GetMozIccManager(ErrorResult& aRv);
   MobileMessageManager* GetMozMobileMessage();
   Telephony* GetMozTelephony(ErrorResult& aRv);
   Voicemail* GetMozVoicemail(ErrorResult& aRv);
@@ -243,7 +240,6 @@ public:
 #endif
 #ifdef MOZ_B2G_RIL
   MobileConnectionArray* GetMozMobileConnections(ErrorResult& aRv);
-  IccManager* GetMozIccManager(ErrorResult& aRv);
 #endif // MOZ_B2G_RIL
 #ifdef MOZ_GAMEPAD
   void GetGamepads(nsTArray<nsRefPtr<Gamepad> >& aGamepads, ErrorResult& aRv);
@@ -324,7 +320,7 @@ public:
     return GetWindow();
   }
 
-  virtual JSObject* WrapObject(JSContext* cx) override;
+  virtual JSObject* WrapObject(JSContext* cx, JS::Handle<JSObject*> aGivenProto) override;
 
   // GetWindowFromGlobal returns the inner window for this global, if
   // any, else null.
@@ -355,6 +351,7 @@ private:
 #endif
   nsRefPtr<PowerManager> mPowerManager;
   nsRefPtr<CellBroadcast> mCellBroadcast;
+  nsRefPtr<IccManager> mIccManager;
   nsRefPtr<MobileMessageManager> mMobileMessageManager;
   nsRefPtr<Telephony> mTelephony;
   nsRefPtr<Voicemail> mVoicemail;
@@ -362,7 +359,6 @@ private:
   nsRefPtr<network::Connection> mConnection;
 #ifdef MOZ_B2G_RIL
   nsRefPtr<MobileConnectionArray> mMobileConnections;
-  nsRefPtr<IccManager> mIccManager;
 #endif
 #ifdef MOZ_B2G_BT
   nsRefPtr<bluetooth::BluetoothManager> mBluetooth;

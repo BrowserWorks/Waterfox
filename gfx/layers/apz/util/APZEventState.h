@@ -50,19 +50,19 @@ public:
   NS_INLINE_DECL_REFCOUNTING(APZEventState);
 
   void ProcessSingleTap(const CSSPoint& aPoint,
+                        Modifiers aModifiers,
                         const ScrollableLayerGuid& aGuid,
                         float aPresShellResolution);
   void ProcessLongTap(const nsCOMPtr<nsIDOMWindowUtils>& aUtils,
                       const CSSPoint& aPoint,
+                      Modifiers aModifiers,
                       const ScrollableLayerGuid& aGuid,
                       uint64_t aInputBlockId,
                       float aPresShellResolution);
-  void ProcessLongTapUp(const CSSPoint& aPoint,
-                        const ScrollableLayerGuid& aGuid,
-                        float aPresShellResolution);
   void ProcessTouchEvent(const WidgetTouchEvent& aEvent,
                          const ScrollableLayerGuid& aGuid,
-                         uint64_t aInputBlockId);
+                         uint64_t aInputBlockId,
+                         nsEventStatus aApzResponse);
   void ProcessWheelEvent(const WidgetWheelEvent& aEvent,
                          const ScrollableLayerGuid& aGuid,
                          uint64_t aInputBlockId);
@@ -72,7 +72,7 @@ public:
                              int aArg);
 private:
   ~APZEventState();
-  void SendPendingTouchPreventedResponse(bool aPreventDefault,
+  bool SendPendingTouchPreventedResponse(bool aPreventDefault,
                                          const ScrollableLayerGuid& aGuid);
   already_AddRefed<nsIWidget> GetWidget() const;
 private:
@@ -84,6 +84,7 @@ private:
   uint64_t mPendingTouchPreventedBlockId;
   bool mEndTouchIsClick;
   bool mTouchEndCancelled;
+  int mActiveAPZTransforms;
 };
 
 }

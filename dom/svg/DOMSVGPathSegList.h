@@ -47,7 +47,7 @@ class SVGAnimatedPathSegList;
  * Our DOM items are created lazily on demand as and when script requests them.
  */
 class DOMSVGPathSegList final : public nsISupports,
-                                    public nsWrapperCache
+                                public nsWrapperCache
 {
   friend class AutoChangePathSegListNotifier;
   friend class DOMSVGPathSeg;
@@ -56,7 +56,7 @@ public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(DOMSVGPathSegList)
 
-  virtual JSObject* WrapObject(JSContext *cx) override;
+  virtual JSObject* WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto) override;
 
   nsISupports* GetParentObject()
   {

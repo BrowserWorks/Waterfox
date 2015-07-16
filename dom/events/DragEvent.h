@@ -30,9 +30,9 @@ public:
 
   NS_FORWARD_TO_MOUSEEVENT
 
-  virtual JSObject* WrapObjectInternal(JSContext* aCx) override
+  virtual JSObject* WrapObjectInternal(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override
   {
-    return DragEventBinding::Wrap(aCx, this);
+    return DragEventBinding::Wrap(aCx, this, aGivenProto);
   }
 
   DataTransfer* GetDataTransfer();
@@ -47,6 +47,11 @@ public:
                      EventTarget* aRelatedTarget,
                      DataTransfer* aDataTransfer,
                      ErrorResult& aError);
+
+  static already_AddRefed<DragEvent> Constructor(const GlobalObject& aGlobal,
+                                                 const nsAString& aType,
+                                                 const DragEventInit& aParam,
+                                                 ErrorResult& aRv);
 
 protected:
   ~DragEvent() {}

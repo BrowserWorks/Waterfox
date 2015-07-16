@@ -1,0 +1,96 @@
+The Simplified MakeMaker class hierarchy
+****************************************
+
+What most people need to know.
+
+(Subclasses on top.)
+
+               MY
+                |
+        ExtUtils::MakeMaker
+                |
+        ExtUtils::MM_{Current OS}
+                |
+        ExtUtils::MM_Unix
+                |
+        ExtUtils::MM_Any
+
+The object actually used is of the class MY which allows you to
+override bits of MakeMaker inside your Makefile.PL by declaring
+MY::foo() methods.
+
+
+The Real MakeMaker class hierarchy
+**********************************
+
+You wish it was that simple.
+
+Here's how it really works.
+
+               PACK### (created each call to ExtUtils::MakeMaker->new)
+                    .                       |
+                 (mixin)                    |
+                    .                       |
+        MY (created by ExtUtils::MY)        |
+        |                                   |
+        ExtUtils::MY         MM (created by ExtUtils::MM)
+                   |          |
+                   ExtUtils::MM
+                    |     |   |-----------------------
+                    |     |                          |   
+    ExtUtils::Liblist     ExtUtils::MakeMaker        |
+          |                                          |
+    ExtUtils::Liblist::Kid                           |
+                                                     |
+                                                     |
+                                                     |
+                                    ExtUtils::MM_{Current OS} (if necessary)
+                                            |
+                                    ExtUtils::MM_Unix
+                                            |
+                                    ExtUtils::MM_Any
+
+
+NOTE: Yes, this is a mess.  See
+http://archive.develooper.com/makemaker@perl.org/msg00134.html
+for some history.
+
+NOTE: When ExtUtils::MM is loaded it chooses a superclass for MM from
+amongst the ExtUtils::MM_* modules based on the current operating
+system.
+
+NOTE: ExtUtils::MM_{Current OS} represents one of the ExtUtils::MM_*
+modules except ExtUtils::MM_Any chosen based on your operating system.
+
+NOTE: The main object used by MakeMaker is a PACK### object, *not*
+ExtUtils::MakeMaker.  It is, effectively, a subclass of MY,
+ExtUtils::Makemaker, ExtUtils::Liblist and ExtUtils::MM_{Current OS}
+
+NOTE: The methods in MY are simply copied into PACK### rather than
+MY being a superclass of PACK###.  I don't remember the rationale.
+
+NOTE: ExtUtils::Liblist should be removed from the inheritence hiearchy
+and simply be called as functions.
+
+NOTE: Modules like File::Spec and Exporter have been omitted for clarity.
+
+
+The MM_* hierarchy
+******************
+
+                               MM_Win95   MM_NW5
+                                    \      /
+MM_BeOS  MM_Cygwin  MM_OS2  MM_VMS  MM_Win32  MM_DOS  MM_UWIN
+      \        |      |         |        /      /      /
+       ------------------------------------------------
+                           |       |
+                        MM_Unix    |
+                              |    |
+                              MM_Any
+
+NOTE: Each direct MM_Unix subclass is also an MM_Any subclass.  This
+is a temporary hack because MM_Unix overrides some MM_Any methods with
+Unix specific code.  It allows the non-Unix modules to see the
+original MM_Any implementations.
+
+NOTE: Modules like File::Spec and Exporter have been omitted for clarity.

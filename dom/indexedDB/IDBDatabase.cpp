@@ -1335,7 +1335,7 @@ nsresult
 IDBDatabase::PostHandleEvent(EventChainPostVisitor& aVisitor)
 {
   nsresult rv =
-    IndexedDatabaseManager::CommonPostHandleEvent(this, mFactory, aVisitor);
+    IndexedDatabaseManager::CommonPostHandleEvent(aVisitor, mFactory);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
@@ -1344,9 +1344,9 @@ IDBDatabase::PostHandleEvent(EventChainPostVisitor& aVisitor)
 }
 
 JSObject*
-IDBDatabase::WrapObject(JSContext* aCx)
+IDBDatabase::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return IDBDatabaseBinding::Wrap(aCx, this);
+  return IDBDatabaseBinding::Wrap(aCx, this, aGivenProto);
 }
 
 NS_IMPL_ISUPPORTS(CancelableRunnableWrapper, nsIRunnable, nsICancelableRunnable)

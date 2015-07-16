@@ -209,21 +209,28 @@ TraceLoggerThread::enable()
 }
 
 bool
+TraceLoggerThread::fail(JSContext* cx, const char* error)
+{
+    JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_TRACELOGGER_ENABLE_FAIL, error);
+    failed = true;
+    enabled = 0;
+
+    return false;
+}
+
+bool
 TraceLoggerThread::enable(JSContext* cx)
 {
     if (!enable())
-        return false;
+        return fail(cx, "internal error");
 
     if (enabled == 1) {
         // Get the top Activation to log the top script/pc (No inlined frames).
         ActivationIterator iter(cx->runtime());
         Activation* act = iter.activation();
 
-        if (!act) {
-            failed = true;
-            enabled = 0;
-            return false;
-        }
+        if (!act)
+            return fail(cx, "internal error");
 
         JSScript* script = nullptr;
         int32_t engine = 0;
@@ -239,6 +246,10 @@ TraceLoggerThread::enable(JSContext* cx)
 
             script = it.script();
             engine = it.isIonJS() ? TraceLogger_IonMonkey : TraceLogger_Baseline;
+        } else if (act->isAsmJS()) {
+            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_TRACELOGGER_ENABLE_FAIL,
+                                 "not yet supported in asmjs code");
+            return false;
         } else {
             MOZ_ASSERT(act->isInterpreter());
             InterpreterFrame* fp = act->asInterpreter()->current();
@@ -246,11 +257,8 @@ TraceLoggerThread::enable(JSContext* cx)
 
             script = fp->script();
             engine = TraceLogger_Interpreter;
-            if (script->compartment() != cx->compartment()) {
-                failed = true;
-                enabled = 0;
-                return false;
-            }
+            if (script->compartment() != cx->compartment())
+                return fail(cx, "compartment mismatch");
         }
 
         TraceLoggerEvent event(this, TraceLogger_Scripts, script);
@@ -676,13 +684,16 @@ TraceLoggerThreadState::init()
         enabledTextIds[TraceLogger_RenumberBlocks] = true;
         enabledTextIds[TraceLogger_DominatorTree] = true;
         enabledTextIds[TraceLogger_PhiAnalysis] = true;
+        enabledTextIds[TraceLogger_ScalarReplacement] = true;
         enabledTextIds[TraceLogger_ApplyTypes] = true;
+        enabledTextIds[TraceLogger_EagerSimdUnbox] = true;
         enabledTextIds[TraceLogger_AliasAnalysis] = true;
         enabledTextIds[TraceLogger_GVN] = true;
         enabledTextIds[TraceLogger_LICM] = true;
         enabledTextIds[TraceLogger_RangeAnalysis] = true;
         enabledTextIds[TraceLogger_LoopUnrolling] = true;
         enabledTextIds[TraceLogger_EffectiveAddressAnalysis] = true;
+        enabledTextIds[TraceLogger_AlignmentMaskAnalysis] = true;
         enabledTextIds[TraceLogger_EliminateDeadCode] = true;
         enabledTextIds[TraceLogger_EdgeCaseAnalysis] = true;
         enabledTextIds[TraceLogger_EliminateRedundantChecks] = true;

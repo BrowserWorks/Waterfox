@@ -14,7 +14,7 @@ import org.mozilla.gecko.SiteIdentity.MixedMode;
 import org.mozilla.gecko.SiteIdentity.TrackingMode;
 import org.mozilla.gecko.Tab;
 import org.mozilla.gecko.Tabs;
-import org.mozilla.gecko.widget.ArrowPopup;
+import org.mozilla.gecko.widget.AnchoredPopup;
 import org.mozilla.gecko.widget.DoorHanger;
 import org.mozilla.gecko.widget.DoorHanger.OnButtonClickListener;
 import org.json.JSONException;
@@ -27,12 +27,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import org.mozilla.gecko.widget.DoorhangerConfig;
 
 /**
  * SiteIdentityPopup is a singleton class that displays site identity data in
  * an arrow panel popup hanging from the lock icon in the browser toolbar.
  */
-public class SiteIdentityPopup extends ArrowPopup {
+public class SiteIdentityPopup extends AnchoredPopup {
     private static final String LOGTAG = "GeckoSiteIdentityPopup";
 
     private static final String MIXED_CONTENT_SUPPORT_URL =
@@ -52,6 +53,8 @@ public class SiteIdentityPopup extends ArrowPopup {
     private TextView mOwnerLabel;
     private TextView mOwner;
     private TextView mVerifier;
+
+    private View mDivider;
 
     private DoorHanger mMixedContentNotification;
     private DoorHanger mTrackingContentNotification;
@@ -85,6 +88,7 @@ public class SiteIdentityPopup extends ArrowPopup {
         mOwnerLabel = (TextView) mIdentityKnownContainer.findViewById(R.id.owner_label);
         mOwner = (TextView) mIdentityKnownContainer.findViewById(R.id.owner);
         mVerifier = (TextView) mIdentityKnownContainer.findViewById(R.id.verifier);
+        mDivider = mIdentity.findViewById(R.id.divider_doorhanger);
     }
 
     private void updateIdentity(final SiteIdentity siteIdentity) {
@@ -137,26 +141,27 @@ public class SiteIdentityPopup extends ArrowPopup {
     private void addMixedContentNotification(boolean blocked) {
         // Remove any existing mixed content notification.
         removeMixedContentNotification();
-        mMixedContentNotification = new DoorHanger(mContext, DoorHanger.Theme.DARK);
 
+        final DoorhangerConfig config = new DoorhangerConfig();
         int icon;
-        String message;
         if (blocked) {
             icon = R.drawable.shield_enabled_doorhanger;
-            message = mContext.getString(R.string.blocked_mixed_content_message_top) + "\n\n" +
-                      mContext.getString(R.string.blocked_mixed_content_message_bottom);
+            config.setMessage(mContext.getString(R.string.blocked_mixed_content_message_top) + "\n\n" +
+                      mContext.getString(R.string.blocked_mixed_content_message_bottom));
         } else {
             icon = R.drawable.shield_disabled_doorhanger;
-            message = mContext.getString(R.string.loaded_mixed_content_message);
+            config.setMessage(mContext.getString(R.string.loaded_mixed_content_message));
         }
 
+        config.setLink(mContext.getString(R.string.learn_more), MIXED_CONTENT_SUPPORT_URL, "\n\n");
+        config.setType(DoorHanger.Type.SITE);
+        mMixedContentNotification = DoorHanger.Get(mContext, config);
         mMixedContentNotification.setIcon(icon);
-        mMixedContentNotification.setMessage(message);
-        mMixedContentNotification.addLink(mContext.getString(R.string.learn_more), MIXED_CONTENT_SUPPORT_URL, "\n\n");
 
         addNotificationButtons(mMixedContentNotification, blocked);
 
         mContent.addView(mMixedContentNotification);
+        mDivider.setVisibility(View.VISIBLE);
     }
 
     private void removeMixedContentNotification() {
@@ -169,27 +174,30 @@ public class SiteIdentityPopup extends ArrowPopup {
     private void addTrackingContentNotification(boolean blocked) {
         // Remove any existing tracking content notification.
         removeTrackingContentNotification();
-        mTrackingContentNotification = new DoorHanger(mContext, DoorHanger.Theme.DARK);
+
+        final DoorhangerConfig config = new DoorhangerConfig();
 
         int icon;
-        String message;
         if (blocked) {
             icon = R.drawable.shield_enabled_doorhanger;
-            message = mContext.getString(R.string.blocked_tracking_content_message_top) + "\n\n" +
-                      mContext.getString(R.string.blocked_tracking_content_message_bottom);
+            config.setMessage(mContext.getString(R.string.blocked_tracking_content_message_top) + "\n\n" +
+                      mContext.getString(R.string.blocked_tracking_content_message_bottom));
         } else {
             icon = R.drawable.shield_disabled_doorhanger;
-            message = mContext.getString(R.string.loaded_tracking_content_message_top) + "\n\n" +
-                      mContext.getString(R.string.loaded_tracking_content_message_bottom);
+            config.setMessage(mContext.getString(R.string.loaded_tracking_content_message_top) + "\n\n" +
+                      mContext.getString(R.string.loaded_tracking_content_message_bottom));
         }
 
+        config.setLink(mContext.getString(R.string.learn_more), TRACKING_CONTENT_SUPPORT_URL, "\n\n");
+        config.setType(DoorHanger.Type.SITE);
+        mTrackingContentNotification = DoorHanger.Get(mContext, config);
+
         mTrackingContentNotification.setIcon(icon);
-        mTrackingContentNotification.setMessage(message);
-        mTrackingContentNotification.addLink(mContext.getString(R.string.learn_more), TRACKING_CONTENT_SUPPORT_URL, "\n\n");
 
         addNotificationButtons(mTrackingContentNotification, blocked);
 
         mContent.addView(mTrackingContentNotification);
+        mDivider.setVisibility(View.VISIBLE);
     }
 
     private void removeTrackingContentNotification() {
@@ -200,6 +208,7 @@ public class SiteIdentityPopup extends ArrowPopup {
     }
 
     private void addNotificationButtons(DoorHanger dh, boolean blocked) {
+        // TODO: Add support for buttons in DoorHangerConfig.
         if (blocked) {
             dh.addButton(mContext.getString(R.string.disable_protection), "disable", mButtonClickListener);
             dh.addButton(mContext.getString(R.string.keep_blocking), "keepBlocking", mButtonClickListener);
@@ -276,6 +285,7 @@ public class SiteIdentityPopup extends ArrowPopup {
         super.dismiss();
         removeMixedContentNotification();
         removeTrackingContentNotification();
+        mDivider.setVisibility(View.GONE);
     }
 
     private class PopupButtonListener implements OnButtonClickListener {

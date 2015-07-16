@@ -11,10 +11,10 @@
 #include "mozilla/Attributes.h"
 #include <map>
 
+#include "mozilla/layers/APZUtils.h"
 #include "mozilla/layers/LayersTypes.h"
 #include "mozilla/layout/PRenderFrameParent.h"
 #include "nsDisplayList.h"
-#include "RenderFrameUtils.h"
 
 class nsFrameLoader;
 class nsSubDocumentFrame;
@@ -46,6 +46,7 @@ class RenderFrameParent : public PRenderFrameParent
   typedef mozilla::ContainerLayerParameters ContainerLayerParameters;
   typedef mozilla::layers::TextureFactoryIdentifier TextureFactoryIdentifier;
   typedef mozilla::layers::ScrollableLayerGuid ScrollableLayerGuid;
+  typedef mozilla::layers::TouchBehaviorFlags TouchBehaviorFlags;
   typedef mozilla::layers::ZoomConstraints ZoomConstraints;
   typedef FrameMetrics::ViewID ViewID;
 
@@ -58,7 +59,6 @@ public:
    * them to asynchronously pan and zoom.
    */
   RenderFrameParent(nsFrameLoader* aFrameLoader,
-                    ScrollingBehavior aScrollingBehavior,
                     TextureFactoryIdentifier* aTextureFactoryIdentifier,
                     uint64_t* aId, bool* aSuccess);
   virtual ~RenderFrameParent();
@@ -88,6 +88,8 @@ public:
                                  bool aPreventDefault);
   void SetTargetAPZC(uint64_t aInputBlockId,
                      const nsTArray<ScrollableLayerGuid>& aTargets);
+  void SetAllowedTouchBehavior(uint64_t aInputBlockId,
+                               const nsTArray<TouchBehaviorFlags>& aFlags);
 
   void UpdateZoomConstraints(uint32_t aPresShellId,
                              ViewID aViewId,
@@ -95,8 +97,6 @@ public:
                              const ZoomConstraints& aConstraints);
 
   bool HitTest(const nsRect& aRect);
-
-  bool UseAsyncPanZoom() { return !!mContentController; }
 
   void GetTextureFactoryIdentifier(TextureFactoryIdentifier* aTextureFactoryIdentifier);
 
@@ -166,7 +166,7 @@ class nsDisplayRemote : public nsDisplayItem
   typedef mozilla::layout::RenderFrameParent RenderFrameParent;
 
 public:
-  nsDisplayRemote(nsDisplayListBuilder* aBuilder, nsIFrame* aFrame,
+  nsDisplayRemote(nsDisplayListBuilder* aBuilder, nsSubDocumentFrame* aFrame,
                   RenderFrameParent* aRemoteFrame);
 
   virtual LayerState GetLayerState(nsDisplayListBuilder* aBuilder,

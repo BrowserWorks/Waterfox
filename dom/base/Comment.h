@@ -14,7 +14,7 @@ namespace mozilla {
 namespace dom {
 
 class Comment final : public nsGenericDOMDataNode,
-                          public nsIDOMComment
+                      public nsIDOMComment
 {
 private:
   void Init()
@@ -72,7 +72,7 @@ public:
               ErrorResult& aRv);
 
 protected:
-  virtual JSObject* WrapNode(JSContext *aCx) override;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 };
 
 } // namespace dom

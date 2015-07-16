@@ -281,7 +281,7 @@ function getPotentialLeaks() {
   memory.gc();
 
   // Things we can assume are part of the platform and so aren't leaks
-  let WHITELIST_BASE_URLS = [
+  let GOOD_BASE_URLS = [
     "chrome://",
     "resource:///",
     "resource://app/",
@@ -302,7 +302,7 @@ function getPotentialLeaks() {
   uri = chromeReg.convertChromeURL(uri);
   let spec = uri.spec;
   let pos = spec.indexOf("!/");
-  WHITELIST_BASE_URLS.push(spec.substring(0, pos + 2));
+  GOOD_BASE_URLS.push(spec.substring(0, pos + 2));
 
   let zoneRegExp = new RegExp("^explicit/js-non-window/zones/zone[^/]+/compartment\\((.+)\\)");
   let compartmentRegexp = new RegExp("^explicit/js-non-window/compartments/non-window-global/compartment\\((.+)\\)/");
@@ -314,9 +314,10 @@ function getPotentialLeaks() {
     if (!item.location)
       return false;
 
-    for (let whitelist of WHITELIST_BASE_URLS) {
-      if (item.location.substring(0, whitelist.length) == whitelist)
+    for (let url of GOOD_BASE_URLS) {
+      if (item.location.substring(0, url.length) == url) {
         return false;
+      }
     }
 
     return true;
@@ -340,7 +341,7 @@ function getPotentialLeaks() {
       let item = {
         path: matches[1],
         principal: details[1],
-        location: details[2] ? details[2].replace("\\", "/", "g") : undefined,
+        location: details[2] ? details[2].replace(/\\/g, "/") : undefined,
         source: details[3] ? details[3].split(" -> ").reverse() : undefined,
         toString: function() this.location
       };
@@ -364,8 +365,8 @@ function getPotentialLeaks() {
 
       let item = {
         path: matches[1],
-        location: details[1].replace("\\", "/", "g"),
-        source: [details[1].replace("\\", "/", "g")],
+        location: details[1].replace(/\\/g, "/"),
+        source: [details[1].replace(/\\/g, "/")],
         toString: function() this.location
       };
 

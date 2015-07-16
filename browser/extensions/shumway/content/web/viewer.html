@@ -99,7 +99,7 @@ limitations under the License.
   </head>
 
   <body contextmenu="shumwayMenu">
-    <iframe id="playerWindow" width="9" height="9" src=""></iframe>
+    <iframe id="playerWindow" width="9" height="9" src="" sandbox="allow-scripts"></iframe>
     <div id="easelContainer"></div>
     <section>
       <div id="overlay">
@@ -111,6 +111,7 @@ limitations under the License.
         <menuitem label="Open in Inspector" id="inspectorMenu"></menuitem>
         <menuitem label="Report Problems" id="reportMenu"></menuitem>
         <menuitem label="Reload in Adobe Flash Player" id="fallbackMenu" hidden></menuitem>
+        <menuitem label="Debug this SWF" id="debugMenu"></menuitem>
         <menuitem label="About Shumway %version%..." id="aboutMenu"></menuitem>
       </menu>
     </section>

@@ -722,9 +722,9 @@ Console::Observe(nsISupports* aSubject, const char* aTopic,
 }
 
 JSObject*
-Console::WrapObject(JSContext* aCx)
+Console::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return ConsoleBinding::Wrap(aCx, this);
+  return ConsoleBinding::Wrap(aCx, this, aGivenProto);
 }
 
 #define METHOD(name, string)                                          \
@@ -858,7 +858,7 @@ Console::Assert(JSContext* aCx, bool aCondition,
 METHOD(Count, "count")
 
 void
-Console::__noSuchMethod__()
+Console::NoopMethod()
 {
   // Nothing to do.
 }
@@ -934,13 +934,13 @@ public:
     }
   }
 
-  virtual bool Equals(const TimelineMarker* aOther) override
+  virtual bool Equals(const TimelineMarker& aOther) override
   {
     if (!TimelineMarker::Equals(aOther)) {
       return false;
     }
     // Console markers must have matching causes as well.
-    return GetCause() == aOther->GetCause();
+    return GetCause() == aOther.GetCause();
   }
 
   virtual void AddDetails(mozilla::dom::ProfileTimelineMarker& aMarker) override
@@ -1057,7 +1057,7 @@ Console::Method(JSContext* aCx, MethodName aMethodName,
               MakeUnique<ConsoleTimelineMarker>(docShell,
                                                 aMethodName == MethodTime ? TRACING_INTERVAL_START : TRACING_INTERVAL_END,
                                                 key);
-            docShell->AddProfileTimelineMarker(marker);
+            docShell->AddProfileTimelineMarker(Move(marker));
           }
         }
       }
@@ -1243,7 +1243,7 @@ Console::ProcessCallData(ConsoleCallData* aData)
       }
     } else {
       JSFunction* fun = js::NewFunctionWithReserved(cx, LazyStackGetter, 0, 0,
-                                                    eventObj, "stacktrace");
+                                                    "stacktrace");
       if (!fun) {
         return;
       }

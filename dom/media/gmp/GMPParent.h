@@ -55,7 +55,7 @@ enum GMPState {
 };
 
 class GMPParent final : public PGMPParent,
-                            public GMPSharedMem
+                        public GMPSharedMem
 {
 public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING_WITH_MAIN_THREAD_DESTRUCTION(GMPParent)
@@ -211,6 +211,16 @@ private:
 
   bool mAsyncShutdownRequired;
   bool mAsyncShutdownInProgress;
+
+#ifdef PR_LOGGING
+  int mChildPid;
+#endif
+
+  // We hold a self reference to ourself while the child process is alive.
+  // This ensures that if the GMPService tries to shut us down and drops
+  // its reference to us, we stay alive long enough for the child process
+  // to terminate gracefully.
+  bool mHoldingSelfRef;
 };
 
 } // namespace gmp

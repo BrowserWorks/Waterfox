@@ -740,6 +740,18 @@ GlobalHelperThreadState::canStartGCParallelTask()
     return !gcParallelWorklist().empty();
 }
 
+js::GCParallelTask::~GCParallelTask()
+{
+    // Only most-derived classes' destructors may do the join: base class
+    // destructors run after those for derived classes' members, so a join in a
+    // base class can't ensure that the task is done using the members. All we
+    // can do now is check that someone has previously stopped the task.
+#ifdef DEBUG
+    AutoLockHelperThreadState helperLock;
+    MOZ_ASSERT(state == NotStarted);
+#endif
+}
+
 bool
 js::GCParallelTask::startWithLockHeld()
 {
@@ -905,7 +917,7 @@ GlobalHelperThreadState::finishParseTask(JSContext* maybecx, JSRuntime* rt, void
     // state, so finish any ongoing GC first and assert that we can't trigger
     // another one.
     gc::AutoFinishGC finishGC(rt);
-    for (gc::ZoneCellIter iter(parseTask->cx->zone(), gc::FINALIZE_OBJECT_GROUP);
+    for (gc::ZoneCellIter iter(parseTask->cx->zone(), gc::AllocKind::OBJECT_GROUP);
          !iter.done();
          iter.next())
     {
@@ -941,7 +953,7 @@ GlobalHelperThreadState::finishParseTask(JSContext* maybecx, JSRuntime* rt, void
     for (size_t i = 0; i < parseTask->errors.length(); i++)
         parseTask->errors[i]->throwError(cx);
     if (parseTask->overRecursed)
-        js_ReportOverRecursed(cx);
+        ReportOverRecursed(cx);
     if (cx->isExceptionPending())
         return nullptr;
 
@@ -1249,7 +1261,7 @@ js::StartOffThreadCompression(ExclusiveContext* cx, SourceCompressionTask* task)
 
     if (!HelperThreadState().compressionWorklist().append(task)) {
         if (JSContext* maybecx = cx->maybeJSContext())
-            js_ReportOutOfMemory(maybecx);
+            ReportOutOfMemory(maybecx);
         return false;
     }
 
@@ -1296,7 +1308,7 @@ SourceCompressionTask::complete()
         js_free(compressed);
 
         if (result == OOM)
-            js_ReportOutOfMemory(cx);
+            ReportOutOfMemory(cx);
         else if (result == Aborted && !ss->ensureOwnsSource(cx))
             result = OOM;
     }

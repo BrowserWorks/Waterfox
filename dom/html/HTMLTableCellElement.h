@@ -17,7 +17,7 @@ namespace dom {
 class HTMLTableElement;
 
 class HTMLTableCellElement final : public nsGenericHTMLElement,
-                                       public nsIDOMHTMLTableCellElement
+                                   public nsIDOMHTMLTableCellElement
 {
 public:
   explicit HTMLTableCellElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
@@ -158,7 +158,7 @@ public:
 protected:
   virtual ~HTMLTableCellElement();
 
-  virtual JSObject* WrapNode(JSContext *aCx) override;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   HTMLTableElement* GetTable() const;
 

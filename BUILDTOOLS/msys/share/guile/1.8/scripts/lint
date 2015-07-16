@@ -1,0 +1,320 @@
+#!/bin/sh
+# aside from this initial boilerplate, this is actually -*- scheme -*- code
+main='(module-ref (resolve-module '\''(scripts lint)) '\'main')'
+exec ${GUILE-guile} -l $0 -c "(apply $main (cdr (command-line)))" "$@"
+!#
+;;; lint --- Preemptive checks for coding errors in Guile Scheme code
+
+;; 	Copyright (C) 2002, 2006 Free Software Foundation, Inc.
+;;
+;; This program is free software; you can redistribute it and/or
+;; modify it under the terms of the GNU General Public License as
+;; published by the Free Software Foundation; either version 2, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this software; see the file COPYING.  If not, write to
+;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+;; Boston, MA 02110-1301 USA
+
+;;; Author: Neil Jerram
+
+;;; Commentary:
+
+;; Usage: lint FILE1 FILE2 ...
+;;
+;; Perform various preemptive checks for coding errors in Guile Scheme
+;; code.
+;;
+;; Right now, there is only one check available, for unresolved free
+;; variables.  The intention is that future lint-like checks will be
+;; implemented by adding to this script file.
+;;
+;; Unresolved free variables
+;; -------------------------
+;;
+;; Free variables are those whose definitions come from outside the
+;; module under investigation.  In Guile, these definitions are
+;; imported from other modules using `#:use-module' forms.
+;;
+;; This tool scans the specified files for unresolved free variables -
+;; i.e. variables for which you may have forgotten the appropriate
+;; `#:use-module', or for which the module that is supposed to export
+;; them forgot to.
+;;
+;; It isn't guaranteed that the scan will find absolutely all such
+;; errors.  Quoted (and quasiquoted) expressions are skipped, since
+;; they are most commonly used to describe constant data, not code, so
+;; code that is explicitly evaluated using `eval' will not be checked.
+;; For example, the `unresolved-var' in `(eval 'unresolved-var
+;; (current-module))' would be missed.
+;;
+;; False positives are also possible.  Firstly, the tool doesn't
+;; understand all possible forms of implicit quoting; in particular,
+;; it doesn't detect and expand uses of macros.  Secondly, it picks up
+;; explicit compatibility code like `(if (defined? 'x) (define y x))'.
+;; Thirdly, there are occasional oddities like `next-method'.
+;; However, the number of false positives for realistic code is
+;; hopefully small enough that they can be individually considered and
+;; ignored.
+;;
+;; Example
+;; -------
+;;
+;; Note: most of the unresolved variables found in this example are
+;; false positives, as you would hope.  => scope for improvement.
+;;
+;; $ guile-tools lint `guile-tools`
+;; No unresolved free variables in PROGRAM
+;; No unresolved free variables in autofrisk
+;; No unresolved free variables in display-commentary
+;; Unresolved free variables in doc-snarf:
+;; 	   doc-snarf-version
+;; No unresolved free variables in frisk
+;; No unresolved free variables in generate-autoload
+;; No unresolved free variables in lint
+;; No unresolved free variables in punify
+;; No unresolved free variables in read-scheme-source
+;; Unresolved free variables in snarf-check-and-output-texi:
+;; 	   name
+;; 	   pos
+;; 	   line
+;; 	   x
+;; 	   rest
+;; 	   ...
+;; 	   do-argpos
+;; 	   do-command
+;; 	   do-args
+;; 	   type
+;; 	   num
+;; 	   file
+;; 	   do-arglist
+;; 	   req
+;; 	   opt
+;; 	   var
+;; 	   command
+;; 	   do-directive
+;; 	   s
+;; 	   ?
+;; No unresolved free variables in use2dot
+
+;;; Code:
+
+(define-module (scripts lint)
+  #:use-module (ice-9 common-list)
+  #:use-module (ice-9 format)
+  #:export (lint))
+
+(define (lint filename)
+  (let ((module-name (scan-file-for-module-name filename))
+	(free-vars (uniq (scan-file-for-free-variables filename))))
+    (let ((module (resolve-module module-name))
+	  (all-resolved? #t))
+      (format #t "Resolved module: ~S\n" module)
+      (let loop ((free-vars free-vars))
+	(or (null? free-vars)
+	    (begin
+	      (catch #t
+		(lambda ()
+		  (eval (car free-vars) module))
+		(lambda args
+		  (if all-resolved?
+		      (format #t
+			      "Unresolved free variables in ~A:\n"
+			      filename))
+		  (write-char #\tab)
+		  (write (car free-vars))
+		  (newline)
+		  (set! all-resolved? #f)))
+	      (loop (cdr free-vars)))))
+      (if all-resolved?
+	  (format #t
+		  "No unresolved free variables in ~A\n"
+		  filename)))))
+
+(define (scan-file-for-module-name filename)
+  (with-input-from-file filename
+    (lambda ()
+      (let loop ((x (read)))
+	(cond ((eof-object? x) #f)
+	      ((and (pair? x)
+		    (eq? (car x) 'define-module))
+	       (cadr x))
+	      (else (loop (read))))))))
+
+(define (scan-file-for-free-variables filename)
+  (with-input-from-file filename
+    (lambda ()
+      (let loop ((x (read)) (fvlists '()))
+	(if (eof-object? x)
+	    (apply append fvlists)
+	    (loop (read) (cons (detect-free-variables x '()) fvlists)))))))
+
+; guile> (detect-free-variables '(let ((a 1)) a) '())
+; ()
+; guile> (detect-free-variables '(let ((a 1)) b) '())
+; (b)
+; guile> (detect-free-variables '(let ((a 1) (b a)) b) '())
+; (a)
+; guile> (detect-free-variables '(let* ((a 1) (b a)) b) '())
+; ()
+; guile> (detect-free-variables '(define a 1) '())
+; ()
+; guile> (detect-free-variables '(define a b) '())
+; (b)
+; guile> (detect-free-variables '(define (a b c) b) '())
+; ()
+; guile> (detect-free-variables '(define (a b c) e) '())
+; (e)
+
+(define (detect-free-variables x locals)
+  ;; Given an expression @var{x} and a list @var{locals} of local
+  ;; variables (symbols) that are in scope for @var{x}, return a list
+  ;; of free variable symbols.
+  (cond ((symbol? x)
+	 (if (memq x locals) '() (list x)))
+
+	((pair? x)
+	 (case (car x)
+	   ((define-module define-generic quote quasiquote)
+	    ;; No code of interest in these expressions.
+	    '())
+
+	   ((let letrec)
+	    ;; Check for named let.  If there is a name, transform the
+	    ;; expression so that it looks like an unnamed let with
+	    ;; the name as one of the bindings.
+	    (if (symbol? (cadr x))
+		(set-cdr! x (cons (cons (list (cadr x) #f) (caddr x))
+				  (cdddr x))))
+	    ;; Unnamed let processing.
+	    (let ((letrec? (eq? (car x) 'letrec))
+		  (locals-for-let-body (append locals (map car (cadr x)))))
+	      (append (apply append
+			     (map (lambda (binding)
+				    (detect-free-variables (cadr binding)
+							   (if letrec?
+							       locals-for-let-body
+							       locals)))
+				  (cadr x)))
+		      (apply append
+			     (map (lambda (bodyform)
+				    (detect-free-variables bodyform
+							   locals-for-let-body))
+				  (cddr x))))))
+
+	   ((let* and-let*)
+	    ;; Handle bindings recursively.
+	    (if (null? (cadr x))
+		(apply append
+		       (map (lambda (bodyform)
+			      (detect-free-variables bodyform locals))
+			    (cddr x)))
+		(append (detect-free-variables (cadr (caadr x)) locals)
+			(detect-free-variables `(let* ,(cdadr x) ,@(cddr x))
+					       (cons (caaadr x) locals)))))
+
+	   ((define define-public define-macro)
+	    (if (pair? (cadr x))
+		(begin
+		  (set! locals (cons (caadr x) locals))
+		  (detect-free-variables `(lambda ,(cdadr x) ,@(cddr x))
+					 locals))
+		(begin
+		  (set! locals (cons (cadr x) locals))
+		  (detect-free-variables (caddr x) locals))))
+
+	   ((lambda lambda*)
+	    (let ((locals-for-lambda-body (let loop ((locals locals)
+						     (args (cadr x)))
+					    (cond ((null? args) locals)
+						  ((pair? args)
+						   (loop (cons (car args) locals)
+							 (cdr args)))
+						  (else
+						   (cons args locals))))))
+	      (apply append
+		     (map (lambda (bodyform)
+			    (detect-free-variables bodyform
+						   locals-for-lambda-body))
+			  (cddr x)))))
+
+	   ((receive)
+	    (let ((locals-for-receive-body (append locals (cadr x))))
+	      (apply append
+		     (detect-free-variables (caddr x) locals)
+		     (map (lambda (bodyform)
+			    (detect-free-variables bodyform
+						   locals-for-receive-body))
+			  (cdddr x)))))
+
+	   ((define-method define*)
+	    (let ((locals-for-method-body (let loop ((locals locals)
+						     (args (cdadr x)))
+					    (cond ((null? args) locals)
+						  ((pair? args)
+						   (loop (cons (if (pair? (car args))
+								   (caar args)
+								   (car args))
+							       locals)
+							 (cdr args)))
+						  (else
+						   (cons args locals))))))
+	      (apply append
+		     (map (lambda (bodyform)
+			    (detect-free-variables bodyform
+						   locals-for-method-body))
+			  (cddr x)))))
+
+	   ((define-class)
+	    ;; Avoid picking up slot names at the start of slot
+	    ;; definitions.
+	    (apply append
+		   (map (lambda (slot/option)
+			  (detect-free-variables-noncar (if (pair? slot/option)
+							    (cdr slot/option)
+							    slot/option)
+							locals))
+			(cdddr x))))
+
+	   ((case)
+	    (apply append
+		   (detect-free-variables (cadr x) locals)
+		   (map (lambda (case)
+			  (detect-free-variables (cdr case) locals))
+			(cddr x))))
+
+	   ((unquote unquote-splicing else =>)
+	    (detect-free-variables-noncar (cdr x) locals))
+
+	   (else (append (detect-free-variables (car x) locals)
+			 (detect-free-variables-noncar (cdr x) locals)))))
+
+	(else '())))
+
+(define (detect-free-variables-noncar x locals)
+  ;; Given an expression @var{x} and a list @var{locals} of local
+  ;; variables (symbols) that are in scope for @var{x}, return a list
+  ;; of free variable symbols.
+  (cond ((symbol? x)
+	 (if (memq x locals) '() (list x)))
+
+	((pair? x)
+	 (case (car x)
+	   ((=>)
+	    (detect-free-variables-noncar (cdr x) locals))
+
+	   (else (append (detect-free-variables (car x) locals)
+			 (detect-free-variables-noncar (cdr x) locals)))))
+
+	(else '())))
+
+(define (main . files)
+  (for-each lint files))
+
+;;; lint ends here

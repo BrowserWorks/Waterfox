@@ -31,9 +31,9 @@ public:
                                                   const InputEventInit& aParam,
                                                   ErrorResult& aRv);
 
-  virtual JSObject* WrapObjectInternal(JSContext* aCx) override
+  virtual JSObject* WrapObjectInternal(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override
   {
-    return InputEventBinding::Wrap(aCx, this);
+    return InputEventBinding::Wrap(aCx, this, aGivenProto);
   }
 
   bool IsComposing();

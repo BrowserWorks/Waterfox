@@ -15,32 +15,6 @@
 namespace mozilla {
 namespace widget {
 
-uint32_t
-ContentHelper::GetTouchActionFromFrame(nsIFrame* aFrame)
-{
-  // If aFrame is null then return default value
-  if (!aFrame) {
-    return NS_STYLE_TOUCH_ACTION_AUTO;
-  }
-
-  // The touch-action CSS property applies to: all elements except:
-  // non-replaced inline elements, table rows, row groups, table columns, and column groups
-  bool isNonReplacedInlineElement = aFrame->IsFrameOfType(nsIFrame::eLineParticipant);
-  if (isNonReplacedInlineElement) {
-    return NS_STYLE_TOUCH_ACTION_AUTO;
-  }
-
-  const nsStyleDisplay* disp = aFrame->StyleDisplay();
-  bool isTableElement = disp->IsInnerTableStyle() &&
-                        disp->mDisplay != NS_STYLE_DISPLAY_TABLE_CELL &&
-                        disp->mDisplay != NS_STYLE_DISPLAY_TABLE_CAPTION;
-  if (isTableElement) {
-    return NS_STYLE_TOUCH_ACTION_AUTO;
-  }
-
-  return disp->mTouchAction;
-}
-
 void
 ContentHelper::UpdateAllowedBehavior(uint32_t aTouchActionValue, bool aConsiderPanning, TouchBehaviorFlags& aOutBehavior)
 {
@@ -70,14 +44,13 @@ ContentHelper::UpdateAllowedBehavior(uint32_t aTouchActionValue, bool aConsiderP
 }
 
 ContentHelper::TouchBehaviorFlags
-ContentHelper::GetAllowedTouchBehavior(nsIWidget* aWidget, const nsIntPoint& aPoint)
+ContentHelper::GetAllowedTouchBehavior(nsIWidget* aWidget, const LayoutDeviceIntPoint& aPoint)
 {
   nsView *view = nsView::GetViewFor(aWidget);
   nsIFrame *viewFrame = view->GetFrame();
 
   nsPoint relativePoint =
-    nsLayoutUtils::GetEventCoordinatesRelativeTo(
-      aWidget, LayoutDeviceIntPoint::FromUntyped(aPoint), viewFrame);
+    nsLayoutUtils::GetEventCoordinatesRelativeTo(aWidget, aPoint, viewFrame);
 
   nsIFrame *target = nsLayoutUtils::GetFrameForPoint(viewFrame, relativePoint, nsLayoutUtils::IGNORE_ROOT_SCROLL_FRAME);
   nsIScrollableFrame *nearestScrollableParent = nsLayoutUtils::GetNearestScrollableFrame(target, 0);
@@ -104,7 +77,7 @@ ContentHelper::GetAllowedTouchBehavior(nsIWidget* aWidget, const nsIntPoint& aPo
                                 AllowedTouchBehavior::PINCH_ZOOM | AllowedTouchBehavior::DOUBLE_TAP_ZOOM;
 
   for (nsIFrame *frame = target; frame && frame->GetContent() && behavior; frame = frame->GetParent()) {
-    UpdateAllowedBehavior(GetTouchActionFromFrame(frame), considerPanning, behavior);
+    UpdateAllowedBehavior(nsLayoutUtils::GetTouchActionFromFrame(frame), considerPanning, behavior);
 
     if (frame == nearestScrollableFrame) {
       // We met the scrollable element, after it we shouldn't consider touch-action

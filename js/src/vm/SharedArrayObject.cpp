@@ -67,7 +67,7 @@ MarkValidRegion(void* addr, size_t len)
 #endif
 }
 
-#ifdef JS_CODEGEN_X64
+#if defined(ASMJS_MAY_USE_SIGNAL_HANDLERS_FOR_OOB)
 // Since this SharedArrayBuffer will likely be used for asm.js code, prepare it
 // for asm.js by mapping the 4gb protected zone described in AsmJSValidate.h.
 // Since we want to put the SharedArrayBuffer header immediately before the
@@ -97,7 +97,7 @@ SharedArrayRawBuffer::New(JSContext* cx, uint32_t length)
     uint32_t allocSize = (length + 2*AsmJSPageSize - 1) & ~(AsmJSPageSize - 1);
     if (allocSize <= length)
         return nullptr;
-#ifdef JS_CODEGEN_X64
+#if defined(ASMJS_MAY_USE_SIGNAL_HANDLERS_FOR_OOB)
     // Test >= to guard against the case where multiple extant runtimes
     // race to allocate.
     if (++numLive >= maxLive) {
@@ -153,7 +153,7 @@ SharedArrayRawBuffer::dropReference()
     if (refcount == 0) {
         uint8_t* p = this->dataPointer() - AsmJSPageSize;
         MOZ_ASSERT(uintptr_t(p) % AsmJSPageSize == 0);
-#ifdef JS_CODEGEN_X64
+#if defined(ASMJS_MAY_USE_SIGNAL_HANDLERS_FOR_OOB)
         numLive--;
         UnmapMemory(p, SharedArrayMappedSize);
 #       if defined(MOZ_VALGRIND) \
@@ -212,7 +212,7 @@ SharedArrayBufferObject::class_constructor(JSContext* cx, unsigned argc, Value* 
             args.rval().set(args[0]);
             return true;
         }
-        JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_SHARED_ARRAY_BAD_OBJECT);
+        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_SHARED_ARRAY_BAD_OBJECT);
         return false;
     }
 
@@ -221,7 +221,7 @@ SharedArrayBufferObject::class_constructor(JSContext* cx, unsigned argc, Value* 
     if (!ToLengthClamped(cx, args.get(0), &length, &overflow)) {
         // Bug 1068458: Limit length to 2^31-1.
         if (overflow || length > INT32_MAX)
-            JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_SHARED_ARRAY_BAD_LENGTH);
+            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_SHARED_ARRAY_BAD_LENGTH);
         return false;
     }
 
@@ -324,7 +324,7 @@ const Class SharedArrayBufferObject::class_ = {
 };
 
 JSObject*
-js_InitSharedArrayBufferClass(JSContext* cx, HandleObject obj)
+js::InitSharedArrayBufferClass(JSContext* cx, HandleObject obj)
 {
     MOZ_ASSERT(obj->isNative());
     Rooted<GlobalObject*> global(cx, &obj->as<GlobalObject>());
@@ -345,13 +345,13 @@ js_InitSharedArrayBufferClass(JSContext* cx, HandleObject obj)
 
     RootedId byteLengthId(cx, NameToId(cx->names().byteLength));
     unsigned attrs = JSPROP_SHARED | JSPROP_GETTER | JSPROP_PERMANENT;
-    JSObject* getter = NewFunction(cx, NullPtr(), SharedArrayBufferObject::byteLengthGetter, 0,
-                                   JSFunction::NATIVE_FUN, global, NullPtr());
+    JSObject* getter =
+        NewNativeFunction(cx, SharedArrayBufferObject::byteLengthGetter, 0, NullPtr());
     if (!getter)
         return nullptr;
 
     if (!NativeDefineProperty(cx, proto, byteLengthId, UndefinedHandleValue,
-                              JS_DATA_TO_FUNC_PTR(PropertyOp, getter), nullptr, attrs))
+                              JS_DATA_TO_FUNC_PTR(GetterOp, getter), nullptr, attrs))
         return nullptr;
 
     if (!JS_DefineFunctions(cx, ctor, SharedArrayBufferObject::jsstaticfuncs))

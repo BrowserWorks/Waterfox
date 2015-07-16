@@ -938,7 +938,7 @@ class Marionette(object):
 
         :returns: A dict of the capabilities offered."""
         self.wait_for_port(timeout=timeout)
-        self.session = self._send_message('newSession', 'value', capabilities=desired_capabilities, session_id=session_id)
+        self.session = self._send_message('newSession', 'value', capabilities=desired_capabilities, sessionId=session_id)
         self.b2g = 'b2g' in self.session
         return self.session
 
@@ -1310,7 +1310,8 @@ class Marionette(object):
             for arg in args:
                 wrapped[arg] = self.wrapArguments(args[arg])
         elif type(args) == HTMLElement:
-            wrapped = {'ELEMENT': args.id }
+            wrapped = {'element-6066-11e4-a52e-4f735466cecf': args.id,
+                       'ELEMENT': args.id }
         elif (isinstance(args, bool) or isinstance(args, basestring) or
               isinstance(args, int) or isinstance(args, float) or args is None):
             wrapped = args
@@ -1325,8 +1326,12 @@ class Marionette(object):
         elif isinstance(value, dict):
             unwrapped = {}
             for key in value:
-                if key == 'ELEMENT':
+                if key == 'element-6066-11e4-a52e-4f735466cecf':
                     unwrapped = HTMLElement(self, value[key])
+                    break
+                elif key == 'ELEMENT':
+                    unwrapped = HTMLElement(self, value[key])
+                    break
                 else:
                     unwrapped[key] = self.unwrapValue(value[key])
         else:

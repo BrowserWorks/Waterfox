@@ -39,7 +39,7 @@ class AudioNode;
  */
 
 class MediaRecorder final : public DOMEventTargetHelper,
-                                public nsIDocumentActivity
+                            public nsIDocumentActivity
 {
   class Session;
 
@@ -48,7 +48,7 @@ public:
   MediaRecorder(AudioNode& aSrcAudioNode, uint32_t aSrcOutput, nsPIDOMWindow* aOwnerWindow);
 
   // nsWrapperCache
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   nsPIDOMWindow* GetParentObject() { return GetOwner(); }
 

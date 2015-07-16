@@ -15,6 +15,7 @@ const require = Cu.import("resource://gre/modules/devtools/Loader.jsm", {}).devt
 const Editor  = require("devtools/sourceeditor/editor");
 const {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
 const {CssLogic} = require("devtools/styleinspector/css-logic");
+const {console} = require("resource://gre/modules/devtools/Console.jsm");
 
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/FileUtils.jsm");
@@ -236,26 +237,34 @@ StyleSheetEditor.prototype = {
 
   /**
    * Start fetching the full text source for this editor's sheet.
+   *
+   * @return {Promise}
+   *         A promise that'll resolve with the source text once the source
+   *         has been loaded or reject on unexpected error.
    */
-  fetchSource: function(callback) {
-    return this.styleSheet.getText().then((longStr) => {
-      longStr.string().then((source) => {
-        let ruleCount = this.styleSheet.ruleCount;
-        if (!this.styleSheet.isOriginalSource) {
-          source = CssLogic.prettifyCSS(source, ruleCount);
-        }
-        this._state.text = source;
-        this.sourceLoaded = true;
+  fetchSource: function () {
+    return Task.spawn(function* () {
+      let longStr = yield this.styleSheet.getText();
+      let source = yield longStr.string();
+      let ruleCount = this.styleSheet.ruleCount;
+      if (!this.styleSheet.isOriginalSource) {
+        source = CssLogic.prettifyCSS(source, ruleCount);
+      }
+      this._state.text = source;
+      this.sourceLoaded = true;
 
-        if (callback) {
-          callback(source);
-        }
-        return source;
-      });
-    }, e => {
-      this.emit("error", { key: LOAD_ERROR, append: this.styleSheet.href });
-      throw e;
-    })
+      return source;
+    }.bind(this)).then(null, e => {
+      if (this._isDestroyed) {
+        console.warn("Could not fetch the source for " +
+                     this.styleSheet.href +
+                     ", the editor was destroyed");
+        Cu.reportError(e);
+      } else {
+        this.emit("error", { key: LOAD_ERROR, append: this.styleSheet.href });
+        throw e;
+      }
+    });
   },
 
   /**
@@ -355,6 +364,11 @@ StyleSheetEditor.prototype = {
    *         Promise that will resolve when the style editor is loaded.
    */
   load: function(inputElement) {
+    if (this._isDestroyed) {
+      return promise.reject("Won't load source editor as the style sheet has " +
+                            "already been removed from Style Editor.");
+    }
+
     this._inputElement = inputElement;
 
     let config = {
@@ -712,6 +726,7 @@ StyleSheetEditor.prototype = {
     this.cssSheet.off("property-change", this._onPropertyChange);
     this.cssSheet.off("media-rules-changed", this._onMediaRulesChanged);
     this.styleSheet.off("error", this._onError);
+    this._isDestroyed = true;
   }
 }
 

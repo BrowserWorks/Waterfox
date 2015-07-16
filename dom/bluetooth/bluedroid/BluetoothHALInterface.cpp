@@ -79,7 +79,7 @@ DispatchBluetoothHALResult(BluetoothResultHandler* aRes,
 {
   MOZ_ASSERT(aRes);
 
-  nsRunnable* runnable;
+  nsRefPtr<nsRunnable> runnable;
 
   if (aStatus == STATUS_SUCCESS) {
     runnable = new BluetoothHALResultRunnable(aRes, aMethod);
@@ -151,9 +151,8 @@ struct BluetoothCallback
 
   typedef BluetoothNotificationHALRunnable5<NotificationHandlerWrapper, void,
                                             nsString, nsString, uint32_t,
-                                            nsString, uint32_t,
-                                            const nsAString&, const nsAString&,
-                                            uint32_t, const nsAString&>
+                                            BluetoothSspVariant, uint32_t,
+                                            const nsAString&, const nsAString&>
     SspRequestNotification;
 
   typedef BluetoothNotificationHALRunnable3<NotificationHandlerWrapper, void,

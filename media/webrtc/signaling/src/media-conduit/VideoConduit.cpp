@@ -6,9 +6,6 @@
 #include "nspr.h"
 #include "plstr.h"
 
-// For rtcp-fb constants
-#include "ccsdp.h"
-
 #include "VideoConduit.h"
 #include "AudioConduit.h"
 #include "nsThreadUtils.h"
@@ -25,6 +22,13 @@
 
 #ifdef MOZ_WIDGET_ANDROID
 #include "AndroidJNIWrapper.h"
+#endif
+
+// for ntohs
+#ifdef _MSC_VER
+#include "Winsock2.h"
+#else
+#include <netinet/in.h>
 #endif
 
 #include <algorithm>
@@ -70,7 +74,7 @@ WebrtcVideoConduit::WebrtcVideoConduit():
   mEngineReceiving(false),
   mChannel(-1),
   mCapId(-1),
-  mCurSendCodecConfig(nullptr),
+  mCodecMutex("VideoConduit codec db"),
   mSendingWidth(0),
   mSendingHeight(0),
   mReceivingWidth(640),
@@ -81,7 +85,8 @@ WebrtcVideoConduit::WebrtcVideoConduit():
   mVideoLatencyAvg(0),
   mMinBitrate(200),
   mStartBitrate(300),
-  mMaxBitrate(2000)
+  mMaxBitrate(2000),
+  mCodecMode(webrtc::kRealtimeVideo)
 {
 }
 
@@ -94,8 +99,6 @@ WebrtcVideoConduit::~WebrtcVideoConduit()
   {
     delete mRecvCodecList[i];
   }
-
-  delete mCurSendCodecConfig;
 
   // The first one of a pair to be deleted shuts down media for both
   //Deal with External Capturer
@@ -538,10 +541,22 @@ WebrtcVideoConduit::SetReceiverTransport(mozilla::RefPtr<TransportInterface> aTr
   mReceiverTransport = aTransport;
   return kMediaConduitNoError;
 }
-
+MediaConduitErrorCode
+WebrtcVideoConduit::ConfigureCodecMode(webrtc::VideoCodecMode mode)
+{
+  CSFLogDebug(logTag,  "%s ", __FUNCTION__);
+  mCodecMode = mode;
+  return kMediaConduitNoError;
+}
 /**
  * Note: Setting the send-codec on the Video Engine will restart the encoder,
  * sets up new SSRC and reset RTP_RTCP module with the new codec setting.
+ *
+ * Note: this is called from MainThread, and the codec settings are read on
+ * videoframe delivery threads (i.e in SendVideoFrame().  With
+ * renegotiation/reconfiguration, this now needs a lock!  Alternatively
+ * changes could be queued until the next frame is delivered using an
+ * Atomic pointer and swaps.
  */
 MediaConduitErrorCode
 WebrtcVideoConduit::ConfigureSendMediaCodec(const VideoCodecConfig* codecConfig)
@@ -555,16 +570,12 @@ WebrtcVideoConduit::ConfigureSendMediaCodec(const VideoCodecConfig* codecConfig)
 
   memset(&video_codec, 0, sizeof(video_codec));
 
-  //validate basic params
-  if((condError = ValidateCodecConfig(codecConfig,true)) != kMediaConduitNoError)
   {
-    return condError;
-  }
-
-  //Check if we have same codec already applied
-  if(CheckCodecsForMatch(mCurSendCodecConfig, codecConfig))
-  {
-    CSFLogDebug(logTag,  "%s Codec has been applied already ", __FUNCTION__);
+    //validate basic params
+    if((condError = ValidateCodecConfig(codecConfig,true)) != kMediaConduitNoError)
+    {
+      return condError;
+    }
   }
 
   condError = StopTransmitting();
@@ -590,7 +601,7 @@ WebrtcVideoConduit::ConfigureSendMediaCodec(const VideoCodecConfig* codecConfig)
 #endif
     video_codec.qpMax = 56;
     video_codec.numberOfSimulcastStreams = 1;
-    video_codec.mode = webrtc::kRealtimeVideo;
+    video_codec.mode = mCodecMode;
 
     codecFound = true;
   } else {
@@ -633,8 +644,9 @@ WebrtcVideoConduit::ConfigureSendMediaCodec(const VideoCodecConfig* codecConfig)
   }
 
   if (!mVideoCodecStat) {
-    mVideoCodecStat = new VideoCodecStatistics(mChannel, mPtrViECodec, true);
+    mVideoCodecStat = new VideoCodecStatistics(mChannel, mPtrViECodec);
   }
+  mVideoCodecStat->Register(true);
 
   mSendingWidth = 0;
   mSendingHeight = 0;
@@ -655,10 +667,12 @@ WebrtcVideoConduit::ConfigureSendMediaCodec(const VideoCodecConfig* codecConfig)
     return condError;
   }
 
-  //Copy the applied config for future reference.
-  delete mCurSendCodecConfig;
+  {
+    MutexAutoLock lock(mCodecMutex);
 
-  mCurSendCodecConfig = new VideoCodecConfig(*codecConfig);
+    //Copy the applied config for future reference.
+    mCurSendCodecConfig = new VideoCodecConfig(*codecConfig);
+  }
 
   mPtrRTP->SetRembStatus(mChannel, true, false);
 
@@ -783,8 +797,9 @@ WebrtcVideoConduit::ConfigureRecvMediaCodecs(
   }
 
   if (!mVideoCodecStat) {
-    mVideoCodecStat = new VideoCodecStatistics(mChannel, mPtrViECodec, false);
+    mVideoCodecStat = new VideoCodecStatistics(mChannel, mPtrViECodec);
   }
+  mVideoCodecStat->Register(false);
 
   // XXX Currently, we gather up all of the feedback types that the remote
   // party indicated it supports for all video codecs and configure the entire
@@ -860,10 +875,12 @@ WebrtcVideoConduit::ConfigureRecvMediaCodecs(
 
 // XXX we need to figure out how to feed back changes in preferred capture
 // resolution to the getUserMedia source
+// Invoked under lock of mCodecMutex!
 bool
 WebrtcVideoConduit::SelectSendResolution(unsigned short width,
                                          unsigned short height)
 {
+  mCodecMutex.AssertCurrentThreadOwns();
   // XXX This will do bandwidth-resolution adaptation as well - bug 877954
 
   // Limit resolution to max-fs while keeping same aspect ratio as the
@@ -933,6 +950,7 @@ WebrtcVideoConduit::SelectSendResolution(unsigned short width,
 
   // Adapt to getUserMedia resolution changes
   // check if we need to reconfigure the sending resolution
+  bool changed = false;
   if (mSendingWidth != width || mSendingHeight != height)
   {
     // This will avoid us continually retrying this operation if it fails.
@@ -940,7 +958,17 @@ WebrtcVideoConduit::SelectSendResolution(unsigned short width,
     // keep using the old size in the encoder.
     mSendingWidth = width;
     mSendingHeight = height;
+    changed = true;
+  }
 
+  // uses mSendingWidth/Height
+  unsigned int framerate = SelectSendFrameRate(mSendingFramerate);
+  if (mSendingFramerate != framerate) {
+    mSendingFramerate = framerate;
+    changed = true;
+  }
+
+  if (changed) {
     // Get current vie codec.
     webrtc::VideoCodec vie_codec;
     int32_t err;
@@ -950,10 +978,13 @@ WebrtcVideoConduit::SelectSendResolution(unsigned short width,
       CSFLogError(logTag, "%s: GetSendCodec failed, err %d", __FUNCTION__, err);
       return false;
     }
-    if (vie_codec.width != width || vie_codec.height != height)
+    // Likely spurious unless there was some error, but rarely checked
+    if (vie_codec.width != width || vie_codec.height != height ||
+        vie_codec.maxFramerate != mSendingFramerate)
     {
       vie_codec.width = width;
       vie_codec.height = height;
+      vie_codec.maxFramerate = mSendingFramerate;
 
       if ((err = mPtrViECodec->SetSendCodec(mChannel, vie_codec)) != 0)
       {
@@ -961,18 +992,22 @@ WebrtcVideoConduit::SelectSendResolution(unsigned short width,
                     __FUNCTION__, width, height, err);
         return false;
       }
-      CSFLogDebug(logTag, "%s: Encoder resolution changed to %ux%u",
-                  __FUNCTION__, width, height);
+      CSFLogDebug(logTag, "%s: Encoder resolution changed to %ux%u @ %ufps, bitrate %u:%u",
+                  __FUNCTION__, width, height, mSendingFramerate,
+                   vie_codec.minBitrate, vie_codec.maxBitrate);
     } // else no change; mSendingWidth likely was 0
   }
   return true;
 }
-// TODO(ruil2@cisco.com):combine SelectSendResolution with SelectSendFrameRate Bug 1132318
-bool
-WebrtcVideoConduit::SelectSendFrameRate(unsigned int framerate)
+
+// Invoked under lock of mCodecMutex!
+unsigned int
+WebrtcVideoConduit::SelectSendFrameRate(unsigned int framerate) const
 {
+  mCodecMutex.AssertCurrentThreadOwns();
+  unsigned int new_framerate = framerate;
+
   // Limit frame rate based on max-mbps
-  mSendingFramerate = framerate;
   if (mCurSendCodecConfig && mCurSendCodecConfig->mMaxMBPS)
   {
     unsigned int cur_fs, mb_width, mb_height, max_fps;
@@ -983,39 +1018,15 @@ WebrtcVideoConduit::SelectSendFrameRate(unsigned int framerate)
     cur_fs = mb_width * mb_height;
     max_fps = mCurSendCodecConfig->mMaxMBPS/cur_fs;
     if (max_fps < mSendingFramerate) {
-      mSendingFramerate = max_fps;
+      new_framerate = max_fps;
     }
 
     if (mCurSendCodecConfig->mMaxFrameRate != 0 &&
       mCurSendCodecConfig->mMaxFrameRate < mSendingFramerate) {
-      mSendingFramerate = mCurSendCodecConfig->mMaxFrameRate;
+      new_framerate = mCurSendCodecConfig->mMaxFrameRate;
     }
   }
-  if (mSendingFramerate != framerate)
-  {
-    // Get current vie codec.
-    webrtc::VideoCodec vie_codec;
-    int32_t err;
-
-    if ((err = mPtrViECodec->GetSendCodec(mChannel, vie_codec)) != 0)
-    {
-      CSFLogError(logTag, "%s: GetSendCodec failed, err %d", __FUNCTION__, err);
-      return false;
-    }
-    if (vie_codec.maxFramerate != mSendingFramerate)
-    {
-      vie_codec.maxFramerate = mSendingFramerate;
-      if ((err = mPtrViECodec->SetSendCodec(mChannel, vie_codec)) != 0)
-      {
-        CSFLogError(logTag, "%s: SetSendCodec(%u) failed, err %d",
-                       __FUNCTION__, mSendingFramerate, err);
-        return false;
-      }
-      CSFLogDebug(logTag, "%s: Encoder framerate changed to %u",
-       __FUNCTION__, mSendingFramerate);
-    }
-  }
-  return true;
+  return new_framerate;
 }
 
 MediaConduitErrorCode
@@ -1080,13 +1091,12 @@ WebrtcVideoConduit::SendVideoFrame(unsigned char* video_frame,
     return kMediaConduitSessionNotInited;
   }
 
-  if (!SelectSendResolution(width, height))
   {
-    return kMediaConduitCaptureError;
-  }
-  if (!SelectSendFrameRate(mSendingFramerate))
-  {
-    return kMediaConduitCaptureError;
+    MutexAutoLock lock(mCodecMutex);
+    if (!SelectSendResolution(width, height))
+    {
+      return kMediaConduitCaptureError;
+    }
   }
   //insert the frame to video engine in I420 format only
   MOZ_ASSERT(mPtrExtCapture);
@@ -1365,6 +1375,9 @@ WebrtcVideoConduit::CodecConfigToWebRTCCodec(const VideoCodecConfig* codecInfo,
   } else if (codecInfo->mName == "VP8") {
     cinst.codecType = webrtc::kVideoCodecVP8;
     PL_strncpyz(cinst.plName, "VP8", sizeof(cinst.plName));
+  } else if (codecInfo->mName == "VP9") {
+    cinst.codecType = webrtc::kVideoCodecVP9;
+    PL_strncpyz(cinst.plName, "VP9", sizeof(cinst.plName));
   } else if (codecInfo->mName == "I420") {
     cinst.codecType = webrtc::kVideoCodecI420;
     PL_strncpyz(cinst.plName, "I420", sizeof(cinst.plName));
@@ -1465,7 +1478,7 @@ WebrtcVideoConduit::CheckCodecForMatch(const VideoCodecConfig* codecInfo) const
  */
 MediaConduitErrorCode
 WebrtcVideoConduit::ValidateCodecConfig(const VideoCodecConfig* codecInfo,
-                                        bool send) const
+                                        bool send)
 {
   bool codecAppliedAlready = false;
 
@@ -1485,6 +1498,8 @@ WebrtcVideoConduit::ValidateCodecConfig(const VideoCodecConfig* codecInfo,
   //check if we have the same codec already applied
   if(send)
   {
+    MutexAutoLock lock(mCodecMutex);
+
     codecAppliedAlready = CheckCodecsForMatch(mCurSendCodecConfig,codecInfo);
   } else {
     codecAppliedAlready = CheckCodecForMatch(codecInfo);

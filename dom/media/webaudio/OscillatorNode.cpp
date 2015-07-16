@@ -303,7 +303,7 @@ public:
       *aFinished = true;
       return;
     }
-    if (ticks + WEBAUDIO_BLOCK_SIZE < mStart) {
+    if (ticks + WEBAUDIO_BLOCK_SIZE <= mStart) {
       // We're not playing yet.
       ComputeSilence(aOutput);
       return;
@@ -417,9 +417,9 @@ OscillatorNode::SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const
 }
 
 JSObject*
-OscillatorNode::WrapObject(JSContext* aCx)
+OscillatorNode::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return OscillatorNodeBinding::Wrap(aCx, this);
+  return OscillatorNodeBinding::Wrap(aCx, this, aGivenProto);
 }
 
 void

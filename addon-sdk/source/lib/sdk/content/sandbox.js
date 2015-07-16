@@ -21,6 +21,7 @@ const { getTabForContentWindow } = require('../tabs/utils');
 const { getInnerId } = require('../window/utils');
 const { PlainTextConsole } = require('../console/plain-text');
 const { data } = require('../self');
+const { isChildLoader } = require('../remote/core');
 // WeakMap of sandboxes so we can access private values
 const sandboxes = new WeakMap();
 
@@ -46,6 +47,19 @@ const secMan = Cc["@mozilla.org/scriptsecuritymanager;1"].
   getService(Ci.nsIScriptSecurityManager);
 
 const JS_VERSION = '1.8';
+
+// Tests whether this window is loaded in a tab
+function isWindowInTab(window) {
+  if (isChildLoader) {
+    let { frames } = require('../remote/child');
+    let frame = frames.getFrameForWindow(window.top);
+    return frame.isTab;
+  }
+  else {
+    // The deprecated sync worker API still does everything in the main process
+    return getTabForContentWindow(window);
+  }
+}
 
 const WorkerSandbox = Class({
   implements: [ EventTarget ],
@@ -202,7 +216,7 @@ const WorkerSandbox = Class({
     // Inject our `console` into target document if worker doesn't have a tab
     // (e.g Panel, PageWorker, Widget).
     // `worker.tab` can't be used because bug 804935.
-    if (!getTabForContentWindow(window)) {
+    if (!isWindowInTab(window)) {
       let win = getUnsafeWindow(window);
 
       // export our chrome console to content window, as described here:
@@ -229,8 +243,16 @@ const WorkerSandbox = Class({
         timeEnd: genPropDesc('timeEnd'),
         profile: genPropDesc('profile'),
         profileEnd: genPropDesc('profileEnd'),
-       __noSuchMethod__: { enumerable: true, configurable: true, writable: true,
-                            value: function() {} }
+        exception: genPropDesc('exception'),
+        assert: genPropDesc('assert'),
+        count: genPropDesc('count'),
+        table: genPropDesc('table'),
+        clear: genPropDesc('clear'),
+        dirxml: genPropDesc('dirxml'),
+        markTimeline: genPropDesc('markTimeline'),
+        timeline: genPropDesc('timeline'),
+        timelineEnd: genPropDesc('timelineEnd'),
+        timeStamp: genPropDesc('timeStamp'),
       };
 
       Object.defineProperties(con, properties);

@@ -409,17 +409,24 @@ loadListener.prototype = {
 
 // Method to determine if we should be using geo-specific defaults
 function geoSpecificDefaultsEnabled() {
+  // check to see if this is a partner build.  Partner builds should not use geo-specific defaults.
+  let distroID;
+  try {
+    distroID = Services.prefs.getCharPref("distribution.id");
+
+    // Mozilla-provided builds (i.e. funnelcake) are not partner builds
+    if (distroID && !distroID.startsWith("mozilla")) {
+      return false;
+    }
+  } catch (e) {}
+
+  // if we make it here, the pref should dictate behaviour
   let geoSpecificDefaults = false;
   try {
     geoSpecificDefaults = Services.prefs.getBoolPref("browser.search.geoSpecificDefaults");
   } catch(e) {}
 
-  let distroID;
-  try {
-    distroID = Services.prefs.getCharPref("distribution.id");
-  } catch (e) {}
-
-  return (geoSpecificDefaults && !distroID);
+  return geoSpecificDefaults;
 }
 
 // Some notes on countryCode and region prefs:
@@ -2861,10 +2868,14 @@ Engine.prototype = {
   },
 
   get searchForm() {
+    return this._getSearchFormWithPurpose();
+  },
+
+  _getSearchFormWithPurpose(aPurpose = "") {
     // First look for a <Url rel="searchform">
     var searchFormURL = this._getURLOfType(URLTYPE_SEARCH_HTML, "searchform");
     if (searchFormURL) {
-      let submission = searchFormURL.getSubmission("", this);
+      let submission = searchFormURL.getSubmission("", this, aPurpose);
 
       // If the rel=searchform URL is not type="get" (i.e. has postData),
       // ignore it, since we can only return a URL.
@@ -2947,7 +2958,7 @@ Engine.prototype = {
 
     if (!aData) {
       // Return a dummy submission object with our searchForm attribute
-      return new Submission(makeURI(this.searchForm), null);
+      return new Submission(makeURI(this._getSearchFormWithPurpose(aPurpose)), null);
     }
 
     LOG("getSubmission: In data: \"" + aData + "\"; Purpose: \"" + aPurpose + "\"");
@@ -4703,7 +4714,7 @@ SearchService.prototype = {
     try {
       terms = gTextToSubURI.UnEscapeAndConvert(
                                        mapEntry.engine.queryCharset,
-                                       encodedTerms.replace("+", " ", "g"));
+                                       encodedTerms.replace(/\+/g, " "));
     } catch (ex) {
       // Decoding errors will cause this match to be ignored.
       LOG("Parameter decoding failed. Charset: " +

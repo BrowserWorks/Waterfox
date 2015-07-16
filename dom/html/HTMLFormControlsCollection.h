@@ -24,7 +24,7 @@ class OwningRadioNodeListOrElement;
 template<typename> struct Nullable;
 
 class HTMLFormControlsCollection final : public nsIHTMLCollection
-                                           , public nsWrapperCache
+                                       , public nsWrapperCache
 {
 public:
   explicit HTMLFormControlsCollection(HTMLFormElement* aForm);
@@ -80,7 +80,7 @@ public:
 
   // nsWrapperCache
   using nsWrapperCache::GetWrapperPreserveColor;
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 protected:
   virtual ~HTMLFormControlsCollection();
   virtual JSObject* GetWrapperPreserveColorInternal() override

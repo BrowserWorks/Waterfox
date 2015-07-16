@@ -1,6 +1,7 @@
 ---
 $inherits:
   from: 'tasks/test.yml'
+reruns: 2
 task:
   metadata:
     name: '[TC] Gaia Unit Test'
@@ -15,6 +16,7 @@ task:
         --no-read-buildbot-config
         --config-file ./mozharness/configs/b2g/gaia_unit_production_config.py
         --config-file ./mozharness_configs/gaia_integration_override.py
+        --config-file ./mozharness_configs/remove_executables.py
         --download-symbols ondemand
         --installer-url {{build_url}}
         --test-url {{tests_url}}
@@ -28,6 +30,10 @@ task:
         expires: '{{#from_now}}1 year{{/from_now}}'
 
   extra:
+    treeherderEnv:
+      - production
+      - staging
     treeherder:
       symbol: 'Gu'
+      groupSymbol: "?"
       productName: b2g

@@ -315,7 +315,7 @@ nsHTMLEditRules::BeforeEdit(EditAction action,
     nsRefPtr<Selection> selection = mHTMLEditor->GetSelection();
 
     // get the selection location
-    NS_ENSURE_STATE(selection->GetRangeCount());
+    NS_ENSURE_STATE(selection->RangeCount());
     mRangeItem->startNode = selection->GetRangeAt(0)->GetStartParent();
     mRangeItem->startOffset = selection->GetRangeAt(0)->StartOffset();
     mRangeItem->endNode = selection->GetRangeAt(0)->GetEndParent();
@@ -582,7 +582,7 @@ nsHTMLEditRules::WillDoAction(Selection* aSelection,
   if (!aSelection) {
     return NS_OK;
   }
-  NS_ENSURE_TRUE(aSelection->GetRangeCount(), NS_OK);
+  NS_ENSURE_TRUE(aSelection->RangeCount(), NS_OK);
 
   nsRefPtr<nsRange> range = aSelection->GetRangeAt(0);
   nsCOMPtr<nsINode> selStartNode = range->GetStartParent();
@@ -703,21 +703,21 @@ nsHTMLEditRules::GetListState(bool *aMixed, bool *aOL, bool *aUL, bool *aDL)
 
     if (!curElement) {
       bNonList = true;
-    } else if (curElement->IsHTML(nsGkAtoms::ul)) {
+    } else if (curElement->IsHTMLElement(nsGkAtoms::ul)) {
       *aUL = true;
-    } else if (curElement->IsHTML(nsGkAtoms::ol)) {
+    } else if (curElement->IsHTMLElement(nsGkAtoms::ol)) {
       *aOL = true;
-    } else if (curElement->IsHTML(nsGkAtoms::li)) {
+    } else if (curElement->IsHTMLElement(nsGkAtoms::li)) {
       if (dom::Element* parent = curElement->GetParentElement()) {
-        if (parent->IsHTML(nsGkAtoms::ul)) {
+        if (parent->IsHTMLElement(nsGkAtoms::ul)) {
           *aUL = true;
-        } else if (parent->IsHTML(nsGkAtoms::ol)) {
+        } else if (parent->IsHTMLElement(nsGkAtoms::ol)) {
           *aOL = true;
         }
       }
-    } else if (curElement->IsHTML(nsGkAtoms::dl) ||
-               curElement->IsHTML(nsGkAtoms::dt) ||
-               curElement->IsHTML(nsGkAtoms::dd)) {
+    } else if (curElement->IsAnyOfHTMLElements(nsGkAtoms::dl,
+                                               nsGkAtoms::dt,
+                                               nsGkAtoms::dd)) {
       *aDL = true;
     } else {
       bNonList = true;
@@ -753,15 +753,15 @@ nsHTMLEditRules::GetListItemState(bool *aMixed, bool *aLI, bool *aDT, bool *aDD)
     nsCOMPtr<dom::Element> element = do_QueryInterface(curNode);
     if (!element) {
       bNonList = true;
-    } else if (element->IsHTML(nsGkAtoms::ul) ||
-               element->IsHTML(nsGkAtoms::ol) ||
-               element->IsHTML(nsGkAtoms::li)) {
+    } else if (element->IsAnyOfHTMLElements(nsGkAtoms::ul,
+                                            nsGkAtoms::ol,
+                                            nsGkAtoms::li)) {
       *aLI = true;
-    } else if (element->IsHTML(nsGkAtoms::dt)) {
+    } else if (element->IsHTMLElement(nsGkAtoms::dt)) {
       *aDT = true;
-    } else if (element->IsHTML(nsGkAtoms::dd)) {
+    } else if (element->IsHTMLElement(nsGkAtoms::dd)) {
       *aDD = true;
-    } else if (element->IsHTML(nsGkAtoms::dl)) {
+    } else if (element->IsHTMLElement(nsGkAtoms::dl)) {
       // need to look inside dl and see which types of items it has
       bool bDT, bDD;
       GetDefinitionListItemTypes(element, &bDT, &bDD);
@@ -826,7 +826,7 @@ nsHTMLEditRules::GetAlignment(bool *aMixed, nsIHTMLEditor::EAlignment *aAlign)
   {
     // if we are in a text node, then that is the node of interest
     nodeToExamine = GetAsDOMNode(parent);
-  } else if (parent->Tag() == nsGkAtoms::html && offset == rootOffset) {
+  } else if (parent->IsHTMLElement(nsGkAtoms::html) && offset == rootOffset) {
     // if we have selected the body, let's look at the first editable node
     NS_ENSURE_STATE(mHTMLEditor);
     nodeToExamine =
@@ -2055,9 +2055,9 @@ nsHTMLEditRules::WillDeleteSelection(Selection* aSelection,
     }
     
     if (wsType == WSType::special || wsType == WSType::br ||
-        visNode->Tag() == nsGkAtoms::hr) {
+        visNode->IsHTMLElement(nsGkAtoms::hr)) {
       // Short circuit for invisible breaks.  delete them and recurse.
-      if (visNode->Tag() == nsGkAtoms::br &&
+      if (visNode->IsHTMLElement(nsGkAtoms::br) &&
           (!mHTMLEditor || !mHTMLEditor->IsVisBreak(visNode))) {
         NS_ENSURE_STATE(mHTMLEditor);
         res = mHTMLEditor->DeleteNode(visNode);
@@ -2067,7 +2067,8 @@ nsHTMLEditRules::WillDeleteSelection(Selection* aSelection,
       }
 
       // Special handling for backspace when positioned after <hr>
-      if (aAction == nsIEditor::ePrevious && visNode->Tag() == nsGkAtoms::hr) {
+      if (aAction == nsIEditor::ePrevious &&
+          visNode->IsHTMLElement(nsGkAtoms::hr)) {
         // Only if the caret is positioned at the end-of-hr-line position, we
         // want to delete the <hr>.
         //
@@ -2210,7 +2211,7 @@ nsHTMLEditRules::WillDeleteSelection(Selection* aSelection,
         rightNode = leafNode;
       }
 
-      if (otherNode->Tag() == nsGkAtoms::br) {
+      if (otherNode->IsHTMLElement(nsGkAtoms::br)) {
         NS_ENSURE_STATE(mHTMLEditor);
         res = mHTMLEditor->DeleteNode(otherNode);
         NS_ENSURE_SUCCESS(res, res);
@@ -2391,7 +2392,7 @@ nsHTMLEditRules::WillDeleteSelection(Selection* aSelection,
         if (leftBlockParent == rightBlockParent &&
             mHTMLEditor->NodesSameType(GetAsDOMNode(leftParent),
                                        GetAsDOMNode(rightParent))) {
-          if (leftParent->Tag() == nsGkAtoms::p) {
+          if (leftParent->IsHTMLElement(nsGkAtoms::p)) {
             // First delete the selection
             NS_ENSURE_STATE(mHTMLEditor);
             res = mHTMLEditor->DeleteSelectionImpl(aAction, aStripWrappers);
@@ -2426,7 +2427,7 @@ nsHTMLEditRules::WillDeleteSelection(Selection* aSelection,
         // except table elements.
         join = true;
 
-        uint32_t rangeCount = aSelection->GetRangeCount();
+        uint32_t rangeCount = aSelection->RangeCount();
         for (uint32_t rangeIdx = 0; rangeIdx < rangeCount; ++rangeIdx) {
           nsRefPtr<nsRange> range = aSelection->GetRangeAt(rangeIdx);
 
@@ -2459,7 +2460,7 @@ nsHTMLEditRules::WillDeleteSelection(Selection* aSelection,
                 mHTMLEditor->IsVisTextNode(content, &join, true);
               } else {
                 NS_ENSURE_STATE(mHTMLEditor);
-                join = content->IsHTML(nsGkAtoms::br) &&
+                join = content->IsHTMLElement(nsGkAtoms::br) &&
                        !mHTMLEditor->IsVisBreak(somenode);
               }
             }
@@ -2577,7 +2578,8 @@ nsHTMLEditRules::GetGoodSelPointForNode(nsINode& aNode,
   ret.node = aNode.GetParentNode();
   ret.offset = ret.node ? ret.node->IndexOf(&aNode) : -1;
   NS_ENSURE_TRUE(mHTMLEditor, ::DOMPoint());
-  if ((aNode.Tag() != nsGkAtoms::br || mHTMLEditor->IsVisBreak(&aNode)) &&
+  if ((!aNode.IsHTMLElement(nsGkAtoms::br) ||
+       mHTMLEditor->IsVisBreak(&aNode)) &&
       aAction == nsIEditor::ePrevious) {
     ret.offset++;
   }
@@ -3221,7 +3223,7 @@ nsHTMLEditRules::WillMakeList(Selection* aSelection,
 
     if (nsHTMLEditUtils::IsListItem(curNode)) {
       NS_ENSURE_STATE(mHTMLEditor);
-      if (curParent->Tag() != listType) {
+      if (!curParent->IsHTMLElement(listType)) {
         // list item is in wrong type of list. if we don't have a curList,
         // split the old list and make a new list of correct type.
         if (!curList || nsEditorUtils::IsDescendantOf(curNode, curList)) {
@@ -3242,7 +3244,7 @@ nsHTMLEditRules::WillMakeList(Selection* aSelection,
         NS_ENSURE_SUCCESS(res, res);
         // convert list item type if needed
         NS_ENSURE_STATE(mHTMLEditor);
-        if (curNode->Tag() != itemType) {
+        if (!curNode->IsHTMLElement(itemType)) {
           NS_ENSURE_STATE(mHTMLEditor);
           newBlock = dont_AddRef(GetAsDOMNode(
             mHTMLEditor->ReplaceContainer(curNode->AsElement(),
@@ -3261,7 +3263,7 @@ nsHTMLEditRules::WillMakeList(Selection* aSelection,
           NS_ENSURE_SUCCESS(res, res);
         }
         NS_ENSURE_STATE(mHTMLEditor);
-        if (curNode->Tag() != itemType) {
+        if (!curNode->IsHTMLElement(itemType)) {
           NS_ENSURE_STATE(mHTMLEditor);
           newBlock = dont_AddRef(GetAsDOMNode(
             mHTMLEditor->ReplaceContainer(curNode->AsElement(),
@@ -3284,7 +3286,7 @@ nsHTMLEditRules::WillMakeList(Selection* aSelection,
 
     // if we hit a div clear our prevListItem, insert divs contents
     // into our node array, and remove the div
-    if (curNode->Tag() == nsGkAtoms::div) {
+    if (curNode->IsHTMLElement(nsGkAtoms::div)) {
       prevListItem = nullptr;
       int32_t j = i + 1;
       res = GetInnerContent(curNode->AsDOMNode(), arrayOfNodes, &j);
@@ -3320,7 +3322,7 @@ nsHTMLEditRules::WillMakeList(Selection* aSelection,
         NS_ENSURE_SUCCESS(res, res);
       } else {
         // don't wrap li around a paragraph.  instead replace paragraph with li
-        if (curNode->Tag() == nsGkAtoms::p) {
+        if (curNode->IsHTMLElement(nsGkAtoms::p)) {
           NS_ENSURE_STATE(mHTMLEditor);
           listItem = mHTMLEditor->ReplaceContainer(curNode->AsElement(),
                                                    itemType);
@@ -3747,7 +3749,8 @@ nsHTMLEditRules::WillCSSIndent(Selection* aSelection,
       sibling = mHTMLEditor->GetNextHTMLSibling(curNode);
       if (sibling && nsHTMLEditUtils::IsList(sibling))
       {
-        if (curParent->Tag() == sibling->Tag()) {
+        if (curParent->NodeInfo()->NameAtom() == sibling->NodeInfo()->NameAtom() &&
+            curParent->NodeInfo()->NamespaceID() == sibling->NodeInfo()->NamespaceID()) {
           NS_ENSURE_STATE(mHTMLEditor);
           res = mHTMLEditor->MoveNode(curNode, sibling, 0);
           NS_ENSURE_SUCCESS(res, res);
@@ -3761,7 +3764,8 @@ nsHTMLEditRules::WillCSSIndent(Selection* aSelection,
       sibling = mHTMLEditor->GetPriorHTMLSibling(curNode);
       if (sibling && nsHTMLEditUtils::IsList(sibling))
       {
-        if (curParent->Tag() == sibling->Tag()) {
+        if (curParent->NodeInfo()->NameAtom() == sibling->NodeInfo()->NameAtom() &&
+            curParent->NodeInfo()->NamespaceID() == sibling->NodeInfo()->NamespaceID()) {
           NS_ENSURE_STATE(mHTMLEditor);
           res = mHTMLEditor->MoveNode(curNode, sibling, -1);
           NS_ENSURE_SUCCESS(res, res);
@@ -3779,10 +3783,12 @@ nsHTMLEditRules::WillCSSIndent(Selection* aSelection,
 
       if (!curList || (sibling && sibling != curList)) {
         // create a new nested list of correct type
-        res = SplitAsNeeded(*curParent->Tag(), curParent, offset);
+        res = SplitAsNeeded(*curParent->NodeInfo()->NameAtom(), curParent,
+                            offset);
         NS_ENSURE_SUCCESS(res, res);
         NS_ENSURE_STATE(mHTMLEditor);
-        curList = mHTMLEditor->CreateNode(curParent->Tag(), curParent, offset);
+        curList = mHTMLEditor->CreateNode(curParent->NodeInfo()->NameAtom(),
+                                          curParent, offset);
         NS_ENSURE_STATE(curList);
         // curList is now the correct thing to put curNode in
         // remember our new block for postprocessing
@@ -3929,7 +3935,8 @@ nsHTMLEditRules::WillHTMLIndent(Selection* aSelection,
       NS_ENSURE_STATE(mHTMLEditor);
       sibling = mHTMLEditor->GetNextHTMLSibling(curNode);
       if (sibling && nsHTMLEditUtils::IsList(sibling) &&
-          curParent->Tag() == sibling->Tag()) {
+          curParent->NodeInfo()->NameAtom() == sibling->NodeInfo()->NameAtom() &&
+          curParent->NodeInfo()->NamespaceID() == sibling->NodeInfo()->NamespaceID()) {
         NS_ENSURE_STATE(mHTMLEditor);
         res = mHTMLEditor->MoveNode(curNode, sibling, 0);
         NS_ENSURE_SUCCESS(res, res);
@@ -3942,7 +3949,8 @@ nsHTMLEditRules::WillHTMLIndent(Selection* aSelection,
       NS_ENSURE_STATE(mHTMLEditor);
       sibling = mHTMLEditor->GetPriorHTMLSibling(curNode);
       if (sibling && nsHTMLEditUtils::IsList(sibling) &&
-          curParent->Tag() == sibling->Tag()) {
+          curParent->NodeInfo()->NameAtom() == sibling->NodeInfo()->NameAtom() &&
+          curParent->NodeInfo()->NamespaceID() == sibling->NodeInfo()->NamespaceID()) {
         NS_ENSURE_STATE(mHTMLEditor);
         res = mHTMLEditor->MoveNode(curNode, sibling, -1);
         NS_ENSURE_SUCCESS(res, res);
@@ -3961,10 +3969,12 @@ nsHTMLEditRules::WillHTMLIndent(Selection* aSelection,
       if (!curList || (sibling && sibling != curList) )
       {
         // create a new nested list of correct type
-        res = SplitAsNeeded(*curParent->Tag(), curParent, offset);
+        res = SplitAsNeeded(*curParent->NodeInfo()->NameAtom(), curParent,
+                            offset);
         NS_ENSURE_SUCCESS(res, res);
         NS_ENSURE_STATE(mHTMLEditor);
-        curList = mHTMLEditor->CreateNode(curParent->Tag(), curParent, offset);
+        curList = mHTMLEditor->CreateNode(curParent->NodeInfo()->NameAtom(),
+                                          curParent, offset);
         NS_ENSURE_STATE(curList);
         // curList is now the correct thing to put curNode in
         // remember our new block for postprocessing
@@ -4006,11 +4016,12 @@ nsHTMLEditRules::WillHTMLIndent(Selection* aSelection,
         if (!curList || (sibling && sibling != curList) )
         {
           // create a new nested list of correct type
-          res = SplitAsNeeded(*curParent->Tag(), curParent, offset);
+          res = SplitAsNeeded(*curParent->NodeInfo()->NameAtom(), curParent,
+                              offset);
           NS_ENSURE_SUCCESS(res, res);
           NS_ENSURE_STATE(mHTMLEditor);
-          curList = mHTMLEditor->CreateNode(curParent->Tag(), curParent,
-                                            offset);
+          curList = mHTMLEditor->CreateNode(curParent->NodeInfo()->NameAtom(),
+                                            curParent, offset);
           NS_ENSURE_STATE(curList);
         }
         NS_ENSURE_STATE(mHTMLEditor);
@@ -4485,11 +4496,12 @@ nsHTMLEditRules::ConvertListType(Element* aList,
   {
     if (child->IsElement()) {
       dom::Element* element = child->AsElement();
-      if (nsHTMLEditUtils::IsListItem(element) && !element->IsHTML(aItemType)) {
+      if (nsHTMLEditUtils::IsListItem(element) &&
+          !element->IsHTMLElement(aItemType)) {
         child = mHTMLEditor->ReplaceContainer(element, aItemType);
         NS_ENSURE_STATE(child);
       } else if (nsHTMLEditUtils::IsList(element) &&
-                 !element->IsHTML(aListType)) {
+                 !element->IsHTMLElement(aListType)) {
         nsCOMPtr<dom::Element> temp;
         nsresult rv = ConvertListType(child->AsElement(), getter_AddRefs(temp),
                                       aListType, aItemType);
@@ -4500,7 +4512,7 @@ nsHTMLEditRules::ConvertListType(Element* aList,
     child = child->GetNextSibling();
   }
 
-  if (aList->IsElement() && aList->AsElement()->IsHTML(aListType)) {
+  if (aList->IsHTMLElement(aListType)) {
     nsCOMPtr<dom::Element> list = aList->AsElement();
     list.forget(aOutList);
     return NS_OK;
@@ -4959,7 +4971,8 @@ nsHTMLEditRules::AlignBlockContents(nsIDOMNode *aNode, const nsAString *alignTyp
   if (!firstChild)
   {
     // this cell has no content, nothing to align
-  } else if (firstChild == lastChild && firstChild->Tag() == nsGkAtoms::div) {
+  } else if (firstChild == lastChild &&
+             firstChild->IsHTMLElement(nsGkAtoms::div)) {
     // the cell already has a div containing all of its content: just
     // act on this div.
     nsCOMPtr<nsIDOMElement> divElem = do_QueryInterface(firstChild);
@@ -5599,14 +5612,14 @@ nsHTMLEditRules::GetPromotedPoint(RulesEndpoint aWhere, nsIDOMNode* aNode,
     NS_ENSURE_TRUE(mHTMLEditor, /* void */);
     nsCOMPtr<nsIContent> nearNode =
       mHTMLEditor->GetPriorHTMLNode(node, offset, true);
-    while (!nearNode && node->Tag() != nsGkAtoms::body &&
+    while (!nearNode && !node->IsHTMLElement(nsGkAtoms::body) &&
            node->GetParentNode()) {
       // some cutoffs are here: we don't need to also include them in the
       // aWhere == kEnd case.  as long as they are in one or the other it will
       // work.  special case for outdent: don't keep looking up if we have
       // found a blockquote element to act on
       if (actionID == EditAction::outdent &&
-          node->Tag() == nsGkAtoms::blockquote) {
+          node->IsHTMLElement(nsGkAtoms::blockquote)) {
         break;
       }
 
@@ -5675,7 +5688,7 @@ nsHTMLEditRules::GetPromotedPoint(RulesEndpoint aWhere, nsIDOMNode* aNode,
   NS_ENSURE_TRUE(mHTMLEditor, /* void */);
   nsCOMPtr<nsIContent> nearNode =
     mHTMLEditor->GetNextHTMLNode(node, offset, true);
-  while (!nearNode && node->Tag() != nsGkAtoms::body &&
+  while (!nearNode && !node->IsHTMLElement(nsGkAtoms::body) &&
          node->GetParentNode()) {
     int32_t parentOffset = node->GetParentNode()->IndexOf(node);
     nsCOMPtr<nsINode> parent = node->GetParentNode();
@@ -6051,7 +6064,7 @@ nsHTMLEditRules::GetListActionNodes(nsCOMArray<nsIDOMNode> &outArrayOfNodes,
   // is only in part of it.  used by list item dialog.
   if (aEntireList)
   {       
-    uint32_t rangeCount = selection->GetRangeCount();
+    uint32_t rangeCount = selection->RangeCount();
     for (uint32_t rangeIdx = 0; rangeIdx < rangeCount; ++rangeIdx) {
       nsRefPtr<nsRange> range = selection->GetRangeAt(rangeIdx);
       nsCOMPtr<nsIDOMNode> commonParent, parent, tmp;
@@ -6136,9 +6149,9 @@ nsHTMLEditRules::LookInsideDivBQandList(nsCOMArray<nsIDOMNode>& aNodeArray)
   NS_ENSURE_STATE(curNode);
 
   while (curNode->IsElement() &&
-         (curNode->AsElement()->IsHTML(nsGkAtoms::div) ||
+         (curNode->IsHTMLElement(nsGkAtoms::div) ||
           nsHTMLEditUtils::IsList(curNode) ||
-          curNode->AsElement()->IsHTML(nsGkAtoms::blockquote))) {
+          curNode->IsHTMLElement(nsGkAtoms::blockquote))) {
     // dive as long as there is only one child, and it is a list, div, blockquote
     NS_ENSURE_STATE(mHTMLEditor);
     uint32_t numChildren = mHTMLEditor->CountEditableChildren(curNode);
@@ -6154,9 +6167,9 @@ nsHTMLEditRules::LookInsideDivBQandList(nsCOMArray<nsIDOMNode>& aNodeArray)
     }
 
     dom::Element* element = tmp->AsElement();
-    if (!element->IsHTML(nsGkAtoms::div) &&
+    if (!element->IsHTMLElement(nsGkAtoms::div) &&
         !nsHTMLEditUtils::IsList(element) &&
-        !element->IsHTML(nsGkAtoms::blockquote)) {
+        !element->IsHTMLElement(nsGkAtoms::blockquote)) {
       break;
     }
 
@@ -6167,9 +6180,8 @@ nsHTMLEditRules::LookInsideDivBQandList(nsCOMArray<nsIDOMNode>& aNodeArray)
   // we've found innermost list/blockquote/div: 
   // replace the one node in the array with these nodes
   aNodeArray.RemoveObjectAt(0);
-  if (curNode->IsElement() &&
-      (curNode->AsElement()->IsHTML(nsGkAtoms::div) ||
-       curNode->AsElement()->IsHTML(nsGkAtoms::blockquote))) {
+  if (curNode->IsAnyOfHTMLElements(nsGkAtoms::div,
+                                   nsGkAtoms::blockquote)) {
     int32_t j = 0;
     return GetInnerContent(curNode->AsDOMNode(), aNodeArray, &j, false, false);
   }
@@ -6186,7 +6198,7 @@ void
 nsHTMLEditRules::GetDefinitionListItemTypes(dom::Element* aElement, bool* aDT, bool* aDD)
 {
   MOZ_ASSERT(aElement);
-  MOZ_ASSERT(aElement->IsHTML(nsGkAtoms::dl));
+  MOZ_ASSERT(aElement->IsHTMLElement(nsGkAtoms::dl));
   MOZ_ASSERT(aDT);
   MOZ_ASSERT(aDD);
 
@@ -6194,9 +6206,9 @@ nsHTMLEditRules::GetDefinitionListItemTypes(dom::Element* aElement, bool* aDT, b
   for (nsIContent* child = aElement->GetFirstChild();
        child;
        child = child->GetNextSibling()) {
-    if (child->IsHTML(nsGkAtoms::dt)) {
+    if (child->IsHTMLElement(nsGkAtoms::dt)) {
       *aDT = true;
-    } else if (child->IsHTML(nsGkAtoms::dd)) {
+    } else if (child->IsHTMLElement(nsGkAtoms::dd)) {
       *aDD = true;
     }
   }
@@ -7091,14 +7103,14 @@ nsHTMLEditRules::RemoveBlockStyle(nsCOMArray<nsIDOMNode>& arrayOfNodes)
       res = mHTMLEditor->RemoveBlockContainer(curNode); 
       NS_ENSURE_SUCCESS(res, res);
     } else if (curElement &&
-               (curElement->IsHTML(nsGkAtoms::table)      ||
-                curElement->IsHTML(nsGkAtoms::tr)         ||
-                curElement->IsHTML(nsGkAtoms::tbody)      ||
-                curElement->IsHTML(nsGkAtoms::td)         ||
-                nsHTMLEditUtils::IsList(curElement)       ||
-                curElement->IsHTML(nsGkAtoms::li)         ||
-                curElement->IsHTML(nsGkAtoms::blockquote) ||
-                curElement->IsHTML(nsGkAtoms::div))) {
+               (curElement->IsAnyOfHTMLElements(nsGkAtoms::table,
+                                                nsGkAtoms::tr,
+                                                nsGkAtoms::tbody,
+                                                nsGkAtoms::td,
+                                                nsGkAtoms::li,
+                                                nsGkAtoms::blockquote,
+                                                nsGkAtoms::div) ||
+                nsHTMLEditUtils::IsList(curElement))) {
       // process any partial progress saved
       if (curBlock)
       {
@@ -7210,7 +7222,7 @@ nsHTMLEditRules::ApplyBlockStyle(nsCOMArray<nsIDOMNode>& arrayOfNodes, const nsA
     curParent = curNode->GetParentNode();
     offset = curParent ? curParent->IndexOf(curNode) : -1;
     nsAutoString curNodeTag;
-    curNode->Tag()->ToString(curNodeTag);
+    curNode->NodeInfo()->NameAtom()->ToString(curNodeTag);
     ToLowerCase(curNodeTag);
  
     // is it already the right kind of block?
@@ -7240,8 +7252,8 @@ nsHTMLEditRules::ApplyBlockStyle(nsCOMArray<nsIDOMNode>& arrayOfNodes, const nsA
              (curNodeTag.EqualsLiteral("td"))         ||
              nsHTMLEditUtils::IsList(curNode)                     ||
              (curNodeTag.EqualsLiteral("li"))         ||
-             curNode->Tag() == nsGkAtoms::blockquote  ||
-             curNode->Tag() == nsGkAtoms::div) {
+             curNode->IsAnyOfHTMLElements(nsGkAtoms::blockquote,
+                                          nsGkAtoms::div)) {
       curBlock = 0;  // forget any previous block used for previous inline nodes
       // recursion time
       nsCOMArray<nsIDOMNode> childArray;
@@ -7455,11 +7467,11 @@ nsHTMLEditRules::GetTopEnclosingMailCite(nsINode& aNode)
   nsCOMPtr<Element> ret;
 
   for (nsCOMPtr<nsINode> node = &aNode; node; node = node->GetParentNode()) {
-    if ((IsPlaintextEditor() && node->Tag() == nsGkAtoms::pre) ||
+    if ((IsPlaintextEditor() && node->IsHTMLElement(nsGkAtoms::pre)) ||
         nsHTMLEditUtils::IsMailCite(node)) {
       ret = node->AsElement();
     }
-    if (node->Tag() == nsGkAtoms::body) {
+    if (node->IsHTMLElement(nsGkAtoms::body)) {
       break;
     }
   }
@@ -7520,7 +7532,7 @@ nsHTMLEditRules::ReapplyCachedStyles()
   NS_ENSURE_STATE(mHTMLEditor);
   nsRefPtr<Selection> selection = mHTMLEditor->GetSelection();
   MOZ_ASSERT(selection);
-  if (!selection->GetRangeCount()) {
+  if (!selection->RangeCount()) {
     // Nothing to do
     return NS_OK;
   }
@@ -7879,7 +7891,7 @@ nsHTMLEditRules::AdjustSelection(Selection* aSelection,
   if (nearNode && (nsTextEditUtils::IsBreak(nearNode) ||
                    nsEditor::IsTextNode(nearNode) ||
                    nsHTMLEditUtils::IsImage(nearNode) ||
-                   nearNode->Tag() == nsGkAtoms::hr)) {
+                   nearNode->IsHTMLElement(nsGkAtoms::hr))) {
     // this is a good place for the caret to be
     return NS_OK;
   }
@@ -7887,8 +7899,8 @@ nsHTMLEditRules::AdjustSelection(Selection* aSelection,
   nearNode = mHTMLEditor->GetNextHTMLNode(selNode, selOffset, true);
   if (nearNode && (nsTextEditUtils::IsBreak(nearNode) ||
                    nsEditor::IsTextNode(nearNode) ||
-                   nearNode->Tag() == nsGkAtoms::img ||
-                   nearNode->Tag() == nsGkAtoms::hr)) {
+                   nearNode->IsAnyOfHTMLElements(nsGkAtoms::img,
+                                                 nsGkAtoms::hr))) {
     return NS_OK; // this is a good place for the caret to be
   }
 
@@ -8073,18 +8085,18 @@ nsHTMLEditRules::RemoveEmptyNodes()
 
       if (node->IsElement()) {
         dom::Element* element = node->AsElement();
-        if (element->IsHTML(nsGkAtoms::body)) {
+        if (element->IsHTMLElement(nsGkAtoms::body)) {
           // don't delete the body
         } else if ((bIsMailCite = nsHTMLEditUtils::IsMailCite(element))  ||
-                   element->IsHTML(nsGkAtoms::a)                         ||
+                   element->IsHTMLElement(nsGkAtoms::a)                  ||
                    nsHTMLEditUtils::IsInlineStyle(element)               ||
                    nsHTMLEditUtils::IsList(element)                      ||
-                   element->IsHTML(nsGkAtoms::div)) {
+                   element->IsHTMLElement(nsGkAtoms::div)) {
           // only consider certain nodes to be empty for purposes of removal
           bIsCandidate = true;
         } else if (nsHTMLEditUtils::IsFormatNode(element) ||
                    nsHTMLEditUtils::IsListItem(element)   ||
-                   element->IsHTML(nsGkAtoms::blockquote)) {
+                   element->IsHTMLElement(nsGkAtoms::blockquote)) {
           // these node types are candidates if selection is not in them
           // if it is one of these, don't delete if selection inside.
           // this is so we can create empty headings, etc, for the
@@ -8180,7 +8192,7 @@ nsHTMLEditRules::SelectionEndpointInNode(nsINode* aNode, bool* aResult)
   nsRefPtr<Selection> selection = mHTMLEditor->GetSelection();
   NS_ENSURE_STATE(selection);
   
-  uint32_t rangeCount = selection->GetRangeCount();
+  uint32_t rangeCount = selection->RangeCount();
   for (uint32_t rangeIdx = 0; rangeIdx < rangeCount; ++rangeIdx) {
     nsRefPtr<nsRange> range = selection->GetRangeAt(rangeIdx);
     nsCOMPtr<nsIDOMNode> startParent, endParent;
@@ -9008,7 +9020,7 @@ nsHTMLEditRules::RelativeChangeIndentationOfElementNode(nsIDOMNode *aNode, int8_
   // to unapply a CSS "indent" (<div style="margin-left: 40px;">) by
   // removing the DIV container instead of just removing the CSS property.
   nsCOMPtr<dom::Element> node = do_QueryInterface(aNode);
-  if (!node || !node->IsHTML(nsGkAtoms::div) ||
+  if (!node || !node->IsHTMLElement(nsGkAtoms::div) ||
       !mHTMLEditor ||
       node == mHTMLEditor->GetActiveEditingHost() ||
       !mHTMLEditor->IsDescendantOfEditorRoot(node) ||
@@ -9137,7 +9149,8 @@ nsHTMLEditRules::WillAbsolutePosition(Selection* aSelection,
       
       if (!curList || (sibling && sibling != GetAsDOMNode(curList))) {
         // create a new nested list of correct type
-        res = SplitAsNeeded(*curParent->Tag(), curParent, offset);
+        res = SplitAsNeeded(*curParent->NodeInfo()->NameAtom(), curParent,
+                            offset);
         NS_ENSURE_SUCCESS(res, res);
         if (!curPositionedDiv) {
           nsCOMPtr<nsINode> curParentParent = curParent->GetParentNode();
@@ -9149,8 +9162,8 @@ nsHTMLEditRules::WillAbsolutePosition(Selection* aSelection,
           mNewBlock = GetAsDOMNode(curPositionedDiv);
         }
         NS_ENSURE_STATE(mHTMLEditor);
-        curList = mHTMLEditor->CreateNode(curParent->Tag(), curPositionedDiv,
-                                          -1);
+        curList = mHTMLEditor->CreateNode(curParent->NodeInfo()->NameAtom(),
+                                          curPositionedDiv, -1);
         NS_ENSURE_STATE(curList);
         // curList is now the correct thing to put curNode in
         // remember our new block for postprocessing
@@ -9190,7 +9203,8 @@ nsHTMLEditRules::WillAbsolutePosition(Selection* aSelection,
          
         if (!curList || (sibling && sibling != GetAsDOMNode(curList))) {
           // create a new nested list of correct type
-          res = SplitAsNeeded(*curParent->Tag(), curParent, offset);
+          res = SplitAsNeeded(*curParent->NodeInfo()->NameAtom(), curParent,
+                              offset);
           NS_ENSURE_SUCCESS(res, res);
           if (!curPositionedDiv) {
             nsCOMPtr<nsINode> curParentParent = curParent->GetParentNode();
@@ -9203,8 +9217,8 @@ nsHTMLEditRules::WillAbsolutePosition(Selection* aSelection,
             mNewBlock = GetAsDOMNode(curPositionedDiv);
           }
           NS_ENSURE_STATE(mHTMLEditor);
-          curList = mHTMLEditor->CreateNode(curParent->Tag(), curPositionedDiv,
-                                            -1);
+          curList = mHTMLEditor->CreateNode(curParent->NodeInfo()->NameAtom(),
+                                            curPositionedDiv, -1);
           NS_ENSURE_STATE(curList);
         }
         NS_ENSURE_STATE(mHTMLEditor);
@@ -9220,7 +9234,7 @@ nsHTMLEditRules::WillAbsolutePosition(Selection* aSelection,
 
         if (!curPositionedDiv) 
         {
-          if (curNode->Tag() == nsGkAtoms::div) {
+          if (curNode->IsHTMLElement(nsGkAtoms::div)) {
             curPositionedDiv = curNode->AsElement();
             mNewBlock = GetAsDOMNode(curPositionedDiv);
             curList = nullptr;

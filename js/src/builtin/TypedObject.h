@@ -39,7 +39,7 @@
  * Currently, all "globals" related to typed objects are packaged
  * within a single "module" object `TypedObject`. This module has its
  * own js::Class and when that class is initialized, we also create
- * and define all other values (in `js_InitTypedObjectModuleClass()`).
+ * and define all other values (in `js::InitTypedObjectModuleClass()`).
  *
  * - Type objects, meta type objects, and type representations:
  *
@@ -173,6 +173,9 @@ class TypeDescr : public NativeObject
     int32_t size() const {
         return getReservedSlot(JS_DESCR_SLOT_SIZE).toInt32();
     }
+
+    // Whether id is an 'own' property of objects with this descriptor.
+    bool hasProperty(const JSAtomState& names, jsid id);
 
     // Type descriptors may contain a list of their references for use during
     // scanning. Marking code is optimized to use this list to mark inline
@@ -331,10 +334,10 @@ class SimdTypeDescr : public ComplexTypeDescr
 {
   public:
     enum Type {
-        TYPE_INT32 = JS_SIMDTYPEREPR_INT32,
-        TYPE_FLOAT32 = JS_SIMDTYPEREPR_FLOAT32,
-        TYPE_FLOAT64 = JS_SIMDTYPEREPR_FLOAT64,
-        LAST_TYPE = TYPE_FLOAT64
+        Int32x4 = JS_SIMDTYPEREPR_INT32,
+        Float32x4 = JS_SIMDTYPEREPR_FLOAT32,
+        Float64x2 = JS_SIMDTYPEREPR_FLOAT64,
+        LAST_TYPE = Float64x2
     };
 
     static const type::Kind Kind = type::Simd;
@@ -352,10 +355,10 @@ class SimdTypeDescr : public ComplexTypeDescr
     static bool is(const Value& v);
 };
 
-#define JS_FOR_EACH_SIMD_TYPE_REPR(macro_)                             \
-    macro_(SimdTypeDescr::TYPE_INT32, int32_t, int32, 4)               \
-    macro_(SimdTypeDescr::TYPE_FLOAT32, float, float32, 4)             \
-    macro_(SimdTypeDescr::TYPE_FLOAT64, double, float64, 2)
+#define JS_FOR_EACH_SIMD_TYPE_REPR(macro_)               \
+    macro_(SimdTypeDescr::Int32x4, int32_t, int32, 4)    \
+    macro_(SimdTypeDescr::Float32x4, float, float32, 4)  \
+    macro_(SimdTypeDescr::Float64x2, double, float64, 2)
 
 bool IsTypedObjectClass(const Class* clasp); // Defined below
 bool IsTypedObjectArray(JSObject& obj);
@@ -369,7 +372,7 @@ class ArrayTypeDescr;
  * is no `class_` field because `ArrayType` is just a native
  * constructor function.
  */
-class ArrayMetaTypeDescr : public JSObject
+class ArrayMetaTypeDescr : public NativeObject
 {
   private:
     // Helper for creating a new ArrayType object.
@@ -433,7 +436,7 @@ class ArrayTypeDescr : public ComplexTypeDescr
  * is no `class_` field because `StructType` is just a native
  * constructor function.
  */
-class StructMetaTypeDescr : public JSObject
+class StructMetaTypeDescr : public NativeObject
 {
   private:
     static JSObject* create(JSContext* cx, HandleObject structTypeGlobal,
@@ -510,7 +513,6 @@ class TypedObjectModuleObject : public NativeObject {
 /* Base type for transparent and opaque typed objects. */
 class TypedObject : public JSObject
 {
-  private:
     static const bool IsTypedObjectClass = true;
 
     static bool obj_getArrayElement(JSContext* cx,
@@ -520,15 +522,15 @@ class TypedObject : public JSObject
                                     MutableHandleValue vp);
 
   protected:
+    HeapPtrShape shape_;
+
     static bool obj_lookupProperty(JSContext* cx, HandleObject obj,
                                    HandleId id, MutableHandleObject objp,
                                    MutableHandleShape propp);
 
-    static bool obj_lookupElement(JSContext* cx, HandleObject obj, uint32_t index,
-                                  MutableHandleObject objp, MutableHandleShape propp);
-
-    static bool obj_defineProperty(JSContext* cx, HandleObject obj, HandleId id, HandleValue v,
-                                   PropertyOp getter, StrictPropertyOp setter, unsigned attrs);
+    static bool obj_defineProperty(JSContext* cx, HandleObject obj, HandleId id,
+                                   Handle<JSPropertyDescriptor> desc,
+                                   ObjectOpResult& result);
 
     static bool obj_hasProperty(JSContext* cx, HandleObject obj, HandleId id, bool* foundp);
 
@@ -538,13 +540,14 @@ class TypedObject : public JSObject
     static bool obj_getElement(JSContext* cx, HandleObject obj, HandleObject receiver,
                                uint32_t index, MutableHandleValue vp);
 
-    static bool obj_setProperty(JSContext* cx, HandleObject obj, HandleObject receiver,
-                                HandleId id, MutableHandleValue vp, bool strict);
+    static bool obj_setProperty(JSContext* cx, HandleObject obj, HandleId id, HandleValue v,
+                                HandleValue receiver, ObjectOpResult& result);
 
     static bool obj_getOwnPropertyDescriptor(JSContext* cx, HandleObject obj, HandleId id,
                                              MutableHandle<JSPropertyDescriptor> desc);
 
-    static bool obj_deleteProperty(JSContext* cx, HandleObject obj, HandleId id, bool* succeeded);
+    static bool obj_deleteProperty(JSContext* cx, HandleObject obj, HandleId id,
+                                   ObjectOpResult& result);
 
     static bool obj_enumerate(JSContext* cx, HandleObject obj, AutoIdVector& properties);
 
@@ -601,6 +604,8 @@ class TypedObject : public JSObject
     /* Accessors for self hosted code. */
     static bool GetBuffer(JSContext* cx, unsigned argc, Value* vp);
     static bool GetByteOffset(JSContext* cx, unsigned argc, Value* vp);
+
+    Shape* shapeFromGC() { return shape_; }
 };
 
 typedef Handle<TypedObject*> HandleTypedObject;
@@ -711,8 +716,6 @@ class InlineTypedObject : public TypedObject
     }
 
     uint8_t* inlineTypedMem() const {
-        static_assert(offsetof(InlineTypedObject, data_) == sizeof(JSObject),
-                      "The data for an inline typed object must follow the shape and type.");
         return (uint8_t*) &data_;
     }
 
@@ -1018,34 +1021,10 @@ TypedObject::opaque() const
     return IsOpaqueTypedObjectClass(getClass());
 }
 
-// Inline transparent typed objects do not initially have an array buffer, but
-// can have that buffer created lazily if it is accessed later. This table
-// manages references from such typed objects to their buffers.
-class LazyArrayBufferTable
-{
-  private:
-    // The map from transparent typed objects to their lazily created buffer.
-    // Keys in this map are InlineTransparentTypedObjects and values are
-    // ArrayBufferObjects, but we don't enforce this in the type system due to
-    // the extra marking code goop that requires.
-    typedef WeakMap<PreBarrieredObject, RelocatablePtrObject> Map;
-    Map map;
-
-  public:
-    explicit LazyArrayBufferTable(JSContext* cx);
-    ~LazyArrayBufferTable();
-
-    ArrayBufferObject* maybeBuffer(InlineTransparentTypedObject* obj);
-    bool addBuffer(JSContext* cx, InlineTransparentTypedObject* obj, ArrayBufferObject* buffer);
-
-    void trace(JSTracer* trc);
-    size_t sizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf);
-};
+JSObject*
+InitTypedObjectModuleObject(JSContext* cx, JS::HandleObject obj);
 
 } // namespace js
-
-JSObject*
-js_InitTypedObjectModuleObject(JSContext* cx, JS::HandleObject obj);
 
 template <>
 inline bool

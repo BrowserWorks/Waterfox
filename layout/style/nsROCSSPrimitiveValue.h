@@ -35,7 +35,7 @@ class nsDOMCSSRGBColor;
  * computed style.
  */
 class nsROCSSPrimitiveValue final : public mozilla::dom::CSSValue,
-  public nsIDOMCSSPrimitiveValue
+                                    public nsIDOMCSSPrimitiveValue
 {
 public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -104,7 +104,7 @@ public:
     return nullptr;
   }
 
-  virtual JSObject *WrapObject(JSContext *cx) override;
+  virtual JSObject *WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto) override;
 
 private:
   ~nsROCSSPrimitiveValue();

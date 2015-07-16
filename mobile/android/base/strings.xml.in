@@ -78,6 +78,7 @@
 
   <string name="quit">&quit;</string>
   <string name="bookmark">&bookmark;</string>
+  <string name="bookmark_remove">&bookmark_remove;</string>
   <string name="bookmark_added">&bookmark_added;</string>
   <string name="bookmark_removed">&bookmark_removed;</string>
   <string name="bookmark_updated">&bookmark_updated;</string>
@@ -118,12 +119,16 @@
   <string name="overlay_share_no_url">&overlay_share_no_url;</string>
   <string name="overlay_share_retry">&overlay_share_retry;</string>
   <string name="overlay_share_select_device">&overlay_share_select_device;</string>
+  <string name="overlay_no_synced_devices">&overlay_no_synced_devices;</string>
+  <string name="overlay_share_tab_not_sent">&overlay_share_tab_not_sent;</string>
 
   <string name="settings">&settings;</string>
   <string name="settings_title">&settings_title;</string>
   <string name="pref_category_advanced">&pref_category_advanced;</string>
   <string name="pref_category_customize">&pref_category_customize;</string>
   <string name="pref_category_customize_summary">&pref_category_customize_summary;</string>
+  <string name="pref_category_customize_alt_summary">&pref_category_customize_alt_summary;</string>
+
   <string name="pref_category_search">&pref_category_search3;</string>
   <string name="pref_category_search_summary">&pref_category_search_summary;</string>
   <string name="pref_category_display">&pref_category_display;</string>
@@ -172,7 +177,9 @@
 
   <string name="pref_learn_more">&pref_learn_more;</string>
 
+  <string name="pref_category_logins">&pref_category_logins;</string>
   <string name="pref_remember_signons">&pref_remember_signons;</string>
+  <string name="pref_manage_logins">&pref_manage_logins;</string>
 
   <string name="pref_cookies_menu">&pref_cookies_menu;</string>
   <string name="pref_cookies_accept_all">&pref_cookies_accept_all;</string>
@@ -231,6 +238,15 @@
   <string name="pref_update_autodownload_disabled">&pref_update_autodownload_never;</string>
   <string name="pref_update_autodownload_enabled">&pref_update_autodownload_always;</string>
 
+  <string name="pref_tab_queue_title">&pref_tab_queue_title;</string>
+  <string name="pref_tab_queue_summary">&pref_tab_queue_summary;</string>
+
+  <string name="tab_queue_toast_message">&tab_queue_toast_message;</string>
+  <string name="tab_queue_toast_action">&tab_queue_toast_action;</string>
+  <string name="tab_queue_notification_text_singular">&tab_queue_notification_text_singular;</string>
+  <string name="tab_queue_notification_text_plural">&tab_queue_notification_text_plural;</string>
+  <string name="tab_queue_notification_title_singular">&tab_queue_notification_title_singular;</string>
+  <string name="tab_queue_notification_title_plural">&tab_queue_notification_title_plural;</string>
 
   <string name="pref_about_firefox">&pref_about_firefox;</string>
   <string name="pref_vendor_faqs">&pref_vendor_faqs;</string>
@@ -263,7 +279,7 @@
   <string name="datareporting_crashreporter_title_short">&datareporting_crashreporter_title_short;</string>
   <string name="datareporting_crashreporter_summary">&datareporting_crashreporter_summary;</string>
   <string name="datareporting_wifi_title">&datareporting_wifi_title2;</string>
-  <string name="datareporting_wifi_geolocation_summary">&datareporting_wifi_geolocation_summary3;</string>
+  <string name="datareporting_wifi_geolocation_summary">&datareporting_wifi_geolocation_summary4;</string>
 
   <string name="go">&go;</string>
   <string name="search">&search;</string>
@@ -280,6 +296,7 @@
   <string name="one_tab">&one_tab;</string>
   <string name="num_tabs">&num_tabs2;</string>
   <string name="addons">&addons;</string>
+  <string name="logins">&logins;</string>
   <string name="downloads">&downloads;</string>
   <string name="apps">&apps;</string>
   <string name="char_encoding">&char_encoding;</string>
@@ -322,6 +339,12 @@
   <string name="contextmenu_top_sites_unpin">&contextmenu_top_sites_unpin;</string>
   <string name="contextmenu_add_search_engine">&contextmenu_add_search_engine;</string>
 
+  <string name="doorhanger_login_no_username">&doorhanger_login_no_username;</string>
+  <string name="doorhanger_login_edit_title">&doorhanger_login_edit_title;</string>
+  <string name="doorhanger_login_edit_username_hint">&doorhanger_login_edit_username_hint;</string>
+  <string name="doorhanger_login_edit_password_hint">&doorhanger_login_edit_password_hint;</string>
+  <string name="doorhanger_login_edit_toggle">&doorhanger_login_edit_toggle;</string>
+
   <string name="pref_titlebar_mode">&pref_titlebar_mode;</string>
   <string name="pref_titlebar_mode_title">&pref_titlebar_mode_title;</string>
   <string name="pref_titlebar_mode_url">&pref_titlebar_mode_url;</string>
@@ -349,6 +372,7 @@
   <string name="button_clear">&button_clear;</string>
   <string name="button_yes">&button_yes;</string>
   <string name="button_no">&button_no;</string>
+  <string name="button_remember">&button_remember;</string>
 
   <string name="home_title">&home_title;</string>
   <string name="home_top_sites_title">&home_top_sites_title;</string>
@@ -457,8 +481,9 @@
   <string name="updater_apply_title">&updater_apply_title2;</string>
   <string name="updater_apply_select">&updater_apply_select2;</string>
 
-  <!-- Search suggestions opt-in -->
+  <!-- Awesomescreen screen -->
   <string name="suggestions_prompt">&suggestions_prompt3;</string>
+  <string name="search_bar_item_desc">&search_bar_item_desc;</string>
 
   <string name="suggestion_for_engine">&suggestion_for_engine;</string>
 

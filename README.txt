@@ -1,3 +1,12 @@
+The Waterfox source code is made to be able to be compiled by Intel's C++ compiler for Windows. You should be able to
+install it and compile Waterfox without any issues. Other modifications and patches that are more
+upstream have been implemented as well to fix any compatibility/security issues that Mozilla may 
+lag behind in implementing (usually due to not being high priority).
+
+Waterfox is released under the Mozilla Public License Version 2.0:
+
+	https://www.mozilla.org/MPL/2.0/
+
 An explanation of the Mozilla Source Code Directory Structure and links to
 project pages with documentation can be found at:
 

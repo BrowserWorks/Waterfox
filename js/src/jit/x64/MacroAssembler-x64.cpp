@@ -10,6 +10,7 @@
 #include "jit/BaselineFrame.h"
 #include "jit/JitCompartment.h"
 #include "jit/JitFrames.h"
+#include "jit/MacroAssembler.h"
 #include "jit/MoveEmitter.h"
 
 using namespace js;
@@ -44,7 +45,7 @@ MacroAssemblerX64::loadConstantDouble(double d, FloatRegister dest)
     // instructions which reference them. This allows the instructions to use
     // PC-relative addressing. Use "jump" label support code, because we need
     // the same PC-relative address patching that jumps use.
-    JmpSrc j = masm.vmovsd_ripr(dest.code());
+    JmpSrc j = masm.vmovsd_ripr(dest.encoding());
     JmpSrc prev = JmpSrc(dbl.uses.use(j.offset()));
     masm.setNextJump(j, prev);
 }
@@ -74,7 +75,7 @@ MacroAssemblerX64::loadConstantFloat32(float f, FloatRegister dest)
     MOZ_ASSERT(!flt.uses.bound());
 
     // See comment in loadConstantDouble
-    JmpSrc j = masm.vmovss_ripr(dest.code());
+    JmpSrc j = masm.vmovss_ripr(dest.encoding());
     JmpSrc prev = JmpSrc(flt.uses.use(j.offset()));
     masm.setNextJump(j, prev);
 }
@@ -115,7 +116,7 @@ MacroAssemblerX64::loadConstantInt32x4(const SimdConstant& v, FloatRegister dest
     MOZ_ASSERT(!val->uses.bound());
     MOZ_ASSERT(val->type() == SimdConstant::Int32x4);
 
-    JmpSrc j = masm.vmovdqa_ripr(dest.code());
+    JmpSrc j = masm.vmovdqa_ripr(dest.encoding());
     JmpSrc prev = JmpSrc(val->uses.use(j.offset()));
     masm.setNextJump(j, prev);
 }
@@ -134,7 +135,7 @@ MacroAssemblerX64::loadConstantFloat32x4(const SimdConstant&v, FloatRegister des
     MOZ_ASSERT(!val->uses.bound());
     MOZ_ASSERT(val->type() == SimdConstant::Float32x4);
 
-    JmpSrc j = masm.vmovaps_ripr(dest.code());
+    JmpSrc j = masm.vmovaps_ripr(dest.encoding());
     JmpSrc prev = JmpSrc(val->uses.use(j.offset()));
     masm.setNextJump(j, prev);
 }
@@ -143,7 +144,7 @@ void
 MacroAssemblerX64::finish()
 {
     if (!doubles_.empty())
-        masm.align(sizeof(double));
+        masm.haltingAlign(sizeof(double));
     for (size_t i = 0; i < doubles_.length(); i++) {
         Double& dbl = doubles_[i];
         bind(&dbl.uses);
@@ -151,7 +152,7 @@ MacroAssemblerX64::finish()
     }
 
     if (!floats_.empty())
-        masm.align(sizeof(float));
+        masm.haltingAlign(sizeof(float));
     for (size_t i = 0; i < floats_.length(); i++) {
         Float& flt = floats_[i];
         bind(&flt.uses);
@@ -160,7 +161,7 @@ MacroAssemblerX64::finish()
 
     // SIMD memory values must be suitably aligned.
     if (!simds_.empty())
-        masm.align(SimdMemoryAlignment);
+        masm.haltingAlign(SimdMemoryAlignment);
     for (size_t i = 0; i < simds_.length(); i++) {
         SimdData& v = simds_[i];
         bind(&v.uses);
@@ -213,6 +214,9 @@ MacroAssemblerX64::passABIArg(const MoveOperand& from, MoveOp::Type type)
       case MoveOp::DOUBLE: {
         FloatRegister dest;
         if (GetFloatArgReg(passedIntArgs_, passedFloatArgs_++, &dest)) {
+            // Convert to the right type of register.
+            if (type == MoveOp::FLOAT32)
+                dest = dest.asSingle();
             if (from.isFloatReg() && from.floatReg() == dest) {
                 // Nothing to do; the value is in the right register already
                 return;
@@ -285,7 +289,7 @@ MacroAssemblerX64::callWithABIPre(uint32_t* stackAdjust)
         if (!enoughMemory_)
             return;
 
-        MoveEmitter emitter(*this);
+        MoveEmitter emitter(asMasm());
         emitter.emit(moveResolver_);
         emitter.finish();
     }
@@ -502,6 +506,15 @@ MacroAssemblerX64::storeUnboxedValue(ConstantOrRegister value, MIRType valueType
                                      MIRType slotType);
 
 void
+MacroAssemblerX64::callWithExitFrame(JitCode* target, Register dynStack)
+{
+    addPtr(Imm32(framePushed()), dynStack);
+    makeFrameDescriptor(dynStack, JitFrame_IonJS);
+    asMasm().Push(dynStack);
+    call(target);
+}
+
+void
 MacroAssemblerX64::branchPtrInNurseryRange(Condition cond, Register ptr, Register temp, Label* label)
 {
     MOZ_ASSERT(cond == Assembler::Equal || cond == Assembler::NotEqual);
@@ -544,4 +557,16 @@ void
 MacroAssemblerX64::profilerExitFrame()
 {
     jmp(GetJitContext()->runtime->jitRuntime()->getProfilerExitFrameTail());
+}
+
+MacroAssembler&
+MacroAssemblerX64::asMasm()
+{
+    return *static_cast<MacroAssembler*>(this);
+}
+
+const MacroAssembler&
+MacroAssemblerX64::asMasm() const
+{
+    return *static_cast<const MacroAssembler*>(this);
 }

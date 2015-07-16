@@ -8,7 +8,7 @@ EXPORTS += [
     'WrapperFactory.h',
 ]
 
-SOURCES += [
+UNIFIED_SOURCES += [
     'AccessCheck.cpp',
     'AddonWrapper.cpp',
     'ChromeObjectWrapper.cpp',

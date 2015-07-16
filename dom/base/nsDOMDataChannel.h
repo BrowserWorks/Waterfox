@@ -24,9 +24,9 @@ class File;
 class DataChannel;
 };
 
-class nsDOMDataChannel : public mozilla::DOMEventTargetHelper,
-                         public nsIDOMDataChannel,
-                         public mozilla::DataChannelListener
+class nsDOMDataChannel final : public mozilla::DOMEventTargetHelper,
+                               public nsIDOMDataChannel,
+                               public mozilla::DataChannelListener
 {
 public:
   nsDOMDataChannel(already_AddRefed<mozilla::DataChannel>& aDataChannel,
@@ -42,7 +42,7 @@ public:
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(nsDOMDataChannel,
                                            mozilla::DOMEventTargetHelper)
 
-  virtual JSObject* WrapObject(JSContext* aCx)
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
     override;
   nsPIDOMWindow* GetParentObject() const
   {

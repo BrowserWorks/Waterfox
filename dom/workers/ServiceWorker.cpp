@@ -6,6 +6,8 @@
 #include "ServiceWorker.h"
 
 #include "nsPIDOMWindow.h"
+#include "ServiceWorkerClient.h"
+#include "ServiceWorkerManager.h"
 #include "SharedWorker.h"
 #include "WorkerPrivate.h"
 
@@ -38,18 +40,24 @@ ServiceWorkerVisible(JSContext* aCx, JSObject* aObj)
 }
 
 ServiceWorker::ServiceWorker(nsPIDOMWindow* aWindow,
+                             ServiceWorkerInfo* aInfo,
                              SharedWorker* aSharedWorker)
   : DOMEventTargetHelper(aWindow),
-    mState(ServiceWorkerState::Installing),
+    mInfo(aInfo),
     mSharedWorker(aSharedWorker)
 {
   AssertIsOnMainThread();
+  MOZ_ASSERT(aInfo);
   MOZ_ASSERT(mSharedWorker);
+
+  // This will update our state too.
+  mInfo->AppendWorker(this);
 }
 
 ServiceWorker::~ServiceWorker()
 {
   AssertIsOnMainThread();
+  mInfo->RemoveWorker(this);
 }
 
 NS_IMPL_ADDREF_INHERITED(ServiceWorker, DOMEventTargetHelper)
@@ -62,11 +70,17 @@ NS_IMPL_CYCLE_COLLECTION_INHERITED(ServiceWorker, DOMEventTargetHelper,
                                    mSharedWorker)
 
 JSObject*
-ServiceWorker::WrapObject(JSContext* aCx)
+ServiceWorker::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
   AssertIsOnMainThread();
 
-  return ServiceWorkerBinding::Wrap(aCx, this);
+  return ServiceWorkerBinding::Wrap(aCx, this, aGivenProto);
+}
+
+void
+ServiceWorker::GetScriptURL(nsString& aURL) const
+{
+  CopyUTF8toUTF16(mInfo->ScriptSpec(), aURL);
 }
 
 void
@@ -82,7 +96,12 @@ ServiceWorker::PostMessage(JSContext* aCx, JS::Handle<JS::Value> aMessage,
     return;
   }
 
-  workerPrivate->PostMessage(aCx, aMessage, aTransferable, aRv);
+  nsCOMPtr<nsPIDOMWindow> window = do_QueryInterface(GetParentObject());
+  nsCOMPtr<nsIDocument> doc = window->GetExtantDoc();
+  nsAutoPtr<ServiceWorkerClientInfo> clientInfo(new ServiceWorkerClientInfo(doc));
+
+  workerPrivate->PostMessageToServiceWorker(aCx, aMessage, aTransferable,
+                                            clientInfo, aRv);
 }
 
 WorkerPrivate*
@@ -93,6 +112,16 @@ ServiceWorker::GetWorkerPrivate() const
   // pressure or similar.
   MOZ_ASSERT(mSharedWorker);
   return mSharedWorker->GetWorkerPrivate();
+}
+
+void
+ServiceWorker::QueueStateChangeEvent(ServiceWorkerState aState)
+{
+  nsCOMPtr<nsIRunnable> r =
+    NS_NewRunnableMethodWithArg<ServiceWorkerState>(this,
+                                                    &ServiceWorker::DispatchStateChange,
+                                                    aState);
+  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToMainThread(r)));
 }
 
 } // namespace workers

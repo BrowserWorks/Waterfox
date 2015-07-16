@@ -95,9 +95,22 @@ static MOZ_NEVER_INLINE void js_failedAllocBreakpoint() { asm(""); }
         } \
     } while (0)
 
+namespace js {
+namespace oom {
+static inline bool ShouldFailWithOOM()
+{
+    if (++OOM_counter > OOM_maxAllocations) {
+        JS_OOM_CALL_BP_FUNC();
+        return true;
+    }
+    return false;
+}
+}
+}
 # else
 #  define JS_OOM_POSSIBLY_FAIL() do {} while(0)
 #  define JS_OOM_POSSIBLY_FAIL_BOOL() do {} while(0)
+namespace js { namespace oom { static inline bool ShouldFailWithOOM() { return false; } } }
 # endif /* DEBUG || JS_OOM_BREAKPOINT */
 
 static inline void* js_malloc(size_t bytes)
@@ -381,40 +394,6 @@ ScrambleHashCode(HashNumber h)
 } /* namespace detail */
 
 } /* namespace js */
-
-namespace JS {
-
-/*
- * Methods for poisoning GC heap pointer words and checking for poisoned words.
- * These are in this file for use in Value methods and so forth.
- *
- * If the moving GC hazard analysis is in use and detects a non-rooted stack
- * pointer to a GC thing, one byte of that pointer is poisoned to refer to an
- * invalid location. For both 32 bit and 64 bit systems, the fourth byte of the
- * pointer is overwritten, to reduce the likelihood of accidentally changing
- * a live integer value.
- */
-
-inline void PoisonPtr(void* v)
-{
-#if defined(JSGC_ROOT_ANALYSIS) && defined(JS_DEBUG)
-    uint8_t* ptr = (uint8_t*) v + 3;
-    *ptr = JS_FREE_PATTERN;
-#endif
-}
-
-template <typename T>
-inline bool IsPoisonedPtr(T* v)
-{
-#if defined(JSGC_ROOT_ANALYSIS) && defined(JS_DEBUG)
-    uint32_t mask = uintptr_t(v) & 0xff000000;
-    return mask == uint32_t(JS_FREE_PATTERN << 24);
-#else
-    return false;
-#endif
-}
-
-}
 
 /* sixgill annotation defines */
 #ifndef HAVE_STATIC_ANNOTATIONS

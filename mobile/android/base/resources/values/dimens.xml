@@ -94,9 +94,17 @@
     <!-- Padding at the top of the site identity popup, when no identity data is available. -->
     <dimen name="identity_padding_top">5dp</dimen>
 
+    <dimen name="doorhanger_width">300dp</dimen>
     <dimen name="doorhanger_input_width">250dp</dimen>
     <dimen name="doorhanger_spinner_textsize">9sp</dimen>
     <dimen name="doorhanger_padding">15dp</dimen>
+    <dimen name="doorhanger_offsetX">10dp</dimen>
+    <dimen name="doorhanger_offsetY">67dp</dimen>
+    <dimen name="doorhanger_GB_offsetY">7dp</dimen>
+    <dimen name="doorhanger_drawable_padding">5dp</dimen>
+    <dimen name="doorhanger_section_padding_small">20dp</dimen>
+    <dimen name="doorhanger_section_padding_large">30dp</dimen>
+    <dimen name="doorhanger_icon_size">60dp</dimen>
 
     <dimen name="context_menu_item_horizontal_padding">10dp</dimen>
 
@@ -168,20 +176,11 @@
     <!-- PanelGridView dimensions -->
     <dimen name="panel_grid_view_column_width">150dp</dimen>
 
-    <!-- TabsGridView dimensions -->
-    <dimen name="tabs_grid_view_column_width">200dp</dimen>
-
     <!-- PanelItemView dimensions -->
     <dimen name="panel_article_item_height">95dp</dimen>
 
     <!-- Button toast dimenstions. -->
     <dimen name="toast_button_corner_radius">2dp</dimen>
-
-    <!-- ArrowPopup dimensions. -->
-    <dimen name="arrow_popup_arrow_width">40dip</dimen>
-    <dimen name="arrow_popup_arrow_height">12dip</dimen>
-    <dimen name="arrow_popup_arrow_offset">8dp</dimen>
-    <dimen name="arrow_popup_container_width">@dimen/custom_match_parent</dimen>
 
     <!-- TabHistoryItemRow dimensions. -->
     <dimen name="tab_history_timeline_width">3dp</dimen>
@@ -212,9 +211,5 @@
     <!-- The share icon asset has no padding while the other action bar items do
          so we dynamically add padding to compensate. To be removed in bug 1122752. -->
     <dimen name="ab_share_padding">12dp</dimen>
-
-    <!-- Use android attr in dimens, via http://stackoverflow.com/a/19043952 -->
-    <dimen name="custom_match_parent">-2px</dimen>
-    <dimen name="custom_wrap_content">-1px</dimen>
 
 </resources>

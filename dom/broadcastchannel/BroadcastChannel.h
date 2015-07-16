@@ -49,7 +49,7 @@ public:
   static bool IsEnabled(JSContext* aCx, JSObject* aGlobal);
 
   virtual JSObject*
-  WrapObject(JSContext* aCx) override;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   static already_AddRefed<BroadcastChannel>
   Constructor(const GlobalObject& aGlobal, const nsAString& aChannel,

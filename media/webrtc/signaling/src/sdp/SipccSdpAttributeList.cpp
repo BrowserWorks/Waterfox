@@ -359,6 +359,8 @@ SipccSdpAttributeList::GetCodecType(rtp_ptype type)
       return SdpRtpmapAttributeList::kOpus;
     case RTP_VP8:
       return SdpRtpmapAttributeList::kVP8;
+    case RTP_VP9:
+      return SdpRtpmapAttributeList::kVP9;
     case RTP_NONE:
     // Happens when sipcc doesn't know how to translate to the enum
     case RTP_CELP:
@@ -645,9 +647,20 @@ SipccSdpAttributeList::LoadFmtp(sdp_t* sdp, uint16_t level)
 
         parameters.reset(h264Parameters);
       } break;
+      case RTP_VP9: {
+        SdpFmtpAttributeList::VP8Parameters* vp9Parameters(
+            new SdpFmtpAttributeList::VP8Parameters(
+              SdpRtpmapAttributeList::kVP9));
+
+        vp9Parameters->max_fs = fmtp->max_fs;
+        vp9Parameters->max_fr = fmtp->max_fr;
+
+        parameters.reset(vp9Parameters);
+      } break;
       case RTP_VP8: {
         SdpFmtpAttributeList::VP8Parameters* vp8Parameters(
-            new SdpFmtpAttributeList::VP8Parameters);
+            new SdpFmtpAttributeList::VP8Parameters(
+              SdpRtpmapAttributeList::kVP8));
 
         vp8Parameters->max_fs = fmtp->max_fs;
         vp8Parameters->max_fr = fmtp->max_fr;

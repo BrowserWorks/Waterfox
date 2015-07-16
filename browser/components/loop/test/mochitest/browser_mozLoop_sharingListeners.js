@@ -54,9 +54,19 @@ function promiseWindowIdReceivedNewTab(handlers = []) {
   return Promise.all(promiseHandlers);
 };
 
-function removeTabs() {
+function promiseRemoveTab(tab) {
+  return new Promise(resolve => {
+    gBrowser.tabContainer.addEventListener("TabClose", function onTabClose() {
+      gBrowser.tabContainer.removeEventListener("TabClose", onTabClose);
+      resolve();
+    });
+    gBrowser.removeTab(tab);
+  });
+}
+
+function* removeTabs() {
   for (let createdTab of createdTabs) {
-    gBrowser.removeTab(createdTab);
+    yield promiseRemoveTab(createdTab);
   }
 
   createdTabs = [];
@@ -79,7 +89,7 @@ add_task(function* test_singleListener() {
   // Now remove the listener.
   gMozLoopAPI.removeBrowserSharingListener(handlers[0].listener);
 
-  removeTabs();
+  yield removeTabs();
 });
 
 add_task(function* test_multipleListener() {
@@ -122,7 +132,7 @@ add_task(function* test_multipleListener() {
   // Cleanup.
   gMozLoopAPI.removeBrowserSharingListener(handlers[1].listener);
 
-  removeTabs();
+  yield removeTabs();
 });
 
 add_task(function* test_infoBar() {
@@ -142,7 +152,7 @@ add_task(function* test_infoBar() {
   yield promiseWindowIdReceivedOnAdd(handlers[0]);
 
   let getInfoBar = function() {
-    let box = gBrowser.getNotificationBox(gBrowser.selectedTab.linkedBrowser);
+    let box = gBrowser.getNotificationBox(gBrowser.selectedBrowser);
     return box.getNotificationWithValue(kBrowserSharingNotificationId);
   };
 
@@ -186,6 +196,6 @@ add_task(function* test_infoBar() {
 
   // Cleanup.
   gMozLoopAPI.removeBrowserSharingListener(handlers[0].listener);
-  removeTabs();
+  yield removeTabs();
   Services.prefs.clearUserPref(kPrefBrowserSharingInfoBar);
 });

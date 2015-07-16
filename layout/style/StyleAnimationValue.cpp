@@ -2495,14 +2495,13 @@ BuildStyleRule(nsCSSProperty aProperty,
     nsCSSProps::SubpropertyEntryFor(aProperty)[0] : aProperty;
 
   // Get a parser, parse the property, and check for CSS parsing errors.
-  // If any of these steps fails, we bail out and delete the declaration.
-  if (NS_FAILED(parser.ParseProperty(aProperty, aSpecifiedValue,
-                                     doc->GetDocumentURI(), baseURI,
-                                     aTargetElement->NodePrincipal(),
-                                     declaration, &changed, false,
-                                     aUseSVGMode)) ||
-      // check whether property parsed without CSS parsing errors
-      !declaration->HasNonImportantValueFor(propertyToCheck)) {
+  // If this fails, we bail out and delete the declaration.
+  parser.ParseProperty(aProperty, aSpecifiedValue, doc->GetDocumentURI(),
+                       baseURI, aTargetElement->NodePrincipal(), declaration,
+                       &changed, false, aUseSVGMode);
+
+  // check whether property parsed without CSS parsing errors
+  if (!declaration->HasNonImportantValueFor(propertyToCheck)) {
     NS_WARNING("failure in BuildStyleRule");
     return nullptr;
   }
@@ -3017,8 +3016,8 @@ StyleAnimationValue::ExtractComputedValue(nsCSSProperty aProperty,
           const nsStyleTableBorder *styleTableBorder =
             static_cast<const nsStyleTableBorder*>(styleStruct);
           nsAutoPtr<nsCSSValuePair> pair(new nsCSSValuePair);
-          nscoordToCSSValue(styleTableBorder->mBorderSpacingX, pair->mXValue);
-          nscoordToCSSValue(styleTableBorder->mBorderSpacingY, pair->mYValue);
+          nscoordToCSSValue(styleTableBorder->mBorderSpacingCol, pair->mXValue);
+          nscoordToCSSValue(styleTableBorder->mBorderSpacingRow, pair->mYValue);
           aComputedValue.SetAndAdoptCSSValuePairValue(pair.forget(),
                                                       eUnit_CSSValuePair);
           break;

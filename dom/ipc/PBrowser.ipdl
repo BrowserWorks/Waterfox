@@ -27,11 +27,11 @@ using class mozilla::gfx::Matrix from "mozilla/gfx/Matrix.h";
 using struct gfxSize from "gfxPoint.h";
 using CSSRect from "Units.h";
 using LayoutDeviceIntRect from "Units.h";
+using ScreenIntSize from "Units.h";
 using struct mozilla::layers::FrameMetrics from "FrameMetrics.h";
 using struct mozilla::layers::ScrollableLayerGuid from "FrameMetrics.h";
 using struct mozilla::layers::ZoomConstraints from "FrameMetrics.h";
 using FrameMetrics::ViewID from "FrameMetrics.h";
-using mozilla::layout::ScrollingBehavior from "mozilla/layout/RenderFrameUtils.h";
 using struct mozilla::void_t from "ipc/IPCMessageUtils.h";
 using mozilla::WindowsHandle from "ipc/IPCMessageUtils.h";
 using nscolor from "nsColor.h";
@@ -40,7 +40,7 @@ using struct mozilla::widget::IMENotification from "nsIWidget.h";
 using struct nsIMEUpdatePreference from "nsIWidget.h";
 using struct nsIntPoint from "nsPoint.h";
 using struct nsIntRect from "nsRect.h";
-using struct nsIntSize from "nsSize.h";
+using mozilla::gfx::IntSize from "mozilla/gfx/Point.h";
 using class mozilla::WidgetKeyboardEvent from "ipc/nsGUIEventIPC.h";
 using class mozilla::WidgetMouseEvent from "ipc/nsGUIEventIPC.h";
 using class mozilla::WidgetWheelEvent from "ipc/nsGUIEventIPC.h";
@@ -53,8 +53,10 @@ using struct mozilla::layers::TextureFactoryIdentifier from "mozilla/layers/Comp
 using mozilla::CSSPoint from "Units.h";
 using mozilla::CSSToScreenScale from "Units.h";
 using mozilla::CommandInt from "mozilla/EventForwards.h";
+using mozilla::Modifiers from "mozilla/EventForwards.h";
 using mozilla::layers::GeckoContentController::APZStateChange from "mozilla/layers/GeckoContentController.h";
-using mozilla::WritingMode from "WritingModes.h";
+using mozilla::WritingMode from "mozilla/WritingModes.h";
+using mozilla::layers::TouchBehaviorFlags from "mozilla/layers/APZUtils.h";
 
 namespace mozilla {
 namespace dom {
@@ -439,6 +441,13 @@ parent:
     SetTargetAPZC(uint64_t aInputBlockId, ScrollableLayerGuid[] aTargets);
 
     /**
+     * Notifies the APZ code of the allowed touch-behaviours for a particular
+     * input block. Each item in the aFlags array corresponds to one touch point
+     * in the touch event.
+     */
+    SetAllowedTouchBehavior(uint64_t aInputBlockId, TouchBehaviorFlags[] aFlags);
+
+    /**
      * Updates the zoom constraints for a scrollable frame in this tab.
      * The zoom controller code lives on the parent side and so this allows it to
      * have up-to-date zoom constraints.
@@ -474,8 +483,7 @@ parent:
     async RemotePaintIsReady();
 
     sync GetRenderFrameInfo(PRenderFrame aRenderFrame)
-        returns (ScrollingBehavior scrolling,
-                 TextureFactoryIdentifier textureFactoryIdentifier,
+        returns (TextureFactoryIdentifier textureFactoryIdentifier,
                  uint64_t layersId);
 
     /**
@@ -483,6 +491,10 @@ parent:
      * dimensions has been requested, likely through win.moveTo or resizeTo
      */
     async SetDimensions(uint32_t aFlags, int32_t aX, int32_t aY, int32_t aCx, int32_t aCy);
+
+    prio(high) sync DispatchWheelEvent(WidgetWheelEvent event);
+    prio(high) sync DispatchMouseEvent(WidgetMouseEvent event);
+    prio(high) sync DispatchKeyboardEvent(WidgetKeyboardEvent event);
 
 child:
     /**
@@ -494,9 +506,8 @@ child:
      * content processes always render to a virtual <0, 0> top-left
      * point.
      */
-    Show(nsIntSize size,
+    Show(ScreenIntSize size,
          ShowInfo info,
-         ScrollingBehavior scrolling,
          TextureFactoryIdentifier textureFactoryIdentifier,
          uint64_t layersId,
          nullable PRenderFrame renderFrame,
@@ -506,7 +517,7 @@ child:
 
     CacheFileDescriptor(nsString path, FileDescriptor fd);
 
-    UpdateDimensions(nsIntRect rect, nsIntSize size, ScreenOrientation orientation,
+    UpdateDimensions(nsIntRect rect, ScreenIntSize size, ScreenOrientation orientation,
                      nsIntPoint chromeDisp) compress;
 
     UpdateFrame(FrameMetrics frame);
@@ -514,11 +525,11 @@ child:
     // The following methods correspond to functions on the GeckoContentController
     // interface in gfx/layers/apz/public/GeckoContentController.h. Refer to documentation
     // in that file for these functions.
+    RequestFlingSnap(ViewID aScrollID, CSSPoint aDestination);
     AcknowledgeScrollUpdate(ViewID aScrollId, uint32_t aScrollGeneration);
-    HandleDoubleTap(CSSPoint point, ScrollableLayerGuid aGuid);
-    HandleSingleTap(CSSPoint point, ScrollableLayerGuid aGuid);
-    HandleLongTap(CSSPoint point, ScrollableLayerGuid aGuid, uint64_t aInputBlockId);
-    HandleLongTapUp(CSSPoint point, ScrollableLayerGuid aGuid);
+    HandleDoubleTap(CSSPoint aPoint, Modifiers aModifiers, ScrollableLayerGuid aGuid);
+    HandleSingleTap(CSSPoint aPoint, Modifiers aModifiers, ScrollableLayerGuid aGuid);
+    HandleLongTap(CSSPoint point, Modifiers aModifiers, ScrollableLayerGuid aGuid, uint64_t aInputBlockId);
     NotifyAPZStateChange(ViewID aViewId, APZStateChange aChange, int aArg);
 
 
@@ -562,6 +573,11 @@ child:
              int32_t aModifiers,
              bool aPreventDefault);
 
+    /**
+     * APZ notification for mouse scroll testing events.
+     */
+    MouseScrollTestEvent(ViewID aScrollId, nsString aEvent);
+
     CompositionEvent(WidgetCompositionEvent event);
 
     SelectionEvent(WidgetSelectionEvent event);
@@ -589,7 +605,7 @@ child:
     PDocumentRenderer(nsRect documentRect, Matrix transform,
                       nsString bgcolor,
                       uint32_t renderFlags, bool flushLayout,
-                      nsIntSize renderSize);
+                      IntSize renderSize);
 
     /**
      * Sent by the chrome process when it no longer wants this remote

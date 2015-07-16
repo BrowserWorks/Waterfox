@@ -25,8 +25,8 @@ struct UDPOptions;
 class StringOrBlobOrArrayBufferOrArrayBufferView;
 
 class UDPSocket final : public DOMEventTargetHelper
-                          , public nsIUDPSocketListener
-                          , public nsIUDPSocketInternal
+                      , public nsIUDPSocketListener
+                      , public nsIUDPSocketInternal
 {
 public:
   NS_DECL_ISUPPORTS_INHERITED
@@ -43,7 +43,7 @@ public:
   }
 
   virtual JSObject*
-  WrapObject(JSContext* aCx) override;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   virtual void
   DisconnectFromOwner() override;

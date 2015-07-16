@@ -62,7 +62,7 @@ let MemoryCallTreeView = Heritage.extend(DetailsSubview, {
    */
   _prepareCallTree: function (allocations, { startTime, endTime }, options) {
     let samples = RecordingUtils.getSamplesFromAllocations(allocations);
-    let invertTree = PerformanceController.getPref("invert-call-tree");
+    let invertTree = PerformanceController.getOption("invert-call-tree");
 
     let threadNode = new ThreadNode(samples,
       { startTime, endTime, invertTree });
@@ -89,6 +89,13 @@ let MemoryCallTreeView = Heritage.extend(DetailsSubview, {
       // Call trees should only auto-expand when not inverted. Passing undefined
       // will default to the CALL_TREE_AUTO_EXPAND depth.
       autoExpandDepth: options.inverted ? 0 : undefined,
+      // Some cells like the time duration and cost percentage don't make sense
+      // for a memory allocations call tree.
+      visibleCells: {
+        allocations: true,
+        selfAllocations: true,
+        function: true
+      }
     });
 
     // Bind events.

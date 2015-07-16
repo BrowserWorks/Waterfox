@@ -242,12 +242,13 @@ function setupDisplayport(contentRootElement) {
     }
 }
 
+// Returns whether any offsets were updated
 function setupAsyncScrollOffsets(options) {
     var currentDoc = content.document;
     var contentRootElement = currentDoc ? currentDoc.documentElement : null;
 
     if (!contentRootElement) {
-        return;
+        return false;
     }
 
     function setupAsyncScrollOffsetsForElement(element, winUtils) {
@@ -258,30 +259,38 @@ function setupAsyncScrollOffsets(options) {
                 // This might fail when called from RecordResult since layers
                 // may not have been constructed yet
                 winUtils.setAsyncScrollOffset(element, sx, sy);
+                return true;
             } catch (e) {
                 if (!options.allowFailure) {
                     throw e;
                 }
             }
         }
+        return false;
     }
 
     function setupAsyncScrollOffsetsForElementSubtree(element, winUtils) {
-        setupAsyncScrollOffsetsForElement(element, winUtils);
+        var updatedAny = setupAsyncScrollOffsetsForElement(element, winUtils);
         for (var c = element.firstElementChild; c; c = c.nextElementSibling) {
-            setupAsyncScrollOffsetsForElementSubtree(c, winUtils);
+            if (setupAsyncScrollOffsetsForElementSubtree(c, winUtils)) {
+                updatedAny = true;
+            }
         }
         if (element.contentDocument) {
             LogInfo("Descending into subdocument (async offsets)");
-            setupAsyncScrollOffsetsForElementSubtree(element.contentDocument.documentElement,
-                                                     windowUtilsForWindow(element.contentWindow));
+            if (setupAsyncScrollOffsetsForElementSubtree(element.contentDocument.documentElement,
+                                                         windowUtilsForWindow(element.contentWindow))) {
+                updatedAny = true;
+            }
         }
+        return updatedAny;
     }
 
     var asyncScroll = contentRootElement.hasAttribute("reftest-async-scroll");
     if (asyncScroll) {
-        setupAsyncScrollOffsetsForElementSubtree(contentRootElement, windowUtils());
+        return setupAsyncScrollOffsetsForElementSubtree(contentRootElement, windowUtils());
     }
+    return false;
 }
 
 function resetDisplayportAndViewport() {
@@ -316,7 +325,25 @@ function shouldSnapshotWholePage(contentRootElement) {
 }
 
 function getNoPaintElements(contentRootElement) {
-  return contentRootElement.getElementsByClassName('reftest-no-paint');
+    return contentRootElement.getElementsByClassName('reftest-no-paint');
+}
+
+function getOpaqueLayerElements(contentRootElement) {
+    return contentRootElement.getElementsByClassName('reftest-opaque-layer');
+}
+
+function getAssignedLayerMap(contentRootElement) {
+    var layerNameToElementsMap = {};
+    var elements = contentRootElement.querySelectorAll('[reftest-assigned-layer]');
+    for (var i = 0; i < elements.length; ++i) {
+        var element = elements[i];
+        var layerName = element.getAttribute('reftest-assigned-layer');
+        if (!(layerName in layerNameToElementsMap)) {
+            layerNameToElementsMap[layerName] = [];
+        }
+        layerNameToElementsMap[layerName].push(element);
+    }
+    return layerNameToElementsMap;
 }
 
 // Initial state. When the document has loaded and all MozAfterPaint events and
@@ -525,6 +552,7 @@ function WaitForTestEnd(contentRootElement, inPrintMode, spellCheckedElements) {
                       SendFailedNoPaint();
                   }
               }
+              CheckLayerAssertions(contentRootElement);
             }
             LogInfo("MakeProgress: Completed");
             state = STATE_COMPLETED;
@@ -631,7 +659,8 @@ function OnDocumentLoad(event)
             // Go into reftest-wait mode belatedly.
             WaitForTestEnd(contentRootElement, inPrintMode, []);
         } else {
-            CheckForProcessCrashExpectation();
+            CheckLayerAssertions(contentRootElement);
+            CheckForProcessCrashExpectation(contentRootElement);
             RecordResult();
         }
     }
@@ -661,9 +690,60 @@ function OnDocumentLoad(event)
     }
 }
 
-function CheckForProcessCrashExpectation()
+function CheckLayerAssertions(contentRootElement)
 {
-    var contentRootElement = content.document.documentElement;
+    if (!contentRootElement) {
+        return;
+    }
+
+    var opaqueLayerElements = getOpaqueLayerElements(contentRootElement);
+    for (var i = 0; i < opaqueLayerElements.length; ++i) {
+        var elem = opaqueLayerElements[i];
+        try {
+            if (!windowUtils().isPartOfOpaqueLayer(elem)) {
+                SendFailedOpaqueLayer(elementDescription(elem) + ' is not part of an opaque layer');
+            }
+        } catch (e) {
+            SendFailedOpaqueLayer('got an exception while checking whether ' + elementDescription(elem) + ' is part of an opaque layer');
+        }
+    }
+    var layerNameToElementsMap = getAssignedLayerMap(contentRootElement);
+    var oneOfEach = [];
+    // Check that elements with the same reftest-assigned-layer share the same PaintedLayer.
+    for (var layerName in layerNameToElementsMap) {
+        try {
+            var elements = layerNameToElementsMap[layerName];
+            oneOfEach.push(elements[0]);
+            var numberOfLayers = windowUtils().numberOfAssignedPaintedLayers(elements, elements.length);
+            if (numberOfLayers !== 1) {
+                SendFailedAssignedLayer('these elements are assigned to ' + numberOfLayers +
+                                        ' different layers, instead of sharing just one layer: ' +
+                                        elements.map(elementDescription).join(', '));
+            }
+        } catch (e) {
+            SendFailedAssignedLayer('got an exception while checking whether these elements share a layer: ' +
+                                    elements.map(elementDescription).join(', '));
+        }
+    }
+    // Check that elements with different reftest-assigned-layer are assigned to different PaintedLayers.
+    if (oneOfEach.length > 0) {
+        try {
+            var numberOfLayers = windowUtils().numberOfAssignedPaintedLayers(oneOfEach, oneOfEach.length);
+            if (numberOfLayers !== oneOfEach.length) {
+                SendFailedAssignedLayer('these elements are assigned to ' + numberOfLayers +
+                                        ' different layers, instead of having none in common (expected ' +
+                                        oneOfEach.length + ' different layers): ' +
+                                        oneOfEach.map(elementDescription).join(', '));
+            }
+        } catch (e) {
+            SendFailedAssignedLayer('got an exception while checking whether these elements are assigned to different layers: ' +
+                                    oneOfEach.map(elementDescription).join(', '));
+        }
+    }
+}
+
+function CheckForProcessCrashExpectation(contentRootElement)
+{
     if (contentRootElement &&
         contentRootElement.hasAttribute('class') &&
         contentRootElement.getAttribute('class').split(/\s+/)
@@ -723,8 +803,13 @@ function RecordResult()
     }
 
     // Setup async scroll offsets now in case SynchronizeForSnapshot is not
-    // called (due to reftest-no-sync-layers being supplied).
-    setupAsyncScrollOffsets({allowFailure:true});
+    // called (due to reftest-no-sync-layers being supplied, or in the single
+    // process case).
+    var changedAsyncScrollOffsets = setupAsyncScrollOffsets({allowFailure:true}) ;
+    if (changedAsyncScrollOffsets && !gBrowserIsRemote) {
+        sendAsyncMessage("reftest:UpdateWholeCanvasForInvalidation");
+    }
+
     SendTestDone(currentTestRunTime);
     FinishTestItem();
 }
@@ -872,6 +957,16 @@ function SendFailedNoPaint()
     sendAsyncMessage("reftest:FailedNoPaint");
 }
 
+function SendFailedOpaqueLayer(why)
+{
+    sendAsyncMessage("reftest:FailedOpaqueLayer", { why: why });
+}
+
+function SendFailedAssignedLayer(why)
+{
+    sendAsyncMessage("reftest:FailedAssignedLayer", { why: why });
+}
+
 // Return true if a snapshot was taken.
 function SendInitCanvasWithSnapshot()
 {
@@ -916,6 +1011,14 @@ function SendTestDone(runtimeMs)
 function roundTo(x, fraction)
 {
     return Math.round(x/fraction)*fraction;
+}
+
+function elementDescription(element)
+{
+    return '<' + element.localName +
+        [].slice.call(element.attributes).map((attr) =>
+            ` ${attr.nodeName}="${attr.value}"`).join('') +
+        '>';
 }
 
 function SendUpdateCanvasForEvent(event, contentRootElement)

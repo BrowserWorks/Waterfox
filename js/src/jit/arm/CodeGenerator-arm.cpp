@@ -1662,6 +1662,13 @@ CodeGeneratorARM::visitGuardObjectGroup(LGuardObjectGroup* guard)
 {
     Register obj = ToRegister(guard->input());
     Register tmp = ToRegister(guard->tempInt());
+    MOZ_ASSERT(obj != tmp);
+
+    if (guard->mir()->checkUnboxedExpando()) {
+        masm.ma_ldr(DTRAddr(obj, DtrOffImm(UnboxedPlainObject::offsetOfExpando())), tmp);
+        masm.ma_cmp(tmp, ImmWord(0));
+        bailoutIf(Assembler::NotEqual, guard->snapshot());
+    }
 
     masm.ma_ldr(DTRAddr(obj, DtrOffImm(JSObject::offsetOfGroup())), tmp);
     masm.ma_cmp(tmp, ImmGCPtr(guard->mir()->group()));
@@ -1928,6 +1935,7 @@ CodeGeneratorARM::visitAsmJSCompareExchangeHeap(LAsmJSCompareExchangeHeap* ins)
     const LAllocation* ptr = ins->ptr();
     Register ptrReg = ToRegister(ptr);
     BaseIndex srcAddr(HeapReg, ptrReg, TimesOne);
+    MOZ_ASSERT(ins->addrTemp()->isBogusTemp());
 
     Register oldval = ToRegister(ins->oldValue());
     Register newval = ToRegister(ins->newValue());
@@ -1957,10 +1965,12 @@ CodeGeneratorARM::visitAsmJSCompareExchangeHeap(LAsmJSCompareExchangeHeap* ins)
 void
 CodeGeneratorARM::visitAsmJSAtomicBinopHeap(LAsmJSAtomicBinopHeap* ins)
 {
+    MOZ_ASSERT(ins->mir()->hasUses());
+    MOZ_ASSERT(ins->addrTemp()->isBogusTemp());
+
     MAsmJSAtomicBinopHeap* mir = ins->mir();
     Scalar::Type vt = mir->accessType();
-    const LAllocation* ptr = ins->ptr();
-    Register ptrReg = ToRegister(ptr);
+    Register ptrReg = ToRegister(ins->ptr());
     Register temp = ins->temp()->isBogusTemp() ? InvalidReg : ToRegister(ins->temp());
     const LAllocation* value = ins->value();
     AtomicOp op = mir->operation();
@@ -1988,6 +1998,44 @@ CodeGeneratorARM::visitAsmJSAtomicBinopHeap(LAsmJSAtomicBinopHeap* ins)
         masm.atomicBinopToTypedIntArray(op, vt == Scalar::Uint32 ? Scalar::Int32 : vt,
                                         ToRegister(value), srcAddr, temp, InvalidReg,
                                         ToAnyRegister(ins->output()));
+    if (rejoin.used()) {
+        masm.bind(&rejoin);
+        masm.append(AsmJSHeapAccess(maybeCmpOffset));
+    }
+}
+
+void
+CodeGeneratorARM::visitAsmJSAtomicBinopHeapForEffect(LAsmJSAtomicBinopHeapForEffect* ins)
+{
+    MOZ_ASSERT(!ins->mir()->hasUses());
+    MOZ_ASSERT(ins->temp()->isBogusTemp());
+    MOZ_ASSERT(ins->addrTemp()->isBogusTemp());
+
+    MAsmJSAtomicBinopHeap* mir = ins->mir();
+    Scalar::Type vt = mir->accessType();
+    Register ptrReg = ToRegister(ins->ptr());
+    const LAllocation* value = ins->value();
+    AtomicOp op = mir->operation();
+
+    BaseIndex srcAddr(HeapReg, ptrReg, TimesOne);
+
+    Label rejoin;
+    uint32_t maybeCmpOffset = 0;
+    if (mir->needsBoundsCheck()) {
+        Label goahead;
+        BufferOffset bo = masm.ma_BoundsCheck(ptrReg);
+        maybeCmpOffset = bo.getOffset();
+        masm.ma_b(&goahead, Assembler::Below);
+        memoryBarrier(MembarFull);
+        masm.ma_b(&rejoin, Assembler::Always);
+        masm.bind(&goahead);
+    }
+
+    if (value->isConstant())
+        masm.atomicBinopToTypedIntArray(op, vt, Imm32(ToInt32(value)), srcAddr);
+    else
+        masm.atomicBinopToTypedIntArray(op, vt, ToRegister(value), srcAddr);
+
     if (rejoin.used()) {
         masm.bind(&rejoin);
         masm.append(AsmJSHeapAccess(maybeCmpOffset));

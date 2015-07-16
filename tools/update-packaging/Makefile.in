@@ -11,7 +11,7 @@ STANDALONE_MAKEFILE := 1
 PACKAGE_BASE_DIR	= $(DIST)
 
 # Default output location for update archive
-STAGE_DIR	= $(DIST)/$(PKG_UPDATE_PATH)
+STAGE_DIR      = $(abspath $(DIST)/$(PKG_UPDATE_PATH))
 
 ifeq (cocoa,$(MOZ_WIDGET_TOOLKIT))
 ifdef UNIVERSAL_BINARY
@@ -31,7 +31,7 @@ MAR_BIN	= $(LIBXUL_DIST)/host/bin/mar$(HOST_BIN_SUFFIX)
 MBSDIFF_BIN	= $(LIBXUL_DIST)/host/bin/mbsdiff$(HOST_BIN_SUFFIX)
 
 OVERRIDE_DEFAULT_GOAL := full-update
-full-update:: complete-patch $(if $(MOZ_AUTOMATION_UPDATE_PACKAGING),automation-partial-patch)
+full-update:: complete-patch $(if $(filter 1,$(MOZ_AUTOMATION_UPDATE_PACKAGING)),automation-partial-patch)
 
 ifeq ($(OS_TARGET), WINNT)
 MOZ_PKG_FORMAT	:= SFX7Z
@@ -46,8 +46,8 @@ include $(topsrcdir)/toolkit/mozapps/installer/signing.mk
 include $(topsrcdir)/toolkit/mozapps/installer/packager.mk
 
 ifdef MOZ_EXTERNAL_SIGNING_FORMAT
-# We can't use signcode on mar files
-MOZ_EXTERNAL_SIGNING_FORMAT := $(filter-out osslsigncode signcode,$(MOZ_EXTERNAL_SIGNING_FORMAT))
+# We can't use osslsigncode on mar files
+MOZ_EXTERNAL_SIGNING_FORMAT := $(filter-out osslsigncode,$(MOZ_EXTERNAL_SIGNING_FORMAT))
 MOZ_EXTERNAL_SIGNING_FORMAT := mar $(MOZ_EXTERNAL_SIGNING_FORMAT)
 endif
 
@@ -85,9 +85,9 @@ automation-partial-patch: complete-patch
 	  if test -n "$$latestmar"; then \
 	    wget -O $(STAGE_DIR)/previous.mar http://$(UPLOAD_HOST)/$(LATEST_MAR_DIR)/$$latestmar && \
 	    (cd previous; \
-	      MAR=$(MAR_BIN) perl $(topsrcdir)/tools/update-packaging/unwrap_full_update.pl '../$(STAGE_DIR)/previous.mar') && \
+	      MAR=$(MAR_BIN) perl $(topsrcdir)/tools/update-packaging/unwrap_full_update.pl '$(STAGE_DIR)/previous.mar') && \
 	    (cd current; \
-	      MAR=$(MAR_BIN) perl $(topsrcdir)/tools/update-packaging/unwrap_full_update.pl '../$(DIST)/$(COMPLETE_MAR)') && \
+	      MAR=$(MAR_BIN) perl $(topsrcdir)/tools/update-packaging/unwrap_full_update.pl '$(abspath $(DIST)/$(COMPLETE_MAR))') && \
 	    find current -name \*.pgc -print -delete && \
 	    find previous -name \*.pgc -print -delete && \
 	    rm -f $(STAGE_DIR)/*.partial.*.mar && \

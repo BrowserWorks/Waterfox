@@ -583,7 +583,14 @@ Assembler::WriteInstStatic(uint32_t x, uint32_t* dest)
 }
 
 BufferOffset
-Assembler::align(int alignment)
+Assembler::haltingAlign(int alignment)
+{
+    // TODO: Implement a proper halting align.
+    nopAlign(alignment);
+}
+
+BufferOffset
+Assembler::nopAlign(int alignment)
 {
     BufferOffset ret;
     MOZ_ASSERT(m_buffer.isAligned(4));
@@ -1455,7 +1462,7 @@ void
 Assembler::as_break(uint32_t code)
 {
     MOZ_ASSERT(code <= MAX_BREAK_CODE);
-    writeInst(op_special | code << RTShift | ff_break);
+    writeInst(op_special | code << FunctionBits | ff_break);
 }
 
 uint32_t

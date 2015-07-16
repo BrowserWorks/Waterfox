@@ -7,7 +7,10 @@ from __future__ import print_function
 
 import platform
 import sys
+import os.path
 
+# Don't forgot to add new mozboot modules to the bootstrap download
+# list in bin/bootstrap.py!
 from mozboot.centos import CentOSBootstrapper
 from mozboot.debian import DebianBootstrapper
 from mozboot.fedora import FedoraBootstrapper
@@ -16,6 +19,7 @@ from mozboot.gentoo import GentooBootstrapper
 from mozboot.osx import OSXBootstrapper
 from mozboot.openbsd import OpenBSDBootstrapper
 from mozboot.ubuntu import UbuntuBootstrapper
+from mozboot.archlinux import ArchlinuxBootstrapper
 
 APPLICATION_CHOICE = '''
 Please choose the version of Firefox you want to build:
@@ -71,6 +75,9 @@ class Bootstrapper(object):
                 cls = UbuntuBootstrapper
             elif distro in ('Elementary OS', 'Elementary', '"elementary OS"'):
                 cls = UbuntuBootstrapper
+            elif os.path.exists('/etc/arch-release'):
+                # Even on archlinux, platform.linux_distribution() returns ['','','']
+                cls = ArchlinuxBootstrapper
             else:
                 raise NotImplementedError('Bootstrap support for this Linux '
                                           'distro not yet available.')
@@ -90,10 +97,10 @@ class Bootstrapper(object):
             args['version'] = platform.uname()[2]
 
         elif sys.platform.startswith('dragonfly') or \
-             sys.platform.startswith('freebsd'):
+                sys.platform.startswith('freebsd'):
             cls = FreeBSDBootstrapper
             args['version'] = platform.release()
-            args['flavor']  = platform.system()
+            args['flavor'] = platform.system()
 
         if cls is None:
             raise NotImplementedError('Bootstrap support is not yet available '
@@ -101,10 +108,9 @@ class Bootstrapper(object):
 
         self.instance = cls(**args)
 
-
     def bootstrap(self):
         # Like ['1. Firefox for Desktop', '2. Firefox for Android'].
-        labels = [ '%s. %s' % (i + 1, name) for (i, (name, _)) in enumerate(APPLICATIONS) ]
+        labels = ['%s. %s' % (i + 1, name) for (i, (name, _)) in enumerate(APPLICATIONS)]
         prompt = APPLICATION_CHOICE % '\n'.join(labels)
         choice = self.instance.prompt_int(prompt=prompt, low=1, high=len(APPLICATIONS))
         name, application = APPLICATIONS[choice-1]

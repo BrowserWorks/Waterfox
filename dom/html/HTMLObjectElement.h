@@ -17,9 +17,9 @@ namespace mozilla {
 namespace dom {
 
 class HTMLObjectElement final : public nsGenericHTMLFormElement
-                                  , public nsObjectLoadingContent
-                                  , public nsIDOMHTMLObjectElement
-                                  , public nsIConstraintValidation
+                              , public nsObjectLoadingContent
+                              , public nsIDOMHTMLObjectElement
+                              , public nsIConstraintValidation
 {
 public:
   explicit HTMLObjectElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo,
@@ -252,7 +252,7 @@ private:
 
   virtual ~HTMLObjectElement();
 
-  virtual JSObject* WrapNode(JSContext *aCx) override;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   static void MapAttributesIntoRule(const nsMappedAttributes* aAttributes,
                                     nsRuleData* aData);

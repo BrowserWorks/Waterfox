@@ -39,16 +39,16 @@ class InterceptedChannelContent;
 class InterceptStreamListener;
 
 class HttpChannelChild final : public PHttpChannelChild
-                                 , public HttpBaseChannel
-                                 , public HttpAsyncAborter<HttpChannelChild>
-                                 , public nsICacheInfoChannel
-                                 , public nsIProxiedChannel
-                                 , public nsIApplicationCacheChannel
-                                 , public nsIAsyncVerifyRedirectCallback
-                                 , public nsIAssociatedContentSecurity
-                                 , public nsIChildChannel
-                                 , public nsIHttpChannelChild
-                                 , public nsIDivertableChannel
+                             , public HttpBaseChannel
+                             , public HttpAsyncAborter<HttpChannelChild>
+                             , public nsICacheInfoChannel
+                             , public nsIProxiedChannel
+                             , public nsIApplicationCacheChannel
+                             , public nsIAsyncVerifyRedirectCallback
+                             , public nsIAssociatedContentSecurity
+                             , public nsIChildChannel
+                             , public nsIHttpChannelChild
+                             , public nsIDivertableChannel
 {
   virtual ~HttpChannelChild();
 public:
@@ -159,13 +159,13 @@ private:
 
   // Override this channel's pending response with a synthesized one. The content will be
   // asynchronously read from the pump.
-  void OverrideWithSynthesizedResponse(nsAutoPtr<nsHttpResponseHead>& aResponseHead, nsInputStreamPump* aPump);
+  void OverrideWithSynthesizedResponse(nsAutoPtr<nsHttpResponseHead>& aResponseHead, nsInputStreamPump* aPump, int64_t aStreamLength);
 
   RequestHeaderTuples mClientSetRequestHeaders;
   nsCOMPtr<nsIChildChannel> mRedirectChannelChild;
-  nsCOMPtr<nsISupports> mSecurityInfo;
   nsRefPtr<InterceptStreamListener> mInterceptListener;
   nsRefPtr<nsInputStreamPump> mSynthesizedResponsePump;
+  int64_t mSynthesizedStreamLength;
 
   bool mIsFromCache;
   bool mCacheEntryAvailable;

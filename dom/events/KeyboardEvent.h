@@ -36,9 +36,9 @@ public:
                                            const KeyboardEventInit& aParam,
                                            ErrorResult& aRv);
 
-  virtual JSObject* WrapObjectInternal(JSContext* aCx) override
+  virtual JSObject* WrapObjectInternal(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override
   {
-    return KeyboardEventBinding::Wrap(aCx, this);
+    return KeyboardEventBinding::Wrap(aCx, this, aGivenProto);
   }
 
   bool AltKey();

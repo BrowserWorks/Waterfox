@@ -17,7 +17,7 @@ class BluetoothDevice;
 class BluetoothSignal;
 
 class BluetoothPairingListener final : public DOMEventTargetHelper
-                                         , public BluetoothSignalObserver
+                                     , public BluetoothSignalObserver
 {
 public:
   NS_DECL_ISUPPORTS_INHERITED
@@ -25,7 +25,8 @@ public:
   static already_AddRefed<BluetoothPairingListener>
     Create(nsPIDOMWindow* aWindow);
 
-  void DispatchPairingEvent(BluetoothDevice* aDevice,
+  void DispatchPairingEvent(const nsAString& aName,
+                            const nsAString& aAddress,
                             const nsAString& aPasskey,
                             const nsAString& aType);
 
@@ -36,7 +37,8 @@ public:
     return GetOwner();
   }
 
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx,
+                               JS::Handle<JSObject*> aGivenProto) override;
   virtual void DisconnectFromOwner() override;
   virtual void EventListenerAdded(nsIAtom* aType) override;
 

@@ -193,7 +193,7 @@ nsHTMLContentSerializer::AppendElementStart(Element* aElement,
 
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsIAtom *name = content->Tag();
+  nsIAtom *name = content->NodeInfo()->NameAtom();
   int32_t ns = content->GetNameSpaceID();
 
   bool lineBreakBeforeOpen = LineBreakBeforeOpen(ns, name);
@@ -306,7 +306,7 @@ nsHTMLContentSerializer::AppendElementEnd(Element* aElement,
 
   nsIContent* content = aElement;
 
-  nsIAtom *name = content->Tag();
+  nsIAtom *name = content->NodeInfo()->NameAtom();
   int32_t ns = content->GetNameSpaceID();
 
   if (ns == kNameSpaceID_XHTML &&

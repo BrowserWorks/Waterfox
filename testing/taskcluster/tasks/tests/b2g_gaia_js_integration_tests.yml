@@ -1,9 +1,10 @@
 ---
 $inherits:
   from: 'tasks/test.yml'
+reruns: 2
 task:
   metadata:
-    name: '[TC] Gaia JS Integration Test'
+    name: '[TC] - Gaia JS Integration Test'
     description: Gaia JS Integration Test run {{chunk}}
 
   payload:
@@ -15,6 +16,7 @@ task:
         --no-read-buildbot-config
         --config-file b2g/gaia_integration_config.py
         --config-file ./mozharness_configs/gaia_integration_override.py
+        --config-file ./mozharness_configs/remove_executables.py
         --installer-url {{build_url}}
         --test-url {{tests_url}}
         --download-symbols ondemand
@@ -29,8 +31,13 @@ task:
         expires: '{{#from_now}}1 year{{/from_now}}'
 
   extra:
+    chunks:
+      total: 30
+    treeherderEnv:
+      - production
+      - staging
     treeherder:
       groupName: Gaia JS Integration Test
-      groupSymbol: tc-Gij
+      groupSymbol: Gij
       symbol: '{{chunk}}'
       productName: b2g

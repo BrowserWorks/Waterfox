@@ -1,0 +1,41 @@
+=head1 NAME
+
+XML::LibXML::CDATASection - XML::LibXML Class for CDATA Sections
+
+=head1 SYNOPSIS
+
+  $node = XML::LibXML::CDATASection( $content );
+
+
+=head1 DESCRIPTION
+
+This class provides all functions of XML::LibXML::Text, but for CDATA nodes.
+
+=over 4
+
+=item B<new>
+
+  $node = XML::LibXML::CDATASection( $content );
+
+The constructor is the only provided function for this package. It is required,
+because libxml2 treats the different text node types slightly differently.
+
+
+
+=back
+
+=head1 AUTHORS
+
+Matt Sergeant, 
+Christian Glahn, 
+Petr Pajas, 
+
+=head1 VERSION
+
+1.63
+
+=head1 COPYRIGHT
+
+2001-2007, AxKit.com Ltd; 2002-2006 Christian Glahn; 2006-2007 Petr Pajas, All rights reserved.
+
+=cut

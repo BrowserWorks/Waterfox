@@ -39,6 +39,9 @@
 #endif
 #define _WIN32_WINNT 0x0600
 #define INITGUID
+#undef NTDDI_VERSION
+#define NTDDI_VERSION NTDDI_WIN8
+// Needed for access to IApplicationActivationManager
 #include <shlobj.h>
 
 #include <mbstring.h>
@@ -620,9 +623,13 @@ DynSHOpenWithDialog(HWND hwndParent, const OPENASINFO *poainfo)
     return NS_ERROR_FAILURE;
   }
 
-  nsresult rv = 
-    SUCCEEDED(SHOpenWithDialogFn(hwndParent, poainfo)) ? NS_OK :
-                                                         NS_ERROR_FAILURE;
+  nsresult rv;
+  HRESULT hr = SHOpenWithDialogFn(hwndParent, poainfo);
+  if (SUCCEEDED(hr) || (hr == HRESULT_FROM_WIN32(ERROR_CANCELLED))) {
+    rv = NS_OK;
+  } else {
+    rv = NS_ERROR_FAILURE;
+  }
   FreeLibrary(shellDLL);
   return rv;
 }
@@ -655,6 +662,28 @@ nsWindowsShellService::LaunchControlPanelDefaultPrograms()
   CloseHandle(pi.hProcess);
   CloseHandle(pi.hThread);
 
+  return NS_OK;
+}
+
+nsresult
+nsWindowsShellService::LaunchModernSettingsDialogDefaultApps()
+{
+  IApplicationActivationManager* pActivator;
+  HRESULT hr = CoCreateInstance(CLSID_ApplicationActivationManager,
+                                nullptr,
+                                CLSCTX_INPROC,
+                                IID_IApplicationActivationManager,
+                                (void**)&pActivator);
+
+  if (SUCCEEDED(hr)) {
+    DWORD pid;
+    hr = pActivator->ActivateApplication(
+           L"windows.immersivecontrolpanel_cw5n1h2txyewy"
+           L"!microsoft.windows.immersivecontrolpanel",
+           L"page=SettingsPageAppsDefaults", AO_NONE, &pid);
+    pActivator->Release();
+    return SUCCEEDED(hr) ? NS_OK : NS_ERROR_FAILURE;
+  }
   return NS_OK;
 }
 
@@ -693,9 +722,17 @@ nsWindowsShellService::SetDefaultBrowser(bool aClaimAllTypes, bool aForAllUsers)
         rv = LaunchHTTPHandlerPane();
       }
     } else {
-      rv = LaunchHTTPHandlerPane();
-      // The above calls hould never really fail, but just in case
-      // fallb ack to showing control panel for all defaults
+      // Windows 10 blocks attempts to load the HTTP Handler
+      // association dialog, so the modern Settings dialog
+      // is opened with the Default Apps view loaded.
+      if (IsWin10OrLater()) {
+        rv = LaunchModernSettingsDialogDefaultApps();
+      } else {
+        rv = LaunchHTTPHandlerPane();
+      }
+
+      // The above call should never really fail, but just in case
+      // fall back to showing control panel for all defaults
       if (NS_FAILED(rv)) {
         rv = LaunchControlPanelDefaultPrograms();
       }

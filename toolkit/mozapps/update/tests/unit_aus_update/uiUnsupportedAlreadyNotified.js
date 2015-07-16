@@ -5,19 +5,17 @@
 function run_test() {
   setupTestCommon();
 
-  logTestInfo("testing nsIUpdatePrompt notifications should not be displayed " +
-              "when showUpdateAvailable is called for an unsupported system " +
-              "update when the unsupported notification has already been " +
-              "shown (bug 843497)");
+  debugDump("testing nsIUpdatePrompt notifications should not be displayed " +
+            "when showUpdateAvailable is called for an unsupported system " +
+            "update when the unsupported notification has already been " +
+            "shown (bug 843497)");
 
   setUpdateURLOverride();
   // The mock XMLHttpRequest is MUCH faster
   overrideXHR(callHandleEvent);
   standardInit();
-  // The HTTP server is only used for the mar file downloads which is slow
-  start_httpserver();
 
-  let registrar = Components.manager.QueryInterface(AUS_Ci.nsIComponentRegistrar);
+  let registrar = Cm.QueryInterface(Ci.nsIComponentRegistrar);
   registrar.registerFactory(Components.ID("{1dfeb90a-2193-45d5-9cb8-864928b2af55}"),
                             "Fake Window Watcher",
                             "@mozilla.org/embedcomp/window-watcher;1",
@@ -53,7 +51,7 @@ function check_test() {
 }
 
 function end_test() {
-  let registrar = Components.manager.QueryInterface(AUS_Ci.nsIComponentRegistrar);
+  let registrar = Cm.QueryInterface(Ci.nsIComponentRegistrar);
   registrar.unregisterFactory(Components.ID("{1dfeb90a-2193-45d5-9cb8-864928b2af55}"),
                               WindowWatcherFactory);
   registrar.unregisterFactory(Components.ID("{1dfeb90a-2193-45d5-9cb8-864928b2af56}"),
@@ -66,12 +64,12 @@ function callHandleEvent() {
   gXHR.status = 400;
   gXHR.responseText = gResponseBody;
   try {
-    var parser = AUS_Cc["@mozilla.org/xmlextras/domparser;1"].
-                 createInstance(AUS_Ci.nsIDOMParser);
+    let parser = Cc["@mozilla.org/xmlextras/domparser;1"].
+                 createInstance(Ci.nsIDOMParser);
     gXHR.responseXML = parser.parseFromString(gResponseBody, "application/xml");
   } catch (e) {
   }
-  var e = { target: gXHR };
+  let e = { target: gXHR };
   gXHR.onload(e);
 }
 
@@ -79,46 +77,36 @@ function check_showUpdateAvailable() {
   do_throw("showUpdateAvailable should not have called openWindow!");
 }
 
-var WindowWatcher = {
+const WindowWatcher = {
   openWindow: function(aParent, aUrl, aName, aFeatures, aArgs) {
     check_showUpdateAvailable();
   },
 
-  QueryInterface: function(aIID) {
-    if (aIID.equals(AUS_Ci.nsIWindowWatcher) ||
-        aIID.equals(AUS_Ci.nsISupports))
-      return this;
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIWindowWatcher])
+};
 
-    throw AUS_Cr.NS_ERROR_NO_INTERFACE;
-  }
-}
-
-var WindowWatcherFactory = {
+const WindowWatcherFactory = {
   createInstance: function createInstance(aOuter, aIID) {
-    if (aOuter != null)
-      throw AUS_Cr.NS_ERROR_NO_AGGREGATION;
+    if (aOuter != null) {
+      throw Cr.NS_ERROR_NO_AGGREGATION;
+    }
     return WindowWatcher.QueryInterface(aIID);
   }
 };
 
-var WindowMediator = {
+const WindowMediator = {
   getMostRecentWindow: function(aWindowType) {
     return null;
   },
 
-  QueryInterface: function(aIID) {
-    if (aIID.equals(AUS_Ci.nsIWindowMediator) ||
-        aIID.equals(AUS_Ci.nsISupports))
-      return this;
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIWindowMediator])
+};
 
-    throw AUS_Cr.NS_ERROR_NO_INTERFACE;
-  }
-}
-
-var WindowMediatorFactory = {
+const WindowMediatorFactory = {
   createInstance: function createInstance(aOuter, aIID) {
-    if (aOuter != null)
-      throw AUS_Cr.NS_ERROR_NO_AGGREGATION;
+    if (aOuter != null) {
+      throw Cr.NS_ERROR_NO_AGGREGATION;
+    }
     return WindowMediator.QueryInterface(aIID);
   }
 };

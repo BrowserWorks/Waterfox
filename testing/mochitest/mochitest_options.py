@@ -292,20 +292,6 @@ class MochitestOptions(optparse.OptionParser):
           "Default cap is 30 runs, which can be overwritten with the --repeat parameter.",
           "default": False,
           }],
-        [["--run-only-tests"],
-         {"action": "store",
-          "type": "string",
-          "dest": "runOnlyTests",
-          "help": "JSON list of tests that we only want to run. [DEPRECATED- please use --test-manifest]",
-          "default": None,
-          }],
-        [["--test-manifest"],
-         {"action": "store",
-          "type": "string",
-          "dest": "testManifest",
-          "help": "JSON list of tests to specify 'runtests'. Old format for mobile specific tests",
-          "default": None,
-          }],
         [["--manifest"],
          {"action": "store",
           "type": "string",
@@ -478,6 +464,12 @@ class MochitestOptions(optparse.OptionParser):
           "dest": "debuggerInteractive",
           "help": "prevents the test harness from redirecting stdout and stderr for interactive debuggers",
           }],
+        [["--max-timeouts"],
+         { "type": "int",
+           "dest": "maxTimeouts",
+           "help": "maximum number of timeouts permitted before halting testing",
+           "default": None,
+           }],
     ]
 
     def __init__(self, **kwargs):
@@ -579,27 +571,6 @@ class MochitestOptions(optparse.OptionParser):
                 self.error("%s not found, cannot automate VMware recording." %
                            mochitest.vmwareHelperPath)
 
-        if options.testManifest and options.runOnlyTests:
-            self.error(
-                "Please use --test-manifest only and not --run-only-tests")
-
-        if options.runOnlyTests:
-            if not os.path.exists(
-                os.path.abspath(
-                    os.path.join(
-                        here,
-                        options.runOnlyTests))):
-                self.error(
-                    "unable to find --run-only-tests file '%s'" %
-                    options.runOnlyTests)
-            options.runOnly = True
-            options.testManifest = options.runOnlyTests
-            options.runOnlyTests = None
-
-        if options.manifestFile and options.testManifest:
-            self.error(
-                "Unable to support both --manifest and --test-manifest/--run-only-tests at the same time")
-
         if options.webapprtContent and options.webapprtChrome:
             self.error(
                 "Only one of --webapprt-content and --webapprt-chrome may be given.")
@@ -677,7 +648,8 @@ class MochitestOptions(optparse.OptionParser):
             for f in ['/usr/bin/gst-launch-0.10', '/usr/bin/pactl']:
                 if not os.path.isfile(f):
                     self.error(
-                        'Missing binary %s required for --use-test-media-devices')
+                        'Missing binary %s required for '
+                        '--use-test-media-devices' % f)
 
         if options.nested_oop:
             if not options.e10s:
@@ -692,7 +664,12 @@ class MochitestOptions(optparse.OptionParser):
 
         # Bug 1065098 - The geckomediaplugin process fails to produce a leak
         # log for some reason.
-        options.ignoreMissingLeaks = ["geckomediaplugin", "tab"]
+        options.ignoreMissingLeaks = ["geckomediaplugin"]
+
+        # Bug 1091917 - We exit early in tab processes on Windows, so we don't
+        # get leak logs yet.
+        if mozinfo.isWin:
+            options.ignoreMissingLeaks.append("tab")
 
         # Bug 1121539 - OSX-only intermittent tab process leak in test_ipc.html
         if mozinfo.isMac:
@@ -855,7 +832,7 @@ class B2GOptions(MochitestOptions):
         defaults["testPath"] = ""
         defaults["extensionsToExclude"] = ["specialpowers"]
         # See dependencies of bug 1038943.
-        defaults["defaultLeakThreshold"] = 5404
+        defaults["defaultLeakThreshold"] = 5536
         self.set_defaults(**defaults)
 
     def verifyRemoteOptions(self, options):
@@ -908,7 +885,7 @@ class B2GOptions(MochitestOptions):
         options.ignoreMissingLeaks.append("default")
 
         # Bug 1070068 - Leak logging does not work for tab processes on B2G.
-        assert "tab" in options.ignoreMissingLeaks, "Ignore failures for tab processes on B2G"
+        options.ignoreMissingLeaks.append("tab")
 
         return options
 

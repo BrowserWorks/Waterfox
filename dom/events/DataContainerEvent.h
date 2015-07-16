@@ -31,9 +31,9 @@ public:
   NS_DECL_NSIDOMDATACONTAINEREVENT
 
   virtual JSObject*
-  WrapObjectInternal(JSContext* aCx) override
+  WrapObjectInternal(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override
   {
-    return DataContainerEventBinding::Wrap(aCx, this);
+    return DataContainerEventBinding::Wrap(aCx, this, aGivenProto);
   }
 
   already_AddRefed<nsIVariant> GetData(const nsAString& aKey)

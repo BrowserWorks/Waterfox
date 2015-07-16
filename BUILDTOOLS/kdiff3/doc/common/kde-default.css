@@ -1,0 +1,327 @@
+/*
+    KDE-wide default CSS for HTML documentation (all media types).
+    Copyright (C) 2000 Frederik Fouvry
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+    Send comments, suggestions, etc. to Frederik Fouvry 
+    <fouvry@sfs.nphil.uni-tuebingen.de>. */
+
+/*
+   Important note: these setting may be overridden by localised CSS.  Do not 
+   add here any localization-sensitive style declarations.
+   
+   Any updates should be validated, e.g. http://jigsaw.w3.org/css-validator/ */
+
+/* Note: "should be inherit" means that in a proper browser inherit should work.
+   Somehow Netscape manages to interpret "inherit" as bright green. 
+   Yuck.  */
+
+body {
+  background: white none;
+  color: black;
+  font-family: sans-serif;
+  padding: 0 15px 0 0;
+  margin: 0; 
+}
+
+.legalnotice, .copyright {
+  padding: 0;
+  margin: 0; 
+}
+
+.abstract {
+  font-weight: bolder;
+  padding-right: 1em; 
+}
+
+.toc, .list-of-tables {
+  padding-left: 1em;
+}
+
+.sect1, .chapter, .synopsis, .appendix, .preface, .article, .refsect1, .index, .glossary, .section {
+  padding-left: 1em;
+}
+
+.toc .chapter {
+padding: 0em 0em 0em 1em;
+}
+
+.author {
+  color: rgb(82,80,82);
+  font-weight: bolder;
+  padding: 0;
+  margin: 0;
+}
+
+.othercredit {
+  line-height: 1em;
+}
+
+.chapter .sect1, .chapter .titlepage, .sect1 .titlepage, .article .titlepage {
+  padding: 0em;
+}
+
+.titlepage {
+  padding-left: 1em;
+  padding-right: 1em;
+}
+
+/* Links in Navigation */
+
+.navLeft a:link, .navCenter a:link, .navRight a:link, .header a:link, .header a:visited, .bottom-nav a:link, .bottom-nav a:visited {
+  color: #41597A;
+  font-weight: bold;
+}
+
+
+/* Nice link colors for the main text */
+
+:link { 
+  color: #41597A;
+}
+
+:visited { 
+  color: #597ba8;
+}
+
+.navLeft {
+  position: absolute; 
+  left: 20px;
+}
+
+.navRight {
+  position: absolute; 
+  right: 20px;
+}
+
+.navCenter {
+  text-align: center;
+  align: center;
+}
+
+.bannerBottomLeft {
+  position: absolute; left: 0px;
+}
+
+.bannerBottomRight {
+  position: absolute; right: 0px;
+}
+
+.header {
+  background: #3E91EB none;
+  border-bottom: 1px solid #206dcd;
+  border-top: 1px solid white;
+  color: white;
+  font-size: small;
+  height: 1.7em;
+  line-height: 1em;
+  margin: 0px;
+  padding-bottom: 0px;
+  padding-left: 1em;
+  padding-right: 0px;
+  padding-top: 0px;
+  vertical-align: middle;
+}
+
+.bottom-nav { 
+  background-color: #3E91EB; 
+  border-bottom: 1px solid #206dcd; 
+  border-top: 1px solid white;
+  color: white; 
+  font-size: small; 
+  height: 1.7em; 
+  line-height: 1em; 
+  margin: 0px; 
+  padding-bottom: 0px; 
+  padding-left: 1em;
+  padding-right: 0px; 
+  padding-top: 10px; 
+  vertical-align: middle; 
+}
+
+#logo {
+  background: url('kde_logo_bg.png') transparent repeat;
+}
+
+/* A little bit of padding makes the tables for keybindings etc much easier to read */
+
+table { 
+  padding: 5px; 
+} 
+
+dl { 
+  margin-top: 0em; 
+  margin-bottom: 0.5em; 
+}
+
+dt { 
+  margin-top: 1em; 
+}
+div.toc dt { 
+  margin-top: 0px; 
+}
+div.screenshot { 
+  margin-bottom: 1em;
+  margin-top: 1em; 
+}
+
+div.informalexample { 
+  border-style: dotted;
+  padding: 10px;
+}
+
+/* But no padding for navigation elements */
+
+.toplogo, .navbackground { 
+  padding: 0px; 
+}
+
+table.programlisting
+table.screen { 
+  border-style: none;
+  background-color: rgb(224,224,224);
+  table-layout: auto; /* 100%? */
+  color: rgb(0,0,0); /* should be inherit */
+}
+
+/* Same as previous block, but more general (previous is HTML only)
+   Not all browsers understand this yet.
+   TABLE[class~=programlisting]
+   TABLE[class~=screen] { border-style: none;
+          background-color: rgb(224,224,224);
+          table-layout: auto;
+          color: inherit;
+}
+*/
+
+p { 
+  text-align: justify; 
+}
+
+/* More specific settings */
+/* Temporary patch: browsers break on bad HTML */
+/* P, H1, H2, H3, H4, H5, TD, TH { font-family: Helvetica, Arial, sans-serif;
+    } */
+
+p, h1, h2, h3, h4, h5, h6, td, th { 
+  font-family: sans-serif;
+}
+
+/* Visual cues for GUI elements etc in the text */
+
+.guimenu, .guimenuitem, .guisubmenu { 
+  background-color: rgb(220,220,220);
+  color: rgb(0,0,0); /* should be inherit */
+}
+
+.guilabel, .interface, .guibutton { 
+  background-color: rgb(220,220,220);
+  color: rgb(0,0,0); /* should be inherit */
+}
+
+.shortcut { 
+  background-color: rgb(220,220,220);
+  color: rgb(0,0,0); /* should be inherit */
+}
+
+.shortcut .keycap { 
+  background-color: rgb(220,220,220);
+  color: rgb(0,0,0); /* should be inherit */
+}
+
+.question { 
+  font-weight: bolder; 
+}
+
+.accel { 
+  background-color: rgb(220,220,220);
+  color: rgb(0,0,0); 
+  text-decoration: underline;
+}
+
+.option, .command { 
+  background-color: rgb(255,255,255);
+  color: rgb(0,96,160);
+  font-weight: bold;
+}
+
+h1, h2, h3, h4, h5, h6 { 
+  color: rgb(82,80,82);
+  background-color: transparent;
+}
+
+.arg, .parameter, .replaceable { 
+  background-color: rgb(255,255,255);
+  color: rgb(0,128,64);
+  font-style: italic;
+}
+
+.screen, .programlisting { 
+  background-color: rgb(220,220,220);
+  color: rgb(0,0,0); /* should be inherit */
+  border-style: dotted;
+  border-color: rgb(0,0,0);
+  border-width: thin; 
+  padding: 5px; 
+} 
+
+
+/* This one is set in inches because the admonitions are set in inches
+   and they're more difficult to change.  We can live with it in here, 
+   for the meantime, it gives consistent margins */
+
+.example { 
+  margin-left: 0.5in; 
+  margin-right: 0.5in;
+}
+
+div.mediaobject { 
+  /* float: right; */ 
+  /* might make it much nicer. although someone has to
+     understand the rules ;-)  You also don't want it to be
+     surrounded by text it doesn't refer to ...  But that
+     may be among others a question of writing style. */
+  text-align: center; /* a bit of a hack: it should
+                         position _images_ */
+}
+
+.caption { 
+  margin: 0em 2em 3em 2em; 
+  text-align: center;
+}
+
+.inlinemediaobject { 
+  vertical-align: baseline; 
+  padding-right: 1em;
+  padding-left: 1em;		
+}
+
+/* An idea that could be nice: a search engine looking for specific
+classes could display them in some conspicuous color.  All that is
+needed is an on the fly generated style element/style sheet. */
+
+/* Only used in the hand-made HTML license texts */
+body.license { 
+  background-color: rgb(255,255,255);
+  text-align: justify; 
+  color: rgb(0,0,0);
+}
+pre.license { 
+  background-color: rgb(255,255,255);
+  font-family: monospace;
+  color: rgb(0,0,0);
+}
+

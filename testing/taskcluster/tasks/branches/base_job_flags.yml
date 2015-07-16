@@ -2,10 +2,15 @@
 # List of all possible flags for each category of tests used in the case where
 # "all" is specified.
 flags:
+  aliases:
+    mochitests: mochitest
+
   builds:
     - emulator
     - emulator-jb
     - emulator-kk
+    - emulator-x86-kk
+    - emulator-l
     - linux32_gecko  # b2g desktop linux 32 bit
     - linux64_gecko  # b2g desktop linux 64 bit
     - linux64-mulet  # Firefox desktop - b2g gecko linux 64 bit
@@ -24,9 +29,11 @@ flags:
     - gaia-linter
     - gaia-unit
     - gaia-unit-oop
+    - gaia-ui-test-sanity
     - gaia-ui-test-oop
     - gaia-ui-test-accessibility
     - gaia-ui-test-functional
+    - gaia-ui-test-functional-dsds
     - gaia-ui-test-unit
     - jetpack
     - jittests

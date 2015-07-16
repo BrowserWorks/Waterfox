@@ -153,6 +153,15 @@ typedef enum { SSLAppOpRead = 0,
 
 #define EXPORT_RSA_KEY_LENGTH 64	/* bytes */
 
+/* The minimum server key sizes accepted by the clients.
+ * Not 1024 to be conservative. */
+#define SSL_RSA_MIN_MODULUS_BITS 1023
+/* 1023 to avoid cases where p = 2q+1 for a 512-bit q turns out to be
+ * only 1023 bits and similar.  We don't have good data on whether this
+ * happens because NSS used to count bit lengths incorrectly. */
+#define SSL_DH_MIN_P_BITS 1023
+#define SSL_DSA_MIN_P_BITS 1023
+
 #define INITIAL_DTLS_TIMEOUT_MS   1000  /* Default value from RFC 4347 = 1s*/
 #define MAX_DTLS_TIMEOUT_MS      60000  /* 1 minute */
 #define DTLS_FINISHED_TIMER_MS  120000  /* Time to wait in FINISHED state */
@@ -725,9 +734,15 @@ typedef struct {
     SSL3KeyExchangeAlgorithm kea;
     SSL3KEAType              exchKeyType;
     SSL3SignType             signKeyType;
+    /* For export cipher suites:
+     * is_limited identifies a suite as having a limit on the key size.
+     * key_size_limit provides the corresponding limit. */
     PRBool                   is_limited;
     int                      key_size_limit;
     PRBool                   tls_keygen;
+    /* True if the key exchange for the suite can be ephemeral.  Or to be more
+     * precise: true if the ServerKeyExchange message is required. */
+    PRBool                   ephemeral;
 } ssl3KEADef;
 
 /*
@@ -981,6 +996,7 @@ struct ssl3StateStr {
     PRUint16             dtlsSRTPCiphers[MAX_DTLS_SRTP_CIPHER_SUITES];
     PRUint16             dtlsSRTPCipherCount;
     PRUint16             dtlsSRTPCipherSuite;	/* 0 if not selected */
+    PRBool               fatalAlertSent;
 };
 
 #define DTLS_MAX_MTU  1500      /* Ethernet MTU but without subtracting the

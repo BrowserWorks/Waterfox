@@ -15,7 +15,7 @@ namespace mozilla {
 namespace dom {
 
 class HTMLBRElement final : public nsGenericHTMLElement,
-                                public nsIDOMHTMLBRElement
+                            public nsIDOMHTMLBRElement
 {
 public:
   explicit HTMLBRElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
@@ -43,7 +43,7 @@ public:
     return SetHTMLAttr(nsGkAtoms::clear, aClear, aError);
   }
 
-  virtual JSObject* WrapNode(JSContext *aCx) override;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 private:
   virtual ~HTMLBRElement();

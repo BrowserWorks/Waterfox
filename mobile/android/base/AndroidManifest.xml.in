@@ -60,6 +60,11 @@
     <uses-permission android:name="android.permission.GET_ACCOUNTS"/>
 #endif
 
+#ifdef MOZ_ANDROID_TAB_QUEUE
+    <!-- Tab Queue -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+#endif
+
 #ifdef MOZ_ANDROID_BEAM
     <!-- Android Beam support -->
     <uses-permission android:name="android.permission.NFC"/>
@@ -166,6 +171,11 @@
                 <action android:name="org.mozilla.gecko.UPDATE"/>
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+#ifndef MOZ_ANDROID_TAB_QUEUE
+            <!-- The main reason for the Tab Queue build flag is to not mess with the VIEW intent filter
+                 before the rest of the plumbing is in place -->
+
+            <!-- The entry point for Intent.VIEW actions will move to the TabQueue activity -->
 
             <!-- Default browser intents -->
             <intent-filter>
@@ -188,7 +198,7 @@
                 <data android:mimeType="text/plain"/>
                 <data android:mimeType="application/xhtml+xml"/>
             </intent-filter>
-
+#endif
             <intent-filter>
                 <action android:name="android.intent.action.WEB_SEARCH" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -196,10 +206,6 @@
                 <data android:scheme="" />
                 <data android:scheme="http" />
                 <data android:scheme="https" />
-            </intent-filter>
-
-            <intent-filter>
-                <action android:name="android.intent.action.SEARCH" />
             </intent-filter>
 
             <!-- For XPI installs from websites and the download manager. -->
@@ -230,15 +236,47 @@
             </intent-filter>
 #endif
 
-            <meta-data android:name="android.app.searchable"
-                       android:resource="@xml/searchable" />
-
             <!-- For debugging -->
             <intent-filter>
                 <action android:name="org.mozilla.gecko.DEBUG" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity-alias>
+
+#ifdef MOZ_ANDROID_TAB_QUEUE
+        <!-- The main reason for the Tab Queue build flag is to not mess with the VIEW intent filter
+             before the rest of the plumbing is in place -->
+
+        <service android:name="org.mozilla.gecko.tabqueue.TabQueueService" />
+
+        <activity android:name="org.mozilla.gecko.tabqueue.TabQueueDispatcher"
+                  android:label="@MOZ_APP_DISPLAYNAME@"
+                  android:noHistory="true"
+                  android:excludeFromRecents="true"
+                  android:launchMode="singleTask"
+                  android:theme="@style/TabQueueActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:scheme="about" />
+                <data android:scheme="javascript" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="file" />
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:mimeType="text/html"/>
+                <data android:mimeType="text/plain"/>
+                <data android:mimeType="application/xhtml+xml"/>
+            </intent-filter>
+        </activity>
+#endif
 
         <activity android:name="org.mozilla.gecko.StartPane"
                   android:theme="@style/GeckoStartPane"
@@ -371,12 +409,7 @@
 
         <provider android:name="org.mozilla.gecko.db.BrowserProvider"
                   android:authorities="@ANDROID_PACKAGE_NAME@.db.browser"
-                  android:permission="@ANDROID_PACKAGE_NAME@.permissions.BROWSER_PROVIDER">
-
-            <path-permission android:pathPrefix="/search_suggest_query"
-                             android:readPermission="android.permission.GLOBAL_SEARCH" />
-
-        </provider>
+                  android:permission="@ANDROID_PACKAGE_NAME@.permissions.BROWSER_PROVIDER"/>
 
 #ifdef MOZ_ANDROID_SHARE_OVERLAY
         <!-- Share overlay activity

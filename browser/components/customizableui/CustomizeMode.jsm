@@ -129,6 +129,16 @@ CustomizeMode.prototype = {
     }
   },
 
+  swatchForTheme: function(aDocument) {
+   let lwthemeButton = aDocument.getElementById("customization-lwtheme-button");
+   let lwthemeIcon = aDocument.getAnonymousElementByAttribute(lwthemeButton,
+          "class", "button-icon");
+   let imageURL = LightweightThemeManager.currentTheme === null ?
+          "chrome://browser/skin/theme-switcher-icon.png" :
+          LightweightThemeManager.currentTheme.iconURL;
+    lwthemeIcon.style.backgroundImage = "url(" + imageURL + ")";
+  },
+
   enter: function() {
     this._wantToBeInCustomizeMode = true;
 
@@ -290,6 +300,7 @@ CustomizeMode.prototype = {
       this.paletteSpacer.hidden = true;
       this._updateEmptyPaletteNotice();
 
+      this.swatchForTheme(document);
       this.maybeShowTip(panelHolder);
 
       this._handler.isEnteringCustomizeMode = false;
@@ -1401,6 +1412,7 @@ CustomizeMode.prototype = {
     let doc = aEvent.target.ownerDocument;
     let footer = doc.getElementById("customization-lwtheme-menu-footer");
     let recommendedLabel = doc.getElementById("customization-lwtheme-menu-recommended");
+    this.swatchForTheme(doc);
     for (let element of [footer, recommendedLabel]) {
       while (element.previousSibling &&
              element.previousSibling.localName == "toolbarbutton") {

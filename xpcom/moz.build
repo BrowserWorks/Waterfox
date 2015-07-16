@@ -4,6 +4,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files('**'):
+    BUG_COMPONENT = ('Core', 'XPCOM')
+
 DIRS += [
     'idl-parser',
 ]
@@ -28,7 +31,6 @@ if CONFIG['OS_ARCH'] == 'WINNT' and CONFIG['MOZ_DEBUG']:
 
 TEST_DIRS += [
     'tests',
-    'sample',
     'typelib/xpt/tests',
 ]
 

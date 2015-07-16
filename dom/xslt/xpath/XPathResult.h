@@ -45,8 +45,8 @@ namespace dom {
  * A class for evaluating an XPath expression string
  */
 class XPathResult final : public nsIXPathResult,
-                              public nsStubMutationObserver,
-                              public nsWrapperCache
+                          public nsStubMutationObserver,
+                          public nsWrapperCache
 {
     ~XPathResult();
 
@@ -77,7 +77,7 @@ public:
         return static_cast<XPathResult*>(static_cast<nsIXPathResult*>(aSupports));
     }
 
-    virtual JSObject* WrapObject(JSContext* aCx) override;
+    virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
     nsINode* GetParentObject() const
     {
         return mParent;

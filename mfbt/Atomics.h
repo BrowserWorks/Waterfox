@@ -42,7 +42,7 @@
 #  elif MOZ_USING_LIBCXX && defined(__clang__)
 #    define MOZ_HAVE_CXX11_ATOMICS
 #  endif
-#elif defined(_MSC_VER) && _MSC_VER > 1800
+#elif defined(_MSC_VER) > 1900
 #  define MOZ_HAVE_CXX11_ATOMICS
 #endif
 

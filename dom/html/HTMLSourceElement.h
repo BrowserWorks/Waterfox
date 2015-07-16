@@ -19,7 +19,7 @@ namespace dom {
 
 class ResponsiveImageSelector;
 class HTMLSourceElement final : public nsGenericHTMLElement,
-                                    public nsIDOMHTMLSourceElement
+                                public nsIDOMHTMLSourceElement
 {
 public:
   explicit HTMLSourceElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
@@ -99,7 +99,7 @@ public:
 protected:
   virtual ~HTMLSourceElement();
 
-  virtual JSObject* WrapNode(JSContext* aCx) override;
+  virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 protected:
   virtual void GetItemValueText(DOMString& text) override;

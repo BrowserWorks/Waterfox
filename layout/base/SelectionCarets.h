@@ -7,6 +7,7 @@
 #ifndef SelectionCarets_h__
 #define SelectionCarets_h__
 
+#include "nsDirection.h"
 #include "nsIReflowObserver.h"
 #include "nsIScrollObserver.h"
 #include "nsISelectionListener.h"
@@ -56,9 +57,9 @@ class Selection;
  *          caret becomes tilt.
  */
 class SelectionCarets final : public nsIReflowObserver,
-                                  public nsISelectionListener,
-                                  public nsIScrollObserver,
-                                  public nsSupportsWeakReference
+                              public nsISelectionListener,
+                              public nsIScrollObserver,
+                              public nsSupportsWeakReference
 {
 public:
   /**
@@ -83,8 +84,8 @@ public:
   virtual void ScrollPositionChanged() override;
 
   // AsyncPanZoom started/stopped callbacks from nsIScrollObserver
-  virtual void AsyncPanZoomStarted(const mozilla::CSSIntPoint aScrollPos) override;
-  virtual void AsyncPanZoomStopped(const mozilla::CSSIntPoint aScrollPos) override;
+  virtual void AsyncPanZoomStarted() override;
+  virtual void AsyncPanZoomStopped() override;
 
   void Init();
   void Terminate();
@@ -143,7 +144,7 @@ private:
    */
   void SetSelectionDragState(bool aState);
 
-  void SetSelectionDirection(bool aForward);
+  void SetSelectionDirection(nsDirection aDir);
 
   /**
    * Move start frame of selection caret to given position.
@@ -258,8 +259,8 @@ private:
 
   DragMode mDragMode;
 
-  // True if AsyncPanZoom is enabled
-  bool mAsyncPanZoomEnabled;
+  // True if async-pan-zoom should be used for selection carets.
+  bool mUseAsyncPanZoom;
   // True if AsyncPanZoom is started
   bool mInAsyncPanZoomGesture;
 

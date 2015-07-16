@@ -146,6 +146,10 @@ if (params.interactiveDebugger) {
   TestRunner.structuredLogger.interactiveDebugger = true;
 }
 
+if (params.maxTimeouts) {
+  TestRunner.maxTimeouts = params.maxTimeouts;
+}
+
 // Log things to the console if appropriate.
 TestRunner.logger.addListener("dumpListener", consoleLevel + "", function(msg) {
   dump(msg.info.join(' ') + "\n");
@@ -156,6 +160,7 @@ var RunSet = {};
 RunSet.runall = function(e) {
   // Filter tests to include|exclude tests based on data in params.filter.
   // This allows for including or excluding tests from the gTestList
+  // TODO Only used by ipc tests, remove once those are implemented sanely
   if (params.testManifest) {
     getTestManifest("http://mochi.test:8888/" + params.testManifest, params, function(filter) { gTestList = filterTests(filter, gTestList, params.runOnly); RunSet.runtests(); });
   } else {
@@ -169,10 +174,6 @@ RunSet.runtests = function(e) {
 
   if (params.startAt || params.endAt) {
     my_tests = skipTests(my_tests, params.startAt, params.endAt);
-  }
-
-  if (params.totalChunks && params.thisChunk) {
-    my_tests = chunkifyTests(my_tests, params.totalChunks, params.thisChunk, params.chunkByDir, TestRunner.logger);
   }
 
   if (params.shuffle) {

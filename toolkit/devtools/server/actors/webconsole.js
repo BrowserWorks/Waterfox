@@ -71,6 +71,7 @@ function WebConsoleActor(aConnection, aParentActor)
   this._netEvents = new Map();
   this._gripDepth = 0;
   this._listeners = new Set();
+  this._lastConsoleInputEvaluation = undefined;
 
   this._onWillNavigate = this._onWillNavigate.bind(this);
   this._onChangedToplevelDocument = this._onChangedToplevelDocument.bind(this);
@@ -358,6 +359,7 @@ WebConsoleActor.prototype =
     this._actorPool = null;
 
     this._jstermHelpersCache = null;
+    this._lastConsoleInputEvaluation = null;
     this._evalWindow = null;
     this._netEvents.clear();
     this.dbg.enabled = false;
@@ -501,6 +503,17 @@ WebConsoleActor.prototype =
   releaseActor: function WCA_releaseActor(aActor)
   {
     this._actorPool.removeActor(aActor.actorID);
+  },
+
+  /**
+   * Returns the latest web console input evaluation.
+   * This is undefined if no evaluations have been completed.
+   *
+   * @return object
+   */
+  getLastConsoleInputEvaluation: function WCU_getLastConsoleInputEvaluation()
+  {
+    return this._lastConsoleInputEvaluation;
   },
 
   //////////////////
@@ -815,6 +828,8 @@ WebConsoleActor.prototype =
     } catch (e) {
       errorMessage = e;
     }
+
+    this._lastConsoleInputEvaluation = result;
 
     return {
       from: this.actorID,
@@ -1503,6 +1518,9 @@ WebConsoleActor.prototype =
     // This method is called after this.window is changed,
     // so we register new listener on this new window
     this.onStartListeners({listeners: listeners});
+
+    // Also reset the cached top level chrome window being targeted
+    this._lastChromeWindow  = null;
   },
 };
 

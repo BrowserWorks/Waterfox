@@ -115,8 +115,8 @@ AsmJSFrameIterator::computeLine(uint32_t* column) const
 static const unsigned PushedRetAddr = 0;
 static const unsigned PostStorePrePopFP = 0;
 # endif
-static const unsigned PushedFP = 10;
-static const unsigned StoredFP = 14;
+static const unsigned PushedFP = 13;
+static const unsigned StoredFP = 20;
 #elif defined(JS_CODEGEN_X86)
 # if defined(DEBUG)
 static const unsigned PushedRetAddr = 0;
@@ -271,14 +271,14 @@ js::GenerateAsmJSFunctionPrologue(MacroAssembler& masm, unsigned framePushed,
     masm.flushBuffer();
 #endif
 
-    masm.align(CodeAlignment);
+    masm.haltingAlign(CodeAlignment);
 
     GenerateProfilingPrologue(masm, framePushed, AsmJSExit::None, &labels->begin);
     Label body;
     masm.jump(&body);
 
     // Generate normal prologue:
-    masm.align(CodeAlignment);
+    masm.haltingAlign(CodeAlignment);
     masm.bind(&labels->entry);
     PushRetAddr(masm);
     masm.subPtr(Imm32(framePushed + AsmJSFrameBytesAfterReturnAddress), StackPointer);
@@ -388,7 +388,7 @@ void
 js::GenerateAsmJSExitPrologue(MacroAssembler& masm, unsigned framePushed, AsmJSExit::Reason reason,
                               Label* begin)
 {
-    masm.align(CodeAlignment);
+    masm.haltingAlign(CodeAlignment);
     GenerateProfilingPrologue(masm, framePushed, reason, begin);
     masm.setFramePushed(framePushed);
 }

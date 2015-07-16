@@ -73,16 +73,12 @@ WMFVideoMFTManager::WMFVideoMFTManager(
                             mozilla::layers::LayersBackend aLayersBackend,
                             mozilla::layers::ImageContainer* aImageContainer,
                             bool aDXVAEnabled)
-  : mVideoStride(0)
-  , mVideoWidth(0)
-  , mVideoHeight(0)
-  , mImageContainer(aImageContainer)
+  : mImageContainer(aImageContainer)
   , mDXVAEnabled(aDXVAEnabled)
   , mLayersBackend(aLayersBackend)
-  , mUseHwAccel(false)
+  // mVideoStride, mVideoWidth, mVideoHeight, mUseHwAccel are initialized in
+  // Init().
 {
-  NS_ASSERTION(!NS_IsMainThread(), "Should not be on main thread.");
-  MOZ_ASSERT(mImageContainer);
   MOZ_COUNT_CTOR(WMFVideoMFTManager);
 
   // Need additional checks/params to check vp8/vp9
@@ -163,7 +159,11 @@ WMFVideoMFTManager::InitializeDXVA()
 
   // The DXVA manager must be created on the main thread.
   nsRefPtr<CreateDXVAManagerEvent> event(new CreateDXVAManagerEvent());
-  NS_DispatchToMainThread(event, NS_DISPATCH_SYNC);
+  if (NS_IsMainThread()) {
+    event->Run();
+  } else {
+    NS_DispatchToMainThread(event, NS_DISPATCH_SYNC);
+  }
   mDXVA2Manager = event->mDXVA2Manager;
 
   return mDXVA2Manager != nullptr;
@@ -172,6 +172,7 @@ WMFVideoMFTManager::InitializeDXVA()
 TemporaryRef<MFTDecoder>
 WMFVideoMFTManager::Init()
 {
+  mUseHwAccel = false; // default value; changed if D3D setup succeeds.
   bool useDxva = InitializeDXVA();
 
   RefPtr<MFTDecoder> decoder(new MFTDecoder());
@@ -229,6 +230,13 @@ WMFVideoMFTManager::Init()
 
   mDecoder = decoder;
   LOG("Video Decoder initialized, Using DXVA: %s", (mUseHwAccel ? "Yes" : "No"));
+
+  // Just in case ConfigureVideoFrameGeometry() does not set these
+  mVideoInfo = VideoInfo();
+  mVideoStride = 0;
+  mVideoWidth = 0;
+  mVideoHeight = 0;
+  mPictureRegion.SetEmpty();
 
   return decoder.forget();
 }
@@ -460,6 +468,7 @@ WMFVideoMFTManager::Output(int64_t aStreamOffset,
   RefPtr<IMFSample> sample;
   HRESULT hr;
   aOutData = nullptr;
+  int typeChangeCount = 0;
 
   // Loop until we decode a sample, or an unexpected error that we can't
   // handle occurs.
@@ -475,7 +484,12 @@ WMFVideoMFTManager::Output(int64_t aStreamOffset,
       MOZ_ASSERT(!sample);
       hr = ConfigureVideoFrameGeometry();
       NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
+      // Catch infinite loops, but some decoders perform at least 2 stream
+      // changes on consecutive calls, so be permissive.
+      // 100 is arbitrarily > 2.
+      NS_ENSURE_TRUE(typeChangeCount < 100, MF_E_TRANSFORM_STREAM_CHANGE);
       // Loop back and try decoding again...
+      ++typeChangeCount;
       continue;
     }
     if (SUCCEEDED(hr)) {
@@ -512,7 +526,7 @@ WMFVideoMFTManager::Shutdown()
 bool
 WMFVideoMFTManager::IsHardwareAccelerated() const
 {
-  return mUseHwAccel;
+  return mDecoder && mUseHwAccel;
 }
 
 } // namespace mozilla

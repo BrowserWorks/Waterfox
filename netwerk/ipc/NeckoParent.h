@@ -160,6 +160,7 @@ protected:
                                           const uint32_t& flags,
                                           const nsCString& aNetworkInterface) override;
   virtual bool DeallocPDNSRequestParent(PDNSRequestParent*) override;
+  virtual bool RecvSpeculativeConnect(const URIParams& aURI) override;
   virtual bool RecvHTMLDNSPrefetch(const nsString& hostname,
                                    const uint16_t& flags) override;
   virtual bool RecvCancelHTMLDNSPrefetch(const nsString& hostname,
@@ -169,6 +170,14 @@ protected:
   virtual mozilla::ipc::IProtocol*
   CloneProtocol(Channel* aChannel,
                 mozilla::ipc::ProtocolCloneContext* aCtx) override;
+
+  virtual PDataChannelParent*
+    AllocPDataChannelParent(const uint32_t& channelId) override;
+  virtual bool DeallocPDataChannelParent(PDataChannelParent* parent) override;
+
+  virtual bool RecvPDataChannelConstructor(PDataChannelParent* aActor,
+                                           const uint32_t& channelId) override;
+
   virtual PRtspControllerParent* AllocPRtspControllerParent() override;
   virtual bool DeallocPRtspControllerParent(PRtspControllerParent*) override;
 

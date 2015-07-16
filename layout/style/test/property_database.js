@@ -2760,6 +2760,7 @@ var gCSSProperties = {
     subproperties: [ "list-style-type", "list-style-position", "list-style-image" ],
     initial_values: [ "outside", "disc", "disc outside", "outside disc", "disc none", "none disc", "none disc outside", "none outside disc", "disc none outside", "disc outside none", "outside none disc", "outside disc none" ],
     other_values: [ "inside none", "none inside", "none none inside", "square", "none", "none none", "outside none none", "none outside none", "none none outside", "none outside", "outside none", "outside outside", "outside inside", "\\32 style", "\\32 style inside",
+      '"-"', "'-'", "inside '-'", "'-' outside", "none '-'", "inside none '-'",
       "symbols(\"*\" \"\\2020\" \"\\2021\" \"\\A7\")",
       "symbols(cyclic \"*\" \"\\2020\" \"\\2021\" \"\\A7\")",
       "inside symbols(\"*\" \"\\2020\" \"\\2021\" \"\\A7\")",
@@ -2837,6 +2838,7 @@ var gCSSProperties = {
       "-moz-ethiopic-halehame-am",
       "-moz-ethiopic-halehame-ti-er", "-moz-ethiopic-halehame-ti-et",
       "other-style", "inside", "outside", "\\32 style",
+      '"-"', "'-'",
       "symbols(\"*\" \"\\2020\" \"\\2021\" \"\\A7\")",
       "symbols(cyclic '*' '\\2020' '\\2021' '\\A7')"
     ],
@@ -6244,7 +6246,7 @@ if (SpecialPowers.getBoolPref("layout.css.image-orientation.enabled")) {
 
 if (SpecialPowers.getBoolPref("layout.css.osx-font-smoothing.enabled")) {
   gCSSProperties["-moz-osx-font-smoothing"] = {
-    domProp: "MozOSXFontSmoothing",
+    domProp: "MozOsxFontSmoothing",
     inherited: true,
     type: CSS_TYPE_LONGHAND,
     initial_values: [ "auto" ],
@@ -6385,6 +6387,85 @@ if (SpecialPowers.getBoolPref("layout.css.scroll-behavior.property-enabled")) {
     initial_values: [ "auto" ],
     other_values: [ "smooth" ],
     invalid_values: [ "none",  "1px" ]
+  };
+}
+
+if (SpecialPowers.getBoolPref("layout.css.scroll-snap.enabled")) {
+  gCSSProperties["scroll-snap-coordinate"] = {
+    domProp: "scrollSnapCoordinate",
+    inherited: false,
+    type: CSS_TYPE_LONGHAND,
+    initial_values: [ "none" ],
+    other_values: [ "25% 25%", "top", "0px 100px, 10em 50%",
+                    "top left, top right, bottom left, bottom right, center",
+                    "calc(2px)",
+                    "calc(50%)",
+                    "calc(3*25px)",
+                    "calc(3*25px) 5px",
+                    "5px calc(3*25px)",
+                    "calc(20%) calc(3*25px)",
+                    "calc(25px*3)",
+                    "calc(3*25px + 50%)",
+                    "calc(20%) calc(3*25px), center"],
+    invalid_values: [ "auto", "default" ]
+  }
+  gCSSProperties["scroll-snap-destination"] = {
+    domProp: "scrollSnapDestination",
+    inherited: false,
+    type: CSS_TYPE_LONGHAND,
+    initial_values: [ "0px 0px" ],
+    other_values: [ "25% 25%", "6px 5px", "20% 3em", "0in 1in",
+                    "top", "right", "top left", "top right", "center",
+                    "calc(2px)",
+                    "calc(50%)",
+                    "calc(3*25px)",
+                    "calc(3*25px) 5px",
+                    "5px calc(3*25px)",
+                    "calc(20%) calc(3*25px)",
+                    "calc(25px*3)",
+                    "calc(3*25px + 50%)"],
+    invalid_values: [ "auto", "none", "default" ]
+  }
+  gCSSProperties["scroll-snap-points-x"] = {
+    domProp: "scrollSnapPointsX",
+    inherited: false,
+    type: CSS_TYPE_LONGHAND,
+    initial_values: [ "none" ],
+    other_values: [ "repeat(100%)", "repeat(120px)", "repeat(calc(3*25px))" ],
+    invalid_values: [ "auto", "1px", "left", "rgb(1,2,3)" ]
+  }
+  gCSSProperties["scroll-snap-points-y"] = {
+    domProp: "scrollSnapPointsY",
+    inherited: false,
+    type: CSS_TYPE_LONGHAND,
+    initial_values: [ "none" ],
+    other_values: [ "repeat(100%)", "repeat(120px)", "repeat(calc(3*25px))" ],
+    invalid_values: [ "auto", "1px", "top", "rgb(1,2,3)" ]
+  }
+  gCSSProperties["scroll-snap-type"] = {
+    domProp: "scrollSnapType",
+    inherited: false,
+    type: CSS_TYPE_TRUE_SHORTHAND,
+    subproperties: [ "scroll-snap-type-x", "scroll-snap-type-y" ],
+    initial_values: [ "none" ],
+    other_values: [ "mandatory", "proximity" ],
+    invalid_values: [ "auto",  "1px" ]
+  };
+  gCSSProperties["scroll-snap-type-x"] = {
+    domProp: "scrollSnapTypeX",
+    inherited: false,
+    type: CSS_TYPE_LONGHAND,
+    initial_values: [ "none" ],
+    other_values: ["mandatory", "proximity"],
+    invalid_values: [ "auto",  "1px" ]
+  };
+  gCSSProperties["scroll-snap-type-y"] = {
+    domProp: "scrollSnapTypeY",
+    inherited: false,
+    type: CSS_TYPE_LONGHAND,
+    initial_values: [ "none" ],
+    other_values: ["mandatory", "proximity"],
+    invalid_values: [ "auto",  "1px" ]
   };
 }
 

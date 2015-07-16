@@ -60,7 +60,7 @@ public:
 
   void SetDefaultSettings();
 
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   TextTrackKind Kind() const
   {

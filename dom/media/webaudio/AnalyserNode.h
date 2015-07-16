@@ -22,7 +22,7 @@ public:
 
   NS_DECL_ISUPPORTS_INHERITED
 
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   void GetFloatFrequencyData(const Float32Array& aArray);
   void GetByteFrequencyData(const Uint8Array& aArray);

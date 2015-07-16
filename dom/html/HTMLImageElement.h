@@ -23,8 +23,8 @@ namespace dom {
 
 class ResponsiveImageSelector;
 class HTMLImageElement final : public nsGenericHTMLElement,
-                                   public nsImageLoadingContent,
-                                   public nsIDOMHTMLImageElement
+                               public nsImageLoadingContent,
+                               public nsIDOMHTMLImageElement
 {
   friend class HTMLSourceElement;
   friend class HTMLPictureElement;
@@ -313,7 +313,7 @@ protected:
   CSSIntPoint GetXY();
   virtual void GetItemValueText(DOMString& text) override;
   virtual void SetItemValueText(const nsAString& text) override;
-  virtual JSObject* WrapNode(JSContext *aCx) override;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
   void UpdateFormOwner();
 
   virtual nsresult BeforeSetAttr(int32_t aNameSpaceID, nsIAtom* aName,

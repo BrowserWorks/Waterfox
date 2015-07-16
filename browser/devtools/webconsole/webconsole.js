@@ -26,6 +26,8 @@ loader.lazyGetter(this, "ConsoleOutput",
                   () => require("devtools/webconsole/console-output").ConsoleOutput);
 loader.lazyGetter(this, "Messages",
                   () => require("devtools/webconsole/console-output").Messages);
+loader.lazyGetter(this, "asyncStorage",
+                  () => require("devtools/toolkit/shared/async-storage"));
 loader.lazyImporter(this, "EnvironmentClient", "resource://gre/modules/devtools/dbg-client.jsm");
 loader.lazyImporter(this, "ObjectClient", "resource://gre/modules/devtools/dbg-client.jsm");
 loader.lazyImporter(this, "VariablesView", "resource:///modules/devtools/VariablesView.jsm");
@@ -176,6 +178,7 @@ const MIN_FONT_SIZE = 10;
 const PREF_CONNECTION_TIMEOUT = "devtools.debugger.remote-timeout";
 const PREF_PERSISTLOG = "devtools.webconsole.persistlog";
 const PREF_MESSAGE_TIMESTAMP = "devtools.webconsole.timestampMessages";
+const PREF_INPUT_HISTORY_COUNT = "devtools.webconsole.inputHistoryCount";
 
 /**
  * A WebConsoleFrame instance is an interactive console initialized *per target*
@@ -437,18 +440,39 @@ WebConsoleFrame.prototype = {
    * @type boolean
    */
   get persistLog() {
-    return Services.prefs.getBoolPref(PREF_PERSISTLOG);
+    // For the browser console, we receive tab navigation
+    // when the original top level window we attached to is closed,
+    // but we don't want to reset console history and just switch to
+    // the next available window.
+    return this.owner._browserConsole || Services.prefs.getBoolPref(PREF_PERSISTLOG);
   },
 
   /**
    * Initialize the WebConsoleFrame instance.
    * @return object
-   *         A promise object for the initialization.
+   *         A promise object that resolves once the frame is ready to use.
    */
-  init: function WCF_init()
+  init: function()
   {
     this._initUI();
-    return this._initConnection();
+    let connectionInited = this._initConnection();
+
+    // Don't reject if the history fails to load for some reason.
+    // This would be fine, the panel will just start with empty history.
+    let allReady = this.jsterm.historyLoaded.catch(() => {}).then(() => {
+      return connectionInited;
+    });
+
+    // This notification is only used in tests. Don't chain it onto
+    // the returned promise because the console panel needs to be attached
+    // to the toolbox before the web-console-created event is receieved.
+    let notifyObservers = () => {
+      let id = WebConsoleUtils.supportsString(this.hudId);
+      Services.obs.notifyObservers(id, "web-console-created", null);
+    };
+    allReady.then(notifyObservers, notifyObservers);
+
+    return allReady;
   },
 
   /**
@@ -475,9 +499,6 @@ WebConsoleFrame.prototype = {
                                         aReason.error + ": " + aReason.message);
       this.outputMessage(CATEGORY_JS, node, [aReason]);
       this._initDefer.reject(aReason);
-    }).then(() => {
-      let id = WebConsoleUtils.supportsString(this.hudId);
-      Services.obs.notifyObservers(id, "web-console-created", null);
     });
 
     return this._initDefer.promise;
@@ -3054,17 +3075,11 @@ function JSTerm(aWebConsoleFrame)
 {
   this.hud = aWebConsoleFrame;
   this.hudId = this.hud.hudId;
+  this.inputHistoryCount = Services.prefs.getIntPref(PREF_INPUT_HISTORY_COUNT);
 
   this.lastCompletion = { value: null };
-  this.history = [];
+  this._loadHistory();
 
-  // Holds the number of entries in history. This value is incremented in
-  // this.execute().
-  this.historyIndex = 0; // incremented on this.execute()
-
-  // Holds the index of the history entry that the user is currently viewing.
-  // This is reset to this.history.length when this.execute() is invoked.
-  this.historyPlaceHolder = 0;
   this._objectActorsInVariablesViews = new Map();
 
   this._keyPress = this._keyPress.bind(this);
@@ -3078,6 +3093,53 @@ function JSTerm(aWebConsoleFrame)
 
 JSTerm.prototype = {
   SELECTED_FRAME: -1,
+
+  /**
+   * Load the console history from previous sessions.
+   * @private
+   */
+  _loadHistory: function() {
+    this.history = [];
+    this.historyIndex = this.historyPlaceHolder = 0;
+
+    this.historyLoaded = asyncStorage.getItem("webConsoleHistory").then(value => {
+      if (Array.isArray(value)) {
+        // Since it was gotten asynchronously, there could be items already in
+        // the history.  It's not likely but stick them onto the end anyway.
+        this.history = value.concat(this.history);
+
+        // Holds the number of entries in history. This value is incremented in
+        // this.execute().
+        this.historyIndex = this.history.length;
+
+        // Holds the index of the history entry that the user is currently viewing.
+        // This is reset to this.history.length when this.execute() is invoked.
+        this.historyPlaceHolder = this.history.length;
+      }
+    }, console.error);
+  },
+
+  /**
+   * Clear the console history altogether.  Note that this will not affect
+   * other consoles that are already opened (since they have their own copy),
+   * but it will reset the array for all newly-opened consoles.
+   * @returns Promise
+   *          Resolves once the changes have been persisted.
+   */
+  clearHistory: function() {
+    this.history = [];
+    this.historyIndex = this.historyPlaceHolder = 0;
+    return this.storeHistory();
+  },
+
+  /**
+   * Stores the console history for future console instances.
+   * @returns Promise
+   *          Resolves once the changes have been persisted.
+   */
+  storeHistory: function() {
+    return asyncStorage.setItem("webConsoleHistory", this.history);
+  },
 
   /**
    * Stores the data for the last completion.
@@ -3269,6 +3331,9 @@ JSTerm.prototype = {
         case "clearOutput":
           this.clearOutput();
           break;
+        case "clearHistory":
+          this.clearHistory();
+          break;
         case "inspectObject":
           if (aAfterMessage) {
             if (!aAfterMessage._objectActors) {
@@ -3365,7 +3430,7 @@ JSTerm.prototype = {
 
     let selectedNodeActor = null;
     let inspectorSelection = this.hud.owner.getInspectorSelection();
-    if (inspectorSelection) {
+    if (inspectorSelection && inspectorSelection.nodeFront) {
       selectedNodeActor = inspectorSelection.nodeFront.actorID;
     }
 
@@ -3388,6 +3453,12 @@ JSTerm.prototype = {
     // value that was not evaluated yet.
     this.history[this.historyIndex++] = aExecuteString;
     this.historyPlaceHolder = this.history.length;
+
+    if (this.history.length > this.inputHistoryCount) {
+      this.history.splice(0, this.history.length - this.inputHistoryCount);
+      this.historyIndex = this.historyPlaceHolder = this.history.length;
+    }
+    this.storeHistory();
     WebConsoleUtils.usageCount++;
     this.setInputValue("");
     this.clearCompletion();
@@ -5028,7 +5099,7 @@ WebConsoleConnectionProxy.prototype = {
     this.target.on("navigate", this._onTabNavigated);
 
     this._consoleActor = this.target.form.consoleActor;
-    if (!this.target.chrome) {
+    if (this.target.isTabActor) {
       let tab = this.target.form;
       this.owner.onLocationChange(tab.url, tab.title);
     }

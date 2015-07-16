@@ -1406,7 +1406,7 @@ nsSHistory::RemoveEntries(nsTArray<uint64_t>& aIDs, int32_t aStartIndex)
     --index;
   }
   if (didRemove && mRootDocShell) {
-    nsRefPtr<nsIRunnable> ev =
+    nsCOMPtr<nsIRunnable> ev =
       NS_NewRunnableMethod(static_cast<nsDocShell*>(mRootDocShell),
                            &nsDocShell::FireDummyOnLocationChange);
     NS_DispatchToCurrentThread(ev);
@@ -1791,26 +1791,12 @@ nsSHistory::InitiateLoad(nsISHEntry * aFrameEntry, nsIDocShell * aFrameDS, long 
 
 }
 
-
-
 NS_IMETHODIMP
 nsSHistory::SetRootDocShell(nsIDocShell * aDocShell)
 {
   mRootDocShell = aDocShell;
   return NS_OK;
 }
-
-NS_IMETHODIMP
-nsSHistory::GetRootDocShell(nsIDocShell ** aDocShell)
-{
-  NS_ENSURE_ARG_POINTER(aDocShell);
-
-  *aDocShell = mRootDocShell;
-  //Not refcounted. May this method should not be available for public
-  // NS_IF_ADDREF(*aDocShell);
-  return NS_OK;
-}
-
 
 NS_IMETHODIMP
 nsSHistory::GetSHistoryEnumerator(nsISimpleEnumerator** aEnumerator)

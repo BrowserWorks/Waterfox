@@ -447,8 +447,7 @@ TransportSecurityInfo::GetInterfaces(uint32_t *count, nsIID * **array)
 }
 
 NS_IMETHODIMP
-TransportSecurityInfo::GetHelperForLanguage(uint32_t language,
-                                            nsISupports **_retval)
+TransportSecurityInfo::GetScriptableHelper(nsIXPCScriptable **_retval)
 {
   *_retval = nullptr;
   return NS_OK;
@@ -583,7 +582,9 @@ AppendErrorTextUntrusted(PRErrorCode errTrust,
                          nsINSSComponent *component,
                          nsString &returnedMessage)
 {
-  const char *errorID = nullptr;
+  const char* errorID = nullptr;
+  const char* errorID2 = nullptr;
+  const char* errorID3 = nullptr;
   bool isSelfSigned;
   if (NS_SUCCEEDED(ix509->GetIsSelfSigned(&isSelfSigned)) && isSelfSigned) {
     errorID = "certErrorTrust_SelfSigned";
@@ -593,6 +594,8 @@ AppendErrorTextUntrusted(PRErrorCode errTrust,
     switch (errTrust) {
       case SEC_ERROR_UNKNOWN_ISSUER:
         errorID = "certErrorTrust_UnknownIssuer";
+        errorID2 = "certErrorTrust_UnknownIssuer2";
+        errorID3 = "certErrorTrust_UnknownIssuer3";
         break;
       case SEC_ERROR_CA_CERT_INVALID:
         errorID = "certErrorTrust_CaInvalid";
@@ -613,13 +616,18 @@ AppendErrorTextUntrusted(PRErrorCode errTrust,
     }
   }
 
-  nsString formattedString;
-  nsresult rv = component->GetPIPNSSBundleString(errorID, 
-                                                 formattedString);
-  if (NS_SUCCEEDED(rv))
-  {
-    returnedMessage.Append(formattedString);
-    returnedMessage.Append('\n');
+  const char* errorIDs[] = { errorID, errorID2, errorID3 };
+  for (size_t i = 0; i < ArrayLength(errorIDs); i++) {
+    if (!errorIDs[i]) {
+      break;
+    }
+
+    nsString formattedString;
+    nsresult rv = component->GetPIPNSSBundleString(errorIDs[i], formattedString);
+    if (NS_SUCCEEDED(rv)) {
+      returnedMessage.Append(formattedString);
+      returnedMessage.Append('\n');
+    }
   }
 }
 
@@ -1088,15 +1096,16 @@ RememberCertErrorsTable::LookupCertErrorBits(TransportSecurityInfo* infoObject,
 }
 
 void
-TransportSecurityInfo::SetStatusErrorBits(nsIX509Cert & cert,
+TransportSecurityInfo::SetStatusErrorBits(nsNSSCertificate* cert,
                                           uint32_t collected_errors)
 {
   MutexAutoLock lock(mMutex);
 
-  if (!mSSLStatus)
+  if (!mSSLStatus) {
     mSSLStatus = new nsSSLStatus();
+  }
 
-  mSSLStatus->SetServerCert(&cert, nsNSSCertificate::ev_status_invalid);
+  mSSLStatus->SetServerCert(cert, nsNSSCertificate::ev_status_invalid);
 
   mSSLStatus->mHaveCertErrorBits = true;
   mSSLStatus->mIsDomainMismatch = 

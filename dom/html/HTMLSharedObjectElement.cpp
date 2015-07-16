@@ -83,7 +83,7 @@ HTMLSharedObjectElement::DoneAddingChildren(bool aHaveNotified)
 
     // If we're already in a document, we need to trigger the load
     // Otherwise, BindToTree takes care of that.
-    if (IsInDoc()) {
+    if (IsInComposedDoc()) {
       StartObjectLoad(aHaveNotified);
     }
   }
@@ -191,7 +191,7 @@ HTMLSharedObjectElement::SetAttr(int32_t aNameSpaceID, nsIAtom *aName,
   // We also don't want to start loading the object when we're not yet in
   // a document, just in case that the caller wants to set additional
   // attributes before inserting the node into the document.
-  if (aNotify && IsInDoc() && mIsDoneAddingChildren &&
+  if (aNotify && IsInComposedDoc() && mIsDoneAddingChildren &&
       aNameSpaceID == kNameSpaceID_None && aName == URIAttrName()) {
     return LoadObject(aNotify, true);
   }
@@ -324,7 +324,7 @@ HTMLSharedObjectElement::StartObjectLoad(bool aNotify)
 {
   // BindToTree can call us asynchronously, and we may be removed from the tree
   // in the interim
-  if (!IsInDoc() || !OwnerDoc()->IsActive()) {
+  if (!IsInComposedDoc() || !OwnerDoc()->IsActive()) {
     return;
   }
 
@@ -370,14 +370,14 @@ HTMLSharedObjectElement::CopyInnerTo(Element* aDest)
 }
 
 JSObject*
-HTMLSharedObjectElement::WrapNode(JSContext* aCx)
+HTMLSharedObjectElement::WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
   JSObject* obj;
   if (mNodeInfo->Equals(nsGkAtoms::applet)) {
-    obj = HTMLAppletElementBinding::Wrap(aCx, this);
+    obj = HTMLAppletElementBinding::Wrap(aCx, this, aGivenProto);
   } else {
     MOZ_ASSERT(mNodeInfo->Equals(nsGkAtoms::embed));
-    obj = HTMLEmbedElementBinding::Wrap(aCx, this);
+    obj = HTMLEmbedElementBinding::Wrap(aCx, this, aGivenProto);
   }
   if (!obj) {
     return nullptr;

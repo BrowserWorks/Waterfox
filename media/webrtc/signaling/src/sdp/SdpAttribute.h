@@ -949,11 +949,13 @@ public:
   class H264Parameters : public Parameters
   {
   public:
+    static const uint32_t kDefaultProfileLevelId = 0x420010;
+
     H264Parameters()
         : Parameters(SdpRtpmapAttributeList::kH264),
           packetization_mode(0),
           level_asymmetry_allowed(false),
-          profile_level_id(0),
+          profile_level_id(kDefaultProfileLevelId),
           max_mbps(0),
           max_fs(0),
           max_cpb(0),
@@ -1020,11 +1022,12 @@ public:
     unsigned int max_br;
   };
 
+  // Also used for VP9 since they share parameters
   class VP8Parameters : public Parameters
   {
   public:
-    VP8Parameters()
-        : Parameters(SdpRtpmapAttributeList::kVP8), max_fs(0), max_fr(0)
+    explicit VP8Parameters(SdpRtpmapAttributeList::CodecType type)
+        : Parameters(type), max_fs(0), max_fr(0)
     {
     }
 

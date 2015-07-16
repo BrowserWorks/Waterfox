@@ -477,8 +477,8 @@ nsImageFrame::ShouldCreateImageFrameFor(Element* aElement,
   }
   else if (aElement->HasAttr(kNameSpaceID_None, nsGkAtoms::src) &&
            !aElement->HasAttr(kNameSpaceID_None, nsGkAtoms::alt) &&
-           !aElement->IsHTML(nsGkAtoms::object) &&
-           !aElement->IsHTML(nsGkAtoms::input)) {
+           !aElement->IsHTMLElement(nsGkAtoms::object) &&
+           !aElement->IsHTMLElement(nsGkAtoms::input)) {
     // Use a sized box if we have no alt text.  This means no alt attribute
     // and the node is not an object or an input (since those always have alt
     // text).
@@ -858,6 +858,7 @@ nsImageFrame::Reflow(nsPresContext*          aPresContext,
                      const nsHTMLReflowState& aReflowState,
                      nsReflowStatus&          aStatus)
 {
+  MarkInReflow();
   DO_GLOBAL_REFLOW_COUNT("nsImageFrame");
   DISPLAY_REFLOW(aPresContext, this, aReflowState, aMetrics, aStatus);
   NS_FRAME_TRACE(NS_FRAME_TRACE_CALLS,
@@ -1172,6 +1173,28 @@ public:
   nsDisplayAltFeedback(nsDisplayListBuilder* aBuilder, nsIFrame* aFrame)
     : nsDisplayItem(aBuilder, aFrame) {}
 
+  virtual nsDisplayItemGeometry*
+  AllocateGeometry(nsDisplayListBuilder* aBuilder) override
+  {
+    return new nsDisplayItemGenericImageGeometry(this, aBuilder);
+  }
+
+  virtual void ComputeInvalidationRegion(nsDisplayListBuilder* aBuilder,
+                                         const nsDisplayItemGeometry* aGeometry,
+                                         nsRegion* aInvalidRegion) override
+  {
+    auto geometry =
+      static_cast<const nsDisplayItemGenericImageGeometry*>(aGeometry);
+
+    if (aBuilder->ShouldSyncDecodeImages() &&
+        geometry->ShouldInvalidateToSyncDecodeImages()) {
+      bool snap;
+      aInvalidRegion->Or(*aInvalidRegion, GetBounds(aBuilder, &snap));
+    }
+
+    nsDisplayItem::ComputeInvalidationRegion(aBuilder, aGeometry, aInvalidRegion);
+  }
+
   virtual nsRect GetBounds(nsDisplayListBuilder* aBuilder,
                            bool* aSnap) override
   {
@@ -1182,25 +1205,33 @@ public:
   virtual void Paint(nsDisplayListBuilder* aBuilder,
                      nsRenderingContext* aCtx) override
   {
+    // Always sync decode, because these icons are UI, and since they're not
+    // discardable we'll pay the price of sync decoding at most once.
+    uint32_t flags = imgIContainer::FLAG_SYNC_DECODE;
+
     nsImageFrame* f = static_cast<nsImageFrame*>(mFrame);
     EventStates state = f->GetContent()->AsElement()->State();
-    f->DisplayAltFeedback(*aCtx,
-                          mVisibleRect,
-                          IMAGE_OK(state, true)
-                             ? nsImageFrame::gIconLoad->mLoadingImage
-                             : nsImageFrame::gIconLoad->mBrokenImage,
-                          ToReferenceFrame());
+    DrawResult result =
+      f->DisplayAltFeedback(*aCtx,
+                            mVisibleRect,
+                            IMAGE_OK(state, true)
+                               ? nsImageFrame::gIconLoad->mLoadingImage
+                               : nsImageFrame::gIconLoad->mBrokenImage,
+                            ToReferenceFrame(),
+                            flags);
 
+    nsDisplayItemGenericImageGeometry::UpdateDrawResult(this, result);
   }
 
   NS_DISPLAY_DECL_NAME("AltFeedback", TYPE_ALT_FEEDBACK)
 };
 
-void
+DrawResult
 nsImageFrame::DisplayAltFeedback(nsRenderingContext& aRenderingContext,
-                                 const nsRect&        aDirtyRect,
-                                 imgIRequest*         aRequest,
-                                 nsPoint              aPt)
+                                 const nsRect& aDirtyRect,
+                                 imgIRequest* aRequest,
+                                 nsPoint aPt,
+                                 uint32_t aFlags)
 {
   // We should definitely have a gIconLoad here.
   MOZ_ASSERT(gIconLoad, "How did we succeed in Init then?");
@@ -1220,7 +1251,7 @@ nsImageFrame::DisplayAltFeedback(nsRenderingContext& aRenderingContext,
   // Make sure we have enough room to actually render the border within
   // our frame bounds
   if ((inner.width < 2 * borderEdgeWidth) || (inner.height < 2 * borderEdgeWidth)) {
-    return;
+    return DrawResult::SUCCESS;
   }
 
   // Paint the border
@@ -1234,7 +1265,7 @@ nsImageFrame::DisplayAltFeedback(nsRenderingContext& aRenderingContext,
   inner.Deflate(nsPresContext::CSSPixelsToAppUnits(ICON_PADDING+ALT_BORDER_WIDTH), 
                 nsPresContext::CSSPixelsToAppUnits(ICON_PADDING+ALT_BORDER_WIDTH));
   if (inner.IsEmpty()) {
-    return;
+    return DrawResult::SUCCESS;
   }
 
   DrawTarget* drawTarget = aRenderingContext.GetDrawTarget();
@@ -1245,11 +1276,13 @@ nsImageFrame::DisplayAltFeedback(nsRenderingContext& aRenderingContext,
   gfx->Clip(NSRectToSnappedRect(inner, PresContext()->AppUnitsPerDevPixel(),
                                 *drawTarget));
 
-  // Check if we should display image placeholders
-  if (gIconLoad->mPrefShowPlaceholders) {
-    nscoord size = nsPresContext::CSSPixelsToAppUnits(ICON_SIZE);
+  DrawResult result = DrawResult::NOT_READY;
 
-    bool iconUsed = false;
+  // Check if we should display image placeholders
+  if (!gIconLoad->mPrefShowPlaceholders) {
+    result = DrawResult::SUCCESS;
+  } else {
+    nscoord size = nsPresContext::CSSPixelsToAppUnits(ICON_SIZE);
 
     // If we weren't previously displaying an icon, register ourselves
     // as an observer for load and animation updates and flag that we're
@@ -1263,7 +1296,7 @@ nsImageFrame::DisplayAltFeedback(nsRenderingContext& aRenderingContext,
     bool flushRight =
       (!wm.IsVertical() && !wm.IsBidiLTR()) || wm.IsVerticalRL();
 
-    // If the icon in question is loaded and decoded, draw it
+    // If the icon in question is loaded, draw it.
     uint32_t imageStatus = 0;
     if (aRequest)
       aRequest->GetImageStatus(&imageStatus);
@@ -1273,15 +1306,13 @@ nsImageFrame::DisplayAltFeedback(nsRenderingContext& aRenderingContext,
       MOZ_ASSERT(imgCon, "Load complete, but no image container?");
       nsRect dest(flushRight ? inner.XMost() - size : inner.x,
                   inner.y, size, size);
-      nsLayoutUtils::DrawSingleImage(*gfx, PresContext(), imgCon,
+      result = nsLayoutUtils::DrawSingleImage(*gfx, PresContext(), imgCon,
         nsLayoutUtils::GetGraphicsFilterForFrame(this), dest, aDirtyRect,
-        nullptr, imgIContainer::FLAG_SYNC_DECODE);
-      iconUsed = true;
+        nullptr, aFlags);
     }
 
-    // if we could not draw the icon, flag that we're waiting for it and
-    // just draw some graffiti in the mean time
-    if (!iconUsed) {
+    // If we could not draw the icon, just draw some graffiti in the mean time.
+    if (result == DrawResult::NOT_READY) {
       ColorPattern color(ToDeviceColor(Color(1.f, 0.f, 0.f, 1.f)));
 
       nscoord iconXPos = flushRight ? inner.XMost() - size : inner.x;
@@ -1324,13 +1355,16 @@ nsImageFrame::DisplayAltFeedback(nsRenderingContext& aRenderingContext,
     nsIContent* content = GetContent();
     if (content) {
       nsXPIDLString altText;
-      nsCSSFrameConstructor::GetAlternateTextFor(content, content->Tag(),
+      nsCSSFrameConstructor::GetAlternateTextFor(content,
+                                                 content->NodeInfo()->NameAtom(),
                                                  altText);
       DisplayAltText(PresContext(), aRenderingContext, altText, inner);
     }
   }
 
   aRenderingContext.ThebesContext()->Restore();
+
+  return result;
 }
 
 #ifdef DEBUG
@@ -1395,9 +1429,11 @@ already_AddRefed<ImageContainer>
 nsDisplayImage::GetContainer(LayerManager* aManager,
                              nsDisplayListBuilder* aBuilder)
 {
-  nsRefPtr<ImageContainer> container;
-  mImage->GetImageContainer(aManager, getter_AddRefs(container));
-  return container.forget();
+  uint32_t flags = aBuilder->ShouldSyncDecodeImages()
+                 ? imgIContainer::FLAG_SYNC_DECODE
+                 : imgIContainer::FLAG_NONE;
+
+  return mImage->GetImageContainer(aManager, flags);
 }
 
 gfxRect
@@ -1457,8 +1493,12 @@ nsDisplayImage::GetLayerState(nsDisplayListBuilder* aBuilder,
     }
   }
 
-  nsRefPtr<ImageContainer> container;
-  mImage->GetImageContainer(aManager, getter_AddRefs(container));
+  uint32_t flags = aBuilder->ShouldSyncDecodeImages()
+                 ? imgIContainer::FLAG_SYNC_DECODE
+                 : imgIContainer::FLAG_NONE;
+
+  nsRefPtr<ImageContainer> container =
+    mImage->GetImageContainer(aManager, flags);
   if (!container) {
     return LAYER_NONE;
   }
@@ -1502,9 +1542,15 @@ nsDisplayImage::BuildLayer(nsDisplayListBuilder* aBuilder,
                            LayerManager* aManager,
                            const ContainerLayerParameters& aParameters)
 {
-  nsRefPtr<ImageContainer> container;
-  nsresult rv = mImage->GetImageContainer(aManager, getter_AddRefs(container));
-  NS_ENSURE_SUCCESS(rv, nullptr);
+  uint32_t flags = aBuilder->ShouldSyncDecodeImages()
+                 ? imgIContainer::FLAG_SYNC_DECODE
+                 : imgIContainer::FLAG_NONE;
+
+  nsRefPtr<ImageContainer> container =
+    mImage->GetImageContainer(aManager, flags);
+  if (!container) {
+    return nullptr;
+  }
 
   nsRefPtr<ImageLayer> layer = static_cast<ImageLayer*>
     (aManager->GetLayerBuilder()->GetLeafLayerFor(aBuilder, this));

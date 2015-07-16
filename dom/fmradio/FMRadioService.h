@@ -148,9 +148,9 @@ enum FMRadioState
 };
 
 class FMRadioService final : public IFMRadioService
-                               , public hal::FMRadioObserver
-                               , public hal::FMRadioRDSObserver
-                               , public nsIObserver
+                           , public hal::FMRadioObserver
+                           , public hal::FMRadioRDSObserver
+                           , public nsIObserver
 {
   friend class ReadAirplaneModeSettingTask;
   friend class EnableRunnable;
@@ -159,7 +159,6 @@ class FMRadioService final : public IFMRadioService
 
 public:
   static FMRadioService* Singleton();
-  virtual ~FMRadioService();
 
   NS_DECL_ISUPPORTS
 
@@ -201,6 +200,7 @@ public:
 
 protected:
   FMRadioService();
+  virtual ~FMRadioService();
 
 private:
   int32_t RoundFrequency(double aFrequencyInMHz);

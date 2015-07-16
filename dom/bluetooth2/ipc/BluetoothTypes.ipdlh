@@ -4,7 +4,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-using mozilla::dom::bluetooth::BluetoothStatus from "mozilla/dom/bluetooth/BluetoothCommon.h";
+using mozilla::dom::bluetooth::BluetoothGattId
+  from "mozilla/dom/bluetooth/BluetoothCommon.h";
+using mozilla::dom::bluetooth::BluetoothGattServiceId
+  from "mozilla/dom/bluetooth/BluetoothCommon.h";
+using mozilla::dom::bluetooth::BluetoothStatus
+  from "mozilla/dom/bluetooth/BluetoothCommon.h";
 
 namespace mozilla {
 namespace dom {
@@ -14,7 +19,6 @@ namespace bluetooth {
  * Value structure for returns from bluetooth. Currently modeled after dbus
  * returns, which can be a 32-bit int, an UTF16 string, a bool, or an array of
  * UTF16 strings. Can also hold key-value pairs for dictionary-ish access.
- * 
  */
 union BluetoothValue
 {
@@ -24,12 +28,13 @@ union BluetoothValue
   nsString[];
   uint8_t[];
   BluetoothNamedValue[];
+  BluetoothGattId[];
+  BluetoothGattServiceId[];
 };
 
 /**
  * Key-value pair for dicts returned by the bluetooth backend. Used for things
  * like property updates, where the property will have a name and a type.
- * 
  */
 struct BluetoothNamedValue
 {

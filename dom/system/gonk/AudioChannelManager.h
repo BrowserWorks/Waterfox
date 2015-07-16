@@ -26,7 +26,6 @@ class AudioChannelManager final
 {
 public:
   AudioChannelManager();
-  virtual ~AudioChannelManager();
 
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_NSIDOMEVENTLISTENER
@@ -44,7 +43,7 @@ public:
      return GetOwner();
   }
 
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   bool Headphones() const
   {
@@ -61,6 +60,9 @@ public:
   bool GetVolumeControlChannel(nsAString& aChannel);
 
   IMPL_EVENT_HANDLER(headphoneschange)
+
+protected:
+  virtual ~AudioChannelManager();
 
 private:
   void NotifyVolumeControlChannelChanged();

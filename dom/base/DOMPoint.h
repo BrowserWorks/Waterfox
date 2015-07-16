@@ -64,7 +64,7 @@ public:
               double aZ, double aW, ErrorResult& aRV);
 
   nsISupports* GetParentObject() const { return mParent; }
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   void SetX(double aX) { mX = aX; }
   void SetY(double aY) { mY = aY; }

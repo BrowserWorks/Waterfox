@@ -1,12 +1,12 @@
 == default-size.html default-size-ref.html
-skip-if(B2G) fuzzy-if(Android&&AndroidVersion>=15,8,1000) == size-1.html size-1-ref.html
+skip-if(B2G||Mulet) fuzzy-if(Android&&AndroidVersion>=15,8,1000) == size-1.html size-1-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
 
 == empty-transaction-1.html empty-transaction-1-ref.html
 
-== image-rendering-test.html image-rendering-ref.html
+skip-if(Mulet) == image-rendering-test.html image-rendering-ref.html # TC: Bug 1144079 - Re-enable Mulet mochitests and reftests taskcluster-specific disables.
 == image-shadow.html image-shadow-ref.html
 
-skip-if(B2G) asserts-if(cocoaWidget,0-2) == size-change-1.html size-change-1-ref.html
+skip-if(B2G||Mulet) asserts-if(cocoaWidget,0-2) == size-change-1.html size-change-1-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
 
 random-if(cocoaWidget) == subpixel-1.html about:blank
 
@@ -27,8 +27,8 @@ random-if(cocoaWidget) == subpixel-1.html about:blank
 == text-ltr-alignment-test.html text-ltr-alignment-ref.html
 == text-rtl-alignment-test.html text-rtl-alignment-ref.html
 
-fuzzy-if(B2G&&azureSkiaGL,1,256) == text-horzline-with-bottom.html text-horzline.html
-fuzzy-if(B2G&&azureSkiaGL,1,256) == text-horzline-with-top.html text-horzline.html
+fuzzy-if((B2G||Mulet)&&azureSkiaGL,1,256) == text-horzline-with-bottom.html text-horzline.html # Initial mulet triage: parity with B2G/B2G Desktop
+fuzzy-if((B2G||Mulet)&&azureSkiaGL,1,256) == text-horzline-with-top.html text-horzline.html # Initial mulet triage: parity with B2G/B2G Desktop
 
 != text-big-stroke.html text-blank.html
 != text-big-stroke.html text-big-fill.html
@@ -45,7 +45,7 @@ fuzzy-if(azureSkiaGL,10,400) == text-not-in-doc-test.html text-not-in-doc-ref.ht
 != text-bidi-ltr-test.html text-bidi-ltr-notref.html # for bug 698185
 == text-bidi-rtl-test.html text-bidi-rtl-ref.html
 
-skip-if(B2G) != text-font-lang.html text-font-lang-notref.html
+skip-if(B2G||Mulet) != text-font-lang.html text-font-lang-notref.html # Initial mulet triage: parity with B2G/B2G Desktop
 
 == text-measure.html text-measure-ref.html
 == text-small-caps-1.html text-small-caps-1-ref.html
@@ -79,7 +79,7 @@ random-if(azureSkiaGL) == evenodd-fill-2.html evenodd-fill-ref.html
 == evenodd-fill-3.html nonzero-fill-2.html
 
 == dash-sanity.html data:text/html,<body>Pass
-fuzzy-if(azureSkia,9,470) random-if(Android) == dash-1.html dash-1-ref.svg  # Bug 668412 (really is android-specific, not IPC-specific)
+skip-if(Mulet) fuzzy-if(azureSkia,9,470) random-if(Android) == dash-1.html dash-1-ref.svg  # Bug 668412 (really is android-specific, not IPC-specific) # TC: Bug 1144079 - Re-enable Mulet mochitests and reftests taskcluster-specific disables.
 
 == ctm-sanity.html data:text/html,<body>Pass
 == ctm-singular-sanity.html data:text/html,<body>Pass
@@ -90,7 +90,7 @@ fails-if(OSX==1006) == 672646-alpha-radial-gradient.html 672646-alpha-radial-gra
 
 != 693610-1.html 693610-1-notref.html # bug 693610: multiple glyph runs should not be overprinted
 
-== 726951-shadow-clips.html 726951-shadow-clips-ref.html
+skip-if(Mulet) == 726951-shadow-clips.html 726951-shadow-clips-ref.html # TC: Bug 1144079 - Re-enable Mulet mochitests and reftests taskcluster-specific disables.
 
 == transformed-clip.html transformed-clip-ref.html
 == transformed-gradient.html transformed-gradient-ref.html

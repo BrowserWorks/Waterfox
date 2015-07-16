@@ -10,8 +10,8 @@
 #include "nsAutoPtr.h"
 #include "nsRefPtr.h"
 #include "nsString.h"
-#include "nsString.h"
 #include "nsTArray.h"
+#include "nsString.h"
 
 namespace stagefright
 {
@@ -46,6 +46,12 @@ struct PsshInfo
 class CryptoFile
 {
 public:
+  CryptoFile() {}
+  CryptoFile(const CryptoFile& aCryptoFile) : valid(aCryptoFile.valid)
+  {
+    pssh.AppendElements(aCryptoFile.pssh);
+  }
+
   void Update(stagefright::sp<stagefright::MetaData>& aMetaData)
   {
     valid = DoUpdate(aMetaData);
@@ -78,6 +84,7 @@ public:
   nsTArray<uint16_t> plain_sizes;
   nsTArray<uint32_t> encrypted_sizes;
   nsTArray<uint8_t> iv;
+
   nsTArray<nsCString> session_ids;
 };
 

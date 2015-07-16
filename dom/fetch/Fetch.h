@@ -16,6 +16,7 @@
 
 #include "mozilla/DebugOnly.h"
 #include "mozilla/ErrorResult.h"
+#include "mozilla/dom/Promise.h"
 #include "mozilla/dom/RequestBinding.h"
 #include "mozilla/dom/workers/bindings/WorkerFeature.h"
 
@@ -25,10 +26,9 @@ class nsIGlobalObject;
 namespace mozilla {
 namespace dom {
 
-class ArrayBufferOrArrayBufferViewOrBlobOrUSVStringOrURLSearchParams;
+class ArrayBufferOrArrayBufferViewOrBlobOrFormDataOrUSVStringOrURLSearchParams;
 class InternalRequest;
-class OwningArrayBufferOrArrayBufferViewOrBlobOrUSVStringOrURLSearchParams;
-class Promise;
+class OwningArrayBufferOrArrayBufferViewOrBlobOrFormDataOrUSVStringOrURLSearchParams;
 class RequestOrUSVString;
 
 namespace workers {
@@ -48,7 +48,7 @@ UpdateRequestReferrer(nsIGlobalObject* aGlobal, InternalRequest* aRequest);
  * Stores content type in out param aContentType.
  */
 nsresult
-ExtractByteStreamFromBody(const OwningArrayBufferOrArrayBufferViewOrBlobOrUSVStringOrURLSearchParams& aBodyInit,
+ExtractByteStreamFromBody(const OwningArrayBufferOrArrayBufferViewOrBlobOrFormDataOrUSVStringOrURLSearchParams& aBodyInit,
                           nsIInputStream** aStream,
                           nsCString& aContentType);
 
@@ -56,7 +56,7 @@ ExtractByteStreamFromBody(const OwningArrayBufferOrArrayBufferViewOrBlobOrUSVStr
  * Non-owning version.
  */
 nsresult
-ExtractByteStreamFromBody(const ArrayBufferOrArrayBufferViewOrBlobOrUSVStringOrURLSearchParams& aBodyInit,
+ExtractByteStreamFromBody(const ArrayBufferOrArrayBufferViewOrBlobOrFormDataOrUSVStringOrURLSearchParams& aBodyInit,
                           nsIInputStream** aStream,
                           nsCString& aContentType);
 
@@ -114,6 +114,12 @@ public:
   }
 
   already_AddRefed<Promise>
+  FormData(ErrorResult& aRv)
+  {
+    return ConsumeBody(CONSUME_FORMDATA, aRv);
+  }
+
+  already_AddRefed<Promise>
   Json(ErrorResult& aRv)
   {
     return ConsumeBody(CONSUME_JSON, aRv);
@@ -154,13 +160,13 @@ protected:
   virtual ~FetchBody();
 
   void
-  SetMimeType(ErrorResult& aRv);
+  SetMimeType();
 private:
   enum ConsumeType
   {
     CONSUME_ARRAYBUFFER,
     CONSUME_BLOB,
-    // FormData not supported right now,
+    CONSUME_FORMDATA,
     CONSUME_JSON,
     CONSUME_TEXT,
   };

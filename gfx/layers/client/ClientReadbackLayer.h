@@ -24,8 +24,8 @@ public:
   }
 
   virtual ShadowableLayer* AsShadowableLayer() override { return this; }
-  virtual Layer* AsLayer() { return this; }
-  virtual void RenderLayer() {}
+  virtual Layer* AsLayer() override { return this; }
+  virtual void RenderLayer() override {}
 };
 
 } /* layers */

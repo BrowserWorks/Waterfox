@@ -19,9 +19,9 @@ class EventChainPreVisitor;
 namespace dom {
 
 class HTMLLinkElement final : public nsGenericHTMLElement,
-                                  public nsIDOMHTMLLinkElement,
-                                  public nsStyleLinkElement,
-                                  public Link
+                              public nsIDOMHTMLLinkElement,
+                              public nsStyleLinkElement,
+                              public Link
 {
 public:
   explicit HTMLLinkElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
@@ -43,6 +43,7 @@ public:
   void LinkRemoved();
 
   void UpdateImport();
+  void UpdatePreconnect();
 
   // nsIDOMEventTarget
   virtual nsresult PreHandleEvent(EventChainPreVisitor& aVisitor) override;
@@ -51,7 +52,7 @@ public:
 
   // nsINode
   virtual nsresult Clone(mozilla::dom::NodeInfo* aNodeInfo, nsINode** aResult) const override;
-  virtual JSObject* WrapNode(JSContext* aCx) override;
+  virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // nsIContent
   virtual nsresult BindToTree(nsIDocument* aDocument, nsIContent* aParent,

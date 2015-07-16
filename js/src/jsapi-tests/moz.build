@@ -45,7 +45,6 @@ UNIFIED_SOURCES += [
     'testGCStoreBufferRemoval.cpp',
     'testGetPropertyDescriptor.cpp',
     'testHashTable.cpp',
-    'testHashTableInit.cpp',
     'testIndexToString.cpp',
     'testIntern.cpp',
     'testIntString.cpp',
@@ -96,6 +95,7 @@ if CONFIG['ENABLE_ION']:
         'testJitMoveEmitterCycles-mips.cpp',
         'testJitMoveEmitterCycles.cpp',
         'testJitRangeAnalysis.cpp',
+        'testJitRegisterSet.cpp',
         'testJitRValueAlloc.cpp',
     ]
 

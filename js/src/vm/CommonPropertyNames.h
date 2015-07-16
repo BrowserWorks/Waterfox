@@ -21,6 +21,7 @@
     macro(ArrayIteratorNext, ArrayIteratorNext, "ArrayIteratorNext") \
     macro(ArrayType, ArrayType, "ArrayType") \
     macro(ArrayValues, ArrayValues, "ArrayValues") \
+    macro(Async, Async, "Async") \
     macro(buffer, buffer, "buffer") \
     macro(builder, builder, "builder") \
     macro(byteLength, byteLength, "byteLength") \
@@ -37,6 +38,7 @@
     macro(close, close, "close") \
     macro(Collator, Collator, "Collator") \
     macro(CollatorCompareGet, CollatorCompareGet, "Intl_Collator_compare_get") \
+    macro(collections, collections, "collections") \
     macro(columnNumber, columnNumber, "columnNumber") \
     macro(comma, comma, ",") \
     macro(compare, compare, "compare") \
@@ -67,6 +69,7 @@
     macro(emptyRegExp, emptyRegExp, "(?:)") \
     macro(encodeURI, encodeURI, "encodeURI") \
     macro(encodeURIComponent, encodeURIComponent, "encodeURIComponent") \
+    macro(endTimestamp, endTimestamp, "endTimestamp") \
     macro(enumerable, enumerable, "enumerable") \
     macro(enumerate, enumerate, "enumerate") \
     macro(escape, escape, "escape") \
@@ -142,6 +145,7 @@
     macro(NFD, NFD, "NFD") \
     macro(NFKC, NFKC, "NFKC") \
     macro(NFKD, NFKD, "NFKD") \
+    macro(nonincrementalReason, nonincrementalReason, "nonincrementalReason") \
     macro(noSuchMethod, noSuchMethod, "__noSuchMethod__") \
     macro(NumberFormat, NumberFormat, "NumberFormat") \
     macro(NumberFormatFormatGet, NumberFormatFormatGet, "Intl_NumberFormat_format_get") \
@@ -169,6 +173,7 @@
     macro(proto, proto, "__proto__") \
     macro(prototype, prototype, "prototype") \
     macro(proxy, proxy, "proxy") \
+    macro(reason, reason, "reason") \
     macro(Reify, Reify, "Reify") \
     macro(resumeGenerator, resumeGenerator, "resumeGenerator") \
     macro(return, return_, "return") \
@@ -180,6 +185,8 @@
     macro(signMask, signMask, "signMask") \
     macro(source, source, "source") \
     macro(stack, stack, "stack") \
+    macro(startTimestamp, startTimestamp, "startTimestamp") \
+    macro(static, static_, "static") \
     macro(sticky, sticky, "sticky") \
     macro(strings, strings, "strings") \
     macro(StructType, StructType, "StructType") \

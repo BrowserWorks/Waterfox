@@ -20,7 +20,7 @@ pref("datareporting.healthreport.pendingDeleteRemoteData", false);
 // Health Report is enabled by default on all channels.
 pref("datareporting.healthreport.uploadEnabled", false);
 
-pref("datareporting.healthreport.service.enabled", false);
+pref("datareporting.healthreport.service.enabled", true);
 pref("datareporting.healthreport.service.loadDelayMsec", 10000);
 pref("datareporting.healthreport.service.loadDelayFirstRunMsec", 60000);
 

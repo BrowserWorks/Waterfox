@@ -40,7 +40,7 @@ public:
   static already_AddRefed<WorkerDataStore> Constructor(GlobalObject& aGlobal,
                                                        ErrorResult& aRv);
 
-  virtual JSObject* WrapObject(JSContext *aCx) override;
+  virtual JSObject* WrapObject(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // WebIDL (public APIs)
 
@@ -99,7 +99,7 @@ private:
 };
 
 class DataStoreChangeEventProxy final : public nsIDOMEventListener
-                                          , public WorkerFeature
+                                      , public WorkerFeature
 {
 public:
   NS_DECL_THREADSAFE_ISUPPORTS

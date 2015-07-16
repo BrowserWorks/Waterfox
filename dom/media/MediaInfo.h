@@ -10,6 +10,7 @@
 #include "nsRect.h"
 #include "ImageTypes.h"
 #include "nsString.h"
+#include "nsTArray.h"
 #include "StreamBuffer.h" // for TrackID
 
 namespace mozilla {
@@ -46,7 +47,6 @@ private:
     mDisplay = nsIntSize(aWidth, aHeight);
     mStereoMode = StereoMode::MONO;
     mHasVideo = aHasVideo;
-    mIsHardwareAccelerated = false;
 
     // TODO: TrackInfo should be initialized by its specific codec decoder.
     // This following call should be removed once we have that implemented.
@@ -76,8 +76,6 @@ public:
   bool mHasVideo;
 
   TrackInfo mTrackInfo;
-
-  bool mIsHardwareAccelerated;
 };
 
 class AudioInfo {
@@ -105,10 +103,22 @@ public:
   TrackInfo mTrackInfo;
 };
 
+class EncryptionInfo {
+public:
+  EncryptionInfo() : mIsEncrypted(false) {}
+
+  // Encryption type to be passed to JS. Usually `cenc'.
+  nsString mType;
+
+  // Encryption data.
+  nsTArray<uint8_t> mInitData;
+
+  // True if the stream has encryption metadata
+  bool mIsEncrypted;
+};
+
 class MediaInfo {
 public:
-  MediaInfo() : mIsEncrypted(false) {}
-
   bool HasVideo() const
   {
     return mVideo.mHasVideo;
@@ -119,16 +129,21 @@ public:
     return mAudio.mHasAudio;
   }
 
+  bool IsEncrypted() const
+  {
+    return mCrypto.mIsEncrypted;
+  }
+
   bool HasValidMedia() const
   {
     return HasVideo() || HasAudio();
   }
 
-  bool mIsEncrypted;
-
   // TODO: Store VideoInfo and AudioIndo in arrays to support multi-tracks.
   VideoInfo mVideo;
   AudioInfo mAudio;
+
+  EncryptionInfo mCrypto;
 };
 
 } // namespace mozilla

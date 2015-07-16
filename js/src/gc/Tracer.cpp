@@ -7,6 +7,7 @@
 #include "gc/Tracer.h"
 
 #include "mozilla/DebugOnly.h"
+#include "mozilla/SizePrintfMacros.h"
 
 #include "jsapi.h"
 #include "jsfun.h"
@@ -273,7 +274,7 @@ JS_GetTraceThingInfo(char* buf, size_t bufsize, JSTracer* trc, void* thing,
           case JSTRACE_SCRIPT:
           {
             JSScript* script = static_cast<JSScript*>(thing);
-            JS_snprintf(buf, bufsize, " %s:%u", script->filename(), unsigned(script->lineno()));
+            JS_snprintf(buf, bufsize, " %s:%" PRIuSIZE, script->filename(), script->lineno());
             break;
           }
 
@@ -324,10 +325,10 @@ JS_GetTraceThingInfo(char* buf, size_t bufsize, JSTracer* trc, void* thing,
     buf[bufsize - 1] = '\0';
 }
 
-JSTracer::JSTracer(JSRuntime* rt, JSTraceCallback traceCallback,
+JSTracer::JSTracer(JSRuntime* rt, TracerKindTag kindTag,
                    WeakMapTraceKind weakTraceKind /* = TraceWeakMapValues */)
-  : callback(traceCallback)
-  , runtime_(rt)
+  : runtime_(rt)
+  , tag(kindTag)
   , debugPrinter_(nullptr)
   , debugPrintArg_(nullptr)
   , debugPrintIndex_(size_t(-1))
@@ -386,7 +387,7 @@ JSTracer::debugPrintIndex() const
 }
 
 void
-JSTracer::setTraceCallback(JSTraceCallback traceCallback)
+JS::CallbackTracer::setTraceCallback(JSTraceCallback traceCallback)
 {
     callback = traceCallback;
 }
@@ -511,12 +512,11 @@ MarkStack::sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf) const
  * so we delay visting entries.
  */
 GCMarker::GCMarker(JSRuntime* rt)
-  : JSTracer(rt, nullptr, DoNotTraceWeakMaps),
+  : JSTracer(rt, JSTracer::MarkingTracer, DoNotTraceWeakMaps),
     stack(size_t(-1)),
     color(BLACK),
     unmarkedArenaStackTop(nullptr),
     markLaterArenas(0),
-    grayBufferState(GRAY_BUFFER_UNUSED),
     started(false),
     strictCompartmentChecking(false)
 {
@@ -553,9 +553,6 @@ GCMarker::stop()
 
     /* Free non-ballast stack memory. */
     stack.reset();
-
-    resetBufferedGrayRoots();
-    grayBufferState = GRAY_BUFFER_UNUSED;
 }
 
 void
@@ -646,103 +643,6 @@ GCMarker::checkZone(void* p)
 }
 #endif
 
-bool
-GCMarker::hasBufferedGrayRoots() const
-{
-    return grayBufferState == GRAY_BUFFER_OK;
-}
-
-void
-GCMarker::startBufferingGrayRoots()
-{
-    MOZ_ASSERT(grayBufferState == GRAY_BUFFER_UNUSED);
-    grayBufferState = GRAY_BUFFER_OK;
-    for (GCZonesIter zone(runtime()); !zone.done(); zone.next())
-        MOZ_ASSERT(zone->gcGrayRoots.empty());
-
-    MOZ_ASSERT(!callback);
-    callback = GrayCallback;
-    MOZ_ASSERT(IS_GC_MARKING_TRACER(this));
-}
-
-void
-GCMarker::endBufferingGrayRoots()
-{
-    MOZ_ASSERT(callback == GrayCallback);
-    callback = nullptr;
-    MOZ_ASSERT(IS_GC_MARKING_TRACER(this));
-    MOZ_ASSERT(grayBufferState == GRAY_BUFFER_OK ||
-               grayBufferState == GRAY_BUFFER_FAILED);
-}
-
-void
-GCMarker::resetBufferedGrayRoots()
-{
-    for (GCZonesIter zone(runtime()); !zone.done(); zone.next())
-        zone->gcGrayRoots.clearAndFree();
-}
-
-void
-GCMarker::markBufferedGrayRoots(JS::Zone* zone)
-{
-    MOZ_ASSERT(grayBufferState == GRAY_BUFFER_OK);
-    MOZ_ASSERT(zone->isGCMarkingGray() || zone->isGCCompacting());
-
-    for (GrayRoot* elem = zone->gcGrayRoots.begin(); elem != zone->gcGrayRoots.end(); elem++) {
-#ifdef DEBUG
-        setTracingDetails(elem->debugPrinter, elem->debugPrintArg, elem->debugPrintIndex);
-#endif
-        MarkKind(this, &elem->thing, elem->kind);
-    }
-}
-
-void
-GCMarker::appendGrayRoot(void* thing, JSGCTraceKind kind)
-{
-    MOZ_ASSERT(started);
-
-    if (grayBufferState == GRAY_BUFFER_FAILED)
-        return;
-
-    GrayRoot root(thing, kind);
-#ifdef DEBUG
-    root.debugPrinter = debugPrinter();
-    root.debugPrintArg = debugPrintArg();
-    root.debugPrintIndex = debugPrintIndex();
-#endif
-
-    Zone* zone = TenuredCell::fromPointer(thing)->zone();
-    if (zone->isCollecting()) {
-        // See the comment on SetMaybeAliveFlag to see why we only do this for
-        // objects and scripts. We rely on gray root buffering for this to work,
-        // but we only need to worry about uncollected dead compartments during
-        // incremental GCs (when we do gray root buffering).
-        switch (kind) {
-          case JSTRACE_OBJECT:
-            static_cast<JSObject*>(thing)->compartment()->maybeAlive = true;
-            break;
-          case JSTRACE_SCRIPT:
-            static_cast<JSScript*>(thing)->compartment()->maybeAlive = true;
-            break;
-          default:
-            break;
-        }
-        if (!zone->gcGrayRoots.append(root)) {
-            resetBufferedGrayRoots();
-            grayBufferState = GRAY_BUFFER_FAILED;
-        }
-    }
-}
-
-void
-GCMarker::GrayCallback(JSTracer* trc, void** thingp, JSGCTraceKind kind)
-{
-    MOZ_ASSERT(thingp);
-    MOZ_ASSERT(*thingp);
-    GCMarker* gcmarker = static_cast<GCMarker*>(trc);
-    gcmarker->appendGrayRoot(*thingp, kind);
-}
-
 size_t
 GCMarker::sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf) const
 {
@@ -757,4 +657,3 @@ js::SetMarkStackLimit(JSRuntime* rt, size_t limit)
 {
     rt->gc.setMarkStackLimit(limit);
 }
-

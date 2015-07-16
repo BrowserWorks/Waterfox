@@ -30,7 +30,7 @@ public:
 
   // WebIDL
   nsSVGElement* GetParentObject() { return mSVGElement; }
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
   already_AddRefed<DOMSVGLength> BaseVal();
   already_AddRefed<DOMSVGLength> AnimVal();
 

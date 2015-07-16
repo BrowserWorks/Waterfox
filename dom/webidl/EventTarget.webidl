@@ -10,7 +10,7 @@
  * liability, trademark and document use rules apply.
  */
 
-[Exposed=(Window,Worker,System)]
+[Exposed=(Window,Worker,WorkerDebugger,System)]
 interface EventTarget {
   /* Passing null for wantsUntrusted means "default behavior", which
      differs in content and chrome.  In content that default boolean
@@ -43,6 +43,6 @@ partial interface EventTarget {
 // chrome easier.  This returns the window which can be used to create
 // events to fire at this EventTarget, or null if there isn't one.
 partial interface EventTarget {
-  [ChromeOnly]
+  [ChromeOnly, Exposed=Window]
   readonly attribute WindowProxy? ownerGlobal;
 };

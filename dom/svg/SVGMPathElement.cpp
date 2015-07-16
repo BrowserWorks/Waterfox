@@ -19,9 +19,9 @@ namespace mozilla {
 namespace dom {
 
 JSObject*
-SVGMPathElement::WrapNode(JSContext *aCx)
+SVGMPathElement::WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return SVGMPathElementBinding::Wrap(aCx, this);
+  return SVGMPathElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 nsSVGElement::StringInfo SVGMPathElement::sStringInfo[1] =
@@ -187,7 +187,7 @@ SVGMPathElement::GetReferencedPath()
   }
 
   nsIContent* genericTarget = mHrefTarget.get();
-  if (genericTarget && genericTarget->IsSVG(nsGkAtoms::path)) {
+  if (genericTarget && genericTarget->IsSVGElement(nsGkAtoms::path)) {
     return static_cast<SVGPathElement*>(genericTarget);
   }
   return nullptr;
@@ -246,7 +246,7 @@ SVGMPathElement::UnlinkHrefTarget(bool aNotifyParent)
 void
 SVGMPathElement::NotifyParentOfMpathChange(nsIContent* aParent)
 {
-  if (aParent && aParent->IsSVG(nsGkAtoms::animateMotion)) {
+  if (aParent && aParent->IsSVGElement(nsGkAtoms::animateMotion)) {
 
     SVGAnimateMotionElement* animateMotionParent =
       static_cast<SVGAnimateMotionElement*>(aParent);

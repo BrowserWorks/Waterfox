@@ -151,6 +151,44 @@ panel > .panel-arrowcontainer > .panel-arrowcontent {
   max-width: 400px;
 }
 
+#project-listing-panel {
+  display: none;
+  position: relative;
+  max-width: 250px;
+  overflow: hidden;
+}
+
+#project-listing-wrapper {
+  height: 100%;
+  width: 100%;
+  min-width: 100px;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  left: 0;
+}
+
+#project-listing-panel-details {
+  height: inherit;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  left: 0;
+}
+
+/* TODO: remove once Bug 1079347 is complete */
+.project-listing, #project-listing-splitter {
+  display: none;
+}
+
+#project-listing-splitter[sidebar-displayed], #project-listing-panel[sidebar-displayed],
+#project-listing-panel[sidebar-displayed] .project-listing {
+  display: block;
+}
+
 .panel-item {
   padding: 3px 12px;
   margin: 0;
@@ -217,6 +255,7 @@ panel > .panel-arrowcontainer > .panel-arrowcontent {
 #runtime-screenshot,
 #runtime-permissions,
 #runtime-preferences,
+#runtime-settings,
 #runtime-disconnect,
 #runtime-panel-nousbdevice,
 #runtime-panel-noadbhelper,
@@ -232,6 +271,7 @@ panel > .panel-arrowcontainer > .panel-arrowcontent {
 #runtime-screenshot             { -moz-image-region: rect(130px,438px,156px,412px) }
 #runtime-permissions            { -moz-image-region: rect(104px,438px,130px,412px) }
 #runtime-preferences            { -moz-image-region: rect(104px,462px,129px,438px) }
+#runtime-settings               { -moz-image-region: rect(104px,462px,129px,438px) }
 #runtime-disconnect             { -moz-image-region: rect(52px,438px,78px,412px) }
 #runtime-panel-nousbdevice      { -moz-image-region: rect(156px,438px,182px,412px) }
 #runtime-panel-noadbhelper      { -moz-image-region: rect(234px,438px,260px,412px) }
@@ -280,25 +320,19 @@ panel > .panel-arrowcontainer > .panel-arrowcontent {
 }
 
 .devtools-horizontal-splitter {
-  -moz-appearance: none;
-  background-image: none;
-  background-color: transparent;
-  border: 0;
-  border-bottom: 1px solid rgba(118, 121, 125, .5);
-  min-height: 3px;
-  height: 3px;
-  margin-top: -3px;
   position: relative;
   border-bottom: 1px solid #aaa;
 }
 
 /* Toolbox */
 
-#notificationbox[toolboxfullscreen] > .devtools-horizontal-splitter,
-#notificationbox[toolboxfullscreen] > #deck,
-#notificationbox[toolboxfullscreen] > #deck > iframe {
+#notificationbox[toolboxfullscreen] > .devtools-horizontal-splitter {
   min-height: 0;
   max-height: 0;
+}
+
+#notificationbox[toolboxfullscreen] > #deck-panels {
+  display: none;
 }
 
 #notificationbox[toolboxfullscreen] > #toolbox {

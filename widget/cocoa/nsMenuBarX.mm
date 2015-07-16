@@ -132,8 +132,7 @@ void nsMenuBarX::ConstructNativeMenus()
   for (uint32_t i = 0; i < count; i++) { 
     nsIContent *menuContent = mContent->GetChildAt(i);
     if (menuContent &&
-        menuContent->Tag() == nsGkAtoms::menu &&
-        menuContent->IsXUL()) {
+        menuContent->IsXULElement(nsGkAtoms::menu)) {
       nsMenuX* newMenu = new nsMenuX();
       if (newMenu) {
         nsresult rv = newMenu->Create(this, this, menuContent);
@@ -496,6 +495,14 @@ char nsMenuBarX::GetLocalizedAccelKey(const char *shortcutID)
   char retval = tolower(keyASCPtr[0]);
 
   return retval;
+}
+
+/* static */
+void nsMenuBarX::ResetNativeApplicationMenu()
+{
+  [sApplicationMenu removeAllItems];
+  [sApplicationMenu release];
+  sApplicationMenu = nil;
 }
 
 // Hide the item in the menu by setting the 'hidden' attribute. Returns it in |outHiddenNode| so

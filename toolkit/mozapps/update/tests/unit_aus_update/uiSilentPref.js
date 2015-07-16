@@ -11,12 +11,12 @@
 function run_test() {
   setupTestCommon();
 
-  logTestInfo("testing nsIUpdatePrompt notifications should not be seen " +
-              "when the " + PREF_APP_UPDATE_SILENT + " preference is true");
+  debugDump("testing nsIUpdatePrompt notifications should not be seen " +
+            "when the " + PREF_APP_UPDATE_SILENT + " preference is true");
 
   Services.prefs.setBoolPref(PREF_APP_UPDATE_SILENT, true);
 
-  let registrar = Components.manager.QueryInterface(AUS_Ci.nsIComponentRegistrar);
+  let registrar = Cm.QueryInterface(Ci.nsIComponentRegistrar);
   registrar.registerFactory(Components.ID("{1dfeb90a-2193-45d5-9cb8-864928b2af55}"),
                             "Fake Window Watcher",
                             "@mozilla.org/embedcomp/window-watcher;1",
@@ -24,7 +24,7 @@ function run_test() {
 
   standardInit();
 
-  logTestInfo("testing showUpdateInstalled should not call openWindow");
+  debugDump("testing showUpdateInstalled should not call openWindow");
   Services.prefs.setBoolPref(PREF_APP_UPDATE_SHOW_INSTALLED_UI, true);
 
   gCheckFunc = check_showUpdateInstalled;
@@ -33,7 +33,7 @@ function run_test() {
   // didn't throw and otherwise it would report no tests run.
   do_check_true(true);
 
-  logTestInfo("testing showUpdateAvailable should not call openWindow");
+  debugDump("testing showUpdateAvailable should not call openWindow");
   writeUpdatesToXMLFile(getLocalUpdatesXMLString(""), false);
   let patches = getLocalPatchString(null, null, null, null, null, null,
                                     STATE_FAILED);
@@ -49,7 +49,7 @@ function run_test() {
   // didn't throw and otherwise it would report no tests run.
   do_check_true(true);
 
-  logTestInfo("testing showUpdateError should not call getNewPrompter");
+  debugDump("testing showUpdateError should not call getNewPrompter");
   gCheckFunc = check_showUpdateError;
   update.errorCode = WRITE_ERROR;
   gUP.showUpdateError(update);
@@ -57,7 +57,7 @@ function run_test() {
   // didn't throw and otherwise it would report no tests run.
   do_check_true(true);
 
-  registrar = Components.manager.QueryInterface(AUS_Ci.nsIComponentRegistrar);
+  registrar = Cm.QueryInterface(Ci.nsIComponentRegistrar);
   registrar.unregisterFactory(Components.ID("{1dfeb90a-2193-45d5-9cb8-864928b2af55}"),
                               WindowWatcherFactory);
 
@@ -76,7 +76,7 @@ function check_showUpdateError() {
   do_throw("showUpdateError should not have seen getNewPrompter!");
 }
 
-var WindowWatcher = {
+const WindowWatcher = {
   openWindow: function(aParent, aUrl, aName, aFeatures, aArgs) {
     gCheckFunc();
   },
@@ -85,19 +85,14 @@ var WindowWatcher = {
     gCheckFunc();
   },
 
-  QueryInterface: function(aIID) {
-    if (aIID.equals(AUS_Ci.nsIWindowWatcher) ||
-        aIID.equals(AUS_Ci.nsISupports))
-      return this;
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIWindowWatcher])
+};
 
-    throw AUS_Cr.NS_ERROR_NO_INTERFACE;
-  }
-}
-
-var WindowWatcherFactory = {
+const WindowWatcherFactory = {
   createInstance: function createInstance(aOuter, aIID) {
-    if (aOuter != null)
-      throw AUS_Cr.NS_ERROR_NO_AGGREGATION;
+    if (aOuter != null) {
+      throw Cr.NS_ERROR_NO_AGGREGATION;
+    }
     return WindowWatcher.QueryInterface(aIID);
   }
 };

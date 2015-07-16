@@ -35,7 +35,7 @@ public:
                             const nsAString& aScope);
 
   JSObject*
-  WrapObject(JSContext* aCx) override;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   already_AddRefed<workers::ServiceWorker>
   GetInstalling();
@@ -58,9 +58,6 @@ public:
   // Useful methods for ServiceWorkerManager:
   void
   InvalidateWorkerReference(WhichServiceWorker aWhichOnes);
-
-  void
-  QueueStateChangeEvent(WhichServiceWorker aWhichOne, ServiceWorkerState aState) const;
 
   // DOMEventTargethelper
   virtual void DisconnectFromOwner() override;

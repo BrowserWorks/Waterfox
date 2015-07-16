@@ -1,0 +1,136 @@
+msysCORE
+========================================================================
+msysCORE consists of the MSYS runtime plus the basic support files for
+a standard MSYS installation.
+
+Runtime requirements:
+  None.
+
+Build requirements:
+  msys-bash-bin
+  msys-core-ext
+  msys-coreutils-bin
+  msys-diffutils-bin
+  msys-findutils-bin
+  msys-gawk-bin
+  msys-grep-bin
+  msys-make-bin
+  msys-sed-bin
+  msys-tar-bin
+  msys-xz-bin
+  msys-gcc-bin
+  mingw32-gcc-g++
+
+Canonical homepage:
+  http://www.mingw.org/wiki/msys/
+
+Canonical download:
+  http://sourceforge.net/projects/mingw/files/
+
+License:
+  Cygwin (see /share/doc/MSYS/CYGWIN_LICENSE)
+
+Language:
+  C, C++
+
+========================================================================
+
+Build instructions:
+1) unpack msysCORE-1.0.18-1-msys-1.0.18-src.tar.lzma
+2) Install the build requirements:
+  ./msysrlsbld -e build_dep
+  (requires mingw-get in PATH)
+3) Create an empty build directory and type: 
+   <path-to-source>/msysrlsbld
+
+See <path-to-source>/msysrlsbld -h for further options.
+
+This will create:
+
+  msysCORE-1.0.18-1-msys-1.0.18-bin.tar.lzma
+    MSYS runtime DLL plus basic support files
+
+  msysCORE-1.0.18-1-msys-1.0.18-ext.tar.lzma
+    A few support scripts dependent on other MSYS components.
+
+  msysCORE-1.0.18-1-msys-1.0.18-dev.tar.lzma
+    Development files for the MSYS runtime.
+
+  msysCORE-1.0.18-1-msys-1.0.18-doc.tar.lzma
+    MSYS documentation.
+
+  msysCORE-1.0.18-1-msys-1.0.18-lic.tar.lzma
+    MSYS license.
+
+  msysCORE-1.0.18-1-msys-1.0.18-dbg.tar.bz2
+    Debug information:
+    * msys-1.0-debug.dll - Debug version of the MSYS runtime.
+    * strace.exe - System call tracer for use with the above.
+    * msys-1.0.dll.dbg - Symbolic information for decoding stack dumps.
+
+========================================================================
+
+----------  msysCORE-1.0.18-1 -- 2012 Nov 21 -----------
+* Enable quoting of globbing characters on the command-line of native
+  applications.
+* In case of an absent /etc directory, keep on trying to monitor the root
+  directory for its creation instead of silently failing.
+* Fix getpwnam to return NULL for unknown user names, and be more robust
+  when HOME is not set.
+* Import Cygwin 1.3.4 and port modern wincap functionality.
+
+----------  msysCORE-1.0.17-1 -- 2011 Apr 19 -----------
+* Allow to override the error mode for Windows exceptions like GPF.
+
+----------  msysCORE-1.0.16-1 -- 2010 Sep 28 -----------
+* Fix a race condition when determining if a pid is valid
+  just after creating the process (bug #3042292)
+* Support path conversion of @file arguments.
+* Be more robust when dealing with ambiguous paths and mount points
+  (eg. /usr/tmp vs. /tmp, when /usr == /). Fixes bug #3059626.
+* Add --mintty option to msys.bat, for using mintty as the MSYS
+  terminal (mintty must be already installed for this to work).
+
+----------  msysCORE-1.0.15-1 -- 2010 Jul 06 -----------
+* Add declarations of fchdir and getdomainname to sys/unistd.h
+* Add declarations of rcmd, rexec, and rresvport to netdb.h
+* Correct bug involving double evaluations of pseudo-relocations
+  after fork().  Affected MSYS applications must be recompiled to
+  take advantage of this fix.
+* Add --replace option to mount and umount scripts
+* Split -bin component into -bin, -ext, -doc and -lic.
+* Removed a dependency of strace on the native GCC shared runtimes.
+* Moved the MSYS DLL base to 0x60800000, to hopefully minimize the need
+  to rebase it so often.
+* Simplified the bin/cmd script
+
+----------  msysCORE-1.0.14-1 -- 2010 Mar 17 -----------
+* Fix path translation in presence of components with dots.
+Example: /mingw/example.dot/../include
+-> c:/mingw/example.dot/../include
+
+----------  msysCORE-1.0.13-2 -- 2010 Jan 27 -----------
+* Recompile at -O3 +:
+    -fno-unit-at-a-time
+  to avoid compiler optimization bug at -O3 and -O2
+
+----------  msysCORE-1.0.13-1 -- 2010 Jan 15 -----------
+* Updated MSYS to support runtime pseudo-relocs (see `info ld'
+  and search for --enable-runtime-pseudo-reloc). Both v1 and v2
+  relocations are supported.
+* Other changes necesssary to allow building with GCC 3.x rather
+  than the old 2.95.3 version.
+* Developer files are moved from within /usr/i686-pc-msys to
+  /usr/include and /usr/lib.
+* Fix a potential crash when preparing to run executables.
+* Fix bug #1249827 - MSYS appending Win32 path to hyphen.
+
+----------  msysCORE-1.0.12-1 -- 2010 Jan 5 -----------
+* Documentation moved to /share/doc/MSYS
+* MSYS symlink semantics are documented in /share/doc/MSYS/README.rtf
+* Improve symlink emulation:
+  - handle relative symlinks
+  - avoid infinite recursion
+  - correct return value on failure
+  - fail if destination exists
+* Better Win9x compatibility.

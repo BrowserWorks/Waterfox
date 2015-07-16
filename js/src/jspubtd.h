@@ -119,9 +119,10 @@ typedef JSConstScalarSpec<int32_t> JSConstIntegerSpec;
 typedef void
 (* JSTraceDataOp)(JSTracer* trc, void* data);
 
-void js_FinishGC(JSRuntime* rt);
-
 namespace js {
+
+void FinishGC(JSRuntime* rt);
+
 namespace gc {
 class StoreBuffer;
 void MarkPersistentRootedChains(JSTracer*);
@@ -248,9 +249,10 @@ class JS_PUBLIC_API(AutoGCRooter)
         PARSER =       -3, /* js::frontend::Parser */
         SHAPEVECTOR =  -4, /* js::AutoShapeVector */
         IDARRAY =      -6, /* js::AutoIdArray */
-        DESCVECTOR =   -7, /* js::AutoPropDescVector */
+        DESCVECTOR =   -7, /* js::AutoPropertyDescriptorVector */
         VALVECTOR =   -10, /* js::AutoValueVector */
-        IDVECTOR =    -13, /* js::AutoIdVector */
+        IDVECTOR =    -11, /* js::AutoIdVector */
+        IDVALVECTOR = -12, /* js::AutoIdValueVector */
         OBJVECTOR =   -14, /* js::AutoObjectVector */
         STRINGVECTOR =-15, /* js::AutoStringVector */
         SCRIPTVECTOR =-16, /* js::AutoScriptVector */

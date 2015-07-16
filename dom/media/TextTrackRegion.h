@@ -22,7 +22,7 @@ class GlobalObject;
 class TextTrack;
 
 class TextTrackRegion final : public nsISupports,
-                                  public nsWrapperCache
+                              public nsWrapperCache
 {
 public:
 
@@ -35,7 +35,7 @@ public:
            Preferences::GetBool("media.webvtt.regions.enabled");
   }
 
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   nsISupports* GetParentObject() const
   {

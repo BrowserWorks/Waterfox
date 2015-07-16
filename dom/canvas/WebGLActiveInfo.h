@@ -25,7 +25,7 @@ public:
     NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_NATIVE_CLASS(WebGLActiveInfo)
     NS_INLINE_DECL_CYCLE_COLLECTING_NATIVE_REFCOUNTING(WebGLActiveInfo)
 
-    virtual JSObject* WrapObject(JSContext* js) override;
+    virtual JSObject* WrapObject(JSContext* js, JS::Handle<JSObject*> aGivenProto) override;
 
     WebGLContext* GetParentObject() const {
         return mWebGL;

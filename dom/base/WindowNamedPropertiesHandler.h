@@ -28,19 +28,19 @@ public:
   virtual bool
   defineProperty(JSContext* aCx, JS::Handle<JSObject*> aProxy,
                  JS::Handle<jsid> aId,
-                 JS::MutableHandle<JSPropertyDescriptor> aDesc) const override;
+                 JS::Handle<JSPropertyDescriptor> aDesc,
+                 JS::ObjectOpResult &result) const override;
   virtual bool
   ownPropNames(JSContext* aCx, JS::Handle<JSObject*> aProxy, unsigned flags,
                JS::AutoIdVector& aProps) const override;
   virtual bool
   delete_(JSContext* aCx, JS::Handle<JSObject*> aProxy, JS::Handle<jsid> aId,
-          bool* aBp) const override;
+          JS::ObjectOpResult &aResult) const override;
   virtual bool
   preventExtensions(JSContext* aCx, JS::Handle<JSObject*> aProxy,
-                    bool *succeeded) const override
+                    JS::ObjectOpResult& aResult) const override
   {
-    *succeeded = false;
-    return true;
+    return aResult.failCantPreventExtensions();
   }
   virtual bool
   isExtensible(JSContext* aCx, JS::Handle<JSObject*> aProxy,

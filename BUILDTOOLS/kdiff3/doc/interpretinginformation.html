@@ -1,0 +1,67 @@
+<html><head><title>Comparing Files And Interpreting The Information In The Input Windows</title><link rel="stylesheet" href="common/kde-default.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.67.2"><meta name="keywords" content="KDE, kdeextragear, kdiff3, diff, merge, CVS, triplediff, compare, files, directories, version control, three-way-merge, in-line-differences, synchronise, kpart, kio, networktransparent, editor, white space, comments"><link rel="start" href="index.html" title="The KDiff3 Handbook"><link rel="up" href="documentation.html" title="Chapter 2. File Comparison And Merge"><link rel="prev" href="pasteinput.html" title="Paste and Drop Input"><link rel="next" href="merging.html" title="Merging And The Merge Output Editor Window"><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta name="GENERATOR" content="KDE XSL Stylesheet V1.13 using libxslt"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div style="position: absolute; left 0px;"><img src="common/top-left.png" style="margin: 0px" alt=""></div><div style="background-image: url(common/top-middle.png); width: 100%; height: 131px;"><div style="position: absolute;                      right: 0px;"><img src="common/top-right.png" style="margin: 0px" alt=""></div><div style="position: absolute;                         top: 63px;                         right: 0px;                         margin-top: -1em;                         margin-right: 5%;                         text-align: right;                          font-size: xx-large;                          font-weight: bold;                          text-shadow: #CDE1FF 0px 0px 5px;                          color: #444">Comparing Files And Interpreting The Information In The Input Windows</div></div><div style="margin-top: 20px; background-color: #white;                        color: black;                       margin-left: 20px;                        margin-right: 20px;"><div style="position: absolute;                          left: 20px;"><a accesskey="p" href="pasteinput.html">Prev</a></div><div style="position: absolute;                          right: 20px;"><a accesskey="n" href="merging.html">Next</a></div><div class="navCenter">File Comparison And Merge</div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="interpretinginformation"></a>Comparing Files And Interpreting The Information In The Input Windows</h2></div></div></div><div class="screenshot"><div xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="mediaobject"><hr><img src="screenshot_diff.png"><hr></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2538638"></a>Info Line</h3></div></div></div><p>
+   At the top of each text window is its "info line". The info lines of
+   the input windows contain a letter "A", "B" or "C", the editable filename,
+   a button for browsing, and the line number of the first visible line in the window. 
+   (Note that window "C" is  optional.) Each info line appears in a different color.
+</p><p>
+   When you selected another file via browsing or finished editing the filename here 
+   by pressing enter, the new file will be loaded and 
+   compared with the already loaded file(s).
+</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2538655"></a>Coloring</h3></div></div></div><p>
+   The three input windows are assigned the letters "A", "B" and "C".
+   "A"   has  color blue, "B" has green and "C" has magenta. (These are the
+   defaults,   but  can be changed in the Settings-Menu.)
+</p><p>
+   When a difference is detected then the color shows which input file
+   differs.   When both other input files differ then the color used to express
+   this is   red by default ("Conflict color" in the Settings).
+   This colorscheme is especially useful in the case of three input files, which will be
+   seen in the next section (<a href="merging.html" title="Merging And The Merge Output Editor Window">Merging</a>).
+</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2538682"></a>Summary Column</h3></div></div></div><p>
+   Left of each text is the "summary column". If differences occurred on a
+   line then the summary column shows the respective color. For a white-space-only
+   difference the summary is chequered. For programming languages where white
+   space is not so important this is useful to see at one glance if anything
+   of importance was modified. (In C/C++ white space is only interesting within
+   strings, comments, for the preprocessor, and some only very esoteric situations.)
+</p><p>
+   The vertical line separating the summary column and the text is interrupted
+   if the input file had no lines there. When word-wrap is enabled then this vertical 
+   line appears dotted for wrapped lines.
+</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2538702"></a>Overview Column</h3></div></div></div><p>
+   On the right side a "overview"-column is visible left of the vertical scrollbar.
+   It shows the compressed summary column of input "A". All the differences
+   and conflicts are visible at one glance. When only two input windows are
+   used, then all differences appear red here because every difference is
+   also   a conflict. A black rectangle frames the visible part of the inputs.
+   For  very long input files, when the number of input lines is bigger than
+   the height of the overview column in pixels, then several input lines share
+   one overview line. A conflict then has top priority over simple differences,
+   which have priority over no change, so that no difference or conflict is
+   lost here.  By clicking into this overview column the corresponding text
+   will be shown.
+</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="manualdiffhelp"></a>Manually Aligning Lines</h3></div></div></div><p>
+   Sometimes the algorithm places the wrong lines next to each other. Or you want to compare 
+   one piece of text with text at a completely different position in the other file.
+   For these situations you can manually instruct <span class="application">KDiff3</span> to align certain lines. 
+   Mark the text for which you want to improve the alignment with the mouse as you would 
+   for copy and paste in the first diff view and then choose "Add Manual Diff Alignment" 
+   in the "Diffview"-menu (keyboard shortcut "Ctrl-Y") . An orange bar will appear in 
+   the summary column next to the chosen text. Repeat this for the second and 
+   (if available) third diff view. <span class="application">KDiff3</span> will immediately recalculate the differences everytime you do this.
+   and will align the chosen lines. Of course some of the previously matching lines in between 
+   might not match anymore.
+</p><p>
+   Currently merging doesn't support the use of manual diff help.
+</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="joinsplitsections"></a>Manually Joining and Splitting Diff Sections</h3></div></div></div><p>
+   In some cases <span class="application">KDiff3</span> will see too many or too few diff sections for merging. In such a 
+   case you can join or split existing sections.
+</p><p>
+   Add new sections by first selecting text in the lines that belong together in either input window (as for copying to the clipboard). 
+   Then choose "Split Diff At Selection" in the "Merge" menu.
+   Splits will be added above the first line and below the last line of the selected text.
+   If you only want to add one section, then select text beginning at another section-split.
+</p><p>
+   For joining sections in either input window select something in the lines from the sections to join.
+   (You can join several sections in one step too.) Then choose "Join selected Diffs" in the "Merge"-menu.
+</p></div></div><div style="background-color: #white; color: black;                  margin-top: 20px; margin-left: 20px;                  margin-right: 20px;"><div style="position: absolute; left: 20px;"><a accesskey="p" href="pasteinput.html">Prev</a></div><div style="position: absolute; right: 20px;"><a accesskey="n" href="merging.html">Next</a></div><div align="center"><a accesskey="h" href="index.html">Contents</a></div></div><div style="background-color: #white;   color: black;         margin-left: 20px;   margin-right: 20px;"><div class="navLeft">Paste and Drop Input </div><div class="navRight"> Merging And The Merge Output Editor Window</div><div class="navCenter"><a accesskey="u" href="documentation.html">Up</a></div></div><br><br><div class="bannerBottom" style="background-image: url(common/bottom-middle.png);                                        background-repeat: x-repeat;                                         width: 100%;                                         height: 70px;                                         bottom:0px;"><div class="BannerBottomRight"><img src="common/bottom-right.png" style="height: 70px; margin: 0px" alt=""></div><div class="bannerBottomLeft"><img src="common/bottom-left.png" style="height: 70px; margin: 0px;" alt=""></div><div id="comments" style="position:relative; top: 15px; left: 1em; width: 100%; color: #282828;"><p>Would you like to make a comment or contribute an update to this page?<br>Send feedback to the <a href="mailto:kde-doc-english@kde.org" style="background:transparent; color: #282828; text-decoration: underline;">KDE Docs Team</a></p></div></div></body></html>

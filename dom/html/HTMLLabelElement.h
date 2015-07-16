@@ -18,7 +18,7 @@ class EventChainPostVisitor;
 namespace dom {
 
 class HTMLLabelElement final : public nsGenericHTMLFormElement,
-                                   public nsIDOMHTMLLabelElement
+                               public nsIDOMHTMLLabelElement
 {
 public:
   explicit HTMLLabelElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
@@ -76,7 +76,7 @@ public:
 protected:
   virtual ~HTMLLabelElement();
 
-  virtual JSObject* WrapNode(JSContext *aCx) override;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   nsGenericHTMLElement* GetFirstLabelableDescendant() const;
 

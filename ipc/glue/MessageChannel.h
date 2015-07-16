@@ -88,7 +88,7 @@ class MessageChannel : HasResultCodes
 
     void SetAbortOnError(bool abort)
     {
-        mAbortOnError = true;
+        mAbortOnError = abort;
     }
 
     // Misc. behavioral traits consumers can request for this channel
@@ -134,6 +134,14 @@ class MessageChannel : HasResultCodes
     bool IsOnCxxStack() const {
         return !mCxxStackFrames.empty();
     }
+
+    /**
+     * This function is used by hang annotation code to determine which IPDL
+     * actor is highest in the call stack at the time of the hang. It should
+     * be called from the main thread when a sync or intr message is about to
+     * be sent.
+     */
+    int32_t GetTopmostMessageRoutingId() const;
 
     void FlushPendingInterruptQueue();
 
@@ -219,6 +227,7 @@ class MessageChannel : HasResultCodes
     bool InterruptEventOccurred();
     bool HasPendingEvents();
 
+    void ProcessPendingRequests();
     bool ProcessPendingRequest(const Message &aUrgent);
 
     void MaybeUndeferIncall();

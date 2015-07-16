@@ -1,6 +1,7 @@
 ---
 $inherits:
   from: 'tasks/test.yml'
+reruns: 2
 task:
   metadata:
     name: '[TC] Gaia Unit Test OOP'
@@ -15,6 +16,7 @@ task:
         --no-read-buildbot-config
         --config-file ./mozharness/configs/b2g/gaia_unit_production_config.py
         --config-file ./mozharness_configs/gaia_integration_override.py
+        --config-file ./mozharness_configs/remove_executables.py
         --browser-arg -oop
         --download-symbols ondemand
         --installer-url {{build_url}}

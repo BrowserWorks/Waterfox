@@ -16,6 +16,9 @@
 #include "mozilla/dom/Promise.h"
 #include "mozilla/dom/ServiceWorkerGlobalScopeBinding.h"
 #include "mozilla/dom/SharedWorkerGlobalScopeBinding.h"
+#include "mozilla/dom/WorkerDebuggerGlobalScopeBinding.h"
+#include "mozilla/dom/WorkerGlobalScopeBinding.h"
+#include "mozilla/dom/cache/CacheStorage.h"
 #include "mozilla/dom/indexedDB/IDBFactory.h"
 #include "mozilla/Services.h"
 #include "nsServiceManagerUtils.h"
@@ -37,14 +40,11 @@
 #include "Performance.h"
 #include "ServiceWorkerClients.h"
 
-#define UNWRAP_WORKER_OBJECT(Interface, obj, value)                           \
-  UnwrapObject<prototypes::id::Interface##_workers,                           \
-    mozilla::dom::Interface##Binding_workers::NativeType>(obj, value)
-
 using namespace mozilla;
 using namespace mozilla::dom;
 USING_WORKERS_NAMESPACE
 
+using mozilla::dom::cache::CacheStorage;
 using mozilla::dom::indexedDB::IDBFactory;
 using mozilla::ipc::PrincipalInfo;
 
@@ -71,6 +71,7 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(WorkerGlobalScope,
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mLocation)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mNavigator)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mIndexedDB)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mCacheStorage)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(WorkerGlobalScope,
@@ -81,6 +82,7 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(WorkerGlobalScope,
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mLocation)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mNavigator)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mIndexedDB)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mCacheStorage)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN_INHERITED(WorkerGlobalScope,
@@ -99,7 +101,7 @@ NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(WorkerGlobalScope)
 NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
 
 JSObject*
-WorkerGlobalScope::WrapObject(JSContext* aCx)
+WorkerGlobalScope::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
   MOZ_CRASH("We should never get here!");
 }
@@ -114,6 +116,19 @@ WorkerGlobalScope::GetConsole()
   }
 
   return mConsole;
+}
+
+already_AddRefed<CacheStorage>
+WorkerGlobalScope::GetCaches(ErrorResult& aRv)
+{
+  if (!mCacheStorage) {
+    MOZ_ASSERT(mWorkerPrivate);
+    mCacheStorage = CacheStorage::CreateOnWorker(cache::DEFAULT_NAMESPACE, this,
+                                                 mWorkerPrivate, aRv);
+  }
+
+  nsRefPtr<CacheStorage> ref = mCacheStorage;
+  return ref.forget();
 }
 
 already_AddRefed<WorkerLocation>
@@ -156,11 +171,15 @@ WorkerGlobalScope::GetExistingNavigator() const
 }
 
 void
-WorkerGlobalScope::Close(JSContext* aCx)
+WorkerGlobalScope::Close(JSContext* aCx, ErrorResult& aRv)
 {
   mWorkerPrivate->AssertIsOnWorkerThread();
 
-  mWorkerPrivate->CloseInternal(aCx);
+  if (mWorkerPrivate->IsServiceWorker()) {
+    aRv.Throw(NS_ERROR_DOM_INVALID_ACCESS_ERR);
+  } else {
+    mWorkerPrivate->CloseInternal(aCx);
+  }
 }
 
 OnErrorEventHandlerNonNull*
@@ -454,10 +473,114 @@ ServiceWorkerGlobalScope::Clients()
   return mClients;
 }
 
+WorkerDebuggerGlobalScope::WorkerDebuggerGlobalScope(
+                                                  WorkerPrivate* aWorkerPrivate)
+: mWorkerPrivate(aWorkerPrivate)
+{
+  mWorkerPrivate->AssertIsOnWorkerThread();
+}
+
+WorkerDebuggerGlobalScope::~WorkerDebuggerGlobalScope()
+{
+  mWorkerPrivate->AssertIsOnWorkerThread();
+}
+
+NS_IMPL_ADDREF_INHERITED(WorkerDebuggerGlobalScope, DOMEventTargetHelper)
+NS_IMPL_RELEASE_INHERITED(WorkerDebuggerGlobalScope, DOMEventTargetHelper)
+
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(WorkerDebuggerGlobalScope)
+  NS_INTERFACE_MAP_ENTRY(nsIGlobalObject)
+NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
+
+bool
+WorkerDebuggerGlobalScope::WrapGlobalObject(JSContext* aCx,
+                                            JS::MutableHandle<JSObject*> aReflector)
+{
+  mWorkerPrivate->AssertIsOnWorkerThread();
+
+  JS::CompartmentOptions options;
+  mWorkerPrivate->CopyJSCompartmentOptions(options);
+
+  return WorkerDebuggerGlobalScopeBinding::Wrap(aCx, this, this, options,
+                                                GetWorkerPrincipal(), true,
+                                                aReflector);
+}
+
+void
+WorkerDebuggerGlobalScope::GetGlobal(JSContext* aCx,
+                                     JS::MutableHandle<JSObject*> aGlobal)
+{
+  aGlobal.set(mWorkerPrivate->GetOrCreateGlobalScope(aCx)->GetWrapper());
+}
+
+void
+WorkerDebuggerGlobalScope::EnterEventLoop()
+{
+  mWorkerPrivate->EnterDebuggerEventLoop();
+}
+
+void
+WorkerDebuggerGlobalScope::LeaveEventLoop()
+{
+  mWorkerPrivate->LeaveDebuggerEventLoop();
+}
+
+void
+WorkerDebuggerGlobalScope::PostMessage(const nsAString& aMessage)
+{
+  mWorkerPrivate->PostMessageToDebugger(aMessage);
+}
+
+void
+WorkerDebuggerGlobalScope::ReportError(JSContext* aCx,
+                                       const nsAString& aMessage)
+{
+  JS::AutoFilename afn;
+  uint32_t lineno = 0;
+  JS::DescribeScriptedCaller(aCx, &afn, &lineno);
+  nsString filename(NS_ConvertUTF8toUTF16(afn.get()));
+  mWorkerPrivate->ReportErrorToDebugger(filename, lineno, aMessage);
+}
+
+void
+WorkerDebuggerGlobalScope::Dump(JSContext* aCx,
+                                const Optional<nsAString>& aString) const
+{
+  return mWorkerPrivate->GetOrCreateGlobalScope(aCx)->Dump(aString);
+}
+
+nsIGlobalObject*
+GetGlobalObjectForGlobal(JSObject* global)
+{
+  nsIGlobalObject* globalObject = nullptr;
+  UNWRAP_WORKER_OBJECT(WorkerGlobalScope, global, globalObject);
+  if (!globalObject) {
+    UNWRAP_OBJECT(WorkerDebuggerGlobalScope, global, globalObject);
+    MOZ_ASSERT(globalObject);
+  }
+  return globalObject;
+}
+
+bool
+IsWorkerGlobal(JSObject* object)
+{
+  nsIGlobalObject* globalObject;
+  return NS_SUCCEEDED(UNWRAP_WORKER_OBJECT(WorkerGlobalScope, object,
+                                           globalObject)) && !!globalObject;
+}
+
+bool
+IsDebuggerGlobal(JSObject* object)
+{
+  nsIGlobalObject* globalObject;
+  return NS_SUCCEEDED(UNWRAP_OBJECT(WorkerDebuggerGlobalScope, object,
+                                    globalObject)) && !!globalObject;
+}
+
 bool
 GetterOnlyJSNative(JSContext* aCx, unsigned aArgc, JS::Value* aVp)
 {
-  JS_ReportErrorNumber(aCx, js_GetErrorMessage, nullptr, JSMSG_GETTER_ONLY);
+  JS_ReportErrorNumber(aCx, js::GetErrorMessage, nullptr, JSMSG_GETTER_ONLY);
   return false;
 }
 
@@ -490,8 +613,8 @@ private:
 };
 
 class WorkerScopeUnregisterRunnable final : public nsRunnable
-                                              , public nsIServiceWorkerUnregisterCallback
-                                              , public WorkerFeature
+                                          , public nsIServiceWorkerUnregisterCallback
+                                          , public WorkerFeature
 {
   WorkerPrivate* mWorkerPrivate;
   nsString mScope;

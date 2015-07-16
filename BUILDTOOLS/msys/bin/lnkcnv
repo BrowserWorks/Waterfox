@@ -1,0 +1,19 @@
+#!/bin/sh
+# Copyright (C) 2002, Earnie Boyd
+#   mailto:earnie@users.sf.net
+# This file is part of Minimal SYStem.
+#   http://www.mingw.org/msys.shtml
+# File: lnkcnv - .lnk symlink file to actual file converter.
+
+Param1=$1
+LinkName=`echo $Param1 | sed -e 's/\.lnk$//'`
+FileName=`cat $Param1 | tr '[:cntrl:]' ' ' | \
+    sed -e 's/      / /g' \
+	-e 's/     / /g' \
+	-e 's/    / /g' \
+	-e 's/   / /g' \
+	-e 's/  / /g' | \
+    cut -f 4 -d ' '`
+
+ln -s $FileName $LinkName
+rm -f $Param1

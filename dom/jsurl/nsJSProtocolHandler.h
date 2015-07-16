@@ -85,6 +85,9 @@ public:
     NS_IMETHOD Read(nsIObjectInputStream* aStream) override;
     NS_IMETHOD Write(nsIObjectOutputStream* aStream) override;
 
+    // nsIIPCSerializableURI overrides
+    NS_DECL_NSIIPCSERIALIZABLEURI
+
     // Override the nsIClassInfo method GetClassIDNoAlloc to make sure our
     // nsISerializable impl works right.
     NS_IMETHOD GetClassIDNoAlloc(nsCID *aClassIDNoAlloc) override;

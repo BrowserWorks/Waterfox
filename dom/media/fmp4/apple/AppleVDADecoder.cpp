@@ -360,6 +360,7 @@ AppleVDADecoder::SubmitFrame(mp4_demuxer::MP4Sample* aSample)
 
   if (rv != noErr) {
     NS_WARNING("AppleVDADecoder: Couldn't pass frame to decoder");
+    mCallback->Error();
     return NS_ERROR_FAILURE;
   }
 
@@ -402,7 +403,7 @@ AppleVDADecoder::InitializeSession()
                      &mDecoder);
 
   if (rv != noErr) {
-    NS_ERROR("AppleVDADecoder: Couldn't create decoder!");
+    NS_WARNING("AppleVDADecoder: Couldn't create hardware VDA decoder");
     return NS_ERROR_FAILURE;
   }
 
@@ -504,7 +505,6 @@ AppleVDADecoder::CreateVDADecoder(
   nsRefPtr<AppleVDADecoder> decoder =
     new AppleVDADecoder(aConfig, aVideoTaskQueue, aCallback, aImageContainer);
   if (NS_FAILED(decoder->Init())) {
-    NS_ERROR("AppleVDADecoder an error occurred");
     return nullptr;
   }
   return decoder.forget();

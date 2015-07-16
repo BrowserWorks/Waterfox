@@ -117,9 +117,9 @@ private:
 
 
 class CSSStyleSheet final : public nsIStyleSheet,
-                                public nsIDOMCSSStyleSheet,
-                                public nsICSSLoaderObserver,
-                                public nsWrapperCache
+                            public nsIDOMCSSStyleSheet,
+                            public nsICSSLoaderObserver,
+                            public nsWrapperCache
 {
 public:
   typedef net::ReferrerPolicy ReferrerPolicy;
@@ -310,7 +310,7 @@ public:
 
     return dom::ParentObject(static_cast<nsIStyleSheet*>(mParent), mParent);
   }
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 private:
   CSSStyleSheet(const CSSStyleSheet& aCopy,

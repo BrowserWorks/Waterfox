@@ -19,9 +19,9 @@ using namespace js::jit;
 
 // All registers to save and restore. This includes the stack pointer, since we
 // use the ability to reference register values on the stack by index.
-static const RegisterSet AllRegs =
-  RegisterSet(GeneralRegisterSet(Registers::AllMask),
-              FloatRegisterSet(FloatRegisters::AllMask));
+static const LiveRegisterSet AllRegs =
+    LiveRegisterSet(GeneralRegisterSet(Registers::AllMask),
+                         FloatRegisterSet(FloatRegisters::AllMask));
 
 // Generates a trampoline for calling Jit compiled code from a C++ function.
 // The trampoline use the EnterJitCode signature, with the standard x64 fastcall
@@ -150,7 +150,7 @@ JitRuntime::generateEnterJIT(JSContext* cx, EnterJitType type)
     CodeLabel returnLabel;
     if (type == EnterJitBaseline) {
         // Handle OSR.
-        GeneralRegisterSet regs(GeneralRegisterSet::All());
+        AllocatableGeneralRegisterSet regs(GeneralRegisterSet::All());
         regs.takeUnchecked(OsrFrameReg);
         regs.take(rbp);
         regs.take(reg_code);
@@ -405,10 +405,9 @@ JitRuntime::generateArgumentsRectifier(JSContext* cx, void** returnAddrOut)
     static_assert(JitStackAlignment % sizeof(Value) == 0,
       "Ensure that we can pad the stack by pushing extra UndefinedValue");
 
-    const uint32_t alignment = JitStackAlignment / sizeof(Value);
-    MOZ_ASSERT(IsPowerOfTwo(alignment));
-    masm.addl(Imm32(alignment - 1 /* for padding */ + 1 /* for |this| */), rcx);
-    masm.andl(Imm32(~(alignment - 1)), rcx);
+    MOZ_ASSERT(IsPowerOfTwo(JitStackValueAlignment));
+    masm.addl(Imm32(JitStackValueAlignment - 1 /* for padding */ + 1 /* for |this| */), rcx);
+    masm.andl(Imm32(~(JitStackValueAlignment - 1)), rcx);
 
     // Load the number of |undefined|s to push into %rcx.
     masm.subq(r8, rcx);
@@ -509,7 +508,24 @@ static void
 PushBailoutFrame(MacroAssembler& masm, Register spArg)
 {
     // Push registers such that we can access them from [base + code].
-    masm.PushRegsInMask(AllRegs);
+    if (JitSupportsSimd()) {
+        masm.PushRegsInMask(AllRegs);
+    } else {
+        // When SIMD isn't supported, PushRegsInMask reduces the set of float
+        // registers to be double-sized, while the RegisterDump expects each of
+        // the float registers to have the maximal possible size
+        // (Simd128DataSize). To work around this, we just spill the double
+        // registers by hand here, using the register dump offset directly.
+        for (GeneralRegisterBackwardIterator iter(AllRegs.gprs()); iter.more(); iter++)
+            masm.Push(*iter);
+
+        masm.reserveStack(sizeof(RegisterDump::FPUArray));
+        for (FloatRegisterBackwardIterator iter(AllRegs.fpus()); iter.more(); iter++) {
+            FloatRegister reg = *iter;
+            Address spillAddress(StackPointer, reg.getRegisterDumpOffsetInBytes());
+            masm.storeDouble(reg, spillAddress);
+        }
+    }
 
     // Get the stack pointer into a register, pre-alignment.
     masm.movq(rsp, spArg);
@@ -539,8 +555,7 @@ GenerateBailoutThunk(JSContext* cx, MacroAssembler& masm, uint32_t frameClass)
     //     [bailoutFrame]
     //
     // Remove both the bailout frame and the topmost Ion frame's stack.
-    static const uint32_t BailoutDataSize = sizeof(void*) * Registers::Total +
-                                            sizeof(double) * FloatRegisters::Total;
+    static const uint32_t BailoutDataSize = sizeof(RegisterDump);
     masm.addq(Imm32(BailoutDataSize), rsp);
     masm.pop(rcx);
     masm.lea(Operand(rsp, rcx, TimesOne, sizeof(void*)), rsp);
@@ -586,7 +601,7 @@ JitRuntime::generateVMWrapper(JSContext* cx, const VMFunction& f)
 
     // Avoid conflicts with argument registers while discarding the result after
     // the function call.
-    GeneralRegisterSet regs = GeneralRegisterSet(Register::Codes::WrapperMask);
+    AllocatableGeneralRegisterSet regs(Register::Codes::WrapperMask);
 
     // Wrapper register set is a superset of Volatile register set.
     JS_STATIC_ASSERT((Register::Codes::VolatileMask & ~Register::Codes::WrapperMask) == 0);
@@ -761,8 +776,9 @@ JitRuntime::generatePreBarrier(JSContext* cx, MIRType type)
 {
     MacroAssembler masm;
 
-    RegisterSet regs = RegisterSet(GeneralRegisterSet(Registers::VolatileMask),
-                                   FloatRegisterSet(FloatRegisters::VolatileMask));
+    LiveRegisterSet regs =
+        LiveRegisterSet(GeneralRegisterSet(Registers::VolatileMask),
+                             FloatRegisterSet(FloatRegisters::VolatileMask));
     masm.PushRegsInMask(regs);
 
     MOZ_ASSERT(PreBarrierReg == rdx);

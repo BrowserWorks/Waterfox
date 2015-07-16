@@ -43,6 +43,12 @@ namespace indexedDB {
 using namespace mozilla::dom::workers;
 using namespace mozilla::ipc;
 
+namespace {
+
+NS_DEFINE_IID(kIDBRequestIID, PRIVATE_IDBREQUEST_IID);
+
+} // anonymous namespace
+
 IDBRequest::IDBRequest(IDBDatabase* aDatabase)
   : IDBWrapperCache(aDatabase)
 {
@@ -296,9 +302,9 @@ IDBRequest::SetSource(IDBCursor* aSource)
 }
 
 JSObject*
-IDBRequest::WrapObject(JSContext* aCx)
+IDBRequest::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return IDBRequestBinding::Wrap(aCx, this);
+  return IDBRequestBinding::Wrap(aCx, this, aGivenProto);
 }
 
 void
@@ -407,6 +413,9 @@ NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN_INHERITED(IDBRequest, IDBWrapperCache)
 NS_IMPL_CYCLE_COLLECTION_TRACE_END
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(IDBRequest)
+  if (aIID.Equals(kIDBRequestIID)) {
+    foundInterface = this;
+  } else
 NS_INTERFACE_MAP_END_INHERITING(IDBWrapperCache)
 
 NS_IMPL_ADDREF_INHERITED(IDBRequest, IDBWrapperCache)
@@ -563,7 +572,7 @@ nsresult
 IDBOpenDBRequest::PostHandleEvent(EventChainPostVisitor& aVisitor)
 {
   nsresult rv =
-    IndexedDatabaseManager::CommonPostHandleEvent(this, mFactory, aVisitor);
+    IndexedDatabaseManager::CommonPostHandleEvent(aVisitor, mFactory);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
@@ -572,11 +581,11 @@ IDBOpenDBRequest::PostHandleEvent(EventChainPostVisitor& aVisitor)
 }
 
 JSObject*
-IDBOpenDBRequest::WrapObject(JSContext* aCx)
+IDBOpenDBRequest::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
   AssertIsOnOwningThread();
 
-  return IDBOpenDBRequestBinding::Wrap(aCx, this);
+  return IDBOpenDBRequestBinding::Wrap(aCx, this, aGivenProto);
 }
 
 bool

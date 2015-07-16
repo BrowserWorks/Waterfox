@@ -87,6 +87,7 @@
 #include "mozilla/LookAndFeel.h"
 #include "GeckoProfiler.h"
 #include "Units.h"
+#include "mozilla/layers/APZCTreeManager.h"
 
 #ifdef XP_MACOSX
 #import <ApplicationServices/ApplicationServices.h>
@@ -872,7 +873,7 @@ IsAccessKeyTarget(nsIContent* aContent, nsIFrame* aFrame, nsAString& aKey)
 
   nsCOMPtr<nsIDOMXULDocument> xulDoc =
     do_QueryInterface(aContent->OwnerDoc());
-  if (!xulDoc && !aContent->IsXUL())
+  if (!xulDoc && !aContent->IsXULElement())
     return true;
 
     // For XUL we do visibility checks.
@@ -890,21 +891,18 @@ IsAccessKeyTarget(nsIContent* aContent, nsIFrame* aFrame, nsAString& aKey)
   if (control)
     return true;
 
-  if (aContent->IsHTML()) {
-    nsIAtom* tag = aContent->Tag();
+  // HTML area, label and legend elements are never focusable, so
+  // we need to check for them explicitly before giving up.
+  if (aContent->IsAnyOfHTMLElements(nsGkAtoms::area,
+                                    nsGkAtoms::label,
+                                    nsGkAtoms::legend)) {
+    return true;
+  }
 
-    // HTML area, label and legend elements are never focusable, so
-    // we need to check for them explicitly before giving up.
-    if (tag == nsGkAtoms::area ||
-        tag == nsGkAtoms::label ||
-        tag == nsGkAtoms::legend)
-      return true;
-
-  } else if (aContent->IsXUL()) {
-    // XUL label elements are never focusable, so we need to check for them
-    // explicitly before giving up.
-    if (aContent->Tag() == nsGkAtoms::label)
-      return true;
+  // XUL label elements are never focusable, so we need to check for them
+  // explicitly before giving up.
+  if (aContent->IsXULElement(nsGkAtoms::label)) {
+    return true;
   }
 
   return false;
@@ -1124,9 +1122,7 @@ EventStateManager::IsRemoteTarget(nsIContent* target) {
   }
 
   // <browser/iframe remote=true> from XUL
-  if ((target->Tag() == nsGkAtoms::browser ||
-       target->Tag() == nsGkAtoms::iframe) &&
-      target->IsXUL() &&
+  if (target->IsAnyOfXULElements(nsGkAtoms::browser, nsGkAtoms::iframe) &&
       target->AttrValueIs(kNameSpaceID_None, nsGkAtoms::Remote,
                           nsGkAtoms::_true, eIgnoreCase)) {
     return true;
@@ -1290,7 +1286,7 @@ EventStateManager::CreateClickHoldTimer(nsPresContext* inPresContext,
       return;
     
     // check for a <menubutton> like bookmarks
-    if (mGestureDownContent->Tag() == nsGkAtoms::menubutton)
+    if (mGestureDownContent->IsXULElement(nsGkAtoms::menubutton))
       return;
   }
 
@@ -1384,40 +1380,37 @@ EventStateManager::FireContextClick()
 
     // before dispatching, check that we're not on something that
     // doesn't get a context menu
-    nsIAtom *tag = mGestureDownContent->Tag();
     bool allowedToDispatch = true;
 
-    if (mGestureDownContent->IsXUL()) {
-      if (tag == nsGkAtoms::scrollbar ||
-          tag == nsGkAtoms::scrollbarbutton ||
-          tag == nsGkAtoms::button)
+    if (mGestureDownContent->IsAnyOfXULElements(nsGkAtoms::scrollbar,
+                                                nsGkAtoms::scrollbarbutton,
+                                                nsGkAtoms::button)) {
+      allowedToDispatch = false;
+    } else if (mGestureDownContent->IsXULElement(nsGkAtoms::toolbarbutton)) {
+      // a <toolbarbutton> that has the container attribute set
+      // will already have its own dropdown.
+      if (nsContentUtils::HasNonEmptyAttr(mGestureDownContent,
+              kNameSpaceID_None, nsGkAtoms::container)) {
         allowedToDispatch = false;
-      else if (tag == nsGkAtoms::toolbarbutton) {
-        // a <toolbarbutton> that has the container attribute set
-        // will already have its own dropdown.
-        if (nsContentUtils::HasNonEmptyAttr(mGestureDownContent,
-                kNameSpaceID_None, nsGkAtoms::container)) {
+      } else {
+        // If the toolbar button has an open menu, don't attempt to open
+          // a second menu
+        if (mGestureDownContent->AttrValueIs(kNameSpaceID_None, nsGkAtoms::open,
+                                             nsGkAtoms::_true, eCaseMatters)) {
           allowedToDispatch = false;
-        } else {
-          // If the toolbar button has an open menu, don't attempt to open
-            // a second menu
-          if (mGestureDownContent->AttrValueIs(kNameSpaceID_None, nsGkAtoms::open,
-                                               nsGkAtoms::_true, eCaseMatters)) {
-            allowedToDispatch = false;
-          }
         }
       }
     }
-    else if (mGestureDownContent->IsHTML()) {
+    else if (mGestureDownContent->IsHTMLElement()) {
       nsCOMPtr<nsIFormControl> formCtrl(do_QueryInterface(mGestureDownContent));
 
       if (formCtrl) {
         allowedToDispatch = formCtrl->IsTextControl(false) ||
                             formCtrl->GetType() == NS_FORM_INPUT_FILE;
       }
-      else if (tag == nsGkAtoms::applet ||
-               tag == nsGkAtoms::embed  ||
-               tag == nsGkAtoms::object) {
+      else if (mGestureDownContent->IsAnyOfHTMLElements(nsGkAtoms::applet,
+                                                        nsGkAtoms::embed,
+                                                        nsGkAtoms::object)) {
         allowedToDispatch = false;
       }
     }
@@ -2029,6 +2022,21 @@ GetParentFrameToScroll(nsIFrame* aFrame)
   return aFrame->GetParent();
 }
 
+/*static*/ bool
+EventStateManager::CanVerticallyScrollFrameWithWheel(nsIFrame* aFrame)
+{
+  nsIContent* c = aFrame->GetContent();
+  if (!c) {
+    return true;
+  }
+  nsCOMPtr<nsITextControlElement> ctrl =
+    do_QueryInterface(c->IsInAnonymousSubtree() ? c->GetBindingParent() : c);
+  if (ctrl && ctrl->IsSingleLineTextControl()) {
+    return false;
+  }
+  return true;
+}
+
 void
 EventStateManager::DispatchLegacyMouseScrollEvents(nsIFrame* aTargetFrame,
                                                    WidgetWheelEvent* aEvent,
@@ -2297,10 +2305,7 @@ EventStateManager::ComputeScrollTarget(nsIFrame* aTargetFrame,
 
     // Don't scroll vertically by mouse-wheel on a single-line text control.
     if (checkIfScrollableY) {
-      nsIContent* c = scrollFrame->GetContent();
-      nsCOMPtr<nsITextControlElement> ctrl =
-        do_QueryInterface(c->IsInAnonymousSubtree() ? c->GetBindingParent() : c);
-      if (ctrl && ctrl->IsSingleLineTextControl()) {
+      if (!CanVerticallyScrollFrameWithWheel(scrollFrame)) {
         continue;
       }
     }
@@ -2426,13 +2431,16 @@ EventStateManager::DoScrollText(nsIScrollableFrame* aScrollableFrame,
     actualDevPixelScrollAmount.y = 0;
   }
 
+  nsIScrollbarMediator::ScrollSnapMode snapMode = nsIScrollbarMediator::DISABLE_SNAP;
   nsIAtom* origin = nullptr;
   switch (aEvent->deltaMode) {
     case nsIDOMWheelEvent::DOM_DELTA_LINE:
       origin = nsGkAtoms::mouseWheel;
+      snapMode = nsIScrollableFrame::ENABLE_SNAP;
       break;
     case nsIDOMWheelEvent::DOM_DELTA_PAGE:
       origin = nsGkAtoms::pages;
+      snapMode = nsIScrollableFrame::ENABLE_SNAP;
       break;
     case nsIDOMWheelEvent::DOM_DELTA_PIXEL:
       origin = nsGkAtoms::pixels;
@@ -2485,10 +2493,14 @@ EventStateManager::DoScrollText(nsIScrollableFrame* aScrollableFrame,
       MOZ_CRASH("Invalid scrollType value comes");
   }
 
+  nsIScrollableFrame::ScrollMomentum momentum =
+    aEvent->isMomentum ? nsIScrollableFrame::SYNTHESIZED_MOMENTUM_EVENT
+                       : nsIScrollableFrame::NOT_MOMENTUM;
+
   nsIntPoint overflow;
   aScrollableFrame->ScrollBy(actualDevPixelScrollAmount,
                              nsIScrollableFrame::DEVICE_PIXELS,
-                             mode, &overflow, origin, aEvent->isMomentum);
+                             mode, &overflow, origin, momentum, snapMode);
 
   if (!scrollFrameWeak.IsAlive()) {
     // If the scroll causes changing the layout, we can think that the event
@@ -2647,7 +2659,7 @@ static bool
 NodeAllowsClickThrough(nsINode* aNode)
 {
   while (aNode) {
-    if (aNode->IsElement() && aNode->AsElement()->IsXUL()) {
+    if (aNode->IsXULElement()) {
       mozilla::dom::Element* element = aNode->AsElement();
       static nsIContent::AttrValuesArray strings[] =
         {&nsGkAtoms::always, &nsGkAtoms::never, nullptr};
@@ -2889,7 +2901,7 @@ EventStateManager::PostHandleEvent(nsPresContext* aPresContext,
             EnsureDocument(mPresContext);
             if (mDocument) {
 #ifdef XP_MACOSX
-              if (!activeContent || !activeContent->IsXUL())
+              if (!activeContent || !activeContent->IsXULElement())
 #endif
                 fm->ClearFocus(mDocument->GetWindow());
               fm->SetFocusedWindow(mDocument->GetWindow());
@@ -2989,6 +3001,13 @@ EventStateManager::PostHandleEvent(nsPresContext* aPresContext,
     {
       MOZ_ASSERT(aEvent->mFlags.mIsTrusted);
       ScrollbarsForWheel::MayInactivate();
+      WidgetWheelEvent* wheelEvent = aEvent->AsWheelEvent();
+      nsIScrollableFrame* scrollTarget =
+        ComputeScrollTarget(aTargetFrame, wheelEvent,
+                            COMPUTE_DEFAULT_ACTION_TARGET);
+      if (scrollTarget) {
+        scrollTarget->ScrollSnap();
+      }
     }
     break;
   case NS_WHEEL_WHEEL:
@@ -3002,7 +3021,18 @@ EventStateManager::PostHandleEvent(nsPresContext* aPresContext,
       }
 
       WidgetWheelEvent* wheelEvent = aEvent->AsWheelEvent();
-      switch (WheelPrefs::GetInstance()->ComputeActionFor(wheelEvent)) {
+
+      // When APZ is enabled, the actual scroll animation might be handled by
+      // the compositor.
+      WheelPrefs::Action action;
+      if (gfxPrefs::AsyncPanZoomEnabled() &&
+          layers::APZCTreeManager::WillHandleWheelEvent(wheelEvent))
+      {
+        action = WheelPrefs::ACTION_NONE;
+      } else {
+        action = WheelPrefs::GetInstance()->ComputeActionFor(wheelEvent);
+      }
+      switch (action) {
         case WheelPrefs::ACTION_SCROLL: {
           // For scrolling of default action, we should honor the mouse wheel
           // transaction.
@@ -4616,7 +4646,7 @@ EventStateManager::UpdateAncestorState(nsIContent* aStartNode,
                                        bool aAddState)
 {
   for (; aStartNode && aStartNode != aStopBefore;
-       aStartNode = aStartNode->GetParent()) {
+       aStartNode = aStartNode->GetParentElementCrossingShadowRoot()) {
     // We might be starting with a non-element (e.g. a text node) and
     // if someone is doing something weird might be ending with a
     // non-element too (e.g. a document fragment)
@@ -4644,7 +4674,7 @@ EventStateManager::UpdateAncestorState(nsIContent* aStartNode,
     // still be in hover state.  To handle this situation we need to
     // keep walking up the tree and any time we find a label mark its
     // corresponding node as still in our state.
-    for ( ; aStartNode; aStartNode = aStartNode->GetParent()) {
+    for ( ; aStartNode; aStartNode = aStartNode->GetParentElementCrossingShadowRoot()) {
       if (!aStartNode->IsElement()) {
         continue;
       }
@@ -4687,8 +4717,10 @@ EventStateManager::SetContentState(nsIContent* aContent, EventStates aState)
 
     if (aState == NS_EVENT_STATE_ACTIVE) {
       // Editable content can never become active since their default actions
-      // are disabled.
-      if (aContent && aContent->IsEditable()) {
+      // are disabled.  Watch out for editable content in native anonymous
+      // subtrees though, as they belong to text controls.
+      if (aContent && aContent->IsEditable() &&
+          !aContent->IsInNativeAnonymousSubtree()) {
         aContent = nullptr;
       }
       if (aContent != mActiveContent) {
@@ -4808,8 +4840,7 @@ EventStateManager::ContentRemoved(nsIDocument* aDocument, nsIContent* aContent)
    * the current link. We want to make sure that the UI gets informed when they
    * are actually removed from the DOM.
    */
-  if (aContent->IsHTML() &&
-      (aContent->Tag() == nsGkAtoms::a || aContent->Tag() == nsGkAtoms::area) &&
+  if (aContent->IsAnyOfHTMLElements(nsGkAtoms::a, nsGkAtoms::area) &&
       (aContent->AsElement()->State().HasAtLeastOneOfStates(NS_EVENT_STATE_FOCUS |
                                                             NS_EVENT_STATE_HOVER))) {
     nsGenericHTMLElement* element = static_cast<nsGenericHTMLElement*>(aContent);
@@ -5486,9 +5517,25 @@ EventStateManager::WheelPrefs::NeedToComputeLineOrPageDelta(
 }
 
 bool
+EventStateManager::WheelPrefs::HasUserPrefsForDelta(WidgetWheelEvent* aEvent)
+{
+  Index index = GetIndexFor(aEvent);
+  Init(index);
+
+  return mMultiplierX[index] != 1.0 ||
+         mMultiplierY[index] != 1.0;
+}
+
+bool
 EventStateManager::WheelEventIsScrollAction(WidgetWheelEvent* aEvent)
 {
   return WheelPrefs::GetInstance()->ComputeActionFor(aEvent) == WheelPrefs::ACTION_SCROLL;
+}
+
+bool
+EventStateManager::WheelEventNeedsDeltaMultipliers(WidgetWheelEvent* aEvent)
+{
+  return WheelPrefs::GetInstance()->HasUserPrefsForDelta(aEvent);
 }
 
 bool

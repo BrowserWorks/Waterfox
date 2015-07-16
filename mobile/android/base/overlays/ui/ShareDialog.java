@@ -112,8 +112,8 @@ public class ShareDialog extends Locales.LocaleAwareActivity implements SendTabT
         if (state == State.DEVICES_ONLY &&
                 (clientrecords == null || clientrecords.length == 0)) {
             Log.e(LOGTAG, "In state: " + State.DEVICES_ONLY + " and received 0 synced clients. Finishing...");
-            // We show a toast in 39. The string doesn't exist in 38 so do nothing. It's an extreme
-            // edge case we don't expect to see, so I'm not too concerned.
+            Toast.makeText(this, getResources().getText(R.string.overlay_no_synced_devices), Toast.LENGTH_SHORT)
+                 .show();
             finish();
             return;
         }

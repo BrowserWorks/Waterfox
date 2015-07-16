@@ -1,4 +1,5 @@
 /* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=2 sw=2 sts=2 et tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -1692,12 +1693,18 @@ HTMLInputElement::GetValueInternal(nsAString& aValue) const
 
     case VALUE_MODE_FILENAME:
       if (nsContentUtils::IsCallerChrome()) {
+#ifndef MOZ_CHILD_PERMISSIONS
+        aValue.Assign(mFirstFilePath);
+#else
+        // XXX We'd love to assert that this can't happen, but some mochitests
+        // use SpecialPowers to circumvent our more sane security model.
         if (!mFiles.IsEmpty()) {
           return mFiles[0]->GetMozFullPath(aValue);
         }
         else {
           aValue.Truncate();
         }
+#endif
       } else {
         // Just return the leaf name
         if (mFiles.IsEmpty() || NS_FAILED(mFiles[0]->GetName(aValue))) {
@@ -1886,7 +1893,7 @@ HTMLInputElement::GetList() const
   }
 
   Element* element = doc->GetElementById(dataListId);
-  if (!element || !element->IsHTML(nsGkAtoms::datalist)) {
+  if (!element || !element->IsHTMLElement(nsGkAtoms::datalist)) {
     return nullptr;
   }
 
@@ -2652,6 +2659,19 @@ HTMLInputElement::AfterSetFiles(bool aSetValueChanged)
     formControlFrame->SetFormProperty(nsGkAtoms::value, readableValue);
   }
 
+#ifndef MOZ_CHILD_PERMISSIONS
+  // Grab the full path here for any chrome callers who access our .value via a
+  // CPOW. This path won't be called from a CPOW meaning the potential sync IPC
+  // call under GetMozFullPath won't be rejected for not being urgent.
+  // XXX Protected by the ifndef because the blob code doesn't allow us to send
+  // this message in b2g.
+  if (mFiles.IsEmpty()) {
+    mFirstFilePath.Truncate();
+  } else {
+    mFiles[0]->GetMozFullPath(mFirstFilePath);
+  }
+#endif
+
   UpdateFileList();
 
   if (aSetValueChanged) {
@@ -3230,7 +3250,8 @@ HTMLInputElement::Focus(ErrorResult& aError)
 bool
 HTMLInputElement::IsInteractiveHTMLContent(bool aIgnoreTabindex) const
 {
-  return mType != NS_FORM_INPUT_HIDDEN;
+  return mType != NS_FORM_INPUT_HIDDEN ||
+         nsGenericHTMLFormElementWithState::IsInteractiveHTMLContent(aIgnoreTabindex);
 }
 
 NS_IMETHODIMP
@@ -5721,13 +5742,13 @@ HTMLInputElement::SubmitNamesValues(nsFormSubmission* aFormSubmission)
     const nsTArray<nsRefPtr<File>>& files = GetFilesInternal();
 
     for (uint32_t i = 0; i < files.Length(); ++i) {
-      aFormSubmission->AddNameFilePair(name, files[i], NullString());
+      aFormSubmission->AddNameFilePair(name, files[i]);
     }
 
     if (files.IsEmpty()) {
       // If no file was selected, pretend we had an empty file with an
       // empty filename.
-      aFormSubmission->AddNameFilePair(name, nullptr, NullString());
+      aFormSubmission->AddNameFilePair(name, nullptr);
 
     }
 
@@ -7581,9 +7602,9 @@ HTMLInputElement::PickerClosed()
 }
 
 JSObject*
-HTMLInputElement::WrapNode(JSContext* aCx)
+HTMLInputElement::WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return HTMLInputElementBinding::Wrap(aCx, this);
+  return HTMLInputElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 } // namespace dom

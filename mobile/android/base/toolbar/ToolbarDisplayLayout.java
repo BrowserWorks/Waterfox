@@ -192,7 +192,7 @@ public class ToolbarDisplayLayout extends ThemedLinearLayout
         mSiteSecurityVisible = (mSiteSecurity.getVisibility() == View.VISIBLE);
 
         mSiteIdentityPopup = new SiteIdentityPopup(mActivity);
-        mSiteIdentityPopup.setAnchor(mSiteSecurity);
+        mSiteIdentityPopup.setAnchor(this);
 
         mStop = (ImageButton) findViewById(R.id.stop);
         mPageActionLayout = (PageActionLayout) findViewById(R.id.page_action_layout);
@@ -556,12 +556,15 @@ public class ToolbarDisplayLayout extends ThemedLinearLayout
         mTitleChangeListener = listener;
     }
 
-    View getDoorHangerAnchor() {
-        if (!HardwareUtils.isTablet()) {
-            return mFavicon;
-        } else {
-            return mSiteSecurity;
-        }
+    /**
+     * Update the Site Identity popup anchor.
+     *
+     * Tablet UI has a tablet-specific doorhanger anchor, so update it after all the views
+     * are inflated.
+     * @param view View to use as the anchor for the Site Identity popup.
+     */
+    void updateSiteIdentityAnchor(View view) {
+        mSiteIdentityPopup.setAnchor(view);
     }
 
     void prepareForwardAnimation(PropertyAnimator anim, ForwardButtonAnimation animation, int width) {

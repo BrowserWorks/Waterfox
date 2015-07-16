@@ -55,6 +55,7 @@
 
 #include "prmjtime.h"
 
+#include "js/Class.h"
 #include "vm/GlobalObject.h"
 #include "vm/SharedTypedArrayObject.h"
 #include "vm/TypedArrayObject.h"
@@ -154,7 +155,7 @@ const Class AtomicsObject::class_ = {
 static bool
 ReportBadArrayType(JSContext* cx)
 {
-    JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_ATOMICS_BAD_ARRAY);
+    JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_ATOMICS_BAD_ARRAY);
     return false;
 }
 
@@ -1080,7 +1081,7 @@ js::FutexRuntime::wait(JSContext* cx, double timeout_ms, AtomicsObject::FutexWai
     // See explanation below.
 
     if (state_ == WaitingInterrupted) {
-        JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_ATOMICS_WAIT_NOT_ALLOWED);
+        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_ATOMICS_WAIT_NOT_ALLOWED);
         return false;
     }
 
@@ -1089,7 +1090,7 @@ js::FutexRuntime::wait(JSContext* cx, double timeout_ms, AtomicsObject::FutexWai
     // Reject the timeout if it is not exactly representable.  2e50 ms = 2e53 us = 6e39 years.
 
     if (timed && timeout_ms > 2e50) {
-        JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_ATOMICS_TOO_LONG);
+        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_ATOMICS_TOO_LONG);
         return false;
     }
 
@@ -1242,7 +1243,7 @@ AtomicsObject::initClass(JSContext* cx, Handle<GlobalObject*> global)
     if (!objProto)
         return nullptr;
     RootedObject Atomics(cx, NewObjectWithGivenProto(cx, &AtomicsObject::class_, objProto,
-                                                     global, SingletonObject));
+                                                     SingletonObject));
     if (!Atomics)
         return nullptr;
 
@@ -1262,7 +1263,7 @@ AtomicsObject::initClass(JSContext* cx, Handle<GlobalObject*> global)
 }
 
 JSObject*
-js_InitAtomicsClass(JSContext* cx, HandleObject obj)
+js::InitAtomicsClass(JSContext* cx, HandleObject obj)
 {
     MOZ_ASSERT(obj->is<GlobalObject>());
     Rooted<GlobalObject*> global(cx, &obj->as<GlobalObject>());

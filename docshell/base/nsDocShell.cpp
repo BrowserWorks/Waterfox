@@ -352,11 +352,7 @@ IsElementAnchor(nsIContent* aContent)
 {
   // Make sure we are dealing with either an <A> or <AREA> element in the HTML
   // or XHTML namespace.
-  if (!aContent->IsHTML()) {
-    return false;
-  }
-  nsIAtom* nameAtom = aContent->Tag();
-  return nameAtom == nsGkAtoms::a || nameAtom == nsGkAtoms::area;
+  return aContent->IsAnyOfHTMLElements(nsGkAtoms::a, nsGkAtoms::area);
 }
 
 static void
@@ -1025,7 +1021,6 @@ NS_IMPL_ADDREF_INHERITED(nsDocShell, nsDocLoader)
 NS_IMPL_RELEASE_INHERITED(nsDocShell, nsDocLoader)
 
 NS_INTERFACE_MAP_BEGIN(nsDocShell)
-  NS_INTERFACE_MAP_ENTRY(nsIDocShell_ESR38)
   NS_INTERFACE_MAP_ENTRY(nsIDocShell)
   NS_INTERFACE_MAP_ENTRY(nsIDocShellTreeItem)
   NS_INTERFACE_MAP_ENTRY(nsIWebNavigation)
@@ -2637,7 +2632,7 @@ nsDocShell::GetFullscreenAllowed(bool* aFullscreenAllowed)
   }
   nsCOMPtr<Element> frameElement = win->GetFrameElementInternal();
   if (frameElement &&
-      frameElement->IsHTML(nsGkAtoms::iframe) &&
+      frameElement->IsHTMLElement(nsGkAtoms::iframe) &&
       !frameElement->HasAttr(kNameSpaceID_None, nsGkAtoms::allowfullscreen) &&
       !frameElement->HasAttr(kNameSpaceID_None, nsGkAtoms::mozallowfullscreen)) {
     return NS_OK;
@@ -2982,10 +2977,10 @@ nsDocShell::PopProfileTimelineMarkers(
   // If we see an unpaired START, we keep it around for the next call
   // to PopProfileTimelineMarkers.  We store the kept START objects in
   // this array.
-  nsTArray<TimelineMarker*> keptMarkers;
+  nsTArray<UniquePtr<TimelineMarker>> keptMarkers;
 
   for (uint32_t i = 0; i < mProfileTimelineMarkers.Length(); ++i) {
-    TimelineMarker* startPayload = mProfileTimelineMarkers[i];
+    UniquePtr<TimelineMarker>& startPayload = mProfileTimelineMarkers[i];
     const char* startMarkerName = startPayload->GetName();
 
     bool hasSeenPaintedLayer = false;
@@ -3007,7 +3002,7 @@ nsDocShell::PopProfileTimelineMarkers(
       // enough for the amount of markers to always be small enough that the
       // nested for loop isn't going to be a performance problem.
       for (uint32_t j = i + 1; j < mProfileTimelineMarkers.Length(); ++j) {
-        TimelineMarker* endPayload = mProfileTimelineMarkers[j];
+        UniquePtr<TimelineMarker>& endPayload = mProfileTimelineMarkers[j];
         const char* endMarkerName = endPayload->GetName();
 
         // Look for Layer markers to stream out paint markers.
@@ -3016,7 +3011,7 @@ nsDocShell::PopProfileTimelineMarkers(
           endPayload->AddLayerRectangles(layerRectangles);
         }
 
-        if (!startPayload->Equals(endPayload)) {
+        if (!startPayload->Equals(*endPayload)) {
           continue;
         }
 
@@ -3053,14 +3048,13 @@ nsDocShell::PopProfileTimelineMarkers(
 
       // If we did not see the corresponding END, keep the START.
       if (!hasSeenEnd) {
-        keptMarkers.AppendElement(mProfileTimelineMarkers[i]);
+        keptMarkers.AppendElement(Move(mProfileTimelineMarkers[i]));
         mProfileTimelineMarkers.RemoveElementAt(i);
         --i;
       }
     }
   }
 
-  ClearProfileTimelineMarkers();
   mProfileTimelineMarkers.SwapElements(keptMarkers);
 
   if (!ToJSValue(aCx, profileTimelineMarkers, aProfileTimelineMarkers)) {
@@ -3091,10 +3085,10 @@ nsDocShell::AddProfileTimelineMarker(const char* aName,
 }
 
 void
-nsDocShell::AddProfileTimelineMarker(UniquePtr<TimelineMarker>& aMarker)
+nsDocShell::AddProfileTimelineMarker(UniquePtr<TimelineMarker>&& aMarker)
 {
   if (mProfileTimelineRecording) {
-    mProfileTimelineMarkers.AppendElement(aMarker.release());
+    mProfileTimelineMarkers.AppendElement(Move(aMarker));
   }
 }
 
@@ -3130,9 +3124,6 @@ nsDocShell::GetWindowDraggingAllowed(bool* aValue)
 void
 nsDocShell::ClearProfileTimelineMarkers()
 {
-  for (uint32_t i = 0; i < mProfileTimelineMarkers.Length(); ++i) {
-    delete mProfileTimelineMarkers[i];
-  }
   mProfileTimelineMarkers.Clear();
 }
 
@@ -3244,14 +3235,14 @@ nsDocShell::RemoveWeakScrollObserver(nsIScrollObserver* aObserver)
 }
 
 void
-nsDocShell::NotifyAsyncPanZoomStarted(const mozilla::CSSIntPoint aScrollPos)
+nsDocShell::NotifyAsyncPanZoomStarted()
 {
   nsTObserverArray<nsWeakPtr>::ForwardIterator iter(mScrollObservers);
   while (iter.HasMore()) {
     nsWeakPtr ref = iter.GetNext();
     nsCOMPtr<nsIScrollObserver> obs = do_QueryReferent(ref);
     if (obs) {
-      obs->AsyncPanZoomStarted(aScrollPos);
+      obs->AsyncPanZoomStarted();
     } else {
       mScrollObservers.RemoveElement(ref);
     }
@@ -3262,20 +3253,20 @@ nsDocShell::NotifyAsyncPanZoomStarted(const mozilla::CSSIntPoint aScrollPos)
     nsCOMPtr<nsIDocShell> kid = do_QueryInterface(ChildAt(i));
     if (kid) {
       nsDocShell* docShell = static_cast<nsDocShell*>(kid.get());
-      docShell->NotifyAsyncPanZoomStarted(aScrollPos);
+      docShell->NotifyAsyncPanZoomStarted();
     }
   }
 }
 
 void
-nsDocShell::NotifyAsyncPanZoomStopped(const mozilla::CSSIntPoint aScrollPos)
+nsDocShell::NotifyAsyncPanZoomStopped()
 {
   nsTObserverArray<nsWeakPtr>::ForwardIterator iter(mScrollObservers);
   while (iter.HasMore()) {
     nsWeakPtr ref = iter.GetNext();
     nsCOMPtr<nsIScrollObserver> obs = do_QueryReferent(ref);
     if (obs) {
-      obs->AsyncPanZoomStopped(aScrollPos);
+      obs->AsyncPanZoomStopped();
     } else {
       mScrollObservers.RemoveElement(ref);
     }
@@ -3286,7 +3277,7 @@ nsDocShell::NotifyAsyncPanZoomStopped(const mozilla::CSSIntPoint aScrollPos)
     nsCOMPtr<nsIDocShell> kid = do_QueryInterface(ChildAt(i));
     if (kid) {
       nsDocShell* docShell = static_cast<nsDocShell*>(kid.get());
-      docShell->NotifyAsyncPanZoomStopped(aScrollPos);
+      docShell->NotifyAsyncPanZoomStopped();
     }
   }
 }
@@ -3461,7 +3452,7 @@ nsDocShell::SetDocLoaderParent(nsDocLoader* aParent)
   // If parent is another docshell, we inherit all their flags for
   // allowing plugins, scripting etc.
   bool value;
-  nsCOMPtr<nsIDocShell_ESR38> parentAsDocShell(do_QueryInterface(parent));
+  nsCOMPtr<nsIDocShell> parentAsDocShell(do_QueryInterface(parent));
   if (parentAsDocShell) {
     if (NS_SUCCEEDED(parentAsDocShell->GetAllowPlugins(&value))) {
       SetAllowPlugins(value);
@@ -5014,24 +5005,32 @@ nsDocShell::DisplayLoadError(nsresult aError, nsIURI* aURI,
       if (errorClass == nsINSSErrorsService::ERROR_CLASS_BAD_CERT) {
         error.AssignLiteral("nssBadCert");
 
-        // if this is a Strict-Transport-Security host and the cert
-        // is bad, don't allow overrides (STS Spec section 7.3).
-        uint32_t type = nsISiteSecurityService::HEADER_HSTS;
+        // If this is an HTTP Strict Transport Security host or a pinned host
+        // and the certificate is bad, don't allow overrides (RFC 6797 section
+        // 12.1, HPKP draft spec section 2.6).
         uint32_t flags =
           mInPrivateBrowsing ? nsISocketProvider::NO_PERMANENT_STORAGE : 0;
         bool isStsHost = false;
+        bool isPinnedHost = false;
         if (XRE_GetProcessType() == GeckoProcessType_Default) {
           nsCOMPtr<nsISiteSecurityService> sss =
             do_GetService(NS_SSSERVICE_CONTRACTID, &rv);
           NS_ENSURE_SUCCESS(rv, rv);
-          rv = sss->IsSecureURI(type, aURI, flags, &isStsHost);
+          rv = sss->IsSecureURI(nsISiteSecurityService::HEADER_HSTS, aURI,
+                                flags, &isStsHost);
+          NS_ENSURE_SUCCESS(rv, rv);
+          rv = sss->IsSecureURI(nsISiteSecurityService::HEADER_HPKP, aURI,
+                                flags, &isPinnedHost);
           NS_ENSURE_SUCCESS(rv, rv);
         } else {
           mozilla::dom::ContentChild* cc =
             mozilla::dom::ContentChild::GetSingleton();
           mozilla::ipc::URIParams uri;
           SerializeURI(aURI, uri);
-          cc->SendIsSecureURI(type, uri, flags, &isStsHost);
+          cc->SendIsSecureURI(nsISiteSecurityService::HEADER_HSTS, uri, flags,
+                              &isStsHost);
+          cc->SendIsSecureURI(nsISiteSecurityService::HEADER_HPKP, uri, flags,
+                              &isPinnedHost);
         }
 
         if (Preferences::GetBool(
@@ -5039,11 +5038,16 @@ nsDocShell::DisplayLoadError(nsresult aError, nsIURI* aURI,
           cssClass.AssignLiteral("expertBadCert");
         }
 
-        // HSTS takes precedence over the expert bad cert pref. We
-        // never want to show the "Add Exception" button for HSTS sites.
+        // HSTS/pinning takes precedence over the expert bad cert pref. We
+        // never want to show the "Add Exception" button for these sites.
+        // In the future we should differentiate between an HSTS host and a
+        // pinned host and display a more informative message to the user.
+        if (isStsHost || isPinnedHost) {
+          cssClass.AssignLiteral("badStsCert");
+        }
+
         uint32_t bucketId;
         if (isStsHost) {
-          cssClass.AssignLiteral("badStsCert");
           // measuring STS separately allows us to measure click through
           // rates easily
           bucketId = nsISecurityUITelemetry::WARNING_BAD_CERT_TOP_STS;
@@ -7949,7 +7953,7 @@ nsDocShell::CreateAboutBlankContentViewer(nsIPrincipal* aPrincipal,
   mFiredUnloadEvent = false;
 
   nsCOMPtr<nsIDocumentLoaderFactory> docFactory =
-    nsContentUtils::FindInternalContentViewer("text/html");
+    nsContentUtils::FindInternalContentViewer(NS_LITERAL_CSTRING("text/html"));
 
   if (docFactory) {
     nsCOMPtr<nsIPrincipal> principal;
@@ -8733,7 +8737,7 @@ nsDocShell::RestoreFromHistory()
   // Now we simulate appending child docshells for subframes.
   for (i = 0; i < childShells.Count(); ++i) {
     nsIDocShellTreeItem* childItem = childShells.ObjectAt(i);
-    nsCOMPtr<nsIDocShell_ESR38> childShell = do_QueryInterface(childItem);
+    nsCOMPtr<nsIDocShell> childShell = do_QueryInterface(childItem);
 
     // Make sure to not clobber the state of the child.  Since AddChild
     // always clobbers it, save it off first.
@@ -8909,7 +8913,7 @@ nsDocShell::RestoreFromHistory()
 }
 
 nsresult
-nsDocShell::CreateContentViewer(const char* aContentType,
+nsDocShell::CreateContentViewer(const nsACString& aContentType,
                                 nsIRequest* aRequest,
                                 nsIStreamListener** aContentHandler)
 {
@@ -9105,7 +9109,7 @@ nsDocShell::CreateContentViewer(const char* aContentType,
 }
 
 nsresult
-nsDocShell::NewContentViewerObj(const char* aContentType,
+nsDocShell::NewContentViewerObj(const nsACString& aContentType,
                                 nsIRequest* aRequest, nsILoadGroup* aLoadGroup,
                                 nsIStreamListener** aContentHandler,
                                 nsIContentViewer** aViewer)
@@ -13420,7 +13424,8 @@ nsDocShell::OnLinkClickSync(nsIContent* aContent,
   // XXX When the linking node was HTMLFormElement, it is synchronous event.
   //     That is, the caller of this method is not |OnLinkClickEvent::Run()|
   //     but |HTMLFormElement::SubmitSubmission(...)|.
-  if (nsGkAtoms::form == aContent->Tag() && ShouldBlockLoadingForBackButton()) {
+  if (aContent->IsHTMLElement(nsGkAtoms::form) &&
+      ShouldBlockLoadingForBackButton()) {
     return NS_OK;
   }
 
@@ -13450,7 +13455,7 @@ nsDocShell::OnLinkClickSync(nsIContent* aContent,
 
   uint32_t flags = INTERNAL_LOAD_FLAGS_NONE;
   if (IsElementAnchor(aContent)) {
-    MOZ_ASSERT(aContent->IsHTML());
+    MOZ_ASSERT(aContent->IsHTMLElement());
     nsAutoString referrer;
     aContent->GetAttr(kNameSpaceID_None, nsGkAtoms::rel, referrer);
     nsWhitespaceTokenizerTemplate<nsContentUtils::IsHTMLWhitespace> tok(referrer);
@@ -13842,10 +13847,6 @@ nsDocShell::GetAppManifestURL(nsAString& aAppManifestURL)
 NS_IMETHODIMP
 nsDocShell::GetAsyncPanZoomEnabled(bool* aOut)
 {
-  if (TabChild* tabChild = TabChild::GetFrom(this)) {
-    *aOut = tabChild->IsAsyncPanZoomEnabled();
-    return NS_OK;
-  }
   *aOut = Preferences::GetBool("layers.async-pan-zoom.enabled", false);
   return NS_OK;
 }
@@ -13958,6 +13959,11 @@ NS_IMETHODIMP
 nsDocShell::ShouldPrepareForIntercept(nsIURI* aURI, bool aIsNavigate, bool* aShouldIntercept)
 {
   *aShouldIntercept = false;
+  if (mSandboxFlags) {
+    // If we're sandboxed, don't intercept.
+    return NS_OK;
+  }
+
   nsCOMPtr<nsIServiceWorkerManager> swm = mozilla::services::GetServiceWorkerManager();
   if (!swm) {
     return NS_OK;
@@ -13997,7 +14003,8 @@ nsDocShell::ChannelIntercepted(nsIInterceptedChannel* aChannel)
     }
   }
 
-  return swm->DispatchFetchEvent(doc, aChannel);
+  bool isReload = mLoadType & LOAD_CMD_RELOAD;
+  return swm->DispatchFetchEvent(doc, aChannel, isReload);
 }
 
 NS_IMETHODIMP

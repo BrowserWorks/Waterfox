@@ -38,6 +38,7 @@ Response::Response(nsIGlobalObject* aGlobal, InternalResponse* aInternalResponse
   , mOwner(aGlobal)
   , mInternalResponse(aInternalResponse)
 {
+  SetMimeType();
 }
 
 Response::~Response()
@@ -99,7 +100,7 @@ Response::Redirect(const GlobalObject& aGlobal, const nsAString& aUrl,
     return nullptr;
   }
 
-  Optional<ArrayBufferOrArrayBufferViewOrBlobOrUSVStringOrURLSearchParams> body;
+  Optional<ArrayBufferOrArrayBufferViewOrBlobOrFormDataOrUSVStringOrURLSearchParams> body;
   ResponseInit init;
   init.mStatus = aStatus;
   nsRefPtr<Response> r = Response::Constructor(aGlobal, body, init, aRv);
@@ -112,13 +113,15 @@ Response::Redirect(const GlobalObject& aGlobal, const nsAString& aUrl,
   if (NS_WARN_IF(aRv.Failed())) {
     return nullptr;
   }
+  r->GetInternalHeaders()->SetGuard(HeadersGuardEnum::Immutable, aRv);
+  MOZ_ASSERT(!aRv.Failed());
 
   return r.forget();
 }
 
 /*static*/ already_AddRefed<Response>
 Response::Constructor(const GlobalObject& aGlobal,
-                      const Optional<ArrayBufferOrArrayBufferViewOrBlobOrUSVStringOrURLSearchParams>& aBody,
+                      const Optional<ArrayBufferOrArrayBufferViewOrBlobOrFormDataOrUSVStringOrURLSearchParams>& aBody,
                       const ResponseInit& aInit, ErrorResult& aRv)
 {
   if (aInit.mStatus < 200 || aInit.mStatus > 599) {
@@ -186,7 +189,7 @@ Response::Constructor(const GlobalObject& aGlobal,
     }
   }
 
-  r->SetMimeType(aRv);
+  r->SetMimeType();
   return r.forget();
 }
 
@@ -210,6 +213,13 @@ Response::SetBody(nsIInputStream* aBody)
   mInternalResponse->SetBody(aBody);
 }
 
+already_AddRefed<InternalResponse>
+Response::GetInternalResponse() const
+{
+  nsRefPtr<InternalResponse> ref = mInternalResponse;
+  return ref.forget();
+}
+
 Headers*
 Response::Headers_()
 {
@@ -218,19 +228,6 @@ Response::Headers_()
   }
 
   return mHeaders;
-}
-
-void
-Response::SetFinalURL(bool aFinalURL, ErrorResult& aRv)
-{
-  nsCString url;
-  mInternalResponse->GetUrl(url);
-  if (url.IsEmpty()) {
-    aRv.ThrowTypeError(MSG_RESPONSE_URL_IS_NULL);
-    return;
-  }
-
-  mInternalResponse->SetFinalURL(aFinalURL);
 }
 } // namespace dom
 } // namespace mozilla

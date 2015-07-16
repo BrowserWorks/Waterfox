@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2014 Mozilla Foundation
+ * Copyright (C) 2012-2015 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,28 +17,41 @@
 #include "GonkCameraHwMgr.h"
 #include "TestGonkCameraHardware.h"
 
+#ifdef MOZ_WIDGET_GONK
 #include <binder/IPCThreadState.h>
 #include <sys/system_properties.h>
+#include "GonkNativeWindow.h"
+#endif
 
 #include "base/basictypes.h"
 #include "nsDebug.h"
 #include "mozilla/layers/TextureClient.h"
 #include "CameraPreferences.h"
 #include "mozilla/RefPtr.h"
+#if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION >= 21
+#include "GonkBufferQueueProducer.h"
+#endif
 #include "GonkCameraControl.h"
-#include "GonkNativeWindow.h"
 #include "CameraCommon.h"
 
 using namespace mozilla;
 using namespace mozilla::layers;
 using namespace android;
 
+#ifndef MOZ_WIDGET_GONK
+NS_IMPL_ISUPPORTS0(GonkCameraHardware);
+NS_IMPL_ISUPPORTS0(android::Camera);
+#endif
+
 GonkCameraHardware::GonkCameraHardware(mozilla::nsGonkCameraControl* aTarget, uint32_t aCameraId, const sp<Camera>& aCamera)
   : mCameraId(aCameraId)
   , mClosing(false)
   , mNumFrames(0)
+#ifdef MOZ_WIDGET_GONK
   , mCamera(aCamera)
+#endif
   , mTarget(aTarget)
+  , mRawSensorOrientation(0)
   , mSensorOrientation(0)
 {
   DOM_CAMERA_LOGT("%s:%d : this=%p (aTarget=%p)\n", __func__, __LINE__, (void*)this, (void*)aTarget);
@@ -50,6 +63,7 @@ GonkCameraHardware::OnRateLimitPreview(bool aLimit)
   ::OnRateLimitPreview(mTarget, aLimit);
 }
 
+#ifdef MOZ_WIDGET_GONK
 void
 GonkCameraHardware::OnNewFrame()
 {
@@ -147,12 +161,14 @@ GonkCameraHardware::postDataTimestamp(nsecs_t aTimestamp, int32_t aMsgType, cons
     mCamera->releaseRecordingFrame(aDataPtr);
   }
 }
+#endif
 
 nsresult
 GonkCameraHardware::Init()
 {
   DOM_CAMERA_LOGT("%s: this=%p\n", __func__, (void* )this);
 
+#ifdef MOZ_WIDGET_GONK
   CameraInfo info;
   int rv = Camera::getCameraInfo(mCameraId, &info);
   if (rv != 0) {
@@ -181,12 +197,11 @@ GonkCameraHardware::Init()
   // Disable shutter sound in android CameraService because gaia camera app will play it
   mCamera->sendCommand(CAMERA_CMD_ENABLE_SHUTTER_SOUND, 0, 0);
 
-#if defined(MOZ_WIDGET_GONK)
-
 #if ANDROID_VERSION >= 21
   sp<IGraphicBufferProducer> producer;
   sp<IGonkGraphicBufferConsumer> consumer;
   GonkBufferQueue::createBufferQueue(&producer, &consumer);
+  static_cast<GonkBufferQueueProducer*>(producer.get())->setSynchronousMode(false);
   mNativeWindow = new GonkNativeWindow(consumer, GonkCameraHardware::MIN_UNDEQUEUED_BUFFERS);
   mCamera->setPreviewTarget(producer);
 #elif ANDROID_VERSION >= 19
@@ -221,18 +236,25 @@ GonkCameraHardware::Init()
 sp<GonkCameraHardware>
 GonkCameraHardware::Connect(mozilla::nsGonkCameraControl* aTarget, uint32_t aCameraId)
 {
-#if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION >= 18
-  sp<Camera> camera = Camera::connect(aCameraId, /* clientPackageName */String16("gonk.camera"), Camera::USE_CALLING_UID);
-#else
-  sp<Camera> camera = Camera::connect(aCameraId);
-#endif
-
-  if (camera.get() == nullptr) {
-    return nullptr;
-  }
+  sp<Camera> camera;
 
   nsCString test;
   CameraPreferences::GetPref("camera.control.test.enabled", test);
+
+  if (!test.EqualsASCII("hardware")) {
+#ifdef MOZ_WIDGET_GONK
+#if ANDROID_VERSION >= 18
+    camera = Camera::connect(aCameraId, /* clientPackageName */String16("gonk.camera"), Camera::USE_CALLING_UID);
+#else
+    camera = Camera::connect(aCameraId);
+#endif
+#endif
+
+    if (camera.get() == nullptr) {
+      return nullptr;
+    }
+  }
+
   sp<GonkCameraHardware> cameraHardware;
   if (test.EqualsASCII("hardware")) {
     NS_WARNING("Using test Gonk hardware layer");
@@ -257,23 +279,29 @@ GonkCameraHardware::Close()
   DOM_CAMERA_LOGT("%s:%d : this=%p\n", __func__, __LINE__, (void*)this);
 
   mClosing = true;
-  mCamera->stopPreview();
-  mCamera->disconnect();
+  if (mCamera.get()) {
+    mCamera->stopPreview();
+    mCamera->disconnect();
+  }
+  mCamera.clear();
+#ifdef MOZ_WIDGET_GONK
   if (mNativeWindow.get()) {
     mNativeWindow->abandon();
   }
-  mCamera.clear();
   mNativeWindow.clear();
 
   // Ensure that ICamera's destructor is actually executed
   IPCThreadState::self()->flushCommands();
+#endif
 }
 
 GonkCameraHardware::~GonkCameraHardware()
 {
   DOM_CAMERA_LOGT("%s:%d : this=%p\n", __func__, __LINE__, (void*)this);
   mCamera.clear();
+#ifdef MOZ_WIDGET_GONK
   mNativeWindow.clear();
+#endif
 }
 
 int
@@ -359,18 +387,19 @@ GonkCameraHardware::PushParameters(const GonkCameraParameters& aParams)
   return mCamera->setParameters(s);
 }
 
-int
-GonkCameraHardware::PushParameters(const CameraParameters& aParams)
-{
-  String8 s = aParams.flatten();
-  return mCamera->setParameters(s);
-}
-
 nsresult
 GonkCameraHardware::PullParameters(GonkCameraParameters& aParams)
 {
   const String8 s = mCamera->getParameters();
   return aParams.Unflatten(s);
+}
+
+#ifdef MOZ_WIDGET_GONK
+int
+GonkCameraHardware::PushParameters(const CameraParameters& aParams)
+{
+  String8 s = aParams.flatten();
+  return mCamera->setParameters(s);
 }
 
 void
@@ -379,6 +408,7 @@ GonkCameraHardware::PullParameters(CameraParameters& aParams)
   const String8 s = mCamera->getParameters();
   aParams.unflatten(s);
 }
+#endif
 
 int
 GonkCameraHardware::StartPreview()
@@ -415,6 +445,7 @@ GonkCameraHardware::StopRecording()
   return OK;
 }
 
+#ifdef MOZ_WIDGET_GONK
 int
 GonkCameraHardware::SetListener(const sp<GonkCameraListener>& aListener)
 {
@@ -427,6 +458,7 @@ GonkCameraHardware::ReleaseRecordingFrame(const sp<IMemory>& aFrame)
 {
   mCamera->releaseRecordingFrame(aFrame);
 }
+#endif
 
 int
 GonkCameraHardware::StoreMetaDataInBuffers(bool aEnabled)

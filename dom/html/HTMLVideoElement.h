@@ -112,7 +112,7 @@ public:
 protected:
   virtual ~HTMLVideoElement();
 
-  virtual JSObject* WrapNode(JSContext* aCx) override;
+  virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   virtual void WakeLockCreate() override;
   virtual void WakeLockRelease() override;

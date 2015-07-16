@@ -11,7 +11,8 @@ const Cu = Components.utils;
 Cu.import("resource://gre/modules/Services.jsm");
 
 // Import common head.
-let (commonFile = do_get_file("../head_common.js", false)) {
+{
+  let commonFile = do_get_file("../head_common.js", false);
   let uri = Services.io.newFileURI(commonFile);
   Services.scriptloader.loadSubScript(uri.spec, this);
 }
@@ -93,4 +94,12 @@ function checkFaviconMissingForPage(aPageURI, aCallback) {
       do_check_true(aURI === null);
       aCallback();
     });
+}
+
+function promiseFaviconMissingForPage(aPageURI) {
+  return new Promise(resolve => checkFaviconMissingForPage(aPageURI, resolve));
+}
+
+function promiseFaviconChanged(aExpectedPageURI, aExpectedFaviconURI) {
+  return new Promise(resolve => waitForFaviconChanged(aExpectedPageURI, aExpectedFaviconURI, resolve));
 }

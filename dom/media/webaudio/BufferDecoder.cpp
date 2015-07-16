@@ -57,14 +57,14 @@ BufferDecoder::IsShutdown() const
 }
 
 bool
-BufferDecoder::OnStateMachineThread() const
+BufferDecoder::OnStateMachineTaskQueue() const
 {
   // BufferDecoder doesn't have the concept of a state machine.
   return true;
 }
 
 bool
-BufferDecoder::OnDecodeThread() const
+BufferDecoder::OnDecodeTaskQueue() const
 {
   MOZ_ASSERT(mTaskQueueIdentity, "Forgot to call BeginDecoding?");
   return mTaskQueueIdentity->IsCurrentThreadIn();
@@ -166,12 +166,6 @@ BufferDecoder::RemoveMediaTracks()
 
 void
 BufferDecoder::SetMediaEndTime(int64_t aTime)
-{
-  // ignore
-}
-
-void
-BufferDecoder::UpdatePlaybackPosition(int64_t aTime)
 {
   // ignore
 }

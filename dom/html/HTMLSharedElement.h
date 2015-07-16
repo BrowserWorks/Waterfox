@@ -22,11 +22,11 @@ namespace mozilla {
 namespace dom {
 
 class HTMLSharedElement final : public nsGenericHTMLElement,
-                                    public nsIDOMHTMLBaseElement,
-                                    public nsIDOMHTMLDirectoryElement,
-                                    public nsIDOMHTMLQuoteElement,
-                                    public nsIDOMHTMLHeadElement,
-                                    public nsIDOMHTMLHtmlElement
+                                public nsIDOMHTMLBaseElement,
+                                public nsIDOMHTMLDirectoryElement,
+                                public nsIDOMHTMLQuoteElement,
+                                public nsIDOMHTMLHeadElement,
+                                public nsIDOMHTMLHtmlElement
 {
 public:
   explicit HTMLSharedElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
@@ -179,7 +179,7 @@ public:
 protected:
   virtual ~HTMLSharedElement();
 
-  virtual JSObject* WrapNode(JSContext* aCx) override;
+  virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 };
 
 } // namespace mozilla

@@ -28,7 +28,7 @@ public:
   MOZ_DECLARE_WEAKREFERENCE_TYPENAME(PannerNode)
   explicit PannerNode(AudioContext* aContext);
 
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   virtual void DestroyMediaStream() override;
 

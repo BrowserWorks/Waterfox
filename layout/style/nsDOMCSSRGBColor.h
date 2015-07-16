@@ -52,7 +52,7 @@ public:
     return nullptr;
   }
 
-  virtual JSObject *WrapObject(JSContext *cx)
+  virtual JSObject *WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto)
     override final;
 
 private:

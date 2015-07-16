@@ -16,6 +16,7 @@
 #include "nsAutoPtr.h"
 
 #include "nsWindowsDllInterceptor.h"
+#include "mozilla/ArrayUtils.h"
 #include "mozilla/WindowsVersion.h"
 #include "nsWindowsHelpers.h"
 
@@ -169,8 +170,14 @@ static DllBlockInfo sWindowsDllBlocklist[] = {
   { "rndlnpshimswf.dll", ALL_VERSIONS },
   { "rndlmainbrowserrecordplugin.dll", ALL_VERSIONS },
 
+  // Crashes with CyberLink YouCam, bug 1136968
+  { "ycwebcamerasource.ax", MAKE_VERSION(2, 0, 0, 1611) },
+
   // Old version of WebcamMax crashes WebRTC, bug 1130061
   { "vwcsource.ax", MAKE_VERSION(1, 5, 0, 0) },
+
+  // NetOp School, discontinued product, bug 763395
+  { "nlsp.dll", MAKE_VERSION(6, 23, 2012, 19) },
 
   { nullptr, 0 }
 };
@@ -197,6 +204,8 @@ static const int kUser32BeforeBlocklistParameterLen =
 static DWORD sThreadLoadingXPCOMModule;
 static bool sBlocklistInitFailed;
 static bool sUser32BeforeBlocklist;
+
+static wchar_t sPreviouslyCrashedModule[MAX_PATH + 1];
 
 // Duplicated from xpcom glue. Ideally this should be shared.
 void
@@ -578,6 +587,23 @@ patched_LdrLoadDll (PWCHAR filePath, PULONG flags, PUNICODE_STRING moduleFileNam
       return STATUS_DLL_NOT_FOUND;
     }
   }
+  // Block binaries where the filename is at least 16 hex digits
+  if (dot && ((dot - dllName) >= 16)) {
+    char * current = dllName;
+    while (current < dot && isxdigit(*current)) {
+      current++;
+    }
+    if (current == dot) {
+      return STATUS_DLL_NOT_FOUND;
+    }
+  }
+
+  if (sPreviouslyCrashedModule[0] &&
+      moduleFileName->Length < sizeof(sPreviouslyCrashedModule) &&
+      !wcsicmp(sPreviouslyCrashedModule, moduleFileName->Buffer)) {
+    printf_stderr("LdrLoadDll: Blocking load of previously crashed module '%s'\n", dllName);
+    return STATUS_DLL_NOT_FOUND;
+  }
 
   // then compare to everything on the blocklist
   info = &sWindowsDllBlocklist[0];
@@ -684,14 +710,71 @@ continue_loading:
 
 WindowsDllInterceptor NtDllIntercept;
 
+void ReadPreviouslyCrashedModule()
+{
+  memset(sPreviouslyCrashedModule, 0, sizeof(sPreviouslyCrashedModule));
+
+  wchar_t tempPath[MAX_PATH];
+  if (!GetTempPathW(ArrayLength(tempPath), tempPath)) {
+    return;
+  }
+
+  if (wcscat_s(tempPath, ArrayLength(tempPath), L"FirefoxBlockedDLL.txt")) {
+    return;
+  }
+
+  HANDLE inputFile = CreateFileW(tempPath,
+                                 GENERIC_READ,
+                                 FILE_SHARE_READ,
+                                 nullptr,
+                                 OPEN_EXISTING,
+                                 FILE_ATTRIBUTE_NORMAL,
+                                 nullptr);
+
+  if (inputFile == INVALID_HANDLE_VALUE) {
+    return;
+  }
+
+  DWORD nBytes = 0;
+  if (ReadFile(inputFile,
+               sPreviouslyCrashedModule,
+               sizeof(sPreviouslyCrashedModule) - sizeof(wchar_t),
+               &nBytes,
+               nullptr) &&
+      nBytes % 2 == 0) {
+    sPreviouslyCrashedModule[nBytes/2] = L'\0';
+  } else {
+    memset(sPreviouslyCrashedModule, 0, sizeof(sPreviouslyCrashedModule));
+  }
+
+  CloseHandle(inputFile);
+}
+
 } // anonymous namespace
 
 NS_EXPORT void
 DllBlocklist_Initialize()
 {
+#if defined(_MSC_VER) && _MSC_VER < 1900 && defined(_M_X64)
+  // The code below is not blocklist-related, but is the best place for it.
+  // This is the earliest place where msvcr120.dll is loaded, and this
+  // codepath is used by both firefox.exe and plugin-container.exe processes.
+
+  // Disable CRT use of FMA3 on non-AVX2 CPUs and on Win7RTM due to bug 1160148
+  int cpuid0[4] = {0};
+  int cpuid7[4] = {0};
+  __cpuid(cpuid0, 0); // Get the maximum supported CPUID function
+  __cpuid(cpuid7, 7); // AVX2 is function 7, subfunction 0, EBX, bit 5
+  if (cpuid0[0] < 7 || !(cpuid7[1] & 0x20) || !IsWin7SP1OrLater()) {
+    _set_FMA3_enable(0);
+  }
+#endif
+
   if (GetModuleHandleA("user32.dll")) {
     sUser32BeforeBlocklist = true;
   }
+
+  ReadPreviouslyCrashedModule();
 
   NtDllIntercept.Init("ntdll.dll");
 

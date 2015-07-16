@@ -34,7 +34,7 @@ public:
 
   // WebIDL (internal functions)
 
-  virtual JSObject* WrapObject(JSContext *aCx) override;
+  virtual JSObject* WrapObject(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   nsresult SetCurrentSource(TVSourceType aSourceType);
 

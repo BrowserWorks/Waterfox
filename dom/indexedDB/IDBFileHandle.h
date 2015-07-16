@@ -29,9 +29,9 @@ namespace indexedDB {
 class IDBMutableFile;
 
 class IDBFileHandle final : public DOMEventTargetHelper,
-                                public nsIRunnable,
-                                public FileHandleBase,
-                                public nsSupportsWeakReference
+                            public nsIRunnable,
+                            public FileHandleBase,
+                            public nsSupportsWeakReference
 {
 public:
   NS_DECL_ISUPPORTS_INHERITED
@@ -53,7 +53,7 @@ public:
 
   // WrapperCache
   virtual JSObject*
-  WrapObject(JSContext* aCx) override;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // WebIDL
   nsPIDOMWindow*

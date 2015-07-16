@@ -75,6 +75,7 @@ const BrowserElementIsPreloaded = true;
   Cc["@mozilla.org/uriloader;1"].getService(Ci["nsIURILoader"]);
   Cc["@mozilla.org/cspcontext;1"].createInstance(Ci["nsIContentSecurityPolicy"]);
   Cc["@mozilla.org/settingsManager;1"].createInstance(Ci["nsISupports"]);
+  Cc["@mozilla.org/webapps;1"].createInstance(Ci["nsISupports"]);
 
   /* Applications Specific Helper */
   try {
@@ -91,7 +92,17 @@ const BrowserElementIsPreloaded = true;
   } catch (e) {
   }
 
-  Services.scriptloader.loadSubScript("chrome://global/content/BrowserElementPanning.js", global);
+  if (Services.prefs.getIntPref("dom.w3c_touch_events.enabled") == 1) {
+    try {
+      if (Services.prefs.getBoolPref("layers.async-pan-zoom.enabled") === false) {
+        Services.scriptloader.loadSubScript("chrome://global/content/BrowserElementPanningAPZDisabled.js", global);
+      }
+    } catch (e) {
+    }
+
+    Services.scriptloader.loadSubScript("chrome://global/content/BrowserElementPanning.js", global);
+  }
+
   Services.scriptloader.loadSubScript("chrome://global/content/BrowserElementChildPreload.js", global);
 
   Services.io.getProtocolHandler("app");

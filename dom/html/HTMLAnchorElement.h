@@ -19,8 +19,8 @@ class EventChainPreVisitor;
 namespace dom {
 
 class HTMLAnchorElement final : public nsGenericHTMLElement,
-                                    public nsIDOMHTMLAnchorElement,
-                                    public Link
+                                public nsIDOMHTMLAnchorElement,
+                                public Link
 {
 public:
   using Element::GetText;
@@ -229,7 +229,7 @@ protected:
 
   virtual void GetItemValueText(DOMString& text) override;
   virtual void SetItemValueText(const nsAString& text) override;
-  virtual JSObject* WrapNode(JSContext *aCx) override;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
   nsRefPtr<nsDOMTokenList > mRelList;
 };
 

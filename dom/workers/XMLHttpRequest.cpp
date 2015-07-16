@@ -19,6 +19,7 @@
 #include "mozilla/dom/ProgressEvent.h"
 #include "nsComponentManagerUtils.h"
 #include "nsContentUtils.h"
+#include "nsFormData.h"
 #include "nsJSUtils.h"
 #include "nsThreadUtils.h"
 
@@ -109,6 +110,7 @@ public:
   bool mLastUploadLengthComputable;
   bool mSeenLoadStart;
   bool mSeenUploadLoadStart;
+  bool mOpening;
 
   // Only touched on the main thread.
   bool mUploadEventListenersAttached;
@@ -124,7 +126,7 @@ public:
     mOuterEventStreamId(0), mOuterChannelId(0), mLastLoaded(0), mLastTotal(0),
     mLastUploadLoaded(0), mLastUploadTotal(0), mIsSyncXHR(false),
     mLastLengthComputable(false), mLastUploadLengthComputable(false),
-    mSeenLoadStart(false), mSeenUploadLoadStart(false),
+    mSeenLoadStart(false), mSeenUploadLoadStart(false), mOpening(false),
     mUploadEventListenersAttached(false), mMainThreadSeenLoadStart(false),
     mInOpen(false), mArrayBufferResponseWasTransferred(false)
   { }
@@ -136,7 +138,7 @@ public:
   Init();
 
   void
-  Teardown();
+  Teardown(bool aSendUnpin);
 
   bool
   AddRemoveEventListeners(bool aUpload, bool aAdd);
@@ -306,7 +308,9 @@ private:
   {
     AssertIsOnMainThread();
 
-    mProxy->Teardown();
+    // This means the XHR was GC'd, so we can't be pinned, and we don't need to
+    // try to unpin.
+    mProxy->Teardown(/* aSendUnpin */ false);
     mProxy = nullptr;
 
     return NS_OK;
@@ -314,7 +318,7 @@ private:
 };
 
 class LoadStartDetectionRunnable final : public nsRunnable,
-                                             public nsIDOMEventListener
+                                         public nsIDOMEventListener
 {
   WorkerPrivate* mWorkerPrivate;
   nsRefPtr<Proxy> mProxy;
@@ -566,7 +570,7 @@ private:
   virtual nsresult
   MainThreadRun() override
   {
-    mProxy->Teardown();
+    mProxy->Teardown(/* aSendUnpin */ true);
     MOZ_ASSERT(!mProxy->mSyncLoopTarget);
     return NS_OK;
   }
@@ -939,7 +943,7 @@ Proxy::Init()
 }
 
 void
-Proxy::Teardown()
+Proxy::Teardown(bool aSendUnpin)
 {
   AssertIsOnMainThread();
 
@@ -952,10 +956,12 @@ Proxy::Teardown()
     mXHR->Abort();
 
     if (mOutstandingSendCount) {
-      nsRefPtr<XHRUnpinRunnable> runnable =
-        new XHRUnpinRunnable(mWorkerPrivate, mXMLHttpRequestPrivate);
-      if (!runnable->Dispatch(nullptr)) {
-        NS_RUNTIMEABORT("We're going to hang at shutdown anyways.");
+      if (aSendUnpin) {
+        nsRefPtr<XHRUnpinRunnable> runnable =
+          new XHRUnpinRunnable(mWorkerPrivate, mXMLHttpRequestPrivate);
+        if (!runnable->Dispatch(nullptr)) {
+          NS_RUNTIMEABORT("We're going to hang at shutdown anyways.");
+        }
       }
 
       if (mSyncLoopTarget) {
@@ -969,10 +975,10 @@ Proxy::Teardown()
         }
       }
 
-      mWorkerPrivate = nullptr;
       mOutstandingSendCount = 0;
     }
 
+    mWorkerPrivate = nullptr;
     mXHRUpload = nullptr;
     mXHR = nullptr;
   }
@@ -1545,7 +1551,11 @@ SendRunnable::MainThreadRun()
     variant = wvariant;
   }
 
-  MOZ_ASSERT(!mProxy->mWorkerPrivate);
+  // Send() has been already called.
+  if (mProxy->mWorkerPrivate) {
+    return NS_ERROR_FAILURE;
+  }
+
   mProxy->mWorkerPrivate = mWorkerPrivate;
 
   MOZ_ASSERT(!mProxy->mSyncLoopTarget);
@@ -1626,9 +1636,9 @@ NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN_INHERITED(XMLHttpRequest,
 NS_IMPL_CYCLE_COLLECTION_TRACE_END
 
 JSObject*
-XMLHttpRequest::WrapObject(JSContext* aCx)
+XMLHttpRequest::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return XMLHttpRequestBinding_workers::Wrap(aCx, this);
+  return XMLHttpRequestBinding_workers::Wrap(aCx, this, aGivenProto);
 }
 
 // static
@@ -1840,6 +1850,12 @@ XMLHttpRequest::SendInternal(const nsAString& aStringBody,
 {
   mWorkerPrivate->AssertIsOnWorkerThread();
 
+  // No send() calls when open is running.
+  if (mProxy->mOpening) {
+    aRv.Throw(NS_ERROR_FAILURE);
+    return;
+  }
+
   bool hasUploadListeners = mUpload ? mUpload->HasListeners() : false;
 
   MaybePin(aRv);
@@ -1865,6 +1881,11 @@ XMLHttpRequest::SendInternal(const nsAString& aStringBody,
     new SendRunnable(mWorkerPrivate, mProxy, aStringBody, Move(aBody),
                      aClonedObjects, syncLoopTarget, hasUploadListeners);
   if (!runnable->Dispatch(cx)) {
+    // Dispatch() may have spun the event loop and we may have already unrooted.
+    // If so we don't want autoUnpin to try again.
+    if (!mRooted) {
+      autoUnpin.Clear();
+    }
     aRv.Throw(NS_ERROR_FAILURE);
     return;
   }
@@ -1925,12 +1946,15 @@ XMLHttpRequest::Open(const nsACString& aMethod, const nsAString& aUrl,
                      mBackgroundRequest, mWithCredentials,
                      mTimeout);
 
+  mProxy->mOpening = true;
   if (!runnable->Dispatch(mWorkerPrivate->GetJSContext())) {
+    mProxy->mOpening = false;
     ReleaseProxy();
     aRv.Throw(NS_ERROR_FAILURE);
     return;
   }
 
+  mProxy->mOpening = false;
   mProxy->mIsSyncXHR = !aAsync;
 }
 
@@ -2200,6 +2224,44 @@ XMLHttpRequest::Send(File& aBody, ErrorResult& aRv)
 }
 
 void
+XMLHttpRequest::Send(nsFormData& aBody, ErrorResult& aRv)
+{
+  mWorkerPrivate->AssertIsOnWorkerThread();
+  JSContext* cx = mWorkerPrivate->GetJSContext();
+
+  if (mCanceled) {
+    aRv.ThrowUncatchableException();
+    return;
+  }
+
+  if (!mProxy) {
+    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
+    return;
+  }
+
+  JS::Rooted<JS::Value> value(cx);
+  if (!GetOrCreateDOMReflector(cx, &aBody, &value)) {
+    aRv.Throw(NS_ERROR_FAILURE);
+    return;
+  }
+
+  const JSStructuredCloneCallbacks* callbacks =
+    mWorkerPrivate->IsChromeWorker() ?
+    ChromeWorkerStructuredCloneCallbacks(false) :
+    WorkerStructuredCloneCallbacks(false);
+
+  nsTArray<nsCOMPtr<nsISupports>> clonedObjects;
+
+  JSAutoStructuredCloneBuffer buffer;
+  if (!buffer.write(cx, value, callbacks, &clonedObjects)) {
+    aRv.Throw(NS_ERROR_DOM_DATA_CLONE_ERR);
+    return;
+  }
+
+  SendInternal(EmptyString(), Move(buffer), clonedObjects, aRv);
+}
+
+void
 XMLHttpRequest::Send(const ArrayBuffer& aBody, ErrorResult& aRv)
 {
   JS::Rooted<JSObject*> obj(mWorkerPrivate->GetJSContext(), aBody.Obj());
@@ -2214,20 +2276,13 @@ XMLHttpRequest::Send(const ArrayBufferView& aBody, ErrorResult& aRv)
 }
 
 void
-XMLHttpRequest::SendAsBinary(const nsAString& aBody, ErrorResult& aRv)
-{
-  NS_NOTYETIMPLEMENTED("Implement me!");
-  aRv.Throw(NS_ERROR_NOT_IMPLEMENTED);
-  return;
-}
-
-void
 XMLHttpRequest::Abort(ErrorResult& aRv)
 {
   mWorkerPrivate->AssertIsOnWorkerThread();
 
   if (mCanceled) {
     aRv.ThrowUncatchableException();
+    return;
   }
 
   if (!mProxy) {

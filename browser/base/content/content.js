@@ -246,6 +246,15 @@ let AboutNetErrorListener = {
     if (automatic) {
       this.onSendReport(evt);
     }
+    // hide parts of the UI we don't need yet
+    let contentDoc = content.document;
+
+    let reportSendingMsg = contentDoc.getElementById("reportSendingMessage");
+    let reportSentMsg = contentDoc.getElementById("reportSentMessage");
+    let retryBtn = contentDoc.getElementById("reportCertificateErrorRetry");
+    reportSendingMsg.style.display = "none";
+    reportSentMsg.style.display = "none";
+    retryBtn.style.display = "none";
   },
 
   onSetAutomatic: function(evt) {
@@ -272,22 +281,21 @@ let AboutNetErrorListener = {
           reportBtn.style.display = "none";
           retryBtn.style.display = "none";
           reportSentMsg.style.display = "none";
-          reportSendingMsg.style.display = "inline";
+          reportSendingMsg.style.removeProperty("display");
           break;
         case "error":
           // show the retry button
-          retryBtn.style.display = "inline";
+          retryBtn.style.removeProperty("display");
           reportSendingMsg.style.display = "none";
           break;
         case "complete":
           // Show a success indicator
-          reportSentMsg.style.display = "inline";
+          reportSentMsg.style.removeProperty("display");
           reportSendingMsg.style.display = "none";
           break;
         }
       }
     });
-
 
     let failedChannel = docShell.failedChannel;
     let location = contentDoc.location.href;
@@ -707,6 +715,12 @@ let ClickEventHandler = {
                  bookmark: false, referrerPolicy: ownerDoc.referrerPolicy };
 
     if (href) {
+      try {
+        BrowserUtils.urlSecurityCheck(href, node.ownerDocument.nodePrincipal);
+      } catch (e) {
+        return;
+      }
+
       json.href = href;
       if (node) {
         json.title = node.getAttribute("title");
@@ -717,8 +731,8 @@ let ClickEventHandler = {
             event.preventDefault(); // Need to prevent the pageload.
           }
         }
-        json.noReferrer = BrowserUtils.linkHasNoReferrer(node)
       }
+      json.noReferrer = BrowserUtils.linkHasNoReferrer(node)
 
       sendAsyncMessage("Content:Click", json);
       return;
@@ -1059,7 +1073,7 @@ let PageMetadataMessenger = {
       }
 
       case "PageMetadata:GetMicrodata": {
-        let target = message.objects;
+        let target = message.objects.target;
         let result = PageMetadata.getMicrodata(content.document, target);
         sendAsyncMessage("PageMetadata:MicrodataResult", result);
         break;
@@ -1154,4 +1168,9 @@ addMessageListener("ContextMenu:MediaCommand", (message) => {
         media.mozRequestFullScreen();
       break;
   }
+});
+
+addMessageListener("ContextMenu:Canvas:ToDataURL", (message) => {
+  let dataURL = message.objects.target.toDataURL();
+  sendAsyncMessage("ContextMenu:Canvas:ToDataURL:Result", { dataURL });
 });

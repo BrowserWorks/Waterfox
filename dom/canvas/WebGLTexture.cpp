@@ -18,8 +18,8 @@
 namespace mozilla {
 
 JSObject*
-WebGLTexture::WrapObject(JSContext* cx) {
-    return dom::WebGLTextureBinding::Wrap(cx, this);
+WebGLTexture::WrapObject(JSContext* cx, JS::Handle<JSObject*> aGivenProto) {
+    return dom::WebGLTextureBinding::Wrap(cx, this, aGivenProto);
 }
 
 WebGLTexture::WebGLTexture(WebGLContext* webgl, GLuint tex)
@@ -181,6 +181,8 @@ WebGLTexture::SetImageInfo(TexImageTarget texImageTarget, GLint level,
     MOZ_ASSERT(depth == 1 || texImageTarget == LOCAL_GL_TEXTURE_3D);
     MOZ_ASSERT(TexImageTargetToTexTarget(texImageTarget) == mTarget);
 
+    InvalidateStatusOfAttachedFBs();
+
     EnsureMaxLevelWithCustomImagesAtLeast(level);
 
     ImageInfoAt(texImageTarget, level) = ImageInfo(width, height, depth,
@@ -189,9 +191,6 @@ WebGLTexture::SetImageInfo(TexImageTarget texImageTarget, GLint level,
 
     if (level > 0)
         SetCustomMipmap();
-
-    // Invalidate framebuffer status cache.
-    NotifyFBsStatusChanged();
 
     SetFakeBlackStatus(WebGLTextureFakeBlackStatus::Unknown);
 }
@@ -530,7 +529,7 @@ ClearByMask(WebGLContext* webgl, GLbitfield mask)
         colorAttachmentsMask[0] = true;
     }
 
-    webgl->ForceClearFramebufferWithDefaultValues(mask, colorAttachmentsMask);
+    webgl->ForceClearFramebufferWithDefaultValues(false, mask, colorAttachmentsMask);
     return true;
 }
 
@@ -599,10 +598,10 @@ ClearWithTempFB(WebGLContext* webgl, GLuint tex,
 
     gl::ScopedRenderbuffer rb(gl);
     {
-        gl::ScopedBindRenderbuffer(gl, rb.RB());
-        gl->fRenderbufferStorage(LOCAL_GL_RENDERBUFFER,
-                                 LOCAL_GL_RGBA4,
-                                 width, height);
+        // Only GLES guarantees RGBA4.
+        GLenum format = gl->IsGLES() ? LOCAL_GL_RGBA4 : LOCAL_GL_RGBA8;
+        gl::ScopedBindRenderbuffer rbBinding(gl, rb.RB());
+        gl->fRenderbufferStorage(LOCAL_GL_RENDERBUFFER, format, width, height);
     }
 
     gl->fFramebufferRenderbuffer(LOCAL_GL_FRAMEBUFFER, LOCAL_GL_COLOR_ATTACHMENT0,

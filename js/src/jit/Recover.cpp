@@ -13,6 +13,7 @@
 #include "jsstr.h"
 
 #include "builtin/RegExp.h"
+#include "builtin/SIMD.h"
 #include "builtin/TypedObject.h"
 
 #include "gc/Heap.h"
@@ -1170,16 +1171,16 @@ RNewObject::RNewObject(CompactBufferReader& reader)
 bool
 RNewObject::recover(JSContext* cx, SnapshotIterator& iter) const
 {
-    RootedPlainObject templateObject(cx, &iter.read().toObject().as<PlainObject>());
+    RootedObject templateObject(cx, &iter.read().toObject());
     RootedValue result(cx);
     JSObject* resultObject = nullptr;
 
     // See CodeGenerator::visitNewObjectVMCall
     if (mode_ == MNewObject::ObjectLiteral) {
-        resultObject = NewInitObject(cx, templateObject);
+        resultObject = NewObjectOperationWithTemplate(cx, templateObject);
     } else {
         MOZ_ASSERT(mode_ == MNewObject::ObjectCreate);
-        resultObject = ObjectCreateWithTemplate(cx, templateObject);
+        resultObject = ObjectCreateWithTemplate(cx, templateObject.as<PlainObject>());
     }
 
     if (!resultObject)
@@ -1314,6 +1315,54 @@ RLambda::recover(JSContext* cx, SnapshotIterator& iter) const
 }
 
 bool
+MSimdBox::writeRecoverData(CompactBufferWriter& writer) const
+{
+    MOZ_ASSERT(canRecoverOnBailout());
+    writer.writeUnsigned(uint32_t(RInstruction::Recover_SimdBox));
+    SimdTypeDescr& simdTypeDescr = templateObject()->typeDescr().as<SimdTypeDescr>();
+    SimdTypeDescr::Type type = simdTypeDescr.type();
+    writer.writeByte(uint8_t(type));
+    return true;
+}
+
+RSimdBox::RSimdBox(CompactBufferReader& reader)
+{
+    type_ = reader.readByte();
+}
+
+bool
+RSimdBox::recover(JSContext* cx, SnapshotIterator& iter) const
+{
+    JSObject* resultObject = nullptr;
+    RValueAllocation a = iter.readAllocation();
+    MOZ_ASSERT(iter.allocationReadable(a));
+    const FloatRegisters::RegisterContent* raw = iter.floatAllocationPointer(a);
+    switch (SimdTypeDescr::Type(type_)) {
+      case SimdTypeDescr::Int32x4:
+        MOZ_ASSERT_IF(a.mode() == RValueAllocation::ANY_FLOAT_REG,
+                      a.fpuReg().isInt32x4());
+        resultObject = js::CreateSimd<Int32x4>(cx, (const Int32x4::Elem*) raw);
+        break;
+      case SimdTypeDescr::Float32x4:
+        MOZ_ASSERT_IF(a.mode() == RValueAllocation::ANY_FLOAT_REG,
+                      a.fpuReg().isFloat32x4());
+        resultObject = js::CreateSimd<Float32x4>(cx, (const Float32x4::Elem*) raw);
+        break;
+      case SimdTypeDescr::Float64x2:
+        MOZ_CRASH("NYI, RSimdBox of Float64x2");
+        break;
+    }
+
+    if (!resultObject)
+        return false;
+
+    RootedValue result(cx);
+    result.setObject(*resultObject);
+    iter.storeInstructionResult(result);
+    return true;
+}
+
+bool
 MObjectState::writeRecoverData(CompactBufferWriter& writer) const
 {
     MOZ_ASSERT(canRecoverOnBailout());
@@ -1378,6 +1427,27 @@ RArrayState::recover(JSContext* cx, SnapshotIterator& iter) const
     }
 
     result.setObject(*object);
+    iter.storeInstructionResult(result);
+    return true;
+}
+
+bool
+MAssertRecoveredOnBailout::writeRecoverData(CompactBufferWriter& writer) const
+{
+    MOZ_ASSERT(canRecoverOnBailout());
+    MOZ_RELEASE_ASSERT(input()->isRecoveredOnBailout() == mustBeRecovered_,
+        "assertRecoveredOnBailout failed during compilation");
+    writer.writeUnsigned(uint32_t(RInstruction::Recover_AssertRecoveredOnBailout));
+    return true;
+}
+
+RAssertRecoveredOnBailout::RAssertRecoveredOnBailout(CompactBufferReader& reader)
+{ }
+
+bool RAssertRecoveredOnBailout::recover(JSContext* cx, SnapshotIterator& iter) const
+{
+    RootedValue result(cx);
+    result.setUndefined();
     iter.storeInstructionResult(result);
     return true;
 }

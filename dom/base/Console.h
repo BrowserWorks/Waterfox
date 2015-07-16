@@ -26,7 +26,7 @@ class ConsoleCallData;
 struct ConsoleStackEntry;
 
 class Console final : public nsIObserver
-                        , public nsWrapperCache
+                    , public nsWrapperCache
 {
   ~Console();
 
@@ -44,7 +44,7 @@ public:
   }
 
   virtual JSObject*
-  WrapObject(JSContext* aCx) override;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   void
   Log(JSContext* aCx, const Sequence<JS::Value>& aData);
@@ -101,7 +101,7 @@ public:
   Count(JSContext* aCx, const Sequence<JS::Value>& aData);
 
   void
-  __noSuchMethod__();
+  NoopMethod();
 
 private:
   enum MethodName

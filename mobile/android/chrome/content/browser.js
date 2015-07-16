@@ -1415,7 +1415,7 @@ var BrowserApp = {
     });
   },
 
-  setPreferences: function setPreferences(aPref) {
+  setPreferences: function (aPref) {
     let json = JSON.parse(aPref);
 
     switch (json.name) {
@@ -1471,6 +1471,13 @@ var BrowserApp = {
         Services.prefs.setComplexValue(json.name, Ci.nsISupportsString, pref);
         break;
       }
+    }
+
+    // Finally, if we were asked to flush, flush prefs to disk right now.
+    // This allows us to be confident that prefs set in Settings are persisted,
+    // even if we crash very soon after.
+    if (json.flush) {
+      Services.prefs.savePrefFile(null);
     }
   },
 
@@ -2215,11 +2222,24 @@ var NativeWindow = {
    *                     persist across location changes.
    *        timeout:     A time in milliseconds. The notification will not
    *                     automatically dismiss before this time.
+   *
    *        checkbox:    A string to appear next to a checkbox under the notification
    *                     message. The button callback functions will be called with
    *                     the checked state as an argument.                   
+   *
+   *        title:       An object that specifies text to display as the title, and
+   *                     optionally a resource, such as a favicon cache url that can be
+   *                     used to fetch a favicon from the FaviconCache. (This can be
+   *                     generalized to other resources if the situation arises.)
+   *                     { text: <title>,
+   *                       resource: <resource_url> }
+   *
+   *        subtext:     A string to appear below the doorhanger message.
+   *
+   * @param aCategory
+   *        Doorhanger type to display (e.g., LOGIN)
    */
-    show: function(aMessage, aValue, aButtons, aTabID, aOptions) {
+    show: function(aMessage, aValue, aButtons, aTabID, aOptions, aCategory) {
       if (aButtons == null) {
         aButtons = [];
       }
@@ -2238,7 +2258,8 @@ var NativeWindow = {
         buttons: aButtons,
         // use the current tab if none is provided
         tabID: aTabID || BrowserApp.selectedTab.id,
-        options: aOptions || {}
+        options: aOptions || {},
+        category: aCategory
       };
       Messaging.sendRequest(json);
     },
@@ -3572,6 +3593,11 @@ Tab.prototype = {
    * Reloads the tab with the desktop mode setting.
    */
   reloadWithMode: function (aDesktopMode) {
+    // notify desktopmode for PIDOMWindow
+    let win = this.browser.contentWindow;
+    let dwi = win.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
+    dwi.setDesktopModeViewport(aDesktopMode);
+
     // Set desktop mode for tab and send change to Java
     if (this.desktopMode != aDesktopMode) {
       this.desktopMode = aDesktopMode;
@@ -3692,7 +3718,7 @@ Tab.prototype = {
     if (BrowserApp.selectedTab == this) {
       if (resolution != this._drawZoom) {
         this._drawZoom = resolution;
-        cwu.setResolutionAndScaleTo(resolution / window.devicePixelRatio, resolution / window.devicePixelRatio);
+        cwu.setResolutionAndScaleTo(resolution / window.devicePixelRatio);
       }
     } else if (!fuzzyEquals(resolution, zoom)) {
       dump("Warning: setDisplayPort resolution did not match zoom for background tab! (" + resolution + " != " + zoom + ")");
@@ -3816,7 +3842,7 @@ Tab.prototype = {
       if (BrowserApp.selectedTab == this) {
         let cwu = this.browser.contentWindow.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
         this._drawZoom = aZoom;
-        cwu.setResolutionAndScaleTo(aZoom / window.devicePixelRatio, aZoom / window.devicePixelRatio);
+        cwu.setResolutionAndScaleTo(aZoom / window.devicePixelRatio);
       }
     }
   },
@@ -3974,6 +4000,130 @@ Tab.prototype = {
     }
   },
 
+  sanitizeRelString: function(linkRel) {
+    // Sanitize the rel string
+    let list = [];
+    if (linkRel) {
+      list = linkRel.toLowerCase().split(/\s+/);
+      let hash = {};
+      list.forEach(function(value) { hash[value] = true; });
+      list = [];
+      for (let rel in hash)
+      list.push("[" + rel + "]");
+    }
+    return list;
+  },
+
+  makeFaviconMessage: function(eventTarget) {
+    // We want to get the largest icon size possible for our UI.
+    let maxSize = 0;
+
+    // We use the sizes attribute if available
+    // see http://www.whatwg.org/specs/web-apps/current-work/multipage/links.html#rel-icon
+    if (eventTarget.hasAttribute("sizes")) {
+      let sizes = eventTarget.getAttribute("sizes").toLowerCase();
+
+      if (sizes == "any") {
+        // Since Java expects an integer, use -1 to represent icons with sizes="any"
+        maxSize = -1;
+      } else {
+        let tokens = sizes.split(" ");
+        tokens.forEach(function(token) {
+          // TODO: check for invalid tokens
+          let [w, h] = token.split("x");
+          maxSize = Math.max(maxSize, Math.max(w, h));
+        });
+      }
+    }
+    return {
+      type: "Link:Favicon",
+      tabID: this.id,
+      href: resolveGeckoURI(eventTarget.href),
+      size: maxSize,
+      mime: eventTarget.getAttribute("type") || ""
+    };
+  },
+
+  makeFeedMessage: function(eventTarget, targetType) {
+    try {
+      // urlSecurityCeck will throw if things are not OK
+      ContentAreaUtils.urlSecurityCheck(eventTarget.href,
+            eventTarget.ownerDocument.nodePrincipal,
+            Ci.nsIScriptSecurityManager.DISALLOW_INHERIT_PRINCIPAL);
+
+      if (!this.browser.feeds)
+        this.browser.feeds = [];
+
+      this.browser.feeds.push({
+        href: eventTarget.href,
+        title: eventTarget.title,
+        type: targetType
+      });
+
+      return {
+        type: "Link:Feed",
+        tabID: this.id
+      };
+    } catch (e) {
+        return null;
+    }
+  },
+
+  makeOpenSearchMessage: function(eventTarget) {
+    let type = eventTarget.type && eventTarget.type.toLowerCase();
+    // Replace all starting or trailing spaces or spaces before "*;" globally w/ "".
+    type = type.replace(/^\s+|\s*(?:;.*)?$/g, "");
+
+    // Check that type matches opensearch.
+    let isOpenSearch = (type == "application/opensearchdescription+xml");
+    if (isOpenSearch && eventTarget.title && /^(?:https?|ftp):/i.test(eventTarget.href)) {
+      Services.search.init(() => {
+        let visibleEngines = Services.search.getVisibleEngines();
+        // NOTE: Engines are currently identified by name, but this can be changed
+        // when Engines are identified by URL (see bug 335102).
+        if (visibleEngines.some(function(e) {
+          return e.name == eventTarget.title;
+        })) {
+          // This engine is already present, do nothing.
+          return null;
+        }
+
+        if (this.browser.engines) {
+          // This engine has already been handled, do nothing.
+          if (this.browser.engines.some(function(e) {
+            return e.url == eventTarget.href;
+          })) {
+            return null;
+          }
+        } else {
+            this.browser.engines = [];
+        }
+
+        // Get favicon.
+        let iconURL = eventTarget.ownerDocument.documentURIObject.prePath + "/favicon.ico";
+
+        let newEngine = {
+          title: eventTarget.title,
+          url: eventTarget.href,
+          iconURL: iconURL
+        };
+
+        this.browser.engines.push(newEngine);
+
+        // Don't send a message to display engines if we've already handled an engine.
+        if (this.browser.engines.length > 1)
+          return null;
+
+        // Broadcast message that this tab contains search engines that should be visible.
+        return {
+          type: "Link:OpenSearch",
+          tabID: this.id,
+          visible: true
+        };
+      });
+    }
+  },
+
   handleEvent: function(aEvent) {
     switch (aEvent.type) {
       case "DOMContentLoaded": {
@@ -4063,6 +4213,7 @@ Tab.prototype = {
 
       case "DOMLinkAdded":
       case "DOMLinkChanged": {
+        let jsonMessage = null;
         let target = aEvent.originalTarget;
         if (!target.href || target.disabled)
           return;
@@ -4071,47 +4222,10 @@ Tab.prototype = {
         if (target.ownerDocument != this.browser.contentDocument)
           return;
 
-        // Sanitize the rel string
-        let list = [];
-        if (target.rel) {
-          list = target.rel.toLowerCase().split(/\s+/);
-          let hash = {};
-          list.forEach(function(value) { hash[value] = true; });
-          list = [];
-          for (let rel in hash)
-            list.push("[" + rel + "]");
-        }
-
+        // Sanitize rel link
+        let list = this.sanitizeRelString(target.rel);
         if (list.indexOf("[icon]") != -1) {
-          // We want to get the largest icon size possible for our UI.
-          let maxSize = 0;
-
-          // We use the sizes attribute if available
-          // see http://www.whatwg.org/specs/web-apps/current-work/multipage/links.html#rel-icon
-          if (target.hasAttribute("sizes")) {
-            let sizes = target.getAttribute("sizes").toLowerCase();
-
-            if (sizes == "any") {
-              // Since Java expects an integer, use -1 to represent icons with sizes="any"
-              maxSize = -1; 
-            } else {
-              let tokens = sizes.split(" ");
-              tokens.forEach(function(token) {
-                // TODO: check for invalid tokens
-                let [w, h] = token.split("x");
-                maxSize = Math.max(maxSize, Math.max(w, h));
-              });
-            }
-          }
-
-          let json = {
-            type: "Link:Favicon",
-            tabID: this.id,
-            href: resolveGeckoURI(target.href),
-            size: maxSize,
-            mime: target.getAttribute("type") || ""
-          };
-          Messaging.sendRequest(json);
+          jsonMessage = this.makeFaviconMessage(target);
         } else if (list.indexOf("[alternate]") != -1 && aEvent.type == "DOMLinkAdded") {
           let type = target.type.toLowerCase().replace(/^\s+|\s*(?:;.*)?$/g, "");
           let isFeed = (type == "application/rss+xml" || type == "application/atom+xml");
@@ -4119,77 +4233,14 @@ Tab.prototype = {
           if (!isFeed)
             return;
 
-          try {
-            // urlSecurityCeck will throw if things are not OK
-            ContentAreaUtils.urlSecurityCheck(target.href, target.ownerDocument.nodePrincipal, Ci.nsIScriptSecurityManager.DISALLOW_INHERIT_PRINCIPAL);
-
-            if (!this.browser.feeds)
-              this.browser.feeds = [];
-            this.browser.feeds.push({ href: target.href, title: target.title, type: type });
-
-            let json = {
-              type: "Link:Feed",
-              tabID: this.id
-            };
-            Messaging.sendRequest(json);
-          } catch (e) {}
+          jsonMessage = this.makeFeedMessage(target, type);
         } else if (list.indexOf("[search]" != -1) && aEvent.type == "DOMLinkAdded") {
-          let type = target.type && target.type.toLowerCase();
-
-          // Replace all starting or trailing spaces or spaces before "*;" globally w/ "".
-          type = type.replace(/^\s+|\s*(?:;.*)?$/g, "");
-
-          // Check that type matches opensearch.
-          let isOpenSearch = (type == "application/opensearchdescription+xml");
-          if (isOpenSearch && target.title && /^(?:https?|ftp):/i.test(target.href)) {
-            Services.search.init(() => {
-              let visibleEngines = Services.search.getVisibleEngines();
-              // NOTE: Engines are currently identified by name, but this can be changed
-              // when Engines are identified by URL (see bug 335102).
-              if (visibleEngines.some(function(e) {
-                return e.name == target.title;
-              })) {
-                // This engine is already present, do nothing.
-                return;
-              }
-
-              if (this.browser.engines) {
-                // This engine has already been handled, do nothing.
-                if (this.browser.engines.some(function(e) {
-                  return e.url == target.href;
-                })) {
-                    return;
-                }
-              } else {
-                this.browser.engines = [];
-              }
-
-              // Get favicon.
-              let iconURL = target.ownerDocument.documentURIObject.prePath + "/favicon.ico";
-
-              let newEngine = {
-                title: target.title,
-                url: target.href,
-                iconURL: iconURL
-              };
-
-              this.browser.engines.push(newEngine);
-
-              // Don't send a message to display engines if we've already handled an engine.
-              if (this.browser.engines.length > 1)
-                return;
-
-              // Broadcast message that this tab contains search engines that should be visible.
-              let newEngineMessage = {
-                type: "Link:OpenSearch",
-                tabID: this.id,
-                visible: true
-              };
-
-              Messaging.sendRequest(newEngineMessage);
-            });
-          }
+          jsonMessage = this.makeOpenSearchMessage(target);
         }
+        if (!jsonMessage)
+         return;
+
+        Messaging.sendRequest(jsonMessage);
         break;
       }
 
@@ -4546,16 +4597,16 @@ Tab.prototype = {
   },
 
   _getGeckoZoom: function() {
-    let res = {x: {}, y: {}};
+    let res = {};
     let cwu = this.browser.contentWindow.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
-    cwu.getResolution(res.x, res.y);
-    let zoom = res.x.value * window.devicePixelRatio;
+    cwu.getResolution(res);
+    let zoom = res.value * window.devicePixelRatio;
     return zoom;
   },
 
   saveSessionZoom: function(aZoom) {
     let cwu = this.browser.contentWindow.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
-    cwu.setResolutionAndScaleTo(aZoom / window.devicePixelRatio, aZoom / window.devicePixelRatio);
+    cwu.setResolutionAndScaleTo(aZoom / window.devicePixelRatio);
   },
 
   restoredSessionZoom: function() {
@@ -6316,6 +6367,24 @@ var ViewportHandler = {
    * Returns the ViewportMetadata object.
    */
   getViewportMetadata: function getViewportMetadata(aWindow) {
+    let tab = BrowserApp.getTabForWindow(aWindow);
+    let readerMode = false;
+    try {
+      readerMode = tab.browser.contentDocument.documentURI.startsWith("about:reader");
+    } catch (e) {
+    }
+    if (tab.desktopMode && !readerMode) {
+      return new ViewportMetadata({
+        minZoom: kViewportMinScale,
+        maxZoom: kViewportMaxScale,
+        width: kDefaultCSSViewportWidth,
+        height: kDefaultCSSViewportHeight,
+        allowZoom: true,
+        allowDoubleTapZoom: true,
+        isSpecified: false
+      });
+    }
+
     let windowUtils = aWindow.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
 
     // viewport details found here
@@ -6595,13 +6664,12 @@ var IndexedDB = {
 
     let requestor = subject.QueryInterface(Ci.nsIInterfaceRequestor);
 
-    let contentWindow = requestor.getInterface(Ci.nsIDOMWindow);
-    let contentDocument = contentWindow.document;
-    let tab = BrowserApp.getTabForWindow(contentWindow);
+    let browser = requestor.getInterface(Ci.nsIDOMNode);
+    let tab = BrowserApp.getTabForBrowser(browser);
     if (!tab)
       return;
 
-    let host = contentDocument.documentURIObject.asciiHost;
+    let host = browser.currentURI.asciiHost;
 
     let strings = Strings.browser;
 
@@ -7412,6 +7480,7 @@ var RemoteDebugger = {
         DebuggerServer.init();
         DebuggerServer.addBrowserActors();
         DebuggerServer.registerModule("resource://gre/modules/dbg-browser-actors.js");
+        DebuggerServer.allowChromeProcess = true;
       }
 
       let pathOrPort = this._getPath();
@@ -7697,7 +7766,7 @@ var Distribution = {
     }
 
     // Apply a lightweight theme if necessary
-    if (prefs && prefs["lightweightThemes.isThemeSelected"]) {
+    if (prefs && prefs["lightweightThemes.selectedThemeID"]) {
       Services.obs.notifyObservers(null, "lightweight-theme-apply", "");
     }
 
@@ -7706,7 +7775,7 @@ var Distribution = {
     for (let key in localizeablePrefs) {
       try {
         let value = localizeablePrefs[key];
-        value = value.replace("%LOCALE%", locale, "g");
+        value = value.replace(/%LOCALE%/g, locale);
         localizedString.data = "data:text/plain," + key + "=" + value;
         defaults.setComplexValue(key, Ci.nsIPrefLocalizedString, localizedString);
       } catch (e) { /* ignore bad prefs and move on */ }

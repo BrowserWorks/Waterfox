@@ -49,7 +49,7 @@ class BaselineFrame
 
         // Frame has execution observed by a Debugger.
         //
-        // See comment above 'debugMode' in jscompartment.h for explanation of
+        // See comment above 'isDebuggee' in jscompartment.h for explanation of
         // invariants of debuggee compartments, scripts, and frames.
         DEBUGGEE         = 1 << 6,
 
@@ -133,6 +133,7 @@ class BaselineFrame
 
     inline void pushOnScopeChain(ScopeObject& scope);
     inline void popOffScopeChain();
+    inline void replaceInnermostScope(ScopeObject& scope);
 
     inline void popWith(JSContext* cx);
 
@@ -249,6 +250,7 @@ class BaselineFrame
 
     inline bool pushBlock(JSContext* cx, Handle<StaticBlockObject*> block);
     inline void popBlock(JSContext* cx);
+    inline bool freshenBlock(JSContext* cx);
 
     bool strictEvalPrologue(JSContext* cx);
     bool heavyweightFunPrologue(JSContext* cx);

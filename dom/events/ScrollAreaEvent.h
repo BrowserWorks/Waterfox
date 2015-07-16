@@ -38,9 +38,9 @@ public:
   NS_IMETHOD_(void) Serialize(IPC::Message* aMsg, bool aSerializeInterfaceType) override;
   NS_IMETHOD_(bool) Deserialize(const IPC::Message* aMsg, void** aIter) override;
 
-  virtual JSObject* WrapObjectInternal(JSContext* aCx) override
+  virtual JSObject* WrapObjectInternal(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override
   {
-    return ScrollAreaEventBinding::Wrap(aCx, this);
+    return ScrollAreaEventBinding::Wrap(aCx, this, aGivenProto);
   }
 
   float X() const

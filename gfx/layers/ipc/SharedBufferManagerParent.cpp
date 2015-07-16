@@ -53,6 +53,10 @@ public:
     for (it = SharedBufferManagerParent::sManagers.begin(); it != SharedBufferManagerParent::sManagers.end(); it++) {
       base::ProcessId pid = it->first;
       SharedBufferManagerParent *mgr = it->second;
+      if (!mgr) {
+        printf_stderr("GrallocReporter::CollectReports() mgr is nullptr");
+        continue;
+      }
 
       nsAutoCString pidName;
       LinuxUtils::GetThreadName(pid, pidName);
@@ -95,6 +99,8 @@ public:
     return NS_OK;
   }
 
+protected:
+  ~GrallocReporter() {}
 };
 
 NS_IMPL_ISUPPORTS(GrallocReporter, nsIMemoryReporter)
@@ -207,7 +213,12 @@ bool SharedBufferManagerParent::RecvAllocateGrallocBuffer(const IntSize& aSize, 
 
   if (aFormat == 0 || aUsage == 0) {
     printf_stderr("SharedBufferManagerParent::RecvAllocateGrallocBuffer -- format and usage must be non-zero");
-    return true;
+    return false;
+  }
+
+  if (aSize.width <= 0 || aSize.height <= 0) {
+    printf_stderr("SharedBufferManagerParent::RecvAllocateGrallocBuffer -- requested gralloc buffer size is invalid");
+    return false;
   }
 
   // If the requested size is too big (i.e. exceeds the commonly used max GL texture size)
@@ -332,7 +343,11 @@ MessageLoop* SharedBufferManagerParent::GetMessageLoop()
 SharedBufferManagerParent* SharedBufferManagerParent::GetInstance(ProcessId id)
 {
   NS_ASSERTION(sManagers.count(id) == 1, "No BufferManager for the process");
-  return sManagers[id];
+  if (sManagers.count(id) == 1) {
+    return sManagers[id];
+  } else {
+    return nullptr;
+  }
 }
 
 #ifdef MOZ_HAVE_SURFACEDESCRIPTORGRALLOC

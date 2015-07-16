@@ -29,7 +29,7 @@ namespace dom {
 // Attribute helper class used to wrap up an attribute with a dom
 // object that implements nsIDOMAttr and nsIDOMNode
 class Attr final : public nsIAttribute,
-                       public nsIDOMAttr
+                   public nsIDOMAttr
 {
   virtual ~Attr() {}
 
@@ -82,7 +82,7 @@ public:
   virtual nsIDOMNode* AsDOMNode() override { return this; }
 
   // WebIDL
-  virtual JSObject* WrapNode(JSContext* aCx) override;
+  virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // XPCOM GetName() is OK
   // XPCOM GetValue() is OK

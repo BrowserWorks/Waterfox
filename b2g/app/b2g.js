@@ -34,6 +34,9 @@ pref("browser.tabs.remote.autostart.1", false);
 // Bug 945235: Prevent all bars to be considered visible:
 pref("toolkit.defaultChromeFeatures", "chrome,dialog=no,close,resizable,scrollbars,extrachrome");
 
+// Disable focus rings
+pref("browser.display.focus_ring_width", 0);
+
 // Device pixel to CSS px ratio, in percent. Set to -1 to calculate based on display density.
 pref("browser.viewport.scaleRatio", -1);
 
@@ -217,6 +220,10 @@ pref("dom.max_script_run_time", 0);
 pref("dom.max_chrome_script_run_time", 0);
 pref("dom.max_child_script_run_time", 0);
 
+// Temporarily disable support for offsetX/Y to work around Google Maps bug
+// (bug 1150284)
+pref("dom.mouseEvent.offsetXY.enabled", false);
+
 // plugins
 pref("plugin.disable", true);
 pref("dom.ipc.plugins.enabled", true);
@@ -319,8 +326,8 @@ pref("media.fragmented-mp4.gonk.enabled", true);
 pref("media.video-queue.default-size", 3);
 
 // optimize images' memory usage
-pref("image.mem.decodeondraw", true);
-pref("image.mem.allow_locking_in_content_processes", false); /* don't allow image locking */
+pref("image.decode-only-on-draw.enabled", true);
+pref("image.mem.allow_locking_in_content_processes", true);
 // Limit the surface cache to 1/8 of main memory or 128MB, whichever is smaller.
 // Almost everything that was factored into 'max_decoded_image_kb' is now stored
 // in the surface cache.  1/8 of main memory is 32MB on a 256MB device, which is
@@ -691,6 +698,9 @@ pref("ui.scrollbarFadeDuration", 200);
 // Scrollbar position follows the document `dir` attribute
 pref("layout.scrollbar.side", 1);
 
+// CSS Scroll Snapping
+pref("layout.css.scroll-snap.enabled", true);
+
 // Enable the ProcessPriorityManager, and give processes with no visible
 // documents a 1s grace period before they're eligible to be marked as
 // background. Background processes that are perceivable due to playing
@@ -700,10 +710,11 @@ pref("dom.ipc.processPriorityManager.backgroundGracePeriodMS", 1000);
 pref("dom.ipc.processPriorityManager.backgroundPerceivableGracePeriodMS", 5000);
 pref("dom.ipc.processPriorityManager.temporaryPriorityLockMS", 5000);
 
-// Number of different background levels for background processes.  We use
-// these different levels to force the low-memory killer to kill processes in
-// a LRU order.
-pref("dom.ipc.processPriorityManager.backgroundLRUPoolLevels", 5);
+// Number of different background/foreground levels for background/foreground
+// processes.  We use these different levels to force the low-memory killer to
+// kill processes in a LRU order.
+pref("dom.ipc.processPriorityManager.BACKGROUND.LRUPoolLevels", 5);
+pref("dom.ipc.processPriorityManager.FOREGROUND.LRUPoolLevels", 3);
 
 // Kernel parameters for process priorities.  These affect how processes are
 // killed on low-memory and their relative CPU priorities.
@@ -989,6 +1000,13 @@ pref("b2g.theme.origin", "app://theme.gaiamobile.org");
 pref("dom.mozApps.themable", true);
 pref("dom.mozApps.selected_theme", "default_theme.gaiamobile.org");
 
+// Enable PAC generator for B2G.
+pref("network.proxy.pac_generator", true);
+
+// List of app origins to apply browsing traffic proxy setting, separated by
+// comma.  Specify '*' in the list to apply to all apps.
+pref("network.proxy.browsing.app_origins", "app://system.gaiamobile.org");
+
 // Enable Web Speech synthesis API
 pref("media.webspeech.synth.enabled", true);
 
@@ -1021,7 +1039,7 @@ pref("apz.fling_curve_function_y1", "0.0");
 pref("apz.fling_curve_function_x2", "0.80");
 pref("apz.fling_curve_function_y2", "1.0");
 pref("apz.fling_curve_threshold_inches_per_ms", "0.01");
-pref("apz.fling_friction", "0.00238");
+pref("apz.fling_friction", "0.0019");
 pref("apz.max_velocity_inches_per_ms", "0.07");
 
 // Tweak default displayport values to reduce the risk of running out of
@@ -1036,9 +1054,9 @@ pref("apz.axis_lock.mode", 2);
 
 // Overscroll-related settings
 pref("apz.overscroll.enabled", true);
-pref("apz.overscroll.stretch_factor", "0.15");
-pref("apz.overscroll.spring_stiffness", "0.002");
-pref("apz.overscroll.spring_friction", "0.02");
+pref("apz.overscroll.stretch_factor", "0.35");
+pref("apz.overscroll.spring_stiffness", "0.0018");
+pref("apz.overscroll.spring_friction", "0.015");
 pref("apz.overscroll.stop_distance_threshold", "5.0");
 pref("apz.overscroll.stop_velocity_threshold", "0.01");
 
@@ -1121,4 +1139,12 @@ pref("gfx.touch.resample", true);
 pref("gfx.vsync.hw-vsync.enabled", false);
 pref("gfx.vsync.compositor", false);
 pref("gfx.touch.resample", false);
+#endif
+
+// Bug 1147753 - Weird issues with vsync refresh driver on L devices
+// so disable them on L, but enable on KK and ICS
+#if ANDROID_VERSION == 19 || ANDROID_VERSION == 15
+pref("gfx.vsync.refreshdriver", true);
+#else
+pref("gfx.vsync.refreshdriver", false);
 #endif

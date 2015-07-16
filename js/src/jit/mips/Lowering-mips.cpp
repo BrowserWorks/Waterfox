@@ -19,17 +19,6 @@ using namespace js::jit;
 using mozilla::FloorLog2;
 
 void
-LIRGeneratorMIPS::useBox(LInstruction* lir, size_t n, MDefinition* mir,
-                         LUse::Policy policy, bool useAtStart)
-{
-    MOZ_ASSERT(mir->type() == MIRType_Value);
-
-    ensureDefined(mir);
-    lir->setOperand(n, LUse(mir->virtualRegister(), policy, useAtStart));
-    lir->setOperand(n + 1, LUse(VirtualRegisterOfPayload(mir), policy, useAtStart));
-}
-
-void
 LIRGeneratorMIPS::useBoxFixed(LInstruction* lir, size_t n, MDefinition* mir, Register reg1,
                               Register reg2)
 {
@@ -430,7 +419,7 @@ LIRGeneratorMIPS::lowerUDiv(MDiv* div)
     MDefinition* lhs = div->getOperand(0);
     MDefinition* rhs = div->getOperand(1);
 
-    LUDiv* lir = new(alloc()) LUDiv;
+    LUDivOrMod* lir = new(alloc()) LUDivOrMod;
     lir->setOperand(0, useRegister(lhs));
     lir->setOperand(1, useRegister(rhs));
     if (div->fallible())
@@ -445,7 +434,7 @@ LIRGeneratorMIPS::lowerUMod(MMod* mod)
     MDefinition* lhs = mod->getOperand(0);
     MDefinition* rhs = mod->getOperand(1);
 
-    LUMod* lir = new(alloc()) LUMod;
+    LUDivOrMod* lir = new(alloc()) LUDivOrMod;
     lir->setOperand(0, useRegister(lhs));
     lir->setOperand(1, useRegister(rhs));
     if (mod->fallible())

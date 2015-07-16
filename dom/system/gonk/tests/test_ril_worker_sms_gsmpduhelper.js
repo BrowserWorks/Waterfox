@@ -30,14 +30,14 @@ add_test(function test_GsmPDUHelper_readDataCodingScheme() {
     let msg = {};
     helper.readDataCodingScheme(msg);
 
-    do_check_eq(msg.dcs, dcs);
-    do_check_eq(msg.encoding, encoding);
-    do_check_eq(msg.messageClass, messageClass);
-    do_check_eq(msg.mwi == null, mwi == null);
+    equal(msg.dcs, dcs);
+    equal(msg.encoding, encoding);
+    equal(msg.messageClass, messageClass);
+    equal(msg.mwi == null, mwi == null);
     if (mwi != null) {
-      do_check_eq(msg.mwi.active, mwi.active);
-      do_check_eq(msg.mwi.discard, mwi.discard);
-      do_check_eq(msg.mwi.msgCount, mwi.msgCount);
+      equal(msg.mwi.active, mwi.active);
+      equal(msg.mwi.discard, mwi.discard);
+      equal(msg.mwi.msgCount, mwi.msgCount);
     }
   }
 
@@ -179,9 +179,56 @@ add_test(function test_GsmPDUHelper_writeStringAsSeptets() {
       helper.resetOctetWritten();
       helper.writeStringAsSeptets(str, paddingBits, PDU_NL_IDENTIFIER_DEFAULT,
                                   PDU_NL_IDENTIFIER_DEFAULT);
-      do_check_eq(Math.ceil(((len * 7) + paddingBits) / 8),
+      equal(Math.ceil(((len * 7) + paddingBits) / 8),
                   helper.octetsWritten);
     }
+  }
+
+  run_next_test();
+});
+
+/**
+ * Verify that encoding with Spanish locking shift table generates the same
+ * septets as with GSM default alphabet table.
+ *
+ * Bug 1138841 - Incorrect Spanish national language locking shift table
+ * definition.
+ */
+add_test(function test_GsmPDUHelper_writeStringAsSeptets_spanish_fallback() {
+  let worker = newWorker({
+    postRILMessage: function(data) {
+      // Do nothing
+    },
+    postMessage: function(message) {
+      // Do nothing
+    }
+  });
+
+  let context = worker.ContextPool._contexts[0];
+  let helper = context.GsmPDUHelper;
+  let buf = [];
+  helper.writeHexOctet = function(octet) {
+    buf.push(octet);
+  }
+
+  // Simple message string which is covered by GSM default alphabet.
+  let msg = "The quick brown fox jumps over the lazy dog";
+
+  // Encoded with GSM default alphabet.
+  helper.writeStringAsSeptets(msg, 0 /* paddingBits */,
+    PDU_NL_IDENTIFIER_DEFAULT, PDU_NL_IDENTIFIER_DEFAULT);
+  let octetsWithDefaultTable = buf;
+  buf = [];
+
+  // Encoded with Spanish locking shift table.
+  helper.writeStringAsSeptets(msg, 0 /* paddingBits */,
+    PDU_NL_IDENTIFIER_SPANISH, PDU_NL_IDENTIFIER_SPANISH);
+
+  // The length and content should be equal to what encoded with GSM default
+  // alphabet.
+  equal(octetsWithDefaultTable.length, buf.length);
+  for (let i = 0; i < buf.length; i++) {
+    equal(octetsWithDefaultTable[i], buf[i]);
   }
 
   run_next_test();
@@ -217,7 +264,7 @@ add_test(function test_GsmPDUHelper_readAddress() {
     }
     let length = helper.readHexOctet();
     let parsedAddr = helper.readAddress(length);
-    do_check_eq(parsedAddr, addrString);
+    equal(parsedAddr, addrString);
   }
 
   // For AlphaNumeric

@@ -1,0 +1,45 @@
+This file contains message digests of all files listed in MANIFEST,
+signed via the Module::Signature module, version 0.26.
+
+To verify the content in this distribution, first make sure you have
+Module::Signature installed, then type:
+
+    % cpansign -v
+
+It would check each file's integrity, as well as the signature's
+validity.  If "==> Signature verified OK! <==" is not displayed,
+the distribution may already have been compromised, and you should
+not run its Makefile.PL or Build.PL.
+
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
+
+SHA1 efbe8e6882a2caa0d741b113959a706830ab5882 BUNDLE/Test/Builder.pm
+SHA1 ae1d68262bedc2475e2c6fd478d99b259b4fb109 BUNDLE/Test/More.pm
+SHA1 2b02ead396d701c16a93a54b0f15f7073addb407 ChangeLog
+SHA1 a029ffa2f2252bb8914eb658666244710994d256 Changes.old
+SHA1 ed0c9e6c6b83e39e3822cf71aeed81f829386dd9 MANIFEST
+SHA1 21e313600b36ee8adb724a43c247ee0f873b5b81 MANIFEST.SKIP
+SHA1 1b0753e38574181a9d0e041cb9082d09c32f0fbf META.yml
+SHA1 441f9a3ec80bfa266d889d5c56a9a75eeb119626 Makefile.PL
+SHA1 37e858c51409a297ef5d3fb35dc57cd3b57f9a4d PAUSE2003.pub
+SHA1 0006bf6573858fbeb094d0becc5030c36d41a46d README
+SHA1 9e6e9cf9ae517d91ef3bda61f2c5d0c6409073d6 Todo
+SHA1 859ee1f3ba026d269c44b29d715d9af1e35333bc lib/Bundle/CPAN.pm
+SHA1 3aaaaf913748abe1cfa3f89ccf70d8f6315e5fe8 lib/CPAN.pm
+SHA1 e00d87017076b26de7696ae8b75d397bee737bbb lib/CPAN/Admin.pm
+SHA1 536e9720a6161510b50a2948c768d1daabc87dcd lib/CPAN/FirstTime.pm
+SHA1 33dd610c4b5d679bbcf3e61df290e33b460feaab lib/CPAN/Nox.pm
+SHA1 0a7b5d987e699afe63d9e314f1aa456214c8e1d0 scripts/cpan
+SHA1 1ef040435bd29f7d46db02c079fcb79cc279780c t/Nox.t
+SHA1 6a3fa699be244f587ef1d14e4c345bc57affd0c8 t/loadme.t
+SHA1 d765dc589a77265e305ef27ff386e31f562ad70b t/mirroredby.t
+SHA1 44ee216f4a129193a62fc1cd61088fd2de8e9538 t/signature.t
+SHA1 ada872f52e59a537c444e12ca9d79e4df4bd18c4 t/vcmp.t
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.2.2 (GNU/Linux)
+
+iD8DBQE/KTBH7IA58KMXwV0RAvwzAKDqt5FPLl5zA2RkWRoLz/ASslZqKACfV1pg
+VUyR6PLFLNoGHDZXCzmn1co=
+=8wMs
+-----END PGP SIGNATURE-----

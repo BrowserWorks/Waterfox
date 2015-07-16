@@ -32,7 +32,7 @@ public:
 
   nsPIDOMWindow* GetParentObject() const { return mWindow; }
 
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   static already_AddRefed<MozIsoDepTech>
   Constructor(const GlobalObject& aGlobal, MozNFCTag& aNFCTag,
@@ -45,7 +45,7 @@ private:
   nsRefPtr<nsPIDOMWindow> mWindow;
   nsRefPtr<MozNFCTag> mTag;
 
-  static const NFCTechType mTechnology = NFCTechType::ISO_DEP;
+  static const NFCTechType mTechnology;
 };
 
 } // namespace dom

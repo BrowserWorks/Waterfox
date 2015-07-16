@@ -34,15 +34,24 @@ let AppManager = exports.AppManager = {
   DEFAULT_PROJECT_ICON: "chrome://browser/skin/devtools/app-manager/default-app-icon.png",
   DEFAULT_PROJECT_NAME: "--",
 
+  _initialized: false,
+
   init: function() {
+    if (this._initialized) {
+      return;
+    }
+    this._initialized = true;
+
     let port = Services.prefs.getIntPref("devtools.debugger.remote-port");
     this.connection = ConnectionManager.createConnection("localhost", port);
     this.onConnectionChanged = this.onConnectionChanged.bind(this);
     this.connection.on(Connection.Events.STATUS_CHANGED, this.onConnectionChanged);
 
     this.tabStore = new TabStore(this.connection);
+    this.onTabList = this.onTabList.bind(this);
     this.onTabNavigate = this.onTabNavigate.bind(this);
     this.onTabClosed = this.onTabClosed.bind(this);
+    this.tabStore.on("tab-list", this.onTabList);
     this.tabStore.on("navigate", this.onTabNavigate);
     this.tabStore.on("closed", this.onTabClosed);
 
@@ -57,12 +66,18 @@ let AppManager = exports.AppManager = {
     this._telemetry = new Telemetry();
   },
 
-  uninit: function() {
+  destroy: function() {
+    if (!this._initialized) {
+      return;
+    }
+    this._initialized = false;
+
     this.selectedProject = null;
     this.selectedRuntime = null;
     RuntimeScanners.off("runtime-list-updated", this._rebuildRuntimeList);
     RuntimeScanners.disable();
     this.runtimeList = null;
+    this.tabStore.off("tab-list", this.onTabList);
     this.tabStore.off("navigate", this.onTabNavigate);
     this.tabStore.off("closed", this.onTabClosed);
     this.tabStore.destroy();
@@ -73,6 +88,52 @@ let AppManager = exports.AppManager = {
     this.connection = null;
   },
 
+  /**
+   * This module emits various events when state changes occur.  The basic event
+   * naming scheme is that event "X" means "X has changed" or "X is available".
+   * Some names are more detailed to clarify their precise meaning.
+   *
+   * The events this module may emit include:
+   *   before-project:
+   *     The selected project is about to change.  The event includes a special
+   *     |cancel| callback that will abort the project change if desired.
+   *   connection:
+   *     The connection status has changed (connected, disconnected, etc.)
+   *   install-progress:
+   *     A project being installed to a runtime has made further progress.  This
+   *     event contains additional details about exactly how far the process is
+   *     when such information is available.
+   *   project:
+   *     The selected project has changed.
+   *   project-started:
+   *     The selected project started running on the connected runtime.
+   *   project-stopped:
+   *     The selected project stopped running on the connected runtime.
+   *   project-removed:
+   *     The selected project was removed from the project list.
+   *   project-validated:
+   *     The selected project just completed validation.  As part of validation,
+   *     many pieces of metadata about the project are refreshed, including its
+   *     name, manifest details, etc.
+   *   runtime:
+   *     The selected runtime has changed.
+   *   runtime-global-actors:
+   *     The list of global actors for the entire runtime (but not actors for a
+   *     specific tab or app) are now available, so we can test for features
+   *     like preferences and settings.
+   *   runtime-details:
+   *     The selected runtime's details have changed, such as its user-visible
+   *     name.
+   *   runtime-list:
+   *     The list of available runtimes has changed, or any of the user-visible
+   *     details (like names) for the non-selected runtimes has changed.
+   *   runtime-targets:
+   *     The list of remote runtime targets available from the currently
+   *     connected runtime (such as tabs or apps) has changed, or any of the
+   *     user-visible details (like names) for the non-selected runtime targets
+   *     has changed.  This event includes |type| in the details, to distguish
+   *     "apps" and "tabs".
+   */
   update: function(what, details) {
     // Anything we want to forward to the UI
     this.emit("app-manager-update", what, details);
@@ -120,16 +181,16 @@ let AppManager = exports.AppManager = {
             // first.
             this._appsFront = front;
             this._listTabsResponse = response;
-            this.update("list-tabs-response");
+            this.update("runtime-global-actors");
           })
           .then(() => {
             this.checkIfProjectIsRunning();
-            this.update("runtime-apps-found");
+            this.update("runtime-targets", { type: "apps" });
             front.fetchIcons();
           });
         } else {
           this._listTabsResponse = response;
-          this.update("list-tabs-response");
+          this.update("runtime-global-actors");
         }
       });
     }
@@ -138,7 +199,8 @@ let AppManager = exports.AppManager = {
   },
 
   get connected() {
-    return this.connection.status == Connection.Status.CONNECTED;
+    return this.connection &&
+           this.connection.status == Connection.Status.CONNECTED;
   },
 
   get apps() {
@@ -166,9 +228,9 @@ let AppManager = exports.AppManager = {
   checkIfProjectIsRunning: function() {
     if (this.selectedProject) {
       if (this.isProjectRunning()) {
-        this.update("project-is-running");
+        this.update("project-started");
       } else {
-        this.update("project-is-not-running");
+        this.update("project-stopped");
       }
     }
   },
@@ -177,8 +239,13 @@ let AppManager = exports.AppManager = {
     return this.tabStore.listTabs();
   },
 
+  onTabList: function() {
+    this.update("runtime-targets", { type: "tabs" });
+  },
+
   // TODO: Merge this into TabProject as part of project-agnostic work
   onTabNavigate: function() {
+    this.update("runtime-targets", { type: "tabs" });
     if (this.selectedProject.type !== "tab") {
       return;
     }
@@ -217,11 +284,25 @@ let AppManager = exports.AppManager = {
 
   getTarget: function() {
     if (this.selectedProject.type == "mainProcess") {
-      return devtools.TargetFactory.forRemoteTab({
-        form: this._listTabsResponse,
-        client: this.connection.client,
-        chrome: true
-      });
+      // Fx >=39 exposes a ChromeActor to debug the main process
+      if (this.connection.client.mainRoot.traits.allowChromeProcess) {
+        return this.connection.client.getProcess()
+                   .then(aResponse => {
+                     return devtools.TargetFactory.forRemoteTab({
+                       form: aResponse.form,
+                       client: this.connection.client,
+                       chrome: true
+                     });
+                   });
+      } else {
+        // Fx <39 exposes tab actors on the root actor
+        return devtools.TargetFactory.forRemoteTab({
+          form: this._listTabsResponse,
+          client: this.connection.client,
+          chrome: true,
+          isTabActor: false
+        });
+      }
     }
 
     if (this.selectedProject.type == "tab") {
@@ -278,50 +359,65 @@ let AppManager = exports.AppManager = {
   },
 
   _selectedProject: null,
-  set selectedProject(value) {
+  set selectedProject(project) {
     // A regular comparison still sees a difference when equal in some cases
-    if (JSON.stringify(this._selectedProject) !==
-        JSON.stringify(value)) {
-
-      let cancelled = false;
-      this.update("before-project", { cancel: () => { cancelled = true; } });
-      if (cancelled)  {
-        return;
-      }
-
-      this._selectedProject = value;
-
-      // Clear out tab store's selected state, if any
-      this.tabStore.selectedTab = null;
-
-      if (this.selectedProject) {
-        if (this.selectedProject.type == "packaged" ||
-            this.selectedProject.type == "hosted") {
-          this.validateProject(this.selectedProject);
-        }
-        if (this.selectedProject.type == "tab") {
-          this.tabStore.selectedTab = this.selectedProject.app;
-        }
-      }
-
-      this.update("project");
-
-      this.checkIfProjectIsRunning();
+    if (JSON.stringify(this._selectedProject) ===
+        JSON.stringify(project)) {
+      return;
     }
+
+    let cancelled = false;
+    this.update("before-project", { cancel: () => { cancelled = true; } });
+    if (cancelled)  {
+      return;
+    }
+
+    this._selectedProject = project;
+
+    // Clear out tab store's selected state, if any
+    this.tabStore.selectedTab = null;
+
+    if (project) {
+      if (project.type == "packaged" ||
+          project.type == "hosted") {
+        this.validateAndUpdateProject(project);
+      }
+      if (project.type == "tab") {
+        this.tabStore.selectedTab = project.app;
+      }
+    }
+
+    this.update("project");
+    this.checkIfProjectIsRunning();
   },
   get selectedProject() {
     return this._selectedProject;
   },
 
-  removeSelectedProject: function() {
+  removeSelectedProject: Task.async(function*() {
     let location = this.selectedProject.location;
     AppManager.selectedProject = null;
     // If the user cancels the removeProject operation, don't remove the project
     if (AppManager.selectedProject != null) {
       return;
     }
-    return AppProjects.remove(location);
-  },
+
+    yield AppProjects.remove(location);
+    AppManager.update("project-removed");
+  }),
+
+  packageProject: Task.async(function*(project) {
+    if (!project) {
+      return;
+    }
+    if (project.type == "packaged" ||
+        project.type == "hosted") {
+      yield ProjectBuilding.build({
+        project: project,
+        logger: this.update.bind(this, "pre-package")
+      });
+    }
+  }),
 
   _selectedRuntime: null,
   set selectedRuntime(value) {
@@ -332,7 +428,7 @@ let AppManager = exports.AppManager = {
          this.selectedProject.type == "tab")) {
       this.selectedProject = null;
     }
-    this.update("runtime-changed");
+    this.update("runtime");
   },
 
   get selectedRuntime() {
@@ -401,8 +497,13 @@ let AppManager = exports.AppManager = {
   },
 
   isMainProcessDebuggable: function() {
-    return this._listTabsResponse &&
-           this._listTabsResponse.consoleActor;
+    // Fx <39 exposes chrome tab actors on RootActor
+    // Fx >=39 exposes a dedicated actor via getProcess request
+    return this.connection.client &&
+           this.connection.client.mainRoot &&
+           this.connection.client.mainRoot.traits.allowChromeProcess ||
+           (this._listTabsResponse &&
+            this._listTabsResponse.consoleActor);
   },
 
   get deviceFront() {
@@ -481,12 +582,9 @@ let AppManager = exports.AppManager = {
     return Task.spawn(function* () {
       let self = AppManager;
 
-      let packageDir = yield ProjectBuilding.build({
-        project: project,
-        logger: self.update.bind(self, "pre-package")
-      });
-
-      yield self.validateProject(project);
+      // Package and validate project
+      yield self.packageProject(project);
+      yield self.validateAndUpdateProject(project);
 
       if (project.errorsCount > 0) {
         self.reportError("error_cantInstallValidationErrors");
@@ -501,7 +599,7 @@ let AppManager = exports.AppManager = {
 
       let response;
       if (project.type == "packaged") {
-        packageDir = packageDir || project.location;
+        let packageDir = yield ProjectBuilding.getPackageDir(project);
         console.log("Installing app from " + packageDir);
 
         response = yield self._appsFront.installPackaged(packageDir,
@@ -537,7 +635,7 @@ let AppManager = exports.AppManager = {
       if (!app.running) {
         let deferred = promise.defer();
         self.on("app-manager-update", function onUpdate(event, what) {
-          if (what == "project-is-running") {
+          if (what == "project-started") {
             self.off("app-manager-update", onUpdate);
             deferred.resolve();
           }
@@ -557,14 +655,20 @@ let AppManager = exports.AppManager = {
 
   /* PROJECT VALIDATION */
 
-  validateProject: function(project) {
+  validateAndUpdateProject: function(project) {
     if (!project) {
       return promise.reject();
     }
 
     return Task.spawn(function* () {
 
-      let validation = new AppValidator(project);
+      let packageDir = yield ProjectBuilding.getPackageDir(project);
+      let validation = new AppValidator({
+        type: project.type,
+        // Build process may place the manifest in a non-root directory
+        location: packageDir
+      });
+
       yield validation.validate();
 
       if (validation.manifest) {
@@ -584,7 +688,7 @@ let AppManager = exports.AppManager = {
             let origin = Services.io.newURI(manifestURL.prePath, null, null);
             project.icon = Services.io.newURI(iconPath, null, origin).spec;
           } else if (project.type == "packaged") {
-            let projectFolder = FileUtils.File(project.location);
+            let projectFolder = FileUtils.File(packageDir);
             let folderURI = Services.io.newFileURI(projectFolder).spec;
             project.icon = folderURI + iconPath.replace(/^\/|\\/, "");
           }
@@ -671,7 +775,7 @@ let AppManager = exports.AppManager = {
     }
 
     this.update("runtime-details");
-    this.update("runtimelist");
+    this.update("runtime-list");
   },
 
   /* MANIFEST UTILS */

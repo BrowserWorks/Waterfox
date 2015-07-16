@@ -33,6 +33,7 @@
 #include "nsIApplicationCacheContainer.h"
 #include "nsIApplicationCacheChannel.h"
 #include "nsIScriptSecurityManager.h"
+#include "nsISpeculativeConnect.h"
 #include "nsICookieService.h"
 #include "nsContentUtils.h"
 #include "nsNodeInfoManager.h"
@@ -686,6 +687,10 @@ nsContentSink::ProcessLink(const nsSubstring& aAnchor, const nsSubstring& aHref,
     PrefetchDNS(aHref);
   }
 
+  if (!aHref.IsEmpty() && (linkTypes & nsStyleLinkElement::ePRECONNECT)) {
+    Preconnect(aHref);
+  }
+
   // is it a stylesheet link?
   if (!(linkTypes & nsStyleLinkElement::eSTYLESHEET)) {
     return NS_OK;
@@ -847,13 +852,39 @@ nsContentSink::PrefetchDNS(const nsAString &aHref)
     if (!uri) {
       return;
     }
-    nsAutoCString host;
-    uri->GetHost(host);
-    CopyUTF8toUTF16(host, hostname);
+    nsresult rv;
+    bool isLocalResource = false;
+    rv = NS_URIChainHasFlags(uri, nsIProtocolHandler::URI_IS_LOCAL_RESOURCE,
+                             &isLocalResource);
+    if (NS_SUCCEEDED(rv) && !isLocalResource) {
+      nsAutoCString host;
+      uri->GetHost(host);
+      CopyUTF8toUTF16(host, hostname);
+    }
   }
 
   if (!hostname.IsEmpty() && nsHTMLDNSPrefetch::IsAllowed(mDocument)) {
     nsHTMLDNSPrefetch::PrefetchLow(hostname);
+  }
+}
+
+void
+nsContentSink::Preconnect(const nsAString &aHref)
+{
+  nsCOMPtr<nsISpeculativeConnect>
+    speculator(do_QueryInterface(nsContentUtils::GetIOService()));
+  if (!speculator) {
+    return;
+  }
+
+  // construct URI using document charset
+  const nsACString& charset = mDocument->GetDocumentCharacterSet();
+  nsCOMPtr<nsIURI> uri;
+  NS_NewURI(getter_AddRefs(uri), aHref,
+            charset.IsEmpty() ? nullptr : PromiseFlatCString(charset).get(),
+            mDocument->GetDocBaseURI());
+  if (uri) {
+    speculator->SpeculativeConnect(uri, nullptr);
   }
 }
 
@@ -1550,4 +1581,8 @@ nsContentSink::NotifyDocElementCreated(nsIDocument* aDoc)
       NotifyObservers(domDoc, "document-element-inserted",
                       EmptyString().get());
   }
+
+  nsContentUtils::DispatchChromeEvent(aDoc, aDoc,
+                                      NS_LITERAL_STRING("DOMDocElementInserted"),
+                                      true, false);
 }

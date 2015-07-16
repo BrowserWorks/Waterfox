@@ -10,7 +10,6 @@
 #include "nsIX509CertDB.h"
 #include "nsIX509CertList.h"
 #include "nsIASN1Object.h"
-#include "nsIIdentityInfo.h"
 #include "nsCOMPtr.h"
 #include "nsNSSShutDown.h"
 #include "nsISimpleEnumerator.h"
@@ -26,15 +25,13 @@ class nsINSSComponent;
 class nsIASN1Sequence;
 
 class nsNSSCertificate final : public nsIX509Cert,
-                                   public nsIIdentityInfo,
-                                   public nsISerializable,
-                                   public nsIClassInfo,
-                                   public nsNSSShutDownObject
+                               public nsISerializable,
+                               public nsIClassInfo,
+                               public nsNSSShutDownObject
 {
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSIX509CERT
-  NS_DECL_NSIIDENTITYINFO
   NS_DECL_NSISERIALIZABLE
   NS_DECL_NSICLASSINFO
 
@@ -48,6 +45,7 @@ public:
   static nsNSSCertificate* Create(CERTCertificate*cert = nullptr,
                                   SECOidTag* evOidPolicy = nullptr);
   static nsNSSCertificate* ConstructFromDER(char* certDER, int derLen);
+  nsresult GetIsExtendedValidation(bool* aIsEV);
 
   enum EVStatus {
     ev_status_invalid = 0,

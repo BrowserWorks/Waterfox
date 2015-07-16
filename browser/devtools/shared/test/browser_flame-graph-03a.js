@@ -24,12 +24,14 @@ function* performTest() {
   let graph = new FlameGraph(doc.body, 1);
   graph.fixedWidth = TEST_WIDTH;
   graph.fixedHeight = TEST_HEIGHT;
+  graph.horizontalPanThreshold = 0;
+  graph.verticalPanThreshold = 0;
 
   yield graph.ready();
 
   testGraph(graph);
 
-  graph.destroy();
+  yield graph.destroy();
   host.destroy();
 }
 

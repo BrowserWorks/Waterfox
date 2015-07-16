@@ -49,8 +49,8 @@ function run_test() {
   callbackApp.permissions = PERMS_DIRECTORY;
   let args = [getApplyDirPath() + DIR_RESOURCES, "input", "output", "-s",
               HELPER_SLEEP_TIMEOUT];
-  let callbackAppProcess = AUS_Cc["@mozilla.org/process/util;1"].
-                           createInstance(AUS_Ci.nsIProcess);
+  let callbackAppProcess = Cc["@mozilla.org/process/util;1"].
+                           createInstance(Ci.nsIProcess);
   callbackAppProcess.init(callbackApp);
   callbackAppProcess.run(false, args, args.length);
 
@@ -96,8 +96,8 @@ function checkUpdateApplied() {
  */
 function finishCheckUpdateApplied() {
   if (IS_MACOSX) {
-    logTestInfo("testing last modified time on the apply to directory has " +
-                "changed after a successful update (bug 600098)");
+    debugDump("testing last modified time on the apply to directory has " +
+              "changed after a successful update (bug 600098)");
     let now = Date.now();
     let applyToDir = getApplyDirFile();
     let timeDiff = Math.abs(applyToDir.lastModifiedTime - now);
@@ -113,15 +113,16 @@ function checkUpdate() {
     checkSymlink();
   }
   checkUpdateLogContents(LOG_COMPLETE_SUCCESS);
+  standardInit();
   checkCallbackAppLog();
 }
 
 function runHelperProcess(args) {
   let helperBin = getTestDirFile(FILE_HELPER_BIN);
-  let process = AUS_Cc["@mozilla.org/process/util;1"].
-                createInstance(AUS_Ci.nsIProcess);
+  let process = Cc["@mozilla.org/process/util;1"].
+                createInstance(Ci.nsIProcess);
   process.init(helperBin);
-  logTestInfo("Running " + helperBin.path + " " + args.join(" "));
+  debugDump("Running " + helperBin.path + " " + args.join(" "));
   process.run(true, args, args.length);
   do_check_eq(process.exitValue, 0);
 }

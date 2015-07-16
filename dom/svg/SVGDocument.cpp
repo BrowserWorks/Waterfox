@@ -58,7 +58,7 @@ SVGDocument::GetRootElement(ErrorResult& aRv)
   if (!root) {
     return nullptr;
   }
-  if (!root->IsSVG()) {
+  if (!root->IsSVGElement()) {
     aRv.Throw(NS_NOINTERFACE);
     return nullptr;
   }
@@ -70,7 +70,7 @@ SVGDocument::InsertChildAt(nsIContent* aKid, uint32_t aIndex, bool aNotify)
 {
   nsresult rv = XMLDocument::InsertChildAt(aKid, aIndex, aNotify);
 
-  if (NS_SUCCEEDED(rv) && aKid->IsElement() && !aKid->IsSVG()) {
+  if (NS_SUCCEEDED(rv) && aKid->IsElement() && !aKid->IsSVGElement()) {
     // We can get here when well formed XML with a non-SVG root element is
     // served with the SVG MIME type, for example. In that case we need to load
     // the non-SVG UA sheets or else we can get bugs like bug 1016145.
@@ -167,9 +167,9 @@ SVGDocument::EnsureNonSVGUserAgentStyleSheetsLoaded()
 }
 
 JSObject*
-SVGDocument::WrapNode(JSContext *aCx)
+SVGDocument::WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return SVGDocumentBinding::Wrap(aCx, this);
+  return SVGDocumentBinding::Wrap(aCx, this, aGivenProto);
 }
 
 } // namespace dom

@@ -38,9 +38,9 @@ using namespace mozilla;
 using namespace mozilla::dom;
 
 JSObject*
-nsRange::WrapObject(JSContext* aCx)
+nsRange::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return RangeBinding::Wrap(aCx, this);
+  return RangeBinding::Wrap(aCx, this, aGivenProto);
 }
 
 /******************************************************
@@ -1061,10 +1061,11 @@ nsRange::IsValidBoundary(nsINode* aNode)
   }
 
   if (aNode->IsNodeOfType(nsINode::eCONTENT)) {
-    nsIContent* content = static_cast<nsIContent*>(aNode);
-    if (content->Tag() == nsGkAtoms::documentTypeNodeName) {
+    if (aNode->NodeInfo()->NameAtom() == nsGkAtoms::documentTypeNodeName) {
       return nullptr;
     }
+
+    nsIContent* content = static_cast<nsIContent*>(aNode);
 
     if (!mMaySpanAnonymousSubtrees) {
       // If the node is in a shadow tree then the ShadowRoot is the root.

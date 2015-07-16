@@ -19,11 +19,12 @@ const {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
 const ProjectEditor = require("projecteditor/projecteditor");
 const {Devices} = Cu.import("resource://gre/modules/devtools/Devices.jsm");
 const {GetAvailableAddons} = require("devtools/webide/addons");
-const {GetTemplatesJSON, GetAddonsJSON} = require("devtools/webide/remote-resources");
+const {getJSON} = require("devtools/shared/getjson");
 const utils = require("devtools/webide/utils");
 const Telemetry = require("devtools/shared/telemetry");
 const {RuntimeScanners, WiFiScanner} = require("devtools/webide/runtimes");
 const {showDoorhanger} = require("devtools/shared/doorhanger");
+const ProjectList = require("devtools/webide/project-list");
 
 const Strings = Services.strings.createBundle("chrome://browser/locale/devtools/webide.properties");
 
@@ -33,8 +34,9 @@ const HELP_URL = "https://developer.mozilla.org/docs/Tools/WebIDE/Troubleshootin
 const MAX_ZOOM = 1.4;
 const MIN_ZOOM = 0.6;
 
-// download template index early
-GetTemplatesJSON(true);
+// Download remote resources early
+getJSON("devtools.webide.addonsURL", true);
+getJSON("devtools.webide.templatesURL", true);
 
 // See bug 989619
 console.log = console.log.bind(console);
@@ -48,8 +50,10 @@ window.addEventListener("load", function onLoad() {
 
 window.addEventListener("unload", function onUnload() {
   window.removeEventListener("unload", onUnload);
-  UI.uninit();
+  UI.destroy();
 });
+
+let projectList;
 
 let UI = {
   init: function() {
@@ -64,6 +68,9 @@ let UI = {
     this.appManagerUpdate = this.appManagerUpdate.bind(this);
     AppManager.on("app-manager-update", this.appManagerUpdate);
 
+    projectList = new ProjectList(window, window);
+    ProjectPanel.toggle(projectList.sidebarsEnabled);
+
     this.updateCommands();
     this.updateRuntimeList();
 
@@ -72,6 +79,7 @@ let UI = {
 
     AppProjects.load().then(() => {
       this.autoSelectProject();
+      projectList.update();
     }, e => {
       console.error(e);
       this.reportError("error_appProjectsLoadFailed");
@@ -107,12 +115,15 @@ let UI = {
                                .QueryInterface(Ci.nsIDocShell)
                                .contentViewer;
     this.contentViewer.fullZoom = Services.prefs.getCharPref("devtools.webide.zoom");
+
+    gDevToolsBrowser.isWebIDEInitialized.resolve();
   },
 
-  uninit: function() {
+  destroy: function() {
     window.removeEventListener("focus", this.onfocus, true);
     AppManager.off("app-manager-update", this.appManagerUpdate);
-    AppManager.uninit();
+    AppManager.destroy();
+    projectList = null;
     window.removeEventListener("message", this.onMessage);
     this.updateConnectionTelemetry();
     this._telemetry.toolClosed("webide");
@@ -134,7 +145,7 @@ let UI = {
         AppManager.selectedProject.type != "mainProcess" &&
         AppManager.selectedProject.type != "runtimeApp" &&
         AppManager.selectedProject.type != "tab") {
-      AppManager.validateProject(AppManager.selectedProject);
+      AppManager.validateAndUpdateProject(AppManager.selectedProject);
     }
 
     // Hook to display promotional Developer Edition doorhanger. Only displayed once.
@@ -145,8 +156,9 @@ let UI = {
 
   appManagerUpdate: function(event, what, details) {
     // Got a message from app-manager.js
+    // See AppManager.update() for descriptions of what these events mean.
     switch (what) {
-      case "runtimelist":
+      case "runtime-list":
         this.updateRuntimeList();
         this.autoConnectRuntime();
         break;
@@ -169,17 +181,19 @@ let UI = {
           UI.openProject();
           UI.autoStartProject();
           UI.saveLastSelectedProject();
+          projectList.update();
         });
         return;
-      case "project-is-not-running":
-      case "project-is-running":
-      case "list-tabs-response":
+      case "project-stopped":
+      case "project-started":
+      case "runtime-global-actors":
         this.updateCommands();
+        projectList.update();
         break;
       case "runtime-details":
         this.updateRuntimeButton();
         break;
-      case "runtime-changed":
+      case "runtime":
         this.updateRuntimeButton();
         this.saveLastConnectedRuntime();
         break;
@@ -188,12 +202,17 @@ let UI = {
         this.updateCommands();
         this.updateProjectButton();
         this.updateProjectEditorHeader();
+        projectList.update();
+        break;
+      case "project-removed":
+        projectList.update();
         break;
       case "install-progress":
         this.updateProgress(Math.round(100 * details.bytesSent / details.totalBytes));
         break;
-      case "runtime-apps-found":
+      case "runtime-targets":
         this.autoSelectProject();
+        projectList.update(details);
         break;
       case "pre-package":
         this.prePackageLog(details);
@@ -223,6 +242,7 @@ let UI = {
     }
   },
 
+  // TODO: remove hidePanel when project layout is complete - Bug 1079347
   hidePanels: function() {
     let panels = document.querySelectorAll("panel");
     for (let p of panels) {
@@ -283,9 +303,8 @@ let UI = {
   },
 
   busyUntil: function(promise, operationDescription) {
-    // Freeze the UI until the promise is resolved. A 30s timeout
-    // will unfreeze the UI, just in case the promise never gets
-    // resolved.
+    // Freeze the UI until the promise is resolved. A timeout will unfreeze the
+    // UI, just in case the promise never gets resolved.
     this._busyPromise = promise;
     this._busyOperationDescription = operationDescription;
     this.setupBusyTimeout();
@@ -450,7 +469,13 @@ let UI = {
              // |busyUntil| will listen for rejections.
              // Bug 1121100 may find a better way to silence these.
            });
-    return this.busyUntil(promise, "Connecting to " + name);
+    promise = this.busyUntil(promise, "Connecting to " + name);
+    // Stop busy timeout for runtimes that take unknown or long amounts of time
+    // to connect.
+    if (runtime.prolongedConnection) {
+      this.cancelBusyTimeout();
+    }
+    return promise;
   },
 
   updateRuntimeButton: function() {
@@ -525,14 +550,16 @@ let UI = {
 
     let project = AppManager.selectedProject;
 
-    if (!project) {
-      buttonNode.classList.add("no-project");
-      labelNode.setAttribute("value", Strings.GetStringFromName("projectButton_label"));
-      imageNode.removeAttribute("src");
-    } else {
-      buttonNode.classList.remove("no-project");
-      labelNode.setAttribute("value", project.name);
-      imageNode.setAttribute("src", project.icon);
+    if (!projectList.sidebarsEnabled) {
+      if (!project) {
+        buttonNode.classList.add("no-project");
+        labelNode.setAttribute("value", Strings.GetStringFromName("projectButton_label"));
+        imageNode.removeAttribute("src");
+      } else {
+        buttonNode.classList.remove("no-project");
+        labelNode.setAttribute("value", project.name);
+        imageNode.setAttribute("src", project.icon);
+      }
     }
   },
 
@@ -567,7 +594,7 @@ let UI = {
       menuindex: 1
     });
     this.projecteditor.on("onEditorSave", (editor, resource) => {
-      AppManager.validateProject(AppManager.selectedProject);
+      AppManager.validateAndUpdateProject(AppManager.selectedProject);
     });
     return this.projecteditor.loaded;
   },
@@ -666,9 +693,6 @@ let UI = {
         throw e;
       }
     }
-
-    // Validate project
-    yield AppManager.validateProject(project);
 
     // Select project
     AppManager.selectedProject = project;
@@ -928,8 +952,10 @@ let UI = {
           // We can't know for sure which one was used here, so reset the
           // |toolboxPromise| since someone must be destroying it to reach here,
           // and call our own close method.
-          this.toolboxPromise = null;
-          this._closeToolboxUI();
+          if (this.toolboxIframe && this.toolboxIframe.uid == json.uid) {
+            this.toolboxPromise = null;
+            this._closeToolboxUI();
+          }
           break;
       }
     } catch(e) { console.error(e); }
@@ -942,9 +968,9 @@ let UI = {
       this.toolboxPromise = null;
       return toolboxPromise.then(toolbox => {
         return toolbox.destroy();
-      }).catch(console.error)
+      }).then(null, console.error)
         .then(() => this._closeToolboxUI())
-        .catch(console.error);
+        .then(null, console.error);
     }
     return promise.resolve();
   },
@@ -967,9 +993,13 @@ let UI = {
     let iframe = document.createElement("iframe");
     iframe.id = "toolbox";
 
+    // Compute a uid on the iframe in order to identify toolbox iframe
+    // when receiving toolbox-close event
+    iframe.uid = new Date().getTime();
+
     document.querySelector("notificationbox").insertBefore(iframe, splitter.nextSibling);
     let host = devtools.Toolbox.HostType.CUSTOM;
-    let options = { customIframe: iframe, zoom: false };
+    let options = { customIframe: iframe, zoom: false, uid: iframe.uid };
     this.toolboxIframe = iframe;
 
     let height = Services.prefs.getIntPref("devtools.toolbox.footer.height");
@@ -1034,214 +1064,31 @@ let Cmds = {
    * }
    */
   newApp: function(testOptions) {
-    return UI.busyUntil(Task.spawn(function* () {
-
-      // Open newapp.xul, which will feed ret.location
-      let ret = {location: null, testOptions: testOptions};
-      window.openDialog("chrome://webide/content/newapp.xul", "newapp", "chrome,modal", ret);
-      if (!ret.location)
-        return;
-
-      // Retrieve added project
-      let project = AppProjects.get(ret.location);
-
-      // Validate project
-      yield AppManager.validateProject(project);
-
-      // Select project
-      AppManager.selectedProject = project;
-
-    }), "creating new app");
+    projectList.newApp(testOptions);
   },
 
   importPackagedApp: function(location) {
-    return UI.busyUntil(Task.spawn(function* () {
-
-      let directory = utils.getPackagedDirectory(window, location);
-
-      if (!directory) {
-        // User cancelled directory selection
-        return;
-      }
-
-      yield UI.importAndSelectApp(directory);
-    }), "importing packaged app");
+    projectList.importPackagedApp(location);
   },
 
   importHostedApp: function(location) {
-    return UI.busyUntil(Task.spawn(function* () {
-
-      let url = utils.getHostedURL(window, location);
-
-      if (!url) {
-        return;
-      }
-
-      yield UI.importAndSelectApp(url);
-    }), "importing hosted app");
+    projectList.importHostedApp(location);
   },
 
   showProjectPanel: function() {
-    let deferred = promise.defer();
+    ProjectPanel.toggle(projectList.sidebarsEnabled, true);
 
-    let panelNode = document.querySelector("#project-panel");
-    let panelVboxNode = document.querySelector("#project-panel > vbox");
-    let anchorNode = document.querySelector("#project-panel-button > .panel-button-anchor");
-    let projectsNode = document.querySelector("#project-panel-projects");
-
-    while (projectsNode.hasChildNodes()) {
-      projectsNode.firstChild.remove();
-    }
-
-    AppProjects.load().then(() => {
-      let projects = AppProjects.store.object.projects;
-      for (let i = 0; i < projects.length; i++) {
-        let project = projects[i];
-        let panelItemNode = document.createElement("toolbarbutton");
-        panelItemNode.className = "panel-item";
-        projectsNode.appendChild(panelItemNode);
-        panelItemNode.setAttribute("label", project.name || AppManager.DEFAULT_PROJECT_NAME);
-        panelItemNode.setAttribute("image", project.icon || AppManager.DEFAULT_PROJECT_ICON);
-        if (!project.name || !project.icon) {
-          // The result of the validation process (storing names, icons, …) is not stored in
-          // the IndexedDB database when App Manager v1 is used.
-          // We need to run the validation again and update the name and icon of the app.
-          AppManager.validateProject(project).then(() => {
-            panelItemNode.setAttribute("label", project.name);
-            panelItemNode.setAttribute("image", project.icon);
-          });
-        }
-        panelItemNode.addEventListener("click", () => {
-          UI.hidePanels();
-          AppManager.selectedProject = project;
-        }, true);
-      }
-
-      window.setTimeout(() => {
-        // Open the popup only when the projects are added.
-        // Not doing it in the next tick can cause mis-calculations
-        // of the size of the panel.
-        function onPopupShown() {
-          panelNode.removeEventListener("popupshown", onPopupShown);
-          deferred.resolve();
-        }
-        panelNode.addEventListener("popupshown", onPopupShown);
-        panelNode.openPopup(anchorNode);
-        panelVboxNode.scrollTop = 0;
-      }, 0);
-    }, deferred.reject);
-
-
-    let runtimeappsHeaderNode = document.querySelector("#panel-header-runtimeapps");
-    let sortedApps = [];
-    for (let [manifestURL, app] of AppManager.apps) {
-      sortedApps.push(app);
-    }
-    sortedApps = sortedApps.sort((a, b) => {
-      return a.manifest.name > b.manifest.name;
-    });
-    let mainProcess = AppManager.isMainProcessDebuggable();
-    if (AppManager.connected && (sortedApps.length > 0 || mainProcess)) {
-      runtimeappsHeaderNode.removeAttribute("hidden");
-    } else {
-      runtimeappsHeaderNode.setAttribute("hidden", "true");
-    }
-
-    let runtimeAppsNode = document.querySelector("#project-panel-runtimeapps");
-    while (runtimeAppsNode.hasChildNodes()) {
-      runtimeAppsNode.firstChild.remove();
-    }
-
-    if (mainProcess) {
-      let panelItemNode = document.createElement("toolbarbutton");
-      panelItemNode.className = "panel-item";
-      panelItemNode.setAttribute("label", Strings.GetStringFromName("mainProcess_label"));
-      panelItemNode.setAttribute("image", AppManager.DEFAULT_PROJECT_ICON);
-      runtimeAppsNode.appendChild(panelItemNode);
-      panelItemNode.addEventListener("click", () => {
-        UI.hidePanels();
-        AppManager.selectedProject = {
-          type: "mainProcess",
-          name: Strings.GetStringFromName("mainProcess_label"),
-          icon: AppManager.DEFAULT_PROJECT_ICON
-        };
-      }, true);
-    }
-
-    for (let i = 0; i < sortedApps.length; i++) {
-      let app = sortedApps[i];
-      let panelItemNode = document.createElement("toolbarbutton");
-      panelItemNode.className = "panel-item";
-      panelItemNode.setAttribute("label", app.manifest.name);
-      panelItemNode.setAttribute("image", app.iconURL);
-      runtimeAppsNode.appendChild(panelItemNode);
-      panelItemNode.addEventListener("click", () => {
-        UI.hidePanels();
-        AppManager.selectedProject = {
-          type: "runtimeApp",
-          app: app.manifest,
-          icon: app.iconURL,
-          name: app.manifest.name
-        };
-      }, true);
-    }
-
-    // Build the tab list right now, so it's fast...
-    this._buildProjectPanelTabs();
-
-    // But re-list them and rebuild, in case any tabs navigated since the last
-    // time they were listed.
-    if (AppManager.connected) {
-      AppManager.listTabs().then(() => {
-        this._buildProjectPanelTabs();
+    // There are currently no available events to listen for when an unselected
+    // tab navigates.  Since we show every tab's location in the project menu,
+    // we re-list all the tabs each time the menu is displayed.
+    // TODO: An event-based solution will be needed for the sidebar UI.
+    if (!projectList.sidebarsEnabled && AppManager.connected) {
+      return AppManager.listTabs().then(() => {
+        projectList.updateTabs();
       }).catch(console.error);
     }
 
-    return deferred.promise;
-  },
-
-  _buildProjectPanelTabs: function() {
-    let tabs = AppManager.tabStore.tabs;
-    let tabsHeaderNode = document.querySelector("#panel-header-tabs");
-    if (AppManager.connected && tabs.length > 0) {
-      tabsHeaderNode.removeAttribute("hidden");
-    } else {
-      tabsHeaderNode.setAttribute("hidden", "true");
-    }
-
-    let tabsNode = document.querySelector("#project-panel-tabs");
-    while (tabsNode.hasChildNodes()) {
-      tabsNode.firstChild.remove();
-    }
-
-    for (let i = 0; i < tabs.length; i++) {
-      let tab = tabs[i];
-      let url = new URL(tab.url);
-      // Wanted to use nsIFaviconService here, but it only works for visited
-      // tabs, so that's no help for any remote tabs.  Maybe some favicon wizard
-      // knows how to get high-res favicons easily, or we could offer actor
-      // support for this (bug 1061654).
-      tab.favicon = url.origin + "/favicon.ico";
-      tab.name = tab.title || Strings.GetStringFromName("project_tab_loading");
-      if (url.protocol.startsWith("http")) {
-        tab.name = url.hostname + ": " + tab.name;
-      }
-      let panelItemNode = document.createElement("toolbarbutton");
-      panelItemNode.className = "panel-item";
-      panelItemNode.setAttribute("label", tab.name);
-      panelItemNode.setAttribute("image", tab.favicon);
-      tabsNode.appendChild(panelItemNode);
-      panelItemNode.addEventListener("click", () => {
-        UI.hidePanels();
-        AppManager.selectedProject = {
-          type: "tab",
-          app: tab,
-          icon: tab.favicon,
-          location: tab.url,
-          name: tab.name
-        };
-      }, true);
-    }
+    return promise.resolve();
   },
 
   showRuntimePanel: function() {
@@ -1338,7 +1185,7 @@ let Cmds = {
   },
 
   removeProject: function() {
-    return AppManager.removeSelectedProject();
+    AppManager.removeSelectedProject();
   },
 
   toggleEditors: function() {

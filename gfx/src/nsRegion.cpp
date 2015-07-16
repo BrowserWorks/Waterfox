@@ -336,23 +336,23 @@ void nsRegion::SimplifyOutwardByArea(uint32_t aThreshold)
       // merge the rects into tmpRect
       rect = MergeRects(topRects, topRectsEnd, bottomRects, bottomRectsEnd, tmpRect);
 
+      // set topRects to where the newly merged rects will be so that we use them
+      // as our next set of topRects
+      topRects = destRect;
       // copy the merged rects back into the destination
       topRectsEnd = CopyRow(destRect, tmpRect, rect);
-      topRects = destRect;
-      bottomRects = bottomRectsEnd;
-      destRect = topRects;
     } else {
       // copy the unmerged rects
       destRect = CopyRow(destRect, topRects, topRectsEnd);
 
       topRects = bottomRects;
       topRectsEnd = bottomRectsEnd;
-      bottomRects = bottomRectsEnd;
       if (bottomRectsEnd == end) {
         // copy the last row when we are done
         topRectsEnd = CopyRow(destRect, topRects, topRectsEnd);
       }
     }
+    bottomRects = bottomRectsEnd;
   } while (bottomRectsEnd != end);
 
 
@@ -639,7 +639,7 @@ nsRegion& nsRegion::Transform (const gfx3DMatrix &aTransform)
 }
 
 
-nsRegion nsRegion::ConvertAppUnitsRoundOut (int32_t aFromAPP, int32_t aToAPP) const
+nsRegion nsRegion::ScaleToOtherAppUnitsRoundOut (int32_t aFromAPP, int32_t aToAPP) const
 {
   if (aFromAPP == aToAPP) {
     return *this;
@@ -650,7 +650,7 @@ nsRegion nsRegion::ConvertAppUnitsRoundOut (int32_t aFromAPP, int32_t aToAPP) co
   pixman_box32_t *boxes = pixman_region32_rectangles(&region.mImpl, &n);
   for (int i=0; i<n; i++) {
     nsRect rect = BoxToRect(boxes[i]);
-    rect = rect.ConvertAppUnitsRoundOut(aFromAPP, aToAPP);
+    rect = rect.ScaleToOtherAppUnitsRoundOut(aFromAPP, aToAPP);
     boxes[i] = RectToBox(rect);
   }
 
@@ -663,7 +663,7 @@ nsRegion nsRegion::ConvertAppUnitsRoundOut (int32_t aFromAPP, int32_t aToAPP) co
   return region;
 }
 
-nsRegion nsRegion::ConvertAppUnitsRoundIn (int32_t aFromAPP, int32_t aToAPP) const
+nsRegion nsRegion::ScaleToOtherAppUnitsRoundIn (int32_t aFromAPP, int32_t aToAPP) const
 {
   if (aFromAPP == aToAPP) {
     return *this;
@@ -674,7 +674,7 @@ nsRegion nsRegion::ConvertAppUnitsRoundIn (int32_t aFromAPP, int32_t aToAPP) con
   pixman_box32_t *boxes = pixman_region32_rectangles(&region.mImpl, &n);
   for (int i=0; i<n; i++) {
     nsRect rect = BoxToRect(boxes[i]);
-    rect = rect.ConvertAppUnitsRoundIn(aFromAPP, aToAPP);
+    rect = rect.ScaleToOtherAppUnitsRoundIn(aFromAPP, aToAPP);
     boxes[i] = RectToBox(rect);
   }
 
@@ -1140,17 +1140,4 @@ std::ostream& operator<<(std::ostream& stream, const nsRegion& m) {
 nsCString
 nsRegion::ToString() const {
   return nsCString(mozilla::ToString(this).c_str());
-}
-
-
-nsRegion nsIntRegion::ToAppUnits (nscoord aAppUnitsPerPixel) const
-{
-  nsRegion result;
-  nsIntRegionRectIterator rgnIter(*this);
-  const nsIntRect* currentRect;
-  while ((currentRect = rgnIter.Next())) {
-    nsRect appRect = currentRect->ToAppUnits(aAppUnitsPerPixel);
-    result.Or(result, appRect);
-  }
-  return result;
 }

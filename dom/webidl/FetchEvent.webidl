@@ -12,12 +12,13 @@
  Exposed=(ServiceWorker)]
 interface FetchEvent : Event {
   readonly attribute Request request;
-  readonly attribute Client client; // The window issuing the request.
+
+  // https://github.com/slightlyoff/ServiceWorker/issues/631
+  readonly attribute Client? client; // The window issuing the request.
   readonly attribute boolean isReload;
 
-  [Throws] void respondWith(Promise<Response> r);
-  Promise<Response> forwardTo(USVString url);
-  Promise<Response> default();
+  [Throws]
+  void respondWith((Response or Promise<Response>) r);
 };
 
 dictionary FetchEventInit : EventInit {

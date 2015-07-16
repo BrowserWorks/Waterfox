@@ -140,6 +140,15 @@ public:
                                  nsCSSPseudoElements::Type aPseudoType,
                                  nsStyleContext* aNewStyleContext);
 
+  void UpdateCascadeResultsWithTransitions(
+         AnimationPlayerCollection* aTransitions);
+  void UpdateCascadeResultsWithAnimations(
+         const AnimationPlayerCollection* aAnimations);
+  void UpdateCascadeResultsWithAnimationsToBeDestroyed(
+         const AnimationPlayerCollection* aAnimations);
+  void UpdateCascadeResults(AnimationPlayerCollection* aTransitions,
+                            const AnimationPlayerCollection* aAnimations);
+
   void SetInAnimationOnlyStyleUpdate(bool aInAnimationOnlyUpdate) {
     mInAnimationOnlyStyleUpdate = aInAnimationOnlyUpdate;
   }

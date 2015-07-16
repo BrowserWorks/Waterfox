@@ -47,6 +47,7 @@ DIRS += [
     'bindings',
     'battery',
     'browser-element',
+    'cache',
     'canvas',
     'cellbroadcast',
     'contacts',
@@ -63,6 +64,7 @@ DIRS += [
     'fmradio',
     'geolocation',
     'html',
+    'icc',
     'json',
     'jsurl',
     'asmjscache',
@@ -89,7 +91,6 @@ DIRS += [
     'indexedDB',
     'system',
     'ipc',
-    'identity',
     'workers',
     'camera',
     'audiochannel',
@@ -122,7 +123,6 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
 
 if CONFIG['MOZ_B2G_RIL']:
     DIRS += [
-        'icc',
         'wappush',
     ]
 
@@ -141,6 +141,7 @@ if CONFIG['MOZ_SECUREELEMENT']:
 if CONFIG['MOZ_B2G']:
     DIRS += [
         'downloads',
+        'identity',
         'mobileid',
         'engineeringmode'
     ]

@@ -1,0 +1,166 @@
+# error.py - Mercurial exceptions
+#
+# Copyright 2005-2008 Matt Mackall <mpm@selenic.com>
+#
+# This software may be used and distributed according to the terms of the
+# GNU General Public License version 2 or any later version.
+
+"""Mercurial exceptions.
+
+This allows us to catch exceptions at higher levels without forcing
+imports.
+"""
+
+# Do not import anything here, please
+
+class RevlogError(Exception):
+    pass
+
+class FilteredIndexError(IndexError):
+    pass
+
+class LookupError(RevlogError, KeyError):
+    def __init__(self, name, index, message):
+        self.name = name
+        self.index = index
+        # this can't be called 'message' because at least some installs of
+        # Python 2.6+ complain about the 'message' property being deprecated
+        self.lookupmessage = message
+        if isinstance(name, str) and len(name) == 20:
+            from node import short
+            name = short(name)
+        RevlogError.__init__(self, '%s@%s: %s' % (index, name, message))
+
+    def __str__(self):
+        return RevlogError.__str__(self)
+
+class FilteredLookupError(LookupError):
+    pass
+
+class ManifestLookupError(LookupError):
+    pass
+
+class CommandError(Exception):
+    """Exception raised on errors in parsing the command line."""
+
+class InterventionRequired(Exception):
+    """Exception raised when a command requires human intervention."""
+
+class Abort(Exception):
+    """Raised if a command needs to print an error and exit."""
+    def __init__(self, *args, **kw):
+        Exception.__init__(self, *args)
+        self.hint = kw.get('hint')
+
+class HookAbort(Abort):
+    """raised when a validation hook fails, aborting an operation
+
+    Exists to allow more specialized catching."""
+    pass
+
+class ConfigError(Abort):
+    """Exception raised when parsing config files"""
+
+class OutOfBandError(Exception):
+    """Exception raised when a remote repo reports failure"""
+
+class ParseError(Exception):
+    """Raised when parsing config files and {rev,file}sets (msg[, pos])"""
+
+class UnknownIdentifier(ParseError):
+    """Exception raised when a {rev,file}set references an unknown identifier"""
+
+    def __init__(self, function, symbols):
+        from i18n import _
+        ParseError.__init__(self, _("unknown identifier: %s") % function)
+        self.function = function
+        self.symbols = symbols
+
+class RepoError(Exception):
+    def __init__(self, *args, **kw):
+        Exception.__init__(self, *args)
+        self.hint = kw.get('hint')
+
+class RepoLookupError(RepoError):
+    pass
+
+class FilteredRepoLookupError(RepoLookupError):
+    pass
+
+class CapabilityError(RepoError):
+    pass
+
+class RequirementError(RepoError):
+    """Exception raised if .hg/requires has an unknown entry."""
+    pass
+
+class LockError(IOError):
+    def __init__(self, errno, strerror, filename, desc):
+        IOError.__init__(self, errno, strerror, filename)
+        self.desc = desc
+
+class LockHeld(LockError):
+    def __init__(self, errno, filename, desc, locker):
+        LockError.__init__(self, errno, 'Lock held', filename, desc)
+        self.locker = locker
+
+class LockUnavailable(LockError):
+    pass
+
+class ResponseError(Exception):
+    """Raised to print an error with part of output and exit."""
+
+class UnknownCommand(Exception):
+    """Exception raised if command is not in the command table."""
+
+class AmbiguousCommand(Exception):
+    """Exception raised if command shortcut matches more than one command."""
+
+# derived from KeyboardInterrupt to simplify some breakout code
+class SignalInterrupt(KeyboardInterrupt):
+    """Exception raised on SIGTERM and SIGHUP."""
+
+class SignatureError(Exception):
+    pass
+
+class PushRaced(RuntimeError):
+    """An exception raised during unbundling that indicate a push race"""
+
+# bundle2 related errors
+class BundleValueError(ValueError):
+    """error raised when bundle2 cannot be processed"""
+
+class UnsupportedPartError(BundleValueError):
+    def __init__(self, parttype=None, params=()):
+        self.parttype = parttype
+        self.params = params
+        if self.parttype is None:
+            msg = 'Stream Parameter'
+        else:
+            msg = parttype
+        if self.params:
+            msg = '%s - %s' % (msg, ', '.join(self.params))
+        ValueError.__init__(self, msg)
+
+class ReadOnlyPartError(RuntimeError):
+    """error raised when code tries to alter a part being generated"""
+    pass
+
+class CensoredNodeError(RevlogError):
+    """error raised when content verification fails on a censored node
+
+    Also contains the tombstone data substituted for the uncensored data.
+    """
+
+    def __init__(self, filename, node, tombstone):
+        from node import short
+        RevlogError.__init__(self, '%s:%s' % (filename, short(node)))
+        self.tombstone = tombstone
+
+class CensoredBaseError(RevlogError):
+    """error raised when a delta is rejected because its base is censored
+
+    A delta based on a censored revision must be formed as single patch
+    operation which replaces the entire base with new content. This ensures
+    the delta may be applied by clones which have not censored the base.
+    """

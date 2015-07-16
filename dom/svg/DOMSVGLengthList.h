@@ -39,7 +39,7 @@ class DOMSVGLength;
  * Our DOM items are created lazily on demand as and when script requests them.
  */
 class DOMSVGLengthList final : public nsISupports,
-                                   public nsWrapperCache
+                               public nsWrapperCache
 {
   friend class AutoChangeLengthListNotifier;
   friend class DOMSVGLength;
@@ -69,7 +69,7 @@ public:
     InternalListLengthWillChange(aInternalList.Length()); // Sync mItems
   }
 
-  virtual JSObject* WrapObject(JSContext *cx) override;
+  virtual JSObject* WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto) override;
 
   nsISupports* GetParentObject()
   {

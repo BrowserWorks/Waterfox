@@ -78,6 +78,70 @@ protected:
   bool mNeedsClearWhite;
 };
 
+class DXGIYCbCrTextureClient : public TextureClient
+{
+public:
+  DXGIYCbCrTextureClient(ISurfaceAllocator* aAllocator,
+                         TextureFlags aFlags);
+
+  virtual ~DXGIYCbCrTextureClient();
+
+  // TextureClient
+
+  virtual bool IsAllocated() const override{ return !!mHoldRefs[0]; }
+
+  virtual bool Lock(OpenMode aOpenMode) override;
+
+  virtual void Unlock() override;
+
+  virtual bool IsLocked() const override{ return mIsLocked; }
+
+  virtual bool ToSurfaceDescriptor(SurfaceDescriptor& aOutDescriptor) override;
+
+  void InitWith(IUnknown* aTextureY,
+                IUnknown* aTextureCb,
+                IUnknown* aTextureCr,
+                HANDLE aHandleY,
+                HANDLE aHandleCb,
+                HANDLE aHandleCr,
+                const gfx::IntSize& aSize,
+                const gfx::IntSize& aSizeY,
+                const gfx::IntSize& aSizeCbCr)
+  {
+    mHandles[0] = aHandleY;
+    mHandles[1] = aHandleCb;
+    mHandles[2] = aHandleCr;
+    mHoldRefs[0] = aTextureY;
+    mHoldRefs[1] = aTextureCb;
+    mHoldRefs[2] = aTextureCr;
+    mSize = aSize;
+    mSizeY = aSizeY;
+    mSizeCbCr = aSizeCbCr;
+  }
+
+  virtual gfx::IntSize GetSize() const
+  {
+    return mSize;
+  }
+
+  virtual bool HasInternalBuffer() const override{ return true; }
+
+    // This TextureClient should not be used in a context where we use CreateSimilar
+    // (ex. component alpha) because the underlying texture data is always created by
+    // an external producer.
+    virtual TemporaryRef<TextureClient>
+    CreateSimilar(TextureFlags, TextureAllocationFlags) const override{ return nullptr; }
+
+private:
+  RefPtr<IUnknown> mHoldRefs[3];
+  HANDLE mHandles[3];
+  gfx::IntSize mSize;
+  gfx::IntSize mSizeY;
+  gfx::IntSize mSizeCbCr;
+  bool mIsLocked;
+};
+
+
 /**
  * TextureSource that provides with the necessary APIs to be composited by a
  * CompositorD3D11.
@@ -180,7 +244,7 @@ public:
   DXGITextureHostD3D11(TextureFlags aFlags,
                        const SurfaceDescriptorD3D10& aDescriptor);
 
-  virtual TextureSource* GetTextureSources() override;
+  virtual bool BindTextureSource(CompositableTextureSourceRef& aTexture) override;
 
   virtual void DeallocateDeviceData() override {}
 
@@ -210,6 +274,45 @@ protected:
   gfx::IntSize mSize;
   WindowsHandle mHandle;
   gfx::SurfaceFormat mFormat;
+  bool mIsLocked;
+};
+
+class DXGIYCbCrTextureHostD3D11 : public TextureHost
+{
+public:
+  DXGIYCbCrTextureHostD3D11(TextureFlags aFlags,
+                            const SurfaceDescriptorDXGIYCbCr& aDescriptor);
+
+  virtual bool BindTextureSource(CompositableTextureSourceRef& aTexture) override;
+
+  virtual void DeallocateDeviceData() override{}
+
+  virtual void SetCompositor(Compositor* aCompositor) override;
+
+  virtual gfx::SurfaceFormat GetFormat() const override{ return gfx::SurfaceFormat::YUV; }
+
+  virtual bool Lock() override;
+
+  virtual void Unlock() override;
+
+  virtual gfx::IntSize GetSize() const override{ return mSize; }
+
+  virtual TemporaryRef<gfx::DataSourceSurface> GetAsSurface() override
+  {
+    return nullptr;
+  }
+
+protected:
+  ID3D11Device* GetDevice();
+
+  bool OpenSharedHandle();
+
+  RefPtr<ID3D11Texture2D> mTextures[3];
+  RefPtr<DataTextureSourceD3D11> mTextureSources[3];
+
+  RefPtr<CompositorD3D11> mCompositor;
+  gfx::IntSize mSize;
+  WindowsHandle mHandles[3];
   bool mIsLocked;
 };
 

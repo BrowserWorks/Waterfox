@@ -35,7 +35,7 @@ public:
 
   virtual nsresult InstallMember(JSContext* aCx,
                                  JS::Handle<JSObject*> aTargetClassObject) override;
-  virtual nsresult CompileMember(mozilla::dom::AutoJSAPI& jsapi, const nsCString& aClassStr,
+  virtual nsresult CompileMember(mozilla::dom::AutoJSAPI& jsapi, const nsString& aClassStr,
                                  JS::Handle<JSObject*> aClassObject) override;
 
   virtual void Trace(const TraceCallbacks& aCallback, void *aClosure) override;

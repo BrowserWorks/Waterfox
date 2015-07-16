@@ -278,7 +278,7 @@ MediaStreamGraphImpl::UpdateBufferSufficiencyState(SourceMediaStream* aStream)
   }
 
   for (uint32_t i = 0; i < runnables.Length(); ++i) {
-    runnables[i].mTarget->Dispatch(runnables[i].mRunnable, 0);
+    runnables[i].mTarget->Dispatch(runnables[i].mRunnable);
   }
 }
 
@@ -541,22 +541,18 @@ MediaStreamGraphImpl::UpdateStreamOrder()
     // If this is a AudioNodeStream, force a AudioCallbackDriver.
     if (stream->AsAudioNodeStream()) {
       audioTrackPresent = true;
-    }
-    for (StreamBuffer::TrackIter tracks(stream->GetStreamBuffer(), MediaSegment::AUDIO);
-         !tracks.IsEnded(); tracks.Next()) {
-      audioTrackPresent = true;
+    } else {
+      for (StreamBuffer::TrackIter tracks(stream->GetStreamBuffer(), MediaSegment::AUDIO);
+           !tracks.IsEnded(); tracks.Next()) {
+        audioTrackPresent = true;
+      }
     }
   }
 
   if (!audioTrackPresent &&
       CurrentDriver()->AsAudioCallbackDriver()) {
-    bool started;
-    {
-      MonitorAutoLock mon(mMonitor);
-      started = CurrentDriver()->AsAudioCallbackDriver()->IsStarted();
-    }
-    if (started) {
-      MonitorAutoLock mon(mMonitor);
+    MonitorAutoLock mon(mMonitor);
+    if (CurrentDriver()->AsAudioCallbackDriver()->IsStarted()) {
       if (mLifecycleState == LIFECYCLE_RUNNING) {
         SystemClockDriver* driver = new SystemClockDriver(this);
         CurrentDriver()->SwitchAtNextIteration(driver);
@@ -575,6 +571,12 @@ MediaStreamGraphImpl::UpdateStreamOrder()
     }
   }
 #endif
+
+  if (!mStreamOrderDirty) {
+    return;
+  }
+
+  mStreamOrderDirty = false;
 
   // The algorithm for finding cycles is based on Tim Leslie's iterative
   // implementation [1][2] of Pearce's variant [3] of Tarjan's strongly
@@ -1285,9 +1287,7 @@ MediaStreamGraphImpl::UpdateGraph(GraphTime aEndBlockingDecision)
   }
   mFrontMessageQueue.Clear();
 
-  if (mStreamOrderDirty) {
-    UpdateStreamOrder();
-  }
+  UpdateStreamOrder();
 
   bool ensureNextIteration = false;
 
@@ -2203,15 +2203,17 @@ MediaStream::RemoveListener(MediaStreamListener* aListener)
 }
 
 void
-MediaStream::RunAfterPendingUpdates(nsRefPtr<nsIRunnable> aRunnable)
+MediaStream::RunAfterPendingUpdates(already_AddRefed<nsIRunnable> aRunnable)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MediaStreamGraphImpl* graph = GraphImpl();
+  nsCOMPtr<nsIRunnable> runnable(aRunnable);
 
   // Special case when a non-realtime graph has not started, to ensure the
   // runnable will run in finite time.
   if (!(graph->mRealtime || graph->mNonRealtimeProcessing)) {
-    aRunnable->Run();
+    runnable->Run();
+    return;
   }
 
   class Message : public ControlMessage {
@@ -2233,10 +2235,10 @@ MediaStream::RunAfterPendingUpdates(nsRefPtr<nsIRunnable> aRunnable)
       NS_DispatchToCurrentThread(mRunnable);
     }
   private:
-    nsRefPtr<nsIRunnable> mRunnable;
+    nsCOMPtr<nsIRunnable> mRunnable;
   };
 
-  graph->AppendMessage(new Message(this, aRunnable.forget()));
+  graph->AppendMessage(new Message(this, runnable.forget()));
 }
 
 void
@@ -2493,21 +2495,21 @@ SourceMediaStream::GetEndOfAppendedData(TrackID aID)
 
 void
 SourceMediaStream::DispatchWhenNotEnoughBuffered(TrackID aID,
-    nsIEventTarget* aSignalThread, nsIRunnable* aSignalRunnable)
+    MediaTaskQueue* aSignalQueue, nsIRunnable* aSignalRunnable)
 {
   MutexAutoLock lock(mMutex);
   TrackData* data = FindDataForTrack(aID);
   if (!data) {
-    aSignalThread->Dispatch(aSignalRunnable, 0);
+    aSignalQueue->Dispatch(aSignalRunnable);
     return;
   }
 
   if (data->mHaveEnough) {
     if (data->mDispatchWhenNotEnough.IsEmpty()) {
-      data->mDispatchWhenNotEnough.AppendElement()->Init(aSignalThread, aSignalRunnable);
+      data->mDispatchWhenNotEnough.AppendElement()->Init(aSignalQueue, aSignalRunnable);
     }
   } else {
-    aSignalThread->Dispatch(aSignalRunnable, 0);
+    aSignalQueue->Dispatch(aSignalRunnable);
   }
 }
 

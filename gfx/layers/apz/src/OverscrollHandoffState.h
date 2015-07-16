@@ -113,6 +113,8 @@ public:
   // Determine whether any APZC along this handoff chain is moving fast.
   bool HasFastMovingApzc() const;
 
+  nsRefPtr<AsyncPanZoomController> FindFirstScrollable(const ScrollWheelInput& aInput) const;
+
 private:
   std::vector<nsRefPtr<AsyncPanZoomController>> mChain;
 
@@ -127,8 +129,13 @@ private:
  */
 struct OverscrollHandoffState {
   OverscrollHandoffState(const OverscrollHandoffChain& aChain,
-                         const ScreenPoint& aPanDistance)
-      : mChain(aChain), mChainIndex(0), mPanDistance(aPanDistance) {}
+                         const ScreenPoint& aPanDistance,
+                         ScrollSource aScrollSource)
+    : mChain(aChain),
+      mChainIndex(0),
+      mPanDistance(aPanDistance),
+      mScrollSource(aScrollSource)
+  {}
 
   // The chain of APZCs along which we hand off scroll.
   // This is const to indicate that the chain does not change over the
@@ -144,6 +151,8 @@ struct OverscrollHandoffState {
   // course of handoff.
   // The x/y components of this are non-negative.
   const ScreenPoint mPanDistance;
+
+  ScrollSource mScrollSource;
 };
 // Don't pollute other files with this macro for now.
 #undef NS_INLINE_DECL_THREADSAFE_MUTABLE_REFCOUNTING

@@ -19,8 +19,8 @@ namespace dom {
 
 typedef nsSVGFE SVGFEImageElementBase;
 
-class SVGFEImageElement : public SVGFEImageElementBase,
-                          public nsImageLoadingContent
+class SVGFEImageElement final : public SVGFEImageElementBase,
+                                public nsImageLoadingContent
 {
   friend class ::SVGFEImageFrame;
 
@@ -29,7 +29,7 @@ protected:
                                              already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo));
   explicit SVGFEImageElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
   virtual ~SVGFEImageElement();
-  virtual JSObject* WrapNode(JSContext *aCx) override;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 public:
   virtual bool SubregionIsUnionOfRegions() override { return false; }

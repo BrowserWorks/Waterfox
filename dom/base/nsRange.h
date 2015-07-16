@@ -31,8 +31,8 @@ class DOMRectList;
 }
 
 class nsRange final : public nsIDOMRange,
-                          public nsStubMutationObserver,
-                          public nsWrapperCache
+                      public nsStubMutationObserver,
+                      public nsWrapperCache
 {
   typedef mozilla::ErrorResult ErrorResult;
   typedef mozilla::dom::DOMRect DOMRect;
@@ -244,7 +244,7 @@ public:
                                                bool aFlushLayout = true);
 
   nsINode* GetParentObject() const { return mOwner; }
-  virtual JSObject* WrapObject(JSContext* cx) override final;
+  virtual JSObject* WrapObject(JSContext* cx, JS::Handle<JSObject*> aGivenProto) override final;
 
 private:
   // no copy's or assigns
@@ -351,14 +351,14 @@ protected:
   int32_t mStartOffset;
   int32_t mEndOffset;
 
-  bool mIsPositioned;
-  bool mIsDetached;
-  bool mMaySpanAnonymousSubtrees;
-  bool mInSelection;
-  bool mIsGenerated;
-  bool mStartOffsetWasIncremented;
-  bool mEndOffsetWasIncremented;
-  bool mEnableGravitationOnElementRemoval;
+  bool mIsPositioned : 1;
+  bool mIsDetached : 1;
+  bool mMaySpanAnonymousSubtrees : 1;
+  bool mInSelection : 1;
+  bool mIsGenerated : 1;
+  bool mStartOffsetWasIncremented : 1;
+  bool mEndOffsetWasIncremented : 1;
+  bool mEnableGravitationOnElementRemoval : 1;
 #ifdef DEBUG
   int32_t  mAssertNextInsertOrAppendIndex;
   nsINode* mAssertNextInsertOrAppendNode;

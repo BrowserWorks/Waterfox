@@ -2,19 +2,17 @@ $inherits:
   from: 'tasks/build.yml'
 task:
   metadata:
-    name: '[TC] Mulet Linux x64 Opt'
-    description: Mulet Linux x64 Opt
+    name: '[TC] Mulet Linux'
+    description: Mulet Linux
 
-  workerType: b2gbuild-desktop
+  workerType: mulet-opt
   scopes:
-    - 'docker-worker:cache:sources-gecko'
-    - 'docker-worker:cache:build-mulet-linux-objects'
+    - 'docker-worker:cache:build-mulet-linux-workspace'
     - 'docker-worker:cache:tooltool-cache'
 
   payload:
     cache:
-      sources-gecko: '/home/worker/gecko'
-      build-mulet-linux-objects: '/home/worker/object-folder'
+      build-mulet-linux-workspace: '/home/worker/workspace'
       tooltool-cache: '/home/worker/tools/tooltool-cache'
 
     env:
@@ -23,10 +21,20 @@ task:
     maxRunTime: 3600
 
     command:
-      - bin/build-mulet-linux.sh
+      - /bin/bash
+      - -c
+      - >
+        checkout-gecko workspace &&
+        cd ./workspace/gecko/testing/taskcluster/scripts/builder &&
+        buildbot_step 'Build' ./build-mulet-linux.sh $HOME/workspace
 
   extra:
+    treeherderEnv:
+      - production
+      - staging
     treeherder:
+      # Disable "TC" prefix...
+      groupSymbol: "?"
       machine:
         platform: mulet-linux64
     # Rather then enforcing particular conventions we require that all build

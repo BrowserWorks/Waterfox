@@ -35,6 +35,7 @@
 #include "platform.h"
 #include "TableTicker.h"
 #include "UnwinderThread2.h"  /* uwt__register_thread_for_profiling */
+#include "mozilla/TimeStamp.h"
 
 // Memory profile
 #include "nsMemoryReporterManager.h"
@@ -182,7 +183,6 @@ class SamplerThread : public Thread {
   }
 
   static void AddActiveSampler(Sampler* sampler) {
-    mozilla::MutexAutoLock lock(*Sampler::sRegisteredThreadsMutex);
     SamplerRegistry::AddActiveSampler(sampler);
     if (instance_ == NULL) {
       instance_ = new SamplerThread(sampler->interval());
@@ -191,7 +191,6 @@ class SamplerThread : public Thread {
   }
 
   static void RemoveActiveSampler(Sampler* sampler) {
-    mozilla::MutexAutoLock lock(*Sampler::sRegisteredThreadsMutex);
     instance_->Join();
     //XXX: unlike v8 we need to remove the active sampler after doing the Join
     // because we drop the sampler immediately
@@ -202,6 +201,8 @@ class SamplerThread : public Thread {
 
   // Implement Thread::Run().
   virtual void Run() {
+    TimeDuration lastSleepOverhead = 0;
+    TimeStamp sampleStart = TimeStamp::Now();
     while (SamplerRegistry::sampler->IsActive()) {
       SamplerRegistry::sampler->DeleteExpiredMarkers();
       if (!SamplerRegistry::sampler->IsPaused()) {
@@ -231,7 +232,14 @@ class SamplerThread : public Thread {
           isFirstProfiledThread = false;
         }
       }
-      OS::SleepMicro(intervalMicro_);
+
+      TimeStamp targetSleepEndTime = sampleStart + TimeDuration::FromMicroseconds(intervalMicro_);
+      TimeStamp beforeSleep = TimeStamp::Now();
+      TimeDuration targetSleepDuration = targetSleepEndTime - beforeSleep;
+      double sleepTime = std::max(0.0, (targetSleepDuration - lastSleepOverhead).ToMicroseconds());
+      OS::SleepMicro(sleepTime);
+      sampleStart = TimeStamp::Now();
+      lastSleepOverhead = sampleStart - (beforeSleep + TimeDuration::FromMicroseconds(sleepTime));
     }
   }
 

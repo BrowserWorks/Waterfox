@@ -20,7 +20,7 @@ class SVGTextElement final : public SVGTextElementBase
 {
 protected:
   explicit SVGTextElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
-  virtual JSObject* WrapNode(JSContext *cx) override;
+  virtual JSObject* WrapNode(JSContext *cx, JS::Handle<JSObject*> aGivenProto) override;
 
   friend nsresult (::NS_NewSVGTextElement(nsIContent **aResult,
                                           already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo));

@@ -87,13 +87,14 @@ function checkUpdateApplied() {
 function finishTest() {
   if (IS_WIN || IS_MACOSX) {
     let running = getPostUpdateFile(".running");
-    logTestInfo("checking that the post update process running file doesn't " +
-                "exist. Path: " + running.path);
+    debugDump("checking that the post update process running file doesn't " +
+              "exist. Path: " + running.path);
     do_check_false(running.exists());
   }
 
   do_check_eq(readStatusState(), STATE_PENDING);
   checkFilesAfterUpdateFailure(getApplyDirFile, false, false);
   unlockDirectory(getAppBaseDir());
+  standardInit();
   waitForFilesInUse();
 }

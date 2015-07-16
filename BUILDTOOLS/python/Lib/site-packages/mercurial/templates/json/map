@@ -1,0 +1,174 @@
+mimetype = 'application/json'
+filerevision = '"not yet implemented"'
+search = '"not yet implemented"'
+# changelog and shortlog are the same web API but with different
+# number of entries.
+changelog = changelist.tmpl
+shortlog = changelist.tmpl
+changelistentry = '\{
+  "node": {node|json},
+  "date": {date|json},
+  "desc": {desc|json},
+  "bookmarks": [{join(bookmarks%changelistentryname, ", ")}],
+  "tags": [{join(tags%changelistentryname, ", ")}],
+  "user": {author|json}
+  }'
+changelistentryname = '{name|json}'
+changeset = '\{
+  "node": {node|json},
+  "date": {date|json},
+  "desc": {desc|json},
+  "branch": {if(branch, branch%changesetbranch, "default"|json)},
+  "bookmarks": [{join(changesetbookmark, ", ")}],
+  "tags": [{join(changesettag, ", ")}],
+  "user": {author|json},
+  "parents": [{join(parent%changesetparent, ", ")}],
+  "phase": {phase|json}
+  }'
+changesetbranch = '{name|json}'
+changesetbookmark = '{bookmark|json}'
+changesettag = '{tag|json}'
+changesetparent = '{node|json}'
+manifest = '\{
+  "node": {node|json},
+  "abspath": {path|json},
+  "directories": [{join(dentries%direntry, ", ")}],
+  "files": [{join(fentries%fileentry, ", ")}],
+  "bookmarks": [{join(bookmarks%name, ", ")}],
+  "tags": [{join(tags%name, ", ")}]
+  }'
+name = '{name|json}'
+direntry = '\{
+  "abspath": {path|json},
+  "basename": {basename|json},
+  "emptydirs": {emptydirs|json}
+  }'
+fileentry = '\{
+  "abspath": {file|json},
+  "basename": {basename|json},
+  "date": {date|json},
+  "size": {size|json},
+  "flags": {permissions|json}
+  }'
+tags = '\{
+  "node": {node|json},
+  "tags": [{join(entriesnotip%tagentry, ", ")}]
+  }'
+tagentry = '\{
+  "tag": {tag|json},
+  "node": {node|json},
+  "date": {date|json}
+  }'
+bookmarks = '\{
+  "node": {node|json},
+  "bookmarks": [{join(entries%bookmarkentry, ", ")}]
+  }'
+bookmarkentry = '\{
+  "bookmark": {bookmark|json},
+  "node": {node|json},
+  "date": {date|json}
+  }'
+branches = '\{
+  "branches": [{join(entries%branchentry, ", ")}]
+  }'
+branchentry = '\{
+  "branch": {branch|json},
+  "node": {node|json},
+  "date": {date|json},
+  "status": {status|json}
+  }'
+summary = '"not yet implemented"'
+filediff = '\{
+  "path": {file|json},
+  "node": {node|json},
+  "date": {date|json},
+  "desc": {desc|json},
+  "author": {author|json},
+  "parents": [{join(parent%changesetparent, ", ")}],
+  "children": [{join(child%changesetparent, ", ")}],
+  "diff": [{join(diff%diffblock, ", ")}]
+  }'
+diffblock = '\{
+  "blockno": {blockno|json},
+  "lines": [{join(lines, ", ")}]
+  }'
+difflineplus = '\{
+  "t": "+",
+  "n": {lineno|json},
+  "l": {line|json}
+  }'
+difflineminus = '\{
+  "t": "-",
+  "n": {lineno|json},
+  "l": {line|json}
+  }'
+difflineat = '\{
+  "t": "@",
+  "n": {lineno|json},
+  "l": {line|json}
+  }'
+diffline = '\{
+  "t": "",
+  "n": {lineno|json},
+  "l": {line|json}
+  }'
+filecomparison = '\{
+  "path": {file|json},
+  "node": {node|json},
+  "date": {date|json},
+  "desc": {desc|json},
+  "author": {author|json},
+  "parents": [{join(parent%changesetparent, ", ")}],
+  "children": [{join(child%changesetparent, ", ")}],
+  "leftnode": {leftnode|json},
+  "rightnode": {rightnode|json},
+  "comparison": [{join(comparison, ", ")}]
+  }'
+comparisonblock = '\{
+  "lines": [{join(lines, ", ")}]
+  }'
+comparisonline = '\{
+  "t": {type|json},
+  "ln": {leftlineno|json},
+  "ll": {leftline|json},
+  "rn": {rightlineno|json},
+  "rl": {rightline|json}
+  }'
+fileannotate = '\{
+  "abspath": {file|json},
+  "node": {node|json},
+  "author": {author|json},
+  "date": {date|json},
+  "desc": {desc|json},
+  "parents": [{join(parent%changesetparent, ", ")}],
+  "children": [{join(child%changesetparent, ", ")}],
+  "permissions": {permissions|json},
+  "annotate": [{join(annotate%fileannotation, ", ")}]
+  }'
+fileannotation = '\{
+  "node": {node|json},
+  "author": {author|json},
+  "desc": {desc|json},
+  "abspath": {file|json},
+  "targetline": {targetline|json},
+  "line": {line|json},
+  "lineno": {lineno|json},
+  "revdate": {revdate|json}
+  }'
+filelog = '"not yet implemented"'
+graph = '"not yet implemented"'
+helptopics = '\{
+  "topics": [{join(topics%helptopicentry, ", ")}],
+  "earlycommands": [{join(earlycommands%helptopicentry, ", ")}],
+  "othercommands": [{join(othercommands%helptopicentry, ", ")}]
+  }'
+helptopicentry = '\{
+  "topic": {topic|json},
+  "summary": {summary|json}
+  }'
+help = '\{
+  "topic": {topic|json},
+  "rawdoc": {doc|json}
+  }'
+filenodelink = ''
+filenolink = ''

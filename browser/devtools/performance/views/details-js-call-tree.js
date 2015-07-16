@@ -64,8 +64,8 @@ let JsCallTreeView = Heritage.extend(DetailsSubview, {
    */
   _prepareCallTree: function (profile, { startTime, endTime }, options) {
     let threadSamples = profile.threads[0].samples;
-    let contentOnly = !PerformanceController.getPref("show-platform-data");
-    let invertTree = PerformanceController.getPref("invert-call-tree");
+    let contentOnly = !PerformanceController.getOption("show-platform-data");
+    let invertTree = PerformanceController.getOption("invert-call-tree");
 
     let threadNode = new ThreadNode(threadSamples,
       { startTime, endTime, contentOnly, invertTree });
@@ -103,12 +103,9 @@ let JsCallTreeView = Heritage.extend(DetailsSubview, {
     container.innerHTML = "";
     root.attachTo(container);
 
-    // Profiler data does not contain memory allocations information.
-    root.toggleAllocations(false);
-
     // When platform data isn't shown, hide the cateogry labels, since they're
     // only available for C++ frames.
-    let contentOnly = !PerformanceController.getPref("show-platform-data");
+    let contentOnly = !PerformanceController.getOption("show-platform-data");
     root.toggleCategories(!contentOnly);
   },
 

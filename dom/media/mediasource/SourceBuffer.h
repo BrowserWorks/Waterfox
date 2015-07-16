@@ -94,7 +94,7 @@ public:
 
   MediaSource* GetParentObject() const;
 
-  JSObject* WrapObject(JSContext* aCx) override;
+  JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // Notify the SourceBuffer that it has been detached from the
   // MediaSource's sourceBuffer list.

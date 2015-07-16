@@ -167,8 +167,7 @@ loop.panel = (function(_, mozL10n) {
             <span>{availabilityText}</span>
             <i className={availabilityStatus}></i>
           </p>
-          <ul className={availabilityDropdown}
-              onMouseLeave={this.hideDropdownMenu}>
+          <ul className={availabilityDropdown}>
             <li onClick={this.changeAvailability("available")}
                 className="dropdown-menu-item dnd-make-available">
               <i className="status status-available"></i>
@@ -363,8 +362,7 @@ loop.panel = (function(_, mozL10n) {
         <div className="settings-menu dropdown">
           <a className="button-settings" onClick={this.showDropdownMenu}
              title={mozL10n.get("settings_menu_button_tooltip")} />
-          <ul className={cx({"dropdown-menu": true, hide: !this.state.showMenu})}
-              onMouseLeave={this.hideDropdownMenu}>
+          <ul className={cx({"dropdown-menu": true, hide: !this.state.showMenu})}>
             <SettingsDropdownEntry label={mozL10n.get("settings_menu_item_settings")}
                                    onClick={this.handleClickSettingsEntry}
                                    displayed={false}
@@ -612,6 +610,7 @@ loop.panel = (function(_, mozL10n) {
     mixins: [Backbone.Events, sharedMixins.WindowCloseMixin],
 
     propTypes: {
+      mozLoop: React.PropTypes.object.isRequired,
       store: React.PropTypes.instanceOf(loop.store.RoomStore).isRequired,
       dispatcher: React.PropTypes.instanceOf(loop.Dispatcher).isRequired,
       userDisplayName: React.PropTypes.string.isRequired  // for room creation
@@ -684,13 +683,68 @@ loop.panel = (function(_, mozL10n) {
               />;
             }, this)
           }</div>
-          <p>
+          <div>
+            <ContextInfo mozLoop={this.props.mozLoop} />
             <button className="btn btn-info new-room-button"
                     onClick={this.handleCreateButtonClick}
                     disabled={this._hasPendingOperation()}>
               {mozL10n.get("rooms_new_room_button_label")}
             </button>
-          </p>
+          </div>
+        </div>
+      );
+    }
+  });
+
+  /**
+   * Context info that is offered to be part of a Room.
+   */
+  var ContextInfo = React.createClass({
+    propTypes: {
+      mozLoop: React.PropTypes.object.isRequired,
+    },
+
+    mixins: [sharedMixins.DocumentVisibilityMixin],
+
+    getInitialState: function() {
+      return {
+        previewImage: "",
+        description: "",
+        url: ""
+      };
+    },
+
+    onDocumentVisible: function() {
+      this.props.mozLoop.getSelectedTabMetadata(function callback(metadata) {
+        var previewImage = metadata.previews.length ? metadata.previews[0] : "";
+        var description = metadata.description || metadata.title;
+        var url = metadata.url;
+        this.setState({previewImage: previewImage,
+                       description: description,
+                       url: url});
+      }.bind(this));
+    },
+
+    onDocumentHidden: function() {
+      this.setState({previewImage: "",
+                     description: "",
+                     url: ""});
+    },
+
+    render: function() {
+      if (!this.props.mozLoop.getLoopPref("contextInConverations.enabled") ||
+          !this.state.url) {
+        return null;
+      }
+      return (
+        <div className="context">
+          <label className="context-enabled">
+            <input type="checkbox"/>
+            {mozL10n.get("context_offer_label")}
+          </label>
+          <img className="context-preview" src={this.state.previewImage}/>
+          <span className="context-description">{this.state.description}</span>
+          <span className="context-url">{this.state.url}</span>
         </div>
       );
     }
@@ -837,7 +891,8 @@ loop.panel = (function(_, mozL10n) {
             <Tab name="rooms">
               <RoomList dispatcher={this.props.dispatcher}
                         store={this.props.roomStore}
-                        userDisplayName={this._getUserDisplayName()}/>
+                        userDisplayName={this._getUserDisplayName()}
+                        mozLoop={this.props.mozLoop}/>
               <ToSView />
             </Tab>
             <Tab name="contacts">
@@ -908,6 +963,7 @@ loop.panel = (function(_, mozL10n) {
     init: init,
     AuthLink: AuthLink,
     AvailabilityDropdown: AvailabilityDropdown,
+    ContextInfo: ContextInfo,
     GettingStartedView: GettingStartedView,
     PanelView: PanelView,
     RoomEntry: RoomEntry,

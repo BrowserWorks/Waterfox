@@ -40,8 +40,7 @@ CodeGeneratorShared::ensureMasm(MacroAssembler* masmArg)
 }
 
 CodeGeneratorShared::CodeGeneratorShared(MIRGenerator* gen, LIRGraph* graph, MacroAssembler* masmArg)
-  : oolIns(nullptr),
-    maybeMasm_(),
+  : maybeMasm_(),
     masm(ensureMasm(masmArg)),
     gen(gen),
     graph(*graph),
@@ -129,10 +128,8 @@ CodeGeneratorShared::generateOutOfLineCode()
         lastPC_ = outOfLineCode_[i]->pc();
         outOfLineCode_[i]->bind(&masm);
 
-        oolIns = outOfLineCode_[i];
         outOfLineCode_[i]->generate(this);
     }
-    oolIns = nullptr;
 
     return true;
 }
@@ -381,30 +378,46 @@ CodeGeneratorShared::encodeAllocation(LSnapshot* snapshot, MDefinition* mir,
       case MIRType_ObjectOrNull:
       case MIRType_Boolean:
       case MIRType_Double:
-      case MIRType_Float32:
       {
         LAllocation* payload = snapshot->payloadOfSlot(*allocIndex);
-        JSValueType valueType =
-            (type == MIRType_ObjectOrNull) ? JSVAL_TYPE_OBJECT : ValueTypeFromMIRType(type);
-        if (payload->isMemory()) {
-            if (type == MIRType_Float32)
-                alloc = RValueAllocation::Float32(ToStackIndex(payload));
-            else
-                alloc = RValueAllocation::Typed(valueType, ToStackIndex(payload));
-        } else if (payload->isGeneralReg()) {
-            alloc = RValueAllocation::Typed(valueType, ToRegister(payload));
-        } else if (payload->isFloatReg()) {
-            FloatRegister reg = ToFloatRegister(payload);
-            if (type == MIRType_Float32)
-                alloc = RValueAllocation::Float32(reg);
-            else
-                alloc = RValueAllocation::Double(reg);
-        } else {
+        if (payload->isConstant()) {
             MConstant* constant = mir->toConstant();
             uint32_t index;
             masm.propagateOOM(graph.addConstantToPool(constant->value(), &index));
             alloc = RValueAllocation::ConstantPool(index);
+            break;
         }
+
+        JSValueType valueType =
+            (type == MIRType_ObjectOrNull) ? JSVAL_TYPE_OBJECT : ValueTypeFromMIRType(type);
+
+        MOZ_ASSERT(payload->isMemory() || payload->isRegister());
+        if (payload->isMemory())
+            alloc = RValueAllocation::Typed(valueType, ToStackIndex(payload));
+        else if (payload->isGeneralReg())
+            alloc = RValueAllocation::Typed(valueType, ToRegister(payload));
+        else if (payload->isFloatReg())
+            alloc = RValueAllocation::Double(ToFloatRegister(payload));
+        break;
+      }
+      case MIRType_Float32:
+      case MIRType_Int32x4:
+      case MIRType_Float32x4:
+      {
+        LAllocation* payload = snapshot->payloadOfSlot(*allocIndex);
+        if (payload->isConstant()) {
+            MConstant* constant = mir->toConstant();
+            uint32_t index;
+            masm.propagateOOM(graph.addConstantToPool(constant->value(), &index));
+            alloc = RValueAllocation::ConstantPool(index);
+            break;
+        }
+
+        MOZ_ASSERT(payload->isMemory() || payload->isFloatReg());
+        if (payload->isFloatReg())
+            alloc = RValueAllocation::AnyFloat(ToFloatRegister(payload));
+        else
+            alloc = RValueAllocation::AnyFloat(ToStackIndex(payload));
         break;
       }
       case MIRType_MagicOptimizedArguments:
@@ -875,12 +888,15 @@ class ReadTempAttemptsVectorOp : public JS::ForEachTrackedOptimizationAttemptOp
 
 struct ReadTempTypeInfoVectorOp : public IonTrackedOptimizationsTypeInfo::ForEachOp
 {
+    TempAllocator& alloc_;
     TempOptimizationTypeInfoVector* types_;
-    TypeSet::TypeList accTypes_;
+    TempTypeList accTypes_;
 
   public:
-    explicit ReadTempTypeInfoVectorOp(TempOptimizationTypeInfoVector* types)
-      : types_(types)
+    ReadTempTypeInfoVectorOp(TempAllocator& alloc, TempOptimizationTypeInfoVector* types)
+      : alloc_(alloc),
+        types_(types),
+        accTypes_(alloc)
     { }
 
     void readType(const IonTrackedTypeWithAddendum& tracked) override {
@@ -888,7 +904,7 @@ struct ReadTempTypeInfoVectorOp : public IonTrackedOptimizationsTypeInfo::ForEac
     }
 
     void operator()(JS::TrackedTypeSite site, MIRType mirType) override {
-        OptimizationTypeInfo ty(site, mirType);
+        OptimizationTypeInfo ty(alloc_, site, mirType);
         for (uint32_t i = 0; i < accTypes_.length(); i++)
             MOZ_ALWAYS_TRUE(ty.trackType(accTypes_[i]));
         MOZ_ALWAYS_TRUE(types_->append(mozilla::Move(ty)));
@@ -960,7 +976,7 @@ CodeGeneratorShared::verifyCompactTrackedOptimizationsMap(JitCode* code, uint32_
             // decoded.
             IonTrackedOptimizationsTypeInfo typeInfo = typesTable->entry(index);
             TempOptimizationTypeInfoVector tvec(alloc());
-            ReadTempTypeInfoVectorOp top(&tvec);
+            ReadTempTypeInfoVectorOp top(alloc(), &tvec);
             typeInfo.forEach(top, allTypes);
             MOZ_ASSERT(entry.optimizations->matchTypes(tvec));
 
@@ -1032,7 +1048,7 @@ CodeGeneratorShared::markOsiPoint(LOsiPoint* ins)
 #ifdef CHECK_OSIPOINT_REGISTERS
 template <class Op>
 static void
-HandleRegisterDump(Op op, MacroAssembler& masm, RegisterSet liveRegs, Register activation,
+HandleRegisterDump(Op op, MacroAssembler& masm, LiveRegisterSet liveRegs, Register activation,
                    Register scratch)
 {
     const size_t baseOffset = JitActivation::offsetOfRegs();
@@ -1075,27 +1091,30 @@ class StoreOp
         masm.storePtr(reg, dump);
     }
     void operator()(FloatRegister reg, Address dump) {
-#if defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_MIPS)
-        if (reg.isDouble()) {
+        if (reg.isDouble())
             masm.storeDouble(reg, dump);
-        } else {
+        else if (reg.isSingle())
             masm.storeFloat32(reg, dump);
-        }
-#else
-        masm.storeDouble(reg, dump);
+#if defined(JS_CODEGEN_X86) || defined(JS_CODEGEN_X64)
+        else if (reg.isInt32x4())
+            masm.storeUnalignedInt32x4(reg, dump);
+        else if (reg.isFloat32x4())
+            masm.storeUnalignedFloat32x4(reg, dump);
 #endif
+        else
+            MOZ_CRASH("Unexpected register type.");
     }
 };
 
 static void
-StoreAllLiveRegs(MacroAssembler& masm, RegisterSet liveRegs)
+StoreAllLiveRegs(MacroAssembler& masm, LiveRegisterSet liveRegs)
 {
     // Store a copy of all live registers before performing the call.
     // When we reach the OsiPoint, we can use this to check nothing
     // modified them in the meantime.
 
     // Load pointer to the JitActivation in a scratch register.
-    GeneralRegisterSet allRegs(GeneralRegisterSet::All());
+    AllocatableGeneralRegisterSet allRegs(GeneralRegisterSet::All());
     Register scratch = allRegs.takeAny();
     masm.push(scratch);
     masm.loadJitActivation(scratch);
@@ -1124,21 +1143,17 @@ class VerifyOp
     }
     void operator()(FloatRegister reg, Address dump) {
         FloatRegister scratch;
-#if defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_MIPS)
         if (reg.isDouble()) {
             scratch = ScratchDoubleReg;
             masm.loadDouble(dump, scratch);
             masm.branchDouble(Assembler::DoubleNotEqual, scratch, reg, failure_);
-        } else {
+        } else if (reg.isSingle()) {
             scratch = ScratchFloat32Reg;
             masm.loadFloat32(dump, scratch);
             masm.branchFloat(Assembler::DoubleNotEqual, scratch, reg, failure_);
         }
-#else
-        scratch = ScratchFloat32Reg;
-        masm.loadDouble(dump, scratch);
-        masm.branchDouble(Assembler::DoubleNotEqual, scratch, reg, failure_);
-#endif
+
+        // :TODO: (Bug 1133745) Add support to verify SIMD registers.
     }
 };
 
@@ -1149,7 +1164,7 @@ CodeGeneratorShared::verifyOsiPointRegs(LSafepoint* safepoint)
     // the call and this OsiPoint. Try-catch relies on this invariant.
 
     // Load pointer to the JitActivation in a scratch register.
-    GeneralRegisterSet allRegs(GeneralRegisterSet::All());
+    AllocatableGeneralRegisterSet allRegs(GeneralRegisterSet::All());
     Register scratch = allRegs.takeAny();
     masm.push(scratch);
     masm.loadJitActivation(scratch);
@@ -1176,8 +1191,9 @@ CodeGeneratorShared::verifyOsiPointRegs(LSafepoint* safepoint)
     // instructions (including this OsiPoint) will depend on them. Also
     // backtracking can also use the same register for an input and an output.
     // These are marked as clobbered and shouldn't get checked.
-    RegisterSet liveRegs = safepoint->liveRegs();
-    liveRegs = RegisterSet::Intersect(liveRegs, RegisterSet::Not(safepoint->clobberedRegs()));
+    LiveRegisterSet liveRegs;
+    liveRegs.set() = RegisterSet::Intersect(safepoint->liveRegs().set(),
+                                            RegisterSet::Not(safepoint->clobberedRegs().set()));
 
     VerifyOp op(masm, &failure);
     HandleRegisterDump<VerifyOp>(op, masm, liveRegs, scratch, allRegs.getAny());
@@ -1215,7 +1231,7 @@ CodeGeneratorShared::shouldVerifyOsiPointRegs(LSafepoint* safepoint)
     if (!checkOsiPointRegisters)
         return false;
 
-    if (safepoint->liveRegs().empty(true) && safepoint->liveRegs().empty(false))
+    if (safepoint->liveRegs().emptyGeneral() && safepoint->liveRegs().emptyFloat())
         return false; // No registers to check.
 
     return true;
@@ -1229,7 +1245,7 @@ CodeGeneratorShared::resetOsiPointRegs(LSafepoint* safepoint)
 
     // Set checkRegs to 0. If we perform a VM call, the instruction
     // will set it to 1.
-    GeneralRegisterSet allRegs(GeneralRegisterSet::All());
+    AllocatableGeneralRegisterSet allRegs(GeneralRegisterSet::All());
     Register scratch = allRegs.takeAny();
     masm.push(scratch);
     masm.loadJitActivation(scratch);
@@ -1366,16 +1382,19 @@ CodeGeneratorShared::visitOutOfLineTruncateSlow(OutOfLineTruncateSlow* ool)
     Register dest = ool->dest();
 
     saveVolatile(dest);
-#ifdef JS_CODEGEN_ARM
+#if defined(JS_CODEGEN_ARM)
     if (ool->needFloat32Conversion()) {
         masm.convertFloat32ToDouble(src, ScratchDoubleReg);
         src = ScratchDoubleReg;
     }
 
 #else
+    FloatRegister srcSingle = src.asSingle();
     if (ool->needFloat32Conversion()) {
+        MOZ_ASSERT(src.isSingle());
         masm.push(src);
         masm.convertFloat32ToDouble(src, src);
+        src = src.asDouble();
     }
 #endif
     masm.setupUnalignedABICall(1, dest);
@@ -1386,9 +1405,9 @@ CodeGeneratorShared::visitOutOfLineTruncateSlow(OutOfLineTruncateSlow* ool)
         masm.callWithABI(BitwiseCast<void*, int32_t(*)(double)>(JS::ToInt32));
     masm.storeCallResult(dest);
 
-#ifndef JS_CODEGEN_ARM
+#if !defined(JS_CODEGEN_ARM)
     if (ool->needFloat32Conversion())
-        masm.pop(src);
+        masm.pop(srcSingle);
 #endif
     restoreVolatile(dest);
 
@@ -1627,9 +1646,9 @@ CodeGeneratorShared::emitTracelogScript(bool isStart)
 
     Label done;
 
-    RegisterSet regs = RegisterSet::Volatile();
-    Register logger = regs.takeGeneral();
-    Register script = regs.takeGeneral();
+    AllocatableRegisterSet regs(RegisterSet::Volatile());
+    Register logger = regs.takeAnyGeneral();
+    Register script = regs.takeAnyGeneral();
 
     masm.Push(logger);
 
@@ -1663,8 +1682,8 @@ CodeGeneratorShared::emitTracelogTree(bool isStart, uint32_t textId)
         return;
 
     Label done;
-    RegisterSet regs = RegisterSet::Volatile();
-    Register logger = regs.takeGeneral();
+    AllocatableRegisterSet regs(RegisterSet::Volatile());
+    Register logger = regs.takeAnyGeneral();
 
     masm.Push(logger);
 

@@ -317,6 +317,7 @@ PK11_DigestOp
 PK11_DoesMechanism
 PK11_Encrypt
 PK11_ExportDERPrivateKeyInfo
+PK11_ExportEncryptedPrivKeyInfo
 PK11_ExtractKeyValue
 PK11_FindCertFromNickname
 PK11_FindCertsFromEmailAddress
@@ -512,6 +513,7 @@ SECKEY_CopyPublicKey
 SECKEY_CopySubjectPublicKeyInfo
 SECKEY_CreateSubjectPublicKeyInfo
 SECKEY_DecodeDERSubjectPublicKeyInfo
+SECKEY_DestroyEncryptedPrivateKeyInfo
 SECKEY_DestroyPrivateKey
 SECKEY_DestroyPrivateKeyList
 SECKEY_DestroyPublicKey
@@ -523,7 +525,6 @@ SECKEY_ExtractPublicKey
 SECKEY_GetPublicKeyType
 SECKEY_ImportDERPublicKey
 SECKEY_PublicKeyStrength
-SECKEY_PublicKeyStrengthInBits
 SECKEY_RSAPSSParamsTemplate DATA
 SECKEY_SignatureLen
 SECMIME_DecryptionAllowed
@@ -589,6 +590,7 @@ SEC_PKCS12DecoderFinish
 SEC_PKCS12DecoderImportBags
 SEC_PKCS12DecoderIterateInit
 SEC_PKCS12DecoderIterateNext
+SEC_PKCS12DecoderRenameCertNicknames
 SEC_PKCS12DecoderStart
 SEC_PKCS12DecoderUpdate
 SEC_PKCS12DecoderValidateBags

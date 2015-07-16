@@ -132,7 +132,7 @@ nsXBLProtoImplMethod::InstallMember(JSContext* aCx,
 }
 
 nsresult
-nsXBLProtoImplMethod::CompileMember(AutoJSAPI& jsapi, const nsCString& aClassStr,
+nsXBLProtoImplMethod::CompileMember(AutoJSAPI& jsapi, const nsString& aClassStr,
                                     JS::Handle<JSObject*> aClassObject)
 {
   AssertInCompilationScope();
@@ -189,7 +189,7 @@ nsXBLProtoImplMethod::CompileMember(AutoJSAPI& jsapi, const nsCString& aClassStr
   // Now that we have a body and args, compile the function
   // and then define it.
   NS_ConvertUTF16toUTF8 cname(mName);
-  nsAutoCString functionUri(aClassStr);
+  NS_ConvertUTF16toUTF8 functionUri(aClassStr);
   int32_t hash = functionUri.RFindChar('#');
   if (hash != kNotFound) {
     functionUri.Truncate(hash);
@@ -291,6 +291,8 @@ nsXBLProtoImplAnonymousMethod::Execute(nsIContent* aBoundElement, JSAddonId* aAd
   if (!global) {
     return NS_OK;
   }
+
+  nsAutoMicroTask mt;
 
   // We are going to run script via JS::Call, so we need a script entry point,
   // but as this is XBL related it does not appear in the HTML spec.

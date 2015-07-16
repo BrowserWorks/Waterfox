@@ -46,7 +46,7 @@ using namespace mozilla::gfx;
 static FT_Library gPlatformFTLibrary = nullptr;
 
 class FreetypeReporter final : public nsIMemoryReporter,
-                                   public CountingAllocatorBase<FreetypeReporter>
+                               public CountingAllocatorBase<FreetypeReporter>
 {
 private:
     ~FreetypeReporter() {}
@@ -132,8 +132,7 @@ gfxAndroidPlatform::CreateOffscreenSurface(const IntSize& size,
                                            gfxContentType contentType)
 {
     nsRefPtr<gfxASurface> newSurface;
-    newSurface = new gfxImageSurface(ThebesIntSize(size),
-                                     OptimalFormatForContent(contentType));
+    newSurface = new gfxImageSurface(size, OptimalFormatForContent(contentType));
 
     return newSurface.forget();
 }
@@ -499,7 +498,6 @@ gfxAndroidPlatform::CreateHardwareVsyncSource()
     display.DisableVsync();
     return vsyncSource.forget();
 #else
-    NS_WARNING("Hardware vsync not supported on android yet");
-    return nullptr;
+    return gfxPlatform::CreateHardwareVsyncSource();
 #endif
 }

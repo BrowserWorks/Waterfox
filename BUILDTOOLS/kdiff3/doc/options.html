@@ -1,0 +1,137 @@
+<html><head><title>Options</title><link rel="stylesheet" href="common/kde-default.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.67.2"><meta name="keywords" content="KDE, kdeextragear, kdiff3, diff, merge, CVS, triplediff, compare, files, directories, version control, three-way-merge, in-line-differences, synchronise, kpart, kio, networktransparent, editor, white space, comments"><link rel="start" href="index.html" title="The KDiff3 Handbook"><link rel="up" href="documentation.html" title="Chapter 2. File Comparison And Merge"><link rel="prev" href="printing.html" title="Printing"><link rel="next" href="preprocessors.html" title="Preprocessor Commands"><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta name="GENERATOR" content="KDE XSL Stylesheet V1.13 using libxslt"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div style="position: absolute; left 0px;"><img src="common/top-left.png" style="margin: 0px" alt=""></div><div style="background-image: url(common/top-middle.png); width: 100%; height: 131px;"><div style="position: absolute;                      right: 0px;"><img src="common/top-right.png" style="margin: 0px" alt=""></div><div style="position: absolute;                         top: 63px;                         right: 0px;                         margin-top: -1em;                         margin-right: 5%;                         text-align: right;                          font-size: xx-large;                          font-weight: bold;                          text-shadow: #CDE1FF 0px 0px 5px;                          color: #444">Options</div></div><div style="margin-top: 20px; background-color: #white;                        color: black;                       margin-left: 20px;                        margin-right: 20px;"><div style="position: absolute;                          left: 20px;"><a accesskey="p" href="printing.html">Prev</a></div><div style="position: absolute;                          right: 20px;"><a accesskey="n" href="preprocessors.html">Next</a></div><div class="navCenter">File Comparison And Merge</div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="options"></a>Options</h2></div></div></div><p>
+   Options and the recent-file-list will be saved when you exit the program,
+   and reloaded when you start it. (Menu Settings-&gt;Configure <span class="application">KDiff3</span> ...)
+</p><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2540485"></a>Font</h3></div></div></div><p>
+   Select a fixed width font. (On some systems this dialog will also
+   present    variable width fonts, but you should not use them.)
+</p><div class="variablelist"><dl><dt><span class="term"><span class="emphasis"><em>Italic Font for Deltas:</em></span></span></dt><dd><p> If you select this, then text differences
+       will be drawn with the italic version of the selected font. If the font
+       doesn't  support italic, then this does nothing.</p></dd></dl></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2540512"></a>Colors</h3></div></div></div><div class="variablelist"><dl><dt><span class="term"><span class="emphasis"><em>Foreground color:</em></span></span></dt><dd><p> Usually black. </p></dd><dt><span class="term"><span class="emphasis"><em>Background color:</em></span></span></dt><dd><p> Usually white. </p></dd><dt><span class="term"><span class="emphasis"><em>Diff Background color:</em></span></span></dt><dd><p> Usually light gray. </p></dd><dt><span class="term"><span class="emphasis"><em>Color A:</em></span></span></dt><dd><p> Usually dark blue. </p></dd><dt><span class="term"><span class="emphasis"><em>Color B:</em></span></span></dt><dd><p> Usually dark green. </p></dd><dt><span class="term"><span class="emphasis"><em>Color C:</em></span></span></dt><dd><p> Usually dark magenta. </p></dd><dt><span class="term"><span class="emphasis"><em>Conflict Color:</em></span></span></dt><dd><p> Usually red.</p></dd><dt><span class="term"><span class="emphasis"><em>Current range background color:</em></span></span></dt><dd><p> Usually light yellow.</p></dd><dt><span class="term"><span class="emphasis"><em>Current range diff background color:</em></span></span></dt><dd><p> Usually dark yellow.</p></dd><dt><span class="term"><span class="emphasis"><em>Color for manually selected diff ranges:</em></span></span></dt><dd><p> Usually orange.</p></dd><dt><span class="term"><span class="emphasis"><em>Newest file color in directory comparison:</em></span></span></dt><dd><p> Usually green.</p></dd><dt><span class="term"><span class="emphasis"><em>Oldest file color in directory comparison:</em></span></span></dt><dd><p> Usually red.</p></dd><dt><span class="term"><span class="emphasis"><em>Middle age file color in directory comparison:</em></span></span></dt><dd><p> Usually dark yellow.</p></dd><dt><span class="term"><span class="emphasis"><em>Color for missing files in directory comparison:</em></span></span></dt><dd><p> Usually black.</p></dd></dl></div><p>
+   Changing the colors for directory comparison will be effective only when starting the next directory comparison.
+</p><p>
+   On systems with only 16 or 256 colors some colors are not available in pure
+   form. On such systems the "Defaults"-button will choose a pure color.
+</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2540657"></a>Editor Settings</h3></div></div></div><div class="variablelist"><dl><dt><span class="term"><span class="emphasis"><em>Tab inserts spaces:</em></span></span></dt><dd><p> If this is disabled and you press the
+      tabulator key,   a tab-character is inserted, otherwise the appropriate
+      amount  of characters   is inserted.</p></dd><dt><span class="term"><span class="emphasis"><em>   Tab size:</em></span></span></dt><dd><p> Can be adjusted for your specific needs. Default is 8. </p></dd><dt><span class="term"><span class="emphasis"><em>   Auto indentation:</em></span></span></dt><dd><p> When pressing Enter or Return the indentation
+      of the previous  line is used for the new line. </p></dd><dt><span class="term"><span class="emphasis"><em>   Auto copy selection:</em></span></span></dt><dd><p> Every selection is immediately copied
+      to the clipboard   when active and you needn't explicitely copy it. </p></dd><dt><span class="term"><span class="emphasis"><em>   Line end style:</em></span></span></dt><dd><p> When saving you can select what line 
+      end style you prefer. The default setting is the common choice for the used operating system. </p></dd></dl></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="diffoptions"></a>Diff Settings</h3></div></div></div><p>
+   When comparing files, <span class="application">KDiff3</span> first it tries to match lines that are equal
+   in all input files. Only during this step it might ignore white space. The
+   second step compares each line. In this step white space will not be ignored.
+   Also during the merge white space will not be ignored.
+</p><div class="variablelist"><dl><dt><span class="term"><span class="emphasis"><em>Preserve Carriage Return:</em></span></span></dt><dd><p> Some editors (on some systems) save
+      carriage return '\r' and linefeed '\n'-characters at the end of line, while
+      others will only save the linefeed '\n'. Usually <span class="application">KDiff3</span> ignores the carriage
+      return, but then files that don't have equal sizes, look equal in side by
+      side comparison. When this option is on, then the carriage return characters
+      are made visible but are treated as white space. This option must be off
+      during a merge. Default is off.</p></dd><dt><span class="term"><span class="emphasis"><em>Ignore numbers:</em></span></span></dt><dd><p> Default is off. Number characters ('0'-'9', '.', '-')
+      will be ignored  in the first  part of the analysis in which the line matching is
+      done. In the result the differences will be shown nevertheless, but they are treated
+      as white space.
+   </p></dd><dt><span class="term"><span class="emphasis"><em>Ignore C/C++ comments:</em></span></span></dt><dd><p> Default is off.
+      Changes in comments will be treated like changes in white space.
+   </p></dd><dt><span class="term"><span class="emphasis"><em>Ignore case:</em></span></span></dt><dd><p>  Default is off. 
+      Case-differences of characters (like 'A' vs. 'a') will be treated like changes in white space.
+   </p></dd><dt><span class="term"><span class="emphasis"><em>Preprocessor-Command:</em></span></span></dt><dd><p>
+   See <a href="preprocessors.html" title="Preprocessor Commands">next section</a>.
+   </p></dd><dt><span class="term"><span class="emphasis"><em>Line-Matching Preprocessor-Command:</em></span></span></dt><dd><p>
+   See <a href="preprocessors.html" title="Preprocessor Commands">next section</a>.
+   </p></dd><dt><span class="term"><span class="emphasis"><em>Try Hard:</em></span></span></dt><dd><p>
+      Try hard to find an even smaller delta. (Default is on.) This will probably
+      be effective for complicated and big files. And slow for very big files.
+   </p></dd></dl></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="mergeoptions"></a>Merge Settings</h3></div></div></div><div class="variablelist"><dl><dt><span class="term"><span class="emphasis"><em>Auto Advance Delay (ms):</em></span></span></dt><dd><p> When in auto-advance-mode this setting specifies
+      how long to show the result of the selection before jumping to the next unsolved
+      conflict.
+   </p></dd><dt><span class="term"><span class="emphasis"><em>White space 2/3-file merge default:</em></span></span></dt><dd><p>
+      Automatically solve all white-space conflict by choosing the specified file.
+      (Default is manual choice.) Useful if white space really isn't important in many files.
+      If you need this only occasionally better use "Choose A/B/C For All Unsolved Whitespace Conflicts"
+      in the merge menu. Note that if you enable either "Ignore numbers" or "Ignore C/C++ comments"
+      then this auto-choice also applies for conflicts in numbers or comments.
+   </p></dd><dt><span class="term"><span class="emphasis"><em>Auto merge regular expression:</em></span></span></dt><dd><p>
+      Regular expression for lines where <span class="application">KDiff3</span> should automatically choose one source. See also <a href="merging.html#vcskeywordsmergesupport" title="Automatic Merge of Version Control Keywords and History (Log)">Automatic Merge ...</a>
+   </p></dd><dt><span class="term"><span class="emphasis"><em>Run regular expression auto merge on merge start:</em></span></span></dt><dd><p>
+      If activated <span class="application">KDiff3</span> runs the automatic merge using the "Auto merge regular expression" when a merge is started.
+   </p></dd><dt><span class="term"><span class="emphasis"><em>History start regular expression:</em></span></span></dt><dd><p>
+      Regular expression for the start of the merge history entry.
+      Usually this line contains the "$Log$"-keyword.
+      Default value: ".*\$Log.*\$.*"
+   </p></dd><dt><span class="term"><span class="emphasis"><em>History entry start regular expression:</em></span></span></dt><dd><p>
+      A merge history entry consists of several lines.
+      Specify the regular expression to detect the first line (without the leading comment).
+      Use parentheses to group the keys you want to use for sorting.
+      If left empty, then <span class="application">KDiff3</span> assumes that empty lines separate history entries.
+      See also <a href="merging.html#vcskeywordsmergesupport" title="Automatic Merge of Version Control Keywords and History (Log)">Automatic Merge ...</a>
+   </p></dd><dt><span class="term"><span class="emphasis"><em>History merge sorting:</em></span></span></dt><dd><p>
+      Enable version control history sorting.
+   </p></dd><dt><span class="term"><span class="emphasis"><em>History entry start sort key order:</em></span></span></dt><dd><p>
+      Each parentheses used in the regular expression for the history start entry
+      groups a key that can be used for sorting.
+      Specify the list of keys (that are numbered in order of occurrence
+      starting with 1) using ',' as separator (e.g. "4,5,6,1,2,3,7").
+      If left empty, then no sorting will be done.
+      See also <a href="merging.html#vcskeywordsmergesupport" title="Automatic Merge of Version Control Keywords and History (Log)">Automatic Merge ...</a>
+   </p></dd><dt><span class="term"><span class="emphasis"><em>Merge version control history on merge start:</em></span></span></dt><dd><p>
+      If activated <span class="application">KDiff3</span> runs the automatic history merging using aforementioned options when a merge is started.
+   </p></dd><dt><span class="term"><span class="emphasis"><em>Max number of history entries:</em></span></span></dt><dd><p>
+      <span class="application">KDiff3</span> truncates the history list after the specified number of entries. Use -1 to avoid truncation. (Default is -1).
+   </p></dd><dt><span class="term"><span class="emphasis"><em>Test your regular expressions</em></span></span></dt><dd><p>
+      This button shows a dialog that allows you to improve and test the regular expressions above.
+      Just copy the respective data from your files into the example lines. The "Match results" 
+      will immediately show whether the match succeeds or not.
+      The "Sort key result" will display the key used for history merge sorting.
+   </p></dd><dt><span class="term"><span class="emphasis"><em>Irrelevant merge command:</em></span></span></dt><dd><p>
+      Specify a command of your own that should be called when <span class="application">KDiff3</span> detects 
+      that for a three file merge the file from B doesn't contribute any 
+      relevant data that isn't already contained in the file from C.
+      The command is called with the three filenames as parameters.
+      Data matched by the "Auto merge regular expression" or in the 
+      history isn't considered relevant.
+   </p></dd></dl></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2541034"></a>Directory Merge</h3></div></div></div><p>
+   These options are concerned with scanning the directory and handling the
+   merge: See the <a href="dirmergeoptions.html" title="Options for Comparing and Merging Directories">Directory Comparison/Merge
+   Docs</a> for details.
+</p><p>
+Yet there is one option here that is also relevant for saving single files:
+</p><div class="variablelist"><dl><dt><span class="term"><span class="emphasis"><em>Backup files:</em></span></span></dt><dd><p> When a file is saved and an older version already
+      exists, then the original version will be renamed with an ".orig" extension.
+      If an old backup file with ".orig" extension already exists then this will
+      be deleted without backup.
+   </p></dd></dl></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2541070"></a>Regional and Language Options</h3></div></div></div><div class="variablelist"><dl><dt><span class="term"><span class="emphasis"><em>Language:</em></span></span></dt><dd><p>Adjust the language of the user interface. Changing this option doesn't affect the running program. You have to exit and restart <span class="application">KDiff3</span> so that the language is changed. (This option is not available in the KDE version of <span class="application">KDiff3</span> because the language is adjustable in the global KDE settings.) 
+	</p></dd><dt><span class="term"><span class="emphasis"><em>Use the same encoding for everything:</em></span></span></dt><dd><p> The following encoding options can be adjusted separately for each item or if this option is true, all values will take the first value.
+	</p></dd><dt><span class="term"><span class="emphasis"><em>Local Encoding:</em></span></span></dt><dd><p>Above the codec-selectors appears a note that tells you what the local encoding is. (This is not adjustable but for your information just in case you don't know your local encoding, but need to select it.)
+	</p></dd><dt><span class="term"><span class="emphasis"><em>File Encoding for A/B/C:</em></span></span></dt><dd><p> Adjust the file encoding for input files. This has an effect on how the special characters are interpreted. Since you can adjust each codec separately you can even compare and merge files that were saved using different codecs.
+	</p></dd><dt><span class="term"><span class="emphasis"><em>File Encoding for Merge Output and Saving:</em></span></span></dt><dd><p> When you have edited a file, then you can adjust which encoding will be used when saving to disk.
+	</p></dd><dt><span class="term"><span class="emphasis"><em>File Encoding for Preprocessor Files:</em></span></span></dt><dd><p>When you define preprocessors then they might not be able to operate on your codec. (e.g.: Your files are 16-bit-unicode and your preprocessor can only take 8-bit-ascii.) With this option you can define the encoding of preprocessor output.
+	</p></dd><dt><span class="term"><span class="emphasis"><em>Right To Left Language:</em></span></span></dt><dd><p>Some languages are written right to left. When this option is enabled, <span class="application">KDiff3</span> draws the text from right to left in the diff input windows and in the merge output window. Note that if you start <span class="application">KDiff3</span> with the command line option "--reverse" then all layouting will be done right to left too. (This is a feature provided by Qt.) This documentation was written assuming that "Right To Left Language" or reverse layout are disabled. So some references to "left" or "right" must be replaced by their respective counterpart if you use these options.
+	</p></dd></dl></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2541184"></a>Miscellaneous</h3></div></div></div><p>(These options and actions are available in menus or the buttonbar.)</p><div class="variablelist"><dl><dt><span class="term"><span class="emphasis"><em>Show line numbers:</em></span></span></dt><dd><p> You can select if line numbers should be
+     shown for the input files.</p></dd><dt><span class="term"><span class="emphasis"><em>Show space and tabulator characters for differences:</em></span></span></dt><dd><p> Sometimes
+     the visible spaces and tabs are disturbing. You can turn this off.</p></dd><dt><span class="term"><span class="emphasis"><em>Show white space:</em></span></span></dt><dd><p> Turn this off to suppress
+      any highlighting of white-space-only changes in the text or overview-columns.
+      (Note that this also applies to changes in numbers or comments if the options "Ignore numbers"
+      or "Ignore C/C++ comments" are active.)</p></dd><dt><span class="term"><span class="emphasis"><em>Overview options:</em></span></span></dt><dd><p>
+     These choices are only available when you compare three files. In normal mode all
+     differences are shown in one color-coded overview-column. But sometimes you are  
+     especially interested in the differences between only two of these three files.
+     Selecting "A vs. B", "A vs. C" or "B vs. C"-overview will show a second overview 
+     column with the required information next to the normal overview.
+  </p></dd><dt><span class="term"><span class="emphasis"><em>Word wrap diff windows:</em></span></span></dt><dd><p>
+     Wrap lines when their length would exceed the width of a window.
+  </p></dd><dt><span class="term"><span class="emphasis"><em>Show Window A/B/C:</em></span></span></dt><dd><p> Sometimes you want to use the space on
+      the screen better for long lines. Hide the windows that are not important.
+      (In the Windows-menu.)</p></dd><dt><span class="term"><span class="emphasis"><em>Toggle Split Orientation:</em></span></span></dt><dd><p>
+      Switch between diff windows shown next to each other (A left of B left of C) or above
+      each other (A above B above C). This should also help for long lines. (In the Windows-menu.)
+      </p></dd><dt><span class="term"><span class="emphasis"><em>Start a merge quickly:</em></span></span></dt><dd><p>
+      Sometimes you are viewing the deltas and decide to merge.
+      <span class="inlinemediaobject"><img src="merge_current.png"></span>
+      "Merge current file" in the Directory-menu also works if you only compare
+      two files. A single click starts the merge and uses the filename of the last
+      input-file as the default output filename. (When this is used to restart
+      a merge, then the output filename will be preserved.)</p></dd></dl></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="shortcuts"></a>Configuring Keyboard-Shortcuts</h3></div></div></div><p>
+   Currently only the KDE-version supports user-configurable keyboard-shortcuts.
+   (Menu Settings-&gt;Configure Shortcuts...)
+</p></div></div><div style="background-color: #white; color: black;                  margin-top: 20px; margin-left: 20px;                  margin-right: 20px;"><div style="position: absolute; left: 20px;"><a accesskey="p" href="printing.html">Prev</a></div><div style="position: absolute; right: 20px;"><a accesskey="n" href="preprocessors.html">Next</a></div><div align="center"><a accesskey="h" href="index.html">Contents</a></div></div><div style="background-color: #white;   color: black;         margin-left: 20px;   margin-right: 20px;"><div class="navLeft">Printing </div><div class="navRight"> Preprocessor Commands</div><div class="navCenter"><a accesskey="u" href="documentation.html">Up</a></div></div><br><br><div class="bannerBottom" style="background-image: url(common/bottom-middle.png);                                        background-repeat: x-repeat;                                         width: 100%;                                         height: 70px;                                         bottom:0px;"><div class="BannerBottomRight"><img src="common/bottom-right.png" style="height: 70px; margin: 0px" alt=""></div><div class="bannerBottomLeft"><img src="common/bottom-left.png" style="height: 70px; margin: 0px;" alt=""></div><div id="comments" style="position:relative; top: 15px; left: 1em; width: 100%; color: #282828;"><p>Would you like to make a comment or contribute an update to this page?<br>Send feedback to the <a href="mailto:kde-doc-english@kde.org" style="background:transparent; color: #282828; text-decoration: underline;">KDE Docs Team</a></p></div></div></body></html>

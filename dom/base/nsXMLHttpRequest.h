@@ -147,7 +147,7 @@ public:
 };
 
 class nsXMLHttpRequestUpload final : public nsXHREventTarget,
-                                         public nsIXMLHttpRequestUpload
+                                     public nsIXMLHttpRequestUpload
 {
 public:
   explicit nsXMLHttpRequestUpload(mozilla::DOMEventTargetHelper* aOwner)
@@ -160,7 +160,7 @@ public:
   NS_REALLY_FORWARD_NSIDOMEVENTTARGET(nsXHREventTarget)
   NS_DECL_NSIXMLHTTPREQUESTUPLOAD
 
-  virtual JSObject* WrapObject(JSContext *cx) override;
+  virtual JSObject* WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto) override;
   nsISupports* GetParentObject()
   {
     return GetOwner();
@@ -180,15 +180,15 @@ class nsXMLHttpRequestXPCOMifier;
 // Make sure that any non-DOM interfaces added here are also added to
 // nsXMLHttpRequestXPCOMifier.
 class nsXMLHttpRequest final : public nsXHREventTarget,
-                                   public nsIXMLHttpRequest,
-                                   public nsIJSXMLHttpRequest,
-                                   public nsIStreamListener,
-                                   public nsIChannelEventSink,
-                                   public nsIProgressEventSink,
-                                   public nsIInterfaceRequestor,
-                                   public nsSupportsWeakReference,
-                                   public nsITimerCallback,
-                                   public nsISizeOfEventTarget
+                               public nsIXMLHttpRequest,
+                               public nsIJSXMLHttpRequest,
+                               public nsIStreamListener,
+                               public nsIChannelEventSink,
+                               public nsIProgressEventSink,
+                               public nsIInterfaceRequestor,
+                               public nsSupportsWeakReference,
+                               public nsITimerCallback,
+                               public nsISizeOfEventTarget
 {
   friend class nsXHRParseEndListener;
   friend class nsXMLHttpRequestXPCOMifier;
@@ -196,9 +196,9 @@ class nsXMLHttpRequest final : public nsXHREventTarget,
 public:
   nsXMLHttpRequest();
 
-  virtual JSObject* WrapObject(JSContext *cx) override
+  virtual JSObject* WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto) override
   {
-    return mozilla::dom::XMLHttpRequestBinding::Wrap(cx, this);
+    return mozilla::dom::XMLHttpRequestBinding::Wrap(cx, this, aGivenProto);
   }
   nsISupports* GetParentObject()
   {
@@ -488,7 +488,6 @@ public:
     }
     aRv = Send(RequestBody(aStream));
   }
-  void SendAsBinary(const nsAString& aBody, ErrorResult& aRv);
 
   void Abort();
 
@@ -635,7 +634,8 @@ protected:
   nsCOMPtr<nsIStreamListener> mXMLParserStreamListener;
 
   // used to implement getAllResponseHeaders()
-  class nsHeaderVisitor : public nsIHttpHeaderVisitor {
+  class nsHeaderVisitor : public nsIHttpHeaderVisitor
+  {
   public:
     NS_DECL_ISUPPORTS
     NS_DECL_NSIHTTPHEADERVISITOR
@@ -821,10 +821,10 @@ private:
 // A shim class designed to expose the non-DOM interfaces of
 // XMLHttpRequest via XPCOM stuff.
 class nsXMLHttpRequestXPCOMifier final : public nsIStreamListener,
-                                             public nsIChannelEventSink,
-                                             public nsIProgressEventSink,
-                                             public nsIInterfaceRequestor,
-                                             public nsITimerCallback
+                                         public nsIChannelEventSink,
+                                         public nsIProgressEventSink,
+                                         public nsIInterfaceRequestor,
+                                         public nsITimerCallback
 {
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_CLASS_AMBIGUOUS(nsXMLHttpRequestXPCOMifier,

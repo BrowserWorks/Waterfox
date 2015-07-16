@@ -16,7 +16,7 @@
 
 // This is the schema version. Update it at any schema change and add a
 // corresponding migrateVxx method below.
-#define DATABASE_SCHEMA_VERSION 26
+#define DATABASE_SCHEMA_VERSION 28
 
 // Fired after Places inited.
 #define TOPIC_PLACES_INIT_COMPLETE "places-init-complete"
@@ -62,7 +62,7 @@ enum JournalMode {
 };
 
 class Database final : public nsIObserver
-                         , public nsSupportsWeakReference
+                     , public nsSupportsWeakReference
 {
   typedef mozilla::storage::StatementCache<mozIStorageStatement> StatementCache;
   typedef mozilla::storage::StatementCache<mozIStorageAsyncStatement> AsyncStatementCache;
@@ -274,6 +274,8 @@ protected:
   nsresult MigrateV24Up();
   nsresult MigrateV25Up();
   nsresult MigrateV26Up();
+  nsresult MigrateV27Up();
+  nsresult MigrateV28Up();
 
   nsresult UpdateBookmarkRootTitles();
 

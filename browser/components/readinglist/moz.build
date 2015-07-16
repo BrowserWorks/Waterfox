@@ -19,3 +19,6 @@ TESTING_JS_MODULES += [
 BROWSER_CHROME_MANIFESTS += ['test/browser/browser.ini']
 
 XPCSHELL_TESTS_MANIFESTS += ['test/xpcshell/xpcshell.ini']
+
+with Files('**'):
+    BUG_COMPONENT = ('Firefox', 'Reading List')

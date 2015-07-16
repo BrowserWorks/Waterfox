@@ -668,7 +668,7 @@ Example
     }
 
 org.mozilla.addons.plugins
--------------------------
+--------------------------
 
 This measurement contains information about the currently-installed plugins.
 
@@ -697,7 +697,7 @@ directly from ``nsIPluginTag`` via ``nsIPluginHost``.
 *updateDay* is the number of days since UNIX epoch of the plugins last modified
 time.
 *mimeTypes* is the list of mimetypes the plugin supports, see
-``nsIPluginTag.getMimeTypes()`.
+``nsIPluginTag.getMimeTypes()``.
 
 Example
 ^^^^^^^
@@ -1077,6 +1077,39 @@ org.mozilla.crashes.crashes
 ---------------------------
 
 This measurement contains a historical record of application crashes.
+
+Version 6
+^^^^^^^^^
+
+This version adds tracking for out-of-memory (OOM) crashes in the main process.
+An OOM crash will be counted as both main-crash and main-crash-oom.
+
+This measurement will be reported on each day there was a crash or crash
+submission. Records may contain the following fields, whose values indicate
+the number of crashes, hangs, or submissions that occurred on the given day:
+
+* content-crash
+* content-crash-submission-succeeded
+* content-crash-submission-failed
+* content-hang
+* content-hang-submission-succeeded
+* content-hang-submission-failed
+* gmplugin-crash
+* gmplugin-crash-submission-succeeded
+* gmplugin-crash-submission-failed
+* main-crash
+* main-crash-oom
+* main-crash-submission-succeeded
+* main-crash-submission-failed
+* main-hang
+* main-hang-submission-succeeded
+* main-hang-submission-failed
+* plugin-crash
+* plugin-crash-submission-succeeded
+* plugin-crash-submission-failed
+* plugin-hang
+* plugin-hang-submission-succeeded
+* plugin-hang-submission-failed
 
 Version 5
 ^^^^^^^^^
@@ -1951,5 +1984,5 @@ Example
       "enabled": 1,
       "numNewSavedPasswords": 5,
       "numSuccessfulFills": 11,
-      "totalLoginsEncountered": 23,
+      "numTotalLoginsEncountered": 23,
     }

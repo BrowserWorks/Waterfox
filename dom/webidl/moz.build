@@ -57,6 +57,8 @@ WEBIDL_FILES = [
     'BroadcastChannel.webidl',
     'BrowserElement.webidl',
     'BrowserElementDictionaries.webidl',
+    'Cache.webidl',
+    'CacheStorage.webidl',
     'CallsList.webidl',
     'CameraCapabilities.webidl',
     'CameraControl.webidl',
@@ -227,6 +229,7 @@ WEBIDL_FILES = [
     'HTMLTrackElement.webidl',
     'HTMLUListElement.webidl',
     'HTMLVideoElement.webidl',
+    'IccCardLockError.webidl',
     'IDBCursor.webidl',
     'IDBDatabase.webidl',
     'IDBEnvironment.webidl',
@@ -241,7 +244,6 @@ WEBIDL_FILES = [
     'IDBRequest.webidl',
     'IDBTransaction.webidl',
     'IDBVersionChangeEvent.webidl',
-    'Identity.webidl',
     'ImageCapture.webidl',
     'ImageData.webidl',
     'ImageDocument.webidl',
@@ -260,6 +262,7 @@ WEBIDL_FILES = [
     'ListBoxObject.webidl',
     'LocalMediaStream.webidl',
     'Location.webidl',
+    'MediaDeviceInfo.webidl',
     'MediaDevices.webidl',
     'MediaElementAudioSourceNode.webidl',
     'MediaError.webidl',
@@ -286,6 +289,9 @@ WEBIDL_FILES = [
     'MozActivity.webidl',
     'MozCellBroadcast.webidl',
     'MozCellBroadcastMessage.webidl',
+    'MozIcc.webidl',
+    'MozIccInfo.webidl',
+    'MozIccManager.webidl',
     'MozMmsMessage.webidl',
     'MozMobileCellInfo.webidl',
     'MozMobileConnection.webidl',
@@ -547,6 +553,7 @@ WEBIDL_FILES = [
     'WifiOptions.webidl',
     'WindowRoot.webidl',
     'Worker.webidl',
+    'WorkerDebuggerGlobalScope.webidl',
     'WorkerGlobalScope.webidl',
     'WorkerLocation.webidl',
     'WorkerNavigator.webidl',
@@ -635,6 +642,9 @@ if CONFIG['MOZ_B2G_BT']:
             'BluetoothDevice2.webidl',
             'BluetoothDiscoveryHandle.webidl',
             'BluetoothGatt.webidl',
+            'BluetoothGattCharacteristic.webidl',
+            'BluetoothGattDescriptor.webidl',
+            'BluetoothGattService.webidl',
             'BluetoothManager2.webidl',
             'BluetoothPairingHandle.webidl',
             'BluetoothPairingListener.webidl',
@@ -645,14 +655,6 @@ if CONFIG['MOZ_B2G_BT']:
             'BluetoothDevice.webidl',
             'BluetoothManager.webidl',
         ]
-
-if CONFIG['MOZ_B2G_RIL']:
-    WEBIDL_FILES += [
-        'IccCardLockError.webidl',
-        'MozIcc.webidl',
-        'MozIccInfo.webidl',
-        'MozIccManager.webidl',
-    ]
 
 if CONFIG['MOZ_NFC']:
     WEBIDL_FILES += [
@@ -823,4 +825,9 @@ if CONFIG['MOZ_EME']:
 if CONFIG['MOZ_PAY']:
     WEBIDL_FILES += [
         'MozPaymentProvider.webidl'
+    ]
+
+if CONFIG['MOZ_B2G']:
+    WEBIDL_FILES += [
+        'Identity.webidl'
     ]

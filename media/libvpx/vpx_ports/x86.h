@@ -12,6 +12,7 @@
 #ifndef VPX_PORTS_X86_H_
 #define VPX_PORTS_X86_H_
 #include <stdlib.h>
+#include <intrin.h>  // For __cpuidex()
 #include "vpx_config.h"
 
 #ifdef __cplusplus

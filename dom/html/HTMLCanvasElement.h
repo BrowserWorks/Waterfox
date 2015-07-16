@@ -42,7 +42,7 @@ enum class CanvasContextType : uint8_t {
 };
 
 class HTMLCanvasElement final : public nsGenericHTMLElement,
-                                    public nsIDOMHTMLCanvasElement
+                                public nsIDOMHTMLCanvasElement
 {
   enum {
     DEFAULT_CANVAS_WIDTH = 300,
@@ -215,7 +215,7 @@ public:
 protected:
   virtual ~HTMLCanvasElement();
 
-  virtual JSObject* WrapNode(JSContext* aCx) override;
+  virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   nsIntSize GetWidthHeight();
 
@@ -279,7 +279,7 @@ public:
   NS_INLINE_DECL_CYCLE_COLLECTING_NATIVE_REFCOUNTING(HTMLCanvasPrintState)
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_NATIVE_CLASS(HTMLCanvasPrintState)
 
-  virtual JSObject* WrapObject(JSContext *cx) override;
+  virtual JSObject* WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto) override;
 
   HTMLCanvasElement* GetParentObject()
   {

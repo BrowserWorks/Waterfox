@@ -23,6 +23,7 @@ class AsyncPanZoomController;
 class OverscrollHandoffChain;
 class CancelableBlockState;
 class TouchBlockState;
+class WheelBlockState;
 
 /**
  * This class stores incoming input events, separated into "input blocks", until
@@ -31,9 +32,6 @@ class TouchBlockState;
  */
 class InputQueue {
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(InputQueue)
-
-public:
-  typedef uint32_t TouchBehaviorFlags;
 
 public:
   InputQueue();
@@ -83,15 +81,29 @@ public:
    */
   CancelableBlockState* CurrentBlock() const;
   /**
-   * Returns the current pending input block as a touch block. It must only
+   * Returns the current pending input block as a touch block. It must only be
    * called if the current pending block is a touch block.
    */
   TouchBlockState* CurrentTouchBlock() const;
+  /**
+   * Returns the current pending input block as a wheel block. It must only be
+   * called if the current pending block is a wheel block.
+   */
+  WheelBlockState* CurrentWheelBlock() const;
   /**
    * Returns true iff the pending block at the head of the queue is ready for
    * handling.
    */
   bool HasReadyTouchBlock() const;
+  /**
+   * If there is a wheel transaction, returns the WheelBlockState representing
+   * the transaction. Otherwise, returns null.
+   */
+  WheelBlockState* GetCurrentWheelTransaction() const;
+  /**
+   * Remove all input blocks from the input queue.
+   */
+  void Clear();
 
 private:
   ~InputQueue();

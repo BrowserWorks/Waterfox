@@ -252,6 +252,18 @@ XPCCallContext::SetMethodIndex(uint16_t index)
 }
 
 /***************************************************************************/
+inline XPCNativeInterface*
+XPCNativeMember::GetInterface() const
+{
+    XPCNativeMember* arrayStart =
+        const_cast<XPCNativeMember*>(this - mIndexInInterface);
+    size_t arrayStartOffset = XPCNativeInterface::OffsetOfMembers();
+    char* xpcNativeInterfaceStart =
+        reinterpret_cast<char*>(arrayStart) - arrayStartOffset;
+    return reinterpret_cast<XPCNativeInterface*>(xpcNativeInterfaceStart);
+}
+
+/***************************************************************************/
 
 inline const nsIID*
 XPCNativeInterface::GetIID() const
@@ -283,6 +295,13 @@ XPCNativeInterface::HasAncestor(const nsIID* iid) const
     bool found = false;
     mInfo->HasAncestor(iid, &found);
     return found;
+}
+
+/* static */
+inline size_t
+XPCNativeInterface::OffsetOfMembers()
+{
+    return offsetof(XPCNativeInterface, mMembers);
 }
 
 /***************************************************************************/
@@ -502,6 +521,7 @@ void XPCWrappedNativeTearOff::JSObjectMoved(JSObject* obj, const JSObject* old)
 inline
 XPCWrappedNativeTearOff::~XPCWrappedNativeTearOff()
 {
+    MOZ_COUNT_DTOR(XPCWrappedNativeTearOff);
     MOZ_ASSERT(!(GetInterface() || GetNative() || GetJSObjectPreserveColor()),
                "tearoff not empty in dtor");
 }
@@ -519,23 +539,17 @@ XPCWrappedNative::SweepTearOffs()
 {
     XPCWrappedNativeTearOffChunk* chunk;
     for (chunk = &mFirstChunk; chunk; chunk = chunk->mNextChunk) {
-        XPCWrappedNativeTearOff* to = chunk->mTearOffs;
-        for (int i = XPC_WRAPPED_NATIVE_TEAROFFS_PER_CHUNK; i > 0; i--, to++) {
-            bool marked = to->IsMarked();
-            to->Unmark();
-            if (marked)
-                continue;
+        XPCWrappedNativeTearOff* to = &chunk->mTearOff;
+        bool marked = to->IsMarked();
+        to->Unmark();
+        if (marked)
+            continue;
 
-            // If this tearoff does not have a live dedicated JSObject,
-            // then let's recycle it.
-            if (!to->GetJSObjectPreserveColor()) {
-                nsISupports* obj = to->GetNative();
-                if (obj) {
-                    obj->Release();
-                    to->SetNative(nullptr);
-                }
-                to->SetInterface(nullptr);
-            }
+        // If this tearoff does not have a live dedicated JSObject,
+        // then let's recycle it.
+        if (!to->GetJSObjectPreserveColor()) {
+            to->SetNative(nullptr);
+            to->SetInterface(nullptr);
         }
     }
 }

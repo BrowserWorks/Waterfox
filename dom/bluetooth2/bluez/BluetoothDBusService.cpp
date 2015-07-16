@@ -408,6 +408,18 @@ DispatchToBtThread(nsIRunnable* aRunnable)
   return sBluetoothThread->Dispatch(aRunnable, NS_DISPATCH_NORMAL);
 }
 
+static void
+DispatchBluetoothReply(BluetoothReplyRunnable* aRunnable,
+                       const BluetoothValue& aValue,
+                       const nsAString& aErrorStr)
+{
+  if (!aErrorStr.IsEmpty()) {
+    DispatchReplyError(aRunnable, aErrorStr);
+  } else {
+    DispatchReplySuccess(aRunnable, aValue);
+  }
+}
+
 BluetoothDBusService::BluetoothDBusService()
 {
   sGetPropertyMonitor = new Monitor("BluetoothService.sGetPropertyMonitor");
@@ -1722,13 +1734,11 @@ public:
   {
     MOZ_ASSERT(NS_IsMainThread());
 
-    BluetoothSignal signal(NS_LITERAL_STRING(REQUEST_MEDIA_PLAYSTATUS_ID),
-                           NS_LITERAL_STRING(KEY_ADAPTER),
-                           InfallibleTArray<BluetoothNamedValue>());
-
     BluetoothService* bs = BluetoothService::Get();
     NS_ENSURE_TRUE(bs, NS_ERROR_FAILURE);
-    bs->DistributeSignal(signal);
+
+    bs->DistributeSignal(NS_LITERAL_STRING(REQUEST_MEDIA_PLAYSTATUS_ID),
+                         NS_LITERAL_STRING(KEY_ADAPTER));
 
     return NS_OK;
   }
@@ -4282,7 +4292,20 @@ BluetoothDBusService::DisconnectGattClientInternal(
 }
 
 void
+BluetoothDBusService::DiscoverGattServicesInternal(
+  const nsAString& aAppUuid, BluetoothReplyRunnable* aRunnable)
+{
+}
+
+void
 BluetoothDBusService::UnregisterGattClientInternal(
   int aClientIf, BluetoothReplyRunnable* aRunnable)
+{
+}
+
+void
+BluetoothDBusService::GattClientReadRemoteRssiInternal(
+  int aClientIf, const nsAString& aDeviceAddress,
+  BluetoothReplyRunnable* aRunnable)
 {
 }

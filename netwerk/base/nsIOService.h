@@ -45,10 +45,10 @@ namespace net {
 } // namespace mozilla
 
 class nsIOService final : public nsIIOService2
-                            , public nsIObserver
-                            , public nsINetUtil
-                            , public nsISpeculativeConnect
-                            , public nsSupportsWeakReference
+                        , public nsIObserver
+                        , public nsINetUtil
+                        , public nsISpeculativeConnect
+                        , public nsSupportsWeakReference
 {
 public:
     NS_DECL_THREADSAFE_ISUPPORTS
@@ -76,10 +76,6 @@ public:
 
     bool IsOffline() { return mOffline; }
     bool IsLinkUp();
-
-    bool IsComingOnline() const {
-      return mOffline && mSettingOffline && !mSetOfflineValue;
-    }
 
     // Should only be called from NeckoChild. Use SetAppOffline instead.
     void SetAppOfflineInternal(uint32_t appId, int32_t status);

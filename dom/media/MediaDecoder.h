@@ -189,6 +189,7 @@ destroying the MediaDecoder object.
 #include "nsIObserver.h"
 #include "nsAutoPtr.h"
 #include "nsITimer.h"
+#include "MediaPromise.h"
 #include "MediaResource.h"
 #include "mozilla/dom/AudioChannelBinding.h"
 #include "mozilla/gfx/Rect.h"
@@ -273,6 +274,14 @@ class MediaDecoder : public nsIObserver,
                      public AbstractMediaDecoder
 {
 public:
+  struct SeekResolveValue {
+    SeekResolveValue(bool aAtEnd, MediaDecoderEventVisibility aEventVisibility)
+      : mAtEnd(aAtEnd), mEventVisibility(aEventVisibility) {}
+    bool mAtEnd;
+    MediaDecoderEventVisibility mEventVisibility;
+  };
+
+  typedef MediaPromise<SeekResolveValue, bool /* aIgnored */, /* IsExclusive = */ true> SeekPromise;
   class DecodedStreamGraphListener;
 
   NS_DECL_THREADSAFE_ISUPPORTS
@@ -399,8 +408,13 @@ public:
     ~DecodedStreamData();
 
     // microseconds
-    int64_t GetLastOutputTime() { return mListener->GetLastOutputTime(); }
-    bool IsFinished() { return mListener->IsFinishedOnMainThread(); }
+    bool IsFinished() const {
+      return mListener->IsFinishedOnMainThread();
+    }
+
+    int64_t GetClock() const {
+      return mInitialTime + mListener->GetLastOutputTime();
+    }
 
     // The following group of fields are protected by the decoder's monitor
     // and can be read or written on any thread.
@@ -408,7 +422,7 @@ public:
     int64_t mAudioFramesWritten;
     // Saved value of aInitialTime. Timestamp of the first audio and/or
     // video packet written.
-    int64_t mInitialTime; // microseconds
+    const int64_t mInitialTime; // microseconds
     // mNextVideoTime is the end timestamp for the last packet sent to the stream.
     // Therefore video packets starting at or after this time need to be copied
     // to the output stream.
@@ -460,13 +474,6 @@ public:
 
       MutexAutoLock lock(mMutex);
       mStream = nullptr;
-    }
-    bool SetFinishedOnMainThread(bool aFinished)
-    {
-      MutexAutoLock lock(mMutex);
-      bool result = !mStreamFinishedOnMainThread;
-      mStreamFinishedOnMainThread = aFinished;
-      return result;
     }
     bool IsFinishedOnMainThread()
     {
@@ -661,9 +668,9 @@ public:
   // has changed.
   void DurationChanged();
 
-  bool OnStateMachineThread() const override;
+  bool OnStateMachineTaskQueue() const override;
 
-  bool OnDecodeThread() const override;
+  bool OnDecodeTaskQueue() const override;
 
   // Returns the monitor for other threads to synchronise access to
   // state.
@@ -735,12 +742,6 @@ public:
   // to buffer, given the current download and playback rates.
   bool CanPlayThrough();
 
-  // Make the decoder state machine update the playback position. Called by
-  // the reader on the decoder thread (Assertions for this checked by
-  // mDecoderStateMachine). This must be called with the decode monitor
-  // held.
-  void UpdatePlaybackPosition(int64_t aTime) final override;
-
   void SetAudioChannel(dom::AudioChannel aChannel) { mAudioChannel = aChannel; }
   dom::AudioChannel GetAudioChannel() { return mAudioChannel; }
 
@@ -803,13 +804,22 @@ public:
   // Call on the main thread only.
   void PlaybackEnded();
 
-  // Seeking has stopped. Inform the element on the main
-  // thread.
-  void SeekingStopped(MediaDecoderEventVisibility aEventVisibility = MediaDecoderEventVisibility::Observable);
+  void OnSeekRejected() { mSeekRequest.Complete(); }
+  void OnSeekResolvedInternal(bool aAtEnd, MediaDecoderEventVisibility aEventVisibility);
 
-  // Seeking has stopped at the end of the resource. Inform the element on the main
-  // thread.
-  void SeekingStoppedAtEnd(MediaDecoderEventVisibility aEventVisibility = MediaDecoderEventVisibility::Observable);
+  void OnSeekResolved(SeekResolveValue aVal)
+  {
+    mSeekRequest.Complete();
+    OnSeekResolvedInternal(aVal.mAtEnd, aVal.mEventVisibility);
+  }
+
+#ifdef MOZ_AUDIO_OFFLOAD
+  // Temporary hack - see bug 1139206.
+  void SimulateSeekResolvedForAudioOffload(MediaDecoderEventVisibility aEventVisibility)
+  {
+    OnSeekResolvedInternal(false, aEventVisibility);
+  }
+#endif
 
   // Seeking has started. Inform the element on the main
   // thread.
@@ -1155,6 +1165,8 @@ protected:
   // If the SeekTarget's IsValid() accessor returns false, then no seek has
   // been requested. When a seek is started this is reset to invalid.
   SeekTarget mRequestedSeekTarget;
+
+  MediaPromiseConsumerHolder<SeekPromise> mSeekRequest;
 
   // True when seeking or otherwise moving the play position around in
   // such a manner that progress event data is inaccurate. This is set

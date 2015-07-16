@@ -18,8 +18,8 @@ class EventChainPreVisitor;
 namespace dom {
 
 class HTMLFieldSetElement final : public nsGenericHTMLFormElement,
-                                      public nsIDOMHTMLFieldSetElement,
-                                      public nsIConstraintValidation
+                                  public nsIDOMHTMLFieldSetElement,
+                                  public nsIConstraintValidation
 {
 public:
   using nsGenericHTMLFormElement::GetForm;
@@ -111,7 +111,7 @@ public:
 protected:
   virtual ~HTMLFieldSetElement();
 
-  virtual JSObject* WrapNode(JSContext* aCx) override;
+  virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 private:
 

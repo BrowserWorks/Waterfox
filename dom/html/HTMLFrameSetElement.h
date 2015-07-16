@@ -43,7 +43,7 @@ namespace dom {
 class OnBeforeUnloadEventHandlerNonNull;
 
 class HTMLFrameSetElement final : public nsGenericHTMLElement,
-                                      public nsIDOMHTMLFrameSetElement
+                                  public nsIDOMHTMLFrameSetElement
 {
 public:
   explicit HTMLFrameSetElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
@@ -139,7 +139,7 @@ public:
 protected:
   virtual ~HTMLFrameSetElement();
 
-  virtual JSObject* WrapNode(JSContext *aCx) override;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 private:
   nsresult ParseRowCol(const nsAString& aValue,

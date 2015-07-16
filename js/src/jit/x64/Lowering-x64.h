@@ -24,8 +24,6 @@ class LIRGeneratorX64 : public LIRGeneratorX86Shared
     void defineUntypedPhi(MPhi* phi, size_t lirIndex);
 
     // Adds a use at operand |n| of a value-typed insturction.
-    void useBox(LInstruction* lir, size_t n, MDefinition* mir,
-                LUse::Policy policy = LUse::REGISTER, bool useAtStart = false);
     void useBoxFixed(LInstruction* lir, size_t n, MDefinition* mir, Register reg1, Register);
 
     // x86 has constraints on what registers can be formatted for 1-byte
@@ -42,11 +40,15 @@ class LIRGeneratorX64 : public LIRGeneratorX86Shared
     void visitBox(MBox* box);
     void visitUnbox(MUnbox* unbox);
     void visitReturn(MReturn* ret);
+    void visitCompareExchangeTypedArrayElement(MCompareExchangeTypedArrayElement* ins);
+    void visitAtomicTypedArrayElementBinop(MAtomicTypedArrayElementBinop* ins);
     void visitAsmJSUnsignedToDouble(MAsmJSUnsignedToDouble* ins);
     void visitAsmJSUnsignedToFloat32(MAsmJSUnsignedToFloat32* ins);
     void visitAsmJSLoadHeap(MAsmJSLoadHeap* ins);
     void visitAsmJSStoreHeap(MAsmJSStoreHeap* ins);
     void visitAsmJSLoadFuncPtr(MAsmJSLoadFuncPtr* ins);
+    void visitAsmJSCompareExchangeHeap(MAsmJSCompareExchangeHeap* ins);
+    void visitAsmJSAtomicBinopHeap(MAsmJSAtomicBinopHeap* ins);
     void visitStoreTypedArrayElementStatic(MStoreTypedArrayElementStatic* ins);
     void visitSubstr(MSubstr* ins);
 };

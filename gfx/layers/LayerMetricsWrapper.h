@@ -309,6 +309,16 @@ public:
     return EventRegions();
   }
 
+  bool HasTransformAnimation() const
+  {
+    MOZ_ASSERT(IsValid());
+
+    if (AtBottomLayer()) {
+      return mLayer->HasTransformAnimation();
+    }
+    return false;
+  }
+
   RefLayer* AsRefLayer() const
   {
     MOZ_ASSERT(IsValid());
@@ -335,7 +345,11 @@ public:
   {
     MOZ_ASSERT(IsValid());
 
-    return mLayer->GetClipRect();
+    if (AtBottomLayer()) {
+      return mLayer->GetClipRect();
+    }
+
+    return nullptr;
   }
 
   EventRegionsOverride GetEventRegionsOverride() const

@@ -35,6 +35,7 @@ public:
   virtual bool IsDormantNeeded() override;
   virtual void AllocateMediaResources() override;
   virtual void ReleaseMediaResources() override;
+  virtual bool IsHardwareAccelerated() const override;
 
 private:
   // Will create the required MediaDataDecoder if we have a AVC SPS.
@@ -135,7 +136,9 @@ nsresult
 AVCCMediaDataDecoder::Shutdown()
 {
   if (mDecoder) {
-    return mDecoder->Shutdown();
+    nsresult rv = mDecoder->Shutdown();
+    mDecoder = nullptr;
+    return rv;
   }
   return NS_OK;
 }
@@ -164,10 +167,7 @@ AVCCMediaDataDecoder::AllocateMediaResources()
 void
 AVCCMediaDataDecoder::ReleaseMediaResources()
 {
-  if (mDecoder) {
-    mDecoder->Shutdown();
-    mDecoder = nullptr;
-  }
+  Shutdown();
 }
 
 nsresult
@@ -204,6 +204,15 @@ AVCCMediaDataDecoder::CreateDecoderAndInit(mp4_demuxer::MP4Sample* aSample)
   nsresult rv = CreateDecoder();
   NS_ENSURE_SUCCESS(rv, rv);
   return Init();
+}
+
+bool
+AVCCMediaDataDecoder::IsHardwareAccelerated() const
+{
+  if (mDecoder) {
+    return mDecoder->IsHardwareAccelerated();
+  }
+  return MediaDataDecoder::IsHardwareAccelerated();
 }
 
 nsresult

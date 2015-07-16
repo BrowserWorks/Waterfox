@@ -29,11 +29,15 @@ BEGIN_BLUETOOTH_NAMESPACE
 
 class BluetoothSocket;
 class ObexHeaderSet;
-class SendFileBatch;
 
 class BluetoothOppManager : public BluetoothSocketObserver
                           , public BluetoothProfileManagerBase
 {
+  class CloseSocketTask;
+  class ReadFileTask;
+  class SendFileBatch;
+  class SendSocketDataTask;
+
 public:
   BT_DECL_PROFILE_MGR_BASE
   virtual void GetName(nsACString& aName)
@@ -43,7 +47,6 @@ public:
 
   static const int MAX_PACKET_LENGTH = 0xFFFE;
 
-  virtual ~BluetoothOppManager();
   static BluetoothOppManager* Get();
   void ClientDataHandler(mozilla::ipc::UnixSocketRawData* aMessage);
   void ServerDataHandler(mozilla::ipc::UnixSocketRawData* aMessage);
@@ -73,10 +76,14 @@ public:
   virtual void OnSocketConnectError(BluetoothSocket* aSocket) override;
   virtual void OnSocketDisconnect(BluetoothSocket* aSocket) override;
 
+protected:
+  virtual ~BluetoothOppManager();
+
 private:
   BluetoothOppManager();
   bool Init();
   void HandleShutdown();
+  void HandleVolumeStateChanged(nsISupports* aSubject);
 
   void StartFileTransfer();
   void StartSendingNextFile();

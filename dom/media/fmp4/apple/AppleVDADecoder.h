@@ -75,6 +75,10 @@ public:
   virtual nsresult Flush() override;
   virtual nsresult Drain() override;
   virtual nsresult Shutdown() override;
+  virtual bool IsHardwareAccelerated() const override
+  {
+    return true;
+  }
 
   nsresult OutputFrame(CVPixelBufferRef aImage,
                        nsAutoPtr<AppleFrameRef> aFrameRef);

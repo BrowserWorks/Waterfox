@@ -27,7 +27,7 @@ public:
 };
 
 class URLSearchParams final : public nsISupports,
-                                  public nsWrapperCache
+                              public nsWrapperCache
 {
   ~URLSearchParams();
 
@@ -44,7 +44,7 @@ public:
   }
 
   virtual JSObject*
-  WrapObject(JSContext* aCx) override;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   static already_AddRefed<URLSearchParams>
   Constructor(const GlobalObject& aGlobal, const nsAString& aInit,
@@ -78,6 +78,17 @@ public:
   void Stringify(nsString& aRetval) const
   {
     Serialize(aRetval);
+  }
+
+  typedef void (*ParamFunc)(const nsString& aName, const nsString& aValue,
+                            void* aClosure);
+
+  void
+  ForEach(ParamFunc aFunc, void* aClosure)
+  {
+    for (uint32_t i = 0; i < mSearchParams.Length(); ++i) {
+      aFunc(mSearchParams[i].mKey, mSearchParams[i].mValue, aClosure);
+    }
   }
 
 private:

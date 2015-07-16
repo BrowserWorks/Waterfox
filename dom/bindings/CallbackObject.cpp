@@ -61,6 +61,10 @@ CallbackObject::CallSetup::CallSetup(CallbackObject* aCallback,
   , mExceptionHandling(aExceptionHandling)
   , mIsMainThread(NS_IsMainThread())
 {
+  if (mIsMainThread) {
+    nsContentUtils::EnterMicroTask();
+  }
+
   // Compute the caller's subject principal (if necessary) early, before we
   // do anything that might perturb the relevant state.
   nsIPrincipal* webIDLCallerPrincipal = nullptr;
@@ -115,7 +119,9 @@ CallbackObject::CallSetup::CallSetup(CallbackObject* aCallback,
       }
     } else {
       cx = workers::GetCurrentThreadJSContext();
-      globalObject = workers::GetCurrentThreadWorkerPrivate()->GlobalScope();
+      JSObject *global = js::GetGlobalForObjectCrossCompartment(realCallback);
+      globalObject = workers::GetGlobalObjectForGlobal(global);
+      MOZ_ASSERT(globalObject);
     }
 
     // Bail out if there's no useful global. This seems to happen intermittently
@@ -298,6 +304,12 @@ CallbackObject::CallSetup::~CallSetup()
 
   mAutoIncumbentScript.reset();
   mAutoEntryScript.reset();
+
+  // It is important that this is the last thing we do, after leaving the
+  // compartment and undoing all our entry/incumbent script changes
+  if (mIsMainThread) {
+    nsContentUtils::LeaveMicroTask();
+  }
 }
 
 already_AddRefed<nsISupports>

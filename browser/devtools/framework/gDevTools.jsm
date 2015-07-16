@@ -27,6 +27,13 @@ XPCOMUtils.defineLazyModuleGetter(this, "DebuggerClient",
                                   "resource://gre/modules/devtools/dbg-client.jsm");
 
 const EventEmitter = devtools.require("devtools/toolkit/event-emitter");
+const Telemetry = devtools.require("devtools/shared/telemetry");
+
+const TABS_OPEN_PEAK_HISTOGRAM = "DEVTOOLS_TABS_OPEN_PEAK_LINEAR";
+const TABS_OPEN_AVG_HISTOGRAM = "DEVTOOLS_TABS_OPEN_AVERAGE_LINEAR";
+const TABS_PINNED_PEAK_HISTOGRAM = "DEVTOOLS_TABS_PINNED_PEAK_LINEAR";
+const TABS_PINNED_AVG_HISTOGRAM = "DEVTOOLS_TABS_PINNED_AVERAGE_LINEAR";
+
 const FORBIDDEN_IDS = new Set(["toolbox", ""]);
 const MAX_ORDINAL = 99;
 
@@ -40,6 +47,7 @@ this.DevTools = function DevTools() {
   this._tools = new Map();     // Map<toolId, tool>
   this._themes = new Map();    // Map<themeId, theme>
   this._toolboxes = new Map(); // Map<target, toolbox>
+  this._telemetry = new Telemetry();
 
   // destroy() is an observer's handler so we need to preserve context.
   this.destroy = this.destroy.bind(this);
@@ -467,6 +475,23 @@ DevTools.prototype = {
     return toolbox.destroy().then(() => true);
   },
 
+  _pingTelemetry: function() {
+    let mean = function(arr) {
+      if (arr.length === 0) {
+        return 0;
+      }
+
+      let total = arr.reduce((a, b) => a + b);
+      return Math.ceil(total / arr.length);
+    };
+
+    let tabStats = gDevToolsBrowser._tabStats;
+    this._telemetry.log(TABS_OPEN_PEAK_HISTOGRAM, tabStats.peakOpen);
+    this._telemetry.log(TABS_OPEN_AVG_HISTOGRAM, mean(tabStats.histOpen));
+    this._telemetry.log(TABS_PINNED_PEAK_HISTOGRAM, tabStats.peakPinned);
+    this._telemetry.log(TABS_PINNED_AVG_HISTOGRAM, mean(tabStats.histPinned));
+  },
+
   /**
    * Called to tear down a tools provider.
    */
@@ -486,6 +511,9 @@ DevTools.prototype = {
     for (let [key, tool] of this.getToolDefinitionMap()) {
       this.unregisterTool(key, true);
     }
+
+    this._pingTelemetry();
+    this._telemetry = null;
 
     // Cleaning down the toolboxes: i.e.
     //   for (let [target, toolbox] of this._toolboxes) toolbox.destroy();
@@ -521,6 +549,13 @@ let gDevToolsBrowser = {
    * as the window is closed
    */
   _trackedBrowserWindows: new Set(),
+
+  _tabStats: {
+    peakOpen: 0,
+    peakPinned: 0,
+    histOpen: [],
+    histPinned: []
+  },
 
   /**
    * This function is for the benefit of Tools:DevToolbox in
@@ -697,6 +732,7 @@ let gDevToolsBrowser = {
       DebuggerServer.init();
       DebuggerServer.addBrowserActors();
     }
+    DebuggerServer.allowChromeProcess = true;
 
     let transport = DebuggerServer.connectPipe();
     let client = new DebuggerClient(transport);
@@ -713,12 +749,13 @@ let gDevToolsBrowser = {
           return;
         }
         // Otherwise, arbitrary connect to the unique content process.
-        client.attachProcess(contentProcesses[0].id)
+        client.getProcess(contentProcesses[0].id)
               .then(response => {
                 let options = {
                   form: response.form,
                   client: client,
-                  chrome: true
+                  chrome: true,
+                  isTabActor: false
                 };
                 return devtools.TargetFactory.forRemoteTab(options);
               })
@@ -779,6 +816,11 @@ let gDevToolsBrowser = {
   },
 
   /**
+   * The deferred promise will be resolved by WebIDE's UI.init()
+   */
+  isWebIDEInitialized: promise.defer(),
+
+  /**
    * Uninstall WebIDE widget
    */
   uninstallWebIDEWidget: function() {
@@ -812,9 +854,12 @@ let gDevToolsBrowser = {
       broadcaster.removeAttribute("key");
     }
 
-    let tabContainer = win.document.getElementById("tabbrowser-tabs")
-    tabContainer.addEventListener("TabSelect",
-                                  gDevToolsBrowser._updateMenuCheckbox, false);
+    let tabContainer = win.document.getElementById("tabbrowser-tabs");
+    tabContainer.addEventListener("TabSelect", this, false);
+    tabContainer.addEventListener("TabOpen", this, false);
+    tabContainer.addEventListener("TabClose", this, false);
+    tabContainer.addEventListener("TabPinned", this, false);
+    tabContainer.addEventListener("TabUnpinned", this, false);
   },
 
   /**
@@ -1246,9 +1291,40 @@ let gDevToolsBrowser = {
       }
     }
 
-    let tabContainer = win.document.getElementById("tabbrowser-tabs")
-    tabContainer.removeEventListener("TabSelect",
-                                     gDevToolsBrowser._updateMenuCheckbox, false);
+    let tabContainer = win.document.getElementById("tabbrowser-tabs");
+    tabContainer.removeEventListener("TabSelect", this, false);
+    tabContainer.removeEventListener("TabOpen", this, false);
+    tabContainer.removeEventListener("TabClose", this, false);
+    tabContainer.removeEventListener("TabPinned", this, false);
+    tabContainer.removeEventListener("TabUnpinned", this, false);
+  },
+
+  handleEvent: function(event) {
+    switch (event.type) {
+      case "TabOpen":
+      case "TabClose":
+      case "TabPinned":
+      case "TabUnpinned":
+        let open = 0;
+        let pinned = 0;
+
+        for (let win of this._trackedBrowserWindows) {
+          let tabContainer = win.gBrowser.tabContainer;
+          let numPinnedTabs = tabContainer.tabbrowser._numPinnedTabs;
+          let numTabs = tabContainer.itemCount - numPinnedTabs;
+
+          open += numTabs;
+          pinned += numPinnedTabs;
+        }
+
+        this._tabStats.histOpen.push(open);
+        this._tabStats.histPinned.push(pinned);
+        this._tabStats.peakOpen = Math.max(open, this._tabStats.peakOpen);
+        this._tabStats.peakPinned = Math.max(pinned, this._tabStats.peakPinned);
+      break;
+      case "TabSelect":
+        gDevToolsBrowser._updateMenuCheckbox();
+    }
   },
 
   /**

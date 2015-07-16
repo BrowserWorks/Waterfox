@@ -122,7 +122,7 @@ public:
   bool MozLockOrientation(const mozilla::dom::Sequence<nsString>& aOrientations, ErrorResult& aRv);
   void MozUnlockOrientation();
 
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   void Notify(const mozilla::hal::ScreenConfiguration& aConfiguration) override;
 

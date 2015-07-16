@@ -66,6 +66,7 @@ XPIDL_SOURCES += [
     'nsINetworkProperties.idl',
     'nsINSSErrorsService.idl',
     'nsINullChannel.idl',
+    'nsIPACGenerator.idl',
     'nsIParentChannel.idl',
     'nsIParentRedirectingChannel.idl',
     'nsIPermission.idl',
@@ -146,6 +147,9 @@ EXPORTS += [
     'nsMIMEInputStream.h',
     'nsNetUtil.h',
     'nsReadLine.h',
+    'nsSerializationHelper.h',
+    'nsSimpleNestedURI.h',
+    'nsSimpleURI.h',
     'nsStreamListenerWrapper.h',
     'nsTemporaryFileInputStream.h',
     'nsURIHashKey.h',
@@ -162,6 +166,7 @@ EXPORTS.mozilla.net += [
     'ChannelDiverterParent.h',
     'Dashboard.h',
     'DashboardTypes.h',
+    'MemoryDownloader.h',
     'OfflineObserver.h',
     'ReferrerPolicy.h',
 ]
@@ -180,6 +185,7 @@ UNIFIED_SOURCES += [
     'EventTokenBucket.cpp',
     'LoadContextInfo.cpp',
     'LoadInfo.cpp',
+    'MemoryDownloader.cpp',
     'NetworkActivityMonitor.cpp',
     'nsAsyncRedirectVerifyHelper.cpp',
     'nsAsyncStreamCopier.cpp',
@@ -255,6 +261,11 @@ if CONFIG['MOZ_ENABLE_QTNETWORK']:
     SOURCES += [
         'nsAutodialQt.cpp',
     ]
+
+EXTRA_COMPONENTS += [
+    'PACGenerator.js',
+    'PACGenerator.manifest'
+]
 
 EXTRA_JS_MODULES += [
     'NetUtil.jsm',

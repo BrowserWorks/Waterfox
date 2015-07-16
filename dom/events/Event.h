@@ -19,6 +19,7 @@
 #include "nsIScriptGlobalObject.h"
 #include "Units.h"
 #include "js/TypeDecls.h"
+#include "nsIGlobalObject.h"
 
 class nsIContent;
 class nsIDOMEventTarget;
@@ -63,15 +64,6 @@ private:
                        WidgetEvent* aEvent);
 
 public:
-  void GetParentObject(nsIScriptGlobalObject** aParentObject)
-  {
-    if (mOwner) {
-      CallQueryInterface(mOwner, aParentObject);
-    } else {
-      *aParentObject = nullptr;
-    }
-  }
-
   static Event* FromSupports(nsISupports* aSupports)
   {
     nsIDOMEvent* event =
@@ -93,14 +85,14 @@ public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(Event)
 
-  nsISupports* GetParentObject()
+  nsIGlobalObject* GetParentObject()
   {
     return mOwner;
   }
 
-  virtual JSObject* WrapObject(JSContext* aCx) override final;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override final;
 
-  virtual JSObject* WrapObjectInternal(JSContext* aCx);
+  virtual JSObject* WrapObjectInternal(JSContext* aCx, JS::Handle<JSObject*> aGivenProto);
 
 #define GENERATED_EVENT(EventClass_) \
   virtual EventClass_* As##EventClass_()  \
@@ -149,6 +141,10 @@ public:
   static LayoutDeviceIntPoint GetScreenCoords(nsPresContext* aPresContext,
                                               WidgetEvent* aEvent,
                                               LayoutDeviceIntPoint aPoint);
+  static CSSIntPoint GetOffsetCoords(nsPresContext* aPresContext,
+                                     WidgetEvent* aEvent,
+                                     LayoutDeviceIntPoint aPoint,
+                                     CSSIntPoint aDefaultPoint);
 
   static already_AddRefed<Event> Constructor(const GlobalObject& aGlobal,
                                              const nsAString& aType,
@@ -274,7 +270,7 @@ protected:
   mozilla::WidgetEvent*       mEvent;
   nsRefPtr<nsPresContext>     mPresContext;
   nsCOMPtr<EventTarget>       mExplicitOriginalTarget;
-  nsCOMPtr<nsPIDOMWindow>     mOwner; // nsPIDOMWindow for now.
+  nsCOMPtr<nsIGlobalObject>   mOwner;
   bool                        mEventIsInternal;
   bool                        mPrivateDataDuplicated;
   bool                        mIsMainThreadEvent;

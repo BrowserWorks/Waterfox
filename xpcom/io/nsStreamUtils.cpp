@@ -10,6 +10,7 @@
 #include "nsAutoPtr.h"
 #include "nsCOMPtr.h"
 #include "nsIPipe.h"
+#include "nsICloneableInputStream.h"
 #include "nsIEventTarget.h"
 #include "nsIRunnable.h"
 #include "nsISafeOutputStream.h"
@@ -606,10 +607,6 @@ NS_AsyncCopy(nsIInputStream*         aSource,
     copier = new nsStreamCopierIB();
   } else {
     copier = new nsStreamCopierOB();
-  }
-
-  if (!copier) {
-    return NS_ERROR_OUT_OF_MEMORY;
   }
 
   // Start() takes an owning ref to the copier...

@@ -29,7 +29,7 @@ class XMLHttpRequestUpload;
 class WorkerPrivate;
 
 class XMLHttpRequest final: public nsXHREventTarget,
-                                public WorkerFeature
+                            public WorkerFeature
 {
 public:
   struct StateData
@@ -70,7 +70,7 @@ private:
 
 public:
   virtual JSObject*
-  WrapObject(JSContext* aCx) override;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS_INHERITED(XMLHttpRequest,
@@ -173,13 +173,13 @@ public:
   Send(File& aBody, ErrorResult& aRv);
 
   void
+  Send(nsFormData& aBody, ErrorResult& aRv);
+
+  void
   Send(const ArrayBuffer& aBody, ErrorResult& aRv);
 
   void
   Send(const ArrayBufferView& aBody, ErrorResult& aRv);
-
-  void
-  SendAsBinary(const nsAString& aBody, ErrorResult& aRv);
 
   void
   Abort(ErrorResult& aRv);

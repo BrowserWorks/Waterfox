@@ -96,7 +96,7 @@ class SVGSVGElement final : public SVGSVGElementBase
 
   SVGSVGElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo,
                 FromParser aFromParser);
-  virtual JSObject* WrapNode(JSContext *aCx) override;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   friend nsresult (::NS_NewSVGSVGElement(nsIContent **aResult,
                                          already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo,
@@ -312,8 +312,8 @@ private:
    */
   bool IsInner() const {
     const nsIContent *parent = GetFlattenedTreeParent();
-    return parent && parent->IsSVG() &&
-           parent->Tag() != nsGkAtoms::foreignObject;
+    return parent && parent->IsSVGElement() &&
+           !parent->IsSVGElement(nsGkAtoms::foreignObject);
   }
 
   /* 

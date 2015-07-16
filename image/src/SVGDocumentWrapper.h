@@ -15,13 +15,13 @@
 #include "nsIObserver.h"
 #include "nsIContentViewer.h"
 #include "nsWeakReference.h"
+#include "nsSize.h"
 
 class nsIAtom;
 class nsIPresShell;
 class nsIRequest;
 class nsILoadGroup;
 class nsIFrame;
-struct nsIntSize;
 
 #define OBSERVER_SVC_CID "@mozilla.org/observer-service;1"
 
@@ -36,8 +36,8 @@ class SVGSVGElement;
 namespace image {
 
 class SVGDocumentWrapper final : public nsIStreamListener,
-                                     public nsIObserver,
-                                     nsSupportsWeakReference
+                                 public nsIObserver,
+                                 nsSupportsWeakReference
 {
 public:
   SVGDocumentWrapper();

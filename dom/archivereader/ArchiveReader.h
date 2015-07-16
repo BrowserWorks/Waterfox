@@ -33,7 +33,7 @@ class ArchiveRequest;
  * This is the ArchiveReader object
  */
 class ArchiveReader final : public nsISupports,
-                                public nsWrapperCache
+                            public nsWrapperCache
 {
 public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -51,7 +51,7 @@ public:
     return mWindow;
   }
 
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   already_AddRefed<ArchiveRequest> GetFilenames();
   already_AddRefed<ArchiveRequest> GetFile(const nsAString& filename);

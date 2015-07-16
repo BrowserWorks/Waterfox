@@ -26,7 +26,7 @@ class EventChainPreVisitor;
 #include "nsTHashtable.h"
 #include "nsHashKeys.h"
 
-class nsWindowRoot : public nsPIWindowRoot
+class nsWindowRoot final : public nsPIWindowRoot
 {
 public:
   explicit nsWindowRoot(nsPIDOMWindow* aWindow);
@@ -69,7 +69,7 @@ public:
 
   nsIGlobalObject* GetParentObject();
 
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS_AMBIGUOUS(nsWindowRoot,
                                                          nsIDOMEventTarget)

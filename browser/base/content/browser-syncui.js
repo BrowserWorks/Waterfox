@@ -136,6 +136,8 @@ let gSyncUI = {
   },
 
   _loginFailed: function () {
+    this.log.debug("_loginFailed has sync state=${sync}, readinglist state=${rl}",
+                   { sync: Weave.Status.login, rl: ReadingListScheduler.state});
     return Weave.Status.login == Weave.LOGIN_FAILED_LOGIN_REJECTED ||
            ReadingListScheduler.state == ReadingListScheduler.STATE_ERROR_AUTHENTICATION;
   },
@@ -225,6 +227,7 @@ let gSyncUI = {
   },
 
   onLoginError: function SUI_onLoginError() {
+    this.log.debug("onLoginError: login=${login}, sync=${sync}", Weave.Status);
     // Note: This is used for *both* Sync and ReadingList login errors.
     // if login fails, any other notifications are essentially moot
     Weave.Notifications.removeAll();
@@ -234,8 +237,14 @@ let gSyncUI = {
       this.updateUI();
       return;
     }
-    // if we are still waiting for the identity manager to initialize, don't show errors
-    if (Weave.Status.login == Weave.LOGIN_FAILED_NOT_READY) {
+    // if we are still waiting for the identity manager to initialize, or it's
+    // a network/server error, don't show errors.  If it weren't for the legacy
+    // provider we could just check LOGIN_FAILED_LOGIN_REJECTED, but the legacy
+    // provider has states like LOGIN_FAILED_INVALID_PASSPHRASE which we
+    // probably do want to surface.
+    if (Weave.Status.login == Weave.LOGIN_FAILED_NOT_READY ||
+        Weave.Status.login == Weave.LOGIN_FAILED_NETWORK_ERROR ||
+        Weave.Status.login == Weave.LOGIN_FAILED_SERVER_ERROR) {
       this.updateUI();
       return;
     }
@@ -454,6 +463,14 @@ let gSyncUI = {
   // engine doesn't impose what that means, so calculate it here. For
   // consistency, we just use the sync prefs.
   isProlongedReadingListError() {
+    // If the readinglist scheduler is disabled we don't treat it as prolonged.
+    let enabled = false;
+    try {
+      enabled = Services.prefs.getBoolPref("readinglist.scheduler.enabled");
+    } catch (_) {}
+    if (!enabled) {
+      return false;
+    }
     let lastSync, threshold, prolonged;
     try {
       lastSync = new Date(Services.prefs.getCharPref("readinglist.scheduler.lastSync"));
@@ -512,7 +529,7 @@ let gSyncUI = {
   },
 
   onSyncError: function SUI_onSyncError() {
-    this.log.debug("onSyncError");
+    this.log.debug("onSyncError: login=${login}, sync=${sync}", Weave.Status);
     let title = this._stringBundle.GetStringFromName("error.sync.title");
 
     if (Weave.Status.login != Weave.LOGIN_SUCCEEDED) {

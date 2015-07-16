@@ -22,7 +22,6 @@ class ContentHelper
   typedef uint32_t TouchBehaviorFlags;
 
 private:
-  static uint32_t GetTouchActionFromFrame(nsIFrame* aFrame);
   static void UpdateAllowedBehavior(uint32_t aTouchActionValue, bool aConsiderPanning, TouchBehaviorFlags& aOutBehavior);
 
 public:
@@ -31,7 +30,7 @@ public:
    * touch-action css property value from it according the rules specified in the spec:
    * http://www.w3.org/TR/pointerevents/#the-touch-action-css-property.
    */
-  static TouchBehaviorFlags GetAllowedTouchBehavior(nsIWidget* aWidget, const nsIntPoint& aPoint);
+  static TouchBehaviorFlags GetAllowedTouchBehavior(nsIWidget* aWidget, const LayoutDeviceIntPoint& aPoint);
 };
 
 }

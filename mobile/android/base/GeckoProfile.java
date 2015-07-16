@@ -5,9 +5,11 @@
 
 package org.mozilla.gecko;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
@@ -17,6 +19,8 @@ import java.util.Hashtable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.json.JSONException;
+import org.json.JSONArray;
 import org.mozilla.gecko.GeckoProfileDirectories.NoMozillaDirectoryException;
 import org.mozilla.gecko.GeckoProfileDirectories.NoSuchProfileException;
 import org.mozilla.gecko.db.BrowserDB;
@@ -615,6 +619,42 @@ public final class GeckoProfile {
         return null;
     }
 
+    public void writeFile(final String filename, final String data) {
+        File file = new File(getDir(), filename);
+        BufferedWriter bufferedWriter = null;
+        try {
+            bufferedWriter = new BufferedWriter(new FileWriter(file, false));
+            bufferedWriter.write(data);
+        } catch (IOException e) {
+            Log.e(LOGTAG, "Unable to write to file", e);
+        } finally {
+            try {
+                if (bufferedWriter != null) {
+                    bufferedWriter.close();
+                }
+            } catch (IOException e) {
+                Log.e(LOGTAG, "Error closing writer while writing to file", e);
+            }
+        }
+    }
+
+    public JSONArray readJSONArrayFromFile(final String filename) {
+        String fileContent;
+        try {
+            fileContent = readFile(filename);
+        } catch (IOException expected) {
+            return new JSONArray();
+        }
+
+        JSONArray jsonArray;
+        try {
+            jsonArray = new JSONArray(fileContent);
+        } catch (JSONException e) {
+            jsonArray = new JSONArray();
+        }
+        return jsonArray;
+    }
+
     public String readFile(String filename) throws IOException {
         File dir = getDir();
         if (dir == null) {
@@ -638,6 +678,14 @@ public final class GeckoProfile {
         } finally {
             fr.close();
         }
+    }
+
+    public boolean deleteFileFromProfileDir(String fileName) throws IllegalArgumentException {
+        if (TextUtils.isEmpty(fileName)) {
+            throw new IllegalArgumentException("Filename cannot be empty.");
+        }
+        File file = new File(getDir(), fileName);
+        return file.delete();
     }
 
     private boolean remove() {

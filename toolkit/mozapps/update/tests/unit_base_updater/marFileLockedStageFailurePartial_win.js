@@ -26,8 +26,8 @@ function run_test() {
   lockFileRelPath = lockFileRelPath.join("/") + "/" + gTestFiles[2].fileName;
   let args = [getApplyDirPath() + DIR_RESOURCES, "input", "output", "-s",
               HELPER_SLEEP_TIMEOUT, lockFileRelPath];
-  let lockFileProcess = AUS_Cc["@mozilla.org/process/util;1"].
-                     createInstance(AUS_Ci.nsIProcess);
+  let lockFileProcess = Cc["@mozilla.org/process/util;1"].
+                        createInstance(Ci.nsIProcess);
   lockFileProcess.init(helperBin);
   lockFileProcess.run(false, args, args.length);
 
@@ -35,7 +35,7 @@ function run_test() {
 }
 
 function doUpdate() {
-  runUpdate(1, STATE_FAILED_WRITE_ERROR, null);
+  runUpdate(1, STATE_FAILED_WRITE_ERROR_FILE_COPY, null);
 
   // Switch the application to the staged application that was updated.
   gStageUpdate = false;
@@ -51,5 +51,6 @@ function checkUpdateApplied() {
 function checkUpdate() {
   checkFilesAfterUpdateFailure(getApplyDirFile, true, false);
   checkUpdateLogContains(ERR_RENAME_FILE);
+  standardInit();
   checkCallbackAppLog();
 }

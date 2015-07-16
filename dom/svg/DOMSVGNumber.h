@@ -34,7 +34,7 @@ namespace mozilla {
  * See the comment in DOMSVGLength.h (yes, LENGTH), which applies here too.
  */
 class DOMSVGNumber final : public nsISupports
-                             , public nsWrapperCache
+                         , public nsWrapperCache
 {
   friend class AutoChangeNumberNotifier;
 
@@ -124,7 +124,7 @@ public:
     return mParent;
   }
 
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   static already_AddRefed<DOMSVGNumber>
   Constructor(const dom::GlobalObject& aGlobal, ErrorResult& aRv);

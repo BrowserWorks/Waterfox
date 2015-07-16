@@ -38,6 +38,8 @@ public:
                     /*optional*/ const mozilla::pkix::Input* aiaExtension) override;
   virtual Result IsChainValid(const mozilla::pkix::DERArray& certChain,
                               mozilla::pkix::Time time) override;
+  virtual Result CheckSignatureDigestAlgorithm(
+                   mozilla::pkix::DigestAlgorithm digestAlg) override;
   virtual Result CheckRSAPublicKeyModulusSizeInBits(
                    mozilla::pkix::EndEntityOrCA endEntityOrCA,
                    unsigned int modulusSizeInBits) override;
@@ -59,7 +61,7 @@ private:
   /*out*/ ScopedCERTCertList& mCertChain;
   void* mPinArg; // non-owning!
   ScopedCERTCertificate mTrustedRoot;
-  unsigned int mMinimumNonECCBits;
+  unsigned int mMinRSABits;
 };
 
 } } // namespace mozilla::psm

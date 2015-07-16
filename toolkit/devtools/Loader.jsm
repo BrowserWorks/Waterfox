@@ -253,6 +253,8 @@ SrcdirProvider.prototype = {
   }
 };
 
+var gNextLoaderID = 0;
+
 /**
  * The main devtools API.
  * In addition to a few loader-related details, this object will also include all
@@ -277,6 +279,14 @@ DevToolsLoader.prototype = {
   },
 
   _provider: null,
+
+  get id() {
+    if (this._id) {
+      return this._id;
+    } else {
+      return this._id = ++gNextLoaderID;
+    }
+  },
 
   /**
    * A dummy version of require, in case a provider hasn't been chosen yet when
@@ -306,10 +316,25 @@ DevToolsLoader.prototype = {
    */
   lazyRequireGetter: function (obj, property, module, destructure) {
     Object.defineProperty(obj, property, {
-      get: () => destructure
-        ? this.require(module)[property]
-        : this.require(module || property),
-      configurable: true
+      get: () => {
+        // Redefine this accessor property as a data property.
+        // Delete it first, to rule out "too much recursion" in case obj is
+        // a proxy whose defineProperty handler might unwittingly trigger this
+        // getter again.
+        delete obj[property];
+        let value = destructure
+          ? this.require(module)[property]
+          : this.require(module || property);
+        Object.defineProperty(obj, property, {
+          value,
+          writable: true,
+          configurable: true,
+          enumerable: true
+        });
+        return value;
+      },
+      configurable: true,
+      enumerable: true
     });
   },
 
@@ -377,7 +402,8 @@ DevToolsLoader.prototype = {
         lazyGetter: this.lazyGetter,
         lazyImporter: this.lazyImporter,
         lazyServiceGetter: this.lazyServiceGetter,
-        lazyRequireGetter: this.lazyRequireGetter
+        lazyRequireGetter: this.lazyRequireGetter,
+        id: this.id
       },
     };
     // Lazy define console in order to load Console.jsm only when it is used

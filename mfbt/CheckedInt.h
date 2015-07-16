@@ -394,7 +394,7 @@ struct IsModValidImpl<T, true>
   }
 };
 
-template<typename T, bool IsSigned = IsSigned<T>::value>
+template<typename T, bool IsTSigned = IsSigned<T>::value>
 struct NegateImpl;
 
 template<typename T>

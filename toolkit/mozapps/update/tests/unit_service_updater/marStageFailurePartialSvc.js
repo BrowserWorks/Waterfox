@@ -34,7 +34,8 @@ function run_test() {
 }
 
 function setupAppFilesFinished() {
-  runUpdateUsingService(STATE_PENDING_SVC, STATE_FAILED);
+  runUpdateUsingService(STATE_PENDING_SVC,
+                        STATE_FAILED_LOADSOURCE_ERROR_WRONG_SIZE);
 }
 
 /**
@@ -44,12 +45,13 @@ function setupAppFilesFinished() {
 function checkUpdateFinished() {
   if (IS_WIN || IS_MACOSX) {
     let running = getPostUpdateFile(".running");
-    logTestInfo("checking that the post update process running file doesn't " +
-                "exist. Path: " + running.path);
+    debugDump("checking that the post update process running file doesn't " +
+              "exist. Path: " + running.path);
     do_check_false(running.exists());
   }
 
   checkFilesAfterUpdateFailure(getApplyDirFile, true, false);
   checkUpdateLogContents(LOG_PARTIAL_FAILURE);
+  standardInit();
   waitForFilesInUse();
 }

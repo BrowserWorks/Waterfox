@@ -645,7 +645,7 @@ LiveRangeAllocator<VREG, forLSRA>::buildLivenessInfo()
         for (LInstructionReverseIterator ins = block->rbegin(); ins != block->rend(); ins++) {
             // Calls may clobber registers, so force a spill and reload around the callsite.
             if (ins->isCall()) {
-                for (AnyRegisterIterator iter(allRegisters_); iter.more(); iter++) {
+                for (AnyRegisterIterator iter(allRegisters_.asLiveSet()); iter.more(); iter++) {
                     if (forLSRA) {
                         if (!addFixedRangeAtHead(*iter, inputOf(*ins), outputOf(*ins)))
                             return false;

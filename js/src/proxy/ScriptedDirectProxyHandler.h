@@ -12,39 +12,42 @@
 namespace js {
 
 /* Derived class for all scripted direct proxy handlers. */
-class ScriptedDirectProxyHandler : public DirectProxyHandler {
+class ScriptedDirectProxyHandler : public BaseProxyHandler {
   public:
     MOZ_CONSTEXPR ScriptedDirectProxyHandler()
-      : DirectProxyHandler(&family)
+      : BaseProxyHandler(&family)
     { }
 
     /* Standard internal methods. */
     virtual bool getOwnPropertyDescriptor(JSContext* cx, HandleObject proxy, HandleId id,
                                           MutableHandle<JSPropertyDescriptor> desc) const override;
     virtual bool defineProperty(JSContext* cx, HandleObject proxy, HandleId id,
-                                MutableHandle<JSPropertyDescriptor> desc) const override;
+                                Handle<JSPropertyDescriptor> desc,
+                                ObjectOpResult& result) const override;
     virtual bool ownPropertyKeys(JSContext* cx, HandleObject proxy,
                                  AutoIdVector& props) const override;
-    virtual bool delete_(JSContext* cx, HandleObject proxy, HandleId id, bool* bp) const override;
+    virtual bool delete_(JSContext* cx, HandleObject proxy, HandleId id,
+                         ObjectOpResult& result) const override;
     virtual bool enumerate(JSContext* cx, HandleObject proxy, MutableHandleObject objp) const override;
 
     /* These two are standard internal methods but aren't implemented to spec yet. */
-    virtual bool getPrototypeOf(JSContext* cx, HandleObject proxy,
-                                MutableHandleObject protop) const override;
-    virtual bool setPrototypeOf(JSContext* cx, HandleObject proxy, HandleObject proto,
-                                bool* bp) const override;
+    virtual bool getPrototype(JSContext* cx, HandleObject proxy,
+                              MutableHandleObject protop) const override;
+    virtual bool setPrototype(JSContext* cx, HandleObject proxy, HandleObject proto,
+                              ObjectOpResult& result) const override;
     /* Non-standard, but needed to handle revoked proxies. */
     virtual bool setImmutablePrototype(JSContext* cx, HandleObject proxy,
                                        bool* succeeded) const override;
 
-    virtual bool preventExtensions(JSContext* cx, HandleObject proxy, bool* succeeded) const override;
+    virtual bool preventExtensions(JSContext* cx, HandleObject proxy,
+                                   ObjectOpResult& result) const override;
     virtual bool isExtensible(JSContext* cx, HandleObject proxy, bool* extensible) const override;
 
     virtual bool has(JSContext* cx, HandleObject proxy, HandleId id, bool* bp) const override;
     virtual bool get(JSContext* cx, HandleObject proxy, HandleObject receiver, HandleId id,
                      MutableHandleValue vp) const override;
-    virtual bool set(JSContext* cx, HandleObject proxy, HandleObject receiver, HandleId id,
-                     bool strict, MutableHandleValue vp) const override;
+    virtual bool set(JSContext* cx, HandleObject proxy, HandleId id, HandleValue v,
+                     HandleValue receiver, ObjectOpResult& result) const override;
     virtual bool call(JSContext* cx, HandleObject proxy, const CallArgs& args) const override;
     virtual bool construct(JSContext* cx, HandleObject proxy, const CallArgs& args) const override;
 

@@ -18,7 +18,7 @@ from marionette.wait import Wait
 from mozprofile import FirefoxProfile, Preferences
 
 from .base import get_free_port, BrowserError, Browser, ExecutorBrowser
-from ..executors.executormarionette import MarionetteTestharnessExecutor, required_files
+from ..executors.executormarionette import MarionetteTestharnessExecutor
 from ..hosts import HostsFile, HostsLine
 
 here = os.path.split(__file__)[0]
@@ -41,22 +41,25 @@ def browser_kwargs(test_environment, **kwargs):
             "no_backup": kwargs.get("b2g_no_backup", False)}
 
 
-def executor_kwargs(http_server_url, **kwargs):
+def executor_kwargs(test_type, server_config, cache_manager, **kwargs):
     timeout_multiplier = kwargs["timeout_multiplier"]
     if timeout_multiplier is None:
         timeout_multiplier = 2
 
-    executor_kwargs = {"http_server_url": http_server_url,
+    executor_kwargs = {"server_config": server_config,
                        "timeout_multiplier": timeout_multiplier,
                        "close_after_done": False}
+
+    if test_type == "reftest":
+        executor_kwargs["cache_manager"] = cache_manager
+
     return executor_kwargs
 
 
 def env_options():
     return {"host": "web-platform.test",
             "bind_hostname": "false",
-            "test_server_port": False,
-            "required_files": required_files}
+            "test_server_port": False}
 
 
 class B2GBrowser(Browser):

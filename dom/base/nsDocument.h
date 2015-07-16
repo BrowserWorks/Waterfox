@@ -409,7 +409,8 @@ protected:
     CandidateMap;
 
   // Hashtable for custom element definitions in web components.
-  // Custom prototypes are in the document's compartment.
+  // Custom prototypes are stored in the compartment where
+  // registerElement was called.
   DefinitionMap mCustomDefinitions;
 
   // The "upgrade candidates map" from the web components spec. Maps from a
@@ -596,8 +597,8 @@ protected:
     
     // XXXbz I wish we could just derive the _allcaps thing from _i
 #define DECL_SHIM(_i, _allcaps)                                              \
-    class _i##Shim final : public nsIInterfaceRequestor,                 \
-                               public _i                                     \
+    class _i##Shim final : public nsIInterfaceRequestor,                     \
+                           public _i                                         \
     {                                                                        \
       ~_i##Shim() {}                                                         \
     public:                                                                  \
@@ -1034,9 +1035,8 @@ public:
   virtual void FlushSkinBindings() override;
 
   virtual nsresult InitializeFrameLoader(nsFrameLoader* aLoader) override;
-  virtual nsresult FinalizeFrameLoader(nsFrameLoader* aLoader) override;
+  virtual nsresult FinalizeFrameLoader(nsFrameLoader* aLoader, nsIRunnable* aFinalizer) override;
   virtual void TryCancelFrameLoaderInitialization(nsIDocShell* aShell) override;
-  virtual bool FrameLoaderScheduledToBeFinalized(nsIDocShell* aShell) override;
   virtual nsIDocument*
     RequestExternalResource(nsIURI* aURI,
                             nsINode* aRequestingNode,
@@ -1769,7 +1769,7 @@ private:
   nsString mLastStyleSheetSet;
 
   nsTArray<nsRefPtr<nsFrameLoader> > mInitializableFrameLoaders;
-  nsTArray<nsRefPtr<nsFrameLoader> > mFinalizableFrameLoaders;
+  nsTArray<nsCOMPtr<nsIRunnable> > mFrameLoaderFinalizers;
   nsRefPtr<nsRunnableMethod<nsDocument> > mFrameLoaderRunner;
 
   nsRevocableEventPtr<nsRunnableMethod<nsDocument, void, false> >

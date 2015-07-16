@@ -8,6 +8,7 @@
 
 #include "FrameMetrics.h"
 #include "mozilla/EventForwards.h"
+#include "mozilla/layers/APZUtils.h"
 #include "nsIDOMWindowUtils.h"
 
 class nsIContent;
@@ -27,6 +28,16 @@ public:
   virtual void Run(uint64_t aInputBlockId, const nsTArray<ScrollableLayerGuid>& aTargets) const = 0;
 protected:
   virtual ~SetTargetAPZCCallback() {}
+};
+
+/* A base class for callbacks to be passed to
+ * APZCCallbackHelper::SendSetAllowedTouchBehaviorNotification. */
+struct SetAllowedTouchBehaviorCallback {
+public:
+  NS_INLINE_DECL_REFCOUNTING(SetAllowedTouchBehaviorCallback)
+  virtual void Run(uint64_t aInputBlockId, const nsTArray<TouchBehaviorFlags>& aFlags) const = 0;
+protected:
+  virtual ~SetAllowedTouchBehaviorCallback() {}
 };
 
 /* This class contains some helper methods that facilitate implementing the
@@ -81,6 +92,14 @@ public:
                                              uint32_t* aPresShellIdOut,
                                              FrameMetrics::ViewID* aViewIdOut);
 
+    /* Tell layout to perform scroll snapping for the scrollable frame with the
+     * given scroll id. aDestination specifies the expected landing position of
+     * a current fling or scrolling animation that should be used to select
+     * the scroll snap point.
+     */
+    static void RequestFlingSnap(const FrameMetrics::ViewID& aScrollId,
+                                 const mozilla::CSSPoint& aDestination);
+
     /* Tell layout that we received the scroll offset update for the given view ID, so
        that it accepts future scroll offset updates from APZ. */
     static void AcknowledgeScrollUpdate(const FrameMetrics::ViewID& aScrollId,
@@ -123,6 +142,7 @@ public:
     static nsEventStatus DispatchSynthesizedMouseEvent(uint32_t aMsg,
                                                        uint64_t aTime,
                                                        const LayoutDevicePoint& aRefPoint,
+                                                       Modifiers aModifiers,
                                                        nsIWidget* aWidget);
 
     /* Dispatch a mouse event with the given parameters.
@@ -139,6 +159,7 @@ public:
     /* Fire a single-tap event at the given point. The event is dispatched
      * via the given widget. */
     static void FireSingleTapEvent(const LayoutDevicePoint& aPoint,
+                                   Modifiers aModifiers,
                                    nsIWidget* aWidget);
 
     /* Perform hit-testing on the touch points of |aEvent| to determine
@@ -153,6 +174,16 @@ public:
                                               const ScrollableLayerGuid& aGuid,
                                               uint64_t aInputBlockId,
                                               const nsRefPtr<SetTargetAPZCCallback>& aCallback);
+
+    /* Figure out the allowed touch behaviors of each touch point in |aEvent|
+     * and send that information to the provided callback. */
+    static void SendSetAllowedTouchBehaviorNotification(nsIWidget* aWidget,
+                                                         const WidgetTouchEvent& aEvent,
+                                                         uint64_t aInputBlockId,
+                                                         const nsRefPtr<SetAllowedTouchBehaviorCallback>& aCallback);
+
+    /* Notify content of a mouse scroll testing event. */
+    static void NotifyMozMouseScrollEvent(const FrameMetrics::ViewID& aScrollId, const nsString& aEvent);
 };
 
 }

@@ -11,6 +11,7 @@
 #include "nsTArray.h"
 #include "nsAutoPtr.h"
 #include "mozilla/Monitor.h"
+#include "mozilla/DebugOnly.h"
 
 class nsIRunnable;
 
@@ -89,11 +90,12 @@ private:
   nsCOMPtr<nsIThread> mXPCOMThread;
   uint32_t mLowestLevelWaiting;
   uint32_t mCurrentlyExecutingLevel;
-  nsTArray<nsRefPtr<nsIRunnable> > mEventQueue[LAST_LEVEL];
+  nsTArray<nsCOMPtr<nsIRunnable> > mEventQueue[LAST_LEVEL];
 
   bool mHasXPCOMEvents;
   bool mRerunCurrentEvent;
   bool mShutdown;
+  DebugOnly<bool> mInsideLoop;
 };
 
 } // net

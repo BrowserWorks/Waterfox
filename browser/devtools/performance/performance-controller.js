@@ -57,10 +57,12 @@ const BRANCH_NAME = "devtools.performance.ui.";
 
 // Events emitted by various objects in the panel.
 const EVENTS = {
-  // Fired by the OptionsView when a preference changes.
+  // Fired by the PerformanceController and OptionsView when a pref changes.
   PREF_CHANGED: "Performance:PrefChanged",
 
-  // Emitted by the PerformanceView when the state (display mode) changes.
+  // Emitted by the PerformanceView when the state (display mode) changes,
+  // for example when switching between "empty", "recording" or "recorded".
+  // This causes certain panels to be hidden or visible.
   UI_STATE_CHANGED: "Performance:UI:StateChanged",
 
   // Emitted by the PerformanceView on clear button click
@@ -176,6 +178,18 @@ let PerformanceController = {
     this._onRecordingSelectFromView = this._onRecordingSelectFromView.bind(this);
     this._onPrefChanged = this._onPrefChanged.bind(this);
 
+    // All boolean prefs should be handled via the OptionsView in the
+    // ToolbarView, so that they may be accessible via the "gear" menu.
+    // Every other pref should be registered here.
+    this._nonBooleanPrefs = new ViewHelpers.Prefs("devtools.performance", {
+      "hidden-markers": ["Json", "timeline.hidden-markers"],
+      "memory-sample-probability": ["Float", "memory.sample-probability"],
+      "memory-max-log-length": ["Int", "memory.max-log-length"]
+    });
+
+    this._nonBooleanPrefs.registerObserver();
+    this._nonBooleanPrefs.on("pref-changed", this._onPrefChanged);
+
     ToolbarView.on(EVENTS.PREF_CHANGED, this._onPrefChanged);
     PerformanceView.on(EVENTS.UI_START_RECORDING, this.startRecording);
     PerformanceView.on(EVENTS.UI_STOP_RECORDING, this.stopRecording);
@@ -195,6 +209,9 @@ let PerformanceController = {
    * Remove events handled by the PerformanceController
    */
   destroy: function() {
+    this._nonBooleanPrefs.unregisterObserver();
+    this._nonBooleanPrefs.off("pref-changed", this._onPrefChanged);
+
     ToolbarView.off(EVENTS.PREF_CHANGED, this._onPrefChanged);
     PerformanceView.off(EVENTS.UI_START_RECORDING, this.startRecording);
     PerformanceView.off(EVENTS.UI_STOP_RECORDING, this.stopRecording);
@@ -211,11 +228,32 @@ let PerformanceController = {
   },
 
   /**
-   * Get a preference setting from `prefName` via the underlying
+   * Get a boolean preference setting from `prefName` via the underlying
    * OptionsView in the ToolbarView.
+   *
+   * @param string prefName
+   * @return boolean
+   */
+  getOption: function (prefName) {
+    return ToolbarView.optionsView.getPref(prefName);
+  },
+
+  /**
+   * Get a preference setting from `prefName`.
+   * @param string prefName
+   * @return object
    */
   getPref: function (prefName) {
-    return ToolbarView.optionsView.getPref(prefName);
+    return this._nonBooleanPrefs[prefName];
+  },
+
+  /**
+   * Set a preference setting from `prefName`.
+   * @param string prefName
+   * @param object prefValue
+   */
+  setPref: function (prefName, prefValue) {
+    this._nonBooleanPrefs[prefName] = prefValue;
   },
 
   /**
@@ -223,14 +261,16 @@ let PerformanceController = {
    * when the front has started to record.
    */
   startRecording: Task.async(function *() {
-    let withMemory = this.getPref("enable-memory");
-    let withTicks = this.getPref("enable-framerate");
-    let withAllocations = this.getPref("enable-memory");
-
-    let recording = this._createRecording({ withMemory, withTicks, withAllocations });
+    let recording = this._createRecording({
+      withMemory: this.getOption("enable-memory"),
+      withTicks: this.getOption("enable-framerate"),
+      withAllocations: this.getOption("enable-memory"),
+      allocationsSampleProbability: this.getPref("memory-sample-probability"),
+      allocationsMaxLogLength: this.getPref("memory-max-log-length")
+    });
 
     this.emit(EVENTS.RECORDING_WILL_START, recording);
-    yield recording.startRecording({ withTicks, withMemory, withAllocations });
+    yield recording.startRecording();
     this.emit(EVENTS.RECORDING_STARTED, recording);
 
     this.setCurrentRecording(recording);
@@ -241,7 +281,7 @@ let PerformanceController = {
    * when the front has stopped recording.
    */
   stopRecording: Task.async(function *() {
-    let recording = this._getLatestRecording();
+    let recording = this.getLatestRecording();
 
     this.emit(EVENTS.RECORDING_WILL_STOP, recording);
     yield recording.stopRecording();
@@ -267,7 +307,7 @@ let PerformanceController = {
    * Emits `EVENTS.RECORDINGS_CLEARED` when complete so other components can clean up.
    */
   clearRecordings: Task.async(function* () {
-    let latest = this._getLatestRecording();
+    let latest = this.getLatestRecording();
 
     if (latest && latest.isRecording()) {
       yield this.stopRecording();
@@ -302,12 +342,10 @@ let PerformanceController = {
    *         The newly created recording model.
    */
   _createRecording: function (options={}) {
-    let { withMemory, withTicks, withAllocations } = options;
-    let front = gFront;
-
-    let recording = new RecordingModel(
-      { front, performance, withMemory, withTicks, withAllocations });
-
+    let recording = new RecordingModel(Heritage.extend(options, {
+      front: gFront,
+      performance: window.performance
+    }));
     this._recordings.push(recording);
     return recording;
   },
@@ -335,11 +373,21 @@ let PerformanceController = {
    * Get most recently added recording that was triggered manually (via UI).
    * @return RecordingModel
    */
-  _getLatestRecording: function () {
+  getLatestRecording: function () {
     for (let i = this._recordings.length - 1; i >= 0; i--) {
       return this._recordings[i];
     }
     return null;
+  },
+
+  /**
+   * Gets the current timeline blueprint without the hidden markers.
+   * @return object
+   */
+  getTimelineBlueprint: function() {
+    let blueprint = TIMELINE_BLUEPRINT;
+    let hiddenMarkers = this.getPref("hidden-markers");
+    return RecordingUtils.getFilteredBlueprint({ blueprint, hiddenMarkers });
   },
 
   /**
@@ -362,8 +410,8 @@ let PerformanceController = {
    * Fired when the ToolbarView fires a PREF_CHANGED event.
    * with the value.
    */
-  _onPrefChanged: function (_, prefName, value) {
-    this.emit(EVENTS.PREF_CHANGED, prefName, value);
+  _onPrefChanged: function (_, prefName, prefValue) {
+    this.emit(EVENTS.PREF_CHANGED, prefName, prefValue);
   },
 
   toString: () => "[object PerformanceController]"

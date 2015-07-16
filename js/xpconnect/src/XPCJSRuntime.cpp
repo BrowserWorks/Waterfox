@@ -20,6 +20,7 @@
 #include "nsIMemoryReporter.h"
 #include "nsIObserverService.h"
 #include "nsIDebug2.h"
+#include "nsIDocShell.h"
 #include "amIAddonManager.h"
 #include "nsPIDOMWindow.h"
 #include "nsPrintfCString.h"
@@ -30,6 +31,7 @@
 #include "nsContentUtils.h"
 #include "nsCCUncollectableMarker.h"
 #include "nsCycleCollectionNoteRootCallback.h"
+#include "nsCycleCollector.h"
 #include "nsScriptLoader.h"
 #include "jsfriendapi.h"
 #include "jsprf.h"
@@ -89,7 +91,9 @@ const char* const XPCJSRuntime::mStrings[] = {
     "lineNumber",           // IDX_LINENUMBER
     "columnNumber",         // IDX_COLUMNNUMBER
     "stack",                // IDX_STACK
-    "message"               // IDX_MESSAGE
+    "message",              // IDX_MESSAGE
+    "lastIndex",            // IDX_LASTINDEX
+    "source"                // IDX_SOURCE
 };
 
 /***************************************************************************/
@@ -1469,6 +1473,13 @@ XPCJSRuntime::InterruptCallback(JSContext* cx)
     if (!win)
         return true;
 
+    if (win->GetIsPrerendered()) {
+        // We cannot display a dialog if the page is being prerendered, so
+        // just kill the page.
+        mozilla::dom::HandlePrerenderingViolation(win);
+        return false;
+    }
+
     // Show the prompt to the user, and kill if requested.
     nsGlobalWindow::SlowScriptResponse response = win->ShowSlowScriptDialog();
     if (response == nsGlobalWindow::KillSlowScript)
@@ -1586,6 +1597,8 @@ ReloadPrefsCallback(const char* pref, void* data)
 
     sDiscardSystemSource = Preferences::GetBool(JS_OPTIONS_DOT_STR "discardSystemSource");
 
+    bool useAsyncStack = Preferences::GetBool(JS_OPTIONS_DOT_STR "asyncstack");
+
     bool werror = Preferences::GetBool(JS_OPTIONS_DOT_STR "werror");
 
     bool extraWarnings = Preferences::GetBool(JS_OPTIONS_DOT_STR "strict");
@@ -1597,6 +1610,7 @@ ReloadPrefsCallback(const char* pref, void* data)
                              .setIon(useIon)
                              .setAsmJS(useAsmJS)
                              .setNativeRegExp(useNativeRegExp)
+                             .setAsyncStack(useAsyncStack)
                              .setWerror(werror)
                              .setExtraWarnings(extraWarnings);
 
@@ -2342,6 +2356,10 @@ ReportCompartmentStats(const JS::CompartmentStats& cStats,
     ZCREPORT_BYTES(cJSPathPrefix + NS_LITERAL_CSTRING("lazy-array-buffers"),
         cStats.lazyArrayBuffersTable,
         "The table for typed object lazy array buffers.");
+
+    ZCREPORT_BYTES(cJSPathPrefix + NS_LITERAL_CSTRING("object-metadata"),
+        cStats.objectMetadataTable,
+        "The table used by debugging tools for tracking object metadata");
 
     ZCREPORT_BYTES(cJSPathPrefix + NS_LITERAL_CSTRING("cross-compartment-wrapper-table"),
         cStats.crossCompartmentWrappersTable,
@@ -3342,8 +3360,8 @@ XPCJSRuntime::XPCJSRuntime(nsXPConnect* aXPConnect)
     // OSX 64-bit Debug: 7MB stack, 636 stack frames => ~11.3k per stack frame
     // OSX64 Opt: 7MB stack, 2440 stack frames => ~3k per stack frame
     //
-    // Linux 32-bit Debug: 2MB stack, 447 stack frames => ~4.6k per stack frame
-    // Linux 64-bit Debug: 4MB stack, 501 stack frames => ~8.2k per stack frame
+    // Linux 32-bit Debug: 2MB stack, 426 stack frames => ~4.8k per stack frame
+    // Linux 64-bit Debug: 4MB stack, 455 stack frames => ~9.0k per stack frame
     //
     // Windows (Opt+Debug): 900K stack, 235 stack frames => ~3.4k per stack frame
     //
@@ -3375,9 +3393,9 @@ XPCJSRuntime::XPCJSRuntime(nsXPConnect* aXPConnect)
     // were not taken at the time of this writing, so we hazard a guess that
     // ASAN builds have roughly thrice the stack overhead as normal builds.
     // On normal builds, the largest stack frame size we might encounter is
-    // 8.2k, so let's use a buffer of 8.2 * 3 * 10 = 246k.
+    // 9.0k (see above), so let's use a buffer of 9.0 * 3 * 10 = 270k.
     const size_t kStackQuota =  2 * kDefaultStackQuota;
-    const size_t kTrustedScriptBuffer = 246 * 1024;
+    const size_t kTrustedScriptBuffer = 270 * 1024;
 #elif defined(XP_WIN)
     // 1MB is the default stack size on Windows, so use 900k.
     // Windows PGO stack frames have unfortunately gotten pretty large lately. :-(

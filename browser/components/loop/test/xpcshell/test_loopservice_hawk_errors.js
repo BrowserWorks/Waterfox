@@ -37,6 +37,7 @@ add_task(function* setup_server() {
 
 add_task(function* error_offline() {
   Services.io.offline = true;
+  Services.prefs.setBoolPref("network.dns.offline-localhost", false);
   yield MozLoopServiceInternal.hawkRequestInternal(LOOP_SESSION_TYPE.GUEST, "/offline", "GET").then(
     () => Assert.ok(false, "Should have rejected"),
     (error) => {
@@ -172,13 +173,14 @@ add_task(cleanup_between_tests);
 function run_test() {
   setupFakeLoopServer();
 
-  // Set the expiry time one hour in the future so that an error is shown when the guest session expires.
-  MozLoopServiceInternal.expiryTimeSeconds = (Date.now() / 1000) + 3600;
+  Services.prefs.setBoolPref("loop.createdRoom", true);
 
   do_register_cleanup(() => {
     Services.prefs.clearUserPref("loop.hawk-session-token");
     Services.prefs.clearUserPref("loop.hawk-session-token.fxa");
     Services.prefs.clearUserPref("loop.urlsExpiryTimeSeconds");
+    Services.prefs.clearUserPref("network.dns.offline-localhost");
+    Services.prefs.clearUserPref("loop.createdRoom");
     MozLoopService.errors.clear();
   });
 

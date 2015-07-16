@@ -113,8 +113,8 @@ private:
  * Implementation of &lt;select&gt;
  */
 class HTMLSelectElement final : public nsGenericHTMLFormElementWithState,
-                                    public nsIDOMHTMLSelectElement,
-                                    public nsIConstraintValidation
+                                public nsIDOMHTMLSelectElement,
+                                public nsIConstraintValidation
 {
 public:
   /**
@@ -272,7 +272,7 @@ public:
 
 
   // nsINode
-  virtual JSObject* WrapNode(JSContext* aCx) override;
+  virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // nsIContent
   virtual nsresult PreHandleEvent(EventChainPreVisitor& aVisitor) override;

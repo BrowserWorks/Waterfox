@@ -14,7 +14,7 @@ namespace dom {
 struct CustomEventInit;
 
 class CustomEvent final : public Event,
-                              public nsIDOMCustomEvent
+                          public nsIDOMCustomEvent
 {
 private:
   virtual ~CustomEvent();
@@ -38,7 +38,7 @@ public:
               ErrorResult& aRv);
 
   virtual JSObject*
-  WrapObjectInternal(JSContext* aCx) override;
+  WrapObjectInternal(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   void
   GetDetail(JSContext* aCx,

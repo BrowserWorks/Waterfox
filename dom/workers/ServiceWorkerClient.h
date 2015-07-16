@@ -11,47 +11,86 @@
 #include "nsWrapperCache.h"
 #include "mozilla/ErrorResult.h"
 #include "mozilla/dom/BindingDeclarations.h"
+#include "mozilla/dom/ClientBinding.h"
 
 namespace mozilla {
 namespace dom {
 namespace workers {
 
-class ServiceWorkerClient final : public nsISupports,
-                                      public nsWrapperCache
+class ServiceWorkerClient;
+class ServiceWorkerWindowClient;
+
+// Used as a container object for information needed to create
+// client objects.
+class ServiceWorkerClientInfo final
+{
+  friend class ServiceWorkerClient;
+  friend class ServiceWorkerWindowClient;
+
+public:
+  explicit ServiceWorkerClientInfo(nsIDocument* aDoc);
+
+private:
+  nsString mClientId;
+  uint64_t mWindowId;
+  nsString mUrl;
+
+  // Window Clients
+  VisibilityState mVisibilityState;
+  bool mFocused;
+  FrameType mFrameType;
+};
+
+class ServiceWorkerClient : public nsISupports,
+                            public nsWrapperCache
 {
 public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(ServiceWorkerClient)
 
-  ServiceWorkerClient(nsISupports* aOwner, uint64_t aId)
+  ServiceWorkerClient(nsISupports* aOwner,
+                      const ServiceWorkerClientInfo& aClientInfo)
     : mOwner(aOwner),
-      mId(aId)
+      mId(aClientInfo.mClientId),
+      mWindowId(aClientInfo.mWindowId),
+      mUrl(aClientInfo.mUrl)
   {
+    MOZ_ASSERT(aOwner);
   }
 
-  uint32_t Id() const
-  {
-    return mId;
-  }
-
-  nsISupports* GetParentObject() const
+  nsISupports*
+  GetParentObject() const
   {
     return mOwner;
   }
 
-  void PostMessage(JSContext* aCx, JS::Handle<JS::Value> aMessage,
-                   const Optional<Sequence<JS::Value>>& aTransferable,
-                   ErrorResult& aRv);
-
-  JSObject* WrapObject(JSContext* aCx) override;
-
-private:
-  ~ServiceWorkerClient()
+  void GetId(nsString& aRetval) const
   {
+    aRetval = mId;
   }
 
+  void
+  GetUrl(nsAString& aUrl) const
+  {
+    aUrl.Assign(mUrl);
+  }
+
+  void
+  PostMessage(JSContext* aCx, JS::Handle<JS::Value> aMessage,
+              const Optional<Sequence<JS::Value>>& aTransferable,
+              ErrorResult& aRv);
+
+  JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
+
+protected:
+  virtual ~ServiceWorkerClient()
+  { }
+
+private:
   nsCOMPtr<nsISupports> mOwner;
-  uint64_t mId;
+  nsString mId;
+  uint64_t mWindowId;
+  nsString mUrl;
 };
 
 } // namespace workers

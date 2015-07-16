@@ -65,7 +65,7 @@ public:
     Init();
   }
 
-  virtual JSObject* WrapNode(JSContext *aCx) override;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // nsIContent
   nsresult SetAttr(int32_t aNameSpaceID, nsIAtom* aName,

@@ -23,6 +23,7 @@
 
 #include "mozilla/RefPtr.h"
 #include "GfxInfoCollector.h"
+#include "nsIXULRuntime.h"
 
 #include "mozilla/layers/CompositorTypes.h"
 
@@ -133,6 +134,8 @@ enum eGfxLog {
 // when searching through pref langs, max number of pref langs
 const uint32_t kMaxLenPrefLangList = 32;
 
+extern bool gANGLESupportsD3D11;
+
 #define UNINITIALIZED_VALUE  (-1)
 
 inline const char*
@@ -166,7 +169,9 @@ enum class DeviceResetReason
   REMOVED,
   RESET,
   DRIVER_ERROR,
-  INVALID_CALL
+  INVALID_CALL,
+  OUT_OF_MEMORY,
+  UNKNOWN
 };
 
 class gfxPlatform {
@@ -196,6 +201,7 @@ public:
     static void InitLayersIPC();
     static void ShutdownLayersIPC();
 
+    static bool InSafeMode();
     /**
      * Create an offscreen surface of the given dimensions
      * and image format.
@@ -295,6 +301,7 @@ public:
       aObj.DefineProperty("AzureFallbackCanvasBackend", GetBackendName(mFallbackCanvasBackend));
       aObj.DefineProperty("AzureContentBackend", GetBackendName(mContentBackend));
     }
+    void GetApzSupportInfo(mozilla::widget::InfoObject& aObj);
 
     mozilla::gfx::BackendType GetContentBackend() {
       return mContentBackend;
@@ -609,6 +616,23 @@ public:
       return mVsyncSource;
     }
 
+    /**
+     * True if layout rendering should use ASAP mode, which means
+     * the refresh driver and compositor should render ASAP.
+     * Used for talos testing purposes
+     */
+    static bool IsInLayoutAsapMode();
+
+    /**
+     * Used to test which input types are handled via APZ.
+     */
+    virtual bool SupportsApzWheelInput() {
+      return false;
+    }
+    virtual bool SupportsApzTouchInput() {
+      return false;
+    }
+
 protected:
     gfxPlatform();
     virtual ~gfxPlatform();
@@ -723,6 +747,7 @@ private:
     int mTileHeight;
 
     mozilla::widget::GfxInfoCollector<gfxPlatform> mAzureCanvasBackendCollector;
+    mozilla::widget::GfxInfoCollector<gfxPlatform> mApzSupportCollector;
 
     mozilla::RefPtr<mozilla::gfx::DrawEventRecorder> mRecorder;
     mozilla::RefPtr<mozilla::gl::SkiaGLGlue> mSkiaGlue;

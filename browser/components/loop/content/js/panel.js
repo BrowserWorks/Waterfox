@@ -167,8 +167,7 @@ loop.panel = (function(_, mozL10n) {
             React.createElement("span", null, availabilityText), 
             React.createElement("i", {className: availabilityStatus})
           ), 
-          React.createElement("ul", {className: availabilityDropdown, 
-              onMouseLeave: this.hideDropdownMenu}, 
+          React.createElement("ul", {className: availabilityDropdown}, 
             React.createElement("li", {onClick: this.changeAvailability("available"), 
                 className: "dropdown-menu-item dnd-make-available"}, 
               React.createElement("i", {className: "status status-available"}), 
@@ -363,8 +362,7 @@ loop.panel = (function(_, mozL10n) {
         React.createElement("div", {className: "settings-menu dropdown"}, 
           React.createElement("a", {className: "button-settings", onClick: this.showDropdownMenu, 
              title: mozL10n.get("settings_menu_button_tooltip")}), 
-          React.createElement("ul", {className: cx({"dropdown-menu": true, hide: !this.state.showMenu}), 
-              onMouseLeave: this.hideDropdownMenu}, 
+          React.createElement("ul", {className: cx({"dropdown-menu": true, hide: !this.state.showMenu})}, 
             React.createElement(SettingsDropdownEntry, {label: mozL10n.get("settings_menu_item_settings"), 
                                    onClick: this.handleClickSettingsEntry, 
                                    displayed: false, 
@@ -612,6 +610,7 @@ loop.panel = (function(_, mozL10n) {
     mixins: [Backbone.Events, sharedMixins.WindowCloseMixin],
 
     propTypes: {
+      mozLoop: React.PropTypes.object.isRequired,
       store: React.PropTypes.instanceOf(loop.store.RoomStore).isRequired,
       dispatcher: React.PropTypes.instanceOf(loop.Dispatcher).isRequired,
       userDisplayName: React.PropTypes.string.isRequired  // for room creation
@@ -684,13 +683,68 @@ loop.panel = (function(_, mozL10n) {
               );
             }, this)
           ), 
-          React.createElement("p", null, 
+          React.createElement("div", null, 
+            React.createElement(ContextInfo, {mozLoop: this.props.mozLoop}), 
             React.createElement("button", {className: "btn btn-info new-room-button", 
                     onClick: this.handleCreateButtonClick, 
                     disabled: this._hasPendingOperation()}, 
               mozL10n.get("rooms_new_room_button_label")
             )
           )
+        )
+      );
+    }
+  });
+
+  /**
+   * Context info that is offered to be part of a Room.
+   */
+  var ContextInfo = React.createClass({displayName: "ContextInfo",
+    propTypes: {
+      mozLoop: React.PropTypes.object.isRequired,
+    },
+
+    mixins: [sharedMixins.DocumentVisibilityMixin],
+
+    getInitialState: function() {
+      return {
+        previewImage: "",
+        description: "",
+        url: ""
+      };
+    },
+
+    onDocumentVisible: function() {
+      this.props.mozLoop.getSelectedTabMetadata(function callback(metadata) {
+        var previewImage = metadata.previews.length ? metadata.previews[0] : "";
+        var description = metadata.description || metadata.title;
+        var url = metadata.url;
+        this.setState({previewImage: previewImage,
+                       description: description,
+                       url: url});
+      }.bind(this));
+    },
+
+    onDocumentHidden: function() {
+      this.setState({previewImage: "",
+                     description: "",
+                     url: ""});
+    },
+
+    render: function() {
+      if (!this.props.mozLoop.getLoopPref("contextInConverations.enabled") ||
+          !this.state.url) {
+        return null;
+      }
+      return (
+        React.createElement("div", {className: "context"}, 
+          React.createElement("label", {className: "context-enabled"}, 
+            React.createElement("input", {type: "checkbox"}), 
+            mozL10n.get("context_offer_label")
+          ), 
+          React.createElement("img", {className: "context-preview", src: this.state.previewImage}), 
+          React.createElement("span", {className: "context-description"}, this.state.description), 
+          React.createElement("span", {className: "context-url"}, this.state.url)
         )
       );
     }
@@ -837,7 +891,8 @@ loop.panel = (function(_, mozL10n) {
             React.createElement(Tab, {name: "rooms"}, 
               React.createElement(RoomList, {dispatcher: this.props.dispatcher, 
                         store: this.props.roomStore, 
-                        userDisplayName: this._getUserDisplayName()}), 
+                        userDisplayName: this._getUserDisplayName(), 
+                        mozLoop: this.props.mozLoop}), 
               React.createElement(ToSView, null)
             ), 
             React.createElement(Tab, {name: "contacts"}, 
@@ -908,6 +963,7 @@ loop.panel = (function(_, mozL10n) {
     init: init,
     AuthLink: AuthLink,
     AvailabilityDropdown: AvailabilityDropdown,
+    ContextInfo: ContextInfo,
     GettingStartedView: GettingStartedView,
     PanelView: PanelView,
     RoomEntry: RoomEntry,

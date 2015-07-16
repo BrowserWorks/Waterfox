@@ -27,13 +27,6 @@
 #include "SSLServerCertVerification.h"
 #include "nsNSSCertHelper.h"
 
-#ifndef MOZ_NO_EV_CERTS
-#include "nsIDocShell.h"
-#include "nsIDocShellTreeItem.h"
-#include "nsISecureBrowserUI.h"
-#include "nsIInterfaceRequestorUtils.h"
-#endif
-
 #include "nsCharSeparatedTokenizer.h"
 #include "nsIConsoleService.h"
 #include "PSMRunnable.h"
@@ -202,8 +195,16 @@ nsNSSSocketInfo::GetBypassAuthentication(bool* arg)
 NS_IMETHODIMP
 nsNSSSocketInfo::SetBypassAuthentication(bool arg)
 {
+  nsNSSShutDownPreventionLock locker;
+  if (isAlreadyShutDown()) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+  if (!mFd) {
+    return NS_ERROR_FAILURE;
+  }
+
   mBypassAuthentication = arg;
-  return NS_OK;
+  return SyncNSSNames(locker);
 }
 
 NS_IMETHODIMP
@@ -223,7 +224,25 @@ nsNSSSocketInfo::GetAuthenticationName(nsACString& aAuthenticationName)
 NS_IMETHODIMP
 nsNSSSocketInfo::SetAuthenticationName(const nsACString& aAuthenticationName)
 {
-  return SetHostName(PromiseFlatCString(aAuthenticationName).get());
+  nsNSSShutDownPreventionLock locker;
+  if (isAlreadyShutDown()) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+  if (!mFd) {
+    return NS_ERROR_FAILURE;
+  }
+
+  nsCString authenticationName(aAuthenticationName);
+  PR_LOG(gPIPNSSLog, PR_LOG_DEBUG,
+         ("[%p] nsNSSSocketInfo::SetAuthenticationName change from %s to %s\n",
+          mFd, PromiseFlatCString(GetHostName()).get(),
+          authenticationName.get()));
+
+  nsresult rv = SetHostName(authenticationName.get());
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+  return SyncNSSNames(locker);
 }
 
 NS_IMETHODIMP
@@ -235,7 +254,19 @@ nsNSSSocketInfo::GetAuthenticationPort(int32_t* aAuthenticationPort)
 NS_IMETHODIMP
 nsNSSSocketInfo::SetAuthenticationPort(int32_t aAuthenticationPort)
 {
-  return SetPort(aAuthenticationPort);
+  nsNSSShutDownPreventionLock locker;
+  if (isAlreadyShutDown()) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+  if (!mFd) {
+    return NS_ERROR_FAILURE;
+  }
+
+  nsresult rv = SetPort(aAuthenticationPort);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+  return SyncNSSNames(locker);
 }
 
 NS_IMETHODIMP
@@ -274,38 +305,35 @@ nsNSSSocketInfo::SetNotificationCallbacks(nsIInterfaceRequestor* aCallbacks)
   return NS_OK;
 }
 
-#ifndef MOZ_NO_EV_CERTS
-static void
-getSecureBrowserUI(nsIInterfaceRequestor* callbacks,
-                   nsISecureBrowserUI** result)
+// forward declare this for SyncNSSNames()
+static nsresult
+nsSSLIOLayerSetPeerName(PRFileDesc* fd, nsNSSSocketInfo* infoObject,
+                        const char* host, int32_t port,
+                        const nsNSSShutDownPreventionLock& /* proofOfLock */);
+
+nsresult
+nsNSSSocketInfo::SyncNSSNames(const nsNSSShutDownPreventionLock& proofOfLock)
 {
-  NS_ASSERTION(result, "result parameter to getSecureBrowserUI is null");
-  *result = nullptr;
+  // I don't know why any of these calls would fail, but if they do
+  // we need to call SetCanceled to avoid non-determinstic results
 
-  NS_ASSERTION(NS_IsMainThread(),
-               "getSecureBrowserUI called off the main thread");
-
-  if (!callbacks)
-    return;
-
-  nsCOMPtr<nsISecureBrowserUI> secureUI = do_GetInterface(callbacks);
-  if (secureUI) {
-    secureUI.forget(result);
-    return;
+  const char* hostName = GetHostNameRaw();
+  if (SECSuccess != SSL_SetURL(mFd, hostName)) {
+    PR_LOG(gPIPNSSLog, PR_LOG_ERROR, ("[%p] SyncNSSNames SSL_SetURL error: %d\n",
+                                      (void*) mFd, PR_GetError()));
+    SetCanceled(PR_INVALID_STATE_ERROR, PlainErrorMessage);
+    return NS_ERROR_FAILURE;
   }
 
-  nsCOMPtr<nsIDocShellTreeItem> item = do_GetInterface(callbacks);
-  if (item) {
-    nsCOMPtr<nsIDocShellTreeItem> rootItem;
-    (void) item->GetSameTypeRootTreeItem(getter_AddRefs(rootItem));
-
-    nsCOMPtr<nsIDocShell> docShell = do_QueryInterface(rootItem);
-    if (docShell) {
-      (void) docShell->GetSecurityUI(result);
-    }
+  int32_t port = GetPort();
+  if (NS_FAILED(nsSSLIOLayerSetPeerName(mFd, this, hostName, port, proofOfLock))) {
+    PR_LOG(gPIPNSSLog, PR_LOG_ERROR, ("[%p] SyncNSSNames SetPeerName error: %d\n",
+                                      (void*) mFd, PR_GetError()));
+    SetCanceled(PR_INVALID_STATE_ERROR, PlainErrorMessage);
+    return NS_ERROR_FAILURE;
   }
+  return NS_OK;
 }
-#endif
 
 void
 nsNSSSocketInfo::NoteTimeUntilReady()
@@ -486,6 +514,12 @@ nsNSSSocketInfo::JoinConnection(const nsACString& npnProtocol,
   if (!mNPNCompleted || !mNegotiatedNPN.Equals(npnProtocol))
     return NS_OK;
 
+  if (mBypassAuthentication) {
+    // An unauthenticated connection does not know whether or not it
+    // is acceptable for a particular hostname
+    return NS_OK;
+  }
+
   IsAcceptableForHost(hostname, _retval);
 
   if (*_retval) {
@@ -578,49 +612,6 @@ nsNSSSocketInfo::SetFileDescPtr(PRFileDesc* aFilePtr)
 {
   mFd = aFilePtr;
   return NS_OK;
-}
-
-#ifndef MOZ_NO_EV_CERTS
-class PreviousCertRunnable : public SyncRunnableBase
-{
-public:
-  explicit PreviousCertRunnable(nsIInterfaceRequestor* callbacks)
-    : mCallbacks(callbacks)
-  {
-  }
-
-  virtual void RunOnTargetThread()
-  {
-    nsCOMPtr<nsISecureBrowserUI> secureUI;
-    getSecureBrowserUI(mCallbacks, getter_AddRefs(secureUI));
-    nsCOMPtr<nsISSLStatusProvider> statusProvider = do_QueryInterface(secureUI);
-    if (statusProvider) {
-      nsCOMPtr<nsISSLStatus> status;
-      (void) statusProvider->GetSSLStatus(getter_AddRefs(status));
-      if (status) {
-        (void) status->GetServerCert(getter_AddRefs(mPreviousCert));
-      }
-    }
-  }
-
-  nsCOMPtr<nsIX509Cert> mPreviousCert; // out
-private:
-  nsCOMPtr<nsIInterfaceRequestor> mCallbacks; // in
-};
-#endif
-
-void
-nsNSSSocketInfo::GetPreviousCert(nsIX509Cert** _result)
-{
-  NS_ASSERTION(_result, "_result parameter to GetPreviousCert is null");
-  *_result = nullptr;
-
-#ifndef MOZ_NO_EV_CERTS
-  RefPtr<PreviousCertRunnable> runnable(new PreviousCertRunnable(mCallbacks));
-  DebugOnly<nsresult> rv = runnable->DispatchToMainThreadAndWait();
-  NS_ASSERTION(NS_SUCCEEDED(rv), "runnable->DispatchToMainThreadAndWait() failed");
-  runnable->mPreviousCert.forget(_result);
-#endif
 }
 
 void
@@ -1257,20 +1248,9 @@ retryDueToTLSIntolerance(PRErrorCode err, nsNSSSocketInfo* socketInfo)
 
   // When not using a proxy we'll see a connection reset error.
   // When using a proxy, we'll see an end of file error.
-  // In addition check for some error codes where it is reasonable
-  // to retry without TLS.
 
   // Don't allow STARTTLS connections to fall back on connection resets or
-  // EOF. Also, don't fall back from TLS 1.0 to SSL 3.0 for connection
-  // resets, because connection resets have too many false positives,
-  // and we want to maximize how often we send TLS 1.0+ with extensions
-  // if at all reasonable. Unfortunately, it appears we have to allow
-  // fallback from TLS 1.2 and TLS 1.1 for connection resets due to bad
-  // servers and possibly bad intermediaries.
-  if (err == PR_CONNECT_RESET_ERROR &&
-      range.max <= SSL_LIBRARY_VERSION_TLS_1_0) {
-    return false;
-  }
+  // EOF.
   if ((err == PR_CONNECT_RESET_ERROR || err == PR_END_OF_FILE_ERROR)
       && socketInfo->GetForSTARTTLS()) {
     return false;
@@ -1295,10 +1275,6 @@ retryDueToTLSIntolerance(PRErrorCode err, nsNSSSocketInfo* socketInfo)
     case SSL_LIBRARY_VERSION_TLS_1_0:
       pre = Telemetry::SSL_TLS10_INTOLERANCE_REASON_PRE;
       post = Telemetry::SSL_TLS10_INTOLERANCE_REASON_POST;
-      break;
-    case SSL_LIBRARY_VERSION_3_0:
-      pre = Telemetry::SSL_SSL30_INTOLERANCE_REASON_PRE;
-      post = Telemetry::SSL_SSL30_INTOLERANCE_REASON_POST;
       break;
     default:
       MOZ_CRASH("impossible TLS version");
@@ -1471,7 +1447,7 @@ nsSSLIOLayerHelpers::nsSSLIOLayerHelpers()
   , mTLSIntoleranceInfo()
   , mFalseStartRequireNPN(false)
   , mUseStaticFallbackList(true)
-  , mUnrestrictedRC4Fallback(true)
+  , mUnrestrictedRC4Fallback(false)
   , mVersionFallbackLimit(SSL_LIBRARY_VERSION_TLS_1_0)
   , mutex("nsSSLIOLayerHelpers.mutex")
 {
@@ -1700,7 +1676,7 @@ PrefObserver::Observe(nsISupports* aSubject, const char* aTopic,
         Preferences::GetBool("security.tls.insecure_fallback_hosts.use_static_list", true);
     } else if (prefName.EqualsLiteral("security.tls.unrestricted_rc4_fallback")) {
       mOwner->mUnrestrictedRC4Fallback =
-        Preferences::GetBool("security.tls.unrestricted_rc4_fallback", true);
+        Preferences::GetBool("security.tls.unrestricted_rc4_fallback", false);
     }
   }
   return NS_OK;
@@ -1807,7 +1783,7 @@ nsSSLIOLayerHelpers::Init()
   mUseStaticFallbackList =
     Preferences::GetBool("security.tls.insecure_fallback_hosts.use_static_list", true);
   mUnrestrictedRC4Fallback =
-    Preferences::GetBool("security.tls.unrestricted_rc4_fallback", true);
+    Preferences::GetBool("security.tls.unrestricted_rc4_fallback", false);
 
   mPrefObserver = new PrefObserver(this);
   Preferences::AddStrongObserver(mPrefObserver,
@@ -2643,11 +2619,44 @@ loser:
 }
 
 static nsresult
+nsSSLIOLayerSetPeerName(PRFileDesc* fd, nsNSSSocketInfo* infoObject,
+                        const char* host, int32_t port,
+                        const nsNSSShutDownPreventionLock& /*proofOfLock*/)
+{
+  // Set the Peer ID so that SSL proxy connections work properly and to
+  // separate anonymous and/or private browsing connections.
+  uint32_t flags = infoObject->GetProviderFlags();
+  nsAutoCString peerId;
+  if (flags & nsISocketProvider::ANONYMOUS_CONNECT) { // See bug 466080
+    peerId.AppendLiteral("anon:");
+  }
+  if (flags & nsISocketProvider::NO_PERMANENT_STORAGE) {
+    peerId.AppendLiteral("private:");
+  }
+  if (infoObject->GetBypassAuthentication()) {
+    peerId.AppendLiteral("bypassAuth:");
+  }
+  peerId.Append(host);
+  peerId.Append(':');
+  peerId.AppendInt(port);
+  PR_LOG(gPIPNSSLog, PR_LOG_DEBUG,
+         ("[%p] nsSSLIOLayerSetPeerName to %s\n", fd, peerId.get()));
+  if (SECSuccess != SSL_SetSockPeerID(fd, peerId.get())) {
+    return NS_ERROR_FAILURE;
+  }
+  return NS_OK;
+}
+
+static nsresult
 nsSSLIOLayerSetOptions(PRFileDesc* fd, bool forSTARTTLS,
                        const char* proxyHost, const char* host, int32_t port,
                        nsNSSSocketInfo* infoObject)
 {
   nsNSSShutDownPreventionLock locker;
+  if (infoObject->isAlreadyShutDown()) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
   if (forSTARTTLS || proxyHost) {
     if (SECSuccess != SSL_OptionSet(fd, SSL_SECURITY, false)) {
       return NS_ERROR_FAILURE;
@@ -2703,24 +2712,7 @@ nsSSLIOLayerSetOptions(PRFileDesc* fd, bool forSTARTTLS,
     return NS_ERROR_FAILURE;
   }
 
-  // Set the Peer ID so that SSL proxy connections work properly and to
-  // separate anonymous and/or private browsing connections.
-  uint32_t flags = infoObject->GetProviderFlags();
-  nsAutoCString peerId;
-  if (flags & nsISocketProvider::ANONYMOUS_CONNECT) { // See bug 466080
-    peerId.AppendLiteral("anon:");
-  }
-  if (flags & nsISocketProvider::NO_PERMANENT_STORAGE) {
-    peerId.AppendLiteral("private:");
-  }
-  peerId.Append(host);
-  peerId.Append(':');
-  peerId.AppendInt(port);
-  if (SECSuccess != SSL_SetSockPeerID(fd, peerId.get())) {
-    return NS_ERROR_FAILURE;
-  }
-
-  return NS_OK;
+  return nsSSLIOLayerSetPeerName(fd, infoObject, host, port, locker);
 }
 
 nsresult

@@ -4,14 +4,40 @@
 Components.utils.import("resource://gre/modules/TelemetryPing.jsm", this);
 Components.utils.import("resource://gre/modules/Services.jsm", this);
 
-// copied from toolkit/mozapps/extensions/test/xpcshell/head_addons.js
-const XULAPPINFO_CONTRACTID = "@mozilla.org/xre/app-info;1";
-const XULAPPINFO_CID = Components.ID("{c763b610-9d49-455a-bbd2-ede71682a1ac}");
-let gAppInfo;
-let gOldAppInfo = Components.classes[XULAPPINFO_CONTRACTID]
-                            .getService(Components.interfaces.nsIXULRuntime);
+const gIsWindows = ("@mozilla.org/windows-registry-key;1" in Components.classes);
+const gIsMac = ("@mozilla.org/xpcom/mac-utils;1" in Components.classes);
+const gIsAndroid =  ("@mozilla.org/android/bridge;1" in Components.classes);
+const gIsGonk = ("@mozilla.org/cellbroadcast/gonkservice;1" in Components.classes);
+
+const MILLISECONDS_PER_MINUTE = 60 * 1000;
+const MILLISECONDS_PER_HOUR = 60 * MILLISECONDS_PER_MINUTE;
+const MILLISECONDS_PER_DAY = 24 * MILLISECONDS_PER_HOUR;
+
+const HAS_DATAREPORTINGSERVICE = "@mozilla.org/datareporting/service;1" in Components.classes;
+
+let gOldAppInfo = null;
+let gGlobalScope = this;
+
+function loadAddonManager(id, name, version, platformVersion) {
+  let ns = {};
+  Cu.import("resource://gre/modules/Services.jsm", ns);
+  let head = "../../../../mozapps/extensions/test/xpcshell/head_addons.js";
+  let file = do_get_file(head);
+  let uri = ns.Services.io.newFileURI(file);
+  ns.Services.scriptloader.loadSubScript(uri.spec, gGlobalScope);
+  createAppInfo(id, name, version, platformVersion);
+  startupManager();
+}
 
 function createAppInfo(id, name, version, platformVersion) {
+  const XULAPPINFO_CONTRACTID = "@mozilla.org/xre/app-info;1";
+  const XULAPPINFO_CID = Components.ID("{c763b610-9d49-455a-bbd2-ede71682a1ac}");
+  let gAppInfo;
+  if (!gOldAppInfo) {
+    gOldAppInfo = Components.classes[XULAPPINFO_CONTRACTID]
+                            .getService(Components.interfaces.nsIXULRuntime);
+  }
+
   gAppInfo = {
     // nsIXULAppInfo
     vendor: "Mozilla",
@@ -58,7 +84,55 @@ function createAppInfo(id, name, version, platformVersion) {
                             XULAPPINFO_CONTRACTID, XULAppInfoFactory);
 }
 
+// Fake the timeout functions for the TelemetryScheduler.
+function fakeSchedulerTimer(set, clear) {
+  let session = Components.utils.import("resource://gre/modules/TelemetrySession.jsm");
+  session.Policy.setSchedulerTickTimeout = set;
+  session.Policy.clearSchedulerTickTimeout = clear;
+}
+
+// Fake the current date.
+function fakeNow(date) {
+  const modules = [
+    Components.utils.import("resource://gre/modules/TelemetrySession.jsm"),
+    Components.utils.import("resource://gre/modules/TelemetryEnvironment.jsm"),
+    Components.utils.import("resource://gre/modules/TelemetryPing.jsm"),
+  ];
+
+  for (let m of modules) {
+    m.Policy.now = () => date;
+  }
+}
+
+// Fake the timeout functions for TelemetryPing sending.
+function fakePingSendTimer(set, clear) {
+  let ping = Components.utils.import("resource://gre/modules/TelemetryPing.jsm");
+  ping.Policy.setPingSendTimeout = set;
+  ping.Policy.clearPingSendTimeout = clear;
+}
+
+function fakeMidnightPingFuzzingDelay(delayMs) {
+  let ping = Components.utils.import("resource://gre/modules/TelemetryPing.jsm");
+  ping.Policy.midnightPingFuzzingDelay = () => delayMs;
+}
+
+// Return a date that is |offset| ms in the future from |date|.
+function futureDate(date, offset) {
+  return new Date(date.getTime() + offset);
+}
+
+function truncateToDays(aMsec) {
+  return Math.floor(aMsec / MILLISECONDS_PER_DAY);
+}
+
 // Set logging preferences for all the tests.
 Services.prefs.setCharPref("toolkit.telemetry.log.level", "Trace");
 Services.prefs.setBoolPref("toolkit.telemetry.log.dump", true);
 TelemetryPing.initLogging();
+
+// Avoid timers interrupting test behavior.
+fakeSchedulerTimer(() => {}, () => {});
+fakePingSendTimer(() => {}, () => {});
+// Make pind sending predictable.
+fakeMidnightPingFuzzingDelay(0);
+

@@ -119,6 +119,7 @@ static const char *sExtensionNames[] = {
     "GL_EXT_read_format_bgra",
     "GL_EXT_robustness",
     "GL_EXT_sRGB",
+    "GL_EXT_sRGB_write_control",
     "GL_EXT_shader_texture_lod",
     "GL_EXT_texture3D",
     "GL_EXT_texture_compression_dxt1",
@@ -1689,8 +1690,9 @@ GLContext::InitExtensions()
         // 3000 appears to be buggy WRT updating sub-images of S3TC
         // textures with glCompressedTexSubImage2D. Works on Intel HD 4000
         // and Intel HD 5000/Iris that I tested.
+        // Bug 1124996: Appears to be the same on OSX Yosemite (10.10)
         if (nsCocoaFeatures::OSXVersionMajor() == 10 &&
-            nsCocoaFeatures::OSXVersionMinor() == 9 &&
+            nsCocoaFeatures::OSXVersionMinor() >= 9 &&
             Renderer() == GLRenderer::IntelHD3000)
         {
             MarkExtensionUnsupported(EXT_texture_compression_s3tc);

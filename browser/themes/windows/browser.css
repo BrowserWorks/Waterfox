@@ -1828,26 +1828,26 @@ toolbarbutton[type="socialmark"] > .toolbarbutton-icon {
       url(chrome://browser/skin/tabbrowser/tab-background-start@2x.png);
   }
 
-  .tabbrowser-tab:hover > .tab-stack > .tab-background:not([selected=true]),
+  .tabbrowser-tab:hover > .tab-stack > .tab-background:not([visuallyselected=true]),
   .tabs-newtab-button:hover {
     background-image: url(chrome://browser/skin/tabbrowser/tab-background-start@2x.png),
                       url(chrome://browser/skin/tabbrowser/tab-background-middle@2x.png),
                       url(chrome://browser/skin/tabbrowser/tab-background-end@2x.png);
   }
 
-  .tab-background-middle[selected=true] {
+  .tab-background-middle[visuallyselected=true] {
     background-image: url(chrome://browser/skin/tabbrowser/tab-active-middle@2x.png),
                       @fgTabTexture@,
                       none;
   }
 
-  .tab-background-start[selected=true]:-moz-locale-dir(ltr)::after,
-  .tab-background-end[selected=true]:-moz-locale-dir(rtl)::after {
+  .tab-background-start[visuallyselected=true]:-moz-locale-dir(ltr)::after,
+  .tab-background-end[visuallyselected=true]:-moz-locale-dir(rtl)::after {
     background-image: url(chrome://browser/skin/tabbrowser/tab-stroke-start@2x.png);
   }
 
-  .tab-background-end[selected=true]:-moz-locale-dir(ltr)::after,
-  .tab-background-start[selected=true]:-moz-locale-dir(rtl)::after {
+  .tab-background-end[visuallyselected=true]:-moz-locale-dir(ltr)::after,
+  .tab-background-start[visuallyselected=true]:-moz-locale-dir(rtl)::after {
     background-image: url(chrome://browser/skin/tabbrowser/tab-stroke-end@2x.png);
   }
 }
@@ -1856,14 +1856,14 @@ toolbarbutton[type="socialmark"] > .toolbarbutton-icon {
 /* Use lighter colors of buttons and text in the titlebar on luna-blue */
 @media (-moz-windows-theme: luna-blue) {
   #tabbrowser-tabs[movingtab] > .tabbrowser-tab[beforeselected]:not([last-visible-tab])::after,
-  .tabbrowser-tab:not([selected]):not([afterselected-visible]):not([afterhovered]):not([first-visible-tab]):not(:hover)::before,
-  #tabbrowser-tabs:not([overflow]) > .tabbrowser-tab[last-visible-tab]:not([selected]):not([beforehovered]):not(:hover)::after {
+  .tabbrowser-tab:not([visuallyselected]):not([afterselected-visible]):not([afterhovered]):not([first-visible-tab]):not(:hover)::before,
+  #tabbrowser-tabs:not([overflow]) > .tabbrowser-tab[last-visible-tab]:not([visuallyselected]):not([beforehovered]):not(:hover)::after {
     background-image: url("chrome://browser/skin/tabbrowser/tab-separator-luna-blue.png");
   }
 }
 %endif
 
-#TabsToolbar[brighttext] .tab-close-button:not(:hover):not([selected="true"]) {
+#TabsToolbar[brighttext] .tab-close-button:not(:hover):not([visuallyselected="true"]) {
   -moz-image-region: rect(0, 64px, 16px, 48px) !important;
 }
 
@@ -1878,7 +1878,7 @@ toolbarbutton[type="socialmark"] > .toolbarbutton-icon {
  * of the window (e.g. no menubar, tabs in titlebar, etc.) to make it easier to drag the window by
  * the titlebar. We don't need this in fullscreen since window dragging is not an issue there.
  */
-#main-window[tabsintitlebar][sizemode=normal] #toolbar-menubar[autohide="true"][inactive] + #TabsToolbar .tab-background-middle:not([selected=true]) {
+#main-window[tabsintitlebar][sizemode=normal] #toolbar-menubar[autohide="true"][inactive] + #TabsToolbar .tab-background-middle:not([visuallyselected=true]) {
   clip-path: url(chrome://browser/content/browser.xul#tab-hover-clip-path);
 }
 
@@ -2158,13 +2158,23 @@ toolbarbutton.bookmark-item[dragover="true"][open="true"] {
 
 .popup-notification-icon[popupid="xpinstall-disabled"],
 .popup-notification-icon[popupid="addon-progress"],
-.popup-notification-icon[popupid="addon-install-cancelled"],
 .popup-notification-icon[popupid="addon-install-blocked"],
 .popup-notification-icon[popupid="addon-install-failed"],
+.popup-notification-icon[popupid="addon-install-confirmation"],
 .popup-notification-icon[popupid="addon-install-complete"] {
   list-style-image: url(chrome://mozapps/skin/extensions/extensionGeneric.png);
   width: 32px;
   height: 32px;
+}
+
+.popup-notification-description[popupid="addon-progress"],
+.popup-notification-description[popupid="addon-install-confirmation"] {
+  width: 27em;
+  max-width: 27em;
+}
+
+.addon-install-confirmation-name {
+  font-weight: bold;
 }
 
 .popup-notification-icon[popupid="click-to-play-plugins"] {
@@ -2175,45 +2185,13 @@ toolbarbutton.bookmark-item[dragover="true"][open="true"] {
   list-style-image: url(chrome://browser/skin/notification-64.png);
 }
 
-.addon-progress-description {
-  width: 350px;
-  max-width: 350px;
-}
-
-.popup-progress-label,
-.popup-progress-meter {
-  -moz-margin-start: 0;
-  -moz-margin-end: 0;
-}
-
-.popup-progress-cancel {
-  -moz-appearance: none;
-  background: transparent;
-  border: none;
-  padding: 0;
-  margin: 0;
-  min-height: 0;
-  min-width: 0;
-  list-style-image: url(chrome://mozapps/skin/downloads/downloadButtons.png);
-  -moz-image-region: rect(0px, 32px, 16px, 16px);
-}
-
-.popup-progress-cancel:hover {
-  -moz-image-region: rect(16px, 32px, 32px, 16px);
-}
-
-.popup-progress-cancel:active {
-  -moz-image-region: rect(32px, 32px, 48px, 16px);
-}
-
 .popup-notification-icon[popupid="indexedDB-permissions-prompt"],
 .popup-notification-icon[popupid*="offline-app-requested"],
 .popup-notification-icon[popupid="offline-app-usage"] {
   list-style-image: url(chrome://global/skin/icons/question-64.png);
 }
 
-.popup-notification-icon[popupid="password-save"],
-.popup-notification-icon[popupid="password-change"] {
+.popup-notification-icon[popupid="password"] {
   list-style-image: url(chrome://mozapps/skin/passwordmgr/key-64.png);
 }
 

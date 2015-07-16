@@ -60,7 +60,6 @@ public:
   NS_DECL_ISUPPORTS_INHERITED
 
   // Accessible
-  virtual a11y::role NativeRole() override;
   virtual Relation RelationByType(RelationType aType) override;
 
 protected:
@@ -81,8 +80,6 @@ public:
   NS_DECL_ISUPPORTS_INHERITED
 
   // Accessible
-  virtual a11y::role NativeRole() override;
-  virtual already_AddRefed<nsIPersistentProperties> NativeAttributes() override;
   virtual Relation RelationByType(RelationType aType) override;
 
 protected:

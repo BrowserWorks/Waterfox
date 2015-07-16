@@ -28,13 +28,24 @@ function test() {
 
     yield selectTabProject(win);
 
+    ok(win.UI.toolboxPromise, "Toolbox promise exists");
+    yield win.UI.toolboxPromise;
+
     let project = win.AppManager.selectedProject;
     is(project.location, TEST_URI, "Location is correct");
     is(project.name, "example.com: Test Tab", "Name is correct");
 
-    yield closeWebIDE(win);
-    DebuggerServer.destroy();
+    // Ensure tab list changes are noticed
+    let tabsNode = win.document.querySelector("#project-panel-tabs");
+    is(tabsNode.querySelectorAll(".panel-item").length, 2, "2 tabs available");
     yield removeTab(tab);
+    yield waitForUpdate(win, "runtime-targets");
+    is(tabsNode.querySelectorAll(".panel-item").length, 1, "1 tab available");
+
+    yield win.Cmds.disconnectRuntime();
+    yield closeWebIDE(win);
+
+    DebuggerServer.destroy();
   }).then(finish, handleError);
 }
 
@@ -49,11 +60,12 @@ function connectToLocal(win) {
 
 function selectTabProject(win) {
   return Task.spawn(function() {
-    yield win.AppManager.listTabs();
-    win.Cmds.showProjectPanel();
-    yield nextTick();
+    yield win.Cmds.showProjectPanel();
+    yield waitForUpdate(win, "runtime-targets");
     let tabsNode = win.document.querySelector("#project-panel-tabs");
     let tabNode = tabsNode.querySelectorAll(".panel-item")[1];
+    let project = waitForUpdate(win, "project");
     tabNode.click();
+    yield project;
   });
 }

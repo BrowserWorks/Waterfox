@@ -388,6 +388,7 @@
     <!-- Certificates -->
     <tabpanel id="encryptionPanel" orient="vertical">
       <groupbox id="certSelection" align="start">
+        <caption><label>&certSelection.label;</label></caption>
         <description id="CertSelectionDesc" control="certSelection">&certSelection.description;</description>
 
         <!--

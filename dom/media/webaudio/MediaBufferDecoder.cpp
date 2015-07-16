@@ -99,16 +99,10 @@ public:
     , mLength(aLength)
     , mDecodeJob(aDecodeJob)
     , mPhase(PhaseEnum::Decode)
+    , mFirstFrameDecoded(false)
   {
     MOZ_ASSERT(aBuffer);
     MOZ_ASSERT(NS_IsMainThread());
-
-    nsCOMPtr<nsPIDOMWindow> pWindow = do_QueryInterface(mDecodeJob.mContext->GetParentObject());
-    nsCOMPtr<nsIScriptObjectPrincipal> scriptPrincipal =
-      do_QueryInterface(pWindow);
-    if (scriptPrincipal) {
-      mPrincipal = scriptPrincipal->GetPrincipal();
-    }
   }
 
   NS_IMETHOD Run();
@@ -155,11 +149,11 @@ private:
   uint32_t mLength;
   WebAudioDecodeJob& mDecodeJob;
   PhaseEnum mPhase;
-  nsCOMPtr<nsIPrincipal> mPrincipal;
   nsRefPtr<BufferDecoder> mBufferDecoder;
   nsRefPtr<MediaDecoderReader> mDecoderReader;
   MediaInfo mMediaInfo;
   MediaQueue<AudioData> mAudioQueue;
+  bool mFirstFrameDecoded;
 };
 
 NS_IMETHODIMP
@@ -186,9 +180,16 @@ MediaDecodeTask::CreateReader()
 {
   MOZ_ASSERT(NS_IsMainThread());
 
+
+  nsCOMPtr<nsIPrincipal> principal;
+  nsCOMPtr<nsIScriptObjectPrincipal> sop = do_QueryInterface(mDecodeJob.mContext->GetParentObject());
+  if (sop) {
+    principal = sop->GetPrincipal();
+  }
+
   nsRefPtr<BufferMediaResource> resource =
     new BufferMediaResource(static_cast<uint8_t*> (mBuffer),
-                            mLength, mPrincipal, mContentType);
+                            mLength, principal, mContentType);
 
   MOZ_ASSERT(!mBufferDecoder);
   mBufferDecoder = new BufferDecoder(resource);
@@ -248,7 +249,7 @@ MediaDecodeTask::Decode()
 
   // Tell the decoder reader that we are not going to play the data directly,
   // and that we should not reject files with more channels than the audio
-  // bakend support.
+  // backend support.
   mDecoderReader->SetIgnoreAudioOutputFormat();
 
   nsAutoPtr<MetadataTags> tags;
@@ -281,6 +282,10 @@ MediaDecodeTask::SampleDecoded(AudioData* aData)
 {
   MOZ_ASSERT(!NS_IsMainThread());
   mAudioQueue.Push(aData);
+  if (!mFirstFrameDecoded) {
+    mDecoderReader->ReadUpdatedMetadata(&mMediaInfo);
+    mFirstFrameDecoded = true;
+  }
   RequestSample();
 }
 

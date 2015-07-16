@@ -21,7 +21,7 @@ public:
   AudioTrackList(nsPIDOMWindow* aOwnerWindow, HTMLMediaElement* aMediaElement)
     : MediaTrackList(aOwnerWindow, aMediaElement) {}
 
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   AudioTrack* operator[](uint32_t aIndex);
 

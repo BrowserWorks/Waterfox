@@ -14,6 +14,7 @@
 
 #include "jit/BaselineFrame.h"
 #include "jit/BaselineJIT.h"
+#include "jit/JitcodeMap.h"
 #include "jit/JitFrameIterator.h"
 #include "jit/JitFrames.h"
 #include "vm/StringBuffer.h"
@@ -87,6 +88,15 @@ SPSProfiler::enable(bool enabled)
      */
     ReleaseAllJITCode(rt->defaultFreeOp());
 
+    // This function is called when the Gecko profiler makes a new TableTicker
+    // (and thus, a new circular buffer). Set all current entries in the
+    // JitcodeGlobalTable as expired and reset the buffer generation and lap
+    // count.
+    if (rt->hasJitRuntime() && rt->jitRuntime()->hasJitcodeGlobalTable())
+        rt->jitRuntime()->getJitcodeGlobalTable()->setAllEntriesAsExpired(rt);
+    rt->resetProfilerSampleBufferGen();
+    rt->resetProfilerSampleBufferLapCount();
+
     // Ensure that lastProfilingFrame is null before 'enabled' becomes true.
     if (rt->jitActivation) {
         rt->jitActivation->setLastProfilingFrame(nullptr);
@@ -106,8 +116,25 @@ SPSProfiler::enable(bool enabled)
      * stack.
      */
     if (rt->jitActivation) {
-        void* lastProfilingFrame = GetTopProfilingJitFrame(rt->jitTop);
-        rt->jitActivation->setLastProfilingFrame(lastProfilingFrame);
+        // Walk through all activations, and set their lastProfilingFrame appropriately.
+        if (enabled) {
+            void* lastProfilingFrame = GetTopProfilingJitFrame(rt->jitTop);
+            jit::JitActivation* jitActivation = rt->jitActivation;
+            while (jitActivation) {
+                jitActivation->setLastProfilingFrame(lastProfilingFrame);
+                jitActivation->setLastProfilingCallSite(nullptr);
+
+                lastProfilingFrame = GetTopProfilingJitFrame(jitActivation->prevJitTop());
+                jitActivation = jitActivation->prevJitActivation();
+            }
+        } else {
+            jit::JitActivation* jitActivation = rt->jitActivation;
+            while (jitActivation) {
+                jitActivation->setLastProfilingFrame(nullptr);
+                jitActivation->setLastProfilingCallSite(nullptr);
+                jitActivation = jitActivation->prevJitActivation();
+            }
+        }
     }
 }
 
@@ -449,8 +476,8 @@ AutoSuppressProfilerSampling::AutoSuppressProfilerSampling(JSRuntime* rt
 
 AutoSuppressProfilerSampling::~AutoSuppressProfilerSampling()
 {
-        if (previouslyEnabled_)
-            rt_->enableProfilerSampling();
+    if (previouslyEnabled_)
+        rt_->enableProfilerSampling();
 }
 
 void*

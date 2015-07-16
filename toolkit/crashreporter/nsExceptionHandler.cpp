@@ -160,7 +160,7 @@ static const XP_CHAR dumpFileExtension[] = XP_TEXT(".dmp");
 static const XP_CHAR extraFileExtension[] = XP_TEXT(".extra");
 static const XP_CHAR memoryReportExtension[] = XP_TEXT(".memory.json.gz");
 
-static const char kCrashMainID[] = "crash.main.1\n";
+static const char kCrashMainID[] = "crash.main.2\n";
 
 static google_breakpad::ExceptionHandler* gExceptionHandler = nullptr;
 
@@ -712,6 +712,13 @@ bool MinidumpCallback(
       WriteFile(hFile, crashTimeString, crashTimeStringLen, &nBytes, nullptr);
       WriteFile(hFile, "\n", 1, &nBytes, nullptr);
       WriteFile(hFile, id_ascii, strlen(id_ascii), &nBytes, nullptr);
+      if (oomAllocationSizeBufferLen) {
+        WriteFile(hFile, "\n", 1, &nBytes, nullptr);
+        WriteFile(hFile, kOOMAllocationSizeParameter,
+                  kOOMAllocationSizeParameterLen, &nBytes, nullptr);
+        WriteFile(hFile, oomAllocationSizeBuffer, oomAllocationSizeBufferLen,
+                  &nBytes, nullptr);
+      }
       CloseHandle(hFile);
     }
 #elif defined(XP_UNIX)
@@ -723,6 +730,13 @@ bool MinidumpCallback(
       unused << sys_write(fd, crashTimeString, crashTimeStringLen);
       unused << sys_write(fd, "\n", 1);
       unused << sys_write(fd, id_ascii, strlen(id_ascii));
+      if (oomAllocationSizeBufferLen) {
+        unused << sys_write(fd, "\n", 1);
+        unused << sys_write(fd, kOOMAllocationSizeParameter,
+                            kOOMAllocationSizeParameterLen);
+        unused << sys_write(fd, oomAllocationSizeBuffer,
+                            oomAllocationSizeBufferLen);
+      }
       sys_close(fd);
     }
 #endif
@@ -3339,6 +3353,53 @@ void AddLibraryMapping(const char* library_name,
                                       mapping_length,
                                       file_offset);
   }
+}
+#endif
+
+#ifdef XP_WIN
+void RecordCrashingModule(void* returnAddress)
+{
+  HMODULE module = nullptr;
+  if (!GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+                         GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                         (LPCTSTR)returnAddress,
+                         &module)) {
+    return;
+  }
+
+  wchar_t moduleName[MAX_PATH];
+  if (!GetModuleFileNameW(module, moduleName, ArrayLength(moduleName))) {
+    return;
+  }
+
+  wchar_t tempPath[MAX_PATH];
+  if (!GetTempPathW(ArrayLength(tempPath), tempPath)) {
+    return;
+  }
+
+  if (wcscat_s(tempPath, ArrayLength(tempPath), L"FirefoxBlockedDLL.txt")) {
+    return;
+  }
+
+  HANDLE outputFile = CreateFileW(tempPath,
+                                  GENERIC_WRITE,
+                                  0,
+                                  nullptr,
+                                  CREATE_ALWAYS,
+                                  FILE_ATTRIBUTE_NORMAL,
+                                  nullptr);
+
+  if (outputFile == INVALID_HANDLE_VALUE) {
+    return;
+  }
+
+  DWORD nBytes;
+  WriteFile(outputFile,
+            moduleName,
+            wcslen(moduleName)*sizeof(wchar_t),
+            &nBytes,
+            nullptr);
+  CloseHandle(outputFile);
 }
 #endif
 

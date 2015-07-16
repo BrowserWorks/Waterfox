@@ -16,7 +16,7 @@ interface nsIURI;
  * location, stop or restart an in process load, or determine where the object
  * has previously gone.
  */
-[scriptable, uuid(e186891c-b053-4fe7-a268-a1c80234b8a2)]
+[scriptable, uuid(0e92d522-53a5-4af6-9a24-4eccdcbf4f91)]
 interface nsIWebNavigation : nsISupports
 {
   /**

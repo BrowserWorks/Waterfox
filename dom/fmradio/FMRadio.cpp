@@ -33,7 +33,7 @@ using mozilla::Preferences;
 BEGIN_FMRADIO_NAMESPACE
 
 class FMRadioRequest final : public FMRadioReplyRunnable
-                               , public DOMRequest
+                           , public DOMRequest
 {
 public:
   NS_DECL_ISUPPORTS_INHERITED
@@ -59,8 +59,6 @@ public:
     mFMRadio = do_GetWeakReference(static_cast<nsIDOMEventTarget*>(aFMRadio));
     mType = aType;
   }
-
-  ~FMRadioRequest() { }
 
   NS_IMETHODIMP
   Run()
@@ -96,6 +94,9 @@ public:
 
     return NS_OK;
   }
+
+protected:
+  ~FMRadioRequest() { }
 
 private:
   FMRadioRequestArgs::Type mType;
@@ -184,9 +185,9 @@ FMRadio::Shutdown()
 }
 
 JSObject*
-FMRadio::WrapObject(JSContext* aCx)
+FMRadio::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return FMRadioBinding::Wrap(aCx, this);
+  return FMRadioBinding::Wrap(aCx, this, aGivenProto);
 }
 
 void

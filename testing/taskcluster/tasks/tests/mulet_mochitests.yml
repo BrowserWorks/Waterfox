@@ -3,7 +3,7 @@ $inherits:
   from: 'tasks/test.yml'
 task:
   metadata:
-    name: '[TC] Mulet Mochitests ({{chunk}})'
+    name: '[TC] Mulet Mochitests ( {{chunk}} )'
     description: Mulet Mochitest run {{chunk}}
 
   payload:
@@ -14,6 +14,7 @@ task:
         --no-read-buildbot-config
         --config-file ./mozharness/configs/unittests/linux_unittest.py
         --config-file ./mozharness_configs/linux_mulet_config.py
+        --config-file ./mozharness_configs/remove_executables.py
         --installer-url {{build_url}}
         --test-url {{tests_url}}
         --download-symbols ondemand
@@ -27,8 +28,12 @@ task:
         expires: '{{#from_now}}1 year{{/from_now}}'
 
   extra:
+    treeherderEnv:
+      - production
+      - staging
+    chunks:
+      total: 5
     treeherder:
-      groupSymbol: tc-M
+      groupSymbol: M
       groupName: Mulet mochitests
       symbol: {{chunk}}
-

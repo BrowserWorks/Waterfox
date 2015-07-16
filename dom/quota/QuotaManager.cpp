@@ -30,6 +30,7 @@
 #include "mozilla/CondVar.h"
 #include "mozilla/dom/asmjscache/AsmJSCache.h"
 #include "mozilla/dom/FileService.h"
+#include "mozilla/dom/cache/QuotaClient.h"
 #include "mozilla/dom/indexedDB/ActorsParent.h"
 #include "mozilla/Mutex.h"
 #include "mozilla/LazyIdleThread.h"
@@ -262,8 +263,8 @@ private:
 // thread. When on the main thread the runnable will call the callback and then
 // notify the QuotaManager that the job has been completed.
 class AsyncUsageRunnable final : public UsageInfo,
-                                     public nsRunnable,
-                                     public nsIQuotaRequest
+                                 public nsRunnable,
+                                 public nsIQuotaRequest
 {
   enum CallbackState {
     // Not yet run.
@@ -751,16 +752,6 @@ public:
     Append(':');
     Append(aOrigin);
   }
-};
-
-struct MOZ_STACK_CLASS RemoveQuotaInfo
-{
-  RemoveQuotaInfo(PersistenceType aPersistenceType, const nsACString& aPattern)
-  : persistenceType(aPersistenceType), pattern(aPattern)
-  { }
-
-  PersistenceType persistenceType;
-  nsCString pattern;
 };
 
 struct MOZ_STACK_CLASS InactiveOriginsInfo
@@ -1419,8 +1410,8 @@ QuotaManager::Init()
     NS_WARNING("Unable to respond to testing pref changes!");
   }
 
-  static_assert(Client::IDB == 0 && Client::ASMJS == 1 && Client::TYPE_MAX == 2,
-                "Fix the registration!");
+  static_assert(Client::IDB == 0 && Client::ASMJS == 1 && Client::DOMCACHE == 2 &&
+                Client::TYPE_MAX == 3, "Fix the registration!");
 
   NS_ASSERTION(mClients.Capacity() == Client::TYPE_MAX,
                "Should be using an auto array with correct capacity!");
@@ -1430,6 +1421,7 @@ QuotaManager::Init()
   // Register clients.
   mClients.AppendElement(idbClient);
   mClients.AppendElement(asmjscache::CreateClient());
+  mClients.AppendElement(cache::CreateQuotaClient());
 
   return NS_OK;
 }
@@ -3534,7 +3526,6 @@ QuotaManager::CollectOriginsForEviction(uint64_t aMinSizeToBeFreed,
   // Add origins that have live persistent storages.
   mDefaultLiveStorageTable.EnumerateRead(AddLiveStorageOrigins,
                                          &defaultOriginCollection);
-
 
   // Enumerate inactive origins. This must be protected by the mutex.
   nsTArray<OriginInfo*> inactiveOrigins;

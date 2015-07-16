@@ -22,7 +22,7 @@ class Promise;
 typedef ArrayBufferViewOrArrayBuffer CryptoOperationData;
 
 class SubtleCrypto final : public nsISupports,
-                               public nsWrapperCache
+                           public nsWrapperCache
 {
   ~SubtleCrypto() {}
 
@@ -38,7 +38,7 @@ public:
     return mParent;
   }
 
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   already_AddRefed<Promise> Encrypt(JSContext* cx,
                                     const ObjectOrString& algorithm,

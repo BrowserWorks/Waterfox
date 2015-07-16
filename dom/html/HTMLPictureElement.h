@@ -17,7 +17,7 @@ namespace mozilla {
 namespace dom {
 
 class HTMLPictureElement final : public nsGenericHTMLElement,
-                                    public nsIDOMHTMLPictureElement
+                                 public nsIDOMHTMLPictureElement
 {
 public:
   explicit HTMLPictureElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
@@ -36,7 +36,7 @@ public:
 protected:
   virtual ~HTMLPictureElement();
 
-  virtual JSObject* WrapNode(JSContext* aCx) override;
+  virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 };
 
 } // namespace dom

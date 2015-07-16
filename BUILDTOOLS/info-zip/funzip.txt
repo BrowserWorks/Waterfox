@@ -1,0 +1,92 @@
+FUNZIP(1L)                                                          FUNZIP(1L)
+
+NAME
+       funzip - filter for extracting from a ZIP archive in a pipe
+
+SYNOPSIS
+       funzip [-password] [input[.zip|.gz]]
+
+ARGUMENTS
+       [-password]
+              Optional  password  to  be  used  if  ZIP  archive is encrypted.
+              Decryption may not be supported at some sites.  See  DESCRIPTION
+              for more details.
+
+       [input[.zip|.gz]]
+              Optional  input  archive file specification. See DESCRIPTION for
+              details.
+
+DESCRIPTION
+       funzip without a file argument acts as a filter; that  is,  it  assumes
+       that  a  ZIP archive (or a gzip'd(1) file) is being piped into standard
+       input, and it extracts the first member from  the  archive  to  stdout.
+       When  stdin comes from a tty device, funzip assumes that this cannot be
+       a stream of (binary) compressed data  and  shows  a  short  help  text,
+       instead.   If  there  is  a  file argument, then input is read from the
+       specified file instead of from stdin.
+
+       A password for encrypted zip files can be specified on the command line
+       (preceding  the  file  name,  if  any) by prefixing the password with a
+       dash.  Note that this constitutes a security risk on many systems; cur-
+       rently  running  processes are often visible via simple commands (e.g.,
+       ps(1) under Unix), and command-line histories  can  be  read.   If  the
+       first  entry  of the zip file is encrypted and no password is specified
+       on the command line, then the user is prompted for a password  and  the
+       password is not echoed on the console.
+
+       Given the limitation on single-member extraction, funzip is most useful
+       in conjunction with a secondary archiver program such as  tar(1).   The
+       following  section  includes  an example illustrating this usage in the
+       case of disk backups to tape.
+
+EXAMPLES
+       To use funzip to extract the first member file of the archive  test.zip
+       and to pipe it into more(1):
+
+           funzip test.zip | more
+
+       To  use  funzip  to  test the first member file of test.zip (any errors
+       will be reported on standard error):
+
+           funzip test.zip > /dev/null
+
+       To use zip and funzip in place of compress(1) and zcat(1) (or  gzip(1L)
+       and gzcat(1L)) for tape backups:
+
+           tar cf - . | zip -7 | dd of=/dev/nrst0 obs=8k
+           dd if=/dev/nrst0 ibs=8k | funzip | tar xf -
+
+       (where, for example, nrst0 is a SCSI tape drive).
+
+BUGS
+       When  piping  an encrypted file into more and allowing funzip to prompt
+       for password, the terminal may sometimes be reset to a  non-echo  mode.
+       This  is  apparently  due to a race condition between the two programs;
+       funzip changes the terminal mode to  non-echo  before  more  reads  its
+       state,  and  more  then  ``restores''  the terminal to this mode before
+       exiting.  To recover, run funzip on  the  same  file  but  redirect  to
+       /dev/null  rather  than piping into more; after prompting again for the
+       password, funzip will reset the terminal properly.
+
+       There is presently no way to extract any member but the  first  from  a
+       ZIP  archive.   This would be useful in the case where a ZIP archive is
+       included within another archive.  In the case where the first member is
+       a directory, funzip simply creates the directory and exits.
+
+       The  functionality  of  funzip should be incorporated into unzip itself
+       (future release).
+
+SEE ALSO
+       gzip(1L), unzip(1L), unzipsfx(1L), zip(1L), zipcloak(1L),  zipinfo(1L),
+       zipnote(1L), zipsplit(1L)
+
+URL
+       The Info-ZIP home page is currently at
+           http://www.info-zip.org/pub/infozip/
+       or
+           ftp://ftp.info-zip.org/pub/infozip/ .
+
+AUTHOR
+       Mark Adler (Info-ZIP)
+
+Info-ZIP                     20 April 2009 (v3.95)                  FUNZIP(1L)

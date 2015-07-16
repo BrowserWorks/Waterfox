@@ -129,7 +129,8 @@ nsresult HTMLVideoElement::SetAcceptHeader(nsIHttpChannel* aChannel)
 bool
 HTMLVideoElement::IsInteractiveHTMLContent(bool aIgnoreTabindex) const
 {
-  return HasAttr(kNameSpaceID_None, nsGkAtoms::controls);
+  return HasAttr(kNameSpaceID_None, nsGkAtoms::controls) ||
+         HTMLMediaElement::IsInteractiveHTMLContent(aIgnoreTabindex);
 }
 
 uint32_t HTMLVideoElement::MozParsedFrames() const
@@ -183,9 +184,9 @@ bool HTMLVideoElement::MozHasAudio() const
 }
 
 JSObject*
-HTMLVideoElement::WrapNode(JSContext* aCx)
+HTMLVideoElement::WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return HTMLVideoElementBinding::Wrap(aCx, this);
+  return HTMLVideoElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 void

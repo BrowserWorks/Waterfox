@@ -449,7 +449,7 @@ protected:
   void AppendUniversalRule(const RuleSelectorPair& aRuleInfo);
 
   int32_t     mRuleCount;
-  // The hashtables are lazily initialized.
+
   PLDHashTable mIdTable;
   PLDHashTable mClassTable;
   PLDHashTable mTagTable;
@@ -508,6 +508,20 @@ RuleHash::RuleHash(bool aQuirksMode)
 #endif
 {
   MOZ_COUNT_CTOR(RuleHash);
+
+  PL_DHashTableInit(&mIdTable, aQuirksMode ? &RuleHash_IdTable_CIOps.ops
+                                           : &RuleHash_IdTable_CSOps.ops,
+                    sizeof(RuleHashTableEntry));
+
+  PL_DHashTableInit(&mClassTable, aQuirksMode ? &RuleHash_ClassTable_CIOps.ops
+                                              : &RuleHash_ClassTable_CSOps.ops,
+                    sizeof(RuleHashTableEntry));
+
+  PL_DHashTableInit(&mTagTable, &RuleHash_TagTable_Ops,
+                    sizeof(RuleHashTagTableEntry));
+
+  PL_DHashTableInit(&mNameSpaceTable, &RuleHash_NameSpaceTable_Ops,
+                    sizeof(RuleHashTableEntry));
 }
 
 RuleHash::~RuleHash()
@@ -550,18 +564,10 @@ RuleHash::~RuleHash()
     delete [] mEnumList;
   }
   // delete arena for strings and small objects
-  if (mIdTable.IsInitialized()) {
-    PL_DHashTableFinish(&mIdTable);
-  }
-  if (mClassTable.IsInitialized()) {
-    PL_DHashTableFinish(&mClassTable);
-  }
-  if (mTagTable.IsInitialized()) {
-    PL_DHashTableFinish(&mTagTable);
-  }
-  if (mNameSpaceTable.IsInitialized()) {
-    PL_DHashTableFinish(&mNameSpaceTable);
-  }
+  PL_DHashTableFinish(&mIdTable);
+  PL_DHashTableFinish(&mClassTable);
+  PL_DHashTableFinish(&mTagTable);
+  PL_DHashTableFinish(&mNameSpaceTable);
 }
 
 void RuleHash::AppendRuleToTable(PLDHashTable* aTable, const void* aKey,
@@ -600,31 +606,15 @@ void RuleHash::AppendRule(const RuleSelectorPair& aRuleInfo)
     selector = selector->mNext;
   }
   if (nullptr != selector->mIDList) {
-    if (!mIdTable.IsInitialized()) {
-      PL_DHashTableInit(&mIdTable,
-                        mQuirksMode ? &RuleHash_IdTable_CIOps.ops
-                                    : &RuleHash_IdTable_CSOps.ops,
-                        sizeof(RuleHashTableEntry));
-    }
     AppendRuleToTable(&mIdTable, selector->mIDList->mAtom, aRuleInfo);
     RULE_HASH_STAT_INCREMENT(mIdSelectors);
   }
   else if (nullptr != selector->mClassList) {
-    if (!mClassTable.IsInitialized()) {
-      PL_DHashTableInit(&mClassTable,
-                        mQuirksMode ? &RuleHash_ClassTable_CIOps.ops
-                                    : &RuleHash_ClassTable_CSOps.ops,
-                        sizeof(RuleHashTableEntry));
-    }
     AppendRuleToTable(&mClassTable, selector->mClassList->mAtom, aRuleInfo);
     RULE_HASH_STAT_INCREMENT(mClassSelectors);
   }
   else if (selector->mLowercaseTag) {
     RuleValue ruleValue(aRuleInfo, mRuleCount++, mQuirksMode);
-    if (!mTagTable.IsInitialized()) {
-      PL_DHashTableInit(&mTagTable, &RuleHash_TagTable_Ops,
-                        sizeof(RuleHashTagTableEntry));
-    }
     AppendRuleToTagTable(&mTagTable, selector->mLowercaseTag, ruleValue);
     RULE_HASH_STAT_INCREMENT(mTagSelectors);
     if (selector->mCasedTag &&
@@ -634,10 +624,6 @@ void RuleHash::AppendRule(const RuleSelectorPair& aRuleInfo)
     }
   }
   else if (kNameSpaceID_Unknown != selector->mNameSpace) {
-    if (!mNameSpaceTable.IsInitialized()) {
-      PL_DHashTableInit(&mNameSpaceTable, &RuleHash_NameSpaceTable_Ops,
-                        sizeof(RuleHashTableEntry));
-    }
     AppendRuleToTable(&mNameSpaceTable,
                       NS_INT32_TO_PTR(selector->mNameSpace), aRuleInfo);
     RULE_HASH_STAT_INCREMENT(mNameSpaceSelectors);
@@ -668,7 +654,7 @@ void RuleHash::EnumerateAllRules(Element* aElement, ElementDependentRuleProcesso
                                  NodeMatchContext& aNodeContext)
 {
   int32_t nameSpace = aElement->GetNameSpaceID();
-  nsIAtom* tag = aElement->Tag();
+  nsIAtom* tag = aElement->NodeInfo()->NameAtom();
   nsIAtom* id = aElement->GetID();
   const nsAttrValue* classList = aElement->GetClasses();
 
@@ -694,7 +680,7 @@ void RuleHash::EnumerateAllRules(Element* aElement, ElementDependentRuleProcesso
     RULE_HASH_STAT_INCREMENT_LIST_COUNT(mUniversalRules, mElementUniversalCalls);
   }
   // universal rules within the namespace
-  if (kNameSpaceID_Unknown != nameSpace && mNameSpaceTable.IsInitialized()) {
+  if (kNameSpaceID_Unknown != nameSpace && mNameSpaceTable.EntryCount() > 0) {
     RuleHashTableEntry *entry = static_cast<RuleHashTableEntry*>
                                            (PL_DHashTableSearch(&mNameSpaceTable, NS_INT32_TO_PTR(nameSpace)));
     if (entry) {
@@ -702,7 +688,7 @@ void RuleHash::EnumerateAllRules(Element* aElement, ElementDependentRuleProcesso
       RULE_HASH_STAT_INCREMENT_LIST_COUNT(entry->mRules, mElementNameSpaceCalls);
     }
   }
-  if (mTagTable.IsInitialized()) {
+  if (mTagTable.EntryCount() > 0) {
     RuleHashTableEntry *entry = static_cast<RuleHashTableEntry*>
                                            (PL_DHashTableSearch(&mTagTable, tag));
     if (entry) {
@@ -710,7 +696,7 @@ void RuleHash::EnumerateAllRules(Element* aElement, ElementDependentRuleProcesso
       RULE_HASH_STAT_INCREMENT_LIST_COUNT(entry->mRules, mElementTagCalls);
     }
   }
-  if (id && mIdTable.IsInitialized()) {
+  if (id && mIdTable.EntryCount() > 0) {
     RuleHashTableEntry *entry = static_cast<RuleHashTableEntry*>
                                            (PL_DHashTableSearch(&mIdTable, id));
     if (entry) {
@@ -718,7 +704,7 @@ void RuleHash::EnumerateAllRules(Element* aElement, ElementDependentRuleProcesso
       RULE_HASH_STAT_INCREMENT_LIST_COUNT(entry->mRules, mElementIdCalls);
     }
   }
-  if (mClassTable.IsInitialized()) {
+  if (mClassTable.EntryCount() > 0) {
     for (int32_t index = 0; index < classCount; ++index) {
       RuleHashTableEntry *entry = static_cast<RuleHashTableEntry*>
                                              (PL_DHashTableSearch(&mClassTable, classList->AtomAt(index)));
@@ -781,29 +767,21 @@ RuleHash::SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const
 {
   size_t n = 0;
 
-  if (mIdTable.IsInitialized()) {
-    n += PL_DHashTableSizeOfExcludingThis(&mIdTable,
-                                          SizeOfRuleHashTableEntry,
-                                          aMallocSizeOf);
-  }
+  n += PL_DHashTableSizeOfExcludingThis(&mIdTable,
+                                        SizeOfRuleHashTableEntry,
+                                        aMallocSizeOf);
 
-  if (mClassTable.IsInitialized()) {
-    n += PL_DHashTableSizeOfExcludingThis(&mClassTable,
-                                          SizeOfRuleHashTableEntry,
-                                          aMallocSizeOf);
-  }
+  n += PL_DHashTableSizeOfExcludingThis(&mClassTable,
+                                        SizeOfRuleHashTableEntry,
+                                        aMallocSizeOf);
 
-  if (mTagTable.IsInitialized()) {
-    n += PL_DHashTableSizeOfExcludingThis(&mTagTable,
-                                          SizeOfRuleHashTableEntry,
-                                          aMallocSizeOf);
-  }
+  n += PL_DHashTableSizeOfExcludingThis(&mTagTable,
+                                        SizeOfRuleHashTableEntry,
+                                        aMallocSizeOf);
 
-  if (mNameSpaceTable.IsInitialized()) {
-    n += PL_DHashTableSizeOfExcludingThis(&mNameSpaceTable,
-                                          SizeOfRuleHashTableEntry,
-                                          aMallocSizeOf);
-  }
+  n += PL_DHashTableSizeOfExcludingThis(&mNameSpaceTable,
+                                        SizeOfRuleHashTableEntry,
+                                        aMallocSizeOf);
 
   n += mUniversalRules.SizeOfExcludingThis(aMallocSizeOf);
 
@@ -1683,7 +1661,7 @@ StateSelectorMatches(Element* aElement,
                                            NS_EVENT_STATE_HOVER) &&
       aTreeMatchContext.mCompatMode == eCompatibility_NavQuirks &&
       ActiveHoverQuirkMatches(aSelector, aSelectorFlags) &&
-      aElement->IsHTML() && !nsCSSRuleProcessor::IsLink(aElement)) {
+      aElement->IsHTMLElement() && !nsCSSRuleProcessor::IsLink(aElement)) {
     // In quirks mode, only make links sensitive to selectors ":active"
     // and ":hover".
     return false;
@@ -1762,9 +1740,9 @@ static bool SelectorMatches(Element* aElement,
 
   if (aSelector->mLowercaseTag) {
     nsIAtom* selectorTag =
-      (aTreeMatchContext.mIsHTMLDocument && aElement->IsHTML()) ?
+      (aTreeMatchContext.mIsHTMLDocument && aElement->IsHTMLElement()) ?
         aSelector->mLowercaseTag : aSelector->mCasedTag;
-    if (selectorTag != aElement->Tag()) {
+    if (selectorTag != aElement->NodeInfo()->NameAtom()) {
       return false;
     }
   }
@@ -1875,7 +1853,7 @@ static bool SelectorMatches(Element* aElement,
           } while (child &&
                    (!IsSignificantChild(child, true, false) ||
                     (child->GetNameSpaceID() == aElement->GetNameSpaceID() &&
-                     child->Tag()->Equals(nsDependentString(pseudoClass->u.mString)))));
+                     child->NodeInfo()->NameAtom()->Equals(nsDependentString(pseudoClass->u.mString)))));
           if (child != nullptr) {
             return false;
           }
@@ -2078,7 +2056,7 @@ static bool SelectorMatches(Element* aElement,
         break;
 
       case nsCSSPseudoClasses::ePseudoClass_mozIsHTML:
-        if (!aTreeMatchContext.mIsHTMLDocument || !aElement->IsHTML()) {
+        if (!aTreeMatchContext.mIsHTMLDocument || !aElement->IsHTMLElement()) {
           return false;
         }
         break;
@@ -2157,7 +2135,7 @@ static bool SelectorMatches(Element* aElement,
 
       case nsCSSPseudoClasses::ePseudoClass_mozTableBorderNonzero:
         {
-          if (!aElement->IsHTML(nsGkAtoms::table)) {
+          if (!aElement->IsHTMLElement(nsGkAtoms::table)) {
             return false;
           }
           const nsAttrValue *val = aElement->GetParsedAttr(nsGkAtoms::border);
@@ -2252,7 +2230,7 @@ static bool SelectorMatches(Element* aElement,
 
       do {
         bool isHTML =
-          (aTreeMatchContext.mIsHTMLDocument && aElement->IsHTML());
+          (aTreeMatchContext.mIsHTMLDocument && aElement->IsHTMLElement());
         matchAttribute = isHTML ? attr->mLowercaseAttr : attr->mCasedAttr;
         if (attr->mNameSpace == kNameSpaceID_Unknown) {
           // Attr selector with a wildcard namespace.  We have to examine all
@@ -3713,7 +3691,7 @@ AncestorFilter::PushAncestor(Element *aElement)
 #ifdef DEBUG
   mElements.AppendElement(aElement);
 #endif
-  mHashes.AppendElement(aElement->Tag()->hash());
+  mHashes.AppendElement(aElement->NodeInfo()->NameAtom()->hash());
   nsIAtom *id = aElement->GetID();
   if (id) {
     mHashes.AppendElement(id->hash());

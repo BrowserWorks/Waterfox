@@ -398,10 +398,28 @@ BluetoothServiceChildProcess::DisconnectGattClientInternal(
 }
 
 void
+BluetoothServiceChildProcess::DiscoverGattServicesInternal(
+  const nsAString& aAppUuid, BluetoothReplyRunnable* aRunnable)
+{
+  SendRequest(aRunnable,
+    DiscoverGattServicesRequest(nsString(aAppUuid)));
+}
+
+void
 BluetoothServiceChildProcess::UnregisterGattClientInternal(
   int aClientIf, BluetoothReplyRunnable* aRunnable)
 {
   SendRequest(aRunnable, UnregisterGattClientRequest(aClientIf));
+}
+
+void
+BluetoothServiceChildProcess::GattClientReadRemoteRssiInternal(
+  int aClientIf, const nsAString& aDeviceAddress,
+  BluetoothReplyRunnable* aRunnable)
+{
+  SendRequest(aRunnable,
+              GattClientReadRemoteRssiRequest(aClientIf,
+                                              nsString(aDeviceAddress)));
 }
 
 nsresult

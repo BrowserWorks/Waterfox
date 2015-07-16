@@ -21,7 +21,7 @@ namespace mozilla {
 namespace dom {
 
 class AudioParam final : public nsWrapperCache,
-                             public AudioParamTimeline
+                         public AudioParamTimeline
 {
   virtual ~AudioParam();
 
@@ -46,7 +46,7 @@ public:
     return mNode->Context()->DOMTimeToStreamTime(aTime);
   }
 
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // We override SetValueCurveAtTime to convert the Float32Array to the wrapper
   // object.

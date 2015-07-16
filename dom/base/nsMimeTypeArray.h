@@ -17,7 +17,7 @@ class nsMimeType;
 class nsPluginElement;
 
 class nsMimeTypeArray final : public nsISupports,
-                                  public nsWrapperCache
+                              public nsWrapperCache
 {
 public:
   explicit nsMimeTypeArray(nsPIDOMWindow* aWindow);
@@ -26,7 +26,7 @@ public:
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(nsMimeTypeArray)
 
   nsPIDOMWindow* GetParentObject() const;
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   void Refresh();
 
@@ -69,7 +69,7 @@ public:
              uint32_t aPluginTagMimeIndex, const nsAString& aMimeType);
   nsMimeType(nsPIDOMWindow* aWindow, const nsAString& aMimeType);
   nsPIDOMWindow* GetParentObject() const;
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   const nsString& Type() const
   {

@@ -48,6 +48,42 @@ function b2gStart() {
   webNav.loadURI(url, null, null, null, null);
 }
 
+let TabDestroyObserver = {
+  outstanding: new Set(),
+  promiseResolver: null,
+
+  init: function() {
+    Services.obs.addObserver(this, "message-manager-close", false);
+    Services.obs.addObserver(this, "message-manager-disconnect", false);
+  },
+
+  destroy: function() {
+    Services.obs.removeObserver(this, "message-manager-close");
+    Services.obs.removeObserver(this, "message-manager-disconnect");
+  },
+
+  observe: function(subject, topic, data) {
+    if (topic == "message-manager-close") {
+      this.outstanding.add(subject);
+    } else if (topic == "message-manager-disconnect") {
+      this.outstanding.delete(subject);
+      if (!this.outstanding.size && this.promiseResolver) {
+        this.promiseResolver();
+      }
+    }
+  },
+
+  wait: function() {
+    if (!this.outstanding.size) {
+      return Promise.resolve();
+    }
+
+    return new Promise((resolve) => {
+      this.promiseResolver = resolve;
+    });
+  },
+};
+
 function testInit() {
   gConfig = readConfig();
   if (gConfig.testRoot == "browser" ||
@@ -88,7 +124,16 @@ function testInit() {
   }
   if (gConfig.e10s) {
     e10s_init();
+    let globalMM = Cc["@mozilla.org/globalmessagemanager;1"]
+                     .getService(Ci.nsIMessageListenerManager);
+    globalMM.loadFrameScript("chrome://mochikit/content/shutdown-leaks-collector.js", true);
+  } else {
+    // In non-e10s, only run the ShutdownLeaksCollector in the parent process.
+    Components.utils.import("chrome://mochikit/content/ShutdownLeaksCollector.jsm");
   }
+
+  let gmm = Cc["@mozilla.org/globalmessagemanager;1"].getService(Ci.nsIMessageListenerManager);
+  gmm.loadFrameScript("chrome://mochikit/content/tests/SimpleTest/AsyncUtilsContent.js", true);
 }
 
 function Tester(aTests, aDumper, aCallback) {
@@ -99,6 +144,7 @@ function Tester(aTests, aDumper, aCallback) {
   this.openedURLs = {};
 
   this._scriptLoader = Services.scriptloader;
+  this.EventUtils = {};
   this._scriptLoader.loadSubScript("chrome://mochikit/content/tests/SimpleTest/EventUtils.js", this.EventUtils);
   var simpleTestScope = {};
   this._scriptLoader.loadSubScript("chrome://mochikit/content/tests/SimpleTest/specialpowersAPI.js", simpleTestScope);
@@ -179,6 +225,8 @@ Tester.prototype = {
   },
 
   start: function Tester_start() {
+    TabDestroyObserver.init();
+
     //if testOnLoad was not called, then gConfig is not defined
     if (!gConfig)
       gConfig = readConfig();
@@ -280,11 +328,17 @@ Tester.prototype = {
       this.nextTest();
     }
     else{
+      TabDestroyObserver.destroy();
       Services.console.unregisterListener(this);
       Services.obs.removeObserver(this, "chrome-document-global-created");
       Services.obs.removeObserver(this, "content-document-global-created");
       this.Promise.Debugging.clearUncaughtErrorObservers();
       this._treatUncaughtRejectionsAsFailures = false;
+
+      // In the main process, we print the ShutdownLeaksCollector message here.
+      let pid = Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULRuntime).processID;
+      dump("Completed ShutdownLeaks collections in process " + pid + "\n");
+
       this.dumper.structuredLogger.info("TEST-START | Shutdown");
 
       if (this.tests.length) {
@@ -571,10 +625,17 @@ Tester.prototype = {
         Services.obs.notifyObservers({wrappedJSObject: barrier},
           "shutdown-leaks-before-check", null);
 
+        barrier.client.addBlocker("ShutdownLeaks: Wait for tabs to finish closing",
+                                  TabDestroyObserver.wait());
+
         barrier.wait().then(() => {
           // Simulate memory pressure so that we're forced to free more resources
           // and thus get rid of more false leaks like already terminated workers.
           Services.obs.notifyObservers(null, "memory-pressure", "heap-minimize");
+
+          let ppmm = Cc["@mozilla.org/parentprocessmessagemanager;1"]
+                       .getService(Ci.nsIMessageBroadcaster);
+          ppmm.broadcastAsyncMessage("browser-test:collect-request");
 
           checkForLeakedGlobalWindows(aResults => {
             if (aResults.length == 0) {

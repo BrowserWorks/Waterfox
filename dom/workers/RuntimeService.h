@@ -8,7 +8,6 @@
 #define mozilla_dom_workers_runtimeservice_h__
 
 #include "Workers.h"
-#include "WorkerPrivate.h" // For the WorkerType enum.
 
 #include "nsIObserver.h"
 
@@ -16,7 +15,6 @@
 #include "nsClassHashtable.h"
 #include "nsHashKeys.h"
 #include "nsTArray.h"
-#include "WorkerPrivate.h"
 
 class nsIRunnable;
 class nsITimer;
@@ -24,7 +22,6 @@ class nsPIDOMWindow;
 
 BEGIN_WORKERS_NAMESPACE
 
-class ServiceWorker;
 class SharedWorker;
 class WorkerThread;
 
@@ -148,17 +145,25 @@ public:
   }
 
   nsresult
-  CreateServiceWorker(const GlobalObject& aGlobal,
-                      const nsAString& aScriptURL,
-                      const nsACString& aScope,
-                      ServiceWorker** aServiceWorker);
+  CreateSharedWorkerForServiceWorker(const GlobalObject& aGlobal,
+                                     const nsAString& aScriptURL,
+                                     const nsACString& aScope,
+                                     SharedWorker** aSharedWorker)
+  {
+    return CreateSharedWorkerInternal(aGlobal, aScriptURL, aScope,
+                                      WorkerTypeService, aSharedWorker);
+  }
 
   nsresult
-  CreateServiceWorkerFromLoadInfo(JSContext* aCx,
-                                  WorkerPrivate::LoadInfo* aLoadInfo,
-                                  const nsAString& aScriptURL,
-                                  const nsACString& aScope,
-                                  ServiceWorker** aServiceWorker);
+  CreateSharedWorkerForServiceWorkerFromLoadInfo(JSContext* aCx,
+                                                 WorkerLoadInfo* aLoadInfo,
+                                                 const nsAString& aScriptURL,
+                                                 const nsACString& aScope,
+                                                 SharedWorker** aSharedWorker)
+  {
+    return CreateSharedWorkerFromLoadInfo(aCx, aLoadInfo, aScriptURL, aScope,
+                                          WorkerTypeService, aSharedWorker);
+  }
 
   void
   ForgetSharedWorker(WorkerPrivate* aWorkerPrivate);
@@ -308,7 +313,7 @@ private:
 
   nsresult
   CreateSharedWorkerFromLoadInfo(JSContext* aCx,
-                                 WorkerPrivate::LoadInfo* aLoadInfo,
+                                 WorkerLoadInfo* aLoadInfo,
                                  const nsAString& aScriptURL,
                                  const nsACString& aName,
                                  WorkerType aType,

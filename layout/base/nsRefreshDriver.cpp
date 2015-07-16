@@ -853,9 +853,13 @@ CreateVsyncRefreshTimer()
   // ready.
   gfxPrefs::GetSingleton();
 
-  if (!gfxPrefs::VsyncAlignedRefreshDriver() || !gfxPrefs::HardwareVsyncEnabled()) {
+  if (!gfxPrefs::VsyncAlignedRefreshDriver()
+        || !gfxPrefs::HardwareVsyncEnabled()
+        || gfxPlatform::IsInLayoutAsapMode()) {
     return;
   }
+
+  NS_WARNING("Enabling vsync refresh driver\n");
 
   if (XRE_IsParentProcess()) {
     // Make sure all vsync systems are ready.
@@ -1471,6 +1475,16 @@ nsRefreshDriver::Tick(int64_t aNowEpoch, TimeStamp aNowTime)
     return;
   }
 
+  // We can have a race condition where the vsync timestamp
+  // is before the most recent refresh due to a forced refresh.
+  // The underlying assumption is that the refresh driver tick can only
+  // go forward in time, not backwards. To prevent the refresh
+  // driver from going back in time, just skip this tick and
+  // wait until the next tick.
+  if ((aNowTime <= mMostRecentRefresh) && !mTestControllingRefreshes) {
+    return;
+  }
+
   TimeStamp previousRefresh = mMostRecentRefresh;
 
   mMostRecentRefresh = aNowTime;
@@ -1700,7 +1714,6 @@ nsRefreshDriver::Tick(int64_t aNowEpoch, TimeStamp aNowTime)
       profilingDocShells[i]->AddProfileTimelineMarker("Paint",
                                                       TRACING_INTERVAL_START);
     }
-    profiler_tracing("Paint", "DisplayList", TRACING_INTERVAL_START);
 #ifdef MOZ_DUMP_PAINTING
     if (nsLayoutUtils::InvalidationDebuggingIsEnabled()) {
       printf_stderr("Starting ProcessPendingUpdates\n");
@@ -1719,7 +1732,6 @@ nsRefreshDriver::Tick(int64_t aNowEpoch, TimeStamp aNowTime)
       profilingDocShells[i]->AddProfileTimelineMarker("Paint",
                                                       TRACING_INTERVAL_END);
     }
-    profiler_tracing("Paint", "DisplayList", TRACING_INTERVAL_END);
 
     if (nsContentUtils::XPConnect()) {
       nsContentUtils::XPConnect()->NotifyDidPaint();

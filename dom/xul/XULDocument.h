@@ -87,11 +87,11 @@ namespace mozilla {
 namespace dom {
 
 class XULDocument final : public XMLDocument,
-                              public nsIXULDocument,
-                              public nsIDOMXULDocument,
-                              public nsIStreamLoaderObserver,
-                              public nsICSSLoaderObserver,
-                              public nsIOffThreadScriptReceiver
+                          public nsIXULDocument,
+                          public nsIDOMXULDocument,
+                          public nsIStreamLoaderObserver,
+                          public nsICSSLoaderObserver,
+                          public nsIOffThreadScriptReceiver
 {
 public:
     XULDocument();
@@ -300,7 +300,7 @@ protected:
     nsresult
     Persist(nsIContent* aElement, int32_t aNameSpaceID, nsIAtom* aAttribute);
 
-    virtual JSObject* WrapNode(JSContext *aCx) override;
+    virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
     // IMPORTANT: The ownership implicit in the following member
     // variables has been explicitly checked and set using nsCOMPtr

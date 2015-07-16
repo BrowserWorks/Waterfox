@@ -46,6 +46,12 @@ searchbar {
   -moz-binding: url("chrome://browser/content/search/search.xml#searchbar");
 }
 
+/* Prevent shrinking the page content to 0 height and width */
+.browserStack > browser {
+  min-height: 25px;
+  min-width: 25px;
+}
+
 .browserStack > browser {
   -moz-binding: url("chrome://browser/content/tabbrowser.xml#tabbrowser-browser");
 }
@@ -913,6 +919,10 @@ chatbox {
   width: 260px; /* CHAT_WIDTH_OPEN in socialchat.xml */
 }
 
+chatbox[large="true"] {
+  width: 300px;
+}
+
 chatbox[minimized="true"] {
   width: 160px;
   height: 20px; /* CHAT_WIDTH_MINIMIZED in socialchat.xml */
@@ -1294,4 +1304,12 @@ toolbarpaletteitem[place="palette"][hidden] {
 .popup-notification-footer[popupid="bad-content"][mixedblockdisabled],
 .popup-notification-footer[popupid="bad-content"][trackingblockdisabled] {
   display: block;
+}
+
+.popup-notification-invalid-input {
+  box-shadow: 0 0 1.5px 1px red;
+}
+
+.popup-notification-invalid-input[focused] {
+  box-shadow: 0 0 2px 2px rgba(255,0,0,0.4);
 }

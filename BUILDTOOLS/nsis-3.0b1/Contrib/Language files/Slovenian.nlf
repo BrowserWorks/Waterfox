@@ -1,0 +1,190 @@
+﻿# Header, don't edit
+NLF v6
+# Language ID
+1060
+# Font and size - dash (-) means default
+-
+-
+# Codepage - dash (-) means ANSI code page
+1250
+# RTL - anything else than RTL means LTR
+-
+# Translation by Janez Dolinar, edited by Martin Srebotnjak - Lugos.si
+# ^Branding
+Namestitveni sistem Nullsoft %s
+# ^SetupCaption
+Namestitev $(^Name)
+# ^UninstallCaption
+Odstranitev $(^Name)
+# ^LicenseSubCaption
+: Licenčna pogodba
+# ^ComponentsSubCaption
+: Možnosti namestitve
+# ^DirSubCaption
+: Mapa namestitve
+# ^InstallingSubCaption
+: Nameščanje poteka
+# ^CompletedSubCaption
+: Dokončano
+# ^UnComponentsSubCaption
+: Možnosti odstranitve
+# ^UnDirSubCaption
+: Mapa odstranitve
+# ^ConfirmSubCaption
+: Potrditev
+# ^UninstallingSubCaption
+: Odstranjevanje poteka
+# ^UnCompletedSubCaption
+: Dokončano
+# ^BackBtn
+< &Nazaj
+# ^NextBtn
+N&aprej >
+# ^AgreeBtn
+Se &strinjam
+# ^AcceptBtn
+&Sprejmem pogoje licenčne pogodbe
+# ^DontAcceptBtn
+&Ne sprejmem pogojev licenčne pogodbe
+# ^InstallBtn
+&Namesti
+# ^UninstallBtn
+&Odstrani
+# ^CancelBtn
+Prekliči
+# ^CloseBtn
+&Zapri
+# ^BrowseBtn
+Prebrsk&aj ...
+# ^ShowDetailsBtn
+&Podrobnosti
+# ^ClickNext
+Kliknite Naprej za nadaljevanje.
+# ^ClickInstall	
+Kliknite Namesti za začetek namestitve.
+# ^ClickUninstall	
+Kliknite Odstrani za odstranitev.
+# ^NameIme
+Ime
+# ^Completed
+Dokončano
+# ^LicenseText
+Prosimo, da pred namestitvijo $(^NameDA) pregledate licenčno pogodbo. Če se z njo strinjate, pritisnite Se strinjam.
+# ^LicenseTextCB
+Prosimo, da pred namestitvijo $(^NameDA) pregledate licenčno pogodbo. Če sprejmete vse naštete pogoje, potrdite spodnje polje. $_CLICK
+# ^LicenseTextRB
+Prosimo, da pred namestitvijo $(^NameDA) pregledate licenčno pogodbo. Če sprejmete vse naštete pogoje, izberite prvo spodaj podano možnost. $_CLICK
+# ^UnLicenseText
+Prosimo, da pred odstranitvijo $(^NameDA) pregledate licenčno pogodbo. Če se z njo strinjate, pritisnite Se strinjam.
+# ^UnLicenseTextCB
+Prosimo, da pred odstranitvijo $(^NameDA) pregledate licenčno pogodbo. Če sprejmete vse naštete pogoje, potrdite spodnje polje. $_CLICK
+# ^UnLicenseTextRB
+Prosimo, da pred odstranitvijo $(^NameDA) pregledate licenčno pogodbo. Če sprejmete vse naštete pogoje, izberite prvo spodaj podano možnost. $_CLICK
+# ^Custom
+Po meri ...
+# ^ComponentsText
+Označite komponente, ki jih želite namestiti, in pustite neoznačene tiste, katerih ne želite namestiti. $_CLICK
+# ^ComponentsSubText1
+Izberite vrsto namestitve:
+# ^ComponentsSubText2_NoInstTypes
+Izberite komponente namestitve:
+# ^ComponentsSubText2
+Ali pa izberite komponente, ki jih želite namestiti:
+# ^UnComponentsText
+Označite komponente, ki jih želite odstraniti, in pustite neoznačene tiste, ki jih ne želite odstraniti. $_CLICK
+# ^UnComponentsSubText1
+Izberite vrsto odstranitve:
+# ^UnComponentsSubText2_NoInstTypes
+Izberite komponente za odstranitev:
+# ^UnComponentsSubText2
+Ali pa izberite komponente namestitve, ki jih želite odstraniti:
+# ^DirText
+$(^NameDA) boste namestili v sledečo mapo. Za izbiro druge mape kliknite tipko Prebrskaj in izberite drugo mapo. $_CLICK
+# ^DirSubText
+Ciljna mapa
+# ^DirBrowseText
+Izberite mapo, kamor želite namestiti $(^NameDA):
+# ^UnDirText
+Odstranili boste $(^NameDA) iz sledeče mape. Za izbiro druge mape kliknite tipko Prebrskaj in izberite drugo mapo. $_CLICK
+# ^UnDirSubText
+""
+# ^UnDirBrowseText
+Izberite mapo, od koder želite odstraniti $(^NameDA):
+# ^SpaceAvailable
+"Prostor na disku: "
+# ^SpaceRequired
+"Potreben prostor: "
+# ^UninstallingText
+$(^NameDA) bo odstranjen iz naslednje mape. $_CLICK
+# ^UninstallingSubText
+Odstranjevanje iz:
+# ^FileError
+Napaka pri odpiranju datoteke za pisanje: \r\n\r\n$0\r\n\r\nPritisnite Prekini za prekinitev namestitve,\r\nPonovi za ponoven poskus ali\r\nPrezri za izpust te datoteke.
+# ^FileError_NoIgnore
+Napaka pri odpiranju datoteke za pisanje: \r\n\r\n$0\r\n\r\nPritisnite Ponovi za ponoven poskus pisanja ali\r\Prekliči za prekinitev namestitve.
+# ^CantWrite
+"Ni mogoče pisati: "
+# ^CopyFailed
+Kopiranje neuspešno
+# ^CopyTo
+"Kopiranje v "
+# ^Registering
+"Registracija: "
+# ^Unregistering
+"Preklic registracije: "
+# ^SymbolNotFound
+"Ni mogoče najti simbola: "
+# ^CouldNotLoad
+"Ni mogoče naložiti: "
+# ^CreateFolder
+"Ustvarjanje mape: "
+# ^CreateShortcut
+"Ustvarjanje bližnjice: "
+# ^CreatedUninstaller
+"Ustvarjena odstranitev: "
+# ^Delete
+"Brisanje datoteke: "
+# ^DeleteOnReboot
+"Brisanje ob ponovnem zagonu: "
+# ^ErrorCreatingShortcut
+"Napaka ustvarjanja bližnjice: "
+# ^ErrorCreating
+"Napaka ustvarjanja: "
+# ^ErrorDecompressing
+Napaka pri razširjanju podatkov! Je namestitvena datoteka okvarjena?
+# ^ErrorRegistering
+Napaka registracije DLL
+# ^ExecShell
+"Izvajanje v lupini: "
+# ^Exec
+"Izvajanje: "
+# ^Extract
+"Razširjanje: "
+# ^ErrorWriting
+"Razširjanje: napaka pri pisanju v datoteko "
+# ^InvalidOpcode
+Namestitev neveljavna: napačen ukaz
+# ^NoOLE
+"Neobstoječi OLE za: "
+# ^OutputFolder
+"Ciljna mapa: "
+# ^RemoveFolder
+"Odstranjevanje mape: "
+# ^RenameOnReboot
+"Preimenovanje ob zagonu: "
+# ^Rename
+"Preimenovanje: "
+# ^Skipped
+"Izpuščeno: "
+# ^CopyDetails
+Kopiraj podrobnosti v odložišče
+# ^LogInstall
+Shrani potek namestitve
+# ^Byte
+B
+# ^Kilo
+K
+# ^Mega
+M
+# ^Giga
+G

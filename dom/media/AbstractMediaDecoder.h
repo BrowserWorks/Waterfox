@@ -54,9 +54,9 @@ public:
   // Returns true if the decoder is shut down.
   virtual bool IsShutdown() const = 0;
 
-  virtual bool OnStateMachineThread() const = 0;
+  virtual bool OnStateMachineTaskQueue() const = 0;
 
-  virtual bool OnDecodeThread() const = 0;
+  virtual bool OnDecodeTaskQueue() const = 0;
 
   // Get the current MediaResource being used. Its URI will be returned
   // by currentSrc. Returns what was passed to Load(), if Load() has been called.
@@ -103,12 +103,6 @@ public:
 
   // Set the media end time in microseconds
   virtual void SetMediaEndTime(int64_t aTime) = 0;
-
-  // Make the decoder state machine update the playback position. Called by
-  // the reader on the decoder thread (Assertions for this checked by
-  // mDecoderStateMachine). This must be called with the decode monitor
-  // held.
-  virtual void UpdatePlaybackPosition(int64_t aTime) = 0;
 
   // May be called by the reader to notify this decoder that the metadata from
   // the media file has been read. Call on the decode thread only.

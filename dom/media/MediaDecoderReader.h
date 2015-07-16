@@ -22,7 +22,8 @@ class TimeRanges;
 class MediaDecoderReader;
 class SharedDecoderManager;
 
-struct WaitForDataRejectValue {
+struct WaitForDataRejectValue
+{
   enum Reason {
     SHUTDOWN,
     CANCELED
@@ -32,6 +33,23 @@ struct WaitForDataRejectValue {
     :mType(aType), mReason(aReason) {}
   MediaData::Type mType;
   Reason mReason;
+};
+
+class MetadataHolder
+{
+public:
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(MetadataHolder)
+  MediaInfo mInfo;
+  nsAutoPtr<MetadataTags> mTags;
+
+private:
+  virtual ~MetadataHolder() {}
+};
+
+enum class ReadMetadataFailureReason : int8_t
+{
+  WAITING_FOR_RESOURCES,
+  METADATA_ERROR
 };
 
 // Encapsulates the decoding and reading of media data. Reading can either
@@ -49,6 +67,7 @@ public:
     CANCELED
   };
 
+  typedef MediaPromise<nsRefPtr<MetadataHolder>, ReadMetadataFailureReason, /* IsExclusive = */ true> MetadataPromise;
   typedef MediaPromise<nsRefPtr<AudioData>, NotDecodedReason, /* IsExclusive = */ true> AudioDataPromise;
   typedef MediaPromise<nsRefPtr<VideoData>, NotDecodedReason, /* IsExclusive = */ true> VideoDataPromise;
   typedef MediaPromise<int64_t, nsresult, /* IsExclusive = */ true> SeekPromise;
@@ -93,7 +112,7 @@ public:
 
   MediaTaskQueue* EnsureTaskQueue();
 
-  virtual bool OnDecodeThread()
+  virtual bool OnTaskQueue()
   {
     return !GetTaskQueue() || GetTaskQueue()->IsCurrentThreadIn();
   }
@@ -106,11 +125,14 @@ public:
   }
 
   // Resets all state related to decoding, emptying all buffers etc.
-  // Cancels all pending Request*Data() request callbacks, and flushes the
-  // decode pipeline. The decoder must not call any of the callbacks for
-  // outstanding Request*Data() calls after this is called. Calls to
-  // Request*Data() made after this should be processed as usual.
+  // Cancels all pending Request*Data() request callbacks, rejects any
+  // outstanding seek promises, and flushes the decode pipeline. The
+  // decoder must not call any of the callbacks for outstanding
+  // Request*Data() calls after this is called. Calls to Request*Data()
+  // made after this should be processed as usual.
+  //
   // Normally this call preceedes a Seek() call, or shutdown.
+  //
   // The first samples of every stream produced after a ResetDecode() call
   // *must* be marked as "discontinuities". If it's not, seeking work won't
   // properly!
@@ -145,6 +167,11 @@ public:
   virtual bool HasAudio() = 0;
   virtual bool HasVideo() = 0;
 
+  // The ReadMetadata API is unfortunately synchronous. We should fix that at
+  // some point, but for now we can make things a bit better by using a
+  // promise-y API on top of a synchronous call.
+  nsRefPtr<MetadataPromise> CallReadMetadata();
+
   // A function that is called before ReadMetadata() call.
   virtual void PreReadMetadata() {};
 
@@ -164,15 +191,6 @@ public:
   // probably be removed somehow.
   virtual nsRefPtr<SeekPromise>
   Seek(int64_t aTime, int64_t aEndTime) = 0;
-
-  // Cancels an ongoing seek, if any. Any previously-requested seek is
-  // guaranteeed to be resolved or rejected in finite time, though no
-  // guarantees are made about precise nature of the resolve/reject, since the
-  // promise might have already dispatched a resolution or an error code before
-  // the cancel arrived.
-  //
-  // Must be called on the decode task queue.
-  virtual void CancelSeek() { };
 
   // Called to move the reader into idle state. When the reader is
   // created it is assumed to be active (i.e. not idle). When the media
@@ -261,6 +279,10 @@ public:
   // implementation in this class to adapt the old synchronous to
   // the newer async model.
   virtual bool IsAsync() const { return false; }
+
+  // Returns true if this decoder reader uses hardware accelerated video
+  // decoding.
+  virtual bool VideoIsHardwareAccelerated() const { return false; }
 
   virtual void DisableHardwareAcceleration() {}
 

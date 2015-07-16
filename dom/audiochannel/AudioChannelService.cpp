@@ -360,6 +360,13 @@ AudioChannelService::GetState(AudioChannelAgent* aAgent, bool aElementHidden)
 
   data->mState = GetStateInternal(data->mChannel, CONTENT_PROCESS_ID_MAIN,
                                 aElementHidden, oldElementHidden);
+  #ifdef MOZ_WIDGET_GONK
+    bool active = AnyAudioChannelIsActive();
+    for (uint32_t i = 0; i < mSpeakerManager.Length(); i++) {
+      mSpeakerManager[i]->SetAudioChannelActive(active);
+    }
+  #endif
+
   return data->mState;
 }
 
@@ -507,15 +514,15 @@ AudioChannelService::ProcessContentOrNormalChannelIsActive(uint64_t aChildID)
 
 void
 AudioChannelService::SetDefaultVolumeControlChannel(int32_t aChannel,
-                                                    bool aHidden)
+                                                    bool aVisible)
 {
-  SetDefaultVolumeControlChannelInternal(aChannel, aHidden,
+  SetDefaultVolumeControlChannelInternal(aChannel, aVisible,
                                          CONTENT_PROCESS_ID_MAIN);
 }
 
 void
 AudioChannelService::SetDefaultVolumeControlChannelInternal(int32_t aChannel,
-                                                            bool aHidden,
+                                                            bool aVisible,
                                                             uint64_t aChildID)
 {
   if (XRE_GetProcessType() != GeckoProcessType_Default) {
@@ -525,15 +532,26 @@ AudioChannelService::SetDefaultVolumeControlChannelInternal(int32_t aChannel,
   // If this child is in the background and mDefChannelChildID is set to
   // others then it means other child in the foreground already set it's
   // own default channel already.
-  if ((!aHidden && mDefChannelChildID != aChildID) ||
-      (mDefChannelChildID != aChildID &&
-       mDefChannelChildID != CONTENT_PROCESS_ID_UNKNOWN)) {
+  if (!aVisible && mDefChannelChildID != aChildID) {
+    return;
+  }
+  // Workaround for the call screen app. The call screen app is running on the
+  // main process, that will results in wrong visible state. Because we use the
+  // docshell's active state as visible state, the main process is always
+  // active. Therefore, we will see the strange situation that the visible
+  // state of the call screen is always true. If the mDefChannelChildID is set
+  // to others then it means other child in the foreground already set it's
+  // own default channel already.
+  // Summary :
+  //   Child process : foreground app always can set type.
+  //   Parent process : check the mDefChannelChildID.
+  else if (aChildID == CONTENT_PROCESS_ID_MAIN &&
+           mDefChannelChildID != CONTENT_PROCESS_ID_UNKNOWN) {
     return;
   }
 
-  mDefChannelChildID = aChildID;
-  nsString channelName;
-
+  mDefChannelChildID = aVisible ? aChildID : CONTENT_PROCESS_ID_UNKNOWN;
+  nsAutoString channelName;
   if (aChannel == -1) {
     channelName.AssignASCII("unknown");
   } else {

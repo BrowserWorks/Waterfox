@@ -22,14 +22,17 @@ class DeadObjectProxy : public BaseProxyHandler
     virtual bool getOwnPropertyDescriptor(JSContext* cx, HandleObject wrapper, HandleId id,
                                           MutableHandle<JSPropertyDescriptor> desc) const override;
     virtual bool defineProperty(JSContext* cx, HandleObject wrapper, HandleId id,
-                                MutableHandle<JSPropertyDescriptor> desc) const override;
+                                Handle<JSPropertyDescriptor> desc,
+                                ObjectOpResult& result) const override;
     virtual bool ownPropertyKeys(JSContext* cx, HandleObject wrapper,
                                  AutoIdVector& props) const override;
-    virtual bool delete_(JSContext* cx, HandleObject wrapper, HandleId id, bool* bp) const override;
+    virtual bool delete_(JSContext* cx, HandleObject wrapper, HandleId id,
+                         ObjectOpResult& result) const override;
     virtual bool enumerate(JSContext* cx, HandleObject wrapper, MutableHandleObject objp) const override;
-    virtual bool getPrototypeOf(JSContext* cx, HandleObject proxy,
-                                MutableHandleObject protop) const override;
-    virtual bool preventExtensions(JSContext* cx, HandleObject proxy, bool* succeeded) const override;
+    virtual bool getPrototype(JSContext* cx, HandleObject proxy,
+                              MutableHandleObject protop) const override;
+    virtual bool preventExtensions(JSContext* cx, HandleObject proxy,
+                                   ObjectOpResult& result) const override;
     virtual bool isExtensible(JSContext* cx, HandleObject proxy, bool* extensible) const override;
     virtual bool call(JSContext* cx, HandleObject proxy, const CallArgs& args) const override;
     virtual bool construct(JSContext* cx, HandleObject proxy, const CallArgs& args) const override;

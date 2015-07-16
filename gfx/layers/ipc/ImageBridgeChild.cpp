@@ -153,22 +153,6 @@ ImageBridgeChild::UseOverlaySource(CompositableClient* aCompositable,
 #endif
 
 void
-ImageBridgeChild::UpdatedTexture(CompositableClient* aCompositable,
-                                 TextureClient* aTexture,
-                                 nsIntRegion* aRegion)
-{
-  MOZ_ASSERT(aCompositable);
-  MOZ_ASSERT(aTexture);
-  MOZ_ASSERT(aCompositable->GetIPDLActor());
-  MOZ_ASSERT(aTexture->GetIPDLActor());
-  MaybeRegion region = aRegion ? MaybeRegion(*aRegion)
-                               : MaybeRegion(null_t());
-  mTxn->AddNoSwapEdit(OpUpdateTexture(nullptr, aCompositable->GetIPDLActor(),
-                                      nullptr, aTexture->GetIPDLActor(),
-                                      region));
-}
-
-void
 ImageBridgeChild::SendFenceHandle(AsyncTransactionTracker* aTracker,
                                   PTextureChild* aTexture,
                                   const FenceHandle& aFence)
@@ -541,17 +525,6 @@ ImageBridgeChild::EndTransaction()
   for (nsTArray<EditReply>::size_type i = 0; i < replies.Length(); ++i) {
     const EditReply& reply = replies[i];
     switch (reply.type()) {
-    case EditReply::TOpTextureSwap: {
-      const OpTextureSwap& ots = reply.get_OpTextureSwap();
-
-      CompositableClient* compositable =
-        CompositableClient::FromIPDLActor(ots.compositableChild());
-
-      MOZ_ASSERT(compositable);
-
-      compositable->SetDescriptorFromReply(ots.textureId(), ots.image());
-      break;
-    }
     case EditReply::TReturnReleaseFence: {
       const ReturnReleaseFence& rep = reply.get_ReturnReleaseFence();
       FenceHandle fence = rep.fence();

@@ -364,6 +364,7 @@ nsListControlFrame::Reflow(nsPresContext*           aPresContext,
     return;
   }
 
+  MarkInReflow();
   /*
    * Due to the fact that our intrinsic height depends on the heights of our
    * kids, we end up having to do two-pass reflow, in general -- the first pass
@@ -456,8 +457,6 @@ nsListControlFrame::Reflow(nsPresContext*           aPresContext,
   nscoord computedHeight = CalcIntrinsicBSize(HeightOfARow(), length); 
   computedHeight = state.ApplyMinMaxHeight(computedHeight);
   state.SetComputedHeight(computedHeight);
-
-  nsHTMLScrollFrame::WillReflow(aPresContext);
 
   // XXXbz to make the ascent really correct, we should add our
   // mComputedPadding.top to it (and subtract it from descent).  Need that
@@ -577,7 +576,6 @@ nsListControlFrame::ReflowAsDropdown(nsPresContext*           aPresContext,
 
   mLastDropdownComputedHeight = state.ComputedHeight();
 
-  nsHTMLScrollFrame::WillReflow(aPresContext);
   nsHTMLScrollFrame::Reflow(aPresContext, aDesiredSize, state, aStatus);
 }
 
@@ -588,8 +586,7 @@ nsListControlFrame::GetScrollbarStyles() const
   // and GetScrollbarStyles can be devirtualized
   int32_t verticalStyle = IsInDropDownMode() ? NS_STYLE_OVERFLOW_AUTO
     : NS_STYLE_OVERFLOW_SCROLL;
-  return ScrollbarStyles(NS_STYLE_OVERFLOW_HIDDEN, verticalStyle,
-                         NS_STYLE_SCROLL_BEHAVIOR_AUTO);
+  return ScrollbarStyles(NS_STYLE_OVERFLOW_HIDDEN, verticalStyle);
 }
 
 bool
@@ -707,7 +704,7 @@ CountOptionsAndOptgroups(nsIFrame* aFrame)
     nsIFrame* child = e.get();
     nsIContent* content = child->GetContent();
     if (content) {
-      if (content->IsHTML(nsGkAtoms::option)) {
+      if (content->IsHTMLElement(nsGkAtoms::option)) {
         ++count;
       } else {
         nsCOMPtr<nsIDOMHTMLOptGroupElement> optgroup = do_QueryInterface(content);

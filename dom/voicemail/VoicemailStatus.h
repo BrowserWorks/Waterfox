@@ -17,7 +17,7 @@ namespace mozilla {
 namespace dom {
 
 class VoicemailStatus final : public nsISupports
-                                , public nsWrapperCache
+                            , public nsWrapperCache
 {
 public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -30,7 +30,7 @@ public:
   GetParentObject() const { return mParent; }
 
   virtual JSObject*
-  WrapObject(JSContext* aCx) override;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // WebIDL interface
 

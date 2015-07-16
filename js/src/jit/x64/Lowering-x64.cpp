@@ -15,16 +15,6 @@ using namespace js;
 using namespace js::jit;
 
 void
-LIRGeneratorX64::useBox(LInstruction* lir, size_t n, MDefinition* mir,
-                        LUse::Policy policy, bool useAtStart)
-{
-    MOZ_ASSERT(mir->type() == MIRType_Value);
-
-    ensureDefined(mir);
-    lir->setOperand(n, LUse(mir->virtualRegister(), policy, useAtStart));
-}
-
-void
 LIRGeneratorX64::useBoxFixed(LInstruction* lir, size_t n, MDefinition* mir, Register reg1, Register)
 {
     MOZ_ASSERT(mir->type() == MIRType_Value);
@@ -132,6 +122,18 @@ LIRGeneratorX64::lowerUntypedPhiInput(MPhi* phi, uint32_t inputPosition, LBlock*
 }
 
 void
+LIRGeneratorX64::visitCompareExchangeTypedArrayElement(MCompareExchangeTypedArrayElement* ins)
+{
+    lowerCompareExchangeTypedArrayElement(ins, /* useI386ByteRegisters = */ false);
+}
+
+void
+LIRGeneratorX64::visitAtomicTypedArrayElementBinop(MAtomicTypedArrayElementBinop* ins)
+{
+    lowerAtomicTypedArrayElementBinop(ins, /* useI386ByteRegisters = */ false);
+}
+
+void
 LIRGeneratorX64::visitAsmJSUnsignedToDouble(MAsmJSUnsignedToDouble* ins)
 {
     MOZ_ASSERT(ins->input()->type() == MIRType_Int32);
@@ -153,14 +155,11 @@ LIRGeneratorX64::visitAsmJSLoadHeap(MAsmJSLoadHeap* ins)
     MDefinition* ptr = ins->ptr();
     MOZ_ASSERT(ptr->type() == MIRType_Int32);
 
-    // Only a positive index is accepted because a negative offset encoded as an
-    // offset in the addressing mode would not wrap back into the protected area
-    // reserved for the heap. For simplicity (and since we don't care about
-    // getting maximum performance in these cases) only allow constant
-    // operands when skipping bounds checks.
-    LAllocation ptrAlloc = ins->needsBoundsCheck()
+    // For simplicity, require a register if we're going to emit a bounds-check
+    // branch, so that we don't have special cases for constants.
+    LAllocation ptrAlloc = gen->needsAsmJSBoundsCheckBranch(ins)
                            ? useRegisterAtStart(ptr)
-                           : useRegisterOrNonNegativeConstantAtStart(ptr);
+                           : useRegisterOrZeroAtStart(ptr);
 
     define(new(alloc()) LAsmJSLoadHeap(ptrAlloc), ins);
 }
@@ -171,14 +170,11 @@ LIRGeneratorX64::visitAsmJSStoreHeap(MAsmJSStoreHeap* ins)
     MDefinition* ptr = ins->ptr();
     MOZ_ASSERT(ptr->type() == MIRType_Int32);
 
-    // Only a positive index is accepted because a negative offset encoded as an
-    // offset in the addressing mode would not wrap back into the protected area
-    // reserved for the heap. For simplicity (and since we don't care about
-    // getting maximum performance in these cases) only allow constant
-    // opererands when skipping bounds checks.
-    LAllocation ptrAlloc = ins->needsBoundsCheck()
+    // For simplicity, require a register if we're going to emit a bounds-check
+    // branch, so that we don't have special cases for constants.
+    LAllocation ptrAlloc = gen->needsAsmJSBoundsCheckBranch(ins)
                            ? useRegisterAtStart(ptr)
-                           : useRegisterOrNonNegativeConstantAtStart(ptr);
+                           : useRegisterOrZeroAtStart(ptr);
 
     LAsmJSStoreHeap* lir = nullptr;  // initialize to silence GCC warning
     switch (ins->accessType()) {
@@ -200,8 +196,93 @@ LIRGeneratorX64::visitAsmJSStoreHeap(MAsmJSStoreHeap* ins)
       case Scalar::MaxTypedArrayViewType:
         MOZ_CRASH("unexpected array type");
     }
-
     add(lir, ins);
+}
+
+void
+LIRGeneratorX64::visitAsmJSCompareExchangeHeap(MAsmJSCompareExchangeHeap* ins)
+{
+    MDefinition* ptr = ins->ptr();
+    MOZ_ASSERT(ptr->type() == MIRType_Int32);
+
+    // The output may not be used but will be clobbered regardless, so
+    // pin the output to eax.
+    //
+    // The input values must both be in registers.
+
+    const LAllocation oldval = useRegister(ins->oldValue());
+    const LAllocation newval = useRegister(ins->newValue());
+
+    LAsmJSCompareExchangeHeap* lir =
+        new(alloc()) LAsmJSCompareExchangeHeap(useRegister(ptr), oldval, newval);
+
+    defineFixed(lir, ins, LAllocation(AnyRegister(eax)));
+}
+
+void
+LIRGeneratorX64::visitAsmJSAtomicBinopHeap(MAsmJSAtomicBinopHeap* ins)
+{
+    MDefinition* ptr = ins->ptr();
+    MOZ_ASSERT(ptr->type() == MIRType_Int32);
+
+    // Case 1: the result of the operation is not used.
+    //
+    // We'll emit a single instruction: LOCK ADD, LOCK SUB, LOCK AND,
+    // LOCK OR, or LOCK XOR.
+
+    if (!ins->hasUses()) {
+        LAsmJSAtomicBinopHeapForEffect* lir =
+            new(alloc()) LAsmJSAtomicBinopHeapForEffect(useRegister(ptr),
+                                                        useRegisterOrConstant(ins->value()));
+        add(lir, ins);
+        return;
+    }
+
+    // Case 2: the result of the operation is used.
+    //
+    // For ADD and SUB we'll use XADD with word and byte ops as
+    // appropriate.  Any output register can be used and if value is a
+    // register it's best if it's the same as output:
+    //
+    //    movl       value, output  ; if value != output
+    //    lock xaddl output, mem
+    //
+    // For AND/OR/XOR we need to use a CMPXCHG loop, and the output is
+    // always in rax:
+    //
+    //    movl          *mem, rax
+    // L: mov           rax, temp
+    //    andl          value, temp
+    //    lock cmpxchg  temp, mem  ; reads rax also
+    //    jnz           L
+    //    ; result in rax
+    //
+    // Note the placement of L, cmpxchg will update rax with *mem if
+    // *mem does not have the expected value, so reloading it at the
+    // top of the loop would be redundant.
+
+    bool bitOp = !(ins->operation() == AtomicFetchAddOp || ins->operation() == AtomicFetchSubOp);
+    bool reuseInput = false;
+    LAllocation value;
+
+    if (bitOp || ins->value()->isConstant()) {
+        value = useRegisterOrConstant(ins->value());
+    } else {
+        reuseInput = true;
+        value = useRegisterAtStart(ins->value());
+    }
+
+    LAsmJSAtomicBinopHeap* lir =
+        new(alloc()) LAsmJSAtomicBinopHeap(useRegister(ptr),
+                                           value,
+                                           bitOp ? temp() : LDefinition::BogusTemp());
+
+    if (reuseInput)
+        defineReuseInput(lir, ins, LAsmJSAtomicBinopHeap::valueOp);
+    else if (bitOp)
+        defineFixed(lir, ins, LAllocation(AnyRegister(rax)));
+    else
+        define(lir, ins);
 }
 
 void

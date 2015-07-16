@@ -6,7 +6,7 @@
 from marionette_driver.by import By
 from marionette_driver.marionette import Actions
 from marionette_driver.selection import SelectionManager
-from marionette_test import MarionetteTestCase
+from marionette import MarionetteTestCase
 
 
 class TouchCaretTest(MarionetteTestCase):
@@ -44,8 +44,8 @@ class TouchCaretTest(MarionetteTestCase):
         set touch caret expiration time in milliseconds).
 
         '''
-        self.marionette.execute_script(
-            'SpecialPowers.setBoolPref("touchcaret.enabled", %s);' %
+        self.marionette.execute_async_script(
+            'SpecialPowers.pushPrefEnv({"set": [["touchcaret.enabled", %s]]}, marionetteScriptFinished);' %
             ('true' if enabled else 'false'))
 
         # Set a larger expiration time to avoid intermittent test failures.

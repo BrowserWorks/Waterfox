@@ -45,6 +45,7 @@ public:
   void PrepareInitialization();
 
   bool IsWaitingMediaResources() override;
+  bool IsWaitingOnCDMResource() override;
 
   nsRefPtr<AudioDataPromise> RequestAudioData() override;
   nsRefPtr<VideoDataPromise>
@@ -108,7 +109,7 @@ public:
   nsRefPtr<SeekPromise>
   Seek(int64_t aTime, int64_t aEndTime) override;
 
-  void CancelSeek() override;
+  nsresult ResetDecode() override;
 
   // Acquires the decoder monitor, and is thus callable on any thread.
   nsresult GetBuffered(dom::TimeRanges* aBuffered) override;
@@ -148,8 +149,14 @@ public:
 #endif
 
   virtual bool IsAsync() const override {
+    ReentrantMonitorAutoEnter decoderMon(mDecoder->GetReentrantMonitor());
     return (!GetAudioReader() || GetAudioReader()->IsAsync()) &&
            (!GetVideoReader() || GetVideoReader()->IsAsync());
+  }
+
+  virtual bool VideoIsHardwareAccelerated() const override {
+    ReentrantMonitorAutoEnter decoderMon(mDecoder->GetReentrantMonitor());
+    return GetVideoReader() && GetVideoReader()->VideoIsHardwareAccelerated();
   }
 
   // Returns true if aReader is a currently active audio or video
@@ -260,6 +267,7 @@ private:
 
   // Temporary seek information while we wait for the data
   // to be added to the track buffer.
+  int64_t mOriginalSeekTime;
   int64_t mPendingSeekTime;
   bool mWaitingForSeekData;
   bool mSeekToEnd;

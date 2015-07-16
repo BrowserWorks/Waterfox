@@ -32,7 +32,7 @@ const int kRightStickXAxis = 2;
 const int kRightStickYAxis = 3;
 
 class Gamepad final : public nsISupports,
-                          public nsWrapperCache
+                      public nsWrapperCache
 {
 public:
   Gamepad(nsISupports* aParent,
@@ -59,7 +59,7 @@ public:
     return mParent;
   }
 
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   void GetId(nsAString& aID) const
   {

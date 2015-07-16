@@ -1,0 +1,107 @@
+Mercurial allows you to customize output of commands through
+templates. You can either pass in a template or select an existing
+template-style from the command line, via the --template option.
+
+You can customize output for any "log-like" command: log,
+outgoing, incoming, tip, parents, and heads.
+
+Some built-in styles are packaged with Mercurial. These can be listed
+with :hg:`log --template list`. Example usage::
+
+    $ hg log -r1.0::1.1 --template changelog
+
+A template is a piece of text, with markup to invoke variable
+expansion::
+
+    $ hg log -r1 --template "{node}\n"
+    b56ce7b07c52de7d5fd79fb89701ea538af65746
+
+Strings in curly braces are called keywords. The availability of
+keywords depends on the exact context of the templater. These
+keywords are usually available for templating a log-like command:
+
+.. keywordsmarker
+
+The "date" keyword does not produce human-readable output. If you
+want to use a date in your output, you can use a filter to process
+it. Filters are functions which return a string based on the input
+variable. Be sure to use the stringify filter first when you're
+applying a string-input filter to a list-like input variable.
+You can also use a chain of filters to get the desired output::
+
+   $ hg tip --template "{date|isodate}\n"
+   2008-08-21 18:22 +0000
+
+List of filters:
+
+.. filtersmarker
+
+Note that a filter is nothing more than a function call, i.e.
+``expr|filter`` is equivalent to ``filter(expr)``.
+
+In addition to filters, there are some basic built-in functions:
+
+.. functionsmarker
+
+Also, for any expression that returns a list, there is a list operator:
+
+- expr % "{template}"
+
+Some sample command line templates:
+
+- Format lists, e.g. files::
+
+   $ hg log -r 0 --template "files:\n{files % '  {file}\n'}"
+
+- Join the list of files with a ", "::
+
+   $ hg log -r 0 --template "files: {join(files, ', ')}\n"
+
+- Modify each line of a commit description::
+
+   $ hg log --template "{splitlines(desc) % '**** {line}\n'}"
+
+- Format date::
+
+   $ hg log -r 0 --template "{date(date, '%Y')}\n"
+
+- Output the description set to a fill-width of 30::
+
+   $ hg log -r 0 --template "{fill(desc, '30')}"
+
+- Use a conditional to test for the default branch::
+
+   $ hg log -r 0 --template "{ifeq(branch, 'default', 'on the main branch',
+   'on branch {branch}')}\n"
+
+- Append a newline if not empty::
+
+   $ hg tip --template "{if(author, '{author}\n')}"
+
+- Label the output for use with the color extension::
+
+   $ hg log -r 0 --template "{label('changeset.{phase}', node|short)}\n"
+
+- Invert the firstline filter, i.e. everything but the first line::
+
+   $ hg log -r 0 --template "{sub(r'^.*\n?\n?', '', desc)}\n"
+
+- Display the contents of the 'extra' field, one per line::
+
+   $ hg log -r 0 --template "{join(extras, '\n')}\n"
+
+- Mark the current bookmark with '*'::
+
+   $ hg log --template "{bookmarks % '{bookmark}{ifeq(bookmark, current, \"*\")} '}\n"
+
+- Mark the working copy parent with '@'::
+
+   $ hg log --template "{ifcontains(rev, revset('.'), '@')}\n"
+
+- Show only commit descriptions that start with "template"::
+
+   $ hg log --template "{startswith(\"template\", firstline(desc))}\n"
+
+- Print the first word of each line of a commit message::
+
+   $ hg log --template "{word(\"0\", desc)}\n"

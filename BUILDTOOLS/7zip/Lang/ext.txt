@@ -1,0 +1,543 @@
+﻿;!@Lang@!UTF-8!
+; 7-Zip 9.07
+; Translated by Purgossu (based in original file of Igor Pavlov)
+;
+;
+;
+;
+
+00000000="Extremaduran"
+00000001="Estremeñu"
+00000002=""
+
+; 7-Zip Configuration
+
+; Title
+01000000="Configuración de 7-Zip"
+
+; Info Page
+01000100="About 7-Zip"
+01000103="7-Zip es una apricación libri i a gastus pagus. Peru puei apoyal el desarrollu e 7-Zip meyanti'l rehistru el pograma."
+01000104="Soporti"
+01000105="Rehistral"
+
+; Folders Page
+01000200="Diretórius"
+01000210="Diretóriu e labu&tu"
+01000211="Diretóriu temporal del &sistema"
+01000212="Diretóriu &ahtual"
+01000213="&Especifical:"
+01000214="Usal sólu pa dispositivus estrayíbris"
+
+01000281="Especifical ruta pa ficherus d'archivus temporalis."
+
+; System Page
+01000300="Sistema"
+01000301="Integral 7-Zip nel menú contestual"
+01000302="Menú contestual en cascá"
+01000310="Elementus del menú contestual:"
+
+; Language Page
+01000400="Palra"
+01000401="Palra:"
+
+
+; 7-Zip Explorer extension
+
+; Context menu
+02000101="7-Zip"
+02000102="Comandus de 7-Zip"
+02000103="Abril archivu"
+02000104="Abril archivu selecionau."
+02000105="Estrayel ficherus..."
+02000106="Estrayel ficherus del archivu selecionau."
+02000107="Añíl al archivu..."
+02000108="Añiil lus elementus selecionaus al archivu."
+02000109="Comprebal archivu"
+0200010A="Comprebal l'integriá l'archivu selecionau."
+0200010B="Estrayel aquina"
+0200010C="Estrayel ficherus del archivu selecionau nel diretóriu atual."
+0200010D="Estrayel en {0}"
+0200010E="Estrayel ficherus nun sudirehtoriu."
+0200010F="Añiil a {0}"
+02000110="Añiil lus elementus selecionaus al archivu."
+02000111="Comprimil i envial pol correu-e..."
+02000112="Comprimil archivus selecionaus nel ficheru i envialu pol correu-e."
+02000113="Comprimil en {0} i envial pol correu"
+02000114="Comprimil elementus selecionaus nel ficheru i envialu pol correu-e."
+
+02000140="<Diretóriu>"
+02000141="<Archivu>"
+
+; Properties
+02000203="Ruta"
+02000204="Nombri"
+02000205="Estensión"
+02000206="Diretóriu"
+02000207="Tamañu"
+02000208="Tamañu comprimiu"
+02000209="Atributus"
+0200020A="Creau'l"
+0200020B="Úrtimu acesu"
+0200020C="Escambiau'l"
+0200020D="Sóliu"
+0200020E="Comentau"
+0200020F="Encrihtau"
+02000210="Desapartau enantis"
+02000211="Desapartau endispués"
+02000212="Izionáriu"
+02000213="CRC"
+02000214="Tipu"
+02000215="Anti"
+02000216="Métou"
+02000217="S.O. orihin"
+02000218="Sistema d'archivus"
+02000219="Usuariu"
+0200021A="Grupu"
+0200021B="Broqui"
+0200021C="Comentariu"
+0200021D="Posición"
+0200021E="Prefihu la ruta"
+0200021F="Diretórius"
+02000220="Ficherus"
+02000221="Velsión"
+02000222="Volumin"
+02000223="Murtivolumin"
+02000224="Desprazamientu"
+02000225="Enlacis"
+02000226="Broquis"
+02000227="Volúmenis"
+
+02000229="64-bit"
+0200022A="Big-endian"
+0200022B="UCP"
+0200022C="Tamañu físicu"
+0200022D="Tamañu las cabiceras"
+0200022E="Suma e cumprebación"
+0200022F="Caraterísticas"
+02000230="Direción virtual"
+02000231="ID"
+02000232="Nombri cortu"
+02000233="Apricación criaora"
+02000234="Tamañu el setol"
+02000235="Mou"
+02000236="Enlaci"
+
+; Status bar
+02000301="{0} elementu(s) selecionaus"
+02000302="{0} elementu(s)"
+
+02000320="Ficherus:"
+02000321="Diretórius:"
+02000322="Tamañu:"
+02000323="Tamañu comprimíu:"
+02000324="Archivus:"
+
+; List Context Menu
+02000401="&Colunas..."
+
+02000411="&Abril"
+02000412="&Estrayel..."
+
+; ToolBar
+02000501="Estrayel"
+
+; Messages
+02000601="Nu se puei atualizal esti tipu d'archivu."
+02000602="Nu s'á puiu atualizal l'archivu {0}"
+02000603="Nu s'á puiu crial el diretóriu '{0}'"
+02000604="Tipu d'archivu nu soportau."
+02000605="Yerru"
+02000606="Ai elementus en demasía"
+02000607="Nu ai nengún pograma asociau con esta estensión d'archivu"
+02000608="Sin yerrus"
+02000609="Nu s'á puiu abril '{0}' comu archivu"
+0200060A="Nu s'a puiu abril l'archivu encritau '{0}'. Conseña yerronia?"
+0200060B="El sistema nu á síu escapás d'asinal la cantiá prehisa de memoria"
+0200060C="Yerru andarríu"
+0200060D="Tipu archivu nu suportau"
+
+; Dialogs
+02000702="Acetal"
+02000705="&Sí"
+02000707="Sí &a tó"
+02000709="&Nu"
+0200070B="Nu a &tó"
+
+02000710="Cancelal"
+02000711="&Cancelal"
+02000713="&Fechal"
+02000714="Paral"
+02000715="Reinicial"
+
+02000720="Ayua"
+
+; Extract dialog
+02000800="Estrayel"
+02000801="E&strayel a:"
+02000802="Conseña"
+
+02000810="Mou e ruta"
+02000811="Ruta compreta"
+02000812="Ruta relativa"
+02000813="Sin ruta"
+
+02000820="Mou e sobrescrebil"
+02000821="Preguntal enantis"
+02000822="Sobrescrebil sin preguntal"
+02000823="Conserval ficherus esistentis"
+02000824="Renombral de horma automática"
+02000825="Autu-renombral ficherus esistentis"
+
+02000830="Ficherus"
+02000831="Ficherus &selecionaus"
+02000832="&Tolos ficherus"
+
+02000881="Especifical destinu palus ficherus estrayíus."
+
+02000890="Estrayendu"
+
+; Overwrite dialog
+02000900="Confirmal remprazu de ficherus"
+02000901="El diretóriu ya contieni un ficheru el mesmu nombri."
+02000902="Escambial el ficheru esistenti"
+02000903="pol esti otru?"
+
+02000911="Escambial nombri a&utomáticamenti"
+
+02000982="{0} bytes"
+02000983="moificau'l"
+
+; Messages dialog
+02000A00="Mensahis de dianósticu"
+
+02000A80="Mensahi"
+
+02000A91="Métou e compresión nu soportau pa '{0}'."
+02000A92="Yerru datus en '{0}'. El ficheru está changarrau."
+02000A93="Yerru e CRC '{0}'. El ficheru está changarrau."
+02000A94="Yerru e datus nel ficheru encritau '{0}'. Conseña yerrónia?"
+02000A95="Yerru e CRC nel ficheru encritau '{0}'. Conseña yerrónia?"
+
+; Password dialog
+02000B00="Introuzil conseña"
+02000B01="Introuzil conseña:"
+02000B02="Mue&stral conseña"
+02000B03="Repitil conseña:"
+02000B10="Las cunseñas nu coinciín"
+02000B11="Usi sólu letras ingresas, númirus i caráteris especialis (!, #, $, ...) pala conseña"
+02000B12="La conseña tieni largura'n demasía"
+
+; Progress dialog
+02000C00="Pogresu"
+02000C01="Tiempu trascurríu:"
+02000C02="Tiempu restanti:"
+02000C03="Tamañu total:"
+02000C04="Velociá:"
+02000C05="Procesau:"
+02000C06="Tasa e compresión:"
+
+02000C10="Se&gundu pranu"
+02000C11="&Primel pranu"
+02000C12="&Paral"
+02000C13="A&continal"
+
+02000C20="Parau"
+
+02000C30="De siguru que quieri cancelal la operación?"
+
+; Compress dialog
+02000D00="Añiil a archivu"
+02000D01="&Archivu:"
+02000D02="&Mou d'atualización:"
+02000D03="&Hormatu d'archivu:"
+02000D04="Mé&tou e compresión:"
+02000D05="&Creal archivu sóliu"
+02000D06="&Parámetrus:"
+02000D07="Ocionis"
+02000D08="Creal archivu 'SF&X'"
+02000D09="Multi-hilu"
+02000D0A="Encrital &nombris de ficheru"
+02000D0B="Nive&l de compresión:"
+02000D0C="Tamañu el i&zionariu:"
+02000D0D="Tama&ñu e parabra:"
+02000D0E="Usu e memoria pa compresión:"
+02000D0F="Usu e memoria pa decompresión:"
+02000D10="Encritación"
+02000D11="Métou encritación:"
+02000D12="Númiru hilus e la UCP:"
+02000D13="Tamañu el bloqui sóliu:"
+02000D14="Nu sóliu"
+02000D15="Sóliu"
+02000D16="Comprimil ficherus compartíus"
+
+02000D40="Desapartal en &balandronis, 'bytes':"
+02000D41="Tamañu el volumin nu váliu"
+02000D42="Introuza'l tamañu el volumin: {0} 'bytes'.\nDe siguru que quieri desapartal l'archivu'n tantus volúmenis?"
+
+02000D81="Almacenal"
+02000D82="Normal"
+02000D83="Másima"
+02000D84="Respahila"
+02000D85="La más respahila"
+02000D86="Ultra"
+
+02000D90="Esproral"
+
+02000DA1="Añiil i remprazal ficherus"
+02000DA2="Atualizal i añiil ficherus"
+02000DA3="Atualizal sólu ficherus esistentis"
+02000DA4="Sincronizal ficherus"
+
+02000DB1="Tolos ficherus"
+
+02000DC0="Comprimiendu"
+
+; Columns dialog
+02000E00="Colunas"
+02000E01="Selecioni las colunas que quiera muestral n'esti diretóriu. Pa reordinal las colunas usi las tecras AvPág o RePág."
+02000E02="La coluna selecioná debi e tenel una &anchura e"
+02000E03="'pixels'."
+
+02000E10="Movel pa &cimará"
+02000E11="Movel pa em&bahu"
+02000E12="Mue&stral"
+02000E13="&Escuendel"
+02000E14="Fihal"
+
+02000E81="Títulu"
+02000E82="Anchura"
+
+; Testing
+02000F90="Comprebandu"
+
+
+; File Manager
+
+03000000="7-Zip - hestol de ficherus"
+
+; Menu
+03000102="&Archivu"
+03000103="&Eital"
+03000104="&Vel"
+03000105="&Herramientas"
+03000106="A&yua"
+03000107="A&tihus"
+
+; File
+03000210="&Abril"
+03000211="Abril &dentru"
+03000212="Abril &huera"
+03000220="&Vel"
+03000221="&Eital"
+03000230="Renom&bral"
+03000231="&Copial a..."
+03000232="&Movel pa..."
+03000233="&Eliminal"
+03000240="P&ropieais"
+03000241="Come&ntariu"
+03000242="Calculal suma e verificación"
+03000243="Diff"
+03000250="Creal diretóriu"
+03000251="Creal ficheru"
+03000260="&Salil"
+03000270="De&sapartal ficheru..."
+03000271="Com&binal ficherus..."
+
+; Edit
+03000310="&Deshadel"
+03000311="&Rehadel"
+03000320="Cor&tal"
+03000321="&Copial"
+03000322="&Pegal"
+03000323="&Eliminal"
+03000330="Selecional &tó"
+03000331="Deselecional tó"
+03000332="&Invertil seleción"
+03000333="Selecional..."
+03000334="Deselecional..."
+03000335="Selecional pol tipu"
+03000336="Deselecional pol tipu"
+
+; View
+03000410="Iconus g&randis"
+03000411="Iconus caquerus"
+03000412="&Listau"
+03000413="&Detallis"
+03000420="Nu soportau"
+03000430="Abril diretóriu raí"
+03000431="Subil un nivel"
+03000432="Estorial de diretórius..."
+03000440="&Atualizal"
+03000449="Vista prana"
+03000450="&2 panelis"
+03000451="Barra e herramien&tas"
+03000460="Barra e herramientas 'archivu'"
+03000461="Barra e herramientas estándal"
+03000462="Botonis grandis"
+03000463="Muestral testu enus botonis"
+
+; Tools
+03000510="&Ocionis..."
+03000511="&Prebas ('benchmark')"
+
+; Help
+03000610="&Contenius..."
+03000620="&Al tentu 7-Zip..."
+
+; Favorites
+03000710="&Añíl diretóriu a Atihus comu"
+03000720="Atihu"
+
+; Options Dialog
+
+03010000="Ocionis"
+
+; Plugins
+03010100="'Plugins'"
+03010101="'&Plugins':"
+03010110="Ocionis..."
+
+; Edit
+03010200="Eitol"
+03010201="&Eitol:"
+03010202="&Diff:"
+
+; System
+03010300="Sistema"
+03010302="Asocial 7-Zip a hormatus:"
+03010310="'Plugin'"
+
+; Settings
+03010400="Configuración"
+03010401="Muestral l'elementu \..\""
+03010402="Muestral icunus propius del ficheru"
+03010410="Muestral menú el sistema"
+03010420="&Selecional fila(s) enteriza(s)"
+03010421="Muestral línias e la &cuairícula"
+03010422="'Click' únicu p'abril un elementu"
+03010430="Móu e seleción &alternativu"
+03010440="Usa&l páhinas de memoria grandis"
+
+; Strings
+
+03020201="Copial"
+03020202="Movel"
+03020203="Copial a:"
+03020204="Movel pa:"
+03020205="Copiandu..."
+03020206="Moviendu..."
+03020207="Nu se puein movel u copial elementus pa esti tipu e diretórius."
+03020208="Operación nu soportá."
+03020209="Selecional diretóriu destinu."
+
+03020210="Confirmal eliminación del ficheru"
+03020211="Confirmal eliminación del direhtoriu"
+03020212="Confirmal eliminación de varius ficherus"
+03020213="De siguru que quieri eliminal '{0}'?"
+03020214="De siguru que quieri eliminal el diretóriu '{0}' i tol su conteniu?"
+03020215="De siguru que quieri eliminal estus {0} elementus?"
+03020216="Eliminandu..."
+03020217="S'alcuentrau'n yerru al eliminal el ficheru u diretóriu"
+03020218="El sistema nu puei movel un ficheru con ruta larga a la Papelera Recicrahi"
+
+03020220="Renombrandu..."
+03020221="S'alcuentrau'n yerru al renombral el ficheru u diretóriu"
+03020222="Confirmal copia el ficheru"
+03020223="De siguru que quieri copiar estus ficherus al archivu?"
+
+03020230="Creal diretóriu"
+03020231="Nombri e diretóriu:"
+03020232="Nuevu diretóriu"
+03020233="S'alcuentrau'n yerru al creal el diretóriu"
+
+03020240="Creal ficheru"
+03020241="Nombri el ficheru:"
+03020242="Nuevu ficheru"
+03020243="S'alcuentrau'n yerru al creal el ficheru"
+
+03020250="Selecional"
+03020251="Deselecional"
+03020252="Máscara:"
+
+03020260="Estorial de diretórius"
+
+03020280="El ficheru '{0}' á síu moificau.\nAtualizalu nel archivu?"
+03020281="Nu s'á puíu atualizal l'archivu\n'{0}'"
+03020282="Nu s'á puíu ehecutal el eitol."
+03020283="Abriendu..."
+03020284="El ficheru pahi un virus (el nombri'l ficheru contieni espacius largus nel nombri)."
+
+03020290="Comentáriu"
+03020291="&Comentáriu:"
+
+030202A0="Sistema"
+
+03020300="Mi PC"
+03020301="Entorno de red"
+03020302="Documentos"
+
+03020400="Añiil"
+03020401="Estrayel"
+03020402="Comprebal"
+
+03020420="Copial"
+03020421="Movel"
+03020422="Eliminal"
+03020423="Inhormazión"
+
+03020500="Desapartal ficheru"
+03020501="&Desapartal a:"
+03020510="Desapartandu..."
+03020520="Confirmal desapartamientu"
+03020521="De siguru que quieri desapartal el ficheru'n {0} volúmenis?"
+03020522="El tamañu lus volúmenis debi sel mas caqueru que'l del ficheru orihinal"
+
+03020600="Uñil ficherus"
+03020601="&Uñil en:"
+03020610="Uñiendu..."
+03020620="Selecional sólu'l primel ficheru"
+03020621="Nu s'á puíu detetal el ficheru comu parti d'un ficheru desapartau"
+03020622="Nu s'á puíu alcuentral más d'un balandrón del ficheru desapartau"
+
+03020710="Calculandu la suma e verificación..."
+03020720="Inhormazión de suma e verificación"
+03020721="Suma e verificación de 'CRC' pala inhormazión:"
+03020722="Suma e verificación de 'CRC' pala inhormazión i lus nombris:"
+
+03020800="Escaneandu..."
+
+03020900="Propieais"
+
+03020A01="Nu puei realizasi la operación dendi un diretóriu que tenga una ruta larga."
+03020A02="You must select one file"
+03020A03="You must select one or more files"
+03020A04="File {0} is already exist"
+
+; Computer
+03031100="Tamañu total"
+03031101="Espaciu dispunibri"
+03031102="Tamañu el 'cluster'"
+03031103="Etiqueta"
+
+; Network
+03031200="Nombri local"
+03031201="Proveol"
+
+; Benchmark Dialog
+
+03080000="Prebas ('benchmark')"
+03080001="Usu e memoria:"
+03080002="Comprimiendu"
+03080003="Comprimiendu"
+03080004="Velociá"
+03080005="Razón"
+03080006="Razón total"
+03080007="Atual"
+03080008="Resurtau"
+03080009="Pasis:"
+0308000A="Yerrus:"
+0308000B="Usu e CPU"
+0308000C="Razón / Usu"
+
+;!@LangEnd@!

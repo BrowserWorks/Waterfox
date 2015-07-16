@@ -8,7 +8,7 @@
 #define js_Id_h
 
 // A jsid is an identifier for a property or method of an object which is
-// either a 31-bit signed integer, interned string or object.
+// either a 31-bit unsigned integer, interned string or symbol.
 //
 // Also, there is an additional jsid value, JSID_VOID, which does not occur in
 // JS scripts but may be used to indicate the absence of a valid jsid.  A void
@@ -17,7 +17,7 @@
 // entry points expecting a jsid and do not need to handle JSID_VOID in hooks
 // receiving a jsid except when explicitly noted in the API contract.
 //
-// A jsid is not implicitly convertible to or from a jsval; JS_ValueToId or
+// A jsid is not implicitly convertible to or from a Value; JS_ValueToId or
 // JS_IdToValue must be used instead.
 
 #include "jstypes.h"
@@ -126,7 +126,6 @@ SYMBOL_TO_JSID(JS::Symbol* sym)
     MOZ_ASSERT(sym != nullptr);
     MOZ_ASSERT((size_t(sym) & JSID_TYPE_MASK) == 0);
     MOZ_ASSERT(!js::gc::IsInsideNursery(reinterpret_cast<js::gc::Cell*>(sym)));
-    MOZ_ASSERT(!JS::IsPoisonedPtr(sym));
     JSID_BITS(id) = (size_t(sym) | JSID_TYPE_SYMBOL);
     return id;
 }
@@ -169,20 +168,9 @@ extern JS_PUBLIC_DATA(const JS::HandleId) JSID_EMPTYHANDLE;
 
 namespace js {
 
-inline bool
-IsPoisonedId(jsid id)
-{
-    if (JSID_IS_STRING(id))
-        return JS::IsPoisonedPtr(JSID_TO_STRING(id));
-    if (JSID_IS_SYMBOL(id))
-        return JS::IsPoisonedPtr(JSID_TO_SYMBOL(id));
-    return false;
-}
-
 template <> struct GCMethods<jsid>
 {
     static jsid initial() { return JSID_VOID; }
-    static bool poisoned(jsid id) { return IsPoisonedId(id); }
     static bool needsPostBarrier(jsid id) { return false; }
     static void postBarrier(jsid* idp) {}
     static void relocate(jsid* idp) {}

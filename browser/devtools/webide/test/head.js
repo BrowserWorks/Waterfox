@@ -36,6 +36,10 @@ SimpleTest.registerCleanupFunction(() => {
   Services.prefs.clearUserPref("devtools.webide.enableLocalRuntime");
   Services.prefs.clearUserPref("devtools.webide.autoinstallADBHelper");
   Services.prefs.clearUserPref("devtools.webide.autoinstallFxdtAdapters");
+  Services.prefs.clearUserPref("devtools.webide.sidebars");
+  Services.prefs.clearUserPref("devtools.webide.busyTimeout");
+  Services.prefs.clearUserPref("devtools.webide.lastSelectedProject");
+  Services.prefs.clearUserPref("devtools.webide.lastConnectedRuntime");
 });
 
 function openWebIDE(autoInstallAddons) {
@@ -103,8 +107,10 @@ function nextTick() {
 }
 
 function waitForUpdate(win, update) {
+  info("Wait: " + update);
   let deferred = promise.defer();
   win.AppManager.on("app-manager-update", function onUpdate(e, what) {
+    info("Got: " + what);
     if (what !== update) {
       return;
     }
@@ -141,7 +147,7 @@ function lazyIframeIsLoaded(iframe) {
   let deferred = promise.defer();
   iframe.addEventListener("load", function onLoad() {
     iframe.removeEventListener("load", onLoad, true);
-    deferred.resolve();
+    deferred.resolve(nextTick());
   }, true);
   return deferred.promise;
 }
@@ -191,16 +197,9 @@ function connectToLocalRuntime(aWindow) {
   let items = panelNode.querySelectorAll(".runtime-panel-item-other");
   is(items.length, 2, "Found 2 custom runtime buttons");
 
-  let deferred = promise.defer();
-  aWindow.AppManager.on("app-manager-update", function onUpdate(e,w) {
-    if (w == "list-tabs-response") {
-      aWindow.AppManager.off("app-manager-update", onUpdate);
-      deferred.resolve();
-    }
-  });
-
+  let updated = waitForUpdate(aWindow, "runtime-global-actors");
   items[1].click();
-  return deferred.promise;
+  return updated;
 }
 
 function handleError(aError) {

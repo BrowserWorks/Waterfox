@@ -124,6 +124,11 @@ protected:
             // We have already checked that our parent is visible.
             return true;
           }
+          if (aNode->IsHTMLElement(nsGkAtoms::rp)) {
+            // Ruby parentheses are part of ruby structure, hence
+            // shouldn't be stripped out even if it is not displayed.
+            return true;
+          }
           return false;
         }
         bool isVisible = frame->StyleVisibility()->IsVisible();
@@ -134,8 +139,6 @@ protected:
     return true;
   }
 
-  static bool IsTag(nsIContent* aContent, nsIAtom* aAtom);
-  
   virtual bool IncludeInContext(nsINode *aNode);
 
   nsCOMPtr<nsIDocument>          mDocument;
@@ -530,7 +533,7 @@ nsDocumentEncoder::SerializeToStringIterative(nsINode* aNode,
             current->NodeType() == nsIDOMNode::DOCUMENT_FRAGMENT_NODE) {
           DocumentFragment* frag = static_cast<DocumentFragment*>(current);
           nsIContent* host = frag->GetHost();
-          if (host && host->IsHTML(nsGkAtoms::_template)) {
+          if (host && host->IsHTMLElement(nsGkAtoms::_template)) {
             current = host;
           }
         }
@@ -539,12 +542,6 @@ nsDocumentEncoder::SerializeToStringIterative(nsINode* aNode,
   }
 
   return NS_OK;
-}
-
-bool 
-nsDocumentEncoder::IsTag(nsIContent* aContent, nsIAtom* aAtom)
-{
-  return aContent && aContent->Tag() == aAtom;
 }
 
 static nsresult
@@ -1093,7 +1090,7 @@ nsDocumentEncoder::EncodeToStringWithMaxLength(uint32_t aMaxLength,
           NS_ENSURE_SUCCESS(rv, rv);
         }
         nsCOMPtr<nsIContent> content = do_QueryInterface(node);
-        if (content && content->IsHTML(nsGkAtoms::tr)) {
+        if (content && content->IsHTMLElement(nsGkAtoms::tr)) {
           nsINode* n = content;
           if (!prevNode) {
             // Went from a non-<tr> to a <tr>
@@ -1354,7 +1351,7 @@ nsHTMLCopyEncoder::SetSelection(nsISelection* aSelection)
   nsCOMPtr<nsIDOMRange> range;
   nsCOMPtr<nsIDOMNode> commonParent;
   Selection* selection = static_cast<Selection*>(aSelection);
-  uint32_t rangeCount = selection->GetRangeCount();
+  uint32_t rangeCount = selection->RangeCount();
 
   // if selection is uninitialized return
   if (!rangeCount)
@@ -1378,9 +1375,7 @@ nsHTMLCopyEncoder::SetSelection(nsISelection* aSelection)
        selContent = selContent->GetParent())
   {
     // checking for selection inside a plaintext form widget
-    nsIAtom *atom = selContent->Tag();
-    if (atom == nsGkAtoms::input ||
-        atom == nsGkAtoms::textarea)
+    if (selContent->IsAnyOfHTMLElements(nsGkAtoms::input, nsGkAtoms::textarea))
     {
       mIsTextWidget = true;
       break;
@@ -1398,7 +1393,7 @@ nsHTMLCopyEncoder::SetSelection(nsISelection* aSelection)
 
   // also consider ourselves in a text widget if we can't find an html document
   nsCOMPtr<nsIHTMLDocument> htmlDoc = do_QueryInterface(mDocument);
-  if (!(htmlDoc && mDocument->IsHTML())) {
+  if (!(htmlDoc && mDocument->IsHTMLDocument())) {
     mIsTextWidget = true;
     mSelection = aSelection;
     // mMimeType is set to text/plain when encoding starts.
@@ -1508,34 +1503,32 @@ nsHTMLCopyEncoder::IncludeInContext(nsINode *aNode)
   if (!content)
     return false;
 
-  nsIAtom *tag = content->Tag();
-
-  return (tag == nsGkAtoms::b        ||
-          tag == nsGkAtoms::i        ||
-          tag == nsGkAtoms::u        ||
-          tag == nsGkAtoms::a        ||
-          tag == nsGkAtoms::tt       ||
-          tag == nsGkAtoms::s        ||
-          tag == nsGkAtoms::big      ||
-          tag == nsGkAtoms::small    ||
-          tag == nsGkAtoms::strike   ||
-          tag == nsGkAtoms::em       ||
-          tag == nsGkAtoms::strong   ||
-          tag == nsGkAtoms::dfn      ||
-          tag == nsGkAtoms::code     ||
-          tag == nsGkAtoms::cite     ||
-          tag == nsGkAtoms::var      ||
-          tag == nsGkAtoms::abbr     ||
-          tag == nsGkAtoms::font     ||
-          tag == nsGkAtoms::script   ||
-          tag == nsGkAtoms::span     ||
-          tag == nsGkAtoms::pre      ||
-          tag == nsGkAtoms::h1       ||
-          tag == nsGkAtoms::h2       ||
-          tag == nsGkAtoms::h3       ||
-          tag == nsGkAtoms::h4       ||
-          tag == nsGkAtoms::h5       ||
-          tag == nsGkAtoms::h6);
+  return content->IsAnyOfHTMLElements(nsGkAtoms::b,
+                                      nsGkAtoms::i,
+                                      nsGkAtoms::u,
+                                      nsGkAtoms::a,
+                                      nsGkAtoms::tt,
+                                      nsGkAtoms::s,
+                                      nsGkAtoms::big,
+                                      nsGkAtoms::small,
+                                      nsGkAtoms::strike,
+                                      nsGkAtoms::em,
+                                      nsGkAtoms::strong,
+                                      nsGkAtoms::dfn,
+                                      nsGkAtoms::code,
+                                      nsGkAtoms::cite,
+                                      nsGkAtoms::var,
+                                      nsGkAtoms::abbr,
+                                      nsGkAtoms::font,
+                                      nsGkAtoms::script,
+                                      nsGkAtoms::span,
+                                      nsGkAtoms::pre,
+                                      nsGkAtoms::h1,
+                                      nsGkAtoms::h2,
+                                      nsGkAtoms::h3,
+                                      nsGkAtoms::h4,
+                                      nsGkAtoms::h5,
+                                      nsGkAtoms::h6);
 }
 
 
@@ -1699,10 +1692,11 @@ nsHTMLCopyEncoder::GetPromotedPoint(Endpoint aWhere, nsIDOMNode *aNode, int32_t 
         if (bResetPromotion)
         {
           nsCOMPtr<nsIContent> content = do_QueryInterface(parent);
-          if (content)
+          if (content && content->IsHTMLElement())
           {
             bool isBlock = false;
-            parserService->IsBlock(parserService->HTMLAtomTagToId(content->Tag()), isBlock);
+            parserService->IsBlock(parserService->HTMLAtomTagToId(
+                                     content->NodeInfo()->NameAtom()), isBlock);
             if (isBlock)
             {
               bResetPromotion = false;
@@ -1781,10 +1775,11 @@ nsHTMLCopyEncoder::GetPromotedPoint(Endpoint aWhere, nsIDOMNode *aNode, int32_t 
         if (bResetPromotion)
         {
           nsCOMPtr<nsIContent> content = do_QueryInterface(parent);
-          if (content)
+          if (content && content->IsHTMLElement())
           {
             bool isBlock = false;
-            parserService->IsBlock(parserService->HTMLAtomTagToId(content->Tag()), isBlock);
+            parserService->IsBlock(parserService->HTMLAtomTagToId(
+                                     content->NodeInfo()->NameAtom()), isBlock);
             if (isBlock)
             {
               bResetPromotion = false;
@@ -1843,7 +1838,7 @@ nsHTMLCopyEncoder::IsMozBR(nsIDOMNode* aNode)
   MOZ_ASSERT(aNode);
   nsCOMPtr<Element> element = do_QueryInterface(aNode);
   return element &&
-         element->IsHTML(nsGkAtoms::br) &&
+         element->IsHTMLElement(nsGkAtoms::br) &&
          element->AttrValueIs(kNameSpaceID_None, nsGkAtoms::type,
                               NS_LITERAL_STRING("_moz"), eIgnoreCase);
 }
@@ -1875,16 +1870,17 @@ bool
 nsHTMLCopyEncoder::IsRoot(nsIDOMNode* aNode)
 {
   nsCOMPtr<nsIContent> content = do_QueryInterface(aNode);
-  if (content)
-  {
-    if (mIsTextWidget) 
-      return (IsTag(content, nsGkAtoms::div));
-
-    return (IsTag(content, nsGkAtoms::body) ||
-            IsTag(content, nsGkAtoms::td)   ||
-            IsTag(content, nsGkAtoms::th));
+  if (!content) {
+    return false;
   }
-  return false;
+
+  if (mIsTextWidget) {
+    return content->IsHTMLElement(nsGkAtoms::div);
+  }
+
+  return content->IsAnyOfHTMLElements(nsGkAtoms::body,
+                                      nsGkAtoms::td,
+                                      nsGkAtoms::th);
 }
 
 bool
@@ -2002,11 +1998,12 @@ nsHTMLCopyEncoder::GetImmediateContextCount(const nsTArray<nsINode*>& aAncestorA
       break;
     }
     nsCOMPtr<nsIContent> content(do_QueryInterface(node));
-    if (!content || !content->IsHTML() || (content->Tag() != nsGkAtoms::tr    &&
-                                           content->Tag() != nsGkAtoms::thead &&
-                                           content->Tag() != nsGkAtoms::tbody &&
-                                           content->Tag() != nsGkAtoms::tfoot &&
-                                           content->Tag() != nsGkAtoms::table)) {
+    if (!content ||
+        !content->IsAnyOfHTMLElements(nsGkAtoms::tr,
+                                      nsGkAtoms::thead,
+                                      nsGkAtoms::tbody,
+                                      nsGkAtoms::tfoot,
+                                      nsGkAtoms::table)) {
       break;
     }
     ++j;

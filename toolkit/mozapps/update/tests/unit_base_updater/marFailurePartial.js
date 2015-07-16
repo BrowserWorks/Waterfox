@@ -26,7 +26,7 @@ function run_test() {
   }
 
   // Note that on platforms where we use execv, we cannot trust the return code.
-  runUpdate((USE_EXECV ? 0 : 1), STATE_FAILED_UNEXPECTED_FILE_OPERATION_ERROR);
+  runUpdate((USE_EXECV ? 0 : 1), STATE_FAILED_LOADSOURCE_ERROR_WRONG_SIZE);
 }
 
 /**
@@ -40,8 +40,8 @@ function checkUpdateApplied() {
   }
 
   if (IS_MACOSX) {
-    logTestInfo("testing last modified time on the apply to directory has " +
-                "changed after a successful update (bug 600098)");
+    debugDump("testing last modified time on the apply to directory has " +
+              "changed after a successful update (bug 600098)");
     let now = Date.now();
     let applyToDir = getApplyDirFile();
     let timeDiff = Math.abs(applyToDir.lastModifiedTime - now);
@@ -50,5 +50,6 @@ function checkUpdateApplied() {
 
   checkFilesAfterUpdateFailure(getApplyDirFile, false, false);
   checkUpdateLogContents(LOG_PARTIAL_FAILURE);
+  standardInit();
   checkCallbackAppLog();
 }

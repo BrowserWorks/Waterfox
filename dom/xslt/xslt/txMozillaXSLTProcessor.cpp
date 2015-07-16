@@ -194,7 +194,7 @@ txToFragmentHandlerFactory::createHandlerWith(txOutputFormat* aFormat,
             NS_ASSERTION(domdoc, "unable to get ownerdocument");
             nsCOMPtr<nsIDocument> doc = do_QueryInterface(domdoc);
 
-            if (doc && doc->IsHTML()) {
+            if (doc && doc->IsHTMLDocument()) {
                 format.mMethod = eHTMLOutput;
             } else {
                 format.mMethod = eXMLOutput;
@@ -1279,9 +1279,9 @@ txMozillaXSLTProcessor::ContentRemoved(nsIDocument* aDocument,
 }
 
 /* virtual */ JSObject*
-txMozillaXSLTProcessor::WrapObject(JSContext* aCx)
+txMozillaXSLTProcessor::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-    return XSLTProcessorBinding::Wrap(aCx, this);
+    return XSLTProcessorBinding::Wrap(aCx, this, aGivenProto);
 }
 
 

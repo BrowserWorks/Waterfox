@@ -20,9 +20,9 @@ class AudioContext;
 class EventProxyHandler;
 
 class AudioDestinationNode final : public AudioNode
-                                     , public nsIDOMEventListener
-                                     , public nsIAudioChannelAgentCallback
-                                     , public MainThreadMediaStreamListener
+                                 , public nsIDOMEventListener
+                                 , public nsIAudioChannelAgentCallback
+                                 , public MainThreadMediaStreamListener
 {
 public:
   // This node type knows what MediaStreamGraph to use based on
@@ -40,7 +40,7 @@ public:
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(AudioDestinationNode, AudioNode)
   NS_DECL_NSIAUDIOCHANNELAGENTCALLBACK
 
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   virtual uint16_t NumberOfOutputs() const final override
   {

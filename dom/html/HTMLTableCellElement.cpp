@@ -23,9 +23,9 @@ HTMLTableCellElement::~HTMLTableCellElement()
 }
 
 JSObject*
-HTMLTableCellElement::WrapNode(JSContext *aCx)
+HTMLTableCellElement::WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return HTMLTableCellElementBinding::Wrap(aCx, this);
+  return HTMLTableCellElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 NS_IMPL_ISUPPORTS_INHERITED(HTMLTableCellElement, nsGenericHTMLElement,
@@ -56,14 +56,14 @@ HTMLTableCellElement::GetTable() const
     return nullptr;
   }
 
-  if (section->IsHTML(nsGkAtoms::table)) {
+  if (section->IsHTMLElement(nsGkAtoms::table)) {
     // XHTML, without a row group.
     return static_cast<HTMLTableElement*>(section);
   }
 
   // We have a row group.
   nsIContent* result = section->GetParent();
-  if (result && result->IsHTML(nsGkAtoms::table)) {
+  if (result && result->IsHTMLElement(nsGkAtoms::table)) {
     return static_cast<HTMLTableElement*>(result);
   }
 
@@ -390,7 +390,7 @@ HTMLTableCellElement::ParseAttribute(int32_t aNamespaceID,
         // quirks mode does not honor the special html 4 value of 0
         if (val > MAX_COLSPAN || val < 0 ||
             (0 == val && InNavQuirksMode(OwnerDoc()))) {
-          aResult.SetTo(1);
+          aResult.SetTo(1, &aValue);
         }
       }
       return res;
@@ -401,7 +401,7 @@ HTMLTableCellElement::ParseAttribute(int32_t aNamespaceID,
         int32_t val = aResult.GetIntegerValue();
         // quirks mode does not honor the special html 4 value of 0
         if (val < 0 || (0 == val && InNavQuirksMode(OwnerDoc()))) {
-          aResult.SetTo(1);
+          aResult.SetTo(1, &aValue);
         }
       }
       return res;

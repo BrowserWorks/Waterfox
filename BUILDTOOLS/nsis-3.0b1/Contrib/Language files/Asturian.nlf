@@ -1,0 +1,190 @@
+﻿# Header, don't edit ;Asturian - Asturies
+NLF v6
+# Language ID (none exists at the moment)
+9997
+# Font and size - dash (-) means default
+-
+-
+# Codepage - dash (-) means ANSI code page
+1252
+# RTL - anything else than RTL means LTR
+-
+# Translation by Marcos (marcoscostales@gmail.com).
+# ^Branding
+Nullsoft Install System %s
+# ^SetupCaption
+Instalación de $(^Name)
+# ^UninstallCaption
+Desinstalación de $(^Name)
+# ^LicenseSubCaption
+: Alcuerdu de Llicencia
+# ^ComponentsSubCaption
+: Opciones d'Instalación
+# ^DirSubCaption
+: Direutoriu d'Instalación
+# ^InstallingSubCaption
+: Instalando
+# ^CompletedSubCaption
+: Completáu
+# ^UnComponentsSubCaption
+: Opciones de Desinstalación
+# ^UnDirSubCaption
+: Direutoriu de Desinstalación
+# ^ConfirmSubCaption
+: Confirmación
+# ^UninstallingSubCaption
+: Desinstalando
+# ^UnCompletedSubCaption
+: Completáu
+# ^BackBtn
+< &Atrás
+# ^NextBtn
+&Siguiente >
+# ^AgreeBtn
+A&ceuto
+# ^AcceptBtn
+A&ceuto los términos de la llicencia
+# ^DontAcceptBtn
+&Non aceuto los términos de la llicencia
+# ^InstallBtn
+&Instalar
+# ^UninstallBtn
+&Desinstalar
+# ^CancelBtn
+Encaboxar
+# ^CloseBtn
+&Zarrar
+# ^BrowseBtn
+&Restolar...
+# ^ShowDetailsBtn
+Ver &detalles
+# ^ClickNext
+Calca Siguiente pa siguir.
+# ^ClickInstall
+Calca Instalar pa entamar la instalación.
+# ^ClickUninstall
+Calca Desinstalar pa entamar la desinstalación.
+# ^Name
+Nome
+# ^Completed
+Completáu
+# ^LicenseText
+Por favor, revisa l'acuerdu de llicencia enantes d'instalar $(^NameDA). Si aceutes tolos términos del alcuerdu, calca Aceuto.
+# ^LicenseTextCB
+Por favor, revisa l'alcuerdu de llicencia enantes d'instalar $(^NameDA). Si aceutes tolos términos del alcuerdu, marca embaxo la caxella. $_CLICK
+# ^LicenseTextRB
+Por favor, revisa l'alcuerdu de llicencia enantes d'instalar $(^NameDA). Si aceutes tolos términos del alcuerdu, seleiciona embaxo la primer opción. $_CLICK
+# ^UnLicenseText
+Por favor, revisa l'alcuerdu de llicencia enantes de desinstalar $(^NameDA). Si aceutes tolos términos del alcuerdu, calca Aceuto.
+# ^UnLicenseTextCB
+Por favor, revisa l'alcuerdu de llicencia enantes de desinstalar $(^NameDA). Si aceutes tolos términos del alcuerdu, marca embaxo la caxella. $_CLICK.
+# ^UnLicenseTextRB
+Por favor, revisa l'alcuerdu de llicencia enantes de desinstalar $(^NameDA). Si aceutes tolos términos del alcuerdu, seleiciona embaxo la primer opción. $_CLICK
+# ^Custom
+Personalizada
+# ^ComponentsText
+Conseña los componentes que deseyes instalar y desconseña los componentes que nun quies instalar. $_CLICK
+# ^ComponentsSubText1
+Tipos d'instalación:
+# ^ComponentsSubText2_NoInstTypes
+Seleiciona los componentes a instalar:
+# ^ComponentsSubText2
+O selecciona los componentes opcionales que deseyes instalar:
+# ^UnComponentsText
+Conseña los componentes que deseyes desinstalar y desconseña los componentes que nun quieras desinstalar. $_CLICK
+# ^UnComponentsSubText1
+Tipos de desinstalación:
+# ^UnComponentsSubText2_NoInstTypes
+Seleiciona los componentes a desinstalar:
+# ^UnComponentsSubText2
+O seleiciona los componentes opcionales que deseyes desinstalar:
+# ^DirText
+El programa d'instalación instalará $(^NameDA) nel siguiente direutoriu. Pa instalar nun direutoriu distintu, calca Restolar y seleiciona otru direutoriu. $_CLICK
+# ^DirSubText
+Direutoriu de Destín
+# ^DirBrowseText
+Seleiciona'l direutoriu nel qu'instalará $(^NameDA):
+# ^UnDirText
+El programa d'instalación desinstalará $(^NameDA) del siguiente direutoriu. Pa desinstalar d'un direutoriu distintu, calca Restolar y seleiciona otru direutoriu. $_CLICK
+# ^UnDirSubText
+""
+# ^UnDirBrowseText
+Seleiciona'l direutoriu dende'l cual desinstalará $(^NameDA):
+# ^SpaceAvailable
+Espaciu disponible: 
+# ^SpaceRequired
+Espaciu requeríu: 
+# ^UninstallingText
+$(^NameDA) sedrá desinstaláu del siguiente direutoriu. $_CLICK
+# ^UninstallingSubText
+Desinstalando dende:
+# ^FileError
+Error abriendo ficheru pa escritura: \r\n\t"$0"\r\nCalca albortar p'anular la instalación,\r\nreintentar pa volver a intentar escribir el ficheru, u\r\nomitir pa inorar esti ficheru
+# ^FileError_NoIgnore
+Error abriendo ficheru pa escritura: \r\n\t"$0"\r\nCalca reintentar pa volver a intentar escribir el ficheru, o\r\nencaboxar p'anular la instalación
+# ^CantWrite
+"Nun pudo escribise: "
+# ^CopyFailed
+Falló la copia
+# ^CopyTo
+"Copiar a "
+# ^Registering
+"Rexistrando: "
+# ^Unregistering
+"Desaniciando rexistru: "
+# ^SymbolNotFound
+"Nun pudo atopase símbolu: "
+# ^CouldNotLoad
+"Nun pudo cargase: "
+# ^CreateFolder
+"Criar direutoriu: "
+# ^CreateShortcut
+"Criar accesu direutu: "
+# ^CreatedUninstaller
+"Criar desinstalador: "
+# ^Delete
+"Desaniciar ficheru: "
+# ^DeleteOnReboot
+"Desaniciar al reaniciu: "
+# ^ErrorCreatingShortcut
+"Fallu criando accesu direutu: "
+# ^ErrorCreating
+"Fallu criando: "
+# ^ErrorDecompressing
+¡Error descomprimiendo datos! ¿Instalador corruptu?
+# ^ErrorRegistering
+Fallu rexistrando DLL
+# ^ExecShell
+"Executar comandu: "
+# ^Exec
+"Executar: "
+# ^Extract
+"Estrayer: "
+# ^ErrorWriting
+"Extrayer: fallu escribiendo al ficheru "
+# ^InvalidOpcode
+Instalador corruptu: códigu d'operación non válidu
+# ^NoOLE
+"Ensin OLE pa: "
+# ^OutputFolder
+"Direutoriu de salida: "
+# ^RemoveFolder
+"Desaniciar direutoriu: "
+# ^RenameOnReboot
+"Renomar al reaniciu: "
+# ^Rename
+"Renomar: "
+# ^Skipped
+"Omitíu: "
+# ^CopyDetails
+Copiar Detalles al Cartafueyu
+# ^LogInstall
+Rexistrar procesu d'instalación 
+# ^Byte
+B
+# ^Kilo
+K
+# ^Mega
+M
+# ^Giga
+G

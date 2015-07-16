@@ -7,6 +7,7 @@ import json
 import urllib2
 import sys
 import re
+import subprocess
 
 repo_matcher = re.compile(r'[a-z]+://(hg|git)\.mozilla\.org')
 
@@ -35,12 +36,11 @@ def check_task(task):
         print('Invalid base repository', repo, file=sys.stderr)
         return -1
 
-    if 'artifacts' in payload:
-        artifacts = payload['artifacts']
-        # If any of the artifacts makes reference to 'public',
-        # abort the task
-        if any(map(lambda a: 'public' in a, artifacts)):
-            print('Cannot upload to public', file=sys.stderr)
+    locations = task["extra"]["locations"]
+    if "img" in locations:
+        img = locations["img"]
+        if img.startswith("public"):
+            print('Cannot upload images to public', file=sys.stderr)
             return -1
 
     return 0
@@ -49,11 +49,17 @@ def main():
     taskid = os.getenv('TASK_ID')
 
     # If the task id is None, we assume we are running docker locally
-    if taskid is None:
-        sys.exit(0)
+    if taskid is not None:
+        task = get_task(taskid)
+        ret = check_task(task)
+        if ret != 0:
+            sys.exit(ret)
 
-    task = get_task(taskid)
-    sys.exit(check_task(task))
+    if len(sys.argv) > 1:
+        try:
+            subprocess.call(sys.argv[1:], shell=True)
+        except subprocess.CalledProcessError as e:
+            sys.exit(e.returncode)
 
 if __name__ == '__main__':
     main()

@@ -180,7 +180,7 @@ AddCert(PK11SlotInfo *slot, CERTCertDBHandle *handle, char *name, char *trusts,
 
 static SECStatus
 CertReq(SECKEYPrivateKey *privk, SECKEYPublicKey *pubk, KeyType keyType,
-        SECOidTag hashAlgTag, CERTName *subject, char *phone, int ascii, 
+        SECOidTag hashAlgTag, CERTName *subject, const char *phone, int ascii,
 	const char *emailAddrs, const char *dnsNames,
         certutilExtnList extnList, const char *extGeneric,
         /*out*/ SECItem *result)
@@ -270,7 +270,7 @@ CertReq(SECKEYPrivateKey *privk, SECKEYPublicKey *pubk, KeyType keyType,
 	}
 
 	if (!phone)
-	    phone = strdup("(not specified)");
+	    phone = "(not specified)";
 
 	email = CERT_GetCertEmailAddress(subject);
 	if (!email)
@@ -323,6 +323,7 @@ CertReq(SECKEYPrivateKey *privk, SECKEYPublicKey *pubk, KeyType keyType,
 	    }
 	    PR_smprintf_free(header);
 	}
+	PORT_Free(obuf);
     } else {
 	(void) SECITEM_CopyItem(NULL, result, &signedReq);
     }
@@ -2419,10 +2420,10 @@ certutil_main(int argc, char **argv, PRBool initialize)
     PRFileDesc *outFile         = PR_STDOUT;
     SECItem     certReqDER      = { siBuffer, NULL, 0 };
     SECItem     certDER         = { siBuffer, NULL, 0 };
-    char *      slotname        = "internal";
-    char *      certPrefix      = "";
+    const char *slotname        = "internal";
+    const char *certPrefix      = "";
     char *      sourceDir       = "";
-    char *      srcCertPrefix   = "";
+    const char *srcCertPrefix   = "";
     char *      upgradeID        = "";
     char *      upgradeTokenName     = "";
     KeyType     keytype         = rsaKey;
@@ -2533,7 +2534,7 @@ certutil_main(int argc, char **argv, PRBool initialize)
 	if (PL_strcmp(certutil.options[opt_TokenName].arg, "all") == 0)
 	    slotname = NULL;
 	else
-	    slotname = PL_strdup(certutil.options[opt_TokenName].arg);
+	    slotname = certutil.options[opt_TokenName].arg;
     }
 
     /*  -Z hash type  */
@@ -2593,7 +2594,7 @@ certutil_main(int argc, char **argv, PRBool initialize)
     /*  -P certdb name prefix */
     if (certutil.options[opt_DBPrefix].activated) {
         if (certutil.options[opt_DBPrefix].arg) {
-            certPrefix = strdup(certutil.options[opt_DBPrefix].arg);
+            certPrefix = certutil.options[opt_DBPrefix].arg;
         } else {
             Usage(progName);
         }
@@ -2602,7 +2603,7 @@ certutil_main(int argc, char **argv, PRBool initialize)
     /*  --source-prefix certdb name prefix */
     if (certutil.options[opt_SourcePrefix].activated) {
         if (certutil.options[opt_SourcePrefix].arg) {
-            srcCertPrefix = strdup(certutil.options[opt_SourcePrefix].arg);
+            srcCertPrefix = certutil.options[opt_SourcePrefix].arg;
         } else {
             Usage(progName);
         }

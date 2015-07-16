@@ -1,0 +1,66 @@
+#!/bin/sh
+# Original copyright (C) 2002, Earnie Boyd
+#   mailto:earnie@users.sf.net
+# This implementation copyright (C) 2006, 2008, Keith Marshall
+#   mailto:keithmarshall@users.sf.net
+#
+# This file is part of MSYS
+#   http://www.mingw.org/msys.shtml
+#
+# File: which
+# $Id: which,v 1.4 2009/03/14 14:13:32 keithmarshall Exp $
+
+CMD=`IFS='\\/:'; set CMD $0; eval echo \$\{$#\}`
+if test $# -lt 1
+then
+  echo >&2 "$CMD: syntax error: missing argument"
+  echo >&2 "Usage: $CMD [ -a | --all ] cmd ..."
+  exit 1
+fi
+
+# To accomodate Woe32's typically asinine $PATH, which frequently
+# includes directory names with embedded spaces, we need to set up
+# $IFS to consider only a newline as a field separator.
+IFS=$'\n'
+
+break=break
+for PROG
+do
+  if test x"$PROG" = x-a || test x"$PROG" = x--all
+  then
+    break=""
+  else
+    WHICH=""
+    # need `type -ap -- "$PROG" || type -p -- "$PROG"'
+    # because `type -ap foo' reports nothing, if both `foo' and `foo.exe'
+    # are present, and are distinct.
+    for LIST in `type -ap -- "$PROG" || type -p -- "$PROG"`
+    do
+      if test -f "$LIST"
+      then
+	# preserve `.exe' extension
+        WHICH="$LIST"`test -f "$LIST.exe" && echo '.exe'`
+	if test "$LIST" != "$WHICH"
+	then
+	  # detect distinct `foo' and `foo.exe'
+	  # (this needs IFS=<space>, to get the INODE numbers)
+	  IFS=" " INODE1=`ls -id "$LIST"` INODE2=`ls -id "$WHICH"`
+	  if test `set ref $INODE1; echo $2` != `set ref $INODE2; echo $2`
+	  then
+	    # `foo' matches first, followed by `foo.exe'
+	    test -z "$break" && echo "$LIST" || WHICH="$LIST"
+	  fi
+	  # reset IFS=<newline>, to get any further PROG names
+	  IFS=$'\n'
+	fi
+	echo "$WHICH"
+	$break
+      fi
+    done
+    test x"$WHICH" = x && echo >&2 "$CMD: $PROG: "${ERROR="unknown command"}
+  fi
+done
+test ${ERROR+set} && exit 1
+exit 0
+
+# $RCSfile: which,v $: end of file

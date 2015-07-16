@@ -35,10 +35,8 @@ class JavaScriptBase : public WrapperOwner, public WrapperAnswer, public Base
 
     /*** IPC handlers ***/
 
-    bool RecvPreventExtensions(const uint64_t& objId, ReturnStatus* rs,
-                               bool* succeeded) {
-        return Answer::RecvPreventExtensions(ObjectId::deserialize(objId), rs,
-                                             succeeded);
+    bool RecvPreventExtensions(const uint64_t& objId, ReturnStatus* rs) {
+        return Answer::RecvPreventExtensions(ObjectId::deserialize(objId), rs);
     }
     bool RecvGetPropertyDescriptor(const uint64_t& objId, const JSIDVariant& id,
                                      ReturnStatus* rs,
@@ -52,13 +50,12 @@ class JavaScriptBase : public WrapperOwner, public WrapperAnswer, public Base
         return Answer::RecvGetOwnPropertyDescriptor(ObjectId::deserialize(objId), id, rs, out);
     }
     bool RecvDefineProperty(const uint64_t& objId, const JSIDVariant& id,
-                              const PPropertyDescriptor& flags,
-                              ReturnStatus* rs) {
+                            const PPropertyDescriptor& flags, ReturnStatus* rs) {
         return Answer::RecvDefineProperty(ObjectId::deserialize(objId), id, flags, rs);
     }
     bool RecvDelete(const uint64_t& objId, const JSIDVariant& id,
-                      ReturnStatus* rs, bool* success) {
-        return Answer::RecvDelete(ObjectId::deserialize(objId), id, rs, success);
+                      ReturnStatus* rs) {
+        return Answer::RecvDelete(ObjectId::deserialize(objId), id, rs);
     }
 
     bool RecvHas(const uint64_t& objId, const JSIDVariant& id,
@@ -74,10 +71,9 @@ class JavaScriptBase : public WrapperOwner, public WrapperAnswer, public Base
                    ReturnStatus* rs, JSVariant* result) {
         return Answer::RecvGet(ObjectId::deserialize(objId), receiverVar, id, rs, result);
     }
-    bool RecvSet(const uint64_t& objId, const ObjectVariant& receiverVar,
-                   const JSIDVariant& id, const bool& strict,
-                   const JSVariant& value, ReturnStatus* rs, JSVariant* result) {
-        return Answer::RecvSet(ObjectId::deserialize(objId), receiverVar, id, strict, value, rs, result);
+    bool RecvSet(const uint64_t& objId, const JSIDVariant& id, const JSVariant& value,
+                 const JSVariant& receiverVar, ReturnStatus* rs) {
+        return Answer::RecvSet(ObjectId::deserialize(objId), id, value, receiverVar, rs);
     }
 
     bool RecvIsExtensible(const uint64_t& objId, ReturnStatus* rs,
@@ -96,11 +92,11 @@ class JavaScriptBase : public WrapperOwner, public WrapperAnswer, public Base
                              bool* result) {
         return Answer::RecvObjectClassIs(ObjectId::deserialize(objId), classValue, result);
     }
-    bool RecvClassName(const uint64_t& objId, nsString* result) {
+    bool RecvClassName(const uint64_t& objId, nsCString* result) {
         return Answer::RecvClassName(ObjectId::deserialize(objId), result);
     }
-    bool RecvGetPrototypeOf(const uint64_t& objId, ReturnStatus* rs, ObjectOrNullVariant* result) {
-        return Answer::RecvGetPrototypeOf(ObjectId::deserialize(objId), rs, result);
+    bool RecvGetPrototype(const uint64_t& objId, ReturnStatus* rs, ObjectOrNullVariant* result) {
+        return Answer::RecvGetPrototype(ObjectId::deserialize(objId), rs, result);
     }
     bool RecvRegExpToShared(const uint64_t& objId, ReturnStatus* rs, nsString* source, uint32_t* flags) {
         return Answer::RecvRegExpToShared(ObjectId::deserialize(objId), rs, source, flags);
@@ -128,9 +124,8 @@ class JavaScriptBase : public WrapperOwner, public WrapperAnswer, public Base
     bool SendDropObject(const ObjectId& objId) {
         return Base::SendDropObject(objId.serialize());
     }
-    bool SendPreventExtensions(const ObjectId& objId, ReturnStatus* rs,
-                               bool* succeeded) {
-        return Base::SendPreventExtensions(objId.serialize(), rs, succeeded);
+    bool SendPreventExtensions(const ObjectId& objId, ReturnStatus* rs) {
+        return Base::SendPreventExtensions(objId.serialize(), rs);
     }
     bool SendGetPropertyDescriptor(const ObjectId& objId, const JSIDVariant& id,
                                      ReturnStatus* rs,
@@ -145,12 +140,11 @@ class JavaScriptBase : public WrapperOwner, public WrapperAnswer, public Base
     }
     bool SendDefineProperty(const ObjectId& objId, const JSIDVariant& id,
                             const PPropertyDescriptor& flags,
-                              ReturnStatus* rs) {
+                            ReturnStatus* rs) {
         return Base::SendDefineProperty(objId.serialize(), id, flags, rs);
     }
-    bool SendDelete(const ObjectId& objId, const JSIDVariant& id,
-                    ReturnStatus* rs, bool* success) {
-        return Base::SendDelete(objId.serialize(), id, rs, success);
+    bool SendDelete(const ObjectId& objId, const JSIDVariant& id, ReturnStatus* rs) {
+        return Base::SendDelete(objId.serialize(), id, rs);
     }
 
     bool SendHas(const ObjectId& objId, const JSIDVariant& id,
@@ -166,10 +160,9 @@ class JavaScriptBase : public WrapperOwner, public WrapperAnswer, public Base
                  ReturnStatus* rs, JSVariant* result) {
         return Base::SendGet(objId.serialize(), receiverVar, id, rs, result);
     }
-    bool SendSet(const ObjectId& objId, const ObjectVariant& receiverVar,
-                 const JSIDVariant& id, const bool& strict,
-                 const JSVariant& value, ReturnStatus* rs, JSVariant* result) {
-        return Base::SendSet(objId.serialize(), receiverVar, id, strict, value, rs, result);
+    bool SendSet(const ObjectId& objId, const JSIDVariant& id, const JSVariant& value,
+                 const JSVariant& receiverVar, ReturnStatus* rs) {
+        return Base::SendSet(objId.serialize(), id, value, receiverVar, rs);
     }
 
     bool SendIsExtensible(const ObjectId& objId, ReturnStatus* rs,
@@ -188,12 +181,12 @@ class JavaScriptBase : public WrapperOwner, public WrapperAnswer, public Base
                            bool* result) {
         return Base::SendObjectClassIs(objId.serialize(), classValue, result);
     }
-    bool SendClassName(const ObjectId& objId, nsString* result) {
+    bool SendClassName(const ObjectId& objId, nsCString* result) {
         return Base::SendClassName(objId.serialize(), result);
     }
-    bool SendGetPrototypeOf(const ObjectId& objId, ReturnStatus* rs, ObjectOrNullVariant* result) {
-        return Base::SendGetPrototypeOf(objId.serialize(), rs, result);
-     }
+    bool SendGetPrototype(const ObjectId& objId, ReturnStatus* rs, ObjectOrNullVariant* result) {
+        return Base::SendGetPrototype(objId.serialize(), rs, result);
+    }
 
     bool SendRegExpToShared(const ObjectId& objId, ReturnStatus* rs,
                             nsString* source, uint32_t* flags) {

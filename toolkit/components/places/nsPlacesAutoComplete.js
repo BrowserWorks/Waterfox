@@ -12,6 +12,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "TelemetryStopwatch",
                                   "resource://gre/modules/TelemetryStopwatch.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
                                   "resource://gre/modules/NetUtil.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Task",
+                                  "resource://gre/modules/Task.jsm");
 
 ////////////////////////////////////////////////////////////////////////////////
 //// Constants
@@ -414,24 +416,20 @@ function nsPlacesAutoComplete()
   XPCOMUtils.defineLazyGetter(this, "_keywordQuery", function() {
     return this._db.createAsyncStatement(
       `/* do not warn (bug 487787) */
-       SELECT
-       (SELECT REPLACE(url, '%s', :query_string) FROM moz_places WHERE id = b.fk)
-       AS search_url, h.title,
+       SELECT REPLACE(h.url, '%s', :query_string) AS search_url, h.title,
        IFNULL(f.url, (SELECT f.url
                       FROM moz_places
                       JOIN moz_favicons f ON f.id = favicon_id
-                      WHERE rev_host = (SELECT rev_host FROM moz_places WHERE id = b.fk)
+                      WHERE rev_host = h.rev_host
                       ORDER BY frecency DESC
                       LIMIT 1)
-       ), 1, b.title, NULL, h.visit_count, h.typed, IFNULL(h.id, b.fk),
+       ), 1, NULL, NULL, h.visit_count, h.typed, h.id,
        :query_type, t.open_count
        FROM moz_keywords k
-       JOIN moz_bookmarks b ON b.keyword_id = k.id
-       LEFT JOIN moz_places h ON h.url = search_url
+       JOIN moz_places h ON k.place_id = h.id
        LEFT JOIN moz_favicons f ON f.id = h.favicon_id
        LEFT JOIN moz_openpages_temp t ON t.url = search_url
-       WHERE LOWER(k.keyword) = LOWER(:keyword)
-       ORDER BY h.frecency DESC`
+       WHERE k.keyword = LOWER(:keyword)`
     );
   });
 
@@ -1097,7 +1095,7 @@ nsPlacesAutoComplete.prototype = {
       queryString = searchString.substring(queryIndex + 1);
     }
     // We need to escape the parameters as if they were the query in a URL
-    queryString = encodeURIComponent(queryString).replace("%20", "+", "g");
+    queryString = encodeURIComponent(queryString).replace(/%20/g, "+");
 
     // The first word could be a keyword, so that's what we'll search.
     let keyword = aTokens[0];
@@ -1172,16 +1170,8 @@ nsPlacesAutoComplete.prototype = {
 
     let style;
     if (aRow.getResultByIndex(kQueryIndexQueryType) == kQueryTypeKeyword) {
-      // If we do not have a title, then we must have a keyword, so let the UI
-      // know it is a keyword.  Otherwise, we found an exact page match, so just
-      // show the page like a regular result.  Because the page title is likely
-      // going to be more specific than the bookmark title (keyword title).
-      if (!entryTitle) {
-        style = "keyword";
-      }
-      else {
-        title = entryTitle;
-      }
+      style = "keyword";
+      title = NetUtil.newURI(escapedEntryURL).host;
     }
 
     // We will always prefer to show tags if we have them.
@@ -1436,6 +1426,8 @@ urlInlineComplete.prototype = {
       this.stopSearch();
     }
 
+    let pendingSearch = this._pendingSearch = {};
+
     // We want to store the original string with no leading or trailing
     // whitespace for case sensitive searches.
     this._originalSearchString = aSearchString;
@@ -1454,74 +1446,82 @@ urlInlineComplete.prototype = {
 
     this._listener = aListener;
 
-    // Don't autoFill if the search term is recognized as a keyword, otherwise
-    // it will override default keywords behavior.  Note that keywords are
-    // hashed on first use, so while the first query may delay a little bit,
-    // next ones will just hit the memory hash.
-    if (this._currentSearchString.length == 0 || !this._db ||
-        PlacesUtils.bookmarks.getURIForKeyword(this._currentSearchString)) {
-      this._finishSearch();
-      return;
-    }
-
-    // Don't try to autofill if the search term includes any whitespace.
-    // This may confuse completeDefaultIndex cause the AUTOCOMPLETE_MATCH
-    // tokenizer ends up trimming the search string and returning a value
-    // that doesn't match it, or is even shorter.
-    if (/\s/.test(this._currentSearchString)) {
-      this._finishSearch();
-      return;
-    }
-
-    // Hosts have no "/" in them.
-    let lastSlashIndex = this._currentSearchString.lastIndexOf("/");
-
-    // Search only URLs if there's a slash in the search string...
-    if (lastSlashIndex != -1) {
-      // ...but not if it's exactly at the end of the search string.
-      if (lastSlashIndex < this._currentSearchString.length - 1)
-        this._queryURL();
-      else
+    Task.spawn(function* () {
+      // Don't autoFill if the search term is recognized as a keyword, otherwise
+      // it will override default keywords behavior.  Note that keywords are
+      // hashed on first use, so while the first query may delay a little bit,
+      // next ones will just hit the memory hash.
+      let dontAutoFill = this._currentSearchString.length == 0 || !this._db ||
+                         (yield PlacesUtils.keywords.fetch(this._currentSearchString));
+      if (this._pendingSearch != pendingSearch)
+        return;
+      if (dontAutoFill) {
         this._finishSearch();
-      return;
-    }
-
-    // Do a synchronous search on the table of hosts.
-    let query = this._hostQuery;
-    query.params.search_string = this._currentSearchString.toLowerCase();
-    // This is just to measure the delay to reach the UI, not the query time.
-    TelemetryStopwatch.start(DOMAIN_QUERY_TELEMETRY);
-    let ac = this;
-    let wrapper = new AutoCompleteStatementCallbackWrapper(this, {
-      handleResult: function (aResultSet) {
-        let row = aResultSet.getNextRow();
-        let trimmedHost = row.getResultByIndex(0);
-        let untrimmedHost = row.getResultByIndex(1);
-        // If the untrimmed value doesn't preserve the user's input just
-        // ignore it and complete to the found host.
-        if (untrimmedHost &&
-            !untrimmedHost.toLowerCase().contains(ac._originalSearchString.toLowerCase())) {
-          untrimmedHost = null;
-        }
-
-        ac._result.appendMatch(ac._strippedPrefix + trimmedHost, "", "", "", untrimmedHost);
-
-        // handleCompletion() will cause the result listener to be called, and
-        // will display the result in the UI.
-      },
-
-      handleError: function (aError) {
-        Components.utils.reportError(
-          "URL Inline Complete: An async statement encountered an " +
-          "error: " + aError.result + ", '" + aError.message + "'");
-      },
-
-      handleCompletion: function (aReason) {
-        TelemetryStopwatch.finish(DOMAIN_QUERY_TELEMETRY);
-        ac._finishSearch();
+        return;
       }
-    }, this._db);
-    this._pendingQuery = wrapper.executeAsync([query]);
+
+      // Don't try to autofill if the search term includes any whitespace.
+      // This may confuse completeDefaultIndex cause the AUTOCOMPLETE_MATCH
+      // tokenizer ends up trimming the search string and returning a value
+      // that doesn't match it, or is even shorter.
+      if (/\s/.test(this._currentSearchString)) {
+        this._finishSearch();
+        return;
+      }
+
+      // Hosts have no "/" in them.
+      let lastSlashIndex = this._currentSearchString.lastIndexOf("/");
+
+      // Search only URLs if there's a slash in the search string...
+      if (lastSlashIndex != -1) {
+        // ...but not if it's exactly at the end of the search string.
+        if (lastSlashIndex < this._currentSearchString.length - 1)
+          this._queryURL();
+        else
+          this._finishSearch();
+        return;
+      }
+
+      // Do a synchronous search on the table of hosts.
+      let query = this._hostQuery;
+      query.params.search_string = this._currentSearchString.toLowerCase();
+      // This is just to measure the delay to reach the UI, not the query time.
+      TelemetryStopwatch.start(DOMAIN_QUERY_TELEMETRY);
+      let wrapper = new AutoCompleteStatementCallbackWrapper(this, {
+        handleResult: aResultSet => {
+          if (this._pendingSearch != pendingSearch)
+            return;
+          let row = aResultSet.getNextRow();
+          let trimmedHost = row.getResultByIndex(0);
+          let untrimmedHost = row.getResultByIndex(1);
+          // If the untrimmed value doesn't preserve the user's input just
+          // ignore it and complete to the found host.
+          if (untrimmedHost &&
+              !untrimmedHost.toLowerCase().contains(this._originalSearchString.toLowerCase())) {
+            untrimmedHost = null;
+          }
+
+          this._result.appendMatch(this._strippedPrefix + trimmedHost, "", "", "", untrimmedHost);
+
+          // handleCompletion() will cause the result listener to be called, and
+          // will display the result in the UI.
+        },
+
+        handleError: aError => {
+          Components.utils.reportError(
+            "URL Inline Complete: An async statement encountered an " +
+            "error: " + aError.result + ", '" + aError.message + "'");
+        },
+
+        handleCompletion: aReason => {
+          if (this._pendingSearch != pendingSearch)
+            return;
+          TelemetryStopwatch.finish(DOMAIN_QUERY_TELEMETRY);
+          this._finishSearch();
+        }
+      }, this._db);
+      this._pendingQuery = wrapper.executeAsync([query]);
+    }.bind(this));
   },
 
   /**
@@ -1550,9 +1550,8 @@ urlInlineComplete.prototype = {
     params.searchString = this._currentSearchString;
 
     // Execute the query.
-    let ac = this;
     let wrapper = new AutoCompleteStatementCallbackWrapper(this, {
-      handleResult: function(aResultSet) {
+      handleResult: aResultSet => {
         let row = aResultSet.getNextRow();
         let value = row.getResultByIndex(0);
         let url = fixupSearchText(value);
@@ -1560,10 +1559,10 @@ urlInlineComplete.prototype = {
         let prefix = value.slice(0, value.length - stripPrefix(value).length);
 
         // We must complete the URL up to the next separator (which is /, ? or #).
-        let separatorIndex = url.slice(ac._currentSearchString.length)
+        let separatorIndex = url.slice(this._currentSearchString.length)
                                 .search(/[\/\?\#]/);
         if (separatorIndex != -1) {
-          separatorIndex += ac._currentSearchString.length;
+          separatorIndex += this._currentSearchString.length;
           if (url[separatorIndex] == "/") {
             separatorIndex++; // Include the "/" separator
           }
@@ -1575,24 +1574,24 @@ urlInlineComplete.prototype = {
         // ignore it and complete to the found url.
         let untrimmedURL = prefix + url;
         if (untrimmedURL &&
-            !untrimmedURL.toLowerCase().contains(ac._originalSearchString.toLowerCase())) {
+            !untrimmedURL.toLowerCase().contains(this._originalSearchString.toLowerCase())) {
           untrimmedURL = null;
          }
 
-        ac._result.appendMatch(ac._strippedPrefix + url, "", "", "", untrimmedURL);
+        this._result.appendMatch(this._strippedPrefix + url, "", "", "", untrimmedURL);
 
         // handleCompletion() will cause the result listener to be called, and
         // will display the result in the UI.
       },
 
-      handleError: function(aError) {
+      handleError: aError => {
         Components.utils.reportError(
           "URL Inline Complete: An async statement encountered an " +
           "error: " + aError.result + ", '" + aError.message + "'");
       },
 
-      handleCompletion: function(aReason) {
-        ac._finishSearch();
+      handleCompletion: aReason => {
+        this._finishSearch();
       }
     }, this._db);
     this._pendingQuery = wrapper.executeAsync([query]);
@@ -1604,6 +1603,7 @@ urlInlineComplete.prototype = {
     delete this._currentSearchString;
     delete this._result;
     delete this._listener;
+    delete this._pendingSearch;
 
     if (this._pendingQuery) {
       this._pendingQuery.cancel();

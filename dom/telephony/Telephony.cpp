@@ -96,9 +96,9 @@ Telephony::Shutdown()
 }
 
 JSObject*
-Telephony::WrapObject(JSContext* aCx)
+Telephony::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return TelephonyBinding::Wrap(aCx, this);
+  return TelephonyBinding::Wrap(aCx, this, aGivenProto);
 }
 
 // static
@@ -685,7 +685,9 @@ Telephony::NotifyError(uint32_t aServiceId,
   }
 
   // Set the call state to 'disconnected' and remove it from the calls list.
+  callToNotify->UpdateDisconnectedReason(aError);
   callToNotify->NotifyError(aError);
+  callToNotify->ChangeState(nsITelephonyService::CALL_STATE_DISCONNECTED);
 
   return NS_OK;
 }

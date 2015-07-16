@@ -44,8 +44,8 @@ config = {
                 "--localLib=../tests/bin",
                 "--no-slow",
                 "--no-progress",
-                "--tinderbox",
-                "--tbpl"
+                "--format=automation",
+                "--jitflags=all"
             ],
             "run_filename": "jit_test.py",
             "testsdir": "jit-test/jit-test"
@@ -77,7 +77,6 @@ config = {
                 "--console-level=INFO",
                 "--http-port=%(http_port)s",
                 "--ssl-port=%(ssl_port)s",
-                "--run-only-tests=android.json",
                 "--symbols-path=%(symbols_path)s",
                 "--quiet",
                 "--log-raw=%(raw_log_file)s"

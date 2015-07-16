@@ -23,8 +23,6 @@
 #include "mozilla/gfx/Logging.h"        // for gfx::TreeLog
 #include "mozilla/layers/APZUtils.h"    // for HitTestResult
 
-class nsIntRegion;
-
 namespace mozilla {
 class InputData;
 class MultiTouchInput;
@@ -96,7 +94,6 @@ class APZCTreeManager {
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(APZCTreeManager)
 
   typedef mozilla::layers::AllowedTouchBehavior AllowedTouchBehavior;
-  typedef uint32_t TouchBehaviorFlags;
 
   // Helper struct to hold some state while we build the hit-testing tree. The
   // sole purpose of this struct is to shorten the argument list to
@@ -147,12 +144,9 @@ public:
    *
    * The following values may be returned by this function:
    * nsEventStatus_eConsumeNoDefault is returned to indicate the
-   *   caller should discard the event with extreme prejudice.
-   *   Currently this is only returned if the APZ determines that something is
-   *   in overscroll and the event should be ignored entirely, or if the input
-   *   event is part of a extended gesture like flywheel scrolling, and gets
-   *   consumed within the APZ code. There may be other scenarios where this
-   *   return code might be used in the future.
+   *   APZ is consuming this event and the caller should discard the event with
+   *   extreme prejudice. The exact scenarios under which this is returned is
+   *   implementation-dependent and may vary.
    * nsEventStatus_eIgnore is returned to indicate that the APZ code didn't
    *   use this event. This might be because it was directed at a point on
    *   the screen where there was no APZ, or because the thing the user was
@@ -290,14 +284,6 @@ public:
   static float GetDPI() { return sDPI; }
 
   /**
-   * Returns values of allowed touch-behavior for the touches of aEvent via out parameter.
-   * Internally performs asks appropriate AsyncPanZoomController to perform
-   * hit testing on its own.
-   */
-  void GetAllowedTouchBehavior(WidgetInputEvent* aEvent,
-                               nsTArray<TouchBehaviorFlags>& aOutValues);
-
-  /**
    * Sets allowed touch behavior values for current touch-session for specific
    * input block (determined by aInputBlock).
    * Should be invoked by the widget. Each value of the aValues arrays
@@ -391,6 +377,15 @@ public:
    */
   nsRefPtr<const OverscrollHandoffChain> BuildOverscrollHandoffChain(const nsRefPtr<AsyncPanZoomController>& aInitialTarget);
 
+public:
+  // Returns whether or not a wheel event action will be (or was) performed by
+  // APZ. If this returns true, the event must not perform a synchronous
+  // scroll.
+  //
+  // Even if this returns false, all wheel events in APZ-aware widgets must
+  // be sent through APZ so they are transformed correctly for TabParent.
+  static bool WillHandleWheelEvent(WidgetWheelEvent* aEvent);
+
 protected:
   // Protected destructor, to discourage deletion outside of Release():
   virtual ~APZCTreeManager();
@@ -441,6 +436,7 @@ private:
   nsEventStatus ProcessEvent(WidgetInputEvent& inputEvent,
                              ScrollableLayerGuid* aOutTargetGuid,
                              uint64_t* aOutInputBlockId);
+  void UpdateWheelTransaction(WidgetInputEvent& aEvent);
   void UpdateZoomConstraintsRecursively(HitTestingTreeNode* aNode,
                                         const ZoomConstraints& aConstraints);
   void FlushRepaintsRecursively(HitTestingTreeNode* aNode);

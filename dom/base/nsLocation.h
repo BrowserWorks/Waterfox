@@ -26,8 +26,8 @@ class nsIDocShellLoadInfo;
 //*****************************************************************************
 
 class nsLocation final : public nsIDOMLocation
-                           , public nsWrapperCache
-                           , public mozilla::dom::URLSearchParamsObserver
+                       , public nsWrapperCache
+                       , public mozilla::dom::URLSearchParamsObserver
 {
   typedef mozilla::ErrorResult ErrorResult;
 
@@ -142,7 +142,7 @@ public:
   {
     return mInnerWindow;
   }
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // URLSearchParamsObserver
   void URLSearchParamsUpdated(mozilla::dom::URLSearchParams* aSearchParams) override;

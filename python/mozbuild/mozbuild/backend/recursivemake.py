@@ -409,11 +409,12 @@ class RecursiveMakeBackend(CommonBackend):
             backend_file.write('GENERATED_FILES += %s\n' % obj.output)
             if obj.script:
                 backend_file.write("""{output}: {script}{inputs}
-\t$(call py_action,file_generate,{script} {output}{inputs})
+\t$(call py_action,file_generate,{script} {method} {output}{inputs})
 
 """.format(output=obj.output,
            inputs=' ' + ' '.join(obj.inputs) if obj.inputs else '',
-           script=obj.script))
+           script=obj.script,
+           method=obj.method))
 
         elif isinstance(obj, TestHarnessFiles):
             self._process_test_harness_files(obj, backend_file)
@@ -809,7 +810,7 @@ class RecursiveMakeBackend(CommonBackend):
 
         for path, patterns in obj.srcdir_pattern_files.iteritems():
             for p in patterns:
-                self._install_manifests['tests'].add_pattern_symlink(obj.srcdir, p, path)
+                self._install_manifests['tests'].add_pattern_symlink(p[0], p[1], path)
 
         for path, files in obj.objdir_files.iteritems():
             prefix = 'TEST_HARNESS_%s' % path.replace('/', '_')

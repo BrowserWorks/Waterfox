@@ -34,9 +34,9 @@ public:
 
   virtual bool IsShutdown() const final override;
 
-  virtual bool OnStateMachineThread() const final override;
+  virtual bool OnStateMachineTaskQueue() const final override;
 
-  virtual bool OnDecodeThread() const final override;
+  virtual bool OnDecodeTaskQueue() const final override;
 
   virtual MediaResource* GetResource() const final override;
 
@@ -70,8 +70,6 @@ public:
   virtual void RemoveMediaTracks() final override;
 
   virtual void SetMediaEndTime(int64_t aTime) final override;
-
-  virtual void UpdatePlaybackPosition(int64_t aTime) final override;
 
   virtual void OnReadMetadataCompleted() final override;
 

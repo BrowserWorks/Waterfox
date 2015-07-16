@@ -1,0 +1,64 @@
+<html><head><title>Doing A Directory Merge</title><link rel="stylesheet" href="common/kde-default.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.67.2"><meta name="keywords" content="KDE, kdeextragear, kdiff3, diff, merge, CVS, triplediff, compare, files, directories, version control, three-way-merge, in-line-differences, synchronise, kpart, kio, networktransparent, editor, white space, comments"><link rel="start" href="index.html" title="The KDiff3 Handbook"><link rel="up" href="dirmerge.html" title="Chapter 3. Directory Comparison and Merge with KDiff3"><link rel="prev" href="dirmergevisible.html" title="Directory Merge Visible Information"><link rel="next" href="dirmergeoptions.html" title="Options for Comparing and Merging Directories"><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta name="GENERATOR" content="KDE XSL Stylesheet V1.13 using libxslt"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div style="position: absolute; left 0px;"><img src="common/top-left.png" style="margin: 0px" alt=""></div><div style="background-image: url(common/top-middle.png); width: 100%; height: 131px;"><div style="position: absolute;                      right: 0px;"><img src="common/top-right.png" style="margin: 0px" alt=""></div><div style="position: absolute;                         top: 63px;                         right: 0px;                         margin-top: -1em;                         margin-right: 5%;                         text-align: right;                          font-size: xx-large;                          font-weight: bold;                          text-shadow: #CDE1FF 0px 0px 5px;                          color: #444">Doing A Directory Merge</div></div><div style="margin-top: 20px; background-color: #white;                        color: black;                       margin-left: 20px;                        margin-right: 20px;"><div style="position: absolute;                          left: 20px;"><a accesskey="p" href="dirmergevisible.html">Prev</a></div><div style="position: absolute;                          right: 20px;"><a accesskey="n" href="dirmergeoptions.html">Next</a></div><div class="navCenter">Directory Comparison and Merge with <span class="application">KDiff3</span></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="dothemerge"></a>Doing A Directory Merge</h2></div></div></div><p>
+   You can either merge the currently selected item (file or directory), or all items.
+   When you have made all your operation choices (in all subdirectories too)
+   then you can start the merge.
+</p><p>
+   Be aware that if you didn't specify a destination directory explicitely,
+   then the destination will be "C" in three directory mode, "B" in two directory
+   merge mode, and in sync-mode it will be "A" or/and "B".
+</p><p>
+   If you have specified a destination directory also check that all items
+   that should be in the output, are in the tree. There are some options that
+   cause certain items to be omitted from the directory comparison and merge.
+   Check these options to avoid unpleasant surprises:
+</p><div class="itemizedlist"><ul type="disc"><li><p>"Recursive Directories": If this is off, then items in subdirectories
+                     will not be found.</p></li><li><p>"Pattern"/"Anti-Pattern": Include/exclude items that match</p></li><li><p>"Exclude Hidden Files"</p></li><li><p><a href="dirmergevisible.html#selectingvisiblefiles" title="Selecting Listed Files">"Show"-options</a> (Show Identical/Different Files, Files only in A/B/C)</p></li></ul></div><p>
+   If you change the settings in order to list more files, you must do a rescan via menu "Directory"-&gt;"Rescan" yourself.
+   (The reason for this is that for faster comparison-speed <span class="application">KDiff3</span> omits the comparison for files suppressed by these criteria.)
+   If you changed your file and dir patterns to exclude files, then the file-list will immediately be updated on closing
+   the options-dialog.
+</p><p>
+   Note that when you write to a completely new directory then you usually also want to copy the identical files.
+   In that case enable the "Show Identical Files"-option. If your destination-directory is one of the inputs, 
+   then this isn't necessary because the file is already there.
+</p><p>
+   If you are satisfied so far, the rest is easy.
+</p><p>
+   To merge all items: Select "Start/Continue directory merge" in the "Directory"-menu
+   or press F7 (which is the default shortcut).
+   To merge only the current item: Select "Run Operation For Current Item"
+   or press F6.
+</p><p>
+   If due to conflicting filetypes still some items with invalid operations
+   exist, then a messagebox will appear and these items will be pointed out,
+   so you can select a valid operation for the item.
+</p><p>
+   If you merge all items a dialog will appear giving you the options "Do it", "Simulate
+   it" and "Cancel".
+</p><div class="itemizedlist"><ul type="disc"><li><p>Select "Simulate it" if you want to see what would be done without
+                     actually doing it. A verbose list of all operations will be shown.</p></li><li><p>Otherwise select "Do it" to really start merging.</p></li></ul></div><p>
+   Then <span class="application">KDiff3</span> will run the specified operation for all items. If manual
+   interaction  is required (single file merge), then a merge window will open
+   (<a href="screenshots.html#dirmergebigscreenshot">see the big screenshot</a>).
+</p><p>
+   When you have finished with manually merging a file, again select "Start/Continue directory
+   merge" or the key F7. If you haven't saved it yet, a dialog will ask you to
+   do so. Then <span class="application">KDiff3</span> will continue with the next item.
+</p><p>
+   When <span class="application">KDiff3</span> encounters an error, it will tell you so and will show the
+   verbose-status-information. At the bottom of this list, there will be some
+   error messages which should help you to understand the cause of the problem.
+   When you continue merging (F7 key) <span class="application">KDiff3</span> will give you the choice to retry
+   or skip the item that caused the problem. This means that before continuing
+   you can choose another operation or solve the problem by other means.
+</p><p>
+   When the merge is complete, then <span class="application">KDiff3</span> will inform you via a message
+   box.
+</p><p>
+   If some items were merged individually before running the directorymerge then 
+   <span class="application">KDiff3</span> remembers this (while this
+   merge-session goes on), and doesn't merge them again when later the merge for
+   all items is run. Even when the merge was skipped or nothing was saved these
+   items count as completed. Only when you change the merge operation the 
+   "Done"-status of the item will be removed and it can be merged again.
+</p></div><div style="background-color: #white; color: black;                  margin-top: 20px; margin-left: 20px;                  margin-right: 20px;"><div style="position: absolute; left: 20px;"><a accesskey="p" href="dirmergevisible.html">Prev</a></div><div style="position: absolute; right: 20px;"><a accesskey="n" href="dirmergeoptions.html">Next</a></div><div align="center"><a accesskey="h" href="index.html">Contents</a></div></div><div style="background-color: #white;   color: black;         margin-left: 20px;   margin-right: 20px;"><div class="navLeft">Directory Merge Visible Information </div><div class="navRight"> Options for Comparing and Merging Directories</div><div class="navCenter"><a accesskey="u" href="dirmerge.html">Up</a></div></div><br><br><div class="bannerBottom" style="background-image: url(common/bottom-middle.png);                                        background-repeat: x-repeat;                                         width: 100%;                                         height: 70px;                                         bottom:0px;"><div class="BannerBottomRight"><img src="common/bottom-right.png" style="height: 70px; margin: 0px" alt=""></div><div class="bannerBottomLeft"><img src="common/bottom-left.png" style="height: 70px; margin: 0px;" alt=""></div><div id="comments" style="position:relative; top: 15px; left: 1em; width: 100%; color: #282828;"><p>Would you like to make a comment or contribute an update to this page?<br>Send feedback to the <a href="mailto:kde-doc-english@kde.org" style="background:transparent; color: #282828; text-decoration: underline;">KDE Docs Team</a></p></div></div></body></html>

@@ -29,9 +29,7 @@ namespace layers {
  * the main thread and the compositor thread context. It's primary
  * purpose is to manage the PLayerTransaction sub protocol.
  */
-// This should really be 'sync', but we're using 'rpc' as a workaround
-// for Bug 716631.
-intr protocol PCompositor
+sync protocol PCompositor
 {
   // A Compositor manages a single Layer Manager (PLayerTransaction)
   manages PLayerTransaction;
@@ -65,6 +63,12 @@ child:
   async UpdatePluginConfigurations(nsIntPoint aContentOffset,
                                    nsIntRegion aVisibleRegion,
                                    PluginWindowData[] aPlugins);
+
+  /**
+   * Sets the list of currently visible plugin windows based on a
+   * list of plugin window ids.
+   */
+  async UpdatePluginVisibility(uintptr_t[] aVisibleIdList);
 
 parent:
   // Child sends the parent a request for fill ratio numbers.
@@ -127,7 +131,7 @@ parent:
 child:
   // Send back Compositor Frame Metrics from APZCs so tiled layers can
   // update progressively.
-  async SharedCompositorFrameMetrics(Handle metrics, CrossProcessMutexHandle mutex, uint32_t aAPZCId);
+  async SharedCompositorFrameMetrics(Handle metrics, CrossProcessMutexHandle mutex, uint64_t aLayersId, uint32_t aAPZCId);
   async ReleaseSharedCompositorFrameMetrics(ViewID aId, uint32_t aAPZCId);
 };
 

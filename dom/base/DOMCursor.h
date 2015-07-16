@@ -27,7 +27,7 @@ public:
 
   DOMCursor(nsPIDOMWindow* aWindow, nsICursorContinueCallback *aCallback);
 
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   bool Done() const
   {

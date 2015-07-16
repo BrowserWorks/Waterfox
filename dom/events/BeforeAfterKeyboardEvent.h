@@ -19,9 +19,9 @@ public:
                            nsPresContext* aPresContext,
                            InternalBeforeAfterKeyboardEvent* aEvent);
 
-  virtual JSObject* WrapObjectInternal(JSContext* aCx) override
+  virtual JSObject* WrapObjectInternal(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override
   {
-    return BeforeAfterKeyboardEventBinding::Wrap(aCx, this);
+    return BeforeAfterKeyboardEventBinding::Wrap(aCx, this, aGivenProto);
   }
 
   static already_AddRefed<BeforeAfterKeyboardEvent>

@@ -356,6 +356,9 @@ class IonBuilder
     // Improve the type information at tests
     bool improveTypesAtTest(MDefinition* ins, bool trueBranch, MTest* test);
     bool improveTypesAtCompare(MCompare* ins, bool trueBranch, MTest* test);
+    bool improveTypesAtNullOrUndefinedCompare(MCompare* ins, bool trueBranch, MTest* test);
+    bool improveTypesAtTypeOfCompare(MCompare* ins, bool trueBranch, MTest* test);
+
     // Used to detect triangular structure at test.
     bool detectAndOrStructure(MPhi* ins, bool* branchIsTrue);
     bool replaceTypeSet(MDefinition* subject, TemporaryTypeSet* type, MTest* test);
@@ -395,8 +398,13 @@ class IonBuilder
     MDefinition* addMaybeCopyElementsForWrite(MDefinition* object);
     MInstruction* addBoundsCheck(MDefinition* index, MDefinition* length);
     MInstruction* addShapeGuard(MDefinition* obj, Shape* const shape, BailoutKind bailoutKind);
-    MInstruction* addShapeGuardPolymorphic(MDefinition* obj,
-                                           const BaselineInspector::ShapeVector& shapes);
+    MInstruction* addGroupGuard(MDefinition* obj, ObjectGroup* group, BailoutKind bailoutKind,
+                                bool checkUnboxedExpando = false);
+
+    MInstruction*
+    addGuardReceiverPolymorphic(MDefinition* obj,
+                                const BaselineInspector::ShapeVector& shapes,
+                                const BaselineInspector::ObjectGroupVector& unboxedGroups);
 
     MDefinition* convertShiftToMaskForStaticTypedArray(MDefinition* id,
                                                        Scalar::Type viewType);
@@ -432,6 +440,7 @@ class IonBuilder
                                 TemporaryTypeSet* types);
     bool getPropTryInlineAccess(bool* emitted, MDefinition* obj, PropertyName* name,
                                 BarrierKind barrier, TemporaryTypeSet* types);
+    bool getPropTrySimdGetter(bool* emitted, MDefinition* obj, PropertyName* name);
     bool getPropTryTypedObject(bool* emitted, MDefinition* obj, PropertyName* name);
     bool getPropTryScalarPropOfTypedObject(bool* emitted, MDefinition* typedObj,
                                            int32_t fieldOffset,
@@ -510,7 +519,6 @@ class IonBuilder
     bool storeScalarTypedObjectValue(MDefinition* typedObj,
                                      const LinearSum& byteOffset,
                                      ScalarTypeDescr::Type type,
-                                     bool racy,
                                      MDefinition* value);
     bool checkTypedObjectIndexInBounds(int32_t elemSize,
                                        MDefinition* obj,
@@ -607,6 +615,7 @@ class IonBuilder
         return length;
     }
 
+    bool improveThisTypesForCall();
 
     MDefinition* getCallee();
     MDefinition* getAliasedVar(ScopeCoordinate sc);
@@ -658,7 +667,7 @@ class IonBuilder
                             SetElemSafety safety,
                             MDefinition* object, MDefinition* index, MDefinition* value);
     bool jsop_setelem_typed_object(ScalarTypeDescr::Type arrayType,
-                                   SetElemSafety safety, bool racy,
+                                   SetElemSafety safety,
                                    MDefinition* object, MDefinition* index, MDefinition* value);
     bool jsop_length();
     bool jsop_length_fastPath();
@@ -805,10 +814,38 @@ class IonBuilder
 
     // SIMD intrinsics and natives.
     InliningStatus inlineConstructSimdObject(CallInfo& callInfo, SimdTypeDescr* target);
-    InliningStatus inlineSimdInt32x4BinaryArith(CallInfo& callInfo, JSNative native,
-                                                MSimdBinaryArith::Operation op);
-    InliningStatus inlineSimdInt32x4BinaryBitwise(CallInfo& callInfo, JSNative native,
-                                                  MSimdBinaryBitwise::Operation op);
+
+    //  helpers
+    static MIRType SimdTypeDescrToMIRType(SimdTypeDescr::Type type);
+    bool checkInlineSimd(CallInfo& callInfo, JSNative native, SimdTypeDescr::Type type,
+                         unsigned numArgs, InlineTypedObject** templateObj);
+    IonBuilder::InliningStatus boxSimd(CallInfo& callInfo, MInstruction* ins,
+                                       InlineTypedObject* templateObj);
+
+    template <typename T>
+    InliningStatus inlineBinarySimd(CallInfo& callInfo, JSNative native,
+                                    typename T::Operation op, SimdTypeDescr::Type type);
+    InliningStatus inlineCompSimd(CallInfo& callInfo, JSNative native,
+                                  MSimdBinaryComp::Operation op, SimdTypeDescr::Type compType);
+    InliningStatus inlineUnarySimd(CallInfo& callInfo, JSNative native,
+                                   MSimdUnaryArith::Operation op, SimdTypeDescr::Type type);
+    InliningStatus inlineSimdWith(CallInfo& callInfo, JSNative native, SimdLane lane,
+                                  SimdTypeDescr::Type type);
+    InliningStatus inlineSimdSplat(CallInfo& callInfo, JSNative native, SimdTypeDescr::Type type);
+    InliningStatus inlineSimdShuffle(CallInfo& callInfo, JSNative native, SimdTypeDescr::Type type,
+                                     unsigned numVectors, unsigned numLanes);
+    InliningStatus inlineSimdCheck(CallInfo& callInfo, JSNative native, SimdTypeDescr::Type type);
+    InliningStatus inlineSimdConvert(CallInfo& callInfo, JSNative native, bool isCast,
+                                     SimdTypeDescr::Type from, SimdTypeDescr::Type to);
+    InliningStatus inlineSimdSelect(CallInfo& callInfo, JSNative native, bool isElementWise,
+                                    SimdTypeDescr::Type type);
+
+    bool prepareForSimdLoadStore(CallInfo& callInfo, Scalar::Type simdType, MInstruction** elements,
+                                 MDefinition** index, Scalar::Type* arrayType);
+    InliningStatus inlineSimdLoad(CallInfo& callInfo, JSNative native, SimdTypeDescr::Type type,
+                                  unsigned numElems);
+    InliningStatus inlineSimdStore(CallInfo& callInfo, JSNative native, SimdTypeDescr::Type type,
+                                   unsigned numElems);
 
     // Utility intrinsics.
     InliningStatus inlineIsCallable(CallInfo& callInfo);
@@ -827,6 +864,8 @@ class IonBuilder
     // Testing functions.
     InliningStatus inlineBailout(CallInfo& callInfo);
     InliningStatus inlineAssertFloat32(CallInfo& callInfo);
+    InliningStatus inlineAssertRecoveredOnBailout(CallInfo& callInfo);
+    InliningStatus inlineTrue(CallInfo& callInfo);
 
     // Bind function.
     InliningStatus inlineBoundFunction(CallInfo& callInfo, JSFunction* target);
@@ -877,9 +916,11 @@ class IonBuilder
     bool testShouldDOMCall(TypeSet* inTypes,
                            JSFunction* func, JSJitInfo::OpType opType);
 
-    MDefinition* addShapeGuardsForGetterSetter(MDefinition* obj, JSObject* holder, Shape* holderShape,
-                                               const BaselineInspector::ShapeVector& receiverShapes,
-                                               bool isOwnProperty);
+    MDefinition*
+    addShapeGuardsForGetterSetter(MDefinition* obj, JSObject* holder, Shape* holderShape,
+                                  const BaselineInspector::ShapeVector& receiverShapes,
+                                  const BaselineInspector::ObjectGroupVector& receiverGroups,
+                                  bool isOwnProperty);
 
     bool annotateGetPropertyCache(MDefinition* obj, MGetPropertyCache* getPropCache,
                                   TemporaryTypeSet* objTypes,
@@ -1059,6 +1100,10 @@ class IonBuilder
 
     size_t inliningDepth_;
 
+    // Total bytecode length of all inlined scripts. Only tracked for the
+    // outermost builder.
+    size_t inlinedBytecodeLength_;
+
     // Cutoff to disable compilation if excessive time is spent reanalyzing
     // loop bodies to compute a fixpoint of the types for loop variables.
     static const size_t MAX_LOOP_RESTARTS = 40;
@@ -1071,6 +1116,10 @@ class IonBuilder
     // True if script->failedShapeGuard is set for the current script or
     // an outer script.
     bool failedShapeGuard_;
+
+    // True if script->failedLexicalCheck_ is set for the current script or
+    // an outer script.
+    bool failedLexicalCheck_;
 
     // Has an iterator other than 'for in'.
     bool nonStringIteration_;
@@ -1251,6 +1300,13 @@ class CallInfo
     MDefinition* getArg(uint32_t i) const {
         MOZ_ASSERT(i < argc());
         return args_[i];
+    }
+
+    MDefinition* getArgWithDefault(uint32_t i, MDefinition* defaultValue) const {
+        if (i < argc())
+            return args_[i];
+
+        return defaultValue;
     }
 
     void setArg(uint32_t i, MDefinition* def) {

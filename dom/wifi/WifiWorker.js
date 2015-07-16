@@ -97,6 +97,10 @@ XPCOMUtils.defineLazyServiceGetter(this, "gSettingsService",
                                    "@mozilla.org/settingsService;1",
                                    "nsISettingsService");
 
+XPCOMUtils.defineLazyServiceGetter(this, "gTetheringService",
+                                   "@mozilla.org/tethering/service;1",
+                                   "nsITetheringService");
+
 // A note about errors and error handling in this file:
 // The libraries that we use in this file are intended for C code. For
 // C code, it is natural to return -1 for errors and 0 for success.
@@ -125,7 +129,7 @@ var WifiManager = (function() {
 
   let capabilities = {
     security: ["OPEN", "WEP", "WPA-PSK", "WPA-EAP"],
-    eapMethod: ["PEAP", "TTLS"],
+    eapMethod: ["PEAP", "TTLS", "TLS"],
     eapPhase2: ["MSCHAPV2"],
     certificate: ["SERVER"],
     mode: [MODE_ESS]
@@ -846,6 +850,16 @@ var WifiManager = (function() {
     if (eventData.indexOf("CTRL-EVENT-EAP") === 0) {
       return handleWpaEapEvents(event);
     }
+    if (eventData.indexOf("CTRL-EVENT-ASSOC-REJECT") === 0) {
+      debug("CTRL-EVENT-ASSOC-REJECT: network error");
+      notify("passwordmaybeincorrect");
+      if (manager.authenticationFailuresCount > MAX_RETRIES_ON_AUTHENTICATION_FAILURE) {
+        manager.authenticationFailuresCount = 0;
+        debug("CTRL-EVENT-ASSOC-REJECT: disconnect network");
+        notify("disconnected", {connectionInfo: manager.connectionInfo});
+      }
+      return true;
+    }
     if (eventData.indexOf("WPS-TIMEOUT") === 0) {
       notifyStateChange({ state: "WPS_TIMEOUT", BSSID: null, id: -1 });
       return true;
@@ -1136,8 +1150,8 @@ var WifiManager = (function() {
         function doStartWifiTethering() {
           cancelWaitForDriverReadyTimer();
           WifiNetworkInterface.name = libcutils.property_get("wifi.tethering.interface", manager.ifname);
-          gNetworkManager.setWifiTethering(enabled, WifiNetworkInterface,
-                                           configuration, function(result) {
+          gTetheringService.setWifiTethering(enabled, WifiNetworkInterface,
+                                             configuration, function(result) {
             if (result) {
               manager.tetheringState = "UNINITIALIZED";
             } else {
@@ -1164,8 +1178,8 @@ var WifiManager = (function() {
       });
     } else {
       cancelWifiHotspotStatusTimer();
-      gNetworkManager.setWifiTethering(enabled, WifiNetworkInterface,
-                                       configuration, function(result) {
+      gTetheringService.setWifiTethering(enabled, WifiNetworkInterface,
+                                         configuration, function(result) {
         // Should we fire a dom event if we fail to set wifi tethering  ?
         debug("Disable Wifi tethering result: " + (result ? result : "successfully"));
         // Unload wifi driver even if we fail to control wifi tethering.
@@ -1207,6 +1221,11 @@ var WifiManager = (function() {
     {name: "pcsc",          type: "string"},
     {name: "ca_cert",       type: "string"},
     {name: "subject_match", type: "string"},
+    {name: "client_cert",   type: "string"},
+    {name: "private_key",   type: "stirng"},
+    {name: "engine",        type: "integer"},
+    {name: "engine_id",     type: "string"},
+    {name: "key_id",        type: "string"},
     {name: "frequency",     type: "integer"},
     {name: "mode",          type: "integer"}
   ];
@@ -1531,6 +1550,10 @@ var WifiManager = (function() {
     wifiCertService.deleteCert(id, caInfo.certNickname);
   }
 
+  manager.sdkVersion = function() {
+    return sdkVersion;
+  }
+
   return manager;
 })();
 
@@ -1687,7 +1710,8 @@ Network.api = {
   pin: "rw",
   phase1: "rw",
   phase2: "rw",
-  serverCertificate: "rw"
+  serverCertificate: "rw",
+  userCertificate: "rw"
 };
 
 // Note: We never use ScanResult.prototype, so the fact that it's unrelated to
@@ -1932,6 +1956,10 @@ function WifiWorker() {
     if(net.subject_match) {
       pub.subjectMatch = net.subject_match;
     }
+    if ("client_cert" in net && net.client_cert &&
+        net.client_cert.indexOf("keystore://WIFI_USERCERT_" === 0)) {
+      pub.userCertificate = net.client_cert.substr(25);
+    }
     return pub;
   };
 
@@ -2021,6 +2049,24 @@ function WifiWorker() {
 
       if (hasValidProperty("subjectMatch"))
         net.subject_match = quote(net.subjectMatch);
+
+      if (hasValidProperty("userCertificate")) {
+        let userCertName = "WIFI_USERCERT_" + net.userCertificate;
+        net.client_cert = quote("keystore://" + userCertName);
+
+        let wifiCertService = Cc["@mozilla.org/wifi/certservice;1"].
+                                getService(Ci.nsIWifiCertService);
+        if (wifiCertService.hasPrivateKey(userCertName)) {
+          if (WifiManager.sdkVersion() >= 19) {
+            // Use openssol engine instead of keystore protocol after Kitkat.
+            net.engine = 1;
+            net.engine_id = quote("keystore");
+            net.key_id = quote("WIFI_USERKEY_" + net.userCertificate);
+          } else {
+            net.private_key = quote("keystore://WIFI_USERKEY_" + net.userCertificate);
+          }
+        }
+      }
     }
 
     return net;
@@ -2126,7 +2172,10 @@ function WifiWorker() {
             ssid: quote(WifiManager.connectionInfo.ssid),
             mode: MODE_ESS,
             frequency: 0};
-        self._fireEvent("onconnecting", { network: netToDOM(self.currentNetwork) });
+        WifiManager.getNetworkConfiguration(self.currentNetwork, function (){
+          // Notify again because we get complete network information.
+          self._fireEvent("onconnecting", { network: netToDOM(self.currentNetwork) });
+        });
         break;
       case "ASSOCIATED":
         // set to full power mode when ready to do 4 way handsharke.
@@ -3230,7 +3279,23 @@ WifiWorker.prototype = {
             WifiManager.reconnect(function (ok) {
               self._sendMessage(message, ok, ok, msg);
             });
-          } else {
+          } else if (WifiManager.state == "INACTIVE") {
+             // If AP info didn't clear, then call associate function.
+             // That maybe occurs wpa supplicant that suppose already associated.
+             // To avoid this case, need to clear AP info and call reassoiate
+             // in INACTIVE state.
+             let networkKey = getNetworkKey(network);
+             if (!(networkKey in this.configuredNetworks)) {
+               self._sendMessage(message, false, "Trying to forget an unknown network", msg);
+               return;
+             }
+             let configured = this.configuredNetworks[networkKey];
+             WifiManager.removeNetwork(configured.netId, function() {
+               WifiManager.reassociate(function() {
+                 self._sendMessage(message, ok, ok, msg);
+               });
+             });
+          }else {
             self._sendMessage(message, ok, ok, msg);
           }
         });
@@ -3469,7 +3534,7 @@ WifiWorker.prototype = {
 
     WifiManager.importCert(msg.data, function(data) {
       if (data.status === 0) {
-        let usageString = ["ServerCert"];
+        let usageString = ["ServerCert", "UserCert"];
         let usageArray = [];
         for (let i = 0; i < usageString.length; i++) {
           if (data.usageFlag & (0x01 << i)) {
@@ -3513,9 +3578,11 @@ WifiWorker.prototype = {
     }
     let importedCerts = {
       ServerCert: [],
+      UserCert: [],
     };
     let UsageMapping = {
       SERVERCERT: "ServerCert",
+      USERCERT: "UserCert",
     };
 
     while (certListEnum.hasMoreElements()) {

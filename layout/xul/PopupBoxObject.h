@@ -37,7 +37,7 @@ public:
   PopupBoxObject();
 
   nsIContent* GetParentObject() const;
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   void ShowPopup(Element* aAnchorElement,
                  Element& aPopupElement,

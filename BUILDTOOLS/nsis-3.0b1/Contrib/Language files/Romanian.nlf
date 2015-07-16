@@ -1,0 +1,202 @@
+﻿# Header, don't edit
+NLF v6
+# Language ID
+1048
+# Font and size - dash (-) means default
+-
+-
+# Codepage - dash (-) means ANSI code page
+1250
+# RTL - anything else than RTL means LTR
+-
+# Translation by Cristian Pirvu (pcristip@yahoo.com) v6
+# Revision by Sorin Sbarnea (sorin@intersol.ro)      v5.1
+# and Sorin Sbarnea INTERSOL SRL (sorin@intersol.ro) v4
+# New revision by George Radu (georadu@hotmail.com)
+# New revision by Iulian Dogariu (iulian@jayomega.net)
+#   - Use Romanian letters ăâîşţ
+#   - Use imperative forms on buttons
+#   - Replace some neologisms
+# New revision by Vlad Rusu (vlad@bitattack.ro)
+#	- "Rasfoieşte" replaced with "Alege" - more appropiate
+#	- "Elimină" related terms replaced with more appropiate "Dezinstalează"
+#	- Fixed: Wrong translation in ^FileError and ^FileError_NoIgnore -> no translation
+#	  needed Abort/Retry/Ignore, as these are not translated into local language, OS related
+# ^Branding
+Nullsoft Install System %s
+# ^SetupCaption
+Instalare $(^Name)
+# ^UninstallCaption
+Dezinstalare $(^Name)
+# ^LicenseSubCaption
+: Contract de licenţă
+# ^ComponentsSubCaption
+: Opţiuni instalare
+# ^DirSubCaption
+: Directorul destinaţie
+# ^InstallingSubCaption
+: În curs de instalare
+# ^CompletedSubCaption
+: Instalare terminată
+# ^UnComponentsSubCaption
+: Opţiuni dezinstalare
+# ^UnDirSubCaption
+: Directorul de dezinstalare
+# ^ConfirmSubCaption
+: Confirmă
+# ^UninstallingSubCaption
+: În curs de dezinstalare
+# ^UnCompletedSubCaption
+: Termină
+# ^BackBtn
+< Îna&poi
+# ^NextBtn
+Îna&inte >
+# ^AgreeBtn
+&De acord
+# ^AcceptBtn
+&Accept termenii contractului de licenţă
+# ^DontAcceptBtn
+Nu accept termenii contractului de licenţă
+# ^InstallBtn
+&Instalează
+# ^UninstallBtn
+&Dezinstalează
+# ^CancelBtn
+&Renunţă
+# ^CloseBtn
+În&chide
+# ^BrowseBtn
+&Alege...
+# ^ShowDetailsBtn
+Arată &detalii
+# ^ClickNext
+Apăsaţi Înainte pentru a continua.
+# ^ClickInstall
+Apăsaţi Instalează pentru a începe instalarea.
+# ^ClickUninstall
+Apăsaţi Dezinstalează pentru a începe dezinstalarea.
+# ^Name
+Nume
+# ^Completed
+Terminat
+# ^LicenseText
+Citiţi cu atenţie contractul de licenţă înainte de a instala $(^NameDA). Dacă acceptaţi termenii contractului de licenţă, apăsaţi butonul De acord.
+# ^LicenseTextCB
+Citiţi cu atenţie contractul de licenţă înainte de a instala $(^NameDA). Dacă acceptaţi termenii contractului de licenţă, bifaţi căsuţa de mai jos. $_CLICK
+# ^LicenseTextRB
+Citiţi cu atenţie contractul de licenţă înainte de a instala $(^NameDA). Dacă acceptaţi termenii contractului de licenţă, selectaţi prima opţiune de mai jos. $_CLICK
+# ^UnLicenseText
+Citiţi cu atenţie contractul de licenţă înainte de a dezinstala $(^NameDA). Dacă acceptaţi termenii contractului de licenţă, apăsaţi butonul De acord.
+# ^UnLicenseTextCB
+Citiţi cu atenţie contractul de licenţă înainte de a dezinstala $(^NameDA). Dacă acceptaţi termenii contractului de licenţă, bifaţi căsuţa de mai jos. $_CLICK
+# ^UnLicenseTextRB
+Citiţi cu atenţie contractul de licenţă înainte de a dezinstala $(^NameDA). Dacă acceptaţi termenii contractului de licenţă, selectaţi prima opţiune de mai jos. $_CLICK
+# ^Custom
+Personalizată
+# ^ComponentsText
+Alegeţi componentele pe care doriţi să le instalaţi. $_CLICK
+# ^ComponentsSubText1
+Alegeţi tipul instalării:
+# ^ComponentsSubText2_NoInstTypes
+Alegeţi componentele ce urmează a fi instalate:
+# ^ComponentsSubText2
+Sau, alegeţi componentele opţionale pe care doriţi să le instalaţi:
+# ^UnComponentsText
+Alegeţi componentele pe care doriţi să le dezinstalaţi. $_CLICK
+# ^UnComponentsSubText1
+Alegeţi tipul de dezinstalare:
+# ^UnComponentsSubText2_NoInstTypes
+Alegeţi componentele ce urmează a fi dezinstalate:
+# ^UnComponentsSubText2
+Sau, alegeţi componentele opţionale pe care doriţi să le dezinstalaţi:
+# ^DirText
+$(^NameDA) se va instala în următorul director. Pentru a alege altă destinaţie, apăsaţi Alege şi alegeţi alt director. $_CLICK
+# ^DirSubText
+Director destinaţie
+# ^DirBrowseText
+Alegeţi directorul în care doriţi să instalaţi $(^NameDA):
+# ^UnDirText
+$(^NameDA) se va dezinstala din următorul director. Pentru a dezinstala din alt director, apăsaţi Alege şi alegeţi alt director. $_CLICK
+# ^UnDirSubText
+""
+# ^UnDirBrowseText
+Alegeţi directorul de dezinstalare al $(^NameDA):
+# ^SpaceAvailable
+"Spaţiu disponibil: "
+# ^SpaceRequired
+"Spaţiu necesar: "
+# ^UninstallingText
+Această aplicaţie va dezinstala $(^NameDA) din computerul Dv. $_CLICK
+# ^UninstallingSubText
+Dezinstalare din:
+# ^FileError
+Eroare la scrierea fişierului: \r\n\t"$0"\r\nApăsaţi Abort pentru oprirea instalării,\r\nRetry pentru a mai încerca o dată scrierea fişierului, \r\nIgnore pentru a trece peste acest fişier.
+# ^FileError_NoIgnore
+Eroare la scrierea fişierului: \r\n\t"$0"\r\nApăsaţi Retry pentru a mai încerca o dată, sau\r\nAbort pentru oprirea instalării.
+# ^CantWrite
+"Nu am putut scrie: "
+# ^CopyFailed
+Copierea a eşuat
+# ^CopyTo
+"Copiere în "
+# ^Registering
+"Se înregistrează: "
+# ^Unregistering
+"Se dezînregistrează din registru: "
+# ^SymbolNotFound
+"Simbolul nu a fost găsit: "
+# ^CouldNotLoad
+"Nu am putut încărca: "
+# ^CreateFolder
+"Creare director: "
+# ^CreateShortcut
+"Creare comandă rapidă: "
+# ^CreatedUninstaller
+"S-a creat aplicaţia de dezinstalare: "
+# ^Delete
+"Ştergere fişier: "
+# ^DeleteOnReboot
+"Ştergere la repornire: "
+# ^ErrorCreatingShortcut
+"Eroare la crearea comenzii rapide: "
+# ^ErrorCreating
+"Eroare la creare: "
+# ^ErrorDecompressing
+Eroare la dezarhivarea datelor! Aplicatia de instalare este defectă?
+# ^ErrorRegistering
+Eroare la Înregistrarea DLL-ului
+# ^ExecShell
+"ExecShell: "
+# ^Exec
+"Executare: "
+# ^Extract
+"Extragere: "
+# ^ErrorWriting
+"Extragere: eroare la scriere în fişier "
+# ^InvalidOpcode
+Aplicaţie de instalare defectă: opcode incorect
+# ^NoOLE
+"Nu există OLE pentru: "
+# ^OutputFolder
+"Directorul destinaţie: "
+# ^RemoveFolder
+"Ştergere destinaţie: "
+# ^RenameOnReboot
+"Redenumire la repornirea computerului: "
+# ^Rename
+"Redenumire: "
+# ^Skipped
+"Sărite: "
+# ^CopyDetails
+Copiere detalii în clipboard
+# ^LogInstall
+Jurnal proces instalare
+# ^Byte
+O
+# ^Kilo
+K
+# ^Mega
+M
+# ^Giga
+G

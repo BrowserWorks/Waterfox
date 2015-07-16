@@ -23,7 +23,7 @@ public:
               int16_t aRetryCount, ErrorResult& aRv);
 
   virtual JSObject*
-  WrapObject(JSContext* aCx) override;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // WebIDL interface
 

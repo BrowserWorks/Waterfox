@@ -48,7 +48,6 @@ class nsWindow : public nsBaseWidget
 {
 public:
     nsWindow();
-    virtual ~nsWindow();
 
     NS_DECL_ISUPPORTS_INHERITED
 
@@ -91,7 +90,8 @@ public:
     void DispatchTouchInputViaAPZ(mozilla::MultiTouchInput& aInput);
     void DispatchTouchEventForAPZ(const mozilla::MultiTouchInput& aInput,
                                   const ScrollableLayerGuid& aGuid,
-                                  const uint64_t aInputBlockId);
+                                  const uint64_t aInputBlockId,
+                                  nsEventStatus aApzResponse);
     NS_IMETHOD DispatchEvent(mozilla::WidgetGUIEvent* aEvent,
                              nsEventStatus& aStatus);
     virtual nsresult SynthesizeNativeTouchPoint(uint32_t aPointerId,
@@ -132,6 +132,8 @@ public:
 
     virtual Composer2D* GetComposer2D() override;
 
+    void ConfigureAPZControllerThread() override;
+
 protected:
     nsWindow* mParent;
     bool mVisible;
@@ -151,6 +153,8 @@ protected:
     // Only accessed on the compositor thread, except during
     // destruction.
     mozilla::RefPtr<mozilla::gfx::DrawTarget> mBackBuffer;
+
+    virtual ~nsWindow();
 
     void BringToTop();
 

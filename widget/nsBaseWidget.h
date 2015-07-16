@@ -40,6 +40,7 @@ class GeckoContentController;
 class APZEventState;
 struct ScrollableLayerGuid;
 struct SetTargetAPZCCallback;
+struct SetAllowedTouchBehaviorCallback;
 }
 
 class CompositorVsyncDispatcher;
@@ -95,6 +96,7 @@ protected:
   typedef mozilla::layers::ScrollableLayerGuid ScrollableLayerGuid;
   typedef mozilla::layers::APZEventState APZEventState;
   typedef mozilla::layers::SetTargetAPZCCallback SetTargetAPZCCallback;
+  typedef mozilla::layers::SetAllowedTouchBehaviorCallback SetAllowedTouchBehaviorCallback;
   typedef mozilla::ScreenRotation ScreenRotation;
 
   virtual ~nsBaseWidget();
@@ -227,9 +229,14 @@ public:
   NS_IMETHOD              AttachViewToTopLevel(bool aUseAttachedEvents) override;
   virtual nsIWidgetListener* GetAttachedWidgetListener() override;
   virtual void               SetAttachedWidgetListener(nsIWidgetListener* aListener) override;
-  NS_IMETHOD              RegisterTouchWindow() override;
-  NS_IMETHOD              UnregisterTouchWindow() override;
   NS_IMETHOD_(TextEventDispatcher*) GetTextEventDispatcher() override final;
+
+  // Helper function for dispatching events which are not processed by APZ,
+  // but need to be transformed by APZ.
+  nsEventStatus DispatchInputEvent(mozilla::WidgetInputEvent* aEvent) override;
+
+  // Dispatch an event that must be first be routed through APZ.
+  nsEventStatus DispatchAPZAwareEvent(mozilla::WidgetInputEvent* aEvent) override;
 
   void NotifyWindowDestroyed();
   void NotifySizeMoveDone();
@@ -324,13 +331,14 @@ protected:
                              nsWidgetInitData *aInitData);
 
   virtual void ConfigureAPZCTreeManager();
+  virtual void ConfigureAPZControllerThread();
   virtual already_AddRefed<GeckoContentController> CreateRootContentController();
 
-  // Dispatch an event that has been routed through APZ directly from the
-  // widget.
-  nsEventStatus DispatchEventForAPZ(mozilla::WidgetGUIEvent* aEvent,
-                                    const ScrollableLayerGuid& aGuid,
-                                    uint64_t aInputBlockId);
+  // Dispatch an event that has already been routed through APZ.
+  nsEventStatus ProcessUntransformedAPZEvent(mozilla::WidgetInputEvent* aEvent,
+                                             const ScrollableLayerGuid& aGuid,
+                                             uint64_t aInputBlockId,
+                                             nsEventStatus aApzResponse);
 
   const nsIntRegion RegionFromArray(const nsTArray<nsIntRect>& aRects);
   void ArrayFromRegion(const nsIntRegion& aRegion, nsTArray<nsIntRect>& aRects);
@@ -450,6 +458,7 @@ protected:
   nsRefPtr<APZCTreeManager> mAPZC;
   nsRefPtr<APZEventState> mAPZEventState;
   nsRefPtr<SetTargetAPZCCallback> mSetTargetAPZCCallback;
+  nsRefPtr<SetAllowedTouchBehaviorCallback> mSetAllowedTouchBehaviorCallback;
   nsRefPtr<WidgetShutdownObserver> mShutdownObserver;
   nsRefPtr<TextEventDispatcher> mTextEventDispatcher;
   nsCursor          mCursor;

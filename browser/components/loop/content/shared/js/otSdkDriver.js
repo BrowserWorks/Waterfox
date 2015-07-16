@@ -27,7 +27,12 @@ loop.OTSdkDriver = (function() {
       this.dispatcher = options.dispatcher;
       this.sdk = options.sdk;
 
-      if (options.mozLoop) {
+      this._isDesktop = !!options.isDesktop;
+
+      if (this._isDesktop) {
+        if (!options.mozLoop) {
+          throw new Error("Missing option mozLoop");
+        }
         this.mozLoop = options.mozLoop;
       }
 
@@ -38,13 +43,20 @@ loop.OTSdkDriver = (function() {
         "setMute"
       ]);
 
+      // Set loop.debug.twoWayMediaTelemetry to true in the browser
+      // by changing the hidden pref loop.debug.twoWayMediaTelemetry using
+      // about:config, or use
+      //
+      // localStorage.setItem("debug.twoWayMediaTelemetry", true);
+      this._debugTwoWayMediaTelemetry =
+        loop.shared.utils.getBoolPreference("debug.twoWayMediaTelemetry");
+
     /**
      * XXX This is a workaround for desktop machines that do not have a
      * camera installed. As we don't yet have device enumeration, when
      * we do, this can be removed (bug 1138851), and the sdk should handle it.
      */
-    if ("isDesktop" in options && options.isDesktop &&
-        !window.MediaStreamTrack.getSources) {
+    if (this._isDesktop && !window.MediaStreamTrack.getSources) {
       // If there's no getSources function, the sdk defines its own and caches
       // the result. So here we define the "normal" one which doesn't get cached, so
       // we can change it later.
@@ -197,11 +209,19 @@ loop.OTSdkDriver = (function() {
      * - sessionId: The OT session ID
      * - apiKey: The OT API key
      * - sessionToken: The token for the OT session
+     * - sendTwoWayMediaTelemetry: boolean should we send telemetry on length
+     *                             of media sessions.  Callers should ensure
+     *                             that this is only set for one side of the
+     *                             session so that things don't get
+     *                             double-counted.
      *
      * @param {Object} sessionData The session data for setting up the OT session.
      */
     connectSession: function(sessionData) {
       this.session = this.sdk.initSession(sessionData.sessionId);
+
+      this._sendTwoWayMediaTelemetry = !!sessionData.sendTwoWayMediaTelemetry;
+      this._setTwoWayMediaStartTime(this.CONNECTION_START_TIME_UNINITIALIZED);
 
       this.session.on("connectionCreated", this._onConnectionCreated.bind(this));
       this.session.on("streamCreated", this._onRemoteStreamCreated.bind(this));
@@ -235,12 +255,15 @@ loop.OTSdkDriver = (function() {
         delete this.publisher;
       }
 
+      this._noteConnectionLengthIfNeeded(this._getTwoWayMediaStartTime(), performance.now());
+
       // Also, tidy these variables ready for next time.
       delete this._sessionConnected;
       delete this._publisherReady;
       delete this._publishedLocalStream;
       delete this._subscribedRemoteStream;
       this.connections = {};
+      this._setTwoWayMediaStartTime(this.CONNECTION_START_TIME_UNINITIALIZED);
     },
 
     /**
@@ -304,6 +327,7 @@ loop.OTSdkDriver = (function() {
       if (connection && (connection.id in this.connections)) {
         delete this.connections[connection.id];
       }
+      this._noteConnectionLengthIfNeeded(this._getTwoWayMediaStartTime(), performance.now());
       this.dispatcher.dispatch(new sharedActions.RemotePeerDisconnected({
         peerHungup: event.reason === "clientDisconnected"
       }));
@@ -330,6 +354,8 @@ loop.OTSdkDriver = (function() {
           return;
       }
 
+      this._noteConnectionLengthIfNeeded(this._getTwoWayMediaStartTime(),
+        performance.now());
       this.dispatcher.dispatch(new sharedActions.ConnectionFailure({
         reason: reason
       }));
@@ -401,6 +427,7 @@ loop.OTSdkDriver = (function() {
 
       this._subscribedRemoteStream = true;
       if (this._checkAllStreamsConnected()) {
+        this._setTwoWayMediaStartTime(performance.now());
         this.dispatcher.dispatch(new sharedActions.MediaConnected());
       }
     },
@@ -421,6 +448,56 @@ loop.OTSdkDriver = (function() {
       }
     },
 
+    /**
+     * Implementation detail, may be set to one of the CONNECTION_START_TIME
+     * constants, or a positive integer in milliseconds.
+     *
+     * @private
+     */
+    __twoWayMediaStartTime: undefined,
+
+    /**
+     * Used as a guard to make sure we don't inadvertently use an
+     * uninitialized value.
+     */
+    CONNECTION_START_TIME_UNINITIALIZED: -1,
+
+    /**
+     * Use as a guard to ensure that we don't note any bidirectional sessions
+     * twice.
+     */
+    CONNECTION_START_TIME_ALREADY_NOTED: -2,
+
+    /**
+     * Set and get the start time of the two-way media connection.  These
+     * are done as wrapper functions so that we can log sets to make manual
+     * verification of various telemetry scenarios possible.  The get API is
+     * analogous in order to follow the principle of least surprise for
+     * people consuming this code.
+     *
+     * If this._sendTwoWayMediaTelemetry is not true, returns immediately
+     * without making any changes, since this data is not used, and it makes
+     * reading the logs confusing for manual verification of both ends of the
+     * call in the same browser, which is a case we care about.
+     *
+     * @param start  start time in milliseconds, as returned by
+     *               performance.now()
+     * @private
+     */
+    _setTwoWayMediaStartTime: function(start) {
+      if (!this._sendTwoWayMediaTelemetry) {
+        return;
+      }
+
+      this.__twoWayMediaStartTime = start;
+      if (this._debugTwoWayMediaTelemetry) {
+        console.log("Loop Telemetry: noted two-way connection start, " +
+                    "start time in ms:", start);
+      }
+    },
+    _getTwoWayMediaStartTime: function() {
+      return this.__twoWayMediaStartTime;
+    },
 
     /**
      * Handles the event when the remote stream is destroyed.
@@ -520,6 +597,7 @@ loop.OTSdkDriver = (function() {
         // Now record the fact, and check if we've got all media yet.
         this._publishedLocalStream = true;
         if (this._checkAllStreamsConnected()) {
+          this._setTwoWayMediaStartTime(performance.now());
           this.dispatcher.dispatch(new sharedActions.MediaConnected());
         }
       }
@@ -553,6 +631,90 @@ loop.OTSdkDriver = (function() {
       }));
     },
 
+    /*
+     * XXX all of the bi-directional media connection telemetry stuff in this
+     * file, (much, but not all, of it is below) should be hoisted into its
+     * own object for maintainability and clarity, also in part because this
+     * stuff only wants to run one side of the connection, not both (tracked
+     * by bug 1145237).
+     */
+
+    /**
+     * A hook exposed only for the use of the functional tests so that
+     * they can check that the bi-directional media count is being updated
+     * correctly.
+     *
+     * @type number
+     * @private
+     */
+    _connectionLengthNotedCalls: 0,
+
+    /**
+     * Wrapper for adding a keyed value that also updates
+     * connectionLengthNoted calls and sets the twoWayMediaStartTime to
+     * this.CONNECTION_START_TIME_ALREADY_NOTED.
+     *
+     * @param {number} callLengthSeconds  the call length in seconds
+     * @private
+     */
+    _noteConnectionLength: function(callLengthSeconds) {
+      var buckets = this.mozLoop.TWO_WAY_MEDIA_CONN_LENGTH;
+
+      var bucket = buckets.SHORTER_THAN_10S;
+      if (callLengthSeconds >= 10 && callLengthSeconds <= 30) {
+        bucket = buckets.BETWEEN_10S_AND_30S;
+      } else if (callLengthSeconds > 30 && callLengthSeconds <= 300) {
+        bucket = buckets.BETWEEN_30S_AND_5M;
+      } else if (callLengthSeconds > 300) {
+        bucket = buckets.MORE_THAN_5M;
+      }
+
+      this.mozLoop.telemetryAddValue("LOOP_TWO_WAY_MEDIA_CONN_LENGTH_1", bucket);
+      this._setTwoWayMediaStartTime(this.CONNECTION_START_TIME_ALREADY_NOTED);
+
+      this._connectionLengthNotedCalls++;
+      if (this._debugTwoWayMediaTelemetry) {
+        console.log('Loop Telemetry: noted two-way media connection ' +
+          'in bucket: ', bucket);
+      }
+    },
+
+    /**
+     * Note connection length if it's valid (the startTime has been initialized
+     * and is not later than endTime) and not yet already noted.  If
+     * this._sendTwoWayMediaTelemetry is not true, we return immediately.
+     *
+     * @param {number} startTime  in milliseconds
+     * @param {number} endTime  in milliseconds
+     * @private
+     */
+    _noteConnectionLengthIfNeeded: function(startTime, endTime) {
+      if (!this._sendTwoWayMediaTelemetry) {
+        return;
+      }
+
+      if (startTime == this.CONNECTION_START_TIME_ALREADY_NOTED ||
+          startTime == this.CONNECTION_START_TIME_UNINITIALIZED ||
+          startTime > endTime) {
+        if (this._debugTwoWayMediaTelemetry) {
+          console.log("_noteConnectionLengthIfNeeded called with " +
+            " invalid params, either the calls were never" +
+            " connected or there is a bug; startTime:", startTime,
+            "endTime:", endTime);
+        }
+        return;
+      }
+
+      var callLengthSeconds = (endTime - startTime) / 1000;
+      this._noteConnectionLength(callLengthSeconds);
+    },
+
+    /**
+     * If set to true, make it easy to test/verify 2-way media connection
+     * telemetry code operation by viewing the logs.
+     */
+    _debugTwoWayMediaTelemetry: false,
+
     /**
      * Note the sharing state. If this.mozLoop is not defined, we're assumed to
      * be running in the standalone client and return immediately.
@@ -570,12 +732,12 @@ loop.OTSdkDriver = (function() {
 
       var bucket = this.mozLoop.SHARING_STATE_CHANGE[type.toUpperCase() + "_" +
         (enabled ? "ENABLED" : "DISABLED")];
-      if (!bucket) {
+      if (typeof bucket === "undefined") {
         console.error("No sharing state bucket found for '" + type + "'");
         return;
       }
 
-      this.mozLoop.telemetryAddKeyedValue("LOOP_SHARING_STATE_CHANGE", bucket);
+      this.mozLoop.telemetryAddValue("LOOP_SHARING_STATE_CHANGE_1", bucket);
     }
   };
 

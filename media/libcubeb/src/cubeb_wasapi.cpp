@@ -28,7 +28,6 @@
 #endif
 
 // #define LOGGING_ENABLED
-
 #ifdef LOGGING_ENABLED
 #define LOG(...) do {                           \
     fprintf(stderr, __VA_ARGS__);               \
@@ -239,6 +238,7 @@ struct cubeb_stream
   /* We synthesize our clock from the callbacks. */
   LONG64 clock;
   owned_critical_section * stream_reset_lock;
+  owned_critical_section * clock_lock;
   /* Maximum number of frames we can be requested in a callback. */
   uint32_t buffer_frame_count;
   /* Resampler instance. Resampling will only happen if necessary. */
@@ -344,12 +344,22 @@ private:
 namespace {
 void clock_add(cubeb_stream * stm, LONG64 value)
 {
-  InterlockedExchangeAdd64(&stm->clock, value);
+	//#ifndef InterlockedExchangeAdd64
+		auto_lock lock(stm->clock_lock);
+	stm->clock += value;
+	//#else
+		//InterlockedExchangeAdd64(&stm->clock, value);
+	//#endif
 }
 
 LONG64 clock_get(cubeb_stream * stm)
 {
-  return InterlockedExchangeAdd64(&stm->clock, 0);
+	//#ifndef InterlockedExchangeAdd64
+		auto_lock lock(stm->clock_lock);
+		return stm->clock;
+	//#else
+	//	return InterlockedExchangeAdd64(&stm->clock, 0);
+	//#endif
 }
 
 bool should_upmix(cubeb_stream * stream)
@@ -1114,6 +1124,10 @@ wasapi_stream_init(cubeb * context, cubeb_stream ** stream,
   stm->notification_client = NULL;
 
   stm->stream_reset_lock = new owned_critical_section();
+  
+  //#ifndef InterlockedExchangeAdd64
+  stm->clock_lock = new owned_critical_section();
+  //#endif
 
   stm->reconfigure_event = CreateEvent(NULL, 0, 0, NULL);
   if (!stm->reconfigure_event) {
@@ -1194,6 +1208,7 @@ void wasapi_stream_destroy(cubeb_stream * stm)
   }
 
   delete stm->stream_reset_lock;
+  delete stm->clock_lock;
 
   free(stm);
 }

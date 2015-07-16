@@ -5,9 +5,7 @@
 import base64
 import json
 import logging
-import math
 import os
-import re
 import shutil
 import sys
 import tempfile
@@ -24,9 +22,10 @@ from runtests import Mochitest, MessageLogger
 from mochitest_options import MochitestOptions
 from mozlog import structured
 
+from manifestparser import TestManifest
+from manifestparser.filters import chunk_by_slice
 import devicemanager
 import droid
-import manifestparser
 import mozinfo
 import moznetwork
 
@@ -626,7 +625,15 @@ class MochiRemote(Mochitest):
                     ''.join(logcat).decode(
                         'utf-8',
                         'replace'))
-            self.log.info("Device info: %s" % self._dm.getInfo())
+            self.log.info("Device info:")
+            devinfo = self._dm.getInfo()
+            for category in devinfo:
+                if type(devinfo[category]) is list:
+                    self.log.info("  %s:" % category)
+                    for item in devinfo[category]:
+                        self.log.info("     %s" % item)
+                else:
+                    self.log.info("  %s: %s" % (category, devinfo[category]))
             self.log.info("Test root: %s" % self._dm.deviceRoot)
         except devicemanager.DMError:
             self.log.warning("Error getting device information")
@@ -791,23 +798,15 @@ def main(args):
 
         # sut may wait up to 300 s for a robocop am process before returning
         dm.default_timeout = 320
-        mp = manifestparser.TestManifest(strict=False)
+        mp = TestManifest(strict=False)
         # TODO: pull this in dynamically
         mp.read(options.robocopIni)
-        robocop_tests = mp.active_tests(exists=False, **mozinfo.info)
-        tests = []
-        my_tests = tests
-        for test in robocop_tests:
-            tests.append(test['name'])
 
+        filters = []
         if options.totalChunks:
-            tests_per_chunk = float(len(tests)) / options.totalChunks
-            start = int(round((options.thisChunk - 1) * tests_per_chunk))
-            end = int(round(options.thisChunk * tests_per_chunk))
-            if end > len(tests):
-                end = len(tests)
-            my_tests = tests[start:end]
-            log.info("Running tests %d-%d/%d" % (start + 1, end, len(tests)))
+            filters.append(
+                chunk_by_slice(options.thisChunk, options.totalChunks))
+        robocop_tests = mp.active_tests(exists=False, filters=filters, **mozinfo.info)
 
         options.extraPrefs.append('browser.search.suggest.enabled=true')
         options.extraPrefs.append('browser.search.suggest.prompted=true')
@@ -815,6 +814,7 @@ def main(args):
         options.extraPrefs.append('browser.chrome.dynamictoolbar=false')
         options.extraPrefs.append('browser.snippets.enabled=false')
         options.extraPrefs.append('browser.casting.enabled=true')
+        options.extraPrefs.append('extensions.autoupdate.enabled=false')
 
         if (options.dm_trans == 'adb' and options.robocopApk):
             dm._checkCmd(["install", "-r", options.robocopApk])
@@ -824,9 +824,6 @@ def main(args):
         active_tests = []
         for test in robocop_tests:
             if options.testPath and options.testPath != test['name']:
-                continue
-
-            if not test['name'] in my_tests:
                 continue
 
             if 'disabled' in test:

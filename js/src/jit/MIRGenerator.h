@@ -20,6 +20,7 @@
 #include "jit/CompileInfo.h"
 #include "jit/JitAllocPolicy.h"
 #include "jit/JitCompartment.h"
+#include "jit/MIR.h"
 #ifdef JS_ION_PERF
 # include "jit/PerfSpewer.h"
 #endif
@@ -38,7 +39,8 @@ class MIRGenerator
   public:
     MIRGenerator(CompileCompartment* compartment, const JitCompileOptions& options,
                  TempAllocator* alloc, MIRGraph* graph,
-                 CompileInfo* info, const OptimizationInfo* optimizationInfo);
+                 CompileInfo* info, const OptimizationInfo* optimizationInfo,
+                 Label* outOfBoundsLabel = nullptr, bool usesSignalHandlersForAsmJSOOB = false);
 
     TempAllocator& alloc() {
         return *alloc_;
@@ -156,10 +158,10 @@ class MIRGenerator
 
     typedef Vector<ObjectGroup*, 0, JitAllocPolicy> ObjectGroupVector;
 
-    // When abortReason() == AbortReason_NewScriptProperties, all types which
-    // the new script properties analysis hasn't been performed on yet.
-    const ObjectGroupVector& abortedNewScriptPropertiesGroups() const {
-        return abortedNewScriptPropertiesGroups_;
+    // When abortReason() == AbortReason_PreliminaryObjects, all groups with
+    // preliminary objects which haven't been analyzed yet.
+    const ObjectGroupVector& abortedPreliminaryGroups() const {
+        return abortedPreliminaryGroups_;
     }
 
   public:
@@ -174,7 +176,7 @@ class MIRGenerator
     MIRGraph* graph_;
     AbortReason abortReason_;
     bool shouldForceAbort_; // Force AbortReason_Disable
-    ObjectGroupVector abortedNewScriptPropertiesGroups_;
+    ObjectGroupVector abortedPreliminaryGroups_;
     bool error_;
     mozilla::Atomic<bool, mozilla::Relaxed>* pauseBuild_;
     mozilla::Atomic<bool, mozilla::Relaxed> cancelBuild_;
@@ -199,7 +201,13 @@ class MIRGenerator
     // CodeGenerator::link).
     ObjectVector nurseryObjects_;
 
-    void addAbortedNewScriptPropertiesGroup(ObjectGroup* type);
+    void addAbortedPreliminaryGroup(ObjectGroup* group);
+
+    Label* outOfBoundsLabel_;
+#if defined(ASMJS_MAY_USE_SIGNAL_HANDLERS_FOR_OOB)
+    bool usesSignalHandlersForAsmJSOOB_;
+#endif
+
     void setForceAbort() {
         shouldForceAbort_ = true;
     }
@@ -222,6 +230,12 @@ class MIRGenerator
     const ObjectVector& nurseryObjects() const {
         return nurseryObjects_;
     }
+
+    Label* outOfBoundsLabel() const {
+        return outOfBoundsLabel_;
+    }
+    bool needsAsmJSBoundsCheckBranch(const MAsmJSHeapAccess* access) const;
+    size_t foldableOffsetRange(const MAsmJSHeapAccess* access) const;
 };
 
 } // namespace jit

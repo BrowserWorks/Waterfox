@@ -31,7 +31,10 @@ class nsMathMLContainerFrame : public nsContainerFrame,
                                public nsMathMLFrame {
   friend class nsMathMLmfencedFrame;
 public:
-  explicit nsMathMLContainerFrame(nsStyleContext* aContext) : nsContainerFrame(aContext) {}
+  explicit nsMathMLContainerFrame(nsStyleContext* aContext)
+    : nsContainerFrame(aContext)
+    , mIntrinsicWidth(NS_INTRINSIC_WIDTH_UNKNOWN)
+  {}
 
   NS_DECL_QUERYFRAME_TARGET(nsMathMLContainerFrame)
   NS_DECL_QUERYFRAME
@@ -96,8 +99,8 @@ public:
    * Both GetMinISize and GetPrefISize use the intrinsic width metrics
    * returned by GetIntrinsicMetrics, including ink overflow.
    */
-  virtual nscoord GetMinISize(nsRenderingContext *aRenderingContext) override;
-  virtual nscoord GetPrefISize(nsRenderingContext *aRenderingContext) override;
+  virtual nscoord GetMinISize(nsRenderingContext* aRenderingContext) override;
+  virtual nscoord GetPrefISize(nsRenderingContext* aRenderingContext) override;
 
   /**
    * Return the intrinsic horizontal metrics of the frame's content area.
@@ -111,13 +114,6 @@ public:
          nsHTMLReflowMetrics&     aDesiredSize,
          const nsHTMLReflowState& aReflowState,
          nsReflowStatus&          aStatus) override;
-
-  virtual void
-  WillReflow(nsPresContext* aPresContext) override
-  {
-    mPresentationData.flags &= ~NS_MATHML_ERROR;
-    nsContainerFrame::WillReflow(aPresContext);
-  }
 
   virtual void DidReflow(nsPresContext*           aPresContext,
             const nsHTMLReflowState*  aReflowState,
@@ -133,6 +129,8 @@ public:
                                 const nsDisplayListSet& aLists) override;
 
   virtual bool UpdateOverflow() override;
+
+  virtual void MarkIntrinsicISizesDirty() override;
 
   // Notification when an attribute is changed. The MathML module uses the
   // following paradigm:
@@ -390,6 +388,13 @@ protected:
    * The method does nothing if aFirst == nullptr.
    */
   static void DidReflowChildren(nsIFrame* aFirst, nsIFrame* aStop = nullptr);
+
+  /**
+   * Recompute mIntrinsicWidth if it's not already up to date.
+   */
+  void UpdateIntrinsicWidth(nsRenderingContext* aRenderingContext);
+
+  nscoord mIntrinsicWidth;
 
 private:
   class RowChildFrameIterator;

@@ -42,7 +42,6 @@
 #include "nsNPAPIPlugin.h"
 
 #ifdef XP_WIN
-#include "COMMessageFilter.h"
 #include "nsWindowsDllInterceptor.h"
 #include "mozilla/widget/AudioSession.h"
 #endif
@@ -264,10 +263,6 @@ PluginModuleChild::InitForChrome(const std::string& aPluginFilename,
                                  MessageLoop* aIOLoop,
                                  IPC::Channel* aChannel)
 {
-#ifdef XP_WIN
-    COMMessageFilter::Initialize(this);
-#endif
-
     NS_ASSERTION(aChannel, "need a channel");
 
     if (!InitGraphics())
@@ -1820,7 +1815,7 @@ _popupcontextmenu(NPP instance, NPMenu* menu)
     if (success) {
         return mozilla::plugins::PluginUtilsOSX::ShowCocoaContextMenu(menu,
                                     screenX, screenY,
-                                    PluginModuleChild::GetChrome(),
+                                    InstCast(instance)->Manager(),
                                     ProcessBrowserEvents);
     } else {
         NS_WARNING("Convertpoint failed, could not created contextmenu.");
@@ -2133,15 +2128,18 @@ PluginModuleChild::InitQuirksModes(const nsCString& aMimeType)
 #endif
     }
 
-#ifdef OS_WIN
     if (specialType == nsPluginHost::eSpecialType_Flash) {
+        mQuirks |= QUIRK_FLASH_RETURN_EMPTY_DOCUMENT_ORIGIN;
+#ifdef OS_WIN
         mQuirks |= QUIRK_WINLESS_TRACKPOPUP_HOOK;
         mQuirks |= QUIRK_FLASH_THROTTLE_WMUSER_EVENTS;
         mQuirks |= QUIRK_FLASH_HOOK_SETLONGPTR;
         mQuirks |= QUIRK_FLASH_HOOK_GETWINDOWINFO;
         mQuirks |= QUIRK_FLASH_FIXUP_MOUSE_CAPTURE;
+#endif
     }
 
+#ifdef OS_WIN
     // QuickTime plugin usually loaded with audio/mpeg mimetype
     NS_NAMED_LITERAL_CSTRING(quicktime, "npqtplugin");
     if (FindInReadable(quicktime, mPluginFilename)) {
@@ -2157,6 +2155,12 @@ PluginModuleChild::InitQuirksModes(const nsCString& aMimeType)
         mQuirks |= QUIRK_ALLOW_OFFLINE_RENDERER;
     } else if (FindInReadable(quicktime, mPluginFilename)) {
         mQuirks |= QUIRK_ALLOW_OFFLINE_RENDERER;
+    }
+#endif
+
+#ifdef OS_WIN
+    if (specialType == nsPluginHost::eSpecialType_Unity) {
+        mQuirks |= QUIRK_UNITY_FIXUP_MOUSE_CAPTURE;
     }
 #endif
 }
@@ -2186,6 +2190,37 @@ PluginModuleChild::AnswerSyncNPP_New(PPluginInstanceChild* aActor, NPError* rv)
     return true;
 }
 
+class AsyncNewResultSender : public ChildAsyncCall
+{
+public:
+    AsyncNewResultSender(PluginInstanceChild* aInstance, NPError aResult)
+        : ChildAsyncCall(aInstance, nullptr, nullptr)
+        , mResult(aResult)
+    {
+    }
+
+    void Run() override
+    {
+        RemoveFromAsyncList();
+        DebugOnly<bool> sendOk = mInstance->SendAsyncNPP_NewResult(mResult);
+        MOZ_ASSERT(sendOk);
+    }
+
+private:
+    NPError  mResult;
+};
+
+static void
+RunAsyncNPP_New(void* aChildInstance)
+{
+    MOZ_ASSERT(aChildInstance);
+    PluginInstanceChild* childInstance =
+        static_cast<PluginInstanceChild*>(aChildInstance);
+    NPError rv = childInstance->DoNPP_New();
+    AsyncNewResultSender* task = new AsyncNewResultSender(childInstance, rv);
+    childInstance->PostChildAsyncCall(task);
+}
+
 bool
 PluginModuleChild::RecvAsyncNPP_New(PPluginInstanceChild* aActor)
 {
@@ -2193,8 +2228,8 @@ PluginModuleChild::RecvAsyncNPP_New(PPluginInstanceChild* aActor)
     PluginInstanceChild* childInstance =
         reinterpret_cast<PluginInstanceChild*>(aActor);
     AssertPluginThread();
-    NPError rv = childInstance->DoNPP_New();
-    childInstance->SendAsyncNPP_NewResult(rv);
+    // We don't want to run NPP_New async from within nested calls
+    childInstance->AsyncCall(&RunAsyncNPP_New, childInstance);
     return true;
 }
 

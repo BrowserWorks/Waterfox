@@ -28,7 +28,7 @@ using namespace mozilla::dom;
  * class used to implement attr() generated content
  */
 class nsAttributeTextNode final : public nsTextNode,
-                                      public nsStubMutationObserver
+                                  public nsStubMutationObserver
 {
 public:
   NS_DECL_ISUPPORTS_INHERITED
@@ -100,9 +100,9 @@ NS_IMPL_ISUPPORTS_INHERITED(nsTextNode, nsGenericDOMDataNode, nsIDOMNode,
                             nsIDOMText, nsIDOMCharacterData)
 
 JSObject*
-nsTextNode::WrapNode(JSContext *aCx)
+nsTextNode::WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return TextBinding::Wrap(aCx, this);
+  return TextBinding::Wrap(aCx, this, aGivenProto);
 }
 
 bool

@@ -5,6 +5,7 @@
 
 #include "APZCCallbackHelper.h"
 
+#include "ContentHelper.h"
 #include "gfxPlatform.h" // For gfxPlatform::UseTiling
 #include "mozilla/dom/TabParent.h"
 #include "nsIScrollableFrame.h"
@@ -208,7 +209,7 @@ APZCCallbackHelper::UpdateRootFrame(nsIDOMWindowUtils* aUtils,
   // last paint.
   float presShellResolution = aMetrics.GetPresShellResolution()
                             * aMetrics.GetAsyncZoom().scale;
-  aUtils->SetResolutionAndScaleTo(presShellResolution, presShellResolution);
+  aUtils->SetResolutionAndScaleTo(presShellResolution);
 
   SetDisplayPortMargins(aUtils, content, aMetrics);
 }
@@ -244,7 +245,7 @@ already_AddRefed<nsIDOMWindowUtils>
 APZCCallbackHelper::GetDOMWindowUtils(const nsIContent* aContent)
 {
     nsCOMPtr<nsIDOMWindowUtils> utils;
-    nsIDocument* doc = aContent->GetCurrentDoc();
+    nsIDocument* doc = aContent->GetComposedDoc();
     if (doc) {
         utils = GetDOMWindowUtils(doc);
     }
@@ -262,6 +263,46 @@ APZCCallbackHelper::GetOrCreateScrollIdentifiers(nsIContent* aContent,
     *aViewIdOut = nsLayoutUtils::FindOrCreateIDFor(aContent);
     nsCOMPtr<nsIDOMWindowUtils> utils = GetDOMWindowUtils(aContent);
     return utils && (utils->GetPresShellId(aPresShellIdOut) == NS_OK);
+}
+
+class FlingSnapEvent : public nsRunnable
+{
+    typedef mozilla::layers::FrameMetrics::ViewID ViewID;
+
+public:
+    FlingSnapEvent(const ViewID& aScrollId,
+                   const mozilla::CSSPoint& aDestination)
+        : mScrollId(aScrollId)
+        , mDestination(aDestination)
+    {
+    }
+
+    NS_IMETHOD Run() {
+        MOZ_ASSERT(NS_IsMainThread());
+
+        nsIScrollableFrame* sf = nsLayoutUtils::FindScrollableFrameFor(mScrollId);
+        if (sf) {
+            sf->FlingSnap(mDestination);
+        }
+
+        return NS_OK;
+    }
+
+protected:
+    ViewID mScrollId;
+    mozilla::CSSPoint mDestination;
+};
+
+void
+APZCCallbackHelper::RequestFlingSnap(const FrameMetrics::ViewID& aScrollId,
+                                     const mozilla::CSSPoint& aDestination)
+{
+    nsCOMPtr<nsIRunnable> r1 = new FlingSnapEvent(aScrollId, aDestination);
+    if (!NS_IsMainThread()) {
+        NS_DispatchToMainThread(r1);
+    } else {
+        r1->Run();
+    }
 }
 
 class AcknowledgeScrollUpdateEvent : public nsRunnable
@@ -375,23 +416,10 @@ APZCCallbackHelper::ApplyCallbackTransform(WidgetTouchEvent& aEvent,
 nsEventStatus
 APZCCallbackHelper::DispatchWidgetEvent(WidgetGUIEvent& aEvent)
 {
-  if (!aEvent.widget)
-    return nsEventStatus_eConsumeNoDefault;
-
-  // A nested process may be capturing events.
-  if (TabParent* capturer = TabParent::GetEventCapturer()) {
-    if (capturer->TryCapture(aEvent)) {
-      // Only touch events should be captured, and touch events from a parent
-      // process should not make it here. Capture for those is done elsewhere
-      // (for gonk, in nsWindow::DispatchTouchInputViaAPZ).
-      MOZ_ASSERT(!XRE_IsParentProcess());
-
-      return nsEventStatus_eConsumeNoDefault;
-    }
+  nsEventStatus status = nsEventStatus_eConsumeNoDefault;
+  if (aEvent.widget) {
+    aEvent.widget->DispatchEvent(&aEvent, status);
   }
-  nsEventStatus status;
-  NS_ENSURE_SUCCESS(aEvent.widget->DispatchEvent(&aEvent, status),
-                    nsEventStatus_eConsumeNoDefault);
   return status;
 }
 
@@ -399,6 +427,7 @@ nsEventStatus
 APZCCallbackHelper::DispatchSynthesizedMouseEvent(uint32_t aMsg,
                                                   uint64_t aTime,
                                                   const LayoutDevicePoint& aRefPoint,
+                                                  Modifiers aModifiers,
                                                   nsIWidget* aWidget)
 {
   MOZ_ASSERT(aMsg == NS_MOUSE_MOVE || aMsg == NS_MOUSE_BUTTON_DOWN ||
@@ -414,6 +443,7 @@ APZCCallbackHelper::DispatchSynthesizedMouseEvent(uint32_t aMsg,
   if (aMsg != NS_MOUSE_MOVE) {
     event.clickCount = 1;
   }
+  event.modifiers = aModifiers;
   event.widget = aWidget;
 
   return DispatchWidgetEvent(event);
@@ -440,6 +470,7 @@ APZCCallbackHelper::DispatchMouseEvent(const nsCOMPtr<nsIDOMWindowUtils>& aUtils
 
 void
 APZCCallbackHelper::FireSingleTapEvent(const LayoutDevicePoint& aPoint,
+                                       Modifiers aModifiers,
                                        nsIWidget* aWidget)
 {
   if (aWidget->Destroyed()) {
@@ -448,9 +479,9 @@ APZCCallbackHelper::FireSingleTapEvent(const LayoutDevicePoint& aPoint,
   APZCCH_LOG("Dispatching single-tap component events to %s\n",
     Stringify(aPoint).c_str());
   int time = 0;
-  DispatchSynthesizedMouseEvent(NS_MOUSE_MOVE, time, aPoint, aWidget);
-  DispatchSynthesizedMouseEvent(NS_MOUSE_BUTTON_DOWN, time, aPoint, aWidget);
-  DispatchSynthesizedMouseEvent(NS_MOUSE_BUTTON_UP, time, aPoint, aWidget);
+  DispatchSynthesizedMouseEvent(NS_MOUSE_MOVE, time, aPoint, aModifiers, aWidget);
+  DispatchSynthesizedMouseEvent(NS_MOUSE_BUTTON_DOWN, time, aPoint, aModifiers, aWidget);
+  DispatchSynthesizedMouseEvent(NS_MOUSE_BUTTON_UP, time, aPoint, aModifiers, aWidget);
 }
 
 static nsIScrollableFrame*
@@ -619,6 +650,38 @@ APZCCallbackHelper::SendSetTargetAPZCNotification(nsIWidget* aWidget,
       }
     }
   }
+}
+
+void
+APZCCallbackHelper::SendSetAllowedTouchBehaviorNotification(
+        nsIWidget* aWidget,
+        const WidgetTouchEvent& aEvent,
+        uint64_t aInputBlockId,
+        const nsRefPtr<SetAllowedTouchBehaviorCallback>& aCallback)
+{
+  nsTArray<TouchBehaviorFlags> flags;
+  for (uint32_t i = 0; i < aEvent.touches.Length(); i++) {
+    flags.AppendElement(widget::ContentHelper::GetAllowedTouchBehavior(aWidget, aEvent.touches[i]->mRefPoint));
+  }
+  aCallback->Run(aInputBlockId, flags);
+}
+
+void
+APZCCallbackHelper::NotifyMozMouseScrollEvent(const FrameMetrics::ViewID& aScrollId, const nsString& aEvent)
+{
+  nsCOMPtr<nsIContent> targetContent = nsLayoutUtils::FindContentFor(aScrollId);
+  if (!targetContent) {
+    return;
+  }
+  nsCOMPtr<nsIDocument> ownerDoc = targetContent->OwnerDoc();
+  if (!ownerDoc) {
+    return;
+  }
+
+  nsContentUtils::DispatchTrustedEvent(
+    ownerDoc, targetContent,
+    aEvent,
+    true, true);
 }
 
 }

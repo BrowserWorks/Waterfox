@@ -80,6 +80,13 @@ ContainsHoistedDeclaration(ExclusiveContext* cx, ParseNode* node, bool* result)
         *result = false;
         return true;
 
+      // Similarly to the lexical declarations above, classes cannot add hoisted
+      // declarations
+      case PNK_CLASS:
+        MOZ_ASSERT(node->isArity(PN_TERNARY));
+        *result = false;
+        return true;
+
       // ContainsHoistedDeclaration is only called on nested nodes, so any
       // instance of this can't be function statements at body level.  In
       // SpiderMonkey, a binding induced by a function statement is added when
@@ -300,8 +307,11 @@ ContainsHoistedDeclaration(ExclusiveContext* cx, ParseNode* node, bool* result)
 
       case PNK_LETBLOCK: {
         MOZ_ASSERT(node->isArity(PN_BINARY));
-        MOZ_ASSERT(node->pn_left->isKind(PNK_LET));
         MOZ_ASSERT(node->pn_right->isKind(PNK_LEXICALSCOPE));
+        MOZ_ASSERT(node->pn_left->isKind(PNK_LET) ||
+                   (node->pn_left->isKind(PNK_CONST) && node->pn_right->pn_expr->isKind(PNK_FOR)),
+                   "a let-block's left half is its declarations: ordinarily a PNK_LET node but "
+                   "PNK_CONST in the weird case of |for (const x ...)|");
         return ContainsHoistedDeclaration(cx, node->pn_right, result);
       }
 
@@ -405,6 +415,10 @@ ContainsHoistedDeclaration(ExclusiveContext* cx, ParseNode* node, bool* result)
       case PNK_FORIN:
       case PNK_FOROF:
       case PNK_FORHEAD:
+      case PNK_FRESHENBLOCK:
+      case PNK_CLASSMETHOD:
+      case PNK_CLASSMETHODLIST:
+      case PNK_CLASSNAMES:
         MOZ_CRASH("ContainsHoistedDeclaration should have indicated false on "
                   "some parent node without recurring to test this node");
 

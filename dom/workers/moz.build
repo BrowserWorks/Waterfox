@@ -34,6 +34,7 @@ EXPORTS.mozilla.dom.workers.bindings += [
     'ServiceWorker.h',
     'ServiceWorkerClient.h',
     'ServiceWorkerClients.h',
+    'ServiceWorkerWindowClient.h',
     'SharedWorker.h',
     'URL.h',
     'WorkerFeature.h',
@@ -69,6 +70,7 @@ UNIFIED_SOURCES += [
     'ServiceWorkerManager.cpp',
     'ServiceWorkerRegistrar.cpp',
     'ServiceWorkerRegistration.cpp',
+    'ServiceWorkerWindowClient.cpp',
     'SharedWorker.cpp',
     'URL.cpp',
     'WorkerDebuggerManager.cpp',
@@ -106,7 +108,6 @@ TEST_DIRS += [
 ]
 
 MOCHITEST_MANIFESTS += [
-    'test/fetch/mochitest.ini',
     'test/mochitest.ini',
     'test/serviceworkers/mochitest.ini',
 ]
@@ -114,5 +115,7 @@ MOCHITEST_MANIFESTS += [
 MOCHITEST_CHROME_MANIFESTS += ['test/chrome.ini']
 
 XPCSHELL_TESTS_MANIFESTS += ['test/xpcshell/xpcshell.ini']
+
+BROWSER_CHROME_MANIFESTS += ['test/browser.ini']
 
 TEST_DIRS += ['test/gtest']

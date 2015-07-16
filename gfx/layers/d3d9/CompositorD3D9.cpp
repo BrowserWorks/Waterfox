@@ -27,6 +27,7 @@ CompositorD3D9::CompositorD3D9(PCompositorParent* aParent, nsIWidget *aWidget)
   : Compositor(aParent)
   , mWidget(aWidget)
   , mDeviceResetCount(0)
+  , mFailedResetAttempts(0)
 {
   Compositor::SetBackend(LayersBackend::LAYERS_D3D9);
 }
@@ -558,6 +559,7 @@ CompositorD3D9::EnsureSwapChain()
   // We have a swap chain, lets initialise it
   DeviceManagerState state = mSwapChain->PrepareForRendering();
   if (state == DeviceOK) {
+    mFailedResetAttempts = 0;
     return true;
   }
   // Swap chain could not be initialised, handle the failure
@@ -585,7 +587,6 @@ CompositorD3D9::Ready()
     if (EnsureSwapChain()) {
       // We don't need to call VerifyReadyForRendering because that is
       // called by mSwapChain->PrepareForRendering() via EnsureSwapChain().
-
       CheckResetCount();
       return true;
     }
@@ -598,6 +599,7 @@ CompositorD3D9::Ready()
 
   mDeviceManager = gfxWindowsPlatform::GetPlatform()->GetD3D9DeviceManager();
   if (!mDeviceManager) {
+    FailedToResetDevice();
     mParent->SendInvalidateAll();
     return false;
   }
@@ -606,6 +608,16 @@ CompositorD3D9::Ready()
     return true;
   }
   return false;
+}
+
+void
+CompositorD3D9::FailedToResetDevice() {
+  mFailedResetAttempts += 1;
+  // 10 is a totally arbitrary number that we may want to increase or decrease
+  // depending on how things behave in the wild.
+  if (mFailedResetAttempts > 10) {
+    MOZ_CRASH("Unable to get a working D3D9 Compositor");
+  }
 }
 
 void
@@ -740,7 +752,11 @@ CompositorD3D9::PaintToTarget()
   device()->GetRenderTargetData(backBuff, destSurf);
 
   D3DLOCKED_RECT rect;
-  destSurf->LockRect(&rect, nullptr, D3DLOCK_READONLY);
+  HRESULT hr = destSurf->LockRect(&rect, nullptr, D3DLOCK_READONLY);
+  if (FAILED(hr) || !rect.pBits) {
+    gfxCriticalError() << "Failed to lock rect in paint to target D3D9 " << hexa(hr);
+    return;
+  }
   RefPtr<DataSourceSurface> sourceSurface =
     Factory::CreateWrappingDataSourceSurface((uint8_t*)rect.pBits,
                                              rect.Pitch,

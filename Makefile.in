@@ -40,7 +40,9 @@ ifndef MOZ_PROFILE_USE
 $(TIERS) binaries:: CLOBBER $(configure_dir)/configure config.status backend.RecursiveMakeBackend
 ifndef JS_STANDALONE
 ifndef LIBXUL_SDK
+ifdef COMPILE_ENVIRONMENT
 $(TIERS) binaries:: $(topsrcdir)/js/src/configure js/src/config.status
+endif
 endif
 endif
 endif
@@ -105,10 +107,12 @@ install_manifest_depends = \
 
 ifndef JS_STANDALONE
 ifndef LIBXUL_SDK
+ifdef COMPILE_ENVIRONMENT
 install_manifest_depends += \
   $(topsrcdir)/js/src/configure \
   js/src/config.status \
   $(NULL)
+endif
 endif
 endif
 
@@ -249,7 +253,11 @@ endif # MOZ_CRASHREPORTER
 
 uploadsymbols:
 ifdef MOZ_CRASHREPORTER
+ifdef SOCORRO_SYMBOL_UPLOAD_TOKEN_FILE
+	$(PYTHON) -u $(topsrcdir)/toolkit/crashreporter/tools/upload_symbols.py '$(DIST)/$(PKG_PATH)$(SYMBOL_FULL_ARCHIVE_BASENAME).zip'
+else
 	$(SHELL) $(topsrcdir)/toolkit/crashreporter/tools/upload_symbols.sh $(SYMBOL_INDEX_NAME) '$(DIST)/$(PKG_PATH)$(SYMBOL_FULL_ARCHIVE_BASENAME).zip'
+endif
 endif
 
 # MOZ_SOURCE_STAMP is defined in package-name.mk with a deferred assignment.

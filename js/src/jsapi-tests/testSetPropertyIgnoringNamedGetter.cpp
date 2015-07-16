@@ -27,14 +27,13 @@ class CustomProxyHandler : public DirectProxyHandler {
         return impl(cx, proxy, id, desc, true);
     }
 
-    bool set(JSContext* cx, HandleObject proxy, HandleObject receiver,
-             HandleId id, bool strict, MutableHandleValue vp) const override
+    bool set(JSContext* cx, HandleObject proxy, HandleId id, HandleValue v, HandleValue receiver,
+             ObjectOpResult& result) const override
     {
         Rooted<JSPropertyDescriptor> desc(cx);
         if (!DirectProxyHandler::getPropertyDescriptor(cx, proxy, id, &desc))
             return false;
-        return SetPropertyIgnoringNamedGetter(cx, this, proxy, receiver, id, &desc,
-                                              desc.object() == proxy, strict, vp);
+        return SetPropertyIgnoringNamedGetter(cx, proxy, id, v, receiver, desc, result);
     }
 
   private:
@@ -72,7 +71,7 @@ BEGIN_TEST(testSetPropertyIgnoringNamedGetter_direct)
     EVAL("({})", &targetv);
 
     RootedObject proxyObj(cx, NewProxyObject(cx, &customProxyHandler, targetv,
-                                             &protov.toObject(), global, ProxyOptions()));
+                                             &protov.toObject(), ProxyOptions()));
     CHECK(proxyObj);
 
     CHECK(JS_DefineProperty(cx, global, "target", targetv, 0));

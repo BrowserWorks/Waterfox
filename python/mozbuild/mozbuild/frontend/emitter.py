@@ -74,7 +74,10 @@ from .data import (
 
 from .reader import SandboxValidationError
 
-from .context import Context
+from .context import (
+    Context,
+    SubContext,
+)
 
 
 class TreeMetadataEmitter(LoggingMixin):
@@ -135,6 +138,11 @@ class TreeMetadataEmitter(LoggingMixin):
                     raise Exception('Unhandled object of type %s' % type(o))
 
         for out in output:
+            # Nothing in sub-contexts is currently of interest to us. Filter
+            # them all out.
+            if isinstance(out, SubContext):
+                continue
+
             if isinstance(out, Context):
                 # Keep all contexts around, we will need them later.
                 contexts[out.objdir] = out
@@ -153,11 +161,14 @@ class TreeMetadataEmitter(LoggingMixin):
             else:
                 raise Exception('Unhandled output type: %s' % type(out))
 
-        start = time.time()
-        objs = list(self._emit_libs_derived(contexts))
-        emitter_time += time.time() - start
+        # Don't emit Linkable objects when COMPILE_ENVIRONMENT is explicitely
+        # set to a value meaning false (usually '').
+        if self.config.substs.get('COMPILE_ENVIRONMENT', True):
+            start = time.time()
+            objs = list(self._emit_libs_derived(contexts))
+            emitter_time += time.time() - start
 
-        for o in emit_objs(objs): yield o
+            for o in emit_objs(objs): yield o
 
         yield ReaderSummary(file_count, sandbox_execution_time, emitter_time)
 
@@ -342,323 +353,7 @@ class TreeMetadataEmitter(LoggingMixin):
         else:
             return ExternalSharedLibrary(context, name)
 
-    def emit_from_context(self, context):
-        """Convert a Context to tree metadata objects.
-
-        This is a generator of mozbuild.frontend.data.ContextDerived instances.
-        """
-
-        # We only want to emit an InstallationTarget if one of the consulted
-        # variables is defined. Later on, we look up FINAL_TARGET, which has
-        # the side-effect of populating it. So, we need to do this lookup
-        # early.
-        if any(k in context for k in ('FINAL_TARGET', 'XPI_NAME', 'DIST_SUBDIR')):
-            yield InstallationTarget(context)
-
-        # We always emit a directory traversal descriptor. This is needed by
-        # the recursive make backend.
-        for o in self._emit_directory_traversal_from_context(context): yield o
-
-        for path in context['CONFIGURE_SUBST_FILES']:
-            yield self._create_substitution(ConfigFileSubstitution, context,
-                path)
-
-        for path in context['CONFIGURE_DEFINE_FILES']:
-            yield self._create_substitution(HeaderFileSubstitution, context,
-                path)
-
-        # XPIDL source files get processed and turned into .h and .xpt files.
-        # If there are multiple XPIDL files in a directory, they get linked
-        # together into a final .xpt, which has the name defined by
-        # XPIDL_MODULE.
-        xpidl_module = context['XPIDL_MODULE']
-
-        if context['XPIDL_SOURCES'] and not xpidl_module:
-            raise SandboxValidationError('XPIDL_MODULE must be defined if '
-                'XPIDL_SOURCES is defined.', context)
-
-        if xpidl_module and not context['XPIDL_SOURCES']:
-            raise SandboxValidationError('XPIDL_MODULE cannot be defined '
-                'unless there are XPIDL_SOURCES', context)
-
-        if context['XPIDL_SOURCES'] and context['NO_DIST_INSTALL']:
-            self.log(logging.WARN, 'mozbuild_warning', dict(
-                path=context.main_path),
-                '{path}: NO_DIST_INSTALL has no effect on XPIDL_SOURCES.')
-
-        for idl in context['XPIDL_SOURCES']:
-            yield XPIDLFile(context, mozpath.join(context.srcdir, idl),
-                xpidl_module)
-
-        for symbol in ('SOURCES', 'HOST_SOURCES', 'UNIFIED_SOURCES'):
-            for src in (context[symbol] or []):
-                if not os.path.exists(mozpath.join(context.srcdir, src)):
-                    raise SandboxValidationError('File listed in %s does not '
-                        'exist: \'%s\'' % (symbol, src), context)
-
-        # Proxy some variables as-is until we have richer classes to represent
-        # them. We should aim to keep this set small because it violates the
-        # desired abstraction of the build definition away from makefiles.
-        passthru = VariablePassthru(context)
-        varlist = [
-            'ANDROID_GENERATED_RESFILES',
-            'ANDROID_RES_DIRS',
-            'DISABLE_STL_WRAPPING',
-            'EXTRA_ASSEMBLER_FLAGS',
-            'EXTRA_COMPILE_FLAGS',
-            'EXTRA_COMPONENTS',
-            'EXTRA_DSO_LDOPTS',
-            'EXTRA_PP_COMPONENTS',
-            'FAIL_ON_WARNINGS',
-            'USE_STATIC_LIBS',
-            'IS_GYP_DIR',
-            'MSVC_ENABLE_PGO',
-            'NO_DIST_INSTALL',
-            'PYTHON_UNIT_TESTS',
-            'RCFILE',
-            'RESFILE',
-            'RCINCLUDE',
-            'DEFFILE',
-            'WIN32_EXE_LDFLAGS',
-            'LD_VERSION_SCRIPT',
-        ]
-        for v in varlist:
-            if v in context and context[v]:
-                passthru.variables[v] = context[v]
-
-        if context.config.substs.get('OS_TARGET') == 'WINNT' and \
-                context['DELAYLOAD_DLLS']:
-            context['LDFLAGS'].extend([('-DELAYLOAD:%s' % dll)
-                for dll in context['DELAYLOAD_DLLS']])
-            context['OS_LIBS'].append('delayimp')
-
-        for v in ['CFLAGS', 'CXXFLAGS', 'CMFLAGS', 'CMMFLAGS', 'LDFLAGS']:
-            if v in context and context[v]:
-                passthru.variables['MOZBUILD_' + v] = context[v]
-
-        # NO_VISIBILITY_FLAGS is slightly different
-        if context['NO_VISIBILITY_FLAGS']:
-            passthru.variables['VISIBILITY_FLAGS'] = ''
-
-        no_pgo = context.get('NO_PGO')
-        sources = context.get('SOURCES', [])
-        no_pgo_sources = [f for f in sources if sources[f].no_pgo]
-        if no_pgo:
-            if no_pgo_sources:
-                raise SandboxValidationError('NO_PGO and SOURCES[...].no_pgo '
-                    'cannot be set at the same time', context)
-            passthru.variables['NO_PROFILE_GUIDED_OPTIMIZE'] = no_pgo
-        if no_pgo_sources:
-            passthru.variables['NO_PROFILE_GUIDED_OPTIMIZE'] = no_pgo_sources
-
-        # A map from "canonical suffixes" for a particular source file
-        # language to the range of suffixes associated with that language.
-        #
-        # We deliberately don't list the canonical suffix in the suffix list
-        # in the definition; we'll add it in programmatically after defining
-        # things.
-        suffix_map = {
-            '.s': set(['.asm']),
-            '.c': set(),
-            '.m': set(),
-            '.mm': set(),
-            '.cpp': set(['.cc', '.cxx']),
-            '.S': set(),
-        }
-
-        # The inverse of the above, mapping suffixes to their canonical suffix.
-        canonicalized_suffix_map = {}
-        for suffix, alternatives in suffix_map.iteritems():
-            alternatives.add(suffix)
-            for a in alternatives:
-                canonicalized_suffix_map[a] = suffix
-
-        def canonical_suffix_for_file(f):
-            return canonicalized_suffix_map[mozpath.splitext(f)[1]]
-
-        # A map from moz.build variables to the canonical suffixes of file
-        # kinds that can be listed therein.
-        all_suffixes = list(suffix_map.keys())
-        varmap = dict(
-            SOURCES=(Sources, all_suffixes),
-            HOST_SOURCES=(HostSources, ['.c', '.mm', '.cpp']),
-            UNIFIED_SOURCES=(UnifiedSources, ['.c', '.mm', '.cpp']),
-            GENERATED_SOURCES=(GeneratedSources, all_suffixes),
-        )
-
-        for variable, (klass, suffixes) in varmap.items():
-            allowed_suffixes = set().union(*[suffix_map[s] for s in suffixes])
-
-            # First ensure that we haven't been given filetypes that we don't
-            # recognize.
-            for f in context[variable]:
-                ext = mozpath.splitext(f)[1]
-                if ext not in allowed_suffixes:
-                    raise SandboxValidationError(
-                        '%s has an unknown file type.' % f, context)
-                if variable.startswith('GENERATED_'):
-                    l = passthru.variables.setdefault('GARBAGE', [])
-                    l.append(f)
-
-            # Now sort the files to let groupby work.
-            sorted_files = sorted(context[variable], key=canonical_suffix_for_file)
-            for canonical_suffix, files in itertools.groupby(sorted_files, canonical_suffix_for_file):
-                arglist = [context, list(files), canonical_suffix]
-                if variable.startswith('UNIFIED_') and 'FILES_PER_UNIFIED_FILE' in context:
-                    arglist.append(context['FILES_PER_UNIFIED_FILE'])
-                yield klass(*arglist)
-
-        sources_with_flags = [f for f in sources if sources[f].flags]
-        for f in sources_with_flags:
-            ext = mozpath.splitext(f)[1]
-            yield PerSourceFlag(context, f, sources[f].flags)
-
-        exports = context.get('EXPORTS')
-        if exports:
-            yield Exports(context, exports,
-                dist_install=not context.get('NO_DIST_INSTALL', False))
-
-        generated_files = context.get('GENERATED_FILES')
-        if generated_files:
-            for f in generated_files:
-                flags = generated_files[f]
-                output = f
-                if flags.script:
-                    script = mozpath.join(context.srcdir, flags.script)
-                    inputs = [mozpath.join(context.srcdir, i) for i in flags.inputs]
-
-                    if not os.path.exists(script):
-                        raise SandboxValidationError(
-                            'Script for generating %s does not exist: %s'
-                            % (f, script), context)
-                    if os.path.splitext(script)[1] != '.py':
-                        raise SandboxValidationError(
-                            'Script for generating %s does not end in .py: %s'
-                            % (f, script), context)
-                    for i in inputs:
-                        if not os.path.exists(i):
-                            raise SandboxValidationError(
-                                'Input for generating %s does not exist: %s'
-                                % (f, i), context)
-                else:
-                    script = None
-                    inputs = []
-                yield GeneratedFile(context, script, output, inputs)
-
-        test_harness_files = context.get('TEST_HARNESS_FILES')
-        if test_harness_files:
-            srcdir_files = defaultdict(list)
-            srcdir_pattern_files = defaultdict(list)
-            objdir_files = defaultdict(list)
-
-            for path, strings in test_harness_files.walk():
-                if not path and strings:
-                    raise SandboxValidationError(
-                        'Cannot install files to the root of TEST_HARNESS_FILES', context)
-
-                for s in strings:
-                    if context.is_objdir_path(s):
-                        if s.startswith('!/'):
-                            objdir_files[path].append('$(DEPTH)/%s' % s[2:])
-                        else:
-                            objdir_files[path].append(s[1:])
-                    else:
-                        resolved = context.resolve_path(s)
-                        if '*' in s:
-                            srcdir_pattern_files[path].append(s);
-                        elif not os.path.exists(resolved):
-                            raise SandboxValidationError(
-                                'File listed in TEST_HARNESS_FILES does not exist: %s' % s, context)
-                        else:
-                            srcdir_files[path].append(resolved)
-
-            yield TestHarnessFiles(context, srcdir_files,
-                                   srcdir_pattern_files, objdir_files)
-
-        defines = context.get('DEFINES')
-        if defines:
-            yield Defines(context, defines)
-
-        resources = context.get('RESOURCE_FILES')
-        if resources:
-            yield Resources(context, resources, defines)
-
-        for pref in sorted(context['JS_PREFERENCE_FILES']):
-            yield JsPreferenceFile(context, pref)
-
-        for kind, cls in [('PROGRAM', Program), ('HOST_PROGRAM', HostProgram)]:
-            program = context.get(kind)
-            if program:
-                if program in self._binaries:
-                    raise SandboxValidationError(
-                        'Cannot use "%s" as %s name, '
-                        'because it is already used in %s' % (program, kind,
-                        self._binaries[program].relativedir), context)
-                self._binaries[program] = cls(context, program)
-                self._linkage.append((context, self._binaries[program],
-                    kind.replace('PROGRAM', 'USE_LIBS')))
-
-        for kind, cls in [
-                ('SIMPLE_PROGRAMS', SimpleProgram),
-                ('CPP_UNIT_TESTS', SimpleProgram),
-                ('HOST_SIMPLE_PROGRAMS', HostSimpleProgram)]:
-            for program in context[kind]:
-                if program in self._binaries:
-                    raise SandboxValidationError(
-                        'Cannot use "%s" in %s, '
-                        'because it is already used in %s' % (program, kind,
-                        self._binaries[program].relativedir), context)
-                self._binaries[program] = cls(context, program,
-                    is_unit_test=kind == 'CPP_UNIT_TESTS')
-                self._linkage.append((context, self._binaries[program],
-                    'HOST_USE_LIBS' if kind == 'HOST_SIMPLE_PROGRAMS'
-                    else 'USE_LIBS'))
-
-        extra_js_modules = context.get('EXTRA_JS_MODULES')
-        if extra_js_modules:
-            yield JavaScriptModules(context, extra_js_modules, 'extra')
-
-        extra_pp_js_modules = context.get('EXTRA_PP_JS_MODULES')
-        if extra_pp_js_modules:
-            yield JavaScriptModules(context, extra_pp_js_modules, 'extra_pp')
-
-        test_js_modules = context.get('TESTING_JS_MODULES')
-        if test_js_modules:
-            yield JavaScriptModules(context, test_js_modules, 'testing')
-
-        simple_lists = [
-            ('GENERATED_EVENTS_WEBIDL_FILES', GeneratedEventWebIDLFile),
-            ('GENERATED_WEBIDL_FILES', GeneratedWebIDLFile),
-            ('IPDL_SOURCES', IPDLFile),
-            ('GENERATED_INCLUDES', GeneratedInclude),
-            ('PREPROCESSED_TEST_WEBIDL_FILES', PreprocessedTestWebIDLFile),
-            ('PREPROCESSED_WEBIDL_FILES', PreprocessedWebIDLFile),
-            ('TEST_WEBIDL_FILES', TestWebIDLFile),
-            ('WEBIDL_FILES', WebIDLFile),
-            ('WEBIDL_EXAMPLE_INTERFACES', ExampleWebIDLInterface),
-        ]
-        for context_var, klass in simple_lists:
-            for name in context.get(context_var, []):
-                yield klass(context, name)
-
-        for local_include in context.get('LOCAL_INCLUDES', []):
-            if local_include.startswith('/'):
-                path = context.config.topsrcdir
-                relative_include = local_include[1:]
-            else:
-                path = context.srcdir
-                relative_include = local_include
-
-            actual_include = os.path.join(path, relative_include)
-            if not os.path.exists(actual_include):
-                raise SandboxValidationError('Path specified in LOCAL_INCLUDES '
-                    'does not exist: %s (resolved to %s)' % (local_include, actual_include), context)
-            yield LocalInclude(context, local_include)
-
-        final_target_files = context.get('FINAL_TARGET_FILES')
-        if final_target_files:
-            yield FinalTargetFiles(context, final_target_files, context['FINAL_TARGET'])
-
+    def _handle_libraries(self, context):
         host_libname = context.get('HOST_LIBRARY_NAME')
         libname = context.get('LIBRARY_NAME')
 
@@ -802,6 +497,389 @@ class TreeMetadataEmitter(LoggingMixin):
                         'LIBRARY_NAME to take effect', context)
                 lib.defines.update(lib_defines)
 
+    def emit_from_context(self, context):
+        """Convert a Context to tree metadata objects.
+
+        This is a generator of mozbuild.frontend.data.ContextDerived instances.
+        """
+
+        # We only want to emit an InstallationTarget if one of the consulted
+        # variables is defined. Later on, we look up FINAL_TARGET, which has
+        # the side-effect of populating it. So, we need to do this lookup
+        # early.
+        if any(k in context for k in ('FINAL_TARGET', 'XPI_NAME', 'DIST_SUBDIR')):
+            yield InstallationTarget(context)
+
+        # We always emit a directory traversal descriptor. This is needed by
+        # the recursive make backend.
+        for o in self._emit_directory_traversal_from_context(context): yield o
+
+        for path in context['CONFIGURE_SUBST_FILES']:
+            yield self._create_substitution(ConfigFileSubstitution, context,
+                path)
+
+        for path in context['CONFIGURE_DEFINE_FILES']:
+            yield self._create_substitution(HeaderFileSubstitution, context,
+                path)
+
+        for obj in self._process_xpidl(context):
+            yield obj
+
+        # Proxy some variables as-is until we have richer classes to represent
+        # them. We should aim to keep this set small because it violates the
+        # desired abstraction of the build definition away from makefiles.
+        passthru = VariablePassthru(context)
+        varlist = [
+            'ANDROID_GENERATED_RESFILES',
+            'ANDROID_RES_DIRS',
+            'DISABLE_STL_WRAPPING',
+            'EXTRA_ASSEMBLER_FLAGS',
+            'EXTRA_COMPILE_FLAGS',
+            'EXTRA_COMPONENTS',
+            'EXTRA_DSO_LDOPTS',
+            'EXTRA_PP_COMPONENTS',
+            'FAIL_ON_WARNINGS',
+            'USE_STATIC_LIBS',
+            'IS_GYP_DIR',
+            'MSVC_ENABLE_PGO',
+            'NO_DIST_INSTALL',
+            'PYTHON_UNIT_TESTS',
+            'RCFILE',
+            'RESFILE',
+            'RCINCLUDE',
+            'DEFFILE',
+            'WIN32_EXE_LDFLAGS',
+            'LD_VERSION_SCRIPT',
+        ]
+        for v in varlist:
+            if v in context and context[v]:
+                passthru.variables[v] = context[v]
+
+        if context.config.substs.get('OS_TARGET') == 'WINNT' and \
+                context['DELAYLOAD_DLLS']:
+            context['LDFLAGS'].extend([('-DELAYLOAD:%s' % dll)
+                for dll in context['DELAYLOAD_DLLS']])
+            context['OS_LIBS'].append('delayimp')
+
+        for v in ['CFLAGS', 'CXXFLAGS', 'CMFLAGS', 'CMMFLAGS', 'LDFLAGS']:
+            if v in context and context[v]:
+                passthru.variables['MOZBUILD_' + v] = context[v]
+
+        # NO_VISIBILITY_FLAGS is slightly different
+        if context['NO_VISIBILITY_FLAGS']:
+            passthru.variables['VISIBILITY_FLAGS'] = ''
+
+        for obj in self._process_sources(context, passthru):
+            yield obj
+
+        exports = context.get('EXPORTS')
+        if exports:
+            yield Exports(context, exports,
+                dist_install=not context.get('NO_DIST_INSTALL', False))
+
+        for obj in self._process_generated_files(context):
+            yield obj
+
+        for obj in self._process_test_harness_files(context):
+            yield obj
+
+        defines = context.get('DEFINES')
+        if defines:
+            yield Defines(context, defines)
+
+        resources = context.get('RESOURCE_FILES')
+        if resources:
+            yield Resources(context, resources, defines)
+
+        for pref in sorted(context['JS_PREFERENCE_FILES']):
+            yield JsPreferenceFile(context, pref)
+
+        self._handle_programs(context)
+
+        extra_js_modules = context.get('EXTRA_JS_MODULES')
+        if extra_js_modules:
+            yield JavaScriptModules(context, extra_js_modules, 'extra')
+
+        extra_pp_js_modules = context.get('EXTRA_PP_JS_MODULES')
+        if extra_pp_js_modules:
+            yield JavaScriptModules(context, extra_pp_js_modules, 'extra_pp')
+
+        test_js_modules = context.get('TESTING_JS_MODULES')
+        if test_js_modules:
+            yield JavaScriptModules(context, test_js_modules, 'testing')
+
+        simple_lists = [
+            ('GENERATED_EVENTS_WEBIDL_FILES', GeneratedEventWebIDLFile),
+            ('GENERATED_WEBIDL_FILES', GeneratedWebIDLFile),
+            ('IPDL_SOURCES', IPDLFile),
+            ('GENERATED_INCLUDES', GeneratedInclude),
+            ('PREPROCESSED_TEST_WEBIDL_FILES', PreprocessedTestWebIDLFile),
+            ('PREPROCESSED_WEBIDL_FILES', PreprocessedWebIDLFile),
+            ('TEST_WEBIDL_FILES', TestWebIDLFile),
+            ('WEBIDL_FILES', WebIDLFile),
+            ('WEBIDL_EXAMPLE_INTERFACES', ExampleWebIDLInterface),
+        ]
+        for context_var, klass in simple_lists:
+            for name in context.get(context_var, []):
+                yield klass(context, name)
+
+        for local_include in context.get('LOCAL_INCLUDES', []):
+            if local_include.startswith('/'):
+                path = context.config.topsrcdir
+                relative_include = local_include[1:]
+            else:
+                path = context.srcdir
+                relative_include = local_include
+
+            actual_include = os.path.join(path, relative_include)
+            if not os.path.exists(actual_include):
+                raise SandboxValidationError('Path specified in LOCAL_INCLUDES '
+                    'does not exist: %s (resolved to %s)' % (local_include, actual_include), context)
+            yield LocalInclude(context, local_include)
+
+        final_target_files = context.get('FINAL_TARGET_FILES')
+        if final_target_files:
+            yield FinalTargetFiles(context, final_target_files, context['FINAL_TARGET'])
+
+        self._handle_libraries(context)
+
+        for obj in self._process_test_manifests(context):
+            yield obj
+
+        for obj in self._process_jar_manifests(context):
+            yield obj
+
+        for name, jar in context.get('JAVA_JAR_TARGETS', {}).items():
+            yield ContextWrapped(context, jar)
+
+        for name, data in context.get('ANDROID_ECLIPSE_PROJECT_TARGETS', {}).items():
+            yield ContextWrapped(context, data)
+
+        if passthru.variables:
+            yield passthru
+
+    def _create_substitution(self, cls, context, path):
+        if os.path.isabs(path):
+            path = path[1:]
+
+        sub = cls(context)
+        sub.input_path = mozpath.join(context.srcdir, '%s.in' % path)
+        sub.output_path = mozpath.join(context.objdir, path)
+        sub.relpath = path
+
+        return sub
+
+    def _process_sources(self, context, passthru):
+        for symbol in ('SOURCES', 'HOST_SOURCES', 'UNIFIED_SOURCES'):
+            for src in (context[symbol] or []):
+                if not os.path.exists(mozpath.join(context.srcdir, src)):
+                    raise SandboxValidationError('File listed in %s does not '
+                        'exist: \'%s\'' % (symbol, src), context)
+
+        no_pgo = context.get('NO_PGO')
+        sources = context.get('SOURCES', [])
+        no_pgo_sources = [f for f in sources if sources[f].no_pgo]
+        if no_pgo:
+            if no_pgo_sources:
+                raise SandboxValidationError('NO_PGO and SOURCES[...].no_pgo '
+                    'cannot be set at the same time', context)
+            passthru.variables['NO_PROFILE_GUIDED_OPTIMIZE'] = no_pgo
+        if no_pgo_sources:
+            passthru.variables['NO_PROFILE_GUIDED_OPTIMIZE'] = no_pgo_sources
+
+        # A map from "canonical suffixes" for a particular source file
+        # language to the range of suffixes associated with that language.
+        #
+        # We deliberately don't list the canonical suffix in the suffix list
+        # in the definition; we'll add it in programmatically after defining
+        # things.
+        suffix_map = {
+            '.s': set(['.asm']),
+            '.c': set(),
+            '.m': set(),
+            '.mm': set(),
+            '.cpp': set(['.cc', '.cxx']),
+            '.S': set(),
+        }
+
+        # The inverse of the above, mapping suffixes to their canonical suffix.
+        canonicalized_suffix_map = {}
+        for suffix, alternatives in suffix_map.iteritems():
+            alternatives.add(suffix)
+            for a in alternatives:
+                canonicalized_suffix_map[a] = suffix
+
+        def canonical_suffix_for_file(f):
+            return canonicalized_suffix_map[mozpath.splitext(f)[1]]
+
+        # A map from moz.build variables to the canonical suffixes of file
+        # kinds that can be listed therein.
+        all_suffixes = list(suffix_map.keys())
+        varmap = dict(
+            SOURCES=(Sources, all_suffixes),
+            HOST_SOURCES=(HostSources, ['.c', '.mm', '.cpp']),
+            UNIFIED_SOURCES=(UnifiedSources, ['.c', '.mm', '.cpp']),
+            GENERATED_SOURCES=(GeneratedSources, all_suffixes),
+        )
+
+        for variable, (klass, suffixes) in varmap.items():
+            allowed_suffixes = set().union(*[suffix_map[s] for s in suffixes])
+
+            # First ensure that we haven't been given filetypes that we don't
+            # recognize.
+            for f in context[variable]:
+                ext = mozpath.splitext(f)[1]
+                if ext not in allowed_suffixes:
+                    raise SandboxValidationError(
+                        '%s has an unknown file type.' % f, context)
+                if variable.startswith('GENERATED_'):
+                    l = passthru.variables.setdefault('GARBAGE', [])
+                    l.append(f)
+
+            # Now sort the files to let groupby work.
+            sorted_files = sorted(context[variable], key=canonical_suffix_for_file)
+            for canonical_suffix, files in itertools.groupby(sorted_files, canonical_suffix_for_file):
+                arglist = [context, list(files), canonical_suffix]
+                if variable.startswith('UNIFIED_') and 'FILES_PER_UNIFIED_FILE' in context:
+                    arglist.append(context['FILES_PER_UNIFIED_FILE'])
+                yield klass(*arglist)
+
+        sources_with_flags = [f for f in sources if sources[f].flags]
+        for f in sources_with_flags:
+            ext = mozpath.splitext(f)[1]
+            yield PerSourceFlag(context, f, sources[f].flags)
+
+    def _process_xpidl(self, context):
+        # XPIDL source files get processed and turned into .h and .xpt files.
+        # If there are multiple XPIDL files in a directory, they get linked
+        # together into a final .xpt, which has the name defined by
+        # XPIDL_MODULE.
+        xpidl_module = context['XPIDL_MODULE']
+
+        if context['XPIDL_SOURCES'] and not xpidl_module:
+            raise SandboxValidationError('XPIDL_MODULE must be defined if '
+                'XPIDL_SOURCES is defined.', context)
+
+        if xpidl_module and not context['XPIDL_SOURCES']:
+            raise SandboxValidationError('XPIDL_MODULE cannot be defined '
+                'unless there are XPIDL_SOURCES', context)
+
+        if context['XPIDL_SOURCES'] and context['NO_DIST_INSTALL']:
+            self.log(logging.WARN, 'mozbuild_warning', dict(
+                path=context.main_path),
+                '{path}: NO_DIST_INSTALL has no effect on XPIDL_SOURCES.')
+
+        for idl in context['XPIDL_SOURCES']:
+            yield XPIDLFile(context, mozpath.join(context.srcdir, idl),
+                xpidl_module)
+
+    def _process_generated_files(self, context):
+        generated_files = context.get('GENERATED_FILES')
+        if not generated_files:
+            return
+
+        for f in generated_files:
+            flags = generated_files[f]
+            output = f
+            if flags.script:
+                method = "main"
+                # Deal with cases like "C:\\path\\to\\script.py:function".
+                if not flags.script.endswith('.py') and ':' in flags.script:
+                    script, method = flags.script.rsplit(':', 1)
+                else:
+                    script = flags.script
+                script = mozpath.join(context.srcdir, script)
+                inputs = [mozpath.join(context.srcdir, i) for i in flags.inputs]
+
+                if not os.path.exists(script):
+                    raise SandboxValidationError(
+                        'Script for generating %s does not exist: %s'
+                        % (f, script), context)
+                if os.path.splitext(script)[1] != '.py':
+                    raise SandboxValidationError(
+                        'Script for generating %s does not end in .py: %s'
+                        % (f, script), context)
+                for i in inputs:
+                    if not os.path.exists(i):
+                        raise SandboxValidationError(
+                            'Input for generating %s does not exist: %s'
+                            % (f, i), context)
+            else:
+                script = None
+                method = None
+                inputs = []
+            yield GeneratedFile(context, script, method, output, inputs)
+
+    def _process_test_harness_files(self, context):
+        test_harness_files = context.get('TEST_HARNESS_FILES')
+        if not test_harness_files:
+            return
+
+        srcdir_files = defaultdict(list)
+        srcdir_pattern_files = defaultdict(list)
+        objdir_files = defaultdict(list)
+
+        for path, strings in test_harness_files.walk():
+            if not path and strings:
+                raise SandboxValidationError(
+                    'Cannot install files to the root of TEST_HARNESS_FILES', context)
+
+            for s in strings:
+                if context.is_objdir_path(s):
+                    if s.startswith('!/'):
+                        objdir_files[path].append('$(DEPTH)/%s' % s[2:])
+                    else:
+                        objdir_files[path].append(s[1:])
+                else:
+                    resolved = context.resolve_path(s)
+                    if '*' in s:
+                        if s[0] == '/':
+                            pattern_start = resolved.index('*')
+                            base_path = mozpath.dirname(resolved[:pattern_start])
+                            pattern = resolved[len(base_path)+1:]
+                        else:
+                            base_path = context.srcdir
+                            pattern = s
+                        srcdir_pattern_files[path].append((base_path, pattern));
+                    elif not os.path.exists(resolved):
+                        raise SandboxValidationError(
+                            'File listed in TEST_HARNESS_FILES does not exist: %s' % s, context)
+                    else:
+                        srcdir_files[path].append(resolved)
+
+        yield TestHarnessFiles(context, srcdir_files,
+                               srcdir_pattern_files, objdir_files)
+
+    def _handle_programs(self, context):
+        for kind, cls in [('PROGRAM', Program), ('HOST_PROGRAM', HostProgram)]:
+            program = context.get(kind)
+            if program:
+                if program in self._binaries:
+                    raise SandboxValidationError(
+                        'Cannot use "%s" as %s name, '
+                        'because it is already used in %s' % (program, kind,
+                        self._binaries[program].relativedir), context)
+                self._binaries[program] = cls(context, program)
+                self._linkage.append((context, self._binaries[program],
+                    kind.replace('PROGRAM', 'USE_LIBS')))
+
+        for kind, cls in [
+                ('SIMPLE_PROGRAMS', SimpleProgram),
+                ('CPP_UNIT_TESTS', SimpleProgram),
+                ('HOST_SIMPLE_PROGRAMS', HostSimpleProgram)]:
+            for program in context[kind]:
+                if program in self._binaries:
+                    raise SandboxValidationError(
+                        'Cannot use "%s" in %s, '
+                        'because it is already used in %s' % (program, kind,
+                        self._binaries[program].relativedir), context)
+                self._binaries[program] = cls(context, program,
+                    is_unit_test=kind == 'CPP_UNIT_TESTS')
+                self._linkage.append((context, self._binaries[program],
+                    'HOST_USE_LIBS' if kind == 'HOST_SIMPLE_PROGRAMS'
+                    else 'USE_LIBS'))
+
+    def _process_test_manifests(self, context):
         # While there are multiple test manifests, the behavior is very similar
         # across them. We enforce this by having common handling of all
         # manifests and outputting a single class type with the differences
@@ -844,44 +922,6 @@ class TreeMetadataEmitter(LoggingMixin):
                 for obj in self._process_reftest_manifest(context, flavor, path):
                     yield obj
 
-        jar_manifests = context.get('JAR_MANIFESTS', [])
-        if len(jar_manifests) > 1:
-            raise SandboxValidationError('While JAR_MANIFESTS is a list, '
-                'it is currently limited to one value.', context)
-
-        for path in jar_manifests:
-            yield JARManifest(context, mozpath.join(context.srcdir, path))
-
-        # Temporary test to look for jar.mn files that creep in without using
-        # the new declaration. Before, we didn't require jar.mn files to
-        # declared anywhere (they were discovered). This will detect people
-        # relying on the old behavior.
-        if os.path.exists(os.path.join(context.srcdir, 'jar.mn')):
-            if 'jar.mn' not in jar_manifests:
-                raise SandboxValidationError('A jar.mn exists but it '
-                    'is not referenced in the moz.build file. '
-                    'Please define JAR_MANIFESTS.', context)
-
-        for name, jar in context.get('JAVA_JAR_TARGETS', {}).items():
-            yield ContextWrapped(context, jar)
-
-        for name, data in context.get('ANDROID_ECLIPSE_PROJECT_TARGETS', {}).items():
-            yield ContextWrapped(context, data)
-
-        if passthru.variables:
-            yield passthru
-
-    def _create_substitution(self, cls, context, path):
-        if os.path.isabs(path):
-            path = path[1:]
-
-        sub = cls(context)
-        sub.input_path = mozpath.join(context.srcdir, '%s.in' % path)
-        sub.output_path = mozpath.join(context.objdir, path)
-        sub.relpath = path
-
-        return sub
-
     def _process_test_manifest(self, context, info, manifest_path):
         flavor, install_root, install_subdir, package_tests = info
 
@@ -893,7 +933,8 @@ class TreeMetadataEmitter(LoggingMixin):
         install_prefix = mozpath.join(install_root, install_subdir)
 
         try:
-            m = manifestparser.TestManifest(manifests=[path], strict=True)
+            m = manifestparser.TestManifest(manifests=[path], strict=True,
+                                            rootdir=context.config.topsrcdir)
             defaults = m.manifest_defaults[os.path.normpath(path)]
             if not m.tests and not 'support-files' in defaults:
                 raise SandboxValidationError('Empty test manifest: %s'
@@ -987,8 +1028,10 @@ class TreeMetadataEmitter(LoggingMixin):
                 # Some test files are compiled and should not be copied into the
                 # test package. They function as identifiers rather than files.
                 if package_tests:
+                    manifest_relpath = mozpath.relpath(test['path'],
+                        mozpath.dirname(test['manifest']))
                     obj.installs[mozpath.normpath(test['path'])] = \
-                        (mozpath.join(out_dir, test['relpath']), True)
+                        ((mozpath.join(out_dir, manifest_relpath)), True)
 
                 process_support_files(test)
 
@@ -1057,6 +1100,25 @@ class TreeMetadataEmitter(LoggingMixin):
             })
 
         yield obj
+
+    def _process_jar_manifests(self, context):
+        jar_manifests = context.get('JAR_MANIFESTS', [])
+        if len(jar_manifests) > 1:
+            raise SandboxValidationError('While JAR_MANIFESTS is a list, '
+                'it is currently limited to one value.', context)
+
+        for path in jar_manifests:
+            yield JARManifest(context, mozpath.join(context.srcdir, path))
+
+        # Temporary test to look for jar.mn files that creep in without using
+        # the new declaration. Before, we didn't require jar.mn files to
+        # declared anywhere (they were discovered). This will detect people
+        # relying on the old behavior.
+        if os.path.exists(os.path.join(context.srcdir, 'jar.mn')):
+            if 'jar.mn' not in jar_manifests:
+                raise SandboxValidationError('A jar.mn exists but it '
+                    'is not referenced in the moz.build file. '
+                    'Please define JAR_MANIFESTS.', context)
 
     def _emit_directory_traversal_from_context(self, context):
         o = DirectoryTraversal(context)

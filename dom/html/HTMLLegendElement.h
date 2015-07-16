@@ -86,7 +86,7 @@ public:
 protected:
   virtual ~HTMLLegendElement();
 
-  virtual JSObject* WrapNode(JSContext* aCx) override;
+  virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   /**
    * Get the fieldset content element that contains this legend.

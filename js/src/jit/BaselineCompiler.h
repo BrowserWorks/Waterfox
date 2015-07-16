@@ -103,6 +103,8 @@ namespace jit {
     _(JSOP_INITELEM_INC)       \
     _(JSOP_MUTATEPROTO)        \
     _(JSOP_INITPROP)           \
+    _(JSOP_INITLOCKEDPROP)     \
+    _(JSOP_INITHIDDENPROP)     \
     _(JSOP_INITPROP_GETTER)    \
     _(JSOP_INITPROP_SETTER)    \
     _(JSOP_ARRAYPUSH)          \
@@ -157,6 +159,7 @@ namespace jit {
     _(JSOP_SPREADEVAL)         \
     _(JSOP_STRICTSPREADEVAL)   \
     _(JSOP_IMPLICITTHIS)       \
+    _(JSOP_GIMPLICITTHIS)      \
     _(JSOP_INSTANCEOF)         \
     _(JSOP_TYPEOF)             \
     _(JSOP_TYPEOFEXPR)         \
@@ -169,6 +172,7 @@ namespace jit {
     _(JSOP_RETSUB)             \
     _(JSOP_PUSHBLOCKSCOPE)     \
     _(JSOP_POPBLOCKSCOPE)      \
+    _(JSOP_FRESHENBLOCKSCOPE)  \
     _(JSOP_DEBUGLEAVEBLOCK)    \
     _(JSOP_EXCEPTION)          \
     _(JSOP_DEBUGGER)           \

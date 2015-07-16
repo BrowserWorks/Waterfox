@@ -50,10 +50,10 @@ class GlobalObject;
  * txMozillaXSLTProcessor is a front-end to the XSLT Processor.
  */
 class txMozillaXSLTProcessor final : public nsIXSLTProcessor,
-                                         public nsIXSLTProcessorPrivate,
-                                         public nsIDocumentTransformer,
-                                         public nsStubMutationObserver,
-                                         public nsWrapperCache
+                                     public nsIXSLTProcessorPrivate,
+                                     public nsIDocumentTransformer,
+                                     public nsStubMutationObserver,
+                                     public nsWrapperCache
 {
 public:
     /**
@@ -94,7 +94,7 @@ public:
     NS_DECL_NSIMUTATIONOBSERVER_NODEWILLBEDESTROYED
 
     // nsWrapperCache
-    virtual JSObject* WrapObject(JSContext* aCx) override;
+    virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
     // WebIDL
     nsISupports*

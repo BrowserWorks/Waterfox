@@ -1059,7 +1059,7 @@ CompositorD3D11::BeginFrame(const nsIntRegion& aInvalidRegion,
 
   // Failed to create a render target or the view.
   if (!mDefaultRT || !mDefaultRT->mRTView ||
-      mSize.width == 0 || mSize.height == 0) {
+      mSize.width <= 0 || mSize.height <= 0) {
     *aRenderBoundsOut = Rect();
     return;
   }
@@ -1126,10 +1126,12 @@ CompositorD3D11::EndFrame()
     return;
   }
 
-  mContext->Flush();
-
   nsIntSize oldSize = mSize;
   EnsureSize();
+  if (mSize.width <= 0 || mSize.height <= 0) {
+    return;
+  }
+
   UINT presentInterval = 0;
 
   if (gfxWindowsPlatform::GetPlatform()->IsWARP()) {
@@ -1218,6 +1220,7 @@ CompositorD3D11::VerifyBufferSize()
 
   hr = mSwapChain->GetDesc(&swapDesc);
   if (Failed(hr)) {
+    gfxCriticalError() << "Failed to get the description " << hexa(hr);
     return false;
   }
 
@@ -1255,9 +1258,17 @@ void
 CompositorD3D11::UpdateRenderTarget()
 {
   EnsureSize();
-  VerifyBufferSize();
+  if (!VerifyBufferSize()) {
+    gfxCriticalError(gfxCriticalError::DefaultOptions(false)) << "Failed VerifyBufferSize in UpdateRenderTarget";
+    return;
+  }
 
   if (mDefaultRT) {
+    return;
+  }
+
+  if (mSize.width <= 0 || mSize.height <= 0) {
+    gfxCriticalError(gfxCriticalError::DefaultOptions(false)) << "Invalid size in UpdateRenderTarget " << mSize;
     return;
   }
 
@@ -1278,7 +1289,7 @@ CompositorD3D11::UpdateRenderTarget()
   }
 
   mDefaultRT = new CompositingRenderTargetD3D11(backBuf, IntPoint(0, 0));
-  mDefaultRT->SetSize(mSize.ToIntSize());
+  mDefaultRT->SetSize(mSize);
 }
 
 bool
@@ -1364,16 +1375,20 @@ CompositorD3D11::UpdateConstantBuffers()
 {
   HRESULT hr;
   D3D11_MAPPED_SUBRESOURCE resource;
+  resource.pData = nullptr;
 
   hr = mContext->Map(mAttachments->mVSConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
-  if (Failed(hr)) {
+  if (Failed(hr) || !resource.pData) {
+    gfxCriticalError() << "Failed to map VSConstantBuffer. Result: " << hr;
     return false;
   }
   *(VertexShaderConstants*)resource.pData = mVSConstants;
   mContext->Unmap(mAttachments->mVSConstantBuffer, 0);
+  resource.pData = nullptr;
 
   hr = mContext->Map(mAttachments->mPSConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
-  if (Failed(hr)) {
+  if (Failed(hr) || !resource.pData) {
+    gfxCriticalError() << "Failed to map PSConstantBuffer. Result: " << hr;
     return false;
   }
   *(PixelShaderConstants*)resource.pData = mPSConstants;

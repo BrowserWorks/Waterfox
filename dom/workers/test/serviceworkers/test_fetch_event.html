@@ -18,18 +18,28 @@
 
   function simpleRegister() {
     var p = navigator.serviceWorker.register("fetch_event_worker.js", { scope: "./fetch" });
-    return p;
+    return p.then(function(swr) {
+      return new Promise(function(resolve) {
+        swr.installing.onstatechange = resolve;
+      });
+    });
   }
 
   function testController() {
     var p = new Promise(function(resolve, reject) {
+      var reloaded = false;
       window.onmessage = function(e) {
         if (e.data.status == "ok") {
           ok(e.data.result, e.data.message);
         } else if (e.data.status == "done") {
-          window.onmessage = null;
-          w.close();
-          resolve();
+          if (reloaded) {
+            window.onmessage = null;
+            w.close();
+            resolve();
+          } else {
+            w.location.reload();
+            reloaded = true;
+          }
         }
       }
     });
@@ -51,9 +61,9 @@
 
   SimpleTest.waitForExplicitFinish();
   SpecialPowers.pushPrefEnv({"set": [
+    ["dom.serviceWorkers.exemptFromPerDomainMax", true],
     ["dom.serviceWorkers.enabled", true],
     ["dom.serviceWorkers.testing.enabled", true],
-    ["dom.fetch.enabled", true]
   ]}, runTest);
 </script>
 </pre>

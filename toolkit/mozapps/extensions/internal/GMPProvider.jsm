@@ -18,6 +18,7 @@ Cu.import("resource://gre/modules/osfile.jsm");
 Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/GMPUtils.jsm");
+Cu.import("resource://gre/modules/AppConstants.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(
   this, "GMPInstallManager", "resource://gre/modules/GMPInstallManager.jsm");
@@ -36,33 +37,43 @@ const CLEARKEY_PLUGIN_ID     = "gmp-clearkey";
 const CLEARKEY_VERSION       = "0.1";
 
 const GMP_LICENSE_INFO       = "gmp_license_info";
+const GMP_LEARN_MORE         = "learn_more_label";
 
 const GMP_PLUGINS = [
   {
     id:              OPEN_H264_ID,
     name:            "openH264_name",
-    description:     "openH264_description",
+    description:     "openH264_description2",
     // The following licenseURL is part of an awful hack to include the OpenH264
     // license without having bug 624602 fixed yet, and intentionally ignores
     // localisation.
     licenseURL:      "chrome://mozapps/content/extensions/OpenH264-license.txt",
     homepageURL:     "http://www.openh264.org/",
-    optionsURL:      "chrome://mozapps/content/extensions/gmpPrefs.xul"
+    optionsURL:      "chrome://mozapps/content/extensions/gmpPrefs.xul",
+    missingKey:      "VIDEO_OPENH264_GMP_DISAPPEARED",
   },
   {
     id:              EME_ADOBE_ID,
     name:            "eme-adobe_name",
     description:     "eme-adobe_description",
+    // The following learnMoreURL is another hack to be able to support a SUMO page for this
+    // feature.
+    get learnMoreURL() {
+      return Services.urlFormatter.formatURLPref("app.support.baseURL") + "drm-content";
+    },
     licenseURL:      "http://help.adobe.com/en_US/primetime/drm/HTML5_CDM_EULA/index.html",
     homepageURL:     "http://help.adobe.com/en_US/primetime/drm/HTML5_CDM",
     optionsURL:      "chrome://mozapps/content/extensions/gmpPrefs.xul",
-    isEME:           true
+    isEME:           true,
+    missingKey:      "VIDEO_ADOBE_GMP_DISAPPEARED",
   }];
 
 XPCOMUtils.defineLazyGetter(this, "pluginsBundle",
   () => Services.strings.createBundle("chrome://global/locale/plugins.properties"));
 XPCOMUtils.defineLazyGetter(this, "gmpService",
   () => Cc["@mozilla.org/gecko-media-plugin-service;1"].getService(Ci.mozIGeckoMediaPluginService));
+
+XPCOMUtils.defineLazyGetter(this, "telemetryService", () => Services.telemetry);  
 
 let messageManager = Cc["@mozilla.org/globalmessagemanager;1"]
                        .getService(Ci.nsIMessageListenerManager);
@@ -132,6 +143,10 @@ GMPWrapper.prototype = {
                                                 null, this._plugin.id));
     }
     return this._gmpPath;
+  },
+
+  get missingKey() {
+    return this._plugin.missingKey;
   },
 
   get id() { return this._plugin.id; },
@@ -441,6 +456,28 @@ GMPWrapper.prototype = {
     }
     return this._updateTask;
   },
+
+  _arePluginFilesOnDisk: function () {
+    let fileExists = function(aGmpPath, aFileName) {
+      let f = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsIFile);
+      let path = OS.Path.join(aGmpPath, aFileName);
+      f.initWithPath(path);
+      return f.exists();
+    };
+
+    let id = this._plugin.id.substring(4);
+    let libName = AppConstants.DLL_PREFIX + id + AppConstants.DLL_SUFFIX;
+
+    return fileExists(this.gmpPath, libName) &&
+           fileExists(this.gmpPath, id + ".info") &&
+           (this._plugin.id != EME_ADOBE_ID ||
+            fileExists(this.gmpPath, id + ".voucher"));
+  },
+
+  validate: function() {
+    return !this.isInstalled ||
+           this._arePluginFilesOnDisk();
+  },
 };
 
 let GMPProvider = {
@@ -466,6 +503,13 @@ let GMPProvider = {
                       gmpPath);
 
       if (gmpPath && isEnabled) {
+        if (!wrapper.validate()) {
+          this._log.info("startup - gmp " + plugin.id +
+                         " missing lib and/or info files, uninstalling");
+          telemetryService.getHistogramById(wrapper.missingKey).add(true);
+          wrapper.uninstallPlugin();
+          continue;
+        }
         this._log.info("startup - adding gmp directory " + gmpPath);
         try {
           gmpService.addPluginDirectory(gmpPath);
@@ -558,14 +602,19 @@ let GMPProvider = {
     return GMPPrefs.get(GMPPrefs.KEY_PROVIDER_ENABLED, false);
   },
 
-  generateFullDescription: function(aLicenseURL, aLicenseInfo) {
-    return "<xhtml:a href=\"" + aLicenseURL + "\" target=\"_blank\">" +
-           aLicenseInfo + "</xhtml:a>."
+  generateFullDescription: function(aPlugin) {
+    let rv = [];
+    for (let [urlProp, labelId] of [["learnMoreURL", GMP_LEARN_MORE],
+                                    ["licenseURL", GMP_LICENSE_INFO]]) {
+      if (aPlugin[urlProp]) {
+        let label = pluginsBundle.GetStringFromName(labelId);
+        rv.push(`<xhtml:a href="${aPlugin[urlProp]}" target="_blank">${label}</xhtml:a>.`);
+      }
+    }
+    return rv.length ? rv.join("<xhtml:br /><xhtml:br />") : undefined;
   },
 
   buildPluginList: function() {
-    let licenseInfo = pluginsBundle.GetStringFromName(GMP_LICENSE_INFO);
-
     this._plugins = new Map();
     for (let aPlugin of GMP_PLUGINS) {
       let plugin = {
@@ -576,11 +625,9 @@ let GMPProvider = {
         optionsURL: aPlugin.optionsURL,
         wrapper: null,
         isEME: aPlugin.isEME,
+        missingKey: aPlugin.missingKey,
       };
-      if (aPlugin.licenseURL) {
-        plugin.fullDescription =
-          this.generateFullDescription(aPlugin.licenseURL, licenseInfo);
-      }
+      plugin.fullDescription = this.generateFullDescription(aPlugin);
       plugin.wrapper = new GMPWrapper(plugin);
       this._plugins.set(plugin.id, plugin);
     }

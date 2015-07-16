@@ -395,11 +395,8 @@ PrintUse(char* buf, size_t size, const LUse* use)
         JS_snprintf(buf, size, "v%d:r", use->virtualRegister());
         break;
       case LUse::FIXED:
-        // Unfortunately, we don't know here whether the virtual register is a
-        // float or a double. Should we steal a bit in LUse for help? For now,
-        // nothing defines any fixed xmm registers.
         JS_snprintf(buf, size, "v%d:%s", use->virtualRegister(),
-                    Registers::GetName(Registers::Code(use->registerCode())));
+                    AnyRegister::FromCode(use->registerCode()).name());
         break;
       case LUse::ANY:
         JS_snprintf(buf, size, "v%d:r?", use->virtualRegister());
@@ -550,12 +547,14 @@ LMoveGroup::add(LAllocation* from, LAllocation* to, LDefinition::Type type)
 
     // Check that SIMD moves are aligned according to ABI requirements.
     if (LDefinition(type).isSimdType()) {
+        MOZ_ASSERT(from->isMemory() || from->isFloatReg());
         if (from->isMemory()) {
             if (from->isArgument())
                 MOZ_ASSERT(from->toArgument()->index() % SimdMemoryAlignment == 0);
             else
                 MOZ_ASSERT(from->toStackSlot()->slot() % SimdMemoryAlignment == 0);
         }
+        MOZ_ASSERT(to->isMemory() || to->isFloatReg());
         if (to->isMemory()) {
             if (to->isArgument())
                 MOZ_ASSERT(to->toArgument()->index() % SimdMemoryAlignment == 0);

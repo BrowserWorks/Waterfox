@@ -580,7 +580,7 @@ CompileError::throwError(JSContext* cx)
     // as the non-top-level "load", "eval", or "compile" native function
     // returns false, the top-level reporter will eventually receive the
     // uncaught exception report.
-    if (!js_ErrorToException(cx, message, &report, nullptr, nullptr))
+    if (!ErrorToException(cx, message, &report, nullptr, nullptr))
         CallErrorReporter(cx, message, &report);
 }
 
@@ -647,8 +647,8 @@ TokenStream::reportCompileErrorNumberVA(uint32_t offset, unsigned flags, unsigne
 
     err.argumentsType = (flags & JSREPORT_UC) ? ArgumentsAreUnicode : ArgumentsAreASCII;
 
-    if (!js_ExpandErrorArguments(cx, js_GetErrorMessage, nullptr, errorNumber, &err.message,
-                                 &err.report, err.argumentsType, args))
+    if (!ExpandErrorArguments(cx, GetErrorMessage, nullptr, errorNumber, &err.message,
+                              &err.report, err.argumentsType, args))
     {
         return false;
     }
@@ -982,8 +982,15 @@ TokenStream::putIdentInTokenbuf(const char16_t* identStart)
 bool
 TokenStream::checkForKeyword(const KeywordInfo* kw, TokenKind* ttp)
 {
-    if (kw->tokentype == TOK_RESERVED)
+    if (kw->tokentype == TOK_RESERVED
+#ifndef JS_HAS_CLASSES
+        || kw->tokentype == TOK_CLASS
+        || kw->tokentype == TOK_EXTENDS
+#endif
+        )
+    {
         return reportError(JSMSG_RESERVED_ID, kw->chars);
+    }
 
     if (kw->tokentype != TOK_STRICT_RESERVED) {
         if (kw->version <= versionNumber()) {

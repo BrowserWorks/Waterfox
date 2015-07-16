@@ -35,8 +35,8 @@ class ShadowLayerParent;
 class CompositableParent;
 class ShadowLayersManager;
 
-class LayerTransactionParent : public PLayerTransactionParent,
-                               public CompositableParentManager
+class LayerTransactionParent final : public PLayerTransactionParent,
+                                     public CompositableParentManager
 {
   typedef mozilla::layout::RenderFrameParent RenderFrameParent;
   typedef InfallibleTArray<Edit> EditArray;
@@ -100,6 +100,8 @@ public:
   {
     return mChildProcessId;
   }
+
+  virtual void ReplyRemoveTexture(const OpReplyRemoveTexture& aReply) override;
 
 protected:
   virtual bool RecvShutdown() override;

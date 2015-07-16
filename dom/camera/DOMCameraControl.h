@@ -46,7 +46,7 @@ class StartRecordingHelper;
 
 // Main camera control.
 class nsDOMCameraControl final : public DOMMediaStream
-                                   , public nsSupportsWeakReference
+                               , public nsSupportsWeakReference
 {
 public:
   NS_DECLARE_STATIC_IID_ACCESSOR(NS_DOM_CAMERA_CONTROL_CID)
@@ -123,7 +123,7 @@ public:
   already_AddRefed<dom::Promise> ReleaseHardware(ErrorResult& aRv);
   void ResumeContinuousFocus(ErrorResult& aRv);
 
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   operator nsISupports*() { return static_cast<DOMMediaStream*>(this); }
 

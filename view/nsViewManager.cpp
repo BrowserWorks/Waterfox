@@ -243,7 +243,7 @@ static nsRegion ConvertRegionBetweenViews(const nsRegion& aIn,
 {
   nsRegion out = aIn;
   out.MoveBy(aFromView->GetOffsetTo(aToView));
-  out = out.ConvertAppUnitsRoundOut(
+  out = out.ScaleToOtherAppUnitsRoundOut(
     aFromView->GetViewManager()->AppUnitsPerDevPixel(),
     aToView->GetViewManager()->AppUnitsPerDevPixel());
   return out;
@@ -375,6 +375,7 @@ nsViewManager::ProcessPendingUpdatesForView(nsView* aView,
     return; // 'this' might have been destroyed
   }
   if (aFlushDirtyRegion) {
+    profiler_tracing("Paint", "DisplayList", TRACING_INTERVAL_START);
     nsAutoScriptBlocker scriptBlocker;
     SetPainting(true);
     for (uint32_t i = 0; i < widgets.Length(); ++i) {
@@ -385,6 +386,7 @@ nsViewManager::ProcessPendingUpdatesForView(nsView* aView,
       }
     }
     SetPainting(false);
+    profiler_tracing("Paint", "DisplayList", TRACING_INTERVAL_END);
   }
 }
 
@@ -638,7 +640,7 @@ nsViewManager::InvalidateViewNoSuppression(nsView *aView,
   damagedRect.MoveBy(aView->GetOffsetTo(displayRoot));
   int32_t rootAPD = displayRootVM->AppUnitsPerDevPixel();
   int32_t APD = AppUnitsPerDevPixel();
-  damagedRect = damagedRect.ConvertAppUnitsRoundOut(APD, rootAPD);
+  damagedRect = damagedRect.ScaleToOtherAppUnitsRoundOut(APD, rootAPD);
 
   // accumulate this rectangle in the view's dirty region, so we can
   // process it later.

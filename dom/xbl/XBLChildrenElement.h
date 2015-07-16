@@ -133,7 +133,7 @@ public:
   {
     NS_ASSERTION(!mIncludes.IsEmpty(),
                  "Shouldn't check for includes on default insertion point");
-    return mIncludes.Contains(aChild->Tag());
+    return mIncludes.Contains(aChild->NodeInfo()->NameAtom());
   }
 
   bool IsDefaultInsertion()
@@ -176,7 +176,7 @@ public:
   virtual nsINode* GetParentObject() override { return mParent; }
   virtual nsIContent* Item(uint32_t aIndex) override;
 
-  virtual JSObject* WrapObject(JSContext *cx) override;
+  virtual JSObject* WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto) override;
 
   bool IsListFor(nsIContent* aContent) {
     return mParent == aContent;

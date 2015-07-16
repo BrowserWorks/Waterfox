@@ -205,6 +205,7 @@ WebGLContext::WebGLContext()
     , mBypassShaderValidation(false)
     , mGLMaxSamples(1)
     , mNeedsFakeNoAlpha(false)
+    , mNeedsFakeNoStencil(false)
 {
     mGeneration = 0;
     mInvalidated = false;
@@ -236,9 +237,10 @@ WebGLContext::WebGLContext()
     mViewportWidth = 0;
     mViewportHeight = 0;
 
-    mScissorTestEnabled = 0;
     mDitherEnabled = 1;
     mRasterizerDiscardEnabled = 0; // OpenGL ES 3.0 spec p244
+    mScissorTestEnabled = 0;
+    mStencilTestEnabled = 0;
 
     // initialize some GL values: we're going to get them from the GL and use them as the sizes of arrays,
     // so in case glGetIntegerv leaves them uninitialized because of a GL bug, we would have very weird crashes.
@@ -340,14 +342,8 @@ WebGLContext::DestroyResourcesAndContext()
     mBoundTransformFeedback = nullptr;
     mDefaultTransformFeedback = nullptr;
 
-    if (mBoundTransformFeedbackBuffers) {
-        for (GLuint i = 0; i < mGLMaxTransformFeedbackSeparateAttribs; i++) {
-            mBoundTransformFeedbackBuffers[i] = nullptr;
-        }
-    }
-
-    for (GLuint i = 0; i < mGLMaxUniformBufferBindings; i++)
-        mBoundUniformBuffers[i] = nullptr;
+    mBoundTransformFeedbackBuffers.Clear();
+    mBoundUniformBuffers.Clear();
 
     while (!mTextures.isEmpty())
         mTextures.getLast()->DeleteOnce();
@@ -825,6 +821,11 @@ WebGLContext::SetDimensions(int32_t signedWidth, int32_t signedHeight)
         // If we've already drawn, we should commit the current buffer.
         PresentScreenBuffer();
 
+        if (IsContextLost()) {
+            GenerateWarning("WebGL context was lost due to swap failure.");
+            return NS_OK;
+        }
+
         // ResizeOffscreen scraps the current prod buffer before making a new one.
         if (!ResizeBackbuffer(width, height)) {
             GenerateWarning("WebGL context failed to resize.");
@@ -867,6 +868,10 @@ WebGLContext::SetDimensions(int32_t signedWidth, int32_t signedHeight)
     NS_ENSURE_TRUE(Preferences::GetRootBranch(), NS_ERROR_FAILURE);
 
     bool disabled = Preferences::GetBool("webgl.disabled", false);
+
+    // TODO: When we have software webgl support we should use that instead.
+    disabled |= gfxPlatform::InSafeMode();
+
     if (disabled) {
         GenerateWarning("WebGL creation is disabled, and so disallowed here.");
         return NS_ERROR_FAILURE;
@@ -899,9 +904,13 @@ WebGLContext::SetDimensions(int32_t signedWidth, int32_t signedHeight)
     ++mGeneration;
 
     // Update our internal stuff:
-    if (gl->WorkAroundDriverBugs()) {
+    if (gl->WorkAroundDriverBugs() && gl->IsANGLE()) {
         if (!mOptions.alpha && gl->Caps().alpha)
             mNeedsFakeNoAlpha = true;
+
+        // ANGLE doesn't quite handle this properly.
+        if (gl->Caps().depth && !gl->Caps().stencil)
+            mNeedsFakeNoStencil = true;
     }
 
     // Update mOptions.
@@ -914,6 +923,8 @@ WebGLContext::SetDimensions(int32_t signedWidth, int32_t signedHeight)
     gl->fViewport(0, 0, mWidth, mHeight);
     mViewportWidth = mWidth;
     mViewportHeight = mHeight;
+
+    gl->fScissor(0, 0, mWidth, mHeight);
 
     // Make sure that we clear this out, otherwise
     // we'll end up displaying random memory
@@ -1296,11 +1307,12 @@ WebGLContext::ClearScreen()
 
     colorAttachmentsMask[0] = true;
 
-    ForceClearFramebufferWithDefaultValues(clearMask, colorAttachmentsMask);
+    ForceClearFramebufferWithDefaultValues(mNeedsFakeNoAlpha, clearMask,
+                                           colorAttachmentsMask);
 }
 
 void
-WebGLContext::ForceClearFramebufferWithDefaultValues(GLbitfield mask,
+WebGLContext::ForceClearFramebufferWithDefaultValues(bool fakeNoAlpha, GLbitfield mask,
                                                      const bool colorAttachmentsMask[kMaxColorAttachments])
 {
     MakeContextCurrent();
@@ -1346,7 +1358,7 @@ WebGLContext::ForceClearFramebufferWithDefaultValues(GLbitfield mask,
 
         gl->fColorMask(1, 1, 1, 1);
 
-        if (mNeedsFakeNoAlpha) {
+        if (fakeNoAlpha) {
             gl->fClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         } else {
             gl->fClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -1852,29 +1864,43 @@ WebGLContext::TexImageFromVideoElement(const TexImageTarget texImageTarget,
     return ok;
 }
 
+size_t mozilla::RoundUpToMultipleOf(size_t value, size_t multiple)
+{
+    size_t overshoot = value + multiple - 1;
+    return overshoot - (overshoot % multiple);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 WebGLContext::ScopedMaskWorkaround::ScopedMaskWorkaround(WebGLContext& webgl)
     : mWebGL(webgl)
-    , mNeedsChange(NeedsChange(webgl))
+    , mFakeNoAlpha(ShouldFakeNoAlpha(webgl))
+    , mFakeNoStencil(ShouldFakeNoStencil(webgl))
 {
-    if (mNeedsChange) {
+    if (mFakeNoAlpha) {
         mWebGL.gl->fColorMask(mWebGL.mColorWriteMask[0],
                               mWebGL.mColorWriteMask[1],
                               mWebGL.mColorWriteMask[2],
                               false);
     }
+    if (mFakeNoStencil) {
+        mWebGL.gl->fDisable(LOCAL_GL_STENCIL_TEST);
+    }
 }
 
 WebGLContext::ScopedMaskWorkaround::~ScopedMaskWorkaround()
 {
-    if (mNeedsChange) {
+    if (mFakeNoAlpha) {
         mWebGL.gl->fColorMask(mWebGL.mColorWriteMask[0],
                               mWebGL.mColorWriteMask[1],
                               mWebGL.mColorWriteMask[2],
                               mWebGL.mColorWriteMask[3]);
     }
+    if (mFakeNoStencil) {
+        mWebGL.gl->fEnable(LOCAL_GL_STENCIL_TEST);
+    }
 }
+
 ////////////////////////////////////////////////////////////////////////////////
 // XPCOM goop
 

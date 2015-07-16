@@ -166,7 +166,7 @@ public:
   virtual bool WillIgnoreCharsetOverride() override;
 
   // WebIDL API
-  virtual JSObject* WrapNode(JSContext* aCx)
+  virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
     override;
   void SetDomain(const nsAString& aDomain, mozilla::ErrorResult& rv);
   void GetCookie(nsAString& aCookie, mozilla::ErrorResult& rv);

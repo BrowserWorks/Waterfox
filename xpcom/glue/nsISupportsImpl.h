@@ -49,8 +49,8 @@ struct HasDangerousPublicDestructor
 #  if MOZ_USING_LIBSTDCXX && MOZ_GCC_VERSION_AT_LEAST(4, 8, 0)
 #    define MOZ_HAVE_STD_IS_DESTRUCTIBLE
    // Some GCC versions have an ICE when using destructors in decltype().
-   // Works for me on GCC 4.8.2 on Fedora 20 x86-64.
-#  elif MOZ_GCC_VERSION_AT_LEAST(4, 8, 2)
+   // Works on GCC 4.8 at least.
+#  elif MOZ_GCC_VERSION_AT_LEAST(4, 8, 0)
 #    define MOZ_CAN_USE_IS_DESTRUCTIBLE_FALLBACK
 #  endif
 #endif
@@ -385,9 +385,9 @@ private:
 #define NS_DECL_ISUPPORTS                                                     \
 public:                                                                       \
   NS_IMETHOD QueryInterface(REFNSIID aIID,                                    \
-                            void** aInstancePtr) override;                \
-  NS_IMETHOD_(MozExternalRefCountType) AddRef(void) override;             \
-  NS_IMETHOD_(MozExternalRefCountType) Release(void) override;            \
+                            void** aInstancePtr) override;                    \
+  NS_IMETHOD_(MozExternalRefCountType) AddRef(void) override;                 \
+  NS_IMETHOD_(MozExternalRefCountType) Release(void) override;                \
 protected:                                                                    \
   nsAutoRefCnt mRefCnt;                                                       \
   NS_DECL_OWNINGTHREAD                                                        \
@@ -396,9 +396,9 @@ public:
 #define NS_DECL_THREADSAFE_ISUPPORTS                                          \
 public:                                                                       \
   NS_IMETHOD QueryInterface(REFNSIID aIID,                                    \
-                            void** aInstancePtr) override;                \
-  NS_IMETHOD_(MozExternalRefCountType) AddRef(void) override;             \
-  NS_IMETHOD_(MozExternalRefCountType) Release(void) override;            \
+                            void** aInstancePtr) override;                    \
+  NS_IMETHOD_(MozExternalRefCountType) AddRef(void) override;                 \
+  NS_IMETHOD_(MozExternalRefCountType) Release(void) override;                \
 protected:                                                                    \
   ::mozilla::ThreadSafeAutoRefCnt mRefCnt;                                    \
   NS_DECL_OWNINGTHREAD                                                        \
@@ -407,9 +407,9 @@ public:
 #define NS_DECL_CYCLE_COLLECTING_ISUPPORTS                                    \
 public:                                                                       \
   NS_IMETHOD QueryInterface(REFNSIID aIID,                                    \
-                            void** aInstancePtr) override;                \
-  NS_IMETHOD_(MozExternalRefCountType) AddRef(void) override;             \
-  NS_IMETHOD_(MozExternalRefCountType) Release(void) override;            \
+                            void** aInstancePtr) override;                    \
+  NS_IMETHOD_(MozExternalRefCountType) AddRef(void) override;                 \
+  NS_IMETHOD_(MozExternalRefCountType) Release(void) override;                \
   NS_IMETHOD_(void) DeleteCycleCollectable(void);                             \
 protected:                                                                    \
   nsCycleCollectingAutoRefCnt mRefCnt;                                        \
@@ -1081,7 +1081,7 @@ _class::GetInterfaces(uint32_t* _count, nsIID*** _array)                      \
 }                                                                             \
                                                                               \
 NS_IMETHODIMP                                                                 \
-_class::GetHelperForLanguage(uint32_t _language, nsISupports** _retval)       \
+_class::GetScriptableHelper(nsIXPCScriptable** _retval)                       \
 {                                                                             \
   *_retval = nullptr;                                                         \
   return NS_OK;                                                               \

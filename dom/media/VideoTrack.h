@@ -22,7 +22,7 @@ public:
              const nsAString& aLabel,
              const nsAString& aLanguage);
 
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   virtual VideoTrack* AsVideoTrack() override
   {

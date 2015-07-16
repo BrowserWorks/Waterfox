@@ -85,10 +85,13 @@ public:
   virtual void InitEvent(mozilla::WidgetGUIEvent& aEvent,
                          nsIntPoint* aPoint = nullptr) override;
   virtual bool DispatchWindowEvent(mozilla::WidgetGUIEvent* aEvent) override;
-  virtual bool DispatchKeyboardEvent(mozilla::WidgetGUIEvent* aEvent) override;
-  virtual bool DispatchScrollEvent(mozilla::WidgetGUIEvent* aEvent) override;
+  virtual bool DispatchKeyboardEvent(mozilla::WidgetKeyboardEvent* aEvent) override;
+  virtual bool DispatchWheelEvent(mozilla::WidgetWheelEvent* aEvent) override;
+  virtual bool DispatchContentCommandEvent(mozilla::WidgetContentCommandEvent* aEvent) override;
   virtual nsWindowBase* GetParentWindowBase(bool aIncludeOwner) override;
   virtual bool IsTopLevelWidget() override { return mIsTopWidgetWindow; }
+
+  using nsWindowBase::DispatchPluginEvent;
 
   // nsIWidget interface
   NS_IMETHOD              Create(nsIWidget *aParent,
@@ -178,8 +181,6 @@ public:
                                           const InputContextAction& aAction);
   NS_IMETHOD_(InputContext) GetInputContext();
   NS_IMETHOD              GetToggledKeyState(uint32_t aKeyCode, bool* aLEDState);
-  NS_IMETHOD              RegisterTouchWindow();
-  NS_IMETHOD              UnregisterTouchWindow();
 #ifdef MOZ_XUL
   virtual void            SetTransparencyMode(nsTransparencyMode aMode);
   virtual nsTransparencyMode GetTransparencyMode();
@@ -236,6 +237,8 @@ public:
    */
   virtual bool            AutoErase(HDC dc);
 
+  static void             ClearCompositor(nsWindow* aWindow);
+
   /**
    * AssociateDefaultIMC() associates or disassociates the default IMC for
    * the window.
@@ -280,6 +283,8 @@ protected:
   virtual ~nsWindow();
 
   virtual void WindowUsesOMTC() override;
+  virtual void ConfigureAPZCTreeManager() override;
+  void RegisterTouchWindow();
 
   virtual nsresult NotifyIMEInternal(
                      const IMENotification& aIMENotification) override;

@@ -189,7 +189,6 @@ asm/signal.h
 ASRegistry.h
 assert.h
 atk/atk.h
-atk-bridge.h
 atlcom.h
 atlconv.h
 atlctl.cpp
@@ -471,6 +470,7 @@ freetype/ftbitmap.h
 freetype/ftxf86.h
 freetype.h
 ftcache.h
+ftfntfmt.h
 ftglyph.h
 ftsynth.h
 ftoutln.h
@@ -628,14 +628,6 @@ libgnome/libgnome.h
 libgnomeui/gnome-icon-lookup.h
 libgnomeui/gnome-icon-theme.h
 libgnomeui/gnome-ui-init.h
-libgnomevfs/gnome-vfs-file-info.h
-libgnomevfs/gnome-vfs.h
-libgnomevfs/gnome-vfs-init.h
-libgnomevfs/gnome-vfs-mime.h
-libgnomevfs/gnome-vfs-mime-handlers.h
-libgnomevfs/gnome-vfs-mime-utils.h
-libgnomevfs/gnome-vfs-ops.h
-libgnomevfs/gnome-vfs-standard-callbacks.h
 lib$routines.h
 limits
 limits.h

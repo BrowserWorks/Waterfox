@@ -11,7 +11,6 @@
 #define nsDOMAttributeMap_h
 
 #include "mozilla/MemoryReporting.h"
-#include "mozilla/UniquePtr.h"
 #include "mozilla/dom/Attr.h"
 #include "mozilla/ErrorResult.h"
 #include "nsCycleCollectionParticipant.h"
@@ -82,8 +81,8 @@ private:
 };
 
 // Helper class that implements the nsIDOMMozNamedAttrMap interface.
-class nsDOMAttributeMap : public nsIDOMMozNamedAttrMap
-                        , public nsWrapperCache
+class nsDOMAttributeMap final : public nsIDOMMozNamedAttrMap
+                              , public nsWrapperCache
 {
 public:
   typedef mozilla::dom::Attr Attr;
@@ -140,7 +139,7 @@ public:
   {
     return mContent;
   }
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // WebIDL
   Attr* GetNamedItem(const nsAString& aAttrName);
@@ -151,8 +150,6 @@ public:
   {
     return SetNamedItemInternal(aAttr, false, aError);
   }
-  already_AddRefed<Attr>
-  RemoveNamedItem(mozilla::dom::NodeInfo* aNodeInfo, ErrorResult& aError);
   already_AddRefed<Attr>
   RemoveNamedItem(const nsAString& aName, ErrorResult& aError);
  
@@ -186,11 +183,9 @@ private:
   nsCOMPtr<Element> mContent;
 
   /**
-   * Cache of Attrs. It's usually empty, and thus initialized lazily.
+   * Cache of Attrs.
    */
-  mozilla::UniquePtr<AttrCache> mAttributeCache;
-
-  void EnsureAttributeCache();
+  AttrCache mAttributeCache;
 
   /**
    * SetNamedItem() (aWithNS = false) and SetNamedItemNS() (aWithNS =

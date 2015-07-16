@@ -30,7 +30,7 @@ public:
                         nsIDOMMozMmsMessage* aMms);
 
   virtual JSObject*
-  WrapObject(JSContext* aCx) override;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   void GetData(OwningMozSmsMessageOrMozMmsMessage& aRetVal) const;
 

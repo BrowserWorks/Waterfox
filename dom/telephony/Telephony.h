@@ -31,7 +31,7 @@ class TelephonyDialCallback;
 class OwningTelephonyCallOrTelephonyCallGroup;
 
 class Telephony final : public DOMEventTargetHelper,
-                            private nsITelephonyListener
+                        private nsITelephonyListener
 {
   /**
    * Class Telephony doesn't actually expose nsITelephonyListener.
@@ -69,7 +69,7 @@ public:
 
   // WrapperCache
   virtual JSObject*
-  WrapObject(JSContext* aCx) override;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // WebIDL
   already_AddRefed<Promise>

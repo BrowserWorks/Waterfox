@@ -14,7 +14,7 @@ namespace mozilla {
 namespace dom {
 
 class HTMLMetaElement final : public nsGenericHTMLElement,
-                                  public nsIDOMHTMLMetaElement
+                              public nsIDOMHTMLMetaElement
 {
 public:
   explicit HTMLMetaElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
@@ -59,7 +59,7 @@ public:
     SetHTMLAttr(nsGkAtoms::scheme, aScheme, aRv);
   }
 
-  virtual JSObject* WrapNode(JSContext* aCx) override;
+  virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 protected:
   virtual ~HTMLMetaElement();

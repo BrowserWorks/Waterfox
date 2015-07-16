@@ -10,11 +10,11 @@
 #include "jscompartment.h"
 
 #include "builtin/SymbolObject.h"
+#include "gc/Allocator.h"
 #include "gc/Rooting.h"
 #include "vm/StringBuffer.h"
 
 #include "jscompartmentinlines.h"
-#include "jsgcinlines.h"
 
 using JS::Symbol;
 using namespace js;
@@ -26,9 +26,9 @@ Symbol::newInternal(ExclusiveContext* cx, JS::SymbolCode code, JSAtom* descripti
     MOZ_ASSERT(cx->atomsCompartment()->runtimeFromAnyThread()->currentThreadHasExclusiveAccess());
 
     // Following js::AtomizeString, we grudgingly forgo last-ditch GC here.
-    Symbol* p = gc::AllocateNonObject<Symbol, NoGC>(cx);
+    Symbol* p = Allocate<JS::Symbol, NoGC>(cx);
     if (!p) {
-        js_ReportOutOfMemory(cx);
+        ReportOutOfMemory(cx);
         return nullptr;
     }
     return new (p) Symbol(code, description);
@@ -74,7 +74,7 @@ Symbol::for_(js::ExclusiveContext* cx, HandleString description)
     // lookupForAdd call, and newInternal can't GC.
     if (!registry.add(p, sym)) {
         // SystemAllocPolicy does not report OOM.
-        js_ReportOutOfMemory(cx);
+        ReportOutOfMemory(cx);
         return nullptr;
     }
     return sym;

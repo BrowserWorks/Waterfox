@@ -31,7 +31,7 @@ class GMPParent;
 #define GMP_DEFAULT_ASYNC_SHUTDONW_TIMEOUT 3000
 
 class GeckoMediaPluginService final : public mozIGeckoMediaPluginService
-                                        , public nsIObserver
+                                    , public nsIObserver
 {
 public:
   static already_AddRefed<GeckoMediaPluginService> GetGeckoMediaPluginService();
@@ -122,6 +122,7 @@ protected:
 private:
   GMPParent* ClonePlugin(const GMPParent* aOriginal);
   nsresult EnsurePluginsOnDiskScanned();
+  nsresult InitStorage();
 
   class PathRunnable : public nsRunnable
   {
@@ -182,9 +183,7 @@ private:
 
   nsTArray<nsString> mPluginsWaitingForDeletion;
 
-#ifndef MOZ_WIDGET_GONK
   nsCOMPtr<nsIFile> mStorageBaseDir;
-#endif
 
   // Hashes of (origin,topLevelOrigin) to the node id for
   // non-persistent sessions.

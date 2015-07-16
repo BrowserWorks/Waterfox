@@ -257,11 +257,15 @@ static nsDOMClassInfoData sClassInfoData[] = {
   NS_DEFINE_CLASSINFO_DATA(CSSFontFaceRule, nsDOMGenericSH,
                            DOM_DEFAULT_SCRIPTABLE_FLAGS)
 
-  NS_DEFINE_CHROME_ONLY_CLASSINFO_DATA(ContentFrameMessageManager, nsEventTargetSH,
+  NS_DEFINE_CHROME_ONLY_CLASSINFO_DATA(ContentFrameMessageManager,
+                                       nsMessageManagerSH<nsEventTargetSH>,
                                        DOM_DEFAULT_SCRIPTABLE_FLAGS |
+                                       nsIXPCScriptable::WANT_ENUMERATE |
                                        nsIXPCScriptable::IS_GLOBAL_OBJECT)
-  NS_DEFINE_CHROME_ONLY_CLASSINFO_DATA(ContentProcessMessageManager, nsDOMGenericSH,
+  NS_DEFINE_CHROME_ONLY_CLASSINFO_DATA(ContentProcessMessageManager,
+                                       nsMessageManagerSH<nsDOMGenericSH>,
                                        DOM_DEFAULT_SCRIPTABLE_FLAGS |
+                                       nsIXPCScriptable::WANT_ENUMERATE |
                                        nsIXPCScriptable::IS_GLOBAL_OBJECT)
   NS_DEFINE_CHROME_ONLY_CLASSINFO_DATA(ChromeMessageBroadcaster, nsDOMGenericSH,
                                        DOM_DEFAULT_SCRIPTABLE_FLAGS)
@@ -825,16 +829,10 @@ nsDOMClassInfo::GetInterfaces(uint32_t *aCount, nsIID ***aArray)
 }
 
 NS_IMETHODIMP
-nsDOMClassInfo::GetHelperForLanguage(uint32_t language, nsISupports **_retval)
+nsDOMClassInfo::GetScriptableHelper(nsIXPCScriptable **_retval)
 {
-  if (language == nsIProgrammingLanguage::JAVASCRIPT) {
-    *_retval = static_cast<nsIXPCScriptable *>(this);
-
-    NS_ADDREF(*_retval);
-  } else {
-    *_retval = nullptr;
-  }
-
+  nsCOMPtr<nsIXPCScriptable> rval = this;
+  rval.forget(_retval);
   return NS_OK;
 }
 
@@ -1170,13 +1168,7 @@ nsDOMClassInfo::PostCreatePrototype(JSContext * cx, JSObject * aProto)
   NS_ENSURE_SUCCESS(rv, rv);
   if (!contentDefinedProperty && desc.object() && !desc.value().isUndefined() &&
       !JS_DefineUCProperty(cx, global, mData->mNameUTF16,
-                           NS_strlen(mData->mNameUTF16),
-                           desc.value(),
-                           // Descriptors never store JSNatives for accessors:
-                           // they have either JSFunctions or JSPropertyOps.
-                           desc.attributes() | JSPROP_PROPOP_ACCESSORS,
-                           JS_PROPERTYOP_GETTER(desc.getter()),
-                           JS_PROPERTYOP_SETTER(desc.setter()))) {
+                           NS_strlen(mData->mNameUTF16), desc)) {
     return NS_ERROR_UNEXPECTED;
   }
 
@@ -1900,8 +1892,7 @@ ResolvePrototype(nsIXPConnect *aXPConnect, nsGlobalWindow *aWin, JSContext *cx,
       }
       dot_prototype = ::JS_NewObjectWithUniqueType(cx,
                                                    &sDOMConstructorProtoClass,
-                                                   proto,
-                                                   winobj);
+                                                   proto);
       NS_ENSURE_TRUE(dot_prototype, NS_ERROR_OUT_OF_MEMORY);
     }
   }
@@ -2585,5 +2576,44 @@ nsNonDOMObjectSH::GetFlags(uint32_t *aFlags)
   // to do something like implement nsISecurityCheckedComponent in a meaningful
   // way.
   *aFlags = nsIClassInfo::MAIN_THREAD_ONLY | nsIClassInfo::SINGLETON_CLASSINFO;
+  return NS_OK;
+}
+
+// nsContentFrameMessageManagerSH
+
+template<typename Super>
+NS_IMETHODIMP
+nsMessageManagerSH<Super>::Resolve(nsIXPConnectWrappedNative* wrapper,
+                                   JSContext* cx, JSObject* obj_,
+                                   jsid id_, bool* resolvedp,
+                                   bool* _retval)
+{
+  JS::Rooted<JSObject*> obj(cx, obj_);
+  JS::Rooted<jsid> id(cx, id_);
+
+  *_retval = SystemGlobalResolve(cx, obj, id, resolvedp);
+  NS_ENSURE_TRUE(*_retval, NS_ERROR_FAILURE);
+
+  if (*resolvedp) {
+    return NS_OK;
+  }
+
+  return Super::Resolve(wrapper, cx, obj, id, resolvedp, _retval);
+}
+
+template<typename Super>
+NS_IMETHODIMP
+nsMessageManagerSH<Super>::Enumerate(nsIXPConnectWrappedNative* wrapper,
+                                     JSContext* cx, JSObject* obj_,
+                                     bool* _retval)
+{
+  JS::Rooted<JSObject*> obj(cx, obj_);
+
+  *_retval = SystemGlobalEnumerate(cx, obj);
+  NS_ENSURE_TRUE(*_retval, NS_ERROR_FAILURE);
+
+  // Don't call up to our superclass, since neither nsDOMGenericSH nor
+  // nsEventTargetSH have WANT_ENUMERATE.
+  MOZ_ASSERT(!(this->GetScriptableFlags() & nsIXPCScriptable::WANT_ENUMERATE));
   return NS_OK;
 }

@@ -294,6 +294,18 @@ def methodReturnsJSObject(method):
 
     return False
 
+
+def MemberIsUnforgeable(member, descriptor):
+    # Note: "or" and "and" return either their LHS or RHS, not
+    # necessarily booleans.  Make sure to return a boolean from this
+    # method, because callers will compare its return value to
+    # booleans.
+    return bool((member.isAttr() or member.isMethod()) and
+                not member.isStatic() and
+                (member.isUnforgeable() or
+                 descriptor.interface.getExtendedAttribute("Unforgeable")))
+
+
 class Descriptor(DescriptorProvider):
     """
     Represents a single descriptor for an interface. See Bindings.conf.
@@ -302,13 +314,17 @@ class Descriptor(DescriptorProvider):
         DescriptorProvider.__init__(self, config, desc.get('workers', False))
         self.interface = interface
 
+        if self.workers:
+            assert 'wantsXrays' not in desc
+            self.wantsXrays = False
+        else:
+            self.wantsXrays = desc.get('wantsXrays', True)
+
         # Read the desc, and fill in the relevant defaults.
         ifaceName = self.interface.identifier.name
         if self.interface.isExternal():
-            if self.workers:
-                nativeTypeDefault = "JSObject"
-            else:
-                nativeTypeDefault = "nsIDOM" + ifaceName
+            assert not self.workers
+            nativeTypeDefault = "nsIDOM" + ifaceName
         elif self.interface.isCallback():
             nativeTypeDefault = "mozilla::dom::" + ifaceName
         else:
@@ -366,6 +382,9 @@ class Descriptor(DescriptorProvider):
         self.concrete = (not self.interface.isExternal() and
                          not self.interface.isCallback() and
                          desc.get('concrete', True))
+        self.hasUnforgeableMembers = (self.concrete and
+                                      any(MemberIsUnforgeable(m, self) for m in
+                                          self.interface.members))
         self.operations = {
             'IndexedGetter': None,
             'IndexedSetter': None,

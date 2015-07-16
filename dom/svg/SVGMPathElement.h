@@ -21,7 +21,7 @@ namespace dom {
 class SVGPathElement;
 
 class SVGMPathElement final : public SVGMPathElementBase,
-                                  public nsStubMutationObserver
+                              public nsStubMutationObserver
 {
 protected:
   friend nsresult (::NS_NewSVGMPathElement(nsIContent **aResult,
@@ -29,7 +29,7 @@ protected:
   explicit SVGMPathElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
   ~SVGMPathElement();
 
-  virtual JSObject* WrapNode(JSContext *aCx) override;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 public:
   // interfaces:

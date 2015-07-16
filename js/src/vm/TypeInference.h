@@ -115,7 +115,14 @@ enum : uint32_t {
     /* Whether this group is associated with some allocation site. */
     OBJECT_FLAG_FROM_ALLOCATION_SITE  = 0x1,
 
-    /* (0x2 and 0x4 are unused) */
+    /* Whether this group is associated with a single object. */
+    OBJECT_FLAG_SINGLETON             = 0x2,
+
+    /*
+     * Whether this group is used by objects whose singleton groups have not
+     * been created yet.
+     */
+    OBJECT_FLAG_LAZY_SINGLETON        = 0x4,
 
     /* Mask/shift for the number of properties in propertySet */
     OBJECT_FLAG_PROPERTY_COUNT_MASK   = 0xfff8,
@@ -324,6 +331,9 @@ class TypeSet
         bool isSingleton() const {
             return isObject() && !!(data & 1);
         }
+        bool isSingletonUnchecked() const {
+            return isObjectUnchecked() && !!(data & 1);
+        }
 
         inline JSObject* singleton() const;
         inline JSObject* singletonNoBarrier() const;
@@ -332,6 +342,9 @@ class TypeSet
 
         bool isGroup() const {
             return isObject() && !(data & 1);
+        }
+        bool isGroupUnchecked() const {
+            return isObjectUnchecked() && !(data & 1);
         }
 
         inline ObjectGroup* group() const;
@@ -386,7 +399,7 @@ class TypeSet
       : flags(0), objectSet(nullptr)
     {}
 
-    void print();
+    void print(FILE* fp = stderr);
 
     /* Whether this set contains a specific type. */
     inline bool hasType(Type type) const;
@@ -420,13 +433,19 @@ class TypeSet
     static TemporaryTypeSet* unionSets(TypeSet* a, TypeSet* b, LifoAlloc* alloc);
     /* Return the intersection of the 2 TypeSets. The result should not be modified further */
     static TemporaryTypeSet* intersectSets(TemporaryTypeSet* a, TemporaryTypeSet* b, LifoAlloc* alloc);
+    /*
+     * Returns a copy of TypeSet a excluding/removing the types in TypeSet b.
+     * TypeSet b can only contain primitives or be any object. No support for
+     * specific objects. The result should not be modified further.
+     */
+    static TemporaryTypeSet* removeSet(TemporaryTypeSet* a, TemporaryTypeSet* b, LifoAlloc* alloc);
 
     /* Add a type to this set using the specified allocator. */
     void addType(Type type, LifoAlloc* alloc);
 
     /* Get a list of all types in this set. */
     typedef Vector<Type, 1, SystemAllocPolicy> TypeList;
-    bool enumerateTypes(TypeList* list) const;
+    template <class TypeListT> bool enumerateTypes(TypeListT* list) const;
 
     /*
      * Iterate through the objects in this set. getObjectCount overapproximates
@@ -473,6 +492,8 @@ class TypeSet
         return this->isSubset(other) && other->isSubset(this);
     }
 
+    bool objectsIntersect(const TypeSet* other) const;
+
     /* Forward all types in this set to the specified constraint. */
     bool addTypesToConstraint(JSContext* cx, TypeConstraint* constraint);
 
@@ -508,6 +529,10 @@ class TypeSet
     static inline Type GetMaybeUntrackedValueType(const Value& val);
 
     static void MarkTypeRoot(JSTracer* trc, Type* v, const char* name);
+    static void MarkTypeUnbarriered(JSTracer* trc, Type* v, const char* name);
+    static bool IsTypeMarkedFromAnyThread(Type* v);
+    static bool IsTypeAllocatedDuringIncremental(Type v);
+    static bool IsTypeAboutToBeFinalized(Type* v);
 };
 
 /*
@@ -741,11 +766,11 @@ bool
 AddClearDefiniteFunctionUsesInScript(JSContext* cx, ObjectGroup* group,
                                      JSScript* script, JSScript* calleeScript);
 
-// For types where only a small number of objects have been allocated, this
-// structure keeps track of all objects with the type in existence. Once
-// COUNT objects have been allocated, this structure is cleared and the objects
-// are analyzed, to perform the new script properties analyses or determine if
-// an unboxed representation can be used.
+// For groups where only a small number of objects have been allocated, this
+// structure keeps track of all objects in the group. Once COUNT objects have
+// been allocated, this structure is cleared and the objects are analyzed, to
+// perform the new script properties analyses or determine if an unboxed
+// representation can be used.
 class PreliminaryObjectArray
 {
   public:
@@ -770,6 +795,26 @@ class PreliminaryObjectArray
 
     bool full() const;
     void sweep();
+};
+
+class PreliminaryObjectArrayWithTemplate : public PreliminaryObjectArray
+{
+    RelocatablePtrShape shape_;
+
+  public:
+    explicit PreliminaryObjectArrayWithTemplate(Shape* shape)
+      : shape_(shape)
+    {}
+
+    Shape* shape() {
+        return shape_;
+    }
+
+    void maybeAnalyze(ExclusiveContext* cx, ObjectGroup* group, bool force = false);
+
+    void trace(JSTracer* trc);
+
+    static void writeBarrierPre(PreliminaryObjectArrayWithTemplate* preliminaryObjects);
 };
 
 // New script properties analyses overview.
@@ -827,8 +872,6 @@ class TypeNewScript
 
   private:
     // Scripted function which this information was computed for.
-    // If instances of the associated group are created without calling
-    // 'new' on this function, the new script information is cleared.
     RelocatablePtrFunction function_;
 
     // Any preliminary objects with the type. The analyses are not performed
@@ -871,7 +914,7 @@ class TypeNewScript
         js_free(initializerList);
     }
 
-    static inline void writeBarrierPre(TypeNewScript* newScript);
+    static void writeBarrierPre(TypeNewScript* newScript);
 
     bool analyzed() const {
         return preliminaryObjects == nullptr;
@@ -902,12 +945,17 @@ class TypeNewScript
     bool rollbackPartiallyInitializedObjects(JSContext* cx, ObjectGroup* group);
 
     static void make(JSContext* cx, ObjectGroup* group, JSFunction* fun);
+    static TypeNewScript* makeNativeVersion(JSContext* cx, TypeNewScript* newScript,
+                                            PlainObject* templateObject);
 
     size_t sizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf) const;
 };
 
 /* Is this a reasonable PC to be doing inlining on? */
 inline bool isInlinableCall(jsbytecode* pc);
+
+bool
+ClassCanHaveExtraProperties(const Class* clasp);
 
 /*
  * Whether Array.prototype, or an object on its proto chain, has an

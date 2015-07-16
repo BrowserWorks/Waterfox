@@ -115,7 +115,6 @@ struct Token
 
     void setName(PropertyName* name) {
         MOZ_ASSERT(type == TOK_NAME);
-        MOZ_ASSERT(!IsPoisonedPtr(name));
         u.name = name;
     }
 
@@ -123,7 +122,6 @@ struct Token
         MOZ_ASSERT(type == TOK_STRING ||
                    type == TOK_TEMPLATE_HEAD ||
                    type == TOK_NO_SUBS_TEMPLATE);
-        MOZ_ASSERT(!IsPoisonedPtr(atom));
         u.atom = atom;
     }
 
@@ -537,6 +535,11 @@ class MOZ_STACK_CLASS TokenStream
     void tell(Position*);
     void seek(const Position& pos);
     bool seek(const Position& pos, const TokenStream& other);
+#ifdef DEBUG
+    inline bool debugHasNoLookahead() const {
+        return lookahead == 0;
+    }
+#endif
 
     const char16_t* rawCharPtrAt(size_t offset) const {
         return userbuf.rawCharPtrAt(offset);

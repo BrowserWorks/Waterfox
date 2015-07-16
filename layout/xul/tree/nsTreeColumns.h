@@ -40,7 +40,7 @@ class TreeBoxObject;
 // This class is our column info.  We use it to iterate our columns and to obtain
 // information about each column.
 class nsTreeColumn final : public nsITreeColumn
-                             , public nsWrapperCache
+                         , public nsWrapperCache
 {
 public:
   nsTreeColumn(nsTreeColumns* aColumns, nsIContent* aContent);
@@ -53,7 +53,7 @@ public:
 
   // WebIDL
   nsIContent* GetParentObject() const;
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   mozilla::dom::Element* GetElement(mozilla::ErrorResult& aRv);
 
@@ -151,7 +151,7 @@ private:
 NS_DEFINE_STATIC_IID_ACCESSOR(nsTreeColumn, NS_TREECOLUMN_IMPL_CID)
 
 class nsTreeColumns final : public nsITreeColumns
-                              , public nsWrapperCache
+                          , public nsWrapperCache
 {
 private:
   ~nsTreeColumns();
@@ -164,7 +164,7 @@ public:
   NS_DECL_NSITREECOLUMNS
 
   nsIContent* GetParentObject() const;
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // WebIDL
   mozilla::dom::TreeBoxObject* GetTree() const;

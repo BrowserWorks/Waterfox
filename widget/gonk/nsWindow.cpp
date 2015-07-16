@@ -22,6 +22,7 @@
 #include "mozilla/dom/TabParent.h"
 #include "mozilla/Hal.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/ProcessPriorityManager.h"
 #include "mozilla/Services.h"
 #include "mozilla/FileUtils.h"
 #include "mozilla/ClearOnShutdown.h"
@@ -45,6 +46,7 @@
 #include "pixelflinger/format.h"
 #include "mozilla/BasicEvents.h"
 #include "mozilla/gfx/2D.h"
+#include "mozilla/gfx/Logging.h"
 #include "mozilla/layers/APZCTreeManager.h"
 #include "mozilla/layers/APZThreadUtils.h"
 #include "mozilla/layers/CompositorParent.h"
@@ -93,6 +95,13 @@ public:
     {}
 
     NS_IMETHOD Run() {
+        // When the screen is off prevent priority changes.
+        if (mIsOn) {
+          ProcessPriorityManager::Unfreeze();
+        } else {
+          ProcessPriorityManager::Freeze();
+        }
+
         for (uint32_t i = 0; i < sTopWindows.Length(); i++) {
             nsWindow *win = sTopWindows[i];
 
@@ -218,6 +227,12 @@ nsWindow::DoDraw(void)
     }
 }
 
+void
+nsWindow::ConfigureAPZControllerThread()
+{
+  APZThreadUtils::SetControllerThread(CompositorParent::CompositorLoop());
+}
+
 /*static*/ nsEventStatus
 nsWindow::DispatchInputEvent(WidgetGUIEvent& aEvent)
 {
@@ -250,15 +265,17 @@ class DispatchTouchInputOnMainThread : public nsRunnable
 public:
     DispatchTouchInputOnMainThread(const MultiTouchInput& aInput,
                                    const ScrollableLayerGuid& aGuid,
-                                   const uint64_t& aInputBlockId)
+                                   const uint64_t& aInputBlockId,
+                                   nsEventStatus aApzResponse)
       : mInput(aInput)
       , mGuid(aGuid)
       , mInputBlockId(aInputBlockId)
+      , mApzResponse(aApzResponse)
     {}
 
     NS_IMETHOD Run() {
         if (gFocusedWindow) {
-            gFocusedWindow->DispatchTouchEventForAPZ(mInput, mGuid, mInputBlockId);
+            gFocusedWindow->DispatchTouchEventForAPZ(mInput, mGuid, mInputBlockId, mApzResponse);
         }
         return NS_OK;
     }
@@ -267,6 +284,7 @@ private:
     MultiTouchInput mInput;
     ScrollableLayerGuid mGuid;
     uint64_t mInputBlockId;
+    nsEventStatus mApzResponse;
 };
 
 void
@@ -283,9 +301,9 @@ nsWindow::DispatchTouchInputViaAPZ(MultiTouchInput& aInput)
     // First send it through the APZ code
     mozilla::layers::ScrollableLayerGuid guid;
     uint64_t inputBlockId;
-    nsEventStatus rv = mAPZC->ReceiveInputEvent(aInput, &guid, &inputBlockId);
+    nsEventStatus result = mAPZC->ReceiveInputEvent(aInput, &guid, &inputBlockId);
     // If the APZ says to drop it, then we drop it
-    if (rv == nsEventStatus_eConsumeNoDefault) {
+    if (result == nsEventStatus_eConsumeNoDefault) {
         return;
     }
 
@@ -294,13 +312,14 @@ nsWindow::DispatchTouchInputViaAPZ(MultiTouchInput& aInput)
     // refcounting is not threadsafe. Instead we just use the gFocusedWindow
     // static ptr inside the task.
     NS_DispatchToMainThread(new DispatchTouchInputOnMainThread(
-        aInput, guid, inputBlockId));
+        aInput, guid, inputBlockId, result));
 }
 
 void
 nsWindow::DispatchTouchEventForAPZ(const MultiTouchInput& aInput,
                                    const ScrollableLayerGuid& aGuid,
-                                   const uint64_t aInputBlockId)
+                                   const uint64_t aInputBlockId,
+                                   nsEventStatus aApzResponse)
 {
     MOZ_ASSERT(NS_IsMainThread());
     UserActivity();
@@ -308,25 +327,11 @@ nsWindow::DispatchTouchEventForAPZ(const MultiTouchInput& aInput,
     // Convert it to an event we can send to Gecko
     WidgetTouchEvent event = aInput.ToWidgetTouchEvent(this);
 
-    // If there is an event capturing child process, send it directly there.
-    // This happens if we already sent a touchstart event through the root
-    // process hit test and it ended up going to a child process. The event
-    // capturing process should get all subsequent touch events in the same
-    // event block. In this case the TryCapture call below will return true,
-    // and the child process will take care of responding to the event as needed
-    // so we don't need to do anything else here.
-    if (TabParent* capturer = TabParent::GetEventCapturer()) {
-        InputAPZContext context(aGuid, aInputBlockId);
-        if (capturer->TryCapture(event)) {
-            return;
-        }
-    }
-
-    // If it didn't get captured, dispatch the event into the gecko root process
-    // for "normal" flow. The event might get sent to the child process still,
-    // but if it doesn't we need to notify the APZ of various things. All of
-    // that happens in DispatchEventForAPZ
-    DispatchEventForAPZ(&event, aGuid, aInputBlockId);
+    // Dispatch the event into the gecko root process for "normal" flow.
+    // The event might get sent to a child process,
+    // but if it doesn't we need to notify the APZ of various things.
+    // All of that happens in ProcessUntransformedAPZEvent
+    ProcessUntransformedAPZEvent(&event, aGuid, aInputBlockId, aApzResponse);
 }
 
 class DispatchTouchInputOnControllerThread : public Task
@@ -704,6 +709,9 @@ nsWindow::StartRemoteDrawing()
     mFramebufferTarget = Factory::CreateDrawTargetForData(
          BackendType::CAIRO, (uint8_t*)vaddr,
          IntSize(width, height), mFramebuffer->stride * bytepp, format);
+    if (!mFramebufferTarget) {
+        MOZ_CRASH("nsWindow::StartRemoteDrawing failed in CreateDrawTargetForData");
+    }
     if (!mBackBuffer ||
         mBackBuffer->GetSize() != mFramebufferTarget->GetSize() ||
         mBackBuffer->GetFormat() != mFramebufferTarget->GetFormat()) {

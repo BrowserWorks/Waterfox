@@ -22,7 +22,7 @@ class XMLHttpRequestUpload final : public nsXHREventTarget
 
 public:
   virtual JSObject*
-  WrapObject(JSContext* aCx) override;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   static already_AddRefed<XMLHttpRequestUpload>
   Create(XMLHttpRequest* aXHR);

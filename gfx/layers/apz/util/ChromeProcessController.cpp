@@ -87,6 +87,13 @@ ChromeProcessController::PostDelayedTask(Task* aTask, int aDelayMs)
 }
 
 void
+ChromeProcessController::RequestFlingSnap(const FrameMetrics::ViewID& aScrollId,
+                                          const mozilla::CSSPoint& aDestination)
+{
+  APZCCallbackHelper::RequestFlingSnap(aScrollId, aDestination);
+}
+
+void
 ChromeProcessController::AcknowledgeScrollUpdate(const FrameMetrics::ViewID& aScrollId,
                                                  const uint32_t& aScrollGeneration)
 {
@@ -145,7 +152,7 @@ ChromeProcessController::GetDOMWindowUtils() const
 
 void
 ChromeProcessController::HandleSingleTap(const CSSPoint& aPoint,
-                                         int32_t aModifiers,
+                                         Modifiers aModifiers,
                                          const ScrollableLayerGuid& aGuid)
 {
   if (MessageLoop::current() != mUILoop) {
@@ -156,11 +163,11 @@ ChromeProcessController::HandleSingleTap(const CSSPoint& aPoint,
     return;
   }
 
-  mAPZEventState->ProcessSingleTap(aPoint, aGuid, GetPresShellResolution());
+  mAPZEventState->ProcessSingleTap(aPoint, aModifiers, aGuid, GetPresShellResolution());
 }
 
 void
-ChromeProcessController::HandleLongTap(const mozilla::CSSPoint& aPoint, int32_t aModifiers,
+ChromeProcessController::HandleLongTap(const mozilla::CSSPoint& aPoint, Modifiers aModifiers,
                                        const ScrollableLayerGuid& aGuid,
                                        uint64_t aInputBlockId)
 {
@@ -172,23 +179,8 @@ ChromeProcessController::HandleLongTap(const mozilla::CSSPoint& aPoint, int32_t 
     return;
   }
 
-  mAPZEventState->ProcessLongTap(GetDOMWindowUtils(), aPoint, aGuid,
+  mAPZEventState->ProcessLongTap(GetDOMWindowUtils(), aPoint, aModifiers, aGuid,
       aInputBlockId, GetPresShellResolution());
-}
-
-void
-ChromeProcessController::HandleLongTapUp(const CSSPoint& aPoint, int32_t aModifiers,
-                                         const ScrollableLayerGuid& aGuid)
-{
-  if (MessageLoop::current() != mUILoop) {
-    mUILoop->PostTask(
-        FROM_HERE,
-        NewRunnableMethod(this, &ChromeProcessController::HandleLongTapUp,
-                          aPoint, aModifiers, aGuid));
-    return;
-  }
-
-  mAPZEventState->ProcessLongTapUp(aPoint, aGuid, GetPresShellResolution());
 }
 
 void
@@ -207,4 +199,15 @@ ChromeProcessController::NotifyAPZStateChange(const ScrollableLayerGuid& aGuid,
   mAPZEventState->ProcessAPZStateChange(GetDocument(), aGuid.mScrollId, aChange, aArg);
 }
 
+void
+ChromeProcessController::NotifyMozMouseScrollEvent(const FrameMetrics::ViewID& aScrollId, const nsString& aEvent)
+{
+  if (MessageLoop::current() != mUILoop) {
+    mUILoop->PostTask(
+      FROM_HERE,
+      NewRunnableMethod(this, &ChromeProcessController::NotifyMozMouseScrollEvent, aScrollId, aEvent));
+    return;
+  }
 
+  APZCCallbackHelper::NotifyMozMouseScrollEvent(aScrollId, aEvent);
+}

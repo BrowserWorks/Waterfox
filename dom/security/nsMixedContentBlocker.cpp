@@ -97,12 +97,14 @@ public:
       if (eventSink) {
         // If mixed display content is loaded, make sure to include that in the state.
         if (rootDoc->GetHasMixedDisplayContentLoaded()) {
-          eventSink->OnSecurityChange(mContext, (nsIWebProgressListener::STATE_IS_BROKEN |
-          nsIWebProgressListener::STATE_LOADED_MIXED_ACTIVE_CONTENT |
-          nsIWebProgressListener::STATE_LOADED_MIXED_DISPLAY_CONTENT));
+          eventSink->OnSecurityChange(mContext,
+                                      (nsIWebProgressListener::STATE_IS_BROKEN |
+                                       nsIWebProgressListener::STATE_LOADED_MIXED_ACTIVE_CONTENT |
+                                       nsIWebProgressListener::STATE_LOADED_MIXED_DISPLAY_CONTENT));
         } else {
-          eventSink->OnSecurityChange(mContext, (nsIWebProgressListener::STATE_IS_BROKEN |
-          nsIWebProgressListener::STATE_LOADED_MIXED_ACTIVE_CONTENT));
+          eventSink->OnSecurityChange(mContext,
+                                      (nsIWebProgressListener::STATE_IS_BROKEN |
+                                       nsIWebProgressListener::STATE_LOADED_MIXED_ACTIVE_CONTENT));
         }
       }
 
@@ -118,9 +120,10 @@ public:
       if (eventSink) {
         // If mixed active content is loaded, make sure to include that in the state.
         if (rootDoc->GetHasMixedActiveContentLoaded()) {
-          eventSink->OnSecurityChange(mContext, (nsIWebProgressListener::STATE_IS_BROKEN |
-          nsIWebProgressListener::STATE_LOADED_MIXED_DISPLAY_CONTENT |
-          nsIWebProgressListener::STATE_LOADED_MIXED_ACTIVE_CONTENT));
+          eventSink->OnSecurityChange(mContext,
+                                      (nsIWebProgressListener::STATE_IS_BROKEN |
+                                       nsIWebProgressListener::STATE_LOADED_MIXED_DISPLAY_CONTENT |
+                                       nsIWebProgressListener::STATE_LOADED_MIXED_ACTIVE_CONTENT));
         } else {
           eventSink->OnSecurityChange(mContext, (nsIWebProgressListener::STATE_IS_BROKEN |
           nsIWebProgressListener::STATE_LOADED_MIXED_DISPLAY_CONTENT));
@@ -286,8 +289,42 @@ nsMixedContentBlocker::AsyncOnChannelRedirect(nsIChannel* aOldChannel,
   return NS_OK;
 }
 
+/* This version of ShouldLoad() is non-static and called by the Content Policy
+ * API and AsyncOnChannelRedirect().  See nsIContentPolicy::ShouldLoad()
+ * for detailed description of the parameters.
+ */
 NS_IMETHODIMP
 nsMixedContentBlocker::ShouldLoad(uint32_t aContentType,
+                                  nsIURI* aContentLocation,
+                                  nsIURI* aRequestingLocation,
+                                  nsISupports* aRequestingContext,
+                                  const nsACString& aMimeGuess,
+                                  nsISupports* aExtra,
+                                  nsIPrincipal* aRequestPrincipal,
+                                  int16_t* aDecision)
+{
+  // We pass in false as the first parameter to ShouldLoad(), because the
+  // callers of this method don't know whether the load went through cached
+  // image redirects.  This is handled by direct callers of the static
+  // ShouldLoad.
+  nsresult rv = ShouldLoad(false,   //aHadInsecureImageRedirect
+                           aContentType,
+                           aContentLocation,
+                           aRequestingLocation,
+                           aRequestingContext,
+                           aMimeGuess,
+                           aExtra,
+                           aRequestPrincipal,
+                           aDecision);
+  return rv;
+}
+
+/* Static version of ShouldLoad() that contains all the Mixed Content Blocker
+ * logic.  Called from non-static ShouldLoad().
+ */
+nsresult
+nsMixedContentBlocker::ShouldLoad(bool aHadInsecureImageRedirect,
+                                  uint32_t aContentType,
                                   nsIURI* aContentLocation,
                                   nsIURI* aRequestingLocation,
                                   nsISupports* aRequestingContext,
@@ -442,8 +479,12 @@ nsMixedContentBlocker::ShouldLoad(uint32_t aContentType,
     *aDecision = REJECT_REQUEST;
     return NS_ERROR_FAILURE;
   }
-
-  if (schemeLocal || schemeNoReturnData || schemeInherits || schemeSecure) {
+  // TYPE_IMAGE redirects are cached based on the original URI, not the final
+  // destination and hence cache hits for images may not have the correct
+  // aContentLocation.  Check if the cached hit went through an http redirect,
+  // and if it did, we can't treat this as a secure subresource.
+  if (!aHadInsecureImageRedirect &&
+      (schemeLocal || schemeNoReturnData || schemeInherits || schemeSecure)) {
     *aDecision = ACCEPT;
      return NS_OK;
   }
@@ -544,7 +585,7 @@ nsMixedContentBlocker::ShouldLoad(uint32_t aContentType,
   rv = docShell->GetAllowMixedContentAndConnectionData(&rootHasSecureConnection, &allowMixedContent, &isRootDocShell);
   if (NS_FAILED(rv)) {
     *aDecision = REJECT_REQUEST;
-     return rv;
+    return rv;
   }
 
 
@@ -618,10 +659,31 @@ nsMixedContentBlocker::ShouldLoad(uint32_t aContentType,
     if (allowMixedContent) {
       LogMixedContentMessage(classification, aContentLocation, rootDoc, eUserOverride);
       *aDecision = nsIContentPolicy::ACCEPT;
-      rootDoc->SetHasMixedActiveContentLoaded(true);
-      if (!rootDoc->GetHasMixedDisplayContentLoaded() && NS_SUCCEEDED(stateRV)) {
-        rootDoc->SetHasMixedDisplayContentLoaded(true);
-        eventSink->OnSecurityChange(aRequestingContext, (State | nsIWebProgressListener::STATE_LOADED_MIXED_DISPLAY_CONTENT));
+      // See if mixed display content has already loaded on the page or if the state needs to be updated here.
+      // If mixed display hasn't loaded previously, then we need to call OnSecurityChange() to update the UI.
+      if (rootDoc->GetHasMixedDisplayContentLoaded()) {
+        return NS_OK;
+      }
+      rootDoc->SetHasMixedDisplayContentLoaded(true);
+
+      if (rootHasSecureConnection) {
+        if (rootDoc->GetHasMixedActiveContentLoaded()) {
+          // If mixed active content is loaded, make sure to include that in the state.
+          eventSink->OnSecurityChange(aRequestingContext,
+                                      (nsIWebProgressListener::STATE_IS_BROKEN |
+                                       nsIWebProgressListener::STATE_LOADED_MIXED_DISPLAY_CONTENT |
+                                       nsIWebProgressListener::STATE_LOADED_MIXED_ACTIVE_CONTENT));
+        } else {
+          eventSink->OnSecurityChange(aRequestingContext,
+                                      (nsIWebProgressListener::STATE_IS_BROKEN |
+                                       nsIWebProgressListener::STATE_LOADED_MIXED_DISPLAY_CONTENT));
+        }
+      } else {
+        // User has overriden the pref and the root is not https;
+        // mixed display content was allowed on an https subframe.
+        if (NS_SUCCEEDED(stateRV)) {
+          eventSink->OnSecurityChange(aRequestingContext, (State | nsIWebProgressListener::STATE_LOADED_MIXED_DISPLAY_CONTENT));
+         }
       }
     } else {
       *aDecision = nsIContentPolicy::REJECT_REQUEST;
@@ -637,50 +699,52 @@ nsMixedContentBlocker::ShouldLoad(uint32_t aContentType,
     // If the content is active content, and the pref says active content should be blocked, block it
     // unless the user has choosen to override the pref
     if (allowMixedContent) {
-       LogMixedContentMessage(classification, aContentLocation, rootDoc, eUserOverride);
-       *aDecision = nsIContentPolicy::ACCEPT;
-       // See if the pref will change here. If it will, only then do we need to call OnSecurityChange() to update the UI.
-       if (rootDoc->GetHasMixedActiveContentLoaded()) {
-         return NS_OK;
-       }
-       rootDoc->SetHasMixedActiveContentLoaded(true);
+      LogMixedContentMessage(classification, aContentLocation, rootDoc, eUserOverride);
+      *aDecision = nsIContentPolicy::ACCEPT;
+      // See if the state will change here. If it will, only then do we need to call OnSecurityChange() to update the UI.
+      if (rootDoc->GetHasMixedActiveContentLoaded()) {
+        return NS_OK;
+      }
+      rootDoc->SetHasMixedActiveContentLoaded(true);
 
-       if (rootHasSecureConnection) {
-         // User has decided to override the pref and the root is https, so change the Security State.
-         if (rootDoc->GetHasMixedDisplayContentLoaded()) {
-           // If mixed display content is loaded, make sure to include that in the state.
-           eventSink->OnSecurityChange(aRequestingContext, (nsIWebProgressListener::STATE_IS_BROKEN |
-           nsIWebProgressListener::STATE_LOADED_MIXED_ACTIVE_CONTENT |
-           nsIWebProgressListener::STATE_LOADED_MIXED_DISPLAY_CONTENT));
-         } else {
-           eventSink->OnSecurityChange(aRequestingContext, (nsIWebProgressListener::STATE_IS_BROKEN |
-           nsIWebProgressListener::STATE_LOADED_MIXED_ACTIVE_CONTENT));
-         }
-         return NS_OK;
-       } else {
-         // User has already overriden the pref and the root is not https;
-         // mixed content was allowed on an https subframe.
-         if (NS_SUCCEEDED(stateRV)) {
-           eventSink->OnSecurityChange(aRequestingContext, (State | nsIWebProgressListener::STATE_LOADED_MIXED_ACTIVE_CONTENT));
-         }
-         return NS_OK;
-       }
+      if (rootHasSecureConnection) {
+        // User has decided to override the pref and the root is https, so change the Security State.
+        if (rootDoc->GetHasMixedDisplayContentLoaded()) {
+          // If mixed display content is loaded, make sure to include that in the state.
+          eventSink->OnSecurityChange(aRequestingContext,
+                                      (nsIWebProgressListener::STATE_IS_BROKEN |
+                                       nsIWebProgressListener::STATE_LOADED_MIXED_ACTIVE_CONTENT |
+                                       nsIWebProgressListener::STATE_LOADED_MIXED_DISPLAY_CONTENT));
+        } else {
+          eventSink->OnSecurityChange(aRequestingContext,
+                                      (nsIWebProgressListener::STATE_IS_BROKEN |
+                                       nsIWebProgressListener::STATE_LOADED_MIXED_ACTIVE_CONTENT));
+        }
+        return NS_OK;
+      } else {
+        // User has already overriden the pref and the root is not https;
+        // mixed active content was allowed on an https subframe.
+        if (NS_SUCCEEDED(stateRV)) {
+          eventSink->OnSecurityChange(aRequestingContext, (State | nsIWebProgressListener::STATE_LOADED_MIXED_ACTIVE_CONTENT));
+        }
+        return NS_OK;
+      }
     } else {
-       //User has not overriden the pref by Disabling protection. Reject the request and update the security state.
-       *aDecision = nsIContentPolicy::REJECT_REQUEST;
-       LogMixedContentMessage(classification, aContentLocation, rootDoc, eBlocked);
-       // See if the pref will change here. If it will, only then do we need to call OnSecurityChange() to update the UI.
-       if (rootDoc->GetHasMixedActiveContentBlocked()) {
-         return NS_OK;
-       }
-       rootDoc->SetHasMixedActiveContentBlocked(true);
+      //User has not overriden the pref by Disabling protection. Reject the request and update the security state.
+      *aDecision = nsIContentPolicy::REJECT_REQUEST;
+      LogMixedContentMessage(classification, aContentLocation, rootDoc, eBlocked);
+      // See if the pref will change here. If it will, only then do we need to call OnSecurityChange() to update the UI.
+      if (rootDoc->GetHasMixedActiveContentBlocked()) {
+        return NS_OK;
+      }
+      rootDoc->SetHasMixedActiveContentBlocked(true);
 
-       // The user has not overriden the pref, so make sure they still have an option by calling eventSink
-       // which will invoke the doorhanger
-       if (NS_SUCCEEDED(stateRV)) {
-          eventSink->OnSecurityChange(aRequestingContext, (State | nsIWebProgressListener::STATE_BLOCKED_MIXED_ACTIVE_CONTENT));
-       }
-       return NS_OK;
+      // The user has not overriden the pref, so make sure they still have an option by calling eventSink
+      // which will invoke the doorhanger
+      if (NS_SUCCEEDED(stateRV)) {
+         eventSink->OnSecurityChange(aRequestingContext, (State | nsIWebProgressListener::STATE_BLOCKED_MIXED_ACTIVE_CONTENT));
+      }
+      return NS_OK;
     }
 
   } else {

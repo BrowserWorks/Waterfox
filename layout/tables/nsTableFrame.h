@@ -57,6 +57,11 @@ public:
   // cells extending outside them.
   virtual nsRect GetBounds(nsDisplayListBuilder* aBuilder, bool* aSnap) override;
 
+  virtual nsDisplayItemGeometry* AllocateGeometry(nsDisplayListBuilder* aBuilder) override;
+  virtual void ComputeInvalidationRegion(nsDisplayListBuilder* aBuilder,
+                                         const nsDisplayItemGeometry* aGeometry,
+                                         nsRegion *aInvalidRegion) override;
+
   void UpdateForFrameBackground(nsIFrame* aFrame);
 
 private:
@@ -110,6 +115,7 @@ class nsTableFrame : public nsContainerFrame
   typedef mozilla::image::DrawResult DrawResult;
 
 public:
+  NS_DECL_QUERYFRAME_TARGET(nsTableFrame)
   NS_DECL_FRAMEARENA_HELPERS
 
   NS_DECLARE_FRAME_PROPERTY(PositionedTablePartArray,
@@ -380,7 +386,7 @@ public:
   /** return the width of the column at aColIndex    */
   int32_t GetColumnWidth(int32_t aColIndex);
 
-  /** Helper to get the cell spacing X style value.
+  /** Helper to get the column spacing style value.
    *  The argument refers to the space between column aColIndex and column
    *  aColIndex + 1.  An index of -1 indicates the padding between the table
    *  and the left border, an index equal to the number of columns indicates
@@ -389,7 +395,7 @@ public:
    *  Although in this class cell spacing does not depend on the index, it
    *  may be important for overriding classes.
    */
-  virtual nscoord GetCellSpacingX(int32_t aColIndex);
+  virtual nscoord GetColSpacing(int32_t aColIndex);
 
   /** Helper to find the sum of the cell spacing between arbitrary columns.
    *  The argument refers to the space between column aColIndex and column
@@ -400,14 +406,14 @@ public:
    *  This method is equivalent to
    *  nscoord result = 0;
    *  for (i = aStartColIndex; i < aEndColIndex; i++) {
-   *    result += GetCellSpacingX(i);
+   *    result += GetColSpacing(i);
    *  }
    *  return result;
    */
-  virtual nscoord GetCellSpacingX(int32_t aStartColIndex,
-                                  int32_t aEndColIndex);
+  virtual nscoord GetColSpacing(int32_t aStartColIndex,
+                                int32_t aEndColIndex);
 
-  /** Helper to get the cell spacing Y style value.
+  /** Helper to get the row spacing style value.
    *  The argument refers to the space between row aRowIndex and row
    *  aRowIndex + 1.  An index of -1 indicates the padding between the table
    *  and the top border, an index equal to the number of rows indicates
@@ -416,7 +422,7 @@ public:
    *  Although in this class cell spacing does not depend on the index, it
    *  may be important for overriding classes.
    */
-  virtual nscoord GetCellSpacingY(int32_t aRowIndex);
+  virtual nscoord GetRowSpacing(int32_t aRowIndex);
 
   /** Helper to find the sum of the cell spacing between arbitrary rows.
    *  The argument refers to the space between row aRowIndex and row
@@ -427,19 +433,19 @@ public:
    *  This method is equivalent to
    *  nscoord result = 0;
    *  for (i = aStartRowIndex; i < aEndRowIndex; i++) {
-   *    result += GetCellSpacingY(i);
+   *    result += GetRowSpacing(i);
    *  }
    *  return result;
    */
-  virtual nscoord GetCellSpacingY(int32_t aStartRowIndex,
+  virtual nscoord GetRowSpacing(int32_t aStartRowIndex,
                                   int32_t aEndRowIndex);
 
 private:
   /* For the base implementation of nsTableFrame, cell spacing does not depend
    * on row/column indexing.
    */
-  nscoord GetCellSpacingX();
-  nscoord GetCellSpacingY();
+  nscoord GetColSpacing();
+  nscoord GetRowSpacing();
 
 public:
   virtual nscoord GetLogicalBaseline(mozilla::WritingMode aWritingMode) const override;

@@ -7,13 +7,11 @@
     <script type="application/javascript" src="SelectionUtils.js"></script>
     <script type="application/javascript;version=1.8">
 
-// Name of this test.
-const TYPE_NAME = "Robocop:testSelectionHandler";
-
 const DIV_POINT_TEXT = "Under";
 const INPUT_TEXT = "Text for select all in an <input>";
-const TEXTAREA_TEXT = "Text for select all in a <textarea>";
+const PASTE_TEXT = "Text for testing paste";
 const READONLY_INPUT_TEXT = "readOnly text";
+const TEXTAREA_TEXT = "Text for select all in a <textarea>";
 
 /* =================================================================================
  *
@@ -28,6 +26,7 @@ function startTests() {
     then(testReadonlyInput).
     then(testCloseSelection).
     then(testStartSelectionFail).
+    then(testPaste).
 
     then(testAttachCaret).
     then(testAttachCaretFail).
@@ -211,7 +210,12 @@ function testCloseSelection() {
   // Various ways to close an active selection.
   ]).then(function() {
     sh.startSelection(inputNode);
-    Services.obs.notifyObservers(null, "TextSelection:End", {});
+    Services.obs.notifyObservers(null, "TextSelection:End",
+      JSON.stringify({selectionID: -1}));
+    return ok(sh.isSelectionActive(), "unrelated TextSelection:End should not close active selection");
+  }).then(function() {
+    Services.obs.notifyObservers(null, "TextSelection:End",
+      JSON.stringify({selectionID: sh._selectionID}));
     return ok(!sh.isSelectionActive(), "TextSelection:End should close active selection");
 
   }).then(function() {
@@ -313,7 +317,8 @@ function testAttachCaret() {
     ]);
 
   }).then(function() {
-    Services.obs.notifyObservers(null, "TextSelection:End", {});
+    Services.obs.notifyObservers(null, "TextSelection:End",
+      JSON.stringify({selectionID: sh._selectionID}));
 
     return Promise.all([
       ok(!sh.isSelectionActive(), "Selection should not be active at end of testAttachCaret"),
@@ -348,6 +353,44 @@ function testAttachCaretFail() {
   });
 }
 
+/* =================================================================================
+ *
+ * Tests to ensure we can paste text inside editable elements
+ *
+ */
+function testPaste() {
+  let sh = getSelectionHandler();
+  let clipboard = getClipboard();
+  clipboard.copyString(PASTE_TEXT, document);
+
+  // Add a contentEditable element to the document.
+  let div = document.createElement("div");
+  div.contentEditable = true;
+  div.dataset.editable = true;
+  document.body.appendChild(div);
+
+  let elements = document.querySelectorAll("div, input, textarea");
+  let promises = [];
+
+  for (var i = 0; i < elements.length; i++) {
+    sh.startSelection(elements[i]);
+    if (sh.isElementEditableText(elements[i]) && !elements[i].disabled) {
+      sh.actions.PASTE.action(elements[i]);
+    }
+    if (elements[i].dataset.editable) {
+      promises.push(is(getTextValue(elements[i]), PASTE_TEXT, "Pasted correctly"));
+      promises.push(ok(sh.isElementEditableText(elements[i]), "Element is editable"));
+    } else {
+      promises.push(isNot(getTextValue(elements[i]), PASTE_TEXT, "Paste failed correctly"));
+    }
+  }
+
+  document.body.removeChild(div);
+  div = null;
+
+  return Promise.all(promises);
+}
+
     </script>
   </head>
 
@@ -378,9 +421,9 @@ function testAttachCaretFail() {
       nunc vel, fringilla turpis. Nulla lacinia, leo ut egestas hendrerit, risus
       ligula interdum enim, vel varius libero sem ut ligula.</div><br>
 
-    <input id="inputNode" type="text"><br>
+    <input data-editable="true" id="inputNode" type="text"><br>
 
-    <textarea id="textareaNode"></textarea><br>
+    <textarea data-editable="true" id="textareaNode"></textarea><br>
 
     <input id="readOnlyTextInput" type="text" readonly><br>
 

@@ -26,7 +26,7 @@ namespace indexedDB {
 class IDBFileHandle;
 
 class IDBFileRequest final : public DOMRequest,
-                                 public FileRequestBase
+                             public FileRequestBase
 {
 public:
   NS_DECL_ISUPPORTS_INHERITED
@@ -50,7 +50,7 @@ public:
 
   // nsWrapperCache
   virtual JSObject*
-  WrapObject(JSContext* aCx) override;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // WebIDL
   IDBFileHandle*

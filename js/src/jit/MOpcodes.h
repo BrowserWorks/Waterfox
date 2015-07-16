@@ -24,6 +24,7 @@ namespace jit {
     _(SimdInsertElement)                                                    \
     _(SimdSignMask)                                                         \
     _(SimdSwizzle)                                                          \
+    _(SimdGeneralShuffle)                                                   \
     _(SimdShuffle)                                                          \
     _(SimdUnaryArith)                                                       \
     _(SimdBinaryComp)                                                       \
@@ -65,7 +66,9 @@ namespace jit {
     _(ArraySplice)                                                          \
     _(Bail)                                                                 \
     _(Unreachable)                                                          \
+    _(EncodeSnapshot)                                                       \
     _(AssertFloat32)                                                        \
+    _(AssertRecoveredOnBailout)                                             \
     _(GetDynamicName)                                                       \
     _(FilterArgumentsOrEval)                                                \
     _(CallDirectEval)                                                       \
@@ -139,6 +142,7 @@ namespace jit {
     _(StringReplace)                                                        \
     _(Lambda)                                                               \
     _(LambdaArrow)                                                          \
+    _(KeepAliveObject)                                                      \
     _(Slots)                                                                \
     _(Elements)                                                             \
     _(ConstantElements)                                                     \
@@ -159,7 +163,7 @@ namespace jit {
     _(SetElementCache)                                                      \
     _(BindNameCache)                                                        \
     _(GuardShape)                                                           \
-    _(GuardShapePolymorphic)                                                \
+    _(GuardReceiverPolymorphic)                                             \
     _(GuardObjectGroup)                                                     \
     _(GuardObjectIdentity)                                                  \
     _(GuardClass)                                                           \
@@ -178,10 +182,12 @@ namespace jit {
     _(InArray)                                                              \
     _(LoadElement)                                                          \
     _(LoadElementHole)                                                      \
+    _(LoadUnboxedScalar)                                                    \
     _(LoadUnboxedObjectOrNull)                                              \
     _(LoadUnboxedString)                                                    \
     _(StoreElement)                                                         \
     _(StoreElementHole)                                                     \
+    _(StoreUnboxedScalar)                                                   \
     _(StoreUnboxedObjectOrNull)                                             \
     _(StoreUnboxedString)                                                   \
     _(ConvertUnboxedObjectToNative)                                         \
@@ -189,10 +195,8 @@ namespace jit {
     _(ArrayPush)                                                            \
     _(ArrayConcat)                                                          \
     _(ArrayJoin)                                                            \
-    _(LoadTypedArrayElement)                                                \
     _(LoadTypedArrayElementHole)                                            \
     _(LoadTypedArrayElementStatic)                                          \
-    _(StoreTypedArrayElement)                                               \
     _(StoreTypedArrayElementHole)                                           \
     _(StoreTypedArrayElementStatic)                                         \
     _(CompareExchangeTypedArrayElement)                                     \

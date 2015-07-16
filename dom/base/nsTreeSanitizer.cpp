@@ -106,8 +106,10 @@ nsIAtom** const kElementsHTML[] = {
   &nsGkAtoms::pre,
   &nsGkAtoms::progress,
   &nsGkAtoms::q,
+  &nsGkAtoms::rb,
   &nsGkAtoms::rp,
   &nsGkAtoms::rt,
+  &nsGkAtoms::rtc,
   &nsGkAtoms::ruby,
   &nsGkAtoms::s,
   &nsGkAtoms::samp,
@@ -1214,10 +1216,10 @@ nsTreeSanitizer::SanitizeAttributes(mozilla::dom::Element* aElement,
       }
       if (aAllowed->GetEntry(attrLocal) &&
           !((attrLocal == nsGkAtoms::rel &&
-             aElement->IsHTML(nsGkAtoms::link)) ||
+             aElement->IsHTMLElement(nsGkAtoms::link)) ||
             (!mFullDocument &&
              attrLocal == nsGkAtoms::name &&
-             aElement->IsHTML(nsGkAtoms::meta)))) {
+             aElement->IsHTMLElement(nsGkAtoms::meta)))) {
         // name="" and rel="" are whitelisted, but treat them as blacklisted
         // for <meta name> (fragment case) and <link rel> (all cases) to avoid
         // document-wide metadata or styling overrides with non-conforming
@@ -1273,8 +1275,7 @@ nsTreeSanitizer::SanitizeAttributes(mozilla::dom::Element* aElement,
 
   // If we've got HTML audio or video, add the controls attribute, because
   // otherwise the content is unplayable with scripts removed.
-  if (aElement->IsHTML(nsGkAtoms::video) ||
-      aElement->IsHTML(nsGkAtoms::audio)) {
+  if (aElement->IsAnyOfHTMLElements(nsGkAtoms::video, nsGkAtoms::audio)) {
     aElement->SetAttr(kNameSpaceID_None,
                       nsGkAtoms::controls,
                       EmptyString(),
@@ -1358,7 +1359,7 @@ nsTreeSanitizer::Sanitize(nsIDocument* aDocument)
 #ifdef DEBUG
   NS_PRECONDITION(!aDocument->GetContainer(), "The document is in a shell.");
   nsRefPtr<mozilla::dom::Element> root = aDocument->GetRootElement();
-  NS_PRECONDITION(root->IsHTML(nsGkAtoms::html), "Not HTML root.");
+  NS_PRECONDITION(root->IsHTMLElement(nsGkAtoms::html), "Not HTML root.");
 #endif
 
   mFullDocument = true;

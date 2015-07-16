@@ -206,7 +206,9 @@ let DebuggerController = {
 
     if (target.isAddon) {
       yield this._startAddonDebugging(actor);
-    } else if (target.chrome) {
+    } else if (!target.isTabActor) {
+      // Some actors like AddonActor or RootActor for chrome debugging
+      // do not support attach/detach and can be used directly
       yield this._startChromeDebugging(chromeDebugger);
     } else {
       yield this._startDebuggingTab();
@@ -494,10 +496,22 @@ ThreadState.prototype = {
     // Ignore "interrupted" events, to avoid UI flicker. These are generated
     // by the slow script dialog and internal events such as setting
     // breakpoints. Pressing the resume button does need to be shown, though.
-    if (aEvent == "paused" &&
-        aPacket.why.type == "interrupted" &&
-        !this.interruptedByResumeButton) {
-      return;
+    if (aEvent == "paused") {
+      if (aPacket.why.type == "interrupted" &&
+          !this.interruptedByResumeButton) {
+        return;
+      } else if (aPacket.why.type == "breakpointConditionThrown" && aPacket.why.message) {
+        let where = aPacket.frame.where;
+        let aLocation = {
+          line: where.line,
+          column: where.column,
+          actor: where.source ? where.source.actor : null
+        };
+        DebuggerView.Sources.showBreakpointConditionThrownMessage(
+          aLocation,
+          aPacket.why.message
+        );
+      }
     }
 
     this.interruptedByResumeButton = false;
@@ -587,6 +601,10 @@ StackFrames.prototype = {
       // If paused by a breakpoint, store the breakpoint location.
       case "breakpoint":
         this._currentBreakpointLocation = aPacket.frame.where;
+        break;
+      case "breakpointConditionThrown":
+        this._currentBreakpointLocation = aPacket.frame.where;
+        this._conditionThrowMessage = aPacket.why.message;
         break;
       // If paused by a client evaluation, store the evaluated value.
       case "clientEvaluated":
@@ -1728,6 +1746,18 @@ EventListeners.prototype = {
   },
 
   /**
+   * A semaphore that is used to ensure only a single protocol request for event
+   * listeners will be ongoing at any given time.
+   */
+  _parsingListeners: false,
+
+  /**
+   * A flag the indicates whether a new request to fetch updated event listeners
+   * has arrived, while another one was in progress.
+   */
+  _eventListenersUpdateNeeded: false,
+
+  /**
    * Fetches the currently attached event listeners from the debugee.
    * The thread client state is assumed to be "paused".
    *
@@ -1735,6 +1765,13 @@ EventListeners.prototype = {
    *        Invoked once the event listeners are fetched and displayed.
    */
   _getListeners: function(aCallback) {
+    // Don't make a new request if one is still ongoing, but schedule one for
+    // later.
+    if (this._parsingListeners) {
+      this._eventListenersUpdateNeeded = true;
+      return;
+    }
+    this._parsingListeners = true;
     gThreadClient.eventListeners(Task.async(function*(aResponse) {
       if (aResponse.error) {
         throw "Error getting event listeners: " + aResponse.message;
@@ -1745,17 +1782,29 @@ EventListeners.prototype = {
       aResponse.listeners.sort((a, b) => a.type > b.type ? 1 : -1);
 
       // Add all the listeners in the debugger view event linsteners container.
+      let fetchedDefinitions = new Map();
       for (let listener of aResponse.listeners) {
         let definitionSite;
-        if (listener.function.class == "Function") {
+        if (fetchedDefinitions.has(listener.function.actor)) {
+          definitionSite = fetchedDefinitions.get(listener.function.actor);
+        } else if (listener.function.class == "Function") {
           definitionSite = yield this._getDefinitionSite(listener.function);
+          fetchedDefinitions.set(listener.function.actor, definitionSite);
         }
         listener.function.url = definitionSite;
         DebuggerView.EventListeners.addListener(listener, { staged: true });
       }
+      fetchedDefinitions.clear();
 
       // Flushes all the prepared events into the event listeners container.
       DebuggerView.EventListeners.commit();
+
+      // Now that we are done, schedule a new update if necessary.
+      this._parsingListeners = false;
+      if (this._eventListenersUpdateNeeded) {
+        this._eventListenersUpdateNeeded = false;
+        this.scheduleEventListenersFetch();
+      }
 
       // Notify that event listeners were fetched and shown in the view,
       // and callback to resume the active thread if necessary.

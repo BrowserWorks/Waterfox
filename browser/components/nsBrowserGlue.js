@@ -141,6 +141,9 @@ XPCOMUtils.defineLazyModuleGetter(this, "WebChannel",
 XPCOMUtils.defineLazyModuleGetter(this, "ReaderParent",
                                   "resource:///modules/ReaderParent.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "AddonWatcher",
+                                  "resource://gre/modules/AddonWatcher.jsm");
+
 const PREF_PLUGINS_NOTIFYUSER = "plugins.update.notifyUser";
 const PREF_PLUGINS_UPDATEURL  = "plugins.update.url";
 
@@ -581,6 +584,76 @@ BrowserGlue.prototype = {
     this._distributionCustomizer.applyPrefDefaults();
   },
 
+  _notifySlowAddon: function BG_notifySlowAddon(addonId) {
+    let addonCallback = function(addon) {
+      if (!addon) {
+        Cu.reportError("couldn't look up addon: " + addonId);
+        return;
+      }
+      let win = RecentWindow.getMostRecentBrowserWindow();
+
+      if (!win) {
+        return;
+      }
+
+      let brandBundle = win.document.getElementById("bundle_brand");
+      let brandShortName = brandBundle.getString("brandShortName");
+      let message = win.gNavigatorBundle.getFormattedString("addonwatch.slow", [addon.name, brandShortName]);
+      let notificationBox = win.document.getElementById("global-notificationbox");
+      let notificationId = 'addon-slow:' + addonId;
+      let notification = notificationBox.getNotificationWithValue(notificationId);
+      if(notification) {
+        notification.label = message;
+      } else {
+        let buttons = [
+          {
+            label: win.gNavigatorBundle.getFormattedString("addonwatch.disable.label", [addon.name]),
+            accessKey: win.gNavigatorBundle.getString("addonwatch.disable.accesskey"),
+            callback: function() {
+              addon.userDisabled = true;
+              if (addon.pendingOperations != addon.PENDING_NONE) {
+                let restartMessage = win.gNavigatorBundle.getFormattedString("addonwatch.restart.message", [addon.name, brandShortName]);
+                let restartButton = [
+                  {
+                    label: win.gNavigatorBundle.getFormattedString("addonwatch.restart.label", [brandShortName]),
+                    accessKey: win.gNavigatorBundle.getString("addonwatch.restart.accesskey"),
+                    callback: function() {
+                      let appStartup = Cc["@mozilla.org/toolkit/app-startup;1"]
+                        .getService(Ci.nsIAppStartup);
+                      appStartup.quit(appStartup.eForceQuit | appStartup.eRestart);
+                    }
+                  }
+                ];
+                const priority = notificationBox.PRIORITY_WARNING_MEDIUM;
+                notificationBox.appendNotification(restartMessage, "restart-" + addonId, "",
+                                                   priority, restartButton);
+              }
+            }
+          },
+          {
+            label: win.gNavigatorBundle.getString("addonwatch.ignoreSession.label"),
+            accessKey: win.gNavigatorBundle.getString("addonwatch.ignoreSession.accesskey"),
+            callback: function() {
+              AddonWatcher.ignoreAddonForSession(addonId);
+            }
+          },
+          {
+            label: win.gNavigatorBundle.getString("addonwatch.ignorePerm.label"),
+            accessKey: win.gNavigatorBundle.getString("addonwatch.ignorePerm.accesskey"),
+            callback: function() {
+              AddonWatcher.ignoreAddonPermanently(addonId);
+            }
+          },
+        ];
+
+        const priority = notificationBox.PRIORITY_WARNING_MEDIUM;
+        notificationBox.appendNotification(message, notificationId, "",
+                                             priority, buttons);
+      }
+    };
+    AddonManager.getAddonByID(addonId, addonCallback);
+  },
+
   // runs on startup, before the first command line handler is invoked
   // (i.e. before the first window is opened)
   _finalUIStartup: function BG__finalUIStartup() {
@@ -631,6 +704,8 @@ BrowserGlue.prototype = {
 #endif
 
     Services.obs.notifyObservers(null, "browser-ui-startup-complete", "");
+
+    AddonWatcher.init(this._notifySlowAddon);
   },
 
   _checkForOldBuildUpdates: function () {
@@ -893,6 +968,7 @@ BrowserGlue.prototype = {
 #endif
     webrtcUI.uninit();
     FormValidationHandler.uninit();
+    AddonWatcher.uninit();
   },
 
   _initServiceDiscovery: function () {
@@ -982,6 +1058,11 @@ BrowserGlue.prototype = {
                           .add(isDefault);
       }
       catch (ex) { /* Don't break the default prompt if telemetry is broken. */ }
+
+      if (isDefault) {
+        let now = Date.now().toString().slice(0, -3);
+        Services.prefs.setCharPref("browser.shell.mostRecentDateSetAsDefault", now);
+      }
 
       if (shouldCheck && !isDefault && !willRecoverSession) {
         Services.tm.mainThread.dispatch(function() {
@@ -1338,7 +1419,7 @@ BrowserGlue.prototype = {
         () => BookmarkHTMLUtils.exportToFile(BookmarkHTMLUtils.defaultPath));
     }
 
-    Task.spawn(function() {
+    Task.spawn(function* () {
       // Check if Safe Mode or the user has required to restore bookmarks from
       // default profile's bookmarks.html
       let restoreDefaultBookmarks = false;
@@ -1414,23 +1495,21 @@ BrowserGlue.prototype = {
         if (bookmarksUrl) {
           // Import from bookmarks.html file.
           try {
-            BookmarkHTMLUtils.importFromURL(bookmarksUrl, true).then(null,
-              function onFailure() {
-                Cu.reportError("Bookmarks.html file could be corrupt.");
-              }
-            ).then(
-              function onComplete() {
-                // Now apply distribution customized bookmarks.
-                // This should always run after Places initialization.
-                this._distributionCustomizer.applyBookmarks();
-                // Ensure that smart bookmarks are created once the operation is
-                // complete.
-                this.ensurePlacesDefaultQueriesInitialized();
-              }.bind(this)
-            );
-          } catch (err) {
-            Cu.reportError("Bookmarks.html file could be corrupt. " + err);
+            yield BookmarkHTMLUtils.importFromURL(bookmarksUrl, true);
+          } catch (e) {
+            Cu.reportError("Bookmarks.html file could be corrupt. " + e);
           }
+          try {
+            // Now apply distribution customized bookmarks.
+            // This should always run after Places initialization.
+            this._distributionCustomizer.applyBookmarks();
+            // Ensure that smart bookmarks are created once the operation is
+            // complete.
+            this.ensurePlacesDefaultQueriesInitialized();
+          } catch (e) {
+            Cu.reportError(e);
+          }
+
         }
         else {
           Cu.reportError("Unable to find bookmarks.html file.");
@@ -1554,7 +1633,7 @@ BrowserGlue.prototype = {
   },
 
   _migrateUI: function BG__migrateUI() {
-    const UI_VERSION = 27;
+    const UI_VERSION = 29;
     const BROWSER_DOCURL = "chrome://browser/content/browser.xul";
     let currentUIVersion = 0;
     try {
@@ -1870,6 +1949,21 @@ BrowserGlue.prototype = {
       if (Services.prefs.prefHasUserValue(kOldColorPref) &&
           !Services.prefs.getBoolPref(kOldColorPref)) {
         Services.prefs.setIntPref("browser.display.document_color_use", 2);
+      }
+    }
+
+    if (currentUIVersion < 29) {
+      let group = null;
+      try {
+        group = Services.prefs.getComplexValue("font.language.group",
+                                               Ci.nsIPrefLocalizedString);
+      } catch (ex) {}
+      if (group &&
+          ["tr", "x-baltic", "x-central-euro"].some(g => g == group.data)) {
+        // Latin groups were consolidated.
+        group.data = "x-western";
+        Services.prefs.setComplexValue("font.language.group",
+                                       Ci.nsIPrefLocalizedString, group);
       }
     }
 
@@ -2478,9 +2572,9 @@ let DefaultBrowserCheck = {
     let claimAllTypes = true;
 #ifdef XP_WIN
     try {
-      // In Windows 8, the UI for selecting default protocol is much
+      // In Windows 8+, the UI for selecting default protocol is much
       // nicer than the UI for setting file type associations. So we
-      // only show the protocol association screen on Windows 8.
+      // only show the protocol association screen on Windows 8+.
       // Windows 8 is version 6.2.
       let version = Services.sysinfo.getProperty("version");
       claimAllTypes = (parseFloat(version) < 6.2);
@@ -2690,7 +2784,6 @@ let E10SUINotification = {
 
       if (!Services.appinfo.inSafeMode &&
           !Services.appinfo.accessibilityEnabled &&
-          !Services.appinfo.keyboardMayHaveIME &&
           isHardwareAccelerated &&
           e10sPromptShownCount < 5) {
         Services.tm.mainThread.dispatch(() => {

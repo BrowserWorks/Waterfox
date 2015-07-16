@@ -68,6 +68,22 @@ InterceptedChannelBase::GetIsNavigation(bool* aIsNavigation)
 }
 
 nsresult
+InterceptedChannelBase::DoSynthesizeStatus(uint16_t aStatus, const nsACString& aReason)
+{
+    EnsureSynthesizedResponse();
+
+    // Always assume HTTP 1.1 for synthesized responses.
+    nsAutoCString statusLine;
+    statusLine.AppendLiteral("HTTP/1.1 ");
+    statusLine.AppendInt(aStatus);
+    statusLine.AppendLiteral(" ");
+    statusLine.Append(aReason);
+
+    (*mSynthesizedResponseHead)->ParseStatusLine(statusLine.get());
+    return NS_OK;
+}
+
+nsresult
 InterceptedChannelBase::DoSynthesizeHeader(const nsACString& aName, const nsACString& aValue)
 {
     EnsureSynthesizedResponse();
@@ -86,12 +102,19 @@ InterceptedChannelChrome::InterceptedChannelChrome(nsHttpChannel* aChannel,
 , mChannel(aChannel)
 , mSynthesizedCacheEntry(aEntry)
 {
+  nsresult rv = mChannel->GetApplyConversion(&mOldApplyConversion);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    mOldApplyConversion = false;
+  }
 }
 
 void
 InterceptedChannelChrome::NotifyController()
 {
   nsCOMPtr<nsIOutputStream> out;
+
+  // Intercepted responses should already be decoded.
+  mChannel->SetApplyConversion(false);
 
   nsresult rv = mSynthesizedCacheEntry->OpenOutputStream(0, getter_AddRefs(mResponseBody));
   NS_ENSURE_SUCCESS_VOID(rv);
@@ -116,6 +139,8 @@ InterceptedChannelChrome::ResetInterception()
   mSynthesizedCacheEntry->AsyncDoom(nullptr);
   mSynthesizedCacheEntry = nullptr;
 
+  mChannel->SetApplyConversion(mOldApplyConversion);
+
   nsCOMPtr<nsIURI> uri;
   mChannel->GetURI(getter_AddRefs(uri));
 
@@ -124,6 +149,16 @@ InterceptedChannelChrome::ResetInterception()
 
   mChannel = nullptr;
   return NS_OK;
+}
+
+NS_IMETHODIMP
+InterceptedChannelChrome::SynthesizeStatus(uint16_t aStatus, const nsACString& aReason)
+{
+  if (!mSynthesizedCacheEntry) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  return DoSynthesizeStatus(aStatus, aReason);
 }
 
 NS_IMETHODIMP
@@ -194,6 +229,16 @@ InterceptedChannelChrome::Cancel()
   return NS_OK;
 }
 
+NS_IMETHODIMP
+InterceptedChannelChrome::SetSecurityInfo(nsISupports* aSecurityInfo)
+{
+  if (!mChannel) {
+    return NS_ERROR_FAILURE;
+  }
+
+  return mChannel->OverrideSecurityInfo(aSecurityInfo);
+}
+
 InterceptedChannelContent::InterceptedChannelContent(HttpChannelChild* aChannel,
                                                      nsINetworkInterceptController* aController,
                                                      nsIStreamListener* aListener)
@@ -237,6 +282,16 @@ InterceptedChannelContent::ResetInterception()
 }
 
 NS_IMETHODIMP
+InterceptedChannelContent::SynthesizeStatus(uint16_t aStatus, const nsACString& aReason)
+{
+  if (!mResponseBody) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  return DoSynthesizeStatus(aStatus, aReason);
+}
+
+NS_IMETHODIMP
 InterceptedChannelContent::SynthesizeHeader(const nsACString& aName, const nsACString& aValue)
 {
   if (!mResponseBody) {
@@ -267,7 +322,22 @@ InterceptedChannelContent::FinishSynthesizedResponse()
   rv = mStoragePump->AsyncRead(mStreamListener, nullptr);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  mChannel->OverrideWithSynthesizedResponse(mSynthesizedResponseHead.ref(), mStoragePump);
+  // Intercepted responses should already be decoded.
+  mChannel->SetApplyConversion(false);
+
+  // In our current implementation, the FetchEvent handler will copy the
+  // response stream completely into the pipe backing the input stream so we
+  // can treat the available as the length of the stream.
+  int64_t streamLength;
+  uint64_t available;
+  rv = mSynthesizedInput->Available(&available);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    streamLength = -1;
+  } else {
+    streamLength = int64_t(available);
+  }
+
+  mChannel->OverrideWithSynthesizedResponse(mSynthesizedResponseHead.ref(), mStoragePump, streamLength);
 
   mChannel = nullptr;
   mStreamListener = nullptr;
@@ -288,6 +358,16 @@ InterceptedChannelContent::Cancel()
   mChannel = nullptr;
   mStreamListener = nullptr;
   return NS_OK;
+}
+
+NS_IMETHODIMP
+InterceptedChannelContent::SetSecurityInfo(nsISupports* aSecurityInfo)
+{
+  if (!mChannel) {
+    return NS_ERROR_FAILURE;
+  }
+
+  return mChannel->OverrideSecurityInfo(aSecurityInfo);
 }
 
 } // namespace net

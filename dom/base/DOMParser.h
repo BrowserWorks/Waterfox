@@ -21,8 +21,8 @@ namespace mozilla {
 namespace dom {
 
 class DOMParser final : public nsIDOMParser,
-                            public nsSupportsWeakReference,
-                            public nsWrapperCache
+                        public nsSupportsWeakReference,
+                        public nsWrapperCache
 {
   typedef mozilla::dom::GlobalObject GlobalObject;
 
@@ -75,9 +75,9 @@ public:
     return mOwner;
   }
 
-  virtual JSObject* WrapObject(JSContext* aCx) override
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override
   {
-    return mozilla::dom::DOMParserBinding::Wrap(aCx, this);
+    return mozilla::dom::DOMParserBinding::Wrap(aCx, this, aGivenProto);
   }
 
 private:

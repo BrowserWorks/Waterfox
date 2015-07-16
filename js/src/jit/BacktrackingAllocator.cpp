@@ -15,13 +15,13 @@ using mozilla::DebugOnly;
 bool
 BacktrackingAllocator::init()
 {
-    RegisterSet remainingRegisters(allRegisters_);
-    while (!remainingRegisters.empty(/* float = */ false)) {
-        AnyRegister reg = AnyRegister(remainingRegisters.takeGeneral());
+    LiveRegisterSet remainingRegisters(allRegisters_.asLiveSet());
+    while (!remainingRegisters.emptyGeneral()) {
+        AnyRegister reg = AnyRegister(remainingRegisters.takeAnyGeneral());
         registers[reg.code()].allocatable = true;
     }
-    while (!remainingRegisters.empty(/* float = */ true)) {
-        AnyRegister reg = AnyRegister(remainingRegisters.takeFloat());
+    while (!remainingRegisters.emptyFloat()) {
+        AnyRegister reg = AnyRegister(remainingRegisters.takeAnyFloat());
         registers[reg.code()].allocatable = true;
     }
 
@@ -209,7 +209,7 @@ BacktrackingAllocator::tryGroupRegisters(uint32_t vreg0, uint32_t vreg1)
     // arguments through a lazy arguments object.
     if (IsArgumentSlotDefinition(reg0->def()) || IsArgumentSlotDefinition(reg1->def())) {
         JSScript* script = graph.mir().entryBlock()->info().script();
-        if (script && script->argumentsAliasesFormals()) {
+        if (script && script->argumentsHasVarBinding()) {
             if (*reg0->def()->output() != *reg1->def()->output())
                 return true;
         }

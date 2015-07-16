@@ -11,7 +11,7 @@
 namespace mozilla {
 
 template<typename T>
-struct GMPUniqueDestroyPolicy
+struct DestroyPolicy
 {
   void operator()(T* aGMPObject) const {
     aGMPObject->Destroy();
@@ -21,7 +21,7 @@ struct GMPUniqueDestroyPolicy
 // Ideally, this would be a template alias, but GCC 4.6 doesn't support them.  See bug 1124021.
 template<typename T>
 struct GMPUnique {
-  typedef mozilla::UniquePtr<T, GMPUniqueDestroyPolicy<T>> Ptr;
+  typedef mozilla::UniquePtr<T, DestroyPolicy<T>> Ptr;
 };
 
 bool GetEMEVoucherPath(nsIFile** aPath);

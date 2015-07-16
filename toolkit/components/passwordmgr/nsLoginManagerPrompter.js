@@ -3,25 +3,24 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+const { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components;
 
-const Cc = Components.classes;
-const Ci = Components.interfaces;
-const Cr = Components.results;
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
+Cu.import("resource://gre/modules/SharedPromptUtils.jsm");
 
-Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
-Components.utils.import("resource://gre/modules/Services.jsm");
-Components.utils.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
-Components.utils.import("resource://gre/modules/SharedPromptUtils.jsm");
+const LoginInfo =
+      Components.Constructor("@mozilla.org/login-manager/loginInfo;1",
+                             "nsILoginInfo", "init");
 
 /* Constants for password prompt telemetry.
  * Mirrored in mobile/android/components/LoginManagerPrompter.js */
 const PROMPT_DISPLAYED = 0;
 
-const PROMPT_ADD = 1;
+const PROMPT_ADD_OR_UPDATE = 1;
 const PROMPT_NOTNOW = 2;
 const PROMPT_NEVER = 3;
-
-const PROMPT_UPDATE = 1;
 
 /*
  * LoginManagerPromptFactory
@@ -136,7 +135,7 @@ LoginManagerPromptFactory.prototype = {
         }
         self._doAsyncPrompt();
       }
-    }
+    };
 
     Services.tm.mainThread.dispatch(runnable, Ci.nsIThread.DISPATCH_NORMAL);
     this.log("_doAsyncPrompt:run dispatched");
@@ -241,7 +240,7 @@ LoginManagerPrompter.prototype = {
       this.__strBundle = bunService.createBundle(
                   "chrome://passwordmgr/locale/passwordmgr.properties");
       if (!this.__strBundle)
-        throw "String bundle for Login Manager not present!";
+        throw new Error("String bundle for Login Manager not present!");
     }
 
     return this.__strBundle;
@@ -304,7 +303,8 @@ LoginManagerPrompter.prototype = {
   prompt : function (aDialogTitle, aText, aPasswordRealm,
                      aSavePassword, aDefaultText, aResult) {
     if (aSavePassword != Ci.nsIAuthPrompt.SAVE_PASSWORD_NEVER)
-      throw Components.results.NS_ERROR_NOT_IMPLEMENTED;
+      throw new Components.Exception("prompt only supports SAVE_PASSWORD_NEVER",
+                                     Cr.NS_ERROR_NOT_IMPLEMENTED);
 
     this.log("===== prompt() called =====");
 
@@ -328,7 +328,8 @@ LoginManagerPrompter.prototype = {
     this.log("===== promptUsernameAndPassword() called =====");
 
     if (aSavePassword == Ci.nsIAuthPrompt.SAVE_PASSWORD_FOR_SESSION)
-        throw Components.results.NS_ERROR_NOT_IMPLEMENTED;
+      throw new Components.Exception("promptUsernameAndPassword doesn't support SAVE_PASSWORD_FOR_SESSION",
+                                     Cr.NS_ERROR_NOT_IMPLEMENTED);
 
     var selectedLogin = null;
     var checkBox = { value : false };
@@ -430,7 +431,8 @@ LoginManagerPrompter.prototype = {
     this.log("===== promptPassword called() =====");
 
     if (aSavePassword == Ci.nsIAuthPrompt.SAVE_PASSWORD_FOR_SESSION)
-        throw Components.results.NS_ERROR_NOT_IMPLEMENTED;
+      throw new Components.Exception("promptPassword doesn't support SAVE_PASSWORD_FOR_SESSION",
+                                     Cr.NS_ERROR_NOT_IMPLEMENTED);
 
     var checkBox = { value : false };
     var checkBoxLabel = null;
@@ -689,7 +691,7 @@ LoginManagerPrompter.prototype = {
         level: aLevel,
         inProgress : false,
         prompter: this
-      }
+      };
 
       this._factory._asyncPrompts[hashKey] = asyncPrompt;
       this._factory._doAsyncPrompt();
@@ -742,8 +744,6 @@ LoginManagerPrompter.prototype = {
    */
   promptToSavePassword : function (aLogin) {
     var notifyObj = this._getPopupNote() || this._getNotifyBox();
-    Services.telemetry.getHistogramById("PWMGR_PROMPT_REMEMBER_ACTION").add(PROMPT_DISPLAYED);
-
     if (notifyObj)
       this._showSaveLoginNotification(notifyObj, aLogin);
     else
@@ -783,6 +783,203 @@ LoginManagerPrompter.prototype = {
     }
   },
 
+  /**
+   * Displays the PopupNotifications.jsm doorhanger for password save or change.
+   *
+   * @param {nsILoginInfo} login
+   *        Login to save or change. For changes, this login should contain the
+   *        new password.
+   * @param {string} type
+   *        This is "password-save" or "password-change" depending on the
+   *        original notification type. This is used for telemetry and tests.
+   */
+  _showLoginCaptureDoorhanger(login, type) {
+    let { browser } = this._getNotifyWindow();
+
+    let saveMsgNames = {
+      prompt: "rememberPasswordMsgNoUsername",
+      buttonLabel: "notifyBarRememberPasswordButtonText",
+      buttonAccessKey: "notifyBarRememberPasswordButtonAccessKey",
+    };
+
+    let changeMsgNames = {
+      // We reuse the existing message, even if it expects a username, until we
+      // switch to the final terminology in bug 1144856.
+      prompt: "updatePasswordMsg",
+      buttonLabel: "notifyBarUpdateButtonText",
+      buttonAccessKey: "notifyBarUpdateButtonAccessKey",
+    };
+
+    let initialMsgNames = type == "password-save" ? saveMsgNames
+                                                  : changeMsgNames;
+
+    let histogramName = type == "password-save" ? "PWMGR_PROMPT_REMEMBER_ACTION"
+                                                : "PWMGR_PROMPT_UPDATE_ACTION";
+    let histogram = Services.telemetry.getHistogramById(histogramName);
+    histogram.add(PROMPT_DISPLAYED);
+
+    let chromeDoc = browser.ownerDocument;
+
+    let currentNotification;
+
+    let updateButtonStatus = (element) => {
+      let mainActionButton = chromeDoc.getAnonymousElementByAttribute(element.button, "anonid", "button");
+      // Disable the main button inside the menu-button if the password field is empty.
+      if (login.password.length == 0) {
+        mainActionButton.setAttribute("disabled", true);
+        chromeDoc.getElementById("password-notification-password")
+                 .classList.add("popup-notification-invalid-input");
+      } else {
+        mainActionButton.removeAttribute("disabled");
+        chromeDoc.getElementById("password-notification-password")
+                 .classList.remove("popup-notification-invalid-input");
+      }
+    };
+
+    let updateButtonLabel = () => {
+      let foundLogins = Services.logins.findLogins({}, login.hostname,
+                                                   login.formSubmitURL,
+                                                   login.httpRealm);
+      let logins = foundLogins.filter(l => l.username == login.username);
+      let msgNames = (logins.length == 0) ? saveMsgNames : changeMsgNames;
+
+      // Update the label based on whether this will be a new login or not.
+      let label = this._getLocalizedString(msgNames.buttonLabel);
+      let accessKey = this._getLocalizedString(msgNames.buttonAccessKey);
+
+      // Update the labels for the next time the panel is opened.
+      currentNotification.mainAction.label = label;
+      currentNotification.mainAction.accessKey = accessKey;
+
+      // Update the labels in real time if the notification is displayed.
+      let element = [...currentNotification.owner.panel.childNodes]
+                    .find(n => n.notification == currentNotification);
+      if (element) {
+        element.setAttribute("buttonlabel", label);
+        element.setAttribute("buttonaccesskey", accessKey);
+        updateButtonStatus(element);
+      }
+    };
+
+    let writeDataToUI = () => {
+      chromeDoc.getElementById("password-notification-username")
+               .setAttribute("placeholder", usernamePlaceholder);
+      chromeDoc.getElementById("password-notification-username")
+               .setAttribute("value", login.username);
+      chromeDoc.getElementById("password-notification-password")
+               .setAttribute("value", login.password);
+      updateButtonLabel();
+    };
+
+    let readDataFromUI = () => {
+      login.username =
+        chromeDoc.getElementById("password-notification-username").value;
+      login.password =
+        chromeDoc.getElementById("password-notification-password").value;
+    };
+
+    let onInput = () => {
+      readDataFromUI();
+      updateButtonLabel();
+    };
+
+    let persistData = () => {
+      let foundLogins = Services.logins.findLogins({}, login.hostname,
+                                                   login.formSubmitURL,
+                                                   login.httpRealm);
+      let logins = foundLogins.filter(l => l.username == login.username);
+      if (logins.length == 0) {
+        // The original login we have been provided with might have its own
+        // metadata, but we don't want it propagated to the newly created one.
+        Services.logins.addLogin(new LoginInfo(login.hostname,
+                                               login.formSubmitURL,
+                                               login.httpRealm,
+                                               login.username,
+                                               login.password,
+                                               login.usernameField,
+                                               login.passwordField));
+      } else if (logins.length == 1) {
+        if (logins[0].password == login.password) {
+          // We only want to touch the login's use count and last used time.
+          this._updateLogin(logins[0], null);
+        } else {
+          this._updateLogin(logins[0], login.password);
+        }
+      } else {
+        Cu.reportError("Unexpected match of multiple logins.");
+      }
+    };
+
+    // The main action is the "Remember" or "Update" button.
+    let mainAction = {
+      label: this._getLocalizedString(initialMsgNames.buttonLabel),
+      accessKey: this._getLocalizedString(initialMsgNames.buttonAccessKey),
+      callback: () => {
+        histogram.add(PROMPT_ADD_OR_UPDATE);
+        if(histogramName == "PWMGR_PROMPT_REMEMBER_ACTION")
+        {
+          Services.obs.notifyObservers(null, 'LoginStats:NewSavedPassword', null);
+        }
+        readDataFromUI();
+        persistData();
+        browser.focus();
+      }
+    };
+
+    // Include a "Never for this site" button when saving a new password.
+    let secondaryActions = type == "password-save" ? [{
+      label: this._getLocalizedString("notifyBarNeverRememberButtonText"),
+      accessKey: this._getLocalizedString("notifyBarNeverRememberButtonAccessKey"),
+      callback: () => {
+        histogram.add(PROMPT_NEVER);
+        Services.logins.setLoginSavingEnabled(login.hostname, false);
+        browser.focus();
+      }
+    }] : null;
+
+    let usernamePlaceholder = this._getLocalizedString("noUsernamePlaceholder");
+    let displayHost = this._getShortDisplayHost(login.hostname);
+
+    this._getPopupNote().show(
+      browser,
+      "password",
+      this._getLocalizedString(initialMsgNames.prompt, [displayHost]),
+      "password-notification-icon",
+      mainAction,
+      secondaryActions,
+      {
+        timeout: Date.now() + 10000,
+        persistWhileVisible: true,
+        passwordNotificationType: type,
+        eventCallback: function (topic) {
+          switch (topic) {
+            case "showing":
+              currentNotification = this;
+              chromeDoc.getElementById("password-notification-username")
+                       .addEventListener("input", onInput);
+              chromeDoc.getElementById("password-notification-password")
+                       .addEventListener("input", onInput);
+              break;
+            case "shown":
+              writeDataToUI();
+              break;
+            case "dismissed":
+              readDataFromUI();
+              // Fall through.
+            case "removed":
+              currentNotification = null;
+              chromeDoc.getElementById("password-notification-username")
+                       .removeEventListener("input", onInput);
+              chromeDoc.getElementById("password-notification-password")
+                       .removeEventListener("input", onInput);
+              break;
+          }
+          return false;
+        },
+      }
+    );
+  },
+
   /*
    * _showSaveLoginNotification
    *
@@ -808,57 +1005,18 @@ LoginManagerPrompter.prototype = {
           this._getLocalizedString("notifyBarRememberPasswordButtonAccessKey");
 
     var displayHost = this._getShortDisplayHost(aLogin.hostname);
-    var notificationText;
-    if (aLogin.username) {
-      var displayUser = this._sanitizeUsername(aLogin.username);
-      notificationText  = this._getLocalizedString(
-                                  "rememberPasswordMsg",
-                                  [displayUser, displayHost]);
-    } else {
-      notificationText  = this._getLocalizedString(
+    var notificationText = this._getLocalizedString(
                                   "rememberPasswordMsgNoUsername",
                                   [displayHost]);
-    }
 
     // The callbacks in |buttons| have a closure to access the variables
     // in scope here; set one to |this._pwmgr| so we can get back to pwmgr
     // without a getService() call.
     var pwmgr = this._pwmgr;
-    let promptHistogram = Services.telemetry.getHistogramById("PWMGR_PROMPT_REMEMBER_ACTION");
 
     // Notification is a PopupNotification
     if (aNotifyObj == this._getPopupNote()) {
-      // "Remember" button
-      var mainAction = {
-        label:     rememberButtonText,
-        accessKey: rememberButtonAccessKey,
-        callback: function(aNotifyObj, aButton) {
-          promptHistogram.add(PROMPT_ADD);
-          pwmgr.addLogin(aLogin);
-          Services.obs.notifyObservers(null, 'LoginStats:NewSavedPassword', null);
-          browser.focus();
-        }
-      };
-
-      var secondaryActions = [
-        // "Never for this site" button
-        {
-          label:     neverButtonText,
-          accessKey: neverButtonAccessKey,
-          callback: function(aNotifyObj, aButton) {
-            promptHistogram.add(PROMPT_NEVER);
-            pwmgr.setLoginSavingEnabled(aLogin.hostname, false);
-            browser.focus();
-          }
-        }
-      ];
-
-      var { browser } = this._getNotifyWindow();
-
-      aNotifyObj.show(browser, "password-save", notificationText,
-                      "password-notification-icon", mainAction,
-                      secondaryActions, { timeout: Date.now() + 10000,
-                                          persistWhileVisible: true });
+      this._showLoginCaptureDoorhanger(aLogin, "password-save");
     } else {
       var notNowButtonText =
             this._getLocalizedString("notifyBarNotNowButtonText");
@@ -872,8 +1030,6 @@ LoginManagerPrompter.prototype = {
           popup:     null,
           callback: function(aNotifyObj, aButton) {
             pwmgr.addLogin(aLogin);
-            Services.obs.notifyObservers(null, 'LoginStats:NewSavedPassword', null);
-
           }
         },
 
@@ -909,7 +1065,7 @@ LoginManagerPrompter.prototype = {
   _removeLoginNotifications : function () {
     var popupNote = this._getPopupNote();
     if (popupNote)
-      popupNote = popupNote.getNotification("password-save");
+      popupNote = popupNote.getNotification("password");
     if (popupNote)
       popupNote.remove();
 
@@ -1017,48 +1173,26 @@ LoginManagerPrompter.prototype = {
    *        A notification box or a popup notification.
    */
   _showChangeLoginNotification : function (aNotifyObj, aOldLogin, aNewPassword) {
-    var notificationText;
-    if (aOldLogin.username) {
-      var displayUser = this._sanitizeUsername(aOldLogin.username);
-      notificationText  = this._getLocalizedString(
-                                    "updatePasswordMsg",
-                                    [displayUser]);
-    } else {
-      notificationText  = this._getLocalizedString(
-                                    "updatePasswordMsgNoUser");
-    }
-
     var changeButtonText =
           this._getLocalizedString("notifyBarUpdateButtonText");
     var changeButtonAccessKey =
           this._getLocalizedString("notifyBarUpdateButtonAccessKey");
+
+    // We reuse the existing message, even if it expects a username, until we
+    // switch to the final terminology in bug 1144856.
+    var displayHost = this._getShortDisplayHost(aOldLogin.hostname);
+    var notificationText = this._getLocalizedString("updatePasswordMsg",
+                                                    [displayHost]);
 
     // The callbacks in |buttons| have a closure to access the variables
     // in scope here; set one to |this._pwmgr| so we can get back to pwmgr
     // without a getService() call.
     var self = this;
 
-    let promptHistogram = Services.telemetry.getHistogramById("PWMGR_PROMPT_UPDATE_ACTION");
     // Notification is a PopupNotification
     if (aNotifyObj == this._getPopupNote()) {
-      // "Yes" button
-      var mainAction = {
-        label:     changeButtonText,
-        accessKey: changeButtonAccessKey,
-        popup:     null,
-        callback:  function(aNotifyObj, aButton) {
-          self._updateLogin(aOldLogin, aNewPassword);
-          promptHistogram.add(PROMPT_UPDATE);
-        }
-      };
-
-      var { browser } = this._getNotifyWindow();
-
-      Services.telemetry.getHistogramById("PWMGR_PROMPT_UPDATE_ACTION").add(PROMPT_DISPLAYED);
-      aNotifyObj.show(browser, "password-change", notificationText,
-                      "password-notification-icon", mainAction,
-                      null, { timeout: Date.now() + 10000,
-                              persistWhileVisible: true });
+      aOldLogin.password = aNewPassword;
+      this._showLoginCaptureDoorhanger(aOldLogin, "password-change");
     } else {
       var dontChangeButtonText =
             this._getLocalizedString("notifyBarDontChangeButtonText");
@@ -1451,11 +1585,11 @@ LoginManagerPrompter.prototype = {
     if (aAuthInfo.flags & Ci.nsIAuthInformation.AUTH_PROXY) {
       this.log("getAuthTarget is for proxy auth");
       if (!(aChannel instanceof Ci.nsIProxiedChannel))
-        throw "proxy auth needs nsIProxiedChannel";
+        throw new Error("proxy auth needs nsIProxiedChannel");
 
       var info = aChannel.proxyInfo;
       if (!info)
-        throw "proxy auth needs nsIProxyInfo";
+        throw new Error("proxy auth needs nsIProxyInfo");
 
       // Proxies don't have a scheme, but we'll use "moz-proxy://"
       // so that it's more obvious what the login is for.
@@ -1538,7 +1672,7 @@ LoginManagerPrompter.prototype = {
         this.callback = null;
         this.context = null;
       }
-    }
+    };
   }
 
 }; // end of LoginManagerPrompter implementation

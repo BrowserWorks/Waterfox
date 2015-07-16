@@ -2,13 +2,18 @@
 
 interface nsIDOMWindow;
 
-[scriptable, uuid(54fd2dd3-c01b-4f71-888f-462f37a54f57)]
+[scriptable, uuid(55d54034-1573-4889-b1d9-93ba12fc33c7)]
 interface nsIWorkerDebuggerListener : nsISupports
 {
   void onClose();
+
+  void onError(in DOMString filename, in unsigned long lineno,
+               in DOMString message);
+
+  void onMessage(in DOMString message);
 };
 
-[scriptable, builtinclass, uuid(0833b363-bffe-4cdb-ad50-1c4563e0C8ff)]
+[scriptable, builtinclass, uuid(28e0a60c-ff10-446c-8c2a-5fbdc01394ea)]
 interface nsIWorkerDebugger : nsISupports
 {
   const unsigned long TYPE_DEDICATED = 0;
@@ -26,6 +31,12 @@ interface nsIWorkerDebugger : nsISupports
   readonly attribute DOMString url;
 
   readonly attribute nsIDOMWindow window;
+
+  [implicit_jscontext]
+  void initialize(in DOMString url);
+
+  [implicit_jscontext, binaryname(PostMessageMoz)]
+  void postMessage(in DOMString message);
 
   void addListener(in nsIWorkerDebuggerListener listener);
 

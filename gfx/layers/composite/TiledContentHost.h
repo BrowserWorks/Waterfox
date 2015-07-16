@@ -34,7 +34,6 @@
 class gfxReusableSurfaceWrapper;
 struct nsIntPoint;
 struct nsIntRect;
-struct nsIntSize;
 
 namespace mozilla {
 namespace gfx {
@@ -106,6 +105,10 @@ public:
     }
   }
 
+  void Dump(std::stringstream& aStream) {
+    aStream << "TileHost(...)"; // fill in as needed
+  }
+
   void DumpTexture(std::stringstream& aStream) {
     // TODO We should combine the OnWhite/OnBlack here an just output a single image.
     CompositableHost::DumpTextureHost(aStream, mTextureHost);
@@ -136,7 +139,7 @@ public:
 
   // Stores the absolute resolution of the containing frame, calculated
   // by the sum of the resolutions of all parent layers' FrameMetrics.
-  const CSSToParentLayerScale& GetFrameResolution() { return mFrameResolution; }
+  const CSSToParentLayerScale2D& GetFrameResolution() { return mFrameResolution; }
 
   void ReadUnlock();
 
@@ -176,7 +179,7 @@ protected:
   void UnlockTile(TileHost aTile) {}
   void PostValidate(const nsIntRegion& aPaintRegion) {}
 private:
-  CSSToParentLayerScale mFrameResolution;
+  CSSToParentLayerScale2D mFrameResolution;
   bool mHasDoubleBufferedTiles;
   bool mIsValid;
 };
@@ -305,7 +308,7 @@ private:
                   const gfx::Rect& aClipRect,
                   const nsIntRegion& aScreenRegion,
                   const nsIntPoint& aTextureOffset,
-                  const nsIntSize& aTextureBounds);
+                  const gfx::IntSize& aTextureBounds);
 
   void EnsureTileStore() {}
 

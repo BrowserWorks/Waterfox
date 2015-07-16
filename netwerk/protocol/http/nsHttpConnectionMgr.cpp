@@ -195,7 +195,7 @@ nsHttpConnectionMgr::PostEvent(nsConnEventHandler handler, int32_t iparam, void 
         rv = NS_ERROR_NOT_INITIALIZED;
     }
     else {
-        nsRefPtr<nsIRunnable> event = new nsConnEvent(this, handler, iparam, vparam);
+        nsCOMPtr<nsIRunnable> event = new nsConnEvent(this, handler, iparam, vparam);
         rv = mSocketThreadTarget->Dispatch(event, NS_DISPATCH_NORMAL);
     }
     return rv;
@@ -880,8 +880,8 @@ nsHttpConnectionMgr::GetSpdyPreferredEnt(nsConnectionEntry *aOriginalEntry)
          NS_SUCCEEDED(rv) && index > 0; --index) {
         if (info->ProtocolEnabled(index - 1)) {
             rv = sslSocketControl->JoinConnection(info->VersionString[index - 1],
-                                                  aOriginalEntry->mConnInfo->GetHost(),
-                                                  aOriginalEntry->mConnInfo->Port(),
+                                                  aOriginalEntry->mConnInfo->GetOrigin(),
+                                                  aOriginalEntry->mConnInfo->OriginPort(),
                                                   &isJoined);
             if (NS_SUCCEEDED(rv) && isJoined) {
                 break;
@@ -2376,7 +2376,7 @@ nsHttpConnectionMgr::OnMsgShutdown(int32_t, void *param)
     }
 
     // signal shutdown complete
-    nsRefPtr<nsIRunnable> runnable =
+    nsCOMPtr<nsIRunnable> runnable =
         new nsConnEvent(this, &nsHttpConnectionMgr::OnMsgShutdownConfirm,
                         0, param);
     NS_DispatchToMainThread(runnable);
@@ -2811,7 +2811,7 @@ nsHttpConnectionMgr::ActivateTimeoutTick()
 {
     MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread);
     LOG(("nsHttpConnectionMgr::ActivateTimeoutTick() "
-         "this=%p mTimeoutTick=%p\n"));
+         "this=%p mTimeoutTick=%p\n", this, mTimeoutTick.get()));
 
     // The timer tick should be enabled if it is not already pending.
     // Upon running the tick will rearm itself if there are active

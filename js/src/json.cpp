@@ -309,7 +309,7 @@ JO(JSContext* cx, HandleObject obj, StringifyContext* scx)
     if (!detect.init())
         return false;
     if (detect.foundCycle()) {
-        JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_JSON_CYCLIC_VALUE,
+        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_JSON_CYCLIC_VALUE,
                              js_object_str);
         return false;
     }
@@ -400,7 +400,7 @@ JA(JSContext* cx, HandleObject obj, StringifyContext* scx)
     if (!detect.init())
         return false;
     if (detect.foundCycle()) {
-        JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_JSON_CYCLIC_VALUE,
+        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_JSON_CYCLIC_VALUE,
                              js_object_str);
         return false;
     }
@@ -517,8 +517,8 @@ Str(JSContext* cx, const Value& v, StringifyContext* scx)
 
 /* ES5 15.12.3. */
 bool
-js_Stringify(JSContext* cx, MutableHandleValue vp, JSObject* replacer_, Value space_,
-             StringBuffer& sb)
+js::Stringify(JSContext* cx, MutableHandleValue vp, JSObject* replacer_, Value space_,
+              StringBuffer& sb)
 {
     RootedObject replacer(cx, replacer_);
     RootedValue space(cx, space_);
@@ -712,8 +712,8 @@ Walk(JSContext* cx, HandleObject holder, HandleId name, HandleValue reviver, Mut
 
                 if (newElement.isUndefined()) {
                     /* Step 2a(iii)(2). */
-                    bool succeeded;
-                    if (!DeleteProperty(cx, obj, id, &succeeded))
+                    ObjectOpResult ignored;
+                    if (!DeleteProperty(cx, obj, id, ignored))
                         return false;
                 } else {
                     /* Step 2a(iii)(3). */
@@ -740,8 +740,8 @@ Walk(JSContext* cx, HandleObject holder, HandleId name, HandleValue reviver, Mut
 
                 if (newElement.isUndefined()) {
                     /* Step 2b(ii)(2). */
-                    bool succeeded;
-                    if (!DeleteProperty(cx, obj, id, &succeeded))
+                    ObjectOpResult ignored;
+                    if (!DeleteProperty(cx, obj, id, ignored))
                         return false;
                 } else {
                     /* Step 2b(ii)(3). */
@@ -861,7 +861,7 @@ json_stringify(JSContext* cx, unsigned argc, Value* vp)
     RootedValue space(cx, args.get(2));
 
     StringBuffer sb(cx);
-    if (!js_Stringify(cx, &value, replacer, space, sb))
+    if (!Stringify(cx, &value, replacer, space, sb))
         return false;
 
     // XXX This can never happen to nsJSON.cpp, but the JSON object
@@ -889,14 +889,14 @@ static const JSFunctionSpec json_static_methods[] = {
 };
 
 JSObject*
-js_InitJSONClass(JSContext* cx, HandleObject obj)
+js::InitJSONClass(JSContext* cx, HandleObject obj)
 {
     Rooted<GlobalObject*> global(cx, &obj->as<GlobalObject>());
 
     RootedObject proto(cx, global->getOrCreateObjectPrototype(cx));
     if (!proto)
         return nullptr;
-    RootedObject JSON(cx, NewObjectWithGivenProto(cx, &JSONClass, proto, global, SingletonObject));
+    RootedObject JSON(cx, NewObjectWithGivenProto(cx, &JSONClass, proto, SingletonObject));
     if (!JSON)
         return nullptr;
 

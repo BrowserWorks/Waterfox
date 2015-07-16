@@ -19,7 +19,7 @@ namespace dom {
 class TableRowsCollection;
 
 class HTMLTableElement final : public nsGenericHTMLElement,
-                                   public nsIDOMHTMLTableElement
+                               public nsIDOMHTMLTableElement
 {
 public:
   explicit HTMLTableElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
@@ -54,7 +54,7 @@ public:
   }
   void SetTHead(HTMLTableSectionElement* aTHead, ErrorResult& aError)
   {
-    if (aTHead && !aTHead->IsHTML(nsGkAtoms::thead)) {
+    if (aTHead && !aTHead->IsHTMLElement(nsGkAtoms::thead)) {
       aError.Throw(NS_ERROR_DOM_HIERARCHY_REQUEST_ERR);
       return;
     }
@@ -74,7 +74,7 @@ public:
   }
   void SetTFoot(HTMLTableSectionElement* aTFoot, ErrorResult& aError)
   {
-    if (aTFoot && !aTFoot->IsHTML(nsGkAtoms::tfoot)) {
+    if (aTFoot && !aTFoot->IsHTMLElement(nsGkAtoms::tfoot)) {
       aError.Throw(NS_ERROR_DOM_HIERARCHY_REQUEST_ERR);
       return;
     }
@@ -206,13 +206,13 @@ public:
 protected:
   virtual ~HTMLTableElement();
 
-  virtual JSObject* WrapNode(JSContext *aCx) override;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   nsIContent* GetChild(nsIAtom *aTag) const
   {
     for (nsIContent* cur = nsINode::GetFirstChild(); cur;
          cur = cur->GetNextSibling()) {
-      if (cur->IsHTML(aTag)) {
+      if (cur->IsHTMLElement(aTag)) {
         return cur;
       }
     }

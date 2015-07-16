@@ -53,6 +53,7 @@ CanReuseFunctionForClone(JSContext* cx, HandleFunction fun)
 
 inline JSFunction*
 CloneFunctionObjectIfNotSingleton(JSContext* cx, HandleFunction fun, HandleObject parent,
+                                  HandleObject proto = NullPtr(),
                                   NewObjectKind newKind = GenericObject)
 {
     /*
@@ -69,8 +70,10 @@ CloneFunctionObjectIfNotSingleton(JSContext* cx, HandleFunction fun, HandleObjec
      */
     if (CanReuseFunctionForClone(cx, fun)) {
         RootedObject obj(cx, SkipScopeParent(parent));
-        if (!JSObject::setParent(cx, fun, obj))
+        ObjectOpResult succeeded;
+        if (proto && !SetPrototype(cx, fun, proto, succeeded))
             return nullptr;
+        MOZ_ASSERT(!proto || succeeded);
         fun->setEnvironment(parent);
         return fun;
     }
@@ -82,7 +85,7 @@ CloneFunctionObjectIfNotSingleton(JSContext* cx, HandleFunction fun, HandleObjec
     gc::AllocKind kind = fun->isExtended()
                          ? extendedFinalizeKind
                          : finalizeKind;
-    return CloneFunctionObject(cx, fun, parent, kind, newKind);
+    return CloneFunctionObject(cx, fun, parent, kind, newKind, proto);
 }
 
 } /* namespace js */

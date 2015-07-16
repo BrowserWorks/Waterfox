@@ -137,7 +137,7 @@ enum eCharsetReloadState
 
 class nsDocShell final
   : public nsDocLoader
-  , public nsIDocShell_ESR38
+  , public nsIDocShell
   , public nsIWebNavigation
   , public nsIBaseWindow
   , public nsIScrollable
@@ -169,7 +169,6 @@ public:
 
   NS_DECL_ISUPPORTS_INHERITED
 
-  NS_DECL_NSIDOCSHELL_ESR38
   NS_DECL_NSIDOCSHELL
   NS_DECL_NSIDOCSHELLTREEITEM
   NS_DECL_NSIWEBNAVIGATION
@@ -263,17 +262,17 @@ public:
 
   // Notify Scroll observers when an async panning/zooming transform
   // has started being applied
-  void NotifyAsyncPanZoomStarted(const mozilla::CSSIntPoint aScrollPos);
+  void NotifyAsyncPanZoomStarted();
   // Notify Scroll observers when an async panning/zooming transform
   // is no longer applied
-  void NotifyAsyncPanZoomStopped(const mozilla::CSSIntPoint aScrollPos);
+  void NotifyAsyncPanZoomStopped();
 
   // Add new profile timeline markers to this docShell. This will only add
   // markers if the docShell is currently recording profile timeline markers.
   // See nsIDocShell::recordProfileTimelineMarkers
   void AddProfileTimelineMarker(const char* aName,
                                 TracingMetadata aMetaData);
-  void AddProfileTimelineMarker(mozilla::UniquePtr<TimelineMarker>& aMarker);
+  void AddProfileTimelineMarker(mozilla::UniquePtr<TimelineMarker>&& aMarker);
 
   // Global counter for how many docShells are currently recording profile
   // timeline markers
@@ -291,10 +290,10 @@ protected:
   nsresult CreateAboutBlankContentViewer(nsIPrincipal* aPrincipal,
                                          nsIURI* aBaseURI,
                                          bool aTryToSaveOldPresentation = true);
-  nsresult CreateContentViewer(const char* aContentType,
+  nsresult CreateContentViewer(const nsACString& aContentType,
                                nsIRequest* aRequest,
                                nsIStreamListener** aContentHandler);
-  nsresult NewContentViewerObj(const char* aContentType,
+  nsresult NewContentViewerObj(const nsACString& aContentType,
                                nsIRequest* aRequest, nsILoadGroup* aLoadGroup,
                                nsIStreamListener** aContentHandler,
                                nsIContentViewer** aViewer);
@@ -985,7 +984,7 @@ private:
   // True if recording profiles.
   bool mProfileTimelineRecording;
 
-  nsTArray<TimelineMarker*> mProfileTimelineMarkers;
+  nsTArray<mozilla::UniquePtr<TimelineMarker>> mProfileTimelineMarkers;
 
   // Get rid of all the timeline markers accumulated so far
   void ClearProfileTimelineMarkers();

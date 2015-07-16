@@ -46,11 +46,10 @@ const MATCH_BEGINNING_CASE_SENSITIVE = Ci.mozIPlacesAutoComplete.MATCH_BEGINNING
 
 // AutoComplete query type constants.
 // Describes the various types of queries that we can process rows for.
-const QUERYTYPE_KEYWORD       = 0;
-const QUERYTYPE_FILTERED      = 1;
-const QUERYTYPE_AUTOFILL_HOST = 2;
-const QUERYTYPE_AUTOFILL_URL  = 3;
-const QUERYTYPE_AUTOFILL_PREDICTURL  = 4;
+const QUERYTYPE_FILTERED            = 0;
+const QUERYTYPE_AUTOFILL_HOST       = 1;
+const QUERYTYPE_AUTOFILL_URL        = 2;
+const QUERYTYPE_AUTOFILL_PREDICTURL = 3;
 
 // This separator is used as an RTL-friendly way to split the title and tags.
 // It can also be used by an nsIAutoCompleteResult consumer to re-split the
@@ -64,7 +63,7 @@ const TITLE_SEARCH_ENGINE_SEPARATOR = " \u00B7\u2013\u00B7 ";
 const TELEMETRY_1ST_RESULT = "PLACES_AUTOCOMPLETE_1ST_RESULT_TIME_MS";
 const TELEMETRY_6_FIRST_RESULTS = "PLACES_AUTOCOMPLETE_6_FIRST_RESULTS_TIME_MS";
 // The default frecency value used when inserting matches with unknown frecency.
-const FRECENCY_SEARCHENGINES_DEFAULT = 1000;
+const FRECENCY_DEFAULT = 1000;
 
 // Sqlite result row index constants.
 const QUERYINDEX_QUERYTYPE     = 0;
@@ -149,27 +148,6 @@ const SQL_ADAPTIVE_QUERY =
                             :matchBehavior, :searchBehavior)
    ORDER BY rank DESC, h.frecency DESC`;
 
-const SQL_KEYWORD_QUERY =
-  `/* do not warn (bug 487787) */
-   SELECT :query_type,
-     (SELECT REPLACE(url, '%s', :query_string) FROM moz_places WHERE id = b.fk)
-     AS search_url, h.title,
-     IFNULL(f.url, (SELECT f.url
-                    FROM moz_places
-                    JOIN moz_favicons f ON f.id = favicon_id
-                    WHERE rev_host = (SELECT rev_host FROM moz_places WHERE id = b.fk)
-                    ORDER BY frecency DESC
-                    LIMIT 1)
-           ),
-     1, b.title, NULL, h.visit_count, h.typed, IFNULL(h.id, b.fk),
-     t.open_count, h.frecency
-   FROM moz_keywords k
-   JOIN moz_bookmarks b ON b.keyword_id = k.id
-   LEFT JOIN moz_places h ON h.url = search_url
-   LEFT JOIN moz_favicons f ON f.id = h.favicon_id
-   LEFT JOIN moz_openpages_temp t ON t.url = search_url
-   WHERE LOWER(k.keyword) = LOWER(:keyword)
-   ORDER BY h.frecency DESC`;
 
 function hostQuery(conditions = "") {
   let query =
@@ -735,6 +713,8 @@ Search.prototype = {
     // Since we call the synchronous parseSubmissionURL function later, we must
     // wait for the initialization of PlacesSearchAutocompleteProvider first.
     yield PlacesSearchAutocompleteProvider.ensureInitialized();
+    if (!this.pending)
+      return;
 
     // For any given search, we run many queries/heuristics:
     // 1) by alias (as defined in SearchService)
@@ -742,7 +722,7 @@ Search.prototype = {
     // 3) inline completion for hosts (this._hostQuery) or urls (this._urlQuery)
     // 4) directly typed in url (ie, can be navigated to as-is)
     // 5) submission for the current search engine
-    // 6) keywords (this._keywordQuery)
+    // 6) Places keywords
     // 7) adaptive learning (this._adaptiveQuery)
     // 8) open pages not supported by history (this._switchToTabQuery)
     // 9) query based on match behavior
@@ -776,15 +756,13 @@ Search.prototype = {
     // special results.
     let hasFirstResult = false;
 
-    if (this._searchTokens.length > 0 &&
-        PlacesUtils.bookmarks.getURIForKeyword(this._searchTokens[0])) {
-      // This may be a keyword of a bookmark.
-      queries.unshift(this._keywordQuery);
-      hasFirstResult = true;
+    if (this._searchTokens.length > 0) {
+      // This may be a Places keyword.
+      hasFirstResult = yield this._matchPlacesKeyword();
     }
 
-    if (this._enableActions && !hasFirstResult) {
-      // If it's not a bookmarked keyword, then it may be a search engine
+    if (this.pending && this._enableActions && !hasFirstResult) {
+      // If it's not a Places keyword, then it may be a search engine
       // with an alias - which works like a keyword.
       hasFirstResult = yield this._matchSearchEngineAlias();
     }
@@ -879,6 +857,35 @@ Search.prototype = {
     return gotResult;
   },
 
+  _matchPlacesKeyword: function* () {
+    // The first word could be a keyword, so that's what we'll search.
+    let keyword = this._searchTokens[0];
+    let entry = yield PlacesUtils.keywords.fetch(this._searchTokens[0]);
+    if (!entry)
+      return false;
+
+    // Build the url.
+    let searchString = this._trimmedOriginalSearchString;
+    let queryString = "";
+    let queryIndex = searchString.indexOf(" ");
+    if (queryIndex != -1) {
+      queryString = searchString.substring(queryIndex + 1);
+    }
+    // We need to escape the parameters as if they were the query in a URL
+    queryString = encodeURIComponent(queryString).replace(/%20/g, "+");
+    let escapedURL = entry.url.href.replace("%s", queryString);
+
+    let style = (this._enableActions ? "action " : "") + "keyword";
+    let actionURL = makeActionURL("keyword", { url: escapedURL,
+                                               input: this._originalSearchString });
+    let value = this._enableActions ? actionURL : escapedURL;
+    // The title will end up being "host: queryString"
+    let comment = entry.url.host;
+
+    this._addMatch({ value, comment, style, frecency: FRECENCY_DEFAULT });
+    return true;
+  },
+
   _matchSearchEngineUrl: function* () {
     if (!Prefs.autofillSearchEngines)
       return false;
@@ -926,7 +933,7 @@ Search.prototype = {
       icon: match.iconUrl,
       style: "priority-search",
       finalCompleteValue: match.url,
-      frecency: FRECENCY_SEARCHENGINES_DEFAULT
+      frecency: FRECENCY_DEFAULT
     });
     return true;
   },
@@ -973,7 +980,7 @@ Search.prototype = {
       comment: match.engineName,
       icon: match.iconUrl,
       style: "action searchengine",
-      frecency: FRECENCY_SEARCHENGINES_DEFAULT,
+      frecency: FRECENCY_DEFAULT,
     });
   },
 
@@ -1056,7 +1063,6 @@ Search.prototype = {
         match = this._processUrlRow(row);
         break;
       case QUERYTYPE_FILTERED:
-      case QUERYTYPE_KEYWORD:
         match = this._processRow(row);
         break;
     }
@@ -1240,28 +1246,6 @@ Search.prototype = {
     // Always prefer the bookmark title unless it is empty
     let title = bookmarkTitle || historyTitle;
 
-    if (queryType == QUERYTYPE_KEYWORD) {
-      if (this._enableActions) {
-        match.style = "keyword";
-        url = makeActionURL("keyword", {
-          url: escapedURL,
-          input: this._originalSearchString,
-        });
-        action = "keyword";
-      } else {
-        // If we do not have a title, then we must have a keyword, so let the UI
-        // know it is a keyword.  Otherwise, we found an exact page match, so just
-        // show the page like a regular result.  Because the page title is likely
-        // going to be more specific than the bookmark title (keyword title).
-        if (!historyTitle) {
-          match.style = "keyword"
-        }
-        else {
-          title = historyTitle;
-        }
-      }
-    }
-
     // We will always prefer to show tags if we have them.
     let showTags = !!tags;
 
@@ -1363,37 +1347,6 @@ Search.prototype = {
         // Limit the query to the the maximum number of desired results.
         // This way we can avoid doing more work than needed.
         maxResults: Prefs.maxRichResults
-      }
-    ];
-  },
-
-  /**
-   * Obtains the query to search for keywords.
-   *
-   * @return an array consisting of the correctly optimized query to search the
-   *         database with and an object containing the params to bound.
-   */
-  get _keywordQuery() {
-    // The keyword is the first word in the search string, with the parameters
-    // following it.
-    let searchString = this._trimmedOriginalSearchString;
-    let queryString = "";
-    let queryIndex = searchString.indexOf(" ");
-    if (queryIndex != -1) {
-      queryString = searchString.substring(queryIndex + 1);
-    }
-    // We need to escape the parameters as if they were the query in a URL
-    queryString = encodeURIComponent(queryString).replace("%20", "+", "g");
-
-    // The first word could be a keyword, so that's what we'll search.
-    let keyword = this._searchTokens[0];
-
-    return [
-      SQL_KEYWORD_QUERY,
-      {
-        keyword: keyword,
-        query_string: queryString,
-        query_type: QUERYTYPE_KEYWORD
       }
     ];
   },

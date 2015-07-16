@@ -544,7 +544,7 @@ class GetPropertyIC : public RepatchIonCache
   protected:
     // Registers live after the cache, excluding output registers. The initial
     // value of these registers must be preserved by the cache.
-    RegisterSet liveRegs_;
+    LiveRegisterSet liveRegs_;
 
     Register object_;
     PropertyName* name_;
@@ -562,7 +562,7 @@ class GetPropertyIC : public RepatchIonCache
     bool hasGenericProxyStub_ : 1;
 
   public:
-    GetPropertyIC(RegisterSet liveRegs,
+    GetPropertyIC(LiveRegisterSet liveRegs,
                   Register object, PropertyName* name,
                   TypedOrValueRegister output,
                   bool monitoredResult)
@@ -670,6 +670,10 @@ class GetPropertyIC : public RepatchIonCache
                           HandleObject obj, HandlePropertyName name,
                           void* returnAddr, bool* emitted);
 
+    bool tryAttachUnboxedExpando(JSContext* cx, HandleScript outerScript, IonScript* ion,
+                                 HandleObject obj, HandlePropertyName name,
+                                 void* returnAddr, bool* emitted);
+
     bool tryAttachTypedArrayLength(JSContext* cx, HandleScript outerScript, IonScript* ion,
                                    HandleObject obj, HandlePropertyName name, bool* emitted);
 
@@ -685,7 +689,7 @@ class SetPropertyIC : public RepatchIonCache
   protected:
     // Registers live after the cache, excluding output registers. The initial
     // value of these registers must be preserved by the cache.
-    RegisterSet liveRegs_;
+    LiveRegisterSet liveRegs_;
 
     Register object_;
     PropertyName* name_;
@@ -696,7 +700,7 @@ class SetPropertyIC : public RepatchIonCache
     bool hasGenericProxyStub_;
 
   public:
-    SetPropertyIC(RegisterSet liveRegs, Register object, PropertyName* name,
+    SetPropertyIC(LiveRegisterSet liveRegs, Register object, PropertyName* name,
                   ConstantOrRegister value, bool strict, bool needsTypeBarrier)
       : liveRegs_(liveRegs),
         object_(object),
@@ -739,14 +743,14 @@ class SetPropertyIC : public RepatchIonCache
     };
 
     bool attachSetSlot(JSContext* cx, HandleScript outerScript, IonScript* ion,
-                       HandleNativeObject obj, HandleShape shape, bool checkTypeset);
+                       HandleObject obj, HandleShape shape, bool checkTypeset);
 
     bool attachCallSetter(JSContext* cx, HandleScript outerScript, IonScript* ion,
                           HandleObject obj, HandleObject holder, HandleShape shape,
                           void* returnAddr);
 
     bool attachAddSlot(JSContext* cx, HandleScript outerScript, IonScript* ion,
-                       HandleNativeObject obj, HandleShape oldShape, HandleObjectGroup oldGroup,
+                       HandleObject obj, HandleShape oldShape, HandleObjectGroup oldGroup,
                        bool checkTypeset);
 
     bool attachSetUnboxed(JSContext* cx, HandleScript outerScript, IonScript* ion,
@@ -770,7 +774,7 @@ class SetPropertyIC : public RepatchIonCache
 class GetElementIC : public RepatchIonCache
 {
   protected:
-    RegisterSet liveRegs_;
+    LiveRegisterSet liveRegs_;
 
     Register object_;
     ConstantOrRegister index_;
@@ -787,7 +791,7 @@ class GetElementIC : public RepatchIonCache
     static const size_t MAX_FAILED_UPDATES;
 
   public:
-    GetElementIC(RegisterSet liveRegs, Register object, ConstantOrRegister index,
+    GetElementIC(LiveRegisterSet liveRegs, Register object, ConstantOrRegister index,
                  TypedOrValueRegister output, bool monitoredResult, bool allowDoubleResult)
       : liveRegs_(liveRegs),
         object_(object),
@@ -842,6 +846,8 @@ class GetElementIC : public RepatchIonCache
 
     static bool canAttachGetProp(JSObject* obj, const Value& idval, jsid id);
     static bool canAttachDenseElement(JSObject* obj, const Value& idval);
+    static bool canAttachDenseElementHole(JSObject* obj, const Value& idval,
+                                          TypedOrValueRegister output);
     static bool canAttachTypedArrayElement(JSObject* obj, const Value& idval,
                                            TypedOrValueRegister output);
 
@@ -850,6 +856,9 @@ class GetElementIC : public RepatchIonCache
 
     bool attachDenseElement(JSContext* cx, HandleScript outerScript, IonScript* ion,
                             HandleObject obj, const Value& idval);
+
+    bool attachDenseElementHole(JSContext* cx, HandleScript outerScript, IonScript* ion,
+                                HandleObject obj, const Value& idval);
 
     bool attachTypedArrayElement(JSContext* cx, HandleScript outerScript, IonScript* ion,
                                  HandleObject tarr, const Value& idval);
@@ -999,7 +1008,7 @@ class NameIC : public RepatchIonCache
   protected:
     // Registers live after the cache, excluding output registers. The initial
     // value of these registers must be preserved by the cache.
-    RegisterSet liveRegs_;
+    LiveRegisterSet liveRegs_;
 
     bool typeOf_;
     Register scopeChain_;
@@ -1007,7 +1016,7 @@ class NameIC : public RepatchIonCache
     TypedOrValueRegister output_;
 
   public:
-    NameIC(RegisterSet liveRegs, bool typeOf,
+    NameIC(LiveRegisterSet liveRegs, bool typeOf,
            Register scopeChain, PropertyName* name,
            TypedOrValueRegister output)
       : liveRegs_(liveRegs),

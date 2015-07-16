@@ -366,9 +366,9 @@ SVGComponentTransferFunctionElement::GetNumberInfo()
 }
 
 /* virtual */ JSObject*
-SVGFEFuncRElement::WrapNode(JSContext* aCx)
+SVGFEFuncRElement::WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return SVGFEFuncRElementBinding::Wrap(aCx, this);
+  return SVGFEFuncRElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 } // namespace dom
@@ -382,9 +382,9 @@ namespace dom {
 NS_IMPL_ELEMENT_CLONE_WITH_INIT(SVGFEFuncRElement)
 
 /* virtual */ JSObject*
-SVGFEFuncGElement::WrapNode(JSContext* aCx)
+SVGFEFuncGElement::WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return SVGFEFuncGElementBinding::Wrap(aCx, this);
+  return SVGFEFuncGElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 } // namespace dom
@@ -398,9 +398,9 @@ namespace dom {
 NS_IMPL_ELEMENT_CLONE_WITH_INIT(SVGFEFuncGElement)
 
 /* virtual */ JSObject*
-SVGFEFuncBElement::WrapNode(JSContext* aCx)
+SVGFEFuncBElement::WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return SVGFEFuncBElementBinding::Wrap(aCx, this);
+  return SVGFEFuncBElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 } // namespace dom
@@ -414,9 +414,9 @@ namespace dom {
 NS_IMPL_ELEMENT_CLONE_WITH_INIT(SVGFEFuncBElement)
 
 /* virtual */ JSObject*
-SVGFEFuncAElement::WrapNode(JSContext* aCx)
+SVGFEFuncAElement::WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return SVGFEFuncAElementBinding::Wrap(aCx, this);
+  return SVGFEFuncAElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 } // namespace dom
@@ -489,9 +489,9 @@ nsSVGFELightingElement::ComputeLightAttributes(nsSVGFilterInstance* aInstance)
   for (nsCOMPtr<nsIContent> child = nsINode::GetFirstChild();
        child;
        child = child->GetNextSibling()) {
-    if (child->IsSVG(nsGkAtoms::feDistantLight) ||
-        child->IsSVG(nsGkAtoms::fePointLight) ||
-        child->IsSVG(nsGkAtoms::feSpotLight)) {
+    if (child->IsAnyOfSVGElements(nsGkAtoms::feDistantLight,
+                                  nsGkAtoms::fePointLight,
+                                  nsGkAtoms::feSpotLight)) {
       return static_cast<SVGFELightElement*>(child.get())->ComputeLightAttributes(aInstance);
     }
   }

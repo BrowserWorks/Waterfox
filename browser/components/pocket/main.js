@@ -42,8 +42,6 @@
 // TODO : [nice to have] - Immediately save, buffer the actions in a local queue and send (so it works offline, works like our native extensions)
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "AppConstants",
-  "resource://gre/modules/AppConstants.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
   "resource://gre/modules/PrivateBrowsingUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ReaderMode",
@@ -323,7 +321,7 @@ var pktUI = (function() {
             {
                 variant = pktApi.getSignupAB();
             }
-            var panelId = showPanel("chrome://browser/content/pocket/panels/signup.html?pockethost=" + Services.prefs.getCharPref("browser.pocket.site") + "&fxasignedin=" + fxasignedin + "&variant=" + variant + '&inoverflowmenu=' + inOverflowMenu + "&locale=" + getUILocale(), {
+            var panelId = showPanel("about:pocket-signup?pockethost=" + Services.prefs.getCharPref("browser.pocket.site") + "&fxasignedin=" + fxasignedin + "&variant=" + variant + '&inoverflowmenu=' + inOverflowMenu + "&locale=" + getUILocale(), {
             		onShow: function() {
                     },
         			onHide: panelDidHide,
@@ -351,7 +349,7 @@ var pktUI = (function() {
         	startheight = overflowMenuHeight;
         }
 
-    	var panelId = showPanel("chrome://browser/content/pocket/panels/saved.html?pockethost=" + Services.prefs.getCharPref("browser.pocket.site") + "&premiumStatus=" + (pktApi.isPremiumUser() ? '1' : '0') + '&inoverflowmenu='+inOverflowMenu + "&locale=" + getUILocale(), {
+    	var panelId = showPanel("about:pocket-saved?pockethost=" + Services.prefs.getCharPref("browser.pocket.site") + "&premiumStatus=" + (pktApi.isPremiumUser() ? '1' : '0') + '&inoverflowmenu='+inOverflowMenu + "&locale=" + getUILocale(), {
     		onShow: function() {
                 var saveLinkMessageId = 'saveLink';
 
@@ -624,12 +622,7 @@ var pktUI = (function() {
 	function openTabWithUrl(url) {
         let recentWindow = Services.wm.getMostRecentWindow("navigator:browser");
         if (!recentWindow) {
-          if (this.AppConstants.platform == "macosx") {
-            let hiddenWindow = Services.appShell.hiddenDOMWindow;
-            // If there are no open browser windows, open a new one.
-            hiddenWindow.openDialog("chrome://browser/content/", "_blank",
-                                    "chrome,all,dialog=no", url);
-          }
+          Cu.reportError("Pocket: No open browser windows to openTabWithUrl");
           return;
         }
 

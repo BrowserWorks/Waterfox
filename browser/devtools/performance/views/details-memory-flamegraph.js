@@ -33,11 +33,13 @@ let MemoryFlameGraphView = Heritage.extend(DetailsSubview, {
   /**
    * Unbinds events.
    */
-  destroy: function () {
+  destroy: Task.async(function* () {
     DetailsSubview.destroy.call(this);
 
     this.graph.off("selecting", this._onRangeChangeInGraph);
-  },
+
+    yield this.graph.destroy();
+  }),
 
   /**
    * Method for handling all the set up for rendering a new flamegraph.
@@ -52,9 +54,9 @@ let MemoryFlameGraphView = Heritage.extend(DetailsSubview, {
 
     let samples = RecordingUtils.getSamplesFromAllocations(allocations);
     let data = FlameGraphUtils.createFlameGraphDataFromSamples(samples, {
-      invertStack: PerformanceController.getPref("invert-flame-graph"),
-      flattenRecursion: PerformanceController.getPref("flatten-tree-recursion"),
-      showIdleBlocks: PerformanceController.getPref("show-idle-blocks") && L10N.getStr("table.idle")
+      invertStack: PerformanceController.getOption("invert-flame-graph"),
+      flattenRecursion: PerformanceController.getOption("flatten-tree-recursion"),
+      showIdleBlocks: PerformanceController.getOption("show-idle-blocks") && L10N.getStr("table.idle")
     });
 
     this.graph.setData({ data,

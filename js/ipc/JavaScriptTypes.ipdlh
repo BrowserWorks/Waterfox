@@ -37,6 +37,7 @@ struct RemoteObject
     uint64_t serializedId;
     bool isCallable;
     bool isConstructor;
+    bool isDOMObject;
     nsCString objectTag;
 };
 
@@ -103,11 +104,17 @@ struct ReturnException
     JSVariant exn;
 };
 
+struct ReturnObjectOpResult
+{
+    uint32_t code;
+};
+
 union ReturnStatus
 {
     ReturnSuccess;
     ReturnStopIteration;
     ReturnException;
+    ReturnObjectOpResult;
 };
 
 union JSParam

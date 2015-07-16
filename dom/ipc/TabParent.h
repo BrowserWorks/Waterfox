@@ -7,21 +7,22 @@
 #ifndef mozilla_tabs_TabParent_h
 #define mozilla_tabs_TabParent_h
 
-#include "mozilla/EventForwards.h"
+#include "js/TypeDecls.h"
+#include "mozilla/dom/ipc/IdType.h"
 #include "mozilla/dom/PBrowserParent.h"
 #include "mozilla/dom/PFilePickerParent.h"
 #include "mozilla/dom/TabContext.h"
-#include "mozilla/dom/ipc/IdType.h"
+#include "mozilla/EventForwards.h"
+#include "mozilla/WritingModes.h"
 #include "nsCOMPtr.h"
 #include "nsIAuthPromptProvider.h"
 #include "nsIBrowserDOMWindow.h"
+#include "nsIDOMEventListener.h"
 #include "nsISecureBrowserUI.h"
 #include "nsITabParent.h"
 #include "nsIXULBrowserWindow.h"
 #include "nsWeakReference.h"
 #include "Units.h"
-#include "WritingModes.h"
-#include "js/TypeDecls.h"
 
 class nsFrameLoader;
 class nsIFrameLoader;
@@ -58,21 +59,23 @@ class nsIContentParent;
 class Element;
 struct StructuredCloneData;
 
-class TabParent : public PBrowserParent 
-                , public nsITabParent 
-                , public nsIAuthPromptProvider
-                , public nsISecureBrowserUI
-                , public nsSupportsWeakReference
-                , public TabContext
+class TabParent final : public PBrowserParent
+                      , public nsIDOMEventListener
+                      , public nsITabParent
+                      , public nsIAuthPromptProvider
+                      , public nsISecureBrowserUI
+                      , public nsSupportsWeakReference
+                      , public TabContext
 {
     typedef mozilla::dom::ClonedMessageData ClonedMessageData;
-    typedef mozilla::layout::ScrollingBehavior ScrollingBehavior;
 
     virtual ~TabParent();
 
 public:
     // nsITabParent
     NS_DECL_NSITABPARENT
+    // nsIDOMEventListener interfaces
+    NS_DECL_NSIDOMEVENTLISTENER
 
     TabParent(nsIContentParent* aManager,
               const TabId& aTabId,
@@ -80,6 +83,8 @@ public:
               uint32_t aChromeFlags);
     Element* GetOwnerElement() const { return mFrameElement; }
     void SetOwnerElement(Element* aElement);
+
+    void CacheFrameLoader(nsFrameLoader* aFrameLoader);
 
     /**
      * Get the mozapptype attribute from this TabParent's owner DOM element.
@@ -103,31 +108,9 @@ public:
 
     nsIXULBrowserWindow* GetXULBrowserWindow();
 
-    /**
-     * Return the TabParent that has decided it wants to capture an
-     * event series for fast-path dispatch to its subprocess, if one
-     * has.
-     *
-     * DOM event dispatch and widget are free to ignore capture
-     * requests from TabParents; the end result wrt remote content is
-     * (must be) always the same, albeit usually slower without
-     * subprocess capturing.  This allows frontends/widget backends to
-     * "opt in" to faster cross-process dispatch.
-     */
-    static TabParent* GetEventCapturer();
-    /**
-     * If this is the current event capturer, give this a chance to
-     * capture the event.  If it was captured, return true, false
-     * otherwise.  Un-captured events should follow normal DOM
-     * dispatch; captured events should result in no further
-     * processing from the caller of TryCapture().
-     *
-     * It's an error to call TryCapture() if this isn't the event
-     * capturer.
-     */
-    bool TryCapture(const WidgetGUIEvent& aEvent);
-
     void Destroy();
+
+    void RemoveWindowListeners();
 
     virtual bool RecvMoveFocus(const bool& aForward) override;
     virtual bool RecvEvent(const RemoteDOMEvent& aEvent) override;
@@ -232,6 +215,11 @@ public:
                                                const bool& aPreventDefault) override;
     virtual bool RecvSetTargetAPZC(const uint64_t& aInputBlockId,
                                    nsTArray<ScrollableLayerGuid>&& aTargets) override;
+    virtual bool RecvSetAllowedTouchBehavior(const uint64_t& aInputBlockId,
+                                             nsTArray<TouchBehaviorFlags>&& aTargets) override;
+    virtual bool RecvDispatchWheelEvent(const mozilla::WidgetWheelEvent& aEvent) override;
+    virtual bool RecvDispatchMouseEvent(const mozilla::WidgetMouseEvent& aEvent) override;
+    virtual bool RecvDispatchKeyboardEvent(const mozilla::WidgetKeyboardEvent& aEvent) override;
 
     virtual PColorPickerParent*
     AllocPColorPickerParent(const nsString& aTitle, const nsString& aInitialColor) override;
@@ -241,28 +229,27 @@ public:
     // XXX/cjones: it's not clear what we gain by hiding these
     // message-sending functions under a layer of indirection and
     // eating the return values
-    void Show(const nsIntSize& size, bool aParentIsActive);
-    void UpdateDimensions(const nsIntRect& rect, const nsIntSize& size,
-                          const nsIntPoint& chromeDisp);
+    void Show(const ScreenIntSize& size, bool aParentIsActive);
+    void UpdateDimensions(const nsIntRect& rect, const ScreenIntSize& size);
     void UpdateFrame(const layers::FrameMetrics& aFrameMetrics);
     void UIResolutionChanged();
+    void RequestFlingSnap(const FrameMetrics::ViewID& aScrollId,
+                          const mozilla::CSSPoint& aDestination);
     void AcknowledgeScrollUpdate(const ViewID& aScrollId, const uint32_t& aScrollGeneration);
     void HandleDoubleTap(const CSSPoint& aPoint,
-                         int32_t aModifiers,
+                         Modifiers aModifiers,
                          const ScrollableLayerGuid& aGuid);
     void HandleSingleTap(const CSSPoint& aPoint,
-                         int32_t aModifiers,
+                         Modifiers aModifiers,
                          const ScrollableLayerGuid& aGuid);
     void HandleLongTap(const CSSPoint& aPoint,
-                       int32_t aModifiers,
+                       Modifiers aModifiers,
                        const ScrollableLayerGuid& aGuid,
                        uint64_t aInputBlockId);
-    void HandleLongTapUp(const CSSPoint& aPoint,
-                         int32_t aModifiers,
-                         const ScrollableLayerGuid& aGuid);
     void NotifyAPZStateChange(ViewID aViewId,
                               APZStateChange aChange,
                               int aArg);
+    void NotifyMouseScrollTestEvent(const ViewID& aScrollId, const nsString& aEvent);
     void Activate();
     void Deactivate();
 
@@ -284,10 +271,9 @@ public:
     bool SendMouseWheelEvent(mozilla::WidgetWheelEvent& event);
     bool SendRealKeyEvent(mozilla::WidgetKeyboardEvent& event);
     bool SendRealTouchEvent(WidgetTouchEvent& event);
-    bool SendHandleSingleTap(const CSSPoint& aPoint, const ScrollableLayerGuid& aGuid);
-    bool SendHandleLongTap(const CSSPoint& aPoint, const ScrollableLayerGuid& aGuid, const uint64_t& aInputBlockId);
-    bool SendHandleLongTapUp(const CSSPoint& aPoint, const ScrollableLayerGuid& aGuid);
-    bool SendHandleDoubleTap(const CSSPoint& aPoint, const ScrollableLayerGuid& aGuid);
+    bool SendHandleSingleTap(const CSSPoint& aPoint, const Modifiers& aModifiers, const ScrollableLayerGuid& aGuid);
+    bool SendHandleLongTap(const CSSPoint& aPoint, const Modifiers& aModifiers, const ScrollableLayerGuid& aGuid, const uint64_t& aInputBlockId);
+    bool SendHandleDoubleTap(const CSSPoint& aPoint, const Modifiers& aModifiers, const ScrollableLayerGuid& aGuid);
 
     virtual PDocumentRendererParent*
     AllocPDocumentRendererParent(const nsRect& documentRect,
@@ -373,6 +359,11 @@ public:
     bool SendLoadRemoteScript(const nsString& aURL,
                               const bool& aRunInGlobalScope);
 
+    // See nsIFrameLoader requestNotifyLayerTreeReady.
+    bool RequestNotifyLayerTreeReady();
+    bool RequestNotifyLayerTreeCleared();
+    bool LayerTreeUpdate(bool aActive);
+
 protected:
     bool ReceiveMessage(const nsString& aMessage,
                         bool aSync,
@@ -400,7 +391,6 @@ protected:
     virtual bool RecvRemotePaintIsReady() override;
 
     virtual bool RecvGetRenderFrameInfo(PRenderFrameParent* aRenderFrame,
-                                        ScrollingBehavior* aScrolling,
                                         TextureFactoryIdentifier* aTextureFactoryIdentifier,
                                         uint64_t* aLayersId) override;
 
@@ -434,11 +424,8 @@ protected:
     LayoutDeviceIntRect mIMECaretRect;
     LayoutDeviceIntRect mIMEEditorRect;
 
-    // The number of event series we're currently capturing.
-    int32_t mEventCaptureDepth;
-
     nsIntRect mRect;
-    nsIntSize mDimensions;
+    ScreenIntSize mDimensions;
     ScreenOrientation mOrientation;
     float mDPI;
     CSSToLayoutDeviceScale mDefaultScale;
@@ -446,16 +433,13 @@ protected:
     bool mUpdatedDimensions;
 
 private:
-    already_AddRefed<nsFrameLoader> GetFrameLoader() const;
+    already_AddRefed<nsFrameLoader> GetFrameLoader(bool aUseCachedFrameLoaderAfterDestroy = false) const;
     layout::RenderFrameParent* GetRenderFrame();
     nsRefPtr<nsIContentParent> mManager;
     void TryCacheDPIAndScale();
 
     CSSPoint AdjustTapToChildWidget(const CSSPoint& aPoint);
 
-    // When true, we create a pan/zoom controller for our frame and
-    // notify it of input events targeting us.
-    bool UseAsyncPanZoom();
     // Update state prior to routing an APZ-aware event to the child process.
     // |aOutTargetGuid| will contain the identifier
     // of the APZC instance that handled the event. aOutTargetGuid may be
@@ -490,6 +474,11 @@ private:
     bool mInitedByParent;
 
     nsCOMPtr<nsILoadContext> mLoadContext;
+
+    // We keep a strong reference to the frameloader after we've sent the
+    // Destroy message and before we've received __delete__. This allows us to
+    // dispatch message manager messages during this time.
+    nsRefPtr<nsFrameLoader> mFrameLoader;
 
     TabId mTabId;
 
@@ -530,6 +519,11 @@ private:
     // frame scripts that we intend to load and send them as part of the
     // CreateWindow response. Then TabChild loads them immediately.
     nsTArray<FrameScriptInfo> mDelayedFrameScripts;
+
+    // If the user called RequestNotifyLayerTreeReady and the RenderFrameParent
+    // wasn't ready yet, we set this flag and call RequestNotifyLayerTreeReady
+    // again once the RenderFrameParent arrives.
+    bool mNeedLayerTreeReadyNotification;
 
 private:
     // This is used when APZ needs to find the TabParent associated with a layer

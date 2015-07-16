@@ -32,6 +32,7 @@
 #include "nsStyleSet.h"
 #include "nsContentUtils.h" // For AddScriptBlocker().
 #include "nsRefreshDriver.h"
+#include "TouchManager.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/EventForwards.h"
 #include "mozilla/MemoryReporting.h"
@@ -58,9 +59,10 @@ class EventDispatchingCallback;
 #define PAINTLOCK_EVENT_DELAY 250
 
 class PresShell final : public nsIPresShell,
-                            public nsStubDocumentObserver,
-                            public nsISelectionController, public nsIObserver,
-                            public nsSupportsWeakReference
+                        public nsStubDocumentObserver,
+                        public nsISelectionController,
+                        public nsIObserver,
+                        public nsSupportsWeakReference
 {
 public:
   PresShell();
@@ -197,14 +199,14 @@ public:
 
   virtual void SetIgnoreViewportScrolling(bool aIgnore) override;
 
-  virtual nsresult SetResolution(float aXResolution, float aYResolution) override {
-    return SetResolutionImpl(aXResolution, aYResolution, /* aScaleToResolution = */ false);
+  virtual nsresult SetResolution(float aResolution) override {
+    return SetResolutionImpl(aResolution, /* aScaleToResolution = */ false);
   }
-  virtual nsresult SetResolutionAndScaleTo(float aXResolution, float aYResolution) override {
-    return SetResolutionImpl(aXResolution, aYResolution, /* aScaleToResolution = */ true);
+  virtual nsresult SetResolutionAndScaleTo(float aResolution) override {
+    return SetResolutionImpl(aResolution, /* aScaleToResolution = */ true);
   }
   virtual bool ScaleToResolution() const override;
-  virtual gfxSize GetCumulativeResolution() override;
+  virtual float GetCumulativeResolution() override;
 
   //nsIViewObserver interface
 
@@ -234,8 +236,6 @@ public:
   // touch caret
   virtual already_AddRefed<mozilla::TouchCaret> GetTouchCaret() const override;
   virtual mozilla::dom::Element* GetTouchCaretElement() const override;
-  virtual void SetMayHaveTouchCaret(bool aSet) override;
-  virtual bool MayHaveTouchCaret() override;
   // selection caret
   virtual already_AddRefed<mozilla::SelectionCarets> GetSelectionCarets() const override;
   virtual mozilla::dom::Element* GetSelectionCaretsStartElement() const override;
@@ -463,12 +463,10 @@ protected:
 
   struct RenderingState {
     explicit RenderingState(PresShell* aPresShell)
-      : mXResolution(aPresShell->mXResolution)
-      , mYResolution(aPresShell->mYResolution)
+      : mResolution(aPresShell->mResolution)
       , mRenderFlags(aPresShell->mRenderFlags)
     { }
-    float mXResolution;
-    float mYResolution;
+    float mResolution;
     RenderFlags mRenderFlags;
   };
 
@@ -481,8 +479,7 @@ protected:
     ~AutoSaveRestoreRenderingState()
     {
       mPresShell->mRenderFlags = mOldState.mRenderFlags;
-      mPresShell->mXResolution = mOldState.mXResolution;
-      mPresShell->mYResolution = mOldState.mYResolution;
+      mPresShell->mResolution = mOldState.mResolution;
     }
 
     PresShell* mPresShell;
@@ -740,8 +737,6 @@ protected:
   static void MarkImagesInListVisible(const nsDisplayList& aList);
   void MarkImagesInSubtreeVisible(nsIFrame* aFrame, const nsRect& aRect);
 
-  void EvictTouches();
-
   // Methods for dispatching KeyboardEvent and BeforeAfterKeyboardEvent.
   void HandleKeyboardEvent(nsINode* aTarget,
                            mozilla::WidgetKeyboardEvent& aEvent,
@@ -763,7 +758,7 @@ protected:
   // A list of images that are visible or almost visible.
   nsTHashtable< nsRefPtrHashKey<nsIImageLoadingContent> > mVisibleImages;
 
-  nsresult SetResolutionImpl(float aXResolution, float aYResolution, bool aScaleToResolution);
+  nsresult SetResolutionImpl(float aResolution, bool aScaleToResolution);
 
 #ifdef DEBUG
   // The reflow root under which we're currently reflowing.  Null when
@@ -811,6 +806,9 @@ protected:
   nsRefPtr<nsCaret>         mOriginalCaret;
   nsCallbackEventRequest*   mFirstCallbackEventRequest;
   nsCallbackEventRequest*   mLastCallbackEventRequest;
+
+  // TouchManager
+  TouchManager              mTouchManager;
 
   // TouchCaret
   nsRefPtr<mozilla::TouchCaret> mTouchCaret;

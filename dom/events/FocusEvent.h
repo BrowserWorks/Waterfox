@@ -23,9 +23,9 @@ public:
   // Forward to base class
   NS_FORWARD_TO_UIEVENT
 
-  virtual JSObject* WrapObjectInternal(JSContext* aCx) override
+  virtual JSObject* WrapObjectInternal(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override
   {
-    return FocusEventBinding::Wrap(aCx, this);
+    return FocusEventBinding::Wrap(aCx, this, aGivenProto);
   }
 
   FocusEvent(EventTarget* aOwner,

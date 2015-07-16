@@ -50,9 +50,10 @@ const browserElementTestHelpers = {
 
   enableProcessPriorityManager: function() {
     this._setPrefs(
+      ['dom.ipc.processPriorityManager.BACKGROUND.LRUPoolLevels', 2],
+      ['dom.ipc.processPriorityManager.FOREGROUND.LRUPoolLevels', 2],
       ['dom.ipc.processPriorityManager.testMode', true],
-      ['dom.ipc.processPriorityManager.enabled', true],
-      ['dom.ipc.processPriorityManager.backgroundLRUPoolLevels', 2]
+      ['dom.ipc.processPriorityManager.enabled', true]
     );
   },
 
@@ -111,8 +112,7 @@ const browserElementTestHelpers = {
 
 // Returns a promise which is resolved when a subprocess is created.  The
 // argument to resolve() is the childID of the subprocess.
-function expectProcessCreated(/* optional */ initialPriority,
-                              /* optional */ initialCPUPriority) {
+function expectProcessCreated(/* optional */ initialPriority) {
   return new Promise(function(resolve, reject) {
     var observed = false;
     browserElementTestHelpers.addProcessPriorityObserver(
@@ -128,7 +128,7 @@ function expectProcessCreated(/* optional */ initialPriority,
         var childID = parseInt(data);
         ok(true, 'Got new process, id=' + childID);
         if (initialPriority) {
-          expectPriorityChange(childID, initialPriority, initialCPUPriority).then(function() {
+          expectPriorityChange(childID, initialPriority).then(function() {
             resolve(childID);
           });
         } else {
@@ -141,9 +141,8 @@ function expectProcessCreated(/* optional */ initialPriority,
 
 // Just like expectProcessCreated(), except we'll call ok(false) if a second
 // process is created.
-function expectOnlyOneProcessCreated(/* optional */ initialPriority,
-                                     /* optional */ initialCPUPriority) {
-  var p = expectProcessCreated(initialPriority, initialCPUPriority);
+function expectOnlyOneProcessCreated(/* optional */ initialPriority) {
+  var p = expectProcessCreated(initialPriority);
   p.then(function() {
     expectProcessCreated().then(function(childID) {
       ok(false, 'Got unexpected process creation, childID=' + childID);
@@ -153,15 +152,10 @@ function expectOnlyOneProcessCreated(/* optional */ initialPriority,
 }
 
 // Returns a promise which is resolved or rejected the next time the process
-// childID changes its priority.  We resolve if the (priority, CPU priority)
-// tuple matches (expectedPriority, expectedCPUPriority) and we reject
-// otherwise.
-//
-// expectedCPUPriority is an optional argument; if it's not specified, we
-// resolve if priority matches expectedPriority.
+// childID changes its priority. We resolve if the priority matches
+// expectedPriority, and we reject otherwise.
 
-function expectPriorityChange(childID, expectedPriority,
-                              /* optional */ expectedCPUPriority) {
+function expectPriorityChange(childID, expectedPriority) {
   return new Promise(function(resolve, reject) {
     var observed = false;
     browserElementTestHelpers.addProcessPriorityObserver(
@@ -171,7 +165,7 @@ function expectPriorityChange(childID, expectedPriority,
           return;
         }
 
-        var [id, priority, cpuPriority] = data.split(":");
+        var [id, priority] = data.split(":");
         if (id != childID) {
           return;
         }
@@ -184,14 +178,7 @@ function expectPriorityChange(childID, expectedPriority,
            'Expected priority of childID ' + childID +
            ' to change to ' + expectedPriority);
 
-        if (expectedCPUPriority) {
-          is(cpuPriority, expectedCPUPriority,
-             'Expected CPU priority of childID ' + childID +
-             ' to change to ' + expectedCPUPriority);
-        }
-
-        if (priority == expectedPriority &&
-            (!expectedCPUPriority || expectedCPUPriority == cpuPriority)) {
+        if (priority == expectedPriority) {
           resolve();
         } else {
           reject();
@@ -201,27 +188,37 @@ function expectPriorityChange(childID, expectedPriority,
   });
 }
 
-// Returns a promise which is resolved or rejected the next time the background
-// process childID changes its priority.  We resolve if the backgroundLRU
-// matches expectedBackgroundLRU and we reject otherwise.
+// Returns a promise which is resolved or rejected the next time the
+// process childID changes its priority.  We resolve if the expectedPriority
+// matches the priority and the LRU parameter matches expectedLRU and we
+// reject otherwise.
 
-function expectPriorityWithBackgroundLRUSet(childID, expectedBackgroundLRU) {
+function expectPriorityWithLRUSet(childID, expectedPriority, expectedLRU) {
   return new Promise(function(resolve, reject) {
-
+    var observed = false;
     browserElementTestHelpers.addProcessPriorityObserver(
-      'process-priority-with-background-LRU-set',
+      'process-priority-with-LRU-set',
       function(subject, topic, data) {
+        if (observed) {
+          return;
+        }
 
-        var [id, priority, cpuPriority, backgroundLRU] = data.split(":");
+        var [id, priority, lru] = data.split(":");
         if (id != childID) {
           return;
         }
 
-        is(backgroundLRU, expectedBackgroundLRU,
-           'Expected backgroundLRU ' + backgroundLRU + ' of childID ' + childID +
-           ' to change to ' + expectedBackgroundLRU);
+        // Make sure we run the is() calls in this observer only once,
+        // otherwise we'll expect /every/ priority/LRU change to match
+        // expectedPriority/expectedLRU.
+        observed = true;
 
-        if (backgroundLRU == expectedBackgroundLRU) {
+        is(lru, expectedLRU,
+           'Expected LRU ' + lru +
+           ' of childID ' + childID +
+           ' to change to ' + expectedLRU);
+
+        if ((priority == expectedPriority) && (lru == expectedLRU)) {
           resolve();
         } else {
           reject();

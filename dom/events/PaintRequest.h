@@ -18,7 +18,7 @@ namespace dom {
 class DOMRect;
 
 class PaintRequest final : public nsIDOMPaintRequest
-                             , public nsWrapperCache
+                         , public nsWrapperCache
 {
 public:
   explicit PaintRequest(nsIDOMEvent* aParent)
@@ -31,7 +31,7 @@ public:
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(PaintRequest)
   NS_DECL_NSIDOMPAINTREQUEST
 
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   nsIDOMEvent* GetParentObject() const
   {
@@ -55,7 +55,7 @@ private:
 };
 
 class PaintRequestList final : public nsISupports,
-                                   public nsWrapperCache
+                               public nsWrapperCache
 {
 public:
   explicit PaintRequestList(nsIDOMEvent *aParent) : mParent(aParent)
@@ -65,7 +65,7 @@ public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(PaintRequestList)
   
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
   nsISupports* GetParentObject()
   {
     return mParent;

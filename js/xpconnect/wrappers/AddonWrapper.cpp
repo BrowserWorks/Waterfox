@@ -52,7 +52,7 @@ Interpose(JSContext* cx, HandleObject target, const nsIID* iid, HandleId id,
 
     {
         JSAutoCompartment ac(cx, &descriptorVal.toObject());
-        if (!JS::ParsePropertyDescriptorObject(cx, target, descriptorVal, descriptor))
+        if (!JS::ObjectToCompletePropertyDescriptor(cx, target, descriptorVal, descriptor))
             return false;
     }
 
@@ -119,43 +119,43 @@ AddonWrapper<Base>::get(JSContext* cx, JS::Handle<JSObject*> wrapper, JS::Handle
 
 template<typename Base>
 bool
-AddonWrapper<Base>::set(JSContext* cx, JS::HandleObject wrapper, JS::HandleObject receiver,
-                        JS::HandleId id, bool strict, JS::MutableHandleValue vp) const
+AddonWrapper<Base>::set(JSContext* cx, JS::HandleObject wrapper, JS::HandleId id, JS::HandleValue v,
+                        JS::HandleValue receiver, JS::ObjectOpResult& result) const
 {
     Rooted<JSPropertyDescriptor> desc(cx);
     if (!Interpose(cx, wrapper, nullptr, id, &desc))
         return false;
 
     if (!desc.object())
-        return Base::set(cx, wrapper, receiver, id, strict, vp);
+        return Base::set(cx, wrapper, id, v, receiver, result);
 
     if (desc.setter()) {
         MOZ_ASSERT(desc.hasSetterObject());
-        MOZ_ASSERT(!desc.isReadonly());
         JS::AutoValueVector args(cx);
-        args.append(vp);
+        if (!args.append(v))
+            return false;
         RootedValue fval(cx, ObjectValue(*desc.setterObject()));
-        return JS_CallFunctionValue(cx, receiver, fval, args, vp);
-    } else {
-        if (!strict)
-            return true;
-
-        js::ReportErrorWithId(cx, "unable to set interposed data property %s", id);
-        return false;
+        RootedValue ignored(cx);
+        if (!JS::Call(cx, receiver, fval, args, &ignored))
+            return false;
+        return result.succeed();
     }
+
+    return result.failCantSetInterposed();
 }
 
 template<typename Base>
 bool
 AddonWrapper<Base>::defineProperty(JSContext* cx, HandleObject wrapper, HandleId id,
-                                   MutableHandle<JSPropertyDescriptor> desc) const
+                                   Handle<JSPropertyDescriptor> desc,
+                                   ObjectOpResult& result) const
 {
     Rooted<JSPropertyDescriptor> interpDesc(cx);
     if (!Interpose(cx, wrapper, nullptr, id, &interpDesc))
         return false;
 
     if (!interpDesc.object())
-        return Base::defineProperty(cx, wrapper, id, desc);
+        return Base::defineProperty(cx, wrapper, id, desc, result);
 
     js::ReportErrorWithId(cx, "unable to modify interposed property %s", id);
     return false;
@@ -163,14 +163,15 @@ AddonWrapper<Base>::defineProperty(JSContext* cx, HandleObject wrapper, HandleId
 
 template<typename Base>
 bool
-AddonWrapper<Base>::delete_(JSContext* cx, HandleObject wrapper, HandleId id, bool* bp) const
+AddonWrapper<Base>::delete_(JSContext* cx, HandleObject wrapper, HandleId id,
+                            ObjectOpResult& result) const
 {
     Rooted<JSPropertyDescriptor> desc(cx);
     if (!Interpose(cx, wrapper, nullptr, id, &desc))
         return false;
 
     if (!desc.object())
-        return Base::delete_(cx, wrapper, id, bp);
+        return Base::delete_(cx, wrapper, id, result);
 
     js::ReportErrorWithId(cx, "unable to delete interposed property %s", id);
     return false;

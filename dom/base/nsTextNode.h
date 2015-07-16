@@ -81,7 +81,7 @@ public:
 protected:
   virtual ~nsTextNode();
 
-  virtual JSObject* WrapNode(JSContext *aCx) override;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 };
 
 #endif // nsTextNode_h

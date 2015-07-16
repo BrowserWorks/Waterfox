@@ -79,7 +79,7 @@
       <property name="finder" readonly="true">
         <getter><![CDATA[
           if (!this._remoteFinder) {
-            // Don't attempt to create the remote web progress if the
+            // Don't attempt to create the remote finder if the
             // messageManager has already gone away
             if (!this.messageManager)
               return null;
@@ -204,6 +204,11 @@
         ]]></getter>
       </property>
 
+      <field name="_outerWindowID">null</field>
+      <property name="outerWindowID"
+                onget="return this._outerWindowID"
+                readonly="true"/>
+
       <property name="autoCompletePopup"
                 onget="return document.getElementById(this.getAttribute('autocompletepopup'))"
                 readonly="true"/>
@@ -289,6 +294,7 @@
           let data = aMessage.data;
           switch (aMessage.name) {
             case "Browser:Init":
+              this._outerWindowID = data.outerWindowID;
               let result = {};
               result.useGlobalHistory = !this.hasAttribute("disableglobalhistory");
               result.initPopup = this.autoCompletePopup != null;
@@ -315,10 +321,6 @@
               SelectParentHelper.open(this, menulist, data.rect);
               break;
             }
-
-            case "DocumentInserted":
-              this._isSyntheticDocument = data.synthetic;
-              break;
 
             case "FullZoomChange": {
               this._fullZoom = data.value;
@@ -383,27 +385,6 @@
             }
           }
         ]]></body>
-      </method>
-
-      <!--
-        For out-of-process code, event.screen[XY] is relative to the
-        left/top of the content view. For in-process code,
-        event.screen[XY] is relative to the left/top of the screen. We
-        use this method to map screen coordinates received from a
-        (possibly out-of-process) <browser> element to coordinates
-        that are relative to the screen. This code handles the
-        out-of-process case, where we need to translate by the screen
-        position of the <browser> element.
-      -->
-      <method name="mapScreenCoordinatesFromContent">
-        <parameter name="aScreenX"/>
-        <parameter name="aScreenY"/>
-        <body>
-        <![CDATA[
-          return { x: aScreenX + this.boxObject.screenX,
-                   y: aScreenY + this.boxObject.screenY };
-        ]]>
-        </body>
       </method>
 
       <method name="enableDisableCommands">

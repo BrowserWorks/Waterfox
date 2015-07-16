@@ -24,6 +24,7 @@ class nsIDOMBlob;
 class nsIObserver;
 struct ResourceMapping;
 struct OverrideMapping;
+class nsIDomainPolicy;
 
 namespace mozilla {
 class RemoteSpellcheckEngineChild;
@@ -51,8 +52,8 @@ class PStorageChild;
 class ClonedMessageData;
 class TabChild;
 
-class ContentChild : public PContentChild
-                   , public nsIContentChild
+class ContentChild final : public PContentChild
+                         , public nsIContentChild
 {
     typedef mozilla::dom::ClonedMessageData ClonedMessageData;
     typedef mozilla::ipc::OptionalURIParams OptionalURIParams;
@@ -171,6 +172,13 @@ public:
 
     virtual PHalChild* AllocPHalChild() override;
     virtual bool DeallocPHalChild(PHalChild*) override;
+
+    PIccChild*
+    SendPIccConstructor(PIccChild* aActor, const uint32_t& aServiceId);
+    virtual PIccChild*
+    AllocPIccChild(const uint32_t& aClientId) override;
+    virtual bool
+    DeallocPIccChild(PIccChild* aActor) override;
 
     virtual PMemoryReportRequestChild*
     AllocPMemoryReportRequestChild(const uint32_t& aGeneration,
@@ -384,6 +392,9 @@ public:
                                    nsTArray<nsCString>&& aThreadNameFilters) override;
     virtual bool RecvStopProfiler() override;
     virtual bool RecvGetProfile(nsCString* aProfile) override;
+    virtual bool RecvDomainSetChanged(const uint32_t& aSetType, const uint32_t& aChangeType,
+                                      const OptionalURIParams& aDomain) override;
+    virtual bool RecvShutdown() override;
 
 #ifdef ANDROID
     gfxIntSize GetScreenSize() { return mScreenSize; }
@@ -479,6 +490,8 @@ private:
     nsString mProcessName;
 
     static ContentChild* sSingleton;
+
+    nsCOMPtr<nsIDomainPolicy> mPolicy;
 
     DISALLOW_EVIL_CONSTRUCTORS(ContentChild);
 };

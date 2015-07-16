@@ -20,8 +20,8 @@ class WaiveXrayWrapper : public js::CrossCompartmentWrapper {
     virtual bool getOwnPropertyDescriptor(JSContext* cx, JS::Handle<JSObject*> wrapper,
                                           JS::Handle<jsid> id,
                                           JS::MutableHandle<JSPropertyDescriptor> desc) const override;
-    virtual bool getPrototypeOf(JSContext* cx, JS::Handle<JSObject*> wrapper,
-                                JS::MutableHandle<JSObject*> protop) const override;
+    virtual bool getPrototype(JSContext* cx, JS::Handle<JSObject*> wrapper,
+                              JS::MutableHandle<JSObject*> protop) const override;
     virtual bool get(JSContext* cx, JS::Handle<JSObject*> wrapper, JS::Handle<JSObject*> receiver,
                      JS::Handle<jsid> id, JS::MutableHandle<JS::Value> vp) const override;
     virtual bool call(JSContext* cx, JS::Handle<JSObject*> wrapper,

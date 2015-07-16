@@ -34,10 +34,10 @@ class HTMLFormControlsCollection;
 class HTMLImageElement;
 
 class HTMLFormElement final : public nsGenericHTMLElement,
-                                  public nsIDOMHTMLFormElement,
-                                  public nsIWebProgressListener,
-                                  public nsIForm,
-                                  public nsIRadioGroupContainer
+                              public nsIDOMHTMLFormElement,
+                              public nsIWebProgressListener,
+                              public nsIForm,
+                              public nsIRadioGroupContainer
 {
   friend class HTMLFormControlsCollection;
 
@@ -410,7 +410,7 @@ public:
   void RequestAutocomplete();
 
 protected:
-  virtual JSObject* WrapNode(JSContext* aCx) override;
+  virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   void PostPasswordEvent();
   void EventHandled() { mFormPasswordEventDispatcher = nullptr; }

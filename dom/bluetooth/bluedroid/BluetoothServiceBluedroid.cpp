@@ -310,7 +310,8 @@ public:
 
     BT_LOGR("BluetoothInterface::Disable failed: %d", aStatus);
 
-    BluetoothService::AcknowledgeToggleBt(true);
+    // Always make progress; even on failures
+    BluetoothService::AcknowledgeToggleBt(false);
   }
 };
 
@@ -1492,7 +1493,7 @@ BluetoothServiceBluedroid::PinRequestNotification(const nsAString& aRemoteBdAddr
 void
 BluetoothServiceBluedroid::SspRequestNotification(
   const nsAString& aRemoteBdAddr, const nsAString& aBdName, uint32_t aCod,
-  const nsAString& aPairingaVariant, uint32_t aPassKey)
+  BluetoothSspVariant aPairingVariant, uint32_t aPassKey)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -1592,6 +1593,13 @@ BluetoothServiceBluedroid::BondStateChangedNotification(
     }
     default:
       BT_WARNING("Got an unhandled status of BondStateChangedCallback!");
+      // Dispatch a reply to unblock the waiting status of pairing.
+      if (!sBondingRunnableArray.IsEmpty()) {
+        DispatchBluetoothReply(sBondingRunnableArray[0],
+                               BluetoothValue(true),
+                               NS_LITERAL_STRING("Internal failure"));
+        sBondingRunnableArray.RemoveElementAt(0);
+      }
       break;
   }
 }

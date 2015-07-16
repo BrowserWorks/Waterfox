@@ -223,7 +223,15 @@ XPCOMUtils.defineLazyModuleGetter(this, "PanelFrame", "resource:///modules/Panel
       // Add observer notifications before the service is initialized
       Services.obs.addObserver(this, "loop-status-changed", false);
 
-      MozLoopService.initialize();
+      // This is a promise for test purposes, but we don't want to be logging
+      // expected errors to the console, so we catch them here.
+      MozLoopService.initialize().catch(ex => {
+        if (!ex.message ||
+            (!ex.message.contains("not enabled") &&
+             !ex.message.contains("not needed"))) {
+          console.error(ex);
+        }
+      });
       this.updateToolbarState();
     },
 
@@ -362,14 +370,14 @@ XPCOMUtils.defineLazyModuleGetter(this, "PanelFrame", "resource:///modules/Panel
     addBrowserSharingListener: function(listener) {
       if (!this._tabChangeListeners) {
         this._tabChangeListeners = new Set();
-        gBrowser.addEventListener("select", this);
+        gBrowser.tabContainer.addEventListener("TabSelect", this);
       }
 
       this._tabChangeListeners.add(listener);
       this._maybeShowBrowserSharingInfoBar();
 
       // Get the first window Id for the listener.
-      listener(null, gBrowser.selectedTab.linkedBrowser.outerWindowID);
+      listener(null, gBrowser.selectedBrowser.outerWindowID);
     },
 
     /**
@@ -388,7 +396,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "PanelFrame", "resource:///modules/Panel
 
       if (!this._tabChangeListeners.size) {
         this._hideBrowserSharingInfoBar();
-        gBrowser.removeEventListener("select", this);
+        gBrowser.tabContainer.removeEventListener("TabSelect", this);
         delete this._tabChangeListeners;
       }
     },
@@ -463,7 +471,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "PanelFrame", "resource:///modules/Panel
      * @return {Boolean} |true| if the infobar was hidden here.
      */
     _hideBrowserSharingInfoBar: function(permanently = false, browser) {
-      browser = browser || gBrowser.selectedTab.linkedBrowser;
+      browser = browser || gBrowser.selectedBrowser;
       let box = gBrowser.getNotificationBox(browser);
       let notification = box.getNotificationWithValue(kBrowserSharingNotificationId);
       let removed = false;
@@ -484,20 +492,20 @@ XPCOMUtils.defineLazyModuleGetter(this, "PanelFrame", "resource:///modules/Panel
      */
     handleEvent: function(event) {
       // We only should get "select" events.
-      if (event.type != "select") {
+      if (event.type != "TabSelect") {
         return;
       }
 
       let wasVisible = false;
       // Hide the infobar from the previous tab.
-      if (event.fromTab) {
-        wasVisible = this._hideBrowserSharingInfoBar(false, event.fromTab.linkedBrowser);
+      if (event.detail.previousTab) {
+        wasVisible = this._hideBrowserSharingInfoBar(false, event.detail.previousTab.linkedBrowser);
       }
 
       // We've changed the tab, so get the new window id.
       for (let listener of this._tabChangeListeners) {
         try {
-          listener(null, gBrowser.selectedTab.linkedBrowser.outerWindowID);
+          listener(null, gBrowser.selectedBrowser.outerWindowID);
         } catch (ex) {
           Cu.reportError("Tab switch caused an error: " + ex.message);
         }

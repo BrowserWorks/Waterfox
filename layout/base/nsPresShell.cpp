@@ -201,10 +201,8 @@ CapturingContentInfo nsIPresShell::gCaptureInfo =
   { false /* mAllowed */, false /* mPointerLock */, false /* mRetargetToElement */,
     false /* mPreventDrag */, nullptr /* mContent */ };
 nsIContent* nsIPresShell::gKeyDownTarget;
-nsRefPtrHashtable<nsUint32HashKey, dom::Touch>* nsIPresShell::gCaptureTouchList;
 nsClassHashtable<nsUint32HashKey, nsIPresShell::PointerCaptureInfo>* nsIPresShell::gPointerCaptureList;
 nsClassHashtable<nsUint32HashKey, nsIPresShell::PointerInfo>* nsIPresShell::gActivePointersIds;
-bool nsIPresShell::gPreventMouseEvents = false;
 
 // convert a color value to a string, in the CSS format #RRGGBB
 // *  - initially created for bugs 31816, 20760, 22963
@@ -778,8 +776,7 @@ PresShell::PresShell()
   mPresArenaAllocCount = 0;
 #endif
   mRenderFlags = 0;
-  mXResolution = 1.0;
-  mYResolution = 1.0;
+  mResolution = 1.0;
   mViewportOverridden = false;
 
   mScrollPositionClampingScrollPortSizeSet = false;
@@ -975,6 +972,8 @@ PresShell::Init(nsIDocument* aDocument,
 
   // Setup our font inflation preferences.
   SetupFontInflation();
+
+  mTouchManager.Init(this, mDocument);
 }
 
 #ifdef PR_LOGGING
@@ -1277,7 +1276,7 @@ PresShell::Destroy()
 
   mHaveShutDown = true;
 
-  EvictTouches();
+  mTouchManager.Destroy();
 }
 
 void
@@ -1989,7 +1988,7 @@ PresShell::Initialize(nscoord aWidth, nscoord aHeight)
     }
   }
 
-  if (root && root->IsXUL()) {
+  if (root && root->IsXULElement()) {
     mozilla::Telemetry::AccumulateTimeDelta(Telemetry::XUL_INITIAL_FRAME_CONSTRUCTION,
                                             timerStart);
   }
@@ -2390,7 +2389,10 @@ PresShell::ScrollPage(bool aForward)
   if (scrollFrame) {
     scrollFrame->ScrollBy(nsIntPoint(0, aForward ? 1 : -1),
                           nsIScrollableFrame::PAGES,
-                          nsIScrollableFrame::SMOOTH);
+                          nsIScrollableFrame::SMOOTH,
+                          nullptr, nullptr,
+                          nsIScrollableFrame::NOT_MOMENTUM,
+                          nsIScrollableFrame::ENABLE_SNAP);
   }
   return NS_OK;
 }
@@ -2405,7 +2407,10 @@ PresShell::ScrollLine(bool aForward)
                                             NS_DEFAULT_VERTICAL_SCROLL_DISTANCE);
     scrollFrame->ScrollBy(nsIntPoint(0, aForward ? lineCount : -lineCount),
                           nsIScrollableFrame::LINES,
-                          nsIScrollableFrame::SMOOTH);
+                          nsIScrollableFrame::SMOOTH,
+                          nullptr, nullptr,
+                          nsIScrollableFrame::NOT_MOMENTUM,
+                          nsIScrollableFrame::ENABLE_SNAP);
   }
   return NS_OK;
 }
@@ -2420,7 +2425,10 @@ PresShell::ScrollCharacter(bool aRight)
                                     NS_DEFAULT_HORIZONTAL_SCROLL_DISTANCE);
     scrollFrame->ScrollBy(nsIntPoint(aRight ? h : -h, 0),
                           nsIScrollableFrame::LINES,
-                          nsIScrollableFrame::SMOOTH);
+                          nsIScrollableFrame::SMOOTH,
+                          nullptr, nullptr,
+                          nsIScrollableFrame::NOT_MOMENTUM,
+                          nsIScrollableFrame::ENABLE_SNAP);
   }
   return NS_OK;
 }
@@ -2433,7 +2441,10 @@ PresShell::CompleteScroll(bool aForward)
   if (scrollFrame) {
     scrollFrame->ScrollBy(nsIntPoint(0, aForward ? 1 : -1),
                           nsIScrollableFrame::WHOLE,
-                          nsIScrollableFrame::SMOOTH);
+                          nsIScrollableFrame::SMOOTH,
+                          nullptr, nullptr,
+                          nsIScrollableFrame::NOT_MOMENTUM,
+                          nsIScrollableFrame::ENABLE_SNAP);
   }
   return NS_OK;
 }
@@ -2577,52 +2588,6 @@ Element*
 PresShell::GetTouchCaretElement() const
 {
   return GetCanvasFrame() ? GetCanvasFrame()->GetTouchCaretElement() : nullptr;
-}
-
-void
-PresShell::SetMayHaveTouchCaret(bool aSet)
-{
-  if (!mPresContext) {
-    return;
-  }
-
-  if (!mPresContext->IsRoot()) {
-    nsIPresShell* rootPresShell = GetRootPresShell();
-    if (rootPresShell) {
-      rootPresShell->SetMayHaveTouchCaret(aSet);
-    }
-    return;
-  }
-
-  nsIDocument* document = GetDocument();
-  if (document) {
-    nsPIDOMWindow* innerWin = document->GetInnerWindow();
-    if (innerWin) {
-      innerWin->SetMayHaveTouchCaret(aSet);
-    }
-  }
-}
-
-bool
-PresShell::MayHaveTouchCaret()
-{
-  if (!mPresContext) {
-    return false;
-  }
-
-  if (!mPresContext->IsRoot()) {
-    nsIPresShell* rootPresShell = GetRootPresShell();
-    return rootPresShell ? rootPresShell->MayHaveTouchCaret() : false;
-  }
-
-  nsIDocument* document = GetDocument();
-  if (document) {
-    nsPIDOMWindow* innerWin = document->GetInnerWindow();
-    if (innerWin) {
-      return innerWin->MayHaveTouchCaret();
-    }
-  }
-  return false;
 }
 
 Element*
@@ -3171,7 +3136,7 @@ PresShell::GoToAnchor(const nsAString& aAnchorName, bool aScroll,
   }
 
   const Element *root = mDocument->GetRootElement();
-  if (root && root->IsSVG(nsGkAtoms::svg)) {
+  if (root && root->IsSVGElement(nsGkAtoms::svg)) {
     // We need to execute this even if there is an empty anchor name
     // so that any existing SVG fragment identifier effect is removed
     if (SVGFragmentIdentifier::ProcessFragmentIdentifier(mDocument, aAnchorName)) {
@@ -3214,7 +3179,7 @@ PresShell::GoToAnchor(const nsAString& aAnchorName, bool aScroll,
         // Ensure it's an anchor element
         content = do_QueryInterface(node);
         if (content) {
-          if (content->Tag() == nsGkAtoms::a && content->IsHTML()) {
+          if (content->IsHTMLElement(nsGkAtoms::a)) {
             break;
           }
           content = nullptr;
@@ -3406,7 +3371,7 @@ AccumulateFrameBounds(nsIFrame* aContainerFrame,
     nsIFrame *f = aFrame;
 
     while (f && f->IsFrameOfType(nsIFrame::eLineParticipant) &&
-           !f->IsTransformed() && !f->IsPositioned()) {
+           !f->IsTransformed() && !f->IsAbsPosContaininingBlock()) {
       prevFrame = f;
       f = prevFrame->GetParent();
     }
@@ -3784,7 +3749,7 @@ PresShell::ScrollFrameRectIntoView(nsIFrame*                aFrame,
       if (parent) {
         int32_t APD = container->PresContext()->AppUnitsPerDevPixel();
         int32_t parentAPD = parent->PresContext()->AppUnitsPerDevPixel();
-        rect = rect.ConvertAppUnitsRoundOut(APD, parentAPD);
+        rect = rect.ScaleToOtherAppUnitsRoundOut(APD, parentAPD);
         rect += extraOffset;
       }
     }
@@ -5550,17 +5515,16 @@ void PresShell::SetIgnoreViewportScrolling(bool aIgnore)
   SetRenderingState(state);
 }
 
-nsresult PresShell::SetResolutionImpl(float aXResolution, float aYResolution, bool aScaleToResolution)
+nsresult PresShell::SetResolutionImpl(float aResolution, bool aScaleToResolution)
 {
-  if (!(aXResolution > 0.0 && aYResolution > 0.0)) {
+  if (!(aResolution > 0.0)) {
     return NS_ERROR_ILLEGAL_VALUE;
   }
-  if (aXResolution == mXResolution && aYResolution == mYResolution) {
+  if (aResolution == mResolution) {
     return NS_OK;
   }
   RenderingState state(this);
-  state.mXResolution = aXResolution;
-  state.mYResolution = aYResolution;
+  state.mResolution = aResolution;
   SetRenderingState(state);
   mScaleToResolution = aScaleToResolution;
 
@@ -5572,12 +5536,12 @@ bool PresShell::ScaleToResolution() const
   return mScaleToResolution;
 }
 
-gfxSize PresShell::GetCumulativeResolution()
+float PresShell::GetCumulativeResolution()
 {
-  gfxSize resolution = GetResolution();
+  float resolution = GetResolution();
   nsPresContext* parentCtx = GetPresContext()->GetParentPresContext();
   if (parentCtx) {
-    resolution = resolution * parentCtx->PresShell()->GetCumulativeResolution();
+    resolution *= parentCtx->PresShell()->GetCumulativeResolution();
   }
   return resolution;
 }
@@ -5594,8 +5558,7 @@ void PresShell::SetRenderingState(const RenderingState& aState)
   }
 
   mRenderFlags = aState.mRenderFlags;
-  mXResolution = aState.mXResolution;
-  mYResolution = aState.mYResolution;
+  mResolution = aState.mResolution;
 }
 
 void PresShell::SynthesizeMouseMove(bool aFromScroll)
@@ -5772,7 +5735,7 @@ PresShell::ProcessSynthMouseMoveEvent(bool aFromScroll)
     nsIFrame* frame = view->GetFrame();
     NS_ASSERTION(frame, "floating views can't be anonymous");
     viewAPD = frame->PresContext()->AppUnitsPerDevPixel();
-    refpoint = mMouseLocation.ConvertAppUnits(APD, viewAPD);
+    refpoint = mMouseLocation.ScaleToOtherAppUnits(APD, viewAPD);
     refpoint -= view->GetOffsetTo(rootView);
     refpoint += view->ViewToWidgetOffset();
   }
@@ -5906,7 +5869,7 @@ PresShell::MarkImagesInSubtreeVisible(nsIFrame* aFrame, const nsRect& aRect)
       } else {
         rect.MoveBy(-aFrame->GetContentRectRelativeToSelf().TopLeft());
       }
-      rect = rect.ConvertAppUnitsRoundOut(
+      rect = rect.ScaleToOtherAppUnitsRoundOut(
         aFrame->PresContext()->AppUnitsPerDevPixel(),
         presShell->GetPresContext()->AppUnitsPerDevPixel());
 
@@ -6077,7 +6040,7 @@ PresShell::AssumeAllImagesVisible()
       mPresContext->Type() == nsPresContext::eContext_Print ||
       mPresContext->IsChrome() ||
       mDocument->IsResourceDoc() ||
-      mDocument->IsXUL()) {
+      mDocument->IsXULDocument()) {
     return true;
   }
 
@@ -6804,60 +6767,6 @@ PresShell::RecordMouseLocation(WidgetGUIEvent* aEvent)
   }
 }
 
-static void
-EvictTouchPoint(nsRefPtr<dom::Touch>& aTouch,
-                nsIDocument* aLimitToDocument = nullptr)
-{
-  nsCOMPtr<nsINode> node(do_QueryInterface(aTouch->mTarget));
-  if (node) {
-    nsIDocument* doc = node->GetCurrentDoc();
-    if (doc && (!aLimitToDocument || aLimitToDocument == doc)) {
-      nsIPresShell* presShell = doc->GetShell();
-      if (presShell) {
-        nsIFrame* frame = presShell->GetRootFrame();
-        if (frame) {
-          nsPoint pt(aTouch->mRefPoint.x, aTouch->mRefPoint.y);
-          nsCOMPtr<nsIWidget> widget = frame->GetView()->GetNearestWidget(&pt);
-          if (widget) {
-            WidgetTouchEvent event(true, NS_TOUCH_END, widget);
-            event.widget = widget;
-            event.time = PR_IntervalNow();
-            event.touches.AppendElement(aTouch);
-            nsEventStatus status;
-            widget->DispatchEvent(&event, status);
-            return;
-          }
-        }
-      }
-    }
-  }
-  if (!node || !aLimitToDocument || node->OwnerDoc() == aLimitToDocument) {
-    // We couldn't dispatch touchend. Remove the touch from gCaptureTouchList
-    // explicitly.
-    nsIPresShell::gCaptureTouchList->Remove(aTouch->Identifier());
-  }
-}
-
-static PLDHashOperator
-AppendToTouchList(const uint32_t& aKey, nsRefPtr<dom::Touch>& aData, void *aTouchList)
-{
-  WidgetTouchEvent::TouchArray* touches =
-    static_cast<WidgetTouchEvent::TouchArray*>(aTouchList);
-  aData->mChanged = false;
-  touches->AppendElement(aData);
-  return PL_DHASH_NEXT;
-}
-
-void
-PresShell::EvictTouches()
-{
-  WidgetTouchEvent::AutoTouchArray touches;
-  gCaptureTouchList->Enumerate(&AppendToTouchList, &touches);
-  for (uint32_t i = 0; i < touches.Length(); ++i) {
-    EvictTouchPoint(touches[i], mDocument);
-  }
-}
-
 static PLDHashOperator
 FindAnyTarget(const uint32_t& aKey, nsRefPtr<dom::Touch>& aData,
               void* aAnyTarget)
@@ -7062,7 +6971,7 @@ BuildTargetChainForBeforeAfterKeyboardEvent(nsINode* aTarget,
                                             bool& aTargetIsIframe)
 {
   nsCOMPtr<nsIContent> content(do_QueryInterface(aTarget));
-  aTargetIsIframe = content && content->IsHTML(nsGkAtoms::iframe);
+  aTargetIsIframe = content && content->IsHTMLElement(nsGkAtoms::iframe);
 
   Element* frameElement;
   // If event target is not an iframe, skip the event target and get its
@@ -7456,6 +7365,12 @@ PresShell::HandleEvent(nsIFrame* aFrame,
         frame == mFrameConstructor->GetRootFrame()) {
       nsIFrame* popupFrame =
         nsLayoutUtils::GetPopupFrameForEventCoordinates(rootPresContext, aEvent);
+      // If a remote browser is currently capturing input break out if we
+      // detect a chrome generated popup.
+      if (popupFrame && capturingContent &&
+          EventStateManager::IsRemoteTarget(capturingContent)) {
+        capturingContent = nullptr;
+      }
       // If the popupFrame is an ancestor of the 'frame', the frame should
       // handle the event, otherwise, the popup should handle it.
       if (popupFrame &&
@@ -7484,8 +7399,7 @@ PresShell::HandleEvent(nsIFrame* aFrame,
                        "Unexpected document");
           nsIFrame* captureFrame = capturingContent->GetPrimaryFrame();
           if (captureFrame) {
-            if (capturingContent->Tag() == nsGkAtoms::select &&
-                capturingContent->IsHTML()) {
+            if (capturingContent->IsHTMLElement(nsGkAtoms::select)) {
               // a dropdown <select> has a child in its selectPopupList and we should
               // capture on that instead.
               nsIFrame* childFrame = captureFrame->GetChildList(nsIFrame::kSelectPopupList).FirstChild();
@@ -7534,10 +7448,10 @@ PresShell::HandleEvent(nsIFrame* aFrame,
         // in the same document by taking the target of the events already in
         // the capture list
         nsCOMPtr<nsIContent> anyTarget;
-        if (gCaptureTouchList->Count() > 0 && touchEvent->touches.Length() > 1) {
-          gCaptureTouchList->Enumerate(&FindAnyTarget, &anyTarget);
+        if (TouchManager::gCaptureTouchList->Count() > 0 && touchEvent->touches.Length() > 1) {
+          TouchManager::gCaptureTouchList->Enumerate(&FindAnyTarget, &anyTarget);
         } else {
-          gPreventMouseEvents = false;
+          TouchManager::gPreventMouseEvents = false;
         }
 
         for (int32_t i = touchEvent->touches.Length(); i; ) {
@@ -7545,7 +7459,7 @@ PresShell::HandleEvent(nsIFrame* aFrame,
           dom::Touch* touch = touchEvent->touches[i];
 
           int32_t id = touch->Identifier();
-          if (!gCaptureTouchList->Get(id, nullptr)) {
+          if (!TouchManager::gCaptureTouchList->Get(id, nullptr)) {
             // find the target for this touch
             eventPoint = nsLayoutUtils::GetEventCoordinatesRelativeTo(aEvent,
                                                               touch->mRefPoint,
@@ -7599,7 +7513,7 @@ PresShell::HandleEvent(nsIFrame* aFrame,
             touch->mChanged = false;
             int32_t id = touch->Identifier();
 
-            nsRefPtr<dom::Touch> oldTouch = gCaptureTouchList->GetWeak(id);
+            nsRefPtr<dom::Touch> oldTouch = TouchManager::gCaptureTouchList->GetWeak(id);
             if (oldTouch) {
               touch->SetTarget(oldTouch->mTarget);
             }
@@ -7705,7 +7619,7 @@ PresShell::HandleEvent(nsIFrame* aFrame,
           }
 
           nsRefPtr<dom::Touch> oldTouch =
-            gCaptureTouchList->GetWeak(touch->Identifier());
+            TouchManager::gCaptureTouchList->GetWeak(touch->Identifier());
           if (!oldTouch) {
             break;
           }
@@ -8068,125 +7982,7 @@ PresShell::HandleEventInternal(WidgetEvent* aEvent, nsEventStatus* aStatus)
       case NS_MOUSE_BUTTON_UP:
         isHandlingUserInput = true;
         break;
-      case NS_TOUCH_START: {
-        isHandlingUserInput = true;
-        WidgetTouchEvent* touchEvent = aEvent->AsTouchEvent();
-        // if there is only one touch in this touchstart event, assume that it is
-        // the start of a new touch session and evict any old touches in the
-        // queue
-        if (touchEvent->touches.Length() == 1) {
-          WidgetTouchEvent::AutoTouchArray touches;
-          gCaptureTouchList->Enumerate(&AppendToTouchList, (void *)&touches);
-          for (uint32_t i = 0; i < touches.Length(); ++i) {
-            EvictTouchPoint(touches[i]);
-          }
-        }
-        // Add any new touches to the queue
-        for (uint32_t i = 0; i < touchEvent->touches.Length(); ++i) {
-          dom::Touch* touch = touchEvent->touches[i];
-          int32_t id = touch->Identifier();
-          if (!gCaptureTouchList->Get(id, nullptr)) {
-            // If it is not already in the queue, it is a new touch
-            touch->mChanged = true;
-          }
-          touch->mMessage = aEvent->message;
-          gCaptureTouchList->Put(id, touch);
-        }
-        break;
-      }
-      case NS_TOUCH_END:
-        isHandlingUserInput = true;
-        // Fall through to touchcancel code
-      case NS_TOUCH_CANCEL: {
-        // Remove the changed touches
-        // need to make sure we only remove touches that are ending here
-        WidgetTouchEvent* touchEvent = aEvent->AsTouchEvent();
-        WidgetTouchEvent::TouchArray& touches = touchEvent->touches;
-        for (uint32_t i = 0; i < touches.Length(); ++i) {
-          dom::Touch* touch = touches[i];
-          if (!touch) {
-            continue;
-          }
-          touch->mMessage = aEvent->message;
-          touch->mChanged = true;
 
-          int32_t id = touch->Identifier();
-          nsRefPtr<dom::Touch> oldTouch = gCaptureTouchList->GetWeak(id);
-          if (!oldTouch) {
-            continue;
-          }
-          nsCOMPtr<EventTarget> targetPtr = oldTouch->mTarget;
-
-          mCurrentEventContent = do_QueryInterface(targetPtr);
-          touch->SetTarget(targetPtr);
-          gCaptureTouchList->Remove(id);
-        }
-        // add any touches left in the touch list, but ensure changed=false
-        gCaptureTouchList->Enumerate(&AppendToTouchList, (void *)&touches);
-        break;
-      }
-      case NS_TOUCH_MOVE: {
-        // Check for touches that changed. Mark them add to queue
-        WidgetTouchEvent* touchEvent = aEvent->AsTouchEvent();
-        WidgetTouchEvent::TouchArray& touches = touchEvent->touches;
-        bool haveChanged = false;
-        for (int32_t i = touches.Length(); i; ) {
-          --i;
-          dom::Touch* touch = touches[i];
-          if (!touch) {
-            continue;
-          }
-          int32_t id = touch->Identifier();
-          touch->mMessage = aEvent->message;
-
-          nsRefPtr<dom::Touch> oldTouch = gCaptureTouchList->GetWeak(id);
-          if (!oldTouch) {
-            touches.RemoveElementAt(i);
-            continue;
-          }
-          if (!touch->Equals(oldTouch)) {
-            touch->mChanged = true;
-            haveChanged = true;
-          }
-
-          nsCOMPtr<dom::EventTarget> targetPtr = oldTouch->mTarget;
-          if (!targetPtr) {
-            touches.RemoveElementAt(i);
-            continue;
-          }
-          touch->SetTarget(targetPtr);
-
-          gCaptureTouchList->Put(id, touch);
-          // if we're moving from touchstart to touchmove for this touch
-          // we allow preventDefault to prevent mouse events
-          if (oldTouch->mMessage != touch->mMessage) {
-            touchIsNew = true;
-          }
-        }
-        // is nothing has changed, we should just return
-        if (!haveChanged) {
-          if (touchIsNew) {
-            // however, if this is the first touchmove after a touchstart,
-            // it is special in that preventDefault is allowed on it, so
-            // we must dispatch it to content even if nothing changed. we
-            // arbitrarily pick the first touch point to be the "changed"
-            // touch because firing an event with no changed events doesn't
-            // work.
-            for (uint32_t i = 0; i < touchEvent->touches.Length(); ++i) {
-              if (touchEvent->touches[i]) {
-                touchEvent->touches[i]->mChanged = true;
-                break;
-              }
-            }
-          } else {
-            if (gPreventMouseEvents) {
-              *aStatus = nsEventStatus_eConsumeNoDefault;
-            }
-            return NS_OK;
-          }
-        }
-        break;
-      }
       case NS_DRAGDROP_DROP:
         nsCOMPtr<nsIDragSession> session = nsContentUtils::GetDragSession();
         if (session) {
@@ -8197,6 +7993,12 @@ PresShell::HandleEventInternal(WidgetEvent* aEvent, nsEventStatus* aStatus)
           }
         }
         break;
+      }
+
+      if (!mTouchManager.PreHandleEvent(aEvent, aStatus,
+                                        touchIsNew, isHandlingUserInput,
+                                        mCurrentEventContent)) {
+        return NS_OK;
       }
     }
 
@@ -8440,10 +8242,10 @@ PresShell::DispatchTouchEventToDOM(WidgetEvent* aEvent,
   // and this is touchstart, or the first touchmove, widget should consume
   // other events that would be associated with this touch session
   if (preventDefault && canPrevent) {
-    gPreventMouseEvents = true;
+    TouchManager::gPreventMouseEvents = true;
   }
 
-  if (gPreventMouseEvents) {
+  if (TouchManager::gPreventMouseEvents) {
     *aStatus = nsEventStatus_eConsumeNoDefault;
   } else {
     *aStatus = nsEventStatus_eIgnore;
@@ -8837,7 +8639,7 @@ PresShell::GetCurrentItemAndPositionForElement(nsIDOMElement *aCurrentEl,
           nsIFrame* f = do_QueryFrame(scrollFrame);
           int32_t APD = presContext->AppUnitsPerDevPixel();
           int32_t scrollAPD = f->PresContext()->AppUnitsPerDevPixel();
-          scrollAmount = scrollAmount.ConvertAppUnits(scrollAPD, APD);
+          scrollAmount = scrollAmount.ScaleToOtherAppUnits(scrollAPD, APD);
           if (extra > scrollAmount.height) {
             extra = scrollAmount.height;
           }
@@ -8909,13 +8711,6 @@ PresShell::WillPaintWindow()
 void
 PresShell::DidPaintWindow()
 {
-  if (mDocument) {
-    nsCOMPtr<nsPIDOMWindow> window = mDocument->GetWindow();
-    if (window) {
-      window->SendAfterRemotePaintIfRequested();
-    }
-  }
-
   nsRootPresContext* rootPresContext = mPresContext->GetRootPresContext();
   if (rootPresContext != mPresContext) {
     // This could be a popup's presshell. No point in notifying XPConnect
@@ -9293,8 +9088,6 @@ PresShell::DoReflow(nsIFrame* target, bool aInterruptible)
   mCurrentReflowRoot = target;
 #endif
 
-  target->WillReflow(mPresContext);
-
   // If the target frame is the root of the frame hierarchy, then
   // use all the available space. If it's simply a `reflow root',
   // then use the target frame's size as the available space.
@@ -9574,7 +9367,7 @@ PresShell::ProcessReflowCommands(bool aInterruptible)
     int32_t intElapsed = int32_t(elapsed.ToMilliseconds());
 
     Telemetry::ID id;
-    if (mDocument->GetRootElement()->IsXUL()) {
+    if (mDocument->GetRootElement()->IsXULElement()) {
       id = mIsActive
         ? Telemetry::XUL_FOREGROUND_REFLOW_MS
         : Telemetry::XUL_BACKGROUND_REFLOW_MS;
@@ -10862,17 +10655,14 @@ nsIPresShell::AccService()
 
 void nsIPresShell::InitializeStatics()
 {
-  NS_ASSERTION(!gCaptureTouchList, "InitializeStatics called multiple times!");
-  gCaptureTouchList = new nsRefPtrHashtable<nsUint32HashKey, dom::Touch>;
+  NS_ASSERTION(!gPointerCaptureList, "InitializeStatics called multiple times!");
   gPointerCaptureList = new nsClassHashtable<nsUint32HashKey, PointerCaptureInfo>;
   gActivePointersIds = new nsClassHashtable<nsUint32HashKey, PointerInfo>;
 }
 
 void nsIPresShell::ReleaseStatics()
 {
-  NS_ASSERTION(gCaptureTouchList, "ReleaseStatics called without Initialize!");
-  delete gCaptureTouchList;
-  gCaptureTouchList = nullptr;
+  NS_ASSERTION(gPointerCaptureList, "ReleaseStatics called without Initialize!");
   delete gPointerCaptureList;
   gPointerCaptureList = nullptr;
   delete gActivePointersIds;
@@ -11132,10 +10922,10 @@ nsIPresShell::RecomputeFontSizeInflationEnabled()
 
   // Force-enabling font inflation always trumps the heuristics here.
   if (!FontSizeInflationForceEnabled()) {
-    if (TabChild* tab = TabChild::GetFrom(this)) {
+    if (TabChild::GetFrom(this)) {
       // We're in a child process.  Cancel inflation if we're not
       // async-pan zoomed.
-      if (!tab->IsAsyncPanZoomEnabled()) {
+      if (!gfxPrefs::AsyncPanZoomEnabled()) {
         mFontSizeInflationEnabled = false;
         return;
       }

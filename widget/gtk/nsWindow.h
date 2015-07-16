@@ -126,6 +126,7 @@ public:
     NS_IMETHOD         SetFocus(bool aRaise = false) override;
     NS_IMETHOD         GetScreenBounds(nsIntRect &aRect) override;
     NS_IMETHOD         GetClientBounds(nsIntRect &aRect) override;
+    virtual mozilla::gfx::IntSize GetClientSize() override;
     virtual nsIntPoint GetClientOffset() override;
     NS_IMETHOD         SetCursor(nsCursor aCursor) override;
     NS_IMETHOD         SetCursor(imgIContainer* aCursor,

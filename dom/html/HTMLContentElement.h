@@ -73,7 +73,7 @@ public:
 protected:
   virtual ~HTMLContentElement();
 
-  virtual JSObject* WrapNode(JSContext *aCx) override;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   /**
    * Updates the destination insertion points of the fallback
@@ -110,7 +110,7 @@ public:
   virtual nsIContent* Item(uint32_t aIndex) override;
   virtual int32_t IndexOf(nsIContent* aContent) override;
   virtual nsINode* GetParentObject() override { return mParent; }
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 protected:
   virtual ~DistributedContentList();
   nsRefPtr<HTMLContentElement> mParent;

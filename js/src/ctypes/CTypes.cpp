@@ -89,7 +89,7 @@ GetDeflatedUTF8StringLength(JSContext* maybecx, const CharT* chars,
     if (maybecx) {
         js::gc::AutoSuppressGC suppress(maybecx);
         JS_snprintf(buffer, 10, "0x%x", c);
-        JS_ReportErrorFlagsAndNumber(maybecx, JSREPORT_ERROR, js_GetErrorMessage,
+        JS_ReportErrorFlagsAndNumber(maybecx, JSREPORT_ERROR, GetErrorMessage,
                                      nullptr, JSMSG_BAD_SURROGATE_CHAR, buffer);
     }
     return (size_t) -1;
@@ -151,7 +151,7 @@ DeflateStringToUTF8Buffer(JSContext* maybecx, const CharT* src, size_t srclen,
             *dst++ = (char) v;
             utf8Len = 1;
         } else {
-            utf8Len = js_OneUcs4ToUtf8Char(utf8buf, v);
+            utf8Len = js::OneUcs4ToUtf8Char(utf8buf, v);
             if (utf8Len > dstlen)
                 goto bufferTooSmall;
             for (i = 0; i < utf8Len; i++)
@@ -173,7 +173,7 @@ bufferTooSmall:
     *dstlenp = (origDstlen - dstlen);
     if (maybecx) {
         js::gc::AutoSuppressGC suppress(maybecx);
-        JS_ReportErrorNumber(maybecx, js_GetErrorMessage, nullptr,
+        JS_ReportErrorNumber(maybecx, GetErrorMessage, nullptr,
                              JSMSG_BUFFER_TOO_SMALL);
     }
     return false;
@@ -287,7 +287,8 @@ namespace ArrayType {
   bool LengthGetter(JSContext* cx, JS::CallArgs args);
 
   static bool Getter(JSContext* cx, HandleObject obj, HandleId idval, MutableHandleValue vp);
-  static bool Setter(JSContext* cx, HandleObject obj, HandleId idval, bool strict, MutableHandleValue vp);
+  static bool Setter(JSContext* cx, HandleObject obj, HandleId idval, MutableHandleValue vp,
+                     ObjectOpResult& result);
   static bool AddressOfElement(JSContext* cx, unsigned argc, jsval* vp);
 }
 
@@ -300,9 +301,9 @@ namespace StructType {
   bool FieldsArrayGetter(JSContext* cx, JS::CallArgs args);
 
   static bool FieldGetter(JSContext* cx, HandleObject obj, HandleId idval,
-    MutableHandleValue vp);
-  static bool FieldSetter(JSContext* cx, HandleObject obj, HandleId idval, bool strict,
-                            MutableHandleValue vp);
+                          MutableHandleValue vp);
+  static bool FieldSetter(JSContext* cx, HandleObject obj, HandleId idval,
+                          MutableHandleValue vp, ObjectOpResult& result);
   static bool AddressOfField(JSContext* cx, unsigned argc, jsval* vp);
   static bool Define(JSContext* cx, unsigned argc, jsval* vp);
 }
@@ -749,8 +750,8 @@ static const JSPropertySpec sFunctionProps[] = {
 };
 
 static const JSFunctionSpec sFunctionInstanceFunctions[] = {
-  JS_FN("call", js_fun_call, 1, CDATAFN_FLAGS),
-  JS_FN("apply", js_fun_apply, 2, CDATAFN_FLAGS),
+  JS_FN("call", js::fun_call, 1, CDATAFN_FLAGS),
+  JS_FN("apply", js::fun_apply, 2, CDATAFN_FLAGS),
   JS_FS_END
 };
 
@@ -894,9 +895,9 @@ TypeError(JSContext* cx, const char* expected, HandleValue actual)
 }
 
 static JSObject*
-InitCTypeClass(JSContext* cx, HandleObject parent)
+InitCTypeClass(JSContext* cx, HandleObject ctypesObj)
 {
-  JSFunction* fun = JS_DefineFunction(cx, parent, "CType", ConstructAbstract, 0,
+  JSFunction* fun = JS_DefineFunction(cx, ctypesObj, "CType", ConstructAbstract, 0,
                                       CTYPESCTOR_FLAGS);
   if (!fun)
     return nullptr;
@@ -909,7 +910,7 @@ InitCTypeClass(JSContext* cx, HandleObject parent)
   MOZ_ASSERT(fnproto);
 
   // Set up ctypes.CType.prototype.
-  RootedObject prototype(cx, JS_NewObjectWithGivenProto(cx, &sCTypeProtoClass, fnproto, parent));
+  RootedObject prototype(cx, JS_NewObjectWithGivenProto(cx, &sCTypeProtoClass, fnproto));
   if (!prototype)
     return nullptr;
 
@@ -933,7 +934,7 @@ InitCTypeClass(JSContext* cx, HandleObject parent)
 }
 
 static JSObject*
-InitABIClass(JSContext* cx, JSObject* parent)
+InitABIClass(JSContext* cx)
 {
   RootedObject obj(cx, JS_NewPlainObject(cx));
 
@@ -965,7 +966,7 @@ InitCDataClass(JSContext* cx, HandleObject parent, HandleObject CTypeProto)
     return nullptr;
 
   // Set up ctypes.CData.prototype.
-  RootedObject prototype(cx, JS_NewObject(cx, &sCDataProtoClass, parent));
+  RootedObject prototype(cx, JS_NewObject(cx, &sCDataProtoClass));
   if (!prototype)
     return nullptr;
 
@@ -991,7 +992,7 @@ InitCDataClass(JSContext* cx, HandleObject parent, HandleObject CTypeProto)
 
 static bool
 DefineABIConstant(JSContext* cx,
-                  HandleObject parent,
+                  HandleObject ctypesObj,
                   const char* name,
                   ABICode code,
                   HandleObject prototype)
@@ -1004,7 +1005,7 @@ DefineABIConstant(JSContext* cx,
   if (!JS_FreezeObject(cx, obj))
     return false;
 
-  return JS_DefineProperty(cx, parent, name, obj,
+  return JS_DefineProperty(cx, ctypesObj, name, obj,
                            JSPROP_ENUMERATE | JSPROP_READONLY | JSPROP_PERMANENT);
 }
 
@@ -1033,7 +1034,7 @@ InitTypeConstructor(JSContext* cx,
     return false;
 
   // Set up the .prototype and .prototype.constructor properties.
-  typeProto.set(JS_NewObjectWithGivenProto(cx, &sCTypeProtoClass, CTypeProto, parent));
+  typeProto.set(JS_NewObjectWithGivenProto(cx, &sCTypeProtoClass, CTypeProto));
   if (!typeProto)
     return false;
 
@@ -1060,7 +1061,7 @@ InitTypeConstructor(JSContext* cx,
   // created from the given type constructor. This has ctypes.CData.prototype
   // as its prototype, such that it inherits the properties and functions
   // common to all CDatas.
-  dataProto.set(JS_NewObjectWithGivenProto(cx, &sCDataProtoClass, CDataProto, parent));
+  dataProto.set(JS_NewObjectWithGivenProto(cx, &sCDataProtoClass, CDataProto));
   if (!dataProto)
     return false;
 
@@ -1133,7 +1134,7 @@ AttachProtos(JSObject* proto, const AutoObjectVector& protos)
 }
 
 static bool
-InitTypeClasses(JSContext* cx, HandleObject parent)
+InitTypeClasses(JSContext* cx, HandleObject ctypesObj)
 {
   // Initialize the ctypes.CType class. This acts as an abstract base class for
   // the various types, and provides the common API functions. It has:
@@ -1148,7 +1149,7 @@ InitTypeClasses(JSContext* cx, HandleObject parent)
   //       abstract type instance!)
   //     * 'constructor' property === ctypes.CType
   //     * Provides properties and functions common to all CTypes.
-  RootedObject CTypeProto(cx, InitCTypeClass(cx, parent));
+  RootedObject CTypeProto(cx, InitCTypeClass(cx, ctypesObj));
   if (!CTypeProto)
     return false;
 
@@ -1163,7 +1164,7 @@ InitTypeClasses(JSContext* cx, HandleObject parent)
   //     * [[Class]] "CDataProto"
   //     * 'constructor' property === ctypes.CData
   //     * Provides properties and functions common to all CDatas.
-  RootedObject CDataProto(cx, InitCDataClass(cx, parent, CTypeProto));
+  RootedObject CDataProto(cx, InitCDataClass(cx, ctypesObj, CTypeProto));
   if (!CDataProto)
     return false;
 
@@ -1198,25 +1199,25 @@ InitTypeClasses(JSContext* cx, HandleObject parent)
   //     * 'constructor' property === 't'
   AutoObjectVector protos(cx);
   protos.resize(CTYPEPROTO_SLOTS);
-  if (!InitTypeConstructor(cx, parent, CTypeProto, CDataProto,
+  if (!InitTypeConstructor(cx, ctypesObj, CTypeProto, CDataProto,
          sPointerFunction, nullptr, sPointerProps,
          sPointerInstanceFunctions, sPointerInstanceProps,
          protos[SLOT_POINTERPROTO], protos[SLOT_POINTERDATAPROTO]))
     return false;
 
-  if (!InitTypeConstructor(cx, parent, CTypeProto, CDataProto,
+  if (!InitTypeConstructor(cx, ctypesObj, CTypeProto, CDataProto,
          sArrayFunction, nullptr, sArrayProps,
          sArrayInstanceFunctions, sArrayInstanceProps,
          protos[SLOT_ARRAYPROTO], protos[SLOT_ARRAYDATAPROTO]))
     return false;
 
-  if (!InitTypeConstructor(cx, parent, CTypeProto, CDataProto,
+  if (!InitTypeConstructor(cx, ctypesObj, CTypeProto, CDataProto,
          sStructFunction, sStructFunctions, sStructProps,
          sStructInstanceFunctions, nullptr,
          protos[SLOT_STRUCTPROTO], protos[SLOT_STRUCTDATAPROTO]))
     return false;
 
-  if (!InitTypeConstructor(cx, parent, CTypeProto, protos[SLOT_POINTERDATAPROTO],
+  if (!InitTypeConstructor(cx, ctypesObj, CTypeProto, protos[SLOT_POINTERDATAPROTO],
          sFunctionFunction, nullptr, sFunctionProps, sFunctionInstanceFunctions, nullptr,
          protos[SLOT_FUNCTIONPROTO], protos[SLOT_FUNCTIONDATAPROTO]))
     return false;
@@ -1231,18 +1232,18 @@ InitTypeClasses(JSContext* cx, HandleObject parent)
   //   * 'prototype' property:
   //     * [[Class]] {"Int64Proto","UInt64Proto"}
   //     * 'constructor' property === ctypes.{Int64,UInt64}
-  protos[SLOT_INT64PROTO].set(InitInt64Class(cx, parent, &sInt64ProtoClass,
+  protos[SLOT_INT64PROTO].set(InitInt64Class(cx, ctypesObj, &sInt64ProtoClass,
     Int64::Construct, sInt64Functions, sInt64StaticFunctions));
   if (!protos[SLOT_INT64PROTO])
     return false;
-  protos[SLOT_UINT64PROTO].set(InitInt64Class(cx, parent, &sUInt64ProtoClass,
+  protos[SLOT_UINT64PROTO].set(InitInt64Class(cx, ctypesObj, &sUInt64ProtoClass,
     UInt64::Construct, sUInt64Functions, sUInt64StaticFunctions));
   if (!protos[SLOT_UINT64PROTO])
     return false;
 
   // Finally, store a pointer to the global ctypes object.
   // Note that there is no other reliable manner of locating this object.
-  protos[SLOT_CTYPES].set(parent);
+  protos[SLOT_CTYPES].set(ctypesObj);
 
   // Attach the prototypes just created to each of ctypes.CType.prototype,
   // and the special type constructors, so we can access them when constructing
@@ -1253,14 +1254,14 @@ InitTypeClasses(JSContext* cx, HandleObject parent)
   AttachProtos(protos[SLOT_STRUCTPROTO], protos);
   AttachProtos(protos[SLOT_FUNCTIONPROTO], protos);
 
-  RootedObject ABIProto(cx, InitABIClass(cx, parent));
+  RootedObject ABIProto(cx, InitABIClass(cx));
   if (!ABIProto)
     return false;
 
   // Attach objects representing ABI constants.
-  if (!DefineABIConstant(cx, parent, "default_abi", ABI_DEFAULT, ABIProto) ||
-      !DefineABIConstant(cx, parent, "stdcall_abi", ABI_STDCALL, ABIProto) ||
-      !DefineABIConstant(cx, parent, "winapi_abi", ABI_WINAPI, ABIProto))
+  if (!DefineABIConstant(cx, ctypesObj, "default_abi", ABI_DEFAULT, ABIProto) ||
+      !DefineABIConstant(cx, ctypesObj, "stdcall_abi", ABI_STDCALL, ABIProto) ||
+      !DefineABIConstant(cx, ctypesObj, "winapi_abi", ABI_WINAPI, ABIProto))
     return false;
 
   // Create objects representing the builtin types, and attach them to the
@@ -1275,7 +1276,7 @@ InitTypeClasses(JSContext* cx, HandleObject parent)
   //     * 'constructor' property === 't'
 #define DEFINE_TYPE(name, type, ffiType)                                       \
   RootedObject typeObj_##name(cx,                                              \
-    CType::DefineBuiltin(cx, parent, #name, CTypeProto, CDataProto, #name,     \
+    CType::DefineBuiltin(cx, ctypesObj, #name, CTypeProto, CDataProto, #name,  \
       TYPE_##name, INT_TO_JSVAL(sizeof(type)),                                 \
       INT_TO_JSVAL(ffiType.alignment), &ffiType));                             \
   if (!typeObj_##name)                                                         \
@@ -1285,19 +1286,19 @@ InitTypeClasses(JSContext* cx, HandleObject parent)
 
   // Alias 'ctypes.unsigned' as 'ctypes.unsigned_int', since they represent
   // the same type in C.
-  if (!JS_DefineProperty(cx, parent, "unsigned", typeObj_unsigned_int,
+  if (!JS_DefineProperty(cx, ctypesObj, "unsigned", typeObj_unsigned_int,
                          JSPROP_ENUMERATE | JSPROP_READONLY | JSPROP_PERMANENT))
     return false;
 
   // Alias 'ctypes.jschar' as 'ctypes.char16_t' to prevent breaking addons
   // that are still using jschar (bug 1064935).
-  if (!JS_DefineProperty(cx, parent, "jschar", typeObj_char16_t,
+  if (!JS_DefineProperty(cx, ctypesObj, "jschar", typeObj_char16_t,
                          JSPROP_ENUMERATE | JSPROP_READONLY | JSPROP_PERMANENT))
     return false;
 
   // Create objects representing the special types void_t and voidptr_t.
   RootedObject typeObj(cx,
-    CType::DefineBuiltin(cx, parent, "void_t", CTypeProto, CDataProto, "void",
+    CType::DefineBuiltin(cx, ctypesObj, "void_t", CTypeProto, CDataProto, "void",
                          TYPE_void_t, JSVAL_VOID, JSVAL_VOID, &ffi_type_void));
   if (!typeObj)
     return false;
@@ -1305,7 +1306,7 @@ InitTypeClasses(JSContext* cx, HandleObject parent)
   typeObj = PointerType::CreateInternal(cx, typeObj);
   if (!typeObj)
     return false;
-  if (!JS_DefineProperty(cx, parent, "voidptr_t", typeObj,
+  if (!JS_DefineProperty(cx, ctypesObj, "voidptr_t", typeObj,
                          JSPROP_ENUMERATE | JSPROP_READONLY | JSPROP_PERMANENT))
     return false;
 
@@ -1390,7 +1391,7 @@ JS_InitCTypesClass(JSContext* cx, HandleObject global)
   if (!GetObjectProperty(cx, ctypes, "CDataFinalizer", &ctor))
     return false;
 
-  RootedObject prototype(cx, JS_NewObject(cx, &sCDataFinalizerProtoClass, ctypes));
+  RootedObject prototype(cx, JS_NewObject(cx, &sCDataFinalizerProtoClass));
   if (!prototype)
     return false;
 
@@ -3286,8 +3287,6 @@ CType::Create(JSContext* cx,
   RootedString name(cx, name_);
   RootedValue size(cx, size_);
   RootedValue align(cx, align_);
-  RootedObject parent(cx, JS_GetParent(typeProto));
-  MOZ_ASSERT(parent);
 
   // Create a CType object with the properties and slots common to all CTypes.
   // Each type object 't' has:
@@ -3305,7 +3304,7 @@ CType::Create(JSContext* cx,
   //     * 'constructor' property === 't'
   //     * Additional properties specified by 'ps', as appropriate for the
   //       specific type instance 't'.
-  RootedObject typeObj(cx, JS_NewObjectWithGivenProto(cx, &sCTypeClass, typeProto, parent));
+  RootedObject typeObj(cx, JS_NewObjectWithGivenProto(cx, &sCTypeClass, typeProto));
   if (!typeObj)
     return nullptr;
 
@@ -3320,7 +3319,7 @@ CType::Create(JSContext* cx,
 
   if (dataProto) {
     // Set up the 'prototype' and 'prototype.constructor' properties.
-    RootedObject prototype(cx, JS_NewObjectWithGivenProto(cx, &sCDataProtoClass, dataProto, parent));
+    RootedObject prototype(cx, JS_NewObjectWithGivenProto(cx, &sCDataProtoClass, dataProto));
     if (!prototype)
       return nullptr;
 
@@ -3347,7 +3346,7 @@ CType::Create(JSContext* cx,
 
 JSObject*
 CType::DefineBuiltin(JSContext* cx,
-                     JSObject* parent_,
+                     HandleObject ctypesObj,
                      const char* propName,
                      JSObject* typeProto_,
                      JSObject* dataProto_,
@@ -3357,7 +3356,6 @@ CType::DefineBuiltin(JSContext* cx,
                      jsval align_,
                      ffi_type* ffiType)
 {
-  RootedObject parent(cx, parent_);
   RootedObject typeProto(cx, typeProto_);
   RootedObject dataProto(cx, dataProto_);
   RootedValue size(cx, size_);
@@ -3372,8 +3370,8 @@ CType::DefineBuiltin(JSContext* cx,
   if (!typeObj)
     return nullptr;
 
-  // Define the CType as a 'propName' property on 'parent'.
-  if (!JS_DefineProperty(cx, parent, propName, typeObj,
+  // Define the CType as a 'propName' property on 'ctypesObj'.
+  if (!JS_DefineProperty(cx, ctypesObj, propName, typeObj,
                          JSPROP_ENUMERATE | JSPROP_READONLY | JSPROP_PERMANENT))
     return nullptr;
 
@@ -4628,7 +4626,8 @@ ArrayType::Getter(JSContext* cx, HandleObject obj, HandleId idval, MutableHandle
 }
 
 bool
-ArrayType::Setter(JSContext* cx, HandleObject obj, HandleId idval, bool strict, MutableHandleValue vp)
+ArrayType::Setter(JSContext* cx, HandleObject obj, HandleId idval, MutableHandleValue vp,
+                  ObjectOpResult& result)
 {
   // This should never happen, but we'll check to be safe.
   if (!CData::IsCData(obj)) {
@@ -4640,7 +4639,7 @@ ArrayType::Setter(JSContext* cx, HandleObject obj, HandleId idval, bool strict, 
   // CData, regardless of CType.)
   JSObject* typeObj = CData::GetCType(obj);
   if (CType::GetTypeCode(typeObj) != TYPE_array)
-    return true;
+    return result.succeed();
 
   // Convert the index to a size_t and bounds-check it.
   size_t index;
@@ -4650,7 +4649,7 @@ ArrayType::Setter(JSContext* cx, HandleObject obj, HandleId idval, bool strict, 
   if (!ok && JSID_IS_STRING(idval) && !StringToInteger(cx, JSID_TO_STRING(idval), &dummy)) {
     // String either isn't a number, or doesn't fit in size_t.
     // Chances are it's a regular property lookup, so return.
-    return true;
+    return result.succeed();
   }
   if (!ok || index >= length) {
     JS_ReportError(cx, "invalid index");
@@ -4660,7 +4659,9 @@ ArrayType::Setter(JSContext* cx, HandleObject obj, HandleId idval, bool strict, 
   JSObject* baseType = GetBaseType(typeObj);
   size_t elementSize = CType::GetSize(baseType);
   char* data = static_cast<char*>(CData::GetData(obj)) + elementSize * index;
-  return ImplicitConvert(cx, vp, baseType, data, false, nullptr);
+  if (!ImplicitConvert(cx, vp, baseType, data, false, nullptr))
+    return false;
+  return result.succeed();
 }
 
 bool
@@ -4872,7 +4873,7 @@ StructType::DefineInternal(JSContext* cx, JSObject* typeObj_, JSObject* fieldsOb
   // Set up the 'prototype' and 'prototype.constructor' properties.
   // The prototype will reflect the struct fields as properties on CData objects
   // created from this type.
-  RootedObject prototype(cx, JS_NewObjectWithGivenProto(cx, &sCDataProtoClass, dataProto, NullPtr()));
+  RootedObject prototype(cx, JS_NewObjectWithGivenProto(cx, &sCDataProtoClass, dataProto));
   if (!prototype)
     return false;
 
@@ -4944,7 +4945,7 @@ StructType::DefineInternal(JSContext* cx, JSObject* typeObj_, JSObject* fieldsOb
 
       // Add field name to the hash
       FieldInfo info;
-      info.mType = fieldType;
+      info.mType = nullptr; // Value of fields are not yet traceable here.
       info.mIndex = i;
       info.mOffset = fieldOffset;
       ASSERT_OK(fields->add(entryPtr, name, info));
@@ -4976,6 +4977,12 @@ StructType::DefineInternal(JSContext* cx, JSObject* typeObj_, JSObject* fieldsOb
   RootedValue sizeVal(cx);
   if (!SizeTojsval(cx, structSize, &sizeVal))
     return false;
+
+  for (FieldInfoHash::Range r = fields->all(); !r.empty(); r.popFront()) {
+    FieldInfo& field = r.front().value();
+    MOZ_ASSERT(field.mIndex < fieldRoots.length());
+    field.mType = &fieldRoots[field.mIndex].toObject();
+  }
 
   JS_SetReservedSlot(typeObj, SLOT_FIELDINFO, PRIVATE_TO_JSVAL(fields.release()));
 
@@ -5293,7 +5300,8 @@ StructType::FieldGetter(JSContext* cx, HandleObject obj, HandleId idval, Mutable
 }
 
 bool
-StructType::FieldSetter(JSContext* cx, HandleObject obj, HandleId idval, bool strict, MutableHandleValue vp)
+StructType::FieldSetter(JSContext* cx, HandleObject obj, HandleId idval, MutableHandleValue vp,
+                        ObjectOpResult& result)
 {
   if (!CData::IsCData(obj)) {
     JS_ReportError(cx, "not a CData");
@@ -5311,7 +5319,9 @@ StructType::FieldSetter(JSContext* cx, HandleObject obj, HandleId idval, bool st
     return false;
 
   char* data = static_cast<char*>(CData::GetData(obj)) + field->mOffset;
-  return ImplicitConvert(cx, vp, field->mType, data, false, nullptr);
+  if (!ImplicitConvert(cx, vp, field->mType, data, false, nullptr))
+    return false;
+  return result.succeed();
 }
 
 bool
@@ -5334,6 +5344,11 @@ StructType::AddressOfField(JSContext* cx, unsigned argc, jsval* vp)
 
   if (args.length() != 1) {
     JS_ReportError(cx, "addressOfField takes one argument");
+    return false;
+  }
+
+  if (!args[0].isString()) {
+    JS_ReportError(cx, "argument must be a string");
     return false;
   }
 
@@ -6378,10 +6393,8 @@ CData::Create(JSContext* cx,
   MOZ_ASSERT(slot.isObject());
 
   RootedObject proto(cx, &slot.toObject());
-  RootedObject parent(cx, JS_GetParent(typeObj));
-  MOZ_ASSERT(parent);
 
-  RootedObject dataObj(cx, JS_NewObjectWithGivenProto(cx, &sCDataClass, proto, parent));
+  RootedObject dataObj(cx, JS_NewObjectWithGivenProto(cx, &sCDataClass, proto));
   if (!dataObj)
     return nullptr;
 
@@ -6962,8 +6975,7 @@ CDataFinalizer::Construct(JSContext* cx, unsigned argc, jsval* vp)
 
   // Get arguments
   if (args.length() == 0) { // Special case: the empty (already finalized) object
-    JSObject* objResult = JS_NewObjectWithGivenProto(cx, &sCDataFinalizerClass, objProto,
-                                                     NullPtr());
+    JSObject* objResult = JS_NewObjectWithGivenProto(cx, &sCDataFinalizerClass, objProto);
     args.rval().setObject(*objResult);
     return true;
   }
@@ -7062,7 +7074,7 @@ CDataFinalizer::Construct(JSContext* cx, unsigned argc, jsval* vp)
 
   // 5. Create |objResult|
 
-  JSObject* objResult = JS_NewObjectWithGivenProto(cx, &sCDataFinalizerClass, objProto, NullPtr());
+  JSObject* objResult = JS_NewObjectWithGivenProto(cx, &sCDataFinalizerClass, objProto);
   if (!objResult) {
     return false;
   }
@@ -7361,8 +7373,7 @@ Int64Base::Construct(JSContext* cx,
                      bool isUnsigned)
 {
   const JSClass* clasp = isUnsigned ? &sUInt64Class : &sInt64Class;
-  RootedObject parent(cx, JS_GetParent(proto));
-  RootedObject result(cx, JS_NewObjectWithGivenProto(cx, clasp, proto, parent));
+  RootedObject result(cx, JS_NewObjectWithGivenProto(cx, clasp, proto));
   if (!result)
     return nullptr;
 

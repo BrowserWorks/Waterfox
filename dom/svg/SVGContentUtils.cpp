@@ -41,13 +41,13 @@ SVGContentUtils::GetOuterSVGElement(nsSVGElement *aSVGElement)
   nsIContent *element = nullptr;
   nsIContent *ancestor = aSVGElement->GetFlattenedTreeParent();
 
-  while (ancestor && ancestor->IsSVG() &&
-                     ancestor->Tag() != nsGkAtoms::foreignObject) {
+  while (ancestor && ancestor->IsSVGElement() &&
+                     !ancestor->IsSVGElement(nsGkAtoms::foreignObject)) {
     element = ancestor;
     ancestor = element->GetFlattenedTreeParent();
   }
 
-  if (element && element->Tag() == nsGkAtoms::svg) {
+  if (element && element->IsSVGElement(nsGkAtoms::svg)) {
     return static_cast<SVGSVGElement*>(element);
   }
   return nullptr;
@@ -76,6 +76,7 @@ GetStrokeDashData(SVGContentUtils::AutoStrokeOptions* aStrokeOptions,
 {
   size_t dashArrayLength;
   Float totalLengthOfDashes = 0.0, totalLengthOfGaps = 0.0;
+  Float pathScale = 1.0;
 
   if (aContextPaint && aStyleSVG->mStrokeDasharrayFromObject) {
     const FallibleTArray<gfxFloat>& dashSrc = aContextPaint->GetStrokeDashArray();
@@ -100,8 +101,7 @@ GetStrokeDashData(SVGContentUtils::AutoStrokeOptions* aStrokeOptions,
     if (dashArrayLength <= 0) {
       return eContinuousStroke;
     }
-    Float pathScale = 1.0;
-    if (aElement->Tag() == nsGkAtoms::path) {
+    if (aElement->IsSVGElement(nsGkAtoms::path)) {
       pathScale = static_cast<SVGPathElement*>(aElement)->
         GetPathLengthScale(SVGPathElement::eForStroking);
       if (pathScale <= 0) {
@@ -158,7 +158,8 @@ GetStrokeDashData(SVGContentUtils::AutoStrokeOptions* aStrokeOptions,
     aStrokeOptions->mDashOffset = Float(aContextPaint->GetStrokeDashOffset());
   } else {
     aStrokeOptions->mDashOffset =
-      SVGContentUtils::CoordToFloat(aElement, aStyleSVG->mStrokeDashoffset);
+      SVGContentUtils::CoordToFloat(aElement, aStyleSVG->mStrokeDashoffset) *
+      pathScale;
   }
 
   return eDashedStroke;
@@ -362,10 +363,9 @@ SVGContentUtils::EstablishesViewport(nsIContent *aContent)
   // Although SVG 1.1 states that <image> is an element that establishes a
   // viewport, this is really only for the document it references, not
   // for any child content, which is what this function is used for.
-  return aContent && aContent->IsSVG() &&
-           (aContent->Tag() == nsGkAtoms::svg ||
-            aContent->Tag() == nsGkAtoms::foreignObject ||
-            aContent->Tag() == nsGkAtoms::symbol);
+  return aContent && aContent->IsAnyOfSVGElements(nsGkAtoms::svg,
+                                                  nsGkAtoms::foreignObject,
+                                                  nsGkAtoms::symbol);
 }
 
 nsSVGElement*
@@ -373,9 +373,9 @@ SVGContentUtils::GetNearestViewportElement(nsIContent *aContent)
 {
   nsIContent *element = aContent->GetFlattenedTreeParent();
 
-  while (element && element->IsSVG()) {
+  while (element && element->IsSVGElement()) {
     if (EstablishesViewport(element)) {
-      if (element->Tag() == nsGkAtoms::foreignObject) {
+      if (element->IsSVGElement(nsGkAtoms::foreignObject)) {
         return nullptr;
       }
       return static_cast<nsSVGElement*>(element);
@@ -393,8 +393,8 @@ GetCTMInternal(nsSVGElement *aElement, bool aScreenCTM, bool aHaveRecursed)
   nsSVGElement *element = aElement;
   nsIContent *ancestor = aElement->GetFlattenedTreeParent();
 
-  while (ancestor && ancestor->IsSVG() &&
-                     ancestor->Tag() != nsGkAtoms::foreignObject) {
+  while (ancestor && ancestor->IsSVGElement() &&
+                     !ancestor->IsSVGElement(nsGkAtoms::foreignObject)) {
     element = static_cast<nsSVGElement*>(ancestor);
     matrix *= element->PrependLocalTransformsTo(gfxMatrix()); // i.e. *A*ppend
     if (!aScreenCTM && SVGContentUtils::EstablishesViewport(element)) {
@@ -412,7 +412,7 @@ GetCTMInternal(nsSVGElement *aElement, bool aScreenCTM, bool aHaveRecursed)
     // didn't find a nearestViewportElement
     return gfx::Matrix(0.0, 0.0, 0.0, 0.0, 0.0, 0.0); // singular
   }
-  if (element->Tag() != nsGkAtoms::svg) {
+  if (!element->IsSVGElement(nsGkAtoms::svg)) {
     // Not a valid SVG fragment
     return gfx::Matrix(0.0, 0.0, 0.0, 0.0, 0.0, 0.0); // singular
   }
@@ -428,7 +428,7 @@ GetCTMInternal(nsSVGElement *aElement, bool aScreenCTM, bool aHaveRecursed)
   if (!ancestor || !ancestor->IsElement()) {
     return gfx::ToMatrix(matrix);
   }
-  if (ancestor->IsSVG()) {
+  if (ancestor->IsSVGElement()) {
     return
       gfx::ToMatrix(matrix) * GetCTMInternal(static_cast<nsSVGElement*>(ancestor), true, true);
   }

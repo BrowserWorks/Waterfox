@@ -7,6 +7,7 @@
 #include "mozilla/DebugOnly.h"
 #include <stdint.h> // for intptr_t
 
+#include "mozilla/Preferences.h"
 #include "mozilla/Telemetry.h"
 #include "PluginInstanceParent.h"
 #include "BrowserStreamParent.h"
@@ -21,6 +22,7 @@
 #include "gfxContext.h"
 #include "gfxPlatform.h"
 #include "gfxSharedImageSurface.h"
+#include "nsNetUtil.h"
 #include "nsNPAPIPluginInstance.h"
 #include "nsPluginInstanceOwner.h"
 #include "nsFocusManager.h"
@@ -53,6 +55,10 @@ extern const wchar_t* kFlashFullscreenClass;
 #elif defined(XP_MACOSX)
 #include <ApplicationServices/ApplicationServices.h>
 #endif // defined(XP_MACOSX)
+
+// This is the pref used to determine whether to use Shumway on a Flash object
+// (when Shumway is enabled).
+static const char kShumwayWhitelistPref[] = "shumway.swf.whitelist";
 
 using namespace mozilla::plugins;
 using namespace mozilla::layers;
@@ -104,6 +110,7 @@ PluginInstanceParent::PluginInstanceParent(PluginModuleParent* parent,
     , mUseSurrogate(true)
     , mNPP(npp)
     , mNPNIface(npniface)
+    , mIsWhitelistedForShumway(false)
     , mWindowType(NPWindowTypeWindow)
     , mDrawingModel(kDefaultDrawingModel)
 #if defined(OS_WIN)
@@ -143,9 +150,38 @@ PluginInstanceParent::~PluginInstanceParent()
 }
 
 bool
-PluginInstanceParent::Init()
+PluginInstanceParent::InitMetadata(const nsACString& aMimeType,
+                                   const nsACString& aSrcAttribute)
 {
-    return true;
+    if (aSrcAttribute.IsEmpty()) {
+        return false;
+    }
+    // Ensure that the src attribute is absolute
+    nsRefPtr<nsPluginInstanceOwner> owner = GetOwner();
+    if (!owner) {
+        return false;
+    }
+    nsCOMPtr<nsIURI> baseUri(owner->GetBaseURI());
+    nsresult rv = NS_MakeAbsoluteURI(mSrcAttribute, aSrcAttribute, baseUri);
+    if (NS_FAILED(rv)) {
+        return false;
+    }
+    // Check the whitelist
+    nsAutoCString baseUrlSpec;
+    rv = baseUri->GetSpec(baseUrlSpec);
+    if (NS_FAILED(rv)) {
+        return false;
+    }
+    auto whitelist = Preferences::GetCString(kShumwayWhitelistPref);
+    // Empty whitelist is interpreted by CheckWhitelist as "allow everything,"
+    // which is not valid for our use case and should be treated as a failure.
+    if (whitelist.IsEmpty()) {
+        return false;
+    }
+    rv = nsPluginPlayPreviewInfo::CheckWhitelist(baseUrlSpec, mSrcAttribute,
+                                                 whitelist,
+                                                 &mIsWhitelistedForShumway);
+    return NS_SUCCEEDED(rv);
 }
 
 void
@@ -605,7 +641,7 @@ PluginInstanceParent::RecvShow(const NPRect& updatedRect,
         NS_ASSERTION(image->GetFormat() == ImageFormat::CAIRO_SURFACE, "Wrong format?");
         CairoImage* cairoImage = static_cast<CairoImage*>(image.get());
         CairoImage::Data cairoData;
-        cairoData.mSize = surface->GetSize().ToIntSize();
+        cairoData.mSize = surface->GetSize();
         cairoData.mSourceSurface = gfxPlatform::GetPlatform()->GetSourceSurfaceForSurface(nullptr, surface);
         cairoImage->SetData(cairoData);
 
@@ -1359,7 +1395,7 @@ PluginInstanceParent::NPP_NewStream(NPMIMEType type, NPStream* stream,
         MOZ_ASSERT(mSurrogate);
         mSurrogate->AsyncCallDeparting();
         if (SendAsyncNPP_NewStream(bs, NullableString(type), seekable)) {
-            *stype = UINT16_MAX;
+            *stype = nsPluginStreamListenerPeer::STREAM_TYPE_UNKNOWN;
         } else {
             err = NPERR_GENERIC_ERROR;
         }
@@ -1383,6 +1419,12 @@ PluginInstanceParent::NPP_DestroyStream(NPStream* stream, NPReason reason)
                       FULLFUNCTION, (void*) stream, (int) reason));
 
     AStream* s = static_cast<AStream*>(stream->pdata);
+    if (!s) {
+        // The stream has already been deleted by other means.
+        // With async plugin init this could happen if async NPP_NewStream
+        // returns an error code.
+        return NPERR_NO_ERROR;
+    }
     if (s->IsBrowserStream()) {
         BrowserStreamParent* sp =
             static_cast<BrowserStreamParent*>(s);
@@ -1703,10 +1745,17 @@ PluginInstanceParent::RecvAsyncNPP_NewResult(const NPError& aResult)
         mSurrogate->SetAcceptingCalls(true);
     }
 
+    // It is possible for a plugin instance to outlive its owner (eg. When a
+    // PluginDestructionGuard was on the stack at the time the owner was being
+    // destroyed). We need to handle that case.
     nsPluginInstanceOwner* owner = GetOwner();
-    // It is possible for a plugin instance to outlive its owner when async
-    // plugin init is turned on, so we need to handle that case.
-    if (aResult != NPERR_NO_ERROR || !owner) {
+    if (!owner) {
+        // We can't do anything at this point, just return. Any pending browser
+        // streams will be cleaned up when the plugin instance is destroyed.
+        return true;
+    }
+
+    if (aResult != NPERR_NO_ERROR) {
         mSurrogate->NotifyAsyncInitFailed();
         return true;
     }

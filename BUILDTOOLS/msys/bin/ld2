@@ -1,0 +1,17 @@
+#!/bin/sh
+#
+# ld wrapper, passes all args to perlld;
+#
+for trythis in /usr/bin/perl
+do
+  if [ -x $trythis ]
+  then
+    $trythis /usr/bin/perlld "$@"
+    exit $?
+  fi
+done
+# hard luck!
+echo I see no perl executable around there
+echo perl is required to build dynamic libraries
+echo look if the path to perl in /bin/ld2 is correct
+exit 1

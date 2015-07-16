@@ -125,7 +125,7 @@ BytecodeAnalysis::init(TempAllocator& alloc, GSNCache& gsn)
             jssrcnote* sn = GetSrcNote(gsn, script_, pc);
             MOZ_ASSERT(SN_TYPE(sn) == SRC_TRY);
 
-            jsbytecode* endOfTry = pc + js_GetSrcNoteOffset(sn, 0);
+            jsbytecode* endOfTry = pc + GetSrcNoteOffset(sn, 0);
             MOZ_ASSERT(JSOp(*endOfTry) == JSOP_GOTO);
 
             jsbytecode* afterTry = endOfTry + GET_JUMP_OFFSET(endOfTry);
@@ -151,6 +151,7 @@ BytecodeAnalysis::init(TempAllocator& alloc, GSNCache& gsn)
           case JSOP_GETNAME:
           case JSOP_BINDNAME:
           case JSOP_SETNAME:
+          case JSOP_STRICTSETNAME:
           case JSOP_DELNAME:
           case JSOP_GETALIASEDVAR:
           case JSOP_SETALIASEDVAR:
@@ -161,6 +162,13 @@ BytecodeAnalysis::init(TempAllocator& alloc, GSNCache& gsn)
           case JSOP_DEFCONST:
           case JSOP_SETCONST:
             usesScopeChain_ = true;
+            break;
+
+          case JSOP_GETGNAME:
+          case JSOP_SETGNAME:
+          case JSOP_STRICTSETGNAME:
+            if (script_->hasPollutedGlobalScope())
+                usesScopeChain_ = true;
             break;
 
           case JSOP_FINALLY:

@@ -45,6 +45,7 @@ class MOZ_STACK_CLASS SourceBufferHolder;
 
 class HandleValueArray;
 
+class ObjectOpResult;
 }
 
 // Do the importing.
@@ -55,7 +56,6 @@ using JS::BooleanValue;
 using JS::DoubleValue;
 using JS::Float32Value;
 using JS::Int32Value;
-using JS::IsPoisonedValue;
 using JS::MagicValue;
 using JS::NullValue;
 using JS::NumberValue;
@@ -65,8 +65,6 @@ using JS::PrivateUint32Value;
 using JS::PrivateValue;
 using JS::StringValue;
 using JS::UndefinedValue;
-
-using JS::IsPoisonedPtr;
 
 using JS::Latin1Char;
 using JS::Latin1Chars;
@@ -142,6 +140,8 @@ using JS::TrueHandleValue;
 using JS::FalseHandleValue;
 
 using JS::HandleValueArray;
+
+using JS::ObjectOpResult;
 
 using JS::Zone;
 

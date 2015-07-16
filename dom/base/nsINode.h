@@ -33,6 +33,7 @@ class nsAttrAndChildArray;
 class nsChildContentList;
 struct nsCSSSelectorList;
 class nsDOMAttributeMap;
+class nsIAnimationObserver;
 class nsIContent;
 class nsIDocument;
 class nsIDOMElement;
@@ -248,8 +249,8 @@ private:
 
 // IID for the nsINode interface
 #define NS_INODE_IID \
-{ 0x66972940, 0x1d1b, 0x4d15, \
- { 0x93, 0x11, 0x96, 0x72, 0x84, 0x2e, 0xc7, 0x27 } }
+{ 0xe8fdd227, 0x27da, 0x46ee, \
+  { 0xbe, 0xf3, 0x1a, 0xef, 0x5a, 0x8f, 0xc5, 0xb4 } }
 
 /**
  * An internal interface that abstracts some DOMNode-related parts that both
@@ -366,7 +367,7 @@ public:
    */
   virtual bool IsNodeOfType(uint32_t aFlags) const = 0;
 
-  virtual JSObject* WrapObject(JSContext *aCx) override;
+  virtual JSObject* WrapObject(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   /**
    * returns true if we are in priviliged code or
@@ -379,8 +380,12 @@ protected:
    * WrapNode is called from WrapObject to actually wrap this node, WrapObject
    * does some additional checks and fix-up that's common to all nodes. WrapNode
    * should just call the DOM binding's Wrap function.
+   *
+   * aGivenProto is the prototype to use (or null if the default one should be
+   * used) and should just be passed directly on to the DOM binding's Wrap
+   * function.
    */
-  virtual JSObject* WrapNode(JSContext *aCx) = 0;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) = 0;
 
 public:
   mozilla::dom::ParentObject GetParentObject() const; // Implemented in nsIDocument.h
@@ -564,14 +569,96 @@ public:
   }
 
   /**
-   * Get the tag for this element. This will always return a non-null atom
-   * pointer (as implied by the naming of the method).  For elements this is
-   * the non-namespaced tag, and for other nodes it's something like "#text",
-   * "#comment", "#document", etc.
+   * Get the NodeInfo for this element
+   * @return the nodes node info
    */
-  nsIAtom* Tag() const
+  inline mozilla::dom::NodeInfo* NodeInfo() const
   {
-    return mNodeInfo->NameAtom();
+    return mNodeInfo;
+  }
+
+  inline bool IsInNamespace(int32_t aNamespace) const
+  {
+    return mNodeInfo->NamespaceID() == aNamespace;
+  }
+
+protected:
+  // These 2 methods are useful for the recursive templates IsHTMLElement,
+  // IsSVGElement, etc.
+  inline bool IsNodeInternal() const
+  {
+    return false;
+  }
+
+  template<typename First, typename... Args>
+  inline bool IsNodeInternal(First aFirst, Args... aArgs) const
+  {
+    return mNodeInfo->Equals(aFirst) || IsNodeInternal(aArgs...);
+  }
+
+public:
+  inline bool IsHTMLElement() const
+  {
+    return IsElement() && IsInNamespace(kNameSpaceID_XHTML);
+  }
+
+  inline bool IsHTMLElement(nsIAtom* aTag) const
+  {
+    return IsElement() && mNodeInfo->Equals(aTag, kNameSpaceID_XHTML);
+  }
+
+  template<typename First, typename... Args>
+  inline bool IsAnyOfHTMLElements(First aFirst, Args... aArgs) const
+  {
+    return IsHTMLElement() && IsNodeInternal(aFirst, aArgs...);
+  }
+
+  inline bool IsSVGElement() const
+  {
+    return IsElement() && IsInNamespace(kNameSpaceID_SVG);
+  }
+
+  inline bool IsSVGElement(nsIAtom* aTag) const
+  {
+    return IsElement() && mNodeInfo->Equals(aTag, kNameSpaceID_SVG);
+  }
+
+  template<typename First, typename... Args>
+  inline bool IsAnyOfSVGElements(First aFirst, Args... aArgs) const
+  {
+    return IsSVGElement() && IsNodeInternal(aFirst, aArgs...);
+  }
+
+  inline bool IsXULElement() const
+  {
+    return IsElement() && IsInNamespace(kNameSpaceID_XUL);
+  }
+
+  inline bool IsXULElement(nsIAtom* aTag) const
+  {
+    return IsElement() && mNodeInfo->Equals(aTag, kNameSpaceID_XUL);
+  }
+
+  template<typename First, typename... Args>
+  inline bool IsAnyOfXULElements(First aFirst, Args... aArgs) const
+  {
+    return IsXULElement() && IsNodeInternal(aFirst, aArgs...);
+  }
+
+  inline bool IsMathMLElement() const
+  {
+    return IsElement() && IsInNamespace(kNameSpaceID_MathML);
+  }
+
+  inline bool IsMathMLElement(nsIAtom* aTag) const
+  {
+    return IsElement() && mNodeInfo->Equals(aTag, kNameSpaceID_MathML);
+  }
+
+  template<typename First, typename... Args>
+  inline bool IsAnyOfMathMLElements(First aFirst, Args... aArgs) const
+  {
+    return IsMathMLElement() && IsNodeInternal(aFirst, aArgs...);
   }
 
   /**
@@ -866,6 +953,9 @@ public:
    * adding observers while inside a notification is not a good idea.  An
    * observer that is already observing the node must not be added without
    * being removed first.
+   *
+   * For mutation observers that implement nsIAnimationObserver, use
+   * AddAnimationObserver instead.
    */
   void AddMutationObserver(nsIMutationObserver* aMutationObserver)
   {
@@ -879,12 +969,29 @@ public:
   /**
    * Same as above, but only adds the observer if its not observing
    * the node already.
+   *
+   * For mutation observers that implement nsIAnimationObserver, use
+   * AddAnimationObserverUnlessExists instead.
    */
   void AddMutationObserverUnlessExists(nsIMutationObserver* aMutationObserver)
   {
     nsSlots* s = Slots();
     s->mMutationObservers.AppendElementUnlessExists(aMutationObserver);
   }
+
+  /**
+   * Same as AddMutationObserver, but for nsIAnimationObservers.  This
+   * additionally records on the document that animation observers have
+   * been registered, which is used to determine whether notifications
+   * must be fired when animations are added, removed or changed.
+   */
+  void AddAnimationObserver(nsIAnimationObserver* aAnimationObserver);
+
+  /**
+   * Same as above, but only adds the observer if its not observing
+   * the node already.
+   */
+  void AddAnimationObserverUnlessExists(nsIAnimationObserver* aAnimationObserver);
 
   /**
    * Removes a mutation observer.

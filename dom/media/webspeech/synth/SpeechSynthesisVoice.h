@@ -21,7 +21,7 @@ class nsSynthVoiceRegistry;
 class SpeechSynthesis;
 
 class SpeechSynthesisVoice final : public nsISupports,
-                                       public nsWrapperCache
+                                   public nsWrapperCache
 {
   friend class nsSynthVoiceRegistry;
   friend class SpeechSynthesis;
@@ -34,7 +34,7 @@ public:
 
   nsISupports* GetParentObject() const;
 
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   void GetVoiceURI(nsString& aRetval) const;
 

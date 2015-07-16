@@ -13,6 +13,7 @@
 #include "nsJSUtils.h"
 #include "mozJSComponentLoader.h"
 #include "nsContentUtils.h"
+#include "nsCycleCollector.h"
 #include "jsfriendapi.h"
 #include "js/StructuredClone.h"
 #include "mozilla/Attributes.h"
@@ -25,6 +26,7 @@
 #include "mozilla/dom/DOMExceptionBinding.h"
 #include "mozilla/dom/BindingUtils.h"
 #include "mozilla/dom/StructuredCloneTags.h"
+#include "mozilla/dom/WindowBinding.h"
 #include "nsZipArchive.h"
 #include "nsIDOMFile.h"
 #include "nsIDOMFileList.h"
@@ -151,10 +153,9 @@ oom:
     return NS_ERROR_OUT_OF_MEMORY;
 }
 
-/* nsISupports getHelperForLanguage (in uint32_t language); */
+/* nsIXPCScriptable getScriptableHelper(); */
 NS_IMETHODIMP
-nsXPCComponents_Interfaces::GetHelperForLanguage(uint32_t language,
-                                                 nsISupports** retval)
+nsXPCComponents_Interfaces::GetScriptableHelper(nsIXPCScriptable** retval)
 {
     *retval = nullptr;
     return NS_OK;
@@ -395,10 +396,9 @@ oom:
     return NS_ERROR_OUT_OF_MEMORY;
 }
 
-/* nsISupports getHelperForLanguage (in uint32_t language); */
+/* nsIXPCScriptable getScriptableHelper(); */
 NS_IMETHODIMP
-nsXPCComponents_InterfacesByID::GetHelperForLanguage(uint32_t language,
-                                                     nsISupports** retval)
+nsXPCComponents_InterfacesByID::GetScriptableHelper(nsIXPCScriptable** retval)
 {
     *retval = nullptr;
     return NS_OK;
@@ -641,10 +641,9 @@ oom:
     return NS_ERROR_OUT_OF_MEMORY;
 }
 
-/* nsISupports getHelperForLanguage (in uint32_t language); */
+/* nsIXPCScriptable getScriptableHelper(); */
 NS_IMETHODIMP
-nsXPCComponents_Classes::GetHelperForLanguage(uint32_t language,
-                                              nsISupports** retval)
+nsXPCComponents_Classes::GetScriptableHelper(nsIXPCScriptable** retval)
 {
     *retval = nullptr;
     return NS_OK;
@@ -867,10 +866,9 @@ oom:
     return NS_ERROR_OUT_OF_MEMORY;
 }
 
-/* nsISupports getHelperForLanguage (in uint32_t language); */
+/* nsIXPCScriptable getScriptableHelper(); */
 NS_IMETHODIMP
-nsXPCComponents_ClassesByID::GetHelperForLanguage(uint32_t language,
-                                                  nsISupports** retval)
+nsXPCComponents_ClassesByID::GetScriptableHelper(nsIXPCScriptable** retval)
 {
     *retval = nullptr;
     return NS_OK;
@@ -1116,10 +1114,9 @@ oom:
     return NS_ERROR_OUT_OF_MEMORY;
 }
 
-/* nsISupports getHelperForLanguage (in uint32_t language); */
+/* nsIXPCScriptable getScriptableHelper(); */
 NS_IMETHODIMP
-nsXPCComponents_Results::GetHelperForLanguage(uint32_t language,
-                                              nsISupports** retval)
+nsXPCComponents_Results::GetScriptableHelper(nsIXPCScriptable** retval)
 {
     *retval = nullptr;
     return NS_OK;
@@ -1322,10 +1319,9 @@ oom:
     return NS_ERROR_OUT_OF_MEMORY;
 }
 
-/* nsISupports getHelperForLanguage (in uint32_t language); */
+/* nsIXPCScriptable getScriptableHelper(); */
 NS_IMETHODIMP
-nsXPCComponents_ID::GetHelperForLanguage(uint32_t language,
-                                         nsISupports** retval)
+nsXPCComponents_ID::GetScriptableHelper(nsIXPCScriptable** retval)
 {
     *retval = nullptr;
     return NS_OK;
@@ -1539,10 +1535,9 @@ oom:
     return NS_ERROR_OUT_OF_MEMORY;
 }
 
-/* nsISupports getHelperForLanguage (in uint32_t language); */
+/* nsIXPCScriptable getScriptableHelper(); */
 NS_IMETHODIMP
-nsXPCComponents_Exception::GetHelperForLanguage(uint32_t language,
-                                                nsISupports** retval)
+nsXPCComponents_Exception::GetScriptableHelper(nsIXPCScriptable** retval)
 {
     *retval = nullptr;
     return NS_OK;
@@ -1929,10 +1924,9 @@ oom:
     return NS_ERROR_OUT_OF_MEMORY;
 }
 
-/* nsISupports getHelperForLanguage (in uint32_t language); */
+/* nsIXPCScriptable getScriptableHelper(); */
 NS_IMETHODIMP
-nsXPCConstructor::GetHelperForLanguage(uint32_t language,
-                                       nsISupports** retval)
+nsXPCConstructor::GetScriptableHelper(nsIXPCScriptable** retval)
 {
     *retval = nullptr;
     return NS_OK;
@@ -2184,10 +2178,9 @@ oom:
     return NS_ERROR_OUT_OF_MEMORY;
 }
 
-/* nsISupports getHelperForLanguage (in uint32_t language); */
+/* nsIXPCScriptable getScriptableHelper(); */
 NS_IMETHODIMP
-nsXPCComponents_Constructor::GetHelperForLanguage(uint32_t language,
-                                                  nsISupports** retval)
+nsXPCComponents_Constructor::GetScriptableHelper(nsIXPCScriptable** retval)
 {
     *retval = nullptr;
     return NS_OK;
@@ -2719,6 +2712,13 @@ nsXPCComponents_Utils::ImportGlobalProperties(HandleValue aPropertyList,
 {
     RootedObject global(cx, CurrentGlobalOrNull(cx));
     MOZ_ASSERT(global);
+
+    // Don't allow doing this if the global is a Window
+    nsGlobalWindow* win;
+    if (NS_SUCCEEDED(UNWRAP_OBJECT(Window, global, win))) {
+        return NS_ERROR_NOT_AVAILABLE;
+    }
+
     GlobalProperties options;
     NS_ENSURE_TRUE(aPropertyList.isObject(), NS_ERROR_INVALID_ARG);
     RootedObject propertyList(cx, &aPropertyList.toObject());
@@ -2756,9 +2756,9 @@ nsXPCComponents_Utils::ForceGC()
 
 /* void forceCC (); */
 NS_IMETHODIMP
-nsXPCComponents_Utils::ForceCC()
+nsXPCComponents_Utils::ForceCC(nsICycleCollectorListener* listener)
 {
-    nsJSContext::CycleCollectNow();
+    nsJSContext::CycleCollectNow(listener);
     return NS_OK;
 }
 
@@ -2890,6 +2890,47 @@ nsXPCComponents_Utils::GetJSTestingFunctions(JSContext* cx,
     if (!obj)
         return NS_ERROR_XPC_JAVASCRIPT_ERROR;
     retval.setObject(*obj);
+    return NS_OK;
+}
+
+/* jsval callFunctionWithStack(in jsval function, in nsIStackFrame stack,
+                               in AString asyncCause); */
+NS_IMETHODIMP
+nsXPCComponents_Utils::CallFunctionWithAsyncStack(HandleValue function,
+                                                  nsIStackFrame* stack,
+                                                  const nsAString& asyncCause,
+                                                  JSContext* cx,
+                                                  MutableHandleValue retval)
+{
+    nsresult rv;
+
+    if (!stack || asyncCause.IsEmpty()) {
+        return NS_ERROR_INVALID_ARG;
+    }
+
+    JS::Rooted<JS::Value> asyncStack(cx);
+    rv = stack->GetNativeSavedFrame(&asyncStack);
+    if (NS_FAILED(rv))
+        return rv;
+    if (!asyncStack.isObject()) {
+        JS_ReportError(cx, "Must use a native JavaScript stack frame");
+        return NS_ERROR_INVALID_ARG;
+    }
+
+    JS::Rooted<JSObject*> asyncStackObj(cx, &asyncStack.toObject());
+    JS::Rooted<JSString*> asyncCauseString(cx, JS_NewUCStringCopyN(cx, asyncCause.BeginReading(),
+                                                                       asyncCause.Length()));
+    if (!asyncCauseString)
+        return NS_ERROR_OUT_OF_MEMORY;
+
+    JS::AutoSetAsyncStackForNewCalls sas(cx, asyncStackObj, asyncCauseString);
+
+    if (!JS_CallFunctionValue(cx, JS::NullPtr(), function,
+                              JS::HandleValueArray::empty(), retval))
+    {
+        return NS_ERROR_XPC_JAVASCRIPT_ERROR;
+    }
+
     return NS_OK;
 }
 
@@ -3685,7 +3726,7 @@ public:
     // The NS_IMETHODIMP isn't really accurate here, but NS_CALLBACK requires
     // the referent to be declared __stdcall on Windows, and this is the only
     // macro that does that.
-    static NS_IMETHODIMP Get(uint32_t aLangId, nsISupports** helper)
+    static NS_IMETHODIMP Get(nsIXPCScriptable** helper)
     {
         *helper = &singleton;
         return NS_OK;

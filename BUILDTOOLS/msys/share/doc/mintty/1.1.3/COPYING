@@ -1,0 +1,15 @@
+mintty is copyright 2008-09 Andy Koppe.
+Licensed under the terms of the GNU General Public License version 3 or later. 
+See the LICENSE file for details. Sources are available from the project page
+at http://code.google.com/p/mintty.
+
+Based on PuTTY version 0.60 by Simon Tatham and contributors.
+Big thanks to everyone involved for their work on PuTTY.
+See LICENSE.PuTTY for PuTTY's copyright notice, contributors, and license.
+The sources of PuTTY 0.60 can be downloaded from
+ftp://ftp.chiark.greenend.org.uk/users/sgtatham/putty-0.60.
+
+The program icon is the apps/utilities-terminal icon from KDE's Oxygen theme,
+retrieved from http://websvn.kde.org/trunk/KDE/kdebase/runtime/pics/oxygen. 
+Thanks to the KDE artists for their sleek design. The Oxygen icons are licensed
+under the terms of the LGPLv3; see LICENSE.Oxygen for details.

@@ -545,53 +545,6 @@ tests.push({
 //------------------------------------------------------------------------------
 
 tests.push({
-  name: "D.5",
-  desc: "Fix wrong keywords",
-
-  _validKeywordItemId: null,
-  _invalidKeywordItemId: null,
-  _validKeywordId: 1,
-  _invalidKeywordId: 8888,
-  _placeId: null,
-
-  setup: function() {
-    // Insert a keyword
-    let stmt = mDBConn.createStatement("INSERT INTO moz_keywords (id, keyword) VALUES(:id, :keyword)");
-    stmt.params["id"] = this._validKeywordId;
-    stmt.params["keyword"] = "used";
-    stmt.execute();
-    stmt.finalize();
-    // Add a place to ensure place_id = 1 is valid
-    this._placeId = addPlace();
-    // Add a bookmark using the keyword
-    this._validKeywordItemId = addBookmark(this._placeId, bs.TYPE_BOOKMARK, bs.unfiledBookmarksFolder, this._validKeywordId);
-    // Add a bookmark using a nonexistent keyword
-    this._invalidKeywordItemId = addBookmark(this._placeId, bs.TYPE_BOOKMARK, bs.unfiledBookmarksFolder, this._invalidKeywordId);
-  },
-
-  check: function() {
-    // Check that item with valid keyword is there
-    let stmt = mDBConn.createStatement("SELECT id FROM moz_bookmarks WHERE id = :item_id AND keyword_id = :keyword");
-    stmt.params["item_id"] = this._validKeywordItemId;
-    stmt.params["keyword"] = this._validKeywordId;
-    do_check_true(stmt.executeStep());
-    stmt.reset();
-    // Check that item with invalid keyword has been corrected
-    stmt.params["item_id"] = this._invalidKeywordItemId;
-    stmt.params["keyword"] = this._invalidKeywordId;
-    do_check_false(stmt.executeStep());
-    stmt.finalize();
-    // Check that item with invalid keyword has not been removed
-    stmt = mDBConn.createStatement("SELECT id FROM moz_bookmarks WHERE id = :item_id");
-    stmt.params["item_id"] = this._invalidKeywordItemId;
-    do_check_true(stmt.executeStep());
-    stmt.finalize();
-  }
-});
-
-//------------------------------------------------------------------------------
-
-tests.push({
   name: "D.6",
   desc: "Fix wrong item types | bookmarks",
 
@@ -1053,27 +1006,17 @@ tests.push({
 
   setup: function() {
     // Insert 2 keywords
-    let stmt = mDBConn.createStatement("INSERT INTO moz_keywords (id, keyword) VALUES(:id, :keyword)");
+    let stmt = mDBConn.createStatement("INSERT INTO moz_keywords (id, keyword, place_id) VALUES(:id, :keyword, :place_id)");
     stmt.params["id"] = 1;
-    stmt.params["keyword"] = "used";
-    stmt.execute();
-    stmt.reset();
-    stmt.params["id"] = 2;
     stmt.params["keyword"] = "unused";
+    stmt.params["place_id"] = 100;
     stmt.execute();
     stmt.finalize();
-    // Add a place to ensure place_id = 1 is valid
-    this._placeId = addPlace();
-    // Insert a bookmark using the "used" keyword
-    this._bookmarkId = addBookmark(this._placeId, bs.TYPE_BOOKMARK, bs.unfiledBookmarksFolder, 1);
   },
 
   check: function() {
     // Check that "used" keyword is still there
     let stmt = mDBConn.createStatement("SELECT id FROM moz_keywords WHERE keyword = :keyword");
-    stmt.params["keyword"] = "used";
-    do_check_true(stmt.executeStep());
-    stmt.reset();
     // Check that "unused" keyword has gone
     stmt.params["keyword"] = "unused";
     do_check_false(stmt.executeStep());
@@ -1335,14 +1278,17 @@ add_task(function test_preventive_maintenance()
   stmt.finalize();
   do_check_true(defaultBookmarksMaxId > 0);
 
-  for ([, test] in Iterator(tests)) {
+  for (let [, test] in Iterator(tests)) {
     dump("\nExecuting test: " + test.name + "\n" + "*** " + test.desc + "\n");
     yield test.setup();
 
     let promiseMaintenanceFinished =
         promiseTopicObserved(FINISHED_MAINTENANCE_NOTIFICATION_TOPIC);
-    PlacesDBUtils.maintenanceOnIdle();
+    Services.prefs.clearUserPref("places.database.lastMaintenance");
+    let callbackInvoked = false;
+    PlacesDBUtils.maintenanceOnIdle(() => callbackInvoked = true);
     yield promiseMaintenanceFinished;
+    do_check_true(callbackInvoked);
 
     // Check the lastMaintenance time has been saved.
     do_check_neq(Services.prefs.getIntPref("places.database.lastMaintenance"), null);

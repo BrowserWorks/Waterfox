@@ -32,6 +32,7 @@ EXPORTS.mozilla.gfx += [
     'Rect.h',
     'Scale.h',
     'ScaleFactor.h',
+    'ScaleFactors2D.h',
     'SourceSurfaceCairo.h',
     'Tools.h',
     'Types.h',
@@ -109,6 +110,7 @@ UNIFIED_SOURCES += [
     'DrawTargetCapture.cpp',
     'DrawTargetDual.cpp',
     'DrawTargetRecording.cpp',
+    'DrawTargetTiled.cpp',
     'Factory.cpp',
     'FilterNodeSoftware.cpp',
     'FilterProcessing.cpp',
@@ -117,7 +119,6 @@ UNIFIED_SOURCES += [
     'Matrix.cpp',
     'Path.cpp',
     'PathCairo.cpp',
-    'PathHelpers.cpp',
     'PathRecording.cpp',
     'RecordedEvent.cpp',
     'Scale.cpp',
@@ -128,7 +129,7 @@ UNIFIED_SOURCES += [
 ]
 
 SOURCES += [
-    'DrawTargetTiled.cpp',
+    'PathHelpers.cpp', # Uses _USE_MATH_DEFINES
 ]
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
@@ -170,3 +171,10 @@ CXXFLAGS += CONFIG['MOZ_CAIRO_CFLAGS']
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android', 'gtk2', 'gtk3', 'gonk', 'qt'):
     CXXFLAGS += CONFIG['CAIRO_FT_CFLAGS']
+
+if CONFIG['OS_ARCH'] == 'WINNT':
+    # Due to bug 796023, we can't have -DUNICODE and -D_UNICODE; defining those
+    # macros changes the type of LOGFONT to LOGFONTW instead of LOGFONTA. This
+    # changes the symbol names of exported C++ functions that use LOGFONT.
+    del DEFINES['UNICODE']
+    del DEFINES['_UNICODE']

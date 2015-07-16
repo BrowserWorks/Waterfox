@@ -33,9 +33,9 @@ public:
   // Forward to base class
   NS_FORWARD_TO_UIEVENT
 
-  virtual JSObject* WrapObjectInternal(JSContext* aCx) override
+  virtual JSObject* WrapObjectInternal(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override
   {
-    return SVGZoomEventBinding::Wrap(aCx, this);
+    return SVGZoomEventBinding::Wrap(aCx, this, aGivenProto);
   }
 
   float PreviousScale() const

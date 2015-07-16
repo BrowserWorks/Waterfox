@@ -14,11 +14,6 @@
  * limitations under the License.
  */
 
-window.notifyShumwayMessage = function (detail) { };
-window.onExternalCallback = null;
-window.onMessageCallback = null;
-window.onLoadFileCallback = null;
-
 var viewer = document.getElementById('viewer'), onLoaded;
 var promise = new Promise(function (resolve) {
   onLoaded = resolve;
@@ -30,63 +25,30 @@ viewer.addEventListener('mozbrowserloadend', function () {
   onLoaded(true);
 });
 
-Components.utils.import('chrome://shumway/content/SpecialInflate.jsm');
-Components.utils.import('chrome://shumway/content/RtmpUtils.jsm');
+Components.utils.import('chrome://shumway/content/ShumwayCom.jsm');
 
 function runViewer() {
   function handler() {
-    function sendMessage(action, data, sync, callbackCookie) {
-      var detail = {action: action, data: data, sync: sync};
-      if (callbackCookie !== undefined) {
-        detail.callback = true;
-        detail.cookie = callbackCookie;
-      }
-      var result = window.notifyShumwayMessage(detail);
+    function sendMessage(action, data, sync) {
+      var result = shumwayActions.invoke(action, data);
       return Components.utils.cloneInto(result, childWindow);
     }
 
     var childWindow = viewer.contentWindow.wrappedJSObject;
 
-    // Exposing ShumwayCom object/adapter to the unprivileged content -- setting
-    // up Xray wrappers. This allows resending of external interface, clipboard
-    // and other control messages between unprivileged content and
-    // ShumwayStreamConverter.
-    var shumwayComAdapter = Components.utils.createObjectIn(childWindow, {defineAs: 'ShumwayCom'});
-    Components.utils.exportFunction(sendMessage, shumwayComAdapter, {defineAs: 'sendMessage'});
-    Object.defineProperties(shumwayComAdapter, {
-      onLoadFileCallback: { value: null, writable: true },
-      onExternalCallback: { value: null, writable: true },
-      onMessageCallback: { value: null, writable: true }
-    });
-    Components.utils.makeObjectPropsNormal(shumwayComAdapter);
+    var shumwayComAdapterHooks = {};
+    ShumwayCom.createAdapter(childWindow, {
+      sendMessage: sendMessage,
+      enableDebug: enableDebug,
+      getEnvironment: getEnvironment,
+    }, shumwayComAdapterHooks);
 
-    // Exposing createSpecialInflate function for DEFLATE stream decoding using
-    // Gecko API.
-    if (SpecialInflateUtils.isSpecialInflateEnabled) {
-      Components.utils.exportFunction(function () {
-        return SpecialInflateUtils.createWrappedSpecialInflate(childWindow);
-      }, childWindow, {defineAs: 'createSpecialInflate'});
-    }
-
-    if (RtmpUtils.isRtmpEnabled) {
-      Components.utils.exportFunction(function (params) {
-        return RtmpUtils.createSocket(childWindow, params);
-      }, childWindow, {defineAs: 'createRtmpSocket'});
-      Components.utils.exportFunction(function () {
-        return RtmpUtils.createXHR(childWindow);
-      }, childWindow, {defineAs: 'createRtmpXHR'});
-    }
-
-    window.onExternalCallback = function (call) {
-      return shumwayComAdapter.onExternalCallback(Components.utils.cloneInto(call, childWindow));
+    shumwayActions.onExternalCallback = function (call) {
+      return shumwayComAdapterHooks.onExternalCallback(Components.utils.cloneInto(call, childWindow));
     };
 
-    window.onMessageCallback = function (response) {
-      shumwayComAdapter.onMessageCallback(Components.utils.cloneInto(response, childWindow));
-    };
-
-    window.onLoadFileCallback = function (args) {
-      shumwayComAdapter.onLoadFileCallback(Components.utils.cloneInto(args, childWindow));
+    shumwayActions.onLoadFileCallback = function (args) {
+      shumwayComAdapterHooks.onLoadFileCallback(Components.utils.cloneInto(args, childWindow));
     };
 
     childWindow.runViewer();
@@ -104,38 +66,96 @@ function runViewer() {
     });
 
     messageManager.addMessageListener('Shumway:message', function (message) {
-      var detail = {
-        action: message.data.action,
-        data: message.data.data,
-        sync: message.data.sync
-      };
-      if (message.data.callback) {
-        detail.callback = true;
-        detail.cookie = message.data.cookie;
+      var data = message.data;
+      var result = shumwayActions.invoke(data.action, data.data);
+      if (message.sync) {
+        return result === undefined ? 'undefined' : JSON.stringify(result);
       }
-
-      return window.notifyShumwayMessage(detail);
     });
 
-    window.onExternalCallback = function (call) {
+    messageManager.addMessageListener('Shumway:enableDebug', function (message) {
+      enableDebug();
+    });
+
+    shumwayActions.onExternalCallback = function (call) {
       return externalInterface.callback(JSON.stringify(call));
     };
 
-    window.onMessageCallback = function (response) {
-      messageManager.sendAsyncMessage('Shumway:messageCallback', {
-        cookie: response.cookie,
-        response: response.response
-      });
-    };
-
-    window.onLoadFileCallback = function (args) {
+    shumwayActions.onLoadFileCallback = function (args) {
       messageManager.sendAsyncMessage('Shumway:loadFile', args);
     };
 
-    messageManager.sendAsyncMessage('Shumway:init', {});
+    messageManager.sendAsyncMessage('Shumway:init', getEnvironment());
   }
 
+
+  function handleDebug(connection) {
+    viewer.parentNode.removeChild(viewer); // we don't need viewer anymore
+    document.body.className = 'remoteDebug';
+
+    function sendMessage(data) {
+      return shumwayActions.invoke(data.id, data.data);
+    }
+
+    connection.onData = function (data) {
+      switch (data.action) {
+        case 'sendMessage':
+          return sendMessage(data);
+        case 'reload':
+          document.body.className = 'remoteReload';
+          setTimeout(function () {
+            window.top.location.reload();
+          }, 1000);
+          return;
+      }
+    };
+
+    shumwayActions.onExternalCallback = function (call) {
+      return connection.send({action: 'onExternalCallback', detail: call});
+    };
+
+    shumwayActions.onLoadFileCallback = function (args) {
+      if (args.array) {
+        args.array = Array.prototype.slice.call(args.array, 0);
+      }
+      return connection.send({action: 'onLoadFileCallback', detail: args}, true);
+    };
+
+    connection.send({action: 'runViewer'}, true);
+  }
+
+  function getEnvironment() {
+    return {
+      swfUrl: window.shumwayStartupInfo.url,
+      privateBrowsing: window.shumwayStartupInfo.privateBrowsing
+    };
+  }
+
+  function enableDebug() {
+    DebugUtils.enableDebug(window.shumwayStartupInfo.url);
+    setTimeout(function () {
+      window.top.location.reload();
+    }, 1000);
+  }
+
+  var startupInfo = window.shumwayStartupInfo;
+  var shumwayActions = ShumwayCom.createActions(startupInfo, window, document);
+
   promise.then(function (oop) {
+    if (DebugUtils.isEnabled) {
+      DebugUtils.createDebuggerConnection(window.shumwayStartupInfo.url).then(
+          function (debuggerConnection) {
+        if (debuggerConnection) {
+          handleDebug(debuggerConnection);
+        } else if (oop) {
+          handlerOOP();
+        } else {
+          handler();
+        }
+      });
+      return;
+    }
+
     if (oop) {
       handlerOOP();
     } else {

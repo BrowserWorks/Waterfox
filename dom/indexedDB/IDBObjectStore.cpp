@@ -223,7 +223,7 @@ StructuredCloneWriteCallback(JSContext* aCx,
 
   if (JS_GetClass(aObj) == IDBObjectStore::DummyPropClass()) {
     MOZ_ASSERT(!cloneWriteInfo->mOffsetToKeyProp);
-    cloneWriteInfo->mOffsetToKeyProp = js_GetSCOffset(aWriter);
+    cloneWriteInfo->mOffsetToKeyProp = js::GetSCOffset(aWriter);
 
     uint64_t value = 0;
     // Omit endian swap
@@ -585,7 +585,7 @@ public:
                              aFile.mFileInfo.forget());
     MOZ_ASSERT(mutableFile);
 
-    JS::Rooted<JSObject*> result(aCx, mutableFile->WrapObject(aCx));
+    JS::Rooted<JSObject*> result(aCx, mutableFile->WrapObject(aCx, JS::NullPtr()));
     if (NS_WARN_IF(!result)) {
       return false;
     }
@@ -1496,9 +1496,9 @@ NS_IMPL_CYCLE_COLLECTING_ADDREF(IDBObjectStore)
 NS_IMPL_CYCLE_COLLECTING_RELEASE(IDBObjectStore)
 
 JSObject*
-IDBObjectStore::WrapObject(JSContext* aCx)
+IDBObjectStore::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return IDBObjectStoreBinding::Wrap(aCx, this);
+  return IDBObjectStoreBinding::Wrap(aCx, this, aGivenProto);
 }
 
 nsPIDOMWindow*

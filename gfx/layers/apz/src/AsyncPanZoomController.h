@@ -75,7 +75,6 @@ class AsyncPanZoomController {
 
   typedef mozilla::MonitorAutoLock MonitorAutoLock;
   typedef mozilla::gfx::Matrix4x4 Matrix4x4;
-  typedef uint32_t TouchBehaviorFlags;
 
 public:
   enum GestureBehavior {
@@ -288,6 +287,12 @@ public:
    */
   bool Matches(const ScrollableLayerGuid& aGuid);
 
+  /**
+   * Returns true if the tree manager of this APZC is the same as the one
+   * passed in.
+   */
+  bool HasTreeManager(const APZCTreeManager* aTreeManager) const;
+
   void StartAnimation(AsyncPanZoomAnimation* aAnimation);
 
   /**
@@ -301,17 +306,6 @@ public:
    * Clear any overscroll on this APZC.
    */
   void ClearOverscroll();
-
-  /**
-   * Returns allowed touch behavior for the given point on the scrollable layer.
-   * Internally performs a kind of hit testing based on the regions constructed
-   * on the main thread and attached to the current scrollable layer. Each of such regions
-   * contains info about allowed touch behavior. If regions info isn't enough it returns
-   * UNKNOWN value and we should switch to the fallback approach - asking content.
-   * TODO: for now it's only a stub and returns hardcoded magic value. As soon as bug 928833
-   * is done we should integrate its logic here.
-   */
-  TouchBehaviorFlags GetAllowedTouchBehavior(ScreenIntPoint& aPoint);
 
   /**
    * Returns whether this APZC is for an element marked with the 'scrollgrab'
@@ -367,6 +361,16 @@ public:
   ParentLayerPoint ToParentLayerCoordinates(const ScreenPoint& aVector,
                                             const ScreenPoint& aAnchor) const;
 
+  // Return whether or not a wheel event will be able to scroll in either
+  // direction.
+  bool CanScroll(const ScrollWheelInput& aEvent) const;
+
+  // Return whether or not a scroll delta will be able to scroll in either
+  // direction.
+  bool CanScroll(double aDeltaX, double aDeltaY) const;
+
+  void NotifyMozMouseScrollEvent(const nsString& aString) const;
+
 protected:
   // Protected destructor, to discourage deletion outside of Release():
   ~AsyncPanZoomController();
@@ -419,7 +423,7 @@ protected:
   nsEventStatus OnPanMayBegin(const PanGestureInput& aEvent);
   nsEventStatus OnPanCancelled(const PanGestureInput& aEvent);
   nsEventStatus OnPanBegin(const PanGestureInput& aEvent);
-  nsEventStatus OnPan(const PanGestureInput& aEvent, bool aFingersOnTouchpad);
+  nsEventStatus OnPan(const PanGestureInput& aEvent, ScrollSource aSource, bool aFingersOnTouchpad);
   nsEventStatus OnPanEnd(const PanGestureInput& aEvent);
   nsEventStatus OnPanMomentumStart(const PanGestureInput& aEvent);
   nsEventStatus OnPanMomentumEnd(const PanGestureInput& aEvent);
@@ -428,6 +432,10 @@ protected:
    * Helper methods for handling scroll wheel events.
    */
   nsEventStatus OnScrollWheel(const ScrollWheelInput& aEvent);
+
+  void GetScrollWheelDelta(const ScrollWheelInput& aEvent,
+                           double& aOutDeltaX,
+                           double& aOutDeltaY) const;
 
   /**
    * Helper methods for long press gestures.
@@ -788,12 +796,6 @@ public:
   bool ArePointerEventsConsumable(TouchBlockState* aBlock, uint32_t aTouchPoints);
 
   /**
-   * Return true if there are are touch listeners registered on content
-   * scrolled by this APZC.
-   */
-  bool NeedToWaitForContent() const;
-
-  /**
    * Clear internal state relating to input handling.
    */
   void ResetInputState();
@@ -859,7 +861,10 @@ private:
   // Start an overscroll animation with the given initial velocity.
   void StartOverscrollAnimation(const ParentLayerPoint& aVelocity);
 
-  void StartSmoothScroll();
+  void StartSmoothScroll(ScrollSource aSource);
+
+  // Returns whether overscroll is allowed during a wheel event.
+  bool AllowScrollHandoffInWheelTransaction() const;
 
   /* ===================================================================
    * The functions and members in this section are used to make ancestor chains
@@ -922,7 +927,8 @@ public:
    * state). If this returns false, the caller APZC knows that it should enter
    * an overscrolled state itself if it can.
    */
-  bool AttemptScroll(const ParentLayerPoint& aStartPoint, const ParentLayerPoint& aEndPoint,
+  bool AttemptScroll(const ParentLayerPoint& aStartPoint,
+                     const ParentLayerPoint& aEndPoint,
                      OverscrollHandoffState& aOverscrollHandoffState);
 
   void FlushRepaintForOverscrollHandoff();
@@ -994,6 +1000,10 @@ public:
   Matrix4x4 GetAncestorTransform() const {
     return mAncestorTransform;
   }
+
+  // Returns whether or not this apzc contains the given screen point within
+  // its composition bounds.
+  bool Contains(const ScreenIntPoint& aPoint) const;
 
   bool IsOverscrolled() const {
     return mX.IsOverscrolled() || mY.IsOverscrolled();

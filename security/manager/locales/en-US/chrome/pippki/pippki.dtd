@@ -15,11 +15,6 @@
 <!ENTITY resetPassword.title  "Reset Master Password">
 <!ENTITY resetPassword.text  "If you reset your master password, all your stored web and e-mail passwords, form data, personal certificates, and private keys will be forgotten. Are you sure you want to reset your master password?">
 
-<!-- Values for getpassword.xul -->
-<!ENTITY getPassword.title  "Enter Master Password">
-<!ENTITY getPassword.tokenName2.label "Security Device:">
-<!ENTITY getPassword.password.label "Password:">
-
 <!-- Downloading a cert -->
 <!ENTITY downloadCert.title "Downloading Certificate">
 <!ENTITY downloadCert.message1 "You have been asked to trust a new Certificate Authority (CA).">
@@ -49,13 +44,6 @@
 
 <!ENTITY chooseToken.title  "Choose Token Dialog">
 <!ENTITY chooseToken.message1 "Please choose a token.">
-
-<!ENTITY escrowWarn.title "Encryption Key Copy">
-<!ENTITY escrowWarn.message1 "Important: This certificate authority has asked to make a backup of your encryption private key.">
-<!ENTITY escrowWarn.benefit1 "The benefit is that if you lose access to your encryption private key, you can request a copy from this certificate authority.">
-<!ENTITY escrowWarn.message2 "However, your encryption private key will be stored by the certificate authority, and could be used to read your encrypted email or documents without your permission.">
-<!ENTITY examineCert.label "View Certificate">
-<!ENTITY examineCert.accesskey "V">
 
 <!-- Strings for the CreateCertInfo dialog  -->
 <!ENTITY createCertInfo.title "Generating A Private Key">

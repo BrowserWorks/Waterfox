@@ -627,7 +627,7 @@ nsContainerFrame::SyncWindowProperties(nsPresContext*       aPresContext,
     return;
 
   Element* rootElement = aPresContext->Document()->GetRootElement();
-  if (!rootElement || !rootElement->IsXUL()) {
+  if (!rootElement || !rootElement->IsXULElement()) {
     // Scrollframes use native widgets which don't work well with
     // translucent windows, at least in Windows XP. So if the document
     // has a root scrollrame it's useless to try to make it transparent,
@@ -754,16 +754,10 @@ nsContainerFrame::SyncFrameViewProperties(nsPresContext*  aPresContext,
             ? nsViewVisibility_kShow : nsViewVisibility_kHide);
   }
 
-  // See if the frame is being relatively positioned or absolutely
-  // positioned
-  bool isPositioned = aFrame->IsPositioned();
-
   int32_t zIndex = 0;
   bool    autoZIndex = false;
 
-  if (!isPositioned) {
-    autoZIndex = true;
-  } else {
+  if (aFrame->IsAbsPosContaininingBlock()) {
     // Make sure z-index is correct
     const nsStylePosition* position = aStyleContext->StylePosition();
 
@@ -772,6 +766,8 @@ nsContainerFrame::SyncFrameViewProperties(nsPresContext*  aPresContext,
     } else if (position->mZIndex.GetUnit() == eStyleUnit_Auto) {
       autoZIndex = true;
     }
+  } else {
+    autoZIndex = true;
   }
 
   vm->SetViewZIndex(aView, autoZIndex, zIndex);
@@ -940,11 +936,6 @@ nsContainerFrame::ComputeAutoSize(nsRenderingContext* aRenderingContext,
   return result;
 }
 
-/**
- * Invokes the WillReflow() function, positions the frame and its view (if
- * requested), and then calls Reflow(). If the reflow succeeds and the child
- * frame is complete, deletes any next-in-flows using DeleteNextInFlowChild()
- */
 void
 nsContainerFrame::ReflowChild(nsIFrame*                aKidFrame,
                               nsPresContext*           aPresContext,
@@ -963,10 +954,7 @@ nsContainerFrame::ReflowChild(nsIFrame*                aKidFrame,
                  "FinishReflowChild with unconstrained container width!");
   }
 
-  // Send the WillReflow() notification, and position the child frame
-  // and its view if requested
-  aKidFrame->WillReflow(aPresContext);
-
+  // Position the child frame and its view if requested.
   if (NS_FRAME_NO_MOVE_FRAME != (aFlags & NS_FRAME_NO_MOVE_FRAME)) {
     aKidFrame->SetPosition(aWM, aPos, aContainerWidth);
   }
@@ -1008,10 +996,7 @@ nsContainerFrame::ReflowChild(nsIFrame*                aKidFrame,
 {
   NS_PRECONDITION(aReflowState.frame == aKidFrame, "bad reflow state");
 
-  // Send the WillReflow() notification, and position the child frame
-  // and its view if requested
-  aKidFrame->WillReflow(aPresContext);
-
+  // Position the child frame and its view if requested.
   if (NS_FRAME_NO_MOVE_FRAME != (aFlags & NS_FRAME_NO_MOVE_FRAME)) {
     aKidFrame->SetPosition(nsPoint(aX, aY));
   }

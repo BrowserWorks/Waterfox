@@ -64,7 +64,7 @@ public:
   explicit MessagePort(nsPIDOMWindow* aWindow);
 
   virtual JSObject*
-  WrapObject(JSContext* aCx) override;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   virtual void
   PostMessageMoz(JSContext* aCx, JS::Handle<JS::Value> aMessage,

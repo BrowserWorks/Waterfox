@@ -66,7 +66,6 @@ extern PRLogModuleInfo* gPIPNSSLog;
 
 NS_IMPL_ISUPPORTS(nsNSSCertificate,
                   nsIX509Cert,
-                  nsIIdentityInfo,
                   nsISerializable,
                   nsIClassInfo)
 
@@ -1440,7 +1439,7 @@ nsNSSCertificate::getValidEVOidTag(SECOidTag& resultOidTag, bool& validEV)
 
 #endif // MOZ_NO_EV_CERTS
 
-NS_IMETHODIMP
+nsresult
 nsNSSCertificate::GetIsExtendedValidation(bool* aIsEV)
 {
 #ifdef MOZ_NO_EV_CERTS
@@ -1463,43 +1462,6 @@ nsNSSCertificate::GetIsExtendedValidation(bool* aIsEV)
   SECOidTag oid_tag;
   return getValidEVOidTag(oid_tag, *aIsEV);
 #endif
-}
-
-NS_IMETHODIMP
-nsNSSCertificate::GetValidEVPolicyOid(nsACString& outDottedOid)
-{
-  outDottedOid.Truncate();
-
-#ifndef MOZ_NO_EV_CERTS
-  nsNSSShutDownPreventionLock locker;
-  if (isAlreadyShutDown()) {
-    return NS_ERROR_NOT_AVAILABLE;
-  }
-
-  SECOidTag oid_tag;
-  bool valid;
-  nsresult rv = getValidEVOidTag(oid_tag, valid);
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-
-  if (valid) {
-    SECOidData* oid_data = SECOID_FindOIDByTag(oid_tag);
-    if (!oid_data) {
-      return NS_ERROR_FAILURE;
-    }
-
-    char* oid_str = CERT_GetOidString(&oid_data->oid);
-    if (!oid_str) {
-      return NS_ERROR_FAILURE;
-    }
-
-    outDottedOid.Assign(oid_str);
-    PR_smprintf_free(oid_str);
-  }
-#endif
-
-  return NS_OK;
 }
 
 namespace mozilla {
@@ -1959,8 +1921,7 @@ nsNSSCertificate::GetInterfaces(uint32_t* count, nsIID*** array)
 }
 
 NS_IMETHODIMP
-nsNSSCertificate::GetHelperForLanguage(uint32_t language,
-                                       nsISupports** _retval)
+nsNSSCertificate::GetScriptableHelper(nsIXPCScriptable** _retval)
 {
   *_retval = nullptr;
   return NS_OK;

@@ -1,0 +1,108 @@
+{\rtf1\ansi\ansicpg1252\deff0\deflang1033\deflangfe1033{\fonttbl{\f0\fmodern\fprq1\fcharset0 Courier New;}{\f1\fmodern\fprq1\fcharset0 Lucida Console;}}
+{\*\generator Msftedit 5.41.15.1515;}\viewkind4\uc1\pard\nowidctlpar\tx2610\b\i\f0\fs20 File:\b0\tab\i0 README\par
+\b\i Copyright (C):\b0\i0\tab 2001, 2002, 2006\par
+  Earnie Boyd  <earnie@users.sf.net>\par
+\b\i Distribution:\b0\i0\tab See MSYS_LICENSE\par
+\pard\nowidctlpar\qc\tx2610\i\par
+\pard\nowidctlpar\b Preface:\b0\i0\par
+Ok, you have installed msys and now you're reading this to understand how to get started.  However, I must first explain some important facts about Msys.  Msys file system bindings (mounts) are automatic and happens as described in table 1.  These automatic file system bindings are not changable by the user.  User defined file system bindings can be created by specifying them in the /etc/fstab directory as explained in table 2.\par
+\par
+\b\i TABLE 1 - Automatic file system maps:\b0\i0\par
+\f1\fs16 + ---------------------------------------------------------------------------- +\par
+| The automatic mounts are relative to where the msys-1.0.dll (DLL) is located |\par
+| such that the following is true:                                             |\par
+|                                                                              |\par
+| / - is the parent directory of the directory containing the DLL              |\par
+| /usr - the parent directory of the directory containing the DLL              |\par
+| /tmp - the value of the TMP environment variable                             |\par
+| /c - C:\\                                                                     |\par
+| /d - D:\\                                                                     |\par
+| . . .                                                                        |\par
+| /z - Z:\\                                                                     |\par
+|                                                                              |\par
++ ---------------------------------------------------------------------------- +\par
+\f0\fs20\par
+\b\i TABLE 2 - /etc/fstab layout:\b0\i0\par
+\f1\fs16 + ---------------------------------------------------------------------------- +\par
+| The record format for the /etc/fstab is current a simple one.  I need to     |\par
+| work on the syntax parsing more so that things like embedded spaces work.    |\par
+| If you wish to map a path with spaces you must use the DOS style name.       |\par
+|                                                                              |\par
+| The record format is as follows:                                             |\par
+| d:/some/foo/path /bar                                                        |\par
+|                                                                              |\par
+| As you can see this is simply the Win32 path mapped to a mount point.  It is |\par
+| unix practice to have the /bar created as an empty directory before it can   |\par
+| mount the mount point.  Msys doesn't force this but it will be to advantage  |\par
+| if you do.  Some programs, e.g. find, and some operations, e.g. tab          |\par
+| operate better if the physical directory is present for those mount points.  |\par
+|                                                                              |\par
+| If you create a /etc/fstab record that maps to an automatic mount point Msys |\par
+| will remove it when it adds the automatic point.  This means that at some    |\par
+| small moment in time your mount point actually exists.  However it doesn't   |\par
+| exist long enough to be of any use to you.                                   |\par
+|                                                                              |\par
++ ---------------------------------------------------------------------------- +\par
+\f0\fs20\par
+For any executable not dependent on msys-1.0.dll, MSYS will convert POSIX paths that are used as arguments to Win32 paths.  (Prior to MSYS version 1.0.11, an executable was determined to be msys-1.0.dll if it resided in /bin or /usr/bin directories.)  This means that you now have a POSIX environment that will automagically do the right thing w.r.t. changing the paths passed as arguments.  Arguments beginning with a // are considered to be Win32 style switches and will be passed to the program with // converted to / to allow for the command.com/cmd.exe (Win32) style switch.  An example of a Win32 style switch is `write //p /mydocs/msys-rocks.'  In this example write (a.k.a. WordPad) exists in the c:\\winnt\\system32 path on my system.  The //p becomes /p which tells write to print the document.  And mydocs/msys-rocks converts to c:\\msys\\1.0\\mydocs\\msys-rocks so that write can find it.  \par
+\b\i\par
+\page STARTING Msys:\par
+\b0\i0 Starting Msys should just be a matter of clicking on the MSYS icon on your desktop or Start menu.  If you have the File Manager window open, you may now click on it and have it start also.  Doing these presents you with a console window within which you may enter commands.\par
+\par
+\b\i Working with MinGW:\par
+\b0\i0 If you already have MinGW installed then simply bind the path to MinGW to the /mingw mount point in the /etc/fstab as described above.  If you don't have MinGW installed already then simply unarchive the MinGW tar.gz file in the /mingw directory.  With versions of MSYS \ul prior\ulnone  to \ul 1.0.11\ulnone , \ul\b DO NOT\ulnone\b0  unarchive the MinGW tar.gz file in the / directory.  I find it advantageous to now put MinGW and MSYS binaries in the same /bin directory.  It provides one less confusion with where to install your products.\par
+\b\i\par
+Working with other products:\par
+\b0\i0 I find that the easiest thing for working with other products, such as Microsoft Office, is to create a script pointing to the executable.  An example of a script for Microsoft Word on my system looks like the example in Table 3.  I have this stored in my /usr/local/bin directory with a filename of word.  Now all I need to do to edit a word document is `word /mydoc/proposal.doc' and voila up pops a Microsoft Word window with my document in it.\par
+\par
+\b\i Table 3 - Script to execute MS Word from the command line:\par
+\b0\i0\f1\fs16 + ---------------------------------------------------------------------------- +\par
++ #!/bin/sh                                                                    +\par
++ start '/c/Program\\ Files/Microsoft\\ Office/Office/WINWORD' "$@"                +\par
++ ---------------------------------------------------------------------------- +\par
+\par
+\f0\fs20 This is also advantageous if you find that your program isn\rquote t working with RXVT correctly.  RXVT uses PTY emulation and it is often the case that controlling the stdio of a native program isn\rquote t functional.  There is no known cure for this PTY issue and I have stopped looking for one.  The above script method is the way you start the processes that don\rquote t flush their buffers or cause I/O blocking on the standard I/O channels.\par
+\b\i\par
+Other documentation:\b0\i0\par
+Be sure to read the MSYS_ series.  I have tried to document how I'm changing the cygwin code to allow us to use it with MSYS.  These can be found in the /doc/msys directory, or you can find them in the /usr/doc/msys directory.  You will also find HOWTO documentation at http://www.mingw.org/wiki/MinGWiki/ so please read it.\par
+\par
+\b\i Using binaries with different runtimes:\b0\i0\par
+You can't use Cygwin binaries at all and if you try you'll most likely just cause the processes to "hang".  You can use Win32 native binaries but you should put them into the /mingw/bin or your /usr/local/bin directory tree.  If you wish to replace an MSYS binary with a native win32 version then delete or rename the /bin version.\par
+\page\b\i Symlinks\par
+\b0\i0 Native w32 applications have no notion of POSIX-style symlinks. On the other hand, it is natural to assume that useful scripts and tools have come to rely on their existence. So, having some sort of symlink emulation makes it easier to port them to MSYS, provided they are transparent to w32 applications. One approximation that works in pratice is to replace symlink creation with a copy operation. \par
+\par
+The semantics of the symlink operation under MSYS are as follow:\par
+1) The original source is copied to the destination.\par
+2) In case of a directory, a deep copy is performed.\par
+3) If the source path is relative, it is taken relative to the directory of the destination.\par
+\par
+The following are the differences with respect to standard symlink behaviour: \par
+1) The original source must already exist at symlink creation time.\par
+2) Modifying the contents of the original source does not affect the destination and vice-versa.\par
+3) When creating a symlink pointing to a component of the symlink own path, the deep copy operation avoids descending into the newly created tree, to avoid infinite recursion.\par
+For instance:\par
+$ mkdir foo\par
+$ ln -s .. foo/bar\par
+On POSIX, you can dereference foo/bar/foo/bar/...\par
+On MSYS, it stops after foo/bar/foo\par
+4) When doing a deep copy operation, the directory traversal is done in the w32 domain. As a result, it does not traverse mount points found within the directory hierarchy.\par
+For instance: if foo/mnt is a mount point, then ls -s foo bar does not copy the contents of foo/mnt.\par
+\b\i\par
+Effective use of the clipboard:\par
+\b0\i0 You may use the clipboard with MSYS.  When using rxvt as the terminal, just selecting with data with click and drag of the mouse, copies the data to the clipboard.  To paste the clipboard data in the rxvt terminal you can Shift and Left Click or press both mouse buttons if 3 button mouse emulation is on or press the mouse wheel.  To copy the highlighted data to your favorite windows email client the you use the paste options for that program, typically Ctrl-V.  You can also use interesting bash shell commands such as `cat /dev/clipboard > /tmp/foo' or `less -f /dev/clipboard'.  Data entered into the clipboard by non-MSYS programs can also be used by MSYS programs and vice versa.\b\i\par
+\par
+\b\i Handling pop-up error dialog boxes:\par
+\b0\i0 Sometimes, executing an automated testsuite (like libtool's) may trigger unwanted pop-up error dialog boxes. 
+The error-mode tool can be used to temporarily turn off these pop-ups. See ``error-mode --help'' for further info.\par
+\par
+Bug Reports:\b0\i0\par
+See http://www.mingw.org/bugs.shtml\par
+\par
+\b\i User Posts:\b0\i0\par
+MinGW-msys@lists.sf.net\par
+\par
+\b\i Disclaimer:\par
+\b0\i0 Products mentioned in this and other documents are solely owned by their trademark owners.  We claim no rights to those trademarks and any mention of those products are for example only.  Your uses of those products are your responsibility and no endorsement of any mentioned product is being given.\par
+\b\i\par
+}
+ 

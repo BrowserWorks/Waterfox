@@ -18,9 +18,9 @@ namespace mozilla {
 namespace dom {
 
 class HTMLStyleElement final : public nsGenericHTMLElement,
-                                   public nsIDOMHTMLStyleElement,
-                                   public nsStyleLinkElement,
-                                   public nsStubMutationObserver
+                               public nsIDOMHTMLStyleElement,
+                               public nsStyleLinkElement,
+                               public nsStubMutationObserver
 {
 public:
   explicit HTMLStyleElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
@@ -83,7 +83,7 @@ public:
     SetHTMLBoolAttr(nsGkAtoms::scoped, aScoped, aError);
   }
 
-  virtual JSObject* WrapNode(JSContext *aCx) override;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 protected:
   virtual ~HTMLStyleElement();

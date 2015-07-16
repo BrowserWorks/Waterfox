@@ -1,0 +1,14 @@
+/usr/lib/perl5/vendor_perl/5.8/ExtUtils/CBuilder.pm
+/usr/lib/perl5/vendor_perl/5.8/ExtUtils/CBuilder.pm.orig
+/usr/lib/perl5/vendor_perl/5.8/ExtUtils/CBuilder/Base.pm
+/usr/lib/perl5/vendor_perl/5.8/ExtUtils/CBuilder/Platform/Unix.pm
+/usr/lib/perl5/vendor_perl/5.8/ExtUtils/CBuilder/Platform/VMS.pm
+/usr/lib/perl5/vendor_perl/5.8/ExtUtils/CBuilder/Platform/Windows.pm
+/usr/lib/perl5/vendor_perl/5.8/ExtUtils/CBuilder/Platform/aix.pm
+/usr/lib/perl5/vendor_perl/5.8/ExtUtils/CBuilder/Platform/cygwin.pm
+/usr/lib/perl5/vendor_perl/5.8/ExtUtils/CBuilder/Platform/darwin.pm
+/usr/lib/perl5/vendor_perl/5.8/ExtUtils/CBuilder/Platform/dec_osf.pm
+/usr/lib/perl5/vendor_perl/5.8/ExtUtils/CBuilder/Platform/msys.pm
+/usr/lib/perl5/vendor_perl/5.8/ExtUtils/CBuilder/Platform/msys.pm.orig
+/usr/lib/perl5/vendor_perl/5.8/ExtUtils/CBuilder/Platform/os2.pm
+/usr/lib/perl5/vendor_perl/5.8/ExtUtils/bleadcheck.pl

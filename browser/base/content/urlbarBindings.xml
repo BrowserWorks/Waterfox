@@ -124,6 +124,8 @@
       ]]></destructor>
 
       <field name="_value">""</field>
+      <field name="gotResultForCurrentQuery">false</field>
+      <field name="handleEnterWhenGotResult">false</field>
 
       <!--
         onBeforeValueGet is called by the base-binding's .value getter.
@@ -356,18 +358,10 @@
             gBrowser.selectedBrowser.focus();
 
             let isMouseEvent = aTriggeringEvent instanceof MouseEvent;
-            let altEnter = !isMouseEvent && aTriggeringEvent && aTriggeringEvent.altKey;
-
-            if (altEnter) {
-              // XXX This was added a long time ago, and I'm not sure why it is
-              // necessary. Alt+Enter's default action might cause a system beep,
-              // or something like that?
-              aTriggeringEvent.preventDefault();
-              aTriggeringEvent.stopPropagation();
-            }
 
             // If the current tab is empty, ignore Alt+Enter (just reuse this tab)
-            altEnter = altEnter && !isTabEmpty(gBrowser.selectedTab);
+            let altEnter = !isMouseEvent && aTriggeringEvent &&
+              aTriggeringEvent.altKey && !isTabEmpty(gBrowser.selectedTab);
 
             if (isMouseEvent || altEnter) {
               // Use the standard UI link behaviors for clicks or Alt+Enter
@@ -456,7 +450,7 @@
             }
           }
 
-          getShortcutOrURIAndPostData(url, data => {
+          getShortcutOrURIAndPostData(url).then(data => {
             aCallback([data.url, data.postData, data.mayInheritPrincipal]);
           });
         ]]></body>
@@ -806,11 +800,48 @@
             this._value = this.inputField.value;
             gBrowser.userTypedValue = this.value;
             this.valueIsTyped = true;
+            this.gotResultForCurrentQuery = false;
             this.mController.handleText();
           }
           this.resetActionType();
         ]]></body>
       </method>
+
+      <method name="handleEnter">
+        <body><![CDATA[
+          // When UnifiedComplete is enabled, we need to ensure we're using
+          // a selected autocomplete result. A result should automatically be
+          // selected by default (UnifiedComplete guarantees at least one
+          // result), however autocomplete is async and therefore we may not
+          // have a result set relating to the current input yet. If that
+          // happens, we need to mark that when the first result does get added,
+          // it needs to be handled as if enter was pressed with that first
+          // result selected.
+          // With UnifiedComplete disabled we don't have this problem, as the
+          // default is to use the value directly from the input field (without
+          // relying on autocomplete).
+
+          if (!Services.prefs.getBoolPref("browser.urlbar.unifiedcomplete")) {
+            return this.mController.handleEnter(false);
+          }
+
+          // If anything other than the default (first) result is selected, then
+          // it must have been manually selected by the human. We let this
+          // explicit choice be used, even if it may be related to a previous
+          // input.
+          // However, if the default result is automatically selected, we
+          // ensure that it corresponds to the current input.
+
+          if (this.popup.selectedIndex != 0 || this.gotResultForCurrentQuery) {
+            return this.mController.handleEnter(false);
+          }
+
+          this.handleEnterWhenGotResult = true;
+
+          return true;
+        ]]></body>
+      </method>
+
     </implementation>
 
     <handlers>
@@ -1516,6 +1547,12 @@
 
             if (this._matchCount > 0 && this.selectedIndex == -1)
               this.selectedIndex = 0;
+
+            this.input.gotResultForCurrentQuery = true;
+            if (this.input.handleEnterWhenGotResult) {
+              this.input.handleEnterWhenGotResult = false;
+              this.input.mController.handleEnter(false);
+            }
           ]]>
         </body>
       </method>
@@ -1524,44 +1561,10 @@
   </binding>
 
   <binding id="addon-progress-notification" extends="chrome://global/content/bindings/notification.xml#popup-notification">
-    <content align="start">
-      <xul:image class="popup-notification-icon"
-                 xbl:inherits="popupid,src=icon"/>
-      <xul:vbox flex="1">
-        <xul:description class="popup-notification-description addon-progress-description"
-                         xbl:inherits="xbl:text=label"/>
-        <xul:spacer flex="1"/>
-        <xul:hbox align="center">
-          <xul:progressmeter anonid="progressmeter" flex="1" mode="undetermined" class="popup-progress-meter"/>
-          <xul:button anonid="cancel" class="popup-progress-cancel" oncommand="document.getBindingParent(this).cancel()"/>
-        </xul:hbox>
-        <xul:label anonid="progresstext" class="popup-progress-label"/>
-        <xul:hbox class="popup-notification-button-container"
-                  pack="end" align="center">
-          <xul:button anonid="button"
-                      class="popup-notification-menubutton"
-                      type="menu-button"
-                      xbl:inherits="oncommand=buttoncommand,label=buttonlabel,accesskey=buttonaccesskey">
-            <xul:menupopup anonid="menupopup"
-                           xbl:inherits="oncommand=menucommand">
-              <children/>
-              <xul:menuitem class="menuitem-iconic popup-notification-closeitem close-icon"
-                            label="&closeNotificationItem.label;"
-                            xbl:inherits="oncommand=closeitemcommand"/>
-            </xul:menupopup>
-          </xul:button>
-        </xul:hbox>
-      </xul:vbox>
-      <xul:vbox pack="start">
-        <xul:toolbarbutton anonid="closebutton"
-                           class="messageCloseButton close-icon popup-notification-closebutton tabbable"
-                           xbl:inherits="oncommand=closebuttoncommand"
-                           tooltiptext="&closeNotification.tooltip;"/>
-      </xul:vbox>
-    </content>
     <implementation>
       <constructor><![CDATA[
-        this.cancelbtn.setAttribute("tooltiptext", gNavigatorBundle.getString("addonDownloadCancelTooltip"));
+        if (!this.notification)
+          return;
 
         this.notification.options.installs.forEach(function(aInstall) {
           aInstall.addListener(this);
@@ -1581,13 +1584,10 @@
       ]]></destructor>
 
       <field name="progressmeter" readonly="true">
-        document.getAnonymousElementByAttribute(this, "anonid", "progressmeter");
+        document.getElementById("addon-progress-notification-progressmeter"); 
       </field>
       <field name="progresstext" readonly="true">
-        document.getAnonymousElementByAttribute(this, "anonid", "progresstext");
-      </field>
-      <field name="cancelbtn" readonly="true">
-        document.getAnonymousElementByAttribute(this, "anonid", "cancel");
+        document.getElementById("addon-progress-notification-progresstext");
       </field>
       <field name="DownloadUtils" readonly="true">
         let utils = {};
@@ -1597,6 +1597,9 @@
 
       <method name="destroy">
         <body><![CDATA[
+          if (!this.notification)
+            return;
+
           this.notification.options.installs.forEach(function(aInstall) {
             aInstall.removeListener(this);
           }, this);
@@ -1609,11 +1612,11 @@
         <parameter name="aMaxProgress"/>
         <body><![CDATA[
           if (aMaxProgress == -1) {
-            this.progressmeter.mode = "undetermined";
+            this.progressmeter.setAttribute("mode", "undetermined");
           }
           else {
-            this.progressmeter.mode = "determined";
-            this.progressmeter.value = (aProgress * 100) / aMaxProgress;
+            this.progressmeter.setAttribute("mode", "determined");
+            this.progressmeter.setAttribute("value", (aProgress * 100) / aMaxProgress);
           }
 
           let now = Date.now();
@@ -1641,17 +1644,13 @@
 
           let status = null;
           [status, this.notification.last] = this.DownloadUtils.getDownloadStatus(aProgress, aMaxProgress, speed, this.notification.last);
-          this.progresstext.value = status;
+          this.progresstext.setAttribute("value", status);
+          this.progresstext.setAttribute("tooltiptext", status);
         ]]></body>
       </method>
 
       <method name="cancel">
         <body><![CDATA[
-          // Cache these as cancelling the installs will remove this
-          // notification which will drop these references
-          let browser = this.notification.browser;
-          let sourceURI = this.notification.options.sourceURI;
-
           let installs = this.notification.options.installs;
           installs.forEach(function(aInstall) {
             try {
@@ -1662,35 +1661,15 @@
             }
           }, this);
 
-          let anchorID = "addons-notification-icon";
-          let notificationID = "addon-install-cancelled";
-          let messageString = gNavigatorBundle.getString("addonDownloadCancelled");
-          messageString = PluralForm.get(installs.length, messageString);
-          let buttonText = gNavigatorBundle.getString("addonDownloadRestart");
-          buttonText = PluralForm.get(installs.length, buttonText);
-
-          let action = {
-            label: buttonText,
-            accessKey: gNavigatorBundle.getString("addonDownloadRestart.accessKey"),
-            callback: function() {
-              let weblistener = Cc["@mozilla.org/addons/web-install-listener;1"].
-                                getService(Ci.amIWebInstallListener);
-              if (weblistener.onWebInstallRequested(browser, sourceURI,
-                                                    installs, installs.length)) {
-                installs.forEach(function(aInstall) {
-                  aInstall.install();
-                });
-              }
-            }
-          };
-
-          PopupNotifications.show(browser, notificationID, messageString,
-                                  anchorID, action);
+          PopupNotifications.remove(this.notification);
         ]]></body>
       </method>
 
       <method name="updateProgress">
         <body><![CDATA[
+          if (!this.notification)
+            return;
+
           let downloadingCount = 0;
           let progress = 0;
           let maxProgress = 0;
@@ -1707,7 +1686,14 @@
 
           if (downloadingCount == 0) {
             this.destroy();
-            PopupNotifications.remove(this.notification);
+            if (Preferences.get("xpinstall.customConfirmationUI", false)) {
+              this.progressmeter.setAttribute("mode", "undetermined");
+              let status = gNavigatorBundle.getString("addonDownloadVerifying");
+              this.progresstext.setAttribute("value", status);
+              this.progresstext.setAttribute("tooltiptext", status);
+            } else {
+              PopupNotifications.remove(this.notification);
+            }
           }
           else {
             this.setProgress(progress, maxProgress);
@@ -2957,7 +2943,7 @@
           // otherwise just rely on the panel id for common arrowpanels.
           let type = this._panel.firstChild.getAttribute("popupid") ||
                      this._panel.id;
-          if (type.startsWith("password-"))
+          if (type == "password")
             return "passwords";
           if (type == "editBookmarkPanel")
             return "bookmarks";

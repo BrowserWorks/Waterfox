@@ -435,7 +435,9 @@ DetermineCertOverrideErrors(CERTCertificate* cert, const char* hostName,
       return SECFailure;
     }
     result = CheckCertHostname(certInput, hostnameInput);
-    if (result == Result::ERROR_BAD_CERT_DOMAIN) {
+    // Treat malformed name information as a domain mismatch.
+    if (result == Result::ERROR_BAD_DER ||
+        result == Result::ERROR_BAD_CERT_DOMAIN) {
       collectedErrors |= nsICertOverrideService::ERROR_MISMATCH;
       errorCodeMismatch = SSL_ERROR_BAD_CERT_DOMAIN;
     } else if (result != Success) {
@@ -481,26 +483,45 @@ CertErrorRunnable::CheckCertOverrides()
 
   uint32_t remaining_display_errors = mCollectedErrors;
 
-  nsresult nsrv;
 
-  // Enforce Strict-Transport-Security for hosts that are "STS" hosts:
-  // connections must be dropped when there are any certificate errors
-  // (STS Spec section 7.3).
+  // If this is an HTTP Strict Transport Security host or a pinned host and the
+  // certificate is bad, don't allow overrides (RFC 6797 section 12.1,
+  // HPKP draft spec section 2.6).
   bool strictTransportSecurityEnabled = false;
-  nsCOMPtr<nsISiteSecurityService> sss
-    = do_GetService(NS_SSSERVICE_CONTRACTID, &nsrv);
-  if (NS_SUCCEEDED(nsrv)) {
-    nsrv = sss->IsSecureHost(nsISiteSecurityService::HEADER_HSTS,
-                             mInfoObject->GetHostNameRaw(),
-                             mProviderFlags,
-                             &strictTransportSecurityEnabled);
+  bool hasPinningInformation = false;
+  nsCOMPtr<nsISiteSecurityService> sss(do_GetService(NS_SSSERVICE_CONTRACTID));
+  if (!sss) {
+    PR_LOG(gPIPNSSLog, PR_LOG_DEBUG,
+           ("[%p][%p] couldn't get nsISiteSecurityService to check for HSTS/HPKP\n",
+            mFdForLogging, this));
+    return new SSLServerCertVerificationResult(mInfoObject,
+                                               mDefaultErrorCodeToReport);
   }
+  nsresult nsrv = sss->IsSecureHost(nsISiteSecurityService::HEADER_HSTS,
+                                    mInfoObject->GetHostNameRaw(),
+                                    mProviderFlags,
+                                    &strictTransportSecurityEnabled);
   if (NS_FAILED(nsrv)) {
+    PR_LOG(gPIPNSSLog, PR_LOG_DEBUG,
+           ("[%p][%p] checking for HSTS failed\n", mFdForLogging, this));
+    return new SSLServerCertVerificationResult(mInfoObject,
+                                               mDefaultErrorCodeToReport);
+  }
+  nsrv = sss->IsSecureHost(nsISiteSecurityService::HEADER_HPKP,
+                           mInfoObject->GetHostNameRaw(),
+                           mProviderFlags,
+                           &hasPinningInformation);
+  if (NS_FAILED(nsrv)) {
+    PR_LOG(gPIPNSSLog, PR_LOG_DEBUG,
+           ("[%p][%p] checking for HPKP failed\n", mFdForLogging, this));
     return new SSLServerCertVerificationResult(mInfoObject,
                                                mDefaultErrorCodeToReport);
   }
 
-  if (!strictTransportSecurityEnabled) {
+  if (!strictTransportSecurityEnabled && !hasPinningInformation) {
+    PR_LOG(gPIPNSSLog, PR_LOG_DEBUG,
+           ("[%p][%p] no HSTS or HPKP - overrides allowed\n",
+            mFdForLogging, this));
     nsCOMPtr<nsICertOverrideService> overrideService =
       do_GetService(NS_CERTOVERRIDE_CONTRACTID);
     // it is fine to continue without the nsICertOverrideService
@@ -549,8 +570,8 @@ CertErrorRunnable::CheckCertOverrides()
     }
   } else {
     PR_LOG(gPIPNSSLog, PR_LOG_DEBUG,
-           ("[%p][%p] Strict-Transport-Security is violated: untrusted "
-            "transport layer\n", mFdForLogging, this));
+           ("[%p][%p] HSTS or HPKP - no overrides allowed\n",
+            mFdForLogging, this));
   }
 
   PR_LOG(gPIPNSSLog, PR_LOG_DEBUG,
@@ -657,7 +678,7 @@ CreateCertErrorRunnable(CertVerifier& certVerifier,
     return nullptr;
   }
 
-  infoObject->SetStatusErrorBits(*nssCert, collected_errors);
+  infoObject->SetStatusErrorBits(nssCert, collected_errors);
 
   return new CertErrorRunnable(fdForLogging,
                                static_cast<nsIX509Cert*>(nssCert.get()),
@@ -876,16 +897,25 @@ GatherBaselineRequirementsTelemetry(const ScopedCERTCertList& certList)
     return;
   }
   CERTCertificate* cert = endEntityNode->cert;
+  PR_ASSERT(cert);
+  if (!cert) {
+    return;
+  }
   mozilla::pkix::ScopedPtr<char, PORT_Free_string> commonName(
     CERT_GetCommonName(&cert->subject));
   // This only applies to certificates issued by authorities in our root
   // program.
+  CERTCertificate* rootCert = rootNode->cert;
+  PR_ASSERT(rootCert);
+  if (!rootCert) {
+    return;
+  }
   bool isBuiltIn = false;
-  SECStatus rv = IsCertBuiltInRoot(rootNode->cert, isBuiltIn);
+  SECStatus rv = IsCertBuiltInRoot(rootCert, isBuiltIn);
   if (rv != SECSuccess || !isBuiltIn) {
     PR_LOG(gPIPNSSLog, PR_LOG_DEBUG,
-           ("BR telemetry: '%s' not a built-in root (or IsCertBuiltInRoot "
-            "failed)\n", commonName.get()));
+           ("BR telemetry: root certificate for '%s' is not a built-in root "
+            "(or IsCertBuiltInRoot failed)\n", commonName.get()));
     return;
   }
   SECItem altNameExtension;
@@ -1032,10 +1062,19 @@ GatherEKUTelemetry(const ScopedCERTCertList& certList)
     return;
   }
   CERTCertificate* endEntityCert = endEntityNode->cert;
+  PR_ASSERT(endEntityCert);
+  if (!endEntityCert) {
+    return;
+  }
 
   // Only log telemetry if the root CA is built-in
+  CERTCertificate* rootCert = rootNode->cert;
+  PR_ASSERT(rootCert);
+  if (!rootCert) {
+    return;
+  }
   bool isBuiltIn = false;
-  SECStatus rv = IsCertBuiltInRoot(rootNode->cert, isBuiltIn);
+  SECStatus rv = IsCertBuiltInRoot(rootCert, isBuiltIn);
   if (rv != SECSuccess || !isBuiltIn) {
     return;
   }
@@ -1044,7 +1083,8 @@ GatherEKUTelemetry(const ScopedCERTCertList& certList)
   bool foundEKU = false;
   SECOidTag oidTag;
   CERTCertExtension* ekuExtension = nullptr;
-  for (size_t i = 0; endEntityCert->extensions[i]; i++) {
+  for (size_t i = 0; endEntityCert->extensions && endEntityCert->extensions[i];
+       i++) {
     oidTag = SECOID_FindOIDTag(&endEntityCert->extensions[i]->id);
     if (oidTag == SEC_OID_X509_EXT_KEY_USAGE) {
       foundEKU = true;
@@ -1100,12 +1140,17 @@ GatherRootCATelemetry(const ScopedCERTCertList& certList)
   if (!rootNode) {
     return;
   }
-
-  // Only log telemetry if the certificate list is non-empty
-  if (!CERT_LIST_END(rootNode, certList)) {
-    AccumulateTelemetryForRootCA(Telemetry::CERT_VALIDATION_SUCCESS_BY_CA,
-                                 rootNode->cert);
+  PR_ASSERT(!CERT_LIST_END(rootNode, certList));
+  if (CERT_LIST_END(rootNode, certList)) {
+    return;
   }
+  CERTCertificate* rootCert = rootNode->cert;
+  PR_ASSERT(rootCert);
+  if (!rootCert) {
+    return;
+  }
+  AccumulateTelemetryForRootCA(Telemetry::CERT_VALIDATION_SUCCESS_BY_CA,
+                               rootCert);
 }
 
 // There are various things that we want to measure about certificate

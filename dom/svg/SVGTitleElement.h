@@ -18,7 +18,7 @@ namespace mozilla {
 namespace dom {
 
 class SVGTitleElement final : public SVGTitleElementBase,
-                                  public nsStubMutationObserver
+                              public nsStubMutationObserver
 {
 protected:
   friend nsresult (::NS_NewSVGTitleElement(nsIContent **aResult,
@@ -26,7 +26,7 @@ protected:
   explicit SVGTitleElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
   ~SVGTitleElement();
 
-  virtual JSObject* WrapNode(JSContext *aCx) override;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 public:
   // interfaces:

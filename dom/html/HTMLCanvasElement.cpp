@@ -72,9 +72,9 @@ HTMLCanvasPrintState::~HTMLCanvasPrintState()
 }
 
 /* virtual */ JSObject*
-HTMLCanvasPrintState::WrapObject(JSContext* aCx)
+HTMLCanvasPrintState::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return MozCanvasPrintStateBinding::Wrap(aCx, this);
+  return MozCanvasPrintStateBinding::Wrap(aCx, this, aGivenProto);
 }
 
 nsISupports*
@@ -137,9 +137,9 @@ NS_INTERFACE_TABLE_TAIL_INHERITING(nsGenericHTMLElement)
 NS_IMPL_ELEMENT_CLONE(HTMLCanvasElement)
 
 /* virtual */ JSObject*
-HTMLCanvasElement::WrapNode(JSContext* aCx)
+HTMLCanvasElement::WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return HTMLCanvasElementBinding::Wrap(aCx, this);
+  return HTMLCanvasElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 nsIntSize
@@ -561,8 +561,9 @@ HTMLCanvasElement::ToBlob(JSContext* aCx,
       nsresult rv = blob->GetSize(&size);
       if (NS_SUCCEEDED(rv)) {
         AutoJSAPI jsapi;
-        jsapi.Init(mGlobal);
-        JS_updateMallocCounter(jsapi.cx(), size);
+        if (jsapi.Init(mGlobal)) {
+          JS_updateMallocCounter(jsapi.cx(), size);
+        }
       }
 
       nsRefPtr<File> newBlob = new File(mGlobal, blob->Impl());

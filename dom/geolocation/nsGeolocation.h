@@ -53,7 +53,8 @@ struct CachedPositionAndAccuracy {
 /**
  * Singleton that manages the geolocation provider
  */
-class nsGeolocationService final : public nsIGeolocationUpdate, public nsIObserver
+class nsGeolocationService final : public nsIGeolocationUpdate,
+                                   public nsIObserver
 {
 public:
 
@@ -124,8 +125,8 @@ namespace dom {
  * Can return a geolocation info
  */
 class Geolocation final : public nsIDOMGeoGeolocation,
-                              public nsIGeolocationUpdate,
-                              public nsWrapperCache
+                          public nsIGeolocationUpdate,
+                          public nsWrapperCache
 {
 public:
 
@@ -140,7 +141,7 @@ public:
   nsresult Init(nsIDOMWindow* contentDom=nullptr);
 
   nsIDOMWindow* GetParentObject() const;
-  virtual JSObject* WrapObject(JSContext *aCtx) override;
+  virtual JSObject* WrapObject(JSContext *aCtx, JS::Handle<JSObject*> aGivenProto) override;
 
   int32_t WatchPosition(PositionCallback& aCallback, PositionErrorCallback* aErrorCallback, const PositionOptions& aOptions, ErrorResult& aRv);
   void GetCurrentPosition(PositionCallback& aCallback, PositionErrorCallback* aErrorCallback, const PositionOptions& aOptions, ErrorResult& aRv);
@@ -221,7 +222,7 @@ private:
 };
 
 class PositionError final : public nsIDOMGeoPositionError,
-                                public nsWrapperCache
+                            public nsWrapperCache
 {
 public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -233,7 +234,7 @@ public:
 
   Geolocation* GetParentObject() const;
 
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   int16_t Code() const {
     return mCode;

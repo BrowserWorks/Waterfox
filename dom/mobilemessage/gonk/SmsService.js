@@ -21,6 +21,7 @@ const NS_PREFBRANCH_PREFCHANGE_TOPIC_ID  = "nsPref:changed";
 const kPrefDefaultServiceId = "dom.sms.defaultServiceId";
 const kPrefRilDebuggingEnabled = "ril.debugging.enabled";
 const kPrefRilNumRadioInterfaces = "ril.numRadioInterfaces";
+const kPrefLastKnownSimMcc = "ril.lastKnownSimMcc";
 
 const kDiskSpaceWatcherObserverTopic = "disk-space-watcher";
 
@@ -40,7 +41,10 @@ const DOM_MOBILE_MESSAGE_DELIVERY_ERROR    = "error";
 const SMS_HANDLED_WAKELOCK_TIMEOUT = 5000;
 
 XPCOMUtils.defineLazyGetter(this, "gRadioInterfaces", function() {
-  let ril = Cc["@mozilla.org/ril;1"].getService(Ci.nsIRadioInterfaceLayer);
+  let ril = { numRadioInterfaces: 0 };
+  try {
+    ril = Cc["@mozilla.org/ril;1"].getService(Ci.nsIRadioInterfaceLayer);
+  } catch(e) {}
 
   let interfaces = [];
   for (let i = 0; i < ril.numRadioInterfaces; i++) {
@@ -52,6 +56,10 @@ XPCOMUtils.defineLazyGetter(this, "gRadioInterfaces", function() {
 XPCOMUtils.defineLazyGetter(this, "gSmsSegmentHelper", function() {
   let ns = {};
   Cu.import("resource://gre/modules/SmsSegmentHelper.jsm", ns);
+
+  // Initialize enabledGsmTableTuples from current MCC.
+  ns.SmsSegmentHelper.enabledGsmTableTuples = getEnabledGsmTableTuplesFromMcc();
+
   return ns.SmsSegmentHelper;
 });
 
@@ -97,6 +105,7 @@ function debug(s) {
 }
 
 function SmsService() {
+  this._updateDebugFlag();
   this._silentNumbers = [];
   this.smsDefaultServiceId = this._getDefaultServiceId();
 
@@ -107,6 +116,7 @@ function SmsService() {
 
   Services.prefs.addObserver(kPrefRilDebuggingEnabled, this, false);
   Services.prefs.addObserver(kPrefDefaultServiceId, this, false);
+  Services.prefs.addObserver(kPrefLastKnownSimMcc, this, false);
   Services.obs.addObserver(this, NS_XPCOM_SHUTDOWN_OBSERVER_ID, false);
   Services.obs.addObserver(this, kDiskSpaceWatcherObserverTopic, false);
 }
@@ -126,7 +136,7 @@ SmsService.prototype = {
 
   _updateDebugFlag: function() {
     try {
-      DEBUG = RIL.DEBUG_RIL ||
+      DEBUG = DEBUG ||
               Services.prefs.getBoolPref(kPrefRilDebuggingEnabled);
     } catch (e) {}
   },
@@ -876,7 +886,7 @@ SmsService.prototype = {
         if (DEBUG) debug("Error! Radio is disabled when sending SMS.");
         errorCode = Ci.nsIMobileMessageCallback.RADIO_DISABLED_ERROR;
       } else if (gRadioInterfaces[aServiceId].rilContext.cardState !=
-                 Ci.nsIIccProvider.CARD_STATE_READY) {
+                 Ci.nsIIcc.CARD_STATE_READY) {
         if (DEBUG) debug("Error! SIM card is not ready when sending SMS.");
         errorCode = Ci.nsIMobileMessageCallback.NO_SIM_CARD_ERROR;
       }
@@ -1051,6 +1061,10 @@ SmsService.prototype = {
         else if (aData === kPrefDefaultServiceId) {
           this.smsDefaultServiceId = this._getDefaultServiceId();
         }
+        else if ( aData === kPrefLastKnownSimMcc) {
+          gSmsSegmentHelper.enabledGsmTableTuples =
+            getEnabledGsmTableTuplesFromMcc();
+        }
         break;
       case kDiskSpaceWatcherObserverTopic:
         if (DEBUG) {
@@ -1068,6 +1082,28 @@ SmsService.prototype = {
         break;
     }
   }
+};
+
+/**
+ * Get enabled GSM national language locking shift / single shift table pairs
+ * for current SIM MCC.
+ *
+ * @return a list of pairs of national language identifiers for locking shift
+ * table and single shfit table, respectively.
+ */
+function getEnabledGsmTableTuplesFromMcc() {
+  let mcc;
+  try {
+    mcc = Services.prefs.getCharPref(kPrefLastKnownSimMcc);
+  } catch (e) {}
+  let tuples = [[RIL.PDU_NL_IDENTIFIER_DEFAULT,
+    RIL.PDU_NL_IDENTIFIER_DEFAULT]];
+  let extraTuples = RIL.PDU_MCC_NL_TABLE_TUPLES_MAPPING[mcc];
+  if (extraTuples) {
+    tuples = tuples.concat(extraTuples);
+  }
+
+  return tuples;
 };
 
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory([SmsService]);

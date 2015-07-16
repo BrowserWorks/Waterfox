@@ -65,7 +65,7 @@ class PeriodicWave;
 class Promise;
 
 class AudioContext final : public DOMEventTargetHelper,
-                               public nsIMemoryReporter
+                           public nsIMemoryReporter
 {
   AudioContext(nsPIDOMWindow* aParentWindow,
                bool aIsOffline,
@@ -90,7 +90,7 @@ public:
   void Suspend();
   void Resume();
 
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   using DOMEventTargetHelper::DispatchTrustedEvent;
 

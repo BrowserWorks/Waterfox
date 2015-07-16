@@ -23,7 +23,7 @@ public:
     , mSelectedIndex(-1)
   {}
 
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   VideoTrack* operator[](uint32_t aIndex);
 

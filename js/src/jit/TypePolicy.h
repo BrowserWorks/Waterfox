@@ -221,24 +221,8 @@ class Float32Policy final : public TypePolicy
 template <unsigned Op>
 class FloatingPointPolicy final : public TypePolicy
 {
-
   public:
-    struct PolicyTypeData
-    {
-        MIRType policyType_;
-
-        void setPolicyType(MIRType type) {
-            policyType_ = type;
-        }
-
-      protected:
-        MIRType& thisTypeSpecialization() {
-            return policyType_;
-        }
-    };
-
-    INHERIT_DATA_(PolicyTypeData);
-
+    SPECIALIZATION_DATA_;
     virtual bool adjustInputs(TempAllocator& alloc, MInstruction* def) override;
 };
 
@@ -322,6 +306,35 @@ class SimdScalarPolicy final : public TypePolicy
     virtual bool adjustInputs(TempAllocator& alloc, MInstruction* def) override {
         return staticAdjustInputs(alloc, def);
     }
+};
+
+class SimdAllPolicy final : public TypePolicy
+{
+  public:
+    SPECIALIZATION_DATA_;
+    virtual bool adjustInputs(TempAllocator& alloc, MInstruction* ins) override;
+};
+
+template <unsigned Op>
+class SimdPolicy final : public TypePolicy
+{
+  public:
+    SPECIALIZATION_DATA_;
+    virtual bool adjustInputs(TempAllocator& alloc, MInstruction* ins) override;
+};
+
+class SimdSelectPolicy final : public TypePolicy
+{
+  public:
+    SPECIALIZATION_DATA_;
+    virtual bool adjustInputs(TempAllocator& alloc, MInstruction* ins) override;
+};
+
+class SimdShufflePolicy final : public TypePolicy
+{
+  public:
+    SPECIALIZATION_DATA_;
+    virtual bool adjustInputs(TempAllocator& alloc, MInstruction* ins) override;
 };
 
 // SIMD value-type policy, use the returned type of the instruction to determine
@@ -426,10 +439,11 @@ class InstanceOfPolicy final : public TypePolicy
 class StoreTypedArrayHolePolicy;
 class StoreTypedArrayElementStaticPolicy;
 
-class StoreTypedArrayPolicy : public TypePolicy
+class StoreUnboxedScalarPolicy : public TypePolicy
 {
   private:
-    static bool adjustValueInput(TempAllocator& alloc, MInstruction* ins, int arrayType, MDefinition* value, int valueOperand);
+    static bool adjustValueInput(TempAllocator& alloc, MInstruction* ins, Scalar::Type arrayType,
+                                 MDefinition* value, int valueOperand);
 
     friend class StoreTypedArrayHolePolicy;
     friend class StoreTypedArrayElementStaticPolicy;
@@ -439,14 +453,14 @@ class StoreTypedArrayPolicy : public TypePolicy
     virtual bool adjustInputs(TempAllocator& alloc, MInstruction* ins) override;
 };
 
-class StoreTypedArrayHolePolicy final : public StoreTypedArrayPolicy
+class StoreTypedArrayHolePolicy final : public StoreUnboxedScalarPolicy
 {
   public:
     EMPTY_DATA_;
     virtual bool adjustInputs(TempAllocator& alloc, MInstruction* ins) override;
 };
 
-class StoreTypedArrayElementStaticPolicy final : public StoreTypedArrayPolicy
+class StoreTypedArrayElementStaticPolicy final : public StoreUnboxedScalarPolicy
 {
   public:
     EMPTY_DATA_;

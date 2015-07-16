@@ -36,7 +36,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "Utils",
  * In a typical restore, content-sessionStore.js will call the following based
  * on messages and events it receives:
  *
- *   restoreHistory(epoch, tabData, reloadCallback)
+ *   restoreHistory(epoch, tabData, callbacks)
  *     Restores the tab's history and session cookies.
  *   restoreTabContent(finishCallback)
  *     Starts loading the data for the current page to restore.
@@ -100,8 +100,10 @@ function ContentRestoreInternal(chromeGlobal) {
   // restoreHistory and removed in restoreTabContent.
   this._historyListener = null;
 
-  // This listener detects when a restoring tab has finished loading data from
-  // the network. Set in restoreTabContent and removed in resetRestore.
+  // This listener detects when a pending tab starts loading (when not
+  // initiated by sessionstore) and when a restoring tab has finished loading
+  // data from the network. Set in restoreHistory() and restoreTabContent(),
+  // removed in resetRestore().
   this._progressListener = null;
 }
 
@@ -118,10 +120,10 @@ ContentRestoreInternal.prototype = {
   /**
    * Starts the process of restoring a tab. The tabData to be restored is passed
    * in here and used throughout the restoration. The epoch (which must be
-   * non-zero) is passed through to all the callbacks. If the tab is ever
-   * reloaded during the restore process, reloadCallback is called.
+   * non-zero) is passed through to all the callbacks. If a load in the tab
+   * is started while it is pending, the appropriate callbacks are called.
    */
-  restoreHistory: function (epoch, tabData, reloadCallback) {
+  restoreHistory(epoch, tabData, callbacks) {
     this._tabData = tabData;
     this._epoch = epoch;
 
@@ -142,7 +144,7 @@ ContentRestoreInternal.prototype = {
     SessionHistory.restore(this.docShell, tabData);
 
     // Add a listener to watch for reloads.
-    let listener = new HistoryListener(this.docShell, reloadCallback);
+    let listener = new HistoryListener(this.docShell, callbacks.onReload);
     webNavigation.sessionHistory.addSHistoryListener(listener);
     this._historyListener = listener;
 
@@ -155,6 +157,22 @@ ContentRestoreInternal.prototype = {
       SessionStorage.restore(this.docShell, tabData.storage);
       delete tabData.storage;
     }
+
+    // Add a progress listener to correctly handle browser.loadURI()
+    // calls from foreign code.
+    this._progressListener = new ProgressListener(this.docShell, {
+      onStartRequest: () => {
+        // Some code called browser.loadURI() on a pending tab. It's safe to
+        // assume we don't care about restoring scroll or form data.
+        this._tabData = null;
+
+        // Listen for the tab to finish loading.
+        this.restoreTabContentStarted(callbacks.onLoadFinished);
+
+        // Notify the parent.
+        callbacks.onLoadStarted();
+      }
+    });
   },
 
   /**
@@ -168,21 +186,8 @@ ContentRestoreInternal.prototype = {
     let webNavigation = this.docShell.QueryInterface(Ci.nsIWebNavigation);
     let history = webNavigation.sessionHistory;
 
-    // The reload listener is no longer needed.
-    this._historyListener.uninstall();
-    this._historyListener = null;
-
-    // We're about to start a load. This listener will be called when the load
-    // has finished getting everything from the network.
-    let progressListener = new ProgressListener(this.docShell, () => {
-      // Call resetRestore to reset the state back to normal. The data needed
-      // for restoreDocument (which hasn't happened yet) will remain in
-      // _restoringDocument.
-      this.resetRestore();
-
-      finishCallback();
-    });
-    this._progressListener = progressListener;
+    // Listen for the tab to finish loading.
+    this.restoreTabContentStarted(finishCallback);
 
     // Reset the current URI to about:blank. We changed it above for
     // switch-to-tab, but now it must go back to the correct value before the
@@ -249,39 +254,29 @@ ContentRestoreInternal.prototype = {
   },
 
   /**
-   * Accumulates a list of frames that need to be restored for the given browser
-   * element. A frame is only restored if its current URL matches the one saved
-   * in the session data. Each frame to be restored is returned along with its
-   * associated session data.
-   *
-   * @param browser the browser being restored
-   * @return an array of [frame, data] pairs
+   * To be called after restoreHistory(). Removes all listeners needed for
+   * pending tabs and makes sure to notify when the tab finished loading.
    */
-  getFramesToRestore: function (content, data) {
-    function hasExpectedURL(aDocument, aURL) {
-      return !aURL || aURL.replace(/#.*/, "") == aDocument.location.href.replace(/#.*/, "");
-    }
+  restoreTabContentStarted(finishCallback) {
+    // The reload listener is no longer needed.
+    this._historyListener.uninstall();
+    this._historyListener = null;
 
-    let frameList = [];
+    // Remove the old progress listener.
+    this._progressListener.uninstall();
 
-    function enumerateFrame(content, data) {
-      // Skip the frame if the user has navigated away before loading finished.
-      if (!hasExpectedURL(content.document, data.url)) {
-        return;
+    // We're about to start a load. This listener will be called when the load
+    // has finished getting everything from the network.
+    this._progressListener = new ProgressListener(this.docShell, {
+      onStopRequest: () => {
+        // Call resetRestore() to reset the state back to normal. The data
+        // needed for restoreDocument() (which hasn't happened yet) will
+        // remain in _restoringDocument.
+        this.resetRestore();
+
+        finishCallback();
       }
-
-      frameList.push([content, data]);
-
-      for (let i = 0; i < content.frames.length; i++) {
-        if (data.children && data.children[i]) {
-          enumerateFrame(content.frames[i], data.children[i]);
-        }
-      }
-    }
-
-    enumerateFrame(content, data);
-
-    return frameList;
+    });
   },
 
   /**
@@ -298,34 +293,12 @@ ContentRestoreInternal.prototype = {
     let {entry, pageStyle, formdata, scrollPositions} = this._restoringDocument;
     this._restoringDocument = null;
 
-    let window = this.docShell.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindow);
-    let frameList = this.getFramesToRestore(window, entry);
+    let window = this.docShell.QueryInterface(Ci.nsIInterfaceRequestor)
+                               .getInterface(Ci.nsIDOMWindow);
 
-    // Support the old pageStyle format.
-    if (typeof(pageStyle) === "string") {
-      PageStyle.restore(this.docShell, frameList, pageStyle);
-    } else {
-      PageStyle.restoreTree(this.docShell, pageStyle);
-    }
-
+    PageStyle.restoreTree(this.docShell, pageStyle);
     FormData.restoreTree(window, formdata);
     ScrollPosition.restoreTree(window, scrollPositions);
-
-    // We need to support the old form and scroll data for a while at least.
-    for (let [frame, data] of frameList) {
-      if (data.hasOwnProperty("formdata") || data.hasOwnProperty("innerHTML")) {
-        let formdata = data.formdata || {};
-        formdata.url = data.url;
-
-        if (data.hasOwnProperty("innerHTML")) {
-          formdata.innerHTML = data.innerHTML;
-        }
-
-        FormData.restore(frame, formdata);
-      }
-
-      ScrollPosition.restore(frame, data.scroll || "");
-    }
   },
 
   /**
@@ -385,14 +358,28 @@ HistoryListener.prototype = {
     }
   },
 
-  OnHistoryNewEntry: function(newURI) {},
   OnHistoryGoBack: function(backURI) { return true; },
   OnHistoryGoForward: function(forwardURI) { return true; },
   OnHistoryGotoIndex: function(index, gotoURI) { return true; },
   OnHistoryPurge: function(numEntries) { return true; },
   OnHistoryReplaceEntry: function(index) {},
 
-  OnHistoryReload: function(reloadURI, reloadFlags) {
+  // This will be called for a pending tab when loadURI(uri) is called where
+  // the given |uri| only differs in the fragment.
+  OnHistoryNewEntry(newURI) {
+    // Reset the tab's URL to what it's actually showing. Without this loadURI()
+    // would use the current document and change the displayed URL only.
+    this.webNavigation.setCurrentURI(Utils.makeURI("about:blank"));
+
+    // Kick off a new load so that we navigate away from about:blank to the
+    // new URL that was passed to loadURI(). The new load will cause a
+    // STATE_START notification to be sent and the ProgressListener will then
+    // notify the parent and do the rest.
+    let flags = Ci.nsIWebNavigation.LOAD_FLAGS_ALLOW_THIRD_PARTY_FIXUP;
+    this.webNavigation.loadURI(newURI.spec, flags, null, null, null);
+  },
+
+  OnHistoryReload(reloadURI, reloadFlags) {
     this.callback();
 
     // Cancel the load.
@@ -405,16 +392,20 @@ HistoryListener.prototype = {
  * restoring page have completely finished. We only restore three tabs
  * simultaneously, so this is the signal for SessionStore.jsm to kick off
  * another restore (if there are more to do).
+ *
+ * The progress listener is also used to be notified when a load not initiated
+ * by sessionstore starts. Pending tabs will then need to be marked as no
+ * longer pending.
  */
-function ProgressListener(docShell, callback)
-{
+function ProgressListener(docShell, callbacks) {
   let webProgress = docShell.QueryInterface(Ci.nsIInterfaceRequestor)
                             .getInterface(Ci.nsIWebProgress);
   webProgress.addProgressListener(this, Ci.nsIWebProgress.NOTIFY_STATE_WINDOW);
 
   this.webProgress = webProgress;
-  this.callback = callback;
+  this.callbacks = callbacks;
 }
+
 ProgressListener.prototype = {
   QueryInterface: XPCOMUtils.generateQI([
     Ci.nsIWebProgressListener,
@@ -426,10 +417,17 @@ ProgressListener.prototype = {
   },
 
   onStateChange: function(webProgress, request, stateFlags, status) {
-    if (webProgress.isTopLevel &&
-        stateFlags & Ci.nsIWebProgressListener.STATE_STOP &&
-        stateFlags & Ci.nsIWebProgressListener.STATE_IS_WINDOW) {
-      this.callback();
+    let {STATE_IS_WINDOW, STATE_STOP, STATE_START} = Ci.nsIWebProgressListener;
+    if (!webProgress.isTopLevel || !(stateFlags & STATE_IS_WINDOW)) {
+      return;
+    }
+
+    if (stateFlags & STATE_START && this.callbacks.onStartRequest) {
+      this.callbacks.onStartRequest();
+    }
+
+    if (stateFlags & STATE_STOP && this.callbacks.onStopRequest) {
+      this.callbacks.onStopRequest();
     }
   },
 

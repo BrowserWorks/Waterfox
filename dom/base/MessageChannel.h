@@ -22,7 +22,7 @@ namespace dom {
 class MessagePort;
 
 class MessageChannel final : public nsISupports
-                               , public nsWrapperCache
+                           , public nsWrapperCache
 {
 public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -40,7 +40,7 @@ public:
   }
 
   virtual JSObject*
-  WrapObject(JSContext* aCx) override;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   static already_AddRefed<MessageChannel>
   Constructor(const GlobalObject& aGlobal, ErrorResult& aRv);

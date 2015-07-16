@@ -43,7 +43,7 @@ const PLAYER_DEFAULT_AUTO_REFRESH_TIMEOUT = 500; // ms
  * Since the state of a player changes as the animation progresses it is often
  * useful to call getCurrentState at regular intervals to get the current state.
  *
- * This actor also allows playing and pausing the animation.
+ * This actor also allows playing, pausing and seeking the animation.
  */
 let AnimationPlayerActor = ActorClass({
   typeName: "animationplayer",
@@ -208,6 +208,7 @@ let AnimationPlayerActor = ActorClass({
       startTime: this.player.startTime,
       currentTime: this.player.currentTime,
       playState: this.player.playState,
+      playbackRate: this.player.playbackRate,
       name: this.player.source.effect.name,
       duration: this.getDuration(),
       delay: this.getDelay(),
@@ -250,6 +251,7 @@ let AnimationPlayerActor = ActorClass({
    */
   pause: method(function() {
     this.player.pause();
+    return this.player.ready;
   }, {
     request: {},
     response: {}
@@ -282,6 +284,30 @@ let AnimationPlayerActor = ActorClass({
     return this.player.ready;
   }, {
     request: {},
+    response: {}
+  }),
+
+  /**
+   * Set the current time of the animation player.
+   */
+  setCurrentTime: method(function(currentTime) {
+    this.player.currentTime = currentTime;
+  }, {
+    request: {
+      currentTime: Arg(0, "number")
+    },
+    response: {}
+  }),
+
+  /**
+   * Set the playback rate of the animation player.
+   */
+  setPlaybackRate: method(function(playbackRate) {
+    this.player.playbackRate = playbackRate;
+  }, {
+    request: {
+      currentTime: Arg(0, "number")
+    },
     response: {}
   })
 });
@@ -319,6 +345,7 @@ let AnimationPlayerFront = FrontClass(AnimationPlayerActor, {
       startTime: this._form.startTime,
       currentTime: this._form.currentTime,
       playState: this._form.playState,
+      playbackRate: this._form.playbackRate,
       name: this._form.name,
       duration: this._form.duration,
       delay: this._form.delay,
@@ -501,10 +528,13 @@ let AnimationsActor = exports.AnimationsActor = ActorClass({
    * Pause all animations in the current tabActor's frames.
    */
   pauseAll: method(function() {
+    let readyPromises = [];
     for (let player of this.getAllAnimationPlayers()) {
       player.pause();
+      readyPromises.push(player.ready);
     }
     this.allAnimationsPaused = true;
+    return promise.all(readyPromises);
   }, {
     request: {},
     response: {}

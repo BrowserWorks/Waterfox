@@ -300,29 +300,6 @@ typedef enum {
 class MediaManager;
 class GetUserMediaTask;
 
-/**
- * Send an error back to content.
- * Do this only on the main thread. The onSuccess callback is also passed here
- * so it can be released correctly.
- */
-class ErrorCallbackRunnable : public nsRunnable
-{
-public:
-  ErrorCallbackRunnable(
-    nsCOMPtr<nsIDOMGetUserMediaSuccessCallback>& aOnSuccess,
-    nsCOMPtr<nsIDOMGetUserMediaErrorCallback>& aOnFailure,
-    MediaMgrError& aError, uint64_t aWindowID);
-  NS_IMETHOD Run();
-private:
-  ~ErrorCallbackRunnable();
-
-  nsCOMPtr<nsIDOMGetUserMediaSuccessCallback> mOnSuccess;
-  nsCOMPtr<nsIDOMGetUserMediaErrorCallback> mOnFailure;
-  nsRefPtr<MediaMgrError> mError;
-  uint64_t mWindowID;
-  nsRefPtr<MediaManager> mManager; // get ref to this when creating the runnable
-};
-
 class ReleaseMediaOperationResource : public nsRunnable
 {
 public:
@@ -369,20 +346,7 @@ public:
   }
 
   void
-  ReturnCallbackError(nsresult rv, const char* errorLog)
-  {
-    MM_LOG(("%s , rv=%d", errorLog, rv));
-    NS_DispatchToMainThread(new ReleaseMediaOperationResource(mStream.forget(),
-          mOnTracksAvailableCallback.forget()));
-    nsString log;
-
-    log.AssignASCII(errorLog);
-    nsCOMPtr<nsIDOMGetUserMediaSuccessCallback> onSuccess;
-    nsRefPtr<MediaMgrError> error = new MediaMgrError(
-        NS_LITERAL_STRING("InternalError"), log);
-    NS_DispatchToMainThread(new ErrorCallbackRunnable(onSuccess, mOnFailure,
-        *error, mWindowID));
-  }
+  ReturnCallbackError(nsresult rv, const char* errorLog);
 
   void
   Run()
@@ -503,6 +467,7 @@ public:
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSIMEDIADEVICE
 
+  void SetId(const nsAString& aID);
 protected:
   virtual ~MediaDevice() {}
   explicit MediaDevice(MediaEngineSource* aSource);
@@ -545,7 +510,7 @@ typedef void (*WindowListenerCallback)(MediaManager *aThis,
                                        void *aData);
 
 class MediaManager final : public nsIMediaManagerService,
-                               public nsIObserver
+                           public nsIObserver
 {
 public:
   static already_AddRefed<MediaManager> GetInstance();
@@ -554,7 +519,11 @@ public:
   // thread from the MainThread, as we NS_DISPATCH_SYNC to MainThread
   // from MediaManager thread.
   static MediaManager* Get();
+  static MediaManager* GetIfExists();
   static MessageLoop* GetMessageLoop();
+#ifdef DEBUG
+  static bool IsInMediaThread();
+#endif
 
   static bool Exists()
   {
@@ -594,12 +563,21 @@ public:
     const dom::MediaStreamConstraints& aConstraints,
     nsIGetUserMediaDevicesSuccessCallback* onSuccess,
     nsIDOMGetUserMediaErrorCallback* onError,
-    uint64_t aInnerWindowID = 0);
+    uint64_t aInnerWindowID = 0,
+    bool aPrivileged = true);
+
+  nsresult EnumerateDevices(nsPIDOMWindow* aWindow,
+                            nsIGetUserMediaDevicesSuccessCallback* aOnSuccess,
+                            nsIDOMGetUserMediaErrorCallback* aOnFailure);
+
+  nsresult EnumerateDevices(nsPIDOMWindow* aWindow, dom::Promise& aPromise);
   void OnNavigation(uint64_t aWindowID);
+  bool IsWindowActivelyCapturing(uint64_t aWindowId);
 
   MediaEnginePrefs mPrefs;
 
 private:
+  StreamListeners* AddWindowID(uint64_t aWindowId);
   WindowTable *GetActiveWindows() {
     NS_ASSERTION(NS_IsMainThread(), "Only access windowlist on main thread");
     return &mActiveWindows;
@@ -627,6 +605,7 @@ private:
   WindowTable mActiveWindows;
   nsClassHashtable<nsStringHashKey, GetUserMediaTask> mActiveCallbacks;
   nsClassHashtable<nsUint64HashKey, nsTArray<nsString>> mCallIds;
+
   // Always exists
   nsAutoPtr<base::Thread> mMediaThread;
 
@@ -636,7 +615,7 @@ private:
 
   static StaticRefPtr<MediaManager> sSingleton;
 
-#ifdef MOZ_B2G_CAMERA
+#if defined(MOZ_B2G_CAMERA) && defined(MOZ_WIDGET_GONK)
   nsRefPtr<nsDOMCameraManager> mCameraManager;
 #endif
 };

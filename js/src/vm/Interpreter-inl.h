@@ -92,7 +92,7 @@ static inline bool
 GuardFunApplyArgumentsOptimization(JSContext* cx, AbstractFramePtr frame, CallArgs& args)
 {
     if (args.length() == 2 && IsOptimizedArguments(frame, args[1])) {
-        if (!IsNativeFunction(args.calleev(), js_fun_apply)) {
+        if (!IsNativeFunction(args.calleev(), js::fun_apply)) {
             RootedScript script(cx, frame.script());
             if (!JSScript::argumentsOptimizationFailed(cx, script))
                 return false;
@@ -186,7 +186,7 @@ ValuePropertyBearer(JSContext* cx, InterpreterFrame* fp, HandleValue v, int spin
         return GlobalObject::getOrCreateBooleanPrototype(cx, global);
 
     MOZ_ASSERT(v.isNull() || v.isUndefined());
-    js_ReportIsNullOrUndefined(cx, spindex, v, NullPtr());
+    ReportIsNullOrUndefined(cx, spindex, v, NullPtr());
     return nullptr;
 }
 
@@ -228,10 +228,7 @@ FetchName(JSContext* cx, HandleObject obj, HandleObject obj2, HandlePropertyName
             vp.setUndefined();
             return true;
         }
-        JSAutoByteString printable;
-        if (AtomToPrintableString(cx, name, &printable))
-            js_ReportIsNotDefined(cx, printable.ptr());
-        return false;
+        return ReportIsNotDefined(cx, name);
     }
 
     /* Take the slow path if shape was not found in a native object. */
@@ -306,26 +303,42 @@ SetNameOperation(JSContext* cx, JSScript* script, jsbytecode* pc, HandleObject s
                *pc == JSOP_STRICTSETNAME ||
                *pc == JSOP_SETGNAME ||
                *pc == JSOP_STRICTSETGNAME);
-    MOZ_ASSERT_IF(*pc == JSOP_SETGNAME, scope == cx->global());
-    MOZ_ASSERT_IF(*pc == JSOP_STRICTSETGNAME, scope == cx->global());
+    MOZ_ASSERT_IF(*pc == JSOP_SETGNAME && !script->hasPollutedGlobalScope(),
+                  scope == cx->global());
+    MOZ_ASSERT_IF(*pc == JSOP_STRICTSETGNAME && !script->hasPollutedGlobalScope(),
+                  scope == cx->global());
 
     bool strict = *pc == JSOP_STRICTSETNAME || *pc == JSOP_STRICTSETGNAME;
     RootedPropertyName name(cx, script->getName(pc));
-    RootedValue valCopy(cx, val);
 
-    /*
-     * In strict-mode, we need to trigger an error when trying to assign to an
-     * undeclared global variable. To do this, we call NativeSetProperty
-     * directly and pass Unqualified.
-     */
+    // In strict mode, assigning to an undeclared global variable is an
+    // error. To detect this, we call NativeSetProperty directly and pass
+    // Unqualified. It stores the error, if any, in |result|.
+    bool ok;
+    ObjectOpResult result;
+    RootedId id(cx, NameToId(name));
+    RootedValue receiver(cx, ObjectValue(*scope));
     if (scope->isUnqualifiedVarObj()) {
         MOZ_ASSERT(!scope->getOps()->setProperty);
-        RootedId id(cx, NameToId(name));
-        return NativeSetProperty(cx, scope.as<NativeObject>(), scope.as<NativeObject>(), id,
-                                 Unqualified, &valCopy, strict);
+        ok = NativeSetProperty(cx, scope.as<NativeObject>(), id, val, receiver, Unqualified,
+                               result);
+    } else {
+        ok = SetProperty(cx, scope, id, val, receiver, result);
+    }
+    return ok && result.checkStrictErrorOrWarning(cx, scope, id, strict);
+}
+
+inline bool
+InitPropertyOperation(JSContext* cx, JSOp op, HandleObject obj, HandleId id, HandleValue rhs)
+{
+    if (obj->is<PlainObject>() || obj->is<JSFunction>()) {
+        unsigned propAttrs = GetInitDataPropAttrs(op);
+        return NativeDefineProperty(cx, obj.as<NativeObject>(), id, rhs, nullptr, nullptr,
+                                    propAttrs);
     }
 
-    return SetProperty(cx, scope, scope, name, &valCopy, strict);
+    MOZ_ASSERT(obj->as<UnboxedPlainObject>().layout().lookup(id));
+    return PutProperty(cx, obj, id, rhs, false);
 }
 
 inline bool
@@ -354,10 +367,11 @@ DefVarOrConstOperation(JSContext* cx, HandleObject varobj, HandlePropertyName dn
 
         JSAutoByteString bytes;
         if (AtomToPrintableString(cx, dn, &bytes)) {
+            bool isConst = desc.hasWritable() && !desc.writable();
             JS_ALWAYS_FALSE(JS_ReportErrorFlagsAndNumber(cx, JSREPORT_ERROR,
-                                                         js_GetErrorMessage,
+                                                         GetErrorMessage,
                                                          nullptr, JSMSG_REDECLARED_VAR,
-                                                         desc.isReadonly() ? "const" : "var",
+                                                         isConst ? "const" : "var",
                                                          bytes.ptr()));
         }
         return false;
@@ -636,7 +650,7 @@ InitArrayElemOperation(JSContext* cx, jsbytecode* pc, HandleObject obj, uint32_t
     }
 
     if (op == JSOP_INITELEM_INC && index == INT32_MAX) {
-        JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_SPREAD_TOO_LARGE);
+        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_SPREAD_TOO_LARGE);
         return false;
     }
 

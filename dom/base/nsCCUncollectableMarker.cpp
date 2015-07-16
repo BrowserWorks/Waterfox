@@ -16,6 +16,7 @@
 #include "nsISHistory.h"
 #include "nsISHEntry.h"
 #include "nsISHContainer.h"
+#include "nsITabChild.h"
 #include "nsIWindowWatcher.h"
 #include "mozilla/Services.h"
 #include "nsIXULWindow.h"
@@ -297,6 +298,15 @@ MarkWindowList(nsISimpleEnumerator* aWindowList, bool aCleanupJS,
       nsCOMPtr<nsIDocShell> rootDocShell = window->GetDocShell();
 
       MarkDocShell(rootDocShell, aCleanupJS, aPrepareForCC);
+
+      nsCOMPtr<nsITabChild> tabChild = do_GetInterface(rootDocShell);
+      if (tabChild) {
+        nsCOMPtr<nsIContentFrameMessageManager> mm;
+        tabChild->GetMessageManager(getter_AddRefs(mm));
+        if (mm) {
+          mm->MarkForCC();
+        }
+      }
     }
   }
 }
@@ -472,7 +482,7 @@ TraceActiveWindowGlobal(const uint64_t& aId, nsGlobalWindow*& aWindow, void* aCl
 
 #ifdef MOZ_XUL
     nsIDocument* doc = aWindow->GetExtantDoc();
-    if (doc && doc->IsXUL()) {
+    if (doc && doc->IsXULDocument()) {
       XULDocument* xulDoc = static_cast<XULDocument*>(doc);
       xulDoc->TraceProtos(closure->mTrc, closure->mGCNumber);
     }

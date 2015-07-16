@@ -26,7 +26,11 @@ using namespace android;
 #include "runnable_utils.h"
 
 // Gecko
+#if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION >= 21
+#include "GonkBufferQueueProducer.h"
+#endif
 #include "GonkNativeWindow.h"
+#include "GrallocImages.h"
 #include "mozilla/Atomics.h"
 #include "mozilla/Mutex.h"
 #include "nsThreadUtils.h"
@@ -62,7 +66,8 @@ enum {
 class DummyRefCountBase {
 public:
   // Use the name of real class for logging.
-  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(ImageNativeHandle)
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(DummyRefCountBase)
+protected:
   // To make sure subclass will be deleted/destructed properly.
   virtual ~DummyRefCountBase() {}
 };
@@ -252,6 +257,21 @@ static size_t ParamSetLength(uint8_t* aData, size_t aSize)
 class WebrtcOMXDecoder final : public GonkNativeWindowNewFrameCallback
 {
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(WebrtcOMXDecoder)
+
+private:
+  virtual ~WebrtcOMXDecoder()
+  {
+    CODEC_LOGD("WebrtcOMXH264VideoDecoder:%p OMX destructor", this);
+    if (mStarted) {
+      Stop();
+    }
+    if (mCodec != nullptr) {
+      mCodec->release();
+      mCodec.clear();
+    }
+    mLooper.clear();
+  }
+
 public:
   WebrtcOMXDecoder(const char* aMimeType,
                    webrtc::DecodedImageCallback* aCallback)
@@ -270,19 +290,6 @@ public:
     CODEC_LOGD("WebrtcOMXH264VideoDecoder:%p creating decoder", this);
     mCodec = MediaCodec::CreateByType(mLooper, aMimeType, false /* encoder */);
     CODEC_LOGD("WebrtcOMXH264VideoDecoder:%p OMX created", this);
-  }
-
-  virtual ~WebrtcOMXDecoder()
-  {
-    CODEC_LOGD("WebrtcOMXH264VideoDecoder:%p OMX destructor", this);
-    if (mStarted) {
-      Stop();
-    }
-    if (mCodec != nullptr) {
-      mCodec->release();
-      mCodec.clear();
-    }
-    mLooper.clear();
   }
 
   // Find SPS in input data and extract picture width and height if found.
@@ -316,16 +323,30 @@ public:
     mHeight = aHeight;
 
     sp<Surface> surface = nullptr;
+#if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION >= 21
+    sp<IGraphicBufferProducer> producer;
+    sp<IGonkGraphicBufferConsumer> consumer;
+    GonkBufferQueue::createBufferQueue(&producer, &consumer);
+    mNativeWindow = new GonkNativeWindow(consumer);
+#else
     mNativeWindow = new GonkNativeWindow();
+#endif
     if (mNativeWindow.get()) {
       // listen to buffers queued by MediaCodec::RenderOutputBufferAndRelease().
       mNativeWindow->setNewFrameCallback(this);
       // XXX remove buffer changes after a better solution lands - bug 1009420
+#if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION >= 21
+      static_cast<GonkBufferQueueProducer*>(producer.get())->setSynchronousMode(false);
+      // More spare buffers to avoid OMX decoder waiting for native window
+      consumer->setMaxAcquiredBufferCount(WEBRTC_OMX_H264_MIN_DECODE_BUFFERS);
+      surface = new Surface(producer);
+#else
       sp<GonkBufferQueue> bq = mNativeWindow->getBufferQueue();
       bq->setSynchronousMode(false);
       // More spare buffers to avoid OMX decoder waiting for native window
       bq->setMaxAcquiredBufferCount(WEBRTC_OMX_H264_MIN_DECODE_BUFFERS);
       surface = new Surface(bq);
+#endif
     }
     status_t result = mCodec->configure(config, surface, nullptr, 0);
     if (result == OK) {
@@ -749,19 +770,23 @@ private:
   void SendEncodedDataToCallback(webrtc::EncodedImage& aEncodedImage,
                                  bool aPrependParamSets)
   {
-    // Individual NALU inherits metadata from input encoded data.
-    webrtc::EncodedImage nalu(aEncodedImage);
-
     if (aPrependParamSets) {
+      webrtc::EncodedImage prepend(aEncodedImage);
       // Insert current parameter sets in front of the input encoded data.
       MOZ_ASSERT(mParamSets.Length() > sizeof(kNALStartCode)); // Start code + ...
-      nalu._length = mParamSets.Length();
-      nalu._buffer = mParamSets.Elements();
+      prepend._length = mParamSets.Length();
+      prepend._buffer = mParamSets.Elements();
       // Break into NALUs and send.
       CODEC_LOGD("Prepending SPS/PPS: %d bytes, timestamp %u, captureTimeMs %" PRIu64,
-                 nalu._length, nalu._timeStamp, nalu.capture_time_ms_);
-      SendEncodedDataToCallback(nalu, false);
+                 prepend._length, prepend._timeStamp, prepend.capture_time_ms_);
+      SendEncodedDataToCallback(prepend, false);
     }
+
+    struct nal_entry {
+      uint32_t offset;
+      uint32_t size;
+    };
+    nsAutoTArray<nal_entry, 1> nals;
 
     // Break input encoded data into NALUs and send each one to callback.
     const uint8_t* data = aEncodedImage._buffer;
@@ -769,9 +794,23 @@ private:
     const uint8_t* nalStart = nullptr;
     size_t nalSize = 0;
     while (getNextNALUnit(&data, &size, &nalStart, &nalSize, true) == OK) {
-      nalu._buffer = const_cast<uint8_t*>(nalStart);
-      nalu._length = nalSize;
-      mCallback->Encoded(nalu, nullptr, nullptr);
+      // XXX optimize by making buffer an offset
+      nal_entry nal = {((uint32_t) (nalStart - aEncodedImage._buffer)), (uint32_t) nalSize};
+      nals.AppendElement(nal);
+    }
+
+    size_t num_nals = nals.Length();
+    if (num_nals > 0) {
+      webrtc::RTPFragmentationHeader fragmentation;
+      fragmentation.VerifyAndAllocateFragmentationHeader(num_nals);
+      for (size_t i = 0; i < num_nals; i++) {
+        fragmentation.fragmentationOffset[i] = nals[i].offset;
+        fragmentation.fragmentationLength[i] = nals[i].size;
+      }
+      webrtc::EncodedImage unit(aEncodedImage);
+      unit._completeFrame = true;
+
+      mCallback->Encoded(unit, nullptr, &fragmentation);
     }
   }
 

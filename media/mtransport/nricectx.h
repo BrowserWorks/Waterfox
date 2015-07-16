@@ -227,16 +227,13 @@ class NrIceCtx {
   RefPtr<NrIceMediaStream> CreateStream(const std::string& name,
                                         int components);
 
+  void SetStream(size_t index, NrIceMediaStream* stream);
+
   RefPtr<NrIceMediaStream> GetStream(size_t index) {
     if (index < streams_.size()) {
       return streams_[index];
     }
     return nullptr;
-  }
-
-  void RemoveStream(size_t index)
-  {
-    streams_[index] = nullptr;
   }
 
   // Some might be null

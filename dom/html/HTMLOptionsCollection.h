@@ -31,8 +31,8 @@ class HTMLSelectElement;
  * select.options in DOM)
  */
 class HTMLOptionsCollection final : public nsIHTMLCollection
-                                      , public nsIDOMHTMLOptionsCollection
-                                      , public nsWrapperCache
+                                  , public nsIDOMHTMLOptionsCollection
+                                  , public nsWrapperCache
 {
   typedef HTMLOptionElementOrHTMLOptGroupElement HTMLOptionOrOptGroupElement;
 public:
@@ -42,7 +42,7 @@ public:
 
   // nsWrapperCache
   using nsWrapperCache::GetWrapperPreserveColor;
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 protected:
   virtual ~HTMLOptionsCollection();
 

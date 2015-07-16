@@ -178,7 +178,8 @@ class SharedContext
   public:
     ExclusiveContext* const context;
     AnyContextFlags anyCxFlags;
-    bool strict;
+    bool strictScript;
+    bool localStrict;
     bool extraWarnings;
 
     // If it's function code, funbox must be non-nullptr and scopeChain must be
@@ -186,14 +187,13 @@ class SharedContext
     SharedContext(ExclusiveContext* cx, Directives directives, bool extraWarnings)
       : context(cx),
         anyCxFlags(),
-        strict(directives.strict()),
+        strictScript(directives.strict()),
+        localStrict(false),
         extraWarnings(extraWarnings)
     {}
 
     virtual ObjectBox* toObjectBox() = 0;
-    inline bool isGlobalSharedContext() { return toObjectBox() == nullptr; }
     inline bool isFunctionBox() { return toObjectBox() && toObjectBox()->isFunctionBox(); }
-    inline GlobalSharedContext* asGlobalSharedContext();
     inline FunctionBox* asFunctionBox();
 
     bool hasExplicitUseStrict()        const { return anyCxFlags.hasExplicitUseStrict; }
@@ -208,9 +208,18 @@ class SharedContext
 
     inline bool allLocalsAliased();
 
+    bool strict() {
+        return strictScript || localStrict;
+    }
+    bool setLocalStrictMode(bool strict) {
+        bool retVal = localStrict;
+        localStrict = strict;
+        return retVal;
+    }
+
     // JSOPTION_EXTRA_WARNINGS warnings or strict mode errors.
     bool needStrictChecks() {
-        return strict || extraWarnings;
+        return strict() || extraWarnings;
     }
 
     bool isDotVariable(JSAtom* atom) const {
@@ -220,26 +229,14 @@ class SharedContext
 
 class GlobalSharedContext : public SharedContext
 {
-  private:
-    const RootedObject scopeChain_; /* scope chain object for the script */
-
   public:
-    GlobalSharedContext(ExclusiveContext* cx, JSObject* scopeChain,
+    GlobalSharedContext(ExclusiveContext* cx,
                         Directives directives, bool extraWarnings)
-      : SharedContext(cx, directives, extraWarnings),
-        scopeChain_(cx, scopeChain)
+      : SharedContext(cx, directives, extraWarnings)
     {}
 
     ObjectBox* toObjectBox() { return nullptr; }
-    JSObject* scopeChain() const { return scopeChain_; }
 };
-
-inline GlobalSharedContext*
-SharedContext::asGlobalSharedContext()
-{
-    MOZ_ASSERT(isGlobalSharedContext());
-    return static_cast<GlobalSharedContext*>(this);
-}
 
 class FunctionBox : public ObjectBox, public SharedContext
 {

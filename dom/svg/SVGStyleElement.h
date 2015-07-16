@@ -20,8 +20,8 @@ namespace mozilla {
 namespace dom {
 
 class SVGStyleElement final : public SVGStyleElementBase,
-                                  public nsStyleLinkElement,
-                                  public nsStubMutationObserver
+                              public nsStyleLinkElement,
+                              public nsStubMutationObserver
 {
 protected:
   friend nsresult (::NS_NewSVGStyleElement(nsIContent **aResult,
@@ -29,7 +29,7 @@ protected:
   explicit SVGStyleElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
   ~SVGStyleElement();
 
-  virtual JSObject* WrapNode(JSContext *aCx) override;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 public:
   NS_DECL_ISUPPORTS_INHERITED

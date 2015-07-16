@@ -7,6 +7,7 @@
 #include <math.h>
 #include <unistd.h>
 
+#include "mozilla/IMEStateManager.h"
 #include "mozilla/MiscEvents.h"
 #include "mozilla/MouseEvents.h"
 #include "mozilla/TextEvents.h"
@@ -30,6 +31,7 @@ using mozilla::unused;
 #include "nsFocusManager.h"
 #include "nsIWidgetListener.h"
 #include "nsViewManager.h"
+#include "nsISelection.h"
 
 #include "nsIDOMSimpleGestureEvent.h"
 
@@ -76,6 +78,7 @@ static gfxIntSize gAndroidScreenBounds;
 #include "mozilla/layers/CompositorParent.h"
 #include "mozilla/layers/LayerTransactionParent.h"
 #include "mozilla/Mutex.h"
+#include "mozilla/Services.h"
 #include "nsThreadUtils.h"
 
 class ContentCreationNotifier;
@@ -100,8 +103,8 @@ public:
             ContentParent* cp = static_cast<ContentParent*>(cpo.get());
             unused << cp->SendScreenSizeChanged(gAndroidScreenBounds);
         } else if (!strcmp(aTopic, "xpcom-shutdown")) {
-            nsCOMPtr<nsIObserverService>
-                obs(do_GetService("@mozilla.org/observer-service;1"));
+            nsCOMPtr<nsIObserverService> obs =
+                mozilla::services::GetObserverService();
             if (obs) {
                 obs->RemoveObserver(static_cast<nsIObserver*>(this),
                                     "xpcom-shutdown");
@@ -823,7 +826,8 @@ nsWindow::OnGlobalAndroidEvent(AndroidGeckoEvent *ae)
 
             // If the content process is not created yet, wait until it's
             // created and then tell it the screen size.
-            nsCOMPtr<nsIObserverService> obs = do_GetService("@mozilla.org/observer-service;1");
+            nsCOMPtr<nsIObserverService> obs =
+                mozilla::services::GetObserverService();
             if (!obs)
                 break;
 
@@ -2191,7 +2195,19 @@ nsWindow::PostFlushIMEChanges()
 void
 nsWindow::FlushIMEChanges()
 {
+    // Only send change notifications if we are *not* masking events,
+    // i.e. if we have a focused editor,
+    NS_ENSURE_TRUE_VOID(!mIMEMaskEventsCount);
+
+    nsCOMPtr<nsISelection> imeSelection;
+    nsCOMPtr<nsIContent> imeRoot;
+
+    // If we are receiving notifications, we must have selection/root content.
+    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(IMEStateManager::GetFocusSelectionAndRoot(
+            getter_AddRefs(imeSelection), getter_AddRefs(imeRoot))));
+
     nsRefPtr<nsWindow> kungFuDeathGrip(this);
+
     for (uint32_t i = 0; i < mIMETextChanges.Length(); i++) {
         IMEChange &change = mIMETextChanges[i];
 
@@ -2207,8 +2223,8 @@ nsWindow::FlushIMEChanges()
             event.InitForQueryTextContent(change.mStart,
                                           change.mNewEnd - change.mStart);
             DispatchEvent(&event);
-            if (!event.mSucceeded)
-                return;
+            NS_ENSURE_TRUE_VOID(event.mSucceeded);
+            NS_ENSURE_TRUE_VOID(event.mReply.mContentsRoot == imeRoot.get());
         }
 
         GeckoAppShell::NotifyIMEChange(event.mReply.mString, change.mStart,
@@ -2221,8 +2237,8 @@ nsWindow::FlushIMEChanges()
         InitEvent(event, nullptr);
 
         DispatchEvent(&event);
-        if (!event.mSucceeded)
-            return;
+        NS_ENSURE_TRUE_VOID(event.mSucceeded);
+        NS_ENSURE_TRUE_VOID(event.mReply.mContentsRoot == imeRoot.get());
 
         GeckoAppShell::NotifyIMEChange(EmptyString(),
                                        int32_t(event.GetSelectionStart()),
@@ -2484,6 +2500,8 @@ nsWindow::ConfigureAPZCTreeManager()
 already_AddRefed<GeckoContentController>
 nsWindow::CreateRootContentController()
 {
+    widget::android::APZCCallbackHandler::Initialize(this, mAPZEventState);
+
     nsRefPtr<widget::android::APZCCallbackHandler> controller =
         widget::android::APZCCallbackHandler::GetInstance();
     return controller.forget();

@@ -301,6 +301,7 @@ struct ParseContext : public GenericParseContext
     //   if (cond) { function f3() { if (cond) { function f4() { } } } }
     //
     bool atBodyLevel() { return !topStmt; }
+    bool atGlobalLevel() { return atBodyLevel() && !sc->isFunctionBox() && (topStmt == topScopeStmt); }
 
     // True if this is the ParseContext for the body of a function created by
     // the Function constructor.
@@ -316,7 +317,7 @@ struct ParseContext : public GenericParseContext
 template <typename ParseHandler>
 inline
 Directives::Directives(ParseContext<ParseHandler>* parent)
-  : strict_(parent->sc->strict),
+  : strict_(parent->sc->strict()),
     asmJS_(parent->useAsmOrInsideUseAsm())
 {}
 
@@ -328,6 +329,7 @@ class CompExprTransplanter;
 enum LetContext { LetExpression, LetStatement };
 enum VarContext { HoistVars, DontHoistVars };
 enum FunctionType { Getter, Setter, Normal };
+enum PropListType { ObjectLiteral, ClassBody };
 
 template <typename ParseHandler>
 class Parser : private JS::AutoGCRooter, public StrictModeGetter
@@ -430,7 +432,7 @@ class Parser : private JS::AutoGCRooter, public StrictModeGetter
      * Allocate a new parsed object or function container from
      * cx->tempLifoAlloc.
      */
-    ObjectBox* newObjectBox(NativeObject* obj);
+    ObjectBox* newObjectBox(JSObject* obj);
     FunctionBox* newFunctionBox(Node fn, JSFunction* fun, ParseContext<ParseHandler>* pc,
                                 Directives directives, GeneratorKind generatorKind);
 
@@ -503,7 +505,11 @@ class Parser : private JS::AutoGCRooter, public StrictModeGetter
         return versionNumber() >= JSVERSION_1_7 || pc->isGenerator();
     }
 
-    virtual bool strictMode() { return pc->sc->strict; }
+    virtual bool strictMode() { return pc->sc->strict(); }
+    bool setLocalStrictMode(bool strict) {
+        MOZ_ASSERT(tokenStream.debugHasNoLookahead());
+        return pc->sc->setLocalStrictMode(strict);
+    }
 
     const ReadOnlyCompileOptions& options() const {
         return tokenStream.options();
@@ -569,8 +575,9 @@ class Parser : private JS::AutoGCRooter, public StrictModeGetter
     Node parenExprOrGeneratorComprehension();
     Node exprInParens();
 
-    bool methodDefinition(Node literal, Node propname, FunctionType type, FunctionSyntaxKind kind,
-                          GeneratorKind generatorKind, JSOp Op);
+    bool methodDefinition(PropListType listType, Node propList, Node propname, FunctionType type,
+                          FunctionSyntaxKind kind, GeneratorKind generatorKind,
+                          bool isStatic, JSOp Op);
 
     /*
      * Additional JS parsers.
@@ -609,6 +616,9 @@ class Parser : private JS::AutoGCRooter, public StrictModeGetter
     Node deprecatedLetBlockOrExpression(LetContext letContext);
     Node destructuringExpr(BindData<ParseHandler>* data, TokenKind tt);
     Node destructuringExprWithoutYield(BindData<ParseHandler>* data, TokenKind tt, unsigned msg);
+
+    enum ClassContext { ClassStatement, ClassExpression };
+    Node classDefinition(ClassContext classContext);
 
     Node identifierName();
 
@@ -651,16 +661,21 @@ class Parser : private JS::AutoGCRooter, public StrictModeGetter
     Node pushLexicalScope(Handle<StaticBlockObject*> blockObj, StmtInfoPC* stmt);
     Node pushLetScope(Handle<StaticBlockObject*> blockObj, StmtInfoPC* stmt);
     bool noteNameUse(HandlePropertyName name, Node pn);
-    Node objectLiteral();
     Node computedPropertyName(Node literal);
     Node arrayInitializer();
     Node newRegExp();
+
+    Node propertyList(PropListType type);
+    Node newPropertyListNode(PropListType type);
+
+    bool checkAndPrepareLexical(bool isConst, const TokenPos& errorPos);
+    Node makeInitializedLexicalBinding(HandlePropertyName name, bool isConst, const TokenPos& pos);
 
     Node newBindingNode(PropertyName* name, bool functionScope, VarContext varContext = HoistVars);
     bool checkDestructuring(BindData<ParseHandler>* data, Node left);
     bool checkDestructuringObject(BindData<ParseHandler>* data, Node objectPattern);
     bool checkDestructuringArray(BindData<ParseHandler>* data, Node arrayPattern);
-    bool bindDestructuringVar(BindData<ParseHandler>* data, Node pn);
+    bool bindInitialized(BindData<ParseHandler>* data, Node pn);
     bool bindDestructuringLHS(Node pn);
     bool makeSetCall(Node pn, unsigned msg);
     Node cloneDestructuringDefault(Node opn);

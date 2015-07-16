@@ -212,10 +212,10 @@ enum class AcceptedMimeTypes : uint8_t {
 };
 
 class imgLoader final : public imgILoader,
-                            public nsIContentSniffer,
-                            public imgICache,
-                            public nsSupportsWeakReference,
-                            public nsIObserver
+                        public nsIContentSniffer,
+                        public imgICache,
+                        public nsSupportsWeakReference,
+                        public nsIObserver
 {
   virtual ~imgLoader();
 
@@ -443,7 +443,7 @@ public:
   explicit ProxyListener(nsIStreamListener *dest);
 
   /* additional members */
-  NS_DECL_ISUPPORTS
+  NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSISTREAMLISTENER
   NS_DECL_NSITHREADRETARGETABLESTREAMLISTENER
   NS_DECL_NSIREQUESTOBSERVER
@@ -497,7 +497,8 @@ class imgCacheValidator : public nsIStreamListener,
 {
 public:
   imgCacheValidator(nsProgressNotificationProxy* progress, imgLoader* loader,
-                    imgRequest *request, void *aContext, bool forcePrincipalCheckForCacheEntry);
+                    imgRequest* aRequest, nsISupports* aContext,
+                    bool forcePrincipalCheckForCacheEntry);
 
   void AddProxy(imgRequestProxy *aProxy);
 
@@ -523,9 +524,11 @@ private:
   nsRefPtr<imgRequest> mNewRequest;
   nsRefPtr<imgCacheEntry> mNewEntry;
 
-  void *mContext;
+  nsCOMPtr<nsISupports> mContext;
 
   imgLoader* mImgLoader;
+
+  bool mHadInsecureRedirect;
 };
 
 #endif  // imgLoader_h__

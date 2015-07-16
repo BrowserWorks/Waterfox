@@ -18,7 +18,7 @@ namespace mozilla {
 namespace dom {
 
 class HTMLMapElement final : public nsGenericHTMLElement,
-                                 public nsIDOMHTMLMapElement
+                             public nsIDOMHTMLMapElement
 {
 public:
   explicit HTMLMapElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
@@ -41,7 +41,7 @@ public:
   }
   nsIHTMLCollection* Areas();
 
-  virtual JSObject* WrapNode(JSContext* aCx) override;
+  virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 protected:
   ~HTMLMapElement() {}

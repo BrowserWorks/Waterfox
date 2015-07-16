@@ -5,12 +5,12 @@
 
 "use strict";
 
-const Cu = Components.utils;
-const Ci = Components.interfaces;
-const Cc = Components.classes;
+const { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components;
 
+Cu.importGlobalProperties(["URL"]);
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/Task.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "UserAutoCompleteResult",
                                   "resource://gre/modules/LoginManagerContent.jsm");
@@ -20,6 +20,30 @@ XPCOMUtils.defineLazyModuleGetter(this, "AutoCompleteE10S",
 this.EXPORTED_SYMBOLS = [ "LoginManagerParent", "PasswordsMetricsProvider" ];
 
 var gDebug;
+
+#ifndef ANDROID
+#ifdef MOZ_SERVICES_HEALTHREPORT
+XPCOMUtils.defineLazyModuleGetter(this, "Metrics",
+                                  "resource://gre/modules/Metrics.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Task",
+                                  "resource://gre/modules/Task.jsm");
+
+function recordFHRDailyCounter(aField) {
+    let reporter = Cc["@mozilla.org/datareporting/service;1"]
+                      .getService()
+                      .wrappedJSObject
+                      .healthReporter;
+    // This can happen if the FHR component of the data reporting service is
+    // disabled. This is controlled by a pref that most will never use.
+    if (!reporter) {
+      return;
+    }
+      reporter.onInit().then(() => reporter.getProvider("org.mozilla.passwordmgr")
+        .recordDailyCounter(aField));
+  }
+
+#endif
+#endif
 
 function log(...pieces) {
   function generateLogMessage(args) {
@@ -53,27 +77,6 @@ function log(...pieces) {
 
 #ifndef ANDROID
 #ifdef MOZ_SERVICES_HEALTHREPORT
-XPCOMUtils.defineLazyModuleGetter(this, "Metrics",
-                                  "resource://gre/modules/Metrics.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Task",
-                                  "resource://gre/modules/Task.jsm");
-
-const PasswordsHealthReport = {
-  recordDailyCounter: function(aField) {
-    let reporter = Cc["@mozilla.org/datareporting/service;1"]
-                      .getService()
-                      .wrappedJSObject
-                      .healthReporter;
-    // This can happen if the FHR component of the data reporting service is
-    // disabled. This is controlled by a pref that most will never use.
-    if (!reporter) {
-      return;
-    }
-      reporter.onInit().then(() => reporter.getProvider("org.mozilla.passwordmgr")
-                                           .recordDailyCounter(aField));
-
-  }
-};
 
 this.PasswordsMetricsProvider = function() {
   Metrics.Provider.call(this);
@@ -114,8 +117,8 @@ PasswordsMetricsProvider.prototype = Object.freeze({
     }
 
     // Otherwise, we first need to create the field.
-    return this.storage.registerField(m.id, aField, Metrics.Storage.FIELD_DAILY_COUNTER)
-           .then(() => m.incrementDailyCounter(aField));
+    return this.enqueueStorageOperation (() => this.storage.registerField(m.id, aField, 
+      Metrics.Storage.FIELD_DAILY_COUNTER).then(() => m.incrementDailyCounter(aField)));
   },
 });
 
@@ -160,22 +163,41 @@ Services.prefs.addObserver("signon.debug", prefChanged, false);
 prefChanged();
 
 var LoginManagerParent = {
+  /**
+   * Reference to the default LoginRecipesParent (instead of the initialization promise) for
+   * synchronous access. This is a temporary hack and new consumers should yield on
+   * recipeParentPromise instead.
+   *
+   * @type LoginRecipesParent
+   * @deprecated
+   */
+   _recipeManager: null,
+
   init: function() {
     let mm = Cc["@mozilla.org/globalmessagemanager;1"]
                .getService(Ci.nsIMessageListenerManager);
     mm.addMessageListener("RemoteLogins:findLogins", this);
+    mm.addMessageListener("RemoteLogins:findRecipes", this);
     mm.addMessageListener("RemoteLogins:onFormSubmit", this);
     mm.addMessageListener("RemoteLogins:autoCompleteLogins", this);
     mm.addMessageListener("LoginStats:LoginEncountered", this);
     mm.addMessageListener("LoginStats:LoginFillSuccessful", this);
     Services.obs.addObserver(this, "LoginStats:NewSavedPassword", false);
+
+    XPCOMUtils.defineLazyGetter(this, "recipeParentPromise", () => {
+      const { LoginRecipesParent } = Cu.import("resource://gre/modules/LoginRecipes.jsm", {});
+      this._recipeManager = new LoginRecipesParent();
+      return this._recipeManager.initializationPromise;
+
+    });
+
   },
 
   observe: function (aSubject, aTopic, aData) {
 #ifndef ANDROID
 #ifdef MOZ_SERVICES_HEALTHREPORT
     if (aTopic == "LoginStats:NewSavedPassword") {
-      PasswordsHealthReport.recordDailyCounter("numNewSavedPasswordsInSession");
+      recordFHRDailyCounter("numNewSavedPasswordsInSession");
 
     }
 #endif
@@ -187,12 +209,17 @@ var LoginManagerParent = {
     switch (msg.name) {
       case "RemoteLogins:findLogins": {
         // TODO Verify msg.target's principals against the formOrigin?
-        this.findLogins(data.options.showMasterPassword,
-                        data.formOrigin,
-                        data.actionOrigin,
-                        data.requestId,
-                        msg.target.messageManager);
+        this.sendLoginDataToChild(data.options.showMasterPassword,
+                                  data.formOrigin,
+                                  data.actionOrigin,
+                                  data.requestId,
+                                  msg.target.messageManager);
         break;
+      }
+
+      case "RemoteLogins:findRecipes": {
+        let formHost = (new URL(data.formOrigin)).host;
+        return [...this._recipeManager.getRecipesForHost(formHost)];
       }
 
       case "RemoteLogins:onFormSubmit": {
@@ -215,7 +242,7 @@ var LoginManagerParent = {
       case "LoginStats:LoginFillSuccessful": {
 #ifndef ANDROID
 #ifdef MOZ_SERVICES_HEALTHREPORT
-        PasswordsHealthReport.recordDailyCounter("numSuccessfulFills");
+        recordFHRDailyCounter("numSuccessfulFills");
 #endif
 #endif
         break;
@@ -224,7 +251,7 @@ var LoginManagerParent = {
       case "LoginStats:LoginEncountered": {
 #ifndef ANDROID
 #ifdef MOZ_SERVICES_HEALTHREPORT
-        PasswordsHealthReport.recordDailyCounter("numTotalLoginsEncountered");
+        recordFHRDailyCounter("numTotalLoginsEncountered");
 #endif
 #endif
         break;
@@ -232,19 +259,40 @@ var LoginManagerParent = {
     }
   },
 
-  findLogins: function(showMasterPassword, formOrigin, actionOrigin,
-                       requestId, target) {
+  /**
+   * Send relevant data (e.g. logins and recipes) to the child process (LoginManagerContent).
+   */
+  sendLoginDataToChild: Task.async(function*(showMasterPassword, formOrigin, actionOrigin,
+                                             requestId, target) {
+    let recipes = [];
+    if (formOrigin) {
+      let formHost;
+      try {
+        formHost = (new URL(formOrigin)).host;
+        let recipeManager = yield this.recipeParentPromise;
+        recipes = recipeManager.getRecipesForHost(formHost);
+      } catch (ex) {
+        // Some schemes e.g. chrome aren't supported by URL
+      }
+    }
+
     if (!showMasterPassword && !Services.logins.isLoggedIn) {
-      target.sendAsyncMessage("RemoteLogins:loginsFound",
-                              { requestId: requestId, logins: [] });
+      target.sendAsyncMessage("RemoteLogins:loginsFound", {
+        requestId: requestId,
+        logins: [],
+        recipes,
+      });
       return;
     }
 
     let allLoginsCount = Services.logins.countLogins(formOrigin, "", null);
     // If there are no logins for this site, bail out now.
     if (!allLoginsCount) {
-      target.sendAsyncMessage("RemoteLogins:loginsFound",
-                              { requestId: requestId, logins: [] });
+      target.sendAsyncMessage("RemoteLogins:loginsFound", {
+        requestId: requestId,
+        logins: [],
+        recipes,
+      });
       return;
     }
 
@@ -263,13 +311,16 @@ var LoginManagerParent = {
           Services.obs.removeObserver(this, "passwordmgr-crypto-login");
           Services.obs.removeObserver(this, "passwordmgr-crypto-loginCanceled");
           if (topic == "passwordmgr-crypto-loginCanceled") {
-            target.sendAsyncMessage("RemoteLogins:loginsFound",
-                                    { requestId: requestId, logins: [] });
+            target.sendAsyncMessage("RemoteLogins:loginsFound", {
+              requestId: requestId,
+              logins: [],
+              recipes,
+            });
             return;
           }
 
-          self.findLogins(showMasterPassword, formOrigin, actionOrigin,
-                          requestId, target);
+          self.sendLoginDataToChild(showMasterPassword, formOrigin, actionOrigin,
+                                    requestId, target);
         },
       };
 
@@ -284,8 +335,14 @@ var LoginManagerParent = {
     }
 
     var logins = Services.logins.findLogins({}, formOrigin, actionOrigin, null);
-    target.sendAsyncMessage("RemoteLogins:loginsFound",
-                            { requestId: requestId, logins: logins });
+    // Convert the array of nsILoginInfo to vanilla JS objects since nsILoginInfo
+    // doesn't support structured cloning.
+    var jsLogins = JSON.parse(JSON.stringify(logins));
+    target.sendAsyncMessage("RemoteLogins:loginsFound", {
+      requestId: requestId,
+      logins: jsLogins,
+      recipes,
+    });
 
     const PWMGR_FORM_ACTION_EFFECT =  Services.telemetry.getHistogramById("PWMGR_FORM_ACTION_EFFECT");
     if (logins.length == 0) {
@@ -296,7 +353,7 @@ var LoginManagerParent = {
       // logins.length < allLoginsCount
       PWMGR_FORM_ACTION_EFFECT.add(1);
     }
-  },
+  }),
 
   doAutocompleteSearch: function({ formOrigin, actionOrigin,
                                    searchString, previousResult,
@@ -339,9 +396,13 @@ var LoginManagerParent = {
       AutoCompleteE10S.showPopupWithResults(target.ownerDocument.defaultView, rect, result);
     }
 
-    target.messageManager.sendAsyncMessage("RemoteLogins:loginsAutoCompleted",
-                                           { requestId: requestId,
-                                             logins: matchingLogins });
+    // Convert the array of nsILoginInfo to vanilla JS objects since nsILoginInfo
+    // doesn't support structured cloning.
+    var jsLogins = JSON.parse(JSON.stringify(matchingLogins));
+    target.messageManager.sendAsyncMessage("RemoteLogins:loginsAutoCompleted", {
+      requestId: requestId,
+      logins: jsLogins,
+    });
   },
 
   onFormSubmit: function(hostname, formSubmitURL,
@@ -377,20 +438,12 @@ var LoginManagerParent = {
                    (usernameField ? usernameField.name  : ""),
                    newPasswordField.name);
 
+    let logins = Services.logins.findLogins({}, hostname, formSubmitURL, null);
+
     // If we didn't find a username field, but seem to be changing a
     // password, allow the user to select from a list of applicable
     // logins to update the password for.
-    if (!usernameField && oldPasswordField) {
-
-      var logins = Services.logins.findLogins({}, hostname, formSubmitURL, null);
-
-      if (logins.length == 0) {
-        // Could prompt to save this as a new password-only login.
-        // This seems uncommon, and might be wrong, so ignore.
-        log("(no logins for this host -- pwchange ignored)");
-        return;
-      }
-
+    if (!usernameField && oldPasswordField && logins.length > 0) {
       var prompter = getPrompter();
 
       if (logins.length == 1) {
@@ -408,10 +461,8 @@ var LoginManagerParent = {
     }
 
 
-    // Look for an existing login that matches the form login.
     var existingLogin = null;
-    var logins = Services.logins.findLogins({}, hostname, formSubmitURL, null);
-
+    // Look for an existing login that matches the form login.
     for (var i = 0; i < logins.length; i++) {
       var same, login = logins[i];
 

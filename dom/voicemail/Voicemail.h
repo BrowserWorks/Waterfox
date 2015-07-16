@@ -23,7 +23,7 @@ namespace dom {
 class VoicemailStatus;
 
 class Voicemail final : public DOMEventTargetHelper,
-                            private nsIVoicemailListener
+                        private nsIVoicemailListener
 {
   /**
    * Class Voicemail doesn't actually expose nsIVoicemailListener. Instead, it
@@ -55,7 +55,7 @@ public:
   }
 
   virtual JSObject*
-  WrapObject(JSContext* aCx) override;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   already_AddRefed<VoicemailStatus>
   GetStatus(const Optional<uint32_t>& aServiceId,

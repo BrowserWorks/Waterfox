@@ -188,9 +188,20 @@ struct DisconnectGattClientRequest
   nsString deviceAddress;
 };
 
+struct DiscoverGattServicesRequest
+{
+  nsString appUuid;
+};
+
 struct UnregisterGattClientRequest
 {
   int clientIf;
+};
+
+struct GattClientReadRemoteRssiRequest
+{
+  int clientIf;
+  nsString deviceAddress;
 };
 
 union Request
@@ -227,7 +238,9 @@ union Request
   SendPlayStatusRequest;
   ConnectGattClientRequest;
   DisconnectGattClientRequest;
+  DiscoverGattServicesRequest;
   UnregisterGattClientRequest;
+  GattClientReadRemoteRssiRequest;
 };
 
 protocol PBluetooth

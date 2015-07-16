@@ -214,6 +214,11 @@ struct TileClient
   TileDescriptor GetTileDescriptor();
 
   /**
+   * For debugging.
+   */
+  void Dump(std::stringstream& aStream);
+
+  /**
   * Swaps the front and back buffers.
   */
   void Flip();
@@ -318,7 +323,7 @@ struct BasicTiledLayerPaintData {
    * The render resolution of the document that the content this layer
    * represents is in.
    */
-  CSSToParentLayerScale mResolution;
+  CSSToParentLayerScale2D mResolution;
 
   /*
    * The composition bounds of the layer, in Layer coordinates. This is
@@ -420,9 +425,9 @@ public:
 
   void DiscardBuffers();
 
-  const CSSToParentLayerScale& GetFrameResolution() { return mFrameResolution; }
+  const CSSToParentLayerScale2D& GetFrameResolution() { return mFrameResolution; }
 
-  void SetFrameResolution(const CSSToParentLayerScale& aResolution) { mFrameResolution = aResolution; }
+  void SetFrameResolution(const CSSToParentLayerScale2D& aResolution) { mFrameResolution = aResolution; }
 
   bool HasFormatChanged() const;
 
@@ -461,7 +466,7 @@ private:
   ClientLayerManager* mManager;
   LayerManager::DrawPaintedLayerCallback mCallback;
   void* mCallbackData;
-  CSSToParentLayerScale mFrameResolution;
+  CSSToParentLayerScale2D mFrameResolution;
   gfxContentType mLastPaintContentType;
   SurfaceMode mLastPaintSurfaceMode;
 

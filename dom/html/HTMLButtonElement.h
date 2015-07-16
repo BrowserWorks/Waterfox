@@ -17,8 +17,8 @@ class EventChainPreVisitor;
 namespace dom {
 
 class HTMLButtonElement final : public nsGenericHTMLFormElementWithState,
-                                    public nsIDOMHTMLButtonElement,
-                                    public nsIConstraintValidation
+                                public nsIDOMHTMLButtonElement,
+                                public nsIConstraintValidation
 {
 public:
   using nsIConstraintValidation::GetValidationMessage;
@@ -62,7 +62,7 @@ public:
 
   // nsINode
   virtual nsresult Clone(mozilla::dom::NodeInfo* aNodeInfo, nsINode** aResult) const override;
-  virtual JSObject* WrapNode(JSContext* aCx) override;
+  virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // nsIContent
   virtual nsresult BindToTree(nsIDocument* aDocument, nsIContent* aParent,

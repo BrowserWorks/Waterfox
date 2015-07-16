@@ -250,12 +250,35 @@ GeckoMediaPluginService::Init()
     prefs->AddObserver("media.gmp.plugin.crash", this, false);
   }
 
-#ifndef MOZ_WIDGET_GONK
+  nsresult rv = InitStorage();
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+
+  // Kick off scanning for plugins
+  nsCOMPtr<nsIThread> thread;
+  return GetThread(getter_AddRefs(thread));
+}
+
+
+nsresult
+GeckoMediaPluginService::InitStorage()
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  // GMP storage should be used in the chrome process only.
+  if (XRE_GetProcessType() != GeckoProcessType_Default) {
+    return NS_OK;
+  }
+
   // Directory service is main thread only, so cache the profile dir here
   // so that we can use it off main thread.
-  // We only do this on non-B2G, as this fails in multi-process Gecko.
-  // TODO: Make this work in multi-process Gecko.
+#ifdef MOZ_WIDGET_GONK
+  nsresult rv = NS_NewLocalFile(NS_LITERAL_STRING("/data/b2g/mozilla"), false, getter_AddRefs(mStorageBaseDir));
+#else
   nsresult rv = NS_GetSpecialDirectory(NS_APP_USER_PROFILE_50_DIR, getter_AddRefs(mStorageBaseDir));
+#endif
+
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
@@ -269,11 +292,8 @@ GeckoMediaPluginService::Init()
   if (NS_WARN_IF(NS_FAILED(rv) && rv != NS_ERROR_FILE_ALREADY_EXISTS)) {
     return rv;
   }
-#endif
 
-  // Kick off scanning for plugins
-  nsCOMPtr<nsIThread> thread;
-  return GetThread(getter_AddRefs(thread));
+  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -360,6 +380,7 @@ GeckoMediaPluginService::Observe(nsISupports* aSubject,
         NS_DISPATCH_NORMAL);
     } else {
       MOZ_ASSERT(mPlugins.IsEmpty());
+      mWaitingForPluginsAsyncShutdown = false;
     }
 
     // Wait for plugins to do async shutdown...
@@ -625,7 +646,7 @@ GeckoMediaPluginService::AsyncShutdownComplete(GMPParent* aParent)
   if (mAsyncShutdownPlugins.IsEmpty() && mShuttingDownOnGMPThread) {
     // The main thread may be waiting for async shutdown of plugins,
     // which has completed. Break the main thread out of its waiting loop.
-    nsRefPtr<nsIRunnable> task(NS_NewRunnableMethod(
+    nsCOMPtr<nsIRunnable> task(NS_NewRunnableMethod(
       this, &GeckoMediaPluginService::SetAsyncShutdownComplete));
     NS_DispatchToMainThread(task);
   }
@@ -659,7 +680,7 @@ GeckoMediaPluginService::UnloadPlugins()
   }
 
   if (mAsyncShutdownPlugins.IsEmpty()) {
-    nsRefPtr<nsIRunnable> task(NS_NewRunnableMethod(
+    nsCOMPtr<nsIRunnable> task(NS_NewRunnableMethod(
       this, &GeckoMediaPluginService::SetAsyncShutdownComplete));
     NS_DispatchToMainThread(task);
   }
@@ -1118,14 +1139,10 @@ GeckoMediaPluginService::ReAddOnGMPThread(const nsRefPtr<GMPParent>& aOld)
 NS_IMETHODIMP
 GeckoMediaPluginService::GetStorageDir(nsIFile** aOutFile)
 {
-#ifndef MOZ_WIDGET_GONK
   if (NS_WARN_IF(!mStorageBaseDir)) {
     return NS_ERROR_FAILURE;
   }
   return mStorageBaseDir->Clone(aOutFile);
-#else
-  return NS_ERROR_NOT_IMPLEMENTED;
-#endif
 }
 
 static nsresult
@@ -1228,11 +1245,6 @@ GeckoMediaPluginService::GetNodeId(const nsAString& aOrigin,
        NS_ConvertUTF16toUTF8(aOrigin).get(),
        NS_ConvertUTF16toUTF8(aTopLevelOrigin).get(),
        (aInPrivateBrowsing ? "PrivateBrowsing" : "NonPrivateBrowsing")));
-
-#ifdef MOZ_WIDGET_GONK
-  NS_WARNING("GeckoMediaPluginService::GetNodeId Not implemented on B2G");
-  return NS_ERROR_NOT_IMPLEMENTED;
-#endif
 
   nsresult rv;
 
@@ -1682,11 +1694,6 @@ GeckoMediaPluginService::ClearStorage()
 {
   MOZ_ASSERT(NS_GetCurrentThread() == mGMPThread);
   LOGD(("%s::%s", __CLASS__, __FUNCTION__));
-
-#ifdef MOZ_WIDGET_GONK
-  NS_WARNING("GeckoMediaPluginService::ClearStorage not implemented on B2G");
-  return;
-#endif
 
   // Kill plugins with valid nodeIDs.
   KillPlugins(mPlugins, mMutex, &IsNodeIdValid);

@@ -59,11 +59,13 @@ public class testSettingsMenuItems extends PixelTest {
     // Privacy menu items.
     String[] PATH_PRIVACY = { StringHelper.PRIVACY_SECTION_LABEL };
     final String[] TRACKING_PROTECTION_LABEL_ARR = { StringHelper.TRACKING_PROTECTION_LABEL };
+    final String[] MANAGE_LOGINS_ARR = { StringHelper.MANAGE_LOGINS_LABEL };
     String[][] OPTIONS_PRIVACY = {
         TRACKING_PROTECTION_LABEL_ARR,
         { StringHelper.DNT_LABEL },
         { StringHelper.COOKIES_LABEL, "Enabled", "Enabled, excluding 3rd party", "Disabled" },
         { StringHelper.REMEMBER_PASSWORDS_LABEL },
+        MANAGE_LOGINS_ARR,
         { StringHelper.MASTER_PASSWORD_LABEL },
         { StringHelper.CLEAR_PRIVATE_DATA_LABEL, "", "Browsing history", "Downloads", "Form & search history", "Cookies & active logins", "Saved passwords", "Cache", "Offline website data", "Site settings", "Clear data" },
     };
@@ -162,7 +164,7 @@ public class testSettingsMenuItems extends PixelTest {
 
             if (AppConstants.MOZ_STUMBLER_BUILD_TIME_ENABLED) {
                 // Anonymous cell tower/wifi collection
-                String[] networkReportingUi = { "Mozilla Location Service", "Help Mozilla map the world! Share approximate Wi-Fi and cellular location of your device to improve our geolocation service" };
+                String[] networkReportingUi = { "Mozilla Location Service", "Help Mozilla map the world! Share the approximate Wi-Fi and cellular location of your device to improve our geolocation service." };
                 settingsMap.get(PATH_MOZILLA).add(networkReportingUi);
 
                 String[] learnMoreUi = { "Learn more" };
@@ -171,13 +173,21 @@ public class testSettingsMenuItems extends PixelTest {
         }
 
         if (!AppConstants.NIGHTLY_BUILD) {
-            settingsMap.get(PATH_PRIVACY).remove(TRACKING_PROTECTION_LABEL_ARR);
+            final List<String[]> privacy = settingsMap.get(PATH_PRIVACY);
+            privacy.remove(TRACKING_PROTECTION_LABEL_ARR);
+            privacy.remove(MANAGE_LOGINS_ARR);
         }
 
         // Automatic updates
         if (AppConstants.MOZ_UPDATER) {
             String[] autoUpdateUi = { "Download updates automatically", "Only over Wi-Fi", "Always", "Only over Wi-Fi", "Never" };
             settingsMap.get(PATH_CUSTOMIZE).add(autoUpdateUi);
+        }
+
+        // Tab Queue
+        if (AppConstants.NIGHTLY_BUILD && AppConstants.MOZ_ANDROID_TAB_QUEUE) {
+            String[] tabQueue = { StringHelper.TAB_QUEUE_LABEL, "Prevent tabs from opening immediately, but open all queued tabs the next time " + StringHelper.BRAND_NAME + " loads." };
+            settingsMap.get(PATH_CUSTOMIZE).add(tabQueue);
         }
 
         // Crash reporter

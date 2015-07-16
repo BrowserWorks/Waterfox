@@ -33,7 +33,7 @@ public:
   static already_AddRefed<DataStore> Constructor(GlobalObject& aGlobal,
                                                  ErrorResult& aRv);
 
-  virtual JSObject* WrapObject(JSContext *aCx) override;
+  virtual JSObject* WrapObject(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   static bool EnabledForScope(JSContext* aCx, JS::Handle<JSObject*> aObj);
 

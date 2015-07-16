@@ -14,10 +14,10 @@
 #include "jit/CompileInfo.h"
 #include "jit/JitCommon.h"
 #include "jit/JitSpewer.h"
+#include "vm/Debugger.h"
 #include "vm/Interpreter.h"
 #include "vm/TraceLogging.h"
 
-#include "jsgcinlines.h"
 #include "jsobjinlines.h"
 #include "jsopcodeinlines.h"
 #include "jsscriptinlines.h"
@@ -65,7 +65,9 @@ BaselineScript::BaselineScript(uint32_t prologueOffset, uint32_t epilogueOffset,
     traceLoggerScriptEvent_(),
 #endif
     postDebugPrologueOffset_(postDebugPrologueOffset),
-    flags_(0)
+    flags_(0),
+    inlinedBytecodeLength_(0),
+    maxInliningDepth_(UINT8_MAX)
 { }
 
 static const unsigned BASELINE_MAX_ARGS_LENGTH = 20000;
@@ -314,9 +316,8 @@ jit::CanEnterBaselineAtBranch(JSContext* cx, InterpreterFrame* fp, bool newType)
    // already compiled in baseline, execution jumps directly into baseline
    // code. This is incorrect as h's baseline script does not have debug
    // instrumentation.
-   // This is a terrible work around, but it'll have to do
-   //if (fp->isDebuggee() && !Debugger::ensureExecutionObservabilityOfOsrFrame(cx, fp))
-   //    return Method_Error;
+   if (fp->isDebuggee() && !Debugger::ensureExecutionObservabilityOfOsrFrame(cx, fp))
+       return Method_Error;
 
    RootedScript script(cx, fp->script());
    return CanEnterBaselineJIT(cx, script, fp);
@@ -1077,7 +1078,7 @@ void
 jit::ToggleBaselineProfiling(JSRuntime* runtime, bool enable)
 {
     for (ZonesIter zone(runtime, SkipAtoms); !zone.done(); zone.next()) {
-        for (gc::ZoneCellIter i(zone, gc::FINALIZE_SCRIPT); !i.done(); i.next()) {
+        for (gc::ZoneCellIter i(zone, gc::AllocKind::SCRIPT); !i.done(); i.next()) {
             JSScript* script = i.get<JSScript>();
             if (!script->hasBaselineScript())
                 continue;
@@ -1091,7 +1092,7 @@ void
 jit::ToggleBaselineTraceLoggerScripts(JSRuntime* runtime, bool enable)
 {
     for (ZonesIter zone(runtime, SkipAtoms); !zone.done(); zone.next()) {
-        for (gc::ZoneCellIter i(zone, gc::FINALIZE_SCRIPT); !i.done(); i.next()) {
+        for (gc::ZoneCellIter i(zone, gc::AllocKind::SCRIPT); !i.done(); i.next()) {
             JSScript* script = i.get<JSScript>();
             if (!script->hasBaselineScript())
                 continue;
@@ -1104,7 +1105,7 @@ void
 jit::ToggleBaselineTraceLoggerEngine(JSRuntime* runtime, bool enable)
 {
     for (ZonesIter zone(runtime, SkipAtoms); !zone.done(); zone.next()) {
-        for (gc::ZoneCellIter i(zone, gc::FINALIZE_SCRIPT); !i.done(); i.next()) {
+        for (gc::ZoneCellIter i(zone, gc::AllocKind::SCRIPT); !i.done(); i.next()) {
             JSScript* script = i.get<JSScript>();
             if (!script->hasBaselineScript())
                 continue;

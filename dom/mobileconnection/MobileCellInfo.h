@@ -15,7 +15,7 @@ namespace mozilla {
 namespace dom {
 
 class MobileCellInfo final : public nsIMobileCellInfo
-                               , public nsWrapperCache
+                           , public nsWrapperCache
 {
 public:
   NS_DECL_NSIMOBILECELLINFO
@@ -39,7 +39,7 @@ public:
   }
 
   virtual JSObject*
-  WrapObject(JSContext* aCx) override;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // WebIDL interface
   int32_t

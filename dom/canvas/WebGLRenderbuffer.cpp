@@ -41,9 +41,9 @@ NeedsDepthStencilEmu(gl::GLContext* gl, GLenum internalFormat)
 }
 
 JSObject*
-WebGLRenderbuffer::WrapObject(JSContext* cx)
+WebGLRenderbuffer::WrapObject(JSContext* cx, JS::Handle<JSObject*> aGivenProto)
 {
-    return dom::WebGLRenderbufferBinding::Wrap(cx, this);
+    return dom::WebGLRenderbufferBinding::Wrap(cx, this, aGivenProto);
 }
 
 WebGLRenderbuffer::WebGLRenderbuffer(WebGLContext* webgl)
@@ -179,6 +179,10 @@ void
 WebGLRenderbuffer::RenderbufferStorage(GLsizei samples, GLenum internalFormat,
                                        GLsizei width, GLsizei height) const
 {
+    MOZ_ASSERT(mContext->mBoundRenderbuffer == this);
+
+    InvalidateStatusOfAttachedFBs();
+
     gl::GLContext* gl = mContext->gl;
     MOZ_ASSERT(samples >= 0 && samples <= 256); // Sanity check.
 

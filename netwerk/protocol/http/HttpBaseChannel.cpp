@@ -80,6 +80,8 @@ HttpBaseChannel::HttpBaseChannel()
   , mReferrerPolicy(REFERRER_POLICY_NO_REFERRER_WHEN_DOWNGRADE)
   , mRedirectCount(0)
   , mForcePending(false)
+  , mCorsIncludeCredentials(false)
+  , mCorsMode(nsIHttpChannelInternal::CORS_MODE_NO_CORS)
 {
   LOG(("Creating HttpBaseChannel @%x\n", this));
 
@@ -1358,6 +1360,19 @@ HttpBaseChannel::SetRedirectionLimit(uint32_t value)
   return NS_OK;
 }
 
+nsresult
+HttpBaseChannel::OverrideSecurityInfo(nsISupports* aSecurityInfo)
+{
+  MOZ_RELEASE_ASSERT(!mSecurityInfo,
+                     "This can only be called when we don't have a security info object already");
+  MOZ_RELEASE_ASSERT(aSecurityInfo,
+                     "This can only be called with a valid security info object");
+  MOZ_RELEASE_ASSERT(ShouldIntercept(),
+                     "This can only be called on channels that can be intercepted");
+  mSecurityInfo = aSecurityInfo;
+  return NS_OK;
+}
+
 NS_IMETHODIMP
 HttpBaseChannel::IsNoStoreResponse(bool *value)
 {
@@ -1838,6 +1853,34 @@ NS_IMETHODIMP
 HttpBaseChannel::ForceNoIntercept()
 {
   mForceNoIntercept = true;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+HttpBaseChannel::GetCorsIncludeCredentials(bool* aInclude)
+{
+  *aInclude = mCorsIncludeCredentials;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+HttpBaseChannel::SetCorsIncludeCredentials(bool aInclude)
+{
+  mCorsIncludeCredentials = aInclude;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+HttpBaseChannel::GetCorsMode(uint32_t* aMode)
+{
+  *aMode = mCorsMode;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+HttpBaseChannel::SetCorsMode(uint32_t aMode)
+{
+  mCorsMode = aMode;
   return NS_OK;
 }
 

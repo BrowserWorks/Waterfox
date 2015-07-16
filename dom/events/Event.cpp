@@ -234,18 +234,18 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 
 JSObject*
-Event::WrapObject(JSContext* aCx)
+Event::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
   if (mIsMainThreadEvent && !GetWrapperPreserveColor()) {
     nsJSContext::LikelyShortLivingObjectCreated();
   }
-  return WrapObjectInternal(aCx);
+  return WrapObjectInternal(aCx, aGivenProto);
 }
 
 JSObject*
-Event::WrapObjectInternal(JSContext* aCx)
+Event::WrapObjectInternal(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return EventBinding::Wrap(aCx, this);
+  return EventBinding::Wrap(aCx, this, aGivenProto);
 }
 
 bool
@@ -959,7 +959,6 @@ Event::GetClientCoords(nsPresContext* aPresContext,
   if (!shell) {
     return CSSIntPoint(0, 0);
   }
-
   nsIFrame* rootFrame = shell->GetRootFrame();
   if (!rootFrame) {
     return CSSIntPoint(0, 0);
@@ -968,6 +967,44 @@ Event::GetClientCoords(nsPresContext* aPresContext,
     nsLayoutUtils::GetEventCoordinatesRelativeTo(aEvent, aPoint, rootFrame);
 
   return CSSIntPoint::FromAppUnitsRounded(pt);
+}
+
+// static
+CSSIntPoint
+Event::GetOffsetCoords(nsPresContext* aPresContext,
+                       WidgetEvent* aEvent,
+                       LayoutDeviceIntPoint aPoint,
+                       CSSIntPoint aDefaultPoint)
+{
+  if (!aEvent->mFlags.mIsBeingDispatched) {
+    return GetPageCoords(aPresContext, aEvent, aPoint, aDefaultPoint);
+  }
+  nsCOMPtr<nsIContent> content = do_QueryInterface(aEvent->target);
+  if (!content || !aPresContext) {
+    return CSSIntPoint(0, 0);
+  }
+  nsCOMPtr<nsIPresShell> shell = aPresContext->GetPresShell();
+  if (!shell) {
+    return CSSIntPoint(0, 0);
+  }
+  shell->FlushPendingNotifications(Flush_Layout);
+  nsIFrame* frame = content->GetPrimaryFrame();
+  if (!frame) {
+    return CSSIntPoint(0, 0);
+  }
+  nsIFrame* rootFrame = shell->GetRootFrame();
+  if (!rootFrame) {
+    return CSSIntPoint(0, 0);
+  }
+  CSSIntPoint clientCoords =
+    GetClientCoords(aPresContext, aEvent, aPoint, aDefaultPoint);
+  nsPoint pt = CSSPixel::ToAppUnits(clientCoords);
+  if (nsLayoutUtils::TransformPoint(rootFrame, frame, pt) ==
+      nsLayoutUtils::TRANSFORM_SUCCEEDED) {
+    pt -= frame->GetPaddingRectRelativeToSelf().TopLeft();
+    return CSSPixel::FromAppUnitsRounded(pt);
+  }
+  return CSSIntPoint(0, 0);
 }
 
 // To be called ONLY by Event::GetType (which has the additional
@@ -1026,7 +1063,11 @@ Event::TimeStamp() const
       return 0.0;
     }
 
-    nsPerformance* perf = mOwner->GetPerformance();
+    nsCOMPtr<nsPIDOMWindow> win = do_QueryInterface(mOwner);
+    if (NS_WARN_IF(!win)) {
+      return 0.0;
+    }
+    nsPerformance* perf = win->GetPerformance();
     if (NS_WARN_IF(!perf)) {
       return 0.0;
     }
@@ -1049,8 +1090,9 @@ Event::TimeStamp() const
 bool
 Event::GetPreventDefault() const
 {
-  if (mOwner) {
-    if (nsIDocument* doc = mOwner->GetExtantDoc()) {
+  nsCOMPtr<nsPIDOMWindow> win(do_QueryInterface(mOwner));
+  if (win) {
+    if (nsIDocument* doc = win->GetExtantDoc()) {
       doc->WarnOnceAbout(nsIDocument::eGetPreventDefault);
     }
   }
@@ -1130,23 +1172,23 @@ Event::SetOwner(mozilla::dom::EventTarget* aOwner)
 
   nsCOMPtr<nsINode> n = do_QueryInterface(aOwner);
   if (n) {
-    mOwner = do_QueryInterface(n->OwnerDoc()->GetScopeObject());
+    mOwner = n->OwnerDoc()->GetScopeObject();
     return;
   }
 
   nsCOMPtr<nsPIDOMWindow> w = do_QueryInterface(aOwner);
   if (w) {
     if (w->IsOuterWindow()) {
-      mOwner = w->GetCurrentInnerWindow();
+      mOwner = do_QueryInterface(w->GetCurrentInnerWindow());
     } else {
-      mOwner.swap(w);
+      mOwner = do_QueryInterface(w);
     }
     return;
   }
 
   nsCOMPtr<DOMEventTargetHelper> eth = do_QueryInterface(aOwner);
   if (eth) {
-    mOwner = eth->GetOwner();
+    mOwner = eth->GetParentObject();
     return;
   }
 

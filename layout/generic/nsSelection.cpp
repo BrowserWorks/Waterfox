@@ -755,7 +755,7 @@ nsIAtom *GetTag(nsINode *aNode)
     return nullptr;
   }
   
-  return content->Tag();
+  return content->NodeInfo()->NameAtom();
 }
 
 // Returns the parent
@@ -1855,29 +1855,21 @@ nsFrameSelection::GetFrameForNodeOffset(nsIContent*        aNode,
       theNode = childNode;
     }
 
-#ifdef DONT_DO_THIS_YET
-    // XXX: We can't use this code yet because the hinting
-    //      can cause us to attach to the wrong line frame.
-
     // Now that we have the child node, check if it too
     // can contain children. If so, call this method again!
-
-    if (theNode->IsElement())
+    if (theNode->IsElement() &&
+        theNode->GetChildCount() &&
+        !theNode->HasIndependentSelection())
     {
       int32_t newOffset = 0;
 
-      if (aOffset > childIndex)
-      {
+      if (aOffset > childIndex) {
         numChildren = theNode->GetChildCount();
-
         newOffset = numChildren;
       }
 
       return GetFrameForNodeOffset(theNode, newOffset, aHint, aReturnOffset);
-    }
-    else
-#endif // DONT_DO_THIS_YET
-    {
+    } else {
       // Check to see if theNode is a text node. If it is, translate
       // aOffset into an offset into the text node.
 
@@ -1899,13 +1891,25 @@ nsFrameSelection::GetFrameForNodeOffset(nsIContent*        aNode,
           }
           else
             *aReturnOffset = 0;
-        }
-        else
-        {
-          // If we're at a collapsed whitespace content node (which
-          // does not have a primary frame), just use the original node
-          // to get the frame on which we should put the caret.
-          theNode = aNode;
+        } else {
+          int32_t numChildren = aNode->GetChildCount();
+          int32_t newChildIndex =
+            aHint == CARET_ASSOCIATE_BEFORE ? childIndex - 1 : childIndex + 1;
+
+          if (newChildIndex >= 0 && newChildIndex < numChildren) {
+            nsCOMPtr<nsIContent> newChildNode = aNode->GetChildAt(newChildIndex);
+            if (!newChildNode)
+              return nullptr;
+
+            theNode = newChildNode;
+            int32_t newOffset =
+              aHint == CARET_ASSOCIATE_BEFORE ? theNode->GetChildCount() : 0;
+            return GetFrameForNodeOffset(theNode, newOffset, aHint, aReturnOffset);
+          } else {
+            // newChildIndex is illegal which means we're at first or last
+            // child. Just use original node to get the frame.
+            theNode = aNode;
+          }
         }
       }
     }
@@ -2189,9 +2193,7 @@ nsFrameSelection::NotifySelectionListeners(SelectionType aType)
 
 static bool IsCell(nsIContent *aContent)
 {
-  return ((aContent->Tag() == nsGkAtoms::td ||
-           aContent->Tag() == nsGkAtoms::th) &&
-          aContent->IsHTML());
+  return aContent->IsAnyOfHTMLElements(nsGkAtoms::td, nsGkAtoms::th);
 }
 
 nsITableCellLayout* 
@@ -2947,8 +2949,7 @@ nsFrameSelection::GetParentTable(nsIContent *aCell) const
 
   for (nsIContent* parent = aCell->GetParent(); parent;
        parent = parent->GetParent()) {
-    if (parent->Tag() == nsGkAtoms::table &&
-        parent->IsHTML()) {
+    if (parent->IsHTMLElement(nsGkAtoms::table)) {
       return parent;
     }
   }
@@ -3082,15 +3083,13 @@ Selection::GetTableSelectionType(nsIDOMRange* aDOMRange,
     return NS_OK;
 
   nsIContent* startContent = static_cast<nsIContent*>(startNode);
-  if (!(startNode->IsElement() && startContent->IsHTML())) {
+  if (!(startNode->IsElement() && startContent->IsHTMLElement())) {
     // Implies a check for being an element; if we ever make this work
     // for non-HTML, need to keep checking for elements.
     return NS_OK;
   }
 
-  nsIAtom *tag = startContent->Tag();
-
-  if (tag == nsGkAtoms::tr)
+  if (startContent->IsHTMLElement(nsGkAtoms::tr))
   {
     *aTableSelectionType = nsISelectionPrivate::TABLESELECTION_CELL;
   }
@@ -3100,11 +3099,9 @@ Selection::GetTableSelectionType(nsIDOMRange* aDOMRange,
     if (!child)
       return NS_ERROR_FAILURE;
 
-    tag = child->Tag();
-
-    if (tag == nsGkAtoms::table)
+    if (child->IsHTMLElement(nsGkAtoms::table))
       *aTableSelectionType = nsISelectionPrivate::TABLESELECTION_TABLE;
-    else if (tag == nsGkAtoms::tr)
+    else if (child->IsHTMLElement(nsGkAtoms::tr))
       *aTableSelectionType = nsISelectionPrivate::TABLESELECTION_ROW;
   }
 
@@ -3178,7 +3175,7 @@ nsFrameSelection::DeleteFromDocument()
   }
 
   nsRefPtr<Selection> selection = mDomSelections[index];
-  for (int32_t rangeIdx = 0; rangeIdx < selection->GetRangeCount(); ++rangeIdx) {
+  for (uint32_t rangeIdx = 0; rangeIdx < selection->RangeCount(); ++rangeIdx) {
     nsRefPtr<nsRange> range = selection->GetRangeAt(rangeIdx);
     res = range->DeleteContents();
     if (NS_FAILED(res))
@@ -4828,7 +4825,7 @@ Selection::Collapse(nsINode& aParentNode, uint32_t aOffset, ErrorResult& aRv)
   nsCOMPtr<nsIContent> content = do_QueryInterface(&aParentNode);
   nsCOMPtr<nsIDocument> doc = do_QueryInterface(&aParentNode);
   printf ("Sel. Collapse to %p %s %d\n", &aParentNode,
-          content ? nsAtomCString(content->Tag()).get()
+          content ? nsAtomCString(content->NodeInfo()->NameAtom()).get()
                   : (doc ? "DOCUMENT" : "???"),
           aOffset);
 #endif
@@ -5029,6 +5026,32 @@ Selection::ReplaceAnchorFocusRange(nsRange* aRange)
     selectFrames(presContext, mAnchorFocusRange, false);
     SetAnchorFocusToRange(aRange);
     selectFrames(presContext, mAnchorFocusRange, true);
+  }
+}
+
+void
+Selection::AdjustAnchorFocusForMultiRange(nsDirection aDirection)
+{
+  if (aDirection == mDirection) {
+    return;
+  }
+  SetDirection(aDirection);
+
+  if (RangeCount() <= 1) {
+    return;
+  }
+
+  nsRange* firstRange = GetRangeAt(0);
+  nsRange* lastRange = GetRangeAt(RangeCount() - 1);
+
+  if (mDirection == eDirPrevious) {
+    firstRange->SetIsGenerated(false);
+    lastRange->SetIsGenerated(true);
+    setAnchorFocusRange(0);
+  } else { // aDir == eDirNext
+    firstRange->SetIsGenerated(true);
+    lastRange->SetIsGenerated(false);
+    setAnchorFocusRange(RangeCount() - 1);
   }
 }
 
@@ -5367,7 +5390,7 @@ Selection::Extend(nsINode& aParentNode, uint32_t aOffset, ErrorResult& aRv)
   }
   nsCOMPtr<nsIContent> content = do_QueryInterface(&aParentNode);
   printf ("Sel. Extend to %p %s %d\n", content.get(),
-          nsAtomCString(content->Tag()).get(), aOffset);
+          nsAtomCString(content->NodeInfo()->NameAtom()).get(), aOffset);
 #endif
   res = mFrameSelection->NotifySelectionListeners(GetType());
   if (NS_FAILED(res)) {
@@ -6071,9 +6094,9 @@ Selection::SetSelectionDirection(nsDirection aDirection) {
 }
 
 JSObject*
-Selection::WrapObject(JSContext* aCx)
+Selection::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return mozilla::dom::SelectionBinding::Wrap(aCx, this);
+  return mozilla::dom::SelectionBinding::Wrap(aCx, this, aGivenProto);
 }
 
 // nsAutoCopyListener
@@ -6132,5 +6155,6 @@ nsAutoCopyListener::NotifySelectionChanged(nsIDOMDocument *aDoc,
   NS_ENSURE_TRUE(doc, NS_ERROR_FAILURE);
 
   // call the copy code
-  return nsCopySupport::HTMLCopy(aSel, doc, nsIClipboard::kSelectionClipboard);
+  return nsCopySupport::HTMLCopy(aSel, doc,
+                                 nsIClipboard::kSelectionClipboard, false);
 }

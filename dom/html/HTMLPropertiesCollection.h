@@ -49,8 +49,8 @@ protected:
 };
 
 class HTMLPropertiesCollection final : public nsIHTMLCollection,
-                                           public nsStubMutationObserver,
-                                           public nsWrapperCache
+                                       public nsStubMutationObserver,
+                                       public nsWrapperCache
 {
   friend class PropertyNodeList;
   friend class PropertyStringList;
@@ -59,7 +59,7 @@ public:
 
   // nsWrapperCache
   using nsWrapperCache::GetWrapperPreserveColor;
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 protected:
   virtual ~HTMLPropertiesCollection();
 
@@ -149,13 +149,13 @@ protected:
 };
 
 class PropertyNodeList final : public nsINodeList,
-                                   public nsStubMutationObserver
+                               public nsStubMutationObserver
 {
 public:
   PropertyNodeList(HTMLPropertiesCollection* aCollection,
                    nsIContent* aRoot, const nsAString& aName);
 
-  virtual JSObject* WrapObject(JSContext *cx) override;
+  virtual JSObject* WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto) override;
 
   void SetDocument(nsIDocument* aDocument);
 

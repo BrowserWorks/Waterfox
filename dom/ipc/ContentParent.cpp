@@ -51,6 +51,7 @@
 #include "mozilla/dom/bluetooth/PBluetoothParent.h"
 #include "mozilla/dom/cellbroadcast/CellBroadcastParent.h"
 #include "mozilla/dom/devicestorage/DeviceStorageRequestParent.h"
+#include "mozilla/dom/icc/IccParent.h"
 #include "mozilla/dom/mobileconnection/MobileConnectionParent.h"
 #include "mozilla/dom/mobilemessage/SmsParent.h"
 #include "mozilla/dom/power/PowerManagerService.h"
@@ -120,6 +121,7 @@
 #include "nsIStyleSheet.h"
 #include "nsISupportsPrimitives.h"
 #include "nsISystemMessagesInternal.h"
+#include "nsITimer.h"
 #include "nsIURIFixup.h"
 #include "nsIWindowWatcher.h"
 #include "nsIXULRuntime.h"
@@ -223,6 +225,7 @@ using namespace CrashReporter;
 using namespace mozilla::dom::bluetooth;
 using namespace mozilla::dom::cellbroadcast;
 using namespace mozilla::dom::devicestorage;
+using namespace mozilla::dom::icc;
 using namespace mozilla::dom::indexedDB;
 using namespace mozilla::dom::power;
 using namespace mozilla::dom::mobileconnection;
@@ -240,7 +243,7 @@ using namespace mozilla::widget;
 #ifdef ENABLE_TESTS
 
 class BackgroundTester final : public nsIIPCBackgroundChildCreateCallback,
-                                   public nsIObserver
+                               public nsIObserver
 {
     static uint32_t sCallbackCount;
 
@@ -590,6 +593,7 @@ static uint64_t gContentChildID = 1;
 
 static const char* sObserverTopics[] = {
     "xpcom-shutdown",
+    "profile-before-change",
     NS_IPC_IOSERVICE_SET_OFFLINE_TOPIC,
     "child-memory-reporter-request",
     "memory-pressure",
@@ -1546,8 +1550,31 @@ ContentParent::TransformPreallocatedIntoBrowser(ContentParent* aOpener)
 }
 
 void
-ContentParent::ShutDownProcess(bool aCloseWithError)
+ContentParent::ShutDownProcess(ShutDownMethod aMethod)
 {
+#ifdef MOZ_NUWA_PROCESS
+    if (aMethod == SEND_SHUTDOWN_MESSAGE && IsNuwaProcess()) {
+        // We shouldn't send shutdown messages to frozen Nuwa processes,
+        // so just close the channel.
+        aMethod = CLOSE_CHANNEL;
+    }
+#endif
+
+    // Shutting down by sending a shutdown message works differently than the
+    // other methods. We first call Shutdown() in the child. After the child is
+    // ready, it calls FinishShutdown() on us. Then we close the channel.
+    if (aMethod == SEND_SHUTDOWN_MESSAGE) {
+        if (mIPCOpen && !mShutdownPending && SendShutdown()) {
+            mShutdownPending = true;
+            // Start the force-kill timer if we haven't already.
+            StartForceKillTimer();
+        }
+
+        // If call was not successful, the channel must have been broken
+        // somehow, and we will clean up the error in ActorDestroy.
+        return;
+    }
+
     using mozilla::dom::quota::QuotaManager;
 
     if (QuotaManager* quotaManager = QuotaManager::Get()) {
@@ -1555,10 +1582,10 @@ ContentParent::ShutDownProcess(bool aCloseWithError)
     }
 
     // If Close() fails with an error, we'll end up back in this function, but
-    // with aCloseWithError = true.  It's important that we call
+    // with aMethod = CLOSE_CHANNEL_WITH_ERROR.  It's important that we call
     // CloseWithError() in this case; see bug 895204.
 
-    if (!aCloseWithError && !mCalledClose) {
+    if (aMethod == CLOSE_CHANNEL && !mCalledClose) {
         // Close() can only be called once: It kicks off the destruction
         // sequence.
         mCalledClose = true;
@@ -1572,7 +1599,7 @@ ContentParent::ShutDownProcess(bool aCloseWithError)
 #endif
     }
 
-    if (aCloseWithError && !mCalledCloseWithError) {
+    if (aMethod == CLOSE_CHANNEL_WITH_ERROR && !mCalledCloseWithError) {
         MessageChannel* channel = GetIPCChannel();
         if (channel) {
             mCalledCloseWithError = true;
@@ -1597,6 +1624,17 @@ ContentParent::ShutDownProcess(bool aCloseWithError)
     // CC'ed objects, so we need to null them out here, while we still can.  See
     // bug 899761.
     ShutDownMessageManager();
+}
+
+bool
+ContentParent::RecvFinishShutdown()
+{
+    // At this point, we already called ShutDownProcess once with
+    // SEND_SHUTDOWN_MESSAGE. To actually close the channel, we call
+    // ShutDownProcess again with CLOSE_CHANNEL.
+    MOZ_ASSERT(mShutdownPending);
+    ShutDownProcess(CLOSE_CHANNEL);
+    return true;
 }
 
 void
@@ -1793,17 +1831,30 @@ struct DelayedDeleteContentParentTask : public nsRunnable
 void
 ContentParent::ActorDestroy(ActorDestroyReason why)
 {
-    if (mForceKillTask) {
-        mForceKillTask->Cancel();
-        mForceKillTask = nullptr;
+    if (mForceKillTimer) {
+        mForceKillTimer->Cancel();
+        mForceKillTimer = nullptr;
     }
 
-    ShutDownMessageManager();
+    // Signal shutdown completion regardless of error state, so we can
+    // finish waiting in the xpcom-shutdown/profile-before-change observer.
+    mIPCOpen = false;
 
     if (mHangMonitorActor) {
         ProcessHangMonitor::RemoveProcess(mHangMonitorActor);
         mHangMonitorActor = nullptr;
     }
+
+    if (why == NormalShutdown && !mCalledClose) {
+        // If we shut down normally but haven't called Close, assume somebody
+        // else called Close on us. In that case, we still need to call
+        // ShutDownProcess below to perform other necessary clean up.
+        mCalledClose = true;
+    }
+
+    // Make sure we always clean up.
+    ShutDownProcess(why == NormalShutdown ? CLOSE_CHANNEL
+                                          : CLOSE_CHANNEL_WITH_ERROR);
 
     nsRefPtr<ContentParent> kungFuDeathGrip(this);
     nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
@@ -1841,8 +1892,6 @@ ContentParent::ActorDestroy(ActorDestroyReason why)
     RecvRemoveGeolocationListener();
 
     mConsoleService = nullptr;
-
-    MarkAsDead();
 
     if (obs) {
         nsRefPtr<nsHashPropertyBag> props = new nsHashPropertyBag();
@@ -1895,11 +1944,6 @@ ContentParent::ActorDestroy(ActorDestroyReason why)
 
     mIdleListeners.Clear();
 
-    // If the child process was terminated due to a SIGKIL, ShutDownProcess
-    // might not have been called yet.  We must call it to ensure that our
-    // channel is closed, etc.
-    ShutDownProcess(/* closeWithError */ true);
-
     MessageLoop::current()->
         PostTask(FROM_HERE,
                  NewRunnableFunction(DelayedDeleteSubprocess, mSubprocess));
@@ -1923,7 +1967,7 @@ ContentParent::ActorDestroy(ActorDestroyReason why)
         MessageLoop::current()->PostTask(
             FROM_HERE,
             NewRunnableMethod(cp, &ContentParent::ShutDownProcess,
-                              /* closeWithError */ false));
+                              CLOSE_CHANNEL));
     }
     cpm->RemoveContentProcess(this->ChildID());
 }
@@ -1945,15 +1989,24 @@ ContentParent::NotifyTabDestroying(PBrowserParent* aTab)
     // We're dying now, so prevent this content process from being
     // recycled during its shutdown procedure.
     MarkAsDead();
+    StartForceKillTimer();
+}
 
-    MOZ_ASSERT(!mForceKillTask);
-    int32_t timeoutSecs =
-        Preferences::GetInt("dom.ipc.tabs.shutdownTimeoutSecs", 5);
+void
+ContentParent::StartForceKillTimer()
+{
+    if (mForceKillTimer || !mIPCOpen) {
+        return;
+    }
+
+    int32_t timeoutSecs = Preferences::GetInt("dom.ipc.tabs.shutdownTimeoutSecs", 5);
     if (timeoutSecs > 0) {
-        MessageLoop::current()->PostDelayedTask(
-            FROM_HERE,
-            mForceKillTask = NewRunnableMethod(this, &ContentParent::KillHard, nullptr),
-            timeoutSecs * 1000);
+        mForceKillTimer = do_CreateInstance("@mozilla.org/timer;1");
+        MOZ_ASSERT(mForceKillTimer);
+        mForceKillTimer->InitWithFuncCallback(ContentParent::ForceKillTimerCallback,
+                                              this,
+                                              timeoutSecs * 1000,
+                                              nsITimer::TYPE_ONE_SHOT);
     }
 }
 
@@ -1969,10 +2022,12 @@ ContentParent::NotifyTabDestroyed(PBrowserParent* aTab,
     // because of popup windows.  When the last one closes, shut
     // us down.
     if (ManagedPBrowserParent().Length() == 1) {
+        // In the case of normal shutdown, send a shutdown message to child to
+        // allow it to perform shutdown tasks.
         MessageLoop::current()->PostTask(
             FROM_HERE,
             NewRunnableMethod(this, &ContentParent::ShutDownProcess,
-                              /* force */ false));
+                              SEND_SHUTDOWN_MESSAGE));
     }
 }
 
@@ -2011,7 +2066,6 @@ ContentParent::InitializeMembers()
     mSubprocess = nullptr;
     mChildID = gContentChildID++;
     mGeolocationWatchID = -1;
-    mForceKillTask = nullptr;
     mNumDestroyingTabs = 0;
     mIsAlive = true;
     mMetamorphosed = false;
@@ -2021,6 +2075,8 @@ ContentParent::InitializeMembers()
     mCalledCloseWithError = false;
     mCalledKillHard = false;
     mCreatedPairedMinidumps = false;
+    mShutdownPending = false;
+    mIPCOpen = true;
     mHangMonitorActor = nullptr;
 }
 
@@ -2195,8 +2251,8 @@ ContentParent::ContentParent(ContentParent* aTemplate,
 
 ContentParent::~ContentParent()
 {
-    if (mForceKillTask) {
-        mForceKillTask->Cancel();
+    if (mForceKillTimer) {
+        mForceKillTimer->Cancel();
     }
 
     if (OtherProcess())
@@ -2231,6 +2287,10 @@ ContentParent::InitInternal(ProcessPriority aInitialPriority,
                             bool aSetupOffMainThreadCompositing,
                             bool aSendRegisteredChrome)
 {
+    // Initialize the message manager (and load delayed scripts) now that we
+    // have established communications with the child.
+    mMessageManager->InitWithCallback(this);
+
     // Set the subprocess's priority.  We do this early on because we're likely
     // /lowering/ the process's CPU and memory priority, which it has inherited
     // from this process.
@@ -2723,8 +2783,9 @@ ContentParent::RecvAddNewProcess(const uint32_t& aPid,
     bool isOffline;
     InfallibleTArray<nsString> unusedDictionaries;
     ClipboardCapabilities clipboardCaps;
+    DomainPolicyClone domainPolicy;
     RecvGetXPCOMProcessAttributes(&isOffline, &unusedDictionaries,
-                                  &clipboardCaps);
+                                  &clipboardCaps, &domainPolicy);
     mozilla::unused << content->SendSetOffline(isOffline);
     MOZ_ASSERT(!clipboardCaps.supportsSelectionClipboard() &&
                !clipboardCaps.supportsFindClipboard(),
@@ -2758,8 +2819,17 @@ ContentParent::Observe(nsISupports* aSubject,
                        const char* aTopic,
                        const char16_t* aData)
 {
-    if (!strcmp(aTopic, "xpcom-shutdown") && mSubprocess) {
-        ShutDownProcess(/* closeWithError */ false);
+    if (mSubprocess && (!strcmp(aTopic, "profile-before-change") ||
+                        !strcmp(aTopic, "xpcom-shutdown"))) {
+        // Okay to call ShutDownProcess multiple times.
+        ShutDownProcess(SEND_SHUTDOWN_MESSAGE);
+
+        // Wait for shutdown to complete, so that we receive any shutdown
+        // data (e.g. telemetry) from the child before we quit.
+        // This loop terminate prematurely based on mForceKillTimer.
+        while (mIPCOpen && !mCalledKillHard) {
+            NS_ProcessNextEvent(nullptr, true);
+        }
         NS_ASSERTION(!mSubprocess, "Close should have nulled mSubprocess");
     }
 
@@ -3051,7 +3121,8 @@ ContentParent::RecvGetProcessAttributes(ContentParentId* aCpId,
 bool
 ContentParent::RecvGetXPCOMProcessAttributes(bool* aIsOffline,
                                              InfallibleTArray<nsString>* dictionaries,
-                                             ClipboardCapabilities* clipboardCaps)
+                                             ClipboardCapabilities* clipboardCaps,
+                                             DomainPolicyClone* domainPolicy)
 {
     nsCOMPtr<nsIIOService> io(do_GetIOService());
     MOZ_ASSERT(io, "No IO service?");
@@ -3071,6 +3142,11 @@ ContentParent::RecvGetXPCOMProcessAttributes(bool* aIsOffline,
 
     rv = clipboard->SupportsFindClipboard(&clipboardCaps->supportsFindClipboard());
     MOZ_ASSERT(NS_SUCCEEDED(rv));
+
+    // Let's copy the domain policy from the parent to the child (if it's active).
+    nsIScriptSecurityManager* ssm = nsContentUtils::GetSecurityManager();
+    NS_ENSURE_TRUE(ssm, false);
+    ssm->CloneDomainPolicy(domainPolicy);
 
     return true;
 }
@@ -3173,6 +3249,13 @@ ContentParent::DeallocPRemoteSpellcheckEngineParent(PRemoteSpellcheckEngineParen
     return true;
 }
 
+/* static */ void
+ContentParent::ForceKillTimerCallback(nsITimer* aTimer, void* aClosure)
+{
+    auto self = static_cast<ContentParent*>(aClosure);
+    self->KillHard("ShutDownKill");
+}
+
 void
 ContentParent::KillHard(const char* aReason)
 {
@@ -3183,7 +3266,7 @@ ContentParent::KillHard(const char* aReason)
         return;
     }
     mCalledKillHard = true;
-    mForceKillTask = nullptr;
+    mForceKillTimer = nullptr;
 
 #if defined(MOZ_CRASHREPORTER) && !defined(MOZ_B2G)
     if (ManagedPCrashReporterParent().Length() > 0) {
@@ -3212,7 +3295,7 @@ ContentParent::KillHard(const char* aReason)
                   NS_LITERAL_CSTRING("kill_hard"),
                   GetKillHardAnnotation());
             }
-            nsDependentCString reason(aReason ? aReason : "");
+            nsDependentCString reason(aReason);
             crashReporter->AnnotateCrashReport(
                 NS_LITERAL_CSTRING("ipc_channel_error"),
                 reason);
@@ -3302,6 +3385,27 @@ bool
 ContentParent::DeallocPHalParent(hal_sandbox::PHalParent* aHal)
 {
     delete aHal;
+    return true;
+}
+
+PIccParent*
+ContentParent::AllocPIccParent(const uint32_t& aServiceId)
+{
+    if (!AssertAppProcessPermission(this, "mobileconnection")) {
+        return nullptr;
+    }
+    IccParent* parent = new IccParent(aServiceId);
+    // We release this ref in DeallocPIccParent().
+    parent->AddRef();
+
+    return parent;
+}
+
+bool
+ContentParent::DeallocPIccParent(PIccParent* aActor)
+{
+    // IccParent is refcounted, must not be freed manually.
+    static_cast<IccParent*>(aActor)->Release();
     return true;
 }
 
@@ -4384,12 +4488,15 @@ ContentParent::RecvBackUpXResources(const FileDescriptor& aXSocketFd)
 }
 
 bool
-ContentParent::RecvOpenAnonymousTemporaryFile(FileDescriptor *aFD)
+ContentParent::RecvOpenAnonymousTemporaryFile(FileDescOrError *aFD)
 {
     PRFileDesc *prfd;
     nsresult rv = NS_OpenAnonymousTemporaryFile(&prfd);
     if (NS_WARN_IF(NS_FAILED(rv))) {
-        return false;
+        // Returning false will kill the child process; instead
+        // propagate the error and let the child handle it.
+        *aFD = rv;
+        return true;
     }
     *aFD = FileDescriptor(FileDescriptor::PlatformHandleType(PR_FileDesc2NativeHandle(prfd)));
     // The FileDescriptor object owns a duplicate of the file handle; we

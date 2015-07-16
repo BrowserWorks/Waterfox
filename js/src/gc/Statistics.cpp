@@ -19,6 +19,7 @@
 #include "prmjtime.h"
 
 #include "gc/Memory.h"
+#include "vm/Debugger.h"
 #include "vm/HelperThreads.h"
 #include "vm/Runtime.h"
 
@@ -373,6 +374,7 @@ static const PhaseInfo phases[] = {
     { PHASE_TRACE_HEAP, "Trace Heap", PHASE_NO_PARENT },
         /* PHASE_MARK_ROOTS */
     { PHASE_MARK_ROOTS, "Mark Roots", PHASE_MULTI_PARENTS },
+        { PHASE_BUFFER_GRAY_ROOTS, "Buffer Gray Roots", PHASE_MARK_ROOTS },
         { PHASE_MARK_CCWS, "Mark Cross Compartment Wrappers", PHASE_MARK_ROOTS },
         { PHASE_MARK_ROOTERS, "Mark Rooters", PHASE_MARK_ROOTS },
         { PHASE_MARK_RUNTIME_DATA, "Mark Runtime-wide Data", PHASE_MARK_ROOTS },
@@ -508,9 +510,9 @@ Statistics::formatData(StatisticsSerializer& ss, uint64_t timestamp)
     ss.appendNumber("MMU (50ms)", "%d", "%", int(mmu50 * 100));
     ss.appendDecimal("SCC Sweep Total", "ms", t(sccTotal));
     ss.appendDecimal("SCC Sweep Max Pause", "ms", t(sccLongest));
-    if (nonincrementalReason || ss.isJSON()) {
+    if (nonincrementalReason_ || ss.isJSON()) {
         ss.appendString("Nonincremental Reason",
-                        nonincrementalReason ? nonincrementalReason : "none");
+                        nonincrementalReason_ ? nonincrementalReason_ : "none");
     }
     ss.appendNumber("Allocated", "%u", "MB", unsigned(preBytes / 1024 / 1024));
     ss.appendNumber("+Chunks", "%d", "", counts[STAT_NEW_CHUNK]);
@@ -609,8 +611,8 @@ Statistics::formatDescription()
     JS_snprintf(buffer, sizeof(buffer), format,
                 ExplainInvocationKind(gckind),
                 ExplainReason(slices[0].reason),
-                nonincrementalReason ? "no - " : "yes",
-                                                  nonincrementalReason ? nonincrementalReason : "",
+                nonincrementalReason_ ? "no - " : "yes",
+                                                  nonincrementalReason_ ? nonincrementalReason_ : "",
                 zoneStats.collectedZoneCount, zoneStats.zoneCount,
                 zoneStats.collectedCompartmentCount, zoneStats.compartmentCount,
                 counts[STAT_MINOR_GC],
@@ -767,7 +769,7 @@ Statistics::Statistics(JSRuntime* rt)
     fp(nullptr),
     fullFormat(false),
     gcDepth(0),
-    nonincrementalReason(nullptr),
+    nonincrementalReason_(nullptr),
     timedGCStart(0),
     preBytes(0),
     maxPauseInInterval(0),
@@ -932,7 +934,7 @@ Statistics::beginGC(JSGCInvocationKind kind)
     slices.clearAndFree();
     sccTimes.clearAndFree();
     gckind = kind;
-    nonincrementalReason = nullptr;
+    nonincrementalReason_ = nullptr;
 
     preBytes = runtime->gc.usage.gcBytes();
 }
@@ -959,7 +961,7 @@ Statistics::endGC()
     runtime->addTelemetry(JS_TELEMETRY_GC_SWEEP_MS, t(phaseTimes[PHASE_DAG_NONE][PHASE_SWEEP]));
     runtime->addTelemetry(JS_TELEMETRY_GC_MARK_ROOTS_MS, t(markRootsTotal));
     runtime->addTelemetry(JS_TELEMETRY_GC_MARK_GRAY_MS, t(phaseTimes[PHASE_DAG_NONE][PHASE_SWEEP_MARK_GRAY]));
-    runtime->addTelemetry(JS_TELEMETRY_GC_NON_INCREMENTAL, !!nonincrementalReason);
+    runtime->addTelemetry(JS_TELEMETRY_GC_NON_INCREMENTAL, !!nonincrementalReason_);
     runtime->addTelemetry(JS_TELEMETRY_GC_INCREMENTAL_DISABLED, !runtime->gc.isIncrementalGCAllowed());
     runtime->addTelemetry(JS_TELEMETRY_GC_SCC_SWEEP_TOTAL_MS, t(sccTotal));
     runtime->addTelemetry(JS_TELEMETRY_GC_SCC_SWEEP_MAX_PAUSE_MS, t(sccLongest));
@@ -971,6 +973,9 @@ Statistics::endGC()
 
     if (fp)
         printStats();
+
+    if (!aborted)
+        Debugger::onGarbageCollection(runtime, *this);
 
     // Clear the timers at the end of a GC because we accumulate time in
     // between GCs for some (which come before PHASE_GC_BEGIN in the list.)

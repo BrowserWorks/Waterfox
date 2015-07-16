@@ -1161,15 +1161,21 @@ const std::string kBasicAudioVideoOffer =
 "a=candidate:0 2 UDP 2130379006 10.0.0.36 55428 typ host" CRLF
 "a=end-of-candidates" CRLF
 "a=ssrc:5150" CRLF
-"m=video 9 RTP/SAVPF 120" CRLF
+"m=video 9 RTP/SAVPF 120 121" CRLF
 "c=IN IP6 ::1" CRLF
+"a=fingerprint:sha-1 DF:FA:FB:08:3B:3C:54:1D:D7:D4:05:77:A0:72:9B:14:08:6D:0F:4C:2E:AC:8A:FD:0A:8E:99:BF:5D:E8:3C:E7" CRLF
 "a=mid:second" CRLF
 "a=rtpmap:120 VP8/90000" CRLF
 "a=fmtp:120 max-fs=3600;max-fr=30" CRLF
+"a=rtpmap:121 VP9/90000" CRLF
+"a=fmtp:121 max-fs=3600;max-fr=30" CRLF
 "a=recvonly" CRLF
 "a=rtcp-fb:120 nack" CRLF
 "a=rtcp-fb:120 nack pli" CRLF
 "a=rtcp-fb:120 ccm fir" CRLF
+"a=rtcp-fb:121 nack" CRLF
+"a=rtcp-fb:121 nack pli" CRLF
+"a=rtcp-fb:121 ccm fir" CRLF
 "a=setup:active" CRLF
 "a=rtcp-mux" CRLF
 "a=msid:streama tracka" CRLF
@@ -1269,6 +1275,40 @@ TEST_P(NewSdpTest, CheckFingerprint) {
     << "Wrong fingerprint";
   ASSERT_EQ(0xdfU, fingerprints.mFingerprints[0].fingerprint[0])
       << "first fingerprint element is iffy";
+
+  ASSERT_EQ(3U, mSdp->GetMediaSectionCount());
+
+  // Fallback to session level
+  ASSERT_TRUE(mSdp->GetMediaSection(0).GetAttributeList().HasAttribute(
+        SdpAttribute::kFingerprintAttribute));
+  fingerprints = mSdp->GetMediaSection(0).GetAttributeList().GetFingerprint();
+  ASSERT_EQ(1U, fingerprints.mFingerprints.size());
+  ASSERT_EQ(SdpFingerprintAttributeList::kSha256,
+      fingerprints.mFingerprints[0].hashFunc)
+    << "Wrong hash function";
+  ASSERT_EQ("DF:2E:AC:8A:FD:0A:8E:99:BF:5D:E8:3C:E7:FA:FB:08:"
+            "3B:3C:54:1D:D7:D4:05:77:A0:72:9B:14:08:6D:0F:4C",
+            SdpFingerprintAttributeList::FormatFingerprint(
+                fingerprints.mFingerprints[0].fingerprint))
+    << "Wrong fingerprint";
+  ASSERT_EQ(0xdfU, fingerprints.mFingerprints[0].fingerprint[0])
+      << "first fingerprint element is iffy";
+
+  // Media level
+  ASSERT_TRUE(mSdp->GetMediaSection(1).GetAttributeList().HasAttribute(
+        SdpAttribute::kFingerprintAttribute));
+  fingerprints = mSdp->GetMediaSection(1).GetAttributeList().GetFingerprint();
+  ASSERT_EQ(1U, fingerprints.mFingerprints.size());
+  ASSERT_EQ(SdpFingerprintAttributeList::kSha1,
+      fingerprints.mFingerprints[0].hashFunc)
+    << "Wrong hash function";
+  ASSERT_EQ("DF:FA:FB:08:3B:3C:54:1D:D7:D4:05:77:A0:72:9B:14:"
+            "08:6D:0F:4C:2E:AC:8A:FD:0A:8E:99:BF:5D:E8:3C:E7",
+            SdpFingerprintAttributeList::FormatFingerprint(
+                fingerprints.mFingerprints[0].fingerprint))
+    << "Wrong fingerprint";
+  ASSERT_EQ(0xdfU, fingerprints.mFingerprints[0].fingerprint[0])
+      << "first fingerprint element is iffy";
 }
 
 TEST_P(NewSdpTest, CheckIdentity) {
@@ -1309,8 +1349,9 @@ TEST_P(NewSdpTest, CheckMlines) {
             mSdp->GetMediaSection(1).GetProtocol())
     << "Wrong protocol for video";
   auto video_formats = mSdp->GetMediaSection(1).GetFormats();
-  ASSERT_EQ(1U, video_formats.size()) << "Wrong number of formats for video";
+  ASSERT_EQ(2U, video_formats.size()) << "Wrong number of formats for video";
   ASSERT_EQ("120", video_formats[0]);
+  ASSERT_EQ("121", video_formats[1]);
 
   ASSERT_EQ(SdpMediaSection::kAudio, mSdp->GetMediaSection(2).GetMediaType())
     << "Wrong type for third media section";
@@ -1408,14 +1449,23 @@ TEST_P(NewSdpTest, CheckRtpmap) {
               audiosec.GetFormats()[4],
               rtpmap);
 
-  const SdpMediaSection& videosec = mSdp->GetMediaSection(1);
+  const SdpMediaSection& videosec1 = mSdp->GetMediaSection(1);
   CheckRtpmap("120",
               SdpRtpmapAttributeList::kVP8,
               "VP8",
               90000,
               0,
-              videosec.GetFormats()[0],
-              videosec.GetAttributeList().GetRtpmap());
+              videosec1.GetFormats()[0],
+              videosec1.GetAttributeList().GetRtpmap());
+
+  const SdpMediaSection& videosec2 = mSdp->GetMediaSection(1);
+  CheckRtpmap("121",
+              SdpRtpmapAttributeList::kVP9,
+              "VP9",
+              90000,
+              0,
+              videosec2.GetFormats()[1],
+              videosec2.GetAttributeList().GetRtpmap());
 }
 
 const std::string kH264AudioVideoOffer =

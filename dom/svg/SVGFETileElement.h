@@ -25,7 +25,7 @@ protected:
     : SVGFETileElementBase(aNodeInfo)
   {
   }
-  virtual JSObject* WrapNode(JSContext *cx) override;
+  virtual JSObject* WrapNode(JSContext *cx, JS::Handle<JSObject*> aGivenProto) override;
 
 public:
   virtual bool SubregionIsUnionOfRegions() override { return false; }

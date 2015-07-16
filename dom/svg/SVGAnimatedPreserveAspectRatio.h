@@ -112,7 +112,7 @@ public:
 
 namespace dom {
 class DOMSVGAnimatedPreserveAspectRatio final : public nsISupports,
-                                                    public nsWrapperCache
+                                                public nsWrapperCache
 {
   ~DOMSVGAnimatedPreserveAspectRatio();
 
@@ -127,7 +127,7 @@ class DOMSVGAnimatedPreserveAspectRatio final : public nsISupports,
 
   // WebIDL
   nsSVGElement* GetParentObject() const { return mSVGElement; }
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // These aren't weak refs because new objects are returned each time
   already_AddRefed<DOMSVGPreserveAspectRatio> BaseVal();

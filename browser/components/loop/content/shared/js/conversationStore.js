@@ -186,21 +186,24 @@ loop.store = loop.store || {};
           break;
         }
         case WS_STATES.CONNECTING: {
-          this.sdkDriver.connectSession({
-            apiKey: state.apiKey,
-            sessionId: state.sessionId,
-            sessionToken: state.sessionToken
-          });
-          this.mozLoop.addConversationContext(
-            state.windowId,
-            state.sessionId,
-            state.callId);
-          this.setStoreState({callState: CALL_STATES.ONGOING});
+          if (state.outgoing) {
+            // We can start the connection right away if we're the outgoing
+            // call because this is the only way we know the other peer has
+            // accepted.
+            this._startCallConnection();
+          } else if (state.callState !== CALL_STATES.ONGOING) {
+            console.error("Websocket unexpectedly changed to next state whilst waiting for call acceptance.");
+            // Abort and close the window.
+            this.declineCall(new sharedActions.DeclineCall({blockCaller: false}));
+          }
           break;
         }
         case WS_STATES.HALF_CONNECTED:
         case WS_STATES.CONNECTED: {
-          this.setStoreState({callState: CALL_STATES.ONGOING});
+          if (this.getStoreState("callState") !== CALL_STATES.ONGOING) {
+            console.error("Unexpected websocket state received in wrong callState");
+            this.setStoreState({callState: CALL_STATES.ONGOING});
+          }
           break;
         }
         default: {
@@ -221,6 +224,8 @@ loop.store = loop.store || {};
       this.dispatcher.register(this, [
         "connectionFailure",
         "connectionProgress",
+        "acceptCall",
+        "declineCall",
         "connectCall",
         "hangupCall",
         "remotePeerDisconnected",
@@ -228,21 +233,95 @@ loop.store = loop.store || {};
         "retryCall",
         "mediaConnected",
         "setMute",
-        "fetchRoomEmailLink"
+        "fetchRoomEmailLink",
+        "windowUnload"
       ]);
 
       this.setStoreState({
+        apiKey: actionData.apiKey,
+        callerId: actionData.callerId,
+        callId: actionData.callId,
+        callState: CALL_STATES.GATHER,
+        callType: actionData.callType,
         contact: actionData.contact,
         outgoing: windowType === "outgoing",
-        windowId: actionData.windowId,
-        callType: actionData.callType,
-        callState: CALL_STATES.GATHER,
-        videoMuted: actionData.callType === CALL_TYPES.AUDIO_ONLY
+        progressURL: actionData.progressURL,
+        sessionId: actionData.sessionId,
+        sessionToken: actionData.sessionToken,
+        videoMuted: actionData.callType === CALL_TYPES.AUDIO_ONLY,
+        websocketToken: actionData.websocketToken,
+        windowId: actionData.windowId
       });
 
       if (this.getStoreState("outgoing")) {
         this._setupOutgoingCall();
-      } // XXX Else, other types aren't supported yet.
+      } else {
+        this._setupIncomingCall();
+      }
+    },
+
+    /**
+     * Handles starting a call connection - connecting the session on the
+     * sdk, and setting the state appropriately.
+     */
+    _startCallConnection: function() {
+      var state = this.getStoreState();
+
+      this.sdkDriver.connectSession({
+        apiKey: state.apiKey,
+        sessionId: state.sessionId,
+        sessionToken: state.sessionToken,
+        sendTwoWayMediaTelemetry: state.outgoing // only one side of the call
+      });
+      this.mozLoop.addConversationContext(
+        state.windowId,
+        state.sessionId,
+        state.callId);
+      this.setStoreState({callState: CALL_STATES.ONGOING});
+    },
+
+    /**
+     * Accepts an incoming call.
+     *
+     * @param {sharedActions.AcceptCall} actionData
+     */
+    acceptCall: function(actionData) {
+      if (this.getStoreState("outgoing")) {
+        console.error("Received AcceptCall action in outgoing call state");
+        return;
+      }
+
+      this.setStoreState({
+        callType: actionData.callType,
+        videoMuted: actionData.callType === CALL_TYPES.AUDIO_ONLY
+      });
+
+      this._websocket.accept();
+
+      this._startCallConnection();
+    },
+
+    /**
+     * Declines an incoming call.
+     *
+     * @param {sharedActions.DeclineCall} actionData
+     */
+    declineCall: function(actionData) {
+      if (actionData.blockCaller) {
+        this.mozLoop.calls.blockDirectCaller(this.getStoreState("callerId"),
+          function(err) {
+            // XXX The conversation window will be closed when this cb is triggered
+            // figure out if there is a better way to report the error to the user
+            // (bug 1103150).
+            console.log(err.fileName + ":" + err.lineNumber + ": " + err.message);
+          });
+      }
+
+      this._websocket.decline();
+
+      // Now we've declined, end the session and close the window.
+      this._endSession();
+      this.setStoreState({callState: CALL_STATES.CLOSE});
     },
 
     /**
@@ -291,15 +370,19 @@ loop.store = loop.store || {};
     },
 
     /**
-     * Cancels a call
+     * Cancels a call. This can happen for incoming or outgoing calls.
+     * Although the user doesn't "cancel" an incoming call, it may be that
+     * the remote peer cancelled theirs before the incoming call was accepted.
      */
     cancelCall: function() {
-      var callState = this.getStoreState("callState");
-      if (this._websocket &&
-          (callState === CALL_STATES.CONNECTING ||
-           callState === CALL_STATES.ALERTING)) {
-         // Let the server know the user has hung up.
-        this._websocket.cancel();
+      if (this.getStoreState("outgoing")) {
+        var callState = this.getStoreState("callState");
+        if (this._websocket &&
+            (callState === CALL_STATES.CONNECTING ||
+             callState === CALL_STATES.ALERTING)) {
+          // Let the server know the user has hung up.
+          this._websocket.cancel();
+        }
       }
 
       this._endSession();
@@ -357,6 +440,30 @@ loop.store = loop.store || {};
         }
         this.setStoreState({"emailLink": createdRoomData.roomUrl});
       }.bind(this));
+    },
+
+    /**
+     * Called when the window is unloaded, either by code, or by the user
+     * explicitly closing it.  Expected to do any necessary housekeeping, such
+     * as shutting down the call cleanly and adding any relevant telemetry data.
+     */
+    windowUnload: function() {
+      if (!this.getStoreState("outgoing") &&
+          this.getStoreState("callState") === CALL_STATES.ALERTING &&
+          this._websocket) {
+        this._websocket.decline();
+      }
+
+      this._endSession();
+    },
+
+    /**
+     * Sets up an incoming call. All we really need to do here is
+     * to connect the websocket, as we've already got all the information
+     * when the window opened.
+     */
+    _setupIncomingCall: function() {
+      this._connectWebSocket();
     },
 
     /**
@@ -457,28 +564,53 @@ loop.store = loop.store || {};
     },
 
     /**
+     * If we hit any of the termination reasons, and the user hasn't accepted
+     * then it seems reasonable to close the window/abort the incoming call.
+     *
+     * If the user has accepted the call, and something's happened, display
+     * the call failed view.
+     *
+     * https://wiki.mozilla.org/Loop/Architecture/MVP#Termination_Reasons
+     *
+     * For outgoing calls, we treat all terminations as failures.
+     *
+     * @param {Object} progressData  The progress data received from the websocket.
+     * @param {String} previousState The previous state the websocket was in.
+     */
+    _handleWebSocketStateTerminated: function(progressData, previousState) {
+      if (this.getStoreState("outgoing") ||
+          (previousState !== WS_STATES.INIT &&
+           previousState !== WS_STATES.ALERTING)) {
+        // For outgoing calls we can treat everything as connection failure.
+        this.dispatcher.dispatch(new sharedActions.ConnectionFailure({
+          reason: progressData.reason
+        }));
+        return;
+      }
+
+      this.dispatcher.dispatch(new sharedActions.CancelCall());
+    },
+
+    /**
      * Used to handle any progressed received from the websocket. This will
      * dispatch new actions so that the data can be handled appropriately.
+     *
+     * @param {Object} progressData  The progress data received from the websocket.
+     * @param {String} previousState The previous state the websocket was in.
      */
-    _handleWebSocketProgress: function(progressData) {
-      var action;
-
+    _handleWebSocketProgress: function(progressData, previousState) {
       switch(progressData.state) {
         case WS_STATES.TERMINATED: {
-          action = new sharedActions.ConnectionFailure({
-            reason: progressData.reason
-          });
+          this._handleWebSocketStateTerminated(progressData, previousState);
           break;
         }
         default: {
-          action = new sharedActions.ConnectionProgress({
+          this.dispatcher.dispatch(new sharedActions.ConnectionProgress({
             wsState: progressData.state
-          });
+          }));
           break;
         }
       }
-
-      this.dispatcher.dispatch(action);
     }
   });
 })();

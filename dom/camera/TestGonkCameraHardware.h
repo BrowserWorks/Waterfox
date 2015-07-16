@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2014 Mozilla Foundation
+ * Copyright (C) 2013-2015 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,59 +18,61 @@
 #define DOM_CAMERA_TESTGONKCAMERAHARDWARE_H
 
 #include "GonkCameraHwMgr.h"
+#include "nsAutoPtr.h"
+#include "nsIDOMEventListener.h"
+#include "mozilla/CondVar.h"
 
-namespace android {
+namespace mozilla {
 
 class TestGonkCameraHardware : public android::GonkCameraHardware
 {
+#ifndef MOZ_WIDGET_GONK
+  NS_DECL_ISUPPORTS_INHERITED
+#endif
+
 public:
+  virtual nsresult Init() override;
   virtual int AutoFocus() override;
   virtual int StartFaceDetection() override;
   virtual int StopFaceDetection() override;
   virtual int TakePicture() override;
+  virtual void CancelTakePicture() override;
   virtual int StartPreview() override;
+  virtual void StopPreview() override;
   virtual int PushParameters(const mozilla::GonkCameraParameters& aParams) override;
   virtual nsresult PullParameters(mozilla::GonkCameraParameters& aParams) override;
   virtual int StartRecording() override;
   virtual int StopRecording() override;
-  virtual int SetListener(const sp<GonkCameraListener>& aListener) override;
   virtual int StoreMetaDataInBuffers(bool aEnabled) override;
-
-  virtual int
-  PushParameters(const CameraParameters& aParams) override
-  {
-    return GonkCameraHardware::PushParameters(aParams);
-  }
-
-  virtual void
-  PullParameters(CameraParameters& aParams) override
-  {
-    GonkCameraHardware::PullParameters(aParams);
-  }
+#ifdef MOZ_WIDGET_GONK
+  virtual int PushParameters(const android::CameraParameters& aParams) override;
+  virtual void PullParameters(android::CameraParameters& aParams) override;
+#endif
 
   TestGonkCameraHardware(mozilla::nsGonkCameraControl* aTarget,
                          uint32_t aCameraId,
-                         const sp<Camera>& aCamera);
-  virtual ~TestGonkCameraHardware();
-
-  virtual nsresult Init() override;
+                         const android::sp<android::Camera>& aCamera);
 
 protected:
-  const nsCString TestCase();
-  const nsCString GetExtraParameters();
-  bool IsTestCaseInternal(const char* aTest, const char* aFile, int aLine);
-  int TestCaseError(int aDefaultError);
+  virtual ~TestGonkCameraHardware();
 
-  int StartAutoFocusMoving(bool aIsMoving);
-  void InjectFakeSystemFailure();
+  class ControlMessage;
+  class PushParametersDelegate;
+  class PullParametersDelegate;
+
+  nsresult WaitWhileRunningOnMainThread(nsRefPtr<ControlMessage> aRunnable);
+
+  nsCOMPtr<nsIDOMEventListener> mDomListener;
+  nsCOMPtr<nsIThread> mCameraThread;
+  mozilla::Mutex mMutex;
+  mozilla::CondVar mCondVar;
+  nsresult mStatus;
 
 private:
   TestGonkCameraHardware(const TestGonkCameraHardware&) = delete;
   TestGonkCameraHardware& operator=(const TestGonkCameraHardware&) = delete;
 };
 
-#define IsTestCase(test)  IsTestCaseInternal((test), __FILE__, __LINE__)
-
-} // namespace android
+} // namespace mozilla
 
 #endif // DOM_CAMERA_TESTGONKCAMERAHARDWARE_H

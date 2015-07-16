@@ -19,9 +19,9 @@
 #include "jspubtd.h"
 
 #include "js/HashTable.h"
+#include "js/TracingAPI.h"
 #include "js/Utility.h"
 #include "js/Vector.h"
-#include "js/TracingAPI.h"
 
 class nsISupports;      // Needed for ObjectPrivateVisitor.
 
@@ -599,6 +599,7 @@ struct CompartmentStats
     macro(Other,   NotLiveGCThing, compartmentTables) \
     macro(Other,   NotLiveGCThing, innerViewsTable) \
     macro(Other,   NotLiveGCThing, lazyArrayBuffersTable) \
+    macro(Other,   NotLiveGCThing, objectMetadataTable) \
     macro(Other,   NotLiveGCThing, crossCompartmentWrappersTable) \
     macro(Other,   NotLiveGCThing, regexpCompartment) \
     macro(Other,   NotLiveGCThing, savedStacksSet)

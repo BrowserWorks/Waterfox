@@ -27,7 +27,7 @@ namespace jsipc {
 #define LOG_STACK()		                                               \
     PR_BEGIN_MACRO                                                             \
     if (StackLoggingEnabled()) {                                               \
-        js_DumpBacktrace(cx);	                                               \
+        js::DumpBacktrace(cx);                                                 \
     }                                                                          \
     PR_END_MACRO
 
@@ -106,7 +106,7 @@ class Logging
             obj = shared->objects_.find(id);
             if (obj) {
                 JSAutoCompartment ac(cx, obj);
-                objDesc = js_ObjectClassName(cx, obj);
+                objDesc = js::ObjectClassName(cx, obj);
             } else {
                 objDesc = "<dead object>";
             }

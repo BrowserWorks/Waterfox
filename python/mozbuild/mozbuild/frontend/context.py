@@ -19,7 +19,6 @@ from __future__ import unicode_literals
 import os
 
 from collections import OrderedDict
-from contextlib import contextmanager
 from mozbuild.util import (
     HierarchicalStringList,
     HierarchicalStringListWithFlagsFactory,
@@ -31,6 +30,7 @@ from mozbuild.util import (
     StrictOrderingOnAppendList,
     StrictOrderingOnAppendListWithFlagsFactory,
     TypedList,
+    TypedNamedTuple,
 )
 import mozpack.path as mozpath
 from types import FunctionType
@@ -60,11 +60,11 @@ class Context(KeyedDefaultDict):
     lots of empty/default values, you have a data structure with only the
     values that were read or touched.
 
-    Instances of variables classes are created by invoking class_name(),
-    except when class_name derives from ContextDerivedValue, in which
-    case class_name(instance_of_the_context) is invoked.
-    A value is added to those calls when instances are created during
-    assignment (setitem).
+    Instances of variables classes are created by invoking ``class_name()``,
+    except when class_name derives from ``ContextDerivedValue`` or
+    ``SubContext``, in which case ``class_name(instance_of_the_context)`` or
+    ``class_name(self)`` is invoked. A value is added to those calls when
+    instances are created during assignment (setitem).
 
     allowed_variables is a dict of the variables that can be set and read in
     this context instance. Keys in this dict are the strings representing keys
@@ -83,7 +83,8 @@ class Context(KeyedDefaultDict):
         # a list to be a problem.
         self._all_paths = []
         self.config = config
-        self.executed_time = 0
+        self.execution_time = 0
+        self._sandbox = None
         KeyedDefaultDict.__init__(self, self._factory)
 
     def push_source(self, path):
@@ -166,7 +167,6 @@ class Context(KeyedDefaultDict):
 
     def _factory(self, key):
         """Function called when requesting a missing key."""
-
         defaults = self._allowed_variables.get(key)
         if not defaults:
             raise KeyError('global_ns', 'get_unknown', key)
@@ -272,6 +272,35 @@ class TemplateContext(Context):
         return Context._validate(self, key, value, True)
 
 
+class SubContext(Context, ContextDerivedValue):
+    """A Context derived from another Context.
+
+    Sub-contexts are intended to be used as context managers.
+
+    Sub-contexts inherit paths and other relevant state from the parent
+    context.
+    """
+    def __init__(self, parent):
+        assert isinstance(parent, Context)
+
+        Context.__init__(self, allowed_variables=self.VARIABLES,
+                         config=parent.config)
+
+        # Copy state from parent.
+        for p in parent.source_stack:
+            self.push_source(p)
+        self._sandbox = parent._sandbox
+
+    def __enter__(self):
+        if not self._sandbox or self._sandbox() is None:
+            raise Exception('a sandbox is required')
+
+        self._sandbox().push_subcontext(self)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self._sandbox().pop_subcontext(self)
+
+
 class FinalTargetValue(ContextDerivedValue, unicode):
     def __new__(cls, context, value=""):
         if not value:
@@ -364,6 +393,137 @@ def ContextDerivedTypedList(type, base_class=List):
             super(_TypedList, self).__init__(iterable)
 
     return _TypedList
+
+
+BugzillaComponent = TypedNamedTuple('BugzillaComponent',
+                        [('product', unicode), ('component', unicode)])
+
+
+class Files(SubContext):
+    """Metadata attached to files.
+
+    It is common to want to annotate files with metadata, such as which
+    Bugzilla component tracks issues with certain files. This sub-context is
+    where we stick that metadata.
+
+    The argument to this sub-context is a file matching pattern that is applied
+    against the host file's directory. If the pattern matches a file whose info
+    is currently being sought, the metadata attached to this instance will be
+    applied to that file.
+
+    Patterns are collections of filename characters with ``/`` used as the
+    directory separate (UNIX-style paths) and ``*`` and ``**`` used to denote
+    wildcard matching.
+
+    Patterns without the ``*`` character are literal matches and will match at
+    most one entity.
+
+    Patterns with ``*`` or ``**`` are wildcard matches. ``*`` matches files
+    at least within a single directory. ``**`` matches files across several
+    directories.
+
+    ``foo.html``
+       Will match only the ``foo.html`` file in the current directory.
+    ``*.jsm``
+       Will match all ``.jsm`` files in the current directory.
+    ``**/*.cpp``
+       Will match all ``.cpp`` files in this and all child directories.
+    ``foo/*.css``
+       Will match all ``.css`` files in the ``foo/`` directory.
+    ``bar/*``
+       Will match all files in the ``bar/`` directory and all of its
+       children directories.
+    ``bar/**``
+       This is equivalent to ``bar/*`` above.
+    ``bar/**/foo``
+       Will match all ``foo`` files in the ``bar/`` directory and all of its
+       children directories.
+
+    The difference in behavior between ``*`` and ``**`` is only evident if
+    a pattern follows the ``*`` or ``**``. A pattern ending with ``*`` is
+    greedy. ``**`` is needed when you need an additional pattern after the
+    wildcard. e.g. ``**/foo``.
+    """
+
+    VARIABLES = {
+        'BUG_COMPONENT': (BugzillaComponent, tuple,
+            """The bug component that tracks changes to these files.
+
+            Values are a 2-tuple of unicode describing the Bugzilla product and
+            component. e.g. ``('Core', 'Build Config')``.
+            """, None),
+
+        'FINAL': (bool, bool,
+            """Mark variable assignments as finalized.
+
+            During normal processing, values from newer Files contexts
+            overwrite previously set values. Last write wins. This behavior is
+            not always desired. ``FINAL`` provides a mechanism to prevent
+            further updates to a variable.
+
+            When ``FINAL`` is set, the value of all variables defined in this
+            context are marked as frozen and all subsequent writes to them
+            are ignored during metadata reading.
+
+            See :ref:`mozbuild_files_metadata_finalizing` for more info.
+            """, None),
+    }
+
+    def __init__(self, parent, pattern=None):
+        super(Files, self).__init__(parent)
+        self.pattern = pattern
+        self.finalized = set()
+
+    def __iadd__(self, other):
+        assert isinstance(other, Files)
+
+        for k, v in other.items():
+            # Ignore updates to finalized flags.
+            if k in self.finalized:
+                continue
+
+            # Only finalize variables defined in this instance.
+            if k == 'FINAL':
+                self.finalized |= set(other) - {'FINAL'}
+                continue
+
+            self[k] = v
+
+        return self
+
+    def asdict(self):
+        """Return this instance as a dict with built-in data structures.
+
+        Call this to obtain an object suitable for serializing.
+        """
+        d = {}
+        if 'BUG_COMPONENT' in self:
+            bc = self['BUG_COMPONENT']
+            d['bug_component'] = (bc.product, bc.component)
+
+        return d
+
+
+# This defines functions that create sub-contexts.
+#
+# Values are classes that are SubContexts. The class name will be turned into
+# a function that when called emits an instance of that class.
+#
+# Arbitrary arguments can be passed to the class constructor. The first
+# argument is always the parent context. It is up to each class to perform
+# argument validation.
+SUBCONTEXTS = [
+    Files,
+]
+
+for cls in SUBCONTEXTS:
+    if not issubclass(cls, SubContext):
+        raise ValueError('SUBCONTEXTS entry not a SubContext class: %s' % cls)
+
+    if not hasattr(cls, 'VARIABLES'):
+        raise ValueError('SUBCONTEXTS entry does not have VARIABLES: %s' % cls)
+
+SUBCONTEXTS = {cls.__name__: cls for cls in SUBCONTEXTS}
 
 
 # This defines the set of mutable global variables.
@@ -475,6 +635,14 @@ VARIABLES = {
         supported for passing to scripts, and that all arguments provided
         to the script should be filenames relative to the directory in which
         the moz.build file is located.
+
+        To enable using the same script for generating multiple files with
+        slightly different non-filename parameters, alternative entry points
+        into ``script`` can be specified::
+
+          GENERATED_FILES += ['bar.c']
+          bar = GENERATED_FILES['bar.c']
+          bar.script = 'generate.py:make_bar'
         """, 'export'),
 
     'DEFINES': (OrderedDict, dict,

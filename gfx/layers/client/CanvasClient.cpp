@@ -110,7 +110,6 @@ CanvasClient2D::Update(gfx::IntSize aSize, ClientCanvasLayer* aLayer)
   }
 
   if (updated) {
-    GetForwarder()->UpdatedTexture(this, mBuffer, nullptr);
     GetForwarder()->UseTexture(this, mBuffer);
     mBuffer->SyncWithObject(GetForwarder()->GetSyncObject());
   }
@@ -387,7 +386,6 @@ CanvasClientSharedSurface::Update(gfx::IntSize aSize, ClientCanvasLayer* aLayer)
   // Add the new TexClient.
   MOZ_ALWAYS_TRUE( AddTextureClient(newTex) );
 
-#ifdef MOZ_WIDGET_GONK
   // Remove the old TexClient.
   if (mFrontTex) {
     // remove old buffer from CompositableHost
@@ -400,12 +398,10 @@ CanvasClientSharedSurface::Update(gfx::IntSize aSize, ClientCanvasLayer* aLayer)
 
     mFrontTex = nullptr;
   }
-#endif
 
   // Use the new TexClient.
   mFrontTex = newTex;
 
-  forwarder->UpdatedTexture(this, mFrontTex, nullptr);
   forwarder->UseTexture(this, mFrontTex);
 }
 

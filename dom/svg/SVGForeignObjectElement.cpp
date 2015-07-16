@@ -16,9 +16,9 @@ namespace mozilla {
 namespace dom {
 
 JSObject*
-SVGForeignObjectElement::WrapNode(JSContext *aCx)
+SVGForeignObjectElement::WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return SVGForeignObjectElementBinding::Wrap(aCx, this);
+  return SVGForeignObjectElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 nsSVGElement::LengthInfo SVGForeignObjectElement::sLengthInfo[4] =
@@ -117,7 +117,7 @@ SVGForeignObjectElement::BindToTree(nsIDocument* aDocument,
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsIDocument* doc = GetComposedDoc();
-  if (doc && doc->IsSVG()) {
+  if (doc && doc->IsSVGDocument()) {
     // We assume that we're going to have HTML content, so we ensure that the
     // UA style sheets that nsDocumentViewer::CreateStyleSet skipped when
     // it saw the document was an SVG document are loaded.

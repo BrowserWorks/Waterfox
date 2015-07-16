@@ -234,6 +234,15 @@ class MacroAssemblerMIPS : public Assembler
         ma_li(ScratchRegister, imm);
         ma_b(lhs, ScratchRegister, l, c, jumpKind);
     }
+    void ma_b(Register lhs, ImmWord imm, Label* l, Condition c, JumpKind jumpKind = LongJump)
+    {
+        ma_b(lhs, Imm32(uint32_t(imm.value)), l, c, jumpKind);
+    }
+    void ma_b(Address addr, ImmWord imm, Label* l, Condition c, JumpKind jumpKind = LongJump)
+    {
+        ma_b(addr, Imm32(uint32_t(imm.value)), l, c, jumpKind);
+    }
+
     void ma_b(Register lhs, Address addr, Label* l, Condition c, JumpKind jumpKind = LongJump);
     void ma_b(Address addr, Imm32 imm, Label* l, Condition c, JumpKind jumpKind = LongJump);
     void ma_b(Address addr, ImmGCPtr imm, Label* l, Condition c, JumpKind jumpKind = LongJump);
@@ -333,8 +342,16 @@ class MacroAssemblerMIPS : public Assembler
     void ma_cmp_set_float32(Register dst, FloatRegister lhs, FloatRegister rhs, DoubleCondition c);
 };
 
+class MacroAssembler;
+
 class MacroAssemblerMIPSCompat : public MacroAssemblerMIPS
 {
+  private:
+    // Perform a downcast. Should be removed by Bug 996602.
+    MacroAssembler& asMasm();
+    const MacroAssembler& asMasm() const;
+
+  private:
     // Number of bytes the stack is adjusted inside a call to C. Calls to C may
     // not be nested.
     bool inCall_;
@@ -943,14 +960,7 @@ public:
         ma_push(reg);
     }
     void pushValue(const Address& addr);
-    void Push(const ValueOperand& val) {
-        pushValue(val);
-        framePushed_ += sizeof(Value);
-    }
-    void Pop(const ValueOperand& val) {
-        popValue(val);
-        framePushed_ -= sizeof(Value);
-    }
+
     void storePayload(const Value& val, Address dest);
     void storePayload(Register src, Address dest);
     void storePayload(const Value& val, const BaseIndex& dest);
@@ -1017,6 +1027,18 @@ public:
     void atomicFetchAdd32(const S& value, const T& mem, Register temp, Register output) {
         MOZ_CRASH("NYI");
     }
+    template <typename T, typename S>
+    void atomicAdd8(const T& value, const S& mem) {
+        MOZ_CRASH("NYI");
+    }
+    template <typename T, typename S>
+    void atomicAdd16(const T& value, const S& mem) {
+        MOZ_CRASH("NYI");
+    }
+    template <typename T, typename S>
+    void atomicAdd32(const T& value, const S& mem) {
+        MOZ_CRASH("NYI");
+    }
 
     template<typename T, typename S>
     void atomicFetchSub8SignExtend(const S& value, const T& mem, Register temp, Register output) {
@@ -1036,6 +1058,15 @@ public:
     }
     template<typename T, typename S>
     void atomicFetchSub32(const S& value, const T& mem, Register temp, Register output) {
+        MOZ_CRASH("NYI");
+    }
+    template <typename T, typename S> void atomicSub8(const T& value, const S& mem) {
+        MOZ_CRASH("NYI");
+    }
+    template <typename T, typename S> void atomicSub16(const T& value, const S& mem) {
+        MOZ_CRASH("NYI");
+    }
+    template <typename T, typename S> void atomicSub32(const T& value, const S& mem) {
         MOZ_CRASH("NYI");
     }
 
@@ -1059,6 +1090,18 @@ public:
     void atomicFetchAnd32(const S& value, const T& mem, Register temp, Register output) {
         MOZ_CRASH("NYI");
     }
+    template <typename T, typename S>
+    void atomicAnd8(const T& value, const S& mem) {
+        MOZ_CRASH("NYI");
+    }
+    template <typename T, typename S>
+    void atomicAnd16(const T& value, const S& mem) {
+        MOZ_CRASH("NYI");
+    }
+    template <typename T, typename S>
+    void atomicAnd32(const T& value, const S& mem) {
+        MOZ_CRASH("NYI");
+    }
 
     template<typename T, typename S>
     void atomicFetchOr8SignExtend(const S& value, const T& mem, Register temp, Register output) {
@@ -1078,6 +1121,18 @@ public:
     }
     template<typename T, typename S>
     void atomicFetchOr32(const S& value, const T& mem, Register temp, Register output) {
+        MOZ_CRASH("NYI");
+    }
+    template <typename T, typename S>
+    void atomicOr8(const T& value, const S& mem) {
+        MOZ_CRASH("NYI");
+    }
+    template <typename T, typename S>
+    void atomicOr16(const T& value, const S& mem) {
+        MOZ_CRASH("NYI");
+    }
+    template <typename T, typename S>
+    void atomicOr32(const T& value, const S& mem) {
         MOZ_CRASH("NYI");
     }
 
@@ -1101,32 +1156,17 @@ public:
     void atomicFetchXor32(const S& value, const T& mem, Register temp, Register output) {
         MOZ_CRASH("NYI");
     }
-
-    void Push(Register reg) {
-        ma_push(reg);
-        adjustFrame(sizeof(intptr_t));
+    template <typename T, typename S>
+    void atomicXor8(const T& value, const S& mem) {
+        MOZ_CRASH("NYI");
     }
-    void Push(const Imm32 imm) {
-        ma_li(ScratchRegister, imm);
-        ma_push(ScratchRegister);
-        adjustFrame(sizeof(intptr_t));
+    template <typename T, typename S>
+    void atomicXor16(const T& value, const S& mem) {
+        MOZ_CRASH("NYI");
     }
-    void Push(const ImmWord imm) {
-        ma_li(ScratchRegister, Imm32(imm.value));
-        ma_push(ScratchRegister);
-        adjustFrame(sizeof(intptr_t));
-    }
-    void Push(const ImmPtr imm) {
-        Push(ImmWord(uintptr_t(imm.value)));
-    }
-    void Push(const ImmGCPtr ptr) {
-        ma_li(ScratchRegister, ptr);
-        ma_push(ScratchRegister);
-        adjustFrame(sizeof(intptr_t));
-    }
-    void Push(FloatRegister f) {
-        ma_push(f);
-        adjustFrame(sizeof(double));
+    template <typename T, typename S>
+    void atomicXor32(const T& value, const S& mem) {
+        MOZ_CRASH("NYI");
     }
 
     CodeOffsetLabel PushWithPatch(ImmWord word) {
@@ -1137,10 +1177,6 @@ public:
         return PushWithPatch(ImmWord(uintptr_t(imm.value)));
     }
 
-    void Pop(Register reg) {
-        ma_pop(reg);
-        adjustFrame(-sizeof(intptr_t));
-    }
     void implicitPop(uint32_t args) {
         MOZ_ASSERT(args % sizeof(intptr_t) == 0);
         adjustFrame(-args);
@@ -1163,7 +1199,7 @@ public:
     // Makes a call using the only two methods that it is sane for indep code
     // to make a call.
     void callJit(Register callee);
-    void callJitFromAsmJS(Register callee) { call(callee); }
+    void callJitFromAsmJS(Register callee) { callJit(callee); }
 
     void reserveStack(uint32_t amount);
     void freeStack(uint32_t amount);
@@ -1256,15 +1292,35 @@ public:
 
     void loadPrivate(const Address& address, Register dest);
 
+    void loadInt32x1(const Address& addr, FloatRegister dest) { MOZ_CRASH("NYI"); }
+    void loadInt32x1(const BaseIndex& addr, FloatRegister dest) { MOZ_CRASH("NYI"); }
+    void loadInt32x2(const Address& addr, FloatRegister dest) { MOZ_CRASH("NYI"); }
+    void loadInt32x2(const BaseIndex& addr, FloatRegister dest) { MOZ_CRASH("NYI"); }
+    void loadInt32x3(const Address& src, FloatRegister dest) { MOZ_CRASH("NYI"); }
+    void loadInt32x3(const BaseIndex& src, FloatRegister dest) { MOZ_CRASH("NYI"); }
+    void storeInt32x1(FloatRegister src, const Address& dest) { MOZ_CRASH("NYI"); }
+    void storeInt32x1(FloatRegister src, const BaseIndex& dest) { MOZ_CRASH("NYI"); }
+    void storeInt32x2(FloatRegister src, const Address& dest) { MOZ_CRASH("NYI"); }
+    void storeInt32x2(FloatRegister src, const BaseIndex& dest) { MOZ_CRASH("NYI"); }
+    void storeInt32x3(FloatRegister src, const Address& dest) { MOZ_CRASH("NYI"); }
+    void storeInt32x3(FloatRegister src, const BaseIndex& dest) { MOZ_CRASH("NYI"); }
     void loadAlignedInt32x4(const Address& addr, FloatRegister dest) { MOZ_CRASH("NYI"); }
     void storeAlignedInt32x4(FloatRegister src, Address addr) { MOZ_CRASH("NYI"); }
     void loadUnalignedInt32x4(const Address& addr, FloatRegister dest) { MOZ_CRASH("NYI"); }
+    void loadUnalignedInt32x4(const BaseIndex& addr, FloatRegister dest) { MOZ_CRASH("NYI"); }
     void storeUnalignedInt32x4(FloatRegister src, Address addr) { MOZ_CRASH("NYI"); }
+    void storeUnalignedInt32x4(FloatRegister src, BaseIndex addr) { MOZ_CRASH("NYI"); }
 
+    void loadFloat32x3(const Address& src, FloatRegister dest) { MOZ_CRASH("NYI"); }
+    void loadFloat32x3(const BaseIndex& src, FloatRegister dest) { MOZ_CRASH("NYI"); }
+    void storeFloat32x3(FloatRegister src, const Address& dest) { MOZ_CRASH("NYI"); }
+    void storeFloat32x3(FloatRegister src, const BaseIndex& dest) { MOZ_CRASH("NYI"); }
     void loadAlignedFloat32x4(const Address& addr, FloatRegister dest) { MOZ_CRASH("NYI"); }
     void storeAlignedFloat32x4(FloatRegister src, Address addr) { MOZ_CRASH("NYI"); }
     void loadUnalignedFloat32x4(const Address& addr, FloatRegister dest) { MOZ_CRASH("NYI"); }
+    void loadUnalignedFloat32x4(const BaseIndex& addr, FloatRegister dest) { MOZ_CRASH("NYI"); }
     void storeUnalignedFloat32x4(FloatRegister src, Address addr) { MOZ_CRASH("NYI"); }
+    void storeUnalignedFloat32x4(FloatRegister src, BaseIndex addr) { MOZ_CRASH("NYI"); }
 
     void loadDouble(const Address& addr, FloatRegister dest);
     void loadDouble(const BaseIndex& src, FloatRegister dest);

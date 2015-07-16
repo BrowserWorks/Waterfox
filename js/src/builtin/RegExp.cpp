@@ -141,18 +141,10 @@ js::ExecuteRegExpLegacy(JSContext* cx, RegExpStatics* res, RegExpObject& reobj,
 
 /*
  * Compile a new |RegExpShared| for the |RegExpObject|.
- *
- * Per ECMAv5 15.10.4.1, we act on combinations of (pattern, flags) as
- * arguments:
- *
- *  RegExp, undefined => flags := pattern.flags
- *  RegExp, _ => throw TypeError
- *  _ => pattern := ToString(pattern) if defined(pattern) else ''
- *       flags := ToString(flags) if defined(flags) else ''
  */
 static bool
 CompileRegExpObject(JSContext* cx, RegExpObjectBuilder& builder, CallArgs args,
-                    RegExpStaticsUse staticsUse)
+                    RegExpStaticsUse staticsUse, RegExpCreationMode creationMode)
 {
     if (args.length() == 0) {
         MOZ_ASSERT(staticsUse == UseRegExpStatics);
@@ -169,11 +161,16 @@ CompileRegExpObject(JSContext* cx, RegExpObjectBuilder& builder, CallArgs args,
 
     RootedValue sourceValue(cx, args[0]);
 
-    /*
-     * If we get passed in an object whose internal [[Class]] property is
-     * "RegExp", return a new object with the same source/flags.
-     */
     if (IsObjectWithClass(sourceValue, ESClass_RegExp, cx)) {
+        /*
+         * For RegExp.prototype.compile, if the first argument is a RegExp object,
+         * the second argument must be undefined. Otherwise, throw a TypeError.
+         */
+        if (args.hasDefined(1) && creationMode == CreateForCompile) {
+            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_NEWREGEXP_FLAGGED);
+            return false;
+        }
+
         /*
          * Beware, sourceObj may be a (transparent) proxy to a RegExp, so only
          * use generic (proxyable) operations on sourceObj that do not assume
@@ -181,22 +178,30 @@ CompileRegExpObject(JSContext* cx, RegExpObjectBuilder& builder, CallArgs args,
          */
         RootedObject sourceObj(cx, &sourceValue.toObject());
 
-        if (args.hasDefined(1)) {
-            JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_NEWREGEXP_FLAGGED);
-            return false;
-        }
-
-        /*
-         * Only extract the 'flags' out of sourceObj; do not reuse the
-         * RegExpShared since it may be from a different compartment.
-         */
         RegExpFlag flags;
         {
+            /*
+             * Extract the 'source' from sourceObj; do not reuse the RegExpShared
+             * since it may be from a different compartment.
+             */
             RegExpGuard g(cx);
             if (!RegExpToShared(cx, sourceObj, &g))
                 return false;
 
-            flags = g->getFlags();
+            /*
+             * If args[1] is not undefined, then parse the 'flags' from args[1].
+             * Otherwise, extract the 'flags' from sourceObj.
+             */
+            if (args.hasDefined(1)) {
+                flags = RegExpFlag(0);
+                RootedString flagStr(cx, ToString<CanGC>(cx, args[1]));
+                if (!flagStr)
+                    return false;
+                if (!ParseRegExpFlags(cx, flagStr, &flags))
+                    return false;
+            } else {
+                flags = g->getFlags();
+            }
         }
 
         /*
@@ -233,7 +238,6 @@ CompileRegExpObject(JSContext* cx, RegExpObjectBuilder& builder, CallArgs args,
         RootedString flagStr(cx, ToString<CanGC>(cx, args[1]));
         if (!flagStr)
             return false;
-        args[1].setString(flagStr);
         if (!ParseRegExpFlags(cx, flagStr, &flags))
             return false;
     }
@@ -273,7 +277,7 @@ regexp_compile_impl(JSContext* cx, CallArgs args)
 {
     MOZ_ASSERT(IsRegExp(args.thisv()));
     RegExpObjectBuilder builder(cx, &args.thisv().toObject().as<RegExpObject>());
-    return CompileRegExpObject(cx, builder, args, UseRegExpStatics);
+    return CompileRegExpObject(cx, builder, args, UseRegExpStatics, CreateForCompile);
 }
 
 static bool
@@ -283,8 +287,8 @@ regexp_compile(JSContext* cx, unsigned argc, Value* vp)
     return CallNonGenericMethod<IsRegExp, regexp_compile_impl>(cx, args);
 }
 
-static bool
-regexp_construct(JSContext* cx, unsigned argc, Value* vp)
+bool
+js::regexp_construct(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
 
@@ -304,7 +308,7 @@ regexp_construct(JSContext* cx, unsigned argc, Value* vp)
     }
 
     RegExpObjectBuilder builder(cx);
-    return CompileRegExpObject(cx, builder, args, UseRegExpStatics);
+    return CompileRegExpObject(cx, builder, args, UseRegExpStatics, CreateForConstruct);
 }
 
 bool
@@ -318,88 +322,7 @@ js::regexp_construct_no_statics(JSContext* cx, unsigned argc, Value* vp)
     MOZ_ASSERT(!args.isConstructing());
 
     RegExpObjectBuilder builder(cx);
-    return CompileRegExpObject(cx, builder, args, DontUseRegExpStatics);
-}
-
-MOZ_ALWAYS_INLINE bool
-regexp_toString_impl(JSContext* cx, CallArgs args)
-{
-    MOZ_ASSERT(IsRegExp(args.thisv()));
-
-    JSString* str = args.thisv().toObject().as<RegExpObject>().toString(cx);
-    if (!str)
-        return false;
-
-    args.rval().setString(str);
-    return true;
-}
-
-static bool
-regexp_toString(JSContext* cx, unsigned argc, Value* vp)
-{
-    CallArgs args = CallArgsFromVp(argc, vp);
-    return CallNonGenericMethod<IsRegExp, regexp_toString_impl>(cx, args);
-}
-
-/* ES6 draft rev29 21.2.5.3 RegExp.prototype.flags */
-bool
-regexp_flags(JSContext* cx, unsigned argc, JS::Value* vp)
-{
-    CallArgs args = CallArgsFromVp(argc, vp);
-
-    /* Steps 1-2. */
-    if (!args.thisv().isObject()) {
-        char* bytes = DecompileValueGenerator(cx, JSDVG_SEARCH_STACK, args.thisv(), NullPtr());
-        if (!bytes)
-            return false;
-        JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_UNEXPECTED_TYPE,
-                             bytes, "not an object");
-        js_free(bytes);
-        return false;
-    }
-    RootedObject thisObj(cx, &args.thisv().toObject());
-
-    /* Step 3. */
-    StringBuffer sb(cx);
-
-    /* Steps 4-6. */
-    RootedValue global(cx);
-    if (!GetProperty(cx, thisObj, thisObj, cx->names().global, &global))
-        return false;
-    if (ToBoolean(global) && !sb.append('g'))
-        return false;
-
-    /* Steps 7-9. */
-    RootedValue ignoreCase(cx);
-    if (!GetProperty(cx, thisObj, thisObj, cx->names().ignoreCase, &ignoreCase))
-        return false;
-    if (ToBoolean(ignoreCase) && !sb.append('i'))
-        return false;
-
-    /* Steps 10-12. */
-    RootedValue multiline(cx);
-    if (!GetProperty(cx, thisObj, thisObj, cx->names().multiline, &multiline))
-        return false;
-    if (ToBoolean(multiline) && !sb.append('m'))
-        return false;
-
-    /* Steps 13-15. */
-    RootedValue unicode(cx);
-    if (!GetProperty(cx, thisObj, thisObj, cx->names().unicode, &unicode))
-        return false;
-    if (ToBoolean(unicode) && !sb.append('u'))
-        return false;
-
-    /* Steps 16-18. */
-    RootedValue sticky(cx);
-    if (!GetProperty(cx, thisObj, thisObj, cx->names().sticky, &sticky))
-        return false;
-    if (ToBoolean(sticky) && !sb.append('y'))
-        return false;
-
-    /* Step 19. */
-    args.rval().setString(sb.finishString());
-    return true;
+    return CompileRegExpObject(cx, builder, args, DontUseRegExpStatics, CreateForConstruct);
 }
 
 /* ES6 draft rev32 21.2.5.4. */
@@ -482,8 +405,8 @@ regexp_sticky(JSContext* cx, unsigned argc, JS::Value* vp)
     return CallNonGenericMethod<IsRegExp, regexp_sticky_impl>(cx, args);
 }
 
-static const JSPropertySpec regexp_properties[] = {
-    JS_PSG("flags", regexp_flags, 0),
+const JSPropertySpec js::regexp_properties[] = {
+    JS_SELF_HOSTED_GET("flags", "RegExpFlagsGetter", 0),
     JS_PSG("global", regexp_global, 0),
     JS_PSG("ignoreCase", regexp_ignoreCase, 0),
     JS_PSG("multiline", regexp_multiline, 0),
@@ -491,11 +414,11 @@ static const JSPropertySpec regexp_properties[] = {
     JS_PS_END
 };
 
-static const JSFunctionSpec regexp_methods[] = {
+const JSFunctionSpec js::regexp_methods[] = {
 #if JS_HAS_TOSOURCE
-    JS_FN(js_toSource_str,  regexp_toString,    0,0),
+    JS_SELF_HOSTED_FN(js_toSource_str, "RegExpToString", 0, 0),
 #endif
-    JS_FN(js_toString_str,  regexp_toString,    0,0),
+    JS_SELF_HOSTED_FN(js_toString_str, "RegExpToString", 0, 0),
     JS_FN("compile",        regexp_compile,     2,0),
     JS_FN("exec",           regexp_exec,        1,0),
     JS_FN("test",           regexp_test,        1,0),
@@ -593,7 +516,7 @@ static_multiline_setter(JSContext* cx, unsigned argc, Value* vp)
     return true;
 }
 
-static const JSPropertySpec regexp_static_props[] = {
+const JSPropertySpec js::regexp_static_props[] = {
     JS_PSGS("input", static_input_getter, static_input_setter,
             JSPROP_PERMANENT | JSPROP_ENUMERATE),
     JS_PSGS("multiline", static_multiline_getter, static_multiline_setter,
@@ -621,13 +544,11 @@ static const JSPropertySpec regexp_static_props[] = {
 };
 
 JSObject*
-js_InitRegExpClass(JSContext* cx, HandleObject obj)
+js::CreateRegExpPrototype(JSContext* cx, JSProtoKey key)
 {
-    MOZ_ASSERT(obj->isNative());
+    MOZ_ASSERT(key == JSProto_RegExp);
 
-    Rooted<GlobalObject*> global(cx, &obj->as<GlobalObject>());
-
-    Rooted<RegExpObject*> proto(cx, global->createBlankPrototype<RegExpObject>(cx));
+    Rooted<RegExpObject*> proto(cx, cx->global()->createBlankPrototype<RegExpObject>(cx));
     if (!proto)
         return nullptr;
     proto->NativeObject::setPrivate(nullptr);
@@ -635,24 +556,6 @@ js_InitRegExpClass(JSContext* cx, HandleObject obj)
     HandlePropertyName empty = cx->names().emptyRegExp;
     RegExpObjectBuilder builder(cx, proto);
     if (!builder.build(empty, RegExpFlag(0)))
-        return nullptr;
-
-    if (!DefinePropertiesAndFunctions(cx, proto, regexp_properties, regexp_methods))
-        return nullptr;
-
-    RootedFunction ctor(cx);
-    ctor = global->createConstructor(cx, regexp_construct, cx->names().RegExp, 2);
-    if (!ctor)
-        return nullptr;
-
-    if (!LinkConstructorAndPrototype(cx, ctor, proto))
-        return nullptr;
-
-    /* Add static properties to the RegExp constructor. */
-    if (!JS_DefineProperties(cx, ctor, regexp_static_props))
-        return nullptr;
-
-    if (!GlobalObject::initBuiltinConstructor(cx, global, JSProto_RegExp, ctor, proto))
         return nullptr;
 
     return proto;

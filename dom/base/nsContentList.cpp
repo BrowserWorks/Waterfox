@@ -147,9 +147,9 @@ NS_IMPL_ADDREF_INHERITED(nsSimpleContentList, nsBaseContentList)
 NS_IMPL_RELEASE_INHERITED(nsSimpleContentList, nsBaseContentList)
 
 JSObject*
-nsSimpleContentList::WrapObject(JSContext *cx)
+nsSimpleContentList::WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto)
 {
-  return NodeListBinding::Wrap(cx, this);
+  return NodeListBinding::Wrap(cx, this, aGivenProto);
 }
 
 // Hashtable for storing nsContentLists
@@ -259,16 +259,16 @@ const nsCacheableFuncStringContentList::ContentListType
 #endif
 
 JSObject*
-nsCacheableFuncStringNodeList::WrapObject(JSContext *cx)
+nsCacheableFuncStringNodeList::WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto)
 {
-  return NodeListBinding::Wrap(cx, this);
+  return NodeListBinding::Wrap(cx, this, aGivenProto);
 }
 
 
 JSObject*
-nsCacheableFuncStringHTMLCollection::WrapObject(JSContext *cx)
+nsCacheableFuncStringHTMLCollection::WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto)
 {
-  return HTMLCollectionBinding::Wrap(cx, this);
+  return HTMLCollectionBinding::Wrap(cx, this, aGivenProto);
 }
 
 // Hashtable for storing nsCacheableFuncStringContentList
@@ -419,7 +419,7 @@ nsContentList::nsContentList(nsINode* aRootNode,
   // not parser-created and don't need to be flushing stuff under us
   // to get our kids right.
   nsIDocument* doc = mRootNode->GetUncomposedDoc();
-  mFlushesNeeded = doc && !doc->IsHTML();
+  mFlushesNeeded = doc && !doc->IsHTMLDocument();
 }
 
 nsContentList::nsContentList(nsINode* aRootNode,
@@ -452,7 +452,7 @@ nsContentList::nsContentList(nsINode* aRootNode,
   // not parser-created and don't need to be flushing stuff under us
   // to get our kids right.
   nsIDocument* doc = mRootNode->GetUncomposedDoc();
-  mFlushesNeeded = doc && !doc->IsHTML();
+  mFlushesNeeded = doc && !doc->IsHTMLDocument();
 }
 
 nsContentList::~nsContentList()
@@ -469,9 +469,9 @@ nsContentList::~nsContentList()
 }
 
 JSObject*
-nsContentList::WrapObject(JSContext *cx)
+nsContentList::WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto)
 {
-  return HTMLCollectionBinding::Wrap(cx, this);
+  return HTMLCollectionBinding::Wrap(cx, this, aGivenProto);
 }
 
 NS_IMPL_ISUPPORTS_INHERITED(nsContentList, nsBaseContentList,
@@ -853,7 +853,7 @@ nsContentList::Match(Element *aElement)
     return toReturn;
 
   bool matchHTML = aElement->GetNameSpaceID() == kNameSpaceID_XHTML &&
-    aElement->OwnerDoc()->IsHTML();
+    aElement->OwnerDoc()->IsHTMLDocument();
  
   if (unknown) {
     return matchHTML ? ni->QualifiedNameEquals(mHTMLMatchAtom) :

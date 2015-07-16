@@ -31,6 +31,7 @@ public:
   enum {
     eThemeGeometryTypeTitlebar = eThemeGeometryTypeUnknown + 1,
     eThemeGeometryTypeToolbar,
+    eThemeGeometryTypeToolbox,
     eThemeGeometryTypeWindowButtons,
     eThemeGeometryTypeFullscreenButton,
     eThemeGeometryTypeMenu,
@@ -91,7 +92,7 @@ public:
 protected:
   virtual ~nsNativeThemeCocoa();
 
-  nsIntMargin RTLAwareMargin(const nsIntMargin& aMargin, nsIFrame* aFrame);
+  nsIntMargin DirectionAwareMargin(const nsIntMargin& aMargin, nsIFrame* aFrame);
   nsIFrame* SeparatorResponsibility(nsIFrame* aBefore, nsIFrame* aAfter);
   CGRect SeparatorAdjustedRect(CGRect aRect, nsIFrame* aLeft,
                                nsIFrame* aCurrent, nsIFrame* aRight);

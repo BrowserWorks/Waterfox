@@ -15,7 +15,7 @@ namespace mozilla {
 namespace dom {
 
 class HTMLPreElement final : public nsGenericHTMLElement,
-                                 public nsIDOMHTMLPreElement
+                             public nsIDOMHTMLPreElement
 {
 public:
   explicit HTMLPreElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
@@ -52,7 +52,7 @@ public:
 protected:
   virtual ~HTMLPreElement();
 
-  virtual JSObject* WrapNode(JSContext *aCx) override;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 private:
   static void MapAttributesIntoRule(const nsMappedAttributes* aAttributes,

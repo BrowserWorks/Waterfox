@@ -140,7 +140,7 @@ let Bookmarks = Object.freeze({
     // dateAdded may be imposed by the caller.
     let time = (info && info.dateAdded) || new Date();
     let insertInfo = validateBookmarkObject(info,
-      { type: { required: true }
+      { type: { defaultValue: this.TYPE_BOOKMARK }
       , index: { defaultValue: this.DEFAULT_INDEX }
       , url: { requiredIf: b => b.type == this.TYPE_BOOKMARK
              , validIf: b => b.type == this.TYPE_BOOKMARK }
@@ -258,7 +258,7 @@ let Bookmarks = Object.freeze({
                         , validIf: b => b.lastModified >= item.dateAdded }
         });
 
-      let db = yield DBConnPromised;
+      let db = yield PlacesUtils.promiseWrappedConnection();
       let parent;
       if (updateInfo.hasOwnProperty("parentGuid")) {
         if (item.type == this.TYPE_FOLDER) {
@@ -426,7 +426,7 @@ let Bookmarks = Object.freeze({
    * @resolves once the removal is complete.
    */
   eraseEverything: Task.async(function* () {
-    let db = yield DBConnPromised;
+    let db = yield PlacesUtils.promiseWrappedConnection();
     yield db.executeTransaction(function* () {
       const folderGuids = [this.toolbarGuid, this.menuGuid, this.unfiledGuid];
       yield removeFoldersContents(db, folderGuids);
@@ -670,29 +670,11 @@ function notify(observers, notification, args) {
   }
 }
 
-XPCOMUtils.defineLazyGetter(this, "DBConnPromised",
-  () => new Promise((resolve, reject) => {
-    Sqlite.wrapStorageConnection({ connection: PlacesUtils.history.DBConnection } )
-          .then(db => {
-      try {
-        Sqlite.shutdown.addBlocker("Places Bookmarks.jsm wrapper closing",
-                                   db.close.bind(db));
-      }
-      catch (ex) {
-        // It's too late to block shutdown, just close the connection.
-        db.close();
-        reject(ex);
-      }
-      resolve(db);
-    });
-  })
-);
-
 ////////////////////////////////////////////////////////////////////////////////
 // Update implementation.
 
 function* updateBookmark(info, item, newParent) {
-  let db = yield DBConnPromised;
+  let db = yield PlacesUtils.promiseWrappedConnection();
 
   let tuples = new Map();
   if (info.hasOwnProperty("lastModified"))
@@ -779,7 +761,7 @@ function* updateBookmark(info, item, newParent) {
 // Insert implementation.
 
 function* insertBookmark(item, parent) {
-  let db = yield DBConnPromised;
+  let db = yield PlacesUtils.promiseWrappedConnection();
 
   // If a guid was not provided, generate one, so we won't need to fetch the
   // bookmark just after having created it.
@@ -834,7 +816,7 @@ function* insertBookmark(item, parent) {
 // Fetch implementation.
 
 function* fetchBookmark(info) {
-  let db = yield DBConnPromised;
+  let db = yield PlacesUtils.promiseWrappedConnection();
 
   let rows = yield db.executeCached(
     `SELECT b.guid, IFNULL(p.guid, "") AS parentGuid, b.position AS 'index',
@@ -852,7 +834,7 @@ function* fetchBookmark(info) {
 }
 
 function* fetchBookmarkByPosition(info) {
-  let db = yield DBConnPromised;
+  let db = yield PlacesUtils.promiseWrappedConnection();
   let index = info.index == Bookmarks.DEFAULT_INDEX ? null : info.index;
 
   let rows = yield db.executeCached(
@@ -874,7 +856,7 @@ function* fetchBookmarkByPosition(info) {
 }
 
 function* fetchBookmarksByURL(info) {
-  let db = yield DBConnPromised;
+  let db = yield PlacesUtils.promiseWrappedConnection();
 
   let rows = yield db.executeCached(
     `SELECT b.guid, IFNULL(p.guid, "") AS parentGuid, b.position AS 'index',
@@ -895,7 +877,7 @@ function* fetchBookmarksByURL(info) {
 }
 
 function* fetchBookmarksByParent(info) {
-  let db = yield DBConnPromised;
+  let db = yield PlacesUtils.promiseWrappedConnection();
 
   let rows = yield db.executeCached(
     `SELECT b.guid, IFNULL(p.guid, "") AS parentGuid, b.position AS 'index',
@@ -917,7 +899,7 @@ function* fetchBookmarksByParent(info) {
 // Remove implementation.
 
 function* removeBookmark(item) {
-  let db = yield DBConnPromised;
+  let db = yield PlacesUtils.promiseWrappedConnection();
 
   let isUntagging = item._grandParentId == PlacesUtils.tagsFolderId;
 
@@ -960,7 +942,7 @@ function* removeBookmark(item) {
 // Reorder implementation.
 
 function* reorderChildren(parent, orderedChildrenGuids) {
-  let db = yield DBConnPromised;
+  let db = yield PlacesUtils.promiseWrappedConnection();
 
   return db.executeTransaction(function* () {
     // Select all of the direct children for the given parent.
@@ -1229,7 +1211,7 @@ function validateBookmarkObject(input, behavior={}) {
       throw new Error(`Invalid value for property '${prop}': ${input[prop]}`);
     }
     if (behavior[prop].hasOwnProperty("defaultValue") && input[prop] === undefined) {
-      normalizedInput[prop] = behavior[prop].defaultValue;
+      input[prop] = behavior[prop].defaultValue;
     }
   }
 

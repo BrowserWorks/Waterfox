@@ -25,6 +25,10 @@ public:
   virtual nsresult Flush() override;
   virtual nsresult Drain() override;
   virtual nsresult Shutdown() override;
+  virtual bool IsHardwareAccelerated() const override
+  {
+    return mIsHardwareAccelerated;
+  }
 
 private:
   CMVideoFormatDescriptionRef mFormat;
@@ -37,6 +41,7 @@ private:
   nsresult WaitForAsynchronousFrames();
   CFDictionaryRef CreateDecoderSpecification();
   CFDictionaryRef CreateDecoderExtensions();
+  bool mIsHardwareAccelerated;
 };
 
 } // namespace mozilla

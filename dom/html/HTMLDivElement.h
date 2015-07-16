@@ -13,7 +13,7 @@ namespace mozilla {
 namespace dom {
 
 class HTMLDivElement final : public nsGenericHTMLElement,
-                                 public nsIDOMHTMLDivElement
+                             public nsIDOMHTMLDivElement
 {
 public:
   explicit HTMLDivElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
@@ -59,7 +59,7 @@ public:
 protected:
   virtual ~HTMLDivElement();
 
-  virtual JSObject* WrapNode(JSContext *aCx) override;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 private:
   static void MapAttributesIntoRule(const nsMappedAttributes* aAttributes,

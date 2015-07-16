@@ -257,6 +257,8 @@ class JitRuntime
     void freeOsrTempData();
 
     static void Mark(JSTracer* trc);
+    static bool MarkJitcodeGlobalTableIteratively(JSTracer* trc);
+    static void SweepJitcodeGlobalTable(JSRuntime* rt);
 
     ExecutableAllocator& execAlloc() {
         return execAlloc_;
@@ -448,6 +450,24 @@ class JitCompartment
             tpl.set(TypedObject::createZeroed(cx, descr, 0, gc::TenuredHeap));
         return tpl.get();
     }
+
+    JSObject* maybeGetSimdTemplateObjectFor(SimdTypeDescr::Type type) const {
+        const ReadBarrieredObject& tpl = simdTemplateObjects_[type];
+
+        // This function is used by Eager Simd Unbox phase, so we cannot use the
+        // read barrier. For more information, see the comment above
+        // CodeGenerator::simdRefreshTemplatesDuringLink_ .
+        return tpl.unbarrieredGet();
+    }
+
+    // This function is used to call the read barrier, to mark the SIMD template
+    // type as used. This function can only be called from the main thread.
+    void registerSimdTemplateObjectFor(SimdTypeDescr::Type type) {
+        ReadBarrieredObject& tpl = simdTemplateObjects_[type];
+        MOZ_ASSERT(tpl.unbarrieredGet());
+        tpl.get();
+    }
+
     JitCode* getStubCode(uint32_t key) {
         ICStubCodeMap::AddPtr p = stubCodes_->lookupForAdd(key);
         if (p)

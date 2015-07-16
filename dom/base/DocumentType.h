@@ -77,7 +77,7 @@ public:
 protected:
   virtual ~DocumentType();
 
-  virtual JSObject* WrapNode(JSContext *cx) override;
+  virtual JSObject* WrapNode(JSContext *cx, JS::Handle<JSObject*> aGivenProto) override;
 
   nsString mPublicId;
   nsString mSystemId;

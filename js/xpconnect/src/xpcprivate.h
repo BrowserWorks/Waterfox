@@ -243,10 +243,10 @@ static inline bool IS_WN_REFLECTOR(JSObject* obj)
 // returned as function call result values they are not addref'd. Exceptions
 // to this rule are noted explicitly.
 
-class nsXPConnect : public nsIXPConnect,
-                    public nsIThreadObserver,
-                    public nsSupportsWeakReference,
-                    public nsIJSRuntimeService
+class nsXPConnect final : public nsIXPConnect,
+                          public nsIThreadObserver,
+                          public nsSupportsWeakReference,
+                          public nsIJSRuntimeService
 {
 public:
     // all the interface method declarations...
@@ -538,6 +538,8 @@ public:
         IDX_COLUMNNUMBER            ,
         IDX_STACK                   ,
         IDX_MESSAGE                 ,
+        IDX_LASTINDEX               ,
+        IDX_SOURCE                  ,
         IDX_TOTAL_COUNT // just a count of the above
     };
 
@@ -1251,6 +1253,11 @@ private:
 };
 
 /***************************************************************************/
+// Slots we use for our functions
+#define XPC_FUNCTION_NATIVE_MEMBER_SLOT 0
+#define XPC_FUNCTION_PARENT_OBJECT_SLOT 1
+
+/***************************************************************************/
 // XPCNativeMember represents a single idl declared method, attribute or
 // constant.
 
@@ -1306,6 +1313,14 @@ public:
     void SetWritableAttribute()
         {MOZ_ASSERT(mFlags == GETTER,"bad"); mFlags = GETTER | SETTER_TOO;}
 
+    static uint16_t GetMaxIndexInInterface()
+        {return (1<<12) - 1;}
+
+    inline XPCNativeInterface* GetInterface() const;
+
+    void SetIndexInInterface(uint16_t index)
+        {mIndexInInterface = index;}
+
     /* default ctor - leave random contents */
     XPCNativeMember()  {MOZ_COUNT_CTOR(XPCNativeMember);}
     ~XPCNativeMember() {MOZ_COUNT_DTOR(XPCNativeMember);}
@@ -1319,13 +1334,24 @@ private:
         CONSTANT    = 0x02,
         GETTER      = 0x04,
         SETTER_TOO  = 0x08
+        // If you add a flag here, you may need to make mFlags wider and either
+        // make mIndexInInterface narrower (and adjust
+        // XPCNativeInterface::NewInstance accordingly) or make this object
+        // bigger.
     };
 
 private:
     // our only data...
     jsid     mName;
     uint16_t mIndex;
-    uint16_t mFlags;
+    // mFlags needs to be wide enogh to hold the flags in the above enum.
+    uint16_t mFlags : 4;
+    // mIndexInInterface is the index of this in our XPCNativeInterface's
+    // mMembers.  In theory our XPCNativeInterface could have as many as 2^15-1
+    // members (since mMemberCount is 15-bit) but in practice we prevent
+    // creation of XPCNativeInterfaces which have more than 2^12 members.
+    // If the width of this field changes, update GetMaxIndexInInterface.
+    uint16_t mIndexInInterface : 12;
 };
 
 /***************************************************************************/
@@ -1350,6 +1376,7 @@ class XPCNativeInterface
     inline XPCNativeMember* FindMember(jsid name) const;
 
     inline bool HasAncestor(const nsIID* iid) const;
+    static inline size_t OffsetOfMembers();
 
     uint16_t GetMemberCount() const {
         return mMemberCount;
@@ -1848,7 +1875,7 @@ public:
     }
 
     void TraceInside(JSTracer* trc) {
-        if (JS_IsGCMarkingTracer(trc)) {
+        if (trc->isMarkingTracer()) {
             mSet->Mark();
             if (mScriptableInfo)
                 mScriptableInfo->Mark();
@@ -1928,13 +1955,17 @@ public:
     JSObject*           GetJSObjectPreserveColor() const;
     void SetInterface(XPCNativeInterface*  Interface) {mInterface = Interface;}
     void SetNative(nsISupports*  Native)              {mNative = Native;}
+    already_AddRefed<nsISupports> TakeNative() { return mNative.forget(); }
     void SetJSObject(JSObject*  JSObj);
 
     void JSObjectFinalized() {SetJSObject(nullptr);}
     void JSObjectMoved(JSObject* obj, const JSObject* old);
 
     XPCWrappedNativeTearOff()
-        : mInterface(nullptr), mNative(nullptr), mJSObject(nullptr) {}
+        : mInterface(nullptr), mJSObject(nullptr)
+    {
+        MOZ_COUNT_CTOR(XPCWrappedNativeTearOff);
+    }
     ~XPCWrappedNativeTearOff();
 
     // NOP. This is just here to make the AutoMarkingPtr code compile.
@@ -1951,21 +1982,17 @@ private:
 
 private:
     XPCNativeInterface* mInterface;
-    nsISupports*        mNative;
+    // mNative is an nsRefPtr not an nsCOMPtr because it may not be the canonical
+    // nsISupports pointer.
+    nsRefPtr<nsISupports> mNative;
     JS::TenuredHeap<JSObject*> mJSObject;
 };
 
 /***********************************************/
-// XPCWrappedNativeTearOffChunk is a collections of XPCWrappedNativeTearOff
+// XPCWrappedNativeTearOffChunk is a linked list of XPCWrappedNativeTearOff
 // objects. It lets us allocate a set of XPCWrappedNativeTearOff objects and
 // link the sets - rather than only having the option of linking single
 // XPCWrappedNativeTearOff objects.
-//
-// The value of XPC_WRAPPED_NATIVE_TEAROFFS_PER_CHUNK can be tuned at buildtime
-// to balance between the code of allocations of additional chunks and the waste
-// of space for ununsed XPCWrappedNativeTearOff objects.
-
-#define XPC_WRAPPED_NATIVE_TEAROFFS_PER_CHUNK 1
 
 class XPCWrappedNativeTearOffChunk
 {
@@ -1975,17 +2002,15 @@ private:
     ~XPCWrappedNativeTearOffChunk() {delete mNextChunk;}
 
 private:
-    XPCWrappedNativeTearOff mTearOffs[XPC_WRAPPED_NATIVE_TEAROFFS_PER_CHUNK];
+    XPCWrappedNativeTearOff mTearOff;
     XPCWrappedNativeTearOffChunk* mNextChunk;
 };
-
-void* xpc_GetJSPrivate(JSObject* obj);
 
 /***************************************************************************/
 // XPCWrappedNative the wrapper around one instance of a native xpcom object
 // to be used from JavaScript.
 
-class XPCWrappedNative : public nsIXPConnectWrappedNative
+class XPCWrappedNative final : public nsIXPConnectWrappedNative
 {
 public:
     NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -2153,7 +2178,7 @@ public:
 
     // Yes, we *do* need to mark the mScriptableInfo in both cases.
     inline void TraceInside(JSTracer* trc) {
-        if (JS_IsGCMarkingTracer(trc)) {
+        if (trc->isMarkingTracer()) {
             mSet->Mark();
             if (mScriptableInfo)
                 mScriptableInfo->Mark();
@@ -2234,7 +2259,7 @@ private:
 
 private:
 
-    bool Init(JS::HandleObject parent, const XPCNativeScriptableCreateInfo* sci);
+    bool Init(const XPCNativeScriptableCreateInfo* sci);
     bool FinishInit();
 
     bool ExtendSet(XPCNativeInterface* aInterface);
@@ -2291,7 +2316,7 @@ NS_DEFINE_STATIC_IID_ACCESSOR(nsIXPCWrappedJSClass,
 // nsXPCWrappedJSClass represents the sharable factored out common code and
 // data for nsXPCWrappedJS instances for the same interface type.
 
-class nsXPCWrappedJSClass : public nsIXPCWrappedJSClass
+class nsXPCWrappedJSClass final : public nsIXPCWrappedJSClass
 {
     // all the interface method declarations...
     NS_DECL_ISUPPORTS
@@ -2385,10 +2410,10 @@ private:
 // interface on the single underlying (possibly aggregate) JSObject.
 
 class nsXPCWrappedJS final : protected nsAutoXPTCStub,
-                                 public nsIXPConnectWrappedJS,
-                                 public nsSupportsWeakReference,
-                                 public nsIPropertyBag,
-                                 public XPCRootSetElem
+                             public nsIXPConnectWrappedJS,
+                             public nsSupportsWeakReference,
+                             public nsIPropertyBag,
+                             public XPCRootSetElem
 {
 public:
     NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -3480,8 +3505,7 @@ public:
     { }
 
     JSObject* ToJSObject(JSContext* cx) {
-        JS::RootedObject global(cx, JS::CurrentGlobalOrNull(cx));
-        JS::RootedObject obj(cx, JS_NewObjectWithGivenProto(cx, nullptr, JS::NullPtr(), global));
+        JS::RootedObject obj(cx, JS_NewObjectWithGivenProto(cx, nullptr, JS::NullPtr()));
         if (!obj)
             return nullptr;
 
@@ -3767,27 +3791,6 @@ JSObject* NewOutObject(JSContext* cx);
 bool IsOutObject(JSContext* cx, JSObject* obj);
 
 nsresult HasInstance(JSContext* cx, JS::HandleObject objArg, const nsID* iid, bool* bp);
-
-/**
- * Define quick stubs on the given object, @a proto.
- *
- * @param cx
- *     A context.  Requires request.
- * @param proto
- *     The (newly created) prototype object for a DOM class.  The JS half
- *     of an XPCWrappedNativeProto.
- * @param flags
- *     Property flags for the quick stub properties--should be either
- *     JSPROP_ENUMERATE or 0.
- * @param interfaceCount
- *     The number of interfaces the class implements.
- * @param interfaceArray
- *     The interfaces the class implements; interfaceArray and
- *     interfaceCount are like what nsIClassInfo.getInterfaces returns.
- */
-bool
-DOM_DefineQuickStubs(JSContext* cx, JSObject* proto, uint32_t flags,
-                     uint32_t interfaceCount, const nsIID** interfaceArray);
 
 nsIPrincipal* GetObjectPrincipal(JSObject* obj);
 

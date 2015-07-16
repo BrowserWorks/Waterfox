@@ -1,0 +1,104 @@
+<html><head><title>Directory Merge Visible Information</title><link rel="stylesheet" href="common/kde-default.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.67.2"><meta name="keywords" content="KDE, kdeextragear, kdiff3, diff, merge, CVS, triplediff, compare, files, directories, version control, three-way-merge, in-line-differences, synchronise, kpart, kio, networktransparent, editor, white space, comments"><link rel="start" href="index.html" title="The KDiff3 Handbook"><link rel="up" href="dirmerge.html" title="Chapter 3. Directory Comparison and Merge with KDiff3"><link rel="prev" href="startingdirmerge.html" title="Starting Directory Comparison Or Merge"><link rel="next" href="dothemerge.html" title="Doing A Directory Merge"><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta name="GENERATOR" content="KDE XSL Stylesheet V1.13 using libxslt"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div style="position: absolute; left 0px;"><img src="common/top-left.png" style="margin: 0px" alt=""></div><div style="background-image: url(common/top-middle.png); width: 100%; height: 131px;"><div style="position: absolute;                      right: 0px;"><img src="common/top-right.png" style="margin: 0px" alt=""></div><div style="position: absolute;                         top: 63px;                         right: 0px;                         margin-top: -1em;                         margin-right: 5%;                         text-align: right;                          font-size: xx-large;                          font-weight: bold;                          text-shadow: #CDE1FF 0px 0px 5px;                          color: #444">Directory Merge Visible Information</div></div><div style="margin-top: 20px; background-color: #white;                        color: black;                       margin-left: 20px;                        margin-right: 20px;"><div style="position: absolute;                          left: 20px;"><a accesskey="p" href="startingdirmerge.html">Prev</a></div><div style="position: absolute;                          right: 20px;"><a accesskey="n" href="dothemerge.html">Next</a></div><div class="navCenter">Directory Comparison and Merge with <span class="application">KDiff3</span></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="dirmergevisible"></a>Directory Merge Visible Information</h2></div></div></div><p>
+   While reading the directories a message-box appears that informs you of
+   the progress. If you abort the directory scan, then only files that have
+   been  compared until then will be listed.
+</p><p>
+   When the directory scan is complete then <span class="application">KDiff3</span> will show a listbox with
+   the results left, ...
+</p><div class="screenshot"><div xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="mediaobject"><hr><img src="dirbrowser.png"><hr></div></div><p>
+   ... and details about the currently selected item on the right:
+</p><div class="screenshot"><div xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="mediaobject"><hr><img src="iteminfo.png"><hr></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="name"></a>The Name Column</h3></div></div></div><p>
+   Each file and directory that was found during the scan is shown here in
+   a tree. You can select an item by clicking it with the mouse once.
+</p><p>
+   The directories are collapsed by default. You can expand and collapse
+   them by clicking on the "+"/"-" or by double-clicking the item or
+   by using  the left/right-arrow-keys. The "Directory"-menu also contains two
+   actions "Fold all subdirs" and "Unfold all subdirs" with which you can
+   collapse or expand all directories at once.
+</p><p>
+   If you double-click a file item then the file comparison starts and the
+   file-diff-window will appear.
+</p><p>
+   The image in the name column reflects the file type in the first
+   directory  ("A"). It can be one of these:
+</p><div class="itemizedlist"><ul type="disc"><li><p>Normal file</p></li><li><p>Normal directory (directory-image)</p></li><li><p>Link to a file (file-image with a link arrow)</p></li><li><p>Link to a directory (directory-image with a link arrow)</p></li></ul></div><p>
+   If the file type is different in the other directories, then this is visible
+   in the columns A/B/C and in the window that shows the details about the selected
+   item. Note that for such a case no merge operation can be selected automatically.
+   When starting the merge, then the user will be informed of problems of that
+   kind.
+</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="coloring"></a>The Columns A/B/C and the Coloring Scheme</h3></div></div></div><p>
+   As can be seen in the image above the colors red, green, yellow and black
+   are used in the columns A/B/C.
+</p><div class="itemizedlist"><ul type="disc"><li><p>Black: This item doesn't exist in this directory.</p></li><li><p>Green: Newest item.</p></li><li><p>Yellow: Older than green, newer than red.</p></li><li><p>Red: Oldest item.</p></li></ul></div><p>
+   But for items that were identical in the comparison their color also is
+   identical even if the age is not.
+</p><p>
+   Directories are considered equal if all items they contain are identical.
+   Then they also will have the same color. But the age of a directory is not
+   considered for its color.
+</p><p>
+   The idea for this coloring scheme I came upon in
+   <a href="http://samba.org/cgi-bin/cvsweb/dirdiff" target="_top">dirdiff</a>. The colors
+   resemble the colors of a leaf that is green when new, turns yellow later and red
+   when old.
+</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="operation"></a>The Operation Column</h3></div></div></div><p>
+   After comparing the directories <span class="application">KDiff3</span> also evaluates a proposal for a
+   merge  operation. This is shown in the "Operation" column. You can modify
+   the operation  by clicking on the operation you want to change. A small menu
+   will popup and allows you to select an operation for that item. (You can also
+   select the most needed operations via keyboard.
+   Ctrl+1/2/3/4/Del will select A/B/C/Merge/Delete respectively if available.)
+   This operation will be executed during the merge. It depends on the item and
+   on the merge-mode you are in, what operations are available. The merge-mode is one of
+</p><div class="itemizedlist"><ul type="disc"><li><p>Three directory-merge ("A" is treated as older base of both).</p></li><li><p>Two directory-merge.</p></li><li><p>Two directory-sync-mode (activate via option "Synchronize Directories").</p></li></ul></div><p>
+   In three directory merge the operation proposal will be: If for an item ...
+</p><div class="itemizedlist"><ul type="disc"><li><p>... all three directories are equal: Copy from C</p></li><li><p>... A and C are equal but B is not: Copy from B (or if B does not
+                         exist, delete the destination if exists)</p></li><li><p>... A and B are equal but C is not: Copy from C (or if C does not
+                         exist, delete the destination if exists)</p></li><li><p>... B and C are equal but A is not: Copy from C (or if C does not
+                         exist, delete the destination if exists)</p></li><li><p>... only A exists: Delete the destination (if exists)</p></li><li><p>... only B exists: Copy from B</p></li><li><p>... only C exists: Copy from C</p></li><li><p>... A, B and C are not equal: Merge</p></li><li><p>... A, B and C don't have the same file type (e.g. A is a directory,
+                         B is a file): "Error: Conflicting File Types". While such items exist the
+                         directory merge cannot start.</p></li></ul></div><p>
+   In two directory merge the operation proposal will be: If for an item ...
+</p><div class="itemizedlist"><ul type="disc"><li><p>... both directories are equal: Copy from B</p></li><li><p>... A exists, but not B: Copy from A</p></li><li><p>... B exists, but not A: Copy from B</p></li><li><p>... A and B exist but are not equal: Merge</p></li><li><p>... A and B don't have the same file type (e.g. A is a directory,
+                         B is a file): "Error: Conflicting File Types". While such items exist the
+                         directory merge cannot start.</p></li></ul></div><p>
+   Sync-mode is active if only two directories and no explicit destination
+   were specified and if the option "Synchronize directories" is active. <span class="application">KDiff3</span>
+   then selects a default operation so that both directories are the same afterwards.
+   If for an item ...
+</p><div class="itemizedlist"><ul type="disc"><li><p>... both directories are equal: Nothing will be done.</p></li><li><p>... A exists, but not B: Copy A to B</p></li><li><p>... B exists, but not A: Copy B to A</p></li><li><p>... A and B exist, but are not equal: Merge and store the result
+                         in  both directories. (For the user the visible save-filename is B,
+                         but then <span class="application">KDiff3</span> copies B also to A.)</p></li><li><p>... A and B don't have the same file type (e.g. A is a directory,
+                         B is a file): "Error: Conflicting File Types". While such items exist the
+                         directory merge cannot start.</p></li></ul></div><p>
+   When two directories are merged and the option "Copy newer instead of merging" is selected,
+   then <span class="application">KDiff3</span> looks at the dates and proposes to choose the newer file. If the files are not
+   equal but have equal dates, then the operation will contain
+   "Error: Dates are equal but files are not." While such items exist the
+   directory merge cannot start.
+</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="status"></a>The Status Column</h3></div></div></div><p>
+   During the merge one file after the other will be processed. The status
+   column will show "Done" for items where the merge operation has succeeded,
+   and other texts if something unexpected happened. When a merge is complete,
+   then you should make a last check to see if the status for all items is
+   agreeable.
+</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="statisticscolulmns"></a>Statistics Columns</h3></div></div></div><p>
+   When the file comparison mode "Full Analysis" is enabled in the options, then
+   <span class="application">KDiff3</span> will show extra columns containing the numbers of unsolved, solved, nonwhite and whitespace
+   conflicts. (The solved-column will only show when comparing or merging three directories.)
+</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="selectingvisiblefiles"></a>Selecting Listed Files</h3></div></div></div><p>   
+   Several options influence which files are listed here. Some are accessible in the 
+   <a href="dirmergeoptions.html" title="Options for Comparing and Merging Directories">settings dialog</a>. The Directory-menu contains the entries:
+</p><p><div class="itemizedlist"><ul type="disc"><li><p>"Show Identical Files": Files that have been detected equal in all input directories.</p></li><li><p>"Show Different Files": Files that exist in two or more directories but are not equal.</p></li><li><p>"Show Files only in A": Files that exist only in A, but not in B or C.</p></li><li><p>"Show Files only in B": Files that exist only in B, but not in A or B.</p></li><li><p>"Show Files only in C": Files that exist only in C, but not in A or B.</p></li></ul></div></p><p>
+   Activate only the "Show"-options for the items you want listed. If for example you only want to list all items that 
+   exist either in A or in B but not in both, you'll have to activate "Show Files only in A" and "Show Files only in B" 
+   and deactivate all others ("Show Identical Files", "Show Different Files", "Show Files only in C").
+   The list will be updated immediately to reflect the change.
+</p><p>
+   These options also apply for directories with one exception: Disabling "Show Different Files" will not hide 
+   any complete directories. This will work only for files within.
+</p><p>
+   Note that of these only the "Show Identical Files"-option is persistant. The others are enabled when starting <span class="application">KDiff3</span>. 
+</p></div></div><div style="background-color: #white; color: black;                  margin-top: 20px; margin-left: 20px;                  margin-right: 20px;"><div style="position: absolute; left: 20px;"><a accesskey="p" href="startingdirmerge.html">Prev</a></div><div style="position: absolute; right: 20px;"><a accesskey="n" href="dothemerge.html">Next</a></div><div align="center"><a accesskey="h" href="index.html">Contents</a></div></div><div style="background-color: #white;   color: black;         margin-left: 20px;   margin-right: 20px;"><div class="navLeft">Starting Directory Comparison Or Merge </div><div class="navRight"> Doing A Directory Merge</div><div class="navCenter"><a accesskey="u" href="dirmerge.html">Up</a></div></div><br><br><div class="bannerBottom" style="background-image: url(common/bottom-middle.png);                                        background-repeat: x-repeat;                                         width: 100%;                                         height: 70px;                                         bottom:0px;"><div class="BannerBottomRight"><img src="common/bottom-right.png" style="height: 70px; margin: 0px" alt=""></div><div class="bannerBottomLeft"><img src="common/bottom-left.png" style="height: 70px; margin: 0px;" alt=""></div><div id="comments" style="position:relative; top: 15px; left: 1em; width: 100%; color: #282828;"><p>Would you like to make a comment or contribute an update to this page?<br>Send feedback to the <a href="mailto:kde-doc-english@kde.org" style="background:transparent; color: #282828; text-decoration: underline;">KDE Docs Team</a></p></div></div></body></html>

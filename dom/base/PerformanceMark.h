@@ -18,7 +18,7 @@ public:
   PerformanceMark(nsPerformance* aPerformance,
                   const nsAString& aName);
 
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   virtual DOMHighResTimeStamp StartTime() const override
   {

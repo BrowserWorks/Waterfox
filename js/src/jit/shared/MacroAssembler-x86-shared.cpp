@@ -12,90 +12,6 @@
 using namespace js;
 using namespace js::jit;
 
-void
-MacroAssembler::PushRegsInMask(RegisterSet set, FloatRegisterSet simdSet)
-{
-    FloatRegisterSet doubleSet(FloatRegisterSet::Subtract(set.fpus(), simdSet));
-    MOZ_ASSERT_IF(simdSet.empty(), doubleSet == set.fpus());
-    unsigned numSimd = simdSet.size();
-    unsigned numDouble = doubleSet.size();
-    int32_t diffF = numDouble * sizeof(double) + numSimd * Simd128DataSize;
-    int32_t diffG = set.gprs().size() * sizeof(intptr_t);
-
-    // On x86, always use push to push the integer registers, as it's fast
-    // on modern hardware and it's a small instruction.
-    for (GeneralRegisterBackwardIterator iter(set.gprs()); iter.more(); iter++) {
-        diffG -= sizeof(intptr_t);
-        Push(*iter);
-    }
-    MOZ_ASSERT(diffG == 0);
-
-    reserveStack(diffF);
-    for (FloatRegisterBackwardIterator iter(doubleSet); iter.more(); iter++) {
-        diffF -= sizeof(double);
-        numDouble -= 1;
-        storeDouble(*iter, Address(StackPointer, diffF));
-    }
-    MOZ_ASSERT(numDouble == 0);
-    for (FloatRegisterBackwardIterator iter(simdSet); iter.more(); iter++) {
-        diffF -= Simd128DataSize;
-        numSimd -= 1;
-        // XXX how to choose the right move type?
-        storeUnalignedInt32x4(*iter, Address(StackPointer, diffF));
-    }
-    MOZ_ASSERT(numSimd == 0);
-    MOZ_ASSERT(diffF == 0);
-}
-
-void
-MacroAssembler::PopRegsInMaskIgnore(RegisterSet set, RegisterSet ignore, FloatRegisterSet simdSet)
-{
-    FloatRegisterSet doubleSet(FloatRegisterSet::Subtract(set.fpus(), simdSet));
-    MOZ_ASSERT_IF(simdSet.empty(), doubleSet == set.fpus());
-    unsigned numSimd = simdSet.size();
-    unsigned numDouble = doubleSet.size();
-    int32_t diffG = set.gprs().size() * sizeof(intptr_t);
-    int32_t diffF = numDouble * sizeof(double) + numSimd * Simd128DataSize;
-    const int32_t reservedG = diffG;
-    const int32_t reservedF = diffF;
-
-    for (FloatRegisterBackwardIterator iter(simdSet); iter.more(); iter++) {
-        diffF -= Simd128DataSize;
-        numSimd -= 1;
-        if (!ignore.has(*iter))
-            // XXX how to choose the right move type?
-            loadUnalignedInt32x4(Address(StackPointer, diffF), *iter);
-    }
-    MOZ_ASSERT(numSimd == 0);
-    for (FloatRegisterBackwardIterator iter(doubleSet); iter.more(); iter++) {
-        diffF -= sizeof(double);
-        numDouble -= 1;
-        if (!ignore.has(*iter))
-            loadDouble(Address(StackPointer, diffF), *iter);
-    }
-    freeStack(reservedF);
-    MOZ_ASSERT(numDouble == 0);
-    MOZ_ASSERT(diffF == 0);
-
-    // On x86, use pop to pop the integer registers, if we're not going to
-    // ignore any slots, as it's fast on modern hardware and it's a small
-    // instruction.
-    if (ignore.empty(false)) {
-        for (GeneralRegisterForwardIterator iter(set.gprs()); iter.more(); iter++) {
-            diffG -= sizeof(intptr_t);
-            Pop(*iter);
-        }
-    } else {
-        for (GeneralRegisterBackwardIterator iter(set.gprs()); iter.more(); iter++) {
-            diffG -= sizeof(intptr_t);
-            if (!ignore.has(*iter))
-                loadPtr(Address(StackPointer, diffG), *iter);
-        }
-        freeStack(reservedG);
-    }
-    MOZ_ASSERT(diffG == 0);
-}
-
 // Note: this function clobbers the input register.
 void
 MacroAssembler::clampDoubleToUint8(FloatRegister input, Register output)
@@ -155,8 +71,8 @@ MacroAssemblerX86Shared::buildFakeExitFrame(Register scratch, uint32_t* offset)
     mov(cl.dest(), scratch);
 
     uint32_t descriptor = MakeFrameDescriptor(framePushed(), JitFrame_IonJS);
-    Push(Imm32(descriptor));
-    Push(scratch);
+    asMasm().Push(Imm32(descriptor));
+    asMasm().Push(scratch);
 
     bind(cl.src());
     *offset = currentOffset();
@@ -169,7 +85,7 @@ void
 MacroAssemblerX86Shared::callWithExitFrame(Label* target)
 {
     uint32_t descriptor = MakeFrameDescriptor(framePushed(), JitFrame_IonJS);
-    Push(Imm32(descriptor));
+    asMasm().Push(Imm32(descriptor));
     call(target);
 }
 
@@ -177,7 +93,7 @@ void
 MacroAssemblerX86Shared::callWithExitFrame(JitCode* target)
 {
     uint32_t descriptor = MakeFrameDescriptor(framePushed(), JitFrame_IonJS);
-    Push(Imm32(descriptor));
+    asMasm().Push(Imm32(descriptor));
     call(target);
 }
 
@@ -197,8 +113,8 @@ bool
 MacroAssemblerX86Shared::buildOOLFakeExitFrame(void* fakeReturnAddr)
 {
     uint32_t descriptor = MakeFrameDescriptor(framePushed(), JitFrame_IonJS);
-    Push(Imm32(descriptor));
-    Push(ImmPtr(fakeReturnAddr));
+    asMasm().Push(Imm32(descriptor));
+    asMasm().Push(ImmPtr(fakeReturnAddr));
     return true;
 }
 
@@ -245,4 +161,190 @@ MacroAssemblerX86Shared::branchNegativeZeroFloat32(FloatRegister reg,
     vmovd(reg, scratch);
     cmp32(scratch, Imm32(1));
     j(Overflow, label);
+}
+
+MacroAssembler&
+MacroAssemblerX86Shared::asMasm()
+{
+    return *static_cast<MacroAssembler*>(this);
+}
+
+const MacroAssembler&
+MacroAssemblerX86Shared::asMasm() const
+{
+    return *static_cast<const MacroAssembler*>(this);
+}
+
+// ===============================================================
+// Stack manipulation functions.
+
+void
+MacroAssembler::PushRegsInMask(LiveRegisterSet set)
+{
+    FloatRegisterSet fpuSet(set.fpus().reduceSetForPush());
+    unsigned numFpu = fpuSet.size();
+    int32_t diffF = fpuSet.getPushSizeInBytes();
+    int32_t diffG = set.gprs().size() * sizeof(intptr_t);
+
+    // On x86, always use push to push the integer registers, as it's fast
+    // on modern hardware and it's a small instruction.
+    for (GeneralRegisterBackwardIterator iter(set.gprs()); iter.more(); iter++) {
+        diffG -= sizeof(intptr_t);
+        Push(*iter);
+    }
+    MOZ_ASSERT(diffG == 0);
+
+    reserveStack(diffF);
+    for (FloatRegisterBackwardIterator iter(fpuSet); iter.more(); iter++) {
+        FloatRegister reg = *iter;
+        diffF -= reg.size();
+        numFpu -= 1;
+        Address spillAddress(StackPointer, diffF);
+        if (reg.isDouble())
+            storeDouble(reg, spillAddress);
+        else if (reg.isSingle())
+            storeFloat32(reg, spillAddress);
+        else if (reg.isInt32x4())
+            storeUnalignedInt32x4(reg, spillAddress);
+        else if (reg.isFloat32x4())
+            storeUnalignedFloat32x4(reg, spillAddress);
+        else
+            MOZ_CRASH("Unknown register type.");
+    }
+    MOZ_ASSERT(numFpu == 0);
+    // x64 padding to keep the stack aligned on uintptr_t. Keep in sync with
+    // GetPushBytesInSize.
+    diffF -= diffF % sizeof(uintptr_t);
+    MOZ_ASSERT(diffF == 0);
+}
+
+void
+MacroAssembler::PopRegsInMaskIgnore(LiveRegisterSet set, LiveRegisterSet ignore)
+{
+    FloatRegisterSet fpuSet(set.fpus().reduceSetForPush());
+    unsigned numFpu = fpuSet.size();
+    int32_t diffG = set.gprs().size() * sizeof(intptr_t);
+    int32_t diffF = fpuSet.getPushSizeInBytes();
+    const int32_t reservedG = diffG;
+    const int32_t reservedF = diffF;
+
+    for (FloatRegisterBackwardIterator iter(fpuSet); iter.more(); iter++) {
+        FloatRegister reg = *iter;
+        diffF -= reg.size();
+        numFpu -= 1;
+        if (ignore.has(reg))
+            continue;
+
+        Address spillAddress(StackPointer, diffF);
+        if (reg.isDouble())
+            loadDouble(spillAddress, reg);
+        else if (reg.isSingle())
+            loadFloat32(spillAddress, reg);
+        else if (reg.isInt32x4())
+            loadUnalignedInt32x4(spillAddress, reg);
+        else if (reg.isFloat32x4())
+            loadUnalignedFloat32x4(spillAddress, reg);
+        else
+            MOZ_CRASH("Unknown register type.");
+    }
+    freeStack(reservedF);
+    MOZ_ASSERT(numFpu == 0);
+    // x64 padding to keep the stack aligned on uintptr_t. Keep in sync with
+    // GetPushBytesInSize.
+    diffF -= diffF % sizeof(uintptr_t);
+    MOZ_ASSERT(diffF == 0);
+
+    // On x86, use pop to pop the integer registers, if we're not going to
+    // ignore any slots, as it's fast on modern hardware and it's a small
+    // instruction.
+    if (ignore.emptyGeneral()) {
+        for (GeneralRegisterForwardIterator iter(set.gprs()); iter.more(); iter++) {
+            diffG -= sizeof(intptr_t);
+            Pop(*iter);
+        }
+    } else {
+        for (GeneralRegisterBackwardIterator iter(set.gprs()); iter.more(); iter++) {
+            diffG -= sizeof(intptr_t);
+            if (!ignore.has(*iter))
+                loadPtr(Address(StackPointer, diffG), *iter);
+        }
+        freeStack(reservedG);
+    }
+    MOZ_ASSERT(diffG == 0);
+}
+
+void
+MacroAssembler::Push(const Operand op)
+{
+    push(op);
+    framePushed_ += sizeof(intptr_t);
+}
+
+void
+MacroAssembler::Push(Register reg)
+{
+    push(reg);
+    framePushed_ += sizeof(intptr_t);
+}
+
+void
+MacroAssembler::Push(const Imm32 imm)
+{
+    push(imm);
+    framePushed_ += sizeof(intptr_t);
+}
+
+void
+MacroAssembler::Push(const ImmWord imm)
+{
+    push(imm);
+    framePushed_ += sizeof(intptr_t);
+}
+
+void
+MacroAssembler::Push(const ImmPtr imm)
+{
+    Push(ImmWord(uintptr_t(imm.value)));
+}
+
+void
+MacroAssembler::Push(const ImmGCPtr ptr)
+{
+    push(ptr);
+    framePushed_ += sizeof(intptr_t);
+}
+
+void
+MacroAssembler::Push(FloatRegister t)
+{
+    push(t);
+    framePushed_ += sizeof(double);
+}
+
+void
+MacroAssembler::Pop(const Operand op)
+{
+    pop(op);
+    framePushed_ -= sizeof(intptr_t);
+}
+
+void
+MacroAssembler::Pop(Register reg)
+{
+    pop(reg);
+    framePushed_ -= sizeof(intptr_t);
+}
+
+void
+MacroAssembler::Pop(FloatRegister reg)
+{
+    pop(reg);
+    framePushed_ -= sizeof(double);
+}
+
+void
+MacroAssembler::Pop(const ValueOperand& val)
+{
+    popValue(val);
+    framePushed_ -= sizeof(Value);
 }

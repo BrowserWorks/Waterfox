@@ -23,8 +23,8 @@ class EventChainPreVisitor;
 namespace dom {
 
 class HTMLAreaElement final : public nsGenericHTMLElement,
-                                  public nsIDOMHTMLAreaElement,
-                                  public Link
+                              public nsIDOMHTMLAreaElement,
+                              public Link
 {
 public:
   explicit HTMLAreaElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
@@ -178,7 +178,7 @@ public:
 protected:
   virtual ~HTMLAreaElement();
 
-  virtual JSObject* WrapNode(JSContext* aCx) override;
+  virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   virtual void GetItemValueText(DOMString& text) override;
   virtual void SetItemValueText(const nsAString& text) override;

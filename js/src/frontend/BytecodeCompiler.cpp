@@ -34,7 +34,7 @@ CheckLength(ExclusiveContext* cx, SourceBufferHolder& srcBuf)
     // is using size_t internally already.
     if (srcBuf.length() > UINT32_MAX) {
         if (cx->isJSContext())
-            JS_ReportErrorNumber(cx->asJSContext(), js_GetErrorMessage, nullptr,
+            JS_ReportErrorNumber(cx->asJSContext(), GetErrorMessage, nullptr,
                                  JSMSG_SOURCE_TOO_LONG);
         return false;
     }
@@ -147,6 +147,7 @@ CanLazilyParse(ExclusiveContext* cx, const ReadOnlyCompileOptions& options)
 {
     return options.canLazilyParse &&
         options.compileAndGo &&
+        !options.hasPollutedGlobalScope &&
         !cx->compartment()->options().discardSource() &&
         !options.sourceIsLazy;
 }
@@ -154,8 +155,7 @@ CanLazilyParse(ExclusiveContext* cx, const ReadOnlyCompileOptions& options)
 static void
 MarkFunctionsWithinEvalScript(JSScript* script)
 {
-    // Mark top level functions in an eval script as being within an eval and,
-    // if applicable, inside a with statement.
+    // Mark top level functions in an eval script as being within an eval.
 
     if (!script->hasObjects())
         return;
@@ -282,7 +282,7 @@ frontend::CompileScript(ExclusiveContext* cx, LifoAlloc* alloc, HandleObject sco
         return nullptr;
 
     Directives directives(options.strictOption);
-    GlobalSharedContext globalsc(cx, scopeChain, directives, options.extraWarningsOption);
+    GlobalSharedContext globalsc(cx, directives, options.extraWarningsOption);
 
     bool savedCallerFun = evalCaller && evalCaller->functionOrCallerFunction();
     Rooted<JSScript*> script(cx, JSScript::Create(cx, evalStaticScope, savedCallerFun,
@@ -291,17 +291,14 @@ frontend::CompileScript(ExclusiveContext* cx, LifoAlloc* alloc, HandleObject sco
     if (!script)
         return nullptr;
 
-    // We can specialize a bit for the given scope chain if that scope chain is the global object.
-    JSObject* globalScope =
-        scopeChain && scopeChain == &scopeChain->global() ? (JSObject*) scopeChain : nullptr;
-    MOZ_ASSERT_IF(globalScope, globalScope->isNative());
-    MOZ_ASSERT_IF(globalScope, JSCLASS_HAS_GLOBAL_FLAG_AND_SLOTS(globalScope->getClass()));
-
+    bool insideNonGlobalEval =
+        evalStaticScope && evalStaticScope->enclosingScopeForStaticScopeIter();
     BytecodeEmitter::EmitterMode emitterMode =
         options.selfHostingMode ? BytecodeEmitter::SelfHosting : BytecodeEmitter::Normal;
     BytecodeEmitter bce(/* parent = */ nullptr, &parser, &globalsc, script,
                         /* lazyScript = */ js::NullPtr(), options.forEval,
-                        evalCaller, evalStaticScope, !!globalScope, options.lineno, emitterMode);
+                        evalCaller, evalStaticScope, insideNonGlobalEval,
+                        options.lineno, emitterMode);
     if (!bce.init())
         return nullptr;
 
@@ -375,7 +372,7 @@ frontend::CompileScript(ExclusiveContext* cx, LifoAlloc* alloc, HandleObject sco
             }
         }
 
-        // Accumulate the maximum block scope depth, so that EmitTree can assert
+        // Accumulate the maximum block scope depth, so that emitTree can assert
         // when emitting JSOP_GETLOCAL that the local is indeed within the fixed
         // part of the stack frame.
         script->bindings.updateNumBlockScoped(pc->blockScopeDepth);
@@ -394,7 +391,7 @@ frontend::CompileScript(ExclusiveContext* cx, LifoAlloc* alloc, HandleObject sco
         if (!bce.updateLocalsToFrameSlots())
             return nullptr;
 
-        if (!EmitTree(cx, &bce, pn))
+        if (!bce.emitTree(pn))
             return nullptr;
 
         parser.handler.freeTree(pn);
@@ -429,7 +426,7 @@ frontend::CompileScript(ExclusiveContext* cx, LifoAlloc* alloc, HandleObject sco
      * Nowadays the threaded interpreter needs a last return instruction, so we
      * do have to emit that here.
      */
-    if (Emit1(cx, &bce, JSOP_RETRVAL) < 0)
+    if (!bce.emit1(JSOP_RETRVAL))
         return nullptr;
 
     // Global/eval script bindings are always empty (all names are added to the
@@ -515,15 +512,22 @@ frontend::CompileLazyFunction(JSContext* cx, Handle<LazyScript*> lazy, const cha
     if (lazy->hasBeenCloned())
         script->setHasBeenCloned();
 
+    /*
+     * We just pass false for insideNonGlobalEval and insideEval, because we
+     * don't actually know whether we are or not.  The only consumer of those
+     * booleans is TryConvertFreeName, and it has special machinery to avoid
+     * doing bad things when a lazy function is inside eval.
+     */
+    MOZ_ASSERT(!options.forEval);
     BytecodeEmitter bce(/* parent = */ nullptr, &parser, pn->pn_funbox, script, lazy,
-                        options.forEval, /* evalCaller = */ js::NullPtr(),
+                        /* insideEval = */ false, /* evalCaller = */ js::NullPtr(),
                         /* evalStaticScope = */ js::NullPtr(),
-                        /* hasGlobalScope = */ true, options.lineno,
+                        /* insideNonGlobalEval = */ false, options.lineno,
                         BytecodeEmitter::LazyFunction);
     if (!bce.init())
         return false;
 
-    return EmitFunctionScript(cx, &bce, pn->pn_body);
+    return bce.emitFunctionScript(pn->pn_body);
 }
 
 // Compile a JS function body, which might appear as the value of an event
@@ -531,7 +535,7 @@ frontend::CompileLazyFunction(JSContext* cx, Handle<LazyScript*> lazy, const cha
 static bool
 CompileFunctionBody(JSContext* cx, MutableHandleFunction fun, const ReadOnlyCompileOptions& options,
                     const AutoNameVector& formals, SourceBufferHolder& srcBuf,
-                    HandleObject enclosingScope, GeneratorKind generatorKind)
+                    HandleObject enclosingStaticScope, GeneratorKind generatorKind)
 {
     js::TraceLoggerThread* logger = js::TraceLoggerForMainThread(cx->runtime());
     js::TraceLoggerEvent event(logger, TraceLogger_AnnotateScripts, options);
@@ -632,7 +636,7 @@ CompileFunctionBody(JSContext* cx, MutableHandleFunction fun, const ReadOnlyComp
     if (fn->pn_funbox->function()->isInterpreted()) {
         MOZ_ASSERT(fun == fn->pn_funbox->function());
 
-        Rooted<JSScript*> script(cx, JSScript::Create(cx, enclosingScope, false, options,
+        Rooted<JSScript*> script(cx, JSScript::Create(cx, enclosingStaticScope, false, options,
                                                       /* staticLevel = */ 0, sourceObject,
                                                       /* sourceStart = */ 0, srcBuf.length()));
         if (!script)
@@ -640,23 +644,15 @@ CompileFunctionBody(JSContext* cx, MutableHandleFunction fun, const ReadOnlyComp
 
         script->bindings = fn->pn_funbox->bindings;
 
-        /*
-         * The reason for checking fun->environment() below is that certain
-         * consumers of JS::CompileFunction, namely
-         * EventListenerManager::CompileEventHandlerInternal, passes in a
-         * nullptr environment. This compiled function is never used, but
-         * instead is cloned immediately onto the right scope chain.
-         */
         BytecodeEmitter funbce(/* parent = */ nullptr, &parser, fn->pn_funbox, script,
                                /* lazyScript = */ js::NullPtr(), /* insideEval = */ false,
                                /* evalCaller = */ js::NullPtr(),
                                /* evalStaticScope = */ js::NullPtr(),
-                               fun->environment() && fun->environment()->is<GlobalObject>(),
-                               options.lineno);
+                               /* insideNonGlobalEval = */ false, options.lineno);
         if (!funbce.init())
             return false;
 
-        if (!EmitFunctionScript(cx, &funbce, fn->pn_body))
+        if (!funbce.emitFunctionScript(fn->pn_body))
             return false;
     } else {
         fun.set(fn->pn_funbox->function());

@@ -22,7 +22,7 @@ namespace mozilla {
 namespace dom {
 
 class SpeechRecognitionResult final : public nsISupports,
-                                          public nsWrapperCache
+                                      public nsWrapperCache
 {
 public:
   explicit SpeechRecognitionResult(SpeechRecognition* aParent);
@@ -32,7 +32,7 @@ public:
 
   nsISupports* GetParentObject() const;
 
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   uint32_t Length() const;
 

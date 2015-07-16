@@ -12,6 +12,7 @@ MOCHITEST_CHROME_MANIFESTS += ['tests/chrome/chrome.ini']
 SPHINX_TREES['toolkit_modules'] = 'docs'
 
 EXTRA_JS_MODULES += [
+    'AddonWatcher.jsm',
     'Battery.jsm',
     'BinarySearch.jsm',
     'BrowserUtils.jsm',
@@ -29,18 +30,21 @@ EXTRA_JS_MODULES += [
     'LoadContextInfo.jsm',
     'Log.jsm',
     'NewTabUtils.jsm',
+    'ObjectUtils.jsm',
     'PageMenu.jsm',
     'PageMetadata.jsm',
     'PermissionsUtils.jsm',
     'PopupNotifications.jsm',
     'Preferences.jsm',
     'PrivateBrowsingUtils.jsm',
+    'ProfileAge.jsm',
     'Promise-backend.js',
     'Promise.jsm',
     'PromiseUtils.jsm',
     'PropertyListUtils.jsm',
     'RemoteController.jsm',
     'RemoteFinder.jsm',
+    'RemotePageManager.jsm',
     'RemoteSecurityUI.jsm',
     'RemoteWebNavigation.jsm',
     'RemoteWebProgress.jsm',
@@ -87,8 +91,18 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
         'WindowsRegistry.jsm',
     ]
 
-DEFINES['MOZ_APP_NAME'] = CONFIG['MOZ_APP_NAME']
-DEFINES['MOZ_BUILD_APP'] = CONFIG['MOZ_BUILD_APP']
+for var in ('ANDROID_PACKAGE_NAME',
+            'MOZ_APP_NAME',
+            'MOZ_APP_VERSION',
+            'DLL_PREFIX',
+            'DLL_SUFFIX'):
+            DEFINES[var] = CONFIG[var]
 
-if CONFIG['MOZ_TOOLKIT_SEARCH']:
-    DEFINES['MOZ_TOOLKIT_SEARCH'] = True
+for var in ('MOZILLA_OFFICIAL',
+            'MOZ_TOOLKIT_SEARCH'):
+    if CONFIG[var]:
+        DEFINES[var] = True
+
+EXTRA_PP_JS_MODULES += [
+    'AppConstants.jsm',
+]

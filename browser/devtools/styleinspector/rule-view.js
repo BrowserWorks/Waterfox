@@ -16,6 +16,7 @@ const {OutputParser} = require("devtools/output-parser");
 const {PrefObserver, PREF_ORIG_SOURCES} = require("devtools/styleeditor/utils");
 const {parseSingleValue, parseDeclarations} = require("devtools/styleinspector/css-parsing-utils");
 const overlays = require("devtools/styleinspector/style-inspector-overlays");
+const EventEmitter = require("devtools/toolkit/event-emitter");
 
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
@@ -435,11 +436,8 @@ function Rule(aElementStyle, aOptions) {
   this.keyframes = aOptions.keyframes || null;
   this._modificationDepth = 0;
 
-  if (this.domRule) {
-    let parentRule = this.domRule.parentRule;
-    if (parentRule && parentRule.type == Ci.nsIDOMCSSRule.MEDIA_RULE) {
-      this.mediaText = parentRule.mediaText;
-    }
+  if (this.domRule && this.domRule.mediaText) {
+    this.mediaText = this.domRule.mediaText;
   }
 
   // Populate the text properties with the style's current cssText
@@ -507,7 +505,7 @@ Rule.prototype = {
    * The rule's line within a stylesheet
    */
   get ruleLine() {
-    return this.domRule ? this.domRule.line : null;
+    return this.domRule ? this.domRule.line : "";
   },
 
   /**
@@ -529,10 +527,12 @@ Rule.prototype = {
     if (this._originalSourceStrings) {
       return promise.resolve(this._originalSourceStrings);
     }
-    return this.domRule.getOriginalLocation().then(({href, line}) => {
+    return this.domRule.getOriginalLocation().then(({href, line, mediaText}) => {
+      let mediaString = mediaText ? " @" + mediaText : "";
+
       let sourceStrings = {
-        full: href + ":" + line,
-        short: CssLogic.shortSource({href: href}) + ":" + line
+        full: (href || CssLogic.l10n("rule.sourceInline")) + ":" + line + mediaString,
+        short: CssLogic.shortSource({href: href}) + ":" + line + mediaString
       };
 
       this._originalSourceStrings = sourceStrings;
@@ -1153,6 +1153,8 @@ function CssRuleView(aInspector, aDoc, aStore, aPageStyle) {
   this.tooltips.addToView();
   this.highlighters = new overlays.HighlightersOverlay(this);
   this.highlighters.addToView();
+
+  EventEmitter.decorate(this);
 }
 
 exports.CssRuleView = CssRuleView;
@@ -1206,6 +1208,90 @@ CssRuleView.prototype = {
 
     popupset.appendChild(this._contextmenu);
   },
+
+  /**
+   * Get an instance of SelectorHighlighter (used to highlight nodes that match
+   * selectors in the rule-view). A new instance is only created the first time
+   * this function is called. The same instance will then be returned.
+   * @return {Promise} Resolves to the instance of the highlighter.
+   */
+  getSelectorHighlighter: Task.async(function*() {
+    let utils = this.inspector.toolbox.highlighterUtils;
+    if (!utils.supportsCustomHighlighters()) {
+      return null;
+    }
+
+    if (this.selectorHighlighter) {
+      return this.selectorHighlighter;
+    }
+
+    try {
+      let h = yield utils.getHighlighterByType("SelectorHighlighter");
+      return this.selectorHighlighter = h;
+    } catch (e) {
+      // The SelectorHighlighter type could not be created in the current target.
+      // It could be an older server, or a XUL page.
+      return null;
+    }
+  }),
+
+  /**
+   * Highlight/unhighlight all the nodes that match a given set of selectors
+   * inside the document of the current selected node.
+   * Only one selector can be highlighted at a time, so calling the method a
+   * second time with a different selector will first unhighlight the previously
+   * highlighted nodes.
+   * Calling the method a second time with the same selector will just
+   * unhighlight the highlighted nodes.
+   *
+   * @param {DOMNode} The icon that was clicked to toggle the selector. The
+   * class 'highlighted' will be added when the selector is highlighted.
+   * @param {String} The selector used to find nodes in the page.
+   */
+  toggleSelectorHighlighter: function(selectorIcon, selector) {
+    if (this.lastSelectorIcon) {
+      this.lastSelectorIcon.classList.remove("highlighted");
+    }
+    selectorIcon.classList.remove("highlighted");
+
+    this.unhighlightSelector().then(() => {
+      if (selector !== this.highlightedSelector) {
+        this.highlightedSelector = selector;
+        selectorIcon.classList.add("highlighted");
+        this.lastSelectorIcon = selectorIcon;
+        this.highlightSelector(selector).then(() => {
+          this.emit("ruleview-selectorhighlighter-toggled", true);
+        }, Cu.reportError);
+      } else {
+        this.highlightedSelector = null;
+        this.emit("ruleview-selectorhighlighter-toggled", false);
+      }
+    }, Cu.reportError);
+  },
+
+  highlightSelector: Task.async(function*(selector) {
+    let node = this.inspector.selection.nodeFront;
+
+    let highlighter = yield this.getSelectorHighlighter();
+    if (!highlighter) {
+      return;
+    }
+
+    yield highlighter.show(node, {
+      hideInfoBar: true,
+      hideGuides: true,
+      selector
+    });
+  }),
+
+  unhighlightSelector: Task.async(function*() {
+    let highlighter = yield this.getSelectorHighlighter();
+    if (!highlighter) {
+      return;
+    }
+
+    yield highlighter.hide();
+  }),
 
   /**
    * Update the context menu. This means enabling or disabling menuitems as
@@ -1611,9 +1697,7 @@ CssRuleView.prototype = {
       this._createEditors();
 
       // Notify anyone that cares that we refreshed.
-      var evt = this.doc.createEvent("Events");
-      evt.initEvent("CssRuleViewRefreshed", true, false);
-      this.element.dispatchEvent(evt);
+      this.emit("ruleview-refreshed");
       return undefined;
     }).then(null, promiseWarn);
   },
@@ -1645,6 +1729,8 @@ CssRuleView.prototype = {
    * Clear the rule view.
    */
   clear: function() {
+    this.lastSelectorIcon = null;
+
     this._clearRules();
     this._viewedElement = null;
 
@@ -1659,9 +1745,7 @@ CssRuleView.prototype = {
    * Emits an event that clients can listen to.
    */
   _changed: function() {
-    var evt = this.doc.createEvent("Events");
-    evt.initEvent("CssRuleViewChanged", true, false);
-    this.element.dispatchEvent(evt);
+    this.emit("ruleview-changed");
   },
 
   /**
@@ -1837,6 +1921,7 @@ function RuleEditor(aRuleView, aRule) {
   this.ruleView = aRuleView;
   this.doc = this.ruleView.doc;
   this.rule = aRule;
+
   this.isEditable = !aRule.isSystem;
   // Flag that blocks updates of the selector and properties when it is
   // being edited
@@ -1881,11 +1966,7 @@ RuleEditor.prototype = {
         return;
       }
       let rule = this.rule.domRule;
-      let evt = this.doc.createEvent("CustomEvent");
-      evt.initCustomEvent("CssRuleViewCSSLinkClicked", true, false, {
-        rule: rule,
-      });
-      this.element.dispatchEvent(evt);
+      this.ruleView.emit("ruleview-linked-clicked", rule);
     }.bind(this));
     let sourceLabel = this.doc.createElementNS(XUL_NS, "label");
     sourceLabel.setAttribute("crop", "center");
@@ -1903,6 +1984,20 @@ RuleEditor.prototype = {
     this.selectorContainer = createChild(header, "span", {
       class: "ruleview-selectorcontainer"
     });
+
+    if (this.rule.domRule.type !== Ci.nsIDOMCSSRule.KEYFRAME_RULE &&
+        this.rule.domRule.selectors) {
+      let selector = this.rule.domRule.selectors.join(", ");
+
+      let selectorHighlighter = createChild(header, "span", {
+        class: "ruleview-selectorhighlighter" +
+               (this.ruleView.highlightedSelector === selector ? " highlighted": ""),
+        title: CssLogic.l10n("rule.selectorHighlighter.tooltip")
+      });
+      selectorHighlighter.addEventListener("click", () => {
+        this.ruleView.toggleSelectorHighlighter(selectorHighlighter, selector);
+      });
+    }
 
     this.selectorText = createChild(this.selectorContainer, "span", {
       class: "ruleview-selector theme-fg-color3"

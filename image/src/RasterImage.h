@@ -30,6 +30,7 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/Pair.h"
 #include "mozilla/TimeStamp.h"
 #include "mozilla/WeakPtr.h"
 #include "mozilla/UniquePtr.h"
@@ -145,10 +146,10 @@ DecodeFlags(uint32_t aFlags)
 }
 
 class RasterImage final : public ImageResource
-                            , public nsIProperties
-                            , public SupportsWeakPtr<RasterImage>
+                        , public nsIProperties
+                        , public SupportsWeakPtr<RasterImage>
 #ifdef DEBUG
-                            , public imgIContainerDebug
+                        , public imgIContainerDebug
 #endif
 {
   // (no public constructor - use ImageFactory)
@@ -247,7 +248,7 @@ public:
                                        nsresult aStatus,
                                        bool aLastPart) override;
 
-  void NotifyForDecodeOnDrawOnly();
+  void NotifyForDecodeOnlyOnDraw();
 
   /**
    * A hint of the number of bytes of source data that the image contains. If
@@ -297,8 +298,9 @@ private:
 
   TemporaryRef<gfx::SourceSurface> CopyFrame(uint32_t aWhichFrame,
                                              uint32_t aFlags);
-  TemporaryRef<gfx::SourceSurface> GetFrameInternal(uint32_t aWhichFrame,
-                                                    uint32_t aFlags);
+
+  Pair<DrawResult, RefPtr<gfx::SourceSurface>>
+    GetFrameInternal(uint32_t aWhichFrame, uint32_t aFlags);
 
   DrawableFrameRef LookupFrameInternal(uint32_t aFrameNum,
                                        const gfx::IntSize& aSize,
@@ -314,8 +316,9 @@ private:
   size_t SizeOfDecodedWithComputedFallbackIfHeap(gfxMemoryLocation aLocation,
                                                  MallocSizeOf aMallocSizeOf) const;
 
-  already_AddRefed<layers::Image>
-    GetCurrentImage(layers::ImageContainer* aContainer);
+  Pair<DrawResult, nsRefPtr<layers::Image>>
+    GetCurrentImage(layers::ImageContainer* aContainer, uint32_t aFlags);
+
   void UpdateImageContainer();
 
   // We would like to just check if we have a zero lock count, but we can't do
@@ -381,6 +384,10 @@ private: // data
   // the layer system needs it.
   WeakPtr<layers::ImageContainer> mImageContainer;
 
+  // If mImageContainer is non-null, this contains the DrawResult we obtained
+  // the last time we updated it.
+  DrawResult mLastImageContainerDrawResult;
+
 #ifdef DEBUG
   uint32_t                       mFramesNotified;
 #endif
@@ -393,7 +400,7 @@ private: // data
 
   // Boolean flags (clustered together to conserve space):
   bool                       mHasSize:1;       // Has SetSize() been called?
-  bool                       mDecodeOnDraw:1;  // Decoding on draw?
+  bool                       mDecodeOnlyOnDraw:1; // Decoding only on draw?
   bool                       mTransient:1;     // Is the image short-lived?
   bool                       mDiscardable:1;   // Is container discardable?
   bool                       mHasSourceData:1; // Do we have source data?

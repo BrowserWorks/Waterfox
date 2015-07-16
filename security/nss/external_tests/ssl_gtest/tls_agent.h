@@ -14,6 +14,9 @@
 
 #include "test_io.h"
 
+#define GTEST_HAS_RTTI 0
+#include "gtest/gtest.h"
+
 namespace nss_test {
 
 #define LOG(msg) std::cerr << name_ << ": " << msg << std::endl
@@ -30,16 +33,22 @@ class TlsAgent : public PollTarget {
   enum Role { CLIENT, SERVER };
   enum State { INIT, CONNECTING, CONNECTED, ERROR };
 
-  TlsAgent(const std::string& name, Role role, Mode mode)
+  TlsAgent(const std::string& name, Role role, Mode mode, SSLKEAType kea)
       : name_(name),
         mode_(mode),
+        kea_(kea),
         pr_fd_(nullptr),
         adapter_(nullptr),
         ssl_fd_(nullptr),
         role_(role),
-        state_(INIT) {
+        state_(INIT),
+        error_code_(0) {
       memset(&info_, 0, sizeof(info_));
       memset(&csinfo_, 0, sizeof(csinfo_));
+      SECStatus rv = SSL_VersionRangeGetDefault(mode_ == STREAM ?
+                                                ssl_variant_stream : ssl_variant_datagram,
+                                                &vrange_);
+      EXPECT_EQ(SECSuccess, rv);
   }
 
   ~TlsAgent() {
@@ -71,10 +80,11 @@ class TlsAgent : public PollTarget {
 
   void StartConnect();
   void CheckKEAType(SSLKEAType type) const;
+  void CheckAuthType(SSLAuthType type) const;
   void CheckVersion(uint16_t version) const;
 
   void Handshake();
-  void EnableSomeECDHECiphers();
+  void EnableSomeEcdheCiphers();
   bool EnsureTlsSetup();
 
   void ConfigureSessionCache(SessionResumptionMode mode);
@@ -86,6 +96,7 @@ class TlsAgent : public PollTarget {
                  const std::string& expected);
   void EnableSrtp();
   void CheckSrtp();
+  void CheckErrorCode(int32_t expected) const;
 
   State state() const { return state_; }
 
@@ -95,12 +106,21 @@ class TlsAgent : public PollTarget {
 
   PRFileDesc* ssl_fd() { return ssl_fd_; }
 
+  uint16_t min_version() const { return vrange_.min; }
+  uint16_t max_version() const { return vrange_.max; }
+
   bool version(uint16_t* version) const {
     if (state_ != CONNECTED) return false;
 
     *version = info_.protocolVersion;
 
     return true;
+  }
+
+  uint16_t version() const {
+    EXPECT_EQ(CONNECTED, state_);
+
+    return info_.protocolVersion;
   }
 
   bool cipher_suite(int16_t* cipher_suite) const {
@@ -156,6 +176,7 @@ class TlsAgent : public PollTarget {
 
   const std::string name_;
   Mode mode_;
+  SSLKEAType kea_;
   PRFileDesc* pr_fd_;
   DummyPrSocket* adapter_;
   PRFileDesc* ssl_fd_;
@@ -163,6 +184,8 @@ class TlsAgent : public PollTarget {
   State state_;
   SSLChannelInfo info_;
   SSLCipherSuiteInfo csinfo_;
+  SSLVersionRange vrange_;
+  int32_t error_code_;
 };
 
 }  // namespace nss_test

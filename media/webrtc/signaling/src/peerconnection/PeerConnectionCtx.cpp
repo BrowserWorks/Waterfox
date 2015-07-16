@@ -379,7 +379,7 @@ PeerConnectionCtx::~PeerConnectionCtx() {
 #endif
 };
 
-void PeerConnectionCtx::queueJSEPOperation(nsRefPtr<nsIRunnable> aOperation) {
+void PeerConnectionCtx::queueJSEPOperation(nsIRunnable* aOperation) {
   mQueuedJSEPOperations.AppendElement(aOperation);
 }
 

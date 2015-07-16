@@ -66,7 +66,8 @@ class Nursery
         numNurseryChunks_(0),
         finalizers_(nullptr),
         profileThreshold_(0),
-        enableProfiling_(false)
+        enableProfiling_(false),
+        freeHugeSlotsTask(nullptr)
     {}
     ~Nursery();
 
@@ -139,6 +140,8 @@ class Nursery
             setForwardingPointer(oldData, newData, direct);
     }
 
+    void waitBackgroundFreeEnd();
+
     size_t sizeOfHeapCommitted() const {
         return numActiveChunks_ * gc::ChunkSize;
     }
@@ -162,7 +165,7 @@ class Nursery
     }
 
     static bool IsMinorCollectionTracer(JSTracer* trc) {
-        return trc->callback == MinorGCCallback;
+        return trc->isCallbackTracer() && trc->asCallbackTracer()->hasCallback(MinorGCCallback);
     }
 
 #ifdef JS_GC_ZEAL
@@ -221,6 +224,10 @@ class Nursery
      */
     typedef HashSet<HeapSlot*, PointerHasher<HeapSlot*, 3>, SystemAllocPolicy> HugeSlotsSet;
     HugeSlotsSet hugeSlots;
+
+    /* A task structure used to free the huge slots on a background thread. */
+    struct FreeHugeSlotsTask;
+    FreeHugeSlotsTask* freeHugeSlotsTask;
 
     /*
      * During a collection most hoisted slot and element buffers indicate their
@@ -340,7 +347,7 @@ class Nursery
     void growAllocableSpace();
     void shrinkAllocableSpace();
 
-    static void MinorGCCallback(JSTracer* trc, void** thingp, JSGCTraceKind kind);
+    static void MinorGCCallback(JS::CallbackTracer* trc, void** thingp, JSGCTraceKind kind);
 
     friend class gc::MinorCollectionTracer;
     friend class jit::MacroAssembler;

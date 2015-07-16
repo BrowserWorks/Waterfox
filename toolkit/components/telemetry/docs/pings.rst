@@ -19,10 +19,17 @@ If a ping failed to submit (e.g. because of missing internet connection), Teleme
 
 *Note:* the :doc:`main pings <main-ping>` are kept locally even after successful submission to enable the HealthReport and SelfSupport features. They will be deleted after their retention period of 180 days.
 
+The telemetry server team is working towards `the common services status codes <https://wiki.mozilla.org/CloudServices/DataPipeline/HTTPEdgeServerSpecification#Server_Responses>`_, but for now the following logic is sufficient for Telemetry:
+
+* `2XX` - success, don't resubmit
+* `4XX` - there was some problem with the request - the client should not try to resubmit as it would just receive the same response
+* `5XX` - there was a server-side error, the client should try to resubmit later
+
 Ping types
 ==========
 
 * :doc:`main <main-ping>` - contains the information collected by Telemetry (Histograms, hang stacks, ...)
+* :doc:`saved-session <main-ping>` - contains the *"classic"* Telemetry payload with measurements covering the whole browser session. Used to make storage of saved-session easier server-side.
 * ``activation`` - *planned* - sent right after installation or profile creation
 * ``upgrade`` - *planned* - sent right after an upgrade
 * ``deletion`` - *planned* - on opt-out we may have to tell the server to delete user data

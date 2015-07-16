@@ -36,6 +36,7 @@ AsyncNPObject::AsyncNPObject(PluginAsyncSurrogate* aSurrogate)
 AsyncNPObject::~AsyncNPObject()
 {
   if (mRealObject) {
+    --mRealObject->asyncWrapperCount;
     parent::_releaseobject(mRealObject);
     mRealObject = nullptr;
   }
@@ -51,11 +52,19 @@ AsyncNPObject::GetRealObject()
   if (!instance) {
     return nullptr;
   }
+  NPObject* realObject = nullptr;
   NPError err = instance->NPP_GetValue(NPPVpluginScriptableNPObject,
-                                       &mRealObject);
+                                       &realObject);
   if (err != NPERR_NO_ERROR) {
     return nullptr;
   }
+  if (realObject->_class != PluginScriptableObjectParent::GetClass()) {
+    NS_ERROR("Don't know what kind of object this is!");
+    parent::_releaseobject(realObject);
+    return nullptr;
+  }
+  mRealObject = static_cast<ParentNPObject*>(realObject);
+  ++mRealObject->asyncWrapperCount;
   return mRealObject;
 }
 
@@ -436,16 +445,20 @@ PluginAsyncSurrogate::SetStreamType(NPStream* aStream, uint16_t aStreamType)
 void
 PluginAsyncSurrogate::OnInstanceCreated(PluginInstanceParent* aInstance)
 {
-  for (PRUint32 i = 0, len = mPendingNewStreamCalls.Length(); i < len; ++i) {
-    PendingNewStreamCall& curPendingCall = mPendingNewStreamCalls[i];
-    uint16_t streamType = NP_NORMAL;
-    NPError curError = aInstance->NPP_NewStream(
-                    const_cast<char*>(NullableStringGet(curPendingCall.mType)),
-                    curPendingCall.mStream, curPendingCall.mSeekable,
-                    &streamType);
-    if (curError != NPERR_NO_ERROR) {
-      // If we failed here then the send failed and we need to clean up
-      DestroyAsyncStream(curPendingCall.mStream);
+  if (!mDestroyPending) {
+    // If NPP_Destroy has already been called then these streams have already
+    // been cleaned up on the browser side and are no longer valid.
+    for (uint32_t i = 0, len = mPendingNewStreamCalls.Length(); i < len; ++i) {
+      PendingNewStreamCall& curPendingCall = mPendingNewStreamCalls[i];
+      uint16_t streamType = NP_NORMAL;
+      NPError curError = aInstance->NPP_NewStream(
+                      const_cast<char*>(NullableStringGet(curPendingCall.mType)),
+                      curPendingCall.mStream, curPendingCall.mSeekable,
+                      &streamType);
+      if (curError != NPERR_NO_ERROR) {
+        // If we failed here then the send failed and we need to clean up
+        DestroyAsyncStream(curPendingCall.mStream);
+      }
     }
   }
   mPendingNewStreamCalls.Clear();
@@ -543,12 +556,14 @@ PluginAsyncSurrogate::AsyncCallArriving()
 void
 PluginAsyncSurrogate::NotifyAsyncInitFailed()
 {
-  // Clean up any pending NewStream requests
-  for (uint32_t i = 0, len = mPendingNewStreamCalls.Length(); i < len; ++i) {
-    PendingNewStreamCall& curPendingCall = mPendingNewStreamCalls[i];
-    DestroyAsyncStream(curPendingCall.mStream);
+  if (!mDestroyPending) {
+    // Clean up any pending NewStream requests
+    for (uint32_t i = 0, len = mPendingNewStreamCalls.Length(); i < len; ++i) {
+      PendingNewStreamCall& curPendingCall = mPendingNewStreamCalls[i];
+      DestroyAsyncStream(curPendingCall.mStream);
+    }
+    mPendingNewStreamCalls.Clear();
   }
-  mPendingNewStreamCalls.Clear();
 
   nsNPAPIPluginInstance* inst =
     static_cast<nsNPAPIPluginInstance*>(mInstance->ndata);
@@ -556,9 +571,7 @@ PluginAsyncSurrogate::NotifyAsyncInitFailed()
       return;
   }
   nsPluginInstanceOwner* owner = inst->GetOwner();
-  if (!owner) {
-      return;
-  }
+  MOZ_ASSERT(owner);
   owner->NotifyHostAsyncInitFailed();
 }
 

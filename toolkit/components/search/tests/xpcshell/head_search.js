@@ -143,36 +143,19 @@ function isUSTimezone() {
 }
 
 /**
- * Run some callback once metadata has been committed to disk.
+ * Waits for metadata being committed.
+ * @return {Promise} Resolved when the metadata is committed to disk.
  */
-function afterCommit(callback)
-{
-  let obs = function(result, topic, verb) {
-    if (verb == "write-metadata-to-disk-complete") {
-      Services.obs.removeObserver(obs, topic);
-      callback(result);
-    } else {
-      dump("TOPIC: " + topic+ "\n");
-    }
-  }
-  Services.obs.addObserver(obs, "browser-search-service", false);
+function promiseAfterCommit() {
+  return waitForSearchNotification("write-metadata-to-disk-complete");
 }
 
 /**
- * Run some callback once cache has been built.
+ * Waits for the cache file to be saved.
+ * @return {Promise} Resolved when the cache file is saved.
  */
-function afterCache(callback)
-{
-  let obs = function(result, topic, verb) {
-    do_print("afterCache: " + verb);
-    if (verb == "write-cache-to-disk-complete") {
-      Services.obs.removeObserver(obs, topic);
-      callback(result);
-    } else {
-      dump("TOPIC: " + topic+ "\n");
-    }
-  }
-  Services.obs.addObserver(obs, "browser-search-service", false);
+function promiseAfterCache() {
+  return waitForSearchNotification("write-cache-to-disk-complete");
 }
 
 function parseJsonFromStream(aInputStream) {
@@ -328,6 +311,53 @@ function installTestEngine() {
   });
 }
 
+/**
+ * Wrapper for nsIPrefBranch::setComplexValue.
+ * @param aPrefName
+ *        The name of the pref to set.
+ */
+function setLocalizedPref(aPrefName, aValue) {
+  const nsIPLS = Ci.nsIPrefLocalizedString;
+  try {
+    var pls = Components.classes["@mozilla.org/pref-localizedstring;1"]
+                        .createInstance(Ci.nsIPrefLocalizedString);
+    pls.data = aValue;
+    Services.prefs.setComplexValue(aPrefName, nsIPLS, pls);
+  } catch (ex) {}
+}
+
+
+/**
+ * Installs two test engines, sets them as default for US vs. general.
+ */
+function setUpGeoDefaults() {
+  removeMetadata();
+  removeCacheFile();
+
+  do_check_false(Services.search.isInitialized);
+
+  let engineDummyFile = gProfD.clone();
+  engineDummyFile.append("searchplugins");
+  engineDummyFile.append("test-search-engine.xml");
+  let engineDir = engineDummyFile.parent;
+  engineDir.create(Ci.nsIFile.DIRECTORY_TYPE, FileUtils.PERMS_DIRECTORY);
+
+  do_get_file("data/engine.xml").copyTo(engineDir, "engine.xml");
+
+  engineDummyFile = gProfD.clone();
+  engineDummyFile.append("searchplugins");
+  engineDummyFile.append("test-search-engine2.xml");
+
+  do_get_file("data/engine2.xml").copyTo(engineDir, "engine2.xml");
+
+  setLocalizedPref("browser.search.defaultenginename",    "Test search engine");
+  setLocalizedPref("browser.search.defaultenginename.US", "A second test engine");
+
+  do_register_cleanup(function() {
+    removeMetadata();
+    removeCacheFile();
+  });
+}
 
 /**
  * Returns a promise that is resolved when an observer notification from the

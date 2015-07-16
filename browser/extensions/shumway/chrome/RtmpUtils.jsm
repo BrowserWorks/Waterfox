@@ -41,152 +41,119 @@ var RtmpUtils = {
       return null;
     }
 
-    var wrapperOnOpen = null, wrapperOnData = null, wrapperOnDrain = null;
-    var wrapperOnError = null, wrapperOnClose = null;
     socket.onopen = function () {
       if (wrapperOnOpen) {
-        wrapperOnOpen.call(wrapper, new sandbox.Object());
+        wrapperOnOpen(new sandbox.Object());
       }
     };
     socket.ondata = function (e) {
       if (wrapperOnData) {
         var wrappedE = new sandbox.Object();
         wrappedE.data = Components.utils.cloneInto(e.data, sandbox);
-        wrapperOnData.call(wrapper, wrappedE);
+        wrapperOnData(wrappedE);
       }
     };
     socket.ondrain = function () {
       if (wrapperOnDrain) {
-        wrapperOnDrain.call(wrapper, new sandbox.Object());
+        wrapperOnDrain(new sandbox.Object());
       }
     };
     socket.onerror = function (e) {
       if (wrapperOnError) {
         var wrappedE = new sandbox.Object();
         wrappedE.data = Components.utils.cloneInto(e.data, sandbox);
-        wrapperOnError.call(wrapper, wrappedE);
+        wrapperOnError(wrappedE);
       }
     };
     socket.onclose = function () {
       if (wrapperOnClose) {
-        wrapperOnClose.call(wrapper, new sandbox.Object());
+        wrapperOnClose(new sandbox.Object());
       }
     };
 
-    var wrapper = new sandbox.Object();
-    var waived = Components.utils.waiveXrays(wrapper);
-    Object.defineProperties(waived, {
-      onopen: {
-        get: function () { return wrapperOnOpen; },
-        set: function (value) { wrapperOnOpen = value; },
-        enumerable: true
+    var wrapperOnOpen, wrapperOnData, wrapperOnDrain, wrapperOnError, wrapperOnClose;
+    var wrapper = Components.utils.cloneInto({
+      setOpenCallback: function (callback) {
+        wrapperOnOpen = callback;
       },
-      ondata: {
-        get: function () { return wrapperOnData; },
-        set: function (value) { wrapperOnData = value; },
-        enumerable: true
+      setDataCallback: function (callback) {
+        wrapperOnData = callback;
       },
-      ondrain: {
-        get: function () { return wrapperOnDrain; },
-        set: function (value) { wrapperOnDrain = value; },
-        enumerable: true
+      setDrainCallback: function (callback) {
+        wrapperOnDrain = callback;
       },
-      onerror: {
-        get: function () { return wrapperOnError; },
-        set: function (value) { wrapperOnError = value; },
-        enumerable: true
+      setErrorCallback: function (callback) {
+        wrapperOnError = callback;
       },
-      onclose: {
-        get: function () { return wrapperOnClose; },
-        set: function (value) { wrapperOnClose = value; },
-        enumerable: true
+      setCloseCallback: function (callback) {
+        wrapperOnClose = callback;
       },
 
-      send: {
-        value: function (buffer, offset, count) {
-          return socket.send(buffer, offset, count);
-        }
+      send: function (buffer, offset, count) {
+        return socket.send(buffer, offset, count);
       },
 
-      close: {
-        value: function () {
-          socket.close();
-        }
+      close: function () {
+        socket.close();
       }
-    });
+    }, sandbox, {cloneFunctions:true});
     return wrapper;
   },
 
   createXHR: function (sandbox) {
     var xhr = Cc["@mozilla.org/xmlextras/xmlhttprequest;1"]
                 .createInstance(Ci.nsIXMLHttpRequest);
-    var wrapperOnLoad = null, wrapperOnError = null;
+
     xhr.onload = function () {
+      wrapper.status = xhr.status;
+      wrapper.response = Components.utils.cloneInto(xhr.response, sandbox);
       if (wrapperOnLoad) {
-        wrapperOnLoad.call(wrapper, new sandbox.Object());
+        wrapperOnLoad(new sandbox.Object());
       }
     };
     xhr.onerror = function () {
-      if (wrappedOnError) {
-        wrappedOnError.call(wrapper, new sandbox.Object());
+      wrapper.status = xhr.status;
+      if (wrapperOnError) {
+        wrapperOnError(new sandbox.Object());
       }
     };
 
-    var wrapper = new sandbox.Object();
-    var waived = Components.utils.waiveXrays(wrapper);
-    Object.defineProperties(waived, {
-      status: {
-        get: function () { return xhr.status; },
-        enumerable: true
+    var wrapperOnLoad, wrapperOnError;
+    var wrapper = Components.utils.cloneInto({
+      status: 0,
+      response: undefined,
+      responseType: 'text',
+
+      setLoadCallback: function (callback) {
+        wrapperOnLoad = callback;
       },
-      response: {
-        get: function () { return Components.utils.cloneInto(xhr.response, sandbox); },
-        enumerable: true
+      setErrorCallback: function (callback) {
+        wrapperOnError = callback;
       },
-      responseType: {
-        get: function () { return xhr.responseType; },
-        set: function (value) {
-          if (value !== 'arraybuffer') {
-            throw new Error('Invalid responseType.');
-          }
-        },
-        enumerable: true
-      },
-      onload: {
-        get: function () { return wrapperOnLoad; },
-        set: function (value) { wrapperOnLoad = value; },
-        enumerable: true
-      },
-      onerror: {
-        get: function () { return wrapperOnError; },
-        set: function (value) { wrapperOnError = value; },
-        enumerable: true
-      },
-      open: {
-        value: function (method, path, async) {
-          if (method !== 'POST' || !path || (async !== undefined && !async)) {
-            throw new Error('invalid open() arguments');
-          }
-          // TODO check path
-          xhr.open('POST', path, true);
-          xhr.responseType = 'arraybuffer';
-          xhr.setRequestHeader('Content-Type', 'application/x-fcs');
+
+      open: function (method, path, async) {
+        if (method !== 'POST' || !path || (async !== undefined && !async)) {
+          throw new Error('invalid open() arguments');
         }
+        // TODO check path
+        xhr.open('POST', path, true);
+        xhr.responseType = 'arraybuffer';
+        xhr.setRequestHeader('Content-Type', 'application/x-fcs');
       },
-      setRequestHeader: {
-        value: function (header, value) {
-          if (header !== 'Content-Type' || value !== 'application/x-fcs') {
-            throw new Error('invalid setRequestHeader() arguments');
-          }
+
+      setRequestHeader: function (header, value) {
+        if (header !== 'Content-Type' || value !== 'application/x-fcs') {
+          throw new Error('invalid setRequestHeader() arguments');
         }
       },
 
-      send: {
-        value: function (data) {
-          xhr.send(data);
+      send: function (data) {
+        if (wrapper.responseType !== 'arraybuffer') {
+          throw new Error('Invalid responseType.');
         }
+        xhr.send(data);
       }
-    });
+    }, sandbox, {cloneFunctions:true});
     return wrapper;
   }
 };

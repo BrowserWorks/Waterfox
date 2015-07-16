@@ -1,0 +1,51 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta content="text/html; charset=ISO-8859-1" http-equiv="content-type">
+<title>mintty</title>
+</head>
+<body>
+<p>
+mintty is copyright 2008-11 Andy Koppe.
+</p>
+<p>
+This program is distributed in the hope that it will be useful, but without any warranty; without even the implied warranty of merchantability or fitness for a particular purpose. It is licensed under the terms of the <a href="http://mintty.googlecode.com/svn/trunk/LICENSE">GNU General Public License version 3</a> or later. <a href="http://code.google.com/p/mintty/downloads">Updates</a> and <a href="http://code.google.com/p/mintty/source/checkout">source code</a> are available from the mintty project page at <a href="http://mintty.googlecode.com">http://mintty.googlecode.com</a>.
+</p>
+<p>
+Mintty is based on parts of <a href="http://www.chiark.greenend.org.uk/%7Esgtatham/putty/">PuTTY</a> version 0.60 by Simon Tatham and contributors, available from <a href="http://the.earth.li/~sgtatham/putty/0.60">http://the.earth.li/~sgtatham/putty/0.60</a>. Big thanks to everyone involved. Thanks also to KDE's Oxygen team for the program icon.
+</p>
+<h4>Running mintty</h4>
+<p>
+First off, instead of installing mintty manually, consider installing it through the MinGW installer, using <tt>mingw-get install msys-mintty</tt>.
+</p>
+<p>
+Otherwise, you need to ensure that Windows is able to find the MSYS DLL (<i>msys-1.0.dll</i>) when starting <i>mintty.exe</i>. There are several ways to do this:
+</p>
+<ul>
+<li>
+Start it from within an existing MSYS session.
+</li>
+<li>
+Place <i>mintty.exe</i> alongside <i>msys-1.0.dll</i> in the MSYS <i>/bin</i> directory and start it from there.
+</li>
+<li>
+Add the MSYS <i>/bin</i> directory (e.g. <i>C:\MSYS\bin</i>) to the Windows <i>PATH</i> variable, which can be found under 'Environment Variables' on the 'Advanced' tab of the System Properties control panel.
+</li>
+<li>
+Create a shortcut to <i>mintty.exe</i> with the working directory set to the MSYS <i>/bin</i> directory.
+</li>
+</ul>
+<p>
+Invoke mintty as follows to obtain a login shell that sources all the usual startup scripts: <tt>mintty /bin/bash -l</tt>
+</p>
+<p>
+Invoking <i>mintty</i> with <i>--version</i> or <i>--help</i> will print version or usage information. The mintty manual in PDF format can be found on the project page at <a href="http://mintty.googlecode.com">http://mintty.googlecode.com</a>.
+</p>
+<p>
+Please report bugs or suggest enhancements via the <a href="http://code.google.com/p/mintty/issues">issue tracker</a>. Vote for any issues you'd particularly like to see addressed by starring them. The discussion group for all things mintty is <a href="http://groups.google.com/group/mintty-discuss">mintty-discuss</a>.
+</p>
+Enjoy!
+<br>
+Andy
+</body>
+</html>

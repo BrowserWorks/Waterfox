@@ -17,18 +17,34 @@ XPCOMUtils.defineLazyGetter(this, "GetClipboardSearchString",
 );
 
 function RemoteFinder(browser) {
-  this._browser = browser;
   this._listeners = new Set();
   this._searchString = null;
 
-  let mm = this._browser.messageManager;
-  mm.addMessageListener("Finder:Result", this);
-  mm.addMessageListener("Finder:MatchesResult", this);
-  mm.addMessageListener("Finder:CurrentSelectionResult",this);
-  mm.sendAsyncMessage("Finder:Initialize");
+  this.swapBrowser(browser);
 }
 
 RemoteFinder.prototype = {
+  swapBrowser: function(aBrowser) {
+    if (this._messageManager) {
+      this._messageManager.removeMessageListener("Finder:Result", this);
+      this._messageManager.removeMessageListener("Finder:MatchesResult", this);
+      this._messageManager.removeMessageListener("Finder:CurrentSelectionResult",this);
+    }
+    else {
+      aBrowser.messageManager.sendAsyncMessage("Finder:Initialize");
+    }
+
+    this._browser = aBrowser;
+    this._messageManager = this._browser.messageManager;
+    this._messageManager.addMessageListener("Finder:Result", this);
+    this._messageManager.addMessageListener("Finder:MatchesResult", this);
+    this._messageManager.addMessageListener("Finder:CurrentSelectionResult", this);
+
+    // Ideally listeners would have removed themselves but that doesn't happen
+    // right now
+    this._listeners.clear();
+  },
+
   addResultListener: function (aListener) {
     this._listeners.add(aListener);
   },
@@ -58,7 +74,13 @@ RemoteFinder.prototype = {
     }
 
     for (let l of this._listeners) {
-      l[callback].apply(l, params);
+      // Don't let one callback throwing stop us calling the rest
+      try {
+        l[callback].apply(l, params);
+      }
+      catch (e) {
+        Cu.reportError(e);
+      }
     }
   },
 
@@ -83,16 +105,18 @@ RemoteFinder.prototype = {
     this._browser.messageManager.sendAsyncMessage("Finder:GetInitialSelection", {});
   },
 
-  fastFind: function (aSearchString, aLinksOnly) {
+  fastFind: function (aSearchString, aLinksOnly, aDrawOutline) {
     this._browser.messageManager.sendAsyncMessage("Finder:FastFind",
                                                   { searchString: aSearchString,
-                                                    linksOnly: aLinksOnly });
+                                                    linksOnly: aLinksOnly,
+                                                    drawOutline: aDrawOutline });
   },
 
-  findAgain: function (aFindBackwards, aLinksOnly) {
+  findAgain: function (aFindBackwards, aLinksOnly, aDrawOutline) {
     this._browser.messageManager.sendAsyncMessage("Finder:FindAgain",
                                                   { findBackwards: aFindBackwards,
-                                                    linksOnly: aLinksOnly });
+                                                    linksOnly: aLinksOnly,
+                                                    drawOutline: aDrawOutline });
   },
 
   highlight: function (aHighlight, aWord) {
@@ -121,6 +145,7 @@ RemoteFinder.prototype = {
       }
     }
 
+    this._browser.focus();
     this._browser.messageManager.sendAsyncMessage("Finder:FocusContent");
   },
 
@@ -199,11 +224,13 @@ RemoteFinderListener.prototype = {
       }
 
       case "Finder:FastFind":
-        this._finder.fastFind(data.searchString, data.linksOnly);
+
+        this._finder.fastFind(data.searchString, data.linksOnly, data.drawOutline);
+        this._finder.setSelectionModeAndRepaint(Ci.nsISelectionController.SELECTION_ON);
         break;
 
       case "Finder:FindAgain":
-        this._finder.findAgain(data.findBackwards, data.linksOnly);
+        this._finder.findAgain(data.findBackwards, data.linksOnly, data.drawOutline);
         break;
 
       case "Finder:Highlight":

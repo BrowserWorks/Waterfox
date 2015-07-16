@@ -23,8 +23,8 @@ namespace dom {
  * This class provides a late-bound collection of rows in a table.
  * mParent is NOT ref-counted to avoid circular references
  */
-class TableRowsCollection : public nsIHTMLCollection,
-                            public nsWrapperCache
+class TableRowsCollection final : public nsIHTMLCollection,
+                                  public nsWrapperCache
 {
 public:
   explicit TableRowsCollection(HTMLTableElement* aParent);
@@ -49,7 +49,7 @@ public:
 
   // nsWrapperCache
   using nsWrapperCache::GetWrapperPreserveColor;
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 protected:
   virtual ~TableRowsCollection();
 
@@ -83,9 +83,9 @@ TableRowsCollection::~TableRowsCollection()
 }
 
 JSObject*
-TableRowsCollection::WrapObject(JSContext* aCx)
+TableRowsCollection::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return HTMLCollectionBinding::Wrap(aCx, this);
+  return HTMLCollectionBinding::Wrap(aCx, this, aGivenProto);
 }
 
 NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(TableRowsCollection, mOrphanRows)
@@ -119,7 +119,7 @@ NS_INTERFACE_MAP_END
       /* TBodies */                                                  \
       for (nsIContent* _node = mParent->nsINode::GetFirstChild();    \
            _node; _node = _node->GetNextSibling()) {                 \
-        if (_node->IsHTML(nsGkAtoms::tbody)) {                       \
+        if (_node->IsHTMLElement(nsGkAtoms::tbody)) {                \
           rowGroup = static_cast<HTMLTableSectionElement*>(_node);   \
           rows = rowGroup->Rows();                                   \
           do { /* gives scoping */                                   \
@@ -302,9 +302,9 @@ HTMLTableElement::~HTMLTableElement()
 }
 
 JSObject*
-HTMLTableElement::WrapNode(JSContext *aCx)
+HTMLTableElement::WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return HTMLTableElementBinding::Wrap(aCx, this);
+  return HTMLTableElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 NS_IMPL_CYCLE_COLLECTION_CLASS(HTMLTableElement)
@@ -474,7 +474,7 @@ HTMLTableElement::CreateTBody()
   for (nsIContent* child = nsINode::GetLastChild();
        child;
        child = child->GetPreviousSibling()) {
-    if (child->IsHTML(nsGkAtoms::tbody)) {
+    if (child->IsHTMLElement(nsGkAtoms::tbody)) {
       referenceNode = child->GetNextSibling();
       break;
     }
@@ -552,7 +552,7 @@ HTMLTableElement::InsertRow(int32_t aIndex, ErrorResult& aError)
     for (nsIContent* child = nsINode::GetLastChild();
          child;
          child = child->GetPreviousSibling()) {
-      if (child->IsHTML(nsGkAtoms::tbody)) {
+      if (child->IsHTMLElement(nsGkAtoms::tbody)) {
         rowGroup = child;
         break;
       }

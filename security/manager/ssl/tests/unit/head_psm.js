@@ -30,6 +30,10 @@ const SEC_ERROR_BASE = Ci.nsINSSErrorsService.NSS_SEC_ERROR_BASE;
 const SSL_ERROR_BASE = Ci.nsINSSErrorsService.NSS_SSL_ERROR_BASE;
 const MOZILLA_PKIX_ERROR_BASE = Ci.nsINSSErrorsService.MOZILLA_PKIX_ERROR_BASE;
 
+// This isn't really a valid PRErrorCode, but is useful for signalling that
+// a test is expected to succeed.
+const PRErrorCodeSuccess = 0;
+
 // Sort in numerical order
 const SEC_ERROR_INVALID_ARGS                            = SEC_ERROR_BASE +   5; // -8187
 const SEC_ERROR_INVALID_TIME                            = SEC_ERROR_BASE +   8;
@@ -68,6 +72,7 @@ const SEC_ERROR_APPLICATION_CALLBACK_ERROR              = SEC_ERROR_BASE + 178;
 
 const SSL_ERROR_BAD_CERT_DOMAIN                         = SSL_ERROR_BASE +  12;
 const SSL_ERROR_BAD_CERT_ALERT                          = SSL_ERROR_BASE +  17;
+const SSL_ERROR_WEAK_SERVER_CERT_KEY                    = SSL_ERROR_BASE + 132;
 
 const MOZILLA_PKIX_ERROR_KEY_PINNING_FAILURE            = MOZILLA_PKIX_ERROR_BASE +   0;
 const MOZILLA_PKIX_ERROR_CA_CERT_USED_AS_END_ENTITY     = MOZILLA_PKIX_ERROR_BASE +   1;
@@ -216,12 +221,12 @@ function run_test() {
   add_tls_server_setup("<test-server-name>");
 
   add_connection_test("<test-name-1>.example.com",
-                      getXPCOMStatusFromNSS(SEC_ERROR_xxx),
+                      SEC_ERROR_xxx,
                       function() { ... },
                       function(aTransportSecurityInfo) { ... },
                       function(aTransport) { ... });
   [...]
-  add_connection_test("<test-name-n>.example.com", Cr.NS_OK);
+  add_connection_test("<test-name-n>.example.com", PRErrorCodeSuccess);
 
   run_next_test();
 }
@@ -233,15 +238,25 @@ function add_tls_server_setup(serverBinName) {
   });
 }
 
-// Add a TLS connection test case. aHost is the hostname to pass in the SNI TLS
-// extension; this should unambiguously identifiy which test is being run.
-// aExpectedResult is the expected nsresult of the connection.
-// aBeforeConnect is a callback function that takes no arguments that will be
-// called before the connection is attempted.
-// aWithSecurityInfo is a callback function that takes an
-// nsITransportSecurityInfo, which is called after the TLS handshake succeeds.
-// aAfterStreamOpen is a callback function that is called with the
-// nsISocketTransport once the output stream is ready.
+/**
+ * Add a TLS connection test case.
+ *
+ * @param {String} aHost
+ *   The hostname to pass in the SNI TLS extension; this should unambiguously
+ *   identify which test is being run.
+ * @param {PRErrorCode} aExpectedResult
+ *   The expected result of the connection. If an error is not expected, pass
+ *   in PRErrorCodeSuccess.
+ * @param {Function} aBeforeConnect
+ *   A callback function that takes no arguments that will be called before the
+ *   connection is attempted.
+ * @param {Function} aWithSecurityInfo
+ *   A callback function that takes an nsITransportSecurityInfo, which is called
+ *   after the TLS handshake succeeds.
+ * @param {Function} aAfterStreamOpen
+ *   A callback function that is called with the nsISocketTransport once the
+ *   output stream is ready.
+ */
 function add_connection_test(aHost, aExpectedResult,
                              aBeforeConnect, aWithSecurityInfo,
                              aAfterStreamOpen) {
@@ -325,7 +340,9 @@ function add_connection_test(aHost, aExpectedResult,
     }
     connectTo(aHost).then(function(conn) {
       do_print("handling " + aHost);
-      do_check_eq(conn.result, aExpectedResult);
+      do_check_eq(conn.result, aExpectedResult == PRErrorCodeSuccess
+                               ? Cr.NS_OK
+                               : getXPCOMStatusFromNSS(aExpectedResult));
       if (aWithSecurityInfo) {
         aWithSecurityInfo(conn.transport.securityInfo
                               .QueryInterface(Ci.nsITransportSecurityInfo));
@@ -558,4 +575,46 @@ FakeSSLStatus.prototype = {
     }
     throw Components.results.NS_ERROR_NO_INTERFACE;
   },
+}
+
+// Utility functions for adding tests relating to certificate error overrides
+
+// Helper function for add_cert_override_test and
+// add_prevented_cert_override_test. Probably doesn't need to be called
+// directly.
+function add_cert_override(aHost, aExpectedBits, aSecurityInfo) {
+  let sslstatus = aSecurityInfo.QueryInterface(Ci.nsISSLStatusProvider)
+                               .SSLStatus;
+  let bits =
+    (sslstatus.isUntrusted ? Ci.nsICertOverrideService.ERROR_UNTRUSTED : 0) |
+    (sslstatus.isDomainMismatch ? Ci.nsICertOverrideService.ERROR_MISMATCH : 0) |
+    (sslstatus.isNotValidAtThisTime ? Ci.nsICertOverrideService.ERROR_TIME : 0);
+  do_check_eq(bits, aExpectedBits);
+  let cert = sslstatus.serverCert;
+  let certOverrideService = Cc["@mozilla.org/security/certoverride;1"]
+                              .getService(Ci.nsICertOverrideService);
+  certOverrideService.rememberValidityOverride(aHost, 8443, cert, aExpectedBits,
+                                               true);
+}
+
+// Given a host, expected error bits (see nsICertOverrideService.idl), and
+// an expected error code, tests that an initial connection to the host fails
+// with the expected errors and that adding an override results in a subsequent
+// connection succeeding.
+function add_cert_override_test(aHost, aExpectedBits, aExpectedError) {
+  add_connection_test(aHost, aExpectedError, null,
+                      add_cert_override.bind(this, aHost, aExpectedBits));
+  add_connection_test(aHost, PRErrorCodeSuccess);
+}
+
+// Given a host, expected error bits (see nsICertOverrideService.idl), and
+// an expected error code, tests that an initial connection to the host fails
+// with the expected errors and that adding an override does not result in a
+// subsequent connection succeeding (i.e. the same error code is encountered).
+// The idea here is that for HSTS hosts or hosts with key pins, no error is
+// overridable, even if an entry is added to the override service.
+function add_prevented_cert_override_test(aHost, aExpectedBits, aExpectedError) {
+  add_connection_test(aHost, aExpectedError, null,
+                      add_cert_override.bind(this, aHost, aExpectedBits));
+  add_connection_test(aHost, aExpectedError);
 }

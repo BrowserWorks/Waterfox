@@ -535,9 +535,7 @@ gfxWindowsPlatform::UpdateRenderMode()
     }
 
     ID3D11Device *device = GetD3D11Device();
-    if (isVistaOrHigher && !safeMode && tryD2D &&
-        device &&
-        device->GetFeatureLevel() >= D3D_FEATURE_LEVEL_10_0 &&
+    if (isVistaOrHigher && !safeMode && tryD2D && device &&
         DoesD3D11TextureSharingWork(device)) {
 
         VerifyD2DDevice(d2dForceEnabled);
@@ -772,18 +770,18 @@ gfxWindowsPlatform::CreateOffscreenSurface(const IntSize& size,
 
 #ifdef CAIRO_HAS_WIN32_SURFACE
     if (mRenderMode == RENDER_GDI)
-        surf = new gfxWindowsSurface(ThebesIntSize(size),
+        surf = new gfxWindowsSurface(size,
                                      OptimalFormatForContent(contentType));
 #endif
 
 #ifdef CAIRO_HAS_D2D_SURFACE
     if (mRenderMode == RENDER_DIRECT2D)
-        surf = new gfxD2DSurface(ThebesIntSize(size),
+        surf = new gfxD2DSurface(size,
                                  OptimalFormatForContent(contentType));
 #endif
 
     if (!surf || surf->CairoStatus()) {
-        surf = new gfxImageSurface(ThebesIntSize(size),
+        surf = new gfxImageSurface(size,
                                    OptimalFormatForContent(contentType));
     }
 
@@ -1142,6 +1140,27 @@ gfxWindowsPlatform::IsFontFormatSupported(nsIURI *aFontURI, uint32_t aFormatFlag
     return true;
 }
 
+static DeviceResetReason HResultToResetReason(HRESULT hr)
+{
+  switch (hr) {
+  case DXGI_ERROR_DEVICE_HUNG:
+    return DeviceResetReason::HUNG;
+  case DXGI_ERROR_DEVICE_REMOVED:
+    return DeviceResetReason::REMOVED;
+  case DXGI_ERROR_DEVICE_RESET:
+    return DeviceResetReason::RESET;
+  case DXGI_ERROR_DRIVER_INTERNAL_ERROR:
+    return DeviceResetReason::DRIVER_ERROR;
+  case DXGI_ERROR_INVALID_CALL:
+    return DeviceResetReason::INVALID_CALL;
+  case E_OUTOFMEMORY:
+    return DeviceResetReason::OUT_OF_MEMORY;
+  default:
+    MOZ_ASSERT(false);
+  }
+  return DeviceResetReason::UNKNOWN;
+}
+
 bool
 gfxWindowsPlatform::DidRenderingDeviceReset(DeviceResetReason* aResetReason)
 {
@@ -1153,35 +1172,26 @@ gfxWindowsPlatform::DidRenderingDeviceReset(DeviceResetReason* aResetReason)
     HRESULT hr = mD3D11Device->GetDeviceRemovedReason();
     if (hr != S_OK) {
       if (aResetReason) {
-        switch (hr) {
-        case DXGI_ERROR_DEVICE_HUNG:
-          *aResetReason = DeviceResetReason::HUNG;
-          break;
-        case DXGI_ERROR_DEVICE_REMOVED:
-          *aResetReason = DeviceResetReason::REMOVED;
-          break;
-        case DXGI_ERROR_DEVICE_RESET:
-          *aResetReason = DeviceResetReason::RESET;
-          break;
-        case DXGI_ERROR_DRIVER_INTERNAL_ERROR:
-          *aResetReason = DeviceResetReason::DRIVER_ERROR;
-          break;
-        case DXGI_ERROR_INVALID_CALL:
-          *aResetReason = DeviceResetReason::INVALID_CALL;
-        default:
-          MOZ_ASSERT(false);
-        }
+        *aResetReason = HResultToResetReason(hr);
       }
       return true;
     }
   }
   if (mD3D11ContentDevice) {
-    if (mD3D11ContentDevice->GetDeviceRemovedReason() != S_OK) {
+    HRESULT hr = mD3D11ContentDevice->GetDeviceRemovedReason();
+    if (hr != S_OK) {
+      if (aResetReason) {
+        *aResetReason = HResultToResetReason(hr);
+      }
       return true;
     }
   }
   if (GetD3D10Device()) {
-    if (GetD3D10Device()->GetDeviceRemovedReason() != S_OK) {
+    HRESULT hr = GetD3D10Device()->GetDeviceRemovedReason();
+    if (hr != S_OK) {
+      if (aResetReason) {
+        *aResetReason = HResultToResetReason(hr);
+      }
       return true;
     }
   }
@@ -1550,7 +1560,7 @@ gfxWindowsPlatform::GetD3D9DeviceManager()
        CompositorParent::IsInCompositorThread())) {
     mDeviceManager = new DeviceManagerD3D9();
     if (!mDeviceManager->Init()) {
-      NS_WARNING("Could not initialise device manager");
+      gfxCriticalError() << "[D3D9] Could not Initialize the DeviceManagerD3D9";
       mDeviceManager = nullptr;
     }
   }
@@ -1581,6 +1591,19 @@ gfxWindowsPlatform::GetD3D11ContentDevice()
 
   return mD3D11ContentDevice;
 }
+
+ID3D11Device*
+gfxWindowsPlatform::GetD3D11ImageBridgeDevice()
+{
+  if (mD3D11DeviceInitialized) {
+    return mD3D11ImageBridgeDevice;
+  }
+
+  InitD3D11Devices();
+
+  return mD3D11ImageBridgeDevice;
+}
+
 
 ReadbackManagerD3D11*
 gfxWindowsPlatform::GetReadbackManager()
@@ -1691,12 +1714,14 @@ bool DoesD3D11DeviceWork(ID3D11Device *device)
 #if defined(MOZ_CRASHREPORTER)
       CrashReporter::AppendAppNotesToCrashReport(NS_LITERAL_CSTRING("DisplayLink: could not parse version\n"));
 #endif
+      gANGLESupportsD3D11 = false;
       return false;
     }
     if (displayLinkModuleVersion <= V(8,6,1,36484)) {
 #if defined(MOZ_CRASHREPORTER)
       CrashReporter::AppendAppNotesToCrashReport(NS_LITERAL_CSTRING("DisplayLink: too old version\n"));
 #endif
+      gANGLESupportsD3D11 = false;
       return false;
     }
   }
@@ -1706,19 +1731,17 @@ bool DoesD3D11DeviceWork(ID3D11Device *device)
 
 // See bug 1083071. On some drivers, Direct3D 11 CreateShaderResourceView fails
 // with E_OUTOFMEMORY.
-bool DoesD3D11TextureSharingWork(ID3D11Device *device)
+bool DoesD3D11TextureSharingWorkInternal(ID3D11Device *device, DXGI_FORMAT format, UINT bindflags)
 {
-  static bool checked;
-  static bool result;
-
-  if (checked)
-      return result;
-  checked = true;
+  // CreateTexture2D is known to crash on lower feature levels, see bugs
+  // 1170211 and 1089413.
+  if (device->GetFeatureLevel() < D3D_FEATURE_LEVEL_10_0) {
+    return false;
+  }
 
   if (gfxPrefs::Direct2DForceEnabled() ||
       gfxPrefs::LayersAccelerationForceEnabled())
   {
-    result = true;
     return true;
   }
 
@@ -1743,13 +1766,13 @@ bool DoesD3D11TextureSharingWork(ID3D11Device *device)
   desc.Height = 32;
   desc.MipLevels = 1;
   desc.ArraySize = 1;
-  desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+  desc.Format = format;
   desc.SampleDesc.Count = 1;
   desc.SampleDesc.Quality = 0;
   desc.Usage = D3D11_USAGE_DEFAULT;
   desc.CPUAccessFlags = 0;
   desc.MiscFlags = D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
-  desc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+  desc.BindFlags = bindflags;
   if (FAILED(device->CreateTexture2D(&desc, NULL, byRef(texture)))) {
     return false;
   }
@@ -1790,8 +1813,41 @@ bool DoesD3D11TextureSharingWork(ID3D11Device *device)
     return false;
   }
 
-  result = true;
   return true;
+}
+
+bool DoesD3D11TextureSharingWork(ID3D11Device *device)
+{
+  static bool checked;
+  static bool result;
+
+  if (checked)
+    return result;
+  checked = true;
+
+  result = DoesD3D11TextureSharingWorkInternal(device, DXGI_FORMAT_B8G8R8A8_UNORM, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
+  return result;
+}
+
+bool DoesD3D11AlphaTextureSharingWork(ID3D11Device *device)
+{
+  nsCOMPtr<nsIGfxInfo> gfxInfo = do_GetService("@mozilla.org/gfx/info;1");
+  if (gfxInfo) {
+    // A8 texture sharing crashes on this intel driver version (and no others)
+    // so just avoid using it in that case.
+    nsString adapterVendor;
+    nsString driverVersion;
+    gfxInfo->GetAdapterVendorID(adapterVendor);
+    gfxInfo->GetAdapterDriverVersion(driverVersion);
+
+    nsAString &intelVendorID = (nsAString &)GfxDriverInfo::GetDeviceVendor(VendorIntel);
+    if (adapterVendor.Equals(intelVendorID, nsCaseInsensitiveStringComparator()) &&
+        driverVersion.Equals(NS_LITERAL_STRING("8.15.10.2086"))) {
+      return false;
+    }
+  }
+
+  return DoesD3D11TextureSharingWorkInternal(device, DXGI_FORMAT_A8_UNORM, D3D11_BIND_SHADER_RESOURCE);
 }
 
 void
@@ -1970,6 +2026,30 @@ gfxWindowsPlatform::InitD3D11Devices()
     Factory::SetDirect3D11Device(mD3D11ContentDevice);
   }
 
+  if (!useWARP) {
+    hr = E_INVALIDARG;
+
+    MOZ_SEH_TRY{
+      hr = d3d11CreateDevice(adapter, D3D_DRIVER_TYPE_UNKNOWN, nullptr,
+                             D3D11_CREATE_DEVICE_BGRA_SUPPORT,
+                             featureLevels.Elements(), featureLevels.Length(),
+                             D3D11_SDK_VERSION, byRef(mD3D11ImageBridgeDevice), nullptr, nullptr);
+    } MOZ_SEH_EXCEPT(EXCEPTION_EXECUTE_HANDLER) {
+      mD3D11ImageBridgeDevice = nullptr;
+    }
+
+    if (FAILED(hr)) {
+      d3d11Module.disown();
+      return;
+    }
+
+    mD3D11ImageBridgeDevice->SetExceptionMode(0);
+
+    if (!DoesD3D11AlphaTextureSharingWork(mD3D11ImageBridgeDevice)) {
+      mD3D11ImageBridgeDevice = nullptr;
+    }
+  }
+
   // We leak these everywhere and we need them our entire runtime anyway, let's
   // leak it here as well.
   d3d11Module.disown();
@@ -1999,18 +2079,13 @@ public:
         mVsyncThread = new base::Thread("WindowsVsyncThread");
         const double rate = 1000 / 60.0;
         mSoftwareVsyncRate = TimeDuration::FromMilliseconds(rate);
-      }
-
-      virtual ~D3DVsyncDisplay()
-      {
-        MOZ_ASSERT(NS_IsMainThread());
-        DisableVsync();
-        delete mVsyncThread;
+        MOZ_RELEASE_ASSERT(mVsyncThread->Start(), "Could not start Windows vsync thread");
       }
 
       virtual void EnableVsync() override
       {
         MOZ_ASSERT(NS_IsMainThread());
+        MOZ_ASSERT(mVsyncThread->IsRunning());
         { // scope lock
           MonitorAutoLock lock(mVsyncEnabledLock);
           if (mVsyncEnabled) {
@@ -2019,7 +2094,6 @@ public:
           mVsyncEnabled = true;
         }
 
-        MOZ_RELEASE_ASSERT(mVsyncThread->Start(), "Could not start Windows vsync thread");
         CancelableTask* vsyncStart = NewRunnableMethod(this,
             &D3DVsyncDisplay::VBlankLoop);
         mVsyncThread->message_loop()->PostTask(FROM_HERE, vsyncStart);
@@ -2028,15 +2102,12 @@ public:
       virtual void DisableVsync() override
       {
         MOZ_ASSERT(NS_IsMainThread());
-        { // scope lock
-          MonitorAutoLock lock(mVsyncEnabledLock);
-          if (!mVsyncEnabled) {
-            return;
-          }
-          mVsyncEnabled = false;
+        MOZ_ASSERT(mVsyncThread->IsRunning());
+        MonitorAutoLock lock(mVsyncEnabledLock);
+        if (!mVsyncEnabled) {
+          return;
         }
-
-        mVsyncThread->Stop();
+        mVsyncEnabled = false;
       }
 
       virtual bool IsVsyncEnabled() override
@@ -2102,7 +2173,7 @@ public:
           if (SUCCEEDED(hr)) {
             QueryPerformanceCounter(&qpcNow);
             QPC_TIME adjust = qpcNow.QuadPart - vblankTime.qpcVBlank;
-            MOZ_ASSERT(adjust > 0);
+            MOZ_ASSERT(adjust >= 0);
             uint64_t usAdjust = (adjust * microseconds) / frequency.QuadPart;
             vsync -= TimeDuration::FromMicroseconds((double) usAdjust);
           }
@@ -2110,6 +2181,14 @@ public:
       }
 
     private:
+      virtual ~D3DVsyncDisplay()
+      {
+        MOZ_ASSERT(NS_IsMainThread());
+        DisableVsync();
+        mVsyncThread->Stop();
+        delete mVsyncThread;
+      }
+
       bool IsInVsyncThread()
       {
         return mVsyncThread->thread_id() == PlatformThread::CurrentId();
@@ -2156,4 +2235,11 @@ gfxWindowsPlatform::CreateHardwareVsyncSource()
 
   nsRefPtr<VsyncSource> d3dVsyncSource = new D3DVsyncSource();
   return d3dVsyncSource.forget();
+}
+
+bool
+gfxWindowsPlatform::SupportsApzTouchInput()
+{
+  int value = Preferences::GetInt("dom.w3c_touch_events.enabled", 0);
+  return value == 1 || value == 2;
 }

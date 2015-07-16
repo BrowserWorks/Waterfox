@@ -187,10 +187,10 @@ FRAME_STATE_BIT(Generic, 37, NS_FRAME_HAS_ABSPOS_CHILDREN)
 // A display item for this frame has been painted as part of a PaintedLayer.
 FRAME_STATE_BIT(Generic, 38, NS_FRAME_PAINTED_THEBES)
 
-// Frame is or is a descendant of something with a fixed height, unless that
-// ancestor is a body or html element, and has no closer ancestor that is
+// Frame is or is a descendant of something with a fixed block-size, unless
+// that ancestor is a body or html element, and has no closer ancestor that is
 // overflow:auto or overflow:scroll.
-FRAME_STATE_BIT(Generic, 39, NS_FRAME_IN_CONSTRAINED_HEIGHT)
+FRAME_STATE_BIT(Generic, 39, NS_FRAME_IN_CONSTRAINED_BSIZE)
 
 // This is only set during painting
 FRAME_STATE_BIT(Generic, 40, NS_FRAME_FORCE_DISPLAY_LIST_DESCEND_INTO)
@@ -595,6 +595,9 @@ FRAME_STATE_BIT(TableRowGroup, 30, NS_ROWGROUP_HAS_STYLE_HEIGHT)
 // thead or tfoot should be repeated on every printed page
 FRAME_STATE_BIT(TableRowGroup, 31, NS_ROWGROUP_REPEATABLE)
 
+FRAME_STATE_GROUP(Table, nsTableFrame)
+
+FRAME_STATE_BIT(Table, 28, NS_TABLE_PART_HAS_FIXED_BACKGROUND)
 
 #ifdef DEFINED_FRAME_STATE_GROUP
 #undef DEFINED_FRAME_STATE_GROUP

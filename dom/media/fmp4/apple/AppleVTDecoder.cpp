@@ -41,6 +41,7 @@ AppleVTDecoder::AppleVTDecoder(const mp4_demuxer::VideoDecoderConfig& aConfig,
   : AppleVDADecoder(aConfig, aVideoTaskQueue, aCallback, aImageContainer)
   , mFormat(nullptr)
   , mSession(nullptr)
+  , mIsHardwareAccelerated(false)
 {
   MOZ_COUNT_CTOR(AppleVTDecoder);
   // TODO: Verify aConfig.mime_type.
@@ -167,7 +168,7 @@ PlatformCallback(void* decompressionOutputRefCon,
     return;
   }
   if (flags & kVTDecodeInfo_FrameDropped) {
-    NS_WARNING("  ...frame dropped...");
+    NS_WARNING("  ...frame tagged as dropped...");
   }
   MOZ_ASSERT(CFGetTypeID(image) == CVPixelBufferGetTypeID(),
     "VideoToolbox returned an unexpected image type");
@@ -209,7 +210,7 @@ AppleVTDecoder::SubmitFrame(mp4_demuxer::MP4Sample* aSample)
   // For some reason this gives me a double-free error with stagefright.
   AutoCFRelease<CMBlockBufferRef> block = nullptr;
   AutoCFRelease<CMSampleBufferRef> sample = nullptr;
-  VTDecodeInfoFlags flags;
+  VTDecodeInfoFlags infoFlags;
   OSStatus rv;
 
   // FIXME: This copies the sample data. I think we can provide
@@ -242,9 +243,11 @@ AppleVTDecoder::SubmitFrame(mp4_demuxer::MP4Sample* aSample)
                                          sample,
                                          decodeFlags,
                                          CreateAppleFrameRef(aSample),
-                                         &flags);
-  if (rv != noErr) {
+                                         &infoFlags);
+  if (rv != noErr && !(infoFlags & kVTDecodeInfo_FrameDropped)) {
+    LOG("AppleVTDecoder: Error %d VTDecompressionSessionDecodeFrame", rv);
     NS_WARNING("Couldn't pass frame to decoder");
+    mCallback->Error();
     return NS_ERROR_FAILURE;
   }
 
@@ -317,8 +320,9 @@ AppleVTDecoder::InitializeSession()
     if (rv != noErr) {
       LOG("AppleVTDecoder: system doesn't support hardware acceleration");
     }
+    mIsHardwareAccelerated = rv == noErr && isUsingHW == kCFBooleanTrue;
     LOG("AppleVTDecoder: %s hardware accelerated decoding",
-        (rv == noErr && isUsingHW == kCFBooleanTrue) ? "using" : "not using");
+        mIsHardwareAccelerated ? "using" : "not using");
   } else {
     LOG("AppleVTDecoder: couldn't determine hardware acceleration status.");
   }

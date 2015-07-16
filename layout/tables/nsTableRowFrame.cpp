@@ -289,7 +289,7 @@ GetHeightOfRowsSpannedBelowFirst(nsTableCellFrame& aTableCellFrame,
       height += nextRow->GetSize().height;
       rowX++;
     }
-    height += aTableFrame.GetCellSpacingY(rowX);
+    height += aTableFrame.GetRowSpacing(rowX);
     nextRow = nextRow->GetNextSibling();
   }
   return height;
@@ -537,37 +537,10 @@ public:
   }
 #endif
 
-  virtual nsDisplayItemGeometry* AllocateGeometry(nsDisplayListBuilder* aBuilder) override;
-  virtual void ComputeInvalidationRegion(nsDisplayListBuilder* aBuilder,
-                                         const nsDisplayItemGeometry* aGeometry,
-                                         nsRegion *aInvalidRegion) override;
   virtual void Paint(nsDisplayListBuilder* aBuilder,
                      nsRenderingContext* aCtx) override;
   NS_DISPLAY_DECL_NAME("TableRowBackground", TYPE_TABLE_ROW_BACKGROUND)
 };
-
-nsDisplayItemGeometry*
-nsDisplayTableRowBackground::AllocateGeometry(nsDisplayListBuilder* aBuilder)
-{
-  return new nsDisplayItemGenericImageGeometry(this, aBuilder);
-}
-
-void
-nsDisplayTableRowBackground::ComputeInvalidationRegion(nsDisplayListBuilder* aBuilder,
-                                                       const nsDisplayItemGeometry* aGeometry,
-                                                       nsRegion *aInvalidRegion)
-{
-  auto geometry =
-    static_cast<const nsDisplayItemGenericImageGeometry*>(aGeometry);
-
-  if (aBuilder->ShouldSyncDecodeImages() &&
-      geometry->ShouldInvalidateToSyncDecodeImages()) {
-    bool snap;
-    aInvalidRegion->Or(*aInvalidRegion, GetBounds(aBuilder, &snap));
-  }
-
-  nsDisplayTableItem::ComputeInvalidationRegion(aBuilder, aGeometry, aInvalidRegion);
-}
 
 void
 nsDisplayTableRowBackground::Paint(nsDisplayListBuilder* aBuilder,
@@ -583,7 +556,7 @@ nsDisplayTableRowBackground::Paint(nsDisplayListBuilder* aBuilder,
   DrawResult result =
     painter.PaintRow(static_cast<nsTableRowFrame*>(mFrame));
 
-  nsDisplayItemGenericImageGeometry::UpdateDrawResult(this, result);
+  nsDisplayTableItemGeometry::UpdateDrawResult(this, result);
 }
 
 void
@@ -712,7 +685,7 @@ CalcAvailWidth(nsTableFrame&     aTableFrame,
     cellAvailWidth += aTableFrame.GetColumnWidth(colIndex + spanX);
     if (spanX > 0 &&
         aTableFrame.ColumnHasCellSpacingBefore(colIndex + spanX)) {
-      cellAvailWidth += aTableFrame.GetCellSpacingX(colIndex + spanX - 1);
+      cellAvailWidth += aTableFrame.GetColSpacing(colIndex + spanX - 1);
     }
   }
   return cellAvailWidth;
@@ -747,7 +720,7 @@ GetSpaceBetween(int32_t       aPrevColIndex,
           space += aTableFrame.GetColumnWidth(colX);
       }
       if (!isCollapsed && aTableFrame.ColumnHasCellSpacingBefore(colX)) {
-        space += aTableFrame.GetCellSpacingX(colX - 1);
+        space += aTableFrame.GetColSpacing(colX - 1);
       }
     }
   } 
@@ -771,7 +744,7 @@ GetSpaceBetween(int32_t       aPrevColIndex,
           space += aTableFrame.GetColumnWidth(colX);
       }
       if (!isCollapsed && aTableFrame.ColumnHasCellSpacingBefore(colX)) {
-        space += aTableFrame.GetCellSpacingX(colX - 1);
+        space += aTableFrame.GetColSpacing(colX - 1);
       }
     }
   }
@@ -1017,7 +990,7 @@ nsTableRowFrame::ReflowChildren(nsPresContext*          aPresContext,
       }
     }
     ConsiderChildOverflow(aDesiredSize.mOverflowAreas, kidFrame);
-    x += aTableFrame.GetCellSpacingX(cellColIndex);
+    x += aTableFrame.GetColSpacing(cellColIndex);
   }
 
   // just set our width to what was available. The table will calculate the width and not use our value.
@@ -1066,6 +1039,7 @@ nsTableRowFrame::Reflow(nsPresContext*          aPresContext,
                         const nsHTMLReflowState& aReflowState,
                         nsReflowStatus&          aStatus)
 {
+  MarkInReflow();
   DO_GLOBAL_REFLOW_COUNT("nsTableRowFrame");
   DISPLAY_REFLOW(aPresContext, this, aReflowState, aDesiredSize, aStatus);
 
@@ -1197,7 +1171,7 @@ nsTableRowFrame::CollapseRowIfNecessary(nscoord aRowOffset,
     if (cellFrame) {
       int32_t rowIndex;
       cellFrame->GetRowIndex(rowIndex);
-      shift += tableFrame->GetCellSpacingY(rowIndex);
+      shift += tableFrame->GetRowSpacing(rowIndex);
       while (cellFrame) {
         nsRect cRect = cellFrame->GetRect();
         // If aRowOffset != 0, there's no point in invalidating the cells, since
@@ -1212,7 +1186,7 @@ nsTableRowFrame::CollapseRowIfNecessary(nscoord aRowOffset,
         cellFrame = cellFrame->GetNextCell();
       }
     } else {
-      shift += tableFrame->GetCellSpacingY(GetRowIndex());
+      shift += tableFrame->GetRowSpacing(GetRowIndex());
     }
     rowRect.height = 0;
   }
@@ -1276,14 +1250,14 @@ nsTableRowFrame::CollapseRowIfNecessary(nscoord aRowOffset,
               nextColFrame->StyleVisibility();
               if ( (NS_STYLE_VISIBILITY_COLLAPSE != nextColVis->mVisible) &&
                   tableFrame->ColumnHasCellSpacingBefore(colX + colIncrement)) {
-                cRect.width += tableFrame->GetCellSpacingX(cellColIndex);
+                cRect.width += tableFrame->GetColSpacing(cellColIndex);
               }
             }
           }
         }
         x += cRect.width;
         if (isVisible)
-          x += tableFrame->GetCellSpacingX(cellColIndex);
+          x += tableFrame->GetColSpacing(cellColIndex);
         int32_t actualRowSpan = tableFrame->GetEffectiveRowSpan(*cellFrame);
         nsTableRowFrame* rowFrame = GetNextRow();
         for (actualRowSpan--; actualRowSpan > 0 && rowFrame; actualRowSpan--) {
@@ -1293,7 +1267,7 @@ nsTableRowFrame::CollapseRowIfNecessary(nscoord aRowOffset,
           if (!collapseNextRow) {
             nsRect nextRect = rowFrame->GetRect();
             cRect.height += nextRect.height +
-                            tableFrame->GetCellSpacingY(rowFrame->GetRowIndex());
+                            tableFrame->GetRowSpacing(rowFrame->GetRowIndex());
           }
           rowFrame = rowFrame->GetNextRow();
         }

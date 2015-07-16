@@ -1354,6 +1354,7 @@ nsNativeThemeGTK::WidgetStateChanged(nsIFrame* aFrame, uint8_t aWidgetType,
     if (aAttribute == nsGkAtoms::disabled ||
         aAttribute == nsGkAtoms::checked ||
         aAttribute == nsGkAtoms::selected ||
+        aAttribute == nsGkAtoms::visuallyselected ||
         aAttribute == nsGkAtoms::focused ||
         aAttribute == nsGkAtoms::readonly ||
         aAttribute == nsGkAtoms::_default ||
@@ -1528,9 +1529,15 @@ nsNativeThemeGTK::GetWidgetTransparency(nsIFrame* aFrame, uint8_t aWidgetType)
   case NS_THEME_MENUPOPUP:
   case NS_THEME_WINDOW:
   case NS_THEME_DIALOG:
-  // Tooltips use gtk_paint_flat_box().
-  case NS_THEME_TOOLTIP:
     return eOpaque;
+  // Tooltips use gtk_paint_flat_box() on Gtk2
+  // but are shaped on Gtk3
+  case NS_THEME_TOOLTIP:
+#if (MOZ_WIDGET_GTK == 2)
+    return eOpaque;
+#else
+    return eTransparent;
+#endif
   }
 
   return eUnknownTransparency;

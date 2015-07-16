@@ -23,8 +23,8 @@ namespace dom {
 namespace network {
 
 class Connection final : public DOMEventTargetHelper
-                           , public NetworkObserver
-                           , public nsINetworkProperties
+                       , public NetworkObserver
+                       , public nsINetworkProperties
 {
 public:
   NS_DECL_ISUPPORTS_INHERITED
@@ -41,7 +41,7 @@ public:
 
   // WebIDL
 
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   ConnectionType Type() const { return mType; }
 

@@ -30,6 +30,10 @@ XPCOMUtils.defineLazyServiceGetter(this, "uuidgen",
                                    "@mozilla.org/uuid-generator;1",
                                    "nsIUUIDGenerator");
 
+XPCOMUtils.defineLazyServiceGetter(this, "gPACGenerator",
+                                   "@mozilla.org/pac-generator;1",
+                                   "nsIPACGenerator");
+
 // Once Bug 731746 - Allow chrome JS object to implement nsIDOMEventTarget
 // is resolved this helper could be removed.
 var SettingsListener = {
@@ -482,6 +486,40 @@ SettingsListener.observe("theme.selected",
   }
 });
 
+// =================== Proxy server ======================
+(function setupBrowsingProxySettings() {
+  function setPAC() {
+    let usePAC;
+    try {
+      usePAC = Services.prefs.getBoolPref('network.proxy.pac_generator');
+    } catch (ex) {}
+
+    if (usePAC) {
+      Services.prefs.setCharPref('network.proxy.autoconfig_url',
+                                 gPACGenerator.generate());
+      Services.prefs.setIntPref('network.proxy.type',
+                                Ci.nsIProtocolProxyService.PROXYCONFIG_PAC);
+    }
+  }
+
+  SettingsListener.observe('browser.proxy.enabled', false, function(value) {
+    Services.prefs.setBoolPref('network.proxy.browsing.enabled', value);
+    setPAC();
+  });
+
+  SettingsListener.observe('browser.proxy.host', '', function(value) {
+    Services.prefs.setCharPref('network.proxy.browsing.host', value);
+    setPAC();
+  });
+
+  SettingsListener.observe('browser.proxy.port', 0, function(value) {
+    Services.prefs.setIntPref('network.proxy.browsing.port', value);
+    setPAC();
+  });
+
+  setPAC();
+})();
+
 // =================== Various simple mapping  ======================
 let settingsToObserve = {
   'accessibility.screenreader_quicknav_modes': {
@@ -522,7 +560,9 @@ let settingsToObserve = {
   'layers.effect.invert': false,
   'layers.effect.grayscale': false,
   'layers.effect.contrast': "0.0",
+  'network.debugging.enabled': false,
   'privacy.donottrackheader.enabled': false,
+  'ril.debugging.enabled': false,
   'ril.radio.disabled': false,
   'ril.mms.requestReadReport.enabled': {
     prefName: 'dom.mms.requestReadReport',
@@ -617,4 +657,3 @@ for (let key in settingsToObserve) {
     setPref(prefName, value);
   });
 };
-

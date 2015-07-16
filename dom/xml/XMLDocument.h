@@ -69,7 +69,7 @@ public:
 protected:
   virtual ~XMLDocument();
 
-  virtual JSObject* WrapNode(JSContext *aCx) override;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   friend nsresult (::NS_NewXMLDocument)(nsIDocument**, bool, bool);
 

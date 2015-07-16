@@ -542,17 +542,19 @@ add_test(function test_edit_keyword() {
   let testURI = NetUtil.newURI("http://test_edit_keyword.com");
   let testBkmId = bmsvc.insertBookmark(root, testURI, bmsvc.DEFAULT_INDEX, "Test edit keyword");
 
-  let txn = new PlacesEditBookmarkKeywordTransaction(testBkmId, KEYWORD);
+  let txn = new PlacesEditBookmarkKeywordTransaction(testBkmId, KEYWORD, "postData");
 
   txn.doTransaction();
   do_check_eq(observer._itemChangedId, testBkmId);
   do_check_eq(observer._itemChangedProperty, "keyword");
   do_check_eq(observer._itemChangedValue, KEYWORD);
+  do_check_eq(PlacesUtils.getPostDataForBookmark(testBkmId), "postData");
 
   txn.undoTransaction();
   do_check_eq(observer._itemChangedId, testBkmId);
   do_check_eq(observer._itemChangedProperty, "keyword");
   do_check_eq(observer._itemChangedValue, "");
+  do_check_eq(PlacesUtils.getPostDataForBookmark(testBkmId), null);
 
   run_next_test();
 });
@@ -712,24 +714,6 @@ add_test(function test_sort_folder_by_name() {
   do_check_eq(0, bmsvc.getItemIndex(b1));
   do_check_eq(1, bmsvc.getItemIndex(b2));
   do_check_eq(2, bmsvc.getItemIndex(b3));
-
-  run_next_test();
-});
-
-add_test(function test_edit_postData() {
-  const POST_DATA_ANNO = "bookmarkProperties/POSTData";
-  let postData = "post-test_edit_postData";
-  let testURI = NetUtil.newURI("http://test_edit_postData.com");
-  let testBkmId = bmsvc.insertBookmark(root, testURI, bmsvc.DEFAULT_INDEX, "Test edit Post Data");
-
-  let txn = new PlacesEditBookmarkPostDataTransaction(testBkmId, postData);
-
-  txn.doTransaction();
-  do_check_true(annosvc.itemHasAnnotation(testBkmId, POST_DATA_ANNO));
-  do_check_eq(annosvc.getItemAnnotation(testBkmId, POST_DATA_ANNO), postData);
-
-  txn.undoTransaction();
-  do_check_false(annosvc.itemHasAnnotation(testBkmId, POST_DATA_ANNO));
 
   run_next_test();
 });

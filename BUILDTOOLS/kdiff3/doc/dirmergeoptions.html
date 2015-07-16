@@ -1,0 +1,57 @@
+<html><head><title>Options for Comparing and Merging Directories</title><link rel="stylesheet" href="common/kde-default.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.67.2"><meta name="keywords" content="KDE, kdeextragear, kdiff3, diff, merge, CVS, triplediff, compare, files, directories, version control, three-way-merge, in-line-differences, synchronise, kpart, kio, networktransparent, editor, white space, comments"><link rel="start" href="index.html" title="The KDiff3 Handbook"><link rel="up" href="dirmerge.html" title="Chapter 3. Directory Comparison and Merge with KDiff3"><link rel="prev" href="dothemerge.html" title="Doing A Directory Merge"><link rel="next" href="other.html" title="Other Functions in Directory Merge Window"><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta name="GENERATOR" content="KDE XSL Stylesheet V1.13 using libxslt"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div style="position: absolute; left 0px;"><img src="common/top-left.png" style="margin: 0px" alt=""></div><div style="background-image: url(common/top-middle.png); width: 100%; height: 131px;"><div style="position: absolute;                      right: 0px;"><img src="common/top-right.png" style="margin: 0px" alt=""></div><div style="position: absolute;                         top: 63px;                         right: 0px;                         margin-top: -1em;                         margin-right: 5%;                         text-align: right;                          font-size: xx-large;                          font-weight: bold;                          text-shadow: #CDE1FF 0px 0px 5px;                          color: #444">Options for Comparing and Merging Directories</div></div><div style="margin-top: 20px; background-color: #white;                        color: black;                       margin-left: 20px;                        margin-right: 20px;"><div style="position: absolute;                          left: 20px;"><a accesskey="p" href="dothemerge.html">Prev</a></div><div style="position: absolute;                          right: 20px;"><a accesskey="n" href="other.html">Next</a></div><div class="navCenter">Directory Comparison and Merge with <span class="application">KDiff3</span></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="dirmergeoptions"></a>Options for Comparing and Merging Directories</h2></div></div></div><p>
+   The <span class="application">KDiff3</span>-preferences (menu "Settings"-&gt;"Configure <span class="application">KDiff3</span>") has
+   a section called "Directory Merge" with these options:
+</p><div class="variablelist"><dl><dt><span class="term"><span class="emphasis"><em>Recursive Directories:</em></span></span></dt><dd><p> Select whether to search directories
+         recursively.</p></dd><dt><span class="term"><span class="emphasis"><em>File Pattern(s):</em></span></span></dt><dd><p> Only files that match any pattern here will
+         be put in the tree. More than one pattern may be specified here by using
+         the semicolon ";" as separator. Valid wildcards: '*' and '?'. (e.g. "*.cpp;*.h").
+         Default is "*". This pattern is not used on directories.</p></dd><dt><span class="term"><span class="emphasis"><em>File Anti-Pattern(s):</em></span></span></dt><dd><p> Files that match this pattern
+         will be excluded from the tree. More than one pattern may be specified here
+         via using the semicolon ";" as separator. Valid wildcards: '*' and '?'. Default
+         is "*.orig;*.o;*.obj".</p></dd><dt><span class="term"><span class="emphasis"><em>Directory Anti-Pattern(s):</em></span></span></dt><dd><p> Directories that match this pattern
+         will be excluded from the tree. More than one pattern may be specified here
+         via using the semicolon ";" as separator. Valid wildcards: '*' and '?'. Default
+         is "CVS;deps;.svn".</p></dd><dt><span class="term"><span class="emphasis"><em>Use CVS-Ignore:</em></span></span></dt><dd><p>
+         Ignore files and directories that would also be ignored by CVS.
+         Many automatically generated files are ignored by CVS.
+         The big advantage is that this can be directory specific via a local ".cvsignore"-file.
+         (See <a href="info:/cvs/cvsignore" target="_top">info:/cvs/cvsignore</a>.)</p></dd><dt><span class="term"><span class="emphasis"><em>Find Hidden Files and Directories:</em></span></span></dt><dd><p> On some file systems files
+         have an "Hidden"-attribute. On other systems a filename starting with a dot
+         "." causes it to be hidden. This option allows you to decide whether to
+         include  these files in the tree or not. Default is on.</p></dd><dt><span class="term"><span class="emphasis"><em>Follow File Links:</em></span></span></dt><dd><p> For links to files: When disabled, then
+         the symbolic links are compared. When enabled, then the files behind the
+         links are compared. Default is off.</p></dd><dt><span class="term"><span class="emphasis"><em>Follow Directory Links:</em></span></span></dt><dd><p> For links to directories: When disabled,
+         then the symbolic links will be compared. When enabled then the link will
+         be treated like a directory and it will be scanned recursively. (Note that
+         the program doesn't check if the link is "recursive". So for example a directory
+         that contains a link to the directory would cause an infinite loop, and after
+         some time when the stack overflows or all memory is used up, crash the program.)
+         Default is off.</p></dd><dt><span class="term"><span class="emphasis"><em>Case Sensitive Filename Comparison:</em></span></span></dt><dd><p> 
+         Default is false on Windows, true for other operating systems.</p></dd><dt><span class="term"><span class="emphasis"><em>File Comparison Mode:</em></span></span></dt><dd><p>
+<div class="variablelist"><dl><dt><span class="term"><span class="emphasis"><em>Binary Comparison:</em></span></span></dt><dd><p>
+         This is the default file comparison mode.
+         </p></dd><dt><span class="term"><span class="emphasis"><em>Full Analysis:</em></span></span></dt><dd><p>
+         Do a full analysis of each file and show the statistics information columns.
+         (Number of solved, unsolved, nonwhite and white conflicts.)
+         The full analysis is slower than a simple binary analysis, and much
+         slower when used on files that don't contain text. 
+         (Specify the appropriate file-antipatterns.)
+         </p></dd><dt><span class="term"><span class="emphasis"><em>Trust the modification date:</em></span></span></dt><dd><p> If you compare big directories
+         over a slow network, it might be faster to compare the modification dates
+         and file length alone. But this speed improvement comes with the price of
+         a little uncertainty. Use this option with care. Default is off.</p></dd><dt><span class="term"><span class="emphasis"><em>Trust the size:</em></span></span></dt><dd><p>
+         Similar to trusting the modification date. No real comparison happens. Two
+         files are considered equal if their file-sizes are equal. This is useful
+         when the file-copy operation didn't preserve the modification date.
+         Use this option with care. Default is off.</p></dd></dl></div></p></dd><dt><span class="term"><span class="emphasis"><em>Synchronize Directories:</em></span></span></dt><dd><p> Activates "Sync-Mode" when two directories
+         are compared and no explicit destination directory was specified. In this
+         mode the proposed operations will be chosen so that both source directories
+         are equal afterwards. Also the merge result will be written to both directories.
+         Default is off.</p></dd><dt><span class="term"><span class="emphasis"><em>Copy newer instead of merging:</em></span></span></dt><dd><p> Instead of merging the proposed
+         operation will copy the newer source if changes happened. (Considered unsafe,
+         because it implies that you know, that the other file hasn't been edited
+         too. Check to make sure in every case.) Default is off.</p></dd><dt><span class="term"><span class="emphasis"><em>Backup files:</em></span></span></dt><dd><p> If a file or complete directory is replaced
+         by  another or is deleted then the original version will be renamed with an
+         ".orig"  extension. If an old backup file with ".orig" extension already exists
+         then  this will be deleted without backup. This also affects the normal merging
+         of single files, not only in directory-merge mode. Default is on.</p></dd></dl></div></div><div style="background-color: #white; color: black;                  margin-top: 20px; margin-left: 20px;                  margin-right: 20px;"><div style="position: absolute; left: 20px;"><a accesskey="p" href="dothemerge.html">Prev</a></div><div style="position: absolute; right: 20px;"><a accesskey="n" href="other.html">Next</a></div><div align="center"><a accesskey="h" href="index.html">Contents</a></div></div><div style="background-color: #white;   color: black;         margin-left: 20px;   margin-right: 20px;"><div class="navLeft">Doing A Directory Merge </div><div class="navRight"> Other Functions in Directory Merge Window</div><div class="navCenter"><a accesskey="u" href="dirmerge.html">Up</a></div></div><br><br><div class="bannerBottom" style="background-image: url(common/bottom-middle.png);                                        background-repeat: x-repeat;                                         width: 100%;                                         height: 70px;                                         bottom:0px;"><div class="BannerBottomRight"><img src="common/bottom-right.png" style="height: 70px; margin: 0px" alt=""></div><div class="bannerBottomLeft"><img src="common/bottom-left.png" style="height: 70px; margin: 0px;" alt=""></div><div id="comments" style="position:relative; top: 15px; left: 1em; width: 100%; color: #282828;"><p>Would you like to make a comment or contribute an update to this page?<br>Send feedback to the <a href="mailto:kde-doc-english@kde.org" style="background:transparent; color: #282828; text-decoration: underline;">KDE Docs Team</a></p></div></div></body></html>

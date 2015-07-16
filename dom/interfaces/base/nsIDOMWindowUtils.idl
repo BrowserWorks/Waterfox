@@ -50,7 +50,7 @@ interface nsITranslationNodeList;
 interface nsIJSRAIIHelper;
 interface nsIContentPermissionRequest;
 
-[scriptable, uuid(d0461871-31bd-4da1-b22d-24595c27295c)]
+[scriptable, uuid(7f2f44ab-2857-4cc2-8c9d-3d9816f5a4d6)]
 interface nsIDOMWindowUtils : nsISupports {
 
   /**
@@ -205,15 +205,14 @@ interface nsIDOMWindowUtils : nsISupports {
    *
    * The effect of this API is for gfx code to allocate more or fewer
    * pixels for rescalable content by a factor of |resolution| in
-   * either or both dimensions.  The scale at which the content is
-   * displayed does not change; if that is desired, use
-   * setResolutionAndScaleTo() instead.
+   * both dimensions.  The scale at which the content is displayed does
+   * not change; if that is desired, use setResolutionAndScaleTo() instead.
    *
    * The caller of this method must have chrome privileges.
    */
-  void setResolution(in float aXResolution, in float aYResolution);
+  void setResolution(in float aResolution);
 
-  void getResolution(out float aXResolution, out float aYResolution);
+  void getResolution(out float aResolution);
 
   /**
    * Similar to setResolution(), but also scales the content by the
@@ -226,7 +225,7 @@ interface nsIDOMWindowUtils : nsISupports {
    *
    * The caller of this method must have chrome privileges.
    */
-  void setResolutionAndScaleTo(in float aXResolution, in float aYResolution);
+  void setResolutionAndScaleTo(in float aResolution);
 
   /**
    * Whether the resolution has been set by the user.
@@ -1248,14 +1247,6 @@ interface nsIDOMWindowUtils : nsISupports {
                                            in AString aPropertyName);
 
   /**
-   * Returns the parent of obj.
-   *
-   * @param obj The JavaScript object whose parent is to be gotten.
-   * @return the parent.
-   */
-  [implicit_jscontext] jsval getParent(in jsval obj);
-
-  /**
    * Get the id of the outer window of this window.  This will never throw.
    */
   readonly attribute unsigned long long outerWindowID;
@@ -1282,6 +1273,11 @@ interface nsIDOMWindowUtils : nsISupports {
    * Is the window is in a modal state? [See enterModalState()]
    */
   [noscript] boolean isInModalState();
+
+  /**
+   * Request set internal desktopMode flag change.
+   */
+  void setDesktopModeViewport(in boolean aDesktopModeViewport);
 
   /**
    * Suspend/resume timeouts on this window and its descendant windows.
@@ -1438,17 +1434,29 @@ interface nsIDOMWindowUtils : nsISupports {
    * the bounds of the window. Always returns true in non-DEBUG builds.
    */
   boolean leafLayersPartitionWindow();
-
-  /**
-   * true if the (current inner) window may have event listeners for touch events.
-   */
-  readonly attribute boolean mayHaveTouchEventListeners;
  
   /**
    * Check if any PaintedLayer painting has been done for this element,
    * clears the painted flags if they have.
    */
   boolean checkAndClearPaintedState(in nsIDOMElement aElement);
+
+  /**
+   * Check whether all display items of the primary frame of aElement have been
+   * assigned to the same single PaintedLayer in the last paint. If that is the
+   * case, returns whether that PaintedLayer is opaque; if it's not the case, an
+   * exception is thrown.
+   */
+  boolean isPartOfOpaqueLayer(in nsIDOMElement aElement);
+
+  /**
+   * Count the number of different PaintedLayers that the supplied elements have
+   * been assigned to in the last paint. Throws an exception if any of the
+   * elements doesn't have a primary frame, or if that frame's display items are
+   * assigned to any other layers than just a single PaintedLayer per element.
+   */
+  unsigned long numberOfAssignedPaintedLayers([array, size_is(count)] in nsIDOMElement aElements,
+                                              in uint32_t count);
 
   /**
    * Get internal id of the stored blob, file or file handle.
@@ -1749,6 +1757,11 @@ interface nsIDOMWindowUtils : nsISupports {
                        in int32_t aRight,
                        in int32_t aBottom,
                        in int32_t aLeft);
+
+  /**
+   * Enable some service workers testing features.
+   */
+  attribute boolean serviceWorkersTestingEnabled;
 };
 
 [scriptable, uuid(c694e359-7227-4392-a138-33c0cc1f15a6)]

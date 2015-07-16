@@ -49,7 +49,7 @@ public:
   GetParentObject() const { return GetOwner(); }
 
   virtual JSObject*
-  WrapObject(JSContext* aCx) override;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   IMPL_EVENT_HANDLER(received)
 

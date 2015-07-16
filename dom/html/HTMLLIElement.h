@@ -15,7 +15,7 @@ namespace mozilla {
 namespace dom {
 
 class HTMLLIElement final : public nsGenericHTMLElement,
-                                public nsIDOMHTMLLIElement
+                            public nsIDOMHTMLLIElement
 {
 public:
   explicit HTMLLIElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
@@ -58,7 +58,7 @@ public:
 protected:
   virtual ~HTMLLIElement();
 
-  virtual JSObject* WrapNode(JSContext *aCx) override;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 private:
   static void MapAttributesIntoRule(const nsMappedAttributes* aAttributes,

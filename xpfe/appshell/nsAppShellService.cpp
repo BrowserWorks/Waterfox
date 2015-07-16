@@ -40,6 +40,7 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/Services.h"
 #include "mozilla/StartupTimeline.h"
 
 #include "nsEmbedCID.h"
@@ -63,8 +64,7 @@ nsAppShellService::nsAppShellService() :
   mModalWindowCount(0),
   mApplicationProvidedHiddenWindow(false)
 {
-  nsCOMPtr<nsIObserverService> obs
-    (do_GetService("@mozilla.org/observer-service;1"));
+  nsCOMPtr<nsIObserverService> obs = services::GetObserverService();
 
   if (obs) {
     obs->AddObserver(this, "xpcom-will-shutdown", false);
@@ -322,7 +322,8 @@ WebBrowserChrome2Stub::GetInterface(const nsIID & aIID, void **aSink)
 // purely to keep a strong reference to the browser and the container to
 // prevent the container being collected while the stub remains alive.
 class WindowlessBrowserStub final : public nsIWebNavigation,
-                                        public nsIInterfaceRequestor {
+                                    public nsIInterfaceRequestor
+{
 public:
   WindowlessBrowserStub(nsIWebBrowser *aBrowser, nsISupports *aContainer) {
     mBrowser = aBrowser;
@@ -806,8 +807,7 @@ nsAppShellService::RegisterTopLevelWindow(nsIXULWindow* aWindow)
   }
 
   // an ongoing attempt to quit is stopped by a newly opened window
-  nsCOMPtr<nsIObserverService> obssvc =
-    do_GetService("@mozilla.org/observer-service;1");
+  nsCOMPtr<nsIObserverService> obssvc = services::GetObserverService();
   NS_ASSERTION(obssvc, "Couldn't get observer service.");
 
   if (obssvc)

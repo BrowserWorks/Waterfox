@@ -1,0 +1,81 @@
+File:		     MSYS_VS_CYGWIN
+Copyright (C):	     2001: Earnie Boyd  <earnie@users.sf.net>
+Distribution Rights: See MSYS_LICENSE
+File Revision:	     1.0.4
+File Revision Date:  2002.01.25
+
+mount:	The mount command is only used to display all mount points.  The mount
+points for the very important are automounted.  Nothing is stored in the Win32
+registry database.  If you wish to add other mount points, ones that aren't
+auto mounted, then you may do so in the /etc/fstab file.  i
+
+ROOTPATH "/": The "/" auto mount point is currently a reference to the parent
+directory of the directory containing the msys-1.0.dll file.  
+<strikeout>In later releases
+the / will be a reference to a pseudo device that points to the mount points.
+I.E. in a later release it is planned that `ls /' will list the mount points.
+</strikeout>  I plan to do something but it won't be as previously stated.
+
+/bin: The /bin auto mount point is a reference to the directory containing the
+msys-1.0.dll file.  I.E. if the path to msys-1.0.dll is
+C:\msys\1.0\bin\msys-1.0.dll then /bin resolves to C:\msys\1.0\bin.
+
+/tmp: The /tmp auto mount point is a reference to the directory that is
+referenced by the Win32 TMP environment variable.  I.E. if the win32 TMP
+environment variable value is C:\TEMP then the /tmp mount point resolves to
+C:\TEMP.
+
+/usr: The /usr auto mount point is a reference to the parent directory of the
+directory containing the msys-1.0.dll file.  I.E. if the path to msys-1.0.dll
+is C:\msys\1.0\bin\msys-1.0.dll then the /usr mount point resolves to
+C:\msys\1.0.
+
+/cygdrive:  There is no such item.  All devices and mapped shares are auto
+mounted with the device letter as the mount point.  E.G.: the C:\ drive is
+referenced as /c.
+
+/etc/fstab:  If this file exists then it is read for user specified mount
+points.  The form of the record is [PHYSICAL PATH][WHITE SPACE][MOUNT POINT]
+where [WHITE SPACE] is one or more spaces and/or tabs.
+
+binary vs text:  File processing mode is set to binary.  This is not changeable.
+I had originally planned to set this to text mode processing but ran into
+various problems of which volumes have been written in the Cygwin archives.
+For release 1.0 of MSYS this means that you cannot have \r\n line endings on
+text files.  In a future release it is planned to "Do The Right Thing" and
+predetermine the type of file being opened and set text or binary processing
+as appropriate for reading files.  Or, predetermine the type of file and as the
+file is being read remove the \r from the end of the line.
+
+uname -s:  The default system name is returned as MSYS_NT-4.0, if you're on
+NT 4.0.  However you could export MSYSTEM=MINGW32 as change the returned value
+for `uname -s' to MINGW32_NT-4.0.  This is done to aid the use of MSYS with
+MinGW and configuration scripts will determine that it is a MINGW32 build
+system.
+
+--added in version 1.0.2--
+/bin and /usr/bin:  These are currently reserved for MSYS programs only (MSYS
+programs are progrms that depend on the msys-1.0.dll file).  It will be unlikely
+that non-MSYS programs will execute properly if they exist in /bin and /usr/bin.
+
+POSIX paths in arguments:  POSIX paths passed as arguments on the command line
+are now converted to WIN32 paths.  This is only true for programs that don't
+exist in the /bin and /usr/bin paths.  POSIX paths are determined by i) a '/'
+character in the argument and ii) the argument must not be two characters long.
+The two character filter is done so that WIN32 parameters of the type /x can be
+passed to the WIN32 program.  This allows you to do `write /p /mydocuments/abc'
+and the write.exe program found in the c:\WINNT\System32 directory on my
+system can print to the printer on lpt1 the c:\msys\1.0\mydocments\abc file.
+
+--added in version 1.0.3--
+More robust checking for filesystem paths on arguments.
+
+--added in version 1.0.4--
+Symlink resolution.
+diff, diff3 and head to the distribution.
+--removed in version 1.0.4--
+Requirement that the path must begin with /.
+bash from the distribution.
+
+--removed in version 1.0.11--
+Requirement that /bin and /usr/bin are reserved for MSYS programs only.

@@ -200,6 +200,9 @@ CurrentThreadIsGCSweeping();
 bool
 StringIsPermanentAtom(JSString* str);
 
+bool
+SymbolIsWellKnown(JS::Symbol* sym);
+
 namespace gc {
 
 template <typename T> struct MapTypeToTraceKind {};
@@ -333,14 +336,25 @@ struct InternalGCMethods<Value>
 
     static void preBarrier(Value v) {
         MOZ_ASSERT(!CurrentThreadIsIonCompiling());
+        if (v.isString() && StringIsPermanentAtom(v.toString()))
+            return;
+        if (v.isSymbol() && SymbolIsWellKnown(v.toSymbol()))
+            return;
         if (v.isMarkable() && shadowRuntimeFromAnyThread(v)->needsIncrementalBarrier())
-            preBarrier(ZoneOfValueFromAnyThread(v), v);
+            preBarrierImpl(ZoneOfValueFromAnyThread(v), v);
     }
 
     static void preBarrier(Zone* zone, Value v) {
         MOZ_ASSERT(!CurrentThreadIsIonCompiling());
         if (v.isString() && StringIsPermanentAtom(v.toString()))
             return;
+        if (v.isSymbol() && SymbolIsWellKnown(v.toSymbol()))
+            return;
+        preBarrierImpl(zone, v);
+    }
+
+  private:
+    static void preBarrierImpl(Zone* zone, Value v) {
         JS::shadow::Zone* shadowZone = JS::shadow::Zone::asShadowZone(zone);
         if (shadowZone->needsIncrementalBarrier()) {
             MOZ_ASSERT_IF(v.isMarkable(), shadowRuntimeFromMainThread(v)->needsIncrementalBarrier());
@@ -350,6 +364,7 @@ struct InternalGCMethods<Value>
         }
     }
 
+  public:
     static void postBarrier(Value* vp) {
         MOZ_ASSERT(!CurrentThreadIsIonCompiling());
         if (vp->isObject()) {
@@ -388,6 +403,8 @@ struct InternalGCMethods<jsid>
     static void preBarrier(jsid id) {
         MOZ_ASSERT(!CurrentThreadIsIonCompiling());
         if (JSID_IS_STRING(id) && StringIsPermanentAtom(JSID_TO_STRING(id)))
+            return;
+        if (JSID_IS_SYMBOL(id) && SymbolIsWellKnown(JSID_TO_SYMBOL(id)))
             return;
         if (JSID_IS_GCTHING(id) && shadowRuntimeFromAnyThread(id)->needsIncrementalBarrier())
             preBarrierImpl(ZoneOfIdFromAnyThread(id), id);
@@ -433,7 +450,6 @@ class BarrieredBase : public BarrieredBaseMixins<T>
 
   public:
     void init(T v) {
-        MOZ_ASSERT(!GCMethods<T>::poisoned(v));
         this->value = v;
     }
 
@@ -498,7 +514,6 @@ class PreBarriered : public BarrieredBase<T>
   private:
     void set(const T& v) {
         this->pre();
-        MOZ_ASSERT(!GCMethods<T>::poisoned(v));
         this->value = v;
     }
 };
@@ -531,7 +546,6 @@ class HeapPtr : public BarrieredBase<T>
 #endif
 
     void init(T v) {
-        MOZ_ASSERT(!GCMethods<T>::poisoned(v));
         this->value = v;
         post();
     }
@@ -544,7 +558,6 @@ class HeapPtr : public BarrieredBase<T>
   private:
     void set(const T& v) {
         this->pre();
-        MOZ_ASSERT(!GCMethods<T>::poisoned(v));
         this->value = v;
         post();
     }
@@ -642,7 +655,6 @@ class RelocatablePtr : public BarrieredBase<T>
     }
 
     void postBarrieredSet(const T& v) {
-        MOZ_ASSERT(!GCMethods<T>::poisoned(v));
         if (GCMethods<T>::needsPostBarrier(v)) {
             this->value = v;
             post();
@@ -697,7 +709,7 @@ struct HeapPtrHasher
 
 /* Specialized hashing policy for HeapPtrs. */
 template <class T>
-struct DefaultHasher< HeapPtr<T> > : HeapPtrHasher<T> { };
+struct DefaultHasher<HeapPtr<T>> : HeapPtrHasher<T> { };
 
 template <class T>
 struct PreBarrieredHasher
@@ -711,7 +723,7 @@ struct PreBarrieredHasher
 };
 
 template <class T>
-struct DefaultHasher< PreBarriered<T> > : PreBarrieredHasher<T> { };
+struct DefaultHasher<PreBarriered<T>> : PreBarrieredHasher<T> { };
 
 /*
  * Incremental GC requires that weak pointers have read barriers. This is mostly
@@ -755,6 +767,22 @@ class ReadBarriered
     void set(T v) { value = v; }
 };
 
+/* Useful for hashtables with a ReadBarriered as key. */
+template <class T>
+struct ReadBarrieredHasher
+{
+    typedef ReadBarriered<T> Key;
+    typedef T Lookup;
+
+    static HashNumber hash(Lookup obj) { return DefaultHasher<T>::hash(obj); }
+    static bool match(const Key& k, Lookup l) { return k.get() == l; }
+    static void rekey(Key& k, const Key& newKey) { k.set(newKey); }
+};
+
+/* Specialized hashing policy for ReadBarriereds. */
+template <class T>
+struct DefaultHasher<ReadBarriered<T>> : ReadBarrieredHasher<T> { };
+
 class ArrayObject;
 class ArrayBufferObject;
 class NestedScopeObject;
@@ -771,6 +799,7 @@ class JitCode;
 typedef PreBarriered<JSObject*> PreBarrieredObject;
 typedef PreBarriered<JSScript*> PreBarrieredScript;
 typedef PreBarriered<jit::JitCode*> PreBarrieredJitCode;
+typedef PreBarriered<JSString*> PreBarrieredString;
 typedef PreBarriered<JSAtom*> PreBarrieredAtom;
 
 typedef RelocatablePtr<JSObject*> RelocatablePtrObject;
@@ -847,14 +876,12 @@ class HeapSlot : public BarrieredBase<Value>
     explicit HeapSlot(NativeObject* obj, Kind kind, uint32_t slot, const Value& v)
       : BarrieredBase<Value>(v)
     {
-        MOZ_ASSERT(!IsPoisonedValue(v));
         post(obj, kind, slot, v);
     }
 
     explicit HeapSlot(NativeObject* obj, Kind kind, uint32_t slot, const HeapSlot& s)
       : BarrieredBase<Value>(s.value)
     {
-        MOZ_ASSERT(!IsPoisonedValue(s.value));
         post(obj, kind, slot, s);
     }
 
@@ -875,7 +902,6 @@ class HeapSlot : public BarrieredBase<Value>
 
     void set(NativeObject* owner, Kind kind, uint32_t slot, const Value& v) {
         MOZ_ASSERT(preconditionForSet(owner, kind, slot));
-        MOZ_ASSERT(!IsPoisonedValue(v));
         pre();
         value = v;
         post(owner, kind, slot, v);
@@ -883,7 +909,6 @@ class HeapSlot : public BarrieredBase<Value>
 
     void set(Zone* zone, NativeObject* owner, Kind kind, uint32_t slot, const Value& v) {
         MOZ_ASSERT(preconditionForSet(zone, owner, kind, slot));
-        MOZ_ASSERT(!IsPoisonedValue(v));
         pre(zone);
         value = v;
         post(owner, kind, slot, v);

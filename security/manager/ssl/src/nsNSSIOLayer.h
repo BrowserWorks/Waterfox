@@ -25,8 +25,8 @@ class SharedSSLState;
 class nsIObserver;
 
 class nsNSSSocketInfo final : public mozilla::psm::TransportSecurityInfo,
-                                  public nsISSLSocketControl,
-                                  public nsIClientAuthUserDecision
+                              public nsISSLSocketControl,
+                              public nsIClientAuthUserDecision
 {
 public:
   nsNSSSocketInfo(mozilla::psm::SharedSSLState& aState, uint32_t providerFlags);
@@ -43,8 +43,6 @@ public:
 
   bool IsHandshakePending() const { return mHandshakePending; }
   void SetHandshakeNotPending() { mHandshakePending = false; }
-
-  void GetPreviousCert(nsIX509Cert** _result);
 
   void SetTLSVersionRange(SSLVersionRange range) { mTLSVersionRange = range; }
   SSLVersionRange GetTLSVersionRange() const { return mTLSVersionRange; };
@@ -138,6 +136,7 @@ private:
   bool mPreliminaryHandshakeDone; // after false start items are complete
 
   nsresult ActivateSSL();
+  nsresult SyncNSSNames(const nsNSSShutDownPreventionLock& proofOfLock);
 
   nsCString mNegotiatedNPN;
   bool      mNPNCompleted;

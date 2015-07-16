@@ -64,11 +64,19 @@ static const size_t UINT32_CHAR_BUFFER_LENGTH = sizeof("4294967295") - 1;
  *    headers with no associated char array and whose leaf nodes are either flat
  *    or dependent strings.
  *
- *  - To avoid copying the left-hand side when flattening, the left-hand side's
- *    buffer may be grown to make space for a copy of the right-hand side (see
- *    comment in JSString::flatten). This optimization requires that there are
- *    no external pointers into the char array. We conservatively maintain this
- *    property via a flat string's "extensible" property.
+ *  - To avoid copying the leftmost string when flattening, we may produce an
+ *    "extensible" string, which tracks not only its actual length but also its
+ *    buffer's overall size. If such an "extensible" string appears as the
+ *    leftmost string in a subsequent flatten, and its buffer has enough unused
+ *    space, we can simply flatten the rest of the ropes into its buffer,
+ *    leaving its text in place. We then transfer ownership of its buffer to the
+ *    flattened rope, and mutate the donor extensible string into a dependent
+ *    string referencing its original buffer.
+ *
+ *    (The term "extensible" does not imply that we ever 'realloc' the buffer.
+ *    Extensible strings may have dependent strings pointing into them, and the
+ *    JSAPI hands out pointers to flat strings' buffers, so resizing with
+ *    'realloc' is generally not possible.)
  *
  *  - To avoid allocating small char arrays, short strings can be stored inline
  *    in the string header (JSInlineString). These come in two flavours:
@@ -85,8 +93,7 @@ static const size_t UINT32_CHAR_BUFFER_LENGTH = sizeof("4294967295") - 1;
  *
  *  - To avoid using two bytes per character for every string, string characters
  *    are stored as Latin1 instead of TwoByte if all characters are representable
- *    in Latin1. Note that Latin1 strings are not yet enabled by default, see
- *    bug 998392.
+ *    in Latin1.
  *
  * Although all strings share the same basic memory layout, we can conceptually
  * arrange them into a hierarchy of operations/invariants and represent this
@@ -106,7 +113,7 @@ static const size_t UINT32_CHAR_BUFFER_LENGTH = sizeof("4294967295") - 1;
  *  |  |
  *  |  +-- JSExternalString     - / char array memory managed by embedding
  *  |  |
- *  |  +-- JSExtensibleString   capacity / no external pointers into char array
+ *  |  +-- JSExtensibleString   tracks total buffer capacity (including current text)
  *  |  |
  *  |  +-- JSUndependedString   original dependent base / -
  *  |  |
@@ -459,9 +466,12 @@ class JSString : public js::gc::TenuredCell
 
     inline JSLinearString* base() const;
 
-    inline void markBase(JSTracer* trc);
+    void markBase(JSTracer* trc) {
+        MOZ_ASSERT(hasBase());
+        js::gc::MarkStringUnbarriered(trc, &d.s.u3.base, "base");
+    }
 
-    /* Only called by the GC for strings with the FINALIZE_STRING kind. */
+    /* Only called by the GC for strings with the AllocKind::STRING kind. */
 
     inline void finalize(js::FreeOp* fop);
 
@@ -490,12 +500,16 @@ class JSString : public js::gc::TenuredCell
 #ifdef DEBUG
     void dump();
     void dumpCharsNoNewline(FILE* fp=stderr);
+    void dumpRepresentation(FILE* fp, int indent) const;
+    void dumpRepresentationHeader(FILE* fp, int indent, const char* subclass) const;
 
     template <typename CharT>
     static void dumpChars(const CharT* s, size_t len, FILE* fp=stderr);
 
     bool equals(const char* s);
 #endif
+
+    inline void markChildren(JSTracer* trc);
 
     static MOZ_ALWAYS_INLINE void readBarrier(JSString* thing) {
         if (thing->isPermanentAtom())
@@ -554,24 +568,31 @@ class JSRope : public JSString
     template <typename CharT>
     bool copyChars(js::ExclusiveContext* cx, js::ScopedJSFreePtr<CharT>& out) const;
 
-    inline JSString* leftChild() const {
+    JSString* leftChild() const {
         MOZ_ASSERT(isRope());
         return d.s.u2.left;
     }
 
-    inline JSString* rightChild() const {
+    JSString* rightChild() const {
         MOZ_ASSERT(isRope());
         return d.s.u3.right;
     }
 
-    inline void markChildren(JSTracer* trc);
+    void markChildren(JSTracer* trc) {
+        js::gc::MarkStringUnbarriered(trc, &d.s.u2.left, "left child");
+        js::gc::MarkStringUnbarriered(trc, &d.s.u3.right, "right child");
+    }
 
-    inline static size_t offsetOfLeft() {
+    static size_t offsetOfLeft() {
         return offsetof(JSRope, d.s.u2.left);
     }
-    inline static size_t offsetOfRight() {
+    static size_t offsetOfRight() {
         return offsetof(JSRope, d.s.u3.right);
     }
+
+#ifdef DEBUG
+    void dumpRepresentation(FILE* fp, int indent) const;
+#endif
 };
 
 static_assert(sizeof(JSRope) == sizeof(JSString),
@@ -651,6 +672,10 @@ class JSLinearString : public JSString
         JS::AutoCheckCannotGC nogc;
         return hasLatin1Chars() ? latin1Chars(nogc)[index] : twoByteChars(nogc)[index];
     }
+
+#ifdef DEBUG
+    void dumpRepresentationChars(FILE* fp, int indent) const;
+#endif
 };
 
 static_assert(sizeof(JSLinearString) == sizeof(JSString),
@@ -691,6 +716,10 @@ class JSDependentString : public JSLinearString
     inline static size_t offsetOfBase() {
         return offsetof(JSDependentString, d.s.u3.base);
     }
+
+#ifdef DEBUG
+    void dumpRepresentation(FILE* fp, int indent) const;
+#endif
 };
 
 static_assert(sizeof(JSDependentString) == sizeof(JSString),
@@ -752,6 +781,10 @@ class JSFlatString : public JSLinearString
     }
 
     inline void finalize(js::FreeOp* fop);
+
+#ifdef DEBUG
+    void dumpRepresentation(FILE* fp, int indent) const;
+#endif
 };
 
 static_assert(sizeof(JSFlatString) == sizeof(JSString),
@@ -769,6 +802,10 @@ class JSExtensibleString : public JSFlatString
         MOZ_ASSERT(JSString::isExtensible());
         return d.s.u3.capacity;
     }
+
+#ifdef DEBUG
+    void dumpRepresentation(FILE* fp, int indent) const;
+#endif
 };
 
 static_assert(sizeof(JSExtensibleString) == sizeof(JSString),
@@ -797,6 +834,10 @@ class JSInlineString : public JSFlatString
     static size_t offsetOfInlineStorage() {
         return offsetof(JSInlineString, d.inlineStorageTwoByte);
     }
+
+#ifdef DEBUG
+    void dumpRepresentation(FILE* fp, int indent) const;
+#endif
 };
 
 static_assert(sizeof(JSInlineString) == sizeof(JSString),
@@ -868,7 +909,7 @@ class JSFatInlineString : public JSInlineString
     template<typename CharT>
     static bool lengthFits(size_t length);
 
-    /* Only called by the GC for strings with the FINALIZE_FAT_INLINE_STRING kind. */
+    /* Only called by the GC for strings with the AllocKind::FAT_INLINE_STRING kind. */
 
     MOZ_ALWAYS_INLINE void finalize(js::FreeOp* fop);
 };
@@ -902,9 +943,13 @@ class JSExternalString : public JSFlatString
         return rawTwoByteChars();
     }
 
-    /* Only called by the GC for strings with the FINALIZE_EXTERNAL_STRING kind. */
+    /* Only called by the GC for strings with the AllocKind::EXTERNAL_STRING kind. */
 
     inline void finalize(js::FreeOp* fop);
+
+#ifdef DEBUG
+    void dumpRepresentation(FILE* fp, int indent) const;
+#endif
 };
 
 static_assert(sizeof(JSExternalString) == sizeof(JSString),
@@ -1225,6 +1270,15 @@ JSString::base() const
     MOZ_ASSERT(hasBase());
     MOZ_ASSERT(!d.s.u3.base->isInline());
     return d.s.u3.base;
+}
+
+inline void
+JSString::markChildren(JSTracer* trc)
+{
+    if (hasBase())
+        markBase(trc);
+    else if (isRope())
+        asRope().markChildren(trc);
 }
 
 template<>

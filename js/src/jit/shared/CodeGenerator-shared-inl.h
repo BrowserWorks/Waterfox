@@ -159,7 +159,7 @@ CodeGeneratorShared::restoreLive(LInstruction* ins)
 }
 
 void
-CodeGeneratorShared::restoreLiveIgnore(LInstruction* ins, RegisterSet ignore)
+CodeGeneratorShared::restoreLiveIgnore(LInstruction* ins, LiveRegisterSet ignore)
 {
     MOZ_ASSERT(!ins->isCall());
     LSafepoint* safepoint = ins->safepoint();
@@ -171,7 +171,8 @@ CodeGeneratorShared::saveLiveVolatile(LInstruction* ins)
 {
     MOZ_ASSERT(!ins->isCall());
     LSafepoint* safepoint = ins->safepoint();
-    RegisterSet regs = RegisterSet::Intersect(safepoint->liveRegs(), RegisterSet::Volatile());
+    LiveRegisterSet regs;
+    regs.set() = RegisterSet::Intersect(safepoint->liveRegs().set(), RegisterSet::Volatile());
     masm.PushRegsInMask(regs);
 }
 
@@ -180,14 +181,15 @@ CodeGeneratorShared::restoreLiveVolatile(LInstruction* ins)
 {
     MOZ_ASSERT(!ins->isCall());
     LSafepoint* safepoint = ins->safepoint();
-    RegisterSet regs = RegisterSet::Intersect(safepoint->liveRegs(), RegisterSet::Volatile());
+    LiveRegisterSet regs;
+    regs.set() = RegisterSet::Intersect(safepoint->liveRegs().set(), RegisterSet::Volatile());
     masm.PopRegsInMask(regs);
 }
 
 void
 CodeGeneratorShared::verifyHeapAccessDisassembly(uint32_t begin, uint32_t end, bool isLoad,
-                                                 Scalar::Type type, const Operand& mem,
-                                                 LAllocation alloc)
+                                                 Scalar::Type type, unsigned numElems,
+                                                 const Operand& mem, LAllocation alloc)
 {
 #ifdef DEBUG
     using namespace Disassembler;
@@ -222,16 +224,18 @@ CodeGeneratorShared::verifyHeapAccessDisassembly(uint32_t begin, uint32_t end, b
       case Scalar::Float64:
       case Scalar::Float32x4:
       case Scalar::Int32x4:
-        op = OtherOperand(ToFloatRegister(alloc).code());
+        op = OtherOperand(ToFloatRegister(alloc).encoding());
         break;
       case Scalar::Uint8Clamped:
       case Scalar::MaxTypedArrayViewType:
         MOZ_CRASH("Unexpected array type");
     }
 
+    size_t size = Scalar::isSimdType(type)
+                  ? Scalar::scalarByteSize(type) * numElems
+                  : TypedArrayElemSize(type);
     masm.verifyHeapAccessDisassembly(begin, end,
-                                     HeapAccess(kind, TypedArrayElemSize(type),
-                                     ComplexAddress(mem), op));
+                                     HeapAccess(kind, size, ComplexAddress(mem), op));
 #endif
 }
 

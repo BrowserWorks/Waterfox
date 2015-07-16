@@ -19,7 +19,7 @@ namespace mozilla {
 namespace dom {
 
 class MessagePortList final : public nsISupports
-                                , public nsWrapperCache
+                            , public nsWrapperCache
 {
   ~MessagePortList() {}
 
@@ -41,7 +41,7 @@ public:
   }
 
   virtual JSObject*
-  WrapObject(JSContext* aCx) override;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   uint32_t
   Length() const

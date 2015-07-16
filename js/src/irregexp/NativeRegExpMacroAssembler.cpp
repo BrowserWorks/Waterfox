@@ -68,7 +68,7 @@ NativeRegExpMacroAssembler::NativeRegExpMacroAssembler(LifoAlloc* alloc, RegExpS
     runtime(rt), mode_(mode)
 {
     // Find physical registers for each compiler register.
-    GeneralRegisterSet regs(GeneralRegisterSet::All());
+    AllocatableGeneralRegisterSet regs(GeneralRegisterSet::All());
 
     input_end_pointer = regs.takeAny();
     current_character = regs.takeAny();
@@ -89,19 +89,7 @@ NativeRegExpMacroAssembler::NativeRegExpMacroAssembler(LifoAlloc* alloc, RegExpS
             temp1.name(),
             temp2.name());
 
-    // Determine the non-volatile registers which might be modified by jitcode.
-    for (GeneralRegisterIterator iter(GeneralRegisterSet::NonVolatile()); iter.more(); iter++) {
-        Register reg = *iter;
-        if (!regs.has(reg))
-            savedNonVolatileRegisters.add(reg);
-    }
-
-#if defined(JS_CODEGEN_ARM)
-    // ARM additionally requires that the link register be saved.
-    savedNonVolatileRegisters.add(Register::FromCode(Registers::lr));
-#elif defined(JS_CODEGEN_MIPS)
-    savedNonVolatileRegisters.add(Register::FromCode(Registers::ra));
-#endif
+    savedNonVolatileRegisters = SavedNonVolatileRegisters(regs);
 
     masm.jump(&entry_label_);
     masm.bind(&start_label_);
@@ -394,7 +382,7 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext* cx, bool match_only)
         masm.movePtr(ImmPtr(runtime), temp1);
 
         // Save registers before calling C function
-        GeneralRegisterSet volatileRegs = GeneralRegisterSet::Volatile();
+        LiveGeneralRegisterSet volatileRegs(GeneralRegisterSet::Volatile());
 #if defined(JS_CODEGEN_ARM)
         volatileRegs.add(Register::FromCode(Registers::lr));
 #elif defined(JS_CODEGEN_MIPS)
@@ -796,7 +784,7 @@ NativeRegExpMacroAssembler::CheckNotBackReferenceIgnoreCase(int start_reg, Label
         MOZ_ASSERT(mode_ == CHAR16);
 
         // Note: temp1 needs to be saved/restored if it is volatile, as it is used after the call.
-        GeneralRegisterSet volatileRegs = GeneralRegisterSet::Volatile();
+        LiveGeneralRegisterSet volatileRegs(GeneralRegisterSet::Volatile());
         volatileRegs.takeUnchecked(temp0);
         volatileRegs.takeUnchecked(temp2);
         masm.PushRegsInMask(volatileRegs);
@@ -948,7 +936,7 @@ NativeRegExpMacroAssembler::LoadCurrentCharacterUnchecked(int cp_offset, int cha
         } else if (characters == 2) {
             masm.load16ZeroExtend(address, current_character);
         } else {
-            MOZ_ASSERT(characters = 1);
+            MOZ_ASSERT(characters == 1);
             masm.load8ZeroExtend(address, current_character);
         }
     } else {

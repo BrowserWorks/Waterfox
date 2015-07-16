@@ -21,7 +21,7 @@ struct TreeCellInfo;
 class DOMRect;
 
 class TreeBoxObject final : public BoxObject,
-                                public nsITreeBoxObject
+                            public nsITreeBoxObject
 {
 public:
   NS_DECL_ISUPPORTS_INHERITED
@@ -38,7 +38,7 @@ public:
   virtual void ClearCachedValues() override;
 
   // WebIDL
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   already_AddRefed<nsTreeColumns> GetColumns();
 

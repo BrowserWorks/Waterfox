@@ -121,14 +121,9 @@ PerformanceActorsConnection.prototype = {
    * Initializes a connection to the profiler actor.
    */
   _connectProfilerActor: Task.async(function*() {
-    // Chrome debugging targets have already obtained a reference
-    // to the profiler actor.
-    if (this._target.chrome) {
-      this._profiler = this._target.form.profilerActor;
-    }
-    // When we are debugging content processes, we already have the tab
-    // specific one. Use it immediately.
-    else if (this._target.form && this._target.form.profilerActor) {
+    // Chrome and content process targets already have obtained a reference
+    // to the profiler tab actor. Use it immediately.
+    if (this._target.form && this._target.form.profilerActor) {
       this._profiler = this._target.form.profilerActor;
     }
     // Check if we already have a grip to the `listTabs` response object
@@ -302,8 +297,10 @@ PerformanceFront.prototype = {
       return profilerStatus.currentTime;
     }
 
-    // Extend the profiler options so that protocol.js doesn't modify the original.
-    let profilerOptions = extend({}, this._customProfilerOptions);
+    // If this._customProfilerOptions is defined, use those to pass in
+    // to the profiler actor. The profiler actor handles all the defaults
+    // now, so this should only be used for tests.
+    let profilerOptions = this._customProfilerOptions || {};
     yield this._request("profiler", "startProfiler", profilerOptions);
 
     this.emit("profiler-activated");
@@ -327,26 +324,51 @@ PerformanceFront.prototype = {
   }),
 
   /**
-   * Starts the timeline actor, if necessary.
+   * Starts polling for allocations from the memory actor, if necessary.
    */
   _startMemory: Task.async(function *(options) {
     if (!options.withAllocations) {
       return 0;
     }
-    yield this._request("memory", "attach");
-    let memoryStartTime = yield this._request("memory", "startRecordingAllocations");
+    let memoryStartTime = yield this._startRecordingAllocations(options);
     yield this._pullAllocationSites();
     return memoryStartTime;
   }),
 
   /**
-   * Stops the timeline actor, if necessary.
+   * Stops polling for allocations from the memory actor, if necessary.
    */
   _stopMemory: Task.async(function *(options) {
     if (!options.withAllocations) {
       return 0;
     }
+    // Since `_pullAllocationSites` is usually running inside a timeout, and
+    // it's performing asynchronous requests to the server, a recording may
+    // be stopped before that method finishes executing. Therefore, we need to
+    // wait for the last request to `getAllocations` to finish before actually
+    // stopping recording allocations.
+    yield this._lastPullAllocationSitesFinished;
     clearTimeout(this._sitesPullTimeout);
+
+    return yield this._stopRecordingAllocations();
+  }),
+
+  /**
+   * Starts recording allocations in the memory actor.
+   */
+  _startRecordingAllocations: Task.async(function*(options) {
+    yield this._request("memory", "attach");
+    let memoryStartTime = yield this._request("memory", "startRecordingAllocations", {
+      probability: options.allocationsSampleProbability,
+      maxLogLength: options.allocationsMaxLogLength
+    });
+    return memoryStartTime;
+  }),
+
+  /**
+   * Stops recording allocations in the memory actor.
+   */
+  _stopRecordingAllocations: Task.async(function*() {
     let memoryEndTime = yield this._request("memory", "stopRecordingAllocations");
     yield this._request("memory", "detach");
     return memoryEndTime;
@@ -357,9 +379,16 @@ PerformanceFront.prototype = {
    * them to consumers.
    */
   _pullAllocationSites: Task.async(function *() {
-    let memoryData = yield this._request("memory", "getAllocations");
-    let isStillAttached = yield this._request("memory", "getState") == "attached";
+    let deferred = promise.defer();
+    this._lastPullAllocationSitesFinished = deferred.promise;
 
+    let isDetached = (yield this._request("memory", "getState")) !== "attached";
+    if (isDetached) {
+      deferred.resolve();
+      return;
+    }
+
+    let memoryData = yield this._request("memory", "getAllocations");
     this.emit("allocations", {
       sites: memoryData.allocations,
       timestamps: memoryData.allocationsTimestamps,
@@ -367,24 +396,11 @@ PerformanceFront.prototype = {
       counts: memoryData.counts
     });
 
-    if (isStillAttached) {
-      let delay = DEFAULT_ALLOCATION_SITES_PULL_TIMEOUT;
-      this._sitesPullTimeout = setTimeout(this._pullAllocationSites, delay);
-    }
-  }),
+    let delay = DEFAULT_ALLOCATION_SITES_PULL_TIMEOUT;
+    this._sitesPullTimeout = setTimeout(this._pullAllocationSites, delay);
 
-  /**
-   * Overrides the options sent to the built-in profiler module when activating,
-   * such as the maximum entries count, the sampling interval etc.
-   *
-   * Used in tests and for older backend implementations.
-   */
-  _customProfilerOptions: {
-    entries: 1000000,
-    interval: 1,
-    features: ["js"],
-    threadFilters: ["GeckoMain"]
-  },
+    deferred.resolve();
+  }),
 
   /**
    * Returns an object indicating if mock actors are being used or not.

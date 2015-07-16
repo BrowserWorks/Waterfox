@@ -4,8 +4,29 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+with Files('**'):
+    BUG_COMPONENT = ('Core', 'CSS Parsing and Computation')
+
+with Files('nsComputedDOMStyle.*'):
+    BUG_COMPONENT = ('Core', 'DOM: CSS Object Model')
+
+with Files('nsROCSSPrimitiveValue.*'):
+    BUG_COMPONENT = ('Core', 'DOM: CSS Object Model')
+
+with Files('CSSRuleList.*'):
+    BUG_COMPONENT = ('Core', 'DOM: CSS Object Model')
+
+with Files('nsDOM*'):
+    BUG_COMPONENT = ('Core', 'DOM: CSS Object Model')
+
 DIRS += ['xbl-marquee']
 TEST_DIRS += ['test']
+
+XPIDL_SOURCES += [
+    'nsICSSUnprefixingService.idl',
+]
+
+XPIDL_MODULE = 'layout_base'
 
 EXPORTS += [
     'AnimationCommon.h',
@@ -120,6 +141,7 @@ UNIFIED_SOURCES += [
     'nsDOMCSSRGBColor.cpp',
     'nsDOMCSSValueList.cpp',
     'nsFontFaceLoader.cpp',
+    'nsFontFaceUtils.cpp',
     'nsHTMLCSSStyleSheet.cpp',
     'nsHTMLStyleSheet.cpp',
     'nsLayoutStylesheetCache.cpp',
@@ -147,6 +169,11 @@ SOURCES += [
     'nsCSSRuleProcessor.cpp',
 ]
 
+EXTRA_COMPONENTS += [
+    'CSSUnprefixingService.js',
+    'CSSUnprefixingService.manifest',
+]
+
 FAIL_ON_WARNINGS = True
 
 MSVC_ENABLE_PGO = True
@@ -158,6 +185,7 @@ FINAL_LIBRARY = 'xul'
 LOCAL_INCLUDES += [
     '../base',
     '../generic',
+    '../svg',
     '../xul',
     '/dom/base',
     '/dom/html',

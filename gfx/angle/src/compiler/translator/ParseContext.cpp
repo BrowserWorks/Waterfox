@@ -2028,7 +2028,6 @@ TIntermTyped* TParseContext::addIndexExpression(TIntermTyped *baseExpression, co
         recover();
     }
 
-	//BUG=angle:857
     TIntermConstantUnion *indexConstantUnion = indexExpression->getAsConstantUnion();
 
     if (indexExpression->getQualifier() == EvqConst && indexConstantUnion)
@@ -2094,7 +2093,7 @@ TIntermTyped* TParseContext::addIndexExpression(TIntermTyped *baseExpression, co
                 index = baseExpression->getType().getNominalSize() - 1;
             }
 
-            indexExpression->getAsConstantUnion()->getUnionArrayPointer()->setIConst(index);
+            indexConstantUnion->getUnionArrayPointer()->setIConst(index);
             indexedExpression = intermediate.addIndex(EOpIndexDirect, baseExpression, indexExpression, location);
         }
     }

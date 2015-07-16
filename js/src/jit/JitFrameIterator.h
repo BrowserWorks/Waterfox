@@ -280,6 +280,7 @@ class JitProfilingFrameIterator
     bool tryInitWithPC(void* pc);
     bool tryInitWithTable(JitcodeGlobalTable* table, void* pc, JSRuntime* rt,
                           bool forLastCallSite);
+    void fixBaselineDebugModeOSRReturnAddress();
 
   public:
     JitProfilingFrameIterator(JSRuntime* rt,
@@ -382,6 +383,7 @@ struct MaybeReadFallback
 
 
 class RResumePoint;
+class RSimdBox;
 
 // Reads frame information in snapshot-encoding order (that is, outermost frame
 // to innermost frame).
@@ -441,6 +443,10 @@ class SnapshotIterator
     bool allocationReadable(const RValueAllocation& a, ReadMethod rm = RM_Normal);
     void writeAllocationValuePayload(const RValueAllocation& a, Value v);
     void warnUnreadableAllocation();
+
+  private:
+    friend class RSimdBox;
+    const FloatRegisters::RegisterContent* floatAllocationPointer(const RValueAllocation& a) const;
 
   public:
     // Handle iterating over RValueAllocations of the snapshots.

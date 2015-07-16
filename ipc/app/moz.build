@@ -53,7 +53,7 @@ if CONFIG['MOZ_SANDBOX'] and CONFIG['OS_ARCH'] == 'WINNT':
     DELAYLOAD_DLLS += [
         'mozalloc.dll',
         'nss3.dll',
-        'xul.dll'
+		'xul'
     ]
     DEFINES['HASH_NODE_ID_WITH_DEVICE_ID'] = 1;
     SOURCES += [

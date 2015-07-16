@@ -320,7 +320,8 @@ SVGDocumentWrapper::SetupViewer(nsIRequest* aRequest,
   nsCOMPtr<nsIStreamListener> listener;
   rv = docLoaderFactory->CreateInstance("external-resource", chan,
                                         newLoadGroup,
-                                        IMAGE_SVG_XML, nullptr, nullptr,
+                                        NS_LITERAL_CSTRING(IMAGE_SVG_XML),
+                                        nullptr, nullptr,
                                         getter_AddRefs(listener),
                                         getter_AddRefs(viewer));
   NS_ENSURE_SUCCESS(rv, rv);
@@ -409,7 +410,7 @@ SVGDocumentWrapper::GetRootSVGElem()
     return nullptr; // Can happen during destruction
 
   Element* rootElem = mViewer->GetDocument()->GetRootElement();
-  if (!rootElem || !rootElem->IsSVG(nsGkAtoms::svg)) {
+  if (!rootElem || !rootElem->IsSVGElement(nsGkAtoms::svg)) {
     return nullptr;
   }
 

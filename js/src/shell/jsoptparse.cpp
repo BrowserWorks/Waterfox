@@ -84,10 +84,15 @@ static void
 PrintParagraph(const char* text, unsigned startColno, const unsigned limitColno, bool padFirstLine)
 {
     unsigned colno = startColno;
+    unsigned indent = 0;
     const char* it = text;
 
     if (padFirstLine)
         printf("%*s", startColno, "");
+
+    /* Skip any leading spaces. */
+    while (*it != '\0' && isspace(*it))
+        ++it;
 
     while (*it != '\0') {
         MOZ_ASSERT(!isspace(*it));
@@ -105,7 +110,7 @@ PrintParagraph(const char* text, unsigned startColno, const unsigned limitColno,
         size_t tokLen = limit - it;
         MOZ_ASSERT(tokLen);
         if (tokLen + colno >= limitColno) {
-            printf("\n%*s%.*s", startColno, "", int(tokLen), it);
+            printf("\n%*s%.*s", startColno + indent, "", int(tokLen), it);
             colno = startColno + tokLen;
         } else {
             printf("%.*s", int(tokLen), it);
@@ -128,9 +133,11 @@ PrintParagraph(const char* text, unsigned startColno, const unsigned limitColno,
             colno = startColno;
             it = limit + 1;
             /* Could also have line-leading spaces. */
+            indent = 0;
             while (*it == ' ') {
                 putchar(' ');
                 ++colno;
+                ++indent;
                 ++it;
             }
             break;
@@ -178,8 +185,8 @@ OptionParser::printHelp(const char* progname)
         putchar('\n');
     }
 
-    if (ver)
-        printf("\nVersion: %s\n\n", ver);
+    if (version)
+        printf("\nVersion: %s\n\n", version);
 
     if (!arguments.empty()) {
         printf("Arguments:\n");
@@ -243,7 +250,15 @@ OptionParser::printHelp(const char* progname)
         }
     }
 
-    return ParseHelp;
+    return EarlyExit;
+}
+
+OptionParser::Result
+OptionParser::printVersion()
+{
+    MOZ_ASSERT(version);
+    printf("%s\n", version);
+    return EarlyExit;
 }
 
 OptionParser::Result
@@ -277,6 +292,8 @@ OptionParser::handleOption(Option* opt, size_t argc, char** argv, size_t* i, boo
       {
         if (opt == &helpOption)
             return printHelp(argv[0]);
+        if (opt == &versionOption)
+            return printVersion();
         opt->asBoolOption()->value = true;
         return Okay;
       }
@@ -466,6 +483,9 @@ OptionParser::findOption(char shortflag)
             return *it;
     }
 
+    if (versionOption.shortflag == shortflag)
+        return &versionOption;
+
     return helpOption.shortflag == shortflag ? &helpOption : nullptr;
 }
 
@@ -495,6 +515,9 @@ OptionParser::findOption(const char* longflag)
         }
   no_match:;
     }
+
+    if (strcmp(versionOption.longflag, longflag) == 0)
+        return &versionOption;
 
     return strcmp(helpOption.longflag, longflag) ? nullptr : &helpOption;
 }

@@ -147,38 +147,11 @@ public:
   }
 #endif
 
-  virtual nsDisplayItemGeometry* AllocateGeometry(nsDisplayListBuilder* aBuilder) override;
-  virtual void ComputeInvalidationRegion(nsDisplayListBuilder* aBuilder,
-                                         const nsDisplayItemGeometry* aGeometry,
-                                         nsRegion *aInvalidRegion) override;
   virtual void Paint(nsDisplayListBuilder* aBuilder,
                      nsRenderingContext* aCtx) override;
 
   NS_DISPLAY_DECL_NAME("TableRowGroupBackground", TYPE_TABLE_ROW_GROUP_BACKGROUND)
 };
-
-nsDisplayItemGeometry*
-nsDisplayTableRowGroupBackground::AllocateGeometry(nsDisplayListBuilder* aBuilder)
-{
-  return new nsDisplayItemGenericImageGeometry(this, aBuilder);
-}
-
-void
-nsDisplayTableRowGroupBackground::ComputeInvalidationRegion(nsDisplayListBuilder* aBuilder,
-                                                            const nsDisplayItemGeometry* aGeometry,
-                                                            nsRegion *aInvalidRegion)
-{
-  auto geometry =
-    static_cast<const nsDisplayItemGenericImageGeometry*>(aGeometry);
-
-  if (aBuilder->ShouldSyncDecodeImages() &&
-      geometry->ShouldInvalidateToSyncDecodeImages()) {
-    bool snap;
-    aInvalidRegion->Or(*aInvalidRegion, GetBounds(aBuilder, &snap));
-  }
-
-  nsDisplayTableItem::ComputeInvalidationRegion(aBuilder, aGeometry, aInvalidRegion);
-}
 
 void
 nsDisplayTableRowGroupBackground::Paint(nsDisplayListBuilder* aBuilder,
@@ -194,7 +167,7 @@ nsDisplayTableRowGroupBackground::Paint(nsDisplayListBuilder* aBuilder,
   DrawResult result =
     painter.PaintRowGroup(static_cast<nsTableRowGroupFrame*>(mFrame));
 
-  nsDisplayItemGenericImageGeometry::UpdateDrawResult(this, result);
+  nsDisplayTableItemGeometry::UpdateDrawResult(this, result);
 }
 
 // Handle the child-traversal part of DisplayGenericTablePart
@@ -376,7 +349,7 @@ nsTableRowGroupFrame::ReflowChildren(nsPresContext*         aPresContext,
       NS_NOTREACHED("yikes, a non-row child");
       continue;
     }
-    nscoord cellSpacingY = tableFrame->GetCellSpacingY(rowFrame->GetRowIndex());
+    nscoord cellSpacingY = tableFrame->GetRowSpacing(rowFrame->GetRowIndex());
     haveRow = true;
 
     // Reflow the row frame
@@ -470,8 +443,8 @@ nsTableRowGroupFrame::ReflowChildren(nsPresContext*         aPresContext,
   }
 
   if (haveRow)
-    aReflowState.y -= tableFrame->GetCellSpacingY(GetStartRowIndex() +
-                                                  GetRowCount());
+    aReflowState.y -= tableFrame->GetRowSpacing(GetStartRowIndex() +
+                                                GetRowCount());
 
   // Return our desired rect
   aDesiredSize.Width() = aReflowState.reflowState.AvailableWidth();
@@ -634,7 +607,7 @@ nsTableRowGroupFrame::CalculateRowHeights(nsPresContext*           aPresContext,
         nsTableCellFrame* cellFrame = rowFrame->GetFirstCell();
         // iteratate the row's cell frames 
         while (cellFrame) {
-          nscoord cellSpacingY = tableFrame->GetCellSpacingY(startRowIndex + rowIndex);
+          nscoord cellSpacingY = tableFrame->GetRowSpacing(startRowIndex + rowIndex);
           int32_t rowSpan = tableFrame->GetEffectiveRowSpan(rowIndex + startRowIndex, *cellFrame);
           if ((rowIndex + rowSpan) > numRows) {
             // there might be rows pushed already to the nextInFlow
@@ -754,7 +727,7 @@ nsTableRowGroupFrame::CalculateRowHeights(nsPresContext*           aPresContext,
 
   bool styleHeightAllocation = false;
   nscoord rowGroupHeight = startRowGroupHeight + heightOfRows +
-                           tableFrame->GetCellSpacingY(0, numRows-1);
+                           tableFrame->GetRowSpacing(0, numRows-1);
   // if we have a style height, allocate the extra height to unconstrained rows
   if ((aReflowState.ComputedHeight() > rowGroupHeight) && 
       (NS_UNCONSTRAINEDSIZE != aReflowState.ComputedHeight())) {
@@ -814,7 +787,7 @@ nsTableRowGroupFrame::CalculateRowHeights(nsPresContext*           aPresContext,
         // XXXbz we don't need to update our overflow area?
       }
     }
-    yOrigin += rowHeight + tableFrame->GetCellSpacingY(startRowIndex + rowIndex);
+    yOrigin += rowHeight + tableFrame->GetRowSpacing(startRowIndex + rowIndex);
   }
 
   if (isPaginated && styleHeightAllocation) {
@@ -858,8 +831,8 @@ nsTableRowGroupFrame::CollapseRowGroupIfNecessary(nscoord aYTotalOffset,
   groupRect.height -= yGroupOffset;
   if (didCollapse) {
     // add back the cellspacing between rowgroups
-    groupRect.height += tableFrame->GetCellSpacingY(GetStartRowIndex() +
-                                                    GetRowCount());
+    groupRect.height += tableFrame->GetRowSpacing(GetStartRowIndex() +
+                                                  GetRowCount());
   }
 
   groupRect.y -= aYTotalOffset;
@@ -1089,7 +1062,7 @@ nsTableRowGroupFrame::SplitRowGroup(nsPresContext*           aPresContext,
   // in the available space
   for (nsTableRowFrame* rowFrame = firstRowThisPage; rowFrame; rowFrame = rowFrame->GetNextRow()) {
     bool rowIsOnPage = true;
-    nscoord cellSpacingY = aTableFrame->GetCellSpacingY(rowFrame->GetRowIndex());
+    nscoord cellSpacingY = aTableFrame->GetRowSpacing(rowFrame->GetRowIndex());
     nsRect rowRect = rowFrame->GetNormalRect();
     // See if the row fits on this page
     if (rowRect.YMost() > availHeight) {
@@ -1309,6 +1282,7 @@ nsTableRowGroupFrame::Reflow(nsPresContext*           aPresContext,
                              const nsHTMLReflowState& aReflowState,
                              nsReflowStatus&          aStatus)
 {
+  MarkInReflow();
   DO_GLOBAL_REFLOW_COUNT("nsTableRowGroupFrame");
   DISPLAY_REFLOW(aPresContext, this, aReflowState, aDesiredSize, aStatus);
 
@@ -1545,9 +1519,9 @@ nsTableRowGroupFrame::GetHeightBasis(const nsHTMLReflowState& aReflowState)
   nsTableFrame* tableFrame = nsTableFrame::GetTableFrame(this);
   int32_t startRowIndex = GetStartRowIndex();
   if ((aReflowState.ComputedHeight() > 0) && (aReflowState.ComputedHeight() < NS_UNCONSTRAINEDSIZE)) {
-    nscoord cellSpacing = tableFrame->GetCellSpacingY(startRowIndex,
-                                                      std::max(startRowIndex,
-                                                               startRowIndex + GetRowCount() - 1));
+    nscoord cellSpacing = tableFrame->GetRowSpacing(startRowIndex,
+                                                    std::max(startRowIndex,
+                                                             startRowIndex + GetRowCount() - 1));
     result = aReflowState.ComputedHeight() - cellSpacing;
   }
   else {
@@ -1557,7 +1531,7 @@ nsTableRowGroupFrame::GetHeightBasis(const nsHTMLReflowState& aReflowState)
     }
     if (parentRS && (tableFrame == parentRS->frame) && 
         (parentRS->ComputedHeight() > 0) && (parentRS->ComputedHeight() < NS_UNCONSTRAINEDSIZE)) {
-      nscoord cellSpacing = tableFrame->GetCellSpacingY(-1, tableFrame->GetRowCount());
+      nscoord cellSpacing = tableFrame->GetRowSpacing(-1, tableFrame->GetRowCount());
       result = parentRS->ComputedHeight() - cellSpacing;
     }
   }

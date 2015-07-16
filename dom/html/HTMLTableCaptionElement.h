@@ -13,7 +13,7 @@ namespace mozilla {
 namespace dom {
 
 class HTMLTableCaptionElement final : public nsGenericHTMLElement,
-                                          public nsIDOMHTMLTableCaptionElement
+                                      public nsIDOMHTMLTableCaptionElement
 {
 public:
   explicit HTMLTableCaptionElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
@@ -49,7 +49,7 @@ public:
 protected:
   virtual ~HTMLTableCaptionElement();
 
-  virtual JSObject* WrapNode(JSContext *aCx) override;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 private:
   static void MapAttributesIntoRule(const nsMappedAttributes* aAttributes,

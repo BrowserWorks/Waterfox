@@ -12,6 +12,8 @@ Cu.import("resource://gre/modules/Messaging.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import('resource://gre/modules/Geometry.jsm');
 
+const TYPE_NAME = "Robocop:testSelectionHandler";
+
 /* ============================== Utility functions ================================================
  *
  * Common functions available to all tests.
@@ -21,6 +23,14 @@ function getSelectionHandler() {
   return (!this._selectionHandler) ?
     this._selectionHandler = Services.wm.getMostRecentWindow("navigator:browser").SelectionHandler :
     this._selectionHandler;
+}
+
+function getClipboard() {
+  return Cc["@mozilla.org/widget/clipboardhelper;1"].getService(Ci.nsIClipboardHelper);
+}
+
+function getTextValue(aElement) {
+  return aElement.value || aElement.textContent;
 }
 
 function todo(result, msg) {

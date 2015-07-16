@@ -18,7 +18,7 @@ namespace mozilla {
 namespace dom {
 
 class MobileConnectionInfo final : public nsIMobileConnectionInfo
-                                     , public nsWrapperCache
+                                 , public nsWrapperCache
 {
 public:
   NS_DECL_NSIMOBILECONNECTIONINFO
@@ -45,7 +45,7 @@ public:
   }
 
   virtual JSObject*
-  WrapObject(JSContext* aCx) override;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // WebIDL interface
   bool

@@ -41,9 +41,9 @@ class nsHttpResponseHead;
 //-----------------------------------------------------------------------------
 
 class nsHttpTransaction final : public nsAHttpTransaction
-                                  , public ATokenBucketEvent
-                                  , public nsIInputStreamCallback
-                                  , public nsIOutputStreamCallback
+                              , public ATokenBucketEvent
+                              , public nsIInputStreamCallback
+                              , public nsIOutputStreamCallback
 {
 public:
     NS_DECL_THREADSAFE_ISUPPORTS
@@ -294,6 +294,8 @@ private:
     bool                            mResponseTimeoutEnabled;
     bool                            mForceRestart;
     bool                            mReuseOnRestart;
+    bool                            mContentDecoding;
+    bool                            mContentDecodingCheck;
 
     // mClosed           := transaction has been explicitly closed
     // mTransactionDone  := transaction ran to completion or was interrupted

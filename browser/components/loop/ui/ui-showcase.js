@@ -18,7 +18,7 @@
   // 1.1 Panel
   var PanelView = loop.panel.PanelView;
   // 1.2. Conversation Window
-  var IncomingCallView = loop.conversationViews.IncomingCallView;
+  var AcceptCallView = loop.conversationViews.AcceptCallView;
   var DesktopPendingConversationView = loop.conversationViews.PendingConversationView;
   var CallFailedView = loop.conversationViews.CallFailedView;
   var DesktopRoomConversationView = loop.roomViews.DesktopRoomConversationView;
@@ -43,6 +43,7 @@
   // Store constants
   var ROOM_STATES = loop.store.ROOM_STATES;
   var FEEDBACK_STATES = loop.store.FEEDBACK_STATES;
+  var CALL_TYPES = loop.shared.utils.CALL_TYPES;
 
   // Local helpers
   function returnTrue() {
@@ -55,6 +56,28 @@
 
   function noop(){}
 
+  // We save the visibility change listeners so that we can fake an event
+  // to the panel once we've loaded all the views.
+  var visibilityListeners = [];
+  var rootObject = window;
+
+  rootObject.document.addEventListener = function(eventName, func) {
+    if (eventName === "visibilitychange") {
+      visibilityListeners.push(func);
+    }
+    window.addEventListener(eventName, func);
+  };
+
+  rootObject.document.removeEventListener = function(eventName, func) {
+    if (eventName === "visibilitychange") {
+      var index = visibilityListeners.indexOf(func);
+      visibilityListeners.splice(index, 1);
+    }
+    window.removeEventListener(eventName, func);
+  };
+
+  loop.shared.mixins.setRootObject(rootObject);
+
   // Feedback API client configured to send data to the stage input server,
   // which is available at https://input.allizom.org
   var stageFeedbackApiClient = new loop.FeedbackAPIClient(
@@ -63,10 +86,12 @@
     }
   );
 
+  var mockSDK = _.extend({}, Backbone.Events);
+
   var dispatcher = new loop.Dispatcher();
   var activeRoomStore = new loop.store.ActiveRoomStore(dispatcher, {
     mozLoop: navigator.mozLoop,
-    sdkDriver: {}
+    sdkDriver: mockSDK
   });
   var roomStore = new loop.store.RoomStore(dispatcher, {
     mozLoop: navigator.mozLoop
@@ -77,10 +102,13 @@
   var conversationStore = new loop.store.ConversationStore(dispatcher, {
     client: {},
     mozLoop: navigator.mozLoop,
-    sdkDriver: {}
+    sdkDriver: mockSDK
   });
 
-  loop.store.StoreMixin.register({feedbackStore: feedbackStore});
+  loop.store.StoreMixin.register({
+    conversationStore: conversationStore,
+    feedbackStore: feedbackStore
+  });
 
   // Local mocks
 
@@ -96,8 +124,6 @@
   var mockClient = {
     requestCallUrlInfo: noop
   };
-
-  var mockSDK = {};
 
   var mockConversationModel = new loop.shared.models.ConversationModel({
     callerId: "Mrs Jones",
@@ -150,14 +176,14 @@
         "video-white", "video-active", "video-disabled", "volume", "volume-active",
         "volume-disabled"
       ],
-      "16x16": ["audio", "audio-hover", "audio-active", "block", "block-red",
-        "block-hover", "block-active", "contacts", "contacts-hover", "contacts-active",
-        "copy", "checkmark", "google", "google-hover", "google-active", "history",
-        "history-hover", "history-active", "leave", "precall", "precall-hover",
+      "16x16": ["add", "add-hover", "add-active", "audio", "audio-hover", "audio-active",
+        "block", "block-red", "block-hover", "block-active", "contacts", "contacts-hover",
+        "contacts-active", "copy", "checkmark", "google", "google-hover", "google-active",
+        "history", "history-hover", "history-active", "leave", "precall", "precall-hover",
         "precall-active", "screen-white", "screenmute-white", "settings",
-        "settings-hover", "settings-active", "tag", "tag-hover", "tag-active",
-        "trash", "unblock", "unblock-hover", "unblock-active", "video", "video-hover",
-        "video-active", "tour"
+        "settings-hover", "settings-active", "share-darkgrey", "tag", "tag-hover",
+        "tag-active", "trash", "unblock", "unblock-hover", "unblock-active", "video",
+        "video-hover", "video-active", "tour"
       ]
     },
 
@@ -286,27 +312,34 @@
             )
           ), 
 
-          React.createElement(Section, {name: "IncomingCallView"}, 
-            React.createElement(Example, {summary: "Default / incoming video call", dashed: "true", style: {width: "260px", height: "254px"}}, 
+          React.createElement(Section, {name: "AcceptCallView"}, 
+            React.createElement(Example, {summary: "Default / incoming video call", dashed: "true", style: {width: "300px", height: "272px"}}, 
               React.createElement("div", {className: "fx-embedded"}, 
-                React.createElement(IncomingCallView, {model: mockConversationModel, 
-                                  video: true})
+                React.createElement(AcceptCallView, {callType: CALL_TYPES.AUDIO_VIDEO, 
+                                callerId: "Mr Smith", 
+                                dispatcher: dispatcher, 
+                                mozLoop: mockMozLoopRooms})
               )
             ), 
 
-            React.createElement(Example, {summary: "Default / incoming audio only call", dashed: "true", style: {width: "260px", height: "254px"}}, 
+            React.createElement(Example, {summary: "Default / incoming audio only call", dashed: "true", style: {width: "300px", height: "272px"}}, 
               React.createElement("div", {className: "fx-embedded"}, 
-                React.createElement(IncomingCallView, {model: mockConversationModel, 
-                                  video: false})
+                React.createElement(AcceptCallView, {callType: CALL_TYPES.AUDIO_ONLY, 
+                                callerId: "Mr Smith", 
+                                dispatcher: dispatcher, 
+                                mozLoop: mockMozLoopRooms})
               )
             )
           ), 
 
-          React.createElement(Section, {name: "IncomingCallView-ActiveState"}, 
-            React.createElement(Example, {summary: "Default", dashed: "true", style: {width: "260px", height: "254px"}}, 
+          React.createElement(Section, {name: "AcceptCallView-ActiveState"}, 
+            React.createElement(Example, {summary: "Default", dashed: "true", style: {width: "300px", height: "272px"}}, 
               React.createElement("div", {className: "fx-embedded"}, 
-                React.createElement(IncomingCallView, {model: mockConversationModel, 
-                                   showMenu: true})
+                React.createElement(AcceptCallView, {callType: CALL_TYPES.AUDIO_VIDEO, 
+                                callerId: "Mr Smith", 
+                                dispatcher: dispatcher, 
+                                mozLoop: mockMozLoopRooms, 
+                                showMenu: true})
               )
             )
           ), 
@@ -314,19 +347,19 @@
           React.createElement(Section, {name: "ConversationToolbar"}, 
             React.createElement("h2", null, "Desktop Conversation Window"), 
             React.createElement("div", {className: "fx-embedded override-position"}, 
-              React.createElement(Example, {summary: "Default (260x265)", dashed: "true"}, 
+              React.createElement(Example, {summary: "Default", dashed: "true", style: {width: "300px", height: "272px"}}, 
                 React.createElement(ConversationToolbar, {video: {enabled: true}, 
                                      audio: {enabled: true}, 
                                      hangup: noop, 
                                      publishStream: noop})
               ), 
-              React.createElement(Example, {summary: "Video muted"}, 
+              React.createElement(Example, {summary: "Video muted", style: {width: "300px", height: "272px"}}, 
                 React.createElement(ConversationToolbar, {video: {enabled: false}, 
                                      audio: {enabled: true}, 
                                      hangup: noop, 
                                      publishStream: noop})
               ), 
-              React.createElement(Example, {summary: "Audio muted"}, 
+              React.createElement(Example, {summary: "Audio muted", style: {width: "300px", height: "272px"}}, 
                 React.createElement(ConversationToolbar, {video: {enabled: true}, 
                                      audio: {enabled: false}, 
                                      hangup: noop, 
@@ -383,7 +416,7 @@
 
           React.createElement(Section, {name: "PendingConversationView (Desktop)"}, 
             React.createElement(Example, {summary: "Connecting", dashed: "true", 
-                     style: {width: "260px", height: "265px"}}, 
+                     style: {width: "300px", height: "272px"}}, 
               React.createElement("div", {className: "fx-embedded"}, 
                 React.createElement(DesktopPendingConversationView, {callState: "gather", 
                                                 contact: mockContact, 
@@ -393,16 +426,27 @@
           ), 
 
           React.createElement(Section, {name: "CallFailedView"}, 
-            React.createElement(Example, {summary: "Call Failed", dashed: "true", 
-                     style: {width: "260px", height: "265px"}}, 
+            React.createElement(Example, {summary: "Call Failed - Incoming", dashed: "true", 
+                     style: {width: "300px", height: "272px"}}, 
               React.createElement("div", {className: "fx-embedded"}, 
-                React.createElement(CallFailedView, {dispatcher: dispatcher, store: conversationStore})
+                React.createElement(CallFailedView, {dispatcher: dispatcher, 
+                                outgoing: false, 
+                                store: conversationStore})
+              )
+            ), 
+            React.createElement(Example, {summary: "Call Failed - Outgoing", dashed: "true", 
+                     style: {width: "300px", height: "272px"}}, 
+              React.createElement("div", {className: "fx-embedded"}, 
+                React.createElement(CallFailedView, {dispatcher: dispatcher, 
+                                outgoing: true, 
+                                store: conversationStore})
               )
             ), 
             React.createElement(Example, {summary: "Call Failed — with call URL error", dashed: "true", 
-                     style: {width: "260px", height: "265px"}}, 
+                     style: {width: "300px", height: "272px"}}, 
               React.createElement("div", {className: "fx-embedded"}, 
                 React.createElement(CallFailedView, {dispatcher: dispatcher, emailLinkError: true, 
+                                outgoing: true, 
                                 store: conversationStore})
               )
             )
@@ -430,7 +474,7 @@
 
           React.createElement(Section, {name: "ConversationView"}, 
             React.createElement(Example, {summary: "Desktop conversation window", dashed: "true", 
-                     style: {width: "260px", height: "265px"}}, 
+                     style: {width: "300px", height: "272px"}}, 
               React.createElement("div", {className: "fx-embedded"}, 
                 React.createElement(ConversationView, {sdk: mockSDK, 
                                   model: mockConversationModel, 
@@ -452,7 +496,7 @@
             ), 
 
             React.createElement(Example, {summary: "Desktop conversation window local audio stream", 
-                     dashed: "true", style: {width: "260px", height: "265px"}}, 
+                     dashed: "true", style: {width: "300px", height: "272px"}}, 
               React.createElement("div", {className: "fx-embedded"}, 
                 React.createElement(ConversationView, {sdk: mockSDK, 
                                   video: {enabled: false}, 
@@ -503,13 +547,13 @@
               React.createElement("strong", null, "Note:"), " For the useable demo, you can access submitted data at ", 
               React.createElement("a", {href: "https://input.allizom.org/"}, "input.allizom.org"), "."
             ), 
-            React.createElement(Example, {summary: "Default (useable demo)", dashed: "true", style: {width: "260px"}}, 
+            React.createElement(Example, {summary: "Default (useable demo)", dashed: "true", style: {width: "300px", height: "272px"}}, 
               React.createElement(FeedbackView, {feedbackStore: feedbackStore})
             ), 
-            React.createElement(Example, {summary: "Detailed form", dashed: "true", style: {width: "260px"}}, 
+            React.createElement(Example, {summary: "Detailed form", dashed: "true", style: {width: "300px", height: "272px"}}, 
               React.createElement(FeedbackView, {feedbackStore: feedbackStore, feedbackState: FEEDBACK_STATES.DETAILS})
             ), 
-            React.createElement(Example, {summary: "Thank you!", dashed: "true", style: {width: "260px"}}, 
+            React.createElement(Example, {summary: "Thank you!", dashed: "true", style: {width: "300px", height: "272px"}}, 
               React.createElement(FeedbackView, {feedbackStore: feedbackStore, feedbackState: FEEDBACK_STATES.SENT})
             )
           ), 
@@ -734,15 +778,33 @@
 
   window.addEventListener("DOMContentLoaded", function() {
     try {
-      React.render(React.createElement(App, null), document.body);
+      React.renderComponent(React.createElement(App, null), document.getElementById("main"));
+
+      for (var listener of visibilityListeners) {
+        listener({target: {hidden: false}});
+      }
     } catch(err) {
-      console.log(err);
+      console.error(err);
+      uncaughtError = err;
     }
 
     _renderComponentsInIframes();
 
     // Put the title back, in case views changed it.
     document.title = "Loop UI Components Showcase";
+
+    // This simulates the mocha layout for errors which means we can run
+    // this alongside our other unit tests but use the same harness.
+    if (uncaughtError) {
+      $("#results").append("<div class='failures'><em>1</em></div>");
+      $("#results").append("<li class='test fail'>" +
+        "<h2>Errors rendering UI-Showcase</h2>" +
+        "<pre class='error'>" + uncaughtError + "\n" + uncaughtError.stack + "</pre>" +
+        "</li>");
+    } else {
+      $("#results").append("<div class='failures'><em>0</em></div>");
+    }
+    $("#results").append("<p id='complete'>Complete.</p>");
   });
 
 })();

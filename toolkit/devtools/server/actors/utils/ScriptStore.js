@@ -79,6 +79,18 @@ ScriptStore.prototype = {
     return this._scripts.items;
   },
 
+  getScriptsBySourceActor(sourceActor) {
+    return sourceActor.source ?
+           this.getScriptsBySource(sourceActor.source) :
+           this.getScriptsByURL(sourceActor._originalUrl);
+  },
+
+  getScriptsBySourceActorAndLine(sourceActor, line) {
+    return sourceActor.source ?
+           this.getScriptsBySourceAndLine(sourceActor.source, line) :
+           this.getScriptsByURLAndLine(sourceActor._originalUrl, line);
+  },
+
   /**
    * Get all scripts produced from the given source.
    *

@@ -33,7 +33,7 @@ static dom::SVGViewElement*
 GetViewElement(nsIDocument* aDocument, const nsAString& aId)
 {
   dom::Element* element = aDocument->GetElementById(aId);
-  return (element && element->IsSVG(nsGkAtoms::view)) ?
+  return (element && element->IsSVGElement(nsGkAtoms::view)) ?
             static_cast<dom::SVGViewElement*>(element) : nullptr;
 }
 
@@ -238,7 +238,7 @@ bool
 SVGFragmentIdentifier::ProcessFragmentIdentifier(nsIDocument* aDocument,
                                                  const nsAString& aAnchorName)
 {
-  MOZ_ASSERT(aDocument->GetRootElement()->IsSVG(nsGkAtoms::svg),
+  MOZ_ASSERT(aDocument->GetRootElement()->IsSVGElement(nsGkAtoms::svg),
              "expecting an SVG root element");
 
   dom::SVGSVGElement* rootElement =
@@ -259,7 +259,9 @@ SVGFragmentIdentifier::ProcessFragmentIdentifier(nsIDocument* aDocument,
     *rootElement->mCurrentViewID = aAnchorName;
     rootElement->mUseCurrentView = true;
     rootElement->InvalidateTransformNotifyFrame();
-    return true;
+    // not an svgView()-style fragment identifier, return false so the caller
+    // continues processing to match any :target pseudo elements
+    return false;
   }
 
   bool wasOverridden = !!rootElement->mCurrentViewID;

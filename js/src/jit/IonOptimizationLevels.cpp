@@ -28,16 +28,20 @@ OptimizationInfo::initNormalOptimizationInfo()
     eliminateRedundantChecks_ = true;
     inlineInterpreted_ = true;
     inlineNative_ = true;
+    eagerSimdUnbox_ = true;
     gvn_ = true;
     licm_ = true;
     rangeAnalysis_ = true;
     loopUnrolling_ = true;
     autoTruncate_ = true;
     sink_ = true;
-    registerAllocator_ = RegisterAllocator_LSRA;
+    registerAllocator_ = RegisterAllocator_Backtracking;
 
-    inlineMaxTotalBytecodeLength_ = 1000;
-    inliningMaxCallerBytecodeLength_ = 10000;
+    inlineMaxBytecodePerCallSiteMainThread_ = 500;
+    inlineMaxBytecodePerCallSiteOffThread_ = 1000;
+    inlineMaxCalleeInlinedBytecodeLength_ = 3000;
+    inlineMaxTotalBytecodeLength_ = 80000;
+    inliningMaxCallerBytecodeLength_ = 1500;
     maxInlineDepth_ = 3;
     scalarReplacement_ = true;
     smallFunctionMaxInlineDepth_ = 10;
@@ -55,7 +59,9 @@ OptimizationInfo::initAsmjsOptimizationInfo()
     // Take normal option values for not specified values.
     initNormalOptimizationInfo();
 
+    ama_ = true;
     level_ = Optimization_AsmJS;
+    eagerSimdUnbox_ = false;           // AsmJS has no boxing / unboxing.
     edgeCaseAnalysis_ = false;
     eliminateRedundantChecks_ = false;
     autoTruncate_ = false;

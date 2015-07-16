@@ -30,7 +30,7 @@ public:
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(CSSRuleList)
 
   virtual CSSStyleSheet* GetParentObject() = 0;
-  virtual JSObject* WrapObject(JSContext* aCx) override final;
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override final;
 
   NS_IMETHOD
   GetLength(uint32_t* aLength) override final

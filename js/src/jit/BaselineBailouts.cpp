@@ -4,6 +4,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "mozilla/SizePrintfMacros.h"
+
 #include "jsprf.h"
 #include "jsutil.h"
 #include "jit/arm/Simulator-arm.h"
@@ -485,12 +487,10 @@ HasLiveIteratorAtStackDepth(JSScript* script, jsbytecode* pc, uint32_t stackDept
         if (tn->kind == JSTRY_FOR_IN && stackDepth == tn->stackDepth)
             return true;
 
-        // For-of loops have both the iterator and the result on stack.
-        if (tn->kind == JSTRY_FOR_OF &&
-            (stackDepth == tn->stackDepth || stackDepth == tn->stackDepth - 1))
-        {
+        // For-of loops have both the iterator and the result object on
+        // stack. The iterator is below the result object.
+        if (tn->kind == JSTRY_FOR_OF && stackDepth == tn->stackDepth - 1)
             return true;
-        }
     }
 
     return false;
@@ -703,13 +703,13 @@ InitFromBailout(JSContext* cx, HandleScript caller, jsbytecode* callerPC,
                     scopeChain = fun->environment();
                 }
             } else {
-                // For global, compile-and-go scripts the scope chain is the
-                // script's global (Ion does not compile non-compile-and-go
-                // scripts). Also note that it's invalid to resume into the
-                // prologue in this case because the prologue expects the scope
-                // chain in R1 for eval and global scripts.
+                // For global scripts without a polluted global scope the scope
+                // chain is the script's global (Ion does not compile scripts
+                // with a polluted global scope). Also note that it's invalid to
+                // resume into the prologue in this case because the prologue
+                // expects the scope chain in R1 for eval and global scripts.
                 MOZ_ASSERT(!script->isForEval());
-                MOZ_ASSERT(script->compileAndGo());
+                MOZ_ASSERT(!script->hasPollutedGlobalScope());
                 scopeChain = &(script->global());
             }
         }
@@ -969,9 +969,9 @@ InitFromBailout(JSContext* cx, HandleScript caller, jsbytecode* callerPC,
         }
     }
 
-    JitSpew(JitSpew_BaselineBailouts, "      Resuming %s pc offset %d (op %s) (line %d) of %s:%d",
+    JitSpew(JitSpew_BaselineBailouts, "      Resuming %s pc offset %d (op %s) (line %d) of %s:%" PRIuSIZE,
                 resumeAfter ? "after" : "at", (int) pcOff, js_CodeName[op],
-                PCToLineNumber(script, pc), script->filename(), (int) script->lineno());
+                PCToLineNumber(script, pc), script->filename(), script->lineno());
     JitSpew(JitSpew_BaselineBailouts, "      Bailout kind: %s",
             BailoutKindString(bailoutKind));
 #endif
@@ -1127,13 +1127,13 @@ InitFromBailout(JSContext* cx, HandleScript caller, jsbytecode* callerPC,
             char* buf = js_pod_malloc<char>(len);
             if (buf == nullptr)
                 return false;
-            JS_snprintf(buf, len, "%s %s %s on line %d of %s:%d",
+            JS_snprintf(buf, len, "%s %s %s on line %u of %s:%" PRIuSIZE,
                                   BailoutKindString(bailoutKind),
                                   resumeAfter ? "after" : "at",
                                   js_CodeName[op],
-                                  int(PCToLineNumber(script, pc)),
+                                  PCToLineNumber(script, pc),
                                   filename,
-                                  int(script->lineno()));
+                                  script->lineno());
             cx->runtime()->spsProfiler.markEvent(buf);
             js_free(buf);
         }
@@ -1585,13 +1585,17 @@ HandleBoundsCheckFailure(JSContext* cx, HandleScript outerScript, HandleScript i
 
     MOZ_ASSERT(!outerScript->ionScript()->invalidated());
 
-    // TODO: Currently this mimic's Ion's handling of this case.  Investigate setting
-    // the flag on innerScript as opposed to outerScript, and maybe invalidating both
-    // inner and outer scripts, instead of just the outer one.
-    if (!outerScript->failedBoundsCheck())
-        outerScript->setFailedBoundsCheck();
+    if (!innerScript->failedBoundsCheck())
+        innerScript->setFailedBoundsCheck();
+
     JitSpew(JitSpew_BaselineBailouts, "Invalidating due to bounds check failure");
-    return Invalidate(cx, outerScript);
+    if (!Invalidate(cx, outerScript))
+        return false;
+
+    if (innerScript->hasIonScript() && !Invalidate(cx, innerScript))
+        return false;
+
+    return true;
 }
 
 static bool
@@ -1622,6 +1626,28 @@ HandleBaselineInfoBailout(JSContext* cx, JSScript* outerScript, JSScript* innerS
 
     JitSpew(JitSpew_BaselineBailouts, "Invalidating due to invalid baseline info");
     return Invalidate(cx, outerScript);
+}
+
+static bool
+HandleLexicalCheckFailure(JSContext* cx, HandleScript outerScript, HandleScript innerScript)
+{
+    JitSpew(JitSpew_IonBailouts, "Lexical check failure %s:%d, inlined into %s:%d",
+            innerScript->filename(), innerScript->lineno(),
+            outerScript->filename(), outerScript->lineno());
+
+    MOZ_ASSERT(!outerScript->ionScript()->invalidated());
+
+    if (!innerScript->failedLexicalCheck())
+        innerScript->setFailedLexicalCheck();
+
+    JitSpew(JitSpew_BaselineBailouts, "Invalidating due to lexical check failure");
+    if (!Invalidate(cx, outerScript))
+        return false;
+
+    if (innerScript->hasIonScript() && !Invalidate(cx, innerScript))
+        return false;
+
+    return true;
 }
 
 static bool
@@ -1833,6 +1859,10 @@ jit::FinishBailoutToBaseline(BaselineBailoutInfo* bailoutInfo)
         break;
       case Bailout_ShapeGuard:
         if (!HandleShapeGuardFailure(cx, outerScript, innerScript))
+            return false;
+        break;
+      case Bailout_UninitializedLexical:
+        if (!HandleLexicalCheckFailure(cx, outerScript, innerScript))
             return false;
         break;
       case Bailout_IonExceptionDebugMode:

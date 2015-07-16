@@ -118,14 +118,16 @@ public:
 } // namespace mozilla
 
 static void
-TraceWeakMappingChild(JSTracer* aTrc, void** aThingp, JSGCTraceKind aKind);
+TraceWeakMappingChild(JS::CallbackTracer* aTrc, void** aThingp,
+                      JSGCTraceKind aKind);
 
-struct NoteWeakMapChildrenTracer : public JSTracer
+struct NoteWeakMapChildrenTracer : public JS::CallbackTracer
 {
   NoteWeakMapChildrenTracer(JSRuntime* aRt,
                             nsCycleCollectionNoteRootCallback& aCb)
-    : JSTracer(aRt, TraceWeakMappingChild), mCb(aCb), mTracedAny(false),
-      mMap(nullptr), mKey(JS::GCCellPtr::NullPtr()), mKeyDelegate(nullptr)
+    : JS::CallbackTracer(aRt, TraceWeakMappingChild), mCb(aCb),
+      mTracedAny(false), mMap(nullptr), mKey(JS::GCCellPtr::NullPtr()),
+      mKeyDelegate(nullptr)
   {
   }
   nsCycleCollectionNoteRootCallback& mCb;
@@ -136,9 +138,10 @@ struct NoteWeakMapChildrenTracer : public JSTracer
 };
 
 static void
-TraceWeakMappingChild(JSTracer* aTrc, void** aThingp, JSGCTraceKind aKind)
+TraceWeakMappingChild(JS::CallbackTracer* aTrc, void** aThingp,
+                      JSGCTraceKind aKind)
 {
-  MOZ_ASSERT(aTrc->callback == TraceWeakMappingChild);
+  MOZ_ASSERT(aTrc->hasCallback(TraceWeakMappingChild));
   NoteWeakMapChildrenTracer* tracer =
     static_cast<NoteWeakMapChildrenTracer*>(aTrc);
   JS::GCCellPtr thing(*aThingp, aKind);
@@ -368,19 +371,21 @@ JSZoneParticipant::Traverse(void* aPtr, nsCycleCollectionTraversalCallback& aCb)
 }
 
 static void
-NoteJSChildTracerShim(JSTracer* aTrc, void** aThingp, JSGCTraceKind aTraceKind);
+NoteJSChildTracerShim(JS::CallbackTracer* aTrc, void** aThingp,
+                      JSGCTraceKind aTraceKind);
 
-struct TraversalTracer : public JSTracer
+struct TraversalTracer : public JS::CallbackTracer
 {
   TraversalTracer(JSRuntime* aRt, nsCycleCollectionTraversalCallback& aCb)
-    : JSTracer(aRt, NoteJSChildTracerShim, DoNotTraceWeakMaps), mCb(aCb)
+    : JS::CallbackTracer(aRt, NoteJSChildTracerShim, DoNotTraceWeakMaps),
+      mCb(aCb)
   {
   }
   nsCycleCollectionTraversalCallback& mCb;
 };
 
 static void
-NoteJSChild(JSTracer* aTrc, JS::GCCellPtr aThing)
+NoteJSChild(JS::CallbackTracer* aTrc, JS::GCCellPtr aThing)
 {
   TraversalTracer* tracer = static_cast<TraversalTracer*>(aTrc);
 
@@ -427,7 +432,8 @@ NoteJSChild(JSTracer* aTrc, JS::GCCellPtr aThing)
 }
 
 static void
-NoteJSChildTracerShim(JSTracer* aTrc, void** aThingp, JSGCTraceKind aTraceKind)
+NoteJSChildTracerShim(JS::CallbackTracer* aTrc, void** aThingp,
+                      JSGCTraceKind aTraceKind)
 {
   JS::GCCellPtr thing(*aThingp, aTraceKind);
   NoteJSChild(aTrc, thing);
@@ -616,10 +622,14 @@ CycleCollectedJSRuntime::NoteGCThingXPCOMChildren(const js::Class* aClasp,
     const DOMJSClass* domClass = GetDOMClass(aObj);
     if (domClass) {
       NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(aCb, "UnwrapDOMObject(obj)");
+      // It's possible that our object is an unforgeable holder object, in
+      // which case it doesn't actually have a C++ DOM object associated with
+      // it.  Use UnwrapPossiblyNotInitializedDOMObject, which produces null in
+      // that case, since NoteXPCOMChild/NoteNativeChild are null-safe.
       if (domClass->mDOMObjectIsISupports) {
-        aCb.NoteXPCOMChild(UnwrapDOMObject<nsISupports>(aObj));
+        aCb.NoteXPCOMChild(UnwrapPossiblyNotInitializedDOMObject<nsISupports>(aObj));
       } else if (domClass->mParticipant) {
-        aCb.NoteNativeChild(UnwrapDOMObject<void>(aObj),
+        aCb.NoteNativeChild(UnwrapPossiblyNotInitializedDOMObject<void>(aObj),
                             domClass->mParticipant);
       }
     }
@@ -933,7 +943,7 @@ CycleCollectedJSRuntime::SetPendingException(nsIException* aException)
   mPendingException = aException;
 }
 
-nsTArray<nsRefPtr<nsIRunnable>>&
+nsTArray<nsCOMPtr<nsIRunnable>>&
 CycleCollectedJSRuntime::GetPromiseMicroTaskQueue()
 {
   return mPromiseMicroTaskQueue;
@@ -987,7 +997,7 @@ CycleCollectedJSRuntime::UsefulToMergeZones() const
     MOZ_ASSERT(js::IsOuterObject(obj));
     // Grab the inner from the outer.
     obj = JS_ObjectToInnerObject(cx, obj);
-    MOZ_ASSERT(!js::GetObjectParent(obj));
+    MOZ_ASSERT(JS_IsGlobalObject(obj));
     if (JS::ObjectIsMarkedGray(obj) &&
         !js::IsSystemCompartment(js::GetObjectCompartment(obj))) {
       return true;

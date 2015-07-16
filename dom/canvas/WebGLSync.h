@@ -21,18 +21,20 @@ class WebGLSync final
     friend class WebGL2Context;
 
 public:
-    explicit WebGLSync(WebGLContext* webgl);
+    WebGLSync(WebGLContext* webgl, GLenum condition, GLbitfield flags);
 
     void Delete();
     WebGLContext* GetParentObject() const;
 
-    virtual JSObject* WrapObject(JSContext* cx) override;
+    virtual JSObject* WrapObject(JSContext* cx, JS::Handle<JSObject*> aGivenProto) override;
 
     NS_INLINE_DECL_CYCLE_COLLECTING_NATIVE_REFCOUNTING(WebGLSync)
     NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_NATIVE_CLASS(WebGLSync)
 
 private:
     ~WebGLSync();
+
+    GLsync mGLName;
 };
 
 } // namespace mozilla

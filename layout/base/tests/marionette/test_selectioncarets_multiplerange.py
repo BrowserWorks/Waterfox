@@ -5,7 +5,7 @@
 
 from marionette_driver.by import By
 from marionette_driver.marionette import Actions
-from marionette_test import MarionetteTestCase
+from marionette import MarionetteTestCase
 from marionette_driver.selection import SelectionManager
 from marionette_driver.gestures import long_press_without_contextmenu
 
@@ -21,12 +21,9 @@ class SelectionCaretsMultipleRangeTest(MarionetteTestCase):
     def openTestHtml(self, enabled=True):
         # Open html for testing and enable selectioncaret and
         # non-editable support
-        self.marionette.execute_script(
-            'SpecialPowers.setBoolPref("selectioncaret.enabled", %s);' %
-            ('true' if enabled else 'false'))
-        self.marionette.execute_script(
-            'SpecialPowers.setBoolPref("selectioncaret.noneditable", %s);' %
-            ('true' if enabled else 'false'))
+        self.marionette.execute_async_script(
+            'SpecialPowers.pushPrefEnv({"set": [["selectioncaret.enabled", %s],["selectioncaret.noneditable", %s]]}, marionetteScriptFinished);' %
+            ( ('true' if enabled else 'false'),  ('true' if enabled else 'false')))
 
         test_html = self.marionette.absolute_url('test_selectioncarets_multiplerange.html')
         self.marionette.navigate(test_html)
@@ -38,6 +35,29 @@ class SelectionCaretsMultipleRangeTest(MarionetteTestCase):
         self._sel4 = self.marionette.find_element(By.ID, 'sel4')
         self._sel6 = self.marionette.find_element(By.ID, 'sel6')
         self._nonsel1 = self.marionette.find_element(By.ID, 'nonsel1')
+
+    def openTestHtmlLongText(self, enabled=True):
+        # Open html for testing and enable selectioncaret
+        self.marionette.execute_script(
+            'SpecialPowers.setBoolPref("selectioncaret.enabled", %s);' %
+            ('true' if enabled else 'false'))
+
+        test_html = self.marionette.absolute_url('test_selectioncarets_longtext.html')
+        self.marionette.navigate(test_html)
+
+        self._body = self.marionette.find_element(By.ID, 'bd')
+        self._longtext = self.marionette.find_element(By.ID, 'longtext')
+
+    def openTestHtmlIframe(self, enabled=True):
+        # Open html for testing and enable selectioncaret
+        self.marionette.execute_script(
+            'SpecialPowers.setBoolPref("selectioncaret.enabled", %s);' %
+            ('true' if enabled else 'false'))
+
+        test_html = self.marionette.absolute_url('test_selectioncarets_iframe.html')
+        self.marionette.navigate(test_html)
+
+        self._iframe = self.marionette.find_element(By.ID, 'frame')
 
     def _long_press_to_select_word(self, el, wordOrdinal):
         sel = SelectionManager(el)
@@ -106,6 +126,12 @@ class SelectionCaretsMultipleRangeTest(MarionetteTestCase):
         self.assertEqual(self._to_unix_line_ending(sel.selected_content.strip()),
             'this 3\nuser can select this 4\nuser can select this 5\nuser')
 
+        # Drag first caret to target location
+        (caret1_x, caret1_y), (caret2_x, caret2_y) = sel.selection_carets_location()
+        self.actions.flick(self._body, caret1_x, caret1_y, end_caret_x, end_caret_y, 1).perform()
+        self.assertEqual(self._to_unix_line_ending(sel.selected_content.strip()),
+            '4\nuser can select this 5\nuser')
+
     def test_drag_caret_to_beginning_of_a_line(self):
         '''Bug 1094056
         Test caret visibility when caret is dragged to beginning of a line
@@ -128,3 +154,52 @@ class SelectionCaretsMultipleRangeTest(MarionetteTestCase):
         self.actions.flick(self._body, start_caret_x, start_caret_y, caret2_x, caret2_y).perform()
 
         self.assertEqual(self._to_unix_line_ending(sel.selected_content.strip()), 'select')
+
+    def test_caret_position_after_changing_orientation_of_device(self):
+        '''Bug 1094072
+        If positions of carets are updated correctly, they should be draggable.
+        '''
+        # Skip running test on non-rotatable device ex.desktop browser
+        if not self.marionette.session_capabilities['rotatable']:
+            return
+
+        self.openTestHtmlLongText(enabled=True)
+
+        # Select word in portrait mode, then change to landscape mode
+        self.marionette.set_orientation('portrait')
+        self._long_press_to_select_word(self._longtext, 12)
+        sel = SelectionManager(self._body)
+        (p_start_caret_x, p_start_caret_y), (p_end_caret_x, p_end_caret_y) = sel.selection_carets_location()
+        self.marionette.set_orientation('landscape')
+        (l_start_caret_x, l_start_caret_y), (l_end_caret_x, l_end_caret_y) = sel.selection_carets_location()
+
+        # Drag end caret to the start caret to change the selected content
+        self.actions.flick(self._body, l_end_caret_x, l_end_caret_y, l_start_caret_x, l_start_caret_y).perform()
+
+        # Change orientation back to portrait mode to prevent affecting
+        # other tests
+        self.marionette.set_orientation('portrait')
+
+        self.assertEqual(self._to_unix_line_ending(sel.selected_content.strip()), 'o')
+
+    def test_select_word_inside_an_iframe(self):
+        '''Bug 1088552
+        The scroll offset in iframe should be taken into consideration properly.
+        In this test, we scroll content in the iframe to the bottom to cause a
+        huge offset. If we use the right coordinate system, selection should
+        work. Otherwise, it would be hard to trigger select word.
+        '''
+        self.openTestHtmlIframe(enabled=True)
+
+        # switch to inner iframe and scroll to the bottom
+        self.marionette.switch_to_frame(self._iframe)
+        self.marionette.execute_script(
+         'document.getElementById("bd").scrollTop += 999')
+
+        # long press to select bottom text
+        self._body = self.marionette.find_element(By.ID, 'bd')
+        sel = SelectionManager(self._body)
+        self._bottomtext = self.marionette.find_element(By.ID, 'bottomtext')
+        long_press_without_contextmenu(self.marionette, self._bottomtext, self._long_press_time)
+
+        self.assertNotEqual(self._to_unix_line_ending(sel.selected_content.strip()), '')

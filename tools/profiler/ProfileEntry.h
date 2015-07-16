@@ -7,13 +7,16 @@
 #ifndef MOZ_PROFILE_ENTRY_H
 #define MOZ_PROFILE_ENTRY_H
 
+#include <map>
 #include <ostream>
 #include "GeckoProfiler.h"
 #include "platform.h"
 #include "JSStreamWriter.h"
 #include "ProfilerBacktrace.h"
 #include "nsRefPtr.h"
+#include "mozilla/Maybe.h"
 #include "mozilla/Mutex.h"
+#include "mozilla/Vector.h"
 #include "gtest/MozGtestFriend.h"
 #include "mozilla/UniquePtr.h"
 
@@ -71,6 +74,26 @@ private:
 
 typedef void (*IterateTagsCallback)(const ProfileEntry& entry, const char* tagStringData);
 
+class UniqueJITOptimizations {
+ public:
+  bool empty() const {
+    return mOpts.empty();
+  }
+
+  mozilla::Maybe<unsigned> getIndex(void* addr, JSRuntime* rt);
+  void stream(JSStreamWriter& b, JSRuntime* rt);
+
+ private:
+  struct OptimizationKey {
+    void* mEntryAddr;
+    uint8_t mIndex;
+    bool operator<(const OptimizationKey& other) const;
+  };
+
+  mozilla::Vector<OptimizationKey> mOpts;
+  std::map<OptimizationKey, unsigned> mOptToIndexMap;
+};
+
 class ProfileBuffer {
 public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(ProfileBuffer)
@@ -79,7 +102,8 @@ public:
 
   void addTag(const ProfileEntry& aTag);
   void IterateTagsForThread(IterateTagsCallback aCallback, int aThreadId);
-  void StreamSamplesToJSObject(JSStreamWriter& b, int aThreadId, JSRuntime* rt);
+  void StreamSamplesToJSObject(JSStreamWriter& b, int aThreadId, JSRuntime* rt,
+                               UniqueJITOptimizations& aUniqueOpts);
   void StreamMarkersToJSObject(JSStreamWriter& b, int aThreadId);
   void DuplicateLastSample(int aThreadId);
 
@@ -90,7 +114,7 @@ protected:
   char* processDynamicTag(int readPos, int* tagsConsumed, char* tagBuff);
   int FindLastSampleOfThread(int aThreadId);
 
-  ~ProfileBuffer() {}
+  ~ProfileBuffer();
 
 public:
   // Circular buffer 'Keep One Slot Open' implementation for simplicity
@@ -107,7 +131,7 @@ public:
   int mEntrySize;
 
   // How many times mWritePos has wrapped around.
-  int mGeneration;
+  uint32_t mGeneration;
 
   // Markers that marker entries in the buffer might refer to.
   ProfilerMarkerLinkedList mStoredMarkers;
@@ -152,6 +176,11 @@ public:
     mPseudoStack = nullptr;
     mPlatformData = nullptr;
   }
+
+  uint32_t bufferGeneration() const {
+    return mBuffer->mGeneration;
+  }
+
 private:
   FRIEND_TEST(ThreadProfile, InsertOneTag);
   FRIEND_TEST(ThreadProfile, InsertOneTagWithTinyBuffer);
@@ -178,8 +207,6 @@ public:
   int64_t        mRssMemory;
   int64_t        mUssMemory;
 #endif
-
-  void StreamTrackedOptimizations(JSStreamWriter& b, void* addr, uint8_t index);
 };
 
 #endif /* ndef MOZ_PROFILE_ENTRY_H */

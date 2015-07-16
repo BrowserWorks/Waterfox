@@ -1,7 +1,7 @@
 waterfoxsearch
 bing
-google
 startpage
+google
 ddg
 wikipedia
 yahoo

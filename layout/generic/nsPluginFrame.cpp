@@ -378,8 +378,8 @@ nsPluginFrame::GetMinISize(nsRenderingContext *aRenderingContext)
   nscoord result = 0;
 
   if (!IsHidden(false)) {
-    nsIAtom *atom = mContent->Tag();
-    if (atom == nsGkAtoms::applet || atom == nsGkAtoms::embed) {
+    if (mContent->IsAnyOfHTMLElements(nsGkAtoms::applet,
+                                      nsGkAtoms::embed)) {
       bool vertical = GetWritingMode().IsVertical();
       result = nsPresContext::CSSPixelsToAppUnits(
         vertical ? EMBED_DEF_HEIGHT : EMBED_DEF_WIDTH);
@@ -440,8 +440,8 @@ nsPluginFrame::GetDesiredSize(nsPresContext* aPresContext,
   aMetrics.Height() = aReflowState.ComputedHeight();
 
   // for EMBED and APPLET, default to 240x200 for compatibility
-  nsIAtom *atom = mContent->Tag();
-  if (atom == nsGkAtoms::applet || atom == nsGkAtoms::embed) {
+  if (mContent->IsAnyOfHTMLElements(nsGkAtoms::applet,
+                                    nsGkAtoms::embed)) {
     if (aMetrics.Width() == NS_UNCONSTRAINEDSIZE) {
       aMetrics.Width() = clamped(nsPresContext::CSSPixelsToAppUnits(EMBED_DEF_WIDTH),
                                aReflowState.ComputedMinWidth(),
@@ -495,6 +495,7 @@ nsPluginFrame::Reflow(nsPresContext*           aPresContext,
                       const nsHTMLReflowState& aReflowState,
                       nsReflowStatus&          aStatus)
 {
+  MarkInReflow();
   DO_GLOBAL_REFLOW_COUNT("nsPluginFrame");
   DISPLAY_REFLOW(aPresContext, this, aReflowState, aMetrics, aStatus);
 
@@ -731,7 +732,7 @@ nsPluginFrame::IsHidden(bool aCheckVisibilityStyle) const
   }
 
   // only <embed> tags support the HIDDEN attribute
-  if (mContent->Tag() == nsGkAtoms::embed) {
+  if (mContent->IsHTMLElement(nsGkAtoms::embed)) {
     // Yes, these are really the kooky ways that you could tell 4.x
     // not to hide the <embed> once you'd put the 'hidden' attribute
     // on the tag...
@@ -1034,7 +1035,7 @@ void
 nsPluginFrame::DidSetWidgetGeometry()
 {
 #if defined(XP_MACOSX)
-  if (mInstanceOwner) {
+  if (mInstanceOwner && !IsHidden()) {
     mInstanceOwner->FixUpPluginWindow(nsPluginInstanceOwner::ePluginPaintEnable);
   }
 #else
@@ -1434,11 +1435,11 @@ nsPluginFrame::BuildLayer(nsDisplayListBuilder* aBuilder,
     NS_ASSERTION(layer->GetType() == Layer::TYPE_READBACK, "Bad layer type");
 
     ReadbackLayer* readback = static_cast<ReadbackLayer*>(layer.get());
-    if (readback->GetSize() != ThebesIntSize(size)) {
+    if (readback->GetSize() != size) {
       // This will destroy any old background sink and notify us that the
       // background is now unknown
       readback->SetSink(nullptr);
-      readback->SetSize(ThebesIntSize(size));
+      readback->SetSize(size);
 
       if (mBackgroundSink) {
         // Maybe we still have a background sink associated with another

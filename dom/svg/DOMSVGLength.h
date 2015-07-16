@@ -75,7 +75,7 @@ class ErrorResult;
  * https://bugzilla.mozilla.org/show_bug.cgi?id=571734
  */
 class DOMSVGLength final : public nsIDOMSVGLength,
-                               public nsWrapperCache
+                           public nsWrapperCache
 {
   friend class AutoChangeLengthNotifier;
 
@@ -188,7 +188,7 @@ public:
     return static_cast<nsIDOMSVGElement*> (svgElement);
   }
 
-  JSObject* WrapObject(JSContext* aCx) override;
+  JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 private:
 

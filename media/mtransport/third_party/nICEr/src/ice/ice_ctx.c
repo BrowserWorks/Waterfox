@@ -405,6 +405,11 @@ static void nr_ice_ctx_destroy_cb(NR_SOCKET s, int how, void *cb_arg)
     int i;
     nr_ice_stun_id *id1,*id2;
 
+    STAILQ_FOREACH_SAFE(s1, &ctx->streams, entry, s2){
+      STAILQ_REMOVE(&ctx->streams,s1,nr_ice_media_stream_,entry);
+      nr_ice_media_stream_destroy(&s1);
+    }
+
     RFREE(ctx->label);
 
     RFREE(ctx->stun_servers);
@@ -425,11 +430,6 @@ static void nr_ice_ctx_destroy_cb(NR_SOCKET s, int how, void *cb_arg)
     }
     RFREE(ctx->pwd);
     RFREE(ctx->ufrag);
-
-    STAILQ_FOREACH_SAFE(s1, &ctx->streams, entry, s2){
-      STAILQ_REMOVE(&ctx->streams,s1,nr_ice_media_stream_,entry);
-      nr_ice_media_stream_destroy(&s1);
-    }
 
     STAILQ_FOREACH_SAFE(id1, &ctx->ids, entry, id2){
       STAILQ_REMOVE(&ctx->ids,id1,nr_ice_stun_id_,entry);
@@ -599,6 +599,33 @@ int nr_ice_add_media_stream(nr_ice_ctx *ctx,char *label,int components, nr_ice_m
       ABORT(r);
 
     STAILQ_INSERT_TAIL(&ctx->streams,*streamp,entry);
+
+    _status=0;
+  abort:
+    return(_status);
+  }
+
+int nr_ice_remove_media_stream(nr_ice_ctx *ctx,nr_ice_media_stream **streamp)
+  {
+    int r,_status;
+    nr_ice_peer_ctx *pctx;
+    nr_ice_media_stream *peer_stream;
+
+    pctx=STAILQ_FIRST(&ctx->peers);
+    while(pctx){
+      if(!nr_ice_peer_ctx_find_pstream(pctx, *streamp, &peer_stream)) {
+        if(r=nr_ice_peer_ctx_remove_pstream(pctx, &peer_stream)) {
+          ABORT(r);
+        }
+      }
+
+      pctx=STAILQ_NEXT(pctx,entry);
+    }
+
+    STAILQ_REMOVE(&ctx->streams,*streamp,nr_ice_media_stream_,entry);
+    if(r=nr_ice_media_stream_destroy(streamp)) {
+      ABORT(r);
+    }
 
     _status=0;
   abort:

@@ -49,6 +49,8 @@ public:
 
   virtual TemporaryRef<DataTextureSource>
   CreateDataTextureSource(TextureFlags aFlags = TextureFlags::NO_FLAGS) override;
+
+  virtual void EndFrame() override;
 };
 
 } // namespace layers

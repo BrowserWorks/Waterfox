@@ -131,6 +131,7 @@
 #include "nsToolkitCompsCID.h"
 #include "nsIAppStartup.h"
 #include "mozilla/WindowsVersion.h"
+#include "mozilla/TextEvents.h" // For WidgetKeyboardEvent
 #include "nsThemeConstants.h"
 
 #include "nsIGfxInfo.h"
@@ -180,6 +181,7 @@
 
 #include "mozilla/layers/APZCTreeManager.h"
 #include "mozilla/layers/InputAPZContext.h"
+#include "InputData.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -1296,41 +1298,36 @@ void nsWindow::SetThemeRegion()
 
 /**************************************************************
  *
- * SECTION: nsIWidget::RegisterTouchWindow,
- * nsIWidget::UnregisterTouchWindow, and helper functions
- *
- * Used to register the native window to receive touch events
+ * SECTION: Touch and APZ-related functions
  *
  **************************************************************/
 
-NS_METHOD nsWindow::RegisterTouchWindow() {
+void nsWindow::ConfigureAPZCTreeManager()
+{
+  nsBaseWidget::ConfigureAPZCTreeManager();
+
+  // When APZ is enabled, we can actually enable raw touch events because we
+  // have code that can deal with them properly. If APZ is not enabled, this
+  // function doesn't get called, and |mGesture| will take care of touch-based
+  // scrolling. Note that RegisterTouchWindow may still do nothing depending
+  // on touch/pointer events prefs, and so it is possible to enable APZ without
+  // also enabling touch support.
+  RegisterTouchWindow();
+}
+
+void nsWindow::RegisterTouchWindow() {
   if (Preferences::GetInt("dom.w3c_touch_events.enabled", 0) ||
       gIsPointerEventsEnabled) {
     mTouchWindow = true;
     mGesture.RegisterTouchWindow(mWnd);
     ::EnumChildWindows(mWnd, nsWindow::RegisterTouchForDescendants, 0);
   }
-  return NS_OK;
-}
-
-NS_METHOD nsWindow::UnregisterTouchWindow() {
-  mTouchWindow = false;
-  mGesture.UnregisterTouchWindow(mWnd);
-  ::EnumChildWindows(mWnd, nsWindow::UnregisterTouchForDescendants, 0);
-  return NS_OK;
 }
 
 BOOL CALLBACK nsWindow::RegisterTouchForDescendants(HWND aWnd, LPARAM aMsg) {
   nsWindow* win = WinUtils::GetNSWindowPtr(aWnd);
   if (win)
     win->mGesture.RegisterTouchWindow(aWnd);
-  return TRUE;
-}
-
-BOOL CALLBACK nsWindow::UnregisterTouchForDescendants(HWND aWnd, LPARAM aMsg) {
-  nsWindow* win = WinUtils::GetNSWindowPtr(aWnd);
-  if (win)
-    win->mGesture.UnregisterTouchWindow(aWnd);
   return TRUE;
 }
 
@@ -1705,8 +1702,6 @@ NS_METHOD nsWindow::ConstrainPosition(bool aAllowSlop,
   int32_t logWidth = std::max<int32_t>(NSToIntRound(mBounds.width / dpiScale), 1);
   int32_t logHeight = std::max<int32_t>(NSToIntRound(mBounds.height / dpiScale), 1);
 
-  bool doConstrain = false; // whether we have enough info to do anything
-
   /* get our playing field. use the current screen, or failing that
     for any reason, use device caps for the default screen. */
   RECT screenRect;
@@ -1730,7 +1725,6 @@ NS_METHOD nsWindow::ConstrainPosition(bool aAllowSlop,
       screenRect.right = left + width;
       screenRect.top = top;
       screenRect.bottom = top + height;
-      doConstrain = true;
     }
   } else {
     if (mWnd) {
@@ -1744,7 +1738,6 @@ NS_METHOD nsWindow::ConstrainPosition(bool aAllowSlop,
             screenRect.right = GetSystemMetrics(SM_CXFULLSCREEN);
             screenRect.bottom = GetSystemMetrics(SM_CYFULLSCREEN);
           }
-          doConstrain = true;
         }
         ::ReleaseDC(mWnd, dc);
       }
@@ -2705,6 +2698,8 @@ void nsWindow::UpdateGlass()
   case eTransparencyGlass:
     policy = DWMNCRP_ENABLED;
     break;
+  default:
+    break;
   }
 
   PR_LOG(gWindowsLog, PR_LOG_ALWAYS,
@@ -3330,12 +3325,9 @@ nsWindow::GetLayerManager(PLayerTransactionChild* aShadowManager,
   }
 
   if (!mLayerManager) {
+    MOZ_ASSERT(!mCompositorParent && !mCompositorChild);
     mLayerManager = CreateBasicLayerManager();
   }
-
-  // If we don't have a layer manager at this point we shouldn't have a
-  // PCompositor actor pair either.
-  MOZ_ASSERT(mLayerManager || (!mCompositorParent && !mCompositorChild));
 
   NS_ASSERTION(mLayerManager, "Couldn't provide a valid layer manager.");
 
@@ -3667,29 +3659,22 @@ bool nsWindow::DispatchStandardEvent(uint32_t aMsg)
   return result;
 }
 
-bool nsWindow::DispatchKeyboardEvent(WidgetGUIEvent* event)
+bool nsWindow::DispatchKeyboardEvent(WidgetKeyboardEvent* event)
 {
-  nsEventStatus status;
-  DispatchEvent(event, status);
+  nsEventStatus status = DispatchInputEvent(event);
   return ConvertStatus(status);
 }
 
-bool nsWindow::DispatchScrollEvent(WidgetGUIEvent* aEvent)
+bool nsWindow::DispatchContentCommandEvent(WidgetContentCommandEvent* aEvent)
 {
   nsEventStatus status;
+  DispatchEvent(aEvent, status);
+  return ConvertStatus(status);
+}
 
-  if (mAPZC && aEvent->mClass == eWheelEventClass) {
-    uint64_t inputBlockId = 0;
-    ScrollableLayerGuid guid;
-
-    nsEventStatus result = mAPZC->ReceiveInputEvent(*aEvent->AsWheelEvent(), &guid, &inputBlockId);
-    if (result == nsEventStatus_eConsumeNoDefault) {
-      return true;
-    }
-    status = DispatchEventForAPZ(aEvent, guid, inputBlockId);
-  } else {
-    DispatchEvent(aEvent, status);
-  }
+bool nsWindow::DispatchWheelEvent(WidgetWheelEvent* aEvent)
+{
+  nsEventStatus status = DispatchAPZAwareEvent(aEvent->AsInputEvent());
   return ConvertStatus(status);
 }
 
@@ -3787,6 +3772,14 @@ bool nsWindow::DispatchMouseEvent(uint32_t aEventType, WPARAM wParam,
     return result;
   }
 
+  if (WinUtils::GetIsMouseFromTouch(aEventType) && mTouchWindow) {
+    // If mTouchWindow is true, then we must have APZ enabled and be
+    // feeding it raw touch events. In that case we don't need to
+    // send touch-generated mouse events to content.
+    MOZ_ASSERT(mAPZC);
+    return result;
+  }
+
   switch (aEventType) {
     case NS_MOUSE_BUTTON_DOWN:
       CaptureMouse(true);
@@ -3824,10 +3817,9 @@ bool nsWindow::DispatchMouseEvent(uint32_t aEventType, WPARAM wParam,
   modifierKeyState.InitInputEvent(event);
   event.button    = aButton;
   event.inputSource = aInputSource;
-  // Convert Mouse events generated by pen device or if mouse not generated from touch
-  event.convertToPointer =
-    aInputSource == nsIDOMMouseEvent::MOZ_SOURCE_PEN ||
-    !(WinUtils::GetIsMouseFromTouch(aEventType) && mTouchWindow);
+  // If we get here the mouse events must be from non-touch sources, so
+  // convert it to pointer events as well
+  event.convertToPointer = true;
 
   nsIntPoint mpScreen = eventPoint + WidgetToScreenOffsetUntyped();
 
@@ -4002,7 +3994,7 @@ bool nsWindow::DispatchMouseEvent(uint32_t aEventType, WPARAM wParam,
       }
     }
 
-    result = DispatchWindowEvent(&event);
+    result = ConvertStatus(DispatchInputEvent(&event));
 
     if (nsToolkit::gMouseTrailer)
       nsToolkit::gMouseTrailer->Enable();
@@ -4155,8 +4147,8 @@ nsWindow::IsAsyncResponseEvent(UINT aMsg, LRESULT& aResult)
 void
 nsWindow::IPCWindowProcHandler(UINT& msg, WPARAM& wParam, LPARAM& lParam)
 {
-  NS_ASSERTION(!mozilla::ipc::MessageChannel::IsPumpingMessages(),
-               "Failed to prevent a nonqueued message from running!");
+  MOZ_ASSERT_IF(msg != WM_GETOBJECT,
+                !mozilla::ipc::MessageChannel::IsPumpingMessages());
 
   // Modal UI being displayed in windowless plugins.
   if (mozilla::ipc::MessageChannel::IsSpinLoopActive() &&
@@ -5101,7 +5093,7 @@ nsWindow::ProcessMessage(UINT msg, WPARAM& wParam, LPARAM& lParam,
           InitEvent(event);
           ModifierKeyState modifierKeyState;
           modifierKeyState.InitInputEvent(event);
-          DispatchWindowEvent(&event);
+          DispatchInputEvent(&event);
           if (sSwitchKeyboardLayout && mLastKeyboardLayout)
             ActivateKeyboardLayout(mLastKeyboardLayout, 0);
         }
@@ -5196,7 +5188,7 @@ nsWindow::ProcessMessage(UINT msg, WPARAM& wParam, LPARAM& lParam,
       *aRetValue = 0;
       // Do explicit casting to make it working on 64bit systems (see bug 649236
       // for details).
-      DWORD objId = static_cast<DWORD>(lParam);
+      int32_t objId = static_cast<DWORD>(lParam);
       if (objId == OBJID_CLIENT) { // oleacc.dll will be loaded dynamically
         a11y::Accessible* rootAccessible = GetAccessible(); // Held by a11y cache
         if (rootAccessible) {
@@ -5600,7 +5592,7 @@ nsWindow::ClientMarginHitTestPoint(int32_t mx, int32_t my)
       event.refPoint = LayoutDeviceIntPoint(pt.x, pt.y);
       event.inputSource = MOUSE_INPUT_SOURCE();
       event.mFlags.mOnlyChromeDispatch = true;
-      bool result = DispatchWindowEvent(&event);
+      bool result = ConvertStatus(DispatchInputEvent(&event));
       if (result) {
         // The mouse is over a blank area
         testResult = testResult == HTCLIENT ? HTCAPTION : testResult;
@@ -6159,86 +6151,89 @@ bool nsWindow::OnTouch(WPARAM wParam, LPARAM lParam)
   PTOUCHINPUT pInputs = new TOUCHINPUT[cInputs];
 
   if (mGesture.GetTouchInputInfo((HTOUCHINPUT)lParam, cInputs, pInputs)) {
-    WidgetTouchEvent* touchEventToSend = nullptr;
-    WidgetTouchEvent* touchEndEventToSend = nullptr;
-    nsEventStatus status;
+    MultiTouchInput touchInput, touchEndInput;
 
-    // Walk across the touch point array processing each contact point
+    // Walk across the touch point array processing each contact point.
     for (uint32_t i = 0; i < cInputs; i++) {
-      uint32_t msg;
+      bool addToEvent = false, addToEndEvent = false;
+
+      // N.B.: According with MS documentation
+      // https://msdn.microsoft.com/en-us/library/windows/desktop/dd317334(v=vs.85).aspx
+      // TOUCHEVENTF_DOWN cannot be combined with TOUCHEVENTF_MOVE or TOUCHEVENTF_UP.
+      // Possibly, it means that TOUCHEVENTF_MOVE and TOUCHEVENTF_UP can be combined together.
 
       if (pInputs[i].dwFlags & (TOUCHEVENTF_DOWN | TOUCHEVENTF_MOVE)) {
-        // Create a standard touch event to send
-        if (!touchEventToSend) {
-          touchEventToSend = new WidgetTouchEvent(true, NS_TOUCH_MOVE, this);
-          touchEventToSend->time = ::GetMessageTime();
-          touchEventToSend->timeStamp =
-            GetMessageTimeStamp(touchEventToSend->time);
+        if (touchInput.mTimeStamp.IsNull()) {
+          // Initialize a touch event to send.
+          touchInput.mType = MultiTouchInput::MULTITOUCH_MOVE;
+          touchInput.mTime = ::GetMessageTime();
+          touchInput.mTimeStamp = GetMessageTimeStamp(touchInput.mTime);
           ModifierKeyState modifierKeyState;
-          modifierKeyState.InitInputEvent(*touchEventToSend);
+          touchInput.modifiers = modifierKeyState.GetModifiers();
         }
-
-        // Pres shell expects this event to be a NS_TOUCH_START if new contact
-        // points have been added since the last event sent.
+        // Pres shell expects this event to be a NS_TOUCH_START
+        // if any new contact points have been added since the last event sent.
         if (pInputs[i].dwFlags & TOUCHEVENTF_DOWN) {
-          touchEventToSend->message = msg = NS_TOUCH_START;
-        } else {
-          msg = NS_TOUCH_MOVE;
+          touchInput.mType = MultiTouchInput::MULTITOUCH_START;
         }
-      } else if (pInputs[i].dwFlags & TOUCHEVENTF_UP) {
-        // Pres shell expects removed contacts points to be delivered in a
-        // separate NS_TOUCH_END event containing only the contact points
-        // that were removed.
-        if (!touchEndEventToSend) {
-          touchEndEventToSend = new WidgetTouchEvent(true, NS_TOUCH_END, this);
-          touchEndEventToSend->time = ::GetMessageTime();
-          touchEndEventToSend->timeStamp =
-            GetMessageTimeStamp(touchEndEventToSend->time);
+        addToEvent = true;
+      }
+      if (pInputs[i].dwFlags & TOUCHEVENTF_UP) {
+        // Pres shell expects removed contacts points to be delivered in a separate
+        // NS_TOUCH_END event containing only the contact points that were removed.
+        if (touchEndInput.mTimeStamp.IsNull()) {
+          // Initialize a touch event to send.
+          touchEndInput.mType = MultiTouchInput::MULTITOUCH_END;
+          touchEndInput.mTime = ::GetMessageTime();
+          touchEndInput.mTimeStamp = GetMessageTimeStamp(touchEndInput.mTime);
           ModifierKeyState modifierKeyState;
-          modifierKeyState.InitInputEvent(*touchEndEventToSend);
+          touchEndInput.modifiers = modifierKeyState.GetModifiers();
         }
-        msg = NS_TOUCH_END;
-      } else {
-        // Filter out spurious Windows events we don't understand, like palm
-        // contact.
+        addToEndEvent = true;
+      }
+      if (!addToEvent && !addToEndEvent) {
+        // Filter out spurious Windows events we don't understand, like palm contact.
         continue;
       }
 
-      // Setup the touch point we'll append to the touch event array
+      // Setup the touch point we'll append to the touch event array.
       nsPointWin touchPoint;
       touchPoint.x = TOUCH_COORD_TO_PIXEL(pInputs[i].x);
       touchPoint.y = TOUCH_COORD_TO_PIXEL(pInputs[i].y);
       touchPoint.ScreenToClient(mWnd);
-      nsRefPtr<Touch> touch =
-        new Touch(pInputs[i].dwID,
-                  LayoutDeviceIntPoint::FromUntyped(touchPoint),
-                  /* radius, if known */
-                  pInputs[i].dwFlags & TOUCHINPUTMASKF_CONTACTAREA ?
-                    nsIntPoint(
-                      TOUCH_COORD_TO_PIXEL(pInputs[i].cxContact) / 2,
-                      TOUCH_COORD_TO_PIXEL(pInputs[i].cyContact) / 2) :
-                    nsIntPoint(1,1),
-                  /* rotation angle and force */
-                  0.0f, 0.0f);
 
-      // Append to the appropriate event
-      if (msg == NS_TOUCH_START || msg == NS_TOUCH_MOVE) {
-        touchEventToSend->touches.AppendElement(touch);
-      } else {
-        touchEndEventToSend->touches.AppendElement(touch);
+      // Initialize the touch data.
+      SingleTouchData touchData(pInputs[i].dwID,                                      // aIdentifier
+                                ScreenIntPoint::FromUntyped(touchPoint),              // aScreenPoint
+                                /* radius, if known */
+                                pInputs[i].dwFlags & TOUCHINPUTMASKF_CONTACTAREA
+                                  ? ScreenSize(
+                                      TOUCH_COORD_TO_PIXEL(pInputs[i].cxContact) / 2,
+                                      TOUCH_COORD_TO_PIXEL(pInputs[i].cyContact) / 2)
+                                  : ScreenSize(1, 1),                                 // aRadius
+                                0.0f,                                                 // aRotationAngle
+                                0.0f);                                                // aForce
+
+      // Append touch data to the appropriate event.
+      if (addToEvent) {
+        touchInput.mTouches.AppendElement(touchData);
+      }
+      if (addToEndEvent) {
+        touchEndInput.mTouches.AppendElement(touchData);
       }
     }
 
-    // Dispatch touch start and move event if we have one.
-    if (touchEventToSend) {
-      DispatchEvent(touchEventToSend, status);
-      delete touchEventToSend;
+    // Dispatch touch start and touch move event if we have one.
+    if (!touchInput.mTimeStamp.IsNull()) {
+      // Convert MultiTouchInput to WidgetTouchEvent interface.
+      WidgetTouchEvent widgetTouchEvent = touchInput.ToWidgetTouchEvent(this);
+      DispatchAPZAwareEvent(&widgetTouchEvent);
     }
-
     // Dispatch touch end event if we have one.
-    if (touchEndEventToSend) {
-      DispatchEvent(touchEndEventToSend, status);
-      delete touchEndEventToSend;
+    if (!touchEndInput.mTimeStamp.IsNull()) {
+      // Convert MultiTouchInput to WidgetTouchEvent interface.
+      WidgetTouchEvent widgetTouchEvent = touchEndInput.ToWidgetTouchEvent(this);
+      DispatchAPZAwareEvent(&widgetTouchEvent);
     }
   }
 
@@ -6557,6 +6552,15 @@ bool nsWindow::AutoErase(HDC dc)
   return false;
 }
 
+void
+nsWindow::ClearCompositor(nsWindow* aWindow)
+{
+  if (aWindow->mLayerManager) {
+    aWindow->mLayerManager = nullptr;
+    aWindow->DestroyCompositor();
+  }
+}
+
 bool
 nsWindow::IsPopup()
 {
@@ -6594,8 +6598,6 @@ nsWindow::GetPreferredCompositorBackends(nsTArray<LayersBackend>& aHints)
     if (prefs.mPreferOpenGL) {
       aHints.AppendElement(LayersBackend::LAYERS_OPENGL);
     }
-
-    ID3D11Device* device = gfxWindowsPlatform::GetPlatform()->GetD3D11Device();
 
     if (!prefs.mPreferD3D9) {
       aHints.AppendElement(LayersBackend::LAYERS_D3D11);

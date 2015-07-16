@@ -21,7 +21,7 @@ namespace dom {
 class RTCIdentityProvider;
 
 class RTCIdentityProviderRegistrar final : public nsISupports,
-                                               public nsWrapperCache
+                                           public nsWrapperCache
 {
 public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -31,7 +31,7 @@ public:
 
   // As required
   nsIGlobalObject* GetParentObject() const;
-  virtual JSObject* WrapObject(JSContext* aCx);
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // setter and getter
   void Register(RTCIdentityProvider& aIdp);

@@ -10,6 +10,8 @@
 
 #include "jsopcodeinlines.h"
 
+#include "mozilla/SizePrintfMacros.h"
+
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -73,7 +75,7 @@ static const char * const CodeToken[] = {
 };
 
 /*
- * Array of JS bytecode names used by PC count JSON, DEBUG-only js_Disassemble
+ * Array of JS bytecode names used by PC count JSON, DEBUG-only Disassemble
  * and JIT debug spew.
  */
 const char * const js_CodeName[] = {
@@ -87,7 +89,7 @@ const char * const js_CodeName[] = {
 #define COUNTS_LEN 16
 
 size_t
-js_GetVariableBytecodeLength(jsbytecode* pc)
+js::GetVariableBytecodeLength(jsbytecode* pc)
 {
     JSOp op = JSOp(*pc);
     MOZ_ASSERT(js_CodeSpec[op].length == -1);
@@ -235,7 +237,7 @@ js::DumpIonScriptCounts(Sprinter* sp, jit::IonScriptCounts* ionCounts)
 }
 
 void
-js_DumpPCCounts(JSContext* cx, HandleScript script, js::Sprinter* sp)
+js::DumpPCCounts(JSContext* cx, HandleScript script, Sprinter* sp)
 {
     MOZ_ASSERT(script->hasScriptCounts());
 
@@ -245,7 +247,7 @@ js_DumpPCCounts(JSContext* cx, HandleScript script, js::Sprinter* sp)
         JSOp op = JSOp(*pc);
         jsbytecode* next = GetNextPc(pc);
 
-        if (!js_Disassemble1(cx, script, pc, script->pcToOffset(pc), true, sp))
+        if (!Disassemble1(cx, script, pc, script->pcToOffset(pc), true, sp))
             return;
 
         size_t total = PCCounts::numCounts(op);
@@ -279,7 +281,7 @@ js_DumpPCCounts(JSContext* cx, HandleScript script, js::Sprinter* sp)
 void
 js::DumpCompartmentPCCounts(JSContext* cx)
 {
-    for (ZoneCellIter i(cx->zone(), gc::FINALIZE_SCRIPT); !i.done(); i.next()) {
+    for (ZoneCellIter i(cx->zone(), gc::AllocKind::SCRIPT); !i.done(); i.next()) {
         RootedScript script(cx, i.get<JSScript>());
         if (script->compartment() != cx->compartment())
             continue;
@@ -289,15 +291,15 @@ js::DumpCompartmentPCCounts(JSContext* cx)
             if (!sprinter.init())
                 return;
 
-            fprintf(stdout, "--- SCRIPT %s:%d ---\n", script->filename(), (int) script->lineno());
-            js_DumpPCCounts(cx, script, &sprinter);
+            fprintf(stdout, "--- SCRIPT %s:%" PRIuSIZE " ---\n", script->filename(), script->lineno());
+            DumpPCCounts(cx, script, &sprinter);
             fputs(sprinter.string(), stdout);
-            fprintf(stdout, "--- END SCRIPT %s:%d ---\n", script->filename(), (int) script->lineno());
+            fprintf(stdout, "--- END SCRIPT %s:%" PRIuSIZE " ---\n", script->filename(), script->lineno());
         }
     }
 
-    for (unsigned thingKind = FINALIZE_OBJECT0; thingKind < FINALIZE_OBJECT_LIMIT; thingKind++) {
-        for (ZoneCellIter i(cx->zone(), (AllocKind) thingKind); !i.done(); i.next()) {
+    for (auto thingKind : ObjectAllocKinds()) {
+        for (ZoneCellIter i(cx->zone(), thingKind); !i.done(); i.next()) {
             JSObject* obj = i.get<JSObject>();
             if (obj->compartment() != cx->compartment())
                 continue;
@@ -425,7 +427,7 @@ class BytecodeParser
 
     void reportOOM() {
         allocScope_.releaseEarly();
-        js_ReportOutOfMemory(cx_);
+        ReportOutOfMemory(cx_);
     }
 
     uint32_t numSlots() {
@@ -717,9 +719,9 @@ js::ReconstructStackDepth(JSContext* cx, JSScript* script, jsbytecode* pc, uint3
  * current line. If showAll is true, include the source note type and the
  * entry stack depth.
  */
-JS_FRIEND_API(bool)
-js_DisassembleAtPC(JSContext* cx, JSScript* scriptArg, bool lines,
-                   jsbytecode* pc, bool showAll, Sprinter* sp)
+static bool
+DisassembleAtPC(JSContext* cx, JSScript* scriptArg, bool lines,
+                jsbytecode* pc, bool showAll, Sprinter* sp)
 {
     RootedScript script(cx, scriptArg);
     BytecodeParser parser(cx, script);
@@ -731,7 +733,7 @@ js_DisassembleAtPC(JSContext* cx, JSScript* scriptArg, bool lines,
         return false;
 
     if (showAll)
-        Sprint(sp, "%s:%u\n", script->filename(), script->lineno());
+        Sprint(sp, "%s:%" PRIuSIZE "\n", script->filename(), script->lineno());
 
     if (pc != nullptr)
         sp->put("    ");
@@ -763,7 +765,7 @@ js_DisassembleAtPC(JSContext* cx, JSScript* scriptArg, bool lines,
                 sp->put("    ");
         }
         if (showAll) {
-            jssrcnote* sn = js_GetSrcNote(cx, script, next);
+            jssrcnote* sn = GetSrcNote(cx, script, next);
             if (sn) {
                 MOZ_ASSERT(!SN_IS_TERMINATOR(sn));
                 jssrcnote* next = SN_NEXT(sn);
@@ -781,7 +783,7 @@ js_DisassembleAtPC(JSContext* cx, JSScript* scriptArg, bool lines,
             else
                 Sprint(sp, "      ");
         }
-        len = js_Disassemble1(cx, script, next, script->pcToOffset(next), lines, sp);
+        len = Disassemble1(cx, script, next, script->pcToOffset(next), lines, sp);
         if (!len)
             return false;
         next += len;
@@ -790,15 +792,15 @@ js_DisassembleAtPC(JSContext* cx, JSScript* scriptArg, bool lines,
 }
 
 bool
-js_Disassemble(JSContext* cx, HandleScript script, bool lines, Sprinter* sp)
+js::Disassemble(JSContext* cx, HandleScript script, bool lines, Sprinter* sp)
 {
-    return js_DisassembleAtPC(cx, script, lines, nullptr, false, sp);
+    return DisassembleAtPC(cx, script, lines, nullptr, false, sp);
 }
 
 JS_FRIEND_API(bool)
-js_DumpPC(JSContext* cx)
+js::DumpPC(JSContext* cx)
 {
-    js::gc::AutoSuppressGC suppressGC(cx);
+    gc::AutoSuppressGC suppressGC(cx);
     Sprinter sprinter(cx);
     if (!sprinter.init())
         return false;
@@ -808,36 +810,20 @@ js_DumpPC(JSContext* cx)
         return true;
     }
     RootedScript script(cx, iter.script());
-    bool ok = js_DisassembleAtPC(cx, script, true, iter.pc(), false, &sprinter);
+    bool ok = DisassembleAtPC(cx, script, true, iter.pc(), false, &sprinter);
     fprintf(stdout, "%s", sprinter.string());
     return ok;
 }
 
 JS_FRIEND_API(bool)
-js_DumpScript(JSContext* cx, JSScript* scriptArg)
+js::DumpScript(JSContext* cx, JSScript* scriptArg)
 {
-    js::gc::AutoSuppressGC suppressGC(cx);
+    gc::AutoSuppressGC suppressGC(cx);
     Sprinter sprinter(cx);
     if (!sprinter.init())
         return false;
     RootedScript script(cx, scriptArg);
-    bool ok = js_Disassemble(cx, script, true, &sprinter);
-    fprintf(stdout, "%s", sprinter.string());
-    return ok;
-}
-
-/*
- * Useful to debug ReconstructPCStack.
- */
-JS_FRIEND_API(bool)
-js_DumpScriptDepth(JSContext* cx, JSScript* scriptArg, jsbytecode* pc)
-{
-    js::gc::AutoSuppressGC suppressGC(cx);
-    Sprinter sprinter(cx);
-    if (!sprinter.init())
-        return false;
-    RootedScript script(cx, scriptArg);
-    bool ok = js_DisassembleAtPC(cx, script, true, pc, true, &sprinter);
+    bool ok = Disassemble(cx, script, true, &sprinter);
     fprintf(stdout, "%s", sprinter.string());
     return ok;
 }
@@ -923,19 +909,19 @@ ToDisassemblySource(JSContext* cx, HandleValue v, JSAutoByteString* bytes)
         }
     }
 
-    return !!js_ValueToPrintable(cx, v, bytes, true);
+    return !!ValueToPrintable(cx, v, bytes, true);
 }
 
 unsigned
-js_Disassemble1(JSContext* cx, HandleScript script, jsbytecode* pc,
-                unsigned loc, bool lines, Sprinter* sp)
+js::Disassemble1(JSContext* cx, HandleScript script, jsbytecode* pc,
+                 unsigned loc, bool lines, Sprinter* sp)
 {
     JSOp op = (JSOp)*pc;
     if (op >= JSOP_LIMIT) {
         char numBuf1[12], numBuf2[12];
         JS_snprintf(numBuf1, sizeof numBuf1, "%d", op);
         JS_snprintf(numBuf2, sizeof numBuf2, "%d", JSOP_LIMIT);
-        JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr,
+        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
                              JSMSG_BYTECODE_TOO_BIG, numBuf1, numBuf2);
         return 0;
     }
@@ -1058,6 +1044,10 @@ js_Disassemble1(JSContext* cx, HandleScript script, jsbytecode* pc,
         Sprint(sp, " %u", GET_LOCALNO(pc));
         break;
 
+      case JOF_UINT32:
+        Sprint(sp, " %u", GET_UINT32(pc));
+        break;
+
       {
         int i;
 
@@ -1089,7 +1079,7 @@ js_Disassemble1(JSContext* cx, HandleScript script, jsbytecode* pc,
       default: {
         char numBuf[12];
         JS_snprintf(numBuf, sizeof numBuf, "%lx", (unsigned long) cs->format);
-        JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr,
+        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
                              JSMSG_UNKNOWN_FORMAT, numBuf);
         return 0;
       }
@@ -1295,7 +1285,7 @@ Sprinter::reportOutOfMemory()
     if (reportedOOM)
         return;
     if (context)
-        js_ReportOutOfMemory(context);
+        ReportOutOfMemory(context);
     reportedOOM = true;
 }
 
@@ -1417,7 +1407,7 @@ QuoteString(Sprinter* sp, JSString* str, char16_t quote)
 }
 
 JSString*
-js_QuoteString(ExclusiveContext* cx, JSString* str, char16_t quote)
+js::QuoteString(ExclusiveContext* cx, JSString* str, char16_t quote)
 {
     Sprinter sprinter(cx);
     if (!sprinter.init())
@@ -1509,7 +1499,7 @@ ExpressionDecompiler::decompilePC(jsbytecode* pc)
         // Handle simple cases of binary and unary operators.
         switch (js_CodeSpec[op].nuses) {
           case 2: {
-            jssrcnote* sn = js_GetSrcNote(cx, script, pc);
+            jssrcnote* sn = GetSrcNote(cx, script, pc);
             if (!sn || SN_TYPE(sn) != SRC_ASSIGNOP)
                 return write("(") &&
                        decompilePCForStackOperand(pc, -2) &&
@@ -1620,6 +1610,8 @@ ExpressionDecompiler::decompilePC(jsbytecode* pc)
             return false;
         return write(str);
       }
+      case JSOP_VOID:
+        return write("void ") && decompilePCForStackOperand(pc, -1);
       default:
         break;
     }
@@ -1831,7 +1823,9 @@ DecompileExpressionFromStack(JSContext* cx, int spindex, int skipStackHits, Hand
     return ed.getOutput(res);
 }
 
-char*
+typedef mozilla::UniquePtr<char[], JS::FreePolicy> UniquePtrChars;
+
+UniquePtrChars
 js::DecompileValueGenerator(JSContext* cx, int spindex, HandleValue v,
                             HandleString fallbackArg, int skipStackHits)
 {
@@ -1842,19 +1836,19 @@ js::DecompileValueGenerator(JSContext* cx, int spindex, HandleValue v,
             return nullptr;
         if (result) {
             if (strcmp(result, "(intermediate value)"))
-                return result;
+                return UniquePtrChars(result);
             js_free(result);
         }
     }
     if (!fallback) {
         if (v.isUndefined())
-            return JS_strdup(cx, js_undefined_str); // Prevent users from seeing "(void 0)"
+            return UniquePtrChars(JS_strdup(cx, js_undefined_str)); // Prevent users from seeing "(void 0)"
         fallback = ValueToSource(cx, v);
         if (!fallback)
-            return nullptr;
+            return UniquePtrChars(nullptr);
     }
 
-    return JS_EncodeString(cx, fallback);
+    return UniquePtrChars(JS_EncodeString(cx, fallback));
 }
 
 static bool
@@ -2052,7 +2046,7 @@ js::StopPCCountProfiling(JSContext* cx)
         return;
 
     for (ZonesIter zone(rt, SkipAtoms); !zone.done(); zone.next()) {
-        for (ZoneCellIter i(zone, FINALIZE_SCRIPT); !i.done(); i.next()) {
+        for (ZoneCellIter i(zone, AllocKind::SCRIPT); !i.done(); i.next()) {
             JSScript* script = i.get<JSScript>();
             if (script->hasScriptCounts() && script->types()) {
                 ScriptAndCounts sac;
@@ -2124,7 +2118,7 @@ js::GetPCCountScriptSummary(JSContext* cx, size_t index)
     JSRuntime* rt = cx->runtime();
 
     if (!rt->scriptAndCountsVector || index >= rt->scriptAndCountsVector->length()) {
-        JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_BUFFER_TOO_SMALL);
+        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_BUFFER_TOO_SMALL);
         return nullptr;
     }
 
@@ -2377,7 +2371,7 @@ js::GetPCCountScriptContents(JSContext* cx, size_t index)
     JSRuntime* rt = cx->runtime();
 
     if (!rt->scriptAndCountsVector || index >= rt->scriptAndCountsVector->length()) {
-        JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_BUFFER_TOO_SMALL);
+        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_BUFFER_TOO_SMALL);
         return nullptr;
     }
 

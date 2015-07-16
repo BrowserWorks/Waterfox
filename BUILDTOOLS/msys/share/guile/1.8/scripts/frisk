@@ -1,0 +1,292 @@
+#!/bin/sh
+# aside from this initial boilerplate, this is actually -*- scheme -*- code
+main='(module-ref (resolve-module '\''(scripts frisk)) '\'main')'
+exec ${GUILE-guile} -l $0 -c "(apply $main (cdr (command-line)))" "$@"
+!#
+;;; frisk --- Grok the module interfaces of a body of files
+
+;; 	Copyright (C) 2002, 2006 Free Software Foundation, Inc.
+;;
+;; This program is free software; you can redistribute it and/or
+;; modify it under the terms of the GNU General Public License as
+;; published by the Free Software Foundation; either version 2, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this software; see the file COPYING.  If not, write to
+;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+;; Boston, MA 02110-1301 USA
+
+;;; Author: Thien-Thi Nguyen <ttn@gnu.org>
+
+;;; Commentary:
+
+;; Usage: frisk [options] file ...
+;;
+;; Analyze FILE... module interfaces in aggregate (as a "body"),
+;; and display a summary.  Modules that are `define-module'd are
+;; considered "internal" (and those not, "external").  When module X
+;; uses module Y, X is said to be "(a) downstream of" Y, and Y is
+;; "(an) upstream of" X.
+;;
+;; Normally, the summary displays external modules and their internal
+;; downstreams, as this is the usual question asked by a body.  There
+;; are several options that modify this output.
+;;
+;;  -u, --upstream      show upstream edges
+;;  -d, --downstream    show downstream edges (default)
+;;  -i, --internal      show internal modules
+;;  -x, --external      show external modules (default)
+;;
+;; If given both `upstream' and `downstream' options ("frisk -ud"), the
+;; output is formatted: "C MODULE --- UP-LS --- DOWN-LS", where C is
+;; either `i' or `x', and each element of UP-LS and DOWN-LS is (TYPE
+;; MODULE-NAME ...).
+;;
+;; In all other cases, the "C MODULE" occupies its own line, and
+;; subsequent lines list the up- or downstream edges, respectively,
+;; indented by some non-zero amount of whitespace.
+;;
+;; Top-level `use-modules' (or `load' or 'primitive-load') forms in a
+;; file that do not follow a `define-module' result an edge where the
+;; downstream is the "default module", normally `(guile-user)'.  This
+;; can be set to another value by using:
+;;
+;;  -m, --default-module MOD    set MOD as the default module
+
+;; Usage from a Scheme Program: (use-modules (scripts frisk))
+;;
+;; Module export list:
+;;  (frisk . args)
+;;  (make-frisker . options)    => (lambda (files) ...) [see below]
+;;  (mod-up-ls module)          => upstream edges
+;;  (mod-down-ls module)        => downstream edges
+;;  (mod-int? module)           => is the module internal?
+;;  (edge-type edge)            => symbol: {regular,autoload,computed}
+;;  (edge-up edge)              => upstream module
+;;  (edge-down edge)            => downstream module
+;;
+;; OPTIONS is an alist.  Recognized keys are:
+;;  default-module
+;;
+;; `make-frisker' returns a procedure that takes a list of files, the
+;; FRISKER.  FRISKER returns a closure, REPORT, that takes one of the
+;; keys:
+;;  modules  -- entire list of modules
+;;  internal -- list of internal modules
+;;  external -- list of external modules
+;;  i-up     -- list of modules upstream of internal modules
+;;  x-up     -- list of modules upstream of external modules
+;;  i-down   -- list of modules downstream of internal modules
+;;  x-down   -- list of modules downstream of external modules
+;;  edges    -- list of edges
+;; Note that `x-up' should always be null, since by (lack of!)
+;; definition, we only know external modules by reference.
+;;
+;; The module and edge objects managed by REPORT can be examined in
+;; detail by using the other (self-explanatory) procedures.  Be careful
+;; not to confuse a freshly consed list of symbols, like `(a b c)' with
+;; the module `(a b c)'.  If you want to find the module by that name,
+;; try: (cond ((member '(a b c) (REPORT 'modules)) => car)).
+
+;; TODO: Make "frisk -ud" output less ugly.
+;;       Consider default module as internal; add option to invert.
+;;       Support `edge-misc' data.
+
+;;; Code:
+
+(define-module (scripts frisk)
+  :autoload (ice-9 getopt-long) (getopt-long)
+  :use-module ((srfi srfi-1) :select (filter remove))
+  :export (frisk
+           make-frisker
+           mod-up-ls mod-down-ls mod-int?
+           edge-type edge-up edge-down))
+
+(define *default-module* '(guile-user))
+
+(define (grok-proc default-module note-use!)
+  (lambda (filename)
+    (let* ((p (open-file filename "r"))
+           (next (lambda () (read p)))
+           (ferret (lambda (use)   ;;; handle "((foo bar) :select ...)"
+                     (let ((maybe (car use)))
+                       (if (list? maybe)
+                           maybe
+                           use))))
+           (curmod #f))
+      (let loop ((form (next)))
+        (cond ((eof-object? form))
+              ((not (list? form)) (loop (next)))
+              (else (case (car form)
+                      ((define-module)
+                       (let ((module (cadr form)))
+                         (set! curmod module)
+                         (note-use! 'def module #f)
+                         (let loop ((ls form))
+                           (or (null? ls)
+                               (case (car ls)
+                                 ((:use-module)
+                                  (note-use! 'regular module (ferret (cadr ls)))
+                                  (loop (cddr ls)))
+                                 ((:autoload)
+                                  (note-use! 'autoload module (cadr ls))
+                                  (loop (cdddr ls)))
+                                 (else (loop (cdr ls))))))))
+                      ((use-modules)
+                       (for-each (lambda (use)
+                                   (note-use! 'regular
+                                              (or curmod default-module)
+                                              (ferret use)))
+                                 (cdr form)))
+                      ((load primitive-load)
+                       (note-use! 'computed
+                                  (or curmod default-module)
+                                  (let ((file (cadr form)))
+                                    (if (string? file)
+                                        file
+                                        (format #f "[computed in ~A]"
+                                                filename))))))
+                    (loop (next))))))))
+
+(define up-ls (make-object-property))   ; list
+(define dn-ls (make-object-property))   ; list
+(define int?  (make-object-property))   ; defined via `define-module'
+
+(define mod-up-ls up-ls)
+(define mod-down-ls dn-ls)
+(define mod-int? int?)
+
+(define (i-or-x module)
+  (if (int? module) 'i 'x))
+
+(define edge-type (make-object-property)) ; symbol
+
+(define (make-edge type up down)
+  (let ((new (cons up down)))
+    (set! (edge-type new) type)
+    new))
+
+(define edge-up car)
+(define edge-down cdr)
+
+(define (up-ls+! m new) (set! (up-ls m) (cons new (up-ls m))))
+(define (dn-ls+! m new) (set! (dn-ls m) (cons new (dn-ls m))))
+
+(define (make-body alist)
+  (lambda (key)
+    (assq-ref alist key)))
+
+(define (scan default-module files)
+  (let* ((modules (list))
+         (edges (list))
+         (intern (lambda (module)
+                   (cond ((member module modules) => car)
+                         (else (set! (up-ls module) (list))
+                               (set! (dn-ls module) (list))
+                               (set! modules (cons module modules))
+                               module))))
+         (grok (grok-proc default-module
+                          (lambda (type d u)
+                            (let ((d (intern d)))
+                              (if (eq? type 'def)
+                                  (set! (int? d) #t)
+                                  (let* ((u (intern u))
+                                         (edge (make-edge type u d)))
+                                    (set! edges (cons edge edges))
+                                    (up-ls+! d edge)
+                                    (dn-ls+! u edge))))))))
+    (for-each grok files)
+    (make-body
+     `((modules  . ,modules)
+       (internal . ,(filter int? modules))
+       (external . ,(remove int? modules))
+       (i-up     . ,(filter int? (map edge-down edges)))
+       (x-up     . ,(remove int? (map edge-down edges)))
+       (i-down   . ,(filter int? (map edge-up   edges)))
+       (x-down   . ,(remove int? (map edge-up   edges)))
+       (edges    . ,edges)))))
+
+(define (make-frisker . options)
+  (let ((default-module (or (assq-ref options 'default-module)
+                            *default-module*)))
+    (lambda (files)
+      (scan default-module files))))
+
+(define (dump-updown modules)
+  (for-each (lambda (m)
+              (format #t "~A ~A --- ~A --- ~A\n"
+                      (i-or-x m) m
+                      (map (lambda (edge)
+                             (cons (edge-type edge)
+                                   (edge-up edge)))
+                           (up-ls m))
+                      (map (lambda (edge)
+                             (cons (edge-type edge)
+                                   (edge-down edge)))
+                           (dn-ls m))))
+            modules))
+
+(define (dump-up modules)
+  (for-each (lambda (m)
+              (format #t "~A ~A\n" (i-or-x m) m)
+              (for-each (lambda (edge)
+                          (format #t "\t\t\t ~A\t~A\n"
+                                  (edge-type edge) (edge-up edge)))
+                        (up-ls m)))
+            modules))
+
+(define (dump-down modules)
+  (for-each (lambda (m)
+              (format #t "~A ~A\n" (i-or-x m) m)
+              (for-each (lambda (edge)
+                          (format #t "\t\t\t ~A\t~A\n"
+                                  (edge-type edge) (edge-down edge)))
+                        (dn-ls m)))
+            modules))
+
+(define (frisk . args)
+  (let* ((parsed-opts (getopt-long
+                       (cons "frisk" args)    ;;; kludge
+                       '((upstream (single-char #\u))
+                         (downstream (single-char #\d))
+                         (internal (single-char #\i))
+                         (external (single-char #\x))
+                         (default-module
+                           (single-char #\m)
+                           (value #t)))))
+         (=u (option-ref parsed-opts 'upstream #f))
+         (=d (option-ref parsed-opts 'downstream #f))
+         (=i (option-ref parsed-opts 'internal #f))
+         (=x (option-ref parsed-opts 'external #f))
+         (files    (option-ref parsed-opts '() (list)))
+         (report   ((make-frisker
+                     `(default-module
+                        . ,(option-ref parsed-opts 'default-module
+                                       *default-module*)))
+                    files))
+         (modules  (report 'modules))
+         (internal (report 'internal))
+         (external (report 'external))
+         (edges    (report 'edges)))
+    (format #t "~A ~A, ~A ~A (~A ~A, ~A ~A), ~A ~A\n\n"
+            (length files)    "files"
+            (length modules)  "modules"
+            (length internal) "internal"
+            (length external) "external"
+            (length edges)    "edges")
+    ((cond ((and =u =d) dump-updown)
+           (=u dump-up)
+           (else dump-down))
+     (cond ((and =i =x) modules)
+           (=i internal)
+           (else external)))))
+
+(define main frisk)
+
+;;; frisk ends here

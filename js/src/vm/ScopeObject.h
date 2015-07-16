@@ -14,6 +14,7 @@
 #include "gc/Barrier.h"
 #include "vm/ArgumentsObject.h"
 #include "vm/ProxyObject.h"
+#include "vm/WeakMapObject.h"
 
 namespace js {
 
@@ -339,7 +340,7 @@ class DeclEnvObject : public ScopeObject
 
   public:
     static const uint32_t RESERVED_SLOTS = 2;
-    static const gc::AllocKind FINALIZE_KIND = gc::FINALIZE_OBJECT2_BACKGROUND;
+    static const gc::AllocKind FINALIZE_KIND = gc::AllocKind::OBJECT2_BACKGROUND;
 
     static const Class class_;
 
@@ -361,7 +362,7 @@ class StaticEvalObject : public ScopeObject
 
   public:
     static const unsigned RESERVED_SLOTS = 2;
-    static const gc::AllocKind FINALIZE_KIND = gc::FINALIZE_OBJECT2_BACKGROUND;
+    static const gc::AllocKind FINALIZE_KIND = gc::AllocKind::OBJECT2_BACKGROUND;
 
     static const Class class_;
 
@@ -435,7 +436,7 @@ class StaticWithObject : public NestedScopeObject
 {
   public:
     static const unsigned RESERVED_SLOTS = 1;
-    static const gc::AllocKind FINALIZE_KIND = gc::FINALIZE_OBJECT2_BACKGROUND;
+    static const gc::AllocKind FINALIZE_KIND = gc::AllocKind::OBJECT2_BACKGROUND;
 
     static const Class class_;
 
@@ -451,7 +452,7 @@ class DynamicWithObject : public NestedScopeObject
 
   public:
     static const unsigned RESERVED_SLOTS = 4;
-    static const gc::AllocKind FINALIZE_KIND = gc::FINALIZE_OBJECT4_BACKGROUND;
+    static const gc::AllocKind FINALIZE_KIND = gc::AllocKind::OBJECT4_BACKGROUND;
 
     static const Class class_;
 
@@ -504,7 +505,7 @@ class BlockObject : public NestedScopeObject
 
   public:
     static const unsigned RESERVED_SLOTS = 2;
-    static const gc::AllocKind FINALIZE_KIND = gc::FINALIZE_OBJECT4_BACKGROUND;
+    static const gc::AllocKind FINALIZE_KIND = gc::AllocKind::OBJECT4_BACKGROUND;
 
     static const Class class_;
 
@@ -668,6 +669,12 @@ class ClonedBlockObject : public BlockObject
 
     /* Copy in all the unaliased formals and locals. */
     void copyUnaliasedValues(AbstractFramePtr frame);
+
+    /*
+     * Create a new ClonedBlockObject with the same enclosing scope and
+     * variable values as this.
+     */
+    static ClonedBlockObject* clone(JSContext* cx, Handle<ClonedBlockObject*> block);
 };
 
 // Internal scope object used by JSOP_BINDNAME upon encountering an
@@ -690,7 +697,7 @@ class UninitializedLexicalObject : public ScopeObject
 {
   public:
     static const unsigned RESERVED_SLOTS = 1;
-    static const gc::AllocKind FINALIZE_KIND = gc::FINALIZE_OBJECT2_BACKGROUND;
+    static const gc::AllocKind FINALIZE_KIND = gc::AllocKind::OBJECT2_BACKGROUND;
 
     static const Class class_;
 
@@ -778,7 +785,7 @@ class ScopeIter
 // static scope objects are read-only, and we never use their parent links, so
 // they don't need to be distinct.
 //
-// That is, completely optimized out scopes have can't be distinguished by
+// That is, completely optimized out scopes can't be distinguished by
 // frame. Note that even if the frame corresponding to the static scope is
 // live on the stack, it is unsound to synthesize a scope from that live
 // frame. In other words, the provenance of the scope chain is from allocated
@@ -913,10 +920,7 @@ class DebugScopeObject : public ProxyObject
 class DebugScopes
 {
     /* The map from (non-debug) scopes to debug scopes. */
-    typedef WeakMap<PreBarrieredObject, RelocatablePtrObject> ObjectWeakMap;
     ObjectWeakMap proxiedScopes;
-    static MOZ_ALWAYS_INLINE void proxiedScopesPostWriteBarrier(JSRuntime* rt, ObjectWeakMap* map,
-                                                               const PreBarrieredObject& key);
 
     /*
      * The map from live frames which have optimized-away scopes to the
@@ -984,6 +988,9 @@ class DebugScopes
     static void onCompartmentUnsetIsDebuggee(JSCompartment* c);
 };
 
+extern bool
+IsDebugScopeSlow(ProxyObject* proxy);
+
 }  /* namespace js */
 
 template<>
@@ -1009,11 +1016,9 @@ template<>
 inline bool
 JSObject::is<js::DebugScopeObject>() const
 {
-    extern bool js_IsDebugScopeSlow(js::ProxyObject* proxy);
-
     // Note: don't use is<ProxyObject>() here -- it also matches subclasses!
     return hasClass(&js::ProxyObject::class_) &&
-           js_IsDebugScopeSlow(&const_cast<JSObject*>(this)->as<js::ProxyObject>());
+           IsDebugScopeSlow(&const_cast<JSObject*>(this)->as<js::ProxyObject>());
 }
 
 template<>
@@ -1030,17 +1035,15 @@ JSObject::is<js::StaticBlockObject>() const
     return is<js::BlockObject>() && !getProto();
 }
 
-inline JSObject*
-JSObject::enclosingScope()
-{
-    return is<js::ScopeObject>()
-           ? &as<js::ScopeObject>().enclosingScope()
-           : is<js::DebugScopeObject>()
-           ? &as<js::DebugScopeObject>().enclosingScope()
-           : getParent();
-}
-
 namespace js {
+
+inline bool
+IsSyntacticScope(JSObject* scope)
+{
+    return scope->is<ScopeObject>() &&
+           (!scope->is<DynamicWithObject>() ||
+            scope->as<DynamicWithObject>().isSyntactic());
+}
 
 inline const Value&
 ScopeObject::aliasedVar(ScopeCoordinate sc)
@@ -1083,9 +1086,15 @@ ScopeIter::enclosingScope() const
     // chain; every scope chain must start with zero or more ScopeObjects and
     // terminate with one or more non-ScopeObjects (viz., GlobalObject).
     MOZ_ASSERT(done());
-    MOZ_ASSERT(!scope_->is<ScopeObject>());
+    MOZ_ASSERT(!IsSyntacticScope(scope_));
     return *scope_;
 }
+
+extern bool
+CreateScopeObjectsForScopeChain(JSContext* cx, AutoObjectVector& scopeChain,
+                                HandleObject dynamicTerminatingScope,
+                                MutableHandleObject dynamicScopeObj,
+                                MutableHandleObject staticScopeObj);
 
 #ifdef DEBUG
 bool

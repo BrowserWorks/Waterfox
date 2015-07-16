@@ -17,8 +17,8 @@ class ErrorResult;
 namespace dom {
 
 class HTMLTitleElement final : public nsGenericHTMLElement,
-                                   public nsIDOMHTMLTitleElement,
-                                   public nsStubMutationObserver
+                               public nsIDOMHTMLTitleElement,
+                               public nsStubMutationObserver
 {
 public:
   using Element::GetText;
@@ -59,7 +59,7 @@ public:
 protected:
   virtual ~HTMLTitleElement();
 
-  virtual JSObject* WrapNode(JSContext* cx)
+  virtual JSObject* WrapNode(JSContext* cx, JS::Handle<JSObject*> aGivenProto)
     override final;
 
 private:

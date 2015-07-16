@@ -214,7 +214,12 @@
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 10,
-    "description": "GPU Device Reset Reason (ok, hung, removed, reset, internal error, invalid call)"
+    "description": "GPU Device Reset Reason (ok, hung, removed, reset, internal error, invalid call, out of memory)"
+  },
+  "FETCH_IS_MAINTHREAD": {
+    "expires_in_version": "50",
+    "kind": "boolean",
+    "description": "Was Fetch request initiated from the main thread?"
   },
   "FORGET_SKIPPABLE_MAX": {
     "expires_in_version": "never",
@@ -331,6 +336,11 @@
     "kind": "flag",
     "description": "Has seen location error"
   },
+  "GEOLOCATION_WIN8_SOURCE_IS_MLS": {
+    "expires_in_version": "default",
+    "kind": "boolean",
+    "description": "Geolocation on Win8 is either MLS or native"
+  },
   "GEOLOCATION_OSX_SOURCE_IS_MLS": {
     "expires_in_version": "default",
     "kind": "boolean",
@@ -340,7 +350,7 @@
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 10,
-    "description": "Use of SpiderMonkey's deprecated language extensions in web content: ForEach=0, DestructuringForIn=1, LegacyGenerator=2, ExpressionClosure=3, LetBlock=4, LetExpression=5, NoSuchMethod=6"
+    "description": "Use of SpiderMonkey's deprecated language extensions in web content: ForEach=0, DestructuringForIn=1, LegacyGenerator=2, ExpressionClosure=3, LetBlock=4, LetExpression=5, NoSuchMethod=6, FlagsArgument=7"
   },
   "TELEMETRY_PING": {
     "expires_in_version": "never",
@@ -1230,7 +1240,7 @@
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 16,
-    "description": "SSL Version (0=ssl3, 1=tls1, 2=tls1.1, 3=tls1.2)"
+    "description": "SSL Version (1=tls1, 2=tls1.1, 3=tls1.2)"
   },
   "SSL_TIME_UNTIL_READY": {
     "expires_in_version": "never",
@@ -1509,10 +1519,16 @@
     "description": "HTTP Disk Cache Hit, Reval, Failed-Reval, Miss"
   },
   "HTTP_CACHE_MISS_HALFLIFE_EXPERIMENT": {
-    "expires_in_version": "never",
+    "expires_in_version": "40",
     "kind": "enumerated",
     "n_values": 4,
     "description": "HTTP Cache v2 Miss by half-life value (6h, 1d, 7d, 50d)"
+  },
+  "HTTP_CACHE_MISS_HALFLIFE_EXPERIMENT_2": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 4,
+    "description": "HTTP Cache v2 Miss by half-life value (5 min, 15 min, 1 hour, 6 hours)"
   },
   "HTTP_CACHE_ENTRY_RELOAD_TIME": {
     "expires_in_version": "never",
@@ -2441,6 +2457,55 @@
     "n_buckets": 50,
     "extended_statistics_ok": true,
     "description": "How many speculative connections are made needlessly"
+  },
+  "STS_POLL_AND_EVENTS_CYCLE": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": "60000",
+    "n_buckets": 1000,
+    "description": "The duraion of a socketThread cycle, including polls and pending events. (ms)"
+  },
+  "STS_NUMBER_OF_PENDING_EVENTS": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": "2000",
+    "n_buckets": 100,
+    "description": "Number of pending events per SocketThread cycle."
+  },
+  "STS_POLL_CYCLE": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": "60000",
+    "n_buckets": 1000,
+    "description": "The duration of poll. (ms)"
+  },
+  "STS_POLL_AND_EVENT_THE_LAST_CYCLE": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": "60000",
+    "n_buckets": 1000,
+    "description": "The duraion of the socketThread cycle during shutdown, including polls and pending events. (ms)"
+  },
+  "STS_NUMBER_OF_PENDING_EVENTS_IN_THE_LAST_CYCLE": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": "2000",
+    "n_buckets": 100,
+    "description": "Number of pending events per SocketThread cycle during shutdown."
+  },
+  "STS_NUMBER_OF_ONSOCKETREADY_CALLS": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": "2000",
+    "n_buckets": 100,
+    "description": "Number of OnSocketReady calls during a single poll."
+  },
+  "STS_POLL_BLOCK_TIME": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": "60000",
+    "n_buckets": 1000,
+    "description": "Time spend blocked on poll (ms)."
   },
   "URL_PATH_ENDS_IN_EXCLAMATION": {
     "expires_in_version": "never",
@@ -3373,105 +3438,326 @@
     "n_buckets" : 10,
     "description": "PLACES: Days from last maintenance"
   },
-  "UPDATER_BACKGROUND_CHECK_CODE_EXTERNAL": {
-    "expires_in_version": "default",
-    "kind": "enumerated",
-    "n_values": 50,
-    "description": "Updater: externally initiated (typically by the application) background update check result code (see PING_BGUC_* constants defined in /toolkit/mozapps/update/nsUpdateService.js)"
+  "UPDATE_CHECK_NO_UPDATE_EXTERNAL" : {
+    "expires_in_version": "never",
+    "kind": "count",
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: count of no updates were found for a background update check (externally initiated)"
   },
-  "UPDATER_BACKGROUND_CHECK_CODE_NOTIFY": {
-    "expires_in_version": "40",
-    "kind": "enumerated",
-    "n_values": 50,
-    "description": "Updater: timer initiated background update check result code (see PING_BGUC_* constants defined in /toolkit/mozapps/update/nsUpdateService.js)"
+  "UPDATE_CHECK_NO_UPDATE_NOTIFY" : {
+    "expires_in_version": "never",
+    "kind": "count",
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: count of no updates were found for a background update check (timer initiated)"
   },
-  "UPDATER_INVALID_LASTUPDATETIME_EXTERNAL": {
-    "expires_in_version": "40",
-    "kind": "boolean",
-    "description": "Updater: Whether the last update time is invalid when a background update check was externally requested (typically by the application)"
-  },
-  "UPDATER_INVALID_LASTUPDATETIME_NOTIFY": {
-    "expires_in_version": "40",
-    "kind": "boolean",
-    "description": "Updater: Whether the last update time is invalid when a background update check was timer initiated"
-  },
-  "UPDATER_LAST_NOTIFY_INTERVAL_DAYS_EXTERNAL": {
-    "expires_in_version": "40",
-    "kind": "exponential",
-    "n_buckets": 10,
-    "high": "60",
-    "description": "Updater: The interval in days between the previous and the current background update check when the check was externally requested (typically by the application)"
-  },
-  "UPDATER_LAST_NOTIFY_INTERVAL_DAYS_NOTIFY": {
-    "expires_in_version": "40",
-    "kind": "exponential",
-    "n_buckets": 10,
-    "high": "60",
-    "description": "Updater: The interval in days between the previous and the current background update check when the check was timer initiated"
-  },
-  "UPDATER_STATUS_CODES": {
+  "UPDATE_CHECK_CODE_EXTERNAL": {
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 50,
-    "description": "Updater: the status of the latest update performed"
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: background update check result code except for no updates found (externally initiated)"
   },
-  "UPDATER_UPDATES_ENABLED": {
-    "expires_in_version": "default",
+  "UPDATE_CHECK_CODE_NOTIFY": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 50,
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: background update check result code except for no updates found (timer initiated)"
+  },
+  "UPDATE_CHECK_EXTENDED_ERROR_EXTERNAL": {
+    "expires_in_version": "never",
+    "kind": "count",
+    "keyed": true,
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: keyed count (key names are prefixed with AUS_CHECK_EX_ERR_) of background update check extended error code (externally initiated)"
+  },
+  "UPDATE_CHECK_EXTENDED_ERROR_NOTIFY": {
+    "expires_in_version": "never",
+    "kind": "count",
+    "keyed": true,
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: keyed count (key names are prefixed with AUS_CHECK_EX_ERR_) of background update check extended error code (timer initiated)"
+  },
+  "UPDATE_INVALID_LASTUPDATETIME_EXTERNAL": {
+    "expires_in_version": "never",
+    "kind": "count",
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: count of systems that have a last update time greater than the current time (externally initiated)"
+  },
+  "UPDATE_INVALID_LASTUPDATETIME_NOTIFY": {
+    "expires_in_version": "never",
+    "kind": "count",
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: count of systems that have a last update time greater than the current time (timer initiated)"
+  },
+  "UPDATE_LAST_NOTIFY_INTERVAL_DAYS_EXTERNAL": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "n_buckets": 60,
+    "high": "365",
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: interval in days since the last background update check (externally initiated)"
+  },
+  "UPDATE_LAST_NOTIFY_INTERVAL_DAYS_NOTIFY": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "n_buckets": 30,
+    "high": "180",
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: interval in days since the last background update check (timer initiated)"
+  },
+  "UPDATE_PING_COUNT_EXTERNAL": {
+    "expires_in_version": "never",
+    "kind": "count",
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: count of systems for this ping for comparison with other pings (externally initiated)"
+  },
+  "UPDATE_PING_COUNT_NOTIFY": {
+    "expires_in_version": "never",
+    "kind": "count",
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: count of systems for this ping for comparison with other pings (timer initiated)"
+  },
+  "UPDATE_SERVICE_INSTALLED_EXTERNAL": {
+    "expires_in_version": "never",
     "kind": "boolean",
-    "description": "Updater: Whether or not updates are enabled"
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: whether the service is installed (externally initiated)"
   },
-  "UPDATER_UPDATES_METRO_ENABLED": {
-    "expires_in_version": "default",
+  "UPDATE_SERVICE_INSTALLED_NOTIFY": {
+    "expires_in_version": "never",
     "kind": "boolean",
-    "description": "Updater: Whether or not Metro updates are enabled"
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: whether the service is installed (timer initiated)"
   },
-  "UPDATER_UPDATES_AUTOMATIC": {
-    "expires_in_version": "40",
-    "kind": "boolean",
-    "description": "Updater: Whether or not updates are automatic"
+  "UPDATE_SERVICE_MANUALLY_UNINSTALLED_EXTERNAL": {
+    "expires_in_version": "never",
+    "kind": "count",
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: count of systems that manually uninstalled the service (externally initiated)"
   },
-  "UPDATER_SERVICE_ENABLED": {
-    "expires_in_version": "default",
-    "kind": "boolean",
-    "description": "Updater: Whether or not the MozillaMaintenance service is enabled"
+  "UPDATE_SERVICE_MANUALLY_UNINSTALLED_NOTIFY": {
+    "expires_in_version": "never",
+    "kind": "count",
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: count of systems that manually uninstalled the service (timer initiated)"
   },
-  "UPDATER_SERVICE_ERROR_CODE": {
-    "expires_in_version": "default",
+  "UPDATE_UNABLE_TO_APPLY_EXTERNAL": {
+    "expires_in_version": "never",
+    "kind": "count",
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: count of systems that cannot apply updates (externally initiated)"
+  },
+  "UPDATE_UNABLE_TO_APPLY_NOTIFY": {
+    "expires_in_version": "never",
+    "kind": "count",
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: count of systems that cannot apply updates (timer initiated)"
+  },
+  "UPDATE_CANNOT_STAGE_EXTERNAL": {
+    "expires_in_version": "never",
+    "kind": "count",
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: count of systems that cannot stage updates (externally initiated)"
+  },
+  "UPDATE_CANNOT_STAGE_NOTIFY": {
+    "expires_in_version": "never",
+    "kind": "count",
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: count of systems that cannot stage updates (timer initiated)"
+  },
+  "UPDATE_HAS_PREF_URL_OVERRIDE_EXTERNAL": {
+    "expires_in_version": "never",
+    "kind": "count",
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: count of systems that have an app.update.url.override preference (externally initiated)"
+  },
+  "UPDATE_HAS_PREF_URL_OVERRIDE_NOTIFY": {
+    "expires_in_version": "never",
+    "kind": "count",
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: count of systems that have an app.update.url.override preference (timer initiated)"
+  },
+  "UPDATE_PREF_UPDATE_CANCELATIONS_EXTERNAL": {
+    "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 100,
-    "description": "Updater: 0=success else SERVICE_* error code defined in /toolkit/mozapps/update/common/errors.h"
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: number of sequential update elevation request cancelations greater than 0 (externally initiated)"
   },
-  "UPDATER_SERVICE_ERRORS": {
-    "expires_in_version": "default",
+  "UPDATE_PREF_UPDATE_CANCELATIONS_NOTIFY": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 100,
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: number of sequential update elevation request cancelations greater than 0 (timer initiated)"
+  },
+  "UPDATE_PREF_SERVICE_ERRORS_EXTERNAL": {
+    "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 30,
-    "description": "Updater: The number of MozillaMaintenance service errors that have occurred"
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: number of sequential update service errors greater than 0 (externally initiated)"
   },
-  "UPDATER_SERVICE_INSTALLED": {
-    "expires_in_version": "default",
-    "kind": "boolean",
-    "description": "Updater: Whether or not the MozillaMaintenance service is installed"
-  },
-  "UPDATER_SERVICE_MANUALLY_UNINSTALLED": {
-    "expires_in_version": "default",
-    "kind": "boolean",
-    "description": "Updater: Whether or not someone manually uninstalled the service."
-  },
-  "UPDATER_STAGE_ENABLED": {
-    "expires_in_version": "40",
-    "kind": "boolean",
-    "description": "Updater: Whether or not staging updates are enabled"
-  },
-  "UPDATER_HAS_PERMISSIONS": {
-    "expires_in_version": "40",
-    "kind": "boolean",
-    "description": "Updater: Whether or not the updater has permissions"
-  },
-  "UPDATER_WIZ_LAST_PAGE_CODE": {
-    "expires_in_version": "40",
+  "UPDATE_PREF_SERVICE_ERRORS_NOTIFY": {
+    "expires_in_version": "never",
     "kind": "enumerated",
-    "n_values": 25,
-    "description": "Updater: The update wizard page displayed when the UI was closed (mapped in toolkit/mozapps/update/content/updates.js)"
+    "n_values": 30,
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: number of sequential update service errors greater than 0 (timer initiated)"
+  },
+  "UPDATE_NOT_PREF_UPDATE_AUTO_EXTERNAL": {
+    "expires_in_version": "never",
+    "kind": "count",
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: count of when the app.update.auto boolean preference is not the default value of true (true values are not submitted)"
+  },
+  "UPDATE_NOT_PREF_UPDATE_AUTO_NOTIFY": {
+    "expires_in_version": "never",
+    "kind": "count",
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: count of when the app.update.auto boolean preference is not the default value of true (true values are not submitted)"
+  },
+  "UPDATE_NOT_PREF_UPDATE_ENABLED_EXTERNAL": {
+    "expires_in_version": "never",
+    "kind": "count",
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: count of when the app.update.enabled boolean preference is not the default value of true (true values are not submitted)"
+  },
+  "UPDATE_NOT_PREF_UPDATE_ENABLED_NOTIFY": {
+    "expires_in_version": "never",
+    "kind": "count",
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: count of when the app.update.enabled boolean preference is not the default value of true (true values are not submitted)"
+  },
+  "UPDATE_NOT_PREF_UPDATE_STAGING_ENABLED_EXTERNAL": {
+    "expires_in_version": "never",
+    "kind": "count",
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: count of when the app.update.staging.enabled boolean preference is not the default value of true (true values are not submitted)"
+  },
+  "UPDATE_NOT_PREF_UPDATE_STAGING_ENABLED_NOTIFY": {
+    "expires_in_version": "never",
+    "kind": "count",
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: count of when the app.update.staging.enabled boolean preference is not the default value of true (true values are not submitted)"
+  },
+  "UPDATE_NOT_PREF_UPDATE_SERVICE_ENABLED_EXTERNAL": {
+    "expires_in_version": "never",
+    "kind": "count",
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: count of when the app.update.service.enabled boolean preference is not the default value of true (true values are not submitted)"
+  },
+  "UPDATE_NOT_PREF_UPDATE_SERVICE_ENABLED_NOTIFY": {
+    "expires_in_version": "never",
+    "kind": "count",
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: count of when the app.update.service.enabled boolean preference is not the default value of true (true values are not submitted)"
+  },
+  "UPDATE_DOWNLOAD_CODE_COMPLETE": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 50,
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: complete patch download result code"
+  },
+  "UPDATE_DOWNLOAD_CODE_PARTIAL": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 50,
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: complete patch download result code"
+  },
+  "UPDATE_STATE_CODE_COMPLETE_STARTUP": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 20,
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: the state of a complete update from update.status on startup"
+  },
+  "UPDATE_STATE_CODE_PARTIAL_STARTUP": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 20,
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: the state of a partial patch update from update.status on startup"
+  },
+  "UPDATE_STATE_CODE_UNKNOWN_STARTUP": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 20,
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: the state of an unknown patch update from update.status on startup"
+  },
+  "UPDATE_STATE_CODE_COMPLETE_STAGE": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 20,
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: the state of a complete patch update from update.status after staging"
+  },
+  "UPDATE_STATE_CODE_PARTIAL_STAGE": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 20,
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: the state of a partial patch update from update.status after staging"
+  },
+  "UPDATE_STATE_CODE_UNKNOWN_STAGE": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 20,
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: the state of an unknown patch update from update.status after staging"
+  },
+  "UPDATE_STATUS_ERROR_CODE_COMPLETE_STARTUP": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 100,
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: the status error code for a failed complete patch update from update.status on startup"
+  },
+  "UPDATE_STATUS_ERROR_CODE_PARTIAL_STARTUP": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 100,
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: the status error code for a failed partial patch update from update.status on startup"
+  },
+  "UPDATE_STATUS_ERROR_CODE_UNKNOWN_STARTUP": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 100,
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: the status error code for a failed unknown patch update from update.status on startup"
+  },
+  "UPDATE_STATUS_ERROR_CODE_COMPLETE_STAGE": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 100,
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: the status error code for a failed complete patch update from update.status after staging"
+  },
+  "UPDATE_STATUS_ERROR_CODE_PARTIAL_STAGE": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 100,
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: the status error code for a failed partial patch update from update.status after staging"
+  },
+  "UPDATE_STATUS_ERROR_CODE_UNKNOWN_STAGE": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 100,
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: the status error code for a failed unknown patch update from update.status after staging"
+  },
+  "UPDATE_WIZ_LAST_PAGE_CODE": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 30,
+    "releaseChannelCollection": "opt-out",
+    "description": "Update: the update wizard page displayed when the UI was closed (mapped in toolkit/mozapps/update/UpdateTelemetry.jsm)"
   },
   "THUNDERBIRD_GLODA_SIZE_MB": {
     "expires_in_version": "40",
@@ -4337,6 +4623,12 @@
     "n_buckets": 10,
     "extended_statistics_ok": true,
     "description": "Number of histograms with total count low errors"
+  },
+  "TELEMETRY_DISCARDED_CONTENT_PINGS_COUNT": {
+    "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
+    "expires_in_version": "never",
+    "kind": "count",
+    "description": "Count of discarded content payloads."
   },
   "TELEMETRY_FILES_EVICTED": {
     "alert_emails": ["perf-telemetry-alerts@mozilla.com", "rvitillo@mozilla.com"],
@@ -6486,6 +6778,52 @@
     "kind": "boolean",
     "description": "Was WebIDE's debug button used during this runtime connection?"
   },
+  "DEVTOOLS_OS_ENUMERATED_PER_USER": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 13,
+    "description": "OS of DevTools user (0:Windows XP, 1:Windows Vista, 2:Windows 7, 3:Windows 8, 4:Windows 8.1, 5:OSX, 6:Linux 7:reserved, 8:reserved, 9:reserved, 10:reserved, 11:reserved, 12:other)"
+  },
+  "DEVTOOLS_OS_IS_64_BITS_PER_USER": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 3,
+    "description": "OS bit size of DevTools user (0:32bit, 1:64bit, 2:128bit)"
+    },
+  "DEVTOOLS_SCREEN_RESOLUTION_ENUMERATED_PER_USER": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 13,
+    "description": "Screen resolution of DevTools user (0:lower, 1:800x600, 2:1024x768, 3:1280x800, 4:1280x1024, 5:1366x768, 6:1440x900, 7:1920x1080, 8:2560×1440, 9:2560×1600, 10:2880x1800, 11:other, 12:higher)"
+  },
+  "DEVTOOLS_TABS_OPEN_PEAK_LINEAR": {
+    "expires_in_version": "never",
+    "kind": "linear",
+    "high": "101",
+    "n_buckets": 100,
+    "description": "The peak number of open tabs in all windows for a session for devtools users."
+  },
+  "DEVTOOLS_TABS_OPEN_AVERAGE_LINEAR": {
+    "expires_in_version": "never",
+    "kind": "linear",
+    "high": "101",
+    "n_buckets": "100",
+    "description": "The mean number of open tabs in all windows for a session for devtools users."
+  },
+  "DEVTOOLS_TABS_PINNED_PEAK_LINEAR": {
+    "expires_in_version": "never",
+    "kind": "linear",
+    "high": "101",
+    "n_buckets": "100",
+    "description": "The peak number of pinned tabs (app tabs) in all windows for a session for devtools users."
+  },
+  "DEVTOOLS_TABS_PINNED_AVERAGE_LINEAR": {
+    "expires_in_version": "never",
+    "kind": "linear",
+    "high": "101",
+    "n_buckets": "100",
+    "description": "The mean number of pinned tabs (app tabs) in all windows for a session for devtools users."
+  },
   "BROWSER_IS_USER_DEFAULT": {
     "expires_in_version": "never",
     "kind": "boolean",
@@ -6612,6 +6950,61 @@
     "n_values": "7",
     "description": "Final status of the CacheFileInputStream (0=ok, 1=other error, 2=out of memory, 3=disk full, 4=file corrupted, 5=file not found, 6=binding aborted)"
   },
+  "NETWORK_CACHE_FS_TYPE": {
+    "expires_in_version": "42",
+    "kind": "enumerated",
+    "n_values": "5",
+    "description": "Type of FS that the cache is stored on (0=NTFS (Win), 1=FAT32 (Win), 2=FAT (Win), 3=other FS (Win), 4=other OS)"
+  },
+  "NETWORK_CACHE_SIZE_FULL_FAT": {
+    "expires_in_version": "42",
+    "kind": "linear",
+    "high": "500",
+    "n_buckets": 50,
+    "description": "Size (in MB) of a cache that reached a file count limit"
+  },
+  "NETWORK_CACHE_HIT_MISS_STAT_PER_CACHE_SIZE": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 40,
+    "description": "Hit/Miss count split by cache size in file count (0=Hit 0-5000, 1=Miss 0-5000, 2=Hit 5001-10000, ...)"
+  },
+  "NETWORK_CACHE_HIT_RATE_PER_CACHE_SIZE": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 400,
+    "description": "Hit rate for a specific cache size in file count. The hit rate is split into 20 buckets, the lower limit of the range in percents is 5*n/20. The cache size is divided into 20 ranges of length 5000, the lower limit of the range is 5000*(n%20)"
+  },
+  "NETWORK_CACHE_METADATA_FIRST_READ_TIME_MS": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": "10000",
+    "n_buckets": 50,
+    "extended_statistics_ok": true,
+    "description": "Time spent to read the first part of the metadata from the cache entry file."
+  },
+  "NETWORK_CACHE_METADATA_SECOND_READ_TIME_MS": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": "10000",
+    "n_buckets": 50,
+    "extended_statistics_ok": true,
+    "description": "Time spent to read the missing part of the metadata from the cache entry file."
+  },
+  "NETWORK_CACHE_METADATA_FIRST_READ_SIZE": {
+    "expires_in_version": "never",
+    "kind": "linear",
+    "high": "5119",
+    "n_buckets": 256,
+    "description": "Guessed size of the metadata that we read from the cache file as the first part."
+  },
+  "NETWORK_CACHE_METADATA_SIZE": {
+    "expires_in_version": "never",
+    "kind": "linear",
+    "high": "5119",
+    "n_buckets": 256,
+    "description": "Actual size of the metadata parsed from the disk."
+  },
   "DATABASE_LOCKED_EXCEPTION": {
     "expires_in_version": "42",
     "kind": "enumerated",
@@ -6677,18 +7070,6 @@
     "kind": "enumerated",
     "n_values": 64,
     "description": "detected symptom of TLS 1.0 intolerance, after considering historical info"
-  },
-  "SSL_SSL30_INTOLERANCE_REASON_PRE": {
-    "expires_in_version": "never",
-    "kind": "enumerated",
-    "n_values": 64,
-    "description": "detected symptom of SSL 3.0 intolerance, before considering historical info"
-  },
-  "SSL_SSL30_INTOLERANCE_REASON_POST": {
-    "expires_in_version": "never",
-    "kind": "enumerated",
-    "n_values": 64,
-    "description": "detected symptom of SSL 3.0 intolerance, after considering historical info"
   },
   "SSL_VERSION_FALLBACK_INAPPROPRIATE": {
     "expires_in_version": "never",
@@ -7121,6 +7502,11 @@
     "n_buckets": 20,
     "description": "Tracking how ServiceWorkerRegistrar loads data before the first content is shown"
   },
+  "SERVICE_WORKER_REQUEST_PASSTHROUGH": {
+    "expires_in_version": "50",
+    "kind": "boolean",
+    "description": "Intercepted fetch sending back same Request object."
+  },
   "LOOP_CLIENT_CALL_URL_REQUESTS_SUCCESS": {
     "expires_in_version": "never",
     "kind": "boolean",
@@ -7131,13 +7517,21 @@
     "kind": "boolean",
     "description": "Stores 1 every time the URL is copied or shared."
   },
-  "LOOP_SHARING_STATE_CHANGE": {
+  "LOOP_TWO_WAY_MEDIA_CONN_LENGTH_1": {
+    "alert_emails": ["firefox-dev@mozilla.org", "dmose@mozilla.com"],
+    "expires_in_version": "43",
+    "kind": "enumerated",
+    "n_values": 8,
+    "releaseChannelCollection": "opt-out",
+    "description": "Connection length for bi-directionally connected media (0=SHORTER_THAN_10S, 1=BETWEEN_10S_AND_30S, 2=BETWEEN_30S_AND_5M, 3=MORE_THAN_5M)"
+  },
+  "LOOP_SHARING_STATE_CHANGE_1": {
     "alert_emails": ["firefox-dev@mozilla.org", "mdeboer@mozilla.com"],
     "expires_in_version": "43",
-    "kind": "count",
-    "keyed": true,
-    "releaseChannelCollection": "opt-in",
-    "description": "Number of times the sharing feature has been enabled and disabled"
+    "kind": "enumerated",
+    "n_values": 8,
+    "releaseChannelCollection": "opt-out",
+    "description": "Number of times the sharing feature has been enabled and disabled (0=WINDOW_ENABLED, 1=WINDOW_DISABLED, 2=BROWSER_ENABLED, 3=BROWSER_DISABLED)"
   },
   "E10S_AUTOSTART": {
     "expires_in_version": "never",
@@ -7327,6 +7721,20 @@
     "n_values": 5,
     "description": "MSE video state when unloading. ended = 0, paused = 1, stalled = 2, seeking = 3, other = 4"
   },
+  "VIDEO_ADOBE_GMP_DISAPPEARED": {
+    "alert_emails": ["cpearce@mozilla.com"],
+    "expires_in_version": "42",
+    "kind": "flag",
+    "description": "Whether or not the Adobe EME GMP was expected to be resident on disk but mysteriously isn't.",
+    "releaseChannelCollection": "opt-out"
+  },
+  "VIDEO_OPENH264_GMP_DISAPPEARED": {
+    "alert_emails": ["cpearce@mozilla.com", "rjesup@mozilla.com"],
+    "expires_in_version": "42",
+    "kind": "flag",
+    "description": "Whether or not the OpenH264 GMP was expected to be resident on disk but mysteriously isn't.",
+    "releaseChannelCollection": "opt-out"
+  },
   "FX_SANITIZE_TOTAL": {
     "alert_emails": ["firefox-dev@mozilla.org", "gavin@mozilla.com"],
     "expires_in_version": "40",
@@ -7446,6 +7854,43 @@
     "n_values" : 20,
     "description": "The result of auto-filling a login form. See http://mzl.la/1Mbs6jL for bucket descriptions."
   },
+  "PWMGR_MANAGE_COPIED_PASSWORD": {
+    "expires_in_version": "never",
+    "kind": "count",
+    "description": "Count of passwords copied from the password management interface"
+  },
+  "PWMGR_MANAGE_COPIED_USERNAME": {
+    "expires_in_version": "never",
+    "kind": "count",
+    "description": "Count of usernames copied from the password management interface"
+  },
+  "PWMGR_MANAGE_DELETED": {
+    "expires_in_version": "never",
+    "kind": "count",
+    "description": "Count of passwords deleted from the password management interface (including via Remove All)"
+  },
+  "PWMGR_MANAGE_DELETED_ALL": {
+    "expires_in_version": "never",
+    "kind": "count",
+    "description": "Count of times that Remove All was used from the password management interface"
+  },
+  "PWMGR_MANAGE_OPENED": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values" : 5,
+    "description": "Accumulates how the password management interface was opened. (0=Preferences, 1=Page Info)"
+  },
+  "PWMGR_MANAGE_SORTED": {
+    "expires_in_version": "never",
+    "keyed": true,
+    "kind": "count",
+    "description": "Reports the column that logins are sorted by"
+  },
+  "PWMGR_MANAGE_VISIBILITY_TOGGLED": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "Whether the visibility of passwords was toggled (0=Hide, 1=Show)"
+  },
   "PWMGR_NUM_PASSWORDS_PER_HOSTNAME": {
     "expires_in_version": "never",
     "kind": "linear",
@@ -7460,6 +7905,13 @@
     "n_buckets" : 50,
     "extended_statistics_ok": true,
     "description": "Total number of saved logins, including those that cannot be decrypted"
+  },
+  "PWMGR_NUM_HTTPAUTH_PASSWORDS": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": 750,
+    "n_buckets" : 50,
+    "description": "Number of HTTP Auth logins"
   },
   "PWMGR_LOGIN_LAST_USED_DAYS": {
     "expires_in_version": "never",
@@ -7547,6 +7999,21 @@
     "high": "60000",
     "n_buckets": 30,
     "description": "Time PR_Close of a UDP socket taken (ms)"
+  },
+  "SERVICE_WORKER_SPAWN_ATTEMPTS": {
+    "expires_in_version": "50",
+    "kind": "count",
+    "description": "Count attempts to spawn a ServiceWorker for a domain"
+  },
+  "SERVICE_WORKER_WAS_SPAWNED": {
+    "expires_in_version": "50",
+    "kind": "count",
+    "description": "Count ServiceWorkers that really did get a thread created for them"
+  },
+  "SERVICE_WORKER_SPAWN_GETS_QUEUED": {
+    "expires_in_version": "50",
+    "kind": "count",
+    "description": "Tracking whether a ServiceWorker spawn gets queued due to hitting max workers per domain limit"
   },
   "READER_MODE_SERIALIZE_DOM_MS": {
     "expires_in_version": "42",

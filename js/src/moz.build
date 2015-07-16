@@ -4,6 +4,50 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+# Directory metadata
+component_engine = ('Core', 'JavaScript Engine')
+component_gc     = ('Core', 'JavaScript: GC')
+component_intl   = ('Core', 'JavaScript: Internationalization API')
+component_jit    = ('Core', 'JavaScript Engine: JIT')
+component_stl    = ('Core', 'JavaScript: Standard Library')
+
+with Files('../public/**'):
+    BUG_COMPONENT = component_engine
+with Files('*'):
+    BUG_COMPONENT = component_engine
+
+with Files('asmjs/**'):
+    BUG_COMPONENT = component_jit
+with Files('builtin/**'):
+    BUG_COMPONENT = component_stl
+with Files('ctypes/**'):
+    BUG_COMPONENT = ('Core', 'js-ctypes')
+with Files('gc/**'):
+    BUG_COMPONENT = component_gc
+with Files('jit/**'):
+    BUG_COMPONENT = component_jit
+
+# File-specific metadata
+for gcfile in ['jsgc*', 'devtools/rootAnalysis', 'devtools/gc-ubench', 'devtools/gctrace']:
+    with Files(gcfile):
+        BUG_COMPONENT = component_gc
+for header in ('GCAPI.h', 'HeapAPI.h', 'RootingAPI.h', 'SliceBudget.h', 'TracingAPI.h', 'WeakMapPtr.h'):
+    with Files('../public/' + header):
+        BUG_COMPONENT = component_gc
+
+for stlfile in ['jsarray.*', 'jsbool*', 'jsdate.*', 'jsnum.*', 'json.*', 'jsreflect.*', 'jsstr.*']:
+    with Files(stlfile):
+        BUG_COMPONENT = component_stl
+
+with Files('builtin/Intl*'):
+    BUG_COMPONENT = component_intl
+with Files('builtin/make_intl_data.py'):
+    BUG_COMPONENT = component_intl
+
+with Files('../public/TrackedOptimizationInfo.h'):
+    BUG_COMPONENT = component_jit
+
+
 if CONFIG['DEHYDRA_PATH']:
     DIRS += ['analysis-tests']
 
@@ -23,12 +67,7 @@ CONFIGURE_SUBST_FILES += [
     'js.pc',
 ]
 
-if CONFIG['JS_STANDALONE']:
-    DEFINES['IMPL_MFBT'] = True
-    USE_LIBS += [
-        'mfbt',
-    ]
-else:
+if not CONFIG['JS_STANDALONE']:
     CONFIGURE_SUBST_FILES += [
         '../../config/autoconf-js.mk',
         '../../config/emptyvars-js.mk',
@@ -120,6 +159,7 @@ SOURCES += [
     'frontend/ParseMaps.cpp',
     'frontend/ParseNode.cpp',
     'frontend/TokenStream.cpp',
+    'gc/Allocator.cpp',
     'gc/Barrier.cpp',
     'gc/GCTrace.cpp',
     'gc/Iteration.cpp',
@@ -140,6 +180,7 @@ SOURCES += [
     'irregexp/RegExpParser.cpp',
     'irregexp/RegExpStack.cpp',
     'jit/AliasAnalysis.cpp',
+    'jit/AlignmentMaskAnalysis.cpp',
     'jit/BacktrackingAllocator.cpp',
     'jit/Bailouts.cpp',
     'jit/BaselineBailouts.cpp',
@@ -156,6 +197,7 @@ SOURCES += [
     'jit/CodeGenerator.cpp',
     'jit/CompileWrappers.cpp',
     'jit/Disassembler.cpp',
+    'jit/EagerSimdUnbox.cpp',
     'jit/EdgeCaseAnalysis.cpp',
     'jit/EffectiveAddressAnalysis.cpp',
     'jit/ExecutableAllocator.cpp',
@@ -494,6 +536,11 @@ if CONFIG['_MSC_VER']:
     # Prevent floating point errors caused by VC++ optimizations
     # XXX We should add this to CXXFLAGS, too?
     CFLAGS += ['-fp:precise']
+    # C4805 warns mixing bool with other integral types in computation.
+    # But given the conversion from bool is specified, and this is a
+    # pattern widely used in code in js/src, suppress this warning here.
+    CXXFLAGS += ['-wd4805']
+    CXXFLAGS += ['-we4067', '-we4258', '-we4275']
 
 if CONFIG['OS_ARCH'] not in ('WINNT', 'HP-UX'):
     OS_LIBS += [

@@ -89,13 +89,13 @@ PerThreadData::PerThreadData(JSRuntime* runtime)
 PerThreadData::~PerThreadData()
 {
     if (dtoaState)
-        js_DestroyDtoaState(dtoaState);
+        DestroyDtoaState(dtoaState);
 }
 
 bool
 PerThreadData::init()
 {
-    dtoaState = js_NewDtoaState();
+    dtoaState = NewDtoaState();
     if (!dtoaState)
         return false;
 
@@ -121,7 +121,11 @@ JSRuntime::JSRuntime(JSRuntime* parentRuntime)
     jitStackLimit_(0xbad),
     activation_(nullptr),
     profilingActivation_(nullptr),
+    profilerSampleBufferGen_(0),
+    profilerSampleBufferLapCount_(1),
     asmJSActivationStack_(nullptr),
+    asyncStackForNewActivations(nullptr),
+    asyncCauseForNewActivations(nullptr),
     parentRuntime(parentRuntime),
     interrupt_(false),
     telemetryCallback(nullptr),
@@ -211,7 +215,8 @@ JSRuntime::JSRuntime(JSRuntime* parentRuntime)
 #endif
     largeAllocationFailureCallback(nullptr),
     oomCallback(nullptr),
-    debuggerMallocSizeOf(ReturnZeroSize)
+    debuggerMallocSizeOf(ReturnZeroSize),
+    lastAnimationTime(0)
 {
     setGCStoreBufferPtr(&gc.storeBuffer);
 
@@ -372,6 +377,9 @@ JSRuntime::~JSRuntime()
 
         /* Allow the GC to release scripts that were being profiled. */
         profilingScripts = false;
+
+        /* Set the profiler sampler buffer generation to invalid. */
+        profilerSampleBufferGen_ = UINT32_MAX;
 
         JS::PrepareForFullGC(this);
         gc.gc(GC_NORMAL, JS::gcreason::DESTROY_RUNTIME);
@@ -573,7 +581,7 @@ InvokeInterruptCallback(JSContext* cx)
         chars = stableChars.twoByteRange().start().get();
     else
         chars = MOZ_UTF16("(stack not available)");
-    JS_ReportErrorFlagsAndNumberUC(cx, JSREPORT_WARNING, js_GetErrorMessage, nullptr,
+    JS_ReportErrorFlagsAndNumberUC(cx, JSREPORT_WARNING, GetErrorMessage, nullptr,
                                    JSMSG_TERMINATED, chars);
 
     return false;
@@ -638,7 +646,7 @@ JSRuntime::createMathCache(JSContext* cx)
 
     MathCache* newMathCache = js_new<MathCache>();
     if (!newMathCache) {
-        js_ReportOutOfMemory(cx);
+        ReportOutOfMemory(cx);
         return nullptr;
     }
 
@@ -752,7 +760,7 @@ JSRuntime::onOutOfMemory(void* p, size_t nbytes, JSContext* cx)
     if (p)
         return p;
     if (cx)
-        js_ReportOutOfMemory(cx);
+        ReportOutOfMemory(cx);
     return nullptr;
 }
 
@@ -837,6 +845,14 @@ js::AssertCurrentThreadCanLock(RuntimeLock which)
 }
 
 #endif // DEBUG
+
+JS_FRIEND_API(void)
+JS::UpdateJSRuntimeProfilerSampleBufferGen(JSRuntime* runtime, uint32_t generation,
+                                           uint32_t lapCount)
+{
+    runtime->setProfilerSampleBufferGen(generation);
+    runtime->updateProfilerSampleBufferLapCount(lapCount);
+}
 
 JS_FRIEND_API(bool)
 JS::IsProfilingEnabledForRuntime(JSRuntime* runtime)

@@ -15,8 +15,8 @@ namespace mozilla {
 namespace dom {
 
 class HTMLOutputElement final : public nsGenericHTMLFormElement,
-                                    public nsStubMutationObserver,
-                                    public nsIConstraintValidation
+                                public nsStubMutationObserver,
+                                public nsIConstraintValidation
 {
 public:
   using nsIConstraintValidation::GetValidationMessage;
@@ -60,7 +60,7 @@ public:
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(HTMLOutputElement,
                                            nsGenericHTMLFormElement)
 
-  virtual JSObject* WrapNode(JSContext* aCx) override;
+  virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // WebIDL
   nsDOMSettableTokenList* HtmlFor();

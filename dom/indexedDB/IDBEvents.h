@@ -104,7 +104,7 @@ public:
   NS_FORWARD_TO_EVENT
 
   virtual JSObject*
-  WrapObjectInternal(JSContext* aCx) override;
+  WrapObjectInternal(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 private:
   IDBVersionChangeEvent(EventTarget* aOwner, uint64_t aOldVersion)

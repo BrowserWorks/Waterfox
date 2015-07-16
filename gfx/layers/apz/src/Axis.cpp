@@ -30,6 +30,12 @@
 namespace mozilla {
 namespace layers {
 
+bool FuzzyEqualsCoordinate(float aValue1, float aValue2)
+{
+  return FuzzyEqualsAdditive(aValue1, aValue2, COORDINATE_EPSILON)
+      || FuzzyEqualsMultiplicative(aValue1, aValue2);
+}
+
 extern StaticAutoPtr<ComputedTimingFunction> gVelocityCurveFunction;
 
 Axis::Axis(AsyncPanZoomController* aAsyncPanZoomController)
@@ -119,10 +125,17 @@ void Axis::StartTouch(ParentLayerCoord aPos, uint32_t aTimestampMs) {
 
 bool Axis::AdjustDisplacement(ParentLayerCoord aDisplacement,
                               /* ParentLayerCoord */ float& aDisplacementOut,
-                              /* ParentLayerCoord */ float& aOverscrollAmountOut)
+                              /* ParentLayerCoord */ float&
+                              aOverscrollAmountOut,
+                              bool forceOverscroll /* = false */)
 {
   if (mAxisLocked) {
     aOverscrollAmountOut = 0;
+    aDisplacementOut = 0;
+    return false;
+  }
+  if (forceOverscroll) {
+    aOverscrollAmountOut = aDisplacement;
     aDisplacementOut = 0;
     return false;
   }
@@ -173,8 +186,8 @@ void Axis::OverscrollBy(ParentLayerCoord aOverscroll) {
   aOverscroll = ApplyResistance(aOverscroll);
   if (aOverscroll > 0) {
 #ifdef DEBUG
-    if (!FuzzyEqualsAdditive(GetCompositionEnd().value, GetPageEnd().value, COORDINATE_EPSILON)) {
-      nsPrintfCString message("composition end (%f) is not within COORDINATE_EPISLON of page end (%f)\n",
+    if (!FuzzyEqualsCoordinate(GetCompositionEnd().value, GetPageEnd().value)) {
+      nsPrintfCString message("composition end (%f) is not equal (within error) to page end (%f)\n",
                               GetCompositionEnd().value, GetPageEnd().value);
       NS_ASSERTION(false, message.get());
       MOZ_CRASH();
@@ -183,8 +196,8 @@ void Axis::OverscrollBy(ParentLayerCoord aOverscroll) {
     MOZ_ASSERT(mOverscroll >= 0);
   } else if (aOverscroll < 0) {
 #ifdef DEBUG
-    if (!FuzzyEqualsAdditive(GetOrigin().value, GetPageStart().value, COORDINATE_EPSILON)) {
-      nsPrintfCString message("composition origin (%f) is not within COORDINATE_EPISLON of page origin (%f)\n",
+    if (!FuzzyEqualsCoordinate(GetOrigin().value, GetPageStart().value)) {
+      nsPrintfCString message("composition origin (%f) is not equal (within error) to page origin (%f)\n",
                               GetOrigin().value, GetPageStart().value);
       NS_ASSERTION(false, message.get());
       MOZ_CRASH();
@@ -199,7 +212,14 @@ ParentLayerCoord Axis::GetOverscroll() const {
   ParentLayerCoord result = (mOverscroll - mLastOverscrollPeak) / mOverscrollScale;
 
   // Assert that we return overscroll in the correct direction
-  MOZ_ASSERT((result.value * mFirstOverscrollAnimationSample.value) >= 0.0f);
+#ifdef DEBUG
+  if ((result.value * mFirstOverscrollAnimationSample.value) < 0.0f) {
+    nsPrintfCString message("GetOverscroll() (%f) and first overscroll animation sample (%f) have different signs\n",
+                            result.value, mFirstOverscrollAnimationSample.value);
+    NS_ASSERTION(false, message.get());
+    MOZ_CRASH();
+  }
+#endif
 
   return result;
 }
@@ -380,6 +400,16 @@ bool Axis::CanScroll() const {
   return GetPageLength() - GetCompositionLength() > COORDINATE_EPSILON;
 }
 
+bool Axis::CanScroll(double aDelta) const
+{
+  if (!CanScroll() || mAxisLocked) {
+    return false;
+  }
+
+  ParentLayerCoord delta = aDelta;
+  return DisplacementWillOverscrollAmount(delta) != delta;
+}
+
 bool Axis::CanScrollNow() const {
   return !mAxisLocked && CanScroll();
 }
@@ -427,7 +457,7 @@ ParentLayerCoord Axis::DisplacementWillOverscrollAmount(ParentLayerCoord aDispla
 CSSCoord Axis::ScaleWillOverscrollAmount(float aScale, CSSCoord aFocus) const {
   // Internally, do computations in ParentLayer coordinates *before* the scale
   // is applied.
-  CSSToParentLayerScale zoom = GetFrameMetrics().GetZoom();
+  CSSToParentLayerScale zoom = GetFrameMetrics().GetZoom().ToScaleFactor();
   ParentLayerCoord focus = aFocus * zoom;
   ParentLayerCoord originAfterScale = (GetOrigin() + focus) - (focus / aScale);
 

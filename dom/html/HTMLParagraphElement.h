@@ -15,7 +15,7 @@ namespace mozilla {
 namespace dom {
 
 class HTMLParagraphElement final : public nsGenericHTMLElement,
-                                       public nsIDOMHTMLParagraphElement
+                                   public nsIDOMHTMLParagraphElement
 {
 public:
   explicit HTMLParagraphElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
@@ -48,7 +48,7 @@ public:
 protected:
   virtual ~HTMLParagraphElement();
 
-  virtual JSObject* WrapNode(JSContext *aCx) override;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 private:
   static void MapAttributesIntoRule(const nsMappedAttributes* aAttributes,

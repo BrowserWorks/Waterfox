@@ -157,18 +157,18 @@ template <class T> class MediaQueue : private nsDeque {
     mPopListeners.Clear();
   }
 
-  void AddPopListener(nsIRunnable* aRunnable, MediaTaskQueue* aTaskQueue) {
+  void AddPopListener(nsIRunnable* aRunnable, MediaTaskQueue* aTarget) {
     ReentrantMonitorAutoEnter mon(mReentrantMonitor);
-    mPopListeners.AppendElement(Listener(aRunnable, aTaskQueue));
+    mPopListeners.AppendElement(Listener(aRunnable, aTarget));
   }
 
 private:
   mutable ReentrantMonitor mReentrantMonitor;
 
   struct Listener {
-    Listener(nsIRunnable* aRunnable, MediaTaskQueue* aTaskQueue)
+    Listener(nsIRunnable* aRunnable, MediaTaskQueue* aTarget)
       : mRunnable(aRunnable)
-      , mTarget(aTaskQueue)
+      , mTarget(aTarget)
     {
     }
     Listener(const Listener& aOther)

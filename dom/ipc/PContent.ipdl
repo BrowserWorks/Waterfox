@@ -21,6 +21,7 @@ include protocol PFileDescriptorSet;
 include protocol PFMRadio;
 include protocol PFileSystemRequest;
 include protocol PHal;
+include protocol PIcc;
 include protocol PProcessHangMonitor;
 include protocol PImageBridge;
 include protocol PMemoryReportRequest;
@@ -335,10 +336,24 @@ union MaybeFileDesc {
     void_t;
 };
 
+union FileDescOrError {
+    FileDescriptor;
+    nsresult;
+};
+
 union OptionalContentId
 {
   ContentParentId;
   void_t;
+};
+
+struct DomainPolicyClone
+{
+    bool        active;
+    URIParams[] blacklist;
+    URIParams[] whitelist;
+    URIParams[] superBlacklist;
+    URIParams[] superWhitelist;
 };
 
 prio(normal upto urgent) sync protocol PContent
@@ -365,6 +380,7 @@ prio(normal upto urgent) sync protocol PContent
     manages PFileDescriptorSet;
     manages PFMRadio;
     manages PHal;
+    manages PIcc;
     manages PMemoryReportRequest;
     manages PMobileConnection;
     manages PNecko;
@@ -547,6 +563,14 @@ child:
 
     NuwaFreeze();
 
+    async DomainSetChanged(uint32_t aSetType, uint32_t aChangeType, OptionalURIParams aDomain);
+
+    /**
+     * Notify the child to shutdown. The child will in turn call FinishShutdown
+     * and let the parent close the channel.
+     */
+    async Shutdown();
+
     async LoadProcessScript(nsString url);
 
 parent:
@@ -575,7 +599,8 @@ parent:
         returns (ContentParentId cpId, bool isForApp, bool isForBrowser);
     sync GetXPCOMProcessAttributes()
         returns (bool isOffline, nsString[] dictionaries,
-                 ClipboardCapabilities clipboardCaps);
+                 ClipboardCapabilities clipboardCaps,
+                 DomainPolicyClone domainPolicy);
 
     sync CreateChildProcess(IPCTabContext context,
                             ProcessPriority priority,
@@ -587,8 +612,7 @@ parent:
      * This call connects the content process to a plugin process. While this
      * call runs, a new PluginModuleParent will be created in the ContentChild
      * via bridging. The corresponding PluginModuleChild will live in the plugin
-     * process. We use intr semantics here to ensure that the PluginModuleParent
-     * allocation message is dispatched before LoadPlugin returns.
+     * process.
      */
     sync LoadPlugin(uint32_t pluginId) returns (nsresult rv);
 
@@ -632,6 +656,8 @@ parent:
         returns (bool isSecureURI);
 
     PHal();
+
+    PIcc(uint32_t serviceId);
 
     PMobileConnection(uint32_t clientId);
 
@@ -821,7 +847,7 @@ parent:
      */
     BackUpXResources(FileDescriptor aXSocketFd);
 
-    sync OpenAnonymousTemporaryFile() returns (FileDescriptor aFD);
+    sync OpenAnonymousTemporaryFile() returns (FileDescOrError aFD);
 
     /**
      * Keygen requires us to call it after a <keygen> element is parsed and
@@ -889,6 +915,12 @@ parent:
      * offline-apps.allow_by_default is set to true.
      */
     SetOfflinePermission(Principal principal);
+
+    /**
+     * Notifies the parent to continue shutting down after the child performs
+     * its shutdown tasks.
+     */
+    async FinishShutdown();
 
 both:
      AsyncMessage(nsString aMessage, ClonedMessageData aData,

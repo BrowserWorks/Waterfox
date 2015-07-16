@@ -419,6 +419,31 @@ const CustomizableWidgets = [
       node.setAttribute("removable", "true");
       node.setAttribute("observes", "Social:PageShareOrMark");
       node.setAttribute("command", "Social:SharePage");
+
+      let listener = {
+        onWidgetAdded: (aWidgetId) => {
+          if (aWidgetId != this.id)
+            return;
+
+          Services.obs.notifyObservers(null, "social:" + this.id + "-added", null);
+        },
+
+        onWidgetRemoved: aWidgetId => {
+          if (aWidgetId != this.id)
+            return;
+
+          Services.obs.notifyObservers(null, "social:" + this.id + "-removed", null);
+        },
+
+        onWidgetInstanceRemoved: (aWidgetId, aDoc) => {
+          if (aWidgetId != this.id || aDoc != aDocument)
+            return;
+
+          CustomizableUI.removeListener(listener);
+        }
+      };
+      CustomizableUI.addListener(listener);
+
       return node;
     }
   }, {
@@ -762,9 +787,10 @@ const CustomizableWidgets = [
     }
   }, {
     id: "characterencoding-button",
+    label: "characterencoding-button2.label",
     type: "view",
     viewId: "PanelUI-characterEncodingView",
-    tooltiptext: "characterencoding-button.tooltiptext2",
+    tooltiptext: "characterencoding-button2.tooltiptext",
     defaultArea: CustomizableUI.AREA_PANEL,
     maybeDisableMenu: function(aDocument) {
       let window = aDocument.defaultView;
@@ -1078,7 +1104,9 @@ if (Services.prefs.getBoolPref("browser.pocket.enabled")) {
   }
 
   if (isEnabledForLocale) {
-    if (browserLocale == "ja-JP-mac")
+    if (browserLocale == "en-GB" || browserLocale == "en-ZA")
+      browserLocale = "en-US";
+    else if (browserLocale == "ja-JP-mac")
       browserLocale = "ja";
     let url = "chrome://browser/content/browser-pocket-" + browserLocale + ".properties";
     let strings = Services.strings.createBundle(url);
@@ -1104,8 +1132,13 @@ if (Services.prefs.getBoolPref("browser.pocket.enabled")) {
       viewId: "PanelUI-pocketView",
       label: label,
       tooltiptext: tooltiptext,
-      onViewShowing: Pocket.onPanelViewShowing,
-      onViewHiding: Pocket.onPanelViewHiding,
+      // Use forwarding functions here to avoid loading Pocket.jsm on startup:
+      onViewShowing: function() {
+        return Pocket.onPanelViewShowing.apply(this, arguments);
+      },
+      onViewHiding: function() {
+        return Pocket.onPanelViewHiding.apply(this, arguments);
+      },
 
       // If the user has the "classic" Pocket add-on installed, use that instead
       // and destroy the widget.

@@ -50,9 +50,9 @@ NS_INTERFACE_MAP_END_INHERITING(nsGenericHTMLElement)
 NS_IMPL_ELEMENT_CLONE(HTMLShadowElement)
 
 JSObject*
-HTMLShadowElement::WrapNode(JSContext *aCx)
+HTMLShadowElement::WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return HTMLShadowElementBinding::Wrap(aCx, this);
+  return HTMLShadowElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 void
@@ -94,8 +94,7 @@ IsInFallbackContent(nsIContent* aContent)
 {
   nsINode* parentNode = aContent->GetParentNode();
   while (parentNode) {
-    if (parentNode->IsElement() &&
-        parentNode->AsElement()->IsHTML(nsGkAtoms::content)) {
+    if (parentNode->IsHTMLElement(nsGkAtoms::content)) {
       return true;
     }
     parentNode = parentNode->GetParentNode();

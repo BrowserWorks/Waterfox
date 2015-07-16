@@ -24,7 +24,7 @@ namespace mozilla {
 namespace dom {
 
 class USSDSession final : public nsISupports,
-                              public nsWrapperCache
+                          public nsWrapperCache
 {
 public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -37,7 +37,7 @@ public:
   GetParentObject() const;
 
   virtual JSObject*
-  WrapObject(JSContext* aCx) override;
+  WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // WebIDL
   static already_AddRefed<USSDSession>

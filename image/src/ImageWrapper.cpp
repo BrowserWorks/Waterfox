@@ -167,12 +167,6 @@ ImageWrapper::GetType(uint16_t* aType)
   return mInnerImage->GetType(aType);
 }
 
-NS_IMETHODIMP_(uint16_t)
-ImageWrapper::GetType()
-{
-  return mInnerImage->GetType();
-}
-
 NS_IMETHODIMP
 ImageWrapper::GetAnimated(bool* aAnimated)
 {
@@ -192,11 +186,10 @@ ImageWrapper::IsOpaque()
   return mInnerImage->IsOpaque();
 }
 
-NS_IMETHODIMP
-ImageWrapper::GetImageContainer(LayerManager* aManager,
-                                ImageContainer** _retval)
+NS_IMETHODIMP_(already_AddRefed<ImageContainer>)
+ImageWrapper::GetImageContainer(LayerManager* aManager, uint32_t aFlags)
 {
-  return mInnerImage->GetImageContainer(aManager, _retval);
+  return mInnerImage->GetImageContainer(aManager, aFlags);
 }
 
 NS_IMETHODIMP_(DrawResult)

@@ -114,7 +114,7 @@ AccumulateCacheHitTelemetry(CacheDisposition hitOrMiss)
 
         int32_t experiment = CacheObserver::HalfLifeExperiment();
         if (experiment > 0 && hitOrMiss == kCacheMissed) {
-            Telemetry::Accumulate(Telemetry::HTTP_CACHE_MISS_HALFLIFE_EXPERIMENT,
+            Telemetry::Accumulate(Telemetry::HTTP_CACHE_MISS_HALFLIFE_EXPERIMENT_2,
                                   experiment - 1);
         }
     }
@@ -1219,11 +1219,6 @@ nsHttpChannel::ProcessSSLInformation()
         NS_SUCCEEDED(securityInfo->GetSecurityState(&state)) &&
         (state & nsIWebProgressListener::STATE_IS_BROKEN)) {
         // Send weak crypto warnings to the web console
-        if (state & nsIWebProgressListener::STATE_USES_SSL_3) {
-            nsString consoleErrorTag = NS_LITERAL_STRING("WeakProtocolVersionWarning");
-            nsString consoleErrorCategory = NS_LITERAL_STRING("SSL");
-            AddSecurityMessage(consoleErrorTag, consoleErrorCategory);
-        }
         if (state & nsIWebProgressListener::STATE_USES_WEAK_CRYPTO) {
             nsString consoleErrorTag = NS_LITERAL_STRING("WeakCipherSuiteWarning");
             nsString consoleErrorCategory = NS_LITERAL_STRING("SSL");
@@ -3002,7 +2997,7 @@ nsHttpChannel::OnCacheEntryCheck(nsICacheEntry* entry, nsIApplicationCache* appC
                 // want to proceed since the LOAD_ONLY_IF_MODIFIED flag is
                 // also set.
                 MOZ_ASSERT(mLoadFlags & LOAD_ONLY_IF_MODIFIED);
-            } else {
+            } else if (mInterceptCache != INTERCEPTED) {
                 return rv;
             }
         }
@@ -3152,6 +3147,10 @@ nsHttpChannel::OnCacheEntryCheck(nsICacheEntry* entry, nsIApplicationCache* appC
         // Append cacheKey if not in the chain already
         if (!doValidation)
             mRedirectedCachekeys->AppendElement(cacheKey);
+    }
+
+    if (doValidation && mInterceptCache == INTERCEPTED) {
+        doValidation = false;
     }
 
     mCachedContentIsValid = !doValidation;
@@ -4237,12 +4236,14 @@ nsHttpChannel::InstallCacheListener(int64_t offset)
         do_CreateInstance(kStreamListenerTeeCID, &rv);
     if (NS_FAILED(rv)) return rv;
 
-    nsCOMPtr<nsICacheStorageService> serv =
-        do_GetService("@mozilla.org/netwerk/cache-storage-service;1", &rv);
-    NS_ENSURE_SUCCESS(rv, rv);
-
     nsCOMPtr<nsIEventTarget> cacheIOTarget;
-    serv->GetIoTarget(getter_AddRefs(cacheIOTarget));
+    if (!CacheObserver::UseNewCache()) {
+        nsCOMPtr<nsICacheStorageService> serv =
+            do_GetService("@mozilla.org/netwerk/cache-storage-service;1", &rv);
+        NS_ENSURE_SUCCESS(rv, rv);
+
+        serv->GetIoTarget(getter_AddRefs(cacheIOTarget));
+    }
 
     if (!cacheIOTarget) {
         LOG(("nsHttpChannel::InstallCacheListener sync tee %p rv=%x "
@@ -5980,7 +5981,7 @@ nsHttpChannel::SetOfflineCacheToken(nsISupports *token)
 }
 
 class nsHttpChannelCacheKey final : public nsISupportsPRUint32,
-                                        public nsISupportsCString
+                                    public nsISupportsCString
 {
     NS_DECL_ISUPPORTS
 

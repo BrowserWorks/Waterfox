@@ -1070,7 +1070,9 @@ function getMatchedProps_impl(aObj, aMatch, {chainIterator, getProperties})
       if (prop.indexOf(aMatch) != 0) {
         continue;
       }
-
+      if (prop.indexOf('-') > -1) {
+        continue;
+      }
       // If it is an array index, we can't take it.
       // This uses a trick: converting a string to a number yields NaN if
       // the operation failed, and NaN is not equal to itself.
@@ -1548,6 +1550,20 @@ function JSTermHelpers(aOwner)
   };
 
   /**
+   * Returns the result of the last console input evaluation
+   *
+   * @return object|undefined
+   * Returns last console evaluation or undefined
+   */
+  Object.defineProperty(aOwner.sandbox, "$_", {
+    get: function() {
+      return aOwner.consoleActor.getLastConsoleInputEvaluation();
+    },
+    enumerable: true,
+    configurable: true
+  });
+
+  /**
    * Runs an xPath query and returns all matched nodes.
    *
    * @param string aXPath
@@ -1593,6 +1609,16 @@ function JSTermHelpers(aOwner)
   {
     aOwner.helperResult = {
       type: "clearOutput",
+    };
+  };
+
+  /**
+   * Clears the input history of the JSTerm.
+   */
+  aOwner.sandbox.clearHistory = function JSTH_clearHistory()
+  {
+    aOwner.helperResult = {
+      type: "clearHistory",
     };
   };
 

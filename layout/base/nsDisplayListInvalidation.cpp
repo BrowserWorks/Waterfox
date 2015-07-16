@@ -115,3 +115,17 @@ nsDisplaySVGEffectsGeometry::MoveBy(const nsPoint& aOffset)
   mBounds.MoveBy(aOffset);
   mFrameOffsetToReferenceFrame += aOffset;
 }
+
+nsCharClipGeometry::nsCharClipGeometry(nsCharClipDisplayItem* aItem, nsDisplayListBuilder* aBuilder)
+  : nsDisplayItemGenericGeometry(aItem, aBuilder)
+  , mLeftEdge(aItem->mLeftEdge)
+  , mRightEdge(aItem->mRightEdge)
+{}
+
+nsDisplayTableItemGeometry::nsDisplayTableItemGeometry(nsDisplayTableItem* aItem,
+                                                       nsDisplayListBuilder* aBuilder,
+                                                       const nsPoint& aFrameOffsetToViewport)
+  : nsDisplayItemGenericGeometry(aItem, aBuilder)
+  , nsImageGeometryMixin(aItem, aBuilder)
+  , mFrameOffsetToViewport(aFrameOffsetToViewport)
+{}

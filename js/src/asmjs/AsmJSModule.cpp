@@ -37,6 +37,7 @@
 
 #include "frontend/Parser.h"
 #include "jit/IonCode.h"
+#include "js/Class.h"
 #include "js/Conversions.h"
 #include "js/MemoryMetrics.h"
 
@@ -50,9 +51,10 @@ using namespace js;
 using namespace jit;
 using namespace frontend;
 using mozilla::BinarySearch;
+using mozilla::Compression::LZ4;
 using mozilla::PodCopy;
 using mozilla::PodEqual;
-using mozilla::Compression::LZ4;
+using mozilla::PodZero;
 using mozilla::Swap;
 
 static uint8_t*
@@ -65,7 +67,7 @@ AllocateExecutableMemory(ExclusiveContext* cx, size_t bytes)
 #endif
     void* p = AllocateExecutableMemory(nullptr, bytes, permissions, "asm-js-code", AsmJSPageSize);
     if (!p)
-        js_ReportOutOfMemory(cx);
+        ReportOutOfMemory(cx);
     return (uint8_t*)p;
 }
 
@@ -93,6 +95,10 @@ AsmJSModule::AsmJSModule(ScriptSource* scriptSource, uint32_t srcStart, uint32_t
     pod.maxHeapLength_ = 0x80000000;
     pod.strict_ = strict;
     pod.usesSignalHandlers_ = canUseSignalHandlers;
+
+    // AsmJSCheckedImmediateRange should be defined to be at most the minimum
+    // heap length so that offsets can be folded into bounds checks.
+    MOZ_ASSERT(pod.minHeapLength_ - AsmJSCheckedImmediateRange <= pod.minHeapLength_);
 
     scriptSource_->incref();
 }
@@ -250,7 +256,7 @@ struct HeapAccessOffset
     const AsmJSHeapAccessVector& accesses;
     explicit HeapAccessOffset(const AsmJSHeapAccessVector& accesses) : accesses(accesses) {}
     uintptr_t operator[](size_t index) const {
-        return accesses[index].offset();
+        return accesses[index].insnOffset();
     }
 };
 
@@ -328,7 +334,7 @@ AsmJSModule::finish(ExclusiveContext* cx, TokenStream& tokenStream, MacroAssembl
     pod.functionBytes_ = masm.actualOffset(pod.functionBytes_);
     for (size_t i = 0; i < heapAccesses_.length(); i++) {
         AsmJSHeapAccess& a = heapAccesses_[i];
-        a.setOffset(masm.actualOffset(a.offset()));
+        a.setInsnOffset(masm.actualOffset(a.insnOffset()));
     }
     for (unsigned i = 0; i < numExportedFunctions(); i++) {
         if (!exportedFunction(i).isChangeHeap())
@@ -455,7 +461,7 @@ static void
 AsmJSReportOverRecursed()
 {
     JSContext* cx = JSRuntime::innermostAsmJSActivation()->cx();
-    js_ReportOverRecursed(cx);
+    ReportOverRecursed(cx);
 }
 
 static void
@@ -463,14 +469,14 @@ OnDetached()
 {
     // See hasDetachedHeap comment in LinkAsmJS.
     JSContext* cx = JSRuntime::innermostAsmJSActivation()->cx();
-    JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_OUT_OF_MEMORY);
+    JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_OUT_OF_MEMORY);
 }
 
 static void
 OnOutOfBounds()
 {
     JSContext* cx = JSRuntime::innermostAsmJSActivation()->cx();
-    JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_BAD_INDEX);
+    JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_BAD_INDEX);
 }
 
 static bool
@@ -774,16 +780,6 @@ AsmJSModule::staticallyLink(ExclusiveContext* cx)
     MOZ_ASSERT(isStaticallyLinked());
 }
 
-#if defined(JS_CODEGEN_X86) || defined(JS_CODEGEN_X64)
-static size_t
-ByteSizeOfHeapAccess(const jit::AsmJSHeapAccess access)
-{
-    Scalar::Type type = access.type();
-    if (Scalar::isSimdType(type))
-        return Scalar::scalarByteSize(type) * access.numSimdElems();
-    return TypedArrayElemSize(type);
-}
-#endif
 void
 AsmJSModule::initHeap(Handle<ArrayBufferObjectMaybeShared*> heap, JSContext* cx)
 {
@@ -797,18 +793,17 @@ AsmJSModule::initHeap(Handle<ArrayBufferObjectMaybeShared*> heap, JSContext* cx)
 
 #if defined(JS_CODEGEN_X86)
     uint8_t* heapOffset = heap->dataPointer();
+    uint32_t heapLength = heap->byteLength();
     for (unsigned i = 0; i < heapAccesses_.length(); i++) {
         const jit::AsmJSHeapAccess& access = heapAccesses_[i];
-        if (access.hasLengthCheck()) {
-            // An access is out-of-bounds iff
-            //      ptr + data-type-byte-size > heapLength
-            // i.e. ptr >= heapLength + 1 - data-type-byte-size
-            // (Note that we need >= as this is what codegen uses.)
-            size_t scalarByteSize = ByteSizeOfHeapAccess(access);
-            X86Encoding::SetPointer(access.patchLengthAt(code_),
-                                    (void*)(heap->byteLength() + 1 - scalarByteSize));
-        }
-        void* addr = access.patchOffsetAt(code_);
+        // An access is out-of-bounds iff
+        //      ptr + offset + data-type-byte-size > heapLength
+        // i.e. ptr > heapLength - data-type-byte-size - offset.
+        // data-type-byte-size and offset are already included in the addend
+        // so we just have to add the heap length here.
+        if (access.hasLengthCheck())
+            X86Encoding::AddInt32(access.patchLengthAt(code_), heapLength);
+        void* addr = access.patchHeapPtrImmAt(code_);
         uint32_t disp = reinterpret_cast<uint32_t>(X86Encoding::GetPointer(addr));
         MOZ_ASSERT(disp <= INT32_MAX);
         X86Encoding::SetPointer(addr, (void*)(heapOffset + disp));
@@ -821,20 +816,18 @@ AsmJSModule::initHeap(Handle<ArrayBufferObjectMaybeShared*> heap, JSContext* cx)
     // checks at the right places. All accesses that have been recorded are the
     // only ones that need bound checks (see also
     // CodeGeneratorX64::visitAsmJS{Load,Store,CompareExchange,AtomicBinop}Heap)
-    int32_t heapLength = int32_t(intptr_t(heap->byteLength()));
+    uint32_t heapLength = heap->byteLength();
     for (size_t i = 0; i < heapAccesses_.length(); i++) {
         const jit::AsmJSHeapAccess& access = heapAccesses_[i];
-        if (access.hasLengthCheck()) {
-            // See comment above for x86 codegen.
-            size_t scalarByteSize = ByteSizeOfHeapAccess(access);
-            X86Encoding::SetInt32(access.patchLengthAt(code_), heapLength + 1 - scalarByteSize);
-        }
+        // See comment above for x86 codegen.
+        if (access.hasLengthCheck())
+            X86Encoding::AddInt32(access.patchLengthAt(code_), heapLength);
     }
 #elif defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_MIPS)
     uint32_t heapLength = heap->byteLength();
     for (unsigned i = 0; i < heapAccesses_.length(); i++) {
         jit::Assembler::UpdateBoundsCheck(heapLength,
-                                          (jit::Instruction*)(heapAccesses_[i].offset() + code_));
+                                          (jit::Instruction*)(heapAccesses_[i].insnOffset() + code_));
     }
 #endif
 }
@@ -846,12 +839,26 @@ AsmJSModule::restoreHeapToInitialState(ArrayBufferObjectMaybeShared* maybePrevBu
     if (maybePrevBuffer) {
         // Subtract out the base-pointer added by AsmJSModule::initHeap.
         uint8_t* ptrBase = maybePrevBuffer->dataPointer();
+        uint32_t heapLength = maybePrevBuffer->byteLength();
         for (unsigned i = 0; i < heapAccesses_.length(); i++) {
             const jit::AsmJSHeapAccess& access = heapAccesses_[i];
-            void* addr = access.patchOffsetAt(code_);
+            // Subtract the heap length back out, leaving the raw displacement in place.
+            if (access.hasLengthCheck())
+                X86Encoding::AddInt32(access.patchLengthAt(code_), -heapLength);
+            void* addr = access.patchHeapPtrImmAt(code_);
             uint8_t* ptr = reinterpret_cast<uint8_t*>(X86Encoding::GetPointer(addr));
             MOZ_ASSERT(ptr >= ptrBase);
             X86Encoding::SetPointer(addr, (void*)(ptr - ptrBase));
+        }
+    }
+#elif defined(JS_CODEGEN_X64)
+    if (maybePrevBuffer) {
+        uint32_t heapLength = maybePrevBuffer->byteLength();
+        for (unsigned i = 0; i < heapAccesses_.length(); i++) {
+            const jit::AsmJSHeapAccess& access = heapAccesses_[i];
+            // See comment above for x86 codegen.
+            if (access.hasLengthCheck())
+                X86Encoding::AddInt32(access.patchLengthAt(code_), -heapLength);
         }
     }
 #endif
@@ -963,7 +970,7 @@ const Class AsmJSModuleObject::class_ = {
 AsmJSModuleObject*
 AsmJSModuleObject::create(ExclusiveContext* cx, ScopedJSDeletePtr<AsmJSModule>* module)
 {
-    JSObject* obj = NewObjectWithGivenProto(cx, &AsmJSModuleObject::class_, NullPtr(), NullPtr());
+    JSObject* obj = NewObjectWithGivenProto(cx, &AsmJSModuleObject::class_, NullPtr());
     if (!obj)
         return nullptr;
     AsmJSModuleObject* nobj = &obj->as<AsmJSModuleObject>();
@@ -1303,6 +1310,7 @@ AsmJSModule::CodeRange::CodeRange(uint32_t nameIndex, uint32_t lineNumber,
     profilingReturn_(l.profilingReturn.offset()),
     end_(l.end.offset())
 {
+    PodZero(&u);  // zero padding for Valgrind
     u.kind_ = Function;
     setDeltas(l.entry.offset(), l.profilingJump.offset(), l.profilingEpilogue.offset());
 
@@ -1327,9 +1335,13 @@ AsmJSModule::CodeRange::setDeltas(uint32_t entry, uint32_t profilingJump, uint32
 }
 
 AsmJSModule::CodeRange::CodeRange(Kind kind, uint32_t begin, uint32_t end)
-  : begin_(begin),
+  : nameIndex_(0),
+    lineNumber_(0),
+    begin_(begin),
+    profilingReturn_(0),
     end_(end)
 {
+    PodZero(&u);  // zero padding for Valgrind
     u.kind_ = kind;
 
     MOZ_ASSERT(begin_ <= end_);
@@ -1337,10 +1349,13 @@ AsmJSModule::CodeRange::CodeRange(Kind kind, uint32_t begin, uint32_t end)
 }
 
 AsmJSModule::CodeRange::CodeRange(Kind kind, uint32_t begin, uint32_t profilingReturn, uint32_t end)
-  : begin_(begin),
+  : nameIndex_(0),
+    lineNumber_(0),
+    begin_(begin),
     profilingReturn_(profilingReturn),
     end_(end)
 {
+    PodZero(&u);  // zero padding for Valgrind
     u.kind_ = kind;
 
     MOZ_ASSERT(begin_ < profilingReturn_);
@@ -1350,10 +1365,13 @@ AsmJSModule::CodeRange::CodeRange(Kind kind, uint32_t begin, uint32_t profilingR
 
 AsmJSModule::CodeRange::CodeRange(AsmJSExit::BuiltinKind builtin, uint32_t begin,
                                   uint32_t profilingReturn, uint32_t end)
-  : begin_(begin),
+  : nameIndex_(0),
+    lineNumber_(0),
+    begin_(begin),
     profilingReturn_(profilingReturn),
     end_(end)
 {
+    PodZero(&u);  // zero padding for Valgrind
     u.kind_ = Thunk;
     u.thunk.target_ = builtin;
 
@@ -2202,7 +2220,7 @@ js::LookupAsmJSModuleInCache(ExclusiveContext* cx,
 
     uint32_t srcStart = parser.pc->maybeFunction->pn_body->pn_pos.begin;
     uint32_t srcBodyStart = parser.tokenStream.currentToken().pos.end;
-    bool strict = parser.pc->sc->strict && !parser.pc->sc->hasExplicitUseStrict();
+    bool strict = parser.pc->sc->strict() && !parser.pc->sc->hasExplicitUseStrict();
 
     // usesSignalHandlers will be clobbered when deserializing
     ScopedJSDeletePtr<AsmJSModule> module(

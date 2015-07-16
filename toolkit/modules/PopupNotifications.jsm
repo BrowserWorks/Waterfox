@@ -270,6 +270,8 @@ PopupNotifications.prototype = {
    *                     A string URL. Setting this property will make the
    *                     prompt display a "Learn More" link that, when clicked,
    *                     opens the URL in a new tab.
+   *        originHost:  The host name of the page the notification came from.
+   *                     If present, this will be displayed above the message.
    * @returns the Notification object corresponding to the added notification.
    */
   show: function PopupNotifications_show(browser, id, message, anchorID,
@@ -499,12 +501,12 @@ PopupNotifications.prototype = {
         popupnotification.notification = null;
 
         // Remove nodes dynamically added to the notification's menu button
-        // in _refreshPanel. Keep popupnotificationcontent nodes; they are
-        // provided by the chrome document.
+        // in _refreshPanel.
         let contentNode = popupnotification.lastChild;
         while (contentNode) {
           let previousSibling = contentNode.previousSibling;
-          if (contentNode.nodeName != "popupnotificationcontent")
+          if (contentNode.nodeName == "menuitem" ||
+              contentNode.nodeName == "menuseparator")
             popupnotification.removeChild(contentNode);
           contentNode = previousSibling;
         }
@@ -559,10 +561,16 @@ PopupNotifications.prototype = {
 
       if (n.options.popupIconURL)
         popupnotification.setAttribute("icon", n.options.popupIconURL);
+
       if (n.options.learnMoreURL)
         popupnotification.setAttribute("learnmoreurl", n.options.learnMoreURL);
       else
         popupnotification.removeAttribute("learnmoreurl");
+
+      if (n.options.originHost)
+        popupnotification.setAttribute("originhost", n.options.originHost);
+      else
+        popupnotification.removeAttribute("originhost");
 
       popupnotification.notification = n;
 
@@ -644,6 +652,9 @@ PopupNotifications.prototype = {
       notificationsToShow.forEach(function (n) {
         this._fireCallback(n, NOTIFICATION_EVENT_SHOWN);
       }, this);
+      // This notification is used by tests to know when all the processing
+      // required to display the panel has happened.
+      this.panel.dispatchEvent(new this.window.CustomEvent("Shown"));
     });
   },
 

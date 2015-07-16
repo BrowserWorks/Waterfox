@@ -54,9 +54,7 @@ NativeObject::canRemoveLastProperty()
      */
     MOZ_ASSERT(!inDictionaryMode());
     Shape* previous = lastProperty()->previous().get();
-    return previous->getObjectParent() == lastProperty()->getObjectParent()
-        && previous->getObjectMetadata() == lastProperty()->getObjectMetadata()
-        && previous->getObjectFlags() == lastProperty()->getObjectFlags();
+    return previous->getObjectFlags() == lastProperty()->getObjectFlags();
 }
 
 inline void
@@ -74,8 +72,7 @@ NativeObject::clearShouldConvertDoubleElements()
 }
 
 inline void
-NativeObject::setDenseElementWithType(ExclusiveContext* cx, uint32_t index,
-                                      const Value& val)
+NativeObject::setDenseElementWithType(ExclusiveContext* cx, uint32_t index, const Value& val)
 {
     // Avoid a slow AddTypePropertyId call if the type is the same as the type
     // of the previous element.
@@ -86,8 +83,7 @@ NativeObject::setDenseElementWithType(ExclusiveContext* cx, uint32_t index,
 }
 
 inline void
-NativeObject::initDenseElementWithType(ExclusiveContext* cx, uint32_t index,
-                                       const Value& val)
+NativeObject::initDenseElementWithType(ExclusiveContext* cx, uint32_t index, const Value& val)
 {
     MOZ_ASSERT(!shouldConvertDoubleElements());
     AddTypePropertyId(cx, this, JSID_VOID, val);
@@ -332,10 +328,7 @@ CopyInitializerObject(JSContext* cx, HandlePlainObject baseobj, NewObjectKind ne
     if (!obj)
         return nullptr;
 
-    RootedObject metadata(cx, obj->getMetadata());
     if (!obj->setLastProperty(cx, baseobj->lastProperty()))
-        return nullptr;
-    if (metadata && !JSObject::setMetadata(cx, obj, metadata))
         return nullptr;
 
     return obj;
@@ -343,50 +336,50 @@ CopyInitializerObject(JSContext* cx, HandlePlainObject baseobj, NewObjectKind ne
 
 inline NativeObject*
 NewNativeObjectWithGivenTaggedProto(ExclusiveContext* cx, const Class* clasp,
-                                    Handle<TaggedProto> proto, HandleObject parent,
+                                    Handle<TaggedProto> proto,
                                     gc::AllocKind allocKind, NewObjectKind newKind)
 {
-    return MaybeNativeObject(NewObjectWithGivenTaggedProto(cx, clasp, proto, parent, allocKind,
+    return MaybeNativeObject(NewObjectWithGivenTaggedProto(cx, clasp, proto, allocKind,
                                                            newKind));
 }
 
 inline NativeObject*
 NewNativeObjectWithGivenTaggedProto(ExclusiveContext* cx, const Class* clasp,
-                                    Handle<TaggedProto> proto, HandleObject parent,
+                                    Handle<TaggedProto> proto,
                                     NewObjectKind newKind = GenericObject)
 {
-    return MaybeNativeObject(NewObjectWithGivenTaggedProto(cx, clasp, proto, parent, newKind));
+    return MaybeNativeObject(NewObjectWithGivenTaggedProto(cx, clasp, proto, newKind));
 }
 
 inline NativeObject*
 NewNativeObjectWithGivenProto(ExclusiveContext* cx, const Class* clasp,
-                              HandleObject proto, HandleObject parent,
+                              HandleObject proto,
                               gc::AllocKind allocKind, NewObjectKind newKind)
 {
-    return MaybeNativeObject(NewObjectWithGivenProto(cx, clasp, proto, parent, allocKind, newKind));
+    return MaybeNativeObject(NewObjectWithGivenProto(cx, clasp, proto, allocKind, newKind));
 }
 
 inline NativeObject*
 NewNativeObjectWithGivenProto(ExclusiveContext* cx, const Class* clasp,
-                              HandleObject proto, HandleObject parent,
+                              HandleObject proto,
                               NewObjectKind newKind = GenericObject)
 {
-    return MaybeNativeObject(NewObjectWithGivenProto(cx, clasp, proto, parent, newKind));
+    return MaybeNativeObject(NewObjectWithGivenProto(cx, clasp, proto, newKind));
 }
 
 inline NativeObject*
 NewNativeObjectWithClassProto(ExclusiveContext* cx, const Class* clasp, HandleObject proto,
-                              HandleObject parent, gc::AllocKind allocKind,
+                              gc::AllocKind allocKind,
                               NewObjectKind newKind = GenericObject)
 {
-    return MaybeNativeObject(NewObjectWithClassProto(cx, clasp, proto, parent, allocKind, newKind));
+    return MaybeNativeObject(NewObjectWithClassProto(cx, clasp, proto, allocKind, newKind));
 }
 
 inline NativeObject*
 NewNativeObjectWithClassProto(ExclusiveContext* cx, const Class* clasp, HandleObject proto,
-                              HandleObject parent, NewObjectKind newKind = GenericObject)
+                              NewObjectKind newKind = GenericObject)
 {
-    return MaybeNativeObject(NewObjectWithClassProto(cx, clasp, proto, parent, newKind));
+    return MaybeNativeObject(NewObjectWithClassProto(cx, clasp, proto, newKind));
 }
 
 /*
@@ -599,23 +592,11 @@ NativeLookupProperty(ExclusiveContext* cx, HandleNativeObject obj, PropertyName*
 }
 
 inline bool
-NativeDefineProperty(ExclusiveContext* cx, HandleNativeObject obj, PropertyName* name,
-                     HandleValue value, PropertyOp getter, StrictPropertyOp setter,
-                     unsigned attrs)
-{
-    MOZ_ASSERT(getter != JS_PropertyStub);
-    MOZ_ASSERT(setter != JS_StrictPropertyStub);
-
-    RootedId id(cx, NameToId(name));
-    return NativeDefineProperty(cx, obj, id, value, getter, setter, attrs);
-}
-
-inline bool
 WarnIfNotConstructing(JSContext* cx, const CallArgs& args, const char* builtinName)
 {
     if (args.isConstructing())
         return true;
-    return JS_ReportErrorFlagsAndNumber(cx, JSREPORT_WARNING, js_GetErrorMessage, nullptr,
+    return JS_ReportErrorFlagsAndNumber(cx, JSREPORT_WARNING, GetErrorMessage, nullptr,
                                         JSMSG_BUILTIN_CTOR_NO_NEW, builtinName);
 }
 

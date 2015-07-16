@@ -43,14 +43,10 @@ T overrideDefault(const char* param, T dflt) {
     if (!str)
         return dflt;
     if (IsBool<T>::value) {
-        if (strcmp(str, "true") == 0 ||
-            strcmp(str, "yes")) {
+        if (strcmp(str, "true") == 0 || strcmp(str, "yes") == 0)
             return true;
-        }
-        if (strcmp(str, "false") == 0 ||
-            strcmp(str, "no")) {
+        if (strcmp(str, "false") == 0 || strcmp(str, "no") == 0)
             return false;
-        }
         Warn(param, str);
     } else {
         Maybe<int> value = ParseInt(str);
@@ -78,8 +74,14 @@ JitOptions::JitOptions()
     // RangeAnalysis results.
     SET_DEFAULT(checkRangeAnalysis, false);
 
+    // Whether to enable extra code to perform dynamic validations.
+    SET_DEFAULT(runExtraChecks, false);
+
     // Toggle whether eager scalar replacement is globally disabled.
     SET_DEFAULT(disableScalarReplacement, false);
+
+    // Toggle whether eager simd unboxing is globally disabled.
+    SET_DEFAULT(disableEagerSimdUnbox, false);
 
     // Toggle whether global value numbering is globally disabled.
     SET_DEFAULT(disableGvn, false);
@@ -104,6 +106,9 @@ JitOptions::JitOptions()
 
     // Toggles whether Effective Address Analysis is globally disabled.
     SET_DEFAULT(disableEaa, false);
+
+    // Toggles whether Alignment Mask Analysis is globally disabled.
+    SET_DEFAULT(disableAma, false);
 
     // Whether functions are compiled immediately.
     SET_DEFAULT(eagerCompilation, false);
@@ -155,10 +160,6 @@ JitOptions::JitOptions()
     SET_DEFAULT(osrPcMismatchesBeforeRecompile, 6000);
 
     // The bytecode length limit for small function.
-    //
-    // The default for this was arrived at empirically via benchmarking.
-    // We may want to tune it further after other optimizations have gone
-    // in.
     SET_DEFAULT(smallFunctionMaxBytecodeLength_, 100);
 }
 

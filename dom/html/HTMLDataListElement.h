@@ -44,7 +44,7 @@ public:
 protected:
   virtual ~HTMLDataListElement();
 
-  virtual JSObject* WrapNode(JSContext *aCx) override;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   // <option>'s list inside the datalist element.
   nsRefPtr<nsContentList> mOptions;

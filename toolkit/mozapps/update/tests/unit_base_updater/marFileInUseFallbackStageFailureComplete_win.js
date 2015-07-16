@@ -17,8 +17,8 @@ function run_test() {
                                      gTestFiles[13].fileName);
   let args = [getApplyDirPath() + DIR_RESOURCES, "input", "output", "-s",
               HELPER_SLEEP_TIMEOUT];
-  let fileInUseProcess = AUS_Cc["@mozilla.org/process/util;1"].
-                         createInstance(AUS_Ci.nsIProcess);
+  let fileInUseProcess = Cc["@mozilla.org/process/util;1"].
+                         createInstance(Ci.nsIProcess);
   fileInUseProcess.init(fileInUseBin);
   fileInUseProcess.run(false, args, args.length);
 
@@ -41,5 +41,6 @@ function checkUpdateApplied() {
 function checkUpdate() {
   checkFilesAfterUpdateFailure(getApplyDirFile, false, false);
   checkUpdateLogContains(ERR_RENAME_FILE);
+  standardInit();
   checkCallbackAppLog();
 }

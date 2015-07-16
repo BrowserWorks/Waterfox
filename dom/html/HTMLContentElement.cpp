@@ -43,9 +43,9 @@ NS_INTERFACE_MAP_END_INHERITING(nsGenericHTMLElement)
 NS_IMPL_ELEMENT_CLONE(HTMLContentElement)
 
 JSObject*
-HTMLContentElement::WrapNode(JSContext *aCx)
+HTMLContentElement::WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return HTMLContentElementBinding::Wrap(aCx, this);
+  return HTMLContentElementBinding::Wrap(aCx, this, aGivenProto);
 }
 
 nsresult
@@ -65,8 +65,7 @@ HTMLContentElement::BindToTree(nsIDocument* aDocument,
   if (containingShadow && !oldContainingShadow) {
     nsINode* parentNode = nsINode::GetParentNode();
     while (parentNode && parentNode != containingShadow) {
-      if (parentNode->IsElement() &&
-          parentNode->AsElement()->IsHTML(nsGkAtoms::content)) {
+      if (parentNode->IsHTMLElement(nsGkAtoms::content)) {
         // Content element in fallback content is not an insertion point.
         return NS_OK;
       }
@@ -363,8 +362,8 @@ DistributedContentList::IndexOf(nsIContent* aContent)
 }
 
 JSObject*
-DistributedContentList::WrapObject(JSContext* aCx)
+DistributedContentList::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return NodeListBinding::Wrap(aCx, this);
+  return NodeListBinding::Wrap(aCx, this, aGivenProto);
 }
 

@@ -36,6 +36,7 @@
 #include "xpcprivate.h"
 #include "xpcpublic.h"
 #include "nsContentUtils.h"
+#include "nsXULAppAPI.h"
 #include "WrapperFactory.h"
 
 #include "mozilla/AddonPathService.h"
@@ -372,35 +373,7 @@ mozJSComponentLoader::LoadModule(FileLocation& aFile)
         return nullptr;
 
     JSAutoCompartment ac(cx, entry->obj);
-
-    nsCOMPtr<nsIXPConnectJSObjectHolder> cm_holder;
-    rv = xpc->WrapNative(cx, entry->obj, cm,
-                         NS_GET_IID(nsIComponentManager),
-                         getter_AddRefs(cm_holder));
-
-    if (NS_FAILED(rv)) {
-        return nullptr;
-    }
-
-    JSObject* cm_jsobj = cm_holder->GetJSObject();
-    if (!cm_jsobj) {
-        return nullptr;
-    }
-
-    nsCOMPtr<nsIXPConnectJSObjectHolder> file_holder;
     RootedObject entryObj(cx, entry->obj);
-    rv = xpc->WrapNative(cx, entryObj, file,
-                         NS_GET_IID(nsIFile),
-                         getter_AddRefs(file_holder));
-
-    if (NS_FAILED(rv)) {
-        return nullptr;
-    }
-
-    JSObject* file_jsobj = file_holder->GetJSObject();
-    if (!file_jsobj) {
-        return nullptr;
-    }
 
     RootedValue NSGetFactory_val(cx);
     if (!JS_GetProperty(cx, entryObj, "NSGetFactory", &NSGetFactory_val) ||
@@ -614,17 +587,19 @@ mozJSComponentLoader::PrepareObjectForLocation(JSContext* aCx,
     if (testFile) {
         *aRealFile = true;
 
-        nsCOMPtr<nsIXPConnectJSObjectHolder> locationHolder;
-        rv = xpc->WrapNative(aCx, obj, aComponentFile,
-                             NS_GET_IID(nsIFile),
-                             getter_AddRefs(locationHolder));
-        NS_ENSURE_SUCCESS(rv, nullptr);
+        if (XRE_GetProcessType() == GeckoProcessType_Default) {
+            nsCOMPtr<nsIXPConnectJSObjectHolder> locationHolder;
+            rv = xpc->WrapNative(aCx, obj, aComponentFile,
+                                 NS_GET_IID(nsIFile),
+                                 getter_AddRefs(locationHolder));
+            NS_ENSURE_SUCCESS(rv, nullptr);
 
-        RootedObject locationObj(aCx, locationHolder->GetJSObject());
-        NS_ENSURE_TRUE(locationObj, nullptr);
+            RootedObject locationObj(aCx, locationHolder->GetJSObject());
+            NS_ENSURE_TRUE(locationObj, nullptr);
 
-        if (!JS_DefineProperty(aCx, obj, "__LOCATION__", locationObj, 0))
-            return nullptr;
+            if (!JS_DefineProperty(aCx, obj, "__LOCATION__", locationObj, 0))
+                return nullptr;
+        }
     }
 
     nsAutoCString nativePath;
@@ -671,6 +646,7 @@ mozJSComponentLoader::ObjectForLocation(ComponentLoaderInfo& aInfo,
     RootedObject obj(cx, PrepareObjectForLocation(cx, aComponentFile, aInfo.URI(),
                                                   mReuseLoaderGlobal, &realFile));
     NS_ENSURE_TRUE(obj, NS_ERROR_FAILURE);
+    MOZ_ASSERT(JS_IsGlobalObject(obj) == !mReuseLoaderGlobal);
 
     JSAutoCompartment ac(cx, obj);
 
@@ -778,7 +754,7 @@ mozJSComponentLoader::ObjectForLocation(ComponentLoaderInfo& aInfo,
             }
 
             if (!mReuseLoaderGlobal) {
-                Compile(cx, obj, options, buf, fileSize32, &script);
+                Compile(cx, options, buf, fileSize32, &script);
             } else {
                 // Note: exceptions will get handled further down;
                 // don't early return for them here.
@@ -828,8 +804,7 @@ mozJSComponentLoader::ObjectForLocation(ComponentLoaderInfo& aInfo,
             }
 
             if (!mReuseLoaderGlobal) {
-                script = Compile(cx, obj, options, buf,
-                                     fileSize32);
+                script = Compile(cx, options, buf, fileSize32);
             } else {
                 // Note: exceptions will get handled further down;
                 // don't early return for them here.
@@ -874,7 +849,7 @@ mozJSComponentLoader::ObjectForLocation(ComponentLoaderInfo& aInfo,
             buf[len] = '\0';
 
             if (!mReuseLoaderGlobal) {
-                Compile(cx, obj, options, buf, bytesRead, &script);
+                Compile(cx, options, buf, bytesRead, &script);
             } else {
                 // Note: exceptions will get handled further down;
                 // don't early return for them here.
@@ -897,6 +872,12 @@ mozJSComponentLoader::ObjectForLocation(ComponentLoaderInfo& aInfo,
     if (!script && !function) {
         return NS_ERROR_FAILURE;
     }
+
+    // We must have a script or a function (but not both!) here.  We have a
+    // script when we're not reusing the loader global, and a function
+    // otherwise.
+    MOZ_ASSERT(!!script != !!function);
+    MOZ_ASSERT(!!script == JS_IsGlobalObject(obj));
 
     if (writeToCache) {
         // We successfully compiled the script, so cache it.
@@ -940,7 +921,7 @@ mozJSComponentLoader::ObjectForLocation(ComponentLoaderInfo& aInfo,
         if (aPropagateExceptions)
             ContextOptionsRef(cx).setDontReportUncaught(true);
         if (script) {
-            ok = JS_ExecuteScript(cx, obj, script);
+            ok = JS_ExecuteScript(cx, script);
         } else {
             RootedValue rval(cx);
             ok = JS_CallFunction(cx, obj, function, JS::HandleValueArray::empty(), &rval);

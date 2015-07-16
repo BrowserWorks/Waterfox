@@ -15,17 +15,6 @@ using namespace js;
 using namespace js::jit;
 
 void
-LIRGeneratorX86::useBox(LInstruction* lir, size_t n, MDefinition* mir,
-                        LUse::Policy policy, bool useAtStart)
-{
-    MOZ_ASSERT(mir->type() == MIRType_Value);
-
-    ensureDefined(mir);
-    lir->setOperand(n, LUse(mir->virtualRegister(), policy, useAtStart));
-    lir->setOperand(n + 1, LUse(VirtualRegisterOfPayload(mir), policy, useAtStart));
-}
-
-void
 LIRGeneratorX86::useBoxFixed(LInstruction* lir, size_t n, MDefinition* mir, Register reg1,
                              Register reg2)
 {
@@ -183,6 +172,18 @@ LIRGeneratorX86::lowerUntypedPhiInput(MPhi* phi, uint32_t inputPosition, LBlock*
 }
 
 void
+LIRGeneratorX86::visitCompareExchangeTypedArrayElement(MCompareExchangeTypedArrayElement* ins)
+{
+    lowerCompareExchangeTypedArrayElement(ins, /* useI386ByteRegisters = */ true);
+}
+
+void
+LIRGeneratorX86::visitAtomicTypedArrayElementBinop(MAtomicTypedArrayElementBinop* ins)
+{
+    lowerAtomicTypedArrayElementBinop(ins, /* useI386ByteRegisters = */ true);
+}
+
+void
 LIRGeneratorX86::visitAsmJSUnsignedToDouble(MAsmJSUnsignedToDouble* ins)
 {
     MOZ_ASSERT(ins->input()->type() == MIRType_Int32);
@@ -202,55 +203,34 @@ void
 LIRGeneratorX86::visitAsmJSLoadHeap(MAsmJSLoadHeap* ins)
 {
     MDefinition* ptr = ins->ptr();
-    LAllocation ptrAlloc;
     MOZ_ASSERT(ptr->type() == MIRType_Int32);
 
-    // For the x86 it is best to keep the 'ptr' in a register if a bounds check is needed.
-    if (ptr->isConstant() && !ins->needsBoundsCheck()) {
-        // A bounds check is only skipped for a positive index.
-        MOZ_ASSERT(ptr->toConstant()->value().toInt32() >= 0);
-        ptrAlloc = LAllocation(ptr->toConstant()->vp());
-    } else {
-        ptrAlloc = useRegisterAtStart(ptr);
-    }
-    LAsmJSLoadHeap* lir = new(alloc()) LAsmJSLoadHeap(ptrAlloc);
-    define(lir, ins);
+    // For simplicity, require a register if we're going to emit a bounds-check
+    // branch, so that we don't have special cases for constants.
+    LAllocation ptrAlloc = gen->needsAsmJSBoundsCheckBranch(ins)
+                           ? useRegisterAtStart(ptr)
+                           : useRegisterOrZeroAtStart(ptr);
+
+    define(new(alloc()) LAsmJSLoadHeap(ptrAlloc), ins);
 }
 
 void
 LIRGeneratorX86::visitAsmJSStoreHeap(MAsmJSStoreHeap* ins)
 {
     MDefinition* ptr = ins->ptr();
-    LAsmJSStoreHeap* lir;
     MOZ_ASSERT(ptr->type() == MIRType_Int32);
 
-    if (ptr->isConstant() && !ins->needsBoundsCheck()) {
-        MOZ_ASSERT(ptr->toConstant()->value().toInt32() >= 0);
-        LAllocation ptrAlloc = LAllocation(ptr->toConstant()->vp());
-        switch (ins->accessType()) {
-          case Scalar::Int8: case Scalar::Uint8:
-            // See comment below.
-            lir = new(alloc()) LAsmJSStoreHeap(ptrAlloc, useFixed(ins->value(), eax));
-            break;
-          case Scalar::Int16: case Scalar::Uint16:
-          case Scalar::Int32: case Scalar::Uint32:
-          case Scalar::Float32: case Scalar::Float64:
-          case Scalar::Float32x4: case Scalar::Int32x4:
-            // See comment below.
-            lir = new(alloc()) LAsmJSStoreHeap(ptrAlloc, useRegisterAtStart(ins->value()));
-            break;
-          case Scalar::Uint8Clamped:
-          case Scalar::MaxTypedArrayViewType:
-            MOZ_CRASH("unexpected array type");
-        }
-        add(lir, ins);
-        return;
-    }
+    // For simplicity, require a register if we're going to emit a bounds-check
+    // branch, so that we don't have special cases for constants.
+    LAllocation ptrAlloc = gen->needsAsmJSBoundsCheckBranch(ins)
+                           ? useRegisterAtStart(ptr)
+                           : useRegisterOrZeroAtStart(ptr);
 
+    LAsmJSStoreHeap* lir = nullptr;
     switch (ins->accessType()) {
       case Scalar::Int8: case Scalar::Uint8:
         // See comment for LIRGeneratorX86::useByteOpRegister.
-        lir = new(alloc()) LAsmJSStoreHeap(useRegister(ins->ptr()), useFixed(ins->value(), eax));
+        lir = new(alloc()) LAsmJSStoreHeap(ptrAlloc, useFixed(ins->value(), eax));
         break;
       case Scalar::Int16: case Scalar::Uint16:
       case Scalar::Int32: case Scalar::Uint32:
@@ -258,13 +238,12 @@ LIRGeneratorX86::visitAsmJSStoreHeap(MAsmJSStoreHeap* ins)
       case Scalar::Float32x4: case Scalar::Int32x4:
         // For now, don't allow constant values. The immediate operand
         // affects instruction layout which affects patching.
-        lir = new(alloc()) LAsmJSStoreHeap(useRegisterAtStart(ptr), useRegisterAtStart(ins->value()));
+        lir = new(alloc()) LAsmJSStoreHeap(ptrAlloc, useRegisterAtStart(ins->value()));
         break;
       case Scalar::Uint8Clamped:
       case Scalar::MaxTypedArrayViewType:
         MOZ_CRASH("unexpected array type");
     }
-
     add(lir, ins);
 }
 
@@ -290,6 +269,127 @@ LIRGeneratorX86::visitStoreTypedArrayElementStatic(MStoreTypedArrayElementStatic
     }
 
     add(lir, ins);
+}
+
+void
+LIRGeneratorX86::visitAsmJSCompareExchangeHeap(MAsmJSCompareExchangeHeap* ins)
+{
+    MOZ_ASSERT(ins->accessType() < Scalar::Float32);
+
+    MDefinition* ptr = ins->ptr();
+    MOZ_ASSERT(ptr->type() == MIRType_Int32);
+
+    bool byteArray = byteSize(ins->accessType()) == 1;
+
+    // Register allocation:
+    //
+    // The output may not be used, but eax will be clobbered regardless
+    // so pin the output to eax.
+    //
+    // oldval must be in a register.
+    //
+    // newval must be in a register.  If the source is a byte array
+    // then newval must be a register that has a byte size: this must
+    // be ebx, ecx, or edx (eax is taken).
+    //
+    // Bug #1077036 describes some optimization opportunities.
+
+    const LAllocation oldval = useRegister(ins->oldValue());
+    const LAllocation newval = byteArray ? useFixed(ins->newValue(), ebx) : useRegister(ins->newValue());
+
+    LAsmJSCompareExchangeHeap* lir =
+        new(alloc()) LAsmJSCompareExchangeHeap(useRegister(ptr), oldval, newval);
+
+    lir->setAddrTemp(temp());
+    defineFixed(lir, ins, LAllocation(AnyRegister(eax)));
+}
+
+void
+LIRGeneratorX86::visitAsmJSAtomicBinopHeap(MAsmJSAtomicBinopHeap* ins)
+{
+    MOZ_ASSERT(ins->accessType() < Scalar::Float32);
+
+    MDefinition* ptr = ins->ptr();
+    MOZ_ASSERT(ptr->type() == MIRType_Int32);
+
+    bool byteArray = byteSize(ins->accessType()) == 1;
+
+    // Case 1: the result of the operation is not used.
+    //
+    // We'll emit a single instruction: LOCK ADD, LOCK SUB, LOCK AND,
+    // LOCK OR, or LOCK XOR.  These can all take an immediate.
+
+    if (!ins->hasUses()) {
+        LAllocation value;
+        if (byteArray && !ins->value()->isConstant())
+            value = useFixed(ins->value(), ebx);
+        else
+            value = useRegisterOrConstant(ins->value());
+        LAsmJSAtomicBinopHeapForEffect* lir =
+            new(alloc()) LAsmJSAtomicBinopHeapForEffect(useRegister(ptr), value);
+        lir->setAddrTemp(temp());
+        add(lir, ins);
+        return;
+    }
+
+    // Case 2: the result of the operation is used.
+    //
+    // For ADD and SUB we'll use XADD:
+    //
+    //    movl       value, output
+    //    lock xaddl output, mem
+    //
+    // For the 8-bit variants XADD needs a byte register for the
+    // output only, we can still set up with movl; just pin the output
+    // to eax (or ebx / ecx / edx).
+    //
+    // For AND/OR/XOR we need to use a CMPXCHG loop:
+    //
+    //    movl          *mem, eax
+    // L: mov           eax, temp
+    //    andl          value, temp
+    //    lock cmpxchg  temp, mem  ; reads eax also
+    //    jnz           L
+    //    ; result in eax
+    //
+    // Note the placement of L, cmpxchg will update eax with *mem if
+    // *mem does not have the expected value, so reloading it at the
+    // top of the loop would be redundant.
+    //
+    // We want to fix eax as the output.  We also need a temp for
+    // the intermediate value.
+    //
+    // For the 8-bit variants the temp must have a byte register.
+    //
+    // There are optimization opportunities:
+    //  - better 8-bit register allocation and instruction selection, Bug #1077036.
+
+    bool bitOp = !(ins->operation() == AtomicFetchAddOp || ins->operation() == AtomicFetchSubOp);
+    LDefinition tempDef = LDefinition::BogusTemp();
+    LAllocation value;
+
+    if (byteArray) {
+        value = useFixed(ins->value(), ebx);
+        if (bitOp)
+            tempDef = tempFixed(ecx);
+    } else if (bitOp || ins->value()->isConstant()) {
+        value = useRegisterOrConstant(ins->value());
+        if (bitOp)
+            tempDef = temp();
+    } else {
+        value = useRegisterAtStart(ins->value());
+    }
+
+    LAsmJSAtomicBinopHeap* lir =
+        new(alloc()) LAsmJSAtomicBinopHeap(useRegister(ptr), value, tempDef);
+
+    lir->setAddrTemp(temp());
+    if (byteArray || bitOp)
+        defineFixed(lir, ins, LAllocation(AnyRegister(eax)));
+    else if (ins->value()->isConstant())
+        define(lir, ins);
+    else
+        defineReuseInput(lir, ins, LAsmJSAtomicBinopHeap::valueOp);
 }
 
 void

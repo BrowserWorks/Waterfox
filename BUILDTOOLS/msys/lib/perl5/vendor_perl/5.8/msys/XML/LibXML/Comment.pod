@@ -1,0 +1,43 @@
+=head1 NAME
+
+XML::LibXML::Comment - XML::LibXML Comment Class
+
+=head1 SYNOPSIS
+
+  $node = XML::LibXML::Comment( $content );
+
+
+=head1 DESCRIPTION
+
+This class provides all functions of XML::LibXML::Text, but for comment nodes.
+This can be done, since only the output of the node types is different, but not
+the data structure. :-)
+
+=over 4
+
+=item B<new>
+
+  $node = XML::LibXML::Comment( $content );
+
+The constructor is the only provided function for this package. It is required,
+because libxml2 treats text nodes and comment nodes slightly differently.
+
+
+
+=back
+
+=head1 AUTHORS
+
+Matt Sergeant, 
+Christian Glahn, 
+Petr Pajas, 
+
+=head1 VERSION
+
+1.63
+
+=head1 COPYRIGHT
+
+2001-2007, AxKit.com Ltd; 2002-2006 Christian Glahn; 2006-2007 Petr Pajas, All rights reserved.
+
+=cut

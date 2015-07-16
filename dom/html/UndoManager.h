@@ -26,7 +26,7 @@ class DOMTransaction;
 class DOMTransactionCallback;
 
 class UndoManager final : public nsISupports,
-                              public nsWrapperCache
+                          public nsWrapperCache
 {
   friend class TxnScopeGuard;
 public:
@@ -53,9 +53,9 @@ public:
     return mHostNode;
   }
 
-  virtual JSObject* WrapObject(JSContext* aCx) override
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override
   {
-    return mozilla::dom::UndoManagerBinding::Wrap(aCx, this);
+    return mozilla::dom::UndoManagerBinding::Wrap(aCx, this, aGivenProto);
   }
 
   nsITransactionManager* GetTransactionManager();

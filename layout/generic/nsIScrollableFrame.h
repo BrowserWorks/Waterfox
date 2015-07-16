@@ -148,17 +148,17 @@ public:
   /**
    * Get the element resolution.
    */
-  virtual gfxSize GetResolution() const = 0;
+  virtual float GetResolution() const = 0;
   /**
    * Set the element resolution.
    */
-  virtual void SetResolution(const gfxSize& aResolution) = 0;
+  virtual void SetResolution(float aResolution) = 0;
   /**
    * Set the element resolution and specify that content should be scaled by
    * the amount of the resolution. This is only meaningful for root scroll
    * frames. See nsIDOMWindowUtils.setResolutionAndScaleTo().
    */
-  virtual void SetResolutionAndScaleTo(const gfxSize& aResolution) = 0;
+  virtual void SetResolutionAndScaleTo(float aResolution) = 0;
   /**
    * Return how much we would try to scroll by in each direction if
    * asked to scroll by one "line" vertically and horizontally.
@@ -199,6 +199,15 @@ public:
    */
   enum ScrollMode { INSTANT, SMOOTH, SMOOTH_MSD, NORMAL };
   /**
+   * Some platforms (OSX) may generate additional scrolling events even
+   * after the user has stopped scrolling, simulating a momentum scrolling
+   * effect resulting from fling gestures.
+   * SYNTHESIZED_MOMENTUM_EVENT indicates that the scrolling is being requested
+   * by such a synthesized event and may be ignored if another scroll has
+   * been started since the last actual user input.
+   */
+  enum ScrollMomentum { NOT_MOMENTUM, SYNTHESIZED_MOMENTUM_EVENT };
+  /**
    * @note This method might destroy the frame, pres shell and other objects.
    * Clamps aScrollPosition to GetScrollRange and sets the scroll position
    * to that value.
@@ -208,7 +217,9 @@ public:
    * The choosen point will be as close as possible to aScrollPosition.
    */
   virtual void ScrollTo(nsPoint aScrollPosition, ScrollMode aMode,
-                        const nsRect* aRange = nullptr) = 0;
+                        const nsRect* aRange = nullptr,
+                        nsIScrollbarMediator::ScrollSnapMode aSnap
+                          = nsIScrollbarMediator::DISABLE_SNAP) = 0;
   /**
    * @note This method might destroy the frame, pres shell and other objects.
    * Scrolls to a particular position in integer CSS pixels.
@@ -262,7 +273,28 @@ public:
   virtual void ScrollBy(nsIntPoint aDelta, ScrollUnit aUnit, ScrollMode aMode,
                         nsIntPoint* aOverflow = nullptr,
                         nsIAtom* aOrigin = nullptr,
-                        bool aIsMomentum = false) = 0;
+                        ScrollMomentum aMomentum = NOT_MOMENTUM,
+                        nsIScrollbarMediator::ScrollSnapMode aSnap
+                          = nsIScrollbarMediator::DISABLE_SNAP) = 0;
+
+  /**
+   * Perform scroll snapping, possibly resulting in a smooth scroll to
+   * maintain the scroll snap position constraints.  A predicted landing
+   * position determined by the APZC is used to select the best matching
+   * snap point, allowing touchscreen fling gestures to navigate between
+   * snap points.
+   * @param aDestination The desired landing position of the fling, which
+   * is used to select the best matching snap point.
+   */
+  virtual void FlingSnap(const mozilla::CSSPoint& aDestination) = 0;
+  /**
+   * Perform scroll snapping, possibly resulting in a smooth scroll to
+   * maintain the scroll snap position constraints.  Velocity sampled from
+   * main thread scrolling is used to determine best matching snap point
+   * when called after a fling gesture on a trackpad or mouse wheel.
+   */
+  virtual void ScrollSnap() = 0;
+
   /**
    * @note This method might destroy the frame, pres shell and other objects.
    * This tells the scroll frame to try scrolling to the scroll
@@ -397,6 +429,9 @@ public:
    * Mark the scrollbar frames for reflow.
    */
   virtual void MarkScrollbarsDirtyForReflow() const = 0;
+
+  virtual void SetTransformingByAPZ(bool aTransforming) = 0;
+  virtual bool IsTransformingByAPZ() const = 0;
 };
 
 #endif

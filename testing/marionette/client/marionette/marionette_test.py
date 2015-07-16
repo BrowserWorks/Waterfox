@@ -207,6 +207,7 @@ class CommonTestCase(unittest.TestCase):
     __metaclass__ = MetaParameterized
     match_re = None
     failureException = AssertionError
+    pydebugger = None
 
     def __init__(self, methodName, **kwargs):
         unittest.TestCase.__init__(self, methodName)
@@ -215,6 +216,10 @@ class CommonTestCase(unittest.TestCase):
         self.start_time = 0
         self.expected = kwargs.pop('expected', 'pass')
         self.logger = get_default_logger()
+
+    def _enter_pm(self):
+        if self.pydebugger:
+            self.pydebugger.post_mortem(sys.exc_info()[2])
 
     def _addSkip(self, result, reason):
         addSkip = getattr(result, 'addSkip', None)
@@ -277,6 +282,7 @@ class CommonTestCase(unittest.TestCase):
             except _ExpectedFailure as e:
                 expected_failure(result, e.exc_info)
             except:
+                self._enter_pm()
                 result.addError(self, sys.exc_info())
             else:
                 try:
@@ -289,6 +295,7 @@ class CommonTestCase(unittest.TestCase):
                     else:
                         testMethod()
                 except self.failureException:
+                    self._enter_pm()
                     result.addFailure(self, sys.exc_info())
                 except KeyboardInterrupt:
                     raise
@@ -305,6 +312,7 @@ class CommonTestCase(unittest.TestCase):
                 except SkipTest as e:
                     self._addSkip(result, str(e))
                 except:
+                    self._enter_pm()
                     result.addError(self, sys.exc_info())
                 else:
                     success = True
@@ -321,6 +329,7 @@ class CommonTestCase(unittest.TestCase):
                 except _ExpectedFailure as e:
                     expected_failure(result, e.exc_info)
                 except:
+                    self._enter_pm()
                     result.addError(self, sys.exc_info())
                     success = False
             # Here we could handle doCleanups() instead of calling cleanTest directly
@@ -635,10 +644,10 @@ class MarionetteTestCase(CommonTestCase):
                                        (self.filepath.replace('\\', '\\\\'), self.methodName))
 
     def tearDown(self):
-        self.marionette.check_for_crash()
-        self.marionette.set_context("content")
-        self.marionette.execute_script("log('TEST-END: %s:%s')" %
-                                       (self.filepath.replace('\\', '\\\\'), self.methodName))
+        if not self.marionette.check_for_crash():
+           self.marionette.set_context("content")
+           self.marionette.execute_script("log('TEST-END: %s:%s')" %
+                                          (self.filepath.replace('\\', '\\\\'), self.methodName))
         self.marionette.test_name = None
         CommonTestCase.tearDown(self)
 

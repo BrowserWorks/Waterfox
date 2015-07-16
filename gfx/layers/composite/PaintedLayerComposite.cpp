@@ -19,7 +19,7 @@
 #include "mozilla/layers/Effects.h"     // for EffectChain
 #include "mozilla/mozalloc.h"           // for operator delete
 #include "nsAString.h"
-#include "nsAutoPtr.h"                  // for nsRefPtr
+#include "nsRefPtr.h"                   // for nsRefPtr
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_CTOR, etc
 #include "nsMathUtils.h"                // for NS_lround
 #include "nsPoint.h"                    // for nsIntPoint
@@ -53,7 +53,6 @@ bool
 PaintedLayerComposite::SetCompositableHost(CompositableHost* aHost)
 {
   switch (aHost->GetType()) {
-    case CompositableType::CONTENT_INC:
     case CompositableType::CONTENT_TILED:
     case CompositableType::CONTENT_SINGLE:
     case CompositableType::CONTENT_DOUBLE:
@@ -90,7 +89,7 @@ PaintedLayerComposite::SetLayerManager(LayerManagerComposite* aManager)
 {
   LayerComposite::SetLayerManager(aManager);
   mManager = aManager;
-  if (mBuffer) {
+  if (mBuffer && mCompositor) {
     mBuffer->SetCompositor(mCompositor);
   }
 }

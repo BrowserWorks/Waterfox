@@ -65,25 +65,32 @@ WrapperAnswer::ok(ReturnStatus* rs)
 }
 
 bool
-WrapperAnswer::RecvPreventExtensions(const ObjectId& objId, ReturnStatus* rs,
-                                     bool* succeeded)
+WrapperAnswer::ok(ReturnStatus* rs, const JS::ObjectOpResult& result)
+{
+    *rs = result
+          ? ReturnStatus(ReturnSuccess())
+          : ReturnStatus(ReturnObjectOpResult(result.failureCode()));
+    return true;
+}
+
+bool
+WrapperAnswer::RecvPreventExtensions(const ObjectId& objId, ReturnStatus* rs)
 {
     AutoJSAPI jsapi;
     if (NS_WARN_IF(!jsapi.Init(scopeForTargetObjects())))
         return false;
     JSContext* cx = jsapi.cx();
 
-    *succeeded = false;
     RootedObject obj(cx, findObjectById(cx, objId));
     if (!obj)
         return fail(cx, rs);
 
-    if (!JS_PreventExtensions(cx, obj, succeeded))
+    ObjectOpResult success;
+    if (!JS_PreventExtensions(cx, obj, success))
         return fail(cx, rs);
 
     LOG("%s.preventExtensions()", ReceiverObj(objId));
-
-    return ok(rs);
+    return ok(rs, success);
 }
 
 static void
@@ -179,22 +186,19 @@ WrapperAnswer::RecvDefineProperty(const ObjectId& objId, const JSIDVariant& idVa
     if (!toDescriptor(cx, descriptor, &desc))
         return fail(cx, rs);
 
-    bool ignored;
-    if (!js_DefineOwnProperty(cx, obj, id, desc, &ignored))
+    ObjectOpResult success;
+    if (!js::DefineOwnProperty(cx, obj, id, desc, success))
         return fail(cx, rs);
-
-    return ok(rs);
+    return ok(rs, success);
 }
 
 bool
-WrapperAnswer::RecvDelete(const ObjectId& objId, const JSIDVariant& idVar, ReturnStatus* rs,
-                          bool* success)
+WrapperAnswer::RecvDelete(const ObjectId& objId, const JSIDVariant& idVar, ReturnStatus* rs)
 {
     AutoJSAPI jsapi;
     if (NS_WARN_IF(!jsapi.Init(scopeForTargetObjects())))
         return false;
     JSContext* cx = jsapi.cx();
-    *success = false;
 
     RootedObject obj(cx, findObjectById(cx, objId));
     if (!obj)
@@ -206,10 +210,10 @@ WrapperAnswer::RecvDelete(const ObjectId& objId, const JSIDVariant& idVar, Retur
     if (!fromJSIDVariant(cx, idVar, &id))
         return fail(cx, rs);
 
-    if (!JS_DeletePropertyById2(cx, obj, id, success))
+    ObjectOpResult success;
+    if (!JS_DeletePropertyById(cx, obj, id, success))
         return fail(cx, rs);
-
-    return ok(rs);
+    return ok(rs, success);
 }
 
 bool
@@ -304,24 +308,15 @@ WrapperAnswer::RecvGet(const ObjectId& objId, const ObjectVariant& receiverVar,
 }
 
 bool
-WrapperAnswer::RecvSet(const ObjectId& objId, const ObjectVariant& receiverVar,
-                       const JSIDVariant& idVar, const bool& strict, const JSVariant& value,
-                       ReturnStatus* rs, JSVariant* result)
+WrapperAnswer::RecvSet(const ObjectId& objId, const JSIDVariant& idVar, const JSVariant& value,
+                       const JSVariant& receiverVar, ReturnStatus* rs)
 {
     // We may run scripted setters.
     AutoEntryScript aes(xpc::NativeGlobal(scopeForTargetObjects()));
     JSContext* cx = aes.cx();
 
-    // The outparam will be written to the buffer, so it must be set even if
-    // the parent won't read it.
-    *result = UndefinedVariant();
-
     RootedObject obj(cx, findObjectById(cx, objId));
     if (!obj)
-        return fail(cx, rs);
-
-    RootedObject receiver(cx, fromObjectVariant(cx, receiverVar));
-    if (!receiver)
         return fail(cx, rs);
 
     LOG("set %s[%s] = %s", ReceiverObj(objId), Identifier(idVar), InVariant(value));
@@ -330,19 +325,19 @@ WrapperAnswer::RecvSet(const ObjectId& objId, const ObjectVariant& receiverVar,
     if (!fromJSIDVariant(cx, idVar, &id))
         return fail(cx, rs);
 
-    MOZ_ASSERT(obj == receiver);
-
     RootedValue val(cx);
     if (!fromVariant(cx, value, &val))
         return fail(cx, rs);
 
-    if (!JS_SetPropertyById(cx, obj, id, val))
+    RootedValue receiver(cx);
+    if (!fromVariant(cx, receiverVar, &receiver))
         return fail(cx, rs);
 
-    if (!toVariant(cx, val, result))
+    ObjectOpResult result;
+    if (!JS_ForwardSetPropertyTo(cx, obj, id, val, receiver, result))
         return fail(cx, rs);
 
-    return ok(rs);
+    return ok(rs, result);
 }
 
 bool
@@ -513,12 +508,12 @@ WrapperAnswer::RecvObjectClassIs(const ObjectId& objId, const uint32_t& classVal
 
     LOG("%s.objectClassIs()", ReceiverObj(objId));
 
-    *result = js_ObjectClassIs(cx, obj, (js::ESClassValue)classValue);
+    *result = js::ObjectClassIs(cx, obj, (js::ESClassValue)classValue);
     return true;
 }
 
 bool
-WrapperAnswer::RecvClassName(const ObjectId& objId, nsString* name)
+WrapperAnswer::RecvClassName(const ObjectId& objId, nsCString* name)
 {
     AutoJSAPI jsapi;
     if (NS_WARN_IF(!jsapi.Init(scopeForTargetObjects())))
@@ -533,12 +528,12 @@ WrapperAnswer::RecvClassName(const ObjectId& objId, nsString* name)
 
     LOG("%s.className()", ReceiverObj(objId));
 
-    *name = NS_ConvertASCIItoUTF16(js_ObjectClassName(cx, obj));
+    *name = js::ObjectClassName(cx, obj);
     return true;
 }
 
 bool
-WrapperAnswer::RecvGetPrototypeOf(const ObjectId& objId, ReturnStatus* rs, ObjectOrNullVariant* result)
+WrapperAnswer::RecvGetPrototype(const ObjectId& objId, ReturnStatus* rs, ObjectOrNullVariant* result)
 {
     *result = NullVariant();
 
@@ -558,7 +553,7 @@ WrapperAnswer::RecvGetPrototypeOf(const ObjectId& objId, ReturnStatus* rs, Objec
     if (!toObjectOrNullVariant(cx, proto, result))
         return fail(cx, rs);
 
-    LOG("getPrototypeOf(%s)", ReceiverObj(objId));
+    LOG("getPrototype(%s)", ReceiverObj(objId));
 
     return ok(rs);
 }

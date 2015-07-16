@@ -254,8 +254,12 @@ BluetoothParent::RecvPBluetoothRequestConstructor(
       return actor->DoRequest(aRequest.get_ConnectGattClientRequest());
     case Request::TDisconnectGattClientRequest:
       return actor->DoRequest(aRequest.get_DisconnectGattClientRequest());
+    case Request::TDiscoverGattServicesRequest:
+      return actor->DoRequest(aRequest.get_DiscoverGattServicesRequest());
     case Request::TUnregisterGattClientRequest:
       return actor->DoRequest(aRequest.get_UnregisterGattClientRequest());
+    case Request::TGattClientReadRemoteRssiRequest:
+      return actor->DoRequest(aRequest.get_GattClientReadRemoteRssiRequest());
     default:
       MOZ_CRASH("Unknown type!");
   }
@@ -718,6 +722,18 @@ BluetoothRequestParent::DoRequest(const DisconnectGattClientRequest& aRequest)
 }
 
 bool
+BluetoothRequestParent::DoRequest(const DiscoverGattServicesRequest& aRequest)
+{
+  MOZ_ASSERT(mService);
+  MOZ_ASSERT(mRequestType == Request::TDiscoverGattServicesRequest);
+
+  mService->DiscoverGattServicesInternal(aRequest.appUuid(),
+                                         mReplyRunnable.get());
+
+  return true;
+}
+
+bool
 BluetoothRequestParent::DoRequest(const UnregisterGattClientRequest& aRequest)
 {
   MOZ_ASSERT(mService);
@@ -725,6 +741,20 @@ BluetoothRequestParent::DoRequest(const UnregisterGattClientRequest& aRequest)
 
   mService->UnregisterGattClientInternal(aRequest.clientIf(),
                                          mReplyRunnable.get());
+
+  return true;
+}
+
+bool
+BluetoothRequestParent::DoRequest(
+  const GattClientReadRemoteRssiRequest& aRequest)
+{
+  MOZ_ASSERT(mService);
+  MOZ_ASSERT(mRequestType == Request::TGattClientReadRemoteRssiRequest);
+
+  mService->GattClientReadRemoteRssiInternal(aRequest.clientIf(),
+                                             aRequest.deviceAddress(),
+                                             mReplyRunnable.get());
 
   return true;
 }

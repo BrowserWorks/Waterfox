@@ -24,6 +24,21 @@ const DevToolsUtils = devtools.require("devtools/toolkit/DevToolsUtils.js");
 const { DebuggerServer } = devtools.require("devtools/server/main");
 const { DebuggerServer: WorkerDebuggerServer } = worker.require("devtools/server/main");
 
+function getSources(threadClient) {
+  dump("Getting sources.\n");
+  return rdpRequest(threadClient, threadClient.getSources);
+}
+
+function findSource(sources, url) {
+  dump("Finding source with url '" + url + "'.\n");
+  for (let source of sources) {
+    if (source.url === url) {
+      return source;
+    }
+  }
+  return null;
+}
+
 function dumpn(msg) {
   dump("DBG-TEST: " + msg + "\n");
 }
@@ -224,6 +239,24 @@ function finishClient(aClient)
 {
   aClient.close(function() {
     do_test_finished();
+  });
+}
+
+// Create a server, connect to it and fetch tab actors for the parent process;
+// pass |aCallback| the debugger client and tab actor form with all actor IDs.
+function get_chrome_actors(callback)
+{
+  if (!DebuggerServer.initialized) {
+    DebuggerServer.init();
+    DebuggerServer.addBrowserActors();
+  }
+  DebuggerServer.allowChromeProcess = true;
+
+  let client = new DebuggerClient(DebuggerServer.connectPipe());
+  client.connect(() => {
+    client.getProcess().then(response => {
+      callback(client, response.form);
+    });
   });
 }
 
@@ -535,17 +568,6 @@ function interrupt(threadClient) {
 function resumeAndWaitForPause(client, threadClient) {
   const paused = waitForPause(client);
   return resume(threadClient).then(() => paused);
-}
-
-/**
- * Get the list of sources for the specified thread.
- *
- * @param ThreadClient threadClient
- * @returns Promise
- */
-function getSources(threadClient) {
-  dumpn("Getting sources.");
-  return rdpRequest(threadClient, threadClient.getSources);
 }
 
 /**

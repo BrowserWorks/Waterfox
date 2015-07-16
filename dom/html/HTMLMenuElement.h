@@ -15,8 +15,8 @@ namespace mozilla {
 namespace dom {
 
 class HTMLMenuElement final : public nsGenericHTMLElement,
-                                  public nsIDOMHTMLMenuElement,
-                                  public nsIHTMLMenu
+                              public nsIDOMHTMLMenuElement,
+                              public nsIHTMLMenu
 {
 public:
   explicit HTMLMenuElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
@@ -73,7 +73,7 @@ public:
 protected:
   virtual ~HTMLMenuElement();
 
-  virtual JSObject* WrapNode(JSContext *aCx) override;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 
 protected:

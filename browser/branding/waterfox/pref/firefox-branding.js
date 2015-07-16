@@ -1,6 +1,9 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ 
+pref("startup.homepage_override_url","https://www.waterfoxproject.org/charity.html");
+pref("startup.homepage_welcome_url","");
 
 // Whether or not app updates are enabled
 pref("app.update.enabled", true);
@@ -34,7 +37,7 @@ pref("app.update.url.manual", "https://www.waterfoxproject.org/");
 
 // A default value for the "More information about this update" link
 // supplied in the "An update is available" page of the update wizard.
-pref("app.update.url.details", "https://www.waterfoxproject.org/releases/%VERSION%/notes.html");
+pref("app.update.url.details", "https://www.waterfoxproject.org/blog/");
 
 // Interval: Time between checks for a new version (in seconds)
 //           default=12 hours

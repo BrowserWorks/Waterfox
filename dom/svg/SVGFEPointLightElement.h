@@ -26,7 +26,7 @@ protected:
     : SVGFEPointLightElementBase(aNodeInfo)
   {
   }
-  virtual JSObject* WrapNode(JSContext *cx) override;
+  virtual JSObject* WrapNode(JSContext *cx, JS::Handle<JSObject*> aGivenProto) override;
 
 public:
   virtual AttributeMap ComputeLightAttributes(nsSVGFilterInstance* aInstance) override;

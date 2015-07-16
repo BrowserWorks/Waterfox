@@ -35,7 +35,7 @@ public:
 };
 
 class HTMLBodyElement final : public nsGenericHTMLElement,
-                                  public nsIDOMHTMLBodyElement
+                              public nsIDOMHTMLBodyElement
 {
 public:
   using Element::GetText;
@@ -134,7 +134,7 @@ public:
 protected:
   virtual ~HTMLBodyElement();
 
-  virtual JSObject* WrapNode(JSContext *aCx) override;
+  virtual JSObject* WrapNode(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   nsRefPtr<BodyRule> mContentStyleRule;
 

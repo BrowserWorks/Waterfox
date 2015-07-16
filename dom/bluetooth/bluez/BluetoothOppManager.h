@@ -43,7 +43,6 @@ public:
 
   static const int MAX_PACKET_LENGTH = 0xFFFE;
 
-  virtual ~BluetoothOppManager();
   static BluetoothOppManager* Get();
   void ClientDataHandler(mozilla::ipc::UnixSocketRawData* aMessage);
   void ServerDataHandler(mozilla::ipc::UnixSocketRawData* aMessage);
@@ -72,6 +71,9 @@ public:
   virtual void OnSocketConnectSuccess(BluetoothSocket* aSocket) override;
   virtual void OnSocketConnectError(BluetoothSocket* aSocket) override;
   virtual void OnSocketDisconnect(BluetoothSocket* aSocket) override;
+
+protected:
+  virtual ~BluetoothOppManager();
 
 private:
   BluetoothOppManager();

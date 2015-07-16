@@ -134,7 +134,7 @@ check-style::
 
 check-jit-test::
 	$(JITTEST_ASAN_ENV) $(wildcard $(RUN_TEST_PROGRAM)) $(PYTHON) -u $(srcdir)/jit-test/jit_test.py \
-	        --no-slow --no-progress --tinderbox --tbpl \
+	        --no-slow --no-progress --format=automation --jitflags=all \
 			$(JITTEST_VALGRIND_FLAG) \
 			$(JITTEST_EXTRA_ARGS) \
 	        $(DIST)/bin/$(JS_SHELL_NAME)$(BIN_SUFFIX)
@@ -143,7 +143,7 @@ check:: check-style
 
 check-jstests:
 	$(wildcard $(RUN_TEST_PROGRAM)) $(PYTHON) -u $(srcdir)/tests/jstests.py \
-		--no-progress --tinderbox --timeout 300 \
+		--no-progress --format=automation --timeout 300 \
 		$(JSTESTS_EXTRA_ARGS) \
 		$(DIST)/bin/$(JS_SHELL_NAME)$(BIN_SUFFIX)
 
@@ -314,6 +314,7 @@ selfhosting_srcs := \
   $(srcdir)/builtin/Map.js \
   $(srcdir)/builtin/Number.js \
   $(srcdir)/builtin/Object.js \
+  $(srcdir)/builtin/RegExp.js \
   $(srcdir)/builtin/String.js \
   $(srcdir)/builtin/Set.js \
   $(srcdir)/builtin/TypedArray.js \
@@ -481,4 +482,11 @@ RematerializedFrame.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
 RematerializedFrame.$(OBJ_SUFFIX): CXXFLAGS := -O2
 MemoryMetrics.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
 MemoryMetrics.$(OBJ_SUFFIX): CXXFLAGS := -O2
+AtomicsObject.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+AtomicsObject.$(OBJ_SUFFIX): CXXFLAGS := -O2
+ErrorObject.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+ErrorObject.$(OBJ_SUFFIX): CXXFLAGS := -O2
+jsmath.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+jsmath.$(OBJ_SUFFIX): CXXFLAGS := -O2
+
 endif

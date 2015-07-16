@@ -13,7 +13,7 @@ from copy import copy
 from subprocess import list2cmdline, call
 
 from lib.results import NullTestOutput
-from lib.tests import TestCase, TBPL_FLAGS
+from lib.tests import TestCase, get_jitflags
 from lib.results import ResultsSink
 from lib.progressbar import ProgressBar
 
@@ -92,11 +92,16 @@ def parse_args():
                           ' (in seconds).')
     harness_og.add_option('-a', '--args', dest='shell_args', default='',
                           help='Extra args to pass to the JS shell.')
-    harness_og.add_option('--jitflags', default='',
-                          help="Obsolete. Does nothing.")
+    harness_og.add_option('--jitflags', dest='jitflags', default='none',
+                          type='string',
+                          help='IonMonkey option combinations. One of all,'
+                          ' debug, ion, and none (default %default).')
     harness_og.add_option('--tbpl', action='store_true',
                           help='Runs each test in all configurations tbpl'
                           ' tests.')
+    harness_og.add_option('--tbpl-debug', action='store_true',
+                          help='Runs each test in some faster configurations'
+                          ' tbpl tests.')
     harness_og.add_option('-g', '--debug', action='store_true',
                           help='Run a test in debugger.')
     harness_og.add_option('--debugger', default='gdb -q --args',
@@ -110,6 +115,8 @@ def parse_args():
                           help='Run tests in valgrind.')
     harness_og.add_option('--valgrind-args', default='',
                           help='Extra args to pass to valgrind.')
+    harness_og.add_option('--rr', action='store_true',
+                          help='Run tests under RR record-and-replay debugger.')
     op.add_option_group(harness_og)
 
     input_og = OptionGroup(op, "Inputs", "Change what tests are run.")
@@ -152,8 +159,13 @@ def parse_args():
     output_og.add_option('--no-progress', dest='hide_progress',
                          action='store_true',
                          help='Do not show the progress bar.')
-    output_og.add_option('--tinderbox', action='store_true',
-                         help='Use tinderbox-parseable output format.')
+    output_og.add_option('--tinderbox', dest='format', action='store_const',
+                         const='automation',
+                         help='Use automation-parseable output format.')
+    output_og.add_option('--format', dest='format', default='none',
+                          type='choice', choices=['automation', 'none'],
+                          help='Output format. Either automation or none'
+                         ' (default %default).')
     op.add_option_group(output_og)
 
     special_og = OptionGroup(op, "Special",
@@ -174,9 +186,9 @@ def parse_args():
     if options.js_shell is None and not options.make_manifests:
         op.error('missing JS_SHELL argument')
 
-    # Valgrind and gdb are mutually exclusive.
-    if options.valgrind and options.debug:
-        op.error("--valgrind and --debug are mutually exclusive.")
+    # Valgrind, gdb, and rr are mutually exclusive.
+    if sum(map(lambda e: 1 if e else 0, [options.valgrind, options.debug, options.rr])) > 1:
+        op.error("--valgrind, --debug, and --rr are mutually exclusive.")
 
     # Fill the debugger field, as needed.
     prefix = options.debugger.split() if options.debug else []
@@ -185,6 +197,8 @@ def parse_args():
         if os.uname()[0] == 'Darwin':
             prefix.append('--dsymutil=yes')
         options.show_output = True
+    if options.rr:
+        prefix = ['rr', 'record']
 
     js_cmd_args = options.shell_args.split()
     if options.jorendb:
@@ -230,7 +244,7 @@ def parse_args():
             raise SystemExit("Failed to open output file: " + str(ex))
 
     # Hide the progress bar if it will get in the way of other output.
-    options.hide_progress = (options.tinderbox or
+    options.hide_progress = (options.format == 'automation' or
                              not ProgressBar.conservative_isatty() or
                              options.hide_progress)
 
@@ -265,9 +279,16 @@ def load_tests(options, requested_paths, excluded_paths):
         sys.exit()
 
     # Create a new test list. Apply each TBPL configuration to every test.
+    flags_list = None
     if options.tbpl:
+        flags_list = get_jitflags('all')
+    elif options.tbpl_debug:
+        flags_list = get_jitflags('debug')
+    else:
+        flags_list = get_jitflags(options.jitflags, none=None)
+
+    if flags_list:
         new_test_list = []
-        flags_list = TBPL_FLAGS
         for test in test_list:
             for jitflags in flags_list:
                 tmp_test = copy(test)
@@ -275,10 +296,6 @@ def load_tests(options, requested_paths, excluded_paths):
                 tmp_test.jitflags.extend(jitflags)
                 new_test_list.append(tmp_test)
         test_list = new_test_list
-
-    if options.jitflags:
-        print("Warning: the --jitflags option is obsolete and does nothing"
-              " now.")
 
     if options.test_file:
         paths = set()

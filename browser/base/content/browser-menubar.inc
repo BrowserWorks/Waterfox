@@ -320,7 +320,9 @@
                           hidden="true"
                           label="&bidiSwitchPageDirectionItem.label;"
                           accesskey="&bidiSwitchPageDirectionItem.accesskey;"
-                          oncommand="SwitchDocumentDirection(window.content)"/>
+                          oncommand="gBrowser.selectedBrowser
+                                             .messageManager
+                                             .sendAsyncMessage('SwitchDocumentDirection');"/>
               </menupopup>
             </menu>
 
@@ -411,7 +413,7 @@
 #ifndef XP_MACOSX
                 class="menuitem-iconic"
 #endif
-                oncommand="window.pktUI.openTabWithUrl(Pocket.listURL);"/>
+                oncommand="openUILink(Pocket.listURL, event);"/>
       <menuseparator id="menu_pocketSeparator"/>
       <menuitem id="menu_bookmarkThisPage"
                 command="Browser:AddBookmarkAs"

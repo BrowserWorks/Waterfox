@@ -1,0 +1,8 @@
+/usr/bin/pod2man
+/usr/bin/pod2text
+/usr/lib/perl5/vendor_perl/5.8/Pod/Man.pm
+/usr/lib/perl5/vendor_perl/5.8/Pod/ParseLink.pm
+/usr/lib/perl5/vendor_perl/5.8/Pod/Text.pm
+/usr/lib/perl5/vendor_perl/5.8/Pod/Text/Color.pm
+/usr/lib/perl5/vendor_perl/5.8/Pod/Text/Overstrike.pm
+/usr/lib/perl5/vendor_perl/5.8/Pod/Text/Termcap.pm

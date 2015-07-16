@@ -16,8 +16,8 @@
 #include "DOMCameraControl.h"
 #include "nsDOMClassInfo.h"
 #include "CameraCommon.h"
+#include "CameraPreferences.h"
 #include "mozilla/dom/BindingUtils.h"
-#include "mozilla/dom/CameraManagerBinding.h"
 #include "mozilla/dom/PermissionMessageUtils.h"
 
 using namespace mozilla;
@@ -299,7 +299,11 @@ nsDOMCameraManager::GetCamera(const nsAString& aCamera,
   // which gets us a performance win.
   uint16_t status = nsIPrincipal::APP_STATUS_NOT_INSTALLED;
   principal->GetAppStatus(&status);
-  if (status == nsIPrincipal::APP_STATUS_CERTIFIED && CheckPermission(mWindow)) {
+  // Unprivileged mochitests always fail the dispatched permission check,
+  // even if permission to the camera has been granted.
+  bool immediateCheck = false;
+  CameraPreferences::GetPref("camera.control.test.permission", immediateCheck);
+  if ((status == nsIPrincipal::APP_STATUS_CERTIFIED || immediateCheck) && CheckPermission(mWindow)) {
     PermissionAllowed(cameraId, aInitialConfig, promise);
     return promise.forget();
   }
@@ -432,7 +436,7 @@ nsDOMCameraManager::IsWindowStillActive(uint64_t aWindowId)
 }
 
 JSObject*
-nsDOMCameraManager::WrapObject(JSContext* aCx)
+nsDOMCameraManager::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return CameraManagerBinding::Wrap(aCx, this);
+  return CameraManagerBinding::Wrap(aCx, this, aGivenProto);
 }

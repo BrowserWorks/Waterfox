@@ -12,7 +12,7 @@ EXPORTS += [
     'xpcpublic.h',
 ]
 
-SOURCES += [
+UNIFIED_SOURCES += [
     'ExportHelpers.cpp',
     'nsScriptError.cpp',
     'nsXPConnect.cpp',

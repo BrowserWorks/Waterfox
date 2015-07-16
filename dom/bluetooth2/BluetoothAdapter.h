@@ -83,6 +83,7 @@ public:
   IMPL_EVENT_HANDLER(attributechanged);
   IMPL_EVENT_HANDLER(devicepaired);
   IMPL_EVENT_HANDLER(deviceunpaired);
+  IMPL_EVENT_HANDLER(pairingaborted);
   IMPL_EVENT_HANDLER(a2dpstatuschanged);
   IMPL_EVENT_HANDLER(hfpstatuschanged);
   IMPL_EVENT_HANDLER(requestmediaplaystatus);
@@ -163,7 +164,8 @@ public:
      return GetOwner();
   }
 
-  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual JSObject* WrapObject(JSContext* aCx,
+                               JS::Handle<JSObject*> aGivenProto) override;
   virtual void DisconnectFromOwner() override;
 
   /**
@@ -222,6 +224,13 @@ private:
   void HandlePropertyChanged(const BluetoothValue& aValue);
 
   /**
+   * Handle "DeviceFound" bluetooth signal.
+   *
+   * @param aValue [in] Properties array of the discovered device.
+   */
+  void HandleDeviceFound(const BluetoothValue& aValue);
+
+  /**
    * Handle DEVICE_PAIRED_ID bluetooth signal.
    *
    * @param aValue [in] Properties array of the paired device.
@@ -242,13 +251,6 @@ private:
   void HandleDeviceUnpaired(const BluetoothValue& aValue);
 
   /**
-   * Handle "DeviceFound" bluetooth signal.
-   *
-   * @param aValue [in] Properties array of the discovered device.
-   */
-  void HandleDeviceFound(const BluetoothValue& aValue);
-
-  /**
    * Fire BluetoothAttributeEvent to trigger onattributechanged event handler.
    */
   void DispatchAttributeEvent(const nsTArray<nsString>& aTypes);
@@ -262,6 +264,13 @@ private:
    */
   void DispatchDeviceEvent(const nsAString& aType,
                            const BluetoothDeviceEventInit& aInit);
+
+  /**
+   * Fire event with no argument
+   *
+   * @param aType [in] Event type to fire
+   */
+  void DispatchEmptyEvent(const nsAString& aType);
 
   /**
    * Convert string to BluetoothAdapterAttribute.
@@ -330,19 +339,20 @@ private:
   nsRefPtr<BluetoothDiscoveryHandle> mDiscoveryHandleInUse;
 
   /**
-   * Arrays of references to BluetoothDevices created by this adapter.
-   * This array is empty when adapter state is Disabled.
+   * nsRefPtr array of BluetoothDevices created by this adapter. The array is
+   * empty when adapter state is Disabled.
    *
    * Devices will be appended when
-   * 1) Enabling BT: Paired devices reported by stack.
-   * 2) Discovering: Discovered devices during discovery operation.
-   * A device won't be appended if a device object with the same
-   * address already exists.
+   *   1) adapter is enabling: Paired devices reported by stack.
+   *   2) adapter is discovering: Discovered devices during discovery operation.
+   *   3) adapter paired with a device: The paired device reported by stack.
+   * Note devices with identical address won't be appended.
    *
    * Devices will be removed when
-   * 1) Starting discovery: All unpaired devices will be removed before this
-   *    adapter starts a new discovery.
-   * 2) Disabling BT: All devices will be removed.
+   *   1) adapter is disabling: All devices will be removed.
+   *   2) adapter starts discovery: All unpaired devices will be removed before
+   *      this new discovery starts.
+   *   3) adapter unpaired with a device: The unpaired device will be removed.
    */
   nsTArray<nsRefPtr<BluetoothDevice> > mDevices;
 };

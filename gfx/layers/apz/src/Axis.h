@@ -25,6 +25,16 @@ const float EPSILON = 0.0001f;
 // isn't too large.
 const float COORDINATE_EPSILON = 0.01f;
 
+/**
+ * Compare two coordinates for equality, accounting for rounding error.
+ * Use both FuzzyEqualsAdditive() with COORDINATE_EPISLON, which accounts for
+ * things like the error introduced by rounding during a round-trip to app
+ * units, and FuzzyEqualsMultiplicative(), which accounts for accumulated error
+ * due to floating-point operations (which can be larger than COORDINATE_EPISLON
+ * for sufficiently large coordinate values).
+ */
+bool FuzzyEqualsCoordinate(float aValue1, float aValue2);
+
 struct FrameMetrics;
 class AsyncPanZoomController;
 
@@ -75,7 +85,8 @@ public:
    */
   bool AdjustDisplacement(ParentLayerCoord aDisplacement,
                           /* ParentLayerCoord */ float& aDisplacementOut,
-                          /* ParentLayerCoord */ float& aOverscrollAmountOut);
+                          /* ParentLayerCoord */ float& aOverscrollAmountOut,
+                          bool forceOverscroll = false);
 
   /**
    * Overscrolls this axis by the requested amount in the requested direction.
@@ -145,6 +156,11 @@ public:
    * Returns true if the page has room to be scrolled along this axis.
    */
   bool CanScroll() const;
+
+  /**
+   * Returns whether this axis can scroll any more in a particular direction.
+   */
+  bool CanScroll(double aDelta) const;
 
   /**
    * Returns true if the page has room to be scrolled along this axis
