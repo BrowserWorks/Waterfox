@@ -360,7 +360,7 @@ enum {
   bottomMargin
 };
 
-static int EnumSizeForCocoaSize(NSControlSize cocoaControlSize) {
+static size_t EnumSizeForCocoaSize(NSControlSize cocoaControlSize) {
   if (cocoaControlSize == NSMiniControlSize)
     return miniControlSize;
   else if (cocoaControlSize == NSSmallControlSize)
@@ -394,7 +394,7 @@ static void InflateControlRect(NSRect* rect, NSControlSize cocoaControlSize, con
     return;
 
   static int osIndex = leopardOS;
-  int controlSize = EnumSizeForCocoaSize(cocoaControlSize);
+  size_t controlSize = EnumSizeForCocoaSize(cocoaControlSize);
   const float* buttonMargins = marginSet[osIndex][controlSize];
   rect->origin.x -= buttonMargins[leftMargin];
   rect->origin.y -= buttonMargins[bottomMargin];
@@ -485,7 +485,6 @@ static BOOL IsActive(nsIFrame* aFrame, BOOL aIsToolbarControl)
 }
 
 NS_IMPL_ISUPPORTS_INHERITED(nsNativeThemeCocoa, nsNativeTheme, nsITheme)
-
 
 nsNativeThemeCocoa::nsNativeThemeCocoa()
 {
@@ -821,13 +820,13 @@ static void DrawCellWithSnapping(NSCell *cell,
   NSControlSize controlSizeY = FindControlSize(rectHeight, controlHeights, snapTolerance);
 
   NSControlSize controlSize = NSRegularControlSize;
-  int sizeIndex = 0;
+  size_t sizeIndex = 0;
 
   // At some sizes, don't scale but snap.
   const NSControlSize smallerControlSize =
     EnumSizeForCocoaSize(controlSizeX) < EnumSizeForCocoaSize(controlSizeY) ?
     controlSizeX : controlSizeY;
-  const int smallerControlSizeIndex = EnumSizeForCocoaSize(smallerControlSize);
+  const size_t smallerControlSizeIndex = EnumSizeForCocoaSize(smallerControlSize);
   const NSSize size = sizes[smallerControlSizeIndex];
   float diffWidth = size.width ? rectWidth - size.width : 0.0f;
   float diffHeight = size.height ? rectHeight - size.height : 0.0f;
@@ -836,6 +835,8 @@ static void DrawCellWithSnapping(NSCell *cell,
     // Snap to the smaller control size.
     controlSize = smallerControlSize;
     sizeIndex = smallerControlSizeIndex;
+    MOZ_ASSERT(sizeIndex < ArrayLength(settings.naturalSizes));
+
     // Resize and center the drawRect.
     if (sizes[sizeIndex].width) {
       drawRect.origin.x += ceil((destRect.size.width - sizes[sizeIndex].width) / 2);
@@ -854,7 +855,8 @@ static void DrawCellWithSnapping(NSCell *cell,
 
   [cell setControlSize:controlSize];
 
-  NSSize minimumSize = settings.minimumSizes ? settings.minimumSizes[sizeIndex] : NSZeroSize;
+  MOZ_ASSERT(sizeIndex < ArrayLength(settings.minimumSizes));
+  const NSSize minimumSize = settings.minimumSizes[sizeIndex];
   DrawCellWithScaling(cell, cgContext, drawRect, controlSize, sizes[sizeIndex],
                       minimumSize, settings.margins, view, mirrorHorizontal);
 
@@ -2670,7 +2672,7 @@ nsNativeThemeCocoa::DrawWidgetBackground(nsRenderingContext* aContext,
         }
       }
       DrawProgress(cgContext, macRect, IsIndeterminateProgress(aFrame, eventState),
-                   aFrame->StyleDisplay()->mOrient != NS_STYLE_ORIENT_VERTICAL,
+                   !IsVerticalProgress(aFrame),
                    value, maxValue, aFrame);
       break;
     }
@@ -2759,9 +2761,7 @@ nsNativeThemeCocoa::DrawWidgetBackground(nsRenderingContext* aContext,
       int32_t min = 0;
       int32_t max = 1000;
       bool isVertical = !IsRangeHorizontal(aFrame);
-      bool reverseDir =
-        isVertical ||
-        rangeFrame->StyleVisibility()->mDirection == NS_STYLE_DIRECTION_RTL;
+      bool reverseDir = isVertical || rangeFrame->IsRightToLeft();
       DrawScale(cgContext, macRect, eventState, isVertical, reverseDir,
                 value, min, max, aFrame);
       break;
@@ -3163,7 +3163,7 @@ NS_IMETHODIMP
 nsNativeThemeCocoa::GetMinimumWidgetSize(nsPresContext* aPresContext,
                                          nsIFrame* aFrame,
                                          uint8_t aWidgetType,
-                                         nsIntSize* aResult,
+                                         LayoutDeviceIntSize* aResult,
                                          bool* aIsOverridable)
 {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NSRESULT;

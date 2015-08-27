@@ -9,13 +9,14 @@
 
 #include "AudioNode.h"
 #include "FFTBlock.h"
+#include "AlignedTArray.h"
 
 namespace mozilla {
 namespace dom {
 
 class AudioContext;
 
-class AnalyserNode : public AudioNode
+class AnalyserNode final : public AudioNode
 {
 public:
   explicit AnalyserNode(AudioContext* aContext);
@@ -77,8 +78,8 @@ private:
   double mMaxDecibels;
   double mSmoothingTimeConstant;
   uint32_t mWriteIndex;
-  FallibleTArray<float> mBuffer;
-  FallibleTArray<float> mOutputBuffer;
+  AlignedFallibleTArray<float> mBuffer;
+  AlignedFallibleTArray<float> mOutputBuffer;
 };
 
 }

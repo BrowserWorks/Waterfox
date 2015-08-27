@@ -85,6 +85,7 @@ SOURCES += [
 ]
 
 IPDL_SOURCES += [
+    'BrowserConfiguration.ipdlh',
     'DOMTypes.ipdlh',
     'PBlob.ipdl',
     'PBlobStream.ipdl',
@@ -111,13 +112,18 @@ FAIL_ON_WARNINGS = True
 include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
+
+if CONFIG['MOZ_SANDBOX'] and CONFIG['OS_TARGET'] == 'Darwin':
+    USE_LIBS += [
+        'mozsandbox',
+    ]
+
 LOCAL_INCLUDES += [
     '/caps',
     '/chrome',
     '/docshell/base',
     '/dom/base',
     '/dom/bluetooth',
-    '/dom/bluetooth/ipc',
     '/dom/devicestorage',
     '/dom/filesystem',
     '/dom/fmradio/ipc',
@@ -130,8 +136,10 @@ LOCAL_INCLUDES += [
     '/embedding/components/printingui/ipc',
     '/extensions/cookie',
     '/extensions/spellcheck/src',
+    '/gfx/2d',
     '/hal/sandbox',
     '/layout/base',
+    '/media/webrtc',
     '/netwerk/base',
     '/toolkit/xre',
     '/uriloader/exthandler',
@@ -140,6 +148,12 @@ LOCAL_INCLUDES += [
     '/xpcom/threads',
 ]
 
+if CONFIG['MOZ_SANDBOX'] and CONFIG['OS_ARCH'] == 'WINNT':
+    LOCAL_INCLUDES += [
+        '/security/sandbox/chromium',
+        '/security/sandbox/chromium-shim',
+    ]
+
 DEFINES['BIN_SUFFIX'] = '"%s"' % CONFIG['BIN_SUFFIX']
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android', 'gtk2', 'gonk', 'qt'):
@@ -147,6 +161,17 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android', 'gtk2', 'gonk', 'qt'):
 
 if CONFIG['MOZ_TOOLKIT_SEARCH']:
     DEFINES['MOZ_TOOLKIT_SEARCH'] = True
+
+if CONFIG['MOZ_B2G_BT_API_V2']:
+    LOCAL_INCLUDES += [
+        '/dom/bluetooth/bluetooth2',
+        '/dom/bluetooth/bluetooth2/ipc',
+    ]
+else:
+    LOCAL_INCLUDES += [
+        '/dom/bluetooth/bluetooth1',
+        '/dom/bluetooth/bluetooth1/ipc',
+    ]
 
 JAR_MANIFESTS += ['jar.mn']
 

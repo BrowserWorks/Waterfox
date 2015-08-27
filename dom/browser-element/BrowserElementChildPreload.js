@@ -172,6 +172,11 @@ BrowserElementChild.prototype = {
                      /* useCapture = */ true,
                      /* wantsUntrusted = */ false);
 
+    addEventListener('click',
+                     this._ClickHandler.bind(this),
+                     /* useCapture = */ false,
+                     /* wantsUntrusted = */ false);
+
     // This listens to unload events from our message manager, but /not/ from
     // the |content| window.  That's because the window's unload event doesn't
     // bubble, and we're not using a capturing listener.  If we'd used
@@ -577,6 +582,30 @@ BrowserElementChild.prototype = {
       state: e.state,
     };
     sendAsyncMsg('scrollviewchange', detail);
+  },
+
+  _ClickHandler: function(e) {
+
+    let isHTMLLink = node =>
+      ((node instanceof Ci.nsIDOMHTMLAnchorElement && node.href) ||
+       (node instanceof Ci.nsIDOMHTMLAreaElement && node.href) ||
+        node instanceof Ci.nsIDOMHTMLLinkElement);
+
+    // Open in a new tab if middle click or ctrl/cmd-click,
+    // and e.target is a link or inside a link.
+    if ((Services.appinfo.OS == 'Darwin' && e.metaKey) ||
+        (Services.appinfo.OS != 'Darwin' && e.ctrlKey) ||
+         e.button == 1) {
+
+      let node = e.target;
+      while (node && !isHTMLLink(node)) {
+        node = node.parentNode;
+      }
+
+      if (node) {
+        sendAsyncMsg('opentab', {url: node.href});
+      }
+    }
   },
 
   _selectionStateChangedHandler: function(e) {
@@ -1085,7 +1114,7 @@ BrowserElementChild.prototype = {
 
   _updateVisibility: function() {
     var visible = this._forcedVisible && this._ownerVisible;
-    if (docShell.isActive !== visible) {
+    if (docShell && docShell.isActive !== visible) {
       docShell.isActive = visible;
       sendAsyncMsg('visibilitychange', {visible: visible});
     }
@@ -1274,6 +1303,9 @@ BrowserElementChild.prototype = {
             return;
           case Cr.NS_ERROR_MALWARE_URI :
             sendAsyncMsg('error', { type: 'malwareBlocked' });
+            return;
+          case Cr.NS_ERROR_UNWANTED_URI :
+            sendAsyncMsg('error', { type: 'unwantedBlocked' });
             return;
 
           case Cr.NS_ERROR_OFFLINE :

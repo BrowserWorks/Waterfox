@@ -78,6 +78,16 @@ AddActiveInfo(WebGLContext* webgl, GLint elemCount, GLenum elemType, bool isArra
     infoLocMap->insert(std::make_pair(info->mBaseUserName, info.get()));
 }
 
+static void
+AddActiveBlockInfo(const nsACString& baseUserName,
+                   const nsACString& baseMappedName,
+                   std::vector<RefPtr<webgl::UniformBlockInfo>>* activeInfoList)
+{
+    RefPtr<webgl::UniformBlockInfo> info = new webgl::UniformBlockInfo(baseUserName, baseMappedName);
+
+    activeInfoList->push_back(info);
+}
+
 //#define DUMP_SHADERVAR_MAPPINGS
 
 static TemporaryRef<const webgl::LinkedProgramInfo>
@@ -97,9 +107,18 @@ QueryProgramInfo(WebGLProgram* prog, gl::GLContext* gl)
     if (maxUniformLenWithNull < 1)
         maxUniformLenWithNull = 1;
 
+    GLuint maxUniformBlockLenWithNull = 0;
+    if (gl->IsSupported(gl::GLFeature::uniform_buffer_object)) {
+        gl->fGetProgramiv(prog->mGLName, LOCAL_GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH,
+                          (GLint*)&maxUniformBlockLenWithNull);
+        if (maxUniformBlockLenWithNull < 1)
+            maxUniformBlockLenWithNull = 1;
+    }
+
 #ifdef DUMP_SHADERVAR_MAPPINGS
     printf_stderr("maxAttribLenWithNull: %d\n", maxAttribLenWithNull);
     printf_stderr("maxUniformLenWithNull: %d\n", maxUniformLenWithNull);
+    printf_stderr("maxUniformBlockLenWithNull: %d\n", maxUniformBlockLenWithNull);
 #endif
 
     // Attribs
@@ -204,6 +223,54 @@ QueryProgramInfo(WebGLProgram* prog, gl::GLContext* gl)
                       baseMappedName, &info->activeUniforms, &info->uniformMap);
     }
 
+    // Uniform Blocks
+
+    if (gl->IsSupported(gl::GLFeature::uniform_buffer_object)) {
+        GLuint numActiveUniformBlocks = 0;
+        gl->fGetProgramiv(prog->mGLName, LOCAL_GL_ACTIVE_UNIFORM_BLOCKS,
+                          (GLint*)&numActiveUniformBlocks);
+
+        for (GLuint i = 0; i < numActiveUniformBlocks; i++) {
+            nsAutoCString mappedName;
+            mappedName.SetLength(maxUniformBlockLenWithNull - 1);
+
+            GLint lengthWithoutNull;
+            gl->fGetActiveUniformBlockiv(prog->mGLName, i, LOCAL_GL_UNIFORM_BLOCK_NAME_LENGTH, &lengthWithoutNull);
+            gl->fGetActiveUniformBlockName(prog->mGLName, i, maxUniformBlockLenWithNull, &lengthWithoutNull, mappedName.BeginWriting());
+            mappedName.SetLength(lengthWithoutNull);
+
+            nsAutoCString baseMappedName;
+            bool isArray;
+            size_t arrayIndex;
+            if (!ParseName(mappedName, &baseMappedName, &isArray, &arrayIndex))
+                MOZ_CRASH("Failed to parse `mappedName` received from driver.");
+
+            nsAutoCString baseUserName;
+            if (!prog->FindUniformBlockByMappedName(baseMappedName, &baseUserName, &isArray)) {
+                baseUserName = baseMappedName;
+
+                if (needsCheckForArrays && !isArray) {
+                    std::string mappedName = baseMappedName.BeginReading();
+                    mappedName += "[0]";
+
+                    GLuint loc = gl->fGetUniformBlockIndex(prog->mGLName, mappedName.c_str());
+                    if (loc != LOCAL_GL_INVALID_INDEX)
+                        isArray = true;
+                }
+            }
+
+#ifdef DUMP_SHADERVAR_MAPPINGS
+            printf_stderr("[uniform block %i] %s/%i/%s/%s\n", i, mappedName.BeginReading(),
+                          (int)isArray, baseMappedName.BeginReading(),
+                          baseUserName.BeginReading());
+            printf_stderr("    lengthWithoutNull: %d\n", lengthWithoutNull);
+            printf_stderr("    isArray: %d\n", (int)isArray);
+#endif
+
+            AddActiveBlockInfo(baseUserName, baseMappedName, &info->uniformBlocks);
+        }
+    }
+
     return info.forget();
 }
 
@@ -228,6 +295,7 @@ CreateProgram(gl::GLContext* gl)
 WebGLProgram::WebGLProgram(WebGLContext* webgl)
     : WebGLContextBoundObject(webgl)
     , mGLName(CreateProgram(webgl->GL()))
+    , mTransformFeedbackBufferMode(LOCAL_GL_NONE)
 {
     mContext->mPrograms.insertBack(this);
 }
@@ -365,6 +433,7 @@ already_AddRefed<WebGLActiveInfo>
 WebGLProgram::GetActiveUniform(GLuint index) const
 {
     if (!mMostRecentLinkInfo) {
+        // According to the spec, this can return null.
         nsRefPtr<WebGLActiveInfo> ret = WebGLActiveInfo::CreateInvalid(mContext);
         return ret.forget();
     }
@@ -465,9 +534,11 @@ WebGLProgram::GetProgramParameter(GLenum pname) const
         switch (pname) {
         case LOCAL_GL_ACTIVE_UNIFORM_BLOCKS:
             return JS::Int32Value(GetProgramiv(gl, mGLName, pname));
-        }
-    }
 
+        case LOCAL_GL_TRANSFORM_FEEDBACK_VARYINGS:
+            return JS::Int32Value(mTransformFeedbackVaryings.size());
+       }
+    }
 
     switch (pname) {
     case LOCAL_GL_ATTACHED_SHADERS:
@@ -494,6 +565,141 @@ WebGLProgram::GetProgramParameter(GLenum pname) const
                                        pname);
         return JS::NullValue();
     }
+}
+
+GLuint
+WebGLProgram::GetUniformBlockIndex(const nsAString& userName_wide) const
+{
+    if (!ValidateGLSLVariableName(userName_wide, mContext, "getUniformBlockIndex"))
+        return LOCAL_GL_INVALID_INDEX;
+
+    if (!IsLinked()) {
+        mContext->ErrorInvalidOperation("getUniformBlockIndex: `program` must be linked.");
+        return LOCAL_GL_INVALID_INDEX;
+    }
+
+    const NS_LossyConvertUTF16toASCII userName(userName_wide);
+
+    nsDependentCString baseUserName;
+    bool isArray;
+    size_t arrayIndex;
+    if (!ParseName(userName, &baseUserName, &isArray, &arrayIndex))
+        return LOCAL_GL_INVALID_INDEX;
+
+    RefPtr<const webgl::UniformBlockInfo> info;
+    if (!LinkInfo()->FindUniformBlock(baseUserName, &info)) {
+        return LOCAL_GL_INVALID_INDEX;
+    }
+
+    const nsCString& baseMappedName = info->mBaseMappedName;
+    nsAutoCString mappedName(baseMappedName);
+    if (isArray) {
+        mappedName.AppendLiteral("[");
+        mappedName.AppendInt(uint32_t(arrayIndex));
+        mappedName.AppendLiteral("]");
+    }
+
+    gl::GLContext* gl = mContext->GL();
+    gl->MakeCurrent();
+
+    return gl->fGetUniformBlockIndex(mGLName, mappedName.BeginReading());
+}
+
+void
+WebGLProgram::GetActiveUniformBlockName(GLuint uniformBlockIndex, nsAString& retval) const
+{
+    if (!IsLinked()) {
+        mContext->ErrorInvalidOperation("getActiveUniformBlockName: `program` must be linked.");
+        return;
+    }
+
+    const webgl::LinkedProgramInfo* linkInfo = LinkInfo();
+    GLuint uniformBlockCount = (GLuint) linkInfo->uniformBlocks.size();
+    if (uniformBlockIndex >= uniformBlockCount) {
+        mContext->ErrorInvalidValue("getActiveUniformBlockName: index %u invalid.", uniformBlockIndex);
+        return;
+    }
+
+    const webgl::UniformBlockInfo* blockInfo = linkInfo->uniformBlocks[uniformBlockIndex];
+
+    retval.Assign(NS_ConvertASCIItoUTF16(blockInfo->mBaseUserName));
+}
+
+void
+WebGLProgram::GetActiveUniformBlockParam(GLuint uniformBlockIndex, GLenum pname,
+                                         Nullable<dom::OwningUnsignedLongOrUint32ArrayOrBoolean>& retval) const
+{
+    retval.SetNull();
+    if (!IsLinked()) {
+        mContext->ErrorInvalidOperation("getActiveUniformBlockParameter: `program` must be linked.");
+        return;
+    }
+
+    const webgl::LinkedProgramInfo* linkInfo = LinkInfo();
+    GLuint uniformBlockCount = (GLuint)linkInfo->uniformBlocks.size();
+    if (uniformBlockIndex >= uniformBlockCount) {
+        mContext->ErrorInvalidValue("getActiveUniformBlockParameter: index %u invalid.", uniformBlockIndex);
+        return;
+    }
+
+    gl::GLContext* gl = mContext->GL();
+    GLint param = 0;
+
+    switch (pname) {
+    case LOCAL_GL_UNIFORM_BLOCK_REFERENCED_BY_VERTEX_SHADER:
+    case LOCAL_GL_UNIFORM_BLOCK_REFERENCED_BY_FRAGMENT_SHADER:
+        gl->fGetActiveUniformBlockiv(mGLName, uniformBlockIndex, pname, &param);
+        retval.SetValue().SetAsBoolean() = (param != 0);
+        return;
+
+    case LOCAL_GL_UNIFORM_BLOCK_BINDING:
+    case LOCAL_GL_UNIFORM_BLOCK_DATA_SIZE:
+    case LOCAL_GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS:
+        gl->fGetActiveUniformBlockiv(mGLName, uniformBlockIndex, pname, &param);
+        retval.SetValue().SetAsUnsignedLong() = param;
+        return;
+    }
+}
+
+void
+WebGLProgram::GetActiveUniformBlockActiveUniforms(JSContext* cx, GLuint uniformBlockIndex,
+                                                  Nullable<dom::OwningUnsignedLongOrUint32ArrayOrBoolean>& retval,
+                                                  ErrorResult& rv) const
+{
+    if (!IsLinked()) {
+        mContext->ErrorInvalidOperation("getActiveUniformBlockParameter: `program` must be linked.");
+        return;
+    }
+
+    const webgl::LinkedProgramInfo* linkInfo = LinkInfo();
+    GLuint uniformBlockCount = (GLuint)linkInfo->uniformBlocks.size();
+    if (uniformBlockIndex >= uniformBlockCount) {
+        mContext->ErrorInvalidValue("getActiveUniformBlockParameter: index %u invalid.", uniformBlockIndex);
+        return;
+    }
+
+    gl::GLContext* gl = mContext->GL();
+    GLint activeUniformCount = 0;
+    gl->fGetActiveUniformBlockiv(mGLName, uniformBlockIndex,
+                                 LOCAL_GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS,
+                                 &activeUniformCount);
+    JS::RootedObject obj(cx, dom::Uint32Array::Create(cx, mContext, activeUniformCount,
+                                                      nullptr));
+    if (!obj) {
+        rv = NS_ERROR_OUT_OF_MEMORY;
+        return;
+    }
+
+    dom::Uint32Array result;
+    DebugOnly<bool> inited = result.Init(obj);
+    MOZ_ASSERT(inited);
+    result.ComputeLengthAndData();
+    gl->fGetActiveUniformBlockiv(mGLName, uniformBlockIndex,
+                                 LOCAL_GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES,
+                                 (GLint*)result.Data());
+
+    inited = retval.SetValue().SetAsUint32Array().Init(obj);
+    MOZ_ASSERT(inited);
 }
 
 already_AddRefed<WebGLUniformLocation>
@@ -538,6 +744,31 @@ WebGLProgram::GetUniformLocation(const nsAString& userName_wide) const
     nsRefPtr<WebGLUniformLocation> locObj = new WebGLUniformLocation(mContext, LinkInfo(),
                                                                      loc, activeInfo);
     return locObj.forget();
+}
+
+void
+WebGLProgram::UniformBlockBinding(GLuint uniformBlockIndex, GLuint uniformBlockBinding) const
+{
+    if (!IsLinked()) {
+        mContext->ErrorInvalidOperation("getActiveUniformBlockName: `program` must be linked.");
+        return;
+    }
+
+    const webgl::LinkedProgramInfo* linkInfo = LinkInfo();
+    GLuint uniformBlockCount = (GLuint)linkInfo->uniformBlocks.size();
+    if (uniformBlockIndex >= uniformBlockCount) {
+        mContext->ErrorInvalidValue("getActiveUniformBlockName: index %u invalid.", uniformBlockIndex);
+        return;
+    }
+
+    if (uniformBlockBinding > mContext->mGLMaxUniformBufferBindings) {
+        mContext->ErrorInvalidEnum("getActiveUniformBlockName: binding %u invalid.", uniformBlockBinding);
+        return;
+    }
+
+    gl::GLContext* gl = mContext->GL();
+    gl->MakeCurrent();
+    gl->fUniformBlockBinding(mGLName, uniformBlockIndex, uniformBlockBinding);
 }
 
 bool
@@ -590,6 +821,15 @@ WebGLProgram::LinkProgram()
         GLuint index = itr->second;
 
         mVertShader->BindAttribLocation(mGLName, name, index);
+    }
+
+    if (!mTransformFeedbackVaryings.empty()) {
+        // Bind the transform feedback varyings.
+        // This can't be done trivially, because we have to deal with mapped names too.
+        mVertShader->ApplyTransformFeedbackVaryings(mGLName,
+                                                    mTransformFeedbackVaryings,
+                                                    mTransformFeedbackBufferMode,
+                                                    &mTempMappedVaryings);
     }
 
     if (LinkAndUpdate())
@@ -669,6 +909,11 @@ WebGLProgram::LinkAndUpdate()
         mLinkLog.SetLength(0);
     }
 
+    // Post link, temporary mapped varying names for transform feedback can be discarded.
+    // The memory can only be deleted after log is queried or the link status will fail.
+    std::vector<std::string> empty;
+    empty.swap(mTempMappedVaryings);
+
     GLint ok = 0;
     gl->fGetProgramiv(mGLName, LOCAL_GL_LINK_STATUS, &ok);
     if (!ok)
@@ -702,6 +947,85 @@ WebGLProgram::FindUniformByMappedName(const nsACString& mappedName,
         return true;
 
     if (mFragShader->FindUniformByMappedName(mappedName, out_userName, out_isArray))
+        return true;
+
+    return false;
+}
+
+void
+WebGLProgram::TransformFeedbackVaryings(const dom::Sequence<nsString>& varyings,
+                                        GLenum bufferMode)
+{
+    if (bufferMode != LOCAL_GL_INTERLEAVED_ATTRIBS &&
+        bufferMode != LOCAL_GL_SEPARATE_ATTRIBS)
+    {
+        mContext->ErrorInvalidEnum("transformFeedbackVaryings: `bufferMode` %s is "
+                                   "invalid. Must be one of gl.INTERLEAVED_ATTRIBS or "
+                                   "gl.SEPARATE_ATTRIBS.",
+                                   mContext->EnumName(bufferMode));
+        return;
+    }
+
+    size_t varyingsCount = varyings.Length();
+    if (bufferMode == LOCAL_GL_SEPARATE_ATTRIBS &&
+        varyingsCount >= mContext->mGLMaxTransformFeedbackSeparateAttribs)
+    {
+        mContext->ErrorInvalidValue("transformFeedbackVaryings: Number of `varyings` exc"
+                                    "eeds gl.MAX_TRANSFORM_FEEDBACK_SEPARATE_ATTRIBS.");
+        return;
+    }
+
+    std::vector<nsCString> asciiVaryings;
+    for (size_t i = 0; i < varyingsCount; i++) {
+        if (!ValidateGLSLVariableName(varyings[i], mContext, "transformFeedbackVaryings"))
+            return;
+
+        NS_LossyConvertUTF16toASCII asciiName(varyings[i]);
+        asciiVaryings.push_back(asciiName);
+    }
+
+    // All validated. Translate the strings and store them until
+    // program linking.
+    mTransformFeedbackBufferMode = bufferMode;
+    mTransformFeedbackVaryings.swap(asciiVaryings);
+}
+
+already_AddRefed<WebGLActiveInfo>
+WebGLProgram::GetTransformFeedbackVarying(GLuint index)
+{
+    // No docs in the WebGL 2 spec for this function. Taking the language for
+    // getActiveAttrib, which states that the function returns null on any error.
+    if (!IsLinked()) {
+        mContext->ErrorInvalidOperation("getTransformFeedbackVarying: `program` must be "
+                                        "linked.");
+        return nullptr;
+    }
+
+    if (index >= mTransformFeedbackVaryings.size()) {
+        mContext->ErrorInvalidValue("getTransformFeedbackVarying: `index` is greater or "
+                                    "equal to TRANSFORM_FEEDBACK_VARYINGS.");
+        return nullptr;
+    }
+
+    const nsCString& varyingUserName = mTransformFeedbackVaryings[index];
+
+    WebGLActiveInfo* info;
+    LinkInfo()->FindAttrib(varyingUserName, (const WebGLActiveInfo**) &info);
+    MOZ_ASSERT(info);
+
+    nsRefPtr<WebGLActiveInfo> ret(info);
+    return ret.forget();
+}
+
+bool
+WebGLProgram::FindUniformBlockByMappedName(const nsACString& mappedName,
+                                           nsCString* const out_userName,
+                                           bool* const out_isArray) const
+{
+    if (mVertShader->FindUniformBlockByMappedName(mappedName, out_userName, out_isArray))
+        return true;
+
+    if (mFragShader->FindUniformBlockByMappedName(mappedName, out_userName, out_isArray))
         return true;
 
     return false;

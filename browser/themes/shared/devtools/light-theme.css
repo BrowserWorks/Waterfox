@@ -3,8 +3,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/* According to:
- * https://bugzilla.mozilla.org/show_bug.cgi?id=715472#c17
+/* Colors are taken from:
+ * https://developer.mozilla.org/en-US/docs/Tools/DevToolsColors.
+ * Changes should be kept in sync with commandline.css and commandline.inc.css.
  */
 :root {
   --theme-body-background: #fcfcfc;
@@ -14,10 +15,10 @@
   --theme-tab-toolbar-background: #ebeced;
   --theme-toolbar-background: #f0f1f2;
   --theme-selection-background: #4c9ed9;
-  --theme-selection-color: #f5f7fa;
   --theme-selection-background-semitransparent: rgba(76, 158, 217, .23);
+  --theme-selection-color: #f5f7fa;
   --theme-splitter-color: #aaaaaa;
-  --theme-comment: hsl(90,2%,46%);
+  --theme-comment: #757873;
 
   --theme-body-color: #18191a;
   --theme-body-color-alt: #585959;
@@ -25,14 +26,22 @@
   --theme-content-color2: #8fa1b2;
   --theme-content-color3: #667380;
 
-  --theme-highlight-green: hsl(72,100%,27%);
-  --theme-highlight-blue: hsl(208,56%,40%);
-  --theme-highlight-bluegrey: hsl(208,81%,21%);
+  --theme-highlight-green: #2cbb0f;
+  --theme-highlight-blue: #0088cc;
+  --theme-highlight-bluegrey: #5f88b0;
   --theme-highlight-purple: #5b5fff;
-  --theme-highlight-lightorange: #a18650;
-  --theme-highlight-orange: hsl(24,85%,39%);
-  --theme-highlight-red: #bf5656;
+  --theme-highlight-lightorange: #d97e00;
+  --theme-highlight-orange: #f13c00;
+  --theme-highlight-red: #ed2655;
   --theme-highlight-pink: #b82ee5;
+
+  /* Colors used in Graphs, like performance tools. Similar colors to Chrome's timeline. */
+  --theme-graphs-green: #85d175;
+  --theme-graphs-blue: #83b7f6;
+  --theme-graphs-purple: #b693eb;
+  --theme-graphs-yellow: #efc052;
+  --theme-graphs-red: #e57180;
+  --theme-graphs-grey: #cccccc;
 }
 
 .theme-body {
@@ -202,9 +211,8 @@
   border-color: var(--theme-splitter-color);
 }
 
-.ruleview-colorswatch,
-.computedview-colorswatch,
-.ruleview-bezierswatch {
+.ruleview-swatch,
+.computedview-colorswatch {
   box-shadow: 0 0 0 1px #c4c4c4;
 }
 
@@ -335,7 +343,7 @@ div.CodeMirror span.eval-text {
   background-position: -14px 0;
 }
 
-@media (min-resolution: 2dppx) {
+@media (min-resolution: 1.25dppx) {
   .theme-twisty, .theme-checkbox {
     background-image: url("chrome://browser/skin/devtools/controls@2x.png");
   }
@@ -373,7 +381,7 @@ div.CodeMirror span.eval-text {
   margin-left: -4px;
 }
 
-@media (min-resolution: 2dppx) {
+@media (min-resolution: 1.25dppx) {
   .theme-tooltip-panel .panel-arrow[side="top"],
   .theme-tooltip-panel .panel-arrow[side="bottom"] {
     list-style-image: url("chrome://browser/skin/devtools/tooltip/arrow-vertical-light@2x.png");

@@ -212,6 +212,9 @@ PopupNotifications.prototype = {
    * @param options
    *        An options JavaScript object holding additional properties for the
    *        notification. The following properties are currently supported:
+   *        origin:      A string representing the origin of the site presenting
+   *                     a notification so it can be shown to the user (possibly
+   *                     with a favicon). e.g. https://example.com:8080
    *        persistence: An integer. The notification will not automatically
    *                     dismiss for this many page loads.
    *        timeout:     A time in milliseconds. The notification will not
@@ -270,8 +273,9 @@ PopupNotifications.prototype = {
    *                     A string URL. Setting this property will make the
    *                     prompt display a "Learn More" link that, when clicked,
    *                     opens the URL in a new tab.
-   *        originHost:  The host name of the page the notification came from.
-   *                     If present, this will be displayed above the message.
+   *        displayOrigin:
+   *                     The host name or file path of the page the notification came
+   *                     from. If present, this will be displayed above the message.
    * @returns the Notification object corresponding to the added notification.
    */
   show: function PopupNotifications_show(browser, id, message, anchorID,
@@ -567,10 +571,10 @@ PopupNotifications.prototype = {
       else
         popupnotification.removeAttribute("learnmoreurl");
 
-      if (n.options.originHost)
-        popupnotification.setAttribute("originhost", n.options.originHost);
+      if (n.options.displayOrigin)
+        popupnotification.setAttribute("origin", n.options.displayOrigin);
       else
-        popupnotification.removeAttribute("originhost");
+        popupnotification.removeAttribute("origin");
 
       popupnotification.notification = n;
 
@@ -755,7 +759,6 @@ PopupNotifications.prototype = {
       if (anchorElement.classList.contains("notification-anchor-icon")) {
         // remove previous icon classes
         let className = anchorElement.className.replace(/([-\w]+-notification-icon\s?)/g,"")
-        className = "default-notification-icon " + className;
         if (notifications.length > 0) {
           // Find the first notification this anchor used for.
           let notification = notifications[0];

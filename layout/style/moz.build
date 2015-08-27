@@ -89,10 +89,12 @@ EXPORTS.mozilla += [
 
 EXPORTS.mozilla.dom += [
     'CSS.h',
+    'CSSLexer.h',
     'CSSRuleList.h',
     'CSSValue.h',
     'FontFace.h',
     'FontFaceSet.h',
+    'FontFaceSetIterator.h',
     'MediaQueryList.h',
 ]
 
@@ -112,6 +114,7 @@ UNIFIED_SOURCES += [
     'AnimationCommon.cpp',
     'CounterStyleManager.cpp',
     'CSS.cpp',
+    'CSSLexer.cpp',
     'CSSRuleList.cpp',
     'CSSStyleSheet.cpp',
     'CSSVariableDeclarations.cpp',
@@ -120,6 +123,7 @@ UNIFIED_SOURCES += [
     'Declaration.cpp',
     'ErrorReporter.cpp',
     'FontFace.cpp',
+    'FontFaceSetIterator.cpp',
     'ImageLoader.cpp',
     'Loader.cpp',
     'MediaQueryList.cpp',
@@ -175,8 +179,6 @@ EXTRA_COMPONENTS += [
 ]
 
 FAIL_ON_WARNINGS = True
-
-MSVC_ENABLE_PGO = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

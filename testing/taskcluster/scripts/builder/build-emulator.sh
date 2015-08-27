@@ -23,9 +23,7 @@ test $TARGET
 #
 #   $ docker -v your_mozharness:/home/worker/mozharness ...
 #
-if [ ! -d mozharness ]; then
-  tc-vcs checkout mozharness $MOZHARNESS_REPOSITORY $MOZHARNESS_REPOSITORY $MOZHARNESS_REV $MOZHARNESS_REF
-fi
+tc-vcs checkout mozharness $MOZHARNESS_REPOSITORY $MOZHARNESS_REPOSITORY $MOZHARNESS_REV $MOZHARNESS_REF
 
 # Figure out where the remote manifest is so we can use caches for it.
 
@@ -64,7 +62,7 @@ ls -lah $WORKSPACE/B2G/objdir-gecko/dist/
 
 mv $WORKSPACE/B2G/sources.xml $HOME/artifacts/sources.xml
 mv $WORKSPACE/B2G/out/target/product/generic/tests/gaia-tests.zip $HOME/artifacts/gaia-tests.zip
-mv $WORKSPACE/B2G/out/target/product/generic/tests/b2g-*.zip $HOME/artifacts/b2g-tests.zip
+mv $WORKSPACE/B2G/out/target/product/generic/tests/b2g-*.zip $HOME/artifacts
 mv $WORKSPACE/B2G/out/emulator.tar.gz $HOME/artifacts/emulator.tar.gz
 mv $WORKSPACE/B2G/objdir-gecko/dist/b2g-*.crashreporter-symbols.zip $HOME/artifacts/b2g-crashreporter-symbols.zip
 

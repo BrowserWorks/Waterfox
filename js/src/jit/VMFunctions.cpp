@@ -86,18 +86,6 @@ InvokeFunction(JSContext* cx, HandleObject obj, uint32_t argc, Value* argv, Valu
     return true;
 }
 
-JSObject*
-NewGCObject(JSContext* cx, gc::AllocKind allocKind, gc::InitialHeap initialHeap,
-            size_t ndynamic, const js::Class* clasp)
-{
-    JSObject* obj = js::Allocate<JSObject>(cx, allocKind, ndynamic, initialHeap, clasp);
-    if (!obj)
-        return nullptr;
-
-    SetNewObjectMetadata(cx, obj);
-    return obj;
-}
-
 bool
 CheckOverRecursed(JSContext* cx)
 {
@@ -602,7 +590,8 @@ GetDynamicName(JSContext* cx, JSObject* scopeChain, JSString* str, Value* vp)
     }
 
     Shape* shape = nullptr;
-    JSObject* scope = nullptr, *pobj = nullptr;
+    JSObject* scope = nullptr;
+    JSObject* pobj = nullptr;
     if (LookupNameNoGC(cx, atom->asPropertyName(), scopeChain, &scope, &pobj, &shape)) {
         if (FetchNameNoGC(pobj, shape, MutableHandleValue::fromMarkedLocation(vp)))
             return;
@@ -708,16 +697,17 @@ DebugEpilogueOnBaselineReturn(JSContext* cx, BaselineFrame* frame, jsbytecode* p
 bool
 DebugEpilogue(JSContext* cx, BaselineFrame* frame, jsbytecode* pc, bool ok)
 {
-    // Unwind scope chain to stack depth 0.
-    ScopeIter si(cx, frame, pc);
-    UnwindAllScopesInFrame(cx, si);
-    jsbytecode* unwindPc = frame->script()->main();
-    frame->setOverridePc(unwindPc);
-
     // If Debugger::onLeaveFrame returns |true| we have to return the frame's
     // return value. If it returns |false|, the debugger threw an exception.
     // In both cases we have to pop debug scopes.
     ok = Debugger::onLeaveFrame(cx, frame, ok);
+
+    // Unwind to the outermost scope and set pc to the end of the script,
+    // regardless of error.
+    ScopeIter si(cx, frame, pc);
+    UnwindAllScopesInFrame(cx, si);
+    JSScript* script = frame->script();
+    frame->setOverridePc(script->lastPC());
 
     if (frame->isNonEvalFunctionFrame()) {
         MOZ_ASSERT_IF(ok, frame->hasReturnValue());
@@ -995,8 +985,23 @@ PopBlockScope(JSContext* cx, BaselineFrame* frame)
 }
 
 bool
+DebugLeaveThenPopBlockScope(JSContext* cx, BaselineFrame* frame, jsbytecode* pc)
+{
+    MOZ_ALWAYS_TRUE(DebugLeaveBlock(cx, frame, pc));
+    frame->popBlock(cx);
+    return true;
+}
+
+bool
 FreshenBlockScope(JSContext* cx, BaselineFrame* frame)
 {
+    return frame->freshenBlock(cx);
+}
+
+bool
+DebugLeaveThenFreshenBlockScope(JSContext* cx, BaselineFrame* frame, jsbytecode* pc)
+{
+    MOZ_ALWAYS_TRUE(DebugLeaveBlock(cx, frame, pc));
     return frame->freshenBlock(cx);
 }
 
@@ -1104,22 +1109,22 @@ Recompile(JSContext* cx)
 }
 
 bool
-SetDenseElement(JSContext* cx, HandleNativeObject obj, int32_t index, HandleValue value,
-                bool strict)
+SetDenseOrUnboxedArrayElement(JSContext* cx, HandleObject obj, int32_t index,
+                              HandleValue value, bool strict)
 {
     // This function is called from Ion code for StoreElementHole's OOL path.
-    // In this case we know the object is native and we can use setDenseElement
-    // instead of setDenseElementWithType.
+    // In this case we know the object is native or an unboxed array and we can
+    // use setDenseElement instead of setDenseElementWithType.
 
     NativeObject::EnsureDenseResult result = NativeObject::ED_SPARSE;
     do {
-        if (index < 0)
+        if (index < 0 || obj->is<UnboxedArrayObject>())
             break;
         bool isArray = obj->is<ArrayObject>();
         if (isArray && !obj->as<ArrayObject>().lengthIsWritable())
             break;
         uint32_t idx = uint32_t(index);
-        result = obj->ensureDenseElements(cx, idx, 1);
+        result = obj->as<NativeObject>().ensureDenseElements(cx, idx, 1);
         if (result != NativeObject::ED_OK)
             break;
         if (isArray) {
@@ -1127,13 +1132,22 @@ SetDenseElement(JSContext* cx, HandleNativeObject obj, int32_t index, HandleValu
             if (idx >= arr.length())
                 arr.setLengthInt32(idx + 1);
         }
-        obj->setDenseElement(idx, value);
+        obj->as<NativeObject>().setDenseElement(idx, value);
         return true;
     } while (false);
 
     if (result == NativeObject::ED_FAILED)
         return false;
     MOZ_ASSERT(result == NativeObject::ED_SPARSE);
+
+    if (index >= 0 && obj->is<UnboxedArrayObject>()) {
+        UnboxedArrayObject* nobj = &obj->as<UnboxedArrayObject>();
+        if (uint32_t(index) == nobj->initializedLength() &&
+            uint32_t(index) < UnboxedArrayObject::MaximumCapacity)
+        {
+            return nobj->appendElementNoTypeChange(cx, index, value);
+        }
+    }
 
     RootedValue indexVal(cx, Int32Value(index));
     return SetObjectElement(cx, obj, indexVal, value, strict);
@@ -1243,33 +1257,33 @@ ObjectIsCallable(JSObject* obj)
 void
 MarkValueFromIon(JSRuntime* rt, Value* vp)
 {
-    gc::MarkValueUnbarriered(&rt->gc.marker, vp, "write barrier");
+    TraceManuallyBarrieredEdge(&rt->gc.marker, vp, "write barrier");
 }
 
 void
 MarkStringFromIon(JSRuntime* rt, JSString** stringp)
 {
     if (*stringp)
-        gc::MarkStringUnbarriered(&rt->gc.marker, stringp, "write barrier");
+        TraceManuallyBarrieredEdge(&rt->gc.marker, stringp, "write barrier");
 }
 
 void
 MarkObjectFromIon(JSRuntime* rt, JSObject** objp)
 {
     if (*objp)
-        gc::MarkObjectUnbarriered(&rt->gc.marker, objp, "write barrier");
+        TraceManuallyBarrieredEdge(&rt->gc.marker, objp, "write barrier");
 }
 
 void
 MarkShapeFromIon(JSRuntime* rt, Shape** shapep)
 {
-    gc::MarkShapeUnbarriered(&rt->gc.marker, shapep, "write barrier");
+    TraceManuallyBarrieredEdge(&rt->gc.marker, shapep, "write barrier");
 }
 
 void
 MarkObjectGroupFromIon(JSRuntime* rt, ObjectGroup** groupp)
 {
-    gc::MarkObjectGroupUnbarriered(&rt->gc.marker, groupp, "write barrier");
+    TraceManuallyBarrieredEdge(&rt->gc.marker, groupp, "write barrier");
 }
 
 bool

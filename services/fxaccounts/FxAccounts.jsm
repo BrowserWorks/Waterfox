@@ -45,6 +45,7 @@ let publicProperties = [
   "now",
   "promiseAccountsForceSigninURI",
   "promiseAccountsChangeProfileURI",
+  "promiseAccountsManageURI",
   "removeCachedOAuthToken",
   "resendVerificationEmail",
   "setSignedInUser",
@@ -1067,6 +1068,12 @@ FxAccountsInternal.prototype = {
   pollEmailStatus: function pollEmailStatus(currentState, sessionToken, why) {
     log.debug("entering pollEmailStatus: " + why);
     if (why == "start") {
+      if (this.currentTimer) {
+        log.debug("pollEmailStatus starting while existing timer is running");
+        clearTimeout(this.currentTimer);
+        this.currentTimer = null;
+      }
+
       // If we were already polling, stop and start again.  This could happen
       // if the user requested the verification email to be resent while we
       // were already polling for receipt of an earlier email.
@@ -1213,6 +1220,28 @@ FxAccountsInternal.prototype = {
       let newQueryPortion = url.indexOf("?") == -1 ? "?" : "&";
       newQueryPortion += "email=" + encodeURIComponent(accountData.email);
       newQueryPortion += "&uid=" + encodeURIComponent(accountData.uid);
+      return url + newQueryPortion;
+    }).then(result => currentState.resolve(result));
+  },
+
+  // Returns a promise that resolves with the URL to use to manage the current
+  // user's FxA acct.
+  promiseAccountsManageURI: function() {
+    let url = Services.urlFormatter.formatURLPref("identity.fxaccounts.settings.uri");
+    if (this._requireHttps() && !/^https:/.test(url)) { // Comment to un-break emacs js-mode highlighting
+      throw new Error("Firefox Accounts server must use HTTPS");
+    }
+    let currentState = this.currentAccountState;
+    // but we need to append the uid and email address onto a query string
+    // (if the server has no matching uid it will offer to sign in with the
+    // email address)
+    return this.getSignedInUser().then(accountData => {
+      if (!accountData) {
+        return null;
+      }
+      let newQueryPortion = url.indexOf("?") == -1 ? "?" : "&";
+      newQueryPortion += "uid=" + encodeURIComponent(accountData.uid) +
+                         "&email=" + encodeURIComponent(accountData.email);
       return url + newQueryPortion;
     }).then(result => currentState.resolve(result));
   },
@@ -1377,9 +1406,9 @@ FxAccountsInternal.prototype = {
    *
    * @param options
    *        {
-   *          contentUrl: (string) Used by the FxAccountsProfileChannel.
+   *          contentUrl: (string) Used by the FxAccountsWebChannel.
    *            Defaults to pref identity.fxaccounts.settings.uri
-   *          profileServerUrl: (string) Used by the FxAccountsProfileChannel.
+   *          profileServerUrl: (string) Used by the FxAccountsWebChannel.
    *            Defaults to pref identity.fxaccounts.remote.profile.uri
    *        }
    *

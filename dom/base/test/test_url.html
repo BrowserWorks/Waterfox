@@ -310,7 +310,7 @@
     url = new URL("http://localhost/");
     url.host = "[2001::1]:30";
     is(url.hostname, "[2001::1]", "IPv6 hostname");
-    is(url.port, 30, "Port");
+    is(url.port, "30", "Port");
     is(url.host, "[2001::1]:30", "IPv6 host");
 
     url = new URL("http://localhost/");
@@ -334,6 +334,19 @@
     var a = document.createElement('A');
     a.href = url;
     ok(a.origin, 'http://mochi.test:8888', "The 'a' element has the correct origin");
+  </script>
+
+  <script>
+    var blob = new Blob(['a']);
+    var url = URL.createObjectURL(blob);
+    URL.revokeObjectURL(url);
+    URL.revokeObjectURL(url);
+    ok(true, "Calling revokeObjectURL twice should be ok");
+  </script>
+
+  <script>
+    URL.revokeObjectURL('blob:something');
+    ok(true, "This should not throw.");
   </script>
 </body>
 </html>

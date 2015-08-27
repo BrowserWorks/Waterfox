@@ -65,8 +65,8 @@ void vp8_regular_quantize_b_c(BLOCK *b, BLOCKD *d)
     short *dequant_ptr     = d->dequant;
     short zbin_oq_value    = b->zbin_extra;
 
-    vpx_memset(qcoeff_ptr, 0, 32);
-    vpx_memset(dqcoeff_ptr, 0, 32);
+    memset(qcoeff_ptr, 0, 32);
+    memset(dqcoeff_ptr, 0, 32);
 
     eob = -1;
 
@@ -101,7 +101,7 @@ void vp8_regular_quantize_b_c(BLOCK *b, BLOCKD *d)
     *d->eob = (char)(eob + 1);
 }
 
-void vp8_quantize_mby_c(MACROBLOCK *x)
+void vp8_quantize_mby(MACROBLOCK *x)
 {
     int i;
     int has_2nd_order = (x->e_mbd.mode_info_context->mbmi.mode != B_PRED
@@ -114,7 +114,7 @@ void vp8_quantize_mby_c(MACROBLOCK *x)
         x->quantize_b(&x->block[24], &x->e_mbd.block[24]);
 }
 
-void vp8_quantize_mb_c(MACROBLOCK *x)
+void vp8_quantize_mb(MACROBLOCK *x)
 {
     int i;
     int has_2nd_order=(x->e_mbd.mode_info_context->mbmi.mode != B_PRED
@@ -125,30 +125,13 @@ void vp8_quantize_mb_c(MACROBLOCK *x)
 }
 
 
-void vp8_quantize_mbuv_c(MACROBLOCK *x)
+void vp8_quantize_mbuv(MACROBLOCK *x)
 {
     int i;
 
     for (i = 16; i < 24; i++)
         x->quantize_b(&x->block[i], &x->e_mbd.block[i]);
 }
-
-/* quantize_b_pair function pointer in MACROBLOCK structure is set to one of
- * these two C functions if corresponding optimized routine is not available.
- * NEON optimized version implements currently the fast quantization for pair
- * of blocks. */
-void vp8_regular_quantize_b_pair(BLOCK *b1, BLOCK *b2, BLOCKD *d1, BLOCKD *d2)
-{
-    vp8_regular_quantize_b(b1, d1);
-    vp8_regular_quantize_b(b2, d2);
-}
-
-void vp8_fast_quantize_b_pair_c(BLOCK *b1, BLOCK *b2, BLOCKD *d1, BLOCKD *d2)
-{
-    vp8_fast_quantize_b_c(b1, d1);
-    vp8_fast_quantize_b_c(b2, d2);
-}
-
 
 static const int qrounding_factors[129] =
 {
@@ -552,6 +535,7 @@ void vp8_set_quantizer(struct VP8_COMP *cpi, int Q)
     MACROBLOCKD *mbd = &cpi->mb.e_mbd;
     int update = 0;
     int new_delta_q;
+    int new_uv_delta_q;
     cm->base_qindex = Q;
 
     /* if any of the delta_q values are changing update flag has to be set */
@@ -559,8 +543,6 @@ void vp8_set_quantizer(struct VP8_COMP *cpi, int Q)
 
     cm->y1dc_delta_q = 0;
     cm->y2ac_delta_q = 0;
-    cm->uvdc_delta_q = 0;
-    cm->uvac_delta_q = 0;
 
     if (Q < 4)
     {
@@ -572,6 +554,21 @@ void vp8_set_quantizer(struct VP8_COMP *cpi, int Q)
     update |= cm->y2dc_delta_q != new_delta_q;
     cm->y2dc_delta_q = new_delta_q;
 
+    new_uv_delta_q = 0;
+    // For screen content, lower the q value for UV channel. For now, select
+    // conservative delta; same delta for dc and ac, and decrease it with lower
+    // Q, and set to 0 below some threshold. May want to condition this in
+    // future on the variance/energy in UV channel.
+    if (cpi->oxcf.screen_content_mode && Q > 40) {
+      new_uv_delta_q = -(int)(0.15 * Q);
+      // Check range: magnitude of delta is 4 bits.
+      if (new_uv_delta_q < -15) {
+        new_uv_delta_q = -15;
+      }
+    }
+    update |= cm->uvdc_delta_q != new_uv_delta_q;
+    cm->uvdc_delta_q = new_uv_delta_q;
+    cm->uvac_delta_q = new_uv_delta_q;
 
     /* Set Segment specific quatizers */
     mbd->segment_feature_data[MB_LVL_ALT_Q][0] = cpi->segment_feature_data[MB_LVL_ALT_Q][0];

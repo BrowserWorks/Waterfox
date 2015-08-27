@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -162,6 +163,12 @@ XPCOM_API(nsresult) NS_NewNativeLocalFile(const nsACString& aPath,
 #endif
 
 /**
+ * Allocator functions for the standalone glue.
+ * Do not use outside the xpcom glue code.
+ * Use moz_xmalloc/moz_xrealloc/free, or new/delete instead.
+ */
+#ifdef XPCOM_GLUE
+/**
  * Allocates a block of memory of a particular size. If the memory cannot
  * be allocated (because of an out-of-memory condition), the process aborts.
  *
@@ -197,6 +204,11 @@ XPCOM_API(void*) NS_Realloc(void* aPtr, size_t aSize);
  * @note        This function is thread-safe.
  */
 XPCOM_API(void) NS_Free(void* aPtr);
+#else
+#define NS_Alloc moz_xmalloc
+#define NS_Realloc moz_xrealloc
+#define NS_Free free
+#endif
 
 /**
  * Support for warnings, assertions, and debugging breaks.

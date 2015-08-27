@@ -1,5 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * url, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -13,8 +13,6 @@
 #include "mozilla/dom/BindingDeclarations.h"
 #include "mozilla/dom/URLSearchParams.h"
 
-class nsIPrincipal;
-
 namespace mozilla {
 namespace dom {
 class File;
@@ -25,6 +23,7 @@ struct objectURLOptions;
 BEGIN_WORKERS_NAMESPACE
 
 class URLProxy;
+class ConstructorRunnable;
 
 class URL final : public mozilla::dom::URLSearchParamsObserver
 {
@@ -55,6 +54,9 @@ public:
               URL& aBase, ErrorResult& aRv);
   static already_AddRefed<URL>
   Constructor(const GlobalObject& aGlobal, const nsAString& aUrl,
+              const Optional<nsAString>& aBase, ErrorResult& aRv);
+  static already_AddRefed<URL>
+  Constructor(const GlobalObject& aGlobal, const nsAString& aUrl,
               const nsAString& aBase, ErrorResult& aRv);
 
   static void
@@ -63,7 +65,8 @@ public:
                   nsAString& aResult, ErrorResult& aRv);
 
   static void
-  RevokeObjectURL(const GlobalObject& aGlobal, const nsAString& aUrl);
+  RevokeObjectURL(const GlobalObject& aGlobal, const nsAString& aUrl,
+                  ErrorResult& aRv);
 
   void GetHref(nsAString& aHref, ErrorResult& aRv) const;
 
@@ -124,6 +127,10 @@ private:
   {
     return mURLProxy;
   }
+
+  static already_AddRefed<URL>
+  FinishConstructor(JSContext* aCx, WorkerPrivate* aPrivate,
+                    ConstructorRunnable* aRunnable, ErrorResult& aRv);
 
   void CreateSearchParamsIfNeeded();
 

@@ -10,19 +10,18 @@ function spawnTest () {
 
   Services.prefs.setBoolPref(FLATTEN_PREF, true);
 
-  yield DetailsView.selectView("js-flamegraph");
-
   yield startRecording(panel);
   yield busyWait(100);
 
-  let rendered = once(JsFlameGraphView, EVENTS.JS_FLAMEGRAPH_RENDERED);
   yield stopRecording(panel);
+  let rendered = once(JsFlameGraphView, EVENTS.JS_FLAMEGRAPH_RENDERED);
+  yield DetailsView.selectView("js-flamegraph");
   yield rendered;
 
-  let samples1 = PerformanceController.getCurrentRecording().getProfile().threads[0].samples;
-  let rendering1 = FlameGraphUtils._cache.get(samples1);
+  let thread1 = PerformanceController.getCurrentRecording().getProfile().threads[0];
+  let rendering1 = FlameGraphUtils._cache.get(thread1);
 
-  ok(samples1,
+  ok(thread1,
     "The samples were retrieved from the controller.");
   ok(rendering1,
     "The rendering data was cached.");
@@ -33,10 +32,10 @@ function spawnTest () {
 
   ok(true, "JsFlameGraphView rerendered when toggling flatten-tree-recursion.");
 
-  let samples2 = PerformanceController.getCurrentRecording().getProfile().threads[0].samples;
-  let rendering2 = FlameGraphUtils._cache.get(samples2);
+  let thread2 = PerformanceController.getCurrentRecording().getProfile().threads[0];
+  let rendering2 = FlameGraphUtils._cache.get(thread2);
 
-  is(samples1, samples2,
+  is(thread1, thread2,
     "The same samples data should be retrieved from the controller (1).");
   isnot(rendering1, rendering2,
     "The rendering data should be different because other options were used (1).");
@@ -47,10 +46,10 @@ function spawnTest () {
 
   ok(true, "JsFlameGraphView rerendered when toggling back flatten-tree-recursion.");
 
-  let samples3 = PerformanceController.getCurrentRecording().getProfile().threads[0].samples;
-  let rendering3 = FlameGraphUtils._cache.get(samples3);
+  let thread3 = PerformanceController.getCurrentRecording().getProfile().threads[0];
+  let rendering3 = FlameGraphUtils._cache.get(thread3);
 
-  is(samples2, samples3,
+  is(thread2, thread3,
     "The same samples data should be retrieved from the controller (2).");
   isnot(rendering2, rendering3,
     "The rendering data should be different because other options were used (2).");

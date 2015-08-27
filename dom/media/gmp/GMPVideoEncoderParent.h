@@ -18,7 +18,7 @@
 namespace mozilla {
 namespace gmp {
 
-class GMPParent;
+class GMPContentParent;
 
 class GMPVideoEncoderParent : public GMPVideoEncoderProxy,
                               public PGMPVideoEncoderParent,
@@ -27,7 +27,7 @@ class GMPVideoEncoderParent : public GMPVideoEncoderProxy,
 public:
   NS_INLINE_DECL_REFCOUNTING(GMPVideoEncoderParent)
 
-  explicit GMPVideoEncoderParent(GMPParent *aPlugin);
+  explicit GMPVideoEncoderParent(GMPContentParent *aPlugin);
 
   GMPVideoHostImpl& Host();
   void Shutdown();
@@ -39,13 +39,13 @@ public:
                             GMPVideoEncoderCallbackProxy* aCallback,
                             int32_t aNumberOfCores,
                             uint32_t aMaxPayloadSize) override;
-  virtual GMPErr Encode(GMPUnique<GMPVideoi420Frame>::Ptr aInputFrame,
+  virtual GMPErr Encode(GMPUniquePtr<GMPVideoi420Frame> aInputFrame,
                         const nsTArray<uint8_t>& aCodecSpecificInfo,
                         const nsTArray<GMPVideoFrameType>& aFrameTypes) override;
   virtual GMPErr SetChannelParameters(uint32_t aPacketLoss, uint32_t aRTT) override;
   virtual GMPErr SetRates(uint32_t aNewBitRate, uint32_t aFrameRate) override;
   virtual GMPErr SetPeriodicKeyFrames(bool aEnable) override;
-  virtual const uint64_t ParentID() override { return reinterpret_cast<uint64_t>(mPlugin.get()); }
+  virtual const uint32_t GetPluginId() const override { return mPluginId; }
 
   // GMPSharedMemManager
   virtual bool Alloc(size_t aSize, Shmem::SharedMemory::SharedMemoryType aType, Shmem* aMem) override
@@ -69,6 +69,7 @@ private:
   virtual bool RecvEncoded(const GMPVideoEncodedFrameData& aEncodedFrame,
                            InfallibleTArray<uint8_t>&& aCodecSpecificInfo) override;
   virtual bool RecvError(const GMPErr& aError) override;
+  virtual bool RecvShutdown() override;
   virtual bool RecvParentShmemForPool(Shmem&& aFrameBuffer) override;
   virtual bool AnswerNeedShmem(const uint32_t& aEncodedBufferSize,
                                Shmem* aMem) override;
@@ -76,10 +77,12 @@ private:
 
   bool mIsOpen;
   bool mShuttingDown;
-  nsRefPtr<GMPParent> mPlugin;
+  bool mActorDestroyed;
+  nsRefPtr<GMPContentParent> mPlugin;
   GMPVideoEncoderCallbackProxy* mCallback;
   GMPVideoHostImpl mVideoHost;
   nsCOMPtr<nsIThread> mEncodedThread;
+  const uint32_t mPluginId;
 };
 
 } // namespace gmp

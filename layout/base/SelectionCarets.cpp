@@ -17,6 +17,7 @@
 #include "nsDOMTokenList.h"
 #include "nsFocusManager.h"
 #include "nsFrame.h"
+#include "nsGenericHTMLElement.h"
 #include "nsIDocument.h"
 #include "nsIDocShell.h"
 #include "nsIDOMDocument.h"
@@ -71,6 +72,7 @@ NS_IMPL_ISUPPORTS(SelectionCarets,
                   nsISupportsWeakReference)
 
 /*static*/ int32_t SelectionCarets::sSelectionCaretsInflateSize = 0;
+/*static*/ bool SelectionCarets::sSelectionCaretDetectsLongTap = true;
 
 SelectionCarets::SelectionCarets(nsIPresShell* aPresShell)
   : mPresShell(aPresShell)
@@ -98,6 +100,8 @@ SelectionCarets::SelectionCarets(nsIPresShell* aPresShell)
   if (!addedPref) {
     Preferences::AddIntVarCache(&sSelectionCaretsInflateSize,
                                 "selectioncaret.inflatesize.threshold");
+    Preferences::AddBoolVarCache(&sSelectionCaretDetectsLongTap,
+                                 "selectioncaret.detects.longtap", true);
     addedPref = true;
   }
 }
@@ -267,13 +271,16 @@ SelectionCarets::HandleEvent(WidgetEvent* aEvent)
           nsPresContext::AppUnitsPerCSSPixel() * kMoveStartTolerancePx) {
       CancelLongTapDetector();
     }
+
   } else if (aEvent->message == NS_MOUSE_MOZLONGTAP) {
-    if (!mVisible) {
-      SELECTIONCARETS_LOG("SelectWord from APZ");
+    if (!mVisible || !sSelectionCaretDetectsLongTap) {
+      SELECTIONCARETS_LOG("SelectWord from NS_MOUSE_MOZLONGTAP");
+
+      mDownPoint = ptInRoot;
       nsresult wordSelected = SelectWord();
 
       if (NS_FAILED(wordSelected)) {
-        SELECTIONCARETS_LOG("SelectWord from APZ failed!")
+        SELECTIONCARETS_LOG("SelectWord from NS_MOUSE_MOZLONGTAP failed!");
         return nsEventStatus_eIgnore;
       }
 
@@ -531,8 +538,8 @@ SelectionCarets::UpdateSelectionCarets()
   SetStartFrameVisibility(startFrameVisible);
   SetEndFrameVisibility(endFrameVisible);
 
-  SetStartFramePos(firstRectInRootFrame.BottomLeft());
-  SetEndFramePos(lastRectInRootFrame.BottomRight());
+  SetStartFramePos(firstRectInRootFrame);
+  SetEndFramePos(lastRectInRootFrame);
   SetVisibility(true);
 
   // Use half of the first(last) rect as the dragup(dragdown) boundary
@@ -616,10 +623,16 @@ SelectionCarets::SelectWord()
     }
   } else {
     nsIContent* focusedContent = GetFocusedContent();
-    if (focusedContent && focusedContent->GetTextEditorRootContent()) {
-      nsIDOMWindow* win = mPresShell->GetDocument()->GetWindow();
-      if (win) {
-        fm->ClearFocus(win);
+    if (focusedContent) {
+      // Clear focus if content was editable element, or contentEditable.
+      nsGenericHTMLElement* focusedGeneric =
+        nsGenericHTMLElement::FromContent(focusedContent);
+      if (focusedContent->GetTextEditorRootContent() ||
+          (focusedGeneric && focusedGeneric->IsContentEditable())) {
+        nsIDOMWindow* win = mPresShell->GetDocument()->GetWindow();
+        if (win) {
+          fm->ClearFocus(win);
+        }
       }
     }
   }
@@ -879,7 +892,7 @@ SelectionCarets::SetSelectionDirection(nsDirection aDir)
 }
 
 static void
-SetFramePos(dom::Element* aElement, const nsPoint& aPosition)
+SetFramePos(dom::Element* aElement, const nsRect& aCaretRect)
 {
   if (!aElement) {
     return;
@@ -887,9 +900,11 @@ SetFramePos(dom::Element* aElement, const nsPoint& aPosition)
 
   nsAutoString styleStr;
   styleStr.AppendLiteral("left: ");
-  styleStr.AppendFloat(nsPresContext::AppUnitsToFloatCSSPixels(aPosition.x));
+  styleStr.AppendFloat(nsPresContext::AppUnitsToFloatCSSPixels(aCaretRect.Center().x));
   styleStr.AppendLiteral("px; top: ");
-  styleStr.AppendFloat(nsPresContext::AppUnitsToFloatCSSPixels(aPosition.y));
+  styleStr.AppendFloat(nsPresContext::AppUnitsToFloatCSSPixels(aCaretRect.y));
+  styleStr.AppendLiteral("px; padding-top: ");
+  styleStr.AppendFloat(nsPresContext::AppUnitsToFloatCSSPixels(aCaretRect.height));
   styleStr.AppendLiteral("px;");
 
   SELECTIONCARETS_LOG_STATIC("Set style: %s",
@@ -899,17 +914,19 @@ SetFramePos(dom::Element* aElement, const nsPoint& aPosition)
 }
 
 void
-SelectionCarets::SetStartFramePos(const nsPoint& aPosition)
+SelectionCarets::SetStartFramePos(const nsRect& aCaretRect)
 {
-  SELECTIONCARETS_LOG("x=%d, y=%d", aPosition.x, aPosition.y);
-  SetFramePos(mPresShell->GetSelectionCaretsStartElement(), aPosition);
+  SELECTIONCARETS_LOG("x=%d, y=%d, w=%d, h=%d",
+    aCaretRect.x, aCaretRect.y, aCaretRect.width, aCaretRect.height);
+  SetFramePos(mPresShell->GetSelectionCaretsStartElement(), aCaretRect);
 }
 
 void
-SelectionCarets::SetEndFramePos(const nsPoint& aPosition)
+SelectionCarets::SetEndFramePos(const nsRect& aCaretRect)
 {
-  SELECTIONCARETS_LOG("x=%d, y=%d", aPosition.y, aPosition.y);
-  SetFramePos(mPresShell->GetSelectionCaretsEndElement(), aPosition);
+  SELECTIONCARETS_LOG("x=%d, y=%d, w=%d, h=%d",
+    aCaretRect.x, aCaretRect.y, aCaretRect.width, aCaretRect.height);
+  SetFramePos(mPresShell->GetSelectionCaretsEndElement(), aCaretRect);
 }
 
 bool
@@ -1218,7 +1235,7 @@ SelectionCarets::ScrollPositionChanged()
 void
 SelectionCarets::LaunchLongTapDetector()
 {
-  if (mUseAsyncPanZoom) {
+  if (!sSelectionCaretDetectsLongTap || mUseAsyncPanZoom) {
     return;
   }
 

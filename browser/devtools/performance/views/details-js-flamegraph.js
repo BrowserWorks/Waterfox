@@ -9,6 +9,8 @@
  */
 let JsFlameGraphView = Heritage.extend(DetailsSubview, {
 
+  shouldUpdateWhileMouseIsActive: true,
+
   rerenderPrefs: [
     "invert-flame-graph",
     "flatten-tree-recursion",
@@ -24,10 +26,13 @@ let JsFlameGraphView = Heritage.extend(DetailsSubview, {
 
     this.graph = new FlameGraph($("#js-flamegraph-view"));
     this.graph.timelineTickUnits = L10N.getStr("graphs.ms");
+    this.graph.setTheme(PerformanceController.getTheme());
     yield this.graph.ready();
 
     this._onRangeChangeInGraph = this._onRangeChangeInGraph.bind(this);
+    this._onThemeChanged = this._onThemeChanged.bind(this);
 
+    PerformanceController.on(EVENTS.THEME_CHANGED, this._onThemeChanged);
     this.graph.on("selecting", this._onRangeChangeInGraph);
   }),
 
@@ -37,6 +42,7 @@ let JsFlameGraphView = Heritage.extend(DetailsSubview, {
   destroy: Task.async(function* () {
     DetailsSubview.destroy.call(this);
 
+    PerformanceController.off(EVENTS.THEME_CHANGED, this._onThemeChanged);
     this.graph.off("selecting", this._onRangeChangeInGraph);
 
     yield this.graph.destroy();
@@ -52,12 +58,12 @@ let JsFlameGraphView = Heritage.extend(DetailsSubview, {
     let recording = PerformanceController.getCurrentRecording();
     let duration = recording.getDuration();
     let profile = recording.getProfile();
-    let samples = profile.threads[0].samples;
+    let thread = profile.threads[0];
 
-    let data = FlameGraphUtils.createFlameGraphDataFromSamples(samples, {
-      invertStack: PerformanceController.getOption("invert-flame-graph"),
+    let data = FlameGraphUtils.createFlameGraphDataFromThread(thread, {
+      invertTree: PerformanceController.getOption("invert-flame-graph"),
       flattenRecursion: PerformanceController.getOption("flatten-tree-recursion"),
-      filterFrames: !PerformanceController.getOption("show-platform-data") && FrameNode.isContent,
+      contentOnly: !PerformanceController.getOption("show-platform-data"),
       showIdleBlocks: PerformanceController.getOption("show-idle-blocks") && L10N.getStr("table.idle")
     });
 
@@ -89,8 +95,16 @@ let JsFlameGraphView = Heritage.extend(DetailsSubview, {
   _onRerenderPrefChanged: function() {
     let recording = PerformanceController.getCurrentRecording();
     let profile = recording.getProfile();
-    let samples = profile.threads[0].samples;
-    FlameGraphUtils.removeFromCache(samples);
+    let thread = profile.threads[0];
+    FlameGraphUtils.removeFromCache(thread);
+  },
+
+  /**
+   * Called when `devtools.theme` changes.
+   */
+  _onThemeChanged: function (_, theme) {
+    this.graph.setTheme(theme);
+    this.graph.refresh({ force: true });
   },
 
   toString: () => "[object JsFlameGraphView]"

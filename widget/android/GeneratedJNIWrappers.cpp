@@ -302,6 +302,14 @@ mozilla::jni::ByteArray::LocalRef GeckoAppShell::GetIconForExtensionWrapper(mozi
     return mozilla::jni::Method<GetIconForExtensionWrapper_t>::Call(nullptr, nullptr, a0, a1);
 }
 
+constexpr char GeckoAppShell::GetMaxTouchPoints_t::name[];
+constexpr char GeckoAppShell::GetMaxTouchPoints_t::signature[];
+
+int32_t GeckoAppShell::GetMaxTouchPoints()
+{
+    return mozilla::jni::Method<GetMaxTouchPoints_t>::Call(nullptr, nullptr);
+}
+
 constexpr char GeckoAppShell::GetMessageWrapper_t::name[];
 constexpr char GeckoAppShell::GetMessageWrapper_t::signature[];
 
@@ -510,14 +518,6 @@ void GeckoAppShell::NotifyWakeLockChanged(mozilla::jni::String::Param a0, mozill
     return mozilla::jni::Method<NotifyWakeLockChanged_t>::Call(nullptr, nullptr, a0, a1);
 }
 
-constexpr char GeckoAppShell::NotifyXreExit_t::name[];
-constexpr char GeckoAppShell::NotifyXreExit_t::signature[];
-
-void GeckoAppShell::NotifyXreExit()
-{
-    return mozilla::jni::Method<NotifyXreExit_t>::Call(nullptr, nullptr);
-}
-
 constexpr char GeckoAppShell::OpenUriExternal_t::name[];
 constexpr char GeckoAppShell::OpenUriExternal_t::signature[];
 
@@ -537,9 +537,9 @@ void GeckoAppShell::PerformHapticFeedback(bool a0)
 constexpr char GeckoAppShell::PumpMessageLoop_t::name[];
 constexpr char GeckoAppShell::PumpMessageLoop_t::signature[];
 
-bool GeckoAppShell::PumpMessageLoop()
+bool GeckoAppShell::PumpMessageLoop(mozilla::jni::Object::Param a0)
 {
-    return mozilla::jni::Method<PumpMessageLoop_t>::Call(nullptr, nullptr);
+    return mozilla::jni::Method<PumpMessageLoop_t>::Call(nullptr, nullptr, a0);
 }
 
 constexpr char GeckoAppShell::RegisterSurfaceTextureFrameListener_t::name[];

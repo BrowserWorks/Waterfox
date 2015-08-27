@@ -20,7 +20,6 @@ const PC_ICE_CONTRACT = "@mozilla.org/dom/rtcicecandidate;1";
 const PC_SESSION_CONTRACT = "@mozilla.org/dom/rtcsessiondescription;1";
 const PC_MANAGER_CONTRACT = "@mozilla.org/dom/peerconnectionmanager;1";
 const PC_STATS_CONTRACT = "@mozilla.org/dom/rtcstatsreport;1";
-const PC_IDENTITY_CONTRACT = "@mozilla.org/dom/rtcidentityassertion;1";
 const PC_STATIC_CONTRACT = "@mozilla.org/dom/peerconnectionstatic;1";
 const PC_SENDER_CONTRACT = "@mozilla.org/dom/rtpsender;1";
 const PC_RECEIVER_CONTRACT = "@mozilla.org/dom/rtpreceiver;1";
@@ -31,7 +30,6 @@ const PC_ICE_CID = Components.ID("{02b9970c-433d-4cc2-923d-f7028ac66073}");
 const PC_SESSION_CID = Components.ID("{1775081b-b62d-4954-8ffe-a067bbf508a7}");
 const PC_MANAGER_CID = Components.ID("{7293e901-2be3-4c02-b4bd-cbef6fc24f78}");
 const PC_STATS_CID = Components.ID("{7fe6e18b-0da3-4056-bf3b-440ef3809e06}");
-const PC_IDENTITY_CID = Components.ID("{1abc7499-3c54-43e0-bd60-686e2703f072}");
 const PC_STATIC_CID = Components.ID("{0fb47c47-a205-4583-a9fc-cbadf8c95880}");
 const PC_SENDER_CID = Components.ID("{4fff5d46-d827-4cd4-a970-8fd53977440e}");
 const PC_RECEIVER_CID = Components.ID("{d974b814-8fde-411c-8c45-b86791b81030}");
@@ -47,9 +45,14 @@ function GlobalPCList() {
   Services.obs.addObserver(this, "network:offline-about-to-go-offline", true);
   Services.obs.addObserver(this, "network:offline-status-changed", true);
   Services.obs.addObserver(this, "gmp-plugin-crash", true);
+  if (Cc["@mozilla.org/childprocessmessagemanager;1"]) {
+    let mm = Cc["@mozilla.org/childprocessmessagemanager;1"].getService(Ci.nsIMessageListenerManager);
+    mm.addMessageListener("gmp-plugin-crash", this);
+  }
 }
 GlobalPCList.prototype = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver,
+                                         Ci.nsIMessageListener,
                                          Ci.nsISupportsWeakReference,
                                          Ci.IPeerConnectionManager]),
   classID: PC_MANAGER_CID,
@@ -95,6 +98,31 @@ GlobalPCList.prototype = {
     return this._list[winID] ? true : false;
   },
 
+  handleGMPCrash: function(data) {
+    let broadcastPluginCrash = function(list, winID, pluginID, pluginName) {
+      if (list.hasOwnProperty(winID)) {
+        list[winID].forEach(function(pcref) {
+          let pc = pcref.get();
+          if (pc) {
+            pc._pc.pluginCrash(pluginID, pluginName);
+          }
+        });
+      }
+    };
+
+    // a plugin crashed; if it's associated with any of our PCs, fire an
+    // event to the DOM window
+    for (let winId in this._list) {
+      broadcastPluginCrash(this._list, winId, data.pluginID, data.pluginName);
+    }
+  },
+
+  receiveMessage: function(message) {
+    if (message.name == "gmp-plugin-crash") {
+      this.handleGMPCrash(message.data);
+    }
+  },
+
   observe: function(subject, topic, data) {
     let cleanupPcRef = function(pcref) {
       let pc = pcref.get();
@@ -109,17 +137,6 @@ GlobalPCList.prototype = {
       if (list.hasOwnProperty(winID)) {
         list[winID].forEach(cleanupPcRef);
         delete list[winID];
-      }
-    };
-
-    let broadcastPluginCrash = function(list, winID, pluginID, name, crashReportID) {
-      if (list.hasOwnProperty(winID)) {
-        list[winID].forEach(function(pcref) {
-          let pc = pcref.get();
-          if (pc) {
-            pc._pc.pluginCrash(pluginID, name, crashReportID);
-          }
-        });
       }
     };
 
@@ -151,26 +168,24 @@ GlobalPCList.prototype = {
         this._networkdown = false;
       }
     } else if (topic == "network:app-offline-status-changed") {
-      // App just went offline. The subject also contains the appId,
-      // but navigator.onLine checks that for us
-      if (!this._networkdown && !this._win.navigator.onLine) {
-        for (let winId in this._list) {
+      // App changed offline status. The subject contains the appId for which
+      // we need to check the status
+      let appId = subject.QueryInterface(Ci.nsIAppOfflineInfo).appId;
+      let ios = Cc['@mozilla.org/network/io-service;1'].getService(Ci.nsIIOService);
+      for (let winId in this._list) {
+        if (appId != this._list[winId]._appId) {
+          continue;
+        }
+        if (ios.isAppOffline(appId)) {
           cleanupWinId(this._list, winId);
         }
       }
-      this._networkdown = !this._win.navigator.onLine;
     } else if (topic == "gmp-plugin-crash") {
-      // a plugin crashed; if it's associated with any of our PCs, fire an
-      // event to the DOM window
-      let sep = data.indexOf(' ');
-      let pluginId = data.slice(0, sep);
-      let rest = data.slice(sep+1);
-      // This presumes no spaces in the name!
-      sep = rest.indexOf(' ');
-      let name = rest.slice(0, sep);
-      let crashId = rest.slice(sep+1);
-      for (let winId in this._list) {
-        broadcastPluginCrash(this._list, winId, pluginId, name, crashId);
+      if (subject instanceof Ci.nsIWritablePropertyBag2) {
+        let pluginID = subject.getPropertyAsUint32("pluginID");
+        let pluginName = subject.getPropertyAsAString("pluginName");
+        let data = { pluginID, pluginName };
+        this.handleGMPCrash(data);
       }
     }
   },
@@ -272,22 +287,6 @@ RTCStatsReport.prototype = {
   get mozPcid() { return this._pcid; }
 };
 
-function RTCIdentityAssertion() {}
-RTCIdentityAssertion.prototype = {
-  classDescription: "RTCIdentityAssertion",
-  classID: PC_IDENTITY_CID,
-  contractID: PC_IDENTITY_CONTRACT,
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsISupports,
-                                         Ci.nsIDOMGlobalPropertyInitializer]),
-
-  init: function(win) { this._win = win; },
-
-  __init: function(idp, name) {
-    this.idp = idp;
-    this.name  = name;
-  }
-};
-
 function RTCPeerConnection() {
   this._senders = [];
   this._receivers = [];
@@ -342,7 +341,19 @@ RTCPeerConnection.prototype = {
     });
     this._mustValidateRTCConfiguration(rtcConfig,
         "RTCPeerConnection constructor passed invalid RTCConfiguration");
-    if (_globalPCList._networkdown || !this._win.navigator.onLine) {
+
+    // Save the appId
+    this._appId = Cu.getWebIDLCallerPrincipal().appId;
+
+    // Get the offline status for this appId
+    let appOffline = false;
+    if (this._appId != Ci.nsIScriptSecurityManager.NO_APP_ID &&
+        this._appId != Ci.nsIScriptSecurityManager.UNKNOWN_APP_ID) {
+      let ios = Cc['@mozilla.org/network/io-service;1'].getService(Ci.nsIIOService);
+      appOffline = ios.isAppOffline(this._appId);
+    }
+
+    if (_globalPCList._networkdown || appOffline) {
       throw new this._win.DOMException(
           "Can't create RTCPeerConnections when the network is down",
           "InvalidStateError");
@@ -717,9 +728,10 @@ RTCPeerConnection.prototype = {
         if (msg) {
           // Set new identity and generate an event.
           this._impl.peerIdentity = msg.identity;
-          let assertion = new this._win.RTCIdentityAssertion(
-            this._remoteIdp.provider, msg.identity);
-          this._resolvePeerIdentity(assertion);
+          this._resolvePeerIdentity(Cu.cloneInto({
+            idp: this._remoteIdp.provider,
+            name: msg.identity
+          }, this._win));
         }
       })
       .catch(e => {
@@ -1343,6 +1355,5 @@ this.NSGetFactory = XPCOMUtils.generateNSGetFactory(
    RTCRtpReceiver,
    RTCRtpSender,
    RTCStatsReport,
-   RTCIdentityAssertion,
    PeerConnectionObserver]
 );

@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -565,7 +566,14 @@ nsMixedContentBlocker::ShouldLoad(bool aHadInsecureImageRedirect,
   // Check the parent scheme. If it is not an HTTPS page then mixed content
   // restrictions do not apply.
   bool parentIsHttps;
-  nsresult rv = requestingLocation->SchemeIs("https", &parentIsHttps);
+  nsCOMPtr<nsIURI> innerURI = NS_GetInnermostURI(requestingLocation);
+  if (!innerURI) {
+    NS_ERROR("Can't get innerURI from requestingLocation");
+    *aDecision = REJECT_REQUEST;
+    return NS_OK;
+  }
+
+  nsresult rv = innerURI->SchemeIs("https", &parentIsHttps);
   if (NS_FAILED(rv)) {
     NS_ERROR("requestingLocation->SchemeIs failed");
     *aDecision = REJECT_REQUEST;

@@ -58,7 +58,7 @@ static struct VP8D_COMP * create_decompressor(VP8D_CONFIG *oxcf)
     if (!pbi)
         return NULL;
 
-    vpx_memset(pbi, 0, sizeof(VP8D_COMP));
+    memset(pbi, 0, sizeof(VP8D_COMP));
 
     if (setjmp(pbi->common.error.jmp))
     {
@@ -87,6 +87,7 @@ static struct VP8D_COMP * create_decompressor(VP8D_CONFIG *oxcf)
     pbi->ec_enabled = oxcf->error_concealment;
     pbi->overlaps = NULL;
 #else
+    (void)oxcf;
     pbi->ec_enabled = 0;
 #endif
     /* Error concealment is activated after a key frame has been
@@ -258,7 +259,7 @@ static int swap_frame_buffers (VP8_COMMON *cm)
     return err;
 }
 
-int check_fragments_for_errors(VP8D_COMP *pbi)
+static int check_fragments_for_errors(VP8D_COMP *pbi)
 {
     if (!pbi->ec_active &&
         pbi->fragments.count <= 1 && pbi->fragments.sizes[0] == 0)
@@ -303,6 +304,8 @@ int vp8dx_receive_compressed_data(VP8D_COMP *pbi, size_t size,
 {
     VP8_COMMON *cm = &pbi->common;
     int retcode = -1;
+    (void)size;
+    (void)source;
 
     pbi->common.error.error_code = VPX_CODEC_OK;
 
@@ -407,6 +410,7 @@ int vp8dx_get_raw_frame(VP8D_COMP *pbi, YV12_BUFFER_CONFIG *sd, int64_t *time_st
 #if CONFIG_POSTPROC
     ret = vp8_post_proc_frame(&pbi->common, sd, flags);
 #else
+    (void)flags;
 
     if (pbi->common.frame_to_show)
     {

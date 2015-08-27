@@ -13,7 +13,9 @@
 #define VP9_COMMON_VP9_ENTROPYMV_H_
 
 #include "./vpx_config.h"
-#include "vp9/common/vp9_blockd.h"
+
+#include "vp9/common/vp9_mv.h"
+#include "vp9/common/vp9_prob.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -16,8 +16,8 @@
 #include "nsGkAtoms.h"
 #include "nsLayoutUtils.h"
 #include "nsTArray.h"
-
-class nsTableFrame;
+#include "nsTableRowFrame.h"
+#include "mozilla/WritingModes.h"
 
 /**
  * nsTableCellFrame
@@ -36,6 +36,11 @@ class nsTableCellFrame : public nsContainerFrame,
 {
   typedef mozilla::image::DrawResult DrawResult;
 
+protected:
+  typedef mozilla::WritingMode WritingMode;
+  typedef mozilla::LogicalSide LogicalSide;
+  typedef mozilla::LogicalMargin LogicalMargin;
+
 public:
   NS_DECL_QUERYFRAME_TARGET(nsTableCellFrame)
   NS_DECL_QUERYFRAME
@@ -43,8 +48,20 @@ public:
 
   // default constructor supplied by the compiler
 
-  explicit nsTableCellFrame(nsStyleContext* aContext);
+  nsTableCellFrame(nsStyleContext* aContext, nsTableFrame* aTableFrame);
   ~nsTableCellFrame();
+
+  nsTableRowFrame* GetTableRowFrame() const
+  {
+    nsIFrame* parent = GetParent();
+    MOZ_ASSERT(parent && parent->GetType() == nsGkAtoms::tableRowFrame);
+    return static_cast<nsTableRowFrame*>(parent);
+  }
+
+  nsTableFrame* GetTableFrame() const
+  {
+    return GetTableRowFrame()->GetTableFrame();
+  }
 
   virtual void Init(nsIContent*       aContent,
                     nsContainerFrame* aParent,
@@ -85,13 +102,6 @@ public:
 
   virtual bool NeedsToObserve(const nsHTMLReflowState& aReflowState) override;
 
-  /** instantiate a new instance of nsTableRowFrame.
-    * @param aPresShell the pres shell for this frame
-    *
-    * @return           the frame that was created
-    */
-  friend nsIFrame* NS_NewTableCellFrame(nsIPresShell* aPresShell, nsStyleContext* aContext);
-
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                                 const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override;
@@ -125,6 +135,14 @@ public:
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override;
 #endif
+
+  // Although the spec doesn't say that writing-mode is not applied to
+  // table-cells, we still override this method here because we want to
+  // make effective writing mode of table structure frames consistent
+  // within a table. The content inside table cells is reflowed by an
+  // anonymous block, hence their writing mode is not affected.
+  virtual mozilla::WritingMode GetWritingMode() const override
+    { return GetTableFrame()->GetWritingMode(); }
 
   void VerticallyAlignChild(nscoord aMaxAscent);
 
@@ -203,7 +221,7 @@ public:
 
   nsTableCellFrame* GetNextCell() const;
 
-  virtual nsMargin* GetBorderWidth(nsMargin& aBorder) const;
+  virtual LogicalMargin GetBorderWidth(WritingMode aWM) const;
 
   virtual DrawResult PaintBackground(nsRenderingContext& aRenderingContext,
                                      const nsRect&        aDirtyRect,
@@ -296,7 +314,7 @@ class nsBCTableCellFrame final : public nsTableCellFrame
 public:
   NS_DECL_FRAMEARENA_HELPERS
 
-  explicit nsBCTableCellFrame(nsStyleContext* aContext);
+  nsBCTableCellFrame(nsStyleContext* aContext, nsTableFrame* aTableFrame);
 
   ~nsBCTableCellFrame();
 
@@ -309,13 +327,13 @@ public:
                               nscoord aRadii[8]) const override;
 
   // Get the *inner half of the border only*, in twips.
-  virtual nsMargin* GetBorderWidth(nsMargin& aBorder) const override;
+  virtual LogicalMargin GetBorderWidth(WritingMode aWM) const override;
 
   // Get the *inner half of the border only*, in pixels.
-  BCPixelSize GetBorderWidth(mozilla::css::Side aSide) const;
+  BCPixelSize GetBorderWidth(LogicalSide aSide) const;
 
   // Set the full (both halves) width of the border
-  void SetBorderWidth(mozilla::css::Side aSide, BCPixelSize aPixelValue);
+  void SetBorderWidth(LogicalSide aSide, BCPixelSize aPixelValue);
 
   virtual nsMargin GetBorderOverflow() override;
 
@@ -332,10 +350,10 @@ private:
 
   // These are the entire width of the border (the cell edge contains only
   // the inner half, per the macros in nsTablePainter.h).
-  BCPixelSize mTopBorder;
-  BCPixelSize mRightBorder;
-  BCPixelSize mBottomBorder;
-  BCPixelSize mLeftBorder;
+  BCPixelSize mBStartBorder;
+  BCPixelSize mIEndBorder;
+  BCPixelSize mBEndBorder;
+  BCPixelSize mIStartBorder;
 };
 
 #endif

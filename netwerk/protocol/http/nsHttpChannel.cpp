@@ -37,9 +37,11 @@
 #include "nsError.h"
 #include "nsPrintfCString.h"
 #include "nsAlgorithm.h"
+#include "nsQueryObject.h"
 #include "GeckoProfiler.h"
 #include "nsIConsoleService.h"
 #include "mozilla/Attributes.h"
+#include "mozilla/DebugOnly.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/VisualEventTracer.h"
 #include "nsISSLSocketControl.h"
@@ -81,6 +83,10 @@
 namespace mozilla { namespace net {
 
 namespace {
+
+// Monotonically increasing ID for generating unique cache entries per
+// intercepted channel.
+static uint64_t gNumIntercepted = 0;
 
 // True if the local cache should be bypassed when processing a request.
 #define BYPASS_LOCAL_CACHE(loadFlags) \
@@ -222,6 +228,7 @@ nsHttpChannel::nsHttpChannel()
     , mRequestTime(0)
     , mOfflineCacheLastModifiedTime(0)
     , mInterceptCache(DO_NOT_INTERCEPT)
+    , mInterceptionID(gNumIntercepted++)
     , mCachedContentIsValid(false)
     , mCachedContentIsPartial(false)
     , mCacheOnlyMetadata(false)
@@ -244,6 +251,7 @@ nsHttpChannel::nsHttpChannel()
     , mHasAutoRedirectVetoNotifier(0)
     , mPushedStream(nullptr)
     , mLocalBlocklist(false)
+    , mWarningReporter(nullptr)
     , mDidReval(false)
 {
     LOG(("Creating nsHttpChannel [this=%p]\n", this));
@@ -281,6 +289,19 @@ nsHttpChannel::Init(nsIURI *uri,
 
     return rv;
 }
+
+nsresult
+nsHttpChannel::AddSecurityMessage(const nsAString& aMessageTag,
+                                  const nsAString& aMessageCategory)
+{
+    if (mWarningReporter) {
+        return mWarningReporter->ReportSecurityMessage(aMessageTag,
+                                                       aMessageCategory);
+    }
+    return HttpBaseChannel::AddSecurityMessage(aMessageTag,
+                                               aMessageCategory);
+}
+
 //-----------------------------------------------------------------------------
 // nsHttpChannel <private>
 //-----------------------------------------------------------------------------
@@ -300,7 +321,7 @@ nsHttpChannel::Connect()
     rv = mURI->SchemeIs("https", &isHttps);
     NS_ENSURE_SUCCESS(rv,rv);
 
-    if (mAllowSTS && !isHttps) {
+    if (!isHttps) {
         // enforce Strict-Transport-Security
         nsISiteSecurityService* sss = gHttpHandler->GetSSService();
         NS_ENSURE_TRUE(sss, NS_ERROR_OUT_OF_MEMORY);
@@ -317,12 +338,21 @@ nsHttpChannel::Connect()
 
         if (isStsHost) {
             LOG(("nsHttpChannel::Connect() STS permissions found\n"));
-            return AsyncCall(&nsHttpChannel::HandleAsyncRedirectChannelToHttps);
+            if (mAllowSTS) {
+                Telemetry::Accumulate(Telemetry::HTTP_SCHEME_UPGRADE, 3);
+                return AsyncCall(&nsHttpChannel::HandleAsyncRedirectChannelToHttps);
+            } else {
+                Telemetry::Accumulate(Telemetry::HTTP_SCHEME_UPGRADE, 2);
+            }
+        } else {
+            Telemetry::Accumulate(Telemetry::HTTP_SCHEME_UPGRADE, 1);
         }
+    } else {
+        Telemetry::Accumulate(Telemetry::HTTP_SCHEME_UPGRADE, 0);
     }
 
     // ensure that we are using a valid hostname
-    if (!net_IsValidHostName(nsDependentCString(mConnectionInfo->Host())))
+    if (!net_IsValidHostName(nsDependentCString(mConnectionInfo->Origin())))
         return NS_ERROR_UNKNOWN_HOST;
 
     // Finalize ConnectionInfo flags before SpeculativeConnect
@@ -893,7 +923,7 @@ nsHttpChannel::CallOnStartRequest()
         if (!mContentTypeHint.IsEmpty())
             mResponseHead->SetContentType(mContentTypeHint);
         else if (mResponseHead->Version() == NS_HTTP_VERSION_0_9 &&
-                 mConnectionInfo->Port() != mConnectionInfo->DefaultPort())
+                 mConnectionInfo->OriginPort() != mConnectionInfo->DefaultPort())
             mResponseHead->SetContentType(NS_LITERAL_CSTRING(TEXT_PLAIN));
         else {
             // Uh-oh.  We had better find out what type we are!
@@ -934,7 +964,10 @@ nsHttpChannel::CallOnStartRequest()
 
     LOG(("  calling mListener->OnStartRequest\n"));
     if (mListener) {
+        MOZ_ASSERT(!mOnStartRequestCalled,
+                   "We should not call OsStartRequest twice");
         rv = mListener->OnStartRequest(this, mListenerContext);
+        mOnStartRequestCalled = true;
         if (NS_FAILED(rv))
             return rv;
     } else {
@@ -1259,6 +1292,10 @@ nsHttpChannel::ProcessAltService()
     // alternative   = protocol-id "=" alt-authority
     // protocol-id   = token ; percent-encoded ALPN protocol identifier
     // alt-authority = quoted-string ;  containing [ uri-host ] ":" port
+
+    if (!mAllowAltSvc) { // per channel opt out
+        return;
+    }
 
     if (!gHttpHandler->AllowAltSvc() || (mCaps & NS_HTTP_DISALLOW_SPDY)) {
         return;
@@ -2297,7 +2334,7 @@ nsHttpChannel::ProcessPartialContent()
         LOG(("nsHttpChannel::ProcessPartialContent [this=%p] "
              "206 has different total entity size than the content length "
              "of the original partially cached entity.\n", this));
-        
+
         mCacheEntry->AsyncDoom(nullptr);
         Cancel(NS_ERROR_CORRUPTED_CONTENT);
         return CallOnStartRequest();
@@ -2732,7 +2769,7 @@ nsHttpChannel::OpenCacheEntry(bool isHttps)
     }
 
     if (!mPostID && mApplicationCache) {
-        rv = cacheStorageService->AppCacheStorage(info, 
+        rv = cacheStorageService->AppCacheStorage(info,
             mApplicationCache,
             getter_AddRefs(cacheStorage));
     }
@@ -2760,12 +2797,16 @@ nsHttpChannel::OpenCacheEntry(bool isHttps)
         extension.Append(nsPrintfCString("%d", mPostID));
     }
     if (PossiblyIntercepted()) {
-        extension.Append('u');
+        extension.Append(nsPrintfCString("u%lld", mInterceptionID));
     }
 
     // If this channel should be intercepted, we do not open a cache entry for this channel
     // until the interception process is complete and the consumer decides what to do with it.
     if (mInterceptCache == MAYBE_INTERCEPT) {
+        DebugOnly<bool> exists;
+        MOZ_ASSERT(NS_FAILED(cacheStorage->Exists(openURI, extension, &exists)) || !exists,
+                   "The entry must not exist in the cache before we create it here");
+
         nsCOMPtr<nsICacheEntry> entry;
         rv = cacheStorage->OpenTruncate(openURI, extension, getter_AddRefs(entry));
         NS_ENSURE_SUCCESS(rv, rv);
@@ -4781,6 +4822,8 @@ nsHttpChannel::AsyncOpen(nsIStreamListener *listener, nsISupports *context)
     return rv;
 }
 
+// On error BeginConnect() should call AsyncAbort() before exiting until
+// ContineBeginConnect after that it should not call it.
 nsresult
 nsHttpChannel::BeginConnect()
 {
@@ -4804,12 +4847,17 @@ nsHttpChannel::BeginConnect()
         mURI->GetUsername(mUsername);
     if (NS_SUCCEEDED(rv))
         rv = mURI->GetAsciiSpec(mSpec);
-    if (NS_FAILED(rv))
+    if (NS_FAILED(rv)) {
+        AsyncAbort(rv);
         return rv;
+    }
 
     // Reject the URL if it doesn't specify a host
-    if (host.IsEmpty())
-        return NS_ERROR_MALFORMED_URI;
+    if (host.IsEmpty()) {
+        rv = NS_ERROR_MALFORMED_URI;
+        AsyncAbort(rv);
+        return rv;
+    }
     LOG(("host=%s port=%d\n", host.get(), port));
     LOG(("uri=%s\n", mSpec.get()));
 
@@ -4821,14 +4869,16 @@ nsHttpChannel::BeginConnect()
     mRequestHead.SetOrigin(scheme, host, port);
 
     nsRefPtr<AltSvcMapping> mapping;
-    if ((scheme.Equals(NS_LITERAL_CSTRING("http")) ||
+    if (mAllowAltSvc && // per channel
+        (scheme.Equals(NS_LITERAL_CSTRING("http")) ||
          scheme.Equals(NS_LITERAL_CSTRING("https"))) &&
+        (!proxyInfo || proxyInfo->IsDirect()) &&
         (mapping = gHttpHandler->GetAltServiceMapping(scheme,
                                                       host, port,
                                                       mPrivateBrowsing))) {
-        LOG(("nsHttpChannel %p Alt Service Mapping Found %s://%s:%d\n", this,
-             scheme.get(), mapping->AlternateHost().get(),
-             mapping->AlternatePort()));
+        LOG(("nsHttpChannel %p Alt Service Mapping Found %s://%s:%d [%s]\n",
+             this, scheme.get(), mapping->AlternateHost().get(),
+             mapping->AlternatePort(), mapping->HashKey().get()));
 
         if (!(mLoadFlags & LOAD_ANONYMOUS) && !mPrivateBrowsing) {
             nsAutoCString altUsedLine(mapping->AlternateHost());
@@ -4869,13 +4919,21 @@ nsHttpChannel::BeginConnect()
         Telemetry::Accumulate(Telemetry::HTTP_TRANSACTION_USE_ALTSVC, false);
     }
 
+    // Set network interface id only when it's not empty to avoid
+    // rebuilding hash key.
+    if (!mNetworkInterfaceId.IsEmpty()) {
+        mConnectionInfo->SetNetworkInterfaceId(mNetworkInterfaceId);
+    }
+
     mAuthProvider =
         do_CreateInstance("@mozilla.org/network/http-channel-auth-provider;1",
                           &rv);
     if (NS_SUCCEEDED(rv))
         rv = mAuthProvider->Init(this);
-    if (NS_FAILED(rv))
+    if (NS_FAILED(rv)) {
+        AsyncAbort(rv);
         return rv;
+    }
 
     // check to see if authorization headers should be included
     mAuthProvider->AddAuthorizationHeaders();
@@ -4886,7 +4944,11 @@ nsHttpChannel::BeginConnect()
     // Check to see if we should redirect this channel elsewhere by
     // nsIHttpChannel.redirectTo API request
     if (mAPIRedirectToURI) {
-        return AsyncCall(&nsHttpChannel::HandleAsyncAPIRedirect);
+        rv = AsyncCall(&nsHttpChannel::HandleAsyncAPIRedirect);
+        if (NS_FAILED(rv)) {
+            AsyncAbort(rv);
+        }
+        return rv;
     }
     // Check to see if this principal exists on local blocklists.
     nsRefPtr<nsChannelClassifier> channelClassifier = new nsChannelClassifier();
@@ -4973,11 +5035,14 @@ nsHttpChannel::BeginConnect()
     if (mLoadFlags & LOAD_FRESH_CONNECTION) {
         // just the initial document resets the whole pool
         if (mLoadFlags & LOAD_INITIAL_DOCUMENT_URI) {
+            gHttpHandler->ConnMgr()->ClearAltServiceMappings();
             gHttpHandler->ConnMgr()->DoShiftReloadConnectionCleanup(mConnectionInfo);
         }
         mCaps &= ~NS_HTTP_ALLOW_PIPELINING;
     }
     if (!(mLoadFlags & LOAD_CLASSIFY_URI)) {
+        // On error ContinueBeginConnect() will call AsyncAbort so do not do it
+        // here
         return ContinueBeginConnect();
     }
     // mLocalBlocklist is true only if tracking protection is enabled and the
@@ -4988,6 +5053,8 @@ nsHttpChannel::BeginConnect()
     if (mCanceled || !mLocalBlocklist) {
        rv = ContinueBeginConnect();
        if (NS_FAILED(rv)) {
+           // On error ContinueBeginConnect() will call AsyncAbort so do not do
+           // it here
            return rv;
        }
        callContinueBeginConnect = false;
@@ -5111,21 +5178,15 @@ nsHttpChannel::OnProxyAvailable(nsICancelable *request, nsIChannel *channel,
         LOG(("nsHttpChannel::OnProxyAvailable [this=%p] "
              "Handler no longer active.\n", this));
         rv = NS_ERROR_NOT_AVAILABLE;
+        AsyncAbort(rv);
     }
     else {
+        // On error BeginConnect() will call AsyncAbort.
         rv = BeginConnect();
     }
 
     if (NS_FAILED(rv)) {
         Cancel(rv);
-        // Calling OnStart/OnStop synchronously here would mean doing it before
-        // returning from AsyncOpen which is a contract violation. Do it async.
-        nsRefPtr<nsRunnableMethod<HttpBaseChannel> > event =
-            NS_NewRunnableMethod(this, &nsHttpChannel::DoNotifyListener);
-        rv = NS_DispatchToCurrentThread(event);
-        if (NS_FAILED(rv)) {
-            NS_WARNING("Failed To Dispatch DoNotifyListener");
-        }
     }
     return rv;
 }
@@ -5519,7 +5580,10 @@ nsHttpChannel::OnStopRequest(nsIRequest *request, nsISupports *ctxt, nsresult st
             // NOTE: since we have a failure status, we can ignore the return
             // value from onStartRequest.
             if (mListener) {
+                MOZ_ASSERT(!mOnStartRequestCalled,
+                           "We should not call OnStartRequest twice.");
                 mListener->OnStartRequest(this, mListenerContext);
+                mOnStartRequestCalled = true;
             } else {
                 NS_WARNING("OnStartRequest skipped because of null listener");
             }
@@ -5767,7 +5831,7 @@ nsHttpChannel::OnDataAvailable(nsIRequest *request, nsISupports *ctxt,
             }
             mLogicalOffset += count;
         }
-        
+
         return rv;
     }
 
@@ -5850,11 +5914,15 @@ nsHttpChannel::OnTransportStatus(nsITransport *trans, nsresult status,
 
     if (status == NS_NET_STATUS_CONNECTED_TO ||
         status == NS_NET_STATUS_WAITING_FOR) {
-        nsCOMPtr<nsISocketTransport> socketTransport =
-            do_QueryInterface(trans);
-        if (socketTransport) {
-            socketTransport->GetSelfAddr(&mSelfAddr);
-            socketTransport->GetPeerAddr(&mPeerAddr);
+        if (mTransaction) {
+            mTransaction->GetNetworkAddresses(mSelfAddr, mPeerAddr);
+        } else {
+            nsCOMPtr<nsISocketTransport> socketTransport =
+                do_QueryInterface(trans);
+            if (socketTransport) {
+                socketTransport->GetSelfAddr(&mSelfAddr);
+                socketTransport->GetPeerAddr(&mPeerAddr);
+            }
         }
     }
 
@@ -6501,12 +6569,12 @@ nsHttpChannel::MaybeInvalidateCacheEntryForSubsequentGet()
     }
 
     // Invalidate the request-uri.
-#ifdef PR_LOGGING
-    nsAutoCString key;
-    mURI->GetAsciiSpec(key);
-    LOG(("MaybeInvalidateCacheEntryForSubsequentGet [this=%p uri=%s]\n",
-        this, key.get()));
-#endif
+    if (LOG_ENABLED()) {
+      nsAutoCString key;
+      mURI->GetAsciiSpec(key);
+      LOG(("MaybeInvalidateCacheEntryForSubsequentGet [this=%p uri=%s]\n",
+          this, key.get()));
+    }
 
     DoInvalidateCacheEntry(mURI);
 
@@ -6549,11 +6617,12 @@ nsHttpChannel::DoInvalidateCacheEntry(nsIURI* aURI)
 
     nsresult rv;
 
-#ifdef PR_LOGGING
     nsAutoCString key;
-    aURI->GetAsciiSpec(key);
+    if (LOG_ENABLED()) {
+      aURI->GetAsciiSpec(key);
+    }
+
     LOG(("DoInvalidateCacheEntry [channel=%p key=%s]", this, key.get()));
-#endif
 
     nsCOMPtr<nsICacheStorageService> cacheStorageService =
         do_GetService("@mozilla.org/netwerk/cache-storage-service;1", &rv);

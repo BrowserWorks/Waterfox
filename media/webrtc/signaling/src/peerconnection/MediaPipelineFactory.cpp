@@ -3,6 +3,8 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "logging.h"
+#include "nsIGfxInfo.h"
+#include "nsServiceManagerUtils.h"
 
 #include "PeerConnectionImpl.h"
 #include "PeerConnectionMedia.h"
@@ -14,8 +16,9 @@
 
 #include "signaling/src/jsep/JsepTrack.h"
 #include "signaling/src/jsep/JsepTransport.h"
+#include "signaling/src/common/PtrVector.h"
 
-#ifdef MOZILLA_INTERNAL_API
+#if !defined(MOZILLA_EXTERNAL_LINKAGE)
 #include "MediaStreamTrack.h"
 #include "nsIPrincipal.h"
 #include "nsIDocument.h"
@@ -29,25 +32,23 @@
 #include "OMXCodecWrapper.h"
 #endif
 
+#ifdef MOZ_WEBRTC_MEDIACODEC
+#include "MediaCodecVideoCodec.h"
+#endif
+
+#ifdef MOZILLA_INTERNAL_API
+#include "mozilla/Preferences.h"
+#endif
+
+#if !defined(MOZILLA_EXTERNAL_LINKAGE)
+#include "WebrtcGmpVideoCodec.h"
+#endif
+
 #include <stdlib.h>
 
 namespace mozilla {
 
 MOZ_MTLOG_MODULE("MediaPipelineFactory")
-
-// Trivial wrapper class around a vector of ptrs.
-template <class T> class PtrVector
-{
-public:
-  ~PtrVector()
-  {
-    for (auto it = values.begin(); it != values.end(); ++it) {
-      delete *it;
-    }
-  }
-
-  std::vector<T*> values;
-};
 
 static nsresult
 JsepCodecDescToCodecConfig(const JsepCodecDescription& aCodec,
@@ -212,6 +213,22 @@ MediaPipelineFactory::CreateOrGetTransportFlow(
     return rv;
   }
 
+  // Always permits negotiation of the confidential mode.
+  // Only allow non-confidential (which is an allowed default),
+  // if we aren't confidential.
+  std::set<std::string> alpn;
+  std::string alpnDefault = "";
+  alpn.insert("c-webrtc");
+  if (!mPC->PrivacyRequested()) {
+    alpnDefault = "webrtc";
+    alpn.insert(alpnDefault);
+  }
+  rv = dtls->SetAlpn(alpn, alpnDefault);
+  if (NS_FAILED(rv)) {
+    MOZ_MTLOG(ML_ERROR, "Couldn't set ALPN");
+    return rv;
+  }
+
   nsAutoPtr<PtrVector<TransportLayer> > layers(new PtrVector<TransportLayer>);
   layers->values.push_back(ice.release());
   layers->values.push_back(dtls.release());
@@ -302,6 +319,14 @@ MediaPipelineFactory::CreateOrUpdateMediaPipeline(
     const JsepTrackPair& aTrackPair,
     const JsepTrack& aTrack)
 {
+#if !defined(MOZILLA_EXTERNAL_LINKAGE)
+  // The GMP code is all the way on the other side of webrtc.org, and it is not
+  // feasible to plumb this information all the way through. So, we set it (for
+  // the duration of this call) in a global variable. This allows the GMP code
+  // to report errors to the PC.
+  WebrtcGmpPCHandleSetter setter(mPC->GetHandle());
+#endif
+
   MOZ_ASSERT(aTrackPair.mRtpTransport);
 
   bool receiving =
@@ -352,6 +377,20 @@ MediaPipelineFactory::CreateOrUpdateMediaPipeline(
     return NS_ERROR_FAILURE;
   }
 
+  RefPtr<MediaSessionConduit> conduit;
+  if (aTrack.GetMediaType() == SdpMediaSection::kAudio) {
+    rv = GetOrCreateAudioConduit(aTrackPair, aTrack, &conduit);
+    if (NS_FAILED(rv))
+      return rv;
+  } else if (aTrack.GetMediaType() == SdpMediaSection::kVideo) {
+    rv = GetOrCreateVideoConduit(aTrackPair, aTrack, &conduit);
+    if (NS_FAILED(rv))
+      return rv;
+  } else {
+    // We've created the TransportFlow, nothing else to do here.
+    return NS_OK;
+  }
+
   RefPtr<MediaPipeline> pipeline =
     stream->GetPipelineByTrackId_m(aTrack.GetTrackId());
 
@@ -377,20 +416,6 @@ MediaPipelineFactory::CreateOrUpdateMediaPipeline(
                 << " m-line index=" << aTrackPair.mLevel
                 << " type=" << aTrack.GetMediaType()
                 << " direction=" << aTrack.GetDirection());
-
-  RefPtr<MediaSessionConduit> conduit;
-  if (aTrack.GetMediaType() == SdpMediaSection::kAudio) {
-    rv = GetOrCreateAudioConduit(aTrackPair, aTrack, &conduit);
-    if (NS_FAILED(rv))
-      return rv;
-  } else if (aTrack.GetMediaType() == SdpMediaSection::kVideo) {
-    rv = GetOrCreateVideoConduit(aTrackPair, aTrack, &conduit);
-    if (NS_FAILED(rv))
-      return rv;
-  } else {
-    // We've created the TransportFlow, nothing else to do here.
-    return NS_OK;
-  }
 
   if (receiving) {
     rv = CreateMediaPipelineReceiving(aTrackPair, aTrack,
@@ -516,7 +541,7 @@ MediaPipelineFactory::CreateMediaPipelineSending(
       aRtcpFlow,
       aFilter);
 
-#ifdef MOZILLA_INTERNAL_API
+#if !defined(MOZILLA_EXTERNAL_LINKAGE)
   // implement checking for peerIdentity (where failure == black/silence)
   nsIDocument* doc = mPC->GetWindow()->GetExtantDoc();
   if (doc) {
@@ -605,6 +630,15 @@ MediaPipelineFactory::GetOrCreateAudioConduit(
     if (error) {
       MOZ_MTLOG(ML_ERROR, "ConfigureRecvMediaCodecs failed: " << error);
       return NS_ERROR_FAILURE;
+    }
+
+    if (!aTrackPair.mSending) {
+      // No send track, but we still need to configure an SSRC for receiver
+      // reports.
+      if (!conduit->SetLocalSSRC(aTrackPair.mRecvonlySsrc)) {
+        MOZ_MTLOG(ML_ERROR, "SetLocalSSRC failed");
+        return NS_ERROR_FAILURE;
+      }
     }
   } else {
     // For now we only expect to have one ssrc per local track.
@@ -727,6 +761,15 @@ MediaPipelineFactory::GetOrCreateVideoConduit(
       MOZ_MTLOG(ML_ERROR, "ConfigureRecvMediaCodecs failed: " << error);
       return NS_ERROR_FAILURE;
     }
+
+    if (!aTrackPair.mSending) {
+      // No send track, but we still need to configure an SSRC for receiver
+      // reports.
+      if (!conduit->SetLocalSSRC(aTrackPair.mRecvonlySsrc)) {
+        MOZ_MTLOG(ML_ERROR, "SetLocalSSRC failed");
+        return NS_ERROR_FAILURE;
+      }
+    }
   } else {
     // For now we only expect to have one ssrc per local track.
     auto ssrcs = aTrack.GetSsrcs();
@@ -784,7 +827,7 @@ nsresult
 MediaPipelineFactory::ConfigureVideoCodecMode(const JsepTrack& aTrack,
                                               VideoSessionConduit& aConduit)
 {
-#ifdef MOZILLA_INTERNAL_API
+#if !defined(MOZILLA_EXTERNAL_LINKAGE)
   nsRefPtr<LocalSourceStreamInfo> stream =
     mPCMedia->GetLocalStreamById(aTrack.GetStreamId());
 
@@ -843,7 +886,63 @@ MediaPipelineFactory::EnsureExternalCodec(VideoSessionConduit& aConduit,
                                           VideoCodecConfig* aConfig,
                                           bool aIsSend)
 {
-  if (aConfig->mName == "VP8" || aConfig->mName == "VP9") {
+  if (aConfig->mName == "VP8") {
+#ifdef MOZ_WEBRTC_MEDIACODEC
+     if (aIsSend) {
+#ifdef MOZILLA_INTERNAL_API
+       bool enabled = mozilla::Preferences::GetBool("media.navigator.hardware.vp8_encode.acceleration_enabled", false);
+#else
+       bool enabled = false;
+#endif
+       if (enabled) {
+         nsCOMPtr<nsIGfxInfo> gfxInfo = do_GetService("@mozilla.org/gfx/info;1");
+         if (gfxInfo) {
+           int32_t status;
+           if (NS_SUCCEEDED(gfxInfo->GetFeatureStatus(nsIGfxInfo::FEATURE_WEBRTC_HW_ACCELERATION, &status))) {
+             if (status != nsIGfxInfo::FEATURE_STATUS_OK) {
+               NS_WARNING("VP8 encoder hardware is not whitelisted: disabling.\n");
+             } else {
+               VideoEncoder* encoder = nullptr;
+               encoder = MediaCodecVideoCodec::CreateEncoder(MediaCodecVideoCodec::CodecType::CODEC_VP8);
+               if (encoder) {
+                 return aConduit.SetExternalSendCodec(aConfig, encoder);
+               } else {
+                 return kMediaConduitNoError;
+               }
+             }
+           }
+         }
+       }
+     } else {
+#ifdef MOZILLA_INTERNAL_API
+       bool enabled = mozilla::Preferences::GetBool("media.navigator.hardware.vp8_decode.acceleration_enabled", false);
+#else
+       bool enabled = false;
+#endif
+       if (enabled) {
+         nsCOMPtr<nsIGfxInfo> gfxInfo = do_GetService("@mozilla.org/gfx/info;1");
+         if (gfxInfo) {
+           int32_t status;
+           if (NS_SUCCEEDED(gfxInfo->GetFeatureStatus(nsIGfxInfo::FEATURE_WEBRTC_HW_ACCELERATION, &status))) {
+             if (status != nsIGfxInfo::FEATURE_STATUS_OK) {
+               NS_WARNING("VP8 decoder hardware is not whitelisted: disabling.\n");
+             } else {
+
+               VideoDecoder* decoder;
+               decoder = MediaCodecVideoCodec::CreateDecoder(MediaCodecVideoCodec::CodecType::CODEC_VP8);
+               if (decoder) {
+                 return aConduit.SetExternalRecvCodec(aConfig, decoder);
+               } else {
+                 return kMediaConduitNoError;
+               }
+             }
+           }
+         }
+       }
+     }
+#endif
+     return kMediaConduitNoError;
+  } else if (aConfig->mName == "VP9") {
     return kMediaConduitNoError;
   } else if (aConfig->mName == "H264") {
     if (aConduit.CodecPluginID() != 0) {
@@ -855,7 +954,7 @@ MediaPipelineFactory::EnsureExternalCodec(VideoSessionConduit& aConduit,
 #ifdef MOZ_WEBRTC_OMX
       encoder =
           OMXVideoCodec::CreateEncoder(OMXVideoCodec::CodecType::CODEC_H264);
-#else
+#elif !defined(MOZILLA_XPCOMRT_API)
       encoder = GmpVideoCodec::CreateEncoder();
 #endif
       if (encoder) {
@@ -864,11 +963,11 @@ MediaPipelineFactory::EnsureExternalCodec(VideoSessionConduit& aConduit,
         return kMediaConduitInvalidSendCodec;
       }
     } else {
-      VideoDecoder* decoder;
+      VideoDecoder* decoder = nullptr;
 #ifdef MOZ_WEBRTC_OMX
       decoder =
           OMXVideoCodec::CreateDecoder(OMXVideoCodec::CodecType::CODEC_H264);
-#else
+#elif !defined(MOZILLA_XPCOMRT_API)
       decoder = GmpVideoCodec::CreateDecoder();
 #endif
       if (decoder) {

@@ -910,7 +910,7 @@ nsDocShellTreeOwner::HandleEvent(nsIDOMEvent* aEvent)
       nsIWebNavigation* webnav = static_cast<nsIWebNavigation *>(mWebBrowser);
 
       nsAutoString link, name;
-      if (webnav && NS_SUCCEEDED(handler->DropLink(dragEvent, link, false, name))) {
+      if (webnav && NS_SUCCEEDED(handler->DropLink(dragEvent, name, true, link))) {
         if (!link.IsEmpty()) {
           webnav->LoadURI(link.get(), 0, nullptr, nullptr, nullptr);
         }
@@ -1174,17 +1174,17 @@ NS_IMETHODIMP
 ChromeTooltipListener::AddTooltipListener()
 {
   if (mEventTarget) {
-    nsresult rv = mEventTarget->AddEventListener(NS_LITERAL_STRING("keydown"),
-                                                 this, false, false);
+    nsresult rv = mEventTarget->AddSystemEventListener(NS_LITERAL_STRING("keydown"),
+                                                       this, false, false);
     NS_ENSURE_SUCCESS(rv, rv);
-    rv = mEventTarget->AddEventListener(NS_LITERAL_STRING("mousedown"), this,
-                                        false, false);
+    rv = mEventTarget->AddSystemEventListener(NS_LITERAL_STRING("mousedown"), this,
+                                              false, false);
     NS_ENSURE_SUCCESS(rv, rv);
-    rv = mEventTarget->AddEventListener(NS_LITERAL_STRING("mouseout"), this,
-                                        false, false);
+    rv = mEventTarget->AddSystemEventListener(NS_LITERAL_STRING("mouseout"), this,
+                                              false, false);
     NS_ENSURE_SUCCESS(rv, rv);
-    rv = mEventTarget->AddEventListener(NS_LITERAL_STRING("mousemove"), this,
-                                        false, false);
+    rv = mEventTarget->AddSystemEventListener(NS_LITERAL_STRING("mousemove"), this,
+                                              false, false);
     NS_ENSURE_SUCCESS(rv, rv);
 
     mTooltipListenerInstalled = true;
@@ -1226,17 +1226,17 @@ ChromeTooltipListener::RemoveTooltipListener()
 {
   if (mEventTarget) {
     nsresult rv =
-      mEventTarget->RemoveEventListener(NS_LITERAL_STRING("keydown"), this,
-                                        false);
+      mEventTarget->RemoveSystemEventListener(NS_LITERAL_STRING("keydown"), this,
+                                              false);
     NS_ENSURE_SUCCESS(rv, rv);
-    rv = mEventTarget->RemoveEventListener(NS_LITERAL_STRING("mousedown"),
-                                           this, false);
+    rv = mEventTarget->RemoveSystemEventListener(NS_LITERAL_STRING("mousedown"),
+                                                 this, false);
     NS_ENSURE_SUCCESS(rv, rv);
-    rv = mEventTarget->RemoveEventListener(NS_LITERAL_STRING("mouseout"), this,
+    rv = mEventTarget->RemoveSystemEventListener(NS_LITERAL_STRING("mouseout"), this,
                                            false);
     NS_ENSURE_SUCCESS(rv, rv);
-    rv = mEventTarget->RemoveEventListener(NS_LITERAL_STRING("mousemove"),
-                                           this, false);
+    rv = mEventTarget->RemoveSystemEventListener(NS_LITERAL_STRING("mousemove"),
+                                                 this, false);
     NS_ENSURE_SUCCESS(rv, rv);
 
     mTooltipListenerInstalled = false;

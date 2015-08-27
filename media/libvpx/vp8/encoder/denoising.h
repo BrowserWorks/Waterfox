@@ -19,13 +19,15 @@ extern "C" {
 #endif
 
 #define SUM_DIFF_THRESHOLD (16 * 16 * 2)
-#define SUM_DIFF_THRESHOLD_HIGH (600)
+#define SUM_DIFF_THRESHOLD_HIGH (600)  // ~(16 * 16 * 1.5)
 #define MOTION_MAGNITUDE_THRESHOLD (8*3)
 
 #define SUM_DIFF_THRESHOLD_UV (96)   // (8 * 8 * 1.5)
 #define SUM_DIFF_THRESHOLD_HIGH_UV (8 * 8 * 2)
 #define SUM_DIFF_FROM_AVG_THRESH_UV (8 * 8 * 8)
 #define MOTION_MAGNITUDE_THRESHOLD_UV (8*3)
+
+#define MAX_GF_ARF_DENOISE_RANGE (8)
 
 enum vp8_denoiser_decision
 {

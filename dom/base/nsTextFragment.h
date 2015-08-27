@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -19,7 +21,6 @@
 #include "nsISupportsImpl.h"
 
 class nsString;
-class nsCString;
 
 // XXX should this normalize the code to keep a \u0000 at the end?
 
@@ -134,8 +135,9 @@ public:
    * Append the contents of this string fragment to aString
    * @return false if an out of memory condition is detected, true otherwise
    */
+  MOZ_WARN_UNUSED_RESULT
   bool AppendTo(nsAString& aString,
-                const mozilla::fallible_t& aFallible) const NS_WARN_UNUSED_RESULT {
+                const mozilla::fallible_t& aFallible) const {
     if (mState.mIs2b) {
       bool ok = aString.Append(m2b, mState.mLength, aFallible);
       if (!ok) {
@@ -167,8 +169,9 @@ public:
    * @param aLength the length of the substring
    * @return false if an out of memory condition is detected, true otherwise
    */
+  MOZ_WARN_UNUSED_RESULT
   bool AppendTo(nsAString& aString, int32_t aOffset, int32_t aLength,
-                const mozilla::fallible_t& aFallible) const NS_WARN_UNUSED_RESULT
+                const mozilla::fallible_t& aFallible) const
   {
     if (mState.mIs2b) {
       bool ok = aString.Append(m2b + aOffset, aLength, aFallible);

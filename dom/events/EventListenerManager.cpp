@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -379,6 +380,10 @@ EventListenerManager::AddEventListenerInternal(
   if (aTypeAtom && mTarget) {
     mTarget->EventListenerAdded(aTypeAtom);
   }
+
+  if (mIsMainThreadELM && mTarget) {
+    EventListenerService::NotifyAboutMainThreadListenerChange(mTarget);
+  }
 }
 
 bool
@@ -495,6 +500,9 @@ EventListenerManager::RemoveEventListenerInternal(
         mNoListenerForEventAtom = nullptr;
         if (mTarget && aUserType) {
           mTarget->EventListenerRemoved(aUserType);
+        }
+        if (mIsMainThreadELM && mTarget) {
+          EventListenerService::NotifyAboutMainThreadListenerChange(mTarget);
         }
 
         if (!deviceType
@@ -629,6 +637,9 @@ EventListenerManager::SetEventHandlerInternal(
       mTarget->EventListenerRemoved(aName);
       mTarget->EventListenerAdded(aName);
     }
+    if (mIsMainThreadELM && mTarget) {
+      EventListenerService::NotifyAboutMainThreadListenerChange(mTarget);
+    }
   }
 
   // Set flag to indicate possible need for compilation later
@@ -755,6 +766,9 @@ EventListenerManager::RemoveEventHandler(nsIAtom* aName,
     mNoListenerForEventAtom = nullptr;
     if (mTarget && aName) {
       mTarget->EventListenerRemoved(aName);
+    }
+    if (mIsMainThreadELM && mTarget) {
+      EventListenerService::NotifyAboutMainThreadListenerChange(mTarget);
     }
   }
 }
@@ -960,7 +974,7 @@ EventListenerManager::HandleEventSubType(Listener* aListener,
       ErrorResult rv;
       listenerHolder.GetWebIDLCallback()->
         HandleEvent(aCurrentTarget, *(aDOMEvent->InternalDOMEvent()), rv);
-      result = rv.ErrorCode();
+      result = rv.StealNSResult();
     } else {
       result = listenerHolder.GetXPCOMCallback()->HandleEvent(aDOMEvent);
     }
@@ -1023,7 +1037,8 @@ public:
   {
   }
 
-  virtual void AddDetails(mozilla::dom::ProfileTimelineMarker& aMarker) override
+  virtual void AddDetails(JSContext* aCx,
+                          mozilla::dom::ProfileTimelineMarker& aMarker) override
   {
     if (GetMetaData() == TRACING_INTERVAL_START) {
       aMarker.mType.Construct(GetCause());

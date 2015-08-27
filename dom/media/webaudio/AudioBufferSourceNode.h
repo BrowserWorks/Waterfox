@@ -15,8 +15,8 @@ namespace dom {
 
 class AudioParam;
 
-class AudioBufferSourceNode : public AudioNode,
-                              public MainThreadMediaStreamListener
+class AudioBufferSourceNode final : public AudioNode,
+                                    public MainThreadMediaStreamListener
 {
 public:
   explicit AudioBufferSourceNode(AudioContext* aContext);
@@ -58,6 +58,10 @@ public:
   AudioParam* PlaybackRate() const
   {
     return mPlaybackRate;
+  }
+  AudioParam* Detune() const
+  {
+    return mDetune;
   }
   bool Loop() const
   {
@@ -123,6 +127,7 @@ private:
     LOOPSTART,
     LOOPEND,
     PLAYBACKRATE,
+    DETUNE,
     DOPPLERSHIFT
   };
 
@@ -130,6 +135,7 @@ private:
   void SendBufferParameterToStream(JSContext* aCx);
   void SendOffsetAndDurationParametersToStream(AudioNodeStream* aStream);
   static void SendPlaybackRateToStream(AudioNode* aNode);
+  static void SendDetuneToStream(AudioNode* aNode);
 
 private:
   double mLoopStart;
@@ -138,6 +144,7 @@ private:
   double mDuration;
   nsRefPtr<AudioBuffer> mBuffer;
   nsRefPtr<AudioParam> mPlaybackRate;
+  nsRefPtr<AudioParam> mDetune;
   bool mLoop;
   bool mStartCalled;
   bool mStopped;

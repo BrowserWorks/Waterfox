@@ -20,6 +20,8 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=641821
 
 /** Test for Bug 641821 **/
 
+SimpleTest.requestFlakyTimeout("requestFlakyTimeout is silly. (But make sure marquee has time to initialize itself.)");
+
 var div = document.createElement("div");
 
 var M;
@@ -580,7 +582,7 @@ function testExpandos() {
   var m2 = new M(function(records, observer) {
     is(observer.expandoProperty, true);
     observer.disconnect();
-    then();
+    then(testOutsideShadowDOM);
   });
   m2.expandoProperty = true;
   m2.observe(div, { attributes: true });
@@ -594,6 +596,159 @@ function testExpandos() {
     SpecialPowers.gc();
   }
   div.setAttribute("foo", "bar2");
+}
+
+function testOutsideShadowDOM() {
+  var m = new M(function(records, observer) {
+    is(records.length, 1);
+    is(records[0].type, "attributes", "Should have got attributes");
+    observer.disconnect();
+    then(testInsideShadowDOM);
+  });
+  m.observe(div, {
+      attributes: true,
+      childList: true,
+      characterData: true,
+      subtree: true
+    })
+  var sr = div.createShadowRoot();
+  sr.innerHTML = "<div" + ">text</" + "div>";
+  sr.firstChild.setAttribute("foo", "bar");
+  sr.firstChild.firstChild.data = "text2";
+  sr.firstChild.appendChild(document.createElement("div"));
+  div.setAttribute("foo", "bar");
+}
+
+function testInsideShadowDOM() {
+  var m = new M(function(records, observer) {
+    is(records.length, 4);
+    is(records[0].type, "childList");
+    is(records[1].type, "attributes");
+    is(records[2].type, "characterData");
+    is(records[3].type, "childList");
+    observer.disconnect();
+    then(testMarquee);
+  });
+  var sr = div.createShadowRoot();
+  m.observe(sr, {
+      attributes: true,
+      childList: true,
+      characterData: true,
+      subtree: true
+    });
+
+  sr.innerHTML = "<div" + ">text</" + "div>";
+  sr.firstChild.setAttribute("foo", "bar");
+  sr.firstChild.firstChild.data = "text2";
+  sr.firstChild.appendChild(document.createElement("div"));
+  div.setAttribute("foo", "bar2");
+
+}
+
+function testMarquee() {
+  var m = new M(function(records, observer) {
+    is(records.length, 1);
+    is(records[0].type, "attributes");
+    is(records[0].attributeName, "ok");
+    is(records[0].oldValue, null);
+    observer.disconnect();
+    then(testStyleCreate);
+  });
+  var marquee = document.createElement("marquee");
+  m.observe(marquee, {
+    attributes: true,
+    attributeOldValue: true,
+    childList: true,
+    characterData: true,
+    subtree: true
+  });
+  document.body.appendChild(marquee);
+  setTimeout(function() {marquee.setAttribute("ok", "ok")}, 500);
+}
+
+function testStyleCreate() {
+  m = new M(function(records, observer) {
+    is(records.length, 1, "number of records");
+    is(records[0].type, "attributes", "record.type");
+    is(records[0].attributeName, "style", "record.attributeName");
+    is(records[0].oldValue, null, "record.oldValue");
+    isnot(div.getAttribute("style"), null, "style attribute after creation");
+    observer.disconnect();
+    m = null;
+    div.removeAttribute("style");
+    then(testStyleModify);
+  });
+  m.observe(div, { attributes: true, attributeOldValue: true });
+  is(div.getAttribute("style"), null, "style attribute before creation");
+  div.style.color = "blue";
+}
+
+function testStyleModify() {
+  div.style.color = "yellow";
+  m = new M(function(records, observer) {
+    is(records.length, 1, "number of records");
+    is(records[0].type, "attributes", "record.type");
+    is(records[0].attributeName, "style", "record.attributeName");
+    isnot(div.getAttribute("style"), null, "style attribute after modification");
+    observer.disconnect();
+    m = null;
+    div.removeAttribute("style");
+    then(testStyleRead);
+  });
+  m.observe(div, { attributes: true });
+  isnot(div.getAttribute("style"), null, "style attribute before modification");
+  div.style.color = "blue";
+}
+
+function testStyleRead() {
+  m = new M(function(records, observer) {
+    is(records.length, 1, "number of records");
+    is(records[0].type, "attributes", "record.type");
+    is(records[0].attributeName, "data-test", "record.attributeName");
+    is(div.getAttribute("style"), null, "style attribute after read");
+    observer.disconnect();
+    div.removeAttribute("data-test");
+    m = null;
+    then(testStyleRemoveProperty);
+  });
+  m.observe(div, { attributes: true });
+  is(div.getAttribute("style"), null, "style attribute before read");
+  var value = div.style.color;  // shouldn't generate any mutation records
+  div.setAttribute("data-test", "a");
+}
+
+function testStyleRemoveProperty() {
+  div.style.color = "blue";
+  m = new M(function(records, observer) {
+    is(records.length, 1, "number of records");
+    is(records[0].type, "attributes", "record.type");
+    is(records[0].attributeName, "style", "record.attributeName");
+    isnot(div.getAttribute("style"), null, "style attribute after successful removeProperty");
+    observer.disconnect();
+    m = null;
+    div.removeAttribute("style");
+    then(testStyleRemoveProperty2);
+  });
+  m.observe(div, { attributes: true });
+  isnot(div.getAttribute("style"), null, "style attribute before successful removeProperty");
+  div.style.removeProperty("color");
+}
+
+function testStyleRemoveProperty2() {
+  m = new M(function(records, observer) {
+    is(records.length, 1, "number of records");
+    is(records[0].type, "attributes", "record.type");
+    is(records[0].attributeName, "data-test", "record.attributeName");
+    is(div.getAttribute("style"), null, "style attribute after unsuccessful removeProperty");
+    observer.disconnect();
+    m = null;
+    div.removeAttribute("data-test");
+    then();
+  });
+  m.observe(div, { attributes: true });
+  is(div.getAttribute("style"), null, "style attribute before unsuccessful removeProperty");
+  div.style.removeProperty("color");  // shouldn't generate any mutation records
+  div.setAttribute("data-test", "a");
 }
 
 SimpleTest.waitForExplicitFinish();

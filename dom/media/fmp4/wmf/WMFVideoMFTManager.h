@@ -20,7 +20,7 @@ class DXVA2Manager;
 
 class WMFVideoMFTManager : public MFTManager {
 public:
-  WMFVideoMFTManager(const mp4_demuxer::VideoDecoderConfig& aConfig,
+  WMFVideoMFTManager(const VideoInfo& aConfig,
                      mozilla::layers::LayersBackend aLayersBackend,
                      mozilla::layers::ImageContainer* aImageContainer,
                      bool aDXVAEnabled);
@@ -28,7 +28,7 @@ public:
 
   virtual TemporaryRef<MFTDecoder> Init() override;
 
-  virtual HRESULT Input(mp4_demuxer::MP4Sample* aSample) override;
+  virtual HRESULT Input(MediaRawData* aSample) override;
 
   virtual HRESULT Output(int64_t aStreamOffset,
                          nsRefPtr<MediaData>& aOutput) override;

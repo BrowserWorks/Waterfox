@@ -275,14 +275,14 @@ nsNavHistory::QueryStringToQueries(const nsACString& aQueryString,
   if (queries.Count() > 0) {
     // convert COM array to raw
     *aQueries = static_cast<nsINavHistoryQuery**>
-                           (nsMemory::Alloc(sizeof(nsINavHistoryQuery*) * queries.Count()));
+                           (moz_xmalloc(sizeof(nsINavHistoryQuery*) * queries.Count()));
     NS_ENSURE_TRUE(*aQueries, NS_ERROR_OUT_OF_MEMORY);
     for (int32_t i = 0; i < queries.Count(); i ++) {
       (*aQueries)[i] = queries[i];
       NS_ADDREF((*aQueries)[i]);
     }
   }
-  NS_ADDREF(*aOptions = options);
+  options.forget(aOptions);
   return NS_OK;
 }
 
@@ -316,7 +316,7 @@ nsNavHistory::QueryStringToQueryArray(const nsACString& aQueryString,
     return rv;
   }
 
-  NS_ADDREF(*aOptions = options);
+  options.forget(aOptions);
   return NS_OK;
 }
 
@@ -471,7 +471,7 @@ nsNavHistory::QueriesToQueryString(nsINavHistoryQuery **aQueries,
       nsresult rv = PlacesFolderConversion::AppendFolder(queryString, folders[i]);
       NS_ENSURE_SUCCESS(rv, rv);
     }
-    nsMemory::Free(folders);
+    free(folders);
 
     // tags
     const nsTArray<nsString> &tags = query->Tags();
@@ -1148,7 +1148,7 @@ NS_IMETHODIMP nsNavHistoryQuery::GetTags(nsIVariant **aTags)
   else {
     // Note: The resulting nsIVariant dupes both the array and its elements.
     const char16_t **array = reinterpret_cast<const char16_t **>
-                              (NS_Alloc(arrayLen * sizeof(char16_t *)));
+                              (moz_xmalloc(arrayLen * sizeof(char16_t *)));
     NS_ENSURE_TRUE(array, NS_ERROR_OUT_OF_MEMORY);
 
     for (uint32_t i = 0; i < arrayLen; ++i) {
@@ -1159,11 +1159,11 @@ NS_IMETHODIMP nsNavHistoryQuery::GetTags(nsIVariant **aTags)
                          nullptr,
                          arrayLen,
                          reinterpret_cast<void *>(array));
-    NS_Free(array);
+    free(array);
   }
   NS_ENSURE_SUCCESS(rv, rv);
 
-  NS_ADDREF(*aTags = out);
+  out.forget(aTags);
   return NS_OK;
 }
 
@@ -1202,7 +1202,7 @@ NS_IMETHODIMP nsNavHistoryQuery::SetTags(nsIVariant *aTags)
         char **charArray = reinterpret_cast<char **>(array);
         for (uint32_t i = 0; i < arrayLen; ++i) {
           if (charArray[i])
-            NS_Free(charArray[i]);
+            free(charArray[i]);
         }
       }
       break;
@@ -1217,7 +1217,7 @@ NS_IMETHODIMP nsNavHistoryQuery::SetTags(nsIVariant *aTags)
       break;
     // The other types are primitives that do not need to be freed.
     }
-    NS_Free(array);
+    free(array);
     return NS_ERROR_ILLEGAL_VALUE;
   }
 
@@ -1229,7 +1229,7 @@ NS_IMETHODIMP nsNavHistoryQuery::SetTags(nsIVariant *aTags)
 
     // Don't allow nulls.
     if (!tags[i]) {
-      NS_Free(tags);
+      free(tags);
       return NS_ERROR_ILLEGAL_VALUE;
     }
 
@@ -1239,14 +1239,14 @@ NS_IMETHODIMP nsNavHistoryQuery::SetTags(nsIVariant *aTags)
     // fancy; the SQL that's built from the tags relies on no dupes.
     if (!mTags.Contains(tag)) {
       if (!mTags.AppendElement(tag)) {
-        NS_Free(tags[i]);
-        NS_Free(tags);
+        free(tags[i]);
+        free(tags);
         return NS_ERROR_OUT_OF_MEMORY;
       }
     }
-    NS_Free(tags[i]);
+    free(tags[i]);
   }
-  NS_Free(tags);
+  free(tags);
 
   mTags.Sort();
 
@@ -1274,7 +1274,7 @@ NS_IMETHODIMP nsNavHistoryQuery::GetFolders(uint32_t *aCount,
   int64_t *folders = nullptr;
   if (count > 0) {
     folders = static_cast<int64_t*>
-                         (nsMemory::Alloc(count * sizeof(int64_t)));
+                         (moz_xmalloc(count * sizeof(int64_t)));
     NS_ENSURE_TRUE(folders, NS_ERROR_OUT_OF_MEMORY);
 
     for (uint32_t i = 0; i < count; ++i) {
@@ -1310,7 +1310,7 @@ NS_IMETHODIMP nsNavHistoryQuery::GetTransitions(uint32_t* aCount,
   uint32_t* transitions = nullptr;
   if (count > 0) {
     transitions = reinterpret_cast<uint32_t*>
-                  (NS_Alloc(count * sizeof(uint32_t)));
+                  (moz_xmalloc(count * sizeof(uint32_t)));
     NS_ENSURE_TRUE(transitions, NS_ERROR_OUT_OF_MEMORY);
     for (uint32_t i = 0; i < count; ++i) {
       transitions[i] = mTransitions[i];

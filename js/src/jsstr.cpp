@@ -394,8 +394,15 @@ str_enumerate(JSContext* cx, HandleObject obj)
     return true;
 }
 
-bool
-js::str_resolve(JSContext* cx, HandleObject obj, HandleId id, bool* resolvedp)
+static bool
+str_mayResolve(const JSAtomState&, jsid id, JSObject*)
+{
+    // str_resolve ignores non-integer ids.
+    return JSID_IS_INT(id);
+}
+
+static bool
+str_resolve(JSContext* cx, HandleObject obj, HandleId id, bool* resolvedp)
 {
     if (!JSID_IS_INT(id))
         return true;
@@ -424,7 +431,8 @@ const Class StringObject::class_ = {
     nullptr, /* getProperty */
     nullptr, /* setProperty */
     str_enumerate,
-    str_resolve
+    str_resolve,
+    str_mayResolve
 };
 
 /*
@@ -603,7 +611,7 @@ ToLowerCase(JSContext* cx, JSLinearString* str)
         size_t i = 0;
         for (; i < length; i++) {
             char16_t c = chars[i];
-            if (unicode::ToLowerCase(c) != c)
+            if (unicode::CanLowerCase(c))
                 break;
         }
 
@@ -722,7 +730,7 @@ ToUpperCase(JSContext* cx, JSLinearString* str)
         size_t i = 0;
         for (; i < length; i++) {
             char16_t c = chars[i];
-            if (unicode::ToUpperCase(c) != c)
+            if (unicode::CanUpperCase(c))
                 break;
         }
 
@@ -1239,7 +1247,8 @@ StringMatch(const TextChar* text, uint32_t textLen, const PatChar* pat, uint32_t
      */
     if (patLen == 1) {
         const PatChar p0 = *pat;
-        for (const TextChar* c = text, *end = text + textLen; c != end; ++c) {
+        const TextChar* end = text + textLen;
+        for (const TextChar* c = text; c != end; ++c) {
             if (*c == p0)
                 return c - text;
         }
@@ -1508,9 +1517,9 @@ RopeMatch(JSContext* cx, JSRope* text, JSLinearString* pat, int* match)
     return true;
 }
 
-/* ES6 20121026 draft 15.5.4.24. */
+/* ES6 draft rc4 21.1.3.7. */
 static bool
-str_contains(JSContext* cx, unsigned argc, Value* vp)
+str_includes(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
 
@@ -1520,11 +1529,23 @@ str_contains(JSContext* cx, unsigned argc, Value* vp)
         return false;
 
     // Steps 4 and 5
+    bool isRegExp;
+    if (!IsRegExp(cx, args.get(0), &isRegExp))
+        return false;
+
+    // Step 6
+    if (isRegExp) {
+        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_INVALID_ARG_TYPE,
+                             "first", "", "Regular Expression");
+        return false;
+    }
+
+    // Steps 7 and 8
     RootedLinearString searchStr(cx, ArgToRootedString(cx, args, 0));
     if (!searchStr)
         return false;
 
-    // Steps 6 and 7
+    // Steps 9 and 10
     uint32_t pos = 0;
     if (args.hasDefined(1)) {
         if (args[1].isInt32()) {
@@ -1538,19 +1559,32 @@ str_contains(JSContext* cx, unsigned argc, Value* vp)
         }
     }
 
-    // Step 8
+    // Step 11
     uint32_t textLen = str->length();
 
-    // Step 9
+    // Step 12
     uint32_t start = Min(Max(pos, 0U), textLen);
 
-    // Steps 10 and 11
+    // Steps 13 and 14
     JSLinearString* text = str->ensureLinear(cx);
     if (!text)
         return false;
 
     args.rval().setBoolean(StringMatch(text, searchStr, start) != -1);
     return true;
+}
+
+/* TODO: remove String.prototype.contains (bug 1103588) */
+static bool
+str_contains(JSContext *cx, unsigned argc, Value *vp)
+{
+#ifndef RELEASE_BUILD
+    CallArgs args = CallArgsFromVp(argc, vp);
+    RootedObject callee(cx, &args.callee());
+    if (!GlobalObject::warnOnceAboutStringContains(cx, callee))
+        return false;
+#endif
+    return str_includes(cx, argc, vp);
 }
 
 /* ES6 20120927 draft 15.5.4.7. */
@@ -1720,7 +1754,7 @@ HasSubstringAt(JSLinearString* text, JSLinearString* pat, size_t start)
     return EqualChars(pat->latin1Chars(nogc), textChars, patLen);
 }
 
-/* ES6 20131108 draft 21.1.3.18. */
+/* ES6 draft rc3 21.1.3.18. */
 bool
 js::str_startsWith(JSContext* cx, unsigned argc, Value* vp)
 {
@@ -1731,19 +1765,24 @@ js::str_startsWith(JSContext* cx, unsigned argc, Value* vp)
     if (!str)
         return false;
 
-    // Step 4
-    if (args.get(0).isObject() && IsObjectWithClass(args[0], ESClass_RegExp, cx)) {
+    // Steps 4 and 5
+    bool isRegExp;
+    if (!IsRegExp(cx, args.get(0), &isRegExp))
+        return false;
+
+    // Step 6
+    if (isRegExp) {
         JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_INVALID_ARG_TYPE,
                              "first", "", "Regular Expression");
         return false;
     }
 
-    // Steps 5 and 6
+    // Steps 7 and 8
     RootedLinearString searchStr(cx, ArgToRootedString(cx, args, 0));
     if (!searchStr)
         return false;
 
-    // Steps 7 and 8
+    // Steps 9 and 10
     uint32_t pos = 0;
     if (args.hasDefined(1)) {
         if (args[1].isInt32()) {
@@ -1757,22 +1796,22 @@ js::str_startsWith(JSContext* cx, unsigned argc, Value* vp)
         }
     }
 
-    // Step 9
+    // Step 11
     uint32_t textLen = str->length();
 
-    // Step 10
+    // Step 12
     uint32_t start = Min(Max(pos, 0U), textLen);
 
-    // Step 11
+    // Step 13
     uint32_t searchLen = searchStr->length();
 
-    // Step 12
+    // Step 14
     if (searchLen + start < searchLen || searchLen + start > textLen) {
         args.rval().setBoolean(false);
         return true;
     }
 
-    // Steps 13 and 14
+    // Steps 15 and 16
     JSLinearString* text = str->ensureLinear(cx);
     if (!text)
         return false;
@@ -1781,7 +1820,7 @@ js::str_startsWith(JSContext* cx, unsigned argc, Value* vp)
     return true;
 }
 
-/* ES6 20131108 draft 21.1.3.7. */
+/* ES6 draft rc3 21.1.3.6. */
 static bool
 str_endsWith(JSContext* cx, unsigned argc, Value* vp)
 {
@@ -1792,22 +1831,27 @@ str_endsWith(JSContext* cx, unsigned argc, Value* vp)
     if (!str)
         return false;
 
-    // Step 4
-    if (args.get(0).isObject() && IsObjectWithClass(args[0], ESClass_RegExp, cx)) {
+    // Steps 4 and 5
+    bool isRegExp;
+    if (!IsRegExp(cx, args.get(0), &isRegExp))
+        return false;
+
+    // Step 6
+    if (isRegExp) {
         JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_INVALID_ARG_TYPE,
                              "first", "", "Regular Expression");
         return false;
     }
 
-    // Steps 5 and 6
+    // Steps 7 and 8
     RootedLinearString searchStr(cx, ArgToRootedString(cx, args, 0));
     if (!searchStr)
         return false;
 
-    // Step 7
+    // Step 9
     uint32_t textLen = str->length();
 
-    // Steps 8 and 9
+    // Steps 10 and 11
     uint32_t pos = textLen;
     if (args.hasDefined(1)) {
         if (args[1].isInt32()) {
@@ -1821,22 +1865,22 @@ str_endsWith(JSContext* cx, unsigned argc, Value* vp)
         }
     }
 
-    // Step 10
+    // Step 12
     uint32_t end = Min(Max(pos, 0U), textLen);
 
-    // Step 11
+    // Step 13
     uint32_t searchLen = searchStr->length();
 
-    // Step 13 (reordered)
+    // Step 15 (reordered)
     if (searchLen > end) {
         args.rval().setBoolean(false);
         return true;
     }
 
-    // Step 12
+    // Step 14
     uint32_t start = end - searchLen;
 
-    // Steps 14 and 15
+    // Steps 16 and 17
     JSLinearString* text = str->ensureLinear(cx);
     if (!text)
         return false;
@@ -3954,6 +3998,7 @@ static const JSFunctionSpec string_methods[] = {
     JS_FN("charCodeAt",        str_charCodeAt,        1,JSFUN_GENERIC_NATIVE),
     JS_SELF_HOSTED_FN("substring", "String_substring", 2,0),
     JS_SELF_HOSTED_FN("codePointAt", "String_codePointAt", 1,0),
+    JS_FN("includes",          str_includes,          1,JSFUN_GENERIC_NATIVE),
     JS_FN("contains",          str_contains,          1,JSFUN_GENERIC_NATIVE),
     JS_FN("indexOf",           str_indexOf,           1,JSFUN_GENERIC_NATIVE),
     JS_FN("lastIndexOf",       str_lastIndexOf,       1,JSFUN_GENERIC_NATIVE),

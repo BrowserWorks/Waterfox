@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -194,7 +194,7 @@ nsIContentParent::RecvSyncMessage(const nsString& aMsg,
   if (ppm) {
     StructuredCloneData cloneData = ipc::UnpackClonedMessageDataForParent(aData);
     CrossProcessCpowHolder cpows(this, aCpows);
-    ppm->ReceiveMessage(static_cast<nsIContentFrameMessageManager*>(ppm.get()),
+    ppm->ReceiveMessage(static_cast<nsIContentFrameMessageManager*>(ppm.get()), nullptr,
                         aMsg, true, &cloneData, &cpows, aPrincipal, aRetvals);
   }
   return true;
@@ -221,7 +221,7 @@ nsIContentParent::RecvRpcMessage(const nsString& aMsg,
   if (ppm) {
     StructuredCloneData cloneData = ipc::UnpackClonedMessageDataForParent(aData);
     CrossProcessCpowHolder cpows(this, aCpows);
-    ppm->ReceiveMessage(static_cast<nsIContentFrameMessageManager*>(ppm.get()),
+    ppm->ReceiveMessage(static_cast<nsIContentFrameMessageManager*>(ppm.get()), nullptr,
                         aMsg, true, &cloneData, &cpows, aPrincipal, aRetvals);
   }
   return true;
@@ -247,7 +247,7 @@ nsIContentParent::RecvAsyncMessage(const nsString& aMsg,
   if (ppm) {
     StructuredCloneData cloneData = ipc::UnpackClonedMessageDataForParent(aData);
     CrossProcessCpowHolder cpows(this, aCpows);
-    ppm->ReceiveMessage(static_cast<nsIContentFrameMessageManager*>(ppm.get()),
+    ppm->ReceiveMessage(static_cast<nsIContentFrameMessageManager*>(ppm.get()), nullptr,
                         aMsg, false, &cloneData, &cpows, aPrincipal, nullptr);
   }
   return true;

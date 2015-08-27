@@ -368,6 +368,17 @@ nsViewManager::ProcessPendingUpdatesForView(nsView* aView,
   for (uint32_t i = 0; i < widgets.Length(); ++i) {
     nsView* view = nsView::GetViewFor(widgets[i]);
     if (view) {
+      if (view->mNeedsWindowPropertiesSync) {
+        view->mNeedsWindowPropertiesSync = false;
+        if (nsViewManager* vm = view->GetViewManager()) {
+          if (nsIPresShell* ps = vm->GetPresShell()) {
+            ps->SyncWindowProperties(view);
+          }
+        }
+      }
+    }
+    view = nsView::GetViewFor(widgets[i]);
+    if (view) {
       view->ResetWidgetBounds(false, true);
     }
   }
@@ -475,7 +486,7 @@ void nsViewManager::FlushDirtyRegionToWidget(nsView* aView)
   // If we draw the frame counter we need to make sure we invalidate the area
   // for it to make it on screen
   if (gfxPrefs::DrawFrameCounter()) {
-    nsRect counterBounds = gfxPlatform::FrameCounterBounds().ToAppUnits(AppUnitsPerDevPixel());
+    nsRect counterBounds = ToAppUnits(gfxPlatform::FrameCounterBounds(), AppUnitsPerDevPixel());
     r = r.Or(r, counterBounds);
   }
 
@@ -570,9 +581,8 @@ nsViewManager::InvalidateWidgetArea(nsView *aWidgetView,
         nsTArray<nsIntRect> clipRects;
         childWidget->GetWindowClipRegion(&clipRects);
         for (uint32_t i = 0; i < clipRects.Length(); ++i) {
-          nsRect rr = (clipRects[i] + bounds.TopLeft()).
-            ToAppUnits(AppUnitsPerDevPixel());
-          children.Or(children, rr - aWidgetView->ViewToWidgetOffset()); 
+          nsRect rr = ToAppUnits(clipRects[i] + bounds.TopLeft(), AppUnitsPerDevPixel());
+          children.Or(children, rr - aWidgetView->ViewToWidgetOffset());
           children.SimplifyInward(20);
         }
 #endif
@@ -734,8 +744,8 @@ nsViewManager::DispatchEvent(WidgetGUIEvent *aEvent,
        // Ignore mouse exit and enter (we'll get moves if the user
        // is really moving the mouse) since we get them when we
        // create and destroy widgets.
-       mouseEvent->message != NS_MOUSE_EXIT &&
-       mouseEvent->message != NS_MOUSE_ENTER) ||
+       mouseEvent->message != NS_MOUSE_EXIT_WIDGET &&
+       mouseEvent->message != NS_MOUSE_ENTER_WIDGET) ||
       aEvent->HasKeyEventMessage() ||
       aEvent->HasIMEEventMessage() ||
       aEvent->message == NS_PLUGIN_INPUT_EVENT) {

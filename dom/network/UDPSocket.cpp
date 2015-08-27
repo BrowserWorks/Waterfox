@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim:set ts=2 sw=2 sts=2 et cindent: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -292,7 +292,7 @@ UDPSocket::DoPendingMcastCommand()
     }
 
     if (NS_WARN_IF(rv.Failed())) {
-      return rv.ErrorCode();
+      return rv.StealNSResult();
     }
   }
 
@@ -396,8 +396,19 @@ UDPSocket::InitLocal(const nsAString& aLocalAddress,
     return rv;
   }
 
+  nsCOMPtr<nsIGlobalObject> global = do_QueryInterface(GetOwner(), &rv);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+
+  nsCOMPtr<nsIPrincipal> principal = global->PrincipalOrNull();
+  if (!principal) {
+    return NS_ERROR_FAILURE;
+  }
+
   if (aLocalAddress.IsEmpty()) {
-    rv = sock->Init(aLocalPort, /* loopback = */ false, mAddressReuse, /* optionalArgc = */ 1);
+    rv = sock->Init(aLocalPort, /* loopback = */ false, principal,
+                    mAddressReuse, /* optionalArgc = */ 1);
   } else {
     PRNetAddr prAddr;
     PR_InitializeNetAddr(PR_IpAddrAny, aLocalPort, &prAddr);
@@ -405,7 +416,8 @@ UDPSocket::InitLocal(const nsAString& aLocalAddress,
 
     mozilla::net::NetAddr addr;
     PRNetAddrToNetAddr(&prAddr, &addr);
-    rv = sock->InitWithAddress(&addr, mAddressReuse, /* optionalArgc = */ 1);
+    rv = sock->InitWithAddress(&addr, principal, mAddressReuse,
+                               /* optionalArgc = */ 1);
   }
   if (NS_FAILED(rv)) {
     return rv;
@@ -471,7 +483,18 @@ UDPSocket::InitRemote(const nsAString& aLocalAddress,
 
   mListenerProxy = new ListenerProxy(this);
 
+  nsCOMPtr<nsIGlobalObject> obj = do_QueryInterface(GetOwner(), &rv);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+
+  nsCOMPtr<nsIPrincipal> principal = obj->PrincipalOrNull();
+  if (!principal) {
+    return NS_ERROR_FAILURE;
+  }
+
   rv = sock->Bind(mListenerProxy,
+                  principal,
                   NS_ConvertUTF16toUTF8(aLocalAddress),
                   aLocalPort,
                   mAddressReuse,
@@ -504,12 +527,12 @@ UDPSocket::Init(const nsString& aLocalAddress,
 
   mOpened = Promise::Create(global, rv);
   if (NS_WARN_IF(rv.Failed())) {
-    return rv.ErrorCode();
+    return rv.StealNSResult();
   }
 
   mClosed = Promise::Create(global, rv);
   if (NS_WARN_IF(rv.Failed())) {
-    return rv.ErrorCode();
+    return rv.StealNSResult();
   }
 
   class OpenSocketRunnable final : public nsRunnable

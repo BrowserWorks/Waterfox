@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -125,6 +125,9 @@ public:
         break;
       case IDBTransaction::READ_WRITE:
         AppendLiteral("\"readwrite\"");
+        break;
+      case IDBTransaction::READ_WRITE_FLUSH:
+        AppendLiteral("\"readwriteflush\"");
         break;
       case IDBTransaction::VERSION_CHANGE:
         AppendLiteral("\"versionchange\"");
@@ -279,7 +282,7 @@ LoggingHelper(bool aUseProfiler, const char* aFmt, ...)
   PRLogModuleInfo* logModule = IndexedDatabaseManager::GetLoggingModule();
   MOZ_ASSERT(logModule);
 
-  static const PRLogModuleLevel logLevel = PR_LOG_DEBUG;
+  static const PRLogModuleLevel logLevel = PR_LOG_WARNING;
 
   if (PR_LOG_TEST(logModule, logLevel) ||
       (aUseProfiler && profiler_is_active())) {

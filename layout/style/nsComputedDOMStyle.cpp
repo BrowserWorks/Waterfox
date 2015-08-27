@@ -53,6 +53,7 @@ using namespace mozilla;
 using namespace mozilla::dom;
 typedef const nsStyleBackground::Position Position;
 typedef const nsStyleBackground::Position::PositionCoord PositionCoord;
+typedef nsStyleTransformMatrix::TransformReferenceBox TransformReferenceBox;
 
 #if defined(DEBUG_bzbarsky) || defined(DEBUG_caillon)
 #define DEBUG_ComputedDOMStyle
@@ -365,14 +366,14 @@ nsComputedDOMStyle::GetPropertyValue(const nsAString& aPropertyName,
   ErrorResult error;
   nsRefPtr<CSSValue> val = GetPropertyCSSValue(aPropertyName, error);
   if (error.Failed()) {
-    return error.ErrorCode();
+    return error.StealNSResult();
   }
 
   if (val) {
     nsString text;
     val->GetCssText(text, error);
     aReturn.Assign(text);
-    return error.ErrorCode();
+    return error.StealNSResult();
   }
 
   return NS_OK;
@@ -543,7 +544,7 @@ nsComputedDOMStyle::GetPresShellForContent(nsIContent* aContent)
 // on a nsComputedDOMStyle object, but must be defined to avoid
 // compile errors.
 css::Declaration*
-nsComputedDOMStyle::GetCSSDeclaration(bool)
+nsComputedDOMStyle::GetCSSDeclaration(Operation)
 {
   NS_RUNTIMEABORT("called nsComputedDOMStyle::GetCSSDeclaration");
   return nullptr;
@@ -1253,7 +1254,9 @@ nsComputedDOMStyle::DoGetTransform()
    * store it in a string, and hand it back to the caller.
    */
 
-  /* Use the inner frame for width and height.  If we fail, assume zero.
+  /* Use the inner frame for the reference box.  If we don't have an inner
+   * frame we use empty dimensions to allow us to continue (and percentage
+   * values in the transform will simply give broken results).
    * TODO: There is no good way for us to represent the case where there's no
    * frame, which is problematic.  The reason is that when we have percentage
    * transforms, there are a total of four stored matrix entries that influence
@@ -1262,9 +1265,7 @@ nsComputedDOMStyle::DoGetTransform()
    * using the named transforms.  Until a real solution is found, we'll just
    * use this approach.
    */
-  nsRect bounds =
-    (mInnerFrame ? nsDisplayTransform::GetFrameBoundsForTransform(mInnerFrame) :
-     nsRect(0, 0, 0, 0));
+  TransformReferenceBox refBox(mInnerFrame, nsSize(0, 0));
 
    bool dummy;
    gfx3DMatrix matrix =
@@ -1272,7 +1273,7 @@ nsComputedDOMStyle::DoGetTransform()
                                             mStyleContextHolder,
                                             mStyleContextHolder->PresContext(),
                                             dummy,
-                                            bounds,
+                                            refBox,
                                             float(mozilla::AppUnitsPerCSSPixel()));
 
   return MatrixToCSSValue(matrix);
@@ -1427,7 +1428,7 @@ nsComputedDOMStyle::DoGetFontSizeAdjust()
 
   const nsStyleFont *font = StyleFont();
 
-  if (font->mFont.sizeAdjust) {
+  if (font->mFont.sizeAdjust >= 0.0f) {
     val->SetNumber(font->mFont.sizeAdjust);
   } else {
     val->SetIdent(eCSSKeyword_none);
@@ -4958,7 +4959,7 @@ nsComputedDOMStyle::GetFrameBoundsWidthForTransform(nscoord& aWidth)
 
   AssertFlushedPendingReflows();
 
-  aWidth = nsDisplayTransform::GetFrameBoundsForTransform(mInnerFrame).width;
+  aWidth = TransformReferenceBox(mInnerFrame).Width();
   return true;
 }
 
@@ -4972,7 +4973,7 @@ nsComputedDOMStyle::GetFrameBoundsHeightForTransform(nscoord& aHeight)
 
   AssertFlushedPendingReflows();
 
-  aHeight = nsDisplayTransform::GetFrameBoundsForTransform(mInnerFrame).height;
+  aHeight = TransformReferenceBox(mInnerFrame).Height();
   return true;
 }
 

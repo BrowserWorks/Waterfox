@@ -128,6 +128,8 @@ public:
         return mPluginName + mPluginVersion;
     }
 
+    virtual nsresult GetRunID(uint32_t* aRunID) override;
+
 protected:
     virtual mozilla::ipc::RacyInterruptPolicy
     MediateInterruptRace(const Message& parent, const Message& child) override
@@ -308,6 +310,7 @@ protected:
     bool              mIsNPShutdownPending;
     nsTArray<nsRefPtr<PluginAsyncSurrogate>> mSurrogateInstances;
     nsresult          mAsyncNewRv;
+    uint32_t          mRunID;
 };
 
 class PluginModuleContentParent : public PluginModuleParent

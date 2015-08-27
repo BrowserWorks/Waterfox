@@ -31,9 +31,8 @@
 #include "mozilla/Services.h"
 #include "nsIPrefService.h"
 #include "nsIPrefBranch.h"
-#include "nsNetUtil.h"
-#include "nsIIOService.h"
 #include "nsIDNSService.h"
+#include "nsQueryObject.h"
 #include "nsWeakReference.h"
 #include "nricectx.h"
 #include "rlogringbuffer.h"
@@ -2112,6 +2111,9 @@ public:
   uint16_t stun_port_;
 };
 
+#if !defined(MOZILLA_XPCOMRT_API)
+// FIXME XPCOMRT doesn't support nsPrefService
+// See Bug 1129188 - Create standalone libpref for use in standalone WebRTC
 static void SetIntPrefOnMainThread(nsCOMPtr<nsIPrefBranch> prefs,
   const char *pref_name,
   int new_value) {
@@ -2161,6 +2163,7 @@ class FsFrPrefClearer {
   private:
     nsCOMPtr<nsIPrefBranch> mPrefs;
 };
+#endif // !defined(MOZILLA_XPCOMRT_API)
 
 TEST_P(SignalingTest, JustInit)
 {
@@ -3078,6 +3081,38 @@ TEST_F(SignalingAgentTest, CreateOffer) {
   agent(0)->CreateOffer(options, OFFER_AUDIO);
 }
 
+TEST_F(SignalingAgentTest, SetLocalWithoutCreateOffer) {
+  CreateAgent(TestStunServer::GetInstance()->addr(),
+              TestStunServer::GetInstance()->port());
+  CreateAgent(TestStunServer::GetInstance()->addr(),
+              TestStunServer::GetInstance()->port());
+  OfferOptions options;
+  agent(0)->CreateOffer(options, OFFER_AUDIO);
+  agent(1)->SetLocal(TestObserver::OFFER,
+                     agent(0)->offer(),
+                     true,
+                     PCImplSignalingState::SignalingStable);
+}
+
+TEST_F(SignalingAgentTest, SetLocalWithoutCreateAnswer) {
+  CreateAgent(TestStunServer::GetInstance()->addr(),
+              TestStunServer::GetInstance()->port());
+  CreateAgent(TestStunServer::GetInstance()->addr(),
+              TestStunServer::GetInstance()->port());
+  CreateAgent(TestStunServer::GetInstance()->addr(),
+              TestStunServer::GetInstance()->port());
+  OfferOptions options;
+  agent(0)->CreateOffer(options, OFFER_AUDIO);
+  agent(1)->SetRemote(TestObserver::OFFER, agent(0)->offer());
+  agent(1)->CreateAnswer(ANSWER_AUDIO);
+  agent(2)->SetRemote(TestObserver::OFFER, agent(0)->offer());
+  // Use agent 1's answer on agent 2, should fail
+  agent(2)->SetLocal(TestObserver::ANSWER,
+                     agent(1)->answer(),
+                     true,
+                     PCImplSignalingState::SignalingHaveRemoteOffer);
+}
+
 TEST_F(SignalingAgentTest, CreateOfferSetLocalTrickleTestServer) {
   TestStunServer::GetInstance()->SetActive(false);
   TestStunServer::GetInstance()->SetResponseAddr(
@@ -3908,6 +3943,10 @@ TEST_P(SignalingTest, hugeSdp)
   a2_->CreateAnswer(OFFER_AV);
 }
 
+#if !defined(MOZILLA_XPCOMRT_API)
+// FIXME XPCOMRT doesn't support nsPrefService
+// See Bug 1129188 - Create standalone libpref for use in standalone WebRTC
+
 // Test max_fs and max_fr prefs have proper impact on SDP offer
 TEST_P(SignalingTest, MaxFsFrInOffer)
 {
@@ -4042,6 +4081,7 @@ TEST_P(SignalingTest, MaxFsFrCallerCodec)
   ASSERT_EQ(video_conduit->SendingMaxFs(), (unsigned short) 600);
   ASSERT_EQ(video_conduit->SendingMaxFr(), (unsigned short) 60);
 }
+#endif // !defined(MOZILLA_XPCOMRT_API)
 
 // Validate offer with multiple video codecs
 TEST_P(SignalingTest, ValidateMultipleVideoCodecsInOffer)

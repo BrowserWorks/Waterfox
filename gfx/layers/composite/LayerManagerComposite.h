@@ -9,6 +9,7 @@
 #include <stdint.h>                     // for int32_t, uint32_t
 #include "GLDefs.h"                     // for GLenum
 #include "Layers.h"
+#include "Units.h"                      // for ParentLayerIntRect
 #include "mozilla/Assertions.h"         // for MOZ_ASSERT, etc
 #include "mozilla/Attributes.h"         // for override
 #include "mozilla/RefPtr.h"             // for RefPtr, TemporaryRef
@@ -18,6 +19,7 @@
 #include "mozilla/gfx/Types.h"          // for SurfaceFormat
 #include "mozilla/layers/CompositorTypes.h"
 #include "mozilla/layers/LayersTypes.h"  // for LayersBackend, etc
+#include "mozilla/Maybe.h"              // for Maybe
 #include "mozilla/RefPtr.h"
 #include "mozilla/UniquePtr.h"
 #include "nsAString.h"
@@ -25,7 +27,7 @@
 #include "nsCOMPtr.h"                   // for already_AddRefed
 #include "nsDebug.h"                    // for NS_ASSERTION
 #include "nsISupportsImpl.h"            // for Layer::AddRef, etc
-#include "nsRect.h"                     // for nsIntRect
+#include "nsRect.h"                     // for mozilla::gfx::IntRect
 #include "nsRegion.h"                   // for nsIntRegion
 #include "nscore.h"                     // for nsAString, etc
 #include "LayerTreeInvalidation.h"
@@ -41,11 +43,6 @@ namespace gfx {
 class DrawTarget;
 }
 
-namespace gl {
-class GLContext;
-class TextureImage;
-}
-
 namespace layers {
 
 class CanvasLayerComposite;
@@ -58,7 +55,6 @@ class ImageLayer;
 class ImageLayerComposite;
 class LayerComposite;
 class RefLayerComposite;
-class SurfaceDescriptor;
 class PaintedLayerComposite;
 class TiledLayerComposer;
 class TextRenderer;
@@ -106,14 +102,14 @@ public:
     return this;
   }
 
-  void UpdateRenderBounds(const nsIntRect& aRect);
+  void UpdateRenderBounds(const gfx::IntRect& aRect);
 
   virtual void BeginTransaction() override;
   virtual void BeginTransactionWithTarget(gfxContext* aTarget) override
   {
     MOZ_CRASH("Use BeginTransactionWithDrawTarget");
   }
-  void BeginTransactionWithDrawTarget(gfx::DrawTarget* aTarget, const nsIntRect& aRect);
+  void BeginTransactionWithDrawTarget(gfx::DrawTarget* aTarget, const gfx::IntRect& aRect);
 
   virtual bool EndEmptyTransaction(EndTransactionFlags aFlags = END_DEFAULT) override;
   virtual void EndTransaction(DrawPaintedLayerCallback aCallback,
@@ -256,7 +252,7 @@ public:
 private:
   /** Region we're clipping our current drawing to. */
   nsIntRegion mClippingRegion;
-  nsIntRect mRenderBounds;
+  gfx::IntRect mRenderBounds;
 
   /** Current root layer. */
   LayerComposite* RootLayer() const;
@@ -276,6 +272,9 @@ private:
    * Render the current layer tree to the active target.
    */
   void Render();
+#ifdef MOZ_WIDGET_ANDROID
+  void RenderToPresentationSurface();
+#endif
 
   /**
    * Render debug overlays such as the FPS/FrameCounter above the frame.
@@ -285,7 +284,7 @@ private:
 
   RefPtr<CompositingRenderTarget> PushGroupForLayerEffects();
   void PopGroupForLayerEffects(RefPtr<CompositingRenderTarget> aPreviousTarget,
-                               nsIntRect aClipRect,
+                               gfx::IntRect aClipRect,
                                bool aGrayscaleEffect,
                                bool aInvertEffect,
                                float aContrastEffect);
@@ -300,7 +299,7 @@ private:
    * Context target, nullptr when drawing directly to our swap chain.
    */
   RefPtr<gfx::DrawTarget> mTarget;
-  nsIntRect mTargetBounds;
+  gfx::IntRect mTargetBounds;
 
   nsIntRegion mInvalidRegion;
   UniquePtr<FPSState> mFPS;
@@ -366,7 +365,7 @@ public:
   virtual void Prepare(const RenderTargetIntRect& aClipRect) {}
 
   // TODO: This should also take RenderTargetIntRect like Prepare.
-  virtual void RenderLayer(const nsIntRect& aClipRect) = 0;
+  virtual void RenderLayer(const gfx::IntRect& aClipRect) = 0;
 
   virtual bool SetCompositableHost(CompositableHost*)
   {
@@ -403,12 +402,9 @@ public:
     mShadowOpacity = aOpacity;
   }
 
-  void SetShadowClipRect(const nsIntRect* aRect)
+  void SetShadowClipRect(const Maybe<ParentLayerIntRect>& aRect)
   {
-    mUseShadowClipRect = aRect != nullptr;
-    if (aRect) {
-      mShadowClipRect = *aRect;
-    }
+    mShadowClipRect = aRect;
   }
 
   void SetShadowTransform(const gfx::Matrix4x4& aMatrix)
@@ -425,19 +421,19 @@ public:
     mLayerComposited = value;
   }
 
-  void SetClearRect(const nsIntRect& aRect)
+  void SetClearRect(const gfx::IntRect& aRect)
   {
     mClearRect = aRect;
   }
 
   // These getters can be used anytime.
   float GetShadowOpacity() { return mShadowOpacity; }
-  const nsIntRect* GetShadowClipRect() { return mUseShadowClipRect ? &mShadowClipRect : nullptr; }
+  const Maybe<ParentLayerIntRect>& GetShadowClipRect() { return mShadowClipRect; }
   const nsIntRegion& GetShadowVisibleRegion() { return mShadowVisibleRegion; }
   const gfx::Matrix4x4& GetShadowTransform() { return mShadowTransform; }
   bool GetShadowTransformSetByAnimation() { return mShadowTransformSetByAnimation; }
   bool HasLayerBeenComposited() { return mLayerComposited; }
-  nsIntRect GetClearRect() { return mClearRect; }
+  gfx::IntRect GetClearRect() { return mClearRect; }
 
   /**
    * Return the part of the visible region that has been fully rendered.
@@ -449,15 +445,14 @@ public:
 protected:
   gfx::Matrix4x4 mShadowTransform;
   nsIntRegion mShadowVisibleRegion;
-  nsIntRect mShadowClipRect;
+  Maybe<ParentLayerIntRect> mShadowClipRect;
   LayerManagerComposite* mCompositeManager;
   RefPtr<Compositor> mCompositor;
   float mShadowOpacity;
-  bool mUseShadowClipRect;
   bool mShadowTransformSetByAnimation;
   bool mDestroyed;
   bool mLayerComposited;
-  nsIntRect mClearRect;
+  gfx::IntRect mClearRect;
 };
 
 

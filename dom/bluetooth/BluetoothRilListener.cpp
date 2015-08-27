@@ -1,5 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -14,6 +14,7 @@
 #include "nsITelephonyService.h"
 #include "nsServiceManagerUtils.h"
 #include "nsString.h"
+#include "nsQueryObject.h"
 
 USING_BLUETOOTH_NAMESPACE
 
@@ -217,9 +218,13 @@ TelephonyListener::HandleCallInfo(nsITelephonyCallInfo* aInfo, bool aSend)
 }
 
 NS_IMETHODIMP
-TelephonyListener::CallStateChanged(nsITelephonyCallInfo* aInfo)
+TelephonyListener::CallStateChanged(uint32_t aLength,
+                                    nsITelephonyCallInfo** aAllInfo)
 {
-  return HandleCallInfo(aInfo, true);
+  for (uint32_t i = 0; i < aLength; ++i) {
+    HandleCallInfo(aAllInfo[i], true);
+  }
+  return NS_OK;
 }
 
 NS_IMETHODIMP

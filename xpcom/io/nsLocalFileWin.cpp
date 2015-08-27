@@ -212,9 +212,6 @@ private:
     SHELLEXECUTEINFOW seinfo;
     memset(&seinfo, 0, sizeof(seinfo));
     seinfo.cbSize = sizeof(SHELLEXECUTEINFOW);
-    if (XRE_GetWindowsEnvironment() == WindowsEnvironmentType_Metro) {
-      seinfo.fMask  = SEE_MASK_FLAG_LOG_USAGE;
-    }
     seinfo.hwnd   = nullptr;
     seinfo.lpVerb = nullptr;
     seinfo.lpFile = mResolvedPath.get();
@@ -1745,7 +1742,7 @@ nsLocalFile::GetVersionInfoField(const char* aField, nsAString& aResult)
       }
     }
   }
-  moz_free(ver);
+  free(ver);
 
   return rv;
 }

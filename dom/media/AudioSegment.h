@@ -13,6 +13,7 @@
 #ifdef MOZILLA_INTERNAL_API
 #include "mozilla/TimeStamp.h"
 #endif
+#include <float.h>
 
 namespace mozilla {
 
@@ -43,7 +44,6 @@ public:
   nsTArray<nsTArray<T> > mBuffers;
 };
 
-class AudioStream;
 class AudioMixer;
 
 /**
@@ -129,6 +129,25 @@ struct AudioChunk {
     mVolume = 1.0f;
     mBufferFormat = AUDIO_FORMAT_SILENCE;
   }
+
+  bool IsSilentOrSubnormal() const
+  {
+    if (!mBuffer) {
+      return true;
+    }
+
+    for (uint32_t i = 0, length = mChannelData.Length(); i < length; ++i) {
+      const float* channel = static_cast<const float*>(mChannelData[i]);
+      for (StreamTime frame = 0; frame < mDuration; ++frame) {
+        if (fabs(channel[frame]) >= FLT_MIN) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
   int ChannelCount() const { return mChannelData.Length(); }
 
   bool IsMuted() const { return mVolume == 0.0f; }
@@ -164,7 +183,6 @@ struct AudioChunk {
 #endif
 };
 
-
 /**
  * A list of audio samples consisting of a sequence of slices of SharedBuffers.
  * The audio rate is determined by the track, not stored in this class.
@@ -198,20 +216,27 @@ public:
       MOZ_ASSERT(channels == segmentChannelCount);
       output.SetLength(channels);
       bufferPtrs.SetLength(channels);
+#if !defined(MOZILLA_XPCOMRT_API)
+// FIXME Bug 1126414 - XPCOMRT does not support dom::WebAudioUtils::SpeexResamplerProcess
       uint32_t inFrames = c.mDuration;
+#endif // !defined(MOZILLA_XPCOMRT_API)
       // Round up to allocate; the last frame may not be used.
       NS_ASSERTION((UINT32_MAX - aInRate + 1) / c.mDuration >= aOutRate,
                    "Dropping samples");
       uint32_t outSize = (c.mDuration * aOutRate + aInRate - 1) / aInRate;
       for (uint32_t i = 0; i < channels; i++) {
-        const T* in = static_cast<const T*>(c.mChannelData[i]);
         T* out = output[i].AppendElements(outSize);
         uint32_t outFrames = outSize;
 
+#if !defined(MOZILLA_XPCOMRT_API)
+// FIXME Bug 1126414 - XPCOMRT does not support dom::WebAudioUtils::SpeexResamplerProcess
+        const T* in = static_cast<const T*>(c.mChannelData[i]);
         dom::WebAudioUtils::SpeexResamplerProcess(aResampler, i,
                                                   in, &inFrames,
                                                   out, &outFrames);
         MOZ_ASSERT(inFrames == c.mDuration);
+#endif // !defined(MOZILLA_XPCOMRT_API)
+
         bufferPtrs[i] = out;
         output[i].SetLength(outFrames);
       }

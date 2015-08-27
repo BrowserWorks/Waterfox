@@ -80,7 +80,7 @@ struct CGYieldOffsetList {
 
     bool append(uint32_t offset) { return list.append(offset); }
     size_t length() const { return list.length(); }
-    void finish(YieldOffsetArray& array, uint32_t prologLength);
+    void finish(YieldOffsetArray& array, uint32_t prologueLength);
 };
 
 struct LoopStmtInfo;
@@ -130,7 +130,7 @@ struct BytecodeEmitter
           : code(cx), notes(cx), lastNoteOffset(0), currentLine(lineNum), lastColumn(0)
         {}
     };
-    EmitSection prolog, main, *current;
+    EmitSection prologue, main, *current;
 
     /* the parser */
     Parser<FullParseHandler>* const parser;
@@ -248,6 +248,10 @@ struct BytecodeEmitter
     bool isInLoop();
     bool checkSingletonContext();
 
+    // Check whether our function is in a run-once context (a toplevel
+    // run-one script or a run-once lambda).
+    bool checkRunOnceContext();
+
     bool needsImplicitThis();
 
     void tellDebuggerAboutCompiledScript(ExclusiveContext* cx);
@@ -257,9 +261,9 @@ struct BytecodeEmitter
     BytecodeVector& code() const { return current->code; }
     jsbytecode* code(ptrdiff_t offset) const { return current->code.begin() + offset; }
     ptrdiff_t offset() const { return current->code.end() - current->code.begin(); }
-    ptrdiff_t prologOffset() const { return prolog.code.end() - prolog.code.begin(); }
+    ptrdiff_t prologueOffset() const { return prologue.code.end() - prologue.code.begin(); }
     void switchToMain() { current = &main; }
-    void switchToProlog() { current = &prolog; }
+    void switchToPrologue() { current = &prologue; }
 
     SrcNotesVector& notes() const { return current->notes; }
     ptrdiff_t lastNoteOffset() const { return current->lastNoteOffset; }
@@ -423,7 +427,7 @@ struct BytecodeEmitter
     bool emitAtomOp(JSAtom* atom, JSOp op);
     bool emitAtomOp(ParseNode* pn, JSOp op);
 
-    bool emitArray(ParseNode* pn, uint32_t count);
+    bool emitArray(ParseNode* pn, uint32_t count, JSOp op);
     bool emitArrayComp(ParseNode* pn);
 
     bool emitInternedObjectOp(uint32_t index, JSOp op);
@@ -454,7 +458,7 @@ struct BytecodeEmitter
     bool emitNameOp(ParseNode* pn, bool callContext);
     bool emitNameIncDec(ParseNode* pn);
 
-    bool maybeEmitVarDecl(JSOp prologOp, ParseNode* pn, jsatomid* result);
+    bool maybeEmitVarDecl(JSOp prologueOp, ParseNode* pn, jsatomid* result);
     bool emitVariables(ParseNode* pn, VarEmitOption emitOption, bool isLetExpr = false);
 
     bool emitNewInit(JSProtoKey key);
@@ -468,7 +472,7 @@ struct BytecodeEmitter
     bool emitYieldOp(JSOp op);
     bool emitYieldStar(ParseNode* iter, ParseNode* gen);
 
-    bool emitPropLHS(ParseNode* pn, JSOp op);
+    bool emitPropLHS(ParseNode* pn);
     bool emitPropOp(ParseNode* pn, JSOp op);
     bool emitPropIncDec(ParseNode* pn);
 
@@ -509,16 +513,16 @@ struct BytecodeEmitter
     bool emitDestructuringOpsObjectHelper(ParseNode* pattern, VarEmitOption emitOption);
 
     typedef bool
-    (*DestructuringDeclEmitter)(BytecodeEmitter* bce, JSOp prologOp, ParseNode* pn);
+    (*DestructuringDeclEmitter)(BytecodeEmitter* bce, JSOp prologueOp, ParseNode* pn);
 
     template <DestructuringDeclEmitter EmitName>
-    bool emitDestructuringDeclsWithEmitter(JSOp prologOp, ParseNode* pattern);
+    bool emitDestructuringDeclsWithEmitter(JSOp prologueOp, ParseNode* pattern);
 
-    bool emitDestructuringDecls(JSOp prologOp, ParseNode* pattern);
+    bool emitDestructuringDecls(JSOp prologueOp, ParseNode* pattern);
 
     // Emit code to initialize all destructured names to the value on the top of
     // the stack.
-    bool emitInitializeDestructuringDecls(JSOp prologOp, ParseNode* pattern);
+    bool emitInitializeDestructuringDecls(JSOp prologueOp, ParseNode* pattern);
 
     // emitIterator expects the iterable to already be on the stack.
     // It will replace that stack value with the corresponding iterator
@@ -589,6 +593,13 @@ struct BytecodeEmitter
     bool emitForOf(StmtType type, ParseNode* pn, ptrdiff_t top);
 
     bool emitClass(ParseNode* pn);
+    bool emitSuperPropLHS(bool isCall = false);
+    bool emitSuperPropOp(ParseNode* pn, JSOp op, bool isCall = false);
+    bool emitSuperPropIncDec(ParseNode* pn);
+    enum SuperElemOptions { SuperElem_Get, SuperElem_Set, SuperElem_Call, SuperElem_IncDec };
+    bool emitSuperElemOperands(ParseNode* pn, SuperElemOptions opts = SuperElem_Get);
+    bool emitSuperElemOp(ParseNode* pn, JSOp op, bool isCall = false);
+    bool emitSuperElemIncDec(ParseNode* pn);
 };
 
 } /* namespace frontend */

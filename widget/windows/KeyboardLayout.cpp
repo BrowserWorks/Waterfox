@@ -50,7 +50,6 @@
 namespace mozilla {
 namespace widget {
 
-#ifdef PR_LOGGING
 static const char* kVirtualKeyName[] = {
   "NULL", "VK_LBUTTON", "VK_RBUTTON", "VK_CANCEL",
   "VK_MBUTTON", "VK_XBUTTON1", "VK_XBUTTON2", "0x07",
@@ -139,8 +138,6 @@ static const char* kVirtualKeyName[] = {
 
 static_assert(sizeof(kVirtualKeyName) / sizeof(const char*) == 0x100,
   "The virtual key name must be defined just 256 keys");
-
-#endif // #ifdef PR_LOGGING
 
 // Unique id counter associated with a keydown / keypress events. Used in
 // identifing keypress events for removal from async event dispatch queue
@@ -299,11 +296,6 @@ ModifierKeyState::InitMouseEvent(WidgetInputEvent& aMouseEvent) const
                aMouseEvent.mClass == eSimpleGestureEventClass,
                "called with non-mouse event");
 
-  if (XRE_GetWindowsEnvironment() == WindowsEnvironmentType_Metro) {
-    // Buttons for immersive mode are handled in MetroInput.
-    return;
-  }
-
   WidgetMouseEventBase& mouseEvent = *aMouseEvent.AsMouseEventBase();
   mouseEvent.buttons = 0;
   if (::GetKeyState(VK_LBUTTON) < 0) {
@@ -369,12 +361,6 @@ bool
 ModifierKeyState::IsScrollLocked() const
 {
   return (mModifiers & MODIFIER_SCROLLLOCK) != 0;
-}
-
-Modifiers
-ModifierKeyState::GetModifiers() const
-{
-  return mModifiers;
 }
 
 void
@@ -2256,20 +2242,16 @@ NativeKey::DispatchKeyPressEventForFollowingCharMessage(
 KeyboardLayout* KeyboardLayout::sInstance = nullptr;
 nsIIdleServiceInternal* KeyboardLayout::sIdleService = nullptr;
 
-#ifdef PR_LOGGING
 PRLogModuleInfo* sKeyboardLayoutLogger = nullptr;
-#endif // #ifdef PR_LOGGING
 
 // static
 KeyboardLayout*
 KeyboardLayout::GetInstance()
 {
   if (!sInstance) {
-#ifdef PR_LOGGING
     if (!sKeyboardLayoutLogger) {
       sKeyboardLayoutLogger = PR_NewLogModule("KeyboardLayoutWidgets");
     }
-#endif // #ifdef PR_LOGGING
     sInstance = new KeyboardLayout();
     nsCOMPtr<nsIIdleServiceInternal> idleService =
       do_GetService("@mozilla.org/widget/idleservice;1");
@@ -2558,7 +2540,6 @@ KeyboardLayout::LoadLayout(HKL aLayout)
 
   ::SetKeyboardState(originalKbdState);
 
-#ifdef PR_LOGGING
   if (PR_LOG_TEST(sKeyboardLayoutLogger, PR_LOG_DEBUG)) {
     static const UINT kExtendedScanCode[] = { 0x0000, 0xE000 };
     static const UINT kMapType =
@@ -2581,7 +2562,6 @@ KeyboardLayout::LoadLayout(HKL aLayout)
       }
     }
   }
-#endif // #ifdef PR_LOGGING
 }
 
 inline int32_t

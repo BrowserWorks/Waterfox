@@ -47,7 +47,7 @@ private:
 
 class GMPAudioDecoder : public MediaDataDecoder {
 protected:
-  GMPAudioDecoder(const mp4_demuxer::AudioDecoderConfig& aConfig,
+  GMPAudioDecoder(const AudioInfo& aConfig,
                   MediaTaskQueue* aTaskQueue,
                   MediaDataDecoderCallbackProxy* aCallback,
                   AudioCallbackAdapter* aAdapter)
@@ -59,7 +59,7 @@ protected:
   }
 
 public:
-  GMPAudioDecoder(const mp4_demuxer::AudioDecoderConfig& aConfig,
+  GMPAudioDecoder(const AudioInfo& aConfig,
                   MediaTaskQueue* aTaskQueue,
                   MediaDataDecoderCallbackProxy* aCallback)
    : mConfig(aConfig)
@@ -70,7 +70,7 @@ public:
   }
 
   virtual nsresult Init() override;
-  virtual nsresult Input(mp4_demuxer::MP4Sample* aSample) override;
+  virtual nsresult Input(MediaRawData* aSample) override;
   virtual nsresult Flush() override;
   virtual nsresult Drain() override;
   virtual nsresult Shutdown() override;
@@ -80,7 +80,64 @@ protected:
   virtual nsCString GetNodeId();
 
 private:
-  const mp4_demuxer::AudioDecoderConfig& mConfig;
+  class GMPInitDoneRunnable : public nsRunnable
+  {
+  public:
+    GMPInitDoneRunnable()
+      : mInitDone(false),
+        mThread(do_GetCurrentThread())
+    {
+    }
+
+    NS_IMETHOD Run()
+    {
+      mInitDone = true;
+      return NS_OK;
+    }
+
+    void Dispatch()
+    {
+      mThread->Dispatch(this, NS_DISPATCH_NORMAL);
+    }
+
+    bool IsDone()
+    {
+      MOZ_ASSERT(nsCOMPtr<nsIThread>(do_GetCurrentThread()) == mThread);
+      return mInitDone;
+    }
+
+  private:
+    bool mInitDone;
+    nsCOMPtr<nsIThread> mThread;
+  };
+
+  void GetGMPAPI(GMPInitDoneRunnable* aInitDone);
+
+  class GMPInitDoneCallback : public GetGMPAudioDecoderCallback
+  {
+  public:
+    GMPInitDoneCallback(GMPAudioDecoder* aDecoder,
+                        GMPInitDoneRunnable* aGMPInitDone)
+      : mDecoder(aDecoder)
+      , mGMPInitDone(aGMPInitDone)
+    {
+    }
+
+    virtual void Done(GMPAudioDecoderProxy* aGMP)
+    {
+      if (aGMP) {
+        mDecoder->GMPInitDone(aGMP);
+      }
+      mGMPInitDone->Dispatch();
+    }
+
+  private:
+    nsRefPtr<GMPAudioDecoder> mDecoder;
+    nsRefPtr<GMPInitDoneRunnable> mGMPInitDone;
+  };
+  void GMPInitDone(GMPAudioDecoderProxy* aGMP);
+
+  const AudioInfo& mConfig;
   MediaDataDecoderCallbackProxy* mCallback;
   nsCOMPtr<mozIGeckoMediaPluginService> mMPS;
   GMPAudioDecoderProxy* mGMP;

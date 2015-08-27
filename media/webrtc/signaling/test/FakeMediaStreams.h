@@ -30,7 +30,17 @@ class nsIDOMWindow;
 
 namespace mozilla {
    class MediaStreamGraph;
+   class MediaStreamGraphImpl;
    class MediaSegment;
+};
+
+class Fake_VideoSink {
+public:
+  Fake_VideoSink() {}
+  virtual void SegmentReady(mozilla::MediaSegment* aSegment) = 0;
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(Fake_VideoSink)
+protected:
+  virtual ~Fake_VideoSink() {}
 };
 
 class Fake_SourceMediaStream;
@@ -82,8 +92,19 @@ class Fake_MediaStream {
     mListeners.erase(aListener);
   }
 
+  void NotifyPull(mozilla::MediaStreamGraph* graph,
+                  mozilla::StreamTime aDesiredTime) {
+
+    mozilla::MutexAutoLock lock(mMutex);
+    std::set<Fake_MediaStreamListener *>::iterator it;
+    for (it = mListeners.begin(); it != mListeners.end(); ++it) {
+      (*it)->NotifyPull(graph, aDesiredTime);
+    }
+  }
+
   virtual Fake_SourceMediaStream *AsSourceStream() { return nullptr; }
 
+  virtual mozilla::MediaStreamGraphImpl *GraphImpl() { return nullptr; }
   virtual nsresult Start() { return NS_OK; }
   virtual nsresult Stop() { return NS_OK; }
   virtual void StopStream() {}
@@ -134,6 +155,11 @@ class Fake_SourceMediaStream : public Fake_MediaStream {
   enum {
     ADDTRACK_QUEUED    = 0x01 // Queue track add until FinishAddTracks()
   };
+
+  void AddVideoSink(const nsRefPtr<Fake_VideoSink>& aSink) {
+    mSink  = aSink;
+  }
+
   void AddTrack(mozilla::TrackID aID, mozilla::StreamTime aStart,
                 mozilla::MediaSegment* aSegment, uint32_t aFlags = 0) {
     delete aSegment;
@@ -182,6 +208,9 @@ class Fake_SourceMediaStream : public Fake_MediaStream {
     } else {
       //in the case of video segment appended, we just increase the
       //segment count.
+      if (mSink.get()) {
+        mSink->SegmentReady(aSegment);
+      }
       ++mSegmentsAdded;
     }
     return true;
@@ -217,6 +246,7 @@ class Fake_SourceMediaStream : public Fake_MediaStream {
   bool mPullEnabled;
   bool mStop;
   nsRefPtr<Fake_MediaPeriodic> mPeriodic;
+  nsRefPtr<Fake_VideoSink> mSink;
   nsCOMPtr<nsITimer> mTimer;
 };
 
@@ -248,6 +278,14 @@ public:
   const Fake_MediaStreamTrack* AsAudioStreamTrack() const
   {
     return mIsVideo? nullptr : this;
+  }
+  const uint32_t typeSize () const
+  {
+    return sizeof(Fake_MediaStreamTrack);
+  }
+  const char* typeName () const
+  {
+    return "Fake_MediaStreamTrack";
   }
 private:
   ~Fake_MediaStreamTrack() {}

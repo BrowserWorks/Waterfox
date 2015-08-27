@@ -636,16 +636,6 @@ void StartForceQuitWatchdog(ShutdownMode aMode, int32_t aTimeoutSecs)
   PROXY_IF_SANDBOXED(StartForceQuitWatchdog(aMode, aTimeoutSecs));
 }
 
-void StartMonitoringGamepadStatus()
-{
-  PROXY_IF_SANDBOXED(StartMonitoringGamepadStatus());
-}
-
-void StopMonitoringGamepadStatus()
-{
-  PROXY_IF_SANDBOXED(StopMonitoringGamepadStatus());
-}
-
 void
 RegisterWakeLockObserver(WakeLockObserver* aObserver)
 {
@@ -872,6 +862,13 @@ void
 SetCurrentThreadPriority(hal::ThreadPriority aThreadPriority)
 {
   PROXY_IF_SANDBOXED(SetCurrentThreadPriority(aThreadPriority));
+}
+
+void
+SetThreadPriority(PlatformThreadId aThreadId,
+                  hal::ThreadPriority aThreadPriority)
+{
+  PROXY_IF_SANDBOXED(SetThreadPriority(aThreadId, aThreadPriority));
 }
 
 // From HalTypes.h.

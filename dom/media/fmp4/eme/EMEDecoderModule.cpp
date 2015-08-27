@@ -12,137 +12,109 @@
 #include "mozilla/CDMProxy.h"
 #include "mozilla/unused.h"
 #include "nsServiceManagerUtils.h"
+#include "MediaInfo.h"
 
 namespace mozilla {
 
 class EMEDecryptor : public MediaDataDecoder {
-  typedef mp4_demuxer::MP4Sample MP4Sample;
 
 public:
 
   EMEDecryptor(MediaDataDecoder* aDecoder,
                MediaDataDecoderCallback* aCallback,
-               CDMProxy* aProxy)
+               CDMProxy* aProxy,
+               MediaTaskQueue* aDecodeTaskQueue)
     : mDecoder(aDecoder)
     , mCallback(aCallback)
-    , mTaskQueue(CreateFlushableMediaDecodeTaskQueue())
+    , mTaskQueue(aDecodeTaskQueue)
     , mProxy(aProxy)
     , mSamplesWaitingForKey(new SamplesWaitingForKey(this, mTaskQueue, mProxy))
-#ifdef DEBUG
     , mIsShutdown(false)
-#endif
   {
   }
 
   virtual nsresult Init() override {
     MOZ_ASSERT(!mIsShutdown);
-    nsresult rv = mTaskQueue->SyncDispatch(
-      NS_NewRunnableMethod(mDecoder, &MediaDataDecoder::Init));
-    unused << NS_WARN_IF(NS_FAILED(rv));
-    return rv;
+    return mDecoder->Init();
   }
 
   class DeliverDecrypted : public DecryptionClient {
   public:
-    DeliverDecrypted(EMEDecryptor* aDecryptor, FlushableMediaTaskQueue* aTaskQueue)
+    explicit DeliverDecrypted(EMEDecryptor* aDecryptor)
       : mDecryptor(aDecryptor)
-      , mTaskQueue(aTaskQueue)
-    {}
-    virtual void Decrypted(GMPErr aResult,
-                           mp4_demuxer::MP4Sample* aSample) override {
-      if (aResult == GMPNoKeyErr) {
-        RefPtr<nsIRunnable> task;
-        task = NS_NewRunnableMethodWithArg<MP4Sample*>(mDecryptor,
-                                                       &EMEDecryptor::Input,
-                                                       aSample);
-        mTaskQueue->Dispatch(task.forget());
-      } else if (GMP_FAILED(aResult)) {
-        if (mDecryptor->mCallback) {
-          mDecryptor->mCallback->Error();
-        }
-        MOZ_ASSERT(!aSample);
-      } else {
-        RefPtr<nsIRunnable> task;
-        task = NS_NewRunnableMethodWithArg<MP4Sample*>(mDecryptor,
-                                                       &EMEDecryptor::Decrypted,
-                                                       aSample);
-        mTaskQueue->Dispatch(task.forget());
-      }
-      mTaskQueue = nullptr;
+    { }
+    virtual void Decrypted(GMPErr aResult, MediaRawData* aSample) override {
+      mDecryptor->Decrypted(aResult, aSample);
       mDecryptor = nullptr;
     }
   private:
     nsRefPtr<EMEDecryptor> mDecryptor;
-    nsRefPtr<FlushableMediaTaskQueue> mTaskQueue;
   };
 
-  virtual nsresult Input(MP4Sample* aSample) override {
+  virtual nsresult Input(MediaRawData* aSample) override {
+    MOZ_ASSERT(mTaskQueue->IsCurrentThreadIn());
     MOZ_ASSERT(!mIsShutdown);
-    // We run the PDM on its own task queue. We can't run it on the decode
-    // task queue, because that calls into Input() in a loop and waits until
-    // output is delivered. We need to defer some Input() calls while we wait
-    // for keys to become usable, and once they do we need to dispatch an event
-    // to run the PDM on the same task queue, but since the decode task queue
-    // is waiting in MP4Reader::Decode() for output our task would never run.
-    // So we dispatch tasks to make all calls into the wrapped decoder.
     if (mSamplesWaitingForKey->WaitIfKeyNotUsable(aSample)) {
       return NS_OK;
     }
 
-    mProxy->GetSessionIdsForKeyId(aSample->crypto.key,
-                                  aSample->crypto.session_ids);
+    nsAutoPtr<MediaRawDataWriter> writer(aSample->CreateWriter());
+    mProxy->GetSessionIdsForKeyId(aSample->mCrypto.mKeyId,
+                                  writer->mCrypto.mSessionIds);
 
-    mProxy->Decrypt(aSample, new DeliverDecrypted(this, mTaskQueue));
+    mProxy->Decrypt(aSample, new DeliverDecrypted(this), mTaskQueue);
     return NS_OK;
   }
 
-  void Decrypted(mp4_demuxer::MP4Sample* aSample) {
-    MOZ_ASSERT(!mIsShutdown);
-    nsresult rv = mTaskQueue->Dispatch(
-      NS_NewRunnableMethodWithArg<mp4_demuxer::MP4Sample*>(
-        mDecoder,
-        &MediaDataDecoder::Input,
-        aSample));
-    unused << NS_WARN_IF(NS_FAILED(rv));
+  void Decrypted(GMPErr aResult, MediaRawData* aSample) {
+    MOZ_ASSERT(mTaskQueue->IsCurrentThreadIn());
+    if (mIsShutdown) {
+      NS_WARNING("EME decrypted sample arrived after shutdown");
+      return;
+    }
+    if (aResult == GMPNoKeyErr) {
+      // Key became unusable after we sent the sample to CDM to decrypt.
+      // Call Input() again, so that the sample is enqueued for decryption
+      // if the key becomes usable again.
+      Input(aSample);
+    } else if (GMP_FAILED(aResult)) {
+      if (mCallback) {
+        mCallback->Error();
+      }
+      MOZ_ASSERT(!aSample);
+    } else {
+      MOZ_ASSERT(!mIsShutdown);
+      nsresult rv = mDecoder->Input(aSample);
+      unused << NS_WARN_IF(NS_FAILED(rv));
+    }
   }
 
   virtual nsresult Flush() override {
+    MOZ_ASSERT(mTaskQueue->IsCurrentThreadIn());
     MOZ_ASSERT(!mIsShutdown);
-    nsresult rv = mTaskQueue->SyncDispatch(
-      NS_NewRunnableMethod(
-        mDecoder,
-        &MediaDataDecoder::Flush));
+    nsresult rv = mDecoder->Flush();
     unused << NS_WARN_IF(NS_FAILED(rv));
     mSamplesWaitingForKey->Flush();
     return rv;
   }
 
   virtual nsresult Drain() override {
+    MOZ_ASSERT(mTaskQueue->IsCurrentThreadIn());
     MOZ_ASSERT(!mIsShutdown);
-    nsresult rv = mTaskQueue->Dispatch(
-      NS_NewRunnableMethod(
-        mDecoder,
-        &MediaDataDecoder::Drain));
+    nsresult rv = mDecoder->Drain();
     unused << NS_WARN_IF(NS_FAILED(rv));
     return rv;
   }
 
   virtual nsresult Shutdown() override {
+    MOZ_ASSERT(mTaskQueue->IsCurrentThreadIn());
     MOZ_ASSERT(!mIsShutdown);
-#ifdef DEBUG
     mIsShutdown = true;
-#endif
-    nsresult rv = mTaskQueue->SyncDispatch(
-      NS_NewRunnableMethod(
-        mDecoder,
-        &MediaDataDecoder::Shutdown));
+    nsresult rv = mDecoder->Shutdown();
     unused << NS_WARN_IF(NS_FAILED(rv));
     mSamplesWaitingForKey->BreakCycles();
     mSamplesWaitingForKey = nullptr;
     mDecoder = nullptr;
-    mTaskQueue->BeginShutdown();
-    mTaskQueue->AwaitShutdownAndIdle();
-    mTaskQueue = nullptr;
     mProxy = nullptr;
     mCallback = nullptr;
     return rv;
@@ -152,12 +124,10 @@ private:
 
   nsRefPtr<MediaDataDecoder> mDecoder;
   MediaDataDecoderCallback* mCallback;
-  nsRefPtr<FlushableMediaTaskQueue> mTaskQueue;
+  nsRefPtr<MediaTaskQueue> mTaskQueue;
   nsRefPtr<CDMProxy> mProxy;
   nsRefPtr<SamplesWaitingForKey> mSamplesWaitingForKey;
-#ifdef DEBUG
   bool mIsShutdown;
-#endif
 };
 
 class EMEMediaDataDecoderProxy : public MediaDataDecoderProxy {
@@ -169,7 +139,7 @@ public:
   {
   }
 
-  virtual nsresult Input(mp4_demuxer::MP4Sample* aSample) override;
+  virtual nsresult Input(MediaRawData* aSample) override;
   virtual nsresult Shutdown() override;
 
 private:
@@ -178,14 +148,15 @@ private:
 };
 
 nsresult
-EMEMediaDataDecoderProxy::Input(mp4_demuxer::MP4Sample* aSample)
+EMEMediaDataDecoderProxy::Input(MediaRawData* aSample)
 {
   if (mSamplesWaitingForKey->WaitIfKeyNotUsable(aSample)) {
     return NS_OK;
   }
 
-  mProxy->GetSessionIdsForKeyId(aSample->crypto.key,
-                                aSample->crypto.session_ids);
+  nsAutoPtr<MediaRawDataWriter> writer(aSample->CreateWriter());
+  mProxy->GetSessionIdsForKeyId(aSample->mCrypto.mKeyId,
+                                writer->mCrypto.mSessionIds);
 
   return MediaDataDecoderProxy::Input(aSample);
 }
@@ -236,13 +207,13 @@ CreateDecoderWrapper(MediaDataDecoderCallback* aCallback, CDMProxy* aProxy, Flus
 }
 
 already_AddRefed<MediaDataDecoder>
-EMEDecoderModule::CreateVideoDecoder(const VideoDecoderConfig& aConfig,
+EMEDecoderModule::CreateVideoDecoder(const VideoInfo& aConfig,
                                      layers::LayersBackend aLayersBackend,
                                      layers::ImageContainer* aImageContainer,
                                      FlushableMediaTaskQueue* aVideoTaskQueue,
                                      MediaDataDecoderCallback* aCallback)
 {
-  if (mCDMDecodesVideo && aConfig.crypto.valid) {
+  if (mCDMDecodesVideo && aConfig.mCrypto.mValid) {
     nsRefPtr<MediaDataDecoderProxy> wrapper = CreateDecoderWrapper(aCallback, mProxy, aVideoTaskQueue);
     wrapper->SetProxyTarget(new EMEVideoDecoder(mProxy,
                                                 aConfig,
@@ -253,31 +224,33 @@ EMEDecoderModule::CreateVideoDecoder(const VideoDecoderConfig& aConfig,
     return wrapper.forget();
   }
 
-  nsRefPtr<MediaDataDecoder> decoder(mPDM->CreateVideoDecoder(aConfig,
-                                                              aLayersBackend,
-                                                              aImageContainer,
-                                                              aVideoTaskQueue,
-                                                              aCallback));
+  nsRefPtr<MediaDataDecoder> decoder(
+    mPDM->CreateDecoder(aConfig,
+                        aVideoTaskQueue,
+                        aCallback,
+                        aLayersBackend,
+                        aImageContainer));
   if (!decoder) {
     return nullptr;
   }
 
-  if (!aConfig.crypto.valid) {
+  if (!aConfig.mCrypto.mValid) {
     return decoder.forget();
   }
 
   nsRefPtr<MediaDataDecoder> emeDecoder(new EMEDecryptor(decoder,
                                                          aCallback,
-                                                         mProxy));
+                                                         mProxy,
+                                                         AbstractThread::GetCurrent()->AsTaskQueue()));
   return emeDecoder.forget();
 }
 
 already_AddRefed<MediaDataDecoder>
-EMEDecoderModule::CreateAudioDecoder(const AudioDecoderConfig& aConfig,
+EMEDecoderModule::CreateAudioDecoder(const AudioInfo& aConfig,
                                      FlushableMediaTaskQueue* aAudioTaskQueue,
                                      MediaDataDecoderCallback* aCallback)
 {
-  if (mCDMDecodesAudio && aConfig.crypto.valid) {
+  if (mCDMDecodesAudio && aConfig.mCrypto.mValid) {
     nsRefPtr<MediaDataDecoderProxy> wrapper = CreateDecoderWrapper(aCallback, mProxy, aAudioTaskQueue);
     wrapper->SetProxyTarget(new EMEAudioDecoder(mProxy,
                                                 aConfig,
@@ -286,27 +259,31 @@ EMEDecoderModule::CreateAudioDecoder(const AudioDecoderConfig& aConfig,
     return wrapper.forget();
   }
 
-  nsRefPtr<MediaDataDecoder> decoder(mPDM->CreateAudioDecoder(aConfig,
-                                                              aAudioTaskQueue,
-                                                              aCallback));
+  nsRefPtr<MediaDataDecoder> decoder(
+    mPDM->CreateDecoder(aConfig, aAudioTaskQueue, aCallback));
   if (!decoder) {
     return nullptr;
   }
 
-  if (!aConfig.crypto.valid) {
+  if (!aConfig.mCrypto.mValid) {
     return decoder.forget();
   }
 
   nsRefPtr<MediaDataDecoder> emeDecoder(new EMEDecryptor(decoder,
                                                          aCallback,
-                                                         mProxy));
+                                                         mProxy,
+                                                         AbstractThread::GetCurrent()->AsTaskQueue()));
   return emeDecoder.forget();
 }
 
-bool
-EMEDecoderModule::DecoderNeedsAVCC(const mp4_demuxer::VideoDecoderConfig& aConfig)
+PlatformDecoderModule::ConversionRequired
+EMEDecoderModule::DecoderNeedsConversion(const TrackInfo& aConfig) const
 {
-  return mCDMDecodesVideo && aConfig.crypto.valid;
+  if (aConfig.IsVideo()) {
+    return kNeedAVCC;
+  } else {
+    return kNeedNone;
+  }
 }
 
 } // namespace mozilla

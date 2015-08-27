@@ -113,6 +113,7 @@
 #include "nsSVGLength2.h"
 #include "nsDeviceContext.h"
 #include "nsFontMetrics.h"
+#include "Units.h"
 
 #undef free // apparently defined by some windows header, clashing with a free()
             // method in SkTypes.h
@@ -307,12 +308,12 @@ public:
     nsIntRegion strokePaintNeededRegion;
 
     FilterSupport::ComputeSourceNeededRegions(
-      ctx->CurrentState().filter, mgfx::ThebesIntRect(mPostFilterBounds),
+      ctx->CurrentState().filter, mPostFilterBounds,
       sourceGraphicNeededRegion, fillPaintNeededRegion, strokePaintNeededRegion);
 
-    mSourceGraphicRect = mgfx::ToIntRect(sourceGraphicNeededRegion.GetBounds());
-    mFillPaintRect = mgfx::ToIntRect(fillPaintNeededRegion.GetBounds());
-    mStrokePaintRect = mgfx::ToIntRect(strokePaintNeededRegion.GetBounds());
+    mSourceGraphicRect = sourceGraphicNeededRegion.GetBounds();
+    mFillPaintRect = fillPaintNeededRegion.GetBounds();
+    mStrokePaintRect = strokePaintNeededRegion.GetBounds();
 
     mSourceGraphicRect = mSourceGraphicRect.Intersect(aPreFilterBounds);
 
@@ -599,10 +600,10 @@ private:
     nsIntRegion strokePaintNeededRegion;
 
     FilterSupport::ComputeSourceNeededRegions(
-      ctx->CurrentState().filter, mgfx::ThebesIntRect(mgfx::RoundedToInt(aDestBounds)),
+      ctx->CurrentState().filter, mgfx::RoundedToInt(aDestBounds),
       sourceGraphicNeededRegion, fillPaintNeededRegion, strokePaintNeededRegion);
 
-    return mgfx::Rect(mgfx::ToIntRect(sourceGraphicNeededRegion.GetBounds()));
+    return mgfx::Rect(sourceGraphicNeededRegion.GetBounds());
   }
 
   mgfx::Rect
@@ -638,8 +639,8 @@ private:
 
     nsIntRegion extents =
       mgfx::FilterSupport::ComputePostFilterExtents(ctx->CurrentState().filter,
-                                                    mgfx::ThebesIntRect(intBounds));
-    return mgfx::Rect(mgfx::ToIntRect(extents.GetBounds()));
+                                                    intBounds);
+    return mgfx::Rect(extents.GetBounds());
   }
 
   RefPtr<DrawTarget> mTarget;
@@ -1333,7 +1334,8 @@ CanvasRenderingContext2D::EnsureTarget(RenderingMode aRenderingMode)
 
    // Check that the dimensions are sane
   IntSize size(mWidth, mHeight);
-  if (size.width <= 0xFFFF && size.height <= 0xFFFF &&
+  if (size.width <= gfxPrefs::MaxCanvasSize() &&
+      size.height <= gfxPrefs::MaxCanvasSize() &&
       size.width >= 0 && size.height >= 0) {
     SurfaceFormat format = GetSurfaceFormat();
     nsIDocument* ownerDoc = nullptr;
@@ -4268,7 +4270,10 @@ CanvasRenderingContext2D::DrawImage(const HTMLImageOrCanvasOrVideoElement& image
       gl->fTexParameteri(LOCAL_GL_TEXTURE_2D, LOCAL_GL_TEXTURE_MAG_FILTER, LOCAL_GL_LINEAR);
       gl->fTexParameteri(LOCAL_GL_TEXTURE_2D, LOCAL_GL_TEXTURE_MIN_FILTER, LOCAL_GL_LINEAR);
     }
-    bool ok = gl->BlitHelper()->BlitImageToTexture(srcImage.get(), srcImage->GetSize(), mVideoTexture, LOCAL_GL_TEXTURE_2D, 1);
+    const gl::OriginPos destOrigin = gl::OriginPos::TopLeft;
+    bool ok = gl->BlitHelper()->BlitImageToTexture(srcImage.get(), srcImage->GetSize(),
+                                                   mVideoTexture, LOCAL_GL_TEXTURE_2D,
+                                                   destOrigin);
     if (ok) {
       NativeSurface texSurf;
       texSurf.mType = NativeSurfaceType::OPENGL_TEXTURE;
@@ -4312,14 +4317,17 @@ CanvasRenderingContext2D::DrawImage(const HTMLImageOrCanvasOrVideoElement& image
       res = nsLayoutUtils::SurfaceFromElement(element, sfeFlags, mTarget);
 
     if (!res.mSourceSurface && !res.mDrawInfo.mImgContainer) {
-      // Spec says to silently do nothing if the element is still loading.
-      if (!res.mIsStillLoading) {
+      // The spec says to silently do nothing in the following cases:
+      //   - The element is still loading.
+      //   - The image is bad, but it's not in the broken state (i.e., we could
+      //     decode the headers and get the size).
+      if (!res.mIsStillLoading && !res.mHasSize) {
         error.Throw(NS_ERROR_NOT_AVAILABLE);
       }
       return;
     }
 
-    imgSize = gfx::ToIntSize(res.mSize);
+    imgSize = res.mSize;
 
     // Scale sw/sh based on aspect ratio
     if (image.IsHTMLVideoElement()) {
@@ -4463,7 +4471,8 @@ CanvasRenderingContext2D::DrawDirectlyToCanvas(
   // FLAG_CLAMP is added for increased performance, since we never tile here.
   uint32_t modifiedFlags = image.mDrawingFlags | imgIContainer::FLAG_CLAMP;
 
-  SVGImageContext svgContext(scaledImageSize, Nothing(), CurrentState().globalAlpha);
+  CSSIntSize sz(scaledImageSize.width, scaledImageSize.height); // XXX hmm is scaledImageSize really in CSS pixels?
+  SVGImageContext svgContext(sz, Nothing(), CurrentState().globalAlpha);
 
   auto result = image.mImgContainer->
     Draw(context, scaledImageSize,

@@ -137,7 +137,6 @@ MediaOmxReader::MediaOmxReader(AbstractMediaDecoder *aDecoder)
   , mAudioSeekTimeUs(-1)
   , mLastParserDuration(-1)
   , mSkipCount(0)
-  , mUseParserDuration(false)
   , mIsShutdown(false)
   , mMP3FrameParser(-1)
   , mIsWaitingResources(false)
@@ -190,9 +189,7 @@ MediaOmxReader::Shutdown()
 
   // Wait for the superclass to finish tearing things down before releasing
   // the decoder on the main thread.
-  nsCOMPtr<nsIThread> mt;
-  NS_GetMainThread(getter_AddRefs(mt));
-  p->Then(mt.get(), __func__, this, &MediaOmxReader::ReleaseDecoder, &MediaOmxReader::ReleaseDecoder);
+  p->Then(AbstractThread::MainThread(), __func__, this, &MediaOmxReader::ReleaseDecoder, &MediaOmxReader::ReleaseDecoder);
 
   return p;
 }
@@ -292,16 +289,16 @@ nsresult MediaOmxReader::ReadMetadata(MediaInfo* aInfo,
   }
 
   if (isMP3 && mMP3FrameParser.IsMP3()) {
-    int64_t duration = mMP3FrameParser.GetDuration();
-    // The MP3FrameParser may reported a duration;
-    // return -1 if no frame has been parsed.
-    if (duration >= 0) {
-      ReentrantMonitorAutoEnter mon(mDecoder->GetReentrantMonitor());
-      mUseParserDuration = true;
-      mLastParserDuration = duration;
-      mDecoder->SetMediaDuration(mLastParserDuration);
-    }
+    // Check if the MP3 frame parser found a duration.
+    mLastParserDuration = mMP3FrameParser.GetDuration();
+  }
+
+  if (mLastParserDuration >= 0) {
+    // Prefer the parser duration if we have it.
+    ReentrantMonitorAutoEnter mon(mDecoder->GetReentrantMonitor());
+    mDecoder->SetMediaDuration(mLastParserDuration);
   } else {
+    // MP3 parser failed to find a duration.
     // Set the total duration (the max of the audio and video track).
     int64_t durationUs;
     mOmxDecoder->GetDuration(&durationUs);
@@ -326,7 +323,7 @@ nsresult MediaOmxReader::ReadMetadata(MediaInfo* aInfo,
     }
 
     // Video track's frame sizes will not overflow. Activate the video track.
-    mHasVideo = mInfo.mVideo.mHasVideo = true;
+    mHasVideo = true;
     mInfo.mVideo.mDisplay = displaySize;
     mPicture = pictureRect;
     mInitialFrame = frameSize;
@@ -341,7 +338,7 @@ nsresult MediaOmxReader::ReadMetadata(MediaInfo* aInfo,
   if (mOmxDecoder->HasAudio()) {
     int32_t numChannels, sampleRate;
     mOmxDecoder->GetAudioParameters(&numChannels, &sampleRate);
-    mHasAudio = mInfo.mAudio.mHasAudio = true;
+    mHasAudio = true;
     mInfo.mAudio.mChannels = numChannels;
     mInfo.mAudio.mRate = sampleRate;
   }
@@ -405,7 +402,7 @@ bool MediaOmxReader::DecodeVideoFrame(bool &aKeyframeSkip,
 
     aKeyframeSkip = false;
 
-    IntRect picture = ToIntRect(mPicture);
+    IntRect picture = mPicture;
     if (frame.Y.mWidth != mInitialFrame.width ||
         frame.Y.mHeight != mInitialFrame.height) {
 
@@ -503,7 +500,7 @@ void MediaOmxReader::NotifyDataArrived(const char* aBuffer, uint32_t aLength, in
   }
 
   int64_t duration = mMP3FrameParser.GetDuration();
-  if (duration != mLastParserDuration && mUseParserDuration) {
+  if (duration != mLastParserDuration) {
     ReentrantMonitorAutoEnter mon(decoder->GetReentrantMonitor());
     mLastParserDuration = duration;
     decoder->UpdateEstimatedMediaDuration(mLastParserDuration);

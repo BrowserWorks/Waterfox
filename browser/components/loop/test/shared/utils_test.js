@@ -145,6 +145,31 @@ describe("loop.shared.utils", function() {
     });
   });
 
+  describe("#formatURL", function() {
+    it("should decode encoded URIs", function() {
+      expect(sharedUtils.formatURL("http://invalid.com/?a=Foo%20Bar"))
+        .eql({
+          location: "http://invalid.com/?a=Foo Bar",
+          hostname: "invalid.com"
+        });
+    });
+
+    it("should change some idn urls to ascii encoded", function() {
+      // Note, this is based on the browser's list of what does/doesn't get
+      // altered for punycode, so if the list changes this could change in the
+      // future.
+      expect(sharedUtils.formatURL("http://\u0261oogle.com/"))
+        .eql({
+          location: "http://xn--oogle-qmc.com/",
+          hostname: "xn--oogle-qmc.com"
+        });
+    });
+
+    it("should return null if it the url is not valid", function() {
+      expect(sharedUtils.formatURL("hinvalid//url")).eql(null);
+    });
+  });
+
   describe("#composeCallUrlEmail", function() {
     var composeEmail;
 
@@ -152,8 +177,14 @@ describe("loop.shared.utils", function() {
       // fake mozL10n
       sandbox.stub(navigator.mozL10n, "get", function(id) {
         switch(id) {
-          case "share_email_subject5": return "subject";
-          case "share_email_body5":    return "body";
+          case "share_email_subject5":
+            return "subject";
+          case "share_email_body5":
+            return "body";
+          case "share_email_subject_context":
+            return "subject_context";
+          case "share_email_body_context":
+            return "body_context";
         }
       });
       composeEmail = sandbox.spy();
@@ -169,6 +200,13 @@ describe("loop.shared.utils", function() {
       sinon.assert.calledOnce(composeEmail);
       sinon.assert.calledWith(composeEmail,
                               "subject", "body", "fake@invalid.tld");
+    });
+
+    it("should compose a different email when context info is provided", function() {
+      sharedUtils.composeCallUrlEmail("http://invalid", null, "Hello, is me you're looking for?");
+
+      sinon.assert.calledOnce(composeEmail);
+      sinon.assert.calledWith(composeEmail, "subject_context", "body_context");
     });
   });
 
@@ -291,6 +329,141 @@ describe("loop.shared.utils", function() {
 
       // Linux version can't be determined correctly.
       expect(result).eql({ major: Infinity, minor: 0 });
+    });
+  });
+
+  describe("#getPlatform", function() {
+    it("should recognize the OSX userAgent string", function() {
+      var UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:37.0) Gecko/20100101 Firefox/37.0";
+      var result = sharedUtils.getPlatform(UA);
+
+      expect(result).eql("mac");
+    });
+
+    it("should recognize the Windows userAgent string", function() {
+      var UA = "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:10.0) Gecko/20100101 Firefox/10.0";
+      var result = sharedUtils.getPlatform(UA);
+
+      expect(result).eql("win");
+    });
+
+    it("should recognize the Linux userAgent string", function() {
+      var UA = "Mozilla/5.0 (X11; Linux i686 on x86_64; rv:10.0) Gecko/20100101 Firefox/10.0";
+      var result = sharedUtils.getPlatform(UA);
+
+      expect(result).eql("other");
+    });
+
+    it("should recognize the OSX oscpu string", function() {
+      var oscpu = "Intel Mac OS X 10.10";
+      var result = sharedUtils.getPlatform(oscpu);
+
+      expect(result).eql("mac");
+    });
+
+    it("should recognize the Windows oscpu string", function() {
+      var oscpu = "Windows NT 5.3; Win64; x64";
+      var result = sharedUtils.getPlatform(oscpu);
+
+      expect(result).eql("win");
+    });
+  });
+
+  describe("#objectDiff", function() {
+    var a, b, diff;
+
+    afterEach(function() {
+      a = b = diff = null;
+    });
+
+    it("should find object property additions", function() {
+      a = {
+        prop1: null
+      };
+      b = {
+        prop1: null,
+        prop2: null
+      };
+
+      diff = sharedUtils.objectDiff(a, b);
+      expect(diff.updated).to.eql([]);
+      expect(diff.removed).to.eql([]);
+      expect(diff.added).to.eql(["prop2"]);
+    });
+
+    it("should find object property value changes", function() {
+      a = {
+        prop1: null
+      };
+      b = {
+        prop1: "null"
+      };
+
+      diff = sharedUtils.objectDiff(a, b);
+      expect(diff.updated).to.eql(["prop1"]);
+      expect(diff.removed).to.eql([]);
+      expect(diff.added).to.eql([]);
+    });
+
+    it("should find object property removals", function() {
+      a = {
+        prop1: null
+      };
+      b = {};
+
+      diff = sharedUtils.objectDiff(a, b);
+      expect(diff.updated).to.eql([]);
+      expect(diff.removed).to.eql(["prop1"]);
+      expect(diff.added).to.eql([]);
+    });
+
+    it("should report a mix of removed, added and updated properties", function() {
+      a = {
+        prop1: null,
+        prop2: null
+      };
+      b = {
+        prop1: "null",
+        prop3: null
+      };
+
+      diff = sharedUtils.objectDiff(a, b);
+      expect(diff.updated).to.eql(["prop1"]);
+      expect(diff.removed).to.eql(["prop2"]);
+      expect(diff.added).to.eql(["prop3"]);
+    });
+  });
+
+  describe("#stripFalsyValues", function() {
+    var obj;
+
+    afterEach(function() {
+      obj = null;
+    });
+
+    it("should strip falsy object property values", function() {
+      obj = {
+        prop1: null,
+        prop2: false,
+        prop3: undefined,
+        prop4: void 0,
+        prop5: "",
+        prop6: 0
+      };
+
+      sharedUtils.stripFalsyValues(obj);
+      expect(obj).to.eql({});
+    });
+
+    it("should keep non-falsy values", function() {
+      obj = {
+        prop1: "null",
+        prop2: null,
+        prop3: true
+      };
+
+      sharedUtils.stripFalsyValues(obj);
+      expect(obj).to.eql({ prop1: "null", prop3: true });
     });
   });
 });

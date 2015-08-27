@@ -11,6 +11,7 @@ loop.store.ActiveRoomStore = (function() {
   "use strict";
 
   var sharedActions = loop.shared.actions;
+  var crypto = loop.crypto;
   var FAILURE_DETAILS = loop.shared.utils.FAILURE_DETAILS;
   var SCREEN_SHARE_STATES = loop.shared.utils.SCREEN_SHARE_STATES;
 
@@ -19,6 +20,15 @@ loop.store.ActiveRoomStore = (function() {
   var REST_ERRNOS = loop.shared.utils.REST_ERRNOS;
 
   var ROOM_STATES = loop.store.ROOM_STATES;
+
+  var ROOM_INFO_FAILURES = loop.shared.utils.ROOM_INFO_FAILURES;
+
+  var OPTIONAL_ROOMINFO_FIELDS = {
+    urls: "roomContextUrls",
+    description: "roomDescription",
+    roomInfoFailure: "roomInfoFailure",
+    roomName: "roomName"
+  };
 
   /**
    * Active room store.
@@ -77,8 +87,16 @@ loop.store.ActiveRoomStore = (function() {
         remoteVideoDimensions: {},
         screenSharingState: SCREEN_SHARE_STATES.INACTIVE,
         receivingScreenShare: false,
-        // Social API state.
-        socialShareButtonAvailable: false,
+        // Any urls (aka context) associated with the room.
+        roomContextUrls: null,
+        // The roomCryptoKey to decode the context data if necessary.
+        roomCryptoKey: null,
+        // The description for a room as stored in the context data.
+        roomDescription: null,
+        // Room information failed to be obtained for a reason. See ROOM_INFO_FAILURES.
+        roomInfoFailure: null,
+        // The name of the room.
+        roomName: null,
         socialShareProviders: null
       };
     },
@@ -136,7 +154,8 @@ loop.store.ActiveRoomStore = (function() {
         "videoDimensionsChanged",
         "startScreenShare",
         "endScreenShare",
-        "updateSocialShareInfo"
+        "updateSocialShareInfo",
+        "connectionStatus"
       ]);
     },
 
@@ -174,10 +193,11 @@ loop.store.ActiveRoomStore = (function() {
 
           this.dispatchAction(new sharedActions.SetupRoomInfo({
             roomToken: actionData.roomToken,
-            roomName: roomData.roomName,
+            roomContextUrls: roomData.decryptedContext.urls,
+            roomDescription: roomData.decryptedContext.description,
+            roomName: roomData.decryptedContext.roomName,
             roomOwner: roomData.roomOwner,
             roomUrl: roomData.roomUrl,
-            socialShareButtonAvailable: this._mozLoop.isSocialShareButtonAvailable(),
             socialShareProviders: this._mozLoop.getSocialShareProviders()
           }));
 
@@ -205,6 +225,7 @@ loop.store.ActiveRoomStore = (function() {
 
       this.setStoreState({
         roomToken: actionData.token,
+        roomCryptoKey: actionData.cryptoKey,
         roomState: ROOM_STATES.READY
       });
 
@@ -213,17 +234,66 @@ loop.store.ActiveRoomStore = (function() {
       this._mozLoop.rooms.on("delete:" + actionData.roomToken,
         this._handleRoomDelete.bind(this));
 
-      this._mozLoop.rooms.get(this._storeState.roomToken,
-        function(err, result) {
-          if (err) {
-            // XXX Bug 1110937 will want to handle the error results here
-            // e.g. room expired/invalid.
-            console.error("Failed to get room data:", err);
-            return;
-          }
+      this._getRoomDataForStandalone();
+    },
 
-          this.dispatcher.dispatch(new sharedActions.UpdateRoomInfo(result));
-        }.bind(this));
+    _getRoomDataForStandalone: function() {
+      this._mozLoop.rooms.get(this._storeState.roomToken, function(err, result) {
+        if (err) {
+          // XXX Bug 1110937 will want to handle the error results here
+          // e.g. room expired/invalid.
+          console.error("Failed to get room data:", err);
+          return;
+        }
+
+        var roomInfoData = new sharedActions.UpdateRoomInfo({
+          roomOwner: result.roomOwner,
+          roomUrl: result.roomUrl
+        });
+
+        if (!result.context && !result.roomName) {
+          roomInfoData.roomInfoFailure = ROOM_INFO_FAILURES.NO_DATA;
+          this.dispatcher.dispatch(roomInfoData);
+          return;
+        }
+
+        // This handles 'legacy', non-encrypted room names.
+        if (result.roomName && !result.context) {
+          roomInfoData.roomName = result.roomName;
+          this.dispatcher.dispatch(roomInfoData);
+          return;
+        }
+
+        if (!crypto.isSupported()) {
+          roomInfoData.roomInfoFailure = ROOM_INFO_FAILURES.WEB_CRYPTO_UNSUPPORTED;
+          this.dispatcher.dispatch(roomInfoData);
+          return;
+        }
+
+        var roomCryptoKey = this.getStoreState("roomCryptoKey");
+
+        if (!roomCryptoKey) {
+          roomInfoData.roomInfoFailure = ROOM_INFO_FAILURES.NO_CRYPTO_KEY;
+          this.dispatcher.dispatch(roomInfoData);
+          return;
+        }
+
+        var dispatcher = this.dispatcher;
+
+        crypto.decryptBytes(roomCryptoKey, result.context.value)
+              .then(function(decryptedResult) {
+          var realResult = JSON.parse(decryptedResult);
+
+          roomInfoData.description = realResult.description;
+          roomInfoData.urls = realResult.urls;
+          roomInfoData.roomName = realResult.roomName;
+
+          dispatcher.dispatch(roomInfoData);
+        }, function(err) {
+          roomInfoData.roomInfoFailure = ROOM_INFO_FAILURES.DECRYPT_FAILED;
+          dispatcher.dispatch(roomInfoData);
+        });
+      }.bind(this));
     },
 
     /**
@@ -239,12 +309,13 @@ loop.store.ActiveRoomStore = (function() {
       }
 
       this.setStoreState({
+        roomContextUrls: actionData.roomContextUrls,
+        roomDescription: actionData.roomDescription,
         roomName: actionData.roomName,
         roomOwner: actionData.roomOwner,
         roomState: ROOM_STATES.READY,
         roomToken: actionData.roomToken,
         roomUrl: actionData.roomUrl,
-        socialShareButtonAvailable: actionData.socialShareButtonAvailable,
         socialShareProviders: actionData.socialShareProviders
       });
 
@@ -264,11 +335,18 @@ loop.store.ActiveRoomStore = (function() {
      * @param {sharedActions.UpdateRoomInfo} actionData
      */
     updateRoomInfo: function(actionData) {
-      this.setStoreState({
-        roomName: actionData.roomName,
+      var newState = {
         roomOwner: actionData.roomOwner,
         roomUrl: actionData.roomUrl
+      };
+      // Iterate over the optional fields that _may_ be present on the actionData
+      // object.
+      Object.keys(OPTIONAL_ROOMINFO_FIELDS).forEach(function(field) {
+        if (actionData[field]) {
+          newState[OPTIONAL_ROOMINFO_FIELDS[field]] = actionData[field];
+        }
       });
+      this.setStoreState(newState);
     },
 
     /**
@@ -279,7 +357,6 @@ loop.store.ActiveRoomStore = (function() {
      */
     updateSocialShareInfo: function(actionData) {
       this.setStoreState({
-        socialShareButtonAvailable: actionData.socialShareButtonAvailable,
         socialShareProviders: actionData.socialShareProviders
       });
     },
@@ -292,7 +369,9 @@ loop.store.ActiveRoomStore = (function() {
      */
     _handleRoomUpdate: function(eventName, roomData) {
       this.dispatchAction(new sharedActions.UpdateRoomInfo({
-        roomName: roomData.roomName,
+        urls: roomData.decryptedContext.urls,
+        description: roomData.decryptedContext.description,
+        roomName: roomData.decryptedContext.roomName,
         roomOwner: roomData.roomOwner,
         roomUrl: roomData.roomUrl
       }));
@@ -316,7 +395,6 @@ loop.store.ActiveRoomStore = (function() {
      */
     _handleSocialShareUpdate: function() {
       this.dispatchAction(new sharedActions.UpdateSocialShareInfo({
-        socialShareButtonAvailable: this._mozLoop.isSocialShareButtonAvailable(),
         socialShareProviders: this._mozLoop.getSocialShareProviders()
       }));
     },
@@ -483,7 +561,7 @@ loop.store.ActiveRoomStore = (function() {
           constraints: {
             browserWindow: windowId,
             scrollWithPage: true
-          },
+          }
         };
         this._sdkDriver.startScreenShare(options);
       } else if (screenSharingState === SCREEN_SHARE_STATES.ACTIVE) {
@@ -556,6 +634,17 @@ loop.store.ActiveRoomStore = (function() {
      */
     remotePeerDisconnected: function() {
       this.setStoreState({roomState: ROOM_STATES.SESSION_CONNECTED});
+    },
+
+    /**
+     * Handles an SDK status update, forwarding it to the server.
+     *
+     * @param {sharedActions.ConnectionStatus} actionData
+     */
+    connectionStatus: function(actionData) {
+      this._mozLoop.rooms.sendConnectionStatus(this.getStoreState("roomToken"),
+        this.getStoreState("sessionToken"),
+        actionData);
     },
 
     /**

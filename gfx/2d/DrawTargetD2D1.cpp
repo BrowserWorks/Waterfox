@@ -327,30 +327,39 @@ DrawTargetD2D1::CopySurface(SourceSurface *aSurface,
     return;
   }
 
-  if (mFormat == SurfaceFormat::A8) {
-    RefPtr<ID2D1Bitmap> bitmap;
-    image->QueryInterface((ID2D1Bitmap**)byRef(bitmap));
+  RefPtr<ID2D1Bitmap> bitmap;
+  image->QueryInterface((ID2D1Bitmap**)byRef(bitmap));
 
-    mDC->PushAxisAlignedClip(D2D1::RectF(aDestination.x, aDestination.y,
-                                         aDestination.x + aSourceRect.width,
-                                         aDestination.y + aSourceRect.height),
-                             D2D1_ANTIALIAS_MODE_ALIASED);
-    mDC->Clear();
-    mDC->PopAxisAlignedClip();
-
+  if (bitmap && mFormat == SurfaceFormat::A8) {
     RefPtr<ID2D1SolidColorBrush> brush;
     mDC->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White),
                                D2D1::BrushProperties(), byRef(brush));
     mDC->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
+    mDC->SetPrimitiveBlend(D2D1_PRIMITIVE_BLEND_COPY);
     mDC->FillOpacityMask(bitmap, brush, D2D1_OPACITY_MASK_CONTENT_GRAPHICS);
     mDC->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
+    mDC->SetPrimitiveBlend(D2D1_PRIMITIVE_BLEND_SOURCE_OVER);
+    return;
+  }
+
+  Rect srcRect(Float(aSourceRect.x), Float(aSourceRect.y),
+               Float(aSourceRect.width), Float(aSourceRect.height));
+
+  Rect dstRect(Float(aDestination.x), Float(aDestination.y),
+               Float(aSourceRect.width), Float(aSourceRect.height));
+
+  if (bitmap) {
+    mDC->SetPrimitiveBlend(D2D1_PRIMITIVE_BLEND_COPY);
+    mDC->DrawBitmap(bitmap, D2DRect(dstRect), 1.0f,
+                    D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
+                    D2DRect(srcRect));
+    mDC->SetPrimitiveBlend(D2D1_PRIMITIVE_BLEND_SOURCE_OVER);
     return;
   }
 
   mDC->DrawImage(image, D2D1::Point2F(Float(aDestination.x), Float(aDestination.y)),
-                 D2D1::RectF(Float(aSourceRect.x), Float(aSourceRect.y), 
-                             Float(aSourceRect.XMost()), Float(aSourceRect.YMost())),
-                 D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR, D2D1_COMPOSITE_MODE_BOUNDED_SOURCE_COPY);
+                 D2DRect(srcRect), D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
+                 D2D1_COMPOSITE_MODE_BOUNDED_SOURCE_COPY);
 }
 
 void
@@ -524,8 +533,67 @@ DrawTargetD2D1::FillGlyphs(ScaledFont *aFont,
   AutoDWriteGlyphRun autoRun;
   DWriteGlyphRunFromGlyphs(aBuffer, font, &autoRun);
 
+  bool needsRepushedLayers = false;
+  if (d2dAAMode == D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE && mFormat != SurfaceFormat::B8G8R8X8) {
+    D2D1_RECT_F rect;
+    bool isAligned;
+    needsRepushedLayers = mPushedClips.size() && !GetDeviceSpaceClipRect(rect, isAligned);
+
+    // If we have a complex clip in our stack and we have a transparent
+    // background, and subpixel AA is permitted, we need to repush our layer
+    // stack limited by the glyph run bounds initializing our layers for
+    // subpixel AA.
+    if (needsRepushedLayers) {
+      mDC->GetGlyphRunWorldBounds(D2D1::Point2F(), &autoRun,
+                                  DWRITE_MEASURING_MODE_NATURAL, &rect);
+      rect.left = std::floor(rect.left);
+      rect.right = std::ceil(rect.right);
+      rect.top = std::floor(rect.top);
+      rect.bottom = std::ceil(rect.bottom);
+
+      PopAllClips();
+
+      if (!mTransform.IsRectilinear()) {
+        // We must limit the pixels we touch to the -user space- bounds of
+        // the glyphs being drawn. In order not to get transparent pixels
+        // copied up in our pushed layer stack.
+        D2D1_RECT_F userRect;
+        mDC->SetTransform(D2D1::IdentityMatrix());
+        mDC->GetGlyphRunWorldBounds(D2D1::Point2F(), &autoRun,
+                                    DWRITE_MEASURING_MODE_NATURAL, &userRect);
+
+        RefPtr<ID2D1PathGeometry> path;
+        D2DFactory()->CreatePathGeometry(byRef(path));
+        RefPtr<ID2D1GeometrySink> sink;
+        path->Open(byRef(sink));
+        sink->BeginFigure(D2D1::Point2F(userRect.left, userRect.top), D2D1_FIGURE_BEGIN_FILLED);
+        sink->AddLine(D2D1::Point2F(userRect.right, userRect.top));
+        sink->AddLine(D2D1::Point2F(userRect.right, userRect.bottom));
+        sink->AddLine(D2D1::Point2F(userRect.left, userRect.bottom));
+        sink->EndFigure(D2D1_FIGURE_END_CLOSED);
+        sink->Close();
+
+        mDC->PushLayer(D2D1::LayerParameters1(D2D1::InfiniteRect(), path, D2D1_ANTIALIAS_MODE_ALIASED,
+                                              D2DMatrix(mTransform), 1.0f, nullptr,
+                                              D2D1_LAYER_OPTIONS1_INITIALIZE_FROM_BACKGROUND |
+                                              D2D1_LAYER_OPTIONS1_IGNORE_ALPHA), nullptr);
+      }
+
+      PushClipsToDC(mDC, true, rect);
+      mDC->SetTransform(D2DMatrix(mTransform));
+    }
+  }
+
   if (brush) {
     mDC->DrawGlyphRun(D2D1::Point2F(), &autoRun, brush);
+  }
+
+  if (needsRepushedLayers) {
+    PopClipsFromDC(mDC);
+
+    if (!mTransform.IsRectilinear()) {
+      mDC->PopLayer();
+    }
   }
 
   FinalizeDrawing(aOptions.mCompositionOp, aPattern);
@@ -739,7 +807,12 @@ DrawTargetD2D1::Init(ID3D11Texture2D* aTexture, SurfaceFormat aFormat)
 {
   HRESULT hr;
 
-  hr = Factory::GetD2D1Device()->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS, byRef(mDC));
+  ID2D1Device* device = Factory::GetD2D1Device();
+  if (!device) {
+    return false;
+  }
+
+  hr = device->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS, byRef(mDC));
 
   if (FAILED(hr)) {
     gfxCriticalError() <<"[D2D1.1] 1Failed to create a DeviceContext, code: " << hexa(hr);
@@ -806,7 +879,12 @@ DrawTargetD2D1::Init(const IntSize &aSize, SurfaceFormat aFormat)
 {
   HRESULT hr;
 
-  hr = Factory::GetD2D1Device()->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS, byRef(mDC));
+  ID2D1Device* device = Factory::GetD2D1Device();
+  if (!device) {
+    return false;
+  }
+
+  hr = device->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS, byRef(mDC));
 
   if (FAILED(hr)) {
     gfxCriticalError() <<"[D2D1.1] 2Failed to create a DeviceContext, code: " << hexa(hr);
@@ -1241,7 +1319,7 @@ DrawTargetD2D1::PushAllClips()
 }
 
 void
-DrawTargetD2D1::PushClipsToDC(ID2D1DeviceContext *aDC)
+DrawTargetD2D1::PushClipsToDC(ID2D1DeviceContext *aDC, bool aForceIgnoreAlpha, const D2D1_RECT_F& aMaxRect)
 {
   mDC->SetTransform(D2D1::IdentityMatrix());
   mTransformDirty = true;
@@ -1249,7 +1327,7 @@ DrawTargetD2D1::PushClipsToDC(ID2D1DeviceContext *aDC)
   for (std::vector<PushedClip>::iterator iter = mPushedClips.begin();
         iter != mPushedClips.end(); iter++) {
     if (iter->mPath) {
-      PushD2DLayer(aDC, iter->mPath->mGeometry, iter->mTransform);
+      PushD2DLayer(aDC, iter->mPath->mGeometry, iter->mTransform, aForceIgnoreAlpha, aMaxRect);
     } else {
       mDC->PushAxisAlignedClip(iter->mBounds, iter->mIsPixelAligned ? D2D1_ANTIALIAS_MODE_ALIASED : D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
     }
@@ -1366,29 +1444,46 @@ DrawTargetD2D1::CreateBrushForPattern(const Pattern &aPattern, Float aAlpha)
     D2D1_RECT_F samplingBounds;
     Matrix mat = pat->mMatrix;
 
-    bool useSamplingRect = false;
-    if (!pat->mSamplingRect.IsEmpty() &&
-        (pat->mSurface->GetType() == SurfaceType::D2D1_1_IMAGE)) {
-      samplingBounds = D2DRect(pat->mSamplingRect);
-      mat.PreTranslate(pat->mSamplingRect.x, pat->mSamplingRect.y);
-    } else if (!pat->mSamplingRect.IsEmpty()) {
-      // We will do a partial upload of the sampling restricted area from GetImageForSurface.
-      samplingBounds = D2D1::RectF(0, 0, pat->mSamplingRect.width, pat->mSamplingRect.height);
-    } else {
-      samplingBounds = D2D1::RectF(0, 0,
-                                   Float(pat->mSurface->GetSize().width),
-                                   Float(pat->mSurface->GetSize().height));
-    }
-
     MOZ_ASSERT(pat->mSurface->IsValid());
 
-    RefPtr<ID2D1ImageBrush> imageBrush;
     RefPtr<ID2D1Image> image = GetImageForSurface(pat->mSurface, mat, pat->mExtendMode, !pat->mSamplingRect.IsEmpty() ? &pat->mSamplingRect : nullptr);
 
     if (!image) {
       return CreateTransparentBlackBrush();
     }
 
+    bool useSamplingRect = false;
+    if (pat->mSamplingRect.IsEmpty()) {
+      RefPtr<ID2D1Bitmap> bitmap;
+      image->QueryInterface((ID2D1Bitmap**)byRef(bitmap));
+      if (bitmap) {
+        RefPtr<ID2D1BitmapBrush> bitmapBrush;
+        mDC->CreateBitmapBrush(bitmap,
+                               D2D1::BitmapBrushProperties(D2DExtend(pat->mExtendMode),
+                                                           D2DExtend(pat->mExtendMode),
+                                                           D2DFilter(pat->mFilter)),
+                               D2D1::BrushProperties(aAlpha, D2DMatrix(mat)),
+                               byRef(bitmapBrush));
+        if (!bitmapBrush) {
+          gfxWarning() << "Couldn't create bitmap brush!";
+          return CreateTransparentBlackBrush();
+        }
+        return bitmapBrush.forget();
+      }
+    }
+
+    RefPtr<ID2D1ImageBrush> imageBrush;
+    if (pat->mSamplingRect.IsEmpty()) {
+      samplingBounds = D2D1::RectF(0, 0,
+                                   Float(pat->mSurface->GetSize().width),
+                                   Float(pat->mSurface->GetSize().height));
+    } else if (pat->mSurface->GetType() == SurfaceType::D2D1_1_IMAGE) {
+      samplingBounds = D2DRect(pat->mSamplingRect);
+      mat.PreTranslate(pat->mSamplingRect.x, pat->mSamplingRect.y);
+    } else {
+      // We will do a partial upload of the sampling restricted area from GetImageForSurface.
+      samplingBounds = D2D1::RectF(0, 0, pat->mSamplingRect.width, pat->mSamplingRect.height);
+    }
     mDC->CreateImageBrush(image,
                           D2D1::ImageBrushProperties(samplingBounds,
                                                      D2DExtend(pat->mExtendMode),
@@ -1472,15 +1567,16 @@ DrawTargetD2D1::OptimizeSourceSurface(SourceSurface* aSurface) const
 }
 
 void
-DrawTargetD2D1::PushD2DLayer(ID2D1DeviceContext *aDC, ID2D1Geometry *aGeometry, const D2D1_MATRIX_3X2_F &aTransform)
+DrawTargetD2D1::PushD2DLayer(ID2D1DeviceContext *aDC, ID2D1Geometry *aGeometry, const D2D1_MATRIX_3X2_F &aTransform,
+                             bool aForceIgnoreAlpha, const D2D1_RECT_F& aMaxRect)
 {
   D2D1_LAYER_OPTIONS1 options = D2D1_LAYER_OPTIONS1_NONE;
 
-  if (aDC->GetPixelFormat().alphaMode == D2D1_ALPHA_MODE_IGNORE) {
+  if (aDC->GetPixelFormat().alphaMode == D2D1_ALPHA_MODE_IGNORE || aForceIgnoreAlpha) {
     options = D2D1_LAYER_OPTIONS1_IGNORE_ALPHA | D2D1_LAYER_OPTIONS1_INITIALIZE_FROM_BACKGROUND;
   }
 
-  mDC->PushLayer(D2D1::LayerParameters1(D2D1::InfiniteRect(), aGeometry,
+  mDC->PushLayer(D2D1::LayerParameters1(aMaxRect, aGeometry,
                                         D2D1_ANTIALIAS_MODE_PER_PRIMITIVE, aTransform,
                                         1.0, nullptr, options), nullptr);
 }

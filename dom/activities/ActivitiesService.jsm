@@ -355,6 +355,23 @@ let Activities = {
           calleeApp.appStatus !== Ci.nsIPrincipal.APP_STATUS_CERTIFIED) {
         return false;
       }
+
+      // If the activity is in the developer mode activity list, only let the
+      // system app be a provider.
+      let isSystemApp = false;
+      let isDevModeActivity = false;
+      try {
+        isSystemApp =
+          aResult.manifest == Services.prefs.getCharPref("b2g.system_manifest_url");
+        isDevModeActivity =
+          Services.prefs.getCharPref("dom.activities.developer_mode_only")
+                        .split(",").indexOf(aMsg.options.name) !== -1;
+      } catch(e)  {}
+
+      if (isDevModeActivity && !isSystemApp) {
+        return false;
+      }
+
       return ActivitiesServiceFilter.match(aMsg.options.data,
                                            aResult.description.filters);
     };
@@ -410,13 +427,16 @@ let Activities = {
         break;
 
       case "Activities:Register":
-        let self = this;
         this.db.add(msg,
           function onSuccess(aEvent) {
+            debug("Activities:Register:OK");
+            Services.obs.notifyObservers(null, "new-activity-registered-success", null);
             mm.sendAsyncMessage("Activities:Register:OK", null);
           },
           function onError(aEvent) {
             msg.error = "REGISTER_ERROR";
+            debug("Activities:Register:KO");
+            Services.obs.notifyObservers(null, "new-activity-registered-failure", null);
             mm.sendAsyncMessage("Activities:Register:KO", msg);
           });
         break;

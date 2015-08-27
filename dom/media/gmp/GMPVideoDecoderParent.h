@@ -18,7 +18,7 @@
 namespace mozilla {
 namespace gmp {
 
-class GMPParent;
+class GMPContentParent;
 
 class GMPVideoDecoderParent final : public PGMPVideoDecoderParent
                                   , public GMPVideoDecoderProxy
@@ -27,7 +27,7 @@ class GMPVideoDecoderParent final : public PGMPVideoDecoderParent
 public:
   NS_INLINE_DECL_REFCOUNTING(GMPVideoDecoderParent)
 
-  explicit GMPVideoDecoderParent(GMPParent *aPlugin);
+  explicit GMPVideoDecoderParent(GMPContentParent *aPlugin);
 
   GMPVideoHostImpl& Host();
   nsresult Shutdown();
@@ -38,13 +38,13 @@ public:
                               const nsTArray<uint8_t>& aCodecSpecific,
                               GMPVideoDecoderCallbackProxy* aCallback,
                               int32_t aCoreCount) override;
-  virtual nsresult Decode(GMPUnique<GMPVideoEncodedFrame>::Ptr aInputFrame,
+  virtual nsresult Decode(GMPUniquePtr<GMPVideoEncodedFrame> aInputFrame,
                           bool aMissingFrames,
                           const nsTArray<uint8_t>& aCodecSpecificInfo,
                           int64_t aRenderTimeMs = -1) override;
   virtual nsresult Reset() override;
   virtual nsresult Drain() override;
-  virtual const uint64_t ParentID() override { return reinterpret_cast<uint64_t>(mPlugin.get()); }
+  virtual const uint32_t GetPluginId() const override { return mPluginId; }
   virtual const nsCString& GetDisplayName() const override;
 
   // GMPSharedMemManager
@@ -73,6 +73,7 @@ private:
   virtual bool RecvDrainComplete() override;
   virtual bool RecvResetComplete() override;
   virtual bool RecvError(const GMPErr& aError) override;
+  virtual bool RecvShutdown() override;
   virtual bool RecvParentShmemForPool(Shmem&& aEncodedBuffer) override;
   virtual bool AnswerNeedShmem(const uint32_t& aFrameBufferSize,
                                Shmem* aMem) override;
@@ -80,9 +81,11 @@ private:
 
   bool mIsOpen;
   bool mShuttingDown;
-  nsRefPtr<GMPParent> mPlugin;
+  bool mActorDestroyed;
+  nsRefPtr<GMPContentParent> mPlugin;
   GMPVideoDecoderCallbackProxy* mCallback;
   GMPVideoHostImpl mVideoHost;
+  const uint32_t mPluginId;
 };
 
 } // namespace gmp

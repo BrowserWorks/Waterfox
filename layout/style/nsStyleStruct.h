@@ -30,6 +30,7 @@
 #include "CounterStyleManager.h"
 
 class nsIFrame;
+class nsTextFrame;
 class nsIURI;
 class imgIContainer;
 
@@ -60,8 +61,10 @@ class imgIContainer;
 #define NS_STYLE_SUPPRESS_LINEBREAK        0x080000000
 // See nsStyleContext::IsInDisplayNoneSubtree
 #define NS_STYLE_IN_DISPLAY_NONE_SUBTREE   0x100000000
+// See nsStyleContext::FindChildWithRules
+#define NS_STYLE_INELIGIBLE_FOR_SHARING    0x200000000
 // See nsStyleContext::GetPseudoEnum
-#define NS_STYLE_CONTEXT_TYPE_SHIFT        33
+#define NS_STYLE_CONTEXT_TYPE_SHIFT        34
 
 // Additional bits for nsRuleNode's mDependentBits:
 #define NS_RULE_NODE_GC_MARK                0x02000000
@@ -1264,9 +1267,14 @@ struct nsStyleGridTemplate {
 
 struct nsStyleGridLine {
   // http://dev.w3.org/csswg/css-grid/#typedef-grid-line
+  // XXXmats we could optimize memory size here
   bool mHasSpan;
   int32_t mInteger;  // 0 means not provided
   nsString mLineName;  // Empty string means not provided.
+
+  // mInteger is clamped to this range:
+  static const int32_t kMinLine;
+  static const int32_t kMaxLine;
 
   nsStyleGridLine()
     : mHasSpan(false)
@@ -1659,7 +1667,7 @@ struct nsStyleText {
   // style struct is for.  If the frame is for SVG text or inside ruby,
   // the return value will be massaged to be something that makes sense
   // for those cases.
-  inline bool NewlineIsSignificant(const nsIFrame* aContextFrame) const;
+  inline bool NewlineIsSignificant(const nsTextFrame* aContextFrame) const;
   inline bool WhiteSpaceCanWrap(const nsIFrame* aContextFrame) const;
   inline bool WordCanWrap(const nsIFrame* aContextFrame) const;
 };

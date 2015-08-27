@@ -61,7 +61,6 @@ class GeckoInstance(object):
             profile_args["preferences"].update({
                 "devtools.browsertoolbox.panel": "jsdebugger",
                 "devtools.debugger.remote-enabled": True,
-                "devtools.debugger.chrome-enabled": True,
                 "devtools.chrome.enabled": True,
                 "devtools.debugger.prompt-connection": False,
                 "marionette.debugging.clicktostart": True,
@@ -69,7 +68,6 @@ class GeckoInstance(object):
 
         if hasattr(self, "profile_path") and self.profile is None:
             if not self.profile_path:
-                profile_args["restore"] = False
                 self.profile = Profile(**profile_args)
             else:
                 profile_args["path_from"] = self.profile_path
@@ -138,11 +136,12 @@ class GeckoInstance(object):
             self.runner.cleanup()
 
     def restart(self, prefs=None, clean=True):
+        self.close(restart=True)
+
         if clean:
             self.profile.cleanup()
             self.profile = None
 
-        self.close(restart=True)
         if prefs:
             self.prefs = prefs
         else:

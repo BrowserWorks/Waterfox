@@ -25,11 +25,14 @@ add_task(function*() {
     "The second button is the rewind button");
   ok(container.children[2].classList.contains("ff"),
     "The third button is the fast-forward button");
+  ok(container.querySelector("select"),
+    "The container contains the playback rate select");
 
   info("Faking an older server version by setting " +
     "AnimationsController.hasSetCurrentTime to false");
 
-  yield selectNode("body", inspector);
+  // Selecting <div.still> to make sure no widgets are displayed in the panel.
+  yield selectNode(".still", inspector);
   controller.hasSetCurrentTime = false;
 
   info("Selecting the animated node again");
@@ -44,6 +47,24 @@ add_task(function*() {
   ok(container.children[0].classList.contains("toggle"),
     "The first button is the play/pause button");
 
-  yield selectNode("body", inspector);
+  yield selectNode(".still", inspector);
   controller.hasSetCurrentTime = true;
+
+  info("Faking an older server version by setting " +
+    "AnimationsController.hasSetPlaybackRate to false");
+
+  controller.hasSetPlaybackRate = false;
+
+  info("Selecting the animated node again");
+  yield selectNode(".animated", inspector);
+
+  widget = panel.playerWidgets[0];
+  container = widget.el.querySelector(".playback-controls");
+
+  ok(container, "The control buttons container still exists");
+  ok(!container.querySelector("select"),
+    "The playback rate select does not exist");
+
+  yield selectNode(".still", inspector);
+  controller.hasSetPlaybackRate = true;
 });

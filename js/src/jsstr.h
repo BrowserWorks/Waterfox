@@ -19,14 +19,11 @@
 #include "vm/Unicode.h"
 
 class JSAutoByteString;
-class JSFlatString;
 class JSLinearString;
 
 namespace js {
 
 class StringBuffer;
-
-class MutatingRopeSegmentRange;
 
 template <AllowGC allowGC>
 extern JSString*
@@ -410,9 +407,6 @@ str_split(JSContext* cx, unsigned argc, Value* vp);
 
 JSObject*
 str_split_string(JSContext* cx, HandleObjectGroup group, HandleString str, HandleString sep);
-
-bool
-str_resolve(JSContext* cx, HandleObject obj, HandleId id, bool* resolvedp);
 
 bool
 str_replace_regexp_raw(JSContext* cx, HandleString string, HandleObject regexp,

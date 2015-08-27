@@ -10,33 +10,34 @@
 
 let test = Task.async(function*() {
   // Ensure the profiler is already running when the test starts.
+  loadFrameScripts();
   let ENTRIES = 1000000;
   let INTERVAL = 1;
   let FEATURES = ["js"];
-  nsIProfilerModule.StartProfiler(ENTRIES, INTERVAL, FEATURES, FEATURES.length);
+  yield sendProfilerCommand("StartProfiler", [ENTRIES, INTERVAL, FEATURES, FEATURES.length]);
 
   let { panel: firstPanel } = yield initPerformance(SIMPLE_URL);
   let firstFront = firstPanel.panelWin.gFront;
 
   let firstAlreadyActive = firstFront.once("profiler-already-active");
-  let { profilerStartTime: firstStartTime } = yield firstFront.startRecording();
+  let recording = yield firstFront.startRecording();
   yield firstAlreadyActive;
-  ok(firstStartTime > 0, "The profiler was not restarted.");
+  ok(recording._profilerStartTime > 0, "The profiler was not restarted.");
 
   let { panel: secondPanel } = yield initPerformance(SIMPLE_URL);
   let secondFront = secondPanel.panelWin.gFront;
 
   let secondAlreadyActive = secondFront.once("profiler-already-active");
-  let { profilerStartTime: secondStartTime } = yield secondFront.startRecording();
+  let secondRecording = yield secondFront.startRecording();
   yield secondAlreadyActive;
-  ok(secondStartTime > 0, "The profiler was not restarted.");
+  ok(secondRecording._profilerStartTime > 0, "The profiler was not restarted.");
 
   yield teardown(firstPanel);
-  ok(nsIProfilerModule.IsActive(),
+  ok((yield PMM_isProfilerActive()),
     "The built-in profiler module should still be active.");
 
   yield teardown(secondPanel);
-  ok(!nsIProfilerModule.IsActive(),
+  ok(!(yield PMM_isProfilerActive()),
     "The built-in profiler module should have been automatically stoped.");
 
   finish();

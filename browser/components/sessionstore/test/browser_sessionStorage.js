@@ -30,7 +30,7 @@ add_task(function session_storage() {
     "sessionStorage data for mochi.test has been serialized correctly");
 
   // Ensure that modifying sessionStore values works for the inner frame only.
-  yield modifySessionStorage2(browser, {test: "modified1"});
+  yield modifySessionStorage(browser, {test: "modified1"}, {frameIndex: 0});
   TabState.flush(browser);
 
   ({storage} = JSON.parse(ss.getTabState(tab)));
@@ -41,7 +41,7 @@ add_task(function session_storage() {
 
   // Ensure that modifying sessionStore values works for both frames.
   yield modifySessionStorage(browser, {test: "modified"});
-  yield modifySessionStorage2(browser, {test: "modified2"});
+  yield modifySessionStorage(browser, {test: "modified2"}, {frameIndex: 0});
   TabState.flush(browser);
 
   ({storage} = JSON.parse(ss.getTabState(tab)));
@@ -129,7 +129,7 @@ add_task(function purge_domain() {
 add_task(function respect_privacy_level() {
   let tab = gBrowser.addTab(URL + "&secure");
   yield promiseBrowserLoaded(tab.linkedBrowser);
-  gBrowser.removeTab(tab);
+  yield promiseRemoveTab(tab);
 
   let [{state: {storage}}] = JSON.parse(ss.getClosedTabData(window));
   is(storage["http://mochi.test:8888"].test, OUTER_VALUE,
@@ -142,7 +142,7 @@ add_task(function respect_privacy_level() {
 
   tab = gBrowser.addTab(URL + "&secure");
   yield promiseBrowserLoaded(tab.linkedBrowser);
-  gBrowser.removeTab(tab);
+  yield promiseRemoveTab(tab);
 
   [{state: {storage}}] = JSON.parse(ss.getClosedTabData(window));
   is(storage["http://mochi.test:8888"].test, OUTER_VALUE,
@@ -158,15 +158,22 @@ add_task(function respect_privacy_level() {
   yield promiseBrowserLoaded(tab.linkedBrowser);
   let tab2 = gBrowser.duplicateTab(tab);
   yield promiseTabRestored(tab2);
-  gBrowser.removeTab(tab);
+  yield promiseRemoveTab(tab);
 
   // With privacy_level=2 the |tab| shouldn't have any sessionStorage data.
   [{state: {storage}}] = JSON.parse(ss.getClosedTabData(window));
   ok(!storage, "sessionStorage data has *not* been saved");
 
+  // Remove all closed tabs before continuing with the next test.
+  // As Date.now() isn't monotonic we might sometimes check
+  // the wrong closedTabData entry.
+  while (ss.getClosedTabCount(window) > 0) {
+    ss.forgetClosedTab(window, 0);
+  }
+
   // Restore the default privacy level and close the duplicated tab.
   Services.prefs.clearUserPref("browser.sessionstore.privacy_level");
-  gBrowser.removeTab(tab2);
+  yield promiseRemoveTab(tab2);
 
   // With privacy_level=0 the duplicated |tab2| should persist all data.
   [{state: {storage}}] = JSON.parse(ss.getClosedTabData(window));
@@ -175,20 +182,6 @@ add_task(function respect_privacy_level() {
   is(storage["https://example.com"].test, INNER_VALUE,
     "https sessionStorage data has been saved");
 });
-
-function waitForStorageEvent(browser) {
-  return promiseContentMessage(browser, "ss-test:MozStorageChanged");
-}
-
-function modifySessionStorage(browser, data) {
-  browser.messageManager.sendAsyncMessage("ss-test:modifySessionStorage", data);
-  return waitForStorageEvent(browser);
-}
-
-function modifySessionStorage2(browser, data) {
-  browser.messageManager.sendAsyncMessage("ss-test:modifySessionStorage2", data);
-  return waitForStorageEvent(browser);
-}
 
 function purgeDomainData(browser, domain) {
   return sendMessage(browser, "ss-test:purgeDomainData", domain);

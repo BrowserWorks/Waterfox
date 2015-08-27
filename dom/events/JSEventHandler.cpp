@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -166,7 +167,7 @@ JSEventHandler::HandleEvent(nsIDOMEvent* aEvent)
     bool handled = handler->Call(mTarget, msgOrEvent, fileName, lineNumber,
                                  columnNumber, error, rv);
     if (rv.Failed()) {
-      return rv.ErrorCode();
+      return rv.StealNSResult();
     }
 
     if (handled) {
@@ -184,7 +185,7 @@ JSEventHandler::HandleEvent(nsIDOMEvent* aEvent)
     nsString retval;
     handler->Call(mTarget, *(aEvent->InternalDOMEvent()), retval, rv);
     if (rv.Failed()) {
-      return rv.ErrorCode();
+      return rv.StealNSResult();
     }
 
     nsCOMPtr<nsIDOMBeforeUnloadEvent> beforeUnload = do_QueryInterface(aEvent);
@@ -213,7 +214,7 @@ JSEventHandler::HandleEvent(nsIDOMEvent* aEvent)
   JS::Rooted<JS::Value> retval(CycleCollectedJSRuntime::Get()->Runtime());
   handler->Call(mTarget, *(aEvent->InternalDOMEvent()), &retval, rv);
   if (rv.Failed()) {
-    return rv.ErrorCode();
+    return rv.StealNSResult();
   }
 
   // If the handler returned false and its sense is not reversed,

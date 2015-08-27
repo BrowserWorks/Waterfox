@@ -228,6 +228,16 @@ label.requests-menu-status-code {
   background-color: rgba(143, 161, 178, 1); /* grey */
 }
 
+.theme-dark box.requests-menu-status[code="cached"] {
+  border: 2px solid rgba(95, 115, 135, 1); /* dark grey */
+  background-color: transparent;  
+}
+
+.theme-light box.requests-menu-status[code="cached"] {
+  border: 2px solid rgba(143, 161, 178, 1); /* grey */
+  background-color: transparent;
+}
+
 .theme-dark box.requests-menu-status[code^="1"] {
   background-color: rgba(70, 175, 227, 1); /* light blue */
 }
@@ -460,7 +470,7 @@ label.requests-menu-status-code {
   -moz-image-region: rect(0px,32px,16px,16px);
 }
 
-@media (min-resolution: 2dppx) {
+@media (min-resolution: 1.25dppx) {
   #details-pane-toggle {
     list-style-image: url("chrome://browser/skin/devtools/debugger-collapse@2x.png");
     -moz-image-region: rect(0px,32px,32px,0px);
@@ -593,7 +603,7 @@ label.requests-menu-status-code {
   height: 12px;
 }
 
-@media (min-resolution: 2dppx) {
+@media (min-resolution: 1.25dppx) {
   .security-warning-icon {
     background-image: url(alerticon-warning@2x.png);
   }
@@ -695,6 +705,28 @@ label.requests-menu-status-code {
 .requests-menu-footer-label {
   padding-top: 3px;
   font-weight: 600;
+}
+
+#requests-menu-filter-freetext-text {
+  transition-property: max-width, -moz-padding-end, -moz-padding-start;
+  transition-duration: 250ms;
+  transition-timing-function: ease;
+}
+
+#requests-menu-filter-freetext-text:not([focused]):not([filled]) > .textbox-input-box {
+  overflow: hidden;
+}
+
+#requests-menu-filter-freetext-text:not([focused]):not([filled]) {
+  max-width: 20px !important;
+  -moz-padding-end: 5px;
+  -moz-padding-start: 22px;
+  background-position: 8px center, top left, top left;
+}
+
+#requests-menu-filter-freetext-text[focused],
+#requests-menu-filter-freetext-text[filled] {
+  max-width: 200px !important;
 }
 
 /* Performance analysis buttons */

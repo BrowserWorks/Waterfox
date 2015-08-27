@@ -10,20 +10,20 @@
 #include "vp9/decoder/vp9_read_bit_buffer.h"
 
 size_t vp9_rb_bytes_read(struct vp9_read_bit_buffer *rb) {
-  return (rb->bit_offset + CHAR_BIT - 1) / CHAR_BIT;
+  return (rb->bit_offset + 7) >> 3;
 }
 
 int vp9_rb_read_bit(struct vp9_read_bit_buffer *rb) {
   const size_t off = rb->bit_offset;
-  const size_t p = off / CHAR_BIT;
-  const int q = CHAR_BIT - 1 - (int)off % CHAR_BIT;
-  if (rb->bit_buffer + p >= rb->bit_buffer_end) {
-    rb->error_handler(rb->error_handler_data);
-    return 0;
-  } else {
-    const int bit = (rb->bit_buffer[p] & (1 << q)) >> q;
+  const size_t p = off >> 3;
+  const int q = 7 - (int)(off & 0x7);
+  if (rb->bit_buffer + p < rb->bit_buffer_end) {
+    const int bit = (rb->bit_buffer[p] >> q) & 1;
     rb->bit_offset = off + 1;
     return bit;
+  } else {
+    rb->error_handler(rb->error_handler_data);
+    return 0;
   }
 }
 

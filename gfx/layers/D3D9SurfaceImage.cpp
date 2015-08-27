@@ -107,7 +107,7 @@ D3D9SurfaceImage::SetData(const Data& aData)
   // DXVA surfaces aren't created sharable, so we need to copy the surface
   // to a sharable texture to that it's accessible to the layer manager's
   // device.
-  const nsIntRect& region = aData.mRegion;
+  const gfx::IntRect& region = aData.mRegion;
   RefPtr<IDirect3DTexture9> texture;
   HANDLE shareHandle = nullptr;
   hr = device->CreateTexture(region.width,
@@ -202,12 +202,12 @@ D3D9SurfaceImage::GetTextureClient(CompositableClient* aClient)
 {
   EnsureSynchronized();
   if (!mTextureClient) {
-    RefPtr<SharedTextureClientD3D9> textureClient =
-      new SharedTextureClientD3D9(aClient->GetForwarder(),
-                                  gfx::SurfaceFormat::B8G8R8X8,
-                                  TextureFlags::DEFAULT);
-    textureClient->InitWith(mTexture, mShareHandle, mDesc);
-    mTextureClient = textureClient;
+    mTextureClient = SharedTextureClientD3D9::Create(aClient->GetForwarder(),
+                                                     gfx::SurfaceFormat::B8G8R8X8,
+                                                     TextureFlags::DEFAULT,
+                                                     mTexture,
+                                                     mShareHandle,
+                                                     mDesc);
   }
   return mTextureClient;
 }

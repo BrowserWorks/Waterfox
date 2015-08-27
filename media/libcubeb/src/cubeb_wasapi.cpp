@@ -8,6 +8,7 @@
 #if defined(HAVE_CONFIG_H)
 #include "config.h"
 #endif
+#include <algorithm>
 #include <windows.h>
 #include <mmdeviceapi.h>
 #include <windef.h>
@@ -28,6 +29,7 @@
 #endif
 
 // #define LOGGING_ENABLED
+
 #ifdef LOGGING_ENABLED
 #define LOG(...) do {                           \
     fprintf(stderr, __VA_ARGS__);               \
@@ -238,7 +240,6 @@ struct cubeb_stream
   /* We synthesize our clock from the callbacks. */
   LONG64 clock;
   owned_critical_section * stream_reset_lock;
-  owned_critical_section * clock_lock;
   /* Maximum number of frames we can be requested in a callback. */
   uint32_t buffer_frame_count;
   /* Resampler instance. Resampling will only happen if necessary. */
@@ -344,22 +345,12 @@ private:
 namespace {
 void clock_add(cubeb_stream * stm, LONG64 value)
 {
-	//#ifndef InterlockedExchangeAdd64
-		auto_lock lock(stm->clock_lock);
-	stm->clock += value;
-	//#else
-		//InterlockedExchangeAdd64(&stm->clock, value);
-	//#endif
+  InterlockedExchangeAdd64(&stm->clock, value);
 }
 
 LONG64 clock_get(cubeb_stream * stm)
 {
-	//#ifndef InterlockedExchangeAdd64
-		auto_lock lock(stm->clock_lock);
-		return stm->clock;
-	//#else
-	//	return InterlockedExchangeAdd64(&stm->clock, 0);
-	//#endif
+  return InterlockedExchangeAdd64(&stm->clock, 0);
 }
 
 bool should_upmix(cubeb_stream * stream)
@@ -378,14 +369,12 @@ float stream_to_mix_samplerate_ratio(cubeb_stream * stream)
   return float(stream->stream_params.rate) / stream->mix_params.rate;
 }
 
-/* Upmix function, copies a mono channel in two interleaved
- * stereo channel. |out| has to be twice as long as |in| */
+/* Upmix function, copies a mono channel into L and R */
 template<typename T>
 void
-mono_to_stereo(T * in, long insamples, T * out)
+mono_to_stereo(T * in, long insamples, T * out, int32_t out_channels)
 {
-  int j = 0;
-  for (int i = 0; i < insamples; ++i, j += 2) {
+  for (int i = 0, j = 0; i < insamples; ++i, j += out_channels) {
     out[j] = out[j + 1] = in[i];
   }
 }
@@ -394,22 +383,32 @@ template<typename T>
 void
 upmix(T * in, long inframes, T * out, int32_t in_channels, int32_t out_channels)
 {
-  XASSERT(out_channels >= in_channels);
+  XASSERT(out_channels >= in_channels && in_channels > 0);
+
+  /* Either way, if we have 2 or more channels, the first two are L and R. */
   /* If we are playing a mono stream over stereo speakers, copy the data over. */
-  if (in_channels == 1 && out_channels == 2) {
-    mono_to_stereo(in, inframes, out);
+  if (in_channels == 1 && out_channels >= 2) {
+    mono_to_stereo(in, inframes, out, out_channels);
+  } else {
+    /* Copy through. */
+    for (int i = 0, o = 0; i < inframes * in_channels;
+        i += in_channels, o += out_channels) {
+      for (int j = 0; j < in_channels; ++j) {
+        out[o + j] = in[i + j];
+      }
+    }
+  }
+
+  /* Check if more channels. */
+  if (out_channels <= 2) {
     return;
   }
-  /* Otherwise, put silence in other channels. */
-  long out_index = 0;
-  for (long i = 0; i < inframes * in_channels; i += in_channels) {
-    for (int j = 0; j < in_channels; ++j) {
-      out[out_index + j] = in[i + j];
+
+  /* Put silence in remaining channels. */
+  for (long i = 0, o = 0; i < inframes; ++i, o += out_channels) {
+    for (int j = 2; j < out_channels; ++j) {
+      out[o + j] = 0.0;
     }
-    for (int j = in_channels; j < out_channels; ++j) {
-      out[out_index + j] = 0.0;
-    }
-    out_index += out_channels;
   }
 }
 
@@ -1124,10 +1123,6 @@ wasapi_stream_init(cubeb * context, cubeb_stream ** stream,
   stm->notification_client = NULL;
 
   stm->stream_reset_lock = new owned_critical_section();
-  
-  //#ifndef InterlockedExchangeAdd64
-  stm->clock_lock = new owned_critical_section();
-  //#endif
 
   stm->reconfigure_event = CreateEvent(NULL, 0, 0, NULL);
   if (!stm->reconfigure_event) {
@@ -1208,7 +1203,6 @@ void wasapi_stream_destroy(cubeb_stream * stm)
   }
 
   delete stm->stream_reset_lock;
-  delete stm->clock_lock;
 
   free(stm);
 }

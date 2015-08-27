@@ -5,20 +5,22 @@
  * Tests that the js call tree view renders the correct columns.
  */
 function spawnTest () {
+  // This test seems to take a long time to cleanup on Ubuntu VMs.
+  requestLongerTimeout(2);
+
   let { panel } = yield initPerformance(SIMPLE_URL);
   let { EVENTS, $, $$, DetailsView, JsCallTreeView } = panel.panelWin;
 
   // Enable platform data to show the `busyWait` function in the tree.
   Services.prefs.setBoolPref(PLATFORM_DATA_PREF, true);
 
-  yield DetailsView.selectView("js-calltree");
-  ok(DetailsView.isViewSelected(JsCallTreeView), "The call tree is now selected.");
-
   yield startRecording(panel);
   yield busyWait(1000);
 
   let rendered = once(JsCallTreeView, EVENTS.JS_CALL_TREE_RENDERED);
   yield stopRecording(panel);
+  yield DetailsView.selectView("js-calltree");
+  ok(DetailsView.isViewSelected(JsCallTreeView), "The call tree is now selected.");
   yield rendered;
 
   testCells($, $$, {

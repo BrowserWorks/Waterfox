@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -32,7 +32,7 @@ AsyncHelper::AsyncWork(nsIRequestObserver* aObserver, nsISupports* aCtxt)
   FileService* service = FileService::GetOrCreate();
   NS_ENSURE_TRUE(service, NS_ERROR_FAILURE);
 
-  nsIEventTarget* target = service->StreamTransportTarget();
+  nsIEventTarget* target = service->ThreadPoolTarget();
 
   rv = target->Dispatch(this, NS_DISPATCH_NORMAL);
   NS_ENSURE_SUCCESS(rv, rv);

@@ -14,8 +14,11 @@
 #include "WMFMediaDataDecoder.h"
 #include "nsIWindowsRegKey.h"
 #include "nsComponentManagerUtils.h"
+#include "nsServiceManagerUtils.h"
 #include "nsIGfxInfo.h"
 #include "GfxDriverInfo.h"
+#include "gfxWindowsPlatform.h"
+#include "MediaInfo.h"
 
 namespace mozilla {
 
@@ -44,7 +47,7 @@ WMFDecoderModule::Init()
   if (NS_FAILED(WMFDecoder::LoadDLLs())) {
     sIsWMFEnabled = false;
   }
-  sDXVAEnabled = Preferences::GetBool("media.windows-media-foundation.use-dxva", false);
+  sDXVAEnabled = gfxPlatform::GetPlatform()->CanUseHardwareVideoDecoding();
 }
 
 nsresult
@@ -61,7 +64,7 @@ WMFDecoderModule::Startup()
 }
 
 already_AddRefed<MediaDataDecoder>
-WMFDecoderModule::CreateVideoDecoder(const mp4_demuxer::VideoDecoderConfig& aConfig,
+WMFDecoderModule::CreateVideoDecoder(const VideoInfo& aConfig,
                                      layers::LayersBackend aLayersBackend,
                                      layers::ImageContainer* aImageContainer,
                                      FlushableMediaTaskQueue* aVideoTaskQueue,
@@ -78,7 +81,7 @@ WMFDecoderModule::CreateVideoDecoder(const mp4_demuxer::VideoDecoderConfig& aCon
 }
 
 already_AddRefed<MediaDataDecoder>
-WMFDecoderModule::CreateAudioDecoder(const mp4_demuxer::AudioDecoderConfig& aConfig,
+WMFDecoderModule::CreateAudioDecoder(const AudioInfo& aConfig,
                                      FlushableMediaTaskQueue* aAudioTaskQueue,
                                      MediaDataDecoderCallback* aCallback)
 {
@@ -90,7 +93,7 @@ WMFDecoderModule::CreateAudioDecoder(const mp4_demuxer::AudioDecoderConfig& aCon
 }
 
 bool
-WMFDecoderModule::ShouldUseDXVA(const mp4_demuxer::VideoDecoderConfig& aConfig) const
+WMFDecoderModule::ShouldUseDXVA(const VideoInfo& aConfig) const
 {
   static bool isAMD = false;
   static bool initialized = false;
@@ -106,11 +109,11 @@ WMFDecoderModule::ShouldUseDXVA(const mp4_demuxer::VideoDecoderConfig& aConfig) 
     return true;
   }
   // Don't use DXVA for 4k videos or above, since it seems to perform poorly.
-  return aConfig.display_height <= 1920 && aConfig.display_height <= 1200;
+  return aConfig.mDisplay.width <= 1920 && aConfig.mDisplay.height <= 1200;
 }
 
 bool
-WMFDecoderModule::SupportsSharedDecoders(const mp4_demuxer::VideoDecoderConfig& aConfig) const
+WMFDecoderModule::SupportsSharedDecoders(const VideoInfo& aConfig) const
 {
   // If DXVA is enabled, but we're not going to use it for this specific config, then
   // we can't use the shared decoder.
@@ -118,19 +121,26 @@ WMFDecoderModule::SupportsSharedDecoders(const mp4_demuxer::VideoDecoderConfig& 
 }
 
 bool
-WMFDecoderModule::SupportsVideoMimeType(const nsACString& aMimeType)
+WMFDecoderModule::SupportsMimeType(const nsACString& aMimeType)
 {
   return aMimeType.EqualsLiteral("video/mp4") ||
          aMimeType.EqualsLiteral("video/avc") ||
          aMimeType.EqualsLiteral("video/webm; codecs=vp8") ||
-         aMimeType.EqualsLiteral("video/webm; codecs=vp9");
+         aMimeType.EqualsLiteral("video/webm; codecs=vp9") ||
+         aMimeType.EqualsLiteral("audio/mp4a-latm") ||
+         aMimeType.EqualsLiteral("audio/mpeg");
 }
 
-bool
-WMFDecoderModule::SupportsAudioMimeType(const nsACString& aMimeType)
+PlatformDecoderModule::ConversionRequired
+WMFDecoderModule::DecoderNeedsConversion(const TrackInfo& aConfig) const
 {
-  return aMimeType.EqualsLiteral("audio/mp4a-latm") ||
-         aMimeType.EqualsLiteral("audio/mpeg");
+  if (aConfig.IsVideo() &&
+      (aConfig.mMimeType.EqualsLiteral("video/avc") ||
+       aConfig.mMimeType.EqualsLiteral("video/mp4"))) {
+    return kNeedAnnexB;
+  } else {
+    return kNeedNone;
+  }
 }
 
 static bool

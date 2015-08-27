@@ -52,8 +52,6 @@ SOURCES += [
 
 FAIL_ON_WARNINGS = True
 
-MSVC_ENABLE_PGO = True
-
 include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
@@ -75,3 +73,11 @@ if CONFIG['MOZ_B2G_BT']:
     LOCAL_INCLUDES += [
         '/dom/bluetooth',
     ]
+    if CONFIG['MOZ_B2G_BT_API_V2']:
+        LOCAL_INCLUDES += [
+            '/dom/bluetooth/bluetooth2',
+        ]
+    else:
+        LOCAL_INCLUDES += [
+            '/dom/bluetooth/bluetooth1',
+        ]

@@ -3,7 +3,8 @@
 
 // Tests consecutive duplicate frames are removed from the flame graph data.
 
-let {FlameGraphUtils} = Cu.import("resource:///modules/devtools/FlameGraph.jsm", {});
+let {FlameGraphUtils} = devtools.require("devtools/shared/widgets/FlameGraph");
+let {PALLETTE_SIZE} = devtools.require("devtools/shared/widgets/FlameGraph");
 
 add_task(function*() {
   yield promiseTab("about:blank");
@@ -12,12 +13,12 @@ add_task(function*() {
 });
 
 function* performTest() {
-  let out = FlameGraphUtils.createFlameGraphDataFromSamples(TEST_DATA, {
+  let out = FlameGraphUtils.createFlameGraphDataFromThread(TEST_DATA, {
     flattenRecursion: true
   });
 
   ok(out, "Some data was outputted properly");
-  is(out.length, 10, "The outputted length is correct.");
+  is(out.length, PALLETTE_SIZE, "The outputted length is correct.");
 
   info("Got flame graph data:\n" + out.toSource() + "\n");
 
@@ -43,7 +44,7 @@ function* performTest() {
   }
 }
 
-let TEST_DATA = [{
+let TEST_DATA = synthesizeProfileForTest([{
   frames: [{
     location: "A"
   }, {
@@ -58,7 +59,7 @@ let TEST_DATA = [{
     location: "C"
   }],
   time: 50,
-}];
+}]);
 
 let EXPECTED_OUTPUT = [{
   blocks: []
@@ -66,28 +67,52 @@ let EXPECTED_OUTPUT = [{
   blocks: []
 }, {
   blocks: [{
-    srcData: {
-      startTime: 0,
-      rawLocation: "A"
-    },
+    startTime: 0,
+    frameKey: "A",
     x: 0,
     y: 0,
     width: 50,
-    height: 11,
+    height: 15,
     text: "A"
   }]
 }, {
   blocks: [{
-    srcData: {
-      startTime: 0,
-      rawLocation: "B"
-    },
+    startTime: 0,
+    frameKey: "B",
     x: 0,
-    y: 11,
+    y: 15,
     width: 50,
-    height: 11,
+    height: 15,
     text: "B"
   }]
+}, {
+  blocks: [{
+    startTime: 0,
+    frameKey: "C",
+    x: 0,
+    y: 30,
+    width: 50,
+    height: 15,
+    text: "C"
+  }]
+}, {
+  blocks: []
+}, {
+  blocks: []
+}, {
+  blocks: []
+}, {
+  blocks: []
+}, {
+  blocks: []
+}, {
+  blocks: []
+}, {
+  blocks: []
+}, {
+  blocks: []
+}, {
+  blocks: []
 }, {
   blocks: []
 }, {

@@ -32,9 +32,16 @@
 #include "nsIDocument.h"
 #include <algorithm>
 
+using namespace mozilla;
+
 static_assert((((1 << nsStyleStructID_Length) - 1) &
                ~(NS_STYLE_INHERIT_MASK)) == 0,
               "Not enough bits in NS_STYLE_INHERIT_MASK");
+
+// These are the limits that we choose to clamp grid line numbers to.
+// http://dev.w3.org/csswg/css-grid/#overlarge-grids
+const int32_t nsStyleGridLine::kMinLine = -10000;
+const int32_t nsStyleGridLine::kMaxLine = 10000;
 
 inline bool IsFixedUnit(const nsStyleCoord& aCoord, bool aEnumOK)
 {
@@ -606,6 +613,8 @@ nsStyleOutline::nsStyleOutline(nsPresContext* aPresContext)
 
   mHasCachedOutline = false;
   mTwipsPerPixel = aPresContext->DevPixelsToAppUnits(1);
+
+  SetOutlineInitialColor();
 }
 
 nsStyleOutline::nsStyleOutline(const nsStyleOutline& aSrc)
@@ -1404,15 +1413,11 @@ nsStylePosition::nsStylePosition(void)
   mFlexBasis.SetAutoValue();
 
   // The initial value of grid-auto-columns and grid-auto-rows is 'auto',
-  // which computes to 'minmax(min-content, max-content)'.
-  mGridAutoColumnsMin.SetIntValue(NS_STYLE_GRID_TRACK_BREADTH_MIN_CONTENT,
-                                  eStyleUnit_Enumerated);
-  mGridAutoColumnsMax.SetIntValue(NS_STYLE_GRID_TRACK_BREADTH_MAX_CONTENT,
-                                  eStyleUnit_Enumerated);
-  mGridAutoRowsMin.SetIntValue(NS_STYLE_GRID_TRACK_BREADTH_MIN_CONTENT,
-                               eStyleUnit_Enumerated);
-  mGridAutoRowsMax.SetIntValue(NS_STYLE_GRID_TRACK_BREADTH_MAX_CONTENT,
-                               eStyleUnit_Enumerated);
+  // which computes to 'minmax(auto, auto)'.
+  mGridAutoColumnsMin.SetAutoValue();
+  mGridAutoColumnsMax.SetAutoValue();
+  mGridAutoRowsMin.SetAutoValue();
+  mGridAutoRowsMax.SetAutoValue();
 
   mGridAutoFlow = NS_STYLE_GRID_AUTO_FLOW_ROW;
   mBoxSizing = NS_STYLE_BOX_SIZING_CONTENT;
@@ -1881,7 +1886,7 @@ nsStyleImage::SetNull()
   else if (mType == eStyleImageType_Image)
     NS_RELEASE(mImage);
   else if (mType == eStyleImageType_Element)
-    NS_Free(mElementId);
+    free(mElementId);
 
   mType = eStyleImageType_Null;
   mCropRect = nullptr;
@@ -2342,7 +2347,7 @@ nsStyleBackground::Size::DependsOnPositioningAreaSize(const nsStyleImage& aImage
     nsCOMPtr<imgIContainer> imgContainer;
     aImage.GetImageData()->GetImage(getter_AddRefs(imgContainer));
     if (imgContainer) {
-      nsIntSize imageSize;
+      CSSIntSize imageSize;
       nsSize imageRatio;
       bool hasWidth, hasHeight;
       nsLayoutUtils::ComputeSizeForDrawing(imgContainer, imageSize, imageRatio,
@@ -2600,7 +2605,7 @@ nsStyleDisplay::nsStyleDisplay()
   mChildPerspective.SetNoneValue();
   mBackfaceVisibility = NS_STYLE_BACKFACE_VISIBILITY_VISIBLE;
   mTransformStyle = NS_STYLE_TRANSFORM_STYLE_FLAT;
-  mOrient = NS_STYLE_ORIENT_AUTO;
+  mOrient = NS_STYLE_ORIENT_INLINE;
   mMixBlendMode = NS_STYLE_BLEND_NORMAL;
   mIsolation = NS_STYLE_ISOLATION_AUTO;
   mTouchAction = NS_STYLE_TOUCH_ACTION_AUTO;
@@ -2979,7 +2984,7 @@ nsStyleContentData::~nsStyleContentData()
              mType == eStyleContentType_Counters) {
     mContent.mCounters->Release();
   } else if (mContent.mString) {
-    NS_Free(mContent.mString);
+    free(mContent.mString);
   }
 }
 
@@ -3638,6 +3643,7 @@ nsStyleVariables::nsStyleVariables()
 nsStyleVariables::nsStyleVariables(const nsStyleVariables& aSource)
 {
   MOZ_COUNT_CTOR(nsStyleVariables);
+  mVariables = aSource.mVariables;
 }
 
 nsStyleVariables::~nsStyleVariables(void)

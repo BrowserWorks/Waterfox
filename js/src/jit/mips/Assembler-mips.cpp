@@ -278,7 +278,7 @@ Assembler::TraceJumpRelocations(JSTracer* trc, JitCode* code, CompactBufferReade
     RelocationIterator iter(reader);
     while (iter.read()) {
         JitCode* child = CodeFromJump((Instruction*)(code->raw() + iter.offset()));
-        MarkJitCodeUnbarriered(trc, &child, "rel32");
+        TraceManuallyBarrieredEdge(trc, &child, "rel32");
     }
 }
 
@@ -295,7 +295,8 @@ TraceOneDataRelocation(JSTracer* trc, Instruction* inst)
     MOZ_ASSERT(!(uintptr_t(ptr) & 0x1));
 
     // No barrier needed since these are constants.
-    gc::MarkGCThingUnbarriered(trc, reinterpret_cast<void**>(&ptr), "ion-masm-ptr");
+    TraceManuallyBarrieredGenericPointerEdge(trc, reinterpret_cast<gc::Cell**>(&ptr),
+                                                 "ion-masm-ptr");
     if (ptr != prior) {
         Assembler::UpdateLuiOriValue(inst, inst->next(), uint32_t(ptr));
         AutoFlushICache::flush(uintptr_t(inst), 8);
@@ -393,7 +394,7 @@ Assembler::trace(JSTracer* trc)
         RelativePatch& rp = jumps_[i];
         if (rp.kind == Relocation::JITCODE) {
             JitCode* code = JitCode::FromExecutable((uint8_t*)rp.target);
-            MarkJitCodeUnbarriered(trc, &code, "masmrel32");
+            TraceManuallyBarrieredEdge(trc, &code, "masmrel32");
             MOZ_ASSERT(code == JitCode::FromExecutable((uint8_t*)rp.target));
         }
     }

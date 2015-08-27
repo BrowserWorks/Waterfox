@@ -13,15 +13,11 @@
 #include "mozilla/RefPtr.h"
 #include <queue>
 
-namespace mp4_demuxer {
-class VideoDecoderConfig;
-class AudioDecoderConfig;
-class MP4Sample;
-}
-
-class nsIThreadPool;
-
 namespace mozilla {
+class TrackInfo;
+class AudioInfo;
+class VideoInfo;
+class MediaRawData;
 
 namespace layers {
 class ImageContainer;
@@ -29,7 +25,6 @@ class ImageContainer;
 
 class MediaDataDecoder;
 class MediaDataDecoderCallback;
-class MediaInputQueue;
 class FlushableMediaTaskQueue;
 class CDMProxy;
 typedef int64_t Microseconds;
@@ -86,7 +81,44 @@ public:
                    bool aHasVideo);
 #endif
 
-  // Creates an H.264 decoder. The layers backend is passed in so that
+  // Creates a decoder.
+  // See CreateVideoDecoder and CreateAudioDecoder for implementation details.
+  virtual already_AddRefed<MediaDataDecoder>
+  CreateDecoder(const TrackInfo& aConfig,
+                FlushableMediaTaskQueue* aTaskQueue,
+                MediaDataDecoderCallback* aCallback,
+                layers::LayersBackend aLayersBackend = layers::LayersBackend::LAYERS_NONE,
+                layers::ImageContainer* aImageContainer = nullptr);
+
+  // An audio decoder module must support AAC by default.
+  // A video decoder must support H264 by default.
+  // If more codecs are to be supported, SupportsMimeType will have
+  // to be extended
+  virtual bool SupportsMimeType(const nsACString& aMimeType);
+
+  enum ConversionRequired {
+    kNeedNone,
+    kNeedAVCC,
+    kNeedAnnexB,
+  };
+
+  // Indicates that the decoder requires a specific format.
+  // The PlatformDecoderModule will convert the demuxed data accordingly before
+  // feeding it to MediaDataDecoder::Input.
+  virtual ConversionRequired DecoderNeedsConversion(const TrackInfo& aConfig) const = 0;
+
+  virtual void DisableHardwareAcceleration() {}
+
+  virtual bool SupportsSharedDecoders(const VideoInfo& aConfig) const {
+    return true;
+  }
+
+protected:
+  PlatformDecoderModule() {}
+  virtual ~PlatformDecoderModule() {}
+
+  friend class H264Converter;
+  // Creates a Video decoder. The layers backend is passed in so that
   // decoders can determine whether hardware accelerated decoding can be used.
   // Asynchronous decoding of video should be done in runnables dispatched
   // to aVideoTaskQueue. If the task queue isn't needed, the decoder should
@@ -98,11 +130,11 @@ public:
   // It is safe to store a reference to aConfig.
   // This is called on the decode task queue.
   virtual already_AddRefed<MediaDataDecoder>
-  CreateVideoDecoder(const mp4_demuxer::VideoDecoderConfig& aConfig,
-                    layers::LayersBackend aLayersBackend,
-                    layers::ImageContainer* aImageContainer,
-                    FlushableMediaTaskQueue* aVideoTaskQueue,
-                    MediaDataDecoderCallback* aCallback) = 0;
+  CreateVideoDecoder(const VideoInfo& aConfig,
+                     layers::LayersBackend aLayersBackend,
+                     layers::ImageContainer* aImageContainer,
+                     FlushableMediaTaskQueue* aVideoTaskQueue,
+                     MediaDataDecoderCallback* aCallback) = 0;
 
   // Creates an Audio decoder with the specified properties.
   // Asynchronous decoding of audio should be done in runnables dispatched to
@@ -115,28 +147,10 @@ public:
   // It is safe to store a reference to aConfig.
   // This is called on the decode task queue.
   virtual already_AddRefed<MediaDataDecoder>
-  CreateAudioDecoder(const mp4_demuxer::AudioDecoderConfig& aConfig,
+  CreateAudioDecoder(const AudioInfo& aConfig,
                      FlushableMediaTaskQueue* aAudioTaskQueue,
                      MediaDataDecoderCallback* aCallback) = 0;
 
-  // An audio decoder module must support AAC by default.
-  // If more audio codec is to be supported, SupportsAudioMimeType will have
-  // to be extended
-  virtual bool SupportsAudioMimeType(const nsACString& aMimeType);
-  virtual bool SupportsVideoMimeType(const nsACString& aMimeType);
-
-  // Indicates if the video decoder requires AVCC format.
-  virtual bool DecoderNeedsAVCC(const mp4_demuxer::VideoDecoderConfig& aConfig);
-
-  virtual void DisableHardwareAcceleration() {}
-
-  virtual bool SupportsSharedDecoders(const mp4_demuxer::VideoDecoderConfig& aConfig) const {
-    return true;
-  }
-
-protected:
-  PlatformDecoderModule() {}
-  virtual ~PlatformDecoderModule() {}
   // Caches pref media.fragmented-mp4.use-blank-decoder
   static bool sUseBlankDecoder;
   static bool sFFmpegDecoderEnabled;
@@ -168,6 +182,8 @@ public:
   virtual void NotifyResourcesStatusChanged() {};
 
   virtual void ReleaseMediaResources() {};
+
+  virtual bool OnReaderTaskQueue() = 0;
 };
 
 // MediaDataDecoder is the interface exposed by decoders created by the
@@ -175,9 +191,13 @@ public:
 // media data that the decoder accepts as valid input and produces as
 // output is determined when the MediaDataDecoder is created.
 //
-// All functions are only called on the decode task queue. Don't block
-// inside these functions, unless it's explicitly noted that you should
-// (like in Flush() and Drain()).
+// Unless otherwise noted, all functions are only called on the decode task
+// queue.  An exception is the MediaDataDecoder in
+// MP4Reader::IsVideoAccelerated() for which all calls (Init(),
+// IsHardwareAccelerated(), and Shutdown()) are from the main thread.
+//
+// Don't block inside these functions, unless it's explicitly noted that you
+// should (like in Flush()).
 //
 // Decoding is done asynchronously. Any async work can be done on the
 // MediaTaskQueue passed into the PlatformDecoderModules's Create*Decoder()
@@ -199,10 +219,8 @@ public:
   // be done here so that it can be canceled by calling Shutdown()!
   virtual nsresult Init() = 0;
 
-  // Inserts a sample into the decoder's decode pipeline. The decoder must
-  // delete the sample once its been decoded. If Input() returns an error,
-  // aSample will be deleted by the caller.
-  virtual nsresult Input(mp4_demuxer::MP4Sample* aSample) = 0;
+  // Inserts a sample into the decoder's decode pipeline.
+  virtual nsresult Input(MediaRawData* aSample) = 0;
 
   // Causes all samples in the decoding pipeline to be discarded. When
   // this function returns, the decoder must be ready to accept new input
@@ -212,7 +230,6 @@ public:
   // it is safe (but pointless) to send output while Flush is called.
   // The MP4Reader will not call Input() while it's calling Flush().
   virtual nsresult Flush() = 0;
-
 
   // Causes all complete samples in the pipeline that can be decoded to be
   // output. If the decoder can't produce samples from the current output,
@@ -234,16 +251,17 @@ public:
   // returned.
   virtual nsresult Shutdown() = 0;
 
-  // For Codec Resource Management
-  virtual bool IsWaitingMediaResources() {
-    return false;
-  };
-  virtual bool IsDormantNeeded() {
-    return false;
-  };
-  virtual void AllocateMediaResources() {}
-  virtual void ReleaseMediaResources() {}
+  // Called from the state machine task queue or main thread.
   virtual bool IsHardwareAccelerated() const { return false; }
+
+  // ConfigurationChanged will be called to inform the video or audio decoder
+  // that the format of the next input sample is about to change.
+  // If video decoder, aConfig will be a VideoInfo object.
+  // If audio decoder, aConfig will be a AudioInfo object.
+  virtual nsresult ConfigurationChanged(const TrackInfo& aConfig)
+  {
+    return NS_OK;
+  }
 };
 
 } // namespace mozilla

@@ -14,7 +14,7 @@ It contains some basic information shared between different ping types, the :doc
 Submission
 ==========
 
-Pings are submitted via a common API on ``TelemetryPing``. It allows callers to choose a custom retention period that determines how long pings are kept on disk if submission wasn't successful.
+Pings are submitted via a common API on ``TelemetryController``. It allows callers to choose a custom retention period that determines how long pings are kept on disk if submission wasn't successful.
 If a ping failed to submit (e.g. because of missing internet connection), Telemetry will retry to submit it until its retention period is up.
 
 *Note:* the :doc:`main pings <main-ping>` are kept locally even after successful submission to enable the HealthReport and SelfSupport features. They will be deleted after their retention period of 180 days.
@@ -29,7 +29,21 @@ Ping types
 ==========
 
 * :doc:`main <main-ping>` - contains the information collected by Telemetry (Histograms, hang stacks, ...)
-* :doc:`saved-session <main-ping>` - contains the *"classic"* Telemetry payload with measurements covering the whole browser session. Used to make storage of saved-session easier server-side.
+* :doc:`saved-session <main-ping>` - has the same format as a main ping, but it contains the *"classic"* Telemetry payload with measurements covering the whole browser session. This is only a separate type to make storage of saved-session easier server-side. This is temporary and will be removed soon.
+* :doc:`crash <crash-ping>` - a ping that is captured and sent after Firefox crashes.
+* :doc:`uitour-ping` - a ping submitted via the UITour API
 * ``activation`` - *planned* - sent right after installation or profile creation
 * ``upgrade`` - *planned* - sent right after an upgrade
 * ``deletion`` - *planned* - on opt-out we may have to tell the server to delete user data
+
+Archiving
+=========
+
+When archiving is enabled through the relative preference, pings submitted to ``TelemetryController`` are also stored locally in the user profile directory, in `<profile-dir>/datareporting/archived`.
+
+To allow for cheaper lookup of archived pings, storage follows a specific naming scheme for both the directory and the ping file name: `<YYYY-MM>/<timestamp>.<UUID>.<type>.json`.
+
+* ``<YYYY-MM>`` - The subdirectory name, generated from the ping creation date.
+* ``<timestamp>`` - Timestamp of the ping creation date.
+* ``<UUID>`` - The ping identifier.
+* ``<type>`` - The ping type.

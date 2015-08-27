@@ -17,10 +17,9 @@
 #include "nsInterfaceHashtable.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsWrapperCache.h"
+#include "nsRect.h"
 
 class nsIFrame;
-class nsIDocShell;
-struct nsIntRect;
 class nsIPresShell;
 
 namespace mozilla {

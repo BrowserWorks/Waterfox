@@ -14,12 +14,13 @@
 #include "nsThreadUtils.h"
 #include "Layers.h"
 #include "mozilla/layers/LayersTypes.h"
-#include "mp4_demuxer/AnnexB.h"
-#include "mp4_demuxer/DecoderData.h"
+#include "MediaInfo.h"
 #include "prlog.h"
 #include "gfx2DGlue.h"
 #include "gfxWindowsPlatform.h"
 #include "IMFYCbCrImage.h"
+#include "mozilla/WindowsVersion.h"
+#include "mozilla/Preferences.h"
 
 #ifdef PR_LOGGING
 PRLogModuleInfo* GetDemuxerLog();
@@ -28,7 +29,6 @@ PRLogModuleInfo* GetDemuxerLog();
 #define LOG(...)
 #endif
 
-using mozilla::gfx::ToIntRect;
 using mozilla::layers::Image;
 using mozilla::layers::IMFYCbCrImage;
 using mozilla::layers::LayerManager;
@@ -69,7 +69,7 @@ const CLSID CLSID_WebmMfVp9Dec =
 namespace mozilla {
 
 WMFVideoMFTManager::WMFVideoMFTManager(
-                            const mp4_demuxer::VideoDecoderConfig& aConfig,
+                            const VideoInfo& aConfig,
                             mozilla::layers::LayersBackend aLayersBackend,
                             mozilla::layers::ImageContainer* aImageContainer,
                             bool aDXVAEnabled)
@@ -82,12 +82,12 @@ WMFVideoMFTManager::WMFVideoMFTManager(
   MOZ_COUNT_CTOR(WMFVideoMFTManager);
 
   // Need additional checks/params to check vp8/vp9
-  if (aConfig.mime_type.EqualsLiteral("video/mp4") ||
-      aConfig.mime_type.EqualsLiteral("video/avc")) {
+  if (aConfig.mMimeType.EqualsLiteral("video/mp4") ||
+      aConfig.mMimeType.EqualsLiteral("video/avc")) {
     mStreamType = H264;
-  } else if (aConfig.mime_type.EqualsLiteral("video/webm; codecs=vp8")) {
+  } else if (aConfig.mMimeType.EqualsLiteral("video/webm; codecs=vp8")) {
     mStreamType = VP8;
-  } else if (aConfig.mime_type.EqualsLiteral("video/webm; codecs=vp9")) {
+  } else if (aConfig.mMimeType.EqualsLiteral("video/webm; codecs=vp9")) {
     mStreamType = VP9;
   } else {
     mStreamType = Unknown;
@@ -129,12 +129,23 @@ WMFVideoMFTManager::GetMediaSubtypeGUID()
 
 class CreateDXVAManagerEvent : public nsRunnable {
 public:
+  CreateDXVAManagerEvent(LayersBackend aBackend)
+    : mBackend(aBackend)
+  {}
+
   NS_IMETHOD Run() {
     NS_ASSERTION(NS_IsMainThread(), "Must be on main thread.");
-    mDXVA2Manager = DXVA2Manager::Create();
+    if (mBackend == LayersBackend::LAYERS_D3D11 &&
+        Preferences::GetBool("media.windows-media-foundation.allow-d3d11-dxva", false) &&
+        IsWin8OrLater()) {
+      mDXVA2Manager = DXVA2Manager::CreateD3D11DXVA();
+    } else {
+      mDXVA2Manager = DXVA2Manager::CreateD3D9DXVA();
+    }
     return NS_OK;
   }
   nsAutoPtr<DXVA2Manager> mDXVA2Manager;
+  LayersBackend mBackend;
 };
 
 bool
@@ -152,13 +163,9 @@ WMFVideoMFTManager::InitializeDXVA()
     return false;
   }
 
-  if (gfxWindowsPlatform::GetPlatform()->IsWARP() ||
-      !gfxPlatform::CanUseDXVA()) {
-    return false;
-  }
-
   // The DXVA manager must be created on the main thread.
-  nsRefPtr<CreateDXVAManagerEvent> event(new CreateDXVAManagerEvent());
+  nsRefPtr<CreateDXVAManagerEvent> event(new CreateDXVAManagerEvent(mLayersBackend));
+
   if (NS_IsMainThread()) {
     event->Run();
   } else {
@@ -242,22 +249,16 @@ WMFVideoMFTManager::Init()
 }
 
 HRESULT
-WMFVideoMFTManager::Input(mp4_demuxer::MP4Sample* aSample)
+WMFVideoMFTManager::Input(MediaRawData* aSample)
 {
   if (!mDecoder) {
     // This can happen during shutdown.
     return E_FAIL;
   }
-  if (mStreamType != VP8 && mStreamType != VP9) {
-    // We must prepare samples in AVC Annex B.
-    if (!mp4_demuxer::AnnexB::ConvertSampleToAnnexB(aSample)) {
-      return E_FAIL;
-    }
-  }
   // Forward sample data to the decoder.
-  const uint8_t* data = reinterpret_cast<const uint8_t*>(aSample->data);
-  uint32_t length = aSample->size;
-  return mDecoder->Input(data, length, aSample->composition_timestamp);
+  return mDecoder->Input(aSample->mData,
+                         uint32_t(aSample->mSize),
+                         aSample->mTime);
 }
 
 HRESULT
@@ -303,9 +304,13 @@ WMFVideoMFTManager::ConfigureVideoFrameGeometry()
     return E_FAIL;
   }
 
+  if (mDXVA2Manager) {
+    hr = mDXVA2Manager->ConfigureForSize(width, height);
+    NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
+  }
+
   // Success! Save state.
   mVideoInfo.mDisplay = displaySize;
-  mVideoInfo.mHasVideo = true;
   GetDefaultStride(mediaType, &mVideoStride);
   mVideoWidth = width;
   mVideoHeight = height;
@@ -403,7 +408,7 @@ WMFVideoMFTManager::CreateBasicVideoFrame(IMFSample* aSample,
   VideoData::SetVideoDataToImage(image,
                                  mVideoInfo,
                                  b,
-                                 ToIntRect(mPictureRegion),
+                                 mPictureRegion,
                                  false);
 
   nsRefPtr<VideoData> v =
@@ -415,7 +420,7 @@ WMFVideoMFTManager::CreateBasicVideoFrame(IMFSample* aSample,
                                image.forget(),
                                false,
                                -1,
-                               ToIntRect(mPictureRegion));
+                               mPictureRegion);
 
   v.forget(aOutVideoData);
   return S_OK;
@@ -452,7 +457,7 @@ WMFVideoMFTManager::CreateD3DVideoFrame(IMFSample* aSample,
                                                      image.forget(),
                                                      false,
                                                      -1,
-                                                     ToIntRect(mPictureRegion));
+                                                     mPictureRegion);
 
   NS_ENSURE_TRUE(v, E_FAIL);
   v.forget(aOutVideoData);
@@ -497,7 +502,7 @@ WMFVideoMFTManager::Output(int64_t aStreamOffset,
     }
     // Else unexpected error, assert, and bail.
     NS_WARNING("WMFVideoMFTManager::Output() unexpected error");
-    return E_FAIL;
+    return hr;
   }
 
   nsRefPtr<VideoData> frame;

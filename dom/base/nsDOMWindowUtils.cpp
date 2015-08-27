@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 sts=2 sw=2 et tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -19,11 +19,15 @@
 #include "nsFrameManager.h"
 #include "nsRefreshDriver.h"
 #include "mozilla/dom/Touch.h"
-#include "mozilla/PendingPlayerTracker.h"
+#include "mozilla/PendingAnimationTracker.h"
 #include "nsIObjectLoadingContent.h"
 #include "nsFrame.h"
 #include "mozilla/layers/ShadowLayers.h"
 #include "ClientLayerManager.h"
+#include "nsQueryObject.h"
+#ifdef MOZ_FMP4
+#include "MP4Decoder.h"
+#endif
 
 #include "nsIScrollableFrame.h"
 
@@ -290,9 +294,7 @@ nsDOMWindowUtils::UpdateLayerTree()
 NS_IMETHODIMP
 nsDOMWindowUtils::SetCSSViewport(float aWidthPx, float aHeightPx)
 {
-  if (!nsContentUtils::IsCallerChrome()) {
-    return NS_ERROR_DOM_SECURITY_ERR;
-  }
+  MOZ_RELEASE_ASSERT(nsContentUtils::IsCallerChrome());
 
   if (!(aWidthPx >= 0.0 && aHeightPx >= 0.0)) {
     return NS_ERROR_ILLEGAL_VALUE;
@@ -303,10 +305,7 @@ nsDOMWindowUtils::SetCSSViewport(float aWidthPx, float aHeightPx)
     return NS_ERROR_FAILURE;
   }
 
-  nscoord width = nsPresContext::CSSPixelsToAppUnits(aWidthPx);
-  nscoord height = nsPresContext::CSSPixelsToAppUnits(aHeightPx);
-
-  presShell->ResizeReflowOverride(width, height);
+  nsLayoutUtils::SetCSSViewport(presShell, CSSSize(aWidthPx, aHeightPx));
 
   return NS_OK;
 }
@@ -419,9 +418,7 @@ nsDOMWindowUtils::SetDisplayPortMarginsForElement(float aLeftMargin,
                                                   nsIDOMElement* aElement,
                                                   uint32_t aPriority)
 {
-  if (!nsContentUtils::IsCallerChrome()) {
-    return NS_ERROR_DOM_SECURITY_ERR;
-  }
+  MOZ_RELEASE_ASSERT(nsContentUtils::IsCallerChrome());
 
   nsIPresShell* presShell = GetPresShell();
   if (!presShell) {
@@ -513,20 +510,14 @@ nsDOMWindowUtils::SetResolution(float aResolution)
 NS_IMETHODIMP
 nsDOMWindowUtils::SetResolutionAndScaleTo(float aResolution)
 {
-  if (!nsContentUtils::IsCallerChrome()) {
-    return NS_ERROR_DOM_SECURITY_ERR;
-  }
+  MOZ_RELEASE_ASSERT(nsContentUtils::IsCallerChrome());
 
   nsIPresShell* presShell = GetPresShell();
   if (!presShell) {
     return NS_ERROR_FAILURE;
   }
 
-  nsIScrollableFrame* sf = presShell->GetRootScrollFrameAsScrollable();
-  if (sf) {
-    sf->SetResolutionAndScaleTo(aResolution);
-    presShell->SetResolutionAndScaleTo(aResolution);
-  }
+  nsLayoutUtils::SetResolutionAndScaleTo(presShell, aResolution);
 
   return NS_OK;
 }
@@ -541,12 +532,7 @@ nsDOMWindowUtils::GetResolution(float* aResolution)
     return NS_ERROR_FAILURE;
   }
 
-  nsIScrollableFrame* sf = presShell->GetRootScrollFrameAsScrollable();
-  if (sf) {
-    *aResolution = sf->GetResolution();
-  } else {
-    *aResolution = presShell->GetResolution();
-  }
+  *aResolution = nsLayoutUtils::GetResolution(presShell);
 
   return NS_OK;
 }
@@ -599,9 +585,7 @@ nsDOMWindowUtils::GetIsFirstPaint(bool *aIsFirstPaint)
 NS_IMETHODIMP
 nsDOMWindowUtils::GetPresShellId(uint32_t *aPresShellId)
 {
-  if (!nsContentUtils::IsCallerChrome()) {
-    return NS_ERROR_DOM_SECURITY_ERR;
-  }
+  MOZ_RELEASE_ASSERT(nsContentUtils::IsCallerChrome());
 
   nsIPresShell* presShell = GetPresShell();
   if (presShell) {
@@ -609,53 +593,6 @@ nsDOMWindowUtils::GetPresShellId(uint32_t *aPresShellId)
     return NS_OK;
   }
   return NS_ERROR_FAILURE;
-}
-
-/* static */
-mozilla::Modifiers
-nsDOMWindowUtils::GetWidgetModifiers(int32_t aModifiers)
-{
-  Modifiers result = 0;
-  if (aModifiers & nsIDOMWindowUtils::MODIFIER_SHIFT) {
-    result |= mozilla::MODIFIER_SHIFT;
-  }
-  if (aModifiers & nsIDOMWindowUtils::MODIFIER_CONTROL) {
-    result |= mozilla::MODIFIER_CONTROL;
-  }
-  if (aModifiers & nsIDOMWindowUtils::MODIFIER_ALT) {
-    result |= mozilla::MODIFIER_ALT;
-  }
-  if (aModifiers & nsIDOMWindowUtils::MODIFIER_META) {
-    result |= mozilla::MODIFIER_META;
-  }
-  if (aModifiers & nsIDOMWindowUtils::MODIFIER_ALTGRAPH) {
-    result |= mozilla::MODIFIER_ALTGRAPH;
-  }
-  if (aModifiers & nsIDOMWindowUtils::MODIFIER_CAPSLOCK) {
-    result |= mozilla::MODIFIER_CAPSLOCK;
-  }
-  if (aModifiers & nsIDOMWindowUtils::MODIFIER_FN) {
-    result |= mozilla::MODIFIER_FN;
-  }
-  if (aModifiers & nsIDOMWindowUtils::MODIFIER_FNLOCK) {
-    result |= mozilla::MODIFIER_FNLOCK;
-  }
-  if (aModifiers & nsIDOMWindowUtils::MODIFIER_NUMLOCK) {
-    result |= mozilla::MODIFIER_NUMLOCK;
-  }
-  if (aModifiers & nsIDOMWindowUtils::MODIFIER_SCROLLLOCK) {
-    result |= mozilla::MODIFIER_SCROLLLOCK;
-  }
-  if (aModifiers & nsIDOMWindowUtils::MODIFIER_SYMBOL) {
-    result |= mozilla::MODIFIER_SYMBOL;
-  }
-  if (aModifiers & nsIDOMWindowUtils::MODIFIER_SYMBOLLOCK) {
-    result |= mozilla::MODIFIER_SYMBOLLOCK;
-  }
-  if (aModifiers & nsIDOMWindowUtils::MODIFIER_OS) {
-    result |= mozilla::MODIFIER_OS;
-  }
-  return result;
 }
 
 NS_IMETHODIMP
@@ -700,52 +637,6 @@ nsDOMWindowUtils::SendMouseEventToWindow(const nsAString& aType,
                               aOptionalArgCount >= 4 ? aIsSynthesized : true);
 }
 
-static LayoutDeviceIntPoint
-ToWidgetPoint(const CSSPoint& aPoint, const nsPoint& aOffset,
-              nsPresContext* aPresContext)
-{
-  return LayoutDeviceIntPoint::FromAppUnitsRounded(
-    CSSPoint::ToAppUnits(aPoint) + aOffset,
-    aPresContext->AppUnitsPerDevPixel());
-}
-
-static inline int16_t
-GetButtonsFlagForButton(int32_t aButton)
-{
-  switch (aButton) {
-    case WidgetMouseEvent::eLeftButton:
-      return WidgetMouseEvent::eLeftButtonFlag;
-    case WidgetMouseEvent::eMiddleButton:
-      return WidgetMouseEvent::eMiddleButtonFlag;
-    case WidgetMouseEvent::eRightButton:
-      return WidgetMouseEvent::eRightButtonFlag;
-    case 4:
-      return WidgetMouseEvent::e4thButtonFlag;
-    case 5:
-      return WidgetMouseEvent::e5thButtonFlag;
-    default:
-      NS_ERROR("Button not known.");
-      return 0;
-  }
-}
-
-nsView*
-nsDOMWindowUtils::GetViewToDispatchEvent(nsPresContext* presContext, nsIPresShell** presShell)
-{
-  if (presContext && presShell) {
-    *presShell = presContext->PresShell();
-    if (*presShell) {
-      NS_ADDREF(*presShell);
-      if (nsViewManager* viewManager = (*presShell)->GetViewManager()) {
-        if (nsView* view = viewManager->GetRootView()) {
-          return view;
-        }
-      }
-    }
-  }
-  return nullptr;
-}
-
 NS_IMETHODIMP
 nsDOMWindowUtils::SendMouseEventCommon(const nsAString& aType,
                                        float aX,
@@ -762,76 +653,10 @@ nsDOMWindowUtils::SendMouseEventCommon(const nsAString& aType,
 {
   MOZ_RELEASE_ASSERT(nsContentUtils::IsCallerChrome());
 
-  // get the widget to send the event to
-  nsPoint offset;
-  nsCOMPtr<nsIWidget> widget = GetWidget(&offset);
-  if (!widget)
-    return NS_ERROR_FAILURE;
-
-  int32_t msg;
-  bool contextMenuKey = false;
-  if (aType.EqualsLiteral("mousedown"))
-    msg = NS_MOUSE_BUTTON_DOWN;
-  else if (aType.EqualsLiteral("mouseup"))
-    msg = NS_MOUSE_BUTTON_UP;
-  else if (aType.EqualsLiteral("mousemove"))
-    msg = NS_MOUSE_MOVE;
-  else if (aType.EqualsLiteral("mouseover"))
-    msg = NS_MOUSE_ENTER;
-  else if (aType.EqualsLiteral("mouseout"))
-    msg = NS_MOUSE_EXIT;
-  else if (aType.EqualsLiteral("contextmenu")) {
-    msg = NS_CONTEXTMENU;
-    contextMenuKey = (aButton == 0);
-  } else if (aType.EqualsLiteral("MozMouseHittest"))
-    msg = NS_MOUSE_MOZHITTEST;
-  else
-    return NS_ERROR_FAILURE;
-
-  if (aInputSourceArg == nsIDOMMouseEvent::MOZ_SOURCE_UNKNOWN) {
-    aInputSourceArg = nsIDOMMouseEvent::MOZ_SOURCE_MOUSE;
-  }
-
-  WidgetMouseEvent event(true, msg, widget, WidgetMouseEvent::eReal,
-                         contextMenuKey ? WidgetMouseEvent::eContextMenuKey :
-                                          WidgetMouseEvent::eNormal);
-  event.modifiers = GetWidgetModifiers(aModifiers);
-  event.button = aButton;
-  event.buttons = GetButtonsFlagForButton(aButton);
-  event.widget = widget;
-  event.pressure = aPressure;
-  event.inputSource = aInputSourceArg;
-  event.clickCount = aClickCount;
-  event.time = PR_IntervalNow();
-  event.mFlags.mIsSynthesizedForTests = aIsSynthesized;
-
-  nsPresContext* presContext = GetPresContext();
-  if (!presContext)
-    return NS_ERROR_FAILURE;
-
-  event.refPoint = ToWidgetPoint(CSSPoint(aX, aY), offset, presContext);
-  event.ignoreRootScrollFrame = aIgnoreRootScrollFrame;
-
-  nsEventStatus status = nsEventStatus_eIgnore;
-  if (aToWindow) {
-    nsCOMPtr<nsIPresShell> presShell;
-    nsView* view = GetViewToDispatchEvent(presContext, getter_AddRefs(presShell));
-    if (!presShell || !view) {
-      return NS_ERROR_FAILURE;
-    }
-    return presShell->HandleEvent(view->GetFrame(), &event, false, &status);
-  }
-  if (gfxPrefs::TestEventsAsyncEnabled()) {
-    status = widget->DispatchInputEvent(&event);
-  } else {
-    nsresult rv = widget->DispatchEvent(&event, status);
-    NS_ENSURE_SUCCESS(rv, rv);
-  }
-  if (aPreventDefault) {
-    *aPreventDefault = (status == nsEventStatus_eConsumeNoDefault);
-  }
-
-  return NS_OK;
+  nsCOMPtr<nsIPresShell> presShell = GetPresShell();
+  return nsContentUtils::SendMouseEvent(presShell, aType, aX, aY, aButton,
+      aClickCount, aModifiers, aIgnoreRootScrollFrame, aPressure,
+      aInputSourceArg, aToWindow, aPreventDefault, aIsSynthesized);
 }
 
 NS_IMETHODIMP
@@ -884,9 +709,9 @@ nsDOMWindowUtils::SendPointerEventCommon(const nsAString& aType,
   }
 
   WidgetPointerEvent event(true, msg, widget);
-  event.modifiers = GetWidgetModifiers(aModifiers);
+  event.modifiers = nsContentUtils::GetWidgetModifiers(aModifiers);
   event.button = aButton;
-  event.buttons = GetButtonsFlagForButton(aButton);
+  event.buttons = nsContentUtils::GetButtonsFlagForButton(aButton);
   event.widget = widget;
   event.pressure = aPressure;
   event.inputSource = aInputSourceArg;
@@ -905,13 +730,13 @@ nsDOMWindowUtils::SendPointerEventCommon(const nsAString& aType,
     return NS_ERROR_FAILURE;
   }
 
-  event.refPoint = ToWidgetPoint(CSSPoint(aX, aY), offset, presContext);
+  event.refPoint = nsContentUtils::ToWidgetPoint(CSSPoint(aX, aY), offset, presContext);
   event.ignoreRootScrollFrame = aIgnoreRootScrollFrame;
 
   nsEventStatus status;
   if (aToWindow) {
     nsCOMPtr<nsIPresShell> presShell;
-    nsView* view = GetViewToDispatchEvent(presContext, getter_AddRefs(presShell));
+    nsView* view = nsContentUtils::GetViewToDispatchEvent(presContext, getter_AddRefs(presShell));
     if (!presShell || !view) {
       return NS_ERROR_FAILURE;
     }
@@ -1009,7 +834,7 @@ nsDOMWindowUtils::SendWheelEvent(float aX,
   }
 
   WidgetWheelEvent wheelEvent(true, NS_WHEEL_WHEEL, widget);
-  wheelEvent.modifiers = GetWidgetModifiers(aModifiers);
+  wheelEvent.modifiers = nsContentUtils::GetWidgetModifiers(aModifiers);
   wheelEvent.deltaX = aDeltaX;
   wheelEvent.deltaY = aDeltaY;
   wheelEvent.deltaZ = aDeltaZ;
@@ -1029,9 +854,15 @@ nsDOMWindowUtils::SendWheelEvent(float aX,
   nsPresContext* presContext = GetPresContext();
   NS_ENSURE_TRUE(presContext, NS_ERROR_FAILURE);
 
-  wheelEvent.refPoint = ToWidgetPoint(CSSPoint(aX, aY), offset, presContext);
+  wheelEvent.refPoint = nsContentUtils::ToWidgetPoint(CSSPoint(aX, aY), offset, presContext);
 
   widget->DispatchAPZAwareEvent(&wheelEvent);
+
+  if (gfxPrefs::AsyncPanZoomEnabled()) {
+    // Computing overflow deltas is not compatible with APZ, so if APZ is
+    // enabled, we skip testing it.
+    return NS_OK;
+  }
 
   bool failedX = false;
   if ((aOptions & WHEEL_EVENT_EXPECTED_OVERFLOW_DELTA_X_ZERO) &&
@@ -1150,7 +981,7 @@ nsDOMWindowUtils::SendTouchEventCommon(const nsAString& aType,
     return NS_ERROR_UNEXPECTED;
   }
   WidgetTouchEvent event(true, msg, widget);
-  event.modifiers = GetWidgetModifiers(aModifiers);
+  event.modifiers = nsContentUtils::GetWidgetModifiers(aModifiers);
   event.widget = widget;
   event.time = PR_Now();
 
@@ -1161,7 +992,7 @@ nsDOMWindowUtils::SendTouchEventCommon(const nsAString& aType,
   event.touches.SetCapacity(aCount);
   for (uint32_t i = 0; i < aCount; ++i) {
     LayoutDeviceIntPoint pt =
-      ToWidgetPoint(CSSPoint(aXs[i], aYs[i]), offset, presContext);
+      nsContentUtils::ToWidgetPoint(CSSPoint(aXs[i], aYs[i]), offset, presContext);
     nsRefPtr<Touch> t = new Touch(aIdentifiers[i],
                                   pt,
                                   nsIntPoint(aRxs[i], aRys[i]),
@@ -1173,7 +1004,7 @@ nsDOMWindowUtils::SendTouchEventCommon(const nsAString& aType,
   nsEventStatus status;
   if (aToWindow) {
     nsCOMPtr<nsIPresShell> presShell;
-    nsView* view = GetViewToDispatchEvent(presContext, getter_AddRefs(presShell));
+    nsView* view = nsContentUtils::GetViewToDispatchEvent(presContext, getter_AddRefs(presShell));
     if (!presShell || !view) {
       return NS_ERROR_FAILURE;
     }
@@ -1199,100 +1030,10 @@ nsDOMWindowUtils::SendKeyEvent(const nsAString& aType,
 
   // get the widget to send the event to
   nsCOMPtr<nsIWidget> widget = GetWidget();
-  if (!widget)
-    return NS_ERROR_FAILURE;
-
-  int32_t msg;
-  if (aType.EqualsLiteral("keydown"))
-    msg = NS_KEY_DOWN;
-  else if (aType.EqualsLiteral("keyup"))
-    msg = NS_KEY_UP;
-  else if (aType.EqualsLiteral("keypress"))
-    msg = NS_KEY_PRESS;
-  else
-    return NS_ERROR_FAILURE;
-
-  WidgetKeyboardEvent event(true, msg, widget);
-  event.modifiers = GetWidgetModifiers(aModifiers);
-
-  if (msg == NS_KEY_PRESS) {
-    event.keyCode = aCharCode ? 0 : aKeyCode;
-    event.charCode = aCharCode;
-  } else {
-    event.keyCode = aKeyCode;
-    event.charCode = 0;
-  }
-
-  uint32_t locationFlag = (aAdditionalFlags &
-    (KEY_FLAG_LOCATION_STANDARD | KEY_FLAG_LOCATION_LEFT |
-     KEY_FLAG_LOCATION_RIGHT | KEY_FLAG_LOCATION_NUMPAD));
-  switch (locationFlag) {
-    case KEY_FLAG_LOCATION_STANDARD:
-      event.location = nsIDOMKeyEvent::DOM_KEY_LOCATION_STANDARD;
-      break;
-    case KEY_FLAG_LOCATION_LEFT:
-      event.location = nsIDOMKeyEvent::DOM_KEY_LOCATION_LEFT;
-      break;
-    case KEY_FLAG_LOCATION_RIGHT:
-      event.location = nsIDOMKeyEvent::DOM_KEY_LOCATION_RIGHT;
-      break;
-    case KEY_FLAG_LOCATION_NUMPAD:
-      event.location = nsIDOMKeyEvent::DOM_KEY_LOCATION_NUMPAD;
-      break;
-    default:
-      if (locationFlag != 0) {
-        return NS_ERROR_INVALID_ARG;
-      }
-      // If location flag isn't set, choose the location from keycode.
-      switch (aKeyCode) {
-        case nsIDOMKeyEvent::DOM_VK_NUMPAD0:
-        case nsIDOMKeyEvent::DOM_VK_NUMPAD1:
-        case nsIDOMKeyEvent::DOM_VK_NUMPAD2:
-        case nsIDOMKeyEvent::DOM_VK_NUMPAD3:
-        case nsIDOMKeyEvent::DOM_VK_NUMPAD4:
-        case nsIDOMKeyEvent::DOM_VK_NUMPAD5:
-        case nsIDOMKeyEvent::DOM_VK_NUMPAD6:
-        case nsIDOMKeyEvent::DOM_VK_NUMPAD7:
-        case nsIDOMKeyEvent::DOM_VK_NUMPAD8:
-        case nsIDOMKeyEvent::DOM_VK_NUMPAD9:
-        case nsIDOMKeyEvent::DOM_VK_MULTIPLY:
-        case nsIDOMKeyEvent::DOM_VK_ADD:
-        case nsIDOMKeyEvent::DOM_VK_SEPARATOR:
-        case nsIDOMKeyEvent::DOM_VK_SUBTRACT:
-        case nsIDOMKeyEvent::DOM_VK_DECIMAL:
-        case nsIDOMKeyEvent::DOM_VK_DIVIDE:
-          event.location = nsIDOMKeyEvent::DOM_KEY_LOCATION_NUMPAD;
-          break;
-        case nsIDOMKeyEvent::DOM_VK_SHIFT:
-        case nsIDOMKeyEvent::DOM_VK_CONTROL:
-        case nsIDOMKeyEvent::DOM_VK_ALT:
-        case nsIDOMKeyEvent::DOM_VK_META:
-          event.location = nsIDOMKeyEvent::DOM_KEY_LOCATION_LEFT;
-          break;
-        default:
-          event.location = nsIDOMKeyEvent::DOM_KEY_LOCATION_STANDARD;
-          break;
-      }
-      break;
-  }
-
-  event.refPoint.x = event.refPoint.y = 0;
-  event.time = PR_IntervalNow();
-  if (!(aAdditionalFlags & KEY_FLAG_NOT_SYNTHESIZED_FOR_TESTS)) {
-    event.mFlags.mIsSynthesizedForTests = true;
-  }
-
-  if (aAdditionalFlags & KEY_FLAG_PREVENT_DEFAULT) {
-    event.mFlags.mDefaultPrevented = true;
-  }
-
-  nsEventStatus status;
-  nsresult rv = widget->DispatchEvent(&event, status);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  *aDefaultActionTaken = (status != nsEventStatus_eConsumeNoDefault);
   
-  return NS_OK;
+  return nsContentUtils::SendKeyEvent(widget, aType, aKeyCode, aCharCode,
+                                      aModifiers, aAdditionalFlags,
+                                      aDefaultActionTaken);
 }
 
 NS_IMETHODIMP
@@ -1300,7 +1041,8 @@ nsDOMWindowUtils::SendNativeKeyEvent(int32_t aNativeKeyboardLayout,
                                      int32_t aNativeKeyCode,
                                      int32_t aModifiers,
                                      const nsAString& aCharacters,
-                                     const nsAString& aUnmodifiedCharacters)
+                                     const nsAString& aUnmodifiedCharacters,
+                                     nsIObserver* aObserver)
 {
   MOZ_RELEASE_ASSERT(nsContentUtils::IsCallerChrome());
 
@@ -1309,8 +1051,11 @@ nsDOMWindowUtils::SendNativeKeyEvent(int32_t aNativeKeyboardLayout,
   if (!widget)
     return NS_ERROR_FAILURE;
 
-  return widget->SynthesizeNativeKeyEvent(aNativeKeyboardLayout, aNativeKeyCode,
-                                          aModifiers, aCharacters, aUnmodifiedCharacters);
+  NS_DispatchToMainThread(NS_NewRunnableMethodWithArgs
+    <int32_t, int32_t, uint32_t, nsString, nsString, nsIObserver*>
+    (widget, &nsIWidget::SynthesizeNativeKeyEvent, aNativeKeyboardLayout,
+    aNativeKeyCode, aModifiers, aCharacters, aUnmodifiedCharacters, aObserver));
+  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -1318,7 +1063,8 @@ nsDOMWindowUtils::SendNativeMouseEvent(int32_t aScreenX,
                                        int32_t aScreenY,
                                        int32_t aNativeMessage,
                                        int32_t aModifierFlags,
-                                       nsIDOMElement* aElement)
+                                       nsIDOMElement* aElement,
+                                       nsIObserver* aObserver)
 {
   MOZ_RELEASE_ASSERT(nsContentUtils::IsCallerChrome());
 
@@ -1327,8 +1073,12 @@ nsDOMWindowUtils::SendNativeMouseEvent(int32_t aScreenX,
   if (!widget)
     return NS_ERROR_FAILURE;
 
-  return widget->SynthesizeNativeMouseEvent(LayoutDeviceIntPoint(aScreenX, aScreenY),
-                                            aNativeMessage, aModifierFlags);
+  NS_DispatchToMainThread(NS_NewRunnableMethodWithArgs
+    <LayoutDeviceIntPoint, int32_t, int32_t, nsIObserver*>
+    (widget, &nsIWidget::SynthesizeNativeMouseEvent,
+    LayoutDeviceIntPoint(aScreenX, aScreenY), aNativeMessage, aModifierFlags,
+    aObserver));
+  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -1340,7 +1090,8 @@ nsDOMWindowUtils::SendNativeMouseScrollEvent(int32_t aScreenX,
                                              double aDeltaZ,
                                              uint32_t aModifierFlags,
                                              uint32_t aAdditionalFlags,
-                                             nsIDOMElement* aElement)
+                                             nsIDOMElement* aElement,
+                                             nsIObserver* aObserver)
 {
   MOZ_RELEASE_ASSERT(nsContentUtils::IsCallerChrome());
 
@@ -1350,12 +1101,12 @@ nsDOMWindowUtils::SendNativeMouseScrollEvent(int32_t aScreenX,
     return NS_ERROR_FAILURE;
   }
 
-  return widget->SynthesizeNativeMouseScrollEvent(LayoutDeviceIntPoint(aScreenX,
-                                                                       aScreenY),
-                                                  aNativeMessage,
-                                                  aDeltaX, aDeltaY, aDeltaZ,
-                                                  aModifierFlags,
-                                                  aAdditionalFlags);
+  NS_DispatchToMainThread(NS_NewRunnableMethodWithArgs
+    <mozilla::LayoutDeviceIntPoint, uint32_t, double, double, double, uint32_t, uint32_t, nsIObserver*>
+    (widget, &nsIWidget::SynthesizeNativeMouseScrollEvent,
+    LayoutDeviceIntPoint(aScreenX, aScreenY), aNativeMessage, aDeltaX, aDeltaY,
+    aDeltaZ, aModifierFlags, aAdditionalFlags, aObserver));
+  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -1364,7 +1115,8 @@ nsDOMWindowUtils::SendNativeTouchPoint(uint32_t aPointerId,
                                        int32_t aScreenX,
                                        int32_t aScreenY,
                                        double aPressure,
-                                       uint32_t aOrientation)
+                                       uint32_t aOrientation,
+                                       nsIObserver* aObserver)
 {
   MOZ_RELEASE_ASSERT(nsContentUtils::IsCallerChrome());
 
@@ -1377,16 +1129,19 @@ nsDOMWindowUtils::SendNativeTouchPoint(uint32_t aPointerId,
     return NS_ERROR_INVALID_ARG;
   }
 
-  return widget->SynthesizeNativeTouchPoint(aPointerId,
-                                            (nsIWidget::TouchPointerState)aTouchState,
-                                            nsIntPoint(aScreenX, aScreenY),
-                                            aPressure, aOrientation);
+  NS_DispatchToMainThread(NS_NewRunnableMethodWithArgs
+    <uint32_t, nsIWidget::TouchPointerState, nsIntPoint, double, uint32_t, nsIObserver*>
+    (widget, &nsIWidget::SynthesizeNativeTouchPoint, aPointerId,
+    (nsIWidget::TouchPointerState)aTouchState, nsIntPoint(aScreenX, aScreenY),
+    aPressure, aOrientation, aObserver));
+  return NS_OK;
 }
 
 NS_IMETHODIMP
 nsDOMWindowUtils::SendNativeTouchTap(int32_t aScreenX,
                                      int32_t aScreenY,
-                                     bool aLongTap)
+                                     bool aLongTap,
+                                     nsIObserver* aObserver)
 {
   MOZ_RELEASE_ASSERT(nsContentUtils::IsCallerChrome());
 
@@ -1394,11 +1149,16 @@ nsDOMWindowUtils::SendNativeTouchTap(int32_t aScreenX,
   if (!widget) {
     return NS_ERROR_FAILURE;
   }
-  return widget->SynthesizeNativeTouchTap(nsIntPoint(aScreenX, aScreenY), aLongTap);
+
+  NS_DispatchToMainThread(NS_NewRunnableMethodWithArgs
+    <nsIntPoint, bool, nsIObserver*>
+    (widget, &nsIWidget::SynthesizeNativeTouchTap,
+    nsIntPoint(aScreenX, aScreenY), aLongTap, aObserver));
+  return NS_OK;
 }
 
 NS_IMETHODIMP
-nsDOMWindowUtils::ClearNativeTouchSequence()
+nsDOMWindowUtils::ClearNativeTouchSequence(nsIObserver* aObserver)
 {
   MOZ_RELEASE_ASSERT(nsContentUtils::IsCallerChrome());
 
@@ -1406,7 +1166,10 @@ nsDOMWindowUtils::ClearNativeTouchSequence()
   if (!widget) {
     return NS_ERROR_FAILURE;
   }
-  return widget->ClearNativeTouchSequence();
+
+  NS_DispatchToMainThread(NS_NewRunnableMethodWithArgs<nsIObserver*>
+    (widget, &nsIWidget::ClearNativeTouchSequence, aObserver));
+  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -1443,11 +1206,7 @@ nsDOMWindowUtils::GetWidget(nsPoint* aOffset)
     nsIDocShell *docShell = window->GetDocShell();
     if (docShell) {
       nsCOMPtr<nsIPresShell> presShell = docShell->GetPresShell();
-      if (presShell) {
-        nsIFrame* frame = presShell->GetRootFrame();
-        if (frame)
-          return frame->GetView()->GetNearestWidget(aOffset);
-      }
+      return nsContentUtils::GetWidget(presShell, aOffset);
     }
   }
 
@@ -1579,7 +1338,7 @@ nsDOMWindowUtils::SendSimpleGestureEvent(const nsAString& aType,
     return NS_ERROR_FAILURE;
  
   WidgetSimpleGestureEvent event(true, msg, widget);
-  event.modifiers = GetWidgetModifiers(aModifiers);
+  event.modifiers = nsContentUtils::GetWidgetModifiers(aModifiers);
   event.direction = aDirection;
   event.delta = aDelta;
   event.clickCount = aClickCount;
@@ -1589,7 +1348,7 @@ nsDOMWindowUtils::SendSimpleGestureEvent(const nsAString& aType,
   if (!presContext)
     return NS_ERROR_FAILURE;
 
-  event.refPoint = ToWidgetPoint(CSSPoint(aX, aY), offset, presContext);
+  event.refPoint = nsContentUtils::ToWidgetPoint(CSSPoint(aX, aY), offset, presContext);
 
   nsEventStatus status;
   return widget->DispatchEvent(&event, status);
@@ -2481,6 +2240,27 @@ nsDOMWindowUtils::GetLayerManagerRemote(bool* retval)
 }
 
 NS_IMETHODIMP
+nsDOMWindowUtils::GetSupportsHardwareH264Decoding(bool* retval)
+{
+  MOZ_RELEASE_ASSERT(nsContentUtils::IsCallerChrome());
+
+#ifdef MOZ_FMP4
+  nsCOMPtr<nsIWidget> widget = GetWidget();
+  if (!widget)
+    return NS_ERROR_FAILURE;
+
+  LayerManager *mgr = widget->GetLayerManager();
+  if (!mgr)
+    return NS_ERROR_FAILURE;
+
+  *retval = MP4Decoder::IsVideoAccelerated(mgr->GetCompositorBackendType());
+#else
+  *retval = false;
+#endif
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 nsDOMWindowUtils::StartFrameTimeRecording(uint32_t *startIndex)
 {
   MOZ_RELEASE_ASSERT(nsContentUtils::IsCallerChrome());
@@ -2527,7 +2307,7 @@ nsDOMWindowUtils::StopFrameTimeRecording(uint32_t   startIndex,
   mgr->StopFrameTimeRecording(startIndex, tmpFrameIntervals);
   *frameCount = tmpFrameIntervals.Length();
 
-  *frameIntervals = (float*)nsMemory::Alloc(*frameCount * sizeof(float));
+  *frameIntervals = (float*)moz_xmalloc(*frameCount * sizeof(float));
 
   /* copy over the frame intervals and paint times into the arrays we just allocated */
   for (uint32_t i = 0; i < *frameCount; i++) {
@@ -2586,25 +2366,27 @@ nsDOMWindowUtils::AdvanceTimeAndRefresh(int64_t aMilliseconds)
   // Before we advance the time, we should trigger any animations that are
   // waiting to start. This is because there are many tests that call this
   // which expect animations to start immediately. Ideally, we should make
-  // all these tests do an asynchronous wait on the corresponding animation
-  // player's 'ready' promise before continuing. Then we could remove the
-  // special handling here and the code path followed when testing would
-  // more closely match the code path during regular operation. Filed as
-  // bug 1112957.
+  // all these tests do an asynchronous wait on the corresponding animation's
+  // 'ready' promise before continuing. Then we could remove the special
+  // handling here and the code path followed when testing would more closely
+  // match the code path during regular operation. Filed as bug 1112957.
   nsCOMPtr<nsIDocument> doc = GetDocument();
   if (doc) {
-    PendingPlayerTracker* tracker = doc->GetPendingPlayerTracker();
+    PendingAnimationTracker* tracker = doc->GetPendingAnimationTracker();
     if (tracker) {
-      tracker->TriggerPendingPlayersNow();
+      tracker->TriggerPendingAnimationsNow();
     }
   }
 
-  nsRefreshDriver* driver = GetPresContext()->RefreshDriver();
-  driver->AdvanceTimeAndRefresh(aMilliseconds);
+  nsPresContext* presContext = GetPresContext();
+  if (presContext) {
+    nsRefreshDriver* driver = presContext->RefreshDriver();
+    driver->AdvanceTimeAndRefresh(aMilliseconds);
 
-  RefPtr<LayerTransactionChild> transaction = GetLayerTransaction();
-  if (transaction && transaction->IPCOpen()) {
-    transaction->SendSetTestSampleTime(driver->MostRecentRefresh());
+    RefPtr<LayerTransactionChild> transaction = GetLayerTransaction();
+    if (transaction && transaction->IPCOpen()) {
+      transaction->SendSetTestSampleTime(driver->MostRecentRefresh());
+    }
   }
 
   return NS_OK;
@@ -2623,8 +2405,10 @@ nsDOMWindowUtils::RestoreNormalRefresh()
     transaction->SendLeaveTestMode();
   }
 
-  nsRefreshDriver* driver = GetPresContext()->RefreshDriver();
-  driver->RestoreNormalRefresh();
+  if (nsPresContext* pc = GetPresContext()) {
+    nsRefreshDriver* driver = pc->RefreshDriver();
+    driver->RestoreNormalRefresh();
+  }
 
   return NS_OK;
 }
@@ -3247,54 +3031,10 @@ nsDOMWindowUtils::GetPlugins(JSContext* cx, JS::MutableHandle<JS::Value> aPlugin
   return NS_OK;
 }
 
-static void
-MaybeReflowForInflationScreenSizeChange(nsPresContext *aPresContext)
-{
-  if (aPresContext) {
-    nsIPresShell* presShell = aPresContext->GetPresShell();
-    bool fontInflationWasEnabled = presShell->FontSizeInflationEnabled();
-    presShell->NotifyFontSizeInflationEnabledIsDirty();
-    bool changed = false;
-    if (presShell && presShell->FontSizeInflationEnabled() &&
-        presShell->FontSizeInflationMinTwips() != 0) {
-      aPresContext->ScreenSizeInchesForFontInflation(&changed);
-    }
-
-    changed = changed ||
-      (fontInflationWasEnabled != presShell->FontSizeInflationEnabled());
-    if (changed) {
-      nsCOMPtr<nsIDocShell> docShell = aPresContext->GetDocShell();
-      if (docShell) {
-        nsCOMPtr<nsIContentViewer> cv;
-        docShell->GetContentViewer(getter_AddRefs(cv));
-        if (cv) {
-          nsTArray<nsCOMPtr<nsIContentViewer> > array;
-          cv->AppendSubtree(array);
-          for (uint32_t i = 0, iEnd = array.Length(); i < iEnd; ++i) {
-            nsCOMPtr<nsIPresShell> shell;
-            nsCOMPtr<nsIContentViewer> cv = array[i];
-            cv->GetPresShell(getter_AddRefs(shell));
-            if (shell) {
-              nsIFrame *rootFrame = shell->GetRootFrame();
-              if (rootFrame) {
-                shell->FrameNeedsReflow(rootFrame,
-                                        nsIPresShell::eStyleChange,
-                                        NS_FRAME_IS_DIRTY);
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
 NS_IMETHODIMP
 nsDOMWindowUtils::SetScrollPositionClampingScrollPortSize(float aWidth, float aHeight)
 {
-  if (!nsContentUtils::IsCallerChrome()) {
-    return NS_ERROR_DOM_SECURITY_ERR;
-  }
+  MOZ_RELEASE_ASSERT(nsContentUtils::IsCallerChrome());
 
   if (!(aWidth >= 0.0 && aHeight >= 0.0)) {
     return NS_ERROR_ILLEGAL_VALUE;
@@ -3305,17 +3045,7 @@ nsDOMWindowUtils::SetScrollPositionClampingScrollPortSize(float aWidth, float aH
     return NS_ERROR_FAILURE;
   }
 
-  presShell->SetScrollPositionClampingScrollPortSize(
-    nsPresContext::CSSPixelsToAppUnits(aWidth),
-    nsPresContext::CSSPixelsToAppUnits(aHeight));
-
-  // When the "font.size.inflation.minTwips" preference is set, the
-  // layout depends on the size of the screen.  Since when the size
-  // of the screen changes, the scroll position clamping scroll port
-  // size also changes, we hook in the needed updates here rather
-  // than adding a separate notification just for this change.
-  nsPresContext* presContext = GetPresContext();
-  MaybeReflowForInflationScreenSizeChange(presContext);
+  nsLayoutUtils::SetScrollPositionClampingScrollPortSize(presShell, CSSSize(aWidth, aHeight));
 
   return NS_OK;
 }
@@ -3430,7 +3160,7 @@ nsDOMWindowUtils::SelectAtPoint(float aX, float aY, uint32_t aSelectBehavior,
   nsPoint offset;
   nsCOMPtr<nsIWidget> widget = GetWidget(&offset);
   LayoutDeviceIntPoint pt =
-    ToWidgetPoint(CSSPoint(aX, aY), offset, GetPresContext());
+    nsContentUtils::ToWidgetPoint(CSSPoint(aX, aY), offset, GetPresContext());
   nsPoint ptInRoot =
     nsLayoutUtils::GetEventCoordinatesRelativeTo(widget, pt, rootFrame);
   nsIFrame* targetFrame = nsLayoutUtils::GetFrameForPoint(rootFrame, ptInRoot);
@@ -3766,7 +3496,7 @@ nsDOMWindowUtils::GetOMTAStyle(nsIDOMElement* aElement,
     ErrorResult rv;
     cssValue->GetCssText(text, rv);
     aResult.Assign(text);
-    return rv.ErrorCode();
+    return rv.StealNSResult();
   } else {
     aResult.Truncate();
   }
@@ -3879,6 +3609,18 @@ nsDOMWindowUtils::GetCompositorAPZTestData(JSContext* aContext,
     }
   }
 
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsDOMWindowUtils::PostRestyleSelfEvent(nsIDOMElement* aElement)
+{
+  nsCOMPtr<Element> element = do_QueryInterface(aElement);
+  if (!element) {
+    return NS_ERROR_INVALID_ARG;
+  }
+
+  nsLayoutUtils::PostRestyleEvent(element, eRestyle_Self, nsChangeHint(0));
   return NS_OK;
 }
 

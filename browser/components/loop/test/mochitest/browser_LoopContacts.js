@@ -1,6 +1,8 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
+"use strict";
+
 const {LoopContacts} = Cu.import("resource:///modules/loop/LoopContacts.jsm", {});
 const {LoopStorage} = Cu.import("resource:///modules/loop/LoopStorage.jsm", {});
 
@@ -24,7 +26,7 @@ const kContacts = [{
   category: ["google"],
   published: 1406798311748,
   updated: 1406798311748
-},{
+}, {
   id: 2,
   name: ["Bob Banana"],
   email: [{
@@ -104,7 +106,7 @@ const normalizeContact = function(contact) {
   // Get a copy of contact without private properties.
   for (let prop of Object.getOwnPropertyNames(contact)) {
     if (!prop.startsWith("_")) {
-      result[prop] = contact[prop]
+      result[prop] = contact[prop];
     }
   }
   return result;
@@ -187,7 +189,7 @@ add_task(function* () {
         Assert.ok(!err, "There shouldn't be an error");
         Assert.equal(found.length, 0, "There shouldn't be any contacts left");
         resolve();
-      })
+      });
     });
   });
 });
@@ -221,8 +223,13 @@ add_task(function* () {
       Assert.ok(!err, "There shouldn't be an error");
       Assert.equal(result.length, toRetrieve.length, "Result list should be the same " +
                    "size as the list of items to retrieve");
+
+      function resultFilter(c) {
+        return c._guid == this._guid;
+      }
+
       for (let contact of toRetrieve) {
-        let found = result.filter(c => c._guid == contact._guid);
+        let found = result.filter(resultFilter.bind(contact));
         Assert.ok(found.length, "Contact " + contact._guid + " should be in the list");
         compareContacts(found[0], contact);
       }

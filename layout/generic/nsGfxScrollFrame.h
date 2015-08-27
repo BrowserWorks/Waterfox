@@ -27,7 +27,6 @@ class nsPresContext;
 class nsIPresShell;
 class nsIContent;
 class nsIAtom;
-class nsIScrollFrameInternal;
 class nsPresState;
 class nsIScrollPositionListener;
 struct ScrollReflowState;
@@ -499,6 +498,12 @@ public:
   // If true, the layer should always be active because we always build a
   // scrollable layer. Used for asynchronous scrolling.
   bool mShouldBuildScrollableLayer:1;
+
+  // Whether we are the root scroll frame that is used for containerful
+  // scrolling with a display port. If true, the scrollable frame
+  // shouldn't attach frame metrics to its layers because the container
+  // will already have the necessary frame metrics.
+  bool mIsScrollableLayerInRootContainer:1;
 
   // If true, add clipping in ScrollFrameHelper::ComputeFrameMetrics.
   bool mAddClipRectToLayer:1;

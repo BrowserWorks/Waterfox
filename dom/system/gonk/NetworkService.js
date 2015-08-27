@@ -23,10 +23,6 @@ XPCOMUtils.defineLazyServiceGetter(this, "gNetworkWorker",
                                    "@mozilla.org/network/worker;1",
                                    "nsINetworkWorker");
 
-XPCOMUtils.defineLazyServiceGetter(this, "gPACGenerator",
-                                   "@mozilla.org/pac-generator;1",
-                                   "nsIPACGenerator");
-
 // 1xx - Requested action is proceeding
 const NETD_COMMAND_PROCEEDING   = 100;
 // 2xx - Requested action has been successfully completed
@@ -40,9 +36,6 @@ const NETD_COMMAND_ERROR        = 500;
 const NETD_COMMAND_UNSOLICITED  = 600;
 
 const WIFI_CTRL_INTERFACE = "wl0.1";
-
-const PROXY_TYPE_MANUAL = Ci.nsIProtocolProxyService.PROXYCONFIG_MANUAL;
-const PROXY_TYPE_PAC = Ci.nsIProtocolProxyService.PROXYCONFIG_PAC;
 
 let debug;
 function updateDebug() {
@@ -375,13 +368,15 @@ NetworkService.prototype = {
     });
   },
 
-  resetRoutingTable: function(network) {
+  resetRoutingTable: function(network, callback) {
     let options = {
       cmd: "removeNetworkRoute",
       ifname: network.name
     };
 
-    this.controlMessage(options);
+    this.controlMessage(options, function(result) {
+      callback.nativeCommandResult(!result.error);
+    });
   },
 
   setDNS: function(networkInterface, callback) {
@@ -391,7 +386,8 @@ NetworkService.prototype = {
       cmd: "setDNS",
       ifname: networkInterface.name,
       domain: "mozilla." + networkInterface.name + ".doman",
-      dnses: dnses
+      dnses: dnses,
+      gateways: networkInterface.getGateways()
     };
     this.controlMessage(options, function(result) {
       callback.setDnsResult(result.success ? null : result.reason);
@@ -412,7 +408,7 @@ NetworkService.prototype = {
     });
   },
 
-  removeDefaultRoute: function(network) {
+  removeDefaultRoute: function(network, callback) {
     debug("Remove default route for " + network.name);
     let gateways = network.getGateways();
     let options = {
@@ -420,7 +416,9 @@ NetworkService.prototype = {
       ifname: network.name,
       gateways: gateways
     };
-    this.controlMessage(options);
+    this.controlMessage(options, function(result) {
+      callback.nativeCommandResult(!result.error);
+    });
   },
 
   _routeToString: function(interfaceName, host, prefixLength, gateway) {
@@ -493,7 +491,7 @@ NetworkService.prototype = {
     });
   },
 
-  addSecondaryRoute: function(ifname, route) {
+  addSecondaryRoute: function(ifname, route, callback) {
     debug("Going to add route to secondary table on " + ifname);
     let options = {
       cmd: "addSecondaryRoute",
@@ -502,10 +500,12 @@ NetworkService.prototype = {
       prefix: route.prefix,
       gateway: route.gateway
     };
-    this.controlMessage(options);
+    this.controlMessage(options, function(result) {
+      callback.nativeCommandResult(!result.error);
+    });
   },
 
-  removeSecondaryRoute: function(ifname, route) {
+  removeSecondaryRoute: function(ifname, route, callback) {
     debug("Going to remove route from secondary table on " + ifname);
     let options = {
       cmd: "removeSecondaryRoute",
@@ -514,68 +514,9 @@ NetworkService.prototype = {
       prefix: route.prefix,
       gateway: route.gateway
     };
-    this.controlMessage(options);
-  },
-
-  setNetworkProxy: function(network) {
-    try {
-      if (!network.httpProxyHost || network.httpProxyHost === "") {
-        // Sets direct connection to internet.
-        this.clearNetworkProxy();
-
-        debug("No proxy support for " + network.name + " network interface.");
-        return;
-      }
-
-      debug("Going to set proxy settings for " + network.name + " network interface.");
-
-      // Do not use this proxy server for all protocols.
-      Services.prefs.setBoolPref("network.proxy.share_proxy_settings", false);
-      Services.prefs.setCharPref("network.proxy.http", network.httpProxyHost);
-      Services.prefs.setCharPref("network.proxy.ssl", network.httpProxyHost);
-      let port = network.httpProxyPort === 0 ? 8080 : network.httpProxyPort;
-      Services.prefs.setIntPref("network.proxy.http_port", port);
-      Services.prefs.setIntPref("network.proxy.ssl_port", port);
-
-      let usePAC;
-      try {
-        usePAC = Services.prefs.getBoolPref("network.proxy.pac_generator");
-      } catch (ex) {}
-
-      if (usePAC) {
-        Services.prefs.setCharPref("network.proxy.autoconfig_url",
-                                   gPACGenerator.generate());
-        Services.prefs.setIntPref("network.proxy.type", PROXY_TYPE_PAC);
-      } else {
-        Services.prefs.setIntPref("network.proxy.type", PROXY_TYPE_MANUAL);
-      }
-    } catch(ex) {
-        debug("Exception " + ex + ". Unable to set proxy setting for " +
-                         network.name + " network interface.");
-    }
-  },
-
-  clearNetworkProxy: function() {
-    debug("Going to clear all network proxy.");
-
-    Services.prefs.clearUserPref("network.proxy.share_proxy_settings");
-    Services.prefs.clearUserPref("network.proxy.http");
-    Services.prefs.clearUserPref("network.proxy.http_port");
-    Services.prefs.clearUserPref("network.proxy.ssl");
-    Services.prefs.clearUserPref("network.proxy.ssl_port");
-
-    let usePAC;
-    try {
-      usePAC = Services.prefs.getBoolPref("network.proxy.pac_generator");
-    } catch (ex) {}
-
-    if (usePAC) {
-      Services.prefs.setCharPref("network.proxy.autoconfig_url",
-                                 gPACGenerator.generate());
-      Services.prefs.setIntPref("network.proxy.type", PROXY_TYPE_PAC);
-    } else {
-      Services.prefs.clearUserPref("network.proxy.type");
-    }
+    this.controlMessage(options, function(result) {
+      callback.nativeCommandResult(!result.error);
+    });
   },
 
   // Enable/Disable DHCP server.
@@ -760,6 +701,23 @@ NetworkService.prototype = {
 
     this.controlMessage(params, function(result) {
       callback.nativeCommandResult(!result.error);
+    });
+  },
+
+  getNetId: function(interfaceName) {
+    let params = {
+      cmd: "getNetId",
+      ifname: interfaceName
+    };
+
+    return new Promise((aResolve, aReject) => {
+      this.controlMessage(params, result => {
+        if (result.error) {
+          aReject(result.reason);
+          return;
+        }
+        aResolve(result.netId);
+      });
     });
   },
 };

@@ -40,7 +40,7 @@ void vp9_foreach_transformed_block_in_plane(
     const MACROBLOCKD *const xd, BLOCK_SIZE bsize, int plane,
     foreach_transformed_block_visitor visit, void *arg) {
   const struct macroblockd_plane *const pd = &xd->plane[plane];
-  const MB_MODE_INFO* mbmi = &xd->mi[0].src_mi->mbmi;
+  const MB_MODE_INFO* mbmi = &xd->mi[0]->mbmi;
   // block and transform sizes, in number of 4x4 blocks log 2 ("*_b")
   // 4x4=0, 8x8=2, 16x16=4, 32x32=6, 64x64=8
   // transform size varies per plane, look it up in a common way.
@@ -50,39 +50,25 @@ void vp9_foreach_transformed_block_in_plane(
   const int num_4x4_w = num_4x4_blocks_wide_lookup[plane_bsize];
   const int num_4x4_h = num_4x4_blocks_high_lookup[plane_bsize];
   const int step = 1 << (tx_size << 1);
-  int i;
+  int i = 0, r, c;
 
   // If mb_to_right_edge is < 0 we are in a situation in which
   // the current block size extends into the UMV and we won't
   // visit the sub blocks that are wholly within the UMV.
-  if (xd->mb_to_right_edge < 0 || xd->mb_to_bottom_edge < 0) {
-    int r, c;
+  const int max_blocks_wide = num_4x4_w + (xd->mb_to_right_edge >= 0 ? 0 :
+      xd->mb_to_right_edge >> (5 + pd->subsampling_x));
+  const int max_blocks_high = num_4x4_h + (xd->mb_to_bottom_edge >= 0 ? 0 :
+      xd->mb_to_bottom_edge >> (5 + pd->subsampling_y));
 
-    int max_blocks_wide = num_4x4_w;
-    int max_blocks_high = num_4x4_h;
-
-    // xd->mb_to_right_edge is in units of pixels * 8.  This converts
-    // it to 4x4 block sizes.
-    if (xd->mb_to_right_edge < 0)
-      max_blocks_wide += (xd->mb_to_right_edge >> (5 + pd->subsampling_x));
-
-    if (xd->mb_to_bottom_edge < 0)
-      max_blocks_high += (xd->mb_to_bottom_edge >> (5 + pd->subsampling_y));
-
-    i = 0;
-    // Unlike the normal case - in here we have to keep track of the
-    // row and column of the blocks we use so that we know if we are in
-    // the unrestricted motion border.
-    for (r = 0; r < num_4x4_h; r += (1 << tx_size)) {
-      for (c = 0; c < num_4x4_w; c += (1 << tx_size)) {
-        if (r < max_blocks_high && c < max_blocks_wide)
-          visit(plane, i, plane_bsize, tx_size, arg);
-        i += step;
-      }
+  // Keep track of the row and column of the blocks we use so that we know
+  // if we are in the unrestricted motion border.
+  for (r = 0; r < max_blocks_high; r += (1 << tx_size)) {
+    for (c = 0; c < num_4x4_w; c += (1 << tx_size)) {
+      // Skip visiting the sub blocks that are wholly within the UMV.
+      if (c < max_blocks_wide)
+        visit(plane, i, plane_bsize, tx_size, arg);
+      i += step;
     }
-  } else {
-    for (i = 0; i < num_4x4_w * num_4x4_h; i += step)
-      visit(plane, i, plane_bsize, tx_size, arg);
   }
 }
 
@@ -92,7 +78,7 @@ void vp9_foreach_transformed_block(const MACROBLOCKD* const xd,
                                    void *arg) {
   int plane;
 
-  for (plane = 0; plane < MAX_MB_PLANE; plane++)
+  for (plane = 0; plane < MAX_MB_PLANE; ++plane)
     vp9_foreach_transformed_block_in_plane(xd, bsize, plane, visit, arg);
 }
 
@@ -117,7 +103,7 @@ void vp9_set_contexts(const MACROBLOCKD *xd, struct macroblockd_plane *pd,
     for (i = above_contexts; i < tx_size_in_blocks; ++i)
       a[i] = 0;
   } else {
-    vpx_memset(a, has_eob, sizeof(ENTROPY_CONTEXT) * tx_size_in_blocks);
+    memset(a, has_eob, sizeof(ENTROPY_CONTEXT) * tx_size_in_blocks);
   }
 
   // left
@@ -134,7 +120,7 @@ void vp9_set_contexts(const MACROBLOCKD *xd, struct macroblockd_plane *pd,
     for (i = left_contexts; i < tx_size_in_blocks; ++i)
       l[i] = 0;
   } else {
-    vpx_memset(l, has_eob, sizeof(ENTROPY_CONTEXT) * tx_size_in_blocks);
+    memset(l, has_eob, sizeof(ENTROPY_CONTEXT) * tx_size_in_blocks);
   }
 }
 

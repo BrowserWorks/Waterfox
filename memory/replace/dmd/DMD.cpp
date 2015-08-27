@@ -51,6 +51,8 @@
 // and rarely used) valloc.
 #define MOZ_REPLACE_ONLY_MEMALIGN 1
 
+#ifndef PAGE_SIZE
+#define DMD_DEFINED_PAGE_SIZE
 #ifdef XP_WIN
 #define PAGE_SIZE GetPageSize()
 static long GetPageSize()
@@ -59,12 +61,16 @@ static long GetPageSize()
   GetSystemInfo(&si);
   return si.dwPageSize;
 }
-#else
+#else // XP_WIN
 #define PAGE_SIZE sysconf(_SC_PAGESIZE)
-#endif
+#endif // XP_WIN
+#endif // PAGE_SIZE
 #include "replace_malloc.h"
 #undef MOZ_REPLACE_ONLY_MEMALIGN
+#ifdef DMD_DEFINED_PAGE_SIZE
+#undef DMD_DEFINED_PAGE_SIZE
 #undef PAGE_SIZE
+#endif // DMD_DEFINED_PAGE_SIZE
 
 #include "DMD.h"
 
@@ -76,13 +82,13 @@ class DMDBridge : public ReplaceMallocBridge
   virtual DMDFuncs* GetDMDFuncs() override;
 };
 
-static DMDBridge sDMDBridge;
-static DMDFuncs sDMDFuncs;
+static DMDBridge* gDMDBridge;
+static DMDFuncs gDMDFuncs;
 
 DMDFuncs*
 DMDBridge::GetDMDFuncs()
 {
-  return &sDMDFuncs;
+  return &gDMDFuncs;
 }
 
 inline void
@@ -90,7 +96,7 @@ StatusMsg(const char* aFmt, ...)
 {
   va_list ap;
   va_start(ap, aFmt);
-  sDMDFuncs.StatusMsg(aFmt, ap);
+  gDMDFuncs.StatusMsg(aFmt, ap);
   va_end(ap);
 }
 
@@ -1205,7 +1211,7 @@ replace_init(const malloc_table_t* aMallocTable)
 ReplaceMallocBridge*
 replace_get_bridge()
 {
-  return &mozilla::dmd::sDMDBridge;
+  return mozilla::dmd::gDMDBridge;
 }
 
 void*
@@ -1512,6 +1518,7 @@ static void
 Init(const malloc_table_t* aMallocTable)
 {
   gMallocTable = aMallocTable;
+  gDMDBridge = InfallibleAllocPolicy::new_<DMDBridge>();
 
   // DMD is controlled by the |DMD| environment variable.
   const char* e = getenv("DMD");

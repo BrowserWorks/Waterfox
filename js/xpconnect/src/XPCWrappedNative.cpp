@@ -1466,7 +1466,7 @@ CallMethodHelper::~CallMethodHelper()
                 }
 
                 // always free the array itself
-                nsMemory::Free(p);
+                free(p);
             } else {
                 // Clean up single parameters (if requested).
                 if (dp->DoesValNeedCleanup())
@@ -2033,7 +2033,7 @@ CallMethodHelper::CleanupParam(nsXPTCMiniVariant& param, nsXPTType& type)
             break;
         default:
             MOZ_ASSERT(!type.IsArithmetic(), "Cleanup requested on unexpected type.");
-            nsMemory::Free(param.val.p);
+            free(param.val.p);
             break;
     }
 }
@@ -2319,9 +2319,9 @@ static void DEBUG_CheckClassInfoClaims(XPCWrappedNative* wrapper)
                interfaceName);
 
         if (className)
-            nsMemory::Free(className);
+            free(className);
         if (contractID)
-            nsMemory::Free(contractID);
+            free(contractID);
     }
 }
 #endif
@@ -2350,14 +2350,5 @@ XPCJSObjectHolder::~XPCJSObjectHolder()
 void
 XPCJSObjectHolder::TraceJS(JSTracer* trc)
 {
-    trc->setTracingDetails(GetTraceName, this, 0);
     JS_CallObjectTracer(trc, &mJSObj, "XPCJSObjectHolder::mJSObj");
-}
-
-// static
-void
-XPCJSObjectHolder::GetTraceName(JSTracer* trc, char* buf, size_t bufsize)
-{
-    JS_snprintf(buf, bufsize, "XPCJSObjectHolder[0x%p].mJSObj",
-                trc->debugPrintArg());
 }

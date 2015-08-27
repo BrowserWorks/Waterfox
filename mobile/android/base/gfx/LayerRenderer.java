@@ -145,7 +145,7 @@ public class LayerRenderer implements Tabs.OnTabsChangedListener {
 
     public LayerRenderer(LayerView view) {
         mView = view;
-        setOverscrollColor(R.color.background_normal);
+        setOverscrollColor(R.color.toolbar_grey);
 
         Bitmap scrollbarImage = view.getScrollbarImage();
         IntSize size = new IntSize(scrollbarImage.getWidth(), scrollbarImage.getHeight());
@@ -160,12 +160,6 @@ public class LayerRenderer implements Tabs.OnTabsChangedListener {
 
         mFrameTimings = new int[60];
         mCurrentFrame = mFrameTimingsSum = mDroppedFrames = 0;
-
-        // Initialize the FloatBuffer that will be used to store all vertices and texture
-        // coordinates in draw() commands.
-        mCoordByteBuffer = DirectBufferAllocator.allocate(COORD_BUFFER_SIZE * 4);
-        mCoordByteBuffer.order(ByteOrder.nativeOrder());
-        mCoordBuffer = mCoordByteBuffer.asFloatBuffer();
 
         Tabs.registerOnTabsChangedListener(this);
         mZoomedViewListeners = new ArrayList<LayerView.ZoomedViewListener>();
@@ -190,9 +184,11 @@ public class LayerRenderer implements Tabs.OnTabsChangedListener {
     }
 
     public void destroy() {
-        DirectBufferAllocator.free(mCoordByteBuffer);
-        mCoordByteBuffer = null;
-        mCoordBuffer = null;
+        if (mCoordByteBuffer != null) {
+            DirectBufferAllocator.free(mCoordByteBuffer);
+            mCoordByteBuffer = null;
+            mCoordBuffer = null;
+        }
         mHorizScrollLayer.destroy();
         mVertScrollLayer.destroy();
         Tabs.unregisterOnTabsChangedListener(this);
@@ -348,10 +344,17 @@ public class LayerRenderer implements Tabs.OnTabsChangedListener {
 
     private RenderContext createContext(RectF viewport, RectF pageRect, float zoomFactor, PointF offset) {
         if (mCoordBuffer == null) {
-            throw new IllegalStateException();
+            // Initialize the FloatBuffer that will be used to store all vertices and texture
+            // coordinates in draw() commands.
+            mCoordByteBuffer = DirectBufferAllocator.allocate(COORD_BUFFER_SIZE * 4);
+            mCoordByteBuffer.order(ByteOrder.nativeOrder());
+            mCoordBuffer = mCoordByteBuffer.asFloatBuffer();
+            if (mCoordBuffer == null) {
+                throw new IllegalStateException();
+            }
         }
-        return new RenderContext(viewport, pageRect, zoomFactor, offset, mPositionHandle, mTextureHandle,
-                                 mCoordBuffer);
+        return new RenderContext(viewport, pageRect, zoomFactor, offset,
+                                 mPositionHandle, mTextureHandle, mCoordBuffer);
     }
 
     private void updateDroppedFrames(long frameStartTime) {
@@ -682,7 +685,7 @@ public class LayerRenderer implements Tabs.OnTabsChangedListener {
         if (msg == Tabs.TabEvents.SELECTED) {
             if (mView != null) {
                 final int overscrollColor =
-                        (tab.isPrivate() ? R.color.background_private : R.color.background_normal);
+                        (tab.isPrivate() ? R.color.private_toolbar_grey : R.color.toolbar_grey);
                 setOverscrollColor(overscrollColor);
 
                 if (mView.getChildAt(0) != null) {

@@ -11,8 +11,6 @@
 #include "mozilla/gfx/2D.h"
 #include "nsAutoPtr.h"
 
-class gfxContext;
-
 namespace mozilla {
 namespace layers {
 
@@ -48,7 +46,7 @@ protected:
   virtual ~BasicCompositor();
 
 public:
-  virtual bool Initialize() override { return true; };
+  virtual bool Initialize() override;
 
   virtual void Destroy() override;
 

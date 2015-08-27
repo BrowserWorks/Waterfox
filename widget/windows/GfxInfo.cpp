@@ -222,7 +222,7 @@ enum {
   kWindows7 = 0x60001,
   kWindows8 = 0x60002,
   kWindows8_1 = 0x60003,
-  kWindows10 = 0x60004
+  kWindows10 = 0xA0000
 };
 
 static int32_t
@@ -969,14 +969,23 @@ GfxInfo::GetGfxDriverInfo()
     IMPLEMENT_INTEL_DRIVER_BLOCKLIST_D2D(DRIVER_OS_WINDOWS_VISTA, IntelGMA950,   V(7,14,10,1504));
     IMPLEMENT_INTEL_DRIVER_BLOCKLIST_D2D(DRIVER_OS_WINDOWS_VISTA, IntelGMA3150,  V(7,14,10,2124));
     IMPLEMENT_INTEL_DRIVER_BLOCKLIST_D2D(DRIVER_OS_WINDOWS_VISTA, IntelGMAX3000, V(7,15,10,1666));
-    IMPLEMENT_INTEL_DRIVER_BLOCKLIST_D2D(DRIVER_OS_WINDOWS_VISTA, IntelGMAX4500HD, V(8,15,10,2202));
+    IMPLEMENT_INTEL_DRIVER_BLOCKLIST_D2D(DRIVER_OS_WINDOWS_VISTA, IntelHDGraphicsToIvyBridge, V(8,15,10,2202));
 
     IMPLEMENT_INTEL_DRIVER_BLOCKLIST_D2D(DRIVER_OS_WINDOWS_7, IntelGMA500,   V(5,0,0,2026));
     IMPLEMENT_INTEL_DRIVER_BLOCKLIST_D2D(DRIVER_OS_WINDOWS_7, IntelGMA900,   GfxDriverInfo::allDriverVersions);
     IMPLEMENT_INTEL_DRIVER_BLOCKLIST_D2D(DRIVER_OS_WINDOWS_7, IntelGMA950,   V(8,15,10,1930));
     IMPLEMENT_INTEL_DRIVER_BLOCKLIST_D2D(DRIVER_OS_WINDOWS_7, IntelGMA3150,  V(8,14,10,2117));
     IMPLEMENT_INTEL_DRIVER_BLOCKLIST_D2D(DRIVER_OS_WINDOWS_7, IntelGMAX3000, V(8,15,10,1930));
-    IMPLEMENT_INTEL_DRIVER_BLOCKLIST_D2D(DRIVER_OS_WINDOWS_7, IntelGMAX4500HD, V(8,15,10,2202));
+    IMPLEMENT_INTEL_DRIVER_BLOCKLIST_D2D(DRIVER_OS_WINDOWS_7, IntelHDGraphicsToIvyBridge, V(8,15,10,2202));
+
+    /* Disable Direct2D on Intel GMAX4500 devices because of rendering corruption discovered
+     * in bug 1180379. These seems to affect even the most recent drivers. We're black listing
+     * all of the devices to be safe even though we've only confirmed the issue on the G45
+     */
+    APPEND_TO_DRIVER_BLOCKLIST2(DRIVER_OS_ALL,
+        (nsAString&) GfxDriverInfo::GetDeviceVendor(VendorIntel), (GfxDeviceFamily*) GfxDriverInfo::GetDeviceFamily(IntelGMAX4500HD),
+      nsIGfxInfo::FEATURE_DIRECT2D, nsIGfxInfo::FEATURE_BLOCKED_DEVICE,
+      DRIVER_LESS_THAN, GfxDriverInfo::allDriverVersions);
 
     IMPLEMENT_INTEL_DRIVER_BLOCKLIST(DRIVER_OS_WINDOWS_XP, IntelGMA500,   V(3,0,20,3200));
     IMPLEMENT_INTEL_DRIVER_BLOCKLIST(DRIVER_OS_WINDOWS_XP, IntelGMA900,   V(6,14,10,4764));
@@ -984,6 +993,7 @@ GfxInfo::GetGfxDriverInfo()
     IMPLEMENT_INTEL_DRIVER_BLOCKLIST(DRIVER_OS_WINDOWS_XP, IntelGMA3150,  V(6,14,10,5134));
     IMPLEMENT_INTEL_DRIVER_BLOCKLIST(DRIVER_OS_WINDOWS_XP, IntelGMAX3000, V(6,14,10,5218));
     IMPLEMENT_INTEL_DRIVER_BLOCKLIST(DRIVER_OS_WINDOWS_XP, IntelGMAX4500HD, V(6,14,10,4969));
+    IMPLEMENT_INTEL_DRIVER_BLOCKLIST(DRIVER_OS_WINDOWS_XP, IntelHDGraphicsToIvyBridge, V(6,14,10,4969));
 
     // StrechRect seems to suffer from precision issues which leads to artifacting
     // during content drawing starting with at least version 6.14.10.5082
@@ -1000,6 +1010,7 @@ GfxInfo::GetGfxDriverInfo()
     IMPLEMENT_INTEL_DRIVER_BLOCKLIST(DRIVER_OS_WINDOWS_VISTA, IntelGMA3150,  V(7,14,10,1910));
     IMPLEMENT_INTEL_DRIVER_BLOCKLIST(DRIVER_OS_WINDOWS_VISTA, IntelGMAX3000, V(7,15,10,1666));
     IMPLEMENT_INTEL_DRIVER_BLOCKLIST(DRIVER_OS_WINDOWS_VISTA, IntelGMAX4500HD, V(7,15,10,1666));
+    IMPLEMENT_INTEL_DRIVER_BLOCKLIST(DRIVER_OS_WINDOWS_VISTA, IntelHDGraphicsToIvyBridge, V(7,15,10,1666));
 
     IMPLEMENT_INTEL_DRIVER_BLOCKLIST(DRIVER_OS_WINDOWS_7, IntelGMA500,   V(5,0,0,2026));
     IMPLEMENT_INTEL_DRIVER_BLOCKLIST(DRIVER_OS_WINDOWS_7, IntelGMA900,   GfxDriverInfo::allDriverVersions);
@@ -1007,11 +1018,17 @@ GfxInfo::GetGfxDriverInfo()
     IMPLEMENT_INTEL_DRIVER_BLOCKLIST(DRIVER_OS_WINDOWS_7, IntelGMA3150,  V(8,14,10,1972));
     IMPLEMENT_INTEL_DRIVER_BLOCKLIST(DRIVER_OS_WINDOWS_7, IntelGMAX3000, V(7,15,10,1666));
     IMPLEMENT_INTEL_DRIVER_BLOCKLIST(DRIVER_OS_WINDOWS_7, IntelGMAX4500HD, V(7,15,10,1666));
+    IMPLEMENT_INTEL_DRIVER_BLOCKLIST(DRIVER_OS_WINDOWS_7, IntelHDGraphicsToIvyBridge, V(7,15,10,1666));
 
     // Bug 1074378
     APPEND_TO_DRIVER_BLOCKLIST(DRIVER_OS_WINDOWS_7,
       (nsAString&) GfxDriverInfo::GetDeviceVendor(VendorIntel),
       (GfxDeviceFamily*) GfxDriverInfo::GetDeviceFamily(IntelGMAX4500HD),
+      GfxDriverInfo::allFeatures, nsIGfxInfo::FEATURE_BLOCKED_DRIVER_VERSION,
+      DRIVER_EQUAL, V(8,15,10,1749), "8.15.10.2342");
+    APPEND_TO_DRIVER_BLOCKLIST(DRIVER_OS_WINDOWS_7,
+      (nsAString&) GfxDriverInfo::GetDeviceVendor(VendorIntel),
+      (GfxDeviceFamily*) GfxDriverInfo::GetDeviceFamily(IntelHDGraphicsToIvyBridge),
       GfxDriverInfo::allFeatures, nsIGfxInfo::FEATURE_BLOCKED_DRIVER_VERSION,
       DRIVER_EQUAL, V(8,15,10,1749), "8.15.10.2342");
 
@@ -1093,28 +1110,23 @@ GfxInfo::GetGfxDriverInfo()
     /* Bug 1151721: Black video on youtube, block DXVA for all older intel cards. */
     APPEND_TO_DRIVER_BLOCKLIST2(DRIVER_OS_ALL,
       (nsAString&)GfxDriverInfo::GetDeviceVendor(VendorATI), (GfxDeviceFamily*)GfxDriverInfo::GetDeviceFamily(AMDRadeonHD5800),
-      nsIGfxInfo::FEATURE_DXVA, nsIGfxInfo::FEATURE_BLOCKED_DEVICE,
+      nsIGfxInfo::FEATURE_HARDWARE_VIDEO_DECODING, nsIGfxInfo::FEATURE_BLOCKED_DEVICE,
       DRIVER_LESS_THAN, GfxDriverInfo::allDriverVersions);
 
     /* Bug 1139503: DXVA crashes with ATI cards on windows 10. */
     APPEND_TO_DRIVER_BLOCKLIST2(DRIVER_OS_WINDOWS_10,
       (nsAString&)GfxDriverInfo::GetDeviceVendor(VendorATI), GfxDriverInfo::allDevices,
-      nsIGfxInfo::FEATURE_DXVA, nsIGfxInfo::FEATURE_BLOCKED_DRIVER_VERSION,
+      nsIGfxInfo::FEATURE_HARDWARE_VIDEO_DECODING, nsIGfxInfo::FEATURE_BLOCKED_DRIVER_VERSION,
       DRIVER_EQUAL, V(15,200,1006,0));
-
-    APPEND_TO_DRIVER_BLOCKLIST2(DRIVER_OS_ALL,
-      (nsAString&)GfxDriverInfo::GetDeviceVendor(VendorIntel), GfxDriverInfo::allDevices,
-      nsIGfxInfo::FEATURE_DXVA, nsIGfxInfo::FEATURE_BLOCKED_DRIVER_VERSION,
-      DRIVER_LESS_THAN, V(8,15,10,2622));
 
     APPEND_TO_DRIVER_BLOCKLIST2(DRIVER_OS_WINDOWS_7,
       (nsAString&)GfxDriverInfo::GetDeviceVendor(VendorIntel), (GfxDeviceFamily*)GfxDriverInfo::GetDeviceFamily(Bug1155608),
-      nsIGfxInfo::FEATURE_DXVA, nsIGfxInfo::FEATURE_BLOCKED_DRIVER_VERSION,
+      nsIGfxInfo::FEATURE_HARDWARE_VIDEO_DECODING, nsIGfxInfo::FEATURE_BLOCKED_DRIVER_VERSION,
       DRIVER_LESS_THAN_OR_EQUAL, V(8,15,10,2869));
 
     APPEND_TO_DRIVER_BLOCKLIST2(DRIVER_OS_ALL,
       (nsAString&)GfxDriverInfo::GetDeviceVendor(VendorNVIDIA), (GfxDeviceFamily*)GfxDriverInfo::GetDeviceFamily(Nvidia8800GTS),
-      nsIGfxInfo::FEATURE_DXVA, nsIGfxInfo::FEATURE_BLOCKED_DRIVER_VERSION,
+      nsIGfxInfo::FEATURE_HARDWARE_VIDEO_DECODING, nsIGfxInfo::FEATURE_BLOCKED_DRIVER_VERSION,
       DRIVER_EQUAL, V(9,18,13,4052));
 
     /* Bug 1137716: XXX this should really check for the matching Intel piece as well.
@@ -1127,6 +1139,10 @@ GfxInfo::GetGfxDriverInfo()
     /* Bug 1153381: WebGL issues with D3D11 ANGLE on Intel. These may be fixed by an ANGLE update. */
     APPEND_TO_DRIVER_BLOCKLIST2(DRIVER_OS_ALL,
       (nsAString&)GfxDriverInfo::GetDeviceVendor(VendorIntel), (GfxDeviceFamily*)GfxDriverInfo::GetDeviceFamily(IntelGMAX4500HD),
+      nsIGfxInfo::FEATURE_DIRECT3D_11_ANGLE, nsIGfxInfo::FEATURE_BLOCKED_DEVICE,
+      DRIVER_LESS_THAN, GfxDriverInfo::allDriverVersions);
+    APPEND_TO_DRIVER_BLOCKLIST2(DRIVER_OS_ALL,
+      (nsAString&)GfxDriverInfo::GetDeviceVendor(VendorIntel), (GfxDeviceFamily*)GfxDriverInfo::GetDeviceFamily(IntelHDGraphicsToIvyBridge),
       nsIGfxInfo::FEATURE_DIRECT3D_11_ANGLE, nsIGfxInfo::FEATURE_BLOCKED_DEVICE,
       DRIVER_LESS_THAN, GfxDriverInfo::allDriverVersions);
 

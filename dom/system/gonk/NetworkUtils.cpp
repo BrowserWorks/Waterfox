@@ -440,7 +440,6 @@ CommandResult::CommandResult(int32_t aResultCode)
     strerror_r(abs(aResultCode), strerrorBuf, STRERROR_R_BUF_SIZE);
     mResult.mReason = NS_ConvertUTF8toUTF16(strerrorBuf);
   }
-  mResult.mRet = true;
 }
 
 CommandResult::CommandResult(const mozilla::dom::NetworkResultOptions& aResult)
@@ -992,14 +991,39 @@ void NetworkUtils::removeDefaultRoute(CommandChain* aChain,
                                       CommandCallback aCallback,
                                       NetworkResultOptions& aResult)
 {
-  char command[MAX_COMMAND_SIZE];
-  // FIXME: (Bug 1121795) We only remove the first gateway to the default route.
-  //        For dual stack (ipv4/ipv6) device, one of the gateway would
-  //        not be added to the default route.
-  snprintf(command, MAX_COMMAND_SIZE - 1, "network route remove %d %s 0.0.0.0/0 %s",
-                    GET_FIELD(mNetId), GET_CHAR(mIfname), GET_CHAR(mGateways[0]));
+  if (GET_FIELD(mLoopIndex) >= GET_FIELD(mGateways).Length()) {
+    aCallback(aChain, false, aResult);
+    return;
+  }
 
-  doCommand(command, aChain, aCallback);
+  char command[MAX_COMMAND_SIZE];
+  nsTArray<nsString>& gateways = GET_FIELD(mGateways);
+  NS_ConvertUTF16toUTF8 autoGateway(gateways[GET_FIELD(mLoopIndex)]);
+
+  int type = getIpType(autoGateway.get());
+  snprintf(command, MAX_COMMAND_SIZE - 1, "network route remove %d %s %s/0 %s",
+           GET_FIELD(mNetId), GET_CHAR(mIfname),
+           type == AF_INET6 ? "::" : "0.0.0.0", autoGateway.get());
+
+  struct MyCallback {
+    static void callback(CommandCallback::CallbackType aOriginalCallback,
+                         CommandChain* aChain,
+                         bool aError,
+                         mozilla::dom::NetworkResultOptions& aResult)
+    {
+      NS_ConvertUTF16toUTF8 reason(aResult.mResultReason);
+      NU_DBG("removeDefaultRoute's reason: %s", reason.get());
+      if (aError && !reason.EqualsASCII("removeRoute() failed (No such process)")) {
+        return aOriginalCallback(aChain, aError, aResult);
+      }
+
+      GET_FIELD(mLoopIndex)++;
+      return removeDefaultRoute(aChain, aOriginalCallback, aResult);
+    }
+  };
+
+  CommandCallback wrappedCallback(MyCallback::callback, aCallback);
+  doCommand(command, aChain, wrappedCallback);
 }
 
 void NetworkUtils::setInterfaceDns(CommandChain* aChain,
@@ -1147,13 +1171,19 @@ void NetworkUtils::addDefaultRouteToNetwork(CommandChain* aChain,
                                             CommandCallback aCallback,
                                             NetworkResultOptions& aResult)
 {
-  char command[MAX_COMMAND_SIZE];
+  if (GET_FIELD(mLoopIndex) >= GET_FIELD(mGateways).Length()) {
+    aCallback(aChain, false, aResult);
+    return;
+  }
 
-  // FIXME: (Bug 1121795) We only add the first gateway to the default route.
-  //        For dual stack (ipv4/ipv6) device, one of the gateway would
-  //        not be added to the default route.
-  snprintf(command, MAX_COMMAND_SIZE - 1, "network route add %d %s 0.0.0.0/0 %s",
-                    GET_FIELD(mNetId), GET_CHAR(mIfname), GET_CHAR(mGateways[0]));
+  char command[MAX_COMMAND_SIZE];
+  nsTArray<nsString>& gateways = GET_FIELD(mGateways);
+  NS_ConvertUTF16toUTF8 autoGateway(gateways[GET_FIELD(mLoopIndex)]);
+
+  int type = getIpType(autoGateway.get());
+  snprintf(command, MAX_COMMAND_SIZE - 1, "network route add %d %s %s/0 %s",
+           GET_FIELD(mNetId), GET_CHAR(mIfname),
+           type == AF_INET6 ? "::" : "0.0.0.0", autoGateway.get());
 
   struct MyCallback {
     static void callback(CommandCallback::CallbackType aOriginalCallback,
@@ -1163,11 +1193,12 @@ void NetworkUtils::addDefaultRouteToNetwork(CommandChain* aChain,
     {
       NS_ConvertUTF16toUTF8 reason(aResult.mResultReason);
       NU_DBG("addDefaultRouteToNetwork's reason: %s", reason.get());
-      if (aError && reason.EqualsASCII("addRoute() failed (File exists)")) {
-        NU_DBG("Ignore \"File exists\" error when adding host route.");
-        return aOriginalCallback(aChain, false, aResult);
+      if (aError && !reason.EqualsASCII("addRoute() failed (File exists)")) {
+        return aOriginalCallback(aChain, aError, aResult);
       }
-      aOriginalCallback(aChain, aError, aResult);
+
+      GET_FIELD(mLoopIndex)++;
+      return addDefaultRouteToNetwork(aChain, aOriginalCallback, aResult);
     }
   };
 
@@ -1503,6 +1534,7 @@ void NetworkUtils::ExecuteCommand(NetworkParams aOptions)
     BUILD_ENTRY(resetConnections),
     BUILD_ENTRY(createNetwork),
     BUILD_ENTRY(destroyNetwork),
+    BUILD_ENTRY(getNetId),
 
     #undef BUILD_ENTRY
   };
@@ -1672,6 +1704,7 @@ CommandResult NetworkUtils::setDNS(NetworkParams& aOptions)
     // Lollipop.
     static CommandFunc COMMAND_CHAIN[] = {
       setInterfaceDns,
+      addDefaultRouteToNetwork,
       defaultAsyncSuccessHandler
     };
     NetIdManager::NetIdInfo netIdInfo;
@@ -1685,7 +1718,12 @@ CommandResult NetworkUtils::setDNS(NetworkParams& aOptions)
   if (SDK_VERSION >= 18) {
     // JB, KK.
     static CommandFunc COMMAND_CHAIN[] = {
+    #if ANDROID_VERSION == 18
+      // Since we don't use per-interface DNS lookup feature on JB,
+      // we need to set the default DNS interface whenever setting the
+      // DNS name server.
       setDefaultInterface,
+    #endif
       setInterfaceDns,
       defaultAsyncSuccessHandler
     };
@@ -1810,8 +1848,9 @@ CommandResult NetworkUtils::setDefaultRoute(NetworkParams& aOptions)
   }
 
   aOptions.mNetId = netIdInfo.mNetId;
-
+  aOptions.mLoopIndex = 0;
   runChain(aOptions, COMMAND_CHAIN, defaultAsyncFailureHandler);
+
   return CommandResult::Pending();
 }
 
@@ -1865,6 +1904,17 @@ CommandResult NetworkUtils::setDefaultRouteLegacy(NetworkParams& aOptions)
     }
   }
 
+  // Set the default DNS interface.
+  if (SDK_VERSION >= 18) {
+    // For JB, KK only.
+    static CommandFunc COMMAND_CHAIN[] = {
+      setDefaultInterface,
+      defaultAsyncSuccessHandler
+    };
+    runChain(aOptions, COMMAND_CHAIN, setDnsFail);
+    return CommandResult::Pending();
+  }
+
   return SUCCESS;
 }
 
@@ -1893,6 +1943,7 @@ CommandResult NetworkUtils::removeDefaultRoute(NetworkParams& aOptions)
   NU_DBG("Obtained netid %d for interface %s", netIdInfo.mNetId, GET_CHAR(mIfname));
 
   aOptions.mNetId = netIdInfo.mNetId;
+  aOptions.mLoopIndex = 0;
   runChain(aOptions, COMMAND_CHAIN, defaultAsyncFailureHandler);
 
   return CommandResult::Pending();
@@ -2480,6 +2531,27 @@ CommandResult NetworkUtils::destroyNetwork(NetworkParams& aOptions)
   aOptions.mNetId = netIdInfo.mNetId;
   runChain(aOptions, COMMAND_CHAIN, defaultAsyncFailureHandler);
   return CommandResult::Pending();
+}
+
+/**
+ * Query the netId associated with the given network interface name.
+ */
+CommandResult NetworkUtils::getNetId(NetworkParams& aOptions)
+{
+  NetworkResultOptions result;
+
+  if (SDK_VERSION < 20) {
+    // For pre-Lollipop, use the interface name as the fallback.
+    result.mNetId = GET_FIELD(mIfname);
+    return result;
+  }
+
+  NetIdManager::NetIdInfo netIdInfo;
+  if (-1 == mNetIdManager.lookup(GET_FIELD(mIfname), &netIdInfo)) {
+    return ESRCH;
+  }
+  result.mNetId.AppendInt(netIdInfo.mNetId, 10);
+  return result;
 }
 
 void NetworkUtils::sendBroadcastMessage(uint32_t code, char* reason)

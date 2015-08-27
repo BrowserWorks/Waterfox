@@ -12,6 +12,7 @@ import sys
 SCRIPT_DIR = os.path.abspath(os.path.realpath(os.path.dirname(__file__)))
 sys.path.insert(0, SCRIPT_DIR)
 
+from argparse import Namespace
 from urlparse import urlparse
 import ctypes
 import glob
@@ -21,7 +22,6 @@ import mozdebug
 import mozinfo
 import mozprocess
 import mozrunner
-import optparse
 import re
 import shutil
 import signal
@@ -48,15 +48,25 @@ from datetime import datetime
 from manifestparser import TestManifest
 from manifestparser.filters import (
     chunk_by_dir,
+    chunk_by_runtime,
     chunk_by_slice,
     subsuite,
+    tags,
 )
-from mochitest_options import MochitestOptions
+from mochitest_options import MochitestArgumentParser
 from mozprofile import Profile, Preferences
 from mozprofile.permissions import ServerLocations
 from urllib import quote_plus as encodeURIComponent
 from mozlog.structured.formatters import TbplFormatter
 from mozlog.structured import commandline
+
+here = os.path.abspath(os.path.dirname(__file__))
+
+try:
+    from mozbuild.base import MozbuildObject
+    build_obj = MozbuildObject.from_environment(cwd=here)
+except ImportError:
+    build_obj = None
 
 
 ###########################
@@ -330,7 +340,7 @@ class MochitestServer(object):
     "Web server used to serve Mochitests, for closer fidelity to the real web."
 
     def __init__(self, options, logger):
-        if isinstance(options, optparse.Values):
+        if isinstance(options, Namespace):
             options = vars(options)
         self._log = logger
         self._closeWhenDone = options['closeWhenDone']
@@ -364,6 +374,11 @@ class MochitestServer(object):
         # the test slaves. Try to limit the amount of resources by disabling certain
         # features.
         env["ASAN_OPTIONS"] = "quarantine_size=1:redzone=32:malloc_context_size=5"
+
+        # Likewise, when running with a TSan build, our xpcshell server will
+        # also be TSan-enabled. Except that in this case, we don't really
+        # care about races in xpcshell. So disable TSan for the server.
+        env["TSAN_OPTIONS"] = "report_bugs=0"
 
         if mozinfo.isWin:
             env["PATH"] = env["PATH"] + ";" + str(self._xrePath)
@@ -1275,6 +1290,13 @@ class Mochitest(MochitestUtilsMixin):
         bin_suffix = mozinfo.info.get('bin_suffix', '')
         certutil = os.path.join(options.utilityPath, "certutil" + bin_suffix)
         pk12util = os.path.join(options.utilityPath, "pk12util" + bin_suffix)
+        toolsEnv = env
+        if mozinfo.info["asan"]:
+            # Disable leak checking when running these tools
+            toolsEnv["ASAN_OPTIONS"] = "detect_leaks=0"
+        if mozinfo.info["tsan"]:
+            # Disable race checking when running these tools
+            toolsEnv["TSAN_OPTIONS"] = "report_bugs=0"
 
         if self.certdbNew:
             # android and b2g use the new DB formats exclusively
@@ -1284,7 +1306,7 @@ class Mochitest(MochitestUtilsMixin):
             certdbPath = options.profilePath
 
         status = call(
-            [certutil, "-N", "-d", certdbPath, "-f", pwfilePath], env=env)
+            [certutil, "-N", "-d", certdbPath, "-f", pwfilePath], env=toolsEnv)
         if status:
             return status
 
@@ -1309,11 +1331,11 @@ class Mochitest(MochitestUtilsMixin):
                       root,
                       "-t",
                       trustBits],
-                     env=env)
+                     env=toolsEnv)
             elif ext == ".client":
                 call([pk12util, "-i", os.path.join(options.certPath, item),
                       "-w", pwfilePath, "-d", certdbPath],
-                     env=env)
+                     env=toolsEnv)
 
         os.unlink(pwfilePath)
         return 0
@@ -1513,6 +1535,11 @@ class Mochitest(MochitestUtilsMixin):
 
         if debugger and not options.slowscript:
             browserEnv["JS_DISABLE_SLOW_SCRIPT_SIGNALS"] = "1"
+
+        # For e10s, our tests default to suppressing the "unsafe CPOW usage"
+        # warnings that can plague test logs.
+        if not options.enableCPOWWarnings:
+            browserEnv["DISABLE_UNSAFE_CPOW_WARNINGS"] = "1"
 
         return browserEnv
 
@@ -1844,6 +1871,26 @@ class Mochitest(MochitestUtilsMixin):
         options.profilePath = None
         self.urlOpts = []
 
+    def resolve_runtime_file(self, options, info):
+        platform = info['platform_guess']
+        buildtype = info['buildtype_guess']
+
+        data_dir = os.path.join(SCRIPT_DIR, 'runtimes', '{}-{}'.format(
+            platform, buildtype))
+
+        flavor = self.getTestFlavor(options)
+        if flavor == 'browser-chrome' and options.subsuite == 'devtools':
+            flavor = 'devtools-chrome'
+        elif flavor == 'mochitest':
+            flavor = 'plain'
+
+        base = 'mochitest'
+        if options.e10s:
+            base = '{}-e10s'.format(base)
+        return os.path.join(data_dir, '{}-{}.runtimes.json'.format(
+            base, flavor))
+
+
     def getActiveTests(self, options, disabled=True):
         """
           This method is used to parse the manifest and return active filtered tests.
@@ -1887,18 +1934,48 @@ class Mochitest(MochitestUtilsMixin):
                 ]
 
                 # Add chunking filters if specified
-                if options.chunkByDir:
-                    filters.append(chunk_by_dir(options.thisChunk,
-                                                options.totalChunks,
-                                                options.chunkByDir))
-                elif options.totalChunks:
-                    filters.append(chunk_by_slice(options.thisChunk,
-                                                  options.totalChunks))
+                if options.totalChunks:
+                    if options.chunkByRuntime:
+                        runtime_file = self.resolve_runtime_file(options, info)
+                        if not os.path.exists(runtime_file):
+                            self.log.warning("runtime file %s not found; defaulting to chunk-by-dir" %
+                                             runtime_file)
+                            options.chunkByRuntime = None
+                            flavor = self.getTestFlavor(options)
+                            if flavor in ('browser-chrome', 'devtools-chrome'):
+                                # these values match current mozharness configs
+                                options.chunkbyDir = 5
+                            else:
+                                options.chunkByDir = 4
+
+                    if options.chunkByDir:
+                        filters.append(chunk_by_dir(options.thisChunk,
+                                                    options.totalChunks,
+                                                    options.chunkByDir))
+                    elif options.chunkByRuntime:
+                        with open(runtime_file, 'r') as f:
+                            runtime_data = json.loads(f.read())
+                        runtimes = runtime_data['runtimes']
+                        default = runtime_data['excluded_test_average']
+                        filters.append(
+                            chunk_by_runtime(options.thisChunk,
+                                             options.totalChunks,
+                                             runtimes,
+                                             default_runtime=default))
+                    else:
+                        filters.append(chunk_by_slice(options.thisChunk,
+                                                      options.totalChunks))
+
+                if options.test_tags:
+                    filters.append(tags(options.test_tags))
+
                 tests = manifest.active_tests(
                     exists=False, disabled=disabled, filters=filters, **info)
+
                 if len(tests) == 0:
-                    tests = manifest.active_tests(
-                        exists=False, disabled=True, **info)
+                    self.log.error("no tests to run using specified "
+                                   "combination of filters: {}".format(
+                                        manifest.fmt_filters()))
 
         paths = []
 
@@ -2055,7 +2132,7 @@ class Mochitest(MochitestUtilsMixin):
                 continue
 
             print "dir: %s" % d
-            tests_in_dir = [t for t in testsToRun if t.startswith(d)]
+            tests_in_dir = [t for t in testsToRun if os.path.dirname(t) == d]
 
             # If we are using --run-by-dir, we should not use the profile path (if) provided
             # by the user, since we need to create a new directory for each run. We would face problems
@@ -2127,12 +2204,17 @@ class Mochitest(MochitestUtilsMixin):
             options,
             debuggerInfo is not None)
 
+
         # If there are any Mulet-specific tests doing remote network access,
         # we will not be aware since we are explicitely allowing this, as for
         # B2G
-        if mozinfo.info.get(
-                'buildapp') == 'mulet' and 'MOZ_DISABLE_NONLOCAL_CONNECTIONS' in self.browserEnv:
-            del self.browserEnv['MOZ_DISABLE_NONLOCAL_CONNECTIONS']
+        #
+        # In addition, the push subsuite directly accesses the production
+        # push service.
+        if 'MOZ_DISABLE_NONLOCAL_CONNECTIONS' in self.browserEnv:
+            if mozinfo.info.get('buildapp') == 'mulet' or options.subsuite == 'push':
+                del self.browserEnv['MOZ_DISABLE_NONLOCAL_CONNECTIONS']
+                os.environ["MOZ_DISABLE_NONLOCAL_CONNECTIONS"] = "0"
 
         if self.browserEnv is None:
             return 1
@@ -2533,29 +2615,34 @@ class Mochitest(MochitestUtilsMixin):
         return dirlist
 
 
-def main():
+def run_test_harness(options):
+    logger_options = {
+        key: value for key, value in vars(options).iteritems() if key.startswith('log')}
+    runner = Mochitest(logger_options)
+    result = runner.runTests(options)
+
+    # don't dump failures if running from automation as treeherder already displays them
+    if build_obj:
+        if runner.message_logger.errors:
+            result = 1
+            runner.message_logger.logger.warning("The following tests failed:")
+            for error in runner.message_logger.errors:
+                runner.message_logger.logger.log_raw(error)
+
+    runner.message_logger.finish()
+
+    return result
+
+
+def cli(args=sys.argv[1:]):
     # parse command line options
-    parser = MochitestOptions()
-    commandline.add_logging_group(parser)
-    options, args = parser.parse_args()
+    parser = MochitestArgumentParser(app='generic')
+    options = parser.parse_args(args)
     if options is None:
         # parsing error
         sys.exit(1)
-    logger_options = {
-        key: value for key,
-        value in vars(options).iteritems() if key.startswith('log')}
-    mochitest = Mochitest(logger_options)
-    options = parser.verifyOptions(options, mochitest)
 
-    options.utilityPath = mochitest.getFullPath(options.utilityPath)
-    options.certPath = mochitest.getFullPath(options.certPath)
-    if options.symbolsPath and len(urlparse(options.symbolsPath).scheme) < 2:
-        options.symbolsPath = mochitest.getFullPath(options.symbolsPath)
-
-    return_code = mochitest.runTests(options)
-    mochitest.message_logger.finish()
-
-    sys.exit(return_code)
+    return run_test_harness(options)
 
 if __name__ == "__main__":
-    main()
+    sys.exit(cli())

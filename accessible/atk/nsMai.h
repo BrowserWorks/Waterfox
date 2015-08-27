@@ -51,4 +51,31 @@ IsAtkVersionAtLeast(int aMajor, int aMinor)
          (aMajor == atkMajorVersion && aMinor <= atkMinorVersion);
 }
 
+// This is or'd with the pointer in MaiAtkObject::accWrap if the wrap-ee is a
+// proxy.
+static const uintptr_t IS_PROXY = 1;
+
+/**
+ * This MaiAtkObject is a thin wrapper, in the MAI namespace, for AtkObject
+ */
+struct MaiAtkObject
+{
+  AtkObject parent;
+  /*
+   * The AccessibleWrap whose properties and features are exported
+   * via this object instance.
+   */
+  uintptr_t accWrap;
+
+  /*
+   * Get the AtkHyperlink for this atk object.
+   */
+  AtkHyperlink* GetAtkHyperlink();
+
+  /*
+   * Shutdown this AtkObject.
+   */
+  void Shutdown();
+};
+
 #endif /* __NS_MAI_H__ */

@@ -53,8 +53,7 @@
 @RESPATH@/dictionaries/*
 @RESPATH@/hyphenation/*
 @RESPATH@/browser/@PREF_DIR@/firefox-l10n.js
-@RESPATH@/browser/searchplugins/*
-#ifdef XP_WIN32
+#ifdef HAVE_MAKENSISU
 @BINPATH@/uninstall/helper.exe
 #endif
 #ifdef MOZ_UPDATER
@@ -67,7 +66,6 @@
 #ifdef GKMEDIAS_SHARED_LIBRARY
 @BINPATH@/@DLL_PREFIX@gkmedias@DLL_SUFFIX@
 #endif
-@BINPATH@/@DLL_PREFIX@mozalloc@DLL_SUFFIX@
 #ifdef MOZ_SHARED_MOZGLUE
 @BINPATH@/@DLL_PREFIX@mozglue@DLL_SUFFIX@
 #endif
@@ -181,7 +179,6 @@
 @RESPATH@/components/chrome.xpt
 @RESPATH@/components/commandhandler.xpt
 @RESPATH@/components/commandlines.xpt
-@RESPATH@/components/compartments.xpt
 @RESPATH@/components/composer.xpt
 @RESPATH@/components/content_events.xpt
 @RESPATH@/components/content_html.xpt
@@ -220,6 +217,7 @@
 @RESPATH@/components/dom_offline.xpt
 @RESPATH@/components/dom_json.xpt
 @RESPATH@/components/dom_power.xpt
+@RESPATH@/components/dom_push.xpt
 @RESPATH@/components/dom_quota.xpt
 @RESPATH@/components/dom_range.xpt
 @RESPATH@/components/dom_security.xpt
@@ -329,6 +327,9 @@
 @RESPATH@/components/toolkit_finalizationwitness.xpt
 @RESPATH@/components/toolkit_formautofill.xpt
 @RESPATH@/components/toolkit_osfile.xpt
+#ifdef NIGHTLY_BUILD
+@RESPATH@/components/toolkit_perfmonitoring.xpt
+#endif
 @RESPATH@/components/toolkit_xulstore.xpt
 @RESPATH@/components/toolkitprofile.xpt
 #ifdef MOZ_ENABLE_XREMOTE
@@ -426,6 +427,7 @@
 @RESPATH@/components/amInstallTrigger.js
 @RESPATH@/components/amWebInstallListener.js
 @RESPATH@/components/nsBlocklistService.js
+@RESPATH@/components/nsBlocklistServiceContent.js
 #ifdef MOZ_UPDATER
 @RESPATH@/components/nsUpdateService.manifest
 @RESPATH@/components/nsUpdateService.js
@@ -435,6 +437,7 @@
 @RESPATH@/components/nsUpdateTimerManager.js
 @RESPATH@/components/addoncompat.manifest
 @RESPATH@/components/multiprocessShims.js
+@RESPATH@/components/defaultShims.js
 @RESPATH@/components/remoteTagService.js
 @RESPATH@/components/pluginGlue.manifest
 @RESPATH@/components/ProcessSingleton.manifest
@@ -557,7 +560,7 @@
 @RESPATH@/components/AlarmsManager.manifest
 @RESPATH@/components/Push.js
 @RESPATH@/components/Push.manifest
-@RESPATH@/components/PushServiceLauncher.js
+@RESPATH@/components/PushNotificationService.js
 
 @RESPATH@/components/SlowScriptDebug.manifest
 @RESPATH@/components/SlowScriptDebug.js
@@ -610,6 +613,8 @@
 
 @RESPATH@/components/PresentationDeviceInfoManager.manifest
 @RESPATH@/components/PresentationDeviceInfoManager.js
+@RESPATH@/components/BuiltinProviders.manifest
+@RESPATH@/components/TCPPresentationServer.js
 
 ; InputMethod API
 @RESPATH@/components/MozKeyboard.js
@@ -660,8 +665,9 @@
 @RESPATH@/browser/chrome/shumway.manifest
 @RESPATH@/browser/chrome/shumway/*
 #endif
-@RESPATH@/browser/extensions/{972ce4c6-7e08-4474-a285-3208198ce6fd}/install.rdf
+@RESPATH@/browser/extensions/{972ce4c6-7e08-4474-a285-3208198ce6fd}/chrome.manifest
 @RESPATH@/browser/extensions/{972ce4c6-7e08-4474-a285-3208198ce6fd}/icon.png
+@RESPATH@/browser/extensions/{972ce4c6-7e08-4474-a285-3208198ce6fd}/install.rdf
 @RESPATH@/chrome/toolkit@JAREXT@
 @RESPATH@/chrome/toolkit.manifest
 @RESPATH@/chrome/recording.manifest
@@ -694,7 +700,6 @@
 @RESPATH@/browser/@PREF_DIR@/firefox.js
 @RESPATH@/browser/@PREF_DIR@/firefox-branding.js
 @RESPATH@/greprefs.js
-@RESPATH@/defaults/autoconfig/platform.js
 @RESPATH@/defaults/autoconfig/prefcalls.js
 @RESPATH@/browser/defaults/profile/prefs.js
 
@@ -880,36 +885,6 @@ bin/libfreebl_32int64_3.so
 @RESPATH@/webapprt/modules/WebappManager.jsm
 @RESPATH@/webapprt/modules/RemoteDebugger.jsm
 @RESPATH@/webapprt/modules/WebRTCHandler.jsm
-#endif
-
-#ifdef MOZ_METRO
-@RESPATH@/components/MetroUIUtils.js
-@RESPATH@/components/MetroUIUtils.manifest
-[metro]
-; gre resources
-@BINPATH@/CommandExecuteHandler@BIN_SUFFIX@
-@RESPATH@/resources.pri
-@RESPATH@/VisualElementsManifest.xml
-@RESPATH@/tileresources
-; app dir resources
-@RESPATH@/metro/chrome.manifest
-@RESPATH@/metro/searchplugins
-@RESPATH@/metro/metroapp.ini
-@RESPATH@/metro/chrome/browser@JAREXT@
-@RESPATH@/metro/chrome/browser.manifest
-@RESPATH@/metro/chrome/chrome@JAREXT@
-@RESPATH@/metro/chrome/chrome.manifest
-@RESPATH@/metro/chrome/@AB_CD@@JAREXT@
-@RESPATH@/metro/chrome/@AB_CD@.manifest
-#ifdef NIGHTLY_BUILD
-@RESPATH@/metro/chrome/shumway.manifest
-@RESPATH@/metro/chrome/shumway/*
-@RESPATH@/metro/chrome/pdfjs.manifest
-@RESPATH@/metro/chrome/pdfjs/*
-#endif
-@RESPATH@/metro/components
-@RESPATH@/metro/defaults
-@RESPATH@/metro/modules
 #endif
 
 @RESPATH@/components/DataStore.manifest

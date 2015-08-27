@@ -3,6 +3,7 @@
 export CC="icl"
 export CXX="icl"
 export LD="xilink"
+export AR="xilib"
 
 ac_add_options --enable-application=browser
 mk_add_options MOZ_MAKE_FLAGS=-j4
@@ -21,17 +22,16 @@ ac_add_options --with-branding=browser/branding/waterfox
 ac_add_options --enable-update-channel=release
 ac_add_options --enable-updater
 ac_add_options --enable-update-packaging
-ac_add_options --enable-release
 
 # for 64-bit build
 export MOZ_OPTIMIZE_LDFLAGS="-MACHINE:X64 -OPT:REF,ICF -FORCE"
 mk_add_options MOZ_OPTIMIZE_LDFLAGS="-MACHINE:X64 -OPT:REF,ICF -FORCE"
 
 # Use to use profiling
-ac_add_options --enable-optimize="-Qstd=c++11 -D_ATL_XP_TARGETING -O3 -Qparallel -Qip- -fp:precise -arch:SSE3 -QaxCORE-AVX2,CORE-AVX-I,AVX,SSE4.2,SSE4.1,SSSE3,SSE3,SSE2 -w"
+ac_add_options --enable-optimize="-Qstd=c++11 -D_ATL_XP_TARGETING -O3 -no-prec-div -Qparallel -arch:SSE3 -QaxCORE-AVX2,CORE-AVX-I,AVX,SSE4.2,SSE4.1,SSSE3 -w"
 
 ac_add_options --disable-verify-mar
-ac_add_options --disable-jemalloc
+#ac_add_options --disable-jemalloc
 ac_add_options --disable-crashreporter
 ac_add_options --disable-maintenance-service
 ac_add_options --disable-services-healthreport

@@ -66,11 +66,9 @@ loop.shared.views = (function(_, l10n) {
 
     render: function() {
       return (
-        /* jshint ignore:start */
         React.createElement("button", {className: this._getClasses(), 
                 title: this._getTitle(), 
                 onClick: this.handleClick})
-        /* jshint ignore:end */
       );
     }
   });
@@ -85,12 +83,12 @@ loop.shared.views = (function(_, l10n) {
    *                                 loop.shared.utils.SCREEN_SHARE_STATES
    */
   var ScreenShareControlButton = React.createClass({displayName: "ScreenShareControlButton",
-    mixins: [sharedMixins.DropdownMenuMixin],
+    mixins: [sharedMixins.DropdownMenuMixin()],
 
     propTypes: {
       dispatcher: React.PropTypes.instanceOf(loop.Dispatcher).isRequired,
       visible: React.PropTypes.bool.isRequired,
-      state: React.PropTypes.string.isRequired,
+      state: React.PropTypes.string.isRequired
     },
 
     getInitialState: function() {
@@ -153,7 +151,8 @@ loop.shared.views = (function(_, l10n) {
       var dropdownMenuClasses = cx({
         "native-dropdown-menu": true,
         "conversation-window-dropdown": true,
-        "visually-hidden": !this.state.showMenu
+        "hide": !this.state.showMenu,
+        "visually-hidden": true
       });
       var windowSharingClasses = cx({
         "disabled": this.state.windowSharingDisabled
@@ -163,12 +162,13 @@ loop.shared.views = (function(_, l10n) {
         React.createElement("div", null, 
           React.createElement("button", {className: screenShareClasses, 
                   onClick: this.handleClick, 
+                  ref: "menu-button", 
                   title: this._getTitle()}, 
             isActive ? null : React.createElement("span", {className: "chevron"})
           ), 
           React.createElement("ul", {ref: "menu", className: dropdownMenuClasses}, 
             React.createElement("li", {onClick: this._handleShareTabs}, 
-              l10n.get("share_tabs_button_title")
+              l10n.get("share_tabs_button_title2")
             ), 
             React.createElement("li", {onClick: this._handleShareWindows, className: windowSharingClasses}, 
               l10n.get("share_windows_button_title")
@@ -200,7 +200,7 @@ loop.shared.views = (function(_, l10n) {
       hangup: React.PropTypes.func.isRequired,
       publishStream: React.PropTypes.func.isRequired,
       hangupButtonLabel: React.PropTypes.string,
-      enableHangup: React.PropTypes.bool,
+      enableHangup: React.PropTypes.bool
     },
 
     handleClickHangup: function() {
@@ -450,7 +450,6 @@ loop.shared.views = (function(_, l10n) {
         "local-stream": true,
         "local-stream-audio": !this.state.video.enabled
       });
-      /* jshint ignore:start */
       return (
         React.createElement("div", {className: "video-layout-wrapper"}, 
           React.createElement("div", {className: "conversation in-call"}, 
@@ -467,7 +466,6 @@ loop.shared.views = (function(_, l10n) {
           )
         )
       );
-      /* jshint ignore:end */
     }
   });
 
@@ -563,14 +561,14 @@ loop.shared.views = (function(_, l10n) {
       onClick: React.PropTypes.func.isRequired,
       disabled: React.PropTypes.bool,
       additionalClass: React.PropTypes.string,
-      htmlId: React.PropTypes.string,
+      htmlId: React.PropTypes.string
     },
 
     getDefaultProps: function() {
       return {
         disabled: false,
         additionalClass: "",
-        htmlId: "",
+        htmlId: ""
       };
     },
 
@@ -599,7 +597,7 @@ loop.shared.views = (function(_, l10n) {
 
     getDefaultProps: function() {
       return {
-        additionalClass: "",
+        additionalClass: ""
       };
     },
 
@@ -617,9 +615,77 @@ loop.shared.views = (function(_, l10n) {
     }
   });
 
+  var Checkbox = React.createClass({displayName: "Checkbox",
+    PropTypes: {
+      additionalClass: React.PropTypes.string,
+      checked: React.PropTypes.bool,
+      disabled: React.PropTypes.bool,
+      label: React.PropTypes.string,
+      onChange: React.PropTypes.func.isRequired,
+      // If `value` is not supplied, the consumer should rely on the boolean
+      // `checked` state changes.
+      value: React.PropTypes.string
+    },
+
+    getDefaultProps: function() {
+      return {
+        additionalClass: "",
+        checked: false,
+        disabled: false,
+        label: null,
+        value: ""
+      };
+    },
+
+    getInitialState: function() {
+      return {
+        checked: this.props.checked,
+        value: this.props.checked ? this.props.value : ""
+      };
+    },
+
+    _handleClick: function(event) {
+      event.preventDefault();
+
+      var newState = {
+        checked: !this.state.checked,
+        value: this.state.checked ? "" : this.props.value
+      };
+      this.setState(newState);
+      this.props.onChange(newState);
+    },
+
+    render: function() {
+      var cx = React.addons.classSet;
+      var wrapperClasses = {
+        "checkbox-wrapper": true,
+        disabled: this.props.disabled
+      };
+      var checkClasses = {
+        checkbox: true,
+        checked: this.state.checked,
+        disabled: this.props.disabled
+      };
+      if (this.props.additionalClass) {
+        wrapperClasses[this.props.additionalClass] = true;
+      }
+      return (
+        React.createElement("div", {className: cx(wrapperClasses), 
+             disabled: this.props.disabled, 
+             onClick: this._handleClick}, 
+          React.createElement("div", {className: cx(checkClasses)}), 
+          this.props.label ?
+            React.createElement("label", null, this.props.label) :
+            null
+        )
+      );
+    }
+  });
+
   return {
     Button: Button,
     ButtonGroup: ButtonGroup,
+    Checkbox: Checkbox,
     ConversationView: ConversationView,
     ConversationToolbar: ConversationToolbar,
     MediaControlButton: MediaControlButton,

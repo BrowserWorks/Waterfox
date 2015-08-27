@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-*/
-/* vim: set ts=2 sw=2 et tw=79: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -17,6 +17,12 @@
 #include "nscore.h"
 #include "nsStringGlue.h"
 #include "mozilla/Assertions.h"
+#include "mozilla/Move.h"
+
+namespace IPC {
+class Message;
+template <typename> struct ParamTraits;
+}
 
 namespace mozilla {
 
@@ -41,11 +47,8 @@ public:
     mResult = NS_OK;
 
 #ifdef DEBUG
-    // ErrorResult is extremely performance-sensitive code, where literally
-    // every machine instruction matters. Initialize mMessage only to suppress
-    // a debug-only warning from gcc 4.6.
-    mMessage = nullptr;
     mMightHaveUnreportedJSException = false;
+    mHasMessage = false;
 #endif
   }
 
@@ -53,25 +56,44 @@ public:
   ~ErrorResult() {
     MOZ_ASSERT_IF(IsErrorWithMessage(), !mMessage);
     MOZ_ASSERT(!mMightHaveUnreportedJSException);
+    MOZ_ASSERT(!mHasMessage);
   }
 #endif
 
+  ErrorResult(ErrorResult&& aRHS)
+  {
+    *this = Move(aRHS);
+  }
+  ErrorResult& operator=(ErrorResult&& aRHS);
+
+  explicit ErrorResult(nsresult aRv)
+    : ErrorResult()
+  {
+    AssignErrorCode(aRv);
+  }
+
   void Throw(nsresult rv) {
     MOZ_ASSERT(NS_FAILED(rv), "Please don't try throwing success");
-    MOZ_ASSERT(rv != NS_ERROR_TYPE_ERR, "Use ThrowTypeError()");
-    MOZ_ASSERT(rv != NS_ERROR_RANGE_ERR, "Use ThrowRangeError()");
-    MOZ_ASSERT(!IsErrorWithMessage(), "Don't overwrite errors with message");
-    MOZ_ASSERT(rv != NS_ERROR_DOM_JS_EXCEPTION, "Use ThrowJSException()");
-    MOZ_ASSERT(!IsJSException(), "Don't overwrite JS exceptions");
-    MOZ_ASSERT(rv != NS_ERROR_XPC_NOT_ENOUGH_ARGS, "Use ThrowNotEnoughArgsError()");
-    MOZ_ASSERT(!IsNotEnoughArgsError(), "Don't overwrite not enough args error");
-    mResult = rv;
+    AssignErrorCode(rv);
+  }
+
+  // Use SuppressException when you want to suppress any exception that might be
+  // on the ErrorResult.  After this call, the ErrorResult will be back a "no
+  // exception thrown" state.
+  void SuppressException();
+
+  // Use StealNSResult() when you want to safely convert the ErrorResult to an
+  // nsresult that you will then return to a caller.  This will
+  // SuppressException(), since there will no longer be a way to report it.
+  nsresult StealNSResult() {
+    nsresult rv = ErrorCode();
+    SuppressException();
+    return rv;
   }
 
   void ThrowTypeError(const dom::ErrNum errorNumber, ...);
   void ThrowRangeError(const dom::ErrNum errorNumber, ...);
   void ReportErrorWithMessage(JSContext* cx);
-  void ClearMessage();
   bool IsErrorWithMessage() const { return ErrorCode() == NS_ERROR_TYPE_ERR || ErrorCode() == NS_ERROR_RANGE_ERR; }
 
   // Facilities for throwing a preexisting JS exception value via this
@@ -97,6 +119,10 @@ public:
                                 const char* memberName);
   bool IsNotEnoughArgsError() const { return ErrorCode() == NS_ERROR_XPC_NOT_ENOUGH_ARGS; }
 
+  // Report a generic error.  This should only be used if we're not
+  // some more specific exception type.
+  void ReportGenericError(JSContext* cx);
+
   // Support for uncatchable exceptions.
   void ThrowUncatchableException() {
     Throw(NS_ERROR_UNCATCHABLE_EXCEPTION);
@@ -107,7 +133,7 @@ public:
 
   // StealJSException steals the JS Exception from the object. This method must
   // be called only if IsJSException() returns true. This method also resets the
-  // ErrorCode() to NS_OK.
+  // error code to NS_OK.
   void StealJSException(JSContext* cx, JS::MutableHandle<JS::Value> value);
 
   void MOZ_ALWAYS_INLINE MightThrowJSException()
@@ -131,25 +157,48 @@ public:
   // Throw() here because people can easily pass success codes to
   // this.
   void operator=(nsresult rv) {
-    MOZ_ASSERT(rv != NS_ERROR_TYPE_ERR, "Use ThrowTypeError()");
-    MOZ_ASSERT(rv != NS_ERROR_RANGE_ERR, "Use ThrowRangeError()");
-    MOZ_ASSERT(!IsErrorWithMessage(), "Don't overwrite errors with message");
-    MOZ_ASSERT(rv != NS_ERROR_DOM_JS_EXCEPTION, "Use ThrowJSException()");
-    MOZ_ASSERT(!IsJSException(), "Don't overwrite JS exceptions");
-    MOZ_ASSERT(rv != NS_ERROR_XPC_NOT_ENOUGH_ARGS, "Use ThrowNotEnoughArgsError()");
-    MOZ_ASSERT(!IsNotEnoughArgsError(), "Don't overwrite not enough args error");
-    mResult = rv;
+    AssignErrorCode(rv);
   }
 
   bool Failed() const {
     return NS_FAILED(mResult);
   }
 
+  bool ErrorCodeIs(nsresult rv) const {
+    return mResult == rv;
+  }
+
+  // For use in logging ONLY.
+  uint32_t ErrorCodeAsInt() const {
+    return static_cast<uint32_t>(ErrorCode());
+  }
+
+protected:
   nsresult ErrorCode() const {
     return mResult;
   }
 
 private:
+  friend struct IPC::ParamTraits<ErrorResult>;
+  void SerializeMessage(IPC::Message* aMsg) const;
+  bool DeserializeMessage(const IPC::Message* aMsg, void** aIter);
+
+  void ThrowErrorWithMessage(va_list ap, const dom::ErrNum errorNumber,
+                             nsresult errorType);
+
+  void AssignErrorCode(nsresult aRv) {
+    MOZ_ASSERT(aRv != NS_ERROR_TYPE_ERR, "Use ThrowTypeError()");
+    MOZ_ASSERT(aRv != NS_ERROR_RANGE_ERR, "Use ThrowRangeError()");
+    MOZ_ASSERT(!IsErrorWithMessage(), "Don't overwrite errors with message");
+    MOZ_ASSERT(aRv != NS_ERROR_DOM_JS_EXCEPTION, "Use ThrowJSException()");
+    MOZ_ASSERT(!IsJSException(), "Don't overwrite JS exceptions");
+    MOZ_ASSERT(aRv != NS_ERROR_XPC_NOT_ENOUGH_ARGS, "Use ThrowNotEnoughArgsError()");
+    MOZ_ASSERT(!IsNotEnoughArgsError(), "Don't overwrite not enough args error");
+    mResult = aRv;
+  }
+
+  void ClearMessage();
+
   nsresult mResult;
   struct Message;
   // mMessage is set by ThrowErrorWithMessage and cleared (and deallocated) by
@@ -165,13 +214,16 @@ private:
   // Used to keep track of codepaths that might throw JS exceptions,
   // for assertion purposes.
   bool mMightHaveUnreportedJSException;
+  // Used to keep track of whether mMessage has ever been assigned to.
+  // We need to check this in order to ensure that not attempting to
+  // delete mMessage in DeserializeMessage doesn't leak memory.
+  bool mHasMessage;
 #endif
 
   // Not to be implemented, to make sure people always pass this by
   // reference, not by value.
   ErrorResult(const ErrorResult&) = delete;
-  void ThrowErrorWithMessage(va_list ap, const dom::ErrNum errorNumber,
-                             nsresult errorType);
+  void operator=(const ErrorResult&) = delete;
 };
 
 /******************************************************************************
@@ -183,7 +235,7 @@ private:
     if (res.Failed()) {                                                   \
       nsCString msg;                                                      \
       msg.AppendPrintf("ENSURE_SUCCESS(%s, %s) failed with "              \
-                       "result 0x%X", #res, #ret, res.ErrorCode());       \
+                       "result 0x%X", #res, #ret, res.ErrorCodeAsInt());  \
       NS_WARNING(msg.get());                                              \
       return ret;                                                         \
     }                                                                     \
@@ -194,7 +246,7 @@ private:
     if (res.Failed()) {                                                   \
       nsCString msg;                                                      \
       msg.AppendPrintf("ENSURE_SUCCESS_VOID(%s) failed with "             \
-                       "result 0x%X", #res, res.ErrorCode());             \
+                       "result 0x%X", #res, res.ErrorCodeAsInt());        \
       NS_WARNING(msg.get());                                              \
       return;                                                             \
     }                                                                     \

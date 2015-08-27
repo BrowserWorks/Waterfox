@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 sw=2 et tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -18,11 +18,8 @@
 #undef GetClassName
 #endif
 
-class nsContentList;
-class nsDocument;
 struct nsGlobalNameStruct;
 class nsGlobalWindow;
-class nsIScriptSecurityManager;
 
 struct nsDOMClassInfoData;
 
@@ -208,7 +205,8 @@ public:
   NS_IMETHOD PreCreate(nsISupports *nativeObj, JSContext *cx,
                        JSObject *globalObj, JSObject **parentObj) override;
   NS_IMETHOD AddProperty(nsIXPConnectWrappedNative *wrapper, JSContext *cx,
-                         JSObject *obj, jsid id, JS::Value *vp, bool *_retval) override;
+                         JSObject *obj, jsid id, JS::Handle<JS::Value> val,
+                         bool *_retval) override;
 
   virtual void PreserveWrapper(nsISupports *aNative) override;
 

@@ -1,4 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -19,12 +20,6 @@ namespace mozilla {
 
 class ErrorResult;
 
-namespace dom {
-
-template <typename T>
-class Sequence;
-
-} // namespace dom
 } // namespace mozilla
 
 BEGIN_WORKERS_NAMESPACE
@@ -58,7 +53,8 @@ bool LoadMainScript(JSContext* aCx, const nsAString& aScriptURL,
 
 void Load(JSContext* aCx,
           WorkerPrivate* aWorkerPrivate,
-          const mozilla::dom::Sequence<nsString>& aScriptURLs,
+          const nsTArray<nsString>& aScriptURLs,
+          WorkerScriptType aWorkerScriptType,
           mozilla::ErrorResult& aRv);
 
 } // namespace scriptloader

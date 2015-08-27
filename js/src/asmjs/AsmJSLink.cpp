@@ -60,8 +60,6 @@ CloneModule(JSContext* cx, MutableHandle<AsmJSModuleObject*> moduleObj)
     if (!moduleObj->module().clone(cx, &module))
         return false;
 
-    module->staticallyLink(cx);
-
     AsmJSModuleObject* newModuleObj = AsmJSModuleObject::create(cx, &module);
     if (!newModuleObj)
         return false;
@@ -746,8 +744,12 @@ CallAsmJS(JSContext* cx, unsigned argc, Value* vp)
         // that the optimized asm.js-to-Ion FFI call path (which we want to be
         // very fast) can avoid doing so. The JitActivation is marked as
         // inactive so stack iteration will skip over it.
+        //
+        // We needn't provide an entry script pointer; that's only used for
+        // reporting entry points to performance-monitoring tools, and asm.js ->
+        // Ion calls will never be entry points.
         AsmJSActivation activation(cx, module);
-        JitActivation jitActivation(cx, /* active */ false);
+        JitActivation jitActivation(cx, /* entryScript */ nullptr, /* active */ false);
 
         // Call the per-exported-function trampoline created by GenerateEntry.
         AsmJSModule::CodePtr enter = module.entryTrampoline(func);
@@ -801,7 +803,7 @@ NewExportedFunction(JSContext* cx, const AsmJSModule::ExportedFunction& func,
     unsigned numArgs = func.isChangeHeap() ? 1 : func.numArgs();
     JSFunction* fun =
         NewNativeConstructor(cx, CallAsmJS, numArgs, name,
-                             JSFunction::ExtendedFinalizeKind, GenericObject,
+                             gc::AllocKind::FUNCTION_EXTENDED, GenericObject,
                              JSFunction::ASMJS_CTOR);
     if (!fun)
         return nullptr;
@@ -817,6 +819,16 @@ HandleDynamicLinkFailure(JSContext* cx, CallArgs args, AsmJSModule& module, Hand
     if (cx->isExceptionPending())
         return false;
 
+    // Source discarding is allowed to affect JS semantics because it is never
+    // enabled for normal JS content.
+    bool haveSource = module.scriptSource()->hasSourceData();
+    if (!haveSource && !JSScript::loadSource(cx, module.scriptSource(), &haveSource))
+        return false;
+    if (!haveSource) {
+        JS_ReportError(cx, "asm.js link failure with source discarding enabled");
+        return false;
+    }
+
     uint32_t begin = module.srcBodyStart();  // starts right after 'use asm'
     uint32_t end = module.srcEndBeforeCurly();
     Rooted<JSFlatString*> src(cx, module.scriptSource()->substringDontDeflate(cx, begin, end));
@@ -824,7 +836,7 @@ HandleDynamicLinkFailure(JSContext* cx, CallArgs args, AsmJSModule& module, Hand
         return false;
 
     RootedFunction fun(cx, NewScriptedFunction(cx, 0, JSFunction::INTERPRETED,
-                                               name, JSFunction::FinalizeKind,
+                                               name, gc::AllocKind::FUNCTION,
                                                TenuredObject));
     if (!fun)
         return false;
@@ -843,7 +855,6 @@ HandleDynamicLinkFailure(JSContext* cx, CallArgs args, AsmJSModule& module, Hand
     CompileOptions options(cx);
     options.setMutedErrors(module.scriptSource()->mutedErrors())
            .setFile(module.scriptSource()->filename())
-           .setCompileAndGo(false)
            .setNoScriptRval(false);
 
     // The exported function inherits an implicit strict context if the module
@@ -1040,26 +1051,18 @@ LinkAsmJS(JSContext* cx, unsigned argc, JS::Value* vp)
     RootedFunction fun(cx, &args.callee().as<JSFunction>());
     Rooted<AsmJSModuleObject*> moduleObj(cx, &ModuleFunctionToModuleObject(fun));
 
-    // All ICache flushing of the module being linked has been inhibited under the
-    // assumption that the module is flushed after dynamic linking (when the last code
-    // mutation occurs).  Thus, enter an AutoFlushICache context for the entire module
-    // now.  The module range is set below.
-    AutoFlushICache afc("LinkAsmJS");
 
     // When a module is linked, it is dynamically specialized to the given
     // arguments (buffer, ffis). Thus, if the module is linked again (it is just
     // a function so it can be called multiple times), we need to clone a new
     // module.
-    if (moduleObj->module().isDynamicallyLinked()) {
-        if (!CloneModule(cx, &moduleObj))
-            return false;
-    } else {
-        // CloneModule already calls setAutoFlushICacheRange internally before patching
-        // the cloned module, so avoid calling twice.
-        moduleObj->module().setAutoFlushICacheRange();
-    }
+    if (moduleObj->module().isDynamicallyLinked() && !CloneModule(cx, &moduleObj))
+        return false;
 
     AsmJSModule& module = moduleObj->module();
+
+    AutoFlushICache afc("LinkAsmJS");
+    module.setAutoFlushICacheRange();
 
     // Link the module by performing the link-time validation checks in the
     // asm.js spec and then patching the generated module to associate it with
@@ -1096,7 +1099,7 @@ js::NewAsmJSModuleFunction(ExclusiveContext* cx, JSFunction* origFun, HandleObje
                                                   : JSFunction::ASMJS_CTOR;
     JSFunction* moduleFun =
         NewNativeConstructor(cx, LinkAsmJS, origFun->nargs(), name,
-                             JSFunction::ExtendedFinalizeKind, TenuredObject,
+                             gc::AllocKind::FUNCTION_EXTENDED, TenuredObject,
                              flags);
     if (!moduleFun)
         return nullptr;

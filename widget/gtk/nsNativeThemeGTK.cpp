@@ -6,7 +6,9 @@
 #include "nsNativeThemeGTK.h"
 #include "nsThemeConstants.h"
 #include "gtkdrawing.h"
+#include "nsScreenGtk.h"
 
+#include "gfx2DGlue.h"
 #include "nsIObserverService.h"
 #include "nsIServiceManager.h"
 #include "nsIFrame.h"
@@ -32,6 +34,7 @@
 #include "gfxPlatformGtk.h"
 #include "gfxGdkNativeRenderer.h"
 #include <algorithm>
+#include <dlfcn.h>
 
 using namespace mozilla;
 using namespace mozilla::gfx;
@@ -87,6 +90,7 @@ nsNativeThemeGTK::RefreshWidgetWindow(nsIFrame* aFrame)
  
   vm->InvalidateAllViews();
 }
+
 
 static bool IsFrameContentNodeInNamespace(nsIFrame *aFrame, uint32_t aNamespace)
 {
@@ -577,7 +581,7 @@ nsNativeThemeGTK::GetGtkWidgetAndState(uint8_t aWidgetType, nsIFrame* aFrame,
       EventStates eventStates = GetContentState(stateFrame, aWidgetType);
 
       aGtkWidgetType = IsIndeterminateProgress(stateFrame, eventStates)
-                         ? (stateFrame->StyleDisplay()->mOrient == NS_STYLE_ORIENT_VERTICAL)
+                         ? IsVerticalProgress(stateFrame)
                            ? MOZ_GTK_PROGRESS_CHUNK_VERTICAL_INDETERMINATE
                            : MOZ_GTK_PROGRESS_CHUNK_INDETERMINATE
                          : MOZ_GTK_PROGRESS_CHUNK;
@@ -711,10 +715,10 @@ nsNativeThemeGTK::GetExtraSizeForWidget(nsIFrame* aFrame, uint8_t aWidgetType,
   switch (aWidgetType) {
   case NS_THEME_SCROLLBAR_THUMB_VERTICAL:
     aExtra->top = aExtra->bottom = 1;
-    return true;
+    break;
   case NS_THEME_SCROLLBAR_THUMB_HORIZONTAL:
     aExtra->left = aExtra->right = 1;
-    return true;
+    break;
 
   // Include the indicator spacing (the padding around the control).
   case NS_THEME_CHECKBOX:
@@ -732,7 +736,7 @@ nsNativeThemeGTK::GetExtraSizeForWidget(nsIFrame* aFrame, uint8_t aWidgetType,
       aExtra->right = indicator_spacing;
       aExtra->bottom = indicator_spacing;
       aExtra->left = indicator_spacing;
-      return true;
+      break;
     }
   case NS_THEME_BUTTON :
     {
@@ -745,7 +749,7 @@ nsNativeThemeGTK::GetExtraSizeForWidget(nsIFrame* aFrame, uint8_t aWidgetType,
         aExtra->right = right;
         aExtra->bottom = bottom;
         aExtra->left = left;
-        return true;
+        break;
       }
     }
   case NS_THEME_FOCUS_OUTLINE:
@@ -753,7 +757,7 @@ nsNativeThemeGTK::GetExtraSizeForWidget(nsIFrame* aFrame, uint8_t aWidgetType,
       moz_gtk_get_focus_outline_size(&aExtra->left, &aExtra->top);
       aExtra->right = aExtra->left;
       aExtra->bottom = aExtra->top;
-      return true;
+      break;
     }
   case NS_THEME_TAB :
     {
@@ -761,6 +765,8 @@ nsNativeThemeGTK::GetExtraSizeForWidget(nsIFrame* aFrame, uint8_t aWidgetType,
         return false;
 
       gint gap_height = moz_gtk_get_tab_thickness();
+      if (!gap_height)
+        return false;
 
       int32_t extra = gap_height - GetTabMarginPixels(aFrame);
       if (extra <= 0)
@@ -775,6 +781,12 @@ nsNativeThemeGTK::GetExtraSizeForWidget(nsIFrame* aFrame, uint8_t aWidgetType,
   default:
     return false;
   }
+  gint scale = nsScreenGtk::GetGtkMonitorScaleFactor();
+  aExtra->top *= scale;
+  aExtra->right *= scale;
+  aExtra->bottom *= scale;
+  aExtra->left *= scale;
+  return true;
 }
 
 NS_IMETHODIMP
@@ -801,6 +813,7 @@ nsNativeThemeGTK::DrawWidgetBackground(nsRenderingContext* aContext,
 
   gfxRect rect = presContext->AppUnitsToGfxUnits(aRect);
   gfxRect dirtyRect = presContext->AppUnitsToGfxUnits(aDirtyRect);
+  gint scaleFactor = nsScreenGtk::GetGtkMonitorScaleFactor();
 
   // Align to device pixels where sensible
   // to provide crisper and faster drawing.
@@ -824,7 +837,7 @@ nsNativeThemeGTK::DrawWidgetBackground(nsRenderingContext* aContext,
   nsIntRect overflowRect(widgetRect);
   nsIntMargin extraSize;
   if (GetExtraSizeForWidget(aFrame, aWidgetType, &extraSize)) {
-    overflowRect.Inflate(extraSize);
+    overflowRect.Inflate(gfx::ToIntMargin(extraSize));
   }
 
   // This is the rectangle that will actually be drawn, in gdk pixels
@@ -838,8 +851,10 @@ nsNativeThemeGTK::DrawWidgetBackground(nsRenderingContext* aContext,
 
   // gdk rectangles are wrt the drawing rect.
 
-  GdkRectangle gdk_rect = {-drawingRect.x, -drawingRect.y,
-                           widgetRect.width, widgetRect.height};
+  GdkRectangle gdk_rect = {-drawingRect.x/scaleFactor,
+                           -drawingRect.y/scaleFactor,
+                           widgetRect.width/scaleFactor,
+                           widgetRect.height/scaleFactor};
 
   // translate everything so (0,0) is the top left of the drawingRect
   gfxContextAutoSaveRestore autoSR(ctx);
@@ -848,6 +863,7 @@ nsNativeThemeGTK::DrawWidgetBackground(nsRenderingContext* aContext,
     tm = ctx->CurrentMatrix();
   }
   tm.Translate(rect.TopLeft() + gfxPoint(drawingRect.x, drawingRect.y));
+  tm.Scale(scaleFactor, scaleFactor); // Draw in GDK coords
   ctx->SetMatrix(tm);
 
   NS_ASSERTION(!IsWidgetTypeDisabled(mDisabledWidgetTypes, aWidgetType),
@@ -1036,6 +1052,12 @@ nsNativeThemeGTK::GetWidgetPadding(nsDeviceContext* aContext,
         aResult->left += horizontal_padding;
         aResult->right += horizontal_padding;
 
+        gint scale = nsScreenGtk::GetGtkMonitorScaleFactor();
+        aResult->top *= scale;
+        aResult->right *= scale;
+        aResult->bottom *= scale;
+        aResult->left *= scale;
+
         return true;
       }
   }
@@ -1065,7 +1087,8 @@ nsNativeThemeGTK::GetWidgetOverflow(nsDeviceContext* aContext,
 NS_IMETHODIMP
 nsNativeThemeGTK::GetMinimumWidgetSize(nsPresContext* aPresContext,
                                        nsIFrame* aFrame, uint8_t aWidgetType,
-                                       nsIntSize* aResult, bool* aIsOverridable)
+                                       LayoutDeviceIntSize* aResult,
+                                       bool* aIsOverridable)
 {
   aResult->width = aResult->height = 0;
   *aIsOverridable = true;
@@ -1296,6 +1319,9 @@ nsNativeThemeGTK::GetMinimumWidgetSize(nsPresContext* aPresContext,
     }
     break;
   }
+
+  *aResult = *aResult * nsScreenGtk::GetGtkMonitorScaleFactor();
+
   return NS_OK;
 }
 

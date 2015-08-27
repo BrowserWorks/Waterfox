@@ -123,12 +123,11 @@ class HTMLElement(object):
 
     @property
     def size(self):
-        '''
-        A dictionary with the size of the element.
-        '''
+        """A dictionary with the size of the element."""
         warnings.warn("The size property has been deprecated and will be removed in a future version. \
             Please use HTMLElement#rect", DeprecationWarning)
-        return self.marionette._send_message('getElementSize', 'value', id=self.id)
+        rect = self.rect
+        return {"width": rect["width"], "height": rect["height"]}
 
     @property
     def tag_name(self):
@@ -150,18 +149,20 @@ class HTMLElement(object):
         """
         warnings.warn("The location property has been deprecated and will be removed in a future version. \
             Please use HTMLElement#rect", DeprecationWarning)
-        return self.marionette._send_message("getElementLocation", "value", id=self.id)
+        rect = self.rect
+        return {"x": rect["x"], "y": rect["y"]}
 
     @property
     def rect(self):
+        """Gets the element's bounding rectangle.
+        
+        This will return a dictionary with the following:
+
+          * x and y represent the top left coordinates of the ``HTMLElement``
+            relative to top left corner of the document.
+          * height and the width will contain the height and the width
+            of the DOMRect of the ``HTMLElement``.
         """
-            this will return a dictionary with the following:
-
-            * x and y represent the top left coordinates of the WebElement relative to top left corner of the document.
-            * height and the width will contain the height and the width of the DOMRect of the WebElement.
-
-        """
-
         return self.marionette._send_message("getElementRect", "value", id=self.id)
 
     def value_of_css_property(self, property_name):
@@ -173,11 +174,6 @@ class HTMLElement(object):
         return self.marionette._send_message('getElementValueOfCssProperty', 'value',
                                              id=self.id,
                                              propertyName=property_name)
-    def submit(self):
-        '''
-        Submits if the element is a form or is within a form
-        '''
-        return self.marionette._send_message('submitElement', 'ok', id=self.id)
 
 class MouseButton(object):
     '''
@@ -554,7 +550,7 @@ class Marionette(object):
                  gecko_log=None, homedir=None, baseurl=None, no_window=False, logdir=None,
                  busybox=None, symbols_path=None, timeout=None, socket_timeout=360,
                  device_serial=None, adb_path=None, process_args=None,
-                 adb_host=None, adb_port=None, prefs=None):
+                 adb_host=None, adb_port=None, prefs=None, startup_timeout=60):
         self.host = host
         self.port = self.local_port = port
         self.bin = bin
@@ -603,7 +599,7 @@ class Marionette(object):
                                            app_args=app_args, symbols_path=symbols_path,
                                            gecko_log=gecko_log, prefs=prefs)
             self.instance.start()
-            assert(self.wait_for_port()), "Timed out waiting for port!"
+            assert(self.wait_for_port(timeout=startup_timeout)), "Timed out waiting for port!"
 
         if emulator:
             self.runner = B2GEmulatorRunner(b2g_home=homedir,
@@ -693,8 +689,7 @@ class Marionette(object):
             self.session = None
             self.window = None
             self.client.close()
-            raise errors.TimeoutException(
-                "Connection timed out", status=errors.ErrorCodes.TIMEOUT)
+            raise errors.TimeoutException("Connection timed out")
 
         # Process any emulator commands that are sent from a script
         # while it's executing.
@@ -745,60 +740,11 @@ class Marionette(object):
                 "Malformed packet, expected key 'error' to be a dict: %s" % response)
 
         error = response["error"]
-        status = error.get("status", 500)
+        status = error.get("status")
         message = error.get("message")
         stacktrace = error.get("stacktrace")
 
-        # status numbers come from
-        # http://code.google.com/p/selenium/wiki/JsonWireProtocol#Response_Status_Codes
-        if status == errors.ErrorCodes.NO_SUCH_ELEMENT:
-            raise errors.NoSuchElementException(message=message, status=status, stacktrace=stacktrace)
-        elif status == errors.ErrorCodes.NO_SUCH_FRAME:
-            raise errors.NoSuchFrameException(message=message, status=status, stacktrace=stacktrace)
-        elif status == errors.ErrorCodes.STALE_ELEMENT_REFERENCE:
-            raise errors.StaleElementException(message=message, status=status, stacktrace=stacktrace)
-        elif status == errors.ErrorCodes.ELEMENT_NOT_VISIBLE:
-            raise errors.ElementNotVisibleException(message=message, status=status, stacktrace=stacktrace)
-        elif status == errors.ErrorCodes.ELEMENT_NOT_ACCESSIBLE:
-            raise errors.ElementNotAccessibleException(message=message, status=status, stacktrace=stacktrace)
-        elif status == errors.ErrorCodes.INVALID_ELEMENT_STATE:
-            raise errors.InvalidElementStateException(message=message, status=status, stacktrace=stacktrace)
-        elif status == errors.ErrorCodes.UNKNOWN_ERROR:
-            raise errors.MarionetteException(message=message, status=status, stacktrace=stacktrace)
-        elif status == errors.ErrorCodes.ELEMENT_IS_NOT_SELECTABLE:
-            raise errors.ElementNotSelectableException(message=message, status=status, stacktrace=stacktrace)
-        elif status == errors.ErrorCodes.JAVASCRIPT_ERROR:
-            raise errors.JavascriptException(message=message, status=status, stacktrace=stacktrace)
-        elif status == errors.ErrorCodes.XPATH_LOOKUP_ERROR:
-            raise errors.XPathLookupException(message=message, status=status, stacktrace=stacktrace)
-        elif status == errors.ErrorCodes.TIMEOUT:
-            raise errors.TimeoutException(message=message, status=status, stacktrace=stacktrace)
-        elif status == errors.ErrorCodes.NO_SUCH_WINDOW:
-            raise errors.NoSuchWindowException(message=message, status=status, stacktrace=stacktrace)
-        elif status == errors.ErrorCodes.INVALID_COOKIE_DOMAIN:
-            raise errors.InvalidCookieDomainException(message=message, status=status, stacktrace=stacktrace)
-        elif status == errors.ErrorCodes.UNABLE_TO_SET_COOKIE:
-            raise errors.UnableToSetCookieException(message=message, status=status, stacktrace=stacktrace)
-        elif status == errors.ErrorCodes.NO_ALERT_OPEN:
-            raise errors.NoAlertPresentException(message=message, status=status, stacktrace=stacktrace)
-        elif status == errors.ErrorCodes.SCRIPT_TIMEOUT:
-            raise errors.ScriptTimeoutException(message=message, status=status, stacktrace=stacktrace)
-        elif status == errors.ErrorCodes.INVALID_SELECTOR \
-             or status == errors.ErrorCodes.INVALID_XPATH_SELECTOR \
-             or status == errors.ErrorCodes.INVALID_XPATH_SELECTOR_RETURN_TYPER:
-            raise errors.InvalidSelectorException(message=message, status=status, stacktrace=stacktrace)
-        elif status == errors.ErrorCodes.MOVE_TARGET_OUT_OF_BOUNDS:
-            raise errors.MoveTargetOutOfBoundsException(message=message, status=status, stacktrace=stacktrace)
-        elif status == errors.ErrorCodes.FRAME_SEND_NOT_INITIALIZED_ERROR:
-            raise errors.FrameSendNotInitializedError(message=message, status=status, stacktrace=stacktrace)
-        elif status == errors.ErrorCodes.FRAME_SEND_FAILURE_ERROR:
-            raise errors.FrameSendFailureError(message=message, status=status, stacktrace=stacktrace)
-        elif status == errors.ErrorCodes.UNSUPPORTED_OPERATION:
-            raise errors.UnsupportedOperationException(message=message, status=status, stacktrace=stacktrace)
-        elif status == errors.ErrorCodes.SESSION_NOT_CREATED:
-            raise errors.SessionNotCreatedException(message=message, status=status, stacktrace=stacktrace)
-        else:
-            raise errors.MarionetteException(message=message, status=status, stacktrace=stacktrace)
+        raise errors.lookup(status)(message, stacktrace=stacktrace)
 
     def _reset_timeouts(self):
         if self.timeout is not None:
@@ -840,6 +786,70 @@ class Marionette(object):
                 for i in range(len(val)):
                     typing.append(val[i])
         return typing
+
+    def push_permission(self, perm_type, allow):
+        with self.using_context('content'):
+            perm = self.execute_script("""
+                let allow = arguments[0];
+                if (allow) {
+                  allow = Components.interfaces.nsIPermissionManager.ALLOW_ACTION;
+                }
+                else {
+                  allow = Components.interfaces.nsIPermissionManager.DENY_ACTION;
+                }
+                let perm_type = arguments[1];
+
+                Components.utils.import("resource://gre/modules/Services.jsm");
+                window.wrappedJSObject.permChanged = false;
+                window.wrappedJSObject.permObserver = function(subject, topic, data) {
+                  if (topic == "perm-changed") {
+                    let permission = subject.QueryInterface(Components.interfaces.nsIPermission);
+                    if (perm_type == permission.type) {
+                      Services.obs.removeObserver(window.wrappedJSObject.permObserver, "perm-changed");
+                      window.wrappedJSObject.permChanged = true;
+                    }
+                  }
+                };
+                Services.obs.addObserver(window.wrappedJSObject.permObserver,
+                                         "perm-changed", false);
+
+                let value = {
+                              'url': document.nodePrincipal.URI.spec,
+                              'appId': document.nodePrincipal.appId,
+                              'isInBrowserElement': document.nodePrincipal.isInBrowserElement,
+                              'type': perm_type,
+                              'action': allow
+                            };
+                return value;
+                """, script_args=[allow, perm_type], sandbox='system')
+
+        with self.using_context('chrome'):
+            waiting = self.execute_script("""
+                Components.utils.import("resource://gre/modules/Services.jsm");
+                let perm = arguments[0];
+                let secMan = Services.scriptSecurityManager;
+                let principal = secMan.getAppCodebasePrincipal(Services.io.newURI(perm.url, null, null),
+                                perm.appId, perm.isInBrowserElement);
+                let testPerm = Services.perms.testPermissionFromPrincipal(principal, perm.type, perm.action);
+                if (testPerm == perm.action) {
+                  return false;
+                }
+                Services.perms.addFromPrincipal(principal, perm.type, perm.action);
+                return true;
+                """, script_args=[perm])
+
+        with self.using_context('content'):
+            if waiting:
+                self.execute_async_script("""
+                    waitFor(marionetteScriptFinished, function() {
+                      return window.wrappedJSObject.permChanged;
+                    });
+                    """, sandbox='system')
+            else:
+                self.execute_script("""
+                    Components.utils.import("resource://gre/modules/Services.jsm");
+                    Services.obs.removeObserver(window.wrappedJSObject.permObserver, "perm-changed");
+                    """, sandbox='system')
 
     def enforce_gecko_prefs(self, prefs):
         """
@@ -1185,23 +1195,28 @@ class Marionette(object):
         return None
 
     def switch_to_default_content(self):
-        '''
-        Switch the current context to page's default content.
-        '''
+        """Switch the current context to page's default content."""
         return self.switch_to_frame()
 
     def switch_to_frame(self, frame=None, focus=True):
-        '''
-        Switch the current context to the specified frame. Subsequent commands will operate in the context of the specified frame, if applicable.
+        """Switch the current context to the specified frame. Subsequent
+        commands will operate in the context of the specified frame,
+        if applicable.
 
-        :param frame: A reference to the frame to switch to: this can be an HTMLElement, an index, name or an id attribute. If you call switch_to_frame() without an argument, it will switch to the top-level frame.
-        :param focus: A boolean value which determins whether to focus the frame that we just switched to.
-        '''
+        :param frame: A reference to the frame to switch to.  This can
+            be an ``HTMLElement``, an integer index, string name, or an
+            ID attribute.  If you call ``switch_to_frame`` without an
+            argument, it will switch to the top-level frame.
+
+        :param focus: A boolean value which determins whether to focus
+            the frame that we just switched to.
+        """
+        kwargs = {"focus": focus}
         if isinstance(frame, HTMLElement):
-            response = self._send_message('switchToFrame', 'ok', element=frame.id, focus=focus)
-        else:
-            response = self._send_message('switchToFrame', 'ok', id=frame, focus=focus)
-        return response
+            kwargs["element"] = frame.id
+        elif frame is not None:
+            kwargs["id"] = frame
+        return self._send_message("switchToFrame", "ok", **kwargs)
 
     def get_url(self):
         """Get a string representing the current URL.
@@ -1231,35 +1246,29 @@ class Marionette(object):
         return response
 
     def navigate(self, url):
-        """Navigate to to given URL.
+        """Navigate to given `url`.
 
-        This will follow redirects issued by the server.  When the
-        method returns is based on the page load strategy that the
-        user has selected.
+        Navigates the current top-level browsing context's content
+        frame to the given URL and waits for the document to load or
+        the session's page timeout duration to elapse before returning.
 
-        Documents that contain a META tag with the "http-equiv"
-        attribute set to "refresh" will return if the timeout is
-        greater than 1 second and the other criteria for determining
-        whether a page is loaded are met.  When the refresh period is
-        1 second or less and the page load strategy is "normal" or
-        "conservative", it will wait for the page to complete loading
-        before returning.
+        The command will return with a failure if there is an error
+        loading the document or the URL is blocked.  This can occur if
+        it fails to reach the host, the URL is malformed, the page is
+        restricted (about:* pages), or if there is a certificate issue
+        to name some examples.
 
-        If any modal dialog box, such as those opened on
-        window.onbeforeunload or window.alert, is opened at any point
-        in the page load, it will return immediately.
+        The document is considered successfully loaded when the
+        `DOMContentLoaded` event on the frame element associated with the
+        `window` triggers and `document.readState` is "complete".
 
-        If a 401 response is seen by the browser, it will return
-        immediately.  That is, if BASIC, DIGEST, NTLM or similar
-        authentication is required, the page load is assumed to be
-        complete.  This does not include FORM-based authentication.
+        In chrome context it will change the current `window`'s location
+        to the supplied URL and wait until `document.readState` equals
+        "complete" or the page timeout duration has elapsed.
 
-        :param url: The url to navigate to.
-
+        :param url: The URL to navigate to.
         """
-
-        response = self._send_message("get", "ok", url=url)
-        return response
+        return self._send_message("get", "ok", url=url)
 
     def timeouts(self, timeout_type, ms):
         """An interface for managing timeout behaviour of a Marionette instance.
@@ -1342,7 +1351,7 @@ class Marionette(object):
     def execute_js_script(self, script, script_args=None, async=True,
                           new_sandbox=True, special_powers=False,
                           script_timeout=None, inactivity_timeout=None,
-                          filename=None):
+                          filename=None, sandbox='default'):
         if script_args is None:
             script_args = []
         args = self.wrapArguments(script_args)
@@ -1360,7 +1369,7 @@ class Marionette(object):
         return self.unwrapValue(response)
 
     def execute_script(self, script, script_args=None, new_sandbox=True,
-                       special_powers=False, script_timeout=None):
+                       special_powers=False, sandbox='default', script_timeout=None):
         '''
         Executes a synchronous JavaScript script, and returns the result (or None if the script does return a value).
 
@@ -1375,6 +1384,10 @@ class Marionette(object):
          be used, since you already have access to chrome-level commands if you
          set context to chrome and do an execute_script. This method was added
          only to help us run existing Mochitests.
+        :param sandbox: A tag referring to the sandbox you wish to use; if
+         you specify a new tag, a new sandbox will be created.  If you use the
+         special tag 'system', the sandbox will be created using the system
+         principal which has elevated privileges.
         :param new_sandbox: If False, preserve global variables from the last
          execute_*script call. This is True by default, in which case no
          globals are preserved.
@@ -1432,13 +1445,16 @@ class Marionette(object):
                                       script=script,
                                       args=args,
                                       newSandbox=new_sandbox,
+                                      sandbox=sandbox,
                                       specialPowers=special_powers,
                                       scriptTimeout=script_timeout,
                                       line=int(frame[1]),
                                       filename=os.path.basename(frame[0]))
         return self.unwrapValue(response)
 
-    def execute_async_script(self, script, script_args=None, new_sandbox=True, special_powers=False, script_timeout=None, debug_script=False):
+    def execute_async_script(self, script, script_args=None, new_sandbox=True,
+                             sandbox='default', script_timeout=None,
+                             special_powers=False, debug_script=False):
         '''
         Executes an asynchronous JavaScript script, and returns the result (or None if the script does return a value).
 
@@ -1453,6 +1469,10 @@ class Marionette(object):
          be used, since you already have access to chrome-level commands if you
          set context to chrome and do an execute_script. This method was added
          only to help us run existing Mochitests.
+        :param sandbox: A tag referring to the sandbox you wish to use; if
+         you specify a new tag, a new sandbox will be created.  If you use the
+         special tag 'system', the sandbox will be created using the system
+         principal which has elevated privileges.
         :param new_sandbox: If False, preserve global variables from the last
          execute_*script call. This is True by default, in which case no
          globals are preserved.
@@ -1482,6 +1502,7 @@ class Marionette(object):
                                       script=script,
                                       args=args,
                                       newSandbox=new_sandbox,
+                                      sandbox=sandbox,
                                       specialPowers=special_powers,
                                       scriptTimeout=script_timeout,
                                       line=int(frame[1]),

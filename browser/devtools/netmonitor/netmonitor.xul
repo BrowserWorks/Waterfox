@@ -25,27 +25,60 @@
 
   <popupset id="networkPopupSet">
     <menupopup id="network-request-popup">
-      <menuitem id="request-menu-context-newtab"
-                label="&netmonitorUI.context.newTab;"
-                accesskey="&netmonitorUI.context.newTab.accesskey;"/>
       <menuitem id="request-menu-context-copy-url"
                 label="&netmonitorUI.context.copyUrl;"
                 accesskey="&netmonitorUI.context.copyUrl.accesskey;"/>
+      <menuitem id="request-menu-context-copy-url-params"
+                label="&netmonitorUI.context.copyUrlParams;"
+                accesskey="&netmonitorUI.context.copyUrlParams.accesskey;"
+                oncommand="NetMonitorView.RequestsMenu.copyUrlParams();"/>
+      <menuitem id="request-menu-context-copy-post-data"
+                label="&netmonitorUI.context.copyPostData;"
+                accesskey="&netmonitorUI.context.copyPostData.accesskey;"
+                oncommand="NetMonitorView.RequestsMenu.copyPostData();"/>
       <menuitem id="request-menu-context-copy-as-curl"
                 label="&netmonitorUI.context.copyAsCurl;"
+                accesskey="&netmonitorUI.context.copyAsCurl.accesskey;"
                 oncommand="NetMonitorView.RequestsMenu.copyAsCurl();"/>
+      <menuseparator class="request-menu-context-separator"/>
+      <menuitem id="request-menu-context-copy-request-headers"
+                label="&netmonitorUI.context.copyRequestHeaders;"
+                accesskey="&netmonitorUI.context.copyRequestHeaders.accesskey;"
+                oncommand="NetMonitorView.RequestsMenu.copyRequestHeaders();"/>
+      <menuitem id="response-menu-context-copy-response-headers"
+                label="&netmonitorUI.context.copyResponseHeaders;"
+                accesskey="&netmonitorUI.context.copyResponseHeaders.accesskey;"
+                oncommand="NetMonitorView.RequestsMenu.copyResponseHeaders();"/>
+      <menuitem id="request-menu-context-copy-response"
+                label="&netmonitorUI.context.copyResponse;"
+                accesskey="&netmonitorUI.context.copyResponse.accesskey;"/>
       <menuitem id="request-menu-context-copy-image-as-data-uri"
                 label="&netmonitorUI.context.copyImageAsDataUri;"
                 accesskey="&netmonitorUI.context.copyImageAsDataUri.accesskey;"/>
       <menuitem id="request-menu-context-resend"
                 label="&netmonitorUI.summary.editAndResend;"
                 accesskey="&netmonitorUI.summary.editAndResend.accesskey;"/>
-      <menuseparator id="request-menu-context-separator"/>
+      <menuseparator class="request-menu-context-separator"/>
+      <menuitem id="request-menu-context-newtab"
+                label="&netmonitorUI.context.newTab;"
+                accesskey="&netmonitorUI.context.newTab.accesskey;"/>
       <menuitem id="request-menu-context-perf"
                 label="&netmonitorUI.context.perfTools;"
                 accesskey="&netmonitorUI.context.perfTools.accesskey;"/>
     </menupopup>
   </popupset>
+
+  <commandset>
+    <command id="freeTextFilterCommand"
+             oncommand="NetMonitorView.RequestsMenu.freetextFilterBox.focus()"/>
+  </commandset>
+
+  <keyset>
+    <key id="freeTextFilterKey"
+         key="&netmonitorUI.footer.filterFreetext.key;"
+         modifiers="accel"
+         command="freeTextFilterCommand"/>
+  </keyset>
 
   <deck id="body" class="theme-sidebar" flex="1">
 
@@ -396,7 +429,7 @@
                 <vbox flex="1">
                   <label id="response-content-info-header"/>
                   <vbox id="response-content-json-box" flex="1" hidden="true">
-                    <vbox id="response-content-json" flex="1"/>
+                    <vbox id="response-content-json" flex="1" context="network-response-popup" />
                   </vbox>
                   <vbox id="response-content-textarea-box" flex="1" hidden="true">
                     <vbox id="response-content-textarea" flex="1"/>
@@ -752,6 +785,14 @@
                 data-key="other"
                 label="&netmonitorUI.footer.filterOther;">
         </button>
+        <spacer id="requests-menu-spacer-textbox"
+                class="requests-menu-footer-spacer"
+                flex="0"/>
+        <textbox id="requests-menu-filter-freetext-text"
+                 class="requests-menu-footer-textbox devtools-searchinput"
+                 type="search"
+                 required="true"
+                 placeholder="&netmonitorUI.footer.filterFreetext.label;"/>
         <spacer id="requests-menu-spacer"
                 class="requests-menu-footer-spacer"
                 flex="100"/>

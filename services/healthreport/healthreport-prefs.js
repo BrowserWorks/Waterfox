@@ -7,7 +7,7 @@ pref("datareporting.healthreport.currentDaySubmissionFailureCount", 0);
 pref("datareporting.healthreport.documentServerURI", "https://fhr.data.mozilla.com/");
 pref("datareporting.healthreport.documentServerNamespace", "metrics");
 pref("datareporting.healthreport.infoURL", "https://www.mozilla.org/legal/privacy/firefox.html#health-report");
-pref("datareporting.healthreport.logging.consoleEnabled", true);
+pref("datareporting.healthreport.logging.consoleEnabled", false);
 pref("datareporting.healthreport.logging.consoleLevel", "Warn");
 pref("datareporting.healthreport.logging.dumpEnabled", false);
 pref("datareporting.healthreport.logging.dumpLevel", "Debug");
@@ -20,7 +20,7 @@ pref("datareporting.healthreport.pendingDeleteRemoteData", false);
 // Health Report is enabled by default on all channels.
 pref("datareporting.healthreport.uploadEnabled", false);
 
-pref("datareporting.healthreport.service.enabled", true);
+pref("datareporting.healthreport.service.enabled", false);
 pref("datareporting.healthreport.service.loadDelayMsec", 10000);
 pref("datareporting.healthreport.service.loadDelayFirstRunMsec", 60000);
 

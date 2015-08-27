@@ -17,12 +17,12 @@ namespace mozilla {
 
 class WMFAudioMFTManager : public MFTManager {
 public:
-  WMFAudioMFTManager(const mp4_demuxer::AudioDecoderConfig& aConfig);
+  WMFAudioMFTManager(const AudioInfo& aConfig);
   ~WMFAudioMFTManager();
 
   virtual TemporaryRef<MFTDecoder> Init() override;
 
-  virtual HRESULT Input(mp4_demuxer::MP4Sample* aSample) override;
+  virtual HRESULT Input(MediaRawData* aSample) override;
 
   // Note WMF's AAC decoder sometimes output negatively timestamped samples,
   // presumably they're the preroll samples, and we strip them. We may return

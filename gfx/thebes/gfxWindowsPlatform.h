@@ -57,8 +57,6 @@ struct IDirect3DDevice9;
 struct ID3D11Device;
 struct IDXGIAdapter1;
 
-class nsIMemoryReporter;
-
 /**
  * Utility to get a Windows HDC from a Moz2D DrawTarget.  If the DrawTarget is
  * not backed by a HDC this will get the HDC for the screen device context
@@ -205,6 +203,8 @@ public:
                                            const uint8_t* aFontData,
                                            uint32_t aLength);
 
+    virtual bool CanUseHardwareVideoDecoding() override;
+
     /**
      * Check whether format is supported on a platform or not (if unclear, returns true)
      */
@@ -249,16 +249,19 @@ public:
     // Device to be used on the ImageBridge thread
     ID3D11Device *GetD3D11ImageBridgeDevice();
 
+    // Create a D3D11 device to be used for DXVA decoding.
+    mozilla::TemporaryRef<ID3D11Device> CreateD3D11DecoderDevice();
+
     mozilla::layers::ReadbackManagerD3D11* GetReadbackManager();
 
     static bool IsOptimus();
 
     bool IsWARP() { return mIsWARP; }
 
-    bool SupportsApzWheelInput() override {
+    bool SupportsApzWheelInput() const override {
       return true;
     }
-    bool SupportsApzTouchInput() override;
+    bool SupportsApzTouchInput() const override;
 
     virtual already_AddRefed<mozilla::gfx::VsyncSource> CreateHardwareVsyncSource() override;
     static mozilla::Atomic<size_t> sD3D11MemoryUsed;
@@ -276,6 +279,7 @@ private:
     void Init();
     void InitD3D11Devices();
     IDXGIAdapter1 *GetDXGIAdapter();
+    bool IsDeviceReset(HRESULT hr, DeviceResetReason* aReason);
 
     bool mUseDirectWrite;
     bool mUsingGDIFonts;
@@ -297,6 +301,9 @@ private:
     bool mD3D11DeviceInitialized;
     mozilla::RefPtr<mozilla::layers::ReadbackManagerD3D11> mD3D11ReadbackManager;
     bool mIsWARP;
+    bool mHasDeviceReset;
+    bool mDoesD3D11TextureSharingWork;
+    DeviceResetReason mDeviceResetReason;
 
     virtual void GetPlatformCMSOutputProfile(void* &mem, size_t &size);
 };

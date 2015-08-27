@@ -196,19 +196,20 @@ SettingsListener.observe('devtools.overlay', false, (value) => {
 });
 
 #ifdef MOZ_WIDGET_GONK
+
 let LogShake;
-SettingsListener.observe('devtools.logshake', false, (value) => {
+(function() {
+  let scope = {};
+  Cu.import('resource://gre/modules/LogShake.jsm', scope);
+  LogShake = scope.LogShake;
+  LogShake.init();
+})();
+
+SettingsListener.observe('devtools.logshake', false, value => {
   if (value) {
-    if (!LogShake) {
-      let scope = {};
-      Cu.import('resource://gre/modules/LogShake.jsm', scope);
-      LogShake = scope.LogShake;
-    }
-    LogShake.init();
+    LogShake.enableDeviceMotionListener();
   } else {
-    if (LogShake) {
-      LogShake.uninit();
-    }
+    LogShake.disableDeviceMotionListener();
   }
 });
 #endif
@@ -564,6 +565,7 @@ let settingsToObserve = {
   'privacy.donottrackheader.enabled': false,
   'ril.debugging.enabled': false,
   'ril.radio.disabled': false,
+  'mms.debugging.enabled': false,
   'ril.mms.requestReadReport.enabled': {
     prefName: 'dom.mms.requestReadReport',
     defaultValue: true

@@ -1022,9 +1022,6 @@ SpdyConnectTransaction::SpdyConnectTransaction(nsHttpConnectionInfo *ci,
 SpdyConnectTransaction::~SpdyConnectTransaction()
 {
   LOG(("SpdyConnectTransaction dtor %p\n", this));
-  if (mRequestHead) {
-    delete mRequestHead;
-  }
 
   if (mDrivingTransaction) {
     // requeue it I guess. This should be gone.
@@ -1604,6 +1601,18 @@ NS_IMETHODIMP
 SocketTransportShim::GetTimeout(uint32_t aType, uint32_t *_retval)
 {
   return mWrapped->GetTimeout(aType, _retval);
+}
+
+NS_IMETHODIMP
+SocketTransportShim::GetNetworkInterfaceId(nsACString_internal &aNetworkInterfaceId)
+{
+  return mWrapped->GetNetworkInterfaceId(aNetworkInterfaceId);
+}
+
+NS_IMETHODIMP
+SocketTransportShim::SetNetworkInterfaceId(const nsACString_internal &aNetworkInterfaceId)
+{
+  return mWrapped->SetNetworkInterfaceId(aNetworkInterfaceId);
 }
 
 NS_IMETHODIMP

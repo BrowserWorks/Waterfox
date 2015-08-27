@@ -122,11 +122,46 @@ function waitForDebuggerMessage(dbg, message) {
         if (message !== message1) {
           return;
         }
-        info(true, "Should receive " + message + " message from debugger.");
+        ok(true, "Should receive " + message + " message from debugger.");
         dbg.removeListener(this);
         resolve();
       }
     });
+  });
+}
+
+function waitForDebuggerFreeze(dbg) {
+  return new Promise(function (resolve) {
+    dbg.addListener({
+      onFreeze: function () {
+        dbg.removeListener(this);
+        resolve();
+      }
+    });
+  });
+}
+
+function waitForDebuggerThaw(dbg) {
+  return new Promise(function (resolve) {
+    dbg.addListener({
+      onThaw: function () {
+        dbg.removeListener(this);
+        resolve();
+      }
+    });
+  });
+}
+
+function waitForWindowMessage(window, message) {
+  return new Promise(function (resolve) {
+    let onmessage = function (event) {
+      if (event.data !== event.data) {
+        return;
+      }
+      window.removeEventListener("message", onmessage, false);
+      resolve();
+    };
+    window.addEventListener("message", onmessage, false);
   });
 }
 

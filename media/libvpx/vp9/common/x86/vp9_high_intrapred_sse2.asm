@@ -18,7 +18,7 @@ pw_32: times 4 dd 32
 
 SECTION .text
 INIT_MMX sse
-cglobal high_dc_predictor_4x4, 4, 5, 4, dst, stride, above, left, goffset
+cglobal highbd_dc_predictor_4x4, 4, 5, 4, dst, stride, above, left, goffset
   GET_GOT     goffsetq
 
   movq                  m0, [aboveq]
@@ -45,7 +45,7 @@ cglobal high_dc_predictor_4x4, 4, 5, 4, dst, stride, above, left, goffset
   RET
 
 INIT_XMM sse2
-cglobal high_dc_predictor_8x8, 4, 5, 4, dst, stride, above, left, goffset
+cglobal highbd_dc_predictor_8x8, 4, 5, 4, dst, stride, above, left, goffset
   GET_GOT     goffsetq
 
   pxor                  m1, m1
@@ -80,7 +80,7 @@ cglobal high_dc_predictor_8x8, 4, 5, 4, dst, stride, above, left, goffset
   RET
 
 INIT_XMM sse2
-cglobal high_dc_predictor_16x16, 4, 5, 5, dst, stride, above, left, goffset
+cglobal highbd_dc_predictor_16x16, 4, 5, 5, dst, stride, above, left, goffset
   GET_GOT     goffsetq
 
   pxor                  m1, m1
@@ -124,7 +124,7 @@ cglobal high_dc_predictor_16x16, 4, 5, 5, dst, stride, above, left, goffset
 
 %if ARCH_X86_64
 INIT_XMM sse2
-cglobal high_dc_predictor_32x32, 4, 5, 9, dst, stride, above, left, goffset
+cglobal highbd_dc_predictor_32x32, 4, 5, 9, dst, stride, above, left, goffset
   GET_GOT     goffsetq
 
   pxor                  m1, m1
@@ -184,7 +184,7 @@ cglobal high_dc_predictor_32x32, 4, 5, 9, dst, stride, above, left, goffset
 %endif
 
 INIT_MMX sse
-cglobal high_v_predictor_4x4, 3, 3, 1, dst, stride, above
+cglobal highbd_v_predictor_4x4, 3, 3, 1, dst, stride, above
   movq                  m0, [aboveq]
   movq    [dstq          ], m0
   movq    [dstq+strideq*2], m0
@@ -194,7 +194,7 @@ cglobal high_v_predictor_4x4, 3, 3, 1, dst, stride, above
   RET
 
 INIT_XMM sse2
-cglobal high_v_predictor_8x8, 3, 3, 1, dst, stride, above
+cglobal highbd_v_predictor_8x8, 3, 3, 1, dst, stride, above
   mova                  m0, [aboveq]
   DEFINE_ARGS dst, stride, stride3
   lea             stride3q, [strideq*3]
@@ -210,7 +210,7 @@ cglobal high_v_predictor_8x8, 3, 3, 1, dst, stride, above
   RET
 
 INIT_XMM sse2
-cglobal high_v_predictor_16x16, 3, 4, 2, dst, stride, above
+cglobal highbd_v_predictor_16x16, 3, 4, 2, dst, stride, above
   mova                  m0, [aboveq]
   mova                  m1, [aboveq+16]
   DEFINE_ARGS dst, stride, stride3, nlines4
@@ -231,7 +231,7 @@ cglobal high_v_predictor_16x16, 3, 4, 2, dst, stride, above
   REP_RET
 
 INIT_XMM sse2
-cglobal high_v_predictor_32x32, 3, 4, 4, dst, stride, above
+cglobal highbd_v_predictor_32x32, 3, 4, 4, dst, stride, above
   mova                  m0, [aboveq]
   mova                  m1, [aboveq+16]
   mova                  m2, [aboveq+32]
@@ -262,7 +262,7 @@ cglobal high_v_predictor_32x32, 3, 4, 4, dst, stride, above
   REP_RET
 
 INIT_MMX sse
-cglobal high_tm_predictor_4x4, 5, 6, 5, dst, stride, above, left, bps, one
+cglobal highbd_tm_predictor_4x4, 5, 6, 5, dst, stride, above, left, bps, one
   movd                  m1, [aboveq-2]
   movq                  m0, [aboveq]
   pshufw                m1, m1, 0x0
@@ -300,7 +300,7 @@ cglobal high_tm_predictor_4x4, 5, 6, 5, dst, stride, above, left, bps, one
   REP_RET
 
 INIT_XMM sse2
-cglobal high_tm_predictor_8x8, 5, 6, 5, dst, stride, above, left, bps, one
+cglobal highbd_tm_predictor_8x8, 5, 6, 5, dst, stride, above, left, bps, one
   movd                  m1, [aboveq-2]
   mova                  m0, [aboveq]
   pshuflw               m1, m1, 0x0
@@ -345,7 +345,7 @@ cglobal high_tm_predictor_8x8, 5, 6, 5, dst, stride, above, left, bps, one
 
 %if ARCH_X86_64
 INIT_XMM sse2
-cglobal high_tm_predictor_16x16, 5, 6, 8, dst, stride, above, left, bps, one
+cglobal highbd_tm_predictor_16x16, 5, 6, 9, dst, stride, above, left, bps, one
   movd                  m2, [aboveq-2]
   mova                  m0, [aboveq]
   mova                  m1, [aboveq+16]
@@ -399,7 +399,7 @@ cglobal high_tm_predictor_16x16, 5, 6, 8, dst, stride, above, left, bps, one
   REP_RET
 
 INIT_XMM sse2
-cglobal high_tm_predictor_32x32, 5, 6, 12, dst, stride, above, left, bps, one
+cglobal highbd_tm_predictor_32x32, 5, 6, 12, dst, stride, above, left, bps, one
   movd                  m0, [aboveq-2]
   mova                  m1, [aboveq]
   mova                  m2, [aboveq+16]

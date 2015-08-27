@@ -10,6 +10,7 @@ interface WindowProxy;
 interface nsISupports;
 interface URI;
 interface nsIDocShell;
+interface nsILoadGroup;
 
 enum VisibilityState { "hidden", "visible" };
 
@@ -292,10 +293,10 @@ partial interface Document {
   //(Not implemented)NodeList  findAll(DOMString selectors, optional (Element or sequence<Node>)? refNodes);
 };
 
-// http://dev.w3.org/fxtf/web-animations/#extensions-to-the-document-interface
+// http://w3c.github.io/web-animations/#extensions-to-the-document-interface
 partial interface Document {
   [Func="nsDocument::IsWebAnimationsEnabled"]
-  readonly attribute AnimationTimeline timeline;
+  readonly attribute DocumentTimeline timeline;
 };
 
 //  Mozilla extensions of various sorts
@@ -354,6 +355,8 @@ partial interface Document {
   [ChromeOnly] readonly attribute nsIDocShell? docShell;
 
   [ChromeOnly] readonly attribute DOMString contentLanguage;
+
+  [ChromeOnly] readonly attribute nsILoadGroup? documentLoadGroup;
 };
 
 // Extension to give chrome JS the ability to determine when a document was

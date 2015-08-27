@@ -71,13 +71,22 @@ policies and contribution forms [3].
 
     WindowTestEnvironment.prototype._dispatch = function(selector, callback_args, message_arg) {
         this._forEach_windows(
-                function(w, is_same_origin) {
-                    if (is_same_origin && selector in w) {
+                function(w, same_origin) {
+                    if (same_origin) {
                         try {
-                            w[selector].apply(undefined, callback_args);
-                        } catch (e) {
-                            if (debug) {
-                                throw e;
+                            var has_selector = selector in w;
+                        } catch(e) {
+                            // If document.domain was set at some point same_origin can be
+                            // wrong and the above will fail.
+                            has_selector = false;
+                        }
+                        if (has_selector) {
+                            try {
+                                w[selector].apply(undefined, callback_args);
+                            } catch (e) {
+                                if (debug) {
+                                    throw e;
+                                }
                             }
                         }
                     }
@@ -359,8 +368,20 @@ policies and contribution forms [3].
         self.addEventListener("message",
                 function(event) {
                     if (event.data.type && event.data.type === "connect") {
-                        this_obj._add_message_port(event.ports[0]);
-                        event.ports[0].start();
+                        if (event.ports && event.ports[0]) {
+                            // If a MessageChannel was passed, then use it to
+                            // send results back to the main window.  This
+                            // allows the tests to work even if the browser
+                            // does not fully support MessageEvent.source in
+                            // ServiceWorkers yet.
+                            this_obj._add_message_port(event.ports[0]);
+                            event.ports[0].start();
+                        } else {
+                            // If there is no MessageChannel, then attempt to
+                            // use the MessageEvent.source to send results
+                            // back to the main window.
+                            this_obj._add_message_port(event.source);
+                        }
                     }
                 });
 
@@ -469,6 +490,74 @@ policies and contribution forms [3].
             assert_throws(expected, function() { throw e });
         });
     }
+
+    /**
+     * This constructor helper allows DOM events to be handled using Promises,
+     * which can make it a lot easier to test a very specific series of events,
+     * including ensuring that unexpected events are not fired at any point.
+     */
+    function EventWatcher(test, watchedNode, eventTypes)
+    {
+        if (typeof eventTypes == 'string') {
+            eventTypes = [eventTypes];
+        }
+
+        var waitingFor = null;
+
+        var eventHandler = test.step_func(function(evt) {
+            assert_true(!!waitingFor,
+                        'Not expecting event, but got ' + evt.type + ' event');
+            assert_equals(evt.type, waitingFor.types[0],
+                          'Expected ' + waitingFor.types[0] + ' event, but got ' +
+                          evt.type + ' event instead');
+            if (waitingFor.types.length > 1) {
+                // Pop first event from array
+                waitingFor.types.shift();
+                return;
+            }
+            // We need to null out waitingFor before calling the resolve function
+            // since the Promise's resolve handlers may call wait_for() which will
+            // need to set waitingFor.
+            var resolveFunc = waitingFor.resolve;
+            waitingFor = null;
+            resolveFunc(evt);
+        });
+
+        for (var i = 0; i < eventTypes.length; i++) {
+            watchedNode.addEventListener(eventTypes[i], eventHandler);
+        }
+
+        /**
+         * Returns a Promise that will resolve after the specified event or
+         * series of events has occured.
+         */
+        this.wait_for = function(types) {
+            if (waitingFor) {
+                return Promise.reject('Already waiting for an event or events');
+            }
+            if (typeof types == 'string') {
+                types = [types];
+            }
+            return new Promise(function(resolve, reject) {
+                waitingFor = {
+                    types: types,
+                    resolve: resolve,
+                    reject: reject
+                };
+            });
+        };
+
+        function stop_watching() {
+            for (var i = 0; i < eventTypes.length; i++) {
+                watchedNode.removeEventListener(eventTypes[i], eventHandler);
+            }
+        };
+
+        test.add_cleanup(stop_watching);
+
+        return this;
+    }
+    expose(EventWatcher, 'EventWatcher');
 
     function setup(func_or_properties, maybe_properties)
     {
@@ -1399,15 +1488,24 @@ policies and contribution forms [3].
         var message_port;
 
         if (is_service_worker(worker)) {
-            // The ServiceWorker's implicit MessagePort is currently not
-            // reliably accessible from the ServiceWorkerGlobalScope due to
-            // Blink setting MessageEvent.source to null for messages sent via
-            // ServiceWorker.postMessage(). Until that's resolved, create an
-            // explicit MessageChannel and pass one end to the worker.
-            var message_channel = new MessageChannel();
-            message_port = message_channel.port1;
-            message_port.start();
-            worker.postMessage({type: "connect"}, [message_channel.port2]);
+            if (window.MessageChannel) {
+                // The ServiceWorker's implicit MessagePort is currently not
+                // reliably accessible from the ServiceWorkerGlobalScope due to
+                // Blink setting MessageEvent.source to null for messages sent
+                // via ServiceWorker.postMessage(). Until that's resolved,
+                // create an explicit MessageChannel and pass one end to the
+                // worker.
+                var message_channel = new MessageChannel();
+                message_port = message_channel.port1;
+                message_port.start();
+                worker.postMessage({type: "connect"}, [message_channel.port2]);
+            } else {
+                // If MessageChannel is not available, then try the
+                // ServiceWorker.postMessage() approach using MessageEvent.source
+                // on the other end.
+                message_port = navigator.serviceWorker;
+                worker.postMessage({type: "connect"});
+            }
         } else if (is_shared_worker(worker)) {
             message_port = worker.port;
         } else {
@@ -1436,7 +1534,7 @@ policies and contribution forms [3].
             status: {
                 status: tests.status.ERROR,
                 message: "Error in worker" + filename + ": " + message,
-                stack: e.stack
+                stack: error.stack
             }
         });
         error.preventDefault();
@@ -2258,7 +2356,15 @@ policies and contribution forms [3].
     AssertionError.prototype = Object.create(Error.prototype);
 
     AssertionError.prototype.get_stack = function() {
-        var lines = new Error().stack.split("\n");
+        var stack = new Error().stack;
+        if (!stack) {
+            try {
+                throw new Error();
+            } catch (e) {
+                stack = e.stack;
+            }
+        }
+        var lines = stack.split("\n");
         var rv = [];
         var re = /\/resources\/testharness\.js/;
         var i = 0;

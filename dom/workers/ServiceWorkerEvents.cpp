@@ -1,5 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -16,7 +16,9 @@
 #include "nsStreamUtils.h"
 #include "nsNetCID.h"
 #include "nsSerializationHelper.h"
+#include "nsQueryObject.h"
 
+#include "mozilla/Preferences.h"
 #include "mozilla/dom/FetchEventBinding.h"
 #include "mozilla/dom/PromiseNativeHandler.h"
 #include "mozilla/dom/Request.h"
@@ -96,11 +98,14 @@ class FinishResponse final : public nsRunnable
 {
   nsMainThreadPtrHandle<nsIInterceptedChannel> mChannel;
   nsRefPtr<InternalResponse> mInternalResponse;
+  nsCString mWorkerSecurityInfo;
 public:
   FinishResponse(nsMainThreadPtrHandle<nsIInterceptedChannel>& aChannel,
-                 InternalResponse* aInternalResponse)
+                 InternalResponse* aInternalResponse,
+                 const nsCString& aWorkerSecurityInfo)
     : mChannel(aChannel)
     , mInternalResponse(aInternalResponse)
+    , mWorkerSecurityInfo(aWorkerSecurityInfo)
   {
   }
 
@@ -110,7 +115,13 @@ public:
     AssertIsOnMainThread();
 
     nsCOMPtr<nsISupports> infoObj;
-    nsresult rv = NS_DeserializeObject(mInternalResponse->GetSecurityInfo(), getter_AddRefs(infoObj));
+    nsAutoCString securityInfo(mInternalResponse->GetSecurityInfo());
+    if (securityInfo.IsEmpty()) {
+      // We are dealing with a synthesized response here, so fall back to the
+      // security info for the worker script.
+      securityInfo = mWorkerSecurityInfo;
+    }
+    nsresult rv = NS_DeserializeObject(securityInfo, getter_AddRefs(infoObj));
     if (NS_SUCCEEDED(rv)) {
       rv = mChannel->SetSecurityInfo(infoObj);
       if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -158,11 +169,14 @@ struct RespondWithClosure
 {
   nsMainThreadPtrHandle<nsIInterceptedChannel> mInterceptedChannel;
   nsRefPtr<InternalResponse> mInternalResponse;
+  nsCString mWorkerSecurityInfo;
 
   RespondWithClosure(nsMainThreadPtrHandle<nsIInterceptedChannel>& aChannel,
-                     InternalResponse* aInternalResponse)
+                     InternalResponse* aInternalResponse,
+                     const nsCString& aWorkerSecurityInfo)
     : mInterceptedChannel(aChannel)
     , mInternalResponse(aInternalResponse)
+    , mWorkerSecurityInfo(aWorkerSecurityInfo)
   {
   }
 };
@@ -172,7 +186,9 @@ void RespondWithCopyComplete(void* aClosure, nsresult aStatus)
   nsAutoPtr<RespondWithClosure> data(static_cast<RespondWithClosure*>(aClosure));
   nsCOMPtr<nsIRunnable> event;
   if (NS_SUCCEEDED(aStatus)) {
-    event = new FinishResponse(data->mInterceptedChannel, data->mInternalResponse);
+    event = new FinishResponse(data->mInterceptedChannel,
+                               data->mInternalResponse,
+                               data->mWorkerSecurityInfo);
   } else {
     event = new CancelChannelRunnable(data->mInterceptedChannel);
   }
@@ -208,6 +224,7 @@ RespondWithHandler::ResolvedCallback(JSContext* aCx, JS::Handle<JS::Value> aValu
   AutoCancel autoCancel(this);
 
   if (!aValue.isObject()) {
+    NS_WARNING("FetchEvent::RespondWith was passed a promise resolved to a non-Object value");
     return;
   }
 
@@ -233,7 +250,12 @@ RespondWithHandler::ResolvedCallback(JSContext* aCx, JS::Handle<JS::Value> aValu
     return;
   }
 
-  nsAutoPtr<RespondWithClosure> closure(new RespondWithClosure(mInterceptedChannel, ir));
+  WorkerPrivate* worker = GetCurrentThreadWorkerPrivate();
+  MOZ_ASSERT(worker);
+  worker->AssertIsOnWorkerThread();
+
+  nsAutoPtr<RespondWithClosure> closure(
+      new RespondWithClosure(mInterceptedChannel, ir, worker->GetSecurityInfo()));
   nsCOMPtr<nsIInputStream> body;
   response->GetBody(getter_AddRefs(body));
   // Errors and redirects may not have a body.
@@ -246,7 +268,7 @@ RespondWithHandler::ResolvedCallback(JSContext* aCx, JS::Handle<JS::Value> aValu
       return;
     }
 
-    nsCOMPtr<nsIEventTarget> stsThread = do_GetService(NS_SOCKETTRANSPORTSERVICE_CONTRACTID, &rv);
+    nsCOMPtr<nsIEventTarget> stsThread = do_GetService(NS_STREAMTRANSPORTSERVICE_CONTRACTID, &rv);
     if (NS_WARN_IF(!stsThread)) {
       return;
     }
@@ -356,18 +378,59 @@ NS_INTERFACE_MAP_END_INHERITING(Event)
 
 NS_IMPL_CYCLE_COLLECTION_INHERITED(ExtendableEvent, Event, mPromise)
 
-InstallEvent::InstallEvent(EventTarget* aOwner)
-  : ExtendableEvent(aOwner)
-  , mActivateImmediately(false)
+#ifndef MOZ_SIMPLEPUSH
+
+PushMessageData::PushMessageData(const nsAString& aData)
+  : mData(aData)
 {
 }
 
-NS_IMPL_ADDREF_INHERITED(InstallEvent, ExtendableEvent)
-NS_IMPL_RELEASE_INHERITED(InstallEvent, ExtendableEvent)
+PushMessageData::~PushMessageData()
+{
+}
 
-NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(InstallEvent)
+NS_IMPL_ISUPPORTS0(PushMessageData);
+
+
+void
+PushMessageData::Json(JSContext* cx, JS::MutableHandle<JSObject*> aRetval)
+{
+  //todo bug 1149195.  Don't be lazy.
+   NS_ABORT();
+}
+
+void
+PushMessageData::Text(nsAString& aData)
+{
+  aData = mData;
+}
+
+void
+PushMessageData::ArrayBuffer(JSContext* cx, JS::MutableHandle<JSObject*> aRetval)
+{
+  //todo bug 1149195.  Don't be lazy.
+   NS_ABORT();
+}
+
+mozilla::dom::File*
+PushMessageData::Blob()
+{
+  //todo bug 1149195.  Don't be lazy.
+  NS_ABORT();
+  return nullptr;
+}
+
+PushEvent::PushEvent(EventTarget* aOwner)
+  : ExtendableEvent(aOwner)
+{
+}
+
+NS_INTERFACE_MAP_BEGIN(PushEvent)
 NS_INTERFACE_MAP_END_INHERITING(ExtendableEvent)
 
-NS_IMPL_CYCLE_COLLECTION_INHERITED(InstallEvent, ExtendableEvent, mActiveWorker)
+NS_IMPL_ADDREF_INHERITED(PushEvent, ExtendableEvent)
+NS_IMPL_RELEASE_INHERITED(PushEvent, ExtendableEvent)
+
+#endif /* ! MOZ_SIMPLEPUSH */
 
 END_WORKERS_NAMESPACE

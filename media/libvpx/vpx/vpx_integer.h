@@ -15,8 +15,6 @@
 /* get ptrdiff_t, size_t, wchar_t, NULL */
 #include <stddef.h>
 
-#if !defined(VPX_DONT_DEFINE_STDINT_TYPES)
-
 #if defined(_MSC_VER)
 #define VPX_FORCE_INLINE __forceinline
 #define VPX_INLINE __inline
@@ -25,6 +23,8 @@
 // TODO(jbb): Allow a way to force inline off for older compilers.
 #define VPX_INLINE inline
 #endif
+
+#if !defined(VPX_DONT_DEFINE_STDINT_TYPES)
 
 #if (defined(_MSC_VER) && (_MSC_VER < 1600)) || defined(VPX_EMULATE_INTTYPES)
 typedef signed char  int8_t;
@@ -39,6 +39,8 @@ typedef unsigned int   uint32_t;
 typedef signed __int64   int64_t;
 typedef unsigned __int64 uint64_t;
 #define INT64_MAX _I64_MAX
+#define INT32_MAX _I32_MAX
+#define INT32_MIN _I32_MIN
 #define INT16_MAX _I16_MAX
 #define INT16_MIN _I16_MIN
 #endif
@@ -51,9 +53,15 @@ typedef size_t uintptr_t;
 
 /* Most platforms have the C99 standard integer types. */
 
-#if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
-#define __STDC_FORMAT_MACROS
-#endif
+#if defined(__cplusplus)
+# if !defined(__STDC_FORMAT_MACROS)
+#  define __STDC_FORMAT_MACROS
+# endif
+# if !defined(__STDC_LIMIT_MACROS)
+#  define __STDC_LIMIT_MACROS
+# endif
+#endif  // __cplusplus
+
 #include <stdint.h>
 
 #endif

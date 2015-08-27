@@ -230,19 +230,19 @@ nsNPAPIPluginInstance::~nsNPAPIPluginInstance()
 
   for (uint32_t i = 0; i < mCachedParamLength; i++) {
     if (mCachedParamNames[i]) {
-      NS_Free(mCachedParamNames[i]);
+      free(mCachedParamNames[i]);
       mCachedParamNames[i] = nullptr;
     }
     if (mCachedParamValues[i]) {
-      NS_Free(mCachedParamValues[i]);
+      free(mCachedParamValues[i]);
       mCachedParamValues[i] = nullptr;
     }
   }
 
-  NS_Free(mCachedParamNames);
+  free(mCachedParamNames);
   mCachedParamNames = nullptr;
 
-  NS_Free(mCachedParamValues);
+  free(mCachedParamValues);
   mCachedParamValues = nullptr;
 }
 
@@ -454,8 +454,8 @@ nsNPAPIPluginInstance::Start()
   uint32_t quirkParamLength = params.Length() ?
                                 mCachedParamLength : attributes.Length();
 
-  mCachedParamNames = (char**)NS_Alloc(sizeof(char*) * mCachedParamLength);
-  mCachedParamValues = (char**)NS_Alloc(sizeof(char*) * mCachedParamLength);
+  mCachedParamNames = (char**)moz_xmalloc(sizeof(char*) * mCachedParamLength);
+  mCachedParamValues = (char**)moz_xmalloc(sizeof(char*) * mCachedParamLength);
 
   for (uint32_t i = 0; i < attributes.Length(); i++) {
     mCachedParamNames[i] = ToNewUTF8String(attributes[i].mName);
@@ -1167,7 +1167,7 @@ public:
     if (plugin)
       mLibrary = plugin->GetLibrary();
   }
-  operator bool() { return !!mLibrary; }
+  explicit operator bool() { return !!mLibrary; }
   PluginLibrary* operator->() { return mLibrary; }
 
 private:
@@ -1293,7 +1293,7 @@ nsNPAPIPluginInstance::GetFormValue(nsAString& aValue)
 
   // NPPVformValue allocates with NPN_MemAlloc(), which uses
   // nsMemory.
-  nsMemory::Free(value);
+  free(value);
 
   return NS_OK;
 }
@@ -1777,4 +1777,23 @@ nsNPAPIPluginInstance::GetContentsScaleFactor()
     mOwner->GetContentsScaleFactor(&scaleFactor);
   }
   return scaleFactor;
+}
+
+nsresult
+nsNPAPIPluginInstance::GetRunID(uint32_t* aRunID)
+{
+  if (NS_WARN_IF(!aRunID)) {
+    return NS_ERROR_INVALID_POINTER;
+  }
+
+  if (NS_WARN_IF(!mPlugin)) {
+    return NS_ERROR_FAILURE;
+  }
+
+  PluginLibrary* library = mPlugin->GetLibrary();
+  if (!library) {
+    return NS_ERROR_FAILURE;
+  }
+
+  return library->GetRunID(aRunID);
 }

@@ -31,9 +31,6 @@
 static void make_grayscale(YV12_BUFFER_CONFIG *yuv);
 #endif
 
-static const int widths[]  = {4, 4, 8, 8,  8, 16, 16, 16, 32, 32, 32, 64, 64};
-static const int heights[] = {4, 8, 4, 8, 16,  8, 16, 32, 16, 32, 64, 32, 64};
-
 static int absdiff_thresh(BLOCK_SIZE bs, int increase_denoising) {
   (void)bs;
   return 3 + (increase_denoising ? 1 : 0);
@@ -48,38 +45,41 @@ static int delta_thresh(BLOCK_SIZE bs, int increase_denoising) {
 static int noise_motion_thresh(BLOCK_SIZE bs, int increase_denoising) {
   (void)bs;
   (void)increase_denoising;
-  return 25 * 25;
+  return 625;
 }
 
 static unsigned int sse_thresh(BLOCK_SIZE bs, int increase_denoising) {
-  return widths[bs] * heights[bs] * (increase_denoising ? 60 : 40);
+  return (1 << num_pels_log2_lookup[bs]) * (increase_denoising ? 60 : 40);
 }
 
 static int sse_diff_thresh(BLOCK_SIZE bs, int increase_denoising,
-                           int mv_row, int mv_col) {
-  if (mv_row * mv_row + mv_col * mv_col >
+                           int motion_magnitude) {
+  if (motion_magnitude >
       noise_motion_thresh(bs, increase_denoising)) {
     return 0;
   } else {
-    return widths[bs] * heights[bs] * 20;
+    return (1 << num_pels_log2_lookup[bs]) * 20;
   }
 }
 
-static int total_adj_strong_thresh(BLOCK_SIZE bs, int increase_denoising) {
-  return widths[bs] * heights[bs] * (increase_denoising ? 3 : 2);
+int total_adj_strong_thresh(BLOCK_SIZE bs, int increase_denoising) {
+  return (1 << num_pels_log2_lookup[bs]) * (increase_denoising ? 3 : 2);
 }
 
 static int total_adj_weak_thresh(BLOCK_SIZE bs, int increase_denoising) {
-  return widths[bs] * heights[bs] * (increase_denoising ? 3 : 2);
+  return (1 << num_pels_log2_lookup[bs]) * (increase_denoising ? 3 : 2);
 }
 
-static VP9_DENOISER_DECISION denoiser_filter(const uint8_t *sig, int sig_stride,
-                                             const uint8_t *mc_avg,
-                                             int mc_avg_stride,
-                                             uint8_t *avg, int avg_stride,
-                                             int increase_denoising,
-                                             BLOCK_SIZE bs,
-                                             int motion_magnitude) {
+// TODO(jackychen): If increase_denoising is enabled in the future,
+// we might need to update the code for calculating 'total_adj' in
+// case the C code is not bit-exact with corresponding sse2 code.
+int vp9_denoiser_filter_c(const uint8_t *sig, int sig_stride,
+                          const uint8_t *mc_avg,
+                          int mc_avg_stride,
+                          uint8_t *avg, int avg_stride,
+                          int increase_denoising,
+                          BLOCK_SIZE bs,
+                          int motion_magnitude) {
   int r, c;
   const uint8_t *sig_start = sig;
   const uint8_t *mc_avg_start = mc_avg;
@@ -102,8 +102,8 @@ static VP9_DENOISER_DECISION denoiser_filter(const uint8_t *sig, int sig_stride,
   }
 
   // First attempt to apply a strong temporal denoising filter.
-  for (r = 0; r < heights[bs]; ++r) {
-    for (c = 0; c < widths[bs]; ++c) {
+  for (r = 0; r < (4 << b_height_log2_lookup[bs]); ++r) {
+    for (c = 0; c < (4 << b_width_log2_lookup[bs]); ++c) {
       diff = mc_avg[c] - sig[c];
       absdiff = abs(diff);
 
@@ -143,7 +143,7 @@ static VP9_DENOISER_DECISION denoiser_filter(const uint8_t *sig, int sig_stride,
 
   // Otherwise, we try to dampen the filter if the delta is not too high.
   delta = ((abs(total_adj) - total_adj_strong_thresh(bs, increase_denoising))
-           >> 8) + 1;
+           >> num_pels_log2_lookup[bs]) + 1;
 
   if (delta >= delta_thresh(bs, increase_denoising)) {
     return COPY_BLOCK;
@@ -152,8 +152,8 @@ static VP9_DENOISER_DECISION denoiser_filter(const uint8_t *sig, int sig_stride,
   mc_avg =  mc_avg_start;
   avg = avg_start;
   sig = sig_start;
-  for (r = 0; r < heights[bs]; ++r) {
-    for (c = 0; c < widths[bs]; ++c) {
+  for (r = 0; r < (4 << b_height_log2_lookup[bs]); ++r) {
+    for (c = 0; c < (4 << b_width_log2_lookup[bs]); ++c) {
       diff = mc_avg[c] - sig[c];
       adj = abs(diff);
       if (adj > delta) {
@@ -190,16 +190,6 @@ static uint8_t *block_start(uint8_t *framebuf, int stride,
   return framebuf + (stride * mi_row * 8) + (mi_col * 8);
 }
 
-static void copy_block(uint8_t *dest, int dest_stride,
-                       const uint8_t *src, int src_stride, BLOCK_SIZE bs) {
-  int r;
-  for (r = 0; r < heights[bs]; ++r) {
-    vpx_memcpy(dest, src, widths[bs]);
-    dest += dest_stride;
-    src += src_stride;
-  }
-}
-
 static VP9_DENOISER_DECISION perform_motion_compensation(VP9_DENOISER *denoiser,
                                                          MACROBLOCK *mb,
                                                          BLOCK_SIZE bs,
@@ -213,33 +203,23 @@ static VP9_DENOISER_DECISION perform_motion_compensation(VP9_DENOISER *denoiser,
   int sse_diff = ctx->zeromv_sse - ctx->newmv_sse;
   MV_REFERENCE_FRAME frame;
   MACROBLOCKD *filter_mbd = &mb->e_mbd;
-  MB_MODE_INFO *mbmi = &filter_mbd->mi[0].src_mi->mbmi;
-
+  MB_MODE_INFO *mbmi = &filter_mbd->mi[0]->mbmi;
   MB_MODE_INFO saved_mbmi;
   int i, j;
   struct buf_2d saved_dst[MAX_MB_PLANE];
   struct buf_2d saved_pre[MAX_MB_PLANE][2];  // 2 pre buffers
 
-  // We will restore these after motion compensation.
-  saved_mbmi = *mbmi;
-  for (i = 0; i < MAX_MB_PLANE; ++i) {
-    for (j = 0; j < 2; ++j) {
-      saved_pre[i][j] = filter_mbd->plane[i].pre[j];
-    }
-    saved_dst[i] = filter_mbd->plane[i].dst;
-  }
-
   mv_col = ctx->best_sse_mv.as_mv.col;
   mv_row = ctx->best_sse_mv.as_mv.row;
-
   *motion_magnitude = mv_row * mv_row + mv_col * mv_col;
-
   frame = ctx->best_reference_frame;
+
+  saved_mbmi = *mbmi;
 
   // If the best reference frame uses inter-prediction and there is enough of a
   // difference in sum-squared-error, use it.
   if (frame != INTRA_FRAME &&
-      sse_diff > sse_diff_thresh(bs, increase_denoising, mv_row, mv_col)) {
+      sse_diff > sse_diff_thresh(bs, increase_denoising, *motion_magnitude)) {
     mbmi->ref_frame[0] = ctx->best_reference_frame;
     mbmi->mode = ctx->best_sse_inter_mode;
     mbmi->mv[0] = ctx->best_sse_mv;
@@ -254,6 +234,26 @@ static VP9_DENOISER_DECISION perform_motion_compensation(VP9_DENOISER *denoiser,
     ctx->best_sse_inter_mode = ZEROMV;
     ctx->best_sse_mv.as_int = 0;
     ctx->newmv_sse = ctx->zeromv_sse;
+  }
+
+  if (ctx->newmv_sse > sse_thresh(bs, increase_denoising)) {
+    // Restore everything to its original state
+    *mbmi = saved_mbmi;
+    return COPY_BLOCK;
+  }
+  if (*motion_magnitude >
+     (noise_motion_thresh(bs, increase_denoising) << 3)) {
+    // Restore everything to its original state
+    *mbmi = saved_mbmi;
+    return COPY_BLOCK;
+  }
+
+  // We will restore these after motion compensation.
+  for (i = 0; i < MAX_MB_PLANE; ++i) {
+    for (j = 0; j < 2; ++j) {
+      saved_pre[i][j] = filter_mbd->plane[i].pre[j];
+    }
+    saved_dst[i] = filter_mbd->plane[i].dst;
   }
 
   // Set the pointers in the MACROBLOCKD to point to the buffers in the denoiser
@@ -308,13 +308,6 @@ static VP9_DENOISER_DECISION perform_motion_compensation(VP9_DENOISER *denoiser,
   mv_row = ctx->best_sse_mv.as_mv.row;
   mv_col = ctx->best_sse_mv.as_mv.col;
 
-  if (ctx->newmv_sse > sse_thresh(bs, increase_denoising)) {
-    return COPY_BLOCK;
-  }
-  if (mv_row * mv_row + mv_col * mv_col >
-      8 * noise_motion_thresh(bs, increase_denoising)) {
-    return COPY_BLOCK;
-  }
   return FILTER_BLOCK;
 }
 
@@ -336,16 +329,22 @@ void vp9_denoiser_denoise(VP9_DENOISER *denoiser, MACROBLOCK *mb,
                                          &motion_magnitude);
 
   if (decision == FILTER_BLOCK) {
-    decision = denoiser_filter(src.buf, src.stride,
-                               mc_avg_start, mc_avg.y_stride,
-                               avg_start, avg.y_stride,
-                               0, bs, motion_magnitude);
+    decision = vp9_denoiser_filter(src.buf, src.stride,
+                                 mc_avg_start, mc_avg.y_stride,
+                                 avg_start, avg.y_stride,
+                                 0, bs, motion_magnitude);
   }
 
   if (decision == FILTER_BLOCK) {
-    copy_block(src.buf, src.stride, avg_start, avg.y_stride, bs);
+    vp9_convolve_copy(avg_start, avg.y_stride, src.buf, src.stride,
+                      NULL, 0, NULL, 0,
+                      num_4x4_blocks_wide_lookup[bs] << 2,
+                      num_4x4_blocks_high_lookup[bs] << 2);
   } else {  // COPY_BLOCK
-    copy_block(avg_start, avg.y_stride, src.buf, src.stride, bs);
+    vp9_convolve_copy(src.buf, src.stride, avg_start, avg.y_stride,
+                      NULL, 0, NULL, 0,
+                      num_4x4_blocks_wide_lookup[bs] << 2,
+                      num_4x4_blocks_high_lookup[bs] << 2);
   }
 }
 
@@ -353,14 +352,24 @@ static void copy_frame(YV12_BUFFER_CONFIG dest, const YV12_BUFFER_CONFIG src) {
   int r;
   const uint8_t *srcbuf = src.y_buffer;
   uint8_t *destbuf = dest.y_buffer;
+
   assert(dest.y_width == src.y_width);
   assert(dest.y_height == src.y_height);
 
   for (r = 0; r < dest.y_height; ++r) {
-    vpx_memcpy(destbuf, srcbuf, dest.y_width);
+    memcpy(destbuf, srcbuf, dest.y_width);
     destbuf += dest.y_stride;
     srcbuf += src.y_stride;
   }
+}
+
+static void swap_frame_buffer(YV12_BUFFER_CONFIG *dest,
+                              YV12_BUFFER_CONFIG *src) {
+  uint8_t *tmp_buf = dest->y_buffer;
+  assert(dest->y_width == src->y_width);
+  assert(dest->y_height == src->y_height);
+  dest->y_buffer = src->y_buffer;
+  src->y_buffer = tmp_buf;
 }
 
 void vp9_denoiser_update_frame_info(VP9_DENOISER *denoiser,
@@ -372,22 +381,23 @@ void vp9_denoiser_update_frame_info(VP9_DENOISER *denoiser,
   if (frame_type == KEY_FRAME) {
     int i;
     // Start at 1 so as not to overwrite the INTRA_FRAME
-    for (i = 1; i < MAX_REF_FRAMES; ++i) {
+    for (i = 1; i < MAX_REF_FRAMES; ++i)
       copy_frame(denoiser->running_avg_y[i], src);
-    }
-  } else {  /* For non key frames */
-    if (refresh_alt_ref_frame) {
-      copy_frame(denoiser->running_avg_y[ALTREF_FRAME],
-                 denoiser->running_avg_y[INTRA_FRAME]);
-    }
-    if (refresh_golden_frame) {
-      copy_frame(denoiser->running_avg_y[GOLDEN_FRAME],
-                 denoiser->running_avg_y[INTRA_FRAME]);
-    }
-    if (refresh_last_frame) {
-      copy_frame(denoiser->running_avg_y[LAST_FRAME],
-                 denoiser->running_avg_y[INTRA_FRAME]);
-    }
+    return;
+  }
+
+  /* For non key frames */
+  if (refresh_alt_ref_frame) {
+    swap_frame_buffer(&denoiser->running_avg_y[ALTREF_FRAME],
+                      &denoiser->running_avg_y[INTRA_FRAME]);
+  }
+  if (refresh_golden_frame) {
+    swap_frame_buffer(&denoiser->running_avg_y[GOLDEN_FRAME],
+                      &denoiser->running_avg_y[INTRA_FRAME]);
+  }
+  if (refresh_last_frame) {
+    swap_frame_buffer(&denoiser->running_avg_y[LAST_FRAME],
+                      &denoiser->running_avg_y[INTRA_FRAME]);
   }
 }
 
@@ -405,7 +415,7 @@ void vp9_denoiser_update_frame_stats(MB_MODE_INFO *mbmi, unsigned int sse,
     ctx->best_zeromv_reference_frame = mbmi->ref_frame[0];
   }
 
-  if (mode == NEWMV) {
+  if (mbmi->mv[0].as_int != 0 && sse < ctx->newmv_sse) {
     ctx->newmv_sse = sse;
     ctx->best_sse_inter_mode = mode;
     ctx->best_sse_mv = mbmi->mv[0];
@@ -420,6 +430,7 @@ int vp9_denoiser_alloc(VP9_DENOISER *denoiser, int width, int height,
 #endif
                        int border) {
   int i, fail;
+  const int legacy_byte_alignment = 0;
   assert(denoiser != NULL);
 
   for (i = 0; i < MAX_REF_FRAMES; ++i) {
@@ -428,7 +439,7 @@ int vp9_denoiser_alloc(VP9_DENOISER *denoiser, int width, int height,
 #if CONFIG_VP9_HIGHBITDEPTH
                                   use_highbitdepth,
 #endif
-                                  border);
+                                  border, legacy_byte_alignment);
     if (fail) {
       vp9_denoiser_free(denoiser);
       return 1;
@@ -443,7 +454,7 @@ int vp9_denoiser_alloc(VP9_DENOISER *denoiser, int width, int height,
 #if CONFIG_VP9_HIGHBITDEPTH
                                 use_highbitdepth,
 #endif
-                                border);
+                                border, legacy_byte_alignment);
   if (fail) {
     vp9_denoiser_free(denoiser);
     return 1;
@@ -452,23 +463,21 @@ int vp9_denoiser_alloc(VP9_DENOISER *denoiser, int width, int height,
   make_grayscale(&denoiser->running_avg_y[i]);
 #endif
   denoiser->increase_denoising = 0;
+  denoiser->frame_buffer_initialized = 1;
 
   return 0;
 }
 
 void vp9_denoiser_free(VP9_DENOISER *denoiser) {
   int i;
+  denoiser->frame_buffer_initialized = 0;
   if (denoiser == NULL) {
     return;
   }
   for (i = 0; i < MAX_REF_FRAMES; ++i) {
-    if (&denoiser->running_avg_y[i] != NULL) {
-      vp9_free_frame_buffer(&denoiser->running_avg_y[i]);
-    }
+    vp9_free_frame_buffer(&denoiser->running_avg_y[i]);
   }
-  if (&denoiser->mc_running_avg_y != NULL) {
-    vp9_free_frame_buffer(&denoiser->mc_running_avg_y);
-  }
+  vp9_free_frame_buffer(&denoiser->mc_running_avg_y);
 }
 
 #ifdef OUTPUT_YUV_DENOISED
@@ -477,15 +486,13 @@ static void make_grayscale(YV12_BUFFER_CONFIG *yuv) {
   uint8_t *u = yuv->u_buffer;
   uint8_t *v = yuv->v_buffer;
 
-  // The '/2's are there because we have a 440 buffer, but we want to output
-  // 420.
-  for (r = 0; r < yuv->uv_height / 2; ++r) {
-    for (c = 0; c < yuv->uv_width / 2; ++c) {
+  for (r = 0; r < yuv->uv_height; ++r) {
+    for (c = 0; c < yuv->uv_width; ++c) {
       u[c] = UINT8_MAX / 2;
       v[c] = UINT8_MAX / 2;
     }
-    u += yuv->uv_stride + yuv->uv_width / 2;
-    v += yuv->uv_stride + yuv->uv_width / 2;
+    u += yuv->uv_stride;
+    v += yuv->uv_stride;
   }
 }
 #endif

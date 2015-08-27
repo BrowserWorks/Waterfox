@@ -23,9 +23,20 @@
 
 #include "vm/NativeObject.h"
 
-namespace js {
+#define FOR_EACH_GC_LAYOUT(D) \
+ /* PrettyName       TypeName           AddToCCKind */ \
+    D(AccessorShape, js::AccessorShape, true) \
+    D(BaseShape,     js::BaseShape,     true) \
+    D(JitCode,       js::jit::JitCode,  true) \
+    D(LazyScript,    js::LazyScript,    true) \
+    D(Object,        JSObject,          true) \
+    D(ObjectGroup,   js::ObjectGroup,   true) \
+    D(Script,        JSScript,          true) \
+    D(Shape,         js::Shape,         true) \
+    D(String,        JSString,          false) \
+    D(Symbol,        JS::Symbol,        false)
 
-class AutoLockGC;
+namespace js {
 
 unsigned GetCPUCount();
 
@@ -41,10 +52,6 @@ enum ThreadType
     MainThread,
     BackgroundThread
 };
-
-namespace jit {
-    class JitCode;
-}
 
 namespace gcstats {
 struct Statistics;
@@ -78,11 +85,19 @@ template <> struct MapTypeToFinalizeKind<JSExternalString>  { static const Alloc
 template <> struct MapTypeToFinalizeKind<JS::Symbol>        { static const AllocKind kind = AllocKind::SYMBOL; };
 template <> struct MapTypeToFinalizeKind<jit::JitCode>      { static const AllocKind kind = AllocKind::JITCODE; };
 
+template <typename T> struct ParticipatesInCC {};
+#define EXPAND_PARTICIPATES_IN_CC(_, type, addToCCKind) \
+    template <> struct ParticipatesInCC<type> { static const bool value = addToCCKind; };
+FOR_EACH_GC_LAYOUT(EXPAND_PARTICIPATES_IN_CC)
+#undef EXPAND_PARTICIPATES_IN_CC
+
 static inline bool
 IsNurseryAllocable(AllocKind kind)
 {
     MOZ_ASSERT(IsValidAllocKind(kind));
     static const bool map[] = {
+        true,      /* AllocKind::FUNCTION */
+        true,      /* AllocKind::FUNCTION_EXTENDED */
         false,     /* AllocKind::OBJECT0 */
         true,      /* AllocKind::OBJECT0_BACKGROUND */
         false,     /* AllocKind::OBJECT2 */
@@ -116,6 +131,8 @@ IsBackgroundFinalized(AllocKind kind)
 {
     MOZ_ASSERT(IsValidAllocKind(kind));
     static const bool map[] = {
+        true,      /* AllocKind::FUNCTION */
+        true,      /* AllocKind::FUNCTION_EXTENDED */
         false,     /* AllocKind::OBJECT0 */
         true,      /* AllocKind::OBJECT0_BACKGROUND */
         false,     /* AllocKind::OBJECT2 */
@@ -161,6 +178,51 @@ CanBeFinalizedInBackground(AllocKind kind, const Class* clasp)
 
 inline JSGCTraceKind
 GetGCThingTraceKind(const void* thing);
+
+// Fortunately, few places in the system need to deal with fully abstract
+// cells. In those places that do, we generally want to move to a layout
+// templated function as soon as possible. This template wraps the upcast
+// for that dispatch.
+//
+// Call the functor |F f| with template parameter of the layout type.
+
+// GCC and Clang require an explicit template declaration in front of the
+// specialization of operator() because it is a dependent template. MSVC, on
+// the other hand, gets very confused if we have a |template| token there.
+#if defined(_MSC_VER) && !defined(__ICL)
+# define DEPENDENT_TEMPLATE_HINT
+#else
+# define DEPENDENT_TEMPLATE_HINT template
+#endif
+template <typename F, typename... Args>
+auto
+CallTyped(F f, JSGCTraceKind traceKind, Args&&... args)
+  -> decltype(f. DEPENDENT_TEMPLATE_HINT operator()<JSObject>(mozilla::Forward<Args>(args)...))
+{
+    switch (traceKind) {
+      case JSTRACE_OBJECT:
+          return f. DEPENDENT_TEMPLATE_HINT operator()<JSObject>(mozilla::Forward<Args>(args)...);
+      case JSTRACE_SCRIPT:
+          return f. DEPENDENT_TEMPLATE_HINT operator()<JSScript>(mozilla::Forward<Args>(args)...);
+      case JSTRACE_STRING:
+          return f. DEPENDENT_TEMPLATE_HINT operator()<JSString>(mozilla::Forward<Args>(args)...);
+      case JSTRACE_SYMBOL:
+          return f. DEPENDENT_TEMPLATE_HINT operator()<JS::Symbol>(mozilla::Forward<Args>(args)...);
+      case JSTRACE_BASE_SHAPE:
+          return f. DEPENDENT_TEMPLATE_HINT operator()<BaseShape>(mozilla::Forward<Args>(args)...);
+      case JSTRACE_JITCODE:
+          return f. DEPENDENT_TEMPLATE_HINT operator()<jit::JitCode>(mozilla::Forward<Args>(args)...);
+      case JSTRACE_LAZY_SCRIPT:
+          return f. DEPENDENT_TEMPLATE_HINT operator()<LazyScript>(mozilla::Forward<Args>(args)...);
+      case JSTRACE_SHAPE:
+          return f. DEPENDENT_TEMPLATE_HINT operator()<Shape>(mozilla::Forward<Args>(args)...);
+      case JSTRACE_OBJECT_GROUP:
+          return f. DEPENDENT_TEMPLATE_HINT operator()<ObjectGroup>(mozilla::Forward<Args>(args)...);
+      default:
+          MOZ_CRASH("Invalid trace kind in CallTyped.");
+    }
+}
+#undef DEPENDENT_TEMPLATE_HINT
 
 /* Capacity for slotsToThingKind */
 const size_t SLOTS_TO_THING_KIND_LIMIT = 17;
@@ -229,9 +291,11 @@ GetGCKindSlots(AllocKind thingKind)
 {
     /* Using a switch in hopes that thingKind will usually be a compile-time constant. */
     switch (thingKind) {
+      case AllocKind::FUNCTION:
       case AllocKind::OBJECT0:
       case AllocKind::OBJECT0_BACKGROUND:
         return 0;
+      case AllocKind::FUNCTION_EXTENDED:
       case AllocKind::OBJECT2:
       case AllocKind::OBJECT2_BACKGROUND:
         return 2;
@@ -271,6 +335,12 @@ GetGCKindSlots(AllocKind thingKind, const Class* clasp)
         nslots = 0;
 
     return nslots;
+}
+
+static inline size_t
+GetGCKindBytes(AllocKind thingKind)
+{
+    return sizeof(JSObject_Slots0) + GetGCKindSlots(thingKind) * sizeof(Value);
 }
 
 // Class to assist in triggering background chunk allocation. This cannot be done
@@ -844,6 +914,7 @@ class ArenaLists
 
     friend class GCRuntime;
     friend class js::Nursery;
+    friend class js::TenuringTracer;
 };
 
 /* The number of GC cycles an empty chunk can survive before been released. */
@@ -1050,19 +1121,6 @@ struct GCChunkHasher {
 
 typedef HashSet<js::gc::Chunk*, GCChunkHasher, SystemAllocPolicy> GCChunkSet;
 
-struct GrayRoot {
-    void* thing;
-    JSGCTraceKind kind;
-#ifdef DEBUG
-    JSTraceNamePrinter debugPrinter;
-    const void* debugPrintArg;
-    size_t debugPrintIndex;
-#endif
-
-    GrayRoot(void* thing, JSGCTraceKind kind)
-        : thing(thing), kind(kind) {}
-};
-
 typedef void (*IterateChunkCallback)(JSRuntime* rt, void* data, gc::Chunk* chunk);
 typedef void (*IterateZoneCallback)(JSRuntime* rt, void* data, JS::Zone* zone);
 typedef void (*IterateArenaCallback)(JSRuntime* rt, void* data, gc::Arena* arena,
@@ -1132,6 +1190,7 @@ MergeCompartments(JSCompartment* source, JSCompartment* target);
 class RelocationOverlay
 {
     friend class MinorCollectionTracer;
+    friend class js::TenuringTracer;
 
     /* The low bit is set so this should never equal a normal pointer. */
     static const uintptr_t Relocated = uintptr_t(0xbad0bad1);
@@ -1207,20 +1266,14 @@ IsForwarded(T* t)
     return overlay->isForwarded();
 }
 
+struct IsForwardedFunctor : public BoolDefaultAdaptor<Value, false> {
+    template <typename T> bool operator()(T* t) { return IsForwarded(t); }
+};
+
 inline bool
 IsForwarded(const JS::Value& value)
 {
-    if (value.isObject())
-        return IsForwarded(&value.toObject());
-
-    if (value.isString())
-        return IsForwarded(value.toString());
-
-    if (value.isSymbol())
-        return IsForwarded(value.toSymbol());
-
-    MOZ_ASSERT(!value.isGCThing());
-    return false;
+    return DispatchValueTyped(IsForwardedFunctor(), value);
 }
 
 template <typename T>
@@ -1232,18 +1285,16 @@ Forwarded(T* t)
     return reinterpret_cast<T*>(overlay->forwardingAddress());
 }
 
+struct ForwardedFunctor : public IdentityDefaultAdaptor<Value> {
+    template <typename T> inline Value operator()(T* t) {
+        return js::gc::RewrapValueOrId<Value, T*>::wrap(Forwarded(t));
+    }
+};
+
 inline Value
 Forwarded(const JS::Value& value)
 {
-    if (value.isObject())
-        return ObjectValue(*Forwarded(&value.toObject()));
-    else if (value.isString())
-        return StringValue(Forwarded(value.toString()));
-    else if (value.isSymbol())
-        return SymbolValue(Forwarded(value.toSymbol()));
-
-    MOZ_ASSERT(!value.isGCThing());
-    return value;
+    return DispatchValueTyped(ForwardedFunctor(), value);
 }
 
 template <typename T>
@@ -1259,19 +1310,20 @@ template <typename T>
 inline void
 CheckGCThingAfterMovingGC(T* t)
 {
-    MOZ_ASSERT_IF(t, !IsInsideNursery(t));
-    MOZ_ASSERT_IF(t, !RelocationOverlay::isCellForwarded(t));
+    if (t) {
+        MOZ_RELEASE_ASSERT(!IsInsideNursery(t));
+        MOZ_RELEASE_ASSERT(!RelocationOverlay::isCellForwarded(t));
+    }
 }
+
+struct CheckValueAfterMovingGCFunctor : public VoidDefaultAdaptor<Value> {
+    template <typename T> void operator()(T* t) { CheckGCThingAfterMovingGC(t); }
+};
 
 inline void
 CheckValueAfterMovingGC(const JS::Value& value)
 {
-    if (value.isObject())
-        return CheckGCThingAfterMovingGC(&value.toObject());
-    else if (value.isString())
-        return CheckGCThingAfterMovingGC(value.toString());
-    else if (value.isSymbol())
-        return CheckGCThingAfterMovingGC(value.toSymbol());
+    DispatchValueTyped(CheckValueAfterMovingGCFunctor(), value);
 }
 
 #endif // JSGC_HASH_TABLE_CHECKS
@@ -1286,15 +1338,12 @@ const int ZealGenerationalGCValue = 7;
 const int ZealIncrementalRootsThenFinish = 8;
 const int ZealIncrementalMarkAllThenFinish = 9;
 const int ZealIncrementalMultipleSlices = 10;
-const int ZealVerifierPostValue = 11;
-const int ZealFrameVerifierPostValue = 12;
 const int ZealCheckHashTablesOnMinorGC = 13;
 const int ZealCompactValue = 14;
 const int ZealLimit = 14;
 
 enum VerifierType {
-    PreBarrierVerifier,
-    PostBarrierVerifier
+    PreBarrierVerifier
 };
 
 #ifdef JS_GC_ZEAL

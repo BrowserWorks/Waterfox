@@ -6,8 +6,6 @@
 
 @template
 def Libxul(name):
-    MSVC_ENABLE_PGO = True
-
     if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
         # This is going to be a framework named "XUL", not an ordinary library named
         # "libxul.dylib"
@@ -28,18 +26,17 @@ def Libxul(name):
         'winspool.drv'
     ]
 
-    if CONFIG['MOZ_METRO']:
-        DELAYLOAD_DLLS += [
-            'API-MS-WIN-CORE-WINRT-L' + CONFIG['CRTEXPDLLVERSION'] + '.DLL',
-            'API-MS-WIN-CORE-WINRT-STRING-L' + CONFIG['CRTEXPDLLVERSION'] + '.DLL',
-            'uiautomationcore.dll'
-        ]
-
     if CONFIG['ACCESSIBILITY']:
         DELAYLOAD_DLLS += ['oleacc.dll']
 
     if CONFIG['MOZ_WEBRTC']:
         DELAYLOAD_DLLS += ['msdmo.dll']
+
+    if CONFIG['OS_ARCH'] == 'WINNT':
+        DELAYLOAD_DLLS += [
+            'api-ms-win-core-winrt-l1-1-0.dll',
+            'api-ms-win-core-winrt-string-l1-1-0.dll',
+        ]
 
     if CONFIG['OS_ARCH'] == 'WINNT' and not CONFIG['GNU_CC']:
         LOCAL_INCLUDES += [
@@ -69,8 +66,6 @@ STATIC_LIBRARY_NAME = 'xul_s'
 SOURCES += [
     'StaticXULComponentsStart.cpp',
 ]
-
-MSVC_ENABLE_PGO = True
 
 # This, combined with the fact the file is first, makes the start pointer
 # it contains first in Windows PGO builds.
@@ -113,7 +108,6 @@ if CONFIG['MOZ_SANDBOX'] and CONFIG['OS_ARCH'] == 'WINNT':
 
 USE_LIBS += [
     'gkmedias',
-    'mozalloc',
     'nspr',
     'nss',
     'sqlite',
@@ -166,6 +160,7 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
         '-framework IOKit',
         '-F%s' % CONFIG['MACOS_PRIVATE_FRAMEWORKS_DIR'],
         '-framework CoreUI',
+        '-framework CoreSymbolication',
         'cups',
     ]
 
@@ -355,11 +350,6 @@ if CONFIG['OS_ARCH'] == 'WINNT':
     if CONFIG['ACCESSIBILITY']:
         OS_LIBS += [
             'oleacc',
-        ]
-    if CONFIG['MOZ_METRO']:
-        OS_LIBS += [
-            'uiautomationcore',
-            'runtimeobject',
         ]
 
 if CONFIG['MOZ_ENABLE_QT']:

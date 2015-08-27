@@ -315,7 +315,7 @@ class JS_FRIEND_API(BaseProxyHandler)
 
     /* SpiderMonkey extensions. */
     virtual bool getPropertyDescriptor(JSContext* cx, HandleObject proxy, HandleId id,
-                                       MutableHandle<JSPropertyDescriptor> desc) const = 0;
+                                       MutableHandle<JSPropertyDescriptor> desc) const;
     virtual bool hasOwn(JSContext* cx, HandleObject proxy, HandleId id, bool* bp) const;
     virtual bool getOwnEnumerablePropertyKeys(JSContext* cx, HandleObject proxy,
                                               AutoIdVector& props) const;
@@ -425,7 +425,7 @@ class JS_FRIEND_API(DirectProxyHandler) : public BaseProxyHandler
 
 extern JS_FRIEND_DATA(const js::Class* const) ProxyClassPtr;
 
-inline bool IsProxy(JSObject* obj)
+inline bool IsProxy(const JSObject* obj)
 {
     return GetObjectClass(obj)->isProxy();
 }

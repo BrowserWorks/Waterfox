@@ -51,10 +51,6 @@
 #include "gfx2DGlue.h"
 #include "GeckoProfiler.h"
 
-class nsIntRegion;
-class nsIRunnable;
-class nsIThread;
-
 namespace android {
     class GraphicBuffer;
 }
@@ -1418,6 +1414,13 @@ public:
     void fGetUniformiv(GLuint program, GLint location, GLint* params) {
         BEFORE_GL_CALL;
         mSymbols.fGetUniformiv(program, location, params);
+        AFTER_GL_CALL;
+    }
+
+    void fGetUniformuiv(GLuint program, GLint location, GLuint* params) {
+        BEFORE_GL_CALL;
+        ASSERT_SYMBOL_PRESENT(fGetUniformuiv);
+        mSymbols.fGetUniformuiv(program, location, params);
         AFTER_GL_CALL;
     }
 

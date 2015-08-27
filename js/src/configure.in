@@ -190,6 +190,11 @@ MOZ_ARG_WITH_STRING(gonk-toolchain-prefix,
 
 if test -n "$gonkdir" ; then
     kernel_name=`uname -s | tr "[[:upper:]]" "[[:lower:]]"`
+    dnl Default to ICS
+    ANDROID_VERSION=15
+    if test -n "${PLATFORM_SDK_VERSION}"; then
+        ANDROID_VERSION="${PLATFORM_SDK_VERSION}"
+    fi
 
     dnl set up compilers
     AS="$gonk_toolchain_prefix"as
@@ -294,14 +299,6 @@ MOZ_CHECK_COMPILER_WRAPPER
 
 dnl Special win32 checks
 dnl ========================================================
-
-MOZ_ARG_ENABLE_BOOL(metro,
-[  --enable-metro           Enable Windows Metro build targets],
-    MOZ_METRO=1,
-    MOZ_METRO=)
-if test -n "$MOZ_METRO"; then
-    AC_DEFINE(MOZ_METRO)
-fi
 
 # Target the Windows 8.1 SDK by default
 WINSDK_TARGETVER=603
@@ -1235,16 +1232,21 @@ if test "$GNU_CC"; then
         _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Werror=sequence-point"
         _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Werror=switch"
         _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Werror=trigraphs"
+        _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Werror=uninitialized"
         _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Werror=unknown-pragmas"
         _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Werror=write-strings"
 
         MOZ_C_SUPPORTS_WARNING(-Werror=, non-literal-null-conversion, ac_c_has_werror_non_literal_null_conversion)
+        MOZ_C_SUPPORTS_WARNING(-Werror=, sometimes-uninitialized, ac_c_has_sometimes_uninitialized)
     fi
 
     # Turn off the following warnings that -Wall turns on:
     # -Wno-unused - lots of violations in third-party code
+    # -Wno-inline-new-delete - we inline 'new' and 'delete' in mozalloc
     #
     _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Wno-unused"
+
+    MOZ_CXX_SUPPORTS_WARNING(-Wno-, inline-new-delete, ac_cxx_has_wno_inline_new_delete)
 
     if test -z "$INTEL_CC" -a -z "$CLANG_CC"; then
        # Don't use -Wcast-align with ICC or clang
@@ -1335,6 +1337,7 @@ if test "$GNU_CXX"; then
         _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Werror=sequence-point"
         _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Werror=switch"
         _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Werror=trigraphs"
+        _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Werror=uninitialized"
         _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Werror=unknown-pragmas"
         _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Werror=unused-label"
         _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Werror=unused-value"
@@ -1342,6 +1345,7 @@ if test "$GNU_CXX"; then
 
         MOZ_CXX_SUPPORTS_WARNING(-Werror=, conversion-null, ac_cxx_has_werror_conversion_null)
         MOZ_CXX_SUPPORTS_WARNING(-Werror=, non-literal-null-conversion, ac_cxx_has_werror_non_literal_null_conversion)
+        MOZ_CXX_SUPPORTS_WARNING(-Werror=, sometimes-uninitialized, ac_cxx_has_sometimes_uninitialized)
     fi
 
     # Turn off the following warnings that -Wall turns on:
@@ -1789,6 +1793,10 @@ ia64*-hpux*)
         # the same thing as C4244, we disable C4267, too.
         CFLAGS="$CFLAGS -wd4244 -wd4267"
         CXXFLAGS="$CXXFLAGS -wd4244 -wd4267 -wd4251"
+        if test -n "$CLANG_CL"; then
+            # Suppress the clang-cl warning for the inline 'new' and 'delete' in mozalloc
+            CXXFLAGS="$CXXFLAGS -Wno-inline-new-delete"
+        fi
         # make 'foo == bar;' error out
         CFLAGS="$CFLAGS -we4553"
         CXXFLAGS="$CXXFLAGS -we4553"
@@ -1841,22 +1849,6 @@ ia64*-hpux*)
     dnl set NO_X11 defines here as the general check is skipped on win32
     no_x=yes
     AC_DEFINE(NO_X11)
-
-    case "$host" in
-    *-mingw*)
-        if test -z "$MOZ_TOOLS"; then
-            AC_MSG_ERROR([MOZ_TOOLS is not set])
-        fi
-        MOZ_TOOLS_DIR=`cd $MOZ_TOOLS && pwd -W`
-        if test "$?" != "0" -o -z "$MOZ_TOOLS_DIR"; then
-            AC_MSG_ERROR([cd \$MOZ_TOOLS failed. MOZ_TOOLS ==? $MOZ_TOOLS])
-        fi
-        MOZ_TOOLS_BIN_DIR="$(cd "$MOZ_TOOLS_DIR/bin" && pwd)"
-        if test `echo ${PATH}: | grep -ic "$MOZ_TOOLS_BINDIR:"` = 0; then
-            AC_MSG_ERROR([\$MOZ_TOOLS\\bin must be in your path.])
-        fi
-        ;;
-    esac
 
     case "$host_os" in
     cygwin*|msvc*|mks*)
@@ -2675,20 +2667,6 @@ AC_CACHE_CHECK(for __attribute__((always_inline)),
                                ac_cv_attribute_always_inline=yes,
                                ac_cv_attribute_always_inline=no)])
 
-AC_CACHE_CHECK(for __attribute__((malloc)),
-               ac_cv_attribute_malloc,
-               [AC_TRY_COMPILE([void* f(int) __attribute__((malloc));],
-                               [],
-                               ac_cv_attribute_malloc=yes,
-                               ac_cv_attribute_malloc=no)])
-
-AC_CACHE_CHECK(for __attribute__((warn_unused_result)),
-               ac_cv_attribute_warn_unused,
-               [AC_TRY_COMPILE([int f(void) __attribute__((warn_unused_result));],
-                               [],
-                               ac_cv_attribute_warn_unused=yes,
-                               ac_cv_attribute_warn_unused=no)])
-
 dnl End of C++ language/feature checks
 AC_LANG_C
 
@@ -2719,25 +2697,6 @@ if test -n "${CPU_ARCH}" -a -n "${TARGET_COMPILER_ABI}"; then
     TARGET_XPCOM_ABI="${CPU_ARCH}-${TARGET_COMPILER_ABI}"
 fi
 
-dnl Mozilla specific options
-dnl ========================================================
-dnl The macros used for command line options
-dnl are defined in build/autoconf/altoptions.m4.
-
-dnl If the compiler supports these attributes, define them as
-dnl convenience macros.
-if test "$ac_cv_attribute_malloc" = yes ; then
-  AC_DEFINE(NS_ATTR_MALLOC, [__attribute__((malloc))])
-else
-  AC_DEFINE(NS_ATTR_MALLOC,)
-fi
-
-if test "$ac_cv_attribute_warn_unused" = yes ; then
-  AC_DEFINE(NS_WARN_UNUSED_RESULT, [__attribute__((warn_unused_result))])
-else
-  AC_DEFINE(NS_WARN_UNUSED_RESULT,)
-fi
-
 dnl We can't run TRY_COMPILE tests on Windows, so hard-code some
 dnl features that Windows actually does support.
 
@@ -2747,6 +2706,11 @@ if test -n "$SKIP_COMPILER_CHECKS"; then
    AC_DEFINE(HAVE_FORCEINLINE)
    AC_DEFINE(HAVE_LOCALECONV)
 fi # SKIP_COMPILER_CHECKS
+
+dnl Mozilla specific options
+dnl ========================================================
+dnl The macros used for command line options
+dnl are defined in build/autoconf/altoptions.m4.
 
 dnl ========================================================
 dnl = Mozilla update channel, used for disabling features
@@ -2957,20 +2921,23 @@ if test -z "$MOZ_ENABLE_WARNINGS_AS_ERRORS"; then
    WARNINGS_AS_ERRORS=''
 elif test "$GNU_CC"; then
     # Prevent the following GCC warnings from being treated as errors:
-    # -Wuninitialized - too many false positives
     # -Wmaybe-uninitialized - too many false positives
     # -Wdeprecated-declarations - we don't want our builds held hostage when a
     #   platform-specific API becomes deprecated.
-    MOZ_C_SUPPORTS_WARNING(-W, no-error=uninitialized, ac_c_has_noerror_uninitialized)
-    MOZ_CXX_SUPPORTS_WARNING(-W, no-error=uninitialized, ac_cxx_has_noerror_uninitialized)
+    # -Wfree-nonheap-object - false positives during PGO
+    # -Warray-bounds - false positives depending on optimization
     MOZ_C_SUPPORTS_WARNING(-W, no-error=maybe-uninitialized, ac_c_has_noerror_maybe_uninitialized)
     MOZ_CXX_SUPPORTS_WARNING(-W, no-error=maybe-uninitialized, ac_cxx_has_noerror_maybe_uninitialized)
     MOZ_C_SUPPORTS_WARNING(-W, no-error=deprecated-declarations, ac_c_has_noerror_deprecated_declarations)
     MOZ_CXX_SUPPORTS_WARNING(-W, no-error=deprecated-declarations, ac_cxx_has_noerror_deprecated_declarations)
+    MOZ_C_SUPPORTS_WARNING(-W, no-error=array-bounds, ac_c_has_noerror_array_bounds)
+    MOZ_CXX_SUPPORTS_WARNING(-W, no-error=array-bounds, ac_cxx_has_noerror_array_bounds)
 
     if test -n "$MOZ_PGO"; then
         MOZ_C_SUPPORTS_WARNING(-W, no-error=coverage-mismatch, ac_c_has_noerror_coverage_mismatch)
         MOZ_CXX_SUPPORTS_WARNING(-W, no-error=coverage-mismatch, ac_cxx_has_noerror_coverage_mismatch)
+        MOZ_C_SUPPORTS_WARNING(-W, no-error=free-nonheap-object, ac_c_has_noerror_free_nonheap_object)
+        MOZ_CXX_SUPPORTS_WARNING(-W, no-error=free-nonheap-object, ac_cxx_has_noerror_free_nonheap_object)
     fi
 fi
 
@@ -3728,7 +3695,6 @@ AC_SUBST(MOZILLA_OFFICIAL)
 
 dnl win32 options
 AC_SUBST(MOZ_BROWSE_INFO)
-AC_SUBST(MOZ_TOOLS_DIR)
 
 dnl Echo the CFLAGS to remove extra whitespace.
 CFLAGS=`echo \
@@ -3780,7 +3746,6 @@ AC_SUBST(OS_COMPILE_CXXFLAGS)
 AC_SUBST(OS_LDFLAGS)
 AC_SUBST(OS_LIBS)
 AC_SUBST(CROSS_COMPILE)
-AC_SUBST(MOZ_METRO)
 
 AC_SUBST(HOST_CC)
 AC_SUBST(HOST_CXX)

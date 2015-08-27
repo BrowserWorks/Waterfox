@@ -16,7 +16,9 @@ const {Cc, Ci, Cu} = require("chrome");
 const {
   Tooltip,
   SwatchColorPickerTooltip,
-  SwatchCubicBezierTooltip
+  SwatchCubicBezierTooltip,
+  CssDocsTooltip,
+  SwatchFilterTooltip
 } = require("devtools/shared/widgets/Tooltip");
 const {CssLogic} = require("devtools/styleinspector/css-logic");
 const {Promise:promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
@@ -239,7 +241,8 @@ TooltipsOverlay.prototype = {
   get isEditing() {
     return this.colorPicker.tooltip.isShown() ||
            this.colorPicker.eyedropperOpen ||
-           this.cubicBezier.tooltip.isShown();
+           this.cubicBezier.tooltip.isShown() ||
+           this.filterEditor.tooltip.isShown();
   },
 
   /**
@@ -261,6 +264,10 @@ TooltipsOverlay.prototype = {
       this.colorPicker = new SwatchColorPickerTooltip(this.view.inspector.panelDoc);
       // Cubic bezier tooltip
       this.cubicBezier = new SwatchCubicBezierTooltip(this.view.inspector.panelDoc);
+      // MDN CSS help tooltip
+      this.cssDocs = new CssDocsTooltip(this.view.inspector.panelDoc);
+      // Filter editor tooltip
+      this.filterEditor = new SwatchFilterTooltip(this.view.inspector.panelDoc);
     }
 
     this._isStarted = true;
@@ -284,6 +291,14 @@ TooltipsOverlay.prototype = {
 
     if (this.cubicBezier) {
       this.cubicBezier.destroy();
+    }
+
+    if (this.cssDocs) {
+      this.cssDocs.destroy();
+    }
+
+    if (this.filterEditor) {
+      this.filterEditor.destroy();
     }
 
     this._isStarted = false;
@@ -326,13 +341,13 @@ TooltipsOverlay.prototype = {
     let nodeInfo = this.view.getNodeInfo(target);
     if (!nodeInfo) {
       // The hovered node isn't something we care about
-      return promise.reject();
+      return promise.reject(false);
     }
 
     let type = this._getTooltipType(nodeInfo);
     if (!type) {
       // There is no tooltip type defined for the hovered node
-      return promise.reject();
+      return promise.reject(false);
     }
 
     if (this.isRuleView && this.colorPicker.tooltip.isShown()) {
@@ -343,6 +358,15 @@ TooltipsOverlay.prototype = {
     if (this.isRuleView && this.cubicBezier.tooltip.isShown()) {
       this.cubicBezier.revert();
       this.cubicBezier.hide();
+    }
+
+    if (this.isRuleView && this.cssDocs.tooltip.isShown()) {
+      this.cssDocs.hide();
+    }
+
+    if (this.isRuleView && this.filterEditor.tooltip.isShown()) {
+      this.filterEditor.revert();
+      this.filterEdtior.hide();
     }
 
     let inspector = this.view.inspector;
@@ -372,6 +396,14 @@ TooltipsOverlay.prototype = {
 
     if (this.cubicBezier) {
       this.cubicBezier.hide();
+    }
+
+    if (this.cssDocs) {
+      this.cssDocs.hide();
+    }
+
+    if (this.filterEditor) {
+      this.filterEditor.hide();
     }
   },
 

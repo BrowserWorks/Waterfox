@@ -57,7 +57,6 @@ class NestedLoopTimer;
 static const int kNestedLoopDetectorIntervalMs = 90;
 #endif
 
-class PluginScriptableObjectChild;
 class PluginInstanceChild;
 
 class PluginModuleChild : public PPluginModuleChild
@@ -158,17 +157,17 @@ public:
     explicit PluginModuleChild(bool aIsChrome);
     virtual ~PluginModuleChild();
 
-    bool CommonInit(base::ProcessHandle aParentProcessHandle,
+    bool CommonInit(base::ProcessId aParentPid,
                     MessageLoop* aIOLoop,
                     IPC::Channel* aChannel);
 
     // aPluginFilename is UTF8, not native-charset!
     bool InitForChrome(const std::string& aPluginFilename,
-                       base::ProcessHandle aParentProcessHandle,
+                       base::ProcessId aParentPid,
                        MessageLoop* aIOLoop,
                        IPC::Channel* aChannel);
 
-    bool InitForContent(base::ProcessHandle aParentProcessHandle,
+    bool InitForContent(base::ProcessId aParentPid,
                         MessageLoop* aIOLoop,
                         IPC::Channel* aChannel);
 

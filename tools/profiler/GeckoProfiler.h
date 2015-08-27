@@ -50,8 +50,6 @@
 #define SAMPLER_H
 
 #include "js/TypeDecls.h"
-#include "mozilla/GuardObjects.h"
-#include "mozilla/UniquePtr.h"
 
 namespace mozilla {
 class TimeStamp;
@@ -62,10 +60,11 @@ enum TracingMetadata {
   TRACING_INTERVAL_START,
   TRACING_INTERVAL_END,
   TRACING_EVENT,
-  TRACING_EVENT_BACKTRACE
+  TRACING_EVENT_BACKTRACE,
+  TRACING_TIMESTAMP
 };
 
-#ifndef MOZ_ENABLE_PROFILER_SPS
+#if !defined(MOZ_ENABLE_PROFILER_SPS) || defined(MOZILLA_XPCOMRT_API)
 
 #include <stdint.h>
 #include <stdarg.h>
@@ -160,10 +159,13 @@ static inline void profiler_responsiveness(const mozilla::TimeStamp& aTime) {}
 static inline void profiler_set_frame_number(int frameNumber) {}
 
 // Get the profile encoded as a JSON string.
-static inline char* profiler_get_profile() { return nullptr; }
+static inline char* profiler_get_profile(float aSinceTime = 0) { return nullptr; }
 
 // Get the profile encoded as a JSON object.
-static inline JSObject* profiler_get_profile_jsobject(JSContext* aCx) { return nullptr; }
+static inline JSObject* profiler_get_profile_jsobject(JSContext* aCx,
+                                                      float aSinceTime = 0) {
+  return nullptr;
+}
 
 // Get the profile and write it into a file
 static inline void profiler_save_profile_to_file(char* aFilename) { }
@@ -171,6 +173,22 @@ static inline void profiler_save_profile_to_file(char* aFilename) { }
 // Get the features supported by the profiler that are accepted by profiler_init.
 // Returns a null terminated char* array.
 static inline char** profiler_get_features() { return nullptr; }
+
+// Get information about the current buffer status.
+// Retursn (using outparams) the current write position in the buffer,
+// the total size of the buffer, and the generation of the buffer.
+// This information may be useful to a user-interface displaying the
+// current status of the profiler, allowing the user to get a sense
+// for how fast the buffer is being written to, and how much
+// data is visible.
+static inline void profiler_get_buffer_info(uint32_t *aCurrentPosition,
+                                            uint32_t *aTotalSize,
+                                            uint32_t *aGeneration)
+{
+  *aCurrentPosition = 0;
+  *aTotalSize = 0;
+  *aGeneration = 0;
+}
 
 // Discard the profile, throw away the profile and notify 'profiler-locked'.
 // This function is to be used when entering private browsing to prevent
@@ -225,30 +243,6 @@ public:
   ~GeckoProfilerSleepRAII() {
     profiler_sleep_end();
   }
-};
-
-class ProfilerBacktrace;
-
-class MOZ_STACK_CLASS GeckoProfilerTracingRAII {
-public:
-  GeckoProfilerTracingRAII(const char* aCategory, const char* aInfo,
-                           mozilla::UniquePtr<ProfilerBacktrace> aBacktrace
-                           MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
-    : mCategory(aCategory)
-    , mInfo(aInfo)
-  {
-    MOZ_GUARD_OBJECT_NOTIFIER_INIT;
-    profiler_tracing(mCategory, mInfo, aBacktrace.release(), TRACING_INTERVAL_START);
-  }
-
-  ~GeckoProfilerTracingRAII() {
-    profiler_tracing(mCategory, mInfo, TRACING_INTERVAL_END);
-  }
-
-protected:
-  MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
-  const char* mCategory;
-  const char* mInfo;
 };
 
 #endif // ifndef SAMPLER_H

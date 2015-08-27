@@ -4,7 +4,6 @@
 
 import base64
 import json
-import logging
 import os
 import shutil
 import sys
@@ -19,268 +18,17 @@ sys.path.insert(
 from automation import Automation
 from remoteautomation import RemoteAutomation, fennecLogcatFilters
 from runtests import Mochitest, MessageLogger
-from mochitest_options import MochitestOptions
-from mozlog import structured
+from mochitest_options import MochitestArgumentParser
 
 from manifestparser import TestManifest
 from manifestparser.filters import chunk_by_slice
 import devicemanager
-import droid
 import mozinfo
-import moznetwork
 
 SCRIPT_DIR = os.path.abspath(os.path.realpath(os.path.dirname(__file__)))
 
 
-class RemoteOptions(MochitestOptions):
-
-    def __init__(self, automation, **kwargs):
-        defaults = {}
-        self._automation = automation or Automation()
-        MochitestOptions.__init__(self)
-
-        self.add_option(
-            "--remote-app-path",
-            action="store",
-            type="string",
-            dest="remoteAppPath",
-            help="Path to remote executable relative to device root using only forward slashes. Either this or app must be specified but not both")
-        defaults["remoteAppPath"] = None
-
-        self.add_option("--deviceIP", action="store",
-                        type="string", dest="deviceIP",
-                        help="ip address of remote device to test")
-        defaults["deviceIP"] = None
-
-        self.add_option("--deviceSerial", action="store",
-                        type="string", dest="deviceSerial",
-                        help="ip address of remote device to test")
-        defaults["deviceSerial"] = None
-
-        self.add_option(
-            "--dm_trans",
-            action="store",
-            type="string",
-            dest="dm_trans",
-            help="the transport to use to communicate with device: [adb|sut]; default=sut")
-        defaults["dm_trans"] = "sut"
-
-        self.add_option("--devicePort", action="store",
-                        type="string", dest="devicePort",
-                        help="port of remote device to test")
-        defaults["devicePort"] = 20701
-
-        self.add_option(
-            "--remote-product-name",
-            action="store",
-            type="string",
-            dest="remoteProductName",
-            help="The executable's name of remote product to test - either fennec or firefox, defaults to fennec")
-        defaults["remoteProductName"] = "fennec"
-
-        self.add_option(
-            "--remote-logfile",
-            action="store",
-            type="string",
-            dest="remoteLogFile",
-            help="Name of log file on the device relative to the device root.  PLEASE ONLY USE A FILENAME.")
-        defaults["remoteLogFile"] = None
-
-        self.add_option(
-            "--remote-webserver",
-            action="store",
-            type="string",
-            dest="remoteWebServer",
-            help="ip address where the remote web server is hosted at")
-        defaults["remoteWebServer"] = None
-
-        self.add_option("--http-port", action="store",
-                        type="string", dest="httpPort",
-                        help="http port of the remote web server")
-        defaults["httpPort"] = automation.DEFAULT_HTTP_PORT
-
-        self.add_option("--ssl-port", action="store",
-                        type="string", dest="sslPort",
-                        help="ssl port of the remote web server")
-        defaults["sslPort"] = automation.DEFAULT_SSL_PORT
-
-        self.add_option(
-            "--robocop-ini",
-            action="store",
-            type="string",
-            dest="robocopIni",
-            help="name of the .ini file containing the list of tests to run")
-        defaults["robocopIni"] = ""
-
-        self.add_option(
-            "--robocop",
-            action="store",
-            type="string",
-            dest="robocop",
-            help="name of the .ini file containing the list of tests to run. [DEPRECATED- please use --robocop-ini")
-        defaults["robocop"] = ""
-
-        self.add_option(
-            "--robocop-apk",
-            action="store",
-            type="string",
-            dest="robocopApk",
-            help="name of the Robocop APK to use for ADB test running")
-        defaults["robocopApk"] = ""
-
-        self.add_option(
-            "--robocop-path",
-            action="store",
-            type="string",
-            dest="robocopPath",
-            help="Path to the folder where robocop.apk is located at.  Primarily used for ADB test running. [DEPRECATED- please use --robocop-apk]")
-        defaults["robocopPath"] = ""
-
-        self.add_option(
-            "--robocop-ids",
-            action="store",
-            type="string",
-            dest="robocopIds",
-            help="name of the file containing the view ID map (fennec_ids.txt)")
-        defaults["robocopIds"] = ""
-
-        self.add_option(
-            "--remoteTestRoot",
-            action="store",
-            type="string",
-            dest="remoteTestRoot",
-            help="remote directory to use as test root (eg. /mnt/sdcard/tests or /data/local/tests)")
-        defaults["remoteTestRoot"] = None
-
-        defaults["logFile"] = "mochitest.log"
-        defaults["autorun"] = True
-        defaults["closeWhenDone"] = True
-        defaults["testPath"] = ""
-        defaults["app"] = None
-        defaults["utilityPath"] = None
-
-        self.set_defaults(**defaults)
-
-    def verifyRemoteOptions(self, options, automation):
-        options_logger = logging.getLogger('MochitestRemote')
-
-        if not options.remoteTestRoot:
-            options.remoteTestRoot = automation._devicemanager.deviceRoot
-
-        if options.remoteWebServer is None:
-            if os.name != "nt":
-                options.remoteWebServer = moznetwork.get_ip()
-            else:
-                options_logger.error(
-                    "you must specify a --remote-webserver=<ip address>")
-                return None
-
-        options.webServer = options.remoteWebServer
-
-        if (options.dm_trans == 'sut' and options.deviceIP is None):
-            options_logger.error(
-                "If --dm_trans = sut, you must provide a device IP")
-            return None
-
-        if (options.remoteLogFile is None):
-            options.remoteLogFile = options.remoteTestRoot + \
-                '/logs/mochitest.log'
-
-        if (options.remoteLogFile.count('/') < 1):
-            options.remoteLogFile = options.remoteTestRoot + \
-                '/' + options.remoteLogFile
-
-        # remoteAppPath or app must be specified to find the product to launch
-        if (options.remoteAppPath and options.app):
-            options_logger.error(
-                "You cannot specify both the remoteAppPath and the app setting")
-            return None
-        elif (options.remoteAppPath):
-            options.app = options.remoteTestRoot + "/" + options.remoteAppPath
-        elif (options.app is None):
-            # Neither remoteAppPath nor app are set -- error
-            options_logger.error("You must specify either appPath or app")
-            return None
-
-        # Only reset the xrePath if it wasn't provided
-        if (options.xrePath is None):
-            options.xrePath = options.utilityPath
-
-        if (options.pidFile != ""):
-            f = open(options.pidFile, 'w')
-            f.write("%s" % os.getpid())
-            f.close()
-
-        # Robocop specific deprecated options.
-        if options.robocop:
-            if options.robocopIni:
-                options_logger.error(
-                    "can not use deprecated --robocop and replacement --robocop-ini together")
-                return None
-            options.robocopIni = options.robocop
-            del options.robocop
-
-        if options.robocopPath:
-            if options.robocopApk:
-                options_logger.error(
-                    "can not use deprecated --robocop-path and replacement --robocop-apk together")
-                return None
-            options.robocopApk = os.path.join(
-                options.robocopPath,
-                'robocop.apk')
-            del options.robocopPath
-
-        # Robocop specific options
-        if options.robocopIni != "":
-            if not os.path.exists(options.robocopIni):
-                options_logger.error(
-                    "Unable to find specified robocop .ini manifest '%s'" %
-                    options.robocopIni)
-                return None
-            options.robocopIni = os.path.abspath(options.robocopIni)
-
-        if options.robocopApk != "":
-            if not os.path.exists(options.robocopApk):
-                options_logger.error(
-                    "Unable to find robocop APK '%s'" %
-                    options.robocopApk)
-                return None
-            options.robocopApk = os.path.abspath(options.robocopApk)
-
-        if options.robocopIds != "":
-            if not os.path.exists(options.robocopIds):
-                options_logger.error(
-                    "Unable to find specified robocop IDs file '%s'" %
-                    options.robocopIds)
-                return None
-            options.robocopIds = os.path.abspath(options.robocopIds)
-
-        # allow us to keep original application around for cleanup while
-        # running robocop via 'am'
-        options.remoteappname = options.app
-        return options
-
-    def verifyOptions(self, options, mochitest):
-        # since we are reusing verifyOptions, it will exit if App is not found
-        temp = options.app
-        options.app = __file__
-        tempPort = options.httpPort
-        tempSSL = options.sslPort
-        tempIP = options.webServer
-        # We are going to override this option later anyway, just pretend
-        # like it's not set for verification purposes.
-        options.dumpOutputDirectory = None
-        options = MochitestOptions.verifyOptions(self, options, mochitest)
-        options.webServer = tempIP
-        options.app = temp
-        options.sslPort = tempSSL
-        options.httpPort = tempPort
-
-        return options
-
-
 class MochiRemote(Mochitest):
-
     _automation = None
     _dm = None
     localProfile = None
@@ -527,7 +275,7 @@ class MochiRemote(Mochitest):
         for line in data:
             try:
                 message = json.loads(line)
-                if not isinstance(message, dict) or not 'action' in message:
+                if not isinstance(message, dict) or 'action' not in message:
                     continue
             except ValueError:
                 continue
@@ -677,7 +425,7 @@ class MochiRemote(Mochitest):
         os.unlink(fHandle.name)
 
     def getGMPPluginPath(self, options):
-        # TODO: bug 1043403
+        # TODO: bug 1149374
         return None
 
     def buildBrowserEnv(self, options, debugger=False):
@@ -685,6 +433,11 @@ class MochiRemote(Mochitest):
             self,
             options,
             debugger=debugger)
+        # remove desktop environment not used on device
+        if "MOZ_WIN_INHERIT_STD_HANDLES_PRE_VISTA" in browserEnv:
+            del browserEnv["MOZ_WIN_INHERIT_STD_HANDLES_PRE_VISTA"]
+        if "XPCOM_MEM_BLOAT_LOG" in browserEnv:
+            del browserEnv["XPCOM_MEM_BLOAT_LOG"]
         # override nsprLogs to avoid processing in Mochitest base class
         self.nsprLogs = None
         browserEnv["NSPR_LOG_FILE"] = os.path.join(
@@ -711,47 +464,21 @@ class MochiRemote(Mochitest):
         return self._automation.runApp(*args, **kwargs)
 
 
-def main(args):
+def run_test_harness(options):
     message_logger = MessageLogger(logger=None)
     process_args = {'messageLogger': message_logger}
     auto = RemoteAutomation(None, "fennec", processArgs=process_args)
 
-    parser = RemoteOptions(auto)
-    structured.commandline.add_logging_group(parser)
-    options, args = parser.parse_args(args)
+    if options is None:
+        raise ValueError("Invalid options specified, use --help for a list of valid options")
 
-    if (options.dm_trans == "adb"):
-        if (options.deviceIP):
-            dm = droid.DroidADB(
-                options.deviceIP,
-                options.devicePort,
-                deviceRoot=options.remoteTestRoot)
-        elif (options.deviceSerial):
-            dm = droid.DroidADB(
-                None,
-                None,
-                deviceSerial=options.deviceSerial,
-                deviceRoot=options.remoteTestRoot)
-        else:
-            dm = droid.DroidADB(deviceRoot=options.remoteTestRoot)
-    else:
-        dm = droid.DroidSUT(
-            options.deviceIP,
-            options.devicePort,
-            deviceRoot=options.remoteTestRoot)
+    dm = options.dm
     auto.setDeviceManager(dm)
-    options = parser.verifyRemoteOptions(options, auto)
-
     mochitest = MochiRemote(auto, dm, options)
 
     log = mochitest.log
     message_logger.logger = log
     mochitest.message_logger = message_logger
-
-    if (options is None):
-        log.error(
-            "Invalid options specified, use --help for a list of valid options")
-        return 1
 
     productPieces = options.remoteProductName.split('.')
     if (productPieces is not None):
@@ -759,10 +486,6 @@ def main(args):
     else:
         auto.setProduct(options.remoteProductName)
     auto.setAppName(options.remoteappname)
-
-    options = parser.verifyOptions(options, mochitest)
-    if (options is None):
-        return 1
 
     logParent = os.path.dirname(options.remoteLogFile)
     dm.mkDir(logParent)
@@ -991,5 +714,12 @@ def main(args):
     return retVal
 
 
+def main(args=sys.argv[1:]):
+    parser = MochitestArgumentParser(app='android')
+    options = parser.parse_args(args)
+
+    return run_test_harness(options)
+
+
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    sys.exit(main())

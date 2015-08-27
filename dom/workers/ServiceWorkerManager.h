@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -10,6 +12,7 @@
 
 #include "ipc/IPCMessageUtils.h"
 #include "mozilla/Attributes.h"
+#include "mozilla/AutoRestore.h"
 #include "mozilla/LinkedList.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/TypedEnumBits.h"
@@ -28,8 +31,6 @@
 #include "nsTArrayForwardDeclare.h"
 #include "nsTObserverArray.h"
 
-class nsIScriptError;
-
 namespace mozilla {
 
 namespace ipc {
@@ -38,7 +39,7 @@ class BackgroundChild;
 
 namespace dom {
 
-class ServiceWorkerRegistration;
+class ServiceWorkerRegistrationListener;
 
 namespace workers {
 
@@ -60,6 +61,9 @@ public:
 
   virtual void Start() = 0;
 
+  virtual bool
+  IsRegisterJob() const { return false; }
+
 protected:
   explicit ServiceWorkerJob(ServiceWorkerJobQueue* aQueue)
     : mQueue(aQueue)
@@ -78,8 +82,13 @@ class ServiceWorkerJobQueue final
   friend class ServiceWorkerJob;
 
   nsTArray<nsRefPtr<ServiceWorkerJob>> mJobs;
+  bool mPopping;
 
 public:
+  explicit ServiceWorkerJobQueue()
+    : mPopping(false)
+  {}
+
   ~ServiceWorkerJobQueue()
   {
     if (!mJobs.IsEmpty()) {
@@ -99,11 +108,16 @@ public:
     }
   }
 
+  void
+  CancelJobs();
+
   // Only used by HandleError, keep it that way!
   ServiceWorkerJob*
   Peek()
   {
-    MOZ_ASSERT(!mJobs.IsEmpty());
+    if (mJobs.IsEmpty()) {
+      return nullptr;
+    }
     return mJobs[0];
   }
 
@@ -111,6 +125,10 @@ private:
   void
   Pop()
   {
+    MOZ_ASSERT(!mPopping,
+               "Pop() called recursively, did you write a job which calls Done() synchronously from Start()?");
+    AutoRestore<bool> savePopping(mPopping);
+    mPopping = true;
     MOZ_ASSERT(!mJobs.IsEmpty());
     mJobs.RemoveElementAt(0);
     if (!mJobs.IsEmpty()) {
@@ -215,6 +233,7 @@ class ServiceWorkerInfo final
 private:
   const ServiceWorkerRegistrationInfo* mRegistration;
   nsCString mScriptSpec;
+  nsString mCacheName;
   ServiceWorkerState mState;
   // We hold rawptrs since the ServiceWorker constructor and destructor ensure
   // addition and removal.
@@ -247,18 +266,27 @@ public:
   }
 
   explicit ServiceWorkerInfo(ServiceWorkerRegistrationInfo* aReg,
-                             const nsACString& aScriptSpec)
+                             const nsACString& aScriptSpec,
+                             const nsAString& aCacheName)
     : mRegistration(aReg)
     , mScriptSpec(aScriptSpec)
+    , mCacheName(aCacheName)
     , mState(ServiceWorkerState::EndGuard_)
   {
     MOZ_ASSERT(mRegistration);
+    MOZ_ASSERT(!aCacheName.IsEmpty());
   }
 
   ServiceWorkerState
   State() const
   {
     return mState;
+  }
+
+  const nsString&
+  CacheName() const
+  {
+    return mCacheName;
   }
 
   void
@@ -294,6 +322,7 @@ public:
 class ServiceWorkerManager final
   : public nsIServiceWorkerManager
   , public nsIIPCBackgroundChildCreateCallback
+  , public nsIObserver
 {
   friend class GetReadyPromiseRunnable;
   friend class GetRegistrationsRunnable;
@@ -306,6 +335,7 @@ public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSISERVICEWORKERMANAGER
   NS_DECL_NSIIPCBACKGROUNDCHILDCREATECALLBACK
+  NS_DECL_NSIOBSERVER
   NS_DECLARE_STATIC_IID_ACCESSOR(NS_SERVICEWORKERMANAGER_IMPL_IID)
 
   static ServiceWorkerManager* FactoryCreate()
@@ -326,11 +356,11 @@ public:
   // memmoves associated with inserting stuff in the middle of the array.
   nsTArray<nsCString> mOrderedScopes;
 
-  // Scope to registration. 
+  // Scope to registration.
   // The scope should be a fully qualified valid URL.
   nsRefPtrHashtable<nsCStringHashKey, ServiceWorkerRegistrationInfo> mServiceWorkerRegistrationInfos;
 
-  nsTObserverArray<ServiceWorkerRegistration*> mServiceWorkerRegistrations;
+  nsTObserverArray<ServiceWorkerRegistrationListener*> mServiceWorkerRegistrationListeners;
 
   nsRefPtrHashtable<nsISupportsHashKey, ServiceWorkerRegistrationInfo> mControlledDocuments;
 
@@ -388,6 +418,18 @@ public:
  void LoadRegistrations(
                  const nsTArray<ServiceWorkerRegistrationData>& aRegistrations);
 
+  // Used by remove() and removeAll() when clearing history.
+  // MUST ONLY BE CALLED FROM UnregisterIfMatchesHost!
+  void
+  ForceUnregister(ServiceWorkerRegistrationInfo* aRegistration);
+
+  NS_IMETHOD
+  AddRegistrationEventListener(const nsAString& aScope,
+                               ServiceWorkerRegistrationListener* aListener);
+
+  NS_IMETHOD
+  RemoveRegistrationEventListener(const nsAString& aScope,
+                                  ServiceWorkerRegistrationListener* aListener);
 private:
   ServiceWorkerManager();
   ~ServiceWorkerManager();
@@ -417,6 +459,9 @@ private:
                            WhichServiceWorker aWhichWorker,
                            nsISupports** aServiceWorker);
 
+  already_AddRefed<ServiceWorker>
+  CreateServiceWorkerForScope(const nsACString& aScope);
+
   void
   InvalidateServiceWorkerRegistrationWorker(ServiceWorkerRegistrationInfo* aRegistration,
                                             WhichServiceWorker aWhichOnes);
@@ -444,15 +489,7 @@ private:
                                              const nsAString& aName);
 
   void
-  FireEventOnServiceWorkerRegistrations(ServiceWorkerRegistrationInfo* aRegistration,
-                                        const nsAString& aName);
-
-  void
-  FireUpdateFound(ServiceWorkerRegistrationInfo* aRegistration)
-  {
-    FireEventOnServiceWorkerRegistrations(aRegistration,
-                                          NS_LITERAL_STRING("updatefound"));
-  }
+  FireUpdateFoundOnServiceWorkerRegistrations(ServiceWorkerRegistrationInfo* aRegistration);
 
   void
   FireControllerChange(ServiceWorkerRegistrationInfo* aRegistration);
@@ -491,9 +528,17 @@ private:
                                       void* aUnused);
 
   nsClassHashtable<nsISupportsHashKey, PendingReadyPromise> mPendingReadyPromises;
- 
+
   void
   MaybeRemoveRegistration(ServiceWorkerRegistrationInfo* aRegistration);
+
+  // Does all cleanup except removing the registration from
+  // mServiceWorkerRegistrationInfos. This is useful when we clear
+  // registrations via remove()/removeAll() since we are iterating over the
+  // hashtable and can cleanly remove within the hashtable enumeration
+  // function.
+  void
+  RemoveRegistrationInternal(ServiceWorkerRegistrationInfo* aRegistration);
 
   mozilla::ipc::PBackgroundChild* mActor;
 

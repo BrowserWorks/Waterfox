@@ -93,10 +93,13 @@ NS_IMPL_ISUPPORTS(CachePushStreamChild::Callback, nsIInputStreamCallback,
                                                   nsICancelableRunnable);
 
 CachePushStreamChild::CachePushStreamChild(Feature* aFeature,
+                                           nsISupports* aParent,
                                            nsIAsyncInputStream* aStream)
-  : mStream(aStream)
+  : mParent(aParent)
+  , mStream(aStream)
   , mClosed(false)
 {
+  MOZ_ASSERT(mParent);
   MOZ_ASSERT(mStream);
   MOZ_ASSERT_IF(!NS_IsMainThread(), aFeature);
   SetFeature(aFeature);
@@ -118,8 +121,9 @@ CachePushStreamChild::Start()
 void
 CachePushStreamChild::StartDestroy()
 {
-  // called if we are running on a Worker and the thread gets shutdown
-  OnEnd(NS_ERROR_ABORT);
+  // The worker has signaled its shutting down, but continue streaming.  The
+  // Cache is now designed to hold the worker open until all async operations
+  // complete.
 }
 
 void

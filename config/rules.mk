@@ -16,10 +16,6 @@ $(error Do not include rules.mk twice!)
 endif
 INCLUDED_RULES_MK = 1
 
-# Make sure that anything that needs to be defined in moz.build wasn't
-# overwritten after including config.mk.
-_eval_for_side_effects := $(CHECK_MOZBUILD_VARIABLES)
-
 ifndef INCLUDED_CONFIG_MK
 include $(topsrcdir)/config/config.mk
 endif
@@ -248,8 +244,9 @@ CPPOBJS = $(notdir $(addsuffix .$(OBJ_SUFFIX),$(basename $(CPPSRCS))))
 CMOBJS = $(notdir $(CMSRCS:.m=.$(OBJ_SUFFIX)))
 CMMOBJS = $(notdir $(CMMSRCS:.mm=.$(OBJ_SUFFIX)))
 ASOBJS = $(notdir $(ASFILES:.$(ASM_SUFFIX)=.$(OBJ_SUFFIX)))
+RSOBJS = $(addprefix lib,$(notdir $(RSSRCS:.rs=.$(LIB_SUFFIX))))
 ifndef OBJS
-_OBJS = $(COBJS) $(SOBJS) $(CPPOBJS) $(CMOBJS) $(CMMOBJS) $(ASOBJS)
+_OBJS = $(COBJS) $(SOBJS) $(CPPOBJS) $(CMOBJS) $(CMMOBJS) $(ASOBJS) $(RSOBJS)
 OBJS = $(strip $(_OBJS))
 endif
 
@@ -715,6 +712,9 @@ else
 	$(EXPAND_LIBS_EXEC) -- $(HOST_CC) -o $@ $(HOST_CFLAGS) $(HOST_LDFLAGS) $(HOST_PROGOBJS) $(HOST_LIBS) $(HOST_EXTRA_LIBS)
 endif # HOST_CPP_PROG_LINK
 endif
+ifndef CROSS_COMPILE
+	$(call CHECK_STDCXX,$@)
+endif
 
 #
 # This is an attempt to support generation of multiple binaries
@@ -756,6 +756,9 @@ ifneq (,$(HOST_CPPSRCS)$(USE_HOST_CXX))
 else
 	$(EXPAND_LIBS_EXEC) -- $(HOST_CC) $(HOST_OUTOPTION)$@ $(HOST_CFLAGS) $(INCLUDES) $< $(HOST_LIBS) $(HOST_EXTRA_LIBS)
 endif
+endif
+ifndef CROSS_COMPILE
+	$(call CHECK_STDCXX,$@)
 endif
 
 ifdef DTRACE_PROBE_OBJ
@@ -874,6 +877,11 @@ $(basename $2$(notdir $1)).$(OBJ_SUFFIX): $1 $$(call mkdir_deps,$$(MDDEPDIR))
 endef
 $(foreach f,$(CSRCS) $(SSRCS) $(CPPSRCS) $(CMSRCS) $(CMMSRCS) $(ASFILES),$(eval $(call src_objdep,$(f))))
 $(foreach f,$(HOST_CSRCS) $(HOST_CPPSRCS) $(HOST_CMSRCS) $(HOST_CMMSRCS),$(eval $(call src_objdep,$(f),host_)))
+# The rust compiler only outputs library objects, and so we need different
+# mangling to generate dependency rules for it.
+mk_libname = $(basename lib$(notdir $1)).$(LIB_SUFFIX)
+src_libdep = $(call mk_libname,$1): $1 $$(call mkdir_deps,$$(MDDEPDIR))
+$(foreach f,$(RSSRCS),$(eval $(call src_libdep,$(f))))
 
 $(OBJS) $(HOST_OBJS) $(PROGOBJS) $(HOST_PROGOBJS): $(GLOBAL_DEPS)
 
@@ -920,6 +928,14 @@ ifdef ASFILES
 $(ASOBJS):
 	$(REPORT_BUILD)
 	$(AS) $(ASOUTOPTION)$@ $(ASFLAGS) $($(notdir $<)_FLAGS) $(AS_DASH_C_FLAG) $(_VPATH_SRCS)
+endif
+
+ifdef MOZ_RUST
+# Assume any system libraries rustc links against are already
+# in the target's LIBS.
+$(RSOBJS):
+	$(REPORT_BUILD)
+	$(RUSTC) --crate-type staticlib -o $(call mk_libname,$<) $(_VPATH_SRCS)
 endif
 
 $(SOBJS):
@@ -1168,14 +1184,6 @@ endif #} XPT_NAME
 
 ################################################################################
 # Copy each element of EXTRA_COMPONENTS to $(FINAL_TARGET)/components
-ifneq (,$(filter %.js,$(EXTRA_COMPONENTS) $(EXTRA_PP_COMPONENTS)))
-ifeq (,$(filter %.manifest,$(EXTRA_COMPONENTS) $(EXTRA_PP_COMPONENTS)))
-ifndef NO_JS_MANIFEST
-$(error .js component without matching .manifest. See https://developer.mozilla.org/en/XPCOM/XPCOM_changes_in_Gecko_2.0)
-endif
-endif
-endif
-
 ifdef EXTRA_COMPONENTS
 misc:: $(EXTRA_COMPONENTS)
 ifndef NO_DIST_INSTALL
@@ -1274,7 +1282,7 @@ ifneq ($(DIST_FILES),)
 DIST_FILES_PATH := $(FINAL_TARGET)
 # We preprocess these, but they don't necessarily have preprocessor directives,
 # so tell them preprocessor to not complain about that.
-DIST_FILES_FLAGS := $(XULAPP_DEFINES) --silence-missing-directive-warnings
+DIST_FILES_FLAGS := --silence-missing-directive-warnings
 PP_TARGETS += DIST_FILES
 endif
 
@@ -1635,10 +1643,3 @@ endif
 export:: $(GENERATED_FILES)
 
 GARBAGE += $(GENERATED_FILES)
-
-# We may have modified "frozen" variables in rules.mk (we do that), but we don't
-# want Makefile.in doing that, so collect the possibly modified variables here,
-# and check them again in recurse.mk, which is always included after Makefile.in
-# contents.
-$(foreach var,$(_MOZBUILD_EXTERNAL_VARIABLES),$(eval $(var)_FROZEN := '$($(var))'))
-$(foreach var,$(_DEPRECATED_VARIABLES),$(eval $(var)_FROZEN := '$($(var))'))

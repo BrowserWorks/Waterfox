@@ -22,7 +22,6 @@ class VolumeInfo;
 
 namespace system {
 
-class WakeLockCallback;
 class Volume;
 
 /***************************************************************************
@@ -45,11 +44,16 @@ public:
   //static nsVolumeService* GetSingleton();
   static void Shutdown();
 
+  void DumpNoLock(const char* aLabel);
+
+  // To use this function, you have to create a new volume and pass it in.
   void UpdateVolume(nsIVolume* aVolume, bool aNotifyObservers = true);
   void UpdateVolumeIOThread(const Volume* aVolume);
 
   void RecvVolumesFromParent(const nsTArray<dom::VolumeInfo>& aVolumes);
   void GetVolumesForIPC(nsTArray<dom::VolumeInfo>* aResult);
+
+  void RemoveVolumeByName(const nsAString& aName);
 
 private:
   ~nsVolumeService();

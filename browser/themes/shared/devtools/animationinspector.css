@@ -28,7 +28,7 @@ body {
 }
 
 #toggle-all {
-  border-width: 0px 1px;
+  border-width: 0 0 0 1px;
   min-height: 20px;
 }
 
@@ -84,7 +84,7 @@ body {
   background-image: url("debugger-play.png");
 }
 
-@media (min-resolution: 2dppx) {
+@media (min-resolution: 1.25dppx) {
   #element-picker::before {
     background-image: url("chrome://browser/skin/devtools/command-pick@2x.png");
     background-size: 64px;
@@ -99,11 +99,34 @@ body {
   }
 }
 
-/* Disabled playerWidget when the animation has ended */
+/* Animation target node gutter, contains a preview of the dom node */
 
-.finished {
-  pointer-events: none;
-  opacity: .5;
+.animation-target {
+  background-color: var(--theme-toolbar-background);
+  padding: 1px 4px;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.animation-target .attribute-name {
+  padding-left: 4px;
+}
+
+.animation-target .node-selector {
+  background: url("chrome://browser/skin/devtools/vview-open-inspector.png") no-repeat 0 0;
+  padding-left: 16px;
+  margin-right: 5px;
+  cursor: pointer;
+}
+
+.animation-target .node-selector:hover {
+  background-position: -32px 0;
+}
+
+.animation-target .node-selector:active {
+  background-position: -16px 0;
 }
 
 /* Animation title gutter, contains the name, duration, iteration */
@@ -163,7 +186,7 @@ body {
   background-image: url(rewind.png);
 }
 
-@media (min-resolution: 2dppx) {
+@media (min-resolution: 1.25dppx) {
   .timeline .toggle::before {
     background-image: url(debugger-pause@2x.png);
   }
@@ -180,6 +203,13 @@ body {
   .timeline .rw::before {
     background-image: url(rewind@2x.png);
   }
+}
+
+.timeline .rate {
+  -moz-appearance: none;
+  text-align: center;
+  color: var(--theme-body-color);
+  border-right: 1px solid var(--theme-splitter-color);
 }
 
 /* Slider (input type range) container */

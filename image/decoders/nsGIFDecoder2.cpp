@@ -93,8 +93,8 @@ nsGIFDecoder2::nsGIFDecoder2(RasterImage* aImage)
 
 nsGIFDecoder2::~nsGIFDecoder2()
 {
-  moz_free(mGIFStruct.local_colormap);
-  moz_free(mGIFStruct.hold);
+  free(mGIFStruct.local_colormap);
+  free(mGIFStruct.hold);
 }
 
 void
@@ -541,7 +541,9 @@ ConvertColormap(uint32_t* aColormap, uint32_t aColors)
   // Convert color entries to Cairo format
 
   // set up for loops below
-  if (!aColors) return;
+  if (!aColors) {
+    return;
+  }
   uint32_t c = aColors;
 
   // copy as bytes until source pointer is 32-bit-aligned
@@ -657,8 +659,9 @@ nsGIFDecoder2::WriteInternal(const char* aBuffer, uint32_t aCount)
       mGIFStruct.datum = mGIFStruct.bits = 0;
 
       // init the tables
-      for (int i = 0; i < clear_code; i++)
+      for (int i = 0; i < clear_code; i++) {
         mGIFStruct.suffix[i] = i;
+      }
 
       mGIFStruct.stackp = mGIFStruct.stack;
 
@@ -702,7 +705,7 @@ nsGIFDecoder2::WriteInternal(const char* aBuffer, uint32_t aCount)
       //   Not used
       //   float aspect = (float)((q[6] + 15) / 64.0);
 
-      if (q[4] & 0x80) { // global map
+      if (q[4] & 0x80) {
         // Get the global colormap
         const uint32_t size = (3 << mGIFStruct.global_colormap_depth);
         if (len < size) {
@@ -857,10 +860,11 @@ nsGIFDecoder2::WriteInternal(const char* aBuffer, uint32_t aCount)
       // Check for netscape application extension
       if (mGIFStruct.bytes_to_consume == 11 &&
           (!strncmp((char*)q, "NETSCAPE2.0", 11) ||
-           !strncmp((char*)q, "ANIMEXTS1.0", 11)))
+           !strncmp((char*)q, "ANIMEXTS1.0", 11))) {
         GETN(1, gif_netscape_extension_block);
-      else
+      } else {
         GETN(1, gif_consume_block);
+      }
       break;
 
     // Netscape-specific GIF extension: animation looping
@@ -1114,7 +1118,9 @@ nsGIFDecoder2::WriteInternal(const char* aBuffer, uint32_t aCount)
 
     // We shouldn't ever get here.
     default:
-      break;
+      MOZ_ASSERT_UNREACHABLE("Unexpected mGIFStruct.state");
+      PostDecoderError(NS_ERROR_UNEXPECTED);
+      return;
     }
   }
 
@@ -1151,8 +1157,6 @@ done:
     mLastFlushedRow = mCurrentRow;
     mLastFlushedPass = mCurrentPass;
   }
-
-  return;
 }
 
 bool
@@ -1161,8 +1165,8 @@ nsGIFDecoder2::SetHold(const uint8_t* buf1, uint32_t count1,
                        uint32_t count2 /* = 0 */)
 {
   // We have to handle the case that buf currently points to hold
-  uint8_t* newHold = (uint8_t*) moz_malloc(std::max(uint32_t(MIN_HOLD_SIZE),
-                                            count1 + count2));
+  uint8_t* newHold = (uint8_t*) malloc(std::max(uint32_t(MIN_HOLD_SIZE),
+                                       count1 + count2));
   if (!newHold) {
     mGIFStruct.state = gif_error;
     return false;
@@ -1173,7 +1177,7 @@ nsGIFDecoder2::SetHold(const uint8_t* buf1, uint32_t count1,
     memcpy(newHold + count1, buf2, count2);
   }
 
-  moz_free(mGIFStruct.hold);
+  free(mGIFStruct.hold);
   mGIFStruct.hold = newHold;
   mGIFStruct.bytes_in_hold = count1 + count2;
   return true;
@@ -1184,7 +1188,6 @@ nsGIFDecoder2::SpeedHistogram()
 {
   return Telemetry::IMAGE_DECODE_SPEED_GIF;
 }
-
 
 } // namespace image
 } // namespace mozilla

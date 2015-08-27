@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -30,12 +32,16 @@ class DesktopNotificationRequest : public nsIContentPermissionRequest
   {
   }
 
+  nsCOMPtr<nsIContentPermissionRequester> mRequester;
 public:
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_NSICONTENTPERMISSIONREQUEST
 
   explicit DesktopNotificationRequest(DesktopNotification* aNotification)
-    : mDesktopNotification(aNotification) {}
+    : mDesktopNotification(aNotification)
+  {
+    mRequester = new nsContentPermissionRequester(mDesktopNotification->GetOwner());
+  }
 
   NS_IMETHOD Run() override
   {
@@ -311,6 +317,16 @@ DesktopNotificationRequest::Allow(JS::HandleValue aChoices)
   nsresult rv = mDesktopNotification->SetAllow(true);
   mDesktopNotification = nullptr;
   return rv;
+}
+
+NS_IMETHODIMP
+DesktopNotificationRequest::GetRequester(nsIContentPermissionRequester** aRequester)
+{
+  NS_ENSURE_ARG_POINTER(aRequester);
+
+  nsCOMPtr<nsIContentPermissionRequester> requester = mRequester;
+  requester.forget(aRequester);
+  return NS_OK;
 }
 
 NS_IMETHODIMP

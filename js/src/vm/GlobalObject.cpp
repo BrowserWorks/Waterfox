@@ -418,17 +418,23 @@ GlobalObject::isRuntimeCodeGenEnabled(JSContext* cx, Handle<GlobalObject*> globa
 }
 
 /* static */ bool
-GlobalObject::warnOnceAbout(JSContext* cx, HandleObject obj, uint32_t slot, unsigned errorNumber)
+GlobalObject::warnOnceAbout(JSContext* cx, HandleObject obj, WarnOnceFlag flag,
+                            unsigned errorNumber)
 {
     Rooted<GlobalObject*> global(cx, &obj->global());
-    HeapSlot& v = global->getSlotRef(slot);
-    if (v.isUndefined()) {
+    HeapSlot& v = global->getSlotRef(WARNED_ONCE_FLAGS);
+    MOZ_ASSERT_IF(!v.isUndefined(), v.toInt32());
+    int32_t flags = v.isUndefined() ? 0 : v.toInt32();
+    if (!(flags & flag)) {
         if (!JS_ReportErrorFlagsAndNumber(cx, JSREPORT_WARNING, GetErrorMessage, nullptr,
                                           errorNumber))
         {
             return false;
         }
-        v.init(global, HeapSlot::Slot, slot, BooleanValue(true));
+        if (v.isUndefined())
+            v.init(global, HeapSlot::Slot, WARNED_ONCE_FLAGS, Int32Value(flags | flag));
+        else
+            v.set(global, HeapSlot::Slot, WARNED_ONCE_FLAGS, Int32Value(flags | flag));
     }
     return true;
 }
@@ -506,12 +512,12 @@ GlobalDebuggees_finalize(FreeOp* fop, JSObject* obj)
 static const Class
 GlobalDebuggees_class = {
     "GlobalDebuggee", JSCLASS_HAS_PRIVATE,
-    nullptr, nullptr, nullptr, nullptr,
+    nullptr, nullptr, nullptr, nullptr, nullptr,
     nullptr, nullptr, nullptr, GlobalDebuggees_finalize
 };
 
 GlobalObject::DebuggerVector*
-GlobalObject::getDebuggers()
+GlobalObject::getDebuggers() const
 {
     Value debuggers = getReservedSlot(DEBUGGERS);
     if (debuggers.isUndefined())
@@ -601,7 +607,7 @@ GlobalObject::getSelfHostedFunction(JSContext* cx, HandleAtom selfHostedName, Ha
 
     JSFunction* fun =
         NewScriptedFunction(cx, nargs, JSFunction::INTERPRETED_LAZY,
-                            name, JSFunction::ExtendedFinalizeKind, SingletonObject);
+                            name, gc::AllocKind::FUNCTION_EXTENDED, SingletonObject);
     if (!fun)
         return false;
     fun->setIsSelfHostedBuiltin();

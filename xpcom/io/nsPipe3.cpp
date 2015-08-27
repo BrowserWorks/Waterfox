@@ -11,7 +11,6 @@
 #include "nsIPipe.h"
 #include "nsIEventTarget.h"
 #include "nsISeekableStream.h"
-#include "nsIProgrammingLanguage.h"
 #include "nsRefPtr.h"
 #include "nsSegmentedBuffer.h"
 #include "nsStreamUtils.h"
@@ -29,7 +28,6 @@ using namespace mozilla;
 #ifdef LOG
 #undef LOG
 #endif
-#if defined(PR_LOGGING)
 //
 // set NSPR_LOG_MODULES=nsPipe:5
 //
@@ -43,9 +41,6 @@ GetPipeLog()
   return sLog;
 }
 #define LOG(args) PR_LOG(GetPipeLog(), PR_LOG_DEBUG, args)
-#else
-#define LOG(args)
-#endif
 
 #define DEFAULT_SEGMENT_SIZE  4096
 #define DEFAULT_SEGMENT_COUNT 16

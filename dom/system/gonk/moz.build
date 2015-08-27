@@ -98,6 +98,7 @@ if CONFIG['MOZ_B2G_RIL']:
         'ril_consts.js',
         'ril_worker.js',
         'ril_worker_buf_object.js',
+        'ril_worker_telephony_request_queue.js',
         'RILSystemMessenger.jsm',
     ]
     if not CONFIG['DISABLE_MOZ_RIL_GEOLOC']:
@@ -116,5 +117,14 @@ LOCAL_INCLUDES += [
     '/dom/geolocation',
     '/dom/wifi',
 ]
+
+if CONFIG['MOZ_B2G_BT_API_V2']:
+    LOCAL_INCLUDES += [
+        '/dom/bluetooth/bluetooth2',
+    ]
+else:
+    LOCAL_INCLUDES += [
+        '/dom/bluetooth/bluetooth1',
+    ]
 
 FINAL_LIBRARY = 'xul'

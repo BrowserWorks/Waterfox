@@ -157,7 +157,7 @@ loop.contacts = (function(_, mozL10n) {
 
     getInitialState: function () {
       return {
-        openDirUp: false,
+        openDirUp: false
       };
     },
 
@@ -175,7 +175,7 @@ loop.contacts = (function(_, mozL10n) {
       if (menuNodeRect.top + menuNodeRect.height >=
           listNodeRect.top + listNodeRect.height) {
         this.setState({
-          openDirUp: true,
+          openDirUp: true
         });
       }
     },
@@ -222,7 +222,7 @@ loop.contacts = (function(_, mozL10n) {
                               "disabled": !this.props.canEdit })}
               onClick={this.onItemClick} data-action="remove">
             <i className="icon icon-remove" />
-            {mozL10n.get("remove_contact_menu_button")}
+            {mozL10n.get("remove_contact_menu_button2")}
           </li>
         </ul>
       );
@@ -232,7 +232,7 @@ loop.contacts = (function(_, mozL10n) {
   const ContactDetail = React.createClass({
     getInitialState: function() {
       return {
-        showMenu: false,
+        showMenu: false
       };
     },
 
@@ -351,7 +351,7 @@ loop.contacts = (function(_, mozL10n) {
     getInitialState: function() {
       return {
         importBusy: false,
-        filter: "",
+        filter: ""
       };
     },
 
@@ -553,8 +553,10 @@ loop.contacts = (function(_, mozL10n) {
       let cx = React.addons.classSet;
 
       let viewForItem = item => {
-        return <ContactDetail key={item._guid} contact={item}
-                              handleContactAction={this.handleContactAction} />
+        return (
+          <ContactDetail key={item._guid} contact={item}
+                         handleContactAction={this.handleContactAction} />
+        );
       };
 
       let shownContacts = _.groupBy(this.contacts, function(contact) {
@@ -567,8 +569,8 @@ loop.contacts = (function(_, mozL10n) {
         let filter = this.state.filter.trim().toLocaleLowerCase();
         if (filter) {
           let filterFn = contact => {
-            return contact.name[0].toLocaleLowerCase().contains(filter) ||
-                   getPreferred(contact, "email").value.toLocaleLowerCase().contains(filter);
+            return contact.name[0].toLocaleLowerCase().includes(filter) ||
+                   getPreferred(contact, "email").value.toLocaleLowerCase().includes(filter);
           };
           if (shownContacts.available) {
             shownContacts.available = shownContacts.available.filter(filterFn);
@@ -585,7 +587,7 @@ loop.contacts = (function(_, mozL10n) {
             <ButtonGroup>
               <Button caption={this.state.importBusy
                                ? mozL10n.get("importing_contacts_progress_button")
-                               : mozL10n.get("import_contacts_button")}
+                               : mozL10n.get("import_contacts_button2")}
                       disabled={this.state.importBusy}
                       onClick={this.handleImportButtonClick}>
                 <div className={cx({"contact-import-spinner": true,
@@ -631,7 +633,7 @@ loop.contacts = (function(_, mozL10n) {
         pristine: true,
         name: "",
         email: "",
-        tel: "",
+        tel: ""
       };
     },
 
@@ -649,7 +651,7 @@ loop.contacts = (function(_, mozL10n) {
     handleAcceptButtonClick: function() {
       // Allow validity error indicators to be displayed.
       this.setState({
-        pristine: false,
+        pristine: false
       });
 
       let emailInput = this.refs.email.getDOMNode();
@@ -675,7 +677,7 @@ loop.contacts = (function(_, mozL10n) {
             }
           });
           this.setState({
-            contact: null,
+            contact: null
           });
           break;
         case "add":
@@ -750,6 +752,6 @@ loop.contacts = (function(_, mozL10n) {
     ContactsList: ContactsList,
     ContactDetailsForm: ContactDetailsForm,
     _getPreferred: getPreferred,
-    _setPreferred: setPreferred,
+    _setPreferred: setPreferred
   };
 })(_, document.mozL10n);

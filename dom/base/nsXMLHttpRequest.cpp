@@ -599,7 +599,7 @@ nsXMLHttpRequest::GetResponseXML(nsIDOMDocument **aResponseXML)
   ErrorResult rv;
   nsIDocument* responseXML = GetResponseXML(rv);
   if (rv.Failed()) {
-    return rv.ErrorCode();
+    return rv.StealNSResult();
   }
 
   if (!responseXML) {
@@ -714,7 +714,7 @@ nsXMLHttpRequest::GetResponseText(nsAString& aResponseText)
   nsString responseText;
   GetResponseText(responseText, rv);
   aResponseText = responseText;
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 void
@@ -913,7 +913,7 @@ NS_IMETHODIMP nsXMLHttpRequest::SetResponseType(const nsAString& aResponseType)
 
   ErrorResult rv;
   SetResponseType(responseType, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 void
@@ -960,7 +960,7 @@ nsXMLHttpRequest::GetResponse(JSContext *aCx, JS::MutableHandle<JS::Value> aResu
 {
   ErrorResult rv;
   GetResponse(aCx, aResult, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 void
@@ -1371,7 +1371,7 @@ nsXMLHttpRequest::GetResponseHeader(const nsACString& aHeader,
 {
   ErrorResult rv;
   GetResponseHeader(aHeader, aResult, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 void
@@ -1433,10 +1433,10 @@ nsXMLHttpRequest::GetResponseHeader(const nsACString& header,
   }
 
   aRv = httpChannel->GetResponseHeader(header, _retval);
-  if (aRv.ErrorCode() == NS_ERROR_NOT_AVAILABLE) {
+  if (aRv.ErrorCodeIs(NS_ERROR_NOT_AVAILABLE)) {
     // Means no header
     _retval.SetIsVoid(true);
-    aRv = NS_OK;
+    aRv.SuppressException();
   }
 }
 
@@ -1801,6 +1801,19 @@ nsXMLHttpRequest::Open(const nsACString& inMethod, const nsACString& url,
   ChangeState(XML_HTTP_REQUEST_OPENED);
 
   return rv;
+}
+
+void
+nsXMLHttpRequest::PopulateNetworkInterfaceId()
+{
+  if (mNetworkInterfaceId.IsEmpty()) {
+    return;
+  }
+  nsCOMPtr<nsIHttpChannelInternal> channel(do_QueryInterface(mChannel));
+  if (!channel) {
+    return;
+  }
+  channel->SetNetworkInterfaceId(mNetworkInterfaceId);
 }
 
 /*
@@ -2472,7 +2485,7 @@ GetRequestBody(nsIVariant* aBody, nsIInputStream** aResult, uint64_t* aContentLe
     rv = aBody->GetAsInterface(&iid, getter_AddRefs(supports));
     NS_ENSURE_SUCCESS(rv, rv);
 
-    nsMemory::Free(iid);
+    free(iid);
 
     // document?
     nsCOMPtr<nsIDOMDocument> doc = do_QueryInterface(supports);
@@ -2617,6 +2630,8 @@ nsresult
 nsXMLHttpRequest::Send(nsIVariant* aVariant, const Nullable<RequestBody>& aBody)
 {
   NS_ENSURE_TRUE(mPrincipal, NS_ERROR_NOT_INITIALIZED);
+
+  PopulateNetworkInterfaceId();
 
   nsresult rv = CheckInnerWindowCorrectness();
   NS_ENSURE_SUCCESS(rv, rv);
@@ -2880,7 +2895,7 @@ nsXMLHttpRequest::Send(nsIVariant* aVariant, const Nullable<RequestBody>& aBody)
     // a same-origin request right now, since it could be redirected.
     nsRefPtr<nsCORSListenerProxy> corsListener =
       new nsCORSListenerProxy(listener, mPrincipal, withCredentials);
-    rv = corsListener->Init(mChannel, true);
+    rv = corsListener->Init(mChannel, DataURIHandling::Allow);
     NS_ENSURE_SUCCESS(rv, rv);
     listener = corsListener;
   }
@@ -3175,7 +3190,7 @@ nsXMLHttpRequest::SetTimeout(uint32_t aTimeout)
 {
   ErrorResult rv;
   SetTimeout(aTimeout, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 void
@@ -3324,7 +3339,7 @@ nsXMLHttpRequest::SetWithCredentials(bool aWithCredentials)
 {
   ErrorResult rv;
   SetWithCredentials(aWithCredentials, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 void
@@ -4075,13 +4090,12 @@ ArrayBufferBuilder::mapToFileInPackage(const nsCString& aFile,
     uint32_t offset = zip->GetDataOffset(zipItem);
     uint32_t size = zipItem->RealSize();
     mozilla::AutoFDClose pr_fd;
-    mozilla::ScopedClose fd;
     rv = aJarFile->OpenNSPRFileDesc(PR_RDONLY, 0, &pr_fd.rwget());
     if (NS_FAILED(rv)) {
       return rv;
     }
-    fd.rwget() = PR_FileDesc2NativeHandle(pr_fd);
-    mMapPtr = JS_CreateMappedArrayBufferContents(fd, offset, size);
+    mMapPtr = JS_CreateMappedArrayBufferContents(PR_FileDesc2NativeHandle(pr_fd),
+                                                 offset, size);
     if (mMapPtr) {
       mLength = size;
       return NS_OK;

@@ -16,36 +16,31 @@ function runTests() {
   Services.prefs.setBoolPref(INTRO_PREF, false);
   Services.prefs.setBoolPref(PRELOAD_PREF, false);
 
-  let panel;
-  function maybeWaitForPanel() {
-    // If already open, no need to wait
-    if (panel.state == "open") {
-      executeSoon(TestRunner.next);
-      return;
-    }
-
-    // We're expecting the panel to open, so wait for it
-    panel.addEventListener("popupshown", TestRunner.next);
-    isnot(panel.state, "open", "intro panel can be slow to show");
-  }
-
   yield addNewTabPageTab();
-  panel = getContentDocument().getElementById("newtab-intro-panel");
-  yield maybeWaitForPanel();
-  is(panel.state, "open", "intro automatically shown on first opening");
+  let intro;
+  intro = getContentDocument().getElementById("newtab-intro-mask");
+  is(intro.style.opacity, 1, "intro automatically shown on first opening");
+  is(getContentDocument().getElementById("newtab-intro-header").innerHTML,
+     'New Tab got an update!', "we show intro.");
   is(Services.prefs.getBoolPref(INTRO_PREF), true, "newtab remembers that the intro was shown");
 
   yield addNewTabPageTab();
-  panel = getContentDocument().getElementById("newtab-intro-panel");
-  is(panel.state, "closed", "intro not shown on second opening");
+  intro = getContentDocument().getElementById("newtab-intro-mask");
+  is(intro.style.opacity, 0, "intro not shown on second opening");
 
   // Test with preload true
   Services.prefs.setBoolPref(INTRO_PREF, false);
   Services.prefs.setBoolPref(PRELOAD_PREF, true);
 
   yield addNewTabPageTab();
-  panel = getContentDocument().getElementById("newtab-intro-panel");
-  yield maybeWaitForPanel();
-  is(panel.state, "open", "intro automatically shown on preloaded opening");
+  intro = getContentDocument().getElementById("newtab-intro-mask");
+  is(intro.style.opacity, 1, "intro automatically shown on preloaded opening");
+  is(getContentDocument().getElementById("newtab-intro-header").innerHTML,
+     'New Tab got an update!', "we show intro.");
   is(Services.prefs.getBoolPref(INTRO_PREF), true, "newtab remembers that the intro was shown");
+
+  let gotit = getContentDocument().getElementById("newtab-intro-button");
+  gotit.click();
+
+  is(intro.style.opacity, 0, "intro exited");
 }

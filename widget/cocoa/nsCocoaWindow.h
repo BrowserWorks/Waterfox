@@ -272,7 +272,8 @@ public:
     NS_IMETHOD              SetFocus(bool aState=false) override;
     virtual mozilla::LayoutDeviceIntPoint WidgetToScreenOffset() override;
     virtual nsIntPoint GetClientOffset() override;
-    virtual nsIntSize ClientToWindowSize(const nsIntSize& aClientSize) override;
+    virtual mozilla::LayoutDeviceIntSize
+    ClientToWindowSize(const mozilla::LayoutDeviceIntSize& aClientSize) override;
 
     virtual void* GetNativeData(uint32_t aDataType) override;
 
@@ -327,7 +328,8 @@ public:
     virtual void UpdateThemeGeometries(const nsTArray<ThemeGeometry>& aThemeGeometries) override;
     virtual nsresult SynthesizeNativeMouseEvent(mozilla::LayoutDeviceIntPoint aPoint,
                                                 uint32_t aNativeMessage,
-                                                uint32_t aModifierFlags) override;
+                                                uint32_t aModifierFlags,
+                                                nsIObserver* aObserver) override;
 
     void DispatchSizeModeEvent();
 

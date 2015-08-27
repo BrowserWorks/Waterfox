@@ -1,5 +1,3 @@
-
-
 let AddonManager = Cu.import("resource://gre/modules/AddonManager.jsm", {}).AddonManager;
 let SocialService = Cu.import("resource://gre/modules/SocialService.jsm", {}).SocialService;
 

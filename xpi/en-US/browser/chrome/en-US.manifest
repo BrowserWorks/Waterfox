@@ -1,0 +1,7 @@
+locale branding en-US en-US/locale/branding/
+locale browser en-US en-US/locale/browser/
+locale browser-region en-US en-US/locale/browser-region/
+locale pdf.js en-US en-US/locale/pdfviewer/
+override chrome://global/locale/appstrings.properties chrome://browser/locale/appstrings.properties
+override chrome://global/locale/netError.dtd chrome://browser/locale/netError.dtd
+override chrome://mozapps/locale/downloads/settingsChange.dtd chrome://browser/locale/downloads/settingsChange.dtd

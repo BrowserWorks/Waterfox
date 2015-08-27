@@ -59,14 +59,12 @@
  */
 
 struct nsHTMLReflowState;
-class nsHTMLReflowCommand;
 class nsIAtom;
 class nsPresContext;
 class nsIPresShell;
 class nsRenderingContext;
 class nsView;
 class nsIWidget;
-class nsIDOMRange;
 class nsISelectionController;
 class nsBoxLayoutState;
 class nsBoxLayout;
@@ -860,8 +858,6 @@ public:
   NS_DECLARE_FRAME_PROPERTY(UsedPaddingProperty, DeleteValue<nsMargin>)
   NS_DECLARE_FRAME_PROPERTY(UsedBorderProperty, DeleteValue<nsMargin>)
 
-  NS_DECLARE_FRAME_PROPERTY(ScrollLayerCount, nullptr)
-
   NS_DECLARE_FRAME_PROPERTY(LineBaselineOffset, nullptr)
 
   NS_DECLARE_FRAME_PROPERTY(CachedBackgroundImage, ReleaseValue<gfxASurface>)
@@ -1279,18 +1275,20 @@ public:
   // Note that the primary offset can be after the secondary offset; for places
   // that need the beginning and end of the object, the StartOffset and 
   // EndOffset helpers can be used.
-  struct MOZ_STACK_CLASS ContentOffsets {
-    ContentOffsets();
-    ContentOffsets(const ContentOffsets&);
-    ~ContentOffsets();
-    nsCOMPtr<nsIContent> content;
+  struct MOZ_STACK_CLASS ContentOffsets
+  {
+    ContentOffsets() : offset(0)
+                     , secondaryOffset(0)
+                     , associate(mozilla::CARET_ASSOCIATE_BEFORE) {}
     bool IsNull() { return !content; }
-    int32_t offset;
-    int32_t secondaryOffset;
     // Helpers for places that need the ends of the offsets and expect them in
     // numerical order, as opposed to wanting the primary and secondary offsets
     int32_t StartOffset() { return std::min(offset, secondaryOffset); }
     int32_t EndOffset() { return std::max(offset, secondaryOffset); }
+
+    nsCOMPtr<nsIContent> content;
+    int32_t offset;
+    int32_t secondaryOffset;
     // This value indicates whether the associated content is before or after
     // the offset; the most visible use is to allow the caret to know which line
     // to display on.
@@ -2806,15 +2804,27 @@ NS_PTR_TO_INT32(frame->Properties().Get(nsIFrame::ParagraphDepthProperty()))
    * the last repaint.
    */  
   void UpdatePaintCountForPaintedPresShells() {
-    nsTArray<nsWeakPtr> * list = PaintedPresShellList();
-    for (int i = 0, l = list->Length(); i < l; i++) {
-      nsCOMPtr<nsIPresShell> shell = do_QueryReferent(list->ElementAt(i));
-      
+    for (nsWeakPtr& item : *PaintedPresShellList()) {
+      nsCOMPtr<nsIPresShell> shell = do_QueryReferent(item);
       if (shell) {
         shell->IncrementPaintCount();
       }
     }
   }  
+
+  /**
+   * @return true if we painted @aShell during the last repaint.
+   */
+  bool DidPaintPresShell(nsIPresShell* aShell)
+  {
+    for (nsWeakPtr& item : *PaintedPresShellList()) {
+      nsCOMPtr<nsIPresShell> shell = do_QueryReferent(item);
+      if (shell == aShell) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   /**
    * Accessors for the absolute containing block.
@@ -3346,6 +3356,27 @@ nsFrameList::FrameLinkEnumerator::Next()
 {
   mPrev = mFrame;
   Enumerator::Next();
+}
+
+// Operators of nsFrameList::Iterator
+// ---------------------------------------------------
+
+inline nsFrameList::Iterator&
+nsFrameList::Iterator::operator++()
+{
+  mCurrent = mCurrent->GetNextSibling();
+  return *this;
+}
+
+inline nsFrameList::Iterator&
+nsFrameList::Iterator::operator--()
+{
+  if (!mCurrent) {
+    mCurrent = mList.LastChild();
+  } else {
+    mCurrent = mCurrent->GetPrevSibling();
+  }
+  return *this;
 }
 
 // Helper-functions for nsIFrame::SortFrameList()

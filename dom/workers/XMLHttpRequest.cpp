@@ -1,4 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -101,6 +102,7 @@ public:
   // Only touched on the worker thread.
   uint32_t mOuterEventStreamId;
   uint32_t mOuterChannelId;
+  uint32_t mOpenCount;
   uint64_t mLastLoaded;
   uint64_t mLastTotal;
   uint64_t mLastUploadLoaded;
@@ -110,7 +112,6 @@ public:
   bool mLastUploadLengthComputable;
   bool mSeenLoadStart;
   bool mSeenUploadLoadStart;
-  bool mOpening;
 
   // Only touched on the main thread.
   bool mUploadEventListenersAttached;
@@ -123,10 +124,10 @@ public:
   : mWorkerPrivate(nullptr), mXMLHttpRequestPrivate(aXHRPrivate),
     mMozAnon(aMozAnon), mMozSystem(aMozSystem),
     mInnerEventStreamId(0), mInnerChannelId(0), mOutstandingSendCount(0),
-    mOuterEventStreamId(0), mOuterChannelId(0), mLastLoaded(0), mLastTotal(0),
-    mLastUploadLoaded(0), mLastUploadTotal(0), mIsSyncXHR(false),
+    mOuterEventStreamId(0), mOuterChannelId(0), mOpenCount(0), mLastLoaded(0),
+    mLastTotal(0), mLastUploadLoaded(0), mLastUploadTotal(0), mIsSyncXHR(false),
     mLastLengthComputable(false), mLastUploadLengthComputable(false),
-    mSeenLoadStart(false), mSeenUploadLoadStart(false), mOpening(false),
+    mSeenLoadStart(false), mSeenUploadLoadStart(false),
     mUploadEventListenersAttached(false), mMainThreadSeenLoadStart(false),
     mInOpen(false), mArrayBufferResponseWasTransferred(false)
   { }
@@ -1498,7 +1499,7 @@ OpenRunnable::MainThreadRunInternal()
   mProxy->mInOpen = false;
 
   if (rv2.Failed()) {
-    return rv2.ErrorCode();
+    return rv2.StealNSResult();
   }
 
   return mProxy->mXHR->SetResponseType(NS_LITERAL_STRING("text"));
@@ -1851,7 +1852,7 @@ XMLHttpRequest::SendInternal(const nsAString& aStringBody,
   mWorkerPrivate->AssertIsOnWorkerThread();
 
   // No send() calls when open is running.
-  if (mProxy->mOpening) {
+  if (mProxy->mOpenCount) {
     aRv.Throw(NS_ERROR_FAILURE);
     return;
   }
@@ -1946,15 +1947,17 @@ XMLHttpRequest::Open(const nsACString& aMethod, const nsAString& aUrl,
                      mBackgroundRequest, mWithCredentials,
                      mTimeout);
 
-  mProxy->mOpening = true;
+  ++mProxy->mOpenCount;
   if (!runnable->Dispatch(mWorkerPrivate->GetJSContext())) {
-    mProxy->mOpening = false;
-    ReleaseProxy();
+    if (!--mProxy->mOpenCount) {
+      ReleaseProxy();
+    }
+
     aRv.Throw(NS_ERROR_FAILURE);
     return;
   }
 
-  mProxy->mOpening = false;
+  --mProxy->mOpenCount;
   mProxy->mIsSyncXHR = !aAsync;
 }
 

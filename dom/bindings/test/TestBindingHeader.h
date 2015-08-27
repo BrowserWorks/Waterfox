@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -712,6 +713,7 @@ public:
 
   // Dictionary tests
   void PassDictionary(JSContext*, const Dict&);
+  void PassDictionary2(JSContext*, const Dict&);
   void GetReadonlyDictionary(JSContext*, Dict&);
   void GetReadonlyNullableDictionary(JSContext*, Nullable<Dict>&);
   void GetWritableDictionary(JSContext*, Dict&);
@@ -737,11 +739,23 @@ public:
   already_AddRefed<TestInterface> ExerciseTypedefInterfaces2(TestInterface*);
   void ExerciseTypedefInterfaces3(TestInterface&);
 
+  // Deprecated methods and attributes
+  int8_t DeprecatedAttribute();
+  int8_t SetDeprecatedAttribute(int8_t);
+  int8_t DeprecatedMethod();
+  int8_t DeprecatedMethodWithContext(JSContext*, JS::Value);
+
   // Static methods and attributes
   static void StaticMethod(const GlobalObject&, bool);
   static void StaticMethodWithContext(const GlobalObject&, JS::Value);
   static bool StaticAttribute(const GlobalObject&);
   static void SetStaticAttribute(const GlobalObject&, bool);
+
+  // Deprecated static methods and attributes
+  static int8_t StaticDeprecatedAttribute(const GlobalObject&);
+  static int8_t SetStaticDeprecatedAttribute(const GlobalObject&, int8_t);
+  static int8_t StaticDeprecatedMethod(const GlobalObject&);
+  static int8_t StaticDeprecatedMethodWithContext(const GlobalObject&, JS::Value);
 
   // Overload resolution tests
   bool Overload1(TestInterface&);

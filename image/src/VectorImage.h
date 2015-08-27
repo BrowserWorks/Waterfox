@@ -3,8 +3,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef mozilla_imagelib_VectorImage_h_
-#define mozilla_imagelib_VectorImage_h_
+#ifndef mozilla_image_src_VectorImage_h
+#define mozilla_image_src_VectorImage_h
 
 #include "Image.h"
 #include "nsIStreamListener.h"
@@ -14,10 +14,6 @@ class nsIRequest;
 class gfxDrawable;
 
 namespace mozilla {
-namespace layers {
-class LayerManager;
-class ImageContainer;
-}
 namespace image {
 
 struct SVGDrawingParameters;
@@ -38,12 +34,10 @@ public:
   // (no public constructor - use ImageFactory)
 
   // Methods inherited from Image
-  nsresult Init(const char* aMimeType,
-                uint32_t aFlags) override;
-
-  virtual size_t SizeOfSourceWithComputedFallback(MallocSizeOf aMallocSizeOf) const override;
-  virtual size_t SizeOfDecoded(gfxMemoryLocation aLocation,
-                               MallocSizeOf aMallocSizeOf) const override;
+  virtual size_t SizeOfSourceWithComputedFallback(MallocSizeOf aMallocSizeOf)
+    const override;
+  virtual void CollectSizeOfSurfaces(nsTArray<SurfaceMemoryCounter>& aCounters,
+                                     MallocSizeOf aMallocSizeOf) const override;
 
   virtual nsresult OnImageDataAvailable(nsIRequest* aRequest,
                                         nsISupports* aContext,
@@ -75,8 +69,7 @@ public:
   void OnSVGDocumentError();
 
 protected:
-  explicit VectorImage(ProgressTracker* aProgressTracker = nullptr,
-                       ImageURL* aURI = nullptr);
+  explicit VectorImage(ImageURL* aURI = nullptr);
   virtual ~VectorImage();
 
   virtual nsresult StartAnimation() override;
@@ -87,6 +80,8 @@ protected:
   void Show(gfxDrawable* aDrawable, const SVGDrawingParameters& aParams);
 
 private:
+  nsresult Init(const char* aMimeType, uint32_t aFlags);
+
   /**
    * In catastrophic circumstances like a GPU driver crash, we may lose our
    * surfaces even if they're locked. RecoverFromLossOfSurfaces discards all
@@ -105,22 +100,20 @@ private:
   /// Count of locks on this image (roughly correlated to visible instances).
   uint32_t mLockCount;
 
-  bool           mIsInitialized;          // Have we been initalized?
+  bool           mIsInitialized;          // Have we been initialized?
   bool           mDiscardable;            // Are we discardable?
-  bool           mIsFullyLoaded;          // Has the SVG document finished loading?
+  bool           mIsFullyLoaded;          // Has the SVG document finished
+                                          // loading?
   bool           mIsDrawing;              // Are we currently drawing?
   bool           mHaveAnimations;         // Is our SVG content SMIL-animated?
                                           // (Only set after mIsFullyLoaded.)
   bool           mHasPendingInvalidation; // Invalidate observers next refresh
                                           // driver tick.
 
-  // Initializes ProgressTracker and resets it on RasterImage destruction.
-  nsAutoPtr<ProgressTrackerInit> mProgressTrackerInit;
-
   friend class ImageFactory;
 };
 
-inline NS_IMETHODIMP VectorImage::GetAnimationMode(uint16_t *aAnimationMode) {
+inline NS_IMETHODIMP VectorImage::GetAnimationMode(uint16_t* aAnimationMode) {
   return GetAnimationModeInternal(aAnimationMode);
 }
 
@@ -131,4 +124,4 @@ inline NS_IMETHODIMP VectorImage::SetAnimationMode(uint16_t aAnimationMode) {
 } // namespace image
 } // namespace mozilla
 
-#endif // mozilla_imagelib_VectorImage_h_
+#endif // mozilla_image_src_VectorImage_h

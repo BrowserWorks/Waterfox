@@ -8,9 +8,6 @@
 #define jit_LOpcodes_h
 
 #define LIR_COMMON_OPCODE_LIST(_)   \
-    _(Label)                        \
-    _(Nop)                          \
-    _(Mop)                          \
     _(OsiPoint)                     \
     _(MoveGroup)                    \
     _(Integer)                      \
@@ -209,6 +206,8 @@
     _(GuardObjectGroup)             \
     _(GuardObjectIdentity)          \
     _(GuardClass)                   \
+    _(GuardUnboxedExpando)          \
+    _(LoadUnboxedExpando)           \
     _(TypeBarrierV)                 \
     _(TypeBarrierO)                 \
     _(MonitorTypes)                 \
@@ -216,6 +215,9 @@
     _(PostWriteBarrierV)            \
     _(InitializedLength)            \
     _(SetInitializedLength)         \
+    _(UnboxedArrayLength)           \
+    _(UnboxedArrayInitializedLength) \
+    _(IncrementUnboxedArrayInitializedLength) \
     _(BoundsCheck)                  \
     _(BoundsCheckRange)             \
     _(BoundsCheckLower)             \
@@ -286,6 +288,7 @@
     _(SetArrayLength)               \
     _(TypedArrayLength)             \
     _(TypedArrayElements)           \
+    _(SetDisjointTypedElements)     \
     _(TypedObjectDescr)             \
     _(TypedObjectElements)          \
     _(SetTypedObjectOffset)         \

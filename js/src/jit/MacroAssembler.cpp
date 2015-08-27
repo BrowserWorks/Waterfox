@@ -798,8 +798,16 @@ void
 MacroAssembler::loadUnboxedProperty(T address, JSValueType type, TypedOrValueRegister output)
 {
     switch (type) {
+      case JSVAL_TYPE_INT32: {
+          // Handle loading an int32 into a double reg.
+          if (output.type() == MIRType_Double) {
+              convertInt32ToDouble(address, output.typedReg().fpu());
+              break;
+          }
+          // Fallthrough.
+      }
+
       case JSVAL_TYPE_BOOLEAN:
-      case JSVAL_TYPE_INT32:
       case JSVAL_TYPE_STRING: {
         Register outReg;
         if (output.hasValue()) {
@@ -1008,6 +1016,31 @@ template void
 MacroAssembler::storeUnboxedProperty(BaseIndex address, JSValueType type,
                                      ConstantOrRegister value, Label* failure);
 
+void
+MacroAssembler::checkUnboxedArrayCapacity(Register obj, const Int32Key& index, Register temp,
+                                          Label* failure)
+{
+    Address initLengthAddr(obj, UnboxedArrayObject::offsetOfCapacityIndexAndInitializedLength());
+    Address lengthAddr(obj, UnboxedArrayObject::offsetOfLength());
+
+    Label capacityIsIndex, done;
+    load32(initLengthAddr, temp);
+    branchTest32(Assembler::NonZero, temp, Imm32(UnboxedArrayObject::CapacityMask), &capacityIsIndex);
+    branchKey(Assembler::BelowOrEqual, lengthAddr, index, failure);
+    jump(&done);
+    bind(&capacityIsIndex);
+
+    // Do a partial shift so that we can get an absolute offset from the base
+    // of CapacityArray to use.
+    JS_STATIC_ASSERT(sizeof(UnboxedArrayObject::CapacityArray[0]) == 4);
+    rshiftPtr(Imm32(UnboxedArrayObject::CapacityShift - 2), temp);
+    and32(Imm32(~0x3), temp);
+
+    addPtr(ImmPtr(&UnboxedArrayObject::CapacityArray), temp);
+    branchKey(Assembler::BelowOrEqual, Address(temp, 0), index, failure);
+    bind(&done);
+}
+
 // Inlined version of gc::CheckAllocatorState that checks the bare essentials
 // and bails for anything that cannot be handled with our jit allocators.
 void
@@ -1052,9 +1085,10 @@ MacroAssembler::nurseryAllocate(Register result, Register temp, gc::AllocKind al
     MOZ_ASSERT(initialHeap != gc::TenuredHeap);
 
     // We still need to allocate in the nursery, per the comment in
-    // shouldNurseryAllocate; however, we need to insert into hugeSlots, so
-    // bail to do the nursery allocation in the interpreter.
-    if (nDynamicSlots >= Nursery::MaxNurserySlots) {
+    // shouldNurseryAllocate; however, we need to insert into the
+    // mallocedBuffers set, so bail to do the nursery allocation in the
+    // interpreter.
+    if (nDynamicSlots >= Nursery::MaxNurseryBufferSize / sizeof(Value)) {
         jump(fail);
         return;
     }
@@ -1173,19 +1207,6 @@ MacroAssembler::allocateObject(Register result, Register temp, gc::AllocKind all
     jump(fail);
 
     bind(&success);
-}
-
-void
-MacroAssembler::newGCThing(Register result, Register temp, JSObject* templateObj,
-                           gc::InitialHeap initialHeap, Label* fail)
-{
-    gc::AllocKind allocKind = templateObj->asTenured().getAllocKind();
-    MOZ_ASSERT(gc::IsObjectAllocKind(allocKind));
-
-    size_t ndynamic = 0;
-    if (templateObj->isNative())
-        ndynamic = templateObj->as<NativeObject>().numDynamicSlots();
-    allocateObject(result, temp, allocKind, ndynamic, initialHeap, fail);
 }
 
 void
@@ -1438,6 +1459,16 @@ MacroAssembler::initGCThing(Register obj, Register temp, JSObject* templateObj,
         storePtr(ImmWord(0), Address(obj, UnboxedPlainObject::offsetOfExpando()));
         if (initContents)
             initUnboxedObjectContents(obj, &templateObj->as<UnboxedPlainObject>());
+    } else if (templateObj->is<UnboxedArrayObject>()) {
+        MOZ_ASSERT(templateObj->as<UnboxedArrayObject>().hasInlineElements());
+        int elementsOffset = UnboxedArrayObject::offsetOfInlineElements();
+        computeEffectiveAddress(Address(obj, elementsOffset), temp);
+        storePtr(temp, Address(obj, UnboxedArrayObject::offsetOfElements()));
+        store32(Imm32(templateObj->as<UnboxedArrayObject>().length()),
+                Address(obj, UnboxedArrayObject::offsetOfLength()));
+        uint32_t capacityIndex = templateObj->as<UnboxedArrayObject>().capacityIndex();
+        store32(Imm32(capacityIndex << UnboxedArrayObject::CapacityShift),
+                Address(obj, UnboxedArrayObject::offsetOfCapacityIndexAndInitializedLength()));
     } else {
         MOZ_CRASH("Unknown object");
     }
@@ -1556,7 +1587,7 @@ void
 MacroAssembler::linkExitFrame()
 {
     AbsoluteAddress jitTop(GetJitContext()->runtime->addressOfJitTop());
-    storePtr(StackPointer, jitTop);
+    storeStackPtr(jitTop);
 }
 
 static void
@@ -1669,7 +1700,7 @@ MacroAssembler::generateBailoutTail(Register scratch, Register bailoutInfo)
             popValue(R0);
 
             // Discard exit frame.
-            addPtr(Imm32(ExitFrameLayout::SizeWithFooter()), StackPointer);
+            addToStackPtr(Imm32(ExitFrameLayout::SizeWithFooter()));
 
 #if defined(JS_CODEGEN_X86) || defined(JS_CODEGEN_X64)
             push(BaselineTailCallReg);
@@ -1707,7 +1738,7 @@ MacroAssembler::generateBailoutTail(Register scratch, Register bailoutInfo)
             popValue(R0);
 
             // Discard exit frame.
-            addPtr(Imm32(ExitFrameLayout::SizeWithFooter()), StackPointer);
+            addToStackPtr(Imm32(ExitFrameLayout::SizeWithFooter()));
 
             jump(jitcodeReg);
         }
@@ -2370,10 +2401,24 @@ MacroAssembler::branchIfNotInterpretedConstructor(Register fun, Register scratch
 
     // Common case: if IS_FUN_PROTO, ARROW and SELF_HOSTED are not set,
     // the function is an interpreted constructor and we're done.
-    Label done;
-    bits = IMM32_16ADJ( (JSFunction::IS_FUN_PROTO | JSFunction::ARROW | JSFunction::SELF_HOSTED) );
-    branchTest32(Assembler::Zero, scratch, Imm32(bits), &done);
+    Label done, moreChecks;
+
+    // Start with the easy ones. Check IS_FUN_PROTO and SELF_HOSTED.
+    bits = IMM32_16ADJ( (JSFunction::IS_FUN_PROTO | JSFunction::SELF_HOSTED) );
+    branchTest32(Assembler::NonZero, scratch, Imm32(bits), &moreChecks);
+
+    // Check !isArrow()
+    bits = IMM32_16ADJ(JSFunction::FUNCTION_KIND_MASK);
+    and32(Imm32(bits), scratch);
+
+    bits = IMM32_16ADJ(JSFunction::ARROW_KIND);
+    branch32(Assembler::NotEqual, scratch, Imm32(bits), &done);
+
+    // Reload the smashed flags and nargs for more checks.
+    load32(Address(fun, JSFunction::offsetOfNargs()), scratch);
+
     {
+        bind(&moreChecks);
         // The callee is either Function.prototype, an arrow function or
         // self-hosted. None of these are constructible, except self-hosted
         // constructors, so branch to |label| if SELF_HOSTED_CTOR is not set.
@@ -2483,15 +2528,15 @@ MacroAssembler::alignJitStackBasedOnNArgs(Register nargs)
 #endif
     assertStackAlignment(sizeof(Value), 0);
     branchTestPtr(Assembler::NonZero, nargs, Imm32(1), &odd);
-    branchTestPtr(Assembler::NonZero, StackPointer, Imm32(JitStackAlignment - 1), maybeAssert);
-    subPtr(Imm32(sizeof(Value)), StackPointer);
+    branchTestStackPtr(Assembler::NonZero, Imm32(JitStackAlignment - 1), maybeAssert);
+    subFromStackPtr(Imm32(sizeof(Value)));
 #ifdef DEBUG
     bind(&assert);
 #endif
     assertStackAlignment(JitStackAlignment, sizeof(Value));
     jump(&end);
     bind(&odd);
-    andPtr(Imm32(~(JitStackAlignment - 1)), StackPointer);
+    andToStackPtr(Imm32(~(JitStackAlignment - 1)));
     bind(&end);
 }
 
@@ -2519,12 +2564,12 @@ MacroAssembler::alignJitStackBasedOnNArgs(uint32_t nargs)
     assertStackAlignment(sizeof(Value), 0);
     if (nargs % 2 == 0) {
         Label end;
-        branchTestPtr(Assembler::NonZero, StackPointer, Imm32(JitStackAlignment - 1), &end);
-        subPtr(Imm32(sizeof(Value)), StackPointer);
+        branchTestStackPtr(Assembler::NonZero, Imm32(JitStackAlignment - 1), &end);
+        subFromStackPtr(Imm32(sizeof(Value)));
         bind(&end);
         assertStackAlignment(JitStackAlignment, sizeof(Value));
     } else {
-        andPtr(Imm32(~(JitStackAlignment - 1)), StackPointer);
+        andToStackPtr(Imm32(~(JitStackAlignment - 1)));
     }
 }
 

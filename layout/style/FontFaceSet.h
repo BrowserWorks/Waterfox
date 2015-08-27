@@ -97,7 +97,6 @@ public:
 
   virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
-  UserFontSet* EnsureUserFontSet(nsPresContext* aPresContext);
   UserFontSet* GetUserFontSet() { return mUserFontSet; }
 
   // Called when this font set is no longer associated with a presentation.
@@ -158,6 +157,8 @@ public:
                               bool aWasAlternate,
                               nsresult aStatus) override;
 
+  FontFace* GetFontFaceAt(uint32_t aIndex);
+
   // -- Web IDL --------------------------------------------------------------
 
   IMPL_EVENT_HANDLER(loading)
@@ -176,8 +177,12 @@ public:
   void Clear();
   bool Delete(FontFace& aFontFace, mozilla::ErrorResult& aRv);
   bool Has(FontFace& aFontFace);
-  FontFace* IndexedGetter(uint32_t aIndex, bool& aFound);
-  uint32_t Length();
+  uint32_t Size();
+  already_AddRefed<mozilla::dom::FontFaceSetIterator> Entries();
+  already_AddRefed<mozilla::dom::FontFaceSetIterator> Values();
+  void ForEach(JSContext* aCx, FontFaceSetForEachCallback& aCallback,
+               JS::Handle<JS::Value> aThisArg,
+               mozilla::ErrorResult& aRv);
 
 private:
   ~FontFaceSet();

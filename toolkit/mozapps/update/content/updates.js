@@ -585,7 +585,7 @@ var gUpdates = {
     if (this.update)
       this.update.QueryInterface(CoI.nsIWritablePropertyBag);
   }
-}
+};
 
 /**
  * The "Checking for Updates" page. Provides feedback on the update checking

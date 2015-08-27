@@ -10,6 +10,7 @@
 
 #include "vm/Interpreter-inl.h"
 
+#include "mozilla/ArrayUtils.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/FloatingPoint.h"
 #include "mozilla/PodOperations.h"
@@ -51,6 +52,15 @@
 #include "vm/Probes-inl.h"
 #include "vm/ScopeObject-inl.h"
 #include "vm/Stack-inl.h"
+
+#if defined(XP_MACOSX)
+#include <mach/mach.h>
+#elif defined(XP_UNIX)
+#include <sys/resource.h>
+#elif defined(XP_WIN)
+#include <processthreadsapi.h>
+#include <windows.h>
+#endif // defined(XP_MACOSX) || defined(XP_UNIX) || defined(XP_WIN)
 
 using namespace js;
 using namespace js::gc;
@@ -292,7 +302,8 @@ GetNameOperation(JSContext* cx, InterpreterFrame* fp, jsbytecode* pc, MutableHan
         obj = &obj->global();
 
     Shape* shape = nullptr;
-    JSObject* scope = nullptr, *pobj = nullptr;
+    JSObject* scope = nullptr;
+    JSObject* pobj = nullptr;
     if (LookupNameNoGC(cx, name, obj, &scope, &pobj, &shape)) {
         if (FetchNameNoGC(pobj, shape, vp))
             return CheckUninitializedLexical(cx, name, vp);
@@ -382,11 +393,263 @@ ExecuteState::pushInterpreterFrame(JSContext* cx)
     return cx->runtime()->interpreterStack().pushExecuteFrame(cx, script_, thisv_, scopeChain_,
                                                               type_, evalInFrame_);
 }
+namespace js {
 
+// Implementation of per-performance group performance measurement.
+//
+//
+// All mutable state is stored in `Runtime::stopwatch` (per-process
+// performance stats and logistics) and in `PerformanceGroup` (per
+// group performance stats).
+struct AutoStopwatch final
+{
+    // If the stopwatch is active, constructing an instance of
+    // AutoStopwatch causes it to become the current owner of the
+    // stopwatch.
+    //
+    // Previous owner is restored upon destruction.
+    explicit inline AutoStopwatch(JSContext* cx MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
+      : compartment_(nullptr)
+      , runtime_(nullptr)
+      , iteration_(0)
+      , isActive_(false)
+      , isTop_(false)
+      , userTimeStart_(0)
+      , systemTimeStart_(0)
+      , CPOWTimeStart_(0)
+    {
+        MOZ_GUARD_OBJECT_NOTIFIER_INIT;
+        runtime_ = cx->runtime();
+        if (!runtime_->stopwatch.isActive())
+            return;
+        compartment_ = cx->compartment();
+        MOZ_ASSERT(compartment_);
+        if (compartment_->scheduledForDestruction)
+            return;
+        iteration_ = runtime_->stopwatch.iteration;
+
+        PerformanceGroup* group = compartment_->performanceMonitoring.getGroup();
+        MOZ_ASSERT(group);
+
+        if (group->hasStopwatch(iteration_)) {
+            // Someone is already monitoring this group during this
+            // tick, no need for further monitoring.
+            return;
+        }
+
+        // Start the stopwatch.
+        if (!this->getTimes(&userTimeStart_, &systemTimeStart_))
+            return;
+        isActive_ = true;
+        CPOWTimeStart_ = runtime_->stopwatch.performance.totalCPOWTime;
+
+        // We are now in charge of monitoring this group for the tick,
+        // until destruction of `this` or until we enter a nested event
+        // loop and `iteration_` is incremented.
+        group->acquireStopwatch(iteration_, this);
+
+        if (runtime_->stopwatch.isEmpty) {
+            // This is the topmost stopwatch on the stack.
+            // It will be in charge of updating the per-process
+            // performance data.
+            runtime_->stopwatch.isEmpty = false;
+            runtime_->stopwatch.performance.ticks++;
+            isTop_ = true;
+        }
+    }
+    inline ~AutoStopwatch() {
+        if (!isActive_) {
+            // We are not in charge of monitoring anything.
+            return;
+        }
+
+        MOZ_ASSERT(!compartment_->scheduledForDestruction);
+
+        if (!runtime_->stopwatch.isActive()) {
+            // Monitoring has been stopped while we were
+            // executing the code. Drop everything.
+            return;
+        }
+
+        if (iteration_ != runtime_->stopwatch.iteration) {
+            // We have entered a nested event loop at some point.
+            // Any information we may have is obsolete.
+            return;
+        }
+
+        PerformanceGroup* group = compartment_->performanceMonitoring.getGroup();
+        MOZ_ASSERT(group);
+
+        // Compute time spent.
+        group->releaseStopwatch(iteration_, this);
+        uint64_t userTimeEnd, systemTimeEnd;
+        if (!this->getTimes(&userTimeEnd, &systemTimeEnd))
+            return;
+
+        uint64_t userTimeDelta = userTimeEnd - userTimeStart_;
+        uint64_t systemTimeDelta = systemTimeEnd - systemTimeStart_;
+        uint64_t CPOWTimeDelta = runtime_->stopwatch.performance.totalCPOWTime - CPOWTimeStart_;
+        group->data.totalUserTime += userTimeDelta;
+        group->data.totalSystemTime += systemTimeDelta;
+        group->data.totalCPOWTime += CPOWTimeDelta;
+
+        uint64_t totalTimeDelta = userTimeDelta + systemTimeDelta;
+        updateDurations(totalTimeDelta, group->data.durations);
+        group->data.ticks++;
+
+        if (isTop_) {
+            // This is the topmost stopwatch on the stack.
+            // Record the timing information.
+            runtime_->stopwatch.performance.totalUserTime = userTimeEnd;
+            runtime_->stopwatch.performance.totalSystemTime = systemTimeEnd;
+            updateDurations(totalTimeDelta, runtime_->stopwatch.performance.durations);
+            runtime_->stopwatch.isEmpty = true;
+        }
+    }
+
+ private:
+
+    // Update an array containing the number of times we have missed
+    // at least 2^0 successive ms, 2^1 successive ms, ...
+    // 2^i successive ms.
+    template<int N>
+    void updateDurations(uint64_t totalTimeDelta, uint64_t (&array)[N]) const {
+        // Duration of one frame, i.e. 16ms in museconds
+        size_t i = 0;
+        uint64_t duration = 1000;
+        for (i = 0, duration = 1000;
+             i < N && duration < totalTimeDelta;
+             ++i, duration *= 2) {
+            array[i]++;
+        }
+    }
+
+    // Get the OS-reported time spent in userland/systemland, in
+    // microseconds. On most platforms, this data is per-thread,
+    // but on some platforms we need to fall back to per-process.
+    bool getTimes(uint64_t* userTime, uint64_t* systemTime) const {
+        MOZ_ASSERT(userTime);
+        MOZ_ASSERT(systemTime);
+
+#if defined(XP_MACOSX)
+        // On MacOS X, to get we per-thread data, we need to
+        // reach into the kernel.
+
+        mach_msg_type_number_t count = THREAD_BASIC_INFO_COUNT;
+        thread_basic_info_data_t info;
+        mach_port_t port = mach_thread_self();
+        kern_return_t err =
+            thread_info(/* [in] targeted thread*/ port,
+                        /* [in] nature of information*/ THREAD_BASIC_INFO,
+                        /* [out] thread information */  (thread_info_t)&info,
+                        /* [inout] number of items */   &count);
+
+        // We do not need ability to communicate with the thread, so
+        // let's release the port.
+        mach_port_deallocate(mach_task_self(), port);
+
+        if (err != KERN_SUCCESS)
+            return false;
+
+        *userTime = info.user_time.microseconds + info.user_time.seconds * 1000000;
+        *systemTime = info.system_time.microseconds + info.system_time.seconds * 1000000;
+
+#elif defined(XP_UNIX)
+        struct rusage rusage;
+#if defined(RUSAGE_THREAD)
+        // Under Linux, we can obtain per-thread statistics
+        int err = getrusage(RUSAGE_THREAD, &rusage);
+#else
+        // Under other Unices, we need to do with more noisy
+        // per-process statistics.
+        int err = getrusage(RUSAGE_SELF, &rusage);
+#endif // defined(RUSAGE_THREAD)
+
+        if (err)
+            return false;
+
+        *userTime = rusage.ru_utime.tv_usec + rusage.ru_utime.tv_sec * 1000000;
+        *systemTime = rusage.ru_stime.tv_usec + rusage.ru_stime.tv_sec * 1000000;
+
+#elif defined(XP_WIN)
+        // Under Windows, we can obtain per-thread statistics,
+        // although experience seems to suggest that they are
+        // not very good under Windows XP.
+        FILETIME creationFileTime; // Ignored
+        FILETIME exitFileTime; // Ignored
+        FILETIME kernelFileTime;
+        FILETIME userFileTime;
+        BOOL success = GetThreadTimes(GetCurrentThread(),
+                                      &creationFileTime, &exitFileTime,
+                                      &kernelFileTime, &userFileTime);
+
+        if (!success)
+            return false;
+
+        ULARGE_INTEGER kernelTimeInt;
+        ULARGE_INTEGER userTimeInt;
+        kernelTimeInt.LowPart = kernelFileTime.dwLowDateTime;
+        kernelTimeInt.HighPart = kernelFileTime.dwHighDateTime;
+        // Convert 100 ns to 1 us, make sure that the result is monotonic
+        *systemTime = runtime_-> stopwatch.systemTimeFix.monotonize(kernelTimeInt.QuadPart / 10);
+
+        userTimeInt.LowPart = userFileTime.dwLowDateTime;
+        userTimeInt.HighPart = userFileTime.dwHighDateTime;
+        // Convert 100 ns to 1 us, make sure that the result is monotonic
+        *userTime = runtime_-> stopwatch.userTimeFix.monotonize(userTimeInt.QuadPart / 10);
+
+#endif // defined(XP_MACOSX) || defined(XP_UNIX) || defined(XP_WIN)
+
+        return true;
+    }
+
+  private:
+    // The compartment with which this object was initialized.
+    // Non-null.
+    JSCompartment* compartment_;
+
+    // The runtime with which this object was initialized.
+    // Non-null.
+    JSRuntime* runtime_;
+
+    // An indication of the number of times we have entered the event
+    // loop.  Used only for comparison.
+    uint64_t iteration_;
+
+    // `true` if this object is currently used to monitor performance,
+    // `false` otherwise, i.e. if the stopwatch mechanism is off or if
+    // another stopwatch is already in charge of monitoring for the
+    // same PerformanceGroup.
+    bool isActive_;
+
+    // `true` if this stopwatch is the topmost stopwatch on the stack
+    // for this event, `false` otherwise.
+    bool isTop_;
+
+    // Timestamps captured while starting the stopwatch.
+    uint64_t userTimeStart_;
+    uint64_t systemTimeStart_;
+    uint64_t CPOWTimeStart_;
+
+    MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
+};
+
+}
+
+// MSVC with PGO inlines a lot of functions in RunScript, resulting in large
+// stack frames and stack overflow issues, see bug 1167883. Turn off PGO to
+// avoid this.
+#ifdef _MSC_VER
+# pragma optimize("g", off)
+#endif
 bool
 js::RunScript(JSContext* cx, RunState& state)
 {
     JS_CHECK_RECURSION(cx, return false);
+
+#if defined(NIGHTLY_BUILD)
+    js::AutoStopwatch stopwatch(cx);
+#endif // defined(NIGHTLY_BUILD)
 
     SPSEntryMarker marker(cx->runtime(), state.script());
 
@@ -419,6 +682,9 @@ js::RunScript(JSContext* cx, RunState& state)
 
     return Interpret(cx, state);
 }
+#ifdef _MSC_VER
+# pragma optimize("", on)
+#endif
 
 struct AutoGCIfRequested
 {
@@ -477,10 +743,8 @@ js::Invoke(JSContext* cx, CallArgs args, MaybeConstruct construct)
 
     // Check to see if createSingleton flag should be set for this frame.
     if (construct) {
-        FrameIter iter(cx);
-        if (!iter.done() && iter.hasScript()) {
-            JSScript* script = iter.script();
-            jsbytecode* pc = iter.pc();
+        jsbytecode* pc;
+        if (JSScript* script = cx->currentScript(&pc)) {
             if (ObjectGroup::useSingletonForNewObject(cx, script, pc))
                 state.setCreateSingleton();
         }
@@ -623,6 +887,15 @@ js::ExecuteKernel(JSContext* cx, HandleScript script, JSObject& scopeChainArg, c
                script->hasPollutedGlobalScope());
 #endif
 
+    if (script->treatAsRunOnce()) {
+        if (script->hasRunOnce()) {
+            JS_ReportError(cx, "Trying to execute a run-once script multiple times");
+            return false;
+        }
+
+        script->setHasRunOnce();
+    }
+
     if (script->isEmpty()) {
         if (result)
             result->setUndefined();
@@ -647,9 +920,6 @@ js::Execute(JSContext* cx, HandleScript script, JSObject& scopeChainArg, Value* 
     RootedObject scopeChain(cx, &scopeChainArg);
     MOZ_ASSERT(scopeChain == GetInnerObject(scopeChain));
 
-    MOZ_RELEASE_ASSERT(scopeChain->is<GlobalObject>() || !script->compileAndGo(),
-                       "Only non-compile-and-go scripts can be executed with "
-                       "interesting scopechains");
     MOZ_RELEASE_ASSERT(scopeChain->is<GlobalObject>() || script->hasPollutedGlobalScope(),
                        "Only scripts with polluted scopes can be executed with "
                        "interesting scopechains");
@@ -970,92 +1240,73 @@ js::UnwindAllScopesInFrame(JSContext* cx, ScopeIter& si)
 jsbytecode*
 js::UnwindScopeToTryPc(JSScript* script, JSTryNote* tn)
 {
-    return script->main() + tn->start - js_CodeSpec[JSOP_TRY].length;
+    jsbytecode* pc = script->main() + tn->start;
+    if (tn->kind == JSTRY_CATCH || tn->kind == JSTRY_FINALLY) {
+        pc -= JSOP_TRY_LENGTH;
+        MOZ_ASSERT(*pc == JSOP_TRY);
+    }
+    return pc;
 }
 
-static void
-ForcedReturn(JSContext* cx, ScopeIter& si, InterpreterRegs& regs)
+static bool
+ForcedReturn(JSContext* cx, ScopeIter& si, InterpreterRegs& regs, bool frameOk = true)
 {
+    bool ok = Debugger::onLeaveFrame(cx, regs.fp(), frameOk);
     UnwindAllScopesInFrame(cx, si);
+    // Point the frame to the end of the script, regardless of error. The
+    // caller must jump to the correct continuation depending on 'ok'.
     regs.setToEndOfScript();
+    return ok;
 }
 
-static void
+static bool
 ForcedReturn(JSContext* cx, InterpreterRegs& regs)
 {
     ScopeIter si(cx, regs.fp(), regs.pc);
-    ForcedReturn(cx, si, regs);
+    return ForcedReturn(cx, si, regs);
 }
 
-void
-js::UnwindForUncatchableException(JSContext* cx, const InterpreterRegs& regs)
+static void
+SettleOnTryNote(JSContext* cx, JSTryNote* tn, ScopeIter& si, InterpreterRegs& regs)
 {
-    /* c.f. the regular (catchable) TryNoteIter loop in HandleError. */
-    for (TryNoteIter tni(cx, regs); !tni.done(); ++tni) {
+    // Unwind the scope to the beginning of the JSOP_TRY.
+    UnwindScope(cx, si, UnwindScopeToTryPc(regs.fp()->script(), tn));
+
+    // Set pc to the first bytecode after the the try note to point
+    // to the beginning of catch or finally.
+    regs.pc = regs.fp()->script()->main() + tn->start + tn->length;
+    regs.sp = regs.spForStackDepth(tn->stackDepth);
+}
+
+class InterpreterFrameStackDepthOp
+{
+    const InterpreterRegs& regs_;
+  public:
+    explicit InterpreterFrameStackDepthOp(const InterpreterRegs& regs)
+      : regs_(regs)
+    { }
+    uint32_t operator()() { return regs_.stackDepth(); }
+};
+
+class TryNoteIterInterpreter : public TryNoteIter<InterpreterFrameStackDepthOp>
+{
+  public:
+    TryNoteIterInterpreter(JSContext* cx, const InterpreterRegs& regs)
+      : TryNoteIter(cx, regs.fp()->script(), regs.pc, InterpreterFrameStackDepthOp(regs))
+    { }
+};
+
+static void
+UnwindIteratorsForUncatchableException(JSContext* cx, const InterpreterRegs& regs)
+{
+    // c.f. the regular (catchable) TryNoteIterInterpreter loop in
+    // ProcessTryNotes.
+    for (TryNoteIterInterpreter tni(cx, regs); !tni.done(); ++tni) {
         JSTryNote* tn = *tni;
         if (tn->kind == JSTRY_FOR_IN) {
             Value* sp = regs.spForStackDepth(tn->stackDepth);
             UnwindIteratorForUncatchableException(cx, &sp[-1].toObject());
         }
-    }
-}
-
-TryNoteIter::TryNoteIter(JSContext* cx, const InterpreterRegs& regs)
-  : regs(regs),
-    script(cx, regs.fp()->script()),
-    pcOffset(regs.pc - script->main())
-{
-    if (script->hasTrynotes()) {
-        tn = script->trynotes()->vector;
-        tnEnd = tn + script->trynotes()->length;
-    } else {
-        tn = tnEnd = nullptr;
-    }
-    settle();
-}
-
-void
-TryNoteIter::operator++()
-{
-    ++tn;
-    settle();
-}
-
-bool
-TryNoteIter::done() const
-{
-    return tn == tnEnd;
-}
-
-void
-TryNoteIter::settle()
-{
-    for (; tn != tnEnd; ++tn) {
-        /* If pc is out of range, try the next one. */
-        if (pcOffset - tn->start >= tn->length)
-            continue;
-
-        /*
-         * We have a note that covers the exception pc but we must check
-         * whether the interpreter has already executed the corresponding
-         * handler. This is possible when the executed bytecode implements
-         * break or return from inside a for-in loop.
-         *
-         * In this case the emitter generates additional [enditer] and [gosub]
-         * opcodes to close all outstanding iterators and execute the finally
-         * blocks. If such an [enditer] throws an exception, its pc can still
-         * be inside several nested for-in loops and try-finally statements
-         * even if we have already closed the corresponding iterators and
-         * invoked the finally blocks.
-         *
-         * To address this, we make [enditer] always decrease the stack even
-         * when its implementation throws an exception. Thus already executed
-         * [enditer] and [gosub] opcodes will have try notes with the stack
-         * depth exceeding the current one and this condition is what we use to
-         * filter them out.
-         */
-        if (tn->stackDepth <= regs.stackDepth())
-            break;
     }
 }
 
@@ -1068,6 +1319,69 @@ enum HandleErrorContinuation
 };
 
 static HandleErrorContinuation
+ProcessTryNotes(JSContext* cx, ScopeIter& si, InterpreterRegs& regs)
+{
+    for (TryNoteIterInterpreter tni(cx, regs); !tni.done(); ++tni) {
+        JSTryNote* tn = *tni;
+
+        switch (tn->kind) {
+          case JSTRY_CATCH:
+            /* Catch cannot intercept the closing of a generator. */
+            if (cx->isClosingGenerator())
+                break;
+            SettleOnTryNote(cx, tn, si, regs);
+            return CatchContinuation;
+
+          case JSTRY_FINALLY:
+            SettleOnTryNote(cx, tn, si, regs);
+            return FinallyContinuation;
+
+          case JSTRY_FOR_IN: {
+            /* This is similar to JSOP_ENDITER in the interpreter loop. */
+            DebugOnly<jsbytecode*> pc = regs.fp()->script()->main() + tn->start + tn->length;
+            MOZ_ASSERT(JSOp(*pc) == JSOP_ENDITER);
+            Value* sp = regs.spForStackDepth(tn->stackDepth);
+            RootedObject obj(cx, &sp[-1].toObject());
+            if (!UnwindIteratorForException(cx, obj)) {
+                // We should only settle on the note only if
+                // UnwindIteratorForException itself threw, as
+                // onExceptionUnwind should be called anew with the new
+                // location of the throw (the iterator). Indeed, we must
+                // settle to avoid infinitely handling the same exception.
+                SettleOnTryNote(cx, tn, si, regs);
+                return ErrorReturnContinuation;
+            }
+            break;
+          }
+
+          case JSTRY_FOR_OF:
+          case JSTRY_LOOP:
+            break;
+
+          default:
+            MOZ_CRASH("Invalid try note");
+        }
+    }
+
+    return SuccessfulReturnContinuation;
+}
+
+bool
+js::HandleClosingGeneratorReturn(JSContext* cx, AbstractFramePtr frame, bool ok)
+{
+    /*
+     * Propagate the exception or error to the caller unless the exception
+     * is an asynchronous return from a generator.
+     */
+    if (cx->isClosingGenerator()) {
+        cx->clearPendingException();
+        ok = true;
+        SetReturnValueForClosingGenerator(cx, frame);
+    }
+    return ok;
+}
+
+static HandleErrorContinuation
 HandleError(JSContext* cx, InterpreterRegs& regs)
 {
     MOZ_ASSERT(regs.fp()->script()->containsPC(regs.pc));
@@ -1078,11 +1392,7 @@ HandleError(JSContext* cx, InterpreterRegs& regs)
   again:
     if (cx->isExceptionPending()) {
         /* Call debugger throw hooks. */
-        RootedValue exception(cx);
-        if (!cx->getPendingException(&exception))
-            goto again;
-
-        if (!exception.isMagic(JS_GENERATOR_CLOSING)) {
+        if (!cx->isClosingGenerator()) {
             JSTrapStatus status = Debugger::onExceptionUnwind(cx, regs.fp());
             switch (status) {
               case JSTRAP_ERROR:
@@ -1093,7 +1403,9 @@ HandleError(JSContext* cx, InterpreterRegs& regs)
                 break;
 
               case JSTRAP_RETURN:
-                ForcedReturn(cx, si, regs);
+                UnwindIteratorsForUncatchableException(cx, regs);
+                if (!ForcedReturn(cx, si, regs))
+                    return ErrorReturnContinuation;
                 return SuccessfulReturnContinuation;
 
               default:
@@ -1101,77 +1413,37 @@ HandleError(JSContext* cx, InterpreterRegs& regs)
             }
         }
 
-        for (TryNoteIter tni(cx, regs); !tni.done(); ++tni) {
-            JSTryNote* tn = *tni;
-
-            // Unwind the scope to the beginning of the JSOP_TRY.
-            UnwindScope(cx, si, UnwindScopeToTryPc(regs.fp()->script(), tn));
-
-            /*
-             * Set pc to the first bytecode after the the try note to point
-             * to the beginning of catch or finally or to [enditer] closing
-             * the for-in loop.
-             */
-            regs.pc = regs.fp()->script()->main() + tn->start + tn->length;
-            regs.sp = regs.spForStackDepth(tn->stackDepth);
-
-            switch (tn->kind) {
-              case JSTRY_CATCH:
-                /* Catch cannot intercept the closing of a generator. */
-                if (!cx->getPendingException(&exception))
-                    return ErrorReturnContinuation;
-                if (exception.isMagic(JS_GENERATOR_CLOSING))
-                    break;
-                return CatchContinuation;
-
-              case JSTRY_FINALLY:
-                return FinallyContinuation;
-
-              case JSTRY_FOR_IN: {
-                /* This is similar to JSOP_ENDITER in the interpreter loop. */
-                MOZ_ASSERT(JSOp(*regs.pc) == JSOP_ENDITER);
-                RootedObject obj(cx, &regs.sp[-1].toObject());
-                bool ok = UnwindIteratorForException(cx, obj);
-                regs.sp -= 1;
-                if (!ok)
-                    goto again;
-                break;
-              }
-
-              case JSTRY_FOR_OF:
-              case JSTRY_LOOP:
-                break;
-            }
+        switch (ProcessTryNotes(cx, si, regs)) {
+          case SuccessfulReturnContinuation:
+            break;
+          case ErrorReturnContinuation:
+            goto again;
+          case CatchContinuation:
+            return CatchContinuation;
+          case FinallyContinuation:
+            return FinallyContinuation;
         }
 
-        /*
-         * Propagate the exception or error to the caller unless the exception
-         * is an asynchronous return from a generator.
-         */
-        if (cx->isExceptionPending()) {
-            RootedValue exception(cx);
-            if (!cx->getPendingException(&exception))
-                return ErrorReturnContinuation;
-
-            if (exception.isMagic(JS_GENERATOR_CLOSING)) {
-                cx->clearPendingException();
-                ok = true;
-                SetReturnValueForClosingGenerator(cx, regs.fp());
-            }
-        }
+        ok = HandleClosingGeneratorReturn(cx, regs.fp(), ok);
+        ok = Debugger::onLeaveFrame(cx, regs.fp(), ok);
     } else {
         // We may be propagating a forced return from the interrupt
         // callback, which cannot easily force a return.
         if (MOZ_UNLIKELY(cx->isPropagatingForcedReturn())) {
             cx->clearPropagatingForcedReturn();
-            ForcedReturn(cx, si, regs);
+            if (!ForcedReturn(cx, si, regs))
+                return ErrorReturnContinuation;
             return SuccessfulReturnContinuation;
         }
 
-        UnwindForUncatchableException(cx, regs);
+        UnwindIteratorsForUncatchableException(cx, regs);
     }
 
-    ForcedReturn(cx, si, regs);
+    // After this point, we will pop the frame regardless. Settle the frame on
+    // the end of the script.
+    UnwindAllScopesInFrame(cx, si);
+    regs.setToEndOfScript();
+
     return ok ? SuccessfulReturnContinuation : ErrorReturnContinuation;
 }
 
@@ -1274,7 +1546,7 @@ AddOperation(JSContext* cx, MutableHandleValue lhs, MutableHandleValue rhs, Muta
 
     bool lIsString, rIsString;
     if ((lIsString = lhs.isString()) | (rIsString = rhs.isString())) {
-        JSString* lstr, *rstr;
+        JSString* lstr;
         if (lIsString) {
             lstr = lhs.toString();
         } else {
@@ -1282,6 +1554,8 @@ AddOperation(JSContext* cx, MutableHandleValue lhs, MutableHandleValue rhs, Muta
             if (!lstr)
                 return false;
         }
+
+        JSString* rstr;
         if (rIsString) {
             rstr = rhs.toString();
         } else {
@@ -1360,9 +1634,12 @@ ModOperation(JSContext* cx, HandleValue lhs, HandleValue rhs, MutableHandleValue
 }
 
 static MOZ_ALWAYS_INLINE bool
-SetObjectElementOperation(JSContext* cx, Handle<JSObject*> obj, HandleId id, const Value& value,
-                          bool strict, JSScript* script = nullptr, jsbytecode* pc = nullptr)
+SetObjectElementOperation(JSContext* cx, HandleObject obj, HandleValue receiver, HandleId id,
+                          const Value& value, bool strict, JSScript* script = nullptr,
+                          jsbytecode* pc = nullptr)
 {
+    // receiver != obj happens only at super[expr], where we expect to find the property
+    // People probably aren't building hashtables with |super| anyway.
     TypeScript::MonitorAssign(cx, obj, id);
 
     if (obj->isNative() && JSID_IS_INT(id)) {
@@ -1379,7 +1656,9 @@ SetObjectElementOperation(JSContext* cx, Handle<JSObject*> obj, HandleId id, con
         return false;
 
     RootedValue tmp(cx, value);
-    return PutProperty(cx, obj, id, tmp, strict);
+    ObjectOpResult result;
+    return SetProperty(cx, obj, id, tmp, receiver, result) &&
+           result.checkStrictErrorOrWarning(cx, obj, id, strict);
 }
 
 static MOZ_NEVER_INLINE bool
@@ -1547,7 +1826,8 @@ Interpret(JSContext* cx, RunState& state)
       case JSTRAP_CONTINUE:
         break;
       case JSTRAP_RETURN:
-        ForcedReturn(cx, REGS);
+        if (!ForcedReturn(cx, REGS))
+            goto error;
         goto successful_return_continuation;
       case JSTRAP_THROW:
       case JSTRAP_ERROR:
@@ -1593,7 +1873,8 @@ CASE(EnableInterruptsPseudoOpcode)
                 break;
               case JSTRAP_RETURN:
                 REGS.fp()->setReturnValue(rval);
-                ForcedReturn(cx, REGS);
+                if (!ForcedReturn(cx, REGS))
+                    goto error;
                 goto successful_return_continuation;
               case JSTRAP_THROW:
                 cx->setPendingException(rval);
@@ -1614,7 +1895,8 @@ CASE(EnableInterruptsPseudoOpcode)
                 goto error;
               case JSTRAP_RETURN:
                 REGS.fp()->setReturnValue(rval);
-                ForcedReturn(cx, REGS);
+                if (!ForcedReturn(cx, REGS))
+                    goto error;
                 goto successful_return_continuation;
               case JSTRAP_THROW:
                 cx->setPendingException(rval);
@@ -1639,18 +1921,9 @@ CASE(EnableInterruptsPseudoOpcode)
 /* Various 1-byte no-ops. */
 CASE(JSOP_NOP)
 CASE(JSOP_UNUSED2)
-CASE(JSOP_UNUSED92)
-CASE(JSOP_UNUSED103)
-CASE(JSOP_UNUSED104)
-CASE(JSOP_UNUSED105)
-CASE(JSOP_UNUSED107)
-CASE(JSOP_UNUSED125)
-CASE(JSOP_UNUSED126)
 CASE(JSOP_UNUSED148)
 CASE(JSOP_BACKPATCH)
 CASE(JSOP_UNUSED150)
-CASE(JSOP_UNUSED158)
-CASE(JSOP_UNUSED159)
 CASE(JSOP_UNUSED161)
 CASE(JSOP_UNUSED162)
 CASE(JSOP_UNUSED163)
@@ -1828,8 +2101,6 @@ CASE(JSOP_RETRVAL)
             ADVANCE_AND_DISPATCH(JSOP_CALL_LENGTH);
         }
 
-        /* Increment pc so that |sp - fp->slots == ReconstructStackDepth(pc)|. */
-        REGS.pc += JSOP_CALL_LENGTH;
         goto error;
     } else {
         MOZ_ASSERT(REGS.stackDepth() == 0);
@@ -2218,7 +2489,8 @@ END_CASE(JSOP_ADD)
 
 CASE(JSOP_SUB)
 {
-    RootedValue& lval = rootValue0, &rval = rootValue1;
+    RootedValue& lval = rootValue0;
+    RootedValue& rval = rootValue1;
     lval = REGS.sp[-2];
     rval = REGS.sp[-1];
     MutableHandleValue res = REGS.stackHandleAt(-2);
@@ -2230,7 +2502,8 @@ END_CASE(JSOP_SUB)
 
 CASE(JSOP_MUL)
 {
-    RootedValue& lval = rootValue0, &rval = rootValue1;
+    RootedValue& lval = rootValue0;
+    RootedValue& rval = rootValue1;
     lval = REGS.sp[-2];
     rval = REGS.sp[-1];
     MutableHandleValue res = REGS.stackHandleAt(-2);
@@ -2242,7 +2515,8 @@ END_CASE(JSOP_MUL)
 
 CASE(JSOP_DIV)
 {
-    RootedValue& lval = rootValue0, &rval = rootValue1;
+    RootedValue& lval = rootValue0;
+    RootedValue& rval = rootValue1;
     lval = REGS.sp[-2];
     rval = REGS.sp[-1];
     MutableHandleValue res = REGS.stackHandleAt(-2);
@@ -2254,7 +2528,8 @@ END_CASE(JSOP_DIV)
 
 CASE(JSOP_MOD)
 {
-    RootedValue& lval = rootValue0, &rval = rootValue1;
+    RootedValue& lval = rootValue0;
+    RootedValue& rval = rootValue1;
     lval = REGS.sp[-2];
     rval = REGS.sp[-1];
     MutableHandleValue res = REGS.stackHandleAt(-2);
@@ -2371,7 +2646,8 @@ CASE(JSOP_TOID)
      * but we need to avoid the observable stringification the second time.
      * There must be an object value below the id, which will not be popped.
      */
-    RootedValue& objval = rootValue0, &idval = rootValue1;
+    RootedValue& objval = rootValue0;
+    RootedValue& idval = rootValue1;
     objval = REGS.sp[-2];
     idval = REGS.sp[-1];
 
@@ -2410,6 +2686,23 @@ CASE(JSOP_CALLPROP)
     assertSameCompartmentDebugOnly(cx, lval);
 }
 END_CASE(JSOP_GETPROP)
+
+CASE(JSOP_GETPROP_SUPER)
+{
+    RootedObject& receiver = rootObject0;
+    RootedObject& obj = rootObject1;
+
+    FETCH_OBJECT(cx, -2, receiver);
+    obj = &REGS.sp[-1].toObject();
+
+    MutableHandleValue rref = REGS.stackHandleAt(-2);
+
+    if (!GetProperty(cx, obj, receiver, script->getName(REGS.pc), rref))
+        goto error;
+
+    REGS.sp--;
+}
+END_CASE(JSOP_GETPROP_SUPER)
 
 CASE(JSOP_GETXPROP)
 {
@@ -2480,6 +2773,38 @@ CASE(JSOP_STRICTSETPROP)
 }
 END_CASE(JSOP_SETPROP)
 
+CASE(JSOP_SETPROP_SUPER)
+CASE(JSOP_STRICTSETPROP_SUPER)
+{
+    static_assert(JSOP_SETPROP_SUPER_LENGTH == JSOP_STRICTSETPROP_SUPER_LENGTH,
+                  "setprop-super and strictsetprop-super must be the same size");
+
+
+    RootedValue& receiver = rootValue0;
+    receiver = REGS.sp[-3];
+    
+    RootedObject& obj = rootObject0;
+    obj = &REGS.sp[-2].toObject();
+
+    RootedValue& rval = rootValue1;
+    rval = REGS.sp[-1];
+
+    RootedId& id = rootId0;
+    id = NameToId(script->getName(REGS.pc));
+
+    ObjectOpResult result;
+    if (!SetProperty(cx, obj, id, rval, receiver, result))
+        goto error;
+
+    bool strict = JSOp(*REGS.pc) == JSOP_STRICTSETPROP_SUPER;
+    if (!result.checkStrictErrorOrWarning(cx, obj, id, strict))
+        goto error;
+
+    REGS.sp[-3] = REGS.sp[-1];
+    REGS.sp -= 2;
+}
+END_CASE(JSOP_SETPROP_SUPER)
+
 CASE(JSOP_GETELEM)
 CASE(JSOP_CALLELEM)
 {
@@ -2501,6 +2826,27 @@ CASE(JSOP_CALLELEM)
 }
 END_CASE(JSOP_GETELEM)
 
+CASE(JSOP_GETELEM_SUPER)
+{
+    HandleValue rval = REGS.stackHandleAt(-3);
+    RootedObject& receiver = rootObject0;
+    FETCH_OBJECT(cx, -2, receiver);
+    RootedObject& obj = rootObject1;
+    obj = &REGS.sp[-1].toObject();
+
+    MutableHandleValue res = REGS.stackHandleAt(-3);
+
+    // Since we have asserted that obj has to be an object, it cannot be
+    // either optimized arguments, or indeed any primitive. This simplifies
+    // our task some.
+    if (!GetObjectElementOperation(cx, JSOp(*REGS.pc), obj, receiver, rval, res))
+        goto error;
+
+    TypeScript::Monitor(cx, script, REGS.pc, res);
+    REGS.sp -= 2;
+}
+END_CASE(JSOP_GETELEM_SUPER)
+
 CASE(JSOP_SETELEM)
 CASE(JSOP_STRICTSETELEM)
 {
@@ -2511,12 +2857,36 @@ CASE(JSOP_STRICTSETELEM)
     RootedId& id = rootId0;
     FETCH_ELEMENT_ID(-2, id);
     Value& value = REGS.sp[-1];
-    if (!SetObjectElementOperation(cx, obj, id, value, *REGS.pc == JSOP_STRICTSETELEM))
+    RootedValue& receiver = rootValue0;
+    receiver = ObjectValue(*obj);
+    if (!SetObjectElementOperation(cx, obj, receiver, id, value, *REGS.pc == JSOP_STRICTSETELEM))
         goto error;
     REGS.sp[-3] = value;
     REGS.sp -= 2;
 }
 END_CASE(JSOP_SETELEM)
+
+CASE(JSOP_SETELEM_SUPER)
+CASE(JSOP_STRICTSETELEM_SUPER)
+{
+    static_assert(JSOP_SETELEM_SUPER_LENGTH == JSOP_STRICTSETELEM_SUPER_LENGTH,
+                  "setelem-super and strictsetelem-super must be the same size");
+
+    RootedId& id = rootId0;
+    FETCH_ELEMENT_ID(-4, id);
+    RootedValue& receiver = rootValue0;
+    receiver = REGS.sp[-3];
+    RootedObject& obj = rootObject1;
+    obj = &REGS.sp[-2].toObject();
+    Value& value = REGS.sp[-1];
+
+    bool strict = JSOp(*REGS.pc) == JSOP_STRICTSETELEM_SUPER;
+    if (!SetObjectElementOperation(cx, obj, receiver, id, value, strict))
+        goto error;
+    REGS.sp[-4] = value;
+    REGS.sp -= 3;
+}
+END_CASE(JSOP_SETELEM_SUPER)
 
 CASE(JSOP_EVAL)
 CASE(JSOP_STRICTEVAL)
@@ -2662,7 +3032,8 @@ CASE(JSOP_FUNCALL)
       case JSTRAP_CONTINUE:
         break;
       case JSTRAP_RETURN:
-        ForcedReturn(cx, REGS);
+        if (!ForcedReturn(cx, REGS))
+            goto error;
         goto successful_return_continuation;
       case JSTRAP_THROW:
       case JSTRAP_ERROR:
@@ -2675,12 +3046,12 @@ CASE(JSOP_FUNCALL)
     ADVANCE_AND_DISPATCH(0);
 }
 
-CASE(JSOP_SETCALL)
+CASE(JSOP_THROWMSG)
 {
-    JS_ALWAYS_FALSE(SetCallOperation(cx));
+    JS_ALWAYS_FALSE(ThrowMsgOperation(cx, GET_UINT16(REGS.pc)));
     goto error;
 }
-END_CASE(JSOP_SETCALL)
+END_CASE(JSOP_THROWMSG)
 
 CASE(JSOP_IMPLICITTHIS)
 CASE(JSOP_GIMPLICITTHIS)
@@ -2787,7 +3158,7 @@ CASE(JSOP_OBJECT)
     RootedObject& ref = rootObject0;
     ref = script->getObject(REGS.pc);
     if (JS::CompartmentOptionsRef(cx).cloneSingletons()) {
-        JSObject* obj = DeepCloneObjectLiteral(cx, ref, js::MaybeSingletonObject);
+        JSObject* obj = DeepCloneObjectLiteral(cx, ref, TenuredObject);
         if (!obj)
             goto error;
         PUSH_OBJECT(*obj);
@@ -3135,41 +3506,25 @@ CASE(JSOP_NEWINIT)
 {
     uint8_t i = GET_UINT8(REGS.pc);
     MOZ_ASSERT(i == JSProto_Array || i == JSProto_Object);
-    RootedObject& obj = rootObject0;
 
-    if (i == JSProto_Array) {
-        NewObjectKind newKind = GenericObject;
-        if (ObjectGroup::useSingletonForAllocationSite(script, REGS.pc, &ArrayObject::class_))
-            newKind = SingletonObject;
-        obj = NewDenseEmptyArray(cx, NullPtr(), newKind);
-        if (!obj || !ObjectGroup::setAllocationSiteObjectGroup(cx, script, REGS.pc, obj,
-                                                               newKind == SingletonObject))
-        {
-            goto error;
-        }
-    } else {
+    JSObject* obj;
+    if (i == JSProto_Array)
+        obj = NewArrayOperation(cx, script, REGS.pc, 0);
+    else
         obj = NewObjectOperation(cx, script, REGS.pc);
-        if (!obj)
-            goto error;
-    }
+
+    if (!obj)
+        goto error;
     PUSH_OBJECT(*obj);
 }
 END_CASE(JSOP_NEWINIT)
 
 CASE(JSOP_NEWARRAY)
+CASE(JSOP_SPREADCALLARRAY)
 {
-    unsigned count = GET_UINT24(REGS.pc);
-    RootedObject& obj = rootObject0;
-    NewObjectKind newKind = GenericObject;
-    if (ObjectGroup::useSingletonForAllocationSite(script, REGS.pc, &ArrayObject::class_))
-        newKind = SingletonObject;
-    obj = NewDenseFullyAllocatedArray(cx, count, NullPtr(), newKind);
-    if (!obj || !ObjectGroup::setAllocationSiteObjectGroup(cx, script, REGS.pc, obj,
-                                                           newKind == SingletonObject))
-    {
+    JSObject* obj = NewArrayOperation(cx, script, REGS.pc, GET_UINT24(REGS.pc));
+    if (!obj)
         goto error;
-    }
-
     PUSH_OBJECT(*obj);
 }
 END_CASE(JSOP_NEWARRAY)
@@ -3271,8 +3626,6 @@ CASE(JSOP_INITELEM_ARRAY)
 
     RootedObject& obj = rootObject0;
     obj = &REGS.sp[-2].toObject();
-
-    MOZ_ASSERT(obj->is<ArrayObject>());
 
     uint32_t index = GET_UINT24(REGS.pc);
     if (!InitArrayElemOperation(cx, REGS.pc, obj, index, val))
@@ -3390,7 +3743,8 @@ CASE(JSOP_DEBUGGER)
       case JSTRAP_CONTINUE:
         break;
       case JSTRAP_RETURN:
-        ForcedReturn(cx, REGS);
+        if (!ForcedReturn(cx, REGS))
+            goto error;
         goto successful_return_continuation;
       case JSTRAP_THROW:
         goto error;
@@ -3414,12 +3768,14 @@ CASE(JSOP_POPBLOCKSCOPE)
 {
 #ifdef DEBUG
     // Pop block from scope chain.
-    MOZ_ASSERT(*(REGS.pc - JSOP_DEBUGLEAVEBLOCK_LENGTH) == JSOP_DEBUGLEAVEBLOCK);
-    NestedScopeObject* scope = script->getStaticBlockScope(REGS.pc - JSOP_DEBUGLEAVEBLOCK_LENGTH);
+    NestedScopeObject* scope = script->getStaticBlockScope(REGS.pc);
     MOZ_ASSERT(scope && scope->is<StaticBlockObject>());
     StaticBlockObject& blockObj = scope->as<StaticBlockObject>();
     MOZ_ASSERT(blockObj.needsClone());
 #endif
+
+    if (MOZ_UNLIKELY(cx->compartment()->isDebuggee()))
+        DebugScopes::onPopBlock(cx, REGS.fp(), REGS.pc);
 
     // Pop block from scope chain.
     REGS.fp()->popBlock(cx);
@@ -3430,6 +3786,7 @@ CASE(JSOP_DEBUGLEAVEBLOCK)
 {
     MOZ_ASSERT(script->getStaticBlockScope(REGS.pc));
     MOZ_ASSERT(script->getStaticBlockScope(REGS.pc)->is<StaticBlockObject>());
+    MOZ_ASSERT(!script->getStaticBlockScope(REGS.pc)->as<StaticBlockObject>().needsClone());
 
     // FIXME: This opcode should not be necessary.  The debugger shouldn't need
     // help from bytecode to do its job.  See bug 927782.
@@ -3441,6 +3798,9 @@ END_CASE(JSOP_DEBUGLEAVEBLOCK)
 
 CASE(JSOP_FRESHENBLOCKSCOPE)
 {
+    if (MOZ_UNLIKELY(cx->compartment()->isDebuggee()))
+        DebugScopes::onPopBlock(cx, REGS.fp(), REGS.pc);
+
     if (!REGS.fp()->freshenBlock(cx))
         goto error;
 }
@@ -3566,8 +3926,8 @@ CASE(JSOP_CLASSHERITAGE)
         }
     }
 
-    REGS.sp[-1] = objProto;
-    PUSH_OBJECT(*funcProto);
+    REGS.sp[-1].setObject(*funcProto);
+    PUSH_COPY(objProto);
 }
 END_CASE(JSOP_CLASSHERITAGE)
 
@@ -3601,6 +3961,56 @@ CASE(JSOP_OBJWITHPROTO)
     REGS.sp[-1].setObject(*obj);
 }
 END_CASE(JSOP_OBJWITHPROTO)
+
+CASE(JSOP_INITHOMEOBJECT)
+{
+    unsigned skipOver = GET_UINT8(REGS.pc);
+    MOZ_ASSERT(REGS.stackDepth() >= skipOver + 2);
+
+    /* Load the function to be initialized */
+    RootedFunction& func = rootFunction0;
+    func = &REGS.sp[-1].toObject().as<JSFunction>();
+    MOZ_ASSERT(func->isMethod());
+
+    /* Load the home object */
+    RootedNativeObject& obj = rootNativeObject0;
+    obj = &REGS.sp[int(-2 - skipOver)].toObject().as<NativeObject>();
+    MOZ_ASSERT(obj->is<PlainObject>() || obj->is<JSFunction>());
+
+    func->setExtendedSlot(FunctionExtended::METHOD_HOMEOBJECT_SLOT, ObjectValue(*obj));
+}
+END_CASE(JSOP_INITHOMEOBJECT)
+
+CASE(JSOP_SUPERBASE)
+{
+    ScopeIter si(cx, REGS.fp()->scopeChain(), REGS.fp()->script()->innermostStaticScope(REGS.pc));
+    for (; !si.done(); ++si) {
+        if (si.hasScopeObject() && si.type() == ScopeIter::Call) {
+            JSFunction& callee = si.scope().as<CallObject>().callee();
+            MOZ_ASSERT(callee.isMethod());
+            MOZ_ASSERT(callee.nonLazyScript()->needsHomeObject());
+            const Value& homeObjVal = callee.getExtendedSlot(FunctionExtended::METHOD_HOMEOBJECT_SLOT);
+
+            RootedObject& homeObj = rootObject0;
+            homeObj = &homeObjVal.toObject();
+
+            RootedObject& superBase = rootObject1;
+            if (!GetPrototype(cx, homeObj, &superBase))
+                goto error;
+
+            if (!superBase) {
+                JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_CANT_CONVERT_TO,
+                                     "null", "object");
+                goto error;
+            }
+            PUSH_OBJECT(*superBase);
+            break;
+        }
+    }
+    if (si.done())
+        MOZ_CRASH("Unexpected scope chain in superbase");
+}
+END_CASE(JSOP_SUPERBASE)
 
 DEFAULT()
 {
@@ -3811,7 +4221,7 @@ js::DefFunOperation(JSContext* cx, HandleScript script, HandleObject scopeChain,
         if (!fun)
             return false;
     } else {
-        MOZ_ASSERT(script->compileAndGo());
+        MOZ_ASSERT(script->treatAsRunOnce());
         MOZ_ASSERT(!script->functionNonDelazifying());
     }
 
@@ -3884,9 +4294,9 @@ js::DefFunOperation(JSContext* cx, HandleScript script, HandleObject scopeChain,
 }
 
 bool
-js::SetCallOperation(JSContext* cx)
+js::ThrowMsgOperation(JSContext* cx, const unsigned errorNum)
 {
-    JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_BAD_LEFTSIDE_OF_ASS);
+    JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, errorNum);
     return false;
 }
 
@@ -3977,7 +4387,8 @@ js::SetObjectElement(JSContext* cx, HandleObject obj, HandleValue index, HandleV
     RootedId id(cx);
     if (!ValueToId<CanGC>(cx, index, &id))
         return false;
-    return SetObjectElementOperation(cx, obj, id, value, strict);
+    RootedValue receiver(cx, ObjectValue(*obj));
+    return SetObjectElementOperation(cx, obj, receiver, id, value, strict);
 }
 
 bool
@@ -3988,7 +4399,8 @@ js::SetObjectElement(JSContext* cx, HandleObject obj, HandleValue index, HandleV
     RootedId id(cx);
     if (!ValueToId<CanGC>(cx, index, &id))
         return false;
-    return SetObjectElementOperation(cx, obj, id, value, strict, script, pc);
+    RootedValue receiver(cx, ObjectValue(*obj));
+    return SetObjectElementOperation(cx, obj, receiver, id, value, strict, script, pc);
 }
 
 bool
@@ -4279,16 +4691,75 @@ js::NewObjectOperationWithTemplate(JSContext* cx, HandleObject templateObject)
 
     if (templateObject->group()->maybeUnboxedLayout()) {
         RootedObjectGroup group(cx, templateObject->group());
-        JSObject* obj = UnboxedPlainObject::create(cx, group, newKind);
-        if (!obj)
-            return nullptr;
-        return obj;
+        return UnboxedPlainObject::create(cx, group, newKind);
     }
 
     JSObject* obj = CopyInitializerObject(cx, templateObject.as<PlainObject>(), newKind);
     if (!obj)
         return nullptr;
 
+    obj->setGroup(templateObject->group());
+    return obj;
+}
+
+JSObject*
+js::NewArrayOperation(JSContext* cx, HandleScript script, jsbytecode* pc, uint32_t length,
+                      NewObjectKind newKind /* = GenericObject */)
+{
+    MOZ_ASSERT(newKind != SingletonObject);
+
+    RootedObjectGroup group(cx);
+    if (ObjectGroup::useSingletonForAllocationSite(script, pc, JSProto_Array)) {
+        newKind = SingletonObject;
+    } else {
+        group = ObjectGroup::allocationSiteGroup(cx, script, pc, JSProto_Array);
+        if (!group)
+            return nullptr;
+        if (group->maybePreliminaryObjects())
+            group->maybePreliminaryObjects()->maybeAnalyze(cx, group);
+
+        if (group->shouldPreTenure() || group->maybePreliminaryObjects())
+            newKind = TenuredObject;
+
+        if (group->maybeUnboxedLayout())
+            return UnboxedArrayObject::create(cx, group, length, newKind);
+    }
+
+    ArrayObject* obj = NewDenseFullyAllocatedArray(cx, length, NullPtr(), newKind);
+    if (!obj)
+        return nullptr;
+
+    if (newKind == SingletonObject) {
+        MOZ_ASSERT(obj->isSingleton());
+    } else {
+        obj->setGroup(group);
+
+        if (PreliminaryObjectArray* preliminaryObjects = group->maybePreliminaryObjects())
+            preliminaryObjects->registerNewObject(obj);
+    }
+
+    return obj;
+}
+
+JSObject*
+js::NewArrayOperationWithTemplate(JSContext* cx, HandleObject templateObject)
+{
+    MOZ_ASSERT(!templateObject->isSingleton());
+
+    NewObjectKind newKind = templateObject->group()->shouldPreTenure() ? TenuredObject : GenericObject;
+
+    if (templateObject->is<UnboxedArrayObject>()) {
+        uint32_t length = templateObject->as<UnboxedArrayObject>().length();
+        RootedObjectGroup group(cx, templateObject->group());
+        return UnboxedArrayObject::create(cx, group, length, newKind);
+    }
+
+    ArrayObject* obj = NewDenseFullyAllocatedArray(cx, templateObject->as<ArrayObject>().length(),
+                                                   NullPtr(), newKind);
+    if (!obj)
+        return nullptr;
+
+    MOZ_ASSERT(obj->lastProperty() == templateObject->as<ArrayObject>().lastProperty());
     obj->setGroup(templateObject->group());
     return obj;
 }

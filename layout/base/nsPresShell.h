@@ -38,7 +38,6 @@
 #include "mozilla/MemoryReporting.h"
 
 class nsRange;
-class nsIDragService;
 
 struct RangePaintInfo;
 struct nsCallbackEventRequest;
@@ -215,7 +214,8 @@ public:
   virtual nsresult HandleEvent(nsIFrame* aFrame,
                                mozilla::WidgetGUIEvent* aEvent,
                                bool aDontRetargetEvents,
-                               nsEventStatus* aEventStatus) override;
+                               nsEventStatus* aEventStatus,
+                               nsIContent** aTargetContent) override;
   virtual nsresult HandleDOMEventWithTarget(
                                  nsIContent* aTargetContent,
                                  mozilla::WidgetEvent* aEvent,
@@ -834,6 +834,11 @@ protected:
   nsCOMPtr<nsIContent>      mContentToScrollTo;
 
   nscoord                   mLastAnchorScrollPositionY;
+
+  // Information about live content (which still stay in DOM tree).
+  // Used in case we need re-dispatch event after sending pointer event,
+  // when target of pointer event was deleted during executing user handlers.
+  nsCOMPtr<nsIContent>      mPointerEventTarget;
 
   // This is used to protect ourselves from triggering reflow while in the
   // middle of frame construction and the like... it really shouldn't be

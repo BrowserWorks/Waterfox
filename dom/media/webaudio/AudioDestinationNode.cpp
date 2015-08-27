@@ -5,6 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "AudioDestinationNode.h"
+#include "AudioContext.h"
 #include "mozilla/dom/AudioDestinationNodeBinding.h"
 #include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/Preferences.h"
@@ -29,7 +30,7 @@ namespace dom {
 
 static uint8_t gWebAudioOutputKey;
 
-class OfflineDestinationNodeEngine : public AudioNodeEngine
+class OfflineDestinationNodeEngine final : public AudioNodeEngine
 {
 public:
   typedef AutoFallibleTArray<nsAutoArrayPtr<float>, 2> InputChannels;
@@ -134,7 +135,7 @@ public:
       , mRenderedBuffer(aRenderedBuffer)
     {}
 
-    NS_IMETHOD Run()
+    NS_IMETHOD Run() override
     {
       nsRefPtr<OfflineAudioCompletionEvent> event =
           new OfflineAudioCompletionEvent(mAudioContext, nullptr, nullptr);
@@ -176,9 +177,11 @@ public:
 
     aNode->ResolvePromise(renderedBuffer);
 
-    nsRefPtr<OnCompleteTask> task =
+    nsRefPtr<OnCompleteTask> onCompleteTask =
       new OnCompleteTask(context, renderedBuffer);
-    NS_DispatchToMainThread(task);
+    NS_DispatchToMainThread(onCompleteTask);
+
+    context->OnStateChanged(nullptr, AudioContextState::Closed);
   }
 
   virtual size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override
@@ -207,7 +210,7 @@ private:
   bool mBufferAllocated;
 };
 
-class InputMutedRunnable : public nsRunnable
+class InputMutedRunnable final : public nsRunnable
 {
 public:
   InputMutedRunnable(AudioNodeStream* aStream,
@@ -217,7 +220,7 @@ public:
   {
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() override
   {
     MOZ_ASSERT(NS_IsMainThread());
     nsRefPtr<AudioNode> node = mStream->Engine()->NodeMainThread();
@@ -235,7 +238,7 @@ private:
   bool mInputMuted;
 };
 
-class DestinationNodeEngine : public AudioNodeEngine
+class DestinationNodeEngine final : public AudioNodeEngine
 {
 public:
   explicit DestinationNodeEngine(AudioDestinationNode* aNode)
@@ -366,6 +369,10 @@ AudioDestinationNode::AudioDestinationNode(AudioContext* aContext,
   mStream = graph->CreateAudioNodeStream(engine, MediaStreamGraph::EXTERNAL_STREAM);
   mStream->AddMainThreadListener(this);
   mStream->AddAudioOutput(&gWebAudioOutputKey);
+
+  if (!aIsOffline) {
+    graph->NotifyWhenGraphStarted(mStream->AsAudioNodeStream());
+  }
 
   if (aChannel != AudioChannel::Normal) {
     ErrorResult rv;

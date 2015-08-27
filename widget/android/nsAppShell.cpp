@@ -26,7 +26,7 @@
 #include "nsINetworkLinkService.h"
 #include "nsCategoryManagerUtils.h"
 
-#include "mozilla/BackgroundHangMonitor.h"
+#include "mozilla/HangMonitor.h"
 #include "mozilla/Services.h"
 #include "mozilla/unused.h"
 #include "mozilla/Preferences.h"
@@ -41,7 +41,8 @@
 
 #include "mozilla/dom/ScreenOrientation.h"
 #ifdef MOZ_GAMEPAD
-#include "mozilla/dom/GamepadService.h"
+#include "mozilla/dom/GamepadFunctions.h"
+#include "mozilla/dom/Gamepad.h"
 #endif
 
 #include "GeckoProfiler.h"
@@ -62,9 +63,7 @@
 
 using namespace mozilla;
 
-#ifdef PR_LOGGING
 PRLogModuleInfo *gWidgetLog = nullptr;
-#endif
 
 nsIGeolocationUpdate *gLocationCallback = nullptr;
 nsAutoPtr<mozilla::AndroidGeckoEvent> gLastSizeChange;
@@ -176,10 +175,8 @@ static const char* kObservedPrefs[] = {
 nsresult
 nsAppShell::Init()
 {
-#ifdef PR_LOGGING
     if (!gWidgetLog)
         gWidgetLog = PR_NewLogModule("Widget");
-#endif
 
     nsresult rv = nsBaseAppShell::Init();
     nsCOMPtr<nsIObserverService> obsServ =
@@ -242,8 +239,19 @@ nsAppShell::ProcessNextNativeEvent(bool mayWait)
 
         curEvent = PopNextEvent();
         if (!curEvent && mayWait) {
+            // This processes messages in the Android Looper. Note that we only
+            // get here if the normal Gecko event loop has been awoken
+            // (bug 750713). Looper messages effectively have the lowest
+            // priority because we only process them before we're about to
+            // wait for new events.
+            if (AndroidBridge::HasEnv() &&
+                    AndroidBridge::Bridge()->PumpMessageLoop()) {
+                return true;
+            }
+
             PROFILER_LABEL("nsAppShell", "ProcessNextNativeEvent::Wait",
                 js::ProfileEntry::Category::EVENTS);
+            mozilla::HangMonitor::Suspend();
 
             // hmm, should we really hardcode this 10s?
 #if defined(DEBUG_ANDROID_EVENTS)
@@ -264,7 +272,9 @@ nsAppShell::ProcessNextNativeEvent(bool mayWait)
     if (!curEvent)
         return false;
 
-    mozilla::BackgroundHangMonitor().NotifyActivity();
+    mozilla::HangMonitor::NotifyActivity(curEvent->IsInputEvent() ?
+            mozilla::HangMonitor::kUIActivity :
+            mozilla::HangMonitor::kGeneralActivity);
 
     EVLOG("nsAppShell: event %p %d", (void*)curEvent.get(), curEvent->Type());
 
@@ -274,7 +284,7 @@ nsAppShell::ProcessNextNativeEvent(bool mayWait)
         break;
 
     case AndroidGeckoEvent::SENSOR_EVENT: {
-        InfallibleTArray<float> values;
+        nsAutoTArray<float, 4> values;
         mozilla::hal::SensorType type = (mozilla::hal::SensorType) curEvent->Flags();
 
         switch (type) {
@@ -297,6 +307,14 @@ nsAppShell::ProcessNextNativeEvent(bool mayWait)
 
         case hal::SENSOR_LIGHT:
             values.AppendElement(curEvent->X());
+            break;
+
+        case hal::SENSOR_ROTATION_VECTOR:
+        case hal::SENSOR_GAME_ROTATION_VECTOR:
+            values.AppendElement(curEvent->X());
+            values.AppendElement(curEvent->Y());
+            values.AppendElement(curEvent->Z());
+            values.AppendElement(curEvent->W());
             break;
 
         default:
@@ -510,9 +528,9 @@ nsAppShell::ProcessNextNativeEvent(bool mayWait)
         nsresult rv = cmdline->Init(4, argv, nullptr, nsICommandLine::STATE_REMOTE_AUTO);
         if (NS_SUCCEEDED(rv))
             cmdline->Run();
-        nsMemory::Free(uri);
+        free(uri);
         if (flag)
-            nsMemory::Free(flag);
+            free(flag);
         break;
     }
 
@@ -645,19 +663,15 @@ nsAppShell::ProcessNextNativeEvent(bool mayWait)
 
     case AndroidGeckoEvent::GAMEPAD_ADDREMOVE: {
 #ifdef MOZ_GAMEPAD
-        nsRefPtr<mozilla::dom::GamepadService> svc =
-            mozilla::dom::GamepadService::GetService();
-        if (svc) {
             if (curEvent->Action() == AndroidGeckoEvent::ACTION_GAMEPAD_ADDED) {
-                int svc_id = svc->AddGamepad("android",
-                                             mozilla::dom::GamepadMappingType::Standard,
-                                             mozilla::dom::kStandardGamepadButtons,
-                                             mozilla::dom::kStandardGamepadAxes);
+            int svc_id = dom::GamepadFunctions::AddGamepad("android",
+                                                           dom::GamepadMappingType::Standard,
+                                                           dom::kStandardGamepadButtons,
+                                                           dom::kStandardGamepadAxes);
                 widget::GeckoAppShell::GamepadAdded(curEvent->ID(),
                                                     svc_id);
             } else if (curEvent->Action() == AndroidGeckoEvent::ACTION_GAMEPAD_REMOVED) {
-                svc->RemoveGamepad(curEvent->ID());
-            }
+            dom::GamepadFunctions::RemoveGamepad(curEvent->ID());
         }
 #endif
         break;
@@ -665,12 +679,9 @@ nsAppShell::ProcessNextNativeEvent(bool mayWait)
 
     case AndroidGeckoEvent::GAMEPAD_DATA: {
 #ifdef MOZ_GAMEPAD
-        nsRefPtr<mozilla::dom::GamepadService> svc =
-            mozilla::dom::GamepadService::GetService();
-        if (svc) {
             int id = curEvent->ID();
             if (curEvent->Action() == AndroidGeckoEvent::ACTION_GAMEPAD_BUTTON) {
-                 svc->NewButtonEvent(id, curEvent->GamepadButton(),
+            dom::GamepadFunctions::NewButtonEvent(id, curEvent->GamepadButton(),
                                      curEvent->GamepadButtonPressed(),
                                      curEvent->GamepadButtonValue());
             } else if (curEvent->Action() == AndroidGeckoEvent::ACTION_GAMEPAD_AXES) {
@@ -678,8 +689,7 @@ nsAppShell::ProcessNextNativeEvent(bool mayWait)
                 const nsTArray<float>& values = curEvent->GamepadValues();
                 for (unsigned i = 0; i < values.Length(); i++) {
                     if (valid & (1<<i)) {
-                        svc->NewAxisMoveEvent(id, i, values[i]);
-                    }
+                    dom::GamepadFunctions::NewAxisMoveEvent(id, i, values[i]);
                 }
             }
         }

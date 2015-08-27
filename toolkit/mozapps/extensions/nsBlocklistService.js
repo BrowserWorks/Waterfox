@@ -298,7 +298,8 @@ function Blocklist() {
   gPref.addObserver(PREF_EM_LOGGING_ENABLED, this, false);
   this.wrappedJSObject = this;
   // requests from child processes come in here, see receiveMessage.
-  Services.ppmm.addMessageListener("Blocklist::getPluginBlocklistState", this);
+  Services.ppmm.addMessageListener("Blocklist:getPluginBlocklistState", this);
+  Services.ppmm.addMessageListener("Blocklist:content-blocklist-updated", this);
 }
 
 Blocklist.prototype = {
@@ -322,7 +323,8 @@ Blocklist.prototype = {
 
   shutdown: function () {
     Services.obs.removeObserver(this, "xpcom-shutdown");
-    Services.ppmm.removeMessageListener("Blocklist::getPluginBlocklistState", this);
+    Services.ppmm.removeMessageListener("Blocklist:getPluginBlocklistState", this);
+    Services.ppmm.removeMessageListener("Blocklist:content-blocklist-updated", this);
     gPref.removeObserver("extensions.blocklist.", this);
     gPref.removeObserver(PREF_EM_LOGGING_ENABLED, this);
   },
@@ -359,10 +361,13 @@ Blocklist.prototype = {
   // Message manager message handlers
   receiveMessage: function (aMsg) {
     switch (aMsg.name) {
-      case "Blocklist::getPluginBlocklistState":
+      case "Blocklist:getPluginBlocklistState":
         return this.getPluginBlocklistState(aMsg.data.addonData,
                                             aMsg.data.appVersion,
                                             aMsg.data.toolkitVersion);
+      case "Blocklist:content-blocklist-updated":
+        Services.obs.notifyObservers(null, "content-blocklist-updated", null);
+        break;
       default:
         throw new Error("Unknown blocklist message received from content: " + aMsg.name);
     }
@@ -753,6 +758,9 @@ Blocklist.prototype = {
 #          <!-- ... as is the serial number DER data -->
 #          <serialNumber>AkHVNA==</serialNumber>
 #        </certItem>
+#        <!-- subject is the DER subject name data base64 encoded... -->
+#        <certItem subject="MA0xCzAJBgNVBAMMAmNh" pubKeyHash="/xeHA5s+i9/z9d8qy6JEuE1xGoRYIwgJuTE/lmaGJ7M=">
+#        </certItem>
 #      </certItems>
 #    </blocklist>
    */
@@ -926,13 +934,27 @@ Blocklist.prototype = {
   _handleCertItemNode: function Blocklist_handleCertItemNode(blocklistElement,
                                                              result) {
     let issuer = blocklistElement.getAttribute("issuerName");
-    for (let snElement of blocklistElement.children) {
+    if (issuer) {
+      for (let snElement of blocklistElement.children) {
+        try {
+          gCertBlocklistService.revokeCertByIssuerAndSerial(issuer, snElement.textContent);
+        } catch (e) {
+          // we want to keep trying other elements since missing all items
+          // is worse than missing one
+          LOG("Blocklist::_handleCertItemNode: Error adding revoked cert by Issuer and Serial" + e);
+        }
+      }
+      return;
+    }
+
+    let pubKeyHash = blocklistElement.getAttribute("pubKeyHash");
+    let subject = blocklistElement.getAttribute("subject");
+
+    if (pubKeyHash && subject) {
       try {
-        gCertBlocklistService.addRevokedCert(issuer, snElement.textContent);
+        gCertBlocklistService.revokeCertBySubjectAndPubKey(subject, pubKeyHash);
       } catch (e) {
-        // we want to keep trying other elements since missing all items
-        // is worse than missing one
-        LOG("Blocklist::_handleCertItemNode: Error adding revoked cert " + e);
+        LOG("Blocklist::_handleCertItemNode: Error adding revoked cert by Subject and PubKey" + e);
       }
     }
   },
@@ -1175,6 +1197,11 @@ Blocklist.prototype = {
     return blockEntry.infoURL;
   },
 
+  _notifyObserversBlocklistUpdated: function () {
+    Services.obs.notifyObservers(this, "blocklist-updated", "");
+    Services.ppmm.broadcastAsyncMessage("Blocklist:blocklistInvalidated", {});
+  },
+
   _blocklistUpdated: function Blocklist_blocklistUpdated(oldAddonEntries, oldPluginEntries) {
     var addonList = [];
 
@@ -1279,7 +1306,7 @@ Blocklist.prototype = {
       }
 
       if (addonList.length == 0) {
-        Services.obs.notifyObservers(self, "blocklist-updated", "");
+        self._notifyObserversBlocklistUpdated();
         return;
       }
 
@@ -1291,7 +1318,7 @@ Blocklist.prototype = {
         } catch (e) {
           LOG(e);
         }
-        Services.obs.notifyObservers(self, "blocklist-updated", "");
+        self._notifyObserversBlocklistUpdated();
         return;
       }
 
@@ -1325,7 +1352,7 @@ Blocklist.prototype = {
         if (args.restart)
           restartApp();
 
-        Services.obs.notifyObservers(self, "blocklist-updated", "");
+        self._notifyObserversBlocklistUpdated();
         Services.obs.removeObserver(applyBlocklistChanges, "addon-blocklist-closed");
       }
 

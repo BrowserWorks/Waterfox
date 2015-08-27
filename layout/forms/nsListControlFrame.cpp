@@ -862,8 +862,8 @@ nsListControlFrame::HandleEvent(nsPresContext* aPresContext,
                           "<NA>","<NA>","<NA>","<NA>","<NA>","<NA>","<NA>","<NA>",
                           "NS_MOUSE_RIGHT_BUTTON_UP",
                           "NS_MOUSE_RIGHT_BUTTON_DOWN",
-                          "NS_MOUSE_ENTER_SYNTH",
-                          "NS_MOUSE_EXIT_SYNTH",
+                          "NS_MOUSE_OVER",
+                          "NS_MOUSE_OUT",
                           "NS_MOUSE_LEFT_DOUBLECLICK",
                           "NS_MOUSE_MIDDLE_DOUBLECLICK",
                           "NS_MOUSE_RIGHT_DOUBLECLICK",
@@ -1760,6 +1760,20 @@ nsListControlFrame::GetIndexFromDOMEvent(nsIDOMEvent* aMouseEvent,
   return NS_ERROR_FAILURE;
 }
 
+static bool
+FireShowDropDownEvent(nsIContent* aContent)
+{
+  if (XRE_GetProcessType() == GeckoProcessType_Content &&
+      Preferences::GetBool("browser.tabs.remote.desktopbehavior", false)) {
+    nsContentUtils::DispatchChromeEvent(aContent->OwnerDoc(), aContent,
+                                        NS_LITERAL_STRING("mozshowdropdown"), true,
+                                        false);
+    return true;
+  }
+
+  return false;
+}
+
 nsresult
 nsListControlFrame::MouseDown(nsIDOMEvent* aMouseEvent)
 {
@@ -1807,11 +1821,7 @@ nsListControlFrame::MouseDown(nsIDOMEvent* aMouseEvent)
   } else {
     // NOTE: the combo box is responsible for dropping it down
     if (mComboboxFrame) {
-      if (XRE_GetProcessType() == GeckoProcessType_Content &&
-          Preferences::GetBool("browser.tabs.remote.desktopbehavior", false)) {
-        nsContentUtils::DispatchChromeEvent(mContent->OwnerDoc(), mContent,
-                                            NS_LITERAL_STRING("mozshowdropdown"), true,
-                                            false);
+      if (FireShowDropDownEvent(mContent)) {
         return NS_OK;
       }
 
@@ -2054,7 +2064,9 @@ nsListControlFrame::DropDownToggleKey(nsIDOMEvent* aKeyEvent)
   if (IsInDropDownMode() && !nsComboboxControlFrame::ToolkitHasNativePopup()) {
     aKeyEvent->PreventDefault();
     if (!mComboboxFrame->IsDroppedDown()) {
-      mComboboxFrame->ShowDropDown(true);
+      if (!FireShowDropDownEvent(mContent)) {
+        mComboboxFrame->ShowDropDown(true);
+      }
     } else {
       nsWeakFrame weakFrame(this);
       // mEndSelectionIndex is the last item that got selected.
@@ -2080,6 +2092,9 @@ nsListControlFrame::KeyDown(nsIDOMEvent* aKeyEvent)
 
   // Don't check defaultPrevented value because other browsers don't prevent
   // the key navigation of list control even if preventDefault() is called.
+  // XXXmats 2015-04-16: the above is not true anymore, Chrome prevents all
+  // XXXmats keyboard events, even tabbing, when preventDefault() is called
+  // XXXmats in onkeydown. That seems sub-optimal though.
 
   const WidgetKeyboardEvent* keyEvent =
     aKeyEvent->GetInternalNSEvent()->AsKeyboardEvent();
@@ -2437,16 +2452,33 @@ nsListEventListener::HandleEvent(nsIDOMEvent* aEvent)
 
   nsAutoString eventType;
   aEvent->GetType(eventType);
-  if (eventType.EqualsLiteral("keydown"))
+  if (eventType.EqualsLiteral("keydown")) {
     return mFrame->nsListControlFrame::KeyDown(aEvent);
-  if (eventType.EqualsLiteral("keypress"))
+  }
+  if (eventType.EqualsLiteral("keypress")) {
     return mFrame->nsListControlFrame::KeyPress(aEvent);
-  if (eventType.EqualsLiteral("mousedown"))
+  }
+  if (eventType.EqualsLiteral("mousedown")) {
+    bool defaultPrevented = false;
+    aEvent->GetDefaultPrevented(&defaultPrevented);
+    if (defaultPrevented) {
+      return NS_OK;
+    }
     return mFrame->nsListControlFrame::MouseDown(aEvent);
-  if (eventType.EqualsLiteral("mouseup"))
+  }
+  if (eventType.EqualsLiteral("mouseup")) {
+    bool defaultPrevented = false;
+    aEvent->GetDefaultPrevented(&defaultPrevented);
+    if (defaultPrevented) {
+      return NS_OK;
+    }
     return mFrame->nsListControlFrame::MouseUp(aEvent);
-  if (eventType.EqualsLiteral("mousemove"))
+  }
+  if (eventType.EqualsLiteral("mousemove")) {
+    // I don't think we want to honor defaultPrevented on mousemove
+    // in general, and it would only prevent highlighting here.
     return mFrame->nsListControlFrame::MouseMove(aEvent);
+  }
 
   NS_ABORT();
   return NS_OK;

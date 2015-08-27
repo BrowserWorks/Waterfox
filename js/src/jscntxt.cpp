@@ -86,8 +86,7 @@ js::TraceCycleDetectionSet(JSTracer* trc, js::ObjectSet& set)
 {
     for (js::ObjectSet::Enum e(set); !e.empty(); e.popFront()) {
         JSObject* key = e.front();
-        trc->setTracingLocation((void*)&e.front());
-        MarkObjectRoot(trc, &key, "cycle detector table entry");
+        TraceRoot(trc, &key, "cycle detector table entry");
         if (key != e.front())
             e.rekeyFront(key);
     }
@@ -555,10 +554,10 @@ js::PrintError(JSContext* cx, FILE* file, const char* message, JSErrorReport* re
  * Returns true if the expansion succeeds (can fail if out of memory).
  */
 bool
-js::ExpandErrorArguments(ExclusiveContext* cx, JSErrorCallback callback,
-                         void* userRef, const unsigned errorNumber,
-                         char** messagep, JSErrorReport* reportp,
-                         ErrorArgumentsType argumentsType, va_list ap)
+js::ExpandErrorArgumentsVA(ExclusiveContext* cx, JSErrorCallback callback,
+                           void* userRef, const unsigned errorNumber,
+                           char** messagep, JSErrorReport* reportp,
+                           ErrorArgumentsType argumentsType, va_list ap)
 {
     const JSErrorFormatString* efs;
     int i;
@@ -620,7 +619,9 @@ js::ExpandErrorArguments(ExclusiveContext* cx, JSErrorCallback callback,
          */
         if (argCount > 0) {
             if (efs->format) {
-                char16_t* buffer, *fmt, *out;
+                char16_t* buffer;
+                char16_t* fmt;
+                char16_t* out;
                 int expandedArgs = 0;
                 size_t expandedLength;
                 size_t len = strlen(efs->format);
@@ -736,8 +737,8 @@ js::ReportErrorNumberVA(JSContext* cx, unsigned flags, JSErrorCallback callback,
     report.errorNumber = errorNumber;
     PopulateReportBlame(cx, &report);
 
-    if (!ExpandErrorArguments(cx, callback, userRef, errorNumber,
-                              &message, &report, argumentsType, ap)) {
+    if (!ExpandErrorArgumentsVA(cx, callback, userRef, errorNumber,
+                                &message, &report, argumentsType, ap)) {
         return false;
     }
 
@@ -746,7 +747,7 @@ js::ReportErrorNumberVA(JSContext* cx, unsigned flags, JSErrorCallback callback,
     js_free(message);
     if (report.messageArgs) {
         /*
-         * ExpandErrorArguments owns its messageArgs only if it had to
+         * ExpandErrorArgumentsVA owns its messageArgs only if it had to
          * inflate the arguments (from regular |char*|s).
          */
         if (argumentsType == ArgumentsAreASCII) {
@@ -759,6 +760,20 @@ js::ReportErrorNumberVA(JSContext* cx, unsigned flags, JSErrorCallback callback,
     js_free((void*)report.ucmessage);
 
     return warning;
+}
+
+static bool
+ExpandErrorArguments(ExclusiveContext* cx, JSErrorCallback callback,
+                     void* userRef, const unsigned errorNumber,
+                     char** messagep, JSErrorReport* reportp,
+                     ErrorArgumentsType argumentsType, ...)
+{
+    va_list ap;
+    va_start(ap, argumentsType);
+    bool expanded = js::ExpandErrorArgumentsVA(cx, callback, userRef, errorNumber,
+                                               messagep, reportp, argumentsType, ap);
+    va_end(ap);
+    return expanded;
 }
 
 bool
@@ -777,9 +792,8 @@ js::ReportErrorNumberUCArray(JSContext* cx, unsigned flags, JSErrorCallback call
     report.messageArgs = args;
 
     char* message;
-    va_list dummy;
     if (!ExpandErrorArguments(cx, callback, userRef, errorNumber,
-                              &message, &report, ArgumentsAreUnicode, dummy)) {
+                              &message, &report, ArgumentsAreUnicode)) {
         return false;
     }
 
@@ -977,6 +991,12 @@ JSContext::isThrowingOutOfMemory()
 }
 
 bool
+JSContext::isClosingGenerator()
+{
+    return throwing && unwrappedException_.isMagic(JS_GENERATOR_CLOSING);
+}
+
+bool
 JSContext::saveFrameChain()
 {
     if (!savedFrameChains_.append(SavedFrameChain(compartment(), enterCompartmentDepth_)))
@@ -1113,7 +1133,7 @@ JSContext::mark(JSTracer* trc)
 
     /* Mark other roots-by-definition in the JSContext. */
     if (isExceptionPending())
-        MarkValueRoot(trc, &unwrappedException_, "unwrapped exception");
+        TraceRoot(trc, &unwrappedException_, "unwrapped exception");
 
     TraceCycleDetectionSet(trc, cycleDetectorSet);
 

@@ -4,7 +4,7 @@
 /**
  * Tests if the retrieved profiler data samples always have a (root) node.
  * If this ever changes, the |ThreadNode.prototype.insert| function in
- * browser/devtools/profiler/utils/tree-model.js will have to be changed.
+ * browser/devtools/performance/modules/logic/tree-model.js will have to be changed.
  */
 
 const WAIT_TIME = 1000; // ms
@@ -13,20 +13,22 @@ function spawnTest () {
   let { panel } = yield initPerformance(SIMPLE_URL);
   let front = panel.panelWin.gFront;
 
-  yield front.startRecording();
+  let rec = yield front.startRecording();
   busyWait(WAIT_TIME); // allow the profiler module to sample some cpu activity
 
-  let { profile } = yield front.stopRecording();
+  yield front.stopRecording(rec);
+  let profile = rec.getProfile();
   let sampleCount = 0;
 
   for (let thread of profile.threads) {
     info("Checking thread: " + thread.name);
 
-    for (let sample of thread.samples) {
+    for (let sample of thread.samples.data) {
       sampleCount++;
 
-      if (sample.frames[0].location != "(root)") {
-        ok(false, "The sample " + sample.toSource() + " doesn't have a root node.");
+      let stack = getInflatedStackLocations(thread, sample);
+      if (stack[0] != "(root)") {
+        ok(false, "The sample " + stack.toSource() + " doesn't have a root node.");
       }
     }
   }

@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
-/* vim:set ts=4 sw=4 sts=4 ci et: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -49,8 +49,6 @@
 
 #include "nsThreadManager.h"
 #include "nsThreadPool.h"
-
-#include "nsCompartmentInfo.h"
 
 #include "xptinfo.h"
 #include "nsIInterfaceInfoManager.h"
@@ -241,8 +239,6 @@ NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsMemoryReporterManager, Init)
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsMemoryInfoDumper)
 
 NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nsStatusReporterManager, Init)
-
-NS_GENERIC_FACTORY_CONSTRUCTOR(nsCompartmentInfo)
 
 NS_GENERIC_FACTORY_CONSTRUCTOR(nsIOUtil)
 
@@ -535,8 +531,8 @@ NS_InitXPCOM2(nsIServiceManager** aResult,
     sMessageLoop = new MessageLoopForUI(MessageLoop::TYPE_MOZILLA_UI);
     sMessageLoop->set_thread_name("Gecko");
     // Set experimental values for main thread hangs:
-    // 512ms for transient hangs and 8192ms for permanent hangs
-    sMessageLoop->set_hang_timeouts(512, 8192);
+    // 128ms for transient hangs and 8192ms for permanent hangs
+    sMessageLoop->set_hang_timeouts(128, 8192);
   }
 
   if (XRE_GetProcessType() == GeckoProcessType_Default &&
@@ -921,7 +917,7 @@ ShutdownXPCOM(nsIServiceManager* aServMgr)
   // Release the directory service
   NS_IF_RELEASE(nsDirectoryService::gService);
 
-  NS_Free(gGREBinPath);
+  free(gGREBinPath);
   gGREBinPath = nullptr;
 
   if (moduleLoaders) {

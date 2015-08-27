@@ -38,13 +38,13 @@ public:
                               const nsTArray<uint8_t>& aCodecSpecific,
                               GMPVideoDecoderCallbackProxy* aCallback,
                               int32_t aCoreCount) = 0;
-  virtual nsresult Decode(mozilla::GMPUnique<GMPVideoEncodedFrame>::Ptr aInputFrame,
+  virtual nsresult Decode(mozilla::GMPUniquePtr<GMPVideoEncodedFrame> aInputFrame,
                           bool aMissingFrames,
                           const nsTArray<uint8_t>& aCodecSpecificInfo,
                           int64_t aRenderTimeMs = -1) = 0;
   virtual nsresult Reset() = 0;
   virtual nsresult Drain() = 0;
-  virtual const uint64_t ParentID() = 0;
+  virtual const uint32_t GetPluginId() const = 0;
 
   // Call to tell GMP/plugin the consumer will no longer use this
   // interface/codec.

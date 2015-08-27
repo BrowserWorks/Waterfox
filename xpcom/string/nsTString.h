@@ -393,12 +393,12 @@ public:
    */
   void ReplaceSubstring(const self_type& aTarget, const self_type& aNewValue);
   void ReplaceSubstring(const char_type* aTarget, const char_type* aNewValue);
-  NS_WARN_UNUSED_RESULT bool ReplaceSubstring(const self_type& aTarget,
-                                              const self_type& aNewValue,
-                                              const fallible_t&);
-  NS_WARN_UNUSED_RESULT bool ReplaceSubstring(const char_type* aTarget,
-                                              const char_type* aNewValue,
-                                              const fallible_t&);
+  MOZ_WARN_UNUSED_RESULT bool ReplaceSubstring(const self_type& aTarget,
+                                               const self_type& aNewValue,
+                                               const fallible_t&);
+  MOZ_WARN_UNUSED_RESULT bool ReplaceSubstring(const char_type* aTarget,
+                                               const char_type* aNewValue,
+                                               const fallible_t&);
 
 
   /**
@@ -700,7 +700,7 @@ public:
  *   (1) mData can be null
  *   (2) objects of this type can be automatically cast to |const CharT*|
  *   (3) getter_Copies method is supported to adopt data allocated with
- *       NS_Alloc, such as "out string" parameters in XPIDL.
+ *       moz_xmalloc, such as "out string" parameters in XPIDL.
  *
  * NAMES:
  *   nsXPIDLString for wide characters

@@ -30,6 +30,7 @@ const { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components;
 Cu.importGlobalProperties(["URL"]);
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://gre/modules/AppConstants.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Services",
                                   "resource://gre/modules/Services.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
@@ -54,14 +55,10 @@ XPCOMUtils.defineLazyModuleGetter(this, "History",
 // refresh instead.
 const MIN_TRANSACTIONS_FOR_BATCH = 5;
 
-#ifdef XP_MACOSX
-// On Mac OSX, the transferable system converts "\r\n" to "\n\n", where we
-// really just want "\n".
-const NEWLINE= "\n";
-#else
-// On other platforms, the transferable system converts "\r\n" to "\n".
-const NEWLINE = "\r\n";
-#endif
+// On Mac OSX, the transferable system converts "\r\n" to "\n\n", where
+// we really just want "\n". On other platforms, the transferable system
+// converts "\r\n" to "\n".
+const NEWLINE = AppConstants.platform == "macosx" ? "\n" : "\r\n";
 
 function QI_node(aNode, aIID) {
   var result = null;
@@ -438,6 +435,23 @@ this.PlacesUtils = {
       return folders[0];
     }
     return aNode.itemId;
+  },
+
+  /**
+   * Gets the concrete item-guid for the given node. For everything but folder
+   * shortcuts, this is just node.bookmarkGuid.  For folder shortcuts, this is
+   * node.targetFolderGuid (see nsINavHistoryService.idl for the semantics).
+   *
+   * @param aNode
+   *        a result node.
+   * @return the concrete item-guid for aNode.
+   * @note unlike getConcreteItemId, this doesn't allow retrieving the guid of a
+   *       ta container.
+   */
+  getConcreteItemGuid(aNode) {
+    if (aNode.type == Ci.nsINavHistoryResultNode.RESULT_TYPE_FOLDER_SHORTCUT)
+      return asQuery(aNode).targetFolderGuid;
+    return aNode.bookmarkGuid;
   },
 
   /**
@@ -866,6 +880,8 @@ this.PlacesUtils = {
    * Set the POST data associated with a bookmark, if any.
    * Used by POST keywords.
    *   @param aBookmarkId
+   *
+   * @deprecated Use PlacesUtils.keywords.insert() API instead.
    */
   setPostDataForBookmark(aBookmarkId, aPostData) {
     if (!aPostData)
@@ -909,6 +925,8 @@ this.PlacesUtils = {
    * Get the POST data associated with a bookmark, if any.
    * @param aBookmarkId
    * @returns string of POST data if set for aBookmarkId. null otherwise.
+   *
+   * @deprecated Use PlacesUtils.keywords.fetch() API instead.
    */
   getPostDataForBookmark(aBookmarkId) {
     let stmt = PlacesUtils.history.DBConnection.createStatement(
@@ -1604,7 +1622,7 @@ this.PlacesUtils = {
     }
     let width  = Math.round(aWidth * aWindow.devicePixelRatio);
     let height = Math.round(aHeight * aWindow.devicePixelRatio);
-    return aURL + (aURL.contains("#") ? "&" : "#") +
+    return aURL + (aURL.includes("#") ? "&" : "#") +
            "-moz-resolution=" + width + "," + height;
   },
 
@@ -1996,6 +2014,12 @@ XPCOMUtils.defineLazyGetter(this, "gAsyncDBWrapperPromised",
         Sqlite.shutdown.addBlocker(
           "PlacesUtils wrapped connection closing",
           conn.close.bind(conn));
+
+        // Also ensure we close the wrapper in case Places shutdowns first.
+        Services.obs.addObserver(function observe() {
+          Services.obs.removeObserver(observe, "places-will-close-connection");
+          conn.close();
+        }, "places-will-close-connection", false);
       } catch(ex) {
         // It's too late to block shutdown, just close the connection.
         conn.close();
@@ -2305,6 +2329,7 @@ let GuidHelper = {
       return cached;
 
     let conn = yield PlacesUtils.promiseDBConnection();
+
     let rows = yield conn.executeCached(
       "SELECT b.id, b.guid from moz_bookmarks b WHERE b.guid = :guid LIMIT 1",
       { guid: aGuid });
@@ -2323,6 +2348,7 @@ let GuidHelper = {
       return cached;
 
     let conn = yield PlacesUtils.promiseDBConnection();
+
     let rows = yield conn.executeCached(
       "SELECT b.id, b.guid from moz_bookmarks b WHERE b.id = :id LIMIT 1",
       { id: aItemId });

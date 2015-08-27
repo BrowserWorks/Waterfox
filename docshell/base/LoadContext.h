@@ -14,8 +14,6 @@
 #include "nsIInterfaceRequestor.h"
 #include "nsILoadContext.h"
 
-class mozIApplication;
-
 namespace mozilla {
 
 /**
@@ -55,7 +53,8 @@ public:
 #ifdef DEBUG
     , mIsNotNull(aToCopy.mIsNotNull)
 #endif
-  {}
+  {
+  }
 
   // AppId/inBrowser arguments override those in SerializedLoadContext provided
   // by child process.
@@ -72,7 +71,8 @@ public:
 #ifdef DEBUG
     , mIsNotNull(aToCopy.mIsNotNull)
 #endif
-  {}
+  {
+  }
 
   LoadContext(dom::Element* aTopFrameElement,
               uint32_t aAppId,
@@ -90,7 +90,8 @@ public:
 #ifdef DEBUG
     , mIsNotNull(true)
 #endif
-  {}
+  {
+  }
 
   // Constructor taking reserved appId for the safebrowsing cookie.
   explicit LoadContext(uint32_t aAppId)
@@ -104,7 +105,8 @@ public:
 #ifdef DEBUG
     , mIsNotNull(true)
 #endif
-  {}
+  {
+  }
 
   // Constructor for creating a LoadContext with a given principal's appId and
   // browser flag.
@@ -129,4 +131,3 @@ private:
 } // namespace mozilla
 
 #endif // LoadContext_h
-

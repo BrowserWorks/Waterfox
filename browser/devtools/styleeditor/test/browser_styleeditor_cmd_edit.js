@@ -6,11 +6,7 @@
 const TEST_URI = "http://example.com/browser/browser/devtools/styleeditor/" +
                  "test/browser_styleeditor_cmd_edit.html";
 
-function test() {
-  return Task.spawn(spawnTest).then(finish, helpers.handleError);
-}
-
-function spawnTest() {
+add_task(function* () {
   let options = yield helpers.openTab(TEST_URI);
   yield helpers.openToolbar(options);
 
@@ -180,14 +176,6 @@ function spawnTest() {
       setup: "edit css#style2",
       check: {
         input: "edit css#style2",
-        args: {
-          resource: {
-            value: function(resource) {
-              let style2 = options.window.document.getElementById("style2");
-              return resource.element.ownerNode == style2;
-            }
-          }
-        }
       },
       exec: { output: "" }
     },
@@ -203,4 +191,4 @@ function spawnTest() {
 
   yield helpers.closeToolbar(options);
   yield helpers.closeTab(options);
-}
+});

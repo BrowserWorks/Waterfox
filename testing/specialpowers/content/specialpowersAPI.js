@@ -1239,7 +1239,7 @@ SpecialPowersAPI.prototype = {
     var val = this._sendSyncMessage('SPPrefService', msg);
 
     if (val == null || val[0] == null)
-      throw "Error getting pref";
+      throw "Error getting pref '" + aPrefName + "'";
     return val[0];
   },
   _setPref: function(aPrefName, aPrefType, aValue, aIid) {
@@ -1921,6 +1921,18 @@ SpecialPowersAPI.prototype = {
 
   createDOMFile: function(path, options) {
     return new File(path, options);
+  },
+
+  startPeriodicServiceWorkerUpdates: function() {
+    return this._sendSyncMessage('SPPeriodicServiceWorkerUpdates', {});
+  },
+
+  removeAllServiceWorkerData: function() {
+    this.notifyObserversInParentProcess(null, "browser:purge-session-history", "");
+  },
+
+  removeServiceWorkerDataForExampleDomain: function() {
+    this.notifyObserversInParentProcess(null, "browser:purge-domain-data", "example.com");
   },
 };
 

@@ -441,6 +441,7 @@ LayoutView.prototype = {
       for (let i in this.map) {
         let selector = this.map[i].selector;
         let span = this.doc.querySelector(selector);
+        this.updateSourceRuleTooltip(span, this.map[i].property, styleEntries);
         if (span.textContent.length > 0 &&
             span.textContent == this.map[i].value) {
           continue;
@@ -467,6 +468,40 @@ LayoutView.prototype = {
     }).bind(this)).then(null, console.error);
 
     return this._lastRequest = lastRequest;
+  },
+
+  /**
+   * Update the text in the tooltip shown when hovering over a value to provide
+   * information about the source CSS rule that sets this value.
+   * @param {DOMNode} el The element that will receive the tooltip.
+   * @param {String} property The name of the CSS property for the tooltip.
+   * @param {Array} rules An array of applied rules retrieved by
+   * styleActor.getApplied.
+   */
+  updateSourceRuleTooltip: function(el, property, rules) {
+    // Dummy element used to parse the cssText of applied rules.
+    let dummyEl = this.doc.createElement("div");
+
+    // Rules are in order of priority so iterate until we find the first that
+    // defines a value for the property.
+    let sourceRule, value;
+    for (let {rule} of rules) {
+      dummyEl.style.cssText = rule.cssText;
+      value = dummyEl.style.getPropertyValue(property);
+      if (value !== "") {
+        sourceRule = rule;
+        break;
+      }
+    }
+
+    let title = property;
+    if (sourceRule && sourceRule.selectors) {
+      title += "\n" + sourceRule.selectors.join(", ");
+    }
+    if (sourceRule && sourceRule.parentStyleSheet) {
+      title += "\n" + sourceRule.parentStyleSheet.href + ":" + sourceRule.line;
+    }
+    el.setAttribute("title", title);
   },
 
   /**
@@ -500,19 +535,15 @@ LayoutView.prototype = {
 };
 
 let elts;
-let tooltip;
 
 let onmouseover = function(e) {
   let region = e.target.getAttribute("data-box");
-
-  tooltip.textContent = e.target.getAttribute("tooltip");
   this.layoutview.showBoxModel({region});
 
   return false;
 }.bind(window);
 
 let onmouseout = function(e) {
-  tooltip.textContent = "";
   this.layoutview.hideBoxModel();
 
   return false;
@@ -521,9 +552,8 @@ let onmouseout = function(e) {
 window.setPanel = function(panel) {
   this.layoutview = new LayoutView(panel, window);
 
-  // Tooltip mechanism
-  elts = document.querySelectorAll("*[tooltip]");
-  tooltip = document.querySelector(".tooltip");
+  // Box model highlighter mechanism
+  elts = document.querySelectorAll("*[title]");
   for (let i = 0; i < elts.length; i++) {
     let elt = elts[i];
     elt.addEventListener("mouseover", onmouseover, true);

@@ -91,7 +91,6 @@ toolkit.jar:
 * skin/classic/global/console/console.css                            (console/console.css)
   skin/classic/global/dirListing/dirListing.css                      (dirListing/dirListing.css)
   skin/classic/global/dirListing/folder.png                          (dirListing/folder.png)
-  skin/classic/global/dirListing/local.png                           (dirListing/folder.png)
   skin/classic/global/dirListing/remote.png                          (dirListing/remote.png)
   skin/classic/global/dirListing/up.png                              (dirListing/up.png)
   skin/classic/global/icons/autocomplete-dropmarker.png              (icons/autocomplete-dropmarker.png)
@@ -130,17 +129,14 @@ toolkit.jar:
   skin/classic/global/icons/searchfield-small-cancel.png             (icons/searchfield-small-cancel.png)
   skin/classic/global/icons/tabprompts-bgtexture.png                 (icons/tabprompts-bgtexture.png)
   skin/classic/global/icons/warning-16.png                           (icons/warning-16.png)
-  skin/classic/global/icons/warning-24.png                           (icons/warning-24.png)
   skin/classic/global/icons/warning-32.png                           (icons/warning-32.png)
   skin/classic/global/icons/warning-64.png                           (icons/warning-64.png)
   skin/classic/global/icons/warning-large.png                        (icons/warning-large.png)
   skin/classic/global/icons/error-16.png                             (icons/error-16.png)
-  skin/classic/global/icons/error-24.png                             (icons/error-24.png)
   skin/classic/global/icons/error-64.png                             (icons/error-64.png)
   skin/classic/global/icons/error-large.png                          (icons/error-large.png)
   skin/classic/global/icons/Error.png                                (icons/Error.png)
   skin/classic/global/icons/question-16.png                          (icons/question-16.png)
-  skin/classic/global/icons/question-24.png                          (icons/question-24.png)
   skin/classic/global/icons/question-32.png                          (icons/question-32.png)
   skin/classic/global/icons/question-64.png                          (icons/question-64.png)
   skin/classic/global/icons/question-large.png                       (icons/question-large.png)
@@ -189,6 +185,9 @@ toolkit.jar:
   skin/classic/global/media/videoClickToPlayButton.svg               (media/videoClickToPlayButton.svg)
   skin/classic/global/menu/shared-menu-check.png                     (../../shared/menu-check.png)
   skin/classic/global/menu/shared-menu-check@2x.png                  (../../shared/menu-check@2x.png)
+  skin/classic/global/menu/shared-menu-check-active.svg              (../../shared/menu-check-active.svg)
+  skin/classic/global/menu/shared-menu-check-black.svg               (../../shared/menu-check-black.svg)
+  skin/classic/global/menu/shared-menu-check-hover.svg               (../../shared/menu-check-hover.svg)
 * skin/classic/global/in-content/common.css                          (in-content/common.css)
 * skin/classic/global/in-content/info-pages.css                      (in-content/info-pages.css)
   skin/classic/global/in-content/check.svg                           (../../shared/in-content/check.svg)
@@ -217,3 +216,8 @@ toolkit.jar:
   skin/classic/global/tree/columnpicker.gif                          (tree/columnpicker.gif)
   skin/classic/global/tree/folder.png                                (tree/folder.png)
   skin/classic/global/tree/folder@2x.png                             (tree/folder@2x.png)
+
+#if MOZ_BUILD_APP == browser
+../browser/extensions/{972ce4c6-7e08-4474-a285-3208198ce6fd}/chrome.jar:
+#endif
+% override chrome://global/skin/dirListing/local.png                 chrome://global/skin/dirListing/folder.png

@@ -40,7 +40,7 @@
  *
  * Only PL_DHashTableFinish needs to allow this special value.
  */
-#define IMMUTABLE_RECURSION_LEVEL ((uint16_t)-1)
+#define IMMUTABLE_RECURSION_LEVEL UINT32_MAX
 
 #define RECURSION_LEVEL_SAFE_TO_FINISH(table_)                                \
     (table_->mRecursionLevel == 0 ||                                          \
@@ -48,14 +48,16 @@
 
 #define INCREMENT_RECURSION_LEVEL(table_)                                     \
     do {                                                                      \
-        if (table_->mRecursionLevel != IMMUTABLE_RECURSION_LEVEL)             \
-            ++table_->mRecursionLevel;                                        \
+        if (table_->mRecursionLevel != IMMUTABLE_RECURSION_LEVEL) {           \
+            const uint32_t oldRecursionLevel = table_->mRecursionLevel++;     \
+            MOZ_ASSERT(oldRecursionLevel < IMMUTABLE_RECURSION_LEVEL - 1);    \
+        }                                                                     \
     } while(0)
 #define DECREMENT_RECURSION_LEVEL(table_)                                     \
     do {                                                                      \
         if (table_->mRecursionLevel != IMMUTABLE_RECURSION_LEVEL) {           \
-            MOZ_ASSERT(table_->mRecursionLevel > 0);                          \
-            --table_->mRecursionLevel;                                        \
+            const uint32_t oldRecursionLevel = table_->mRecursionLevel--;     \
+            MOZ_ASSERT(oldRecursionLevel > 0);                                \
         }                                                                     \
     } while(0)
 
@@ -167,25 +169,6 @@ SizeOfEntryStore(uint32_t aCapacity, uint32_t aEntrySize, uint32_t* aNbytes)
   return uint64_t(*aNbytes) == nbytes64;   // returns false on overflow
 }
 
-PLDHashTable*
-PL_NewDHashTable(const PLDHashTableOps* aOps, uint32_t aEntrySize,
-                 uint32_t aLength)
-{
-  PLDHashTable* table = new PLDHashTable();
-  if (!PL_DHashTableInit(table, aOps, aEntrySize, fallible, aLength)) {
-    delete table;
-    return nullptr;
-  }
-  return table;
-}
-
-void
-PL_DHashTableDestroy(PLDHashTable* aTable)
-{
-  PL_DHashTableFinish(aTable);
-  delete aTable;
-}
-
 /*
  * Compute max and min load numbers (entry counts).  We have a secondary max
  * that allows us to overload a table reasonably if it cannot be grown further
@@ -215,10 +198,11 @@ MinCapacity(uint32_t aLength)
   return (aLength * 4 + (3 - 1)) / 3;   // == ceil(aLength * 4 / 3)
 }
 
-MOZ_ALWAYS_INLINE bool
+MOZ_ALWAYS_INLINE void
 PLDHashTable::Init(const PLDHashTableOps* aOps,
-                   uint32_t aEntrySize, const fallible_t&, uint32_t aLength)
+                   uint32_t aEntrySize, uint32_t aLength)
 {
+  MOZ_ASSERT(!mAutoFinish);
   MOZ_ASSERT(!IsInitialized());
 
   // Check that the important fields have been set by the constructor.
@@ -227,7 +211,7 @@ PLDHashTable::Init(const PLDHashTableOps* aOps,
   MOZ_ASSERT(mEntryStore == nullptr);
 
   if (aLength > PL_DHASH_MAX_INITIAL_LENGTH) {
-    return false;
+    MOZ_CRASH("Initial length is too large");
   }
 
   // Compute the smallest capacity allowing |aLength| elements to be inserted
@@ -241,51 +225,81 @@ PLDHashTable::Init(const PLDHashTableOps* aOps,
 
   capacity = 1u << log2;
   MOZ_ASSERT(capacity <= PL_DHASH_MAX_CAPACITY);
+  mOps = aOps;
   mHashShift = PL_DHASH_BITS - log2;
   mEntrySize = aEntrySize;
   mEntryCount = mRemovedCount = 0;
   mGeneration = 0;
   uint32_t nbytes;
   if (!SizeOfEntryStore(capacity, aEntrySize, &nbytes)) {
-    return false;  // overflowed
+    MOZ_CRASH("Initial entry store size is too large");
   }
 
   mEntryStore = nullptr;
 
   METER(memset(&mStats, 0, sizeof(mStats)));
 
-  // Set this only once we reach a point where we know we can't fail.
-  mOps = aOps;
-
 #ifdef DEBUG
   mRecursionLevel = 0;
 #endif
-
-  return true;
-}
-
-bool
-PL_DHashTableInit(PLDHashTable* aTable, const PLDHashTableOps* aOps,
-                  uint32_t aEntrySize,
-                  const fallible_t& aFallible, uint32_t aLength)
-{
-  return aTable->Init(aOps, aEntrySize, aFallible, aLength);
 }
 
 void
 PL_DHashTableInit(PLDHashTable* aTable, const PLDHashTableOps* aOps,
                   uint32_t aEntrySize, uint32_t aLength)
 {
-  if (!PL_DHashTableInit(aTable, aOps, aEntrySize, fallible, aLength)) {
-    if (aLength > PL_DHASH_MAX_INITIAL_LENGTH) {
-      MOZ_CRASH();          // the asked-for length was too big
-    }
-    uint32_t capacity = MinCapacity(aLength), nbytes;
-    if (!SizeOfEntryStore(capacity, aEntrySize, &nbytes)) {
-      MOZ_CRASH();          // the required mEntryStore size was too big
-    }
-    NS_ABORT_OOM(nbytes);   // allocation failed
+  aTable->Init(aOps, aEntrySize, aLength);
+}
+
+PLDHashTable::PLDHashTable(const PLDHashTableOps* aOps, uint32_t aEntrySize,
+                           uint32_t aLength)
+  : mOps(nullptr)
+  , mAutoFinish(0)
+  , mEntryStore(nullptr)
+#ifdef DEBUG
+  , mRecursionLevel()
+#endif
+{
+  Init(aOps, aEntrySize, aLength);
+  mAutoFinish = 1;
+}
+
+PLDHashTable& PLDHashTable::operator=(PLDHashTable&& aOther)
+{
+  if (this == &aOther) {
+    return *this;
   }
+
+  // Destruct |this|.
+  mAutoFinish = 0;
+  Finish();
+
+  // Move pieces over.
+  mOps = Move(aOther.mOps);
+  mHashShift = Move(aOther.mHashShift);
+  mEntrySize = Move(aOther.mEntrySize);
+  mEntryCount = Move(aOther.mEntryCount);
+  mRemovedCount = Move(aOther.mRemovedCount);
+  // We can't use Move() on bitfields. Fortunately, '=' suffices.
+  mGeneration = aOther.mGeneration;
+  mAutoFinish = aOther.mAutoFinish;
+  mEntryStore = Move(aOther.mEntryStore);
+#ifdef PL_DHASHMETER
+  mStats = Move(aOther.mStats);
+#endif
+#ifdef DEBUG
+  // Atomic<> doesn't have an |operator=(Atomic<>&&)|.
+  mRecursionLevel = uint32_t(aOther.mRecursionLevel);
+#endif
+
+  // Clear up |aOther| so its destruction will be a no-op.
+  aOther.mOps = nullptr;
+  aOther.mEntryStore = nullptr;
+#ifdef DEBUG
+  aOther.mRecursionLevel = 0;
+#endif
+
+  return *this;
 }
 
 /*
@@ -327,7 +341,12 @@ PLDHashTable::EntryIsFree(PLDHashEntryHdr* aEntry)
 MOZ_ALWAYS_INLINE void
 PLDHashTable::Finish()
 {
-  MOZ_ASSERT(IsInitialized());
+  MOZ_ASSERT(!mAutoFinish);
+
+  if (!IsInitialized()) {
+    MOZ_ASSERT(!mEntryStore);
+    return;
+  }
 
   INCREMENT_RECURSION_LEVEL(this);
 
@@ -357,6 +376,20 @@ void
 PL_DHashTableFinish(PLDHashTable* aTable)
 {
   aTable->Finish();
+}
+
+PLDHashTable::~PLDHashTable()
+{
+  // If we used automatic initialization, then finalize the table here.
+  // Otherwise, Finish() should have already been called manually.
+  if (mAutoFinish) {
+    mAutoFinish = 0;
+    Finish();
+  } else {
+    // XXX: actually, we can't assert this here because some tables never get
+    // finalized.
+    //MOZ_ASSERT(!IsInitialized());
+  }
 }
 
 // If |IsAdd| is true, the return value is always non-null and it may be a
@@ -512,9 +545,6 @@ PLDHashTable::ChangeTable(int aDeltaLog2)
   }
 
   /* We can't fail from here on, so update table parameters. */
-#ifdef DEBUG
-  uint32_t recursionLevelTmp = mRecursionLevel;
-#endif
   mHashShift = PL_DHASH_BITS - newLog2;
   mRemovedCount = 0;
   mGeneration++;
@@ -526,9 +556,6 @@ PLDHashTable::ChangeTable(int aDeltaLog2)
   oldEntryAddr = oldEntryStore = mEntryStore;
   mEntryStore = newEntryStore;
   PLDHashMoveEntry moveEntry = mOps->moveEntry;
-#ifdef DEBUG
-  mRecursionLevel = recursionLevelTmp;
-#endif
 
   /* Copy only live entries, leaving removed ones behind. */
   uint32_t oldCapacity = 1u << oldLog2;

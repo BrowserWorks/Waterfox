@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -15,10 +16,6 @@
 #include "nsHashKeys.h"
 #include "nsISimpleEnumerator.h"
 #include "mozilla/Attributes.h"
-
-namespace mozilla {
-class ObserverServiceReporter;
-} // namespace mozilla
 
 struct ObserverRef
 {
@@ -71,9 +68,8 @@ public:
   // The array is filled in last-added-first order.
   void FillObserverArray(nsCOMArray<nsIObserver>& aArray);
 
-  // Unmark any strongly held observers implemented in JS so the cycle
-  // collector will not traverse them.
-  void UnmarkGrayStrongObservers();
+  // Like FillObserverArray(), but only for strongly held observers.
+  void AppendStrongObservers(nsCOMArray<nsIObserver>& aArray);
 
 private:
   nsTArray<ObserverRef> mObservers;

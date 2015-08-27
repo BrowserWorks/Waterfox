@@ -466,10 +466,7 @@ class JSString : public js::gc::TenuredCell
 
     inline JSLinearString* base() const;
 
-    void markBase(JSTracer* trc) {
-        MOZ_ASSERT(hasBase());
-        js::gc::MarkStringUnbarriered(trc, &d.s.u3.base, "base");
-    }
+    void traceBase(JSTracer* trc);
 
     /* Only called by the GC for strings with the AllocKind::STRING kind. */
 
@@ -509,7 +506,7 @@ class JSString : public js::gc::TenuredCell
     bool equals(const char* s);
 #endif
 
-    inline void markChildren(JSTracer* trc);
+    void traceChildren(JSTracer* trc);
 
     static MOZ_ALWAYS_INLINE void readBarrier(JSString* thing) {
         if (thing->isPermanentAtom())
@@ -578,10 +575,7 @@ class JSRope : public JSString
         return d.s.u3.right;
     }
 
-    void markChildren(JSTracer* trc) {
-        js::gc::MarkStringUnbarriered(trc, &d.s.u2.left, "left child");
-        js::gc::MarkStringUnbarriered(trc, &d.s.u3.right, "right child");
-    }
+    void traceChildren(JSTracer* trc);
 
     static size_t offsetOfLeft() {
         return offsetof(JSRope, d.s.u2.left);
@@ -1138,13 +1132,13 @@ NameToId(PropertyName* name)
     return NON_INTEGER_ATOM_TO_JSID(name);
 }
 
-class AutoNameVector : public AutoVectorRooter<PropertyName*>
+class AutoNameVector : public JS::AutoVectorRooterBase<PropertyName*>
 {
-    typedef AutoVectorRooter<PropertyName*> BaseType;
+    typedef AutoVectorRooterBase<PropertyName*> BaseType;
   public:
     explicit AutoNameVector(JSContext* cx
                             MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
-        : AutoVectorRooter<PropertyName*>(cx, NAMEVECTOR)
+        : AutoVectorRooterBase<PropertyName*>(cx, NAMEVECTOR)
     {
         MOZ_GUARD_OBJECT_NOTIFIER_INIT;
     }
@@ -1270,15 +1264,6 @@ JSString::base() const
     MOZ_ASSERT(hasBase());
     MOZ_ASSERT(!d.s.u3.base->isInline());
     return d.s.u3.base;
-}
-
-inline void
-JSString::markChildren(JSTracer* trc)
-{
-    if (hasBase())
-        markBase(trc);
-    else if (isRope())
-        asRope().markChildren(trc);
 }
 
 template<>

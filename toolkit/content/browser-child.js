@@ -6,6 +6,7 @@ let Cc = Components.classes;
 let Ci = Components.interfaces;
 let Cu = Components.utils;
 
+Cu.import("resource://gre/modules/AppConstants.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 Cu.import("resource://gre/modules/RemoteAddonsChild.jsm");
@@ -14,27 +15,11 @@ Cu.import("resource://gre/modules/Timer.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PageThumbUtils",
   "resource://gre/modules/PageThumbUtils.jsm");
 
-#ifdef MOZ_CRASHREPORTER
-XPCOMUtils.defineLazyServiceGetter(this, "CrashReporter",
-                                   "@mozilla.org/xre/app-info;1",
-                                   "nsICrashReporter");
-#endif
-
-let FocusSyncHandler = {
-  init: function() {
-    sendAsyncMessage("SetSyncHandler", {}, {handler: this});
-  },
-
-  getFocusedElementAndWindow: function() {
-    let fm = Cc["@mozilla.org/focus-manager;1"].getService(Ci.nsIFocusManager);
-
-    let focusedWindow = {};
-    let elt = fm.getFocusedElementForWindow(content, true, focusedWindow);
-    return [elt, focusedWindow.value];
-  },
-};
-
-FocusSyncHandler.init();
+if (AppConstants.MOZ_CRASHREPORTER) {
+  XPCOMUtils.defineLazyServiceGetter(this, "CrashReporter",
+                                     "@mozilla.org/xre/app-info;1",
+                                     "nsICrashReporter");
+}
 
 let WebProgressListener = {
   init: function() {
@@ -64,11 +49,20 @@ let WebProgressListener = {
 
   _setupJSON: function setupJSON(aWebProgress, aRequest) {
     if (aWebProgress) {
+      let domWindowID;
+      try {
+        domWindowID = aWebProgress && aWebProgress.DOMWindowID;
+      } catch (e) {
+        // If nsDocShell::Destroy has already been called, then we'll
+        // get NS_NOINTERFACE when trying to get the DOM window ID.
+        domWindowID = null;
+      }
+
       aWebProgress = {
         isTopLevel: aWebProgress.isTopLevel,
         isLoadingDocument: aWebProgress.isLoadingDocument,
         loadType: aWebProgress.loadType,
-        DOMWindowID: aWebProgress.DOMWindowID,
+        DOMWindowID: domWindowID
       };
     }
 
@@ -80,7 +74,7 @@ let WebProgressListener = {
     };
   },
 
-  _setupObjects: function setupObjects(aWebProgress) {
+  _setupObjects: function setupObjects(aWebProgress, aRequest) {
     let domWindow;
     try {
       domWindow = aWebProgress && aWebProgress.DOMWindow;
@@ -94,30 +88,40 @@ let WebProgressListener = {
     return {
       contentWindow: content,
       // DOMWindow is not necessarily the content-window with subframes.
-      DOMWindow: domWindow
+      DOMWindow: domWindow,
+      webProgress: aWebProgress,
+      request: aRequest,
     };
+  },
+
+  _send(name, data, objects) {
+    if (RemoteAddonsChild.useSyncWebProgress) {
+      sendRpcMessage(name, data, objects);
+    } else {
+      sendAsyncMessage(name, data, objects);
+    }
   },
 
   onStateChange: function onStateChange(aWebProgress, aRequest, aStateFlags, aStatus) {
     let json = this._setupJSON(aWebProgress, aRequest);
-    let objects = this._setupObjects(aWebProgress);
+    let objects = this._setupObjects(aWebProgress, aRequest);
 
     json.stateFlags = aStateFlags;
     json.status = aStatus;
 
-    sendAsyncMessage("Content:StateChange", json, objects);
+    this._send("Content:StateChange", json, objects);
   },
 
   onProgressChange: function onProgressChange(aWebProgress, aRequest, aCurSelf, aMaxSelf, aCurTotal, aMaxTotal) {
     let json = this._setupJSON(aWebProgress, aRequest);
-    let objects = this._setupObjects(aWebProgress);
+    let objects = this._setupObjects(aWebProgress, aRequest);
 
     json.curSelf = aCurSelf;
     json.maxSelf = aMaxSelf;
     json.curTotal = aCurTotal;
     json.maxTotal = aMaxTotal;
 
-    sendAsyncMessage("Content:ProgressChange", json, objects);
+    this._send("Content:ProgressChange", json, objects);
   },
 
   onProgressChange64: function onProgressChange(aWebProgress, aRequest, aCurSelf, aMaxSelf, aCurTotal, aMaxTotal) {
@@ -126,44 +130,46 @@ let WebProgressListener = {
 
   onLocationChange: function onLocationChange(aWebProgress, aRequest, aLocationURI, aFlags) {
     let json = this._setupJSON(aWebProgress, aRequest);
-    let objects = this._setupObjects(aWebProgress);
+    let objects = this._setupObjects(aWebProgress, aRequest);
 
     json.location = aLocationURI ? aLocationURI.spec : "";
     json.flags = aFlags;
 
     // These properties can change even for a sub-frame navigation.
-    json.canGoBack = docShell.canGoBack;
-    json.canGoForward = docShell.canGoForward;
+    let webNav = docShell.QueryInterface(Ci.nsIWebNavigation);
+    json.canGoBack = webNav.canGoBack;
+    json.canGoForward = webNav.canGoForward;
 
     if (aWebProgress && aWebProgress.isTopLevel) {
       json.documentURI = content.document.documentURIObject.spec;
+      json.title = content.document.title;
       json.charset = content.document.characterSet;
       json.mayEnableCharacterEncodingMenu = docShell.mayEnableCharacterEncodingMenu;
       json.principal = content.document.nodePrincipal;
       json.synthetic = content.document.mozSyntheticDocument;
     }
 
-    sendAsyncMessage("Content:LocationChange", json, objects);
+    this._send("Content:LocationChange", json, objects);
   },
 
   onStatusChange: function onStatusChange(aWebProgress, aRequest, aStatus, aMessage) {
     let json = this._setupJSON(aWebProgress, aRequest);
-    let objects = this._setupObjects(aWebProgress);
+    let objects = this._setupObjects(aWebProgress, aRequest);
 
     json.status = aStatus;
     json.message = aMessage;
 
-    sendAsyncMessage("Content:StatusChange", json, objects);
+    this._send("Content:StatusChange", json, objects);
   },
 
   onSecurityChange: function onSecurityChange(aWebProgress, aRequest, aState) {
     let json = this._setupJSON(aWebProgress, aRequest);
-    let objects = this._setupObjects(aWebProgress);
+    let objects = this._setupObjects(aWebProgress, aRequest);
 
     json.state = aState;
     json.status = SecurityUI.getSSLStatusAsString();
 
-    sendAsyncMessage("Content:SecurityChange", json, objects);
+    this._send("Content:SecurityChange", json, objects);
   },
 
   onRefreshAttempted: function onRefreshAttempted(aWebProgress, aURI, aDelay, aSameURI) {
@@ -196,14 +202,22 @@ let WebNavigation =  {
     addMessageListener("WebNavigation:Reload", this);
     addMessageListener("WebNavigation:Stop", this);
 
-    this._webNavigation = docShell.QueryInterface(Ci.nsIWebNavigation);
-    this._sessionHistory = this._webNavigation.sessionHistory;
-
     // Send a CPOW for the sessionHistory object. We need to make sure
     // it stays alive as long as the content script since CPOWs are
     // weakly held.
-    let history = this._sessionHistory;
+    let history = this.webNavigation.sessionHistory;
+    this._sessionHistory = history;
     sendAsyncMessage("WebNavigation:setHistory", {}, {history: history});
+
+    addEventListener("unload", this.uninit);
+  },
+
+  uninit: function() {
+    this._sessionHistory = null;
+  },
+
+  get webNavigation() {
+    return docShell.QueryInterface(Ci.nsIWebNavigation);
   },
 
   receiveMessage: function(message) {
@@ -232,39 +246,37 @@ let WebNavigation =  {
   },
 
   goBack: function() {
-    if (this._webNavigation.canGoBack) {
-      this._webNavigation.goBack();
+    if (this.webNavigation.canGoBack) {
+      this.webNavigation.goBack();
     }
   },
 
   goForward: function() {
-    if (this._webNavigation.canGoForward)
-      this._webNavigation.goForward();
+    if (this.webNavigation.canGoForward)
+      this.webNavigation.goForward();
   },
 
   gotoIndex: function(index) {
-    this._webNavigation.gotoIndex(index);
+    this.webNavigation.gotoIndex(index);
   },
 
   loadURI: function(uri, flags, referrer, referrerPolicy, baseURI) {
-#ifdef MOZ_CRASHREPORTER
-    if (CrashReporter.enabled)
+    if (AppConstants.MOZ_CRASHREPORTER && CrashReporter.enabled)
       CrashReporter.annotateCrashReport("URL", uri);
-#endif
     if (referrer)
       referrer = Services.io.newURI(referrer, null, null);
     if (baseURI)
       baseURI = Services.io.newURI(baseURI, null, null);
-    this._webNavigation.loadURIWithOptions(uri, flags, referrer, referrerPolicy,
-                                           null, null, baseURI);
+    this.webNavigation.loadURIWithOptions(uri, flags, referrer, referrerPolicy,
+                                          null, null, baseURI);
   },
 
   reload: function(flags) {
-    this._webNavigation.reload(flags);
+    this.webNavigation.reload(flags);
   },
 
   stop: function(flags) {
-    this._webNavigation.stop(flags);
+    this.webNavigation.stop(flags);
   }
 };
 
@@ -368,6 +380,8 @@ const ZoomManager = {
    */
   _refreshZoomValue: function(valueName) {
     let actualZoomValue = this._markupViewer[valueName];
+    // Round to remove any floating-point error.
+    actualZoomValue = Number(actualZoomValue.toFixed(2));
     if (actualZoomValue != this._cache[valueName]) {
       this._cache[valueName] = actualZoomValue;
       return true;

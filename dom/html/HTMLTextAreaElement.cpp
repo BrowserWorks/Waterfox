@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set sw=2 ts=2 et tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -373,7 +373,7 @@ HTMLTextAreaElement::SetDefaultValue(const nsAString& aDefaultValue)
 {
   ErrorResult error;
   SetDefaultValue(aDefaultValue, error);
-  return error.ErrorCode();
+  return error.StealNSResult();
 }
 
 void
@@ -632,7 +632,7 @@ HTMLTextAreaElement::GetControllers(nsIControllers** aResult)
   *aResult = GetControllers(error);
   NS_IF_ADDREF(*aResult);
 
-  return error.ErrorCode();
+  return error.StealNSResult();
 }
 
 uint32_t
@@ -659,7 +659,7 @@ HTMLTextAreaElement::GetSelectionStart(int32_t *aSelectionStart)
 
   ErrorResult error;
   *aSelectionStart = GetSelectionStart(error);
-  return error.ErrorCode();
+  return error.StealNSResult();
 }
 
 uint32_t
@@ -682,7 +682,7 @@ HTMLTextAreaElement::SetSelectionStart(int32_t aSelectionStart)
 {
   ErrorResult error;
   SetSelectionStart(aSelectionStart, error);
-  return error.ErrorCode();
+  return error.StealNSResult();
 }
 
 void
@@ -722,7 +722,7 @@ HTMLTextAreaElement::GetSelectionEnd(int32_t *aSelectionEnd)
 
   ErrorResult error;
   *aSelectionEnd = GetSelectionEnd(error);
-  return error.ErrorCode();
+  return error.StealNSResult();
 }
 
 uint32_t
@@ -745,7 +745,7 @@ HTMLTextAreaElement::SetSelectionEnd(int32_t aSelectionEnd)
 {
   ErrorResult error;
   SetSelectionEnd(aSelectionEnd, error);
-  return error.ErrorCode();
+  return error.StealNSResult();
 }
 
 void
@@ -810,7 +810,7 @@ HTMLTextAreaElement::GetSelectionDirection(nsAString& aDirection)
 {
   ErrorResult error;
   GetSelectionDirection(aDirection, error);
-  return error.ErrorCode();
+  return error.StealNSResult();
 }
 
 void
@@ -841,7 +841,7 @@ HTMLTextAreaElement::SetSelectionDirection(const nsAString& aDirection)
 {
   ErrorResult error;
   SetSelectionDirection(aDirection, error);
-  return error.ErrorCode();
+  return error.StealNSResult();
 }
 
 void
@@ -877,7 +877,7 @@ HTMLTextAreaElement::SetSelectionRange(int32_t aSelectionStart,
   Optional<nsAString> dir;
   dir = &aDirection;
   SetSelectionRange(aSelectionStart, aSelectionEnd, dir, error);
-  return error.ErrorCode();
+  return error.StealNSResult();
 }
 
 void
@@ -1461,15 +1461,7 @@ HTMLTextAreaElement::IsPasswordTextControl() const
 NS_IMETHODIMP_(int32_t)
 HTMLTextAreaElement::GetCols()
 {
-  const nsAttrValue* attr = GetParsedAttr(nsGkAtoms::cols);
-  if (attr) {
-    int32_t cols = attr->Type() == nsAttrValue::eInteger ?
-                   attr->GetIntegerValue() : 0;
-    // XXX why a default of 1 char, why hide it
-    return (cols <= 0) ? 1 : cols;
-  }
-
-  return DEFAULT_COLS;
+  return Cols();
 }
 
 NS_IMETHODIMP_(int32_t)

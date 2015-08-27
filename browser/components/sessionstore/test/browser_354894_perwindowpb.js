@@ -141,10 +141,6 @@ function test() {
    */
   function setPrefs() {
     gPrefService.setIntPref("browser.startup.page", 3);
-    gPrefService.setBoolPref(
-      "browser.privatebrowsing.keep_current_session",
-      true
-    );
     gPrefService.setBoolPref("browser.tabs.warnOnClose", false);
   }
 
@@ -170,13 +166,9 @@ function test() {
       Services.obs.removeObserver(observer, o);
 
     // Reset the prefs we touched
-    [
-      "browser.startup.page",
-      "browser.privatebrowsing.keep_current_session"
-    ].forEach(function (pref) {
-      if (gPrefService.prefHasUserValue(pref))
-        gPrefService.clearUserPref(pref);
-    });
+    let pref = "browser.startup.page";
+    if (gPrefService.prefHasUserValue(pref))
+      gPrefService.clearUserPref(pref);
     gPrefService.setBoolPref("browser.tabs.warnOnClose", oldWarnTabsOnClose);
 
     // Reset the window type
@@ -376,24 +368,31 @@ function test() {
         browserWindowsCount([0, 1], "browser windows while running testOpenCloseRestoreFromPopup");
 
         newWin = undoCloseWindow(0);
+        newWin.addEventListener("load", function whenloaded() {
+          newWin.removeEventListener("load", whenloaded, false);
 
-        whenNewWindowLoaded({}, function (newWin2) {
-          is(newWin2.gBrowser.browsers.length, 1,
-             "Did not restore, as undoCloseWindow() was last called");
-          is(TEST_URLS.indexOf(newWin2.gBrowser.browsers[0].currentURI.spec), -1,
-             "Did not restore, as undoCloseWindow() was last called (2)");
+          newWin.gBrowser.tabContainer.addEventListener("SSTabRestored", function whenSSTabRestored() {
+            newWin.gBrowser.tabContainer.removeEventListener("SSTabRestored", whenSSTabRestored, false);
 
-          browserWindowsCount([2, 3], "browser windows while running testOpenCloseRestoreFromPopup");
+            whenNewWindowLoaded({}, function (newWin2) {
+              is(newWin2.gBrowser.browsers.length, 1,
+                 "Did not restore, as undoCloseWindow() was last called");
+              is(TEST_URLS.indexOf(newWin2.gBrowser.browsers[0].currentURI.spec), -1,
+                 "Did not restore, as undoCloseWindow() was last called (2)");
 
-          // Cleanup
-          newWin.close();
-          newWin2.close();
+              browserWindowsCount([2, 3], "browser windows while running testOpenCloseRestoreFromPopup");
 
-          browserWindowsCount([0, 1], "browser windows while running testOpenCloseRestoreFromPopup");
+              // Cleanup
+              newWin.close();
+              newWin2.close();
 
-          // Next please
-          executeSoon(nextFn);
-        });
+              browserWindowsCount([0, 1], "browser windows while running testOpenCloseRestoreFromPopup");
+
+              // Next please
+              executeSoon(nextFn);
+            });
+          }, false);
+        }, false);
       });
     });
   }

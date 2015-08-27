@@ -3,51 +3,49 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-self.onmessage = e => {
-  const { id, task, args } = e.data;
-
-  switch (task) {
-    case "plotTimestampsGraph":
-      plotTimestampsGraph(id, args);
-      break;
-    default:
-      self.postMessage({ id, error: e.message + "\n" + e.stack });
-      break;
-  }
-};
+/**
+ * Import `createTask` to communicate with `devtools/shared/worker`.
+ */
+importScripts("resource://gre/modules/workers/require.js");
+const { createTask } = require("resource:///modules/devtools/shared/worker-helper");
 
 /**
  * @see LineGraphWidget.prototype.setDataFromTimestamps in Graphs.jsm
  * @param number id
  * @param array timestamps
  * @param number interval
+ * @param number duration
  */
-function plotTimestampsGraph(id, args) {
-  let plottedData = plotTimestamps(args.timestamps, args.interval);
-  let plottedMinMaxSum = getMinMaxSum(plottedData);
+createTask(self, "plotTimestampsGraph", function ({ timestamps, interval, duration }) {
+  let plottedData = plotTimestamps(timestamps, interval);
+  let plottedMinMaxSum = getMinMaxAvg(plottedData, timestamps, duration);
 
-  let response = { id, plottedData, plottedMinMaxSum };
-  self.postMessage(response);
-}
+  return { plottedData, plottedMinMaxSum };
+});
+
 
 /**
  * Gets the min, max and average of the values in an array.
  * @param array source
+ * @param array timestamps
+ * @param number duration
  * @return object
  */
-function getMinMaxSum(source) {
+function getMinMaxAvg(source, timestamps, duration) {
   let totalTicks = source.length;
+  let totalFrames = timestamps.length;
   let maxValue = Number.MIN_SAFE_INTEGER;
   let minValue = Number.MAX_SAFE_INTEGER;
-  let avgValue = 0;
-  let sumValues = 0;
+  // Calculate the average by counting how many frames occurred
+  // in the duration of the recording, rather than average the frame points
+  // we have, as that weights higher FPS, as there'll be more timestamps for those
+  // values
+  let avgValue = totalFrames / (duration / 1000);
 
   for (let { value } of source) {
     maxValue = Math.max(value, maxValue);
     minValue = Math.min(value, minValue);
-    sumValues += value;
   }
-  avgValue = sumValues / totalTicks;
 
   return { minValue, maxValue, avgValue };
 }
@@ -55,9 +53,6 @@ function getMinMaxSum(source) {
 /**
  * Takes a list of numbers and plots them on a line graph representing
  * the rate of occurences in a specified interval.
- *
- * XXX: Copied almost verbatim from toolkit/devtools/server/actors/framerate.js
- * Remove that dead code after the Performance panel lands, bug 1075567.
  *
  * @param array timestamps
  *        A list of numbers representing time, ordered ascending. For example,

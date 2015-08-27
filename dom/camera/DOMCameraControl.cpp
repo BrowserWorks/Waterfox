@@ -306,7 +306,7 @@ nsDOMCameraControl::nsDOMCameraControl(uint32_t aCameraId,
 nsDOMCameraControl::~nsDOMCameraControl()
 {
   DOM_CAMERA_LOGT("%s:%d : this=%p\n", __func__, __LINE__, this);
-  /*invoke DOMMdediastream destroy*/
+  /*invoke DOMMediaStream destroy*/
   Destroy();
 }
 
@@ -958,8 +958,10 @@ nsDOMCameraControl::TakePicture(const CameraPictureOptions& aOptions,
     if (s.width && s.height) {
       mCameraControl->Set(CAMERA_PARAM_PICTURE_SIZE, s);
     }
+    if (!aOptions.mFileFormat.IsEmpty()) {
+      mCameraControl->Set(CAMERA_PARAM_PICTURE_FILEFORMAT, aOptions.mFileFormat);
+    }
     mCameraControl->Set(CAMERA_PARAM_PICTURE_ROTATION, aOptions.mRotation);
-    mCameraControl->Set(CAMERA_PARAM_PICTURE_FILEFORMAT, aOptions.mFileFormat);
     mCameraControl->Set(CAMERA_PARAM_PICTURE_DATETIME, aOptions.mDateTime);
     mCameraControl->SetLocation(p);
   }
@@ -1373,10 +1375,9 @@ nsDOMCameraControl::OnFacesDetected(const nsTArray<ICameraControl::Face>& aFaces
   uint32_t len = aFaces.Length();
 
   if (faces.SetCapacity(len)) {
-    nsRefPtr<DOMCameraDetectedFace> f;
     for (uint32_t i = 0; i < len; ++i) {
-      f = new DOMCameraDetectedFace(static_cast<DOMMediaStream*>(this), aFaces[i]);
-      *faces.AppendElement() = f.forget().take();
+      *faces.AppendElement() =
+        new DOMCameraDetectedFace(static_cast<DOMMediaStream*>(this), aFaces[i]);
     }
   }
 
@@ -1427,6 +1428,10 @@ nsDOMCameraControl::OnUserError(CameraControlListener::UserContext aContext, nsr
   switch (aContext) {
     case CameraControlListener::kInStartCamera:
       promise = mGetCameraPromise.forget();
+      // If we failed to open the camera, we never actually provided a reference
+      // for the application to release explicitly. Thus we must clear our handle
+      // here to ensure everything is freed.
+      mCameraControl = nullptr;
       break;
 
     case CameraControlListener::kInStopCamera:
@@ -1443,7 +1448,7 @@ nsDOMCameraControl::OnUserError(CameraControlListener::UserContext aContext, nsr
       break;
 
     case CameraControlListener::kInSetConfiguration:
-      if (mSetInitialConfig) {
+      if (mSetInitialConfig && mCameraControl) {
         // If the SetConfiguration() call in the constructor fails, there
         // is nothing we can do except release the camera hardware. This
         // will trigger a hardware state change, and when the flag that

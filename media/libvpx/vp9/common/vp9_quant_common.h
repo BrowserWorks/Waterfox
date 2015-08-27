@@ -12,7 +12,7 @@
 #define VP9_COMMON_VP9_QUANT_COMMON_H_
 
 #include "vpx/vpx_codec.h"
-#include "vp9/common/vp9_blockd.h"
+#include "vp9/common/vp9_seg_common.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -673,7 +673,7 @@ void nsWebShellWindow::LoadContentAreas() {
                           nullptr,
                           nullptr,
                           nullptr);
-            nsMemory::Free(urlChar);
+            free(urlChar);
           }
         }
       }

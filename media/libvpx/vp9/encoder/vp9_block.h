@@ -13,8 +13,6 @@
 
 #include "vp9/common/vp9_entropymv.h"
 #include "vp9/common/vp9_entropy.h"
-#include "vpx_ports/mem.h"
-#include "vp9/common/vp9_onyxc_int.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,8 +40,6 @@ struct macroblock_plane {
   int16_t *round;
 
   int64_t quant_thred[2];
-  // Zbin Over Quant value
-  int16_t zbin_extra;
 };
 
 /* The [2] dimension is for whether we skip the EOB node (i.e. if previous
@@ -68,6 +64,11 @@ struct macroblock {
   int rddiv;
   int rdmult;
   int mb_energy;
+
+  // These are set to their default values at the beginning, and then adjusted
+  // further in the encoding process.
+  BLOCK_SIZE min_partition_size;
+  BLOCK_SIZE max_partition_size;
 
   int mv_best_ref_index[MAX_REF_FRAMES];
   unsigned int max_mv_context[MAX_REF_FRAMES];
@@ -100,8 +101,6 @@ struct macroblock {
   // note that token_costs is the cost when eob node is skipped
   vp9_coeff_cost token_costs[TX_SIZES];
 
-  int in_static_area;
-
   int optimize;
 
   // indicate if it is in the rd search loop or encoding process
@@ -119,11 +118,15 @@ struct macroblock {
   // Used to store sub partition's choices.
   MV pred_mv[MAX_REF_FRAMES];
 
+  // Strong color activity detection. Used in RTC coding mode to enhance
+  // the visual quality at the boundary of moving color objects.
+  uint8_t color_sensitivity[2];
+
   void (*fwd_txm4x4)(const int16_t *input, tran_low_t *output, int stride);
   void (*itxm_add)(const tran_low_t *input, uint8_t *dest, int stride, int eob);
 #if CONFIG_VP9_HIGHBITDEPTH
-  void (*high_itxm_add)(const tran_low_t *input, uint8_t *dest, int stride,
-                        int eob, int bd);
+  void (*highbd_itxm_add)(const tran_low_t *input, uint8_t *dest, int stride,
+                          int eob, int bd);
 #endif
 };
 

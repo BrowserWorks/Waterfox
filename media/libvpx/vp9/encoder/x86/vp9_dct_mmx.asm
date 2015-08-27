@@ -62,9 +62,40 @@ cglobal fwht4x4, 3, 4, 8, input, output, stride
   psllw           m2,        2
   psllw           m3,        2
 
+%if CONFIG_VP9_HIGHBITDEPTH
+  pxor            m4,             m4
+  pxor            m5,             m5
+  pcmpgtw         m4,             m0
+  pcmpgtw         m5,             m1
+  movq            m6,             m0
+  movq            m7,             m1
+  punpcklwd       m0,             m4
+  punpcklwd       m1,             m5
+  punpckhwd       m6,             m4
+  punpckhwd       m7,             m5
+  movq            [outputq],      m0
+  movq            [outputq + 8],  m6
+  movq            [outputq + 16], m1
+  movq            [outputq + 24], m7
+  pxor            m4,             m4
+  pxor            m5,             m5
+  pcmpgtw         m4,             m2
+  pcmpgtw         m5,             m3
+  movq            m6,             m2
+  movq            m7,             m3
+  punpcklwd       m2,             m4
+  punpcklwd       m3,             m5
+  punpckhwd       m6,             m4
+  punpckhwd       m7,             m5
+  movq            [outputq + 32], m2
+  movq            [outputq + 40], m6
+  movq            [outputq + 48], m3
+  movq            [outputq + 56], m7
+%else
   movq            [outputq],      m0
   movq            [outputq + 8],  m1
   movq            [outputq + 16], m2
   movq            [outputq + 24], m3
+%endif
 
   RET

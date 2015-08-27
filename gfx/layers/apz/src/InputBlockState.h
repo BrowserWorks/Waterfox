@@ -38,7 +38,7 @@ public:
   virtual ~InputBlockState()
   {}
 
-  bool SetConfirmedTargetApzc(const nsRefPtr<AsyncPanZoomController>& aTargetApzc);
+  virtual bool SetConfirmedTargetApzc(const nsRefPtr<AsyncPanZoomController>& aTargetApzc);
   const nsRefPtr<AsyncPanZoomController>& GetTargetApzc() const;
   const nsRefPtr<const OverscrollHandoffChain>& GetOverscrollHandoffChain() const;
   uint64_t GetBlockId() const;
@@ -92,7 +92,7 @@ public:
    * @return false if this block has already received a response from
    *         web content, true if not.
    */
-  bool SetContentResponse(bool aPreventDefault);
+  virtual bool SetContentResponse(bool aPreventDefault);
 
   /**
    * Record that content didn't respond in time.
@@ -161,12 +161,14 @@ public:
                   bool aTargetConfirmed,
                   const ScrollWheelInput& aEvent);
 
+  bool SetContentResponse(bool aPreventDefault) override;
   bool IsReadyForHandling() const override;
   bool HasEvents() const override;
   void DropEvents() override;
   void HandleEvents() override;
   bool MustStayActive() override;
   const char* Type() override;
+  bool SetConfirmedTargetApzc(const nsRefPtr<AsyncPanZoomController>& aTargetApzc) override;
 
   void AddEvent(const ScrollWheelInput& aEvent);
 

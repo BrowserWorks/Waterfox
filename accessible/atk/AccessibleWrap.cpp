@@ -123,22 +123,33 @@ static const GInterfaceInfo atk_if_infos[] = {
      (GInterfaceFinalizeFunc) nullptr, nullptr}
 };
 
-/**
- * This MaiAtkObject is a thin wrapper, in the MAI namespace, for AtkObject
- */
-struct MaiAtkObject
-{
-  AtkObject parent;
-  /*
-   * The AccessibleWrap whose properties and features are exported
-   * via this object instance.
-   */
-  uintptr_t accWrap;
-};
+static GQuark quark_mai_hyperlink = 0;
 
-// This is or'd with the pointer in MaiAtkObject::accWrap if the wrap-ee is a
-// proxy.
-static const uintptr_t IS_PROXY = 1;
+AtkHyperlink*
+MaiAtkObject::GetAtkHyperlink()
+{
+  NS_ASSERTION(quark_mai_hyperlink, "quark_mai_hyperlink not initialized");
+  MaiHyperlink* maiHyperlink =
+    (MaiHyperlink*)g_object_get_qdata(G_OBJECT(this), quark_mai_hyperlink);
+  if (!maiHyperlink) {
+    maiHyperlink = new MaiHyperlink(accWrap);
+    g_object_set_qdata(G_OBJECT(this), quark_mai_hyperlink, maiHyperlink);
+  }
+
+  return maiHyperlink->GetAtkHyperlink();
+}
+
+void
+MaiAtkObject::Shutdown()
+{
+  accWrap = 0;
+  MaiHyperlink* maiHyperlink =
+    (MaiHyperlink*)g_object_get_qdata(G_OBJECT(this), quark_mai_hyperlink);
+  if (maiHyperlink) {
+    delete maiHyperlink;
+    g_object_set_qdata(G_OBJECT(this), quark_mai_hyperlink, nullptr);
+  }
+}
 
 struct MaiAtkObjectClass
 {
@@ -208,8 +219,6 @@ static const char * GetUniqueMaiAtkTypeName(uint16_t interfacesBits);
 
 static gpointer parent_class = nullptr;
 
-static GQuark quark_mai_hyperlink = 0;
-
 GType
 mai_atk_object_get_type(void)
 {
@@ -250,14 +259,15 @@ AccessibleWrap::~AccessibleWrap()
 void
 AccessibleWrap::ShutdownAtkObject()
 {
-    if (mAtkObject) {
-        if (IS_MAI_OBJECT(mAtkObject)) {
-            MAI_ATK_OBJECT(mAtkObject)->accWrap = 0;
-        }
-        SetMaiHyperlink(nullptr);
-        g_object_unref(mAtkObject);
-        mAtkObject = nullptr;
-    }
+  if (!mAtkObject)
+    return;
+
+  NS_ASSERTION(IS_MAI_OBJECT(mAtkObject), "wrong type of atk object");
+  if (IS_MAI_OBJECT(mAtkObject))
+    MAI_ATK_OBJECT(mAtkObject)->Shutdown();
+
+  g_object_unref(mAtkObject);
+  mAtkObject = nullptr;
 }
 
 void
@@ -265,42 +275,6 @@ AccessibleWrap::Shutdown()
 {
   ShutdownAtkObject();
   Accessible::Shutdown();
-}
-
-MaiHyperlink*
-AccessibleWrap::GetMaiHyperlink(bool aCreate /* = true */)
-{
-    // make sure mAtkObject is created
-    GetAtkObject();
-
-    NS_ASSERTION(quark_mai_hyperlink, "quark_mai_hyperlink not initialized");
-    NS_ASSERTION(IS_MAI_OBJECT(mAtkObject), "Invalid AtkObject");
-    MaiHyperlink* maiHyperlink = nullptr;
-    if (quark_mai_hyperlink && IS_MAI_OBJECT(mAtkObject)) {
-        maiHyperlink = (MaiHyperlink*)g_object_get_qdata(G_OBJECT(mAtkObject),
-                                                         quark_mai_hyperlink);
-        if (!maiHyperlink && aCreate) {
-            maiHyperlink = new MaiHyperlink(this);
-            SetMaiHyperlink(maiHyperlink);
-        }
-    }
-    return maiHyperlink;
-}
-
-void
-AccessibleWrap::SetMaiHyperlink(MaiHyperlink* aMaiHyperlink)
-{
-    NS_ASSERTION(quark_mai_hyperlink, "quark_mai_hyperlink not initialized");
-    NS_ASSERTION(IS_MAI_OBJECT(mAtkObject), "Invalid AtkObject");
-    if (quark_mai_hyperlink && IS_MAI_OBJECT(mAtkObject)) {
-        MaiHyperlink* maiHyperlink = GetMaiHyperlink(false);
-        if (!maiHyperlink && !aMaiHyperlink) {
-            return; // Never set and we're shutting down
-        }
-        delete maiHyperlink;
-        g_object_set_qdata(G_OBJECT(mAtkObject), quark_mai_hyperlink,
-                           aMaiHyperlink);
-    }
 }
 
 void
@@ -881,6 +855,13 @@ getIndexInParentCB(AtkObject* aAtkObj)
 {
   // We don't use Accessible::IndexInParent() because we don't include text
   // leaf nodes as children in ATK.
+  if (ProxyAccessible* proxy = GetProxy(aAtkObj)) {
+    if (ProxyAccessible* parent = proxy->Parent())
+      return parent->IndexOfEmbeddedChild(proxy);
+
+    return -1;
+  }
+
     AccessibleWrap* accWrap = GetAccessibleWrap(aAtkObj);
     if (!accWrap) {
         return -1;
@@ -1067,6 +1048,21 @@ GetInterfacesForProxy(ProxyAccessible* aProxy, uint32_t aInterfaces)
     interfaces |= (1 << MAI_INTERFACE_HYPERTEXT) | (1 << MAI_INTERFACE_TEXT)
         | (1 << MAI_INTERFACE_EDITABLE_TEXT);
 
+  if (aInterfaces & Interfaces::HYPERLINK)
+    interfaces |= MAI_INTERFACE_HYPERLINK_IMPL;
+
+  if (aInterfaces & Interfaces::VALUE)
+    interfaces |= MAI_INTERFACE_VALUE;
+
+  if (aInterfaces & Interfaces::TABLE)
+    interfaces |= MAI_INTERFACE_TABLE;
+
+  if (aInterfaces & Interfaces::IMAGE)
+    interfaces |= MAI_INTERFACE_IMAGE;
+
+  if (aInterfaces & Interfaces::DOCUMENT)
+    interfaces |= MAI_INTERFACE_DOCUMENT;
+
   return interfaces;
 }
 
@@ -1093,7 +1089,7 @@ void
 a11y::ProxyDestroyed(ProxyAccessible* aProxy)
 {
   auto obj = reinterpret_cast<MaiAtkObject*>(aProxy->GetWrapper() & ~IS_PROXY);
-  obj->accWrap = 0;
+  obj->Shutdown();
   g_object_unref(obj);
   aProxy->SetWrapper(0);
 }

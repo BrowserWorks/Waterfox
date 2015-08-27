@@ -1,5 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -166,7 +166,7 @@ FileSystemTaskBase::GetBlobParent(nsIDOMFile* aFile) const
   aFile->GetType(mimeType);
   uint64_t fileSize;
   aFile->GetSize(&fileSize);
-  uint64_t lastModifiedDate;
+  int64_t lastModifiedDate;
   aFile->GetMozLastModifiedDate(&lastModifiedDate);
 
   ContentParent* cp = static_cast<ContentParent*>(mRequestParent->Manager());

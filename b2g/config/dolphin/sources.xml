@@ -12,18 +12,18 @@
   <!--original fetch url was https://git.mozilla.org/releases-->
   <remote fetch="https://git.mozilla.org/releases" name="mozillaorg"/>
   <!-- B2G specific things. -->
-  <project name="platform_build" path="build" remote="b2g" revision="ef937d1aca7c4cf89ecb5cc43ae8c21c2000a9db">
+  <project name="platform_build" path="build" remote="b2g" revision="2eda36a4795012a5d1275b77ebb20ac377c8cd26">
     <copyfile dest="Makefile" src="core/root.mk"/>
   </project>
-  <project name="gaia" path="gaia" remote="mozillaorg" revision="be25b16efa19bab8d54be08f8fe45dcc93bf93d0"/>
+  <project name="gaia" path="gaia" remote="mozillaorg" revision="6089234ace8b294a8feef064387604bae16254e3"/>
   <project name="fake-libdvm" path="dalvik" remote="b2g" revision="d50ae982b19f42f0b66d08b9eb306be81687869f"/>
-  <project name="gonk-misc" path="gonk-misc" remote="b2g" revision="2aa4a75c63cd6e93870a8bddbba45f863cbfd9a3"/>
+  <project name="gonk-misc" path="gonk-misc" remote="b2g" revision="d3868ff4bb3a4b81382795e2784258c210fe6cb8"/>
   <project name="librecovery" path="librecovery" remote="b2g" revision="1b3591a50ed352fc6ddb77462b7b35d0bfa555a3"/>
-  <project name="moztt" path="external/moztt" remote="b2g" revision="ed2cf97a6c37a4bbd0bbbbffe06ec7136d8c79ff"/>
+  <project name="moztt" path="external/moztt" remote="b2g" revision="adb24954bf8068f21705b570450475d183336b2d"/>
   <project name="rilproxy" path="rilproxy" remote="b2g" revision="5ef30994f4778b4052e58a4383dbe7890048c87e"/>
   <project name="valgrind" path="external/valgrind" remote="b2g" revision="daa61633c32b9606f58799a3186395fd2bbb8d8c"/>
   <project name="vex" path="external/VEX" remote="b2g" revision="47f031c320888fe9f3e656602588565b52d43010"/>
-  <project name="apitrace" path="external/apitrace" remote="apitrace" revision="47503b5ec80f00630548023efb5ea4f830e1527d"/>
+  <project name="apitrace" path="external/apitrace" remote="apitrace" revision="0627790166dccd8dd370fa7d9f434ed9fc027fb4"/>
   <!-- Stock Android things -->
   <project groups="linux" name="platform/prebuilts/gcc/linux-x86/host/i686-linux-glibc2.7-4.6" path="prebuilts/gcc/linux-x86/host/i686-linux-glibc2.7-4.6" revision="95bb5b66b3ec5769c3de8d3f25d681787418e7d2"/>
   <project groups="linux" name="platform/prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.7-4.6" path="prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.7-4.6" revision="ebdad82e61c16772f6cd47e9f11936bf6ebe9aa0"/>
@@ -102,7 +102,7 @@
   <project name="platform/external/yaffs2" path="external/yaffs2" revision="a2cff2275e1b501ff478b03757d6e4f05fddc2db"/>
   <project name="platform/external/zlib" path="external/zlib" revision="a5c7131da47c991585a6c6ac0c063b6d7d56e3fc"/>
   <project name="platform/frameworks/base" path="frameworks/base" revision="2d12cb68a6c680e1ef50c6fbd19f782f67aec9de"/>
-  <project name="platform/frameworks/native" path="frameworks/native" revision="a1a6f7f8ca11eb722f363a05fb60c2e66c8fbf0c"/>
+  <project name="platform/frameworks/native" path="frameworks/native" revision="8d54940d9bdad8fec3208ff58ddab590be9fe0d4"/>
   <project name="platform/frameworks/opt/emoji" path="frameworks/opt/emoji" revision="dbbe673145107e99883f62bafd70c5f43f11065c"/>
   <project name="platform/frameworks/wilhelm" path="frameworks/wilhelm" revision="aac6c4bb59a6577c97cbda68699829b507b7490d"/>
   <project name="platform/hardware/libhardware" path="hardware/libhardware" revision="fbeca55f4695dd07c0291213403533b8fbca4885"/>
@@ -110,7 +110,7 @@
   <project name="platform/libcore" path="libcore" revision="e195beab082c09217318fc19250caeaf4c1bd800"/>
   <project name="platform/libnativehelper" path="libnativehelper" revision="feeb36c2bd4adfe285f98f5de92e0f3771b2c115"/>
   <project name="platform/ndk" path="ndk" revision="e58ef003be4306bb53a8c11331146f39e4eab31f"/>
-  <project name="platform_prebuilts_misc" path="prebuilts/misc" remote="b2g" revision="0e7c060db684b409616fe67ea433ef19f5634c60"/>
+  <project name="platform_prebuilts_misc" path="prebuilts/misc" remote="b2g" revision="23404f05422c6bf3c39573325a4f4909167671b4"/>
   <project name="platform/prebuilts/ndk" path="prebuilts/ndk" revision="c792f0bd9fff7aea2887c60bbb3a9bbdb534ffa3"/>
   <project name="platform_prebuilts_qemu-kernel" path="prebuilts/qemu-kernel" remote="b2g" revision="f7d9bf71cf6693474f3f2a81a4ba62c0fc5646aa"/>
   <project name="platform/prebuilts/sdk" path="prebuilts/sdk" revision="cfcef469537869947abb9aa1d656774cc2678d4c"/>
@@ -128,17 +128,17 @@
   <!-- Stock Android things -->
   <project name="platform/external/icu4c" path="external/icu4c" revision="2bb01561780583cc37bc667f0ea79f48a122d8a2"/>
   <!-- dolphin specific things -->
-  <project name="device/sprd" path="device/sprd" revision="1eb575040af22c58a16f90ecd04b6e1ebdee5c80"/>
-  <project name="platform/external/wpa_supplicant_8" path="external/wpa_supplicant_8" revision="2ea7f18a7bc45e16cb97a835dc86ee64d2d6b0b3"/>
-  <project name="platform/frameworks/av" path="frameworks/av" revision="fd359e3a74a658d9eaab1c683440ba5412535777"/>
+  <project name="device/sprd" path="device/sprd" revision="e73ddda9fede64134d949050e3fc53bd4121cb30"/>
+  <project name="platform/external/wpa_supplicant_8" path="external/wpa_supplicant_8" revision="39a5b5bcadad745df3e6882316fce426f98b1669"/>
+  <project name="platform/frameworks/av" path="frameworks/av" revision="8bb69db127112fc66da75f8ca7a1158614b919f6"/>
   <project name="platform/hardware/akm" path="hardware/akm" revision="6d3be412647b0eab0adff8a2768736cf4eb68039"/>
   <project groups="invensense" name="platform/hardware/invensense" path="hardware/invensense" revision="e6d9ab28b4f4e7684f6c07874ee819c9ea0002a2"/>
   <project name="platform/hardware/ril" path="hardware/ril" revision="865ce3b4a2ba0b3a31421ca671f4d6c5595f8690"/>
-  <project name="kernel/common" path="kernel" revision="df636d2c31ad4434a7de2565359ad982b3767118"/>
-  <project name="platform/system/core" path="system/core" revision="a626f6c0ef9e88586569331bd7387b569eaa5ed2"/>
+  <project name="kernel/common" path="kernel" revision="0f36762ab0c1d8ce10c6a5eda948b05d5d6cc379"/>
+  <project name="platform/system/core" path="system/core" revision="7992618bd4ee33ce96897675a5c0a9b619122f13"/>
   <project name="u-boot" path="u-boot" revision="f1502910977ac88f43da7bf9277c3523ad4b0b2f"/>
-  <project name="vendor/sprd/gps" path="vendor/sprd/gps" revision="4c59900937dc2e978b7b14b7f1ea617e3d5d550e"/>
-  <project name="vendor/sprd/open-source" path="vendor/sprd/open-source" revision="c5206aa084ad36037b8ee4b405a71ec7bd88b41c"/>
+  <project name="vendor/sprd/gps" path="vendor/sprd/gps" revision="7d6e1269be7186b2073fa568958b357826692c4b"/>
+  <project name="vendor/sprd/open-source" path="vendor/sprd/open-source" revision="e503b1d14d7fdee532b8f391407299da193c1b2d"/>
   <project name="vendor/sprd/partner" path="vendor/sprd/partner" revision="8649c7145972251af11b0639997edfecabfc7c2e"/>
   <project name="vendor/sprd/proprietories" path="vendor/sprd/proprietories" revision="d2466593022f7078aaaf69026adf3367c2adb7bb"/>
 </manifest>

@@ -13,7 +13,12 @@
 #include "nsIThread.h"
 #include "nsRefPtr.h"
 
+#include "mozilla/ThreadLocal.h"
+
 namespace mozilla {
+
+class MediaTaskQueue;
+class TaskDispatcher;
 
 /*
  * We often want to run tasks on a target that guarantees that events will never
@@ -23,39 +28,61 @@ namespace mozilla {
  * nsIEventTarget for this purpose. This class encapsulates the specifics of
  * the structures we might use here and provides a consistent interface.
  *
- * Use AbstractThread::Create() to instantiate an AbstractThread. Note that
- * if you use different types than the ones currently supported (MediaTaskQueue
- * and nsIThread), you'll need to implement the relevant guts in
- * AbstractThread.cpp to avoid linkage errors.
+ * At present, the supported AbstractThread implementations are MediaTaskQueue
+ * and AbstractThread::MainThread. If you add support for another thread that is
+ * not the MainThread, you'll need to figure out how to make it unique such that
+ * comparing AbstractThread pointers is equivalent to comparing nsIThread pointers.
  */
 class AbstractThread
 {
 public:
+  // Returns the AbstractThread that the caller is currently running in, or null
+  // if the caller is not running in an AbstractThread.
+  static AbstractThread* GetCurrent() { return sCurrentThreadTLS.get(); }
+
+  AbstractThread(bool aRequireTailDispatch) : mRequireTailDispatch(aRequireTailDispatch) {}
+
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(AbstractThread);
-  virtual nsresult Dispatch(already_AddRefed<nsIRunnable> aRunnable) = 0;
+
+  enum DispatchFailureHandling { AssertDispatchSuccess, DontAssertDispatchSuccess };
+  enum DispatchReason { NormalDispatch, TailDispatch };
+  virtual void Dispatch(already_AddRefed<nsIRunnable> aRunnable,
+                        DispatchFailureHandling aHandling = AssertDispatchSuccess,
+                        DispatchReason aReason = NormalDispatch) = 0;
+
   virtual bool IsCurrentThreadIn() = 0;
 
-  template<typename TargetType> static AbstractThread* Create(TargetType* aTarget);
+  // Returns true if dispatch is generally reliable. This is used to guard
+  // against FlushableMediaTaskQueues, which should go away.
+  virtual bool IsDispatchReliable() { return true; }
+
+  // Returns a TaskDispatcher that will dispatch its tasks when the currently-
+  // running tasks pops off the stack.
+  //
+  // May only be called when running within the it is invoked up, and only on
+  // threads which support it.
+  virtual TaskDispatcher& TailDispatcher() = 0;
+
+  // Returns true if this task queue requires all dispatches performed by its
+  // tasks to go through the tail dispatcher.
+  bool RequiresTailDispatch() const { return mRequireTailDispatch; }
+
+  virtual MediaTaskQueue* AsTaskQueue() { MOZ_CRASH("Not a task queue!"); }
+  virtual nsIThread* AsXPCOMThread() { MOZ_CRASH("Not an XPCOM thread!"); }
+
+  // Convenience method for getting an AbstractThread for the main thread.
+  static AbstractThread* MainThread();
+
+  // Must be called exactly once during startup.
+  static void InitStatics();
+
 protected:
   virtual ~AbstractThread() {}
-};
+  static ThreadLocal<AbstractThread*> sCurrentThreadTLS;
 
-template<typename TargetType>
-class AbstractThreadImpl : public AbstractThread
-{
-public:
-  explicit AbstractThreadImpl(TargetType* aTarget) : mTarget(aTarget) {}
-  virtual nsresult Dispatch(already_AddRefed<nsIRunnable> aRunnable);
-  virtual bool IsCurrentThreadIn();
-private:
-  nsRefPtr<TargetType> mTarget;
-};
-
-template<typename TargetType>
-AbstractThread*
-AbstractThread::Create(TargetType* aTarget)
-{
-  return new AbstractThreadImpl<TargetType>(aTarget);
+  // True if we want to require that every task dispatched from tasks running in
+  // this queue go through our queue's tail dispatcher.
+  const bool mRequireTailDispatch;
 };
 
 } // namespace mozilla

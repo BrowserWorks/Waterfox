@@ -28,6 +28,7 @@ const {Tooltip} = require("devtools/shared/widgets/Tooltip");
 const EventEmitter = require("devtools/toolkit/event-emitter");
 const Heritage = require("sdk/core/heritage");
 const {setTimeout, clearTimeout, setInterval, clearInterval} = require("sdk/timers");
+const {parseAttribute} = require("devtools/shared/node-attribute-parser");
 const ELLIPSIS = Services.prefs.getComplexValue("intl.ellipsis", Ci.nsIPrefLocalizedString).data;
 
 Cu.import("resource://gre/modules/devtools/LayoutHelpers.jsm");
@@ -149,7 +150,7 @@ MarkupView.prototype = {
     // Show markup-containers as hovered on toolbox "picker-node-hovered" event
     // which happens when the "pick" button is pressed
     this._onToolboxPickerHover = (event, nodeFront) => {
-      this.showNode(nodeFront, true).then(() => {
+      this.showNode(nodeFront).then(() => {
         this._showContainerAsHovered(nodeFront);
       });
     };
@@ -435,7 +436,7 @@ MarkupView.prototype = {
         this._brieflyShowBoxModel(selection.nodeFront);
       }
 
-      this.showNode(selection.nodeFront, true).then(() => {
+      this.showNode(selection.nodeFront).then(() => {
         if (this._destroyer) {
           return promise.reject("markupview destroyed");
         }
@@ -753,6 +754,11 @@ MarkupView.prototype = {
       this._inspector.immediateLayoutChange();
     }
     this._waitForChildren().then((nodes) => {
+      if (this._destroyer) {
+        console.warn("Could not fully update after markup mutations, " +
+          "the markup-view was destroyed while waiting for children.");
+        return;
+      }
       this._flashMutatedNodes(aMutations);
       this._inspector.emit("markupmutation", aMutations);
 
@@ -830,7 +836,7 @@ MarkupView.prototype = {
    * Make sure the given node's parents are expanded and the
    * node is scrolled on to screen.
    */
-  showNode: function(aNode, centered) {
+  showNode: function(aNode, centered=true) {
     let parent = aNode;
 
     this.importNode(aNode);
@@ -846,7 +852,6 @@ MarkupView.prototype = {
       }
       return this._ensureVisible(aNode);
     }).then(() => {
-      // Why is this not working?
       this.layoutHelpers.scrollIntoViewIfNeeded(this.getContainer(aNode).editor.elt, centered);
     }, e => {
       // Only report this rejection as an error if the panel hasn't been
@@ -868,8 +873,8 @@ MarkupView.prototype = {
       if (this._destroyer) {
         console.warn("Could not expand the node, the markup-view was destroyed");
         return;
-      } 
-      aContainer.expanded = true;
+      }
+      aContainer.setExpanded(true);
     });
   },
 
@@ -914,7 +919,7 @@ MarkupView.prototype = {
    */
   collapseNode: function(aNode) {
     let container = this.getContainer(aNode);
-    container.expanded = false;
+    container.setExpanded(false);
   },
 
   /**
@@ -1268,11 +1273,40 @@ MarkupView.prototype = {
       return promise.resolve(aContainer);
     }
 
+    if (aContainer.singleTextChild
+        && aContainer.singleTextChild != aContainer.node.singleTextChild) {
+
+      // This container was doing double duty as a container for a single
+      // text child, back that out.
+      this._containers.delete(aContainer.singleTextChild);
+      aContainer.clearSingleTextChild();
+
+      if (aContainer.hasChildren && aContainer.selected) {
+        aContainer.setExpanded(true);
+      }
+    }
+
+    if (aContainer.node.singleTextChild) {
+      aContainer.setExpanded(false);
+      // this container will do double duty as the container for the single
+      // text child.
+      while (aContainer.children.firstChild) {
+        aContainer.children.removeChild(aContainer.children.firstChild);
+      }
+
+      aContainer.setSingleTextChild(aContainer.node.singleTextChild);
+
+      this._containers.set(aContainer.node.singleTextChild, aContainer);
+      aContainer.childrenDirty = false;
+      return promise.resolve(aContainer);
+    }
+
     if (!aContainer.hasChildren) {
       while (aContainer.children.firstChild) {
         aContainer.children.removeChild(aContainer.children.firstChild);
       }
       aContainer.childrenDirty = false;
+      aContainer.setExpanded(false);
       return promise.resolve(aContainer);
     }
 
@@ -1709,11 +1743,22 @@ MarkupContainer.prototype = {
 
   set hasChildren(aValue) {
     this._hasChildren = aValue;
+    this.updateExpander();
+  },
+
+  /**
+   * True if the current node can be expanded.
+   */
+  get canExpand() {
+    return this._hasChildren && !this.node.singleTextChild;
+  },
+
+  updateExpander: function() {
     if (!this.expander) {
       return;
     }
 
-    if (aValue) {
+    if (this.canExpand) {
       this.expander.style.visibility = "visible";
     } else {
       this.expander.style.visibility = "hidden";
@@ -1739,9 +1784,13 @@ MarkupContainer.prototype = {
     return !this.elt.classList.contains("collapsed");
   },
 
-  set expanded(aValue) {
+  setExpanded: function(aValue) {
     if (!this.expander) {
       return;
+    }
+
+    if (!this.canExpand) {
+      aValue = false;
     }
 
     if (aValue && this.elt.classList.contains("collapsed")) {
@@ -1770,6 +1819,7 @@ MarkupContainer.prototype = {
     } else if (!aValue) {
       if (this.closeTagLine) {
         this.elt.removeChild(this.closeTagLine);
+        this.closeTagLine = undefined;
       }
       this.elt.classList.add("collapsed");
       this.expander.removeAttribute("open");
@@ -1809,21 +1859,20 @@ MarkupContainer.prototype = {
       return;
     }
 
-    // output-parser generated links handling.
-    if (target.nodeName === "a") {
-      event.stopPropagation();
-      event.preventDefault();
-      let browserWin = this.markup._inspector.target
-                           .tab.ownerDocument.defaultView;
-      browserWin.openUILinkIn(target.href, "tab");
-      return;
-    }
-
     // target is the MarkupContainer itself.
     this._isMouseDown = true;
     this.hovered = false;
     this.markup.navigate(this);
     event.stopPropagation();
+
+    // Preventing the default behavior will avoid the body to gain focus on
+    // mouseup (through bubbling) when clicking on a non focusable node in the
+    // line. So, if the click happened outside of a focusable element, do
+    // prevent the default behavior, so that the tagname or textcontent gains
+    // focus.
+    if (!target.closest(".editor [tabindex]")) {
+      event.preventDefault();
+    }
 
     // Start dragging the container after a delay.
     this.markup._dragStartEl = target;
@@ -2125,8 +2174,9 @@ MarkupElementContainer.prototype = Heritage.extend(MarkupContainer.prototype, {
       // the element, the tooltip does contain the image
       let def = promise.defer();
 
+      let hasSrc = this.editor.getAttributeElement("src");
       this.tooltipData = {
-        target: this.editor.getAttributeElement("src") || this.editor.tag,
+        target: hasSrc ? hasSrc.querySelector(".link") : this.editor.tag,
         data: def.promise
       };
 
@@ -2140,7 +2190,7 @@ MarkupElementContainer.prototype = Heritage.extend(MarkupContainer.prototype, {
           this.tooltipData.data = promise.resolve(res);
         });
       }, () => {
-        this.tooltipData.data = promise.reject();
+        this.tooltipData.data = promise.resolve({});
       });
     }
   },
@@ -2156,13 +2206,15 @@ MarkupElementContainer.prototype = Heritage.extend(MarkupContainer.prototype, {
    */
   isImagePreviewTarget: function(target, tooltip) {
     if (!this.tooltipData || this.tooltipData.target !== target) {
-      return promise.reject();
+      return promise.reject(false);
     }
 
     return this.tooltipData.data.then(({data, size}) => {
-      tooltip.setImageContent(data, size);
-    }, () => {
-      tooltip.setBrokenImageContent();
+      if (data && size) {
+        tooltip.setImageContent(data, size);
+      } else {
+        tooltip.setBrokenImageContent();
+      }
     });
   },
 
@@ -2174,6 +2226,16 @@ MarkupElementContainer.prototype = Heritage.extend(MarkupContainer.prototype, {
         clipboardHelper.copyString(str, this.markup.doc);
       });
     });
+  },
+
+  setSingleTextChild: function(singleTextChild) {
+    this.singleTextChild = singleTextChild;
+    this.editor.updateTextEditor();
+  },
+
+  clearSingleTextChild: function() {
+    this.singleTextChild = undefined;
+    this.editor.updateTextEditor();
   }
 });
 
@@ -2201,7 +2263,9 @@ RootContainer.prototype = {
    */
   getChildContainers: function() {
     return [...this.children.children].map(node => node.container);
-  }
+  },
+
+  setExpanded: function(aValue) {}
 };
 
 /**
@@ -2256,6 +2320,7 @@ function TextEditor(aContainer, aNode, aTemplate) {
     stopOnReturn: true,
     trigger: "dblclick",
     multiline: true,
+    trimOutput: false,
     done: (aVal, aCommit) => {
       if (!aCommit) {
         return;
@@ -2307,6 +2372,7 @@ TextEditor.prototype = {
         longstr.release().then(null, console.error);
         if (this.selected) {
           this.value.textContent = str;
+          this.markup.emit("text-expand")
         }
       }).then(null, console.error);
     }
@@ -2392,6 +2458,12 @@ function ElementEditor(aContainer, aNode) {
 
 ElementEditor.prototype = {
 
+  set selected(aValue) {
+    if (this.textEditor) {
+      this.textEditor.selected = aValue;
+    }
+  },
+
   flashAttribute: function(attrName) {
     if (this.animationTimers[attrName]) {
       clearTimeout(this.animationTimers[attrName]);
@@ -2422,7 +2494,7 @@ ElementEditor.prototype = {
     // attributes have already been removed at this point.
     for (let attr of nodeAttributes) {
       let el = this.attrElements.get(attr.name);
-      let valueChanged = el && el.querySelector(".attr-value").innerHTML !== attr.value;
+      let valueChanged = el && el.querySelector(".attr-value").textContent !== attr.value;
       let isEditing = el && el.querySelector(".editable").inplaceEditor;
       let canSimplyShowEditor = el && (!valueChanged || isEditing);
 
@@ -2443,6 +2515,33 @@ ElementEditor.prototype = {
           this.flashAttribute(attr.name);
         }
       }
+    }
+
+    this.updateTextEditor();
+  },
+
+  /**
+   * Update the inline text editor in case of a single text child node.
+   */
+  updateTextEditor: function() {
+    let node = this.node.singleTextChild;
+
+    if (this.textEditor && this.textEditor.node != node) {
+      this.elt.removeChild(this.textEditor.elt);
+      this.textEditor = null;
+    }
+
+    if (node && !this.textEditor) {
+      // Create a text editor added to this editor.
+      // This editor won't receive an update automatically, so we rely on
+      // child text editors to let us know that we need updating.
+      this.textEditor = new TextEditor(this.container, node, "text");
+      this.elt.insertBefore(this.textEditor.elt,
+                            this.elt.firstChild.nextSibling.nextSibling);
+    }
+
+    if (this.textEditor) {
+      this.textEditor.update();
     }
   },
 
@@ -2478,25 +2577,25 @@ ElementEditor.prototype = {
       attrName: aAttr.name,
     };
     this.template("attribute", data);
-    var {attr, inner, name, val} = data;
+    let {attr, inner, name, val} = data;
 
     // Double quotes need to be handled specially to prevent DOMParser failing.
     // name="v"a"l"u"e" when editing -> name='v"a"l"u"e"'
     // name="v'a"l'u"e" when editing -> name="v'a&quot;l'u&quot;e"
     let editValueDisplayed = aAttr.value || "";
-    let hasDoubleQuote = editValueDisplayed.contains('"');
-    let hasSingleQuote = editValueDisplayed.contains("'");
+    let hasDoubleQuote = editValueDisplayed.includes('"');
+    let hasSingleQuote = editValueDisplayed.includes("'");
     let initial = aAttr.name + '="' + editValueDisplayed + '"';
 
     // Can't just wrap value with ' since the value contains both " and '.
     if (hasDoubleQuote && hasSingleQuote) {
-        editValueDisplayed = editValueDisplayed.replace(/\"/g, "&quot;");
-        initial = aAttr.name + '="' + editValueDisplayed + '"';
+      editValueDisplayed = editValueDisplayed.replace(/\"/g, "&quot;");
+      initial = aAttr.name + '="' + editValueDisplayed + '"';
     }
 
     // Wrap with ' since there are no single quotes in the attribute value.
     if (hasDoubleQuote && !hasSingleQuote) {
-        initial = aAttr.name + "='" + editValueDisplayed + "'";
+      initial = aAttr.name + "='" + editValueDisplayed + "'";
     }
 
     // Make the attribute editable.
@@ -2513,7 +2612,7 @@ ElementEditor.prototype = {
         // select accordingly.
         if (aEvent && aEvent.target === name) {
           aEditor.input.setSelectionRange(0, name.textContent.length);
-        } else if (aEvent && aEvent.target === val) {
+        } else if (aEvent && aEvent.target.closest(".attr-value") === val) {
           let length = editValueDisplayed.length;
           let editorLength = aEditor.input.value.length;
           let start = editorLength - (length + 1);
@@ -2562,15 +2661,40 @@ ElementEditor.prototype = {
     this.removeAttribute(aAttr.name);
     this.attrElements.set(aAttr.name, attr);
 
-    let collapsedValue;
-    if (aAttr.value.match(COLLAPSE_DATA_URL_REGEX)) {
-      collapsedValue = truncateString(aAttr.value, COLLAPSE_DATA_URL_LENGTH);
-    } else {
-      collapsedValue = truncateString(aAttr.value, COLLAPSE_ATTRIBUTE_LENGTH);
+    // Parse the attribute value to detect whether there are linkable parts in
+    // it (make sure to pass a complete list of existing attributes to the
+    // parseAttribute function, by concatenating aAttr, because this could be a
+    // newly added attribute not yet on this.node).
+    let attributes = this.node.attributes.filter(({name}) => name !== aAttr.name);
+    attributes.push(aAttr);
+    let parsedLinksData = parseAttribute(this.node.namespaceURI,
+      this.node.tagName, attributes, aAttr.name);
+
+    // Create links in the attribute value, and collapse long attributes if
+    // needed.
+    let collapse = value => {
+      if (value.match(COLLAPSE_DATA_URL_REGEX)) {
+        return truncateString(value, COLLAPSE_DATA_URL_LENGTH);
+      } else {
+        return truncateString(value, COLLAPSE_ATTRIBUTE_LENGTH);
+      }
+    };
+
+    val.innerHTML = "";
+    for (let token of parsedLinksData) {
+      if (token.type === "string") {
+        val.appendChild(this.doc.createTextNode(collapse(token.value)));
+      } else {
+        let link = this.doc.createElement("span");
+        link.classList.add("link");
+        link.setAttribute("data-type", token.type);
+        link.setAttribute("data-link", token.value);
+        link.textContent = collapse(token.value);
+        val.appendChild(link);
+      }
     }
 
     name.textContent = aAttr.name;
-    val.textContent = collapsedValue;
 
     return attr;
   },

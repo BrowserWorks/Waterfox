@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -13,8 +14,15 @@
 #include "nsIDOMEventListener.h"
 #include "nsIEventListenerService.h"
 #include "nsString.h"
+#include "nsTObserverArray.h"
+#include "nsDataHashtable.h"
+
+class nsIMutableArray;
 
 namespace mozilla {
+namespace dom {
+class EventTarget;
+};
 
 template<typename T>
 class Maybe;
@@ -56,10 +64,27 @@ protected:
 
 class EventListenerService final : public nsIEventListenerService
 {
-  ~EventListenerService() {}
+  ~EventListenerService();
 public:
+  EventListenerService();
   NS_DECL_ISUPPORTS
   NS_DECL_NSIEVENTLISTENERSERVICE
+
+  static void NotifyAboutMainThreadListenerChange(dom::EventTarget* aTarget)
+  {
+    if (sInstance) {
+      sInstance->NotifyAboutMainThreadListenerChangeInternal(aTarget);
+    }
+  }
+
+  void NotifyPendingChanges();
+private:
+  void NotifyAboutMainThreadListenerChangeInternal(dom::EventTarget* aTarget);
+  nsTObserverArray<nsCOMPtr<nsIListenerChangeListener>> mChangeListeners;
+  nsCOMPtr<nsIMutableArray> mPendingListenerChanges;
+  nsDataHashtable<nsISupportsHashKey, bool> mPendingListenerChangesSet;
+
+  static EventListenerService* sInstance;
 };
 
 } // namespace mozilla

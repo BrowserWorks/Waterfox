@@ -32,11 +32,7 @@
 // and we load localstore from somewhere else.
 #define NS_LOCALSTORE_UNSAFE_FILE "LStoreS"
 
-class nsACString;
-struct nsStaticModuleInfo;
-
 class nsINativeAppSupport;
-class nsICmdLineService;
 class nsXREDirProvider;
 class nsIToolkitProfileService;
 class nsIFile;
@@ -105,10 +101,6 @@ BOOL
 WinLaunchChild(const wchar_t *exePath, int argc,
                char **argv, HANDLE userToken = nullptr,
                HANDLE *hProcess = nullptr);
-BOOL
-WriteStatusPending(LPCWSTR updateDirPath);
-BOOL
-WriteStatusApplied(LPCWSTR updateDirPath);
 #endif
 
 #define NS_NATIVEAPPSUPPORT_CONTRACTID "@mozilla.org/toolkit/native-app-support;1"

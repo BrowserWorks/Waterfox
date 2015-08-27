@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -46,13 +47,13 @@ class nsXHTMLContentSerializer : public nsXMLContentSerializer {
                           nsAString& aStr,
                           nsresult& aResult) override;
 
-  NS_WARN_UNUSED_RESULT
+  MOZ_WARN_UNUSED_RESULT
   virtual bool AppendEndOfElementStart(nsIContent *aOriginalElement,
                                nsIAtom * aName,
                                int32_t aNamespaceID,
                                nsAString& aStr) override;
 
-  NS_WARN_UNUSED_RESULT
+  MOZ_WARN_UNUSED_RESULT
   virtual bool AfterElementStart(nsIContent* aContent,
                                  nsIContent* aOriginalElement,
                                  nsAString& aStr) override;
@@ -75,7 +76,7 @@ class nsXHTMLContentSerializer : public nsXMLContentSerializer {
   virtual void MaybeEnterInPreContent(nsIContent* aNode) override;
   virtual void MaybeLeaveFromPreContent(nsIContent* aNode) override;
 
-  NS_WARN_UNUSED_RESULT
+  MOZ_WARN_UNUSED_RESULT
   virtual bool SerializeAttributes(nsIContent* aContent,
                            nsIContent *aOriginalElement,
                            nsAString& aTagPrefix,
@@ -87,13 +88,13 @@ class nsXHTMLContentSerializer : public nsXMLContentSerializer {
 
   bool IsFirstChildOfOL(nsIContent* aElement);
 
-  NS_WARN_UNUSED_RESULT
+  MOZ_WARN_UNUSED_RESULT
   bool SerializeLIValueAttribute(nsIContent* aElement,
                                  nsAString& aStr);
   bool IsShorthandAttr(const nsIAtom* aAttrName,
                          const nsIAtom* aElementName);
 
-  NS_WARN_UNUSED_RESULT
+  MOZ_WARN_UNUSED_RESULT
   virtual bool AppendAndTranslateEntities(const nsAString& aStr,
                                           nsAString& aOutputStr) override;
 

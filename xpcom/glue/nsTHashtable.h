@@ -156,7 +156,8 @@ public:
       (PL_DHashTableAdd(&mTable, EntryType::KeyToPointer(aKey)));
   }
 
-  EntryType* PutEntry(KeyType aKey, const fallible_t&) NS_WARN_UNUSED_RESULT
+  MOZ_WARN_UNUSED_RESULT
+  EntryType* PutEntry(KeyType aKey, const fallible_t&)
   {
     NS_ASSERTION(mTable.IsInitialized(),
                  "nsTHashtable was not initialized properly.");
@@ -405,10 +406,6 @@ nsTHashtable<EntryType>::nsTHashtable(nsTHashtable<EntryType>&& aOther)
   // aOther shouldn't touch mTable after this, because we've stolen the table's
   // pointers but not overwitten them.
   MOZ_MAKE_MEM_UNDEFINED(&aOther.mTable, sizeof(aOther.mTable));
-
-  // Indicate that aOther is not initialized.  This will make its destructor a
-  // nop, which is what we want.
-  aOther.mTable.SetOps(nullptr);
 }
 
 template<class EntryType>

@@ -25,9 +25,11 @@ import reftest
 import mozinfo
 
 from .data import (
+    BrandingFiles,
     ConfigFileSubstitution,
     ContextWrapped,
     Defines,
+    DistFiles,
     DirectoryTraversal,
     Exports,
     FinalTargetFiles,
@@ -525,6 +527,17 @@ class TreeMetadataEmitter(LoggingMixin):
         for obj in self._process_xpidl(context):
             yield obj
 
+        # Check for manifest declarations in EXTRA_{PP_,}COMPONENTS.
+        extras = context.get('EXTRA_COMPONENTS', []) + context.get('EXTRA_PP_COMPONENTS', [])
+        if any(e.endswith('.js') for e in extras) and \
+                not any(e.endswith('.manifest') for e in extras) and \
+                not context.get('NO_JS_MANIFEST', False):
+            raise SandboxValidationError('A .js component was specified in EXTRA_COMPONENTS '
+                                         'or EXTRA_PP_COMPONENTS without a matching '
+                                         '.manifest file.  See '
+                                         'https://developer.mozilla.org/en/XPCOM/XPCOM_changes_in_Gecko_2.0 .',
+                                         context);
+
         # Proxy some variables as-is until we have richer classes to represent
         # them. We should aim to keep this set small because it violates the
         # desired abstraction of the build definition away from makefiles.
@@ -541,7 +554,6 @@ class TreeMetadataEmitter(LoggingMixin):
             'FAIL_ON_WARNINGS',
             'USE_STATIC_LIBS',
             'IS_GYP_DIR',
-            'MSVC_ENABLE_PGO',
             'NO_DIST_INSTALL',
             'PYTHON_UNIT_TESTS',
             'RCFILE',
@@ -550,6 +562,8 @@ class TreeMetadataEmitter(LoggingMixin):
             'DEFFILE',
             'WIN32_EXE_LDFLAGS',
             'LD_VERSION_SCRIPT',
+            'USE_EXTENSION_MANIFEST',
+            'NO_JS_MANIFEST',
         ]
         for v in varlist:
             if v in context and context[v]:
@@ -641,6 +655,20 @@ class TreeMetadataEmitter(LoggingMixin):
         if final_target_files:
             yield FinalTargetFiles(context, final_target_files, context['FINAL_TARGET'])
 
+        dist_files = context.get('DIST_FILES')
+        if dist_files:
+            for f in dist_files:
+                path = os.path.join(context.srcdir, f)
+                if not os.path.exists(path):
+                    raise SandboxValidationError('File listed in DIST_FILES '
+                        'does not exist: %s' % f, context)
+
+            yield DistFiles(context, dist_files, context['FINAL_TARGET'])
+
+        branding_files = context.get('BRANDING_FILES')
+        if branding_files:
+            yield BrandingFiles(context, branding_files)
+
         self._handle_libraries(context)
 
         for obj in self._process_test_manifests(context):
@@ -699,6 +727,7 @@ class TreeMetadataEmitter(LoggingMixin):
             '.m': set(),
             '.mm': set(),
             '.cpp': set(['.cc', '.cxx']),
+            '.rs': set(),
             '.S': set(),
         }
 

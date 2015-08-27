@@ -254,14 +254,14 @@ js::ForOfPIC::Chain::mark(JSTracer* trc)
     if (!initialized_ || disabled_)
         return;
 
-    gc::MarkObject(trc, &arrayProto_, "ForOfPIC Array.prototype.");
-    gc::MarkObject(trc, &arrayIteratorProto_, "ForOfPIC ArrayIterator.prototype.");
+    TraceEdge(trc, &arrayProto_, "ForOfPIC Array.prototype.");
+    TraceEdge(trc, &arrayIteratorProto_, "ForOfPIC ArrayIterator.prototype.");
 
-    gc::MarkShape(trc, &arrayProtoShape_, "ForOfPIC Array.prototype shape.");
-    gc::MarkShape(trc, &arrayIteratorProtoShape_, "ForOfPIC ArrayIterator.prototype shape.");
+    TraceEdge(trc, &arrayProtoShape_, "ForOfPIC Array.prototype shape.");
+    TraceEdge(trc, &arrayIteratorProtoShape_, "ForOfPIC ArrayIterator.prototype shape.");
 
-    gc::MarkValue(trc, &canonicalIteratorFunc_, "ForOfPIC ArrayValues builtin.");
-    gc::MarkValue(trc, &canonicalNextFunc_, "ForOfPIC ArrayIterator.prototype.next builtin.");
+    TraceEdge(trc, &canonicalIteratorFunc_, "ForOfPIC ArrayValues builtin.");
+    TraceEdge(trc, &canonicalNextFunc_, "ForOfPIC ArrayIterator.prototype.next builtin.");
 
     // Free all the stubs in the chain.
     while (stubs_)
@@ -296,7 +296,7 @@ ForOfPIC_traceObject(JSTracer* trc, JSObject* obj)
 
 const Class ForOfPIC::jsclass = {
     "ForOfPIC", JSCLASS_HAS_PRIVATE | JSCLASS_IMPLEMENTS_BARRIERS,
-    nullptr, nullptr, nullptr, nullptr,
+    nullptr, nullptr, nullptr, nullptr, nullptr,
     nullptr, nullptr, nullptr, ForOfPIC_finalize,
     nullptr,              /* call        */
     nullptr,              /* hasInstance */

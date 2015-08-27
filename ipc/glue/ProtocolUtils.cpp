@@ -10,67 +10,52 @@
 #include "mozilla/ipc/MessageChannel.h"
 #include "mozilla/ipc/ProtocolUtils.h"
 #include "mozilla/ipc/Transport.h"
+#include "mozilla/StaticMutex.h"
+
+#if defined(MOZ_SANDBOX) && defined(XP_WIN)
+#define TARGET_SANDBOX_EXPORTS
+#include "mozilla/sandboxTarget.h"
+#endif
 
 using namespace IPC;
 
-using base::GetCurrentProcessHandle;
-using base::GetProcId;
+using base::GetCurrentProcId;
 using base::ProcessHandle;
 using base::ProcessId;
 
 namespace mozilla {
 namespace ipc {
 
-static Atomic<size_t> gNumProtocols;
-static StaticAutoPtr<Mutex> gProtocolMutex;
+static StaticMutex gProtocolMutex;
 
 IToplevelProtocol::IToplevelProtocol(ProtocolId aProtoId)
  : mOpener(nullptr)
  , mProtocolId(aProtoId)
  , mTrans(nullptr)
 {
-  size_t old = gNumProtocols++;
-
-  if (!old) {
-    // We assume that two threads never race to create the first protocol. This
-    // assertion is sufficient to ensure that.
-    MOZ_ASSERT(NS_IsMainThread());
-    gProtocolMutex = new Mutex("ITopLevelProtocol::ProtocolMutex");
-  }
 }
 
 IToplevelProtocol::~IToplevelProtocol()
 {
-  bool last = false;
+  StaticMutexAutoLock al(gProtocolMutex);
 
-  {
-    MutexAutoLock al(*gProtocolMutex);
-
-    for (IToplevelProtocol* actor = mOpenActors.getFirst();
-         actor;
-         actor = actor->getNext()) {
-      actor->mOpener = nullptr;
-    }
-
-    mOpenActors.clear();
-
-    if (mOpener) {
-      removeFrom(mOpener->mOpenActors);
-    }
-
-    gNumProtocols--;
-    last = gNumProtocols == 0;
+  for (IToplevelProtocol* actor = mOpenActors.getFirst();
+       actor;
+       actor = actor->getNext()) {
+    actor->mOpener = nullptr;
   }
 
-  if (last) {
-    gProtocolMutex = nullptr;
+  mOpenActors.clear();
+
+  if (mOpener) {
+      removeFrom(mOpener->mOpenActors);
   }
 }
 
 void
 IToplevelProtocol::AddOpenedActorLocked(IToplevelProtocol* aActor)
 {
-  gProtocolMutex->AssertCurrentThreadOwns();
+  gProtocolMutex.AssertCurrentThreadOwns();
 
 #ifdef DEBUG
   for (const IToplevelProtocol* actor = mOpenActors.getFirst();
@@ -88,14 +73,14 @@ IToplevelProtocol::AddOpenedActorLocked(IToplevelProtocol* aActor)
 void
 IToplevelProtocol::AddOpenedActor(IToplevelProtocol* aActor)
 {
-  MutexAutoLock al(*gProtocolMutex);
+  StaticMutexAutoLock al(gProtocolMutex);
   AddOpenedActorLocked(aActor);
 }
 
 void
 IToplevelProtocol::GetOpenedActorsLocked(nsTArray<IToplevelProtocol*>& aActors)
 {
-  gProtocolMutex->AssertCurrentThreadOwns();
+  gProtocolMutex.AssertCurrentThreadOwns();
 
   for (IToplevelProtocol* actor = mOpenActors.getFirst();
        actor;
@@ -107,7 +92,7 @@ IToplevelProtocol::GetOpenedActorsLocked(nsTArray<IToplevelProtocol*>& aActors)
 void
 IToplevelProtocol::GetOpenedActors(nsTArray<IToplevelProtocol*>& aActors)
 {
-  MutexAutoLock al(*gProtocolMutex);
+  StaticMutexAutoLock al(gProtocolMutex);
   GetOpenedActorsLocked(aActors);
 }
 
@@ -139,7 +124,7 @@ IToplevelProtocol::CloneOpenedToplevels(IToplevelProtocol* aTemplate,
                                         base::ProcessHandle aPeerProcess,
                                         ProtocolCloneContext* aCtx)
 {
-  MutexAutoLock al(*gProtocolMutex);
+  StaticMutexAutoLock al(gProtocolMutex);
 
   nsTArray<IToplevelProtocol*> actors;
   aTemplate->GetOpenedActorsLocked(actors);
@@ -184,28 +169,25 @@ public:
 
 bool
 Bridge(const PrivateIPDLInterface&,
-       MessageChannel* aParentChannel, ProcessHandle aParentProcess,
-       MessageChannel* aChildChannel, ProcessHandle aChildProcess,
+       MessageChannel* aParentChannel, ProcessId aParentPid,
+       MessageChannel* aChildChannel, ProcessId aChildPid,
        ProtocolId aProtocol, ProtocolId aChildProtocol)
 {
-  ProcessId parentId = GetProcId(aParentProcess);
-  ProcessId childId = GetProcId(aChildProcess);
-  if (!parentId || !childId) {
+  if (!aParentPid || !aChildPid) {
     return false;
   }
 
   TransportDescriptor parentSide, childSide;
-  if (!CreateTransport(aParentProcess, aChildProcess,
-                       &parentSide, &childSide)) {
+  if (!CreateTransport(aParentPid, &parentSide, &childSide)) {
     return false;
   }
 
   if (!aParentChannel->Send(new ChannelOpened(parentSide,
-                                              childId,
+                                              aChildPid,
                                               aProtocol,
                                               IPC::Message::PRIORITY_URGENT)) ||
       !aChildChannel->Send(new ChannelOpened(childSide,
-                                             parentId,
+                                             aParentPid,
                                              aChildProtocol,
                                              IPC::Message::PRIORITY_URGENT))) {
     CloseDescriptor(parentSide);
@@ -217,23 +199,20 @@ Bridge(const PrivateIPDLInterface&,
 
 bool
 Open(const PrivateIPDLInterface&,
-     MessageChannel* aOpenerChannel, ProcessHandle aOtherProcess,
+     MessageChannel* aOpenerChannel, ProcessId aOtherProcessId,
      Transport::Mode aOpenerMode,
      ProtocolId aProtocol, ProtocolId aChildProtocol)
 {
   bool isParent = (Transport::MODE_SERVER == aOpenerMode);
-  ProcessHandle thisHandle = GetCurrentProcessHandle();
-  ProcessHandle parentHandle = isParent ? thisHandle : aOtherProcess;
-  ProcessHandle childHandle = !isParent ? thisHandle : aOtherProcess;
-  ProcessId parentId = GetProcId(parentHandle);
-  ProcessId childId = GetProcId(childHandle);
+  ProcessId thisPid = GetCurrentProcId();
+  ProcessId parentId = isParent ? thisPid : aOtherProcessId;
+  ProcessId childId = !isParent ? thisPid : aOtherProcessId;
   if (!parentId || !childId) {
     return false;
   }
 
   TransportDescriptor parentSide, childSide;
-  if (!CreateTransport(parentHandle, childHandle,
-                       &parentSide, &childSide)) {
+  if (!CreateTransport(parentId, &parentSide, &childSide)) {
     return false;
   }
 
@@ -260,6 +239,43 @@ UnpackChannelOpened(const PrivateIPDLInterface&,
   return ChannelOpened::Read(aMsg, aTransport, aOtherProcess, aProtocol);
 }
 
+#if defined(XP_WIN)
+bool DuplicateHandle(HANDLE aSourceHandle,
+                     DWORD aTargetProcessId,
+                     HANDLE* aTargetHandle,
+                     DWORD aDesiredAccess,
+                     DWORD aOptions) {
+  // If our process is the target just duplicate the handle.
+  if (aTargetProcessId == base::GetCurrentProcId()) {
+    return !!::DuplicateHandle(::GetCurrentProcess(), aSourceHandle,
+                               ::GetCurrentProcess(), aTargetHandle,
+                               aDesiredAccess, false, aOptions);
+
+  }
+
+#if defined(MOZ_SANDBOX)
+  // Try the broker next (will fail if not sandboxed).
+  if (SandboxTarget::Instance()->BrokerDuplicateHandle(aSourceHandle,
+                                                       aTargetProcessId,
+                                                       aTargetHandle,
+                                                       aDesiredAccess,
+                                                       aOptions)) {
+    return true;
+  }
+#endif
+
+  // Finally, see if we already have access to the process.
+  ScopedProcessHandle targetProcess;
+  if (!base::OpenProcessHandle(aTargetProcessId, &targetProcess.rwget())) {
+    return false;
+  }
+
+  return !!::DuplicateHandle(::GetCurrentProcess(), aSourceHandle,
+                              targetProcess, aTargetHandle,
+                              aDesiredAccess, FALSE, aOptions);
+}
+#endif
+
 void
 ProtocolErrorBreakpoint(const char* aMsg)
 {
@@ -271,7 +287,7 @@ ProtocolErrorBreakpoint(const char* aMsg)
 
 void
 FatalError(const char* aProtocolName, const char* aMsg,
-           ProcessHandle aHandle, bool aIsParent)
+           ProcessId aOtherPid, bool aIsParent)
 {
   ProtocolErrorBreakpoint(aMsg);
 
@@ -283,9 +299,16 @@ FatalError(const char* aProtocolName, const char* aMsg,
     formattedMessage.AppendLiteral("\". Killing child side as a result.");
     NS_ERROR(formattedMessage.get());
 
-    if (aHandle != kInvalidProcessHandle &&
-        !base::KillProcess(aHandle, base::PROCESS_END_KILLED_BY_USER, false)) {
-      NS_ERROR("May have failed to kill child!");
+    if (aOtherPid != kInvalidProcessId && aOtherPid != base::GetCurrentProcId()) {
+      ScopedProcessHandle otherProcessHandle;
+      if (base::OpenProcessHandle(aOtherPid, &otherProcessHandle.rwget())) {
+        if (!base::KillProcess(otherProcessHandle,
+                               base::PROCESS_END_KILLED_BY_USER, false)) {
+          NS_ERROR("May have failed to kill child!");
+        }
+      } else {
+        NS_ERROR("Failed to open child process when attempting kill.");
+      }
     }
   } else {
     formattedMessage.AppendLiteral("\". abort()ing as a result.");

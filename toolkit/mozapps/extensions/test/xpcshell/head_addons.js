@@ -14,6 +14,7 @@ const PREF_EM_MIN_COMPAT_APP_VERSION      = "extensions.minCompatibleAppVersion"
 const PREF_EM_MIN_COMPAT_PLATFORM_VERSION = "extensions.minCompatiblePlatformVersion";
 const PREF_GETADDONS_BYIDS               = "extensions.getAddons.get.url";
 const PREF_GETADDONS_BYIDS_PERFORMANCE   = "extensions.getAddons.getWithPerformance.url";
+const PREF_XPI_SIGNATURES_REQUIRED    = "xpinstall.signatures.required";
 
 // Forcibly end the test if it runs longer than 15 minutes
 const TIMEOUT_MS = 900000;
@@ -27,6 +28,7 @@ Components.utils.import("resource://gre/modules/Promise.jsm");
 Components.utils.import("resource://gre/modules/Task.jsm");
 Components.utils.import("resource://gre/modules/osfile.jsm");
 Components.utils.import("resource://gre/modules/AsyncShutdown.jsm");
+Components.utils.import("resource://testing-common/MockRegistrar.jsm");
 
 // We need some internal bits of AddonManager
 let AMscope = Components.utils.import("resource://gre/modules/AddonManager.jsm");
@@ -1405,20 +1407,7 @@ if ("nsIWindowsRegKey" in AM_Ci) {
     }
   };
 
-  var WinRegFactory = {
-    createInstance: function(aOuter, aIid) {
-      if (aOuter != null)
-        throw Components.results.NS_ERROR_NO_AGGREGATION;
-
-      var key = new MockWindowsRegKey();
-      return key.QueryInterface(aIid);
-    }
-  };
-
-  var registrar = Components.manager.QueryInterface(AM_Ci.nsIComponentRegistrar);
-  registrar.registerFactory(Components.ID("{0478de5b-0f38-4edb-851d-4c99f1ed8eba}"),
-                            "Mock Windows Registry Implementation",
-                            "@mozilla.org/windows-registry-key;1", WinRegFactory);
+  MockRegistrar.register("@mozilla.org/windows-registry-key;1", MockWindowsRegKey);
 }
 
 // Get the profile directory for tests to use.
@@ -1464,6 +1453,9 @@ Services.prefs.setCharPref("extensions.hotfix.id", "");
 // By default, set min compatible versions to 0
 Services.prefs.setCharPref(PREF_EM_MIN_COMPAT_APP_VERSION, "0");
 Services.prefs.setCharPref(PREF_EM_MIN_COMPAT_PLATFORM_VERSION, "0");
+
+// Disable signature checks for most tests
+Services.prefs.setBoolPref(PREF_XPI_SIGNATURES_REQUIRED, false);
 
 // Register a temporary directory for the tests.
 const gTmpD = gProfD.clone();
@@ -1540,9 +1532,6 @@ do_register_cleanup(function addon_cleanup() {
   pathShouldntExist(testDir);
 
   testDir.leafName = "staged";
-  pathShouldntExist(testDir);
-
-  testDir.leafName = "staged-xpis";
   pathShouldntExist(testDir);
 
   shutdownManager();

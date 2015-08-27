@@ -7,12 +7,10 @@
 
 #inspector-toolbar:-moz-locale-dir(ltr) {
   padding-left: 2px;
-  padding-right: 16px; /* use -moz-padding-end when/if bug 631729 gets fixed */
 }
 
 #inspector-toolbar:-moz-locale-dir(rtl) {
   padding-left: 4px;
-  padding-right: 18px; /* use -moz-padding-end when/if bug 631729 gets fixed */
 }
 
 %endif
@@ -37,6 +35,44 @@
 #inspector-searchbox[focused],
 #inspector-searchbox[filled] {
   max-width: 200px !important;
+}
+
+/* Expand/collapse panel toolbar button */
+
+#inspector-pane-toggle {
+  background: none;
+  box-shadow: none;
+  border: none;
+  list-style-image: url(debugger-collapse.png);
+  -moz-image-region: rect(0px,16px,16px,0px);
+}
+
+#inspector-pane-toggle > .toolbarbutton-icon {
+  width: 16px;
+  height: 16px;
+}
+
+#inspector-pane-toggle[pane-collapsed] {
+  list-style-image: url(debugger-expand.png);
+}
+
+#inspector-pane-toggle:active {
+  -moz-image-region: rect(0px,32px,16px,16px);
+}
+
+@media (min-resolution: 1.25dppx) {
+  #inspector-pane-toggle {
+    list-style-image: url(debugger-collapse@2x.png);
+    -moz-image-region: rect(0px,32px,32px,0px);
+  }
+
+  #inspector-pane-toggle[pane-collapsed] {
+    list-style-image: url(debugger-expand@2x.png);
+  }
+
+  #inspector-pane-toggle:active {
+    -moz-image-region: rect(0px,64px,32px,32px);
+  }
 }
 
 /* Tooltip: Events */

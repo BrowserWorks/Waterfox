@@ -14,15 +14,12 @@ Cu.import("resource://gre/modules/devtools/Loader.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "promise",
                                   "resource://gre/modules/Promise.jsm", "Promise");
-
 XPCOMUtils.defineLazyModuleGetter(this, "console",
                                   "resource://gre/modules/devtools/Console.jsm");
-
 XPCOMUtils.defineLazyModuleGetter(this, "CustomizableUI",
                                   "resource:///modules/CustomizableUI.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "DebuggerServer",
                                   "resource://gre/modules/devtools/dbg-server.jsm");
-
 XPCOMUtils.defineLazyModuleGetter(this, "DebuggerClient",
                                   "resource://gre/modules/devtools/dbg-client.jsm");
 
@@ -73,13 +70,22 @@ DevTools.prototype = {
   },
 
   set testing(state) {
+    let oldState = this._testing;
     this._testing = state;
 
-    if (state) {
-      // dom.send_after_paint_to_content is set to true (non-default) in
-      // testing/profiles/prefs_general.js so lets set it to the same as it is
-      // in a default browser profile for the duration of the test.
-      Services.prefs.setBoolPref("dom.send_after_paint_to_content", false);
+    if (state !== oldState) {
+      if (state) {
+        this._savedSendAfterPaintToContentPref =
+          Services.prefs.getBoolPref("dom.send_after_paint_to_content");
+
+        // dom.send_after_paint_to_content is set to true (non-default) in
+        // testing/profiles/prefs_general.js so lets set it to the same as it is
+        // in a default browser profile for the duration of the test.
+        Services.prefs.setBoolPref("dom.send_after_paint_to_content", false);
+      } else {
+        Services.prefs.setBoolPref("dom.send_after_paint_to_content",
+                                   this._savedSendAfterPaintToContentPref);
+      }
     }
   },
 
@@ -566,7 +572,11 @@ let gDevToolsBrowser = {
     let target = devtools.TargetFactory.forTab(gBrowser.selectedTab);
     let toolbox = gDevTools.getToolbox(target);
 
-    toolbox ? toolbox.destroy() : gDevTools.showToolbox(target);
+    // If a toolbox exists, using toggle from the Main window :
+    // - should close a docked toolbox
+    // - should focus a windowed toolbox
+    let isDocked = toolbox && toolbox.hostType != devtools.Toolbox.HostType.WINDOW;
+    isDocked ? toolbox.destroy() : gDevTools.showToolbox(target);
   },
 
   toggleBrowserToolboxCommand: function(gBrowser) {
@@ -627,8 +637,7 @@ let gDevToolsBrowser = {
     // Enable Browser Toolbox?
     let chromeEnabled = Services.prefs.getBoolPref("devtools.chrome.enabled");
     let devtoolsRemoteEnabled = Services.prefs.getBoolPref("devtools.debugger.remote-enabled");
-    let remoteEnabled = chromeEnabled && devtoolsRemoteEnabled &&
-                        Services.prefs.getBoolPref("devtools.debugger.chrome-enabled");
+    let remoteEnabled = chromeEnabled && devtoolsRemoteEnabled;
     toggleCmd("Tools:BrowserToolbox", remoteEnabled);
     toggleCmd("Tools:BrowserContentToolbox", remoteEnabled && win.gMultiProcessBrowser);
 
@@ -1214,16 +1223,6 @@ let gDevToolsBrowser = {
   },
 
   /**
-   * Connects to the SPS profiler when the developer tools are open. This is
-   * necessary because of the WebConsole's `profile` and `profileEnd` methods.
-   */
-  _connectToProfiler: function DT_connectToProfiler(event, toolbox) {
-    let SharedProfilerUtils = devtools.require("devtools/profiler/shared");
-    let connection = SharedProfilerUtils.getProfilerConnection(toolbox);
-    connection.open();
-  },
-
-  /**
    * Remove the menuitem for a tool to all open browser windows.
    *
    * @param {string} toolId
@@ -1331,7 +1330,6 @@ let gDevToolsBrowser = {
    * All browser windows have been closed, tidy up remaining objects.
    */
   destroy: function() {
-    gDevTools.off("toolbox-ready", gDevToolsBrowser._connectToProfiler);
     Services.prefs.removeObserver("devtools.", gDevToolsBrowser);
     Services.obs.removeObserver(gDevToolsBrowser.destroy, "quit-application");
   },
@@ -1352,7 +1350,6 @@ gDevTools.on("tool-unregistered", function(ev, toolId) {
 });
 
 gDevTools.on("toolbox-ready", gDevToolsBrowser._updateMenuCheckbox);
-gDevTools.on("toolbox-ready", gDevToolsBrowser._connectToProfiler);
 gDevTools.on("toolbox-destroyed", gDevToolsBrowser._updateMenuCheckbox);
 
 Services.obs.addObserver(gDevToolsBrowser.destroy, "quit-application", false);

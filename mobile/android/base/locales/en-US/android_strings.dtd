@@ -6,8 +6,8 @@
 <!ENTITY  no_space_to_start_error "There is not enough space available for &brandShortName; to start.">
 <!ENTITY  error_loading_file "An error occurred when trying to load files required to run &brandShortName;">
 
-<!ENTITY  onboard_start_message2 "Welcome to &brandShortName;">
-<!ENTITY  onboard_start_subtext2 "More privacy features and ways to customize than ever.">
+<!ENTITY  onboard_start_message3 "Browse with &brandShortName;">
+<!ENTITY  onboard_start_subtext3 "Make your mobile Web browsing experience truly your own.">
 <!ENTITY  onboard_start_button_account "Sign in to &brandShortName;">
 <!ENTITY  onboard_start_button_browser "Start Browsing">
 
@@ -114,7 +114,6 @@
      to. -->
 <!ENTITY overlay_share_send_tab_btn_label "Send to another device">
 <!ENTITY overlay_share_no_url "No link found in this share">
-<!ENTITY overlay_share_retry "Try again">
 <!ENTITY overlay_share_select_device "Select device">
 <!-- Localization note (overlay_no_synced_devices) : Used when the menu option
      to send a tab to a synced device is pressed and no other synced devices
@@ -150,8 +149,6 @@
      it is applicable. -->
 <!ENTITY pref_search_hint "TIP: Add any website to your list of search providers by long-pressing on its search field and then tapping the &formatI; icon.">
 <!ENTITY pref_category_devtools "Developer tools">
-<!ENTITY pref_category_devtools_summary "Remote debugging, paint flashing">
-<!ENTITY pref_developer_paint_flashing "Paint flashing">
 <!ENTITY pref_developer_remotedebugging "Remote debugging">
 <!ENTITY pref_category_logins "Logins">
 <!ENTITY pref_remember_signons "Remember passwords">
@@ -192,22 +189,22 @@
 <!ENTITY pref_donottrack_title "Do not track">
 <!ENTITY pref_donottrack_summary "&brandShortName; will tell sites that you do not want to be tracked">
 
-<!ENTITY tab_queue_toast_message "Open later">
+<!ENTITY tab_queue_toast_message2 "Tab queued in &brandShortName;">
 <!ENTITY tab_queue_toast_action "Open now">
-<!-- Localization note (tab_queue_notification_text_plural) : The
+<!ENTITY tab_queue_prompt_title "Opening multiple links?">
+<!ENTITY tab_queue_prompt_text2 "Open them without switching to &brandShortName; each time.">
+<!ENTITY tab_queue_prompt_tip_text "you can change this later in Settings">
+<!ENTITY tab_queue_prompt_positive_action_button "Enable">
+<!ENTITY tab_queue_prompt_negative_action_button "Not now">
+<!ENTITY tab_queue_notification_title "&brandShortName;">
+<!-- Localization note (tab_queue_notification_text_plural2) : The
      formatD is replaced with the number of tabs queued.  The
      number of tabs queued is always more than one.  We can't use
      Android plural forms, sadly. See Bug #753859. -->
-<!ENTITY tab_queue_notification_text_plural "&formatD; tabs queued">
-<!-- Localization note (tab_queue_notification_title_plural) : This is the
-     title of a notification; we expect more than one tab queued. -->
-<!ENTITY tab_queue_notification_title_plural "Tabs Queued">
-<!-- Localization note (tab_queue_notification_title_singular) : This is the
-     title of a notification; we expect only one tab queued. -->
-<!ENTITY tab_queue_notification_title_singular "Tab Queued">
-<!-- Localization note (tab_queue_notification_text_singular) : This is the
+<!ENTITY tab_queue_notification_text_plural2 "&formatD; tabs waiting">
+<!-- Localization note (tab_queue_notification_text_singular2) : This is the
      text of a notification; we expect only one tab queued. -->
-<!ENTITY tab_queue_notification_text_singular "1 tab queued">
+<!ENTITY tab_queue_notification_text_singular2 "1 tab waiting">
 
 <!ENTITY pref_char_encoding "Character encoding">
 <!ENTITY pref_char_encoding_on "Show menu">
@@ -255,7 +252,8 @@ size. -->
 <!ENTITY pref_import_android "Import from Android">
 <!ENTITY pref_import_android_summary "Import bookmarks and history from the native browser">
 <!ENTITY pref_private_data_history2 "Browsing history">
-<!ENTITY pref_private_data_formdata "Form &amp; search history">
+<!ENTITY pref_private_data_searchHistory "Search history">
+<!ENTITY pref_private_data_formdata2 "Form history">
 <!ENTITY pref_private_data_cookies2 "Cookies &amp; active logins">
 <!ENTITY pref_private_data_passwords "Saved passwords">
 <!ENTITY pref_private_data_cache "Cache">
@@ -380,6 +378,7 @@ size. -->
 <!ENTITY doorhanger_login_edit_username_hint "Username">
 <!ENTITY doorhanger_login_edit_password_hint "Password">
 <!ENTITY doorhanger_login_edit_toggle "Show password">
+<!ENTITY doorhanger_login_edit_toast_error "Failed to save login">
 
 <!ENTITY pref_titlebar_mode "Title bar">
 <!ENTITY pref_titlebar_mode_title "Show page title">
@@ -390,8 +389,8 @@ size. -->
 <!ENTITY pref_scroll_title_bar2 "Full-screen browsing">
 <!ENTITY pref_scroll_title_bar_summary "Hide the &brandShortName; title bar when scrolling down a page">
 
-<!ENTITY pref_tab_queue_title "Open later">
-<!ENTITY pref_tab_queue_summary "Prevent tabs from opening immediately, but open all queued tabs the next time &brandShortName; loads.">
+<!ENTITY pref_tab_queue_title2 "Open multiple links">
+<!ENTITY pref_tab_queue_summary2 "Queue links for later instead of switching to &brandShortName; each time">
 
 <!-- Localization note (page_removed): This string appears in a toast message when
      any page is removed frome about:home. This includes pages that are in history,
@@ -440,6 +439,8 @@ size. -->
 <!ENTITY button_set "Set">
 <!ENTITY button_clear "Clear">
 <!ENTITY button_remember "Remember">
+
+<!ENTITY firstrun_panel_title_welcome "Welcome">
 
 <!ENTITY home_top_sites_title "Top Sites">
 <!-- Localization note (home_top_sites_add): This string is used as placeholder
@@ -612,6 +613,14 @@ just addresses the organization to follow, e.g. "This site is run by " -->
 <!ENTITY ellipsis "…">
 
 <!ENTITY colon ":">
+
+<!-- LOCALIZATION NOTE (percent): The percent sign is appended after a number to
+     display a percentage value. formatS is the number, #37 is the code to display a percent sign.
+     This format string is typically used by getString method, in such method the percent sign
+     is a reserved caracter. In order to display one percent sign in the result of getString,
+     double percent signs must be inserted in the format string.
+     This entity is used in the zoomed view to display the zoom factor-->
+<!ENTITY percent "&formatS;&#37;&#37;">
 
 <!-- These are only used for accessibility for the done and overflow-menu buttons in the actionbar.
      They are never shown to users -->

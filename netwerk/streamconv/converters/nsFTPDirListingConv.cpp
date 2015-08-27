@@ -19,7 +19,6 @@
 #include "ParseFTPList.h"
 #include <algorithm>
 
-#if defined(PR_LOGGING)
 //
 // Log module for FTP dir listing stream converter logging...
 //
@@ -33,7 +32,6 @@
 //
 PRLogModuleInfo* gFTPDirListConvLog = nullptr;
 
-#endif /* PR_LOGGING */
 
 // nsISupports implementation
 NS_IMPL_ISUPPORTS(nsFTPDirListingConv,
@@ -142,7 +140,7 @@ nsFTPDirListingConv::OnDataAvailable(nsIRequest* request, nsISupports *ctxt,
     
     nsUnescape(unescData);
     printf("::OnData() sending the following %d bytes...\n\n%s\n\n", indexFormat.Length(), unescData);
-    nsMemory::Free(unescData);
+    free(unescData);
 #endif // DEBUG_dougt
 
     // if there's any data left over, buffer it.
@@ -193,7 +191,6 @@ nsFTPDirListingConv::~nsFTPDirListingConv() {
 
 nsresult
 nsFTPDirListingConv::Init() {
-#if defined(PR_LOGGING)
     //
     // Initialize the global PRLogModule for FTP Protocol logging 
     // if necessary...
@@ -201,7 +198,6 @@ nsFTPDirListingConv::Init() {
     if (nullptr == gFTPDirListConvLog) {
         gFTPDirListConvLog = PR_NewLogModule("nsFTPDirListingConv");
     }
-#endif /* PR_LOGGING */
 
     return NS_OK;
 }
@@ -325,7 +321,7 @@ nsFTPDirListingConv::DigestBufferLines(char *aBuffer, nsCString &aString) {
 
         char *escapedDate = nsEscape(buffer, url_Path);
         aString.Append(escapedDate);
-        nsMemory::Free(escapedDate);
+        free(escapedDate);
         aString.Append(' ');
 
         // ENTRY TYPE

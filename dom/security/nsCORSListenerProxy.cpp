@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 3; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -35,6 +36,7 @@
 #include "nsIDOMWindowUtils.h"
 #include "nsIDOMWindow.h"
 #include "nsINetworkInterceptController.h"
+#include "nsNullPrincipal.h"
 #include <algorithm>
 
 using namespace mozilla;
@@ -470,7 +472,7 @@ nsCORSListenerProxy::~nsCORSListenerProxy()
 }
 
 nsresult
-nsCORSListenerProxy::Init(nsIChannel* aChannel, bool aAllowDataURI)
+nsCORSListenerProxy::Init(nsIChannel* aChannel, DataURIHandling aAllowDataURI)
 {
   aChannel->GetNotificationCallbacks(getter_AddRefs(mOuterNotificationCallbacks));
   aChannel->SetNotificationCallbacks(this);
@@ -752,7 +754,7 @@ nsCORSListenerProxy::AsyncOnChannelRedirect(nsIChannel *aOldChannel,
         if (NS_SUCCEEDED(rv)) {
           if (!equal) {
             // Spec says to set our source origin to a unique origin.
-            mOriginHeaderPrincipal = do_CreateInstance("@mozilla.org/nullprincipal;1");
+            mOriginHeaderPrincipal = nsNullPrincipal::Create();
             if (!mOriginHeaderPrincipal) {
               rv = NS_ERROR_OUT_OF_MEMORY;
             }
@@ -797,7 +799,7 @@ nsCORSListenerProxy::OnRedirectVerifyCallback(nsresult result)
   NS_ASSERTION(mNewRedirectChannel, "mNewRedirectChannel not set in callback");
 
   if (NS_SUCCEEDED(result)) {
-      nsresult rv = UpdateChannel(mNewRedirectChannel);
+    nsresult rv = UpdateChannel(mNewRedirectChannel, DataURIHandling::Disallow);
       if (NS_FAILED(rv)) {
           NS_WARNING("nsCORSListenerProxy::OnRedirectVerifyCallback: "
                      "UpdateChannel() returned failure");
@@ -817,7 +819,8 @@ nsCORSListenerProxy::OnRedirectVerifyCallback(nsresult result)
 }
 
 nsresult
-nsCORSListenerProxy::UpdateChannel(nsIChannel* aChannel, bool aAllowDataURI)
+nsCORSListenerProxy::UpdateChannel(nsIChannel* aChannel,
+                                   DataURIHandling aAllowDataURI)
 {
   nsCOMPtr<nsIURI> uri, originalURI;
   nsresult rv = NS_GetFinalChannelURI(aChannel, getter_AddRefs(uri));
@@ -826,7 +829,7 @@ nsCORSListenerProxy::UpdateChannel(nsIChannel* aChannel, bool aAllowDataURI)
   NS_ENSURE_SUCCESS(rv, rv);
 
   // exempt data URIs from the same origin check.
-  if (aAllowDataURI && originalURI == uri) {
+  if (aAllowDataURI == DataURIHandling::Allow && originalURI == uri) {
     bool dataScheme = false;
     rv = uri->SchemeIs("data", &dataScheme);
     NS_ENSURE_SUCCESS(rv, rv);
@@ -1239,7 +1242,7 @@ NS_StartCORSPreflight(nsIChannel* aRequestChannel,
     new nsCORSListenerProxy(preflightListener, aPrincipal,
                             aWithCredentials, method,
                             aUnsafeHeaders);
-  rv = corsListener->Init(preflightChannel);
+  rv = corsListener->Init(preflightChannel, DataURIHandling::Disallow);
   NS_ENSURE_SUCCESS(rv, rv);
   preflightListener = corsListener;
 

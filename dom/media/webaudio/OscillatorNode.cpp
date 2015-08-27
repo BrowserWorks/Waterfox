@@ -23,7 +23,7 @@ NS_INTERFACE_MAP_END_INHERITING(AudioNode)
 NS_IMPL_ADDREF_INHERITED(OscillatorNode, AudioNode)
 NS_IMPL_RELEASE_INHERITED(OscillatorNode, AudioNode)
 
-class OscillatorNodeEngine : public AudioNodeEngine
+class OscillatorNodeEngine final : public AudioNodeEngine
 {
 public:
   OscillatorNodeEngine(AudioNode* aNode, AudioDestinationNode* aDestination)
@@ -381,8 +381,8 @@ OscillatorNode::OscillatorNode(AudioContext* aContext)
               ChannelCountMode::Max,
               ChannelInterpretation::Speakers)
   , mType(OscillatorType::Sine)
-  , mFrequency(new AudioParam(this, SendFrequencyToStream, 440.0f))
-  , mDetune(new AudioParam(this, SendDetuneToStream, 0.0f))
+  , mFrequency(new AudioParam(this, SendFrequencyToStream, 440.0f, "frequency"))
+  , mDetune(new AudioParam(this, SendDetuneToStream, 0.0f, "detune"))
   , mStartCalled(false)
   , mStopped(false)
 {
@@ -515,12 +515,12 @@ void
 OscillatorNode::NotifyMainThreadStateChanged()
 {
   if (mStream->IsFinished()) {
-    class EndedEventDispatcher : public nsRunnable
+    class EndedEventDispatcher final : public nsRunnable
     {
     public:
       explicit EndedEventDispatcher(OscillatorNode* aNode)
         : mNode(aNode) {}
-      NS_IMETHODIMP Run()
+      NS_IMETHOD Run() override
       {
         // If it's not safe to run scripts right now, schedule this to run later
         if (!nsContentUtils::IsSafeToRunScript()) {

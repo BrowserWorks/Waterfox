@@ -105,7 +105,7 @@ loop.webapp = (function($, _, OT, mozL10n) {
           <h3>{mozL10n.get("promote_firefox_hello_heading", {brandShortname: mozL10n.get("brandShortname")})}</h3>
           <p>
             <a className="btn btn-large btn-accept"
-               href={loop.config.brandWebsiteUrl}>
+               href={loop.config.downloadFirefoxUrl}>
               {mozL10n.get("get_firefox_button", {
                 brandShortname: mozL10n.get("brandShortname")
               })}
@@ -386,7 +386,7 @@ loop.webapp = (function($, _, OT, mozL10n) {
   });
 
   var InitiateCallButton = React.createClass({
-    mixins: [sharedMixins.DropdownMenuMixin],
+    mixins: [sharedMixins.DropdownMenuMixin()],
 
     propTypes: {
       caption: React.PropTypes.string.isRequired,
@@ -610,11 +610,12 @@ loop.webapp = (function($, _, OT, mozL10n) {
   var StartConversationView = React.createClass({
     render: function() {
       document.title = mozL10n.get("clientShortname2");
-      return <InitiateConversationView
-        {...this.props}
-        title={mozL10n.get("initiate_call_button_label2")}
-        callButtonLabel={mozL10n.get("initiate_audio_video_call_button2")}
-      />;
+      return (
+        <InitiateConversationView
+          {...this.props}
+          title={mozL10n.get("initiate_call_button_label2")}
+          callButtonLabel={mozL10n.get("initiate_audio_video_call_button2")}/>
+      );
     }
   });
 
@@ -629,10 +630,12 @@ loop.webapp = (function($, _, OT, mozL10n) {
       document.title = mozL10n.get("standalone_title_with_status",
                                    {clientShortname: mozL10n.get("clientShortname2"),
                                     currentStatus: mozL10n.get("status_error")});
-      return <InitiateConversationView
-        {...this.props}
-        title={mozL10n.get("call_failed_title")}
-        callButtonLabel={mozL10n.get("retry_call_button")} />;
+      return (
+        <InitiateConversationView
+          {...this.props}
+          title={mozL10n.get("call_failed_title")}
+          callButtonLabel={mozL10n.get("retry_call_button")} />
+      );
     }
   });
 
@@ -855,7 +858,7 @@ loop.webapp = (function($, _, OT, mozL10n) {
       this._websocket = new loop.CallConnectionWebSocket({
         url: this.props.conversation.get("progressURL"),
         websocketToken: this.props.conversation.get("websocketToken"),
-        callId: this.props.conversation.get("callId"),
+        callId: this.props.conversation.get("callId")
       });
       this._websocket.promiseConnect().then(function() {
       }.bind(this), function() {
@@ -927,7 +930,7 @@ loop.webapp = (function($, _, OT, mozL10n) {
       if (this.state.callStatus !== "failure") {
         this.setState({callStatus: "end"});
       }
-    },
+    }
   });
 
   /**
@@ -1084,8 +1087,16 @@ loop.webapp = (function($, _, OT, mozL10n) {
     var feedbackStore = new loop.store.FeedbackStore(dispatcher, {
       feedbackClient: feedbackClient
     });
+    var standaloneMetricsStore = new loop.store.StandaloneMetricsStore(dispatcher, {
+      activeRoomStore: activeRoomStore
+    });
 
-    loop.store.StoreMixin.register({feedbackStore: feedbackStore});
+    loop.store.StoreMixin.register({
+      feedbackStore: feedbackStore,
+      // This isn't used in any views, but is saved here to ensure it
+      // is kept alive.
+      standaloneMetricsStore: standaloneMetricsStore
+    });
 
     window.addEventListener("unload", function() {
       dispatcher.dispatch(new sharedActions.WindowUnload());
@@ -1109,7 +1120,8 @@ loop.webapp = (function($, _, OT, mozL10n) {
     var locationData = sharedUtils.locationData();
 
     dispatcher.dispatch(new sharedActions.ExtractTokenInfo({
-      windowPath: locationData.pathname
+      windowPath: locationData.pathname,
+      windowHash: locationData.hash
     }));
   }
 

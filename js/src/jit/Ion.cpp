@@ -32,7 +32,6 @@
 #include "jit/JitCompartment.h"
 #include "jit/JitSpewer.h"
 #include "jit/LICM.h"
-#include "jit/LinearScan.h"
 #include "jit/LIR.h"
 #include "jit/LoopUnroller.h"
 #include "jit/Lowering.h"
@@ -437,10 +436,32 @@ FinishAllOffThreadCompilations(JSCompartment* comp)
     }
 }
 
+class AutoLazyLinkExitFrame
+{
+    JitActivation* jitActivation_;
+    MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
+
+  public:
+    explicit AutoLazyLinkExitFrame(JitActivation* jitActivation
+                                   MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
+      : jitActivation_(jitActivation)
+    {
+        MOZ_GUARD_OBJECT_NOTIFIER_INIT;
+        MOZ_ASSERT(!jitActivation_->isLazyLinkExitFrame(),
+                   "Cannot stack multiple lazy-link frames.");
+        jitActivation_->setLazyLinkExitFrame(true);
+    }
+
+    ~AutoLazyLinkExitFrame() {
+        jitActivation_->setLazyLinkExitFrame(false);
+    }
+};
+
 uint8_t*
 jit::LazyLinkTopActivation(JSContext* cx)
 {
     JitActivationIterator iter(cx->runtime());
+    AutoLazyLinkExitFrame lazyLinkExitFrame(iter->asJit());
 
     // First frame should be an exit frame.
     JitFrameIterator it(iter);
@@ -493,7 +514,7 @@ JitRuntime::Mark(JSTracer* trc)
     Zone* zone = trc->runtime()->atomsCompartment()->zone();
     for (gc::ZoneCellIterUnderGC i(zone, gc::AllocKind::JITCODE); !i.done(); i.next()) {
         JitCode* code = i.get<JitCode>();
-        MarkJitCodeRoot(trc, &code, "wrapper");
+        TraceRoot(trc, &code, "wrapper");
     }
 }
 
@@ -543,18 +564,18 @@ JitCompartment::sweep(FreeOp* fop, JSCompartment* compartment)
     if (!stubCodes_->lookup(static_cast<uint32_t>(ICStub::SetProp_Fallback)))
         baselineSetPropReturnAddr_ = nullptr;
 
-    if (stringConcatStub_ && !IsJitCodeMarked(&stringConcatStub_))
+    if (stringConcatStub_ && !IsMarkedUnbarriered(&stringConcatStub_))
         stringConcatStub_ = nullptr;
 
-    if (regExpExecStub_ && !IsJitCodeMarked(&regExpExecStub_))
+    if (regExpExecStub_ && !IsMarkedUnbarriered(&regExpExecStub_))
         regExpExecStub_ = nullptr;
 
-    if (regExpTestStub_ && !IsJitCodeMarked(&regExpTestStub_))
+    if (regExpTestStub_ && !IsMarkedUnbarriered(&regExpTestStub_))
         regExpTestStub_ = nullptr;
 
     for (size_t i = 0; i <= SimdTypeDescr::LAST_TYPE; i++) {
         ReadBarrieredObject& obj = simdTemplateObjects_[i];
-        if (obj && IsObjectAboutToBeFinalized(obj.unsafeGet()))
+        if (obj && IsAboutToBeFinalized(&obj))
             obj.set(nullptr);
     }
 }
@@ -640,7 +661,7 @@ JitCode::copyFrom(MacroAssembler& masm)
 }
 
 void
-JitCode::trace(JSTracer* trc)
+JitCode::traceChildren(JSTracer* trc)
 {
     // Note that we cannot mark invalidated scripts, since we've basically
     // corrupted the code stream by injecting bailouts.
@@ -860,13 +881,13 @@ void
 IonScript::trace(JSTracer* trc)
 {
     if (method_)
-        MarkJitCode(trc, &method_, "method");
+        TraceEdge(trc, &method_, "method");
 
     if (deoptTable_)
-        MarkJitCode(trc, &deoptTable_, "deoptimizationTable");
+        TraceEdge(trc, &deoptTable_, "deoptimizationTable");
 
     for (size_t i = 0; i < numConstants(); i++)
-        gc::MarkValue(trc, &getConstant(i), "constant");
+        TraceEdge(trc, &getConstant(i), "constant");
 }
 
 /* static */ void
@@ -1041,10 +1062,8 @@ IonScript::getSafepointIndex(uint32_t disp) const
 const OsiIndex*
 IonScript::getOsiIndex(uint32_t disp) const
 {
-    for (const OsiIndex* it = osiIndices(), *end = osiIndices() + osiIndexEntries_;
-         it != end;
-         ++it)
-    {
+    const OsiIndex* end = osiIndices() + osiIndexEntries_;
+    for (const OsiIndex* it = osiIndices(); it != end; ++it) {
         if (it->returnPointDisplacement() == disp)
             return it;
     }
@@ -1528,25 +1547,6 @@ GenerateLIR(MIRGenerator* mir)
         AutoTraceLog log(logger, TraceLogger_RegisterAllocation);
 
         switch (mir->optimizationInfo().registerAllocator()) {
-          case RegisterAllocator_LSRA: {
-#ifdef DEBUG
-            if (!integrity.record())
-                return nullptr;
-#endif
-
-            LinearScanAllocator regalloc(mir, &lirgen, *lir);
-            if (!regalloc.go())
-                return nullptr;
-
-#ifdef DEBUG
-            if (!integrity.check(false))
-                return nullptr;
-#endif
-
-            IonSpewPass("Allocate Registers [LSRA]", &regalloc);
-            break;
-          }
-
           case RegisterAllocator_Backtracking: {
 #ifdef DEBUG
             if (!integrity.record())
@@ -1723,23 +1723,22 @@ AttachFinishedCompilations(JSContext* cx)
 void
 MIRGenerator::traceNurseryObjects(JSTracer* trc)
 {
-    MarkObjectRootRange(trc, nurseryObjects_.length(), nurseryObjects_.begin(), "ion-nursery-objects");
+    TraceRootRange(trc, nurseryObjects_.length(), nurseryObjects_.begin(), "ion-nursery-objects");
 }
 
 class MarkOffThreadNurseryObjects : public gc::BufferableRef
 {
   public:
-    void mark(JSTracer* trc);
+    void trace(JSTracer* trc) override;
 };
 
 void
-MarkOffThreadNurseryObjects::mark(JSTracer* trc)
+MarkOffThreadNurseryObjects::trace(JSTracer* trc)
 {
     JSRuntime* rt = trc->runtime();
 
     if (trc->runtime()->isHeapMinorCollecting()) {
-        // Only reset hasIonNurseryObjects if we're doing an actual minor GC,
-        // not if we're, for instance, verifying post barriers.
+        // Only reset hasIonNurseryObjects if we're doing an actual minor GC.
         MOZ_ASSERT(rt->jitRuntime()->hasIonNurseryObjects());
         rt->jitRuntime()->setHasIonNurseryObjects(false);
     }
@@ -2392,7 +2391,7 @@ EnterIon(JSContext* cx, EnterJitData& data)
     data.result.setInt32(data.numActualArgs);
     {
         AssertCompartmentUnchanged pcc(cx);
-        JitActivation activation(cx);
+        JitActivation activation(cx, data.calleeToken);
 
         CALL_GENERATED_CODE(enter, data.jitcode, data.maxArgc, data.maxArgv, /* osrFrame = */nullptr, data.calleeToken,
                             /* scopeChain = */ nullptr, 0, data.result.address());
@@ -2489,14 +2488,15 @@ jit::FastInvoke(JSContext* cx, HandleFunction fun, CallArgs& args)
 {
     JS_CHECK_RECURSION(cx, return JitExec_Error);
 
-    IonScript* ion = fun->nonLazyScript()->ionScript();
+    RootedScript script(cx, fun->nonLazyScript());
+    IonScript* ion = script->ionScript();
     JitCode* code = ion->method();
     void* jitcode = code->raw();
 
     MOZ_ASSERT(jit::IsIonEnabled(cx));
     MOZ_ASSERT(!ion->bailoutExpected());
 
-    JitActivation activation(cx);
+    JitActivation activation(cx, CalleeToToken(script));
 
     EnterJitCode enter = cx->runtime()->jitRuntime()->enterIon();
     void* calleeToken = CalleeToToken(fun, /* constructing = */ false);
@@ -2528,11 +2528,12 @@ InvalidateActivation(FreeOp* fop, const JitActivationIterator& activations, bool
     size_t frameno = 1;
 
     for (JitFrameIterator it(activations); !it.done(); ++it, ++frameno) {
-        MOZ_ASSERT_IF(frameno == 1, it.type() == JitFrame_Exit || it.type() == JitFrame_Bailout);
+        MOZ_ASSERT_IF(frameno == 1, it.isExitFrame() || it.type() == JitFrame_Bailout);
 
 #ifdef DEBUG
         switch (it.type()) {
           case JitFrame_Exit:
+          case JitFrame_LazyLink:
             JitSpew(JitSpew_IonInvalidate, "#%d exit frame @ %p", frameno, it.fp());
             break;
           case JitFrame_BaselineJS:
@@ -2639,7 +2640,7 @@ InvalidateActivation(FreeOp* fop, const JitActivationIterator& activations, bool
             // embedded in the JitCode. Perform one final trace of the
             // JitCode for the incremental GC, as it must know about
             // those edges.
-            ionCode->trace(zone->barrierTracer());
+            ionCode->traceChildren(zone->barrierTracer());
         }
         ionCode->setInvalidated();
 

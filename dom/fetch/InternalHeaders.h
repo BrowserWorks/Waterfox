@@ -14,8 +14,6 @@
 #include "nsClassHashtable.h"
 #include "nsWrapperCache.h"
 
-class nsPIDOMWindow;
-
 namespace mozilla {
 
 class ErrorResult;
@@ -23,8 +21,6 @@ class ErrorResult;
 namespace dom {
 
 template<typename T> class MozMap;
-class HeadersOrByteStringSequenceSequenceOrByteStringMozMap;
-class PHeadersEntry;
 
 class InternalHeaders final
 {
@@ -62,7 +58,7 @@ public:
     MOZ_ASSERT(!result.Failed());
   }
 
-  explicit InternalHeaders(const nsTArray<PHeadersEntry>& aHeaders,
+  explicit InternalHeaders(const nsTArray<Entry>&& aHeaders,
                            HeadersGuardEnum aGuard = HeadersGuardEnum::None);
 
   void Append(const nsACString& aName, const nsACString& aValue,
@@ -90,9 +86,6 @@ public:
 
   static already_AddRefed<InternalHeaders>
   CORSHeaders(InternalHeaders* aHeaders);
-
-  void
-  GetPHeaders(nsTArray<PHeadersEntry>& aPHeadersOut) const;
 
   void
   GetEntries(nsTArray<InternalHeaders::Entry>& aEntries) const;

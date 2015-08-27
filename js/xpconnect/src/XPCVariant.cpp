@@ -68,15 +68,7 @@ XPCTraceableVariant::~XPCTraceableVariant()
 void XPCTraceableVariant::TraceJS(JSTracer* trc)
 {
     MOZ_ASSERT(mJSVal.isMarkable());
-    trc->setTracingDetails(GetTraceName, this, 0);
     JS_CallValueTracer(trc, &mJSVal, "XPCTraceableVariant::mJSVal");
-}
-
-// static
-void
-XPCTraceableVariant::GetTraceName(JSTracer* trc, char* buf, size_t bufsize)
-{
-    JS_snprintf(buf, bufsize, "XPCVariant[0x%p].mJSVal", trc->debugPrintArg());
 }
 
 NS_IMPL_CYCLE_COLLECTION_CLASS(XPCVariant)
@@ -495,7 +487,7 @@ XPCVariant::VariantDataToJS(nsIVariant* variant,
                 return false;
             bool success = XPCConvert::NativeData2JS(pJSVal, (const void*)&pc,
                                                      TD_PSTRING, &iid, pErr);
-            nsMemory::Free(pc);
+            free(pc);
             return success;
         }
         case nsIDataType::VTYPE_STRING_SIZE_IS:
@@ -506,7 +498,7 @@ XPCVariant::VariantDataToJS(nsIVariant* variant,
                 return false;
             bool success = XPCConvert::NativeStringWithSize2JS(pJSVal, (const void*)&pc,
                                                                TD_PSTRING_SIZE_IS, size, pErr);
-            nsMemory::Free(pc);
+            free(pc);
             return success;
         }
         case nsIDataType::VTYPE_WCHAR_STR:
@@ -516,7 +508,7 @@ XPCVariant::VariantDataToJS(nsIVariant* variant,
                 return false;
             bool success = XPCConvert::NativeData2JS(pJSVal, (const void*)&pwc,
                                                      TD_PSTRING, &iid, pErr);
-            nsMemory::Free(pwc);
+            free(pwc);
             return success;
         }
         case nsIDataType::VTYPE_WSTRING_SIZE_IS:
@@ -527,7 +519,7 @@ XPCVariant::VariantDataToJS(nsIVariant* variant,
                 return false;
             bool success = XPCConvert::NativeStringWithSize2JS(pJSVal, (const void*)&pwc,
                                                                TD_PWSTRING_SIZE_IS, size, pErr);
-            nsMemory::Free(pwc);
+            free(pwc);
             return success;
         }
         case nsIDataType::VTYPE_INTERFACE:
@@ -539,7 +531,7 @@ XPCVariant::VariantDataToJS(nsIVariant* variant,
                 return false;
 
             iid = *piid;
-            nsMemory::Free((char*)piid);
+            free((char*)piid);
 
             bool success = XPCConvert::NativeData2JS(pJSVal, (const void*)&pi,
                                                      TD_INTERFACE_IS_TYPE, &iid, pErr);

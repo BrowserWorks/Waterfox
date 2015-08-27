@@ -11,6 +11,7 @@
 #include "nsISynthVoiceRegistry.h"
 #include "nsRefPtrHashtable.h"
 #include "nsTArray.h"
+#include "MediaStreamGraph.h"
 
 class nsISpeechService;
 
@@ -35,8 +36,8 @@ public:
                                                 const nsAString& aDocLang);
 
   void Speak(const nsAString& aText, const nsAString& aLang,
-             const nsAString& aUri, const float& aRate, const float& aPitch,
-             nsSpeechTask* aTask);
+             const nsAString& aUri, const float& aVolume,  const float& aRate,
+             const float& aPitch, nsSpeechTask* aTask);
 
   void SendVoices(InfallibleTArray<RemoteVoice>* aVoices,
                   InfallibleTArray<nsString>* aDefaults);
@@ -73,6 +74,8 @@ private:
   nsRefPtrHashtable<nsStringHashKey, VoiceData> mUriVoiceMap;
 
   SpeechSynthesisChild* mSpeechSynthChild;
+
+  nsRefPtr<ProcessedMediaStream> mStream;
 };
 
 } // namespace dom

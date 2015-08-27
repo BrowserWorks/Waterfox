@@ -137,7 +137,8 @@ describe("loop.conversation", function() {
       return TestUtils.renderIntoDocument(
         React.createElement(loop.conversation.AppControllerView, {
           roomStore: roomStore,
-          dispatcher: dispatcher
+          dispatcher: dispatcher,
+          mozLoop: navigator.mozLoop
         }));
     }
 
@@ -161,7 +162,7 @@ describe("loop.conversation", function() {
       }});
 
       roomStore = new loop.store.RoomStore(dispatcher, {
-        mozLoop: navigator.mozLoop,
+        mozLoop: navigator.mozLoop
       });
       conversationAppStore = new loop.store.ConversationAppStore({
         dispatcher: dispatcher,

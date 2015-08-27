@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-// vim: ft=cpp tw=78 sw=2 et ts=2
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -522,40 +522,99 @@ AutoJSAPI::StealException(JS::MutableHandle<JS::Value> aVal)
 }
 
 AutoEntryScript::AutoEntryScript(nsIGlobalObject* aGlobalObject,
+                                 const char *aReason,
                                  bool aIsMainThread,
                                  JSContext* aCx)
   : AutoJSAPI(aGlobalObject, aIsMainThread,
               aCx ? aCx : FindJSContext(aGlobalObject))
   , ScriptSettingsStackEntry(aGlobalObject, /* aCandidate = */ true)
   , mWebIDLCallerPrincipal(nullptr)
-  , mDocShellForJSRunToCompletion(nullptr)
 {
   MOZ_ASSERT(aGlobalObject);
   MOZ_ASSERT_IF(!aCx, aIsMainThread); // cx is mandatory off-main-thread.
   MOZ_ASSERT_IF(aCx && aIsMainThread, aCx == FindJSContext(aGlobalObject));
 
   if (aIsMainThread && gRunToCompletionListeners > 0) {
-    nsCOMPtr<nsPIDOMWindow> window = do_QueryInterface(aGlobalObject);
-    if (window) {
-        mDocShellForJSRunToCompletion = window->GetDocShell();
-    }
-  }
-
-  if (mDocShellForJSRunToCompletion) {
-    mDocShellForJSRunToCompletion->NotifyJSRunToCompletionStart();
+    mDocShellEntryMonitor.emplace(cx(), aReason);
   }
 }
 
 AutoEntryScript::~AutoEntryScript()
 {
-  if (mDocShellForJSRunToCompletion) {
-    mDocShellForJSRunToCompletion->NotifyJSRunToCompletionStop();
-  }
-
   // GC when we pop a script entry point. This is a useful heuristic that helps
   // us out on certain (flawed) benchmarks like sunspider, because it lets us
   // avoid GCing during the timing loop.
   JS_MaybeGC(cx());
+}
+
+AutoEntryScript::DocshellEntryMonitor::DocshellEntryMonitor(JSContext* aCx,
+                                                            const char* aReason)
+  : JS::dbg::AutoEntryMonitor(aCx)
+  , mReason(aReason)
+{
+}
+
+void
+AutoEntryScript::DocshellEntryMonitor::Entry(JSContext* aCx, JSFunction* aFunction,
+                                             JSScript* aScript)
+{
+  JS::Rooted<JSFunction*> rootedFunction(aCx);
+  if (aFunction) {
+    rootedFunction = aFunction;
+  }
+  JS::Rooted<JSScript*> rootedScript(aCx);
+  if (aScript) {
+    rootedScript = aScript;
+  }
+
+  nsCOMPtr<nsPIDOMWindow> window =
+    do_QueryInterface(xpc::NativeGlobal(JS::CurrentGlobalOrNull(aCx)));
+  if (!window || !window->GetDocShell() ||
+      !window->GetDocShell()->GetRecordProfileTimelineMarkers()) {
+    return;
+  }
+
+  nsCOMPtr<nsIDocShell> docShellForJSRunToCompletion = window->GetDocShell();
+  nsString filename;
+  uint32_t lineNumber = 0;
+
+  js::AutoStableStringChars functionName(aCx);
+  if (rootedFunction) {
+    JS::Rooted<JSString*> displayId(aCx, JS_GetFunctionDisplayId(rootedFunction));
+    if (displayId) {
+      functionName.initTwoByte(aCx, displayId);
+    }
+  }
+
+  if (!rootedScript) {
+    rootedScript = JS_GetFunctionScript(aCx, rootedFunction);
+  }
+  if (rootedScript) {
+    filename = NS_ConvertUTF8toUTF16(JS_GetScriptFilename(rootedScript));
+    lineNumber = JS_GetScriptBaseLineNumber(aCx, rootedScript);
+  }
+
+  if (!filename.IsEmpty() || functionName.isTwoByte()) {
+    const char16_t* functionNameChars = functionName.isTwoByte() ?
+      functionName.twoByteChars() : nullptr;
+
+    docShellForJSRunToCompletion->NotifyJSRunToCompletionStart(mReason,
+                                                               functionNameChars,
+                                                               filename.BeginReading(),
+                                                               lineNumber);
+  }
+}
+
+void
+AutoEntryScript::DocshellEntryMonitor::Exit(JSContext* aCx)
+{
+  nsCOMPtr<nsPIDOMWindow> window =
+    do_QueryInterface(xpc::NativeGlobal(JS::CurrentGlobalOrNull(aCx)));
+  // Not really worth checking GetRecordProfileTimelineMarkers here.
+  if (window && window->GetDocShell()) {
+    nsCOMPtr<nsIDocShell> docShellForJSRunToCompletion = window->GetDocShell();
+    docShellForJSRunToCompletion->NotifyJSRunToCompletionStop();
+  }
 }
 
 AutoIncumbentScript::AutoIncumbentScript(nsIGlobalObject* aGlobalObject)

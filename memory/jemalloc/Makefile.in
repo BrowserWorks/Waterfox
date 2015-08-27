@@ -11,3 +11,27 @@ include $(topsrcdir)/config/rules.mk
 ifdef GNU_CC
 CFLAGS += -std=gnu99
 endif
+
+ifeq ($(HOST_OS_ARCH),WINNT)
+arena.$(OBJ_SUFFIX): CFLAGS := -Od
+atomic.$(OBJ_SUFFIX): CFLAGS := -Od
+base.$(OBJ_SUFFIX): CFLAGS := -Od
+bitmap.$(OBJ_SUFFIX): CFLAGS := -Od
+chunk.$(OBJ_SUFFIX): CFLAGS := -Od
+chunk_dss.$(OBJ_SUFFIX): CFLAGS := -Od
+chunk_mmap.$(OBJ_SUFFIX): CFLAGS := -Od
+ckh.$(OBJ_SUFFIX): CFLAGS := -Od
+extent.$(OBJ_SUFFIX): CFLAGS := -Od
+hash.$(OBJ_SUFFIX): CFLAGS := -Od
+huge.$(OBJ_SUFFIX): CFLAGS := -Od
+jemalloc.$(OBJ_SUFFIX): CFLAGS := -Od
+mb.$(OBJ_SUFFIX): CFLAGS := -Od
+mutex.$(OBJ_SUFFIX): CFLAGS := -Od
+prof.$(OBJ_SUFFIX): CFLAGS := -Od
+quarantine.$(OBJ_SUFFIX): CFLAGS := -Od
+rtree.$(OBJ_SUFFIX): CFLAGS := -Od
+stats.$(OBJ_SUFFIX): CFLAGS := -Od
+tcache.$(OBJ_SUFFIX): CFLAGS := -Od
+tsd.$(OBJ_SUFFIX): CFLAGS := -Od
+util.$(OBJ_SUFFIX): CFLAGS := -Od
+endif

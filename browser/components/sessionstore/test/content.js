@@ -65,8 +65,10 @@ let historyListener = {
   ])
 };
 
-docShell.QueryInterface(Ci.nsIWebNavigation).
+let {sessionHistory} = docShell.QueryInterface(Ci.nsIWebNavigation);
+if (sessionHistory) {
   sessionHistory.addSHistoryListener(historyListener);
+}
 
 /**
  * This frame script is only loaded for sessionstore mochitests. It enables us
@@ -75,26 +77,6 @@ docShell.QueryInterface(Ci.nsIWebNavigation).
 
 addEventListener("hashchange", function () {
   sendAsyncMessage("ss-test:hashchange");
-});
-
-addEventListener("MozStorageChanged", function () {
-  // It's possible that this event handler runs before the one in
-  // content-sessionStore.js. We run ours a little later to make sure
-  // that the session store code has seen the event before we allow
-  // the test to proceed.
-  executeSoon(() => sendAsyncMessage("ss-test:MozStorageChanged"));
-}, true);
-
-addMessageListener("ss-test:modifySessionStorage", function (msg) {
-  for (let key of Object.keys(msg.data)) {
-    content.sessionStorage[key] = msg.data[key];
-  }
-});
-
-addMessageListener("ss-test:modifySessionStorage2", function (msg) {
-  for (let key of Object.keys(msg.data)) {
-    content.frames[0].sessionStorage[key] = msg.data[key];
-  }
 });
 
 addMessageListener("ss-test:purgeDomainData", function ({data: domain}) {

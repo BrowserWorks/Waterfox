@@ -36,7 +36,9 @@
 
 %include "vpx_config.asm"
 
+%ifndef program_name
 %define program_name vp9
+%endif
 
 
 %define UNIX64 0
@@ -78,6 +80,9 @@
 %macro SECTION_RODATA 0-1 16
     %ifidn __OUTPUT_FORMAT__,macho64
         SECTION .text align=%1
+    %elifidn __OUTPUT_FORMAT__,macho32
+        SECTION .text align=%1
+        fakegot:
     %elifidn __OUTPUT_FORMAT__,macho
         SECTION .text align=%1
         fakegot:
@@ -617,9 +622,17 @@ DECLARE_ARG 7, 8, 9, 10, 11, 12, 13, 14
         %elifidn __OUTPUT_FORMAT__,elf64
             global %1:function hidden
         %elifidn __OUTPUT_FORMAT__,macho32
-            global %1:private_extern
+            %ifdef __NASM_VER__
+                global %1
+            %else
+                global %1:private_extern
+            %endif
         %elifidn __OUTPUT_FORMAT__,macho64
-            global %1:private_extern
+            %ifdef __NASM_VER__
+                global %1
+            %else
+                global %1:private_extern
+            %endif
         %else
             global %1
         %endif

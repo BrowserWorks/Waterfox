@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -197,27 +198,27 @@ SVGTransformableElement::GetBBox(const SVGBoundingBoxOptions& aOptions,
   if (!NS_SVGNewGetBBoxEnabled()) {
     return NS_NewSVGRect(this, ToRect(nsSVGUtils::GetBBox(frame)));
   } else {
-    uint32_t aFlags = 0;
+    uint32_t flags = 0;
     if (aOptions.mFill) {
-      aFlags |= nsSVGUtils::eBBoxIncludeFill;
+      flags |= nsSVGUtils::eBBoxIncludeFill;
     }
     if (aOptions.mStroke) {
-      aFlags |= nsSVGUtils::eBBoxIncludeStroke;
+      flags |= nsSVGUtils::eBBoxIncludeStroke;
     }
     if (aOptions.mMarkers) {
-      aFlags |= nsSVGUtils::eBBoxIncludeMarkers;
+      flags |= nsSVGUtils::eBBoxIncludeMarkers;
     }
     if (aOptions.mClipped) {
-      aFlags |= nsSVGUtils::eBBoxIncludeClipped;
+      flags |= nsSVGUtils::eBBoxIncludeClipped;
     }
-    if (aFlags == 0) {
+    if (flags == 0) {
       return NS_NewSVGRect(this,0,0,0,0);
     }
-    if (aFlags == nsSVGUtils::eBBoxIncludeMarkers || 
-        aFlags == nsSVGUtils::eBBoxIncludeClipped) {
-      aFlags |= nsSVGUtils::eBBoxIncludeFill;
+    if (flags == nsSVGUtils::eBBoxIncludeMarkers ||
+        flags == nsSVGUtils::eBBoxIncludeClipped) {
+      flags |= nsSVGUtils::eBBoxIncludeFill;
     }
-    return NS_NewSVGRect(this, ToRect(nsSVGUtils::GetBBox(frame, aFlags)));
+    return NS_NewSVGRect(this, ToRect(nsSVGUtils::GetBBox(frame, flags)));
   }
 }
 

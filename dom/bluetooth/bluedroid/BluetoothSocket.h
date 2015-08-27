@@ -1,5 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -8,7 +8,7 @@
 #define mozilla_dom_bluetooth_BluetoothSocket_h
 
 #include "BluetoothCommon.h"
-#include "mozilla/ipc/SocketBase.h"
+#include "mozilla/ipc/DataSocket.h"
 
 BEGIN_BLUETOOTH_NAMESPACE
 
@@ -16,7 +16,7 @@ class BluetoothSocketObserver;
 class BluetoothSocketResultHandler;
 class DroidSocketImpl;
 
-class BluetoothSocket : public mozilla::ipc::SocketConsumerBase
+class BluetoothSocket final : public mozilla::ipc::DataSocket
 {
 public:
   BluetoothSocket(BluetoothSocketObserver* aObserver,
@@ -24,19 +24,21 @@ public:
                   bool aAuth,
                   bool aEncrypt);
 
-  bool ConnectSocket(const nsAString& aDeviceAddress, int aChannel);
+  bool ConnectSocket(const nsAString& aDeviceAddress,
+                     const BluetoothUuid& aServiceUuid,
+                     int aChannel);
 
-  bool ListenSocket(int aChannel);
+  bool ListenSocket(const nsAString& aServiceName,
+                    const BluetoothUuid& aServiceUuid,
+                    int aChannel);
 
-  void CloseSocket();
-
-  bool SendSocketData(mozilla::ipc::UnixSocketRawData* aData);
-
-  virtual void OnConnectSuccess() override;
-  virtual void OnConnectError() override;
-  virtual void OnDisconnect() override;
-  virtual void ReceiveSocketData(
-    nsAutoPtr<mozilla::ipc::UnixSocketRawData>& aMessage) override;
+  /**
+   * Method to be called whenever data is received. This is only called on the
+   * main thread.
+   *
+   * @param aBuffer Data received from the socket.
+   */
+  void ReceiveSocketData(nsAutoPtr<mozilla::ipc::UnixSocketBuffer>& aBuffer);
 
   inline void GetAddress(nsAString& aDeviceAddress)
   {
@@ -52,6 +54,20 @@ public:
   {
     mCurrentRes = aRes;
   }
+
+  // Methods for |DataSocket|
+  //
+
+  void SendSocketData(mozilla::ipc::UnixSocketIOBuffer* aBuffer) override;
+
+  // Methods for |SocketBase|
+  //
+
+  void CloseSocket() override;
+
+  void OnConnectSuccess() override;
+  void OnConnectError() override;
+  void OnDisconnect() override;
 
 private:
   BluetoothSocketObserver* mObserver;

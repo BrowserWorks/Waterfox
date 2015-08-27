@@ -16,7 +16,7 @@ import android.util.Log;
 import java.nio.FloatBuffer;
 import java.nio.ByteBuffer;
 
-public class ScrollbarLayer extends TileLayer {
+public class ScrollbarLayer extends Layer {
     private static final String LOGTAG = "GeckoScrollbarLayer";
 
     public static final long FADE_DELAY = 500; // milliseconds before fade-out starts
@@ -69,7 +69,7 @@ public class ScrollbarLayer extends TileLayer {
     private final Rect mEndCapTexCoords;    // bottom/right endcap coordinates
 
     ScrollbarLayer(LayerRenderer renderer, Bitmap scrollbarImage, IntSize imageSize, boolean vertical) {
-        super(new IntSize(scrollbarImage.getHeight(), scrollbarImage.getWidth()), TileLayer.PaintMode.NORMAL);
+        super(new IntSize(scrollbarImage.getHeight(), scrollbarImage.getWidth()));
         mImage = new BufferedImage(scrollbarImage);
         mRenderer = renderer;
         mVertical = vertical;
@@ -388,7 +388,7 @@ public class ScrollbarLayer extends TileLayer {
         } else {
             // Our texture has been expanded to the next power of two.
             // XXX We probably never want to take this path, so throw an exception.
-            throw new RuntimeException("Buffer/image size mismatch in TileLayer!");
+            throw new RuntimeException("Buffer/image size mismatch in ScrollbarLayer!");
         }
     }
 
@@ -400,12 +400,11 @@ public class ScrollbarLayer extends TileLayer {
         GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER,
                                GLES20.GL_LINEAR);
 
-        int repeatMode = repeats() ? GLES20.GL_REPEAT : GLES20.GL_CLAMP_TO_EDGE;
+        int repeatMode = GLES20.GL_CLAMP_TO_EDGE;
         GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, repeatMode);
         GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, repeatMode);
     }
 
-    @Override
     public void destroy() {
         try {
             if (mImage != null) {

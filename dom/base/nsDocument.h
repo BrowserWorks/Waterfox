@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 sw=2 et tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -18,7 +18,6 @@
 #include "nsCRT.h"
 #include "nsWeakReference.h"
 #include "nsWeakPtr.h"
-#include "nsVoidArray.h"
 #include "nsTArray.h"
 #include "nsIDOMXMLDocument.h"
 #include "nsIDOMDocumentXBL.h"
@@ -59,7 +58,7 @@
 #include "mozilla/EventListenerManager.h"
 #include "mozilla/EventStates.h"
 #include "mozilla/MemoryReporting.h"
-#include "mozilla/PendingPlayerTracker.h"
+#include "mozilla/PendingAnimationTracker.h"
 #include "mozilla/dom/DOMImplementation.h"
 #include "mozilla/dom/StyleSheetList.h"
 #include "nsDataHashtable.h"
@@ -76,17 +75,12 @@
 
 
 class nsDOMStyleSheetSetList;
-class nsIOutputStream;
 class nsDocument;
-class nsIDTD;
 class nsIRadioVisitor;
 class nsIFormControl;
 struct nsRadioGroupStruct;
 class nsOnloadBlocker;
 class nsUnblockOnloadEvent;
-class nsChildContentList;
-class nsHTMLStyleSheet;
-class nsHTMLCSSStyleSheet;
 class nsDOMNavigationTiming;
 class nsWindowSizes;
 class nsHtml5TreeOpExecutor;
@@ -156,8 +150,8 @@ public:
   /**
    * Returns the list of all elements associated with this id.
    */
-  const nsSmallVoidArray* GetIdElements() const {
-    return &mIdContentList;
+  const nsTArray<Element*>& GetIdElements() const {
+    return mIdContentList;
   }
   /**
    * If this entry has a non-null image element set (using SetImageElement),
@@ -233,7 +227,7 @@ private:
 
   // empty if there are no elements with this ID.
   // The elements are stored as weak pointers.
-  nsSmallVoidArray mIdContentList;
+  nsTArray<Element*> mIdContentList;
   nsRefPtr<nsBaseContentList> mNameContentList;
   nsAutoPtr<nsTHashtable<ChangeCallbackEntry> > mChangeCallbacks;
   nsRefPtr<Element> mImageElement;
@@ -785,7 +779,7 @@ public:
   virtual already_AddRefed<mozilla::dom::UndoManager> GetUndoManager() override;
 
   static bool IsWebAnimationsEnabled(JSContext* aCx, JSObject* aObject);
-  virtual mozilla::dom::AnimationTimeline* Timeline() override;
+  virtual mozilla::dom::DocumentTimeline* Timeline() override;
 
   virtual nsresult SetSubDocumentFor(Element* aContent,
                                      nsIDocument* aSubDoc) override;
@@ -1044,20 +1038,18 @@ public:
   virtual void
     EnumerateExternalResources(nsSubDocEnumFunc aCallback, void* aData) override;
 
-  nsTArray<nsCString> mHostObjectURIs;
-
   // Returns our (lazily-initialized) animation controller.
   // If HasAnimationController is true, this is guaranteed to return non-null.
   nsSMILAnimationController* GetAnimationController() override;
 
-  virtual mozilla::PendingPlayerTracker*
-  GetPendingPlayerTracker() final override
+  virtual mozilla::PendingAnimationTracker*
+  GetPendingAnimationTracker() final override
   {
-    return mPendingPlayerTracker;
+    return mPendingAnimationTracker;
   }
 
-  virtual mozilla::PendingPlayerTracker*
-  GetOrCreatePendingPlayerTracker() override;
+  virtual mozilla::PendingAnimationTracker*
+  GetOrCreatePendingAnimationTracker() override;
 
   void SetImagesNeedAnimating(bool aAnimating) override;
 
@@ -1134,9 +1126,6 @@ public:
 
   virtual mozilla::EventStates GetDocumentState() override;
 
-  virtual void RegisterHostObjectUri(const nsACString& aUri) override;
-  virtual void UnregisterHostObjectUri(const nsACString& aUri) override;
-
   // Only BlockOnload should call this!
   void AsyncBlockOnload();
 
@@ -1146,7 +1135,7 @@ public:
   virtual void SetChangeScrollPosWhenScrollingToRef(bool aValue) override;
 
   virtual Element *GetElementById(const nsAString& aElementId) override;
-  virtual const nsSmallVoidArray* GetAllElementsForId(const nsAString& aElementId) const override;
+  virtual const nsTArray<Element*>* GetAllElementsForId(const nsAString& aElementId) const override;
 
   virtual Element *LookupImageElement(const nsAString& aElementId) override;
   virtual void MozSetImageElement(const nsAString& aImageElementId,
@@ -1540,9 +1529,9 @@ protected:
   // Array of observers
   nsTObserverArray<nsIDocumentObserver*> mObservers;
 
-  // Tracker for animation players that are waiting to start.
-  // nullptr until GetOrCreatePendingPlayerTracker is called.
-  nsRefPtr<mozilla::PendingPlayerTracker> mPendingPlayerTracker;
+  // Tracker for animations that are waiting to start.
+  // nullptr until GetOrCreatePendingAnimationTracker is called.
+  nsRefPtr<mozilla::PendingAnimationTracker> mPendingAnimationTracker;
 
   // Weak reference to the scope object (aka the script global object)
   // that, unlike mScriptGlobalObject, is never unset once set. This
@@ -1805,7 +1794,7 @@ private:
 
   nsRefPtr<mozilla::dom::UndoManager> mUndoManager;
 
-  nsRefPtr<mozilla::dom::AnimationTimeline> mAnimationTimeline;
+  nsRefPtr<mozilla::dom::DocumentTimeline> mDocumentTimeline;
 
   enum ViewportType {
     DisplayWidthHeight,

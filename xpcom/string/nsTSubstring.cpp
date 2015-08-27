@@ -4,6 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "mozilla/CheckedInt.h"
 #include "mozilla/double-conversion.h"
 #include "mozilla/MemoryReporting.h"
 
@@ -18,9 +19,7 @@ nsTSubstring_CharT::nsTSubstring_CharT(char_type* aData, size_type aLength,
 {
   if (aFlags & F_OWNED) {
     STRING_STAT_INCREMENT(Adopt);
-#ifdef NS_BUILD_REFCNT_LOGGING
-    NS_LogCtor(mData, "StringAdopt", 1);
-#endif
+    MOZ_LOG_CTOR(mData, "StringAdopt", 1);
   }
 }
 #endif /* XPCOM_STRING_CONSTRUCTOR_OUT_OF_LINE */
@@ -55,7 +54,8 @@ nsTSubstring_CharT::MutatePrep(size_type aCapacity, char_type** aOldData,
   // If |aCapacity > kMaxCapacity|, then our doubling algorithm may not be
   // able to allocate it.  Just bail out in cases like that.  We don't want
   // to be allocating 2GB+ strings anyway.
-  PR_STATIC_ASSERT((sizeof(nsStringBuffer) & 0x1) == 0);
+  static_assert((sizeof(nsStringBuffer) & 0x1) == 0,
+                "bad size for nsStringBuffer");
   const size_type kMaxCapacity =
     (size_type(-1) / 2 - sizeof(nsStringBuffer)) / sizeof(char_type) - 2;
   if (aCapacity > kMaxCapacity) {
@@ -159,6 +159,31 @@ nsTSubstring_CharT::Finalize()
 {
   ::ReleaseData(mData, mFlags);
   // mData, mLength, and mFlags are purposefully left dangling
+}
+
+bool
+nsTSubstring_CharT::ReplacePrep(index_type aCutStart,
+                                size_type aCutLength,
+                                size_type aNewLength)
+{
+  aCutLength = XPCOM_MIN(aCutLength, mLength - aCutStart);
+
+  mozilla::CheckedInt<size_type> newTotalLen = mLength;
+  newTotalLen += aNewLength;
+  newTotalLen -= aCutLength;
+  if (!newTotalLen.isValid()) {
+    return false;
+  }
+
+  if (aCutStart == mLength && Capacity() > newTotalLen.value()) {
+    mFlags &= ~F_VOIDED;
+    mData[newTotalLen.value()] = char_type(0);
+    mLength = newTotalLen.value();
+    return true;
+  }
+
+  return ReplacePrepInternal(aCutStart, aCutLength, aNewLength,
+                             newTotalLen.value());
 }
 
 bool
@@ -460,11 +485,9 @@ nsTSubstring_CharT::Adopt(char_type* aData, size_type aLength)
     SetDataFlags(F_TERMINATED | F_OWNED);
 
     STRING_STAT_INCREMENT(Adopt);
-#ifdef NS_BUILD_REFCNT_LOGGING
     // Treat this as construction of a "StringAdopt" object for leak
     // tracking purposes.
-    NS_LogCtor(mData, "StringAdopt", 1);
-#endif // NS_BUILD_REFCNT_LOGGING
+    MOZ_LOG_CTOR(mData, "StringAdopt", 1);
   } else {
     SetIsVoid(true);
   }

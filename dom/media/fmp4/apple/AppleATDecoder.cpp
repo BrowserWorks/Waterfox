@@ -8,7 +8,7 @@
 #include "MP4Reader.h"
 #include "MP4Decoder.h"
 #include "mp4_demuxer/Adts.h"
-#include "mp4_demuxer/DecoderData.h"
+#include "MediaInfo.h"
 #include "AppleATDecoder.h"
 #include "prlog.h"
 
@@ -22,7 +22,7 @@ PRLogModuleInfo* GetAppleMediaLog();
 
 namespace mozilla {
 
-AppleATDecoder::AppleATDecoder(const mp4_demuxer::AudioDecoderConfig& aConfig,
+AppleATDecoder::AppleATDecoder(const AudioInfo& aConfig,
                                FlushableMediaTaskQueue* aAudioTaskQueue,
                                MediaDataDecoderCallback* aCallback)
   : mConfig(aConfig)
@@ -35,14 +35,14 @@ AppleATDecoder::AppleATDecoder(const mp4_demuxer::AudioDecoderConfig& aConfig,
   MOZ_COUNT_CTOR(AppleATDecoder);
   LOG("Creating Apple AudioToolbox decoder");
   LOG("Audio Decoder configuration: %s %d Hz %d channels %d bits per channel",
-      mConfig.mime_type.get(),
-      mConfig.samples_per_second,
-      mConfig.channel_count,
-      mConfig.bits_per_sample);
+      mConfig.mMimeType.get(),
+      mConfig.mRate,
+      mConfig.mChannels,
+      mConfig.mBitDepth);
 
-  if (mConfig.mime_type.EqualsLiteral("audio/mpeg")) {
+  if (mConfig.mMimeType.EqualsLiteral("audio/mpeg")) {
     mFormatID = kAudioFormatMPEGLayer3;
-  } else if (mConfig.mime_type.EqualsLiteral("audio/mp4a-latm")) {
+  } else if (mConfig.mMimeType.EqualsLiteral("audio/mp4a-latm")) {
     mFormatID = kAudioFormatMPEG4AAC;
   } else {
     mFormatID = 0;
@@ -66,21 +66,21 @@ AppleATDecoder::Init()
 }
 
 nsresult
-AppleATDecoder::Input(mp4_demuxer::MP4Sample* aSample)
+AppleATDecoder::Input(MediaRawData* aSample)
 {
   LOG("mp4 input sample %p %lld us %lld pts%s %llu bytes audio",
       aSample,
-      aSample->duration,
-      aSample->composition_timestamp,
-      aSample->is_sync_point ? " keyframe" : "",
-      (unsigned long long)aSample->size);
+      aSample->mDuration,
+      aSample->mTime,
+      aSample->mKeyframe ? " keyframe" : "",
+      (unsigned long long)aSample->mSize);
 
   // Queue a task to perform the actual decoding on a separate thread.
   mTaskQueue->Dispatch(
-      NS_NewRunnableMethodWithArg<nsAutoPtr<mp4_demuxer::MP4Sample>>(
+      NS_NewRunnableMethodWithArg<nsRefPtr<MediaRawData>>(
         this,
         &AppleATDecoder::SubmitSample,
-        nsAutoPtr<mp4_demuxer::MP4Sample>(aSample)));
+        nsRefPtr<MediaRawData>(aSample)));
 
   return NS_OK;
 }
@@ -173,7 +173,7 @@ _PassthroughInputDataCallback(AudioConverterRef aAudioConverter,
 }
 
 void
-AppleATDecoder::SubmitSample(nsAutoPtr<mp4_demuxer::MP4Sample> aSample)
+AppleATDecoder::SubmitSample(MediaRawData* aSample)
 {
   nsresult rv = NS_OK;
   if (!mConverter) {
@@ -203,7 +203,7 @@ AppleATDecoder::SubmitSample(nsAutoPtr<mp4_demuxer::MP4Sample> aSample)
 }
 
 nsresult
-AppleATDecoder::DecodeSample(mp4_demuxer::MP4Sample* aSample)
+AppleATDecoder::DecodeSample(MediaRawData* aSample)
 {
   // Array containing the queued decoded audio frames, about to be output.
   nsTArray<AudioDataValue> outputData;
@@ -220,7 +220,7 @@ AppleATDecoder::DecodeSample(mp4_demuxer::MP4Sample* aSample)
   // This API insists on having packets spoon-fed to it from a callback.
   // This structure exists only to pass our state.
   PassthroughUserData userData =
-    { channels, (UInt32)aSample->size, aSample->data };
+    { channels, (UInt32)aSample->mSize, aSample->mData };
 
   // Decompressed audio buffer
   nsAutoArrayPtr<AudioDataValue> decoded(new AudioDataValue[maxDecodedSamples]);
@@ -272,14 +272,14 @@ AppleATDecoder::DecodeSample(mp4_demuxer::MP4Sample* aSample)
 
 #ifdef LOG_SAMPLE_DECODE
   LOG("pushed audio at time %lfs; duration %lfs\n",
-      (double)aSample->composition_timestamp / USECS_PER_S,
+      (double)aSample->mTime / USECS_PER_S,
       (double)duration.value() / USECS_PER_S);
 #endif
 
   nsAutoArrayPtr<AudioDataValue> data(new AudioDataValue[outputData.Length()]);
   PodCopy(data.get(), &outputData[0], outputData.Length());
-  nsRefPtr<AudioData> audio = new AudioData(aSample->byte_offset,
-                                            aSample->composition_timestamp,
+  nsRefPtr<AudioData> audio = new AudioData(aSample->mOffset,
+                                            aSample->mTime,
                                             duration.value(),
                                             numFrames,
                                             data.forget(),
@@ -298,7 +298,7 @@ AppleATDecoder::GetInputAudioDescription(AudioStreamBasicDescription& aDesc,
   PodZero(&formatInfo.mASBD);
   formatInfo.mASBD.mFormatID = mFormatID;
   if (mFormatID == kAudioFormatMPEG4AAC) {
-    formatInfo.mASBD.mFormatFlags = mConfig.extended_profile;
+    formatInfo.mASBD.mFormatFlags = mConfig.mExtendedProfile;
   }
   formatInfo.mMagicCookieSize = aExtraData.Length();
   formatInfo.mMagicCookie = aExtraData.Elements();
@@ -309,8 +309,8 @@ AppleATDecoder::GetInputAudioDescription(AudioStreamBasicDescription& aDesc,
   // This method only retrieves the FramesPerPacket information required
   // by the decoder, which depends on the codec type and profile.
   aDesc.mFormatID = mFormatID;
-  aDesc.mChannelsPerFrame = mConfig.channel_count;
-  aDesc.mSampleRate = mConfig.samples_per_second;
+  aDesc.mChannelsPerFrame = mConfig.mChannels;
+  aDesc.mSampleRate = mConfig.mRate;
   UInt32 inputFormatSize = sizeof(aDesc);
   OSStatus rv = AudioFormatGetProperty(kAudioFormatProperty_FormatInfo,
                                        0,
@@ -364,10 +364,10 @@ AppleATDecoder::GetInputAudioDescription(AudioStreamBasicDescription& aDesc,
 }
 
 nsresult
-AppleATDecoder::SetupDecoder(mp4_demuxer::MP4Sample* aSample)
+AppleATDecoder::SetupDecoder(MediaRawData* aSample)
 {
   if (mFormatID == kAudioFormatMPEG4AAC &&
-      mConfig.extended_profile == 2) {
+      mConfig.mExtendedProfile == 2) {
     // Check for implicit SBR signalling if stream is AAC-LC
     // This will provide us with an updated magic cookie for use with
     // GetInputAudioDescription.
@@ -386,7 +386,7 @@ AppleATDecoder::SetupDecoder(mp4_demuxer::MP4Sample* aSample)
   nsresult rv =
     GetInputAudioDescription(inputFormat,
                              mMagicCookie.Length() ?
-                                 mMagicCookie : *mConfig.extra_data);
+                                 mMagicCookie : *mConfig.mExtraData);
   if (NS_FAILED(rv)) {
     return rv;
   }
@@ -461,17 +461,19 @@ _SampleCallback(void* aSBR,
 }
 
 nsresult
-AppleATDecoder::GetImplicitAACMagicCookie(const mp4_demuxer::MP4Sample* aSample)
+AppleATDecoder::GetImplicitAACMagicCookie(const MediaRawData* aSample)
 {
   // Prepend ADTS header to AAC audio.
-  nsAutoPtr<mp4_demuxer::MP4Sample> adtssample(aSample->Clone());
+  nsRefPtr<MediaRawData> adtssample(aSample->Clone());
   if (!adtssample) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
+  int8_t frequency_index =
+    mp4_demuxer::Adts::GetFrequencyIndex(mConfig.mRate);
 
-  bool rv = mp4_demuxer::Adts::ConvertSample(mConfig.channel_count,
-                                             mConfig.frequency_index,
-                                             mConfig.aac_profile,
+  bool rv = mp4_demuxer::Adts::ConvertSample(mConfig.mChannels,
+                                             frequency_index,
+                                             mConfig.mProfile,
                                              adtssample);
   if (!rv) {
     NS_WARNING("Failed to apply ADTS header");
@@ -490,8 +492,8 @@ AppleATDecoder::GetImplicitAACMagicCookie(const mp4_demuxer::MP4Sample* aSample)
   }
 
   OSStatus status = AudioFileStreamParseBytes(mStream,
-                                              adtssample->size,
-                                              adtssample->data,
+                                              adtssample->mSize,
+                                              adtssample->mData,
                                               0 /* discontinuity */);
   if (status) {
     NS_WARNING("Couldn't parse sample");

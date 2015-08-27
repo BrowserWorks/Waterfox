@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -185,6 +186,7 @@ public:
   // converts the data into an array of nsITransferable objects to be used for
   // drag and drop or clipboard operations.
   already_AddRefed<nsISupportsArray> GetTransferables(nsIDOMNode* aDragTarget);
+  already_AddRefed<nsISupportsArray> GetTransferables(nsILoadContext* aLoadContext);
 
   // converts the data for a single item at aIndex into an nsITransferable object.
   already_AddRefed<nsITransferable> GetTransferable(uint32_t aIndex,
@@ -238,6 +240,9 @@ protected:
   // fills in the data field of aItem with the data from the drag service or
   // clipboard for a given index.
   void FillInExternalData(TransferItem& aItem, uint32_t aIndex);
+
+  friend class ContentParent;
+  void FillAllExternalData();
 
   void MozClearDataAtHelper(const nsAString& aFormat, uint32_t aIndex,
                             mozilla::ErrorResult& aRv);

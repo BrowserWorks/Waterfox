@@ -158,29 +158,32 @@ static INLINE int_mv scale_mv(const MB_MODE_INFO *mbmi, int ref,
 // This macro is used to add a motion vector mv_ref list if it isn't
 // already in the list.  If it's the second motion vector it will also
 // skip all additional processing and jump to done!
-#define ADD_MV_REF_LIST(mv) \
+#define ADD_MV_REF_LIST(mv, refmv_count, mv_ref_list, Done) \
   do { \
     if (refmv_count) { \
-      if ((mv).as_int != mv_ref_list[0].as_int) { \
-        mv_ref_list[refmv_count] = (mv); \
+      if ((mv).as_int != (mv_ref_list)[0].as_int) { \
+        (mv_ref_list)[(refmv_count)] = (mv); \
         goto Done; \
       } \
     } else { \
-      mv_ref_list[refmv_count++] = (mv); \
+      (mv_ref_list)[(refmv_count)++] = (mv); \
     } \
   } while (0)
 
 // If either reference frame is different, not INTRA, and they
 // are different from each other scale and add the mv to our list.
-#define IF_DIFF_REF_FRAME_ADD_MV(mbmi) \
+#define IF_DIFF_REF_FRAME_ADD_MV(mbmi, ref_frame, ref_sign_bias, refmv_count, \
+                                 mv_ref_list, Done) \
   do { \
     if (is_inter_block(mbmi)) { \
       if ((mbmi)->ref_frame[0] != ref_frame) \
-        ADD_MV_REF_LIST(scale_mv((mbmi), 0, ref_frame, ref_sign_bias)); \
+        ADD_MV_REF_LIST(scale_mv((mbmi), 0, ref_frame, ref_sign_bias), \
+                        refmv_count, mv_ref_list, Done); \
       if (has_second_ref(mbmi) && \
           (mbmi)->ref_frame[1] != ref_frame && \
           (mbmi)->mv[1].as_int != (mbmi)->mv[0].as_int) \
-        ADD_MV_REF_LIST(scale_mv((mbmi), 1, ref_frame, ref_sign_bias)); \
+        ADD_MV_REF_LIST(scale_mv((mbmi), 1, ref_frame, ref_sign_bias), \
+                        refmv_count, mv_ref_list, Done); \
     } \
   } while (0)
 
@@ -204,21 +207,23 @@ static INLINE void clamp_mv2(MV *mv, const MACROBLOCKD *xd) {
                xd->mb_to_bottom_edge + RIGHT_BOTTOM_MARGIN);
 }
 
+typedef void (*find_mv_refs_sync)(void *const data, int mi_row);
 void vp9_find_mv_refs(const VP9_COMMON *cm, const MACROBLOCKD *xd,
                       const TileInfo *const tile,
                       MODE_INFO *mi, MV_REFERENCE_FRAME ref_frame,
-                      int_mv *mv_ref_list, int mi_row, int mi_col);
+                      int_mv *mv_ref_list, int mi_row, int mi_col,
+                      find_mv_refs_sync sync, void *const data);
 
 // check a list of motion vectors by sad score using a number rows of pixels
 // above and a number cols of pixels in the left to select the one with best
 // score to use as ref motion vector
 void vp9_find_best_ref_mvs(MACROBLOCKD *xd, int allow_hp,
-                           int_mv *mvlist, int_mv *nearest, int_mv *near);
+                           int_mv *mvlist, int_mv *nearest_mv, int_mv *near_mv);
 
 void vp9_append_sub8x8_mvs_for_idx(VP9_COMMON *cm, MACROBLOCKD *xd,
                                    const TileInfo *const tile,
                                    int block, int ref, int mi_row, int mi_col,
-                                   int_mv *nearest, int_mv *near);
+                                   int_mv *nearest_mv, int_mv *near_mv);
 
 #ifdef __cplusplus
 }  // extern "C"

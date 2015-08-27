@@ -14,16 +14,19 @@ import sys
 import time
 import traceback
 import unittest
+import warnings
 import xml.dom.minidom as dom
 
 from manifestparser import TestManifest
+from manifestparser.filters import tags
 from marionette_driver.marionette import Marionette
 from mixins.b2g import B2GTestResultMixin, get_b2g_pid, get_dm
-from mozhttpd import MozHttpd
 from mozlog.structured.structuredlog import get_default_logger
 from moztest.adapters.unit import StructuredTestRunner, StructuredTestResult
 from moztest.results import TestResultCollection, TestResult, relevant_line
 import mozversion
+
+import httpd
 
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -357,6 +360,11 @@ class BaseMarionetteOptions(OptionParser):
                         dest='timeout',
                         type=int,
                         help='if a --timeout value is given, it will set the default page load timeout, search timeout and script timeout to the given value. If not passed in, it will use the default values of 30000ms for page load, 0ms for search timeout and 10000ms for script timeout')
+        self.add_option('--startup-timeout',
+                        dest='startup_timeout',
+                        type=int,
+                        default=60,
+                        help='the max number of seconds to wait for a Marionette connection after launching a binary')
         self.add_option('--shuffle',
                         action='store_true',
                         dest='shuffle',
@@ -417,6 +425,12 @@ class BaseMarionetteOptions(OptionParser):
                         action='store_true',
                         default=False,
                         help='Enable e10s when running marionette tests.')
+        self.add_option('--tag',
+                        action='append', dest='test_tags',
+                        default=None,
+                        help="Filter out tests that don't have the given tag. Can be "
+                             "used multiple times in which case the test must contain "
+                             "at least one of the given tags.")
 
     def parse_args(self, args=None, values=None):
         options, tests = OptionParser.parse_args(self, args, values)
@@ -484,6 +498,7 @@ class BaseMarionetteOptions(OptionParser):
 class BaseMarionetteTestRunner(object):
 
     textrunnerclass = MarionetteTextTestRunner
+    driverclass = Marionette
 
     def __init__(self, address=None, emulator=None, emulator_binary=None,
                  emulator_img=None, emulator_res='480x800', homedir=None,
@@ -494,9 +509,9 @@ class BaseMarionetteTestRunner(object):
                  shuffle=False, shuffle_seed=random.randint(0, sys.maxint),
                  sdcard=None, this_chunk=1, total_chunks=1, sources=None,
                  server_root=None, gecko_log=None, result_callbacks=None,
-                 adb_host=None, adb_port=None, prefs=None,
+                 adb_host=None, adb_port=None, prefs=None, test_tags=None,
                  socket_timeout=BaseMarionetteOptions.socket_timeout_default,
-                 **kwargs):
+                 startup_timeout=None, **kwargs):
         self.address = address
         self.emulator = emulator
         self.emulator_binary = emulator_binary
@@ -540,6 +555,8 @@ class BaseMarionetteTestRunner(object):
         self._adb_host = adb_host
         self._adb_port = adb_port
         self.prefs = prefs or {}
+        self.test_tags = test_tags
+        self.startup_timeout = startup_timeout
 
         def gather_debug(test, status):
             rv = {}
@@ -630,24 +647,6 @@ class BaseMarionetteTestRunner(object):
         self.skipped = 0
         self.failures = []
 
-    def start_httpd(self, need_external_ip):
-        if self.server_root is None or os.path.isdir(self.server_root):
-            host = '127.0.0.1'
-            if need_external_ip:
-                host = moznetwork.get_ip()
-            docroot = self.server_root or os.path.join(os.path.dirname(here), 'www')
-            if not os.path.isdir(docroot):
-                raise Exception('Server root %s is not a valid path' % docroot)
-            self.httpd = MozHttpd(host=host,
-                                  port=0,
-                                  docroot=docroot)
-            self.httpd.start()
-            self.marionette.baseurl = 'http://%s:%d/' % (host, self.httpd.httpd.server_port)
-            self.logger.info('running webserver on %s' % self.marionette.baseurl)
-        else:
-            self.marionette.baseurl = self.server_root
-            self.logger.info('using content from %s' % self.marionette.baseurl)
-
     def _build_kwargs(self):
         kwargs = {
             'device_serial': self.device_serial,
@@ -657,6 +656,7 @@ class BaseMarionetteTestRunner(object):
             'adb_host': self._adb_host,
             'adb_port': self._adb_port,
             'prefs': self.prefs,
+            'startup_timeout': self.startup_timeout,
         }
         if self.bin:
             kwargs.update({
@@ -704,7 +704,7 @@ class BaseMarionetteTestRunner(object):
         return kwargs
 
     def start_marionette(self):
-        self.marionette = Marionette(**self._build_kwargs())
+        self.marionette = self.driverclass(**self._build_kwargs())
 
     def launch_test_container(self):
         if self.marionette.session is None:
@@ -770,9 +770,16 @@ setReq.onerror = function() {
             if self._capabilities['device'] == "desktop":
                 need_external_ip = False
 
+        # Gaia sets server_root and that means we shouldn't spin up our own httpd
         if not self.httpd:
-            self.logger.info("starting httpd")
-            self.start_httpd(need_external_ip)
+            if self.server_root is None or os.path.isdir(self.server_root):
+                self.logger.info("starting httpd")
+                self.start_httpd(need_external_ip)
+                self.marionette.baseurl = self.httpd.get_url()
+                self.logger.info("running httpd on %s" % self.marionette.baseurl)
+            else:
+                self.marionette.baseurl = self.server_root
+                self.logger.info("using remote content from %s" % self.marionette.baseurl)
 
         for test in tests:
             self.add_test(test)
@@ -853,6 +860,20 @@ setReq.onerror = function() {
 
         self.logger.suite_end()
 
+    def start_httpd(self, need_external_ip):
+        warnings.warn("start_httpd has been deprecated in favour of create_httpd",
+            DeprecationWarning)
+        self.httpd = self.create_httpd(need_external_ip)
+        
+    def create_httpd(self, need_external_ip):
+        host = "127.0.0.1"
+        if need_external_ip:
+            host = moznetwork.get_ip()
+        root = self.server_root or os.path.join(os.path.dirname(here), "www")
+        rv = httpd.FixtureServer(root, host=host)
+        rv.start()
+        return rv
+
     def add_test(self, test, expected='pass', test_container=None):
         filepath = os.path.abspath(test)
 
@@ -884,11 +905,20 @@ setReq.onerror = function() {
             manifest = TestManifest()
             manifest.read(filepath)
 
+            filters = []
+            if self.test_tags:
+                filters.append(tags(self.test_tags))
             manifest_tests = manifest.active_tests(exists=False,
                                                    disabled=True,
+                                                   filters=filters,
                                                    device=self.device,
                                                    app=self.appName,
                                                    **mozinfo.info)
+            if len(manifest_tests) == 0:
+                self.logger.error("no tests to run using specified "
+                                  "combination of filters: {}".format(
+                                       manifest.fmt_filters()))
+
             unfiltered_tests = []
             for test in manifest_tests:
                 if test.get('disabled'):

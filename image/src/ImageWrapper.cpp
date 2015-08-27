@@ -21,12 +21,6 @@ namespace image {
 
 // Inherited methods from Image.
 
-nsresult
-ImageWrapper::Init(const char* aMimeType, uint32_t aFlags)
-{
-  return mInnerImage->Init(aMimeType, aFlags);
-}
-
 already_AddRefed<ProgressTracker>
 ImageWrapper::GetProgressTracker()
 {
@@ -39,11 +33,11 @@ ImageWrapper::SizeOfSourceWithComputedFallback(MallocSizeOf aMallocSizeOf) const
   return mInnerImage->SizeOfSourceWithComputedFallback(aMallocSizeOf);
 }
 
-size_t
-ImageWrapper::SizeOfDecoded(gfxMemoryLocation aLocation,
-                            MallocSizeOf aMallocSizeOf) const
+void
+ImageWrapper::CollectSizeOfSurfaces(nsTArray<SurfaceMemoryCounter>& aCounters,
+                                    MallocSizeOf aMallocSizeOf) const
 {
-  return mInnerImage->SizeOfDecoded(aLocation, aMallocSizeOf);
+  mInnerImage->CollectSizeOfSurfaces(aCounters, aMallocSizeOf);
 }
 
 void

@@ -251,6 +251,7 @@ class AsmJSModule
         friend class AsmJSModule;
 
         Global(Which which, PropertyName* name) {
+            mozilla::PodZero(&pod);  // zero padding for Valgrind
             pod.which_ = which;
             name_ = name;
             MOZ_ASSERT_IF(name_, name_->isTenured());
@@ -258,7 +259,7 @@ class AsmJSModule
 
         void trace(JSTracer* trc) {
             if (name_)
-                MarkStringUnbarriered(trc, &name_, "asm.js global name");
+                TraceManuallyBarrieredEdge(trc, &name_, "asm.js global name");
             MOZ_ASSERT_IF(pod.which_ == Variable && pod.u.var.initKind_ == InitConstant,
                           !pod.u.var.u.numLit_.scalarValue().isMarkable());
         }
@@ -476,9 +477,9 @@ class AsmJSModule
         }
 
         void trace(JSTracer* trc) {
-            MarkStringUnbarriered(trc, &name_, "asm.js export name");
+            TraceManuallyBarrieredEdge(trc, &name_, "asm.js export name");
             if (maybeFieldName_)
-                MarkStringUnbarriered(trc, &maybeFieldName_, "asm.js export field");
+                TraceManuallyBarrieredEdge(trc, &maybeFieldName_, "asm.js export field");
         }
 
       public:
@@ -580,6 +581,9 @@ class AsmJSModule
         uint32_t begin() const {
             return begin_;
         }
+        uint32_t profilingEntry() const {
+            return begin();
+        }
         uint32_t entry() const {
             MOZ_ASSERT(isFunction());
             return begin_ + u.func.beginToEntry_;
@@ -680,7 +684,7 @@ class AsmJSModule
 
         void trace(JSTracer* trc) {
             if (name)
-                MarkStringUnbarriered(trc, &name, "asm.js profiled function name");
+                TraceManuallyBarrieredEdge(trc, &name, "asm.js profiled function name");
         }
 
         size_t serializedSize() const;

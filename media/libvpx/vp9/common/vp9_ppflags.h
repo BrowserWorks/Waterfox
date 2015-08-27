@@ -26,7 +26,8 @@ enum {
   VP9D_DEBUG_TXT_RATE_INFO    = 1 << 6,
   VP9D_DEBUG_DRAW_MV          = 1 << 7,
   VP9D_DEBUG_CLR_BLK_MODES    = 1 << 8,
-  VP9D_DEBUG_CLR_FRM_REF_BLKS = 1 << 9
+  VP9D_DEBUG_CLR_FRM_REF_BLKS = 1 << 9,
+  VP9D_MFQE                   = 1 << 10
 };
 
 typedef struct {

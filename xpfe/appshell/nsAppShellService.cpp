@@ -58,11 +58,12 @@ using namespace mozilla;
 
 class nsIAppShell;
 
-nsAppShellService::nsAppShellService() : 
+nsAppShellService::nsAppShellService() :
   mXPCOMWillShutDown(false),
   mXPCOMShuttingDown(false),
   mModalWindowCount(0),
-  mApplicationProvidedHiddenWindow(false)
+  mApplicationProvidedHiddenWindow(false),
+  mScreenId(0)
 {
   nsCOMPtr<nsIObserverService> obs = services::GetObserverService();
 
@@ -88,6 +89,13 @@ NS_IMETHODIMP
 nsAppShellService::CreateHiddenWindow()
 {
   return CreateHiddenWindowHelper(false);
+}
+
+NS_IMETHODIMP
+nsAppShellService::SetScreenId(uint32_t aScreenId)
+{
+  mScreenId = aScreenId;
+  return NS_OK;
 }
 
 void
@@ -393,7 +401,7 @@ nsAppShellService::CreateWindowlessBrowser(bool aIsChrome, nsIWebNavigation **aR
     NS_ERROR("Couldn't create instance of PuppetWidget");
     return NS_ERROR_FAILURE;
   }
-  widget->Create(nullptr, 0, nsIntRect(nsIntPoint(0, 0), nsIntSize(0, 0)),
+  widget->Create(nullptr, 0, gfx::IntRect(gfx::IntPoint(0, 0), gfx::IntSize(0, 0)),
                  nullptr);
   nsCOMPtr<nsIBaseWindow> window = do_QueryInterface(navigation);
   window->InitWindow(0, widget, 0, 0, 0, 0);
@@ -527,7 +535,7 @@ nsAppShellService::JustCreateTopWindow(nsIXULWindow *aParent,
     widgetInitData.mIsAnimationSuppressed = true;
 
   if (aChromeMask & nsIWebBrowserChrome::CHROME_REMOTE_WINDOW)
-    widgetInitData.mRequireOffMainThreadCompositing = true;
+    widgetInitData.mMultiProcessWindow = true;
 
 #ifdef XP_MACOSX
   // Mac OS X sheet support
@@ -599,6 +607,13 @@ nsAppShellService::JustCreateTopWindow(nsIXULWindow *aParent,
     reg->IsLocaleRTL(package, &isRTL);
     widgetInitData.mRTL = isRTL;
   }
+
+#ifdef MOZ_WIDGET_GONK
+  // B2G multi-screen support. Screen ID is for differentiating screens of
+  // windows, and due to the hardware limitation, it is platform-specific for
+  // now, which align with the value of display type defined in HWC.
+  widgetInitData.mScreenId = mScreenId;
+#endif
 
   nsresult rv = window->Initialize(parent, center ? aParent : nullptr,
                                    aUrl, aInitialWidth, aInitialHeight,

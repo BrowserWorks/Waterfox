@@ -23,8 +23,6 @@
 #include "sandboxBroker.h"
 #endif
 
-class nsIFile;
-
 namespace mozilla {
 namespace ipc {
 
@@ -48,6 +46,8 @@ public:
   static nsresult GetArchitecturesForBinary(const char *path, uint32_t *result);
 
   static uint32_t GetSupportedArchitecturesForProcessType(GeckoProcessType type);
+
+  static uint32_t GetUniqueID();
 
   // Block until the IPC channel for our subprocess is initialized,
   // but no longer.  The child process may or may not have been
@@ -104,18 +104,6 @@ public:
   // by this function must not be closed by the caller.
   ProcessHandle GetChildProcessHandle() {
     return mChildProcessHandle;
-  }
-
-  // Returns an "owned" handle to the child process - the handle returned
-  // by this function must be closed by the caller.
-  ProcessHandle GetOwnedChildProcessHandle() {
-    ProcessHandle handle;
-    // We use OpenPrivilegedProcessHandle as that is where our
-    // mChildProcessHandle initially came from.
-    bool ok = base::OpenPrivilegedProcessHandle(base::GetProcId(mChildProcessHandle),
-                                                &handle);
-    NS_ASSERTION(ok, "Failed to get owned process handle");
-    return ok ? handle : 0;
   }
 
   GeckoProcessType GetProcessType() {
@@ -210,6 +198,8 @@ private:
   //
   // FIXME/cjones: this strongly indicates bad design.  Shame on us.
   std::queue<IPC::Message> mQueue;
+
+  static uint32_t sNextUniqueID;
 };
 
 #ifdef MOZ_NUWA_PROCESS

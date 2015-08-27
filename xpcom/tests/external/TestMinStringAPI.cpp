@@ -1,4 +1,5 @@
-/* vim:set ts=2 sw=2 et cindent: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -49,7 +50,7 @@ static bool test_basic_1()
         NS_ERROR("unexpected result");
         return false;
       }
-    NS_Free(clone);
+    free(clone);
 
     nsCStringContainer temp;
     NS_CStringContainerInit(temp);
@@ -108,7 +109,7 @@ static bool test_basic_2()
         NS_ERROR("unexpected result");
         return false;
       }
-    NS_Free(clone);
+    free(clone);
 
     nsStringContainer temp;
     NS_StringContainerInit(temp);

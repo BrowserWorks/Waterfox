@@ -304,7 +304,7 @@
       <!-- option to allow scrolling through the list via the tab key, rather than
            tab moving focus out of the textbox -->
       <property name="tabScrolling"
-                onset="return this.setAttribute('tabscrolling', val); return val;"
+                onset="this.setAttribute('tabscrolling', val); return val;"
                 onget="return this.getAttribute('tabscrolling') == 'true';"/>
 
       <!-- disable key navigation handling in the popup results -->
@@ -1120,7 +1120,7 @@ extends="chrome://global/content/bindings/popup.xml#popup">
           }
           let width  = Math.round(aWidth * aWin.devicePixelRatio);
           let height = Math.round(aHeight * aWin.devicePixelRatio);
-          return aURL + (aURL.contains("#") ? "&" : "#") +
+          return aURL + (aURL.includes("#") ? "&" : "#") +
                  "-moz-resolution=" + width + "," + height;
           ]]>
         </body>

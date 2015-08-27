@@ -991,6 +991,14 @@ HttpChannelChild::DeleteSelf()
   Send__delete__(this);
 }
 
+bool
+HttpChannelChild::RecvReportSecurityMessage(const nsString& messageTag,
+                                            const nsString& messageCategory)
+{
+  AddSecurityMessage(messageTag, messageCategory);
+  return true;
+}
+
 class Redirect1Event : public ChannelEvent
 {
  public:
@@ -1578,6 +1586,12 @@ HttpChannelChild::ContinueAsyncOpen()
   nsTArray<mozilla::ipc::FileDescriptor> fds;
   SerializeInputStream(mUploadStream, openArgs.uploadStream(), fds);
 
+  if (mResponseHead) {
+    openArgs.synthesizedResponseHead() = *mResponseHead;
+  } else {
+    openArgs.synthesizedResponseHead() = mozilla::void_t();
+  }
+
   OptionalFileDescriptorSet optionalFDs;
 
   if (fds.IsEmpty()) {
@@ -1631,6 +1645,7 @@ HttpChannelChild::ContinueAsyncOpen()
   openArgs.chooseApplicationCache() = mChooseApplicationCache;
   openArgs.appCacheClientID() = appCacheClientId;
   openArgs.allowSpdy() = mAllowSpdy;
+  openArgs.allowAltSvc() = mAllowAltSvc;
 
   propagateLoadInfo(mLoadInfo, openArgs);
 
@@ -2086,12 +2101,43 @@ HttpChannelChild::ResetInterception()
 
 void
 HttpChannelChild::OverrideWithSynthesizedResponse(nsAutoPtr<nsHttpResponseHead>& aResponseHead,
-                                                  nsInputStreamPump* aPump,
-                                                  int64_t aStreamLength)
+                                                  nsIInputStream* aSynthesizedInput,
+                                                  nsIStreamListener* aStreamListener)
 {
-  mSynthesizedResponsePump = aPump;
+  // Intercepted responses should already be decoded.
+  SetApplyConversion(false);
+
   mResponseHead = aResponseHead;
-  mSynthesizedStreamLength = aStreamLength;
+
+  uint16_t status = mResponseHead->Status();
+  if (status != 200 && status != 404) {
+    // Continue with the original cross-process request
+    nsresult rv = ContinueAsyncOpen();
+    NS_ENSURE_SUCCESS_VOID(rv);
+    return;
+  }
+
+  // In our current implementation, the FetchEvent handler will copy the
+  // response stream completely into the pipe backing the input stream so we
+  // can treat the available as the length of the stream.
+  uint64_t available;
+  nsresult rv = aSynthesizedInput->Available(&available);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    mSynthesizedStreamLength = -1;
+  } else {
+    mSynthesizedStreamLength = int64_t(available);
+  }
+
+  rv = nsInputStreamPump::Create(getter_AddRefs(mSynthesizedResponsePump),
+                                 aSynthesizedInput,
+                                 int64_t(-1), int64_t(-1), 0, 0, true);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    aSynthesizedInput->Close();
+    return;
+  }
+
+  rv = mSynthesizedResponsePump->AsyncRead(aStreamListener, nullptr);
+  NS_ENSURE_SUCCESS_VOID(rv);
 
   // if this channel has been suspended previously, the pump needs to be
   // correspondingly suspended now that it exists.

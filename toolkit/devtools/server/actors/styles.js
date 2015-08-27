@@ -487,6 +487,10 @@ var PageStyleActor = protocol.ActorClass({
    *     caused this rule to match its node.
    */
   getApplied: method(function(node, options) {
+    if (!node) {
+      return {entries: [], rules: [], sheets: []};
+    }
+
     this.cssLogic.highlight(node.rawNode);
     let entries = [];
     entries = entries.concat(this._getAllElementRules(node, undefined, options));
@@ -1016,7 +1020,8 @@ var StyleRuleActor = protocol.ActorClass({
         // Elements don't have a parent stylesheet, and therefore
         // don't have an associated URI.  Provide a URI for
         // those.
-        form.href = this.rawNode.ownerDocument.location.href;
+        let doc = this.rawNode.ownerDocument;
+        form.href = doc.location ? doc.location.href : "";
         form.cssText = this.rawStyle.cssText || "";
         break;
       case Ci.nsIDOMCSSRule.CHARSET_RULE:
@@ -1227,7 +1232,7 @@ var StyleRuleFront = protocol.FrontClass(StyleRuleActor, {
       return this._form.href;
     }
     let sheet = this.parentStyleSheet;
-    return sheet.href;
+    return sheet ? sheet.href : "";
   },
 
   get nodeHref() {

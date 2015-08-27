@@ -3,6 +3,10 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
+// This should be removed with bug 1163763.
+const DBG_STRINGS_URI = "chrome://browser/locale/devtools/debugger.properties";
+const DBG_L10N = new ViewHelpers.L10N(DBG_STRINGS_URI);
+
 /**
  * Functions handling the recordings UI.
  */
@@ -16,6 +20,7 @@ let RecordingsView = Heritage.extend(WidgetMethods, {
     this._onSelect = this._onSelect.bind(this);
     this._onRecordingStarted = this._onRecordingStarted.bind(this);
     this._onRecordingStopped = this._onRecordingStopped.bind(this);
+    this._onRecordingWillStop = this._onRecordingWillStop.bind(this);
     this._onRecordingImported = this._onRecordingImported.bind(this);
     this._onSaveButtonClick = this._onSaveButtonClick.bind(this);
     this._onRecordingsCleared = this._onRecordingsCleared.bind(this);
@@ -24,6 +29,7 @@ let RecordingsView = Heritage.extend(WidgetMethods, {
 
     PerformanceController.on(EVENTS.RECORDING_STARTED, this._onRecordingStarted);
     PerformanceController.on(EVENTS.RECORDING_STOPPED, this._onRecordingStopped);
+    PerformanceController.on(EVENTS.RECORDING_WILL_STOP, this._onRecordingWillStop);
     PerformanceController.on(EVENTS.RECORDING_IMPORTED, this._onRecordingImported);
     PerformanceController.on(EVENTS.RECORDINGS_CLEARED, this._onRecordingsCleared);
     this.widget.addEventListener("select", this._onSelect, false);
@@ -35,6 +41,7 @@ let RecordingsView = Heritage.extend(WidgetMethods, {
   destroy: function() {
     PerformanceController.off(EVENTS.RECORDING_STARTED, this._onRecordingStarted);
     PerformanceController.off(EVENTS.RECORDING_STOPPED, this._onRecordingStopped);
+    PerformanceController.off(EVENTS.RECORDING_WILL_STOP, this._onRecordingWillStop);
     PerformanceController.off(EVENTS.RECORDING_IMPORTED, this._onRecordingImported);
     PerformanceController.off(EVENTS.RECORDINGS_CLEARED, this._onRecordingsCleared);
     this.widget.removeEventListener("select", this._onSelect, false);
@@ -95,26 +102,18 @@ let RecordingsView = Heritage.extend(WidgetMethods, {
    *        Model of the recording that was started.
    */
   _onRecordingStarted: function (_, recording) {
-    // Insert a "dummy" recording item, to hint that recording has now started.
-    let recordingItem;
-
-    // If a label is specified (e.g due to a call to `console.profile`),
-    // then try reusing a pre-existing recording item, if there is one.
-    // This is symmetrical to how `this.handleRecordingEnded` works.
-    let profileLabel = recording.getLabel();
-    if (profileLabel) {
-      recordingItem = this.getItemForAttachment(e => e.getLabel() == profileLabel);
-    }
-    // Otherwise, create a new empty recording item.
-    if (!recordingItem) {
-      recordingItem = this.addEmptyRecording(recording);
-    }
+    // TODO bug 1144388
+    // If a label is identical to an existing recording item,
+    // logically group them here.
+    // For now, insert a "dummy" recording item, to hint that recording has now started.
+    let recordingItem = this.addEmptyRecording(recording);
 
     // Mark the corresponding item as being a "record in progress".
     recordingItem.isRecording = true;
 
-    // If this is a manual recording, immediately select it.
-    if (!recording.getLabel()) {
+    // If this is a manual recording, immediately select it, or
+    // select a console profile if its the only one
+    if (!recording.isConsole() || this.selectedIndex === -1) {
       this.selectedItem = recordingItem;
     }
   },
@@ -126,26 +125,33 @@ let RecordingsView = Heritage.extend(WidgetMethods, {
    *        The model of the recording that just stopped.
    */
   _onRecordingStopped: function (_, recording) {
-    let recordingItem;
-
-    // If a label is specified (e.g due to a call to `console.profileEnd`),
-    // then try reusing a pre-existing recording item, if there is one.
-    // This is symmetrical to how `this.handleRecordingStarted` works.
-    let profileLabel = recording.getLabel();
-    if (profileLabel) {
-      recordingItem = this.getItemForAttachment(e => e.getLabel() == profileLabel);
-    }
-    // Otherwise, just use the first available recording item.
-    if (!recordingItem) {
-      recordingItem = this.getItemForPredicate(e => e.isRecording);
-    }
+    let recordingItem = this.getItemForPredicate(e => e.attachment === recording);
 
     // Mark the corresponding item as being a "finished recording".
     recordingItem.isRecording = false;
 
     // Render the recording item with finalized information (timing, etc)
     this.finalizeRecording(recordingItem);
-    this.forceSelect(recordingItem);
+
+    // Select the recording if it was a manual recording only
+    if (!recording.isConsole()) {
+      this.forceSelect(recordingItem);
+    }
+  },
+
+  /**
+   * Signals that a recording session is ending, and hasn't finished being
+   * processed yet.
+   *
+   * @param RecordingModel recording
+   *        The model of the recording that is being stopped.
+   */
+  _onRecordingWillStop: function(_, recording) {
+    let recordingItem = this.getItemForPredicate(e => e.attachment === recording);
+
+    // Mark the corresponding item as loading.
+    let durationNode = $(".recording-item-duration", recordingItem.target);
+    durationNode.setAttribute("value", DBG_L10N.getStr("loadingText"));
   },
 
   /**
@@ -195,21 +201,11 @@ let RecordingsView = Heritage.extend(WidgetMethods, {
    * The select listener for this container.
    */
   _onSelect: Task.async(function*({ detail: recordingItem }) {
-    // TODO 1120699
-    // show appropriate empty/recording panels for several scenarios below
     if (!recordingItem) {
       return;
     }
 
     let model = recordingItem.attachment;
-
-    // If recording, don't abort completely, as we still want to fire an event
-    // for selection so we can continue repainting the overview graphs.
-    if (recordingItem.isRecording) {
-      this.emit(EVENTS.RECORDING_SELECTED, model);
-      return;
-    }
-
     this.emit(EVENTS.RECORDING_SELECTED, model);
   }),
 
@@ -218,7 +214,8 @@ let RecordingsView = Heritage.extend(WidgetMethods, {
    */
   _onSaveButtonClick: function (e) {
     let fp = Cc["@mozilla.org/filepicker;1"].createInstance(Ci.nsIFilePicker);
-    fp.init(window, L10N.getStr("recordingsList.saveDialogTitle"), Ci.nsIFilePicker.modeSave);
+    // TODO localize? in bug 1163763
+    fp.init(window, "Save recording…", Ci.nsIFilePicker.modeSave);
     fp.appendFilter(L10N.getStr("recordingsList.saveDialogJSONFilter"), "*.json");
     fp.appendFilter(L10N.getStr("recordingsList.saveDialogAllFilter"), "*.*");
     fp.defaultString = "profile.json";

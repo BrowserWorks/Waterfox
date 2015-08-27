@@ -27,8 +27,11 @@
 #include "mozilla/Attributes.h"
 #include "js/RootingAPI.h"
 #include "nsTObserverArray.h"
+#include "mozilla/dom/SameProcessMessageQueue.h"
 #include "mozilla/dom/StructuredCloneUtils.h"
 #include "mozilla/jsipc/CpowHolder.h"
+
+class nsIFrameLoader;
 
 namespace mozilla {
 namespace dom {
@@ -121,8 +124,6 @@ StructuredCloneData UnpackClonedMessageDataForChild(const ClonedMessageData& aDa
 } // namespace dom
 } // namespace mozilla
 
-class nsAXPCNativeCallContext;
-
 struct nsMessageListenerInfo
 {
   bool operator==(const nsMessageListenerInfo& aOther) const
@@ -203,8 +204,7 @@ private:
       }
       if (this == sChildProcessManager) {
         sChildProcessManager = nullptr;
-        delete sPendingSameProcessAsyncMessages;
-        sPendingSameProcessAsyncMessages = nullptr;
+        delete mozilla::dom::SameProcessMessageQueue::Get();
       }
       if (this == sSameProcessParentManager) {
         sSameProcessParentManager = nullptr;
@@ -229,7 +229,8 @@ public:
   static nsFrameMessageManager*
   NewProcessMessageManager(bool aIsRemote);
 
-  nsresult ReceiveMessage(nsISupports* aTarget, const nsAString& aMessage,
+  nsresult ReceiveMessage(nsISupports* aTarget, nsIFrameLoader* aTargetFrameLoader,
+                          const nsAString& aMessage,
                           bool aIsSync, const StructuredCloneData* aCloneData,
                           mozilla::jsipc::CpowHolder* aCpows, nsIPrincipal* aPrincipal,
                           InfallibleTArray<nsString>* aJSONRetVal);
@@ -293,7 +294,8 @@ private:
                        JS::MutableHandle<JS::Value> aRetval,
                        bool aIsSync);
 
-  nsresult ReceiveMessage(nsISupports* aTarget, bool aTargetClosed, const nsAString& aMessage,
+  nsresult ReceiveMessage(nsISupports* aTarget, nsIFrameLoader* aTargetFrameLoader,
+                          bool aTargetClosed, const nsAString& aMessage,
                           bool aIsSync, const StructuredCloneData* aCloneData,
                           mozilla::jsipc::CpowHolder* aCpows, nsIPrincipal* aPrincipal,
                           InfallibleTArray<nsString>* aJSONRetVal);
@@ -369,7 +371,8 @@ public:
                                 JS::Handle<JSObject*> aCpows,
                                 nsIPrincipal* aPrincipal);
 
-  void ReceiveMessage(nsISupports* aTarget, nsFrameMessageManager* aManager);
+  void ReceiveMessage(nsISupports* aTarget, nsIFrameLoader* aTargetFrameLoader,
+                      nsFrameMessageManager* aManager);
 
 private:
   nsSameProcessAsyncMessageBase(const nsSameProcessAsyncMessageBase&);

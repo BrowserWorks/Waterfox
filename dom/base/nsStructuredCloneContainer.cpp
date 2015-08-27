@@ -1,7 +1,6 @@
-/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*-
- * vim: set ts=8 sw=2 et tw=80:
- *
- * This Source Code Form is subject to the terms of the Mozilla Public
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -48,16 +47,9 @@ nsStructuredCloneContainer::InitFromJSVal(JS::Handle<JS::Value> aData,
   NS_ENSURE_STATE(!mData);
 
   uint64_t* jsBytes = nullptr;
-  bool success = false;
-  if (aData.isPrimitive()) {
-    success = JS_WriteStructuredClone(aCx, aData, &jsBytes, &mSize,
-                                      nullptr, nullptr,
-                                      JS::UndefinedHandleValue);
-  } else {
-    success = JS_WriteStructuredClone(aCx, aData, &jsBytes, &mSize,
-                                      nullptr, nullptr,
-                                      JS::UndefinedHandleValue);
-  }
+  bool success = JS_WriteStructuredClone(aCx, aData, &jsBytes, &mSize,
+                                           nullptr, nullptr,
+                                           JS::UndefinedHandleValue);
   NS_ENSURE_STATE(success);
   NS_ENSURE_STATE(jsBytes);
 

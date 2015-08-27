@@ -24,11 +24,9 @@
 #include "ReadbackProcessor.h"          // For ReadbackProcessor::Update
 #include "nsCOMPtr.h"                   // for already_AddRefed
 #include "nsPoint.h"                    // for nsIntPoint
-#include "nsRect.h"                     // for nsIntRect
+#include "nsRect.h"                     // for mozilla::gfx::IntRect
 #include "nsRegion.h"                   // for nsIntRegion
 #include "nsTArray.h"                   // for nsTArray
-
-class gfxContext;
 
 namespace mozilla {
 namespace gfx {
@@ -37,7 +35,6 @@ class DrawTarget;
 
 namespace layers {
 
-class BasicLayerManager;
 class PaintedLayer;
 
 /**
@@ -164,7 +161,7 @@ public:
                                  aMask, aMaskTransform);
   }
 
-  virtual void CreateBuffer(ContentType aType, const nsIntRect& aRect, uint32_t aFlags,
+  virtual void CreateBuffer(ContentType aType, const gfx::IntRect& aRect, uint32_t aFlags,
                             RefPtr<gfx::DrawTarget>* aBlackDT, RefPtr<gfx::DrawTarget>* aWhiteDT) override;
 
   virtual TextureInfo GetTextureInfo() const override
@@ -250,7 +247,7 @@ public:
   virtual void SwapBuffers(const nsIntRegion& aFrontUpdatedRegion) override;
 
   // Expose these protected methods from the superclass.
-  virtual const nsIntRect& BufferRect() const
+  virtual const gfx::IntRect& BufferRect() const
   {
     return RotatedContentBuffer::BufferRect();
   }
@@ -259,7 +256,7 @@ public:
     return RotatedContentBuffer::BufferRotation();
   }
 
-  virtual void CreateBuffer(ContentType aType, const nsIntRect& aRect, uint32_t aFlags,
+  virtual void CreateBuffer(ContentType aType, const gfx::IntRect& aRect, uint32_t aFlags,
                             RefPtr<gfx::DrawTarget>* aBlackDT, RefPtr<gfx::DrawTarget>* aWhiteDT) override;
 
 protected:
@@ -270,10 +267,10 @@ protected:
                                        bool aDidSelfCopy);
 
   void BuildTextureClients(gfx::SurfaceFormat aFormat,
-                           const nsIntRect& aRect,
+                           const gfx::IntRect& aRect,
                            uint32_t aFlags);
 
-  void CreateBackBuffer(const nsIntRect& aBufferRect);
+  void CreateBackBuffer(const gfx::IntRect& aBufferRect);
 
   // Ensure we have a valid back buffer if we have a valid front buffer (i.e.
   // if a backbuffer has been created.)
@@ -368,7 +365,7 @@ private:
   RefPtr<TextureClient> mFrontClient;
   RefPtr<TextureClient> mFrontClientOnWhite;
   nsIntRegion mFrontUpdatedRegion;
-  nsIntRect mFrontBufferRect;
+  gfx::IntRect mFrontBufferRect;
   nsIntPoint mFrontBufferRotation;
 };
 

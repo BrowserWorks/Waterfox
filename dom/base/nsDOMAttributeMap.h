@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -34,10 +35,10 @@ public:
   int32_t  mNamespaceID;
 
   /**
-   * The atom for attribute, weak ref. is fine as we only use it for the
-   * hashcode, we never dereference it.
+   * The atom for attribute, stored as void*, to make sure that we only use it
+   * for the hashcode, and we can never dereference it.
    */
-  nsIAtom* mLocalName;
+  void* mLocalName;
 
   nsAttrKey(int32_t aNs, nsIAtom* aName)
     : mNamespaceID(aNs), mLocalName(aName) {}

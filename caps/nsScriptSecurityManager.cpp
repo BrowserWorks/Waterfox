@@ -173,7 +173,7 @@ public:
     ~ClassInfoData()
     {
         if (mMustFreeName)
-            nsMemory::Free(mName);
+            free(mName);
     }
 
     uint32_t GetFlags()
@@ -305,6 +305,15 @@ nsScriptSecurityManager::AppStatusForPrincipal(nsIPrincipal *aPrin)
 
 }
 
+/*
+ * GetChannelResultPrincipal will return the principal that the resource
+ * returned by this channel will use.  For example, if the resource is in
+ * a sandbox, it will return the nullprincipal.  If the resource is forced
+ * to inherit principal, it will return the principal of its parent.  If
+ * the load doesn't require sandboxing or inheriting, it will return the same
+ * principal as GetChannelURIPrincipal. Namely the principal of the URI
+ * that is being loaded.
+ */
 NS_IMETHODIMP
 nsScriptSecurityManager::GetChannelResultPrincipal(nsIChannel* aChannel,
                                                    nsIPrincipal** aPrincipal)
@@ -339,6 +348,17 @@ nsScriptSecurityManager::GetChannelResultPrincipal(nsIChannel* aChannel,
     return GetChannelURIPrincipal(aChannel, aPrincipal);
 }
 
+/* The principal of the URI that this channel is loading. This is never
+ * affected by things like sandboxed loads, or loads where we forcefully
+ * inherit the principal.  Think of this as the principal of the server
+ * which this channel is loading from.  Most callers should use
+ * GetChannelResultPrincipal instead of GetChannelURIPrincipal.  Only
+ * call GetChannelURIPrincipal if you are sure that you want the
+ * principal that matches the uri, even in cases when the load is
+ * sandboxed or when the load could be a blob or data uri (i.e even when
+ * you encounter loads that may or may not be sandboxed and loads
+ * that may or may not inherit)."
+ */
 NS_IMETHODIMP
 nsScriptSecurityManager::GetChannelURIPrincipal(nsIChannel* aChannel,
                                                 nsIPrincipal** aPrincipal)
@@ -993,7 +1013,8 @@ nsScriptSecurityManager::CreateCodebasePrincipal(nsIURI* aURI, uint32_t aAppId,
         nsCOMPtr<nsIPrincipal> principal;
         uriPrinc->GetPrincipal(getter_AddRefs(principal));
         if (!principal) {
-            return CallCreateInstance(NS_NULLPRINCIPAL_CONTRACTID, result);
+            principal = nsNullPrincipal::Create();
+            NS_ENSURE_TRUE(principal, NS_ERROR_FAILURE);
         }
 
         principal.forget(result);
@@ -1088,15 +1109,16 @@ nsScriptSecurityManager::GetCodebasePrincipalInternal(nsIURI *aURI,
         NS_URIChainHasFlags(aURI,
                             nsIProtocolHandler::URI_INHERITS_SECURITY_CONTEXT,
                             &inheritsPrincipal);
-    if (NS_FAILED(rv) || inheritsPrincipal) {
-        return CallCreateInstance(NS_NULLPRINCIPAL_CONTRACTID, result);
-    }
-
     nsCOMPtr<nsIPrincipal> principal;
-    rv = CreateCodebasePrincipal(aURI, aAppId, aInMozBrowser,
-                                 getter_AddRefs(principal));
-    NS_ENSURE_SUCCESS(rv, rv);
-    NS_IF_ADDREF(*result = principal);
+    if (NS_FAILED(rv) || inheritsPrincipal) {
+        principal = nsNullPrincipal::Create();
+        NS_ENSURE_TRUE(principal, NS_ERROR_FAILURE);
+    } else {
+        rv = CreateCodebasePrincipal(aURI, aAppId, aInMozBrowser,
+                                     getter_AddRefs(principal));
+        NS_ENSURE_SUCCESS(rv, rv);
+    }
+    principal.forget(result);
 
     return NS_OK;
 }

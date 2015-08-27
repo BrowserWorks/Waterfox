@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set sw=2 ts=8 et tw=80 : */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -1882,9 +1882,9 @@ WebSocketImpl::ParseURL(const nsAString& aURL)
   nsCOMPtr<nsIURL> parsedURL = do_QueryInterface(uri, &rv);
   NS_ENSURE_SUCCESS(rv, NS_ERROR_DOM_SYNTAX_ERR);
 
-  nsAutoCString fragment;
-  rv = parsedURL->GetRef(fragment);
-  NS_ENSURE_TRUE(NS_SUCCEEDED(rv) && fragment.IsEmpty(),
+  bool hasRef;
+  rv = parsedURL->GetHasRef(&hasRef);
+  NS_ENSURE_TRUE(NS_SUCCEEDED(rv) && !hasRef,
                  NS_ERROR_DOM_SYNTAX_ERR);
 
   nsAutoCString scheme;
@@ -1901,7 +1901,7 @@ WebSocketImpl::ParseURL(const nsAString& aURL)
   NS_ENSURE_SUCCESS(rv, NS_ERROR_DOM_SYNTAX_ERR);
 
   rv = NS_CheckPortSafety(port, scheme.get());
-  NS_ENSURE_SUCCESS(rv, NS_ERROR_DOM_SYNTAX_ERR);
+  NS_ENSURE_SUCCESS(rv, NS_ERROR_DOM_SECURITY_ERR);
 
   nsAutoCString filePath;
   rv = parsedURL->GetFilePath(filePath);
@@ -1944,11 +1944,10 @@ WebSocketImpl::ParseURL(const nsAString& aURL)
     }
   }
 
-  mWebSocket->mOriginalURL = aURL;
-
   rv = parsedURL->GetSpec(mURI);
   MOZ_ASSERT(NS_SUCCEEDED(rv));
 
+  CopyUTF8toUTF16(mURI, mWebSocket->mURI);
   return NS_OK;
 }
 
@@ -2207,7 +2206,7 @@ WebSocket::GetUrl(nsAString& aURL)
   AssertIsOnTargetThread();
 
   if (mEffectiveURL.IsEmpty()) {
-    aURL = mOriginalURL;
+    aURL = mURI;
   } else {
     aURL = mEffectiveURL;
   }
@@ -2434,7 +2433,7 @@ WebSocketImpl::GetName(nsACString& aName)
 {
   AssertIsOnMainThread();
 
-  CopyUTF16toUTF8(mWebSocket->mOriginalURL, aName);
+  CopyUTF16toUTF8(mWebSocket->mURI, aName);
   return NS_OK;
 }
 

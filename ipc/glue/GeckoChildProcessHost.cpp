@@ -29,6 +29,7 @@
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/ipc/BrowserProcessSubThread.h"
 #include "mozilla/Omnijar.h"
+#include "ProtocolUtils.h"
 #include <sys/stat.h>
 
 #ifdef XP_WIN
@@ -253,6 +254,17 @@ uint32_t GeckoChildProcessHost::GetSupportedArchitecturesForProcessType(GeckoPro
   return base::GetCurrentProcessArchitecture();
 }
 
+// We start the unique IDs at 1 so that 0 can be used to mean that
+// a component has no unique ID assigned to it.
+uint32_t GeckoChildProcessHost::sNextUniqueID = 1;
+
+/* static */
+uint32_t
+GeckoChildProcessHost::GetUniqueID()
+{
+  return sNextUniqueID++;
+}
+
 void
 GeckoChildProcessHost::PrepareLaunch()
 {
@@ -428,6 +440,11 @@ GeckoChildProcessHost::Join()
 void
 GeckoChildProcessHost::SetAlreadyDead()
 {
+  if (mChildProcessHandle &&
+      mChildProcessHandle != kInvalidProcessHandle) {
+    base::CloseProcessHandle(mChildProcessHandle);
+  }
+
   mChildProcessHandle = 0;
 }
 

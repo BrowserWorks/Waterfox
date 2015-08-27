@@ -1,0 +1,46 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+html {
+  font: message-box;
+  font-size: 12px;
+  font-weight: normal;
+}
+
+.panel-item, label, #project-panel-projects, #runtime-panel-projects {
+  display: block;
+  float: left;
+  width: auto;
+}
+
+.project-image, .panel-item span {
+  display: inline-block;
+  float: left;
+  line-height: 20px;
+}
+
+.project-image {
+  margin-right: 10px;
+  max-height: 20px;
+}
+
+.panel-header {
+  color: #ACACAC;
+  text-transform: uppercase;
+  line-height: 200%;
+  margin: 5px 0;
+  font-size: 100%;
+  font-weight: bold;
+  width: 100%;
+}
+
+.panel-item {
+  cursor: default;
+  padding: 5px 0;
+  min-width: 130px;
+}
+
+.panel-header[hidden] {
+  display: none;
+}

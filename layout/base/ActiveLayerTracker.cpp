@@ -4,6 +4,7 @@
 
 #include "ActiveLayerTracker.h"
 
+#include "mozilla/ArrayUtils.h"
 #include "nsExpirationTracker.h"
 #include "nsContainerFrame.h"
 #include "nsIContent.h"
@@ -287,7 +288,7 @@ ActiveLayerTracker::IsStyleAnimated(nsDisplayListBuilder* aBuilder,
   }
   nsIContent* content = aFrame->GetContent();
   if (content) {
-    return nsLayoutUtils::HasCurrentAnimationsForProperty(content, aProperty);
+    return nsLayoutUtils::HasCurrentAnimationsForProperties(content, &aProperty, 1);
   }
 
   return false;
@@ -309,6 +310,11 @@ ActiveLayerTracker::IsOffsetOrMarginStyleAnimated(nsIFrame* aFrame)
       return true;
     }
   }
+  // We should also check for running CSS animations of these properties once
+  // bug 1009693 is fixed. Until that happens, layerization isn't useful for
+  // animations of these properties because we'll invalidate the layer contents
+  // on every change anyway.
+  // See bug 1151346 for a patch that adds a check for CSS animations.
   return false;
 }
 

@@ -28,10 +28,6 @@
                           command="Tools:PrivateBrowsing"
                           key="key_privatebrowsing"/>
 #ifdef E10S_TESTING_ONLY
-                <menuitem id="menu_newRemoteWindow"
-                          label="New e10s Window"
-                          hidden="true"
-                          command="Tools:RemoteWindow"/>
                 <menuitem id="menu_newNonRemoteWindow"
                           label="New Non-e10s Window"
                           hidden="true"
@@ -48,15 +44,6 @@
                           command="Browser:OpenFile"
                           key="openFileKb"
                           accesskey="&openFileCmd.accesskey;"/>
-#ifdef HAVE_SHELL_SERVICE
-#ifdef XP_WIN
-#ifdef MOZ_METRO
-                <menuitem id="menu_switchToMetro"
-                          label="&switchToMetroCmd2.label;"
-                          oncommand="SwitchToMetro()"/>
-#endif
-#endif
-#endif
                 <menuitem id="menu_close"
                           class="show-only-for-keyboard"
                           label="&closeCmd.label;"

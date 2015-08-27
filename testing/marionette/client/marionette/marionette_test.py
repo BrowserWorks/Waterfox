@@ -16,8 +16,8 @@ import warnings
 
 
 from marionette_driver.errors import (
-        ErrorCodes, MarionetteException, InstallGeckoError, TimeoutException, InvalidResponseException,
-        JavascriptException, NoSuchElementException, XPathLookupException, NoSuchWindowException,
+        MarionetteException, TimeoutException,
+        JavascriptException, NoSuchElementException, NoSuchWindowException,
         StaleElementException, ScriptTimeoutException, ElementNotVisibleException,
         NoSuchFrameException, InvalidElementStateException, NoAlertPresentException,
         InvalidCookieDomainException, UnableToSetCookieException, InvalidSelectorException,
@@ -646,6 +646,7 @@ class MarionetteTestCase(CommonTestCase):
     def tearDown(self):
         if not self.marionette.check_for_crash():
            self.marionette.set_context("content")
+           self.marionette.clear_imported_scripts()
            self.marionette.execute_script("log('TEST-END: %s:%s')" %
                                           (self.filepath.replace('\\', '\\\\'), self.methodName))
         self.marionette.test_name = None

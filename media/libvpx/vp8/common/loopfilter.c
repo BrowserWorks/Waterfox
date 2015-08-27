@@ -82,11 +82,10 @@ void vp8_loop_filter_update_sharpness(loop_filter_info_n *lfi,
         if (block_inside_limit < 1)
             block_inside_limit = 1;
 
-        vpx_memset(lfi->lim[i], block_inside_limit, SIMD_WIDTH);
-        vpx_memset(lfi->blim[i], (2 * filt_lvl + block_inside_limit),
-                SIMD_WIDTH);
-        vpx_memset(lfi->mblim[i], (2 * (filt_lvl + 2) + block_inside_limit),
-                SIMD_WIDTH);
+        memset(lfi->lim[i], block_inside_limit, SIMD_WIDTH);
+        memset(lfi->blim[i], (2 * filt_lvl + block_inside_limit), SIMD_WIDTH);
+        memset(lfi->mblim[i], (2 * (filt_lvl + 2) + block_inside_limit),
+               SIMD_WIDTH);
     }
 }
 
@@ -105,7 +104,7 @@ void vp8_loop_filter_init(VP8_COMMON *cm)
     /* init hev threshold const vectors */
     for(i = 0; i < 4 ; i++)
     {
-        vpx_memset(lfi->hev_thr[i], i, SIMD_WIDTH);
+        memset(lfi->hev_thr[i], i, SIMD_WIDTH);
     }
 }
 
@@ -151,7 +150,7 @@ void vp8_loop_filter_frame_init(VP8_COMMON *cm,
             /* we could get rid of this if we assume that deltas are set to
              * zero when not in use; encoder always uses deltas
              */
-            vpx_memset(lfi->lvl[seg][0], lvl_seg, 4 * 4 );
+            memset(lfi->lvl[seg][0], lvl_seg, 4 * 4 );
             continue;
         }
 
@@ -261,6 +260,7 @@ void vp8_loop_filter_row_simple(VP8_COMMON *cm, MODE_INFO *mode_info_context,
     int mb_col;
     int filter_level;
     loop_filter_info_n *lfi_n = &cm->lf_info;
+    (void)post_uvstride;
 
     for (mb_col = 0; mb_col < cm->mb_cols; mb_col++)
     {

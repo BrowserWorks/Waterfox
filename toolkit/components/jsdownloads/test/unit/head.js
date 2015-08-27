@@ -43,6 +43,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "Task",
                                   "resource://gre/modules/Task.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "OS",
                                   "resource://gre/modules/osfile.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "MockRegistrar",
+                                  "resource://testing-common/MockRegistrar.jsm");
 
 XPCOMUtils.defineLazyServiceGetter(this, "gExternalHelperAppService",
            "@mozilla.org/uriloader/external-helper-app-service;1",
@@ -67,7 +69,7 @@ const TEST_STORE_FILE_NAME = "test-downloads.json";
 const TEST_REFERRER_URL = "http://www.example.com/referrer.html";
 
 const TEST_DATA_SHORT = "This test string is downloaded.";
-// Generate using gzipCompressString in TelemetryPing.jsm.
+// Generate using gzipCompressString in TelemetryController.jsm.
 const TEST_DATA_SHORT_GZIP_ENCODED_FIRST = [
  31,139,8,0,0,0,0,0,0,3,11,201,200,44,86,40,73,45,46,81,40,46,41,202,204
 ];
@@ -405,14 +407,10 @@ function promiseStartExternalHelperAppServiceDownload(aSourceUrl) {
       },
     }).then(null, do_report_unexpected_exception);
 
-    let channel = NetUtil.newChannel2(sourceURI,
-                                      null,
-                                      null,
-                                      null,      // aLoadingNode
-                                      Services.scriptSecurityManager.getSystemPrincipal(),
-                                      null,      // aTriggeringPrincipal
-                                      Ci.nsILoadInfo.SEC_NORMAL,
-                                      Ci.nsIContentPolicy.TYPE_OTHER);
+    let channel = NetUtil.newChannel({
+      uri: sourceURI,
+      loadUsingSystemPrincipal: true,
+    });
 
     // Start the actual download process.
     channel.asyncOpen({
@@ -546,7 +544,7 @@ function promiseVerifyContents(aPath, aExpectedContents)
     }
 
     let deferred = Promise.defer();
-    NetUtil.asyncFetch2(
+    NetUtil.asyncFetch(
       file,
       function(aInputStream, aStatus) {
         do_check_true(Components.isSuccessCode(aStatus));
@@ -562,12 +560,7 @@ function promiseVerifyContents(aPath, aExpectedContents)
           do_check_eq(contents, aExpectedContents);
         }
         deferred.resolve();
-      },
-      null,      // aLoadingNode
-      Services.scriptSecurityManager.getSystemPrincipal(),
-      null,      // aTriggeringPrincipal
-      Ci.nsILoadInfo.SEC_NORMAL,
-      Ci.nsIContentPolicy.TYPE_OTHER);
+      });
 
     yield deferred.promise;
   });
@@ -809,33 +802,22 @@ add_task(function test_common_initialize()
 
   // Make sure that downloads started using nsIExternalHelperAppService are
   // saved to disk without asking for a destination interactively.
-  let mockFactory = {
-    createInstance: function (aOuter, aIid) {
-      return {
-        QueryInterface: XPCOMUtils.generateQI([Ci.nsIHelperAppLauncherDialog]),
-        promptForSaveToFileAsync: function (aLauncher, aWindowContext,
-                                            aDefaultFileName,
-                                            aSuggestedFileExtension,
-                                            aForcePrompt)
-        {
-          // The dialog should create the empty placeholder file.
-          let file = getTempFile(TEST_TARGET_FILE_NAME);
-          file.create(Ci.nsIFile.NORMAL_FILE_TYPE, FileUtils.PERMS_FILE);
-          aLauncher.saveDestinationAvailable(file);
-        },
-      }.QueryInterface(aIid);
-    }
+  let mock = {
+    QueryInterface: XPCOMUtils.generateQI([Ci.nsIHelperAppLauncherDialog]),
+    promptForSaveToFileAsync(aLauncher,
+                             aWindowContext,
+                             aDefaultFileName,
+                             aSuggestedFileExtension,
+                             aForcePrompt) {
+      // The dialog should create the empty placeholder file.
+      let file = getTempFile(TEST_TARGET_FILE_NAME);
+      file.create(Ci.nsIFile.NORMAL_FILE_TYPE, FileUtils.PERMS_FILE);
+      aLauncher.saveDestinationAvailable(file);
+    },
   };
 
-  let contractID = "@mozilla.org/helperapplauncherdialog;1";
-  let cid = registrar.contractIDToCID(contractID);
-  let oldFactory = Components.manager.getClassObject(Cc[contractID],
-                                                     Ci.nsIFactory);
-
-  registrar.unregisterFactory(cid, oldFactory);
-  registrar.registerFactory(cid, "", contractID, mockFactory);
-  do_register_cleanup(function () {
-    registrar.unregisterFactory(cid, mockFactory);
-    registrar.registerFactory(cid, "", contractID, oldFactory);
+  let cid = MockRegistrar.register("@mozilla.org/helperapplauncherdialog;1", mock);
+  do_register_cleanup(() => {
+    MockRegistrar.unregister(cid);
   });
 });

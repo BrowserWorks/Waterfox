@@ -8,6 +8,7 @@ TAGS
 tags
 ID
 .DS_Store*
+*.pdb
 
 # Vim swap files.
 .*.sw[a-z]
@@ -16,8 +17,6 @@ ID
 **/.dir-locals.el
 
 # User files that may appear at the root
-/.mozconfig*
-/mozconfig
 /configure
 /config.cache
 /config.log

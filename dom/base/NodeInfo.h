@@ -25,8 +25,9 @@
 #include "nsCycleCollectionParticipant.h"
 #include "mozilla/dom/NameSpaceConstants.h"
 #include "nsStringGlue.h"
+#include "mozilla/Attributes.h"
+#include "nsIAtom.h"
 
-class nsIAtom;
 class nsIDocument;
 class nsNodeInfoManager;
 
@@ -262,18 +263,20 @@ protected:
     {
     }
 
-    nsIAtom*            mName;
-    nsIAtom*            mPrefix;
+    nsCOMPtr<nsIAtom> mName;
+    nsCOMPtr<nsIAtom> mPrefix;
     int32_t             mNamespaceID;
     uint16_t            mNodeType; // As defined by nsIDOMNode.nodeType
     const nsAString*    mNameString;
-    nsIAtom*            mExtraName; // Only used by PIs and DocTypes
+    nsCOMPtr<nsIAtom> mExtraName; // Only used by PIs and DocTypes
   };
 
   // nsNodeInfoManager needs to pass mInner to the hash table.
   friend class ::nsNodeInfoManager;
 
-  nsIDocument* mDocument; // Weak. Cache of mOwnerManager->mDocument
+  // This is a non-owning reference, but it's safe since it's set to nullptr
+  // by nsNodeInfoManager::DropDocumentReference when the document is destroyed.
+  nsIDocument* MOZ_NON_OWNING_REF mDocument; // Cache of mOwnerManager->mDocument
 
   NodeInfoInner mInner;
 

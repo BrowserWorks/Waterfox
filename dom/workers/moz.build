@@ -18,6 +18,7 @@ EXPORTS.mozilla.dom += [
 
 EXPORTS.mozilla.dom.workers += [
     'ServiceWorkerManager.h',
+    'ServiceWorkerPeriodicUpdater.h',
     'WorkerDebuggerManager.h',
     'Workers.h',
 ]
@@ -68,8 +69,10 @@ UNIFIED_SOURCES += [
     'ServiceWorkerContainer.cpp',
     'ServiceWorkerEvents.cpp',
     'ServiceWorkerManager.cpp',
+    'ServiceWorkerPeriodicUpdater.cpp',
     'ServiceWorkerRegistrar.cpp',
     'ServiceWorkerRegistration.cpp',
+    'ServiceWorkerScriptCache.cpp',
     'ServiceWorkerWindowClient.cpp',
     'SharedWorker.cpp',
     'URL.cpp',
@@ -87,8 +90,6 @@ IPDL_SOURCES += [
 ]
 
 FAIL_ON_WARNINGS = True
-
-MSVC_ENABLE_PGO = True
 
 LOCAL_INCLUDES += [
     '../base',

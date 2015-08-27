@@ -12,10 +12,6 @@
 #include "mozilla/PodOperations.h"
 #include "jsapi.h"
 
-#ifdef MOZ_CRASHREPORTER
-#include "nsExceptionHandler.h"
-#endif
-
 using namespace mozilla;
 
 /***************************************************************************/
@@ -768,23 +764,6 @@ xptiInterfaceInfo::Release(void)
         return 0;    
     }
     return cnt;
-}
-
-NS_IMETHODIMP
-xptiInterfaceInfo::GetConstantCount(uint16_t *aConstantCount)
-{
-    if (!mEntry) {
-        return NS_ERROR_UNEXPECTED;
-    }
-
-    if (!aConstantCount) {
-#if defined(XP_WIN) && defined(MOZ_CRASHREPORTER)
-        CrashReporter::RecordCrashingModule(_ReturnAddress());
-#endif
-        return NS_ERROR_UNEXPECTED;
-    }
-
-    return mEntry->GetConstantCount(aConstantCount);
 }
 
 /***************************************************************************/

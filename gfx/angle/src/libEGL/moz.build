@@ -52,10 +52,7 @@ DEFINES['EGLAPI'] = ""
 
 
 LOCAL_INCLUDES += [ '../../include', '../../src' ]
-USE_LIBS += [
-    'libGLESv2',
-    'mozalloc',
-]
+USE_LIBS += [ 'libGLESv2' ]
 
 GeckoSharedLibrary('libEGL', linkage=None)
 

@@ -68,7 +68,6 @@ class nsIDocShell;
 namespace mozilla {
 
 class WebGLActiveInfo;
-class WebGLContextBoundObject;
 class WebGLContextLossHandler;
 class WebGLBuffer;
 class WebGLExtensionBase;
@@ -84,7 +83,6 @@ class WebGLTexture;
 class WebGLTransformFeedback;
 class WebGLUniformLocation;
 class WebGLVertexArray;
-struct WebGLVertexAttribData;
 
 namespace dom {
 class Element;
@@ -639,6 +637,10 @@ public:
                        GLint yoffset, GLenum format, GLenum type,
                        ElementType& elt, ErrorResult& rv)
     {
+        // TODO: Consolidate all the parameter validation
+        // checks. Instead of spreading out the cheks in multple
+        // places, consolidate into one spot.
+
         if (IsContextLost())
             return;
 
@@ -936,7 +938,7 @@ protected:
 // -----------------------------------------------------------------------------
 // Queries (WebGL2ContextQueries.cpp)
 protected:
-    WebGLRefPtr<WebGLQuery>* GetQueryTargetSlot(GLenum target);
+    WebGLRefPtr<WebGLQuery>& GetQuerySlotByTarget(GLenum target);
 
     WebGLRefPtr<WebGLQuery> mActiveOcclusionQuery;
     WebGLRefPtr<WebGLQuery> mActiveTransformFeedbackQuery;
@@ -1310,7 +1312,7 @@ protected:
                          GLenum format, GLenum type, void* data,
                          uint32_t byteLength, js::Scalar::Type jsArrayType,
                          WebGLTexelFormat srcFormat, bool srcPremultiplied);
-    void TexSubImage2D_base(TexImageTarget texImageTarget, GLint level,
+    void TexSubImage2D_base(GLenum texImageTarget, GLint level,
                             GLint xoffset, GLint yoffset, GLsizei width,
                             GLsizei height, GLsizei srcStrideOrZero,
                             GLenum format, GLenum type, void* pixels,
@@ -1389,6 +1391,7 @@ private:
     virtual bool ValidateBufferIndexedTarget(GLenum target, const char* info) = 0;
     virtual bool ValidateBufferForTarget(GLenum target, WebGLBuffer* buffer, const char* info) = 0;
     virtual bool ValidateBufferUsageEnum(GLenum usage, const char* info) = 0;
+    virtual bool ValidateQueryTarget(GLenum usage, const char* info) = 0;
     virtual bool ValidateUniformMatrixTranspose(bool transpose, const char* info) = 0;
 
 protected:
@@ -1424,6 +1427,8 @@ protected:
     nsTArray<WebGLRefPtr<WebGLTexture> > mBound2DTextures;
     nsTArray<WebGLRefPtr<WebGLTexture> > mBoundCubeMapTextures;
     nsTArray<WebGLRefPtr<WebGLTexture> > mBound3DTextures;
+
+    void ResolveTexturesForDraw() const;
 
     WebGLRefPtr<WebGLProgram> mCurrentProgram;
     RefPtr<const webgl::LinkedProgramInfo> mActiveProgramLinkInfo;

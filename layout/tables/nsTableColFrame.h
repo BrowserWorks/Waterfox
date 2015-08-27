@@ -10,15 +10,8 @@
 #include "nscore.h"
 #include "nsContainerFrame.h"
 #include "nsTArray.h"
-
-class nsTableCellFrame;
-
-enum nsTableColType {
-  eColContent            = 0, // there is real col content associated   
-  eColAnonymousCol       = 1, // the result of a span on a col
-  eColAnonymousColGroup  = 2, // the result of a span on a col group
-  eColAnonymousCell      = 3  // the result of a cell alone
-};
+#include "nsTableColGroupFrame.h"
+#include "mozilla/WritingModes.h"
 
 class nsTableColFrame : public nsSplittableFrame {
 public:
@@ -39,11 +32,24 @@ public:
     */
   friend nsTableColFrame* NS_NewTableColFrame(nsIPresShell* aPresShell,
                                               nsStyleContext*  aContext);
+
+  nsTableColGroupFrame* GetTableColGroupFrame() const
+  {
+    nsIFrame* parent = GetParent();
+    MOZ_ASSERT(parent && parent->GetType() == nsGkAtoms::tableColGroupFrame);
+    return static_cast<nsTableColGroupFrame*>(parent);
+  }
+
+  nsTableFrame* GetTableFrame() const
+  {
+    return GetTableColGroupFrame()->GetTableFrame();
+  }
+
   /** @see nsIFrame::DidSetStyleContext */
   virtual void DidSetStyleContext(nsStyleContext* aOldStyleContext) override;
-  
+
   int32_t GetColIndex() const;
-  
+
   void SetColIndex (int32_t aColIndex);
 
   nsTableColFrame* GetNextCol() const;
@@ -66,12 +72,15 @@ public:
    * @see nsGkAtoms::tableColFrame
    */
   virtual nsIAtom* GetType() const override;
-  
+
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override;
 #endif
 
   virtual nsSplittableType GetSplittableType() const override;
+
+  virtual mozilla::WritingMode GetWritingMode() const override
+    { return GetTableFrame()->GetWritingMode(); }
 
   /** return the number of the columns the col represents.  always >= 1 */
   int32_t GetSpan();
@@ -79,10 +88,10 @@ public:
   /** convenience method, calls into cellmap */
   int32_t Count() const;
 
-  nscoord GetLeftBorderWidth();
-  void    SetLeftBorderWidth(BCPixelSize aWidth);
-  nscoord GetRightBorderWidth();
-  void    SetRightBorderWidth(BCPixelSize aWidth);
+  nscoord GetIStartBorderWidth() const { return mIStartBorderWidth; }
+  nscoord GetIEndBorderWidth() const { return mIEndBorderWidth; }
+  void SetIStartBorderWidth(BCPixelSize aWidth) { mIStartBorderWidth = aWidth; }
+  void SetIEndBorderWidth(BCPixelSize aWidth) { mIEndBorderWidth = aWidth; }
 
   /**
    * Gets inner border widths before collapsing with cell borders
@@ -95,9 +104,9 @@ public:
   nscoord GetContinuousBCBorderWidth(nsMargin& aBorder);
   /**
    * Set full border widths before collapsing with cell borders
-   * @param aForSide - side to set; only valid for top, right, and bottom
+   * @param aForSide - side to set; only valid for bstart, iend, and bend
    */
-  void SetContinuousBCBorderWidth(uint8_t     aForSide,
+  void SetContinuousBCBorderWidth(mozilla::LogicalSide aForSide,
                                   BCPixelSize aPixelValue);
 #ifdef DEBUG
   void Dump(int32_t aIndent);
@@ -254,21 +263,21 @@ public:
   }
 
   // The final width of the column.
-  void ResetFinalWidth() {
-    mFinalWidth = nscoord_MIN; // so we detect that it changed
+  void ResetFinalISize() {
+    mFinalISize = nscoord_MIN; // so we detect that it changed
   }
-  void SetFinalWidth(nscoord aFinalWidth) {
-    mFinalWidth = aFinalWidth;
+  void SetFinalISize(nscoord aFinalISize) {
+    mFinalISize = aFinalISize;
   }
-  nscoord GetFinalWidth() {
-    return mFinalWidth;
+  nscoord GetFinalISize() {
+    return mFinalISize;
   }
 
   virtual bool IsFrameOfType(uint32_t aFlags) const override
   {
     return nsSplittableFrame::IsFrameOfType(aFlags & ~(nsIFrame::eTablePart));
   }
-  
+
   virtual void InvalidateFrame(uint32_t aDisplayItemKey = 0) override;
   virtual void InvalidateFrameWithRect(const nsRect& aRect, uint32_t aDisplayItemKey = 0) override;
   virtual void InvalidateFrameForRemoval() override { InvalidateFrameSubtree(); }
@@ -288,64 +297,47 @@ protected:
   // a separate array allocated only during
   // BasicTableLayoutStrategy::ComputeColumnIntrinsicISizes (and only
   // when colspans were present).
-  nscoord mFinalWidth;
+  nscoord mFinalISize;
 
-  // the index of the column with respect to the whole table (starting at 0) 
-  // it should never be smaller then the start column index of the parent 
+  // the index of the column with respect to the whole table (starting at 0)
+  // it should never be smaller then the start column index of the parent
   // colgroup
   uint32_t mColIndex;
-  
+
   // border width in pixels of the inner half of the border only
-  BCPixelSize mLeftBorderWidth;
-  BCPixelSize mRightBorderWidth;
-  BCPixelSize mTopContBorderWidth;
-  BCPixelSize mRightContBorderWidth;
-  BCPixelSize mBottomContBorderWidth;
+  BCPixelSize mIStartBorderWidth;
+  BCPixelSize mIEndBorderWidth;
+  BCPixelSize mBStartContBorderWidth;
+  BCPixelSize mIEndContBorderWidth;
+  BCPixelSize mBEndContBorderWidth;
 
   bool mHasSpecifiedCoord;
 };
 
 inline int32_t nsTableColFrame::GetColIndex() const
 {
-  return mColIndex; 
+  return mColIndex;
 }
 
 inline void nsTableColFrame::SetColIndex (int32_t aColIndex)
-{ 
-  mColIndex = aColIndex; 
-}
-
-inline nscoord nsTableColFrame::GetLeftBorderWidth()
 {
-  return mLeftBorderWidth;
-}
-
-inline void nsTableColFrame::SetLeftBorderWidth(BCPixelSize aWidth)
-{
-  mLeftBorderWidth = aWidth;
-}
-
-inline nscoord nsTableColFrame::GetRightBorderWidth()
-{
-  return mRightBorderWidth;
-}
-
-inline void nsTableColFrame::SetRightBorderWidth(BCPixelSize aWidth)
-{
-  mRightBorderWidth = aWidth;
+  mColIndex = aColIndex;
 }
 
 inline nscoord
 nsTableColFrame::GetContinuousBCBorderWidth(nsMargin& aBorder)
 {
   int32_t aPixelsToTwips = nsPresContext::AppUnitsPerCSSPixel();
-  aBorder.top = BC_BORDER_BOTTOM_HALF_COORD(aPixelsToTwips,
-                                            mTopContBorderWidth);
-  aBorder.right = BC_BORDER_LEFT_HALF_COORD(aPixelsToTwips,
-                                            mRightContBorderWidth);
-  aBorder.bottom = BC_BORDER_TOP_HALF_COORD(aPixelsToTwips,
-                                            mBottomContBorderWidth);
-  return BC_BORDER_RIGHT_HALF_COORD(aPixelsToTwips, mRightContBorderWidth);
+  mozilla::WritingMode wm = GetWritingMode();
+  mozilla::LogicalMargin border(wm, aBorder);
+  border.BStart(wm) = BC_BORDER_END_HALF_COORD(aPixelsToTwips,
+                                               mBStartContBorderWidth);
+  border.IEnd(wm) = BC_BORDER_START_HALF_COORD(aPixelsToTwips,
+                                               mIEndContBorderWidth);
+  border.BEnd(wm) = BC_BORDER_START_HALF_COORD(aPixelsToTwips,
+                                               mBEndContBorderWidth);
+  aBorder = border.GetPhysicalMargin(wm);
+  return BC_BORDER_END_HALF_COORD(aPixelsToTwips, mIEndContBorderWidth);
 }
 
 #endif

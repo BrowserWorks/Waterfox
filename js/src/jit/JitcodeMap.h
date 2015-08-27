@@ -318,6 +318,8 @@ class JitcodeGlobalEntry
             return -1;
         }
 
+        void* canonicalNativeAddrFor(JSRuntime*rt, void* ptr) const;
+
         bool callStackAtAddr(JSRuntime* rt, void* ptr, BytecodeLocationVector& results,
                              uint32_t* depth) const;
 
@@ -405,6 +407,8 @@ class JitcodeGlobalEntry
 
         void destroy();
 
+        void* canonicalNativeAddrFor(JSRuntime* rt, void* ptr) const;
+
         bool callStackAtAddr(JSRuntime* rt, void* ptr, BytecodeLocationVector& results,
                              uint32_t* depth) const;
 
@@ -437,6 +441,8 @@ class JitcodeGlobalEntry
 
         void destroy() {}
 
+        void* canonicalNativeAddrFor(JSRuntime* rt, void* ptr) const;
+
         bool callStackAtAddr(JSRuntime* rt, void* ptr, BytecodeLocationVector& results,
                              uint32_t* depth) const;
 
@@ -446,6 +452,8 @@ class JitcodeGlobalEntry
         void youngestFrameLocationAtAddr(JSRuntime* rt, void* ptr,
                                          JSScript** script, jsbytecode** pc) const;
 
+        bool markIfUnmarked(JSTracer* trc);
+        void sweep(JSRuntime* rt);
         bool isMarkedFromAnyThread(JSRuntime* rt);
     };
 
@@ -459,6 +467,10 @@ class JitcodeGlobalEntry
         }
 
         void destroy() {}
+
+        void* canonicalNativeAddrFor(JSRuntime* rt, void* ptr) const {
+            return nullptr;
+        }
 
         bool callStackAtAddr(JSRuntime* rt, void* ptr, BytecodeLocationVector& results,
                              uint32_t* depth) const
@@ -703,6 +715,22 @@ class JitcodeGlobalEntry
         return query_;
     }
 
+    void* canonicalNativeAddrFor(JSRuntime* rt, void* ptr) const {
+        switch (kind()) {
+          case Ion:
+            return ionEntry().canonicalNativeAddrFor(rt, ptr);
+          case Baseline:
+            return baselineEntry().canonicalNativeAddrFor(rt, ptr);
+          case IonCache:
+            return ionCacheEntry().canonicalNativeAddrFor(rt, ptr);
+          case Dummy:
+            return dummyEntry().canonicalNativeAddrFor(rt, ptr);
+          default:
+            MOZ_CRASH("Invalid JitcodeGlobalEntry kind.");
+        }
+        return nullptr;
+    }
+
     // Read the inline call stack at a given point in the native code and append into
     // the given vector.  Innermost (script,pc) pair will be appended first, and
     // outermost appended last.
@@ -828,6 +856,7 @@ class JitcodeGlobalEntry
             markedAny |= baselineEntry().markIfUnmarked(trc);
             break;
           case IonCache:
+            markedAny |= ionCacheEntry().markIfUnmarked(trc);
           case Dummy:
             break;
           default:
@@ -836,7 +865,7 @@ class JitcodeGlobalEntry
         return markedAny;
     }
 
-    void sweep() {
+    void sweep(JSRuntime* rt) {
         switch (kind()) {
           case Ion:
             ionEntry().sweep();
@@ -845,6 +874,7 @@ class JitcodeGlobalEntry
             baselineEntry().sweep();
             break;
           case IonCache:
+            ionCacheEntry().sweep(rt);
           case Dummy:
             break;
           default:

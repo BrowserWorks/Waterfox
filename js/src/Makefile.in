@@ -39,8 +39,6 @@ GARBAGE += jsautokw.h host_jskwgen$(HOST_BIN_SUFFIX)
 
 GARBAGE += selfhosted.out.h
 
-USE_HOST_CXX = 1
-
 ifdef HAVE_DTRACE
 ifneq ($(OS_ARCH),Darwin)
 DTRACE_PROBE_OBJ = $(LIBRARY_NAME)-dtrace.$(OBJ_SUFFIX)
@@ -370,57 +368,55 @@ clean::
 endif
 
 ifeq ($(HOST_OS_ARCH),WINNT)
-RegExp.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-jsarray.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-Intl.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-Object.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-SymbolObject.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-TypedObject.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-NameFunctions.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-AsmJSLink.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-TokenStream.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-jsapi.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-jsbool.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-jsdate.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-jsexn.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-jsfun.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-jsnum.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-json.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-jsonparser.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-jsopcode.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-jsstr.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-JSONParser.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-RegExpObject.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-SPSProfiler.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-SavedStacks.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-StringBuffer.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-Symbol.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-Eval.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-Eval.$(OBJ_SUFFIX): CXXFLAGS := -O2
-BytecodeEmitter.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-BytecodeEmitter.$(OBJ_SUFFIX): CXXFLAGS := -O2
-Nursery.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-Nursery.$(OBJ_SUFFIX): CXXFLAGS := -O2
-RootMarking.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-RootMarking.$(OBJ_SUFFIX): CXXFLAGS := -O2
-Zone.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-Zone.$(OBJ_SUFFIX): CXXFLAGS := -O2
-Statistics.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-Statistics.$(OBJ_SUFFIX): CXXFLAGS := -O2
-BaselineDebugModeOSR.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-BaselineDebugModeOSR.$(OBJ_SUFFIX): CXXFLAGS := -O2
+
 BaselineBailouts.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
 BaselineBailouts.$(OBJ_SUFFIX): CXXFLAGS := -O2
+BaselineDebugModeOSR.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+BaselineDebugModeOSR.$(OBJ_SUFFIX): CXXFLAGS := -O2
 BaselineFrame.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
 BaselineFrame.$(OBJ_SUFFIX): CXXFLAGS := -O2
 BaselineIC.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
 BaselineIC.$(OBJ_SUFFIX): CXXFLAGS := -O2
 BaselineJIT.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
 BaselineJIT.$(OBJ_SUFFIX): CXXFLAGS := -O2
-VMFunctions.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-VMFunctions.$(OBJ_SUFFIX): CXXFLAGS := -O2
+BytecodeEmitter.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+BytecodeEmitter.$(OBJ_SUFFIX): CXXFLAGS := -O2
+Debugger.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+Debugger.$(OBJ_SUFFIX): CXXFLAGS := -O2
+DebuggerMemory.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+DebuggerMemory.$(OBJ_SUFFIX): CXXFLAGS := -O2
+Eval.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+Eval.$(OBJ_SUFFIX): CXXFLAGS := -O2
+HelperThreads.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+HelperThreads.$(OBJ_SUFFIX): CXXFLAGS := -O2
+Interpreter.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+Interpreter.$(OBJ_SUFFIX): CXXFLAGS := -O2
 JitFrames.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
 JitFrames.$(OBJ_SUFFIX): CXXFLAGS := -O2
+NativeObject.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+NativeObject.$(OBJ_SUFFIX): CXXFLAGS := -O2
+Nursery.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+Nursery.$(OBJ_SUFFIX): CXXFLAGS := -O2
+RematerializedFrame.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+RematerializedFrame.$(OBJ_SUFFIX): CXXFLAGS := -O2
+RootMarking.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+RootMarking.$(OBJ_SUFFIX): CXXFLAGS := -O2
+Runtime.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+Runtime.$(OBJ_SUFFIX): CXXFLAGS := -O2
+SavedStacks.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+SavedStacks.$(OBJ_SUFFIX): CXXFLAGS := -O2
+Statistics.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+Statistics.$(OBJ_SUFFIX): CXXFLAGS := -O2
+TypeInference.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+TypeInference.$(OBJ_SUFFIX): CXXFLAGS := -O2
+UbiNode.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+UbiNode.$(OBJ_SUFFIX): CXXFLAGS := -O2
+VMFunctions.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+VMFunctions.$(OBJ_SUFFIX): CXXFLAGS := -O2
+Xdr.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+Xdr.$(OBJ_SUFFIX): CXXFLAGS := -O2
+Zone.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+Zone.$(OBJ_SUFFIX): CXXFLAGS := -O2
 jsapi.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
 jsapi.$(OBJ_SUFFIX): CXXFLAGS := -O2
 jscompartment.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
@@ -429,64 +425,5 @@ jsgc.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
 jsgc.$(OBJ_SUFFIX): CXXFLAGS := -O2
 jsscript.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
 jsscript.$(OBJ_SUFFIX): CXXFLAGS := -O2
-js.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-js.$(OBJ_SUFFIX): CXXFLAGS := -O2
-DebuggerMemory.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-DebuggerMemory.$(OBJ_SUFFIX): CXXFLAGS := -O2
-Debugger.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-Debugger.$(OBJ_SUFFIX): CXXFLAGS := -O2
-Interpreter.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-Interpreter.$(OBJ_SUFFIX): CXXFLAGS := -O2
-UbiNode.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-UbiNode.$(OBJ_SUFFIX): CXXFLAGS := -O2
-HelperThreads.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-HelperThreads.$(OBJ_SUFFIX): CXXFLAGS := -O2
-NativeObject.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-NativeObject.$(OBJ_SUFFIX): CXXFLAGS := -O2
-RunTime.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-RunTime.$(OBJ_SUFFIX): CXXFLAGS := -O2
-SavedStacks.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-SavedStacks.$(OBJ_SUFFIX): CXXFLAGS := -O2
-Xdr.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-Runtime.$(OBJ_SUFFIX): CXXFLAGS := -O2
-Runtime.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-Xdr.$(OBJ_SUFFIX): CXXFLAGS := -O2
-js.$(OBJ_SUFFIX): CXXFLAGS := -O2
-js.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-RegExp.$(OBJ_SUFFIX): CXXFLAGS := -O2
-jsarray.$(OBJ_SUFFIX): CXXFLAGS := -O2
-Intl.$(OBJ_SUFFIX): CXXFLAGS := -O2
-Object.$(OBJ_SUFFIX): CXXFLAGS := -O2
-SymbolObject.$(OBJ_SUFFIX): CXXFLAGS := -O2
-TypedObject.$(OBJ_SUFFIX): CXXFLAGS := -O2
-NameFunctions.$(OBJ_SUFFIX): CXXFLAGS := -O2
-AsmJSLink.$(OBJ_SUFFIX): CXXFLAGS := -O2
-TokenStream.$(OBJ_SUFFIX): CXXFLAGS := -O2
-jsapi.$(OBJ_SUFFIX): CXXFLAGS := -O2
-jsbool.$(OBJ_SUFFIX): CXXFLAGS := -O2
-jsdate.$(OBJ_SUFFIX): CXXFLAGS := -O2
-jsexn.$(OBJ_SUFFIX): CXXFLAGS := -O2
-jsfun.$(OBJ_SUFFIX): CXXFLAGS := -O2
-jsnum.$(OBJ_SUFFIX): CXXFLAGS := -O2
-json.$(OBJ_SUFFIX): CXXFLAGS := -O2
-jsonparser.$(OBJ_SUFFIX): CXXFLAGS := -O2
-jsopcode.$(OBJ_SUFFIX): CXXFLAGS := -O2
-jsstr.$(OBJ_SUFFIX): CXXFLAGS := -O2
-JSONParser.$(OBJ_SUFFIX): CXXFLAGS := -O2
-RegExpObject.$(OBJ_SUFFIX): CXXFLAGS := -O2
-SPSProfiler.$(OBJ_SUFFIX): CXXFLAGS := -O2
-SavedStacks.$(OBJ_SUFFIX): CXXFLAGS := -O2
-StringBuffer.$(OBJ_SUFFIX): CXXFLAGS := -O2
-Symbol.$(OBJ_SUFFIX): CXXFLAGS := -O2
-RematerializedFrame.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-RematerializedFrame.$(OBJ_SUFFIX): CXXFLAGS := -O2
-MemoryMetrics.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-MemoryMetrics.$(OBJ_SUFFIX): CXXFLAGS := -O2
-AtomicsObject.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-AtomicsObject.$(OBJ_SUFFIX): CXXFLAGS := -O2
-ErrorObject.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-ErrorObject.$(OBJ_SUFFIX): CXXFLAGS := -O2
-jsmath.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-jsmath.$(OBJ_SUFFIX): CXXFLAGS := -O2
 
 endif

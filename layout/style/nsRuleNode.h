@@ -18,9 +18,8 @@ class nsStyleContext;
 struct nsRuleData;
 class nsIStyleRule;
 struct nsCSSValueList;
-
+class nsCSSPropertySet;
 class nsCSSValue;
-struct nsCSSRect;
 
 class nsStyleCoord;
 struct nsCSSValuePairList;
@@ -761,6 +760,17 @@ public:
     HasAuthorSpecifiedRules(nsStyleContext* aStyleContext,
                             uint32_t ruleTypeMask,
                             bool aAuthorColorsAllowed);
+
+  /**
+   * Fill in to aPropertiesOverridden all of the properties in aProperties
+   * that, for this rule node, have a declaration that is higher than the
+   * animation level in the CSS Cascade.
+   */
+  static void
+  ComputePropertiesOverridingAnimation(
+                              const nsTArray<nsCSSProperty>& aProperties,
+                              nsStyleContext* aStyleContext,
+                              nsCSSPropertySet& aPropertiesOverridden);
 
   // Expose this so media queries can use it
   static nscoord CalcLengthWithInitialFont(nsPresContext* aPresContext,

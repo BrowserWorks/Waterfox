@@ -26,6 +26,7 @@ interfaces = [
     'storage',
     'json',
     'offline',
+    'push',
     'geolocation',
     'notification',
     'permission',
@@ -41,6 +42,7 @@ DIRS += [
     'animation',
     'apps',
     'base',
+    'bluetooth',
     'activities',
     'archivereader',
     'requestsync',
@@ -65,6 +67,7 @@ DIRS += [
     'geolocation',
     'html',
     'icc',
+    'inputport',
     'json',
     'jsurl',
     'asmjscache',
@@ -75,7 +78,6 @@ DIRS += [
     'notification',
     'offline',
     'power',
-    'push',
     'quota',
     'security',
     'settings',
@@ -135,6 +137,11 @@ if CONFIG['MOZ_GAMEPAD']:
 if CONFIG['MOZ_NFC']:
     DIRS += ['nfc']
 
+if CONFIG['MOZ_SIMPLEPUSH']:
+    DIRS += ['simplepush']
+else:
+    DIRS += ['push']
+
 if CONFIG['MOZ_SECUREELEMENT']:
     DIRS += ['secureelement']
 
@@ -145,11 +152,6 @@ if CONFIG['MOZ_B2G']:
         'mobileid',
         'engineeringmode'
     ]
-
-if CONFIG['MOZ_B2G_BT_API_V2']:
-    DIRS += ['bluetooth2']
-else:
-    DIRS += ['bluetooth']
 
 DIRS += ['presentation']
 

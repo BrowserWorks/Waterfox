@@ -5,21 +5,35 @@
 
 #include "domstubs.idl"
 
+interface nsIArray;
 interface nsIDocument;
 interface nsIInterceptedChannel;
 interface nsIPrincipal;
 interface nsIURI;
 
-[builtinclass, uuid(d4367ffe-e435-4195-95f8-0a51b1bbfdfb)]
+[scriptable, uuid(52ee2c9d-ee87-4caf-9588-23ae77ff8798)]
 interface nsIServiceWorkerUnregisterCallback : nsISupports
 {
   // aState is true if the unregistration succeded.
   // It's false if this ServiceWorkerRegistration doesn't exist.
-  [noscript] void UnregisterSucceeded(in bool aState);
-  [noscript] void UnregisterFailed();
+  void unregisterSucceeded(in bool aState);
+  void unregisterFailed();
 };
 
-[builtinclass, uuid(e4c8baa5-237a-4bf6-82d4-ea06eb4b76ba)]
+[scriptable, builtinclass, uuid(8ce0d197-5740-4ddf-aa4a-e5a63e611d03)]
+interface nsIServiceWorkerInfo : nsISupports
+{
+  readonly attribute nsIPrincipal principal;
+
+  readonly attribute DOMString scope;
+  readonly attribute DOMString scriptSpec;
+  readonly attribute DOMString currentWorkerURL;
+
+  readonly attribute DOMString activeCacheName;
+  readonly attribute DOMString waitingCacheName;
+};
+
+[scriptable, builtinclass, uuid(384c9aec-29e5-4bdb-abc2-fba10da83e17)]
 interface nsIServiceWorkerManager : nsISupports
 {
   /**
@@ -62,10 +76,6 @@ interface nsIServiceWorkerManager : nsISupports
   void dispatchFetchEvent(in nsIDocument aDoc, in nsIInterceptedChannel aChannel,
                           in boolean aIsReload);
 
-  // aTarget MUST be a ServiceWorkerRegistration.
-  [noscript] void AddRegistrationEventListener(in DOMString aScope, in nsIDOMEventTarget aTarget);
-  [noscript] void RemoveRegistrationEventListener(in DOMString aScope, in nsIDOMEventTarget aTarget);
-
   /**
    * Call this to request that document `aDoc` be controlled by a ServiceWorker
    * if a registration exists for it's scope.
@@ -97,12 +107,37 @@ interface nsIServiceWorkerManager : nsISupports
   [noscript] nsISupports GetDocumentController(in nsIDOMWindow aWindow);
 
   /*
-   * This implements the update algorithm.
+   * This implements the soft update algorithm.
    */
-  void update(in DOMString aScope);
+  void softUpdate(in DOMString aScope);
+
+  /*
+   * Clears ServiceWorker registrations from memory and disk for the specified
+   * host.
+   * - All ServiceWorker instances change their state to redundant.
+   * - Existing ServiceWorker instances handling fetches will keep running.
+   * - All documents will immediately stop being controlled.
+   * - Unregister jobs will be queued for all registrations.
+   *   This eventually results in the registration being deleted from disk too.
+   */
+  void remove(in AUTF8String aHost);
+
+  /*
+   * Clear all registrations for all hosts. See remove().
+   */
+  void removeAll();
 
   // Testing
   DOMString getScopeForUrl(in DOMString path);
+
+  // This is meant to be used only by about:serviceworkers. It returns an array
+  // of nsIServiceWorkerInfo.
+  nsIArray getAllRegistrations();
+
+  void sendPushEvent(in ACString scope, in DOMString data);
+  void sendPushSubscriptionChangeEvent(in ACString scope);
+
+  void updateAllRegistrations();
 };
 
 %{ C++

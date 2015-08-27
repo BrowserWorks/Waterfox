@@ -7,7 +7,6 @@
 #include "nsSSLStatus.h"
 #include "plstr.h"
 #include "nsIClassInfoImpl.h"
-#include "nsIProgrammingLanguage.h"
 #include "nsIObjectOutputStream.h"
 #include "nsIObjectInputStream.h"
 #include "ssl.h"
@@ -237,18 +236,11 @@ nsSSLStatus::GetClassDescription(char** aClassDescription)
 NS_IMETHODIMP
 nsSSLStatus::GetClassID(nsCID** aClassID)
 {
-  *aClassID = (nsCID*) nsMemory::Alloc(sizeof(nsCID));
+  *aClassID = (nsCID*) moz_xmalloc(sizeof(nsCID));
   if (!*aClassID) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
   return GetClassIDNoAlloc(*aClassID);
-}
-
-NS_IMETHODIMP
-nsSSLStatus::GetImplementationLanguage(uint32_t* aImplementationLanguage)
-{
-  *aImplementationLanguage = nsIProgrammingLanguage::CPLUSPLUS;
-  return NS_OK;
 }
 
 NS_IMETHODIMP

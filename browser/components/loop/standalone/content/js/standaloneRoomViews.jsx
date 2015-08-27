@@ -12,9 +12,11 @@ loop.standaloneRoomViews = (function(mozL10n) {
   "use strict";
 
   var FAILURE_DETAILS = loop.shared.utils.FAILURE_DETAILS;
+  var ROOM_INFO_FAILURES = loop.shared.utils.ROOM_INFO_FAILURES;
   var ROOM_STATES = loop.store.ROOM_STATES;
   var sharedActions = loop.shared.actions;
   var sharedMixins = loop.shared.mixins;
+  var sharedUtils = loop.shared.utils;
   var sharedViews = loop.shared.views;
 
   var StandaloneRoomInfoArea = React.createClass({
@@ -44,7 +46,7 @@ loop.standaloneRoomViews = (function(mozL10n) {
         );
       }
       return (
-        <a href={loop.config.brandWebsiteUrl} className="btn btn-info">
+        <a href={loop.config.downloadFirefoxUrl} className="btn btn-info">
           {mozL10n.get("rooms_room_full_call_to_action_nonFx_label", {
             brandShortname: mozL10n.get("brandShortname")
           })}
@@ -159,11 +161,23 @@ loop.standaloneRoomViews = (function(mozL10n) {
   });
 
   var StandaloneRoomHeader = React.createClass({
+    propTypes: {
+      dispatcher: React.PropTypes.instanceOf(loop.Dispatcher).isRequired
+    },
+
+    recordClick: function() {
+      this.props.dispatcher.dispatch(new sharedActions.RecordClick({
+        linkInfo: "Support link click"
+      }));
+    },
+
     render: function() {
       return (
         <header>
           <h1>{mozL10n.get("clientShortname2")}</h1>
-          <a target="_blank" href={loop.config.generalSupportUrl}>
+          <a href={loop.config.generalSupportUrl}
+             onClick={this.recordClick}
+             target="_blank">
             <i className="icon icon-help"></i>
           </a>
         </header>
@@ -172,7 +186,14 @@ loop.standaloneRoomViews = (function(mozL10n) {
   });
 
   var StandaloneRoomFooter = React.createClass({
+    propTypes: {
+      dispatcher: React.PropTypes.instanceOf(loop.Dispatcher).isRequired
+    },
+
     _getContent: function() {
+      // We use this technique of static markup as it means we get
+      // just one overall string for L10n to define the structure of
+      // the whole item.
       return mozL10n.get("legal_text_and_links", {
         "clientShortname": mozL10n.get("clientShortname2"),
         "terms_of_use_url": React.renderToStaticMarkup(
@@ -184,16 +205,122 @@ loop.standaloneRoomViews = (function(mozL10n) {
           <a href={loop.config.privacyWebsiteUrl} target="_blank">
             {mozL10n.get("privacy_notice_link_text")}
           </a>
-        ),
+        )
       });
+    },
+
+    recordClick: function(event) {
+      // Check for valid href, as this is clicking on the paragraph -
+      // so the user may be clicking on the text rather than the link.
+      if (event.target && event.target.href) {
+        this.props.dispatcher.dispatch(new sharedActions.RecordClick({
+          linkInfo: event.target.href
+        }));
+      }
     },
 
     render: function() {
       return (
         <footer>
-          <p dangerouslySetInnerHTML={{__html: this._getContent()}}></p>
+          <p dangerouslySetInnerHTML={{__html: this._getContent()}}
+             onClick={this.recordClick}></p>
           <div className="footer-logo" />
         </footer>
+      );
+    }
+  });
+
+  var StandaloneRoomContextItem = React.createClass({
+    propTypes: {
+      dispatcher: React.PropTypes.instanceOf(loop.Dispatcher).isRequired,
+      receivingScreenShare: React.PropTypes.bool,
+      roomContextUrl: React.PropTypes.object
+    },
+
+    recordClick: function() {
+      this.props.dispatcher.dispatch(new sharedActions.RecordClick({
+        linkInfo: "Shared URL"
+      }));
+    },
+
+    render: function() {
+      if (!this.props.roomContextUrl ||
+          !this.props.roomContextUrl.location) {
+        return null;
+      }
+
+      var locationInfo = sharedUtils.formatURL(this.props.roomContextUrl.location);
+      if (!locationInfo) {
+        return null;
+      }
+
+      var cx = React.addons.classSet;
+
+      var classes = cx({
+        "standalone-context-url": true,
+        "screen-share-active": this.props.receivingScreenShare
+      });
+
+      return (
+        <div className={classes}>
+          <img src={this.props.roomContextUrl.thumbnail || "shared/img/icons-16x16.svg#globe"} />
+          <div className="standalone-context-url-description-wrapper">
+            {this.props.roomContextUrl.description}
+            <br /><a href={locationInfo.location}
+                     onClick={this.recordClick}
+                     target="_blank"
+                     title={locationInfo.location}>{locationInfo.hostname}</a>
+          </div>
+        </div>
+      );
+    }
+  });
+
+  var StandaloneRoomContextView = React.createClass({
+    propTypes: {
+      dispatcher: React.PropTypes.instanceOf(loop.Dispatcher).isRequired,
+      receivingScreenShare: React.PropTypes.bool.isRequired,
+      roomContextUrls: React.PropTypes.array,
+      roomName: React.PropTypes.string,
+      roomInfoFailure: React.PropTypes.string
+    },
+
+    getInitialState: function() {
+      return {
+        failureLogged: false
+      };
+    },
+
+    _logFailure: function(message) {
+      if (!this.state.failureLogged) {
+        console.error(mozL10n.get(message));
+        this.state.failureLogged = true;
+      }
+    },
+
+    render: function() {
+      // For failures, we currently just log the messages - UX doesn't want them
+      // displayed on primary UI at the moment.
+      if (this.props.roomInfoFailure === ROOM_INFO_FAILURES.WEB_CRYPTO_UNSUPPORTED) {
+        this._logFailure("room_information_failure_unsupported_browser");
+        return null;
+      } else if (this.props.roomInfoFailure) {
+        this._logFailure("room_information_failure_not_available");
+        return null;
+      }
+
+      // We only support one item in the context Urls array for now.
+      var roomContextUrl = (this.props.roomContextUrls &&
+                            this.props.roomContextUrls.length > 0) ?
+                            this.props.roomContextUrls[0] : null;
+      return (
+        <div className="standalone-room-info">
+          <h2 className="room-name">{this.props.roomName}</h2>
+          <StandaloneRoomContextItem
+            dispatcher={this.props.dispatcher}
+            receivingScreenShare={this.props.receivingScreenShare}
+            roomContextUrl={roomContextUrl} />
+        </div>
       );
     }
   });
@@ -272,6 +399,12 @@ loop.standaloneRoomViews = (function(mozL10n) {
         // first, and then connecting to the session doesn't seem to set the
         // initial size correctly.
         this.updateVideoContainer();
+      }
+
+      if (nextState.roomState === ROOM_STATES.INIT ||
+          nextState.roomState === ROOM_STATES.GATHER ||
+          nextState.roomState === ROOM_STATES.READY) {
+        this.resetDimensionsCache();
       }
 
       // When screen sharing stops.
@@ -443,13 +576,13 @@ loop.standaloneRoomViews = (function(mozL10n) {
       var screenShareStreamClasses = React.addons.classSet({
         "screen": true,
         "focus-stream": this.state.receivingScreenShare,
-        hide: !this.state.receivingScreenShare,
+        hide: !this.state.receivingScreenShare
       });
 
       return (
         <div className="room-conversation-wrapper">
           <div className="beta-logo" />
-          <StandaloneRoomHeader />
+          <StandaloneRoomHeader dispatcher={this.props.dispatcher} />
           <StandaloneRoomInfoArea roomState={this.state.roomState}
                                   failureReason={this.state.failureReason}
                                   joinRoom={this.joinRoom}
@@ -458,7 +591,12 @@ loop.standaloneRoomViews = (function(mozL10n) {
                                   roomUsed={this.state.used} />
           <div className="video-layout-wrapper">
             <div className="conversation room-conversation">
-              <h2 className="room-name">{this.state.roomName}</h2>
+              <StandaloneRoomContextView
+                dispatcher={this.props.dispatcher}
+                receivingScreenShare={this.state.receivingScreenShare}
+                roomContextUrls={this.state.roomContextUrls}
+                roomName={this.state.roomName}
+                roomInfoFailure={this.state.roomInfoFailure} />
               <div className="media nested">
                 <span className="self-view-hidden-message">
                   {mozL10n.get("self_view_hidden_message")}
@@ -484,13 +622,16 @@ loop.standaloneRoomViews = (function(mozL10n) {
           <loop.fxOSMarketplaceViews.FxOSHiddenMarketplaceView
             marketplaceSrc={this.state.marketplaceSrc}
             onMarketplaceMessage={this.state.onMarketplaceMessage} />
-          <StandaloneRoomFooter />
+          <StandaloneRoomFooter dispatcher={this.props.dispatcher} />
         </div>
       );
     }
   });
 
   return {
+    StandaloneRoomContextView: StandaloneRoomContextView,
+    StandaloneRoomFooter: StandaloneRoomFooter,
+    StandaloneRoomHeader: StandaloneRoomHeader,
     StandaloneRoomView: StandaloneRoomView
   };
 })(navigator.mozL10n);

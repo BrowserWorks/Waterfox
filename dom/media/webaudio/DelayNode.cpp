@@ -25,7 +25,7 @@ NS_INTERFACE_MAP_END_INHERITING(AudioNode)
 NS_IMPL_ADDREF_INHERITED(DelayNode, AudioNode)
 NS_IMPL_RELEASE_INHERITED(DelayNode, AudioNode)
 
-class DelayNodeEngine : public AudioNodeEngine
+class DelayNodeEngine final : public AudioNodeEngine
 {
   typedef PlayingRefChangeHandler PlayingRefChanged;
 public:
@@ -83,7 +83,7 @@ public:
     MOZ_ASSERT(mSource == aStream, "Invalid source stream");
     MOZ_ASSERT(aStream->SampleRate() == mDestination->SampleRate());
 
-    if (!aInput.IsNull()) {
+    if (!aInput.IsSilentOrSubnormal()) {
       if (mLeftOverData <= 0) {
         nsRefPtr<PlayingRefChanged> refchanged =
           new PlayingRefChanged(aStream, PlayingRefChanged::ADDREF);
@@ -137,9 +137,12 @@ public:
       // If this DelayNode is in a cycle, make sure the delay value is at least
       // one block.
       StreamTime tick = mSource->GetCurrentPosition();
+      float values[WEBAUDIO_BLOCK_SIZE];
+      mDelay.GetValuesAtTime(tick, values,WEBAUDIO_BLOCK_SIZE);
+
       double computedDelay[WEBAUDIO_BLOCK_SIZE];
       for (size_t counter = 0; counter < WEBAUDIO_BLOCK_SIZE; ++counter) {
-        double delayAtTick = mDelay.GetValueAtTime(tick, counter) * sampleRate;
+        double delayAtTick = values[counter] * sampleRate;
         double delayAtTickClamped =
           std::max(minDelay, std::min(delayAtTick, maxDelay));
         computedDelay[counter] = delayAtTickClamped;
@@ -190,7 +193,7 @@ DelayNode::DelayNode(AudioContext* aContext, double aMaxDelay)
               2,
               ChannelCountMode::Max,
               ChannelInterpretation::Speakers)
-  , mDelay(new AudioParam(this, SendDelayToStream, 0.0f))
+  , mDelay(new AudioParam(this, SendDelayToStream, 0.0f, "delayTime"))
 {
   DelayNodeEngine* engine =
     new DelayNodeEngine(this, aContext->Destination(),

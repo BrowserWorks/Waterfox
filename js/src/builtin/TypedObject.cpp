@@ -224,6 +224,7 @@ const Class js::ScalarTypeDescr::class_ = {
     nullptr, /* setProperty */
     nullptr, /* enumerate */
     nullptr, /* resolve */
+    nullptr, /* mayResolve */
     nullptr, /* convert */
     TypeDescr::finalize,
     ScalarTypeDescr::call
@@ -321,6 +322,7 @@ const Class js::ReferenceTypeDescr::class_ = {
     nullptr, /* setProperty */
     nullptr, /* enumerate */
     nullptr, /* resolve */
+    nullptr, /* mayResolve */
     nullptr, /* convert */
     TypeDescr::finalize,
     ReferenceTypeDescr::call
@@ -500,6 +502,7 @@ const Class ArrayTypeDescr::class_ = {
     nullptr, /* setProperty */
     nullptr, /* enumerate */
     nullptr, /* resolve */
+    nullptr, /* mayResolve */
     nullptr, /* convert */
     TypeDescr::finalize,
     nullptr, /* call */
@@ -727,6 +730,7 @@ const Class StructTypeDescr::class_ = {
     nullptr, /* setProperty */
     nullptr, /* enumerate */
     nullptr, /* resolve */
+    nullptr, /* mayResolve */
     nullptr, /* convert */
     TypeDescr::finalize,
     nullptr, /* call */
@@ -1485,7 +1489,7 @@ OutlineTypedObject::createUnattachedWithClass(JSContext* cx,
     if (!group)
         return nullptr;
 
-    NewObjectKind newKind = (heap == gc::TenuredHeap) ? MaybeSingletonObject : GenericObject;
+    NewObjectKind newKind = (heap == gc::TenuredHeap) ? TenuredObject : GenericObject;
     OutlineTypedObject* obj = NewObjectWithGroup<OutlineTypedObject>(cx, group,
                                                                      gc::AllocKind::OBJECT0,
                                                                      newKind);
@@ -1628,7 +1632,7 @@ OutlineTypedObject::obj_trace(JSTracer* trc, JSObject* object)
 {
     OutlineTypedObject& typedObj = object->as<OutlineTypedObject>();
 
-    MarkShape(trc, &typedObj.shape_, "OutlineTypedObject_shape");
+    TraceEdge(trc, &typedObj.shape_, "OutlineTypedObject_shape");
 
     if (!typedObj.owner_)
         return;
@@ -1641,7 +1645,7 @@ OutlineTypedObject::obj_trace(JSTracer* trc, JSObject* object)
 
     // Mark the owner, watching in case it is moved by the tracer.
     JSObject* oldOwner = typedObj.owner_;
-    gc::MarkObjectUnbarriered(trc, &typedObj.owner_, "typed object owner");
+    TraceManuallyBarrieredEdge(trc, &typedObj.owner_, "typed object owner");
     JSObject* owner = typedObj.owner_;
 
     uint8_t* oldData = typedObj.outOfLineTypedMem();
@@ -2119,7 +2123,7 @@ InlineTypedObject::create(JSContext* cx, HandleTypeDescr descr, gc::InitialHeap 
     if (!group)
         return nullptr;
 
-    NewObjectKind newKind = (heap == gc::TenuredHeap) ? MaybeSingletonObject : GenericObject;
+    NewObjectKind newKind = (heap == gc::TenuredHeap) ? TenuredObject : GenericObject;
     return NewObjectWithGroup<InlineTypedObject>(cx, group, allocKind, newKind);
 }
 
@@ -2141,7 +2145,7 @@ InlineTypedObject::obj_trace(JSTracer* trc, JSObject* object)
 {
     InlineTypedObject& typedObj = object->as<InlineTypedObject>();
 
-    MarkShape(trc, &typedObj.shape_, "InlineTypedObject_shape");
+    TraceEdge(trc, &typedObj.shape_, "InlineTypedObject_shape");
 
     // Inline transparent objects do not have references and do not need more
     // tracing. If there is an entry in the compartment's LazyArrayBufferTable,
@@ -2246,6 +2250,7 @@ OutlineTransparentTypedObject::getOrCreateBuffer(JSContext* cx)
         nullptr,        /* setProperty */                \
         nullptr,        /* enumerate   */                \
         nullptr,        /* resolve     */                \
+        nullptr,        /* mayResolve  */                \
         nullptr,        /* convert     */                \
         nullptr,        /* finalize    */                \
         nullptr,        /* call        */                \
@@ -2937,26 +2942,24 @@ MemoryTracingVisitor::visitReference(ReferenceTypeDescr& descr, uint8_t* mem)
     switch (descr.type()) {
       case ReferenceTypeDescr::TYPE_ANY:
       {
-        js::HeapValue* heapValue = reinterpret_cast<js::HeapValue*>(mem);
-        gc::MarkValue(trace_, heapValue, "reference-val");
+        HeapValue* heapValue = reinterpret_cast<js::HeapValue*>(mem);
+        TraceEdge(trace_, heapValue, "reference-val");
         return;
       }
 
       case ReferenceTypeDescr::TYPE_OBJECT:
       {
-        js::HeapPtrObject* objectPtr =
-            reinterpret_cast<js::HeapPtrObject*>(mem);
+        HeapPtrObject* objectPtr = reinterpret_cast<js::HeapPtrObject*>(mem);
         if (*objectPtr)
-            gc::MarkObject(trace_, objectPtr, "reference-obj");
+            TraceEdge(trace_, objectPtr, "reference-obj");
         return;
       }
 
       case ReferenceTypeDescr::TYPE_STRING:
       {
-        js::HeapPtrString* stringPtr =
-            reinterpret_cast<js::HeapPtrString*>(mem);
+        HeapPtrString* stringPtr = reinterpret_cast<js::HeapPtrString*>(mem);
         if (*stringPtr)
-            gc::MarkString(trace_, stringPtr, "reference-str");
+            TraceEdge(trace_, stringPtr, "reference-str");
         return;
       }
     }

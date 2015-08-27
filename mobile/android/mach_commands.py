@@ -54,6 +54,7 @@ class MachCommands(MachCommandBase):
             ensure_exit_code=False, # Don't throw on non-zero exit code.
             cwd=mozpath.join(self.topobjdir, 'mobile', 'android', 'gradle'))
 
+
     @Command('gradle-install', category='devenv',
         description='Install gradle environment.',
         conditions=[conditions.is_android])
@@ -115,13 +116,14 @@ class MachCommands(MachCommandBase):
 
         srcdir('app/build.gradle', 'mobile/android/gradle/app/build.gradle')
         objdir('app/src/main/AndroidManifest.xml', 'mobile/android/base/AndroidManifest.xml')
+        objdir('app/src/androidTest/AndroidManifest.xml', 'build/mobile/robocop/AndroidManifest.xml')
         srcdir('app/src/androidTest/res', 'build/mobile/robocop/res')
-        srcdir('app/src/androidTest/assets', 'mobile/android/base/tests/assets')
+        srcdir('app/src/androidTest/assets', 'mobile/android/tests/browser/robocop/assets')
         objdir('app/src/debug/assets', 'dist/fennec/assets')
         objdir('app/src/debug/jniLibs', 'dist/fennec/lib')
         # Test code.
         srcdir('app/src/robocop_harness/org/mozilla/gecko', 'build/mobile/robocop')
-        srcdir('app/src/robocop/org/mozilla/gecko/tests', 'mobile/android/base/tests')
+        srcdir('app/src/robocop/org/mozilla/gecko/tests', 'mobile/android/tests/browser/robocop')
         srcdir('app/src/background/org/mozilla/gecko', 'mobile/android/tests/background/junit3/src')
         srcdir('app/src/browser/org/mozilla/gecko', 'mobile/android/tests/browser/junit3/src')
         # Test libraries.

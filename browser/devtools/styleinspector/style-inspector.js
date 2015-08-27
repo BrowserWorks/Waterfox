@@ -24,7 +24,6 @@ function RuleViewTool(inspector, window, iframe) {
   this.doc = window.document;
 
   this.view = new RuleView.CssRuleView(inspector, this.doc);
-  this.doc.documentElement.appendChild(this.view.element);
 
   this.onLinkClicked = this.onLinkClicked.bind(this);
   this.onSelected = this.onSelected.bind(this);
@@ -111,9 +110,9 @@ RuleViewTool.prototype = {
     // these sheets in the view source window instead.
     if (!sheet || sheet.isSystem) {
       let contentDoc = this.inspector.selection.document;
-      let viewSourceUtils = this.inspector.viewSourceUtils;
       let href = rule.nodeHref || rule.href;
-      viewSourceUtils.viewSource(href, null, contentDoc, rule.line || 0);
+      let toolbox = gDevTools.getToolbox(this.inspector.target);
+      toolbox.viewSource(href, rule.line);
       return;
     }
 
@@ -151,8 +150,6 @@ RuleViewTool.prototype = {
     this.view.off("ruleview-linked-clicked", this.onLinkClicked);
     this.view.off("ruleview-changed", this.onPropertyChanged);
     this.view.off("ruleview-refreshed", this.onViewRefreshed);
-
-    this.doc.documentElement.removeChild(this.view.element);
 
     this.view.destroy();
 

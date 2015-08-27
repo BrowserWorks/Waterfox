@@ -2,6 +2,8 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
+Components.utils.import("resource://testing-common/MockRegistrar.jsm");
+
 function run_test() {
   setupTestCommon();
   // Calling do_get_profile prevents an error from being logged
@@ -18,15 +20,16 @@ function run_test() {
   overrideXHR(callHandleEvent);
   standardInit();
 
-  let registrar = Cm.QueryInterface(Ci.nsIComponentRegistrar);
-  registrar.registerFactory(Components.ID("{1dfeb90a-2193-45d5-9cb8-864928b2af55}"),
-                            "Fake Window Watcher",
-                            "@mozilla.org/embedcomp/window-watcher;1",
-                            WindowWatcherFactory);
-  registrar.registerFactory(Components.ID("{1dfeb90a-2193-45d5-9cb8-864928b2af56}"),
-                            "Fake Window Mediator",
-                            "@mozilla.org/appshell/window-mediator;1",
-                            WindowMediatorFactory);
+  let windowWatcherCID =
+    MockRegistrar.register("@mozilla.org/embedcomp/window-watcher;1",
+                           WindowWatcher);
+  let windowMediatorCID =
+    MockRegistrar.register("@mozilla.org/appshell/window-mediator;1",
+                           WindowMediator);
+  do_register_cleanup(() => {
+    MockRegistrar.unregister(windowWatcherCID);
+    MockRegistrar.unregister(windowMediatorCID);
+  });
 
   gCheckFunc = check_showUpdateAvailable;
   let patches = getRemotePatchString("complete");
@@ -38,7 +41,7 @@ function run_test() {
 function check_status() {
   let status = readStatusFile();
   Assert.notEqual(status, STATE_DOWNLOADING,
-                  "the update should not be downloading");
+                  "the update state" + MSG_SHOULD_EQUAL);
 
   // Pause the download and reload the Update Manager with an empty update so
   // the Application Update Service doesn't write the update xml files during
@@ -48,28 +51,22 @@ function check_status() {
   writeUpdatesToXMLFile(getLocalUpdatesXMLString(""), false);
   reloadUpdateManagerData();
 
-  let registrar = Cm.QueryInterface(Ci.nsIComponentRegistrar);
-  registrar.unregisterFactory(Components.ID("{1dfeb90a-2193-45d5-9cb8-864928b2af55}"),
-                              WindowWatcherFactory);
-  registrar.unregisterFactory(Components.ID("{1dfeb90a-2193-45d5-9cb8-864928b2af56}"),
-                              WindowMediatorFactory);
-
   do_execute_soon(doTestFinish);
 }
 
 // Callback function used by the custom XMLHttpRequest implementation to
 // call the nsIDOMEventListener's handleEvent method for onload.
 function callHandleEvent(aXHR) {
-  gXHR.status = 400;
-  gXHR.responseText = gResponseBody;
+  aXHR.status = 400;
+  aXHR.responseText = gResponseBody;
   try {
     let parser = Cc["@mozilla.org/xmlextras/domparser;1"].
                  createInstance(Ci.nsIDOMParser);
-    gXHR.responseXML = parser.parseFromString(gResponseBody, "application/xml");
+    aXHR.responseXML = parser.parseFromString(gResponseBody, "application/xml");
   } catch (e) {
   }
-  let e = { target: gXHR };
-  gXHR.onload(e);
+  let e = { target: aXHR };
+  aXHR.onload(e);
 }
 
 function check_showUpdateAvailable() {
@@ -84,15 +81,6 @@ const WindowWatcher = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIWindowWatcher])
 };
 
-const WindowWatcherFactory = {
-  createInstance: function createInstance(aOuter, aIID) {
-    if (aOuter != null) {
-      throw Cr.NS_ERROR_NO_AGGREGATION;
-    }
-    return WindowWatcher.QueryInterface(aIID);
-  }
-};
-
 const WindowMediator = {
   getMostRecentWindow: function(aWindowType) {
     do_execute_soon(check_status);
@@ -100,13 +88,4 @@ const WindowMediator = {
   },
 
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIWindowMediator])
-};
-
-const WindowMediatorFactory = {
-  createInstance: function createInstance(aOuter, aIID) {
-    if (aOuter != null) {
-      throw Cr.NS_ERROR_NO_AGGREGATION;
-    }
-    return WindowMediator.QueryInterface(aIID);
-  }
 };

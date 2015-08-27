@@ -20,18 +20,20 @@ toolkit.jar:
    content/global/aboutRights-unbranded.xhtml (aboutRights-unbranded.xhtml)
    content/global/aboutNetworking.js
    content/global/aboutNetworking.xhtml
+   content/global/aboutServiceWorkers.js
+   content/global/aboutServiceWorkers.xhtml
    content/global/aboutwebrtc/aboutWebrtc.css   (aboutwebrtc/aboutWebrtc.css)
    content/global/aboutwebrtc/aboutWebrtc.js    (aboutwebrtc/aboutWebrtc.js)
    content/global/aboutwebrtc/aboutWebrtc.xhtml (aboutwebrtc/aboutWebrtc.xhtml)
 *  content/global/aboutSupport.js
 *  content/global/aboutSupport.xhtml
-*  content/global/aboutTelemetry.js
+   content/global/aboutTelemetry.js
    content/global/aboutTelemetry.xhtml
    content/global/aboutTelemetry.css          (aboutTelemetry.css)
    content/global/directionDetector.html
    content/global/plugins.html
    content/global/plugins.css
-*  content/global/browser-child.js            (browser-child.js)
+   content/global/browser-child.js            (browser-child.js)
    content/global/browser-content.js          (browser-content.js)
 *+  content/global/buildconfig.html            (buildconfig.html)
 *  content/global/contentAreaUtils.js         (contentAreaUtils.js)

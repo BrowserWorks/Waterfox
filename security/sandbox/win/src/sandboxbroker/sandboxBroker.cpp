@@ -93,21 +93,17 @@ SandboxBroker::SetSecurityLevelForContentProcess(int32_t aSandboxLevel)
   } else if (aSandboxLevel == 2) {
     jobLevel = sandbox::JOB_RESTRICTED;
     accessTokenLevel = sandbox::USER_LIMITED;
-    // Ideally we would have an initialIntegrityLevel of LOW here, but this
-    // immediately causes a problem with the way PBackground is initialized.
-    initialIntegrityLevel = sandbox::INTEGRITY_LEVEL_MEDIUM;
+    initialIntegrityLevel = sandbox::INTEGRITY_LEVEL_LOW;
     delayedIntegrityLevel = sandbox::INTEGRITY_LEVEL_LOW;
   } else if (aSandboxLevel == 1) {
-    jobLevel = sandbox::JOB_INTERACTIVE;
-    accessTokenLevel = sandbox::USER_INTERACTIVE;
-    // INTEGRITY_LEVEL_LAST effectively means don't change from the integrity
-    // level of the broker process.
-    initialIntegrityLevel = sandbox::INTEGRITY_LEVEL_LAST;
+    jobLevel = sandbox::JOB_NONE;
+    accessTokenLevel = sandbox::USER_NON_ADMIN;
+    initialIntegrityLevel = sandbox::INTEGRITY_LEVEL_LOW;
     delayedIntegrityLevel = sandbox::INTEGRITY_LEVEL_LOW;
   } else {
     jobLevel = sandbox::JOB_NONE;
     accessTokenLevel = sandbox::USER_NON_ADMIN;
-    initialIntegrityLevel = sandbox::INTEGRITY_LEVEL_LAST;
+    initialIntegrityLevel = sandbox::INTEGRITY_LEVEL_MEDIUM;
     delayedIntegrityLevel = sandbox::INTEGRITY_LEVEL_MEDIUM;
   }
 
@@ -124,7 +120,7 @@ SandboxBroker::SetSecurityLevelForContentProcess(int32_t aSandboxLevel)
   result = mPolicy->SetDelayedIntegrityLevel(delayedIntegrityLevel);
   ret = ret && (sandbox::SBOX_ALL_OK == result);
 
-  if (aSandboxLevel > 0) {
+  if (aSandboxLevel > 1) {
     result = mPolicy->SetAlternateDesktop(true);
     ret = ret && (sandbox::SBOX_ALL_OK == result);
   }
@@ -135,6 +131,26 @@ SandboxBroker::SetSecurityLevelForContentProcess(int32_t aSandboxLevel)
   result = mPolicy->AddRule(sandbox::TargetPolicy::SUBSYS_FILES,
                             sandbox::TargetPolicy::FILES_ALLOW_ANY,
                             L"\\??\\pipe\\chrome.*");
+  ret = ret && (sandbox::SBOX_ALL_OK == result);
+
+  // Add the policy for the client side of the crash server pipe.
+  result = mPolicy->AddRule(sandbox::TargetPolicy::SUBSYS_FILES,
+                            sandbox::TargetPolicy::FILES_ALLOW_ANY,
+                            L"\\??\\pipe\\gecko-crash-server-pipe.*");
+  ret = ret && (sandbox::SBOX_ALL_OK == result);
+
+  // The content process needs to be able to duplicate named pipes back to the
+  // broker process, which are File type handles.
+  result = mPolicy->AddRule(sandbox::TargetPolicy::SUBSYS_HANDLES,
+                            sandbox::TargetPolicy::HANDLES_DUP_BROKER,
+                            L"File");
+  ret = ret && (sandbox::SBOX_ALL_OK == result);
+
+  // The content process needs to be able to duplicate shared memory to the
+  // broker process, which are Section type handles.
+  result = mPolicy->AddRule(sandbox::TargetPolicy::SUBSYS_HANDLES,
+                            sandbox::TargetPolicy::HANDLES_DUP_BROKER,
+                            L"Section");
   ret = ret && (sandbox::SBOX_ALL_OK == result);
 
   return ret;
@@ -209,6 +225,13 @@ SandboxBroker::SetSecurityLevelForPluginProcess(int32_t aSandboxLevel)
                             L"\\??\\pipe\\chrome.*");
   ret = ret && (sandbox::SBOX_ALL_OK == result);
 
+  // The NPAPI process needs to be able to duplicate shared memory to the
+  // content process, which are Section type handles.
+  result = mPolicy->AddRule(sandbox::TargetPolicy::SUBSYS_HANDLES,
+                            sandbox::TargetPolicy::HANDLES_DUP_ANY,
+                            L"Section");
+  ret = ret && (sandbox::SBOX_ALL_OK == result);
+
   return ret;
 }
 
@@ -237,12 +260,12 @@ SandboxBroker::SetSecurityLevelForGMPlugin()
 
   auto result = mPolicy->SetJobLevel(sandbox::JOB_LOCKDOWN, 0);
   bool ret = (sandbox::SBOX_ALL_OK == result);
-  if (base::win::GetVersion() > base::win::VERSION_WIN8_1) {
-    result = mPolicy->SetTokenLevel(sandbox::USER_RESTRICTED_SAME_ACCESS,
-                                    sandbox::USER_RESTRICTED);
-  } else {
+  if (base::win::GetVersion() < base::win::VERSION_VISTA) {
     result = mPolicy->SetTokenLevel(sandbox::USER_RESTRICTED_SAME_ACCESS,
                                     sandbox::USER_LOCKDOWN);
+  } else {
+    result = mPolicy->SetTokenLevel(sandbox::USER_RESTRICTED_SAME_ACCESS,
+                                    sandbox::USER_RESTRICTED);
   }
   ret = ret && (sandbox::SBOX_ALL_OK == result);
 

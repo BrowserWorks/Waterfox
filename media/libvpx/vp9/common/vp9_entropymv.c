@@ -11,9 +11,6 @@
 #include "vp9/common/vp9_onyxc_int.h"
 #include "vp9/common/vp9_entropymv.h"
 
-#define MV_COUNT_SAT 20
-#define MV_MAX_UPDATE_FACTOR 128
-
 // Integer pel reference mv threshold for use of high-precision 1/8 mv
 #define COMPANDED_MVREF_THRESH 8
 
@@ -183,51 +180,43 @@ void vp9_inc_mv(const MV *mv, nmv_context_counts *counts) {
   }
 }
 
-static vp9_prob adapt_prob(vp9_prob prep, const unsigned int ct[2]) {
-  return merge_probs(prep, ct, MV_COUNT_SAT, MV_MAX_UPDATE_FACTOR);
-}
-
-static void adapt_probs(const vp9_tree_index *tree, const vp9_prob *pre_probs,
-                        const unsigned int *counts, vp9_prob *probs) {
-  vp9_tree_merge_probs(tree, pre_probs, counts, MV_COUNT_SAT,
-                       MV_MAX_UPDATE_FACTOR, probs);
-}
-
 void vp9_adapt_mv_probs(VP9_COMMON *cm, int allow_hp) {
   int i, j;
 
-  nmv_context *fc = &cm->fc.nmvc;
+  nmv_context *fc = &cm->fc->nmvc;
   const nmv_context *pre_fc = &cm->frame_contexts[cm->frame_context_idx].nmvc;
   const nmv_context_counts *counts = &cm->counts.mv;
 
-  adapt_probs(vp9_mv_joint_tree, pre_fc->joints, counts->joints, fc->joints);
+  vp9_tree_merge_probs(vp9_mv_joint_tree, pre_fc->joints, counts->joints,
+                       fc->joints);
 
   for (i = 0; i < 2; ++i) {
     nmv_component *comp = &fc->comps[i];
     const nmv_component *pre_comp = &pre_fc->comps[i];
     const nmv_component_counts *c = &counts->comps[i];
 
-    comp->sign = adapt_prob(pre_comp->sign, c->sign);
-    adapt_probs(vp9_mv_class_tree, pre_comp->classes, c->classes,
-                comp->classes);
-    adapt_probs(vp9_mv_class0_tree, pre_comp->class0, c->class0, comp->class0);
+    comp->sign = mode_mv_merge_probs(pre_comp->sign, c->sign);
+    vp9_tree_merge_probs(vp9_mv_class_tree, pre_comp->classes, c->classes,
+                         comp->classes);
+    vp9_tree_merge_probs(vp9_mv_class0_tree, pre_comp->class0, c->class0,
+                         comp->class0);
 
     for (j = 0; j < MV_OFFSET_BITS; ++j)
-      comp->bits[j] = adapt_prob(pre_comp->bits[j], c->bits[j]);
+      comp->bits[j] = mode_mv_merge_probs(pre_comp->bits[j], c->bits[j]);
 
     for (j = 0; j < CLASS0_SIZE; ++j)
-      adapt_probs(vp9_mv_fp_tree, pre_comp->class0_fp[j], c->class0_fp[j],
-                  comp->class0_fp[j]);
+      vp9_tree_merge_probs(vp9_mv_fp_tree, pre_comp->class0_fp[j],
+                           c->class0_fp[j], comp->class0_fp[j]);
 
-    adapt_probs(vp9_mv_fp_tree, pre_comp->fp, c->fp, comp->fp);
+    vp9_tree_merge_probs(vp9_mv_fp_tree, pre_comp->fp, c->fp, comp->fp);
 
     if (allow_hp) {
-      comp->class0_hp = adapt_prob(pre_comp->class0_hp, c->class0_hp);
-      comp->hp = adapt_prob(pre_comp->hp, c->hp);
+      comp->class0_hp = mode_mv_merge_probs(pre_comp->class0_hp, c->class0_hp);
+      comp->hp = mode_mv_merge_probs(pre_comp->hp, c->hp);
     }
   }
 }
 
 void vp9_init_mv_probs(VP9_COMMON *cm) {
-  cm->fc.nmvc = default_nmv_context;
+  cm->fc->nmvc = default_nmv_context;
 }

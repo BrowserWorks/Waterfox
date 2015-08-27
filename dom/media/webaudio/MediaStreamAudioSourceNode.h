@@ -15,7 +15,7 @@ namespace mozilla {
 
 namespace dom {
 
-class MediaStreamAudioSourceNodeEngine : public AudioNodeEngine
+class MediaStreamAudioSourceNodeEngine final : public AudioNodeEngine
 {
 public:
   explicit MediaStreamAudioSourceNodeEngine(AudioNode* aNode)
@@ -35,6 +35,7 @@ public:
       NS_ERROR("MediaStreamAudioSourceNodeEngine bad parameter index");
     }
   }
+
 private:
   bool mEnabled;
 };

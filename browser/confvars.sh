@@ -21,7 +21,12 @@ if test "$OS_ARCH" = "WINNT"; then
       fi
     fi
   fi
+elif test "$OS_ARCH" = "Darwin"; then
+  MOZ_VERIFY_MAR_SIGNATURE=1
 fi
+
+# Enable building ./signmar and running libmar signature tests
+MOZ_ENABLE_SIGNMAR=1
 
 MOZ_CHROME_FILE_FORMAT=omni
 MOZ_DISABLE_EXPORT_JS=1
@@ -62,3 +67,6 @@ MOZ_PAY=1
 MOZ_ACTIVITIES=1
 MOZ_JSDOWNLOADS=1
 MOZ_WEBM_ENCODER=1
+
+# Enable checking that add-ons are signed by the trusted root
+MOZ_ADDON_SIGNING=1

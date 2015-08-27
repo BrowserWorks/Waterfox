@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -11,12 +12,12 @@
 #include "nsObserverList.h"
 #include "nsThreadUtils.h"
 #include "nsEnumeratorUtils.h"
+#include "xpcpublic.h"
 #include "mozilla/net/NeckoCommon.h"
 #include "mozilla/Services.h"
 
 #define NOTIFY_GLOBAL_OBSERVERS
 
-#if defined(PR_LOGGING)
 // Log module for nsObserverService logging...
 //
 // To enable logging (see prlog.h for full details):
@@ -35,10 +36,7 @@ GetObserverServiceLog()
   }
   return sLog;
 }
-  #define LOG(x)  PR_LOG(GetObserverServiceLog(), PR_LOG_DEBUG, x)
-#else
-  #define LOG(x)
-#endif /* PR_LOGGING */
+#define LOG(x)  PR_LOG(GetObserverServiceLog(), PR_LOG_DEBUG, x)
 
 namespace mozilla {
 
@@ -186,7 +184,6 @@ nsObserverService::CollectReports(nsIHandleReportCallback* aHandleReport,
 ////////////////////////////////////////////////////////////////////////////////
 // nsObserverService Implementation
 
-
 NS_IMPL_ISUPPORTS(nsObserverService,
                   nsIObserverService,
                   nsObserverService,
@@ -205,13 +202,17 @@ nsObserverService::~nsObserverService(void)
 void
 nsObserverService::RegisterReporter()
 {
+#if !defined(MOZILLA_XPCOMRT_API)
   RegisterWeakMemoryReporter(this);
+#endif // !defined(MOZILLA_XPCOMRT_API)
 }
 
 void
 nsObserverService::Shutdown()
 {
+#if !defined(MOZILLA_XPCOMRT_API)
   UnregisterWeakMemoryReporter(this);
+#endif // !defined(MOZILLA_XPCOMRT_API)
 
   mShuttingDown = true;
 
@@ -339,22 +340,32 @@ NS_IMETHODIMP nsObserverService::NotifyObservers(nsISupports* aSubject,
   return NS_OK;
 }
 
+#if !defined(MOZILLA_XPCOMRT_API)
 static PLDHashOperator
-UnmarkGrayObserverEntry(nsObserverList* aObserverList, void* aClosure)
+AppendStrongObservers(nsObserverList* aObserverList, void* aClosure)
 {
+  nsCOMArray<nsIObserver>* array = static_cast<nsCOMArray<nsIObserver>*>(aClosure);
+
   if (aObserverList) {
-    aObserverList->UnmarkGrayStrongObservers();
+    aObserverList->AppendStrongObservers(*array);
   }
   return PL_DHASH_NEXT;
 }
+#endif // !defined(MOZILLA_XPCOMRT_API)
 
 NS_IMETHODIMP
 nsObserverService::UnmarkGrayStrongObservers()
 {
   NS_ENSURE_VALIDCALL
 
-  mObserverTopicTable.EnumerateEntries(UnmarkGrayObserverEntry, nullptr);
+#if !defined(MOZILLA_XPCOMRT_API)
+  nsCOMArray<nsIObserver> strongObservers;
+  mObserverTopicTable.EnumerateEntries(AppendStrongObservers, &strongObservers);
+
+  for (uint32_t i = 0; i < strongObservers.Length(); ++i) {
+    xpc_TryUnmarkWrappedGrayObject(strongObservers[i]);
+  }
+#endif // !defined(MOZILLA_XPCOMRT_API)
 
   return NS_OK;
 }
-

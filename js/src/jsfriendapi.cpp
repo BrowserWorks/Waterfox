@@ -156,14 +156,14 @@ JS_NewObjectWithoutMetadata(JSContext* cx, const JSClass* clasp, JS::Handle<JSOb
 JS_FRIEND_API(JSPrincipals*)
 JS_GetCompartmentPrincipals(JSCompartment* compartment)
 {
-    return compartment->principals;
+    return compartment->principals();
 }
 
 JS_FRIEND_API(void)
 JS_SetCompartmentPrincipals(JSCompartment* compartment, JSPrincipals* principals)
 {
     // Short circuit if there's no change.
-    if (principals == compartment->principals)
+    if (principals == compartment->principals())
         return;
 
     // Any compartment with the trusted principals -- and there can be
@@ -172,24 +172,24 @@ JS_SetCompartmentPrincipals(JSCompartment* compartment, JSPrincipals* principals
     bool isSystem = principals && principals == trusted;
 
     // Clear out the old principals, if any.
-    if (compartment->principals) {
-        JS_DropPrincipals(compartment->runtimeFromMainThread(), compartment->principals);
-        compartment->principals = nullptr;
+    if (compartment->principals()) {
+        JS_DropPrincipals(compartment->runtimeFromMainThread(), compartment->principals());
+        compartment->setPrincipals(nullptr);
         // We'd like to assert that our new principals is always same-origin
         // with the old one, but JSPrincipals doesn't give us a way to do that.
         // But we can at least assert that we're not switching between system
         // and non-system.
-        MOZ_ASSERT(compartment->isSystem == isSystem);
+        MOZ_ASSERT(compartment->isSystem() == isSystem);
     }
 
     // Set up the new principals.
     if (principals) {
         JS_HoldPrincipals(principals);
-        compartment->principals = principals;
+        compartment->setPrincipals(principals);
     }
 
     // Update the system flag.
-    compartment->isSystem = isSystem;
+    compartment->setIsSystem(isSystem);
 }
 
 JS_FRIEND_API(JSPrincipals*)
@@ -215,6 +215,13 @@ JS_TraceShapeCycleCollectorChildren(JSTracer* trc, JS::GCCellPtr shape)
 {
     MOZ_ASSERT(shape.isShape());
     MarkCycleCollectorChildren(trc, static_cast<Shape*>(shape.asCell()));
+}
+
+JS_FRIEND_API(void)
+JS_TraceObjectGroupCycleCollectorChildren(JSTracer* trc, JS::GCCellPtr group)
+{
+    MOZ_ASSERT(group.isObjectGroup());
+    MarkCycleCollectorChildren(trc, static_cast<ObjectGroup*>(group.asCell()));
 }
 
 static bool
@@ -280,7 +287,7 @@ js::GetCompartmentZone(JSCompartment* comp)
 JS_FRIEND_API(bool)
 js::IsSystemCompartment(JSCompartment* comp)
 {
-    return comp->isSystem;
+    return comp->isSystem();
 }
 
 JS_FRIEND_API(bool)
@@ -417,7 +424,7 @@ js::DefineFunctionWithReserved(JSContext* cx, JSObject* objArg, const char* name
     if (!atom)
         return nullptr;
     Rooted<jsid> id(cx, AtomToId(atom));
-    return DefineFunction(cx, obj, id, call, nargs, attrs, JSFunction::ExtendedFinalizeKind);
+    return DefineFunction(cx, obj, id, call, nargs, attrs, gc::AllocKind::FUNCTION_EXTENDED);
 }
 
 JS_FRIEND_API(JSFunction*)
@@ -436,8 +443,8 @@ js::NewFunctionWithReserved(JSContext* cx, JSNative native, unsigned nargs, unsi
     }
 
     return (flags & JSFUN_CONSTRUCTOR) ?
-        NewNativeConstructor(cx, native, nargs, atom, JSFunction::ExtendedFinalizeKind) :
-        NewNativeFunction(cx, native, nargs, atom, JSFunction::ExtendedFinalizeKind);
+        NewNativeConstructor(cx, native, nargs, atom, gc::AllocKind::FUNCTION_EXTENDED) :
+        NewNativeFunction(cx, native, nargs, atom, gc::AllocKind::FUNCTION_EXTENDED);
 }
 
 JS_FRIEND_API(JSFunction*)
@@ -450,8 +457,8 @@ js::NewFunctionByIdWithReserved(JSContext* cx, JSNative native, unsigned nargs, 
 
     RootedAtom atom(cx, JSID_TO_ATOM(id));
     return (flags & JSFUN_CONSTRUCTOR) ?
-        NewNativeConstructor(cx, native, nargs, atom, JSFunction::ExtendedFinalizeKind) :
-        NewNativeFunction(cx, native, nargs, atom, JSFunction::ExtendedFinalizeKind);
+        NewNativeConstructor(cx, native, nargs, atom, gc::AllocKind::FUNCTION_EXTENDED) :
+        NewNativeFunction(cx, native, nargs, atom, gc::AllocKind::FUNCTION_EXTENDED);
 }
 
 JS_FRIEND_API(const Value&)
@@ -947,8 +954,8 @@ DumpHeapVisitChild(JS::CallbackTracer* trc, void** thingp, JSGCTraceKind kind)
 
     DumpHeapTracer* dtrc = static_cast<DumpHeapTracer*>(trc);
     char buffer[1024];
-    fprintf(dtrc->output, "> %p %c %s\n", *thingp, MarkDescriptor(*thingp),
-            dtrc->getTracingEdgeName(buffer, sizeof(buffer)));
+    dtrc->getTracingEdgeName(buffer, sizeof(buffer));
+    fprintf(dtrc->output, "> %p %c %s\n", *thingp, MarkDescriptor(*thingp), buffer);
 }
 
 static void
@@ -959,8 +966,8 @@ DumpHeapVisitRoot(JS::CallbackTracer* trc, void** thingp, JSGCTraceKind kind)
 
     DumpHeapTracer* dtrc = static_cast<DumpHeapTracer*>(trc);
     char buffer[1024];
-    fprintf(dtrc->output, "%p %c %s\n", *thingp, MarkDescriptor(*thingp),
-            dtrc->getTracingEdgeName(buffer, sizeof(buffer)));
+    dtrc->getTracingEdgeName(buffer, sizeof(buffer));
+    fprintf(dtrc->output, "%p %c %s\n", *thingp, MarkDescriptor(*thingp), buffer);
 }
 
 void
@@ -1044,7 +1051,7 @@ js::GetAnyCompartmentInZone(JS::Zone* zone)
 void
 JS::ObjectPtr::updateWeakPointerAfterGC()
 {
-    if (js::gc::IsObjectAboutToBeFinalized(value.unsafeGet()))
+    if (js::gc::IsAboutToBeFinalizedUnbarriered(value.unsafeGet()))
         value = nullptr;
 }
 
@@ -1248,8 +1255,29 @@ JS_StoreStringPostBarrierCallback(JSContext* cx,
         rt->gc.storeBuffer.putCallback(callback, key, data);
 }
 
+extern JS_FRIEND_API(void)
+JS_ClearAllPostBarrierCallbacks(JSRuntime* rt)
+{
+    rt->gc.clearPostBarrierCallbacks();
+}
+
 JS_FRIEND_API(bool)
 js::ForwardToNative(JSContext* cx, JSNative native, const CallArgs& args)
 {
     return native(cx, args.length(), args.base());
+}
+
+JS_FRIEND_API(JSObject*)
+js::ConvertArgsToArray(JSContext* cx, const CallArgs& args)
+{
+    RootedObject argsArray(cx, NewDenseCopiedArray(cx, args.length(), args.array()));
+    return argsArray;
+}
+
+JS_FRIEND_API(JSAtom*)
+js::GetPropertyNameFromPC(JSScript* script, jsbytecode* pc)
+{
+    if (!IsGetPropPC(pc) && !IsSetPropPC(pc))
+        return nullptr;
+    return script->getName(pc);
 }

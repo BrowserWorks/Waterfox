@@ -85,13 +85,13 @@ GeckoTouchDispatcher::GeckoTouchDispatcher()
 }
 
 void
-GeckoTouchDispatcher::SetCompositorVsyncObserver(mozilla::layers::CompositorVsyncObserver *aObserver)
+GeckoTouchDispatcher::SetCompositorVsyncScheduler(mozilla::layers::CompositorVsyncScheduler *aObserver)
 {
   MOZ_ASSERT(NS_IsMainThread());
   // We assume on b2g that there is only 1 CompositorParent
-  MOZ_ASSERT(mCompositorVsyncObserver == nullptr);
+  MOZ_ASSERT(mCompositorVsyncScheduler == nullptr);
   if (mResamplingEnabled) {
-    mCompositorVsyncObserver = aObserver;
+    mCompositorVsyncScheduler = aObserver;
   }
 }
 
@@ -107,8 +107,8 @@ GeckoTouchDispatcher::NotifyVsync(TimeStamp aVsyncTimestamp)
 void
 GeckoTouchDispatcher::NotifyTouch(MultiTouchInput& aTouch, TimeStamp aEventTime)
 {
-  if (mCompositorVsyncObserver) {
-    mCompositorVsyncObserver->SetNeedsComposite(true);
+  if (mCompositorVsyncScheduler) {
+    mCompositorVsyncScheduler->SetNeedsComposite(true);
   }
 
   if (aTouch.mType == MultiTouchInput::MULTITOUCH_MOVE) {
@@ -132,7 +132,7 @@ GeckoTouchDispatcher::NotifyTouch(MultiTouchInput& aTouch, TimeStamp aEventTime)
     layers::APZThreadUtils::RunOnControllerThread(NewRunnableMethod(
       this, &GeckoTouchDispatcher::DispatchTouchMoveEvents, TimeStamp::Now()));
   } else {
-    if (mResamplingEnabled) {
+    { // scope lock
       MutexAutoLock lock(mTouchQueueLock);
       mInflightNonMoveEvents++;
     }
@@ -154,7 +154,7 @@ GeckoTouchDispatcher::DispatchTouchNonMoveEvent(MultiTouchInput aInput)
   }
   DispatchTouchEvent(aInput);
 
-  if (mResamplingEnabled) {
+  { // scope lock
     MutexAutoLock lock(mTouchQueueLock);
     mInflightNonMoveEvents--;
     MOZ_ASSERT(mInflightNonMoveEvents >= 0);
@@ -294,7 +294,7 @@ GeckoTouchDispatcher::ResampleTouchMoves(MultiTouchInput& aOutTouch, TimeStamp a
   TimeDuration touchDiff = currentTouch.mTimeStamp - baseTouch.mTimeStamp;
 
   if (currentTouch.mTimeStamp < sampleTime) {
-    TimeDuration maxResampleTime = std::min(touchDiff / 2, mMaxPredict);
+    TimeDuration maxResampleTime = std::min(touchDiff / int64_t(2), mMaxPredict);
     TimeStamp maxTimestamp = currentTouch.mTimeStamp + maxResampleTime;
     if (sampleTime > maxTimestamp) {
       sampleTime = maxTimestamp;

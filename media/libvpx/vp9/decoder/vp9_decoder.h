@@ -15,12 +15,12 @@
 
 #include "vpx/vpx_codec.h"
 #include "vpx_scale/yv12config.h"
-
+#include "vp9/common/vp9_thread_common.h"
 #include "vp9/common/vp9_onyxc_int.h"
 #include "vp9/common/vp9_ppflags.h"
 #include "vp9/common/vp9_thread.h"
-
 #include "vp9/decoder/vp9_dthread.h"
+#include "vp9/decoder/vp9_reader.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,6 +33,14 @@ typedef struct TileData {
   DECLARE_ALIGNED(16, MACROBLOCKD, xd);
 } TileData;
 
+typedef struct TileWorkerData {
+  struct VP9Decoder *pbi;
+  vp9_reader bit_reader;
+  FRAME_COUNTS counts;
+  DECLARE_ALIGNED(16, MACROBLOCKD, xd);
+  struct vpx_internal_error_info error_info;
+} TileWorkerData;
+
 typedef struct VP9Decoder {
   DECLARE_ALIGNED(16, MACROBLOCKD, mb);
 
@@ -44,8 +52,15 @@ typedef struct VP9Decoder {
 
   int frame_parallel_decode;  // frame-based threading.
 
+  // TODO(hkuang): Combine this with cur_buf in macroblockd as they are
+  // the same.
+  RefCntBuffer *cur_buf;   //  Current decoding frame buffer.
+
+  VP9Worker *frame_worker_owner;   // frame_worker that owns this pbi.
   VP9Worker lf_worker;
   VP9Worker *tile_workers;
+  TileWorkerData *tile_worker_data;
+  TileInfo *tile_worker_info;
   int num_tile_workers;
 
   TileData *tile_data;
@@ -58,7 +73,8 @@ typedef struct VP9Decoder {
 
   int max_threads;
   int inv_tile_order;
-  int need_resync;  // wait for key/intra-only frame
+  int need_resync;  // wait for key/intra-only frame.
+  int hold_ref_buf;  // hold the reference buffer.
 } VP9Decoder;
 
 int vp9_receive_compressed_data(struct VP9Decoder *pbi,
@@ -74,10 +90,6 @@ vpx_codec_err_t vp9_copy_reference_dec(struct VP9Decoder *pbi,
 vpx_codec_err_t vp9_set_reference_dec(VP9_COMMON *cm,
                                       VP9_REFFRAME ref_frame_flag,
                                       YV12_BUFFER_CONFIG *sd);
-
-struct VP9Decoder *vp9_decoder_create();
-
-void vp9_decoder_remove(struct VP9Decoder *pbi);
 
 static INLINE uint8_t read_marker(vpx_decrypt_cb decrypt_cb,
                                   void *decrypt_state,
@@ -97,6 +109,25 @@ vpx_codec_err_t vp9_parse_superframe_index(const uint8_t *data,
                                            uint32_t sizes[8], int *count,
                                            vpx_decrypt_cb decrypt_cb,
                                            void *decrypt_state);
+
+struct VP9Decoder *vp9_decoder_create(BufferPool *const pool);
+
+void vp9_decoder_remove(struct VP9Decoder *pbi);
+
+static INLINE void decrease_ref_count(int idx, RefCntBuffer *const frame_bufs,
+                                      BufferPool *const pool) {
+  if (idx >= 0) {
+    --frame_bufs[idx].ref_count;
+    // A worker may only get a free framebuffer index when calling get_free_fb.
+    // But the private buffer is not set up until finish decoding header.
+    // So any error happens during decoding header, the frame_bufs will not
+    // have valid priv buffer.
+    if (frame_bufs[idx].ref_count == 0 &&
+        frame_bufs[idx].raw_frame_buffer.priv) {
+      pool->release_fb_cb(pool->cb_priv, &frame_bufs[idx].raw_frame_buffer);
+    }
+  }
+}
 
 #ifdef __cplusplus
 }  // extern "C"

@@ -4,10 +4,10 @@
 // Tests that text metrics in the flame graph widget work properly.
 
 let HTML_NS = "http://www.w3.org/1999/xhtml";
-let FLAME_GRAPH_BLOCK_TEXT_FONT_SIZE = 8; // px
-let FLAME_GRAPH_BLOCK_TEXT_FONT_FAMILY = "sans-serif";
 let {ViewHelpers} = Cu.import("resource:///modules/devtools/ViewHelpers.jsm", {});
-let {FlameGraph} = Cu.import("resource:///modules/devtools/FlameGraph.jsm", {});
+let {FlameGraph} = devtools.require("devtools/shared/widgets/FlameGraph");
+let {FLAME_GRAPH_BLOCK_TEXT_FONT_SIZE} = devtools.require("devtools/shared/widgets/FlameGraph");
+let {FLAME_GRAPH_BLOCK_TEXT_FONT_FAMILY} = devtools.require("devtools/shared/widgets/FlameGraph");
 let {Promise} = devtools.require("resource://gre/modules/Promise.jsm");
 
 let L10N = new ViewHelpers.L10N();
@@ -55,11 +55,11 @@ function testGraph(graph) {
   isnot(text50px, text,
     "The fitted text for 50px width is correct (1).");
 
-  ok(text50px.contains(L10N.ellipsis),
+  ok(text50px.includes(L10N.ellipsis),
     "The fitted text for 50px width is correct (2).");
 
-  is(graph._getFittedText(text, 10), L10N.ellipsis,
-    "The fitted text for 10px width is correct.");
+  is(graph._getFittedText(text, FLAME_GRAPH_BLOCK_TEXT_FONT_SIZE + 1), L10N.ellipsis,
+    "The fitted text for text font size width is correct.");
 
   is(graph._getFittedText(text, 1), "",
     "The fitted text for 1px width is correct.");

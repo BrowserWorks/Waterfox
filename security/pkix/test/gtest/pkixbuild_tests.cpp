@@ -65,10 +65,10 @@ CreateCert(const char* issuerCN, // null means "empty name"
 
   ScopedTestKeyPair reusedKey(CloneReusedKeyPair());
   ByteString certDER(CreateEncodedCertificate(
-                       v3, sha256WithRSAEncryption, serialNumber, issuerDER,
+                       v3, sha256WithRSAEncryption(), serialNumber, issuerDER,
                        oneDayBeforeNow, oneDayAfterNow, subjectDER,
                        *reusedKey, extensions, *reusedKey,
-                       sha256WithRSAEncryption));
+                       sha256WithRSAEncryption()));
   EXPECT_FALSE(ENCODING_FAILED(certDER));
 
   if (subjectDERToCertDER) {
@@ -306,12 +306,12 @@ TEST_F(pkixbuild, NoRevocationCheckingForExpiredCert)
   ByteString subjectDER(CNToDERName("Expired End-Entity Cert"));
   ScopedTestKeyPair reusedKey(CloneReusedKeyPair());
   ByteString certDER(CreateEncodedCertificate(
-                       v3, sha256WithRSAEncryption,
+                       v3, sha256WithRSAEncryption(),
                        serialNumber, issuerDER,
                        oneDayBeforeNow - ONE_DAY_IN_SECONDS_AS_TIME_T,
                        oneDayBeforeNow,
                        subjectDER, *reusedKey, nullptr, *reusedKey,
-                       sha256WithRSAEncryption));
+                       sha256WithRSAEncryption()));
   EXPECT_FALSE(ENCODING_FAILED(certDER));
 
   Input cert;
@@ -348,18 +348,18 @@ TEST_F(pkixbuild_DSS, DSSEndEntityKeyNotAccepted)
   ByteString subjectDER(CNToDERName("DSS"));
   ASSERT_FALSE(ENCODING_FAILED(subjectDER));
   ScopedTestKeyPair subjectKey(GenerateDSSKeyPair());
-  ASSERT_TRUE(subjectKey);
+  ASSERT_TRUE(subjectKey.get());
 
   ByteString issuerDER(CNToDERName("RSA"));
   ASSERT_FALSE(ENCODING_FAILED(issuerDER));
   ScopedTestKeyPair issuerKey(CloneReusedKeyPair());
-  ASSERT_TRUE(issuerKey);
+  ASSERT_TRUE(issuerKey.get());
 
-  ByteString cert(CreateEncodedCertificate(v3, sha256WithRSAEncryption,
+  ByteString cert(CreateEncodedCertificate(v3, sha256WithRSAEncryption(),
                                            serialNumber, issuerDER,
                                            oneDayBeforeNow, oneDayAfterNow,
                                            subjectDER, *subjectKey, nullptr,
-                                           *issuerKey, sha256WithRSAEncryption));
+                                           *issuerKey, sha256WithRSAEncryption()));
   ASSERT_FALSE(ENCODING_FAILED(cert));
   Input certDER;
   ASSERT_EQ(Success, certDER.Init(cert.data(), cert.length()));

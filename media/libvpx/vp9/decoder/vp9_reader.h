@@ -30,14 +30,15 @@ typedef size_t BD_VALUE;
 #define BD_VALUE_SIZE ((int)sizeof(BD_VALUE) * CHAR_BIT)
 
 typedef struct {
+  // Be careful when reordering this struct, it may impact the cache negatively.
+  BD_VALUE value;
+  unsigned int range;
+  int count;
   const uint8_t *buffer_end;
   const uint8_t *buffer;
-  uint8_t clear_buffer[sizeof(BD_VALUE) + 1];
-  BD_VALUE value;
-  int count;
-  unsigned int range;
   vpx_decrypt_cb decrypt_cb;
   void *decrypt_state;
+  uint8_t clear_buffer[sizeof(BD_VALUE) + 1];
 } vp9_reader;
 
 int vp9_reader_init(vp9_reader *r,

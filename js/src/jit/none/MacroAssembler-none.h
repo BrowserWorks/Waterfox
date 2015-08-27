@@ -15,8 +15,6 @@
 namespace js {
 namespace jit {
 
-class MDefinition;
-
 static MOZ_CONSTEXPR_VAR Register StackPointer = { Registers::invalid_reg };
 static MOZ_CONSTEXPR_VAR Register FramePointer = { Registers::invalid_reg };
 static MOZ_CONSTEXPR_VAR Register ReturnReg = { Registers::invalid_reg };
@@ -472,6 +470,8 @@ class MacroAssemblerNone : public Assembler
 
     void setPrinter(Sprinter*) { MOZ_CRASH(); }
     Operand ToPayload(Operand base) { MOZ_CRASH(); }
+
+    static const Register getStackPointer() { MOZ_CRASH(); }
 
     // Instrumentation for entering and leaving the profiler.
     void profilerEnterFrame(Register , Register ) { MOZ_CRASH(); }

@@ -28,7 +28,7 @@ extern "C" {
    * types, removing or reassigning enums, adding/removing/rearranging
    * fields to structures
    */
-#define VPX_IMAGE_ABI_VERSION (2) /**<\hideinitializer*/
+#define VPX_IMAGE_ABI_VERSION (3) /**<\hideinitializer*/
 
 
 #define VPX_IMG_FMT_PLANAR     0x100  /**< Image is a planar format. */
@@ -58,15 +58,30 @@ extern "C" {
     VPX_IMG_FMT_VPXI420 = VPX_IMG_FMT_PLANAR | 4,
     VPX_IMG_FMT_I422    = VPX_IMG_FMT_PLANAR | 5,
     VPX_IMG_FMT_I444    = VPX_IMG_FMT_PLANAR | 6,
-    VPX_IMG_FMT_444A    = VPX_IMG_FMT_PLANAR | VPX_IMG_FMT_HAS_ALPHA | 7,
+    VPX_IMG_FMT_I440    = VPX_IMG_FMT_PLANAR | 7,
+    VPX_IMG_FMT_444A    = VPX_IMG_FMT_PLANAR | VPX_IMG_FMT_HAS_ALPHA | 6,
     VPX_IMG_FMT_I42016    = VPX_IMG_FMT_I420 | VPX_IMG_FMT_HIGHBITDEPTH,
     VPX_IMG_FMT_I42216    = VPX_IMG_FMT_I422 | VPX_IMG_FMT_HIGHBITDEPTH,
-    VPX_IMG_FMT_I44416    = VPX_IMG_FMT_I444 | VPX_IMG_FMT_HIGHBITDEPTH
+    VPX_IMG_FMT_I44416    = VPX_IMG_FMT_I444 | VPX_IMG_FMT_HIGHBITDEPTH,
+    VPX_IMG_FMT_I44016    = VPX_IMG_FMT_I440 | VPX_IMG_FMT_HIGHBITDEPTH
   } vpx_img_fmt_t; /**< alias for enum vpx_img_fmt */
+
+  /*!\brief List of supported color spaces */
+  typedef enum vpx_color_space {
+    VPX_CS_UNKNOWN    = 0,  /**< Unknown */
+    VPX_CS_BT_601     = 1,  /**< BT.601 */
+    VPX_CS_BT_709     = 2,  /**< BT.709 */
+    VPX_CS_SMPTE_170  = 3,  /**< SMPTE.170 */
+    VPX_CS_SMPTE_240  = 4,  /**< SMPTE.240 */
+    VPX_CS_BT_2020    = 5,  /**< BT.2020 */
+    VPX_CS_RESERVED   = 6,  /**< Reserved */
+    VPX_CS_SRGB       = 7   /**< sRGB */
+  } vpx_color_space_t; /**< alias for enum vpx_color_space */
 
   /**\brief Image Descriptor */
   typedef struct vpx_image {
     vpx_img_fmt_t fmt; /**< Image Format */
+    vpx_color_space_t cs; /**< Color Space */
 
     /* Image storage dimensions */
     unsigned int  w;           /**< Stored image width */

@@ -6,8 +6,11 @@
 package org.mozilla.gecko.tabqueue;
 
 import org.mozilla.gecko.AppConstants;
-import org.mozilla.gecko.BrowserApp;
+import org.mozilla.gecko.GeckoAppShell;
+import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.Locales;
+import org.mozilla.gecko.mozglue.ContextUtils;
+import org.mozilla.gecko.preferences.GeckoPreferences;
 import org.mozilla.gecko.sync.setup.activities.WebURLFinder;
 
 import android.content.Intent;
@@ -28,13 +31,15 @@ public class TabQueueDispatcher extends Locales.LocaleAwareActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Intent intent = getIntent();
+        GeckoAppShell.ensureCrashHandling();
+
+        ContextUtils.SafeIntent intent = new ContextUtils.SafeIntent(getIntent());
 
         // For the moment lets exit early and start fennec as normal if we're not in nightly with
         // the tab queue build flag.
-        if (!AppConstants.MOZ_ANDROID_TAB_QUEUE) {
-            loadNormally(intent);
-            finish();
+        if (!AppConstants.MOZ_ANDROID_TAB_QUEUE || !AppConstants.NIGHTLY_BUILD) {
+            loadNormally(intent.getUnsafe());
+            return;
         }
 
         // The URL is usually hiding somewhere in the extra text. Extract it.
@@ -44,14 +49,13 @@ public class TabQueueDispatcher extends Locales.LocaleAwareActivity {
             return;
         }
 
-        // TODO: This code is shared with ShareDialog - we should extract this to a helper class.
-        final String pageUrl = new WebURLFinder(dataString).bestWebURL();
-        if (TextUtils.isEmpty(pageUrl)) {
-            abortDueToNoURL(dataString);
-            return;
-        }
+        boolean shouldShowOpenInBackgroundToast = GeckoSharedPrefs.forApp(this).getBoolean(GeckoPreferences.PREFS_TAB_QUEUE, false);
 
-        showToast(intent);
+        if (shouldShowOpenInBackgroundToast) {
+            showToast(intent.getUnsafe());
+        } else {
+            loadNormally(intent.getUnsafe());
+        }
     }
 
     private void showToast(Intent intent) {
@@ -64,7 +68,7 @@ public class TabQueueDispatcher extends Locales.LocaleAwareActivity {
      * Start fennec with the supplied intent.
      */
     private void loadNormally(Intent intent) {
-        intent.setClass(getApplicationContext(), BrowserApp.class);
+        intent.setClassName(getApplicationContext(), AppConstants.MOZ_ANDROID_BROWSER_INTENT_CLASS);
         startActivity(intent);
         finish();
     }

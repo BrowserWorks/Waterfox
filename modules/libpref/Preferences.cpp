@@ -749,11 +749,9 @@ Preferences::GetBranch(const char *aPrefRoot, nsIPrefBranch **_retval)
 
   if ((nullptr != aPrefRoot) && (*aPrefRoot != '\0')) {
     // TODO: - cache this stuff and allow consumers to share branches (hold weak references I think)
-    nsPrefBranch* prefBranch = new nsPrefBranch(aPrefRoot, false);
-    if (!prefBranch)
-      return NS_ERROR_OUT_OF_MEMORY;
-
-    rv = CallQueryInterface(prefBranch, _retval);
+    nsRefPtr<nsPrefBranch> prefBranch = new nsPrefBranch(aPrefRoot, false);
+    prefBranch.forget(_retval);
+    rv = NS_OK;
   } else {
     // special case caching the default root
     nsCOMPtr<nsIPrefBranch> root(sRootBranch);
@@ -804,17 +802,8 @@ Preferences::NotifyServiceObservers(const char *aTopic)
 nsresult
 Preferences::UseDefaultPrefFile()
 {
-  nsresult rv;
   nsCOMPtr<nsIFile> aFile;
-
-#if defined(XP_WIN) && defined(MOZ_METRO)
-  if (XRE_GetWindowsEnvironment() == WindowsEnvironmentType_Metro) {
-    rv = NS_GetSpecialDirectory(NS_METRO_APP_PREFS_50_FILE, getter_AddRefs(aFile));
-  } else
-#endif
-  {
-    rv = NS_GetSpecialDirectory(NS_APP_PREFS_50_FILE, getter_AddRefs(aFile));
-  }
+  nsresult rv = NS_GetSpecialDirectory(NS_APP_PREFS_50_FILE, getter_AddRefs(aFile));
 
   if (NS_SUCCEEDED(rv)) {
     rv = ReadAndOwnUserPrefFile(aFile);
@@ -989,7 +978,7 @@ Preferences::WritePrefFile(nsIFile* aFile)
     if (*walker) {
       outStream->Write(*walker, strlen(*walker), &writeAmount);
       outStream->Write(NS_LINEBREAK, NS_LINEBREAK_LEN, &writeAmount);
-      NS_Free(*walker);
+      free(*walker);
     }
   }
 

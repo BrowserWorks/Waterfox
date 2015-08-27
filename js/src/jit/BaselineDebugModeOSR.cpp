@@ -429,11 +429,18 @@ PatchBaselineFramesForDebugMode(JSContext* cx, const Debugger::ExecutionObservab
                 // invocation, on a pc without an ICEntry. This means the
                 // frame must have an override pc.
                 //
-                // Patch the resume address to nullptr, to ensure the old
-                // address is not used anywhere.
+                // If profiling is off, patch the resume address to nullptr,
+                // to ensure the old address is not used anywhere.
+                //
+                // If profiling is on, JitProfilingFrameIterator requires a
+                // valid return address.
                 MOZ_ASSERT(iter.baselineFrame()->isHandlingException());
                 MOZ_ASSERT(iter.baselineFrame()->overridePc() == pc);
-                uint8_t* retAddr = nullptr;
+                uint8_t* retAddr;
+                if (cx->runtime()->spsProfiler.enabled())
+                    retAddr = bl->nativeCodeForPC(script, pc);
+                else
+                    retAddr = nullptr;
                 SpewPatchBaselineFrameFromExceptionHandler(prev->returnAddress(), retAddr,
                                                            script, pc);
                 DebugModeOSRVolatileJitFrameIterator::forwardLiveIterators(
@@ -759,7 +766,7 @@ CloneOldBaselineStub(JSContext* cx, DebugModeOSREntryVector& entries, size_t ent
     switch (oldStub->kind()) {
 #define CASE_KIND(kindName)                                                  \
       case ICStub::kindName:                                                 \
-        entry.newStub = IC##kindName::Clone(stubSpace, firstMonitorStub,     \
+        entry.newStub = IC##kindName::Clone(cx, stubSpace, firstMonitorStub, \
                                             *oldStub->to##kindName());       \
         break;
         PATCHABLE_ICSTUB_KIND_LIST(CASE_KIND)
@@ -1113,7 +1120,7 @@ JitRuntime::generateBaselineDebugModeOSRHandler(JSContext* cx, uint32_t* noFrame
     CodeOffsetLabel noFrameRegPopOffset(masm.currentOffset());
 
     // Record the stack pointer for syncing.
-    masm.movePtr(StackPointer, syncedStackStart);
+    masm.moveStackPtrTo(syncedStackStart);
     masm.push(ReturnReg);
     masm.push(BaselineFrameReg);
 
@@ -1132,7 +1139,7 @@ JitRuntime::generateBaselineDebugModeOSRHandler(JSContext* cx, uint32_t* noFrame
     masm.pop(BaselineFrameReg);
     masm.pop(ReturnReg);
     masm.loadPtr(Address(BaselineFrameReg, BaselineFrame::reverseOffsetOfScratchValue()), temp);
-    masm.addPtr(Address(temp, offsetof(BaselineDebugModeOSRInfo, stackAdjust)), StackPointer);
+    masm.addToStackPtr(Address(temp, offsetof(BaselineDebugModeOSRInfo, stackAdjust)));
 
     // Emit two tails for the case of returning from a callVM and all other
     // cases, as the state we need to restore differs depending on the case.

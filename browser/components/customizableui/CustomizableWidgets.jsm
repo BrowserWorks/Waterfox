@@ -999,30 +999,6 @@ const CustomizableWidgets = [
     }
   }];
 
-#ifdef XP_WIN
-#ifdef MOZ_METRO
-if (Services.metro && Services.metro.supported) {
-  let widgetArgs = {tooltiptext: "switch-to-metro-button2.tooltiptext"};
-  let brandShortName = BrandBundle.GetStringFromName("brandShortName");
-  let metroTooltip = CustomizableUI.getLocalizedProperty(widgetArgs, "tooltiptext",
-                                                         [brandShortName]);
-  CustomizableWidgets.push({
-    id: "switch-to-metro-button",
-    label: "switch-to-metro-button2.label",
-    tooltiptext: metroTooltip,
-    defaultArea: CustomizableUI.AREA_PANEL,
-    showInPrivateBrowsing: false, /* See bug 928068 */
-    onCommand: function(aEvent) {
-      let win = aEvent.view;
-      if (win && typeof win.SwitchToMetro == "function") {
-        win.SwitchToMetro();
-      }
-    }
-  });
-}
-#endif
-#endif
-
 if (Services.prefs.getBoolPref("privacy.panicButton.enabled")) {
   CustomizableWidgets.push({
     id: "panic-button",
@@ -1173,33 +1149,26 @@ if (Services.prefs.getBoolPref("browser.pocket.enabled")) {
 }
 
 #ifdef E10S_TESTING_ONLY
-/**
-  * The e10s button's purpose is to lower the barrier of entry
-  * for our Nightly testers to use e10s windows. We'll be removing it
-  * once remote tabs are enabled. This button should never ever make it
-  * to production. If it does, that'd be bad, and we should all feel bad.
-  */
-let getCommandFunction = function(aOpenRemote) {
-  return function(aEvent) {
-    let win = aEvent.view;
-    if (win && typeof win.OpenBrowserWindow == "function") {
-      win.OpenBrowserWindow({remote: aOpenRemote});
-    }
-  };
+let e10sDisabled = false;
+#ifdef XP_MACOSX
+// On OS X, "Disable Hardware Acceleration" also disables OMTC and forces
+// a fallback to Basic Layers. This is incompatible with e10s.
+e10sDisabled |= Services.prefs.getBoolPref("layers.acceleration.disabled");
+#endif
+
+if (Services.appinfo.browserTabsRemoteAutostart) {
+  CustomizableWidgets.push({
+    id: "e10s-button",
+    label: "New Non-e10s Window",
+    tooltiptext: "New Non-e10s Window",
+    disabled: e10sDisabled,
+    defaultArea: CustomizableUI.AREA_PANEL,
+    onCommand: function(aEvent) {
+      let win = aEvent.view;
+      if (win && typeof win.OpenBrowserWindow == "function") {
+        win.OpenBrowserWindow({remote: false});
+      }
+    },
+  });
 }
-
-let openRemote = !Services.appinfo.browserTabsRemoteAutostart;
-// Like the XUL menuitem counterparts, we hard-code these strings in because
-// this button should never roll into production.
-let buttonLabel = openRemote ? "New e10s Window"
-                              : "New Non-e10s Window";
-
-CustomizableWidgets.push({
-  id: "e10s-button",
-  label: buttonLabel,
-  tooltiptext: buttonLabel,
-  disabled: Services.appinfo.inSafeMode,
-  defaultArea: CustomizableUI.AREA_PANEL,
-  onCommand: getCommandFunction(openRemote),
-});
 #endif

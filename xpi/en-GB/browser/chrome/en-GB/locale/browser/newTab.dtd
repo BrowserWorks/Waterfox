@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are used in the about:newtab page -->
+<!ENTITY newtab.pageTitle "New Tab">
+<!ENTITY newtab.customize.classic "Show your top sites">
+<!ENTITY newtab.customize.cog.enhanced "Include suggested sites">
+<!--
+  LOCALIZATION NOTE(newtab.customize.cog.title): This string is for the new
+  tab cog menu title. It will be transformed to uppercase.
+-->
+<!ENTITY newtab.customize.cog.title "New Tab Controls">
+<!ENTITY newtab.customize.cog.learn "Learn about New Tab">
+<!ENTITY newtab.customize.title "Customise your New Tab page">
+<!ENTITY newtab.customize.suggested "Show suggested and your top sites">
+<!ENTITY newtab.customize.topsites "Show your top sites">
+<!ENTITY newtab.customize.blank2 "Show blank page">
+<!ENTITY newtab.customize.what "What is this page?">
+<!ENTITY newtab.intro.header "What is this page?">
+<!ENTITY newtab.undo.removedLabel "Thumbnail removed.">
+<!ENTITY newtab.undo.undoButton "Undo.">
+<!ENTITY newtab.undo.restoreButton "Restore All.">
+<!ENTITY newtab.undo.closeTooltip "Hide">

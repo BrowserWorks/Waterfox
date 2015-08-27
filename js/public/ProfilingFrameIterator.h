@@ -8,13 +8,13 @@
 #define js_ProfilingFrameIterator_h
 
 #include "mozilla/Alignment.h"
+#include "mozilla/Maybe.h"
 
-#include <stdint.h>
-
+#include "jsbytecode.h"
 #include "js/Utility.h"
 
-class JSAtom;
 struct JSRuntime;
+class JSScript;
 
 namespace js {
     class Activation;
@@ -22,10 +22,14 @@ namespace js {
     namespace jit {
         class JitActivation;
         class JitProfilingFrameIterator;
+        class JitcodeGlobalEntry;
     }
 }
 
 namespace JS {
+
+struct ForEachTrackedOptimizationAttemptOp;
+struct ForEachTrackedOptimizationTypeInfoOp;
 
 // This iterator can be used to walk the stack of a thread suspended at an
 // arbitrary pc. To provide acurate results, profiling must have been enabled
@@ -109,22 +113,23 @@ class JS_PUBLIC_API(ProfilingFrameIterator)
         void* returnAddress;
         void* activation;
         const char* label;
-        bool mightHaveTrackedOptimizations;
     };
+
+    bool isAsmJS() const;
+    bool isJit() const;
+
     uint32_t extractStack(Frame* frames, uint32_t offset, uint32_t end) const;
 
+    mozilla::Maybe<Frame> getPhysicalFrameWithoutLabel() const;
+
   private:
+    mozilla::Maybe<Frame> getPhysicalFrameAndEntry(js::jit::JitcodeGlobalEntry* entry) const;
+
     void iteratorConstruct(const RegisterState& state);
     void iteratorConstruct();
     void iteratorDestroy();
     bool iteratorDone();
-
-    bool isAsmJS() const;
-    bool isJit() const;
 };
-
-extern JS_PUBLIC_API(ProfilingFrameIterator::FrameKind)
-GetProfilingFrameKindFromNativeAddr(JSRuntime* runtime, void* pc);
 
 JS_FRIEND_API(bool)
 IsProfilingEnabledForRuntime(JSRuntime* runtime);
@@ -140,6 +145,47 @@ IsProfilingEnabledForRuntime(JSRuntime* runtime);
 JS_FRIEND_API(void)
 UpdateJSRuntimeProfilerSampleBufferGen(JSRuntime* runtime, uint32_t generation,
                                        uint32_t lapCount);
+
+struct ForEachProfiledFrameOp
+{
+    // A handle to the underlying JitcodeGlobalEntry, so as to avoid repeated
+    // lookups on JitcodeGlobalTable.
+    class MOZ_STACK_CLASS FrameHandle
+    {
+        friend JS_PUBLIC_API(void) ForEachProfiledFrame(JSRuntime* rt, void* addr,
+                                                        ForEachProfiledFrameOp& op);
+
+        JSRuntime* rt_;
+        js::jit::JitcodeGlobalEntry& entry_;
+        void* addr_;
+        void* canonicalAddr_;
+        const char* label_;
+        uint32_t depth_;
+        mozilla::Maybe<uint8_t> optsIndex_;
+
+        FrameHandle(JSRuntime* rt, js::jit::JitcodeGlobalEntry& entry, void* addr,
+                    const char* label, uint32_t depth);
+
+        void updateHasTrackedOptimizations();
+
+      public:
+        const char* label() const { return label_; }
+        uint32_t depth() const { return depth_; }
+        bool hasTrackedOptimizations() const { return optsIndex_.isSome(); }
+        void* canonicalAddress() const { return canonicalAddr_; }
+
+        ProfilingFrameIterator::FrameKind frameKind() const;
+        void forEachOptimizationAttempt(ForEachTrackedOptimizationAttemptOp& op,
+                                        JSScript** scriptOut, jsbytecode** pcOut) const;
+        void forEachOptimizationTypeInfo(ForEachTrackedOptimizationTypeInfoOp& op) const;
+    };
+
+    // Called once per frame.
+    virtual void operator()(const FrameHandle& frame) = 0;
+};
+
+JS_PUBLIC_API(void)
+ForEachProfiledFrame(JSRuntime* rt, void* addr, ForEachProfiledFrameOp& op);
 
 } // namespace JS
 

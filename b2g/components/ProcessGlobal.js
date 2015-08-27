@@ -104,6 +104,10 @@ ProcessGlobal.prototype = {
       } else if (params[0] == "root") {
         log("unrestrict devtools");
         Services.prefs.setBoolPref("devtools.debugger.forbid-certified-apps", false);
+        Services.prefs.setBoolPref("dom.apps.developer_mode", true);
+        // TODO: Remove once bug 1125916 is fixed.
+        Services.prefs.setBoolPref("network.disable.ipc.security", true);
+        Services.prefs.setBoolPref("dom.webcomponents.enabled", true);
         let lock = settings.createLock();
         lock.set("developer.menu.enabled", true, null);
       }
@@ -166,7 +170,8 @@ ProcessGlobal.prototype = {
       let args = message.arguments;
       let stackTrace = '';
 
-      if (message.level == 'assert' || message.level == 'error' || message.level == 'trace') {
+      if (message.stacktrace &&
+          (message.level == 'assert' || message.level == 'error' || message.level == 'trace')) {
         stackTrace = Array.map(message.stacktrace, formatStackFrame).join('\n');
       } else {
         stackTrace = formatStackFrame(message);

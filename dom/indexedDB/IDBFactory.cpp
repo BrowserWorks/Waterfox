@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -309,6 +309,7 @@ IDBFactory::CreateForJSInternal(JSContext* aCx,
   if (aPrincipalInfo->type() != PrincipalInfo::TContentPrincipalInfo &&
       aPrincipalInfo->type() != PrincipalInfo::TSystemPrincipalInfo) {
     NS_WARNING("IndexedDB not allowed for this principal!");
+    aPrincipalInfo = nullptr;
     *aFactory = nullptr;
     return NS_OK;
   }
@@ -726,6 +727,11 @@ IDBFactory::OpenInternal(nsIPrincipal* aPrincipal,
     JS::Rooted<JSObject*> scriptOwner(autoJS.cx(), mOwningObject);
 
     request = IDBOpenDBRequest::CreateForJS(this, scriptOwner);
+    if (!request) {
+      MOZ_ASSERT(!NS_IsMainThread());
+      aRv.ThrowUncatchableException();
+      return nullptr;
+    }
   }
 
   MOZ_ASSERT(request);

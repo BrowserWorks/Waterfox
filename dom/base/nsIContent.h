@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -545,8 +546,8 @@ public:
    * Append the text content to aResult.
    * NOTE: This asserts and returns for elements
    */
-  virtual bool AppendTextTo(nsAString& aResult,
-                            const mozilla::fallible_t&) NS_WARN_UNUSED_RESULT = 0;
+  MOZ_WARN_UNUSED_RESULT
+  virtual bool AppendTextTo(nsAString& aResult, const mozilla::fallible_t&) = 0;
 
   /**
    * Check if this content is focusable and in the current tab order.
@@ -919,7 +920,8 @@ public:
         // XHTML1 section C.7).
         bool hasAttr = content->GetAttr(kNameSpaceID_XML, nsGkAtoms::lang,
                                           aResult);
-        if (!hasAttr && (content->IsHTMLElement() || content->IsSVGElement())) {
+        if (!hasAttr && (content->IsHTMLElement() || content->IsSVGElement() ||
+            content->IsXULElement())) {
           hasAttr = content->GetAttr(kNameSpaceID_None, nsGkAtoms::lang,
                                      aResult);
         }

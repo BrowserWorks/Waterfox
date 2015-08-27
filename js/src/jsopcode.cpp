@@ -726,9 +726,6 @@ DisassembleAtPC(JSContext* cx, JSScript* scriptArg, bool lines,
     RootedScript script(cx, scriptArg);
     BytecodeParser parser(cx, script);
 
-    jsbytecode* next, *end;
-    unsigned len;
-
     if (showAll && !parser.parse())
         return false;
 
@@ -753,8 +750,8 @@ DisassembleAtPC(JSContext* cx, JSScript* scriptArg, bool lines,
         sp->put("----");
     sp->put("  --\n");
 
-    next = script->code();
-    end = script->codeEnd();
+    jsbytecode* next = script->code();
+    jsbytecode* end = script->codeEnd();
     while (next < end) {
         if (next == script->main())
             sp->put("main:\n");
@@ -783,7 +780,7 @@ DisassembleAtPC(JSContext* cx, JSScript* scriptArg, bool lines,
             else
                 Sprint(sp, "      ");
         }
-        len = Disassemble1(cx, script, next, script->pcToOffset(next), lines, sp);
+        unsigned len = Disassemble1(cx, script, next, script->pcToOffset(next), lines, sp);
         if (!len)
             return false;
         next += len;
@@ -1555,11 +1552,21 @@ ExpressionDecompiler::decompilePC(jsbytecode* pc)
                quote(prop, '\'') &&
                write("]");
       }
+      case JSOP_GETPROP_SUPER:
+      {
+        RootedAtom prop(cx, loadAtom(pc));
+        return write("super.") &&
+               quote(prop, '\0');
+      }
       case JSOP_GETELEM:
       case JSOP_CALLELEM:
         return decompilePCForStackOperand(pc, -2) &&
                write("[") &&
                decompilePCForStackOperand(pc, -1) &&
+               write("]");
+      case JSOP_GETELEM_SUPER:
+        return write("super[") &&
+               decompilePCForStackOperand(pc, -3) &&
                write("]");
       case JSOP_NULL:
         return write(js_null_str);
@@ -1746,7 +1753,13 @@ FindStartPC(JSContext* cx, const FrameIter& iter, int spindex, int skipStackHits
 
     if (spindex == JSDVG_SEARCH_STACK) {
         size_t index = iter.numFrameSlots();
-        MOZ_ASSERT(index >= size_t(parser.stackDepthAtPC(current)));
+
+        // The decompiler may be called from inside functions that are not
+        // called from script, but via the C++ API directly, such as
+        // Invoke. In that case, the youngest script frame may have a
+        // completely unrelated pc and stack depth, so we give up.
+        if (index < size_t(parser.stackDepthAtPC(current)))
+            return true;
 
         // We search from fp->sp to base to find the most recently calculated
         // value matching v under assumption that it is the value that caused

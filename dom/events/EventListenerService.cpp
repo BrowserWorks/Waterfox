@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -15,6 +16,8 @@
 #include "nsJSUtils.h"
 #include "nsMemory.h"
 #include "nsServiceManagerUtils.h"
+#include "nsArray.h"
+#include "nsThreadUtils.h"
 
 namespace mozilla {
 
@@ -127,6 +130,21 @@ EventListenerInfo::ToSource(nsAString& aResult)
   return NS_OK;
 }
 
+EventListenerService*
+EventListenerService::sInstance = nullptr;
+
+EventListenerService::EventListenerService()
+{
+  MOZ_ASSERT(!sInstance);
+  sInstance = this;
+}
+
+EventListenerService::~EventListenerService()
+{
+  MOZ_ASSERT(sInstance == this);
+  sInstance = nullptr;
+}
+
 NS_IMETHODIMP
 EventListenerService::GetListenerInfoFor(nsIDOMEventTarget* aEventTarget,
                                          uint32_t* aCount,
@@ -152,7 +170,7 @@ EventListenerService::GetListenerInfoFor(nsIDOMEventTarget* aEventTarget,
 
   *aOutArray =
     static_cast<nsIEventListenerInfo**>(
-      nsMemory::Alloc(sizeof(nsIEventListenerInfo*) * count));
+      moz_xmalloc(sizeof(nsIEventListenerInfo*) * count));
   NS_ENSURE_TRUE(*aOutArray, NS_ERROR_OUT_OF_MEMORY);
 
   for (int32_t i = 0; i < count; ++i) {
@@ -182,7 +200,7 @@ EventListenerService::GetEventTargetChainFor(nsIDOMEventTarget* aEventTarget,
 
   *aOutArray =
     static_cast<nsIDOMEventTarget**>(
-      nsMemory::Alloc(sizeof(nsIDOMEventTarget*) * count));
+      moz_xmalloc(sizeof(nsIDOMEventTarget*) * count));
   NS_ENSURE_TRUE(*aOutArray, NS_ERROR_OUT_OF_MEMORY);
 
   for (int32_t i = 0; i < count; ++i) {
@@ -286,6 +304,58 @@ EventListenerService::RemoveListenerForAllEvents(nsIDOMEventTarget* aTarget,
     manager->RemoveListenerForAllEvents(aListener, aUseCapture, aSystemEventGroup);
   }
   return NS_OK;
+}
+
+NS_IMETHODIMP
+EventListenerService::AddListenerChangeListener(nsIListenerChangeListener* aListener)
+{
+  if (!mChangeListeners.Contains(aListener)) {
+    mChangeListeners.AppendElement(aListener);
+  }
+  return NS_OK;
+};
+
+NS_IMETHODIMP
+EventListenerService::RemoveListenerChangeListener(nsIListenerChangeListener* aListener)
+{
+  mChangeListeners.RemoveElement(aListener);
+  return NS_OK;
+};
+
+void
+EventListenerService::NotifyAboutMainThreadListenerChangeInternal(dom::EventTarget* aTarget)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  if (mChangeListeners.IsEmpty()) {
+    return;
+  }
+
+  if (!mPendingListenerChanges) {
+    mPendingListenerChanges = nsArrayBase::Create();
+    nsCOMPtr<nsIRunnable> runnable = NS_NewRunnableMethod(this,
+      &EventListenerService::NotifyPendingChanges);
+    NS_DispatchToCurrentThread(runnable);
+  }
+
+  if (!mPendingListenerChangesSet.Get(aTarget)) {
+    mPendingListenerChanges->AppendElement(aTarget, false);
+    mPendingListenerChangesSet.Put(aTarget, true);
+  }
+}
+
+void
+EventListenerService::NotifyPendingChanges()
+{
+  nsCOMPtr<nsIMutableArray> changes;
+  mPendingListenerChanges.swap(changes);
+  mPendingListenerChangesSet.Clear();
+
+  nsTObserverArray<nsCOMPtr<nsIListenerChangeListener>>::EndLimitedIterator
+    iter(mChangeListeners);
+  while (iter.HasMore()) {
+    nsCOMPtr<nsIListenerChangeListener> listener = iter.GetNext();
+    listener->ListenersChanged(changes);
+  }
 }
 
 } // namespace mozilla

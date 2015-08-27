@@ -18,7 +18,6 @@
 #include "nsNSSCertificate.h"
 #include "nsNSSCertificateFakeTransport.h"
 #include "nsNSSCertificateDB.h"
-#include "nsNSSCertCache.h"
 #ifdef MOZ_XUL
 #include "nsCertTree.h"
 #endif
@@ -136,14 +135,20 @@ _InstanceClassChrome##Constructor(nsISupports *aOuter, REFNSIID aIID,         \
 {                                                                             \
     nsresult rv;                                                              \
                                                                               \
-    *aResult = nullptr;                                                          \
-    if (nullptr != aOuter) {                                                     \
+    *aResult = nullptr;                                                       \
+    if (nullptr != aOuter) {                                                  \
         rv = NS_ERROR_NO_AGGREGATION;                                         \
         return rv;                                                            \
     }                                                                         \
                                                                               \
-    if (!EnsureNSSInitialized(ensureOperator))                                \
+    if (!NS_IS_PROCESS_DEFAULT &&                                             \
+        ensureOperator == nssEnsureChromeOrContent) {                         \
+        if (!EnsureNSSInitializedChromeOrContent()) {                         \
+            return NS_ERROR_FAILURE;                                          \
+        }                                                                     \
+    } else if (!EnsureNSSInitialized(ensureOperator)) {                       \
         return NS_ERROR_FAILURE;                                              \
+    }                                                                         \
                                                                               \
     if (NS_IS_PROCESS_DEFAULT)                                                \
         NS_NSS_INSTANTIATE_INIT(ensureOperator,                               \
@@ -183,12 +188,11 @@ NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsure, nsTLSSocketProvider)
 NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsure, nsSecretDecoderRing)
 NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsure, nsPK11TokenDB)
 NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsure, nsPKCS11ModuleDB)
-NS_NSS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nssEnsure, PSMContentListener, init)
+NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(PSMContentListener, init)
 NS_NSS_GENERIC_FACTORY_CONSTRUCTOR_BYPROCESS(nssEnsureOnChromeOnly,
                                              nsNSSCertificate,
                                              nsNSSCertificateFakeTransport)
 NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsure, nsNSSCertificateDB)
-NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsure, nsNSSCertCache)
 NS_NSS_GENERIC_FACTORY_CONSTRUCTOR_BYPROCESS(nssEnsureOnChromeOnly,
                                              nsNSSCertList,
                                              nsNSSCertListFakeTransport)
@@ -222,7 +226,6 @@ NS_DEFINE_NAMED_CID(NS_PSMCONTENTLISTEN_CID);
 NS_DEFINE_NAMED_CID(NS_X509CERT_CID);
 NS_DEFINE_NAMED_CID(NS_X509CERTDB_CID);
 NS_DEFINE_NAMED_CID(NS_X509CERTLIST_CID);
-NS_DEFINE_NAMED_CID(NS_NSSCERTCACHE_CID);
 NS_DEFINE_NAMED_CID(NS_FORMPROCESSOR_CID);
 #ifdef MOZ_XUL
 NS_DEFINE_NAMED_CID(NS_CERTTREE_CID);
@@ -253,7 +256,6 @@ static const mozilla::Module::CIDEntry kNSSCIDs[] = {
   { &kNS_X509CERT_CID, false, nullptr, nsNSSCertificateConstructor },
   { &kNS_X509CERTDB_CID, false, nullptr, nsNSSCertificateDBConstructor },
   { &kNS_X509CERTLIST_CID, false, nullptr, nsNSSCertListConstructor },
-  { &kNS_NSSCERTCACHE_CID, false, nullptr, nsNSSCertCacheConstructor },
   { &kNS_FORMPROCESSOR_CID, false, nullptr, nsKeygenFormProcessor::Create },
 #ifdef MOZ_XUL
   { &kNS_CERTTREE_CID, false, nullptr, nsCertTreeConstructor },
@@ -287,7 +289,6 @@ static const mozilla::Module::ContractIDEntry kNSSContracts[] = {
   { NS_PSMCONTENTLISTEN_CONTRACTID, &kNS_PSMCONTENTLISTEN_CID },
   { NS_X509CERTDB_CONTRACTID, &kNS_X509CERTDB_CID },
   { NS_X509CERTLIST_CONTRACTID, &kNS_X509CERTLIST_CID },
-  { NS_NSSCERTCACHE_CONTRACTID, &kNS_NSSCERTCACHE_CID },
   { NS_FORMPROCESSOR_CONTRACTID, &kNS_FORMPROCESSOR_CID },
 #ifdef MOZ_XUL
   { NS_CERTTREE_CONTRACTID, &kNS_CERTTREE_CID },

@@ -1,6 +1,6 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
- *
- * This Source Code Form is subject to the terms of the Mozilla Public
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -51,18 +51,15 @@ class nsIConsoleService;
 class nsIContent;
 class nsIContentPolicy;
 class nsIContentSecurityPolicy;
-class nsIDocShell;
+class nsIDocShellTreeItem;
 class nsIDocument;
 class nsIDocumentLoaderFactory;
-class nsIDocumentObserver;
 class nsIDOMDocument;
 class nsIDOMDocumentFragment;
 class nsIDOMEvent;
-class nsIDOMHTMLFormElement;
 class nsIDOMHTMLInputElement;
 class nsIDOMKeyEvent;
 class nsIDOMNode;
-class nsIDOMScriptObjectFactory;
 class nsIDOMWindow;
 class nsIDragSession;
 class nsIEditor;
@@ -71,7 +68,6 @@ class nsIFrame;
 class nsIImageLoadingContent;
 class nsIInterfaceRequestor;
 class nsIIOService;
-class nsIJSRuntimeService;
 class nsILineBreaker;
 class nsIMessageBroadcaster;
 class nsNameSpaceManager;
@@ -83,10 +79,10 @@ class nsIPrincipal;
 class nsIRequest;
 class nsIRunnable;
 class nsIScriptContext;
-class nsIScriptGlobalObject;
 class nsIScriptSecurityManager;
 class nsIStringBundle;
 class nsIStringBundleService;
+class nsISupportsArray;
 class nsISupportsHashKey;
 class nsIURI;
 class nsIWidget;
@@ -95,13 +91,14 @@ class nsIXPConnect;
 class nsNodeInfoManager;
 class nsPIDOMWindow;
 class nsPresContext;
-class nsScriptObjectTracer;
 class nsStringBuffer;
 class nsStringHashKey;
 class nsTextFragment;
+class nsView;
 class nsViewportInfo;
 class nsWrapperCache;
 class nsAttrValue;
+class nsITransferable;
 
 struct JSPropertyDescriptor;
 struct JSRuntime;
@@ -120,10 +117,17 @@ namespace dom {
 class DocumentFragment;
 class Element;
 class EventTarget;
+class IPCDataTransfer;
 class NodeInfo;
+class nsIContentChild;
+class nsIContentParent;
 class Selection;
 class TabParent;
 } // namespace dom
+
+namespace gfx {
+class DataSourceSurface;
+} // namespace gfx
 
 namespace layers {
 class LayerManager;
@@ -1273,8 +1277,9 @@ public:
    * @param aResult the result. Out param.
    * @return false on out of memory errors, true otherwise.
    */
+  MOZ_WARN_UNUSED_RESULT
   static bool GetNodeTextContent(nsINode* aNode, bool aDeep,
-                                 nsAString& aResult) NS_WARN_UNUSED_RESULT;
+                                 nsAString& aResult);
 
   /**
    * Same as GetNodeTextContents but appends the result rather than sets it.
@@ -1749,8 +1754,9 @@ public:
    * @param aString the string to convert the newlines inside [in/out]
    */
   static void PlatformToDOMLineBreaks(nsString &aString);
-  static NS_WARN_UNUSED_RESULT bool PlatformToDOMLineBreaks(nsString &aString,
-                                                            const mozilla::fallible_t&);
+  MOZ_WARN_UNUSED_RESULT
+  static bool PlatformToDOMLineBreaks(nsString &aString,
+                                      const mozilla::fallible_t&);
 
   /**
    * Populates aResultString with the contents of the string-buffer aBuf, up
@@ -1873,7 +1879,7 @@ public:
    *
    * Making the fullscreen API content only is useful on platforms where we
    * still want chrome to be visible or accessible while content is
-   * fullscreen, like on Windows 8 in Metro mode.
+   * fullscreen.
    *
    * Note that if the fullscreen API is content only, chrome can still go
    * fullscreen by setting the "fullScreen" attribute on its XUL window.
@@ -2012,6 +2018,11 @@ public:
    * Perform cleanup that's appropriate for XPCOM shutdown.
    */
   static void XPCOMShutdown();
+
+  /**
+   * Checks if internal PDF viewer is enabled.
+   */
+  static bool IsPDFJSEnabled();
 
   enum ContentViewerType
   {
@@ -2278,6 +2289,7 @@ public:
    * otherwise it just outputs the hostname in aHost.
    */
   static void GetHostOrIPv6WithBrackets(nsIURI* aURI, nsAString& aHost);
+  static void GetHostOrIPv6WithBrackets(nsIURI* aURI, nsCString& aHost);
 
   /*
    * Call the given callback on all remote children of the given top-level
@@ -2286,6 +2298,71 @@ public:
   static void CallOnAllRemoteChildren(nsIDOMWindow* aWindow,
                                       CallOnRemoteChildFunction aCallback,
                                       void* aArg);
+
+  static void TransferablesToIPCTransferables(nsISupportsArray* aTransferables,
+                                              nsTArray<mozilla::dom::IPCDataTransfer>& aIPC,
+                                              mozilla::dom::nsIContentChild* aChild,
+                                              mozilla::dom::nsIContentParent* aParent);
+
+  static void TransferableToIPCTransferable(nsITransferable* aTransferable,
+                                            mozilla::dom::IPCDataTransfer* aIPCDataTransfer,
+                                            mozilla::dom::nsIContentChild* aChild,
+                                            mozilla::dom::nsIContentParent* aParent);
+
+  /*
+   * Get the pixel data from the given source surface and return it as a buffer.
+   * The length and stride will be assigned from the surface.
+   */
+  static mozilla::UniquePtr<char[]> GetSurfaceData(mozilla::gfx::DataSourceSurface* aSurface,
+                                                   size_t* aLength, int32_t* aStride);
+
+  // Helpers shared by the implementations of nsContentUtils methods and
+  // nsIDOMWindowUtils methods.
+  static mozilla::Modifiers GetWidgetModifiers(int32_t aModifiers);
+  static nsIWidget* GetWidget(nsIPresShell* aPresShell, nsPoint* aOffset);
+  static int16_t GetButtonsFlagForButton(int32_t aButton);
+  static mozilla::LayoutDeviceIntPoint ToWidgetPoint(const mozilla::CSSPoint& aPoint,
+                                                     const nsPoint& aOffset,
+                                                     nsPresContext* aPresContext);
+  static nsView* GetViewToDispatchEvent(nsPresContext* aPresContext,
+                                        nsIPresShell** aPresShell);
+
+  /**
+   * Synthesize a key event to the given widget
+   * (see nsIDOMWindowUtils.sendKeyEvent).
+   */
+  static nsresult SendKeyEvent(nsCOMPtr<nsIWidget> aWidget,
+                               const nsAString& aType,
+                               int32_t aKeyCode,
+                               int32_t aCharCode,
+                               int32_t aModifiers,
+                               uint32_t aAdditionalFlags,
+                               bool* aDefaultActionTaken);
+
+  /**
+   * Synthesize a mouse event to the given widget
+   * (see nsIDOMWindowUtils.sendMouseEvent).
+   */
+  static nsresult SendMouseEvent(nsCOMPtr<nsIPresShell> aPresShell,
+                                 const nsAString& aType,
+                                 float aX,
+                                 float aY,
+                                 int32_t aButton,
+                                 int32_t aClickCount,
+                                 int32_t aModifiers,
+                                 bool aIgnoreRootScrollFrame,
+                                 float aPressure,
+                                 unsigned short aInputSourceArg,
+                                 bool aToWindow,
+                                 bool *aPreventDefault,
+                                 bool aIsSynthesized);
+
+  static void FirePageShowEvent(nsIDocShellTreeItem* aItem,
+                                mozilla::dom::EventTarget* aChromeEventHandler,
+                                bool aFireIfShowing);
+
+  static void FirePageHideEvent(nsIDocShellTreeItem* aItem,
+                                mozilla::dom::EventTarget* aChromeEventHandler);
 
 private:
   static bool InitializeEventTable();

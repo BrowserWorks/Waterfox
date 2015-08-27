@@ -47,6 +47,9 @@ pref("browser.viewport.defaultZoom", -1);
 /* allow scrollbars to float above chrome ui */
 pref("ui.scrollbarsCanOverlapContent", 1);
 
+/* turn off the caret blink after 10 cycles */
+pref("ui.caretBlinkCount", 10);
+
 /* cache prefs */
 pref("browser.cache.disk.enable", true);
 pref("browser.cache.disk.capacity", 20480); // kilobytes
@@ -257,8 +260,11 @@ pref("browser.search.order.1", "chrome://browser/locale/region.properties");
 pref("browser.search.order.2", "chrome://browser/locale/region.properties");
 pref("browser.search.order.3", "chrome://browser/locale/region.properties");
 
-// Market-specific search defaults (US market only)
+// Market-specific search defaults
 pref("browser.search.geoSpecificDefaults", true);
+pref("browser.search.geoSpecificDefaults.url", "https://search.services.mozilla.com/1/%APP%/%VERSION%/%CHANNEL%/%LOCALE%/%REGION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%");
+
+// US specific default (used as a fallback if the geoSpecificDefaults request fails).
 pref("browser.search.defaultenginename.US", "chrome://browser/locale/region.properties");
 pref("browser.search.order.US.1", "chrome://browser/locale/region.properties");
 pref("browser.search.order.US.2", "chrome://browser/locale/region.properties");
@@ -344,6 +350,7 @@ pref("privacy.item.cache", true);
 pref("privacy.item.cookies", true);
 pref("privacy.item.offlineApps", true);
 pref("privacy.item.history", true);
+pref("privacy.item.searchHistory", true);
 pref("privacy.item.formdata", true);
 pref("privacy.item.downloads", true);
 pref("privacy.item.passwords", true);
@@ -465,6 +472,9 @@ pref("security.mixed_content.block_active_content", true);
 // Enable pinning
 pref("security.cert_pinning.enforcement_level", 1);
 
+// Only fetch OCSP for EV certificates
+pref("security.OCSP.enabled", 2);
+
 // Override some named colors to avoid inverse OS themes
 pref("ui.-moz-dialog", "#efebe7");
 pref("ui.-moz-dialogtext", "#101010");
@@ -570,6 +580,7 @@ pref("media.fragmented-mp4.android-media-codec.enabled", true);
 pref("media.fragmented-mp4.android-media-codec.preferred", true);
 
 // optimize images memory usage
+pref("image.downscale-during-decode.enabled", true);
 pref("image.decode-only-on-draw.enabled", true);
 
 #ifdef NIGHTLY_BUILD
@@ -863,6 +874,18 @@ pref("reader.toolbar.vertical", false);
 
 // Whether or not to display buttons related to reading list in reader view.
 pref("browser.readinglist.enabled", true);
+
+// Telemetry settings.
+// Whether to use the unified telemetry behavior, requires a restart.
+pref("toolkit.telemetry.unified", false);
+
+// Selection carets never fall-back to internal LongTap detector.
+pref("selectioncaret.detects.longtap", false);
+
+// Enable Service workers for Android on non-release builds
+#ifdef NIGHTLY_BUILD
+pref("dom.serviceWorkers.enabled", true);
+#endif
 
 // Disable sending console to logcat on release builds.
 #ifdef RELEASE_BUILD

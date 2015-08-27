@@ -10,6 +10,7 @@
 #include "Point.h"
 #include "Rect.h"
 #include "Matrix.h"
+#include "Quaternion.h"
 #include "UserData.h"
 
 // GenericRefCountedBase allows us to hold on to refcounted objects of any type
@@ -43,7 +44,6 @@ struct ID2D1Device;
 struct IDWriteRenderingParams;
 
 class GrContext;
-struct GrGLInterface;
 
 struct CGContext;
 typedef struct CGContext *CGContextRef;

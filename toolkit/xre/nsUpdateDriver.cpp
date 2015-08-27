@@ -194,7 +194,7 @@ GetXULRunnerStubPath(const char* argv0, nsIFile* *aResult)
   if (NS_FAILED(rv))
     return rv;
 
-  NS_ADDREF(*aResult = static_cast<nsIFile*>(lfm.get()));
+  lfm.forget(aResult);
   return NS_OK;
 }
 #endif /* XP_MACOSX */
@@ -331,19 +331,6 @@ IsOlderVersion(nsIFile *versionFile, const char *appVersion)
   return false;
 }
 
-#if defined(XP_WIN) && defined(MOZ_METRO)
-static bool
-IsWindowsMetroUpdateRequest(int appArgc, char **appArgv)
-{
-  for (int index = 0; index < appArgc; index++) {
-    if (!strcmp(appArgv[index], "--metro-update")) {
-      return true;
-    }
-  }
-  return false;
-}
-#endif
-
 static bool
 CopyFileIntoUpdateDir(nsIFile *parentDir, const char *leafName, nsIFile *updateDir)
 {
@@ -411,6 +398,36 @@ CopyUpdaterIntoUpdateDir(nsIFile *greDir, nsIFile *appDir, nsIFile *updateDir,
   rv = updater->AppendNative(NS_LITERAL_CSTRING(kUpdaterBin));
   return NS_SUCCEEDED(rv); 
 }
+
+/**
+ * Appends the specified path to the library path.
+ * This is used so that updater can find libmozsqlite3.so and other shared libs.
+ *
+ * @param pathToAppend A new library path to prepend to LD_LIBRARY_PATH
+ */
+#if defined(MOZ_VERIFY_MAR_SIGNATURE) && !defined(XP_WIN) && !defined(XP_MACOSX)
+#include "prprf.h"
+#define PATH_SEPARATOR ":"
+#define LD_LIBRARY_PATH_ENVVAR_NAME "LD_LIBRARY_PATH"
+static void
+AppendToLibPath(const char *pathToAppend)
+{
+  char *pathValue = getenv(LD_LIBRARY_PATH_ENVVAR_NAME);
+  if (nullptr == pathValue || '\0' == *pathValue) {
+    char *s = PR_smprintf("%s=%s", LD_LIBRARY_PATH_ENVVAR_NAME, pathToAppend);
+    PR_SetEnv(s);
+  } else if (!strstr(pathValue, pathToAppend)) {
+    char *s = PR_smprintf("%s=%s" PATH_SEPARATOR "%s",
+                    LD_LIBRARY_PATH_ENVVAR_NAME, pathToAppend, pathValue);
+    PR_SetEnv(s);
+  }
+
+  // The memory used by PR_SetEnv is not copied to the environment on all
+  // platform, it can be used by reference directly. So we purposely do not
+  // call PR_smprintf_free on s.  Subsequent calls to PR_SetEnv will free
+  // the old memory first.
+}
+#endif
 
 /**
  * Switch an existing application directory to an updated version that has been
@@ -585,13 +602,6 @@ SwitchToUpdatedApp(nsIFile *greDir, nsIFile *updateDir,
   pid.AppendLiteral("/replace");
 
   int immersiveArgc = 0;
-#if defined(XP_WIN) && defined(MOZ_METRO)
-  // If this is desktop doing an update for metro, or if we're the metro browser
-  // we want to launch the metro browser after we're finished.
-  if (IsWindowsMetroUpdateRequest(appArgc, appArgv) || IsRunningInWindowsMetro()) {
-    immersiveArgc = 1;
-  }
-#endif
   int argc = appArgc + 6 + immersiveArgc;
   char **argv = new char*[argc + 1];
   if (!argv)
@@ -620,6 +630,9 @@ SwitchToUpdatedApp(nsIFile *greDir, nsIFile *updateDir,
   if (gSafeMode) {
     PR_SetEnv("MOZ_SAFE_MODE_RESTART=1");
   }
+#if defined(MOZ_VERIFY_MAR_SIGNATURE) && !defined(XP_WIN) && !defined(XP_MACOSX)
+  AppendToLibPath(installDirPath.get());
+#endif
 
   LOG(("spawning updater process for replacing [%s]\n", updaterPath.get()));
 
@@ -870,13 +883,6 @@ ApplyUpdate(nsIFile *greDir, nsIFile *updateDir, nsIFile *statusFile,
   }
 
   int immersiveArgc = 0;
-#if defined(XP_WIN) && defined(MOZ_METRO)
-  // If this is desktop doing an update for metro, or if we're the metro browser
-  // we want to launch the metro browser after we're finished.
-  if (IsWindowsMetroUpdateRequest(appArgc, appArgv) || IsRunningInWindowsMetro()) {
-    immersiveArgc = 1;
-  }
-#endif
   int argc = appArgc + 6 + immersiveArgc;
   char **argv = new char*[argc + 1 ];
   if (!argv)
@@ -905,6 +911,9 @@ ApplyUpdate(nsIFile *greDir, nsIFile *updateDir, nsIFile *statusFile,
   if (gSafeMode) {
     PR_SetEnv("MOZ_SAFE_MODE_RESTART=1");
   }
+#if defined(MOZ_VERIFY_MAR_SIGNATURE) && !defined(XP_WIN) && !defined(XP_MACOSX)
+  AppendToLibPath(installDirPath.get());
+#endif
 
   if (isOSUpdate) {
     PR_SetEnv("MOZ_OS_UPDATE=1");
@@ -924,7 +933,10 @@ ApplyUpdate(nsIFile *greDir, nsIFile *updateDir, nsIFile *statusFile,
                                             kAppUpdaterIOPrioLevelDefault);
   nsPrintfCString prioEnv("MOZ_UPDATER_PRIO=%d/%d/%d/%d",
                           prioVal, oomScoreAdj, ioprioClass, ioprioLevel);
-  PR_SetEnv(prioEnv.get());
+  // Note: we allocate a new string on heap and pass that to PR_SetEnv, since
+  // the string can be used after this function returns.  This means that we
+  // will intentionally leak this buffer.
+  PR_SetEnv(ToNewCString(prioEnv));
 #endif
 
   LOG(("spawning updater process [%s]\n", updaterPath.get()));

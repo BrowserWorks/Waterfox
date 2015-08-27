@@ -69,7 +69,6 @@
 @BINPATH@/@DLL_PREFIX@plds4@DLL_SUFFIX@
 @BINPATH@/@DLL_PREFIX@nspr4@DLL_SUFFIX@
 #endif
-@BINPATH@/@DLL_PREFIX@mozalloc@DLL_SUFFIX@
 #ifdef MOZ_DMD
 @BINPATH@/@DLL_PREFIX@dmd@DLL_SUFFIX@
 #endif
@@ -146,34 +145,34 @@
 #endif
 @RESPATH@/components/accessibility.xpt
 #endif
-@RESPATH@/components/appshell.xpt
-@RESPATH@/components/appstartup.xpt
-@RESPATH@/components/autocomplete.xpt
-@RESPATH@/components/autoconfig.xpt
-@RESPATH@/components/browsercompsbase.xpt
-@RESPATH@/components/browser-element.xpt
-@RESPATH@/components/browser-feeds.xpt
-@RESPATH@/components/caps.xpt
-@RESPATH@/components/chardet.xpt
-@RESPATH@/components/chrome.xpt
-@RESPATH@/components/commandhandler.xpt
-@RESPATH@/components/commandlines.xpt
-@RESPATH@/components/compartments.xpt
-@RESPATH@/components/composer.xpt
-@RESPATH@/components/content_events.xpt
-@RESPATH@/components/content_html.xpt
-@RESPATH@/components/content_xslt.xpt
-@RESPATH@/components/cookie.xpt
-@RESPATH@/components/devtools_security.xpt
-@RESPATH@/components/directory.xpt
-@RESPATH@/components/diskspacewatcher.xpt
-@RESPATH@/components/docshell.xpt
-@RESPATH@/components/dom.xpt
-@RESPATH@/components/dom_activities.xpt
-@RESPATH@/components/dom_apps.xpt
-@RESPATH@/components/dom_audiochannel.xpt
-@RESPATH@/components/dom_base.xpt
-@RESPATH@/components/dom_system.xpt
+@BINPATH@/components/appshell.xpt
+@BINPATH@/components/appstartup.xpt
+@BINPATH@/components/autocomplete.xpt
+@BINPATH@/components/autoconfig.xpt
+@BINPATH@/components/browsercompsbase.xpt
+@BINPATH@/components/browser-element.xpt
+@BINPATH@/components/browser-feeds.xpt
+@BINPATH@/components/caps.xpt
+@BINPATH@/components/chardet.xpt
+@BINPATH@/components/chrome.xpt
+@BINPATH@/components/commandhandler.xpt
+@BINPATH@/components/commandlines.xpt
+@BINPATH@/components/composer.xpt
+@BINPATH@/components/content_events.xpt
+@BINPATH@/components/content_geckomediaplugins.xpt
+@BINPATH@/components/content_html.xpt
+@BINPATH@/components/content_xslt.xpt
+@BINPATH@/components/cookie.xpt
+@BINPATH@/components/devtools_security.xpt
+@BINPATH@/components/directory.xpt
+@BINPATH@/components/diskspacewatcher.xpt
+@BINPATH@/components/docshell.xpt
+@BINPATH@/components/dom.xpt
+@BINPATH@/components/dom_activities.xpt
+@BINPATH@/components/dom_apps.xpt
+@BINPATH@/components/dom_audiochannel.xpt
+@BINPATH@/components/dom_base.xpt
+@BINPATH@/components/dom_system.xpt
 #ifdef MOZ_WIDGET_GONK
 @RESPATH@/components/dom_wifi.xpt
 @RESPATH@/components/dom_system_gonk.xpt
@@ -211,6 +210,7 @@
 @RESPATH@/components/dom_json.xpt
 @RESPATH@/components/dom_messages.xpt
 @RESPATH@/components/dom_power.xpt
+@RESPATH@/components/dom_push.xpt
 @RESPATH@/components/dom_quota.xpt
 @RESPATH@/components/dom_range.xpt
 @RESPATH@/components/dom_security.xpt
@@ -226,6 +226,7 @@
 @RESPATH@/components/dom_threads.xpt
 @RESPATH@/components/dom_traversal.xpt
 @RESPATH@/components/dom_tv.xpt
+@RESPATH@/components/dom_inputport.xpt
 @RESPATH@/components/dom_views.xpt
 @RESPATH@/components/dom_voicemail.xpt
 #ifdef MOZ_WEBSPEECH
@@ -327,6 +328,9 @@
 @RESPATH@/components/toolkit_finalizationwitness.xpt
 @RESPATH@/components/toolkit_formautofill.xpt
 @RESPATH@/components/toolkit_osfile.xpt
+#ifdef NIGHTLY_BUILD
+@RESPATH@/components/toolkit_perfmonitoring.xpt
+#endif
 @RESPATH@/components/toolkit_xulstore.xpt
 @RESPATH@/components/toolkitprofile.xpt
 #ifdef MOZ_ENABLE_XREMOTE
@@ -431,6 +435,9 @@
 @RESPATH@/components/htmlMenuBuilder.manifest
 @RESPATH@/components/PresentationDeviceInfoManager.manifest
 @RESPATH@/components/PresentationDeviceInfoManager.js
+@RESPATH@/components/BuiltinProviders.manifest
+@RESPATH@/components/TCPPresentationServer.js
+
 #ifdef MOZ_SECUREELEMENT
 @RESPATH@/components/SecureElement.js
 @RESPATH@/components/SecureElement.manifest
@@ -626,7 +633,7 @@
 @RESPATH@/components/AppsService.manifest
 @RESPATH@/components/Push.js
 @RESPATH@/components/Push.manifest
-@RESPATH@/components/PushServiceLauncher.js
+@RESPATH@/components/PushNotificationService.js
 
 @RESPATH@/components/InterAppComm.manifest
 @RESPATH@/components/InterAppCommService.js
@@ -736,7 +743,6 @@
 #endif
 @RESPATH@/@PREF_DIR@/channel-prefs.js
 @RESPATH@/greprefs.js
-@RESPATH@/defaults/autoconfig/platform.js
 @RESPATH@/defaults/autoconfig/prefcalls.js
 @RESPATH@/defaults/profile/prefs.js
 
@@ -952,4 +958,10 @@ bin/libfreebl_32int64_3.so
 
 #ifdef PACKAGE_MOZTT
 @RESPATH@/fonts/*
+#endif
+
+; media
+#ifdef MOZ_EME
+@RESPATH@/gmp-clearkey/0.1/@DLL_PREFIX@clearkey@DLL_SUFFIX@
+@RESPATH@/gmp-clearkey/0.1/clearkey.info
 #endif

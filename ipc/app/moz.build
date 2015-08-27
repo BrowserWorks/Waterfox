@@ -15,13 +15,16 @@ else:
     }
     if CONFIG['MOZ_SANDBOX'] and CONFIG['OS_ARCH'] == 'WINNT':
         kwargs['msvcrt'] = 'static'
+        if not CONFIG['GNU_CC']:
+            USE_LIBS += [
+                'mozalloc_staticruntime',
+            ]
     GeckoProgram(CONFIG['MOZ_CHILD_PROCESS_NAME'], **kwargs)
 
     SOURCES += [
         'MozillaRuntimeMain.cpp',
     ]
     USE_LIBS += [
-        'mozalloc',
         'nspr',
         'xul',
     ]
@@ -43,24 +46,23 @@ if CONFIG['OS_TARGET'] != 'Android':
 if CONFIG['MOZ_SANDBOX'] and CONFIG['OS_ARCH'] == 'WINNT':
     # For sandbox includes and the include dependencies those have
     LOCAL_INCLUDES += [
-        '/security',
         '/security/sandbox/chromium',
+        '/security/sandbox/chromium-shim',
     ]
     USE_LIBS += [
         'rlz',
         'sandbox_staticruntime_s',
     ]
     DELAYLOAD_DLLS += [
-        'mozalloc.dll',
         'nss3.dll',
-		'xul'
+        'xul.dll'
     ]
     DEFINES['HASH_NODE_ID_WITH_DEVICE_ID'] = 1;
     SOURCES += [
         'sha256.c',
     ]
 
-if CONFIG['MOZ_SANDBOX'] and CONFIG['OS_TARGET'] == 'Linux':
+if CONFIG['MOZ_SANDBOX'] and CONFIG['OS_TARGET'] in ('Linux', 'Android'):
     USE_LIBS += [
         'mozsandbox',
     ]
@@ -70,6 +72,11 @@ if CONFIG['MOZ_SANDBOX'] and CONFIG['OS_TARGET'] == 'Linux':
     # forcing there to be only one partition.
     if '-flto' in CONFIG['OS_CXXFLAGS'] and not CONFIG['CLANG_CXX']:
 	LDFLAGS += ['--param lto-partitions=1']
+
+if CONFIG['MOZ_SANDBOX'] and CONFIG['OS_TARGET'] == 'Darwin':
+    USE_LIBS += [
+        'mozsandbox',
+    ]
 
 if CONFIG['_MSC_VER']:
     # Always enter a Windows program through wmain, whether or not we're

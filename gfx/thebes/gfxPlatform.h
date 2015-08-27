@@ -23,7 +23,6 @@
 
 #include "mozilla/RefPtr.h"
 #include "GfxInfoCollector.h"
-#include "nsIXULRuntime.h"
 
 #include "mozilla/layers/CompositorTypes.h"
 
@@ -39,11 +38,9 @@ class nsIURI;
 class nsIAtom;
 class nsIObserver;
 class SRGBOverrideObserver;
-struct gfxRGBA;
 
 namespace mozilla {
 namespace gl {
-class GLContext;
 class SkiaGLGlue;
 }
 namespace gfx {
@@ -201,7 +198,6 @@ public:
     static void InitLayersIPC();
     static void ShutdownLayersIPC();
 
-    static bool InSafeMode();
     /**
      * Create an offscreen surface of the given dimensions
      * and image format.
@@ -497,11 +493,14 @@ public:
         // platform-specific override, by default do nothing
     }
 
+    // Are we in safe mode?
+    static bool InSafeMode();
+
     static bool OffMainThreadCompositingEnabled();
 
     static bool CanUseDirect3D9();
     static bool CanUseDirect3D11();
-    static bool CanUseDXVA();
+    virtual bool CanUseHardwareVideoDecoding();
     static bool CanUseDirect3D11ANGLE();
 
     /**
@@ -591,10 +590,10 @@ public:
      */
     mozilla::layers::DiagnosticTypes GetLayerDiagnosticTypes();
 
-    static nsIntRect FrameCounterBounds() {
+    static mozilla::gfx::IntRect FrameCounterBounds() {
       int bits = 16;
       int sizeOfBit = 3;
-      return nsIntRect(0, 0, bits * sizeOfBit, sizeOfBit);
+      return mozilla::gfx::IntRect(0, 0, bits * sizeOfBit, sizeOfBit);
     }
 
     mozilla::gl::SkiaGLGlue* GetSkiaGLGlue();
@@ -626,13 +625,14 @@ public:
     /**
      * Used to test which input types are handled via APZ.
      */
-    virtual bool SupportsApzWheelInput() {
+    virtual bool SupportsApzWheelInput() const {
       return false;
     }
-    virtual bool SupportsApzTouchInput() {
+    virtual bool SupportsApzTouchInput() const {
       return false;
     }
 
+    virtual void FlushContentDrawing() {}
 protected:
     gfxPlatform();
     virtual ~gfxPlatform();

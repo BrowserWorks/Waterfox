@@ -28,10 +28,12 @@ import mozpack.path as mozpath
 from .common import CommonBackend
 from ..frontend.data import (
     AndroidEclipseProjectData,
+    BrandingFiles,
     ConfigFileSubstitution,
     ContextDerived,
     ContextWrapped,
     Defines,
+    DistFiles,
     DirectoryTraversal,
     Exports,
     ExternalLibrary,
@@ -67,6 +69,77 @@ from ..util import (
     FileAvoidWrite,
 )
 from ..makeutil import Makefile
+
+MOZBUILD_VARIABLES = [
+    'ANDROID_GENERATED_RESFILES',
+    'ANDROID_RES_DIRS',
+    'CMSRCS',
+    'CMMSRCS',
+    'CPP_UNIT_TESTS',
+    'DIRS',
+    'EXTRA_DSO_LDOPTS',
+    'EXTRA_JS_MODULES',
+    'EXTRA_PP_COMPONENTS',
+    'EXTRA_PP_JS_MODULES',
+    'FORCE_SHARED_LIB',
+    'FORCE_STATIC_LIB',
+    'FINAL_LIBRARY',
+    'HOST_CSRCS',
+    'HOST_CMMSRCS',
+    'HOST_EXTRA_LIBS',
+    'HOST_LIBRARY_NAME',
+    'HOST_PROGRAM',
+    'HOST_SIMPLE_PROGRAMS',
+    'IS_COMPONENT',
+    'JAR_MANIFEST',
+    'JAVA_JAR_TARGETS',
+    'LD_VERSION_SCRIPT',
+    'LIBRARY_NAME',
+    'LIBS',
+    'MAKE_FRAMEWORK',
+    'MODULE',
+    'NO_DIST_INSTALL',
+    'NO_JS_MANIFEST',
+    'OS_LIBS',
+    'PARALLEL_DIRS',
+    'PREF_JS_EXPORTS',
+    'PROGRAM',
+    'PYTHON_UNIT_TESTS',
+    'RESOURCE_FILES',
+    'SDK_HEADERS',
+    'SDK_LIBRARY',
+    'SHARED_LIBRARY_LIBS',
+    'SHARED_LIBRARY_NAME',
+    'SIMPLE_PROGRAMS',
+    'SONAME',
+    'STATIC_LIBRARY_NAME',
+    'TEST_DIRS',
+    'TOOL_DIRS',
+    # XXX config/Makefile.in specifies this in a make invocation
+    #'USE_EXTENSION_MANIFEST',
+    'XPCSHELL_TESTS',
+    'XPIDL_MODULE',
+]
+
+DEPRECATED_VARIABLES = [
+    'ANDROID_RESFILES',
+    'EXPORT_LIBRARY',
+    'EXTRA_LIBS',
+    'HOST_LIBS',
+    'LIBXUL_LIBRARY',
+    'MOCHITEST_A11Y_FILES',
+    'MOCHITEST_BROWSER_FILES',
+    'MOCHITEST_BROWSER_FILES_PARTS',
+    'MOCHITEST_CHROME_FILES',
+    'MOCHITEST_FILES',
+    'MOCHITEST_FILES_PARTS',
+    'MOCHITEST_METRO_FILES',
+    'MOCHITEST_ROBOCOP_FILES',
+    'MOZ_CHROME_FILE_FORMAT',
+    'SHORT_LIBNAME',
+    'TESTING_JS_MODULES',
+    'TESTING_JS_MODULE_DIR',
+]
 
 class BackendMakeFile(object):
     """Represents a generated backend.mk file.
@@ -306,6 +379,7 @@ class RecursiveMakeBackend(CommonBackend):
         self._install_manifests = {
             k: InstallManifest() for k in [
                 'dist_bin',
+                'dist_branding',
                 'dist_idl',
                 'dist_include',
                 'dist_public',
@@ -373,6 +447,7 @@ class RecursiveMakeBackend(CommonBackend):
                 '.m': 'CMSRCS',
                 '.mm': 'CMMSRCS',
                 '.cpp': 'CPPSRCS',
+                '.rs': 'RSSRCS',
                 '.S': 'SSRCS',
             }
             var = suffix_map[obj.canonical_suffix]
@@ -421,6 +496,9 @@ class RecursiveMakeBackend(CommonBackend):
 
         elif isinstance(obj, Resources):
             self._process_resources(obj, obj.resources, backend_file)
+
+        elif isinstance(obj, BrandingFiles):
+            self._process_branding_files(obj, obj.files, backend_file)
 
         elif isinstance(obj, JsPreferenceFile):
             if obj.path.startswith('/'):
@@ -489,6 +567,15 @@ class RecursiveMakeBackend(CommonBackend):
 
         elif isinstance(obj, FinalTargetFiles):
             self._process_final_target_files(obj, obj.files, obj.target)
+
+        elif isinstance(obj, DistFiles):
+            # We'd like to install these via manifests as preprocessed files.
+            # But they currently depend on non-standard flags being added via
+            # some Makefiles, so for now we just pass them through to the
+            # underlying Makefile.in.
+            for f in obj.files:
+                backend_file.write('DIST_FILES += %s\n' % f)
+
         else:
             return
         obj.ack()
@@ -623,6 +710,22 @@ class RecursiveMakeBackend(CommonBackend):
             rule = makefile.create_rule(['$(all_absolute_unified_files)'])
             rule.add_dependencies(['$(CURDIR)/%: %'])
 
+    def _check_blacklisted_variables(self, makefile_in, makefile_content):
+        if b'EXTERNALLY_MANAGED_MAKE_FILE' in makefile_content:
+            # Bypass the variable restrictions for externally managed makefiles.
+            return
+
+        for x in MOZBUILD_VARIABLES:
+            if re.search(r'^[^#]*\b%s\s*[:?+]?=' % x, makefile_content, re.M):
+                raise Exception('Variable %s is defined in %s. It should '
+                    'only be defined in moz.build files.' % (x, makefile_in))
+
+        for x in DEPRECATED_VARIABLES:
+            if re.search(r'^[^#]*\b%s\s*[:?+]?=' % x, makefile_content, re.M):
+                raise Exception('Variable %s is defined in %s. This variable '
+                    'has been deprecated. It does nothing. It must be removed '
+                    'in order to build.' % (x, makefile_in))
+
     def consume_finished(self):
         CommonBackend.consume_finished(self)
 
@@ -669,6 +772,10 @@ class RecursiveMakeBackend(CommonBackend):
                             continue
                         self._no_skip['tools'].add(mozpath.relpath(objdir,
                             self.environment.topobjdir))
+
+                    # Detect any Makefile.ins that contain variables on the
+                    # moz.build-only list
+                    self._check_blacklisted_variables(makefile_in, content)
 
         self._fill_root_mk()
 
@@ -839,6 +946,22 @@ INSTALL_TARGETS += %(prefix)s
 
             if not os.path.exists(source):
                 raise Exception('File listed in RESOURCE_FILES does not exist: %s' % source)
+
+    def _process_branding_files(self, obj, files, backend_file):
+        for source, dest, flags in self._walk_hierarchy(obj, files):
+            if flags and flags.source:
+                source = mozpath.normpath(mozpath.join(obj.srcdir, flags.source))
+            if not os.path.exists(source):
+                raise Exception('File listed in BRANDING_FILES does not exist: %s' % source)
+
+            self._install_manifests['dist_branding'].add_symlink(source, dest)
+
+        # Also emit the necessary rules to create $(DIST)/branding during partial
+        # tree builds. The locale makefiles rely on this working.
+        backend_file.write('NONRECURSIVE_TARGETS += export\n')
+        backend_file.write('NONRECURSIVE_TARGETS_export += branding\n')
+        backend_file.write('NONRECURSIVE_TARGETS_export_branding_DIRECTORY = $(DEPTH)\n')
+        backend_file.write('NONRECURSIVE_TARGETS_export_branding_TARGETS += install-dist/branding\n')
 
     def _process_installation_target(self, obj, backend_file):
         # A few makefiles need to be able to override the following rules via

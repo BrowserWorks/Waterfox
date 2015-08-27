@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -11,8 +11,6 @@
 
 #define NS_OFFLINESTORAGE_IID \
   {0x91c57bf2, 0x0eda, 0x4db6, {0x9f, 0xf6, 0xcb, 0x38, 0x26, 0x8d, 0xb3, 0x01}}
-
-class nsPIDOMWindow;
 
 namespace mozilla {
 namespace dom {

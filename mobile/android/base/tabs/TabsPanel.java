@@ -7,9 +7,7 @@ package org.mozilla.gecko.tabs;
 
 import org.mozilla.gecko.AppConstants.Versions;
 import org.mozilla.gecko.GeckoApp;
-import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.GeckoApplication;
-import org.mozilla.gecko.NewTabletUI;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
@@ -85,7 +83,6 @@ public class TabsPanel extends LinearLayout
     private PanelView mPanel;
     private PanelView mPanelNormal;
     private PanelView mPanelPrivate;
-    private RelativeLayout mFooter;
     private TabsLayoutChangeListener mLayoutChangeListener;
 
     private IconTabWidget mTabWidget;
@@ -94,7 +91,6 @@ public class TabsPanel extends LinearLayout
     private ImageButton mNavBackButton;
 
     private Panel mCurrentPanel;
-    private boolean mIsSideBar;
     private boolean mVisible;
     private boolean mHeaderVisible;
 
@@ -105,10 +101,6 @@ public class TabsPanel extends LinearLayout
         mContext = context;
         mActivity = (GeckoApp) context;
         mTheme = ((GeckoApplication) context.getApplicationContext()).getLightweightTheme();
-
-        setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
-                                                      LinearLayout.LayoutParams.MATCH_PARENT));
-        setOrientation(LinearLayout.VERTICAL);
 
         mCurrentPanel = Panel.NORMAL_TABS;
 
@@ -121,11 +113,7 @@ public class TabsPanel extends LinearLayout
     }
 
     private void inflateLayout(Context context) {
-        if (NewTabletUI.isEnabled(context)) {
-            LayoutInflater.from(context).inflate(R.layout.tabs_panel_default, this);
-        } else {
-            LayoutInflater.from(context).inflate(R.layout.tabs_panel, this);
-        }
+        LayoutInflater.from(context).inflate(R.layout.tabs_panel_default, this);
     }
 
     private void initialize() {
@@ -137,13 +125,6 @@ public class TabsPanel extends LinearLayout
 
         mPanelPrivate = (PanelView) findViewById(R.id.private_tabs_panel);
         mPanelPrivate.setTabsPanel(this);
-
-        // Only applies to v11+ in landscape.
-        // We ship a stub to avoid a compiler error when referencing the
-        // ID, so we conditionalize here.
-        if (Versions.feature11Plus) {
-            mFooter = (RelativeLayout) findViewById(R.id.tabs_panel_footer);
-        }
 
         mAddTab = (ImageButton) findViewById(R.id.add_tab);
         mAddTab.setOnClickListener(new Button.OnClickListener() {
@@ -293,7 +274,7 @@ public class TabsPanel extends LinearLayout
     @Override
     @SuppressWarnings("deprecation") // setBackgroundDrawable deprecated by API level 16
     public void onLightweightThemeChanged() {
-        final int background = getResources().getColor(R.color.background_tabs);
+        final int background = getResources().getColor(R.color.text_and_tabs_tray_grey);
         final LightweightThemeDrawable drawable = mTheme.getColorDrawable(this, background, true);
         if (drawable == null)
             return;
@@ -304,7 +285,7 @@ public class TabsPanel extends LinearLayout
 
     @Override
     public void onLightweightThemeReset() {
-        setBackgroundColor(getContext().getResources().getColor(R.color.background_tabs));
+        setBackgroundColor(getContext().getResources().getColor(R.color.text_and_tabs_tray_grey));
     }
 
     @Override
@@ -334,12 +315,8 @@ public class TabsPanel extends LinearLayout
 
         @Override
         protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-            if (!GeckoAppShell.getGeckoInterface().hasTabsSideBar()) {
-                int heightSpec = MeasureSpec.makeMeasureSpec(getTabContainerHeight(TabsLayoutContainer.this), MeasureSpec.EXACTLY);
-                super.onMeasure(widthMeasureSpec, heightSpec);
-            } else {
-                super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-            }
+            int heightSpec = MeasureSpec.makeMeasureSpec(getTabContainerHeight(TabsLayoutContainer.this), MeasureSpec.EXACTLY);
+            super.onMeasure(widthMeasureSpec, heightSpec);
         }
     }
 
@@ -351,11 +328,6 @@ public class TabsPanel extends LinearLayout
         public TabsPanelToolbar(Context context, AttributeSet attrs) {
             super(context, attrs);
             mTheme = ((GeckoApplication) context.getApplicationContext()).getLightweightTheme();
-
-            setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
-                                                          (int) context.getResources().getDimension(R.dimen.browser_toolbar_height)));
-
-            setOrientation(LinearLayout.HORIZONTAL);
         }
 
         @Override
@@ -373,7 +345,7 @@ public class TabsPanel extends LinearLayout
         @Override
         @SuppressWarnings("deprecation") // setBackgroundDrawable deprecated by API level 16
         public void onLightweightThemeChanged() {
-            final int background = getResources().getColor(R.color.background_tabs);
+            final int background = getResources().getColor(R.color.text_and_tabs_tray_grey);
             final LightweightThemeDrawable drawable = mTheme.getColorDrawable(this, background);
             if (drawable == null)
                 return;
@@ -384,7 +356,7 @@ public class TabsPanel extends LinearLayout
 
         @Override
         public void onLightweightThemeReset() {
-            setBackgroundColor(getContext().getResources().getColor(R.color.background_tabs));
+            setBackgroundColor(getContext().getResources().getColor(R.color.text_and_tabs_tray_grey));
         }
 
         @Override
@@ -395,16 +367,9 @@ public class TabsPanel extends LinearLayout
     }
 
     public void show(Panel panelToShow) {
-        final boolean showAnimation = !mVisible;
         prepareToShow(panelToShow);
-        if (isSideBar()) {
-            if (showAnimation) {
-                dispatchLayoutChange(getWidth(), getHeight());
-            }
-        } else {
-            int height = getVerticalPanelHeight();
-            dispatchLayoutChange(getWidth(), height);
-        }
+        int height = getVerticalPanelHeight();
+        dispatchLayoutChange(getWidth(), height);
         mHeaderVisible = true;
     }
 
@@ -416,9 +381,6 @@ public class TabsPanel extends LinearLayout
             prepareToShow(TabsPanel.Panel.NORMAL_TABS);
         }
         mHeaderVisible = true;
-        if (mIsSideBar) {
-            prepareSidebarAnimation(getWidth());
-        }
     }
 
     public void prepareToShow(Panel panelToShow) {
@@ -449,10 +411,6 @@ public class TabsPanel extends LinearLayout
                 throw new IllegalArgumentException("Unknown panel type " + panelToShow);
         }
         mPanel.show();
-
-        if (mFooter != null) {
-            mFooter.setVisibility(View.VISIBLE);
-        }
 
         mAddTab.setVisibility(View.VISIBLE);
         mAddTab.setImageLevel(index);
@@ -506,14 +464,6 @@ public class TabsPanel extends LinearLayout
         return mVisible;
     }
 
-    public boolean isSideBar() {
-        return mIsSideBar;
-    }
-
-    public void setIsSideBar(boolean isSideBar) {
-        mIsSideBar = isSideBar;
-    }
-
     public Panel getCurrentPanel() {
         return mCurrentPanel;
     }
@@ -531,15 +481,6 @@ public class TabsPanel extends LinearLayout
         }
     }
 
-    public void prepareSidebarAnimation(int tabsPanelWidth) {
-        if (mVisible) {
-            ViewHelper.setTranslationX(mHeader, -tabsPanelWidth);
-            ViewHelper.setTranslationX(mTabsContainer, -tabsPanelWidth);
-            // The footer view is only present on the sidebar, v11+.
-            ViewHelper.setTranslationX(mFooter, -tabsPanelWidth);
-        }
-    }
-
     public void prepareTabsAnimation(PropertyAnimator animator) {
         // Not worth doing this on pre-Honeycomb without proper
         // hardware accelerated animations.
@@ -547,15 +488,7 @@ public class TabsPanel extends LinearLayout
             return;
         }
 
-        if (mIsSideBar) {
-            final int tabsPanelWidth = getWidth();
-            prepareSidebarAnimation(tabsPanelWidth);
-            final int translationX = (mVisible ? 0 : -tabsPanelWidth);
-            animator.attach(mTabsContainer, PropertyAnimator.Property.TRANSLATION_X, translationX);
-            animator.attach(mHeader, PropertyAnimator.Property.TRANSLATION_X, translationX);
-            animator.attach(mFooter, PropertyAnimator.Property.TRANSLATION_X, translationX);
-
-        } else if (!mHeaderVisible) {
+        if (!mHeaderVisible) {
             final Resources resources = getContext().getResources();
             final int toolbarHeight = resources.getDimensionPixelSize(R.dimen.browser_toolbar_height);
             final int translationY = (mVisible ? 0 : -toolbarHeight);
@@ -574,20 +507,11 @@ public class TabsPanel extends LinearLayout
 
     public void translateInRange(float progress) {
         final Resources resources = getContext().getResources();
-        if (!mIsSideBar) {
-            final int toolbarHeight = resources.getDimensionPixelSize(R.dimen.browser_toolbar_height);
-            final int translationY =  (int) - ((1 - progress) * toolbarHeight);
-            ViewHelper.setTranslationY(mHeader, translationY);
-            ViewHelper.setTranslationY(mTabsContainer, translationY);
-            mTabsContainer.setAlpha(progress);
-        } else {
-            final int tabsPanelWidth = getWidth();
-            prepareSidebarAnimation(tabsPanelWidth);
-            final int translationX = (int) - ((1 - progress) * tabsPanelWidth);
-            ViewHelper.setTranslationX(mHeader, translationX);
-            ViewHelper.setTranslationX(mTabsContainer, translationX);
-            ViewHelper.setTranslationX(mFooter, translationX);
-        }
+        final int toolbarHeight = resources.getDimensionPixelSize(R.dimen.browser_toolbar_height);
+        final int translationY =  (int) - ((1 - progress) * toolbarHeight);
+        ViewHelper.setTranslationY(mHeader, translationY);
+        ViewHelper.setTranslationY(mTabsContainer, translationY);
+        mTabsContainer.setAlpha(progress);
     }
 
     public void finishTabsAnimation() {

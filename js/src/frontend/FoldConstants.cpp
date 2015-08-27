@@ -419,6 +419,8 @@ ContainsHoistedDeclaration(ExclusiveContext* cx, ParseNode* node, bool* result)
       case PNK_CLASSMETHOD:
       case PNK_CLASSMETHODLIST:
       case PNK_CLASSNAMES:
+      case PNK_SUPERPROP:
+      case PNK_SUPERELEM:
         MOZ_CRASH("ContainsHoistedDeclaration should have indicated false on "
                   "some parent node without recurring to test this node");
 
@@ -617,7 +619,9 @@ Fold(ExclusiveContext* cx, ParseNode** pnp,
      bool inGenexpLambda, SyntacticContext sc)
 {
     ParseNode* pn = *pnp;
-    ParseNode* pn1 = nullptr, *pn2 = nullptr, *pn3 = nullptr;
+    ParseNode* pn1 = nullptr;
+    ParseNode* pn2 = nullptr;
+    ParseNode* pn3 = nullptr;
 
     JS_CHECK_RECURSION(cx, return false);
 

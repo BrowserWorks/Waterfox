@@ -342,7 +342,8 @@ CodeGeneratorShared::encodeAllocation(LSnapshot* snapshot, MDefinition* mir,
         MOZ_ASSERT(mir->isRecoveredOnBailout());
         uint32_t index = 0;
         LRecoverInfo* recoverInfo = snapshot->recoverInfo();
-        MNode** it = recoverInfo->begin(), **end = recoverInfo->end();
+        MNode** it = recoverInfo->begin();
+        MNode** end = recoverInfo->end();
         while (it != end && mir != *it) {
             ++it;
             ++index;
@@ -487,8 +488,8 @@ CodeGeneratorShared::encode(LRecoverInfo* recover)
 
     RecoverOffset offset = recovers_.startRecover(numInstructions, resumeAfter);
 
-    for (MNode** it = recover->begin(), **end = recover->end(); it != end; ++it)
-        recovers_.writeInstruction(*it);
+    for (MNode* insn : *recover)
+        recovers_.writeInstruction(insn);
 
     recovers_.endRecover();
     recover->setRecoverOffset(offset);
@@ -572,18 +573,15 @@ CodeGeneratorShared::assignBailoutId(LSnapshot* snapshot)
 void
 CodeGeneratorShared::encodeSafepoints()
 {
-    for (SafepointIndex* it = safepointIndices_.begin(), *end = safepointIndices_.end();
-         it != end;
-         ++it)
-    {
-        LSafepoint* safepoint = it->safepoint();
+    for (SafepointIndex& index : safepointIndices_) {
+        LSafepoint* safepoint = index.safepoint();
 
         if (!safepoint->encoded()) {
             safepoint->fixupOffset(&masm);
             safepoints_.encode(safepoint);
         }
 
-        it->resolve();
+        index.resolve();
     }
 }
 
@@ -1062,7 +1060,7 @@ HandleRegisterDump(Op op, MacroAssembler& masm, LiveRegisterSet liveRegs, Regist
             // To use the original value of the activation register (that's
             // now on top of the stack), we need the scratch register.
             masm.push(scratch);
-            masm.loadPtr(Address(StackPointer, sizeof(uintptr_t)), scratch);
+            masm.loadPtr(Address(masm.getStackPointer(), sizeof(uintptr_t)), scratch);
             op(scratch, dump);
             masm.pop(scratch);
         } else {
@@ -1440,7 +1438,7 @@ CodeGeneratorShared::emitAsmJSCall(LAsmJSCall* ins)
                   AsmJSStackAlignment % ABIStackAlignment == 0,
                   "The asm.js stack alignment should subsume the ABI-required alignment");
     Label ok;
-    masm.branchTestPtr(Assembler::Zero, StackPointer, Imm32(AsmJSStackAlignment - 1), &ok);
+    masm.branchTestStackPtr(Assembler::Zero, Imm32(AsmJSStackAlignment - 1), &ok);
     masm.breakpoint();
     masm.bind(&ok);
 #endif
@@ -1490,7 +1488,7 @@ CodeGeneratorShared::labelForBackedgeWithImplicitCheck(MBasicBlock* mir)
     // backedges, so just look for any edge going to an earlier block in RPO.
     if (!gen->compilingAsmJS() && mir->isLoopHeader() && mir->id() <= current->mir()->id()) {
         for (LInstructionIterator iter = mir->lir()->begin(); iter != mir->lir()->end(); iter++) {
-            if (iter->isLabel() || iter->isMoveGroup()) {
+            if (iter->isMoveGroup()) {
                 // Continue searching for an interrupt check.
             } else if (iter->isInterruptCheckImplicit()) {
                 return iter->toInterruptCheckImplicit()->oolEntry();

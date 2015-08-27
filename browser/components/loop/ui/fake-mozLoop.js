@@ -6,7 +6,14 @@
 var fakeRooms = [
   {
     "roomToken": "_nxD4V4FflQ",
-    "roomName": "First Room Name",
+    "decryptedContext": {
+      "roomName": "First Room Name",
+      "urls": [{
+        description: "The mozilla page",
+        location: "https://www.mozilla.org",
+        thumbnail: "https://www.mozilla.org/favicon.ico"
+      }]
+    },
     "roomUrl": "http://localhost:3000/rooms/_nxD4V4FflQ",
     "roomOwner": "Alexis",
     "maxSize": 2,
@@ -17,7 +24,9 @@ var fakeRooms = [
   },
   {
     "roomToken": "QzBbvGmIZWU",
-    "roomName": "Second Room Name",
+    "decryptedContext": {
+      "roomName": "Second Room Name"
+    },
     "roomUrl": "http://localhost:3000/rooms/QzBbvGmIZWU",
     "roomOwner": "Alexis",
     "maxSize": 2,
@@ -28,7 +37,9 @@ var fakeRooms = [
   },
   {
     "roomToken": "3jKS_Els9IU",
-    "roomName": "UX Discussion",
+    "decryptedContext": {
+      "roomName": "UX Discussion"
+    },
     "roomUrl": "http://localhost:3000/rooms/3jKS_Els9IU",
     "roomOwner": "Alexis",
     "maxSize": 2,
@@ -60,7 +71,7 @@ var fakeContacts = [{
   category: ["google"],
   published: 1406798311748,
   updated: 1406798311748
-},{
+}, {
   id: 2,
   _guid: 2,
   name: ["Bob Banana"],
@@ -115,12 +126,13 @@ navigator.mozLoop = {
       // Ensure we skip FTE completely.
       case "gettingStarted.seen":
       case "contacts.gravatars.promo":
-      case "contextInConverations.enabled":
+      case "contextInConversations.enabled":
         return true;
       case "contacts.gravatars.show":
         return false;
     }
   },
+  hasEncryptionKey: true,
   setLoopPref: function(){},
   releaseCallData: function() {},
   copyString: function() {},

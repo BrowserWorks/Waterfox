@@ -15,6 +15,7 @@
 #include "./vp9_rtcd.h"
 
 #include "vpx_mem/vpx_mem.h"
+#include "vpx_ports/mem.h"
 
 #include "vp9/common/vp9_common.h"
 #include "vp9/common/vp9_entropy.h"
@@ -44,6 +45,18 @@
 // Factor to weigh the rate for switchable interp filters.
 #define SWITCHABLE_INTERP_RATE_FACTOR 1
 
+void vp9_rd_cost_reset(RD_COST *rd_cost) {
+  rd_cost->rate = INT_MAX;
+  rd_cost->dist = INT64_MAX;
+  rd_cost->rdcost = INT64_MAX;
+}
+
+void vp9_rd_cost_init(RD_COST *rd_cost) {
+  rd_cost->rate = 0;
+  rd_cost->dist = 0;
+  rd_cost->rdcost = 0;
+}
+
 // The baseline rd thresholds for breaking out of the rd loop for
 // certain modes are assumed to be based on 8x8 blocks.
 // This table is used to correct for block size.
@@ -53,7 +66,7 @@ static const uint8_t rd_thresh_block_size_factor[BLOCK_SIZES] = {
 };
 
 static void fill_mode_costs(VP9_COMP *cpi) {
-  const FRAME_CONTEXT *const fc = &cpi->common.fc;
+  const FRAME_CONTEXT *const fc = cpi->common.fc;
   int i, j;
 
   for (i = 0; i < INTRA_MODES; ++i)
@@ -116,7 +129,7 @@ static void init_me_luts_bd(int *bit16lut, int *bit4lut, int range,
   }
 }
 
-void vp9_init_me_luts() {
+void vp9_init_me_luts(void) {
   init_me_luts_bd(sad_per_bit16lut_8, sad_per_bit4lut_8, QINDEX_RANGE,
                   VPX_BITS_8);
 #if CONFIG_VP9_HIGHBITDEPTH
@@ -136,9 +149,9 @@ static const int rd_frame_type_factor[FRAME_UPDATE_TYPES] = {
 };
 
 int vp9_compute_rd_mult(const VP9_COMP *cpi, int qindex) {
-  const int q = vp9_dc_quant(qindex, 0, cpi->common.bit_depth);
+  const int64_t q = vp9_dc_quant(qindex, 0, cpi->common.bit_depth);
 #if CONFIG_VP9_HIGHBITDEPTH
-  int rdmult = 0;
+  int64_t rdmult = 0;
   switch (cpi->common.bit_depth) {
     case VPX_BITS_8:
       rdmult = 88 * q * q / 24;
@@ -154,8 +167,8 @@ int vp9_compute_rd_mult(const VP9_COMP *cpi, int qindex) {
       return -1;
   }
 #else
-  int rdmult = 88 * q * q / 24;
-#endif
+  int64_t rdmult = 88 * q * q / 24;
+#endif  // CONFIG_VP9_HIGHBITDEPTH
   if (cpi->oxcf.pass == 2 && (cpi->common.frame_type != KEY_FRAME)) {
     const GF_GROUP *const gf_group = &cpi->twopass.gf_group;
     const FRAME_UPDATE_TYPE frame_type = gf_group->update_type[gf_group->index];
@@ -164,7 +177,7 @@ int vp9_compute_rd_mult(const VP9_COMP *cpi, int qindex) {
     rdmult = (rdmult * rd_frame_type_factor[frame_type]) >> 7;
     rdmult += ((rdmult * rd_boost_factor[boost_index]) >> 7);
   }
-  return rdmult;
+  return (int)rdmult;
 }
 
 static int compute_rd_thresh_factor(int qindex, vpx_bit_depth_t bit_depth) {
@@ -187,33 +200,34 @@ static int compute_rd_thresh_factor(int qindex, vpx_bit_depth_t bit_depth) {
 #else
   (void) bit_depth;
   q = vp9_dc_quant(qindex, 0, VPX_BITS_8) / 4.0;
-#endif
+#endif  // CONFIG_VP9_HIGHBITDEPTH
   // TODO(debargha): Adjust the function below.
   return MAX((int)(pow(q, RD_THRESH_POW) * 5.12), 8);
 }
 
-void vp9_initialize_me_consts(VP9_COMP *cpi, int qindex) {
+void vp9_initialize_me_consts(VP9_COMP *cpi, MACROBLOCK *x, int qindex) {
 #if CONFIG_VP9_HIGHBITDEPTH
   switch (cpi->common.bit_depth) {
     case VPX_BITS_8:
-      cpi->mb.sadperbit16 = sad_per_bit16lut_8[qindex];
-      cpi->mb.sadperbit4 = sad_per_bit4lut_8[qindex];
+      x->sadperbit16 = sad_per_bit16lut_8[qindex];
+      x->sadperbit4 = sad_per_bit4lut_8[qindex];
       break;
     case VPX_BITS_10:
-      cpi->mb.sadperbit16 = sad_per_bit16lut_10[qindex];
-      cpi->mb.sadperbit4 = sad_per_bit4lut_10[qindex];
+      x->sadperbit16 = sad_per_bit16lut_10[qindex];
+      x->sadperbit4 = sad_per_bit4lut_10[qindex];
       break;
     case VPX_BITS_12:
-      cpi->mb.sadperbit16 = sad_per_bit16lut_12[qindex];
-      cpi->mb.sadperbit4 = sad_per_bit4lut_12[qindex];
+      x->sadperbit16 = sad_per_bit16lut_12[qindex];
+      x->sadperbit4 = sad_per_bit4lut_12[qindex];
       break;
     default:
       assert(0 && "bit_depth should be VPX_BITS_8, VPX_BITS_10 or VPX_BITS_12");
   }
 #else
-  cpi->mb.sadperbit16 = sad_per_bit16lut_8[qindex];
-  cpi->mb.sadperbit4 = sad_per_bit4lut_8[qindex];
-#endif
+  (void)cpi;
+  x->sadperbit16 = sad_per_bit16lut_8[qindex];
+  x->sadperbit4 = sad_per_bit4lut_8[qindex];
+#endif  // CONFIG_VP9_HIGHBITDEPTH
 }
 
 static void set_block_thresholds(const VP9_COMMON *cm, RD_OPT *rd) {
@@ -250,7 +264,7 @@ static void set_block_thresholds(const VP9_COMMON *cm, RD_OPT *rd) {
 
 void vp9_initialize_rd_consts(VP9_COMP *cpi) {
   VP9_COMMON *const cm = &cpi->common;
-  MACROBLOCK *const x = &cpi->mb;
+  MACROBLOCK *const x = &cpi->td.mb;
   RD_OPT *const rd = &cpi->rd;
   int i;
 
@@ -267,9 +281,11 @@ void vp9_initialize_rd_consts(VP9_COMP *cpi) {
 
   set_block_thresholds(cm, rd);
 
-  if (!cpi->sf.use_nonrd_pick_mode || cm->frame_type == KEY_FRAME) {
-    fill_token_costs(x->token_costs, cm->fc.coef_probs);
+  if (!cpi->sf.use_nonrd_pick_mode || cm->frame_type == KEY_FRAME)
+    fill_token_costs(x->token_costs, cm->fc->coef_probs);
 
+  if (cpi->sf.partition_search_type != VAR_BASED_PARTITION ||
+      cm->frame_type == KEY_FRAME) {
     for (i = 0; i < PARTITION_CONTEXTS; ++i)
       vp9_cost_tokens(cpi->partition_cost[i], get_partition_probs(cm, i),
                       vp9_partition_tree);
@@ -283,11 +299,11 @@ void vp9_initialize_rd_consts(VP9_COMP *cpi) {
       vp9_build_nmv_cost_table(x->nmvjointcost,
                                cm->allow_high_precision_mv ? x->nmvcost_hp
                                                            : x->nmvcost,
-                               &cm->fc.nmvc, cm->allow_high_precision_mv);
+                               &cm->fc->nmvc, cm->allow_high_precision_mv);
 
       for (i = 0; i < INTER_MODE_CONTEXTS; ++i)
         vp9_cost_tokens((int *)cpi->inter_mode_cost[i],
-                        cm->fc.inter_mode_probs[i], vp9_inter_mode_tree);
+                        cm->fc->inter_mode_probs[i], vp9_inter_mode_tree);
     }
   }
 }
@@ -367,7 +383,7 @@ static void model_rd_norm(int xsq_q10, int *r_q10, int *d_q10) {
   *d_q10 = (dist_tab_q10[xq] * b_q10 + dist_tab_q10[xq + 1] * a_q10) >> 10;
 }
 
-void vp9_model_rd_from_var_lapndz(unsigned int var, unsigned int n,
+void vp9_model_rd_from_var_lapndz(unsigned int var, unsigned int n_log2,
                                   unsigned int qstep, int *rate,
                                   int64_t *dist) {
   // This function models the rate and distortion for a Laplacian
@@ -383,10 +399,10 @@ void vp9_model_rd_from_var_lapndz(unsigned int var, unsigned int n,
     int d_q10, r_q10;
     static const uint32_t MAX_XSQ_Q10 = 245727;
     const uint64_t xsq_q10_64 =
-        ((((uint64_t)qstep * qstep * n) << 10) + (var >> 1)) / var;
+        (((uint64_t)qstep * qstep << (n_log2 + 10)) + (var >> 1)) / var;
     const int xsq_q10 = (int)MIN(xsq_q10_64, MAX_XSQ_Q10);
     model_rd_norm(xsq_q10, &r_q10, &d_q10);
-    *rate = (n * r_q10 + 2) >> 2;
+    *rate = ((r_q10 << n_log2) + 2) >> 2;
     *dist = (var * (int64_t)d_q10 + 512) >> 10;
   }
 }
@@ -404,8 +420,8 @@ void vp9_get_entropy_contexts(BLOCK_SIZE bsize, TX_SIZE tx_size,
   int i;
   switch (tx_size) {
     case TX_4X4:
-      vpx_memcpy(t_above, above, sizeof(ENTROPY_CONTEXT) * num_4x4_w);
-      vpx_memcpy(t_left, left, sizeof(ENTROPY_CONTEXT) * num_4x4_h);
+      memcpy(t_above, above, sizeof(ENTROPY_CONTEXT) * num_4x4_w);
+      memcpy(t_left, left, sizeof(ENTROPY_CONTEXT) * num_4x4_h);
       break;
     case TX_8X8:
       for (i = 0; i < num_4x4_w; i += 2)
@@ -435,41 +451,47 @@ void vp9_mv_pred(VP9_COMP *cpi, MACROBLOCK *x,
                  uint8_t *ref_y_buffer, int ref_y_stride,
                  int ref_frame, BLOCK_SIZE block_size) {
   MACROBLOCKD *xd = &x->e_mbd;
-  MB_MODE_INFO *mbmi = &xd->mi[0].src_mi->mbmi;
+  MB_MODE_INFO *mbmi = &xd->mi[0]->mbmi;
   int i;
   int zero_seen = 0;
   int best_index = 0;
   int best_sad = INT_MAX;
   int this_sad = INT_MAX;
   int max_mv = 0;
+  int near_same_nearest;
   uint8_t *src_y_ptr = x->plane[0].src.buf;
   uint8_t *ref_y_ptr;
   const int num_mv_refs = MAX_MV_REF_CANDIDATES +
                     (cpi->sf.adaptive_motion_search &&
-                     block_size < cpi->sf.max_partition_size);
+                     block_size < x->max_partition_size);
 
   MV pred_mv[3];
   pred_mv[0] = mbmi->ref_mvs[ref_frame][0].as_mv;
   pred_mv[1] = mbmi->ref_mvs[ref_frame][1].as_mv;
   pred_mv[2] = x->pred_mv[ref_frame];
+  assert(num_mv_refs <= (int)(sizeof(pred_mv) / sizeof(pred_mv[0])));
 
+  near_same_nearest =
+      mbmi->ref_mvs[ref_frame][0].as_int == mbmi->ref_mvs[ref_frame][1].as_int;
   // Get the sad for each candidate reference mv.
   for (i = 0; i < num_mv_refs; ++i) {
     const MV *this_mv = &pred_mv[i];
+    int fp_row, fp_col;
 
-    max_mv = MAX(max_mv, MAX(abs(this_mv->row), abs(this_mv->col)) >> 3);
-    if (is_zero_mv(this_mv) && zero_seen)
+    if (i == 1 && near_same_nearest)
       continue;
+    fp_row = (this_mv->row + 3 + (this_mv->row >= 0)) >> 3;
+    fp_col = (this_mv->col + 3 + (this_mv->col >= 0)) >> 3;
+    max_mv = MAX(max_mv, MAX(abs(this_mv->row), abs(this_mv->col)) >> 3);
 
-    zero_seen |= is_zero_mv(this_mv);
+    if (fp_row ==0 && fp_col == 0 && zero_seen)
+      continue;
+    zero_seen |= (fp_row ==0 && fp_col == 0);
 
-    ref_y_ptr =
-        &ref_y_buffer[ref_y_stride * (this_mv->row >> 3) + (this_mv->col >> 3)];
-
+    ref_y_ptr =&ref_y_buffer[ref_y_stride * fp_row + fp_col];
     // Find sad for current vector.
     this_sad = cpi->fn_ptr[block_size].sdf(src_y_ptr, x->plane[0].src.stride,
                                            ref_y_ptr, ref_y_stride);
-
     // Note if it is the best so far.
     if (this_sad < best_sad) {
       best_sad = this_sad;
@@ -504,17 +526,32 @@ void vp9_setup_pred_block(const MACROBLOCKD *xd,
   }
 }
 
-const YV12_BUFFER_CONFIG *vp9_get_scaled_ref_frame(const VP9_COMP *cpi,
-                                                   int ref_frame) {
-  const VP9_COMMON *const cm = &cpi->common;
-  const int ref_idx = cm->ref_frame_map[get_ref_frame_idx(cpi, ref_frame)];
-  const int scaled_idx = cpi->scaled_ref_idx[ref_frame - 1];
-  return (scaled_idx != ref_idx) ? &cm->frame_bufs[scaled_idx].buf : NULL;
+int vp9_raster_block_offset(BLOCK_SIZE plane_bsize,
+                            int raster_block, int stride) {
+  const int bw = b_width_log2_lookup[plane_bsize];
+  const int y = 4 * (raster_block >> bw);
+  const int x = 4 * (raster_block & ((1 << bw) - 1));
+  return y * stride + x;
 }
 
-int vp9_get_switchable_rate(const VP9_COMP *cpi) {
-  const MACROBLOCKD *const xd = &cpi->mb.e_mbd;
-  const MB_MODE_INFO *const mbmi = &xd->mi[0].src_mi->mbmi;
+int16_t* vp9_raster_block_offset_int16(BLOCK_SIZE plane_bsize,
+                                       int raster_block, int16_t *base) {
+  const int stride = 4 * num_4x4_blocks_wide_lookup[plane_bsize];
+  return base + vp9_raster_block_offset(plane_bsize, raster_block, stride);
+}
+
+YV12_BUFFER_CONFIG *vp9_get_scaled_ref_frame(const VP9_COMP *cpi,
+                                             int ref_frame) {
+  const VP9_COMMON *const cm = &cpi->common;
+  const int scaled_idx = cpi->scaled_ref_idx[ref_frame - 1];
+  const int ref_idx = get_ref_frame_buf_idx(cpi, ref_frame);
+  return
+      (scaled_idx != ref_idx && scaled_idx != INVALID_IDX) ?
+          &cm->buffer_pool->frame_bufs[scaled_idx].buf : NULL;
+}
+
+int vp9_get_switchable_rate(const VP9_COMP *cpi, const MACROBLOCKD *const xd) {
+  const MB_MODE_INFO *const mbmi = &xd->mi[0]->mbmi;
   const int ctx = vp9_get_pred_context_switchable_interp(xd);
   return SWITCHABLE_INTERP_RATE_FACTOR *
              cpi->switchable_interp_costs[ctx][mbmi->interp_filter];
@@ -544,10 +581,6 @@ void vp9_set_rd_speed_thresholds(VP9_COMP *cpi) {
   rd->thresh_mult[THR_NEWMV] += 1000;
   rd->thresh_mult[THR_NEWA] += 1000;
   rd->thresh_mult[THR_NEWG] += 1000;
-
-  // Adjust threshold only in real time mode, which only uses last
-  // reference frame.
-  rd->thresh_mult[THR_NEWMV] += sf->elevate_newmv_thresh;
 
   rd->thresh_mult[THR_NEARMV] += 1000;
   rd->thresh_mult[THR_NEARA] += 1000;
@@ -579,22 +612,53 @@ void vp9_set_rd_speed_thresholds(VP9_COMP *cpi) {
 }
 
 void vp9_set_rd_speed_thresholds_sub8x8(VP9_COMP *cpi) {
-  const SPEED_FEATURES *const sf = &cpi->sf;
+  static const int thresh_mult[2][MAX_REFS] =
+      {{2500, 2500, 2500, 4500, 4500, 2500},
+       {2000, 2000, 2000, 4000, 4000, 2000}};
   RD_OPT *const rd = &cpi->rd;
-  int i;
-
-  for (i = 0; i < MAX_REFS; ++i)
-    rd->thresh_mult_sub8x8[i] = cpi->oxcf.mode == BEST ? -500 : 0;
-
-  rd->thresh_mult_sub8x8[THR_LAST] += 2500;
-  rd->thresh_mult_sub8x8[THR_GOLD] += 2500;
-  rd->thresh_mult_sub8x8[THR_ALTR] += 2500;
-  rd->thresh_mult_sub8x8[THR_INTRA] += 2500;
-  rd->thresh_mult_sub8x8[THR_COMP_LA] += 4500;
-  rd->thresh_mult_sub8x8[THR_COMP_GA] += 4500;
-
-  // Check for masked out split cases.
-  for (i = 0; i < MAX_REFS; ++i)
-    if (sf->disable_split_mask & (1 << i))
-      rd->thresh_mult_sub8x8[i] = INT_MAX;
+  const int idx = cpi->oxcf.mode == BEST;
+  memcpy(rd->thresh_mult_sub8x8, thresh_mult[idx], sizeof(thresh_mult[idx]));
 }
+
+void vp9_update_rd_thresh_fact(int (*factor_buf)[MAX_MODES], int rd_thresh,
+                               int bsize, int best_mode_index) {
+  if (rd_thresh > 0) {
+    const int top_mode = bsize < BLOCK_8X8 ? MAX_REFS : MAX_MODES;
+    int mode;
+    for (mode = 0; mode < top_mode; ++mode) {
+      const BLOCK_SIZE min_size = MAX(bsize - 1, BLOCK_4X4);
+      const BLOCK_SIZE max_size = MIN(bsize + 2, BLOCK_64X64);
+      BLOCK_SIZE bs;
+      for (bs = min_size; bs <= max_size; ++bs) {
+        int *const fact = &factor_buf[bs][mode];
+        if (mode == best_mode_index) {
+          *fact -= (*fact >> 4);
+        } else {
+          *fact = MIN(*fact + RD_THRESH_INC,
+                      rd_thresh * RD_THRESH_MAX_FACT);
+        }
+      }
+    }
+  }
+}
+
+int vp9_get_intra_cost_penalty(int qindex, int qdelta,
+                               vpx_bit_depth_t bit_depth) {
+  const int q = vp9_dc_quant(qindex, qdelta, bit_depth);
+#if CONFIG_VP9_HIGHBITDEPTH
+  switch (bit_depth) {
+    case VPX_BITS_8:
+      return 20 * q;
+    case VPX_BITS_10:
+      return 5 * q;
+    case VPX_BITS_12:
+      return ROUND_POWER_OF_TWO(5 * q, 2);
+    default:
+      assert(0 && "bit_depth should be VPX_BITS_8, VPX_BITS_10 or VPX_BITS_12");
+      return -1;
+  }
+#else
+  return 20 * q;
+#endif  // CONFIG_VP9_HIGHBITDEPTH
+}
+

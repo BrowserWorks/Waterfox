@@ -10,18 +10,24 @@
 #include <stdint.h>
 #include "gmp-entrypoints.h"
 
+#if defined(XP_MACOSX)
+#include "mozilla/Sandbox.h"
+#endif
+
 namespace mozilla {
 namespace gmp {
 
 class SandboxStarter {
 public:
   virtual ~SandboxStarter() {}
-  virtual void Start(const char* aLibPath) = 0;
-};
-
+  virtual bool Start(const char* aLibPath) = 0;
 #if defined(XP_MACOSX)
-#define SANDBOX_NOT_STATICALLY_LINKED_INTO_PLUGIN_CONTAINER 1
+  // On OS X we need to set Mac-specific sandbox info just before we start the
+  // sandbox, which we don't yet know when the GMPLoader and SandboxStarter
+  // objects are created.
+  virtual void SetSandboxInfo(MacSandboxInfo* aSandboxInfo) = 0;
 #endif
+};
 
 // Encapsulates generating the device-bound node id, activating the sandbox,
 // loading the GMP, and passing the node id to the GMP (in that order).
@@ -46,7 +52,7 @@ public:
   // Calculates the device-bound node id, then activates the sandbox,
   // then loads the GMP library and (if applicable) passes the bound node id
   // to the GMP.
-  virtual bool Load(const char* aLibPath,
+  virtual bool Load(const char* aUTF8LibPath,
                     uint32_t aLibPathLen,
                     char* aOriginSalt,
                     uint32_t aOriginSaltLen,
@@ -59,10 +65,11 @@ public:
   // plugin library.
   virtual void Shutdown() = 0;
 
-#ifdef SANDBOX_NOT_STATICALLY_LINKED_INTO_PLUGIN_CONTAINER
-  // Encapsulates starting the sandbox on Linux and MacOSX.
-  // TODO: Remove this, and put sandbox in plugin-container on all platforms.
-  virtual void SetStartSandboxStarter(SandboxStarter* aStarter) = 0;
+#if defined(XP_MACOSX)
+  // On OS X we need to set Mac-specific sandbox info just before we start the
+  // sandbox, which we don't yet know when the GMPLoader and SandboxStarter
+  // objects are created.
+  virtual void SetSandboxInfo(MacSandboxInfo* aSandboxInfo) = 0;
 #endif
 };
 

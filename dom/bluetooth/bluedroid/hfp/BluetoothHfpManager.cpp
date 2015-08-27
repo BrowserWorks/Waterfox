@@ -1,5 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -238,6 +238,9 @@ BluetoothHfpManager::Reset()
 bool
 BluetoothHfpManager::Init()
 {
+  // The function must run at b2g process since it would access SettingsService.
+  MOZ_ASSERT(IsMainProcess());
+
   MOZ_ASSERT(NS_IsMainThread());
 
   nsCOMPtr<nsIObserverService> obs = services::GetObserverService();
@@ -686,13 +689,14 @@ BluetoothHfpManager::HandleVoiceConnectionChanged(uint32_t aClientId)
   nsString regState;
   voiceInfo->GetState(regState);
 
-  int service = (regState.EqualsLiteral("registered")) ? 1 : 0;
+  BluetoothHandsfreeNetworkState service =
+    (regState.EqualsLiteral("registered")) ? HFP_NETWORK_STATE_AVAILABLE :
+                                             HFP_NETWORK_STATE_NOT_AVAILABLE;
   if (service != mService) {
     // Notify BluetoothRilListener of service change
     mListener->ServiceChanged(aClientId, service);
   }
-  mService = service ? HFP_NETWORK_STATE_AVAILABLE :
-                       HFP_NETWORK_STATE_NOT_AVAILABLE;
+  mService = service;
 
   // Signal
   JS::Rooted<JS::Value> value(nsContentUtils::RootingCxForThread());
@@ -1239,6 +1243,7 @@ void
 BluetoothHfpManager::OnDisconnectError()
 {
   MOZ_ASSERT(NS_IsMainThread());
+  NS_ENSURE_TRUE_VOID(mController);
 
   mController->NotifyCompletion(NS_LITERAL_STRING(ERR_CONNECTION_FAILED));
 }

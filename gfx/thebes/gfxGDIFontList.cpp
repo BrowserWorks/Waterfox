@@ -40,7 +40,6 @@ using namespace mozilla;
 #define CLEARTYPE_QUALITY 5
 #endif
 
-#ifdef PR_LOGGING
 #define LOG_FONTLIST(args) PR_LOG(gfxPlatform::GetLog(eGfxLog_fontlist), \
                                PR_LOG_DEBUG, args)
 #define LOG_FONTLIST_ENABLED() PR_LOG_TEST( \
@@ -50,8 +49,6 @@ using namespace mozilla;
 #define LOG_CMAPDATA_ENABLED() PR_LOG_TEST( \
                                    gfxPlatform::GetLog(eGfxLog_cmapdata), \
                                    PR_LOG_DEBUG)
-
-#endif // PR_LOGGING
 
 static __inline void
 BuildKeyNameFromFontName(nsAString &aName)
@@ -195,7 +192,6 @@ GDIFontEntry::ReadCMAP(FontInfoData *aFontInfoData)
         mCharacterMap->mBuildOnTheFly = true;
     }
 
-#ifdef PR_LOGGING
     LOG_FONTLIST(("(fontlist-cmap) name: %s, size: %d hash: %8.8x%s\n",
                   NS_ConvertUTF16toUTF8(mName).get(),
                   charmap->SizeOfIncludingThis(moz_malloc_size_of),
@@ -206,7 +202,6 @@ GDIFontEntry::ReadCMAP(FontInfoData *aFontInfoData)
                 NS_ConvertUTF16toUTF8(mName).get());
         charmap->Dump(prefix, eGfxLog_cmapdata);
     }
-#endif
 
     return rv;
 }
@@ -501,7 +496,6 @@ GDIFontFamily::FamilyAddStylesProc(const ENUMLOGFONTEXW *lpelfe,
         }
     }
 
-#ifdef PR_LOGGING
     if (LOG_FONTLIST_ENABLED()) {
         LOG_FONTLIST(("(fontlist) added (%s) to family (%s)"
              " with style: %s weight: %d stretch: %d",
@@ -510,7 +504,6 @@ GDIFontFamily::FamilyAddStylesProc(const ENUMLOGFONTEXW *lpelfe,
              (logFont.lfItalic == 0xff) ? "italic" : "normal",
              logFont.lfWeight, fe->Stretch()));
     }
-#endif
     return 1;
 }
 
@@ -762,13 +755,13 @@ gfxGDIFontList::MakePlatformFont(const nsAString& aFontName,
                                  const uint8_t* aFontData,
                                  uint32_t aLength)
 {
-    // MakePlatformFont is responsible for deleting the font data with NS_Free
+    // MakePlatformFont is responsible for deleting the font data with free
     // so we set up a stack object to ensure it is freed even if we take an
     // early exit
     struct FontDataDeleter {
         FontDataDeleter(const uint8_t* aFontData)
             : mFontData(aFontData) { }
-        ~FontDataDeleter() { NS_Free((void*)mFontData); }
+        ~FontDataDeleter() { free((void*)mFontData); }
         const uint8_t *mFontData;
     };
     FontDataDeleter autoDelete(aFontData);
@@ -860,22 +853,22 @@ gfxGDIFontList::GetDefaultFont(const gfxFontStyle* aStyle)
     gfxFontFamily *ff = nullptr;
 
     // this really shouldn't fail to find a font....
-    HGDIOBJ hGDI = ::GetStockObject(DEFAULT_GUI_FONT);
-    LOGFONTW logFont;
-    if (hGDI && ::GetObjectW(hGDI, sizeof(logFont), &logFont)) {
-        ff = FindFamily(nsDependentString(logFont.lfFaceName));
-        if (ff) {
-            return ff;
-        }
-    }
-
-    // ...but just in case, try another approach as well
     NONCLIENTMETRICSW ncm;
     ncm.cbSize = sizeof(ncm);
     BOOL status = ::SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, 
                                           sizeof(ncm), &ncm, 0);
     if (status) {
         ff = FindFamily(nsDependentString(ncm.lfMessageFont.lfFaceName));
+        if (ff) {
+            return ff;
+        }
+    }
+
+    // ...but just in case, try another (long-deprecated) approach as well
+    HGDIOBJ hGDI = ::GetStockObject(DEFAULT_GUI_FONT);
+    LOGFONTW logFont;
+    if (hGDI && ::GetObjectW(hGDI, sizeof(logFont), &logFont)) {
+        ff = FindFamily(nsDependentString(logFont.lfFaceName));
     }
 
     return ff;

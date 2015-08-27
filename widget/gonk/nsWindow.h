@@ -22,27 +22,14 @@
 #include "nsIIdleServiceInternal.h"
 #include "Units.h"
 
-extern nsIntRect gScreenBounds;
-
-namespace mozilla {
-namespace gl {
-class GLContext;
-}
-namespace layers {
-class LayersManager;
-}
-}
-
 class ANativeWindowBuffer;
-
-namespace android {
-class FramebufferNativeWindow;
-}
 
 namespace widget {
 struct InputContext;
 struct InputContextAction;
 }
+
+class nsScreenGonk;
 
 class nsWindow : public nsBaseWidget
 {
@@ -52,7 +39,7 @@ public:
     NS_DECL_ISUPPORTS_INHERITED
 
     static void DoDraw(void);
-    static nsEventStatus DispatchInputEvent(mozilla::WidgetGUIEvent& aEvent);
+    static nsEventStatus DispatchKeyInput(mozilla::WidgetKeyboardEvent& aEvent);
     static void DispatchTouchInput(mozilla::MultiTouchInput& aInput);
 
     NS_IMETHOD Create(nsIWidget *aParent,
@@ -82,6 +69,7 @@ public:
     NS_IMETHOD ConfigureChildren(const nsTArray<nsIWidget::Configuration>&);
     NS_IMETHOD Invalidate(const nsIntRect &aRect);
     virtual void* GetNativeData(uint32_t aDataType);
+    virtual void SetNativeData(uint32_t aDataType, uintptr_t aVal);
     NS_IMETHOD SetTitle(const nsAString& aTitle)
     {
         return NS_OK;
@@ -98,7 +86,8 @@ public:
                                                 TouchPointerState aPointerState,
                                                 nsIntPoint aPointerScreenPoint,
                                                 double aPointerPressure,
-                                                uint32_t aPointerOrientation) override;
+                                                uint32_t aPointerOrientation,
+                                                nsIObserver* aObserver) override;
 
     NS_IMETHOD CaptureRollupEvents(nsIRollupListener *aListener,
                                    bool aDoCapture)
@@ -166,6 +155,8 @@ private:
     // This is used by SynthesizeNativeTouchPoint to maintain state between
     // multiple synthesized points
     nsAutoPtr<mozilla::MultiTouchInput> mSynthesizedTouchInput;
+
+    nsRefPtr<nsScreenGonk> mScreen;
 };
 
 #endif /* nsWindow_h */

@@ -134,7 +134,9 @@ function loadCertificates(certFile) {
     // a CNNIC-issued certificate wasn't previously on the whitelist but it
     // otherwise verifies successfully, verifyCertNow will return
     // SEC_ERROR_REVOKED_CERTIFICATE, so we count that as verifying
-    // successfully.
+    // successfully. If the certificate is later revoked by CNNIC, the user
+    // will see that when they attempt to connect to a site using it and we do
+    // normal revocation checking.
     let errorCode = gCertDB.verifyCertNow(cert, 2 /* SSL Server */,
                                           Ci.nsIX509CertDB.LOCAL_ONLY, {}, {});
     if (errorCode != 0 &&

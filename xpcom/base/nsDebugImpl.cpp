@@ -41,9 +41,6 @@
 #if defined(XP_WIN)
 #include <tchar.h>
 #include "nsString.h"
-#ifdef MOZ_METRO
-#include "nsWindowsHelpers.h"
-#endif
 #endif
 
 #if defined(XP_MACOSX) || defined(__DragonFly__) || defined(__FreeBSD__) \
@@ -353,7 +350,9 @@ NS_DebugBreak(uint32_t aSeverity, const char* aStr, const char* aExpr,
   if (sMultiprocessDescription) {
     PrintToBuffer("%s ", sMultiprocessDescription);
   }
+#if !defined(MOZILLA_XPCOMRT_API)
   PrintToBuffer("%d] ", base::GetCurrentProcId());
+#endif // !defined(MOZILLA_XPCOMRT_API)
 
   PrintToBuffer("%s: ", sevString);
 
@@ -403,7 +402,7 @@ NS_DebugBreak(uint32_t aSeverity, const char* aStr, const char* aExpr,
       return;
 
     case NS_DEBUG_ABORT: {
-#if defined(MOZ_CRASHREPORTER)
+#if defined(MOZ_CRASHREPORTER) && !defined(MOZILLA_XPCOMRT_API)
       // Updating crash annotations in the child causes us to do IPC. This can
       // really cause trouble if we're asserting from within IPC code. So we
       // have to do without the annotations in that case.
@@ -420,7 +419,7 @@ NS_DebugBreak(uint32_t aSeverity, const char* aStr, const char* aExpr,
 #if defined(DEBUG) && defined(_WIN32)
       RealBreak();
 #endif
-#ifdef DEBUG
+#if defined(DEBUG) && !defined(MOZILLA_XPCOMRT_API)
       nsTraceRefcnt::WalkTheStack(stderr);
 #endif
       Abort(buf.buffer);
@@ -445,11 +444,15 @@ NS_DebugBreak(uint32_t aSeverity, const char* aStr, const char* aExpr,
       return;
 
     case NS_ASSERT_STACK:
+#if !defined(MOZILLA_XPCOMRT_API)
       nsTraceRefcnt::WalkTheStack(stderr);
+#endif // !defined(MOZILLA_XPCOMRT_API)
       return;
 
     case NS_ASSERT_STACK_AND_ABORT:
+#if !defined(MOZILLA_XPCOMRT_API)
       nsTraceRefcnt::WalkTheStack(stderr);
+#endif // !defined(MOZILLA_XPCOMRT_API)
       // Fall through to abort
 
     case NS_ASSERT_ABORT:
@@ -616,7 +619,7 @@ NS_ErrorAccordingToNSPR()
 void
 NS_ABORT_OOM(size_t aSize)
 {
-#ifdef MOZ_CRASHREPORTER
+#if defined(MOZ_CRASHREPORTER) && !defined(MOZILLA_XPCOMRT_API)
   CrashReporter::AnnotateOOMAllocationSize(aSize);
 #endif
   MOZ_CRASH();

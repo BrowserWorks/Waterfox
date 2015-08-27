@@ -1,5 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -8,14 +8,148 @@
 #include "BluetoothReplyRunnable.h"
 #include "BluetoothService.h"
 #include "jsapi.h"
+#include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/dom/bluetooth/BluetoothTypes.h"
 #include "nsContentUtils.h"
 #include "nsISystemMessagesInternal.h"
+#include "nsIUUIDGenerator.h"
 #include "nsServiceManagerUtils.h"
+#include "nsXULAppAPI.h"
 
 BEGIN_BLUETOOTH_NAMESPACE
 
-bool
+void
+UuidToString(const BluetoothUuid& aUuid, nsAString& aString)
+{
+  char uuidStr[37];
+  uint32_t uuid0, uuid4;
+  uint16_t uuid1, uuid2, uuid3, uuid5;
+
+  memcpy(&uuid0, &aUuid.mUuid[0], sizeof(uint32_t));
+  memcpy(&uuid1, &aUuid.mUuid[4], sizeof(uint16_t));
+  memcpy(&uuid2, &aUuid.mUuid[6], sizeof(uint16_t));
+  memcpy(&uuid3, &aUuid.mUuid[8], sizeof(uint16_t));
+  memcpy(&uuid4, &aUuid.mUuid[10], sizeof(uint32_t));
+  memcpy(&uuid5, &aUuid.mUuid[14], sizeof(uint16_t));
+
+  snprintf(uuidStr, sizeof(uuidStr),
+           "%.8x-%.4x-%.4x-%.4x-%.8x%.4x",
+           ntohl(uuid0), ntohs(uuid1),
+           ntohs(uuid2), ntohs(uuid3),
+           ntohl(uuid4), ntohs(uuid5));
+
+  aString.Truncate();
+  aString.AssignLiteral(uuidStr);
+}
+
+void
+ReversedUuidToString(const BluetoothUuid& aUuid, nsAString& aString)
+{
+  BluetoothUuid uuid;
+  for (uint8_t i = 0; i < 16; i++) {
+    uuid.mUuid[i] = aUuid.mUuid[15 - i];
+  }
+
+  UuidToString(uuid, aString);
+}
+
+void
+StringToUuid(const char* aString, BluetoothUuid& aUuid)
+{
+  uint32_t uuid0, uuid4;
+  uint16_t uuid1, uuid2, uuid3, uuid5;
+
+  sscanf(aString, "%08x-%04hx-%04hx-%04hx-%08x%04hx",
+         &uuid0, &uuid1, &uuid2, &uuid3, &uuid4, &uuid5);
+
+  uuid0 = htonl(uuid0);
+  uuid1 = htons(uuid1);
+  uuid2 = htons(uuid2);
+  uuid3 = htons(uuid3);
+  uuid4 = htonl(uuid4);
+  uuid5 = htons(uuid5);
+
+  memcpy(&aUuid.mUuid[0], &uuid0, sizeof(uint32_t));
+  memcpy(&aUuid.mUuid[4], &uuid1, sizeof(uint16_t));
+  memcpy(&aUuid.mUuid[6], &uuid2, sizeof(uint16_t));
+  memcpy(&aUuid.mUuid[8], &uuid3, sizeof(uint16_t));
+  memcpy(&aUuid.mUuid[10], &uuid4, sizeof(uint32_t));
+  memcpy(&aUuid.mUuid[14], &uuid5, sizeof(uint16_t));
+}
+
+void
+GenerateUuid(nsAString &aUuidString)
+{
+  nsresult rv;
+  nsCOMPtr<nsIUUIDGenerator> uuidGenerator =
+    do_GetService("@mozilla.org/uuid-generator;1", &rv);
+  NS_ENSURE_SUCCESS_VOID(rv);
+
+  nsID uuid;
+  rv = uuidGenerator->GenerateUUIDInPlace(&uuid);
+  NS_ENSURE_SUCCESS_VOID(rv);
+
+  // Build a string in {xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx} format
+  char uuidBuffer[NSID_LENGTH];
+  uuid.ToProvidedString(uuidBuffer);
+  NS_ConvertASCIItoUTF16 uuidString(uuidBuffer);
+
+  // Remove {} and the null terminator
+  aUuidString.Assign(Substring(uuidString, 1, NSID_LENGTH - 3));
+}
+
+void
+GeneratePathFromGattId(const BluetoothGattId& aId,
+                       nsAString& aPath,
+                       nsAString& aUuidStr)
+{
+  ReversedUuidToString(aId.mUuid, aUuidStr);
+
+  aPath.Assign(aUuidStr);
+  aPath.AppendLiteral("_");
+  aPath.AppendInt(aId.mInstanceId);
+}
+
+void
+GeneratePathFromGattId(const BluetoothGattId& aId,
+                       nsAString& aPath)
+{
+  nsString uuidStr;
+  GeneratePathFromGattId(aId, aPath, uuidStr);
+}
+
+void
+RegisterBluetoothSignalHandler(const nsAString& aPath,
+                               BluetoothSignalObserver* aHandler)
+{
+  MOZ_ASSERT(!aPath.IsEmpty());
+  MOZ_ASSERT(aHandler);
+
+  BluetoothService* bs = BluetoothService::Get();
+  NS_ENSURE_TRUE_VOID(bs);
+
+  bs->RegisterBluetoothSignalHandler(aPath, aHandler);
+  aHandler->SetSignalRegistered(true);
+}
+
+void
+UnregisterBluetoothSignalHandler(const nsAString& aPath,
+                                 BluetoothSignalObserver* aHandler)
+{
+  MOZ_ASSERT(!aPath.IsEmpty());
+  MOZ_ASSERT(aHandler);
+
+  BluetoothService* bs = BluetoothService::Get();
+  NS_ENSURE_TRUE_VOID(bs);
+
+  bs->UnregisterBluetoothSignalHandler(aPath, aHandler);
+  aHandler->SetSignalRegistered(false);
+}
+
+/**
+ * |SetJsObject| is an internal function used by |BroadcastSystemMessage| only
+ */
+static bool
 SetJsObject(JSContext* aContext,
             const BluetoothValue& aValue,
             JS::Handle<JSObject*> aObj)
@@ -70,7 +204,7 @@ BroadcastSystemMessage(const nsAString& aType,
                        const BluetoothValue& aData)
 {
   mozilla::AutoSafeJSContext cx;
-  NS_ASSERTION(!::JS_IsExceptionPending(cx),
+  MOZ_ASSERT(!::JS_IsExceptionPending(cx),
       "Shouldn't get here when an exception is pending!");
 
   nsCOMPtr<nsISystemMessagesInternal> systemMessenger =
@@ -111,7 +245,7 @@ BroadcastSystemMessage(const nsAString& aType,
                        const InfallibleTArray<BluetoothNamedValue>& aData)
 {
   mozilla::AutoSafeJSContext cx;
-  NS_ASSERTION(!::JS_IsExceptionPending(cx),
+  MOZ_ASSERT(!::JS_IsExceptionPending(cx),
       "Shouldn't get here when an exception is pending!");
 
   JS::Rooted<JSObject*> obj(cx, JS_NewPlainObject(cx));
@@ -136,6 +270,71 @@ BroadcastSystemMessage(const nsAString& aType,
   return true;
 }
 
+#ifdef MOZ_B2G_BT_API_V2
+void
+DispatchReplySuccess(BluetoothReplyRunnable* aRunnable)
+{
+  DispatchReplySuccess(aRunnable, BluetoothValue(true));
+}
+
+void
+DispatchReplySuccess(BluetoothReplyRunnable* aRunnable,
+                     const BluetoothValue& aValue)
+{
+  MOZ_ASSERT(aRunnable);
+  MOZ_ASSERT(aValue.type() != BluetoothValue::T__None);
+
+  BluetoothReply* reply = new BluetoothReply(BluetoothReplySuccess(aValue));
+
+  aRunnable->SetReply(reply); // runnable will delete reply after Run()
+  NS_WARN_IF(NS_FAILED(NS_DispatchToMainThread(aRunnable)));
+}
+
+void
+DispatchReplyError(BluetoothReplyRunnable* aRunnable,
+                   const nsAString& aErrorStr)
+{
+  MOZ_ASSERT(aRunnable);
+  MOZ_ASSERT(!aErrorStr.IsEmpty());
+
+  BluetoothReply* reply =
+    new BluetoothReply(BluetoothReplyError(STATUS_FAIL, nsString(aErrorStr)));
+
+  aRunnable->SetReply(reply); // runnable will delete reply after Run()
+  NS_WARN_IF(NS_FAILED(NS_DispatchToMainThread(aRunnable)));
+}
+
+void
+DispatchReplyError(BluetoothReplyRunnable* aRunnable,
+                   const enum BluetoothStatus aStatus)
+{
+  MOZ_ASSERT(aRunnable);
+  MOZ_ASSERT(aStatus != STATUS_SUCCESS);
+
+  BluetoothReply* reply =
+    new BluetoothReply(BluetoothReplyError(aStatus, EmptyString()));
+
+  aRunnable->SetReply(reply); // runnable will delete reply after Run()
+  NS_WARN_IF(NS_FAILED(NS_DispatchToMainThread(aRunnable)));
+}
+
+void
+DispatchStatusChangedEvent(const nsAString& aType,
+                           const nsAString& aAddress,
+                           bool aStatus)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  InfallibleTArray<BluetoothNamedValue> data;
+  BT_APPEND_NAMED_VALUE(data, "address", nsString(aAddress));
+  BT_APPEND_NAMED_VALUE(data, "status", aStatus);
+
+  BluetoothService* bs = BluetoothService::Get();
+  NS_ENSURE_TRUE_VOID(bs);
+  bs->DistributeSignal(aType, NS_LITERAL_STRING(KEY_ADAPTER), data);
+}
+#else
+// TODO: remove with bluetooth1
 void
 DispatchBluetoothReply(BluetoothReplyRunnable* aRunnable,
                        const BluetoothValue& aValue,
@@ -157,6 +356,7 @@ DispatchBluetoothReply(BluetoothReplyRunnable* aRunnable,
   }
 }
 
+// TODO: remove with bluetooth1
 void
 DispatchStatusChangedEvent(const nsAString& aType,
                            const nsAString& aAddress,
@@ -173,6 +373,13 @@ DispatchStatusChangedEvent(const nsAString& aType,
   BluetoothService* bs = BluetoothService::Get();
   NS_ENSURE_TRUE_VOID(bs);
   bs->DistributeSignal(signal);
+}
+#endif
+
+bool
+IsMainProcess()
+{
+  return XRE_GetProcessType() == GeckoProcessType_Default;
 }
 
 END_BLUETOOTH_NAMESPACE

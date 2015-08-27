@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set sw=2 sts=2 ts=8 et tw=80 : */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -52,6 +52,7 @@ ThirdPartyUtil::IsThirdPartyInternal(const nsCString& aFirstDomain,
   // Get the base domain for aSecondURI.
   nsCString secondDomain;
   nsresult rv = GetBaseDomain(aSecondURI, secondDomain);
+  LOG(("ThirdPartyUtil::IsThirdPartyInternal %s =? %s", aFirstDomain.get(), secondDomain.get()));
   if (NS_FAILED(rv))
     return rv;
 
@@ -180,6 +181,7 @@ ThirdPartyUtil::IsThirdPartyChannel(nsIChannel* aChannel,
                                     nsIURI* aURI,
                                     bool* aResult)
 {
+  LOG(("ThirdPartyUtil::IsThirdPartyChannel [channel=%p]", aChannel));
   NS_ENSURE_ARG(aChannel);
   NS_ASSERTION(aResult, "null outparam pointer");
 

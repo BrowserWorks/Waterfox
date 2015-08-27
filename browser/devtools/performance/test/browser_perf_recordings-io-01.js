@@ -6,11 +6,19 @@
  */
 
 let test = Task.async(function*() {
-  let { target, panel, toolbox } = yield initPerformance(SIMPLE_URL);
-  let { EVENTS, PerformanceController, DetailsView, DetailsSubview } = panel.panelWin;
+  var { target, panel, toolbox } = yield initPerformance(SIMPLE_URL);
+  var { EVENTS, PerformanceController, DetailsView, DetailsSubview } = panel.panelWin;
 
   // Enable memory to test the memory-calltree and memory-flamegraph.
   Services.prefs.setBoolPref(MEMORY_PREF, true);
+  Services.prefs.setBoolPref(FRAMERATE_PREF, true);
+
+  // Need to allow widgets to be updated while hidden, otherwise we can't use
+  // `waitForWidgetsRendered`.
+  DetailsSubview.canUpdateWhileHidden = true;
+
+  yield startRecording(panel);
+  yield stopRecording(panel);
 
   // Cycle through all the views to initialize them, otherwise we can't use
   // `waitForWidgetsRendered`. The waterfall is shown by default, but all the
@@ -19,13 +27,6 @@ let test = Task.async(function*() {
   yield DetailsView.selectView("js-flamegraph");
   yield DetailsView.selectView("memory-calltree");
   yield DetailsView.selectView("memory-flamegraph");
-
-  // Need to allow widgets to be updated while hidden, otherwise we can't use
-  // `waitForWidgetsRendered`.
-  DetailsSubview.canUpdateWhileHidden = true;
-
-  yield startRecording(panel);
-  yield stopRecording(panel);
 
   // Verify original recording.
 
@@ -60,19 +61,23 @@ let test = Task.async(function*() {
   let importedData = PerformanceController.getCurrentRecording().getAllData();
 
   is(importedData.label, originalData.label,
-    "The impored data is identical to the original data (1).");
+    "The imported data is identical to the original data (1).");
   is(importedData.duration, originalData.duration,
-    "The impored data is identical to the original data (2).");
+    "The imported data is identical to the original data (2).");
   is(importedData.markers.toSource(), originalData.markers.toSource(),
-    "The impored data is identical to the original data (3).");
+    "The imported data is identical to the original data (3).");
   is(importedData.memory.toSource(), originalData.memory.toSource(),
-    "The impored data is identical to the original data (4).");
+    "The imported data is identical to the original data (4).");
   is(importedData.ticks.toSource(), originalData.ticks.toSource(),
-    "The impored data is identical to the original data (5).");
+    "The imported data is identical to the original data (5).");
   is(importedData.allocations.toSource(), originalData.allocations.toSource(),
-    "The impored data is identical to the original data (6).");
+    "The imported data is identical to the original data (6).");
   is(importedData.profile.toSource(), originalData.profile.toSource(),
-    "The impored data is identical to the original data (7).");
+    "The imported data is identical to the original data (7).");
+  is(importedData.configuration.withTicks, originalData.configuration.withTicks,
+    "The imported data is identical to the original data (8).");
+  is(importedData.configuration.withMemory, originalData.configuration.withMemory,
+    "The imported data is identical to the original data (9).");
 
   yield teardown(panel);
   finish();

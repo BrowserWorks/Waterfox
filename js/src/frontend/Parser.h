@@ -575,9 +575,10 @@ class Parser : private JS::AutoGCRooter, public StrictModeGetter
     Node parenExprOrGeneratorComprehension();
     Node exprInParens();
 
+    bool checkAndMarkSuperScope();
+
     bool methodDefinition(PropListType listType, Node propList, Node propname, FunctionType type,
-                          FunctionSyntaxKind kind, GeneratorKind generatorKind,
-                          bool isStatic, JSOp Op);
+                          GeneratorKind generatorKind, bool isStatic, JSOp Op);
 
     /*
      * Additional JS parsers.

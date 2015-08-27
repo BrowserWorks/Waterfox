@@ -45,9 +45,7 @@
 #include "NetStatistics.h"
 #endif
 
-#if defined(PR_LOGGING)
 extern PRLogModuleInfo* gFTPLog;
-#endif
 #define LOG(args)         PR_LOG(gFTPLog, PR_LOG_DEBUG, args)
 #define LOG_ALWAYS(args)  PR_LOG(gFTPLog, PR_LOG_ALWAYS, args)
 
@@ -947,7 +945,7 @@ nsFtpState::R_syst() {
             nsXPIDLString formattedString;
             rv = bundle->FormatStringFromName(name.get(), formatStrings, 1,
                                               getter_Copies(formattedString));
-            nsMemory::Free(ucs2Response);
+            free(ucs2Response);
             if (NS_FAILED(rv))
                 return FTP_ERROR;
 

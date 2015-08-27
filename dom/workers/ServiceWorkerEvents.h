@@ -1,4 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -9,9 +10,15 @@
 #include "mozilla/dom/Event.h"
 #include "mozilla/dom/ExtendableEventBinding.h"
 #include "mozilla/dom/FetchEventBinding.h"
-#include "mozilla/dom/InstallEventBinding.h"
 #include "mozilla/dom/Promise.h"
 #include "mozilla/dom/Response.h"
+#include "mozilla/dom/workers/bindings/ServiceWorker.h"
+
+#ifndef MOZ_SIMPLEPUSH
+#include "mozilla/dom/PushEventBinding.h"
+#include "mozilla/dom/PushMessageDataBinding.h"
+#endif
+
 #include "nsProxyRelease.h"
 
 class nsIInterceptedChannel;
@@ -25,7 +32,6 @@ namespace dom {
 
 BEGIN_WORKERS_NAMESPACE
 
-class ServiceWorker;
 class ServiceWorkerClient;
 
 class FetchEvent final : public Event
@@ -148,73 +154,91 @@ public:
   }
 };
 
-class InstallEvent final : public ExtendableEvent
+#ifndef MOZ_SIMPLEPUSH
+
+class PushMessageData final : public nsISupports,
+                              public nsWrapperCache
 {
-  // FIXME(nsm): Bug 982787 will allow actually populating this.
-  nsRefPtr<ServiceWorker> mActiveWorker;
-  bool mActivateImmediately;
+  nsString mData;
+
+public:
+  NS_DECL_ISUPPORTS
+
+  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override
+  {
+    return mozilla::dom::PushMessageDataBinding_workers::Wrap(aCx, this, aGivenProto);
+  }
+
+  nsISupports* GetParentObject() const {
+    return nullptr;
+  }
+
+  void Json(JSContext* cx, JS::MutableHandle<JSObject*> aRetval);
+  void Text(nsAString& aData);
+  void ArrayBuffer(JSContext* cx, JS::MutableHandle<JSObject*> aRetval);
+  mozilla::dom::File* Blob();
+
+  explicit PushMessageData(const nsAString& aData);
+private:
+  ~PushMessageData();
+
+};
+
+class PushEvent final : public ExtendableEvent
+{
+  nsString mData;
+  nsMainThreadPtrHandle<ServiceWorker> mServiceWorker;
 
 protected:
-  explicit InstallEvent(mozilla::dom::EventTarget* aOwner);
-  ~InstallEvent() {}
+  explicit PushEvent(mozilla::dom::EventTarget* aOwner);
+  ~PushEvent() {}
 
 public:
   NS_DECL_ISUPPORTS_INHERITED
-  NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(InstallEvent, ExtendableEvent)
   NS_FORWARD_TO_EVENT
 
   virtual JSObject* WrapObjectInternal(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override
   {
-    return mozilla::dom::InstallEventBinding::Wrap(aCx, this, aGivenProto);
+    return mozilla::dom::PushEventBinding_workers::Wrap(aCx, this, aGivenProto);
   }
 
-  static already_AddRefed<InstallEvent>
+  static already_AddRefed<PushEvent>
   Constructor(mozilla::dom::EventTarget* aOwner,
               const nsAString& aType,
-              const InstallEventInit& aOptions)
+              const PushEventInit& aOptions)
   {
-    nsRefPtr<InstallEvent> e = new InstallEvent(aOwner);
+    nsRefPtr<PushEvent> e = new PushEvent(aOwner);
     bool trusted = e->Init(aOwner);
     e->InitEvent(aType, aOptions.mBubbles, aOptions.mCancelable);
     e->SetTrusted(trusted);
-    e->mActiveWorker = aOptions.mActiveWorker;
+    if(aOptions.mData.WasPassed()){
+      e->mData = aOptions.mData.Value();
+    }
     return e.forget();
   }
 
-  static already_AddRefed<InstallEvent>
+  static already_AddRefed<PushEvent>
   Constructor(const GlobalObject& aGlobal,
               const nsAString& aType,
-              const InstallEventInit& aOptions,
+              const PushEventInit& aOptions,
               ErrorResult& aRv)
   {
     nsCOMPtr<EventTarget> owner = do_QueryInterface(aGlobal.GetAsSupports());
     return Constructor(owner, aType, aOptions);
   }
 
-  already_AddRefed<ServiceWorker>
-  GetActiveWorker() const
+  void PostInit(nsMainThreadPtrHandle<ServiceWorker>& aServiceWorker)
   {
-    nsRefPtr<ServiceWorker> sw = mActiveWorker;
-    return sw.forget();
+    mServiceWorker = aServiceWorker;
   }
 
-  void
-  Replace()
+  already_AddRefed<PushMessageData> Data()
   {
-    mActivateImmediately = true;
-  };
-
-  bool
-  ActivateImmediately() const
-  {
-    return mActivateImmediately;
-  }
-
-  InstallEvent* AsInstallEvent() override
-  {
-    return this;
+    nsRefPtr<PushMessageData> data = new PushMessageData(mData);
+    return data.forget();
   }
 };
+#endif /* ! MOZ_SIMPLEPUSH */
 
 END_WORKERS_NAMESPACE
 #endif /* mozilla_dom_workers_serviceworkerevents_h__ */

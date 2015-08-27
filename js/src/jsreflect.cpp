@@ -3020,6 +3020,16 @@ ASTSerializer::expression(ParseNode* pn, MutableHandleValue dst)
                builder.memberExpression(false, expr, id, &pn->pn_pos, dst);
       }
 
+      case PNK_SUPERPROP:
+      {
+        RootedValue superBase(cx), id(cx);
+        RootedAtom superAtom(cx, cx->names().super);
+        RootedAtom pnAtom(cx, pn->pn_atom);
+        return identifier(superAtom, nullptr, &superBase) &&
+               identifier(pnAtom, nullptr, &id) &&
+               builder.memberExpression(false, superBase, id, &pn->pn_pos, dst);
+      }
+
       case PNK_ELEM:
       {
         MOZ_ASSERT(pn->pn_pos.encloses(pn->pn_left->pn_pos));
@@ -3029,6 +3039,17 @@ ASTSerializer::expression(ParseNode* pn, MutableHandleValue dst)
         return expression(pn->pn_left, &left) &&
                expression(pn->pn_right, &right) &&
                builder.memberExpression(true, left, right, &pn->pn_pos, dst);
+      }
+
+      case PNK_SUPERELEM:
+      {
+        MOZ_ASSERT(pn->pn_pos.encloses(pn->pn_kid->pn_pos));
+
+        RootedValue superBase(cx), expr(cx);
+        RootedAtom superAtom(cx, cx->names().super);
+        return identifier(superAtom, nullptr, &superBase) &&
+               expression(pn->pn_kid, &expr) &&
+               builder.memberExpression(true, superBase, expr, &pn->pn_pos, dst);
       }
 
       case PNK_CALLSITEOBJ:
@@ -3400,7 +3421,7 @@ ASTSerializer::function(ParseNode* pn, ASTType type, MutableHandleValue dst)
 
     bool isExpression =
 #if JS_HAS_EXPR_CLOSURES
-        func->isExprClosure();
+        func->isExprBody();
 #else
         false;
 #endif
@@ -3498,6 +3519,10 @@ ASTSerializer::functionArgs(ParseNode* pn, ParseNode* pnargs, ParseNode* pndestr
     ParseNode* arg = pnargs ? pnargs->pn_head : nullptr;
     ParseNode* destruct = pndestruct ? pndestruct->pn_head : nullptr;
     RootedValue node(cx);
+    bool defaultsNull = true;
+    MOZ_ASSERT(defaults.empty(),
+               "must be initially empty for it to be proper to clear this "
+               "when there are no defaults");
 
     /*
      * Arguments are found in potentially two different places: 1) the
@@ -3509,8 +3534,11 @@ ASTSerializer::functionArgs(ParseNode* pn, ParseNode* pnargs, ParseNode* pndestr
      */
     while ((arg && arg != pnbody) || destruct) {
         if (destruct && destruct->pn_right->frameSlot() == i) {
-            if (!pattern(destruct->pn_left, &node) || !args.append(node))
+            if (!pattern(destruct->pn_left, &node) ||
+                !args.append(node) || !defaults.append(NullValue()))
+            {
                 return false;
+            }
             destruct = destruct->pn_next;
         } else if (arg && arg != pnbody) {
             /*
@@ -3533,9 +3561,13 @@ ASTSerializer::functionArgs(ParseNode* pn, ParseNode* pnargs, ParseNode* pndestr
             else if (!args.append(node))
                 return false;
             if (arg->pn_dflags & PND_DEFAULT) {
+                defaultsNull = false;
                 ParseNode* expr = arg->expr();
                 RootedValue def(cx);
                 if (!expression(expr, &def) || !defaults.append(def))
+                    return false;
+            } else {
+                if (!defaults.append(NullValue()))
                     return false;
             }
             arg = arg->pn_next;
@@ -3545,6 +3577,9 @@ ASTSerializer::functionArgs(ParseNode* pn, ParseNode* pnargs, ParseNode* pndestr
         ++i;
     }
     MOZ_ASSERT(!rest.isUndefined());
+
+    if (defaultsNull)
+        defaults.clear();
 
     return true;
 }

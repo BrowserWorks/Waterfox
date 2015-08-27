@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -41,7 +42,7 @@ NS_IMETHODIMP
 nsSupportsIDImpl::SetData(const nsID* aData)
 {
   if (mData) {
-    nsMemory::Free(mData);
+    free(mData);
   }
   if (aData) {
     mData = (nsID*)nsMemory::Clone(aData, sizeof(nsID));
@@ -469,7 +470,7 @@ nsSupportsCharImpl::ToString(char** aResult)
 {
   NS_ASSERTION(aResult, "Bad pointer");
 
-  char* result = (char*)nsMemory::Alloc(2 * sizeof(char));
+  char* result = (char*)moz_xmalloc(2 * sizeof(char));
   if (result) {
     result[0] = mData;
     result[1] = '\0';
@@ -769,7 +770,7 @@ nsSupportsInterfacePointerImpl::nsSupportsInterfacePointerImpl()
 nsSupportsInterfacePointerImpl::~nsSupportsInterfacePointerImpl()
 {
   if (mIID) {
-    nsMemory::Free(mIID);
+    free(mIID);
   }
 }
 
@@ -818,7 +819,7 @@ NS_IMETHODIMP
 nsSupportsInterfacePointerImpl::SetDataIID(const nsID* aIID)
 {
   if (mIID) {
-    nsMemory::Free(mIID);
+    free(mIID);
   }
   if (aIID) {
     mIID = (nsID*)nsMemory::Clone(aIID, sizeof(nsID));

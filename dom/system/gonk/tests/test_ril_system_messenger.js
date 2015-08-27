@@ -243,9 +243,75 @@ add_test(function test_sms_messenger_notify_sms() {
       read:              true
     });
 
+  // Verify 'sms-failed' system message.
+  messenger.notifySms(Ci.nsISmsMessenger.NOTIFICATION_TYPE_SENT_FAILED,
+                      7,
+                      8,
+                      "99887766554433221100",
+                      Ci.nsISmsService.DELIVERY_TYPE_ERROR,
+                      Ci.nsISmsService.DELIVERY_STATUS_TYPE_ERROR,
+                      null,
+                      "+0987654321",
+                      "Outgoing message",
+                      Ci.nsISmsService.MESSAGE_CLASS_TYPE_NORMAL,
+                      timestamp,
+                      0,
+                      0,
+                      true);
+
+  equal_received_system_message("sms-failed", {
+      iccId:             "99887766554433221100",
+      type:              "sms",
+      id:                7,
+      threadId:          8,
+      delivery:          "error",
+      deliveryStatus:    "error",
+      sender:            null,
+      receiver:          "+0987654321",
+      body:              "Outgoing message",
+      messageClass:      "normal",
+      timestamp:         timestamp,
+      sentTimestamp:     0,
+      deliveryTimestamp: 0,
+      read:              true
+    });
+
+  // Verify 'sms-delivery-error' system message.
+  messenger.notifySms(Ci.nsISmsMessenger.NOTIFICATION_TYPE_DELIVERY_ERROR,
+                      9,
+                      10,
+                      "99887766554433221100",
+                      Ci.nsISmsService.DELIVERY_TYPE_SENT,
+                      Ci.nsISmsService.DELIVERY_STATUS_TYPE_ERROR,
+                      null,
+                      "+0987654321",
+                      "Outgoing message",
+                      Ci.nsISmsService.MESSAGE_CLASS_TYPE_NORMAL,
+                      timestamp,
+                      0,
+                      0,
+                      true);
+
+  equal_received_system_message("sms-delivery-error", {
+      iccId:             "99887766554433221100",
+      type:              "sms",
+      id:                9,
+      threadId:          10,
+      delivery:          "sent",
+      deliveryStatus:    "error",
+      sender:            null,
+      receiver:          "+0987654321",
+      body:              "Outgoing message",
+      messageClass:      "normal",
+      timestamp:         timestamp,
+      sentTimestamp:     0,
+      deliveryTimestamp: 0,
+      read:              true
+    });
+
   // Verify the protection of invalid nsISmsMessenger.NOTIFICATION_TYPEs.
   try {
-    messenger.notifySms(3,
+    messenger.notifySms(5,
                         1,
                         2,
                         "99887766554433221100",

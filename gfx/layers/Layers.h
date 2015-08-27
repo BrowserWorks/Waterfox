@@ -10,7 +10,7 @@
 #include <stdio.h>                      // for FILE
 #include <sys/types.h>                  // for int32_t, int64_t
 #include "FrameMetrics.h"               // for FrameMetrics
-#include "Units.h"                      // for LayerMargin, LayerPoint
+#include "Units.h"                      // for LayerMargin, LayerPoint, ParentLayerIntRect
 #include "gfxContext.h"                 // for GraphicsOperator
 #include "gfxTypes.h"
 #include "gfxColor.h"                   // for gfxRGBA
@@ -21,6 +21,7 @@
 #include "mozilla/Assertions.h"         // for MOZ_ASSERT_HELPER2, etc
 #include "mozilla/DebugOnly.h"          // for DebugOnly
 #include "mozilla/EventForwards.h"      // for nsPaintEvent
+#include "mozilla/Maybe.h"              // for Maybe
 #include "mozilla/RefPtr.h"             // for TemporaryRef
 #include "mozilla/StyleAnimationValue.h" // for StyleAnimationValue, etc
 #include "mozilla/TimeStamp.h"          // for TimeStamp, TimeDuration
@@ -36,7 +37,7 @@
 #include "nsCSSProperty.h"              // for nsCSSProperty
 #include "nsDebug.h"                    // for NS_ASSERTION
 #include "nsISupportsImpl.h"            // for Layer::Release, etc
-#include "nsRect.h"                     // for nsIntRect
+#include "nsRect.h"                     // for mozilla::gfx::IntRect
 #include "nsRegion.h"                   // for nsIntRegion
 #include "nsSize.h"                     // for nsIntSize
 #include "nsString.h"                   // for nsCString
@@ -56,11 +57,9 @@ namespace mozilla {
 class ComputedTimingFunction;
 class FrameLayerBuilder;
 class StyleAnimationValue;
-class WebGLContext;
 
 namespace gl {
 class GLContext;
-class SharedSurface;
 }
 
 namespace gfx {
@@ -77,7 +76,6 @@ class Animation;
 class AnimationData;
 class AsyncPanZoomController;
 class ClientLayerManager;
-class CommonLayerAttributes;
 class Layer;
 class LayerMetricsWrapper;
 class PaintedLayer;
@@ -94,10 +92,7 @@ class ShadowableLayer;
 class ShadowLayerForwarder;
 class LayerManagerComposite;
 class SpecificLayerAttributes;
-class SurfaceDescriptor;
 class Compositor;
-struct TextureFactoryIdentifier;
-struct EffectMask;
 
 namespace layerscope {
 class LayersPacket;
@@ -822,7 +817,7 @@ public:
    * large displayport. Computing this more exactly is too expensive,
    * but this approximation is sufficient for what we need to use it for.
    */
-  virtual void SetLayerBounds(const nsIntRect& aLayerBounds)
+  virtual void SetLayerBounds(const gfx::IntRect& aLayerBounds)
   {
     if (!mLayerBounds.IsEqualEdges(aLayerBounds)) {
       MOZ_LAYERS_LOG_IF_SHADOWABLE(this, ("Layer::Mutated(%p) LayerBounds", this));
@@ -990,20 +985,20 @@ public:
    * in device pixels.
    * If aRect is null no clipping will be performed.
    */
-  void SetClipRect(const nsIntRect* aRect)
+  void SetClipRect(const Maybe<ParentLayerIntRect>& aRect)
   {
-    if (mUseClipRect) {
+    if (mClipRect) {
       if (!aRect) {
         MOZ_LAYERS_LOG_IF_SHADOWABLE(this, ("Layer::Mutated(%p) ClipRect was %d,%d,%d,%d is <none>", this,
-                         mClipRect.x, mClipRect.y, mClipRect.width, mClipRect.height));
-        mUseClipRect = false;
+                         mClipRect->x, mClipRect->y, mClipRect->width, mClipRect->height));
+        mClipRect.reset();
         Mutated();
       } else {
-        if (!aRect->IsEqualEdges(mClipRect)) {
+        if (!aRect->IsEqualEdges(*mClipRect)) {
           MOZ_LAYERS_LOG_IF_SHADOWABLE(this, ("Layer::Mutated(%p) ClipRect was %d,%d,%d,%d is %d,%d,%d,%d", this,
-                           mClipRect.x, mClipRect.y, mClipRect.width, mClipRect.height,
+                           mClipRect->x, mClipRect->y, mClipRect->width, mClipRect->height,
                            aRect->x, aRect->y, aRect->width, aRect->height));
-          mClipRect = *aRect;
+          mClipRect = aRect;
           Mutated();
         }
       }
@@ -1011,8 +1006,7 @@ public:
       if (aRect) {
         MOZ_LAYERS_LOG_IF_SHADOWABLE(this, ("Layer::Mutated(%p) ClipRect was <none> is %d,%d,%d,%d", this,
                          aRect->x, aRect->y, aRect->width, aRect->height));
-        mUseClipRect = true;
-        mClipRect = *aRect;
+        mClipRect = aRect;
         Mutated();
       }
     }
@@ -1108,6 +1102,7 @@ public:
 
   // Call AddAnimation to add a new animation to this layer from layout code.
   // Caller must fill in all the properties of the returned animation.
+  // A later animation overrides an earlier one.
   Animation* AddAnimation();
   // ClearAnimations clears animations on this layer.
   void ClearAnimations();
@@ -1200,13 +1195,16 @@ public:
    * If a layer is a scrollbar layer, |aScrollId| holds the scroll identifier
    * of the scrollable content that the scrollbar is for.
    */
-  void SetScrollbarData(FrameMetrics::ViewID aScrollId, ScrollDirection aDir)
+  void SetScrollbarData(FrameMetrics::ViewID aScrollId, ScrollDirection aDir, float aThumbRatio)
   {
     if (mScrollbarTargetId != aScrollId ||
-        mScrollbarDirection != aDir) {
+        mScrollbarDirection != aDir ||
+        mScrollbarThumbRatio != aThumbRatio)
+    {
       MOZ_LAYERS_LOG_IF_SHADOWABLE(this, ("Layer::Mutated(%p) ScrollbarData", this));
       mScrollbarTargetId = aScrollId;
       mScrollbarDirection = aDir;
+      mScrollbarThumbRatio = aThumbRatio;
       Mutated();
     }
   }
@@ -1223,9 +1221,9 @@ public:
   // These getters can be used anytime.
   float GetOpacity() { return mOpacity; }
   gfx::CompositionOp GetMixBlendMode() const { return mMixBlendMode; }
-  const nsIntRect* GetClipRect() { return mUseClipRect ? &mClipRect : nullptr; }
+  const Maybe<ParentLayerIntRect>& GetClipRect() const { return mClipRect; }
   uint32_t GetContentFlags() { return mContentFlags; }
-  const nsIntRect& GetLayerBounds() const { return mLayerBounds; }
+  const gfx::IntRect& GetLayerBounds() const { return mLayerBounds; }
   const nsIntRegion& GetVisibleRegion() const { return mVisibleRegion; }
   const FrameMetrics& GetFrameMetrics(uint32_t aIndex) const;
   uint32_t GetFrameMetricsCount() const { return mFrameMetrics.Length(); }
@@ -1254,6 +1252,7 @@ public:
   const LayerRect& GetStickyScrollRangeInner() { return mStickyPositionData->mInner; }
   FrameMetrics::ViewID GetScrollbarTargetContainerId() { return mScrollbarTargetId; }
   ScrollDirection GetScrollbarDirection() { return mScrollbarDirection; }
+  float GetScrollbarThumbRatio() { return mScrollbarThumbRatio; }
   bool IsScrollbarContainer() { return mIsScrollbarContainer; }
   Layer* GetMaskLayer() const { return mMaskLayer; }
 
@@ -1413,7 +1412,7 @@ public:
   // These getters can be used anytime.  They return the effective
   // values that should be used when drawing this layer to screen,
   // accounting for this layer possibly being a shadow.
-  const nsIntRect* GetEffectiveClipRect();
+  const Maybe<ParentLayerIntRect>& GetEffectiveClipRect();
   const nsIntRegion& GetEffectiveVisibleRegion();
 
   /**
@@ -1554,7 +1553,7 @@ public:
   /**
    * Adds to the current invalid rect.
    */
-  void AddInvalidRect(const nsIntRect& aRect) { mInvalidRegion.Or(mInvalidRegion, aRect); }
+  void AddInvalidRect(const gfx::IntRect& aRect) { mInvalidRegion.Or(mInvalidRegion, aRect); }
 
   /**
    * Clear the invalid rect, marking the layer as being identical to what is currently
@@ -1676,7 +1675,7 @@ protected:
   void* mImplData;
   nsRefPtr<Layer> mMaskLayer;
   gfx::UserData mUserData;
-  nsIntRect mLayerBounds;
+  gfx::IntRect mLayerBounds;
   nsIntRegion mVisibleRegion;
   nsTArray<FrameMetrics> mFrameMetrics;
   EventRegions mEventRegions;
@@ -1695,12 +1694,11 @@ protected:
   float mOpacity;
   gfx::CompositionOp mMixBlendMode;
   bool mForceIsolatedGroup;
-  nsIntRect mClipRect;
-  nsIntRect mTileSourceRect;
+  Maybe<ParentLayerIntRect> mClipRect;
+  gfx::IntRect mTileSourceRect;
   nsIntRegion mInvalidRegion;
   nsTArray<nsRefPtr<AsyncPanZoomController> > mApzcs;
   uint32_t mContentFlags;
-  bool mUseClipRect;
   bool mUseTileSourceRect;
   bool mIsFixedPosition;
   LayerPoint mAnchor;
@@ -1713,6 +1711,10 @@ protected:
   nsAutoPtr<StickyPositionData> mStickyPositionData;
   FrameMetrics::ViewID mScrollbarTargetId;
   ScrollDirection mScrollbarDirection;
+  // The scrollbar thumb ratio is the ratio of the thumb position (in the CSS
+  // pixels of the scrollframe's parent's space) to the scroll position (in the
+  // CSS pixels of the scrollframe's space).
+  float mScrollbarThumbRatio;
   bool mIsScrollbarContainer;
   DebugOnly<uint32_t> mDebugColorIndex;
   // If this layer is used for OMTA, then this counter is used to ensure we
@@ -2072,7 +2074,7 @@ public:
     }
   }
 
-  void SetBounds(const nsIntRect& aBounds)
+  void SetBounds(const gfx::IntRect& aBounds)
   {
     if (!mBounds.IsEqualEdges(aBounds)) {
       mBounds = aBounds;
@@ -2080,7 +2082,7 @@ public:
     }
   }
 
-  const nsIntRect& GetBounds()
+  const gfx::IntRect& GetBounds()
   {
     return mBounds;
   }
@@ -2107,7 +2109,7 @@ protected:
 
   virtual void DumpPacket(layerscope::LayersPacket* aPacket, const void* aParent) override;
 
-  nsIntRect mBounds;
+  gfx::IntRect mBounds;
   gfxRGBA mColor;
 };
 
@@ -2274,7 +2276,7 @@ protected:
   /**
    * 0, 0, canvaswidth, canvasheight
    */
-  nsIntRect mBounds;
+  gfx::IntRect mBounds;
   PreTransactionCallback* mPreTransCallback;
   void* mPreTransCallbackData;
   DidTransactionCallback mPostTransCallback;
@@ -2402,9 +2404,9 @@ void WriteSnapshotToDumpFile(Compositor* aCompositor, gfx::DrawTarget* aTarget);
 #endif
 
 // A utility function used by different LayerManager implementations.
-nsIntRect ToOutsideIntRect(const gfxRect &aRect);
+gfx::IntRect ToOutsideIntRect(const gfxRect &aRect);
 
-}
-}
+} // namespace layers
+} // namespace mozilla
 
 #endif /* GFX_LAYERS_H */

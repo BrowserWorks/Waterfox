@@ -5,9 +5,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "InputBlockState.h"
-#include "mozilla/layers/APZCTreeManager.h" // for AllowedTouchBehavior
 #include "AsyncPanZoomController.h"         // for AsyncPanZoomController
 #include "gfxPrefs.h"                       // for gfxPrefs
+#include "mozilla/SizePrintfMacros.h"       // for PRIuSIZE
+#include "mozilla/layers/APZCTreeManager.h" // for AllowedTouchBehavior
 #include "OverscrollHandoffState.h"
 
 #define TBS_LOG(...)
@@ -180,6 +181,31 @@ WheelBlockState::WheelBlockState(const nsRefPtr<AsyncPanZoomController>& aTarget
   }
 }
 
+bool
+WheelBlockState::SetContentResponse(bool aPreventDefault)
+{
+  if (aPreventDefault) {
+    EndTransaction();
+  }
+  return CancelableBlockState::SetContentResponse(aPreventDefault);
+}
+
+bool
+WheelBlockState::SetConfirmedTargetApzc(const nsRefPtr<AsyncPanZoomController>& aTargetApzc)
+{
+  // The APZC that we find via APZCCallbackHelpers may not be the same APZC
+  // ESM or OverscrollHandoff would have computed. Make sure we get the right
+  // one by looking for the first apzc the next pending event can scroll.
+  nsRefPtr<AsyncPanZoomController> apzc = aTargetApzc;
+  if (apzc && mEvents.Length() > 0) {
+    const ScrollWheelInput& event = mEvents.ElementAt(0);
+    apzc = apzc->BuildOverscrollHandoffChain()->FindFirstScrollable(event);
+  }
+
+  InputBlockState::SetConfirmedTargetApzc(apzc);
+  return true;
+}
+
 void
 WheelBlockState::Update(const ScrollWheelInput& aEvent)
 {
@@ -231,7 +257,7 @@ WheelBlockState::HasEvents() const
 void
 WheelBlockState::DropEvents()
 {
-  TBS_LOG("%p dropping %lu events\n", this, mEvents.Length());
+  TBS_LOG("%p dropping %" PRIuSIZE " events\n", this, mEvents.Length());
   mEvents.Clear();
 }
 
@@ -239,7 +265,7 @@ void
 WheelBlockState::HandleEvents()
 {
   while (HasEvents()) {
-    TBS_LOG("%p returning first of %lu events\n", this, mEvents.Length());
+    TBS_LOG("%p returning first of %" PRIuSIZE " events\n", this, mEvents.Length());
     ScrollWheelInput event = mEvents[0];
     mEvents.RemoveElementAt(0);
     GetTargetApzc()->HandleInputEvent(event, mTransformToApzc);
@@ -400,7 +426,7 @@ TouchBlockState::SetAllowedTouchBehaviors(const nsTArray<TouchBehaviorFlags>& aB
   if (mAllowedTouchBehaviorSet) {
     return false;
   }
-  TBS_LOG("%p got allowed touch behaviours for %lu points\n", this, aBehaviors.Length());
+  TBS_LOG("%p got allowed touch behaviours for %" PRIuSIZE " points\n", this, aBehaviors.Length());
   mAllowedTouchBehaviors.AppendElements(aBehaviors);
   mAllowedTouchBehaviorSet = true;
   return true;
@@ -500,7 +526,7 @@ TouchBlockState::Type()
 void
 TouchBlockState::DropEvents()
 {
-  TBS_LOG("%p dropping %lu events\n", this, mEvents.Length());
+  TBS_LOG("%p dropping %" PRIuSIZE " events\n", this, mEvents.Length());
   mEvents.Clear();
 }
 
@@ -508,7 +534,7 @@ void
 TouchBlockState::HandleEvents()
 {
   while (HasEvents()) {
-    TBS_LOG("%p returning first of %lu events\n", this, mEvents.Length());
+    TBS_LOG("%p returning first of %" PRIuSIZE " events\n", this, mEvents.Length());
     MultiTouchInput event = mEvents[0];
     mEvents.RemoveElementAt(0);
     GetTargetApzc()->HandleInputEvent(event, mTransformToApzc);

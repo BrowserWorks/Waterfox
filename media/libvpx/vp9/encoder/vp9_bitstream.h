@@ -18,8 +18,6 @@ extern "C" {
 
 #include "vp9/encoder/vp9_encoder.h"
 
-void vp9_entropy_mode_init();
-
 void vp9_pack_bitstream(VP9_COMP *cpi, uint8_t *dest, size_t *size);
 
 static INLINE int vp9_preserve_existing_gf(VP9_COMP *cpi) {
@@ -29,7 +27,7 @@ static INLINE int vp9_preserve_existing_gf(VP9_COMP *cpi) {
           (is_two_pass_svc(cpi) &&
            cpi->svc.spatial_layer_id == 0 &&
            cpi->svc.layer_context[0].gold_ref_idx >=0 &&
-           cpi->oxcf.ss_play_alternate[0]));
+           cpi->oxcf.ss_enable_auto_arf[0]));
 }
 
 #ifdef __cplusplus

@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 sw=2 et tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -93,6 +93,8 @@ class IccManager;
 class Telephony;
 class Voicemail;
 class TVManager;
+class InputPortManager;
+class DeviceStorageAreaListener;
 
 namespace time {
 class TimeManager;
@@ -213,11 +215,15 @@ public:
   void RemoveIdleObserver(MozIdleObserver& aObserver, ErrorResult& aRv);
   already_AddRefed<WakeLock> RequestWakeLock(const nsAString &aTopic,
                                              ErrorResult& aRv);
+  DeviceStorageAreaListener* GetDeviceStorageAreaListener(ErrorResult& aRv);
   nsDOMDeviceStorage* GetDeviceStorage(const nsAString& aType,
                                        ErrorResult& aRv);
   void GetDeviceStorages(const nsAString& aType,
                          nsTArray<nsRefPtr<nsDOMDeviceStorage> >& aStores,
                          ErrorResult& aRv);
+  nsDOMDeviceStorage* GetDeviceStorageByNameAndType(const nsAString& aName,
+                                                    const nsAString& aType,
+                                                    ErrorResult& aRv);
   DesktopNotificationCenter* GetMozNotification(ErrorResult& aRv);
   CellBroadcast* GetMozCellBroadcast(ErrorResult& aRv);
   IccManager* GetMozIccManager(ErrorResult& aRv);
@@ -225,6 +231,7 @@ public:
   Telephony* GetMozTelephony(ErrorResult& aRv);
   Voicemail* GetMozVoicemail(ErrorResult& aRv);
   TVManager* GetTv();
+  InputPortManager* GetInputPortManager(ErrorResult& aRv);
   network::Connection* GetConnection(ErrorResult& aRv);
   nsDOMCameraManager* GetMozCameras(ErrorResult& aRv);
   MediaDevices* GetMediaDevices(ErrorResult& aRv);
@@ -279,6 +286,9 @@ public:
   bool DoResolve(JSContext* aCx, JS::Handle<JSObject*> aObject,
                  JS::Handle<jsid> aId,
                  JS::MutableHandle<JSPropertyDescriptor> aDesc);
+  // The return value is whether DoResolve might end up resolving the given id.
+  // If in doubt, return true.
+  static bool MayResolve(jsid aId);
   void GetOwnPropertyNames(JSContext* aCx, nsTArray<nsString>& aNames,
                            ErrorResult& aRv);
   void GetLanguages(nsTArray<nsString>& aLanguages);
@@ -356,6 +366,7 @@ private:
   nsRefPtr<Telephony> mTelephony;
   nsRefPtr<Voicemail> mVoicemail;
   nsRefPtr<TVManager> mTVManager;
+  nsRefPtr<InputPortManager> mInputPortManager;
   nsRefPtr<network::Connection> mConnection;
 #ifdef MOZ_B2G_RIL
   nsRefPtr<MobileConnectionArray> mMobileConnections;
@@ -373,6 +384,7 @@ private:
   nsRefPtr<time::TimeManager> mTimeManager;
   nsRefPtr<ServiceWorkerContainer> mServiceWorkerContainer;
   nsCOMPtr<nsPIDOMWindow> mWindow;
+  nsRefPtr<DeviceStorageAreaListener> mDeviceStorageAreaListener;
 
   // Hashtable for saving cached objects DoResolve created, so we don't create
   // the object twice if asked for it twice, whether due to use of "delete" or

@@ -18,16 +18,11 @@
 #include "mozilla/EventForwards.h"
 #include "mozilla/WeakPtr.h"
 
-class nsCanvasFrame;
 class nsDocShell;
 class nsFrameSelection;
 class nsIContent;
-class nsIDocument;
-class nsIFrame;
 class nsIPresShell;
 class nsITimer;
-class nsIWidget;
-class nsPresContext;
 
 namespace mozilla {
 
@@ -147,16 +142,16 @@ private:
   void SetSelectionDirection(nsDirection aDir);
 
   /**
-   * Move start frame of selection caret to given position.
+   * Move start frame of selection caret based on current caret pos.
    * In app units.
    */
-  void SetStartFramePos(const nsPoint& aPosition);
+  void SetStartFramePos(const nsRect& aCaretRect);
 
   /**
-   * Move end frame of selection caret to given position.
+   * Move end frame of selection caret based on current caret pos.
    * In app units.
    */
-  void SetEndFramePos(const nsPoint& aPosition);
+  void SetEndFramePos(const nsRect& aCaretRect);
 
   /**
    * Check if aPosition is on the start or end frame of the
@@ -271,6 +266,7 @@ private:
 
   // Preference
   static int32_t sSelectionCaretsInflateSize;
+  static bool sSelectionCaretDetectsLongTap;
 };
 } // namespace mozilla
 

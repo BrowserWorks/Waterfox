@@ -324,9 +324,23 @@ Service::unregisterConnection(Connection *aConnection)
   {
     mRegistrationMutex.AssertNotCurrentThreadOwns();
     MutexAutoLock mutex(mRegistrationMutex);
-    DebugOnly<bool> removed = mConnections.RemoveElement(aConnection);
-    // Assert if we try to unregister a non-existent connection.
-    MOZ_ASSERT(removed);
+
+    for (uint32_t i = 0 ; i < mConnections.Length(); ++i) {
+      if (mConnections[i] == aConnection) {
+        nsCOMPtr<nsIThread> thread = mConnections[i]->threadOpenedOn;
+
+        // Ensure the connection is released on its opening thread.  Note, we
+        // must use .forget().take() so that we can manually cast to an
+        // unambiguous nsISupports type.
+        NS_ProxyRelease(thread,
+          static_cast<mozIStorageConnection*>(mConnections[i].forget().take()));
+
+        mConnections.RemoveElementAt(i);
+        return;
+      }
+    }
+
+    MOZ_ASSERT_UNREACHABLE("Attempt to unregister unknown storage connection!");
   }
 }
 
@@ -402,10 +416,10 @@ namespace {
 // allocated for a given request.  SQLite uses this function before all
 // allocations, and may be able to use any excess bytes caused by the rounding.
 //
-// Note: the wrappers for moz_malloc, moz_realloc and moz_malloc_usable_size
-// are necessary because the sqlite_mem_methods type signatures differ slightly
+// Note: the wrappers for malloc, realloc and moz_malloc_usable_size are
+// necessary because the sqlite_mem_methods type signatures differ slightly
 // from the standard ones -- they use int instead of size_t.  But we don't need
-// a wrapper for moz_free.
+// a wrapper for free.
 
 #ifdef MOZ_DMD
 
@@ -429,7 +443,7 @@ MOZ_DEFINE_MALLOC_SIZE_OF_ON_FREE(SqliteMallocSizeOfOnFree)
 
 static void *sqliteMemMalloc(int n)
 {
-  void* p = ::moz_malloc(n);
+  void* p = ::malloc(n);
 #ifdef MOZ_DMD
   gSqliteMemoryUsed += SqliteMallocSizeOfOnAlloc(p);
 #endif
@@ -441,14 +455,14 @@ static void sqliteMemFree(void *p)
 #ifdef MOZ_DMD
   gSqliteMemoryUsed -= SqliteMallocSizeOfOnFree(p);
 #endif
-  ::moz_free(p);
+  ::free(p);
 }
 
 static void *sqliteMemRealloc(void *p, int n)
 {
 #ifdef MOZ_DMD
   gSqliteMemoryUsed -= SqliteMallocSizeOfOnFree(p);
-  void *pnew = ::moz_realloc(p, n);
+  void *pnew = ::realloc(p, n);
   if (pnew) {
     gSqliteMemoryUsed += SqliteMallocSizeOfOnAlloc(pnew);
   } else {
@@ -457,7 +471,7 @@ static void *sqliteMemRealloc(void *p, int n)
   }
   return pnew;
 #else
-  return ::moz_realloc(p, n);
+  return ::realloc(p, n);
 #endif
 }
 

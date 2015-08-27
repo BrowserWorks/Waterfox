@@ -987,8 +987,8 @@ check_xcr0_ymm()
         xgetbv
         mov xcr0, eax
     }
-#elif defined(_XCR_XFEATURE_ENABLED_MASK)
-    xcr0 = (PRUint32)_xgetbv(_XCR_XFEATURE_ENABLED_MASK);  /* Requires VS2010 SP1 or later. */
+#else
+    xcr0 = (PRUint32)_xgetbv(0);  /* Requires VS2010 SP1 or later. */
 #endif
 #else
     __asm__ ("xgetbv" : "=a" (xcr0) : "c" (0) : "%edx");

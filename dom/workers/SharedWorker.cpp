@@ -1,4 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -27,7 +28,7 @@ USING_WORKERS_NAMESPACE
 SharedWorker::SharedWorker(nsPIDOMWindow* aWindow,
                            WorkerPrivate* aWorkerPrivate)
 : DOMEventTargetHelper(aWindow), mWorkerPrivate(aWorkerPrivate),
-  mSuspended(false)
+  mFrozen(false)
 {
   AssertIsOnMainThread();
   MOZ_ASSERT(aWorkerPrivate);
@@ -85,25 +86,25 @@ SharedWorker::Port()
 }
 
 void
-SharedWorker::Suspend()
+SharedWorker::Freeze()
 {
   AssertIsOnMainThread();
-  MOZ_ASSERT(!IsSuspended());
+  MOZ_ASSERT(!IsFrozen());
 
-  mSuspended = true;
+  mFrozen = true;
 }
 
 void
-SharedWorker::Resume()
+SharedWorker::Thaw()
 {
   AssertIsOnMainThread();
-  MOZ_ASSERT(IsSuspended());
+  MOZ_ASSERT(IsFrozen());
 
-  mSuspended = false;
+  mFrozen = false;
 
-  if (!mSuspendedEvents.IsEmpty()) {
+  if (!mFrozenEvents.IsEmpty()) {
     nsTArray<nsCOMPtr<nsIDOMEvent>> events;
-    mSuspendedEvents.SwapElements(events);
+    mFrozenEvents.SwapElements(events);
 
     for (uint32_t index = 0; index < events.Length(); index++) {
       nsCOMPtr<nsIDOMEvent>& event = events[index];
@@ -127,9 +128,9 @@ SharedWorker::QueueEvent(nsIDOMEvent* aEvent)
 {
   AssertIsOnMainThread();
   MOZ_ASSERT(aEvent);
-  MOZ_ASSERT(IsSuspended());
+  MOZ_ASSERT(IsFrozen());
 
-  mSuspendedEvents.AppendElement(aEvent);
+  mFrozenEvents.AppendElement(aEvent);
 }
 
 void
@@ -181,14 +182,14 @@ NS_IMPL_CYCLE_COLLECTION_CLASS(SharedWorker)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(SharedWorker,
                                                   DOMEventTargetHelper)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mMessagePort)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mSuspendedEvents)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mFrozenEvents)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(SharedWorker,
                                                 DOMEventTargetHelper)
   tmp->Close();
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mMessagePort)
-  NS_IMPL_CYCLE_COLLECTION_UNLINK(mSuspendedEvents)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mFrozenEvents)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 JSObject*
@@ -206,7 +207,7 @@ SharedWorker::PreHandleEvent(EventChainPreVisitor& aVisitor)
 
   nsIDOMEvent*& event = aVisitor.mDOMEvent;
 
-  if (IsSuspended() && event) {
+  if (IsFrozen() && event) {
     QueueEvent(event);
 
     aVisitor.mCanHandle = false;

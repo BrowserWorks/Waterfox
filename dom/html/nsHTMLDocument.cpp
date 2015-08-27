@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set sw=2 ts=2 et tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -110,6 +110,9 @@
 #include "nsCharsetSource.h"
 #include "nsIStringBundle.h"
 #include "nsDOMClassInfo.h"
+#include "nsFocusManager.h"
+#include "nsIFrame.h"
+#include "nsIContent.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -923,7 +926,7 @@ nsHTMLDocument::SetDomain(const nsAString& aDomain)
 {
   ErrorResult rv;
   SetDomain(aDomain, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 void
@@ -1044,7 +1047,7 @@ nsHTMLDocument::SetBody(nsIDOMHTMLElement* aBody)
              "How could we be an nsIContent but not actually HTML here?");
   ErrorResult rv;
   SetBody(static_cast<nsGenericHTMLElement*>(newBody.get()), rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 void
@@ -1223,7 +1226,7 @@ nsHTMLDocument::GetCookie(nsAString& aCookie)
 {
   ErrorResult rv;
   GetCookie(aCookie, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 already_AddRefed<nsIChannel>
@@ -1306,7 +1309,7 @@ nsHTMLDocument::SetCookie(const nsAString& aCookie)
 {
   ErrorResult rv;
   SetCookie(aCookie, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 void
@@ -1362,7 +1365,7 @@ nsHTMLDocument::Open(const nsAString& aContentTypeOrUrl,
     ErrorResult rv;
     *aReturn = Open(cx, aContentTypeOrUrl, aReplaceOrName, aFeatures,
                     false, rv).take();
-    return rv.ErrorCode();
+    return rv.StealNSResult();
   }
 
   nsString type;
@@ -1377,7 +1380,7 @@ nsHTMLDocument::Open(const nsAString& aContentTypeOrUrl,
   }
   ErrorResult rv;
   *aReturn = Open(cx, type, replace, rv).take();
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 already_AddRefed<nsIDOMWindow>
@@ -1558,13 +1561,6 @@ nsHTMLDocument::Open(JSContext* cx,
                      nsILoadInfo::SEC_FORCE_INHERIT_PRINCIPAL,
                      nsIContentPolicy::TYPE_OTHER,
                      group);
-
-  if (rv.Failed()) {
-    return nullptr;
-  }
-
-  // We can't depend on channels implementing property bags, so do our
-  // base URI manually after reset.
 
   if (rv.Failed()) {
     return nullptr;
@@ -1751,7 +1747,7 @@ nsHTMLDocument::Close()
 {
   ErrorResult rv;
   Close(rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 void
@@ -2225,7 +2221,7 @@ nsHTMLDocument::GetSelection(nsISelection** aReturn)
 {
   ErrorResult rv;
   NS_IF_ADDREF(*aReturn = GetSelection(rv));
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 Selection*
@@ -2723,7 +2719,7 @@ nsHTMLDocument::EditingStateChanged()
   }
 
   if (mEditingState == eSettingUp || mEditingState == eTearingDown) {
-    // XXX We shouldn't recurse.
+    // XXX We shouldn't recurse
     return NS_OK;
   }
 
@@ -2787,11 +2783,90 @@ nsHTMLDocument::EditingStateChanged()
   bool makeWindowEditable = mEditingState == eOff;
   bool updateState = false;
   bool spellRecheckAll = false;
+  bool putOffToRemoveScriptBlockerUntilModifyingEditingState = false;
   nsCOMPtr<nsIEditor> editor;
 
   {
     EditingState oldState = mEditingState;
     nsAutoEditingState push(this, eSettingUp);
+
+    nsCOMPtr<nsIPresShell> presShell = GetShell();
+    NS_ENSURE_TRUE(presShell, NS_ERROR_FAILURE);
+
+    // Before making this window editable, we need to modify UA style sheet
+    // because new style may change whether focused element will be focusable
+    // or not.
+    nsCOMArray<nsIStyleSheet> agentSheets;
+    rv = presShell->GetAgentStyleSheets(agentSheets);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    nsCOMPtr<nsIURI> uri;
+    rv = NS_NewURI(getter_AddRefs(uri),
+                   NS_LITERAL_STRING("resource://gre/res/contenteditable.css"));
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    nsRefPtr<CSSStyleSheet> sheet;
+    rv = LoadChromeSheetSync(uri, true, getter_AddRefs(sheet));
+    NS_ENSURE_TRUE(sheet, rv);
+
+    bool result = agentSheets.AppendObject(sheet);
+    NS_ENSURE_TRUE(result, NS_ERROR_OUT_OF_MEMORY);
+
+    // Should we update the editable state of all the nodes in the document? We
+    // need to do this when the designMode value changes, as that overrides
+    // specific states on the elements.
+    if (designMode) {
+      // designMode is being turned on (overrides contentEditable).
+      rv = NS_NewURI(getter_AddRefs(uri),
+                     NS_LITERAL_STRING("resource://gre/res/designmode.css"));
+      NS_ENSURE_SUCCESS(rv, rv);
+
+      rv = LoadChromeSheetSync(uri, true, getter_AddRefs(sheet));
+      NS_ENSURE_TRUE(sheet, rv);
+
+      result = agentSheets.AppendObject(sheet);
+      NS_ENSURE_TRUE(result, NS_ERROR_OUT_OF_MEMORY);
+
+      updateState = true;
+      spellRecheckAll = oldState == eContentEditable;
+    }
+    else if (oldState == eDesignMode) {
+      // designMode is being turned off (contentEditable is still on).
+      RemoveFromAgentSheets(agentSheets,
+        NS_LITERAL_STRING("resource://gre/res/designmode.css"));
+
+      updateState = true;
+    }
+
+    rv = presShell->SetAgentStyleSheets(agentSheets);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    presShell->ReconstructStyleData();
+
+    // Adjust focused element with new style but blur event shouldn't be fired
+    // until mEditingState is modified with newState.
+    nsAutoScriptBlocker scriptBlocker;
+    if (designMode) {
+      nsCOMPtr<nsPIDOMWindow> focusedWindow;
+      nsIContent* focusedContent =
+        nsFocusManager::GetFocusedDescendant(window, false,
+                                             getter_AddRefs(focusedWindow));
+      if (focusedContent) {
+        nsIFrame* focusedFrame = focusedContent->GetPrimaryFrame();
+        bool clearFocus = focusedFrame ? !focusedFrame->IsFocusable() :
+                                         !focusedContent->IsFocusable();
+        if (clearFocus) {
+          nsFocusManager* fm = nsFocusManager::GetFocusManager();
+          if (fm) {
+            fm->ClearFocus(window);
+            // If we need to dispatch blur event, we should put off after
+            // modifying mEditingState since blur event handler may change
+            // designMode state again.
+            putOffToRemoveScriptBlockerUntilModifyingEditingState = true;
+          }
+        }
+      }
+    }
 
     if (makeWindowEditable) {
       // Editing is being turned on (through designMode or contentEditable)
@@ -2808,61 +2883,26 @@ nsHTMLDocument::EditingStateChanged()
     if (!editor)
       return NS_ERROR_FAILURE;
 
-    nsCOMPtr<nsIPresShell> presShell = GetShell();
-    NS_ENSURE_TRUE(presShell, NS_ERROR_FAILURE);
-
     // If we're entering the design mode, put the selection at the beginning of
     // the document for compatibility reasons.
     if (designMode && oldState == eOff) {
       editor->BeginningOfDocument();
     }
 
-    nsCOMArray<nsIStyleSheet> agentSheets;
-    rv = presShell->GetAgentStyleSheets(agentSheets);
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    nsCOMPtr<nsIURI> uri;
-    rv = NS_NewURI(getter_AddRefs(uri), NS_LITERAL_STRING("resource://gre/res/contenteditable.css"));
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    nsRefPtr<CSSStyleSheet> sheet;
-    rv = LoadChromeSheetSync(uri, true, getter_AddRefs(sheet));
-    NS_ENSURE_TRUE(sheet, rv);
-
-    bool result = agentSheets.AppendObject(sheet);
-    NS_ENSURE_TRUE(result, NS_ERROR_OUT_OF_MEMORY);
-
-    // Should we update the editable state of all the nodes in the document? We
-    // need to do this when the designMode value changes, as that overrides
-    // specific states on the elements.
-    if (designMode) {
-      // designMode is being turned on (overrides contentEditable).
-      rv = NS_NewURI(getter_AddRefs(uri), NS_LITERAL_STRING("resource://gre/res/designmode.css"));
-      NS_ENSURE_SUCCESS(rv, rv);
-
-      rv = LoadChromeSheetSync(uri, true, getter_AddRefs(sheet));
-      NS_ENSURE_TRUE(sheet, rv);
-
-      result = agentSheets.AppendObject(sheet);
-      NS_ENSURE_TRUE(result, NS_ERROR_OUT_OF_MEMORY);
-
-      updateState = true;
-      spellRecheckAll = oldState == eContentEditable;
+    if (putOffToRemoveScriptBlockerUntilModifyingEditingState) {
+      nsContentUtils::AddScriptBlocker();
     }
-    else if (oldState == eDesignMode) {
-      // designMode is being turned off (contentEditable is still on).
-      RemoveFromAgentSheets(agentSheets, NS_LITERAL_STRING("resource://gre/res/designmode.css"));
-
-      updateState = true;
-    }
-
-    rv = presShell->SetAgentStyleSheets(agentSheets);
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    presShell->ReconstructStyleData();
   }
 
   mEditingState = newState;
+  if (putOffToRemoveScriptBlockerUntilModifyingEditingState) {
+    nsContentUtils::RemoveScriptBlocker();
+    // If mEditingState is overwritten by another call and already disabled
+    // the editing, we shouldn't keep making window editable.
+    if (mEditingState == eOff) {
+      return NS_OK;
+    }
+  }
 
   if (makeWindowEditable) {
     // Set the editor to not insert br's on return when in p
@@ -2910,7 +2950,7 @@ nsHTMLDocument::SetDesignMode(const nsAString & aDesignMode)
 {
   ErrorResult rv;
   SetDesignMode(aDesignMode, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 void
@@ -3191,7 +3231,7 @@ nsHTMLDocument::ExecCommand(const nsAString& commandID,
 {
   ErrorResult rv;
   *_retval = ExecCommand(commandID, doShowUI, value, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 bool
@@ -3302,7 +3342,7 @@ nsHTMLDocument::QueryCommandEnabled(const nsAString& commandID,
 {
   ErrorResult rv;
   *_retval = QueryCommandEnabled(commandID, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 bool
@@ -3345,7 +3385,7 @@ nsHTMLDocument::QueryCommandIndeterm(const nsAString & commandID,
 {
   ErrorResult rv;
   *_retval = QueryCommandIndeterm(commandID, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 bool
@@ -3403,7 +3443,7 @@ nsHTMLDocument::QueryCommandState(const nsAString & commandID, bool *_retval)
 {
   ErrorResult rv;
   *_retval = QueryCommandState(commandID, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 bool
@@ -3469,7 +3509,7 @@ nsHTMLDocument::QueryCommandState(const nsAString& commandID, ErrorResult& rv)
       retval = paramToCheck.Equals(actualAlignmentType);
     }
     if (actualAlignmentType) {
-      nsMemory::Free(actualAlignmentType);
+      free(actualAlignmentType);
     }
     return retval;
   }
@@ -3506,7 +3546,7 @@ nsHTMLDocument::QueryCommandValue(const nsAString & commandID,
 {
   ErrorResult rv;
   QueryCommandValue(commandID, _retval, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 void

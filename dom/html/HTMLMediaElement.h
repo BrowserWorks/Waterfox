@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim:set ts=2 sw=2 sts=2 et cindent: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -23,6 +23,7 @@
 #ifdef MOZ_EME
 #include "mozilla/dom/MediaKeys.h"
 #endif
+#include "StateWatching.h"
 #include "nsGkAtoms.h"
 
 // X.h on Linux #defines CurrentTime as 0L, so we have to #undef it here.
@@ -216,15 +217,11 @@ public:
   // Dispatch events
   virtual nsresult DispatchAsyncEvent(const nsAString& aName) final override;
 
+  // Triggers a recomputation of readyState.
+  void UpdateReadyState() override { UpdateReadyStateInternal(); }
+
   // Dispatch events that were raised while in the bfcache
   nsresult DispatchPendingMediaEvents();
-
-  // Called by the decoder when some data has been downloaded or
-  // buffering/seeking has ended. aNextFrameAvailable is true when
-  // the data for the next frame is available. This method will
-  // decide whether to set the ready state to HAVE_CURRENT_DATA,
-  // HAVE_FUTURE_DATA or HAVE_ENOUGH_DATA.
-  virtual void UpdateReadyStateForData(MediaDecoderOwner::NextFrameStatus aNextFrame) final override;
 
   // Return true if we can activate autoplay assuming enough data has arrived.
   bool CanActivateAutoplay();
@@ -564,7 +561,6 @@ public:
   void DispatchEncrypted(const nsTArray<uint8_t>& aInitData,
                          const nsAString& aInitDataType) override;
 
-
   bool IsEventAttributeName(nsIAtom* aName) override;
 
   // Returns the principal of the "top level" document; the origin displayed
@@ -579,9 +575,11 @@ public:
     return mAutoplayEnabled;
   }
 
-  already_AddRefed<DOMMediaStream> MozCaptureStream(ErrorResult& aRv);
+  already_AddRefed<DOMMediaStream> MozCaptureStream(ErrorResult& aRv,
+                                                    MediaStreamGraph* aGraph = nullptr);
 
-  already_AddRefed<DOMMediaStream> MozCaptureStreamUntilEnded(ErrorResult& aRv);
+  already_AddRefed<DOMMediaStream> MozCaptureStreamUntilEnded(ErrorResult& aRv,
+                                                              MediaStreamGraph* aGraph = nullptr);
 
   bool MozAudioCaptured() const
   {
@@ -646,6 +644,9 @@ protected:
   class StreamListener;
   class StreamSizeListener;
 
+  MediaDecoderOwner::NextFrameStatus NextFrameStatus();
+  void SetDecoder(MediaDecoder* aDecoder) { mDecoder = aDecoder; }
+
   virtual void GetItemValueText(DOMString& text) override;
   virtual void SetItemValueText(const nsAString& text) override;
 
@@ -659,7 +660,7 @@ protected:
     void SetOuter(HTMLMediaElement* outer) { mOuter = outer; }
     void SetCanPlay(bool aCanPlay);
 
-    operator bool() const { return mValue; }
+    MOZ_IMPLICIT operator bool() const { return mValue; }
 
     WakeLockBoolWrapper& operator=(bool val);
 
@@ -728,7 +729,8 @@ protected:
    * When aFinishWhenEnded is false, ending playback does not finish the stream.
    * The stream will never finish.
    */
-  already_AddRefed<DOMMediaStream> CaptureStreamInternal(bool aFinishWhenEnded);
+  already_AddRefed<DOMMediaStream> CaptureStreamInternal(bool aFinishWhenEnded,
+                                                         MediaStreamGraph* aGraph = nullptr);
 
   /**
    * Initialize a decoder as a clone of an existing decoder in another
@@ -1011,6 +1013,9 @@ protected:
   // MediaElement doesn't yet have one then it will create it.
   TextTrackManager* GetOrCreateTextTrackManager();
 
+  // Recomputes ready state and fires events as necessary based on current state.
+  void UpdateReadyStateInternal();
+
   class nsAsyncEventRunner;
   using nsGenericHTMLElement::DispatchEvent;
   // For nsAsyncEventRunner.
@@ -1019,6 +1024,9 @@ protected:
   // The current decoder. Load() has been called on this decoder.
   // At most one of mDecoder and mSrcStream can be non-null.
   nsRefPtr<MediaDecoder> mDecoder;
+
+  // State-watching manager.
+  WatchManager<HTMLMediaElement> mWatchManager;
 
   // A reference to the VideoFrameContainer which contains the current frame
   // of video to display.
@@ -1088,10 +1096,7 @@ protected:
   // Media loading flags. See:
   //   http://www.whatwg.org/specs/web-apps/current-work/#video)
   nsMediaNetworkState mNetworkState;
-  nsMediaReadyState mReadyState;
-
-  // Last value passed from codec or stream source to UpdateReadyStateForData.
-  NextFrameStatus mLastNextFrameStatus;
+  Watchable<nsMediaReadyState> mReadyState;
 
   enum LoadAlgorithmState {
     // No load algorithm instance is waiting for a source to be added to the
@@ -1130,13 +1135,6 @@ protected:
   // PRELOAD_UNDEFINED, its value is changed by calling
   // UpdatePreloadAction().
   PreloadAction mPreloadAction;
-
-  // Size of the media. Updated by the decoder on the main thread if
-  // it changes. Defaults to a width and height of -1 if not set.
-  // We keep this separate from the intrinsic size stored in the
-  // VideoFrameContainer so that it doesn't change unexpectedly under us
-  // due to decoder activity.
-  nsIntSize mMediaSize;
 
   // Time that the last timeupdate event was fired. Read/Write from the
   // main thread only.
@@ -1327,8 +1325,13 @@ protected:
   // True if the media has encryption information.
   bool mIsEncrypted;
 
+#ifdef MOZ_EME
+  // Init Data that needs to be sent in 'encrypted' events in MetadataLoaded().
+  EncryptionInfo mPendingEncryptedInitData;
+#endif // MOZ_EME
+
   // True if the media's channel's download has been suspended.
-  bool mDownloadSuspendedByCache;
+  Watchable<bool> mDownloadSuspendedByCache;
 
   // Audio Channel.
   AudioChannel mAudioChannel;

@@ -1,4 +1,5 @@
-/* vim: set ts=2 sw=2 sts=2 et tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -8,7 +9,6 @@
 #include "nsAutoPtr.h"
 #include "nsIObjectInputStream.h"
 #include "nsIObjectOutputStream.h"
-#include "nsIProgrammingLanguage.h"
 
 #include "mozilla/ipc/BackgroundUtils.h"
 #include "mozilla/ipc/URIUtils.h"
@@ -229,17 +229,10 @@ nsHostObjectURI::GetClassID(nsCID * *aClassID)
 {
   // Make sure to modify any subclasses as needed if this ever
   // changes to not call the virtual GetClassIDNoAlloc.
-  *aClassID = (nsCID*) nsMemory::Alloc(sizeof(nsCID));
+  *aClassID = (nsCID*) moz_xmalloc(sizeof(nsCID));
   NS_ENSURE_TRUE(*aClassID, NS_ERROR_OUT_OF_MEMORY);
 
   return GetClassIDNoAlloc(*aClassID);
-}
-
-NS_IMETHODIMP 
-nsHostObjectURI::GetImplementationLanguage(uint32_t *aImplementationLanguage)
-{
-  *aImplementationLanguage = nsIProgrammingLanguage::CPLUSPLUS;
-  return NS_OK;
 }
 
 NS_IMETHODIMP 

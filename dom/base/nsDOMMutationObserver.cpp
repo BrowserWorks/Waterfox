@@ -1,5 +1,5 @@
-/* -*- Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 8; -*- */
-/* vim: set sw=4 ts=8 et tw=80 : */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -14,6 +14,8 @@
 #include "nsIDOMMutationEvent.h"
 #include "nsTextFragment.h"
 #include "nsServiceManagerUtils.h"
+#include "mozilla/dom/Animation.h"
+#include "mozilla/dom/KeyframeEffect.h"
 
 nsAutoTArray<nsRefPtr<nsDOMMutationObserver>, 4>*
   nsDOMMutationObserver::sScheduledMutationObservers = nullptr;
@@ -62,6 +64,13 @@ NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(nsDOMMutationRecord,
 
 // Observer
 
+bool
+nsMutationReceiverBase::IsObservable(nsIContent* aContent)
+{
+  return !aContent->ChromeOnlyAccess() &&
+    (Observer()->IsChrome() || !aContent->IsInAnonymousSubtree());
+}
+
 NS_IMPL_ADDREF(nsMutationReceiver)
 NS_IMPL_RELEASE(nsMutationReceiver)
 
@@ -109,8 +118,7 @@ nsMutationReceiver::AttributeWillChange(nsIDocument* aDocument,
                                         int32_t aModType)
 {
   if (nsAutoMutationBatch::IsBatching() ||
-      !ObservesAttr(aElement, aNameSpaceID, aAttribute) ||
-      aElement->ChromeOnlyAccess()) {
+      !ObservesAttr(RegisterTarget(), aElement, aNameSpaceID, aAttribute)) {
     return;
   }
 
@@ -145,14 +153,16 @@ nsMutationReceiver::CharacterDataWillChange(nsIDocument *aDocument,
                                             CharacterDataChangeInfo* aInfo)
 {
   if (nsAutoMutationBatch::IsBatching() ||
-      !CharacterData() || !(Subtree() || aContent == Target()) ||
-      aContent->ChromeOnlyAccess()) {
+      !CharacterData() ||
+      (!Subtree() && aContent != Target()) ||
+      (Subtree() && RegisterTarget()->SubtreeRoot() != aContent->SubtreeRoot()) ||
+      !IsObservable(aContent)) {
     return;
   }
-  
+
   nsDOMMutationRecord* m =
     Observer()->CurrentRecord(nsGkAtoms::characterData);
- 
+
   NS_ASSERTION(!m->mTarget || m->mTarget == aContent,
                "Wrong target!");
 
@@ -171,8 +181,11 @@ nsMutationReceiver::ContentAppended(nsIDocument* aDocument,
                                     int32_t aNewIndexInContainer)
 {
   nsINode* parent = NODE_FROM(aContainer, aDocument);
-  bool wantsChildList = ChildList() && (Subtree() || parent == Target());
-  if (!wantsChildList || aFirstNewContent->ChromeOnlyAccess()) {
+  bool wantsChildList =
+    ChildList() &&
+    ((Subtree() && RegisterTarget()->SubtreeRoot() == parent->SubtreeRoot()) ||
+     parent == Target());
+  if (!wantsChildList || !IsObservable(aFirstNewContent)) {
     return;
   }
 
@@ -209,8 +222,11 @@ nsMutationReceiver::ContentInserted(nsIDocument* aDocument,
                                     int32_t aIndexInContainer)
 {
   nsINode* parent = NODE_FROM(aContainer, aDocument);
-  bool wantsChildList = ChildList() && (Subtree() || parent == Target());
-  if (!wantsChildList || aChild->ChromeOnlyAccess()) {
+  bool wantsChildList =
+    ChildList() &&
+    ((Subtree() && RegisterTarget()->SubtreeRoot() == parent->SubtreeRoot()) ||
+     parent == Target());
+  if (!wantsChildList || !IsObservable(aChild)) {
     return;
   }
 
@@ -241,11 +257,14 @@ nsMutationReceiver::ContentRemoved(nsIDocument* aDocument,
                                    int32_t aIndexInContainer,
                                    nsIContent* aPreviousSibling)
 {
-  if (aChild->ChromeOnlyAccess()) {
+  if (!IsObservable(aChild)) {
     return;
   }
 
   nsINode* parent = NODE_FROM(aContainer, aDocument);
+  if (Subtree() && parent->SubtreeRoot() != RegisterTarget()->SubtreeRoot()) {
+    return;
+  }
   if (nsAutoMutationBatch::IsBatching()) {
     if (nsAutoMutationBatch::IsRemovalDone()) {
       // This can happen for example if HTML parser parses to
@@ -263,7 +282,7 @@ nsMutationReceiver::ContentRemoved(nsIDocument* aDocument,
     }
 
     return;
-  }                                                                   
+  }
 
   if (Subtree()) {
     // Try to avoid creating transient observer if the node
@@ -323,15 +342,15 @@ void nsMutationReceiver::NodeWillBeDestroyed(const nsINode *aNode)
 }
 
 void
-nsAnimationReceiver::RecordAnimationMutation(AnimationPlayer* aPlayer,
+nsAnimationReceiver::RecordAnimationMutation(Animation* aAnimation,
                                              AnimationMutation aMutationType)
 {
-  Animation* source = aPlayer->GetSource();
-  if (!source) {
+  KeyframeEffectReadOnly* effect = aAnimation->GetEffect();
+  if (!effect) {
     return;
   }
 
-  Element* animationTarget = source->GetTarget();
+  Element* animationTarget = effect->GetTarget();
   if (!animationTarget) {
     return;
   }
@@ -348,13 +367,13 @@ nsAnimationReceiver::RecordAnimationMutation(AnimationPlayer* aPlayer,
 
     switch (aMutationType) {
       case eAnimationMutation_Added:
-        nsAutoAnimationMutationBatch::AnimationAdded(aPlayer);
+        nsAutoAnimationMutationBatch::AnimationAdded(aAnimation);
         break;
       case eAnimationMutation_Changed:
-        nsAutoAnimationMutationBatch::AnimationChanged(aPlayer);
+        nsAutoAnimationMutationBatch::AnimationChanged(aAnimation);
         break;
       case eAnimationMutation_Removed:
-        nsAutoAnimationMutationBatch::AnimationRemoved(aPlayer);
+        nsAutoAnimationMutationBatch::AnimationRemoved(aAnimation);
         break;
     }
 
@@ -371,33 +390,33 @@ nsAnimationReceiver::RecordAnimationMutation(AnimationPlayer* aPlayer,
 
   switch (aMutationType) {
     case eAnimationMutation_Added:
-      m->mAddedAnimations.AppendElement(aPlayer);
+      m->mAddedAnimations.AppendElement(aAnimation);
       break;
     case eAnimationMutation_Changed:
-      m->mChangedAnimations.AppendElement(aPlayer);
+      m->mChangedAnimations.AppendElement(aAnimation);
       break;
     case eAnimationMutation_Removed:
-      m->mRemovedAnimations.AppendElement(aPlayer);
+      m->mRemovedAnimations.AppendElement(aAnimation);
       break;
   }
 }
 
 void
-nsAnimationReceiver::AnimationAdded(AnimationPlayer* aPlayer)
+nsAnimationReceiver::AnimationAdded(Animation* aAnimation)
 {
-  RecordAnimationMutation(aPlayer, eAnimationMutation_Added);
+  RecordAnimationMutation(aAnimation, eAnimationMutation_Added);
 }
 
 void
-nsAnimationReceiver::AnimationChanged(AnimationPlayer* aPlayer)
+nsAnimationReceiver::AnimationChanged(Animation* aAnimation)
 {
-  RecordAnimationMutation(aPlayer, eAnimationMutation_Changed);
+  RecordAnimationMutation(aAnimation, eAnimationMutation_Changed);
 }
 
 void
-nsAnimationReceiver::AnimationRemoved(AnimationPlayer* aPlayer)
+nsAnimationReceiver::AnimationRemoved(Animation* aAnimation)
 {
-  RecordAnimationMutation(aPlayer, eAnimationMutation_Removed);
+  RecordAnimationMutation(aAnimation, eAnimationMutation_Removed);
 }
 
 NS_IMPL_ISUPPORTS_INHERITED(nsAnimationReceiver, nsMutationReceiver,
@@ -712,8 +731,9 @@ nsDOMMutationObserver::Constructor(const mozilla::dom::GlobalObject& aGlobal,
     return nullptr;
   }
   MOZ_ASSERT(window->IsInnerWindow());
+  bool isChrome = nsContentUtils::IsChromeDoc(window->GetExtantDoc());
   nsRefPtr<nsDOMMutationObserver> observer =
-    new nsDOMMutationObserver(window.forget(), aCb);
+    new nsDOMMutationObserver(window.forget(), aCb, isChrome);
   return observer.forget();
 }
 
@@ -1018,11 +1038,11 @@ nsAutoAnimationMutationBatch::Done()
 
     for (const Entry& e : mEntries) {
       if (e.mState == eState_Added) {
-        m->mAddedAnimations.AppendElement(e.mPlayer);
+        m->mAddedAnimations.AppendElement(e.mAnimation);
       } else if (e.mState == eState_Removed) {
-        m->mRemovedAnimations.AppendElement(e.mPlayer);
+        m->mRemovedAnimations.AppendElement(e.mAnimation);
       } else if (e.mState == eState_RemainedPresent && e.mChanged) {
-        m->mChangedAnimations.AppendElement(e.mPlayer);
+        m->mChangedAnimations.AppendElement(e.mAnimation);
       }
     }
 

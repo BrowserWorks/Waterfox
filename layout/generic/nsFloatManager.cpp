@@ -39,7 +39,10 @@ PSArenaFreeCB(size_t aSize, void* aPtr, void* aClosure)
 
 nsFloatManager::nsFloatManager(nsIPresShell* aPresShell,
                                mozilla::WritingMode aWM)
-  : mWritingMode(aWM),
+  :
+#ifdef DEBUG
+    mWritingMode(aWM),
+#endif
     mLineLeft(0), mBlockStart(0),
     mFloatDamage(PSArenaAllocCB, PSArenaFreeCB, aPresShell),
     mPushedLeftFloatPastBreak(false),
@@ -66,7 +69,7 @@ void* nsFloatManager::operator new(size_t aSize) CPP_THROW_NEW
 
   // The cache is empty, this means we haveto create a new instance using
   // the global |operator new|.
-  return nsMemory::Alloc(aSize);
+  return moz_xmalloc(aSize);
 }
 
 void
@@ -89,7 +92,7 @@ nsFloatManager::operator delete(void* aPtr, size_t aSize)
 
   // The cache is full, or the layout module has been shut down,
   // delete this float manager.
-  nsMemory::Free(aPtr);
+  free(aPtr);
 }
 
 
@@ -104,12 +107,16 @@ void nsFloatManager::Shutdown()
   for (i = 0; i < sCachedFloatManagerCount; i++) {
     void* floatManager = sCachedFloatManagers[i];
     if (floatManager)
-      nsMemory::Free(floatManager);
+      free(floatManager);
   }
 
   // Disable further caching.
   sCachedFloatManagerCount = -1;
 }
+
+#define CHECK_BLOCK_DIR(aWM) \
+  NS_ASSERTION(aWM.GetBlockDir() == mWritingMode.value.GetBlockDir(), \
+  "incompatible writing modes")
 
 nsFlowAreaRect
 nsFloatManager::GetFlowArea(WritingMode aWM, nscoord aBOffset,
@@ -117,6 +124,7 @@ nsFloatManager::GetFlowArea(WritingMode aWM, nscoord aBOffset,
                             LogicalRect aContentArea, SavedState* aState,
                             nscoord aContainerWidth) const
 {
+  CHECK_BLOCK_DIR(aWM);
   NS_ASSERTION(aBSize >= 0, "unexpected max block size");
   NS_ASSERTION(aContentArea.ISize(aWM) >= 0,
                "unexpected content area inline size");
@@ -246,6 +254,7 @@ nsresult
 nsFloatManager::AddFloat(nsIFrame* aFloatFrame, const LogicalRect& aMarginRect,
                          WritingMode aWM, nscoord aContainerWidth)
 {
+  CHECK_BLOCK_DIR(aWM);
   NS_ASSERTION(aMarginRect.ISize(aWM) >= 0, "negative inline size!");
   NS_ASSERTION(aMarginRect.BSize(aWM) >= 0, "negative block size!");
 
@@ -405,7 +414,6 @@ nsFloatManager::PushState(SavedState* aState)
   // reflow. In the typical case A and C will be the same, but not always.
   // Allowing mFloatDamage to accumulate the damage incurred during both
   // reflows ensures that nothing gets missed.
-  aState->mWritingMode = mWritingMode;
   aState->mLineLeft = mLineLeft;
   aState->mBlockStart = mBlockStart;
   aState->mPushedLeftFloatPastBreak = mPushedLeftFloatPastBreak;
@@ -420,7 +428,6 @@ nsFloatManager::PopState(SavedState* aState)
 {
   NS_PRECONDITION(aState, "No state to restore?");
 
-  mWritingMode = aState->mWritingMode;
   mLineLeft = aState->mLineLeft;
   mBlockStart = aState->mBlockStart;
   mPushedLeftFloatPastBreak = aState->mPushedLeftFloatPastBreak;

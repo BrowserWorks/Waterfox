@@ -48,6 +48,7 @@
 #include "nsIMemoryReporter.h"
 #include "nsIParentalControlsService.h"
 #include "nsINetworkLinkService.h"
+#include "nsHttpChannelAuthProvider.h"
 
 #include "mozilla/net/NeckoChild.h"
 #include "mozilla/ipc/URIUtils.h"
@@ -191,8 +192,8 @@ nsHttpHandler::nsHttpHandler()
     , mCoalesceSpdy(true)
     , mSpdyPersistentSettings(false)
     , mAllowPush(true)
-    , mEnableAltSvc(true)
-    , mEnableAltSvcOE(true)
+    , mEnableAltSvc(false)
+    , mEnableAltSvcOE(false)
     , mSpdySendingChunkSize(ASpdySession::kSendingChunkSize)
     , mSpdySendBufferSize(ASpdySession::kTCPSendBufferSize)
     , mSpdyPushAllowance(32768)
@@ -213,9 +214,7 @@ nsHttpHandler::nsHttpHandler()
     , mTCPKeepaliveLongLivedIdleTimeS(600)
     , mEnforceH1Framing(FRAMECHECK_BARELY)
 {
-#if defined(PR_LOGGING)
     gHttpLog = PR_NewLogModule("nsHttp");
-#endif
 
     LOG(("Creating nsHttpHandler [this=%p].\n", this));
 
@@ -286,6 +285,8 @@ nsHttpHandler::Init()
         PrefsChanged(prefBranch, nullptr);
     }
 
+    nsHttpChannelAuthProvider::InitializePrefs();
+
     mMisc.AssignLiteral("rv:" MOZILLA_UAVERSION);
 
     mCompatFirefox.AssignLiteral("Waterfox/" MOZ_APP_UA_VERSION);
@@ -348,6 +349,8 @@ nsHttpHandler::Init()
     nsCOMPtr<nsIObserverService> obsService = services::GetObserverService();
     mObserverService = new nsMainThreadPtrHolder<nsIObserverService>(obsService);
     if (mObserverService) {
+        // register the handler object as a weak callback as we don't need to worry
+        // about shutdown ordering.
         mObserverService->AddObserver(this, "profile-change-net-teardown", true);
         mObserverService->AddObserver(this, "profile-change-net-restore", true);
         mObserverService->AddObserver(this, NS_XPCOM_SHUTDOWN_OBSERVER_ID, true);
@@ -355,8 +358,10 @@ nsHttpHandler::Init()
         mObserverService->AddObserver(this, "net:prune-dead-connections", true);
         mObserverService->AddObserver(this, "net:failed-to-process-uri-content", true);
         mObserverService->AddObserver(this, "last-pb-context-exited", true);
+        mObserverService->AddObserver(this, "webapps-clear-data", true);
         mObserverService->AddObserver(this, "browser:purge-session-history", true);
-        mObserverService->AddObserver(this, NS_NETWORK_LINK_TOPIC, false);
+        mObserverService->AddObserver(this, NS_NETWORK_LINK_TOPIC, true);
+        mObserverService->AddObserver(this, "application-background", true);
     }
 
     MakeNewRequestTokenBucket();
@@ -378,8 +383,7 @@ nsHttpHandler::MakeNewRequestTokenBucket()
         return;
 
     nsRefPtr<EventTokenBucket> tokenBucket =
-        new EventTokenBucket(RequestTokenBucketHz(),
-                                           RequestTokenBucketBurst());
+        new EventTokenBucket(RequestTokenBucketHz(), RequestTokenBucketBurst());
     mConnMgr->UpdateRequestTokenBucket(tokenBucket);
 }
 
@@ -670,7 +674,7 @@ nsHttpHandler::BuildUserAgent()
         // "Firefox/x.y" (compatibility) app token
         mUserAgent += ' ';
         mUserAgent += mCompatFirefox;
-    }
+	}
 }
 
 #ifdef XP_WIN
@@ -1269,7 +1273,7 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
     }
 
     if (PREF_CHANGED(HTTP_PREF("altsvc.enabled"))) {
-        rv = prefs->GetBoolPref(HTTP_PREF("atsvc.enabled"),
+        rv = prefs->GetBoolPref(HTTP_PREF("altsvc.enabled"),
                                 &cVar);
         if (NS_SUCCEEDED(rv))
             mEnableAltSvc = cVar;
@@ -1277,7 +1281,7 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
 
 
     if (PREF_CHANGED(HTTP_PREF("altsvc.oe"))) {
-        rv = prefs->GetBoolPref(HTTP_PREF("atsvc.oe"),
+        rv = prefs->GetBoolPref(HTTP_PREF("altsvc.oe"),
                                 &cVar);
         if (NS_SUCCEEDED(rv))
             mEnableAltSvcOE = cVar;
@@ -1449,23 +1453,20 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
             }
         }
     }
-    if (requestTokenBucketUpdated) {
-        MakeNewRequestTokenBucket();
-    }
 
     if (PREF_CHANGED(HTTP_PREF("pacing.requests.enabled"))) {
-        rv = prefs->GetBoolPref(HTTP_PREF("pacing.requests.enabled"),
-                                &cVar);
-        if (NS_SUCCEEDED(rv)){
-            requestTokenBucketUpdated = true;
+        rv = prefs->GetBoolPref(HTTP_PREF("pacing.requests.enabled"), &cVar);
+        if (NS_SUCCEEDED(rv)) {
             mRequestTokenBucketEnabled = cVar;
+            requestTokenBucketUpdated = true;
         }
     }
-
     if (PREF_CHANGED(HTTP_PREF("pacing.requests.min-parallelism"))) {
         rv = prefs->GetIntPref(HTTP_PREF("pacing.requests.min-parallelism"), &val);
-        if (NS_SUCCEEDED(rv))
+        if (NS_SUCCEEDED(rv)) {
             mRequestTokenBucketMinParallelism = static_cast<uint16_t>(clamped(val, 1, 1024));
+            requestTokenBucketUpdated = true;
+        }
     }
     if (PREF_CHANGED(HTTP_PREF("pacing.requests.hz"))) {
         rv = prefs->GetIntPref(HTTP_PREF("pacing.requests.hz"), &val);
@@ -1482,9 +1483,7 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
         }
     }
     if (requestTokenBucketUpdated) {
-        mRequestTokenBucket =
-            new EventTokenBucket(RequestTokenBucketHz(),
-                                 RequestTokenBucketBurst());
+        MakeNewRequestTokenBucket();
     }
 
     // Keepalive values for initial and idle connections.
@@ -1989,6 +1988,10 @@ nsHttpHandler::Observe(nsISupports *subject,
         if (mConnMgr) {
             mConnMgr->ClearAltServiceMappings();
         }
+    } else if (!strcmp(topic, "webapps-clear-data")) {
+        if (mConnMgr) {
+            mConnMgr->ClearAltServiceMappings();
+        }
     } else if (!strcmp(topic, "browser:purge-session-history")) {
         if (mConnMgr) {
             if (gSocketTransportService) {
@@ -2007,6 +2010,12 @@ nsHttpHandler::Observe(nsISupports *subject,
                 mConnMgr->VerifyTraffic();
             }
         }
+    } else if (!strcmp(topic, "application-background")) {
+        // going to the background on android means we should close
+        // down idle connections for power conservation
+        if (mConnMgr) {
+            mConnMgr->DoShiftReloadConnectionCleanup(nullptr);
+        }
     }
 
     return NS_OK;
@@ -2014,14 +2023,15 @@ nsHttpHandler::Observe(nsISupports *subject,
 
 // nsISpeculativeConnect
 
-NS_IMETHODIMP
-nsHttpHandler::SpeculativeConnect(nsIURI *aURI,
-                                  nsIInterfaceRequestor *aCallbacks)
+nsresult
+nsHttpHandler::SpeculativeConnectInternal(nsIURI *aURI,
+                                          nsIInterfaceRequestor *aCallbacks,
+                                          bool anonymous)
 {
     if (IsNeckoChild()) {
         ipc::URIParams params;
         SerializeURI(aURI, params);
-        gNeckoChild->SendSpeculativeConnect(params);
+        gNeckoChild->SendSpeculativeConnect(params, anonymous);
         return NS_OK;
     }
 
@@ -2084,8 +2094,23 @@ nsHttpHandler::SpeculativeConnect(nsIURI *aURI,
 
     nsHttpConnectionInfo *ci =
         new nsHttpConnectionInfo(host, port, EmptyCString(), username, nullptr, usingSSL);
+    ci->SetAnonymous(anonymous);
 
     return SpeculativeConnect(ci, aCallbacks);
+}
+
+NS_IMETHODIMP
+nsHttpHandler::SpeculativeConnect(nsIURI *aURI,
+                                  nsIInterfaceRequestor *aCallbacks)
+{
+    return SpeculativeConnectInternal(aURI, aCallbacks, false);
+}
+
+NS_IMETHODIMP
+nsHttpHandler::SpeculativeAnonymousConnect(nsIURI *aURI,
+                                           nsIInterfaceRequestor *aCallbacks)
+{
+    return SpeculativeConnectInternal(aURI, aCallbacks, true);
 }
 
 void

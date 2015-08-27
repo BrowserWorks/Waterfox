@@ -15,15 +15,14 @@
 #include "nsString.h"
 #include "nsTArray.h"
 #include "nsRefPtrHashtable.h"
+#include "nsRect.h"
 
 struct nsRoleMapEntry;
 
 struct nsRect;
 class nsIFrame;
 class nsIAtom;
-struct nsIntRect;
 class nsIPersistentProperties;
-class nsView;
 
 namespace mozilla {
 namespace a11y {
@@ -39,7 +38,6 @@ class HTMLLIAccessible;
 class HyperTextAccessible;
 class ImageAccessible;
 class KeyBinding;
-class MathMLAccessible;
 class ProxyAccessible;
 class Relation;
 class RootAccessible;

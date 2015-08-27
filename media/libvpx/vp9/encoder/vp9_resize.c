@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "vpx_ports/mem.h"
 #include "vp9/common/vp9_common.h"
 #include "vp9/encoder/vp9_resize.h"
 
@@ -427,7 +428,7 @@ static int get_down2_length(int length, int steps) {
   return length;
 }
 
-int get_down2_steps(int in_length, int out_length) {
+static int get_down2_steps(int in_length, int out_length) {
   int steps = 0;
   int proj_in_length;
   while ((proj_in_length = get_down2_length(in_length, 1)) >= out_length) {
@@ -516,6 +517,10 @@ void vp9_resize_plane(const uint8_t *const input,
   uint8_t *tmpbuf = (uint8_t *)malloc(sizeof(uint8_t) *
                                       (width < height ? height : width));
   uint8_t *arrbuf = (uint8_t *)malloc(sizeof(uint8_t) * (height + height2));
+  assert(width > 0);
+  assert(height > 0);
+  assert(width2 > 0);
+  assert(height2 > 0);
   for (i = 0; i < height; ++i)
     resize_multistep(input + in_stride * i, width,
                         intbuf + width2 * i, width2, tmpbuf);
@@ -571,7 +576,7 @@ static void highbd_interpolate(const uint16_t *const input, int inlength,
         sum += filter[k] *
             input[(pk < 0 ? 0 : (pk >= inlength ? inlength - 1 : pk))];
       }
-      *optr++ = clip_pixel_high(ROUND_POWER_OF_TWO(sum, FILTER_BITS), bd);
+      *optr++ = clip_pixel_highbd(ROUND_POWER_OF_TWO(sum, FILTER_BITS), bd);
     }
   } else {
     // Initial part.
@@ -585,7 +590,7 @@ static void highbd_interpolate(const uint16_t *const input, int inlength,
         sum += filter[k] *
             input[(int_pel - INTERP_TAPS / 2 + 1 + k < 0 ?
                    0 : int_pel - INTERP_TAPS / 2 + 1 + k)];
-      *optr++ = clip_pixel_high(ROUND_POWER_OF_TWO(sum, FILTER_BITS), bd);
+      *optr++ = clip_pixel_highbd(ROUND_POWER_OF_TWO(sum, FILTER_BITS), bd);
     }
     // Middle part.
     for (; x <= x2; ++x, y += delta) {
@@ -596,7 +601,7 @@ static void highbd_interpolate(const uint16_t *const input, int inlength,
       sum = 0;
       for (k = 0; k < INTERP_TAPS; ++k)
         sum += filter[k] * input[int_pel - INTERP_TAPS / 2 + 1 + k];
-      *optr++ = clip_pixel_high(ROUND_POWER_OF_TWO(sum, FILTER_BITS), bd);
+      *optr++ = clip_pixel_highbd(ROUND_POWER_OF_TWO(sum, FILTER_BITS), bd);
     }
     // End part.
     for (; x < outlength; ++x, y += delta) {
@@ -609,7 +614,7 @@ static void highbd_interpolate(const uint16_t *const input, int inlength,
         sum += filter[k] * input[(int_pel - INTERP_TAPS / 2 + 1 + k >=
                                   inlength ?  inlength - 1 :
                                   int_pel - INTERP_TAPS / 2 + 1 + k)];
-      *optr++ = clip_pixel_high(ROUND_POWER_OF_TWO(sum, FILTER_BITS), bd);
+      *optr++ = clip_pixel_highbd(ROUND_POWER_OF_TWO(sum, FILTER_BITS), bd);
     }
   }
 }
@@ -635,7 +640,7 @@ static void highbd_down2_symeven(const uint16_t *const input, int length,
             filter[j];
       }
       sum >>= FILTER_BITS;
-      *optr++ = clip_pixel_high(sum, bd);
+      *optr++ = clip_pixel_highbd(sum, bd);
     }
   } else {
     // Initial part.
@@ -645,7 +650,7 @@ static void highbd_down2_symeven(const uint16_t *const input, int length,
         sum += (input[(i - j < 0 ? 0 : i - j)] + input[i + 1 + j]) * filter[j];
       }
       sum >>= FILTER_BITS;
-      *optr++ = clip_pixel_high(sum, bd);
+      *optr++ = clip_pixel_highbd(sum, bd);
     }
     // Middle part.
     for (; i < l2; i += 2) {
@@ -654,7 +659,7 @@ static void highbd_down2_symeven(const uint16_t *const input, int length,
         sum += (input[i - j] + input[i + 1 + j]) * filter[j];
       }
       sum >>= FILTER_BITS;
-      *optr++ = clip_pixel_high(sum, bd);
+      *optr++ = clip_pixel_highbd(sum, bd);
     }
     // End part.
     for (; i < length; i += 2) {
@@ -665,7 +670,7 @@ static void highbd_down2_symeven(const uint16_t *const input, int length,
             filter[j];
       }
       sum >>= FILTER_BITS;
-      *optr++ = clip_pixel_high(sum, bd);
+      *optr++ = clip_pixel_highbd(sum, bd);
     }
   }
 }
@@ -691,7 +696,7 @@ static void highbd_down2_symodd(const uint16_t *const input, int length,
             filter[j];
       }
       sum >>= FILTER_BITS;
-      *optr++ = clip_pixel_high(sum, bd);
+      *optr++ = clip_pixel_highbd(sum, bd);
     }
   } else {
     // Initial part.
@@ -701,7 +706,7 @@ static void highbd_down2_symodd(const uint16_t *const input, int length,
         sum += (input[(i - j < 0 ? 0 : i - j)] + input[i + j]) * filter[j];
       }
       sum >>= FILTER_BITS;
-      *optr++ = clip_pixel_high(sum, bd);
+      *optr++ = clip_pixel_highbd(sum, bd);
     }
     // Middle part.
     for (; i < l2; i += 2) {
@@ -710,7 +715,7 @@ static void highbd_down2_symodd(const uint16_t *const input, int length,
         sum += (input[i - j] + input[i + j]) * filter[j];
       }
       sum >>= FILTER_BITS;
-      *optr++ = clip_pixel_high(sum, bd);
+      *optr++ = clip_pixel_highbd(sum, bd);
     }
     // End part.
     for (; i < length; i += 2) {
@@ -720,7 +725,7 @@ static void highbd_down2_symodd(const uint16_t *const input, int length,
             filter[j];
       }
       sum >>= FILTER_BITS;
-      *optr++ = clip_pixel_high(sum, bd);
+      *optr++ = clip_pixel_highbd(sum, bd);
     }
   }
 }

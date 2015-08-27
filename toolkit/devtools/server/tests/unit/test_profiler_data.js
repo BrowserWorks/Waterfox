@@ -16,8 +16,8 @@ function run_test()
 {
   get_chrome_actors((client, form) => {
     let actor = form.profilerActor;
-    activate_profiler(client, actor, () => {
-      test_data(client, actor, () => {
+    activate_profiler(client, actor, startTime => {
+      test_data(client, actor, startTime, () => {
         deactivate_profiler(client, actor, () => {
           client.close(do_test_finished);
         })
@@ -34,7 +34,7 @@ function activate_profiler(client, actor, callback)
     do_check_true(response.started);
     client.request({ to: actor, type: "isActive" }, response => {
       do_check_true(response.isActive);
-      callback();
+      callback(response.currentTime);
     });
   });
 }
@@ -50,7 +50,7 @@ function deactivate_profiler(client, actor, callback)
   });
 }
 
-function test_data(client, actor, callback)
+function test_data(client, actor, startTime, callback)
 {
   function attempt(delay)
   {
@@ -64,7 +64,7 @@ function test_data(client, actor, callback)
     while (Date.now() - start < delay) { stack = Components.stack; }
     do_print("Attempt: finished waiting.");
 
-    client.request({ to: actor, type: "getProfile" }, response => {
+    client.request({ to: actor, type: "getProfile", startTime  }, response => {
       // Any valid getProfile response should have the following top
       // level structure.
       do_check_eq(typeof response.profile, "object");
@@ -94,11 +94,11 @@ function test_data(client, actor, callback)
       // Now check the samples. At least one sample is expected to
       // have been in the busy wait above.
       let loc = stack.name + " (" + stack.filename + ":" + funcLine + ")";
-
-      do_check_true(response.profile.threads[0].samples.some(sample => {
-        return typeof sample.frames == "object" &&
-               sample.frames.length != 0 &&
-               sample.frames.some(f => (f.location == loc));
+      let thread0 = response.profile.threads[0];
+      do_check_true(thread0.samples.data.some(sample => {
+        let frames = getInflatedStackLocations(thread0, sample);
+        return frames.length != 0 &&
+               frames.some(location => (location == loc));
       }));
 
       callback();

@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -19,7 +19,6 @@
 #include "nsTHashtable.h"
 
 class nsIDocument;
-class nsIWeakReference;
 class nsPIDOMWindow;
 
 namespace mozilla {
@@ -32,7 +31,8 @@ namespace dom {
 class File;
 class DOMStringList;
 struct IDBObjectStoreParameters;
-template <typename> class Sequence;
+template <class> class Optional;
+class StringOrStringSequence;
 
 namespace indexedDB {
 
@@ -199,6 +199,12 @@ public:
   void
   NoteFinishedMutableFile(IDBMutableFile* aMutableFile);
 
+  void
+  OnNewFileHandle();
+
+  void
+  OnFileHandleFinished();
+
   nsPIDOMWindow*
   GetParentObject() const;
 
@@ -213,15 +219,17 @@ public:
   void
   DeleteObjectStore(const nsAString& name, ErrorResult& aRv);
 
+  // This will be called from the DOM.
   already_AddRefed<IDBTransaction>
-  Transaction(const nsAString& aStoreName,
+  Transaction(const StringOrStringSequence& aStoreNames,
               IDBTransactionMode aMode,
               ErrorResult& aRv);
 
-  already_AddRefed<IDBTransaction>
-  Transaction(const Sequence<nsString>& aStoreNames,
+  // This can be called from C++ to avoid JS exception.
+  nsresult
+  Transaction(const StringOrStringSequence& aStoreNames,
               IDBTransactionMode aMode,
-              ErrorResult& aRv);
+              IDBTransaction** aTransaction);
 
   StorageType
   Storage() const;

@@ -17,10 +17,9 @@
 #include "mozilla/layers/PImageBridgeChild.h"
 #include "nsDebug.h"                    // for NS_RUNTIMEABORT
 #include "nsRegion.h"                   // for nsIntRegion
+#include "mozilla/gfx/Rect.h"
 
 class MessageLoop;
-struct nsIntPoint;
-struct nsIntRect;
 
 namespace base {
 class Thread;
@@ -33,7 +32,6 @@ class Shmem;
 
 namespace layers {
 
-class ClientTiledLayerBuffer;
 class AsyncTransactionTracker;
 class ImageClient;
 class ImageContainer;
@@ -154,6 +152,9 @@ public:
    */
   void ConnectAsync(ImageBridgeParent* aParent);
 
+  using PImageBridgeChild::SendImageBridgeThreadId;
+  void SendImageBridgeThreadId();
+
   static void IdentifyCompositorTextureHost(const TextureFactoryIdentifier& aIdentifier);
 
   void BeginTransaction();
@@ -222,10 +223,6 @@ public:
                                 const OverlaySource& aOverlay) override;
 #endif
 
-  virtual void SendFenceHandle(AsyncTransactionTracker* aTracker,
-                               PTextureChild* aTexture,
-                               const FenceHandle& aFence) override;
-
   virtual void RemoveTextureFromCompositable(CompositableClient* aCompositable,
                                              TextureClient* aTexture) override;
 
@@ -245,7 +242,7 @@ public:
    * Communicate the picture rect of a YUV image in aLayer to the compositor
    */
   virtual void UpdatePictureRect(CompositableClient* aCompositable,
-                                 const nsIntRect& aRect) override;
+                                 const gfx::IntRect& aRect) override;
 
 
   virtual void UpdateTextureRegion(CompositableClient* aCompositable,

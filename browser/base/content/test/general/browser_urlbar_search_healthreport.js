@@ -27,8 +27,10 @@ add_task(function* test_healthreport_search_recording() {
   let now = new Date();
   let oldCount = 0;
 
-  // This will to be need changed if default search engine is not Yahoo.
-  let defaultEngineID = "yahoo";
+  // This will to be need changed if default search engine is not Google.
+  // Note: geoSpecificDefaults are disabled for mochitests, so this is the
+  // non-US en-US default.
+  let defaultEngineID = "google";
 
   let field = defaultEngineID + ".urlbar";
 
@@ -67,7 +69,7 @@ add_task(function* test_healthreport_search_recording() {
   let oldTelemetry = Services.prefs.getBoolPref("toolkit.telemetry.enabled");
   Services.prefs.setBoolPref("toolkit.telemetry.enabled", true);
 
-  m = provider.getMeasurement("engines", 1);
+  m = provider.getMeasurement("engines", 2);
   yield provider.collectDailyData();
   data = yield m.getValues();
 

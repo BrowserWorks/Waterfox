@@ -11,7 +11,7 @@
 #include "mozilla/CheckedInt.h"
 #include "VideoUtils.h"
 #include "ImageContainer.h"
-#include "mp4_demuxer/mp4_demuxer.h"
+#include "MediaInfo.h"
 #include "MediaTaskQueue.h"
 
 namespace mozilla {
@@ -41,7 +41,7 @@ public:
 
   class OutputEvent : public nsRunnable {
   public:
-    OutputEvent(mp4_demuxer::MP4Sample* aSample,
+    OutputEvent(MediaRawData* aSample,
                 MediaDataDecoderCallback* aCallback,
                 BlankMediaDataCreator* aCreator)
       : mSample(aSample)
@@ -51,19 +51,19 @@ public:
     }
     NS_IMETHOD Run() override
     {
-      nsRefPtr<MediaData> data = mCreator->Create(mSample->composition_timestamp,
-                                                  mSample->duration,
-                                                  mSample->byte_offset);
+      nsRefPtr<MediaData> data = mCreator->Create(mSample->mTime,
+                                                  mSample->mDuration,
+                                                  mSample->mOffset);
       mCallback->Output(data);
       return NS_OK;
     }
   private:
-    nsAutoPtr<mp4_demuxer::MP4Sample> mSample;
+    nsRefPtr<MediaRawData> mSample;
     BlankMediaDataCreator* mCreator;
     MediaDataDecoderCallback* mCallback;
   };
 
-  virtual nsresult Input(mp4_demuxer::MP4Sample* aSample) override
+  virtual nsresult Input(MediaRawData* aSample) override
   {
     // The MediaDataDecoder must delete the sample when we're finished
     // with it, so the OutputEvent stores it in an nsAutoPtr and deletes
@@ -208,13 +208,13 @@ public:
 
   // Decode thread.
   virtual already_AddRefed<MediaDataDecoder>
-  CreateVideoDecoder(const mp4_demuxer::VideoDecoderConfig& aConfig,
+  CreateVideoDecoder(const VideoInfo& aConfig,
                      layers::LayersBackend aLayersBackend,
                      layers::ImageContainer* aImageContainer,
                      FlushableMediaTaskQueue* aVideoTaskQueue,
                      MediaDataDecoderCallback* aCallback) override {
     BlankVideoDataCreator* creator = new BlankVideoDataCreator(
-      aConfig.display_width, aConfig.display_height, aImageContainer);
+      aConfig.mDisplay.width, aConfig.mDisplay.height, aImageContainer);
     nsRefPtr<MediaDataDecoder> decoder =
       new BlankMediaDataDecoder<BlankVideoDataCreator>(creator,
                                                        aVideoTaskQueue,
@@ -224,11 +224,11 @@ public:
 
   // Decode thread.
   virtual already_AddRefed<MediaDataDecoder>
-  CreateAudioDecoder(const mp4_demuxer::AudioDecoderConfig& aConfig,
+  CreateAudioDecoder(const AudioInfo& aConfig,
                      FlushableMediaTaskQueue* aAudioTaskQueue,
                      MediaDataDecoderCallback* aCallback) override {
     BlankAudioDataCreator* creator = new BlankAudioDataCreator(
-      aConfig.channel_count, aConfig.samples_per_second);
+      aConfig.mChannels, aConfig.mRate);
 
     nsRefPtr<MediaDataDecoder> decoder =
       new BlankMediaDataDecoder<BlankAudioDataCreator>(creator,
@@ -238,9 +238,15 @@ public:
   }
 
   virtual bool
-  SupportsAudioMimeType(const nsACString& aMimeType) override
+  SupportsMimeType(const nsACString& aMimeType) override
   {
     return true;
+  }
+
+  virtual ConversionRequired
+  DecoderNeedsConversion(const TrackInfo& aConfig) const override
+  {
+    return kNeedNone;
   }
 
 };

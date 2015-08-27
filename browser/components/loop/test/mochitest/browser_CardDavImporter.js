@@ -1,13 +1,15 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
+"use strict";
+
 const {CardDavImporter} = Cu.import("resource:///modules/loop/CardDavImporter.jsm", {});
 
 const kAuth = {
   "method": "basic",
   "user": "username",
   "password": "p455w0rd"
-}
+};
 
 
 // "pid" for "provider ID"
@@ -79,7 +81,7 @@ let vcards = [
     "EMAIL:anyone@example.com\n" +
     "REV:2011-07-12T14:43:20Z\n" +
     "UID:pid8\n" +
-    "END:VCARD\n",
+    "END:VCARD\n"
 ];
 
 
@@ -164,7 +166,7 @@ const monkeyPatchImporter = function(importer) {
     });
   }.bind(importer);
   return importer;
-}
+};
 
 add_task(function* test_CardDavImport() {
   let importer = monkeyPatchImporter(new CardDavImporter());
@@ -317,8 +319,8 @@ add_task(function* test_CardDavImport() {
   error = yield new Promise ((resolve, reject) => {
     info("Initiating import");
     importer.startImport({
-        "host": "example.com",
+        "host": "example.com"
       }, (err, result) => { err ? resolve(err) : reject(new Error("Should have failed")); }, mockDb);
   });
   Assert.equal(error.message, "No authentication specified", "Missing parameters should generate error");
-})
+});

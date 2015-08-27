@@ -15,6 +15,7 @@
 #include "signaling/src/jsep/JsepTrack.h"
 #include "signaling/src/jsep/JsepTrackImpl.h"
 #include "signaling/src/sdp/SipccSdpParser.h"
+#include "signaling/src/common/PtrVector.h"
 
 namespace mozilla {
 
@@ -38,8 +39,6 @@ public:
         mUuidGen(Move(uuidgen))
   {
   }
-
-  virtual ~JsepSessionImpl();
 
   // Implement JsepSession methods.
   virtual nsresult Init() override;
@@ -76,7 +75,7 @@ public:
   virtual std::vector<JsepCodecDescription*>&
   Codecs() override
   {
-    return mCodecs;
+    return mCodecs.values;
   }
 
   virtual nsresult ReplaceTrack(const std::string& oldStreamId,
@@ -121,6 +120,8 @@ public:
 
   virtual nsresult EndOfLocalCandidates(const std::string& defaultCandidateAddr,
                                         uint16_t defaultCandidatePort,
+                                        const std::string& defaultRtcpCandidateAddr,
+                                        uint16_t defaultRtcpCandidatePort,
                                         uint16_t level) override;
 
   virtual nsresult Close() override;
@@ -176,18 +177,21 @@ private:
   void AddCodecs(SdpMediaSection* msection) const;
   void AddExtmap(SdpMediaSection* msection) const;
   void AddMid(const std::string& mid, SdpMediaSection* msection) const;
-  void AddLocalSsrcs(const JsepTrack& track, SdpMediaSection* msection) const;
+  void SetSsrcs(const std::vector<uint32_t>& ssrcs,
+                SdpMediaSection* msection) const;
   void AddLocalIds(const JsepTrack& track, SdpMediaSection* msection) const;
   JsepCodecDescription* FindMatchingCodec(
       const std::string& pt,
       const SdpMediaSection& msection) const;
   const std::vector<SdpExtmapAttributeList::Extmap>* GetRtpExtensions(
       SdpMediaSection::MediaType type) const;
-  void AddCommonCodecs(const SdpMediaSection& remoteMsection,
-                       SdpMediaSection* msection);
+
+  PtrVector<JsepCodecDescription> GetCommonCodecs(
+      const SdpMediaSection& remoteMsection);
   void AddCommonExtmaps(const SdpMediaSection& remoteMsection,
                         SdpMediaSection* msection);
   nsresult SetupIds();
+  nsresult CreateSsrc(uint32_t* ssrc);
   void SetupDefaultCodecs();
   void SetupDefaultRtpExtensions();
   void SetState(JsepSignalingState state);
@@ -260,8 +264,8 @@ private:
   nsresult CreateAnswerMSection(const JsepAnswerOptions& options,
                                 size_t mlineIndex,
                                 const SdpMediaSection& remoteMsection,
-                                SdpMediaSection* msection,
                                 Sdp* sdp);
+  nsresult SetRecvonlySsrc(SdpMediaSection* msection);
   nsresult BindMatchingLocalTrackForAnswer(SdpMediaSection* msection);
   nsresult DetermineAnswererSetupRole(const SdpMediaSection& remoteMsection,
                                       SdpSetupAttribute::Role* rolep);
@@ -306,7 +310,7 @@ private:
   bool IsBundleSlave(const Sdp& localSdp, uint16_t level);
 
   void DisableMsection(Sdp* sdp, SdpMediaSection* msection) const;
-  nsresult EnableMsection(SdpMediaSection* msection);
+  nsresult EnableOfferMsection(SdpMediaSection* msection);
 
   nsresult SetUniquePayloadTypes();
   nsresult GetAllPayloadTypes(const JsepTrackNegotiatedDetails& trackDetails,
@@ -341,12 +345,15 @@ private:
   // Used to prevent duplicate local SSRCs. Not used to prevent local/remote or
   // remote-only duplication, which will be important for EKT but not now.
   std::set<uint32_t> mSsrcs;
+  // When an m-section doesn't have a local track, it still needs an ssrc, which
+  // is stored here.
+  std::vector<uint32_t> mRecvonlySsrcs;
   UniquePtr<Sdp> mGeneratedLocalDescription; // Created but not set.
   UniquePtr<Sdp> mCurrentLocalDescription;
   UniquePtr<Sdp> mCurrentRemoteDescription;
   UniquePtr<Sdp> mPendingLocalDescription;
   UniquePtr<Sdp> mPendingRemoteDescription;
-  std::vector<JsepCodecDescription*> mCodecs;
+  PtrVector<JsepCodecDescription> mCodecs;
   std::string mLastError;
   SipccSdpParser mParser;
 };

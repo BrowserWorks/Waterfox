@@ -237,12 +237,19 @@ InlineSpellChecker.prototype = {
       if (curlang == sortedList[i].id) {
         item.setAttribute("checked", "true");
       } else {
-        var callback = function(me, val) {
+        var callback = function(me, val, dictName) {
           return function(evt) {
             me.selectDictionary(val);
+            // Notify change of dictionary, especially for Thunderbird,
+            // which is otherwise not notified any more.
+            var view = menu.ownerDocument.defaultView;
+            var spellcheckChangeEvent = new view.CustomEvent(
+                  "spellcheck-changed", {detail: { dictionary: dictName}});
+            menu.ownerDocument.dispatchEvent(spellcheckChangeEvent);
           }
         };
-        item.addEventListener("command", callback(this, i), true);
+        item.addEventListener
+          ("command", callback(this, i, sortedList[i].id), true);
       }
       if (insertBefore)
         menu.insertBefore(item, insertBefore);
@@ -335,7 +342,7 @@ InlineSpellChecker.prototype = {
     this.mInlineSpellChecker.spellCheckRange(null); // causes recheck
   },
 
-  // callback for selecting a suggesteed replacement
+  // callback for selecting a suggested replacement
   replaceMisspelling: function(index)
   {
     if (this.mRemote) {

@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -115,7 +116,7 @@ CheckSanity()
                         // ensure we exercise some nontrivial tree-walking
   T data[numElems] = {1,0,3,1,2,6,5,4}; // intentionally specify only 8 elements for now
   size_t numBytes = numElems * sizeof(T);
-  MOZ_ASSERT(numBytes == sizeof(data));
+  MOZ_RELEASE_ASSERT(numBytes == sizeof(data));
 
   GLenum type = GLType<T>();
 
@@ -139,7 +140,7 @@ CheckSanity()
   CheckValidate(true,  c, type, numElems,     0, numElems);
   CheckValidate(false, c, type, numElems - 1, 0, numElems);
 
-  MOZ_ASSERT(numElems > 10);
+  MOZ_RELEASE_ASSERT(numElems > 10);
   CheckValidate(true,  c, type, numElems - 10, 10, numElems - 10);
   CheckValidate(false, c, type, numElems - 11, 10, numElems - 10);
 }
@@ -156,7 +157,7 @@ CheckUintOverflow()
                               // ensure we exercise some nontrivial tree-walking
   T data[numElems];
   size_t numBytes = numElems * sizeof(T);
-  MOZ_ASSERT(numBytes == sizeof(data));
+  MOZ_RELEASE_ASSERT(numBytes == sizeof(data));
 
   GLenum type = GLType<T>();
 

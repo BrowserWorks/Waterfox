@@ -117,9 +117,16 @@ DebuggerMemory::checkThis(JSContext* cx, CallArgs& args, const char* fnName)
  */
 #define THIS_DEBUGGER_MEMORY(cx, argc, vp, fnName, args, memory)        \
     CallArgs args = CallArgsFromVp(argc, vp);                           \
-    Rooted<DebuggerMemory*> memory(cx, checkThis(cx, args, fnName));   \
+    Rooted<DebuggerMemory*> memory(cx, checkThis(cx, args, fnName));    \
     if (!memory)                                                        \
         return false
+
+static bool
+undefined(CallArgs& args)
+{
+    args.rval().setUndefined();
+    return true;
+}
 
 /* static */ bool
 DebuggerMemory::setTrackingAllocationSites(JSContext* cx, unsigned argc, Value* vp)
@@ -131,37 +138,24 @@ DebuggerMemory::setTrackingAllocationSites(JSContext* cx, unsigned argc, Value* 
     Debugger* dbg = memory->getDebugger();
     bool enabling = ToBoolean(args[0]);
 
-    if (enabling == dbg->trackingAllocationSites) {
-        // Nothing to do here...
-        args.rval().setUndefined();
-        return true;
-    }
-
-    if (enabling) {
-        for (WeakGlobalObjectSet::Range r = dbg->debuggees.all(); !r.empty(); r.popFront()) {
-            JSCompartment* compartment = r.front()->compartment();
-            if (compartment->hasObjectMetadataCallback()) {
-                JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
-                                     JSMSG_OBJECT_METADATA_CALLBACK_ALREADY_SET);
-                return false;
-            }
-        }
-    }
-
-    for (WeakGlobalObjectSet::Range r = dbg->debuggees.all(); !r.empty(); r.popFront()) {
-        if (enabling) {
-            r.front()->compartment()->setObjectMetadataCallback(SavedStacksMetadataCallback);
-        } else {
-            r.front()->compartment()->forgetObjectMetadataCallback();
-        }
-    }
-
-    if (!enabling)
-        dbg->emptyAllocationsLog();
+    if (enabling == dbg->trackingAllocationSites)
+        return undefined(args);
 
     dbg->trackingAllocationSites = enabling;
-    args.rval().setUndefined();
-    return true;
+
+    if (!dbg->enabled)
+        return undefined(args);
+
+    if (enabling) {
+        if (!dbg->addAllocationsTrackingForAllDebuggees(cx)) {
+            dbg->trackingAllocationSites = false;
+            return false;
+        }
+    } else {
+        dbg->removeAllocationsTrackingForAllDebuggees();
+    }
+
+    return undefined(args);
 }
 
 /* static */ bool
@@ -197,7 +191,7 @@ DebuggerMemory::drainAllocationsLog(JSContext* cx, unsigned argc, Value* vp)
             return false;
 
         // Don't pop the AllocationSite yet. The queue's links are followed by
-        // the GC to find the AllocationSite, but are not barried, so we must
+        // the GC to find the AllocationSite, but are not barriered, so we must
         // edit them with great care. Use the queue entry in place, and then
         // pop and delete together.
         Debugger::AllocationSite* allocSite = dbg->allocationsLog.getFirst();
@@ -207,6 +201,19 @@ DebuggerMemory::drainAllocationsLog(JSContext* cx, unsigned argc, Value* vp)
 
         RootedValue timestampValue(cx, NumberValue(allocSite->when));
         if (!DefineProperty(cx, obj, cx->names().timestamp, timestampValue))
+            return false;
+
+        RootedString className(cx, Atomize(cx, allocSite->className, strlen(allocSite->className)));
+        if (!className)
+            return false;
+        RootedValue classNameValue(cx, StringValue(className));
+        if (!DefineProperty(cx, obj, cx->names().class_, classNameValue))
+            return false;
+
+        RootedValue ctorName(cx, NullValue());
+        if (allocSite->ctorName)
+            ctorName.setString(allocSite->ctorName);
+        if (!DefineProperty(cx, obj, cx->names().constructor, ctorName))
             return false;
 
         result->setDenseElement(i, ObjectValue(*obj));

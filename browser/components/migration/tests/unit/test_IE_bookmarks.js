@@ -34,8 +34,3 @@ add_task(function* () {
   // Check the bookmarks have been imported to all the expected parents.
   Assert.equal(expectedParents.length, 0);
 });
-
-function run_test() {
-  run_next_test()
-}
-

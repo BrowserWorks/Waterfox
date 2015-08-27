@@ -130,8 +130,11 @@ Below is an example directory source file::
       ],
       "suggested": [
           {
+              "adgroup_name": "open-source browser",
               "bgColor": "#cae1f4",
+              "check_inadjacency": true,
               "directoryId": 702,
+              "explanation": "Suggested for %1$S enthusiasts who visit sites like %2$S",
               "frecent_sites": [
                   "addons.mozilla.org",
                   "air.mozilla.org",
@@ -148,7 +151,9 @@ Below is an example directory source file::
                   "treeherder.mozilla.org",
                   "wiki.mozilla.org"
               ],
+              "frequency_caps": {"daily": 3, "total": 10},
               "imageURI": "https://tiles.cdn.mozilla.net/images/9ee2b265678f2775de2e4bf680df600b502e6038.3875.png",
+              "time_limits": {"start": "2014-01-01T00:00:00.000Z", "end": "2014-02-01T00:00:00.000Z"},
               "title": "Thanks for testing!",
               "type": "affiliate",
               "url": "https://www.mozilla.com/firefox/tiles"
@@ -178,10 +183,27 @@ Suggested Link Object Extras
 
 A suggested link has additional values:
 
+- ``adgroup_name`` - string to override the hardcoded display name of the
+  triggering set of sites in Firefox.
+- ``check_inadjacency`` - boolean if true prevents the suggested link from being
+  shown if the new tab page is showing a site from an inadjacency list.
+- ``explanation`` - string to override the default explanation that appears
+  below a Suggested Tile. %1$S is replaced by the triggering adgroup name and
+  %2$S is replaced by the triggering site.
 - ``frecent_sites`` - array of strings of the sites that can trigger showing a
   Suggested Tile if the user has the site in one of the top 100 most-frecent
   pages. Only preapproved array of strings that are hardcoded into the
   DirectoryLinksProvider module are allowed.
+- ``frequency_caps`` - an object consisting of daily and total frequency caps
+  that limit the number of times a Suggested Tile can be shown in the new tab
+  per day and overall.
+- ``time_limits`` - an object consisting of start and end timestamps specifying
+  when a Suggested Tile may start and has to stop showing in the newtab.
+  The timestamp is expected in ISO_8601 format: '2014-01-10T20:00:00.000Z'
+
+The inadjacency list is packaged with Firefox as base64-encoded 1-way-hashed
+sites that tend to have adult, gambling, alcohol, drug, and similar content.
+Its location: chrome://browser/content/newtab/newTab.inadjacent.json
 
 The preapproved arrays follow a policy for determining what topic grouping is
 allowed as well as the composition of a grouping. The topics are broad

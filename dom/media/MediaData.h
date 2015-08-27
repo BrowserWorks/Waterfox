@@ -22,6 +22,9 @@ class Image;
 class ImageContainer;
 }
 
+class MediaLargeByteBuffer;
+class MediaByteBuffer;
+
 // Container that holds media samples.
 class MediaData {
 public:
@@ -30,7 +33,8 @@ public:
 
   enum Type {
     AUDIO_DATA = 0,
-    VIDEO_DATA
+    VIDEO_DATA,
+    RAW_DATA
   };
 
   MediaData(Type aType,
@@ -40,7 +44,9 @@ public:
     : mType(aType)
     , mOffset(aOffset)
     , mTime(aTimestamp)
+    , mTimecode(aTimestamp)
     , mDuration(aDuration)
+    , mKeyframe(false)
     , mDiscontinuity(false)
   {}
 
@@ -48,13 +54,19 @@ public:
   const Type mType;
 
   // Approximate byte offset where this data was demuxed from its media.
-  const int64_t mOffset;
+  int64_t mOffset;
 
   // Start time of sample, in microseconds.
-  const int64_t mTime;
+  int64_t mTime;
+
+  // Codec specific internal time code. For Ogg based codecs this is the
+  // granulepos.
+  int64_t mTimecode;
 
   // Duration of sample, in microseconds.
-  const int64_t mDuration;
+  int64_t mDuration;
+
+  bool mKeyframe;
 
   // True if this is the first sample after a gap or discontinuity in
   // the stream. This is true for the first sample in a stream after a seek.
@@ -63,6 +75,16 @@ public:
   int64_t GetEndTime() const { return mTime + mDuration; }
 
 protected:
+  explicit MediaData(Type aType)
+    : mType(aType)
+    , mOffset(0)
+    , mTime(0)
+    , mTimecode(0)
+    , mDuration(0)
+    , mKeyframe(false)
+    , mDiscontinuity(false)
+  {}
+
   virtual ~MediaData() {}
 
 };
@@ -152,7 +174,7 @@ public:
   // Returns nsnull if an error occurs. This may indicate that memory couldn't
   // be allocated to create the VideoData object, or it may indicate some
   // problem with the input data (e.g. negative stride).
-  static already_AddRefed<VideoData> Create(VideoInfo& aInfo,
+  static already_AddRefed<VideoData> Create(const VideoInfo& aInfo,
                                             ImageContainer* aContainer,
                                             Image* aImage,
                                             int64_t aOffset,
@@ -164,7 +186,7 @@ public:
                                             const IntRect& aPicture);
 
   // Variant that always makes a copy of aBuffer
-  static already_AddRefed<VideoData> Create(VideoInfo& aInfo,
+  static already_AddRefed<VideoData> Create(const VideoInfo& aInfo,
                                             ImageContainer* aContainer,
                                             int64_t aOffset,
                                             int64_t aTime,
@@ -175,7 +197,7 @@ public:
                                             const IntRect& aPicture);
 
   // Variant to create a VideoData instance given an existing aImage
-  static already_AddRefed<VideoData> Create(VideoInfo& aInfo,
+  static already_AddRefed<VideoData> Create(const VideoInfo& aInfo,
                                             Image* aImage,
                                             int64_t aOffset,
                                             int64_t aTime,
@@ -185,17 +207,17 @@ public:
                                             int64_t aTimecode,
                                             const IntRect& aPicture);
 
-  static already_AddRefed<VideoData> Create(VideoInfo& aInfo,
-                                             ImageContainer* aContainer,
-                                             int64_t aOffset,
-                                             int64_t aTime,
-                                             int64_t aDuration,
-                                             layers::TextureClient* aBuffer,
-                                             bool aKeyframe,
-                                             int64_t aTimecode,
-                                             const IntRect& aPicture);
+  static already_AddRefed<VideoData> Create(const VideoInfo& aInfo,
+                                            ImageContainer* aContainer,
+                                            int64_t aOffset,
+                                            int64_t aTime,
+                                            int64_t aDuration,
+                                            layers::TextureClient* aBuffer,
+                                            bool aKeyframe,
+                                            int64_t aTimecode,
+                                            const IntRect& aPicture);
 
-  static already_AddRefed<VideoData> CreateFromImage(VideoInfo& aInfo,
+  static already_AddRefed<VideoData> CreateFromImage(const VideoInfo& aInfo,
                                                      ImageContainer* aContainer,
                                                      int64_t aOffset,
                                                      int64_t aTime,
@@ -212,26 +234,26 @@ public:
   // in reader backends that can't determine the duration of a VideoData
   // until the next frame is decoded, i.e. it's a way to change the const
   // duration field on a VideoData.
-  static already_AddRefed<VideoData> ShallowCopyUpdateDuration(VideoData* aOther,
+  static already_AddRefed<VideoData> ShallowCopyUpdateDuration(const VideoData* aOther,
                                                                int64_t aDuration);
 
   // Creates a new VideoData identical to aOther, but with a different
   // specified timestamp. All data from aOther is copied into the new
   // VideoData, as ShallowCopyUpdateDuration() does.
-  static already_AddRefed<VideoData> ShallowCopyUpdateTimestamp(VideoData* aOther,
+  static already_AddRefed<VideoData> ShallowCopyUpdateTimestamp(const VideoData* aOther,
                                                                 int64_t aTimestamp);
 
   // Creates a new VideoData identical to aOther, but with a different
   // specified timestamp and duration. All data from aOther is copied
   // into the new VideoData, as ShallowCopyUpdateDuration() does.
   static already_AddRefed<VideoData>
-  ShallowCopyUpdateTimestampAndDuration(VideoData* aOther, int64_t aTimestamp,
+  ShallowCopyUpdateTimestampAndDuration(const VideoData* aOther, int64_t aTimestamp,
                                         int64_t aDuration);
 
   // Initialize PlanarYCbCrImage. Only When aCopyData is true,
   // video data is copied to PlanarYCbCrImage.
   static void SetVideoDataToImage(PlanarYCbCrImage* aVideoImage,
-                                  VideoInfo& aInfo,
+                                  const VideoInfo& aInfo,
                                   const YCbCrBuffer &aBuffer,
                                   const IntRect& aPicture,
                                   bool aCopyData);
@@ -255,17 +277,12 @@ public:
   // dimensions scaled with respect to its aspect ratio.
   const IntSize mDisplay;
 
-  // Codec specific internal time code. For Ogg based codecs this is the
-  // granulepos.
-  const int64_t mTimecode;
-
   // This frame's image.
   nsRefPtr<Image> mImage;
 
   // When true, denotes that this frame is identical to the frame that
   // came before; it's a duplicate. mBuffer will be empty.
   const bool mDuplicate;
-  const bool mKeyframe;
 
   VideoData(int64_t aOffset,
             int64_t aTime,
@@ -283,13 +300,132 @@ protected:
   ~VideoData();
 };
 
-  // LargeDataBuffer is a ref counted fallible TArray.
-  // It is designed to share potentially big byte arrays.
-class LargeDataBuffer : public FallibleTArray<uint8_t> {
-  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(LargeDataBuffer);
+class CryptoTrack
+{
+public:
+  CryptoTrack() : mValid(false) {}
+  bool mValid;
+  int32_t mMode;
+  int32_t mIVSize;
+  nsTArray<uint8_t> mKeyId;
+};
+
+class CryptoSample : public CryptoTrack
+{
+public:
+  nsTArray<uint16_t> mPlainSizes;
+  nsTArray<uint32_t> mEncryptedSizes;
+  nsTArray<uint8_t> mIV;
+  nsTArray<nsCString> mSessionIds;
+};
+
+
+// MediaRawData is a MediaData container used to store demuxed, still compressed
+// samples.
+// Use MediaRawData::CreateWriter() to obtain a MediaRawDataWriter object that
+// provides methods to modify and manipulate the data.
+// Memory allocations are fallibles. Methods return a boolean indicating if
+// memory allocations were successful. Return values should always be checked.
+// MediaRawData::mData will be nullptr if no memory has been allocated or if
+// an error occurred during construction.
+// Existing data is only ever modified if new memory allocation has succeeded
+// and preserved if not.
+//
+// The memory referenced by mData will always be 32 bytes aligned and the
+// underlying buffer will always have a size such that 32 bytes blocks can be
+// used to read the content, regardless of the mSize value. Buffer is zeroed
+// on creation.
+//
+// Typical usage: create new MediaRawData; create the associated
+// MediaRawDataWriter, call SetSize() to allocate memory, write to mData,
+// up to mSize bytes.
+
+class MediaRawData;
+
+class MediaRawDataWriter
+{
+public:
+  // Pointer to data or null if not-yet allocated
+  uint8_t* mData;
+  // Writeable size of buffer.
+  size_t mSize;
+  // Writeable reference to MediaRawData::mCryptoInternal
+  CryptoSample& mCrypto;
+
+  // Data manipulation methods. mData and mSize may be updated accordingly.
+
+  // Set size of buffer, allocating memory as required.
+  // If size is increased, new buffer area is filled with 0.
+  bool SetSize(size_t aSize);
+  // Add aData at the beginning of buffer.
+  bool Prepend(const uint8_t* aData, size_t aSize);
+  // Replace current content with aData.
+  bool Replace(const uint8_t* aData, size_t aSize);
+  // Clear the memory buffer. Will set mData and mSize to 0.
+  void Clear();
 
 private:
-  ~LargeDataBuffer() {}
+  friend class MediaRawData;
+  explicit MediaRawDataWriter(MediaRawData* aMediaRawData);
+  bool EnsureSize(size_t aSize);
+  MediaRawData* mTarget;
+  nsRefPtr<MediaLargeByteBuffer> mBuffer;
+};
+
+class MediaRawData : public MediaData {
+public:
+  MediaRawData();
+  MediaRawData(const uint8_t* aData, size_t mSize);
+
+  // Pointer to data or null if not-yet allocated
+  const uint8_t* mData;
+  // Size of buffer.
+  size_t mSize;
+
+  const CryptoSample& mCrypto;
+  nsRefPtr<MediaByteBuffer> mExtraData;
+
+  // Return a deep copy or nullptr if out of memory.
+  virtual already_AddRefed<MediaRawData> Clone() const;
+  // Create a MediaRawDataWriter for this MediaRawData. The caller must
+  // delete the writer once done. The writer is not thread-safe.
+  virtual MediaRawDataWriter* CreateWriter();
+  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const;
+
+protected:
+  ~MediaRawData();
+
+private:
+  friend class MediaRawDataWriter;
+  // Ensure that the backend buffer can hold aSize data. Will update mData.
+  // Will enforce that the start of allocated data is always 32 bytes
+  // aligned and that it has sufficient end padding to allow for 32 bytes block
+  // read as required by some data decoders.
+  // Returns false if memory couldn't be allocated.
+  bool EnsureCapacity(size_t aSize);
+  nsRefPtr<MediaLargeByteBuffer> mBuffer;
+  CryptoSample mCryptoInternal;
+  uint32_t mPadding;
+  MediaRawData(const MediaRawData&); // Not implemented
+};
+
+  // MediaLargeByteBuffer is a ref counted fallible TArray.
+  // It is designed to share potentially big byte arrays.
+class MediaLargeByteBuffer : public FallibleTArray<uint8_t> {
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(MediaLargeByteBuffer);
+  MediaLargeByteBuffer() = default;
+  explicit MediaLargeByteBuffer(size_t aCapacity) : FallibleTArray<uint8_t>(aCapacity) {}
+
+private:
+  ~MediaLargeByteBuffer() {}
+};
+
+  // MediaByteBuffer is a ref counted infallible TArray.
+class MediaByteBuffer : public nsTArray<uint8_t> {
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(MediaByteBuffer);
+
+private:
+  ~MediaByteBuffer() {}
 };
 
 } // namespace mozilla

@@ -1,4 +1,4 @@
-waterfoxsearch
+waterfox
 bing
 startpage
 google

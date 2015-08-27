@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -35,6 +36,21 @@ nsQueryContentEventResult::GetOffset(uint32_t *aOffset)
   NS_ENSURE_SUCCESS(rv, rv);
   NS_ENSURE_TRUE(!notFound, NS_ERROR_NOT_AVAILABLE);
   *aOffset = mOffset;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsQueryContentEventResult::GetTentativeCaretOffset(uint32_t* aOffset)
+{
+  bool notFound;
+  nsresult rv = GetTentativeCaretOffsetNotFound(&notFound);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+  if (NS_WARN_IF(notFound)) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+  *aOffset = mTentativeCaretOffset;
   return NS_OK;
 }
 
@@ -126,6 +142,19 @@ nsQueryContentEventResult::GetNotFound(bool *aNotFound)
   return NS_OK;
 }
 
+NS_IMETHODIMP
+nsQueryContentEventResult::GetTentativeCaretOffsetNotFound(bool* aNotFound)
+{
+  if (NS_WARN_IF(!mSucceeded)) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+  if (NS_WARN_IF(mEventID != NS_QUERY_CHARACTER_AT_POINT)) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+  *aNotFound = (mTentativeCaretOffset == WidgetQueryContentEvent::NOT_FOUND);
+  return NS_OK;
+}
+
 void
 nsQueryContentEventResult::SetEventResult(nsIWidget* aWidget,
                                           const WidgetQueryContentEvent &aEvent)
@@ -135,6 +164,7 @@ nsQueryContentEventResult::SetEventResult(nsIWidget* aWidget,
   mReversed = aEvent.mReply.mReversed;
   mRect = aEvent.mReply.mRect;
   mOffset = aEvent.mReply.mOffset;
+  mTentativeCaretOffset = aEvent.mReply.mTentativeCaretOffset;
   mString = aEvent.mReply.mString;
 
   if (!IsRectEnabled(mEventID) || !aWidget || !mSucceeded) {

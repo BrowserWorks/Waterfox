@@ -174,7 +174,6 @@ class SocketTransportShim;
 class InputStreamShim;
 class OutputStreamShim;
 class nsHttpConnection;
-class ASpdySession;
 
 class SpdyConnectTransaction final : public NullHttpTransaction
 {
@@ -210,7 +209,6 @@ private:
 
   nsCString             mConnectString;
   uint32_t              mConnectStringOffset;
-  nsHttpRequestHead     *mRequestHead;
 
   nsAHttpConnection    *mSession;
   nsAHttpSegmentReader *mSegmentReader;

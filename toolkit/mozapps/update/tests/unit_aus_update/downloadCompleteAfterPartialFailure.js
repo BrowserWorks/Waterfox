@@ -2,6 +2,8 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
+Components.utils.import("resource://testing-common/MockRegistrar.jsm");
+
 function run_test() {
   setupTestCommon();
 
@@ -13,11 +15,12 @@ function run_test() {
 
   Services.prefs.setBoolPref(PREF_APP_UPDATE_SILENT, false);
 
-  let registrar = Cm.QueryInterface(Ci.nsIComponentRegistrar);
-  registrar.registerFactory(Components.ID("{1dfeb90a-2193-45d5-9cb8-864928b2af55}"),
-                            "Fake Window Watcher",
-                            "@mozilla.org/embedcomp/window-watcher;1",
-                            WindowWatcherFactory);
+  let windowWatcherCID =
+    MockRegistrar.register("@mozilla.org/embedcomp/window-watcher;1",
+                           WindowWatcher);
+  do_register_cleanup(() => {
+    MockRegistrar.unregister(windowWatcherCID);
+  });
 
   standardInit();
 
@@ -39,23 +42,20 @@ function run_test() {
   prompter.showUpdateError(update);
 }
 
-function end_test() {
-  let registrar = Cm.QueryInterface(Ci.nsIComponentRegistrar);
-  registrar.unregisterFactory(Components.ID("{1dfeb90a-2193-45d5-9cb8-864928b2af55}"),
-                              WindowWatcherFactory);
-}
-
 const WindowWatcher = {
-  getNewPrompter: function(aParent) {
-    do_check_eq(aParent, null);
+  getNewPrompter: function WW_getNewPrompter(aParent) {
+    Assert.ok(!aParent,
+              "the aParent parameter should not be defined");
     return {
-      alert: function(aTitle, aText) {
+      alert: function WW_GNP_alert(aTitle, aText) {
         let title = getString("updaterIOErrorTitle");
-        do_check_eq(aTitle, title);
+        Assert.equal(aTitle, title,
+                     "the ui string for title" + MSG_SHOULD_EQUAL);
         let text = gUpdateBundle.formatStringFromName("updaterIOErrorMsg",
                                                       [Services.appinfo.name,
                                                        Services.appinfo.name], 2);
-        do_check_eq(aText, text);
+        Assert.equal(aText, text,
+                     "the ui string for message" + MSG_SHOULD_EQUAL);
 
         doTestFinish();
       }
@@ -63,13 +63,4 @@ const WindowWatcher = {
   },
 
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIWindowWatcher])
-};
-
-const WindowWatcherFactory = {
-  createInstance: function createInstance(aOuter, aIID) {
-    if (aOuter != null) {
-      throw Cr.NS_ERROR_NO_AGGREGATION;
-    }
-    return WindowWatcher.QueryInterface(aIID);
-  }
 };

@@ -46,6 +46,8 @@
 #include "MediaTrackConstraints.h"
 #include "VideoUtils.h"
 #include "Latency.h"
+#include "nsProxyRelease.h"
+#include "nsNullPrincipal.h"
 
 // For PR_snprintf
 #include "prprf.h"
@@ -332,6 +334,18 @@ public:
   {
     mOnSuccess.swap(aOnSuccess);
     mOnFailure.swap(aOnFailure);
+  }
+
+  ~DeviceSuccessCallbackRunnable()
+  {
+    if (!NS_IsMainThread()) {
+      // This can happen if the main thread processes the runnable before
+      // GetUserMediaDevicesTask::Run returns.
+      nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
+
+      NS_ProxyRelease(mainThread, mOnSuccess);
+      NS_ProxyRelease(mainThread, mOnFailure);
+    }
   }
 
   nsresult
@@ -1019,7 +1033,7 @@ public:
 
     nsCOMPtr<nsIPrincipal> principal;
     if (mPeerIdentity) {
-      principal = do_CreateInstance("@mozilla.org/nullprincipal;1");
+      principal = nsNullPrincipal::Create();
       trackunion->SetPeerIdentity(mPeerIdentity.forget());
     } else {
       principal = window->GetExtantDoc()->NodePrincipal();
@@ -1339,6 +1353,11 @@ public:
   {
     MOZ_ASSERT(mOnSuccess);
     MOZ_ASSERT(mOnFailure);
+
+    if (!IsOn(mConstraints.mVideo) && !IsOn(mConstraints.mAudio)) {
+      Fail(NS_LITERAL_STRING("NotSupportedError"));
+      return NS_ERROR_FAILURE;
+    }
     if (IsOn(mConstraints.mVideo)) {
       nsTArray<nsRefPtr<VideoDevice>> sources;
       GetSources(backend, GetInvariant(mConstraints.mVideo),
@@ -1362,6 +1381,11 @@ public:
       // Pick the first available device.
       mAudioDevice = sources[0];
       LOG(("Selected audio device"));
+    }
+
+    if (!mAudioDevice && !mVideoDevice) {
+      Fail(NS_LITERAL_STRING("NotFoundError"));
+      return NS_ERROR_FAILURE;
     }
 
     return NS_OK;
@@ -1533,10 +1557,7 @@ public:
         result->AppendElement(source);
       }
     }
-    // In the case of failure with this newly allocated runnable, we
-    // intentionally leak the runnable, because we've pawned mOnSuccess and
-    // mOnFailure onto it which are main thread objects unsafe to release here.
-    DeviceSuccessCallbackRunnable* runnable =
+    nsRefPtr<DeviceSuccessCallbackRunnable> runnable =
         new DeviceSuccessCallbackRunnable(mWindowId, mOnSuccess, mOnFailure,
                                           result.forget());
     if (mPrivileged) {

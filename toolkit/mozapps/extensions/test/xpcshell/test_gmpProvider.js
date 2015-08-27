@@ -232,7 +232,7 @@ function createMockPluginFilesIfNeeded(aFile, aPluginId) {
 
   let id = aPluginId.substring(4);
   let libName = AppConstants.DLL_PREFIX + id + AppConstants.DLL_SUFFIX;
-  
+
   createFile(libName);
   createFile(id + ".info");
   if (aPluginId == "gmp-eme-adobe")

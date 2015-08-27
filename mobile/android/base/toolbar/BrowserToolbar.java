@@ -562,20 +562,19 @@ public abstract class BrowserToolbar extends ThemedRelativeLayout
 
     private void toggleTabs() {
         if (activity.areTabsShown()) {
-            if (activity.hasTabsSideBar())
-                activity.hideTabs();
+            return;
+        }
+
+        if (hideVirtualKeyboard()) {
+            getViewTreeObserver().addOnGlobalLayoutListener(new OnGlobalLayoutListener() {
+                @Override
+                public void onGlobalLayout() {
+                    getViewTreeObserver().removeGlobalOnLayoutListener(this);
+                    showSelectedTabs();
+                }
+            });
         } else {
-            if (hideVirtualKeyboard()) {
-                getViewTreeObserver().addOnGlobalLayoutListener(new OnGlobalLayoutListener() {
-                    @Override
-                    public void onGlobalLayout() {
-                        getViewTreeObserver().removeGlobalOnLayoutListener(this);
-                        showSelectedTabs();
-                    }
-                });
-            } else {
-                showSelectedTabs();
-            }
+            showSelectedTabs();
         }
     }
 
@@ -904,7 +903,7 @@ public abstract class BrowserToolbar extends ThemedRelativeLayout
         }
 
         final StateListDrawable stateList = new StateListDrawable();
-        stateList.addState(PRIVATE_STATE_SET, getColorDrawable(R.color.background_private));
+        stateList.addState(PRIVATE_STATE_SET, getColorDrawable(R.color.private_toolbar_grey));
         stateList.addState(EMPTY_STATE_SET, drawable);
 
         setBackgroundDrawable(stateList);

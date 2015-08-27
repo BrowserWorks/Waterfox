@@ -15,21 +15,15 @@
 #ifdef MOZ_WIDGET_GONK
 #include <ui/GraphicBuffer.h>
 #endif
-#if defined(DEBUG) || defined(PR_LOGGING)
-#  include <stdio.h>            // FILE
-#  include "prlog.h"            // for PR_LOG
-#  ifndef MOZ_LAYERS_HAVE_LOG
-#    define MOZ_LAYERS_HAVE_LOG
-#  endif
-#  define MOZ_LAYERS_LOG(_args)                             \
+#include <stdio.h>            // FILE
+#include "prlog.h"            // for PR_LOG
+#ifndef MOZ_LAYERS_HAVE_LOG
+#  define MOZ_LAYERS_HAVE_LOG
+#endif
+#define MOZ_LAYERS_LOG(_args)                             \
   PR_LOG(LayerManager::GetLog(), PR_LOG_DEBUG, _args)
-#  define MOZ_LAYERS_LOG_IF_SHADOWABLE(layer, _args)         \
+#define MOZ_LAYERS_LOG_IF_SHADOWABLE(layer, _args)         \
   do { if (layer->AsShadowableLayer()) { PR_LOG(LayerManager::GetLog(), PR_LOG_DEBUG, _args); } } while (0)
-#else
-struct PRLogModuleInfo;
-#  define MOZ_LAYERS_LOG(_args)
-#  define MOZ_LAYERS_LOG_IF_SHADOWABLE(layer, _args)
-#endif  // if defined(DEBUG) || defined(PR_LOGGING)
 
 #define INVALID_OVERLAY -1
 
@@ -211,6 +205,21 @@ struct EventRegions {
   {
     mHitRegion.Sub(aMinuend.mHitRegion, aSubtrahend);
     mDispatchToContentHitRegion.Sub(aMinuend.mDispatchToContentHitRegion, aSubtrahend);
+  }
+
+  void ApplyTranslationAndScale(float aXTrans, float aYTrans, float aXScale, float aYScale)
+  {
+    mHitRegion.ScaleRoundOut(aXScale, aYScale);
+    mDispatchToContentHitRegion.ScaleRoundOut(aXScale, aYScale);
+    mNoActionRegion.ScaleRoundOut(aXScale, aYScale);
+    mHorizontalPanRegion.ScaleRoundOut(aXScale, aYScale);
+    mVerticalPanRegion.ScaleRoundOut(aXScale, aYScale);
+
+    mHitRegion.MoveBy(aXTrans, aYTrans);
+    mDispatchToContentHitRegion.MoveBy(aXTrans, aYTrans);
+    mNoActionRegion.MoveBy(aXTrans, aYTrans);
+    mHorizontalPanRegion.MoveBy(aXTrans, aYTrans);
+    mVerticalPanRegion.MoveBy(aXTrans, aYTrans);
   }
 
   void Transform(const gfx3DMatrix& aTransform)

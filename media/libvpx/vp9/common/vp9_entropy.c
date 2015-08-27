@@ -15,6 +15,18 @@
 #include "vpx_mem/vpx_mem.h"
 #include "vpx/vpx_integer.h"
 
+// Unconstrained Node Tree
+const vp9_tree_index vp9_coef_con_tree[TREE_SIZE(ENTROPY_TOKENS)] = {
+  2, 6,                                // 0 = LOW_VAL
+  -TWO_TOKEN, 4,                       // 1 = TWO
+  -THREE_TOKEN, -FOUR_TOKEN,           // 2 = THREE
+  8, 10,                               // 3 = HIGH_LOW
+  -CATEGORY1_TOKEN, -CATEGORY2_TOKEN,  // 4 = CAT_ONE
+  12, 14,                              // 5 = CAT_THREEFOUR
+  -CATEGORY3_TOKEN, -CATEGORY4_TOKEN,  // 6 = CAT_THREE
+  -CATEGORY5_TOKEN, -CATEGORY6_TOKEN   // 7 = CAT_FIVE
+};
+
 const vp9_prob vp9_cat1_prob[] = { 159 };
 const vp9_prob vp9_cat2_prob[] = { 165, 145 };
 const vp9_prob vp9_cat3_prob[] = { 173, 148, 140 };
@@ -737,21 +749,21 @@ static const vp9_coeff_probs_model default_coef_probs_32x32[PLANE_TYPES] = {
 };
 
 static void extend_to_full_distribution(vp9_prob *probs, vp9_prob p) {
-  vpx_memcpy(probs, vp9_pareto8_full[p = 0 ? 0 : p - 1],
-             MODEL_NODES * sizeof(vp9_prob));
+  memcpy(probs, vp9_pareto8_full[p = 0 ? 0 : p - 1],
+         MODEL_NODES * sizeof(vp9_prob));
 }
 
 void vp9_model_to_full_probs(const vp9_prob *model, vp9_prob *full) {
   if (full != model)
-    vpx_memcpy(full, model, sizeof(vp9_prob) * UNCONSTRAINED_NODES);
+    memcpy(full, model, sizeof(vp9_prob) * UNCONSTRAINED_NODES);
   extend_to_full_distribution(&full[UNCONSTRAINED_NODES], model[PIVOT_NODE]);
 }
 
 void vp9_default_coef_probs(VP9_COMMON *cm) {
-  vp9_copy(cm->fc.coef_probs[TX_4X4], default_coef_probs_4x4);
-  vp9_copy(cm->fc.coef_probs[TX_8X8], default_coef_probs_8x8);
-  vp9_copy(cm->fc.coef_probs[TX_16X16], default_coef_probs_16x16);
-  vp9_copy(cm->fc.coef_probs[TX_32X32], default_coef_probs_32x32);
+  vp9_copy(cm->fc->coef_probs[TX_4X4], default_coef_probs_4x4);
+  vp9_copy(cm->fc->coef_probs[TX_8X8], default_coef_probs_8x8);
+  vp9_copy(cm->fc->coef_probs[TX_16X16], default_coef_probs_16x16);
+  vp9_copy(cm->fc->coef_probs[TX_32X32], default_coef_probs_32x32);
 }
 
 #define COEF_COUNT_SAT 24
@@ -765,7 +777,7 @@ static void adapt_coef_probs(VP9_COMMON *cm, TX_SIZE tx_size,
                              unsigned int count_sat,
                              unsigned int update_factor) {
   const FRAME_CONTEXT *pre_fc = &cm->frame_contexts[cm->frame_context_idx];
-  vp9_coeff_probs_model *const probs = cm->fc.coef_probs[tx_size];
+  vp9_coeff_probs_model *const probs = cm->fc->coef_probs[tx_size];
   const vp9_coeff_probs_model *const pre_probs = pre_fc->coef_probs[tx_size];
   vp9_coeff_count_model *counts = cm->counts.coef[tx_size];
   unsigned int (*eob_counts)[REF_TYPES][COEF_BANDS][COEFF_CONTEXTS] =

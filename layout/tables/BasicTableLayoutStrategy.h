@@ -5,7 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /*
- * Web-compatible algorithms that determine column and table widths,
+ * Web-compatible algorithms that determine column and table isizes,
  * used for CSS2's 'table-layout: auto'.
  */
 
@@ -28,13 +28,13 @@ public:
     virtual nscoord GetPrefISize(nsRenderingContext* aRenderingContext,
                                  bool aComputingSize) override;
     virtual void MarkIntrinsicISizesDirty() override;
-    virtual void ComputeColumnWidths(const nsHTMLReflowState& aReflowState) override;
+    virtual void ComputeColumnISizes(const nsHTMLReflowState& aReflowState) override;
 
 private:
-    // NOTE: Using prefix "BTLS" to avoid overlapping names with 
+    // NOTE: Using prefix "BTLS" to avoid overlapping names with
     // the values of nsLayoutUtils::IntrinsicISizeType
-    enum BtlsWidthType { BTLS_MIN_WIDTH, 
-                         BTLS_PREF_WIDTH, 
+    enum BtlsWidthType { BTLS_MIN_WIDTH,
+                         BTLS_PREF_WIDTH,
                          BTLS_FINAL_WIDTH };
 
     // Compute intrinsic width member variables on the columns.
@@ -60,12 +60,12 @@ private:
     //                           - We're distributing a colspanning cell's
     //                             pref or min width to its columns
     //                           - The colspanning cell has a specified width.
-    void DistributeWidthToColumns(nscoord aWidth, 
-                                  int32_t aFirstCol, 
+    void DistributeWidthToColumns(nscoord aWidth,
+                                  int32_t aFirstCol,
                                   int32_t aColCount,
                                   BtlsWidthType aWidthType,
                                   bool aSpanHasSpecifiedWidth);
- 
+
 
     // Compute the min and pref widths of the table from the width
     // variables on the columns.

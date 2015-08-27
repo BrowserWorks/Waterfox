@@ -270,29 +270,77 @@ JS_GetEmptyString(JSRuntime* rt)
     return rt->emptyString;
 }
 
-JS_PUBLIC_API(bool)
-JS_GetCompartmentStats(JSRuntime* rt, CompartmentStatsVector& stats)
-{
-    for (CompartmentsIter c(rt, WithAtoms); !c.done(); c.next()) {
-        if (!stats.growBy(1))
-            return false;
+namespace js {
 
-        CompartmentTimeStats* stat = &stats.back();
-        stat->time = c.get()->totalTime;
-        stat->compartment = c.get();
-        stat->addonId = c.get()->addonId;
-        if (rt->compartmentNameCallback) {
-            (*rt->compartmentNameCallback)(rt, stat->compartment,
-                                           stat->compartmentName,
-                                           MOZ_ARRAY_LENGTH(stat->compartmentName));
+JS_PUBLIC_API(bool)
+GetPerformanceStats(JSRuntime* rt,
+                    PerformanceStatsVector& stats,
+                    PerformanceStats& processStats)
+{
+    // As a PerformanceGroup is typically associated to several
+    // compartments, use a HashSet to make sure that we only report
+    // each PerformanceGroup once.
+    typedef HashSet<js::PerformanceGroup*,
+                    js::DefaultHasher<js::PerformanceGroup*>,
+                    js::SystemAllocPolicy> Set;
+    Set set;
+    if (!set.init(100)) {
+        return false;
+    }
+
+    for (CompartmentsIter c(rt, WithAtoms); !c.done(); c.next()) {
+        JSCompartment* compartment = c.get();
+        if (!compartment->performanceMonitoring.isLinked()) {
+            // Don't report compartments that do not even have a PerformanceGroup.
+            continue;
+        }
+        PerformanceGroup* group = compartment->performanceMonitoring.getGroup();
+
+        if (group->data.ticks == 0) {
+            // Don't report compartments that have never been used.
+            continue;
+        }
+
+        Set::AddPtr ptr = set.lookupForAdd(group);
+        if (ptr) {
+            // Don't report the same group twice.
+            continue;
+        }
+
+        if (!stats.growBy(1)) {
+            // Memory issue
+            return false;
+        }
+        PerformanceStats* stat = &stats.back();
+        stat->isSystem = compartment->isSystem();
+        if (compartment->addonId)
+            stat->addonId = compartment->addonId;
+
+        if (compartment->addonId || !compartment->isSystem()) {
+            if (rt->compartmentNameCallback) {
+                (*rt->compartmentNameCallback)(rt, compartment,
+                                               stat->name,
+                                               mozilla::ArrayLength(stat->name));
+            } else {
+                strcpy(stat->name, "<unknown>");
+            }
         } else {
-            strcpy(stat->compartmentName, "<unknown>");
+            strcpy(stat->name, "<platform>");
+        }
+        stat->performance = group->data;
+        if (!set.add(ptr, group)) {
+            // Memory issue
+            return false;
         }
     }
+
+    strcpy(processStats.name, "<process>");
+    processStats.addonId = nullptr;
+    processStats.isSystem = true;
+    processStats.performance = rt->stopwatch.performance;
+
     return true;
 }
-
-namespace js {
 
 void
 AssertHeapIsIdle(JSRuntime* rt)
@@ -860,19 +908,23 @@ JS_LeaveCompartment(JSContext* cx, JSCompartment* oldCompartment)
     cx->leaveCompartment(oldCompartment);
 }
 
-JSAutoCompartment::JSAutoCompartment(JSContext* cx, JSObject* target)
+JSAutoCompartment::JSAutoCompartment(JSContext* cx, JSObject* target
+                                     MOZ_GUARD_OBJECT_NOTIFIER_PARAM_IN_IMPL)
   : cx_(cx),
     oldCompartment_(cx->compartment())
 {
     AssertHeapIsIdleOrIterating(cx_);
+    MOZ_GUARD_OBJECT_NOTIFIER_INIT;
     cx_->enterCompartment(target->compartment());
 }
 
-JSAutoCompartment::JSAutoCompartment(JSContext* cx, JSScript* target)
+JSAutoCompartment::JSAutoCompartment(JSContext* cx, JSScript* target
+                                     MOZ_GUARD_OBJECT_NOTIFIER_PARAM_IN_IMPL)
   : cx_(cx),
     oldCompartment_(cx->compartment())
 {
     AssertHeapIsIdleOrIterating(cx_);
+    MOZ_GUARD_OBJECT_NOTIFIER_INIT;
     cx_->enterCompartment(target->compartment());
 }
 
@@ -882,11 +934,13 @@ JSAutoCompartment::~JSAutoCompartment()
 }
 
 JSAutoNullableCompartment::JSAutoNullableCompartment(JSContext* cx,
-                                                     JSObject* targetOrNull)
+                                                     JSObject* targetOrNull
+                                                     MOZ_GUARD_OBJECT_NOTIFIER_PARAM_IN_IMPL)
   : cx_(cx),
     oldCompartment_(cx->compartment())
 {
     AssertHeapIsIdleOrIterating(cx_);
+    MOZ_GUARD_OBJECT_NOTIFIER_INIT;
     if (targetOrNull) {
         cx_->enterCompartment(targetOrNull->compartment());
     } else {
@@ -1090,13 +1144,12 @@ typedef struct JSStdName {
 } JSStdName;
 
 static const JSStdName*
-LookupStdName(JSRuntime* rt, HandleString name, const JSStdName* table)
+LookupStdName(const JSAtomState& names, JSAtom* name, const JSStdName* table)
 {
-    MOZ_ASSERT(name->isAtom());
     for (unsigned i = 0; !table[i].isSentinel(); i++) {
         if (table[i].isDummy())
             continue;
-        JSAtom* atom = AtomStateOffsetToName(*rt->commonNames, table[i].atomOffset);
+        JSAtom* atom = AtomStateOffsetToName(names, table[i].atomOffset);
         MOZ_ASSERT(atom);
         if (name == atom)
             return &table[i];
@@ -1172,11 +1225,10 @@ JS_ResolveStandardClass(JSContext* cx, HandleObject obj, HandleId id, bool* reso
     if (!rt->hasContexts() || !JSID_IS_ATOM(id))
         return true;
 
-    RootedString idstr(cx, JSID_TO_STRING(id));
-
     /* Check whether we're resolving 'undefined', and define it if so. */
+    JSAtom* idAtom = JSID_TO_ATOM(id);
     JSAtom* undefinedAtom = cx->names().undefined;
-    if (idstr == undefinedAtom) {
+    if (idAtom == undefinedAtom) {
         *resolved = true;
         return DefineProperty(cx, obj, undefinedAtom->asPropertyName(),
                               UndefinedHandleValue, nullptr, nullptr,
@@ -1184,11 +1236,11 @@ JS_ResolveStandardClass(JSContext* cx, HandleObject obj, HandleId id, bool* reso
     }
 
     /* Try for class constructors/prototypes named by well-known atoms. */
-    stdnm = LookupStdName(rt, idstr, standard_class_names);
+    stdnm = LookupStdName(cx->names(), idAtom, standard_class_names);
 
     /* Try less frequently used top-level functions and constants. */
     if (!stdnm)
-        stdnm = LookupStdName(rt, idstr, builtin_property_names);
+        stdnm = LookupStdName(cx->names(), idAtom, builtin_property_names);
 
     // If this class is anonymous, then it doesn't exist as a global
     // property, so we won't resolve anything.
@@ -1210,6 +1262,27 @@ JS_ResolveStandardClass(JSContext* cx, HandleObject obj, HandleId id, bool* reso
         return false;
 
     return true;
+}
+
+JS_PUBLIC_API(bool)
+JS_MayResolveStandardClass(const JSAtomState& names, jsid id, JSObject* maybeObj)
+{
+    MOZ_ASSERT_IF(maybeObj, maybeObj->is<GlobalObject>());
+
+    // The global object's resolve hook is special: JS_ResolveStandardClass
+    // initializes the prototype chain lazily. Only attempt to optimize here
+    // if we know the prototype chain has been initialized.
+    if (!maybeObj || !maybeObj->getProto())
+        return true;
+
+    if (!JSID_IS_ATOM(id))
+        return false;
+
+    JSAtom* atom = JSID_TO_ATOM(id);
+
+    return atom == names.undefined ||
+           LookupStdName(names, atom, standard_class_names) ||
+           LookupStdName(names, atom, builtin_property_names);
 }
 
 JS_PUBLIC_API(bool)
@@ -1257,8 +1330,9 @@ JS_IdToProtoKey(JSContext* cx, HandleId id)
 
     if (!JSID_IS_ATOM(id))
         return JSProto_Null;
-    RootedString idstr(cx, JSID_TO_STRING(id));
-    const JSStdName* stdnm = LookupStdName(cx->runtime(), idstr, standard_class_names);
+
+    JSAtom* atom = JSID_TO_ATOM(id);
+    const JSStdName* stdnm = LookupStdName(cx->names(), atom, standard_class_names);
     if (!stdnm)
         return JSProto_Null;
 
@@ -1473,7 +1547,7 @@ JS_UpdateWeakPointerAfterGC(JS::Heap<JSObject*>* objp)
 JS_PUBLIC_API(void)
 JS_UpdateWeakPointerAfterGCUnbarriered(JSObject** objp)
 {
-    if (IsObjectAboutToBeFinalized(objp))
+    if (IsAboutToBeFinalizedUnbarriered(objp))
         *objp = nullptr;
 }
 
@@ -3202,7 +3276,7 @@ IsFunctionCloneable(HandleFunction fun, HandleObject dynamicScope)
         return false;
     }
 
-    return !fun->nonLazyScript()->compileAndGo() || dynamicScope->is<GlobalObject>();
+    return true;
 }
 
 static JSObject*
@@ -3390,6 +3464,7 @@ JS_DefineFunctions(JSContext* cx, HandleObject obj, const JSFunctionSpec* fs,
             if (flags & JSPROP_DEFINE_LATE)
                 continue;
         }
+        flags &= ~JSPROP_DEFINE_LATE;
 
         /*
          * Define a generic arity N+1 static method for the arity N prototype
@@ -3407,7 +3482,7 @@ JS_DefineFunctions(JSContext* cx, HandleObject obj, const JSFunctionSpec* fs,
             JSFunction* fun = DefineFunction(cx, ctor, id,
                                              GenericNativeMethodDispatcher,
                                              fs->nargs + 1, flags,
-                                             JSFunction::ExtendedFinalizeKind);
+                                             gc::AllocKind::FUNCTION_EXTENDED);
             if (!fun)
                 return false;
 
@@ -3609,7 +3684,6 @@ JS::ReadOnlyCompileOptions::copyPODOptions(const ReadOnlyCompileOptions& rhs)
     utf8 = rhs.utf8;
     lineno = rhs.lineno;
     column = rhs.column;
-    compileAndGo = rhs.compileAndGo;
     forEval = rhs.forEval;
     noScriptRval = rhs.noScriptRval;
     selfHostingMode = rhs.selfHostingMode;
@@ -3726,7 +3800,6 @@ JS::CompileOptions::CompileOptions(JSContext* cx, JSVersion version)
 {
     this->version = (version != JSVERSION_UNKNOWN) ? version : cx->findVersion();
 
-    compileAndGo = false;
     strictOption = cx->runtime()->options().strictMode();
     extraWarningsOption = cx->compartment()->options().extraWarnings(cx);
     werrorOption = cx->runtime()->options().werror();
@@ -3875,7 +3948,6 @@ JS_BufferIsCompilableUnit(JSContext* cx, HandleObject obj, const char* utf8, siz
     bool result = true;
 
     CompileOptions options(cx);
-    options.setCompileAndGo(false);
     Parser<frontend::FullParseHandler> parser(cx, &cx->tempLifoAlloc(),
                                               options, chars, length,
                                               /* foldConstants = */ true, nullptr, nullptr);
@@ -3969,15 +4041,13 @@ CompileFunction(JSContext* cx, const ReadOnlyCompileOptions& optionsArg,
     }
 
     fun.set(NewScriptedFunction(cx, 0, JSFunction::INTERPRETED, funAtom,
-                                JSFunction::FinalizeKind, TenuredObject,
+                                gc::AllocKind::FUNCTION, TenuredObject,
                                 enclosingDynamicScope));
     if (!fun)
         return false;
 
     // Make sure to handle cases when we have a polluted scopechain.
-    OwningCompileOptions options(cx);
-    if (!options.copy(cx, optionsArg))
-        return false;
+    CompileOptions options(cx, optionsArg);
     if (!enclosingDynamicScope->is<GlobalObject>())
         options.setHasPollutedScope(true);
 
@@ -4153,8 +4223,8 @@ Evaluate(JSContext* cx, HandleObject scope, const ReadOnlyCompileOptions& option
 
     AutoLastFrameCheck lfc(cx);
 
-    options.setCompileAndGo(scope->is<GlobalObject>());
     options.setHasPollutedScope(!scope->is<GlobalObject>());
+    options.setIsRunOnce(true);
     SourceCompressionTask sct(cx);
     RootedScript script(cx, frontend::CompileScript(cx, &cx->tempLifoAlloc(),
                                                     scope, NullPtr(), NullPtr(), options,
@@ -4390,6 +4460,12 @@ JS_New(JSContext* cx, HandleObject ctor, const JS::HandleValueArray& inputArgs)
         obj = JS_NewHelper(cx, ctor, inputArgs);
     }
     return obj;
+}
+
+JS_PUBLIC_API(bool)
+JS_CheckForInterrupt(JSContext* cx)
+{
+    return js::CheckForInterrupt(cx);
 }
 
 JS_PUBLIC_API(JSInterruptCallback)

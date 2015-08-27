@@ -10,7 +10,7 @@
 #include "mozilla/unused.h"
 #include "GMPMessageUtils.h"
 #include "nsAutoRef.h"
-#include "GMPParent.h"
+#include "GMPContentParent.h"
 #include "mozilla/gmp/GMPTypes.h"
 #include "nsThread.h"
 #include "nsThreadUtils.h"
@@ -50,13 +50,15 @@ namespace gmp {
 //    on Shutdown -> Dead
 // Dead: mIsOpen == false
 
-GMPVideoEncoderParent::GMPVideoEncoderParent(GMPParent *aPlugin)
+GMPVideoEncoderParent::GMPVideoEncoderParent(GMPContentParent *aPlugin)
 : GMPSharedMemManager(aPlugin),
   mIsOpen(false),
   mShuttingDown(false),
+  mActorDestroyed(false),
   mPlugin(aPlugin),
   mCallback(nullptr),
-  mVideoHost(this)
+  mVideoHost(this),
+  mPluginId(aPlugin->GetPluginId())
 {
   MOZ_ASSERT(mPlugin);
 
@@ -126,7 +128,7 @@ GMPVideoEncoderParent::InitEncode(const GMPVideoCodec& aCodecSettings,
 }
 
 GMPErr
-GMPVideoEncoderParent::Encode(GMPUnique<GMPVideoi420Frame>::Ptr aInputFrame,
+GMPVideoEncoderParent::Encode(GMPUniquePtr<GMPVideoi420Frame> aInputFrame,
                               const nsTArray<uint8_t>& aCodecSpecificInfo,
                               const nsTArray<GMPVideoFrameType>& aFrameTypes)
 {
@@ -137,7 +139,7 @@ GMPVideoEncoderParent::Encode(GMPUnique<GMPVideoi420Frame>::Ptr aInputFrame,
 
   MOZ_ASSERT(mPlugin->GMPThread() == NS_GetCurrentThread());
 
-  GMPUnique<GMPVideoi420FrameImpl>::Ptr inputFrameImpl(
+  GMPUniquePtr<GMPVideoi420FrameImpl> inputFrameImpl(
     static_cast<GMPVideoi420FrameImpl*>(aInputFrame.release()));
 
   // Very rough kill-switch if the plugin stops processing.  If it's merely
@@ -235,7 +237,9 @@ GMPVideoEncoderParent::Shutdown()
   mVideoHost.DoneWithAPI();
 
   mIsOpen = false;
-  unused << SendEncodingComplete();
+  if (!mActorDestroyed) {
+    unused << SendEncodingComplete();
+  }
 }
 
 static void
@@ -250,6 +254,7 @@ GMPVideoEncoderParent::ActorDestroy(ActorDestroyReason aWhy)
 {
   LOGD(("%s::%s: %p (%d)", __CLASS__, __FUNCTION__, this, (int) aWhy));
   mIsOpen = false;
+  mActorDestroyed = true;
   if (mCallback) {
     // May call Close() (and Shutdown()) immediately or with a delay
     mCallback->Terminated();
@@ -317,6 +322,13 @@ GMPVideoEncoderParent::RecvError(const GMPErr& aError)
   // Ignore any return code. It is OK for this to fail without killing the process.
   mCallback->Error(aError);
 
+  return true;
+}
+
+bool
+GMPVideoEncoderParent::RecvShutdown()
+{
+  Shutdown();
   return true;
 }
 

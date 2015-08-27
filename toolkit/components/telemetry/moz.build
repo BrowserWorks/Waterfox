@@ -30,22 +30,26 @@ EXTRA_COMPONENTS += [
 ]
 
 EXTRA_JS_MODULES += [
-    'TelemetryFile.jsm',
+    'TelemetryArchive.jsm',
     'TelemetryLog.jsm',
     'TelemetryStopwatch.jsm',
+    'TelemetryStorage.jsm',
+    'TelemetryUtils.jsm',
     'ThirdPartyCookieProbe.jsm',
     'UITelemetry.jsm',
 ]
 
 EXTRA_PP_JS_MODULES += [
+    'TelemetryController.jsm',
     'TelemetryEnvironment.jsm',
-    'TelemetryPing.jsm',
     'TelemetrySession.jsm',
 ]
 
-FAIL_ON_WARNINGS = True
+TESTING_JS_MODULES += [
+  'tests/unit/TelemetryArchiveTesting.jsm',
+]
 
-MSVC_ENABLE_PGO = True
+FAIL_ON_WARNINGS = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

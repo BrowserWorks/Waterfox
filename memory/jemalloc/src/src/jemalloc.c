@@ -1,3 +1,5 @@
+DIE DIE DIE
+
 #define	JEMALLOC_C_
 #include "jemalloc/internal/jemalloc_internal.h"
 

@@ -106,7 +106,7 @@ gfxTextRun::AllocateStorageForTextRun(size_t aSize, uint32_t aLength)
 {
     // Allocate the storage we need, returning nullptr on failure rather than
     // throwing an exception (because web content can create huge runs).
-    void *storage = moz_malloc(aSize + aLength * sizeof(CompressedGlyph));
+    void *storage = malloc(aSize + aLength * sizeof(CompressedGlyph));
     if (!storage) {
         NS_WARNING("failed to allocate storage for text run!");
         return nullptr;
@@ -523,6 +523,7 @@ HasNonOpaqueColor(gfxContext *aContext, gfxRGBA& aCurrentColor)
 struct BufferAlphaColor {
     explicit BufferAlphaColor(gfxContext *aContext)
         : mContext(aContext)
+        , mAlpha(0.0)
     {
 
     }
@@ -929,8 +930,15 @@ gfxTextRun::BreakAndMeasureText(uint32_t aStart, uint32_t aMaxLength,
     }
 
     if (aMetrics) {
-        *aMetrics = MeasureText(aStart, charsFit - trimmableChars,
+        *aMetrics = MeasureText(aStart, charsFit,
             aBoundingBoxType, aRefContext, aProvider);
+        if (trimmableChars) {
+            Metrics trimMetrics =
+                MeasureText(aStart + charsFit - trimmableChars,
+                            trimmableChars, aBoundingBoxType,
+                            aRefContext, aProvider);
+            aMetrics->mAdvanceWidth -= trimMetrics.mAdvanceWidth;
+        }
     }
     if (aTrimWhitespace) {
         *aTrimWhitespace = trimmableAdvance;
@@ -1351,7 +1359,8 @@ gfxTextRun::FetchGlyphExtents(gfxContext *aRefContext)
     for (i = 0; i < runCount; ++i) {
         const GlyphRun& run = mGlyphRuns[i];
         gfxFont *font = run.mFont;
-        if (MOZ_UNLIKELY(font->GetStyle()->size == 0)) {
+        if (MOZ_UNLIKELY(font->GetStyle()->size == 0) ||
+            MOZ_UNLIKELY(font->GetStyle()->sizeAdjust == 0.0f)) {
             continue;
         }
 
@@ -1364,8 +1373,6 @@ gfxTextRun::FetchGlyphExtents(gfxContext *aRefContext)
   
         for (j = start; j < end; ++j) {
             const gfxTextRun::CompressedGlyph *glyphData = &charGlyphs[j];
-            gfxFont::Orientation orientation =
-                IsVertical() ? gfxFont::eVertical : gfxFont::eHorizontal;
             if (glyphData->IsSimpleGlyph()) {
                 // If we're in speed mode, don't set up glyph extents here; we'll
                 // just return "optimistic" glyph bounds later
@@ -1382,7 +1389,7 @@ gfxTextRun::FetchGlyphExtents(gfxContext *aRefContext)
 #ifdef DEBUG_TEXT_RUN_STORAGE_METRICS
                         ++gGlyphExtentsSetupEagerSimple;
 #endif
-                        font->SetupGlyphExtents(aRefContext, orientation,
+                        font->SetupGlyphExtents(aRefContext,
                                                 glyphIndex, false, extents);
                     }
                 }
@@ -1408,7 +1415,7 @@ gfxTextRun::FetchGlyphExtents(gfxContext *aRefContext)
 #ifdef DEBUG_TEXT_RUN_STORAGE_METRICS
                         ++gGlyphExtentsSetupEagerTight;
 #endif
-                        font->SetupGlyphExtents(aRefContext, orientation,
+                        font->SetupGlyphExtents(aRefContext,
                                                 glyphIndex, true, extents);
                     }
                 }
@@ -2000,7 +2007,8 @@ gfxFontGroup::MakeSpaceTextRun(const Parameters *aParams, uint32_t aFlags)
     }
 
     gfxFont *font = GetFirstValidFont();
-    if (MOZ_UNLIKELY(GetStyle()->size == 0)) {
+    if (MOZ_UNLIKELY(GetStyle()->size == 0) ||
+        MOZ_UNLIKELY(GetStyle()->sizeAdjust == 0.0f)) {
         // Short-circuit for size-0 fonts, as Windows and ATSUI can't handle
         // them, and always create at least size 1 fonts, i.e. they still
         // render something for size 0 fonts.
@@ -2099,7 +2107,8 @@ gfxFontGroup::MakeTextRun(const uint8_t *aString, uint32_t aLength,
 
     aFlags |= TEXT_IS_8BIT;
 
-    if (GetStyle()->size == 0) {
+    if (MOZ_UNLIKELY(GetStyle()->size == 0) ||
+        MOZ_UNLIKELY(GetStyle()->sizeAdjust == 0.0f)) {
         // Short-circuit for size-0 fonts, as Windows and ATSUI can't handle
         // them, and always create at least size 1 fonts, i.e. they still
         // render something for size 0 fonts.
@@ -2130,7 +2139,8 @@ gfxFontGroup::MakeTextRun(const char16_t *aString, uint32_t aLength,
     if (aLength == 1 && aString[0] == ' ') {
         return MakeSpaceTextRun(aParams, aFlags);
     }
-    if (GetStyle()->size == 0) {
+    if (MOZ_UNLIKELY(GetStyle()->size == 0) ||
+        MOZ_UNLIKELY(GetStyle()->sizeAdjust == 0.0f)) {
         return MakeBlankTextRun(aLength, aParams, aFlags);
     }
 
@@ -2189,11 +2199,9 @@ gfxFontGroup::InitTextRun(gfxContext *aContext,
         }
     }
 
-#ifdef PR_LOGGING
     PRLogModuleInfo *log = (mStyle.systemFont ?
                             gfxPlatform::GetLog(eGfxLog_textrunui) :
                             gfxPlatform::GetLog(eGfxLog_textrun));
-#endif
 
     // variant fallback handling may end up passing through this twice
     bool redo;
@@ -2202,7 +2210,6 @@ gfxFontGroup::InitTextRun(gfxContext *aContext,
 
         if (sizeof(T) == sizeof(uint8_t) && !transformedString) {
 
-#ifdef PR_LOGGING
             if (MOZ_UNLIKELY(PR_LOG_TEST(log, PR_LOG_WARNING))) {
                 nsAutoCString lang;
                 mStyle.language->ToUTF8String(lang);
@@ -2228,7 +2235,6 @@ gfxFontGroup::InitTextRun(gfxContext *aContext,
                         sizeof(T),
                         str.get()));
             }
-#endif
 
             // the text is still purely 8-bit; bypass the script-run itemizer
             // and treat it as a single Latin run
@@ -2252,7 +2258,6 @@ gfxFontGroup::InitTextRun(gfxContext *aContext,
             int32_t runScript = MOZ_SCRIPT_LATIN;
             while (scriptRuns.Next(runStart, runLimit, runScript)) {
 
-    #ifdef PR_LOGGING
                 if (MOZ_UNLIKELY(PR_LOG_TEST(log, PR_LOG_WARNING))) {
                     nsAutoCString lang;
                     mStyle.language->ToUTF8String(lang);
@@ -2278,7 +2283,6 @@ gfxFontGroup::InitTextRun(gfxContext *aContext,
                             sizeof(T),
                             NS_ConvertUTF16toUTF8(textPtr + runStart, runLen).get()));
                 }
-    #endif
 
                 InitScriptRun(aContext, aTextRun, textPtr + runStart,
                               runStart, runLimit - runStart, runScript, aMFR);
@@ -2561,10 +2565,13 @@ gfxFontGroup::InitScriptRun(gfxContext *aContext,
 }
 
 gfxTextRun *
-gfxFontGroup::GetEllipsisTextRun(int32_t aAppUnitsPerDevPixel,
+gfxFontGroup::GetEllipsisTextRun(int32_t aAppUnitsPerDevPixel, uint32_t aFlags,
                                  LazyReferenceContextGetter& aRefContextGetter)
 {
+    MOZ_ASSERT(!(aFlags & ~TEXT_ORIENT_MASK),
+               "flags here should only be used to specify orientation");
     if (mCachedEllipsisTextRun &&
+        (mCachedEllipsisTextRun->GetFlags() & TEXT_ORIENT_MASK) == aFlags &&
         mCachedEllipsisTextRun->GetAppUnitsPerDevUnit() == aAppUnitsPerDevPixel) {
         return mCachedEllipsisTextRun;
     }
@@ -2584,7 +2591,7 @@ gfxFontGroup::GetEllipsisTextRun(int32_t aAppUnitsPerDevPixel,
     };
     gfxTextRun* textRun =
         MakeTextRun(ellipsis.get(), ellipsis.Length(), &params,
-                    TEXT_IS_PERSISTENT, nullptr);
+                    aFlags | TEXT_IS_PERSISTENT, nullptr);
     if (!textRun) {
         return nullptr;
     }

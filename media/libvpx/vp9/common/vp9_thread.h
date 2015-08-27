@@ -22,9 +22,13 @@
 extern "C" {
 #endif
 
+// Set maximum decode threads to be 8 due to the limit of frame buffers
+// and not enough semaphores in the emulation layer on windows.
+#define MAX_DECODE_THREADS 8
+
 #if CONFIG_MULTITHREAD
 
-#if defined(_WIN32)
+#if defined(_WIN32) && !HAVE_PTHREAD_H
 #include <errno.h>  // NOLINT
 #include <process.h>  // NOLINT
 #include <windows.h>  // NOLINT
@@ -103,8 +107,8 @@ static INLINE int pthread_cond_destroy(pthread_cond_t *const condition) {
 static INLINE int pthread_cond_init(pthread_cond_t *const condition,
                                     void* cond_attr) {
   (void)cond_attr;
-  condition->waiting_sem_ = CreateSemaphore(NULL, 0, 1, NULL);
-  condition->received_sem_ = CreateSemaphore(NULL, 0, 1, NULL);
+  condition->waiting_sem_ = CreateSemaphore(NULL, 0, MAX_DECODE_THREADS, NULL);
+  condition->received_sem_ = CreateSemaphore(NULL, 0, MAX_DECODE_THREADS, NULL);
   condition->signal_event_ = CreateEvent(NULL, FALSE, FALSE, NULL);
   if (condition->waiting_sem_ == NULL ||
       condition->received_sem_ == NULL ||

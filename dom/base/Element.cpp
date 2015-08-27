@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 sw=2 et tw=79: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -14,7 +14,7 @@
 
 #include "AnimationCommon.h"
 #include "mozilla/DebugOnly.h"
-#include "mozilla/dom/AnimationPlayer.h"
+#include "mozilla/dom/Animation.h"
 #include "mozilla/dom/Attr.h"
 #include "nsDOMAttributeMap.h"
 #include "nsIAtom.h"
@@ -139,6 +139,7 @@
 #include "mozilla/dom/WindowBinding.h"
 #include "mozilla/dom/ElementBinding.h"
 #include "mozilla/dom/VRDevice.h"
+#include "nsComputedDOMStyle.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -385,7 +386,7 @@ Element::GetBindingURL(nsIDocument *aDocument, css::URLValue **aResult)
                                IsHTMLElement(nsGkAtoms::object) ||
                                IsHTMLElement(nsGkAtoms::embed) ||
                                IsHTMLElement(nsGkAtoms::applet));
-  nsIPresShell *shell = aDocument->GetShell();
+  nsCOMPtr<nsIPresShell> shell = aDocument->GetShell();
   if (!shell || GetPrimaryFrame() || !isXULorPluginElement) {
     *aResult = nullptr;
 
@@ -393,11 +394,8 @@ Element::GetBindingURL(nsIDocument *aDocument, css::URLValue **aResult)
   }
 
   // Get the computed -moz-binding directly from the style context
-  nsPresContext *pctx = shell->GetPresContext();
-  NS_ENSURE_TRUE(pctx, false);
-
-  nsRefPtr<nsStyleContext> sc = pctx->StyleSet()->ResolveStyleFor(this,
-                                                                  nullptr);
+  nsRefPtr<nsStyleContext> sc =
+    nsComputedDOMStyle::GetStyleContextForElementNoFlush(this, nullptr, shell);
   NS_ENSURE_TRUE(sc, false);
 
   *aResult = sc->StyleDisplay()->mBinding;
@@ -1354,7 +1352,7 @@ Element::GetElementsByTagNameNS(const nsAString& namespaceURI,
   nsCOMPtr<nsIHTMLCollection> list =
     GetElementsByTagNameNS(namespaceURI, localName, rv);
   if (rv.Failed()) {
-    return rv.ErrorCode();
+    return rv.StealNSResult();
   }
   list.forget(aResult);
   return NS_OK;
@@ -2767,9 +2765,9 @@ Element::PreHandleEventForLinks(EventChainPreVisitor& aVisitor)
   // Optimisation: return early if this event doesn't interest us.
   // IMPORTANT: this switch and the switch below it must be kept in sync!
   switch (aVisitor.mEvent->message) {
-  case NS_MOUSE_ENTER_SYNTH:
+  case NS_MOUSE_OVER:
   case NS_FOCUS_CONTENT:
-  case NS_MOUSE_EXIT_SYNTH:
+  case NS_MOUSE_OUT:
   case NS_BLUR_CONTENT:
     break;
   default:
@@ -2788,7 +2786,7 @@ Element::PreHandleEventForLinks(EventChainPreVisitor& aVisitor)
   // updated even if the event is consumed before we have a chance to set it.
   switch (aVisitor.mEvent->message) {
   // Set the status bar similarly for mouseover and focus
-  case NS_MOUSE_ENTER_SYNTH:
+  case NS_MOUSE_OVER:
     aVisitor.mEventStatus = nsEventStatus_eConsumeNoDefault;
     // FALL THROUGH
   case NS_FOCUS_CONTENT: {
@@ -2803,7 +2801,7 @@ Element::PreHandleEventForLinks(EventChainPreVisitor& aVisitor)
     }
     break;
   }
-  case NS_MOUSE_EXIT_SYNTH:
+  case NS_MOUSE_OUT:
     aVisitor.mEventStatus = nsEventStatus_eConsumeNoDefault;
     // FALL THROUGH
   case NS_BLUR_CONTENT:
@@ -3007,7 +3005,7 @@ Element::SetTokenList(nsIAtom* aAtom, nsIVariant* aValue)
   aValue->GetAsAString(string);
   ErrorResult rv;
   itemType->SetValue(string, rv);
-  return rv.ErrorCode();
+  return rv.StealNSResult();
 }
 
 Element*
@@ -3184,7 +3182,7 @@ Element::MozRequestPointerLock()
 }
 
 void
-Element::GetAnimationPlayers(nsTArray<nsRefPtr<AnimationPlayer> >& aPlayers)
+Element::GetAnimations(nsTArray<nsRefPtr<Animation>>& aAnimations)
 {
   nsIDocument* doc = GetComposedDoc();
   if (doc) {
@@ -3195,18 +3193,18 @@ Element::GetAnimationPlayers(nsTArray<nsRefPtr<AnimationPlayer> >& aPlayers)
                             nsGkAtoms::animationsProperty };
   for (size_t propIdx = 0; propIdx < MOZ_ARRAY_LENGTH(properties);
        propIdx++) {
-    AnimationPlayerCollection* collection =
-      static_cast<AnimationPlayerCollection*>(
+    AnimationCollection* collection =
+      static_cast<AnimationCollection*>(
         GetProperty(properties[propIdx]));
     if (!collection) {
       continue;
     }
-    for (size_t playerIdx = 0;
-         playerIdx < collection->mPlayers.Length();
-         playerIdx++) {
-      AnimationPlayer* player = collection->mPlayers[playerIdx];
-      if (player->IsRelevant()) {
-        aPlayers.AppendElement(player);
+    for (size_t animIdx = 0;
+         animIdx < collection->mAnimations.Length();
+         animIdx++) {
+      Animation* anim = collection->mAnimations[animIdx];
+      if (anim->IsRelevant()) {
+        aAnimations.AppendElement(anim);
       }
     }
   }

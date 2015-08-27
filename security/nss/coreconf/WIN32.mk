@@ -42,7 +42,7 @@ else
 	endif
 	# Change the dots to spaces.
 	_CC_VERSION_WORDS := $(subst ., ,$(CC_VERSION))
-	_CC_VMAJOR  := 18
+	_CC_VMAJOR  := $(word 1,$(_CC_VERSION_WORDS))
 	_CC_VMINOR  := $(word 2,$(_CC_VERSION_WORDS))
 	_CC_RELEASE := $(word 3,$(_CC_VERSION_WORDS))
 	_CC_BUILD   := $(word 4,$(_CC_VERSION_WORDS))

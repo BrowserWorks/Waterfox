@@ -7,53 +7,59 @@
  * to browser.xul if a pref is set and no other themes are applied.
  */
 let DevEdition = {
-  _prefName: "browser.devedition.theme.enabled",
-  _themePrefName: "general.skins.selectedSkin",
-  _lwThemePrefName: "lightweightThemes.selectedThemeID",
   _devtoolsThemePrefName: "devtools.theme",
-
   styleSheetLocation: "chrome://browser/skin/devedition.css",
   styleSheet: null,
+  initialized: false,
+
+  get isStyleSheetEnabled() {
+    return this.styleSheet && !this.styleSheet.sheet.disabled;
+  },
+
+  get isThemeCurrentlyApplied() {
+    let theme = LightweightThemeManager.currentTheme;
+    return theme && theme.id == "firefox-devedition@mozilla.org";
+  },
 
   init: function () {
-    this._updateDevtoolsThemeAttribute();
-    this._updateStyleSheetFromPrefs();
-
-    // Listen for changes to all prefs except for complete themes.
-    // No need for this since changing a complete theme requires a
-    // restart.
-    Services.prefs.addObserver(this._lwThemePrefName, this, false);
-    Services.prefs.addObserver(this._prefName, this, false);
+    this.initialized = true;
     Services.prefs.addObserver(this._devtoolsThemePrefName, this, false);
     Services.obs.addObserver(this, "lightweight-theme-styling-update", false);
+    this._updateDevtoolsThemeAttribute();
+
+    if (this.isThemeCurrentlyApplied) {
+      this._toggleStyleSheet(true);
+    }
+  },
+
+  createStyleSheet: function() {
+    let styleSheetAttr = `href="${this.styleSheetLocation}" type="text/css"`;
+    this.styleSheet = document.createProcessingInstruction(
+      "xml-stylesheet", styleSheetAttr);
+    this.styleSheet.addEventListener("load", this);
+    document.insertBefore(this.styleSheet, document.documentElement);
+    this.styleSheet.sheet.disabled = true;
   },
 
   observe: function (subject, topic, data) {
     if (topic == "lightweight-theme-styling-update") {
       let newTheme = JSON.parse(data);
-      if (!newTheme) {
-        // A lightweight theme has been unapplied, so just re-read prefs.
-        this._updateStyleSheetFromPrefs();
+      if (newTheme && newTheme.id == "firefox-devedition@mozilla.org") {
+        this._toggleStyleSheet(true);
       } else {
-        // A lightweight theme has been applied, but the pref may not be
-        // set yet if this happened from customize menu or addons page.
         this._toggleStyleSheet(false);
       }
     }
 
-    if (topic == "nsPref:changed") {
-      if (data == this._devtoolsThemePrefName) {
-        this._updateDevtoolsThemeAttribute();
-      } else {
-        this._updateStyleSheetFromPrefs();
-      }
+    if (topic == "nsPref:changed" && data == this._devtoolsThemePrefName) {
+      this._updateDevtoolsThemeAttribute();
     }
   },
 
   _inferBrightness: function() {
     ToolbarIconColor.inferFromText();
     // Get an inverted full screen button if the dark theme is applied.
-    if (this.styleSheet &&
+    if (this.isStyleSheetEnabled &&
         document.documentElement.getAttribute("devtoolstheme") == "dark") {
       document.documentElement.setAttribute("brighttitlebarforeground", "true");
     } else {
@@ -70,57 +76,41 @@ let DevEdition = {
     }
     document.documentElement.setAttribute("devtoolstheme", devtoolsTheme);
     this._inferBrightness();
-    this._updateStyleSheetFromPrefs();
-  },
-
-  _updateStyleSheetFromPrefs: function() {
-    let lightweightThemeSelected = false;
-    try {
-      lightweightThemeSelected = !!Services.prefs.getCharPref(this._lwThemePrefName);
-    } catch(e) {}
-
-    let defaultThemeSelected = false;
-    try {
-       defaultThemeSelected = Services.prefs.getCharPref(this._themePrefName) == "classic/1.0";
-    } catch(e) {}
-
-    let deveditionThemeEnabled = Services.prefs.getBoolPref(this._prefName) &&
-      !lightweightThemeSelected && defaultThemeSelected;
-
-    this._toggleStyleSheet(deveditionThemeEnabled);
   },
 
   handleEvent: function(e) {
     if (e.type === "load") {
       this.styleSheet.removeEventListener("load", this);
+      this.refreshBrowserDisplay();
+    }
+  },
+
+  refreshBrowserDisplay: function() {
+    // Don't touch things on the browser if gBrowserInit.onLoad hasn't
+    // yet fired.
+    if (this.initialized) {
       gBrowser.tabContainer._positionPinnedTabs();
       this._inferBrightness();
-      Services.obs.notifyObservers(window, "devedition-theme-state-changed", true);
     }
   },
 
   _toggleStyleSheet: function(deveditionThemeEnabled) {
-    if (deveditionThemeEnabled && !this.styleSheet) {
-      let styleSheetAttr = `href="${this.styleSheetLocation}" type="text/css"`;
-      this.styleSheet = document.createProcessingInstruction(
-        'xml-stylesheet', styleSheetAttr);
-      this.styleSheet.addEventListener("load", this);
-      document.insertBefore(this.styleSheet, document.documentElement);
-      // NB: we'll notify observers once the stylesheet has fully loaded, see
-      // handleEvent above.
-    } else if (!deveditionThemeEnabled && this.styleSheet) {
-      this.styleSheet.removeEventListener("load", this);
-      this.styleSheet.remove();
-      this.styleSheet = null;
-      gBrowser.tabContainer._positionPinnedTabs();
-      this._inferBrightness();
-      Services.obs.notifyObservers(window, "devedition-theme-state-changed", false);
+    let wasEnabled = this.isStyleSheetEnabled;
+    if (deveditionThemeEnabled && !wasEnabled) {
+      // The stylesheet may not have been created yet if it wasn't
+      // needed on initial load.  Make it now.
+      if (!this.styleSheet) {
+        this.createStyleSheet();
+      }
+      this.styleSheet.sheet.disabled = false;
+      this.refreshBrowserDisplay();
+    } else if (!deveditionThemeEnabled && wasEnabled) {
+      this.styleSheet.sheet.disabled = true;
+      this.refreshBrowserDisplay();
     }
   },
 
   uninit: function () {
-    Services.prefs.removeObserver(this._lwThemePrefName, this);
-    Services.prefs.removeObserver(this._prefName, this);
     Services.prefs.removeObserver(this._devtoolsThemePrefName, this);
     Services.obs.removeObserver(this, "lightweight-theme-styling-update", false);
     if (this.styleSheet) {
@@ -129,3 +119,12 @@ let DevEdition = {
     this.styleSheet = null;
   }
 };
+
+#ifndef RELEASE_BUILD
+// If the DevEdition theme is going to be applied in gBrowserInit.onLoad,
+// then preload it now.  This prevents a flash of unstyled content where the
+// normal theme is applied while the DevEdition stylesheet is loading.
+if (this != Services.appShell.hiddenDOMWindow && DevEdition.isThemeCurrentlyApplied) {
+  DevEdition.createStyleSheet();
+}
+#endif

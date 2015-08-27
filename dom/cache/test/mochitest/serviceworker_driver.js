@@ -2,7 +2,7 @@
 // http://creativecommons.org/publicdomain/zero/1.0/
 
 function serviceWorkerTestExec(testFile) {
-  var isB2G = !navigator.userAgent.contains("Android") &&
+  var isB2G = !navigator.userAgent.includes("Android") &&
               /Mobile|Tablet/.test(navigator.userAgent);
   if (isB2G) {
     // TODO B2G doesn't support running service workers for now due to bug 1137683.
@@ -38,16 +38,7 @@ function serviceWorkerTestExec(testFile) {
       document.body.appendChild(iframe);
     }
 
-    navigator.serviceWorker.register("worker_wrapper.js" + "?" + (Math.random()), {scope: "."})
-      .then(function(registration) {
-        if (registration.installing) {
-          registration.installing.onstatechange = function(e) {
-            e.target.onstatechange = null;
-            setupSW(registration);
-          };
-        } else {
-          setupSW(registration);
-        }
-      });
+    navigator.serviceWorker.ready.then(setupSW);
+    navigator.serviceWorker.register("worker_wrapper.js", {scope: "."});
   });
 }

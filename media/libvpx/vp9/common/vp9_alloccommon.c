@@ -11,21 +11,29 @@
 #include "./vpx_config.h"
 #include "vpx_mem/vpx_mem.h"
 
+#include "vp9/common/vp9_alloccommon.h"
 #include "vp9/common/vp9_blockd.h"
 #include "vp9/common/vp9_entropymode.h"
 #include "vp9/common/vp9_entropymv.h"
 #include "vp9/common/vp9_onyxc_int.h"
 #include "vp9/common/vp9_systemdependent.h"
 
-static void clear_mi_border(const VP9_COMMON *cm, MODE_INFO *mi) {
-  int i;
+// TODO(hkuang): Don't need to lock the whole pool after implementing atomic
+// frame reference count.
+void lock_buffer_pool(BufferPool *const pool) {
+#if CONFIG_MULTITHREAD
+  pthread_mutex_lock(&pool->pool_mutex);
+#else
+  (void)pool;
+#endif
+}
 
-  // Top border row
-  vpx_memset(mi, 0, sizeof(*mi) * cm->mi_stride);
-
-  // Left border column
-  for (i = 1; i < cm->mi_rows + 1; ++i)
-    vpx_memset(&mi[i * cm->mi_stride], 0, sizeof(*mi));
+void unlock_buffer_pool(BufferPool *const pool) {
+#if CONFIG_MULTITHREAD
+  pthread_mutex_unlock(&pool->pool_mutex);
+#else
+  (void)pool;
+#endif
 }
 
 void vp9_set_mb_mi(VP9_COMMON *cm, int width, int height) {
@@ -41,174 +49,135 @@ void vp9_set_mb_mi(VP9_COMMON *cm, int width, int height) {
   cm->MBs = cm->mb_rows * cm->mb_cols;
 }
 
-static void setup_mi(VP9_COMMON *cm) {
-  cm->mi = cm->mip + cm->mi_stride + 1;
-  cm->prev_mi = cm->prev_mip + cm->mi_stride + 1;
-
-  vpx_memset(cm->mip, 0, cm->mi_stride * (cm->mi_rows + 1) * sizeof(*cm->mip));
-  clear_mi_border(cm, cm->prev_mip);
-}
-
-static int alloc_mi(VP9_COMMON *cm, int mi_size) {
+static int alloc_seg_map(VP9_COMMON *cm, int seg_map_size) {
   int i;
 
-  for (i = 0; i < 2; ++i) {
-    cm->mip_array[i] =
-        (MODE_INFO *)vpx_calloc(mi_size, sizeof(MODE_INFO));
-    if (cm->mip_array[i] == NULL)
+  for (i = 0; i < NUM_PING_PONG_BUFFERS; ++i) {
+    cm->seg_map_array[i] = (uint8_t *)vpx_calloc(seg_map_size, 1);
+    if (cm->seg_map_array[i] == NULL)
       return 1;
   }
-
-  cm->mi_alloc_size = mi_size;
+  cm->seg_map_alloc_size = seg_map_size;
 
   // Init the index.
-  cm->mi_idx = 0;
-  cm->prev_mi_idx = 1;
+  cm->seg_map_idx = 0;
+  cm->prev_seg_map_idx = 1;
 
-  cm->mip = cm->mip_array[cm->mi_idx];
-  cm->prev_mip = cm->mip_array[cm->prev_mi_idx];
+  cm->current_frame_seg_map = cm->seg_map_array[cm->seg_map_idx];
+  if (!cm->frame_parallel_decode)
+    cm->last_frame_seg_map = cm->seg_map_array[cm->prev_seg_map_idx];
 
   return 0;
 }
 
-static void free_mi(VP9_COMMON *cm) {
+static void free_seg_map(VP9_COMMON *cm) {
   int i;
 
-  for (i = 0; i < 2; ++i) {
-    vpx_free(cm->mip_array[i]);
-    cm->mip_array[i] = NULL;
+  for (i = 0; i < NUM_PING_PONG_BUFFERS; ++i) {
+    vpx_free(cm->seg_map_array[i]);
+    cm->seg_map_array[i] = NULL;
   }
 
-  cm->mip = NULL;
-  cm->prev_mip = NULL;
+  cm->current_frame_seg_map = NULL;
+
+  if (!cm->frame_parallel_decode) {
+    cm->last_frame_seg_map = NULL;
+  }
 }
 
-void vp9_free_ref_frame_buffers(VP9_COMMON *cm) {
+void vp9_free_ref_frame_buffers(BufferPool *pool) {
   int i;
 
   for (i = 0; i < FRAME_BUFFERS; ++i) {
-    vp9_free_frame_buffer(&cm->frame_bufs[i].buf);
-
-    if (cm->frame_bufs[i].ref_count > 0 &&
-        cm->frame_bufs[i].raw_frame_buffer.data != NULL) {
-      cm->release_fb_cb(cm->cb_priv, &cm->frame_bufs[i].raw_frame_buffer);
-      cm->frame_bufs[i].ref_count = 0;
+    if (pool->frame_bufs[i].ref_count > 0 &&
+        pool->frame_bufs[i].raw_frame_buffer.data != NULL) {
+      pool->release_fb_cb(pool->cb_priv, &pool->frame_bufs[i].raw_frame_buffer);
+      pool->frame_bufs[i].ref_count = 0;
     }
+    vpx_free(pool->frame_bufs[i].mvs);
+    pool->frame_bufs[i].mvs = NULL;
+    vp9_free_frame_buffer(&pool->frame_bufs[i].buf);
   }
+}
 
+void vp9_free_postproc_buffers(VP9_COMMON *cm) {
+#if CONFIG_VP9_POSTPROC
   vp9_free_frame_buffer(&cm->post_proc_buffer);
+  vp9_free_frame_buffer(&cm->post_proc_buffer_int);
+#else
+  (void)cm;
+#endif
 }
 
 void vp9_free_context_buffers(VP9_COMMON *cm) {
-  free_mi(cm);
-
-  vpx_free(cm->last_frame_seg_map);
-  cm->last_frame_seg_map = NULL;
-
+  cm->free_mi(cm);
+  free_seg_map(cm);
   vpx_free(cm->above_context);
   cm->above_context = NULL;
-
   vpx_free(cm->above_seg_context);
   cm->above_seg_context = NULL;
 }
 
 int vp9_alloc_context_buffers(VP9_COMMON *cm, int width, int height) {
-  vp9_free_context_buffers(cm);
+  int new_mi_size;
 
   vp9_set_mb_mi(cm, width, height);
-  if (alloc_mi(cm, cm->mi_stride * calc_mi_size(cm->mi_rows)))
-    goto fail;
-
-  cm->last_frame_seg_map = (uint8_t *)vpx_calloc(cm->mi_rows * cm->mi_cols, 1);
-  if (!cm->last_frame_seg_map) goto fail;
-
-  cm->above_context = (ENTROPY_CONTEXT *)vpx_calloc(
-      2 * mi_cols_aligned_to_sb(cm->mi_cols) * MAX_MB_PLANE,
-      sizeof(*cm->above_context));
-  if (!cm->above_context) goto fail;
-
-  cm->above_seg_context = (PARTITION_CONTEXT *)vpx_calloc(
-      mi_cols_aligned_to_sb(cm->mi_cols), sizeof(*cm->above_seg_context));
-  if (!cm->above_seg_context) goto fail;
-
-  return 0;
-
- fail:
-  vp9_free_context_buffers(cm);
-  return 1;
-}
-
-static void init_frame_bufs(VP9_COMMON *cm) {
-  int i;
-
-  cm->new_fb_idx = FRAME_BUFFERS - 1;
-  cm->frame_bufs[cm->new_fb_idx].ref_count = 1;
-
-  for (i = 0; i < REF_FRAMES; ++i) {
-    cm->ref_frame_map[i] = i;
-    cm->frame_bufs[i].ref_count = 1;
-  }
-}
-
-int vp9_alloc_ref_frame_buffers(VP9_COMMON *cm, int width, int height) {
-  int i;
-  const int ss_x = cm->subsampling_x;
-  const int ss_y = cm->subsampling_y;
-
-  vp9_free_ref_frame_buffers(cm);
-
-  for (i = 0; i < FRAME_BUFFERS; ++i) {
-    cm->frame_bufs[i].ref_count = 0;
-    if (vp9_alloc_frame_buffer(&cm->frame_bufs[i].buf, width, height,
-                               ss_x, ss_y,
-#if CONFIG_VP9_HIGHBITDEPTH
-                               cm->use_highbitdepth,
-#endif
-                               VP9_ENC_BORDER_IN_PIXELS) < 0)
+  new_mi_size = cm->mi_stride * calc_mi_size(cm->mi_rows);
+  if (cm->mi_alloc_size < new_mi_size) {
+    cm->free_mi(cm);
+    if (cm->alloc_mi(cm, new_mi_size))
       goto fail;
   }
 
-  init_frame_bufs(cm);
+  if (cm->seg_map_alloc_size < cm->mi_rows * cm->mi_cols) {
+    // Create the segmentation map structure and set to 0.
+    free_seg_map(cm);
+    if (alloc_seg_map(cm, cm->mi_rows * cm->mi_cols))
+      goto fail;
+  }
 
-#if CONFIG_INTERNAL_STATS || CONFIG_VP9_POSTPROC
-  if (vp9_alloc_frame_buffer(&cm->post_proc_buffer, width, height, ss_x, ss_y,
-#if CONFIG_VP9_HIGHBITDEPTH
-                             cm->use_highbitdepth,
-#endif
-                             VP9_ENC_BORDER_IN_PIXELS) < 0)
-    goto fail;
-#endif
+  if (cm->above_context_alloc_cols < cm->mi_cols) {
+    vpx_free(cm->above_context);
+    cm->above_context = (ENTROPY_CONTEXT *)vpx_calloc(
+        2 * mi_cols_aligned_to_sb(cm->mi_cols) * MAX_MB_PLANE,
+        sizeof(*cm->above_context));
+    if (!cm->above_context) goto fail;
+
+    vpx_free(cm->above_seg_context);
+    cm->above_seg_context = (PARTITION_CONTEXT *)vpx_calloc(
+        mi_cols_aligned_to_sb(cm->mi_cols), sizeof(*cm->above_seg_context));
+    if (!cm->above_seg_context) goto fail;
+    cm->above_context_alloc_cols = cm->mi_cols;
+  }
 
   return 0;
 
  fail:
-  vp9_free_ref_frame_buffers(cm);
+  vp9_free_context_buffers(cm);
   return 1;
 }
 
 void vp9_remove_common(VP9_COMMON *cm) {
-  vp9_free_ref_frame_buffers(cm);
   vp9_free_context_buffers(cm);
-  vp9_free_internal_frame_buffers(&cm->int_frame_buffers);
+
+  vpx_free(cm->fc);
+  cm->fc = NULL;
+  vpx_free(cm->frame_contexts);
+  cm->frame_contexts = NULL;
 }
 
 void vp9_init_context_buffers(VP9_COMMON *cm) {
-  setup_mi(cm);
-  if (cm->last_frame_seg_map)
-    vpx_memset(cm->last_frame_seg_map, 0, cm->mi_rows * cm->mi_cols);
+  cm->setup_mi(cm);
+  if (cm->last_frame_seg_map && !cm->frame_parallel_decode)
+    memset(cm->last_frame_seg_map, 0, cm->mi_rows * cm->mi_cols);
 }
 
-void vp9_swap_mi_and_prev_mi(VP9_COMMON *cm) {
+void vp9_swap_current_and_last_seg_map(VP9_COMMON *cm) {
   // Swap indices.
-  const int tmp = cm->mi_idx;
-  cm->mi_idx = cm->prev_mi_idx;
-  cm->prev_mi_idx = tmp;
+  const int tmp = cm->seg_map_idx;
+  cm->seg_map_idx = cm->prev_seg_map_idx;
+  cm->prev_seg_map_idx = tmp;
 
-  // Current mip will be the prev_mip for the next frame.
-  cm->mip = cm->mip_array[cm->mi_idx];
-  cm->prev_mip = cm->mip_array[cm->prev_mi_idx];
-
-  // Update the upper left visible macroblock ptrs.
-  cm->mi = cm->mip + cm->mi_stride + 1;
-  cm->prev_mi = cm->prev_mip + cm->mi_stride + 1;
+  cm->current_frame_seg_map = cm->seg_map_array[cm->seg_map_idx];
+  cm->last_frame_seg_map = cm->seg_map_array[cm->prev_seg_map_idx];
 }

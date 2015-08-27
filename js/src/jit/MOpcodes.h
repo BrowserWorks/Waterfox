@@ -167,15 +167,21 @@ namespace jit {
     _(GuardObjectGroup)                                                     \
     _(GuardObjectIdentity)                                                  \
     _(GuardClass)                                                           \
+    _(GuardUnboxedExpando)                                                  \
+    _(LoadUnboxedExpando)                                                   \
     _(ArrayLength)                                                          \
     _(SetArrayLength)                                                       \
     _(TypedArrayLength)                                                     \
     _(TypedArrayElements)                                                   \
+    _(SetDisjointTypedElements)                                             \
     _(TypedObjectDescr)                                                     \
     _(TypedObjectElements)                                                  \
     _(SetTypedObjectOffset)                                                 \
     _(InitializedLength)                                                    \
     _(SetInitializedLength)                                                 \
+    _(UnboxedArrayLength)                                                   \
+    _(UnboxedArrayInitializedLength)                                        \
+    _(IncrementUnboxedArrayInitializedLength)                               \
     _(Not)                                                                  \
     _(BoundsCheck)                                                          \
     _(BoundsCheckLower)                                                     \

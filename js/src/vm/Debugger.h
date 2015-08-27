@@ -10,10 +10,13 @@
 #include "mozilla/GuardObjects.h"
 #include "mozilla/LinkedList.h"
 #include "mozilla/Range.h"
+#include "mozilla/UniquePtr.h"
+#include "mozilla/Vector.h"
 
 #include "jsclist.h"
 #include "jscntxt.h"
 #include "jscompartment.h"
+#include "jsobj.h"
 #include "jsweakmap.h"
 #include "jswrapper.h"
 
@@ -124,7 +127,7 @@ class DebuggerWeakMap : private WeakMap<PreBarriered<UnbarrieredKey>, Relocatabl
         for (Enum e(*static_cast<Base*>(this)); !e.empty(); e.popFront()) {
             traceValueEdges(tracer, e.front().value());
             Key key = e.front().key();
-            gc::Mark(tracer, &key, "Debugger WeakMap key");
+            TraceEdge(tracer, &key, "Debugger WeakMap key");
             if (key != e.front().key())
                 e.rekeyFront(key);
             key.unsafeSet(nullptr);
@@ -187,9 +190,10 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
     friend class mozilla::LinkedListElement<Debugger>;
     friend bool (::JS_DefineDebuggerObject)(JSContext* cx, JS::HandleObject obj);
     friend bool (::JS::dbg::IsDebugger)(JS::Value val);
-    friend JSObject* SavedStacksMetadataCallback(JSContext* cx);
     friend void JS::dbg::onNewPromise(JSContext* cx, HandleObject promise);
     friend void JS::dbg::onPromiseSettled(JSContext* cx, HandleObject promise);
+    friend bool JS::dbg::FireOnGarbageCollectionHook(JSContext* cx,
+                                                     JS::dbg::GarbageCollectionEvent::Ptr&& data);
 
   public:
     enum Hook {
@@ -242,9 +246,17 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
     // false otherwise.
     bool isDebuggee(const JSCompartment* compartment) const;
 
-    // Notify this Debugger that one of its debuggee compartments' zones is
-    // being collected.
-    void debuggeeIsBeingCollected() { debuggeeWasCollected = true; }
+    // Return true if this Debugger observed a debuggee that participated in the
+    // GC identified by the given GC number. Return false otherwise.
+    bool observedGC(uint64_t majorGCNumber) const {
+        return observedGCs.has(majorGCNumber);
+    }
+
+    // Notify this Debugger that one or more of its debuggees is participating
+    // in the GC identified by the given GC number.
+    bool debuggeeIsBeingCollected(uint64_t majorGCNumber) {
+        return observedGCs.put(majorGCNumber);
+    }
 
   private:
     HeapPtrNativeObject object;         /* The Debugger object. Strong reference. */
@@ -253,49 +265,32 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
     bool enabled;
     JSCList breakpoints;                /* Circular list of all js::Breakpoints in this debugger */
 
+    // The set of GC numbers for which one or more of this Debugger's observed
+    // debuggees participated in.
+    js::HashSet<uint64_t> observedGCs;
+
     struct AllocationSite : public mozilla::LinkedListElement<AllocationSite>
     {
-        AllocationSite(HandleObject frame, int64_t when) : frame(frame), when(when) {
+        AllocationSite(HandleObject frame, int64_t when)
+            : frame(frame),
+              when(when),
+              className(nullptr),
+              ctorName(nullptr)
+        {
             MOZ_ASSERT_IF(frame, UncheckedUnwrap(frame)->is<SavedFrame>());
         };
+
+        static AllocationSite* create(JSContext* cx, HandleObject frame, int64_t when,
+                                      HandleObject obj);
+
         RelocatablePtrObject frame;
         int64_t when;
+        const char* className;
+        RelocatablePtrAtom ctorName;
     };
     typedef mozilla::LinkedList<AllocationSite> AllocationSiteList;
 
     bool allowUnobservedAsmJS;
-
-    // During a GC cycle, this is true if one of this Debugger's debuggees was
-    // collected. When the GC cycle completes, this flag is reset.
-    bool debuggeeWasCollected;
-
-    // True while we are executing the onGarbageCollection hook, and therefore
-    // should not fire the hook for this Debugger instance again if there is a
-    // GC while we are executing the hook. See also
-    // `AutoOnGCHookReentrancyGuard` below.
-    bool inOnGCHook;
-
-    // RAII class to automatically guard against reentrancy into the
-    // OnGarbageCollection hook.
-    class MOZ_STACK_CLASS AutoOnGCHookReentrancyGuard {
-        MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER;
-        Debugger& dbg;
-
-    public:
-        explicit AutoOnGCHookReentrancyGuard(Debugger& dbg MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
-            : dbg(dbg)
-        {
-            MOZ_GUARD_OBJECT_NOTIFIER_INIT;
-            MOZ_ASSERT(!dbg.inOnGCHook);
-            dbg.inOnGCHook = true;
-        }
-
-        ~AutoOnGCHookReentrancyGuard() {
-            MOZ_ASSERT(dbg.inOnGCHook);
-            dbg.inOnGCHook = false;
-        }
-    };
-
     bool trackingAllocationSites;
     double allocationSamplingProbability;
     AllocationSiteList allocationsLog;
@@ -305,8 +300,42 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
 
     static const size_t DEFAULT_MAX_ALLOCATIONS_LOG_LENGTH = 5000;
 
-    bool appendAllocationSite(JSContext* cx, HandleSavedFrame frame, int64_t when);
+    bool appendAllocationSite(JSContext* cx, HandleObject obj, HandleSavedFrame frame,
+                              int64_t when);
     void emptyAllocationsLog();
+
+    /*
+     * Return true if there is an existing object metadata callback for the
+     * given global's compartment that will prevent our instrumentation of
+     * allocations.
+     */
+    static bool cannotTrackAllocations(const GlobalObject& global);
+
+    /*
+     * Return true if the given global is being observed by at least one
+     * Debugger that is tracking allocations.
+     */
+    static bool isObservedByDebuggerTrackingAllocations(const GlobalObject& global);
+
+    /*
+     * Add allocations tracking for objects allocated within the given
+     * debuggee's compartment. The given debuggee global must be observed by at
+     * least one Debugger that is enabled and tracking allocations.
+     */
+    static bool addAllocationsTracking(JSContext* cx, GlobalObject& debuggee);
+
+    /*
+     * Remove allocations tracking for objects allocated within the given
+     * global's compartment. This is a no-op if there are still Debuggers
+     * observing this global and who are tracking allocations.
+     */
+    static void removeAllocationsTracking(GlobalObject& global);
+
+    /*
+     * Add or remove allocations tracking for all debuggees.
+     */
+    bool addAllocationsTrackingForAllDebuggees(JSContext* cx);
+    void removeAllocationsTrackingForAllDebuggees();
 
     /*
      * If this Debugger is enabled, and has a onNewGlobalObject handler, then
@@ -515,7 +544,7 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
     static JSTrapStatus slowPathOnExceptionUnwind(JSContext* cx, AbstractFramePtr frame);
     static void slowPathOnNewScript(JSContext* cx, HandleScript script);
     static void slowPathOnNewGlobalObject(JSContext* cx, Handle<GlobalObject*> global);
-    static bool slowPathOnLogAllocationSite(JSContext* cx, HandleSavedFrame frame,
+    static bool slowPathOnLogAllocationSite(JSContext* cx, HandleObject obj, HandleSavedFrame frame,
                                             int64_t when, GlobalObject::DebuggerVector& dbgs);
     static void slowPathPromiseHook(JSContext* cx, Hook hook, HandleObject promise);
     static JSTrapStatus dispatchHook(JSContext* cx, MutableHandleValue vp, Hook which,
@@ -547,9 +576,10 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
 
     /*
      * Receive a "garbage collection" event from the engine. A GC cycle with the
-     * given statistics was just completed.
+     * given data was recently completed.
      */
-    void fireOnGarbageCollectionHook(JSRuntime* rt, const gcstats::Statistics& stats);
+    void fireOnGarbageCollectionHook(JSContext* cx,
+                                     const JS::dbg::GarbageCollectionEvent::Ptr& gcData);
 
     /*
      * Gets a Debugger.Frame object. If maybeIter is non-null, we eagerly copy
@@ -666,8 +696,8 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
 
     static inline void onNewScript(JSContext* cx, HandleScript script);
     static inline void onNewGlobalObject(JSContext* cx, Handle<GlobalObject*> global);
-    static inline bool onLogAllocationSite(JSContext* cx, HandleSavedFrame frame, int64_t when);
-    static inline void onGarbageCollection(JSRuntime* rt, const gcstats::Statistics& stats);
+    static inline bool onLogAllocationSite(JSContext* cx, JSObject* obj, HandleSavedFrame frame,
+                                           int64_t when);
     static JSTrapStatus onTrap(JSContext* cx, MutableHandleValue vp);
     static JSTrapStatus onSingleStep(JSContext* cx, MutableHandleValue vp);
     static bool handleBaselineOsr(JSContext* cx, InterpreterFrame* from, jit::BaselineFrame* to);
@@ -675,7 +705,7 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
     static void handleUnrecoverableIonBailoutError(JSContext* cx, jit::RematerializedFrame* frame);
     static void propagateForcedReturn(JSContext* cx, AbstractFramePtr frame, HandleValue rval);
     static bool hasLiveHook(GlobalObject* global, Hook which);
-    static void assertNotInFrameMaps(AbstractFramePtr frame);
+    static bool inFrameMaps(AbstractFramePtr frame);
 
     /************************************* Functions for use by Debugger.cpp. */
 
@@ -715,13 +745,6 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
      * form { uninitialized: true }.
      */
     bool wrapDebuggeeValue(JSContext* cx, MutableHandleValue vp);
-
-    /*
-     * Converts an implementor level of detail gcstats::Statistics object into a
-     * JSObject that web developers should be able to make sense of. Returns
-     * nullptr on failure.
-     */
-    JSObject* translateGCStatistics(JSContext* cx, const gcstats::Statistics& stats);
 
     /*
      * Unwrap a Debug.Object, without rewrapping it for any particular debuggee
@@ -872,7 +895,7 @@ class BreakpointSite {
  * Nothing else causes a breakpoint to be retained, so if its script or
  * debugger is collected, the breakpoint is destroyed during GC sweep phase,
  * even if the debugger compartment isn't being GC'd. This is implemented in
- * JSCompartment::sweepBreakpoints.
+ * Zone::sweepBreakpoints.
  */
 class Breakpoint {
     friend struct ::JSCompartment;
@@ -975,26 +998,18 @@ Debugger::onNewGlobalObject(JSContext* cx, Handle<GlobalObject*> global)
 }
 
 /* static */ bool
-Debugger::onLogAllocationSite(JSContext* cx, HandleSavedFrame frame, int64_t when)
+Debugger::onLogAllocationSite(JSContext* cx, JSObject* obj, HandleSavedFrame frame, int64_t when)
 {
     GlobalObject::DebuggerVector* dbgs = cx->global()->getDebuggers();
     if (!dbgs || dbgs->empty())
         return true;
-    return Debugger::slowPathOnLogAllocationSite(cx, frame, when, *dbgs);
-}
-
-/* static */ void
-Debugger::onGarbageCollection(JSRuntime* rt, const gcstats::Statistics& stats)
-{
-    for (Debugger* dbg = rt->debuggerList.getFirst(); dbg; dbg = dbg->getNext()) {
-        if (dbg->debuggeeWasCollected && dbg->getHook(OnGarbageCollection)) {
-            dbg->fireOnGarbageCollectionHook(rt, stats);
-        }
-    }
+    RootedObject hobj(cx, obj);
+    return Debugger::slowPathOnLogAllocationSite(cx, hobj, frame, when, *dbgs);
 }
 
 bool ReportObjectRequired(JSContext* cx);
 
 } /* namespace js */
+
 
 #endif /* vm_Debugger_h */

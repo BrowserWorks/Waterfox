@@ -14,7 +14,6 @@
 #include "nsITimer.h"
 #include "nsIDOMEventListener.h"
 
-class nsString;
 class nsITimer;
 class nsSliderFrame;
 
@@ -131,6 +130,10 @@ public:
   NS_IMETHOD HandleRelease(nsPresContext* aPresContext,
                            mozilla::WidgetGUIEvent* aEvent,
                            nsEventStatus* aEventStatus) override;
+
+  // Return the ratio the scrollbar thumb should move in proportion to the
+  // scrolled frame.
+  float GetThumbRatio() const;
 
 private:
 

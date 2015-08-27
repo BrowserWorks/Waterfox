@@ -562,8 +562,8 @@ PluginAsyncSurrogate::NotifyAsyncInitFailed()
       PendingNewStreamCall& curPendingCall = mPendingNewStreamCalls[i];
       DestroyAsyncStream(curPendingCall.mStream);
     }
-    mPendingNewStreamCalls.Clear();
   }
+  mPendingNewStreamCalls.Clear();
 
   nsNPAPIPluginInstance* inst =
     static_cast<nsNPAPIPluginInstance*>(mInstance->ndata);

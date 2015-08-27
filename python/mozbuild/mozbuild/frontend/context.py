@@ -730,6 +730,12 @@ VARIABLES = {
         disabled.
         """, None),
 
+    'DIST_FILES': (StrictOrderingOnAppendList, list,
+        """Additional files to place in ``FINAL_TARGET`` (typically ``dist/bin``).
+
+        Unlike ``FINAL_TARGET_FILES``, these files are preprocessed.
+        """, 'libs'),
+
     'EXTRA_COMPONENTS': (StrictOrderingOnAppendList, list,
         """Additional component files to distribute.
 
@@ -904,10 +910,6 @@ VARIABLES = {
         """Additional directories to be searched for include files by the compiler.
         """, None),
 
-    'MSVC_ENABLE_PGO': (bool, bool,
-        """Whether profile-guided optimization is enabled for MSVC in this directory.
-        """, None),
-
     'NO_PGO': (bool, bool,
         """Whether profile-guided optimization is disable in this directory.
         """, None),
@@ -949,6 +951,27 @@ VARIABLES = {
         """The linker version script for shared libraries.
 
         This variable can only be used on Linux.
+        """, None),
+
+    'BRANDING_FILES': (HierarchicalStringListWithFlagsFactory({'source': unicode}), list,
+        """List of files to be installed into the branding directory.
+
+        ``BRANDING_FILES`` will copy (or symlink, if the platform supports it)
+        the contents of its files to the ``dist/branding`` directory. Files that
+        are destined for a subdirectory can be specified by accessing a field.
+        For example, to export ``foo.png`` to the top-level directory and
+        ``bar.png`` to the directory ``images/subdir``, append to
+        ``BRANDING_FILES`` like so::
+
+           BRANDING_FILES += ['foo.png']
+           BRANDING_FILES.images.subdir += ['bar.png']
+
+        If the source and destination have different file names, add the
+        destination name to the list and set the ``source`` property on the
+        entry, like so::
+
+           BRANDING_FILES.dir += ['baz.png']
+           BRANDING_FILES.dir['baz.png'].source = 'quux.png'
         """, None),
 
     'RESOURCE_FILES': (HierarchicalStringListWithFlagsFactory({'preprocess': bool}), list,
@@ -1237,6 +1260,25 @@ VARIABLES = {
         neither are present, the result is dist/bin. If XPI_NAME is present, the
         result is dist/xpi-stage/$(XPI_NAME). If DIST_SUBDIR is present, then
         the $(DIST_SUBDIR) directory of the otherwise default value is used.
+        """, None),
+
+    'USE_EXTENSION_MANIFEST': (bool, bool,
+        """Controls the name of the manifest for JAR files.
+
+        By default, the name of the manifest is ${JAR_MANIFEST}.manifest.
+        Setting this variable to ``True`` changes the name of the manifest to
+        chrome.manifest.
+        """, None),
+
+    'NO_JS_MANIFEST': (bool, bool,
+        """Explicitly disclaims responsibility for manifest listing in EXTRA_COMPONENTS.
+
+        Normally, if you have .js files listed in ``EXTRA_COMPONENTS`` or
+        ``EXTRA_PP_COMPONENTS``, you are expected to have a corresponding
+        .manifest file to go with those .js files.  Setting ``NO_JS_MANIFEST``
+        indicates that the relevant .manifest file and entries for those .js
+        files are elsehwere (jar.mn, for instance) and this state of affairs
+        is OK.
         """, None),
 
     'GYP_DIRS': (StrictOrderingOnAppendListWithFlagsFactory({

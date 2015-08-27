@@ -84,6 +84,10 @@ XPCOMUtils.defineLazyServiceGetter(this, "uuidgen",
                                    "@mozilla.org/uuid-generator;1",
                                    "nsIUUIDGenerator");
 
+XPCOMUtils.defineLazyServiceGetter(this, "Profiler",
+                                   "@mozilla.org/tools/profiler;1",
+                                   "nsIProfiler");
+
 XPCOMUtils.defineLazyModuleGetter(this, "SimpleServiceDiscovery",
                                   "resource://gre/modules/SimpleServiceDiscovery.jsm");
 
@@ -398,6 +402,11 @@ var BrowserApp = {
           Telemetry.addData("TRACKING_PROTECTION_ENABLED",
             Services.prefs.getBoolPref("privacy.trackingprotection.enabled"));
         }
+
+        // title == 0 and url == 1. See:
+        //   https://mxr.mozilla.org/mozilla-central/source/mobile/android/base/resources/values/arrays.xml?rev=861e4bd9e7fe#153
+        const titleInTitlebarEnabled = Services.prefs.getIntPref("browser.chrome.titlebarMode") == 0;
+        Telemetry.addData("FENNEC_TITLE_IN_TITLEBAR_ENABLED", titleInTitlebarEnabled);
       } catch(ex) { console.log(ex); }
     }, false);
 
@@ -908,37 +917,60 @@ var BrowserApp = {
     Services.obs.notifyObservers(null, "FormHistory:Init", "");
     Services.obs.notifyObservers(null, "Passwords:Init", "");
 
-    // Migrate user-set "plugins.click_to_play" pref. See bug 884694.
-    // Because the default value is true, a user-set pref means that the pref was set to false.
-    if (Services.prefs.prefHasUserValue("plugins.click_to_play")) {
-      Services.prefs.setIntPref("plugin.default.state", Ci.nsIPluginTag.STATE_ENABLED);
-      Services.prefs.clearUserPref("plugins.click_to_play");
+    if (this._startupStatus === "upgrade") {
+      this._migrateUI();
+    }
+  },
+
+  _migrateUI: function() {
+    const UI_VERSION = 1;
+    let currentUIVersion = 0;
+    try {
+      currentUIVersion = Services.prefs.getIntPref("browser.migration.version");
+    } catch(ex) {}
+    if (currentUIVersion >= UI_VERSION) {
+      return;
     }
 
-    // Migrate the "privacy.donottrackheader.value" pref. See bug 1042135.
-    if (Services.prefs.prefHasUserValue("privacy.donottrackheader.value")) {
-      // Make sure the doNotTrack value conforms to the conversion from
-      // three-state to two-state. (This reverts a setting of "please track me"
-      // to the default "don't say anything").
-      if (Services.prefs.getBoolPref("privacy.donottrackheader.enabled") &&
-          (Services.prefs.getIntPref("privacy.donottrackheader.value") != 1)) {
-        Services.prefs.clearUserPref("privacy.donottrackheader.enabled");
+    if (currentUIVersion < 1) {
+      // Migrate user-set "plugins.click_to_play" pref. See bug 884694.
+      // Because the default value is true, a user-set pref means that the pref was set to false.
+      if (Services.prefs.prefHasUserValue("plugins.click_to_play")) {
+        Services.prefs.setIntPref("plugin.default.state", Ci.nsIPluginTag.STATE_ENABLED);
+        Services.prefs.clearUserPref("plugins.click_to_play");
       }
 
-      // This pref has been removed, so always clear it.
-      Services.prefs.clearUserPref("privacy.donottrackheader.value");
-    }
+      // Migrate the "privacy.donottrackheader.value" pref. See bug 1042135.
+      if (Services.prefs.prefHasUserValue("privacy.donottrackheader.value")) {
+        // Make sure the doNotTrack value conforms to the conversion from
+        // three-state to two-state. (This reverts a setting of "please track me"
+        // to the default "don't say anything").
+        if (Services.prefs.getBoolPref("privacy.donottrackheader.enabled") &&
+            (Services.prefs.getIntPref("privacy.donottrackheader.value") != 1)) {
+          Services.prefs.clearUserPref("privacy.donottrackheader.enabled");
+        }
 
-    // Set the search activity default pref on app upgrade if it has not been set already.
-    if (this._startupStatus === "upgrade" &&
-        !Services.prefs.prefHasUserValue("searchActivity.default.migrated")) {
-      Services.prefs.setBoolPref("searchActivity.default.migrated", true);
-      SearchEngines.migrateSearchActivityDefaultPref();
-    }
+        // This pref has been removed, so always clear it.
+        Services.prefs.clearUserPref("privacy.donottrackheader.value");
+      }
 
-    if (this._startupStatus === "upgrade") {
+      // Set the search activity default pref on app upgrade if it has not been set already.
+      if (!Services.prefs.prefHasUserValue("searchActivity.default.migrated")) {
+        Services.prefs.setBoolPref("searchActivity.default.migrated", true);
+        SearchEngines.migrateSearchActivityDefaultPref();
+      }
+
       Reader.migrateCache().catch(e => Cu.reportError("Error migrating Reader cache: " + e));
+
+      // We removed this pref from user visible settings, so we should reset it.
+      // Power users can go into about:config to re-enable this if they choose.
+      if (Services.prefs.prefHasUserValue("nglayout.debug.paint_flashing")) {
+        Services.prefs.clearUserPref("nglayout.debug.paint_flashing");
+      }
     }
+
+    // Update the migration version.
+    Services.prefs.setIntPref("browser.migration.version", UI_VERSION);
   },
 
   // This function returns false during periods where the browser displayed document is
@@ -2234,7 +2266,11 @@ var NativeWindow = {
    *                     { text: <title>,
    *                       resource: <resource_url> }
    *
-   *        subtext:     A string to appear below the doorhanger message.
+   *        actionText:  An object that specifies a clickable string, a type of action,
+   *                     and a bundle blob for the consumer to create a click action.
+   *                     { text: <text>,
+   *                       type: <type>,
+   *                       bundle: <blob-object> }
    *
    * @param aCategory
    *        Doorhanger type to display (e.g., LOGIN)
@@ -4400,6 +4436,12 @@ Tab.prototype = {
 
     // Filter optimization: Only really send NETWORK state changes to Java listener
     if (aStateFlags & Ci.nsIWebProgressListener.STATE_IS_NETWORK) {
+      if (AppConstants.NIGHTLY_BUILD && (aStateFlags & Ci.nsIWebProgressListener.STATE_START)) {
+        Profiler.AddMarker("Load start: " + aRequest.QueryInterface(Ci.nsIChannel).originalURI.spec);
+      } else if (AppConstants.NIGHTLY_BUILD && (aStateFlags & Ci.nsIWebProgressListener.STATE_STOP) && !aWebProgress.isLoadingDocument) {
+        Profiler.AddMarker("Load stop: " + aRequest.QueryInterface(Ci.nsIChannel).originalURI.spec);
+      }
+
       if ((aStateFlags & Ci.nsIWebProgressListener.STATE_STOP) && aWebProgress.isLoadingDocument) {
         // We may receive a document stop event while a document is still loading
         // (such as when doing URI fixup). Don't notify Java UI in these cases.
@@ -5543,10 +5585,14 @@ var ErrorPageEventHandler = {
           }
         } else if (errorDoc.documentURI.startsWith("about:blocked")) {
           // The event came from a button on a malware/phishing block page
-          // First check whether it's malware or phishing, so that we can
-          // use the right strings/links
-          let isMalware = errorDoc.documentURI.contains("e=malwareBlocked");
-          let bucketName = isMalware ? "WARNING_MALWARE_PAGE_" : "WARNING_PHISHING_PAGE_";
+          // First check whether it's malware, phishing or unwanted, so that we
+          // can use the right strings/links
+          let bucketName = "WARNING_PHISHING_PAGE_";
+          if (errorDoc.documentURI.contains("e=malwareBlocked")) {
+            bucketName = "WARNING_MALWARE_PAGE_";
+          } else if (errorDoc.documentURI.contains("e=unwantedBlocked")) {
+            bucketName = "WARNING_UNWANTED_PAGE_";
+          }
           let nsISecTel = Ci.nsISecurityUITelemetry;
           let isIframe = (errorDoc.defaultView.parent === errorDoc.defaultView);
           bucketName += isIframe ? "TOP_" : "FRAME_";
@@ -5561,23 +5607,10 @@ var ErrorPageEventHandler = {
             // the measurement is for how many users clicked the WHY BLOCKED button
             Telemetry.addData("SECURITY_UI", nsISecTel[bucketName + "WHY_BLOCKED"]);
 
-            // This is the "Why is this site blocked" button.  For malware,
-            // we can fetch a site-specific report, for phishing, we redirect
-            // to the generic page describing phishing protection.
-            if (isMalware) {
-              // Get the stop badware "why is this blocked" report url, append the current url, and go there.
-              try {
-                let reportURL = formatter.formatURLPref("browser.safebrowsing.malware.reportURL");
-                reportURL += errorDoc.location.href;
-                BrowserApp.selectedBrowser.loadURI(reportURL);
-              } catch (e) {
-                Cu.reportError("Couldn't get malware report URL: " + e);
-              }
-            } else {
-              // It's a phishing site, just link to the generic information page
-              let url = Services.urlFormatter.formatURLPref("app.support.baseURL");
-              BrowserApp.selectedBrowser.loadURI(url + "phishing-malware");
-            }
+            // This is the "Why is this site blocked" button. We redirect
+            // to the generic page describing phishing/malware protection.
+            let url = Services.urlFormatter.formatURLPref("app.support.baseURL");
+            BrowserApp.selectedBrowser.loadURI(url + "phishing-malware");
           } else if (target == errorDoc.getElementById("ignoreWarningButton")) {
             Telemetry.addData("SECURITY_UI", nsISecTel[bucketName + "IGNORE_WARNING"]);
 
@@ -5864,7 +5897,7 @@ var FormAssistant = {
       else if (item.text)
         label = item.text;
 
-      if (filter && !(label.toLowerCase().contains(lowerFieldValue)) )
+      if (filter && !(label.toLowerCase().includes(lowerFieldValue)) )
         continue;
       suggestions.push({ label: label, value: item.value });
     }
@@ -7066,42 +7099,6 @@ var SearchEngines = {
     Services.obs.addObserver(this, "SearchEngines:RestoreDefaults", false);
     Services.obs.addObserver(this, "SearchEngines:SetDefault", false);
     Services.obs.addObserver(this, "browser-search-engine-modified", false);
-
-    let filter = {
-      matches: function (aElement) {
-        // Copied from body of isTargetAKeywordField function in nsContextMenu.js
-        if(!(aElement instanceof HTMLInputElement))
-          return false;
-        let form = aElement.form;
-        if (!form || aElement.type == "password")
-          return false;
-
-        let method = form.method.toUpperCase();
-
-        // These are the following types of forms we can create keywords for:
-        //
-        // method    encoding type        can create keyword
-        // GET       *                                   YES
-        //           *                                   YES
-        // POST      *                                   YES
-        // POST      application/x-www-form-urlencoded   YES
-        // POST      text/plain                          NO ( a little tricky to do)
-        // POST      multipart/form-data                 NO
-        // POST      everything else                     YES
-        return (method == "GET" || method == "") ||
-               (form.enctype != "text/plain") && (form.enctype != "multipart/form-data");
-      }
-    };
-    SelectionHandler.addAction({
-      id: "search_add_action",
-      label: Strings.browser.GetStringFromName("contextmenu.addSearchEngine2"),
-      icon: "drawable://ab_add_search_engine",
-      selector: filter,
-      action: function(aElement) {
-        UITelemetry.addEvent("action.1", "actionbar", null, "add_search_engine");
-        SearchEngines.addEngine(aElement);
-      }
-    });
   },
 
   // Fetch list of search engines. all ? All engines : Visible engines only.

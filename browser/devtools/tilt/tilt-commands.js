@@ -4,7 +4,7 @@
 
 "use strict";
 
-const gcli = require("gcli/index");
+const l10n = require("gcli/l10n");
 
 // Fetch TiltManager using the current loader, but don't save a
 // reference to it, because it might change with a tool reload.
@@ -18,19 +18,20 @@ Object.defineProperty(this, "TiltManager", {
 
 exports.items = [
 {
-  name: 'tilt',
-  description: gcli.lookup("tiltDesc"),
-  manual: gcli.lookup("tiltManual"),
+  name: "tilt",
+  description: l10n.lookup("tiltDesc"),
+  manual: l10n.lookup("tiltManual"),
   hidden: true
 },
 {
-  name: 'tilt open',
-  description: gcli.lookup("tiltOpenDesc"),
-  manual: gcli.lookup("tiltOpenManual"),
+  name: "tilt open",
+  runAt: "client",
+  description: l10n.lookup("tiltOpenDesc"),
+  manual: l10n.lookup("tiltOpenManual"),
   hidden: true,
   exec: function(args, context) {
     if (isMultiProcess(context)) {
-      return gcli.lookupFormat("notAvailableInE10S", [this.name]);
+      return l10n.lookupFormat("notAvailableInE10S", [this.name]);
     }
 
     let chromeWindow = context.environment.chromeDocument.defaultView;
@@ -42,31 +43,39 @@ exports.items = [
 },
 {
   name: "tilt toggle",
+  runAt: "client",
   buttonId: "command-button-tilt",
   buttonClass: "command-button command-button-invertable",
-  tooltipText: gcli.lookup("tiltToggleTooltip"),
+  tooltipText: l10n.lookup("tiltToggleTooltip"),
   hidden: true,
   state: {
     isChecked: function(aTarget) {
+      if (!aTarget.tab) {
+        return false;
+      }
       let browserWindow = aTarget.tab.ownerDocument.defaultView;
       return !!TiltManager.getTiltForBrowser(browserWindow).currentInstance;
     },
     onChange: function(aTarget, aChangeHandler) {
+      if (!aTarget.tab) {
+        return;
+      }
       let browserWindow = aTarget.tab.ownerDocument.defaultView;
       let tilt = TiltManager.getTiltForBrowser(browserWindow);
       tilt.on("change", aChangeHandler);
     },
     offChange: function(aTarget, aChangeHandler) {
-      if (aTarget.tab) {
-        let browserWindow = aTarget.tab.ownerDocument.defaultView;
-        let tilt = TiltManager.getTiltForBrowser(browserWindow);
-        tilt.off("change", aChangeHandler);
+      if (!aTarget.tab) {
+        return;
       }
+      let browserWindow = aTarget.tab.ownerDocument.defaultView;
+      let tilt = TiltManager.getTiltForBrowser(browserWindow);
+      tilt.off("change", aChangeHandler);
     },
   },
   exec: function(args, context) {
     if (isMultiProcess(context)) {
-      return gcli.lookupFormat("notAvailableInE10S", [this.name]);
+      return l10n.lookupFormat("notAvailableInE10S", [this.name]);
     }
 
     let chromeWindow = context.environment.chromeDocument.defaultView;
@@ -75,29 +84,30 @@ exports.items = [
   }
 },
 {
-  name: 'tilt translate',
-  description: gcli.lookup("tiltTranslateDesc"),
-  manual: gcli.lookup("tiltTranslateManual"),
+  name: "tilt translate",
+  runAt: "client",
+  description: l10n.lookup("tiltTranslateDesc"),
+  manual: l10n.lookup("tiltTranslateManual"),
   hidden: true,
   params: [
     {
       name: "x",
       type: "number",
       defaultValue: 0,
-      description: gcli.lookup("tiltTranslateXDesc"),
-      manual: gcli.lookup("tiltTranslateXManual")
+      description: l10n.lookup("tiltTranslateXDesc"),
+      manual: l10n.lookup("tiltTranslateXManual")
     },
     {
       name: "y",
       type: "number",
       defaultValue: 0,
-      description: gcli.lookup("tiltTranslateYDesc"),
-      manual: gcli.lookup("tiltTranslateYManual")
+      description: l10n.lookup("tiltTranslateYDesc"),
+      manual: l10n.lookup("tiltTranslateYManual")
     }
   ],
   exec: function(args, context) {
     if (isMultiProcess(context)) {
-      return gcli.lookupFormat("notAvailableInE10S", [this.name]);
+      return l10n.lookupFormat("notAvailableInE10S", [this.name]);
     }
 
     let chromeWindow = context.environment.chromeDocument.defaultView;
@@ -108,36 +118,37 @@ exports.items = [
   }
 },
 {
-  name: 'tilt rotate',
-  description: gcli.lookup("tiltRotateDesc"),
-  manual: gcli.lookup("tiltRotateManual"),
+  name: "tilt rotate",
+  runAt: "client",
+  description: l10n.lookup("tiltRotateDesc"),
+  manual: l10n.lookup("tiltRotateManual"),
   hidden: true,
   params: [
     {
       name: "x",
       type: { name: 'number', min: -360, max: 360, step: 10 },
       defaultValue: 0,
-      description: gcli.lookup("tiltRotateXDesc"),
-      manual: gcli.lookup("tiltRotateXManual")
+      description: l10n.lookup("tiltRotateXDesc"),
+      manual: l10n.lookup("tiltRotateXManual")
     },
     {
       name: "y",
       type: { name: 'number', min: -360, max: 360, step: 10 },
       defaultValue: 0,
-      description: gcli.lookup("tiltRotateYDesc"),
-      manual: gcli.lookup("tiltRotateYManual")
+      description: l10n.lookup("tiltRotateYDesc"),
+      manual: l10n.lookup("tiltRotateYManual")
     },
     {
       name: "z",
       type: { name: 'number', min: -360, max: 360, step: 10 },
       defaultValue: 0,
-      description: gcli.lookup("tiltRotateZDesc"),
-      manual: gcli.lookup("tiltRotateZManual")
+      description: l10n.lookup("tiltRotateZDesc"),
+      manual: l10n.lookup("tiltRotateZManual")
     }
   ],
   exec: function(args, context) {
     if (isMultiProcess(context)) {
-      return gcli.lookupFormat("notAvailableInE10S", [this.name]);
+      return l10n.lookupFormat("notAvailableInE10S", [this.name]);
     }
 
     let chromeWindow = context.environment.chromeDocument.defaultView;
@@ -148,21 +159,22 @@ exports.items = [
   }
 },
 {
-  name: 'tilt zoom',
-  description: gcli.lookup("tiltZoomDesc"),
-  manual: gcli.lookup("tiltZoomManual"),
+  name: "tilt zoom",
+  runAt: "client",
+  description: l10n.lookup("tiltZoomDesc"),
+  manual: l10n.lookup("tiltZoomManual"),
   hidden: true,
   params: [
     {
       name: "zoom",
       type: { name: 'number' },
-      description: gcli.lookup("tiltZoomAmountDesc"),
-      manual: gcli.lookup("tiltZoomAmountManual")
+      description: l10n.lookup("tiltZoomAmountDesc"),
+      manual: l10n.lookup("tiltZoomAmountManual")
     }
   ],
   exec: function(args, context) {
     if (isMultiProcess(context)) {
-      return gcli.lookupFormat("notAvailableInE10S", [this.name]);
+      return l10n.lookupFormat("notAvailableInE10S", [this.name]);
     }
 
     let chromeWindow = context.environment.chromeDocument.defaultView;
@@ -174,13 +186,14 @@ exports.items = [
   }
 },
 {
-  name: 'tilt reset',
-  description: gcli.lookup("tiltResetDesc"),
-  manual: gcli.lookup("tiltResetManual"),
+  name: "tilt reset",
+  runAt: "client",
+  description: l10n.lookup("tiltResetDesc"),
+  manual: l10n.lookup("tiltResetManual"),
   hidden: true,
   exec: function(args, context) {
     if (isMultiProcess(context)) {
-      return gcli.lookupFormat("notAvailableInE10S", [this.name]);
+      return l10n.lookupFormat("notAvailableInE10S", [this.name]);
     }
 
     let chromeWindow = context.environment.chromeDocument.defaultView;
@@ -192,13 +205,14 @@ exports.items = [
   }
 },
 {
-  name: 'tilt close',
-  description: gcli.lookup("tiltCloseDesc"),
-  manual: gcli.lookup("tiltCloseManual"),
+  name: "tilt close",
+  runAt: "client",
+  description: l10n.lookup("tiltCloseDesc"),
+  manual: l10n.lookup("tiltCloseManual"),
   hidden: true,
   exec: function(args, context) {
     if (isMultiProcess(context)) {
-      return gcli.lookupFormat("notAvailableInE10S", [this.name]);
+      return l10n.lookupFormat("notAvailableInE10S", [this.name]);
     }
 
     let chromeWindow = context.environment.chromeDocument.defaultView;

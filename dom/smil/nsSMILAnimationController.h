@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -73,10 +74,8 @@ public:
 
   void SetResampleNeeded()
   {
-    if (!mRunningSample) {
-      if (!mResampleNeeded) {
-        FlagDocumentNeedsFlush();
-      }
+    if (!mRunningSample && !mResampleNeeded) {
+      FlagDocumentNeedsFlush();
       mResampleNeeded = true;
     }
   }
@@ -103,10 +102,16 @@ public:
   void NotifyRefreshDriverDestroying(nsRefreshDriver* aRefreshDriver);
 
   // Helper to check if we have any animation elements at all
-  bool HasRegisteredAnimations()
-  { return mAnimationElementTable.Count() != 0; }
+  bool HasRegisteredAnimations() const
+  { 
+	return mAnimationElementTable.Count() != 0;
+  }
 
   void AddStyleUpdatesTo(mozilla::RestyleTracker& aTracker);
+  bool MightHavePendingStyleUpdates() const
+  {
+    return mMightHavePendingStyleUpdates;
+  }
 
 protected:
   ~nsSMILAnimationController();
@@ -223,6 +228,10 @@ protected:
 
   // Are we registered with our document's refresh driver?
   bool                       mRegisteredWithRefreshDriver;
+  
+  // Have we updated animated values without adding them to the restyle tracker?
+
+  bool                       mMightHavePendingStyleUpdates;
 
   // Store raw ptr to mDocument.  It owns the controller, so controller
   // shouldn't outlive it

@@ -26,6 +26,7 @@
 
 using namespace js;
 
+using mozilla::Maybe;
 using mozilla::PodCopy;
 
 /*****************************************************************************/
@@ -332,27 +333,27 @@ InterpreterFrame::mark(JSTracer* trc)
      * frame is copied to the floating frame. Therefore, no barrier is needed.
      */
     if (flags_ & HAS_SCOPECHAIN)
-        gc::MarkObjectUnbarriered(trc, &scopeChain_, "scope chain");
+        TraceManuallyBarrieredEdge(trc, &scopeChain_, "scope chain");
     if (flags_ & HAS_ARGS_OBJ)
-        gc::MarkObjectUnbarriered(trc, &argsObj_, "arguments");
+        TraceManuallyBarrieredEdge(trc, &argsObj_, "arguments");
     if (isFunctionFrame()) {
-        gc::MarkObjectUnbarriered(trc, &exec.fun, "fun");
+        TraceManuallyBarrieredEdge(trc, &exec.fun, "fun");
         if (isEvalFrame())
-            gc::MarkScriptUnbarriered(trc, &u.evalScript, "eval script");
+            TraceManuallyBarrieredEdge(trc, &u.evalScript, "eval script");
     } else {
-        gc::MarkScriptUnbarriered(trc, &exec.script, "script");
+        TraceManuallyBarrieredEdge(trc, &exec.script, "script");
     }
     if (trc->isMarkingTracer())
         script()->compartment()->zone()->active = true;
     if (hasReturnValue())
-        gc::MarkValueUnbarriered(trc, &rval_, "rval");
+        TraceManuallyBarrieredEdge(trc, &rval_, "rval");
 }
 
 void
 InterpreterFrame::markValues(JSTracer* trc, unsigned start, unsigned end)
 {
     if (start < end)
-        gc::MarkValueRootRange(trc, end - start, slots() + start, "vm_stack");
+        TraceRootRange(trc, end - start, slots() + start, "vm_stack");
 }
 
 void
@@ -396,10 +397,10 @@ InterpreterFrame::markValues(JSTracer* trc, Value* sp, jsbytecode* pc)
     if (hasArgs()) {
         // Mark callee, |this| and arguments.
         unsigned argc = Max(numActualArgs(), numFormalArgs());
-        gc::MarkValueRootRange(trc, argc + 2, argv_ - 2, "fp argv");
+        TraceRootRange(trc, argc + 2, argv_ - 2, "fp argv");
     } else {
         // Mark callee and |this|
-        gc::MarkValueRootRange(trc, 2, ((Value*)this) - 2, "stack callee and this");
+        TraceRootRange(trc, 2, ((Value*)this) - 2, "stack callee and this");
     }
 }
 
@@ -425,15 +426,13 @@ js::MarkInterpreterActivations(JSRuntime* rt, JSTracer* trc)
 
 /*****************************************************************************/
 
-// Unlike the other methods of this calss, this method is defined here so that
+// Unlike the other methods of this class, this method is defined here so that
 // we don't have to #include jsautooplen.h in vm/Stack.h.
 void
 InterpreterRegs::setToEndOfScript()
 {
-    JSScript* script = fp()->script();
     sp = fp()->base();
-    pc = script->codeEnd() - JSOP_RETRVAL_LENGTH;
-    MOZ_ASSERT(*pc == JSOP_RETRVAL);
+    pc = fp()->script()->lastPC();
 }
 
 /*****************************************************************************/
@@ -530,7 +529,7 @@ FrameIter::settleOnActivation()
         if (data_.principals_) {
             JSContext* cx = data_.cx_->asJSContext();
             if (JSSubsumesOp subsumes = cx->runtime()->securityCallbacks->subsumes) {
-                if (!subsumes(data_.principals_, activation->compartment()->principals)) {
+                if (!subsumes(data_.principals_, activation->compartment()->principals())) {
                     ++data_.activations_;
                     continue;
                 }
@@ -591,10 +590,12 @@ FrameIter::settleOnActivation()
 }
 
 FrameIter::Data::Data(JSContext* cx, SavedOption savedOption,
-                      ContextOption contextOption, JSPrincipals* principals)
+                      ContextOption contextOption, DebuggerEvalOption debuggerEvalOption,
+                      JSPrincipals* principals)
   : cx_(cx),
     savedOption_(savedOption),
     contextOption_(contextOption),
+    debuggerEvalOption_(debuggerEvalOption),
     principals_(principals),
     pc_(nullptr),
     interpFrames_(nullptr),
@@ -609,6 +610,7 @@ FrameIter::Data::Data(const FrameIter::Data& other)
   : cx_(other.cx_),
     savedOption_(other.savedOption_),
     contextOption_(other.contextOption_),
+    debuggerEvalOption_(other.debuggerEvalOption_),
     principals_(other.principals_),
     state_(other.state_),
     pc_(other.pc_),
@@ -621,7 +623,7 @@ FrameIter::Data::Data(const FrameIter::Data& other)
 }
 
 FrameIter::FrameIter(JSContext* cx, SavedOption savedOption)
-  : data_(cx, savedOption, CURRENT_CONTEXT, nullptr),
+  : data_(cx, savedOption, CURRENT_CONTEXT, FOLLOW_DEBUGGER_EVAL_PREV_LINK, nullptr),
     ionInlineFrames_(cx, (js::jit::JitFrameIterator*) nullptr)
 {
     // settleOnActivation can only GC if principals are given.
@@ -630,8 +632,8 @@ FrameIter::FrameIter(JSContext* cx, SavedOption savedOption)
 }
 
 FrameIter::FrameIter(JSContext* cx, ContextOption contextOption,
-                     SavedOption savedOption)
-  : data_(cx, savedOption, contextOption, nullptr),
+                     SavedOption savedOption, DebuggerEvalOption debuggerEvalOption)
+  : data_(cx, savedOption, contextOption, debuggerEvalOption, nullptr),
     ionInlineFrames_(cx, (js::jit::JitFrameIterator*) nullptr)
 {
     // settleOnActivation can only GC if principals are given.
@@ -640,8 +642,9 @@ FrameIter::FrameIter(JSContext* cx, ContextOption contextOption,
 }
 
 FrameIter::FrameIter(JSContext* cx, ContextOption contextOption,
-                     SavedOption savedOption, JSPrincipals* principals)
-  : data_(cx, savedOption, contextOption, principals),
+                     SavedOption savedOption, DebuggerEvalOption debuggerEvalOption,
+                     JSPrincipals* principals)
+  : data_(cx, savedOption, contextOption, debuggerEvalOption, principals),
     ionInlineFrames_(cx, (js::jit::JitFrameIterator*) nullptr)
 {
     settleOnActivation();
@@ -718,7 +721,10 @@ FrameIter::operator++()
       case DONE:
         MOZ_CRASH("Unexpected state");
       case INTERP:
-        if (interpFrame()->isDebuggerEvalFrame() && interpFrame()->evalInFramePrev()) {
+        if (interpFrame()->isDebuggerEvalFrame() &&
+            interpFrame()->evalInFramePrev() &&
+            data_.debuggerEvalOption_ == FOLLOW_DEBUGGER_EVAL_PREV_LINK)
+        {
             AbstractFramePtr eifPrev = interpFrame()->evalInFramePrev();
 
             // Eval-in-frame can cross contexts and works across saved frame
@@ -1382,9 +1388,10 @@ AbstractFramePtr::hasPushedSPSFrame() const
     return false;
 }
 
-jit::JitActivation::JitActivation(JSContext* cx, bool active)
+jit::JitActivation::JitActivation(JSContext* cx, CalleeToken entryPoint, bool active)
   : Activation(cx, Jit),
     active_(active),
+    isLazyLinkExitFrame_(false),
     rematerializedFrames_(nullptr),
     ionRecovery_(cx),
     bailoutData_(nullptr),
@@ -1404,10 +1411,22 @@ jit::JitActivation::JitActivation(JSContext* cx, bool active)
         prevJitJSContext_ = nullptr;
         prevJitActivation_ = nullptr;
     }
+
+    if (entryMonitor_) {
+        MOZ_ASSERT(entryPoint);
+
+        if (CalleeTokenIsFunction(entryPoint))
+            entryMonitor_->Entry(cx_, CalleeTokenToFunction(entryPoint));
+        else
+            entryMonitor_->Entry(cx_, CalleeTokenToScript(entryPoint));
+    }
 }
 
 jit::JitActivation::~JitActivation()
 {
+    if (entryMonitor_)
+        entryMonitor_->Exit(cx_);
+
     if (active_) {
         if (isProfiling())
             unregisterProfiling();
@@ -1615,17 +1634,11 @@ AsmJSActivation::AsmJSActivation(JSContext* cx, AsmJSModule& module)
   : Activation(cx, AsmJS),
     module_(module),
     entrySP_(nullptr),
-    profiler_(nullptr),
     resumePC_(nullptr),
     fp_(nullptr),
     exitReason_(AsmJSExit::None)
 {
     (void) entrySP_;  // squelch GCC warning
-
-    // NB: this is a hack and can be removed once Ion switches over to
-    // JS::ProfilingFrameIterator.
-    if (cx->runtime()->spsProfiler.enabled())
-        profiler_ = &cx->runtime()->spsProfiler;
 
     prevAsmJSForModule_ = module.activation();
     module.activation() = this;
@@ -1861,68 +1874,84 @@ JS::ProfilingFrameIterator::stackAddress() const
     return jitIter().stackAddress();
 }
 
+Maybe<JS::ProfilingFrameIterator::Frame>
+JS::ProfilingFrameIterator::getPhysicalFrameAndEntry(jit::JitcodeGlobalEntry* entry) const
+{
+    void* stackAddr = stackAddress();
+
+    if (isAsmJS()) {
+        Frame frame;
+        frame.kind = Frame_AsmJS;
+        frame.stackAddress = stackAddr;
+        frame.returnAddress = nullptr;
+        frame.activation = activation_;
+        frame.label = nullptr;
+        return mozilla::Some(frame);
+    }
+
+    MOZ_ASSERT(isJit());
+
+    // Look up an entry for the return address.
+    void* returnAddr = jitIter().returnAddressToFp();
+    jit::JitcodeGlobalTable* table = rt_->jitRuntime()->getJitcodeGlobalTable();
+    if (hasSampleBufferGen())
+        table->lookupForSampler(returnAddr, entry, rt_, sampleBufferGen_);
+    else
+        table->lookupInfallible(returnAddr, entry, rt_);
+
+    MOZ_ASSERT(entry->isIon() || entry->isIonCache() || entry->isBaseline() || entry->isDummy());
+
+    // Dummy frames produce no stack frames.
+    if (entry->isDummy())
+        return mozilla::Nothing();
+
+    Frame frame;
+    frame.kind = entry->isBaseline() ? Frame_Baseline : Frame_Ion;
+    frame.stackAddress = stackAddr;
+    frame.returnAddress = returnAddr;
+    frame.activation = activation_;
+    frame.label = nullptr;
+    return mozilla::Some(frame);
+}
+
 uint32_t
 JS::ProfilingFrameIterator::extractStack(Frame* frames, uint32_t offset, uint32_t end) const
 {
     if (offset >= end)
         return 0;
 
-    void* stackAddr = stackAddress();
+    jit::JitcodeGlobalEntry entry;
+    Maybe<Frame> physicalFrame = getPhysicalFrameAndEntry(&entry);
+
+    // Dummy frames produce no stack frames.
+    if (physicalFrame.isNothing())
+        return 0;
 
     if (isAsmJS()) {
-        frames[offset].kind = Frame_AsmJS;
-        frames[offset].stackAddress = stackAddr;
-        frames[offset].returnAddress = nullptr;
-        frames[offset].activation = activation_;
+        frames[offset] = physicalFrame.value();
         frames[offset].label = asmJSIter().label();
-        frames[offset].mightHaveTrackedOptimizations = false;
         return 1;
     }
 
-    MOZ_ASSERT(isJit());
-    void* returnAddr = jitIter().returnAddressToFp();
-
-    // Look up an entry for the return address.
-    jit::JitcodeGlobalTable* table = rt_->jitRuntime()->getJitcodeGlobalTable();
-    jit::JitcodeGlobalEntry entry;
-    table->lookupInfallible(returnAddr, &entry, rt_);
-    if (hasSampleBufferGen())
-        table->lookupForSampler(returnAddr, &entry, rt_, sampleBufferGen_);
-    else
-        table->lookup(returnAddr, &entry, rt_);
-
-    MOZ_ASSERT(entry.isIon() || entry.isIonCache() || entry.isBaseline() || entry.isDummy());
-
-    // Dummy frames produce no stack frames.
-    if (entry.isDummy())
-        return 0;
-
-    FrameKind kind = entry.isBaseline() ? Frame_Baseline : Frame_Ion;
-
     // Extract the stack for the entry.  Assume maximum inlining depth is <64
     const char* labels[64];
-    uint32_t depth = entry.callStackAtAddr(rt_, returnAddr, labels, 64);
+    uint32_t depth = entry.callStackAtAddr(rt_, jitIter().returnAddressToFp(), labels, 64);
     MOZ_ASSERT(depth < 64);
     for (uint32_t i = 0; i < depth; i++) {
         if (offset + i >= end)
             return i;
-        frames[offset + i].kind = kind;
-        frames[offset + i].stackAddress = stackAddr;
-        frames[offset + i].returnAddress = returnAddr;
-        frames[offset + i].activation = activation_;
+        frames[offset + i] = physicalFrame.value();
         frames[offset + i].label = labels[i];
-        frames[offset + i].mightHaveTrackedOptimizations = false;
     }
 
-    // A particular return address might have tracked optimizations only if
-    // there are any optimizations at all.
-    //
-    // All inlined Ion frames will have the same optimization information by
-    // virtue of sharing the JitcodeGlobalEntry, but such information is only
-    // interpretable on the youngest frame.
-    frames[offset].mightHaveTrackedOptimizations = entry.hasTrackedOptimizations();
-
     return depth;
+}
+
+Maybe<JS::ProfilingFrameIterator::Frame>
+JS::ProfilingFrameIterator::getPhysicalFrameWithoutLabel() const
+{
+    jit::JitcodeGlobalEntry unused;
+    return getPhysicalFrameAndEntry(&unused);
 }
 
 bool

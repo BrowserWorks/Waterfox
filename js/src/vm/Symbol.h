@@ -56,11 +56,16 @@ class Symbol : public js::gc::TenuredCell
     bool isWellKnownSymbol() const { return uint32_t(code_) < WellKnownSymbolLimit; }
 
     static inline js::ThingRootKind rootKind() { return js::THING_ROOT_SYMBOL; }
-    inline void markChildren(JSTracer* trc) {
+    inline void traceChildren(JSTracer* trc) {
         if (description_)
-            js::gc::MarkStringUnbarriered(trc, &description_, "description");
+            js::TraceManuallyBarrieredEdge(trc, &description_, "description");
     }
     inline void finalize(js::FreeOp*) {}
+
+    static MOZ_ALWAYS_INLINE void writeBarrierPre(Symbol* thing) {
+        if (thing && !thing->isWellKnownSymbol())
+            thing->asTenured().writeBarrierPre(thing);
+    }
 
 #ifdef DEBUG
     void dump(FILE* fp = stderr);

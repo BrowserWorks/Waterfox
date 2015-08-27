@@ -11,6 +11,7 @@
 #include "nsPoint.h"
 #include "nsRegion.h"
 #include "nsCRT.h"
+#include "nsCOMPtr.h"
 #include "nsWidgetInitData.h" // for nsWindowType
 #include "nsIWidgetListener.h"
 #include "mozilla/EventForwards.h"
@@ -289,6 +290,8 @@ public:
     mForcedRepaint = aForceRepaint; 
   }
 
+  void SetNeedsWindowPropertiesSync();
+
   /**
    * Make aWidget direct its events to this view.
    * The caller must call DetachWidgetEventHandler before this view
@@ -446,7 +449,7 @@ private:
 
   nsViewManager    *mViewManager;
   nsView           *mParent;
-  nsIWidget        *mWindow;
+  nsCOMPtr<nsIWidget> mWindow;
   nsView           *mNextSibling;
   nsView           *mFirstChild;
   nsIFrame         *mFrame;
@@ -462,6 +465,7 @@ private:
   uint32_t          mVFlags;
   bool              mWidgetIsTopLevel;
   bool              mForcedRepaint;
+  bool              mNeedsWindowPropertiesSync;
 };
 
 #endif

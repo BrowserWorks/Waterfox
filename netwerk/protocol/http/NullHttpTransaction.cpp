@@ -13,6 +13,7 @@
 #include "nsHttpRequestHead.h"
 #include "nsIHttpActivityObserver.h"
 #include "NullHttpChannel.h"
+#include "nsQueryObject.h"
 
 namespace mozilla {
 namespace net {
@@ -94,8 +95,8 @@ NullHttpTransaction::NullHttpTransaction(nsHttpConnectionInfo *ci,
                                          uint32_t caps)
   : mStatus(NS_OK)
   , mCaps(caps | NS_HTTP_ALLOW_KEEPALIVE)
-  , mCapsToClear(0)
   , mRequestHead(nullptr)
+  , mCapsToClear(0)
   , mIsDone(false)
   , mClaimed(false)
   , mCallbacks(callbacks)
@@ -114,7 +115,7 @@ NullHttpTransaction::NullHttpTransaction(nsHttpConnectionInfo *ci,
     // There are some observers registered at activity distributor.
     LOG(("NulHttpTransaction::NullHttpTransaction() "
          "mActivityDistributor is active "
-         "[this=%p, %s]", this, ci->GetHost().get()));
+         "[this=%p, %s]", this, ci->GetOrigin().get()));
   } else {
     // There is no observer, so don't use it.
     mActivityDistributor = nullptr;
@@ -162,8 +163,8 @@ NullHttpTransaction::OnTransportStatus(nsITransport* transport,
 {
   if (mActivityDistributor) {
     NS_DispatchToMainThread(new CallObserveActivity(mActivityDistributor,
-                                  mConnectionInfo->GetHost(),
-                                  mConnectionInfo->Port(),
+                                  mConnectionInfo->GetOrigin(),
+                                  mConnectionInfo->OriginPort(),
                                   mConnectionInfo->EndToEndSSL(),
                                   NS_HTTP_ACTIVITY_TYPE_SOCKET_TRANSPORT,
                                   static_cast<uint32_t>(status),
@@ -237,9 +238,9 @@ NullHttpTransaction::RequestHead()
     mRequestHead = new nsHttpRequestHead();
 
     nsAutoCString hostHeader;
-    nsCString host(mConnectionInfo->GetHost());
+    nsCString host(mConnectionInfo->GetOrigin());
     nsresult rv = nsHttpHandler::GenerateHostPort(host,
-                                                  mConnectionInfo->Port(),
+                                                  mConnectionInfo->OriginPort(),
                                                   hostHeader);
     if (NS_SUCCEEDED(rv)) {
       mRequestHead->SetHeader(nsHttp::Host, hostHeader);
@@ -248,8 +249,8 @@ NullHttpTransaction::RequestHead()
         nsCString reqHeaderBuf;
         mRequestHead->Flatten(reqHeaderBuf, false);
         NS_DispatchToMainThread(new CallObserveActivity(mActivityDistributor,
-                                  mConnectionInfo->GetHost(),
-                                  mConnectionInfo->Port(),
+                                  mConnectionInfo->GetOrigin(),
+                                  mConnectionInfo->OriginPort(),
                                   mConnectionInfo->EndToEndSSL(),
                                   NS_HTTP_ACTIVITY_TYPE_HTTP_TRANSACTION,
                                   NS_HTTP_ACTIVITY_SUBTYPE_REQUEST_HEADER,
@@ -287,8 +288,8 @@ NullHttpTransaction::Close(nsresult reason)
   if (mActivityDistributor) {
     // Report that this transaction is closing.
     NS_DispatchToMainThread(new CallObserveActivity(mActivityDistributor,
-                                  mConnectionInfo->GetHost(),
-                                  mConnectionInfo->Port(),
+                                  mConnectionInfo->GetOrigin(),
+                                  mConnectionInfo->OriginPort(),
                                   mConnectionInfo->EndToEndSSL(),
                                   NS_HTTP_ACTIVITY_TYPE_HTTP_TRANSACTION,
                                   NS_HTTP_ACTIVITY_SUBTYPE_TRANSACTION_CLOSE,

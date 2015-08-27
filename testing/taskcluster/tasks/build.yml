@@ -14,9 +14,12 @@ task:
     createdForUser: {{owner}}
 
   workerType: b2gbuild
-  provisionerId: aws-provisioner
+  provisionerId: aws-provisioner-v1
   schedulerId: task-graph-scheduler
 
+  routes:
+    - 'index.gecko.v1.{{project}}.revision.linux.{{head_rev}}.{{build_name}}.{{build_type}}'
+    - 'index.gecko.v1.{{project}}.latest.linux.{{build_name}}.{{build_type}}'
   scopes:
     # Nearly all of our build tasks use tc-vcs so just include the scope across
     # the board.
@@ -29,8 +32,8 @@ task:
   payload:
     image: '{{#docker_image}}builder{{/docker_image}}'
 
-    # One hour is a good value for most builds
-    maxRunTime: 3600
+    # Two hours is long but covers edge cases (and matches bb based infra)
+    maxRunTime: 7200
 
     cache:
       tc-vcs: '/home/worker/.tc-vcs'
@@ -54,6 +57,8 @@ task:
       MOZHARNESS_REF: '{{mozharness_ref}}'
 
   extra:
+    index:
+      rank: {{pushlog_id}}
     treeherder:
       groupSymbol: tc
       groupName: Submitted by taskcluster

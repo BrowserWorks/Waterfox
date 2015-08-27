@@ -1,5 +1,5 @@
-/* -*- Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 8; -*- */
-/* vim: set sw=4 ts=8 et tw=80 : */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -24,7 +24,7 @@
 #include "nsWrapperCache.h"
 #include "mozilla/dom/MutationObserverBinding.h"
 #include "nsIDocument.h"
-#include "mozilla/dom/AnimationPlayer.h"
+#include "mozilla/dom/Animation.h"
 #include "nsIAnimationObserver.h"
 
 class nsDOMMutationObserver;
@@ -36,7 +36,7 @@ class nsDOMMutationRecord final : public nsISupports,
   virtual ~nsDOMMutationRecord() {}
 
 public:
-  typedef nsTArray<nsRefPtr<mozilla::dom::AnimationPlayer>> AnimationPlayerArray;
+  typedef nsTArray<nsRefPtr<mozilla::dom::Animation>> AnimationArray;
 
   nsDOMMutationRecord(nsIAtom* aType, nsISupports* aOwner)
   : mType(aType), mAttrNamespace(NullString()), mPrevValue(NullString()), mOwner(aOwner)
@@ -95,17 +95,17 @@ public:
     aRetVal.SetOwnedString(mPrevValue);
   }
 
-  void GetAddedAnimations(AnimationPlayerArray& aRetVal) const
+  void GetAddedAnimations(AnimationArray& aRetVal) const
   {
     aRetVal = mAddedAnimations;
   }
 
-  void GetRemovedAnimations(AnimationPlayerArray& aRetVal) const
+  void GetRemovedAnimations(AnimationArray& aRetVal) const
   {
     aRetVal = mRemovedAnimations;
   }
 
-  void GetChangedAnimations(AnimationPlayerArray& aRetVal) const
+  void GetChangedAnimations(AnimationArray& aRetVal) const
   {
     aRetVal = mChangedAnimations;
   }
@@ -119,9 +119,9 @@ public:
   nsRefPtr<nsSimpleContentList> mRemovedNodes;
   nsCOMPtr<nsINode>             mPreviousSibling;
   nsCOMPtr<nsINode>             mNextSibling;
-  AnimationPlayerArray          mAddedAnimations;
-  AnimationPlayerArray          mRemovedAnimations;
-  AnimationPlayerArray          mChangedAnimations;
+  AnimationArray                mAddedAnimations;
+  AnimationArray                mRemovedAnimations;
+  AnimationArray                mChangedAnimations;
 
   nsRefPtr<nsDOMMutationRecord> mNext;
   nsCOMPtr<nsISupports>         mOwner;
@@ -248,14 +248,20 @@ protected:
     mRegisterTarget->OwnerDoc()->SetMayHaveDOMMutationObservers();
   }
 
-  bool ObservesAttr(mozilla::dom::Element* aElement,
+  bool IsObservable(nsIContent* aContent);
+
+  bool ObservesAttr(nsINode* aRegisterTarget,
+                    mozilla::dom::Element* aElement,
                     int32_t aNameSpaceID,
                     nsIAtom* aAttr)
   {
     if (mParent) {
-      return mParent->ObservesAttr(aElement, aNameSpaceID, aAttr);
+      return mParent->ObservesAttr(aRegisterTarget, aElement, aNameSpaceID, aAttr);
     }
-    if (!Attributes() || (!Subtree() && aElement != Target())) {
+    if (!Attributes() ||
+        (!Subtree() && aElement != Target()) ||
+        (Subtree() && aRegisterTarget->SubtreeRoot() != aElement->SubtreeRoot()) ||
+        !IsObservable(aElement)) {
       return false;
     }
     if (AllAttributes()) {
@@ -434,7 +440,7 @@ private:
     eAnimationMutation_Removed
   };
 
-  void RecordAnimationMutation(mozilla::dom::AnimationPlayer* aPlayer,
+  void RecordAnimationMutation(mozilla::dom::Animation* aAnimation,
                                AnimationMutation aMutationType);
 };
 
@@ -447,9 +453,10 @@ class nsDOMMutationObserver final : public nsISupports,
 {
 public:
   nsDOMMutationObserver(already_AddRefed<nsPIDOMWindow>&& aOwner,
-                        mozilla::dom::MutationCallback& aCb)
+                        mozilla::dom::MutationCallback& aCb,
+                        bool aChrome)
   : mOwner(aOwner), mLastPendingMutation(nullptr), mPendingMutationCount(0),
-    mCallback(&aCb), mWaitingForRun(false), mId(++sCount)
+    mCallback(&aCb), mWaitingForRun(false), mIsChrome(aChrome), mId(++sCount)
   {
   }
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -469,6 +476,11 @@ public:
   nsISupports* GetParentObject() const
   {
     return mOwner;
+  }
+
+  bool IsChrome()
+  {
+    return mIsChrome;
   }
 
   void Observe(nsINode& aTarget,
@@ -571,6 +583,7 @@ protected:
   nsRefPtr<mozilla::dom::MutationCallback>           mCallback;
 
   bool                                               mWaitingForRun;
+  bool                                               mIsChrome;
 
   uint64_t                                           mId;
 
@@ -756,13 +769,13 @@ public:
     return sCurrentBatch->mBatchTarget;
   }
 
-  static void AnimationAdded(mozilla::dom::AnimationPlayer* aPlayer)
+  static void AnimationAdded(mozilla::dom::Animation* aAnimation)
   {
     if (!IsBatching()) {
       return;
     }
 
-    Entry* entry = sCurrentBatch->FindEntry(aPlayer);
+    Entry* entry = sCurrentBatch->FindEntry(aAnimation);
     if (entry) {
       switch (entry->mState) {
         case eState_RemainedAbsent:
@@ -777,15 +790,15 @@ public:
       }
     } else {
       entry = sCurrentBatch->mEntries.AppendElement();
-      entry->mPlayer = aPlayer;
+      entry->mAnimation = aAnimation;
       entry->mState = eState_Added;
       entry->mChanged = false;
     }
   }
 
-  static void AnimationChanged(mozilla::dom::AnimationPlayer* aPlayer)
+  static void AnimationChanged(mozilla::dom::Animation* aAnimation)
   {
-    Entry* entry = sCurrentBatch->FindEntry(aPlayer);
+    Entry* entry = sCurrentBatch->FindEntry(aAnimation);
     if (entry) {
       NS_ASSERTION(entry->mState == eState_RemainedPresent ||
                    entry->mState == eState_Added,
@@ -794,15 +807,15 @@ public:
       entry->mChanged = true;
     } else {
       entry = sCurrentBatch->mEntries.AppendElement();
-      entry->mPlayer = aPlayer;
+      entry->mAnimation = aAnimation;
       entry->mState = eState_RemainedPresent;
       entry->mChanged = true;
     }
   }
 
-  static void AnimationRemoved(mozilla::dom::AnimationPlayer* aPlayer)
+  static void AnimationRemoved(mozilla::dom::Animation* aAnimation)
   {
-    Entry* entry = sCurrentBatch->FindEntry(aPlayer);
+    Entry* entry = sCurrentBatch->FindEntry(aAnimation);
     if (entry) {
       switch (entry->mState) {
         case eState_RemainedPresent:
@@ -817,17 +830,17 @@ public:
       }
     } else {
       entry = sCurrentBatch->mEntries.AppendElement();
-      entry->mPlayer = aPlayer;
+      entry->mAnimation = aAnimation;
       entry->mState = eState_Removed;
       entry->mChanged = false;
     }
   }
 
 private:
-  Entry* FindEntry(mozilla::dom::AnimationPlayer* aPlayer)
+  Entry* FindEntry(mozilla::dom::Animation* aAnimation)
   {
     for (Entry& e : mEntries) {
-      if (e.mPlayer == aPlayer) {
+      if (e.mAnimation == aAnimation) {
         return &e;
       }
     }
@@ -843,7 +856,7 @@ private:
 
   struct Entry
   {
-    nsRefPtr<mozilla::dom::AnimationPlayer> mPlayer;
+    nsRefPtr<mozilla::dom::Animation> mAnimation;
     State mState;
     bool mChanged;
   };

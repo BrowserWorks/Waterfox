@@ -133,7 +133,7 @@ function task_populateDB(aArray)
 
       if (qdata.isFolder) {
         yield PlacesUtils.bookmarks.insert({
-          parentGuid: (yield PlacesUtils.promiseItemGuid(qdata.parentFolder)),
+          parentGuid: qdata.parentGuid,
           type: PlacesUtils.bookmarks.TYPE_FOLDER,
           title: qdata.title,
           index: qdata.index
@@ -141,17 +141,17 @@ function task_populateDB(aArray)
       }
 
       if (qdata.isLivemark) {
-        PlacesUtils.livemarks.addLivemark({ title: qdata.title
-                                          , parentId: qdata.parentFolder
-                                          , index: qdata.index
-                                          , feedURI: uri(qdata.feedURI)
-                                          , siteURI: uri(qdata.uri)
-                                          }).then(null, do_throw);
+        yield PlacesUtils.livemarks.addLivemark({ title: qdata.title
+                                                , parentId: (yield PlacesUtils.promiseItemId(qdata.parentGuid))
+                                                , index: qdata.index
+                                                , feedURI: uri(qdata.feedURI)
+                                                , siteURI: uri(qdata.uri)
+                                                });
       }
 
       if (qdata.isBookmark) {
         let data = {
-          parentGuid: (yield PlacesUtils.promiseItemGuid(qdata.parentFolder)),
+          parentGuid: qdata.parentGuid,
           index: qdata.index,
           title: qdata.title,
           url: qdata.uri
@@ -168,8 +168,8 @@ function task_populateDB(aArray)
         let item = yield PlacesUtils.bookmarks.insert(data);
 
         if (qdata.keyword) {
-          let itemId = yield PlacesUtils.promiseItemId(item.guid);
-          PlacesUtils.bookmarks.setKeywordForBookmark(itemId, qdata.keyword);
+          yield PlacesUtils.keywords.insert({ url: qdata.uri,
+                                              keyword: qdata.keyword });
         }
       }
 
@@ -179,14 +179,14 @@ function task_populateDB(aArray)
 
       if (qdata.isSeparator) {
         yield PlacesUtils.bookmarks.insert({
-          parentGuid: (yield PlacesUtils.promiseItemGuid(qdata.parentFolder)),
+          parentGuid: qdata.parentGuid,
           type: PlacesUtils.bookmarks.TYPE_SEPARATOR,
           index: qdata.index
         });
       }
     } catch (ex) {
       // use the data object here in case instantiation of qdata failed
-      LOG("Problem with this URI: " + data.uri);
+      do_print("Problem with this URI: " + data.uri);
       do_throw("Error creating database: " + ex + "\n");
     }
   }
@@ -227,8 +227,7 @@ function queryData(obj) {
   this.isTag = obj.isTag ? obj.isTag : false;
   this.tagArray = obj.tagArray ? obj.tagArray : null;
   this.isLivemark = obj.isLivemark ? obj.isLivemark : false;
-  this.parentFolder = obj.parentFolder ? obj.parentFolder
-                                       : PlacesUtils.placesRootId;
+  this.parentGuid = obj.parentGuid || PlacesUtils.bookmarks.rootGuid;
   this.feedURI = obj.feedURI ? obj.feedURI : "";
   this.index = obj.index ? obj.index : PlacesUtils.bookmarks.DEFAULT_INDEX;
   this.isFolder = obj.isFolder ? obj.isFolder : false;
@@ -255,7 +254,7 @@ queryData.prototype = { }
  * the results, where appropriate.
  */
 function compareArrayToResult(aArray, aRoot) {
-  LOG("Comparing Array to Results");
+  do_print("Comparing Array to Results");
 
   var wasOpen = aRoot.containerOpen;
   if (!wasOpen)
@@ -267,14 +266,14 @@ function compareArrayToResult(aArray, aRoot) {
     // Debugging code for failures.
     dump_table("moz_places");
     dump_table("moz_historyvisits");
-    LOG("Found children:");
+    do_print("Found children:");
     for (let i = 0; i < aRoot.childCount; i++) {
-      LOG(aRoot.getChild(i).uri);
+      do_print(aRoot.getChild(i).uri);
     }
-    LOG("Expected:");
+    do_print("Expected:");
     for (let i = 0; i < aArray.length; i++) {
       if (aArray[i].isInQuery)
-        LOG(aArray[i].uri);
+        do_print(aArray[i].uri);
     }
   }
   do_check_eq(expectedResultCount, aRoot.childCount);
@@ -283,9 +282,9 @@ function compareArrayToResult(aArray, aRoot) {
   for (var i = 0; i < aArray.length; i++) {
     if (aArray[i].isInQuery) {
       var child = aRoot.getChild(inQueryIndex);
-      //LOG("testing testData[" + i + "] vs result[" + inQueryIndex + "]");
+      //do_print("testing testData[" + i + "] vs result[" + inQueryIndex + "]");
       if (!aArray[i].isFolder && !aArray[i].isSeparator) {
-        LOG("testing testData[" + aArray[i].uri + "] vs result[" + child.uri + "]");
+        do_print("testing testData[" + aArray[i].uri + "] vs result[" + child.uri + "]");
         if (aArray[i].uri != child.uri) {
           dump_table("moz_places");
           do_throw("Expected " + aArray[i].uri + " found " + child.uri);
@@ -307,7 +306,7 @@ function compareArrayToResult(aArray, aRoot) {
 
   if (!wasOpen)
     aRoot.containerOpen = false;
-  LOG("Comparing Array to Results passes");
+  do_print("Comparing Array to Results passes");
 }
 
 
@@ -348,7 +347,7 @@ function isInResult(aQueryData, aRoot) {
 
 
 /**
- * A nice helper function for debugging things. It LOGs the contents of a
+ * A nice helper function for debugging things. It prints the contents of a
  * result set.
  */
 function displayResultSet(aRoot) {
@@ -359,12 +358,12 @@ function displayResultSet(aRoot) {
 
   if (!aRoot.hasChildren) {
     // Something wrong? Empty result set?
-    LOG("Result Set Empty");
+    do_print("Result Set Empty");
     return;
   }
 
   for (var i=0; i < aRoot.childCount; ++i) {
-    LOG("Result Set URI: " + aRoot.getChild(i).uri + "   Title: " +
+    do_print("Result Set URI: " + aRoot.getChild(i).uri + "   Title: " +
         aRoot.getChild(i).title + "   Visit Time: " + aRoot.getChild(i).time);
   }
   if (!wasOpen)

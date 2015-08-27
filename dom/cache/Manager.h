@@ -7,11 +7,10 @@
 #ifndef mozilla_dom_cache_Manager_h
 #define mozilla_dom_cache_Manager_h
 
-#include "mozilla/dom/cache/CacheInitData.h"
-#include "mozilla/dom/cache/PCacheStreamControlParent.h"
 #include "mozilla/dom/cache/Types.h"
 #include "nsCOMPtr.h"
 #include "nsISupportsImpl.h"
+#include "nsRefPtr.h"
 #include "nsString.h"
 #include "nsTArray.h"
 
@@ -19,15 +18,17 @@ class nsIInputStream;
 class nsIThread;
 
 namespace mozilla {
+
+class ErrorResult;
+
 namespace dom {
 namespace cache {
 
+class CacheOpArgs;
+class CacheOpResult;
 class CacheRequestResponse;
 class Context;
 class ManagerId;
-class PCacheQueryParams;
-class PCacheRequest;
-class PCacheRequestOrVoid;
 struct SavedRequest;
 struct SavedResponse;
 class StreamList;
@@ -41,23 +42,25 @@ class StreamList;
 // Cache API.  This uniqueness is defined by the ManagerId equality operator.
 // The uniqueness is enforced by the Manager GetOrCreate() factory method.
 //
-// The Manager object can out live the IPC actors in the case where the child
-// process is killed; e.g a child process OOM.  The Manager object can
-// The Manager object can potentially use non-trivial resources.  Long lived
-// DOM objects and their actors should not maintain a reference to the Manager
-// while idle.  Transient DOM objects that may keep a reference for their
-// lifetimes.
+// The life cycle of Manager objects is somewhat complex.  While code may
+// hold a strong reference to the Manager, it will invalidate itself once it
+// believes it has become completely idle.  This is currently determined when
+// all of the following conditions occur:
 //
-// For example, once a CacheStorage DOM object is access it will live until its
-// global is released.  Therefore, CacheStorage should release its Manager
-// reference after operations complete and it becomes idle.  Cache objects,
-// however, can be GC'd once content are done using them and can therefore keep
-// their Manager reference alive.  Its expected that more operations are
-// performed on a Cache object, so keeping the Manager reference will help
-// minimize overhead for each reference.
+//  1) There are no more Manager::Listener objects registered with the Manager
+//     by performing a Cache or Storage operation.
+//  2) There are no more CacheId references noted via Manager::AddRefCacheId().
+//  3) There are no more BodyId references noted via Manager::AddRefBodyId().
+//
+// In order to keep your Manager alive you should perform an operation to set
+// a Listener, call AddRefCacheId(), or call AddRefBodyId().
+//
+// Even once a Manager becomes invalid, however, it may still continue to
+// exist.  This is allowed so that any in-progress Actions can gracefully
+// complete.
 //
 // As an invariant, all Manager objects must cease all IO before shutdown.  This
-// is enforced by the ShutdownObserver.  If content still holds references to
+// is enforced by the Manager::Factory.  If content still holds references to
 // Cache DOM objects during shutdown, then all operations will begin rejecting.
 class Manager final
 {
@@ -84,33 +87,45 @@ public:
   class Listener
   {
   public:
-    virtual void OnCacheMatch(RequestId aRequestId, nsresult aRv,
-                              const SavedResponse* aResponse,
-                              StreamList* aStreamList) { }
-    virtual void OnCacheMatchAll(RequestId aRequestId, nsresult aRv,
-                                 const nsTArray<SavedResponse>& aSavedResponses,
-                                 StreamList* aStreamList) { }
-    virtual void OnCachePutAll(RequestId aRequestId, nsresult aRv) { }
-    virtual void OnCacheDelete(RequestId aRequestId, nsresult aRv,
-                               bool aSuccess) { }
-    virtual void OnCacheKeys(RequestId aRequestId, nsresult aRv,
-                             const nsTArray<SavedRequest>& aSavedRequests,
-                             StreamList* aStreamList) { }
+    // convenience routines
+    void
+    OnOpComplete(ErrorResult&& aRv, const CacheOpResult& aResult);
 
-    virtual void OnStorageMatch(RequestId aRequestId, nsresult aRv,
-                                const SavedResponse* aResponse,
-                                StreamList* aStreamList) { }
-    virtual void OnStorageHas(RequestId aRequestId, nsresult aRv,
-                              bool aCacheFound) { }
-    virtual void OnStorageOpen(RequestId aRequestId, nsresult aRv,
-                               CacheId aCacheId) { }
-    virtual void OnStorageDelete(RequestId aRequestId, nsresult aRv,
-                                 bool aCacheDeleted) { }
-    virtual void OnStorageKeys(RequestId aRequestId, nsresult aRv,
-                               const nsTArray<nsString>& aKeys) { }
+    void
+    OnOpComplete(ErrorResult&& aRv, const CacheOpResult& aResult,
+                 CacheId aOpenedCacheId);
+
+    void
+    OnOpComplete(ErrorResult&& aRv, const CacheOpResult& aResult,
+                 const SavedResponse& aSavedResponse,
+                 StreamList* aStreamList);
+
+    void
+    OnOpComplete(ErrorResult&& aRv, const CacheOpResult& aResult,
+                 const nsTArray<SavedResponse>& aSavedResponseList,
+                 StreamList* aStreamList);
+
+    void
+    OnOpComplete(ErrorResult&& aRv, const CacheOpResult& aResult,
+                 const nsTArray<SavedRequest>& aSavedRequestList,
+                 StreamList* aStreamList);
+
+    // interface to be implemented
+    virtual void
+    OnOpComplete(ErrorResult&& aRv, const CacheOpResult& aResult,
+                 CacheId aOpenedCacheId,
+                 const nsTArray<SavedResponse>& aSavedResponseList,
+                 const nsTArray<SavedRequest>& aSavedRequestList,
+                 StreamList* aStreamList) { }
 
   protected:
     ~Listener() { }
+  };
+
+  enum State
+  {
+    Open,
+    Closing
   };
 
   static nsresult GetOrCreate(ManagerId* aManagerId, Manager** aManagerOut);
@@ -127,8 +142,9 @@ public:
 
   // Marks the Manager "invalid".  Once the Context completes no new operations
   // will be permitted with this Manager.  New actors will get a new Manager.
-  void Invalidate();
-  bool IsValid() const;
+  void NoteClosing();
+
+  State GetState() const;
 
   // If an actor represents a long term reference to a cache or body stream,
   // then they must call AddRefCacheId() or AddRefBodyId().  This will
@@ -148,35 +164,15 @@ public:
   void AddStreamList(StreamList* aStreamList);
   void RemoveStreamList(StreamList* aStreamList);
 
-  // TODO: consider moving CacheId up in the argument lists below (bug 1110485)
-  void CacheMatch(Listener* aListener, RequestId aRequestId, CacheId aCacheId,
-                  const PCacheRequest& aRequest,
-                  const PCacheQueryParams& aParams);
-  void CacheMatchAll(Listener* aListener, RequestId aRequestId,
-                     CacheId aCacheId, const PCacheRequestOrVoid& aRequestOrVoid,
-                     const PCacheQueryParams& aParams);
-  void CachePutAll(Listener* aListener, RequestId aRequestId, CacheId aCacheId,
-                   const nsTArray<CacheRequestResponse>& aPutList,
-                   const nsTArray<nsCOMPtr<nsIInputStream>>& aRequestStreamList,
-                   const nsTArray<nsCOMPtr<nsIInputStream>>& aResponseStreamList);
-  void CacheDelete(Listener* aListener, RequestId aRequestId,
-                   CacheId aCacheId, const PCacheRequest& aRequest,
-                   const PCacheQueryParams& aParams);
-  void CacheKeys(Listener* aListener, RequestId aRequestId,
-                 CacheId aCacheId, const PCacheRequestOrVoid& aRequestOrVoid,
-                 const PCacheQueryParams& aParams);
+  void ExecuteCacheOp(Listener* aListener, CacheId aCacheId,
+                      const CacheOpArgs& aOpArgs);
+  void ExecutePutAll(Listener* aListener, CacheId aCacheId,
+                     const nsTArray<CacheRequestResponse>& aPutList,
+                     const nsTArray<nsCOMPtr<nsIInputStream>>& aRequestStreamList,
+                     const nsTArray<nsCOMPtr<nsIInputStream>>& aResponseStreamList);
 
-  void StorageMatch(Listener* aListener, RequestId aRequestId,
-                    Namespace aNamespace, const PCacheRequest& aRequest,
-                    const PCacheQueryParams& aParams);
-  void StorageHas(Listener* aListener, RequestId aRequestId,
-                  Namespace aNamespace, const nsAString& aKey);
-  void StorageOpen(Listener* aListener, RequestId aRequestId,
-                   Namespace aNamespace, const nsAString& aKey);
-  void StorageDelete(Listener* aListener, RequestId aRequestId,
-                     Namespace aNamespace, const nsAString& aKey);
-  void StorageKeys(Listener* aListener, RequestId aRequestId,
-                   Namespace aNamespace);
+  void ExecuteStorageOp(Listener* aListener, Namespace aNamespace,
+                        const CacheOpArgs& aOpArgs);
 
 private:
   class Factory;
@@ -199,6 +195,7 @@ private:
 
   Manager(ManagerId* aManagerId, nsIThread* aIOThread);
   ~Manager();
+  void Init(Manager* aOldManager);
   void Shutdown();
   already_AddRefed<Context> CurrentContext();
 
@@ -208,6 +205,8 @@ private:
   bool SetCacheIdOrphanedIfRefed(CacheId aCacheId);
   bool SetBodyIdOrphanedIfRefed(const nsID& aBodyId);
   void NoteOrphanedBodyIdList(const nsTArray<nsID>& aDeletedBodyIdList);
+
+  void MaybeAllowContextToClose();
 
   nsRefPtr<ManagerId> mManagerId;
   nsCOMPtr<nsIThread> mIOThread;
@@ -260,7 +259,7 @@ private:
   nsTArray<StreamList*> mStreamLists;
 
   bool mShuttingDown;
-  bool mValid;
+  State mState;
 
   struct CacheIdRefCounter
   {

@@ -258,7 +258,7 @@ function waitForSourceShown(aPanel, aUrl) {
     let sourceUrl = aSource.url || aSource.introductionUrl;
     info("Source shown: " + sourceUrl);
 
-    if (!sourceUrl.contains(aUrl)) {
+    if (!sourceUrl.includes(aUrl)) {
       return waitForSourceShown(aPanel, aUrl);
     } else {
       ok(true, "The correct source has been shown.");
@@ -274,7 +274,7 @@ function ensureSourceIs(aPanel, aUrlOrSource, aWaitFlag = false) {
   let sources = aPanel.panelWin.DebuggerView.Sources;
 
   if (sources.selectedValue === aUrlOrSource ||
-      sources.selectedItem.attachment.source.url.contains(aUrlOrSource)) {
+      sources.selectedItem.attachment.source.url.includes(aUrlOrSource)) {
     ok(true, "Expected source is shown: " + aUrlOrSource);
     return promise.resolve(null);
   }
@@ -439,6 +439,12 @@ function waitForClientEvents(aPanel, aEventName, aEventRepeat = 1) {
   });
 
   return deferred.promise;
+}
+
+function waitForClipboardPromise(setup, expected) {
+  return new Promise((resolve, reject) => {
+    SimpleTest.waitForClipboard(expected, setup, resolve, reject);
+  });
 }
 
 function ensureThreadClientState(aPanel, aState) {
@@ -721,8 +727,8 @@ function prepareDebugger(aDebugger) {
     let view = aDebugger.panelWin.DebuggerView;
     view.Variables.lazyEmpty = false;
     view.Variables.lazySearch = false;
-    view.FilteredSources._autoSelectFirstItem = true;
-    view.FilteredFunctions._autoSelectFirstItem = true;
+    view.Filtering.FilteredSources._autoSelectFirstItem = true;
+    view.Filtering.FilteredFunctions._autoSelectFirstItem = true;
   } else {
     // Nothing to do here yet.
   }

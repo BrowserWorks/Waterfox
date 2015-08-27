@@ -114,7 +114,7 @@ CreateDrawTargetForSurface(gfxASurface *aSurface)
   }
   RefPtr<DrawTarget> drawTarget =
     Factory::CreateDrawTargetForCairoSurface(aSurface->CairoSurface(),
-                                             ToIntSize(gfxIntSize(aSurface->GetSize())),
+                                             aSurface->GetSize(),
                                              &format);
   aSurface->SetData(&kDrawTarget, drawTarget, nullptr);
   return drawTarget;
@@ -3227,7 +3227,7 @@ PluginInstanceChild::PaintRectToSurface(const nsIntRect& aRect,
         RefPtr<DrawTarget> dt = CreateDrawTargetForSurface(aSurface);
         RefPtr<SourceSurface> surface =
             gfxPlatform::GetSourceSurfaceForSurface(dt, renderSurface);
-        dt->CopySurface(surface, ToIntRect(aRect), ToIntPoint(aRect.TopLeft()));
+        dt->CopySurface(surface, aRect, aRect.TopLeft());
     }
 }
 
@@ -3285,7 +3285,7 @@ PluginInstanceChild::PaintRectWithAlphaExtraction(const nsIntRect& aRect,
         RefPtr<DrawTarget> dt = CreateDrawTargetForSurface(whiteImage);
         RefPtr<SourceSurface> surface =
             gfxPlatform::GetSourceSurfaceForSurface(dt, aSurface);
-        dt->CopySurface(surface, ToIntRect(rect), IntPoint());
+        dt->CopySurface(surface, rect, IntPoint());
     }
 
     // Paint the plugin directly onto the target, with a black
@@ -3331,7 +3331,7 @@ PluginInstanceChild::PaintRectWithAlphaExtraction(const nsIntRect& aRect,
             gfxPlatform::GetSourceSurfaceForSurface(dt, blackImage);
         dt->CopySurface(surface,
                         IntRect(0, 0, rect.width, rect.height),
-                        ToIntPoint(rect.TopLeft()));
+                        rect.TopLeft());
     }
 }
 
@@ -3468,9 +3468,7 @@ PluginInstanceChild::ShowPluginFrame()
             RefPtr<DrawTarget> dt = CreateDrawTargetForSurface(surface);
             RefPtr<SourceSurface> backgroundSurface =
                 gfxPlatform::GetSourceSurfaceForSurface(dt, mBackground);
-            dt->CopySurface(backgroundSurface,
-                            ToIntRect(rect),
-                            ToIntPoint(rect.TopLeft()));
+            dt->CopySurface(backgroundSurface, rect, rect.TopLeft());
         }
         // ... and hand off to the plugin
         // BEWARE: mBackground may die during this call
@@ -3533,7 +3531,7 @@ PluginInstanceChild::ShowPluginFrame()
         SharedDIBSurface* s = static_cast<SharedDIBSurface*>(mCurrentSurface.get());
         if (!mCurrentSurfaceActor) {
             base::SharedMemoryHandle handle = nullptr;
-            s->ShareToProcess(OtherProcess(), &handle);
+            s->ShareToProcess(OtherPid(), &handle);
 
             mCurrentSurfaceActor =
                 SendPPluginSurfaceConstructor(handle,
@@ -3603,7 +3601,7 @@ PluginInstanceChild::ReadbackDifferenceRect(const nsIntRect& rect)
     nsIntRegionRectIterator iter(result);
     const nsIntRect* r;
     while ((r = iter.Next()) != nullptr) {
-        dt->CopySurface(source, ToIntRect(*r), ToIntPoint(r->TopLeft()));
+        dt->CopySurface(source, *r, r->TopLeft());
     }
 
     return true;

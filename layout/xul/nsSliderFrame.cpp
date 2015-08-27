@@ -322,6 +322,42 @@ nsSliderFrame::BuildDisplayListForChildren(nsDisplayListBuilder*   aBuilder,
 
     if (crect.width < thumbRect.width || crect.height < thumbRect.height)
       return;
+
+    // If this scrollbar is the scrollbar of an actively scrolled scroll frame,
+    // layerize the scrollbar thumb, wrap it in its own ContainerLayer and
+    // attach scrolling information to it.
+    // We do this here and not in the thumb's nsBoxFrame::BuildDisplayList so
+    // that the event region that gets created for the thumb is included in
+    // the nsDisplayOwnLayer contents.
+
+    uint32_t flags = 0;
+    mozilla::layers::FrameMetrics::ViewID scrollTargetId =
+      mozilla::layers::FrameMetrics::NULL_SCROLL_ID;
+    aBuilder->GetScrollbarInfo(&scrollTargetId, &flags);
+    bool thumbGetsLayer = (scrollTargetId != layers::FrameMetrics::NULL_SCROLL_ID);
+    nsLayoutUtils::SetScrollbarThumbLayerization(thumb, thumbGetsLayer);
+
+    if (thumbGetsLayer) {
+      nsDisplayListCollection tempLists;
+      nsBoxFrame::BuildDisplayListForChildren(aBuilder, aDirtyRect, tempLists);
+
+      // This is a bit of a hack. Collect up all descendant display items
+      // and merge them into a single Content() list.
+      nsDisplayList masterList;
+      masterList.AppendToTop(tempLists.BorderBackground());
+      masterList.AppendToTop(tempLists.BlockBorderBackgrounds());
+      masterList.AppendToTop(tempLists.Floats());
+      masterList.AppendToTop(tempLists.Content());
+      masterList.AppendToTop(tempLists.PositionedDescendants());
+      masterList.AppendToTop(tempLists.Outlines());
+
+      // Wrap the list to make it its own layer.
+      aLists.Content()->AppendNewToTop(new (aBuilder)
+        nsDisplayOwnLayer(aBuilder, this, &masterList, flags, scrollTargetId,
+                          GetThumbRatio()));
+
+      return;
+    }
   }
   
   nsBoxFrame::BuildDisplayListForChildren(aBuilder, aDirtyRect, aLists);
@@ -571,10 +607,10 @@ nsSliderFrame::HandleEvent(nsPresContext* aPresContext,
 #endif
 
   // XXX hack until handle release is actually called in nsframe.
-//  if (aEvent->message == NS_MOUSE_EXIT_SYNTH || aEvent->message == NS_MOUSE_RIGHT_BUTTON_UP || aEvent->message == NS_MOUSE_LEFT_BUTTON_UP)
+//  if (aEvent->message == NS_MOUSE_OUT || aEvent->message == NS_MOUSE_RIGHT_BUTTON_UP || aEvent->message == NS_MOUSE_LEFT_BUTTON_UP)
   //   HandleRelease(aPresContext, aEvent, aEventStatus);
 
-  if (aEvent->message == NS_MOUSE_EXIT_SYNTH && mChange)
+  if (aEvent->message == NS_MOUSE_OUT && mChange)
      HandleRelease(aPresContext, aEvent, aEventStatus);
 
   return nsFrame::HandleEvent(aPresContext, aEvent, aEventStatus);
@@ -691,7 +727,7 @@ nsSliderFrame::CurrentPositionChanged()
 
   // avoid putting the scroll thumb at subpixel positions which cause needless invalidations
   nscoord appUnitsPerPixel = PresContext()->AppUnitsPerDevPixel();
-  nsRect snappedThumbRect = newThumbRect.ToNearestPixels(appUnitsPerPixel).ToAppUnits(appUnitsPerPixel);
+  nsRect snappedThumbRect = ToAppUnits(newThumbRect.ToNearestPixels(appUnitsPerPixel), appUnitsPerPixel);
   if (IsHorizontal()) {
     newThumbRect.x = snappedThumbRect.x;
     newThumbRect.width = snappedThumbRect.width;
@@ -1275,6 +1311,16 @@ nsSliderFrame::PageScroll(nscoord aChange)
     }
   }
   PageUpDown(aChange);
+}
+
+float
+nsSliderFrame::GetThumbRatio() const
+{
+  // mRatio is in thumb app units per scrolled css pixels. Convert it to a
+  // ratio of the thumb's CSS pixels per scrolled CSS pixels. (Note the thumb
+  // is in the scrollframe's parent's space whereas the scrolled CSS pixels
+  // are in the scrollframe's space).
+  return mRatio / mozilla::AppUnitsPerCSSPixel();
 }
 
 NS_IMPL_ISUPPORTS(nsSliderMediator,

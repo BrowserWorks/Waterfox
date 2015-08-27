@@ -34,18 +34,6 @@ ifndef EXTERNALLY_MANAGED_MAKE_FILE
 # scenarios.
 _current_makefile = $(CURDIR)/$(firstword $(MAKEFILE_LIST))
 
-CHECK_MOZBUILD_VARIABLES = $(foreach var,$(_MOZBUILD_EXTERNAL_VARIABLES), \
-  $(if $(subst $($(var)_FROZEN),,'$($(var))'), \
-	  $(error Variable $(var) is defined in $(_current_makefile). It should only be defined in moz.build files),\
-  )) $(foreach var,$(_DEPRECATED_VARIABLES), \
-	$(if $(subst $($(var)_FROZEN),,'$($(var))'), \
-    $(error Variable $(var) is defined in $(_current_makefile). This variable has been deprecated. It does nothing. It must be removed in order to build),\
-    ))
-
-# Check variables set after autoconf.mk (included at the top of Makefiles) is
-# included and before config.mk is included.
-_eval_for_side_effects := $(CHECK_MOZBUILD_VARIABLES)
-
 # Import the automatically generated backend file. If this file doesn't exist,
 # the backend hasn't been properly configured. We want this to be a fatal
 # error, hence not using "-include".
@@ -54,8 +42,6 @@ GLOBAL_DEPS += backend.mk
 include backend.mk
 endif
 
-# Freeze the values specified by moz.build to catch them if they fail.
-$(foreach var,$(_MOZBUILD_EXTERNAL_VARIABLES) $(_DEPRECATED_VARIABLES),$(eval $(var)_FROZEN := '$($(var))'))
 endif
 
 space = $(NULL) $(NULL)
@@ -311,11 +297,6 @@ MY_RULES	:= $(DEPTH)/config/myrules.mk
 # Default command macros; can be overridden in <arch>.mk.
 #
 CCC = $(CXX)
-
-# Java macros
-JAVA_GEN_DIR  = _javagen
-JAVA_DIST_DIR = $(DEPTH)/$(JAVA_GEN_DIR)
-JAVA_IFACES_PKG_NAME = org/mozilla/interfaces
 
 INCLUDES = \
   -I$(srcdir) \
@@ -647,7 +628,7 @@ EXPAND_MKSHLIB = $(EXPAND_LIBS_EXEC) $(EXPAND_MKSHLIB_ARGS) -- $(MKSHLIB)
 
 ifneq (,$(MOZ_LIBSTDCXX_TARGET_VERSION)$(MOZ_LIBSTDCXX_HOST_VERSION))
 ifneq ($(OS_ARCH),Darwin)
-CHECK_STDCXX = @$(TOOLCHAIN_PREFIX)objdump -p $(1) | grep -v -e 'GLIBCXX_3\.4\.\(9\|[1-9][0-9]\)' > /dev/null || ( echo 'TEST-UNEXPECTED-FAIL | check_stdcxx | We do not want these libstdc++ symbols to be used:' && $(TOOLCHAIN_PREFIX)objdump -T $(1) | grep -e 'GLIBCXX_3\.4\.\(9\|[1-9][0-9]\)' && false)
+CHECK_STDCXX = @$(TOOLCHAIN_PREFIX)objdump -p $(1) | grep -e 'GLIBCXX_3\.4\.\(9\|[1-9][0-9]\)' > /dev/null && echo 'TEST-UNEXPECTED-FAIL | check_stdcxx | We do not want these libstdc++ symbols to be used:' && $(TOOLCHAIN_PREFIX)objdump -T $(1) | grep -e 'GLIBCXX_3\.4\.\(9\|[1-9][0-9]\)' && exit 1 || true
 endif
 endif
 
@@ -697,6 +678,3 @@ export CL_INCLUDES_PREFIX
 export NONASCII
 
 DEFINES += -DNO_NSPR_10_SUPPORT
-
-# Freeze the values specified by moz.build to catch them if they fail.
-$(foreach var,$(_MOZBUILD_EXTERNAL_VARIABLES) $(_DEPRECATED_VARIABLES),$(eval $(var)_FROZEN := '$($(var))'))

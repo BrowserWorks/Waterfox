@@ -61,6 +61,7 @@ with Files('nsVideoFrame.*'):
     BUG_COMPONENT = ('Core', 'Video/Audio')
 
 EXPORTS += [
+    'AsyncScrollBase.h',
     'nsCanvasFrame.h',
     'nsContainerFrame.h',
     'nsDirection.h',
@@ -85,9 +86,15 @@ EXPORTS += [
     'nsIStatefulFrame.h',
     'nsPluginFrame.h',
     'nsQueryFrame.h',
+    'nsRubyBaseContainerFrame.h',
+    'nsRubyBaseFrame.h',
+    'nsRubyFrame.h',
+    'nsRubyTextContainerFrame.h',
+    'nsRubyTextFrame.h',
     'nsSplittableFrame.h',
     'nsSubDocumentFrame.h',
     'nsTextRunTransformations.h',
+    'RubyUtils.h',
     'ScrollbarActivity.h',
 ]
 
@@ -104,6 +111,7 @@ EXPORTS.mozilla.layout += [
 ]
 
 UNIFIED_SOURCES += [
+    'AsyncScrollBase.cpp',
     'FrameChildList.cpp',
     'MathMLTextRunFactory.cpp',
     'nsAbsoluteContainingBlock.cpp',
@@ -168,8 +176,6 @@ SOURCES += [
 ]
 
 FAIL_ON_WARNINGS = True
-
-MSVC_ENABLE_PGO = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

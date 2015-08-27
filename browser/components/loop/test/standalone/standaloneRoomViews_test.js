@@ -11,7 +11,9 @@ describe("loop.standaloneRoomViews", function() {
 
   var ROOM_STATES = loop.store.ROOM_STATES;
   var FEEDBACK_STATES = loop.store.FEEDBACK_STATES;
+  var ROOM_INFO_FAILURES = loop.shared.utils.ROOM_INFO_FAILURES;
   var sharedActions = loop.shared.actions;
+  var sharedUtils = loop.shared.utils;
 
   var sandbox, dispatcher, activeRoomStore, feedbackStore, dispatch;
 
@@ -36,6 +38,148 @@ describe("loop.standaloneRoomViews", function() {
 
   afterEach(function() {
     sandbox.restore();
+  });
+
+  describe("StandaloneRoomContextView", function() {
+    beforeEach(function() {
+      sandbox.stub(navigator.mozL10n, "get").returnsArg(0);
+    });
+
+    function mountTestComponent(extraProps) {
+      var props = _.extend({
+        dispatcher: dispatcher,
+        receivingScreenShare: false
+      }, extraProps);
+      return TestUtils.renderIntoDocument(
+        React.createElement(
+          loop.standaloneRoomViews.StandaloneRoomContextView, props));
+    }
+
+    it("should display the room name if no failures are known", function() {
+      var view = mountTestComponent({
+        roomName: "Mike's room",
+        receivingScreenShare: false
+      });
+
+      expect(view.getDOMNode().textContent).eql("Mike's room");
+    });
+
+    it("should log an unsupported browser message if crypto is unsupported", function() {
+      var view = mountTestComponent({
+        roomName: "Mark's room",
+        roomInfoFailure: ROOM_INFO_FAILURES.WEB_CRYPTO_UNSUPPORTED
+      });
+
+      sinon.assert.called(console.error);
+      sinon.assert.calledWithMatch(console.error, sinon.match("unsupported"));
+    });
+
+    it("should display a general error message for any other failure", function() {
+      var view = mountTestComponent({
+        roomName: "Mark's room",
+        roomInfoFailure: ROOM_INFO_FAILURES.NO_DATA
+      });
+
+      sinon.assert.called(console.error);
+      sinon.assert.calledWithMatch(console.error, sinon.match("not_available"));
+    });
+
+    it("should display context information if a url is supplied", function() {
+      var view = mountTestComponent({
+        roomName: "Mike's room",
+        roomContextUrls: [{
+          description: "Mark's super page",
+          location: "http://invalid.com",
+          thumbnail: "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
+        }]
+      });
+
+      expect(view.getDOMNode().querySelector(".standalone-context-url")).not.eql(null);
+    });
+
+    it("should format the url for display", function() {
+      sandbox.stub(sharedUtils, "formatURL").returns({
+          location: "location",
+          hostname: "hostname"
+        });
+
+      var view = mountTestComponent({
+        roomName: "Mike's room",
+        roomContextUrls: [{
+          description: "Mark's super page",
+          location: "http://invalid.com",
+          thumbnail: "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
+        }]
+      });
+
+      expect(view.getDOMNode()
+        .querySelector(".standalone-context-url-description-wrapper > a").textContent)
+        .eql("hostname");
+    });
+
+    it("should not display context information if no urls are supplied", function() {
+      var view = mountTestComponent({
+        roomName: "Mike's room"
+      });
+
+      expect(view.getDOMNode().querySelector(".standalone-context-url")).eql(null);
+    });
+
+    it("should dispatch a RecordClick action when the link is clicked", function() {
+      var view = mountTestComponent({
+        roomName: "Mark's room",
+        roomContextUrls: [{
+          description: "Mark's super page",
+          location: "http://invalid.com",
+          thumbnail: "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
+        }]
+      });
+
+      TestUtils.Simulate.click(view.getDOMNode()
+        .querySelector(".standalone-context-url-description-wrapper > a"));
+
+      sinon.assert.calledOnce(dispatcher.dispatch);
+      sinon.assert.calledWithExactly(dispatcher.dispatch,
+        new sharedActions.RecordClick({
+          linkInfo: "Shared URL"
+        }));
+    });
+
+    it("should display the default favicon when no thumbnail is available", function() {
+      var view = mountTestComponent({
+        roomName: "Mike's room",
+        roomContextUrls: [{
+          description: "Mark's super page",
+          location: "http://invalid.com",
+          thumbnail: ""
+        }]
+      });
+
+      expect(view.getDOMNode().querySelector(".standalone-context-url > img").src)
+        .to.match(/shared\/img\/icons-16x16.svg#globe$/);
+    });
+  });
+
+  describe("StandaloneRoomHeader", function() {
+    function mountTestComponent() {
+      return TestUtils.renderIntoDocument(
+        React.createElement(
+          loop.standaloneRoomViews.StandaloneRoomHeader, {
+            dispatcher: dispatcher
+          }));
+    }
+
+    it("should dispatch a RecordClick action when the support link is clicked", function() {
+      var view = mountTestComponent();
+
+      TestUtils.Simulate.click(view.getDOMNode().querySelector("a"));
+
+      sinon.assert.calledOnce(dispatcher.dispatch);
+      sinon.assert.calledWithExactly(dispatcher.dispatch,
+        new sharedActions.RecordClick({
+          linkInfo: "Support link click"
+        }));
+    });
   });
 
   describe("StandaloneRoomView", function() {
@@ -106,6 +250,19 @@ describe("loop.standaloneRoomViews", function() {
           activeRoomStore.setStoreState({roomState: ROOM_STATES.JOINED});
 
           sinon.assert.calledOnce(view.updateVideoContainer);
+      });
+
+      it("should reset the video dimensions cache when the gather state is entered", function() {
+        activeRoomStore.setStoreState({roomState: ROOM_STATES.SESSION_CONNECTED});
+
+        var view = mountTestComponent();
+
+        activeRoomStore.setStoreState({roomState: ROOM_STATES.GATHER});
+
+        expect(view._videoDimensionsCache).eql({
+          local: {},
+          remote: {}
+        });
       });
     });
 

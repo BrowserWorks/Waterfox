@@ -244,7 +244,7 @@
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">32dp</item>
         <item name="android:textAppearance">@style/TextAppearance.Widget.Home.Header</item>
-        <item name="android:background">@color/background_light</item>
+        <item name="android:background">@color/about_page_header_grey</item>
         <item name="android:focusable">false</item>
         <item name="android:gravity">center|left</item>
         <item name="android:paddingLeft">10dip</item>
@@ -403,7 +403,7 @@
     <style name="TextAppearance.Widget.Home.ItemTitle" parent="TextAppearance.Medium"/>
 
     <style name="TextAppearance.Widget.Home.ItemDescription" parent="TextAppearance.Micro">
-        <item name="android:textColor">#AFB1B3</item>
+        <item name="android:textColor">@color/tabs_tray_icon_grey</item>
     </style>
 
     <style name="TextAppearance.Widget.HomeBanner" parent="TextAppearance.Small">
@@ -508,23 +508,11 @@
     </style>
 
     <!-- Tabs panel -->
-    <style name="TabsPanelFrameBase">
+    <style name="PrivateTabsPanelFrame">
         <item name="android:paddingLeft">16dp</item>
         <item name="android:paddingRight">16dp</item>
         <item name="android:paddingTop">32dp</item>
         <item name="android:orientation">vertical</item>
-    </style>
-
-    <style name="TabsPanelFrame" parent="TabsPanelFrameBase">
-        <!-- We set values in landscape. -->
-    </style>
-
-    <style name="TabsPanelFrame.PrivateTabs">
-        <!-- We set values on tablet. -->
-    </style>
-
-    <style name="TabsPanelFrame.RemoteTabs">
-        <!-- We set values on tablet. -->
     </style>
 
     <style name="TabsPanelSectionBase">
@@ -555,20 +543,6 @@
         <!-- We set values in landscape. -->
     </style>
 
-    <style name="TabsPanelItem.ButtonBase">
-        <item name="android:background">@drawable/remote_tabs_setup_button_background</item>
-        <item name="android:textColor">#FFFEFF</item>
-        <item name="android:textSize">16sp</item>
-        <item name="android:gravity">center</item>
-    </style>
-
-    <style name="TabsPanelItem.Button" parent="TabsPanelItem.ButtonBase">
-        <item name="android:paddingTop">18dp</item>
-        <item name="android:paddingBottom">18dp</item>
-        <item name="android:paddingLeft">9dp</item>
-        <item name="android:paddingRight">9dp</item>
-    </style>
-
     <style name="TabsPanelItem.TextAppearance">
         <item name="android:textColor">#C0C9D0</item>
         <item name="android:textSize">14sp</item>
@@ -578,10 +552,6 @@
     <style name="TabsPanelItem.TextAppearance.Header">
         <item name="android:textSize">18sp</item>
         <item name="android:layout_marginBottom">16dp</item>
-    </style>
-
-    <style name="TabsPanelItem.TextAppearance.Header.FXAccounts">
-        <!-- We change these values on landscape. -->
     </style>
 
     <style name="TabsPanelItem.TextAppearance.Header.PrivateTabs">
@@ -598,14 +568,10 @@
         <item name="android:layout_height">wrap_content</item>
     </style>
 
-    <style name="TabsPanelItem.TextAppearance.Linkified.Resend">
-        <item name="android:layout_height">wrap_content</item>
-    </style>
-
     <style name="Widget.RemoteTabsItemView" parent="Widget.TwoLinePageRow"/>
 
     <style name="Widget.RemoteTabsClientView" parent="Widget.TwoLinePageRow">
-        <item name="android:background">@color/background_light</item>
+        <item name="android:background">@color/about_page_header_grey</item>
     </style>
 
     <style name="Widget.RemoteTabsListView" parent="Widget.HomeListView">
@@ -634,7 +600,7 @@
 
     <!-- Find bar -->
     <style name="FindBar">
-        <item name="android:background">@color/background_tabs</item>
+        <item name="android:background">@color/text_and_tabs_tray_grey</item>
         <item name="android:paddingLeft">3dip</item>
         <item name="android:paddingRight">3dip</item>
         <item name="android:paddingTop">6dip</item>
@@ -823,23 +789,12 @@
         <item name="android:paddingTop">0dp</item>
     </style>
 
-    <!-- Make the share overlay activity appear like an overlay. -->
-    <style name="ShareOverlayActivity" parent="Gecko">
-        <item name="android:windowBackground">@android:color/transparent</item>
-        <item name="android:windowNoTitle">true</item>
-        <item name="android:windowIsTranslucent">true</item>
-        <item name="android:backgroundDimEnabled">true</item>
-
-        <!-- We display the overlay on top of other Activities so show their status bar. -->
-        <item name="android:statusBarColor">@android:color/transparent</item>
-    </style>
-
     <style name="TextAppearance.FirstrunLight"/>
     <style name="TextAppearance.FirstrunRegular"/>
 
     <style name="TextAppearance.FirstrunLight.Main">
         <item name="android:textSize">20sp</item>
-        <item name="android:textColor">#363B40</item>
+        <item name="android:textColor">@color/text_and_tabs_tray_grey</item>
     </style>
 
     <style name="TextAppearance.FirstrunRegular.Body">

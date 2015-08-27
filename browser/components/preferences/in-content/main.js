@@ -5,6 +5,7 @@
 Components.utils.import("resource://gre/modules/Downloads.jsm");
 Components.utils.import("resource://gre/modules/FileUtils.jsm");
 Components.utils.import("resource://gre/modules/Task.jsm");
+Components.utils.import("resource:///modules/TransientPrefs.jsm");
 
 var gMainPane = {
   /**
@@ -27,31 +28,6 @@ var gMainPane = {
     // in case the default changes.  On other Windows OS's defaults can also
     // be set while the prefs are open.
     window.setInterval(this.updateSetDefaultBrowser, 1000);
-
-#ifdef MOZ_METRO
-    // Pre Windows 8, we should hide the update related settings
-    // for the Metro browser
-    let version = Components.classes["@mozilla.org/system-info;1"].
-                  getService(Components.interfaces.nsIPropertyBag2).
-                  getProperty("version");
-    let preWin8 = parseFloat(version) < 6.2;
-    this._showingWin8Prefs = !preWin8;
-    if (preWin8) {
-      ["autoMetro", "autoMetroIndent"].forEach(
-        function(id) document.getElementById(id).collapsed = true
-      );
-    } else {
-      let brandShortName =
-        document.getElementById("bundleBrand").getString("brandShortName");
-      let bundlePrefs = document.getElementById("bundlePreferences");
-      let autoDesktop = document.getElementById("autoDesktop");
-      autoDesktop.label =
-        bundlePrefs.getFormattedString("updateAutoDesktop.label",
-                                       [brandShortName]);
-      autoDesktop.accessKey =
-        bundlePrefs.getString("updateAutoDesktop.accessKey");
-    }
-#endif
 #endif
 #endif
 
@@ -71,6 +47,15 @@ var gMainPane = {
       showTabsInTaskbar.hidden = ver < 6.1;
     } catch (ex) {}
 #endif
+
+    // The "closing multiple tabs" and "opening multiple tabs might slow down
+    // &brandShortName;" warnings provide options for not showing these
+    // warnings again. When the user disabled them, we provide checkboxes to
+    // re-enable the warnings.
+    if (!TransientPrefs.prefShouldBeVisible("browser.tabs.warnOnClose"))
+      document.getElementById("warnCloseMultiple").hidden = true;
+    if (!TransientPrefs.prefShouldBeVisible("browser.tabs.warnOnOpen"))
+      document.getElementById("warnOpenMany").hidden = true;
 
     setEventListener("browser.privatebrowsing.autostart", "change",
                      gMainPane.updateBrowserStartupLastSession);
@@ -181,7 +166,7 @@ var gMainPane = {
 
         let tmp = {};
         Components.utils.import("resource://gre/modules/UpdateChannel.jsm", tmp);
-        if (!e10sCheckbox.checked && tmp.UpdateChannel.get() == "nightly") {
+        if (!e10sCheckbox.checked && tmp.UpdateChannel.get() != "default") {
           Services.prefs.setBoolPref("browser.requestE10sFeedback", true);
           Services.prompt.alert(window, brandName, "After restart, a tab will open to input.mozilla.org where you can provide us feedback about your e10s experience.");
         }
@@ -699,30 +684,6 @@ var gMainPane = {
    *   occurs at startup, false otherwise
    */
 
-   /**
-    * Firefox can attempt to set itself as the default application
-    * for all related filetypes or just for HTML. Some platforms
-    * such as Windows have terrible UIs for all filetypes. In those
-    * platforms, Firefox only attempts to associate itself with HTML.
-    */
-   shouldClaimAllTypes: function()
-   {
-    let claimAllTypes = true;
-    try {
-      if (AppConstants.platform == "win") {
-        // In Windows 10+, the UI for selecting default protocol is much
-        // nicer than the UI for setting file type associations. So we
-        // only show the protocol association screen on Windows 10+.
-        // Windows 8.1 is version 6.3. The startup code still uses
-        // the default protocol dialog, but the preferences is more "advanced"
-        // and as such uses the file type associations.
-        let version = Services.sysinfo.getProperty("version");
-        claimAllTypes = (parseFloat(version) <= 6.3);
-      }
-    } catch (ex) {}
-    return claimAllTypes;
-   },
-
   /**
    * Show button for setting browser as default browser or information that
    * browser is already the default browser.
@@ -736,8 +697,7 @@ var gMainPane = {
       return;
     }
     let setDefaultPane = document.getElementById("setDefaultPane");
-    let claimAllTypes = gMainPane.shouldClaimAllTypes();
-    let selectedIndex = shellSvc.isDefaultBrowser(false, claimAllTypes) ? 1 : 0;
+    let selectedIndex = shellSvc.isDefaultBrowser(false, true) ? 1 : 0;
     setDefaultPane.selectedIndex = selectedIndex;
   },
 
@@ -750,8 +710,7 @@ var gMainPane = {
     if (!shellSvc)
       return;
     try {
-      let claimAllTypes = gMainPane.shouldClaimAllTypes();
-      shellSvc.setDefaultBrowser(claimAllTypes, false);
+      shellSvc.setDefaultBrowser(true, false);
     } catch (ex) {
       Cu.reportError(ex);
       return;

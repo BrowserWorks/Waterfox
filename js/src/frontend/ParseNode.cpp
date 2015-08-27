@@ -23,9 +23,14 @@ ParseNode::checkListConsistency()
     ParseNode** tail;
     uint32_t count = 0;
     if (pn_head) {
-        ParseNode* pn, *last;
-        for (pn = last = pn_head; pn; last = pn, pn = pn->pn_next, count++)
-            ;
+        ParseNode* last = pn_head;
+        ParseNode* pn = last;
+        while (pn) {
+            last = pn;
+            pn = pn->pn_next;
+            count++;
+        }
+
         tail = &last->pn_next;
     } else {
         tail = &pn_head;
@@ -209,6 +214,7 @@ PushNodeChildren(ParseNode* pn, NodeStack* stack)
       case PNK_EXPORT_BATCH_SPEC:
       case PNK_OBJECT_PROPERTY_NAME:
       case PNK_FRESHENBLOCK:
+      case PNK_SUPERPROP:
         MOZ_ASSERT(pn->isArity(PN_NULLARY));
         MOZ_ASSERT(!pn->isUsed(), "handle non-trivial cases separately");
         MOZ_ASSERT(!pn->isDefn(), "handle non-trivial cases separately");
@@ -232,6 +238,7 @@ PushNodeChildren(ParseNode* pn, NodeStack* stack)
       case PNK_SPREAD:
       case PNK_MUTATEPROTO:
       case PNK_EXPORT:
+      case PNK_SUPERELEM:
         return PushUnaryNodeChild(pn, stack);
 
       // Nodes with a single nullable child.
@@ -1123,7 +1130,7 @@ ObjectBox::trace(JSTracer* trc)
 {
     ObjectBox* box = this;
     while (box) {
-        MarkObjectRoot(trc, &box->object, "parser.object");
+        TraceRoot(trc, &box->object, "parser.object");
         if (box->isFunctionBox())
             box->asFunctionBox()->bindings.trace(trc);
         box = box->traceLink;

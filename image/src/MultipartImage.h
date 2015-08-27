@@ -3,8 +3,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef MOZILLA_IMAGELIB_MULTIPARTIMAGE_H_
-#define MOZILLA_IMAGELIB_MULTIPARTIMAGE_H_
+#ifndef mozilla_image_src_MultipartImage_h
+#define mozilla_image_src_MultipartImage_h
 
 #include "ImageWrapper.h"
 #include "IProgressObserver.h"
@@ -26,8 +26,6 @@ class MultipartImage
 public:
   MOZ_DECLARE_REFCOUNTED_TYPENAME(MultipartImage)
   NS_DECL_ISUPPORTS
-
-  MultipartImage(Image* aImage, ProgressTracker* aTracker);
 
   void BeginTransitionToPart(Image* aNextPart);
 
@@ -73,12 +71,15 @@ protected:
   virtual ~MultipartImage();
 
 private:
+  friend class ImageFactory;
   friend class NextPartObserver;
+
+  explicit MultipartImage(Image* aFirstPart);
+  void Init();
 
   void FinishTransition();
 
   nsRefPtr<ProgressTracker> mTracker;
-  nsAutoPtr<ProgressTrackerInit> mProgressTrackerInit;
   nsRefPtr<NextPartObserver> mNextPartObserver;
   nsRefPtr<Image> mNextPart;
   bool mDeferNotifications : 1;
@@ -87,4 +88,4 @@ private:
 } // namespace image
 } // namespace mozilla
 
-#endif // MOZILLA_IMAGELIB_MULTIPARTIMAGE_H_
+#endif // mozilla_image_src_MultipartImage_h

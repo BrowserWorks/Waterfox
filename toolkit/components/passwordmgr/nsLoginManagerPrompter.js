@@ -883,6 +883,42 @@ LoginManagerPrompter.prototype = {
       updateButtonLabel();
     };
 
+    let onPasswordFocus = (focusEvent) => {
+      let passwordField = chromeDoc.getElementById("password-notification-password");
+      // Gets the caret position before changing the type of the textbox
+      let selectionStart = passwordField.selectionStart;
+      let selectionEnd = passwordField.selectionEnd;
+      if (focusEvent.rangeParent != null) {
+        // Check for a click over the SHOW placeholder
+        selectionStart = passwordField.value.length;
+        selectionEnd = passwordField.value.length;
+      }
+      passwordField.type = "";
+      passwordField.selectionStart = selectionStart;
+      passwordField.selectionEnd = selectionEnd;
+    };
+
+    let onPasswordBlur = () => {
+      chromeDoc.getElementById("password-notification-password").type = "password";
+    };
+
+    let onNotificationClick = (clickEvent) => {
+      // Removes focus from textboxes when we click elsewhere on the doorhanger.
+      let focusedElement = Services.focus.focusedElement;
+      if (!focusedElement || focusedElement.nodeName != "html:input") {
+        // No input is focused so we don't need to blur
+        return;
+      }
+
+      let focusedBindingParent = chromeDoc.getBindingParent(focusedElement);
+      if (!focusedBindingParent || focusedBindingParent.nodeName != "textbox" ||
+          clickEvent.explicitOriginalTarget == focusedBindingParent) {
+        // The focus wasn't in a textbox or the click was in the focused textbox.
+        return;
+      }
+      focusedBindingParent.blur();
+    };
+
     let persistData = () => {
       let foundLogins = Services.logins.findLogins({}, login.hostname,
                                                    login.formSubmitURL,
@@ -949,6 +985,7 @@ LoginManagerPrompter.prototype = {
       secondaryActions,
       {
         timeout: Date.now() + 10000,
+        origin: login.hostname,
         persistWhileVisible: true,
         passwordNotificationType: type,
         eventCallback: function (topic) {
@@ -959,8 +996,16 @@ LoginManagerPrompter.prototype = {
                        .addEventListener("input", onInput);
               chromeDoc.getElementById("password-notification-password")
                        .addEventListener("input", onInput);
+              if (Services.prefs.getBoolPref("signon.rememberSignons.visibilityToggle")) {
+                chromeDoc.getElementById("password-notification-password")
+                         .addEventListener("focus", onPasswordFocus);
+              }
+              chromeDoc.getElementById("password-notification-password")
+                       .addEventListener("blur", onPasswordBlur);
               break;
             case "shown":
+              chromeDoc.getElementById("notification-popup")
+                         .addEventListener("click", onNotificationClick);
               writeDataToUI();
               break;
             case "dismissed":
@@ -968,10 +1013,16 @@ LoginManagerPrompter.prototype = {
               // Fall through.
             case "removed":
               currentNotification = null;
+              chromeDoc.getElementById("notification-popup")
+                       .removeEventListener("click", onNotificationClick);
               chromeDoc.getElementById("password-notification-username")
                        .removeEventListener("input", onInput);
               chromeDoc.getElementById("password-notification-password")
                        .removeEventListener("input", onInput);
+              chromeDoc.getElementById("password-notification-password")
+                       .removeEventListener("focus", onPasswordFocus);
+              chromeDoc.getElementById("password-notification-password")
+                       .removeEventListener("blur", onPasswordBlur);
               break;
           }
           return false;

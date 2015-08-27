@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -215,7 +215,9 @@ IDBTransaction::CreateVersionChange(
   nsTArray<nsString> emptyObjectStoreNames;
 
   nsRefPtr<IDBTransaction> transaction =
-    new IDBTransaction(aDatabase, emptyObjectStoreNames, VERSION_CHANGE);
+    new IDBTransaction(aDatabase,
+                       emptyObjectStoreNames,
+                       VERSION_CHANGE);
   aOpenRequest->GetCallerLocation(transaction->mFilename,
                                   &transaction->mLineNo);
 
@@ -251,7 +253,9 @@ IDBTransaction::Create(IDBDatabase* aDatabase,
   MOZ_ASSERT(aDatabase);
   aDatabase->AssertIsOnOwningThread();
   MOZ_ASSERT(!aObjectStoreNames.IsEmpty());
-  MOZ_ASSERT(aMode == READ_ONLY || aMode == READ_WRITE);
+  MOZ_ASSERT(aMode == READ_ONLY ||
+             aMode == READ_WRITE ||
+             aMode == READ_WRITE_FLUSH);
 
   nsRefPtr<IDBTransaction> transaction =
     new IDBTransaction(aDatabase, aObjectStoreNames, aMode);
@@ -862,6 +866,9 @@ IDBTransaction::GetMode(ErrorResult& aRv) const
 
     case READ_WRITE:
       return IDBTransactionMode::Readwrite;
+
+    case READ_WRITE_FLUSH:
+      return IDBTransactionMode::Readwriteflush;
 
     case VERSION_CHANGE:
       return IDBTransactionMode::Versionchange;

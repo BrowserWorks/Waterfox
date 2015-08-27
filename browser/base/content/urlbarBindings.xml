@@ -1,9 +1,11 @@
 <?xml version="1.0"?>
 
-# -*- Mode: HTML -*-
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+<!--
+-*- Mode: HTML -*-
+This Source Code Form is subject to the terms of the Mozilla Public
+License, v. 2.0. If a copy of the MPL was not distributed with this
+file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
 
 <!DOCTYPE bindings [
 <!ENTITY % notificationDTD SYSTEM "chrome://global/locale/notification.dtd">
@@ -49,6 +51,9 @@
     </content>
 
     <implementation implements="nsIObserver, nsIDOMEventListener">
+      <field name="AppConstants" readonly="true">
+        (Components.utils.import("resource://gre/modules/AppConstants.jsm", {})).AppConstants;
+      </field>
       <constructor><![CDATA[
         this._prefs = Components.classes["@mozilla.org/preferences-service;1"]
                                 .getService(Components.interfaces.nsIPrefService)
@@ -300,7 +305,7 @@
               if (this.hasAttribute("actiontype")) {
                 this.handleRevert();
                 let prevTab = gBrowser.selectedTab;
-                if (switchToTabHavingURI(url) &&
+                if (switchToTabHavingURI(action.params.originalUrl || url) &&
                     isTabEmpty(prevTab))
                   gBrowser.removeTab(prevTab);
                 return;
@@ -403,11 +408,9 @@
           // and only if we get a keyboard event, to match user expectations.
           if (/^\s*[^.:\/\s]+(?:\/.*|\s*)$/i.test(url) &&
               (aTriggeringEvent instanceof KeyEvent)) {
-#ifdef XP_MACOSX
-            let accel = aTriggeringEvent.metaKey;
-#else
-            let accel = aTriggeringEvent.ctrlKey;
-#endif
+            let accel = this.AppConstants.platform == "macosx" ?
+                        aTriggeringEvent.metaKey :
+                        aTriggeringEvent.ctrlKey;
             let shift = aTriggeringEvent.shiftKey;
 
             let suffix = "";
@@ -520,7 +523,7 @@
             return selectedVal;
           // The selection doesn't span the full domain if it doesn't contain a slash and is
           // followed by some character other than a slash.
-          if (!selectedVal.contains("/")) {
+          if (!selectedVal.includes("/")) {
             let remainder = inputVal.replace(selectedVal, "");
             if (remainder != "" && remainder[0] != "/")
               return selectedVal;
@@ -713,9 +716,24 @@
         ]]></getter>
         <setter>
           <![CDATA[
+          let uri;
           try {
-            val = losslessDecodeURI(makeURI(val));
-          } catch (ex) { }
+            uri = makeURI(val);
+          } catch (ex) {}
+
+          if (uri) {
+            let action = this._parseActionUrl(val);
+            if (action) {
+              if (action.params.url) {
+                // Store the original URL in the action URL.
+                action.params.originalUrl = action.params.url;
+                action.params.url = losslessDecodeURI(makeURI(action.params.url));
+                val = "moz-action:" + action.type + "," + JSON.stringify(action.params);
+              }
+            } else {
+              val = losslessDecodeURI(uri);
+            }
+          }
 
           // Trim popup selected values, but never trim results coming from
           // autofill.
@@ -755,6 +773,12 @@
 
           try {
             action.params = JSON.parse(params);
+            if (action.params.input) {
+              action.params.input = decodeURIComponent(action.params.input);
+            }
+            if (action.params.searchQuery) {
+              action.params.searchQuery = decodeURIComponent(action.params.searchQuery);
+            }
           } catch (e) {
             // If this failed, we assume that params is not a JSON object, and
             // is instead just a flat string. This will happen when
@@ -937,6 +961,10 @@
   <!-- Note: this binding is applied to the autocomplete popup used in the Search bar and in web page content -->
   <binding id="browser-autocomplete-result-popup" extends="chrome://global/content/bindings/autocomplete.xml#autocomplete-result-popup">
     <implementation>
+      <field name="AppConstants" readonly="true">
+        (Components.utils.import("resource://gre/modules/AppConstants.jsm", {})).AppConstants;
+      </field>
+
       <method name="openAutocompletePopup">
         <parameter name="aInput"/>
         <parameter name="aElement"/>
@@ -989,13 +1017,11 @@
             var where = whereToOpenLink(aEvent, false, true);
 
             // But open ctrl/cmd clicks on autocomplete items in a new background tab.
+            let modifier = this.AppConstants.platform == "macosx" ?
+                           aEvent.metaKey :
+                           aEvent.ctrlKey;
             if (where == "tab" && (aEvent instanceof MouseEvent) &&
-                (aEvent.button == 1 ||
-#ifdef XP_MACOSX
-                 aEvent.metaKey))
-#else
-                 aEvent.ctrlKey))
-#endif
+                (aEvent.button == 1 || modifier))
               where = "tab-background";
 
             searchBar.doSearch(search, where);
@@ -1038,6 +1064,14 @@
           <xul:label anonid="searchbar-oneoffheader-before" value="&searchFor.label;"/>
           <xul:label anonid="searchbar-oneoffheader-searchtext" flex="1" crop="end" class="search-panel-input-value"/>
           <xul:label anonid="searchbar-oneoffheader-after" flex="10000" value="&searchWith.label;"/>
+        </xul:hbox>
+        <xul:hbox anonid="search-panel-searchonengine"
+                  class="search-panel-current-input">
+          <xul:label anonid="searchbar-oneoffheader-beforeengine" value="&search.label;"/>
+          <xul:label anonid="searchbar-oneoffheader-engine" flex="1" crop="end"
+                     class="search-panel-input-value"/>
+          <xul:label anonid="searchbar-oneoffheader-afterengine" flex="10000"
+                     value="&searchAfter.label;"/>
         </xul:hbox>
       </xul:deck>
       <xul:description anonid="search-panel-one-offs"
@@ -1135,19 +1169,24 @@
         let inputHandler = function() {
           headerSearchText.setAttribute("value", textbox.value);
           let groupText;
+          let isOneOffSelected =
+            this.selectedButton &&
+            this.selectedButton.classList.contains("searchbar-engine-one-off-item");
           if (textbox.value) {
             self.removeAttribute("showonlysettings");
             groupText = headerSearchText.previousSibling.value +
                         '"' + headerSearchText.value + '"' +
                         headerSearchText.nextSibling.value;
-            headerPanel.selectedIndex = 1;
+            if (!isOneOffSelected)
+              headerPanel.selectedIndex = 1;
           }
           else {
             let noSearchHeader =
               document.getAnonymousElementByAttribute(self, "anonid",
                                                       "searchbar-oneoffheader-search");
             groupText = noSearchHeader.value;
-            headerPanel.selectedIndex = 0;
+            if (!isOneOffSelected)
+              headerPanel.selectedIndex = 0;
           }
           list.setAttribute("aria-label", groupText);
         };
@@ -2734,6 +2773,16 @@
     </handlers>
   </binding>
 
+  <!-- This is the XBL notification definition for the login fill doorhanger,
+       which is empty because the actual panel is not implemented inside an XBL
+       binding, but made of elements added to the notification panel. This
+       allows accessing the full structure while the panel is hidden. -->
+  <binding id="password-fill-notification" extends="chrome://global/content/bindings/notification.xml#popup-notification">
+    <content>
+      <children/>
+    </content>
+  </binding>
+
   <binding id="splitmenu">
     <content>
       <xul:hbox anonid="menuitem" flex="1"
@@ -3001,6 +3050,17 @@
 
           let viewsLeft = this._viewsLeft;
           if (viewsLeft) {
+            let notification = this._panel.firstElementChild.notification;
+            if (this._notificationType == "passwords" && notification && notification.options &&
+                notification.options.origin) {
+              let fxAOrigin = new URL(Services.prefs.getCharPref("identity.fxaccounts.remote.signup.uri")).origin
+              if (notification.options.origin == fxAOrigin) {
+                // Somewhat gross hack - we don't want to show the sync promo while
+                // the user may be logging into Sync.
+                return;
+              }
+            }
+
             if (Services.prefs.prefHasUserValue("services.sync.username") &&
                this._notificationType != "addons-sync-disabled") {
               // If the user has already setup Sync, don't show the notification.

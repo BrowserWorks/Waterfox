@@ -26,9 +26,11 @@ EXPORTS.mozilla.gfx += [
     'Helpers.h',
     'Logging.h',
     'Matrix.h',
+    'NumericTools.h',
     'PathHelpers.h',
     'PatternHelpers.h',
     'Point.h',
+    'Quaternion.h',
     'Rect.h',
     'Scale.h',
     'ScaleFactor.h',
@@ -120,6 +122,7 @@ UNIFIED_SOURCES += [
     'Path.cpp',
     'PathCairo.cpp',
     'PathRecording.cpp',
+    'Quaternion.cpp',
     'RecordedEvent.cpp',
     'Scale.cpp',
     'ScaledFontBase.cpp',
@@ -143,8 +146,6 @@ if CONFIG['CPU_ARCH'] == 'arm' and CONFIG['BUILD_ARM_NEON']:
     SOURCES['BlurNEON.cpp'].flags += ['-mfpu=neon']
 
 FAIL_ON_WARNINGS = True
-
-MSVC_ENABLE_PGO = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

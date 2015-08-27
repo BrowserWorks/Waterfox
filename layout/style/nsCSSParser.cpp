@@ -736,6 +736,11 @@ protected:
                                            bool aMustCallValueAppended,
                                            bool* aChanged,
                                            nsCSSContextType aContext);
+  // When we detect a webkit-prefixed gradient expression, this function can
+  // be used to parse its body into outparam |aValue|. Only call if
+  // ShouldUseUnprefixingService() returns true.
+  bool ParseWebkitPrefixedGradient(nsAString& aPrefixedFuncName,
+                                   nsCSSValue& aValue);
 
   bool ParseProperty(nsCSSProperty aPropID);
   bool ParsePropertyByFunction(nsCSSProperty aPropID);
@@ -1206,7 +1211,6 @@ protected:
   // @supports rule.
   bool mSuppressErrors : 1;
 
-#ifdef DEBUG
   // True if any parsing of URL values requires a sheet principal to have
   // been passed in the nsCSSScanner constructor.  This is usually the case.
   // It can be set to false, for example, when we create an nsCSSParser solely
@@ -1215,7 +1219,6 @@ protected:
   // not be set to false if any nsCSSValues created during parsing can escape
   // out of the parser.
   bool mSheetPrincipalRequired;
-#endif
 
   // This enum helps us track whether we've unprefixed "display: -webkit-box"
   // (treating it as "display: flex") in an earlier declaration within a series
@@ -1312,9 +1315,7 @@ CSSParserImpl::CSSParserImpl()
     mInSupportsCondition(false),
     mInFailingSupportsRule(false),
     mSuppressErrors(false),
-#ifdef DEBUG
     mSheetPrincipalRequired(true),
-#endif
     mWebkitBoxUnprefixState(eNotParsingDecls),
     mNextFree(nullptr)
 {
@@ -1622,13 +1623,6 @@ CSSParserImpl::ParseRule(const nsAString&        aRule,
   return rv;
 }
 
-// See Bug 723197
-#ifdef _MSC_VER
-#pragma optimize( "", off )
-#pragma warning( push )
-#pragma warning( disable : 4748 )
-#endif
-
 void
 CSSParserImpl::ParseProperty(const nsCSSProperty aPropID,
                              const nsAString& aPropValue,
@@ -1763,11 +1757,6 @@ CSSParserImpl::ParseVariable(const nsAString& aVariableName,
 
   ReleaseScanner();
 }
-
-#ifdef _MSC_VER
-#pragma warning( pop )
-#pragma optimize( "", on )
-#endif
 
 void
 CSSParserImpl::ParseMediaList(const nsSubstring& aBuffer,
@@ -2764,7 +2753,9 @@ CSSParserImpl::GetToken(bool aSkipWS)
       return true;
     }
   }
-  return mScanner->Next(mToken, aSkipWS);
+  return mScanner->Next(mToken, aSkipWS ?
+                        eCSSScannerExclude_WhitespaceAndComments :
+                        eCSSScannerExclude_Comments);
 }
 
 void
@@ -3035,9 +3026,7 @@ CSSParserImpl::ParseCharsetRule(RuleAppendFunc aAppendFunc,
     return false;
   }
 
-  nsRefPtr<css::CharsetRule> rule = new css::CharsetRule(charset,
-                                                         linenum, colnum);
-  (*aAppendFunc)(rule, aData);
+  // It's intentional that we don't create a rule object for @charset rules.
 
   return true;
 }
@@ -6719,6 +6708,72 @@ CSSParserImpl::ParsePropertyWithUnprefixingService(
   return success;
 }
 
+bool
+CSSParserImpl::ParseWebkitPrefixedGradient(nsAString& aPrefixedFuncName,
+                                           nsCSSValue& aValue)
+{
+  MOZ_ASSERT(ShouldUseUnprefixingService(),
+             "Should only call if we're allowed to use unprefixing service");
+
+  // Record the body of the "-webkit-*gradient" function into a string.
+  // Note: we're already just after the opening "(".
+  nsAutoString prefixedFuncBody;
+  mScanner->StartRecording();
+  bool gotCloseParen = SkipUntil(')');
+  mScanner->StopRecording(prefixedFuncBody);
+  if (gotCloseParen) {
+    // Strip off trailing close-paren, so that the value we pass to the
+    // unprefixing service is *just* the function-body (no parens).
+    prefixedFuncBody.Truncate(prefixedFuncBody.Length() - 1);
+  }
+
+  // NOTE: Even if we fail, we'll be leaving the parser's cursor just after
+  // the close of the "-webkit-*gradient(...)" expression. This is the same
+  // behavior that the other Parse*Gradient functions have in their failure
+  // cases -- they call "SkipUntil(')') before returning false. So this is
+  // probably what we want.
+  nsCOMPtr<nsICSSUnprefixingService> unprefixingSvc =
+    do_GetService(NS_CSSUNPREFIXINGSERVICE_CONTRACTID);
+  NS_ENSURE_TRUE(unprefixingSvc, false);
+
+  bool success;
+  nsAutoString unprefixedFuncName;
+  nsAutoString unprefixedFuncBody;
+  nsresult rv =
+    unprefixingSvc->GenerateUnprefixedGradientValue(aPrefixedFuncName,
+                                                    prefixedFuncBody,
+                                                    unprefixedFuncName,
+                                                    unprefixedFuncBody,
+                                                    &success);
+
+  if (NS_FAILED(rv) || !success) {
+    return false;
+  }
+
+  // JS service thinks it successfully converted the gradient! Now let's try
+  // to parse the resulting string.
+
+  // First, add a close-paren if we originally recorded one (so that what we're
+  // about to put into the CSS parser is a faithful representation of what it
+  // would've seen if it were just parsing the original input stream):
+  if (gotCloseParen) {
+    unprefixedFuncBody.Append(char16_t(')'));
+  }
+
+  nsAutoScannerChanger scannerChanger(this, unprefixedFuncBody);
+  if (unprefixedFuncName.EqualsLiteral("linear-gradient")) {
+    return ParseLinearGradient(aValue, false, false);
+  }
+  if (unprefixedFuncName.EqualsLiteral("radial-gradient")) {
+    return ParseRadialGradient(aValue, false, false);
+  }
+
+  NS_ERROR("CSSUnprefixingService returned an unrecognized type of "
+           "gradient function");
+
+  return false;
+}
+
 //----------------------------------------------------------------------
 
 bool
@@ -7342,6 +7397,14 @@ CSSParserImpl::ParseVariant(nsCSSValue& aValue,
     if (tmp.LowerCaseEqualsLiteral("radial-gradient")) {
       return ParseRadialGradient(aValue, isRepeating, isLegacy);
     }
+    if (ShouldUseUnprefixingService() &&
+        !isRepeating && !isLegacy &&
+        StringBeginsWith(tmp, NS_LITERAL_STRING("-webkit-"))) {
+      // Copy 'tmp' into a string on the stack, since as soon as we
+      // start parsing, its backing store (in "tk") will be overwritten
+      nsAutoString prefixedFuncName(tmp);
+      return ParseWebkitPrefixedGradient(prefixedFuncName, aValue);
+    }
   }
   if ((aVariantMask & VARIANT_IMAGE_RECT) != 0 &&
       eCSSToken_Function == tk->mType &&
@@ -7643,9 +7706,13 @@ bool
 CSSParserImpl::SetValueToURL(nsCSSValue& aValue, const nsString& aURL)
 {
   if (!mSheetPrincipal) {
-    NS_ASSERTION(!mSheetPrincipalRequired,
-                 "Codepaths that expect to parse URLs MUST pass in an "
-                 "origin principal");
+    if (!mSheetPrincipalRequired) {
+      /* Pretend to succeed.  */
+      return true;
+    }
+
+    NS_NOTREACHED("Codepaths that expect to parse URLs MUST pass in an "
+                  "origin principal");
     return false;
   }
 
@@ -8087,17 +8154,17 @@ CSSParserImpl::ParseOptionalLineNameListAfterSubgrid(nsCSSValue& aValue)
   }
 }
 
-// Parse a <track-breadth>
+// Parse a <track-breadth>.
 bool
 CSSParserImpl::ParseGridTrackBreadth(nsCSSValue& aValue)
 {
   if (ParseNonNegativeVariant(aValue,
-                              VARIANT_LPCALC | VARIANT_KEYWORD,
+                              VARIANT_AUTO | VARIANT_LPCALC | VARIANT_KEYWORD,
                               nsCSSProps::kGridTrackBreadthKTable)) {
     return true;
   }
 
-  // Attempt to parse <flex> (a dimension with the "fr" unit)
+  // Attempt to parse <flex> (a dimension with the "fr" unit).
   if (!GetToken(true)) {
     return false;
   }
@@ -8111,17 +8178,16 @@ CSSParserImpl::ParseGridTrackBreadth(nsCSSValue& aValue)
   return true;
 }
 
-// Parse a <track-size>
+// Parse a <track-size>.
 CSSParseResult
 CSSParserImpl::ParseGridTrackSize(nsCSSValue& aValue)
 {
-  // Attempt to parse 'auto' or a single <track-breadth>
-  if (ParseGridTrackBreadth(aValue) ||
-      ParseVariant(aValue, VARIANT_AUTO, nullptr)) {
+  // Attempt to parse a single <track-breadth>.
+  if (ParseGridTrackBreadth(aValue)) {
     return CSSParseResult::Ok;
   }
 
-  // Attempt to parse a minmax() function
+  // Attempt to parse a minmax() function.
   if (!GetToken(true)) {
     return CSSParseResult::NotFound;
   }
@@ -10582,7 +10648,11 @@ CSSParserImpl::ParseBackgroundItem(CSSParserImpl::BackgroundParseState& aState)
                  mToken.mIdent.LowerCaseEqualsLiteral("-moz-repeating-linear-gradient") ||
                  mToken.mIdent.LowerCaseEqualsLiteral("-moz-repeating-radial-gradient") ||
                  mToken.mIdent.LowerCaseEqualsLiteral("-moz-image-rect") ||
-                 mToken.mIdent.LowerCaseEqualsLiteral("-moz-element")))) {
+                 mToken.mIdent.LowerCaseEqualsLiteral("-moz-element") ||
+                 (ShouldUseUnprefixingService() &&
+                  (mToken.mIdent.LowerCaseEqualsLiteral("-webkit-gradient") ||
+                   mToken.mIdent.LowerCaseEqualsLiteral("-webkit-linear-gradient") ||
+                   mToken.mIdent.LowerCaseEqualsLiteral("-webkit-radial-gradient")))))) {
       if (haveImage)
         return false;
       haveImage = true;
@@ -15412,7 +15482,6 @@ CSSParserImpl::IsValueValidForProperty(const nsCSSProperty aPropID,
   css::ErrorReporter reporter(scanner, mSheet, mChildLoader, nullptr);
   InitScanner(scanner, reporter, nullptr, nullptr, nullptr);
 
-#ifdef DEBUG
   // We normally would need to pass in a sheet principal to InitScanner,
   // because we might parse a URL value.  However, we will never use the
   // parsed nsCSSValue (and so whether we have a sheet principal or not
@@ -15421,7 +15490,6 @@ CSSParserImpl::IsValueValidForProperty(const nsCSSProperty aPropID,
   // that it's safe to skip the assertion.
   AutoRestore<bool> autoRestore(mSheetPrincipalRequired);
   mSheetPrincipalRequired = false;
-#endif
 
   nsAutoSuppressErrors suppressErrors(this);
 

@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -346,7 +347,7 @@ HTMLButtonElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
         }
         break;
 
-      case NS_MOUSE_ENTER_SYNTH:
+      case NS_MOUSE_OVER:
         {
           aVisitor.mPresContext->EventStateManager()->
             SetContentState(this, NS_EVENT_STATE_HOVER);
@@ -355,7 +356,7 @@ HTMLButtonElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
         break;
 
         // XXX this doesn't seem to do anything yet
-      case NS_MOUSE_EXIT_SYNTH:
+      case NS_MOUSE_OUT:
         {
           aVisitor.mPresContext->EventStateManager()->
             SetContentState(nullptr, NS_EVENT_STATE_HOVER);

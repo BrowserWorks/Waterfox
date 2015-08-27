@@ -3,8 +3,9 @@
 
 // Tests if (idle) nodes are added when necessary in the flame graph data.
 
-let {FlameGraphUtils} = Cu.import("resource:///modules/devtools/FlameGraph.jsm", {});
-let {FrameNode} = devtools.require("devtools/shared/profiler/tree-model");
+let {FlameGraphUtils} = devtools.require("devtools/shared/widgets/FlameGraph");
+let {PALLETTE_SIZE} = devtools.require("devtools/shared/widgets/FlameGraph");
+let {FrameNode} = devtools.require("devtools/performance/tree-model");
 
 add_task(function*() {
   yield promiseTab("about:blank");
@@ -13,14 +14,14 @@ add_task(function*() {
 });
 
 function* performTest() {
-  let out = FlameGraphUtils.createFlameGraphDataFromSamples(TEST_DATA, {
+  let out = FlameGraphUtils.createFlameGraphDataFromThread(TEST_DATA, {
     flattenRecursion: true,
-    filterFrames: FrameNode.isContent,
-    showIdleBlocks: "\m/"
+    contentOnly: true,
+    showIdleBlocks: '\m/'
   });
 
   ok(out, "Some data was outputted properly");
-  is(out.length, 10, "The outputted length is correct.");
+  is(out.length, PALLETTE_SIZE, "The outputted length is correct.");
 
   info("Got flame graph data:\n" + out.toSource() + "\n");
 
@@ -46,7 +47,7 @@ function* performTest() {
   }
 }
 
-let TEST_DATA = [{
+let TEST_DATA = synthesizeProfileForTest([{
   frames: [{
     location: "http://A"
   }, {
@@ -66,11 +67,7 @@ let TEST_DATA = [{
   }],
   time: 50
 }, {
-  frames: [{
-    location: "chrome://D"
-  }, {
-    location: "resource://E"
-  }],
+  frames: [],
   time: 100
 }, {
   frames: [{
@@ -81,7 +78,7 @@ let TEST_DATA = [{
     location: "file://C",
   }],
   time: 150
-}];
+}]);
 
 let EXPECTED_OUTPUT = [{
   blocks: []
@@ -89,47 +86,91 @@ let EXPECTED_OUTPUT = [{
   blocks: []
 }, {
   blocks: [{
-    srcData: {
-      startTime: 0,
-      rawLocation: "http://A"
-    },
+    startTime: 0,
+    frameKey: "http://A",
     x: 0,
     y: 0,
     width: 50,
-    height: 11,
+    height: 15,
     text: "http://A"
   }, {
-    srcData: {
-      startTime: 0,
-      rawLocation: "file://C"
-    },
-    x: 0,
-    y: 22,
-    width: 50,
-    height: 11,
-    text: "file://C"
-  }, {
-    srcData: {
-      startTime: 100,
-      rawLocation: "http://A"
-    },
+    startTime: 100,
+    frameKey: "http://A",
     x: 100,
     y: 0,
     width: 50,
-    height: 11,
+    height: 15,
     text: "http://A"
   }]
 }, {
+  blocks: []
+}, {
+  blocks: []
+}, {
+  blocks: []
+}, {
   blocks: [{
-    srcData: {
-      startTime: 50,
-      rawLocation: "\m/"
-    },
+    startTime: 0,
+    frameKey: "Gecko",
+    x: 0,
+    y: 45,
+    width: 50,
+    height: 15,
+    text: "Gecko"
+  }]
+}, {
+  blocks: []
+}, {
+  blocks: [{
+    startTime: 0,
+    frameKey: "https://B",
+    x: 0,
+    y: 15,
+    width: 50,
+    height: 15,
+    text: "https://B"
+  }, {
+    startTime: 100,
+    frameKey: "https://B",
+    x: 100,
+    y: 15,
+    width: 50,
+    height: 15,
+    text: "https://B"
+  }]
+}, {
+  blocks: []
+}, {
+  blocks: []
+}, {
+  blocks: []
+}, {
+  blocks: [{
+    startTime: 0,
+    frameKey: "file://C",
+    x: 0,
+    y: 30,
+    width: 50,
+    height: 15,
+    text: "file://C"
+  }, {
+    startTime: 100,
+    frameKey: "file://C",
+    x: 100,
+    y: 30,
+    width: 50,
+    height: 15,
+    text: "file://C"
+  }]
+}, {
+  blocks: [{
+    startTime: 50,
+    frameKey: "m/",
     x: 50,
     y: 0,
     width: 50,
-    height: 11,
-    text: "\m/"
+    height: 15,
+    text: "m/"
   }]
 }, {
   blocks: []
@@ -140,27 +181,7 @@ let EXPECTED_OUTPUT = [{
 }, {
   blocks: []
 }, {
-  blocks: [{
-    srcData: {
-      startTime: 0,
-      rawLocation: "https://B"
-    },
-    x: 0,
-    y: 11,
-    width: 50,
-    height: 11,
-    text: "https://B"
-  }, {
-    srcData: {
-      startTime: 100,
-      rawLocation: "https://B"
-    },
-    x: 100,
-    y: 11,
-    width: 50,
-    height: 11,
-    text: "https://B"
-  }]
+  blocks: []
 }, {
   blocks: []
 }];

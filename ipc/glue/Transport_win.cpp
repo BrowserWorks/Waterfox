@@ -9,6 +9,7 @@
 #include "chrome/common/child_process_info.h"
 
 #include "mozilla/ipc/Transport.h"
+#include "mozilla/ipc/ProtocolUtils.h"
 
 using namespace std;
 
@@ -18,7 +19,7 @@ namespace mozilla {
 namespace ipc {
 
 bool
-CreateTransport(ProcessHandle aProcOne, ProcessHandle /*unused*/,
+CreateTransport(base::ProcessId aProcIdOne,
                 TransportDescriptor* aOne, TransportDescriptor* aTwo)
 {
   wstring id = IPC::Channel::GenerateVerifiedChannelID(std::wstring());
@@ -37,11 +38,7 @@ CreateTransport(ProcessHandle aProcOne, ProcessHandle /*unused*/,
   HANDLE serverDup;
   DWORD access = 0;
   DWORD options = DUPLICATE_SAME_ACCESS;
-  if (!DuplicateHandle(GetCurrentProcess(), serverPipe, aProcOne,
-                       &serverDup,
-                       access,
-                       FALSE/*not inheritable*/,
-                       options)) {
+  if (!DuplicateHandle(serverPipe, aProcIdOne, &serverDup, access, options)) {
     return false;
   }
 

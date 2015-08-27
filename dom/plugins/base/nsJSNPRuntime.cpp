@@ -163,7 +163,7 @@ NPClass nsJSObjWrapper::sJSObjWrapperNPClass =
   };
 
 static bool
-NPObjWrapper_AddProperty(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JS::MutableHandle<JS::Value> vp);
+NPObjWrapper_AddProperty(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JS::Handle<JS::Value> v);
 
 static bool
 NPObjWrapper_DelProperty(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id,
@@ -213,6 +213,7 @@ const static js::Class sNPObjectJSWrapperClass =
     NPObjWrapper_SetProperty,
     nullptr,
     NPObjWrapper_Resolve,
+    nullptr,                                                /* mayResolve */
     NPObjWrapper_Convert,
     NPObjWrapper_Finalize,
     NPObjWrapper_Call,
@@ -265,7 +266,7 @@ static const JSClass sNPObjectMemberClass =
   {
     "NPObject Ambiguous Member class", JSCLASS_HAS_PRIVATE | JSCLASS_IMPLEMENTS_BARRIERS,
     nullptr, nullptr, nullptr, nullptr,
-    nullptr, nullptr, NPObjectMember_Convert,
+    nullptr, nullptr, nullptr, NPObjectMember_Convert,
     NPObjectMember_Finalize, NPObjectMember_Call,
     nullptr, nullptr, NPObjectMember_Trace
   };
@@ -350,6 +351,9 @@ static void
 UnregisterGCCallbacks()
 {
   MOZ_ASSERT(sCallbackRuntime);
+  if (!sCallbackRuntime) {
+    return;
+  }
 
   JSRuntime *jsRuntime = nullptr;
   sCallbackRuntime->GetRuntime(&jsRuntime);
@@ -773,7 +777,7 @@ doInvoke(NPObject *npobj, NPIdentifier method, const NPVariant *args,
 
   // We're about to run script via JS_CallFunctionValue, so we need an
   // AutoEntryScript. NPAPI plugins are Gecko-specific and not in any spec.
-  dom::AutoEntryScript aes(globalObject);
+  dom::AutoEntryScript aes(globalObject, "NPAPI doInvoke");
   JSContext *cx = aes.cx();
 
   if (!npobj || !result) {
@@ -901,7 +905,7 @@ nsJSObjWrapper::NP_GetProperty(NPObject *npobj, NPIdentifier id,
 
   // We're about to run script via JS_CallFunctionValue, so we need an
   // AutoEntryScript. NPAPI plugins are Gecko-specific and not in any spec.
-  dom::AutoEntryScript aes(globalObject);
+  dom::AutoEntryScript aes(globalObject, "NPAPI get");
   JSContext *cx = aes.cx();
 
   if (!npobj) {
@@ -935,7 +939,7 @@ nsJSObjWrapper::NP_SetProperty(NPObject *npobj, NPIdentifier npid,
 
   // We're about to run script via JS_CallFunctionValue, so we need an
   // AutoEntryScript. NPAPI plugins are Gecko-specific and not in any spec.
-  dom::AutoEntryScript aes(globalObject);
+  dom::AutoEntryScript aes(globalObject, "NPAPI set");
   JSContext *cx = aes.cx();
 
   if (!npobj) {
@@ -1250,7 +1254,7 @@ GetNPObject(JSContext *cx, JSObject *obj)
 // Does not actually add a property because this is always followed by a
 // SetProperty call.
 static bool
-NPObjWrapper_AddProperty(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JS::MutableHandle<JS::Value> vp)
+NPObjWrapper_AddProperty(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, JS::Handle<JS::Value> v)
 {
   NPObject *npobj = GetNPObject(cx, obj);
 

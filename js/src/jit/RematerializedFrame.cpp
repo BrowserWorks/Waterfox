@@ -98,7 +98,7 @@ RematerializedFrame::FreeInVector(Vector<RematerializedFrame*>& frames)
 {
     for (size_t i = 0; i < frames.length(); i++) {
         RematerializedFrame* f = frames[i];
-        Debugger::assertNotInFrameMaps(f);
+        MOZ_ASSERT(!Debugger::inFrameMaps(f));
         f->RematerializedFrame::~RematerializedFrame();
         js_free(f);
     }
@@ -147,12 +147,11 @@ RematerializedFrame::initFunctionScopeObjects(JSContext* cx)
 void
 RematerializedFrame::mark(JSTracer* trc)
 {
-    gc::MarkScriptRoot(trc, &script_, "remat ion frame script");
-    gc::MarkObjectRoot(trc, &scopeChain_, "remat ion frame scope chain");
-    gc::MarkValueRoot(trc, &returnValue_, "remat ion frame return value");
-    gc::MarkValueRoot(trc, &thisValue_, "remat ion frame this");
-    gc::MarkValueRootRange(trc, slots_, slots_ + numActualArgs_ + script_->nfixed(),
-                           "remat ion frame stack");
+    TraceRoot(trc, &script_, "remat ion frame script");
+    TraceRoot(trc, &scopeChain_, "remat ion frame scope chain");
+    TraceRoot(trc, &returnValue_, "remat ion frame return value");
+    TraceRoot(trc, &thisValue_, "remat ion frame this");
+    TraceRootRange(trc, numActualArgs_ + script_->nfixed(), slots_, "remat ion frame stack");
 }
 
 void

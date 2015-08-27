@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 sw=2 et tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -196,6 +196,8 @@ public:
 
   explicit nsDOMDeviceStorage(nsPIDOMWindow* aWindow);
 
+  static int InstanceCount() { return sInstanceCount; }
+
   nsresult Init(nsPIDOMWindow* aWindow, const nsAString& aType,
                 const nsAString& aVolName);
 
@@ -290,6 +292,12 @@ public:
                           const nsAString& aType,
                           nsTArray<nsRefPtr<nsDOMDeviceStorage> >& aStores);
 
+  static void
+  CreateDeviceStorageByNameAndType(nsPIDOMWindow* aWin,
+                                   const nsAString& aName,
+                                   const nsAString& aType,
+                                   nsDOMDeviceStorage** aStore);
+
   void Shutdown();
 
   static void GetOrderedVolumeNames(nsTArray<nsString>& aVolumeNames);
@@ -319,6 +327,8 @@ private:
                     const EnumerationParameters& aOptions, bool aEditable,
                     ErrorResult& aRv);
 
+  static int sInstanceCount;
+
   nsString mStorageType;
   nsCOMPtr<nsIFile> mRootDirectory;
   nsString mStorageName;
@@ -330,10 +340,17 @@ private:
   already_AddRefed<nsDOMDeviceStorage>
     GetStorageByName(const nsAString &aStorageName);
 
+  static already_AddRefed<nsDOMDeviceStorage>
+    GetStorageByNameAndType(nsPIDOMWindow* aWin,
+                            const nsAString& aStorageName,
+                            const nsAString& aType);
+
   nsCOMPtr<nsIPrincipal> mPrincipal;
 
   bool mIsWatchingFile;
   bool mAllowedToWatchFile;
+  bool mIsDefaultLocation;
+  void DispatchDefaultChangeEvent();
 
   nsresult Notify(const char* aReason, class DeviceStorageFile* aFile);
 

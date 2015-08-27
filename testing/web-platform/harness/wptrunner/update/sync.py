@@ -4,6 +4,7 @@
 
 import os
 import shutil
+import sys
 import uuid
 
 from .. import testloader
@@ -93,6 +94,14 @@ class UpdateCheckout(Step):
         sync_tree.update(state.sync["remote_url"],
                          state.sync["branch"],
                          state.local_branch)
+        sync_path = os.path.abspath(sync_tree.root)
+        if not sync_path in sys.path:
+            from update import setup_paths
+            setup_paths(sync_path)
+
+    def restore(self, state):
+        assert os.path.abspath(state.sync_tree.root) in sys.path
+        Step.restore(self, state)
 
 
 class GetSyncTargetCommit(Step):
@@ -154,7 +163,7 @@ class CreateSyncPatch(Step):
         sync_tree = state.sync_tree
 
         local_tree.create_patch("web-platform-tests_update_%s" % sync_tree.rev,
-                                "Update web-platform-tests to revision %s" % sync_tree.rev)
+                                "Update %s to revision %s" % (state.suite_name, sync_tree.rev))
         local_tree.add_new(os.path.relpath(state.tests_path,
                                            local_tree.root))
         updated = local_tree.update_patch(include=[state.tests_path,

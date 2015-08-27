@@ -28,6 +28,13 @@
     "extended_statistics_ok": true,
     "description": "time spent updating accessibility (ms)"
   },
+  "ADDON_SHIM_USAGE": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 15,
+    "keyed": "true",
+    "description": "Reasons why add-on shims were used, keyed by add-on ID."
+  },
   "APPLICATION_REPUTATION_SHOULD_BLOCK": {
     "expires_in_version": "never",
     "kind": "boolean",
@@ -57,14 +64,14 @@
     "description": "Application reputation query count (both local and remote)"
   },
   "AUDIOSTREAM_FIRST_OPEN_MS": {
-    "expires_in_version": "40",
+    "expires_in_version": "50",
     "kind": "exponential",
     "high": "10000",
     "n_buckets": "50",
     "description": "The length of time (in milliseconds) for the first open of AudioStream."
   },
   "AUDIOSTREAM_LATER_OPEN_MS": {
-    "expires_in_version": "40",
+    "expires_in_version": "50",
     "kind": "exponential",
     "high": "10000",
     "n_buckets": "50",
@@ -80,7 +87,7 @@
     "alert_emails": ["rvitillo@mozilla.com"],
     "expires_in_version": "35",
     "kind": "boolean",
-    "description": "blocklist.xml has been loaded synchronously"
+    "description": "blocklist.xml has been loaded synchronously *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "COMPOSITE_TIME" : {
     "expires_in_version": "never",
@@ -332,7 +339,7 @@
     "description": "Location accuracy"
   },
   "GEOLOCATION_ERROR": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "flag",
     "description": "Has seen location error"
   },
@@ -350,20 +357,7 @@
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 10,
-    "description": "Use of SpiderMonkey's deprecated language extensions in web content: ForEach=0, DestructuringForIn=1, LegacyGenerator=2, ExpressionClosure=3, LetBlock=4, LetExpression=5, NoSuchMethod=6, FlagsArgument=7"
-  },
-  "TELEMETRY_PING": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": "3000",
-    "n_buckets": 10,
-    "extended_statistics_ok": true,
-    "description": "Time taken to submit telemetry info (ms)"
-  },
-  "TELEMETRY_SUCCESS": {
-    "expires_in_version": "never",
-    "kind": "boolean",
-    "description": "Successful telemetry submission"
+    "description": "Use of SpiderMonkey's deprecated language extensions in web content: ForEach=0, DestructuringForIn=1, LegacyGenerator=2, ExpressionClosure=3, LetBlock=4, LetExpression=5, NoSuchMethod=6, FlagsArgument=7, RegExpSourceProp=8"
   },
   "XUL_CACHE_DISABLED": {
     "expires_in_version": "default",
@@ -541,7 +535,7 @@
     "kind": "linear",
     "high": "100",
     "n_buckets": 12,
-    "description": "ProcessIoCounters.ReadOperationCount before glue startup",
+    "description": "ProcessIoCounters.ReadOperationCount before glue startup *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***",
     "cpp_guard": "XP_WIN"
   },
   "EARLY_GLUESTARTUP_READ_TRANSFER": {
@@ -551,26 +545,26 @@
     "high": "50 * 1024",
     "n_buckets": 12,
     "extended_statistics_ok": true,
-    "description": "ProcessIoCounters.ReadTransferCount before glue startup (KB)",
+    "description": "ProcessIoCounters.ReadTransferCount before glue startup (KB) *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***",
     "cpp_guard": "XP_WIN"
   },
   "GLUESTARTUP_READ_OPS": {
     "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
-    "expires_in_version": "default",
+    "expires_in_version": "40",
     "kind": "linear",
     "high": "100",
     "n_buckets": 12,
-    "description": "ProcessIoCounters.ReadOperationCount after glue startup",
+    "description": "ProcessIoCounters.ReadOperationCount after glue startup *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***",
     "cpp_guard": "XP_WIN"
   },
   "GLUESTARTUP_READ_TRANSFER": {
     "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
-    "expires_in_version": "default",
+    "expires_in_version": "40",
     "kind": "exponential",
     "high": "50 * 1024",
     "n_buckets": 12,
     "extended_statistics_ok": true,
-    "description": "ProcessIoCounters.ReadTransferCount after glue startup (KB)",
+    "description": "ProcessIoCounters.ReadTransferCount after glue startup (KB) *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***",
     "cpp_guard": "XP_WIN"
   },
   "EARLY_GLUESTARTUP_HARD_FAULTS": {
@@ -579,7 +573,7 @@
     "kind": "linear",
     "high": "100",
     "n_buckets": 12,
-    "description": "Hard faults count before glue startup",
+    "description": "Hard faults count before glue startup *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***",
     "cpp_guard": "XP_UNIX"
   },
   "GLUESTARTUP_HARD_FAULTS": {
@@ -589,7 +583,7 @@
     "high": "500",
     "n_buckets": 12,
     "extended_statistics_ok": true,
-    "description": "Hard faults count after glue startup",
+    "description": "Hard faults count after glue startup *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***",
     "cpp_guard": "XP_UNIX"
   },
   "PAGE_FAULTS_HARD": {
@@ -618,33 +612,6 @@
     "extended_statistics_ok": true,
     "description": "Time(ms) spent on reading family names from all fonts"
   },
-  "DWRITEFONT_INITFONTLIST_TOTAL": {
-    "expires_in_version": "40",
-    "kind": "exponential",
-    "high": "30000",
-    "n_buckets": 10,
-    "extended_statistics_ok": true,
-    "description": "gfxDWriteFontList::InitFontList Total (ms)",
-    "cpp_guard": "XP_WIN"
-  },
-  "DWRITEFONT_INITFONTLIST_INIT": {
-    "expires_in_version": "40",
-    "kind": "exponential",
-    "high": "30000",
-    "n_buckets": 10,
-    "extended_statistics_ok": true,
-    "description": "gfxDWriteFontList::InitFontList init (ms)",
-    "cpp_guard": "XP_WIN"
-  },
-  "DWRITEFONT_INITFONTLIST_GDI": {
-    "expires_in_version": "40",
-    "kind": "exponential",
-    "high": "30000",
-    "n_buckets": 10,
-    "extended_statistics_ok": true,
-    "description": "gfxDWriteFontList::InitFontList GdiInterop object (ms)",
-    "cpp_guard": "XP_WIN"
-  },
   "DWRITEFONT_DELAYEDINITFONTLIST_TOTAL": {
     "expires_in_version": "never",
     "kind": "exponential",
@@ -663,12 +630,6 @@
     "description": "gfxDWriteFontList::DelayedInitFontList Font Family Count",
     "cpp_guard": "XP_WIN"
   },
-  "DWRITEFONT_DELAYEDINITFONTLIST_GDI_TABLE": {
-    "expires_in_version": "40",
-    "kind": "boolean",
-    "description": "gfxDWriteFontList::DelayedInitFontList GDI Table Access",
-    "cpp_guard": "XP_WIN"
-  },
   "DWRITEFONT_DELAYEDINITFONTLIST_COLLECT": {
     "expires_in_version": "never",
     "kind": "exponential",
@@ -676,15 +637,6 @@
     "n_buckets": 10,
     "extended_statistics_ok": true,
     "description": "gfxDWriteFontList::DelayedInitFontList GetSystemFontCollection (ms)",
-    "cpp_guard": "XP_WIN"
-  },
-  "DWRITEFONT_DELAYEDINITFONTLIST_ITERATE": {
-    "expires_in_version": "40",
-    "kind": "exponential",
-    "high": "30000",
-    "n_buckets": 10,
-    "extended_statistics_ok": true,
-    "description": "gfxDWriteFontList::DelayedInitFontList iterate over families (ms)",
     "cpp_guard": "XP_WIN"
   },
   "GDI_INITFONTLIST_TOTAL": {
@@ -751,7 +703,7 @@
   },
   "STARTUP_CACHE_INVALID": {
     "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "flag",
     "description": "Was the disk startup cache file detected as invalid"
   },
@@ -799,7 +751,7 @@
     "description": "Did the browser start after a successful shutdown"
   },
   "IMAGE_DECODE_LATENCY_US": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "exponential",
     "low": 50,
     "high": "5000000",
@@ -807,7 +759,7 @@
     "description": "Time spent decoding an image chunk (us)"
   },
   "IMAGE_DECODE_TIME": {
-    "expires_in_version": "default",
+    "expires_in_version": "never",
     "kind": "exponential",
     "low": 50,
     "high": "50000000",
@@ -815,7 +767,7 @@
     "description": "Time spent decoding an image (us)"
   },
   "IMAGE_DECODE_ON_DRAW_LATENCY": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "exponential",
     "low": 50,
     "high": "50000000",
@@ -823,28 +775,28 @@
     "description": "Time from starting a decode to it showing up on the screen (us)"
   },
   "IMAGE_DECODE_CHUNKS": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "exponential",
     "high": "500",
     "n_buckets": 50,
     "description": "Number of chunks per decode attempt"
   },
   "IMAGE_DECODE_COUNT": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "exponential",
     "high": "500",
     "n_buckets": 50,
     "description": "Decode count"
   },
   "IMAGE_MAX_DECODE_COUNT": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "exponential",
     "high": "10000",
     "n_buckets": 100,
     "description": "Max decode count over all images"
   },
   "IMAGE_DECODE_SPEED_JPEG": {
-    "expires_in_version": "default",
+    "expires_in_version": "never",
     "kind": "exponential",
     "low": 500,
     "high": "50000000",
@@ -852,7 +804,7 @@
     "description": "JPEG image decode speed (Kbytes/sec)"
   },
   "IMAGE_DECODE_SPEED_GIF": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "exponential",
     "low": 500,
     "high": "50000000",
@@ -860,7 +812,7 @@
     "description": "GIF image decode speed (Kbytes/sec)"
   },
   "IMAGE_DECODE_SPEED_PNG": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "exponential",
     "low": 500,
     "high": "50000000",
@@ -868,18 +820,18 @@
     "description": "PNG image decode speed (Kbytes/sec)"
   },
   "CANVAS_2D_USED": {
-    "expires_in_version": "default",
+    "expires_in_version": "never",
     "kind": "boolean",
     "description": "2D canvas used"
   },
   "CANVAS_WEBGL_USED": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "boolean",
     "description": "WebGL canvas used"
   },
   "TOTAL_CONTENT_PAGE_LOAD_TIME": {
     "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "exponential",
     "low": 100,
     "high": "30000",
@@ -1236,6 +1188,12 @@
     "kind": "boolean",
     "description": "Whether a WAP content type response is served to the browser."
   },
+  "HTTP_SCHEME_UPGRADE": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 10,
+    "description": "Was the URL upgraded to HTTPS?  (0=already HTTPS, 1=no reason to upgrade, 2=STS upgrade blocked by pref, 3=upgraded with STS)"
+  },
   "SSL_HANDSHAKE_VERSION": {
     "expires_in_version": "never",
     "kind": "enumerated",
@@ -1518,12 +1476,6 @@
     "n_values": 5,
     "description": "HTTP Disk Cache Hit, Reval, Failed-Reval, Miss"
   },
-  "HTTP_CACHE_MISS_HALFLIFE_EXPERIMENT": {
-    "expires_in_version": "40",
-    "kind": "enumerated",
-    "n_values": 4,
-    "description": "HTTP Cache v2 Miss by half-life value (6h, 1d, 7d, 50d)"
-  },
   "HTTP_CACHE_MISS_HALFLIFE_EXPERIMENT_2": {
     "expires_in_version": "never",
     "kind": "enumerated",
@@ -1733,7 +1685,7 @@
     "kind": "exponential",
     "high": "10 * 1000",
     "n_buckets": 50,
-    "description": "Time spent waiting on the cache service lock (ms) on the main thread in NSEVICTDISKCACHEENTRIESEVENT_RUN"
+    "description": "Time spent waiting on the cache service lock (ms) on the main thread in NSEVICTDISKCACHEENTRIESEVENT_RUN *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "CACHE_SERVICE_LOCK_WAIT_MAINTHREAD_NSDOOMEVENT_RUN": {
     "expires_in_version": "never",
@@ -1747,28 +1699,28 @@
     "kind": "exponential",
     "high": "10 * 1000",
     "n_buckets": 50,
-    "description": "Time spent waiting on the cache service lock (ms) on the main thread in NSDISKCACHESTREAMIO_WRITE"
+    "description": "Time spent waiting on the cache service lock (ms) on the main thread in NSDISKCACHESTREAMIO_WRITE *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "CACHE_SERVICE_LOCK_WAIT_MAINTHREAD_NSDISKCACHESTREAMIO_CLOSEOUTPUTSTREAM": {
     "expires_in_version": "40",
     "kind": "exponential",
     "high": "10 * 1000",
     "n_buckets": 50,
-    "description": "Time spent waiting on the cache service lock (ms) on the main thread in NSDISKCACHESTREAMIO_CLOSEOUTPUTSTREAM"
+    "description": "Time spent waiting on the cache service lock (ms) on the main thread in NSDISKCACHESTREAMIO_CLOSEOUTPUTSTREAM *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "CACHE_SERVICE_LOCK_WAIT_MAINTHREAD_NSDISKCACHEDEVICEDEACTIVATEENTRYEVENT_RUN": {
     "expires_in_version": "40",
     "kind": "exponential",
     "high": "10 * 1000",
     "n_buckets": 50,
-    "description": "Time spent waiting on the cache service lock (ms) on the main thread in NSDISKCACHEDEVICEDEACTIVATEENTRYEVENT_RUN"
+    "description": "Time spent waiting on the cache service lock (ms) on the main thread in NSDISKCACHEDEVICEDEACTIVATEENTRYEVENT_RUN *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "CACHE_SERVICE_LOCK_WAIT_MAINTHREAD_NSDISKCACHEBINDING_DESTRUCTOR": {
     "expires_in_version": "40",
     "kind": "exponential",
     "high": "10 * 1000",
     "n_buckets": 50,
-    "description": "Time spent waiting on the cache service lock (ms) on the main thread in NSDISKCACHEBINDING_DESTRUCTOR"
+    "description": "Time spent waiting on the cache service lock (ms) on the main thread in NSDISKCACHEBINDING_DESTRUCTOR *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "CACHE_SERVICE_LOCK_WAIT_MAINTHREAD_NSCACHESERVICE_SHUTDOWN": {
     "expires_in_version": "never",
@@ -2139,7 +2091,7 @@
     "kind": "exponential",
     "high": "10 * 1000",
     "n_buckets": 50,
-    "description": "Time spent waiting on the cache service lock (ms) on the main thread in NSDISKCACHEMAP_REVALIDATION"
+    "description": "Time spent waiting on the cache service lock (ms) on the main thread in NSDISKCACHEMAP_REVALIDATION *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "CACHE_SERVICE_LOCK_WAIT_MAINTHREAD_NSASYNCDOOMEVENT_RUN": {
     "expires_in_version": "never",
@@ -2382,58 +2334,6 @@
     "n_buckets": 10,
     "description": "How long it takes from the time Predict() is called to the time we figure out there's nothing to do"
   },
-  "PREDICTOR_CLEANUP_DELTA": {
-      "expires_in_version": "40",
-      "kind": "exponential",
-      "high": "60000",
-      "n_buckets": 50,
-      "description": "How long between predictor db cleanups, in ms"
-  },
-  "PREDICTOR_CLEANUP_SUCCEEDED": {
-      "expires_in_version": "40",
-      "kind": "boolean",
-      "description": "Whether or not the predictor cleanup succeeded"
-  },
-  "PREDICTOR_CLEANUP_TIME": {
-      "expires_in_version": "40",
-      "kind": "exponential",
-      "high": "5000",
-      "n_buckets": 10,
-      "description": "How long it takes to run the predictor cleanup"
-  },
-  "PREDICTOR_CLEANUP_SCHEDULED": {
-      "expires_in_version": "40",
-      "kind": "boolean",
-      "description": "Whether or not we actually try the cleanup method when we think about it"
-  },
-  "PREDICTOR_LOAD_COUNT_IS_ZERO": {
-      "expires_in_version": "40",
-      "kind": "linear",
-      "high": "100",
-      "n_buckets": 50,
-      "description": "Number of times load count is zero"
-  },
-  "PREDICTOR_LOAD_COUNT_OVERFLOWS": {
-      "expires_in_version": "40",
-      "kind": "linear",
-      "high": "100",
-      "n_buckets": 50,
-      "description": "Number of times load count overflowed"
-  },
-  "PREDICTOR_STARTUP_COUNT_IS_ZERO": {
-      "expires_in_version": "40",
-      "kind": "linear",
-      "high": "100",
-      "n_buckets": 50,
-      "description": "Number of times startup count is zero"
-  },
-  "PREDICTOR_STARTUP_COUNT_OVERFLOWS": {
-      "expires_in_version": "40",
-      "kind": "linear",
-      "high": "100",
-      "n_buckets": 50,
-      "description": "Number of times startup count overflowed"
-  },
   "HTTPCONNMGR_TOTAL_SPECULATIVE_CONN": {
     "expires_in_version": "never",
     "kind": "exponential",
@@ -2524,7 +2424,7 @@
   },
   "FIND_PLUGINS": {
     "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -2565,7 +2465,8 @@
     "description": "Value of dom.ipc.plugins.hangUITimeoutSecs plus time spent in Plugin Hang UI (ms)"
   },
   "PLUGIN_LOAD_METADATA": {
-    "expires_in_version": "40",
+    "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
+    "expires_in_version": "never",
     "kind": "exponential",
     "high": "5000",
     "n_buckets": 20,
@@ -2642,7 +2543,7 @@
     "high": "3000",
     "n_buckets": 10,
     "extended_statistics_ok": true,
-    "description": "Time spent on SQLite open() (ms)"
+    "description": "Time spent on SQLite open() (ms) *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "MOZ_SQLITE_TRUNCATE_MS": {
     "expires_in_version": "40",
@@ -2650,7 +2551,7 @@
     "high": "3000",
     "n_buckets": 10,
     "extended_statistics_ok": true,
-    "description": "Time spent on SQLite truncate() (ms)"
+    "description": "Time spent on SQLite truncate() (ms) *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "MOZ_SQLITE_TRUNCATE_MAIN_THREAD_MS": {
     "expires_in_version": "40",
@@ -2658,7 +2559,7 @@
     "high": "3000",
     "n_buckets": 10,
     "extended_statistics_ok": true,
-    "description": "Time spent on SQLite truncate() (ms)"
+    "description": "Time spent on SQLite truncate() (ms) *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "MOZ_SQLITE_OTHER_READ_MS": {
     "expires_in_version": "40",
@@ -2666,7 +2567,7 @@
     "high": "3000",
     "n_buckets": 10,
     "extended_statistics_ok": true,
-    "description": "Time spent on SQLite read() (ms)"
+    "description": "Time spent on SQLite read() (ms) *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "MOZ_SQLITE_OTHER_READ_MAIN_THREAD_MS": {
     "expires_in_version": "40",
@@ -2674,7 +2575,7 @@
     "high": "3000",
     "n_buckets": 10,
     "extended_statistics_ok": true,
-    "description": "Time spent on SQLite read() (ms)"
+    "description": "Time spent on SQLite read() (ms) *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "MOZ_SQLITE_PLACES_READ_MS": {
     "expires_in_version": "40",
@@ -2682,7 +2583,7 @@
     "high": "3000",
     "n_buckets": 10,
     "extended_statistics_ok": true,
-    "description": "Time spent on SQLite read() (ms)"
+    "description": "Time spent on SQLite read() (ms) *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "MOZ_SQLITE_PLACES_READ_MAIN_THREAD_MS": {
     "expires_in_version": "40",
@@ -2690,7 +2591,7 @@
     "high": "3000",
     "n_buckets": 10,
     "extended_statistics_ok": true,
-    "description": "Time spent on SQLite read() (ms)"
+    "description": "Time spent on SQLite read() (ms) *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "MOZ_SQLITE_COOKIES_OPEN_READAHEAD_MS": {
     "expires_in_version": "never",
@@ -2706,7 +2607,7 @@
     "high": "3000",
     "n_buckets": 10,
     "extended_statistics_ok": true,
-    "description": "Time spent on SQLite read() (ms)"
+    "description": "Time spent on SQLite read() (ms) *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "MOZ_SQLITE_COOKIES_READ_MAIN_THREAD_MS": {
     "expires_in_version": "40",
@@ -2714,7 +2615,7 @@
     "high": "3000",
     "n_buckets": 10,
     "extended_statistics_ok": true,
-    "description": "Time spent on SQLite read() (ms)"
+    "description": "Time spent on SQLite read() (ms) *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "MOZ_SQLITE_WEBAPPS_READ_MS": {
     "expires_in_version": "40",
@@ -2722,7 +2623,7 @@
     "high": "3000",
     "n_buckets": 10,
     "extended_statistics_ok": true,
-    "description": "Time spent on SQLite read() (ms)"
+    "description": "Time spent on SQLite read() (ms) *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "MOZ_SQLITE_WEBAPPS_READ_MAIN_THREAD_MS": {
     "expires_in_version": "40",
@@ -2730,7 +2631,7 @@
     "high": "3000",
     "n_buckets": 10,
     "extended_statistics_ok": true,
-    "description": "Time spent on SQLite read() (ms)"
+    "description": "Time spent on SQLite read() (ms) *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "MOZ_SQLITE_OTHER_WRITE_MS": {
     "expires_in_version": "40",
@@ -2738,7 +2639,7 @@
     "high": "3000",
     "n_buckets": 10,
     "extended_statistics_ok": true,
-    "description": "Time spent on SQLite write() (ms)"
+    "description": "Time spent on SQLite write() (ms) *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "MOZ_SQLITE_OTHER_WRITE_MAIN_THREAD_MS": {
     "expires_in_version": "40",
@@ -2746,7 +2647,7 @@
     "high": "3000",
     "n_buckets": 10,
     "extended_statistics_ok": true,
-    "description": "Time spent on SQLite write() (ms)"
+    "description": "Time spent on SQLite write() (ms) *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "MOZ_SQLITE_PLACES_WRITE_MS": {
     "expires_in_version": "default",
@@ -2762,7 +2663,7 @@
     "high": "3000",
     "n_buckets": 10,
     "extended_statistics_ok": true,
-    "description": "Time spent on SQLite write() (ms)"
+    "description": "Time spent on SQLite write() (ms) *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "MOZ_SQLITE_COOKIES_WRITE_MS": {
     "expires_in_version": "40",
@@ -2770,7 +2671,7 @@
     "high": "3000",
     "n_buckets": 10,
     "extended_statistics_ok": true,
-    "description": "Time spent on SQLite write() (ms)"
+    "description": "Time spent on SQLite write() (ms) *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "MOZ_SQLITE_COOKIES_WRITE_MAIN_THREAD_MS": {
     "expires_in_version": "40",
@@ -2778,7 +2679,7 @@
     "high": "3000",
     "n_buckets": 10,
     "extended_statistics_ok": true,
-    "description": "Time spent on SQLite write() (ms)"
+    "description": "Time spent on SQLite write() (ms) *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "MOZ_SQLITE_WEBAPPS_WRITE_MS": {
     "expires_in_version": "40",
@@ -2786,7 +2687,7 @@
     "high": "3000",
     "n_buckets": 10,
     "extended_statistics_ok": true,
-    "description": "Time spent on SQLite write() (ms)"
+    "description": "Time spent on SQLite write() (ms) *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "MOZ_SQLITE_WEBAPPS_WRITE_MAIN_THREAD_MS": {
     "expires_in_version": "40",
@@ -2794,7 +2695,7 @@
     "high": "3000",
     "n_buckets": 10,
     "extended_statistics_ok": true,
-    "description": "Time spent on SQLite write() (ms)"
+    "description": "Time spent on SQLite write() (ms) *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "MOZ_SQLITE_OTHER_SYNC_MS": {
     "expires_in_version": "never",
@@ -2872,42 +2773,42 @@
     "kind": "linear",
     "high": "32768",
     "n_buckets": 3,
-    "description": "SQLite read() (bytes)"
+    "description": "SQLite read() (bytes) *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "MOZ_SQLITE_COOKIES_READ_B": {
     "expires_in_version": "40",
     "kind": "linear",
     "high": "32768",
     "n_buckets": 3,
-    "description": "SQLite read() (bytes)"
+    "description": "SQLite read() (bytes) *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "MOZ_SQLITE_WEBAPPS_READ_B": {
     "expires_in_version": "40",
     "kind": "linear",
     "high": "32768",
     "n_buckets": 3,
-    "description": "SQLite read() (bytes)"
+    "description": "SQLite read() (bytes) *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "MOZ_SQLITE_PLACES_WRITE_B": {
     "expires_in_version": "40",
     "kind": "linear",
     "high": "32768",
     "n_buckets": 3,
-    "description": "SQLite write (bytes)"
+    "description": "SQLite write (bytes) *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "MOZ_SQLITE_COOKIES_WRITE_B": {
     "expires_in_version": "40",
     "kind": "linear",
     "high": "32768",
     "n_buckets": 3,
-    "description": "SQLite write (bytes)"
+    "description": "SQLite write (bytes) *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "MOZ_SQLITE_WEBAPPS_WRITE_B": {
     "expires_in_version": "40",
     "kind": "linear",
     "high": "32768",
     "n_buckets": 3,
-    "description": "SQLite write (bytes)"
+    "description": "SQLite write (bytes) *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "MOZ_SQLITE_OTHER_WRITE_B": {
     "expires_in_version": "default",
@@ -2923,13 +2824,13 @@
     "high": "32768",
     "n_buckets": 20,
     "extended_statistics_ok": true,
-    "description": "mozStorage async requests completion (ms)"
+    "description": "mozStorage async requests completion (ms) *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "MOZ_STORAGE_ASYNC_REQUESTS_SUCCESS": {
     "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
     "expires_in_version": "40",
     "kind": "boolean",
-    "description": "mozStorage async requests success"
+    "description": "mozStorage async requests success *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "STARTUP_MEASUREMENT_ERRORS": {
     "expires_in_version": "default",
@@ -3089,7 +2990,7 @@
     "description": "Time spent loading PrefixSet from file (ms)"
   },
   "URLCLASSIFIER_PS_FALLOCATE_TIME": {
-    "expires_in_version": "40",
+    "expires_in_version": "default",
     "kind": "exponential",
     "high": "1000",
     "n_buckets": 10,
@@ -3120,7 +3021,7 @@
     "description": "Size of the completion cache in entries"
   },
   "URLCLASSIFIER_PS_FAILURE": {
-    "expires_in_version": "40",
+    "expires_in_version": "default",
     "kind": "boolean",
     "description": "Did UrlClassifier fail to construct the PrefixSet?"
   },
@@ -3131,6 +3032,7 @@
     "high": "150000",
     "n_buckets": 20,
     "extended_statistics_ok": true,
+    "releaseChannelCollection": "opt-out",
     "description": "PLACES: Number of unique pages"
   },
   "PLACES_BOOKMARKS_COUNT": {
@@ -3140,6 +3042,7 @@
     "high": "8000",
     "n_buckets": 15,
     "extended_statistics_ok": true,
+    "releaseChannelCollection": "opt-out",
     "description": "PLACES: Number of bookmarks"
   },
   "PLACES_TAGS_COUNT": {
@@ -3282,7 +3185,7 @@
     "n_buckets": 10,
     "cpp_guard": "ANDROID",
     "extended_statistics_ok": true,
-    "description": "Number of favicons stored in the browser DB"
+    "description": "Number of favicons stored in the browser DB *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "FENNEC_THUMBNAILS_COUNT": {
     "expires_in_version": "40",
@@ -3291,7 +3194,7 @@
     "n_buckets": 10,
     "cpp_guard": "ANDROID",
     "extended_statistics_ok": true,
-    "description": "Number of thumbnails stored in the browser DB"
+    "description": "Number of thumbnails stored in the browser DB *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "FENNEC_READING_LIST_COUNT": {
     "expires_in_version": "40",
@@ -3300,7 +3203,7 @@
     "n_buckets": 10,
     "cpp_guard": "ANDROID",
     "extended_statistics_ok": true,
-    "description": "Number of reading list items stored in the browser DB"
+    "description": "Number of reading list items stored in the browser DB *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "PLACES_SORTED_BOOKMARKS_PERC": {
     "expires_in_version": "never",
@@ -3439,18 +3342,21 @@
     "description": "PLACES: Days from last maintenance"
   },
   "UPDATE_CHECK_NO_UPDATE_EXTERNAL" : {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "count",
     "releaseChannelCollection": "opt-out",
     "description": "Update: count of no updates were found for a background update check (externally initiated)"
   },
   "UPDATE_CHECK_NO_UPDATE_NOTIFY" : {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "count",
     "releaseChannelCollection": "opt-out",
     "description": "Update: count of no updates were found for a background update check (timer initiated)"
   },
   "UPDATE_CHECK_CODE_EXTERNAL": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 50,
@@ -3458,6 +3364,7 @@
     "description": "Update: background update check result code except for no updates found (externally initiated)"
   },
   "UPDATE_CHECK_CODE_NOTIFY": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 50,
@@ -3465,6 +3372,7 @@
     "description": "Update: background update check result code except for no updates found (timer initiated)"
   },
   "UPDATE_CHECK_EXTENDED_ERROR_EXTERNAL": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "count",
     "keyed": true,
@@ -3472,6 +3380,7 @@
     "description": "Update: keyed count (key names are prefixed with AUS_CHECK_EX_ERR_) of background update check extended error code (externally initiated)"
   },
   "UPDATE_CHECK_EXTENDED_ERROR_NOTIFY": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "count",
     "keyed": true,
@@ -3479,18 +3388,21 @@
     "description": "Update: keyed count (key names are prefixed with AUS_CHECK_EX_ERR_) of background update check extended error code (timer initiated)"
   },
   "UPDATE_INVALID_LASTUPDATETIME_EXTERNAL": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "count",
     "releaseChannelCollection": "opt-out",
     "description": "Update: count of systems that have a last update time greater than the current time (externally initiated)"
   },
   "UPDATE_INVALID_LASTUPDATETIME_NOTIFY": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "count",
     "releaseChannelCollection": "opt-out",
     "description": "Update: count of systems that have a last update time greater than the current time (timer initiated)"
   },
   "UPDATE_LAST_NOTIFY_INTERVAL_DAYS_EXTERNAL": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "exponential",
     "n_buckets": 60,
@@ -3499,6 +3411,7 @@
     "description": "Update: interval in days since the last background update check (externally initiated)"
   },
   "UPDATE_LAST_NOTIFY_INTERVAL_DAYS_NOTIFY": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "exponential",
     "n_buckets": 30,
@@ -3507,78 +3420,91 @@
     "description": "Update: interval in days since the last background update check (timer initiated)"
   },
   "UPDATE_PING_COUNT_EXTERNAL": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "count",
     "releaseChannelCollection": "opt-out",
     "description": "Update: count of systems for this ping for comparison with other pings (externally initiated)"
   },
   "UPDATE_PING_COUNT_NOTIFY": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "count",
     "releaseChannelCollection": "opt-out",
     "description": "Update: count of systems for this ping for comparison with other pings (timer initiated)"
   },
   "UPDATE_SERVICE_INSTALLED_EXTERNAL": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "boolean",
     "releaseChannelCollection": "opt-out",
     "description": "Update: whether the service is installed (externally initiated)"
   },
   "UPDATE_SERVICE_INSTALLED_NOTIFY": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "boolean",
     "releaseChannelCollection": "opt-out",
     "description": "Update: whether the service is installed (timer initiated)"
   },
   "UPDATE_SERVICE_MANUALLY_UNINSTALLED_EXTERNAL": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "count",
     "releaseChannelCollection": "opt-out",
     "description": "Update: count of systems that manually uninstalled the service (externally initiated)"
   },
   "UPDATE_SERVICE_MANUALLY_UNINSTALLED_NOTIFY": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "count",
     "releaseChannelCollection": "opt-out",
     "description": "Update: count of systems that manually uninstalled the service (timer initiated)"
   },
   "UPDATE_UNABLE_TO_APPLY_EXTERNAL": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "count",
     "releaseChannelCollection": "opt-out",
     "description": "Update: count of systems that cannot apply updates (externally initiated)"
   },
   "UPDATE_UNABLE_TO_APPLY_NOTIFY": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "count",
     "releaseChannelCollection": "opt-out",
     "description": "Update: count of systems that cannot apply updates (timer initiated)"
   },
   "UPDATE_CANNOT_STAGE_EXTERNAL": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "count",
     "releaseChannelCollection": "opt-out",
     "description": "Update: count of systems that cannot stage updates (externally initiated)"
   },
   "UPDATE_CANNOT_STAGE_NOTIFY": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "count",
     "releaseChannelCollection": "opt-out",
     "description": "Update: count of systems that cannot stage updates (timer initiated)"
   },
   "UPDATE_HAS_PREF_URL_OVERRIDE_EXTERNAL": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "count",
     "releaseChannelCollection": "opt-out",
     "description": "Update: count of systems that have an app.update.url.override preference (externally initiated)"
   },
   "UPDATE_HAS_PREF_URL_OVERRIDE_NOTIFY": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "count",
     "releaseChannelCollection": "opt-out",
     "description": "Update: count of systems that have an app.update.url.override preference (timer initiated)"
   },
   "UPDATE_PREF_UPDATE_CANCELATIONS_EXTERNAL": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 100,
@@ -3586,6 +3512,7 @@
     "description": "Update: number of sequential update elevation request cancelations greater than 0 (externally initiated)"
   },
   "UPDATE_PREF_UPDATE_CANCELATIONS_NOTIFY": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 100,
@@ -3593,6 +3520,7 @@
     "description": "Update: number of sequential update elevation request cancelations greater than 0 (timer initiated)"
   },
   "UPDATE_PREF_SERVICE_ERRORS_EXTERNAL": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 30,
@@ -3600,6 +3528,7 @@
     "description": "Update: number of sequential update service errors greater than 0 (externally initiated)"
   },
   "UPDATE_PREF_SERVICE_ERRORS_NOTIFY": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 30,
@@ -3607,54 +3536,63 @@
     "description": "Update: number of sequential update service errors greater than 0 (timer initiated)"
   },
   "UPDATE_NOT_PREF_UPDATE_AUTO_EXTERNAL": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "count",
     "releaseChannelCollection": "opt-out",
     "description": "Update: count of when the app.update.auto boolean preference is not the default value of true (true values are not submitted)"
   },
   "UPDATE_NOT_PREF_UPDATE_AUTO_NOTIFY": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "count",
     "releaseChannelCollection": "opt-out",
     "description": "Update: count of when the app.update.auto boolean preference is not the default value of true (true values are not submitted)"
   },
   "UPDATE_NOT_PREF_UPDATE_ENABLED_EXTERNAL": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "count",
     "releaseChannelCollection": "opt-out",
     "description": "Update: count of when the app.update.enabled boolean preference is not the default value of true (true values are not submitted)"
   },
   "UPDATE_NOT_PREF_UPDATE_ENABLED_NOTIFY": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "count",
     "releaseChannelCollection": "opt-out",
     "description": "Update: count of when the app.update.enabled boolean preference is not the default value of true (true values are not submitted)"
   },
   "UPDATE_NOT_PREF_UPDATE_STAGING_ENABLED_EXTERNAL": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "count",
     "releaseChannelCollection": "opt-out",
     "description": "Update: count of when the app.update.staging.enabled boolean preference is not the default value of true (true values are not submitted)"
   },
   "UPDATE_NOT_PREF_UPDATE_STAGING_ENABLED_NOTIFY": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "count",
     "releaseChannelCollection": "opt-out",
     "description": "Update: count of when the app.update.staging.enabled boolean preference is not the default value of true (true values are not submitted)"
   },
   "UPDATE_NOT_PREF_UPDATE_SERVICE_ENABLED_EXTERNAL": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "count",
     "releaseChannelCollection": "opt-out",
     "description": "Update: count of when the app.update.service.enabled boolean preference is not the default value of true (true values are not submitted)"
   },
   "UPDATE_NOT_PREF_UPDATE_SERVICE_ENABLED_NOTIFY": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "count",
     "releaseChannelCollection": "opt-out",
     "description": "Update: count of when the app.update.service.enabled boolean preference is not the default value of true (true values are not submitted)"
   },
   "UPDATE_DOWNLOAD_CODE_COMPLETE": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 50,
@@ -3662,6 +3600,7 @@
     "description": "Update: complete patch download result code"
   },
   "UPDATE_DOWNLOAD_CODE_PARTIAL": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 50,
@@ -3669,6 +3608,7 @@
     "description": "Update: complete patch download result code"
   },
   "UPDATE_STATE_CODE_COMPLETE_STARTUP": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 20,
@@ -3676,6 +3616,7 @@
     "description": "Update: the state of a complete update from update.status on startup"
   },
   "UPDATE_STATE_CODE_PARTIAL_STARTUP": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 20,
@@ -3683,6 +3624,7 @@
     "description": "Update: the state of a partial patch update from update.status on startup"
   },
   "UPDATE_STATE_CODE_UNKNOWN_STARTUP": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 20,
@@ -3690,6 +3632,7 @@
     "description": "Update: the state of an unknown patch update from update.status on startup"
   },
   "UPDATE_STATE_CODE_COMPLETE_STAGE": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 20,
@@ -3697,6 +3640,7 @@
     "description": "Update: the state of a complete patch update from update.status after staging"
   },
   "UPDATE_STATE_CODE_PARTIAL_STAGE": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 20,
@@ -3704,6 +3648,7 @@
     "description": "Update: the state of a partial patch update from update.status after staging"
   },
   "UPDATE_STATE_CODE_UNKNOWN_STAGE": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 20,
@@ -3711,6 +3656,7 @@
     "description": "Update: the state of an unknown patch update from update.status after staging"
   },
   "UPDATE_STATUS_ERROR_CODE_COMPLETE_STARTUP": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 100,
@@ -3718,6 +3664,7 @@
     "description": "Update: the status error code for a failed complete patch update from update.status on startup"
   },
   "UPDATE_STATUS_ERROR_CODE_PARTIAL_STARTUP": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 100,
@@ -3725,6 +3672,7 @@
     "description": "Update: the status error code for a failed partial patch update from update.status on startup"
   },
   "UPDATE_STATUS_ERROR_CODE_UNKNOWN_STARTUP": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 100,
@@ -3732,6 +3680,7 @@
     "description": "Update: the status error code for a failed unknown patch update from update.status on startup"
   },
   "UPDATE_STATUS_ERROR_CODE_COMPLETE_STAGE": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 100,
@@ -3739,6 +3688,7 @@
     "description": "Update: the status error code for a failed complete patch update from update.status after staging"
   },
   "UPDATE_STATUS_ERROR_CODE_PARTIAL_STAGE": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 100,
@@ -3746,6 +3696,7 @@
     "description": "Update: the status error code for a failed partial patch update from update.status after staging"
   },
   "UPDATE_STATUS_ERROR_CODE_UNKNOWN_STAGE": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 100,
@@ -3753,6 +3704,7 @@
     "description": "Update: the status error code for a failed unknown patch update from update.status after staging"
   },
   "UPDATE_WIZ_LAST_PAGE_CODE": {
+    "alert_emails": ["application-update-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 30,
@@ -3760,14 +3712,14 @@
     "description": "Update: the update wizard page displayed when the UI was closed (mapped in toolkit/mozapps/update/UpdateTelemetry.jsm)"
   },
   "THUNDERBIRD_GLODA_SIZE_MB": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "linear",
     "high": "1000",
     "n_buckets": 40,
     "description": "Gloda: size of global-messages-db.sqlite (MB)"
   },
   "THUNDERBIRD_CONVERSATIONS_TIME_TO_2ND_GLODA_QUERY_MS": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "exponential",
     "high": "10000",
     "n_buckets": 30,
@@ -3775,7 +3727,7 @@
     "description": "Conversations: time between the moment we click and the second gloda query returns (ms)"
   },
   "THUNDERBIRD_INDEXING_RATE_MSG_PER_S": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "linear",
     "high": "100",
     "n_buckets": 20,
@@ -3789,14 +3741,14 @@
     "description": "Firefox: Time taken to capture the page to a canvas, for reuse while swiping through history (ms)."
   },
   "FX_GESTURE_INSTALL_SNAPSHOT_OF_PAGE": {
-    "expires_in_version": "40",
+    "expires_in_version": "50",
     "kind": "exponential",
     "high": "1000",
     "n_buckets": "30",
     "description": "Firefox: Time taken to store the image capture of the page to a canvas, for reuse while swiping through history (ms)."
   },
   "FX_GESTURE_COMPRESS_SNAPSHOT_OF_PAGE": {
-    "expires_in_version": "40",
+    "expires_in_version": "50",
     "kind": "exponential",
     "high": "1000",
     "n_buckets": "30",
@@ -3808,7 +3760,7 @@
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
-    "description": "Firefox: Time taken by the tab opening animation in milliseconds"
+    "description": "Firefox: Time taken by the tab opening animation in milliseconds *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "FX_TAB_ANIM_CLOSE_MS": {
     "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
@@ -3816,7 +3768,7 @@
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
-    "description": "Firefox: Time taken by the tab closing animation in milliseconds"
+    "description": "Firefox: Time taken by the tab closing animation in milliseconds *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "FX_TAB_ANIM_OPEN_PREVIEW_FRAME_INTERVAL_MS": {
     "expires_in_version": "never",
@@ -3847,7 +3799,7 @@
     "kind": "exponential",
     "high": "500",
     "n_buckets": 30,
-    "description": "Average paint duration during any tab open/close animation (excluding tabstrip scroll)"
+    "description": "Average paint duration during any tab open/close animation (excluding tabstrip scroll) *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "FX_REFRESH_DRIVER_FRAME_DELAY_MS": {
     "expires_in_version": "default",
@@ -3858,7 +3810,7 @@
   },
   "FX_TAB_SWITCH_UPDATE_MS": {
     "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "exponential",
     "high": "1000",
     "n_buckets": 20,
@@ -3870,6 +3822,20 @@
     "high": "1000",
     "n_buckets": 20,
     "description": "Firefox: Time in ms till a tab switch is complete including the first paint"
+  },
+  "FX_TAB_SWITCH_TOTAL_E10S_MS": {
+    "expires_in_version": "default",
+    "kind": "exponential",
+    "high": "1000",
+    "n_buckets": 20,
+    "description": "Firefox: Time in ms between tab selection and tab content paint."
+  },
+  "FX_TAB_SWITCH_SPINNER_VISIBLE_MS": {
+    "expires_in_version": "default",
+    "kind": "exponential",
+    "high": "1000",
+    "n_buckets": 20,
+    "description": "Firefox: If the spinner interstitial displays during tab switching, records the time in ms the graphic is visible"
   },
   "FX_TAB_CLICK_MS": {
     "expires_in_version": "default",
@@ -3917,7 +3883,7 @@
     "description": "Count the number of times a new top page was starting to load"
   },
   "FX_THUMBNAILS_CAPTURE_TIME_MS": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "exponential",
     "high": "500",
     "n_buckets": 15,
@@ -3925,7 +3891,7 @@
     "description": "THUMBNAILS: Time (ms) it takes to capture a thumbnail"
   },
   "FX_THUMBNAILS_STORE_TIME_MS": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "exponential",
     "high": "500",
     "n_buckets": 15,
@@ -3933,13 +3899,13 @@
     "description": "THUMBNAILS: Time (ms) it takes to store a thumbnail in the cache"
   },
   "FX_THUMBNAILS_HIT_OR_MISS": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "boolean",
     "description": "THUMBNAILS: Thumbnail found"
   },
   "EVENTLOOP_UI_LAG_EXP_MS": {
     "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "exponential",
     "low": 50,
     "high": "60000",
@@ -3948,6 +3914,7 @@
     "description": "Widget: Time it takes for the message before a UI message (ms)"
   },
   "FX_SESSION_RESTORE_STARTUP_INIT_SESSION_MS": {
+    "alert_emails": ["session-restore-telemetry-alerts@mozilla.com"],
     "expires_in_version": "default",
     "kind": "exponential",
     "high": "30000",
@@ -3956,7 +3923,8 @@
     "description": "Session restore: Time it takes to prepare the data structures for restoring a session (ms)"
   },
   "FX_SESSION_RESTORE_STARTUP_ONLOAD_INITIAL_WINDOW_MS": {
-    "expires_in_version": "40",
+    "alert_emails": ["session-restore-telemetry-alerts@mozilla.com"],
+    "expires_in_version": "never",
     "kind": "exponential",
     "high": "30000",
     "n_buckets": 20,
@@ -3964,23 +3932,17 @@
     "description": "Session restore: Time it takes to finish restoration once we have first opened a window (ms)"
   },
   "FX_SESSION_RESTORE_COLLECT_ALL_WINDOWS_DATA_MS": {
-    "expires_in_version": "40",
+    "alert_emails": ["session-restore-telemetry-alerts@mozilla.com"],
+    "expires_in_version": "never",
     "kind": "exponential",
     "high": "30000",
     "n_buckets": 10,
     "extended_statistics_ok": true,
     "description": "Session restore: Time to collect all window data (ms)"
   },
-  "FX_SESSION_RESTORE_COLLECT_SINGLE_WINDOW_DATA_MS": {
-    "expires_in_version": "40",
-    "kind": "exponential",
-    "high": "30000",
-    "n_buckets": 10,
-    "extended_statistics_ok": true,
-    "description": "Session restore: Time to collect the data of a single window (ms)"
-  },
   "FX_SESSION_RESTORE_COLLECT_COOKIES_MS": {
-    "expires_in_version": "40",
+    "alert_emails": ["session-restore-telemetry-alerts@mozilla.com"],
+    "expires_in_version": "never",
     "kind": "exponential",
     "high": "30000",
     "n_buckets": 10,
@@ -3988,6 +3950,7 @@
     "description": "Session restore: Time to collect cookies (ms)"
   },
   "FX_SESSION_RESTORE_COLLECT_DATA_MS": {
+    "alert_emails": ["session-restore-telemetry-alerts@mozilla.com"],
     "expires_in_version": "default",
     "kind": "exponential",
     "high": "30000",
@@ -3996,7 +3959,8 @@
     "description": "Session restore: Time to collect all window and tab data (ms)"
   },
   "FX_SESSION_RESTORE_COLLECT_DATA_LONGEST_OP_MS": {
-    "expires_in_version": "40",
+    "alert_emails": ["session-restore-telemetry-alerts@mozilla.com"],
+    "expires_in_version": "never",
     "kind": "exponential",
     "high": "30000",
     "n_buckets": 10,
@@ -4004,6 +3968,7 @@
     "description": "Session restore: Duration of the longest uninterruptible operation while collecting all window and tab data (ms)"
   },
   "FX_SESSION_RESTORE_CONTENT_COLLECT_DATA_LONGEST_OP_MS": {
+    "alert_emails": ["session-restore-telemetry-alerts@mozilla.com"],
     "expires_in_version": "default",
     "kind": "exponential",
     "high": "30000",
@@ -4013,22 +3978,15 @@
   },
   "FX_SESSION_RESTORE_SERIALIZE_DATA_MS": {
     "alert_emails": ["session-restore-telemetry-alerts@mozilla.com"],
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "exponential",
     "high": "1000",
     "n_buckets": 10,
     "extended_statistics_ok": true,
     "description": "Session restore: Time to JSON serialize session data (ms)"
   },
-  "FX_SESSION_RESTORE_SERIALIZE_DATA_LONGEST_OP_MS": {
-    "expires_in_version": "40",
-    "kind": "exponential",
-    "high": "30000",
-    "n_buckets": 10,
-    "extended_statistics_ok": true,
-    "description": "Session restore: Duration of the longest uninterruptible operation while serializing session data (ms)"
-  },
   "FX_SESSION_RESTORE_READ_FILE_MS": {
+    "alert_emails": ["session-restore-telemetry-alerts@mozilla.com"],
     "expires_in_version": "default",
     "kind": "exponential",
     "high": "3000",
@@ -4036,23 +3994,8 @@
     "extended_statistics_ok": true,
     "description": "Session restore: Time to read the session data from the file on disk (ms)"
   },
-  "FX_SESSION_RESTORE_SEND_SERIALIZED_STATE_LONGEST_OP_MS": {
-    "expires_in_version": "40",
-    "kind": "exponential",
-    "high": "3000",
-    "n_buckets": 10,
-    "extended_statistics_ok": true,
-    "description": "Session restore: Time spent on the main thread sending the session data off the main thread for writing (ms)"
-  },
-  "FX_SESSION_RESTORE_WRITE_STATE_LONGEST_OP_MS": {
-    "expires_in_version": "40",
-    "kind": "exponential",
-    "high": "3000",
-    "n_buckets": 10,
-    "extended_statistics_ok": true,
-    "description": "Session restore: Time spent on the main thread serializing, broadcasting and sending the session data for writing (ms)"
-  },
   "FX_SESSION_RESTORE_WRITE_FILE_MS": {
+    "alert_emails": ["session-restore-telemetry-alerts@mozilla.com"],
     "expires_in_version": "default",
     "kind": "exponential",
     "high": "3000",
@@ -4060,15 +4003,8 @@
     "extended_statistics_ok": true,
     "description": "Session restore: Time to write the session data to the file on disk (ms)"
   },
-  "FX_SESSION_RESTORE_WRITE_FILE_LONGEST_OP_MS": {
-    "expires_in_version": "40",
-    "kind": "exponential",
-    "high": "3000",
-    "n_buckets": 10,
-    "extended_statistics_ok": true,
-    "description": "Session restore: Duration of the longest uninterruptible operation while writing session data (ms)"
-  },
   "FX_SESSION_RESTORE_FILE_SIZE_BYTES": {
+    "alert_emails": ["session-restore-telemetry-alerts@mozilla.com"],
     "expires_in_version": "default",
     "kind": "exponential",
     "high": 50000000,
@@ -4077,16 +4013,19 @@
     "description": "Session restore: The size of file sessionstore.js (bytes)"
   },
   "FX_SESSION_RESTORE_CORRUPT_FILE": {
+    "alert_emails": ["session-restore-telemetry-alerts@mozilla.com"],
     "expires_in_version": "default",
     "kind": "boolean",
     "description": "Session restore: Whether the file read on startup contained parse-able JSON"
   },
   "FX_SESSION_RESTORE_ALL_FILES_CORRUPT": {
+    "alert_emails": ["session-restore-telemetry-alerts@mozilla.com"],
     "expires_in_version": "default",
     "kind": "boolean",
     "description": "Session restore: Whether none of the backup files contained parse-able JSON"
   },
   "FX_SESSION_RESTORE_RESTORE_WINDOW_MS": {
+    "alert_emails": ["session-restore-telemetry-alerts@mozilla.com"],
     "expires_in_version": "default",
     "kind": "exponential",
     "high": "3000",
@@ -4094,189 +4033,26 @@
     "extended_statistics_ok": true,
     "description": "Session restore: Time spent blocking the main thread while restoring a window state (ms)"
   },
-  "FX_SESSION_RESTORE_SESSION_LENGTH": {
-    "expires_in_version": "40",
-    "kind": "exponential",
-    "high": "365",
-    "n_buckets": 15,
-    "description": "Session restore: Days elapsed since the session was first started"
-  },
-  "FX_SESSION_RESTORE_EXTRACTING_STATISTICS_DURATION_MS": {
-    "expires_in_version": "40",
-    "kind": "exponential",
-    "high": "3000",
-    "n_buckets": 10,
-    "extended_statistics_ok": true,
-    "description": "Session restore: Duration of the off main thread statistics extraction mechanism (ms)"
-  },
-  "FX_SESSION_RESTORE_TOTAL_OPEN_WINDOWS_SIZE_BYTES": {
-    "expires_in_version": "default",
-    "kind": "exponential",
-    "high": "50000000",
-    "n_buckets": 30,
-    "description": "Session restore: The subset of sessionrestore.js representing open windows (total size, in bytes)"
-  },
-  "FX_SESSION_RESTORE_TOTAL_CLOSED_WINDOWS_SIZE_BYTES": {
-    "expires_in_version": "40",
-    "kind": "exponential",
-    "high": "50000000",
-    "n_buckets": 30,
-    "description": "Session restore: The subset of sessionrestore.js representing closed windows (total size, in bytes)"
-  },
-  "FX_SESSION_RESTORE_TOTAL_CLOSED_TABS_IN_OPEN_WINDOWS_SIZE_BYTES": {
-    "expires_in_version": "40",
-    "kind": "exponential",
-    "high": "50000000",
-    "n_buckets": 30,
-    "description": "Sessionrestore: The subset of sesionstore.js representing closed tabs in open windows (total size, in bytes)"
-  },
-  "FX_SESSION_RESTORE_TOTAL_COOKIES_SIZE_BYTES": {
-    "expires_in_version": "40",
-    "kind": "exponential",
-    "high": "50000000",
-    "n_buckets": 30,
-    "description": "The subset of sessionstore.js dealing with cookies (total size, in bytes)"
-  },
-  "FX_SESSION_RESTORE_TOTAL_DOM_STORAGE_SIZE_BYTES": {
-    "expires_in_version": "40",
-    "kind": "exponential",
-    "high": "50000000",
-    "n_buckets": 30,
-    "description": "The subset of sessionstore.js dealing with DOM storage (total size, in bytes)"
-  },
-  "FX_SESSION_RESTORE_TOTAL_FORMDATA_SIZE_BYTES": {
-    "expires_in_version": "40",
-    "kind": "exponential",
-    "high": "50000000",
-    "n_buckets": 30,
-    "description": "The subset of sessionstore.js dealing with storing form data (total size, in bytes)"
-  },
-  "FX_SESSION_RESTORE_TOTAL_HISTORY_SIZE_BYTES": {
-    "expires_in_version": "default",
-    "kind": "exponential",
-    "high": "50000000",
-    "n_buckets": 30,
-    "description": "The subset of sessionstore.js dealing with storing history (total size, in bytes)"
-  },
-  "FX_SESSION_RESTORE_INDIVIDUAL_OPEN_WINDOWS_SIZE_BYTES": {
-    "expires_in_version": "40",
-    "kind": "exponential",
-    "high": "5000000",
-    "n_buckets": 30,
-    "description": "Session restore: The subset of sessionrestore.js representing open windows (item size, in bytes)"
-  },
-  "FX_SESSION_RESTORE_INDIVIDUAL_CLOSED_WINDOWS_SIZE_BYTES": {
-    "expires_in_version": "40",
-    "kind": "exponential",
-    "high": "5000000",
-    "n_buckets": 30,
-    "description": "Session restore: The subset of sessionrestore.js representing closed windows (item size, in bytes)"
-  },
-  "FX_SESSION_RESTORE_INDIVIDUAL_CLOSED_TABS_IN_OPEN_WINDOWS_SIZE_BYTES": {
-    "expires_in_version": "40",
-    "kind": "exponential",
-    "high": "5000000",
-    "n_buckets": 30,
-    "description": "Sessionrestore: The subset of sesionstore.js representing closed tabs in open windows (item size, in bytes)"
-  },
-  "FX_SESSION_RESTORE_INDIVIDUAL_COOKIES_SIZE_BYTES": {
-    "expires_in_version": "40",
-    "kind": "exponential",
-    "high": "50000000",
-    "n_buckets": 30,
-    "description": "The subset of sessionstore.js dealing with cookies (item size, in bytes)"
-  },
-  "FX_SESSION_RESTORE_INDIVIDUAL_DOM_STORAGE_SIZE_BYTES": {
-    "expires_in_version": "default",
-    "kind": "exponential",
-    "high": "5000000",
-    "n_buckets": 30,
-    "description": "The subset of sessionstore.js dealing with DOM storage (item size, in bytes)"
-  },
-  "FX_SESSION_RESTORE_INDIVIDUAL_FORMDATA_SIZE_BYTES": {
-    "expires_in_version": "40",
-    "kind": "exponential",
-    "high": "5000000",
-    "n_buckets": 30,
-    "description": "The subset of sessionstore.js dealing with storing form data (item size, in bytes)"
-  },
-  "FX_SESSION_RESTORE_INDIVIDUAL_HISTORY_SIZE_BYTES": {
-    "expires_in_version": "40",
-    "kind": "exponential",
-    "high": "5000000",
-    "n_buckets": 30,
-    "description": "The subset of sessionstore.js dealing with storing history (item size, in bytes)"
-  },
   "INNERWINDOWS_WITH_MUTATION_LISTENERS": {
     "expires_in_version": "never",
     "kind": "boolean",
     "description": "Deleted or to-be-reused innerwindow which has had mutation event listeners."
   },
   "CHARSET_OVERRIDE_SITUATION": {
-    "expires_in_version": "default",
+    "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 8,
     "description": "Labeling status of top-level page when overriding charset (0: unlabeled file URL without detection, 1: unlabeled non-TLD-guessed non-file URL without detection, 2: unlabeled file URL with detection, 3: unlabeled non-file URL with detection, 4: labeled, 5: already overridden, 6: bug, 7: unlabeled with TLD guessing)"
   },
   "CHARSET_OVERRIDE_USED": {
-    "expires_in_version": "default",
+    "expires_in_version": "never",
     "kind": "flag",
     "description": "Whether the character encoding menu was used to override an encoding in this session."
   },
-  "DECODER_INSTANTIATED_HZ": {
-    "expires_in_version": "default",
-    "kind": "flag",
-    "description": "Whether the decoder for HZ has been instantiated in this session."
-  },
-  "DECODER_INSTANTIATED_ISO2022CN": {
-    "expires_in_version": "40",
-    "kind": "flag",
-    "description": "Whether the decoder for ISO-2022-CN has been instantiated in this session."
-  },
-  "DECODER_INSTANTIATED_ISO2022KR": {
-    "expires_in_version": "40",
-    "kind": "flag",
-    "description": "Whether the decoder for ISO-2022-KR has been instantiated in this session."
-  },
   "DECODER_INSTANTIATED_ISO2022JP": {
-    "expires_in_version": "default",
+    "expires_in_version": "never",
     "kind": "flag",
     "description": "Whether the decoder for ISO-2022-JP has been instantiated in this session."
-  },
-  "DECODER_INSTANTIATED_JOHAB": {
-    "expires_in_version": "32",
-    "kind": "flag",
-    "description": "Whether the decoder for JOHAB has been instantiated in this session."
-  },
-  "DECODER_INSTANTIATED_T61": {
-    "expires_in_version": "32",
-    "kind": "flag",
-    "description": "Whether the decoder for T.61 has been instantiated in this session."
-  },
-  "DECODER_INSTANTIATED_IBM850": {
-    "expires_in_version": "38",
-    "kind": "flag",
-    "description": "Whether the decoder for IBM850 has been instantiated in this session."
-  },
-  "DECODER_INSTANTIATED_IBM852": {
-    "expires_in_version": "38",
-    "kind": "flag",
-    "description": "Whether the decoder for IBM852 has been instantiated in this session."
-  },
-  "DECODER_INSTANTIATED_IBM855": {
-    "expires_in_version": "38",
-    "kind": "flag",
-    "description": "Whether the decoder for IBM855 has been instantiated in this session."
-  },
-  "DECODER_INSTANTIATED_IBM857": {
-    "expires_in_version": "38",
-    "kind": "flag",
-    "description": "Whether the decoder for IBM857 has been instantiated in this session."
-  },
-  "DECODER_INSTANTIATED_IBM862": {
-    "expires_in_version": "38",
-    "kind": "flag",
-    "description": "Whether the decoder for IBM862 has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_IBM866": {
     "expires_in_version": "never",
@@ -4284,107 +4060,82 @@
     "description": "Whether the decoder for IBM866 has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_MACGREEK": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "flag",
     "description": "Whether the decoder for MACGREEK has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_MACICELANDIC": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "flag",
     "description": "Whether the decoder for MACICELANDIC has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_MACCE": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "flag",
     "description": "Whether the decoder for MACCE has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_MACHEBREW": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "flag",
     "description": "Whether the decoder for MACHEBREW has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_MACARABIC": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "flag",
     "description": "Whether the decoder for MACARABIC has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_MACFARSI": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "flag",
     "description": "Whether the decoder for MACFARSI has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_MACCROATIAN": {
-    "expires_in_version": "default",
+    "expires_in_version": "never",
     "kind": "flag",
     "description": "Whether the decoder for MACCROATIAN has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_MACCYRILLIC": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "flag",
     "description": "Whether the decoder for MACCYRILLIC has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_MACROMANIAN": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "flag",
     "description": "Whether the decoder for MACROMANIAN has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_MACTURKISH": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "flag",
     "description": "Whether the decoder for MACTURKISH has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_MACDEVANAGARI": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "flag",
     "description": "Whether the decoder for MACDEVANAGARI has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_MACGUJARATI": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "flag",
     "description": "Whether the decoder for MACGUJARATI has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_MACGURMUKHI": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "flag",
     "description": "Whether the decoder for MACGURMUKHI has been instantiated in this session."
   },
-  "DECODER_INSTANTIATED_ISOIR111": {
-    "expires_in_version": "38",
-    "kind": "flag",
-    "description": "Whether the decoder for ISOIR111 has been instantiated in this session."
-  },
-  "DECODER_INSTANTIATED_ARMSCII8": {
-    "expires_in_version": "default",
-    "kind": "flag",
-    "description": "Whether the decoder for ARMSCII8 has been instantiated in this session."
-  },
-  "DECODER_INSTANTIATED_VISCII": {
-    "expires_in_version": "40",
-    "kind": "flag",
-    "description": "Whether the decoder for VISCII has been instantiated in this session."
-  },
-  "DECODER_INSTANTIATED_VIETTCVN5712": {
-    "expires_in_version": "40",
-    "kind": "flag",
-    "description": "Whether the decoder for VIETTCVN5712 has been instantiated in this session."
-  },
-  "DECODER_INSTANTIATED_VIETVPS": {
-    "expires_in_version": "40",
-    "kind": "flag",
-    "description": "Whether the decoder for VIETVPS has been instantiated in this session."
-  },
   "DECODER_INSTANTIATED_KOI8R": {
-    "expires_in_version": "default",
+    "expires_in_version": "never",
     "kind": "flag",
     "description": "Whether the decoder for KOI8R has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_KOI8U": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "flag",
     "description": "Whether the decoder for KOI8U has been instantiated in this session."
   },
   "DECODER_INSTANTIATED_ISO_8859_5": {
-    "expires_in_version": "default",
+    "expires_in_version": "never",
     "kind": "flag",
     "description": "Whether the decoder for ISO-8859-5 has been instantiated in this session."
   },
@@ -4393,14 +4144,14 @@
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
-    "description": "XUL reflows in foreground windows (ms)"
+    "description": "XUL reflows in foreground windows (ms) *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "XUL_BACKGROUND_REFLOW_MS": {
     "expires_in_version": "40",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
-    "description": "XUL reflows in background windows (ms)"
+    "description": "XUL reflows in background windows (ms) *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "HTML_FOREGROUND_REFLOW_MS_2": {
     "expires_in_version": "never",
@@ -4426,7 +4177,7 @@
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
-    "description": "initial xul frame construction"
+    "description": "initial xul frame construction *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "XMLHTTPREQUEST_ASYNC_OR_SYNC": {
     "expires_in_version": "never",
@@ -4439,7 +4190,7 @@
     "high": "3000",
     "n_buckets": 10,
     "extended_statistics_ok": true,
-    "description": "DOM: Timer handlers called per native timer expiration"
+    "description": "DOM: Timer handlers called per native timer expiration *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "DOM_TIMERS_RECENTLY_SET": {
     "expires_in_version": "40",
@@ -4447,12 +4198,12 @@
     "high": "3000",
     "n_buckets": 10,
     "extended_statistics_ok": true,
-    "description": "DOM: setTimeout/setInterval calls recently (last 30s or more)"
+    "description": "DOM: setTimeout/setInterval calls recently (last 30s or more) *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "DOM_RANGE_DETACHED": {
     "expires_in_version": "40",
     "kind": "boolean",
-    "description": "DOM: Ranges that are detached on destruction (bug 702948)"
+    "description": "DOM: Ranges that are detached on destruction (bug 702948) *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "DOM_WINDOW_SHOWMODALDIALOG_USED": {
     "expires_in_version": "41",
@@ -4624,6 +4375,84 @@
     "extended_statistics_ok": true,
     "description": "Number of histograms with total count low errors"
   },
+  "TELEMETRY_ARCHIVE_DIRECTORIES_COUNT": {
+    "alert_emails": ["telemetry-client-dev@mozilla.com"],
+    "expires_in_version": "never",
+    "kind": "linear",
+    "high": "13",
+    "n_buckets": 12,
+    "description": "Number of directories in the archive at scan"
+  },
+  "TELEMETRY_ARCHIVE_OLDEST_DIRECTORY_AGE": {
+    "alert_emails": ["telemetry-client-dev@mozilla.com"],
+    "expires_in_version": "never",
+    "kind": "linear",
+    "high": "13",
+    "n_buckets": 12,
+    "description": "The age of the oldest Telemetry archive directory in months"
+  },
+  "TELEMETRY_ARCHIVE_SCAN_PING_COUNT": {
+    "alert_emails": ["telemetry-client-dev@mozilla.com"],
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": "100000",
+    "n_buckets": 100,
+    "description": "Number of Telemetry pings in the archive at scan"
+  },
+  "TELEMETRY_ARCHIVE_SESSION_PING_COUNT": {
+    "alert_emails": ["telemetry-client-dev@mozilla.com"],
+    "expires_in_version": "never",
+    "kind": "count",
+    "description": "Number of Telemetry pings added to the archive during the session"
+  },
+  "TELEMETRY_ARCHIVE_SIZE_MB": {
+    "alert_emails": ["telemetry-client-dev@mozilla.com"],
+    "expires_in_version": "never",
+    "kind": "linear",
+    "high": "300",
+    "n_buckets": 60,
+    "description": "The size of the Telemetry archive (MB)"
+  },
+  "TELEMETRY_ARCHIVE_EVICTED_OVER_QUOTA": {
+    "alert_emails": ["telemetry-client-dev@mozilla.com"],
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": "100000",
+    "n_buckets": 100,
+    "description": "Number of Telemetry pings evicted from the archive during cleanup, because they were over the quota"
+  },
+  "TELEMETRY_ARCHIVE_EVICTED_OLD_DIRS": {
+    "alert_emails": ["telemetry-client-dev@mozilla.com"],
+    "expires_in_version": "never",
+    "kind": "linear",
+    "high": "13",
+    "n_buckets": 12,
+    "description": "Number of Telemetry directories evicted from the archive during cleanup, because they were too old"
+  },
+  "TELEMETRY_ARCHIVE_EVICTING_DIRS_MS": {
+    "alert_emails": ["telemetry-client-dev@mozilla.com"],
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": "300000",
+    "n_buckets": 20,
+    "description": "Time (ms) it takes for evicting old directories"
+  },
+  "TELEMETRY_ARCHIVE_CHECKING_OVER_QUOTA_MS": {
+    "alert_emails": ["telemetry-client-dev@mozilla.com"],
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": "300000",
+    "n_buckets": 20,
+    "description": "Time (ms) it takes for checking if the archive is over-quota"
+  },
+  "TELEMETRY_ARCHIVE_EVICTING_OVER_QUOTA_MS": {
+    "alert_emails": ["telemetry-client-dev@mozilla.com"],
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": "300000",
+    "n_buckets": 20,
+    "description": "Time (ms) it takes for evicting over-quota pings"
+  },
   "TELEMETRY_DISCARDED_CONTENT_PINGS_COUNT": {
     "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
@@ -4636,6 +4465,26 @@
     "kind": "enumerated",
     "n_values": 30,
     "description": "Number of telemetry pings evicted at startup"
+  },
+  "TELEMETRY_PING": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": "3000",
+    "n_buckets": 10,
+    "extended_statistics_ok": true,
+    "description": "Time taken to submit telemetry info (ms)"
+  },
+  "TELEMETRY_SUCCESS": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "Successful telemetry submission"
+  },
+  "TELEMETRY_INVALID_PING_TYPE_SUBMITTED": {
+    "alert_emails": ["telemetry-client-dev@mozilla.com"],
+    "expires_in_version": "never",
+    "kind": "count",
+    "keyed": true,
+    "description": "Count of individual invalid ping types that were submitted to Telemetry."
   },
   "TELEMETRY_TEST_FLAG": {
     "expires_in_version": "never",
@@ -4701,6 +4550,11 @@
     "kind": "boolean",
     "description": "New tab page is enabled."
   },
+  "NEWTAB_PAGE_ENHANCED": {
+    "expires_in_version": "default",
+    "kind": "boolean",
+    "description": "New tab page is enhanced (showing suggestions)."
+  },
   "NEWTAB_PAGE_PINNED_SITES_COUNT": {
     "expires_in_version": "default",
     "kind": "enumerated",
@@ -4718,13 +4572,13 @@
   "NEWTAB_PAGE_SHOWN": {
     "expires_in_version": "35",
     "kind": "boolean",
-    "description": "Number of times about:newtab was shown from opening a new tab or window."
+    "description": "Number of times about:newtab was shown from opening a new tab or window. *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "NEWTAB_PAGE_SITE_CLICKED": {
     "expires_in_version": "35",
     "kind": "enumerated",
     "n_values": 10,
-    "description": "Track click count on about:newtab tiles per index (0-8). For non-default row or column configurations all clicks into the '9' bucket."
+    "description": "Track click count on about:newtab tiles per index (0-8). For non-default row or column configurations all clicks into the '9' bucket. *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "PANORAMA_INITIALIZATION_TIME_MS": {
     "expires_in_version": "40",
@@ -4732,7 +4586,7 @@
     "high": "10000",
     "n_buckets": 15,
     "extended_statistics_ok": true,
-    "description": "Time it takes to initialize Panorama (ms)"
+    "description": "Time it takes to initialize Panorama (ms) *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "PANORAMA_GROUPS_COUNT": {
     "expires_in_version": "40",
@@ -4740,7 +4594,7 @@
     "high": "25",
     "n_buckets": 15,
     "extended_statistics_ok": true,
-    "description": "Number of groups in Panorama"
+    "description": "Number of groups in Panorama *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "PANORAMA_STACKED_GROUPS_COUNT": {
     "expires_in_version": "40",
@@ -4748,7 +4602,7 @@
     "high": "25",
     "n_buckets": 15,
     "extended_statistics_ok": true,
-    "description": "Number of stacked groups in Panorama"
+    "description": "Number of stacked groups in Panorama *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "PANORAMA_MEDIAN_TABS_IN_GROUPS_COUNT": {
     "expires_in_version": "40",
@@ -4880,17 +4734,28 @@
     "keyed" : true,
     "description" : "Exceptions thrown by add-ons"
   },
+  "MISBEHAVING_ADDONS_CPOW_TIME_MS": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "low": 1,
+    "high": 10000,
+    "n_buckets": 20,
+    "keyed": true,
+    "description": "Time spent by an add-on performing blocking cross-process communications (ms, keyed by add-on ID, updated every 15s by default)"
+  },
+  "MISBEHAVING_ADDONS_JANK_LEVEL": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 10,
+    "keyed": true,
+    "description": "Longest blocking operation performed by the add-on (log2(duration in ms), keyed by add-on, updated every 15s by default)"
+  },
   "SEARCH_COUNTS": {
     "expires_in_version": "never",
     "kind": "count",
     "keyed": true,
+    "releaseChannelCollection": "opt-out",
     "description": "Record the search counts for search engines"
-  },
-  "SEARCH_DEFAULT_ENGINE": {
-    "expires_in_version": "never",
-    "kind": "flag",
-    "keyed": true,
-    "description": "Record the default search engine."
   },
   "SEARCH_SERVICE_INIT_MS": {
     "expires_in_version": "never",
@@ -5203,27 +5068,27 @@
     "description": "Time spent to display first page in PDF Viewer (ms)"
   },
   "SHUMWAY_TIME_TO_VIEW_MS": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "exponential",
     "high": "2 * 60 * 1000",
     "n_buckets": 50,
     "description": "Time spent to display first frame (ms)"
   },
   "SHUMWAY_PARSING_MS": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "exponential",
     "high": "2 * 60 * 1000",
     "n_buckets": 50,
     "description": "Time spent to parse SWF file (ms)"
   },
   "SHUMWAY_SWF_INDEX_ON_PAGE": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 30,
     "description": "Index of the SWF on the page (0 - full page, 1 - first, 2 - second, etc.)"
   },
   "SHUMWAY_SWF_SIZE_KB": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "exponential",
     "low": "1",
     "high": "256 * 1024",
@@ -5231,20 +5096,20 @@
     "description": "The SWF file size (KB)"
   },
   "SHUMWAY_SWF_VERSION": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 30,
     "description": "The SWF file version"
   },
   "SHUMWAY_SWF_FRAME_RATE": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "linear",
     "high": "256",
     "n_buckets": "50",
     "description": "The SWF file frame rate"
   },
   "SHUMWAY_SWF_AREA": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "exponential",
     "low": "256",
     "high": "16777216",
@@ -5252,12 +5117,12 @@
     "description": "The SWF file dimension: amount of pixels (width * height)"
   },
   "SHUMWAY_SWF_AVM2": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "boolean",
     "description": "The AVM2 is enabled in the SWF file"
   },
   "SHUMWAY_SWF_BANNER": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 30,
     "description": "The well-known banner size"
@@ -5753,44 +5618,50 @@
     "n_buckets": "1000",
     "description": "The time (in milliseconds) that it took a 'reconfigure thread' request to go round trip."
   },
+  "MEDIA_WMF_DECODE_ERROR": {
+    "expires_in_version": "50",
+    "kind": "enumerated",
+    "n_values": 256,
+    "description": "WMF media decoder error or success (0) codes."
+  },
   "VIDEO_CANPLAYTYPE_H264_CONSTRAINT_SET_FLAG": {
-    "expires_in_version": "40",
+    "expires_in_version": "50",
     "kind": "enumerated",
     "n_values": 128,
     "description": "The H.264 constraint set flag as extracted from the codecs parameter passed to HTMLMediaElement.canPlayType, with the addition of 0 for unknown values."
   },
   "VIDEO_CANPLAYTYPE_H264_LEVEL": {
-    "expires_in_version": "40",
+    "expires_in_version": "50",
     "kind": "enumerated",
     "n_values": 51,
     "description": "The H.264 level (level_idc) as extracted from the codecs parameter passed to HTMLMediaElement.canPlayType, from levels 1 (10) to 5.2 (51), with the addition of 0 for unknown values."
   },
   "VIDEO_CANPLAYTYPE_H264_PROFILE": {
-    "expires_in_version": "40",
+    "expires_in_version": "50",
     "kind": "enumerated",
     "n_values": 244,
     "description": "The H.264 profile number (profile_idc) as extracted from the codecs parameter passed to HTMLMediaElement.canPlayType."
   },
   "VIDEO_DECODED_H264_SPS_CONSTRAINT_SET_FLAG": {
-    "expires_in_version": "40",
+    "expires_in_version": "50",
     "kind": "enumerated",
     "n_values": 128,
     "description": "A bit pattern to collect H.264 constraint set flag from the decoded SPS. Bits 0 through 5 represent constraint_set0_flag through constraint_set5_flag, respectively."
   },
   "VIDEO_DECODED_H264_SPS_LEVEL": {
-    "expires_in_version": "40",
+    "expires_in_version": "50",
     "kind": "enumerated",
     "n_values": 51,
     "description": "The H.264 level (level_idc) as extracted from the decoded SPS, from levels 1 (10) to 5.2 (51), with the addition of 0 for unknown values."
   },
   "VIDEO_DECODED_H264_SPS_PROFILE": {
-    "expires_in_version": "40",
+    "expires_in_version": "50",
     "kind": "enumerated",
     "n_values": 244,
     "description": "The H.264 profile number (profile_idc) as extracted from the decoded SPS."
   },
   "VIDEO_H264_SPS_MAX_NUM_REF_FRAMES": {
-    "expires_in_version": "40",
+    "expires_in_version": "50",
     "kind": "enumerated",
     "n_values": 17,
     "description": "SPS.max_num_ref_frames indicates how deep the H.264 queue is going to be, and as such the minimum memory usage by the decoder, from 0 to 16. 17 indicates an invalid value."
@@ -6144,15 +6015,15 @@
     "low": "5",
     "high": "145",
     "n_buckets": "30",
-    "description": "The number of distinct pairs (first-party site, third-party site attempting to set cookie) for which the third-party cookie has been accepted. Sites are considered identical if they have the same eTLD + 1. Measures are normalized per 24h."
+    "description": "The number of distinct pairs (first-party site, third-party site attempting to set cookie) for which the third-party cookie has been accepted. Sites are considered identical if they have the same eTLD + 1. Measures are normalized per 24h. *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "COOKIES_3RDPARTY_NUM_SITES_BLOCKED": {
-    "expires_in_version": "default",
+    "expires_in_version": "40",
     "kind": "linear",
     "low": "5",
     "high": "145",
     "n_buckets": "30",
-    "description": "The number of distinct pairs (first-party site, third-party site attempting to set cookie) for which the third-party cookie has been rejected. Sites are considered identical if they have the same eTLD + 1. Measures are normalized per 24h."
+    "description": "The number of distinct pairs (first-party site, third-party site attempting to set cookie) for which the third-party cookie has been rejected. Sites are considered identical if they have the same eTLD + 1. Measures are normalized per 24h. *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "COOKIES_3RDPARTY_NUM_ATTEMPTS_ACCEPTED": {
     "expires_in_version": "40",
@@ -6160,15 +6031,15 @@
     "low": "10",
     "high": "500",
     "n_buckets": "50",
-    "description": "The total number of distinct attempts by third-party sites to place cookies which have been accepted.  Measures are normalized per 24h."
+    "description": "The total number of distinct attempts by third-party sites to place cookies which have been accepted.  Measures are normalized per 24h. *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "COOKIES_3RDPARTY_NUM_ATTEMPTS_BLOCKED": {
-    "expires_in_version": "default",
+    "expires_in_version": "40",
     "kind": "linear",
     "low": "10",
     "high": "500",
     "n_buckets": "50",
-    "description": "The total number of distinct attempts by third-party sites to place cookies which have been rejected.  Measures are normalized per 24h."
+    "description": "The total number of distinct attempts by third-party sites to place cookies which have been rejected.  Measures are normalized per 24h. *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "DEVTOOLS_DEBUGGER_RDP_LOCAL_GET_EXECUTABLE_LINES_MS": {
     "expires_in_version": "never",
@@ -6778,6 +6649,48 @@
     "kind": "boolean",
     "description": "Was WebIDE's debug button used during this runtime connection?"
   },
+  "DEVTOOLS_WEBIDE_CONNECTED_RUNTIME_TYPE": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "keyed": true,
+    "description": "What runtime type did WebIDE connect to?"
+  },
+  "DEVTOOLS_WEBIDE_CONNECTED_RUNTIME_ID": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "keyed": true,
+    "description": "What runtime ID did WebIDE connect to?"
+  },
+  "DEVTOOLS_WEBIDE_CONNECTED_RUNTIME_PROCESSOR": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "keyed": true,
+    "description": "What runtime processor did WebIDE connect to?"
+  },
+  "DEVTOOLS_WEBIDE_CONNECTED_RUNTIME_OS": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "keyed": true,
+    "description": "What runtime OS did WebIDE connect to?"
+  },
+  "DEVTOOLS_WEBIDE_CONNECTED_RUNTIME_PLATFORM_VERSION": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "keyed": true,
+    "description": "What runtime platform version did WebIDE connect to?"
+  },
+  "DEVTOOLS_WEBIDE_CONNECTED_RUNTIME_APP_TYPE": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "keyed": true,
+    "description": "What runtime app type did WebIDE connect to?"
+  },
+  "DEVTOOLS_WEBIDE_CONNECTED_RUNTIME_VERSION": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "keyed": true,
+    "description": "What runtime version did WebIDE connect to?"
+  },
   "DEVTOOLS_OS_ENUMERATED_PER_USER": {
     "expires_in_version": "never",
     "kind": "enumerated",
@@ -7021,19 +6934,19 @@
     "expires_in_version": "40",
     "kind": "enumerated",
     "n_values": "10",
-    "description": "The number of errors using the PasswordsProvider due to a locked DB."
+    "description": "The number of errors using the PasswordsProvider due to a locked DB. *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "SQLITEBRIDGE_PROVIDER_FORMS_LOCKED": {
     "expires_in_version": "40",
     "kind": "enumerated",
     "n_values": "10",
-    "description": "The number of errors using the FormHistoryProvider due to a locked DB."
+    "description": "The number of errors using the FormHistoryProvider due to a locked DB. *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "SQLITEBRIDGE_PROVIDER_HOME_LOCKED": {
     "expires_in_version": "40",
     "kind": "enumerated",
     "n_values": "10",
-    "description": "The number of errors using the HomeProvider due to a locked DB."
+    "description": "The number of errors using the HomeProvider due to a locked DB. *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "SSL_TLS12_INTOLERANCE_REASON_PRE": {
     "expires_in_version": "never",
@@ -7337,7 +7250,7 @@
     "description": "Whether FxA Sync is configured to use a custom authentication server"
   },
   "WEAVE_CUSTOM_TOKEN_SERVER_CONFIGURATION": {
-    "expires_in_version": "40",
+    "expires_in_version": "50",
     "kind": "boolean",
     "description": "Whether FxA Sync is configured to use a custom token server"
   },
@@ -7388,10 +7301,10 @@
     "kind": "linear",
     "high": "13",
     "n_buckets": 12,
-    "description": "Cache hits on the tile-info metadata database"
+    "description": "Cache hits on the tile-info metadata database *** No longer needed (bug 1156565). Delete histogram and accumulation code! ***"
   },
   "DISPLAY_SCALING_OSX" : {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "linear",
     "high": "500",
     "n_buckets": "100",
@@ -7399,7 +7312,7 @@
     "cpp_guard": "XP_MACOSX"
   },
   "DISPLAY_SCALING_MSWIN" : {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "linear",
     "high": "500",
     "n_buckets": "100",
@@ -7407,7 +7320,7 @@
     "cpp_guard": "XP_WIN"
   },
   "DISPLAY_SCALING_LINUX" : {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "linear",
     "high": "500",
     "n_buckets": "100",
@@ -7415,24 +7328,24 @@
     "cpp_guard": "XP_LINUX"
   },
   "SOCIAL_SIDEBAR_STATE": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "boolean",
     "description": "Social Sidebar state 0: closed, 1: opened.  Toggling between providers will result in a higher opened rate."
   },
   "SOCIAL_TOOLBAR_BUTTONS": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 3,
     "description": "Social toolbar button has been used (0:share, 1:status, 2:bookmark)"
   },
   "SOCIAL_PANEL_CLICKS": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 4,
     "description": "Social content has been interacted with (0:share, 1:status, 2:bookmark, 3: sidebar)"
   },
   "SOCIAL_SIDEBAR_OPEN_DURATION": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "exponential",
     "high": "10000000",
     "n_buckets": 10,
@@ -7538,23 +7451,30 @@
     "kind": "boolean",
     "description": "Whether a session is set to autostart e10s windows"
   },
+  "E10S_AUTOSTART_STATUS": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 6,
+    "description": "Why e10s is enabled or disabled (0=ENABLED_BY_USER, 1=ENABLED_BY_DEFAULT, 2=DISABLED_BY_USER, 3=DISABLED_IN_SAFE_MODE, 4=DISABLED_FOR_ACCESSIBILITY, 5=DISABLED_FOR_MAC_GFX)"
+  },
   "E10S_WINDOW": {
     "expires_in_version": "never",
     "kind": "boolean",
     "description": "Whether a browser window is set as an e10s window"
   },
   "E10S_STILL_ACCEPTED_FROM_PROMPT": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "boolean",
     "description": "Whether a user who accepted e10s from the prompt is still using e10s"
   },
   "E10S_BLOCKED_FROM_RUNNING": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "boolean",
     "description": "Whether the e10s pref was set but it was blocked from running due to blacklisted conditions"
   },
   "BLOCKED_ON_PLUGIN_MODULE_INIT_MS": {
-    "expires_in_version": "40",
+    "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
+    "expires_in_version": "50",
     "kind": "exponential",
     "high": "10000",
     "n_buckets": 20,
@@ -7563,7 +7483,8 @@
     "description": "Time (ms) that the main thread has been blocked on LoadModule and NP_Initialize in PluginModuleParent"
   },
   "BLOCKED_ON_PLUGIN_INSTANCE_INIT_MS": {
-    "expires_in_version": "40",
+    "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
+    "expires_in_version": "50",
     "kind": "exponential",
     "high": "10000",
     "n_buckets": 20,
@@ -7572,7 +7493,8 @@
     "description": "Time (ms) that the main thread has been blocked on NPP_New in an IPC plugin"
   },
   "BLOCKED_ON_PLUGIN_STREAM_INIT_MS": {
-    "expires_in_version": "40",
+    "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
+    "expires_in_version": "50",
     "kind": "exponential",
     "high": "10000",
     "n_buckets": 20,
@@ -7581,7 +7503,8 @@
     "description": "Time (ms) that the main thread has been blocked on NPP_NewStream in an IPC plugin"
   },
   "BLOCKED_ON_PLUGINASYNCSURROGATE_WAITFORINIT_MS": {
-    "expires_in_version": "40",
+    "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
+    "expires_in_version": "50",
     "kind": "exponential",
     "high": "10000",
     "n_buckets": 20,
@@ -7590,7 +7513,8 @@
     "description": "Time (ms) that the main thread has been blocked on PluginAsyncSurrogate::WaitForInit in an IPC plugin"
   },
   "BLOCKED_ON_PLUGIN_INSTANCE_DESTROY_MS": {
-    "expires_in_version": "40",
+    "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
+    "expires_in_version": "50",
     "kind": "exponential",
     "high": "10000",
     "n_buckets": 20,
@@ -7620,6 +7544,20 @@
     "kind": "count",
     "keyed": true,
     "description": "Counts of plugin and content process crashes which are reported with a crash dump."
+  },
+  "PROCESS_CRASH_SUBMIT_ATTEMPT": {
+    "expires_in_version": "never",
+    "kind": "count",
+    "keyed": true,
+    "releaseChannelCollection": "opt-out",
+    "description": "An attempt to submit a crash. Keyed on the CrashManager Crash.type."
+  },
+  "PROCESS_CRASH_SUBMIT_SUCCESS": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "keyed": true,
+    "releaseChannelCollection": "opt-out",
+    "description": "The submission status when main/plugin/content crashes are submitted. 1 is success, 0 is failure. Keyed on the CrashManager Crash.type."
   },
   "STUMBLER_TIME_BETWEEN_UPLOADS_SEC": {
     "expires_in_version": "45",
@@ -7737,7 +7675,7 @@
   },
   "FX_SANITIZE_TOTAL": {
     "alert_emails": ["firefox-dev@mozilla.org", "gavin@mozilla.com"],
-    "expires_in_version": "40",
+    "expires_in_version": "50",
     "kind": "exponential",
     "high": "30000",
     "n_buckets": 20,
@@ -7746,7 +7684,7 @@
   },
   "FX_SANITIZE_CACHE": {
     "alert_emails": ["firefox-dev@mozilla.org", "gavin@mozilla.com"],
-    "expires_in_version": "40",
+    "expires_in_version": "50",
     "kind": "exponential",
     "high": "30000",
     "n_buckets": 20,
@@ -7755,7 +7693,7 @@
   },
   "FX_SANITIZE_COOKIES": {
     "alert_emails": ["firefox-dev@mozilla.org", "gavin@mozilla.com"],
-    "expires_in_version": "40",
+    "expires_in_version": "50",
     "kind": "exponential",
     "high": "30000",
     "n_buckets": 20,
@@ -7764,7 +7702,7 @@
   },
   "FX_SANITIZE_OFFLINEAPPS": {
     "alert_emails": ["firefox-dev@mozilla.org", "gavin@mozilla.com"],
-    "expires_in_version": "40",
+    "expires_in_version": "50",
     "kind": "exponential",
     "high": "30000",
     "n_buckets": 20,
@@ -7773,7 +7711,7 @@
   },
   "FX_SANITIZE_HISTORY": {
     "alert_emails": ["firefox-dev@mozilla.org", "gavin@mozilla.com"],
-    "expires_in_version": "40",
+    "expires_in_version": "50",
     "kind": "exponential",
     "high": "30000",
     "n_buckets": 20,
@@ -7782,7 +7720,7 @@
   },
   "FX_SANITIZE_FORMDATA": {
     "alert_emails": ["firefox-dev@mozilla.org", "gavin@mozilla.com"],
-    "expires_in_version": "40",
+    "expires_in_version": "50",
     "kind": "exponential",
     "high": "30000",
     "n_buckets": 20,
@@ -7791,7 +7729,7 @@
   },
   "FX_SANITIZE_DOWNLOADS": {
     "alert_emails": ["firefox-dev@mozilla.org", "gavin@mozilla.com"],
-    "expires_in_version": "40",
+    "expires_in_version": "50",
     "kind": "exponential",
     "high": "30000",
     "n_buckets": 20,
@@ -7800,7 +7738,7 @@
   },
   "FX_SANITIZE_PASSWORDS": {
     "alert_emails": ["firefox-dev@mozilla.org", "gavin@mozilla.com"],
-    "expires_in_version": "40",
+    "expires_in_version": "50",
     "kind": "exponential",
     "high": "30000",
     "n_buckets": 20,
@@ -7809,7 +7747,7 @@
   },
   "FX_SANITIZE_SESSIONS": {
     "alert_emails": ["firefox-dev@mozilla.org", "gavin@mozilla.com"],
-    "expires_in_version": "40",
+    "expires_in_version": "50",
     "kind": "exponential",
     "high": "30000",
     "n_buckets": 20,
@@ -7818,7 +7756,7 @@
   },
   "FX_SANITIZE_SITESETTINGS": {
     "alert_emails": ["firefox-dev@mozilla.org", "gavin@mozilla.com"],
-    "expires_in_version": "40",
+    "expires_in_version": "50",
     "kind": "exponential",
     "high": "30000",
     "n_buckets": 20,
@@ -7827,7 +7765,7 @@
   },
   "FX_SANITIZE_OPENWINDOWS": {
     "alert_emails": ["firefox-dev@mozilla.org", "gavin@mozilla.com"],
-    "expires_in_version": "40",
+    "expires_in_version": "50",
     "kind": "exponential",
     "high": "30000",
     "n_buckets": 20,
@@ -8048,5 +7986,11 @@
     "kind": "enumerated",
     "n_values": 5,
     "description": "The result of trying to download a document to show in reader view (0=Success, 1=Error XHR, 2=Error no document)"
+  },
+  "FENNEC_TITLE_IN_TITLEBAR_ENABLED": {
+    "alert_emails": ["michael.l.comella@gmail.com"],
+    "expires_in_version": "43",
+    "kind": "boolean",
+    "description": "Is the title shown in the url bar (as determined by the titlebar title or url preference)?"
   }
 }

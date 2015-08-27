@@ -391,14 +391,22 @@ var WifiManager = (function() {
       return null;
 
     let networkKey = getNetworkKey(network);
-    return ((networkKey in httpProxyConfig) ? httpProxyConfig : null);
+    return httpProxyConfig[networkKey];
   }
 
   function setHttpProxy(network) {
     if (!network)
       return;
 
-    gNetworkService.setNetworkProxy(network);
+    // If we got here, arg network must be the currentNetwork, so we just update
+    // WifiNetworkInterface correspondingly and notify NetworkManager.
+    WifiNetworkInterface.httpProxyHost = network.httpProxyHost;
+    WifiNetworkInterface.httpProxyPort = network.httpProxyPort;
+
+    if (WifiNetworkInterface.state ==
+        Ci.nsINetworkInterface.NETWORK_STATE_CONNECTED) {
+      gNetworkManager.updateNetworkInterface(WifiNetworkInterface);
+    }
   }
 
   var staticIpConfig = Object.create(null);
@@ -2203,11 +2211,6 @@ function WifiWorker() {
         }
 
         var _oncompleted = function() {
-          // Update http proxy when connected to network.
-          let netConnect = WifiManager.getHttpProxyNetwork(self.currentNetwork);
-          if (netConnect)
-            WifiManager.setHttpProxy(netConnect);
-
           // The full authentication process is completed, reset the count.
           WifiManager.authenticationFailuresCount = 0;
           WifiManager.loopDetectionCount = 0;
@@ -2251,22 +2254,6 @@ function WifiWorker() {
         }
 
         self._fireEvent("ondisconnect", {network: netToDOM(self.currentNetwork)});
-
-        // When disconnected, clear the http proxy setting if it exists.
-        // Temporarily set http proxy to empty and restore user setting after setHttpProxy.
-        let netDisconnect = WifiManager.getHttpProxyNetwork(self.currentNetwork);
-        if (netDisconnect) {
-          let prehttpProxyHostSetting = netDisconnect.httpProxyHost;
-          let prehttpProxyPortSetting = netDisconnect.httpProxyPort;
-
-          netDisconnect.httpProxyHost = "";
-          netDisconnect.httpProxyPort = 0;
-
-          WifiManager.setHttpProxy(netDisconnect);
-
-          netDisconnect.httpProxyHost = prehttpProxyHostSetting;
-          netDisconnect.httpProxyPort = prehttpProxyPortSetting;
-        }
 
         self.currentNetwork = null;
         self.ipAddress = "";
@@ -2328,6 +2315,13 @@ function WifiWorker() {
     if (!maskLength) {
       maskLength = 32; // max prefix for IPv4.
     }
+
+    let netConnect = WifiManager.getHttpProxyNetwork(self.currentNetwork);
+    if (netConnect) {
+      WifiNetworkInterface.httpProxyHost = netConnect.httpProxyHost;
+      WifiNetworkInterface.httpProxyPort = netConnect.httpProxyPort;
+    }
+
     WifiNetworkInterface.state =
       Ci.nsINetworkInterface.NETWORK_STATE_CONNECTED;
     WifiNetworkInterface.ips = [this.info.ipaddr_str];
@@ -3279,23 +3273,7 @@ WifiWorker.prototype = {
             WifiManager.reconnect(function (ok) {
               self._sendMessage(message, ok, ok, msg);
             });
-          } else if (WifiManager.state == "INACTIVE") {
-             // If AP info didn't clear, then call associate function.
-             // That maybe occurs wpa supplicant that suppose already associated.
-             // To avoid this case, need to clear AP info and call reassoiate
-             // in INACTIVE state.
-             let networkKey = getNetworkKey(network);
-             if (!(networkKey in this.configuredNetworks)) {
-               self._sendMessage(message, false, "Trying to forget an unknown network", msg);
-               return;
-             }
-             let configured = this.configuredNetworks[networkKey];
-             WifiManager.removeNetwork(configured.netId, function() {
-               WifiManager.reassociate(function() {
-                 self._sendMessage(message, ok, ok, msg);
-               });
-             });
-          }else {
+          } else {
             self._sendMessage(message, ok, ok, msg);
           }
         });

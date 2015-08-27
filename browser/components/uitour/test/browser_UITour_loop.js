@@ -196,6 +196,7 @@ let tests = [
     };
     MozLoopServiceInternal.fxAOAuthTokenData = fxASampleToken;
     MozLoopServiceInternal.fxAOAuthProfile = fxASampleProfile;
+    Services.prefs.setCharPref("loop.key.fxa", "fake");
     yield MozLoopServiceInternal.notifyStatusChanged("login");
 
     // Show the Loop menu.
@@ -225,6 +226,7 @@ let tests = [
     // Logout. The panel tab will switch back to 'rooms'.
     MozLoopServiceInternal.fxAOAuthTokenData =
       MozLoopServiceInternal.fxAOAuthProfile = null;
+    Services.prefs.clearUserPref("loop.key.fxa");
     yield MozLoopServiceInternal.notifyStatusChanged();
 
     yield tabChangePromise;
@@ -391,8 +393,9 @@ function checkLoopPanelIsHidden() {
 
 function setupFakeRoom() {
   let room = {};
-  for (let prop of ["roomToken", "roomName", "roomOwner", "roomUrl", "participants"])
+  for (let prop of ["roomToken", "roomOwner", "roomUrl", "participants"])
     room[prop] = "fakeTourRoom";
+  room.decryptedContext = {roomName: "fakeTourRoom"};
   let roomsMap = new Map([
     [room.roomToken, room]
   ]);

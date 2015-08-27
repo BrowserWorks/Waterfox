@@ -518,11 +518,10 @@ PlacesTreeView.prototype = {
   COLUMN_TYPE_URI: 2,
   COLUMN_TYPE_DATE: 3,
   COLUMN_TYPE_VISITCOUNT: 4,
-  COLUMN_TYPE_KEYWORD: 5,
-  COLUMN_TYPE_DESCRIPTION: 6,
-  COLUMN_TYPE_DATEADDED: 7,
-  COLUMN_TYPE_LASTMODIFIED: 8,
-  COLUMN_TYPE_TAGS: 9,
+  COLUMN_TYPE_DESCRIPTION: 5,
+  COLUMN_TYPE_DATEADDED: 6,
+  COLUMN_TYPE_LASTMODIFIED: 7,
+  COLUMN_TYPE_TAGS: 8,
 
   _getColumnType: function PTV__getColumnType(aColumn) {
     let columnType = aColumn.element.getAttribute("anonid") || aColumn.id;
@@ -536,8 +535,6 @@ PlacesTreeView.prototype = {
         return this.COLUMN_TYPE_DATE;
       case "visitCount":
         return this.COLUMN_TYPE_VISITCOUNT;
-      case "keyword":
-        return this.COLUMN_TYPE_KEYWORD;
       case "description":
         return this.COLUMN_TYPE_DESCRIPTION;
       case "dateAdded":
@@ -568,10 +565,6 @@ PlacesTreeView.prototype = {
         return [this.COLUMN_TYPE_VISITCOUNT, false];
       case Ci.nsINavHistoryQueryOptions.SORT_BY_VISITCOUNT_DESCENDING:
         return [this.COLUMN_TYPE_VISITCOUNT, true];
-      case Ci.nsINavHistoryQueryOptions.SORT_BY_KEYWORD_ASCENDING:
-        return [this.COLUMN_TYPE_KEYWORD, false];
-      case Ci.nsINavHistoryQueryOptions.SORT_BY_KEYWORD_DESCENDING:
-        return [this.COLUMN_TYPE_KEYWORD, true];
       case Ci.nsINavHistoryQueryOptions.SORT_BY_ANNOTATION_ASCENDING:
         if (this._result.sortingAnnotation == PlacesUIUtils.DESCRIPTION_ANNO)
           return [this.COLUMN_TYPE_DESCRIPTION, false];
@@ -849,9 +842,7 @@ PlacesTreeView.prototype = {
     this._invalidateCellValue(aNode, this.COLUMN_TYPE_TAGS);
   },
 
-  nodeKeywordChanged: function PTV_nodeKeywordChanged(aNode, aNewKeyword) {
-    this._invalidateCellValue(aNode, this.COLUMN_TYPE_KEYWORD);
-  },
+  nodeKeywordChanged(aNode, aNewKeyword) {},
 
   nodeAnnotationChanged: function PTV_nodeAnnotationChanged(aNode, aAnno) {
     if (aAnno == PlacesUIUtils.DESCRIPTION_ANNO) {
@@ -1444,10 +1435,6 @@ PlacesTreeView.prototype = {
         return this._convertPRTimeToString(nodeTime);
       case this.COLUMN_TYPE_VISITCOUNT:
         return node.accessCount;
-      case this.COLUMN_TYPE_KEYWORD:
-        if (PlacesUtils.nodeIsBookmark(node))
-          return PlacesUtils.bookmarks.getKeywordForBookmark(node.itemId);
-        return "";
       case this.COLUMN_TYPE_DESCRIPTION:
         if (node.itemId != -1) {
           try {
@@ -1583,15 +1570,6 @@ PlacesTreeView.prototype = {
           newSort = NHQO.SORT_BY_VISITCOUNT_DESCENDING;
 
         break;
-      case this.COLUMN_TYPE_KEYWORD:
-        if (oldSort == NHQO.SORT_BY_KEYWORD_ASCENDING)
-          newSort = NHQO.SORT_BY_KEYWORD_DESCENDING;
-        else if (allowTriState && oldSort == NHQO.SORT_BY_KEYWORD_DESCENDING)
-          newSort = NHQO.SORT_BY_NONE;
-        else
-          newSort = NHQO.SORT_BY_KEYWORD_ASCENDING;
-
-        break;
       case this.COLUMN_TYPE_DESCRIPTION:
         if (oldSort == NHQO.SORT_BY_ANNOTATION_ASCENDING &&
             oldSortingAnnotation == PlacesUIUtils.DESCRIPTION_ANNO) {
@@ -1691,8 +1669,13 @@ PlacesTreeView.prototype = {
     // We may only get here if the cell is editable.
     let node = this._rows[aRow];
     if (node.title != aText) {
-      let txn = new PlacesEditItemTitleTransaction(node.itemId, aText);
-      PlacesUtils.transactionManager.doTransaction(txn);
+      if (!PlacesUIUtils.useAsyncTransactions) {
+        let txn = new PlacesEditItemTitleTransaction(node.itemId, aText);
+        PlacesUtils.transactionManager.doTransaction(txn);
+        return;
+      }
+      PlacesTransactions.EditTitle({ guid: node.bookmarkGuid, title: aText })
+                        .transact().catch(Cu.reportError);
     }
   },
 

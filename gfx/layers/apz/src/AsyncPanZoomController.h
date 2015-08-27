@@ -10,6 +10,7 @@
 #include "CrossProcessMutex.h"
 #include "mozilla/layers/GeckoContentController.h"
 #include "mozilla/layers/APZCTreeManager.h"
+#include "mozilla/layers/AsyncPanZoomAnimation.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/EventForwards.h"
 #include "mozilla/Monitor.h"
@@ -21,6 +22,7 @@
 #include "Axis.h"
 #include "InputQueue.h"
 #include "APZUtils.h"
+#include "Layers.h"                     // for Layer::ScrollDirection
 #include "LayersTypes.h"
 #include "TaskThrottler.h"
 #include "mozilla/gfx/Matrix.h"
@@ -367,7 +369,11 @@ public:
 
   // Return whether or not a scroll delta will be able to scroll in either
   // direction.
-  bool CanScroll(double aDeltaX, double aDeltaY) const;
+  bool CanScrollWithWheel(const LayoutDevicePoint& aDelta) const;
+
+  // Return whether or not there is room to scroll this APZC
+  // in the given direction.
+  bool CanScroll(Layer::ScrollDirection aDirection) const;
 
   void NotifyMozMouseScrollEvent(const nsString& aString) const;
 
@@ -433,9 +439,7 @@ protected:
    */
   nsEventStatus OnScrollWheel(const ScrollWheelInput& aEvent);
 
-  void GetScrollWheelDelta(const ScrollWheelInput& aEvent,
-                           double& aOutDeltaX,
-                           double& aOutDeltaY) const;
+  LayoutDevicePoint GetScrollWheelDelta(const ScrollWheelInput& aEvent) const;
 
   /**
    * Helper methods for long press gestures.
@@ -603,12 +607,12 @@ protected:
   void FireAsyncScrollOnTimeout();
 
   /**
-   * Convert ScreenPoint relative to this APZC to CSSPoint relative
+   * Convert ScreenPoint relative to the screen to CSSPoint relative
    * to the parent document. This excludes the transient compositor transform.
    * NOTE: This must be converted to CSSPoint relative to the child
-   * document before sending over IPC.
+   * document before sending over IPC to a child process.
    */
-  bool ConvertToGecko(const ParentLayerPoint& aPoint, CSSPoint* aOut);
+  bool ConvertToGecko(const ScreenIntPoint& aPoint, CSSPoint* aOut);
 
   enum AxisLockMode {
     FREE,     /* No locking at all */
@@ -619,7 +623,7 @@ protected:
   static AxisLockMode GetAxisLockMode();
 
   // Helper function for OnSingleTapUp() and OnSingleTapConfirmed().
-  nsEventStatus GenerateSingleTap(const ParentLayerPoint& aPoint, mozilla::Modifiers aModifiers);
+  nsEventStatus GenerateSingleTap(const ScreenIntPoint& aPoint, mozilla::Modifiers aModifiers);
 
   // Common processing at the end of a touch block.
   void OnTouchEndOrCancel();
@@ -741,6 +745,7 @@ protected:
                                  the finger is lifted. */
     SMOOTH_SCROLL,            /* Smooth scrolling to destination. Used by
                                  CSSOM-View smooth scroll-behavior */
+    WHEEL_SCROLL              /* Smooth scrolling to a destination for a wheel event. */
   };
 
   // This is in theory protected by |mMonitor|; that is, it should be held whenever
@@ -838,6 +843,11 @@ private:
   friend class FlingAnimation;
   friend class OverscrollAnimation;
   friend class SmoothScrollAnimation;
+  friend class WheelScrollAnimation;
+
+  // Returns the cached current frame time.
+  static TimeStamp GetFrameTime();
+
   // The initial velocity of the most recent fling.
   ParentLayerPoint mLastFlingVelocity;
   // The time at which the most recent fling started.
@@ -1074,61 +1084,6 @@ private:
   // Flag to track whether or not the APZ transform is not used. This
   // flag is recomputed for every composition frame.
   bool mAsyncTransformAppliedToContent;
-};
-
-class AsyncPanZoomAnimation {
-  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(AsyncPanZoomAnimation)
-
-public:
-  explicit AsyncPanZoomAnimation(const TimeDuration& aRepaintInterval =
-                                 TimeDuration::Forever())
-    : mRepaintInterval(aRepaintInterval)
-  { }
-
-  virtual bool DoSample(FrameMetrics& aFrameMetrics,
-                        const TimeDuration& aDelta) = 0;
-
-  bool Sample(FrameMetrics& aFrameMetrics,
-              const TimeDuration& aDelta) {
-    // In some situations, particularly when handoff is involved, it's possible
-    // for |aDelta| to be negative on the first call to sample. Ignore such a
-    // sample here, to avoid each derived class having to deal with this case.
-    if (aDelta.ToMilliseconds() <= 0) {
-      return true;
-    }
-
-    return DoSample(aFrameMetrics, aDelta);
-  }
-
-  /**
-   * Get the deferred tasks in |mDeferredTasks|. See |mDeferredTasks|
-   * for more information.
-   * Clears |mDeferredTasks|.
-   */
-  Vector<Task*> TakeDeferredTasks() {
-    Vector<Task*> result;
-    mDeferredTasks.swap(result);
-    return result;
-  }
-
-  /**
-   * Specifies how frequently (at most) we want to do repaints during the
-   * animation sequence. TimeDuration::Forever() will cause it to only repaint
-   * at the end of the animation.
-   */
-  TimeDuration mRepaintInterval;
-
-protected:
-  // Protected destructor, to discourage deletion outside of Release():
-  virtual ~AsyncPanZoomAnimation()
-  { }
-
-  /**
-   * Tasks scheduled for execution after the APZC's mMonitor is released.
-   * Derived classes can add tasks here in Sample(), and the APZC can call
-   * ExecuteDeferredTasks() to execute them.
-   */
-  Vector<Task*> mDeferredTasks;
 };
 
 }

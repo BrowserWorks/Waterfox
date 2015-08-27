@@ -93,6 +93,7 @@ namespace jit {
     _(JSOP_BITNOT)             \
     _(JSOP_NEG)                \
     _(JSOP_NEWARRAY)           \
+    _(JSOP_SPREADCALLARRAY)    \
     _(JSOP_NEWARRAY_COPYONWRITE) \
     _(JSOP_INITELEM_ARRAY)     \
     _(JSOP_NEWOBJECT)          \
@@ -163,7 +164,7 @@ namespace jit {
     _(JSOP_INSTANCEOF)         \
     _(JSOP_TYPEOF)             \
     _(JSOP_TYPEOFEXPR)         \
-    _(JSOP_SETCALL)            \
+    _(JSOP_THROWMSG)           \
     _(JSOP_THROW)              \
     _(JSOP_THROWING)           \
     _(JSOP_TRY)                \

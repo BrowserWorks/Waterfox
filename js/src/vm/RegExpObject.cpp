@@ -269,6 +269,7 @@ const Class RegExpObject::class_ = {
     nullptr, /* setProperty */
     nullptr, /* enumerate */
     nullptr, /* resolve */
+    nullptr, /* mayResolve */
     nullptr, /* convert */
     nullptr, /* finalize */
     nullptr, /* call */
@@ -278,7 +279,7 @@ const Class RegExpObject::class_ = {
 
     // ClassSpec
     {
-        GenericCreateConstructor<js::regexp_construct, 2, JSFunction::FinalizeKind>,
+        GenericCreateConstructor<js::regexp_construct, 2, gc::AllocKind::FUNCTION>,
         CreateRegExpPrototype,
         nullptr,
         js::regexp_static_props,
@@ -589,12 +590,12 @@ RegExpShared::trace(JSTracer* trc)
         marked_ = true;
 
     if (source)
-        MarkString(trc, &source, "RegExpShared source");
+        TraceEdge(trc, &source, "RegExpShared source");
 
     for (size_t i = 0; i < ArrayLength(compilationArray); i++) {
         RegExpCompilation& compilation = compilationArray[i];
         if (compilation.jitCode)
-            MarkJitCode(trc, &compilation.jitCode, "RegExpShared code");
+            TraceEdge(trc, &compilation.jitCode, "RegExpShared code");
     }
 }
 
@@ -907,6 +908,9 @@ RegExpCompartment::init(JSContext* cx)
 void
 RegExpCompartment::sweep(JSRuntime* rt)
 {
+    if (!set_.initialized())
+        return;
+
     for (Set::Enum e(set_); !e.empty(); e.popFront()) {
         RegExpShared* shared = e.front();
 
@@ -920,11 +924,11 @@ RegExpCompartment::sweep(JSRuntime* rt)
         // the RegExpShared if it was accidentally marked earlier but wasn't
         // marked by the current trace.
         bool keep = shared->marked() &&
-                    IsStringMarkedFromAnyThread(&shared->source);
+                    IsMarked(&shared->source);
         for (size_t i = 0; i < ArrayLength(shared->compilationArray); i++) {
             RegExpShared::RegExpCompilation& compilation = shared->compilationArray[i];
             if (compilation.jitCode &&
-                IsJitCodeAboutToBeFinalizedFromAnyThread(compilation.jitCode.unsafeGet()))
+                IsAboutToBeFinalized(&compilation.jitCode))
             {
                 keep = false;
             }
@@ -938,7 +942,7 @@ RegExpCompartment::sweep(JSRuntime* rt)
     }
 
     if (matchResultTemplateObject_ &&
-        IsObjectAboutToBeFinalizedFromAnyThread(matchResultTemplateObject_.unsafeGet()))
+        IsAboutToBeFinalized(&matchResultTemplateObject_))
     {
         matchResultTemplateObject_.set(nullptr);
     }

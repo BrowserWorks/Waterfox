@@ -141,7 +141,7 @@ SpeechSynthesis::Speak(SpeechSynthesisUtterance& aUtterance)
   mSpeechQueue.AppendElement(&aUtterance);
   aUtterance.mState = SpeechSynthesisUtterance::STATE_PENDING;
 
-  if (mSpeechQueue.Length() == 1) {
+  if (mSpeechQueue.Length() == 1 && !mCurrentTask) {
     AdvanceQueue();
   }
 }
@@ -183,17 +183,20 @@ SpeechSynthesis::AdvanceQueue()
 void
 SpeechSynthesis::Cancel()
 {
-  mSpeechQueue.Clear();
-
   if (mCurrentTask) {
-    mCurrentTask->Cancel();
+   if (mSpeechQueue.Length() > 1) {
+      // Remove all queued utterances except for current one.
+      mSpeechQueue.RemoveElementsAt(1, mSpeechQueue.Length() - 1);
+    }
+
+   mCurrentTask->Cancel();
   }
 }
 
 void
 SpeechSynthesis::Pause()
 {
-  if (mCurrentTask) {
+  if (mCurrentTask && !Paused() && (Speaking() || Pending())) {
     mCurrentTask->Pause();
   }
 }
@@ -201,7 +204,7 @@ SpeechSynthesis::Pause()
 void
 SpeechSynthesis::Resume()
 {
-  if (mCurrentTask) {
+  if (mCurrentTask && Paused()) {
     mCurrentTask->Resume();
   }
 }

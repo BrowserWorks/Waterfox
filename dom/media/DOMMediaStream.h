@@ -15,8 +15,6 @@
 #include "mozilla/DOMEventTargetHelper.h"
 #include "mozilla/CORSMode.h"
 
-class nsXPCClassInfo;
-
 // GetCurrentTime is defined in winbase.h as zero argument macro forwarding to
 // GetTickCount() and conflicts with NS_DECL_NSIDOMMEDIASTREAM, containing
 // currentTime getter.
@@ -34,6 +32,7 @@ namespace mozilla {
 class DOMLocalMediaStream;
 class MediaStream;
 class MediaEngineSource;
+class MediaStreamGraph;
 
 namespace dom {
 class AudioNode;
@@ -180,14 +179,14 @@ public:
   /**
    * Create an nsDOMMediaStream whose underlying stream is a SourceMediaStream.
    */
-  static already_AddRefed<DOMMediaStream>
-  CreateSourceStream(nsIDOMWindow* aWindow);
+  static already_AddRefed<DOMMediaStream> CreateSourceStream(nsIDOMWindow* aWindow,
+                                                             MediaStreamGraph* aGraph = nullptr);
 
   /**
    * Create an nsDOMMediaStream whose underlying stream is a TrackUnionStream.
    */
-  static already_AddRefed<DOMMediaStream>
-  CreateTrackUnionStream(nsIDOMWindow* aWindow);
+  static already_AddRefed<DOMMediaStream> CreateTrackUnionStream(nsIDOMWindow* aWindow,
+                                                                 MediaStreamGraph* aGraph = nullptr);
 
   void SetLogicalStreamStartTime(StreamTime aTime)
   {
@@ -205,15 +204,14 @@ public:
     virtual ~OnTracksAvailableCallback() {}
     virtual void NotifyTracksAvailable(DOMMediaStream* aStream) = 0;
   };
-  // When one track of the appropriate type has been added for each bit set
-  // in aCallback->GetExpectedTracks(), run aCallback->NotifyTracksAvailable.
+  // When the initial set of tracks has been added, run
+  // aCallback->NotifyTracksAvailable.
   // It is allowed to do anything, including run script.
   // aCallback may run immediately during this call if tracks are already
   // available!
   // We only care about track additions, we'll fire the notification even if
   // some of the tracks have been removed.
   // Takes ownership of aCallback.
-  // If GetExpectedTracks() returns 0, the callback will be fired as soon as there are any tracks.
   void OnTracksAvailable(OnTracksAvailableCallback* aCallback);
 
   /**
@@ -249,8 +247,10 @@ protected:
   virtual ~DOMMediaStream();
 
   void Destroy();
-  void InitSourceStream(nsIDOMWindow* aWindow);
-  void InitTrackUnionStream(nsIDOMWindow* aWindow);
+  void InitSourceStream(nsIDOMWindow* aWindow,
+                        MediaStreamGraph* aGraph = nullptr);
+  void InitTrackUnionStream(nsIDOMWindow* aWindow,
+                            MediaStreamGraph* aGraph = nullptr);
   void InitStreamCommon(MediaStream* aStream);
   already_AddRefed<AudioTrack> CreateAudioTrack(AudioStreamTrack* aStreamTrack);
   already_AddRefed<VideoTrack> CreateVideoTrack(VideoStreamTrack* aStreamTrack);
@@ -331,13 +331,15 @@ public:
    * Create an nsDOMLocalMediaStream whose underlying stream is a SourceMediaStream.
    */
   static already_AddRefed<DOMLocalMediaStream>
-  CreateSourceStream(nsIDOMWindow* aWindow);
+  CreateSourceStream(nsIDOMWindow* aWindow,
+                     MediaStreamGraph* aGraph = nullptr);
 
   /**
    * Create an nsDOMLocalMediaStream whose underlying stream is a TrackUnionStream.
    */
   static already_AddRefed<DOMLocalMediaStream>
-  CreateTrackUnionStream(nsIDOMWindow* aWindow);
+  CreateTrackUnionStream(nsIDOMWindow* aWindow,
+                         MediaStreamGraph* aGraph = nullptr);
 
 protected:
   virtual ~DOMLocalMediaStream();
@@ -360,7 +362,8 @@ public:
    */
   static already_AddRefed<DOMAudioNodeMediaStream>
   CreateTrackUnionStream(nsIDOMWindow* aWindow,
-                         AudioNode* aNode);
+                         AudioNode* aNode,
+                         MediaStreamGraph* aGraph = nullptr);
 
 protected:
   ~DOMAudioNodeMediaStream();

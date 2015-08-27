@@ -1,7 +1,6 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
- * vim:cindent:ts=2:et:sw=2:
- *
- * This Source Code Form is subject to the terms of the Mozilla Public
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
@@ -288,20 +287,17 @@ nsPropertyTable::PropertyList::PropertyList(nsIAtom            *aName,
                                             void               *aDtorData,
                                             bool                aTransfer)
   : mName(aName),
+    mObjectValueMap(PL_DHashGetStubOps(), sizeof(PropertyListMapEntry)),
     mDtorFunc(aDtorFunc),
     mDtorData(aDtorData),
     mTransfer(aTransfer),
     mNext(nullptr)
 {
-  PL_DHashTableInit(&mObjectValueMap, PL_DHashGetStubOps(),
-                    sizeof(PropertyListMapEntry));
 }
 
 nsPropertyTable::PropertyList::~PropertyList()
 {
-  PL_DHashTableFinish(&mObjectValueMap);
 }
-
 
 static PLDHashOperator
 DestroyPropertyEnumerator(PLDHashTable *table, PLDHashEntryHdr *hdr,

@@ -14,8 +14,6 @@
 #include <d3d11.h>
 #include <vector>
 
-class gfxD2DSurface;
-
 namespace mozilla {
 namespace layers {
 
@@ -33,6 +31,14 @@ public:
                      TextureFlags aFlags);
 
   virtual ~TextureClientD3D11();
+
+  // Creates a TextureClient and init width.
+  static TemporaryRef<TextureClientD3D11>
+  Create(ISurfaceAllocator* aAllocator,
+         gfx::SurfaceFormat aFormat,
+         TextureFlags aFlags,
+         ID3D11Texture2D* aTexture,
+         gfx::IntSize aSize);
 
   // TextureClient
 
@@ -86,6 +92,20 @@ public:
 
   virtual ~DXGIYCbCrTextureClient();
 
+  // Creates a TextureClient and init width.
+  static TemporaryRef<DXGIYCbCrTextureClient>
+  Create(ISurfaceAllocator* aAllocator,
+         TextureFlags aFlags,
+         IUnknown* aTextureY,
+         IUnknown* aTextureCb,
+         IUnknown* aTextureCr,
+         HANDLE aHandleY,
+         HANDLE aHandleCb,
+         HANDLE aHandleCr,
+         const gfx::IntSize& aSize,
+         const gfx::IntSize& aSizeY,
+         const gfx::IntSize& aSizeCbCr);
+
   // TextureClient
 
   virtual bool IsAllocated() const override{ return !!mHoldRefs[0]; }
@@ -97,27 +117,6 @@ public:
   virtual bool IsLocked() const override{ return mIsLocked; }
 
   virtual bool ToSurfaceDescriptor(SurfaceDescriptor& aOutDescriptor) override;
-
-  void InitWith(IUnknown* aTextureY,
-                IUnknown* aTextureCb,
-                IUnknown* aTextureCr,
-                HANDLE aHandleY,
-                HANDLE aHandleCb,
-                HANDLE aHandleCr,
-                const gfx::IntSize& aSize,
-                const gfx::IntSize& aSizeY,
-                const gfx::IntSize& aSizeCbCr)
-  {
-    mHandles[0] = aHandleY;
-    mHandles[1] = aHandleCb;
-    mHandles[2] = aHandleCr;
-    mHoldRefs[0] = aTextureY;
-    mHoldRefs[1] = aTextureCb;
-    mHoldRefs[2] = aTextureCr;
-    mSize = aSize;
-    mSizeY = aSizeY;
-    mSizeCbCr = aSizeCbCr;
-  }
 
   virtual gfx::IntSize GetSize() const
   {
@@ -210,7 +209,7 @@ public:
 
   virtual bool NextTile() override { return (++mCurrentTile < mTileTextures.size()); }
 
-  virtual nsIntRect GetTileRect() override;
+  virtual gfx::IntRect GetTileRect() override;
 
   virtual void EndBigImageIteration() override { mIterating = false; }
 

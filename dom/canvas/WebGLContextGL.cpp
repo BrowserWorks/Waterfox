@@ -240,6 +240,7 @@ WebGLContext::BindTexture(GLenum rawTarget, WebGLTexture* newTex)
        default:
             return ErrorInvalidEnumInfo("bindTexture: target", rawTarget);
     }
+    const TexTarget target(rawTarget);
 
     if (newTex) {
         // silently ignore a deleted texture
@@ -250,29 +251,16 @@ WebGLContext::BindTexture(GLenum rawTarget, WebGLTexture* newTex)
             return ErrorInvalidOperation("bindTexture: this texture has already been bound to a different target");
     }
 
-    const TexTarget target(rawTarget);
-
-    WebGLTextureFakeBlackStatus currentTexFakeBlackStatus = WebGLTextureFakeBlackStatus::NotNeeded;
-    if (*currentTexPtr) {
-        currentTexFakeBlackStatus = (*currentTexPtr)->ResolvedFakeBlackStatus();
-    }
-    WebGLTextureFakeBlackStatus newTexFakeBlackStatus = WebGLTextureFakeBlackStatus::NotNeeded;
-    if (newTex) {
-        newTexFakeBlackStatus = newTex->ResolvedFakeBlackStatus();
-    }
-
     *currentTexPtr = newTex;
-
-    if (currentTexFakeBlackStatus != newTexFakeBlackStatus) {
-        SetFakeBlackStatus(WebGLContextFakeBlackStatus::Unknown);
-    }
 
     MakeContextCurrent();
 
-    if (newTex)
+    if (newTex) {
+        SetFakeBlackStatus(WebGLContextFakeBlackStatus::Unknown);
         newTex->Bind(target);
-    else
-        gl->fBindTexture(target.get(), 0 /* == texturename */);
+    } else {
+        gl->fBindTexture(target.get(), 0);
+    }
 }
 
 void WebGLContext::BlendEquation(GLenum mode)
@@ -3435,7 +3423,7 @@ WebGLContext::TexImage2D(GLenum rawTarget, GLint level,
 
 
 void
-WebGLContext::TexSubImage2D_base(TexImageTarget texImageTarget, GLint level,
+WebGLContext::TexSubImage2D_base(GLenum rawImageTarget, GLint level,
                                  GLint xoffset, GLint yoffset,
                                  GLsizei width, GLsizei height, GLsizei srcStrideOrZero,
                                  GLenum format, GLenum type,
@@ -3448,6 +3436,11 @@ WebGLContext::TexSubImage2D_base(TexImageTarget texImageTarget, GLint level,
 
     if (type == LOCAL_GL_HALF_FLOAT_OES)
         type = LOCAL_GL_HALF_FLOAT;
+
+    if (!ValidateTexImageTarget(rawImageTarget, func, dims))
+        return;
+
+    TexImageTarget texImageTarget(rawImageTarget);
 
     WebGLTexture* tex = ActiveBoundTextureForTexImageTarget(texImageTarget);
     if (!tex)

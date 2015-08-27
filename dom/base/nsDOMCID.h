@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -19,6 +20,9 @@
  { /* 45f27d10-987b-11d2-bd40-00105aa45e89 */        \
   0x45f27d10, 0x987b, 0x11d2,                        \
  {0xbd, 0x40, 0x00, 0x10, 0x5a, 0xa4, 0x5e, 0x89} }
+
+#define SERVICEWORKERPERIODICUPDATER_CONTRACTID \
+  "@mozilla.org/service-worker-periodic-updater;1"
 
 //The dom cannot provide the crypto or pkcs11 classes that
 //were used in older days, so if someone wants to provide

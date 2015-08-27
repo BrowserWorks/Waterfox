@@ -11,6 +11,8 @@ EXPORTS.mozilla.dom.cache += [
     'AutoUtils.h',
     'Cache.h',
     'CacheChild.h',
+    'CacheOpChild.h',
+    'CacheOpParent.h',
     'CacheParent.h',
     'CachePushStreamChild.h',
     'CachePushStreamParent.h',
@@ -23,7 +25,6 @@ EXPORTS.mozilla.dom.cache += [
     'DBAction.h',
     'DBSchema.h',
     'Feature.h',
-    'FetchPut.h',
     'FileUtils.h',
     'IPCUtils.h',
     'Manager.h',
@@ -35,7 +36,6 @@ EXPORTS.mozilla.dom.cache += [
     'SavedTypes.h',
     'StreamControl.h',
     'StreamList.h',
-    'StreamUtils.h',
     'Types.h',
     'TypeUtils.h',
 ]
@@ -46,6 +46,8 @@ UNIFIED_SOURCES += [
     'AutoUtils.cpp',
     'Cache.cpp',
     'CacheChild.cpp',
+    'CacheOpChild.cpp',
+    'CacheOpParent.cpp',
     'CacheParent.cpp',
     'CachePushStreamChild.cpp',
     'CachePushStreamParent.cpp',
@@ -58,7 +60,6 @@ UNIFIED_SOURCES += [
     'DBAction.cpp',
     'DBSchema.cpp',
     'Feature.cpp',
-    'FetchPut.cpp',
     'FileUtils.cpp',
     'Manager.cpp',
     'ManagerId.cpp',
@@ -68,17 +69,16 @@ UNIFIED_SOURCES += [
     'ReadStream.cpp',
     'StreamControl.cpp',
     'StreamList.cpp',
-    'StreamUtils.cpp',
     'TypeUtils.cpp',
 ]
 
 IPDL_SOURCES += [
-    'CacheInitData.ipdlh',
+    'CacheTypes.ipdlh',
     'PCache.ipdl',
+    'PCacheOp.ipdl',
     'PCachePushStream.ipdl',
     'PCacheStorage.ipdl',
     'PCacheStreamControl.ipdl',
-    'PCacheTypes.ipdlh',
 ]
 
 include('/ipc/chromium/chromium-config.mozbuild')
@@ -93,4 +93,8 @@ FINAL_LIBRARY = 'xul'
 
 MOCHITEST_MANIFESTS += [
     'test/mochitest/mochitest.ini',
+]
+
+MOCHITEST_CHROME_MANIFESTS += [
+    'test/mochitest/chrome.ini',
 ]

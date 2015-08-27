@@ -122,7 +122,8 @@ const NfcNotificationType = {
   INITIALIZED: "initialized",
   TECH_DISCOVERED: "techDiscovered",
   TECH_LOST: "techLost",
-  HCI_EVENT_TRANSACTION: "hciEventTransaction"
+  HCI_EVENT_TRANSACTION: "hciEventTransaction",
+  NDEF_RECEIVED: "ndefReceived"
 };
 
 XPCOMUtils.defineLazyServiceGetter(this, "ppmm",
@@ -612,6 +613,10 @@ Nfc.prototype = {
     message.target.sendAsyncMessage(nfcMsgType, message.data);
   },
 
+  getErrorMessage: function getErrorMessage(errorCode) {
+    return NFC.NFC_ERROR_MSG[errorCode];
+  },
+
   /**
    * Process the incoming message from the NFC Service.
    */
@@ -640,14 +645,7 @@ Nfc.prototype = {
         delete message.sessionId;
 
         if (SessionHelper.isP2PSession(sessionId)) {
-          if (message.records) {
-            // TODO: Bug 1082493.
-            // This event should be sent to the focus app, but before Bug 1082493
-            // is landed we forward this to System app.
-            gMessageManager.callDefaultFoundHandler(message);
-          } else {
-            gMessageManager.onPeerEvent(NFC.PEER_EVENT_FOUND, message.sessionToken);
-          }
+          gMessageManager.onPeerEvent(NFC.PEER_EVENT_FOUND, message.sessionToken);
         } else {
           gMessageManager.onTagFound(message);
         }
@@ -665,6 +663,15 @@ Nfc.prototype = {
         break;
       case NfcNotificationType.HCI_EVENT_TRANSACTION:
         this.notifyHCIEventTransaction(message);
+        break;
+      case NfcNotificationType.NDEF_RECEIVED:
+        message.sessionToken = SessionHelper.getToken(message.sessionId);
+        delete message.sessionId;
+        message.isP2P = true;
+        // TODO: Bug 1082493.
+        // This event should be sent to the focus app, but before Bug 1082493
+        // is landed we forward this to System app.
+        gMessageManager.callDefaultFoundHandler(message);
         break;
       case NfcResponseType.CHANGE_RF_STATE_RSP:
         this.sendNfcResponse(message);

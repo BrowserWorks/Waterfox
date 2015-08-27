@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-// vim:set et cin sw=2 sts=2:
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -171,6 +171,10 @@ class nsObjectLoadingContent : public nsImageLoadingContent
     bool DoResolve(JSContext* aCx, JS::Handle<JSObject*> aObject,
                    JS::Handle<jsid> aId,
                    JS::MutableHandle<JSPropertyDescriptor> aDesc);
+    // The return value is whether DoResolve might end up resolving the given
+    // id.  If in doubt, return true.
+    static bool MayResolve(jsid aId);
+
     // Helper for WebIDL enumeration
     void GetOwnPropertyNames(JSContext* aCx, nsTArray<nsString>& /* unused */,
                              mozilla::ErrorResult& aRv);
@@ -232,6 +236,18 @@ class nsObjectLoadingContent : public nsImageLoadingContent
                     const mozilla::dom::Sequence<JS::Value>& aArguments,
                     JS::MutableHandle<JS::Value> aRetval,
                     mozilla::ErrorResult& aRv);
+
+    uint32_t GetRunID(mozilla::ErrorResult& aRv)
+    {
+      uint32_t runID;
+      nsresult rv = GetRunID(&runID);
+      if (NS_FAILED(rv)) {
+        aRv.Throw(rv);
+        return 0;
+      }
+
+      return runID;
+    }
 
   protected:
     /**
@@ -578,6 +594,9 @@ class nsObjectLoadingContent : public nsImageLoadingContent
     ObjectType                  mType           : 8;
     // The type of fallback content we're showing (see ObjectState())
     FallbackType                mFallbackType : 8;
+
+    uint32_t                    mRunID;
+    bool                        mHasRunID;
 
     // If true, we have opened a channel as the listener and it has reached
     // OnStartRequest. Does not get set for channels that are passed directly to

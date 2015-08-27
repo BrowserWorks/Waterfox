@@ -133,14 +133,13 @@ EXPORTS.js += [
     '../public/WeakMapPtr.h',
 ]
 
-SOURCES += [
+UNIFIED_SOURCES += [
     'asmjs/AsmJSFrameIterator.cpp',
     'asmjs/AsmJSLink.cpp',
     'asmjs/AsmJSModule.cpp',
     'asmjs/AsmJSSignalHandlers.cpp',
     'asmjs/AsmJSValidate.cpp',
     'builtin/AtomicsObject.cpp',
-    'builtin/Eval.cpp',
     'builtin/Intl.cpp',
     'builtin/MapObject.cpp',
     'builtin/Object.cpp',
@@ -153,7 +152,6 @@ SOURCES += [
     'devtools/sharkctl.cpp',
     'ds/LifoAlloc.cpp',
     'frontend/BytecodeCompiler.cpp',
-    'frontend/BytecodeEmitter.cpp',
     'frontend/FoldConstants.cpp',
     'frontend/NameFunctions.cpp',
     'frontend/ParseMaps.cpp',
@@ -165,13 +163,9 @@ SOURCES += [
     'gc/Iteration.cpp',
     'gc/Marking.cpp',
     'gc/Memory.cpp',
-    'gc/Nursery.cpp',
-    'gc/RootMarking.cpp',
-    'gc/Statistics.cpp',
     'gc/StoreBuffer.cpp',
     'gc/Tracer.cpp',
     'gc/Verifier.cpp',
-    'gc/Zone.cpp',
     'irregexp/NativeRegExpMacroAssembler.cpp',
     'irregexp/RegExpAST.cpp',
     'irregexp/RegExpEngine.cpp',
@@ -183,14 +177,9 @@ SOURCES += [
     'jit/AlignmentMaskAnalysis.cpp',
     'jit/BacktrackingAllocator.cpp',
     'jit/Bailouts.cpp',
-    'jit/BaselineBailouts.cpp',
     'jit/BaselineCompiler.cpp',
-    'jit/BaselineDebugModeOSR.cpp',
-    'jit/BaselineFrame.cpp',
     'jit/BaselineFrameInfo.cpp',
-    'jit/BaselineIC.cpp',
     'jit/BaselineInspector.cpp',
-    'jit/BaselineJIT.cpp',
     'jit/BitSet.cpp',
     'jit/BytecodeAnalysis.cpp',
     'jit/C1Spewer.cpp',
@@ -207,12 +196,10 @@ SOURCES += [
     'jit/IonCaches.cpp',
     'jit/IonOptimizationLevels.cpp',
     'jit/JitcodeMap.cpp',
-    'jit/JitFrames.cpp',
     'jit/JitOptions.cpp',
     'jit/JitSpewer.cpp',
     'jit/JSONSpewer.cpp',
     'jit/LICM.cpp',
-    'jit/LinearScan.cpp',
     'jit/LIR.cpp',
     'jit/LiveRangeAllocator.cpp',
     'jit/LoopUnroller.cpp',
@@ -227,7 +214,6 @@ SOURCES += [
     'jit/RangeAnalysis.cpp',
     'jit/Recover.cpp',
     'jit/RegisterAllocator.cpp',
-    'jit/RematerializedFrame.cpp',
     'jit/Safepoints.cpp',
     'jit/ScalarReplacement.cpp',
     'jit/shared/BaselineCompiler-shared.cpp',
@@ -239,18 +225,14 @@ SOURCES += [
     'jit/TypedObjectPrediction.cpp',
     'jit/TypePolicy.cpp',
     'jit/ValueNumbering.cpp',
-    'jit/VMFunctions.cpp',
     'jsalloc.cpp',
-    'jsapi.cpp',
     'jsbool.cpp',
     'jscntxt.cpp',
-    'jscompartment.cpp',
     'jsdate.cpp',
     'jsdtoa.cpp',
     'jsexn.cpp',
     'jsfriendapi.cpp',
     'jsfun.cpp',
-    'jsgc.cpp',
     'jsiter.cpp',
     'jsnativestack.cpp',
     'jsnum.cpp',
@@ -260,7 +242,6 @@ SOURCES += [
     'jsprf.cpp',
     'jspropertytree.cpp',
     'jsreflect.cpp',
-    'jsscript.cpp',
     'jsstr.cpp',
     'jswatchpoint.cpp',
     'jsweakmap.cpp',
@@ -281,27 +262,21 @@ SOURCES += [
     'vm/CharacterEncoding.cpp',
     'vm/Compression.cpp',
     'vm/DateTime.cpp',
-    'vm/Debugger.cpp',
-    'vm/DebuggerMemory.cpp',
     'vm/ErrorObject.cpp',
     'vm/ForOfIterator.cpp',
     'vm/GeneratorObject.cpp',
     'vm/GlobalObject.cpp',
-    'vm/HelperThreads.cpp',
     'vm/Id.cpp',
-    'vm/Interpreter.cpp',
     'vm/JSONParser.cpp',
     'vm/MemoryMetrics.cpp',
     'vm/Monitor.cpp',
-    'vm/NativeObject.cpp',
     'vm/ObjectGroup.cpp',
     'vm/PIC.cpp',
     'vm/Probes.cpp',
     'vm/ProxyObject.cpp',
+    'vm/ReceiverGuard.cpp',
     'vm/RegExpObject.cpp',
     'vm/RegExpStatics.cpp',
-    'vm/Runtime.cpp',
-    'vm/SavedStacks.cpp',
     'vm/ScopeObject.cpp',
     'vm/SelfHosting.cpp',
     'vm/Shape.cpp',
@@ -314,13 +289,10 @@ SOURCES += [
     'vm/StructuredClone.cpp',
     'vm/Symbol.cpp',
     'vm/TypedArrayObject.cpp',
-    'vm/TypeInference.cpp',
-    'vm/UbiNode.cpp',
     'vm/UnboxedObject.cpp',
     'vm/Unicode.cpp',
     'vm/Value.cpp',
     'vm/WeakMapPtr.cpp',
-    'vm/Xdr.cpp'
 ]
 
 # jsarray.cpp and jsatom.cpp cannot be built in unified mode because
@@ -334,16 +306,44 @@ SOURCES += [
 # jsutil.cpp cannot be built in unified mode because it is needed for
 # check-vanilla-allocations.
 SOURCES += [
-    'builtin/RegExp.cpp',
-    'frontend/Parser.cpp',
-    'jsarray.cpp',
-    'jsatom.cpp',
-    'jsmath.cpp',
-    'jsutil.cpp',
+	'builtin/Eval.cpp',
+	'builtin/RegExp.cpp',
+	'frontend/BytecodeEmitter.cpp',
+	'frontend/Parser.cpp',
+	'gc/Nursery.cpp',
+	'gc/RootMarking.cpp',
+	'gc/Statistics.cpp',
+	'gc/Zone.cpp',
+	'jit/BaselineBailouts.cpp',
+	'jit/BaselineDebugModeOSR.cpp',
+	'jit/BaselineFrame.cpp',
+	'jit/BaselineIC.cpp',
+	'jit/BaselineJIT.cpp',
+	'jit/JitFrames.cpp',
+	'jit/RematerializedFrame.cpp',
+	'jit/VMFunctions.cpp',
+	'jsapi.cpp',
+	'jsarray.cpp',
+	'jsatom.cpp',
+	'jscompartment.cpp',
+	'jsgc.cpp',
+	'jsmath.cpp',
+	'jsscript.cpp',
+	'jsutil.cpp',
+	'vm/Debugger.cpp',
+	'vm/DebuggerMemory.cpp',
+	'vm/HelperThreads.cpp',
+	'vm/Interpreter.cpp',
+	'vm/NativeObject.cpp',
+	'vm/Runtime.cpp',
+	'vm/SavedStacks.cpp',
+	'vm/TypeInference.cpp',
+	'vm/UbiNode.cpp',
+	'vm/Xdr.cpp'
 ]
 
 if CONFIG['JS_POSIX_NSPR']:
-    SOURCES += [
+    UNIFIED_SOURCES += [
         'vm/PosixNSPR.cpp',
     ]
 
@@ -360,23 +360,24 @@ if CONFIG['ENABLE_TRACE_LOGGING']:
     ]
 
 if not CONFIG['ENABLE_ION']:
-    SOURCES += [
+    UNIFIED_SOURCES += [
         'jit/none/Trampoline-none.cpp'
     ]
 elif CONFIG['JS_CODEGEN_X86'] or CONFIG['JS_CODEGEN_X64']:
-    SOURCES += [
-        'jit/shared/Assembler-x86-shared.cpp',
-        'jit/shared/AssemblerBuffer-x86-shared.cpp',
-        'jit/shared/BaselineCompiler-x86-shared.cpp',
-        'jit/shared/BaselineIC-x86-shared.cpp',
-        'jit/shared/CodeGenerator-x86-shared.cpp',
-        'jit/shared/Disassembler-x86-shared.cpp',
-        'jit/shared/Lowering-x86-shared.cpp',
-        'jit/shared/MacroAssembler-x86-shared.cpp',
-        'jit/shared/MoveEmitter-x86-shared.cpp',
+    UNIFIED_SOURCES += [
+        'jit/x86-shared/Architecture-x86-shared.cpp',
+        'jit/x86-shared/Assembler-x86-shared.cpp',
+        'jit/x86-shared/AssemblerBuffer-x86-shared.cpp',
+        'jit/x86-shared/BaselineCompiler-x86-shared.cpp',
+        'jit/x86-shared/BaselineIC-x86-shared.cpp',
+        'jit/x86-shared/CodeGenerator-x86-shared.cpp',
+        'jit/x86-shared/Disassembler-x86-shared.cpp',
+        'jit/x86-shared/Lowering-x86-shared.cpp',
+        'jit/x86-shared/MacroAssembler-x86-shared.cpp',
+        'jit/x86-shared/MoveEmitter-x86-shared.cpp',
     ]
     if CONFIG['JS_CODEGEN_X64']:
-        SOURCES += [
+        UNIFIED_SOURCES += [
             'jit/x64/Assembler-x64.cpp',
             'jit/x64/Bailouts-x64.cpp',
             'jit/x64/BaselineCompiler-x64.cpp',
@@ -387,7 +388,7 @@ elif CONFIG['JS_CODEGEN_X86'] or CONFIG['JS_CODEGEN_X64']:
             'jit/x64/Trampoline-x64.cpp',
         ]
     else:
-        SOURCES += [
+        UNIFIED_SOURCES += [
             'jit/x86/Assembler-x86.cpp',
             'jit/x86/Bailouts-x86.cpp',
             'jit/x86/BaselineCompiler-x86.cpp',
@@ -398,7 +399,7 @@ elif CONFIG['JS_CODEGEN_X86'] or CONFIG['JS_CODEGEN_X64']:
             'jit/x86/Trampoline-x86.cpp',
         ]
 elif CONFIG['JS_CODEGEN_ARM']:
-    SOURCES += [
+    UNIFIED_SOURCES += [
         'jit/arm/Architecture-arm.cpp',
         'jit/arm/Assembler-arm.cpp',
         'jit/arm/Bailouts-arm.cpp',
@@ -411,11 +412,11 @@ elif CONFIG['JS_CODEGEN_ARM']:
         'jit/arm/Trampoline-arm.cpp',
     ]
     if CONFIG['JS_ARM_SIMULATOR']:
-        SOURCES += [
+        UNIFIED_SOURCES += [
             'jit/arm/Simulator-arm.cpp'
         ]
 elif CONFIG['JS_CODEGEN_MIPS']:
-    SOURCES += [
+    UNIFIED_SOURCES += [
         'jit/mips/Architecture-mips.cpp',
         'jit/mips/Assembler-mips.cpp',
         'jit/mips/Bailouts-mips.cpp',
@@ -428,7 +429,7 @@ elif CONFIG['JS_CODEGEN_MIPS']:
         'jit/mips/Trampoline-mips.cpp',
     ]
     if CONFIG['JS_MIPS_SIMULATOR']:
-        SOURCES += [
+        UNIFIED_SOURCES += [
             'jit/mips/Simulator-mips.cpp'
         ]
 
@@ -467,8 +468,6 @@ else:
     SOURCES += [
         'perf/pm_stub.cpp'
     ]
-
-MSVC_ENABLE_PGO = True
 
 HostSimplePrograms([
     'host_jskwgen',

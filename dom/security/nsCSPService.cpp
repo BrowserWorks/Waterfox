@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -159,7 +160,7 @@ CSPService::ShouldLoad(uint32_t aContentType,
 
   if (status == nsIPrincipal::APP_STATUS_CERTIFIED) {
     // The CSP for certified apps is :
-    // "default-src *; script-src 'self'; object-src 'none'; style-src 'self' app://theme.gaiamobile.org:*"
+    // "default-src * data: blob:; script-src 'self'; object-src 'none'; style-src 'self' app://theme.gaiamobile.org:*"
     // That means we can optimize for this case by:
     // - loading same origin scripts and stylesheets, and stylesheets from the
     //   theme url space.

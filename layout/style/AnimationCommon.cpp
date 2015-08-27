@@ -21,6 +21,7 @@
 #include "FrameLayerBuilder.h"
 #include "nsDisplayList.h"
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/dom/KeyframeEffect.h"
 #include "RestyleManager.h"
 #include "nsRuleProcessorData.h"
 #include "nsStyleSet.h"
@@ -28,8 +29,8 @@
 
 
 using mozilla::layers::Layer;
-using mozilla::dom::AnimationPlayer;
 using mozilla::dom::Animation;
+using mozilla::dom::KeyframeEffectReadOnly;
 
 namespace mozilla {
 
@@ -73,8 +74,7 @@ CommonAnimationManager::Disconnect()
 }
 
 void
-CommonAnimationManager::AddElementCollection(AnimationPlayerCollection*
-                                               aCollection)
+CommonAnimationManager::AddElementCollection(AnimationCollection* aCollection)
 {
   if (!mIsObservingRefreshDriver) {
     NS_ASSERTION(aCollection->mNeedsRefreshes,
@@ -91,63 +91,66 @@ void
 CommonAnimationManager::RemoveAllElementCollections()
 {
   while (!PR_CLIST_IS_EMPTY(&mElementCollections)) {
-    AnimationPlayerCollection* head =
-      static_cast<AnimationPlayerCollection*>(
-        PR_LIST_HEAD(&mElementCollections));
+    AnimationCollection* head =
+      static_cast<AnimationCollection*>(PR_LIST_HEAD(&mElementCollections));
     head->Destroy();
   }
 }
 
 void
-CommonAnimationManager::CheckNeedsRefresh()
+CommonAnimationManager::MaybeStartObservingRefreshDriver()
+{
+  if (mIsObservingRefreshDriver || !NeedsRefresh()) {
+    return;
+  }
+
+  mPresContext->RefreshDriver()->AddRefreshObserver(this, Flush_Style);
+  mIsObservingRefreshDriver = true;
+}
+
+void
+CommonAnimationManager::MaybeStartOrStopObservingRefreshDriver()
+{
+  bool needsRefresh = NeedsRefresh();
+  if (needsRefresh && !mIsObservingRefreshDriver) {
+    mPresContext->RefreshDriver()->AddRefreshObserver(this, Flush_Style);
+  } else if (!needsRefresh && mIsObservingRefreshDriver) {
+    mPresContext->RefreshDriver()->RemoveRefreshObserver(this, Flush_Style);
+  }
+  mIsObservingRefreshDriver = needsRefresh;
+}
+
+bool
+CommonAnimationManager::NeedsRefresh() const
 {
   for (PRCList *l = PR_LIST_HEAD(&mElementCollections);
        l != &mElementCollections;
        l = PR_NEXT_LINK(l)) {
-    if (static_cast<AnimationPlayerCollection*>(l)->mNeedsRefreshes) {
-      if (!mIsObservingRefreshDriver) {
-        mPresContext->RefreshDriver()->AddRefreshObserver(this, Flush_Style);
-        mIsObservingRefreshDriver = true;
-      }
-      return;
+    if (static_cast<AnimationCollection*>(l)->mNeedsRefreshes) {
+      return true;
     }
   }
-  if (mIsObservingRefreshDriver) {
-    mIsObservingRefreshDriver = false;
-    mPresContext->RefreshDriver()->RemoveRefreshObserver(this, Flush_Style);
-  }
+  return false;
 }
 
-AnimationPlayerCollection*
+AnimationCollection*
 CommonAnimationManager::GetAnimationsForCompositor(nsIContent* aContent,
                                                    nsIAtom* aElementProperty,
                                                    nsCSSProperty aProperty)
 {
   if (!aContent->MayHaveAnimations())
     return nullptr;
-  AnimationPlayerCollection* collection =
-    static_cast<AnimationPlayerCollection*>(
-      aContent->GetProperty(aElementProperty));
+
+  AnimationCollection* collection =
+    static_cast<AnimationCollection*>(aContent->GetProperty(aElementProperty));
   if (!collection ||
       !collection->HasAnimationOfProperty(aProperty) ||
       !collection->CanPerformOnCompositorThread(
-        AnimationPlayerCollection::CanAnimate_AllowPartial)) {
+        AnimationCollection::CanAnimate_AllowPartial)) {
     return nullptr;
   }
 
   // This animation can be done on the compositor.
-  // Mark the frame as active, in case we are able to throttle this animation.
-  nsIFrame* frame = nsLayoutUtils::GetStyleFrame(collection->mElement);
-  if (frame) {
-    const auto& info = sLayerAnimationInfo;
-    for (size_t i = 0; i < ArrayLength(info); i++) {
-      if (aProperty == info[i].mProperty) {
-        ActiveLayerTracker::NotifyAnimated(frame, aProperty);
-        break;
-      }
-    }
-  }
-
   return collection;
 }
 
@@ -257,8 +260,7 @@ CommonAnimationManager::AddStyleUpdatesTo(RestyleTracker& aTracker)
 
   PRCList* next = PR_LIST_HEAD(&mElementCollections);
   while (next != &mElementCollections) {
-    AnimationPlayerCollection* collection =
-      static_cast<AnimationPlayerCollection*>(next);
+    AnimationCollection* collection = static_cast<AnimationCollection*>(next);
     next = PR_NEXT_LINK(next);
 
     collection->EnsureStyleRuleFor(now, EnsureStyleRule_IsNotThrottled);
@@ -273,10 +275,10 @@ CommonAnimationManager::AddStyleUpdatesTo(RestyleTracker& aTracker)
 }
 
 void
-CommonAnimationManager::NotifyCollectionUpdated(AnimationPlayerCollection&
+CommonAnimationManager::NotifyCollectionUpdated(AnimationCollection&
                                                   aCollection)
 {
-  CheckNeedsRefresh();
+  MaybeStartObservingRefreshDriver();
   mPresContext->ClearLastStyleUpdateForAllAnimations();
   mPresContext->RestyleManager()->IncrementAnimationGeneration();
   aCollection.UpdateAnimationGeneration(mPresContext);
@@ -302,10 +304,10 @@ CommonAnimationManager::ExtractComputedValueForTransition(
   return result;
 }
 
-AnimationPlayerCollection*
-CommonAnimationManager::GetAnimationPlayers(dom::Element *aElement,
-                                            nsCSSPseudoElements::Type aPseudoType,
-                                            bool aCreateIfNeeded)
+AnimationCollection*
+CommonAnimationManager::GetAnimations(dom::Element *aElement,
+                                      nsCSSPseudoElements::Type aPseudoType,
+                                      bool aCreateIfNeeded)
 {
   if (!aCreateIfNeeded && PR_CLIST_IS_EMPTY(&mElementCollections)) {
     // Early return for the most common case.
@@ -325,15 +327,14 @@ CommonAnimationManager::GetAnimationPlayers(dom::Element *aElement,
                  "other than :before or :after");
     return nullptr;
   }
-  AnimationPlayerCollection* collection =
-    static_cast<AnimationPlayerCollection*>(aElement->GetProperty(propName));
+  AnimationCollection* collection =
+    static_cast<AnimationCollection*>(aElement->GetProperty(propName));
   if (!collection && aCreateIfNeeded) {
     // FIXME: Consider arena-allocating?
-    collection =
-      new AnimationPlayerCollection(aElement, propName, this);
+    collection = new AnimationCollection(aElement, propName, this);
     nsresult rv =
       aElement->SetProperty(propName, collection,
-                            &AnimationPlayerCollection::PropertyDtor, false);
+                            &AnimationCollection::PropertyDtor, false);
     if (NS_FAILED(rv)) {
       NS_WARNING("SetProperty failed");
       delete collection;
@@ -365,8 +366,8 @@ CommonAnimationManager::GetAnimationRule(mozilla::dom::Element* aElement,
     return nullptr;
   }
 
-  AnimationPlayerCollection* collection =
-    GetAnimationPlayers(aElement, aPseudoType, false);
+  AnimationCollection* collection =
+    GetAnimations(aElement, aPseudoType, false);
   if (!collection) {
     return nullptr;
   }
@@ -376,23 +377,9 @@ CommonAnimationManager::GetAnimationRule(mozilla::dom::Element* aElement,
     return nullptr;
   }
 
-  // Animations should already be refreshed, but transitions may not be.
-  // Note that this is temporary, we would like both animations and transitions
-  // to both be refreshed by this point.
-  if (IsAnimationManager()) {
-    NS_WARN_IF_FALSE(!collection->mNeedsRefreshes ||
-                     collection->mStyleRuleRefreshTime ==
-                       mPresContext->RefreshDriver()->MostRecentRefresh(),
-                     "should already have refreshed style rule");
-  } else {
-    // FIXME: Remove this assignment.  See bug 1061364.
-    TimeStamp now = mPresContext->RefreshDriver()->MostRecentRefresh();
-    if (collection->mStyleRuleRefreshTime.IsNull() ||
-        collection->mStyleRuleRefreshTime != now) {
-      collection->mNeedsRefreshes = true;
-    }
-    collection->EnsureStyleRuleFor(now, EnsureStyleRule_IsNotThrottled);
-  }
+  collection->EnsureStyleRuleFor(
+    mPresContext->RefreshDriver()->MostRecentRefresh(),
+    EnsureStyleRule_IsNotThrottled);
 
   return collection->mStyleRule;
 }
@@ -405,6 +392,57 @@ CommonAnimationManager::GetAnimationRule(mozilla::dom::Element* aElement,
       { eCSSProperty_opacity,
         nsDisplayItem::TYPE_OPACITY,
         nsChangeHint_UpdateOpacityLayer } };
+
+/* static */ const CommonAnimationManager::LayerAnimationRecord*
+CommonAnimationManager::LayerAnimationRecordFor(nsCSSProperty aProperty)
+{
+  MOZ_ASSERT(nsCSSProps::PropHasFlags(aProperty,
+                                      CSS_PROPERTY_CAN_ANIMATE_ON_COMPOSITOR),
+             "unexpected property");
+  const auto& info = sLayerAnimationInfo;
+  for (size_t i = 0; i < ArrayLength(info); ++i) {
+    if (aProperty == info[i].mProperty) {
+      return &info[i];
+    }
+  }
+  return nullptr;
+}
+
+#ifdef DEBUG
+/* static */ void
+CommonAnimationManager::Initialize()
+{
+  const auto& info = css::CommonAnimationManager::sLayerAnimationInfo;
+  for (size_t i = 0; i < ArrayLength(info); i++) {
+    auto record = info[i];
+    MOZ_ASSERT(nsCSSProps::PropHasFlags(record.mProperty,
+                                        CSS_PROPERTY_CAN_ANIMATE_ON_COMPOSITOR),
+               "CSS property with entry in sLayerAnimationInfo does not "
+               "have the CSS_PROPERTY_CAN_ANIMATE_ON_COMPOSITOR flag");
+  }
+
+  // Check that every property with the flag for animating on the
+  // compositor has an entry in sLayerAnimationInfo.
+  for (nsCSSProperty prop = nsCSSProperty(0);
+       prop < eCSSProperty_COUNT;
+       prop = nsCSSProperty(prop + 1)) {
+    if (nsCSSProps::PropHasFlags(prop,
+                                 CSS_PROPERTY_CAN_ANIMATE_ON_COMPOSITOR)) {
+      bool found = false;
+      for (size_t i = 0; i < ArrayLength(info); i++) {
+        auto record = info[i];
+        if (record.mProperty == prop) {
+          found = true;
+          break;
+        }
+      }
+      MOZ_ASSERT(found,
+                 "CSS property with the CSS_PROPERTY_CAN_ANIMATE_ON_COMPOSITOR "
+                 "flag does not have an entry in sLayerAnimationInfo");
+    }
+  }
+}
+#endif
 
 NS_IMPL_ISUPPORTS(AnimValuesStyleRule, nsIStyleRule)
 
@@ -462,7 +500,7 @@ AnimValuesStyleRule::List(FILE* out, int32_t aIndent) const
 } /* end sub-namespace css */
 
 bool
-AnimationPlayerCollection::CanAnimatePropertyOnCompositor(
+AnimationCollection::CanAnimatePropertyOnCompositor(
   const dom::Element *aElement,
   nsCSSProperty aProperty,
   CanAnimateFlags aFlags)
@@ -528,7 +566,7 @@ AnimationPlayerCollection::CanAnimatePropertyOnCompositor(
 }
 
 /* static */ bool
-AnimationPlayerCollection::IsCompositorAnimationDisabledForFrame(
+AnimationCollection::IsCompositorAnimationDisabledForFrame(
   nsIFrame* aFrame)
 {
   void* prop = aFrame->Properties().Get(nsIFrame::RefusedAsyncAnimation());
@@ -536,7 +574,7 @@ AnimationPlayerCollection::IsCompositorAnimationDisabledForFrame(
 }
 
 bool
-AnimationPlayerCollection::CanPerformOnCompositorThread(
+AnimationCollection::CanPerformOnCompositorThread(
   CanAnimateFlags aFlags) const
 {
   nsIFrame* frame = nsLayoutUtils::GetStyleFrame(mElement);
@@ -557,18 +595,18 @@ AnimationPlayerCollection::CanPerformOnCompositorThread(
     return false;
   }
 
-  for (size_t playerIdx = mPlayers.Length(); playerIdx-- != 0; ) {
-    const AnimationPlayer* player = mPlayers[playerIdx];
-    if (!player->IsPlaying()) {
+  for (size_t animIdx = mAnimations.Length(); animIdx-- != 0; ) {
+    const Animation* anim = mAnimations[animIdx];
+    if (!anim->IsPlaying()) {
       continue;
     }
 
-    const Animation* anim = player->GetSource();
-    MOZ_ASSERT(anim, "A playing player should have a source animation");
+    const KeyframeEffectReadOnly* effect = anim->GetEffect();
+    MOZ_ASSERT(effect, "A playing animation should have an effect");
 
-    for (size_t propIdx = 0, propEnd = anim->Properties().Length();
+    for (size_t propIdx = 0, propEnd = effect->Properties().Length();
          propIdx != propEnd; ++propIdx) {
-      if (IsGeometricProperty(anim->Properties()[propIdx].mProperty)) {
+      if (IsGeometricProperty(effect->Properties()[propIdx].mProperty)) {
         aFlags = CanAnimateFlags(aFlags | CanAnimate_HasGeometricProperty);
         break;
       }
@@ -576,20 +614,20 @@ AnimationPlayerCollection::CanPerformOnCompositorThread(
   }
 
   bool existsProperty = false;
-  for (size_t playerIdx = mPlayers.Length(); playerIdx-- != 0; ) {
-    const AnimationPlayer* player = mPlayers[playerIdx];
-    if (!player->IsPlaying()) {
+  for (size_t animIdx = mAnimations.Length(); animIdx-- != 0; ) {
+    const Animation* anim = mAnimations[animIdx];
+    if (!anim->IsPlaying()) {
       continue;
     }
 
-    const Animation* anim = player->GetSource();
-    MOZ_ASSERT(anim, "A playing player should have a source animation");
+    const KeyframeEffectReadOnly* effect = anim->GetEffect();
+    MOZ_ASSERT(effect, "A playing animation should have an effect");
 
-    existsProperty = existsProperty || anim->Properties().Length() > 0;
+    existsProperty = existsProperty || effect->Properties().Length() > 0;
 
-    for (size_t propIdx = 0, propEnd = anim->Properties().Length();
+    for (size_t propIdx = 0, propEnd = effect->Properties().Length();
          propIdx != propEnd; ++propIdx) {
-      const AnimationProperty& prop = anim->Properties()[propIdx];
+      const AnimationProperty& prop = effect->Properties()[propIdx];
       if (!CanAnimatePropertyOnCompositor(mElement,
                                           prop.mProperty,
                                           aFlags) ||
@@ -607,14 +645,37 @@ AnimationPlayerCollection::CanPerformOnCompositorThread(
   return true;
 }
 
-bool
-AnimationPlayerCollection::HasAnimationOfProperty(
-  nsCSSProperty aProperty) const
+void
+AnimationCollection::PostUpdateLayerAnimations()
 {
-  for (size_t playerIdx = mPlayers.Length(); playerIdx-- != 0; ) {
-    const Animation* anim = mPlayers[playerIdx]->GetSource();
-    if (anim && anim->HasAnimationOfProperty(aProperty) &&
-        !anim->IsFinishedTransition()) {
+  nsCSSPropertySet propsHandled;
+  for (size_t animIdx = mAnimations.Length(); animIdx-- != 0; ) {
+    const auto& properties = mAnimations[animIdx]->GetEffect()->Properties();
+    for (size_t propIdx = properties.Length(); propIdx-- != 0; ) {
+      nsCSSProperty prop = properties[propIdx].mProperty;
+      if (nsCSSProps::PropHasFlags(prop,
+                                   CSS_PROPERTY_CAN_ANIMATE_ON_COMPOSITOR) &&
+          !propsHandled.HasProperty(prop)) {
+        propsHandled.AddProperty(prop);
+        nsChangeHint changeHint = css::CommonAnimationManager::
+          LayerAnimationRecordFor(prop)->mChangeHint;
+        dom::Element* element = GetElementToRestyle();
+        if (element) {
+          mManager->mPresContext->RestyleManager()->
+            PostRestyleEvent(element, nsRestyleHint(0), changeHint);
+        }
+      }
+    }
+  }
+}
+
+bool
+AnimationCollection::HasAnimationOfProperty(nsCSSProperty aProperty) const
+{
+  for (size_t animIdx = mAnimations.Length(); animIdx-- != 0; ) {
+    const KeyframeEffectReadOnly* effect = mAnimations[animIdx]->GetEffect();
+    if (effect && effect->HasAnimationOfProperty(aProperty) &&
+        !effect->IsFinishedTransition()) {
       return true;
     }
   }
@@ -622,7 +683,7 @@ AnimationPlayerCollection::HasAnimationOfProperty(
 }
 
 mozilla::dom::Element*
-AnimationPlayerCollection::GetElementToRestyle() const
+AnimationCollection::GetElementToRestyle() const
 {
   if (IsForElement()) {
     return mElement;
@@ -648,7 +709,7 @@ AnimationPlayerCollection::GetElementToRestyle() const
 }
 
 void
-AnimationPlayerCollection::NotifyPlayerUpdated()
+AnimationCollection::NotifyAnimationUpdated()
 {
   // On the next flush, force us to update the style rule
   mNeedsRefreshes = true;
@@ -658,7 +719,7 @@ AnimationPlayerCollection::NotifyPlayerUpdated()
 }
 
 /* static */ void
-AnimationPlayerCollection::LogAsyncAnimationFailure(nsCString& aMessage,
+AnimationCollection::LogAsyncAnimationFailure(nsCString& aMessage,
                                                      const nsIContent* aContent)
 {
   if (aContent) {
@@ -678,11 +739,11 @@ AnimationPlayerCollection::LogAsyncAnimationFailure(nsCString& aMessage,
 }
 
 /*static*/ void
-AnimationPlayerCollection::PropertyDtor(void *aObject, nsIAtom *aPropertyName,
-                                         void *aPropertyValue, void *aData)
+AnimationCollection::PropertyDtor(void *aObject, nsIAtom *aPropertyName,
+                                  void *aPropertyValue, void *aData)
 {
-  AnimationPlayerCollection* collection =
-    static_cast<AnimationPlayerCollection*>(aPropertyValue);
+  AnimationCollection* collection =
+    static_cast<AnimationCollection*>(aPropertyValue);
 #ifdef DEBUG
   MOZ_ASSERT(!collection->mCalledPropertyDtor, "can't call dtor twice");
   collection->mCalledPropertyDtor = true;
@@ -691,20 +752,26 @@ AnimationPlayerCollection::PropertyDtor(void *aObject, nsIAtom *aPropertyName,
 }
 
 void
-AnimationPlayerCollection::Tick()
+AnimationCollection::Tick()
 {
-  for (size_t playerIdx = 0, playerEnd = mPlayers.Length();
-       playerIdx != playerEnd; playerIdx++) {
-    mPlayers[playerIdx]->Tick();
+  for (size_t animIdx = 0, animEnd = mAnimations.Length();
+       animIdx != animEnd; animIdx++) {
+    mAnimations[animIdx]->Tick();
   }
 }
 
 void
-AnimationPlayerCollection::EnsureStyleRuleFor(TimeStamp aRefreshTime,
-                                              EnsureStyleRuleFlags aFlags)
+AnimationCollection::EnsureStyleRuleFor(TimeStamp aRefreshTime,
+                                        EnsureStyleRuleFlags aFlags)
 {
   if (!mNeedsRefreshes) {
     mStyleRuleRefreshTime = aRefreshTime;
+    return;
+  }
+
+  if (!mStyleRuleRefreshTime.IsNull() &&
+      mStyleRuleRefreshTime == aRefreshTime) {
+    // mStyleRule may be null and valid, if we have no style to apply.
     return;
   }
 
@@ -715,8 +782,8 @@ AnimationPlayerCollection::EnsureStyleRuleFor(TimeStamp aRefreshTime,
   // mode behavior). CanThrottle returns false for any finishing animations
   // so we can force style recalculation in that case.
   if (aFlags == EnsureStyleRule_IsThrottled) {
-    for (size_t playerIdx = mPlayers.Length(); playerIdx-- != 0; ) {
-      if (!mPlayers[playerIdx]->CanThrottle()) {
+    for (size_t animIdx = mAnimations.Length(); animIdx-- != 0; ) {
+      if (!mAnimations[animIdx]->CanThrottle()) {
         aFlags = EnsureStyleRule_IsNotThrottled;
         break;
       }
@@ -727,39 +794,32 @@ AnimationPlayerCollection::EnsureStyleRuleFor(TimeStamp aRefreshTime,
     return;
   }
 
-  // mStyleRule may be null and valid, if we have no style to apply.
-  if (mStyleRuleRefreshTime.IsNull() ||
-      mStyleRuleRefreshTime != aRefreshTime) {
-    mStyleRuleRefreshTime = aRefreshTime;
-    mStyleRule = nullptr;
-    // We'll set mNeedsRefreshes to true below in all cases where we need them.
-    mNeedsRefreshes = false;
-
-    // If multiple animations specify behavior for the same property the
-    // animation which occurs last in the value of animation-name wins.
-    // As a result, we iterate from last animation to first and, if a
-    // property has already been set, we don't leave it.
-    nsCSSPropertySet properties;
-
-    for (size_t playerIdx = mPlayers.Length(); playerIdx-- != 0; ) {
-      mPlayers[playerIdx]->ComposeStyle(mStyleRule, properties,
-                                        mNeedsRefreshes);
-    }
-  }
-
-  mManager->CheckNeedsRefresh();
-
-  // If one of our animations just started or stopped filling, we need
-  // to notify the transition manager.  This does the notification a bit
-  // more than necessary, but it's easier than doing it exactly.
   if (mManager->IsAnimationManager()) {
-    mManager->mPresContext->TransitionManager()->
-      UpdateCascadeResultsWithAnimations(this);
+    // Update cascade results before updating the style rule, since the
+    // cascade results can influence the style rule.
+    static_cast<nsAnimationManager*>(mManager)->MaybeUpdateCascadeResults(this);
   }
+
+  mStyleRuleRefreshTime = aRefreshTime;
+  mStyleRule = nullptr;
+  // We'll set mNeedsRefreshes to true below in all cases where we need them.
+  mNeedsRefreshes = false;
+
+  // If multiple animations specify behavior for the same property the
+  // animation which occurs last in the value of animation-name wins.
+  // As a result, we iterate from last animation to first and, if a
+  // property has already been set, we don't leave it.
+  nsCSSPropertySet properties;
+
+  for (size_t animIdx = mAnimations.Length(); animIdx-- != 0; ) {
+    mAnimations[animIdx]->ComposeStyle(mStyleRule, properties, mNeedsRefreshes);
+  }
+
+  mManager->MaybeStartObservingRefreshDriver();
 }
 
 bool
-AnimationPlayerCollection::CanThrottleTransformChanges(TimeStamp aTime)
+AnimationCollection::CanThrottleTransformChanges(TimeStamp aTime)
 {
   if (!nsLayoutUtils::AreAsyncAnimationsEnabled()) {
     return false;
@@ -798,7 +858,7 @@ AnimationPlayerCollection::CanThrottleTransformChanges(TimeStamp aTime)
 }
 
 bool
-AnimationPlayerCollection::CanThrottleAnimation(TimeStamp aTime)
+AnimationCollection::CanThrottleAnimation(TimeStamp aTime)
 {
   nsIFrame* frame = nsLayoutUtils::GetStyleFrame(mElement);
   if (!frame) {
@@ -829,15 +889,14 @@ AnimationPlayerCollection::CanThrottleAnimation(TimeStamp aTime)
 }
 
 void
-AnimationPlayerCollection::UpdateAnimationGeneration(
-  nsPresContext* aPresContext)
+AnimationCollection::UpdateAnimationGeneration(nsPresContext* aPresContext)
 {
   mAnimationGeneration =
     aPresContext->RestyleManager()->GetAnimationGeneration();
 }
 
 void
-AnimationPlayerCollection::UpdateCheckGeneration(
+AnimationCollection::UpdateCheckGeneration(
   nsPresContext* aPresContext)
 {
   mCheckGeneration =
@@ -845,10 +904,10 @@ AnimationPlayerCollection::UpdateCheckGeneration(
 }
 
 bool
-AnimationPlayerCollection::HasCurrentAnimations() const
+AnimationCollection::HasCurrentAnimations() const
 {
-  for (size_t playerIdx = mPlayers.Length(); playerIdx-- != 0; ) {
-    if (mPlayers[playerIdx]->HasCurrentSource()) {
+  for (size_t animIdx = mAnimations.Length(); animIdx-- != 0; ) {
+    if (mAnimations[animIdx]->HasCurrentEffect()) {
       return true;
     }
   }
@@ -857,15 +916,16 @@ AnimationPlayerCollection::HasCurrentAnimations() const
 }
 
 bool
-AnimationPlayerCollection::HasCurrentAnimationsForProperty(nsCSSProperty
-                                                             aProperty) const
+AnimationCollection::HasCurrentAnimationsForProperties(
+                              const nsCSSProperty* aProperties,
+                              size_t aPropertyCount) const
 {
-  for (size_t playerIdx = mPlayers.Length(); playerIdx-- != 0; ) {
-    const AnimationPlayer& player = *mPlayers[playerIdx];
-    const Animation* anim = player.GetSource();
-    if (anim &&
-        anim->IsCurrent(player) &&
-        anim->HasAnimationOfProperty(aProperty)) {
+  for (size_t animIdx = mAnimations.Length(); animIdx-- != 0; ) {
+    const Animation& anim = *mAnimations[animIdx];
+    const KeyframeEffectReadOnly* effect = anim.GetEffect();
+    if (effect &&
+        effect->IsCurrent(anim) &&
+        effect->HasAnimationOfProperties(aProperties, aPropertyCount)) {
       return true;
     }
   }

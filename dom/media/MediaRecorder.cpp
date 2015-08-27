@@ -368,15 +368,18 @@ class MediaRecorder::Session: public nsIObserver
 
 public:
   Session(MediaRecorder* aRecorder, int32_t aTimeSlice)
-    : mRecorder(aRecorder),
-      mTimeSlice(aTimeSlice),
-      mStopIssued(false),
-      mCanRetrieveData(false),
-      mIsRegisterProfiler(false)
+    : mRecorder(aRecorder)
+    , mTimeSlice(aTimeSlice)
+    , mStopIssued(false)
+    , mCanRetrieveData(false)
+    , mIsRegisterProfiler(false)
+    , mNeedSessionEndTask(true)
   {
     MOZ_ASSERT(NS_IsMainThread());
 
-    mEncodedBufferCache = new EncodedBufferCache(MAX_ALLOW_MEMORY_BUFFER);
+    uint32_t maxMem = Preferences::GetUint("media.recorder.max_memory",
+                                           MAX_ALLOW_MEMORY_BUFFER);
+    mEncodedBufferCache = new EncodedBufferCache(maxMem);
     mLastBlobTimeStamp = TimeStamp::Now();
   }
 
@@ -394,6 +397,11 @@ public:
     MOZ_ASSERT(NS_IsMainThread());
     mStopIssued = true;
     CleanupStreams();
+    if (mNeedSessionEndTask) {
+      LOG(PR_LOG_DEBUG, ("Session.Stop mNeedSessionEndTask %p", this));
+      // End the Session directly if there is no ExtractRunnable.
+      DoSessionEndTask(NS_OK);
+    }
     nsContentUtils::UnregisterShutdownObserver(this);
   }
 
@@ -576,6 +584,10 @@ private:
     LOG(PR_LOG_DEBUG, ("Session.InitEncoder %p", this));
     MOZ_ASSERT(NS_IsMainThread());
 
+    if (!mRecorder) {
+      LOG(PR_LOG_DEBUG, ("Session.InitEncoder failure, mRecorder is null %p", this));
+      return;
+    }
     // Allocate encoder and bind with union stream.
     // At this stage, the API doesn't allow UA to choose the output mimeType format.
 
@@ -587,6 +599,7 @@ private:
     }
 
     if (!mEncoder) {
+      LOG(PR_LOG_DEBUG, ("Session.InitEncoder !mEncoder %p", this));
       DoSessionEndTask(NS_ERROR_ABORT);
       return;
     }
@@ -595,6 +608,7 @@ private:
     // The Session::stop would clean the mTrackUnionStream. If the AfterTracksAdded
     // comes after stop command, this function would crash.
     if (!mTrackUnionStream) {
+      LOG(PR_LOG_DEBUG, ("Session.InitEncoder !mTrackUnionStream %p", this));
       DoSessionEndTask(NS_OK);
       return;
     }
@@ -603,26 +617,36 @@ private:
     if (!mReadThread) {
       nsresult rv = NS_NewNamedThread("Media_Encoder", getter_AddRefs(mReadThread));
       if (NS_FAILED(rv)) {
+        LOG(PR_LOG_DEBUG, ("Session.InitEncoder !mReadThread %p", this));
         DoSessionEndTask(rv);
         return;
       }
     }
 
-    // In case source media stream does not notify track end, recieve
+    // In case source media stream does not notify track end, receive
     // shutdown notification and stop Read Thread.
     nsContentUtils::RegisterShutdownObserver(this);
 
     nsCOMPtr<nsIRunnable> event = new ExtractRunnable(this);
     if (NS_FAILED(mReadThread->Dispatch(event, NS_DISPATCH_NORMAL))) {
       NS_WARNING("Failed to dispatch ExtractRunnable at beginning");
+      LOG(PR_LOG_DEBUG, ("Session.InitEncoder !ReadThread->Dispatch %p", this));
+      DoSessionEndTask(NS_ERROR_ABORT);
     }
+    // Set mNeedSessionEndTask to false because the
+    // ExtractRunnable/DestroyRunnable will take the response to
+    // end the session.
+    mNeedSessionEndTask = false;
   }
   // application should get blob and onstop event
   void DoSessionEndTask(nsresult rv)
   {
     MOZ_ASSERT(NS_IsMainThread());
     if (NS_FAILED(rv)) {
-      mRecorder->NotifyError(rv);
+      nsCOMPtr<nsIRunnable> runnable =
+        NS_NewRunnableMethodWithArg<nsresult>(mRecorder,
+                                              &MediaRecorder::NotifyError, rv);
+      NS_DispatchToMainThread(runnable);
     }
 
     CleanupStreams();
@@ -635,6 +659,7 @@ private:
     if (NS_FAILED(NS_DispatchToMainThread(new DestroyRunnable(this)))) {
       MOZ_ASSERT(false, "NS_DispatchToMainThread DestroyRunnable failed");
     }
+    mNeedSessionEndTask = false;
   }
   void CleanupStreams()
   {
@@ -708,6 +733,10 @@ private:
   bool mCanRetrieveData;
   // The register flag for "Media_Encoder" thread to profiler
   bool mIsRegisterProfiler;
+  // False if the InitEncoder called successfully, ensure the
+  // ExtractRunnable/DestroyRunnable will end the session.
+  // Main thread only.
+  bool mNeedSessionEndTask;
 };
 
 NS_IMPL_ISUPPORTS(MediaRecorder::Session, nsIObserver)

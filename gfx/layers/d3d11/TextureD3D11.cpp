@@ -212,6 +212,22 @@ TextureClientD3D11::~TextureClientD3D11()
 #endif
 }
 
+// static
+TemporaryRef<TextureClientD3D11>
+TextureClientD3D11::Create(ISurfaceAllocator* aAllocator,
+                           gfx::SurfaceFormat aFormat,
+                           TextureFlags aFlags,
+                           ID3D11Texture2D* aTexture,
+                           gfx::IntSize aSize)
+{
+  RefPtr<TextureClientD3D11> texture = new TextureClientD3D11(aAllocator,
+                                                             aFormat,
+                                                             aFlags);
+  texture->mTexture = aTexture;
+  texture->mSize = aSize;
+  return texture;
+}
+
 TemporaryRef<TextureClient>
 TextureClientD3D11::CreateSimilar(TextureFlags aFlags,
                                   TextureAllocationFlags aAllocFlags) const
@@ -534,6 +550,34 @@ DXGIYCbCrTextureClient::~DXGIYCbCrTextureClient()
   MOZ_COUNT_DTOR(DXGIYCbCrTextureClient);
 }
 
+// static
+TemporaryRef<DXGIYCbCrTextureClient>
+DXGIYCbCrTextureClient::Create(ISurfaceAllocator* aAllocator,
+                               TextureFlags aFlags,
+                               IUnknown* aTextureY,
+                               IUnknown* aTextureCb,
+                               IUnknown* aTextureCr,
+                               HANDLE aHandleY,
+                               HANDLE aHandleCb,
+                               HANDLE aHandleCr,
+                               const gfx::IntSize& aSize,
+                               const gfx::IntSize& aSizeY,
+                               const gfx::IntSize& aSizeCbCr)
+{
+  RefPtr<DXGIYCbCrTextureClient> texture =
+    new DXGIYCbCrTextureClient(aAllocator, aFlags);
+  texture->mHandles[0] = aHandleY;
+  texture->mHandles[1] = aHandleCb;
+  texture->mHandles[2] = aHandleCr;
+  texture->mHoldRefs[0] = aTextureY;
+  texture->mHoldRefs[1] = aTextureCb;
+  texture->mHoldRefs[2] = aTextureCr;
+  texture->mSize = aSize;
+  texture->mSizeY = aSizeY;
+  texture->mSizeCbCr = aSizeCbCr;
+  return texture;
+}
+
 bool
 DXGIYCbCrTextureClient::Lock(OpenMode)
 {
@@ -810,7 +854,7 @@ DataTextureSourceD3D11::Update(DataSourceSurface* aSurface,
 
     if (aDestRegion) {
       nsIntRegionRectIterator iter(*aDestRegion);
-      const nsIntRect *iterRect;
+      const IntRect *iterRect;
       while ((iterRect = iter.Next())) {
         D3D11_BOX box;
         box.front = 0;
@@ -884,11 +928,11 @@ DataTextureSourceD3D11::GetTileRect(uint32_t aIndex) const
   return GetTileRectD3D11(aIndex, mSize, mCompositor->GetMaxTextureSize());
 }
 
-nsIntRect
+IntRect
 DataTextureSourceD3D11::GetTileRect()
 {
   IntRect rect = GetTileRect(mCurrentTile);
-  return nsIntRect(rect.x, rect.y, rect.width, rect.height);
+  return IntRect(rect.x, rect.y, rect.width, rect.height);
 }
 
 void

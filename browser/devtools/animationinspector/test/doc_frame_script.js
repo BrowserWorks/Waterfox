@@ -21,11 +21,11 @@ addMessageListener("Test:ToggleAnimationPlayer", function(msg) {
     return;
   }
 
-  let player = node.getAnimationPlayers()[animationIndex];
+  let animation = node.getAnimations()[animationIndex];
   if (pause) {
-    player.pause();
+    animation.pause();
   } else {
-    player.play();
+    animation.play();
   }
 
   sendAsyncMessage("Test:ToggleAnimationPlayer");
@@ -46,10 +46,31 @@ addMessageListener("Test:SetAnimationPlayerCurrentTime", function(msg) {
     return;
   }
 
-  let player = node.getAnimationPlayers()[animationIndex];
-  player.currentTime = currentTime;
+  let animation = node.getAnimations()[animationIndex];
+  animation.currentTime = currentTime;
 
   sendAsyncMessage("Test:SetAnimationPlayerCurrentTime");
+});
+
+/**
+ * Change the playbackRate of one of the animation players of a given node.
+ * @param {Object} data
+ * - {String} selector The CSS selector to get the node (can be a "super"
+ *   selector).
+ * - {Number} animationIndex The index of the node's animationPlayers to change.
+ * - {Number} playbackRate The rate to set.
+ */
+addMessageListener("Test:SetAnimationPlayerPlaybackRate", function(msg) {
+  let {selector, animationIndex, playbackRate} = msg.data;
+  let node = superQuerySelector(selector);
+  if (!node) {
+    return;
+  }
+
+  let player = node.getAnimations()[animationIndex];
+  player.playbackRate = playbackRate;
+
+  sendAsyncMessage("Test:SetAnimationPlayerPlaybackRate");
 });
 
 /**
@@ -66,9 +87,9 @@ addMessageListener("Test:GetAnimationPlayerState", function(msg) {
     return;
   }
 
-  let player = node.getAnimationPlayers()[animationIndex];
-  player.ready.then(() => {
-    sendAsyncMessage("Test:GetAnimationPlayerState", player.playState);
+  let animation = node.getAnimations()[animationIndex];
+  animation.ready.then(() => {
+    sendAsyncMessage("Test:GetAnimationPlayerState", animation.playState);
   });
 });
 

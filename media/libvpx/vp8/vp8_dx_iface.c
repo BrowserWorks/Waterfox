@@ -11,7 +11,9 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "vp8_rtcd.h"
+#include "./vp8_rtcd.h"
+#include "./vpx_dsp_rtcd.h"
+#include "./vpx_scale_rtcd.h"
 #include "vpx/vpx_decoder.h"
 #include "vpx/vp8dx.h"
 #include "vpx/internal/vpx_codec_internal.h"
@@ -60,7 +62,6 @@ struct vpx_codec_alg_priv
     vpx_decrypt_cb          decrypt_cb;
     void                    *decrypt_state;
     vpx_image_t             img;
-    int                     flushed;
     int                     img_setup;
     struct frame_buffers    yv12_frame_buffers;
     void                    *user_priv;
@@ -75,6 +76,7 @@ static unsigned long vp8_priv_sz(const vpx_codec_dec_cfg_t *si, vpx_codec_flags_
      * known)
      */
     (void)si;
+    (void)flags;
     return sizeof(vpx_codec_alg_priv_t);
 }
 
@@ -89,7 +91,6 @@ static void vp8_init_ctx(vpx_codec_ctx_t *ctx)
     priv->si.sz = sizeof(priv->si);
     priv->decrypt_cb = NULL;
     priv->decrypt_state = NULL;
-    priv->flushed = 0;
 
     if (ctx->config.dec)
     {
@@ -107,27 +108,26 @@ static vpx_codec_err_t vp8_init(vpx_codec_ctx_t *ctx,
     (void) data;
 
     vp8_rtcd();
+    vpx_dsp_rtcd();
+    vpx_scale_rtcd();
 
     /* This function only allocates space for the vpx_codec_alg_priv_t
      * structure. More memory may be required at the time the stream
      * information becomes known.
      */
-    if (!ctx->priv)
-    {
-        vp8_init_ctx(ctx);
-        priv = (vpx_codec_alg_priv_t *)ctx->priv;
+    if (!ctx->priv) {
+      vp8_init_ctx(ctx);
+      priv = (vpx_codec_alg_priv_t *)ctx->priv;
 
-        /* initialize number of fragments to zero */
-        priv->fragments.count = 0;
-        /* is input fragments enabled? */
-        priv->fragments.enabled =
-            (priv->base.init_flags & VPX_CODEC_USE_INPUT_FRAGMENTS);
+      /* initialize number of fragments to zero */
+      priv->fragments.count = 0;
+      /* is input fragments enabled? */
+      priv->fragments.enabled =
+          (priv->base.init_flags & VPX_CODEC_USE_INPUT_FRAGMENTS);
 
-        /*post processing level initialized to do nothing */
-    }
-    else
-    {
-        priv = (vpx_codec_alg_priv_t *)ctx->priv;
+      /*post processing level initialized to do nothing */
+    } else {
+      priv = (vpx_codec_alg_priv_t *)ctx->priv;
     }
 
     priv->yv12_frame_buffers.use_frame_threads =
@@ -138,11 +138,10 @@ static vpx_codec_err_t vp8_init(vpx_codec_ctx_t *ctx,
 
     if (priv->yv12_frame_buffers.use_frame_threads &&
         ((ctx->priv->init_flags & VPX_CODEC_USE_ERROR_CONCEALMENT) ||
-         (ctx->priv->init_flags & VPX_CODEC_USE_INPUT_FRAGMENTS)))
-    {
-        /* row-based threading, error concealment, and input fragments will
-         * not be supported when using frame-based threading */
-        res = VPX_CODEC_INVALID_PARAM;
+         (ctx->priv->init_flags & VPX_CODEC_USE_INPUT_FRAGMENTS))) {
+      /* row-based threading, error concealment, and input fragments will
+       * not be supported when using frame-based threading */
+      res = VPX_CODEC_INVALID_PARAM;
     }
 
     return res;
@@ -193,7 +192,7 @@ static vpx_codec_err_t vp8_peek_si_internal(const uint8_t *data,
 
             /* vet via sync code */
             if (clear[3] != 0x9d || clear[4] != 0x01 || clear[5] != 0x2a)
-                res = VPX_CODEC_UNSUP_BITSTREAM;
+                return VPX_CODEC_UNSUP_BITSTREAM;
 
             si->w = (clear[6] | (clear[7] << 8)) & 0x3fff;
             si->h = (clear[8] | (clear[9] << 8)) & 0x3fff;
@@ -291,8 +290,8 @@ update_fragments(vpx_codec_alg_priv_t  *ctx,
     if (ctx->fragments.count == 0)
     {
         /* New frame, reset fragment pointers and sizes */
-        vpx_memset((void*)ctx->fragments.ptrs, 0, sizeof(ctx->fragments.ptrs));
-        vpx_memset(ctx->fragments.sizes, 0, sizeof(ctx->fragments.sizes));
+        memset((void*)ctx->fragments.ptrs, 0, sizeof(ctx->fragments.ptrs));
+        memset(ctx->fragments.sizes, 0, sizeof(ctx->fragments.sizes));
     }
     if (ctx->fragments.enabled && !(data == NULL && data_sz == 0))
     {
@@ -308,6 +307,11 @@ update_fragments(vpx_codec_alg_priv_t  *ctx,
             *res = VPX_CODEC_INVALID_PARAM;
             return -1;
         }
+        return 0;
+    }
+
+    if (!ctx->fragments.enabled && (data == NULL && data_sz == 0))
+    {
         return 0;
     }
 
@@ -331,13 +335,10 @@ static vpx_codec_err_t vp8_decode(vpx_codec_alg_priv_t  *ctx,
     unsigned int resolution_change = 0;
     unsigned int w, h;
 
-    if (data == NULL && data_sz == 0) {
-      ctx->flushed = 1;
-      return VPX_CODEC_OK;
+    if (!ctx->fragments.enabled && (data == NULL && data_sz == 0))
+    {
+        return 0;
     }
-
-    /* Reset flushed when receiving a valid frame */
-    ctx->flushed = 0;
 
     /* Update the input fragment data */
     if(update_fragments(ctx, data, data_sz, &res) <= 0)
@@ -405,7 +406,7 @@ static vpx_codec_err_t vp8_decode(vpx_codec_alg_priv_t  *ctx,
     if (!res)
     {
         VP8D_COMP *pbi = ctx->yv12_frame_buffers.pbi[0];
-        if(resolution_change)
+        if (resolution_change)
         {
             VP8_COMMON *const pc = & pbi->common;
             MACROBLOCKD *const xd  = & pbi->mb;
@@ -651,6 +652,8 @@ static vpx_codec_err_t vp8_set_postproc(vpx_codec_alg_priv_t *ctx,
         return VPX_CODEC_INVALID_PARAM;
 
 #else
+    (void)ctx;
+    (void)args;
     return VPX_CODEC_INCAPABLE;
 #endif
 }

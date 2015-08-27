@@ -49,14 +49,13 @@ loop.conversation = (function(mozL10n) {
         case "outgoing": {
           return (React.createElement(CallControllerView, {
             dispatcher: this.props.dispatcher, 
-            mozLoop: this.props.mozLoop}
-          ));
+            mozLoop: this.props.mozLoop}));
         }
         case "room": {
           return (React.createElement(DesktopRoomConversationView, {
             dispatcher: this.props.dispatcher, 
-            roomStore: this.props.roomStore}
-          ));
+            mozLoop: this.props.mozLoop, 
+            roomStore: this.props.roomStore}));
         }
         case "failed": {
           return React.createElement(GenericFailureView, {cancelCall: this.closeWindow});
@@ -140,7 +139,7 @@ loop.conversation = (function(mozL10n) {
     loop.store.StoreMixin.register({
       conversationAppStore: conversationAppStore,
       conversationStore: conversationStore,
-      feedbackStore: feedbackStore,
+      feedbackStore: feedbackStore
     });
 
     // Obtain the windowId and pass it through
@@ -161,6 +160,9 @@ loop.conversation = (function(mozL10n) {
       dispatcher: dispatcher, 
       mozLoop: navigator.mozLoop}
     ), document.querySelector('#main'));
+
+    document.body.setAttribute("dir", mozL10n.getDirection());
+    document.body.setAttribute("platform", loop.shared.utils.getPlatform());
 
     dispatcher.dispatch(new sharedActions.GetWindowData({
       windowId: windowId

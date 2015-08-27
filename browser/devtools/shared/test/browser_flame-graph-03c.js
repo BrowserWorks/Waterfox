@@ -9,7 +9,7 @@ let TEST_WIDTH = 200;
 let TEST_HEIGHT = 100;
 let TEST_DPI_DENSITIY = 2;
 
-let {FlameGraph} = Cu.import("resource:///modules/devtools/FlameGraph.jsm", {});
+let {FlameGraph} = devtools.require("devtools/shared/widgets/FlameGraph");
 let {Promise} = devtools.require("resource://gre/modules/Promise.jsm");
 
 add_task(function*() {
@@ -121,19 +121,19 @@ function testGraph(graph) {
 function hover(graph, x, y = 1) {
   x /= window.devicePixelRatio;
   y /= window.devicePixelRatio;
-  graph._onMouseMove({ clientX: x, clientY: y });
+  graph._onMouseMove({ testX: x, testY: y });
 }
 
 function dragStart(graph, x, y = 1) {
   x /= window.devicePixelRatio;
   y /= window.devicePixelRatio;
-  graph._onMouseMove({ clientX: x, clientY: y });
-  graph._onMouseDown({ clientX: x, clientY: y });
+  graph._onMouseMove({ testX: x, testY: y });
+  graph._onMouseDown({ testX: x, testY: y });
 }
 
 function dragStop(graph, x, y = 1) {
   x /= window.devicePixelRatio;
   y /= window.devicePixelRatio;
-  graph._onMouseMove({ clientX: x, clientY: y });
-  graph._onMouseUp({ clientX: x, clientY: y });
+  graph._onMouseMove({ testX: x, testY: y });
+  graph._onMouseUp({ testX: x, testY: y });
 }

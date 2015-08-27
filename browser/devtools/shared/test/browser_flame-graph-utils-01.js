@@ -4,7 +4,8 @@
 // Tests that text metrics and data conversion from profiler samples
 // widget work properly in the flame graph.
 
-let {FlameGraphUtils} = Cu.import("resource:///modules/devtools/FlameGraph.jsm", {});
+let {FlameGraphUtils} = devtools.require("devtools/shared/widgets/FlameGraph");
+let {PALLETTE_SIZE} = devtools.require("devtools/shared/widgets/FlameGraph");
 
 add_task(function*() {
   yield promiseTab("about:blank");
@@ -13,10 +14,10 @@ add_task(function*() {
 });
 
 function* performTest() {
-  let out = FlameGraphUtils.createFlameGraphDataFromSamples(TEST_DATA);
+  let out = FlameGraphUtils.createFlameGraphDataFromThread(TEST_DATA);
 
   ok(out, "Some data was outputted properly");
-  is(out.length, 10, "The outputted length is correct.");
+  is(out.length, PALLETTE_SIZE, "The outputted length is correct.");
 
   info("Got flame graph data:\n" + out.toSource() + "\n");
 
@@ -42,7 +43,7 @@ function* performTest() {
   }
 }
 
-let TEST_DATA = [{
+let TEST_DATA = synthesizeProfileForTest([{
   frames: [{
     location: "M"
   }, {
@@ -96,7 +97,7 @@ let TEST_DATA = [{
     location: "Z"
   }],
   time: 500
-}];
+}]);
 
 let EXPECTED_OUTPUT = [{
   blocks: []
@@ -104,155 +105,147 @@ let EXPECTED_OUTPUT = [{
   blocks: []
 }, {
   blocks: [{
-    srcData: {
-      startTime: 50,
-      rawLocation: "A"
-    },
+    startTime: 50,
+    frameKey: "A",
     x: 50,
     y: 0,
     width: 410,
-    height: 11,
+    height: 15,
     text: "A"
   }]
 }, {
   blocks: [{
-    srcData: {
-      startTime: 50,
-      rawLocation: "B"
-    },
+    startTime: 50,
+    frameKey: "B",
     x: 50,
-    y: 11,
+    y: 15,
     width: 160,
-    height: 11,
+    height: 15,
     text: "B"
   }, {
-    srcData: {
-      startTime: 330,
-      rawLocation: "B"
-    },
+    startTime: 330,
+    frameKey: "B",
     x: 330,
-    y: 11,
+    y: 15,
     width: 130,
-    height: 11,
+    height: 15,
     text: "B"
   }]
 }, {
   blocks: [{
-    srcData: {
-      startTime: 0,
-      rawLocation: "M"
-    },
-    x: 0,
-    y: 0,
-    width: 50,
-    height: 11,
-    text: "M"
-  }, {
-    srcData: {
-      startTime: 50,
-      rawLocation: "C"
-    },
+    startTime: 50,
+    frameKey: "C",
     x: 50,
-    y: 22,
+    y: 30,
     width: 50,
-    height: 11,
+    height: 15,
     text: "C"
   }, {
-    srcData: {
-      startTime: 330,
-      rawLocation: "C"
-    },
+    startTime: 330,
+    frameKey: "C",
     x: 330,
-    y: 22,
+    y: 30,
     width: 130,
-    height: 11,
+    height: 15,
     text: "C"
   }]
 }, {
   blocks: [{
-    srcData: {
-      startTime: 0,
-      rawLocation: "N"
-    },
-    x: 0,
-    y: 11,
-    width: 50,
-    height: 11,
-    text: "N"
-  }, {
-    srcData: {
-      startTime: 100,
-      rawLocation: "D"
-    },
+    startTime: 100,
+    frameKey: "D",
     x: 100,
-    y: 22,
+    y: 30,
     width: 110,
-    height: 11,
+    height: 15,
     text: "D"
   }, {
-    srcData: {
-      startTime: 460,
-      rawLocation: "X"
-    },
+    startTime: 460,
+    frameKey: "X",
     x: 460,
     y: 0,
     width: 40,
-    height: 11,
+    height: 15,
     text: "X"
   }]
 }, {
   blocks: [{
-    srcData: {
-      startTime: 210,
-      rawLocation: "E"
-    },
+    startTime: 210,
+    frameKey: "E",
     x: 210,
-    y: 11,
+    y: 15,
     width: 120,
-    height: 11,
+    height: 15,
     text: "E"
   }, {
-    srcData: {
-      startTime: 460,
-      rawLocation: "Y"
-    },
+    startTime: 460,
+    frameKey: "Y",
     x: 460,
-    y: 11,
+    y: 15,
     width: 40,
-    height: 11,
+    height: 15,
     text: "Y"
   }]
 }, {
   blocks: [{
-    srcData: {
-      startTime: 0,
-      rawLocation: "P"
-    },
-    x: 0,
-    y: 22,
-    width: 50,
-    height: 11,
-    text: "P"
-  }, {
-    srcData: {
-      startTime: 210,
-      rawLocation: "F"
-    },
+    startTime: 210,
+    frameKey: "F",
     x: 210,
-    y: 22,
+    y: 30,
     width: 120,
-    height: 11,
+    height: 15,
     text: "F"
   }, {
-    srcData: {
-      startTime: 460,
-      rawLocation: "Z"
-    },
+    startTime: 460,
+    frameKey: "Z",
     x: 460,
-    y: 22,
+    y: 30,
     width: 40,
-    height: 11,
+    height: 15,
     text: "Z"
+  }]
+}, {
+  blocks: []
+}, {
+  blocks: []
+}, {
+  blocks: []
+}, {
+  blocks: []
+}, {
+  blocks: []
+}, {
+  blocks: []
+}, {
+  blocks: [{
+    startTime: 0,
+    frameKey: "M",
+    x: 0,
+    y: 0,
+    width: 50,
+    height: 15,
+    text: "M"
+  }]
+}, {
+  blocks: [{
+    startTime: 0,
+    frameKey: "N",
+    x: 0,
+    y: 15,
+    width: 50,
+    height: 15,
+    text: "N"
+  }]
+}, {
+  blocks: []
+}, {
+  blocks: [{
+    startTime: 0,
+    frameKey: "P",
+    x: 0,
+    y: 30,
+    width: 50,
+    height: 15,
+    text: "P"
   }]
 }, {
   blocks: []

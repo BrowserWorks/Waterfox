@@ -10,6 +10,7 @@
 #include <ctime>
 #include "gfxPrefs.h"
 #include "image_operations.h"
+#include "mozilla/SSE.h"
 #include "convolver.h"
 #include "skia/SkTypes.h"
 
@@ -69,6 +70,8 @@ Downscaler::BeginFrame(const nsIntSize& aOriginalSize,
              "Invalid original size");
 
   mOriginalSize = aOriginalSize;
+  mScale = gfxSize(double(mOriginalSize.width) / mTargetSize.width,
+                   double(mOriginalSize.height) / mTargetSize.height);
   mOutputBuffer = aOutputBuffer;
   mHasAlpha = aHasAlpha;
 
@@ -77,13 +80,15 @@ Downscaler::BeginFrame(const nsIntSize& aOriginalSize,
 
   auto resizeMethod = skia::ImageOperations::RESIZE_LANCZOS3;
 
-  skia::resize::ComputeFilters(resizeMethod, mOriginalSize.width,
-                               mTargetSize.width, 0,
-                               mTargetSize.width, mXFilter.get());
+  skia::resize::ComputeFilters(resizeMethod,
+                               mOriginalSize.width, mTargetSize.width,
+                               0, mTargetSize.width,
+                               mXFilter.get());
 
-  skia::resize::ComputeFilters(resizeMethod, mOriginalSize.height,
-                               mTargetSize.height, 0,
-                               mTargetSize.height, mYFilter.get());
+  skia::resize::ComputeFilters(resizeMethod,
+                               mOriginalSize.height, mTargetSize.height,
+                               0, mTargetSize.height,
+                               mYFilter.get());
 
   // Allocate the buffer, which contains scanlines of the original image.
   mRowBuffer = MakeUnique<uint8_t[]>(mOriginalSize.width * sizeof(uint32_t));
@@ -126,6 +131,18 @@ Downscaler::ResetForNextProgressivePass()
   mLinesInBuffer = 0;
 }
 
+static void
+GetFilterOffsetAndLength(UniquePtr<skia::ConvolutionFilter1D>& aFilter,
+                         int32_t aOutputImagePosition,
+                         int32_t* aFilterOffsetOut,
+                         int32_t* aFilterLengthOut)
+{
+  MOZ_ASSERT(aOutputImagePosition < aFilter->num_values());
+  aFilter->FilterForValue(aOutputImagePosition,
+                          aFilterOffsetOut,
+                          aFilterLengthOut);
+}
+
 void
 Downscaler::CommitRow()
 {
@@ -135,20 +152,29 @@ Downscaler::CommitRow()
 
   int32_t filterOffset = 0;
   int32_t filterLength = 0;
-  mYFilter->FilterForValue(mCurrentOutLine, &filterOffset, &filterLength);
+  GetFilterOffsetAndLength(mYFilter, mCurrentOutLine,
+                           &filterOffset, &filterLength);
 
   int32_t inLineToRead = filterOffset + mLinesInBuffer;
   MOZ_ASSERT(mCurrentInLine <= inLineToRead, "Reading past end of input");
   if (mCurrentInLine == inLineToRead) {
     skia::ConvolveHorizontally(mRowBuffer.get(), *mXFilter,
                                mWindow[mLinesInBuffer++], mHasAlpha,
-                               /* use_sse2 = */ true);
+                               supports_sse2());
   }
 
-  while (mLinesInBuffer == filterLength &&
-         mCurrentOutLine < mTargetSize.height) {
+  MOZ_ASSERT(mCurrentOutLine < mTargetSize.height,
+             "Writing past end of output");
+
+  while (mLinesInBuffer == filterLength) {
     DownscaleInputLine();
-    mYFilter->FilterForValue(mCurrentOutLine, &filterOffset, &filterLength);
+
+    if (mCurrentOutLine == mTargetSize.height) {
+      break;  // We're done.
+    }
+
+    GetFilterOffsetAndLength(mYFilter, mCurrentOutLine,
+                             &filterOffset, &filterLength);
   }
 
   mCurrentInLine += 1;
@@ -160,17 +186,25 @@ Downscaler::HasInvalidation() const
   return mCurrentOutLine > mPrevInvalidatedLine;
 }
 
-nsIntRect
+DownscalerInvalidRect
 Downscaler::TakeInvalidRect()
 {
   if (MOZ_UNLIKELY(!HasInvalidation())) {
-    return nsIntRect();
+    return DownscalerInvalidRect();
   }
 
-  nsIntRect invalidRect(0, mPrevInvalidatedLine,
-                        mTargetSize.width,
-                        mCurrentOutLine - mPrevInvalidatedLine);
+  DownscalerInvalidRect invalidRect;
+
+  // Compute the target size invalid rect.
+  invalidRect.mTargetSizeRect =
+    nsIntRect(0, mPrevInvalidatedLine,
+              mTargetSize.width, mCurrentOutLine - mPrevInvalidatedLine);
   mPrevInvalidatedLine = mCurrentOutLine;
+
+  // Compute the original size invalid rect.
+  invalidRect.mOriginalSizeRect = invalidRect.mTargetSizeRect;
+  invalidRect.mOriginalSizeRect.ScaleRoundOut(mScale.width, mScale.height);
+
   return invalidRect;
 }
 
@@ -180,10 +214,12 @@ Downscaler::DownscaleInputLine()
   typedef skia::ConvolutionFilter1D::Fixed FilterValue;
 
   MOZ_ASSERT(mOutputBuffer);
-  MOZ_ASSERT(mCurrentOutLine < mTargetSize.height, "Writing past end of output");
+  MOZ_ASSERT(mCurrentOutLine < mTargetSize.height,
+             "Writing past end of output");
 
   int32_t filterOffset = 0;
   int32_t filterLength = 0;
+  MOZ_ASSERT(mCurrentOutLine < mYFilter->num_values());
   auto filterValues =
     mYFilter->FilterForValue(mCurrentOutLine, &filterOffset, &filterLength);
 
@@ -191,7 +227,7 @@ Downscaler::DownscaleInputLine()
     &mOutputBuffer[mCurrentOutLine * mTargetSize.width * sizeof(uint32_t)];
   skia::ConvolveVertically(static_cast<const FilterValue*>(filterValues),
                            filterLength, mWindow.get(), mXFilter->num_values(),
-                           outputLine, mHasAlpha, /* use_sse2 = */ true);
+                           outputLine, mHasAlpha, supports_sse2());
 
   mCurrentOutLine += 1;
 
@@ -202,7 +238,8 @@ Downscaler::DownscaleInputLine()
 
   int32_t newFilterOffset = 0;
   int32_t newFilterLength = 0;
-  mYFilter->FilterForValue(mCurrentOutLine, &newFilterOffset, &newFilterLength);
+  GetFilterOffsetAndLength(mYFilter, mCurrentOutLine,
+                           &newFilterOffset, &newFilterLength);
 
   int diff = newFilterOffset - filterOffset;
   MOZ_ASSERT(diff >= 0, "Moving backwards in the filter?");

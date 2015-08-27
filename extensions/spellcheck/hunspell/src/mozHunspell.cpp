@@ -322,7 +322,7 @@ NS_IMETHODIMP mozHunspell::GetDictionaryList(char16_t ***aDictionaries,
     return NS_ERROR_NULL_POINTER;
 
   AppendNewStruct ans = {
-    (char16_t**) NS_Alloc(sizeof(char16_t*) * mDictionaries.Count()),
+    (char16_t**) moz_xmalloc(sizeof(char16_t*) * mDictionaries.Count()),
     0,
     false
   };
@@ -333,9 +333,9 @@ NS_IMETHODIMP mozHunspell::GetDictionaryList(char16_t ***aDictionaries,
   if (ans.failed) {
     while (ans.count) {
       --ans.count;
-      NS_Free(ans.dics[ans.count]);
+      free(ans.dics[ans.count]);
     }
-    NS_Free(ans.dics);
+    free(ans.dics);
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
@@ -509,7 +509,7 @@ nsresult mozHunspell::ConvertCharset(const char16_t* aStr, char ** aDst)
   nsresult rv = mEncoder->GetMaxLength(aStr, inLength, &outLength);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  *aDst = (char *) nsMemory::Alloc(sizeof(char) * (outLength+1));
+  *aDst = (char *) moz_xmalloc(sizeof(char) * (outLength+1));
   NS_ENSURE_TRUE(*aDst, NS_ERROR_OUT_OF_MEMORY);
 
   rv = mEncoder->Convert(aStr, &inLength, *aDst, &outLength);
@@ -557,7 +557,7 @@ NS_IMETHODIMP mozHunspell::Suggest(const char16_t *aWord, char16_t ***aSuggestio
   *aSuggestionCount = mHunspell->suggest(&wlst, charsetWord);
 
   if (*aSuggestionCount) {
-    *aSuggestions  = (char16_t **)nsMemory::Alloc(*aSuggestionCount * sizeof(char16_t *));
+    *aSuggestions  = (char16_t **)moz_xmalloc(*aSuggestionCount * sizeof(char16_t *));
     if (*aSuggestions) {
       uint32_t index = 0;
       for (index = 0; index < *aSuggestionCount && NS_SUCCEEDED(rv); ++index) {
@@ -567,7 +567,7 @@ NS_IMETHODIMP mozHunspell::Suggest(const char16_t *aWord, char16_t ***aSuggestio
         rv = mDecoder->GetMaxLength(wlst[index], inLength, &outLength);
         if (NS_SUCCEEDED(rv))
         {
-          (*aSuggestions)[index] = (char16_t *) nsMemory::Alloc(sizeof(char16_t) * (outLength+1));
+          (*aSuggestions)[index] = (char16_t *) moz_xmalloc(sizeof(char16_t) * (outLength+1));
           if ((*aSuggestions)[index])
           {
             rv = mDecoder->Convert(wlst[index], &inLength, (*aSuggestions)[index], &outLength);

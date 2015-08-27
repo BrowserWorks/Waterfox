@@ -18,6 +18,10 @@ XPI_NAME = 'mochijar'
 
 JAR_MANIFESTS += ['jar.mn']
 
+USE_EXTENSION_MANIFEST = True
+
+DIST_FILES += ['install.rdf']
+
 MOCHITEST_MANIFESTS += [
     'dynamic/mochitest.ini',
     'MochiKit/mochitest.ini',
@@ -65,12 +69,6 @@ TEST_HARNESS_FILES.testing.mochitest += [
     'runtestsremote.py',
     'server.js',
 ]
-
-if CONFIG['MOZ_BUILD_APP'] == 'mobile/android':
-    TEST_HARNESS_FILES.testing.mochitest += [
-        '/mobile/android/base/tests/robocop.ini',
-        '/mobile/android/base/tests/robocop_autophone.ini',
-    ]
 
 TEST_HARNESS_FILES.testing.mochitest.pywebsocket += [
     'pywebsocket/standalone.py',

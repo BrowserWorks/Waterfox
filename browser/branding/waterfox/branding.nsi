@@ -2,19 +2,19 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-# NSIS branding defines for nightly builds.
+# NSIS branding defines for unofficial builds.
 # The official release build branding.nsi is located in other-license/branding/firefox/
-# The unofficial build branding.nsi is located in browser/branding/unofficial/
+# The nightly build branding.nsi is located in browser/installer/windows/nsis/
 
 # BrandFullNameInternal is used for some registry and file system values
 # instead of BrandFullName and typically should not be modified.
 !define BrandFullNameInternal "Waterfox"
 !define CompanyName           "Waterfox Ltd"
 !define URLInfoAbout          "https://www.waterfoxproject.org"
-!define HelpLink              "https://www.waterfoxproject.org"
+!define HelpLink              "https://www.reddit.com/r/waterfox"
 
-!define URLStubDownload "https://www.waterfoxproject.org"
-!define URLManualDownload "https://www.waterfoxproject.org"
+!define URLStubDownload "https://www.waterfoxproject.org/downloads.html"
+!define URLManualDownload "https://www.waterfoxproject.org/downloads.html"
 !define Channel "release"
 
 # The installer's certificate name and issuer expected by the stub installer
@@ -26,7 +26,7 @@
 # The dialog units for the bitmap's dimensions should match exactly with the
 # bitmap's width and height in pixels.
 !define APPNAME_BMP_WIDTH_DU 159u
-!define APPNAME_BMP_HEIGHT_DU 28u
+!define APPNAME_BMP_HEIGHT_DU 50u
 !define INTRO_BLURB_WIDTH_DU "230u"
 !define INTRO_BLURB_EDGE_DU "198u"
 !define INTRO_BLURB_LTR_TOP_DU "16u"

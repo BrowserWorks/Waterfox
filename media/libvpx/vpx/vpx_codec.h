@@ -83,7 +83,7 @@ extern "C" {
    * types, removing or reassigning enums, adding/removing/rearranging
    * fields to structures
    */
-#define VPX_CODEC_ABI_VERSION (2 + VPX_IMAGE_ABI_VERSION) /**<\hideinitializer*/
+#define VPX_CODEC_ABI_VERSION (3 + VPX_IMAGE_ABI_VERSION) /**<\hideinitializer*/
 
   /*!\brief Algorithm return codes */
   typedef enum {

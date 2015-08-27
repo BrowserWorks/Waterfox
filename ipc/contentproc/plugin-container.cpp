@@ -25,11 +25,9 @@
 #include "GMPLoader.h"
 
 #if defined(XP_WIN) && defined(MOZ_SANDBOX)
-#include "sandbox/chromium/base/basictypes.h"
-#include "sandbox/win/src/sandbox.h"
-#include "sandbox/win/src/sandbox_factory.h"
 #include "mozilla/sandboxTarget.h"
 #include "mozilla/sandboxing/loggingCallbacks.h"
+#include "sandbox/win/src/sandbox_factory.h"
 #endif
 
 #if defined(XP_LINUX) && defined(MOZ_GMP_SANDBOX)
@@ -54,7 +52,11 @@
        "Gecko:MozillaRntimeMain", __VA_ARGS__)) \
      : (void)0 )
 
-#endif
+# ifdef MOZ_CONTENT_SANDBOX
+# include "mozilla/Sandbox.h"
+# endif
+
+#endif // MOZ_WIDGET_GONK
 
 #ifdef MOZ_NUWA_PROCESS
 #include <binder/ProcessState.h>
@@ -79,19 +81,14 @@ InitializeBinder(void *aDummy) {
 
 #if defined(XP_WIN) && defined(MOZ_SANDBOX)
 static bool gIsSandboxEnabled = false;
-void StartSandboxCallback()
-{
-    if (gIsSandboxEnabled) {
-        sandbox::TargetServices* target_service =
-            sandbox::SandboxFactory::GetTargetServices();
-        target_service->LowerToken();
-    }
-}
 
 class WinSandboxStarter : public mozilla::gmp::SandboxStarter {
 public:
-    virtual void Start(const char *aLibPath) override {
-        StartSandboxCallback();
+    virtual bool Start(const char *aLibPath) override {
+        if (gIsSandboxEnabled) {
+            sandbox::SandboxFactory::GetTargetServices()->LowerToken();
+        }
+        return true;
     }
 };
 #endif
@@ -109,23 +106,41 @@ public:
             return nullptr;
         }
     }
-    virtual void Start(const char *aLibPath) override {
+    virtual bool Start(const char *aLibPath) override {
         mozilla::SetMediaPluginSandbox(aLibPath);
+        return true;
     }
+};
+#endif
+
+#if defined(XP_MACOSX) && defined(MOZ_GMP_SANDBOX)
+class MacSandboxStarter : public mozilla::gmp::SandboxStarter {
+public:
+    virtual bool Start(const char *aLibPath) override {
+      std::string err;
+      bool rv = mozilla::StartMacSandbox(mInfo, err);
+      if (!rv) {
+        fprintf(stderr, "sandbox_init() failed! Error \"%s\"\n", err.c_str());
+      }
+      return rv;
+    }
+    virtual void SetSandboxInfo(MacSandboxInfo* aSandboxInfo) override {
+      mInfo = *aSandboxInfo;
+    }
+private:
+  MacSandboxInfo mInfo;
 };
 #endif
 
 mozilla::gmp::SandboxStarter*
 MakeSandboxStarter()
 {
-    // Note: MacOSX creates its SandboxStarter inside xul code; it
-    // needs to change to statically link its sandbox code into
-    // plugin-container. Once it does that, we can create the
-    // SandboxStarter for it here.
 #if defined(XP_WIN) && defined(MOZ_SANDBOX)
     return new WinSandboxStarter();
 #elif defined(XP_LINUX) && defined(MOZ_GMP_SANDBOX)
     return LinuxSandboxStarter::Make();
+#elif defined(XP_MACOSX) && defined(MOZ_GMP_SANDBOX)
+    return new MacSandboxStarter();
 #else
     return nullptr;
 #endif
@@ -153,6 +168,16 @@ content_process_main(int argc, char* argv[])
     if (isNuwa) {
         PrepareNuwaProcess();
     }
+#endif
+
+#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
+    // This has to happen while we're still single-threaded, and on
+    // B2G that means before the Android Binder library is
+    // initialized.  Additional special handling is needed for Nuwa:
+    // the Nuwa process itself needs to be unsandboxed, and the same
+    // single-threadedness condition applies to its children; see also
+    // AfterNuwaFork().
+    mozilla::SandboxEarlyInit(XRE_GetProcessType(), isNuwa);
 #endif
 
 #ifdef MOZ_WIDGET_GONK
@@ -189,11 +214,11 @@ content_process_main(int argc, char* argv[])
             return 1;
         }
 
-        sandbox::ResultCode result = target_service->Init();
+        sandbox::ResultCode result =
+            mozilla::SandboxTarget::Instance()->InitTargetServices(target_service);
         if (result != sandbox::SBOX_ALL_OK) {
            return 2;
         }
-        mozilla::SandboxTarget::Instance()->SetStartSandboxCallback(StartSandboxCallback);
 
         mozilla::sandboxing::PrepareForLogging();
     }

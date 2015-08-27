@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -7,6 +7,7 @@
 #ifndef mozilla_dom_nsIContentParent_h
 #define mozilla_dom_nsIContentParent_h
 
+#include "mozilla/Attributes.h"
 #include "mozilla/dom/ipc/IdType.h"
 
 #include "nsFrameMessageManager.h"
@@ -55,10 +56,12 @@ public:
   virtual bool IsForApp() = 0;
   virtual bool IsForBrowser() = 0;
 
+  MOZ_WARN_UNUSED_RESULT
   virtual PBlobParent* SendPBlobConstructor(
     PBlobParent* aActor,
-    const BlobConstructorParams& aParams) NS_WARN_UNUSED_RESULT = 0;
+    const BlobConstructorParams& aParams) = 0;
 
+  MOZ_WARN_UNUSED_RESULT
   virtual PBrowserParent* SendPBrowserConstructor(
     PBrowserParent* actor,
     const TabId& aTabId,
@@ -66,7 +69,7 @@ public:
     const uint32_t& chromeFlags,
     const ContentParentId& aCpId,
     const bool& aIsForApp,
-    const bool& aIsForBrowser) NS_WARN_UNUSED_RESULT = 0;
+    const bool& aIsForBrowser) = 0;
 
   virtual bool IsContentParent() { return false; }
   ContentParent* AsContentParent();

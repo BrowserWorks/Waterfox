@@ -11,13 +11,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "./vpx_config.h"
 #include "./vpx_version.h"
 
 #include "vpx/internal/vpx_codec_internal.h"
 #include "vpx/vp8dx.h"
 #include "vpx/vpx_decoder.h"
 
+#include "vp9/common/vp9_alloccommon.h"
 #include "vp9/common/vp9_frame_buffers.h"
+#include "vp9/common/vp9_thread.h"
 
 #include "vp9/decoder/vp9_decoder.h"
 #include "vp9/decoder/vp9_decodeframe.h"
@@ -29,20 +32,46 @@
 
 typedef vpx_codec_stream_info_t vp9_stream_info_t;
 
+// This limit is due to framebuffer numbers.
+// TODO(hkuang): Remove this limit after implementing ondemand framebuffers.
+#define FRAME_CACHE_SIZE 6   // Cache maximum 6 decoded frames.
+
+typedef struct cache_frame {
+  int fb_idx;
+  vpx_image_t img;
+} cache_frame;
+
 struct vpx_codec_alg_priv {
   vpx_codec_priv_t        base;
   vpx_codec_dec_cfg_t     cfg;
   vp9_stream_info_t       si;
-  struct VP9Decoder *pbi;
   int                     postproc_cfg_set;
   vp8_postproc_cfg_t      postproc_cfg;
   vpx_decrypt_cb          decrypt_cb;
-  void                   *decrypt_state;
+  void                    *decrypt_state;
   vpx_image_t             img;
   int                     img_avail;
   int                     flushed;
   int                     invert_tile_order;
+  int                     last_show_frame;  // Index of last output frame.
+  int                     byte_alignment;
+  int                     skip_loop_filter;
+
+  // Frame parallel related.
   int                     frame_parallel_decode;  // frame-based threading.
+  VP9Worker               *frame_workers;
+  int                     num_frame_workers;
+  int                     next_submit_worker_id;
+  int                     last_submit_worker_id;
+  int                     next_output_worker_id;
+  int                     available_threads;
+  cache_frame             frame_cache[FRAME_CACHE_SIZE];
+  int                     frame_cache_write;
+  int                     frame_cache_read;
+  int                     num_cache_frames;
+  int                     need_resync;      // wait for key/intra-only frame
+  // BufferPool that holds all reference frames. Shared by all the FrameWorkers.
+  BufferPool              *buffer_pool;
 
   // External frame buffer info to save for VP9 common.
   void *ext_priv;  // Private data associated with the external frame buffers.
@@ -64,13 +93,12 @@ static vpx_codec_err_t decoder_init(vpx_codec_ctx_t *ctx,
 
     ctx->priv = (vpx_codec_priv_t *)priv;
     ctx->priv->init_flags = ctx->init_flags;
-
     priv->si.sz = sizeof(priv->si);
     priv->flushed = 0;
+    // Only do frame parallel decode when threads > 1.
     priv->frame_parallel_decode =
-        (ctx->init_flags & VPX_CODEC_USE_FRAME_THREADING);
-    priv->frame_parallel_decode = 0;  // Disable for now
-
+        (ctx->config.dec && (ctx->config.dec->threads > 1) &&
+         (ctx->init_flags & VPX_CODEC_USE_FRAME_THREADING)) ? 1 : 0;
     if (ctx->config.dec) {
       priv->cfg = *ctx->config.dec;
       ctx->config.dec = &priv->cfg;
@@ -81,24 +109,48 @@ static vpx_codec_err_t decoder_init(vpx_codec_ctx_t *ctx,
 }
 
 static vpx_codec_err_t decoder_destroy(vpx_codec_alg_priv_t *ctx) {
-  if (ctx->pbi) {
-    vp9_decoder_remove(ctx->pbi);
-    ctx->pbi = NULL;
+  if (ctx->frame_workers != NULL) {
+    int i;
+    for (i = 0; i < ctx->num_frame_workers; ++i) {
+      VP9Worker *const worker = &ctx->frame_workers[i];
+      FrameWorkerData *const frame_worker_data =
+          (FrameWorkerData *)worker->data1;
+      vp9_get_worker_interface()->end(worker);
+      vp9_remove_common(&frame_worker_data->pbi->common);
+#if CONFIG_VP9_POSTPROC
+      vp9_free_postproc_buffers(&frame_worker_data->pbi->common);
+#endif
+      vp9_decoder_remove(frame_worker_data->pbi);
+      vpx_free(frame_worker_data->scratch_buffer);
+#if CONFIG_MULTITHREAD
+      pthread_mutex_destroy(&frame_worker_data->stats_mutex);
+      pthread_cond_destroy(&frame_worker_data->stats_cond);
+#endif
+      vpx_free(frame_worker_data);
+    }
+#if CONFIG_MULTITHREAD
+    pthread_mutex_destroy(&ctx->buffer_pool->pool_mutex);
+#endif
   }
 
-  vpx_free(ctx);
+  if (ctx->buffer_pool) {
+    vp9_free_ref_frame_buffers(ctx->buffer_pool);
+    vp9_free_internal_frame_buffers(&ctx->buffer_pool->int_frame_buffers);
+  }
 
+  vpx_free(ctx->frame_workers);
+  vpx_free(ctx->buffer_pool);
+  vpx_free(ctx);
   return VPX_CODEC_OK;
 }
 
 static int parse_bitdepth_colorspace_sampling(
     BITSTREAM_PROFILE profile, struct vp9_read_bit_buffer *rb) {
-  const int sRGB = 7;
-  int colorspace;
+  vpx_color_space_t color_space;
   if (profile >= PROFILE_2)
     rb->bit_offset += 1;  // Bit-depth 10 or 12.
-  colorspace = vp9_rb_read_literal(rb, 3);
-  if (colorspace != sRGB) {
+  color_space = (vpx_color_space_t)vp9_rb_read_literal(rb, 3);
+  if (color_space != VPX_CS_SRGB) {
     rb->bit_offset += 1;  // [16,235] (including xvycc) vs [0,255] range.
     if (profile == PROFILE_1 || profile == PROFILE_3) {
       rb->bit_offset += 2;  // subsampling x/y.
@@ -146,7 +198,11 @@ static vpx_codec_err_t decoder_peek_si_internal(const uint8_t *data,
     if (frame_marker != VP9_FRAME_MARKER)
       return VPX_CODEC_UNSUP_BITSTREAM;
 
-    if (profile >= MAX_PROFILES) return VPX_CODEC_UNSUP_BITSTREAM;
+    if (profile >= MAX_PROFILES)
+      return VPX_CODEC_UNSUP_BITSTREAM;
+
+    if ((profile >= 2 && data_sz <= 1) || data_sz < 1)
+      return VPX_CODEC_UNSUP_BITSTREAM;
 
     if (vp9_rb_read_bit(&rb)) {  // show an existing frame
       vp9_rb_read_literal(&rb, 3);  // Frame buffer to show.
@@ -206,32 +262,46 @@ static vpx_codec_err_t decoder_get_si(vpx_codec_alg_priv_t *ctx,
   return VPX_CODEC_OK;
 }
 
+static void set_error_detail(vpx_codec_alg_priv_t *ctx,
+                             const char *const error) {
+  ctx->base.err_detail = error;
+}
+
 static vpx_codec_err_t update_error_state(vpx_codec_alg_priv_t *ctx,
                            const struct vpx_internal_error_info *error) {
   if (error->error_code)
-    ctx->base.err_detail = error->has_detail ? error->detail : NULL;
+    set_error_detail(ctx, error->has_detail ? error->detail : NULL);
 
   return error->error_code;
 }
 
 static void init_buffer_callbacks(vpx_codec_alg_priv_t *ctx) {
-  VP9_COMMON *const cm = &ctx->pbi->common;
+  int i;
 
-  cm->new_fb_idx = -1;
+  for (i = 0; i < ctx->num_frame_workers; ++i) {
+    VP9Worker *const worker = &ctx->frame_workers[i];
+    FrameWorkerData *const frame_worker_data = (FrameWorkerData *)worker->data1;
+    VP9_COMMON *const cm = &frame_worker_data->pbi->common;
+    BufferPool *const pool = cm->buffer_pool;
 
-  if (ctx->get_ext_fb_cb != NULL && ctx->release_ext_fb_cb != NULL) {
-    cm->get_fb_cb = ctx->get_ext_fb_cb;
-    cm->release_fb_cb = ctx->release_ext_fb_cb;
-    cm->cb_priv = ctx->ext_priv;
-  } else {
-    cm->get_fb_cb = vp9_get_frame_buffer;
-    cm->release_fb_cb = vp9_release_frame_buffer;
+    cm->new_fb_idx = INVALID_IDX;
+    cm->byte_alignment = ctx->byte_alignment;
+    cm->skip_loop_filter = ctx->skip_loop_filter;
 
-    if (vp9_alloc_internal_frame_buffers(&cm->int_frame_buffers))
-      vpx_internal_error(&cm->error, VPX_CODEC_MEM_ERROR,
-                         "Failed to initialize internal frame buffers");
+    if (ctx->get_ext_fb_cb != NULL && ctx->release_ext_fb_cb != NULL) {
+      pool->get_fb_cb = ctx->get_ext_fb_cb;
+      pool->release_fb_cb = ctx->release_ext_fb_cb;
+      pool->cb_priv = ctx->ext_priv;
+    } else {
+      pool->get_fb_cb = vp9_get_frame_buffer;
+      pool->release_fb_cb = vp9_release_frame_buffer;
 
-    cm->cb_priv = &cm->int_frame_buffers;
+      if (vp9_alloc_internal_frame_buffers(&pool->int_frame_buffers))
+        vpx_internal_error(&cm->error, VPX_CODEC_MEM_ERROR,
+                           "Failed to initialize internal frame buffers");
+
+      pool->cb_priv = &pool->int_frame_buffers;
+    }
   }
 }
 
@@ -250,14 +320,127 @@ static void set_ppflags(const vpx_codec_alg_priv_t *ctx,
   flags->noise_level = ctx->postproc_cfg.noise_level;
 }
 
-static void init_decoder(vpx_codec_alg_priv_t *ctx) {
-  ctx->pbi = vp9_decoder_create();
-  if (ctx->pbi == NULL)
-    return;
+static int frame_worker_hook(void *arg1, void *arg2) {
+  FrameWorkerData *const frame_worker_data = (FrameWorkerData *)arg1;
+  const uint8_t *data = frame_worker_data->data;
+  (void)arg2;
 
-  ctx->pbi->max_threads = ctx->cfg.threads;
-  ctx->pbi->inv_tile_order = ctx->invert_tile_order;
-  ctx->pbi->frame_parallel_decode = ctx->frame_parallel_decode;
+  frame_worker_data->result =
+      vp9_receive_compressed_data(frame_worker_data->pbi,
+                                  frame_worker_data->data_size,
+                                  &data);
+  frame_worker_data->data_end = data;
+
+  if (frame_worker_data->pbi->frame_parallel_decode) {
+    // In frame parallel decoding, a worker thread must successfully decode all
+    // the compressed data.
+    if (frame_worker_data->result != 0 ||
+        frame_worker_data->data + frame_worker_data->data_size - 1 > data) {
+      VP9Worker *const worker = frame_worker_data->pbi->frame_worker_owner;
+      BufferPool *const pool = frame_worker_data->pbi->common.buffer_pool;
+      // Signal all the other threads that are waiting for this frame.
+      vp9_frameworker_lock_stats(worker);
+      frame_worker_data->frame_context_ready = 1;
+      lock_buffer_pool(pool);
+      frame_worker_data->pbi->cur_buf->buf.corrupted = 1;
+      unlock_buffer_pool(pool);
+      frame_worker_data->pbi->need_resync = 1;
+      vp9_frameworker_signal_stats(worker);
+      vp9_frameworker_unlock_stats(worker);
+      return 0;
+    }
+  } else if (frame_worker_data->result != 0) {
+    // Check decode result in serial decode.
+    frame_worker_data->pbi->cur_buf->buf.corrupted = 1;
+    frame_worker_data->pbi->need_resync = 1;
+  }
+  return !frame_worker_data->result;
+}
+
+static vpx_codec_err_t init_decoder(vpx_codec_alg_priv_t *ctx) {
+  int i;
+  const VP9WorkerInterface *const winterface = vp9_get_worker_interface();
+
+  ctx->last_show_frame = -1;
+  ctx->next_submit_worker_id = 0;
+  ctx->last_submit_worker_id = 0;
+  ctx->next_output_worker_id = 0;
+  ctx->frame_cache_read = 0;
+  ctx->frame_cache_write = 0;
+  ctx->num_cache_frames = 0;
+  ctx->need_resync = 1;
+  ctx->num_frame_workers =
+      (ctx->frame_parallel_decode == 1) ? ctx->cfg.threads: 1;
+  if (ctx->num_frame_workers > MAX_DECODE_THREADS)
+    ctx->num_frame_workers = MAX_DECODE_THREADS;
+  ctx->available_threads = ctx->num_frame_workers;
+  ctx->flushed = 0;
+
+  ctx->buffer_pool = (BufferPool *)vpx_calloc(1, sizeof(BufferPool));
+  if (ctx->buffer_pool == NULL)
+    return VPX_CODEC_MEM_ERROR;
+
+#if CONFIG_MULTITHREAD
+    if (pthread_mutex_init(&ctx->buffer_pool->pool_mutex, NULL)) {
+      set_error_detail(ctx, "Failed to allocate buffer pool mutex");
+      return VPX_CODEC_MEM_ERROR;
+    }
+#endif
+
+  ctx->frame_workers = (VP9Worker *)
+      vpx_malloc(ctx->num_frame_workers * sizeof(*ctx->frame_workers));
+  if (ctx->frame_workers == NULL) {
+    set_error_detail(ctx, "Failed to allocate frame_workers");
+    return VPX_CODEC_MEM_ERROR;
+  }
+
+  for (i = 0; i < ctx->num_frame_workers; ++i) {
+    VP9Worker *const worker = &ctx->frame_workers[i];
+    FrameWorkerData *frame_worker_data = NULL;
+    winterface->init(worker);
+    worker->data1 = vpx_memalign(32, sizeof(FrameWorkerData));
+    if (worker->data1 == NULL) {
+      set_error_detail(ctx, "Failed to allocate frame_worker_data");
+      return VPX_CODEC_MEM_ERROR;
+    }
+    frame_worker_data = (FrameWorkerData *)worker->data1;
+    frame_worker_data->pbi = vp9_decoder_create(ctx->buffer_pool);
+    if (frame_worker_data->pbi == NULL) {
+      set_error_detail(ctx, "Failed to allocate frame_worker_data");
+      return VPX_CODEC_MEM_ERROR;
+    }
+    frame_worker_data->pbi->frame_worker_owner = worker;
+    frame_worker_data->worker_id = i;
+    frame_worker_data->scratch_buffer = NULL;
+    frame_worker_data->scratch_buffer_size = 0;
+    frame_worker_data->frame_context_ready = 0;
+    frame_worker_data->received_frame = 0;
+#if CONFIG_MULTITHREAD
+    if (pthread_mutex_init(&frame_worker_data->stats_mutex, NULL)) {
+      set_error_detail(ctx, "Failed to allocate frame_worker_data mutex");
+      return VPX_CODEC_MEM_ERROR;
+    }
+
+    if (pthread_cond_init(&frame_worker_data->stats_cond, NULL)) {
+      set_error_detail(ctx, "Failed to allocate frame_worker_data cond");
+      return VPX_CODEC_MEM_ERROR;
+    }
+#endif
+    // If decoding in serial mode, FrameWorker thread could create tile worker
+    // thread or loopfilter thread.
+    frame_worker_data->pbi->max_threads =
+        (ctx->frame_parallel_decode == 0) ? ctx->cfg.threads : 0;
+
+    frame_worker_data->pbi->inv_tile_order = ctx->invert_tile_order;
+    frame_worker_data->pbi->frame_parallel_decode = ctx->frame_parallel_decode;
+    frame_worker_data->pbi->common.frame_parallel_decode =
+        ctx->frame_parallel_decode;
+    worker->hook = (VP9WorkerHook)frame_worker_hook;
+    if (!winterface->reset(worker)) {
+      set_error_detail(ctx, "Frame Worker thread creation failed");
+      return VPX_CODEC_MEM_ERROR;
+    }
+  }
 
   // If postprocessing was enabled by the application and a
   // configuration has not been provided, default it.
@@ -266,19 +449,23 @@ static void init_decoder(vpx_codec_alg_priv_t *ctx) {
     set_default_ppflags(&ctx->postproc_cfg);
 
   init_buffer_callbacks(ctx);
+
+  return VPX_CODEC_OK;
+}
+
+static INLINE void check_resync(vpx_codec_alg_priv_t *const ctx,
+                                const VP9Decoder *const pbi) {
+  // Clear resync flag if worker got a key frame or intra only frame.
+  if (ctx->need_resync == 1 && pbi->need_resync == 0 &&
+      (pbi->common.intra_only || pbi->common.frame_type == KEY_FRAME))
+    ctx->need_resync = 0;
 }
 
 static vpx_codec_err_t decode_one(vpx_codec_alg_priv_t *ctx,
                                   const uint8_t **data, unsigned int data_sz,
                                   void *user_priv, int64_t deadline) {
-  YV12_BUFFER_CONFIG sd;
-  vp9_ppflags_t flags = {0, 0, 0};
-  VP9_COMMON *cm = NULL;
-
+  const VP9WorkerInterface *const winterface = vp9_get_worker_interface();
   (void)deadline;
-
-  vp9_zero(sd);
-  ctx->img_avail = 0;
 
   // Determine the stream parameters. Note that we rely on peek_si to
   // validate that we have a buffer that does not wrap around the top
@@ -295,34 +482,102 @@ static vpx_codec_err_t decode_one(vpx_codec_alg_priv_t *ctx,
       return VPX_CODEC_ERROR;
   }
 
-  // Initialize the decoder instance on the first frame
-  if (ctx->pbi == NULL) {
-    init_decoder(ctx);
-    if (ctx->pbi == NULL)
-      return VPX_CODEC_ERROR;
+  if (!ctx->frame_parallel_decode) {
+    VP9Worker *const worker = ctx->frame_workers;
+    FrameWorkerData *const frame_worker_data = (FrameWorkerData *)worker->data1;
+    frame_worker_data->data = *data;
+    frame_worker_data->data_size = data_sz;
+    frame_worker_data->user_priv = user_priv;
+    frame_worker_data->received_frame = 1;
+
+    // Set these even if already initialized.  The caller may have changed the
+    // decrypt config between frames.
+    frame_worker_data->pbi->decrypt_cb = ctx->decrypt_cb;
+    frame_worker_data->pbi->decrypt_state = ctx->decrypt_state;
+
+    worker->had_error = 0;
+    winterface->execute(worker);
+
+    // Update data pointer after decode.
+    *data = frame_worker_data->data_end;
+
+    if (worker->had_error)
+      return update_error_state(ctx, &frame_worker_data->pbi->common.error);
+
+    check_resync(ctx, frame_worker_data->pbi);
+  } else {
+    VP9Worker *const worker = &ctx->frame_workers[ctx->next_submit_worker_id];
+    FrameWorkerData *const frame_worker_data = (FrameWorkerData *)worker->data1;
+    // Copy context from last worker thread to next worker thread.
+    if (ctx->next_submit_worker_id != ctx->last_submit_worker_id)
+      vp9_frameworker_copy_context(
+          &ctx->frame_workers[ctx->next_submit_worker_id],
+          &ctx->frame_workers[ctx->last_submit_worker_id]);
+
+    frame_worker_data->pbi->ready_for_new_data = 0;
+    // Copy the compressed data into worker's internal buffer.
+    // TODO(hkuang): Will all the workers allocate the same size
+    // as the size of the first intra frame be better? This will
+    // avoid too many deallocate and allocate.
+    if (frame_worker_data->scratch_buffer_size < data_sz) {
+      frame_worker_data->scratch_buffer =
+          (uint8_t *)vpx_realloc(frame_worker_data->scratch_buffer, data_sz);
+      if (frame_worker_data->scratch_buffer == NULL) {
+        set_error_detail(ctx, "Failed to reallocate scratch buffer");
+        return VPX_CODEC_MEM_ERROR;
+      }
+      frame_worker_data->scratch_buffer_size = data_sz;
+    }
+    frame_worker_data->data_size = data_sz;
+    memcpy(frame_worker_data->scratch_buffer, *data, data_sz);
+
+    frame_worker_data->frame_decoded = 0;
+    frame_worker_data->frame_context_ready = 0;
+    frame_worker_data->received_frame = 1;
+    frame_worker_data->data = frame_worker_data->scratch_buffer;
+    frame_worker_data->user_priv = user_priv;
+
+    if (ctx->next_submit_worker_id != ctx->last_submit_worker_id)
+      ctx->last_submit_worker_id =
+          (ctx->last_submit_worker_id + 1) % ctx->num_frame_workers;
+
+    ctx->next_submit_worker_id =
+        (ctx->next_submit_worker_id + 1) % ctx->num_frame_workers;
+    --ctx->available_threads;
+    worker->had_error = 0;
+    winterface->launch(worker);
   }
 
-  // Set these even if already initialized.  The caller may have changed the
-  // decrypt config between frames.
-  ctx->pbi->decrypt_cb = ctx->decrypt_cb;
-  ctx->pbi->decrypt_state = ctx->decrypt_state;
-
-  cm = &ctx->pbi->common;
-
-  if (vp9_receive_compressed_data(ctx->pbi, data_sz, data))
-    return update_error_state(ctx, &cm->error);
-
-  if (ctx->base.init_flags & VPX_CODEC_USE_POSTPROC)
-    set_ppflags(ctx, &flags);
-
-  if (vp9_get_raw_frame(ctx->pbi, &sd, &flags))
-    return update_error_state(ctx, &cm->error);
-
-  yuvconfig2image(&ctx->img, &sd, user_priv);
-  ctx->img.fb_priv = cm->frame_bufs[cm->new_fb_idx].raw_frame_buffer.priv;
-  ctx->img_avail = 1;
-
   return VPX_CODEC_OK;
+}
+
+static void wait_worker_and_cache_frame(vpx_codec_alg_priv_t *ctx) {
+  YV12_BUFFER_CONFIG sd;
+  vp9_ppflags_t flags = {0, 0, 0};
+  const VP9WorkerInterface *const winterface = vp9_get_worker_interface();
+  VP9Worker *const worker = &ctx->frame_workers[ctx->next_output_worker_id];
+  FrameWorkerData *const frame_worker_data = (FrameWorkerData *)worker->data1;
+  ctx->next_output_worker_id =
+      (ctx->next_output_worker_id + 1) % ctx->num_frame_workers;
+  // TODO(hkuang): Add worker error handling here.
+  winterface->sync(worker);
+  frame_worker_data->received_frame = 0;
+  ++ctx->available_threads;
+
+  check_resync(ctx, frame_worker_data->pbi);
+
+  if (vp9_get_raw_frame(frame_worker_data->pbi, &sd, &flags) == 0) {
+    VP9_COMMON *const cm = &frame_worker_data->pbi->common;
+    RefCntBuffer *const frame_bufs = cm->buffer_pool->frame_bufs;
+    ctx->frame_cache[ctx->frame_cache_write].fb_idx = cm->new_fb_idx;
+    yuvconfig2image(&ctx->frame_cache[ctx->frame_cache_write].img, &sd,
+                    frame_worker_data->user_priv);
+    ctx->frame_cache[ctx->frame_cache_write].img.fb_priv =
+        frame_bufs[cm->new_fb_idx].raw_frame_buffer.priv;
+    ctx->frame_cache_write =
+        (ctx->frame_cache_write + 1) % FRAME_CACHE_SIZE;
+    ++ctx->num_cache_frames;
+  }
 }
 
 static vpx_codec_err_t decoder_decode(vpx_codec_alg_priv_t *ctx,
@@ -342,6 +597,13 @@ static vpx_codec_err_t decoder_decode(vpx_codec_alg_priv_t *ctx,
   // Reset flushed when receiving a valid frame.
   ctx->flushed = 0;
 
+  // Initialize the decoder workers on the first frame.
+  if (ctx->frame_workers == NULL) {
+    const vpx_codec_err_t res = init_decoder(ctx);
+    if (res != VPX_CODEC_OK)
+      return res;
+  }
+
   res = vp9_parse_superframe_index(data, data_sz, frame_sizes, &frame_count,
                                    ctx->decrypt_cb, ctx->decrypt_state);
   if (res != VPX_CODEC_OK)
@@ -358,30 +620,46 @@ static vpx_codec_err_t decoder_decode(vpx_codec_alg_priv_t *ctx,
       for (i = 0; i < frame_count; ++i) {
         const uint8_t *data_start_copy = data_start;
         const uint32_t frame_size = frame_sizes[i];
-        vpx_codec_err_t res;
         if (data_start < data
             || frame_size > (uint32_t) (data_end - data_start)) {
-          ctx->base.err_detail = "Invalid frame size in index";
+          set_error_detail(ctx, "Invalid frame size in index");
           return VPX_CODEC_CORRUPT_FRAME;
+        }
+
+        if (ctx->available_threads == 0) {
+          // No more threads for decoding. Wait until the next output worker
+          // finishes decoding. Then copy the decoded frame into cache.
+          if (ctx->num_cache_frames < FRAME_CACHE_SIZE) {
+            wait_worker_and_cache_frame(ctx);
+          } else {
+            // TODO(hkuang): Add unit test to test this path.
+            set_error_detail(ctx, "Frame output cache is full.");
+            return VPX_CODEC_ERROR;
+          }
         }
 
         res = decode_one(ctx, &data_start_copy, frame_size, user_priv,
                          deadline);
         if (res != VPX_CODEC_OK)
           return res;
-
         data_start += frame_size;
       }
     } else {
-      res = decode_one(ctx, &data_start, data_sz, user_priv, deadline);
+      if (ctx->available_threads == 0) {
+        // No more threads for decoding. Wait until the next output worker
+        // finishes decoding. Then copy the decoded frame into cache.
+        if (ctx->num_cache_frames < FRAME_CACHE_SIZE) {
+          wait_worker_and_cache_frame(ctx);
+        } else {
+          // TODO(hkuang): Add unit test to test this path.
+          set_error_detail(ctx, "Frame output cache is full.");
+          return VPX_CODEC_ERROR;
+        }
+      }
+
+      res = decode_one(ctx, &data, data_sz, user_priv, deadline);
       if (res != VPX_CODEC_OK)
         return res;
-
-      // Extra data detected after the frame.
-      if (data_start < data_end - 1) {
-        ctx->base.err_detail = "Fail to decode frame in parallel mode";
-        return VPX_CODEC_INCAPABLE;
-      }
     }
   } else {
     // Decode in serial mode.
@@ -394,7 +672,7 @@ static vpx_codec_err_t decoder_decode(vpx_codec_alg_priv_t *ctx,
         vpx_codec_err_t res;
         if (data_start < data
             || frame_size > (uint32_t) (data_end - data_start)) {
-          ctx->base.err_detail = "Invalid frame size in index";
+          set_error_detail(ctx, "Invalid frame size in index");
           return VPX_CODEC_CORRUPT_FRAME;
         }
 
@@ -425,25 +703,89 @@ static vpx_codec_err_t decoder_decode(vpx_codec_alg_priv_t *ctx,
     }
   }
 
-  return VPX_CODEC_OK;
+  return res;
+}
+
+static void release_last_output_frame(vpx_codec_alg_priv_t *ctx) {
+  RefCntBuffer *const frame_bufs = ctx->buffer_pool->frame_bufs;
+  // Decrease reference count of last output frame in frame parallel mode.
+  if (ctx->frame_parallel_decode && ctx->last_show_frame >= 0) {
+    BufferPool *const pool = ctx->buffer_pool;
+    lock_buffer_pool(pool);
+    decrease_ref_count(ctx->last_show_frame, frame_bufs, pool);
+    unlock_buffer_pool(pool);
+  }
 }
 
 static vpx_image_t *decoder_get_frame(vpx_codec_alg_priv_t *ctx,
                                       vpx_codec_iter_t *iter) {
   vpx_image_t *img = NULL;
 
-  if (ctx->img_avail) {
-    // iter acts as a flip flop, so an image is only returned on the first
-    // call to get_frame.
-    if (!(*iter)) {
-      img = &ctx->img;
-      img->bit_depth = (int)ctx->pbi->common.bit_depth;
-      *iter = img;
-    }
+  // Only return frame when all the cpu are busy or
+  // application fluhsed the decoder in frame parallel decode.
+  if (ctx->frame_parallel_decode && ctx->available_threads > 0 &&
+      !ctx->flushed) {
+    return NULL;
   }
-  ctx->img_avail = 0;
 
-  return img;
+  // Output the frames in the cache first.
+  if (ctx->num_cache_frames > 0) {
+    release_last_output_frame(ctx);
+    ctx->last_show_frame  = ctx->frame_cache[ctx->frame_cache_read].fb_idx;
+    if (ctx->need_resync)
+      return NULL;
+    img = &ctx->frame_cache[ctx->frame_cache_read].img;
+    ctx->frame_cache_read = (ctx->frame_cache_read + 1) % FRAME_CACHE_SIZE;
+    --ctx->num_cache_frames;
+    return img;
+  }
+
+  // iter acts as a flip flop, so an image is only returned on the first
+  // call to get_frame.
+  if (*iter == NULL && ctx->frame_workers != NULL) {
+    do {
+      YV12_BUFFER_CONFIG sd;
+      vp9_ppflags_t flags = {0, 0, 0};
+      const VP9WorkerInterface *const winterface = vp9_get_worker_interface();
+      VP9Worker *const worker =
+          &ctx->frame_workers[ctx->next_output_worker_id];
+      FrameWorkerData *const frame_worker_data =
+          (FrameWorkerData *)worker->data1;
+      ctx->next_output_worker_id =
+          (ctx->next_output_worker_id + 1) % ctx->num_frame_workers;
+      if (ctx->base.init_flags & VPX_CODEC_USE_POSTPROC)
+        set_ppflags(ctx, &flags);
+      // Wait for the frame from worker thread.
+      if (winterface->sync(worker)) {
+        // Check if worker has received any frames.
+        if (frame_worker_data->received_frame == 1) {
+          ++ctx->available_threads;
+          frame_worker_data->received_frame = 0;
+          check_resync(ctx, frame_worker_data->pbi);
+        }
+        if (vp9_get_raw_frame(frame_worker_data->pbi, &sd, &flags) == 0) {
+          VP9_COMMON *const cm = &frame_worker_data->pbi->common;
+          RefCntBuffer *const frame_bufs = cm->buffer_pool->frame_bufs;
+          release_last_output_frame(ctx);
+          ctx->last_show_frame = frame_worker_data->pbi->common.new_fb_idx;
+          if (ctx->need_resync)
+            return NULL;
+          yuvconfig2image(&ctx->img, &sd, frame_worker_data->user_priv);
+          ctx->img.fb_priv = frame_bufs[cm->new_fb_idx].raw_frame_buffer.priv;
+          img = &ctx->img;
+          return img;
+        }
+      } else {
+        // Decoding failed. Release the worker thread.
+        frame_worker_data->received_frame = 0;
+        ++ctx->available_threads;
+        ctx->need_resync = 1;
+        if (ctx->flushed != 1)
+          return NULL;
+      }
+    } while (ctx->next_output_worker_id != ctx->next_submit_worker_id);
+  }
+  return NULL;
 }
 
 static vpx_codec_err_t decoder_set_fb_fn(
@@ -452,7 +794,7 @@ static vpx_codec_err_t decoder_set_fb_fn(
     vpx_release_frame_buffer_cb_fn_t cb_release, void *cb_priv) {
   if (cb_get == NULL || cb_release == NULL) {
     return VPX_CODEC_INVALID_PARAM;
-  } else if (ctx->pbi == NULL) {
+  } else if (ctx->frame_workers == NULL) {
     // If the decoder has already been initialized, do not accept changes to
     // the frame buffer functions.
     ctx->get_ext_fb_cb = cb_get;
@@ -468,12 +810,19 @@ static vpx_codec_err_t ctrl_set_reference(vpx_codec_alg_priv_t *ctx,
                                           va_list args) {
   vpx_ref_frame_t *const data = va_arg(args, vpx_ref_frame_t *);
 
+  // Only support this function in serial decode.
+  if (ctx->frame_parallel_decode) {
+    set_error_detail(ctx, "Not supported in frame parallel decode");
+    return VPX_CODEC_INCAPABLE;
+  }
+
   if (data) {
     vpx_ref_frame_t *const frame = (vpx_ref_frame_t *)data;
     YV12_BUFFER_CONFIG sd;
-
+    VP9Worker *const worker = ctx->frame_workers;
+    FrameWorkerData *const frame_worker_data = (FrameWorkerData *)worker->data1;
     image2yuvconfig(&frame->img, &sd);
-    return vp9_set_reference_dec(&ctx->pbi->common,
+    return vp9_set_reference_dec(&frame_worker_data->pbi->common,
                                  (VP9_REFFRAME)frame->frame_type, &sd);
   } else {
     return VPX_CODEC_INVALID_PARAM;
@@ -484,13 +833,19 @@ static vpx_codec_err_t ctrl_copy_reference(vpx_codec_alg_priv_t *ctx,
                                            va_list args) {
   vpx_ref_frame_t *data = va_arg(args, vpx_ref_frame_t *);
 
+  // Only support this function in serial decode.
+  if (ctx->frame_parallel_decode) {
+    set_error_detail(ctx, "Not supported in frame parallel decode");
+    return VPX_CODEC_INCAPABLE;
+  }
+
   if (data) {
-    vpx_ref_frame_t *frame = (vpx_ref_frame_t *)data;
+    vpx_ref_frame_t *frame = (vpx_ref_frame_t *) data;
     YV12_BUFFER_CONFIG sd;
-
+    VP9Worker *const worker = ctx->frame_workers;
+    FrameWorkerData *const frame_worker_data = (FrameWorkerData *)worker->data1;
     image2yuvconfig(&frame->img, &sd);
-
-    return vp9_copy_reference_dec(ctx->pbi,
+    return vp9_copy_reference_dec(frame_worker_data->pbi,
                                   (VP9_REFFRAME)frame->frame_type, &sd);
   } else {
     return VPX_CODEC_INVALID_PARAM;
@@ -501,10 +856,18 @@ static vpx_codec_err_t ctrl_get_reference(vpx_codec_alg_priv_t *ctx,
                                           va_list args) {
   vp9_ref_frame_t *data = va_arg(args, vp9_ref_frame_t *);
 
-  if (data) {
-    YV12_BUFFER_CONFIG* fb = get_ref_frame(&ctx->pbi->common, data->idx);
-    if (fb == NULL) return VPX_CODEC_ERROR;
+  // Only support this function in serial decode.
+  if (ctx->frame_parallel_decode) {
+    set_error_detail(ctx, "Not supported in frame parallel decode");
+    return VPX_CODEC_INCAPABLE;
+  }
 
+  if (data) {
+    YV12_BUFFER_CONFIG* fb;
+    VP9Worker *const worker = ctx->frame_workers;
+    FrameWorkerData *const frame_worker_data = (FrameWorkerData *)worker->data1;
+    fb = get_ref_frame(&frame_worker_data->pbi->common, data->idx);
+    if (fb == NULL) return VPX_CODEC_ERROR;
     yuvconfig2image(&data->img, fb, NULL);
     return VPX_CODEC_OK;
   } else {
@@ -542,65 +905,123 @@ static vpx_codec_err_t ctrl_get_last_ref_updates(vpx_codec_alg_priv_t *ctx,
                                                  va_list args) {
   int *const update_info = va_arg(args, int *);
 
-  if (update_info) {
-    if (ctx->pbi)
-      *update_info = ctx->pbi->refresh_frame_flags;
-    else
-      return VPX_CODEC_ERROR;
-    return VPX_CODEC_OK;
-  } else {
-    return VPX_CODEC_INVALID_PARAM;
+  // Only support this function in serial decode.
+  if (ctx->frame_parallel_decode) {
+    set_error_detail(ctx, "Not supported in frame parallel decode");
+    return VPX_CODEC_INCAPABLE;
   }
-}
 
+  if (update_info) {
+    if (ctx->frame_workers) {
+      VP9Worker *const worker = ctx->frame_workers;
+      FrameWorkerData *const frame_worker_data =
+          (FrameWorkerData *)worker->data1;
+      *update_info = frame_worker_data->pbi->refresh_frame_flags;
+      return VPX_CODEC_OK;
+    } else {
+      return VPX_CODEC_ERROR;
+    }
+  }
+
+  return VPX_CODEC_INVALID_PARAM;
+}
 
 static vpx_codec_err_t ctrl_get_frame_corrupted(vpx_codec_alg_priv_t *ctx,
                                                 va_list args) {
   int *corrupted = va_arg(args, int *);
 
-  if (corrupted != NULL && ctx->pbi != NULL) {
-    const YV12_BUFFER_CONFIG *const frame = ctx->pbi->common.frame_to_show;
-    if (frame == NULL) return VPX_CODEC_ERROR;
-    *corrupted = frame->corrupted;
-    return VPX_CODEC_OK;
-  } else {
-    return VPX_CODEC_INVALID_PARAM;
+  if (corrupted) {
+    if (ctx->frame_workers) {
+      VP9Worker *const worker = ctx->frame_workers;
+      FrameWorkerData *const frame_worker_data =
+          (FrameWorkerData *)worker->data1;
+      RefCntBuffer *const frame_bufs =
+          frame_worker_data->pbi->common.buffer_pool->frame_bufs;
+      if (frame_worker_data->pbi->common.frame_to_show == NULL)
+        return VPX_CODEC_ERROR;
+      if (ctx->last_show_frame >= 0)
+        *corrupted = frame_bufs[ctx->last_show_frame].buf.corrupted;
+      return VPX_CODEC_OK;
+    } else {
+      return VPX_CODEC_ERROR;
+    }
   }
+
+  return VPX_CODEC_INVALID_PARAM;
+}
+
+static vpx_codec_err_t ctrl_get_frame_size(vpx_codec_alg_priv_t *ctx,
+                                           va_list args) {
+  int *const frame_size = va_arg(args, int *);
+
+  // Only support this function in serial decode.
+  if (ctx->frame_parallel_decode) {
+    set_error_detail(ctx, "Not supported in frame parallel decode");
+    return VPX_CODEC_INCAPABLE;
+  }
+
+  if (frame_size) {
+    if (ctx->frame_workers) {
+      VP9Worker *const worker = ctx->frame_workers;
+      FrameWorkerData *const frame_worker_data =
+          (FrameWorkerData *)worker->data1;
+      const VP9_COMMON *const cm = &frame_worker_data->pbi->common;
+      frame_size[0] = cm->width;
+      frame_size[1] = cm->height;
+      return VPX_CODEC_OK;
+    } else {
+      return VPX_CODEC_ERROR;
+    }
+  }
+
+  return VPX_CODEC_INVALID_PARAM;
 }
 
 static vpx_codec_err_t ctrl_get_display_size(vpx_codec_alg_priv_t *ctx,
                                              va_list args) {
   int *const display_size = va_arg(args, int *);
 
+  // Only support this function in serial decode.
+  if (ctx->frame_parallel_decode) {
+    set_error_detail(ctx, "Not supported in frame parallel decode");
+    return VPX_CODEC_INCAPABLE;
+  }
+
   if (display_size) {
-    if (ctx->pbi) {
-      const VP9_COMMON *const cm = &ctx->pbi->common;
+    if (ctx->frame_workers) {
+      VP9Worker *const worker = ctx->frame_workers;
+      FrameWorkerData *const frame_worker_data =
+          (FrameWorkerData *)worker->data1;
+      const VP9_COMMON *const cm = &frame_worker_data->pbi->common;
       display_size[0] = cm->display_width;
       display_size[1] = cm->display_height;
+      return VPX_CODEC_OK;
     } else {
       return VPX_CODEC_ERROR;
     }
-    return VPX_CODEC_OK;
-  } else {
-    return VPX_CODEC_INVALID_PARAM;
   }
+
+  return VPX_CODEC_INVALID_PARAM;
 }
 
 static vpx_codec_err_t ctrl_get_bit_depth(vpx_codec_alg_priv_t *ctx,
                                           va_list args) {
   unsigned int *const bit_depth = va_arg(args, unsigned int *);
+  VP9Worker *const worker = &ctx->frame_workers[ctx->next_output_worker_id];
 
   if (bit_depth) {
-    if (ctx->pbi) {
-      const VP9_COMMON *const cm = &ctx->pbi->common;
+    if (worker) {
+      FrameWorkerData *const frame_worker_data =
+          (FrameWorkerData *)worker->data1;
+      const VP9_COMMON *const cm = &frame_worker_data->pbi->common;
       *bit_depth = cm->bit_depth;
       return VPX_CODEC_OK;
     } else {
       return VPX_CODEC_ERROR;
     }
-  } else {
-    return VPX_CODEC_INVALID_PARAM;
   }
+
+  return VPX_CODEC_INVALID_PARAM;
 }
 
 static vpx_codec_err_t ctrl_set_invert_tile_order(vpx_codec_alg_priv_t *ctx,
@@ -617,6 +1038,42 @@ static vpx_codec_err_t ctrl_set_decryptor(vpx_codec_alg_priv_t *ctx,
   return VPX_CODEC_OK;
 }
 
+static vpx_codec_err_t ctrl_set_byte_alignment(vpx_codec_alg_priv_t *ctx,
+                                               va_list args) {
+  const int legacy_byte_alignment = 0;
+  const int min_byte_alignment = 32;
+  const int max_byte_alignment = 1024;
+  const int byte_alignment = va_arg(args, int);
+
+  if (byte_alignment != legacy_byte_alignment &&
+      (byte_alignment < min_byte_alignment ||
+       byte_alignment > max_byte_alignment ||
+       (byte_alignment & (byte_alignment - 1)) != 0))
+    return VPX_CODEC_INVALID_PARAM;
+
+  ctx->byte_alignment = byte_alignment;
+  if (ctx->frame_workers) {
+    VP9Worker *const worker = ctx->frame_workers;
+    FrameWorkerData *const frame_worker_data =
+        (FrameWorkerData *)worker->data1;
+    frame_worker_data->pbi->common.byte_alignment = byte_alignment;
+  }
+  return VPX_CODEC_OK;
+}
+
+static vpx_codec_err_t ctrl_set_skip_loop_filter(vpx_codec_alg_priv_t *ctx,
+                                                 va_list args) {
+  ctx->skip_loop_filter = va_arg(args, int);
+
+  if (ctx->frame_workers) {
+    VP9Worker *const worker = ctx->frame_workers;
+    FrameWorkerData *const frame_worker_data = (FrameWorkerData *)worker->data1;
+    frame_worker_data->pbi->common.skip_loop_filter = ctx->skip_loop_filter;
+  }
+
+  return VPX_CODEC_OK;
+}
+
 static vpx_codec_ctrl_fn_map_t decoder_ctrl_maps[] = {
   {VP8_COPY_REFERENCE,            ctrl_copy_reference},
 
@@ -629,6 +1086,8 @@ static vpx_codec_ctrl_fn_map_t decoder_ctrl_maps[] = {
   {VP8_SET_DBG_DISPLAY_MV,        ctrl_set_dbg_options},
   {VP9_INVERT_TILE_DECODE_ORDER,  ctrl_set_invert_tile_order},
   {VPXD_SET_DECRYPTOR,            ctrl_set_decryptor},
+  {VP9_SET_BYTE_ALIGNMENT,        ctrl_set_byte_alignment},
+  {VP9_SET_SKIP_LOOP_FILTER,      ctrl_set_skip_loop_filter},
 
   // Getters
   {VP8D_GET_LAST_REF_UPDATES,     ctrl_get_last_ref_updates},
@@ -636,6 +1095,7 @@ static vpx_codec_ctrl_fn_map_t decoder_ctrl_maps[] = {
   {VP9_GET_REFERENCE,             ctrl_get_reference},
   {VP9D_GET_DISPLAY_SIZE,         ctrl_get_display_size},
   {VP9D_GET_BIT_DEPTH,            ctrl_get_bit_depth},
+  {VP9D_GET_FRAME_SIZE,           ctrl_get_frame_size},
 
   { -1, NULL},
 };

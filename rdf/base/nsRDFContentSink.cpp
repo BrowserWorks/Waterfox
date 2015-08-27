@@ -226,9 +226,7 @@ protected:
     nsIURI*      mDocumentURL;
 
 private:
-#ifdef PR_LOGGING
     static PRLogModuleInfo* gLog;
-#endif
 };
 
 int32_t         RDFContentSinkImpl::gRefCnt = 0;
@@ -241,9 +239,7 @@ nsIRDFResource* RDFContentSinkImpl::kRDF_Bag;
 nsIRDFResource* RDFContentSinkImpl::kRDF_Seq;
 nsIRDFResource* RDFContentSinkImpl::kRDF_nextVal;
 
-#ifdef PR_LOGGING
 PRLogModuleInfo* RDFContentSinkImpl::gLog;
-#endif
 
 ////////////////////////////////////////////////////////////////////////
 
@@ -296,10 +292,8 @@ RDFContentSinkImpl::RDFContentSinkImpl()
         NS_RegisterStaticAtoms(rdf_atoms);
     }
 
-#ifdef PR_LOGGING
     if (! gLog)
         gLog = PR_NewLogModule("nsRDFContentSink");
-#endif
 }
 
 
@@ -326,24 +320,22 @@ RDFContentSinkImpl::~RDFContentSinkImpl()
             RDFContentSinkParseMode parseMode;
             PopContext(resource, state, parseMode);
 
-#ifdef PR_LOGGING
             // print some fairly useless debugging info
             // XXX we should save line numbers on the context stack: this'd
             // be about 1000x more helpful.
-            if (resource) {
+            if (resource && PR_LOG_TEST(gLog, PR_LOG_NOTICE)) {
                 nsXPIDLCString uri;
                 resource->GetValue(getter_Copies(uri));
                 PR_LOG(gLog, PR_LOG_NOTICE,
                        ("rdfxml:   uri=%s", (const char*) uri));
             }
-#endif
 
             NS_IF_RELEASE(resource);
         }
 
         delete mContextStack;
     }
-    moz_free(mText);
+    free(mText);
 
 
     if (--gRefCnt == 0) {
@@ -446,7 +438,6 @@ RDFContentSinkImpl::HandleEndElement(const char16_t *aName)
   nsIRDFResource* resource;
   if (NS_FAILED(PopContext(resource, mState, mParseMode))) {
       // XXX parser didn't catch unmatched tags?
-#ifdef PR_LOGGING
       if (PR_LOG_TEST(gLog, PR_LOG_WARNING)) {
           nsAutoString tagStr(aName);
           char* tagCStr = ToNewCString(tagStr);
@@ -455,9 +446,8 @@ RDFContentSinkImpl::HandleEndElement(const char16_t *aName)
                  ("rdfxml: extra close tag '%s' at line %d",
                   tagCStr, 0/*XXX fix me */);
 
-          NS_Free(tagCStr);
+          free(tagCStr);
       }
-#endif
 
       return NS_ERROR_UNEXPECTED; // XXX
   }
@@ -755,7 +745,7 @@ RDFContentSinkImpl::AddText(const char16_t* aText, int32_t aLength)
 {
     // Create buffer when we first need it
     if (0 == mTextSize) {
-        mText = (char16_t *) moz_malloc(sizeof(char16_t) * 4096);
+        mText = (char16_t *) malloc(sizeof(char16_t) * 4096);
         if (!mText) {
             return NS_ERROR_OUT_OF_MEMORY;
         }
@@ -773,7 +763,7 @@ RDFContentSinkImpl::AddText(const char16_t* aText, int32_t aLength)
         int32_t newSize = (2 * mTextSize > (mTextSize + aLength)) ?
                           (2 * mTextSize) : (mTextSize + aLength);
         char16_t* newText = 
-            (char16_t *) moz_realloc(mText, sizeof(char16_t) * newSize);
+            (char16_t *) realloc(mText, sizeof(char16_t) * newSize);
         if (!newText)
             return NS_ERROR_OUT_OF_MEMORY;
         mTextSize = newSize;

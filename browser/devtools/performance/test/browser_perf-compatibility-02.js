@@ -16,9 +16,9 @@ let test = Task.async(function*() {
   Services.prefs.setBoolPref(MEMORY_PREF, true);
   let { EVENTS, $, gFront, PerformanceController, PerformanceView, DetailsView, JsCallTreeView } = panel.panelWin;
 
-  let { memory: memoryMock, timeline: timelineMock } = gFront.getMocksInUse();
-  ok(memoryMock, "memory should be mocked.");
-  ok(timelineMock, "timeline should be mocked.");
+  let { memory: memorySupport, timeline: timelineSupport } = gFront.getActorSupport();
+  ok(!memorySupport, "memory should be mocked.");
+  ok(!timelineSupport, "timeline should be mocked.");
 
   yield startRecording(panel, { waitForOverview: false });
   busyWait(WAIT_TIME); // allow the profiler module to sample some cpu activity
@@ -46,11 +46,12 @@ let test = Task.async(function*() {
   for (let thread of profile.threads) {
     info("Checking thread: " + thread.name);
 
-    for (let sample of thread.samples) {
+    for (let sample of thread.samples.data) {
       sampleCount++;
 
-      if (sample.frames[0].location != "(root)") {
-        ok(false, "The sample " + sample.toSource() + " doesn't have a root node.");
+      let stack = getInflatedStackLocations(thread, sample);
+      if (stack[0] != "(root)") {
+        ok(false, "The sample " + stack.toSource() + " doesn't have a root node.");
       }
     }
   }

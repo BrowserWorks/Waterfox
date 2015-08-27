@@ -39,7 +39,6 @@ class APZCTreeManager;
 class GeckoContentController;
 class APZEventState;
 struct ScrollableLayerGuid;
-struct SetTargetAPZCCallback;
 struct SetAllowedTouchBehaviorCallback;
 }
 
@@ -57,19 +56,22 @@ class Thread;
 
 class nsBaseWidget;
 
+// Helper class used in shutting down gfx related code.
 class WidgetShutdownObserver final : public nsIObserver
 {
-  ~WidgetShutdownObserver() {}
+  ~WidgetShutdownObserver();
 
 public:
-  explicit WidgetShutdownObserver(nsBaseWidget* aWidget)
-    : mWidget(aWidget)
-  { }
+  explicit WidgetShutdownObserver(nsBaseWidget* aWidget);
 
   NS_DECL_ISUPPORTS
   NS_DECL_NSIOBSERVER
 
+  void Register();
+  void Unregister();
+
   nsBaseWidget *mWidget;
+  bool mRegistered;
 };
 
 /**
@@ -95,7 +97,6 @@ protected:
   typedef mozilla::layers::GeckoContentController GeckoContentController;
   typedef mozilla::layers::ScrollableLayerGuid ScrollableLayerGuid;
   typedef mozilla::layers::APZEventState APZEventState;
-  typedef mozilla::layers::SetTargetAPZCCallback SetTargetAPZCCallback;
   typedef mozilla::layers::SetAllowedTouchBehaviorCallback SetAllowedTouchBehaviorCallback;
   typedef mozilla::ScreenRotation ScreenRotation;
 
@@ -153,6 +154,7 @@ public:
   virtual CompositorParent* NewCompositorParent(int aSurfaceWidth, int aSurfaceHeight);
   virtual void            CreateCompositor();
   virtual void            CreateCompositor(int aWidth, int aHeight);
+  virtual bool            IsMultiProcessWindow() override;
   virtual void            PrepareWindowEffects() override {}
   virtual void            CleanupWindowEffects() override {}
   virtual bool            PreRender(LayerManagerComposite* aManager) override { return true; }
@@ -238,6 +240,9 @@ public:
   // Dispatch an event that must be first be routed through APZ.
   nsEventStatus DispatchAPZAwareEvent(mozilla::WidgetInputEvent* aEvent) override;
 
+  void SetConfirmedTargetAPZC(uint64_t aInputBlockId,
+                              const nsTArray<ScrollableLayerGuid>& aTargets) const override;
+
   void NotifyWindowDestroyed();
   void NotifySizeMoveDone();
   void NotifyWindowMoved(int32_t aX, int32_t aY);
@@ -262,7 +267,8 @@ public:
 
   nsPopupLevel PopupLevel() { return mPopupLevel; }
 
-  virtual nsIntSize       ClientToWindowSize(const nsIntSize& aClientSize) override
+  virtual mozilla::LayoutDeviceIntSize
+  ClientToWindowSize(const mozilla::LayoutDeviceIntSize& aClientSize) override
   {
     return aClientSize;
   }
@@ -304,16 +310,6 @@ public:
   };
   friend class AutoLayerManagerSetup;
 
-  class AutoUseBasicLayerManager {
-  public:
-    explicit AutoUseBasicLayerManager(nsBaseWidget* aWidget);
-    ~AutoUseBasicLayerManager();
-  private:
-    nsBaseWidget* mWidget;
-    bool mPreviousTemporarilyUseBasicLayerManager;
-  };
-  friend class AutoUseBasicLayerManager;
-
   virtual bool            ShouldUseOffMainThreadCompositing();
 
   static nsIRollupListener* GetActiveRollupListener();
@@ -352,16 +348,28 @@ protected:
                                             int32_t aNativeKeyCode,
                                             uint32_t aModifierFlags,
                                             const nsAString& aCharacters,
-                                            const nsAString& aUnmodifiedCharacters) override
-  { return NS_ERROR_UNEXPECTED; }
+                                            const nsAString& aUnmodifiedCharacters,
+                                            nsIObserver* aObserver) override
+  {
+    mozilla::widget::AutoObserverNotifier notifier(aObserver, "keyevent");
+    return NS_ERROR_UNEXPECTED;
+  }
 
   virtual nsresult SynthesizeNativeMouseEvent(mozilla::LayoutDeviceIntPoint aPoint,
                                               uint32_t aNativeMessage,
-                                              uint32_t aModifierFlags) override
-  { return NS_ERROR_UNEXPECTED; }
+                                              uint32_t aModifierFlags,
+                                              nsIObserver* aObserver) override
+  {
+    mozilla::widget::AutoObserverNotifier notifier(aObserver, "mouseevent");
+    return NS_ERROR_UNEXPECTED;
+  }
 
-  virtual nsresult SynthesizeNativeMouseMove(mozilla::LayoutDeviceIntPoint aPoint) override
-  { return NS_ERROR_UNEXPECTED; }
+  virtual nsresult SynthesizeNativeMouseMove(mozilla::LayoutDeviceIntPoint aPoint,
+                                             nsIObserver* aObserver) override
+  {
+    mozilla::widget::AutoObserverNotifier notifier(aObserver, "mouseevent");
+    return NS_ERROR_UNEXPECTED;
+  }
 
   virtual nsresult SynthesizeNativeMouseScrollEvent(mozilla::LayoutDeviceIntPoint aPoint,
                                                     uint32_t aNativeMessage,
@@ -369,15 +377,23 @@ protected:
                                                     double aDeltaY,
                                                     double aDeltaZ,
                                                     uint32_t aModifierFlags,
-                                                    uint32_t aAdditionalFlags) override
-  { return NS_ERROR_UNEXPECTED; }
+                                                    uint32_t aAdditionalFlags,
+                                                    nsIObserver* aObserver) override
+  {
+    mozilla::widget::AutoObserverNotifier notifier(aObserver, "mousescrollevent");
+    return NS_ERROR_UNEXPECTED;
+  }
 
   virtual nsresult SynthesizeNativeTouchPoint(uint32_t aPointerId,
                                               TouchPointerState aPointerState,
                                               nsIntPoint aPointerScreenPoint,
                                               double aPointerPressure,
-                                              uint32_t aPointerOrientation) override
-  { return NS_ERROR_UNEXPECTED; }
+                                              uint32_t aPointerOrientation,
+                                              nsIObserver* aObserver) override
+  {
+    mozilla::widget::AutoObserverNotifier notifier(aObserver, "touchpoint");
+    return NS_ERROR_UNEXPECTED;
+  }
 
   virtual nsresult NotifyIMEInternal(const IMENotification& aIMENotification)
   { return NS_ERROR_NOT_IMPLEMENTED; }
@@ -447,17 +463,18 @@ protected:
    * reached (This is the case with gtk2 for instance).
    */
   void DestroyCompositor();
+  void DestroyLayerManager();
+
+  void FreeShutdownObserver();
 
   nsIWidgetListener* mWidgetListener;
   nsIWidgetListener* mAttachedWidgetListener;
   nsRefPtr<LayerManager> mLayerManager;
-  nsRefPtr<LayerManager> mBasicLayerManager;
   nsRefPtr<CompositorChild> mCompositorChild;
   nsRefPtr<CompositorParent> mCompositorParent;
   nsRefPtr<mozilla::CompositorVsyncDispatcher> mCompositorVsyncDispatcher;
   nsRefPtr<APZCTreeManager> mAPZC;
   nsRefPtr<APZEventState> mAPZEventState;
-  nsRefPtr<SetTargetAPZCCallback> mSetTargetAPZCCallback;
   nsRefPtr<SetAllowedTouchBehaviorCallback> mSetAllowedTouchBehaviorCallback;
   nsRefPtr<WidgetShutdownObserver> mShutdownObserver;
   nsRefPtr<TextEventDispatcher> mTextEventDispatcher;
@@ -465,11 +482,7 @@ protected:
   bool              mUpdateCursor;
   nsBorderStyle     mBorderStyle;
   bool              mUseLayersAcceleration;
-  bool              mForceLayersAcceleration;
-  bool              mTemporarilyUseBasicLayerManager;
-  // Windows with out-of-process tabs always require OMTC. This flag designates
-  // such windows.
-  bool              mRequireOffMainThreadCompositing;
+  bool              mMultiProcessWindow;
   bool              mUseAttachedEvents;
   nsIntRect         mBounds;
   nsIntRect*        mOriginalBounds;

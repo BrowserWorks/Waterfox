@@ -12,11 +12,12 @@
 #include "nsCOMPtr.h"
 #include "nsAlgorithm.h"
 #include "nsAutoPtr.h"
+#include "nsRect.h"
 #include <algorithm>
+#include "TableArea.h"
 
 #undef DEBUG_TABLE_CELLMAP
 
-class nsTableColFrame;
 class nsTableCellFrame;
 class nsTableRowFrame;
 class nsTableRowGroupFrame;
@@ -24,7 +25,6 @@ class nsTableFrame;
 class nsCellMap;
 class nsPresContext;
 class nsCellMapColumnIterator;
-struct nsIntRect;
 
 struct nsColInfo
 {
@@ -53,6 +53,8 @@ struct BCInfo
 
 class nsTableCellMap
 {
+  typedef mozilla::TableArea TableArea;
+
 public:
   nsTableCellMap(nsTableFrame&   aTableFrame,
                  bool            aBorderCollapse);
@@ -98,28 +100,28 @@ public:
   CellData* AppendCell(nsTableCellFrame&     aCellFrame,
                        int32_t               aRowIndex,
                        bool                  aRebuildIfNecessary,
-                       nsIntRect&            aDamageArea);
+                       TableArea&            aDamageArea);
 
   void InsertCells(nsTArray<nsTableCellFrame*>& aCellFrames,
                    int32_t                      aRowIndex,
                    int32_t                      aColIndexBefore,
-                   nsIntRect&                   aDamageArea);
+                   TableArea&                   aDamageArea);
 
   void RemoveCell(nsTableCellFrame* aCellFrame,
                   int32_t           aRowIndex,
-                  nsIntRect&        aDamageArea);
+                  TableArea&        aDamageArea);
   /** Remove the previously gathered column information */
   void ClearCols();
   void InsertRows(nsTableRowGroupFrame*       aRowGroup,
                   nsTArray<nsTableRowFrame*>& aRows,
                   int32_t                     aFirstRowIndex,
                   bool                        aConsiderSpans,
-                  nsIntRect&                  aDamageArea);
+                  TableArea&                  aDamageArea);
 
   void RemoveRows(int32_t         aFirstRowIndex,
                   int32_t         aNumRowsToRemove,
                   bool            aConsiderSpans,
-                  nsIntRect&      aDamageArea);
+                  TableArea&      aDamageArea);
 
   int32_t GetNumCellsOriginatingInRow(int32_t aRowIndex) const;
   int32_t GetNumCellsOriginatingInCol(int32_t aColIndex) const;
@@ -178,7 +180,7 @@ public:
                                int32_t                      aRowIndex,
                                int32_t                      aColIndex,
                                bool                         aInsert,
-                               nsIntRect&                   aDamageArea);
+                               TableArea&                   aDamageArea);
 
 protected:
   /**
@@ -193,7 +195,7 @@ protected:
                               int32_t                     aStartRowIndex,
                               nsTArray<nsTableRowFrame*>* aRowsToInsert,
                               int32_t                     aNumRowsToRemove,
-                              nsIntRect&                  aDamageArea);
+                              TableArea&                  aDamageArea);
 
 public:
   void ExpandZeroColSpans();
@@ -268,6 +270,8 @@ protected:
   */
 class nsCellMap
 {
+  typedef mozilla::TableArea TableArea;
+
 public:
   /** constructor
     * @param aRowGroupFrame the row group frame this is a cellmap for
@@ -348,7 +352,7 @@ public:
                        int32_t           aRowIndex,
                        bool              aRebuildIfNecessary,
                        int32_t           aRgFirstRowIndex,
-                       nsIntRect&        aDamageArea,
+                       TableArea&        aDamageArea,
                        int32_t*          aBeginSearchAtCol = nullptr);
 
   /** Function to be called when a cell is added at a location which is spanned
@@ -372,27 +376,27 @@ public:
                    int32_t                      aRowIndex,
                    int32_t                      aColIndexBefore,
                    int32_t                      aRgFirstRowIndex,
-                   nsIntRect&                   aDamageArea);
+                   TableArea&                   aDamageArea);
 
   void RemoveCell(nsTableCellMap&   aMap,
                   nsTableCellFrame* aCellFrame,
                   int32_t           aRowIndex,
                   int32_t           aRgFirstRowIndex,
-                  nsIntRect&        aDamageArea);
+                  TableArea&        aDamageArea);
 
   void InsertRows(nsTableCellMap&             aMap,
                   nsTArray<nsTableRowFrame*>& aRows,
                   int32_t                     aFirstRowIndex,
                   bool                        aConsiderSpans,
                   int32_t                     aRgFirstRowIndex,
-                  nsIntRect&                  aDamageArea);
+                  TableArea&                  aDamageArea);
 
   void RemoveRows(nsTableCellMap& aMap,
                   int32_t         aFirstRowIndex,
                   int32_t         aNumRowsToRemove,
                   bool            aConsiderSpans,
                   int32_t         aRgFirstRowIndex,
-                  nsIntRect&      aDamageArea);
+                  TableArea&      aDamageArea);
 
   int32_t GetNumCellsOriginatingInRow(int32_t aRowIndex) const;
   int32_t GetNumCellsOriginatingInCol(int32_t aColIndex) const;
@@ -474,7 +478,7 @@ protected:
                       nsTArray<nsTableRowFrame*>& aRowFrames,
                       int32_t                     aStartRowIndex,
                       int32_t                     aRgFirstRowIndex,
-                      nsIntRect&                  aDamageArea);
+                      TableArea&                  aDamageArea);
 
   void ExpandWithCells(nsTableCellMap&              aMap,
                        nsTArray<nsTableCellFrame*>& aCellFrames,
@@ -483,20 +487,20 @@ protected:
                        int32_t                      aRowSpan,
                        bool                         aRowSpanIsZero,
                        int32_t                      aRgFirstRowIndex,
-                       nsIntRect&                   aDamageArea);
+                       TableArea&                   aDamageArea);
 
   void ShrinkWithoutRows(nsTableCellMap& aMap,
                          int32_t         aFirstRowIndex,
                          int32_t         aNumRowsToRemove,
                          int32_t         aRgFirstRowIndex,
-                         nsIntRect&      aDamageArea);
+                         TableArea&      aDamageArea);
 
   void ShrinkWithoutCell(nsTableCellMap&   aMap,
                          nsTableCellFrame& aCellFrame,
                          int32_t           aRowIndex,
                          int32_t           aColIndex,
                          int32_t           aRgFirstRowIndex,
-                         nsIntRect&        aDamageArea);
+                         TableArea&        aDamageArea);
 
   /**
    * Rebuild due to rows being inserted or deleted with cells spanning

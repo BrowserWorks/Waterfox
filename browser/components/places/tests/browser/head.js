@@ -317,7 +317,7 @@ let withBookmarksDialog = Task.async(function* (openFn, taskFn) {
   let dialogWin = yield dialogPromise;
 
   // Ensure overlay is loaded
-  ok(dialogWin.gEditItemOverlay._initialized, "EditItemOverlay is initialized");
+  ok(dialogWin.gEditItemOverlay.initialized, "EditItemOverlay is initialized");
 
   info("withBookmarksDialog: executing the task");
   try {

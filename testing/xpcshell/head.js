@@ -501,7 +501,14 @@ function _execute_test() {
 
   try {
     do_test_pending("MAIN run_test");
-    run_test();
+    // Check if run_test() is defined. If defined, run it.
+    // Else, call run_next_test() directly to invoke tests
+    // added by add_test() and add_task().  
+    if (typeof run_test === "function") {
+      run_test();
+    } else {
+      run_next_test();
+    }
     do_test_finished("MAIN run_test");
     _do_main();
   } catch (e) {
@@ -780,7 +787,7 @@ function todo_check_neq(left, right, stack) {
 }
 
 function do_report_result(passed, text, stack, todo) {
-  while (stack.filename.contains("head.js") && stack.caller) {
+  while (stack.filename.includes("head.js") && stack.caller) {
     stack = stack.caller;
   }
 
@@ -1101,9 +1108,10 @@ function do_get_minidumpdir() {
  * Registers a directory with the profile service,
  * and return the directory as an nsILocalFile.
  *
+ * @param notifyProfileAfterChange Whether to notify for "profile-after-change".
  * @return nsILocalFile of the profile directory.
  */
-function do_get_profile() {
+function do_get_profile(notifyProfileAfterChange = false) {
   if (!runningInParent) {
     _testLogger.info("Ignoring profile creation from child process.");
     return null;
@@ -1166,6 +1174,9 @@ function do_get_profile() {
   if (!_profileInitialized) {
     obsSvc.notifyObservers(null, "profile-do-change", "xpcshell-do-get-profile");
     _profileInitialized = true;
+    if (notifyProfileAfterChange) {
+      obsSvc.notifyObservers(null, "profile-after-change", "xpcshell-do-get-profile");
+    }
   }
 
   // The methods of 'provider' will retain this scope so null out everything
@@ -1202,7 +1213,6 @@ function do_load_child_test_harness()
 
   let command =
         "const _HEAD_JS_PATH=" + uneval(_HEAD_JS_PATH) + "; "
-      + "const _HTTPD_JS_PATH=" + uneval(_HTTPD_JS_PATH) + "; "
       + "const _HEAD_FILES=" + uneval(_HEAD_FILES) + "; "
       + "const _TAIL_FILES=" + uneval(_TAIL_FILES) + "; "
       + "const _TEST_NAME=" + uneval(_TEST_NAME) + "; "
@@ -1292,6 +1302,14 @@ function do_send_remote_message(name) {
 /**
  * Add a test function to the list of tests that are to be run asynchronously.
  *
+ * @param funcOrProperties
+ *        A function to be run or an object represents test properties.
+ *        Supported properties:
+ *          skip_if : An arrow function which has an expression to be
+ *                    evaluated whether the test is skipped or not.
+ * @param func
+ *        A function to be run only if the funcOrProperies is not a function.
+ *
  * Each test function must call run_next_test() when it's done. Test files
  * should call run_next_test() in their run_test function to execute all
  * async tests.
@@ -1299,13 +1317,30 @@ function do_send_remote_message(name) {
  * @return the test function that was passed in.
  */
 let _gTests = [];
-function add_test(func) {
-  _gTests.push([false, func]);
+function add_test(funcOrProperties, func) {
+  if (typeof funcOrProperties == "function") {
+    _gTests.push([{ _isTask: false }, funcOrProperties]);
+  } else if (typeof funcOrProperties == "object") {
+    funcOrProperties._isTask = false;
+    _gTests.push([funcOrProperties, func]);
+  } else {
+    do_throw("add_test() should take a function or an object and a function");
+  }
   return func;
 }
 
 /**
  * Add a test function which is a Task function.
+ *
+ * @param funcOrProperties
+ *        A generator function to be run or an object represents test
+ *        properties.
+ *        Supported properties:
+ *          skip_if : An arrow function which has an expression to be
+ *                    evaluated whether the test is skipped or not.
+ * @param func
+ *        A generator function to be run only if the funcOrProperies is not a
+ *        function.
  *
  * Task functions are functions fed into Task.jsm's Task.spawn(). They are
  * generators that emit promises.
@@ -1321,7 +1356,7 @@ function add_test(func) {
  *
  * Example usage:
  *
- * add_task(function test() {
+ * add_task(function* test() {
  *   let result = yield Promise.resolve(true);
  *
  *   do_check_true(result);
@@ -1330,7 +1365,7 @@ function add_test(func) {
  *   do_check_eq(secondary, "expected value");
  * });
  *
- * add_task(function test_early_return() {
+ * add_task(function* test_early_return() {
  *   let result = yield somethingThatReturnsAPromise();
  *
  *   if (!result) {
@@ -1340,9 +1375,24 @@ function add_test(func) {
  *
  *   do_check_eq(result, "foo");
  * });
+ *
+ * add_task({
+ *   skip_if: () => !("@mozilla.org/telephony/volume-service;1" in Components.classes),
+ * }, function* test_volume_service() {
+ *   let volumeService = Cc["@mozilla.org/telephony/volume-service;1"]
+ *     .getService(Ci.nsIVolumeService);
+ *   ...
+ * });
  */
-function add_task(func) {
-  _gTests.push([true, func]);
+function add_task(funcOrProperties, func) {
+  if (typeof funcOrProperties == "function") {
+    _gTests.push([{ _isTask: true }, funcOrProperties]);
+  } else if (typeof funcOrProperties == "object") {
+    funcOrProperties._isTask = true;
+    _gTests.push([funcOrProperties, func]);
+  } else {
+    do_throw("add_task() should take a function or an object and a function");
+  }
 }
 let _Task = Components.utils.import("resource://gre/modules/Task.jsm", {}).Task;
 _Task.Debugging.maintainStack = true;
@@ -1367,12 +1417,25 @@ function run_next_test()
     if (_gTestIndex < _gTests.length) {
       // Flush uncaught errors as early and often as possible.
       _Promise.Debugging.flushUncaughtErrors();
-      let _isTask;
-      [_isTask, _gRunningTest] = _gTests[_gTestIndex++];
+      let _properties;
+      [_properties, _gRunningTest,] = _gTests[_gTestIndex++];
+      if (typeof(_properties.skip_if) == "function" && _properties.skip_if()) {
+        let _condition = _properties.skip_if.toSource().replace(/\(\)\s*=>\s*/, "");
+        let _message = _gRunningTest.name
+          + " skipped because the following conditions were"
+          + " met: (" + _condition + ")";
+        _testLogger.testStatus(_TEST_NAME,
+                               _gRunningTest.name,
+                               "SKIP",
+                               "SKIP",
+                               _message);
+        do_execute_soon(run_next_test);
+        return;
+      }
       _testLogger.info(_TEST_NAME + " | Starting " + _gRunningTest.name);
       do_test_pending(_gRunningTest.name);
 
-      if (_isTask) {
+      if (_properties._isTask) {
         _gTaskRunning = true;
         _Task.spawn(_gRunningTest).then(
           () => { _gTaskRunning = false; run_next_test(); },
@@ -1420,5 +1483,18 @@ try {
 
     prefs.setCharPref("media.gmp-manager.url.override", "http://%(server)s/dummy-gmp-manager.xml");
     prefs.setCharPref("browser.selfsupport.url", "https://%(server)s/selfsupport-dummy/");
+    prefs.setCharPref("toolkit.telemetry.server", "https://%(server)s/telemetry-dummy");
+  }
+} catch (e) { }
+
+// Make tests run consistently on DevEdition (which has a lightweight theme
+// selected by default).
+try {
+  if (runningInParent) {
+    let prefs = Components.classes["@mozilla.org/preferences-service;1"]
+      .getService(Components.interfaces.nsIPrefBranch);
+
+    prefs.deleteBranch("lightweightThemes.selectedThemeID");
+    prefs.deleteBranch("browser.devedition.theme.enabled");
   }
 } catch (e) { }

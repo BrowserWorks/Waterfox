@@ -1493,8 +1493,8 @@ nsPresContext::SetFullZoom(float aZoom)
   float oldHeightDevPixels = oldHeightAppUnits / float(mCurAppUnitsPerDevPixel);
   mDeviceContext->SetFullZoom(aZoom);
 
-  NS_ASSERTION(!mSupressResizeReflow, "two zooms happening at the same time? impossible!");
-  mSupressResizeReflow = true;
+  NS_ASSERTION(!mSuppressResizeReflow, "two zooms happening at the same time? impossible!");
+  mSuppressResizeReflow = true;
 
   mFullZoom = aZoom;
   mShell->GetViewManager()->
@@ -1503,7 +1503,7 @@ nsPresContext::SetFullZoom(float aZoom)
 
   AppUnitsPerDevPixelChanged();
 
-  mSupressResizeReflow = false;
+  mSuppressResizeReflow = false;
 }
 
 gfxSize
@@ -1702,6 +1702,12 @@ nsPresContext::ThemeChanged()
   }
 }
 
+static void
+NotifyThemeChanged(TabParent* aTabParent, void* aArg)
+{
+  aTabParent->ThemeChanged();
+}
+
 void
 nsPresContext::ThemeChangedInternal()
 {
@@ -1735,6 +1741,11 @@ nsPresContext::ThemeChangedInternal()
   // changes are not), and -moz-appearance (whose changes likewise are
   // not), so we need to reflow.
   MediaFeatureValuesChanged(eRestyle_Subtree, NS_STYLE_HINT_REFLOW);
+
+  // Recursively notify all remote leaf descendants that the
+  // system theme has changed.
+  nsContentUtils::CallOnAllRemoteChildren(mDocument->GetWindow(),
+                                          NotifyThemeChanged, nullptr);
 }
 
 void
@@ -1881,7 +1892,7 @@ nsPresContext::MediaFeatureValuesChanged(nsRestyleHint aRestyleHint,
   mPendingMediaFeatureValuesChanged = false;
 
   // MediumFeaturesChanged updates the applied rules, so it always gets called.
-  if (mShell && mShell->StyleSet()->MediumFeaturesChanged(this)) {
+  if (mShell && mShell->StyleSet()->MediumFeaturesChanged()) {
     aRestyleHint |= eRestyle_Subtree;
   }
 
@@ -2095,15 +2106,18 @@ nsPresContext::FlushUserFontSet()
   if (mFontFaceSetDirty) {
     if (gfxPlatform::GetPlatform()->DownloadableFontsEnabled()) {
       nsTArray<nsFontFaceRuleContainer> rules;
-      if (!mShell->StyleSet()->AppendFontFaceRules(this, rules)) {
+      if (!mShell->StyleSet()->AppendFontFaceRules(rules)) {
         return;
       }
 
-      if (!mFontFaceSet) {
+      bool changed = false;
+
+      if (!mFontFaceSet && !rules.IsEmpty()) {
         mFontFaceSet = new FontFaceSet(mDocument->GetInnerWindow(), this);
       }
-      mFontFaceSet->EnsureUserFontSet(this);
-      bool changed = mFontFaceSet->UpdateRules(rules);
+      if (mFontFaceSet) {
+        changed = mFontFaceSet->UpdateRules(rules);
+      }
 
       // We need to enqueue a style change reflow (for later) to
       // reflect that we're modifying @font-face rules.  (However,
@@ -2184,7 +2198,10 @@ nsPresContext::UserFontSetUpdated(gfxUserFontEntry* aUpdatedFont)
   // it contains that specific font (i.e. the one chosen within the family
   // given the weight, width, and slant from the nsStyleFont). If it does,
   // mark that frame dirty and skip inspecting its descendants.
-  nsFontFaceUtils::MarkDirtyForFontChange(mShell->GetRootFrame(), aUpdatedFont);
+  nsIFrame* root = mShell->GetRootFrame();
+  if (root) {
+    nsFontFaceUtils::MarkDirtyForFontChange(root, aUpdatedFont);
+  }
 }
 
 FontFaceSet*

@@ -34,6 +34,7 @@
 #include "nsIDOMXULSelectCntrlItemEl.h"
 #include "nsIDocument.h"
 #include "nsLayoutStylesheetCache.h"
+#include "mozilla/AsyncEventDispatcher.h"
 #include "mozilla/EventListenerManager.h"
 #include "mozilla/EventStateManager.h"
 #include "mozilla/EventStates.h"
@@ -93,6 +94,7 @@
 #include "nsAttrValueInlines.h"
 #include "mozilla/Attributes.h"
 #include "nsIController.h"
+#include "nsQueryObject.h"
 #include <algorithm>
 
 // The XUL doc interface
@@ -464,7 +466,7 @@ nsXULElement::GetElementsByAttributeNS(const nsAString& aNamespaceURI,
     ErrorResult rv;
     *aReturn =
         GetElementsByAttributeNS(aNamespaceURI, aAttribute, aValue, rv).take();
-    return rv.ErrorCode();
+    return rv.StealNSResult();
 }
 
 already_AddRefed<nsINodeList>
@@ -1369,7 +1371,7 @@ nsXULElement::GetResource(nsIRDFResource** aResource)
 {
     ErrorResult rv;
     *aResource = GetResource(rv).take();
-    return rv.ErrorCode();
+    return rv.StealNSResult();
 }
 
 already_AddRefed<nsIRDFResource>
@@ -1482,7 +1484,7 @@ nsXULElement::GetControllers(nsIControllers** aResult)
 {
     ErrorResult rv;
     NS_IF_ADDREF(*aResult = GetControllers(rv));
-    return rv.ErrorCode();
+    return rv.StealNSResult();
 }
 
 nsIControllers*
@@ -1494,8 +1496,7 @@ nsXULElement::GetControllers(ErrorResult& rv)
         rv = NS_NewXULControllers(nullptr, NS_GET_IID(nsIControllers),
                                   reinterpret_cast<void**>(&slots->mControllers));
 
-        NS_ASSERTION(NS_SUCCEEDED(rv.ErrorCode()),
-                     "unable to create a controllers");
+        NS_ASSERTION(!rv.Failed(), "unable to create a controllers");
         if (rv.Failed()) {
             return nullptr;
         }
@@ -1509,7 +1510,7 @@ nsXULElement::GetBoxObject(nsIBoxObject** aResult)
 {
     ErrorResult rv;
     *aResult = GetBoxObject(rv).take();
-    return rv.ErrorCode();
+    return rv.StealNSResult();
 }
 
 already_AddRefed<BoxObject>
@@ -1599,13 +1600,17 @@ nsXULElement::LoadSrc()
         // Usually xul elements are used in chrome, which doesn't have
         // session history at all.
         slots->mFrameLoader = nsFrameLoader::Create(this, false);
+        NS_ENSURE_TRUE(slots->mFrameLoader, NS_OK);
+
+        (new AsyncEventDispatcher(this,
+                                  NS_LITERAL_STRING("XULFrameLoaderCreated"),
+                                  /* aBubbles */ true))->RunDOMEventWhenSafe();
+
         if (AttrValueIs(kNameSpaceID_None, nsGkAtoms::prerendered,
                         NS_LITERAL_STRING("true"), eIgnoreCase)) {
             nsresult rv = slots->mFrameLoader->SetIsPrerendered();
             NS_ENSURE_SUCCESS(rv,rv);
         }
-
-        NS_ENSURE_TRUE(slots->mFrameLoader, NS_OK);
     }
 
     return slots->mFrameLoader->LoadFrame();
@@ -1647,7 +1652,7 @@ nsXULElement::SwapFrameLoaders(nsIFrameLoaderOwner* aOtherOwner)
 
     ErrorResult rv;
     SwapFrameLoaders(*otherEl, rv);
-    return rv.ErrorCode();
+    return rv.StealNSResult();
 }
 
 void
@@ -1696,7 +1701,7 @@ nsXULElement::Focus()
 {
     ErrorResult rv;
     Focus(rv);
-    return rv.ErrorCode();
+    return rv.StealNSResult();
 }
 
 void
@@ -1714,7 +1719,7 @@ nsXULElement::Blur()
 {
     ErrorResult rv;
     Blur(rv);
-    return rv.ErrorCode();
+    return rv.StealNSResult();
 }
 
 void

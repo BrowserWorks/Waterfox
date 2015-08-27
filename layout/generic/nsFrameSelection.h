@@ -20,7 +20,6 @@
 #include "nsBidiPresUtils.h"
 
 class nsRange;
-class nsTableOuterFrame;
 
 // IID for the nsFrameSelection interface
 // 3c6ae2d0-4cf1-44a1-9e9d-2411867f19c6
@@ -515,6 +514,13 @@ public:
   {
     NS_ASSERTION(mDelayedMouseEventValid, "No valid delayed caret data");
     return mDelayedMouseEventClickCount;
+  }
+
+  bool MouseDownRecorded()
+  {
+    return !GetDragState() &&
+           HasDelayedCaretData() &&
+           GetClickCountInDelayedCaretData() < 2;
   }
 
   /** Get the content node that limits the selection

@@ -29,6 +29,7 @@ pref("browser.sessionstore.restore_on_demand", false);
 pref("browser.sessionstore.resume_from_crash", false);
 // No e10s on mulet
 pref("browser.tabs.remote.autostart.1", false);
+pref("browser.tabs.remote.autostart.2", false);
 #endif
 
 // Bug 945235: Prevent all bars to be considered visible:
@@ -321,12 +322,18 @@ pref("media.cache_readahead_limit", 30);
 // Enable/Disable Gonk Decoder Module
 pref("media.fragmented-mp4.gonk.enabled", true);
 #endif
+
+//Encrypted media extensions.
+pref("media.eme.enabled", true);
+pref("media.eme.apiVisible", true);
+
 // The default number of decoded video frames that are enqueued in
 // MediaDecoderReader's mVideoQueue.
 pref("media.video-queue.default-size", 3);
 
 // optimize images' memory usage
-pref("image.decode-only-on-draw.enabled", true);
+pref("image.downscale-during-decode.enabled", true);
+pref("image.decode-only-on-draw.enabled", false);
 pref("image.mem.allow_locking_in_content_processes", true);
 // Limit the surface cache to 1/8 of main memory or 128MB, whichever is smaller.
 // Almost everything that was factored into 'max_decoded_image_kb' is now stored
@@ -421,14 +428,9 @@ pref("browser.dom.window.dump.enabled", false);
 
 // Default Content Security Policy to apply to certified apps.
 // If you change this CSP, make sure to update the fast path in nsCSPService.cpp
-pref("security.apps.certified.CSP.default", "default-src *; script-src 'self'; object-src 'none'; style-src 'self' 'unsafe-inline' app://theme.gaiamobile.org");
+pref("security.apps.certified.CSP.default", "default-src * data: blob:; script-src 'self'; object-src 'none'; style-src 'self' 'unsafe-inline' app://theme.gaiamobile.org");
 // Default Content Security Policy to apply to trusted apps.
-pref("security.apps.trusted.CSP.default", "default-src *; object-src 'none'; frame-src 'none'");
-
-// Temporarily force-enable GL compositing.  This is default-disabled
-// deep within the bowels of the widgetry system.  Remove me when GL
-// compositing isn't default disabled in widget/android.
-pref("layers.acceleration.force-enabled", true);
+pref("security.apps.trusted.CSP.default", "default-src * data: blob:; object-src 'none'; frame-src 'none'");
 
 // handle links targeting new windows
 // 1=current window/tab, 2=new window, 3=new tab in most recent window
@@ -1041,6 +1043,7 @@ pref("apz.fling_curve_function_y2", "1.0");
 pref("apz.fling_curve_threshold_inches_per_ms", "0.01");
 pref("apz.fling_friction", "0.0019");
 pref("apz.max_velocity_inches_per_ms", "0.07");
+pref("apz.touch_start_tolerance", "0.1");
 
 // Tweak default displayport values to reduce the risk of running out of
 // memory when zooming in
@@ -1110,6 +1113,9 @@ pref("dom.udpsocket.enabled", true);
 // Enable TV Manager API
 pref("dom.tv.enabled", true);
 
+// Enable Inputport Manager API
+pref("dom.inputport.enabled", true);
+
 pref("dom.mozSettings.SettingsDB.debug.enabled", true);
 pref("dom.mozSettings.SettingsManager.debug.enabled", true);
 pref("dom.mozSettings.SettingsRequestManager.debug.enabled", true);
@@ -1128,23 +1134,13 @@ pref("dom.mozSettings.allowForceReadOnly", false);
 // RequestSync API is enabled by default on B2G.
 pref("dom.requestSync.enabled", true);
 
-// Only enable for kit kat and above devices
-// kit kat == 19, L = 21, 20 is kit-kat for wearables
-// 15 is for the ICS emulators which will fallback to software vsync
-#if ANDROID_VERSION == 19 || ANDROID_VERSION == 21 || ANDROID_VERSION == 15
-pref("gfx.vsync.hw-vsync.enabled", true);
-pref("gfx.vsync.compositor", true);
+// Resample touch events on b2g
 pref("gfx.touch.resample", true);
-#else
-pref("gfx.vsync.hw-vsync.enabled", false);
-pref("gfx.vsync.compositor", false);
-pref("gfx.touch.resample", false);
-#endif
 
-// Bug 1147753 - Weird issues with vsync refresh driver on L devices
-// so disable them on L, but enable on KK and ICS
-#if ANDROID_VERSION == 19 || ANDROID_VERSION == 15
-pref("gfx.vsync.refreshdriver", true);
-#else
-pref("gfx.vsync.refreshdriver", false);
-#endif
+// Comma separated list of activity names that can only be provided by
+// the system app in dev mode.
+pref("dom.activities.developer_mode_only", "import-app");
+
+// mulet apparently loads firefox.js as well as b2g.js, so we have to explicitly
+// disable serviceworkers here to get them disabled in mulet.
+pref("dom.serviceWorkers.enabled", false);

@@ -3,12 +3,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-NO_JS_MANIFEST = 1
-MOZ_CHROME_FILE_FORMAT = jar
-DIST_FILES = install.rdf
-
-# Used in install.rdf
-USE_EXTENSION_MANIFEST = 1
 
 _DEST_DIR = $(DEPTH)/_tests/$(relativesrcdir)
 
@@ -57,9 +51,6 @@ endif
 
 ifeq (windows,$(MOZ_WIDGET_TOOLKIT))
 TEST_HARNESS_BINS += screenshot$(BIN_SUFFIX)
-ifdef MOZ_METRO
-TEST_HARNESS_BINS += metrotestharness$(BIN_SUFFIX)
-endif
 endif
 
 ifdef MOZ_DMD

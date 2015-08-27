@@ -12,7 +12,6 @@
 #include "gc/GCTrace.h"
 #include "gc/Nursery.h"
 #include "jit/JitCompartment.h"
-#include "mozilla/Maybe.h"
 #include "vm/Runtime.h"
 #include "vm/String.h"
 
@@ -20,7 +19,6 @@
 
 using namespace js;
 using namespace gc;
-using mozilla::Maybe;
 
 bool
 GCRuntime::gcIfNeededPerAllocation(JSContext* cx)
@@ -74,7 +72,10 @@ GCRuntime::checkAllocatorState(JSContext* cx, AllocKind kind)
 
     // For testing out of memory conditions
     if (js::oom::ShouldFailWithOOM()) {
-        ReportOutOfMemory(cx);
+        // If we are doing a fallible allocation, percolate up the OOM
+        // instead of reporting it.
+        if (allowGC)
+            ReportOutOfMemory(cx);
         return false;
     }
 
@@ -348,7 +349,7 @@ ArenaLists::allocateFromArena(JS::Zone* zone, AllocKind thingKind,
                               AutoMaybeStartBackgroundAllocation& maybeStartBGAlloc)
 {
     JSRuntime* rt = zone->runtimeFromAnyThread();
-    Maybe<AutoLockGC> maybeLock;
+    mozilla::Maybe<AutoLockGC> maybeLock;
 
     // See if we can proceed without taking the GC lock.
     if (backgroundFinalizeState[thingKind] != BFS_DONE)

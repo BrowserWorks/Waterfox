@@ -318,23 +318,31 @@ ClientTiledLayerBuffer::GetContentType(SurfaceMode* aMode) const
 
   if (mode == SurfaceMode::SURFACE_COMPONENT_ALPHA) {
 #if defined(MOZ_GFX_OPTIMIZE_MOBILE) || defined(MOZ_WIDGET_GONK)
-     mode = SurfaceMode::SURFACE_SINGLE_CHANNEL_ALPHA;
-  }
+    mode = SurfaceMode::SURFACE_SINGLE_CHANNEL_ALPHA;
 #else
-      if (!mPaintedLayer->GetParent() ||
-          !mPaintedLayer->GetParent()->SupportsComponentAlphaChildren() ||
-          !gfxPrefs::TiledDrawTargetEnabled()) {
-        mode = SurfaceMode::SURFACE_SINGLE_CHANNEL_ALPHA;
-      } else {
-        content = gfxContentType::COLOR;
-      }
+    if (!mPaintedLayer->GetParent() ||
+        !mPaintedLayer->GetParent()->SupportsComponentAlphaChildren() ||
+        !gfxPrefs::TiledDrawTargetEnabled()) {
+      mode = SurfaceMode::SURFACE_SINGLE_CHANNEL_ALPHA;
+    } else {
+      content = gfxContentType::COLOR;
+    }
+#endif
   } else if (mode == SurfaceMode::SURFACE_OPAQUE) {
+#if defined(MOZ_GFX_OPTIMIZE_MOBILE) || defined(MOZ_WIDGET_GONK)
+    if (mResolution != 1) {
+      // If we're in low-res mode, drawing can sample from outside the visible
+      // region. Make sure that we only sample transparency if that happens.
+      mode = SurfaceMode::SURFACE_SINGLE_CHANNEL_ALPHA;
+      content = gfxContentType::COLOR_ALPHA;
+    }
+#else
     if (mPaintedLayer->MayResample()) {
       mode = SurfaceMode::SURFACE_SINGLE_CHANNEL_ALPHA;
       content = gfxContentType::COLOR_ALPHA;
     }
-  }
 #endif
+  }
 
   if (aMode) {
     *aMode = mode;
@@ -610,7 +618,7 @@ TileClient::ValidateBackBufferFromFront(const nsIntRegion& aDirtyRegion,
 {
   if (mBackBuffer && mFrontBuffer) {
     gfx::IntSize tileSize = mFrontBuffer->GetSize();
-    const nsIntRect tileRect = nsIntRect(0, 0, tileSize.width, tileSize.height);
+    const IntRect tileRect = IntRect(0, 0, tileSize.width, tileSize.height);
 
     if (aDirtyRegion.Contains(tileRect)) {
       // The dirty region means that we no longer need the front buffer, so
@@ -632,7 +640,7 @@ TileClient::ValidateBackBufferFromFront(const nsIntRegion& aDirtyRegion,
       // Copy the bounding rect of regionToCopy. As tiles are quite small, it
       // is unlikely that we'd save much by copying each individual rect of the
       // region, but we can reevaluate this if it becomes an issue.
-      const nsIntRect rectToCopy = regionToCopy.GetBounds();
+      const IntRect rectToCopy = regionToCopy.GetBounds();
       gfx::IntRect gfxRectToCopy(rectToCopy.x, rectToCopy.y, rectToCopy.width, rectToCopy.height);
       CopyFrontToBack(mFrontBuffer, mBackBuffer, gfxRectToCopy);
 
@@ -782,7 +790,7 @@ TileClient::GetBackBuffer(const nsIntRegion& aDirtyRegion,
     MOZ_ASSERT(mBackLock->IsValid());
 
     *aCreatedTextureClient = true;
-    mInvalidBack = nsIntRect(0, 0, mBackBuffer->GetSize().width, mBackBuffer->GetSize().height);
+    mInvalidBack = IntRect(0, 0, mBackBuffer->GetSize().width, mBackBuffer->GetSize().height);
   }
 
   ValidateBackBufferFromFront(aDirtyRegion, aAddPaintedRegion);
@@ -894,7 +902,7 @@ ClientTiledLayerBuffer::PaintThebes(const nsIntRegion& aNewValidRegion,
   if (!gfxPrefs::TiledDrawTargetEnabled()) {
     nsRefPtr<gfxContext> ctxt;
 
-    const nsIntRect bounds = aPaintRegion.GetBounds();
+    const IntRect bounds = aPaintRegion.GetBounds();
     {
       PROFILER_LABEL("ClientTiledLayerBuffer", "PaintThebesSingleBufferAlloc",
         js::ProfileEntry::Category::GRAPHICS);
@@ -935,12 +943,12 @@ ClientTiledLayerBuffer::PaintThebes(const nsIntRegion& aNewValidRegion,
 
 #ifdef GFX_TILEDLAYER_PREF_WARNINGS
   if (PR_IntervalNow() - start > 30) {
-    const nsIntRect bounds = aPaintRegion.GetBounds();
+    const IntRect bounds = aPaintRegion.GetBounds();
     printf_stderr("Time to draw %i: %i, %i, %i, %i\n", PR_IntervalNow() - start, bounds.x, bounds.y, bounds.width, bounds.height);
     if (aPaintRegion.IsComplex()) {
       printf_stderr("Complex region\n");
       nsIntRegionRectIterator it(aPaintRegion);
-      for (const nsIntRect* rect = it.Next(); rect != nullptr; rect = it.Next()) {
+      for (const IntRect* rect = it.Next(); rect != nullptr; rect = it.Next()) {
         printf_stderr(" rect %i, %i, %i, %i\n", rect->x, rect->y, rect->width, rect->height);
       }
     }
@@ -956,7 +964,7 @@ ClientTiledLayerBuffer::PaintThebes(const nsIntRegion& aNewValidRegion,
 
 #ifdef GFX_TILEDLAYER_PREF_WARNINGS
   if (PR_IntervalNow() - start > 10) {
-    const nsIntRect bounds = aPaintRegion.GetBounds();
+    const IntRect bounds = aPaintRegion.GetBounds();
     printf_stderr("Time to tile %i: %i, %i, %i, %i\n", PR_IntervalNow() - start, bounds.x, bounds.y, bounds.width, bounds.height);
   }
 #endif
@@ -1196,7 +1204,7 @@ ClientTiledLayerBuffer::ValidateTile(TileClient aTile,
     mTilingOrigin.y = std::min(mTilingOrigin.y, moz2DTile.mTileOrigin.y);
 
     nsIntRegionRectIterator it(aDirtyRegion);
-    for (const nsIntRect* dirtyRect = it.Next(); dirtyRect != nullptr; dirtyRect = it.Next()) {
+    for (const IntRect* dirtyRect = it.Next(); dirtyRect != nullptr; dirtyRect = it.Next()) {
       gfx::Rect drawRect(dirtyRect->x - aTileOrigin.x,
                          dirtyRect->y - aTileOrigin.y,
                          dirtyRect->width,
@@ -1205,7 +1213,7 @@ ClientTiledLayerBuffer::ValidateTile(TileClient aTile,
 
       // Mark the newly updated area as invalid in the front buffer
       aTile.mInvalidFront.Or(aTile.mInvalidFront,
-        nsIntRect(NS_lroundf(drawRect.x), NS_lroundf(drawRect.y),
+        IntRect(NS_lroundf(drawRect.x), NS_lroundf(drawRect.y),
                   drawRect.width, drawRect.height));
 
       if (mode == SurfaceMode::SURFACE_COMPONENT_ALPHA) {
@@ -1239,7 +1247,7 @@ ClientTiledLayerBuffer::ValidateTile(TileClient aTile,
   // XXX Perhaps we should just copy the bounding rectangle here?
   RefPtr<gfx::SourceSurface> source = mSinglePaintDrawTarget->Snapshot();
   nsIntRegionRectIterator it(aDirtyRegion);
-  for (const nsIntRect* dirtyRect = it.Next(); dirtyRect != nullptr; dirtyRect = it.Next()) {
+  for (const IntRect* dirtyRect = it.Next(); dirtyRect != nullptr; dirtyRect = it.Next()) {
 #ifdef GFX_TILEDLAYER_PREF_WARNINGS
     printf_stderr(" break into subdirtyRect %i, %i, %i, %i\n",
                   dirtyRect->x, dirtyRect->y, dirtyRect->width, dirtyRect->height);
@@ -1258,14 +1266,14 @@ ClientTiledLayerBuffer::ValidateTile(TileClient aTile,
     drawTarget->CopySurface(source, copyRect, copyTarget);
 
     // Mark the newly updated area as invalid in the front buffer
-    aTile.mInvalidFront.Or(aTile.mInvalidFront, nsIntRect(copyTarget.x, copyTarget.y, copyRect.width, copyRect.height));
+    aTile.mInvalidFront.Or(aTile.mInvalidFront, IntRect(copyTarget.x, copyTarget.y, copyRect.width, copyRect.height));
   }
 
   // only worry about padding when not doing low-res
   // because it simplifies the math and the artifacts
   // won't be noticable
   if (mResolution == 1) {
-    nsIntRect unscaledTile = nsIntRect(aTileOrigin.x,
+    IntRect unscaledTile = IntRect(aTileOrigin.x,
                                        aTileOrigin.y,
                                        GetTileSize().width,
                                        GetTileSize().height);
@@ -1293,7 +1301,7 @@ ClientTiledLayerBuffer::ValidateTile(TileClient aTile,
   drawTarget = nullptr;
 
   nsIntRegion tileRegion =
-    nsIntRect(aTileOrigin.x, aTileOrigin.y,
+    IntRect(aTileOrigin.x, aTileOrigin.y,
               GetScaledTileSize().width, GetScaledTileSize().height);
   // Intersect this area with the portion that's invalid.
   tileRegion.SubOut(GetValidRegion());
@@ -1342,7 +1350,7 @@ GetCompositorSideCompositionBounds(const LayerMetricsWrapper& aScrollAncestor,
 {
   Matrix4x4 transform = aTransformToCompBounds * Matrix4x4(aAPZTransform);
   return TransformTo<LayerPixel>(transform.Inverse(),
-            aScrollAncestor.Metrics().mCompositionBounds);
+            aScrollAncestor.Metrics().GetCompositionBounds());
 }
 
 bool
@@ -1437,7 +1445,7 @@ ClientTiledLayerBuffer::ComputeProgressiveUpdateRegion(const nsIntRegion& aInval
   // make the progressive paint more visible to the user while scrolling.
   // On B2G uploads are cheaper and we value coherency more, especially outside
   // the browser, so we always use the entire user-visible area.
-  nsIntRect coherentUpdateRect(LayerIntRect::ToUntyped(RoundedOut(
+  IntRect coherentUpdateRect(LayerIntRect::ToUntyped(RoundedOut(
 #ifdef MOZ_WIDGET_ANDROID
     transformedCompositionBounds.Intersect(aPaintData->mCompositionBounds)
 #else
@@ -1473,7 +1481,7 @@ ClientTiledLayerBuffer::ComputeProgressiveUpdateRegion(const nsIntRegion& aInval
   // The following code decides what order to draw tiles in, based on the
   // current scroll direction of the primary scrollable layer.
   NS_ASSERTION(!aRegionToPaint.IsEmpty(), "Unexpectedly empty paint region!");
-  nsIntRect paintBounds = aRegionToPaint.GetBounds();
+  IntRect paintBounds = aRegionToPaint.GetBounds();
 
   int startX, incX, startY, incY;
   gfx::IntSize scaledTileSize = GetScaledTileSize();
@@ -1494,7 +1502,7 @@ ClientTiledLayerBuffer::ComputeProgressiveUpdateRegion(const nsIntRegion& aInval
   }
 
   // Find a tile to draw.
-  nsIntRect tileBounds(startX, startY, scaledTileSize.width, scaledTileSize.height);
+  IntRect tileBounds(startX, startY, scaledTileSize.width, scaledTileSize.height);
   int32_t scrollDiffX = aPaintData->mScrollOffset.x - aPaintData->mLastScrollOffset.x;
   int32_t scrollDiffY = aPaintData->mScrollOffset.y - aPaintData->mLastScrollOffset.y;
   // This loop will always terminate, as there is at least one tile area
@@ -1615,5 +1623,5 @@ TiledContentClient::Dump(std::stringstream& aStream,
   mTiledBuffer.Dump(aStream, aPrefix, aDumpHtml);
 }
 
-}
-}
+} // namespace layers
+} // namespace mozilla

@@ -202,7 +202,7 @@ nsHTMLCSSStyleSheet::EvictStyleAttr(const nsAString& aSerialized,
 {
 #ifdef DEBUG
   {
-    NS_ASSERTION(aValue = mCachedStyleAttrs.Get(aSerialized),
+    NS_ASSERTION(aValue == mCachedStyleAttrs.Get(aSerialized),
                  "Cached value does not match?!");
   }
 #endif

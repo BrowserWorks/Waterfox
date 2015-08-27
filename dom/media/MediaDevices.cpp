@@ -11,6 +11,7 @@
 #include "nsIScriptGlobalObject.h"
 #include "nsIPermissionManager.h"
 #include "nsPIDOMWindow.h"
+#include "nsQueryObject.h"
 
 namespace mozilla {
 namespace dom {
@@ -96,7 +97,7 @@ public:
       NS_ENSURE_SUCCESS(rv, rv);
 
       if (elementType != nsIDataType::VTYPE_INTERFACE) {
-        NS_Free(rawArray);
+        free(rawArray);
         return NS_ERROR_FAILURE;
       }
 
@@ -106,7 +107,7 @@ public:
         devices.AppendElement(device);
         NS_IF_RELEASE(supportsArray[i]); // explicitly decrease refcount for rawptr
       }
-      NS_Free(rawArray); // explicitly free memory from nsIVariant::GetAsArray
+      free(rawArray); // explicitly free memory from nsIVariant::GetAsArray
     }
     nsTArray<nsRefPtr<MediaDeviceInfo>> infos;
     for (auto& device : devices) {

@@ -15,19 +15,23 @@ add_task(function*() {
   info("inspector opened");
 
   info("testing the eyedropper button");
-  testButton(toolbox, Telemetry);
+  yield testButton(toolbox, Telemetry);
 
   stopRecordingTelemetryLogs(Telemetry);
   yield gDevTools.closeToolbox(target);
   gBrowser.removeCurrentTab();
 });
 
-function testButton(toolbox, Telemetry) {
+function* testButton(toolbox, Telemetry) {
   let button = toolbox.doc.querySelector("#command-button-eyedropper");
   ok(button, "Captain, we have the eyedropper button");
 
+  let clicked = toolbox._requisition.commandOutputManager.onOutput.once();
+
   info("clicking the button to open the eyedropper");
   button.click();
+
+  yield clicked;
 
   checkResults("_EYEDROPPER_", Telemetry);
 }
@@ -37,7 +41,7 @@ function checkResults(histIdFocus, Telemetry) {
 
   for (let [histId, value] of Iterator(result)) {
     if (histId.startsWith("DEVTOOLS_INSPECTOR_") ||
-        !histId.contains(histIdFocus)) {
+        !histId.includes(histIdFocus)) {
       // Inspector stats are tested in
       // browser_telemetry_toolboxtabs_{toolname}.js so we skip them here
       // because we only open the inspector once for this test.

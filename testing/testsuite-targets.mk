@@ -29,34 +29,32 @@ endif
 
 RUN_MOCHITEST_B2G_DESKTOP = \
   rm -f ./$@.log && \
-  $(PYTHON) _tests/testing/mochitest/runtestsb2g.py --autorun --close-when-done \
-    --console-level=INFO --log-tbpl=./$@.log \
+  $(PYTHON) _tests/testing/mochitest/runtestsb2g.py \
+    --log-tbpl=./$@.log \
     --desktop --profile ${GAIA_PROFILE_DIR} \
     --failure-file=$(abspath _tests/testing/mochitest/makefailures.json) \
     $(TEST_PATH_ARG) $(EXTRA_TEST_ARGS)
 
 RUN_MOCHITEST = \
   rm -f ./$@.log && \
-  $(PYTHON) _tests/testing/mochitest/runtests.py --autorun --close-when-done \
-    --console-level=INFO --log-tbpl=./$@.log \
+  $(PYTHON) _tests/testing/mochitest/runtests.py \
+    --log-tbpl=./$@.log \
     --failure-file=$(abspath _tests/testing/mochitest/makefailures.json) \
     --testing-modules-dir=$(abspath _tests/modules) \
-    --extra-profile-file=$(DIST)/plugins \
     $(SYMBOLS_PATH) $(TEST_PATH_ARG) $(EXTRA_TEST_ARGS)
 
 RERUN_MOCHITEST = \
   rm -f ./$@.log && \
-  $(PYTHON) _tests/testing/mochitest/runtests.py --autorun --close-when-done \
-    --console-level=INFO --log-tbpl=./$@.log \
+  $(PYTHON) _tests/testing/mochitest/runtests.py \
+    --log-tbpl=./$@.log \
     --run-only-tests=makefailures.json \
     --testing-modules-dir=$(abspath _tests/modules) \
-    --extra-profile-file=$(DIST)/plugins \
     $(SYMBOLS_PATH) $(TEST_PATH_ARG) $(EXTRA_TEST_ARGS)
 
 RUN_MOCHITEST_REMOTE = \
   rm -f ./$@.log && \
-  $(PYTHON) _tests/testing/mochitest/runtestsremote.py --autorun --close-when-done \
-    --console-level=INFO --log-tbpl=./$@.log $(DM_FLAGS) --dm_trans=$(DM_TRANS) \
+  $(PYTHON) _tests/testing/mochitest/runtestsremote.py \
+    --log-tbpl=./$@.log $(DM_FLAGS) --dm_trans=$(DM_TRANS) \
     --app=$(TEST_PACKAGE_NAME) --deviceIP=${TEST_DEVICE} --xre-path=${MOZ_HOST_BIN} \
     --testing-modules-dir=$(abspath _tests/modules) \
     $(SYMBOLS_PATH) $(TEST_PATH_ARG) $(EXTRA_TEST_ARGS)
@@ -66,8 +64,8 @@ RUN_MOCHITEST_ROBOCOP = \
   $(PYTHON) _tests/testing/mochitest/runtestsremote.py \
     --robocop-apk=$(DEPTH)/build/mobile/robocop/robocop-debug.apk \
     --robocop-ids=$(DEPTH)/mobile/android/base/fennec_ids.txt \
-    --robocop-ini=$(DEPTH)/build/mobile/robocop/robocop.ini \
-    --console-level=INFO --log-tbpl=./$@.log $(DM_FLAGS) --dm_trans=$(DM_TRANS) \
+    --robocop-ini=_tests/testing/mochitest/robocop.ini \
+    --log-tbpl=./$@.log $(DM_FLAGS) --dm_trans=$(DM_TRANS) \
     --app=$(TEST_PACKAGE_NAME) --deviceIP=${TEST_DEVICE} --xre-path=${MOZ_HOST_BIN} \
     $(SYMBOLS_PATH) $(TEST_PATH_ARG) $(EXTRA_TEST_ARGS)
 
@@ -395,6 +393,7 @@ ifndef UNIVERSAL_BINARY
 PKG_STAGE = $(DIST)/test-stage
 package-tests: \
   stage-config \
+  stage-mach \
   stage-mochitest \
   stage-reftest \
   stage-xpcshell \
@@ -408,6 +407,8 @@ package-tests: \
   stage-jittest \
   stage-web-platform-tests \
   stage-luciddream \
+  test-packages-manifest \
+  test-packages-manifest-tc \
   $(NULL)
 ifdef MOZ_WEBRTC
 package-tests: stage-steeplechase
@@ -417,15 +418,53 @@ else
 PKG_STAGE = $(DIST)/universal/test-stage
 endif
 
+TEST_PKGS := \
+  cppunittest \
+  mochitest \
+  reftest \
+  xpcshell \
+  web-platform \
+  $(NULL)
+
+PKG_ARG = --$(1) '$(PKG_BASENAME).$(1).tests.zip'
+
+test-packages-manifest-tc:
+	@rm -f $(MOZ_TEST_PACKAGES_FILE_TC)
+ifndef UNIVERSAL_BINARY
+	$(NSINSTALL) -D $(dir $(MOZ_TEST_PACKAGES_FILE_TC))
+endif
+	$(PYTHON) $(topsrcdir)/build/gen_test_packages_manifest.py \
+      --jsshell $(JSSHELL_NAME) \
+      --dest-file $(MOZ_TEST_PACKAGES_FILE_TC) \
+      --use-short-names \
+      $(call PKG_ARG,common) \
+      $(foreach pkg,$(TEST_PKGS),$(call PKG_ARG,$(pkg)))
+
+test-packages-manifest:
+	@rm -f $(MOZ_TEST_PACKAGES_FILE)
+ifndef UNIVERSAL_BINARY
+	$(NSINSTALL) -D $(dir $(MOZ_TEST_PACKAGES_FILE))
+endif
+	$(PYTHON) $(topsrcdir)/build/gen_test_packages_manifest.py \
+      --jsshell $(JSSHELL_NAME) \
+      --dest-file $(MOZ_TEST_PACKAGES_FILE) \
+      $(call PKG_ARG,common) \
+      $(foreach pkg,$(TEST_PKGS),$(call PKG_ARG,$(pkg)))
+
 package-tests:
 	@rm -f '$(DIST)/$(PKG_PATH)$(TEST_PACKAGE)'
 ifndef UNIVERSAL_BINARY
 	$(NSINSTALL) -D $(DIST)/$(PKG_PATH)
 endif
+# Exclude harness specific directories when generating the common zip.
 	$(MKDIR) -p $(abspath $(DIST))/$(PKG_PATH) && \
 	cd $(PKG_STAGE) && \
 	  zip -rq9D '$(abspath $(DIST))/$(PKG_PATH)$(TEST_PACKAGE)' \
-	  * -x \*/.mkdir.done \*.pyc
+	  * -x \*/.mkdir.done \*.pyc $(foreach name,$(TEST_PKGS),$(name)\*) && \
+	$(foreach name,$(TEST_PKGS),rm -f '$(DIST)/$(PKG_PATH)$(PKG_BASENAME).'$(name)'.tests.zip' && \
+                                zip -rq9D '$(abspath $(DIST))/$(PKG_PATH)$(PKG_BASENAME).'$(name)'.tests.zip' \
+                                $(name) -x \*/.mkdir.done \*.pyc ;)
+
 
 ifeq ($(MOZ_WIDGET_TOOLKIT),android)
 package-tests: stage-android
@@ -446,6 +485,7 @@ make-stage-dir:
 	$(NSINSTALL) -D $(PKG_STAGE)/jetpack
 	$(NSINSTALL) -D $(PKG_STAGE)/mozbase
 	$(NSINSTALL) -D $(PKG_STAGE)/modules
+	$(NSINSTALL) -D $(PKG_STAGE)/tools/mach
 
 stage-b2g: make-stage-dir
 	$(NSINSTALL) $(topsrcdir)/b2g/test/b2g-unittest-requirements.txt $(PKG_STAGE)/b2g
@@ -453,6 +493,11 @@ stage-b2g: make-stage-dir
 stage-config: make-stage-dir
 	$(NSINSTALL) -D $(PKG_STAGE)/config
 	@(cd $(topsrcdir)/testing/config && tar $(TAR_CREATE_FLAGS) - *) | (cd $(PKG_STAGE)/config && tar -xf -)
+
+stage-mach: make-stage-dir
+	@(cd $(topsrcdir)/python/mach && tar $(TAR_CREATE_FLAGS) - *) | (cd $(PKG_STAGE)/tools/mach && tar -xf -)
+	cp $(topsrcdir)/testing/tools/mach_test_package_bootstrap.py $(PKG_STAGE)/tools/mach_bootstrap.py
+	cp $(topsrcdir)/mach $(PKG_STAGE)
 
 stage-mochitest: make-stage-dir
 	$(MAKE) -C $(DEPTH)/testing/mochitest stage-package
@@ -501,23 +546,24 @@ endif
 endif
 
 stage-cppunittests: make-stage-dir
-	$(NSINSTALL) -D $(PKG_STAGE)/cppunittests
+	$(NSINSTALL) -D $(PKG_STAGE)/cppunittest
 ifdef STRIP_CPP_TESTS
-	$(foreach bin,$(CPP_UNIT_TEST_BINS),$(OBJCOPY) $(or $(STRIP_FLAGS),--strip-unneeded) $(bin) $(bin:$(DIST)/%=$(PKG_STAGE)/%);)
+	$(foreach bin,$(CPP_UNIT_TEST_BINS),$(OBJCOPY) $(or $(STRIP_FLAGS),--strip-unneeded) $(bin) $(bin:$(DIST)/cppunittests/%=$(PKG_STAGE)/cppunittest/%);)
 else
-	cp -RL $(DIST)/cppunittests $(PKG_STAGE)
+	cp -RL $(CPP_UNIT_TEST_BINS) $(PKG_STAGE)/cppunittest
 endif
-	cp $(topsrcdir)/testing/runcppunittests.py $(PKG_STAGE)/cppunittests
-	cp $(topsrcdir)/testing/remotecppunittests.py $(PKG_STAGE)/cppunittests
-	cp $(topsrcdir)/testing/cppunittest.ini $(PKG_STAGE)/cppunittests
+	cp $(topsrcdir)/testing/runcppunittests.py $(PKG_STAGE)/cppunittest
+	cp $(topsrcdir)/testing/remotecppunittests.py $(PKG_STAGE)/cppunittest
+	cp $(topsrcdir)/testing/cppunittest.ini $(PKG_STAGE)/cppunittest
+	cp $(DEPTH)/mozinfo.json $(PKG_STAGE)/cppunittest
 ifeq ($(MOZ_DISABLE_STARTUPCACHE),)
-	cp $(topsrcdir)/startupcache/test/TestStartupCacheTelemetry.js $(PKG_STAGE)/cppunittests
-	cp $(topsrcdir)/startupcache/test/TestStartupCacheTelemetry.manifest $(PKG_STAGE)/cppunittests
+	cp $(topsrcdir)/startupcache/test/TestStartupCacheTelemetry.js $(PKG_STAGE)/cppunittest
+	cp $(topsrcdir)/startupcache/test/TestStartupCacheTelemetry.manifest $(PKG_STAGE)/cppunittest
 endif
 ifdef STRIP_CPP_TESTS
-	$(OBJCOPY) $(or $(STRIP_FLAGS),--strip-unneeded) $(DIST)/bin/jsapi-tests$(BIN_SUFFIX) $(PKG_STAGE)/cppunittests/jsapi-tests$(BIN_SUFFIX)
+	$(OBJCOPY) $(or $(STRIP_FLAGS),--strip-unneeded) $(DIST)/bin/jsapi-tests$(BIN_SUFFIX) $(PKG_STAGE)/cppunittest/jsapi-tests$(BIN_SUFFIX)
 else
-	cp -RL $(DIST)/bin/jsapi-tests$(BIN_SUFFIX) $(PKG_STAGE)/cppunittests
+	cp -RL $(DIST)/bin/jsapi-tests$(BIN_SUFFIX) $(PKG_STAGE)/cppunittest
 endif
 
 stage-jittest: make-stage-dir
@@ -596,5 +642,7 @@ stage-instrumentation-tests: make-stage-dir
   stage-web-platform-tests \
   stage-instrumentation-tests \
   stage-luciddream \
+  test-packages-manifest \
+  test-packages-manifest-tc \
   $(NULL)
 

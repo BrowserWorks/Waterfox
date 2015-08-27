@@ -115,7 +115,7 @@ EnterBaseline(JSContext* cx, EnterJitData& data)
     data.result.setInt32(data.numActualArgs);
     {
         AssertCompartmentUnchanged pcc(cx);
-        JitActivation activation(cx);
+        JitActivation activation(cx, data.calleeToken);
 
         if (data.osrFrame)
             data.osrFrame->setRunningInJit();
@@ -412,9 +412,9 @@ BaselineScript::New(JSScript* jsscript, uint32_t prologueOffset, uint32_t epilog
 void
 BaselineScript::trace(JSTracer* trc)
 {
-    MarkJitCode(trc, &method_, "baseline-method");
+    TraceEdge(trc, &method_, "baseline-method");
     if (templateScope_)
-        MarkObject(trc, &templateScope_, "baseline-template-scope");
+        TraceEdge(trc, &templateScope_, "baseline-template-scope");
 
     // Mark all IC stub codes hanging off the IC stub entries.
     for (size_t i = 0; i < numICEntries(); i++) {

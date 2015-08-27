@@ -16,7 +16,7 @@ function run_test() {
   setUpdateURLOverride();
   Services.prefs.setBoolPref(PREF_APP_UPDATE_AUTO, false);
 
-  overrideXHR(null);
+  overrideXHR(xhr_pt1);
   overrideUpdatePrompt(updatePrompt);
   standardInit();
 
@@ -26,24 +26,25 @@ function run_test() {
 function run_test_pt1() {
   gResponseBody = null;
   gCheckFunc = check_test_pt1;
-  gXHRCallback = xhr_pt1;
   gUpdateChecker.checkForUpdates(updateCheckListener, true);
 }
 
-function xhr_pt1() {
-  gXHR.status = Cr.NS_ERROR_OFFLINE;
-  gXHR.onerror({ target: gXHR });
+function xhr_pt1(aXHR) {
+  aXHR.status = Cr.NS_ERROR_OFFLINE;
+  aXHR.onerror({ target: aXHR });
 }
 
 function check_test_pt1(request, update) {
-  do_check_eq(gStatusCode, Cr.NS_ERROR_OFFLINE);
-  do_check_eq(update.errorCode, NETWORK_ERROR_OFFLINE);
+  Assert.equal(gStatusCode, Cr.NS_ERROR_OFFLINE,
+               "the download status code" + MSG_SHOULD_EQUAL);
+  Assert.equal(update.errorCode, NETWORK_ERROR_OFFLINE,
+               "the update error code" + MSG_SHOULD_EQUAL);
 
   // Forward the error to AUS, which should register the online observer
   gAUS.onError(request, update);
 
   // Trigger another check by notifying the offline status observer
-  gXHRCallback = xhr_pt2;
+  overrideXHR(xhr_pt2);
   Services.obs.notifyObservers(gAUS, "network:offline-status-changed", "online");
 }
 
@@ -53,26 +54,27 @@ const updatePrompt = {
   }
 };
 
-function xhr_pt2() {
+function xhr_pt2(aXHR) {
   let patches = getLocalPatchString();
   let updates = getLocalUpdateString(patches);
   let responseBody = getLocalUpdatesXMLString(updates);
 
-  gXHR.status = 200;
-  gXHR.responseText = responseBody;
+  aXHR.status = 200;
+  aXHR.responseText = responseBody;
   try {
     let parser = Cc["@mozilla.org/xmlextras/domparser;1"].
                  createInstance(Ci.nsIDOMParser);
-    gXHR.responseXML = parser.parseFromString(responseBody, "application/xml");
+    aXHR.responseXML = parser.parseFromString(responseBody, "application/xml");
   } catch (e) {
   }
-  gXHR.onload({ target: gXHR });
+  aXHR.onload({ target: aXHR });
 }
 
 function check_test_pt2(update) {
   // We just verify that there are updates to know the check succeeded.
-  do_check_neq(update, null);
-  do_check_eq(update.name, "App Update Test");
+  Assert.ok(!!update, "there should be an update");
+  Assert.equal(update.name, "App Update Test",
+               "the update name" + MSG_SHOULD_EQUAL);
 
   doTestFinish();
 }

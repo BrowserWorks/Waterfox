@@ -27,6 +27,7 @@
 #include "nsAutoPtr.h"
 #include "nsJSPrincipals.h"
 #include "xpcpublic.h"
+#include "xpcprivate.h"
 #include "BackstagePass.h"
 #include "nsIScriptSecurityManager.h"
 #include "nsIPrincipal.h"
@@ -342,7 +343,7 @@ Load(JSContext* cx, unsigned argc, jsval* vp)
         JS::CompileOptions options(cx);
         options.setUTF8(true)
                .setFileAndLine(filename.ptr(), 1)
-               .setCompileAndGo(true);
+               .setIsRunOnce(true);
         JS::Rooted<JSScript*> script(cx);
         JS::Rooted<JSObject*> global(cx, JS::CurrentGlobalOrNull(cx));
         JS::Compile(cx, options, file, &script);
@@ -632,6 +633,35 @@ SimulateActivityCallback(JSContext* cx, unsigned argc, jsval* vp)
     return true;
 }
 
+static bool
+RegisterAppManifest(JSContext* cx, unsigned argc, jsval* vp)
+{
+    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+    if (args.length() != 1) {
+        JS_ReportError(cx, "Wrong number of arguments");
+        return false;
+    }
+    if (!args[0].isObject()) {
+        JS_ReportError(cx, "Expected object as argument 1 to registerAppManifest");
+        return false;
+    }
+
+    Rooted<JSObject*> arg1(cx, &args[0].toObject());
+    nsCOMPtr<nsIFile> file;
+    nsresult rv = nsXPConnect::XPConnect()->
+        WrapJS(cx, arg1, NS_GET_IID(nsIFile), getter_AddRefs(file));
+    if (NS_FAILED(rv)) {
+        XPCThrower::Throw(rv, cx);
+        return false;
+    }
+    rv = XRE_AddManifestLocation(NS_APP_LOCATION, file);
+    if (NS_FAILED(rv)) {
+        XPCThrower::Throw(rv, cx);
+        return false;
+    }
+    return true;
+}
+
 static const JSFunctionSpec glob_functions[] = {
     JS_FS("print",           Print,          0,0),
     JS_FS("readline",        ReadLine,       1,0),
@@ -652,6 +682,7 @@ static const JSFunctionSpec glob_functions[] = {
     JS_FS("btoa",            Btoa,           1,0),
     JS_FS("setInterruptCallback", SetInterruptCallback, 1,0),
     JS_FS("simulateActivityCallback", SimulateActivityCallback, 1,0),
+    JS_FS("registerAppManifest", RegisterAppManifest, 1, 0),
     JS_FS_END
 };
 
@@ -714,7 +745,9 @@ static bool
 env_enumerate(JSContext* cx, HandleObject obj)
 {
     static bool reflected;
-    char** evp, *name, *value;
+    char** evp;
+    char* name;
+    char* value;
     RootedString valstr(cx);
     bool ok;
 
@@ -835,7 +868,7 @@ ProcessFile(JSContext* cx, const char* filename, FILE* file, bool forceTTY)
         JS::CompileOptions options(cx);
         options.setUTF8(true)
                .setFileAndLine(filename, 1)
-               .setCompileAndGo(true);
+               .setIsRunOnce(true);
         if (JS::Compile(cx, options, file, &script) && !compileOnly)
             (void)JS_ExecuteScript(cx, script, &result);
         JS_EndRequest(cx);
@@ -871,7 +904,7 @@ ProcessFile(JSContext* cx, const char* filename, FILE* file, bool forceTTY)
         JS_ClearPendingException(cx);
         JS::CompileOptions options(cx);
         options.setFileAndLine("typein", startline)
-               .setCompileAndGo(true);
+               .setIsRunOnce(true);
         if (JS_CompileScript(cx, buffer, strlen(buffer), options, &script)) {
             JSErrorReporter older;
 
@@ -1339,7 +1372,7 @@ XRE_XPCShellMain(int argc, char** argv, char** envp)
             printf("Couldn't get manifest file.\n");
             return 1;
         }
-        XRE_AddManifestLocation(NS_COMPONENT_LOCATION, lf);
+        XRE_AddManifestLocation(NS_APP_LOCATION, lf);
 
         argc -= 2;
         argv += 2;
@@ -1515,7 +1548,8 @@ XRE_XPCShellMain(int argc, char** argv, char** envp)
 
             // We are almost certainly going to run script here, so we need an
             // AutoEntryScript. This is Gecko-specific and not in any spec.
-            dom::AutoEntryScript aes(backstagePass);
+            dom::AutoEntryScript aes(backstagePass,
+                                     "xpcshell argument processing");
             result = ProcessArgs(aes.cx(), argv, argc, &dirprovider);
 
             JS_DropPrincipals(rt, gJSPrincipals);

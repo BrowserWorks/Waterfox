@@ -24,7 +24,6 @@
 
 using namespace mozilla;
 
-#ifdef PR_LOGGING
 PRLogModuleInfo*
 gfxUserFontSet::GetUserFontsLog()
 {
@@ -33,7 +32,6 @@ gfxUserFontSet::GetUserFontsLog()
         sLog = PR_NewLogModule("userfonts");
     return sLog;
 }
-#endif /* PR_LOGGING */
 
 #define LOG(args) PR_LOG(gfxUserFontSet::GetUserFontsLog(), PR_LOG_DEBUG, args)
 #define LOG_ENABLED() PR_LOG_TEST(gfxUserFontSet::GetUserFontsLog(), PR_LOG_DEBUG)
@@ -47,15 +45,15 @@ class ExpandingMemoryStream : public ots::OTSStream {
 public:
     ExpandingMemoryStream(size_t initial, size_t limit)
         : mLength(initial), mLimit(limit), mOff(0) {
-        mPtr = NS_Alloc(mLength);
+        mPtr = moz_xmalloc(mLength);
     }
 
     ~ExpandingMemoryStream() {
-        NS_Free(mPtr);
+        free(mPtr);
     }
 
     // return the buffer, and give up ownership of it
-    // so the caller becomes responsible to call NS_Free
+    // so the caller becomes responsible to call free
     // when finished with it
     void* forget() {
         void* p = mPtr;
@@ -76,7 +74,7 @@ public:
             if (newLength > mLimit) {
                 newLength = mLimit;
             }
-            mPtr = NS_Realloc(mPtr, newLength);
+            mPtr = moz_xrealloc(mPtr, newLength);
             mLength = newLength;
             return WriteRaw(data, length);
         }
@@ -501,7 +499,6 @@ gfxUserFontEntry::LoadNextSrc()
                         bool loadOK = NS_SUCCEEDED(rv);
 
                         if (loadOK) {
-#ifdef PR_LOGGING
                             if (LOG_ENABLED()) {
                                 nsAutoCString fontURI;
                                 currSrc.mURI->GetSpec(fontURI);
@@ -509,7 +506,6 @@ gfxUserFontEntry::LoadNextSrc()
                                      mFontSet, mSrcIndex, fontURI.get(),
                                      NS_ConvertUTF16toUTF8(mFamilyName).get()));
                             }
-#endif
                             return;
                         } else {
                             mFontSet->LogMessage(this,
@@ -646,7 +642,6 @@ gfxUserFontEntry::LoadPlatformFont(const uint8_t* aFontData, uint32_t& aLength)
         fe->mFamilyName = mFamilyName;
         StoreUserFontData(fe, mFontSet->GetPrivateBrowsing(), originalFullName,
                           &metadata, metaOrigLen, compression);
-#ifdef PR_LOGGING
         if (LOG_ENABLED()) {
             nsAutoCString fontURI;
             mSrcList[mSrcIndex].mURI->GetSpec(fontURI);
@@ -656,12 +651,10 @@ gfxUserFontEntry::LoadPlatformFont(const uint8_t* aFontData, uint32_t& aLength)
                  this,
                  uint32_t(mFontSet->mGeneration)));
         }
-#endif
         mPlatformFontEntry = fe;
         SetLoadState(STATUS_LOADED);
         gfxUserFontSet::UserFontCache::CacheFont(fe);
     } else {
-#ifdef PR_LOGGING
         if (LOG_ENABLED()) {
             nsAutoCString fontURI;
             mSrcList[mSrcIndex].mURI->GetSpec(fontURI);
@@ -670,12 +663,11 @@ gfxUserFontEntry::LoadPlatformFont(const uint8_t* aFontData, uint32_t& aLength)
                  mFontSet, mSrcIndex, fontURI.get(),
                  NS_ConvertUTF16toUTF8(mFamilyName).get()));
         }
-#endif
     }
 
     // The downloaded data can now be discarded; the font entry is using the
     // sanitized copy
-    moz_free((void*)aFontData);
+    free((void*)aFontData);
 
     return fe != nullptr;
 }
@@ -690,7 +682,7 @@ gfxUserFontEntry::Load()
 
 // This is called when a font download finishes.
 // Ownership of aFontData passes in here, and the font set must
-// ensure that it is eventually deleted via moz_free().
+// ensure that it is eventually deleted via free().
 bool
 gfxUserFontEntry::FontDataDownloadComplete(const uint8_t* aFontData,
                                            uint32_t aLength,
@@ -718,7 +710,7 @@ gfxUserFontEntry::FontDataDownloadComplete(const uint8_t* aFontData,
     }
 
     if (aFontData) {
-        moz_free((void*)aFontData);
+        free((void*)aFontData);
     }
 
     // error occurred, load next src
@@ -848,7 +840,6 @@ gfxUserFontSet::AddUserFontEntry(const nsAString& aFamilyName,
     gfxUserFontFamily* family = GetFamily(aFamilyName);
     family->AddFontEntry(aUserFontEntry);
 
-#ifdef PR_LOGGING
     if (LOG_ENABLED()) {
         LOG(("userfonts (%p) added to \"%s\" (%p) style: %s weight: %d "
              "stretch: %d",
@@ -856,7 +847,6 @@ gfxUserFontSet::AddUserFontEntry(const nsAString& aFamilyName,
              (aUserFontEntry->IsItalic() ? "italic" : "normal"),
              aUserFontEntry->Weight(), aUserFontEntry->Stretch()));
     }
-#endif
 }
 
 gfxUserFontEntry*

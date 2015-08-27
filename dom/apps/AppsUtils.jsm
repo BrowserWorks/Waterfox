@@ -503,20 +503,19 @@ this.AppsUtils = {
    * Checks if the app role is allowed:
    * Only certified apps can be themes.
    * Only privileged or certified apps can be addons.
-   * Langpacks need to be privileged.
    * @param aRole   : the role assigned to this app.
    * @param aStatus : the APP_STATUS_* for this app.
    */
   checkAppRole: function(aRole, aStatus) {
+    try {
+      // Anything is possible in developer mode.
+      if (Services.prefs.getBoolPref("dom.apps.developer_mode")) {
+        return true;
+      }
+    } catch(e) {}
+
     if (aRole == "theme" && aStatus !== Ci.nsIPrincipal.APP_STATUS_CERTIFIED) {
       return false;
-    }
-    if (aRole == "langpack" && aStatus !== Ci.nsIPrincipal.APP_STATUS_PRIVILEGED) {
-      let allow = false;
-      try  {
-        allow = Services.prefs.getBoolPref("dom.apps.allow_unsigned_langpacks");
-      } catch(e) {}
-      return allow;
     }
     if (!this.allowUnsignedAddons &&
         (aRole == "addon" &&
@@ -622,7 +621,12 @@ this.AppsUtils = {
     aPrefBranch.setCharPref("gecko.mstone", mstone);
     aPrefBranch.setCharPref("gecko.buildID", buildID);
 
-    return ((mstone != savedmstone) || (buildID != savedBuildID));
+    if ((mstone != savedmstone) || (buildID != savedBuildID)) {
+      aPrefBranch.setBoolPref("dom.apps.reset-permissions", false);
+      return true;
+    } else {
+      return false;
+    }
   },
 
   /**

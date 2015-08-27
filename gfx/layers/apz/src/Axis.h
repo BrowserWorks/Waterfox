@@ -106,10 +106,20 @@ public:
   ParentLayerCoord GetOverscroll() const;
 
   /**
+   * Start an overscroll animation with the given initial velocity.
+   */
+  void StartOverscrollAnimation(float aVelocity);
+
+  /**
    * Sample the snap-back animation to relieve overscroll.
    * |aDelta| is the time since the last sample.
    */
   bool SampleOverscrollAnimation(const TimeDuration& aDelta);
+
+  /**
+   * Stop an overscroll animation.
+   */
+  void EndOverscrollAnimation();
 
   /**
    * Return whether this axis is overscrolled in either direction.
@@ -167,6 +177,12 @@ public:
    * and this axis is not scroll-locked.
    */
   bool CanScrollNow() const;
+
+  /**
+   * Clamp a point to the page's scrollable bounds. That is, a scroll
+   * destination to the returned point will not contain any overscroll.
+   */
+  CSSCoord ClampOriginToScrollableRect(CSSCoord aOrigin) const;
 
   void SetAxisLocked(bool aAxisLocked) { mAxisLocked = aAxisLocked; }
 
@@ -226,6 +242,7 @@ public:
   virtual ParentLayerCoord GetPointOffset(const ParentLayerPoint& aPoint) const = 0;
   virtual ParentLayerCoord GetRectLength(const ParentLayerRect& aRect) const = 0;
   virtual ParentLayerCoord GetRectOffset(const ParentLayerRect& aRect) const = 0;
+  virtual CSSToParentLayerScale GetScaleForAxis(const CSSToParentLayerScale2D& aScale) const = 0;
 
   virtual ScreenPoint MakePoint(ScreenCoord aCoord) const = 0;
 
@@ -268,9 +285,8 @@ protected:
   // actual overscroll amount.
   ParentLayerCoord ApplyResistance(ParentLayerCoord aOverscroll) const;
 
-  // Helper function to disable overscroll transformations triggered by
-  // SampleOverscrollAnimation().
-  void StopSamplingOverscrollAnimation();
+  // Clear the state associated with an overscroll animation.
+  void ClearOverscrollAnimationState();
 
   // Helper function for SampleOverscrollAnimation().
   void StepOverscrollAnimation(double aStepDurationMilliseconds);
@@ -285,6 +301,7 @@ public:
   virtual ParentLayerCoord GetPointOffset(const ParentLayerPoint& aPoint) const override;
   virtual ParentLayerCoord GetRectLength(const ParentLayerRect& aRect) const override;
   virtual ParentLayerCoord GetRectOffset(const ParentLayerRect& aRect) const override;
+  virtual CSSToParentLayerScale GetScaleForAxis(const CSSToParentLayerScale2D& aScale) const override;
   virtual ScreenPoint MakePoint(ScreenCoord aCoord) const override;
   virtual const char* Name() const override;
 };
@@ -295,6 +312,7 @@ public:
   virtual ParentLayerCoord GetPointOffset(const ParentLayerPoint& aPoint) const override;
   virtual ParentLayerCoord GetRectLength(const ParentLayerRect& aRect) const override;
   virtual ParentLayerCoord GetRectOffset(const ParentLayerRect& aRect) const override;
+  virtual CSSToParentLayerScale GetScaleForAxis(const CSSToParentLayerScale2D& aScale) const override;
   virtual ScreenPoint MakePoint(ScreenCoord aCoord) const override;
   virtual const char* Name() const override;
 };

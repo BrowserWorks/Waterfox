@@ -25,6 +25,7 @@
 #include "nsStyleStructInlines.h"
 #include "nsBidiPresUtils.h"
 #include "nsRubyFrame.h"
+#include "nsRubyTextFrame.h"
 #include "RubyUtils.h"
 #include <algorithm>
 
@@ -237,7 +238,7 @@ nsLineLayout::BeginLineReflow(nscoord aICoord, nscoord aBCoord,
     nscoord pctBasis = 0;
     if (textIndent.HasPercent()) {
       pctBasis =
-        nsHTMLReflowState::GetContainingBlockContentWidth(mBlockReflowState);
+        mBlockReflowState->GetContainingBlockContentISize(aWritingMode);
     }
     nscoord indent = nsRuleNode::ComputeCoordPercentCalc(textIndent, pctBasis);
 
@@ -2909,7 +2910,7 @@ FindNearestRubyBaseAncestor(nsIFrame* aFrame)
   // XXX It is possible that no ruby base ancestor is found because of
   // some edge cases like form control or canvas inside ruby text.
   // See bug 1138092 comment 4.
-  NS_ASSERTION(aFrame, "No ruby base ancestor?");
+  NS_WARN_IF_FALSE(aFrame, "no ruby base ancestor?");
   return aFrame;
 }
 

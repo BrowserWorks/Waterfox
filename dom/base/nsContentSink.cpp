@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 sw=2 et tw=78: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -48,6 +48,7 @@
 #include "nsIObserverService.h"
 #include "mozilla/Preferences.h"
 #include "nsParserConstants.h"
+#include "nsSandboxFlags.h"
 
 using namespace mozilla;
 
@@ -765,10 +766,16 @@ nsContentSink::ProcessMETATag(nsIContent* aContent)
   nsAutoString header;
   aContent->GetAttr(kNameSpaceID_None, nsGkAtoms::httpEquiv, header);
   if (!header.IsEmpty()) {
+    // Ignore META REFRESH when document is sandboxed from automatic features.
+    nsContentUtils::ASCIIToLower(header);
+    if (nsGkAtoms::refresh->Equals(header) &&
+        (mDocument->GetSandboxFlags() & SANDBOXED_AUTOMATIC_FEATURES)) {
+      return NS_OK;
+    }
+
     nsAutoString result;
     aContent->GetAttr(kNameSpaceID_None, nsGkAtoms::content, result);
     if (!result.IsEmpty()) {
-      nsContentUtils::ASCIIToLower(header);
       nsCOMPtr<nsIAtom> fieldAtom(do_GetAtom(header));
       rv = ProcessHeaderData(fieldAtom, result, aContent); 
     }

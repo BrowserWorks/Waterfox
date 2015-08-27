@@ -23,7 +23,7 @@ Cu.import("resource://gre/modules/devtools/Templater.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PluralForm",
                                   "resource://gre/modules/PluralForm.jsm");
 
-const FILTER_CHANGED_TIMEOUT = 300;
+const FILTER_CHANGED_TIMEOUT = 150;
 const HTML_NS = "http://www.w3.org/1999/xhtml";
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
@@ -151,18 +151,31 @@ function CssHtmlTree(aStyleInspector, aPageStyle)
   this._onClick = this._onClick.bind(this);
   this._onCopy = this._onCopy.bind(this);
   this._onCopyColor = this._onCopyColor.bind(this);
+  this._onFilterStyles = this._onFilterStyles.bind(this);
+  this._onFilterKeyPress = this._onFilterKeyPress.bind(this);
+  this._onClearSearch = this._onClearSearch.bind(this);
+  this._onIncludeBrowserStyles = this._onIncludeBrowserStyles.bind(this);
+  this._onFilterTextboxContextMenu = this._onFilterTextboxContextMenu.bind(this);
 
-  this.styleDocument.addEventListener("copy", this._onCopy);
+  let doc = this.styleDocument;
+  this.root = doc.getElementById("root");
+  this.element = doc.getElementById("propertyContainer");
+  this.searchField = doc.getElementById("computedview-searchbox");
+  this.searchClearButton = doc.getElementById("computedview-searchinput-clear");
+  this.includeBrowserStylesCheckbox = doc.getElementById("browser-style-checkbox");
+
   this.styleDocument.addEventListener("mousedown", this.focusWindow);
-  this.styleDocument.addEventListener("contextmenu", this._onContextMenu);
+  this.element.addEventListener("click", this._onClick);
+  this.element.addEventListener("copy", this._onCopy);
+  this.element.addEventListener("contextmenu", this._onContextMenu);
+  this.searchField.addEventListener("input", this._onFilterStyles);
+  this.searchField.addEventListener("keypress", this._onFilterKeyPress);
+  this.searchField.addEventListener("contextmenu", this._onFilterTextboxContextMenu);
+  this.searchClearButton.addEventListener("click", this._onClearSearch);
+  this.includeBrowserStylesCheckbox.addEventListener("command",
+    this._onIncludeBrowserStyles);
 
-  // Nodes used in templating
-  this.root = this.styleDocument.getElementById("root");
-  this.templateRoot = this.styleDocument.getElementById("templateRoot");
-  this.element = this.styleDocument.getElementById("propertyContainer");
-
-  // Listen for click events
-  this.element.addEventListener("click", this._onClick, false);
+  this.searchClearButton.hidden = true;
 
   // No results text.
   this.noResults = this.styleDocument.getElementById("noResults");
@@ -175,8 +188,6 @@ function CssHtmlTree(aStyleInspector, aPageStyle)
   this._updateSourceLinks = this._updateSourceLinks.bind(this);
   this._prefObserver = new PrefObserver("devtools.");
   this._prefObserver.on(PREF_ORIG_SOURCES, this._updateSourceLinks);
-
-  CssHtmlTree.processTemplate(this.templateRoot, this.root, this);
 
   // The element that we're inspecting, and the document that it comes from.
   this.viewedElement = null;
@@ -251,12 +262,6 @@ CssHtmlTree.prototype = {
 
   // Used for cancelling timeouts in the style filter.
   _filterChangedTimeout: null,
-
-  // The search filter
-  searchField: null,
-
-  // Reference to the "Include browser styles" checkbox.
-  includeBrowserStylesCheckbox: null,
 
   // Holds the ID of the panelRefresh timeout.
   _panelRefreshTimeout: null,
@@ -496,6 +501,13 @@ CssHtmlTree.prototype = {
         onDone: () => {
           this._refreshProcess = null;
           this.noResults.hidden = this.numVisibleProperties > 0;
+
+          if (this.searchField.value.length > 0 && !this.numVisibleProperties) {
+            this.searchField.classList.add("devtools-style-searchbox-no-match");
+          } else {
+            this.searchField.classList.remove("devtools-style-searchbox-no-match");
+          }
+
           this.inspector.emit("computed-view-refreshed");
           deferred.resolve(undefined);
         }
@@ -506,11 +518,11 @@ CssHtmlTree.prototype = {
   },
 
   /**
-   * Called when the user enters a search term.
+   * Called when the user enters a search term in the filter style search box.
    *
    * @param {Event} aEvent the DOM Event object.
    */
-  filterChanged: function CssHtmlTree_filterChanged(aEvent)
+  _onFilterStyles: function(aEvent)
   {
     let win = this.styleWindow;
 
@@ -518,10 +530,60 @@ CssHtmlTree.prototype = {
       win.clearTimeout(this._filterChangedTimeout);
     }
 
+    let filterTimeout = (this.searchField.value.length > 0)
+      ? FILTER_CHANGED_TIMEOUT : 0;
+    this.searchClearButton.hidden = this.searchField.value.length === 0;
+
     this._filterChangedTimeout = win.setTimeout(() => {
+      if (this.searchField.value.length > 0) {
+        this.searchField.setAttribute("filled", true);
+      } else {
+        this.searchField.removeAttribute("filled");
+      }
+
       this.refreshPanel();
       this._filterChangeTimeout = null;
-    }, FILTER_CHANGED_TIMEOUT);
+    }, filterTimeout);
+  },
+
+  /**
+   * Handle the search box's keypress event. If the escape key is pressed,
+   * clear the search box field.
+   */
+  _onFilterKeyPress: function(aEvent) {
+    if (aEvent.keyCode === Ci.nsIDOMKeyEvent.DOM_VK_ESCAPE &&
+        this._onClearSearch()) {
+      aEvent.preventDefault();
+      aEvent.stopPropagation();
+    }
+  },
+
+  /**
+   * Context menu handler for filter style search box.
+   */
+  _onFilterTextboxContextMenu: function(event) {
+    try {
+      this.styleDocument.defaultView.focus();
+      let contextmenu = this.inspector.toolbox.textboxContextMenuPopup;
+      contextmenu.openPopupAtScreen(event.screenX, event.screenY, true);
+    } catch(e) {
+      console.error(e);
+    }
+  },
+
+  /**
+   * Called when the user clicks on the clear button in the filter style search
+   * box. Returns true if the search box is cleared and false otherwise.
+   */
+  _onClearSearch: function() {
+    if (this.searchField.value) {
+      this.searchField.value = "";
+      this.searchField.focus();
+      this._onFilterStyles();
+      return true;
+    }
+
+    return false;
   },
 
   /**
@@ -529,18 +591,17 @@ CssHtmlTree.prototype = {
    *
    * @param {Event} aEvent the DOM Event object.
    */
-  includeBrowserStylesChanged:
-  function CssHtmltree_includeBrowserStylesChanged(aEvent)
+  _onIncludeBrowserStyles: function(aEvent)
   {
     this.refreshSourceFilter();
     this.refreshPanel();
   },
 
   /**
-   * When includeBrowserStyles.checked is false we only display properties that
-   * have matched selectors and have been included by the document or one of the
-   * document's stylesheets. If .checked is false we display all properties
-   * including those that come from UA stylesheets.
+   * When includeBrowserStylesCheckbox.checked is false we only display
+   * properties that have matched selectors and have been included by the
+   * document or one of thedocument's stylesheets. If .checked is false we
+   * display all properties including those that come from UA stylesheets.
    */
   refreshSourceFilter: function CssHtmlTree_setSourceFilter()
   {
@@ -820,10 +881,6 @@ CssHtmlTree.prototype = {
     this.viewedElement = null;
     this._outputParser = null;
 
-    // Remove event listeners
-    this.includeBrowserStylesCheckbox.removeEventListener("command",
-      this.includeBrowserStylesChanged);
-    this.searchField.removeEventListener("command", this.filterChanged);
     gDevTools.off("pref-changed", this._handlePrefChange);
 
     this._prefObserver.off(PREF_ORIG_SOURCES, this._updateSourceLinks);
@@ -836,8 +893,6 @@ CssHtmlTree.prototype = {
     if (this._refreshProcess) {
       this._refreshProcess.cancel();
     }
-
-    this.element.removeEventListener("click", this._onClick, false);
 
     // Remove context menu
     if (this._contextmenu) {
@@ -865,14 +920,24 @@ CssHtmlTree.prototype = {
     this.highlighters.destroy();
 
     // Remove bound listeners
-    this.styleDocument.removeEventListener("contextmenu", this._onContextMenu);
-    this.styleDocument.removeEventListener("copy", this._onCopy);
     this.styleDocument.removeEventListener("mousedown", this.focusWindow);
+    this.element.removeEventListener("click", this._onClick);
+    this.element.removeEventListener("copy", this._onCopy);
+    this.element.removeEventListener("contextmenu", this._onContextMenu);
+    this.searchField.removeEventListener("input", this._onFilterStyles);
+    this.searchField.removeEventListener("keypress", this._onFilterKeyPress);
+    this.searchField.removeEventListener("contextmenu", this._onFilterTextboxContextMenu);
+    this.searchClearButton.removeEventListener("click", this._onClearSearch);
+    this.includeBrowserStylesCheckbox.removeEventListener("command",
+      this.includeBrowserStylesChanged);
 
     // Nodes used in templating
     this.root = null;
     this.element = null;
     this.panel = null;
+    this.searchField = null;
+    this.searchClearButton = null;
+    this.includeBrowserStylesCheckbox = null;
 
     // The document in which we display the results (csshtmltree.xul).
     this.styleDocument = null;
@@ -910,6 +975,10 @@ function createMenuItem(aMenu, aAttributes)
   item.setAttribute("accesskey", CssHtmlTree.l10n(aAttributes.accesskey));
   item.addEventListener("command", aAttributes.command);
 
+  if (aAttributes.type) {
+    item.setAttribute("type", aAttributes.type);
+  }
+
   aMenu.appendChild(item);
 
   return item;
@@ -931,7 +1000,6 @@ function PropertyView(aTree, aName)
 
   this.link = "https://developer.mozilla.org/CSS/" + aName;
 
-  this.templateMatchedSelectors = aTree.styleDocument.getElementById("templateMatchedSelectors");
   this._propertyInfo = new PropertyInfo(aTree, aName);
 }
 
@@ -1004,8 +1072,10 @@ PropertyView.prototype = {
     }
 
     let searchTerm = this.tree.searchField.value.toLowerCase();
-    if (searchTerm && this.name.toLowerCase().indexOf(searchTerm) == -1 &&
-      this.value.toLowerCase().indexOf(searchTerm) == -1) {
+    let isValidSearchTerm = searchTerm.trim().length > 0;
+    if (isValidSearchTerm &&
+        this.name.toLowerCase().indexOf(searchTerm) == -1 &&
+        this.value.toLowerCase().indexOf(searchTerm) == -1) {
       return false;
     }
 
@@ -1141,6 +1211,7 @@ PropertyView.prototype = {
       this.propertyInfo.value,
       {
         colorSwatchClass: "computedview-colorswatch",
+        colorClass: "computedview-color",
         urlClass: "theme-link"
         // No need to use baseURI here as computed URIs are never relative.
       });
@@ -1171,9 +1242,10 @@ PropertyView.prototype = {
         }
 
         this._matchedSelectorResponse = matched;
-        CssHtmlTree.processTemplate(this.templateMatchedSelectors,
-          this.matchedSelectorsContainer, this);
+
+        this._buildMatchedSelectors();
         this.matchedExpander.setAttribute("open", "");
+
         this.tree.inspector.emit("computed-view-property-expanded");
       }).then(null, console.error);
     } else {
@@ -1187,6 +1259,40 @@ PropertyView.prototype = {
   get matchedSelectors()
   {
     return this._matchedSelectorResponse;
+  },
+
+  _buildMatchedSelectors: function() {
+    let frag = this.element.ownerDocument.createDocumentFragment();
+
+    for (let selector of this.matchedSelectorViews) {
+      let p = createChild(frag, "p");
+      let span = createChild(p, "span", {
+        class: "rule-link"
+      });
+      let link = createChild(span, "a", {
+        target: "_blank",
+        class: "link theme-link",
+        title: selector.href,
+        sourcelocation: selector.source,
+        tabindex: "0",
+        textContent: selector.source
+      });
+      link.addEventListener("click", selector.openStyleEditor, false);
+      link.addEventListener("keydown", selector.maybeOpenStyleEditor, false);
+
+      let status = createChild(p, "span", {
+        dir: "ltr",
+        class: "rule-text theme-fg-color3 " + selector.statusClass,
+        title: selector.statusText,
+        textContent: selector.sourceText
+      });
+      let valueSpan = createChild(status, "span", {
+        class: "other-property-value theme-fg-color1"
+      });
+      valueSpan.appendChild(selector.outputFragment);
+    }
+
+    this.matchedSelectorsContainer.appendChild(frag);
   },
 
   /**
@@ -1228,6 +1334,9 @@ PropertyView.prototype = {
    */
   onMatchedToggle: function PropertyView_onMatchedToggle(aEvent)
   {
+    if (aEvent.shiftKey) {
+      return;
+    }
     this.matchedExpanded = !this.matchedExpanded;
     this.refreshMatchedSelectors();
     aEvent.preventDefault();
@@ -1276,6 +1385,9 @@ function SelectorView(aTree, aSelectorInfo)
   this.tree = aTree;
   this.selectorInfo = aSelectorInfo;
   this._cacheStatusNames();
+
+  this.openStyleEditor = this.openStyleEditor.bind(this);
+  this.maybeOpenStyleEditor = this.maybeOpenStyleEditor.bind(this);
 
   this.updateSourceLink();
 }
@@ -1367,6 +1479,7 @@ SelectorView.prototype = {
       this.selectorInfo.name,
       this.selectorInfo.value, {
       colorSwatchClass: "computedview-colorswatch",
+      colorClass: "computedview-color",
       urlClass: "theme-link",
       baseURI: this.selectorInfo.rule.href
     });
@@ -1468,8 +1581,8 @@ SelectorView.prototype = {
           contentDoc = rawNode.ownerDocument;
         }
       }
-      let viewSourceUtils = inspector.viewSourceUtils;
-      viewSourceUtils.viewSource(rule.href, null, contentDoc, rule.line);
+      let toolbox = gDevTools.getToolbox(inspector.target);
+      toolbox.viewSource(rule.href, rule.line);
       return;
     }
 
@@ -1488,6 +1601,33 @@ SelectorView.prototype = {
     });
   }
 };
+
+/**
+ * Create a child element with a set of attributes.
+ *
+ * @param {Element} aParent
+ *        The parent node.
+ * @param {string} aTag
+ *        The tag name.
+ * @param {object} aAttributes
+ *        A set of attributes to set on the node.
+ */
+function createChild(aParent, aTag, aAttributes={}) {
+  let elt = aParent.ownerDocument.createElementNS(HTML_NS, aTag);
+  for (let attr in aAttributes) {
+    if (aAttributes.hasOwnProperty(attr)) {
+      if (attr === "textContent") {
+        elt.textContent = aAttributes[attr];
+      } else if(attr === "child") {
+        elt.appendChild(aAttributes[attr]);
+      } else {
+        elt.setAttribute(attr, aAttributes[attr]);
+      }
+    }
+  }
+  aParent.appendChild(elt);
+  return elt;
+}
 
 exports.CssHtmlTree = CssHtmlTree;
 exports.PropertyView = PropertyView;

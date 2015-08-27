@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -14,7 +16,6 @@
 #include "nsAutoPtr.h"
 #include "nsString.h"
 #include "nsXULAppAPI.h"
-#include "NfcGonkMessage.h"
 #include "NfcOptions.h"
 
 #define NS_NFCSERVICE_CID \
@@ -24,12 +25,6 @@
 using namespace android;
 using namespace mozilla::dom;
 using namespace mozilla::ipc;
-
-static const nsLiteralString SEOriginString[] = {
-  NS_LITERAL_STRING("SIM"),
-  NS_LITERAL_STRING("eSE"),
-  NS_LITERAL_STRING("ASSD")
-};
 
 namespace mozilla {
 
@@ -191,10 +186,10 @@ public:
 
     // HCI Event Transaction parameters.
     if (mEvent.mOriginType != -1) {
-      MOZ_ASSERT(mEvent.mOriginType < SecureElementOrigin::OriginEndGuard);
+      MOZ_ASSERT(static_cast<HCIEventOrigin>(mEvent.mOriginType) < HCIEventOrigin::EndGuard_);
 
       event.mOrigin.Construct();
-      event.mOrigin.Value().Assign(SEOriginString[mEvent.mOriginType]);
+      event.mOrigin.Value().AssignASCII(HCIEventOriginValues::strings[mEvent.mOriginType].value);
       event.mOrigin.Value().AppendInt(mEvent.mOriginIndex, 16 /* radix */);
     }
 
@@ -229,7 +224,7 @@ private:
 class NfcEventRunnable : public nsRunnable
 {
 public:
-  NfcEventRunnable(NfcMessageHandler* aHandler, UnixSocketRawData* aData)
+  NfcEventRunnable(NfcMessageHandler* aHandler, UnixSocketBuffer* aData)
     : mHandler(aHandler), mData(aData)
   {
     MOZ_ASSERT(NS_IsMainThread());
@@ -262,7 +257,7 @@ public:
 
 private:
   NfcMessageHandler* mHandler;
-  nsAutoPtr<UnixSocketRawData> mData;
+  nsAutoPtr<UnixSocketBuffer> mData;
 };
 
 NfcService::NfcService()
@@ -390,10 +385,11 @@ NfcService::DispatchNfcEvent(const mozilla::dom::NfcEventOptions& aOptions)
 }
 
 void
-NfcService::ReceiveSocketData(nsAutoPtr<UnixSocketRawData>& aData)
+NfcService::ReceiveSocketData(nsAutoPtr<UnixSocketBuffer>& aBuffer)
 {
   MOZ_ASSERT(mHandler);
-  nsCOMPtr<nsIRunnable> runnable = new NfcEventRunnable(mHandler, aData.forget());
+  nsCOMPtr<nsIRunnable> runnable =
+    new NfcEventRunnable(mHandler, aBuffer.forget());
   mThread->Dispatch(runnable, nsIEventTarget::DISPATCH_NORMAL);
 }
 

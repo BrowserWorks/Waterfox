@@ -144,7 +144,7 @@ gbjar.sources += [
     'AndroidGamepadManager.java',
     'animation/AnimationUtils.java',
     'animation/AnimatorProxy.java',
-    'animation/BounceAnimator.java',
+    'animation/BounceAnimatorBuilder.java',
     'animation/HeightChangeAnimation.java',
     'animation/PropertyAnimator.java',
     'animation/Rotate3DAnimation.java',
@@ -286,7 +286,6 @@ gbjar.sources += [
     'gfx/SubdocumentScrollHelper.java',
     'gfx/TextureGenerator.java',
     'gfx/TextureReaper.java',
-    'gfx/TileLayer.java',
     'gfx/TouchEventHandler.java',
     'gfx/ViewTransform.java',
     'gfx/VirtualLayer.java',
@@ -373,7 +372,6 @@ gbjar.sources += [
     'menu/MenuPopup.java',
     'menu/QuickShareBarActionView.java',
     'MotionEventInterceptor.java',
-    'NewTabletUI.java',
     'NotificationClient.java',
     'NotificationHandler.java',
     'NotificationHelper.java',
@@ -436,6 +434,7 @@ gbjar.sources += [
     'Tab.java',
     'tabqueue/TabQueueDispatcher.java',
     'tabqueue/TabQueueHelper.java',
+    'tabqueue/TabQueuePrompt.java',
     'tabqueue/TabQueueService.java',
     'Tabs.java',
     'tabs/PrivateTabsPanel.java',
@@ -457,7 +456,6 @@ gbjar.sources += [
     'ThumbnailHelper.java',
     'tiles/Tile.java',
     'tiles/TilesRecorder.java',
-    'toolbar/ActionBarViewFlipper.java',
     'toolbar/AutocompleteHandler.java',
     'toolbar/BackButton.java',
     'toolbar/BrowserToolbar.java',
@@ -610,6 +608,7 @@ moz_native_devices_sources = [
     'ChromeCast.java',
     'GeckoMediaPlayer.java',
     'MediaPlayerManager.java',
+    'PresentationMediaPlayerManager.java',
 ]
 if CONFIG['MOZ_NATIVE_DEVICES']:
     gbjar.extra_jars += moz_native_devices_jars
@@ -754,6 +753,7 @@ for var in ('ANDROID_PACKAGE_NAME', 'ANDROID_CPU_ARCH',
             'GRE_MILESTONE', 'MOZ_APP_BASENAME', 'MOZ_MOZILLA_API_KEY',
             'MOZ_APP_DISPLAYNAME', 'MOZ_APP_ID', 'MOZ_APP_NAME',
             'MOZ_APP_VENDOR', 'MOZ_APP_VERSION', 'MOZ_CHILD_PROCESS_NAME',
+            'MOZ_ANDROID_APPLICATION_CLASS', 'MOZ_ANDROID_BROWSER_INTENT_CLASS', 'MOZ_ANDROID_SEARCH_INTENT_CLASS',
             'MOZ_CRASHREPORTER', 'MOZ_UPDATE_CHANNEL', 'OMNIJAR_NAME',
             'OS_TARGET', 'TARGET_XPCOM_ABI'):
     DEFINES[var] = CONFIG[var]
@@ -761,6 +761,10 @@ for var in ('ANDROID_PACKAGE_NAME', 'ANDROID_CPU_ARCH',
 # Mangle our package name to avoid Bug 750548.
 DEFINES['MANGLED_ANDROID_PACKAGE_NAME'] = CONFIG['ANDROID_PACKAGE_NAME'].replace('fennec', 'f3nn3c')
 DEFINES['MOZ_APP_ABI'] = CONFIG['TARGET_XPCOM_ABI']
+if not CONFIG['COMPILE_ENVIRONMENT']:
+    # These should really come from the included binaries, but that's not easy.
+    DEFINES['MOZ_APP_ABI'] = 'arm-eabi-gcc3' # Observe quote differences here ...
+    DEFINES['TARGET_XPCOM_ABI'] = '"arm-eabi-gcc3"' # ... and here.
 
 if '-march=armv7' in CONFIG['OS_CFLAGS']:
     DEFINES['MOZ_MIN_CPU_VERSION'] = 7
@@ -814,7 +818,6 @@ main.package_name = 'org.mozilla.gecko'
 # .project file to modify this list.
 main.filtered_resources += [
     '1.0-projectRelativePath-matches-false-false-*org/mozilla/gecko/resources/**',
-    '1.0-projectRelativePath-matches-false-false-*org/mozilla/gecko/tests/**',
 ]
 
 main.recursive_make_targets += generated_recursive_make_targets
@@ -834,7 +837,6 @@ main.res = None
 cpe = main.add_classpathentry('src', SRCDIR,
     dstdir='src/org/mozilla/gecko',
     exclude_patterns=[
-        'org/mozilla/gecko/tests/**',
         'org/mozilla/gecko/resources/**'])
 
 if not CONFIG['MOZ_CRASHREPORTER']:
@@ -942,3 +944,5 @@ if CONFIG['MOZ_ANDROID_MLS_STUMBLER']:
 if CONFIG['MOZ_ANDROID_SEARCH_ACTIVITY']:
     # The Search Activity code is built as part of Fennec, so we follow suit in Eclipse.
     main.add_classpathentry('search', TOPSRCDIR + '/mobile/android/search/java', dstdir='search')
+
+DIST_FILES += ['package-name.txt.in']

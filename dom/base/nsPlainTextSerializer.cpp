@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -54,14 +55,12 @@ static int32_t GetUnicharStringWidth(const char16_t* pwcs, int32_t n);
 static const uint32_t TagStackSize = 500;
 static const uint32_t OLStackSize = 100;
 
-nsresult NS_NewPlainTextSerializer(nsIContentSerializer** aSerializer)
+nsresult
+NS_NewPlainTextSerializer(nsIContentSerializer** aSerializer)
 {
-  nsPlainTextSerializer* it = new nsPlainTextSerializer();
-  if (!it) {
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
-
-  return CallQueryInterface(it, aSerializer);
+  nsRefPtr<nsPlainTextSerializer> it = new nsPlainTextSerializer();
+  it.forget(aSerializer);
+  return NS_OK;
 }
 
 nsPlainTextSerializer::nsPlainTextSerializer()
@@ -1710,7 +1709,7 @@ nsPlainTextSerializer::Write(const nsAString& aStr)
     foo = ToNewCString(remaining);
     //    printf("Next line: bol = %d, newlinepos = %d, totLen = %d, string = '%s'\n",
     //           bol, nextpos, totLen, foo);
-    nsMemory::Free(foo);
+    free(foo);
 #endif
 
     if (nextpos == kNotFound) {

@@ -47,6 +47,7 @@ interface NavigatorID {
   readonly attribute DOMString product; // constant "Gecko"
 
   // Everyone but WebKit/Blink supports this.  See bug 679971.
+  [Exposed=Window]
   boolean taintEnabled(); // constant false
 };
 
@@ -244,12 +245,19 @@ partial interface Navigator {
   MozWakeLock requestWakeLock(DOMString aTopic);
 };
 
+partial interface Navigator {
+  [Throws, Pref="device.storage.enabled"]
+  readonly attribute DeviceStorageAreaListener deviceStorageAreaListener;
+};
+
 // nsIDOMNavigatorDeviceStorage
 partial interface Navigator {
   [Throws, Pref="device.storage.enabled"]
   DeviceStorage? getDeviceStorage(DOMString type);
   [Throws, Pref="device.storage.enabled"]
   sequence<DeviceStorage> getDeviceStorages(DOMString type);
+  [Throws, Pref="device.storage.enabled"]
+  DeviceStorage? getDeviceStorageByNameAndType(DOMString name, DOMString type);
 };
 
 // nsIDOMNavigatorDesktopNotification
@@ -410,6 +418,11 @@ partial interface Navigator {
 partial interface Navigator {
   [Pref="dom.tv.enabled", CheckPermissions="tv", Func="Navigator::HasTVSupport"]
   readonly attribute TVManager? tv;
+};
+
+partial interface Navigator {
+  [Throws, Pref="dom.inputport.enabled", CheckPermissions="inputport", AvailableIn=CertifiedApps]
+  readonly attribute InputPortManager inputPortManager;
 };
 
 #ifdef MOZ_EME

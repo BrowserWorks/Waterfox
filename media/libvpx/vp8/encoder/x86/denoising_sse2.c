@@ -121,12 +121,12 @@ int vp8_denoiser_filter_sse2(unsigned char *mc_running_avg_y,
         if (increase_denoising) sum_diff_thresh = SUM_DIFF_THRESHOLD_HIGH;
         if (abs_sum_diff > sum_diff_thresh) {
           // Before returning to copy the block (i.e., apply no denoising),
-          // checK if we can still apply some (weaker) temporal filtering to
+          // check if we can still apply some (weaker) temporal filtering to
           // this block, that would otherwise not be denoised at all. Simplest
           // is to apply an additional adjustment to running_avg_y to bring it
           // closer to sig. The adjustment is capped by a maximum delta, and
           // chosen such that in most cases the resulting sum_diff will be
-          // within the accceptable range given by sum_diff_thresh.
+          // within the acceptable range given by sum_diff_thresh.
 
           // The delta is set by the excess of absolute pixel diff over the
           // threshold.
@@ -302,12 +302,12 @@ int vp8_denoiser_filter_uv_sse2(unsigned char *mc_running_avg,
         if (increase_denoising) sum_diff_thresh = SUM_DIFF_THRESHOLD_HIGH_UV;
         if (abs_sum_diff > sum_diff_thresh) {
           // Before returning to copy the block (i.e., apply no denoising),
-          // checK if we can still apply some (weaker) temporal filtering to
+          // check if we can still apply some (weaker) temporal filtering to
           // this block, that would otherwise not be denoised at all. Simplest
           // is to apply an additional adjustment to running_avg_y to bring it
           // closer to sig. The adjustment is capped by a maximum delta, and
           // chosen such that in most cases the resulting sum_diff will be
-          // within the accceptable range given by sum_diff_thresh.
+          // within the acceptable range given by sum_diff_thresh.
 
           // The delta is set by the excess of absolute pixel diff over the
           // threshold.

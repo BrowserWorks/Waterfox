@@ -6,6 +6,10 @@
 
 TEST_DIRS += ['test']
 
+EXPORTS.ipc += [
+    'ErrorIPCUtils.h',
+]
+
 EXPORTS.mozilla += [
     'ErrorResult.h',
 ]
@@ -37,8 +41,6 @@ EXPORTS.mozilla.dom += [
 ]
 
 FAIL_ON_WARNINGS = True
-
-MSVC_ENABLE_PGO = True
 
 LOCAL_INCLUDES += [
     '/dom/base',
@@ -89,6 +91,15 @@ if CONFIG['MOZ_AUDIO_CHANNEL_MANAGER']:
         '/dom/system/gonk',
     ]
 
+if CONFIG['MOZ_B2G_BT_API_V2']:
+    LOCAL_INCLUDES += [
+        '/dom/bluetooth/bluetooth2',
+    ]
+else:
+    LOCAL_INCLUDES += [
+        '/dom/bluetooth/bluetooth1',
+    ]
+
 FINAL_LIBRARY = 'xul'
 
 SPHINX_TREES['webidl'] = 'docs'
@@ -97,6 +108,10 @@ SPHINX_PYTHON_PACKAGE_DIRS += ['mozwebidlcodegen']
 if CONFIG['MOZ_BUILD_APP'] in ['browser', 'mobile/android', 'xulrunner']:
     # This is needed for Window.webidl
     DEFINES['HAVE_SIDEBAR'] = True
+
+
+if CONFIG['MOZ_SIMPLEPUSH']:
+    DEFINES['MOZ_SIMPLEPUSH'] = True
 
 PYTHON_UNIT_TESTS += [
     'mozwebidlcodegen/test/test_mozwebidlcodegen.py',

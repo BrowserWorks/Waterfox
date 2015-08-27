@@ -20,8 +20,6 @@
 #include "ThreadSafeRefcountingWithMainThreadDestruction.h"
 #include "nsWeakReference.h"
 
-class nsIObserver;
-
 namespace mozilla {
 
 namespace dom {
@@ -59,6 +57,12 @@ public:
    */
   static PCompositorChild*
   Create(Transport* aTransport, ProcessId aOtherProcess);
+
+  /**
+   * Initialize the CompositorChild and open the connection in the non-multi-process
+   * case.
+   */
+  bool OpenSameProcess(CompositorParent* aParent);
 
   static CompositorChild* Get();
 
@@ -104,7 +108,7 @@ public:
   bool SendResume();
   bool SendNotifyChildCreated(const uint64_t& id);
   bool SendAdoptChild(const uint64_t& id);
-  bool SendMakeSnapshot(const SurfaceDescriptor& inSnapshot, const nsIntRect& dirtyRect);
+  bool SendMakeSnapshot(const SurfaceDescriptor& inSnapshot, const gfx::IntRect& dirtyRect);
   bool SendFlushRendering();
   bool SendGetTileSize(int32_t* tileWidth, int32_t* tileHeight);
   bool SendStartFrameTimeRecording(const int32_t& bufferSize, uint32_t* startIndex);
@@ -168,6 +172,9 @@ private:
                                                         void* aLayerTransactionChild);
 
   nsRefPtr<ClientLayerManager> mLayerManager;
+  // When not multi-process, hold a reference to the CompositorParent to keep it
+  // alive. This reference should be null in multi-process.
+  nsRefPtr<CompositorParent> mCompositorParent;
 
   // The ViewID of the FrameMetrics is used as the key for this hash table.
   // While this should be safe to use since the ViewID is unique

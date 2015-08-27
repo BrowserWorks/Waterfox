@@ -2,6 +2,8 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
+Components.utils.import("resource://testing-common/MockRegistrar.jsm");
+
 /**
  * Test that nsIUpdatePrompt doesn't display UI for showUpdateInstalled,
  * showUpdateAvailable, and showUpdateError when the app.update.silent
@@ -16,11 +18,12 @@ function run_test() {
 
   Services.prefs.setBoolPref(PREF_APP_UPDATE_SILENT, true);
 
-  let registrar = Cm.QueryInterface(Ci.nsIComponentRegistrar);
-  registrar.registerFactory(Components.ID("{1dfeb90a-2193-45d5-9cb8-864928b2af55}"),
-                            "Fake Window Watcher",
-                            "@mozilla.org/embedcomp/window-watcher;1",
-                            WindowWatcherFactory);
+  let windowWatcherCID =
+    MockRegistrar.register("@mozilla.org/embedcomp/window-watcher;1",
+                           WindowWatcher);
+  do_register_cleanup(() => {
+    MockRegistrar.unregister(windowWatcherCID);
+  });
 
   standardInit();
 
@@ -31,7 +34,8 @@ function run_test() {
   gUP.showUpdateInstalled();
   // Report a successful check after the call to showUpdateInstalled since it
   // didn't throw and otherwise it would report no tests run.
-  do_check_true(true);
+  Assert.ok(true,
+            "calling showUpdateInstalled should not attempt to open a window");
 
   debugDump("testing showUpdateAvailable should not call openWindow");
   writeUpdatesToXMLFile(getLocalUpdatesXMLString(""), false);
@@ -47,7 +51,8 @@ function run_test() {
   gUP.showUpdateAvailable(update);
   // Report a successful check after the call to showUpdateAvailable since it
   // didn't throw and otherwise it would report no tests run.
-  do_check_true(true);
+  Assert.ok(true,
+            "calling showUpdateAvailable should not attempt to open a window");
 
   debugDump("testing showUpdateError should not call getNewPrompter");
   gCheckFunc = check_showUpdateError;
@@ -55,11 +60,8 @@ function run_test() {
   gUP.showUpdateError(update);
   // Report a successful check after the call to showUpdateError since it
   // didn't throw and otherwise it would report no tests run.
-  do_check_true(true);
-
-  registrar = Cm.QueryInterface(Ci.nsIComponentRegistrar);
-  registrar.unregisterFactory(Components.ID("{1dfeb90a-2193-45d5-9cb8-864928b2af55}"),
-                              WindowWatcherFactory);
+  Assert.ok(true,
+            "calling showUpdateError should not attempt to open a window");
 
   doTestFinish();
 }
@@ -86,13 +88,4 @@ const WindowWatcher = {
   },
 
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIWindowWatcher])
-};
-
-const WindowWatcherFactory = {
-  createInstance: function createInstance(aOuter, aIID) {
-    if (aOuter != null) {
-      throw Cr.NS_ERROR_NO_AGGREGATION;
-    }
-    return WindowWatcher.QueryInterface(aIID);
-  }
 };

@@ -21,12 +21,7 @@
 #include "TracedTaskCommon.h"
 #endif
 
-#if defined(PR_LOGGING)
 extern PRLogModuleInfo* GetTimerLog();
-#define DEBUG_TIMERS 1
-#else
-#undef DEBUG_TIMERS
-#endif
 
 #define NS_TIMER_CID \
 { /* 5ff24248-1dd2-11b2-8427-fbab44f29bc8 */         \
@@ -35,14 +30,6 @@ extern PRLogModuleInfo* GetTimerLog();
      0x11b2,                                         \
     {0x84, 0x27, 0xfb, 0xab, 0x44, 0xf2, 0x9b, 0xc8} \
 }
-
-enum
-{
-  CALLBACK_TYPE_UNKNOWN   = 0,
-  CALLBACK_TYPE_INTERFACE = 1,
-  CALLBACK_TYPE_FUNC      = 2,
-  CALLBACK_TYPE_OBSERVER  = 3
-};
 
 class nsTimerImpl final : public nsITimer
 {
@@ -81,6 +68,13 @@ public:
   virtual size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const override;
 
 private:
+  enum class CallbackType : uint8_t {
+    Unknown = 0,
+    Interface = 1,
+    Function = 2,
+    Observer = 3,
+  };
+
   ~nsTimerImpl();
   nsresult InitCommon(uint32_t aType, uint32_t aDelay);
 
@@ -89,21 +83,24 @@ private:
     // if we're the last owner of the callback object, make
     // sure that we don't recurse into ReleaseCallback in case
     // the callback's destructor calls Cancel() or similar.
-    uint8_t cbType = mCallbackType;
-    mCallbackType = CALLBACK_TYPE_UNKNOWN;
+    CallbackType cbType = mCallbackType;
+    mCallbackType = CallbackType::Unknown;
 
-    if (cbType == CALLBACK_TYPE_INTERFACE) {
+    if (cbType == CallbackType::Interface) {
       NS_RELEASE(mCallback.i);
-    } else if (cbType == CALLBACK_TYPE_OBSERVER) {
+    } else if (cbType == CallbackType::Observer) {
       NS_RELEASE(mCallback.o);
     }
   }
 
   bool IsRepeating() const
   {
-    PR_STATIC_ASSERT(TYPE_ONE_SHOT < TYPE_REPEATING_SLACK);
-    PR_STATIC_ASSERT(TYPE_REPEATING_SLACK < TYPE_REPEATING_PRECISE);
-    PR_STATIC_ASSERT(TYPE_REPEATING_PRECISE < TYPE_REPEATING_PRECISE_CAN_SKIP);
+    static_assert(TYPE_ONE_SHOT < TYPE_REPEATING_SLACK,
+                  "invalid ordering of timer types!");
+    static_assert(TYPE_REPEATING_SLACK < TYPE_REPEATING_PRECISE,
+                  "invalid ordering of timer types!");
+    static_assert(TYPE_REPEATING_PRECISE < TYPE_REPEATING_PRECISE_CAN_SKIP,
+                  "invalid ordering of timer types!");
     return mType >= TYPE_REPEATING_SLACK;
   }
 
@@ -127,8 +124,8 @@ private:
   // timer is firing.
   nsCOMPtr<nsITimerCallback> mTimerCallbackWhileFiring;
 
-  // These members are set by Init (called from NS_NewTimer) and never reset.
-  uint8_t               mCallbackType;
+  // These members are set by Init and never reset.
+  CallbackType          mCallbackType;
 
   // These members are set by the initiating thread, when the timer's type is
   // changed and during the period where it fires on that thread.
@@ -155,13 +152,10 @@ private:
   nsRefPtr<mozilla::tasktracer::FakeTracedTask> mTracedTask;
 #endif
 
-#ifdef DEBUG_TIMERS
   TimeStamp             mStart, mStart2;
   static double         sDeltaSum;
   static double         sDeltaSumSquared;
   static double         sDeltaNum;
-#endif
-
 };
 
 #endif /* nsTimerImpl_h___ */

@@ -11,7 +11,7 @@
 #include "GMPUtils.h"
 #include "GMPVideoEncodedFrameImpl.h"
 #include "GMPVideoi420FrameImpl.h"
-#include "GMPParent.h"
+#include "GMPContentParent.h"
 #include "GMPMessageUtils.h"
 #include "mozilla/gmp/GMPTypes.h"
 
@@ -43,13 +43,15 @@ namespace gmp {
 //    on Shutdown -> Dead
 // Dead: mIsOpen == false
 
-GMPVideoDecoderParent::GMPVideoDecoderParent(GMPParent* aPlugin)
+GMPVideoDecoderParent::GMPVideoDecoderParent(GMPContentParent* aPlugin)
   : GMPSharedMemManager(aPlugin)
   , mIsOpen(false)
   , mShuttingDown(false)
+  , mActorDestroyed(false)
   , mPlugin(aPlugin)
   , mCallback(nullptr)
   , mVideoHost(this)
+  , mPluginId(aPlugin->GetPluginId())
 {
   MOZ_ASSERT(mPlugin);
 }
@@ -87,6 +89,10 @@ GMPVideoDecoderParent::InitDecode(const GMPVideoCodec& aCodecSettings,
                                   GMPVideoDecoderCallbackProxy* aCallback,
                                   int32_t aCoreCount)
 {
+  if (mActorDestroyed) {
+    NS_WARNING("Trying to use a destroyed GMP video decoder!");
+    return NS_ERROR_FAILURE;
+  }
   if (mIsOpen) {
     NS_WARNING("Trying to re-init an in-use GMP video decoder!");
     return NS_ERROR_FAILURE;
@@ -109,7 +115,7 @@ GMPVideoDecoderParent::InitDecode(const GMPVideoCodec& aCodecSettings,
 }
 
 nsresult
-GMPVideoDecoderParent::Decode(GMPUnique<GMPVideoEncodedFrame>::Ptr aInputFrame,
+GMPVideoDecoderParent::Decode(GMPUniquePtr<GMPVideoEncodedFrame> aInputFrame,
                               bool aMissingFrames,
                               const nsTArray<uint8_t>& aCodecSpecificInfo,
                               int64_t aRenderTimeMs)
@@ -121,7 +127,7 @@ GMPVideoDecoderParent::Decode(GMPUnique<GMPVideoEncodedFrame>::Ptr aInputFrame,
 
   MOZ_ASSERT(mPlugin->GMPThread() == NS_GetCurrentThread());
 
-  GMPUnique<GMPVideoEncodedFrameImpl>::Ptr inputFrameImpl(
+  GMPUniquePtr<GMPVideoEncodedFrameImpl> inputFrameImpl(
     static_cast<GMPVideoEncodedFrameImpl*>(aInputFrame.release()));
 
   // Very rough kill-switch if the plugin stops processing.  If it's merely
@@ -213,7 +219,9 @@ GMPVideoDecoderParent::Shutdown()
   }
 
   mIsOpen = false;
-  unused << SendDecodingComplete();
+  if (!mActorDestroyed) {
+    unused << SendDecodingComplete();
+  }
 
   return NS_OK;
 }
@@ -223,6 +231,7 @@ void
 GMPVideoDecoderParent::ActorDestroy(ActorDestroyReason aWhy)
 {
   mIsOpen = false;
+  mActorDestroyed = true;
   mVideoHost.DoneWithAPI();
 
   if (mCallback) {
@@ -332,6 +341,13 @@ GMPVideoDecoderParent::RecvError(const GMPErr& aError)
   // Ignore any return code. It is OK for this to fail without killing the process.
   mCallback->Error(aError);
 
+  return true;
+}
+
+bool
+GMPVideoDecoderParent::RecvShutdown()
+{
+  Shutdown();
   return true;
 }
 

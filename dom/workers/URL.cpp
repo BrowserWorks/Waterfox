@@ -1,11 +1,11 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "URL.h"
 
-#include "nsIDocument.h"
 #include "nsIIOService.h"
 #include "nsPIDOMWindow.h"
 
@@ -33,7 +33,7 @@ class URLProxy final
 public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(URLProxy)
 
-  explicit URLProxy(mozilla::dom::URL* aURL)
+  explicit URLProxy(already_AddRefed<mozilla::dom::URL> aURL)
     : mURL(aURL)
   {
     AssertIsOnMainThread();
@@ -76,9 +76,9 @@ public:
   CreateURLRunnable(WorkerPrivate* aWorkerPrivate, FileImpl* aBlobImpl,
                     const mozilla::dom::objectURLOptions& aOptions,
                     nsAString& aURL)
-  : WorkerMainThreadRunnable(aWorkerPrivate),
-    mBlobImpl(aBlobImpl),
-    mURL(aURL)
+  : WorkerMainThreadRunnable(aWorkerPrivate)
+  , mBlobImpl(aBlobImpl)
+  , mURL(aURL)
   {
     MOZ_ASSERT(aBlobImpl);
 
@@ -122,23 +122,7 @@ public:
     MOZ_ASSERT(NS_SUCCEEDED(mBlobImpl->GetMutable(&isMutable)));
     MOZ_ASSERT(!isMutable);
 
-    nsCOMPtr<nsIPrincipal> principal;
-    nsIDocument* doc = nullptr;
-
-    nsCOMPtr<nsPIDOMWindow> window = mWorkerPrivate->GetWindow();
-    if (window) {
-      doc = window->GetExtantDoc();
-      if (!doc) {
-        SetDOMStringToNull(mURL);
-        return false;
-      }
-
-      principal = doc->NodePrincipal();
-    } else {
-      // We use the worker Principal in case this is a SharedWorker, a
-      // ChromeWorker or a ServiceWorker.
-      principal = mWorkerPrivate->GetPrincipal();
-    }
+    nsCOMPtr<nsIPrincipal> principal = mWorkerPrivate->GetPrincipal();
 
     nsAutoCString url;
     nsresult rv = nsHostObjectProtocolHandler::AddDataEntry(
@@ -151,10 +135,22 @@ public:
       return false;
     }
 
-    if (doc) {
-      doc->RegisterHostObjectUri(url);
-    } else {
-      mWorkerPrivate->RegisterHostObjectURI(url);
+    if (!mWorkerPrivate->IsSharedWorker() &&
+        !mWorkerPrivate->IsServiceWorker()) {
+      // Walk up to top worker object.
+      WorkerPrivate* wp = mWorkerPrivate;
+      while (WorkerPrivate* parent = wp->GetParent()) {
+        wp = parent;
+      }
+
+      nsCOMPtr<nsIScriptContext> sc = wp->GetScriptContext();
+      // We could not have a ScriptContext in JSM code. In this case, we leak.
+      if (sc) {
+        nsCOMPtr<nsIGlobalObject> global = sc->GetGlobalObject();
+        MOZ_ASSERT(global);
+
+        global->RegisterHostObjectURI(url);
+      }
     }
 
     mURL = NS_ConvertUTF8toUTF16(url);
@@ -171,8 +167,8 @@ private:
 public:
   RevokeURLRunnable(WorkerPrivate* aWorkerPrivate,
                     const nsAString& aURL)
-  : WorkerMainThreadRunnable(aWorkerPrivate),
-    mURL(aURL)
+  : WorkerMainThreadRunnable(aWorkerPrivate)
+  , mURL(aURL)
   {}
 
   bool
@@ -180,41 +176,36 @@ public:
   {
     AssertIsOnMainThread();
 
-    nsCOMPtr<nsIPrincipal> principal;
-    nsIDocument* doc = nullptr;
-
-    nsCOMPtr<nsPIDOMWindow> window = mWorkerPrivate->GetWindow();
-    if (window) {
-      doc = window->GetExtantDoc();
-      if (!doc) {
-        return false;
-      }
-
-      principal = doc->NodePrincipal();
-    } else {
-      // We use the worker Principal in case this is a SharedWorker, a
-      // ChromeWorker or a ServiceWorker.
-      principal = mWorkerPrivate->GetPrincipal();
-    }
-
     NS_ConvertUTF16toUTF8 url(mURL);
 
     nsIPrincipal* urlPrincipal =
       nsHostObjectProtocolHandler::GetDataEntryPrincipal(url);
 
+    nsCOMPtr<nsIPrincipal> principal = mWorkerPrivate->GetPrincipal();
+
     bool subsumes;
     if (urlPrincipal &&
         NS_SUCCEEDED(principal->Subsumes(urlPrincipal, &subsumes)) &&
         subsumes) {
-      if (doc) {
-        doc->UnregisterHostObjectUri(url);
-      }
-
       nsHostObjectProtocolHandler::RemoveDataEntry(url);
     }
 
-    if (!window) {
-      mWorkerPrivate->UnregisterHostObjectURI(url);
+    if (!mWorkerPrivate->IsSharedWorker() &&
+        !mWorkerPrivate->IsServiceWorker()) {
+      // Walk up to top worker object.
+      WorkerPrivate* wp = mWorkerPrivate;
+      while (WorkerPrivate* parent = wp->GetParent()) {
+        wp = parent;
+      }
+
+      nsCOMPtr<nsIScriptContext> sc = wp->GetScriptContext();
+      // We could not have a ScriptContext in JSM code. In this case, we leak.
+      if (sc) {
+        nsCOMPtr<nsIGlobalObject> global = sc->GetGlobalObject();
+        MOZ_ASSERT(global);
+
+        global->UnregisterHostObjectURI(url);
+      }
     }
 
     return true;
@@ -227,7 +218,7 @@ class ConstructorRunnable : public WorkerMainThreadRunnable
 private:
   const nsString mURL;
 
-  const nsString mBase;
+  nsString mBase; // IsVoid() if we have no base URI string.
   nsRefPtr<URLProxy> mBaseProxy;
   mozilla::ErrorResult& mRv;
 
@@ -235,13 +226,17 @@ private:
 
 public:
   ConstructorRunnable(WorkerPrivate* aWorkerPrivate,
-                      const nsAString& aURL, const nsAString& aBase,
+                      const nsAString& aURL, const Optional<nsAString>& aBase,
                       mozilla::ErrorResult& aRv)
   : WorkerMainThreadRunnable(aWorkerPrivate)
   , mURL(aURL)
-  , mBase(aBase)
   , mRv(aRv)
   {
+    if (aBase.WasPassed()) {
+      mBase = aBase.Value();
+    } else {
+      mBase.SetIsVoid(true);
+    }
     mWorkerPrivate->AssertIsOnWorkerThread();
   }
 
@@ -253,6 +248,7 @@ public:
   , mBaseProxy(aBaseProxy)
   , mRv(aRv)
   {
+    mBase.SetIsVoid(true);
     mWorkerPrivate->AssertIsOnWorkerThread();
   }
 
@@ -261,35 +257,20 @@ public:
   {
     AssertIsOnMainThread();
 
-    nsresult rv;
-    nsCOMPtr<nsIIOService> ioService(do_GetService(NS_IOSERVICE_CONTRACTID, &rv));
-    if (NS_FAILED(rv)) {
-      mRv.Throw(rv);
-      return true;
-    }
-
-    nsCOMPtr<nsIURI> baseURL;
-
-    if (!mBaseProxy) {
-      rv = ioService->NewURI(NS_ConvertUTF16toUTF8(mBase), nullptr, nullptr,
-                             getter_AddRefs(baseURL));
-      if (NS_FAILED(rv)) {
-        mRv.Throw(NS_ERROR_DOM_SYNTAX_ERR);
-        return true;
-      }
+    nsRefPtr<mozilla::dom::URL> url;
+    if (mBaseProxy) {
+      url = mozilla::dom::URL::Constructor(mURL, mBaseProxy->URI(), mRv);
+    } else if (!mBase.IsVoid()) {
+      url = mozilla::dom::URL::Constructor(mURL, mBase, mRv);
     } else {
-      baseURL = mBaseProxy->URI();
+      url = mozilla::dom::URL::Constructor(mURL, nullptr, mRv);
     }
 
-    nsCOMPtr<nsIURI> url;
-    rv = ioService->NewURI(NS_ConvertUTF16toUTF8(mURL), nullptr, baseURL,
-                           getter_AddRefs(url));
-    if (NS_FAILED(rv)) {
-      mRv.Throw(NS_ERROR_DOM_SYNTAX_ERR);
+    if (mRv.Failed()) {
       return true;
     }
 
-    mRetval = new URLProxy(new mozilla::dom::URL(url));
+    mRetval = new URLProxy(url.forget());
     return true;
   }
 
@@ -521,18 +502,21 @@ URL::Constructor(const GlobalObject& aGlobal, const nsAString& aUrl,
   nsRefPtr<ConstructorRunnable> runnable =
     new ConstructorRunnable(workerPrivate, aUrl, aBase.GetURLProxy(), aRv);
 
-  if (!runnable->Dispatch(cx)) {
-    JS_ReportPendingException(cx);
-  }
+  return FinishConstructor(cx, workerPrivate, runnable, aRv);
+}
 
-  nsRefPtr<URLProxy> proxy = runnable->GetURLProxy();
-  if (!proxy) {
-    aRv.Throw(NS_ERROR_DOM_SYNTAX_ERR);
-    return nullptr;
-  }
+// static
+already_AddRefed<URL>
+URL::Constructor(const GlobalObject& aGlobal, const nsAString& aUrl,
+                 const Optional<nsAString>& aBase, ErrorResult& aRv)
+{
+  JSContext* cx = aGlobal.Context();
+  WorkerPrivate* workerPrivate = GetWorkerPrivateFromContext(cx);
 
-  nsRefPtr<URL> url = new URL(workerPrivate, proxy);
-  return url.forget();
+  nsRefPtr<ConstructorRunnable> runnable =
+    new ConstructorRunnable(workerPrivate, aUrl, aBase, aRv);
+
+  return FinishConstructor(cx, workerPrivate, runnable, aRv);
 }
 
 // static
@@ -543,20 +527,34 @@ URL::Constructor(const GlobalObject& aGlobal, const nsAString& aUrl,
   JSContext* cx = aGlobal.Context();
   WorkerPrivate* workerPrivate = GetWorkerPrivateFromContext(cx);
 
+  Optional<nsAString> base;
+  base = &aBase;
   nsRefPtr<ConstructorRunnable> runnable =
-    new ConstructorRunnable(workerPrivate, aUrl, aBase, aRv);
+    new ConstructorRunnable(workerPrivate, aUrl, base, aRv);
 
-  if (!runnable->Dispatch(cx)) {
-    JS_ReportPendingException(cx);
+  return FinishConstructor(cx, workerPrivate, runnable, aRv);
+}
+
+// static
+already_AddRefed<URL>
+URL::FinishConstructor(JSContext* aCx, WorkerPrivate* aPrivate,
+                       ConstructorRunnable* aRunnable, ErrorResult& aRv)
+{
+  if (!aRunnable->Dispatch(aCx)) {
+    JS_ReportPendingException(aCx);
   }
 
-  nsRefPtr<URLProxy> proxy = runnable->GetURLProxy();
+  if (aRv.Failed()) {
+    return nullptr;
+  }
+
+  nsRefPtr<URLProxy> proxy = aRunnable->GetURLProxy();
   if (!proxy) {
     aRv.Throw(NS_ERROR_DOM_SYNTAX_ERR);
     return nullptr;
   }
 
-  nsRefPtr<URL> url = new URL(workerPrivate, proxy);
+  nsRefPtr<URL> url = new URL(aPrivate, proxy);
   return url.forget();
 }
 
@@ -903,11 +901,23 @@ URL::CreateObjectURL(const GlobalObject& aGlobal, File& aBlob,
   if (!runnable->Dispatch(cx)) {
     JS_ReportPendingException(cx);
   }
+
+  if (aRv.Failed()) {
+    return;
+  }
+
+  if (workerPrivate->IsSharedWorker() || workerPrivate->IsServiceWorker()) {
+    WorkerGlobalScope* scope = workerPrivate->GlobalScope();
+    MOZ_ASSERT(scope);
+
+    scope->RegisterHostObjectURI(NS_ConvertUTF16toUTF8(aResult));
+  }
 }
 
 // static
 void
-URL::RevokeObjectURL(const GlobalObject& aGlobal, const nsAString& aUrl)
+URL::RevokeObjectURL(const GlobalObject& aGlobal, const nsAString& aUrl,
+                     ErrorResult& aRv)
 {
   JSContext* cx = aGlobal.Context();
   WorkerPrivate* workerPrivate = GetWorkerPrivateFromContext(cx);
@@ -917,6 +927,17 @@ URL::RevokeObjectURL(const GlobalObject& aGlobal, const nsAString& aUrl)
 
   if (!runnable->Dispatch(cx)) {
     JS_ReportPendingException(cx);
+  }
+
+  if (aRv.Failed()) {
+    return;
+  }
+
+  if (workerPrivate->IsSharedWorker() || workerPrivate->IsServiceWorker()) {
+    WorkerGlobalScope* scope = workerPrivate->GlobalScope();
+    MOZ_ASSERT(scope);
+
+    scope->UnregisterHostObjectURI(NS_ConvertUTF16toUTF8(aUrl));
   }
 }
 

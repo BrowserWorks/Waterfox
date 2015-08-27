@@ -36,6 +36,9 @@ extern "C" {
 #define MAX_MODES 30
 #define MAX_REFS  6
 
+#define RD_THRESH_MAX_FACT 64
+#define RD_THRESH_INC      1
+
 // This enumerator type needs to be kept aligned with the mode order in
 // const MODE_DEFINITION vp9_mode_order[MAX_MODES] used in the rd code.
 typedef enum {
@@ -98,26 +101,30 @@ typedef struct RD_OPT {
   int thresh_mult_sub8x8[MAX_REFS];
 
   int threshes[MAX_SEGMENTS][BLOCK_SIZES][MAX_MODES];
-  int thresh_freq_fact[BLOCK_SIZES][MAX_MODES];
 
-  int mode_map[BLOCK_SIZES][MAX_MODES];
-
-  int64_t comp_pred_diff[REFERENCE_MODES];
   int64_t prediction_type_threshes[MAX_REF_FRAMES][REFERENCE_MODES];
-  int64_t tx_select_diff[TX_MODES];
   // TODO(agrange): can this overflow?
   int tx_select_threshes[MAX_REF_FRAMES][TX_MODES];
 
-  int64_t filter_diff[SWITCHABLE_FILTER_CONTEXTS];
   int64_t filter_threshes[MAX_REF_FRAMES][SWITCHABLE_FILTER_CONTEXTS];
-  int64_t filter_cache[SWITCHABLE_FILTER_CONTEXTS];
-  int64_t mask_filter;
 
   int RDMULT;
   int RDDIV;
 } RD_OPT;
 
+typedef struct RD_COST {
+  int rate;
+  int64_t dist;
+  int64_t rdcost;
+} RD_COST;
+
+// Reset the rate distortion cost values to maximum (invalid) value.
+void vp9_rd_cost_reset(RD_COST *rd_cost);
+// Initialize the rate distortion cost values to zero.
+void vp9_rd_cost_init(RD_COST *rd_cost);
+
 struct TileInfo;
+struct TileDataEnc;
 struct VP9_COMP;
 struct macroblock;
 
@@ -125,18 +132,25 @@ int vp9_compute_rd_mult(const struct VP9_COMP *cpi, int qindex);
 
 void vp9_initialize_rd_consts(struct VP9_COMP *cpi);
 
-void vp9_initialize_me_consts(struct VP9_COMP *cpi, int qindex);
+void vp9_initialize_me_consts(struct VP9_COMP *cpi, MACROBLOCK *x, int qindex);
 
 void vp9_model_rd_from_var_lapndz(unsigned int var, unsigned int n,
                                   unsigned int qstep, int *rate,
                                   int64_t *dist);
 
-int vp9_get_switchable_rate(const struct VP9_COMP *cpi);
+int vp9_get_switchable_rate(const struct VP9_COMP *cpi,
+                            const MACROBLOCKD *const xd);
 
-const YV12_BUFFER_CONFIG *vp9_get_scaled_ref_frame(const struct VP9_COMP *cpi,
-                                                   int ref_frame);
+int vp9_raster_block_offset(BLOCK_SIZE plane_bsize,
+                            int raster_block, int stride);
 
-void vp9_init_me_luts();
+int16_t* vp9_raster_block_offset_int16(BLOCK_SIZE plane_bsize,
+                                       int raster_block, int16_t *base);
+
+YV12_BUFFER_CONFIG *vp9_get_scaled_ref_frame(const struct VP9_COMP *cpi,
+                                             int ref_frame);
+
+void vp9_init_me_luts(void);
 
 void vp9_get_entropy_contexts(BLOCK_SIZE bsize, TX_SIZE tx_size,
                               const struct macroblockd_plane *pd,
@@ -146,6 +160,9 @@ void vp9_get_entropy_contexts(BLOCK_SIZE bsize, TX_SIZE tx_size,
 void vp9_set_rd_speed_thresholds(struct VP9_COMP *cpi);
 
 void vp9_set_rd_speed_thresholds_sub8x8(struct VP9_COMP *cpi);
+
+void vp9_update_rd_thresh_fact(int (*fact)[MAX_MODES], int rd_thresh,
+                               int bsize, int best_mode_index);
 
 static INLINE int rd_less_than_thresh(int64_t best_rd, int thresh,
                                       int thresh_fact) {
@@ -162,6 +179,10 @@ void vp9_setup_pred_block(const MACROBLOCKD *xd,
                           int mi_row, int mi_col,
                           const struct scale_factors *scale,
                           const struct scale_factors *scale_uv);
+
+int vp9_get_intra_cost_penalty(int qindex, int qdelta,
+                               vpx_bit_depth_t bit_depth);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif

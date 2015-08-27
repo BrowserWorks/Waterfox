@@ -7,23 +7,25 @@
  */
 
 function test() {
-  let { ThreadNode } = devtools.require("devtools/shared/profiler/tree-model");
-  let { CallView } = devtools.require("devtools/shared/profiler/tree-view");
+  let { ThreadNode } = devtools.require("devtools/performance/tree-model");
+  let { CallView } = devtools.require("devtools/performance/tree-view");
 
-  let threadNode = new ThreadNode(gSamples);
+  let threadNode = new ThreadNode(gThread);
+  // Don't display the synthesized (root) and the real (root) node twice.
+  threadNode.calls = threadNode.calls[0].calls;
   let treeRoot = new CallView({ frame: threadNode });
 
   let container = document.createElement("vbox");
   treeRoot.attachTo(container);
 
   let categories = container.querySelectorAll(".call-tree-category");
-  is(categories.length, 7,
+  is(categories.length, 5,
     "The call tree displays a correct number of categories.");
   ok(!container.hasAttribute("categories-hidden"),
     "All categories should be visible in the tree.");
 
   treeRoot.toggleCategories(false);
-  is(categories.length, 7,
+  is(categories.length, 5,
     "The call tree displays the same number of categories.");
   ok(container.hasAttribute("categories-hidden"),
     "All categories should now be hidden in the tree.");
@@ -31,7 +33,7 @@ function test() {
   finish();
 }
 
-let gSamples = [{
+let gThread = synthesizeProfileForTest([{
   time: 5,
   frames: [
     { category: 8,  location: "(root)" },
@@ -63,4 +65,4 @@ let gSamples = [{
     { category: 128, location: "E (http://foo/bar/baz:90)" },
     { category: 256, location: "F (http://foo/bar/baz:99)" }
   ]
-}];
+}]);

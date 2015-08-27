@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -94,6 +95,7 @@ public:
   nsresult PreHandleEvent(nsPresContext* aPresContext,
                           WidgetEvent* aEvent,
                           nsIFrame* aTargetFrame,
+                          nsIContent* aTargetContent,
                           nsEventStatus* aStatus);
 
   /* The PostHandleEvent method should contain all system processing which
@@ -755,6 +757,9 @@ protected:
   void BeginTrackingDragGesture(nsPresContext* aPresContext,
                                 WidgetMouseEvent* aDownEvent,
                                 nsIFrame* aDownFrame);
+
+  friend class mozilla::dom::TabParent;
+  void BeginTrackingRemoteDragGesture(nsIContent* aContent);
   void StopTrackingDragGesture();
   void GenerateDragGesture(nsPresContext* aPresContext,
                            WidgetMouseEvent* aEvent);
@@ -769,11 +774,11 @@ protected:
    * aSelection - [out] set to the selection to be dragged
    * aTargetNode - [out] the draggable node, or null if there isn't one
    */
-  void DetermineDragTarget(nsPIDOMWindow* aWindow,
-                           nsIContent* aSelectionTarget,
-                           dom::DataTransfer* aDataTransfer,
-                           nsISelection** aSelection,
-                           nsIContent** aTargetNode);
+  void DetermineDragTargetAndDefaultData(nsPIDOMWindow* aWindow,
+                                         nsIContent* aSelectionTarget,
+                                         dom::DataTransfer* aDataTransfer,
+                                         nsISelection** aSelection,
+                                         nsIContent** aTargetNode);
 
   /*
    * Perform the default handling for the dragstart/draggesture event and set up a

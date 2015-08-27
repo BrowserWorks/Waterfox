@@ -9,8 +9,8 @@
 #include "mozilla/unused.h"
 #include "mozilla/dom/cache/ActorUtils.h"
 #include "mozilla/dom/cache/Cache.h"
-#include "mozilla/dom/cache/PCachePushStreamChild.h"
-#include "mozilla/dom/cache/StreamUtils.h"
+#include "mozilla/dom/cache/CacheOpChild.h"
+#include "mozilla/dom/cache/CachePushStreamChild.h"
 
 namespace mozilla {
 namespace dom {
@@ -32,6 +32,8 @@ DeallocPCacheChild(PCacheChild* aActor)
 
 CacheChild::CacheChild()
   : mListener(nullptr)
+  , mNumChildActors(0)
+  , mDelayedDestroy(false)
 {
   MOZ_COUNT_CTOR(cache::CacheChild);
 }
@@ -41,6 +43,7 @@ CacheChild::~CacheChild()
   MOZ_COUNT_DTOR(cache::CacheChild);
   NS_ASSERT_OWNINGTHREAD(CacheChild);
   MOZ_ASSERT(!mListener);
+  MOZ_ASSERT(!mNumChildActors);
 }
 
 void
@@ -61,8 +64,51 @@ CacheChild::ClearListener()
 }
 
 void
+CacheChild::ExecuteOp(nsIGlobalObject* aGlobal, Promise* aPromise,
+                      nsISupports* aParent, const CacheOpArgs& aArgs)
+{
+  mNumChildActors += 1;
+  MOZ_ALWAYS_TRUE(SendPCacheOpConstructor(
+    new CacheOpChild(GetFeature(), aGlobal, aParent, aPromise), aArgs));
+}
+
+CachePushStreamChild*
+CacheChild::CreatePushStream(nsISupports* aParent, nsIAsyncInputStream* aStream)
+{
+  mNumChildActors += 1;
+  auto actor = SendPCachePushStreamConstructor(
+    new CachePushStreamChild(GetFeature(), aParent, aStream));
+  MOZ_ASSERT(actor);
+  return static_cast<CachePushStreamChild*>(actor);
+}
+
+void
+CacheChild::StartDestroyFromListener()
+{
+  NS_ASSERT_OWNINGTHREAD(CacheChild);
+
+  // The listener should be held alive by any async operations, so if it
+  // is going away then there must not be any child actors.  This in turn
+  // ensures that StartDestroy() will not trigger the delayed path.
+  MOZ_ASSERT(!mNumChildActors);
+
+  StartDestroy();
+}
+
+void
 CacheChild::StartDestroy()
 {
+  NS_ASSERT_OWNINGTHREAD(CacheChild);
+
+  // If we have outstanding child actors, then don't destroy ourself yet.
+  // The child actors should be short lived and we should allow them to complete
+  // if possible.  NoteDeletedActor() will call back into this Shutdown()
+  // method when the last child actor is gone.
+  if (mNumChildActors) {
+    mDelayedDestroy = true;
+    return;
+  }
+
   nsRefPtr<Cache> listener = mListener;
 
   // StartDestroy() can get called from either Cache or the Feature.
@@ -95,6 +141,21 @@ CacheChild::ActorDestroy(ActorDestroyReason aReason)
   RemoveFeature();
 }
 
+PCacheOpChild*
+CacheChild::AllocPCacheOpChild(const CacheOpArgs& aOpArgs)
+{
+  MOZ_CRASH("CacheOpChild should be manually constructed.");
+  return nullptr;
+}
+
+bool
+CacheChild::DeallocPCacheOpChild(PCacheOpChild* aActor)
+{
+  delete aActor;
+  NoteDeletedActor();
+  return true;
+}
+
 PCachePushStreamChild*
 CacheChild::AllocPCachePushStreamChild()
 {
@@ -106,95 +167,17 @@ bool
 CacheChild::DeallocPCachePushStreamChild(PCachePushStreamChild* aActor)
 {
   delete aActor;
+  NoteDeletedActor();
   return true;
 }
 
-bool
-CacheChild::RecvMatchResponse(const RequestId& requestId, const nsresult& aRv,
-                              const PCacheResponseOrVoid& aResponse)
+void
+CacheChild::NoteDeletedActor()
 {
-  NS_ASSERT_OWNINGTHREAD(CacheChild);
-
-  AddFeatureToStreamChild(aResponse, GetFeature());
-
-  nsRefPtr<Cache> listener = mListener;
-  if (!listener) {
-    StartDestroyStreamChild(aResponse);
-    return true;
+  mNumChildActors -= 1;
+  if (!mNumChildActors && mDelayedDestroy) {
+    StartDestroy();
   }
-
-  listener->RecvMatchResponse(requestId, aRv, aResponse);
-  return true;
-}
-
-bool
-CacheChild::RecvMatchAllResponse(const RequestId& requestId, const nsresult& aRv,
-                                 nsTArray<PCacheResponse>&& aResponses)
-{
-  NS_ASSERT_OWNINGTHREAD(CacheChild);
-
-  AddFeatureToStreamChild(aResponses, GetFeature());
-
-  nsRefPtr<Cache> listener = mListener;
-  if (!listener) {
-    StartDestroyStreamChild(aResponses);
-    return true;
-  }
-
-  listener->RecvMatchAllResponse(requestId, aRv, aResponses);
-  return true;
-}
-
-bool
-CacheChild::RecvAddAllResponse(const RequestId& requestId, const nsresult& aRv)
-{
-  NS_ASSERT_OWNINGTHREAD(CacheChild);
-  nsRefPtr<Cache> listener = mListener;
-  if (listener) {
-    listener->RecvAddAllResponse(requestId, aRv);
-  }
-  return true;
-}
-
-bool
-CacheChild::RecvPutResponse(const RequestId& aRequestId, const nsresult& aRv)
-{
-  NS_ASSERT_OWNINGTHREAD(CacheChild);
-  nsRefPtr<Cache> listener = mListener;
-  if (listener) {
-    listener->RecvPutResponse(aRequestId, aRv);
-  }
-  return true;
-}
-
-bool
-CacheChild::RecvDeleteResponse(const RequestId& requestId, const nsresult& aRv,
-                               const bool& result)
-{
-  NS_ASSERT_OWNINGTHREAD(CacheChild);
-  nsRefPtr<Cache> listener = mListener;
-  if (listener) {
-    listener->RecvDeleteResponse(requestId, aRv, result);
-  }
-  return true;
-}
-
-bool
-CacheChild::RecvKeysResponse(const RequestId& requestId, const nsresult& aRv,
-                             nsTArray<PCacheRequest>&& aRequests)
-{
-  NS_ASSERT_OWNINGTHREAD(CacheChild);
-
-  AddFeatureToStreamChild(aRequests, GetFeature());
-
-  nsRefPtr<Cache> listener = mListener;
-  if (!listener) {
-    StartDestroyStreamChild(aRequests);
-    return true;
-  }
-
-  listener->RecvKeysResponse(requestId, aRv, aRequests);
-  return true;
 }
 
 } // namespace cache

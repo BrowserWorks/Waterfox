@@ -16,6 +16,7 @@
 
 #define LOG_TAG "Vector"
 
+#include <limits.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -25,6 +26,9 @@
 #include <utils/Errors.h>
 #include <utils/SharedBuffer.h>
 #include <utils/VectorImpl.h>
+
+static const uint32_t kMAX_ALLOCATION =
+    ((SIZE_MAX > INT32_MAX ? INT32_MAX : SIZE_MAX) - 1);
 
 /*****************************************************************************/
 
@@ -88,6 +92,7 @@ void* VectorImpl::editArrayImpl()
         SharedBuffer* sb = SharedBuffer::bufferFromData(mStorage)->attemptEdit();
         if (sb == 0) {
             sb = SharedBuffer::alloc(capacity() * mItemSize);
+            assert(sb);
             if (sb) {
                 _do_copy(sb->data(), mStorage, mCount);
                 release_storage();
@@ -325,12 +330,13 @@ const void* VectorImpl::itemLocation(size_t index) const
 
 ssize_t VectorImpl::setCapacity(size_t new_capacity)
 {
-    size_t current_capacity = capacity();
-    ssize_t amount = new_capacity - size();
-    if (amount <= 0) {
+    if (new_capacity <= size()) {
         // we can't reduce the capacity
-        return current_capacity;
-    } 
+        return capacity();
+    }
+    if (new_capacity >= (kMAX_ALLOCATION / mItemSize)) {
+        return NO_MEMORY;
+    }
     SharedBuffer* sb = SharedBuffer::alloc(new_capacity * mItemSize);
     if (sb) {
         void* array = sb->data();
@@ -374,8 +380,11 @@ void* VectorImpl::_grow(size_t where, size_t amount)
             this, (int)where, (int)amount, (int)mCount); // caller already checked
 
     const size_t new_size = mCount + amount;
+    assert(amount < kMAX_ALLOCATION - mCount);
     if (capacity() < new_size) {
+        assert(new_size < (SIZE_MAX / 3 - 1));
         const size_t new_capacity = max(kMinVectorCapacity, ((new_size*3)+1)/2);
+        assert(new_capacity < (kMAX_ALLOCATION / mItemSize));
 //        ALOGV("grow vector %p, new_capacity=%d", this, (int)new_capacity);
         if ((mStorage) &&
             (mCount==where) &&
@@ -383,10 +392,13 @@ void* VectorImpl::_grow(size_t where, size_t amount)
             (mFlags & HAS_TRIVIAL_DTOR))
         {
             const SharedBuffer* cur_sb = SharedBuffer::bufferFromData(mStorage);
+            assert(cur_sb);
             SharedBuffer* sb = cur_sb->editResize(new_capacity * mItemSize);
+            assert(sb);
             mStorage = sb->data();
         } else {
             SharedBuffer* sb = SharedBuffer::alloc(new_capacity * mItemSize);
+            assert(sb);
             if (sb) {
                 void* array = sb->data();
                 if (where != 0) {
@@ -427,18 +439,23 @@ void VectorImpl::_shrink(size_t where, size_t amount)
             this, (int)where, (int)amount, (int)mCount); // caller already checked
 
     const size_t new_size = mCount - amount;
-    if (new_size*3 < capacity()) {
+    assert(new_size < (SIZE_MAX / 2));
+    if (new_size*2 < capacity()) {
         const size_t new_capacity = max(kMinVectorCapacity, new_size*2);
 //        ALOGV("shrink vector %p, new_capacity=%d", this, (int)new_capacity);
+        assert(new_capacity < (kMAX_ALLOCATION / mItemSize));
         if ((where == new_size) &&
             (mFlags & HAS_TRIVIAL_COPY) &&
             (mFlags & HAS_TRIVIAL_DTOR))
         {
             const SharedBuffer* cur_sb = SharedBuffer::bufferFromData(mStorage);
+            assert(cur_sb);
             SharedBuffer* sb = cur_sb->editResize(new_capacity * mItemSize);
+            assert(sb);
             mStorage = sb->data();
         } else {
             SharedBuffer* sb = SharedBuffer::alloc(new_capacity * mItemSize);
+            assert(sb);
             if (sb) {
                 void* array = sb->data();
                 if (where != 0) {
@@ -455,6 +472,7 @@ void VectorImpl::_shrink(size_t where, size_t amount)
         }
     } else {
         void* array = editArrayImpl();
+        assert(array);
         void* to = reinterpret_cast<uint8_t *>(array) + where*mItemSize;
         _do_destroy(to, amount);
         if (where != new_size) {

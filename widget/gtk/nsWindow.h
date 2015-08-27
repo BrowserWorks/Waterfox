@@ -38,6 +38,7 @@
 
 #include "prlog.h"
 #include "nsTArray.h"
+#include "Units.h"
 
 extern PRLogModuleInfo *gWidgetLog;
 extern PRLogModuleInfo *gWidgetFocusLog;
@@ -60,7 +61,6 @@ extern PRLogModuleInfo *gWidgetDrawLog;
 
 class gfxASurface;
 class gfxPattern;
-class nsDragService;
 class nsPluginNativeWindowGtk;
 #if defined(MOZ_X11) && defined(MOZ_HAVE_SHAREDMEMORYSYSV)
 #  define MOZ_HAVE_SHMIMAGE
@@ -211,7 +211,7 @@ private:
 
     void               NativeShow  (bool    aAction);
     void               SetHasMappedToplevel(bool aState);
-    nsIntSize          GetSafeWindowSize(nsIntSize aSize);
+    mozilla::LayoutDeviceIntSize GetSafeWindowSize(mozilla::LayoutDeviceIntSize aSize);
 
     void               EnsureGrabs  (void);
     void               GrabPointer  (guint32 aTime);
@@ -299,10 +299,12 @@ public:
 
     virtual nsresult SynthesizeNativeMouseEvent(mozilla::LayoutDeviceIntPoint aPoint,
                                                 uint32_t aNativeMessage,
-                                                uint32_t aModifierFlags) override;
+                                                uint32_t aModifierFlags,
+                                                nsIObserver* aObserver) override;
 
-    virtual nsresult SynthesizeNativeMouseMove(mozilla::LayoutDeviceIntPoint aPoint) override
-    { return SynthesizeNativeMouseEvent(aPoint, GDK_MOTION_NOTIFY, 0); }
+    virtual nsresult SynthesizeNativeMouseMove(mozilla::LayoutDeviceIntPoint aPoint,
+                                               nsIObserver* aObserver) override
+    { return SynthesizeNativeMouseEvent(aPoint, GDK_MOTION_NOTIFY, 0, aObserver); }
 
 protected:
     virtual ~nsWindow();

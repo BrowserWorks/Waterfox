@@ -13,9 +13,7 @@
 #include "mozilla/HashFunctions.h"
 #include "nsCRT.h"
 
-#if defined(PR_LOGGING)
 PRLogModuleInfo *gHttpLog = nullptr;
-#endif
 
 namespace mozilla {
 namespace net {
@@ -105,10 +103,8 @@ nsHttp::CreateAtomTable()
     // The initial length for this table is a value greater than the number of
     // known atoms (NUM_HTTP_ATOMS) because we expect to encounter a few random
     // headers right off the bat.
-    if (!PL_DHashTableInit(&sAtomTable, &ops, sizeof(PLDHashEntryStub),
-                           fallible, NUM_HTTP_ATOMS + 10)) {
-        return NS_ERROR_OUT_OF_MEMORY;
-    }
+    PL_DHashTableInit(&sAtomTable, &ops, sizeof(PLDHashEntryStub),
+                      NUM_HTTP_ATOMS + 10);
 
     // fill the table with our known atoms
     const char *const atoms[] = {

@@ -1,21 +1,28 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+/* globals nodesSelected, PluralForm */
 
 "use strict";
 
-const {Cc, Ci, Cu} = require("chrome");
-const gcli = require("gcli/index");
+const l10n = require("gcli/l10n");
 require("devtools/server/actors/inspector");
-const {BoxModelHighlighter} = require("devtools/server/actors/highlighter");
+const {
+  BoxModelHighlighter,
+  HighlighterEnvironment
+} = require("devtools/server/actors/highlighter");
 
 XPCOMUtils.defineLazyGetter(this, "nodesSelected", function() {
-  return Services.strings.createBundle("chrome://browser/locale/devtools/gclicommands.properties");
+  return Services.strings.createBundle("chrome://global/locale/devtools/gclicommands.properties");
 });
-XPCOMUtils.defineLazyModuleGetter(this, "PluralForm","resource://gre/modules/PluralForm.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PluralForm", "resource://gre/modules/PluralForm.jsm");
 
 // How many maximum nodes can be highlighted in parallel
 const MAX_HIGHLIGHTED_ELEMENTS = 100;
+
+// Store the environment object used to create highlighters so it can be
+// destroyed later.
+let highlighterEnv;
 
 // Stores the highlighters instances so they can be destroyed later.
 // also export them so tests can access those and assert they got created
@@ -30,40 +37,47 @@ function unhighlightAll() {
     highlighter.destroy();
   }
   exports.highlighters.length = 0;
+
+  if (highlighterEnv) {
+    highlighterEnv.destroy();
+    highlighterEnv = null;
+  }
 }
 
 exports.items = [
   {
+    item: "command",
+    runAt: "server",
     name: "highlight",
-    description: gcli.lookup("highlightDesc"),
-    manual: gcli.lookup("highlightManual"),
+    description: l10n.lookup("highlightDesc"),
+    manual: l10n.lookup("highlightManual"),
     params: [
       {
         name: "selector",
         type: "nodelist",
-        description: gcli.lookup("highlightSelectorDesc"),
-        manual: gcli.lookup("highlightSelectorManual")
+        description: l10n.lookup("highlightSelectorDesc"),
+        manual: l10n.lookup("highlightSelectorManual")
       },
       {
-        group: gcli.lookup("highlightOptionsDesc"),
+        group: l10n.lookup("highlightOptionsDesc"),
         params: [
           {
             name: "hideguides",
             type: "boolean",
-            description: gcli.lookup("highlightHideGuidesDesc"),
-            manual: gcli.lookup("highlightHideGuidesManual")
+            description: l10n.lookup("highlightHideGuidesDesc"),
+            manual: l10n.lookup("highlightHideGuidesManual")
           },
           {
             name: "showinfobar",
             type: "boolean",
-            description: gcli.lookup("highlightShowInfoBarDesc"),
-            manual: gcli.lookup("highlightShowInfoBarManual")
+            description: l10n.lookup("highlightShowInfoBarDesc"),
+            manual: l10n.lookup("highlightShowInfoBarManual")
           },
           {
             name: "showall",
             type: "boolean",
-            description: gcli.lookup("highlightShowAllDesc"),
-            manual: gcli.lookup("highlightShowAllManual")
+            description: l10n.lookup("highlightShowAllDesc"),
+            manual: l10n.lookup("highlightShowAllManual")
           },
           {
             name: "region",
@@ -71,22 +85,22 @@ exports.items = [
               name: "selection",
               data: ["content", "padding", "border", "margin"]
             },
-            description: gcli.lookup("highlightRegionDesc"),
-            manual: gcli.lookup("highlightRegionManual"),
+            description: l10n.lookup("highlightRegionDesc"),
+            manual: l10n.lookup("highlightRegionManual"),
             defaultValue: "border"
           },
           {
             name: "fill",
             type: "string",
-            description: gcli.lookup("highlightFillDesc"),
-            manual: gcli.lookup("highlightFillManual"),
+            description: l10n.lookup("highlightFillDesc"),
+            manual: l10n.lookup("highlightFillManual"),
             defaultValue: null
           },
           {
             name: "keep",
             type: "boolean",
-            description: gcli.lookup("highlightKeepDesc"),
-            manual: gcli.lookup("highlightKeepManual"),
+            description: l10n.lookup("highlightKeepDesc"),
+            manual: l10n.lookup("highlightKeepManual")
           }
         ]
       }
@@ -98,16 +112,11 @@ exports.items = [
       }
 
       let env = context.environment;
+      highlighterEnv = new HighlighterEnvironment();
+      highlighterEnv.initFromWindow(env.window);
 
       // Unhighlight on navigate
-      env.target.once("navigate", unhighlightAll);
-
-      // Build a tab context for the highlighter (which normally takes a
-      // TabActor as parameter to its constructor)
-      let tabContext = {
-        browser: env.chromeWindow.gBrowser.getBrowserForDocument(env.document),
-        window: env.window
-      };
+      highlighterEnv.once("will-navigate", unhighlightAll);
 
       let i = 0;
       for (let node of args.selector) {
@@ -115,7 +124,7 @@ exports.items = [
           break;
         }
 
-        let highlighter = new BoxModelHighlighter(tabContext);
+        let highlighter = new BoxModelHighlighter(highlighterEnv);
         if (args.fill) {
           highlighter.regionFill[args.region] = args.fill;
         }
@@ -126,14 +135,14 @@ exports.items = [
           showOnly: args.region
         });
         exports.highlighters.push(highlighter);
-        i ++;
+        i++;
       }
 
       let highlightText = nodesSelected.GetStringFromName("highlightOutputConfirm2");
       let output = PluralForm.get(args.selector.length, highlightText)
                              .replace("%1$S", args.selector.length);
       if (args.selector.length > i) {
-        output = gcli.lookupFormat("highlightOutputMaxReached",
+        output = l10n.lookupFormat("highlightOutputMaxReached",
           ["" + args.selector.length, "" + i]);
       }
 
@@ -141,9 +150,11 @@ exports.items = [
     }
   },
   {
+    item: "command",
+    runAt: "server",
     name: "unhighlight",
-    description: gcli.lookup("unhighlightDesc"),
-    manual: gcli.lookup("unhighlightManual"),
+    description: l10n.lookup("unhighlightDesc"),
+    manual: l10n.lookup("unhighlightManual"),
     exec: unhighlightAll
   }
 ];

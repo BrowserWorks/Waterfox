@@ -637,7 +637,8 @@ TokenStream::reportCompileErrorNumberVA(uint32_t offset, unsigned flags, unsigne
     if (offset != NoOffset && !err.report.filename && cx->isJSContext()) {
         NonBuiltinFrameIter iter(cx->asJSContext(),
                                  FrameIter::ALL_CONTEXTS, FrameIter::GO_THROUGH_SAVED,
-                                 cx->compartment()->principals);
+                                 FrameIter::FOLLOW_DEBUGGER_EVAL_PREV_LINK,
+                                 cx->compartment()->principals());
         if (!iter.done() && iter.scriptFilename()) {
             callerFilename = true;
             err.report.filename = iter.scriptFilename();
@@ -647,8 +648,8 @@ TokenStream::reportCompileErrorNumberVA(uint32_t offset, unsigned flags, unsigne
 
     err.argumentsType = (flags & JSREPORT_UC) ? ArgumentsAreUnicode : ArgumentsAreASCII;
 
-    if (!ExpandErrorArguments(cx, GetErrorMessage, nullptr, errorNumber, &err.message,
-                              &err.report, err.argumentsType, args))
+    if (!ExpandErrorArgumentsVA(cx, GetErrorMessage, nullptr, errorNumber, &err.message,
+                                &err.report, err.argumentsType, args))
     {
         return false;
     }
@@ -986,6 +987,7 @@ TokenStream::checkForKeyword(const KeywordInfo* kw, TokenKind* ttp)
 #ifndef JS_HAS_CLASSES
         || kw->tokentype == TOK_CLASS
         || kw->tokentype == TOK_EXTENDS
+        || kw->tokentype == TOK_SUPER
 #endif
         )
     {
@@ -1664,6 +1666,37 @@ TokenStream::getTokenInternal(TokenKind* ttp, Modifier modifier)
 }
 
 bool
+TokenStream::getBracedUnicode(uint32_t* cp)
+{
+    consumeKnownChar('{');
+
+    bool first = true;
+    int32_t c;
+    uint32_t code = 0;
+    while (true) {
+        c = getCharIgnoreEOL();
+        if (c == EOF)
+            return false;
+        if (c == '}') {
+            if (first)
+                return false;
+            break;
+        }
+
+        if (!JS7_ISHEX(c))
+            return false;
+
+        code = (code << 4) | JS7_UNHEX(c);
+        if (code > 0x10FFFF)
+            return false;
+        first = false;
+    }
+
+    *cp = code;
+    return true;
+}
+
+bool
 TokenStream::getStringOrTemplateToken(int untilChar, Token** tp)
 {
     int c;
@@ -1700,6 +1733,24 @@ TokenStream::getStringOrTemplateToken(int untilChar, Token** tp)
 
               // Unicode character specification.
               case 'u': {
+                if (peekChar() == '{') {
+                    uint32_t code;
+                    if (!getBracedUnicode(&code)) {
+                        reportError(JSMSG_MALFORMED_ESCAPE, "Unicode");
+                        return false;
+                    }
+
+                    MOZ_ASSERT(code <= 0x10FFFF);
+                    if (code < 0x10000) {
+                        c = code;
+                    } else {
+                        if (!tokenbuf.append((code - 0x10000) / 1024 + 0xD800))
+                            return false;
+                        c = ((code - 0x10000) % 1024) + 0xDC00;
+                    }
+                    break;
+                }
+
                 char16_t cp[4];
                 if (peekChars(4, cp) &&
                     JS7_ISHEX(cp[0]) && JS7_ISHEX(cp[1]) && JS7_ISHEX(cp[2]) && JS7_ISHEX(cp[3]))

@@ -14,9 +14,9 @@
 
 <window xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
   <script src="chrome://browser/content/devtools/theme-switching.js"/>
+  <script type="application/javascript" src="performance/system.js"/>
   <script type="application/javascript" src="performance/performance-controller.js"/>
   <script type="application/javascript" src="performance/performance-view.js"/>
-  <script type="application/javascript" src="performance/recording-model.js"/>
   <script type="application/javascript" src="performance/views/overview.js"/>
   <script type="application/javascript" src="performance/views/toolbar.js"/>
   <script type="application/javascript" src="performance/views/details-subview.js"/>
@@ -27,6 +27,7 @@
   <script type="application/javascript" src="performance/views/details-memory-flamegraph.js"/>
   <script type="application/javascript" src="performance/views/details.js"/>
   <script type="application/javascript" src="performance/views/recordings.js"/>
+  <script type="application/javascript" src="performance/views/jit-optimizations.js"/>
 
   <popupset id="performance-options-popupset">
     <menupopup id="performance-filter-menupopup"/>
@@ -37,6 +38,7 @@
                 label="&profilerUI.showPlatformData;"
                 tooltiptext="&profilerUI.showPlatformData.tooltiptext;"/>
       <menuitem id="option-enable-memory"
+                class="experimental-option"
                 type="checkbox"
                 data-pref="enable-memory"
                 label="&profilerUI.enableMemory;"
@@ -61,6 +63,12 @@
                 data-pref="flatten-tree-recursion"
                 label="&profilerUI.flattenTreeRecursion;"
                 tooltiptext="&profilerUI.flattenTreeRecursion.tooltiptext;"/>
+      <menuitem id="option-show-jit-optimizations"
+                class="experimental-option"
+                type="checkbox"
+                data-pref="show-jit-optimizations"
+                label="&profilerUI.showJITOptimizations;"
+                tooltiptext="&profilerUI.showJITOptimizations.tooltiptext;"/>
     </menupopup>
   </popupset>
 
@@ -72,7 +80,7 @@
               class="devtools-toolbarbutton-group">
           <toolbarbutton id="main-record-button"
                          class="devtools-toolbarbutton record-button"
-                         tooltiptext="&profilerUI.recordButton.tooltip;"/>
+                         tooltiptext="&profilerUI.recordButton2.tooltip;"/>
           <toolbarbutton id="import-button"
                          class="devtools-toolbarbutton"
                          label="&profilerUI.importButton;"/>
@@ -88,30 +96,35 @@
       <toolbar id="performance-toolbar" class="devtools-toolbar">
         <hbox id="performance-toolbar-control-other" class="devtools-toolbarbutton-group">
           <toolbarbutton id="filter-button"
-                         popup="performance-filter-menupopup"
                          class="devtools-toolbarbutton"
+                         popup="performance-filter-menupopup"
                          tooltiptext="&profilerUI.options.filter.tooltiptext;"/>
         </hbox>
         <hbox id="performance-toolbar-controls-detail-views" class="devtools-toolbarbutton-group">
           <toolbarbutton id="select-waterfall-view"
                          class="devtools-toolbarbutton devtools-button"
-                         label="&profilerUI.toolbar.waterfall;"
+                         label="Waterfall"
+                         hidden="true"
                          data-view="waterfall" />
           <toolbarbutton id="select-js-calltree-view"
                          class="devtools-toolbarbutton devtools-button"
-                         label="&profilerUI.toolbar.js-calltree;"
+                         label="Call Tree"
+                         hidden="true"
                          data-view="js-calltree" />
           <toolbarbutton id="select-js-flamegraph-view"
                          class="devtools-toolbarbutton devtools-button"
-                         label="&profilerUI.toolbar.js-flamegraph;"
+                         label="Flame Chart"
+                         hidden="true"
                          data-view="js-flamegraph" />
           <toolbarbutton id="select-memory-calltree-view"
                          class="devtools-toolbarbutton devtools-button"
-                         label="&profilerUI.toolbar.memory-calltree1;"
+                         label="Allocations Tree"
+                         hidden="true"
                          data-view="memory-calltree" />
           <toolbarbutton id="select-memory-flamegraph-view"
                          class="devtools-toolbarbutton devtools-button"
-                         label="&profilerUI.toolbar.memory-flamegraph1;"
+                         label="Allocations Chart"
+                         hidden="true"
                          data-view="memory-flamegraph" />
         </hbox>
         <spacer flex="1"></spacer>
@@ -129,10 +142,12 @@
               align="center"
               pack="center"
               flex="1">
-          <label value="&profilerUI.emptyNotice1;"/>
-          <button class="devtools-toolbarbutton record-button"
-                  standalone="true" />
-          <label value="&profilerUI.emptyNotice2;"/>
+          <hbox class="devtools-toolbarbutton-group"
+                pack="center">
+            <toolbarbutton class="devtools-toolbarbutton record-button"
+                           label="&profilerUI.startRecording;"
+                           standalone="true"/>
+          </hbox>
         </hbox>
         <vbox id="performance-view-content" flex="1">
           <vbox id="overview-pane">
@@ -141,20 +156,68 @@
             <hbox id="time-framerate"/>
           </vbox>
           <deck id="details-pane-container" flex="1">
+            <hbox id="loading-notice"
+                  class="notice-container devtools-throbber"
+                  align="center"
+                  pack="center"
+                  flex="1">
+              <label value="&profilerUI.loadingNotice;"/>
+            </hbox>
             <hbox id="recording-notice"
                   class="notice-container"
                   align="center"
                   pack="center"
                   flex="1">
-              <label value="&profilerUI.stopNotice1;"/>
-              <button class="devtools-toolbarbutton record-button"
-                      standalone="true"
-                      checked="true" />
-              <label value="&profilerUI.stopNotice2;"/>
+              <vbox>
+                <hbox class="devtools-toolbarbutton-group"
+                      pack="center">
+                  <toolbarbutton class="devtools-toolbarbutton record-button"
+                                 label="&profilerUI.stopRecording;"
+                                 standalone="true"/>
+                </hbox>
+                <label class="realtime-disabled-message">
+                  Realtime recording data disabled on non-multiprocess Firefox.
+                </label>
+                <label class="realtime-disabled-on-e10s-message">
+                  Enable multiprocess Firefox in preferences for rendering recording data in realtime.
+                </label>
+                <label class="buffer-status-message"
+                       tooltiptext="&profilerUI.bufferStatusTooltip;"/>
+                <label class="buffer-status-message-full"
+                       value="&profilerUI.bufferStatusFull;"/>
+              </vbox>
+            </hbox>
+            <hbox id="console-recording-notice"
+                  class="notice-container"
+                  align="center"
+                  pack="center"
+                  flex="1">
+                  <vbox flex="1" align="center">
+                    <hbox class="console-profile-recording-notice">
+                      <label value="&profilerUI.console.recordingNoticeStart;" />
+                      <label class="console-profile-command" />
+                      <label value="&profilerUI.console.recordingNoticeEnd;" />
+                    </hbox>
+                    <hbox class="console-profile-stop-notice">
+                      <label value="&profilerUI.console.stopCommandStart;" />
+                      <label class="console-profile-command" />
+                      <label value="&profilerUI.console.stopCommandEnd;" />
+                    </hbox>
+                    <label class="realtime-disabled-message">
+                      Realtime recording data disabled on non-multiprocess Firefox.
+                    </label>
+                    <label class="realtime-disabled-on-e10s-message">
+                      Enable multiprocess Firefox in preferences for rendering recording data in realtime.
+                    </label>
+                    <label class="buffer-status-message"
+                           tooltiptext="&profilerUI.bufferStatusTooltip;"/>
+                    <label class="buffer-status-message-full"
+                           value="&profilerUI.bufferStatusFull;"/>
+                  </vbox>
             </hbox>
             <deck id="details-pane" flex="1">
               <hbox id="waterfall-view" flex="1">
-                <vbox id="waterfall-breakdown" flex="1" />
+                <vbox id="waterfall-breakdown" flex="1" class="devtools-main-content" />
                 <splitter class="devtools-side-splitter"/>
                 <vbox id="waterfall-details"
                       class="theme-sidebar"
@@ -162,35 +225,55 @@
                       height="150"/>
               </hbox>
 
-              <vbox id="js-calltree-view" flex="1">
-                <hbox class="call-tree-headers-container">
-                  <label class="plain call-tree-header"
-                         type="duration"
-                         crop="end"
-                         value="&profilerUI.table.totalDuration2;"/>
-                  <label class="plain call-tree-header"
-                         type="percentage"
-                         crop="end"
-                         value="&profilerUI.table.totalPercentage;"/>
-                  <label class="plain call-tree-header"
-                         type="self-duration"
-                         crop="end"
-                         value="&profilerUI.table.selfDuration2;"/>
-                  <label class="plain call-tree-header"
-                         type="self-percentage"
-                         crop="end"
-                         value="&profilerUI.table.selfPercentage;"/>
-                  <label class="plain call-tree-header"
-                         type="samples"
-                         crop="end"
-                         value="&profilerUI.table.samples;"/>
-                  <label class="plain call-tree-header"
-                         type="function"
-                         crop="end"
-                         value="&profilerUI.table.function;"/>
-                </hbox>
-                <vbox class="call-tree-cells-container" flex="1"/>
-              </vbox>
+              <hbox id="js-profile-view" flex="1">
+                <vbox id="js-calltree-view" flex="1">
+                  <hbox class="call-tree-headers-container">
+                    <label class="plain call-tree-header"
+                           type="duration"
+                           crop="end"
+                           value="&profilerUI.table.totalDuration2;"
+                           tooltiptext="&profilerUI.table.totalDuration.tooltip;"/>
+                    <label class="plain call-tree-header"
+                           type="percentage"
+                           crop="end"
+                           value="&profilerUI.table.totalPercentage;"
+                           tooltiptext="&profilerUI.table.totalPercentage.tooltip;"/>
+                    <label class="plain call-tree-header"
+                           type="self-duration"
+                           crop="end"
+                           value="&profilerUI.table.selfDuration2;"
+                           tooltiptext="&profilerUI.table.selfDuration.tooltip;"/>
+                    <label class="plain call-tree-header"
+                           type="self-percentage"
+                           crop="end"
+                           value="&profilerUI.table.selfPercentage;"
+                           tooltiptext="&profilerUI.table.selfPercentage.tooltip;"/>
+                    <label class="plain call-tree-header"
+                           type="samples"
+                           crop="end"
+                           value="&profilerUI.table.samples;"
+                           tooltiptext="&profilerUI.table.samples.tooltip;"/>
+                    <label class="plain call-tree-header"
+                           type="function"
+                           crop="end"
+                           value="&profilerUI.table.function;"
+                           tooltiptext="&profilerUI.table.function.tooltip;"/>
+                  </hbox>
+                  <vbox class="call-tree-cells-container" flex="1"/>
+                </vbox>
+                <splitter id="js-call-tree-splitter" class="devtools-side-splitter"/>
+                <vbox id="jit-optimizations-view" hidden="true">
+                  <toolbar id="jit-optimizations-toolbar" class="devtools-toolbar">
+                    <hbox id="jit-optimizations-header">
+                      <span class="jit-optimizations-title">&profilerUI.JITOptimizationsTitle;</span>
+                      <span class="header-function-name" />
+                      <span class="header-file opt-url debugger-link" />
+                      <span class="header-line opt-line" />
+                    </hbox>
+                  </toolbar>
+                  <vbox id="jit-optimizations-raw-view"></vbox>
+                </vbox>
+              </hbox>
 
               <hbox id="js-flamegraph-view" flex="1">
               </hbox>
@@ -201,12 +284,12 @@
                          type="allocations"
                          crop="end"
                          value="&profilerUI.table.totalAlloc1;"
-                         tooltiptext="&profilerUI.table.totalAllocTooltip;"/>
+                         tooltiptext="&profilerUI.table.totalAlloc.tooltip;"/>
                   <label class="plain call-tree-header"
                          type="self-allocations"
                          crop="end"
                          value="&profilerUI.table.selfAlloc1;"
-                         tooltiptext="&profilerUI.table.selfAllocTooltip;"/>
+                         tooltiptext="&profilerUI.table.selfAlloc.tooltip;"/>
                   <label class="plain call-tree-header"
                          type="function"
                          crop="end"

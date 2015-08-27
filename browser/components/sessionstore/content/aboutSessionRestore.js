@@ -7,6 +7,9 @@
 const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
 Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "AppConstants",
+  "resource://gre/modules/AppConstants.jsm");
 
 var gStateObject;
 var gTreeData;
@@ -51,7 +54,7 @@ window.onload = function() {
 };
 
 function isTreeViewVisible() {
-  let tabList = document.getElementById("tabList");
+  let tabList = document.querySelector(".tree-container");
   return tabList.hasAttribute("available");
 }
 
@@ -96,11 +99,14 @@ function initTreeView() {
 
 // User actions
 function updateTabListVisibility() {
-  let tabList = document.getElementById("tabList");
+  let tabList = document.querySelector(".tree-container");
+  let container = document.querySelector(".container");
   if (document.getElementById("radioRestoreChoose").checked) {
     tabList.setAttribute("available", "true");
+    container.classList.add("restore-chosen");
   } else {
     tabList.removeAttribute("available");
+    container.classList.remove("restore-chosen");
   }
   initTreeView();
 }
@@ -179,11 +185,9 @@ function onListClick(aEvent) {
   if (cell.col) {
     // Restore this specific tab in the same window for middle/double/accel clicking
     // on a tab's title.
-#ifdef XP_MACOSX
-    let accelKey = aEvent.metaKey;
-#else
-    let accelKey = aEvent.ctrlKey;
-#endif
+    let accelKey = AppConstants.platform == "macosx" ?
+                   aEvent.metaKey :
+                   aEvent.ctrlKey;
     if ((aEvent.button == 1 || aEvent.button == 0 && aEvent.detail == 2 || accelKey) &&
         cell.col.id == "title" &&
         !treeView.isContainer(cell.row)) {

@@ -89,6 +89,8 @@ protected:
                                      const dom::MediaTrackConstraintSet &aConstraints,
                                      bool aAdvanced);
   static void TrimLessFitCandidates(CapabilitySet& set);
+  static void LogConstraints(const dom::MediaTrackConstraintSet& aConstraints,
+                             bool aAdvanced);
   virtual size_t NumCapabilities();
   virtual void GetCapability(size_t aIndex, webrtc::CaptureCapability& aOut);
   bool ChooseCapability(const dom::MediaTrackConstraints &aConstraints,

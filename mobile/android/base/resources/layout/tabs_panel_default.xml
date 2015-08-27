@@ -15,8 +15,8 @@
 
         <view class="org.mozilla.gecko.tabs.TabsPanel$TabsPanelToolbar"
               android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:background="@color/background_tabs">
+              android:layout_height="@dimen/browser_toolbar_height"
+              android:background="@color/text_and_tabs_tray_grey">
 
             <ViewStub android:id="@+id/nav_back_stub"
                       android:layout="@layout/new_tablet_tabs_panel_back_button"
@@ -81,9 +81,4 @@
 
     </view>
 
-    <!-- To preserve the ID, even when building for pre-11. -->
-    <RelativeLayout android:id="@+id/tabs_panel_footer"
-                    android:layout_height="0dp"
-                    android:layout_width="0dp"
-                    android:visibility="gone"/>
 </merge>

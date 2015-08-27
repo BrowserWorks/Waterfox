@@ -149,8 +149,11 @@ protected:
                                                const uint16_t& aBacklog,
                                                const nsString& aBinaryType) override;
   virtual bool DeallocPTCPServerSocketParent(PTCPServerSocketParent*) override;
-  virtual PUDPSocketParent* AllocPUDPSocketParent(const nsCString& aFilter) override;
-  virtual bool RecvPUDPSocketConstructor(PUDPSocketParent*, const nsCString& aFilter) override;
+  virtual PUDPSocketParent* AllocPUDPSocketParent(const Principal& aPrincipal,
+                                                  const nsCString& aFilter) override;
+  virtual bool RecvPUDPSocketConstructor(PUDPSocketParent*,
+                                         const Principal& aPrincipal,
+                                         const nsCString& aFilter) override;
   virtual bool DeallocPUDPSocketParent(PUDPSocketParent*) override;
   virtual PDNSRequestParent* AllocPDNSRequestParent(const nsCString& aHost,
                                                     const uint32_t& aFlags,
@@ -160,7 +163,7 @@ protected:
                                           const uint32_t& flags,
                                           const nsCString& aNetworkInterface) override;
   virtual bool DeallocPDNSRequestParent(PDNSRequestParent*) override;
-  virtual bool RecvSpeculativeConnect(const URIParams& aURI) override;
+  virtual bool RecvSpeculativeConnect(const URIParams& aURI, const bool& aAnonymous) override;
   virtual bool RecvHTMLDNSPrefetch(const nsString& hostname,
                                    const uint16_t& flags) override;
   virtual bool RecvCancelHTMLDNSPrefetch(const nsString& hostname,

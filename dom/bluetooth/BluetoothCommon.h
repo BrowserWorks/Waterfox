@@ -1,17 +1,21 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef mozilla_dom_bluetooth_bluetoothcommon_h__
-#define mozilla_dom_bluetooth_bluetoothcommon_h__
+#ifndef mozilla_dom_bluetooth_bluetoothcommon_h
+#define mozilla_dom_bluetooth_bluetoothcommon_h
 
 #include "mozilla/Compiler.h"
 #include "mozilla/Observer.h"
 #include "nsPrintfCString.h"
 #include "nsString.h"
 #include "nsTArray.h"
+
+extern bool gBluetoothDebugFlag;
+
+#define SWITCH_BT_DEBUG(V) (gBluetoothDebugFlag = V)
 
 #if MOZ_IS_GCC
 # if MOZ_GCC_VERSION_AT_LEAST(4, 7, 0)
@@ -31,10 +35,6 @@
 
 #define CONVERT(in_, out_) \
   INIT_ARRAY_AT(in_, out_)
-
-extern bool gBluetoothDebugFlag;
-
-#define SWITCH_BT_DEBUG(V) (gBluetoothDebugFlag = V)
 
 #undef BT_LOG
 #if defined(MOZ_WIDGET_GONK)
@@ -78,11 +78,26 @@ extern bool gBluetoothDebugFlag;
 #endif
 
 /**
+ * Prints 'R'ELEASE build logs for WebBluetooth API v2.
+ */
+#define BT_API2_LOGR(msg, ...)                                       \
+  BT_LOGR("[WEBBT-API2] " msg, ##__VA_ARGS__)
+
+/**
  * Wrap literal name and value into a BluetoothNamedValue
  * and append it to the array.
  */
 #define BT_APPEND_NAMED_VALUE(array, name, value)                    \
-  array.AppendElement(BluetoothNamedValue(NS_LITERAL_STRING(name), value))
+  array.AppendElement(BluetoothNamedValue(NS_LITERAL_STRING(name),   \
+                                          BluetoothValue(value)))
+
+/**
+ * Wrap literal name and value into a BluetoothNamedValue
+ * and insert it to the array.
+ */
+#define BT_INSERT_NAMED_VALUE(array, index, name, value)                      \
+  array.InsertElementAt(index, BluetoothNamedValue(NS_LITERAL_STRING(name),   \
+                                                   BluetoothValue(value)))
 
 /**
  * Ensure success of system message broadcast with void return.
@@ -96,6 +111,42 @@ extern bool gBluetoothDebugFlag;
     }                                                                \
   } while(0)
 
+/**
+ * Convert an enum value to string then append it to an array.
+ */
+#define BT_APPEND_ENUM_STRING(array, enumType, enumValue)            \
+  do {                                                               \
+    uint32_t index = uint32_t(enumValue);                            \
+    nsAutoString name;                                               \
+    name.AssignASCII(enumType##Values::strings[index].value,         \
+                     enumType##Values::strings[index].length);       \
+    array.AppendElement(name);                                       \
+  } while(0)                                                         \
+
+/**
+ * Resolve |promise| with |ret| if |x| is false.
+ */
+#define BT_ENSURE_TRUE_RESOLVE(x, promise, ret)                      \
+  do {                                                               \
+    if (MOZ_UNLIKELY(!(x))) {                                        \
+      BT_API2_LOGR("BT_ENSURE_TRUE_RESOLVE(" #x ") failed");         \
+      (promise)->MaybeResolve(ret);                                  \
+      return (promise).forget();                                     \
+    }                                                                \
+  } while(0)
+
+/**
+ * Reject |promise| with |ret| if |x| is false.
+ */
+#define BT_ENSURE_TRUE_REJECT(x, promise, ret)                       \
+  do {                                                               \
+    if (MOZ_UNLIKELY(!(x))) {                                        \
+      BT_API2_LOGR("BT_ENSURE_TRUE_REJECT(" #x ") failed");          \
+      (promise)->MaybeReject(ret);                                   \
+      return (promise).forget();                                     \
+    }                                                                \
+  } while(0)
+
 #define BEGIN_BLUETOOTH_NAMESPACE \
   namespace mozilla { namespace dom { namespace bluetooth {
 #define END_BLUETOOTH_NAMESPACE \
@@ -103,10 +154,11 @@ extern bool gBluetoothDebugFlag;
 #define USING_BLUETOOTH_NAMESPACE \
   using namespace mozilla::dom::bluetooth;
 
-#define KEY_LOCAL_AGENT  "/B2G/bluetooth/agent"
-#define KEY_REMOTE_AGENT "/B2G/bluetooth/remote_device_agent"
-#define KEY_MANAGER      "/B2G/bluetooth/manager"
-#define KEY_ADAPTER      "/B2G/bluetooth/adapter"
+#define KEY_LOCAL_AGENT       "/B2G/bluetooth/agent"
+#define KEY_REMOTE_AGENT      "/B2G/bluetooth/remote_device_agent"
+#define KEY_MANAGER           "/B2G/bluetooth/manager"
+#define KEY_ADAPTER           "/B2G/bluetooth/adapter"
+#define KEY_PAIRING_LISTENER  "/B2G/bluetooth/pairing_listener"
 
 /**
  * When the connection status of a Bluetooth profile is changed, we'll notify
@@ -126,21 +178,72 @@ extern bool gBluetoothDebugFlag;
 #define SCO_STATUS_CHANGED_ID                "scostatuschanged"
 
 /**
+ * Types of pairing requests for constructing BluetoothPairingEvent and
+ * BluetoothPairingHandle.
+ */
+#define PAIRING_REQ_TYPE_DISPLAYPASSKEY       "displaypasskeyreq"
+#define PAIRING_REQ_TYPE_ENTERPINCODE         "enterpincodereq"
+#define PAIRING_REQ_TYPE_CONFIRMATION         "pairingconfirmationreq"
+#define PAIRING_REQ_TYPE_CONSENT              "pairingconsentreq"
+
+/**
  * When the pair status of a Bluetooth device is changed, we'll dispatch an
  * event.
+ *
+ * TODO: remove with bluetooth1
  */
 #define PAIRED_STATUS_CHANGED_ID             "pairedstatuschanged"
 
 /**
  * This event would be fired when discovery procedure starts or stops.
+ *
+ * TODO: remove with bluetooth1
  */
 #define DISCOVERY_STATE_CHANGED_ID           "discoverystatechanged"
+
+/**
+ * System message to launch bluetooth app if no pairing listener is ready to
+ * receive pairing requests.
+ */
+#define SYS_MSG_BT_PAIRING_REQ                "bluetooth-pairing-request"
+
+/**
+ * The app origin of bluetooth app, which is responsible for listening pairing
+ * requests.
+ */
+#define BLUETOOTH_APP_ORIGIN                  "app://bluetooth.gaiamobile.org"
+
+/**
+ * When a remote device gets paired / unpaired with local bluetooth adapter or
+ * pairing process is aborted, we'll dispatch an event.
+ */
+#define DEVICE_PAIRED_ID                     "devicepaired"
+#define DEVICE_UNPAIRED_ID                   "deviceunpaired"
+#define PAIRING_ABORTED_ID                   "pairingaborted"
 
 /**
  * When receiving a query about current play status from remote device, we'll
  * dispatch an event.
  */
 #define REQUEST_MEDIA_PLAYSTATUS_ID          "requestmediaplaystatus"
+
+/**
+ * When the value of a characteristic of a remote BLE device changes, we'll
+ * dispatch an event
+ */
+#define GATT_CHARACTERISTIC_CHANGED_ID       "characteristicchanged"
+
+/**
+ * When a remote BLE device gets connected / disconnected, we'll dispatch an
+ * event.
+ */
+#define GATT_CONNECTION_STATE_CHANGED_ID     "connectionstatechanged"
+
+/**
+ * When attributes of BluetoothManager, BluetoothAdapter, or BluetoothDevice
+ * are changed, we'll dispatch an event.
+ */
+#define ATTRIBUTE_CHANGED_ID                 "attributechanged"
 
 // Bluetooth address format: xx:xx:xx:xx:xx:xx (or xx_xx_xx_xx_xx_xx)
 #define BLUETOOTH_ADDRESS_LENGTH 17
@@ -149,6 +252,12 @@ extern bool gBluetoothDebugFlag;
 
 // Bluetooth stack internal error, such as I/O error
 #define ERR_INTERNAL_ERROR "InternalError"
+
+/**
+ * BT specification v4.1 defines the maximum attribute length as 512 octets.
+ * Currently use 600 here to conform to bluedroid's BTGATT_MAX_ATTR_LEN.
+ */
+#define BLUETOOTH_GATT_MAX_ATTR_LEN 600
 
 BEGIN_BLUETOOTH_NAMESPACE
 
@@ -163,13 +272,21 @@ enum BluetoothStatus {
   STATUS_PARM_INVALID,
   STATUS_UNHANDLED,
   STATUS_AUTH_FAILURE,
-  STATUS_RMT_DEV_DOWN
+  STATUS_RMT_DEV_DOWN,
+  NUM_STATUS
 };
 
 enum BluetoothBondState {
   BOND_STATE_NONE,
   BOND_STATE_BONDING,
   BOND_STATE_BONDED
+};
+
+/* Physical transport for GATT connections to remote dual-mode devices */
+enum BluetoothTransport {
+  TRANSPORT_AUTO,   /* No preference of physical transport */
+  TRANSPORT_BREDR,  /* Prefer BR/EDR transport */
+  TRANSPORT_LE      /* Prefer LE transport */
 };
 
 enum BluetoothTypeOfDevice {
@@ -205,11 +322,31 @@ enum BluetoothSspVariant {
   SSP_VARIANT_PASSKEY_CONFIRMATION,
   SSP_VARIANT_PASSKEY_ENTRY,
   SSP_VARIANT_CONSENT,
-  SSP_VARIANT_PASSKEY_NOTIFICATION
+  SSP_VARIANT_PASSKEY_NOTIFICATION,
+  NUM_SSP_VARIANT
+};
+
+struct BluetoothActivityEnergyInfo {
+  uint8_t mStatus;
+  uint8_t mStackState;  /* stack reported state */
+  uint64_t mTxTime;     /* in ms */
+  uint64_t mRxTime;     /* in ms */
+  uint64_t mIdleTime;   /* in ms */
+  uint64_t mEnergyUsed; /* a product of mA, V and ms */
 };
 
 struct BluetoothUuid {
   uint8_t mUuid[16];
+
+  bool operator==(const BluetoothUuid& aOther) const
+  {
+    for (uint8_t i = 0; i < sizeof(mUuid); i++) {
+      if (mUuid[i] != aOther.mUuid[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
 };
 
 struct BluetoothServiceRecord {
@@ -260,22 +397,6 @@ struct BluetoothProperty {
 
   /* PROPERTY_REMOTE_VERSION_INFO */
   BluetoothRemoteInfo mRemoteInfo;
-};
-
-/* Physical transport for GATT connections to remote dual-mode devices */
-enum BluetoothTransport {
-  TRANSPORT_AUTO,   /* No preference of physical transport */
-  TRANSPORT_BREDR,  /* Prefer BR/EDR transport */
-  TRANSPORT_LE      /* Prefer LE transport */
-};
-
-struct BluetoothActivityEnergyInfo {
-  uint8_t mStatus;
-  uint8_t mStackState;  /* stack reported state */
-  uint64_t mTxTime;     /* in ms */
-  uint64_t mRxTime;     /* in ms */
-  uint64_t mIdleTime;   /* in ms */
-  uint64_t mEnergyUsed; /* a product of mA, V and ms */
 };
 
 enum BluetoothSocketType {
@@ -349,12 +470,6 @@ enum BluetoothHandsfreeNetworkState {
   HFP_NETWORK_STATE_AVAILABLE
 };
 
-enum BluetoothHandsfreeWbsConfig {
-  HFP_WBS_NONE, /* Neither CVSD nor mSBC codec, but other optional codec.*/
-  HFP_WBS_NO,   /* CVSD */
-  HFP_WBS_YES   /* mSBC */
-};
-
 enum BluetoothHandsfreeNRECState {
   HFP_NREC_STOPPED,
   HFP_NREC_STARTED
@@ -375,8 +490,28 @@ enum BluetoothHandsfreeVolumeType {
   HFP_VOLUME_TYPE_MICROPHONE
 };
 
+enum BluetoothHandsfreeWbsConfig {
+  HFP_WBS_NONE, /* Neither CVSD nor mSBC codec, but other optional codec.*/
+  HFP_WBS_NO,   /* CVSD */
+  HFP_WBS_YES   /* mSBC */
+};
+
 class BluetoothSignal;
-typedef mozilla::Observer<BluetoothSignal> BluetoothSignalObserver;
+
+class BluetoothSignalObserver : public mozilla::Observer<BluetoothSignal>
+{
+public:
+  BluetoothSignalObserver() : mSignalRegistered(false)
+  { }
+
+  void SetSignalRegistered(bool aSignalRegistered)
+  {
+    mSignalRegistered = aSignalRegistered;
+  }
+
+protected:
+  bool mSignalRegistered;
+};
 
 // Enums for object types, currently used for shared function lookups
 // (get/setproperty, etc...). Possibly discernable via dbus paths, but this
@@ -385,8 +520,7 @@ enum BluetoothObjectType {
   TYPE_MANAGER = 0,
   TYPE_ADAPTER = 1,
   TYPE_DEVICE = 2,
-
-  TYPE_INVALID
+  NUM_TYPE
 };
 
 enum BluetoothA2dpAudioState {
@@ -422,8 +556,8 @@ enum BluetoothAvrcpMediaAttribute {
   AVRCP_MEDIA_ATTRIBUTE_ALBUM = 0x03,
   AVRCP_MEDIA_ATTRIBUTE_TRACK_NUM = 0x04,
   AVRCP_MEDIA_ATTRIBUTE_NUM_TRACKS = 0x05,
-  AVRCP_MEDIA_ATTRIBUTE_GENRE = 0x6,
-  AVRCP_MEDIA_ATTRIBUTE_PLAYING_TIME = 0x7
+  AVRCP_MEDIA_ATTRIBUTE_GENRE = 0x06,
+  AVRCP_MEDIA_ATTRIBUTE_PLAYING_TIME = 0x07
 };
 
 enum BluetoothAvrcpPlayerAttribute {
@@ -431,6 +565,19 @@ enum BluetoothAvrcpPlayerAttribute {
   AVRCP_PLAYER_ATTRIBUTE_REPEAT,
   AVRCP_PLAYER_ATTRIBUTE_SHUFFLE,
   AVRCP_PLAYER_ATTRIBUTE_SCAN
+};
+
+enum BluetoothAvrcpPlayerRepeatValue {
+  AVRCP_PLAYER_VAL_OFF_REPEAT = 0x01,
+  AVRCP_PLAYER_VAL_SINGLE_REPEAT = 0x02,
+  AVRCP_PLAYER_VAL_ALL_REPEAT = 0x03,
+  AVRCP_PLAYER_VAL_GROUP_REPEAT = 0x04
+};
+
+enum BluetoothAvrcpPlayerShuffleValue {
+  AVRCP_PLAYER_VAL_OFF_SHUFFLE = 0x01,
+  AVRCP_PLAYER_VAL_ALL_SHUFFLE = 0x02,
+  AVRCP_PLAYER_VAL_GROUP_SHUFFLE = 0x03
 };
 
 enum BluetoothAvrcpStatus {
@@ -480,6 +627,144 @@ struct BluetoothAvrcpPlayerSettings {
   uint8_t mNumAttr;
   uint8_t mIds[256];
   uint8_t mValues[256];
+};
+
+enum BluetoothGattStatus {
+  GATT_STATUS_SUCCESS,
+  GATT_STATUS_INVALID_HANDLE,
+  GATT_STATUS_READ_NOT_PERMITTED,
+  GATT_STATUS_WRITE_NOT_PERMITTED,
+  GATT_STATUS_INVALID_PDU,
+  GATT_STATUS_INSUFFICIENT_AUTHENTICATION,
+  GATT_STATUS_REQUEST_NOT_SUPPORTED,
+  GATT_STATUS_INVALID_OFFSET,
+  GATT_STATUS_INSUFFICIENT_AUTHORIZATION,
+  GATT_STATUS_PREPARE_QUEUE_FULL,
+  GATT_STATUS_ATTRIBUTE_NOT_FOUND,
+  GATT_STATUS_ATTRIBUTE_NOT_LONG,
+  GATT_STATUS_INSUFFICIENT_ENCRYPTION_KEY_SIZE,
+  GATT_STATUS_INVALID_ATTRIBUTE_LENGTH,
+  GATT_STATUS_UNLIKELY_ERROR,
+  GATT_STATUS_INSUFFICIENT_ENCRYPTION,
+  GATT_STATUS_UNSUPPORTED_GROUP_TYPE,
+  GATT_STATUS_INSUFFICIENT_RESOURCES,
+  GATT_STATUS_UNKNOWN_ERROR
+};
+
+enum BluetoothGattAuthReq {
+  GATT_AUTH_REQ_NONE,
+  GATT_AUTH_REQ_NO_MITM,
+  GATT_AUTH_REQ_MITM,
+  GATT_AUTH_REQ_SIGNED_NO_MITM,
+  GATT_AUTH_REQ_SIGNED_MITM
+};
+
+enum BluetoothGattWriteType {
+  GATT_WRITE_TYPE_NO_RESPONSE,
+  GATT_WRITE_TYPE_NORMAL,
+  GATT_WRITE_TYPE_PREPARE,
+  GATT_WRITE_TYPE_SIGNED,
+  GATT_WRITE_TYPE_END_GUARD
+};
+
+/*
+ * Bluetooth GATT Characteristic Properties bit field
+ */
+enum BluetoothGattCharPropBit {
+  GATT_CHAR_PROP_BIT_BROADCAST            = (1 << 0),
+  GATT_CHAR_PROP_BIT_READ                 = (1 << 1),
+  GATT_CHAR_PROP_BIT_WRITE_NO_RESPONSE    = (1 << 2),
+  GATT_CHAR_PROP_BIT_WRITE                = (1 << 3),
+  GATT_CHAR_PROP_BIT_NOTIFY               = (1 << 4),
+  GATT_CHAR_PROP_BIT_INDICATE             = (1 << 5),
+  GATT_CHAR_PROP_BIT_SIGNED_WRITE         = (1 << 6),
+  GATT_CHAR_PROP_BIT_EXTENDED_PROPERTIES  = (1 << 7)
+};
+
+/*
+ * BluetoothGattCharProp is used to store a bit mask value which contains
+ * each corresponding bit value of each BluetoothGattCharPropBit.
+ */
+typedef uint8_t BluetoothGattCharProp;
+#define BLUETOOTH_EMPTY_GATT_CHAR_PROP  static_cast<BluetoothGattCharProp>(0x00)
+
+struct BluetoothGattAdvData {
+  uint8_t mAdvData[62];
+};
+
+struct BluetoothGattId {
+  BluetoothUuid mUuid;
+  uint8_t mInstanceId;
+
+  bool operator==(const BluetoothGattId& aOther) const
+  {
+    return mUuid == aOther.mUuid && mInstanceId == aOther.mInstanceId;
+  }
+};
+
+struct BluetoothGattServiceId {
+  BluetoothGattId mId;
+  uint8_t mIsPrimary;
+
+  bool operator==(const BluetoothGattServiceId& aOther) const
+  {
+    return mId == aOther.mId && mIsPrimary == aOther.mIsPrimary;
+  }
+};
+
+struct BluetoothGattCharAttribute {
+  BluetoothGattId mId;
+  BluetoothGattCharProp mProperties;
+  BluetoothGattWriteType mWriteType;
+
+  bool operator==(const BluetoothGattCharAttribute& aOther) const
+  {
+    return mId == aOther.mId &&
+           mProperties == aOther.mProperties &&
+           mWriteType == aOther.mWriteType;
+  }
+};
+
+struct BluetoothGattReadParam {
+  BluetoothGattServiceId mServiceId;
+  BluetoothGattId mCharId;
+  BluetoothGattId mDescriptorId;
+  uint8_t mValue[BLUETOOTH_GATT_MAX_ATTR_LEN];
+  uint16_t mValueLength;
+  uint16_t mValueType;
+  uint8_t mStatus;
+};
+
+struct BluetoothGattWriteParam {
+  BluetoothGattServiceId mServiceId;
+  BluetoothGattId mCharId;
+  BluetoothGattId mDescriptorId;
+  uint8_t mStatus;
+};
+
+struct BluetoothGattNotifyParam {
+  uint8_t mValue[BLUETOOTH_GATT_MAX_ATTR_LEN];
+  nsString mBdAddr;
+  BluetoothGattServiceId mServiceId;
+  BluetoothGattId mCharId;
+  uint16_t mLength;
+  bool mIsNotify;
+};
+
+/**
+ * EIR Data Type, Advertising Data Type (AD Type) and OOB Data Type Definitions
+ * Please refer to https://www.bluetooth.org/en-us/specification/\
+ * assigned-numbers/generic-access-profile
+ */
+enum BluetoothGapDataType {
+  GAP_INCOMPLETE_UUID16  = 0X02, // Incomplete List of 16-bit Service Class UUIDs
+  GAP_COMPLETE_UUID16    = 0X03, // Complete List of 16-bit Service Class UUIDs
+  GAP_INCOMPLETE_UUID32  = 0X04, // Incomplete List of 32-bit Service Class UUIDs
+  GAP_COMPLETE_UUID32    = 0X05, // Complete List of 32-bit Service Class UUIDs»
+  GAP_INCOMPLETE_UUID128 = 0X06, // Incomplete List of 128-bit Service Class UUIDs
+  GAP_COMPLETE_UUID128   = 0X07, // Complete List of 128-bit Service Class UUIDs
+  GAP_SHORTENED_NAME     = 0X08, // Shortened Local Name
+  GAP_COMPLETE_NAME      = 0X09, // Complete Local Name
 };
 
 END_BLUETOOTH_NAMESPACE

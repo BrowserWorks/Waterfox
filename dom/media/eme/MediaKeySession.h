@@ -24,9 +24,6 @@
 struct JSContext;
 
 namespace mozilla {
-
-class CDMProxy;
-
 namespace dom {
 
 class ArrayBufferViewOrArrayBuffer;

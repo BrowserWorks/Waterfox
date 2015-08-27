@@ -230,17 +230,6 @@ GLContextEGL::GLContextEGL(
 #ifdef DEBUG
     printf_stderr("Initializing context %p surface %p on display %p\n", mContext, mSurface, EGL_DISPLAY());
 #endif
-#if defined(MOZ_WIDGET_GONK)
-    if (!mIsOffscreen) {
-        mHwc = HwcComposer2D::GetInstance();
-        MOZ_ASSERT(!mHwc->Initialized());
-
-        if (mHwc->Init(EGL_DISPLAY(), mSurface, this)) {
-            NS_WARNING("HWComposer initialization failed!");
-            mHwc = nullptr;
-        }
-    }
-#endif
 }
 
 GLContextEGL::~GLContextEGL()
@@ -360,7 +349,7 @@ GLContextEGL::SetEGLSurfaceOverride(EGLSurface surf) {
         Screen()->AssureBlitted();
     }
 
-    mSurfaceOverride = surf ? (EGLSurface) surf : mSurface;
+    mSurfaceOverride = surf;
     MakeCurrent(true);
 }
 
@@ -444,7 +433,10 @@ GLContextEGL::RenewSurface() {
 void
 GLContextEGL::ReleaseSurface() {
     if (mOwnsContext) {
-        DestroySurface(mSurface);
+        mozilla::gl::DestroySurface(mSurface);
+    }
+    if (mSurface == mSurfaceOverride) {
+        mSurfaceOverride = EGL_NO_SURFACE;
     }
     mSurface = EGL_NO_SURFACE;
 }
@@ -459,17 +451,17 @@ GLContextEGL::SetupLookupFunction()
 bool
 GLContextEGL::SwapBuffers()
 {
-    if (mSurface) {
-#ifdef MOZ_WIDGET_GONK
+    EGLSurface surface = mSurfaceOverride != EGL_NO_SURFACE
+                          ? mSurfaceOverride
+                          : mSurface;
+    if (surface) {
+#if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION < 17
         if (!mIsOffscreen) {
-            if (mHwc) {
-                return mHwc->Render(EGL_DISPLAY(), mSurface);
-            } else {
-                return GetGonkDisplay()->SwapBuffers(EGL_DISPLAY(), mSurface);
-            }
-        } else
+            // eglSwapBuffers() is called by hwcomposer.
+            return true;
+        }
 #endif
-            return sEGLLibrary.fSwapBuffers(EGL_DISPLAY(), mSurface);
+        return sEGLLibrary.fSwapBuffers(EGL_DISPLAY(), surface);
     } else {
         return false;
     }
@@ -480,6 +472,32 @@ GLContextEGL::SwapBuffers()
 void
 GLContextEGL::HoldSurface(gfxASurface *aSurf) {
     mThebesSurface = aSurf;
+}
+
+/* static */ EGLSurface
+GLContextEGL::CreateSurfaceForWindow(nsIWidget* aWidget)
+{
+    if (!sEGLLibrary.EnsureInitialized()) {
+        MOZ_CRASH("Failed to load EGL library!\n");
+        return nullptr;
+    }
+
+    EGLConfig config;
+    if (!CreateConfig(&config)) {
+        MOZ_CRASH("Failed to create EGLConfig!\n");
+        return nullptr;
+    }
+
+    EGLSurface surface = mozilla::gl::CreateSurfaceForWindow(aWidget, config);
+    return surface;
+}
+
+/* static */ void
+GLContextEGL::DestroySurface(EGLSurface aSurface)
+{
+    if (aSurface != EGL_NO_SURFACE) {
+        sEGLLibrary.fDestroySurface(EGL_DISPLAY(), aSurface);
+    }
 }
 
 already_AddRefed<GLContextEGL>
@@ -774,7 +792,7 @@ GLContextProviderEGL::CreateForWindow(nsIWidget *aWidget)
 
     if (!glContext) {
         MOZ_CRASH("Failed to create EGLContext!\n");
-        DestroySurface(surface);
+        mozilla::gl::DestroySurface(surface);
         return nullptr;
     }
 
@@ -783,6 +801,41 @@ GLContextProviderEGL::CreateForWindow(nsIWidget *aWidget)
 
     return glContext.forget();
 }
+
+#if defined(ANDROID)
+EGLSurface
+GLContextProviderEGL::CreateEGLSurface(void* aWindow)
+{
+    if (!sEGLLibrary.EnsureInitialized()) {
+        MOZ_CRASH("Failed to load EGL library!\n");
+    }
+
+    EGLConfig config;
+    if (!CreateConfig(&config)) {
+        MOZ_CRASH("Failed to create EGLConfig!\n");
+    }
+
+    MOZ_ASSERT(aWindow);
+
+    EGLSurface surface = sEGLLibrary.fCreateWindowSurface(EGL_DISPLAY(), config, aWindow, 0);
+
+    if (surface == EGL_NO_SURFACE) {
+        MOZ_CRASH("Failed to create EGLSurface!\n");
+    }
+
+    return surface;
+}
+
+void
+GLContextProviderEGL::DestroyEGLSurface(EGLSurface surface)
+{
+    if (!sEGLLibrary.EnsureInitialized()) {
+        MOZ_CRASH("Failed to load EGL library!\n");
+    }
+
+    sEGLLibrary.fDestroySurface(EGL_DISPLAY(), surface);
+}
+#endif // defined(ANDROID)
 
 already_AddRefed<GLContextEGL>
 GLContextEGL::CreateEGLPBufferOffscreenContext(const gfxIntSize& size)
@@ -904,7 +957,7 @@ GLContextProviderEGL::CreateOffscreen(const gfxIntSize& size,
     if (!glContext)
         return nullptr;
 
-    if (!glContext->InitOffscreen(ToIntSize(size), caps))
+    if (!glContext->InitOffscreen(size, caps))
         return nullptr;
 
     return glContext.forget();

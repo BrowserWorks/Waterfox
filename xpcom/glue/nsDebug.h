@@ -77,10 +77,13 @@ inline bool NS_warn_if_impl(bool aCondition, const char* aExpr,
  * evaluate the message argument.
  */
 #ifdef DEBUG
+inline void MOZ_PretendNoReturn()
+  MOZ_PRETEND_NORETURN_FOR_STATIC_ANALYSIS {}
 #define NS_ASSERTION(expr, str)                               \
   do {                                                        \
     if (!(expr)) {                                            \
       NS_DebugBreak(NS_DEBUG_ASSERTION, str, #expr, __FILE__, __LINE__); \
+      MOZ_PretendNoReturn();                                         \
     }                                                         \
   } while(0)
 #else
@@ -99,7 +102,10 @@ inline bool NS_warn_if_impl(bool aCondition, const char* aExpr,
  */
 #ifdef DEBUG
 #define NS_NOTYETIMPLEMENTED(str)                             \
-  NS_DebugBreak(NS_DEBUG_ASSERTION, str, "NotYetImplemented", __FILE__, __LINE__)
+  do {                                                        \
+    NS_DebugBreak(NS_DEBUG_ASSERTION, str, "NotYetImplemented", __FILE__, __LINE__); \
+    MOZ_PretendNoReturn();                                    \
+  } while(0)
 #else
 #define NS_NOTYETIMPLEMENTED(str)      do { /* nothing */ } while(0)
 #endif
@@ -110,7 +116,10 @@ inline bool NS_warn_if_impl(bool aCondition, const char* aExpr,
  */
 #ifdef DEBUG
 #define NS_NOTREACHED(str)                                    \
-  NS_DebugBreak(NS_DEBUG_ASSERTION, str, "Not Reached", __FILE__, __LINE__)
+  do {                                                        \
+    NS_DebugBreak(NS_DEBUG_ASSERTION, str, "Not Reached", __FILE__, __LINE__); \
+    MOZ_PretendNoReturn();                                    \
+  } while(0)
 #else
 #define NS_NOTREACHED(str)             do { /* nothing */ } while(0)
 #endif
@@ -120,7 +129,10 @@ inline bool NS_warn_if_impl(bool aCondition, const char* aExpr,
  */
 #ifdef DEBUG
 #define NS_ERROR(str)                                         \
-  NS_DebugBreak(NS_DEBUG_ASSERTION, str, "Error", __FILE__, __LINE__)
+  do {                                                        \
+    NS_DebugBreak(NS_DEBUG_ASSERTION, str, "Error", __FILE__, __LINE__); \
+    MOZ_PretendNoReturn();                                    \
+  } while(0)
 #else
 #define NS_ERROR(str)                  do { /* nothing */ } while(0)
 #endif
@@ -142,7 +154,10 @@ inline bool NS_warn_if_impl(bool aCondition, const char* aExpr,
  */
 #ifdef DEBUG
 #define NS_ABORT()                                            \
-  NS_DebugBreak(NS_DEBUG_ABORT, nullptr, nullptr, __FILE__, __LINE__)
+  do {                                                        \
+    NS_DebugBreak(NS_DEBUG_ABORT, nullptr, nullptr, __FILE__, __LINE__); \
+    MOZ_PretendNoReturn();                                    \
+  } while(0)
 #else
 #define NS_ABORT()                     do { /* nothing */ } while(0)
 #endif
@@ -152,7 +167,10 @@ inline bool NS_warn_if_impl(bool aCondition, const char* aExpr,
  */
 #ifdef DEBUG
 #define NS_BREAK()                                            \
-  NS_DebugBreak(NS_DEBUG_BREAK, nullptr, nullptr, __FILE__, __LINE__)
+  do {                                                        \
+    NS_DebugBreak(NS_DEBUG_BREAK, nullptr, nullptr, __FILE__, __LINE__); \
+    MOZ_PretendNoReturn();                                    \
+  } while(0)
 #else
 #define NS_BREAK()                     do { /* nothing */ } while(0)
 #endif
@@ -179,12 +197,6 @@ inline bool NS_warn_if_impl(bool aCondition, const char* aExpr,
 #define STATIC_PASTE2(X,Y) X ## Y
 #define STATIC_PASTE1(X,Y) STATIC_PASTE2(X,Y)
 
-#define STATIC_ASSERT(COND)                          \
-  do {                                               \
-    __attribute__((assert_static(#COND), unused))    \
-    int STATIC_PASTE1(assert_static_, __COUNTER__);  \
-  } while(0)
-
 #define STATIC_ASSUME(COND)                          \
   do {                                               \
     __attribute__((assume_static(#COND), unused))    \
@@ -206,7 +218,6 @@ inline bool NS_warn_if_impl(bool aCondition, const char* aExpr,
 #define STATIC_INVARIANT(COND)             /* nothing */
 #define STATIC_INVARIANT_ASSUME(COND)      /* nothing */
 
-#define STATIC_ASSERT(COND)          do { /* nothing */ } while(0)
 #define STATIC_ASSUME(COND)          do { /* nothing */ } while(0)
 #define STATIC_ASSERT_RUNTIME(COND)  do { /* nothing */ } while(0)
 
@@ -215,22 +226,6 @@ inline bool NS_warn_if_impl(bool aCondition, const char* aExpr,
 #define STATIC_SKIP_INFERENCE STATIC_INVARIANT(skip_inference())
 
 #endif /* HAVE_STATIC_ANNOTATIONS */
-
-#ifdef XGILL_PLUGIN
-
-/* Redefine runtime assertion macros to perform static assertions, for both
- * debug and release builds. Don't include the original runtime assertions;
- * this ensures the tool will consider cases where the assertion fails. */
-
-#undef NS_PRECONDITION
-#undef NS_ASSERTION
-#undef NS_POSTCONDITION
-
-#define NS_PRECONDITION(expr, str)   STATIC_ASSERT_RUNTIME(expr)
-#define NS_ASSERTION(expr, str)      STATIC_ASSERT_RUNTIME(expr)
-#define NS_POSTCONDITION(expr, str)  STATIC_ASSERT_RUNTIME(expr)
-
-#endif /* XGILL_PLUGIN */
 
 /******************************************************************************
 ** Macros for terminating execution when an unrecoverable condition is

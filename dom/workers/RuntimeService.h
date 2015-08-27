@@ -1,5 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -16,7 +16,6 @@
 #include "nsHashKeys.h"
 #include "nsTArray.h"
 
-class nsIRunnable;
 class nsITimer;
 class nsPIDOMWindow;
 
@@ -129,10 +128,10 @@ public:
   CancelWorkersForWindow(nsPIDOMWindow* aWindow);
 
   void
-  SuspendWorkersForWindow(nsPIDOMWindow* aWindow);
+  FreezeWorkersForWindow(nsPIDOMWindow* aWindow);
 
   void
-  ResumeWorkersForWindow(nsPIDOMWindow* aWindow);
+  ThawWorkersForWindow(nsPIDOMWindow* aWindow);
 
   nsresult
   CreateSharedWorker(const GlobalObject& aGlobal,
@@ -142,16 +141,6 @@ public:
   {
     return CreateSharedWorkerInternal(aGlobal, aScriptURL, aName,
                                       WorkerTypeShared, aSharedWorker);
-  }
-
-  nsresult
-  CreateSharedWorkerForServiceWorker(const GlobalObject& aGlobal,
-                                     const nsAString& aScriptURL,
-                                     const nsACString& aScope,
-                                     SharedWorker** aSharedWorker)
-  {
-    return CreateSharedWorkerInternal(aGlobal, aScriptURL, aScope,
-                                      WorkerTypeService, aSharedWorker);
   }
 
   nsresult

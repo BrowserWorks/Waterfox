@@ -77,6 +77,7 @@ static const JSFunctionSpec exception_methods[] = {
         nullptr,                 /* setProperty */ \
         nullptr,                 /* enumerate */ \
         nullptr,                 /* resolve */ \
+        nullptr,                 /* mayResolve */ \
         nullptr,                 /* convert */ \
         exn_finalize, \
         nullptr,                 /* call        */ \
@@ -108,6 +109,7 @@ ErrorObject::classes[JSEXN_LIMIT] = {
         nullptr,                 /* setProperty */
         nullptr,                 /* enumerate */
         nullptr,                 /* resolve */
+        nullptr,                 /* mayResolve */
         nullptr,                 /* convert */
         exn_finalize,
         nullptr,                 /* call        */
@@ -488,7 +490,7 @@ ErrorObject::createProto(JSContext* cx, JSProtoKey key)
 ErrorObject::createConstructor(JSContext* cx, JSProtoKey key)
 {
     RootedObject ctor(cx);
-    ctor = GenericCreateConstructor<Error, 1, JSFunction::ExtendedFinalizeKind>(cx, key);
+    ctor = GenericCreateConstructor<Error, 1, gc::AllocKind::FUNCTION_EXTENDED>(cx, key);
     if (!ctor)
         return nullptr;
 
@@ -628,8 +630,10 @@ js::ReportUncaughtException(JSContext* cx)
         return true;
 
     RootedValue exn(cx);
-    if (!cx->getPendingException(&exn))
+    if (!cx->getPendingException(&exn)) {
+        cx->clearPendingException();
         return false;
+    }
 
     cx->clearPendingException();
 
@@ -663,7 +667,7 @@ ErrorReport::~ErrorReport()
     js_free(ownedMessage);
     if (ownedReport.messageArgs) {
         /*
-         * ExpandErrorArguments owns its messageArgs only if it had to
+         * ExpandErrorArgumentsVA owns its messageArgs only if it had to
          * inflate the arguments (from regular |char*|s), which is always in
          * our case.
          */
@@ -869,9 +873,9 @@ ErrorReport::populateUncaughtExceptionReportVA(JSContext* cx, va_list ap)
         ownedReport.isMuted = iter.mutedErrors();
     }
 
-    if (!ExpandErrorArguments(cx, GetErrorMessage, nullptr,
-                              JSMSG_UNCAUGHT_EXCEPTION, &ownedMessage,
-                              &ownedReport, ArgumentsAreASCII, ap)) {
+    if (!ExpandErrorArgumentsVA(cx, GetErrorMessage, nullptr,
+                                JSMSG_UNCAUGHT_EXCEPTION, &ownedMessage,
+                                &ownedReport, ArgumentsAreASCII, ap)) {
         return false;
     }
 
@@ -929,4 +933,44 @@ JS::CreateError(JSContext* cx, JSExnType type, HandleObject stack, HandleString 
 
     rval.setObject(*obj);
     return true;
+}
+
+const char*
+js::ValueToSourceForError(JSContext* cx, HandleValue val, JSAutoByteString& bytes)
+{
+    if (val.isUndefined()) {
+        return "undefined";
+    }
+    if (val.isNull()) {
+        return "null";
+    }
+
+    RootedString str(cx, JS_ValueToSource(cx, val));
+    if (!str) {
+        JS_ClearPendingException(cx);
+        return "<<error converting value to string>>";
+    }
+
+    StringBuffer sb(cx);
+    if (val.isObject()) {
+        RootedObject valObj(cx, val.toObjectOrNull());
+        if (JS_IsArrayObject(cx, valObj)) {
+            sb.append("the array ");
+        } else if (JS_IsArrayBufferObject(valObj)) {
+            sb.append("the array buffer ");
+        } else if (JS_IsArrayBufferViewObject(valObj)) {
+            sb.append("the typed array ");
+        } else {
+            sb.append("the object ");
+        }
+    } else if (val.isNumber()) {
+        sb.append("the number ");
+    } else if (val.isString()) {
+        sb.append("the string ");
+    } else {
+        MOZ_ASSERT(val.isBoolean() || val.isSymbol());
+        return bytes.encodeLatin1(cx, str);
+    }
+    sb.append(str);
+    return bytes.encodeLatin1(cx, sb.finishString());
 }

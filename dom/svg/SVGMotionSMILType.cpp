@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -36,7 +37,9 @@ struct TranslationParams {  // Simple translation
   float mY;
 };
 struct PathPointParams {  // Point along a path
-  Path* mPath; // NOTE: Refcounted; need to AddRef/Release.
+  // Refcounted: need to AddRef/Release.  This can't be an nsRefPtr because
+  // this struct is used inside a union so it can't have a default constructor.
+  Path* MOZ_OWNING_REF mPath;
   float mDistToPoint; // Distance from path start to the point on the path that
                       // we're interested in.
 };

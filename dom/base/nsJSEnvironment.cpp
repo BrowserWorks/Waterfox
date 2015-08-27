@@ -146,8 +146,6 @@ static const uint32_t kMaxICCDuration = 2000; // ms
 // Trigger a CC if the purple buffer exceeds this size when we check it.
 #define NS_CC_PURPLE_LIMIT          200
 
-#define JAVASCRIPT nsIProgrammingLanguage::JAVASCRIPT
-
 // Large value used to specify that a script should run essentially forever
 #define NS_UNLIMITED_SCRIPT_RUNTIME (0x40000000LL << 32)
 
@@ -220,7 +218,13 @@ static nsIScriptSecurityManager *sSecurityManager;
 // the appropriate pref is set.
 
 static bool sGCOnMemoryPressure;
+
+// nsJSEnvironmentObserver observes the user-interaction-inactive notifications
+// and triggers a shrinking a garbage collection if the user is still inactive
+// after NS_SHRINKING_GC_DELAY ms later, if the appropriate pref is set.
+
 static bool sCompactOnUserInactive;
+static bool sIsCompactingOnUserInactive = false;
 
 // In testing, we call RunNextCollectorTimer() to ensure that the collectors are run more
 // aggressively than they would be in regular browsing. sExpensiveCollectorPokes keeps
@@ -300,6 +304,10 @@ nsJSEnvironmentObserver::Observe(nsISupports* aSubject, const char* aTopic,
     }
   } else if (!nsCRT::strcmp(aTopic, "user-interaction-active")) {
     nsJSContext::KillShrinkingGCTimer();
+    if (sIsCompactingOnUserInactive) {
+      JS::AbortIncrementalGC(sRuntime);
+    }
+    MOZ_ASSERT(!sIsCompactingOnUserInactive);
   } else if (!nsCRT::strcmp(aTopic, "quit-application") ||
              !nsCRT::strcmp(aTopic, NS_XPCOM_SHUTDOWN_OBSERVER_ID)) {
     sShuttingDown = true;
@@ -319,7 +327,7 @@ public:
   }
   ~AutoFree() {
     if (mPtr)
-      nsMemory::Free(mPtr);
+      free(mPtr);
   }
   void Invalidate() {
     mPtr = 0;
@@ -1820,6 +1828,7 @@ void
 ShrinkingGCTimerFired(nsITimer* aTimer, void* aClosure)
 {
   nsJSContext::KillShrinkingGCTimer();
+  sIsCompactingOnUserInactive = true;
   nsJSContext::GarbageCollectNow(JS::gcreason::USER_INACTIVE,
                                  nsJSContext::IncrementalGC,
                                  nsJSContext::ShrinkingGC);
@@ -2237,6 +2246,7 @@ DOMGCSliceCallback(JSRuntime *aRt, JS::GCProgress aProgress, const JS::GCDescrip
       }
 
       sCCLockedOut = false;
+      sIsCompactingOnUserInactive = false;
 
       // May need to kill the inter-slice GC timer
       nsJSContext::KillInterSliceGCTimer();
@@ -2813,6 +2823,12 @@ mozilla::dom::GetNameSpaceManager()
     NS_ENSURE_SUCCESS(rv, nullptr);
   }
 
+  return gNameSpaceManager;
+}
+
+nsScriptNameSpaceManager*
+mozilla::dom::PeekNameSpaceManager()
+{
   return gNameSpaceManager;
 }
 

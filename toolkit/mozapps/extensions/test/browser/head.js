@@ -33,6 +33,7 @@ const PREF_XPI_ENABLED = "xpinstall.enabled";
 const PREF_UPDATEURL = "extensions.update.url";
 const PREF_GETADDONS_CACHE_ENABLED = "extensions.getAddons.cache.enabled";
 const PREF_CUSTOM_XPINSTALL_CONFIRMATION_UI = "xpinstall.customConfirmationUI";
+const PREF_UI_LASTCATEGORY = "extensions.ui.lastCategory";
 
 const MANAGER_URI = "about:addons";
 const INSTALL_URI = "chrome://mozapps/content/xpinstall/xpinstallConfirm.xul";
@@ -225,6 +226,45 @@ function run_next_test() {
   gTestStart = Date.now();
   executeSoon(() => log_exceptions(test));
 }
+
+let get_tooltip_info = Task.async(function*(addon) {
+  let managerWindow = addon.ownerDocument.defaultView;
+
+  // The popup code uses a triggering event's target to set the
+  // document.tooltipNode property.
+  let nameNode = addon.ownerDocument.getAnonymousElementByAttribute(addon, "anonid", "name");
+  let event = new managerWindow.CustomEvent("TriggerEvent");
+  nameNode.dispatchEvent(event);
+
+  let tooltip = managerWindow.document.getElementById("addonitem-tooltip");
+
+  let promise = BrowserTestUtils.waitForEvent(tooltip, "popupshown");
+  tooltip.openPopup(nameNode, "after_start", 0, 0, false, false, event);
+  yield promise;
+
+  let tiptext = tooltip.label;
+
+  promise = BrowserTestUtils.waitForEvent(tooltip, "popuphidden");
+  tooltip.hidePopup();
+  yield promise;
+
+  let expectedName = addon.getAttribute("name");
+  ok(tiptext.substring(0, expectedName.length), expectedName,
+     "Tooltip should always start with the expected name");
+
+  if (expectedName.length == tiptext.length) {
+    return {
+      name: tiptext,
+      version: undefined
+    };
+  }
+  else {
+    return {
+      name: tiptext.substring(0, expectedName.length),
+      version: tiptext.substring(expectedName.length + 1)
+    };
+  }
+});
 
 function get_addon_file_url(aFilename) {
   try {
@@ -488,6 +528,11 @@ function is_element_hidden(aElement, aMsg) {
   ok(is_hidden(aElement), aMsg || (aElement + " should be hidden"));
 }
 
+function promiseAddonsByIDs(aIDs) {
+  return new Promise(resolve => {
+    AddonManager.getAddonsByIDs(aIDs, resolve);
+  });
+}
 /**
  * Install an add-on and call a callback when complete.
  *

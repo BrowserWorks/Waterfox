@@ -19,7 +19,7 @@ public:
 
   // Decode thread.
   virtual already_AddRefed<MediaDataDecoder>
-  CreateVideoDecoder(const mp4_demuxer::VideoDecoderConfig& aConfig,
+  CreateVideoDecoder(const VideoInfo& aConfig,
                      layers::LayersBackend aLayersBackend,
                      layers::ImageContainer* aImageContainer,
                      FlushableMediaTaskQueue* aVideoTaskQueue,
@@ -27,11 +27,12 @@ public:
 
   // Decode thread.
   virtual already_AddRefed<MediaDataDecoder>
-  CreateAudioDecoder(const mp4_demuxer::AudioDecoderConfig& aConfig,
+  CreateAudioDecoder(const AudioInfo& aConfig,
                      FlushableMediaTaskQueue* aAudioTaskQueue,
                      MediaDataDecoderCallback* aCallback) override;
 
-  virtual bool DecoderNeedsAVCC(const mp4_demuxer::VideoDecoderConfig& aConfig) override;
+  virtual ConversionRequired
+  DecoderNeedsConversion(const TrackInfo& aConfig) const override;
 };
 
 } // namespace mozilla

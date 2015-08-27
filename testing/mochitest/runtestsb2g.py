@@ -17,7 +17,7 @@ sys.path.insert(0, here)
 from automationutils import processLeakLog
 from runtests import Mochitest
 from runtests import MochitestUtilsMixin
-from mochitest_options import B2GOptions, MochitestOptions
+from mochitest_options import MochitestArgumentParser
 from marionette import Marionette
 from mozprofile import Profile, Preferences
 from mozlog import structured
@@ -190,6 +190,14 @@ class B2GMochitest(MochitestUtilsMixin):
                 del self.browserEnv['MOZ_DISABLE_NONLOCAL_CONNECTIONS']
             self.runner.env.update(self.browserEnv)
 
+            # Despite our efforts to clean up servers started by this script, in practice
+            # we still see infrequent cases where a process is orphaned and interferes
+            # with future tests, typically because the old server is keeping the port in use.
+            # Try to avoid those failures by checking for and killing orphan servers before
+            # trying to start new ones.
+            self.killNamedOrphans('ssltunnel')
+            self.killNamedOrphans('xpcshell')
+
             self.startServers(options, None)
             self.buildURLOptions(options, {'MOZ_HIDE_RESULTS_TABLE': '1'})
             self.test_script_args.append(not options.emulator)
@@ -265,8 +273,9 @@ class B2GMochitest(MochitestUtilsMixin):
         return status
 
     def getGMPPluginPath(self, options):
-        # TODO: bug 1043403
-        return None
+        if options.gmp_path:
+            return options.gmp_path
+        return '/system/b2g/gmp-clearkey/0.1'
 
     def getChromeTestDir(self, options):
         # The chrome test directory returned here is the remote location
@@ -408,7 +417,7 @@ class B2GDesktopMochitest(B2GMochitest, Mochitest):
         return self.build_profile(options)
 
 
-def run_remote_mochitests(parser, options):
+def run_remote_mochitests(options):
     # create our Marionette instance
     marionette_args = {
         'adb_path': options.adbPath,
@@ -425,7 +434,6 @@ def run_remote_mochitests(parser, options):
         marionette_args['host'] = host
         marionette_args['port'] = int(port)
 
-    options = parser.verifyRemoteOptions(options)
     if (options is None):
         print "ERROR: Invalid options specified, use --help for a list of valid options"
         sys.exit(1)
@@ -437,7 +445,6 @@ def run_remote_mochitests(parser, options):
         options.xrePath,
         remote_log_file=options.remoteLogFile)
 
-    options = parser.verifyOptions(options, mochitest)
     if (options is None):
         sys.exit(1)
 
@@ -460,7 +467,7 @@ def run_remote_mochitests(parser, options):
     sys.exit(retVal)
 
 
-def run_desktop_mochitests(parser, options):
+def run_desktop_mochitests(options):
     # create our Marionette instance
     marionette_args = {}
     if options.marionette:
@@ -477,7 +484,6 @@ def run_desktop_mochitests(parser, options):
         marionette_args,
         options,
         options.profile_data_dir)
-    options = MochitestOptions.verifyOptions(parser, options, mochitest)
     if options is None:
         sys.exit(1)
 
@@ -493,14 +499,13 @@ def run_desktop_mochitests(parser, options):
 
 
 def main():
-    parser = B2GOptions()
-    structured.commandline.add_logging_group(parser)
-    options, args = parser.parse_args()
+    parser = MochitestArgumentParser(app='b2g')
+    options = parser.parse_args()
 
     if options.desktop:
-        run_desktop_mochitests(parser, options)
+        run_desktop_mochitests(options)
     else:
-        run_remote_mochitests(parser, options)
+        run_remote_mochitests(options)
 
 if __name__ == "__main__":
     main()

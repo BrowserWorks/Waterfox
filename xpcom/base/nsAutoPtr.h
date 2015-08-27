@@ -96,7 +96,21 @@ public:
   {
   }
 
+  template <typename I>
+  nsAutoPtr(nsAutoPtr<I>& aSmartPtr)
+    : mRawPtr(aSmartPtr.forget())
+    // Construct by transferring ownership from another smart pointer.
+  {
+  }
+
   nsAutoPtr(nsAutoPtr<T>&& aSmartPtr)
+    : mRawPtr(aSmartPtr.forget())
+    // Construct by transferring ownership from another smart pointer.
+  {
+  }
+
+  template <typename I>
+  nsAutoPtr(nsAutoPtr<I>&& aSmartPtr)
     : mRawPtr(aSmartPtr.forget())
     // Construct by transferring ownership from another smart pointer.
   {
@@ -119,7 +133,22 @@ public:
     return *this;
   }
 
+  template <typename I>
+  nsAutoPtr<T>& operator=(nsAutoPtr<I>& aRhs)
+  // assign by transferring ownership from another smart pointer.
+  {
+    assign(aRhs.forget());
+    return *this;
+  }
+
   nsAutoPtr<T>& operator=(nsAutoPtr<T>&& aRhs)
+  {
+    assign(aRhs.forget());
+    return *this;
+  }
+
+  template <typename I>
+  nsAutoPtr<T>& operator=(nsAutoPtr<I>&& aRhs)
   {
     assign(aRhs.forget());
     return *this;
@@ -758,94 +787,6 @@ operator!=(NSCAP_Zero* aLhs, const nsAutoArrayPtr<T>& aRhs)
   return reinterpret_cast<const void*>(aLhs) != static_cast<const void*>(aRhs.get());
 }
 
-
-/*****************************************************************************/
-
-template<class T>
-class MOZ_STACK_CLASS nsQueryObject : public nsCOMPtr_helper
-{
-public:
-  explicit nsQueryObject(T* aRawPtr)
-    : mRawPtr(aRawPtr)
-  {
-  }
-
-  virtual nsresult NS_FASTCALL operator()(const nsIID& aIID,
-                                          void** aResult) const override
-  {
-    nsresult status = mRawPtr ? mRawPtr->QueryInterface(aIID, aResult)
-                              : NS_ERROR_NULL_POINTER;
-    return status;
-  }
-private:
-  T* MOZ_NON_OWNING_REF mRawPtr;
-};
-
-template<class T>
-class MOZ_STACK_CLASS nsQueryObjectWithError : public nsCOMPtr_helper
-{
-public:
-  nsQueryObjectWithError(T* aRawPtr, nsresult* aErrorPtr)
-    : mRawPtr(aRawPtr), mErrorPtr(aErrorPtr)
-  {
-  }
-
-  virtual nsresult NS_FASTCALL operator()(const nsIID& aIID,
-                                          void** aResult) const
-  {
-    nsresult status = mRawPtr ? mRawPtr->QueryInterface(aIID, aResult)
-                              : NS_ERROR_NULL_POINTER;
-    if (mErrorPtr) {
-      *mErrorPtr = status;
-    }
-    return status;
-  }
-private:
-  T* MOZ_NON_OWNING_REF mRawPtr;
-  nsresult* mErrorPtr;
-};
-
-template<class T>
-inline nsQueryObject<T>
-do_QueryObject(T* aRawPtr)
-{
-  return nsQueryObject<T>(aRawPtr);
-}
-
-template<class T>
-inline nsQueryObject<T>
-do_QueryObject(nsCOMPtr<T>& aRawPtr)
-{
-  return nsQueryObject<T>(aRawPtr);
-}
-
-template<class T>
-inline nsQueryObject<T>
-do_QueryObject(nsRefPtr<T>& aRawPtr)
-{
-  return nsQueryObject<T>(aRawPtr);
-}
-
-template<class T>
-inline nsQueryObjectWithError<T>
-do_QueryObject(T* aRawPtr, nsresult* aErrorPtr)
-{
-  return nsQueryObjectWithError<T>(aRawPtr, aErrorPtr);
-}
-
-template<class T>
-inline nsQueryObjectWithError<T>
-do_QueryObject(nsCOMPtr<T>& aRawPtr, nsresult* aErrorPtr)
-{
-  return nsQueryObjectWithError<T>(aRawPtr, aErrorPtr);
-}
-
-template<class T>
-inline nsQueryObjectWithError<T>
-do_QueryObject(nsRefPtr<T>& aRawPtr, nsresult* aErrorPtr)
-{
-  return nsQueryObjectWithError<T>(aRawPtr, aErrorPtr);
-}
 
 /*****************************************************************************/
 

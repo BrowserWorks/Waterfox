@@ -1377,7 +1377,7 @@ BaselineCompiler::emit_JSOP_OBJECT()
 
         prepareVMCall();
 
-        pushArg(ImmWord(js::MaybeSingletonObject));
+        pushArg(ImmWord(TenuredObject));
         pushArg(ImmGCPtr(obj));
 
         if (!callVM(DeepCloneObjectLiteralInfo))
@@ -1714,7 +1714,7 @@ BaselineCompiler::emit_JSOP_CASE()
     masm.branch32(Assembler::Equal, payload, Imm32(0), &done);
     {
         // Pop the switch value if the case matches.
-        masm.addPtr(Imm32(sizeof(Value)), StackPointer);
+        masm.addToStackPtr(Imm32(sizeof(Value)));
         masm.jump(labelOf(target));
     }
     masm.bind(&done);
@@ -1740,28 +1740,26 @@ BaselineCompiler::emit_JSOP_NEWARRAY()
     frame.syncStack(0);
 
     uint32_t length = GET_UINT24(pc);
-    RootedObjectGroup group(cx);
-    if (!ObjectGroup::useSingletonForAllocationSite(script, pc, JSProto_Array)) {
-        group = ObjectGroup::allocationSiteGroup(cx, script, pc, JSProto_Array);
-        if (!group)
-            return false;
-    }
 
-    // Pass length in R0, group in R1.
+    // Pass length in R0.
     masm.move32(Imm32(length), R0.scratchReg());
-    masm.movePtr(ImmGCPtr(group), R1.scratchReg());
 
-    ArrayObject* templateObject = NewDenseUnallocatedArray(cx, length, NullPtr(), TenuredObject);
-    if (!templateObject)
+    ObjectGroup* group = ObjectGroup::allocationSiteGroup(cx, script, pc, JSProto_Array);
+    if (!group)
         return false;
-    templateObject->setGroup(group);
 
-    ICNewArray_Fallback::Compiler stubCompiler(cx, templateObject);
+    ICNewArray_Fallback::Compiler stubCompiler(cx, group);
     if (!emitOpIC(stubCompiler.getStub(&stubSpace_)))
         return false;
 
     frame.push(R0);
     return true;
+}
+
+bool
+BaselineCompiler::emit_JSOP_SPREADCALLARRAY()
+{
+    return emit_JSOP_NEWARRAY();
 }
 
 typedef JSObject* (*NewArrayCopyOnWriteFn)(JSContext*, HandleArrayObject, gc::InitialHeap);
@@ -1829,24 +1827,15 @@ BaselineCompiler::emit_JSOP_NEWINIT()
     frame.syncStack(0);
     JSProtoKey key = JSProtoKey(GET_UINT8(pc));
 
-    RootedObjectGroup group(cx);
-    if (!ObjectGroup::useSingletonForAllocationSite(script, pc, key)) {
-        group = ObjectGroup::allocationSiteGroup(cx, script, pc, key);
+    if (key == JSProto_Array) {
+        // Pass length in R0.
+        masm.move32(Imm32(0), R0.scratchReg());
+
+        ObjectGroup* group = ObjectGroup::allocationSiteGroup(cx, script, pc, JSProto_Array);
         if (!group)
             return false;
-    }
 
-    if (key == JSProto_Array) {
-        // Pass length in R0, group in R1.
-        masm.move32(Imm32(0), R0.scratchReg());
-        masm.movePtr(ImmGCPtr(group), R1.scratchReg());
-
-        ArrayObject* templateObject = NewDenseUnallocatedArray(cx, 0, NullPtr(), TenuredObject);
-        if (!templateObject)
-            return false;
-        templateObject->setGroup(group);
-
-        ICNewArray_Fallback::Compiler stubCompiler(cx, templateObject);
+        ICNewArray_Fallback::Compiler stubCompiler(cx, group);
         if (!emitOpIC(stubCompiler.getStub(&stubSpace_)))
             return false;
     } else {
@@ -2901,14 +2890,15 @@ BaselineCompiler::emit_JSOP_TYPEOFEXPR()
     return emit_JSOP_TYPEOF();
 }
 
-typedef bool (*SetCallFn)(JSContext*);
-static const VMFunction SetCallInfo = FunctionInfo<SetCallFn>(js::SetCallOperation);
+typedef bool (*ThrowMsgFn)(JSContext*, const unsigned);
+static const VMFunction ThrowMsgInfo = FunctionInfo<ThrowMsgFn>(js::ThrowMsgOperation);
 
 bool
-BaselineCompiler::emit_JSOP_SETCALL()
+BaselineCompiler::emit_JSOP_THROWMSG()
 {
     prepareVMCall();
-    return callVM(SetCallInfo);
+    pushArg(Imm32(GET_UINT16(pc)));
+    return callVM(ThrowMsgInfo);
 }
 
 typedef bool (*ThrowFn)(JSContext*, HandleValue);
@@ -3009,14 +2999,24 @@ BaselineCompiler::emit_JSOP_PUSHBLOCKSCOPE()
 typedef bool (*PopBlockScopeFn)(JSContext*, BaselineFrame*);
 static const VMFunction PopBlockScopeInfo = FunctionInfo<PopBlockScopeFn>(jit::PopBlockScope);
 
+typedef bool (*DebugLeaveThenPopBlockScopeFn)(JSContext*, BaselineFrame*, jsbytecode*);
+static const VMFunction DebugLeaveThenPopBlockScopeInfo =
+    FunctionInfo<DebugLeaveThenPopBlockScopeFn>(jit::DebugLeaveThenPopBlockScope);
+
 bool
 BaselineCompiler::emit_JSOP_POPBLOCKSCOPE()
 {
     prepareVMCall();
 
     masm.loadBaselineFramePtr(BaselineFrameReg, R0.scratchReg());
-    pushArg(R0.scratchReg());
 
+    if (compileDebugInstrumentation_) {
+        pushArg(ImmPtr(pc));
+        pushArg(R0.scratchReg());
+        return callVM(DebugLeaveThenPopBlockScopeInfo);
+    }
+
+    pushArg(R0.scratchReg());
     return callVM(PopBlockScopeInfo);
 }
 
@@ -3024,14 +3024,24 @@ typedef bool (*FreshenBlockScopeFn)(JSContext*, BaselineFrame*);
 static const VMFunction FreshenBlockScopeInfo =
     FunctionInfo<FreshenBlockScopeFn>(jit::FreshenBlockScope);
 
+typedef bool (*DebugLeaveThenFreshenBlockScopeFn)(JSContext*, BaselineFrame*, jsbytecode*);
+static const VMFunction DebugLeaveThenFreshenBlockScopeInfo =
+    FunctionInfo<DebugLeaveThenFreshenBlockScopeFn>(jit::DebugLeaveThenFreshenBlockScope);
+
 bool
 BaselineCompiler::emit_JSOP_FRESHENBLOCKSCOPE()
 {
     prepareVMCall();
 
     masm.loadBaselineFramePtr(BaselineFrameReg, R0.scratchReg());
-    pushArg(R0.scratchReg());
 
+    if (compileDebugInstrumentation_) {
+        pushArg(ImmPtr(pc));
+        pushArg(R0.scratchReg());
+        return callVM(DebugLeaveThenFreshenBlockScopeInfo);
+    }
+
+    pushArg(R0.scratchReg());
     return callVM(FreshenBlockScopeInfo);
 }
 
@@ -3484,23 +3494,11 @@ BaselineCompiler::emit_JSOP_YIELD()
 
     MOZ_ASSERT(frame.stackDepth() >= 1);
 
-    if (frame.stackDepth() == 1) {
-        // If the expression stack is empty, we can inline the YIELD. For legacy
-        // generators we normally check if we're in the closing state and throw
-        // an exception, but we don't have to do anything here as the expression
-        // stack is never empty in finally blocks. In debug builds, we assert
-        // we're not in the closing state.
-#ifdef DEBUG
-        if (script->isLegacyGenerator()) {
-            Label ok;
-            masm.unboxInt32(Address(genObj, GeneratorObject::offsetOfYieldIndexSlot()),
-                            R0.scratchReg());
-            masm.branch32(Assembler::NotEqual, R0.scratchReg(),
-                          Imm32(GeneratorObject::YIELD_INDEX_CLOSING), &ok);
-            masm.assumeUnreachable("Inline yield with closing generator");
-            masm.bind(&ok);
-        }
-#endif
+    if (frame.stackDepth() == 1 && !script->isLegacyGenerator()) {
+        // If the expression stack is empty, we can inline the YIELD. Don't do
+        // this for legacy generators: we have to throw an exception if the
+        // generator is in the closing state, see GeneratorObject::suspend.
+
         masm.storeValue(Int32Value(GET_UINT24(pc)),
                         Address(genObj, GeneratorObject::offsetOfYieldIndexSlot()));
 

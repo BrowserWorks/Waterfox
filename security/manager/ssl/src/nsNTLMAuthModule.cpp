@@ -29,7 +29,6 @@
 
 static bool sNTLMv1Forced = false;
 
-#ifdef PR_LOGGING
 static PRLogModuleInfo *
 GetNTLMLog()
 {
@@ -41,9 +40,6 @@ GetNTLMLog()
 
 #define LOG(x) PR_LOG(GetNTLMLog(), PR_LOG_DEBUG, x)
 #define LOG_ENABLED() PR_LOG_TEST(GetNTLMLog(), PR_LOG_DEBUG)
-#else
-#define LOG(x)
-#endif
 
 static void des_makekey(const uint8_t *raw, uint8_t *key);
 static void des_encrypt(const uint8_t *key, const uint8_t *src, uint8_t *hash);
@@ -118,8 +114,6 @@ static const char NTLM_TYPE3_MARKER[] = { 0x03, 0x00, 0x00, 0x00 };
 #define NTLMv2_BLOB1_LEN 28
 
 //-----------------------------------------------------------------------------
-
-#ifdef PR_LOGGING
 
 /**
  * Prints a description of flags to the NSPR Log, if enabled.
@@ -239,13 +233,6 @@ static void LogToken(const char *name, const void *token, uint32_t tokenLen)
     PR_Free(b64data);
   }
 }
-
-#else
-#define LogFlags(x)
-#define LogBuf(a,b,c)
-#define LogToken(a,b,c)
-
-#endif // PR_LOGGING
 
 //-----------------------------------------------------------------------------
 
@@ -409,7 +396,7 @@ GenerateType1Msg(void **outBuf, uint32_t *outLen)
   // verify that bufLen is sufficient
   //
   *outLen = NTLM_TYPE1_HEADER_LEN;
-  *outBuf = nsMemory::Alloc(*outLen);
+  *outBuf = moz_xmalloc(*outLen);
   if (!*outBuf)
     return NS_ERROR_OUT_OF_MEMORY;
 
@@ -877,7 +864,7 @@ GenerateType3Msg(const nsString &domain,
     NS_ERROR("failed preparing to allocate NTLM response: integer overflow?!?");
     return NS_ERROR_FAILURE;
   }
-  *outBuf = nsMemory::Alloc(totalLen.value());
+  *outBuf = moz_xmalloc(totalLen.value());
   *outLen = totalLen.value();
   if (!*outBuf) {
     return NS_ERROR_OUT_OF_MEMORY;
@@ -1002,6 +989,7 @@ nsNTLMAuthModule::Init(const char      *serviceName,
   mDomain = domain;
   mUsername = username;
   mPassword = password;
+  mNTLMNegotiateSent = false;
 
   static bool sTelemetrySent = false;
   if (!sTelemetrySent) {
@@ -1030,22 +1018,33 @@ nsNTLMAuthModule::GetNextToken(const void *inToken,
   if (PK11_IsFIPS())
     return NS_ERROR_NOT_AVAILABLE;
 
-  // if inToken is non-null, then assume it contains a type 2 message...
-  if (inToken)
-  {
-    LogToken("in-token", inToken, inTokenLen);
-    rv = GenerateType3Msg(mDomain, mUsername, mPassword, inToken,
-                          inTokenLen, outToken, outTokenLen);
-  }
-  else
-  {
-    rv = GenerateType1Msg(outToken, outTokenLen);
+  if (mNTLMNegotiateSent) {
+    // if inToken is non-null, and we have sent the NTLMSSP_NEGOTIATE (type 1),
+    // then the NTLMSSP_CHALLENGE (type 2) is expected
+    if (inToken) {
+      LogToken("in-token", inToken, inTokenLen);
+      // Now generate the NTLMSSP_AUTH (type 3)
+      rv = GenerateType3Msg(mDomain, mUsername, mPassword, inToken,
+			    inTokenLen, outToken, outTokenLen);
+    } else {
+      LOG(("NTLMSSP_NEGOTIATE already sent and presumably "
+	   "rejected by the server, refusing to send another"));
+      rv = NS_ERROR_UNEXPECTED;
+    }
+  } else {
+    if (inToken) {
+      LOG(("NTLMSSP_NEGOTIATE not sent but NTLM reply already received?!?"));
+      rv = NS_ERROR_UNEXPECTED;
+    } else {
+      rv = GenerateType1Msg(outToken, outTokenLen);
+      if (NS_SUCCEEDED(rv)) {
+	mNTLMNegotiateSent = true;
+      }
+    }
   }
 
-#ifdef PR_LOGGING
   if (NS_SUCCEEDED(rv))
     LogToken("out-token", *outToken, *outTokenLen);
-#endif
 
   return rv;
 }

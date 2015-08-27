@@ -601,9 +601,6 @@ align 16
 t80:
     times 8 db 0x80
 align 16
-t1s:
-    times 8 db 0x01
-align 16
 t3:
     times 8 db 0x03
 align 16
@@ -612,15 +609,3 @@ t4:
 align 16
 ones:
     times 4 dw 0x0001
-align 16
-s27:
-    times 4 dw 0x1b00
-align 16
-s18:
-    times 4 dw 0x1200
-align 16
-s9:
-    times 4 dw 0x0900
-align 16
-s63:
-    times 4 dw 0x003f

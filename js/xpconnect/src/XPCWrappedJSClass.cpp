@@ -172,7 +172,7 @@ nsXPCWrappedJSClass::~nsXPCWrappedJSClass()
         mRuntime->GetWrappedJSClassMap()->Remove(this);
 
     if (mName)
-        nsMemory::Free(mName);
+        free(mName);
 }
 
 JSObject*
@@ -515,7 +515,8 @@ nsXPCWrappedJSClass::DelegatedQueryInterface(nsXPCWrappedJS* self,
       NativeGlobal(js::GetGlobalForObjectCrossCompartment(self->GetJSObject()));
     NS_ENSURE_TRUE(nativeGlobal, NS_ERROR_FAILURE);
     NS_ENSURE_TRUE(nativeGlobal->GetGlobalJSObject(), NS_ERROR_FAILURE);
-    AutoEntryScript aes(nativeGlobal, /* aIsMainThread = */ true);
+    AutoEntryScript aes(nativeGlobal, "XPCWrappedJS QueryInterface",
+                        /* aIsMainThread = */ true);
     XPCCallContext ccx(NATIVE_CALLER, aes.cx());
     if (!ccx.IsValid()) {
         *aInstancePtr = nullptr;
@@ -690,7 +691,7 @@ nsXPCWrappedJSClass::CleanupPointerArray(const nsXPTType& datum_type,
         void** pp = (void**) arrayp;
         for (uint32_t k = 0; k < array_count; k++) {
             void* p = pp[k];
-            if (p) nsMemory::Free(p);
+            if (p) free(p);
         }
     }
 }
@@ -705,7 +706,7 @@ nsXPCWrappedJSClass::CleanupPointerTypeObject(const nsXPTType& type,
         if (p) p->Release();
     } else {
         void* p = *((void**)pp);
-        if (p) nsMemory::Free(p);
+        if (p) free(p);
     }
 }
 
@@ -913,7 +914,8 @@ nsXPCWrappedJSClass::CallMethod(nsXPCWrappedJS* wrapper, uint16_t methodIndex,
     // definitely will be when we turn off XPConnect for the web.
     nsIGlobalObject* nativeGlobal =
       NativeGlobal(js::GetGlobalForObjectCrossCompartment(wrapper->GetJSObject()));
-    AutoEntryScript aes(nativeGlobal, /* aIsMainThread = */ true);
+    AutoEntryScript aes(nativeGlobal, "XPCWrappedJS method call",
+                        /* aIsMainThread = */ true);
     XPCCallContext ccx(NATIVE_CALLER, aes.cx());
     if (!ccx.IsValid())
         return retval;
@@ -1178,7 +1180,7 @@ pre_call_clean_up:
                     }
 
                     // always release the array if it is inout
-                    nsMemory::Free(pp);
+                    free(pp);
                 }
             } else
                 CleanupPointerTypeObject(type, (void**)p);
@@ -1295,21 +1297,9 @@ pre_call_clean_up:
                 break;
         }
 
-// see bug #961488
-#if (defined(XP_UNIX) && !defined(XP_MACOSX) && !defined(_AIX)) && \
-    ((defined(__sparc) && !defined(__sparcv9) && !defined(__sparcv9__)) || \
-    (defined(__powerpc__) && !defined (__powerpc64__)))
-        if (type_tag == nsXPTType::T_JSVAL) {
-            if (!XPCConvert::JSData2Native(*(void**)(&pv->val), val, type,
-                                           &param_iid, nullptr))
-                break;
-        } else
-#endif
-        {
-            if (!XPCConvert::JSData2Native(&pv->val, val, type,
-                                           &param_iid, nullptr))
-                break;
-        }
+        if (!XPCConvert::JSData2Native(&pv->val, val, type,
+                                       &param_iid, nullptr))
+            break;
     }
 
     // if any params were dependent, then we must iterate again to convert them.
@@ -1418,7 +1408,7 @@ pre_call_clean_up:
 
                         CleanupPointerArray(datum_type, array_count, pp);
                     }
-                    nsMemory::Free(pp);
+                    free(pp);
                 }
             } else
                 CleanupPointerTypeObject(type, (void**)p);
@@ -1454,6 +1444,7 @@ static const JSClass XPCOutParamClass = {
     nullptr,   /* setProperty */
     nullptr,   /* enumerate */
     nullptr,   /* resolve */
+    nullptr,   /* mayResolve */
     nullptr,   /* convert */
     FinalizeStub,
     nullptr,   /* call */
@@ -1486,11 +1477,11 @@ nsXPCWrappedJSClass::DebugDump(int16_t depth)
         mInfo->GetName(&name);
         XPC_LOG_ALWAYS(("interface name is %s", name));
         if (name)
-            nsMemory::Free(name);
+            free(name);
         char * iid = mIID.ToString();
         XPC_LOG_ALWAYS(("IID number is %s", iid ? iid : "invalid"));
         if (iid)
-            NS_Free(iid);
+            free(iid);
         XPC_LOG_ALWAYS(("InterfaceInfo @ %x", mInfo.get()));
         uint16_t methodCount = 0;
         if (depth) {

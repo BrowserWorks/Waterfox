@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-*/
-/* vim: set ts=2 sw=2 et tw=79: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -127,7 +127,8 @@ ThrowMethodFailedWithDetails(JSContext* cx, ErrorResult& rv,
     rv.ReportNotEnoughArgsError(cx, ifaceName, memberName);
     return false;
   }
-  return Throw(cx, rv.ErrorCode());
+  rv.ReportGenericError(cx);
+  return false;
 }
 
 // Returns true if the JSClass is used for DOM objects.
@@ -1048,7 +1049,7 @@ WrapNewBindingNonWrapperCachedObject(JSContext* cx,
   // We can end up here in all sorts of compartments, per above.  Make
   // sure to JS_WrapValue!
   rval.set(JS::ObjectValue(*obj));
-  return JS_WrapValue(cx, rval);
+  return MaybeWrapObjectValue(cx, rval);
 }
 
 // Create a JSObject wrapping "value", for cases when "value" is a
@@ -1096,7 +1097,7 @@ WrapNewBindingNonWrapperCachedObject(JSContext* cx,
   // We can end up here in all sorts of compartments, per above.  Make
   // sure to JS_WrapValue!
   rval.set(JS::ObjectValue(*obj));
-  return JS_WrapValue(cx, rval);
+  return MaybeWrapObjectValue(cx, rval);
 }
 
 // Helper for smart pointers (nsRefPtr/nsCOMPtr).
@@ -1539,8 +1540,10 @@ struct WrapNativeParentHelper<T, false>
     JSObject* obj;
     if (cache && (obj = cache->GetWrapper())) {
 #ifdef DEBUG
-      NS_ASSERTION(WrapNativeISupportsParent(cx, parent, cache) == obj,
+      JS::Rooted<JSObject*> rootedObj(cx, obj);
+      NS_ASSERTION(WrapNativeISupportsParent(cx, parent, cache) == rootedObj,
                    "Unexpected object in nsWrapperCache");
+      obj = rootedObj;
 #endif
       return obj;
     }
@@ -1620,83 +1623,6 @@ struct GetParentObject<T, false>
     return nullptr;
   }
 };
-
-MOZ_ALWAYS_INLINE
-JSObject* GetJSObjectFromCallback(CallbackObject* callback)
-{
-  return callback->Callback();
-}
-
-MOZ_ALWAYS_INLINE
-JSObject* GetJSObjectFromCallback(void* noncallback)
-{
-  return nullptr;
-}
-
-template<typename T>
-static inline bool
-WrapCallThisValue(JSContext* cx, const T& p, JS::MutableHandle<JS::Value> rval)
-{
-  // Callbacks are nsISupports, so WrapNativeParent will just happily wrap them
-  // up as an nsISupports XPCWrappedNative... which is not at all what we want.
-  // So we need to special-case them.
-  JS::Rooted<JSObject*> obj(cx, GetJSObjectFromCallback(p));
-  if (!obj) {
-    // WrapNativeParent is a bit of a Swiss army knife that will
-    // wrap anything for us.
-    obj = WrapNativeParent(cx, p);
-    if (!obj) {
-      return false;
-    }
-  }
-
-  // But all that won't necessarily put things in the compartment of cx.
-  if (!JS_WrapObject(cx, &obj)) {
-    return false;
-  }
-
-  rval.setObject(*obj);
-  return true;
-}
-
-/*
- * This specialized function simply wraps a JS::Rooted<> since
- * WrapNativeParent() is not applicable for JS objects.
- */
-template<>
-inline bool
-WrapCallThisValue<JS::Rooted<JSObject*>>(JSContext* cx,
-                                         const JS::Rooted<JSObject*>& p,
-                                         JS::MutableHandle<JS::Value> rval)
-{
-  JS::Rooted<JSObject*> obj(cx, p);
-
-  if (!JS_WrapObject(cx, &obj)) {
-    return false;
-  }
-
-  rval.setObject(*obj);
-  return true;
-}
-
-/*
- * This specialization is for wrapping any JS value.
- */
-template<>
-inline bool
-WrapCallThisValue<JS::Rooted<JS::Value>>(JSContext* cx,
-                                         const JS::Rooted<JS::Value>& v,
-                                         JS::MutableHandle<JS::Value> rval)
-{
-  JS::Rooted<JS::Value> val(cx, v);
-
-  if (!JS_WrapValue(cx, &val)) {
-    return false;
-  }
-
-  rval.set(val);
-  return true;
-}
 
 // Helper for calling GetOrCreateDOMReflector with smart pointers
 // (nsAutoPtr/nsRefPtr/nsCOMPtr) or references.
@@ -3045,6 +2971,9 @@ ResolveGlobal(JSContext* aCx, JS::Handle<JSObject*> aObj,
               JS::Handle<jsid> aId, bool* aResolvedp);
 
 bool
+MayResolveGlobal(const JSAtomState& aNames, jsid aId, JSObject* aMaybeObj);
+
+bool
 EnumerateGlobal(JSContext* aCx, JS::Handle<JSObject*> aObj);
 
 template <class T>
@@ -3268,7 +3197,7 @@ WrappedJSToDictionary(nsISupports* aObject, T& aDictionary)
 
   // we need this AutoEntryScript here because the spec requires us to execute
   // getters when parsing a dictionary
-  AutoEntryScript aes(global);
+  AutoEntryScript aes(global, "WebIDL dictionary creation");
   aes.TakeOwnershipOfErrorReporting();
 
   JS::Rooted<JS::Value> v(aes.cx(), JS::ObjectValue(*obj));

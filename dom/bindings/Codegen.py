@@ -23,6 +23,7 @@ CONSTRUCT_HOOK_NAME = '_constructor'
 LEGACYCALLER_HOOK_NAME = '_legacycaller'
 HASINSTANCE_HOOK_NAME = '_hasInstance'
 RESOLVE_HOOK_NAME = '_resolve'
+MAY_RESOLVE_HOOK_NAME = '_mayResolve'
 ENUMERATE_HOOK_NAME = '_enumerate'
 ENUM_ENTRY_VARIABLE_NAME = 'strings'
 INSTANCE_RESERVED_SLOTS = 1
@@ -134,6 +135,9 @@ def dedent(s):
 fill_multiline_substitution_re = re.compile(r"( *)\$\*{(\w+)}(\n)?")
 
 
+find_substitutions = re.compile(r"\${")
+
+
 @memoize
 def compile_fill_template(template):
     """
@@ -173,6 +177,8 @@ def compile_fill_template(template):
         return "${" + modified_name + "}"
 
     t = re.sub(fill_multiline_substitution_re, replace, t)
+    if not re.search(find_substitutions, t):
+        raise TypeError("Using fill() when dedent() would do.")
     return (string.Template(t), argModList)
 
 
@@ -452,12 +458,15 @@ class CGDOMJSClass(CGThing):
             reservedSlots = slotCount
         if self.descriptor.interface.getExtendedAttribute("NeedResolve"):
             resolveHook = RESOLVE_HOOK_NAME
+            mayResolveHook = MAY_RESOLVE_HOOK_NAME
             enumerateHook = ENUMERATE_HOOK_NAME
         elif self.descriptor.isGlobal():
             resolveHook = "mozilla::dom::ResolveGlobal"
+            mayResolveHook = "mozilla::dom::MayResolveGlobal"
             enumerateHook = "mozilla::dom::EnumerateGlobal"
         else:
             resolveHook = "nullptr"
+            mayResolveHook = "nullptr"
             enumerateHook = "nullptr"
 
         return fill(
@@ -471,6 +480,7 @@ class CGDOMJSClass(CGThing):
                 nullptr,               /* setProperty */
                 ${enumerate}, /* enumerate */
                 ${resolve}, /* resolve */
+                ${mayResolve}, /* mayResolve */
                 nullptr,               /* convert */
                 ${finalize}, /* finalize */
                 ${call}, /* call */
@@ -492,6 +502,7 @@ class CGDOMJSClass(CGThing):
             addProperty=ADDPROPERTY_HOOK_NAME if wantsAddProperty(self.descriptor) else 'nullptr',
             enumerate=enumerateHook,
             resolve=resolveHook,
+            mayResolve=mayResolveHook,
             finalize=FINALIZE_HOOK_NAME,
             call=callHook,
             trace=traceHook,
@@ -611,6 +622,7 @@ class CGPrototypeJSClass(CGThing):
                 nullptr,               /* setProperty */
                 nullptr,               /* enumerate */
                 nullptr,               /* resolve */
+                nullptr,               /* mayResolve */
                 nullptr,               /* convert */
                 nullptr,               /* finalize */
                 nullptr,               /* call */
@@ -704,6 +716,7 @@ class CGInterfaceObjectJSClass(CGThing):
                 nullptr,               /* setProperty */
                 nullptr,               /* enumerate */
                 nullptr,               /* resolve */
+                nullptr,               /* mayResolve */
                 nullptr,               /* convert */
                 nullptr,               /* finalize */
                 ${ctorname}, /* call */
@@ -1141,14 +1154,14 @@ class CGHeaders(CGWrapper):
         if len(callbacks) != 0:
             # We need CallbackFunction to serve as our parent class
             declareIncludes.add("mozilla/dom/CallbackFunction.h")
-            # And we need BindingUtils.h so we can wrap "this" objects
-            declareIncludes.add("mozilla/dom/BindingUtils.h")
+            # And we need ToJSValue.h so we can wrap "this" objects
+            declareIncludes.add("mozilla/dom/ToJSValue.h")
 
         if len(callbackDescriptors) != 0 or len(jsImplementedDescriptors) != 0:
             # We need CallbackInterface to serve as our parent class
             declareIncludes.add("mozilla/dom/CallbackInterface.h")
-            # And we need BindingUtils.h so we can wrap "this" objects
-            declareIncludes.add("mozilla/dom/BindingUtils.h")
+            # And we need ToJSValue.h so we can wrap "this" objects
+            declareIncludes.add("mozilla/dom/ToJSValue.h")
 
         # Also need to include the headers for ancestors of
         # JS-implemented interfaces.
@@ -1503,7 +1516,7 @@ class CGAddPropertyHook(CGAbstractClassHook):
         args = [Argument('JSContext*', 'cx'),
                 Argument('JS::Handle<JSObject*>', 'obj'),
                 Argument('JS::Handle<jsid>', 'id'),
-                Argument('JS::MutableHandle<JS::Value>', 'vp')]
+                Argument('JS::Handle<JS::Value>', 'val')]
         CGAbstractClassHook.__init__(self, descriptor, ADDPROPERTY_HOOK_NAME,
                                      'bool', args)
 
@@ -2766,14 +2779,13 @@ class CGCreateInterfaceObjectsMethod(CGAbstractMethod):
 
         if self.descriptor.hasUnforgeableMembers:
             assert needInterfacePrototypeObject
-            setUnforgeableHolder = CGGeneric(fill(
+            setUnforgeableHolder = CGGeneric(dedent(
                 """
                 if (*protoCache) {
                   js::SetReservedSlot(*protoCache, DOM_INTERFACE_PROTO_SLOTS_BASE,
                                       JS::ObjectValue(*unforgeableHolder));
                 }
-                """,
-                name=self.descriptor.name))
+                """))
         else:
             setUnforgeableHolder = None
 
@@ -3548,11 +3560,12 @@ class CGUpdateMemberSlotsMethod(CGAbstractStaticMethod):
                 "JSJitGetterCallArgs args(&temp);\n")
         for m in self.descriptor.interface.members:
             if m.isAttr() and m.getExtendedAttribute("StoreInSlot"):
-                # Skip doing this for the "window" attribute on the Window
-                # interface, because that can't be gotten safely until we have
-                # hooked it up correctly to the outer window.
+                # Skip doing this for the "window" and "self" attributes on the
+                # Window interface, because those can't be gotten safely until
+                # we have hooked it up correctly to the outer window.  The
+                # window code handles doing the get itself.
                 if (self.descriptor.interface.identifier.name == "Window" and
-                    m.identifier.name == "window"):
+                    (m.identifier.name == "window" or m.identifier.name == "self")):
                     continue
                 body += fill(
                     """
@@ -4759,7 +4772,7 @@ def getJSToNativeConversionInfo(type, descriptorProvider, failureCode=None,
                                       extraConditionForNull=extraConditionForNull)
         elif (not type.hasNullableType and defaultValue and
               isinstance(defaultValue, IDLNullValue)):
-            assert type.hasDictionaryType
+            assert type.hasDictionaryType()
             assert defaultValue.type.isDictionary()
             if not isOwningUnion and typeNeedsRooting(defaultValue.type):
                 ctorArgs = "cx"
@@ -6658,6 +6671,22 @@ class CGPerSignatureCall(CGThing):
                         return false;
                     }
                     """)))
+
+        if idlNode.getExtendedAttribute("Deprecated"):
+            cgThings.append(CGGeneric(dedent(
+                """
+                {
+                  GlobalObject global(cx, obj);
+                  if (global.Failed()) {
+                    return false;
+                  }
+                  nsCOMPtr<nsPIDOMWindow> pWindow = do_QueryInterface(global.GetAsSupports());
+                  if (pWindow && pWindow->GetExtantDoc()) {
+                    pWindow->GetExtantDoc()->WarnOnceAbout(nsIDocument::e%s);
+                  }
+                }
+                """ % idlNode.getExtendedAttribute("Deprecated")[0])))
+
         lenientFloatCode = None
         if idlNode.getExtendedAttribute('LenientFloat') is not None:
             if setter:
@@ -7745,7 +7774,7 @@ class CGLegacyCallHook(CGAbstractBindingMethod):
                             self._legacycaller)
 
 
-class CGResolveHook(CGAbstractBindingMethod):
+class CGResolveHook(CGAbstractClassHook):
     """
     Resolve hook for objects that have the NeedResolve extended attribute.
     """
@@ -7756,13 +7785,11 @@ class CGResolveHook(CGAbstractBindingMethod):
                 Argument('JS::Handle<JSObject*>', 'obj'),
                 Argument('JS::Handle<jsid>', 'id'),
                 Argument('bool*', 'resolvedp')]
-        # Our "self" is actually the "obj" argument in this case, not the thisval.
-        CGAbstractBindingMethod.__init__(
-            self, descriptor, RESOLVE_HOOK_NAME,
-            args, getThisObj="", callArgs="")
+        CGAbstractClassHook.__init__(self, descriptor, RESOLVE_HOOK_NAME,
+                                     "bool", args)
 
     def generate_code(self):
-        return CGGeneric(dedent("""
+        return dedent("""
             JS::Rooted<JSPropertyDescriptor> desc(cx);
             if (!self->DoResolve(cx, obj, id, &desc)) {
               return false;
@@ -7779,7 +7806,7 @@ class CGResolveHook(CGAbstractBindingMethod):
             }
             *resolvedp = true;
             return true;
-            """))
+            """)
 
     def definition_body(self):
         if self.descriptor.isGlobal():
@@ -7795,7 +7822,35 @@ class CGResolveHook(CGAbstractBindingMethod):
                 """)
         else:
             prefix = ""
-        return prefix + CGAbstractBindingMethod.definition_body(self)
+        return prefix + CGAbstractClassHook.definition_body(self)
+
+
+class CGMayResolveHook(CGAbstractStaticMethod):
+    """
+    Resolve hook for objects that have the NeedResolve extended attribute.
+    """
+    def __init__(self, descriptor):
+        assert descriptor.interface.getExtendedAttribute("NeedResolve")
+
+        args = [Argument('const JSAtomState&', 'names'),
+                Argument('jsid', 'id'),
+                Argument('JSObject*', 'maybeObj')]
+        CGAbstractStaticMethod.__init__(self, descriptor, MAY_RESOLVE_HOOK_NAME,
+                                        "bool", args)
+
+    def definition_body(self):
+        if self.descriptor.isGlobal():
+            # Check whether this would resolve as a standard class.
+            prefix = dedent("""
+                if (MayResolveGlobal(names, id, maybeObj)) {
+                  return true;
+                }
+
+                """)
+        else:
+            prefix = ""
+        return (prefix +
+                "return %s::MayResolve(id);\n" % self.descriptor.nativeType)
 
 
 class CGEnumerateHook(CGAbstractBindingMethod):
@@ -8175,8 +8230,8 @@ class CGMemberJITInfo(CGThing):
         return ""
 
     def defineJitInfo(self, infoName, opName, opType, infallible, movable,
-                      aliasSet, alwaysInSlot, lazilyInSlot, slotIndex,
-                      returnTypes, args):
+                      eliminatable, aliasSet, alwaysInSlot, lazilyInSlot,
+                      slotIndex, returnTypes, args):
         """
         aliasSet is a JSJitInfo::AliasSet value, without the "JSJitInfo::" bit.
 
@@ -8186,12 +8241,14 @@ class CGMemberJITInfo(CGThing):
         """
         assert(not movable or aliasSet != "AliasEverything")  # Can't move write-aliasing things
         assert(not alwaysInSlot or movable)  # Things always in slots had better be movable
+        assert(not eliminatable or aliasSet != "AliasEverything")  # Can't eliminate write-aliasing things
+        assert(not alwaysInSlot or eliminatable) # Things always in slots had better be eliminatable
 
         def jitInfoInitializer(isTypedMethod):
             initializer = fill(
                 """
                 {
-                 { ${opName} },
+                  { ${opName} },
                   prototypes::id::${name},
                   PrototypeTraits<prototypes::id::${name}>::Depth,
                   JSJitInfo::${opType},
@@ -8199,6 +8256,7 @@ class CGMemberJITInfo(CGThing):
                   ${returnType},  /* returnType.  Not relevant for setters. */
                   ${isInfallible},  /* isInfallible. False in setters. */
                   ${isMovable},  /* isMovable.  Not relevant for setters. */
+                  ${isEliminatable}, /* isEliminatable.  Not relevant for setters. */
                   ${isAlwaysInSlot}, /* isAlwaysInSlot.  Only relevant for getters. */
                   ${isLazilyCachedInSlot}, /* isLazilyCachedInSlot.  Only relevant for getters. */
                   ${isTypedMethod},  /* isTypedMethod.  Only relevant for methods. */
@@ -8213,12 +8271,17 @@ class CGMemberJITInfo(CGThing):
                                   ""),
                 isInfallible=toStringBool(infallible),
                 isMovable=toStringBool(movable),
+                isEliminatable=toStringBool(eliminatable),
                 isAlwaysInSlot=toStringBool(alwaysInSlot),
                 isLazilyCachedInSlot=toStringBool(lazilyInSlot),
                 isTypedMethod=toStringBool(isTypedMethod),
                 slotIndex=slotIndex)
             return initializer.rstrip()
 
+        slotAssert = dedent(
+            """
+            static_assert(%s <= JSJitInfo::maxSlotIndex, "We won't fit");
+            """ % slotIndex)
         if args is not None:
             argTypes = "%s_argTypes" % infoName
             args = [CGMemberJITInfo.getJSArgType(arg.type) for arg in args]
@@ -8228,21 +8291,27 @@ class CGMemberJITInfo(CGThing):
                 (argTypes, ", ".join(args)))
             return fill(
                 """
-
                 $*{argTypesDecl}
                 static const JSTypedMethodJitInfo ${infoName} = {
-                  ${jitInfo},
+                ${jitInfo},
                   ${argTypes}
                 };
+                $*{slotAssert}
                 """,
                 argTypesDecl=argTypesDecl,
                 infoName=infoName,
-                jitInfo=jitInfoInitializer(True),
-                argTypes=argTypes)
+                jitInfo=indent(jitInfoInitializer(True)),
+                argTypes=argTypes,
+                slotAssert=slotAssert)
 
-        return ("\n"
-                "static const JSJitInfo %s = %s;\n"
-                % (infoName, jitInfoInitializer(False)))
+        return fill(
+            """
+            static const JSJitInfo ${infoName} = ${jitInfo};
+            $*{slotAssert}
+            """,
+            infoName=infoName,
+            jitInfo=jitInfoInitializer(False),
+            slotAssert=slotAssert)
 
     def define(self):
         if self.member.isAttr():
@@ -8255,6 +8324,7 @@ class CGMemberJITInfo(CGThing):
             getterinfal = "infallible" in self.descriptor.getExtendedAttributes(self.member, getter=True)
 
             movable = self.mayBeMovable() and getterinfal
+            eliminatable = self.mayBeEliminatable() and getterinfal
             aliasSet = self.aliasSet()
 
             getterinfal = getterinfal and infallibleForMember(self.member, self.member.type, self.descriptor)
@@ -8271,9 +8341,9 @@ class CGMemberJITInfo(CGThing):
                 slotIndex = "0"
 
             result = self.defineJitInfo(getterinfo, getter, "Getter",
-                                        getterinfal, movable, aliasSet,
-                                        isAlwaysInSlot, isLazilyCachedInSlot,
-                                        slotIndex,
+                                        getterinfal, movable, eliminatable,
+                                        aliasSet, isAlwaysInSlot,
+                                        isLazilyCachedInSlot, slotIndex,
                                         [self.member.type], None)
             if (not self.member.readonly or
                 self.member.getExtendedAttribute("PutForwards") is not None or
@@ -8286,7 +8356,7 @@ class CGMemberJITInfo(CGThing):
                           IDLToCIdentifier(self.member.identifier.name))
                 # Setters are always fallible, since they have to do a typed unwrap.
                 result += self.defineJitInfo(setterinfo, setter, "Setter",
-                                             False, False, "AliasEverything",
+                                             False, False, False, "AliasEverything",
                                              False, False, "0",
                                              [BuiltinTypes[IDLBuiltinType.Types.void]],
                                              None)
@@ -8311,6 +8381,7 @@ class CGMemberJITInfo(CGThing):
                 methodInfal = False
                 args = None
                 movable = False
+                eliminatable = False
             else:
                 sig = sigs[0]
                 # For methods that affect nothing, it's OK to set movable to our
@@ -8320,6 +8391,7 @@ class CGMemberJITInfo(CGThing):
                 # move effectful things.
                 hasInfallibleImpl = "infallible" in self.descriptor.getExtendedAttributes(self.member)
                 movable = self.mayBeMovable() and hasInfallibleImpl
+                eliminatable = self.mayBeEliminatable() and hasInfallibleImpl
                 # XXXbz can we move the smarts about fallibility due to arg
                 # conversions into the JIT, using our new args stuff?
                 if (len(sig[1]) != 0 or
@@ -8336,8 +8408,8 @@ class CGMemberJITInfo(CGThing):
 
             aliasSet = self.aliasSet()
             result = self.defineJitInfo(methodinfo, method, "Method",
-                                        methodInfal, movable, aliasSet,
-                                        False, False, "0",
+                                        methodInfal, movable, eliminatable,
+                                        aliasSet, False, False, "0",
                                         [s[0] for s in sigs], args)
             return result
         raise TypeError("Illegal member type to CGPropertyJITInfo")
@@ -8358,12 +8430,33 @@ class CGMemberJITInfo(CGThing):
         return (affects == "Nothing" and
                 (dependsOn != "Everything" and dependsOn != "DeviceState"))
 
+    def mayBeEliminatable(self):
+        """
+        Returns whether this attribute or method may be eliminatable, just
+        based on Affects/DependsOn annotations.
+        """
+        # dependsOn shouldn't affect this decision at all, except in jitinfo we
+        # have no way to express "Depends on everything, affects nothing",
+        # because we only have three alias set values: AliasNone ("depends on
+        # nothing, affects nothing"), AliasDOMSets ("depends on DOM sets,
+        # affects nothing"), AliasEverything ("depends on everything, affects
+        # everything").  So the [Affects=Nothing, DependsOn=Everything] case
+        # gets encoded as AliasEverything and defineJitInfo asserts that if our
+        # alias state is AliasEverything then we're not eliminatable (because it
+        # thinks we might have side-effects at that point).  Bug 1155796 is
+        # tracking possible solutions for this.
+        affects = self.member.affects
+        dependsOn = self.member.dependsOn
+        assert affects in IDLInterfaceMember.AffectsValues
+        assert dependsOn in IDLInterfaceMember.DependsOnValues
+        return affects == "Nothing" and dependsOn != "Everything"
+
     def aliasSet(self):
-        """Returns the alias set to store in the jitinfo.  This may not be the
+        """
+        Returns the alias set to store in the jitinfo.  This may not be the
         effective alias set the JIT uses, depending on whether we have enough
         information about our args to allow the JIT to prove that effectful
         argument conversions won't happen.
-
         """
         dependsOn = self.member.dependsOn
         assert dependsOn in IDLInterfaceMember.DependsOnValues
@@ -8544,6 +8637,26 @@ class CGStaticMethodJitinfo(CGGeneric):
             (IDLToCIdentifier(method.identifier.name),
              CppKeywords.checkMethodName(
                  IDLToCIdentifier(method.identifier.name))))
+
+
+class CGMethodIdentityTest(CGAbstractMethod):
+    """
+    A class to generate a method-identity test for a given IDL operation.
+    """
+    def __init__(self, descriptor, method):
+        self.method = method
+        name = "Is%sMethod" % MakeNativeName(method.identifier.name)
+        CGAbstractMethod.__init__(self, descriptor, name, 'bool',
+                                  [Argument('JS::Handle<JSObject*>', 'aObj')])
+
+    def definition_body(self):
+        return dedent(
+            """
+            MOZ_ASSERT(aObj);
+            return js::IsFunctionObject(aObj) &&
+                   js::FunctionObjectIsNative(aObj) &&
+                   FUNCTION_VALUE_TO_JITINFO(JS::ObjectValue(*aObj)) == &%s_methodinfo;
+            """ % IDLToCIdentifier(self.method.identifier.name))
 
 
 def getEnumValueName(value):
@@ -10285,7 +10398,7 @@ class CGDOMJSProxyHandler_getOwnPropDescriptor(ClassMethod):
             $*{getIndexed}
             JS::Rooted<JSObject*> expando(cx);
             if (!isXray && (expando = GetExpandoObject(proxy))) {
-              if (!JS_GetPropertyDescriptorById(cx, expando, id, desc)) {
+              if (!JS_GetOwnPropertyDescriptorById(cx, expando, id, desc)) {
                 return false;
               }
               if (desc.object()) {
@@ -10426,7 +10539,7 @@ class CGDOMJSProxyHandler_delete(ClassMethod):
                     # The deleter method has a boolean out-parameter. When a
                     # property is found, the out-param indicates whether it was
                     # successfully deleted.
-                    decls = "bool result;\n"
+                    decls = ""
                     if foundVar is None:
                         foundVar = "found"
                         decls += "bool found = false;\n"
@@ -11142,6 +11255,8 @@ class CGDescriptor(CGThing):
                         cgThings.append(CGMemberJITInfo(descriptor, m))
                         if props.isCrossOriginMethod:
                             crossOriginMethods.add(m.identifier.name)
+                        if m.getExtendedAttribute("MethodIdentityTestable"):
+                            cgThings.append(CGMethodIdentityTest(descriptor, m))
             elif m.isAttr():
                 if m.stringifier:
                     raise TypeError("Stringifier attributes not supported yet. "
@@ -11264,6 +11379,7 @@ class CGDescriptor(CGThing):
         cgThings.append(CGLegacyCallHook(descriptor))
         if descriptor.interface.getExtendedAttribute("NeedResolve"):
             cgThings.append(CGResolveHook(descriptor))
+            cgThings.append(CGMayResolveHook(descriptor))
             cgThings.append(CGEnumerateHook(descriptor))
 
         if descriptor.hasNamedPropertiesObject:
@@ -11514,7 +11630,7 @@ class CGDictionary(CGThing):
                 """,
                 dictName=self.makeClassName(self.dictionary.parent))
         else:
-            body += fill(
+            body += dedent(
                 """
                 if (!IsConvertibleToDictionary(cx, val)) {
                   return ThrowErrorMessage(cx, MSG_NOT_DICTIONARY, sourceDescription);
@@ -11600,7 +11716,7 @@ class CGDictionary(CGThing):
                 """,
                 dictName=self.makeClassName(self.dictionary.parent))
         else:
-            body += fill(
+            body += dedent(
                 """
                 JS::Rooted<JSObject*> obj(cx, JS_NewPlainObject(cx));
                 if (!obj) {
@@ -12401,6 +12517,12 @@ class CGBindingRoot(CGThing):
             iface = desc.interface
             return any(m.getExtendedAttribute("Pref") for m in iface.members + [iface])
 
+        def descriptorDeprecated(desc):
+            iface = desc.interface
+            return any(m.getExtendedAttribute("Deprecated") for m in iface.members + [iface])
+
+        bindingHeaders["nsIDocument.h"] = any(
+            descriptorDeprecated(d) for d in descriptors)
         bindingHeaders["mozilla/Preferences.h"] = any(
             descriptorRequiresPreferences(d) for d in descriptors)
         bindingHeaders["mozilla/dom/DOMJSProxyHandler.h"] = any(
@@ -13733,9 +13855,9 @@ class CGCallback(CGClass):
         self.baseName = baseName
         self._deps = idlObject.getDeps()
         self.idlObject = idlObject
-        name = idlObject.identifier.name
+        self.name = idlObject.identifier.name
         if isJSImplementedDescriptor(descriptorProvider):
-            name = jsImplName(name)
+            self.name = jsImplName(self.name)
         # For our public methods that needThisHandling we want most of the
         # same args and the same return type as what CallbackMember
         # generates.  So we want to take advantage of all its
@@ -13750,11 +13872,11 @@ class CGCallback(CGClass):
                 realMethods.extend(self.getMethodImpls(method))
         realMethods.append(
             ClassMethod("operator==", "bool",
-                        [Argument("const %s&" % name, "aOther")],
+                        [Argument("const %s&" % self.name, "aOther")],
                         inline=True, bodyInHeader=True,
                         const=True,
                         body=("return %s::operator==(aOther);\n" % baseName)))
-        CGClass.__init__(self, name,
+        CGClass.__init__(self, self.name,
                          bases=[ClassBase(baseName)],
                          constructors=self.getConstructors(),
                          methods=realMethods+getters+setters)
@@ -13792,8 +13914,10 @@ class CGCallback(CGClass):
         argnamesWithThis = ["s.GetContext()", "thisValJS"] + argnames
         argnamesWithoutThis = ["s.GetContext()", "JS::UndefinedHandleValue"] + argnames
         # Now that we've recorded the argnames for our call to our private
-        # method, insert our optional argument for deciding whether the
-        # CallSetup should re-throw exceptions on aRv.
+        # method, insert our optional arguments for the execution reason and for
+        # deciding whether the CallSetup should re-throw exceptions on aRv.
+        args.append(Argument("const char*", "aExecutionReason",
+                             "nullptr"))
         args.append(Argument("ExceptionHandling", "aExceptionHandling",
                              "eReportExceptions"))
         # And the argument for communicating when exceptions should really be
@@ -13809,19 +13933,23 @@ class CGCallback(CGClass):
 
         setupCall = fill(
             """
-            CallSetup s(this, aRv, aExceptionHandling, aCompartment);
+            if (!aExecutionReason) {
+              aExecutionReason = "${executionReason}";
+            }
+            CallSetup s(this, aRv, aExecutionReason, aExceptionHandling, aCompartment);
             if (!s.GetContext()) {
               aRv.Throw(NS_ERROR_UNEXPECTED);
               return${errorReturn};
             }
             """,
-            errorReturn=errorReturn)
+            errorReturn=errorReturn,
+            executionReason=method.getPrettyName())
 
         bodyWithThis = fill(
             """
             $*{setupCall}
             JS::Rooted<JS::Value> thisValJS(s.GetContext());
-            if (!WrapCallThisValue(s.GetContext(), thisVal, &thisValJS)) {
+            if (!ToJSValue(s.GetContext(), thisVal, &thisValJS)) {
               aRv.Throw(NS_ERROR_FAILURE);
               return${errorReturn};
             }
@@ -14119,6 +14247,8 @@ class CallbackMember(CGNativeMember):
             # Since we don't need this handling, we're the actual method that
             # will be called, so we need an aRethrowExceptions argument.
             if not self.rethrowContentException:
+                args.append(Argument("const char*", "aExecutionReason",
+                                     "nullptr"))
                 args.append(Argument("ExceptionHandling", "aExceptionHandling",
                                      "eReportExceptions"))
             args.append(Argument("JSCompartment*", "aCompartment", "nullptr"))
@@ -14136,10 +14266,10 @@ class CallbackMember(CGNativeMember):
         if self.rethrowContentException:
             # getArgs doesn't add the aExceptionHandling argument but does add
             # aCompartment for us.
-            callSetup += ", eRethrowContentExceptions, aCompartment, /* aIsJSImplementedWebIDL = */ "
+            callSetup += ', "%s", eRethrowContentExceptions, aCompartment, /* aIsJSImplementedWebIDL = */ ' % self.getPrettyName()
             callSetup += toStringBool(isJSImplementedDescriptor(self.descriptorProvider))
         else:
-            callSetup += ", aExceptionHandling, aCompartment"
+            callSetup += ', "%s", aExceptionHandling, aCompartment' % self.getPrettyName()
         callSetup += ");\n"
         return fill(
             """

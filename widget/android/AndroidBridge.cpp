@@ -44,6 +44,7 @@
 
 #include "MediaCodec.h"
 #include "SurfaceTexture.h"
+#include "GLContextProvider.h"
 
 using namespace mozilla;
 using namespace mozilla::gfx;
@@ -149,7 +150,7 @@ jfieldID AndroidBridge::GetStaticFieldID(JNIEnv* env, jclass jClass,
 }
 
 void
-AndroidBridge::ConstructBridge(JNIEnv *jEnv, Object::Param clsLoader)
+AndroidBridge::ConstructBridge(JNIEnv *jEnv, Object::Param clsLoader, Object::Param msgQueue)
 {
     /* NSS hack -- bionic doesn't handle recursive unloads correctly,
      * because library finalizer functions are called with the dynamic
@@ -164,6 +165,16 @@ AndroidBridge::ConstructBridge(JNIEnv *jEnv, Object::Param clsLoader)
     MOZ_ASSERT(!sBridge);
     sBridge = new AndroidBridge;
     sBridge->Init(jEnv, clsLoader); // Success or crash
+
+    auto msgQueueClass = ClassObject::LocalRef::Adopt(
+            jEnv, jEnv->GetObjectClass(msgQueue.Get()));
+    sBridge->mMessageQueue = msgQueue;
+    // mMessageQueueNext must not be null
+    sBridge->mMessageQueueNext = GetMethodID(
+            jEnv, msgQueueClass.Get(), "next", "()Landroid/os/Message;");
+    // mMessageQueueMessages may be null (e.g. due to proguard optimization)
+    sBridge->mMessageQueueMessages = jEnv->GetFieldID(
+            msgQueueClass.Get(), "mMessages", "Landroid/os/Message;");
 }
 
 void
@@ -183,7 +194,7 @@ AndroidBridge::Init(JNIEnv *jEnv, Object::Param clsLoader)
             "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
 
     mJNIEnv = nullptr;
-    mThread = -1;
+    mThread = pthread_t();
     mGLControllerObj = nullptr;
     mOpenedGraphicsLibraries = false;
     mHasNativeBitmapAccess = false;
@@ -255,7 +266,16 @@ AndroidBridge::SetMainThread(pthread_t thr)
     }
 
     mJNIEnv = nullptr;
-    mThread = -1;
+    mThread = pthread_t();
+
+    // SetMainThread(0) is called on Gecko shutdown,
+    // so we should clean up the bridge here.
+    if (sBridge) {
+        delete sBridge;
+        // AndroidBridge destruction requires sBridge to still be valid,
+        // so we set sBridge to nullptr after deleting it.
+        sBridge = nullptr;
+    }
     return true;
 }
 
@@ -821,6 +841,8 @@ AndroidBridge::OpenGraphicsLibraries()
             ANativeWindow_setBuffersGeometry = (int (*)(void*, int, int, int)) dlsym(handle, "ANativeWindow_setBuffersGeometry");
             ANativeWindow_lock = (int (*)(void*, void*, void*)) dlsym(handle, "ANativeWindow_lock");
             ANativeWindow_unlockAndPost = (int (*)(void*))dlsym(handle, "ANativeWindow_unlockAndPost");
+            ANativeWindow_getWidth = (int (*)(void*))dlsym(handle, "ANativeWindow_getWidth");
+            ANativeWindow_getHeight = (int (*)(void*))dlsym(handle, "ANativeWindow_getHeight");
 
             // This is only available in Honeycomb and ICS. It was removed in Jelly Bean
             ANativeWindow_fromSurfaceTexture = (void* (*)(JNIEnv*, jobject))dlsym(handle, "ANativeWindow_fromSurfaceTexture");
@@ -1275,6 +1297,16 @@ AndroidBridge::ReleaseNativeWindow(void *window)
     // have nothing to do here. We should probably ref it.
 }
 
+IntSize
+AndroidBridge::GetNativeWindowSize(void* window)
+{
+  if (!window || !ANativeWindow_getWidth || !ANativeWindow_getHeight) {
+    return IntSize(0, 0);
+  }
+
+  return IntSize(ANativeWindow_getWidth(window), ANativeWindow_getHeight(window));
+}
+
 void*
 AndroidBridge::AcquireNativeWindowFromSurfaceTexture(JNIEnv* aEnv, jobject aSurfaceTexture)
 {
@@ -1508,7 +1540,9 @@ void AndroidBridge::SyncFrameMetrics(const ParentLayerPoint& aScrollOffset, floa
 }
 
 AndroidBridge::AndroidBridge()
-  : mLayerClient(nullptr)
+  : mLayerClient(nullptr),
+    mPresentationWindow(nullptr),
+    mPresentationSurface(nullptr)
 {
 }
 
@@ -1642,6 +1676,32 @@ AndroidBridge::GetProxyForURI(const nsACString & aSpec,
     return NS_OK;
 }
 
+bool
+AndroidBridge::PumpMessageLoop()
+{
+    JNIEnv* const env = GetJNIEnv();
+
+    if (mMessageQueueMessages) {
+        auto msg = Object::LocalRef::Adopt(env,
+                env->GetObjectField(mMessageQueue.Get(),
+                                    mMessageQueueMessages));
+        // if queue.mMessages is null, queue.next() will block, which we don't
+        // want. It turns out to be an order of magnitude more performant to do
+        // this extra check here and block less vs. one fewer checks here and
+        // more blocking.
+        if (!msg) {
+            return false;
+        }
+    }
+
+    auto msg = Object::LocalRef::Adopt(
+            env, env->CallObjectMethod(mMessageQueue.Get(), mMessageQueueNext));
+    if (!msg) {
+        return false;
+    }
+
+    return GeckoAppShell::PumpMessageLoop(msg);
+}
 
 /* attribute nsIAndroidBrowserApp browserApp; */
 NS_IMETHODIMP nsAndroidBridge::GetBrowserApp(nsIAndroidBrowserApp * *aBrowserApp)
@@ -2034,6 +2094,51 @@ AndroidBridge::RunDelayedUiThreadTasks()
         task->Run();
     }
     return -1;
+}
+
+void*
+AndroidBridge::GetPresentationWindow()
+{
+    return mPresentationWindow;
+}
+
+void
+AndroidBridge::SetPresentationWindow(void* aPresentationWindow)
+{
+     if (mPresentationWindow) {
+         const bool wasAlreadyPaused = nsWindow::IsCompositionPaused();
+         if (!wasAlreadyPaused) {
+             nsWindow::SchedulePauseComposition();
+         }
+
+         mPresentationWindow = aPresentationWindow;
+         if (mPresentationSurface) {
+             // destroy the egl surface!
+             // The compositor is paused so it should be okay to destroy
+             // the surface here.
+             mozilla::gl::GLContextProvider::DestroyEGLSurface(mPresentationSurface);
+             mPresentationSurface = nullptr;
+         }
+
+         if (!wasAlreadyPaused) {
+             nsWindow::ScheduleResumeComposition();
+         }
+     }
+     else {
+         mPresentationWindow = aPresentationWindow;
+     }
+}
+
+EGLSurface
+AndroidBridge::GetPresentationSurface()
+{
+    return mPresentationSurface;
+}
+
+void
+AndroidBridge::SetPresentationSurface(EGLSurface aPresentationSurface)
+{
+    mPresentationSurface = aPresentationSurface;
 }
 
 Object::LocalRef AndroidBridge::ChannelCreate(Object::Param stream) {

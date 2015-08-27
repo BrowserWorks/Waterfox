@@ -32,6 +32,28 @@ BaseProxyHandler::has(JSContext* cx, HandleObject proxy, HandleId id, bool* bp) 
 }
 
 bool
+BaseProxyHandler::getPropertyDescriptor(JSContext* cx, HandleObject proxy, HandleId id,
+                                        MutableHandle<PropertyDescriptor> desc) const
+{
+    assertEnteredPolicy(cx, proxy, id, GET | SET | GET_PROPERTY_DESCRIPTOR);
+
+    if (!getOwnPropertyDescriptor(cx, proxy, id, desc))
+        return false;
+    if (desc.object())
+        return true;
+
+    RootedObject proto(cx);
+    if (!GetPrototype(cx, proxy, &proto))
+        return false;
+    if (!proto) {
+        MOZ_ASSERT(!desc.object());
+        return true;
+    }
+    return GetPropertyDescriptor(cx, proto, id, desc);
+}
+
+
+bool
 BaseProxyHandler::hasOwn(JSContext* cx, HandleObject proxy, HandleId id, bool* bp) const
 {
     assertEnteredPolicy(cx, proxy, id, GET);
@@ -55,6 +77,7 @@ BaseProxyHandler::get(JSContext* cx, HandleObject proxy, HandleObject receiver,
         vp.setUndefined();
         return true;
     }
+    desc.assertComplete();
     MOZ_ASSERT(desc.getter() != JS_PropertyStub);
     if (!desc.getter()) {
         vp.set(desc.value());
@@ -67,7 +90,9 @@ BaseProxyHandler::get(JSContext* cx, HandleObject proxy, HandleObject receiver,
     else
         vp.setUndefined();
 
-    return CallJSGetterOp(cx, desc.getter(), receiver, id, vp);
+    // A proxy object should never have own JSGetterOps.
+    MOZ_ASSERT(desc.object() != proxy);
+    return CallJSGetterOp(cx, desc.getter(), desc.object(), id, vp);
 }
 
 bool
@@ -84,6 +109,7 @@ BaseProxyHandler::set(JSContext* cx, HandleObject proxy, HandleId id, HandleValu
     Rooted<PropertyDescriptor> ownDesc(cx);
     if (!getOwnPropertyDescriptor(cx, proxy, id, &ownDesc))
         return false;
+    ownDesc.assertCompleteIfFound();
 
     // The rest is factored out into a separate function with a weird name.
     // This algorithm continues just below.
@@ -185,6 +211,8 @@ BaseProxyHandler::getOwnEnumerablePropertyKeys(JSContext* cx, HandleObject proxy
         Rooted<PropertyDescriptor> desc(cx);
         if (!getOwnPropertyDescriptor(cx, proxy, id, &desc))
             return false;
+        desc.assertCompleteIfFound();
+
         if (desc.object() && desc.enumerable())
             props[i++].set(id);
     }

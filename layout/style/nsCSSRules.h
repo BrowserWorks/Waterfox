@@ -28,7 +28,6 @@
 #include "nsAutoPtr.h"
 #include "nsCSSProperty.h"
 #include "nsCSSValue.h"
-#include "nsIDOMCSSCharsetRule.h"
 #include "nsTArray.h"
 #include "nsDOMCSSDeclaration.h"
 #include "Declaration.h"
@@ -355,50 +354,6 @@ protected:
   nsTArray<gfxFontFeatureValueSet::FeatureValues> mFeatureValues;
 };
 
-namespace mozilla {
-namespace css {
-
-class CharsetRule final : public Rule,
-                          public nsIDOMCSSCharsetRule
-{
-public:
-  CharsetRule(const nsAString& aEncoding,
-              uint32_t aLineNumber, uint32_t aColumnNumber);
-private:
-  // For |Clone|
-  CharsetRule(const CharsetRule& aCopy);
-  ~CharsetRule() {}
-
-public:
-  NS_DECL_ISUPPORTS
-
-  DECL_STYLE_RULE_INHERIT
-
-  // nsIStyleRule methods
-#ifdef DEBUG
-  virtual void List(FILE* out = stdout, int32_t aIndent = 0) const override;
-#endif
-
-  // Rule methods
-  virtual int32_t GetType() const override;
-  virtual already_AddRefed<Rule> Clone() const override;
-
-  // nsIDOMCSSRule interface
-  NS_DECL_NSIDOMCSSRULE
-
-  // nsIDOMCSSCharsetRule methods
-  NS_IMETHOD GetEncoding(nsAString& aEncoding) override;
-  NS_IMETHOD SetEncoding(const nsAString& aEncoding) override;
-
-  virtual size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const override;
-
-private:
-  nsString  mEncoding;
-};
-
-} // namespace css
-} // namespace mozilla
-
 class nsCSSKeyframeRule;
 
 class nsCSSKeyframeStyleDeclaration final : public nsDOMCSSDeclaration
@@ -408,7 +363,7 @@ public:
 
   NS_IMETHOD GetParentRule(nsIDOMCSSRule **aParent) override;
   void DropReference() { mRule = nullptr; }
-  virtual mozilla::css::Declaration* GetCSSDeclaration(bool aAllocate) override;
+  virtual mozilla::css::Declaration* GetCSSDeclaration(Operation aOperation) override;
   virtual nsresult SetCSSDeclaration(mozilla::css::Declaration* aDecl) override;
   virtual void GetCSSParsingEnvironment(CSSParsingEnvironment& aCSSParseEnv) override;
   virtual nsIDocument* DocToUpdate() override;
@@ -541,7 +496,7 @@ public:
 
   NS_IMETHOD GetParentRule(nsIDOMCSSRule **aParent) override;
   void DropReference() { mRule = nullptr; }
-  virtual mozilla::css::Declaration* GetCSSDeclaration(bool aAllocate) override;
+  virtual mozilla::css::Declaration* GetCSSDeclaration(Operation aOperation) override;
   virtual nsresult SetCSSDeclaration(mozilla::css::Declaration* aDecl) override;
   virtual void GetCSSParsingEnvironment(CSSParsingEnvironment& aCSSParseEnv) override;
   virtual nsIDocument* DocToUpdate() override;

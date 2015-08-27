@@ -38,7 +38,8 @@ interface nsIHttpUpgradeListener : nsISupports
  * using any feature exposed by this interface, be aware that this interface
  * will change and you will be broken.  You have been warned.
  */
-[scriptable, uuid(80ee20a9-757b-4c4e-8a4a-84cbb5981879)]
+[scriptable, uuid(26833ec7-4555-4f23-9281-3a12d4b76db1)]
+
 interface nsIHttpChannelInternal : nsISupports
 {
     /**
@@ -207,6 +208,12 @@ interface nsIHttpChannelInternal : nsISupports
     readonly attribute nsIURI apiRedirectToURI;
 
     /**
+     * Enable/Disable use of Alternate Services with this channel.
+     * The network.http.altsvc.enabled preference is still a pre-requisite.
+     */
+    attribute boolean allowAltSvc;
+
+    /**
      * Add a new nsIPrincipal to the redirect chain. This is the only way to
      * write to nsIRedirectHistory.redirects.
      */
@@ -240,6 +247,11 @@ interface nsIHttpChannelInternal : nsISupports
      * The URI of the top-level window that's associated with this channel.
      */
     readonly attribute nsIURI topWindowURI;
+
+    /**
+     * The network interface id that's associated with this channel.
+     */
+    attribute ACString networkInterfaceId;
 
     /**
      * Used only by nsChannelClassifier to resume connecting or abort the

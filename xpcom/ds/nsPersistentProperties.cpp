@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -459,19 +460,14 @@ nsPropertiesParser::ParseBuffer(const char16_t* aBuffer,
 
 nsPersistentProperties::nsPersistentProperties()
   : mIn(nullptr)
+  , mTable(&property_HashTableOps, sizeof(PropertyTableEntry), 16)
 {
-  PL_DHashTableInit(&mTable, &property_HashTableOps,
-                    sizeof(PropertyTableEntry), 16);
-
   PL_INIT_ARENA_POOL(&mArena, "PersistentPropertyArena", 2048);
 }
 
 nsPersistentProperties::~nsPersistentProperties()
 {
   PL_FinishArenaPool(&mArena);
-  if (mTable.IsInitialized()) {
-    PL_DHashTableFinish(&mTable);
-  }
 }
 
 nsresult

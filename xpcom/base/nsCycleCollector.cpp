@@ -633,7 +633,7 @@ private:
 
   struct Block
   {
-    // We create and destroy Block using NS_Alloc/NS_Free rather
+    // We create and destroy Block using moz_xmalloc/free rather
     // than new and delete to avoid calling its constructor and
     // destructor.
     Block()
@@ -673,7 +673,7 @@ public:
     Block* b = mBlocks;
     while (b) {
       Block* n = b->mNext;
-      NS_Free(b);
+      free(b);
       b = n;
     }
 
@@ -703,7 +703,7 @@ public:
     PtrInfo* Add(void* aPointer, nsCycleCollectionParticipant* aParticipant)
     {
       if (mNext == mBlockEnd) {
-        Block* block = static_cast<Block*>(NS_Alloc(sizeof(Block)));
+        Block* block = static_cast<Block*>(moz_xmalloc(sizeof(Block)));
         *mNextBlock = block;
         mNext = block->mEntries;
         mBlockEnd = block->mEntries + BlockSize;
@@ -1325,7 +1325,9 @@ private:
   void CheckThreadSafety();
   void ShutdownCollect();
 
-  void FixGrayBits(bool aForceGC);
+  void FixGrayBits(bool aForceGC, TimeLog& aTimeLog);
+  bool IsIncrementalGCInProgress();
+  void FinishAnyIncrementalGCInProgress();
   bool ShouldMergeZones(ccType aCCType);
 
   void BeginCollection(ccType aCCType, nsICycleCollectorListener* aManualListener);
@@ -2120,7 +2122,7 @@ private:
   }
 
   NS_IMETHOD_(void) NoteChild(void* aChild, nsCycleCollectionParticipant* aCp,
-                              nsCString aEdgeName)
+                              nsCString& aEdgeName)
   {
     PtrInfo* childPi = AddNode(aChild, aCp);
     if (!childPi) {
@@ -3484,7 +3486,7 @@ nsCycleCollector::CheckThreadSafety()
 // and also when UnmarkGray has run out of stack.  We also force GCs on shut
 // down to collect cycles involving both DOM and JS.
 void
-nsCycleCollector::FixGrayBits(bool aForceGC)
+nsCycleCollector::FixGrayBits(bool aForceGC, TimeLog& aTimeLog)
 {
   CheckThreadSafety();
 
@@ -3494,6 +3496,7 @@ nsCycleCollector::FixGrayBits(bool aForceGC)
 
   if (!aForceGC) {
     mJSRuntime->FixWeakMappingGrayBits();
+    aTimeLog.Checkpoint("FixWeakMappingGrayBits");
 
     bool needGC = !mJSRuntime->AreGCGrayBitsValid();
     // Only do a telemetry ping for non-shutdown CCs.
@@ -3504,10 +3507,25 @@ nsCycleCollector::FixGrayBits(bool aForceGC)
     mResults.mForcedGC = true;
   }
 
-  TimeLog timeLog;
   mJSRuntime->GarbageCollect(aForceGC ? JS::gcreason::SHUTDOWN_CC :
                                         JS::gcreason::CC_FORCED);
-  timeLog.Checkpoint("GC()");
+  aTimeLog.Checkpoint("FixGrayBits GC");
+}
+
+bool
+nsCycleCollector::IsIncrementalGCInProgress()
+{
+  return mJSRuntime && JS::IsIncrementalGCInProgress(mJSRuntime->Runtime());
+}
+
+void
+nsCycleCollector::FinishAnyIncrementalGCInProgress()
+{
+  if (IsIncrementalGCInProgress()) {
+    NS_WARNING("Finishing incremental GC in progress during CC");
+    JS::PrepareForIncrementalGC(mJSRuntime->Runtime());
+    JS::FinishIncrementalGC(mJSRuntime->Runtime(), JS::gcreason::CC_FORCED);
+  }
 }
 
 void
@@ -3550,6 +3568,8 @@ nsCycleCollector::CleanupAfterCollection()
 void
 nsCycleCollector::ShutdownCollect()
 {
+  FinishAnyIncrementalGCInProgress();
+
   SliceBudget unlimitedBudget;
   uint32_t i;
   for (i = 0; i < DEFAULT_SHUTDOWN_COLLECTIONS; ++i) {
@@ -3582,6 +3602,8 @@ nsCycleCollector::Collect(ccType aCCType,
     return false;
   }
   mActivelyCollecting = true;
+
+  MOZ_ASSERT(!IsIncrementalGCInProgress());
 
   bool startedIdle = (mIncrementalPhase == IdlePhase);
   bool collectedAny = false;
@@ -3768,13 +3790,25 @@ nsCycleCollector::BeginCollection(ccType aCCType,
     // hijinks from ForgetSkippable and compartmental GCs.
     mListener->GetWantAllTraces(&forceGC);
   }
-  FixGrayBits(forceGC);
+
+  // BeginCycleCollectionCallback() might have started an IGC, and we need
+  // to finish it before we run FixGrayBits.
+  FinishAnyIncrementalGCInProgress();
+  timeLog.Checkpoint("Pre-FixGrayBits finish IGC");
+
+  FixGrayBits(forceGC, timeLog);
 
   FreeSnowWhite(true);
+  timeLog.Checkpoint("BeginCollection FreeSnowWhite");
 
   if (mListener && NS_FAILED(mListener->Begin())) {
     mListener = nullptr;
   }
+
+  // FreeSnowWhite could potentially have started an IGC, which we need
+  // to finish before we look at any JS roots.
+  FinishAnyIncrementalGCInProgress();
+  timeLog.Checkpoint("Post-FreeSnowWhite finish IGC");
 
   // Set up the data structures for building the graph.
   mGraph.Init();
@@ -3785,6 +3819,7 @@ nsCycleCollector::BeginCollection(ccType aCCType,
   MOZ_ASSERT(!mBuilder, "Forgot to clear mBuilder");
   mBuilder = new CCGraphBuilder(mGraph, mResults, mJSRuntime, mListener,
                                 mergeZones);
+  timeLog.Checkpoint("BeginCollection prepare graph builder");
 
   if (mJSRuntime) {
     mJSRuntime->TraverseRoots(*mBuilder);

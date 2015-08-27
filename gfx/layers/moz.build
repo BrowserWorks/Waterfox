@@ -46,6 +46,9 @@ EXPORTS += [
 ]
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
+    SOURCES += [
+	    'D3D11ShareHandleImage.cpp',
+    ]
     UNIFIED_SOURCES += [
         'D3D9SurfaceImage.cpp',
         'IMFYCbCrImage.cpp',
@@ -94,6 +97,7 @@ EXPORTS.mozilla.layers += [
     # proper interface for the code there
     'apz/src/APZCTreeManager.h',
     'apz/src/APZUtils.h',
+    'apz/src/AsyncPanZoomAnimation.h',
     'apz/testutil/APZTestData.h',
     'apz/util/ActiveElementManager.h',
     'apz/util/APZCCallbackHelper.h',
@@ -127,6 +131,7 @@ EXPORTS.mozilla.layers += [
     'composite/TextureHost.h',
     'Compositor.h',
     'CompositorTypes.h',
+    'D3D11ShareHandleImage.h',
     'D3D9SurfaceImage.h',
     'Effects.h',
     'ImageDataSerializer.h',
@@ -230,6 +235,7 @@ UNIFIED_SOURCES += [
     'apz/src/InputQueue.cpp',
     'apz/src/OverscrollHandoffState.cpp',
     'apz/src/TaskThrottler.cpp',
+    'apz/src/WheelScrollAnimation.cpp',
     'apz/testutil/APZTestData.cpp',
     'apz/util/ActiveElementManager.cpp',
     'apz/util/APZCCallbackHelper.cpp',
@@ -357,8 +363,6 @@ IPDL_SOURCES = [
 ]
 
 FAIL_ON_WARNINGS = True
-
-MSVC_ENABLE_PGO = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

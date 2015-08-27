@@ -83,11 +83,17 @@ Cu.import("resource://gre/modules/devtools/event-emitter.js");
  *       focusable element.
  *    {string} trigger: The DOM event that should trigger editing,
  *      defaults to "click"
+ *    {boolean} multiline: Should the editor be a multiline textarea?
+ *      defaults to false
+ *    {boolean} trimOutput: Should the returned string be trimmed?
+ *      defaults to true
  */
 function editableField(aOptions)
 {
   return editableItem(aOptions, function(aElement, aEvent) {
-    new InplaceEditor(aOptions, aEvent);
+    if (!aOptions.element.inplaceEditor) {
+      new InplaceEditor(aOptions, aEvent);
+    }
   });
 }
 
@@ -187,6 +193,7 @@ function InplaceEditor(aOptions, aEvent)
   this.destroy = aOptions.destroy;
   this.initial = aOptions.initial ? aOptions.initial : this.elt.textContent;
   this.multiline = aOptions.multiline || false;
+  this.trimOutput = aOptions.trimOutput === undefined ? true : !!aOptions.trimOutput;
   this.stopOnShiftTab = !!aOptions.stopOnShiftTab;
   this.stopOnTab = !!aOptions.stopOnTab;
   this.stopOnReturn = !!aOptions.stopOnReturn;
@@ -240,6 +247,8 @@ function InplaceEditor(aOptions, aEvent)
     this.input.addEventListener("keyup", this._onKeyup, false);
   }
 
+  this._updateSize();
+
   if (aOptions.start) {
     aOptions.start(this, aEvent);
   }
@@ -252,6 +261,12 @@ exports.InplaceEditor = InplaceEditor;
 InplaceEditor.CONTENT_TYPES = CONTENT_TYPES;
 
 InplaceEditor.prototype = {
+
+  get currentInputValue() {
+    let val = this.trimOutput ? this.input.value.trim() : this.input.value;
+    return val;
+  },
+
   _createInput: function InplaceEditor_createEditor()
   {
     this.input =
@@ -282,7 +297,7 @@ InplaceEditor.prototype = {
     this.elt.style.display = this.originalDisplay;
     this.elt.focus();
 
-    this.elt.parentNode.removeChild(this.input);
+    this.input.remove();
     this.input = null;
 
     delete this.elt.inplaceEditor;
@@ -327,7 +342,7 @@ InplaceEditor.prototype = {
     if (!this._measurement) {
       return;
     }
-    this._measurement.parentNode.removeChild(this._measurement);
+    this._measurement.remove();
     delete this._measurement;
   },
 
@@ -351,7 +366,6 @@ InplaceEditor.prototype = {
       // account for the fact that after adding a newline the <pre> doesn't grow
       // unless there's text content on the line.
       width += 15;
-      this._measurement.textContent += "M";
       this.input.style.height = this._measurement.offsetHeight + "px";
     }
 
@@ -396,7 +410,7 @@ InplaceEditor.prototype = {
 
     // Call the user's change handler if available.
     if (this.change) {
-      this.change(this.input.value.trim());
+      this.change(this.currentInputValue);
     }
 
     return true;
@@ -788,8 +802,8 @@ InplaceEditor.prototype = {
     this._applied = true;
 
     if (this.done) {
-      let val = this.input.value.trim();
-      return this.done(this.cancelled ? this.initial : val, !this.cancelled, direction);
+      let val = this.cancelled ? this.initial : this.currentInputValue;
+      return this.done(val, !this.cancelled, direction);
     }
 
     return null;
@@ -880,6 +894,14 @@ InplaceEditor.prototype = {
       }
     } else if (aEvent.altKey && !aEvent.shiftKey) {
       increment *= smallIncrement;
+    }
+
+    // Use default cursor movement rather than providing auto-suggestions.
+    if (aEvent.keyCode === Ci.nsIDOMKeyEvent.DOM_VK_HOME
+        || aEvent.keyCode === Ci.nsIDOMKeyEvent.DOM_VK_END
+        || aEvent.keyCode === Ci.nsIDOMKeyEvent.DOM_VK_PAGE_UP
+        || aEvent.keyCode === Ci.nsIDOMKeyEvent.DOM_VK_PAGE_DOWN) {
+      this._preventSuggestions = true;
     }
 
     let cycling = false;
@@ -1024,7 +1046,7 @@ InplaceEditor.prototype = {
 
     // Call the user's change handler if available.
     if (this.change) {
-      this.change(this.input.value.trim());
+      this.change(this.currentInputValue);
     }
   },
 

@@ -15,19 +15,19 @@
 
 namespace mozilla {
 
-typedef std::queue<mp4_demuxer::MP4Sample*> SampleQueue;
+typedef std::queue<nsRefPtr<MediaRawData>> SampleQueue;
 
 class AndroidDecoderModule : public PlatformDecoderModule {
 public:
   virtual already_AddRefed<MediaDataDecoder>
-  CreateVideoDecoder(const mp4_demuxer::VideoDecoderConfig& aConfig,
+  CreateVideoDecoder(const VideoInfo& aConfig,
                      layers::LayersBackend aLayersBackend,
                      layers::ImageContainer* aImageContainer,
                      FlushableMediaTaskQueue* aVideoTaskQueue,
                      MediaDataDecoderCallback* aCallback) override;
 
   virtual already_AddRefed<MediaDataDecoder>
-  CreateAudioDecoder(const mp4_demuxer::AudioDecoderConfig& aConfig,
+  CreateAudioDecoder(const AudioInfo& aConfig,
                      FlushableMediaTaskQueue* aAudioTaskQueue,
                      MediaDataDecoderCallback* aCallback) override;
 
@@ -35,7 +35,10 @@ public:
   AndroidDecoderModule() {}
   virtual ~AndroidDecoderModule() {}
 
-  virtual bool SupportsAudioMimeType(const nsACString& aMimeType) override;
+  virtual bool SupportsMimeType(const nsACString& aMimeType) override;
+
+  virtual ConversionRequired
+  DecoderNeedsConversion(const TrackInfo& aConfig) const override;
 };
 
 class MediaCodecDataDecoder : public MediaDataDecoder {
@@ -52,7 +55,7 @@ public:
   virtual nsresult Flush() override;
   virtual nsresult Drain() override;
   virtual nsresult Shutdown() override;
-  virtual nsresult Input(mp4_demuxer::MP4Sample* aSample);
+  virtual nsresult Input(MediaRawData* aSample);
 
 protected:
   friend class AndroidDecoderModule;

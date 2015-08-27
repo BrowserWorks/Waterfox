@@ -26,8 +26,8 @@
 
 namespace js {
 
-class Nursery;
 class Shape;
+class TenuringTracer;
 
 /*
  * To really poison a set of values, using 'magic' or 'undefined' isn't good
@@ -114,9 +114,9 @@ ArraySetLength(JSContext* cx, Handle<ArrayObject*> obj, HandleId id,
  *  - The length property as a uint32_t, accessible for array objects with
  *    ArrayObject::{length,setLength}().  This is unused for non-arrays.
  *  - The number of element slots (capacity), gettable with
- *    getDenseElementsCapacity().
+ *    getDenseCapacity().
  *  - The array's initialized length, accessible with
- *    getDenseElementsInitializedLength().
+ *    getDenseInitializedLength().
  *
  * Holes in the array are represented by MagicValue(JS_ELEMENTS_HOLE) values.
  * These indicate indexes which are not dense properties of the array. The
@@ -180,9 +180,9 @@ class ObjectElements
 
   private:
     friend class ::JSObject;
-    friend class NativeObject;
     friend class ArrayObject;
-    friend class Nursery;
+    friend class NativeObject;
+    friend class TenuringTracer;
 
     friend bool js::SetIntegrityLevel(JSContext* cx, HandleObject obj, IntegrityLevel level);
 
@@ -282,11 +282,9 @@ extern HeapSlot* const emptyObjectElements;
 
 struct Class;
 class GCMarker;
-struct ObjectOps;
 class Shape;
 
 class NewObjectCache;
-class TaggedProto;
 
 #ifdef DEBUG
 static inline bool
@@ -406,7 +404,7 @@ class NativeObject : public JSObject
     uint32_t getDenseInitializedLength() {
         return getElementsHeader()->initializedLength;
     }
-    uint32_t getDenseCapacity() {
+    uint32_t getDenseCapacity() const {
         return getElementsHeader()->capacity;
     }
 
@@ -459,7 +457,7 @@ class NativeObject : public JSObject
     bool toDictionaryMode(ExclusiveContext* cx);
 
   private:
-    friend class Nursery;
+    friend class TenuringTracer;
 
     /*
      * Get internal pointers to the range of values starting at start and
@@ -506,7 +504,10 @@ class NativeObject : public JSObject
 
     void invalidateSlotRange(uint32_t start, uint32_t length) {
 #ifdef DEBUG
-        HeapSlot* fixedStart, *fixedEnd, *slotsStart, *slotsEnd;
+        HeapSlot* fixedStart;
+        HeapSlot* fixedEnd;
+        HeapSlot* slotsStart;
+        HeapSlot* slotsEnd;
         getSlotRange(start, length, &fixedStart, &fixedEnd, &slotsStart, &slotsEnd);
         Debug_SetSlotRangeToCrashOnTouch(fixedStart, fixedEnd);
         Debug_SetSlotRangeToCrashOnTouch(slotsStart, slotsEnd);
@@ -691,12 +692,8 @@ class NativeObject : public JSObject
 
     /* Change the given property into a sibling with the same id in this scope. */
     static Shape*
-    changeProperty(ExclusiveContext* cx, HandleNativeObject obj,
-                   HandleShape shape, unsigned attrs, unsigned mask,
-                   JSGetterOp getter, JSSetterOp setter);
-
-    static inline bool changePropertyAttributes(JSContext* cx, HandleNativeObject obj,
-                                                HandleShape shape, unsigned attrs);
+    changeProperty(ExclusiveContext* cx, HandleNativeObject obj, HandleShape shape,
+                   unsigned attrs, JSGetterOp getter, JSSetterOp setter);
 
     /* Remove the property named by id from this object. */
     bool removeProperty(ExclusiveContext* cx, jsid id);
@@ -971,14 +968,12 @@ class NativeObject : public JSObject
     void copyDenseElements(uint32_t dstStart, const Value* src, uint32_t count) {
         MOZ_ASSERT(dstStart + count <= getDenseCapacity());
         MOZ_ASSERT(!denseElementsAreCopyOnWrite());
-        JSRuntime* rt = runtimeFromMainThread();
-        if (JS::IsIncrementalBarrierNeeded(rt)) {
-            Zone* zone = this->zone();
+        if (JS::shadow::Zone::asShadowZone(zone())->needsIncrementalBarrier()) {
             for (uint32_t i = 0; i < count; ++i)
-                elements_[dstStart + i].set(zone, this, HeapSlot::Element, dstStart + i, src[i]);
+                elements_[dstStart + i].set(this, HeapSlot::Element, dstStart + i, src[i]);
         } else {
             memcpy(&elements_[dstStart], src, count * sizeof(HeapSlot));
-            DenseRangeWriteBarrierPost(rt, this, dstStart, count);
+            DenseRangeWriteBarrierPost(runtimeFromMainThread(), this, dstStart, count);
         }
     }
 
@@ -1008,19 +1003,17 @@ class NativeObject : public JSObject
          * write barrier is invoked here on B, despite the fact that it exists in
          * the array before and after the move.
         */
-        Zone* zone = this->zone();
-        JS::shadow::Zone* shadowZone = JS::shadow::Zone::asShadowZone(zone);
-        if (shadowZone->needsIncrementalBarrier()) {
+        if (JS::shadow::Zone::asShadowZone(zone())->needsIncrementalBarrier()) {
             if (dstStart < srcStart) {
                 HeapSlot* dst = elements_ + dstStart;
                 HeapSlot* src = elements_ + srcStart;
                 for (uint32_t i = 0; i < count; i++, dst++, src++)
-                    dst->set(zone, this, HeapSlot::Element, dst - elements_, *src);
+                    dst->set(this, HeapSlot::Element, dst - elements_, *src);
             } else {
                 HeapSlot* dst = elements_ + dstStart + count - 1;
                 HeapSlot* src = elements_ + srcStart + count - 1;
                 for (uint32_t i = 0; i < count; i++, dst--, src--)
-                    dst->set(zone, this, HeapSlot::Element, dst - elements_, *src);
+                    dst->set(this, HeapSlot::Element, dst - elements_, *src);
             }
         } else {
             memmove(elements_ + dstStart, elements_ + srcStart, count * sizeof(HeapSlot));
@@ -1353,27 +1346,6 @@ NativeLookupOwnProperty(ExclusiveContext* cx,
                         typename MaybeRooted<Shape*, allowGC>::MutableHandleType propp);
 
 /*
- * On success, and if id was found, return true with *objp non-null and with a
- * property of *objp stored in *propp. If successful but id was not found,
- * return true with both *objp and *propp null.
- */
-template <AllowGC allowGC>
-extern bool
-NativeLookupProperty(ExclusiveContext* cx,
-                     typename MaybeRooted<NativeObject*, allowGC>::HandleType obj,
-                     typename MaybeRooted<jsid, allowGC>::HandleType id,
-                     typename MaybeRooted<JSObject*, allowGC>::MutableHandleType objp,
-                     typename MaybeRooted<Shape*, allowGC>::MutableHandleType propp);
-
-inline bool
-NativeLookupProperty(ExclusiveContext* cx, HandleNativeObject obj, PropertyName* name,
-                     MutableHandleObject objp, MutableHandleShape propp);
-
-extern bool
-NativeLookupElement(JSContext* cx, HandleNativeObject obj, uint32_t index,
-                    MutableHandleObject objp, MutableHandleShape propp);
-
-/*
  * Get a property from `receiver`, after having already done a lookup and found
  * the property on a native object `obj`.
  *
@@ -1382,7 +1354,7 @@ NativeLookupElement(JSContext* cx, HandleNativeObject obj, uint32_t index,
  */
 extern bool
 NativeGetExistingProperty(JSContext* cx, HandleObject receiver, HandleNativeObject obj,
-                          HandleShape shape, MutableHandle<Value> vp);
+                          HandleShape shape, MutableHandleValue vp);
 
 /* * */
 

@@ -59,18 +59,15 @@ public:
   virtual void SendFenceHandleIfPresent(PTextureParent* aTexture,
                                         CompositableHost* aCompositableHost) override;
 
-  virtual void SendFenceHandle(AsyncTransactionTracker* aTracker,
-                               PTextureParent* aTexture,
-                               const FenceHandle& aFence) override;
-
   virtual void SendAsyncMessage(const InfallibleTArray<AsyncParentMessageData>& aMessage) override;
 
   virtual base::ProcessId GetChildProcessId() override
   {
-    return mChildProcessId;
+    return OtherPid();
   }
 
   // PImageBridge
+  virtual bool RecvImageBridgeThreadId(const PlatformThreadId& aThreadId) override;
   virtual bool RecvUpdate(EditArray&& aEdits, EditReplyArray* aReply) override;
   virtual bool RecvUpdateNoSwap(EditArray&& aEdits) override;
 
@@ -123,19 +120,19 @@ public:
   static void ReplyRemoveTexture(base::ProcessId aChildProcessId,
                                  const OpReplyRemoveTexture& aReply);
 
-  void SendFenceHandleToTrackerIfPresent(uint64_t aDestHolderId,
-                                         uint64_t aTransactionId,
-                                         PTextureParent* aTexture,
-                                         CompositableHost* aCompositableHost);
+  void AppendDeliverFenceMessage(uint64_t aDestHolderId,
+                                 uint64_t aTransactionId,
+                                 PTextureParent* aTexture,
+                                 CompositableHost* aCompositableHost);
 
-  static void SendFenceHandleToTrackerIfPresent(base::ProcessId aChildProcessId,
-                                                uint64_t aDestHolderId,
-                                                uint64_t aTransactionId,
-                                                PTextureParent* aTexture,
-                                                CompositableHost* aCompositableHost);
+  static void AppendDeliverFenceMessage(base::ProcessId aChildProcessId,
+                                        uint64_t aDestHolderId,
+                                        uint64_t aTransactionId,
+                                        PTextureParent* aTexture,
+                                        CompositableHost* aCompositableHost);
 
-  using CompositableParentManager::SendPendingAsyncMessges;
-  static void SendPendingAsyncMessges(base::ProcessId aChildProcessId);
+  using CompositableParentManager::SendPendingAsyncMessages;
+  static void SendPendingAsyncMessages(base::ProcessId aChildProcessId);
 
   static ImageBridgeParent* GetInstance(ProcessId aId);
 
@@ -147,14 +144,13 @@ public:
 
 private:
   void DeferredDestroy();
-
   MessageLoop* mMessageLoop;
   Transport* mTransport;
-  // Child side's process id.
-  base::ProcessId mChildProcessId;
   // This keeps us alive until ActorDestroy(), at which point we do a
   // deferred destruction of ourselves.
   nsRefPtr<ImageBridgeParent> mSelfRef;
+
+  bool mSetChildThreadPriority;
 
   /**
    * Map of all living ImageBridgeParent instances

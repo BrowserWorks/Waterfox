@@ -208,6 +208,11 @@ struct CSSPixel {
                    NSToCoordRoundWithClamp(float(aPoint.y) * float(AppUnitsPerCSSPixel())));
   }
 
+  static nsSize ToAppUnits(const CSSIntSize& aSize) {
+    return nsSize(NSToCoordRoundWithClamp(float(aSize.width)  * float(AppUnitsPerCSSPixel())),
+                  NSToCoordRoundWithClamp(float(aSize.height) * float(AppUnitsPerCSSPixel())));
+  }
+
   static nsRect ToAppUnits(const CSSRect& aRect) {
     return nsRect(NSToCoordRoundWithClamp(aRect.x * float(AppUnitsPerCSSPixel())),
                   NSToCoordRoundWithClamp(aRect.y * float(AppUnitsPerCSSPixel())),
@@ -277,6 +282,11 @@ struct LayoutDevicePixel {
                   aSize.height * aAppUnitsPerDevPixel);
   }
 
+  static nsSize ToAppUnits(const LayoutDeviceSize& aSize, nscoord aAppUnitsPerDevPixel) {
+    return nsSize(NSFloatPixelsToAppUnits(aSize.width, aAppUnitsPerDevPixel),
+                  NSFloatPixelsToAppUnits(aSize.height, aAppUnitsPerDevPixel));
+  }
+
   static nsRect ToAppUnits(const LayoutDeviceRect& aRect, nscoord aAppUnitsPerDevPixel) {
     return nsRect(NSFloatPixelsToAppUnits(aRect.x, aAppUnitsPerDevPixel),
                   NSFloatPixelsToAppUnits(aRect.y, aAppUnitsPerDevPixel),
@@ -297,6 +307,10 @@ struct LayoutDevicePixel {
 struct LayerPixel {
   static nsIntRect ToUntyped(const LayerIntRect& aRect) {
     return nsIntRect(aRect.x, aRect.y, aRect.width, aRect.height);
+  }
+
+  static nsIntPoint ToUntyped(const LayerIntPoint& aPoint) {
+    return nsIntPoint(aPoint.x, aPoint.y);
   }
 
   static gfx::IntRect ToUnknown(const LayerIntRect& aRect) {

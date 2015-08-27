@@ -24,11 +24,12 @@ INSTALL_TARGETS += SHELL_INSTALL_AUTOLOAD
 SHELL_INSTALL_AUTOLOAD_FILES := $(CURDIR)/js-gdb.py
 SHELL_INSTALL_AUTOLOAD_DEST := $(DIST)/bin
 
-INSTALL_TARGETS += SHELL_INSTALL_AUTOLOAD_SCRIPT
-SHELL_INSTALL_AUTOLOAD_SCRIPT_FILES := js-gdb.gdb
-SHELL_INSTALL_AUTOLOAD_SCRIPT_DEST := $(CURDIR)
-
 include $(topsrcdir)/config/rules.mk
+
+CC = cl
+CXX = cl
+CFLAGS = -O2
+CXXFLAGS = -O2
 
 # People expect the js shell to wind up in the top-level JS dir.
 libs::
@@ -38,7 +39,3 @@ GARBAGE += ../$(PROGRAM)
 
 install:: $(PROGRAM)
 	$(SYSINSTALL) $^ $(DESTDIR)$(bindir)
-
-js.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
-js.$(OBJ_SUFFIX): CXXFLAGS := -O2	
-	

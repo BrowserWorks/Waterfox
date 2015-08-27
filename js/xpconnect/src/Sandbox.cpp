@@ -49,7 +49,20 @@ using namespace xpc;
 using mozilla::dom::DestroyProtoAndIfaceCache;
 using mozilla::dom::indexedDB::IndexedDatabaseManager;
 
-NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE_0(SandboxPrivate)
+NS_IMPL_CYCLE_COLLECTION_CLASS(SandboxPrivate)
+
+NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(SandboxPrivate)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK_PRESERVED_WRAPPER
+  tmp->UnlinkHostObjectURIs();
+NS_IMPL_CYCLE_COLLECTION_UNLINK_END
+
+NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(SandboxPrivate)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
+  tmp->TraverseHostObjectURIs(cb);
+NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
+
+NS_IMPL_CYCLE_COLLECTION_TRACE_WRAPPERCACHE(SandboxPrivate)
+
 NS_IMPL_CYCLE_COLLECTING_ADDREF(SandboxPrivate)
 NS_IMPL_CYCLE_COLLECTING_RELEASE(SandboxPrivate)
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(SandboxPrivate)
@@ -109,7 +122,8 @@ SandboxDump(JSContext* cx, unsigned argc, jsval* vp)
 
 #if defined(XP_MACOSX)
     // Be nice and convert all \r to \n.
-    char* c = cstr, *cEnd = cstr + strlen(cstr);
+    char* c = cstr;
+    char* cEnd = cstr + strlen(cstr);
     while (c < cEnd) {
         if (*c == '\r')
             *c = '\n';
@@ -398,7 +412,7 @@ struct AutoSkipPropertyMirroring
 // add-ons in a separate compartment while still giving them access to the
 // chrome window.
 static bool
-sandbox_addProperty(JSContext* cx, HandleObject obj, HandleId id, MutableHandleValue vp)
+sandbox_addProperty(JSContext* cx, HandleObject obj, HandleId id, HandleValue v)
 {
     CompartmentPrivate* priv = CompartmentPrivate::Get(obj);
     MOZ_ASSERT(priv->writeToGlobalPrototype);
@@ -441,7 +455,7 @@ sandbox_addProperty(JSContext* cx, HandleObject obj, HandleId id, MutableHandleV
     // readonly attribute (as it calls JSObject::defineProperty). See bug
     // 1019181.
     if (pd.object() && !pd.configurable()) {
-        if (!JS_SetPropertyById(cx, proto, id, vp))
+        if (!JS_SetPropertyById(cx, proto, id, v))
             return false;
     } else {
         if (!JS_CopyPropertyFrom(cx, id, unwrappedProto, obj,
@@ -452,7 +466,7 @@ sandbox_addProperty(JSContext* cx, HandleObject obj, HandleId id, MutableHandleV
     if (!JS_GetPropertyDescriptorById(cx, obj, id, &pd))
         return false;
     unsigned attrs = pd.attributes() & ~(JSPROP_GETTER | JSPROP_SETTER);
-    if (!JS_DefinePropertyById(cx, obj, id, vp,
+    if (!JS_DefinePropertyById(cx, obj, id, v,
                                attrs | JSPROP_PROPOP_ACCESSORS | JSPROP_REDEFINE_NONCONFIGURABLE,
                                JS_PROPERTYOP_GETTER(writeToProto_getProperty),
                                JS_PROPERTYOP_SETTER(writeToProto_setProperty)))
@@ -467,7 +481,9 @@ static const js::Class SandboxClass = {
     "Sandbox",
     XPCONNECT_GLOBAL_FLAGS_WITH_EXTRA_SLOTS(1),
     nullptr, nullptr, nullptr, nullptr,
-    sandbox_enumerate, sandbox_resolve, sandbox_convert,  sandbox_finalize,
+    sandbox_enumerate, sandbox_resolve,
+    nullptr,        /* mayResolve */
+    sandbox_convert,  sandbox_finalize,
     nullptr, nullptr, nullptr, JS_GlobalObjectTraceHook,
     JS_NULL_CLASS_SPEC,
     {
@@ -486,7 +502,9 @@ static const js::Class SandboxWriteToProtoClass = {
     "Sandbox",
     XPCONNECT_GLOBAL_FLAGS_WITH_EXTRA_SLOTS(1),
     sandbox_addProperty, nullptr, nullptr, nullptr,
-    sandbox_enumerate, sandbox_resolve, sandbox_convert,  sandbox_finalize,
+    sandbox_enumerate, sandbox_resolve,
+    nullptr,        /* mayResolve */
+    sandbox_convert,  sandbox_finalize,
     nullptr, nullptr, nullptr, JS_GlobalObjectTraceHook,
     JS_NULL_CLASS_SPEC,
     {
@@ -868,16 +886,14 @@ xpc::CreateSandboxObject(JSContext* cx, MutableHandleValue vp, nsISupports* prin
                          SandboxOptions& options)
 {
     // Create the sandbox global object
-    nsresult rv;
     nsCOMPtr<nsIPrincipal> principal = do_QueryInterface(prinOrSop);
     if (!principal) {
         nsCOMPtr<nsIScriptObjectPrincipal> sop = do_QueryInterface(prinOrSop);
         if (sop) {
             principal = sop->GetPrincipal();
         } else {
-            nsRefPtr<nsNullPrincipal> nullPrin = new nsNullPrincipal();
-            rv = nullPrin->Init();
-            NS_ENSURE_SUCCESS(rv, rv);
+            nsRefPtr<nsNullPrincipal> nullPrin = nsNullPrincipal::Create();
+            NS_ENSURE_TRUE(nullPrin, NS_ERROR_FAILURE);
             principal = nullPrin;
         }
     }
@@ -886,6 +902,8 @@ xpc::CreateSandboxObject(JSContext* cx, MutableHandleValue vp, nsISupports* prin
     JS::CompartmentOptions compartmentOptions;
     if (options.sameZoneAs)
         compartmentOptions.setSameZoneAs(js::UncheckedUnwrap(options.sameZoneAs));
+    else if (options.freshZone)
+        compartmentOptions.setZone(JS::FreshZone);
     else
         compartmentOptions.setZone(JS::SystemZone);
 
@@ -940,7 +958,11 @@ xpc::CreateSandboxObject(JSContext* cx, MutableHandleValue vp, nsISupports* prin
                 return NS_ERROR_XPC_UNEXPECTED;
 
             // Now check what sort of thing we've got in |proto|
-            JSObject* unwrappedProto = js::UncheckedUnwrap(options.proto, false);
+            JSObject* unwrappedProto = js::CheckedUnwrap(options.proto, false);
+            if (!unwrappedProto) {
+                JS_ReportError(cx, "Sandbox must subsume sandboxPrototype");
+                return NS_ERROR_INVALID_ARG;
+            }
             const js::Class* unwrappedClass = js::GetObjectClass(unwrappedProto);
             if (IS_WN_CLASS(unwrappedClass) ||
                 mozilla::dom::IsDOMClass(Jsvalify(unwrappedClass))) {
@@ -1361,18 +1383,28 @@ SandboxOptions::ParseGlobalProperties()
 bool
 SandboxOptions::Parse()
 {
-    return ParseObject("sandboxPrototype", &proto) &&
-           ParseBoolean("wantXrays", &wantXrays) &&
-           ParseBoolean("wantComponents", &wantComponents) &&
-           ParseBoolean("wantExportHelpers", &wantExportHelpers) &&
-           ParseString("sandboxName", sandboxName) &&
-           ParseObject("sameZoneAs", &sameZoneAs) &&
-           ParseBoolean("invisibleToDebugger", &invisibleToDebugger) &&
-           ParseBoolean("discardSource", &discardSource) &&
-           ParseJSString("addonId", &addonId) &&
-           ParseBoolean("writeToGlobalPrototype", &writeToGlobalPrototype) &&
-           ParseGlobalProperties() &&
-           ParseValue("metadata", &metadata);
+    bool ok = ParseObject("sandboxPrototype", &proto) &&
+              ParseBoolean("wantXrays", &wantXrays) &&
+              ParseBoolean("wantComponents", &wantComponents) &&
+              ParseBoolean("wantExportHelpers", &wantExportHelpers) &&
+              ParseString("sandboxName", sandboxName) &&
+              ParseObject("sameZoneAs", &sameZoneAs) &&
+              ParseBoolean("freshZone", &freshZone) &&
+              ParseBoolean("invisibleToDebugger", &invisibleToDebugger) &&
+              ParseBoolean("discardSource", &discardSource) &&
+              ParseJSString("addonId", &addonId) &&
+              ParseBoolean("writeToGlobalPrototype", &writeToGlobalPrototype) &&
+              ParseGlobalProperties() &&
+              ParseValue("metadata", &metadata);
+    if (!ok)
+        return false;
+
+    if (freshZone && sameZoneAs) {
+        JS_ReportError(mCx, "Cannot use both sameZoneAs and freshZone");
+        return false;
+    }
+
+    return true;
 }
 
 static nsresult
@@ -1508,7 +1540,7 @@ xpc::EvalInSandbox(JSContext* cx, HandleObject sandboxArg, const nsAString& sour
     NS_ENSURE_TRUE(prin, NS_ERROR_FAILURE);
 
     nsAutoCString filenameBuf;
-    if (!filename.IsVoid()) {
+    if (!filename.IsVoid() && filename.Length() != 0) {
         filenameBuf.Assign(filename);
     } else {
         // Default to the spec of the principal.
@@ -1523,7 +1555,7 @@ xpc::EvalInSandbox(JSContext* cx, HandleObject sandboxArg, const nsAString& sour
     {
         // We're about to evaluate script, so make an AutoEntryScript.
         // This is clearly Gecko-specific and not in any spec.
-        mozilla::dom::AutoEntryScript aes(priv);
+        mozilla::dom::AutoEntryScript aes(priv, "XPConnect sandbox evaluation");
         JSContext* sandcx = aes.cx();
         AutoSaveContextOptions savedOptions(sandcx);
         JS::ContextOptionsRef(sandcx).setDontReportUncaught(true);

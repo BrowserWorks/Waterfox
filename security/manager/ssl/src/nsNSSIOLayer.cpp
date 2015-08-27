@@ -6,12 +6,12 @@
 
 #include "nsNSSIOLayer.h"
 
-#include "pkix/ScopedPtr.h"
 #include "pkix/pkixtypes.h"
 #include "nsNSSComponent.h"
 #include "mozilla/BinarySearch.h"
 #include "mozilla/Casting.h"
 #include "mozilla/DebugOnly.h"
+#include "mozilla/UniquePtr.h"
 #include "mozilla/Telemetry.h"
 
 #include "prlog.h"
@@ -20,7 +20,6 @@
 #include "nsIPrefService.h"
 #include "nsIClientAuthDialogs.h"
 #include "nsClientAuthRemember.h"
-#include "nsISSLErrorListener.h"
 
 #include "nsNetUtil.h"
 #include "nsPrintfCString.h"
@@ -84,9 +83,7 @@ static const bool FALSE_START_REQUIRE_NPN_DEFAULT = false;
 
 } // unnamed namespace
 
-#ifdef PR_LOGGING
 extern PRLogModuleInfo* gPIPNSSLog;
-#endif
 
 nsNSSSocketInfo::nsNSSSocketInfo(SharedSSLState& aState, uint32_t providerFlags)
   : mFd(nullptr),
@@ -193,80 +190,10 @@ nsNSSSocketInfo::GetBypassAuthentication(bool* arg)
 }
 
 NS_IMETHODIMP
-nsNSSSocketInfo::SetBypassAuthentication(bool arg)
-{
-  nsNSSShutDownPreventionLock locker;
-  if (isAlreadyShutDown()) {
-    return NS_ERROR_NOT_AVAILABLE;
-  }
-  if (!mFd) {
-    return NS_ERROR_FAILURE;
-  }
-
-  mBypassAuthentication = arg;
-  return SyncNSSNames(locker);
-}
-
-NS_IMETHODIMP
 nsNSSSocketInfo::GetFailedVerification(bool* arg)
 {
   *arg = mFailedVerification;
   return NS_OK;
-}
-
-NS_IMETHODIMP
-nsNSSSocketInfo::GetAuthenticationName(nsACString& aAuthenticationName)
-{
-  aAuthenticationName = GetHostName();
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsNSSSocketInfo::SetAuthenticationName(const nsACString& aAuthenticationName)
-{
-  nsNSSShutDownPreventionLock locker;
-  if (isAlreadyShutDown()) {
-    return NS_ERROR_NOT_AVAILABLE;
-  }
-  if (!mFd) {
-    return NS_ERROR_FAILURE;
-  }
-
-  nsCString authenticationName(aAuthenticationName);
-  PR_LOG(gPIPNSSLog, PR_LOG_DEBUG,
-         ("[%p] nsNSSSocketInfo::SetAuthenticationName change from %s to %s\n",
-          mFd, PromiseFlatCString(GetHostName()).get(),
-          authenticationName.get()));
-
-  nsresult rv = SetHostName(authenticationName.get());
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-  return SyncNSSNames(locker);
-}
-
-NS_IMETHODIMP
-nsNSSSocketInfo::GetAuthenticationPort(int32_t* aAuthenticationPort)
-{
-  return GetPort(aAuthenticationPort);
-}
-
-NS_IMETHODIMP
-nsNSSSocketInfo::SetAuthenticationPort(int32_t aAuthenticationPort)
-{
-  nsNSSShutDownPreventionLock locker;
-  if (isAlreadyShutDown()) {
-    return NS_ERROR_NOT_AVAILABLE;
-  }
-  if (!mFd) {
-    return NS_ERROR_FAILURE;
-  }
-
-  nsresult rv = SetPort(aAuthenticationPort);
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-  return SyncNSSNames(locker);
 }
 
 NS_IMETHODIMP
@@ -302,36 +229,6 @@ nsNSSSocketInfo::SetNotificationCallbacks(nsIInterfaceRequestor* aCallbacks)
 
   mCallbacks = aCallbacks;
 
-  return NS_OK;
-}
-
-// forward declare this for SyncNSSNames()
-static nsresult
-nsSSLIOLayerSetPeerName(PRFileDesc* fd, nsNSSSocketInfo* infoObject,
-                        const char* host, int32_t port,
-                        const nsNSSShutDownPreventionLock& /* proofOfLock */);
-
-nsresult
-nsNSSSocketInfo::SyncNSSNames(const nsNSSShutDownPreventionLock& proofOfLock)
-{
-  // I don't know why any of these calls would fail, but if they do
-  // we need to call SetCanceled to avoid non-determinstic results
-
-  const char* hostName = GetHostNameRaw();
-  if (SECSuccess != SSL_SetURL(mFd, hostName)) {
-    PR_LOG(gPIPNSSLog, PR_LOG_ERROR, ("[%p] SyncNSSNames SSL_SetURL error: %d\n",
-                                      (void*) mFd, PR_GetError()));
-    SetCanceled(PR_INVALID_STATE_ERROR, PlainErrorMessage);
-    return NS_ERROR_FAILURE;
-  }
-
-  int32_t port = GetPort();
-  if (NS_FAILED(nsSSLIOLayerSetPeerName(mFd, this, hostName, port, proofOfLock))) {
-    PR_LOG(gPIPNSSLog, PR_LOG_ERROR, ("[%p] SyncNSSNames SetPeerName error: %d\n",
-                                      (void*) mFd, PR_GetError()));
-    SetCanceled(PR_INVALID_STATE_ERROR, PlainErrorMessage);
-    return NS_ERROR_FAILURE;
-  }
   return NS_OK;
 }
 
@@ -693,29 +590,6 @@ nsHandleSSLError(nsNSSSocketInfo* socketInfo,
     // If the socket has been flagged as canceled,
     // the code who did was responsible for setting the error code.
     return;
-  }
-
-  nsresult rv;
-  NS_DEFINE_CID(nssComponentCID, NS_NSSCOMPONENT_CID);
-  nsCOMPtr<nsINSSComponent> nssComponent(do_GetService(nssComponentCID, &rv));
-  if (NS_FAILED(rv))
-    return;
-
-  // Try to get a nsISSLErrorListener implementation from the socket consumer.
-  nsCOMPtr<nsIInterfaceRequestor> cb;
-  socketInfo->GetNotificationCallbacks(getter_AddRefs(cb));
-  if (cb) {
-    nsCOMPtr<nsISSLErrorListener> sel = do_GetInterface(cb);
-    if (sel) {
-      nsIInterfaceRequestor* csi = static_cast<nsIInterfaceRequestor*>(socketInfo);
-
-      nsCString hostWithPortString;
-      getSiteKey(socketInfo->GetHostName(), socketInfo->GetPort(),
-                 hostWithPortString);
-
-      bool suppressMessage = false; // obsolete, ignored
-      rv = sel->NotifySSLError(csi, err, hostWithPortString, &suppressMessage);
-    }
   }
 
   // We must cancel first, which sets the error code.
@@ -1861,7 +1735,6 @@ private:
 static const char* const kFallbackWildcardList[] =
 {
   ".kuronekoyamato.co.jp", // bug 1128366
-  ".userstorage.mega.co.nz", // bug 1133496
   ".wildcard.test",
 };
 
@@ -2069,7 +1942,7 @@ nsGetUserCertChoice(SSM_UserCertChoice* certChoice)
 
 loser:
   if (mode) {
-    nsMemory::Free(mode);
+    free(mode);
   }
   return ret;
 }
@@ -2411,8 +2284,8 @@ ClientAuthDataRunnable::RunOnTargetThread()
       NS_ASSERTION(nicknames->numnicknames == NumberOfCerts, "nicknames->numnicknames != NumberOfCerts");
 
       // Get CN and O of the subject and O of the issuer
-      mozilla::pkix::ScopedPtr<char, PORT_Free_string> ccn(
-        CERT_GetCommonName(&mServerCert->subject));
+      UniquePtr<char, void(&)(void*)>
+        ccn(CERT_GetCommonName(&mServerCert->subject), PORT_Free);
       NS_ConvertUTF8toUTF16 cn(ccn.get());
 
       int32_t port;
@@ -2440,13 +2313,13 @@ ClientAuthDataRunnable::RunOnTargetThread()
       if (cissuer) PORT_Free(cissuer);
 
       certNicknameList =
-        (char16_t**)nsMemory::Alloc(sizeof(char16_t*)* nicknames->numnicknames);
+        (char16_t**)moz_xmalloc(sizeof(char16_t*)* nicknames->numnicknames);
       if (!certNicknameList)
         goto loser;
       certDetailsList =
-        (char16_t**)nsMemory::Alloc(sizeof(char16_t*)* nicknames->numnicknames);
+        (char16_t**)moz_xmalloc(sizeof(char16_t*)* nicknames->numnicknames);
       if (!certDetailsList) {
-        nsMemory::Free(certNicknameList);
+        free(certNicknameList);
         goto loser;
       }
 
@@ -2471,7 +2344,7 @@ ClientAuthDataRunnable::RunOnTargetThread()
           continue;
         certDetailsList[CertsToUse] = ToNewUnicode(details);
         if (!certDetailsList[CertsToUse]) {
-          nsMemory::Free(certNicknameList[CertsToUse]);
+          free(certNicknameList[CertsToUse]);
           continue;
         }
 
@@ -2595,6 +2468,11 @@ nsSSLIOLayerImportFD(PRFileDesc* fd,
                             (SSLGetClientAuthData) nsNSS_SSLGetClientAuthData,
                             infoObject);
   }
+  if (flags & nsISocketProvider::MITM_OK) {
+    PR_LOG(gPIPNSSLog, PR_LOG_DEBUG,
+           ("[%p] nsSSLIOLayerImportFD: bypass authentication flag\n", fd));
+    infoObject->SetBypassAuthentication(true);
+  }
   if (SECSuccess != SSL_AuthCertificateHook(sslSock, AuthCertificateHook,
                                             infoObject)) {
     NS_NOTREACHED("failed to configure AuthCertificateHook");
@@ -2619,54 +2497,16 @@ loser:
 }
 
 static nsresult
-nsSSLIOLayerSetPeerName(PRFileDesc* fd, nsNSSSocketInfo* infoObject,
-                        const char* host, int32_t port,
-                        const nsNSSShutDownPreventionLock& /*proofOfLock*/)
-{
-  // Set the Peer ID so that SSL proxy connections work properly and to
-  // separate anonymous and/or private browsing connections.
-  uint32_t flags = infoObject->GetProviderFlags();
-  nsAutoCString peerId;
-  if (flags & nsISocketProvider::ANONYMOUS_CONNECT) { // See bug 466080
-    peerId.AppendLiteral("anon:");
-  }
-  if (flags & nsISocketProvider::NO_PERMANENT_STORAGE) {
-    peerId.AppendLiteral("private:");
-  }
-  if (infoObject->GetBypassAuthentication()) {
-    peerId.AppendLiteral("bypassAuth:");
-  }
-  peerId.Append(host);
-  peerId.Append(':');
-  peerId.AppendInt(port);
-  PR_LOG(gPIPNSSLog, PR_LOG_DEBUG,
-         ("[%p] nsSSLIOLayerSetPeerName to %s\n", fd, peerId.get()));
-  if (SECSuccess != SSL_SetSockPeerID(fd, peerId.get())) {
-    return NS_ERROR_FAILURE;
-  }
-  return NS_OK;
-}
-
-static nsresult
 nsSSLIOLayerSetOptions(PRFileDesc* fd, bool forSTARTTLS,
                        const char* proxyHost, const char* host, int32_t port,
                        nsNSSSocketInfo* infoObject)
 {
   nsNSSShutDownPreventionLock locker;
-  if (infoObject->isAlreadyShutDown()) {
-    return NS_ERROR_NOT_AVAILABLE;
-  }
-
   if (forSTARTTLS || proxyHost) {
     if (SECSuccess != SSL_OptionSet(fd, SSL_SECURITY, false)) {
       return NS_ERROR_FAILURE;
     }
   }
-
-  // Let's see if we're trying to connect to a site we know is
-  // TLS intolerant.
-  nsAutoCString key;
-  key = nsDependentCString(host) + NS_LITERAL_CSTRING(":") + nsPrintfCString("%d", port);
 
   SSLVersionRange range;
   if (SSL_VersionRangeGet(fd, &range) != SECSuccess) {
@@ -2712,7 +2552,27 @@ nsSSLIOLayerSetOptions(PRFileDesc* fd, bool forSTARTTLS,
     return NS_ERROR_FAILURE;
   }
 
-  return nsSSLIOLayerSetPeerName(fd, infoObject, host, port, locker);
+  // Set the Peer ID so that SSL proxy connections work properly and to
+  // separate anonymous and/or private browsing connections.
+  uint32_t flags = infoObject->GetProviderFlags();
+  nsAutoCString peerId;
+  if (flags & nsISocketProvider::ANONYMOUS_CONNECT) { // See bug 466080
+    peerId.AppendLiteral("anon:");
+  }
+  if (flags & nsISocketProvider::NO_PERMANENT_STORAGE) {
+    peerId.AppendLiteral("private:");
+  }
+  if (flags & nsISocketProvider::MITM_OK) {
+    peerId.AppendLiteral("bypassAuth:");
+  }
+  peerId.Append(host);
+  peerId.Append(':');
+  peerId.AppendInt(port);
+  if (SECSuccess != SSL_SetSockPeerID(fd, peerId.get())) {
+    return NS_ERROR_FAILURE;
+  }
+
+  return NS_OK;
 }
 
 nsresult

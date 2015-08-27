@@ -1,5 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
-/* vim: set ts=2 et sw=2 tw=40: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -87,7 +87,11 @@ TelephonyCall::ChangeStateInternal(uint16_t aCallState, bool aFireEvents)
 {
   nsRefPtr<TelephonyCall> kungFuDeathGrip(this);
 
-  nsString stateString;
+  // Update the internal state.
+  mCallState = aCallState;
+
+  // Indicate whether the external state have been changed.
+  bool externalStateChanged = true;
   switch (aCallState) {
     // These states are used internally to mark this call is currently being
     // controlled, and we should block consecutive requests of the same type
@@ -96,34 +100,30 @@ TelephonyCall::ChangeStateInternal(uint16_t aCallState, bool aFireEvents)
     case nsITelephonyService::CALL_STATE_DISCONNECTING:
     case nsITelephonyService::CALL_STATE_HOLDING:
     case nsITelephonyService::CALL_STATE_RESUMING:
+      externalStateChanged = false;
       break;
     // These states will be translated into literal strings which are used to
     // show the current status of this call.
     case nsITelephonyService::CALL_STATE_DIALING:
-      stateString.AssignLiteral("dialing");
+      mState.AssignLiteral("dialing");
       break;
     case nsITelephonyService::CALL_STATE_ALERTING:
-      stateString.AssignLiteral("alerting");
+      mState.AssignLiteral("alerting");
       break;
     case nsITelephonyService::CALL_STATE_CONNECTED:
-      stateString.AssignLiteral("connected");
+      mState.AssignLiteral("connected");
       break;
     case nsITelephonyService::CALL_STATE_HELD:
-      stateString.AssignLiteral("held");
+      mState.AssignLiteral("held");
       break;
     case nsITelephonyService::CALL_STATE_DISCONNECTED:
-      stateString.AssignLiteral("disconnected");
+      mState.AssignLiteral("disconnected");
       break;
     case nsITelephonyService::CALL_STATE_INCOMING:
-      stateString.AssignLiteral("incoming");
+      mState.AssignLiteral("incoming");
       break;
     default:
       NS_NOTREACHED("Unknown state!");
-  }
-
-  mCallState = aCallState;
-  if (!stateString.IsEmpty()) {
-    mState = stateString;
   }
 
   if (aCallState == nsITelephonyService::CALL_STATE_DISCONNECTED) {
@@ -144,7 +144,7 @@ TelephonyCall::ChangeStateInternal(uint16_t aCallState, bool aFireEvents)
     }
   }
 
-  if (aFireEvents) {
+  if (aFireEvents && externalStateChanged) {
     nsresult rv = DispatchCallEvent(NS_LITERAL_STRING("statechange"), this);
     if (NS_FAILED(rv)) {
       NS_WARNING("Failed to dispatch specific event!");
@@ -153,7 +153,7 @@ TelephonyCall::ChangeStateInternal(uint16_t aCallState, bool aFireEvents)
     // This can change if the statechange handler called back here... Need to
     // figure out something smarter.
     if (mCallState == aCallState) {
-      rv = DispatchCallEvent(stateString, this);
+      rv = DispatchCallEvent(mState, this);
       if (NS_FAILED(rv)) {
         NS_WARNING("Failed to dispatch specific event!");
       }

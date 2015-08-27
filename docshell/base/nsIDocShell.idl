@@ -54,7 +54,7 @@ interface nsITabParent;
  
 typedef unsigned long nsLoadFlags;
 
-[scriptable, builtinclass, uuid(68ba7610-e33d-47ce-8fa2-af07af2422bc)]
+[scriptable, builtinclass, uuid(696b32a1-3cf1-4909-b501-474b25fc7954)]
 interface nsIDocShell : nsIDocShellTreeItem
 {
   /**
@@ -1039,7 +1039,10 @@ interface nsIDocShell : nsIDocShellTreeItem
    * that execution has stopped.  This only occurs when the Timeline devtool
    * is collecting information.
    */
-  [noscript,notxpcom,nostdcall] void notifyJSRunToCompletionStart();
+  [noscript,notxpcom,nostdcall] void notifyJSRunToCompletionStart(in string aReason,
+                                                                  in wstring functionName,
+                                                                  in wstring fileName,
+                                                                  in unsigned long lineNumber);
   [noscript,notxpcom,nostdcall] void notifyJSRunToCompletionStop();
 
   /**

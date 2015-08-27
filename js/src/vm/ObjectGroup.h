@@ -140,16 +140,9 @@ enum NewObjectKind {
     /*
      * Singleton objects are treated specially by the type system. This flag
      * ensures that the new object is automatically set up correctly as a
-     * singleton and is allocated in the correct heap.
+     * singleton and is allocated in the tenured heap.
      */
     SingletonObject,
-
-    /*
-     * Objects which may be marked as a singleton after allocation must still
-     * be allocated on the correct heap, but are not automatically setup as a
-     * singleton after allocation.
-     */
-    MaybeSingletonObject,
 
     /*
      * Objects which will not benefit from being allocated in the nursery
@@ -334,6 +327,10 @@ class ObjectGroup : public gc::TenuredCell
     void detachPreliminaryObjects() {
         MOZ_ASSERT(maybePreliminaryObjects());
         setAddendum(Addendum_None, nullptr);
+    }
+
+    bool hasUnanalyzedPreliminaryObjects() {
+        return (newScript() && !newScript()->analyzed()) || maybePreliminaryObjects();
     }
 
     UnboxedLayout* maybeUnboxedLayout() {
@@ -547,6 +544,7 @@ class ObjectGroup : public gc::TenuredCell
 
     inline void clearProperties();
     void maybeSweep(AutoClearTypeInferenceStateOnOOM* oom);
+    void traceChildren(JSTracer* trc);
 
   private:
 #ifdef DEBUG

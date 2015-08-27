@@ -62,6 +62,10 @@ CompositorD3D9::Initialize()
     return false;
   }
 
+  if (!mWidget->InitCompositor(this)) {
+    return false;
+  }
+
   reporter.SetSuccessful();
   return true;
 }
@@ -707,7 +711,7 @@ CompositorD3D9::PrepareViewport(const gfx::IntSize& aSize)
 void
 CompositorD3D9::EnsureSize()
 {
-  nsIntRect rect;
+  IntRect rect;
   mWidget->GetClientBounds(rect);
 
   mSize = rect.Size();

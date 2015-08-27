@@ -15,9 +15,7 @@
 #include "mozilla/layers/LayersTypes.h"  // for LayersBackend
 #include "mozilla/layers/TextureClient.h"  // for TextureClient
 #include "nsRegion.h"                   // for nsIntRegion
-
-struct nsIntPoint;
-struct nsIntRect;
+#include "mozilla/gfx/Rect.h"
 
 namespace mozilla {
 namespace layers {
@@ -28,7 +26,6 @@ struct TextureFactoryIdentifier;
 class SurfaceDescriptor;
 class SurfaceDescriptorTiles;
 class ThebesBufferData;
-class ClientTiledLayerBuffer;
 class PTextureChild;
 
 /**
@@ -79,7 +76,7 @@ public:
    * Communicate the picture rect of a YUV image in aLayer to the compositor
    */
   virtual void UpdatePictureRect(CompositableClient* aCompositable,
-                                 const nsIntRect& aRect) = 0;
+                                 const gfx::IntRect& aRect) = 0;
 
 #ifdef MOZ_WIDGET_GONK
   virtual void UseOverlaySource(CompositableClient* aCompositabl,
@@ -136,16 +133,6 @@ public:
     mTexturesToRemove.Clear();
   }
 
-  virtual void HoldTransactionsToRespond(uint64_t aTransactionId)
-  {
-    mTransactionsToRespond.push_back(aTransactionId);
-  }
-
-  virtual void ClearTransactionsToRespond()
-  {
-    mTransactionsToRespond.clear();
-  }
-
   /**
    * Tell the CompositableHost on the compositor side what texture to use for
    * the next composition.
@@ -155,10 +142,6 @@ public:
   virtual void UseComponentAlphaTextures(CompositableClient* aCompositable,
                                          TextureClient* aClientOnBlack,
                                          TextureClient* aClientOnWhite) = 0;
-
-  virtual void SendFenceHandle(AsyncTransactionTracker* aTracker,
-                               PTextureChild* aTexture,
-                               const FenceHandle& aFence) = 0;
 
   virtual void SendPendingAsyncMessges() = 0;
 
@@ -203,7 +186,6 @@ public:
 protected:
   TextureFactoryIdentifier mTextureFactoryIdentifier;
   nsTArray<RefPtr<TextureClient> > mTexturesToRemove;
-  std::vector<uint64_t> mTransactionsToRespond;
   RefPtr<SyncObject> mSyncObject;
   const int32_t mSerial;
   static mozilla::Atomic<int32_t> sSerialCounter;

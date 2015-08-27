@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -175,7 +175,7 @@ DEFINE_PHYSICAL_KEY_CODE_NAME_WITH_SAME_NAME(F22)
 DEFINE_PHYSICAL_KEY_CODE_NAME_WITH_SAME_NAME(F23)
 DEFINE_PHYSICAL_KEY_CODE_NAME_WITH_SAME_NAME(F24)
 DEFINE_PHYSICAL_KEY_CODE_NAME_WITH_SAME_NAME(Fn)
-// DEFINE_PHYSICAL_KEY_CODE_NAME_WITH_SAME_NAME(FLock)
+DEFINE_PHYSICAL_KEY_CODE_NAME_WITH_SAME_NAME(FnLock)
 DEFINE_PHYSICAL_KEY_CODE_NAME_WITH_SAME_NAME(PrintScreen)
 DEFINE_PHYSICAL_KEY_CODE_NAME_WITH_SAME_NAME(ScrollLock)
 DEFINE_PHYSICAL_KEY_CODE_NAME_WITH_SAME_NAME(Pause)

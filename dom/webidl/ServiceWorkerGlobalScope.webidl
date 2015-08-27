@@ -14,11 +14,7 @@
  Exposed=ServiceWorker]
 interface ServiceWorkerGlobalScope : WorkerGlobalScope {
   readonly attribute Clients clients;
-
-  void update();
-
-  [Throws]
-  Promise<boolean> unregister();
+  readonly attribute ServiceWorkerRegistration registration;
 
   attribute EventHandler oninstall;
   attribute EventHandler onactivate;
@@ -30,4 +26,9 @@ interface ServiceWorkerGlobalScope : WorkerGlobalScope {
   attribute EventHandler onmessage;
 };
 
+// These are from w3c.github.io/push-api/
+partial interface ServiceWorkerGlobalScope {
+  attribute EventHandler onpush;
+  attribute EventHandler onpushsubscriptionchange;
+};
 

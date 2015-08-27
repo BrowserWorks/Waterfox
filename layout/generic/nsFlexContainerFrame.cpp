@@ -160,23 +160,45 @@ public:
                      const WritingMode& aWM);
 
   // Accessors:
+  // XXXdholbert [BEGIN DEPRECATED]
   AxisOrientationType GetMainAxis() const  { return mMainAxis;  }
   AxisOrientationType GetCrossAxis() const { return mCrossAxis; }
 
-  bool IsMainAxisHorizontal() const { return IsAxisHorizontal(mMainAxis); }
-  bool IsCrossAxisHorizontal() const { return IsAxisHorizontal(mCrossAxis); }
+  bool IsMainAxisHorizontal() const {
+    // If we're row-oriented, and our writing mode is NOT vertical,
+    // or we're column-oriented and our writing mode IS vertical,
+    // then our main axis is horizontal. This handles all cases:
+    return mIsRowOriented != mWM.IsVertical();
+  }
+  bool IsCrossAxisHorizontal() const {
+    return !IsMainAxisHorizontal();
+  }
+  // XXXdholbert [END DEPRECATED]
+
+  // Returns true if our main axis is in the reverse direction of our
+  // writing mode's corresponding axis. (From 'flex-direction: *-reverse')
+  bool IsMainAxisReversed() const {
+    return mIsMainAxisReversed;
+  }
+  // Returns true if our cross axis is in the reverse direction of our
+  // writing mode's corresponding axis. (From 'flex-wrap: *-reverse')
+  bool IsCrossAxisReversed() const {
+    return mIsCrossAxisReversed;
+  }
+
+  bool IsRowOriented() const { return mIsRowOriented; }
 
   nscoord GetMainComponent(const nsSize& aSize) const {
     return GET_MAIN_COMPONENT(*this, aSize.width, aSize.height);
   }
-  int32_t GetMainComponent(const nsIntSize& aIntSize) const {
+  int32_t GetMainComponent(const LayoutDeviceIntSize& aIntSize) const {
     return GET_MAIN_COMPONENT(*this, aIntSize.width, aIntSize.height);
   }
 
   nscoord GetCrossComponent(const nsSize& aSize) const {
     return GET_CROSS_COMPONENT(*this, aSize.width, aSize.height);
   }
-  int32_t GetCrossComponent(const nsIntSize& aIntSize) const {
+  int32_t GetCrossComponent(const LayoutDeviceIntSize& aIntSize) const {
     return GET_CROSS_COMPONENT(*this, aIntSize.width, aIntSize.height);
   }
 
@@ -204,41 +226,47 @@ public:
 
   /**
    * Converts a "flex-relative" point (a main-axis & cross-axis coordinate)
-   * into a "physical" x,y point.
-   *
-   * In the simplest case where the main-axis is left-to-right and the
-   * cross-axis is top-to-bottom, this just returns
-   * nsPoint(aMainCoord, aCrossCoord).
+   * into a LogicalPoint, using the flex container's writing mode.
    *
    *  @arg aMainCoord  The main-axis coordinate -- i.e an offset from the
-   *                   main-start edge of the container's content box.
+   *                   main-start edge of the flex container's content box.
    *  @arg aCrossCoord The cross-axis coordinate -- i.e an offset from the
-   *                   cross-start edge of the container's content box.
-   *  @return A nsPoint representing the same position (in coordinates
-   *          relative to the container's content box).
+   *                   cross-start edge of the flex container's content box.
+   *  @arg aContainerMainSize  The main size of flex container's content box.
+   *  @arg aContainerCrossSize The cross size of flex container's content box.
+   *  @return A LogicalPoint, with the flex container's writing mode, that
+   *          represents the same position. The logical coordinates are
+   *          relative to the flex container's content box.
    */
-  nsPoint PhysicalPointFromFlexRelativePoint(nscoord aMainCoord,
-                                             nscoord aCrossCoord,
-                                             nscoord aContainerMainSize,
-                                             nscoord aContainerCrossSize) const {
-    nscoord physicalCoordInMainAxis =
-      PhysicalCoordFromFlexRelativeCoord(aMainCoord, aContainerMainSize,
-                                         mMainAxis);
-    nscoord physicalCoordInCrossAxis =
-      PhysicalCoordFromFlexRelativeCoord(aCrossCoord, aContainerCrossSize,
-                                         mCrossAxis);
+  LogicalPoint
+  LogicalPointFromFlexRelativePoint(nscoord aMainCoord,
+                                    nscoord aCrossCoord,
+                                    nscoord aContainerMainSize,
+                                    nscoord aContainerCrossSize) const {
+    nscoord logicalCoordInMainAxis = mIsMainAxisReversed ?
+      aContainerMainSize - aMainCoord : aMainCoord;
+    nscoord logicalCoordInCrossAxis = mIsCrossAxisReversed ?
+      aContainerCrossSize - aCrossCoord : aCrossCoord;
 
-    return IsMainAxisHorizontal() ?
-      nsPoint(physicalCoordInMainAxis, physicalCoordInCrossAxis) :
-      nsPoint(physicalCoordInCrossAxis, physicalCoordInMainAxis);
+    return mIsRowOriented ?
+      LogicalPoint(mWM, logicalCoordInMainAxis, logicalCoordInCrossAxis) :
+      LogicalPoint(mWM, logicalCoordInCrossAxis, logicalCoordInMainAxis);
   }
 
-
-  nsSize PhysicalSizeFromFlexRelativeSizes(nscoord aMainSize,
-                                           nscoord aCrossSize) const {
-    return IsMainAxisHorizontal() ?
-      nsSize(aMainSize, aCrossSize) :
-      nsSize(aCrossSize, aMainSize);
+  /**
+   * Converts a "flex-relative" size (a main-axis & cross-axis size)
+   * into a LogicalSize, using the flex container's writing mode.
+   *
+   *  @arg aMainSize  The main-axis size.
+   *  @arg aCrossSize The cross-axis size.
+   *  @return A LogicalSize, with the flex container's writing mode, that
+   *          represents the same size.
+   */
+  LogicalSize LogicalSizeFromFlexRelativeSizes(nscoord aMainSize,
+                                               nscoord aCrossSize) const {
+    return mIsRowOriented ?
+      LogicalSize(mWM, aMainSize, aCrossSize) :
+      LogicalSize(mWM, aCrossSize, aMainSize);
   }
 
   // Are my axes reversed with respect to what the author asked for?
@@ -250,16 +278,29 @@ public:
   }
 
 private:
-  // Indicates whether the given AxisOrientationType is horizontal.
-  // XXXdholbert This is private so that callers outside of FlexboxAxisTracker
-  // don't depend on it. This lets us move away from AxisOrientationType to a
-  // logical-axis-relative representation more seamlessly.
-  static inline bool IsAxisHorizontal(AxisOrientationType aAxis) {
-    return eAxis_LR == aAxis || eAxis_RL == aAxis;
-  }
+  // Delete copy-constructor & reassignment operator, to prevent accidental
+  // (unnecessary) copying.
+  FlexboxAxisTracker(const FlexboxAxisTracker&) = delete;
+  FlexboxAxisTracker& operator=(const FlexboxAxisTracker&) = delete;
 
+  // XXXdholbert [BEGIN DEPRECATED]
   AxisOrientationType mMainAxis;
   AxisOrientationType mCrossAxis;
+  // XXXdholbert [END DEPRECATED]
+
+  const WritingMode mWM; // The flex container's writing mode.
+
+  bool mIsRowOriented; // Is our main axis the inline axis?
+                       // (Are we 'flex-direction:row[-reverse]'?)
+
+  bool mIsMainAxisReversed; // Is our main axis in the opposite direction
+                            // as mWM's corresponding axis? (e.g. RTL vs LTR)
+  bool mIsCrossAxisReversed; // Is our cross axis in the opposite direction
+                             // as mWM's corresponding axis? (e.g. BTT vs TTB)
+
+  // Implementation detail -- this indicates whether we've decided to
+  // transparently reverse our axes & our child ordering, to avoid having
+  // frames flow from bottom to top in either axis (& to make pagination saner).
   bool mAreAxesInternallyReversed;
 };
 
@@ -1045,7 +1086,7 @@ nsFlexContainerFrame::GenerateFlexItemForChild(
   bool isFixedSizeWidget = false;
   const nsStyleDisplay* disp = aChildFrame->StyleDisplay();
   if (aChildFrame->IsThemed(disp)) {
-    nsIntSize widgetMinSize(0, 0);
+    LayoutDeviceIntSize widgetMinSize;
     bool canOverride = true;
     aPresContext->GetTheme()->
       GetMinimumWidgetSize(aPresContext, aChildFrame,
@@ -1698,42 +1739,47 @@ public:
 
   // Advances our current position from the start side of a child frame's
   // border-box to the frame's upper or left edge (depending on our axis).
-  // (Note that this is a no-op if our axis grows in positive direction.)
+  // (Note that this is a no-op if our axis grows in the same direction as
+  // the corresponding logical axis.)
   void EnterChildFrame(nscoord aChildFrameSize)
   {
-    if (!AxisGrowsInPositiveDirection(mAxis))
+    if (mIsAxisReversed) {
       mPosition += aChildFrameSize;
+    }
   }
 
   // Advances our current position from a frame's upper or left border-box edge
   // (whichever is in the axis we're tracking) to the 'end' side of the frame
   // in the axis that we're tracking. (Note that this is a no-op if our axis
-  // grows in the negative direction.)
+  // is reversed with respect to the corresponding logical axis.)
   void ExitChildFrame(nscoord aChildFrameSize)
   {
-    if (AxisGrowsInPositiveDirection(mAxis))
+    if (!mIsAxisReversed) {
       mPosition += aChildFrameSize;
+    }
   }
 
 protected:
   // Protected constructor, to be sure we're only instantiated via a subclass.
-  explicit PositionTracker(AxisOrientationType aAxis)
+  PositionTracker(AxisOrientationType aAxis, bool aIsAxisReversed)
     : mPosition(0),
-      mAxis(aAxis)
+      mAxis(aAxis),
+      mIsAxisReversed(aIsAxisReversed)
   {}
 
-private:
-  // Private copy-constructor, since we don't want any instances of our
-  // subclasses to be accidentally copied.
-  PositionTracker(const PositionTracker& aOther)
-    : mPosition(aOther.mPosition),
-      mAxis(aOther.mAxis)
-  {}
+  // Delete copy-constructor & reassignment operator, to prevent accidental
+  // (unnecessary) copying.
+  PositionTracker(const PositionTracker&) = delete;
+  PositionTracker& operator=(const PositionTracker&) = delete;
 
-protected:
   // Member data:
   nscoord mPosition;               // The position we're tracking
-  const AxisOrientationType mAxis; // The axis along which we're moving
+  // XXXdholbert [BEGIN DEPRECATED]
+  const AxisOrientationType mAxis; // The axis along which we're moving.
+  // XXXdholbert [END DEPRECATED]
+  const bool mIsAxisReversed; // Is the axis along which we're moving reversed
+                              // (e.g. LTR vs RTL) with respect to the
+                              // corresponding axis on the flex container's WM?
 };
 
 // Tracks our position in the main axis, when we're laying out flex items.
@@ -1910,9 +1956,9 @@ nsFlexContainerFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
   // Our children are all block-level, so their borders/backgrounds all go on
   // the BlockBorderBackgrounds list.
   nsDisplayListSet childLists(aLists, aLists.BlockBorderBackgrounds());
-  for (nsFrameList::Enumerator e(mFrames); !e.AtEnd(); e.Next()) {
-    BuildDisplayListForChild(aBuilder, e.get(), aDirtyRect, childLists,
-                             GetDisplayFlagsForFlexItem(e.get()));
+  for (nsIFrame* childFrame : mFrames) {
+    BuildDisplayListForChild(aBuilder, childFrame, aDirtyRect, childLists,
+                             GetDisplayFlagsForFlexItem(childFrame));
   }
 }
 
@@ -1942,8 +1988,7 @@ void
 nsFlexContainerFrame::SanityCheckAnonymousFlexItems() const
 {
   bool prevChildWasAnonFlexItem = false;
-  for (nsIFrame* child = mFrames.FirstChild(); child;
-       child = child->GetNextSibling()) {
+  for (nsIFrame* child : mFrames) {
     MOZ_ASSERT(!FrameWantsToBeInAnonymousFlexItem(child),
                "frame wants to be inside an anonymous flex item, "
                "but it isn't");
@@ -2353,7 +2398,8 @@ MainAxisPositionTracker::
                           const FlexLine* aLine,
                           uint8_t aJustifyContent,
                           nscoord aContentBoxMainSize)
-  : PositionTracker(aAxisTracker.GetMainAxis()),
+  : PositionTracker(aAxisTracker.GetMainAxis(),
+                    aAxisTracker.IsMainAxisReversed()),
     mPackingSpaceRemaining(aContentBoxMainSize), // we chip away at this below
     mNumAutoMarginsInMainAxis(0),
     mNumPackingSpacesRemaining(0),
@@ -2504,7 +2550,8 @@ CrossAxisPositionTracker::
                            nscoord aContentBoxCrossSize,
                            bool aIsCrossSizeDefinite,
                            const FlexboxAxisTracker& aAxisTracker)
-  : PositionTracker(aAxisTracker.GetCrossAxis()),
+  : PositionTracker(aAxisTracker.GetCrossAxis(),
+                    aAxisTracker.IsCrossAxisReversed()),
     mPackingSpaceRemaining(0),
     mNumPackingSpacesRemaining(0),
     mAlignContent(aAlignContent)
@@ -2657,7 +2704,8 @@ CrossAxisPositionTracker::TraversePackingSpace()
 
 SingleLineCrossAxisPositionTracker::
   SingleLineCrossAxisPositionTracker(const FlexboxAxisTracker& aAxisTracker)
-  : PositionTracker(aAxisTracker.GetCrossAxis())
+  : PositionTracker(aAxisTracker.GetCrossAxis(),
+                    aAxisTracker.IsCrossAxisReversed())
 {
 }
 
@@ -2927,7 +2975,8 @@ BlockDirToAxisOrientation(WritingMode::BlockDir aBlockDir)
 
 FlexboxAxisTracker::FlexboxAxisTracker(const nsStylePosition* aStylePosition,
                                        const WritingMode& aWM)
-  : mAreAxesInternallyReversed(false)
+  : mWM(aWM),
+    mAreAxesInternallyReversed(false)
 {
   uint32_t flexDirection = aStylePosition->mFlexDirection;
 
@@ -2936,23 +2985,31 @@ FlexboxAxisTracker::FlexboxAxisTracker(const nsStylePosition* aStylePosition,
   // those terms have explicit definition in the writing-modes spec, which are
   // the opposite of how I'd be using them here.)
   AxisOrientationType inlineDimension =
-    InlineDirToAxisOrientation(aWM.GetInlineDir());
+    InlineDirToAxisOrientation(mWM.GetInlineDir());
   AxisOrientationType blockDimension =
-    BlockDirToAxisOrientation(aWM.GetBlockDir());
+    BlockDirToAxisOrientation(mWM.GetBlockDir());
 
   // Determine main axis:
   switch (flexDirection) {
     case NS_STYLE_FLEX_DIRECTION_ROW:
       mMainAxis = inlineDimension;
+      mIsRowOriented = true;
+      mIsMainAxisReversed = false;
       break;
     case NS_STYLE_FLEX_DIRECTION_ROW_REVERSE:
       mMainAxis = GetReverseAxis(inlineDimension);
+      mIsRowOriented = true;
+      mIsMainAxisReversed = true;
       break;
     case NS_STYLE_FLEX_DIRECTION_COLUMN:
       mMainAxis = blockDimension;
+      mIsRowOriented = false;
+      mIsMainAxisReversed = false;
       break;
     case NS_STYLE_FLEX_DIRECTION_COLUMN_REVERSE:
       mMainAxis = GetReverseAxis(blockDimension);
+      mIsRowOriented = false;
+      mIsMainAxisReversed = true;
       break;
     default:
       MOZ_CRASH("Unexpected computed value for 'flex-flow' property");
@@ -2971,6 +3028,9 @@ FlexboxAxisTracker::FlexboxAxisTracker(const nsStylePosition* aStylePosition,
   // "flex-wrap: wrap-reverse" reverses our cross axis.
   if (aStylePosition->mFlexWrap == NS_STYLE_FLEX_WRAP_WRAP_REVERSE) {
     mCrossAxis = GetReverseAxis(mCrossAxis);
+    mIsCrossAxisReversed = true;
+  } else {
+    mIsCrossAxisReversed = false;
   }
 
   // Master switch to enable/disable bug 983427's code for reversing our axes
@@ -2986,11 +3046,10 @@ FlexboxAxisTracker::FlexboxAxisTracker(const nsStylePosition* aStylePosition,
       mMainAxis = GetReverseAxis(mMainAxis);
       mCrossAxis = GetReverseAxis(mCrossAxis);
       mAreAxesInternallyReversed = true;
+      mIsMainAxisReversed = !mIsMainAxisReversed;
+      mIsCrossAxisReversed = !mIsCrossAxisReversed;
     }
   }
-
-  MOZ_ASSERT(IsMainAxisHorizontal() != IsCrossAxisHorizontal(),
-             "main & cross axes should be in different dimensions");
 }
 
 // Allocates a new FlexLine, adds it to the given LinkedList (at the front or
@@ -3071,9 +3130,7 @@ nsFlexContainerFrame::GenerateFlexLines(
   // checked against entries in aStruts.)
   uint32_t itemIdxInContainer = 0;
 
-  for (nsFrameList::Enumerator e(mFrames); !e.AtEnd(); e.Next()) {
-    nsIFrame* childFrame = e.get();
-
+  for (nsIFrame* childFrame : mFrames) {
     // Honor "page-break-before", if we're multi-line and this line isn't empty:
     if (!isSingleLine && !curLine->IsEmpty() &&
         childFrame->StyleDisplay()->mBreakBefore) {
@@ -3694,49 +3751,56 @@ nsFlexContainerFrame::DoFlexLayout(nsPresContext*           aPresContext,
   // Before giving each child a final reflow, calculate the origin of the
   // flex container's content box (with respect to its border-box), so that
   // we can compute our flex item's final positions.
-  nsMargin containerBorderPadding(aReflowState.ComputedPhysicalBorderPadding());
-  containerBorderPadding.ApplySkipSides(GetSkipSides(&aReflowState));
-  const nsPoint containerContentBoxOrigin(containerBorderPadding.left,
-                                          containerBorderPadding.top);
-  WritingMode outerWM = aReflowState.GetWritingMode();
+  WritingMode flexWM = aReflowState.GetWritingMode();
+  LogicalMargin containerBP = aReflowState.ComputedLogicalBorderPadding();
+
+  // Unconditionally skip block-end border & padding for now, regardless of
+  // writing-mode/GetLogicalSkipSides.  We add it lower down, after we've
+  // established baseline and decided whether bottom border-padding fits (if
+  // we're fragmented).
+  const nscoord blockEndContainerBP = containerBP.BEnd(flexWM);
+  const LogicalSides skipSides =
+    GetLogicalSkipSides(&aReflowState) | LogicalSides(eLogicalSideBitsBEnd);
+  containerBP.ApplySkipSides(skipSides);
+
+  const LogicalPoint containerContentBoxOrigin(flexWM,
+                                               containerBP.IStart(flexWM),
+                                               containerBP.BStart(flexWM));
+
   nscoord containerWidth = aAxisTracker.IsMainAxisHorizontal() ?
                              aContentBoxMainSize : contentBoxCrossSize;
+  containerWidth += aReflowState.ComputedPhysicalBorderPadding().LeftRight();
 
   // FINAL REFLOW: Give each child frame another chance to reflow, now that
   // we know its final size and position.
   for (const FlexLine* line = lines.getFirst(); line; line = line->getNext()) {
     for (const FlexItem* item = line->GetFirstItem(); item;
          item = item->getNext()) {
-      nsPoint physicalPosn = aAxisTracker.PhysicalPointFromFlexRelativePoint(
+      LogicalPoint framePos = aAxisTracker.LogicalPointFromFlexRelativePoint(
                                item->GetMainPosition(),
                                item->GetCrossPosition(),
                                aContentBoxMainSize,
                                contentBoxCrossSize);
-      // Adjust physicalPosn to be relative to the container's border-box
+      // Adjust framePos to be relative to the container's border-box
       // (i.e. its frame rect), instead of the container's content-box:
-      physicalPosn += containerContentBoxOrigin;
-
-      //XXX Can we calculate the logical position more directly instead
-      //    of this double conversion?
-      nsSize finalFlexedPhysicalSize =
-        aAxisTracker.PhysicalSizeFromFlexRelativeSizes(item->GetMainSize(),
-                                                       item->GetCrossSize());
-      LogicalPoint framePos(outerWM, physicalPosn,
-                            containerWidth - finalFlexedPhysicalSize.width -
-                              item->GetBorderPadding().LeftRight());
+      framePos += containerContentBoxOrigin;
 
       // (Intentionally snapshotting this before ApplyRelativePositioning, to
       // maybe use for setting the flex container's baseline.)
-      const nscoord itemNormalBPos = framePos.B(outerWM);
+      const nscoord itemNormalBPos = framePos.B(flexWM);
 
       // Check if we actually need to reflow the item -- if we already reflowed
       // it with the right size, we can just reposition it as-needed.
       bool itemNeedsReflow = true; // (Start out assuming the worst.)
       if (item->HadMeasuringReflow()) {
+        LogicalSize finalFlexItemCBSize =
+          aAxisTracker.LogicalSizeFromFlexRelativeSizes(item->GetMainSize(),
+                                                        item->GetCrossSize());
         // We've already reflowed the child once. Was the size we gave it in
         // that reflow the same as its final (post-flexing/stretching) size?
-        if (finalFlexedPhysicalSize ==
-            item->Frame()->GetContentRectRelativeToSelf().Size()) {
+        if (finalFlexItemCBSize ==
+            LogicalSize(flexWM,
+                        item->Frame()->GetContentRectRelativeToSelf().Size())) {
           // Even if our size hasn't changed, some of our descendants might
           // care that our height is now considered "definite" (whereas it
           // wasn't in our previous "measuring" reflow), if they have a
@@ -3767,15 +3831,14 @@ nsFlexContainerFrame::DoFlexLayout(nsPresContext*           aPresContext,
     }
   }
 
-  nsSize desiredContentBoxSize =
-    aAxisTracker.PhysicalSizeFromFlexRelativeSizes(aContentBoxMainSize,
-                                                   contentBoxCrossSize);
-
-  aDesiredSize.Width() = desiredContentBoxSize.width +
-    containerBorderPadding.LeftRight();
-  // Does *NOT* include bottom border/padding yet (we add that a bit lower down)
-  aDesiredSize.Height() = desiredContentBoxSize.height +
-    containerBorderPadding.top;
+  // Compute flex container's desired size (in its own writing-mode),
+  // starting w/ content-box size & growing from there:
+  LogicalSize desiredSizeInFlexWM =
+    aAxisTracker.LogicalSizeFromFlexRelativeSizes(aContentBoxMainSize,
+                                                  contentBoxCrossSize);
+  // Add border/padding (w/ skipSides already applied):
+  desiredSizeInFlexWM.ISize(flexWM) += containerBP.IStartEnd(flexWM);
+  desiredSizeInFlexWM.BSize(flexWM) += containerBP.BStartEnd(flexWM);
 
   if (flexContainerAscent == nscoord_MIN) {
     // Still don't have our baseline set -- this happens if we have no
@@ -3785,42 +3848,48 @@ nsFlexContainerFrame::DoFlexLayout(nsPresContext*           aPresContext,
     NS_WARN_IF_FALSE(lines.getFirst()->IsEmpty(),
                      "Have flex items but didn't get an ascent - that's odd "
                      "(or there are just gigantic sizes involved)");
-    // Per spec, just use the bottom of content-box.
-    flexContainerAscent = aDesiredSize.Height();
+    // Per spec, synthesize baseline from the flex container's content box
+    // (i.e. use block-end side of content-box)
+    // XXXdholbert This only makes sense if parent's writing mode is
+    // horizontal (& even then, really we should be using the BSize in terms
+    // of the parent's writing mode, not ours). Clean up in bug 1155322.
+    flexContainerAscent = desiredSizeInFlexWM.BSize(flexWM);
   }
+
+  // XXXdholbert flexContainerAscent needs to be in terms of
+  // our parent's writing-mode here. See bug 1155322.
   aDesiredSize.SetBlockStartAscent(flexContainerAscent);
 
-  // Now: If we're complete, add bottom border/padding to desired height
-  // (unless that pushes us over available height, in which case we become
-  // incomplete (unless we already weren't asking for any height, in which case
-  // we stay complete to avoid looping forever)).
+  // Now: If we're complete, add bottom border/padding to desired height (which
+  // we skipped via skipSides) -- unless that pushes us over available height,
+  // in which case we become incomplete (unless we already weren't asking for
+  // any height, in which case we stay complete to avoid looping forever).
   // NOTE: If we're auto-height, we allow our bottom border/padding to push us
   // over the available height without requesting a continuation, for
   // consistency with the behavior of "display:block" elements.
   if (NS_FRAME_IS_COMPLETE(aStatus)) {
-    // NOTE: We can't use containerBorderPadding.bottom for this, because if
-    // we're auto-height, ApplySkipSides will have zeroed it (because it
-    // assumed we might get a continuation). We have the correct value in
-    // aReflowState.ComputedPhyiscalBorderPadding().bottom, though, so we use that.
-    nscoord desiredHeightWithBottomBP =
-      aDesiredSize.Height() + aReflowState.ComputedPhysicalBorderPadding().bottom;
+    nscoord desiredBSizeWithBEndBP =
+      desiredSizeInFlexWM.BSize(flexWM) + blockEndContainerBP;
 
-    if (aReflowState.AvailableHeight() == NS_UNCONSTRAINEDSIZE ||
-        aDesiredSize.Height() == 0 ||
-        desiredHeightWithBottomBP <= aReflowState.AvailableHeight() ||
-        aReflowState.ComputedHeight() == NS_INTRINSICSIZE) {
-      // Update desired height to include bottom border/padding
-      aDesiredSize.Height() = desiredHeightWithBottomBP;
+    if (aReflowState.AvailableBSize() == NS_UNCONSTRAINEDSIZE ||
+        desiredSizeInFlexWM.BSize(flexWM) == 0 ||
+        desiredBSizeWithBEndBP <= aReflowState.AvailableBSize() ||
+        aReflowState.ComputedBSize() == NS_INTRINSICSIZE) {
+      // Update desired height to include block-end border/padding
+      desiredSizeInFlexWM.BSize(flexWM) = desiredBSizeWithBEndBP;
     } else {
       // We couldn't fit bottom border/padding, so we'll need a continuation.
       NS_FRAME_SET_INCOMPLETE(aStatus);
     }
   }
 
+  // Convert flex container's final desired size to parent's WM, for outparam.
+  aDesiredSize.SetSize(flexWM, desiredSizeInFlexWM);
+
   // Overflow area = union(my overflow area, kids' overflow areas)
   aDesiredSize.SetOverflowAreasToDesiredBounds();
-  for (nsFrameList::Enumerator e(mFrames); !e.AtEnd(); e.Next()) {
-    ConsiderChildOverflow(aDesiredSize.mOverflowAreas, e.get());
+  for (nsIFrame* childFrame : mFrames) {
+    ConsiderChildOverflow(aDesiredSize.mOverflowAreas, childFrame);
   }
 
   FinishReflowWithAbsoluteFrames(aPresContext, aDesiredSize,
@@ -3962,9 +4031,9 @@ nsFlexContainerFrame::GetMinISize(nsRenderingContext* aRenderingContext)
   const nsStylePosition* stylePos = StylePosition();
   const FlexboxAxisTracker axisTracker(stylePos, GetWritingMode());
 
-  for (nsFrameList::Enumerator e(mFrames); !e.AtEnd(); e.Next()) {
+  for (nsIFrame* childFrame : mFrames) {
     nscoord childMinWidth =
-      nsLayoutUtils::IntrinsicForContainer(aRenderingContext, e.get(),
+      nsLayoutUtils::IntrinsicForContainer(aRenderingContext, childFrame,
                                            nsLayoutUtils::MIN_ISIZE);
     // For a horizontal single-line flex container, the intrinsic min width is
     // the sum of its items' min widths.
@@ -3993,9 +4062,9 @@ nsFlexContainerFrame::GetPrefISize(nsRenderingContext* aRenderingContext)
   // does)
   const FlexboxAxisTracker axisTracker(StylePosition(), GetWritingMode());
 
-  for (nsFrameList::Enumerator e(mFrames); !e.AtEnd(); e.Next()) {
+  for (nsIFrame* childFrame : mFrames) {
     nscoord childPrefWidth =
-      nsLayoutUtils::IntrinsicForContainer(aRenderingContext, e.get(),
+      nsLayoutUtils::IntrinsicForContainer(aRenderingContext, childFrame,
                                            nsLayoutUtils::PREF_ISIZE);
     if (axisTracker.IsMainAxisHorizontal()) {
       prefWidth += childPrefWidth;

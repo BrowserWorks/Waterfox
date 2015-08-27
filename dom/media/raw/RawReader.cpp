@@ -75,7 +75,6 @@ nsresult RawReader::ReadMetadata(MediaInfo* aInfo,
     return NS_ERROR_FAILURE;
   }
 
-  mInfo.mVideo.mHasVideo = true;
   mInfo.mVideo.mDisplay = display;
 
   mFrameRate = static_cast<float>(mMetadata.framerateNumerator) /
@@ -219,7 +218,7 @@ bool RawReader::DecodeVideoFrame(bool &aKeyframeSkip,
                                             b,
                                             1, // In raw video every frame is a keyframe
                                             -1,
-                                            ToIntRect(mPicture));
+                                            mPicture);
   if (!v)
     return false;
 

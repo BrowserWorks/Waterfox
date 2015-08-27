@@ -791,7 +791,7 @@ Assembler::TraceJumpRelocations(JSTracer* trc, JitCode* code, CompactBufferReade
     while (iter.read()) {
         InstructionIterator institer((Instruction*) (code->raw() + iter.offset()));
         JitCode* child = CodeFromJump(&institer);
-        MarkJitCodeUnbarriered(trc, &child, "rel32");
+        TraceManuallyBarrieredEdge(trc, &child, "rel32");
     }
 }
 
@@ -812,7 +812,8 @@ TraceOneDataRelocation(JSTracer* trc, Iter* iter)
     MOZ_ASSERT(!(uintptr_t(ptr) & 0x1));
 
     // No barrier needed since these are constants.
-    gc::MarkGCThingUnbarriered(trc, &ptr, "ion-masm-ptr");
+    TraceManuallyBarrieredGenericPointerEdge(trc, reinterpret_cast<gc::Cell**>(&ptr),
+                                             "ion-masm-ptr");
 
     if (ptr != prior) {
         MacroAssemblerARM::ma_mov_patch(Imm32(int32_t(ptr)), dest, Assembler::Always, rs, ins);
@@ -924,7 +925,7 @@ Assembler::trace(JSTracer* trc)
         RelativePatch& rp = jumps_[i];
         if (rp.kind == Relocation::JITCODE) {
             JitCode* code = JitCode::FromExecutable((uint8_t*)rp.target);
-            MarkJitCodeUnbarriered(trc, &code, "masmrel32");
+            TraceManuallyBarrieredEdge(trc, &code, "masmrel32");
             MOZ_ASSERT(code == JitCode::FromExecutable((uint8_t*)rp.target));
         }
     }
@@ -2721,7 +2722,8 @@ struct PoolHeader : Instruction {
 void
 Assembler::WritePoolHeader(uint8_t* start, Pool* p, bool isNatural)
 {
-    STATIC_ASSERT(sizeof(PoolHeader) == 4);
+    static_assert(sizeof(PoolHeader) == 4,
+                  "PoolHandler must have the correct size.");
     uint8_t* pool = start + 4;
     // Go through the usual rigmarole to get the size of the pool.
     pool += p->getPoolSize();

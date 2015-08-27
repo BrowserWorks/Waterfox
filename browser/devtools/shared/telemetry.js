@@ -140,7 +140,7 @@ Telemetry.prototype = {
       userHistogram: "DEVTOOLS_CANVASDEBUGGER_OPENED_PER_USER_FLAG",
       timerHistogram: "DEVTOOLS_CANVASDEBUGGER_TIME_ACTIVE_SECONDS"
     },
-    jsprofiler: {
+    performance: {
       histogram: "DEVTOOLS_JSPROFILER_OPENED_BOOLEAN",
       userHistogram: "DEVTOOLS_JSPROFILER_OPENED_PER_USER_FLAG",
       timerHistogram: "DEVTOOLS_JSPROFILER_TIME_ACTIVE_SECONDS"
@@ -273,6 +273,28 @@ Telemetry.prototype = {
       try {
         let histogram = Services.telemetry.getHistogramById(histogramId);
         histogram.add(value);
+      } catch(e) {
+        dump("Warning: An attempt was made to write to the " + histogramId +
+             " histogram, which is not defined in Histograms.json\n");
+      }
+    }
+  },
+
+  /**
+   * Log a value to a keyed histogram.
+   *
+   * @param  {String} histogramId
+   *         Histogram in which the data is to be stored.
+   * @param  {String} key
+   *         The key within the single histogram.
+   * @param  value
+   *         Value to store.
+   */
+  logKeyed: function(histogramId, key, value) {
+    if (histogramId) {
+      try {
+        let histogram = Services.telemetry.getKeyedHistogramById(histogramId);
+        histogram.add(key, value);
       } catch(e) {
         dump("Warning: An attempt was made to write to the " + histogramId +
              " histogram, which is not defined in Histograms.json\n");

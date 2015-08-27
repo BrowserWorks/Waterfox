@@ -207,7 +207,11 @@ IsAndroidAvailable()
 static bool
 IsGonkMP4DecoderAvailable()
 {
+#ifndef MOZ_GONK_MEDIACODEC
+  return false;
+#else
   return Preferences::GetBool("media.fragmented-mp4.gonk.enabled", false);
+#endif
 }
 
 static bool
@@ -241,7 +245,6 @@ MP4Decoder::IsEnabled()
          HavePlatformMPEGDecoders();
 }
 
-#ifdef XP_WIN
 static const uint8_t sTestH264ExtraData[] = {
   0x01, 0x64, 0x00, 0x0a, 0xff, 0xe1, 0x00, 0x17, 0x67, 0x64,
   0x00, 0x0a, 0xac, 0xd9, 0x44, 0x26, 0x84, 0x00, 0x00, 0x03,
@@ -251,10 +254,15 @@ static const uint8_t sTestH264ExtraData[] = {
 
 static already_AddRefed<MediaDataDecoder>
 CreateTestH264Decoder(layers::LayersBackend aBackend,
-                      mp4_demuxer::VideoDecoderConfig& aConfig)
+                      VideoInfo& aConfig)
 {
-  aConfig.mime_type = "video/avc";
-  aConfig.extra_data->AppendElements(sTestH264ExtraData,
+  aConfig.mMimeType = "video/avc";
+  aConfig.mId = 1;
+  aConfig.mDuration = 40000;
+  aConfig.mMediaTime = 0;
+  aConfig.mDisplay = aConfig.mImage = nsIntSize(64, 64);
+  aConfig.mExtraData = new MediaByteBuffer();
+  aConfig.mExtraData->AppendElements(sTestH264ExtraData,
                                      MOZ_ARRAY_LENGTH(sTestH264ExtraData));
 
   PlatformDecoderModule::Init();
@@ -265,7 +273,7 @@ CreateTestH264Decoder(layers::LayersBackend aBackend,
   }
 
   nsRefPtr<MediaDataDecoder> decoder(
-    platform->CreateVideoDecoder(aConfig, aBackend, nullptr, nullptr, nullptr));
+    platform->CreateDecoder(aConfig, nullptr, nullptr, aBackend, nullptr));
   if (!decoder) {
     return nullptr;
   }
@@ -274,7 +282,19 @@ CreateTestH264Decoder(layers::LayersBackend aBackend,
 
   return decoder.forget();
 }
-#endif
+
+/* static */ bool
+MP4Decoder::IsVideoAccelerated(layers::LayersBackend aBackend)
+{
+  VideoInfo config;
+  nsRefPtr<MediaDataDecoder> decoder(CreateTestH264Decoder(aBackend, config));
+  if (!decoder) {
+    return false;
+  }
+  bool result = decoder->IsHardwareAccelerated();
+  decoder->Shutdown();
+  return result;
+}
 
 /* static */ bool
 MP4Decoder::CanCreateH264Decoder()
@@ -285,7 +305,7 @@ MP4Decoder::CanCreateH264Decoder()
   if (haveCachedResult) {
     return result;
   }
-  mp4_demuxer::VideoDecoderConfig config;
+  VideoInfo config;
   nsRefPtr<MediaDataDecoder> decoder(
     CreateTestH264Decoder(layers::LayersBackend::LAYERS_BASIC, config));
   if (decoder) {
@@ -301,7 +321,7 @@ MP4Decoder::CanCreateH264Decoder()
 
 #ifdef XP_WIN
 static already_AddRefed<MediaDataDecoder>
-CreateTestAACDecoder(mp4_demuxer::AudioDecoderConfig& aConfig)
+CreateTestAACDecoder(AudioInfo& aConfig)
 {
   PlatformDecoderModule::Init();
 
@@ -311,7 +331,7 @@ CreateTestAACDecoder(mp4_demuxer::AudioDecoderConfig& aConfig)
   }
 
   nsRefPtr<MediaDataDecoder> decoder(
-    platform->CreateAudioDecoder(aConfig, nullptr, nullptr));
+    platform->CreateDecoder(aConfig, nullptr, nullptr));
   if (!decoder) {
     return nullptr;
   }
@@ -342,16 +362,16 @@ MP4Decoder::CanCreateAACDecoder()
   if (haveCachedResult) {
     return result;
   }
-  mp4_demuxer::AudioDecoderConfig config;
-  config.mime_type = "audio/mp4a-latm";
-  config.samples_per_second = 22050;
-  config.channel_count = 2;
-  config.bits_per_sample = 16;
-  config.aac_profile = 2;
-  config.extended_profile = 2;
-  config.audio_specific_config->AppendElements(sTestAACConfig,
-                                               MOZ_ARRAY_LENGTH(sTestAACConfig));
-  config.extra_data->AppendElements(sTestAACExtraData,
+  AudioInfo config;
+  config.mMimeType = "audio/mp4a-latm";
+  config.mRate = 22050;
+  config.mChannels = 2;
+  config.mBitDepth = 16;
+  config.mProfile = 2;
+  config.mExtendedProfile = 2;
+  config.mCodecSpecificConfig->AppendElements(sTestAACConfig,
+                                              MOZ_ARRAY_LENGTH(sTestAACConfig));
+  config.mExtraData->AppendElements(sTestAACExtraData,
                                     MOZ_ARRAY_LENGTH(sTestAACExtraData));
   nsRefPtr<MediaDataDecoder> decoder(CreateTestAACDecoder(config));
   if (decoder) {

@@ -28,9 +28,7 @@
 using namespace mozilla;
 using namespace mozilla::psm;
 
-#ifdef PR_LOGGING
 extern PRLogModuleInfo* gPIPNSSLog;
-#endif
 
 static void AccumulateCipherSuite(Telemetry::ID probe,
                                   const SSLChannelInfo& channelInfo);
@@ -334,7 +332,6 @@ SECStatus nsNSSHttpRequestSession::trySendAndReceiveFcn(PRPollDesc **pPollDesc,
   while (retryable_error &&
          retry_count < max_retries);
 
-#ifdef PR_LOGGING
   if (retry_count > 1)
   {
     if (retryable_error)
@@ -345,7 +342,6 @@ SECStatus nsNSSHttpRequestSession::trySendAndReceiveFcn(PRPollDesc **pPollDesc,
              ("nsNSSHttpRequestSession::trySendAndReceiveFcn - success at attempt %d\n",
               retry_count));
   }
-#endif
 
   return result_sec_status;
 }
@@ -609,7 +605,7 @@ nsHTTPListener::~nsHTTPListener()
     send_done_signal();
 
   if (mResultData) {
-    moz_free(const_cast<uint8_t *>(mResultData));
+    free(const_cast<uint8_t *>(mResultData));
   }
 
   if (mLoader) {
@@ -662,13 +658,11 @@ nsHTTPListener::OnStreamComplete(nsIStreamLoader* aLoader,
 
   nsresult rv = aLoader->GetRequest(getter_AddRefs(req));
   
-#ifdef PR_LOGGING
   if (NS_FAILED(aStatus))
   {
     PR_LOG(gPIPNSSLog, PR_LOG_DEBUG,
            ("nsHTTPListener::OnStreamComplete status failed %d", aStatus));
   }
-#endif
 
   if (NS_SUCCEEDED(rv))
     hchan = do_QueryInterface(req, &rv);
@@ -835,7 +829,7 @@ void PK11PasswordPromptRunnable::RunOnTargetThread()
   rv = nssComponent->PIPBundleFormatStringFromName("CertPassPrompt",
                                       formatStrings, 1,
                                       promptString);
-  nsMemory::Free(const_cast<char16_t*>(formatStrings[0]));
+  free(const_cast<char16_t*>(formatStrings[0]));
 
   if (NS_FAILED(rv))
     return;
@@ -856,7 +850,7 @@ void PK11PasswordPromptRunnable::RunOnTargetThread()
   
   if (NS_SUCCEEDED(rv) && value) {
     mResult = ToNewUTF8String(nsDependentString(password));
-    NS_Free(password);
+    free(password);
   }
 }
 

@@ -980,6 +980,7 @@ GLContext::InitWithPrefix(const char *prefix, bool trygl)
                 { (PRFuncPtr*) &mSymbols.fBindBufferBase, { "BindBufferBase", nullptr } },
                 { (PRFuncPtr*) &mSymbols.fBindBufferRange, { "BindBufferRange", nullptr } },
                 { (PRFuncPtr*) &mSymbols.fGenTransformFeedbacks, { "GenTransformFeedbacks", nullptr } },
+                { (PRFuncPtr*) &mSymbols.fBindTransformFeedback, { "BindTransformFeedback", nullptr } },
                 { (PRFuncPtr*) &mSymbols.fDeleteTransformFeedbacks, { "DeleteTransformFeedbacks", nullptr } },
                 { (PRFuncPtr*) &mSymbols.fIsTransformFeedback, { "IsTransformFeedback", nullptr } },
                 { (PRFuncPtr*) &mSymbols.fBeginTransformFeedback, { "BeginTransformFeedback", nullptr } },
@@ -995,6 +996,7 @@ GLContext::InitWithPrefix(const char *prefix, bool trygl)
                 { (PRFuncPtr*) &mSymbols.fBindBufferBase, { "BindBufferBaseEXT", "BindBufferBaseNV", nullptr } },
                 { (PRFuncPtr*) &mSymbols.fBindBufferRange, { "BindBufferRangeEXT", "BindBufferRangeNV", nullptr } },
                 { (PRFuncPtr*) &mSymbols.fGenTransformFeedbacks, { "GenTransformFeedbacksNV", nullptr } },
+                { (PRFuncPtr*) &mSymbols.fBindTransformFeedback, { "BindTransformFeedbackNV", nullptr } },
                 { (PRFuncPtr*) &mSymbols.fDeleteTransformFeedbacks, { "DeleteTransformFeedbacksNV", nullptr } },
                 { (PRFuncPtr*) &mSymbols.fIsTransformFeedback, { "IsTransformFeedbackNV", nullptr } },
                 { (PRFuncPtr*) &mSymbols.fBeginTransformFeedback, { "BeginTransformFeedbackEXT", "BeginTransformFeedbackNV", nullptr } },
@@ -1222,6 +1224,7 @@ GLContext::InitWithPrefix(const char *prefix, bool trygl)
                 { (PRFuncPtr*) &mSymbols.fUniform3uiv, { "Uniform3uiv", "Uniform3uivEXT", nullptr } },
                 { (PRFuncPtr*) &mSymbols.fUniform4uiv, { "Uniform4uiv", "Uniform4uivEXT", nullptr } },
                 { (PRFuncPtr*) &mSymbols.fGetFragDataLocation, { "GetFragDataLocation", "GetFragDataLocationEXT", nullptr } },
+                { (PRFuncPtr*) &mSymbols.fGetUniformuiv, { "GetUniformuiv", "GetUniformuivEXT", nullptr } },
                 END_SYMBOLS
             };
 
@@ -1671,6 +1674,9 @@ GLContext::InitExtensions()
             // doesn't expose the OES_rgb8_rgba8 extension, but it seems to
             // support it (tautologically, as it only runs on desktop GL).
             MarkExtensionSupported(OES_rgb8_rgba8);
+            // there seems to be a similar issue for EXT_texture_format_BGRA8888
+            // on the Android 4.3 emulator
+            MarkExtensionSupported(EXT_texture_format_BGRA8888);
         }
 
         if (Vendor() == GLVendor::VMware &&
@@ -1870,7 +1876,8 @@ GLContext::AttachBuffersToFB(GLuint colorTex, GLuint colorRB,
                               colorTex,
                               0);
     } else if (colorRB) {
-        MOZ_ASSERT(fIsRenderbuffer(colorRB));
+        // On the Android 4.3 emulator, IsRenderbuffer may return false incorrectly.
+        MOZ_ASSERT_IF(Renderer() != GLRenderer::AndroidEmulator, fIsRenderbuffer(colorRB));
         fFramebufferRenderbuffer(LOCAL_GL_FRAMEBUFFER,
                                  LOCAL_GL_COLOR_ATTACHMENT0,
                                  LOCAL_GL_RENDERBUFFER,
@@ -1878,7 +1885,7 @@ GLContext::AttachBuffersToFB(GLuint colorTex, GLuint colorRB,
     }
 
     if (depthRB) {
-        MOZ_ASSERT(fIsRenderbuffer(depthRB));
+        MOZ_ASSERT_IF(Renderer() != GLRenderer::AndroidEmulator, fIsRenderbuffer(depthRB));
         fFramebufferRenderbuffer(LOCAL_GL_FRAMEBUFFER,
                                  LOCAL_GL_DEPTH_ATTACHMENT,
                                  LOCAL_GL_RENDERBUFFER,
@@ -1886,7 +1893,7 @@ GLContext::AttachBuffersToFB(GLuint colorTex, GLuint colorRB,
     }
 
     if (stencilRB) {
-        MOZ_ASSERT(fIsRenderbuffer(stencilRB));
+        MOZ_ASSERT_IF(Renderer() != GLRenderer::AndroidEmulator, fIsRenderbuffer(stencilRB));
         fFramebufferRenderbuffer(LOCAL_GL_FRAMEBUFFER,
                                  LOCAL_GL_STENCIL_ATTACHMENT,
                                  LOCAL_GL_RENDERBUFFER,
@@ -2400,7 +2407,7 @@ GLBlitHelper*
 GLContext::BlitHelper()
 {
     if (!mBlitHelper) {
-        mBlitHelper = MakeUnique<GLBlitHelper>(this);
+        mBlitHelper.reset(new GLBlitHelper(this));
     }
 
     return mBlitHelper.get();

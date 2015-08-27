@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -69,7 +70,20 @@ SmsService::GetSmscAddress(uint32_t aServiceId,
                            nsIMobileMessageCallback *aRequest)
 {
   // TODO: bug 878016 - Android backend: implement getSMSCAddress/setSMSCAddress
-  return NS_OK;
+  NS_NOTYETIMPLEMENTED("Implement me!");
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+SmsService::SetSmscAddress(uint32_t aServiceId,
+                           const nsAString& aNumber,
+                           uint32_t aTypeOfNumber,
+                           uint32_t aNumberPlanIdentification,
+                           nsIMobileMessageCallback* aRequest)
+{
+  // TODO: bug 878016 - Android backend: implement getSMSCAddress/setSMSCAddress
+  NS_NOTYETIMPLEMENTED("Implement me!");
+  return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 } // namespace mobilemessage

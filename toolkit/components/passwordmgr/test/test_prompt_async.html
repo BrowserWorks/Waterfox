@@ -11,6 +11,9 @@
         SimpleTest.waitForExplicitFinish();
         SimpleTest.requestFlakyTimeout("untriaged");
 
+        var prefs = Cc["@mozilla.org/preferences-service;1"].
+                        getService(Ci.nsIPrefBranch);
+        prefs.setIntPref("network.auth.allow-subresource-auth", 2);
         // Class monitoring number of open dialog windows
         // It checks there is always open just a single dialog per application
         function dialogMonitor() {
@@ -465,7 +468,7 @@
                     is(monitor.windowsRegistered, 1, "Registered 1 open dialog");
 
                     // ensure that the page content is not displayed on failed proxy auth
-                    is(iframe1Doc.getElementById("ok"), undefined, "frame did not load");
+                    is(iframe1Doc.getElementById("ok"), null, "frame did not load");
                     break;
 
                 case 4:
@@ -483,7 +486,7 @@
                     is(monitor.windowsRegistered, 1, "Registered 1 open dialog");
 
                     // ensure that the page content is not displayed on failed proxy auth
-                    is(iframe1Doc.getElementById("footnote"), undefined, "frame did not load");
+                    is(iframe1Doc.getElementById("footnote"), null, "frame did not load");
                     break;
 
                 case 6:

@@ -34,6 +34,8 @@
     locale/browser/devtools/debugger.dtd              (%chrome/browser/devtools/debugger.dtd)
     locale/browser/devtools/debugger.properties       (%chrome/browser/devtools/debugger.properties)
     locale/browser/devtools/device.properties         (%chrome/browser/devtools/device.properties)
+    locale/browser/devtools/filterwidget.properties   (%chrome/browser/devtools/filterwidget.properties)
+    locale/browser/devtools/filterwidget.dtd          (%chrome/browser/devtools/filterwidget.dtd)
     locale/browser/devtools/netmonitor.dtd            (%chrome/browser/devtools/netmonitor.dtd)
     locale/browser/devtools/netmonitor.properties     (%chrome/browser/devtools/netmonitor.properties)
     locale/browser/devtools/shadereditor.dtd          (%chrome/browser/devtools/shadereditor.dtd)
@@ -42,10 +44,9 @@
     locale/browser/devtools/canvasdebugger.properties (%chrome/browser/devtools/canvasdebugger.properties)
     locale/browser/devtools/webaudioeditor.dtd          (%chrome/browser/devtools/webaudioeditor.dtd)
     locale/browser/devtools/webaudioeditor.properties   (%chrome/browser/devtools/webaudioeditor.properties)
-    locale/browser/devtools/gcli.properties           (%chrome/browser/devtools/gcli.properties)
-    locale/browser/devtools/gclicommands.properties   (%chrome/browser/devtools/gclicommands.properties)
     locale/browser/devtools/webconsole.properties     (%chrome/browser/devtools/webconsole.properties)
     locale/browser/devtools/inspector.properties      (%chrome/browser/devtools/inspector.properties)
+    locale/browser/devtools/jsonview.properties       (%chrome/browser/devtools/jsonview.properties)
     locale/browser/devtools/tilt.properties           (%chrome/browser/devtools/tilt.properties)
     locale/browser/devtools/shared.properties         (%chrome/browser/devtools/shared.properties)
     locale/browser/devtools/scratchpad.properties     (%chrome/browser/devtools/scratchpad.properties)
@@ -148,6 +149,8 @@
     locale/browser/syncQuota.dtd                (%chrome/browser/syncQuota.dtd)
     locale/browser/syncQuota.properties         (%chrome/browser/syncQuota.properties)
 #endif
+    locale/browser/searchplugins/list.txt       (.deps/generated_@AB_CD@/list.txt)
+    locale/browser/searchplugins/               (.deps/generated_@AB_CD@/*.xml)
 % locale browser-region @AB_CD@ %locale/browser-region/
     locale/browser-region/region.properties        (%chrome/browser-region/region.properties)
 # the following files are browser-specific overrides

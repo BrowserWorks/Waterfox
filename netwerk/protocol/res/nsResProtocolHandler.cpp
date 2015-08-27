@@ -23,7 +23,6 @@ static NS_DEFINE_CID(kResURLCID, NS_RESURL_CID);
 
 static nsResProtocolHandler *gResHandler = nullptr;
 
-#if defined(PR_LOGGING)
 //
 // Log module for Resource Protocol logging...
 //
@@ -36,7 +35,6 @@ static nsResProtocolHandler *gResHandler = nullptr;
 // the file log.txt
 //
 static PRLogModuleInfo *gResLog;
-#endif
 
 #define kAPP           NS_LITERAL_CSTRING("app")
 #define kGRE           NS_LITERAL_CSTRING("gre")
@@ -104,9 +102,7 @@ nsResURL::GetClassIDNoAlloc(nsCID *aClassIDNoAlloc)
 nsResProtocolHandler::nsResProtocolHandler()
     : mSubstitutions(16)
 {
-#if defined(PR_LOGGING)
     gResLog = PR_NewLogModule("nsResProtocol");
-#endif
 
     NS_ASSERTION(!gResHandler, "res handler already created!");
     gResHandler = this;
@@ -237,10 +233,9 @@ nsResProtocolHandler::NewURI(const nsACString &aSpec,
 {
     nsresult rv;
 
-    nsResURL *resURL = new nsResURL();
+    nsRefPtr<nsResURL> resURL = new nsResURL();
     if (!resURL)
         return NS_ERROR_OUT_OF_MEMORY;
-    NS_ADDREF(resURL);
 
     // unescape any %2f and %2e to make sure nsStandardURL coalesces them.
     // Later net_GetFileFromURLSpec() will do a full unescape and we want to
@@ -272,9 +267,9 @@ nsResProtocolHandler::NewURI(const nsACString &aSpec,
       spec.Append(last, src-last);
 
     rv = resURL->Init(nsIStandardURL::URLTYPE_STANDARD, -1, spec, aCharset, aBaseURI);
-    if (NS_SUCCEEDED(rv))
-        rv = CallQueryInterface(resURL, result);
-    NS_RELEASE(resURL);
+    if (NS_SUCCEEDED(rv)) {
+        resURL.forget(result);
+    }
     return rv;
 }
 
@@ -452,13 +447,11 @@ nsResProtocolHandler::ResolveURI(nsIURI *uri, nsACString &result)
 
     rv = baseURI->Resolve(nsDependentCString(p, path.Length()-1), result);
 
-#if defined(PR_LOGGING)
     if (PR_LOG_TEST(gResLog, PR_LOG_DEBUG)) {
         nsAutoCString spec;
         uri->GetAsciiSpec(spec);
         PR_LOG(gResLog, PR_LOG_DEBUG,
                ("%s\n -> %s\n", spec.get(), PromiseFlatCString(result).get()));
     }
-#endif
     return rv;
 }

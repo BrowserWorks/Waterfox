@@ -10,7 +10,8 @@
 */
 
 /*global ToObject: false, ToInteger: false, IsCallable: false,
-         ThrowError: false, AssertionFailed: false,
+         ThrowRangeError: false, ThrowTypeError: false,
+         AssertionFailed: false,
          MakeConstructible: false, DecompileArg: false,
          RuntimeDefaultLocale: false,
          ParallelDo: false, ParallelSlices: false, NewDenseArray: false,
@@ -24,6 +25,14 @@
 */
 
 #include "SelfHostingDefines.h"
+
+// Assertions, defined here instead of in the header above to make `assert`
+// invisible to C++.
+#ifdef DEBUG
+#define assert(b, info) if (!(b)) AssertionFailed(info)
+#else
+#define assert(b, info) // Elided assertion.
+#endif
 
 // All C++-implemented standard builtins library functions used in self-hosted
 // code are installed via the std_functions JSFunctionSpec[] in
@@ -92,7 +101,7 @@ function ToNumber(v) {
 /* Spec: ECMAScript Language Specification, 5.1 edition, 9.10 */
 function CheckObjectCoercible(v) {
     if (v === undefined || v === null)
-        ThrowError(JSMSG_CANT_CONVERT_TO, ToString(v), "object");
+        ThrowTypeError(JSMSG_CANT_CONVERT_TO, ToString(v), "object");
 }
 
 /* Spec: ECMAScript Draft, 6 edition May 22, 2014, 7.1.15 */
@@ -125,7 +134,7 @@ function GetMethod(O, P) {
 
     // Step 5.
     if (!IsCallable(func))
-        ThrowError(JSMSG_NOT_FUNCTION, typeof func);
+        ThrowTypeError(JSMSG_NOT_FUNCTION, typeof func);
 
     // Step 6.
     return func;
@@ -148,7 +157,7 @@ function GetIterator(obj, method) {
 
     // Step 5.
     if (!IsObject(iterator))
-        ThrowError(JSMSG_NOT_ITERABLE, ToString(iterator));
+        ThrowTypeError(JSMSG_NOT_ITERABLE, ToString(iterator));
 
     // Step 6.
     return iterator;
@@ -168,7 +177,7 @@ function SpeciesConstructor(obj, defaultConstructor) {
 
     // Step 5.
     if (!IsObject(ctor))
-        ThrowError(JSMSG_NOT_NONNULL_OBJECT, "object's 'constructor' property");
+        ThrowTypeError(JSMSG_NOT_NONNULL_OBJECT, "object's 'constructor' property");
 
     // Steps 6-7.  We don't yet implement @@species and Symbol.species, so we
     // don't implement this correctly right now.  Somebody fix this!
@@ -183,6 +192,5 @@ function SpeciesConstructor(obj, defaultConstructor) {
         return s;
 
     // Step 10.
-    ThrowError(JSMSG_NOT_CONSTRUCTOR,
-               "@@species property of object's constructor");
+    ThrowTypeError(JSMSG_NOT_CONSTRUCTOR, "@@species property of object's constructor");
 }

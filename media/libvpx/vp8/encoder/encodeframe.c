@@ -11,6 +11,7 @@
 
 #include "vpx_config.h"
 #include "vp8_rtcd.h"
+#include "./vpx_dsp_rtcd.h"
 #include "encodemb.h"
 #include "encodemv.h"
 #include "vp8/common/common.h"
@@ -82,6 +83,7 @@ static unsigned int tt_activity_measure( VP8_COMP *cpi, MACROBLOCK *x )
 {
     unsigned int act;
     unsigned int sse;
+    (void)cpi;
     /* TODO: This could also be done over smaller areas (8x8), but that would
      *  require extensive changes elsewhere, as lambda is assumed to be fixed
      *  over an entire MB in most of the code.
@@ -89,7 +91,7 @@ static unsigned int tt_activity_measure( VP8_COMP *cpi, MACROBLOCK *x )
      *  lambda using a non-linear combination (e.g., the smallest, or second
      *  smallest, etc.).
      */
-    act =  vp8_variance16x16(x->src.y_buffer,
+    act =  vpx_variance16x16(x->src.y_buffer,
                     x->src.y_stride, VP8_VAR_OFFS, 0, &sse);
     act = act<<4;
 
@@ -154,8 +156,8 @@ static void calc_av_activity( VP8_COMP *cpi, int64_t activity_sum )
                         cpi->common.MBs));
 
         /* Copy map to sort list */
-        vpx_memcpy( sortlist, cpi->mb_activity_map,
-                    sizeof(unsigned int) * cpi->common.MBs );
+        memcpy( sortlist, cpi->mb_activity_map,
+                sizeof(unsigned int) * cpi->common.MBs );
 
 
         /* Ripple each value down to its correct position */
@@ -522,7 +524,8 @@ void encode_mb_row(VP8_COMP *cpi,
             }
 
 #endif
-            // Keep track of how many (consecutive) times a block is coded
+
+            // Keep track of how many (consecutive) times a  block is coded
             // as ZEROMV_LASTREF, for base layer frames.
             // Reset to 0 if its coded as anything else.
             if (cpi->current_layer == 0) {
@@ -531,9 +534,14 @@ void encode_mb_row(VP8_COMP *cpi,
                 // Increment, check for wrap-around.
                 if (cpi->consec_zero_last[map_index+mb_col] < 255)
                   cpi->consec_zero_last[map_index+mb_col] += 1;
+                if (cpi->consec_zero_last_mvbias[map_index+mb_col] < 255)
+                  cpi->consec_zero_last_mvbias[map_index+mb_col] += 1;
               } else {
                 cpi->consec_zero_last[map_index+mb_col] = 0;
+                cpi->consec_zero_last_mvbias[map_index+mb_col] = 0;
               }
+              if (x->zero_last_dot_suppress)
+                cpi->consec_zero_last_mvbias[map_index+mb_col] = 0;
             }
 
             /* Special case code for cyclic refresh
@@ -574,7 +582,7 @@ void encode_mb_row(VP8_COMP *cpi,
         /* pack tokens for this MB */
         {
             int tok_count = *tp - tp_start;
-            pack_tokens(w, tp_start, tok_count);
+            vp8_pack_tokens(w, tp_start, tok_count);
         }
 #endif
         /* Increment pointer into gf usage flags structure. */
@@ -658,8 +666,7 @@ static void init_encode_frame_mb_context(VP8_COMP *cpi)
 
     x->mvc = cm->fc.mvc;
 
-    vpx_memset(cm->above_context, 0,
-               sizeof(ENTROPY_CONTEXT_PLANES) * cm->mb_cols);
+    memset(cm->above_context, 0, sizeof(ENTROPY_CONTEXT_PLANES) * cm->mb_cols);
 
     /* Special case treatment when GF and ARF are not sensible options
      * for reference
@@ -737,7 +744,7 @@ void vp8_encode_frame(VP8_COMP *cpi)
     const int num_part = (1 << cm->multi_token_partition);
 #endif
 
-    vpx_memset(segment_counts, 0, sizeof(segment_counts));
+    memset(segment_counts, 0, sizeof(segment_counts));
     totalrate = 0;
 
     if (cpi->compressor_speed == 2)
@@ -967,7 +974,7 @@ void vp8_encode_frame(VP8_COMP *cpi)
         int i;
 
         /* Set to defaults */
-        vpx_memset(xd->mb_segment_tree_probs, 255 , sizeof(xd->mb_segment_tree_probs));
+        memset(xd->mb_segment_tree_probs, 255 , sizeof(xd->mb_segment_tree_probs));
 
         tot_count = segment_counts[0] + segment_counts[1] + segment_counts[2] + segment_counts[3];
 
@@ -1143,6 +1150,8 @@ static void sum_intra_stats(VP8_COMP *cpi, MACROBLOCK *x)
         while (++b < 16);
     }
 
+#else
+    (void)cpi;
 #endif
 
     ++x->ymode_count[m];
@@ -1252,7 +1261,6 @@ int vp8cx_encode_inter_macroblock
         if(cpi->sf.use_fastquant_for_pick)
         {
             x->quantize_b      = vp8_fast_quantize_b;
-            x->quantize_b_pair = vp8_fast_quantize_b_pair;
 
             /* the fast quantizer does not use zbin_extra, so
              * do not recalculate */
@@ -1265,7 +1273,6 @@ int vp8cx_encode_inter_macroblock
         if (cpi->sf.improved_quant)
         {
             x->quantize_b      = vp8_regular_quantize_b;
-            x->quantize_b_pair = vp8_regular_quantize_b_pair;
         }
 
         /* restore cpi->zbin_mode_boost_enabled */

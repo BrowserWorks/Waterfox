@@ -17,29 +17,15 @@
 #if defined(__cplusplus)
 #  include <new>
 #endif
-#include "xpcom-config.h"
 
 #if defined(__cplusplus)
 #include "mozilla/fallible.h"
 #include "mozilla/TemplateLib.h"
 #endif
 #include "mozilla/Attributes.h"
+#include "mozilla/Types.h"
 
 #define MOZALLOC_HAVE_XMALLOC
-
-#if defined(MOZALLOC_EXPORT)
-/* do nothing: it's been defined to __declspec(dllexport) by
- * mozalloc*.cpp on platforms where that's required. */
-#elif defined(XP_WIN)
-#  define MOZALLOC_EXPORT __declspec(dllimport)
-#elif defined(HAVE_VISIBILITY_ATTRIBUTE)
-/* Make sure symbols are still exported even if we're wrapped in a
- * |visibility push(hidden)| blanket. */
-#  define MOZALLOC_EXPORT __attribute__ ((visibility ("default")))
-#else
-#  define MOZALLOC_EXPORT
-#endif
-
 
 #if defined(MOZ_ALWAYS_INLINE_EVEN_DEBUG)
 #  define MOZALLOC_INLINE MOZ_ALWAYS_INLINE_EVEN_DEBUG
@@ -51,98 +37,83 @@
 
 /* Workaround build problem with Sun Studio 12 */
 #if defined(__SUNPRO_C) || defined(__SUNPRO_CC)
-#  undef NS_WARN_UNUSED_RESULT
-#  define NS_WARN_UNUSED_RESULT
-#  undef NS_ATTR_MALLOC
-#  define NS_ATTR_MALLOC
+#  undef MOZ_WARN_UNUSED_RESULT
+#  define MOZ_WARN_UNUSED_RESULT
+#  undef MOZ_ALLOCATOR
+#  define MOZ_ALLOCATOR
 #endif
 
 #if defined(__cplusplus)
 extern "C" {
 #endif /* ifdef __cplusplus */
 
+/*
+ * We need to use malloc_impl and free_impl in this file when they are
+ * defined, because of how mozglue.dll is linked on Windows, where using
+ * malloc/free would end up using the symbols from the MSVCRT instead of
+ * ours.
+ */
+#ifndef free_impl
+#define free_impl free
+#define free_impl_
+#endif
+#ifndef malloc_impl
+#define malloc_impl malloc
+#define malloc_impl_
+#endif
 
 /*
- * Each pair of declarations below is analogous to a "standard"
- * allocation function, except that the out-of-memory handling is made
- * explicit.  The |moz_x| versions will never return a NULL pointer;
- * if memory is exhausted, they abort.  The |moz_| versions may return
- * NULL pointers if memory is exhausted: their return value must be
- * checked.
+ * Each declaration below is analogous to a "standard" allocation
+ * function, except that the out-of-memory handling is made explicit.
+ * The |moz_x| versions will never return a NULL pointer; if memory
+ * is exhausted, they abort.  The |moz_| versions may return NULL
+ * pointers if memory is exhausted: their return value must be checked.
  *
  * All these allocation functions are *guaranteed* to return a pointer
  * to memory allocated in such a way that that memory can be freed by
- * passing that pointer to |moz_free()|.
+ * passing that pointer to |free()|.
  */
 
-MOZALLOC_EXPORT
-void moz_free(void* ptr);
+MFBT_API void* moz_xmalloc(size_t size)
+    MOZ_ALLOCATOR;
 
-MOZALLOC_EXPORT void* moz_xmalloc(size_t size)
-    NS_ATTR_MALLOC NS_WARN_UNUSED_RESULT;
+MFBT_API void* moz_xcalloc(size_t nmemb, size_t size)
+    MOZ_ALLOCATOR;
 
-MOZALLOC_EXPORT
-void* moz_malloc(size_t size)
-    NS_ATTR_MALLOC NS_WARN_UNUSED_RESULT;
+MFBT_API void* moz_xrealloc(void* ptr, size_t size)
+    MOZ_ALLOCATOR;
 
+MFBT_API char* moz_xstrdup(const char* str)
+    MOZ_ALLOCATOR;
 
-MOZALLOC_EXPORT void* moz_xcalloc(size_t nmemb, size_t size)
-    NS_ATTR_MALLOC NS_WARN_UNUSED_RESULT;
+MFBT_API size_t moz_malloc_usable_size(void *ptr);
 
-MOZALLOC_EXPORT void* moz_calloc(size_t nmemb, size_t size)
-    NS_ATTR_MALLOC NS_WARN_UNUSED_RESULT;
-
-
-MOZALLOC_EXPORT void* moz_xrealloc(void* ptr, size_t size)
-    NS_ATTR_MALLOC NS_WARN_UNUSED_RESULT;
-
-MOZALLOC_EXPORT void* moz_realloc(void* ptr, size_t size)
-    NS_ATTR_MALLOC NS_WARN_UNUSED_RESULT;
-
-
-MOZALLOC_EXPORT char* moz_xstrdup(const char* str)
-    NS_ATTR_MALLOC NS_WARN_UNUSED_RESULT;
-
-MOZALLOC_EXPORT char* moz_strdup(const char* str)
-    NS_ATTR_MALLOC NS_WARN_UNUSED_RESULT;
-
-MOZALLOC_EXPORT size_t moz_malloc_usable_size(void *ptr);
-
-MOZALLOC_EXPORT size_t moz_malloc_size_of(const void *ptr);
+MFBT_API size_t moz_malloc_size_of(const void *ptr);
 
 #if defined(HAVE_STRNDUP)
-MOZALLOC_EXPORT char* moz_xstrndup(const char* str, size_t strsize)
-    NS_ATTR_MALLOC NS_WARN_UNUSED_RESULT;
-
-MOZALLOC_EXPORT char* moz_strndup(const char* str, size_t strsize)
-    NS_ATTR_MALLOC NS_WARN_UNUSED_RESULT;
+MFBT_API char* moz_xstrndup(const char* str, size_t strsize)
+    MOZ_ALLOCATOR;
 #endif /* if defined(HAVE_STRNDUP) */
 
 
 #if defined(HAVE_POSIX_MEMALIGN)
-MOZALLOC_EXPORT int moz_xposix_memalign(void **ptr, size_t alignment, size_t size)
-    NS_WARN_UNUSED_RESULT;
+MFBT_API MOZ_WARN_UNUSED_RESULT
+int moz_xposix_memalign(void **ptr, size_t alignment, size_t size);
 
-MOZALLOC_EXPORT int moz_posix_memalign(void **ptr, size_t alignment, size_t size)
-    NS_WARN_UNUSED_RESULT;
+MFBT_API MOZ_WARN_UNUSED_RESULT
+int moz_posix_memalign(void **ptr, size_t alignment, size_t size);
 #endif /* if defined(HAVE_POSIX_MEMALIGN) */
 
 
 #if defined(HAVE_MEMALIGN)
-MOZALLOC_EXPORT void* moz_xmemalign(size_t boundary, size_t size)
-    NS_ATTR_MALLOC NS_WARN_UNUSED_RESULT;
-
-MOZALLOC_EXPORT void* moz_memalign(size_t boundary, size_t size)
-    NS_ATTR_MALLOC NS_WARN_UNUSED_RESULT;
+MFBT_API void* moz_xmemalign(size_t boundary, size_t size)
+    MOZ_ALLOCATOR;
 #endif /* if defined(HAVE_MEMALIGN) */
 
 
 #if defined(HAVE_VALLOC)
-MOZALLOC_EXPORT void* moz_xvalloc(size_t size)
-    NS_ATTR_MALLOC NS_WARN_UNUSED_RESULT;
-
-MOZALLOC_EXPORT void* moz_valloc(size_t size)
-    NS_ATTR_MALLOC NS_WARN_UNUSED_RESULT;
+MFBT_API void* moz_xvalloc(size_t size)
+    MOZ_ALLOCATOR;
 #endif /* if defined(HAVE_VALLOC) */
 
 
@@ -176,7 +147,7 @@ MOZALLOC_EXPORT void* moz_valloc(size_t size)
  * visibility on OS X/gcc. These symbols are force-inline and not
  * exported. */
 #if defined(XP_MACOSX)
-#  define MOZALLOC_EXPORT_NEW MOZALLOC_EXPORT
+#  define MOZALLOC_EXPORT_NEW MFBT_API
 #else
 #  define MOZALLOC_EXPORT_NEW
 #endif
@@ -203,7 +174,13 @@ MOZALLOC_EXPORT void* moz_valloc(size_t size)
 
 #define MOZALLOC_THROW_BAD_ALLOC MOZALLOC_THROW_BAD_ALLOC_IF_HAS_EXCEPTIONS
 
-MOZALLOC_EXPORT_NEW MOZALLOC_INLINE
+MOZALLOC_EXPORT_NEW
+#if defined(__GNUC__) && !defined(__clang__) && defined(__SANITIZE_ADDRESS__)
+/* gcc's asan somehow doesn't like always_inline on this function. */
+__attribute__((gnu_inline)) inline
+#else
+MOZALLOC_INLINE
+#endif
 void* operator new(size_t size) MOZALLOC_THROW_BAD_ALLOC
 {
     return moz_xmalloc(size);
@@ -212,7 +189,7 @@ void* operator new(size_t size) MOZALLOC_THROW_BAD_ALLOC
 MOZALLOC_EXPORT_NEW MOZALLOC_INLINE
 void* operator new(size_t size, const std::nothrow_t&) MOZALLOC_THROW_IF_HAS_EXCEPTIONS
 {
-    return moz_malloc(size);
+    return malloc_impl(size);
 }
 
 MOZALLOC_EXPORT_NEW MOZALLOC_INLINE
@@ -224,31 +201,31 @@ void* operator new[](size_t size) MOZALLOC_THROW_BAD_ALLOC
 MOZALLOC_EXPORT_NEW MOZALLOC_INLINE
 void* operator new[](size_t size, const std::nothrow_t&) MOZALLOC_THROW_IF_HAS_EXCEPTIONS
 {
-    return moz_malloc(size);
+    return malloc_impl(size);
 }
 
 MOZALLOC_EXPORT_NEW MOZALLOC_INLINE
 void operator delete(void* ptr) MOZALLOC_THROW_IF_HAS_EXCEPTIONS
 {
-    return moz_free(ptr);
+    return free_impl(ptr);
 }
 
 MOZALLOC_EXPORT_NEW MOZALLOC_INLINE
 void operator delete(void* ptr, const std::nothrow_t&) MOZALLOC_THROW_IF_HAS_EXCEPTIONS
 {
-    return moz_free(ptr);
+    return free_impl(ptr);
 }
 
 MOZALLOC_EXPORT_NEW MOZALLOC_INLINE
 void operator delete[](void* ptr) MOZALLOC_THROW_IF_HAS_EXCEPTIONS
 {
-    return moz_free(ptr);
+    return free_impl(ptr);
 }
 
 MOZALLOC_EXPORT_NEW MOZALLOC_INLINE
 void operator delete[](void* ptr, const std::nothrow_t&) MOZALLOC_THROW_IF_HAS_EXCEPTIONS
 {
-    return moz_free(ptr);
+    return free_impl(ptr);
 }
 
 
@@ -274,32 +251,32 @@ void operator delete[](void* ptr, const std::nothrow_t&) MOZALLOC_THROW_IF_HAS_E
 MOZALLOC_INLINE
 void* operator new(size_t size, const mozilla::fallible_t&) MOZALLOC_THROW_IF_HAS_EXCEPTIONS
 {
-    return moz_malloc(size);
+    return malloc_impl(size);
 }
 
 MOZALLOC_INLINE
 void* operator new[](size_t size, const mozilla::fallible_t&) MOZALLOC_THROW_IF_HAS_EXCEPTIONS
 {
-    return moz_malloc(size);
+    return malloc_impl(size);
 }
 
 MOZALLOC_INLINE
 void operator delete(void* ptr, const mozilla::fallible_t&) MOZALLOC_THROW_IF_HAS_EXCEPTIONS
 {
-    moz_free(ptr);
+    free_impl(ptr);
 }
 
 MOZALLOC_INLINE
 void operator delete[](void* ptr, const mozilla::fallible_t&) MOZALLOC_THROW_IF_HAS_EXCEPTIONS
 {
-    moz_free(ptr);
+    free_impl(ptr);
 }
 
 
 /*
  * This policy is identical to MallocAllocPolicy, except it uses
- * moz_xmalloc/moz_xcalloc/moz_xrealloc/moz_free instead of
- * malloc/calloc/realloc/free.
+ * moz_xmalloc/moz_xcalloc/moz_xrealloc instead of
+ * malloc/calloc/realloc.
  */
 class InfallibleAllocPolicy
 {
@@ -330,7 +307,7 @@ public:
 
     void free_(void* aPtr)
     {
-        moz_free(aPtr);
+        free_impl(aPtr);
     }
 
     void reportAllocOverflow() const
@@ -339,5 +316,14 @@ public:
 };
 
 #endif  /* ifdef __cplusplus */
+
+#ifdef malloc_impl_
+#undef malloc_impl_
+#undef malloc_impl
+#endif
+#ifdef free_impl_
+#undef free_impl_
+#undef free_impl
+#endif
 
 #endif /* ifndef mozilla_mozalloc_h */

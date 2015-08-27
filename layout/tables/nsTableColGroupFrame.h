@@ -8,16 +8,10 @@
 #include "mozilla/Attributes.h"
 #include "nscore.h"
 #include "nsContainerFrame.h"
-#include "nsTableColFrame.h"
+#include "nsTableFrame.h"
+#include "mozilla/WritingModes.h"
 
-class nsTableFrame;
 class nsTableColFrame;
-
-enum nsTableColGroupType {
-  eColGroupContent            = 0, // there is real col group content associated   
-  eColGroupAnonymousCol       = 1, // the result of a col
-  eColGroupAnonymousCell      = 2  // the result of a cell alone
-};
 
 /**
  * nsTableColGroupFrame
@@ -39,6 +33,15 @@ public:
     */
   friend nsTableColGroupFrame* NS_NewTableColGroupFrame(nsIPresShell* aPresShell,
                                                         nsStyleContext* aContext);
+
+  nsTableFrame* GetTableFrame() const
+  {
+    nsIFrame* parent = GetParent();
+    MOZ_ASSERT(parent && parent->GetType() == nsGkAtoms::tableFrame);
+    MOZ_ASSERT(!parent->GetPrevInFlow(),
+               "Col group should always be in a first-in-flow table frame");
+    return static_cast<nsTableFrame*>(parent);
+  }
 
   /**
    * ColGroups never paint anything, nor receive events.
@@ -112,6 +115,9 @@ public:
    * @see nsGkAtoms::tableColGroupFrame
    */
   virtual nsIAtom* GetType() const override;
+
+  virtual mozilla::WritingMode GetWritingMode() const override
+    { return GetTableFrame()->GetWritingMode(); }
 
   /** Add column frames to the table storages: colframe cache and cellmap
     * this doesn't change the mFrames of the colgroup frame.

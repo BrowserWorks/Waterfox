@@ -19,4 +19,11 @@ else:
 
 JAR_MANIFESTS += ['jar.mn']
 
+USE_EXTENSION_MANIFEST = True
+
 XPI_NAME = 'reftest'
+
+DIST_FILES += ['install.rdf']
+
+if CONFIG['MOZ_BUILD_APP'] == 'mobile/android':
+    DIST_FILES += ['bootstrap.js']

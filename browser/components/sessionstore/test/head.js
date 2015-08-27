@@ -239,7 +239,7 @@ function waitForTopic(aTopic, aTimeout, aCallback) {
  * Wait until session restore has finished collecting its data and is
  * has written that data ("sessionstore-state-write-complete").
  *
- * @param {function} aCallback If sessionstore-state-write is sent
+ * @param {function} aCallback If sessionstore-state-write-complete is sent
  * within buffering interval + 100 ms, the callback is passed |true|,
  * otherwise, it is passed |false|.
  */
@@ -526,4 +526,40 @@ const FORM_HELPERS = [
 for (let name of FORM_HELPERS) {
   let msg = "ss-test:" + name;
   this[name] = (browser, data) => sendMessage(browser, msg, data);
+}
+
+// Removes the given tab immediately and returns a promise that resolves when
+// all pending status updates (messages) of the closing tab have been received.
+function promiseRemoveTab(tab) {
+  return BrowserTestUtils.removeTab(tab);
+}
+
+// Write DOMSessionStorage data to the given browser.
+function modifySessionStorage(browser, data, options = {}) {
+  return ContentTask.spawn(browser, [data, options], function* ([data, options]) {
+    let frame = content;
+    if (options && "frameIndex" in options) {
+      frame = content.frames[options.frameIndex];
+    }
+
+    let keys = new Set(Object.keys(data));
+    let storage = frame.sessionStorage;
+
+    return new Promise(resolve => {
+      addEventListener("MozStorageChanged", function onStorageChanged(event) {
+        if (event.storageArea == storage) {
+          keys.delete(event.key);
+        }
+
+        if (keys.size == 0) {
+          removeEventListener("MozStorageChanged", onStorageChanged, true);
+          resolve();
+        }
+      }, true);
+
+      for (let key of keys) {
+        frame.sessionStorage[key] = data[key];
+      }
+    });
+  });
 }

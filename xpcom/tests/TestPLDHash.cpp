@@ -22,12 +22,20 @@ static bool test_pldhash_Init_capacity_ok()
   }
 
   // Try the largest allowed capacity.  With PL_DHASH_MAX_CAPACITY==1<<26, this
-  // will allocate 0.5GB of entry store on 32-bit platforms and 1GB on 64-bit
-  // platforms.
-  if (!PL_DHashTableInit(&t, PL_DHashGetStubOps(), sizeof(PLDHashEntryStub),
-                         mozilla::fallible, PL_DHASH_MAX_INITIAL_LENGTH)) {
-    return false;
-  }
+  // would allocate (if we added an element) 0.5GB of entry store on 32-bit
+  // platforms and 1GB on 64-bit platforms.
+  //
+  // Ideally we'd also try (a) a too-large capacity, and (b) a large capacity
+  // combined with a large entry size that when multipled overflow. But those
+  // cases would cause the test to abort immediately.
+  //
+  // Furthermore, ideally we'd also try a large-but-ok capacity that almost but
+  // doesn't quite overflow, but that would result in allocating just under 4GB
+  // of entry storage.  That's very likely to fail on 32-bit platforms, so such
+  // a test wouldn't be reliable.
+  //
+  PL_DHashTableInit(&t, PL_DHashGetStubOps(), sizeof(PLDHashEntryStub),
+                    PL_DHASH_MAX_INITIAL_LENGTH);
 
   // Check that Init() sets |ops|.
   if (!t.IsInitialized()) {
@@ -43,71 +51,9 @@ static bool test_pldhash_Init_capacity_ok()
   return true;
 }
 
-static bool test_pldhash_Init_capacity_too_large()
-{
-  PLDHashTable t;
-
-  // Check that the constructor nulls |ops|.
-  if (t.IsInitialized()) {
-    return false;
-  }
-
-  // Try the smallest too-large capacity.
-  if (PL_DHashTableInit(&t, PL_DHashGetStubOps(),
-                        sizeof(PLDHashEntryStub),
-                        mozilla::fallible,
-                        PL_DHASH_MAX_INITIAL_LENGTH + 1)) {
-    return false;   // it succeeded!?
-  }
-  // Don't call PL_DHashTableFinish() here; it's not safe after Init() failure.
-
-  // Check that |ops| is still null.
-  if (t.IsInitialized()) {
-    return false;
-  }
-
-  return true;
-}
-
-static bool test_pldhash_Init_overflow()
-{
-  PLDHashTable t;
-
-  // Check that the constructor nulls |ops|.
-  if (t.IsInitialized()) {
-    return false;
-  }
-
-  // Try an acceptable capacity, but one whose byte size overflows uint32_t.
-  //
-  // Ideally we'd also try a large-but-ok capacity that almost but doesn't
-  // quite overflow, but that would result in allocating just under 4GB of
-  // entry storage.  That's very likely to fail on 32-bit platforms, so such a
-  // test wouldn't be reliable.
-
-  struct OneKBEntry {
-      PLDHashEntryHdr hdr;
-      char buf[1024 - sizeof(PLDHashEntryHdr)];
-  };
-
-  if (PL_DHashTableInit(&t, PL_DHashGetStubOps(), sizeof(OneKBEntry),
-                        mozilla::fallible, PL_DHASH_MAX_INITIAL_LENGTH)) {
-    return false;   // it succeeded!?
-  }
-  // Don't call PL_DHashTableFinish() here; it's not safe after Init() failure.
-
-  // Check that |ops| is still null.
-  if (t.IsInitialized()) {
-    return false;
-  }
-
-  return true;
-}
-
 static bool test_pldhash_lazy_storage()
 {
-  PLDHashTable t;
-  PL_DHashTableInit(&t, PL_DHashGetStubOps(), sizeof(PLDHashEntryStub));
+  PLDHashTable t(PL_DHashGetStubOps(), sizeof(PLDHashEntryStub));
 
   // PLDHashTable allocates entry storage lazily. Check that all the non-add
   // operations work appropriately when the table is empty and the storage
@@ -160,26 +106,71 @@ static bool test_pldhash_lazy_storage()
     return false;   // size is non-zero?
   }
 
-  PL_DHashTableFinish(&t);
+  return true;
+}
+
+// We insert the integers 0.., so this hash function is (a) as simple as
+// possible, and (b) collision-free.  Both of which are good, because we want
+// this test to be as fast as possible.
+static PLDHashNumber
+trivial_hash(PLDHashTable *table, const void *key)
+{
+  return (PLDHashNumber)(size_t)key;
+}
+
+static bool test_pldhash_move_semantics()
+{
+  static const PLDHashTableOps ops = {
+    trivial_hash,
+    PL_DHashMatchEntryStub,
+    PL_DHashMoveEntryStub,
+    PL_DHashClearEntryStub,
+    nullptr
+  };
+
+  PLDHashTable t1(&ops, sizeof(PLDHashEntryStub));
+  PL_DHashTableAdd(&t1, (const void*)88);
+  PLDHashTable t2(&ops, sizeof(PLDHashEntryStub));
+  PL_DHashTableAdd(&t2, (const void*)99);
+
+  t1 = mozilla::Move(t1);   // self-move
+
+  t1 = mozilla::Move(t2);   // inited overwritten with inited
+
+  PLDHashTable t3, t4;
+  PL_DHashTableInit(&t3, &ops, sizeof(PLDHashEntryStub));
+  PL_DHashTableAdd(&t3, (const void*)88);
+
+  t3 = mozilla::Move(t4);   // inited overwritten with uninited
+
+  PL_DHashTableFinish(&t3);
+  PL_DHashTableFinish(&t4);
+
+  PLDHashTable t5, t6;
+  PL_DHashTableInit(&t6, &ops, sizeof(PLDHashEntryStub));
+  PL_DHashTableAdd(&t6, (const void*)88);
+
+  t5 = mozilla::Move(t6);   // uninited overwritten with inited
+
+  PL_DHashTableFinish(&t5);
+  PL_DHashTableFinish(&t6);
+
+  PLDHashTable t7;
+  PLDHashTable t8(mozilla::Move(t7));   // new table constructed with uninited
+
+  PLDHashTable t9(&ops, sizeof(PLDHashEntryStub));
+  PL_DHashTableAdd(&t9, (const void*)88);
+  PLDHashTable t10(mozilla::Move(t9));  // new table constructed with inited
 
   return true;
 }
 
 // See bug 931062, we skip this test on Android due to OOM.
 #ifndef MOZ_WIDGET_ANDROID
-// We insert the integers 0.., so this is has function is (a) as simple as
-// possible, and (b) collision-free.  Both of which are good, because we want
-// this test to be as fast as possible.
-static PLDHashNumber
-hash(PLDHashTable *table, const void *key)
-{
-  return (PLDHashNumber)(size_t)key;
-}
-
 static bool test_pldhash_grow_to_max_capacity()
 {
   static const PLDHashTableOps ops = {
-    hash,
+    trivial_hash,
     PL_DHashMatchEntryStub,
     PL_DHashMoveEntryStub,
     PL_DHashClearEntryStub,
@@ -187,11 +178,11 @@ static bool test_pldhash_grow_to_max_capacity()
   };
 
   // This is infallible.
-  PLDHashTable* t = PL_NewDHashTable(&ops, sizeof(PLDHashEntryStub), 128);
+  PLDHashTable* t = new PLDHashTable(&ops, sizeof(PLDHashEntryStub), 128);
 
   // Check that New() sets |t->ops|.
   if (!t->IsInitialized()) {
-    PL_DHashTableDestroy(t);
+    delete t;
     return false;
   }
 
@@ -210,7 +201,7 @@ static bool test_pldhash_grow_to_max_capacity()
     return false;
   }
 
-  PL_DHashTableDestroy(t);
+  delete t;
 
   return true;
 }
@@ -226,9 +217,8 @@ static const struct Test {
   TestFunc    func;
 } tests[] = {
   DECL_TEST(test_pldhash_Init_capacity_ok),
-  DECL_TEST(test_pldhash_Init_capacity_too_large),
-  DECL_TEST(test_pldhash_Init_overflow),
   DECL_TEST(test_pldhash_lazy_storage),
+  DECL_TEST(test_pldhash_move_semantics),
 // See bug 931062, we skip this test on Android due to OOM.
 #ifndef MOZ_WIDGET_ANDROID
   DECL_TEST(test_pldhash_grow_to_max_capacity),

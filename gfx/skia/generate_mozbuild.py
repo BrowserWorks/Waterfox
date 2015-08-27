@@ -48,8 +48,6 @@ if CONFIG['INTEL_ARCHITECTURE'] and CONFIG['GNU_CC'] and CONFIG['OS_ARCH'] != 'W
             'trunk/src/opts/SkBlitRow_opts_SSE4_asm.S',
         ]
 
-MSVC_ENABLE_PGO = True
-
 FINAL_LIBRARY = 'gkmedias'
 LOCAL_INCLUDES += [
     'trunk/include/config',
@@ -138,10 +136,11 @@ if CONFIG['GNU_CXX']:
     CXXFLAGS += [
         '-Wno-overloaded-virtual',
         '-Wno-unused-function',
-        '-fomit-frame-pointer',
     ]
     if not CONFIG['CLANG_CXX']:
         CXXFLAGS += ['-Wno-logical-op']
+    if CONFIG['CPU_ARCH'] == 'arm':
+        SOURCES['trunk/src/opts/SkBlitRow_opts_arm.cpp'].flags += ['-fomit-frame-pointer']
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('gtk2', 'gtk3', 'android', 'gonk', 'qt'):
     CXXFLAGS += CONFIG['MOZ_CAIRO_CFLAGS']
@@ -346,6 +345,7 @@ def write_sources(f, values, indent):
     'SkBlitter_ARGB32.cpp',
     'SkBlitter_RGB16.cpp',
     'SkBlitter_Sprite.cpp',
+    'SkBlitRow_opts_arm.cpp',
     'SkScan_Antihair.cpp',
     'SkCondVar.cpp',
     'SkParse.cpp',

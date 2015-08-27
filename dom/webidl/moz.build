@@ -11,6 +11,7 @@ GENERATED_WEBIDL_FILES = [
 PREPROCESSED_WEBIDL_FILES = [
     'HTMLMediaElement.webidl',
     'Navigator.webidl',
+    'ServiceWorkerRegistration.webidl',
     'Window.webidl',
 ]
 
@@ -22,9 +23,8 @@ WEBIDL_FILES = [
     'AnalyserNode.webidl',
     'Animatable.webidl',
     'Animation.webidl',
-    'AnimationEffect.webidl',
+    'AnimationEffectReadOnly.webidl',
     'AnimationEvent.webidl',
-    'AnimationPlayer.webidl',
     'AnimationTimeline.webidl',
     'AnonymousContent.webidl',
     'AppInfo.webidl',
@@ -47,6 +47,7 @@ WEBIDL_FILES = [
     'AudioTrack.webidl',
     'AudioTrackList.webidl',
     'AutocompleteInfo.webidl',
+    'AVInputPort.webidl',
     'BarProp.webidl',
     'BatteryManager.webidl',
     'BeforeAfterKeyboardEvent.webidl',
@@ -87,6 +88,7 @@ WEBIDL_FILES = [
     'Crypto.webidl',
     'CSPReport.webidl',
     'CSS.webidl',
+    'CSSLexer.webidl',
     'CSSPrimitiveValue.webidl',
     'CSSRuleList.webidl',
     'CSSStyleDeclaration.webidl',
@@ -102,9 +104,12 @@ WEBIDL_FILES = [
     'DesktopNotification.webidl',
     'DeviceMotionEvent.webidl',
     'DeviceStorage.webidl',
+    'DeviceStorageAreaListener.webidl',
     'Directory.webidl',
+    'DisplayPortInputPort.webidl',
     'Document.webidl',
     'DocumentFragment.webidl',
+    'DocumentTimeline.webidl',
     'DocumentType.webidl',
     'DOMCursor.webidl',
     'DOMError.webidl',
@@ -152,6 +157,7 @@ WEBIDL_FILES = [
     'Geolocation.webidl',
     'GeometryUtils.webidl',
     'GetUserMediaRequest.webidl',
+    'HDMIInputPort.webidl',
     'Headers.webidl',
     'History.webidl',
     'HTMLAllCollection.webidl',
@@ -249,14 +255,16 @@ WEBIDL_FILES = [
     'ImageDocument.webidl',
     'InputEvent.webidl',
     'InputMethod.webidl',
+    'InputPort.webidl',
+    'InputPortManager.webidl',
     'InspectorUtils.webidl',
-    'InstallEvent.webidl',
     'InterAppConnection.webidl',
     'InterAppConnectionRequest.webidl',
     'InterAppMessagePort.webidl',
     'KeyAlgorithm.webidl',
     'KeyboardEvent.webidl',
     'KeyEvent.webidl',
+    'KeyframeEffect.webidl',
     'LegacyQueryInterface.webidl',
     'LinkStyle.webidl',
     'ListBoxObject.webidl',
@@ -348,7 +356,6 @@ WEBIDL_FILES = [
     'ProfileTimelineMarker.webidl',
     'Promise.webidl',
     'PromiseDebugging.webidl',
-    'PushManager.webidl',
     'RadioNodeList.webidl',
     'Range.webidl',
     'Rect.webidl',
@@ -377,7 +384,6 @@ WEBIDL_FILES = [
     'ServiceWorker.webidl',
     'ServiceWorkerContainer.webidl',
     'ServiceWorkerGlobalScope.webidl',
-    'ServiceWorkerRegistration.webidl',
     'SettingChangeNotification.webidl',
     'SettingsManager.webidl',
     'ShadowRoot.webidl',
@@ -645,6 +651,7 @@ if CONFIG['MOZ_B2G_BT']:
             'BluetoothGattCharacteristic.webidl',
             'BluetoothGattDescriptor.webidl',
             'BluetoothGattService.webidl',
+            'BluetoothLeDeviceEvent.webidl',
             'BluetoothManager2.webidl',
             'BluetoothPairingHandle.webidl',
             'BluetoothPairingListener.webidl',
@@ -655,6 +662,19 @@ if CONFIG['MOZ_B2G_BT']:
             'BluetoothDevice.webidl',
             'BluetoothManager.webidl',
         ]
+
+if CONFIG['MOZ_SIMPLEPUSH']:
+    WEBIDL_FILES += [
+        'SimplePushManager.webidl'
+    ]
+else:
+    WEBIDL_FILES += [
+        'PushEvent.webidl',
+        'PushManager.webidl',
+        'PushManager.webidl',
+        'PushMessageData.webidl',
+        'PushSubscription.webidl',
+    ]
 
 if CONFIG['MOZ_NFC']:
     WEBIDL_FILES += [
@@ -710,6 +730,7 @@ GENERATED_EVENTS_WEBIDL_FILES = [
     'DeviceLightEvent.webidl',
     'DeviceOrientationEvent.webidl',
     'DeviceProximityEvent.webidl',
+    'DeviceStorageAreaChangedEvent.webidl',
     'DeviceStorageChangeEvent.webidl',
     'DOMTransactionEvent.webidl',
     'DownloadEvent.webidl',
@@ -774,6 +795,7 @@ if CONFIG['MOZ_B2G_BT']:
         GENERATED_EVENTS_WEBIDL_FILES += [
             'BluetoothAdapterEvent.webidl',
             'BluetoothAttributeEvent.webidl',
+            'BluetoothGattCharacteristicEvent.webidl',
             'BluetoothPairingEvent.webidl',
         ]
     else:

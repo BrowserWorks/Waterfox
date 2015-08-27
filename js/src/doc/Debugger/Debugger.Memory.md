@@ -31,6 +31,12 @@ allocated, if:
 - <code><i>dbg</i>.memory.[trackingAllocationSites][tracking-allocs]</code> is
   set to `true`.
 
+- A [Bernoulli trial][bernoulli-trial] succeeds, with probability equal to the
+  maximum of
+  [`d.memory.allocationSamplingProbability`][alloc-sampling-probability] of all
+  `Debugger` instances `d` that are observing the global that this object is
+  allocated within the scope of.
+
 Given a [`Debugger.Object`][object] instance <i>dobj</i> referring to some
 object, <code><i>dobj</i>.[allocationSite][allocation-site]</code> returns a
 [saved call stack][saved-frame] indicating where <i>dobj</i>'s referent was
@@ -79,6 +85,18 @@ following accessor properties from its prototype:
     You can retrieve the allocation site for a given object with the
     [`Debugger.Object.prototype.allocationSite`][allocation-site] accessor
     property.
+
+<code id='alloc-sampling-probability'>allocationSamplingProbability</code>
+:   A number between 0 and 1 that indicates the probability with which each new
+    allocation should be entered into the allocations log. 0 is equivalent to
+    "never", 1 is "always", and .05 would be "one out of twenty".
+
+    The default is 1, or logging every allocation.
+
+    Note that in the presence of multiple <code>Debugger</code> instances
+    observing the same allocations within a global's scope, the maximum
+    <code>allocationSamplingProbability</code> of all the
+    <code>Debugger</code>s is used.
 
 <code id='max-alloc-log'>maxAllocationsLogLength</code>
 :   The maximum number of allocation sites to accumulate in the allocations log
@@ -137,7 +155,7 @@ compartment.
         and end events.
 
     `reason`
-    :   A very short string describing th reason why the collection was
+    :   A very short string describing the reason why the collection was
         triggered. Known values include the following:
 
         * "API"
@@ -181,7 +199,13 @@ compartment.
     :   If SpiderMonkey's collector determined it could not incrementally
         collect garbage, and had to do a full GC all at once, this is a short
         string describing the reason it determined the full GC was necessary.
-        Otherwise, `null` is returned.
+        Otherwise, `null` is returned. Known values include the following:
+
+        * "GC mode"
+        * "malloc bytes trigger"
+        * "allocation trigger"
+        * "requested"
+
 
 Function Properties of the `Debugger.Memory.prototype` Object
 -------------------------------------------------------------
@@ -198,14 +222,27 @@ Function Properties of the `Debugger.Memory.prototype` Object
     <pre class='language-js'><code>
     {
       "timestamp": <i>timestamp</i>,
-      "frame": <i>allocationSite</i>
+      "frame": <i>allocationSite</i>,
+      "class": <i>className</i>,
+      "constructor": <i>constructorName</i>
     }
     </code></pre>
 
-    Here <i>timestamp</i> is the [timestamp][timestamps] of the allocation event and
-    <i>allocationSite</i> is an allocation site (as a
-    [captured stack][saved-frame]).  <i>allocationSite</i> is `null` for objects
-    allocated with no JavaScript frames on the stack.
+    Where
+
+    * *timestamp* is the [timestamp][timestamps] of the allocation event.
+
+    * *allocationSite* is an allocation site (as a
+      [captured stack][saved-frame]). Note that this property can be null if the
+      object was allocated with no JavaScript frames on the stack.
+
+    * *className* is the string name of the allocated object's internal
+    `[[Class]]` property, for example "Array", "Date", "RegExp", or (most
+    commonly) "Object".
+
+    * *constructorName* is the constructor function's display name for objects
+      created by `new Ctor`. If that data is not available, or the object was
+      not created with a `new` expression, this property is `null`.
 
     When `trackingAllocationSites` is `false`, `drainAllocationsLog()` throws an
     `Error`.

@@ -12,6 +12,7 @@
 #include <stdint.h>                     // for uint64_t
 #include "gfxTypes.h"
 #include "mozilla/Attributes.h"         // for override
+#include "mozilla/gfx/Rect.h"
 #include "mozilla/WidgetUtils.h"        // for ScreenRotation
 #include "mozilla/dom/ScreenOrientation.h"  // for ScreenOrientation
 #include "mozilla/ipc/SharedMemory.h"   // for SharedMemory, etc
@@ -22,39 +23,19 @@
 #include "nsTArrayForwardDeclare.h"     // for InfallibleTArray
 #include "nsIWidget.h"
 
-struct nsIntPoint;
-struct nsIntRect;
-
 namespace mozilla {
 namespace layers {
 
-class ClientTiledLayerBuffer;
-class CanvasClient;
-class CanvasLayerComposite;
-class CanvasSurface;
-class ColorLayerComposite;
-class CompositableChild;
-class ContainerLayerComposite;
-class ContentClient;
-class ContentClientRemote;
 class EditReply;
-class ImageClient;
-class ImageLayerComposite;
 class Layer;
-class OptionalThebesBuffer;
 class PLayerChild;
 class PLayerTransactionChild;
-class PLayerTransactionParent;
 class LayerTransactionChild;
-class RefLayerComposite;
 class ShadowableLayer;
-class ShmemTextureClient;
 class SurfaceDescriptor;
 class TextureClient;
-class PaintedLayerComposite;
 class ThebesBuffer;
 class ThebesBufferData;
-class TiledLayerComposer;
 class Transaction;
 
 
@@ -170,7 +151,7 @@ public:
    * Begin recording a transaction to be forwarded atomically to a
    * LayerManagerComposite.
    */
-  void BeginTransaction(const nsIntRect& aTargetBounds,
+  void BeginTransaction(const gfx::IntRect& aTargetBounds,
                         ScreenRotation aRotation,
                         mozilla::dom::ScreenOrientation aOrientation);
 
@@ -258,7 +239,7 @@ public:
    * Communicate the picture rect of an image to the compositor
    */
   void UpdatePictureRect(CompositableClient* aCompositable,
-                         const nsIntRect& aRect) override;
+                         const gfx::IntRect& aRect) override;
 
   /**
    * See CompositableForwarder::UseTexture
@@ -272,9 +253,6 @@ public:
   virtual void UseOverlaySource(CompositableClient* aCompositable,
                                 const OverlaySource& aOverlay) override;
 #endif
-  virtual void SendFenceHandle(AsyncTransactionTracker* aTracker,
-                               PTextureChild* aTexture,
-                               const FenceHandle& aFence) override;
 
   /**
    * End the current transaction and forward it to LayerManagerComposite.

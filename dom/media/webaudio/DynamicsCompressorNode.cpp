@@ -30,7 +30,7 @@ NS_INTERFACE_MAP_END_INHERITING(AudioNode)
 NS_IMPL_ADDREF_INHERITED(DynamicsCompressorNode, AudioNode)
 NS_IMPL_RELEASE_INHERITED(DynamicsCompressorNode, AudioNode)
 
-class DynamicsCompressorNodeEngine : public AudioNodeEngine
+class DynamicsCompressorNodeEngine final : public AudioNodeEngine
 {
 public:
   explicit DynamicsCompressorNodeEngine(AudioNode* aNode,
@@ -151,7 +151,7 @@ private:
   {
     MOZ_ASSERT(!NS_IsMainThread());
 
-    class Command : public nsRunnable
+    class Command final : public nsRunnable
     {
     public:
       Command(AudioNodeStream* aStream, float aReduction)
@@ -160,7 +160,7 @@ private:
       {
       }
 
-      NS_IMETHODIMP Run()
+      NS_IMETHOD Run() override
       {
         nsRefPtr<DynamicsCompressorNode> node;
         {
@@ -201,12 +201,12 @@ DynamicsCompressorNode::DynamicsCompressorNode(AudioContext* aContext)
               2,
               ChannelCountMode::Explicit,
               ChannelInterpretation::Speakers)
-  , mThreshold(new AudioParam(this, SendThresholdToStream, -24.f))
-  , mKnee(new AudioParam(this, SendKneeToStream, 30.f))
-  , mRatio(new AudioParam(this, SendRatioToStream, 12.f))
+  , mThreshold(new AudioParam(this, SendThresholdToStream, -24.f, "threshold"))
+  , mKnee(new AudioParam(this, SendKneeToStream, 30.f, "knee"))
+  , mRatio(new AudioParam(this, SendRatioToStream, 12.f, "ratio"))
   , mReduction(0)
-  , mAttack(new AudioParam(this, SendAttackToStream, 0.003f))
-  , mRelease(new AudioParam(this, SendReleaseToStream, 0.25f))
+  , mAttack(new AudioParam(this, SendAttackToStream, 0.003f, "attack"))
+  , mRelease(new AudioParam(this, SendReleaseToStream, 0.25f, "release"))
 {
   DynamicsCompressorNodeEngine* engine = new DynamicsCompressorNodeEngine(this, aContext->Destination());
   mStream = aContext->Graph()->CreateAudioNodeStream(engine, MediaStreamGraph::INTERNAL_STREAM);

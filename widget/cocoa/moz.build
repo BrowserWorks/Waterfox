@@ -12,7 +12,9 @@ XPIDL_MODULE = 'widget_cocoa'
 
 EXPORTS += [
     'mozView.h',
+    'nsBidiKeyboard.h',
     'nsChangeObserver.h',
+    'nsCocoaDebugUtils.h',
     'nsCocoaFeatures.h',
     'nsCocoaUtils.h',
 ]
@@ -64,6 +66,7 @@ UNIFIED_SOURCES += [
 SOURCES += [
     'nsChildView.mm',
     'nsClipboard.mm',
+    'nsCocoaDebugUtils.mm',
 ]
 
 include('/ipc/chromium/chromium-config.mozbuild')

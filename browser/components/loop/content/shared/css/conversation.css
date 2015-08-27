@@ -313,7 +313,8 @@
   width: 100%;
 }
 
-.call-action-group > .btn {
+.call-action-group > .btn,
+.room-context > .btn {
   min-height: 26px;
   border-radius: 2px;
   margin: 0 4px;
@@ -719,11 +720,14 @@ html, .fx-embedded, #main,
     height: 100%;
   }
 
+  .standalone .media.nested {
+    margin-left: 10px;
+  }
+
   .standalone .remote_wrapper {
     position: relative;
-    width: calc(100% - 10px);
+    width: 100%;
     height: 100%;
-    margin-left: 10px;
   }
 
   .standalone {
@@ -850,15 +854,26 @@ html, .fx-embedded, #main,
   background: rgba(0,0,0,.6);
   /* This matches .fx-embedded .conversation toolbar height */
   top: 26px;
+  height: calc(100% - 26px);
   right: 0;
-  bottom: 0;
   left: 0;
   text-align: center;
   color: #fff;
   z-index: 1010;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: flex-start;
+  align-items: stretch;
 }
 
-.room-invitation-overlay .error-display-area.error,
+.room-invitation-content {
+  flex: 1 1 auto;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: center;
+  align-items: center;
+}
+
 .room-invitation-overlay input[type="text"] {
   display: block;
   background-color: rgba(0,0,0,.5);
@@ -866,40 +881,31 @@ html, .fx-embedded, #main,
   padding: .5em;
 }
 
-.room-invitation-overlay .error-display-area {
-  display: none;
-}
-
-.room-invitation-overlay .error-display-area.error {
-  position: absolute;
-  top: 2em;
-  left: 1em;
-  right: 1em;
-  text-align: start;
-  width: calc(258px - 2em);
-  color: #d74345;
-}
-
-.room-invitation-overlay form {
-  padding: 6em 0 2em 0;
-}
-
-.room-invitation-overlay textarea {
-  display: block;
-  background: rgba(0, 0, 0, .5);
-  color: #fff;
-  font-family: "Helvetica Neue", Arial, sans;
-  font-size: 1.2em;
-  border: none;
-  width: 200px;
-  margin: 0 auto;
-  padding: .2em .4em;
-  border-radius: .5em;
-}
-
 .room-invitation-overlay .btn-group {
-  position: absolute;
-  bottom: 10px;
+  padding: 0 0 1em 0;
+}
+
+.room-invitation-addcontext {
+  color: #0095dd;
+  padding-left: 1.5em;
+  margin-bottom: 1em;
+  background-image: url("../img/icons-10x10.svg#edit-active");
+  background-size: 1em 1em;
+  background-repeat: no-repeat;
+  background-position: left top;
+  font-size: 1em;
+  cursor: pointer;
+}
+
+.room-invitation-addcontext:hover,
+.room-invitation-addcontext:hover:active {
+  text-decoration: underline;
+}
+
+body[dir="rtl"] .room-invitation-addcontext {
+  padding-left: 0;
+  padding-right: 1.5em;
+  background-position: right top;
 }
 
 .share-service-dropdown {
@@ -907,40 +913,20 @@ html, .fx-embedded, #main,
   text-align: start;
   bottom: auto;
   top: 0;
+  overflow: hidden;
+  overflow-y: auto;
 }
 
-.share-service-dropdown.share-button-unavailable {
-  width: 230px;
-  padding: 8px;
+/* When the dropdown is showing a vertical scrollbar, compensate for its width. */
+body[platform="other"] .share-service-dropdown.overflow > .dropdown-menu-item,
+body[platform="win"] .share-service-dropdown.overflow > .dropdown-menu-item {
+  -moz-padding-end: 20px;
 }
 
 .share-service-dropdown > .dropdown-menu-item > .icon {
   width: 14px;
   height: 14px;
   margin-right: 4px;
-}
-
-.share-service-dropdown .share-panel-header {
-  background-image: url("../img/icons-16x16.svg#share-darkgrey");
-  background-size: 3em 3em;
-  background-repeat: no-repeat;
-  min-height: 3em;
-  font-weight: bold;
-  margin-bottom: 1em;
-  padding-left: 4.5em;
-}
-
-body[dir=rtl] .share-service-dropdown .share-panel-header {
-  background-position: top right;
-  padding-left: 0;
-  padding-right: 4.5em;
-}
-
-.share-service-dropdown .btn-toolbar-add {
-  padding: 4px 2px;
-  border-radius: 2px;
-  margin-top: 1em;
-  width: 100%;
 }
 
 .dropdown-menu-item > .icon-add-share-service {
@@ -957,6 +943,199 @@ body[dir=rtl] .share-service-dropdown .share-panel-header {
 
 .dropdown-menu-item:hover:active > .icon-add-share-service {
   background-image: url("../img/icons-16x16.svg#add-active");
+}
+
+.room-context {
+  background: rgba(0,0,0,.6);
+  border-top: 2px solid #444;
+  border-bottom: 2px solid #444;
+  padding: .5rem;
+  max-height: 400px;
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  font-size: .9em;
+  display: flex;
+  flex-flow: column nowrap;
+  align-content: flex-start;
+  align-items: flex-start;
+  overflow-x: hidden;
+  overflow-y: auto;
+  /* Make the context view float atop the video elements. */
+  z-index: 2;
+}
+
+.room-context.editMode {
+  /* Stretch to the maximum available space whilst not covering the conversation
+     toolbar (26px). */
+  height: calc(100% - 26px);
+}
+
+.room-invitation-overlay .room-context {
+  position: relative;
+  left: auto;
+  bottom: auto;
+  flex: 0 1 auto;
+}
+
+.room-invitation-overlay .room-context.editMode {
+  height: 100%;
+}
+
+.room-context-content {
+  flex: 1 1 auto;
+  text-align: start;
+  display: flex;
+  flex-flow: row nowrap;
+  font-size: .9em;
+}
+
+.room-context-thumbnail {
+  /* 16px icon size + 3px border width. */
+  width: 19px;
+  max-height: 19px;
+  border: 3px solid #fff;
+  border-radius: 3px;
+  background-color: #fff;
+  -moz-margin-end: 1ch;
+  flex: 0 1 auto;
+}
+
+.room-context > .error-display-area.error {
+  display: block;
+  background-color: rgba(215,67,69,.8);
+  border-radius: 3px;
+  padding: .5em;
+}
+
+.room-context > .error-display-area {
+  display: none;
+}
+
+.room-context > .error-display-area.error {
+  margin: 1em 0 .5em 0;
+  text-align: center;
+  text-shadow: 1px 1px 0 rgba(0,0,0,.3);
+}
+
+.room-context > .checkbox-wrapper {
+  margin-bottom: .5em;
+}
+
+.room-context-label {
+  margin-bottom: 1em;
+}
+
+.room-context-label,
+.room-context-description,
+.room-context > .checkbox-wrapper > label {
+  color: #fff;
+}
+
+.room-context-comment {
+  color: #707070;
+}
+
+.room-context-description,
+.room-context-comment {
+  word-wrap: break-word;
+}
+
+:not(input).room-context-url {
+  color: #0095dd;
+  font-style: italic;
+  text-decoration: none;
+  display: block;
+  cursor: pointer;
+}
+
+.room-context-url:hover {
+  text-decoration: underline;
+}
+
+.room-context > form {
+  width: 100%;
+}
+
+.room-context > form > textarea,
+.room-context > form > input[type="text"] {
+  display: block;
+  background: rgba(0,0,0,.5);
+  font-family: "Helvetica Neue", Arial, sans;
+  border: 1px solid rgba(255,255,255,.2);
+  width: 100%;
+  padding: .5em;
+  border-radius: 3px;
+  resize: none;
+  color: #fff;
+}
+
+.room-context > form > textarea {
+  font-size: 1em;
+}
+
+.room-context > form > input:not([disabled]).room-context-url {
+  color: #0095dd;
+}
+
+.room-context > form > input[disabled] {
+  background-color: rgba(255,255,255,.2);
+  color: rgba(255,255,255,.4);
+}
+
+.room-context > form > textarea:not(:last-of-type),
+.room-context > form > input[type="text"] {
+  margin: 0 0 .5em 0;
+}
+
+.room-context > .btn {
+  margin: .5em 0 0;
+  font-size: 1.1em;
+  padding: 0 .5em;
+  align-self: flex-end;
+}
+
+.room-context-btn-close,
+.room-context-btn-edit {
+  position: absolute;
+  right: 8px;
+  /* 8px offset + 2px border-top */
+  top: 10px;
+  width: 8px;
+  height: 8px;
+  background-color: transparent;
+  background-image: url("../img/icons-10x10.svg#close-darkergrey");
+  background-size: 8px 8px;
+  background-repeat: no-repeat;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.room-context-btn-edit {
+  right: 20px;
+  background-image: url("../img/icons-10x10.svg#edit-darkergrey");
+}
+
+.room-context-btn-edit:hover,
+.room-context-btn-edit:hover:active {
+  background-image: url("../img/icons-10x10.svg#edit-active");
+}
+
+.room-context-btn-close:hover,
+.room-context-btn-close:hover:active {
+  background-image: url("../img/icons-10x10.svg#close-active");
+}
+
+body[dir=rtl] .room-context-btn-close,
+body[dir=rtl] .room-context-btn-edit {
+  right: auto;
+  left: 8px;
+}
+
+body[dir=rtl] .room-context-btn-edit {
+  left: 20px;
 }
 
 /* Standalone rooms */
@@ -976,7 +1155,7 @@ body[dir=rtl] .share-service-dropdown .share-panel-header {
   /* `top` is chosen to vertically position the area near the center
      of the media element. */
   top: calc(50% - 140px);
-  left: calc(25% + 62.5px + 10px);
+  left: 25%;
   z-index: 1000;
   /* `width` here is specified by the design spec. */
   width: 250px;
@@ -1029,15 +1208,43 @@ body[dir=rtl] .share-service-dropdown .share-panel-header {
   max-width: 400px;
 }
 
-.standalone .room-conversation h2.room-name {
+.standalone-room-info {
   position: absolute;
-  display: inline-block;
+  display: block;
   top: 0;
-  right: 0;
-  color: #fff;
+  right: 10px;
+  /* 20px is 10px for left and right margins. */
+  width: calc(25% - 20px);
   z-index: 2000000;
   font-size: 1.2em;
   padding: .4em;
+  height: 100%;
+}
+
+.standalone-room-info > h2 {
+  color: #fff;
+}
+
+.standalone-context-url {
+  color: #fff;
+  /* Try and keep clear of local video */
+  height: 40%;
+}
+
+.standalone-context-url.screen-share-active {
+  /* Try and keep clear of remote video when screensharing */
+  height: 15%;
+}
+
+.standalone-context-url > img {
+  margin: 1em auto;
+  width: 16px;
+  height: 16px;
+}
+
+.standalone-context-url-description-wrapper {
+  /* So that we can use max-height for the image */
+  height: 20%;
 }
 
 .standalone .room-conversation .media {
@@ -1046,7 +1253,7 @@ body[dir=rtl] .share-service-dropdown .share-panel-header {
 
 .standalone .room-conversation .video_wrapper.remote_wrapper {
   background-color: #4e4e4e;
-  width: calc(75% - 10px); /* Take the left margin into account. */
+  width: 75%;
 }
 
 .standalone .room-conversation .conversation-toolbar {
@@ -1065,6 +1272,26 @@ body[dir=rtl] .share-service-dropdown .share-panel-header {
 
 
 @media screen and (max-width:640px) {
+  .standalone-room-info {
+    /* This isn't perfect, we just center the heading for now. Bug 1141493
+       should fix this. */
+    position: absolute;
+    width: 100%;
+    right: 0px;
+
+    /* Override the 100% specified in the .standalone-room-info selector
+       block so that this div doesn't take over the _whole_ screen and
+       transparently occlude UI widgetry (like the Join button), making
+       it unusable. */
+    height: auto;
+  }
+
+  .standalone-context-url {
+    /* XXX We haven't got UX for standalone yet, so temporarily not displaying
+       on narrow window widths. See bug 1153827. */
+    display: none;
+  }
+
   /* Rooms specific responsive styling */
   .standalone .room-conversation {
     background: #000;
@@ -1076,6 +1303,7 @@ body[dir=rtl] .share-service-dropdown .share-panel-header {
     right: 0;
     margin: auto;
     width: 100%;
+    left: 0;
   }
   .standalone .room-conversation-wrapper .video-layout-wrapper {
     /* 50px: header's height; 25px: footer's height */
@@ -1084,6 +1312,10 @@ body[dir=rtl] .share-service-dropdown .share-panel-header {
   .standalone .room-conversation .video_wrapper.remote_wrapper {
     width: 100%;
   }
+  .standalone .room-conversation .video_wrapper.remote_wrapper.not-joined {
+    width: 100%;
+  }
+
   .standalone .conversation-toolbar {
     height: 38px;
     padding: 8px;

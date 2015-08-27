@@ -33,13 +33,46 @@ typedef struct {
   // public interface to svc_command options
   int spatial_layers;               // number of spatial layers
   int temporal_layers;               // number of temporal layers
+  int temporal_layering_mode;
   SVC_LOG_LEVEL log_level;  // amount of information to display
   int log_print;  // when set, printf log messages instead of returning the
                   // message with svc_get_message
-
+  int output_rc_stat;  // for outputting rc stats
+  int speed;  // speed setting for codec
+  int threads;
   // private storage for vpx_svc_encode
   void *internal;
 } SvcContext;
+
+#define OPTION_BUFFER_SIZE 1024
+#define COMPONENTS 4  // psnr & sse statistics maintained for total, y, u, v
+
+typedef struct SvcInternal {
+  char options[OPTION_BUFFER_SIZE];        // set by vpx_svc_set_options
+
+  // values extracted from option, quantizers
+  vpx_svc_extra_cfg_t svc_params;
+  int enable_auto_alt_ref[VPX_SS_MAX_LAYERS];
+  int bitrates[VPX_SS_MAX_LAYERS];
+
+  // accumulated statistics
+  double psnr_sum[VPX_SS_MAX_LAYERS][COMPONENTS];   // total/Y/U/V
+  uint64_t sse_sum[VPX_SS_MAX_LAYERS][COMPONENTS];
+  uint32_t bytes_sum[VPX_SS_MAX_LAYERS];
+
+  // codec encoding values
+  int width;    // width of highest layer
+  int height;   // height of highest layer
+  int kf_dist;  // distance between keyframes
+
+  // state variables
+  int psnr_pkt_received;
+  int layer;
+  int use_multiple_frame_contexts;
+
+  char message_buffer[2048];
+  vpx_codec_ctx_t *codec_ctx;
+} SvcInternal_t;
 
 /**
  * Set SVC options
@@ -54,14 +87,17 @@ vpx_codec_err_t vpx_svc_set_options(SvcContext *svc_ctx, const char *options);
 /**
  * initialize SVC encoding
  */
-vpx_codec_err_t vpx_svc_init(SvcContext *svc_ctx, vpx_codec_ctx_t *codec_ctx,
+vpx_codec_err_t vpx_svc_init(SvcContext *svc_ctx,
+                             vpx_codec_ctx_t *codec_ctx,
                              vpx_codec_iface_t *iface,
                              vpx_codec_enc_cfg_t *cfg);
 /**
  * encode a frame of video with multiple layers
  */
-vpx_codec_err_t vpx_svc_encode(SvcContext *svc_ctx, vpx_codec_ctx_t *codec_ctx,
-                               struct vpx_image *rawimg, vpx_codec_pts_t pts,
+vpx_codec_err_t vpx_svc_encode(SvcContext *svc_ctx,
+                               vpx_codec_ctx_t *codec_ctx,
+                               struct vpx_image *rawimg,
+                               vpx_codec_pts_t pts,
                                int64_t duration, int deadline);
 
 /**

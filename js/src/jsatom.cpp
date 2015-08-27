@@ -83,7 +83,6 @@ const char js_protected_str[]       = "protected";
 const char js_public_str[]          = "public";
 const char js_send_str[]            = "send";
 const char js_setter_str[]          = "setter";
-const char js_super_str[]           = "super";
 const char js_switch_str[]          = "switch";
 const char js_this_str[]            = "this";
 const char js_try_str[]             = "try";
@@ -203,7 +202,7 @@ js::MarkAtoms(JSTracer* trc)
 
         JSAtom* atom = entry.asPtr();
         bool tagged = entry.isTagged();
-        MarkStringRoot(trc, &atom, "interned_atom");
+        TraceRoot(trc, &atom, "interned_atom");
         if (entry.asPtr() != atom)
             e.rekeyFront(AtomHasher::Lookup(atom), AtomStateEntry(atom, tagged));
     }
@@ -227,7 +226,7 @@ js::MarkPermanentAtoms(JSTracer* trc)
             const AtomStateEntry& entry = r.front();
 
             JSAtom* atom = entry.asPtr();
-            MarkPermanentAtom(trc, atom, "permanent_table");
+            TraceProcessGlobalRoot(trc, atom, "permanent_table");
         }
     }
 }
@@ -242,7 +241,7 @@ js::MarkWellKnownSymbols(JSTracer* trc)
 
     if (WellKnownSymbols* wks = rt->wellKnownSymbols) {
         for (size_t i = 0; i < JS::WellKnownSymbolLimit; i++)
-            MarkWellKnownSymbol(trc, wks->get(i));
+            TraceProcessGlobalRoot(trc, wks->get(i).get(), "well_known_symbol");
     }
 }
 
@@ -255,7 +254,7 @@ JSRuntime::sweepAtoms()
     for (AtomSet::Enum e(*atoms_); !e.empty(); e.popFront()) {
         AtomStateEntry entry = e.front();
         JSAtom* atom = entry.asPtr();
-        bool isDying = IsStringAboutToBeFinalizedFromAnyThread(&atom);
+        bool isDying = IsAboutToBeFinalizedUnbarriered(&atom);
 
         /* Pinned or interned key cannot be finalized. */
         MOZ_ASSERT_IF(hasContexts() && entry.isTagged(), !isDying);

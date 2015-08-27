@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim:set ts=2 sw=2 sts=2 et cindent: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -76,12 +76,12 @@ public:
 
   uint32_t VideoWidth() const
   {
-    return mMediaSize.width == -1 ? 0 : mMediaSize.width;
+    return mMediaInfo.HasVideo() ? mMediaInfo.mVideo.mDisplay.width : 0;
   }
 
   uint32_t VideoHeight() const
   {
-    return mMediaSize.height == -1 ? 0 : mMediaSize.height;
+    return mMediaInfo.HasVideo() ? mMediaInfo.mVideo.mDisplay.height : 0;
   }
 
   void GetPoster(nsAString& aValue)

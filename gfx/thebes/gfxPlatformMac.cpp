@@ -79,7 +79,8 @@ gfxPlatformMac::gfxPlatformMac()
     uint32_t canvasMask = BackendTypeBit(BackendType::CAIRO) |
                           BackendTypeBit(BackendType::SKIA) |
                           BackendTypeBit(BackendType::COREGRAPHICS);
-    uint32_t contentMask = BackendTypeBit(BackendType::COREGRAPHICS);
+    uint32_t contentMask = BackendTypeBit(BackendType::COREGRAPHICS) |
+                           BackendTypeBit(BackendType::SKIA);
     InitBackendPrefs(canvasMask, BackendType::COREGRAPHICS,
                      contentMask, BackendType::COREGRAPHICS);
 
@@ -168,7 +169,7 @@ gfxPlatformMac::MakePlatformFont(const nsAString& aFontName,
 {
     // Ownership of aFontData is received here, and passed on to
     // gfxPlatformFontList::MakePlatformFont(), which must ensure the data
-    // is released with NS_Free when no longer needed
+    // is released with free when no longer needed
     return gfxPlatformFontList::PlatformFontList()->MakePlatformFont(aFontName,
                                                                      aWeight,
                                                                      aStretch,
@@ -484,7 +485,7 @@ public:
       // situations. According to the docs, it is compatible with all displays running on the computer
       // But if we have different monitors at different display rates, we may hit issues.
       if (CVDisplayLinkCreateWithActiveCGDisplays(&mDisplayLink) != kCVReturnSuccess) {
-        NS_WARNING("Could not create a display link with all active displays. Retrying\n");
+        NS_WARNING("Could not create a display link with all active displays. Retrying");
         CVDisplayLinkRelease(mDisplayLink);
         mDisplayLink = nullptr;
 
@@ -588,7 +589,7 @@ gfxPlatformMac::CreateHardwareVsyncSource()
   VsyncSource::Display& primaryDisplay = osxVsyncSource->GetGlobalDisplay();
   primaryDisplay.EnableVsync();
   if (!primaryDisplay.IsVsyncEnabled()) {
-    NS_WARNING("OS X Vsync source not enabled. Falling back to software vsync.\n");
+    NS_WARNING("OS X Vsync source not enabled. Falling back to software vsync.");
     return gfxPlatform::CreateHardwareVsyncSource();
   }
 

@@ -125,6 +125,9 @@ XPCOMUtils.defineLazyModuleGetter(this, "DevToolsUtils",
 XPCOMUtils.defineLazyModuleGetter(this, "ShortcutUtils",
   "resource://gre/modules/ShortcutUtils.jsm");
 
+XPCOMUtils.defineLazyServiceGetter(this, "clipboardHelper",
+  "@mozilla.org/widget/clipboardhelper;1", "nsIClipboardHelper");
+
 Object.defineProperty(this, "NetworkHelper", {
   get: function() {
     return devtools.require("devtools/toolkit/webconsole/network-helper");
@@ -687,9 +690,7 @@ StackFrames.prototype = {
       let { depth, source, where: { line } } = frame;
 
       let isBlackBoxed = source ? this.activeThread.source(source).isBlackBoxed : false;
-      let location = NetworkHelper.convertToUnicode(unescape(source.url || source.introductionUrl));
-      let title = StackFrameUtils.getFrameTitle(frame);
-      DebuggerView.StackFrames.addFrame(title, location, line, depth, isBlackBoxed);
+      DebuggerView.StackFrames.addFrame(frame, line, depth, isBlackBoxed);
     }
 
     DebuggerView.StackFrames.selectedDepth = Math.max(this.currentFrameDepth, 0);
@@ -1219,7 +1220,7 @@ SourceScripts.prototype = {
    * Callback for the debugger's active thread getSources() method.
    */
   _onSourcesAdded: function(aResponse) {
-    if (aResponse.error) {
+    if (aResponse.error || !aResponse.sources) {
       let msg = "Error getting sources: " + aResponse.message;
       Cu.reportError(msg);
       dumpn(msg);

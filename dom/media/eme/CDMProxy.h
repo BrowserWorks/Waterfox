@@ -14,10 +14,9 @@
 #include "nsIThread.h"
 #include "GMPDecryptorProxy.h"
 #include "mozilla/CDMCaps.h"
-#include "mp4_demuxer/DecoderData.h"
 
 namespace mozilla {
-
+class MediaRawData;
 class CDMCallbackProxy;
 
 namespace dom {
@@ -28,7 +27,7 @@ class DecryptionClient {
 public:
   virtual ~DecryptionClient() {}
   virtual void Decrypted(GMPErr aResult,
-                         mp4_demuxer::MP4Sample* aSample) = 0;
+                         MediaRawData* aSample) = 0;
 };
 
 // Proxies calls GMP/CDM, and proxies calls back.
@@ -142,8 +141,9 @@ public:
                        const nsCString& aMsg);
 
   // Threadsafe.
-  void Decrypt(mp4_demuxer::MP4Sample* aSample,
-               DecryptionClient* aSink);
+  void Decrypt(MediaRawData* aSample,
+               DecryptionClient* aSink,
+               MediaTaskQueue* aTaskQueue);
 
   // Reject promise with DOMException corresponding to aExceptionCode.
   // Can be called from any thread.
@@ -175,6 +175,8 @@ public:
 #endif
 
 private:
+  friend class gmp_InitDoneCallback;
+  friend class gmp_InitGetGMPDecryptorCallback;
 
   struct InitData {
     uint32_t mPromiseId;
@@ -184,7 +186,11 @@ private:
   };
 
   // GMP thread only.
-  void gmp_Init(nsAutoPtr<InitData> aData);
+  void gmp_Init(nsAutoPtr<InitData>&& aData);
+  void gmp_InitDone(GMPDecryptorProxy* aCDM, nsAutoPtr<InitData>&& aData);
+  void gmp_InitGetGMPDecryptor(nsresult aResult,
+                               const nsACString& aNodeId,
+                               nsAutoPtr<InitData>&& aData);
 
   // GMP thread only.
   void gmp_Shutdown();
@@ -230,19 +236,35 @@ private:
   // GMP thread only.
   void gmp_RemoveSession(nsAutoPtr<SessionOpData> aData);
 
-  struct DecryptJob {
-    DecryptJob(mp4_demuxer::MP4Sample* aSample,
-               DecryptionClient* aClient)
+  class DecryptJob : public nsRunnable {
+  public:
+    explicit DecryptJob(MediaRawData* aSample,
+                        DecryptionClient* aClient,
+                        MediaTaskQueue* aTaskQueue)
       : mId(0)
       , mSample(aSample)
       , mClient(aClient)
-    {}
+      , mResult(GMPGenericErr)
+      , mTaskQueue(aTaskQueue)
+    {
+      MOZ_ASSERT(mClient);
+      MOZ_ASSERT(mSample);
+    }
+
+    NS_METHOD Run() override;
+    void PostResult(GMPErr aResult, const nsTArray<uint8_t>& aDecryptedData);
+    void PostResult(GMPErr aResult);
+
     uint32_t mId;
-    nsAutoPtr<mp4_demuxer::MP4Sample> mSample;
+    nsRefPtr<MediaRawData> mSample;
+  private:
+    ~DecryptJob() {}
     nsAutoPtr<DecryptionClient> mClient;
+    GMPErr mResult;
+    nsRefPtr<MediaTaskQueue> mTaskQueue;
   };
   // GMP thread only.
-  void gmp_Decrypt(nsAutoPtr<DecryptJob> aJob);
+  void gmp_Decrypt(nsRefPtr<DecryptJob> aJob);
 
   class RejectPromiseTask : public nsRunnable {
   public:
@@ -316,7 +338,7 @@ private:
 
   // Decryption jobs sent to CDM, awaiting result.
   // GMP thread only.
-  nsTArray<nsAutoPtr<DecryptJob>> mDecryptionJobs;
+  nsTArray<nsRefPtr<DecryptJob>> mDecryptionJobs;
 
   // Number of buffers we've decrypted. Used to uniquely identify
   // decryption jobs sent to CDM. Note we can't just use the length of
@@ -324,6 +346,10 @@ private:
   // from it.
   // GMP thread only.
   uint32_t mDecryptionJobCount;
+
+  // True if CDMProxy::gmp_Shutdown was called.
+  // GMP thread only.
+  bool mShutdownCalled;
 };
 
 

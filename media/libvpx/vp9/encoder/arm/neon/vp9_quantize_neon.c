@@ -26,13 +26,12 @@ void vp9_quantize_fp_neon(const int16_t *coeff_ptr, intptr_t count,
                           const int16_t *round_ptr, const int16_t *quant_ptr,
                           const int16_t *quant_shift_ptr, int16_t *qcoeff_ptr,
                           int16_t *dqcoeff_ptr, const int16_t *dequant_ptr,
-                          int zbin_oq_value, uint16_t *eob_ptr,
+                          uint16_t *eob_ptr,
                           const int16_t *scan, const int16_t *iscan) {
   // TODO(jingning) Decide the need of these arguments after the
   // quantization process is completed.
   (void)zbin_ptr;
   (void)quant_shift_ptr;
-  (void)zbin_oq_value;
   (void)scan;
 
   if (!skip_block) {
@@ -112,8 +111,8 @@ void vp9_quantize_fp_neon(const int16_t *coeff_ptr, intptr_t count,
       *eob_ptr = (uint16_t)vget_lane_s16(v_eobmax_final, 0);
     }
   } else {
-    vpx_memset(qcoeff_ptr, 0, count * sizeof(int16_t));
-    vpx_memset(dqcoeff_ptr, 0, count * sizeof(int16_t));
+    memset(qcoeff_ptr, 0, count * sizeof(int16_t));
+    memset(dqcoeff_ptr, 0, count * sizeof(int16_t));
     *eob_ptr = 0;
   }
 }

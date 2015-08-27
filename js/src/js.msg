@@ -53,7 +53,6 @@ MSG_DEF(JSMSG_CANT_DELETE,             1, JSEXN_TYPEERR, "property {0} is non-co
 MSG_DEF(JSMSG_CANT_TRUNCATE_ARRAY,     0, JSEXN_TYPEERR, "can't delete non-configurable array element")
 MSG_DEF(JSMSG_NOT_FUNCTION,            1, JSEXN_TYPEERR, "{0} is not a function")
 MSG_DEF(JSMSG_NOT_CONSTRUCTOR,         1, JSEXN_TYPEERR, "{0} is not a constructor")
-MSG_DEF(JSMSG_CANT_CONVERT,            1, JSEXN_ERR, "can't convert {0} to an integer")
 MSG_DEF(JSMSG_CANT_CONVERT_TO,         2, JSEXN_TYPEERR, "can't convert {0} to {1}")
 MSG_DEF(JSMSG_NO_PROPERTIES,           1, JSEXN_TYPEERR, "{0} has no properties")
 MSG_DEF(JSMSG_BAD_REGEXP_FLAG,         1, JSEXN_SYNTAXERR, "invalid regular expression flag {0}")
@@ -76,6 +75,7 @@ MSG_DEF(JSMSG_UTF8_CHAR_TOO_LARGE,     1, JSEXN_TYPEERR, "UTF-8 character {0} to
 MSG_DEF(JSMSG_MALFORMED_UTF8_CHAR,     1, JSEXN_TYPEERR, "malformed UTF-8 character sequence at offset {0}")
 MSG_DEF(JSMSG_WRONG_CONSTRUCTOR,       1, JSEXN_TYPEERR, "wrong constructor called for {0}")
 MSG_DEF(JSMSG_BUILTIN_CTOR_NO_NEW,     1, JSEXN_NONE, "calling a builtin {0} constructor without new is deprecated and will be forbidden in ES6")
+MSG_DEF(JSMSG_BUILTIN_CTOR_NO_NEW_FATAL, 1, JSEXN_TYPEERR, "calling a builtin {0} constructor without new is forbidden")
 MSG_DEF(JSMSG_PROTO_SETTING_SLOW,      0, JSEXN_NONE, "mutating the [[Prototype]] of an object will cause your code to run very slowly; instead create the object with the correct initial [[Prototype]] value using Object.create")
 MSG_DEF(JSMSG_BAD_GENERATOR_YIELD,     1, JSEXN_TYPEERR, "yield from closing generator {0}")
 MSG_DEF(JSMSG_EMPTY_ARRAY_REDUCE,      0, JSEXN_TYPEERR, "reduce of empty array with no initial value")
@@ -95,7 +95,6 @@ MSG_DEF(JSMSG_NOT_EXPECTED_TYPE,       3, JSEXN_TYPEERR, "{0}: expected {1}, got
 MSG_DEF(JSMSG_NOT_ITERABLE,            1, JSEXN_TYPEERR, "{0} is not iterable")
 MSG_DEF(JSMSG_ALREADY_HAS_PRAGMA,      2, JSEXN_NONE, "{0} is being assigned a {1}, but already has one")
 MSG_DEF(JSMSG_NEXT_RETURNED_PRIMITIVE, 0, JSEXN_TYPEERR, "iterator.next() returned a non-object value")
-MSG_DEF(JSMSG_WRONG_VALUE,             2, JSEXN_ERR, "expected {0} but found {1}")
 MSG_DEF(JSMSG_CANT_SET_PROTO,          0, JSEXN_TYPEERR, "can't set prototype of this object")
 MSG_DEF(JSMSG_CANT_SET_PROTO_OF,       1, JSEXN_TYPEERR, "can't set prototype of {0}")
 MSG_DEF(JSMSG_CANT_SET_PROTO_CYCLE,    0, JSEXN_TYPEERR, "can't set prototype: it would cause a prototype chain cycle")
@@ -126,6 +125,7 @@ MSG_DEF(JSMSG_INVALID_NORMALIZE_FORM,  0, JSEXN_RANGEERR, "form must be one of '
 MSG_DEF(JSMSG_NEGATIVE_REPETITION_COUNT, 0, JSEXN_RANGEERR, "repeat count must be non-negative")
 MSG_DEF(JSMSG_NOT_A_CODEPOINT,         1, JSEXN_RANGEERR, "{0} is not a valid code point")
 MSG_DEF(JSMSG_RESULTING_STRING_TOO_LARGE, 0, JSEXN_RANGEERR, "repeat count must be less than infinity and not overflow maximum string size")
+MSG_DEF(JSMSG_DEPRECATED_STRING_CONTAINS, 0, JSEXN_NONE, "String.prototype.contains() is deprecated and will be removed in a future release; use String.prototype.includes() instead")
 
 // Number
 MSG_DEF(JSMSG_BAD_RADIX,               0, JSEXN_RANGEERR, "radix must be an integer at least 2 and no greater than 36")
@@ -205,6 +205,8 @@ MSG_DEF(JSMSG_BAD_PROP_ID,             0, JSEXN_SYNTAXERR, "invalid property id"
 MSG_DEF(JSMSG_BAD_RETURN_OR_YIELD,     1, JSEXN_SYNTAXERR, "{0} not in function")
 MSG_DEF(JSMSG_BAD_STRICT_ASSIGN,       1, JSEXN_SYNTAXERR, "can't assign to {0} in strict mode")
 MSG_DEF(JSMSG_BAD_SWITCH,              0, JSEXN_SYNTAXERR, "invalid switch statement")
+MSG_DEF(JSMSG_BAD_SUPER,               0, JSEXN_SYNTAXERR, "invalid use of keyword 'super'")
+MSG_DEF(JSMSG_BAD_SUPERPROP,           1, JSEXN_SYNTAXERR, "use of super {0} accesses only valid within methods or eval code within methods")
 MSG_DEF(JSMSG_BRACKET_AFTER_ARRAY_COMPREHENSION, 0, JSEXN_SYNTAXERR, "missing ] after array comprehension")
 MSG_DEF(JSMSG_BRACKET_AFTER_LIST,      0, JSEXN_SYNTAXERR, "missing ] after element list")
 MSG_DEF(JSMSG_BRACKET_IN_INDEX,        0, JSEXN_SYNTAXERR, "missing ] in index expression")
@@ -251,8 +253,7 @@ MSG_DEF(JSMSG_GARBAGE_AFTER_INPUT,     2, JSEXN_SYNTAXERR, "unexpected garbage a
 MSG_DEF(JSMSG_IDSTART_AFTER_NUMBER,    0, JSEXN_SYNTAXERR, "identifier starts immediately after numeric literal")
 MSG_DEF(JSMSG_ILLEGAL_CHARACTER,       0, JSEXN_SYNTAXERR, "illegal character")
 MSG_DEF(JSMSG_IMPORT_DECL_AT_TOP_LEVEL, 0, JSEXN_SYNTAXERR, "import declarations may only appear at top level")
-MSG_DEF(JSMSG_INVALID_FOR_IN_INIT,     0, JSEXN_SYNTAXERR, "for-in loop let declaration may not have an initializer")
-MSG_DEF(JSMSG_INVALID_FOR_OF_INIT,     0, JSEXN_SYNTAXERR, "for-of loop variable declaration may not have an initializer")
+MSG_DEF(JSMSG_INVALID_FOR_INOF_DECL_WITH_INIT,1,JSEXN_SYNTAXERR,"for-{0} loop head declarations may not have initializers")
 MSG_DEF(JSMSG_IN_AFTER_FOR_NAME,       0, JSEXN_SYNTAXERR, "missing 'in' or 'of' after for")
 MSG_DEF(JSMSG_LABEL_NOT_FOUND,         0, JSEXN_SYNTAXERR, "label not found")
 MSG_DEF(JSMSG_LET_CLASS_BINDING,       0, JSEXN_SYNTAXERR, "'let' is not a valid name for a class")
@@ -305,11 +306,12 @@ MSG_DEF(JSMSG_SEMI_AFTER_FOR_COND,     0, JSEXN_SYNTAXERR, "missing ; after for-
 MSG_DEF(JSMSG_SEMI_AFTER_FOR_INIT,     0, JSEXN_SYNTAXERR, "missing ; after for-loop initializer")
 MSG_DEF(JSMSG_SEMI_BEFORE_STMNT,       0, JSEXN_SYNTAXERR, "missing ; before statement")
 MSG_DEF(JSMSG_SOURCE_TOO_LONG,         0, JSEXN_RANGEERR, "source is too long")
+MSG_DEF(JSMSG_STMT_AFTER_RETURN,       0, JSEXN_SYNTAXERR, "unreachable code after return statement")
 MSG_DEF(JSMSG_STRICT_CODE_LET_EXPR_STMT, 0, JSEXN_ERR, "strict mode code may not contain unparenthesized let expression statements")
 MSG_DEF(JSMSG_STRICT_CODE_WITH,        0, JSEXN_SYNTAXERR, "strict mode code may not contain 'with' statements")
 MSG_DEF(JSMSG_STRICT_FUNCTION_STATEMENT, 0, JSEXN_SYNTAXERR, "in strict mode code, functions may be declared only at top level or immediately within another function")
 MSG_DEF(JSMSG_TEMPLSTR_UNTERM_EXPR,    0, JSEXN_SYNTAXERR, "missing } in template string")
-MSG_DEF(JSMSG_SIMD_NOT_A_VECTOR,       0, JSEXN_TYPEERR, "value isn't a SIMD value object")
+MSG_DEF(JSMSG_SIMD_NOT_A_VECTOR,       2, JSEXN_TYPEERR, "expecting a SIMD {0} object as argument {1}")
 MSG_DEF(JSMSG_TOO_MANY_CASES,          0, JSEXN_INTERNALERR, "too many switch cases")
 MSG_DEF(JSMSG_TOO_MANY_CATCH_VARS,     0, JSEXN_SYNTAXERR, "too many catch variables")
 MSG_DEF(JSMSG_TOO_MANY_CON_ARGS,       0, JSEXN_SYNTAXERR, "too many constructor arguments")
@@ -368,6 +370,7 @@ MSG_DEF(JSMSG_PROXY_CONSTRUCT_OBJECT,  0, JSEXN_TYPEERR, "proxy [[Construct]] mu
 MSG_DEF(JSMSG_PROXY_EXTENSIBILITY,     0, JSEXN_TYPEERR, "proxy must report same extensiblitity as target")
 MSG_DEF(JSMSG_PROXY_GETOWN_OBJORUNDEF, 0, JSEXN_TYPEERR, "proxy [[GetOwnProperty]] must return an object or undefined")
 MSG_DEF(JSMSG_PROXY_REVOKED,           0, JSEXN_TYPEERR, "illegal operation attempted on a revoked proxy")
+MSG_DEF(JSMSG_PROXY_ARG_REVOKED,       1, JSEXN_TYPEERR, "argument {0} cannot be a revoked proxy")
 
 // Structured cloning
 MSG_DEF(JSMSG_SC_BAD_CLONE_VERSION,    0, JSEXN_ERR, "unsupported structured clone version")
@@ -439,21 +442,21 @@ MSG_DEF(JSMSG_UNTERM_CLASS,            0, JSEXN_SYNTAXERR, "unterminated charact
 MSG_DEF(JSMSG_DEFAULT_LOCALE_ERROR,    0, JSEXN_ERR, "internal error getting the default locale")
 MSG_DEF(JSMSG_NO_SUCH_SELF_HOSTED_PROP,1, JSEXN_ERR, "No such property on self-hosted object: {0}")
 
-// Typed object
+// Typed object / SIMD
 MSG_DEF(JSMSG_INVALID_PROTOTYPE,       0, JSEXN_TYPEERR, "prototype field is not an object")
-MSG_DEF(JSMSG_TYPEDOBJECT_ARRAYTYPE_BAD_ARGS, 0, JSEXN_ERR, "Invalid arguments")
 MSG_DEF(JSMSG_TYPEDOBJECT_BAD_ARGS,    0, JSEXN_TYPEERR, "invalid arguments")
 MSG_DEF(JSMSG_TYPEDOBJECT_BINARYARRAY_BAD_INDEX, 0, JSEXN_RANGEERR, "invalid or out-of-range index")
 MSG_DEF(JSMSG_TYPEDOBJECT_HANDLE_UNATTACHED, 0, JSEXN_TYPEERR, "handle unattached")
 MSG_DEF(JSMSG_TYPEDOBJECT_STRUCTTYPE_BAD_ARGS, 0, JSEXN_RANGEERR, "invalid field descriptor")
 MSG_DEF(JSMSG_TYPEDOBJECT_TOO_BIG,     0, JSEXN_ERR, "Type is too large to allocate")
+MSG_DEF(JSMSG_SIMD_FAILED_CONVERSION,  0, JSEXN_RANGEERR, "SIMD conversion loses precision")
 
 // Typed array
 MSG_DEF(JSMSG_BAD_INDEX,               0, JSEXN_RANGEERR, "invalid or out-of-range index")
 MSG_DEF(JSMSG_TYPED_ARRAY_BAD_ARGS,    0, JSEXN_TYPEERR, "invalid arguments")
 MSG_DEF(JSMSG_TYPED_ARRAY_BAD_OBJECT,  0, JSEXN_TYPEERR, "invalid object argument")
-MSG_DEF(JSMSG_TYPED_ARRAY_BAD_INDEX,   0, JSEXN_ERR, "invalid or out-of-range index")
-MSG_DEF(JSMSG_TYPED_ARRAY_NEGATIVE_ARG,1, JSEXN_ERR, "argument {0} must be >= 0")
+MSG_DEF(JSMSG_TYPED_ARRAY_BAD_INDEX,   0, JSEXN_RANGEERR, "invalid or out-of-range index")
+MSG_DEF(JSMSG_TYPED_ARRAY_NEGATIVE_ARG,1, JSEXN_RANGEERR, "argument {0} must be >= 0")
 MSG_DEF(JSMSG_TYPED_ARRAY_DETACHED,    0, JSEXN_TYPEERR, "attempting to access detached ArrayBuffer")
 
 // Shared array buffer
@@ -485,3 +488,6 @@ MSG_DEF(JSMSG_CANT_DEFINE_WINDOW_ELEMENT, 0, JSEXN_TYPEERR, "can't define elemen
 MSG_DEF(JSMSG_CANT_DELETE_WINDOW_ELEMENT, 0, JSEXN_TYPEERR, "can't delete elements from a Window object")
 MSG_DEF(JSMSG_CANT_DELETE_WINDOW_NAMED_PROPERTY, 1, JSEXN_TYPEERR, "can't delete property {0} from window's named properties object")
 MSG_DEF(JSMSG_CANT_PREVENT_EXTENSIONS,  0, JSEXN_TYPEERR, "can't prevent extensions on this proxy object")
+
+// Super
+MSG_DEF(JSMSG_CANT_DELETE_SUPER, 0, JSEXN_REFERENCEERR, "invalid delete involving 'super'")

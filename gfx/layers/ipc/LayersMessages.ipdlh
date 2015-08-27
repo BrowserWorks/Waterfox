@@ -19,9 +19,9 @@ include "ImageLayers.h";
 using mozilla::GraphicsFilterType from "mozilla/GfxMessageUtils.h";
 using struct gfxRGBA from "gfxColor.h";
 using struct mozilla::gfx::Point3D from "mozilla/gfx/Point.h";
+using mozilla::gfx::IntPoint from "mozilla/gfx/Point.h";
 using class mozilla::gfx::Matrix4x4 from "mozilla/gfx/Matrix.h";
 using nscoord from "nsCoord.h";
-using struct nsIntPoint from "nsPoint.h";
 using struct nsRect from "nsRect.h";
 using struct nsPoint from "nsPoint.h";
 using class mozilla::TimeDuration from "mozilla/TimeStamp.h";
@@ -33,6 +33,7 @@ using struct mozilla::layers::TextureInfo from "mozilla/layers/CompositorTypes.h
 using mozilla::LayerMargin from "Units.h";
 using mozilla::LayerPoint from "Units.h";
 using mozilla::LayerRect from "Units.h";
+using mozilla::ParentLayerIntRect from "Units.h";
 using mozilla::layers::ScaleMode from "mozilla/layers/LayersTypes.h";
 using mozilla::layers::EventRegions from "mozilla/layers/LayersTypes.h";
 using mozilla::layers::EventRegionsOverride from "mozilla/layers/LayersTypes.h";
@@ -40,14 +41,13 @@ using mozilla::layers::DiagnosticTypes from "mozilla/layers/CompositorTypes.h";
 using struct mozilla::layers::FrameMetrics from "FrameMetrics.h";
 using mozilla::layers::FrameMetrics::ViewID from "FrameMetrics.h";
 using struct mozilla::layers::FenceHandle from "mozilla/layers/FenceUtils.h";
-using struct mozilla::layers::FenceHandleFromChild from "mozilla/layers/FenceUtils.h";
 using std::string from "string";
 
 namespace mozilla {
 namespace layers {
 
 struct TargetConfig {
-  nsIntRect naturalBounds;
+  IntRect naturalBounds;
   ScreenRotation rotation;
   ScreenOrientation orientation;
   nsIntRegion clearRegion;
@@ -72,8 +72,8 @@ struct OpAttachAsyncCompositable {
 };
 
 struct ThebesBufferData {
-  nsIntRect rect;
-  nsIntPoint rotation;
+  IntRect rect;
+  IntPoint rotation;
 };
 
 struct CubicBezierFunction {
@@ -94,26 +94,33 @@ union TimingFunction {
   StepFunction;
 };
 
+// Send the angle with units rather than sending all angles in radians
+// to avoid having floating point error introduced by unit switching.
+struct CSSAngle {
+  float value;
+  int unit; // an nsCSSUnit that is valid for angles
+};
+
 struct LayerColor { gfxRGBA value; };
 struct Perspective { float value; };
-struct RotationX { float radians; };
-struct RotationY { float radians; };
-struct RotationZ { float radians; };
-struct Rotation { float radians; };
+struct RotationX { CSSAngle angle; };
+struct RotationY { CSSAngle angle; };
+struct RotationZ { CSSAngle angle; };
+struct Rotation { CSSAngle angle; };
 struct Rotation3D {
   float x;
   float y;
   float z;
-  float radians;
+  CSSAngle angle;
 };
 struct Scale {
   float x;
   float y;
   float z;
 };
-struct Skew { float x; float y; };
-struct SkewX { float x; };
-struct SkewY { float y; };
+struct Skew { CSSAngle x; CSSAngle y; };
+struct SkewX { CSSAngle x; };
+struct SkewY { CSSAngle y; };
 struct TransformMatrix { Matrix4x4 value; };
 struct Translation {
   float x;
@@ -154,9 +161,9 @@ struct AnimationSegment {
 struct TransformData {
   // the origin of the frame being transformed in app units
   nsPoint origin;
-  // the transform-origin property for the transform in css pixels
+  // the transform-origin property for the transform in device pixels
   Point3D transformOrigin;
-  // the perspective-origin property for the transform in css pixels
+  // the perspective-origin property for the transform in device pixels
   Point3D perspectiveOrigin;
   nsRect bounds;
   nscoord perspective;
@@ -195,7 +202,7 @@ struct Animation {
 
 // Change a layer's attributes
 struct CommonLayerAttributes {
-  nsIntRect layerBounds;
+  IntRect layerBounds;
   nsIntRegion visibleRegion;
   EventRegions eventRegions;
   TransformMatrix transform;
@@ -204,7 +211,7 @@ struct CommonLayerAttributes {
   uint32_t contentFlags;
   float opacity;
   bool useClipRect;
-  nsIntRect clipRect;
+  ParentLayerIntRect clipRect;
   bool isFixedPosition;
   LayerPoint fixedPositionAnchor;
   LayerMargin fixedPositionMargin;
@@ -214,6 +221,7 @@ struct CommonLayerAttributes {
   LayerRect stickyScrollRangeInner;
   uint64_t scrollbarTargetContainerId;
   uint32_t scrollbarDirection;
+  float scrollbarThumbRatio;
   int8_t mixBlendMode;
   bool forceIsolatedGroup;
   nullable PLayer maskLayer;
@@ -240,8 +248,8 @@ struct ContainerLayerAttributes {
   // cross process at some point by passing the HMDConfig
   uint64_t hmdInfo;
 };
-struct ColorLayerAttributes     { LayerColor color; nsIntRect bounds; };
-struct CanvasLayerAttributes    { GraphicsFilterType filter; nsIntRect bounds; };
+struct ColorLayerAttributes     { LayerColor color; IntRect bounds; };
+struct CanvasLayerAttributes    { GraphicsFilterType filter; IntRect bounds; };
 struct RefLayerAttributes {
   int64_t id;
   // TODO: Once bug 1132895 is fixed we shouldn't need to propagate the override
@@ -268,8 +276,8 @@ struct LayerAttributes {
 // See nsIWidget Configurations
 struct PluginWindowData {
   uintptr_t windowId;
-  nsIntRect[] clip;
-  nsIntRect bounds;
+  IntRect[] clip;
+  IntRect bounds;
   bool visible;
 };
 
@@ -347,7 +355,7 @@ struct OpPaintTextureRegion {
 
 struct OpUpdatePictureRect {
   PCompositable compositable;
-  nsIntRect picture;
+  IntRect picture;
 };
 
 /**
@@ -366,9 +374,13 @@ struct OpRemoveTextureAsync {
 };
 
 struct OpReplyRemoveTexture {
-  bool isMain;
   uint64_t holderId;
   uint64_t transactionId;
+};
+
+union MaybeFence {
+  FenceHandle;
+  null_t;
 };
 
 /**
@@ -378,6 +390,7 @@ struct OpReplyRemoveTexture {
 struct OpUseTexture {
   PCompositable compositable;
   PTexture texture;
+  MaybeFence fence;
 };
 
 struct OpUseComponentAlphaTextures {
@@ -392,26 +405,14 @@ union MaybeRegion {
 };
 
 struct OpDeliverFence {
-  uint64_t transactionId;
   PTexture texture;
   FenceHandle fence;
 };
 
 struct OpDeliverFenceToTracker {
-  uint64_t transactionId;
   uint64_t destHolderId;
   uint64_t destTransactionId;
   FenceHandle fence;
-};
-
-struct OpDeliverFenceFromChild {
-  uint64_t transactionId;
-  PTexture texture;
-  FenceHandleFromChild fence;
-};
-
-struct OpReplyDeliverFence {
-  uint64_t transactionId;
 };
 
 union CompositableOperation {
@@ -479,13 +480,10 @@ union EditReply {
 union AsyncParentMessageData {
   OpDeliverFence;
   OpDeliverFenceToTracker;
-  OpReplyDeliverFence;
   OpReplyRemoveTexture;
 };
 
 union AsyncChildMessageData {
-  OpDeliverFenceFromChild;
-  OpReplyDeliverFence;
   OpRemoveTextureAsync;
 };
 

@@ -102,7 +102,8 @@ const CM_MAPPING = [
   "clearHistory",
   "openDialog",
   "refresh",
-  "getScrollInfo"
+  "getScrollInfo",
+  "getViewport"
 ];
 
 const { cssProperties, cssValues, cssColors } = getCSSKeywords();
@@ -220,6 +221,11 @@ function Editor(config) {
     cm.replaceSelection(" ".repeat(num), "end", "+input");
   };
 
+  // Allow add-ons to inject scripts for their editor instances
+  if (!this.config.externalScripts) {
+    this.config.externalScripts = [];
+  }
+
   events.decorate(this);
 }
 
@@ -258,9 +264,11 @@ Editor.prototype = {
       if (!this.config.themeSwitching)
         win.document.documentElement.setAttribute("force-theme", "light");
 
-      CM_SCRIPTS.forEach((url) =>
-        Services.scriptloader.loadSubScript(url, win, "utf8"));
-
+      let scriptsToInject = CM_SCRIPTS.concat(this.config.externalScripts);
+      scriptsToInject.forEach((url) => {
+        if (url.startsWith("chrome://"))
+          Services.scriptloader.loadSubScript(url, win, "utf8");
+      });
       // Replace the propertyKeywords, colorKeywords and valueKeywords
       // properties of the CSS MIME type with the values provided by Gecko.
       let cssSpec = win.CodeMirror.resolveMode("text/css");
@@ -335,6 +343,11 @@ Editor.prototype = {
       this._prefObserver.on(ENABLE_CODE_FOLDING, this.reloadPreferences);
 
       this.reloadPreferences();
+
+      win.editor = this;
+      let editorReadyEvent = new win.CustomEvent("editorReady");
+      win.dispatchEvent(editorReadyEvent);
+
       def.resolve();
     };
 
@@ -463,8 +476,8 @@ Editor.prototype = {
 
   /**
    * Replaces contents of a text area within the from/to {line, ch}
-   * range. If neither from nor to arguments are provided works
-   * exactly like setText. If only from object is provided, inserts
+   * range. If neither `from` nor `to` arguments are provided works
+   * exactly like setText. If only `from` object is provided, inserts
    * text at that point, *overwriting* as many characters as needed.
    */
   replaceText: function (value, from, to) {
@@ -1143,7 +1156,7 @@ function getCSSKeywords() {
   let cssColors = {};
   let cssValues = {};
   cssProperties.forEach(property => {
-    if (property.contains("color")) {
+    if (property.includes("color")) {
       domUtils.getCSSValuesForProperty(property).forEach(value => {
         cssColors[value] = true;
       });

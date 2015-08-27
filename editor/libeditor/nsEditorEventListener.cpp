@@ -53,6 +53,7 @@
 #include "nsRange.h"
 #include "nsServiceManagerUtils.h"      // for do_GetService
 #include "nsString.h"                   // for nsAutoString
+#include "nsQueryObject.h"              // for do_QueryObject
 #ifdef HANDLE_NATIVE_TEXT_DIRECTION_SWITCH
 #include "nsContentUtils.h"             // for nsContentUtils, etc
 #include "nsIBidiKeyboard.h"            // for nsIBidiKeyboard
@@ -373,12 +374,12 @@ nsEditorEventListener::HandleEvent(nsIDOMEvent* aEvent)
       return DragEnter(dragEvent);
     }
     // dragover
-    case NS_DRAGDROP_OVER_SYNTH: {
+    case NS_DRAGDROP_OVER: {
       nsCOMPtr<nsIDOMDragEvent> dragEvent = do_QueryInterface(aEvent);
       return DragOver(dragEvent);
     }
     // dragexit
-    case NS_DRAGDROP_EXIT_SYNTH: {
+    case NS_DRAGDROP_EXIT: {
       nsCOMPtr<nsIDOMDragEvent> dragEvent = do_QueryInterface(aEvent);
       return DragExit(dragEvent);
     }

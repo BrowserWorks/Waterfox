@@ -180,10 +180,16 @@ public:
 
   // Syncs properties to the top level view and window, like transparency and
   // shadow.
+  // The SET_ASYNC indicates that the actual nsIWidget calls to sync the window
+  // properties should be done async.
+  enum {
+    SET_ASYNC = 0x01,
+  };
   static void SyncWindowProperties(nsPresContext*       aPresContext,
                                    nsIFrame*            aFrame,
-                                   nsView*             aView,
-                                   nsRenderingContext*  aRC = nullptr);
+                                   nsView*              aView,
+                                   nsRenderingContext*  aRC,
+                                   uint32_t             aFlags);
 
   // Sets the view's attributes from the frame style.
   // - visibility
@@ -235,10 +241,12 @@ public:
    * If the reflow status after reflowing the child is FULLY_COMPLETE then any
    * next-in-flows are deleted using DeleteNextInFlowChild().
    *
+   * @param aContainerWidth  width of the border-box of the containing frame
+   *
    * Flags:
    * NS_FRAME_NO_MOVE_VIEW - don't position the frame's view. Set this if you
    *    don't want to automatically sync the frame and view
-   * NS_FRAME_NO_MOVE_FRAME - don't move the frame. aX and aY are ignored in this
+   * NS_FRAME_NO_MOVE_FRAME - don't move the frame. aPos is ignored in this
    *    case. Also implies NS_FRAME_NO_MOVE_VIEW
    */
   void ReflowChild(nsIFrame*                      aChildFrame,
@@ -262,8 +270,10 @@ public:
    * - sets the view's visibility, opacity, content transparency, and clip
    * - invoked the DidReflow() function
    *
+   * @param aContainerWidth  width of the border-box of the containing frame
+   *
    * Flags:
-   * NS_FRAME_NO_MOVE_FRAME - don't move the frame. aX and aY are ignored in this
+   * NS_FRAME_NO_MOVE_FRAME - don't move the frame. aPos is ignored in this
    *    case. Also implies NS_FRAME_NO_MOVE_VIEW
    * NS_FRAME_NO_MOVE_VIEW - don't position the frame's view. Set this if you
    *    don't want to automatically sync the frame and view
@@ -606,6 +616,12 @@ protected:
                                   nsIPresShell* aPresShell,
                                   mozilla::FramePropertyTable* aPropTable,
                                   const FramePropertyDescriptor* aProp);
+
+  // ==========================================================================
+
+  // Helper used by Progress and Meter frames. Returns true if the bar should
+  // be rendered vertically, based on writing-mode and -moz-orient properties.
+  bool ResolvedOrientationIsVertical();
 
   // ==========================================================================
 

@@ -156,7 +156,9 @@ public:
   // true, the line should not be broken inside, which means inlines act
   // as if nowrap is set, <br> is suppressed, and blocks are inlinized.
   // This bit is propogated to all children of line partitipants. It is
-  // currenlty used by ruby to make its content frames unbreakable.
+  // currently used by ruby to make its content frames unbreakable.
+  // NOTE: for nsTextFrame, use nsTextFrame::ShouldSuppressLineBreak()
+  // instead of this method.
   bool ShouldSuppressLineBreak() const
     { return !!(mBits & NS_STYLE_SUPPRESS_LINEBREAK); }
 
@@ -425,6 +427,13 @@ public:
    * structs indicated in aStructs.
    */
   void ClearCachedInheritedStyleDataOnDescendants(uint32_t aStructs);
+
+  /**
+   * Sets the NS_STYLE_INELIGIBLE_FOR_SHARING bit on this style context
+   * and its descendants.  If it finds a descendant that has the bit
+   * already set, assumes that it can skip that subtree.
+   */
+  void SetIneligibleForSharing();
 
 #ifdef DEBUG
   void List(FILE* out, int32_t aIndent, bool aListDescendants = true);

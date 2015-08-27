@@ -75,7 +75,7 @@ nsConsoleService::~nsConsoleService()
   }
 
   if (mMessages) {
-    nsMemory::Free(mMessages);
+    free(mMessages);
   }
 }
 
@@ -107,7 +107,7 @@ nsresult
 nsConsoleService::Init()
 {
   mMessages = (nsIConsoleMessage**)
-    nsMemory::Alloc(mBufferSize * sizeof(nsIConsoleMessage*));
+    moz_xmalloc(mBufferSize * sizeof(nsIConsoleMessage*));
   if (!mMessages) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
@@ -339,7 +339,7 @@ nsConsoleService::GetMessageArray(uint32_t* aCount,
      * array object when called from script.
      */
     messageArray = (nsIConsoleMessage**)
-      nsMemory::Alloc(sizeof(nsIConsoleMessage*));
+      moz_xmalloc(sizeof(nsIConsoleMessage*));
     *messageArray = nullptr;
     *aMessages = messageArray;
     *aCount = 0;
@@ -349,7 +349,7 @@ nsConsoleService::GetMessageArray(uint32_t* aCount,
 
   uint32_t resultSize = mFull ? mBufferSize : mCurrent;
   messageArray =
-    (nsIConsoleMessage**)nsMemory::Alloc((sizeof(nsIConsoleMessage*))
+    (nsIConsoleMessage**)moz_xmalloc((sizeof(nsIConsoleMessage*))
                                          * resultSize);
 
   if (!messageArray) {

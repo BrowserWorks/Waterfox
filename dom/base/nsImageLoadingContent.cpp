@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-// vim: ft=cpp tw=78 sw=2 et ts=2
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -490,7 +490,7 @@ nsImageLoadingContent::GetRequest(int32_t aRequestType,
   ErrorResult result;
   *aRequest = GetRequest(aRequestType, result).take();
 
-  return result.ErrorCode();
+  return result.StealNSResult();
 }
 
 NS_IMETHODIMP_(bool)
@@ -602,7 +602,7 @@ nsImageLoadingContent::GetRequestType(imgIRequest* aRequest,
 
   ErrorResult result;
   *aRequestType = GetRequestType(aRequest, result);
-  return result.ErrorCode();
+  return result.StealNSResult();
 }
 
 already_AddRefed<nsIURI>
@@ -628,7 +628,7 @@ nsImageLoadingContent::GetCurrentURI(nsIURI** aURI)
 
   ErrorResult result;
   *aURI = GetCurrentURI(result).take();
-  return result.ErrorCode();
+  return result.StealNSResult();
 }
 
 already_AddRefed<nsIStreamListener>
@@ -685,7 +685,7 @@ nsImageLoadingContent::LoadImageWithChannel(nsIChannel* aChannel,
 
   ErrorResult result;
   *aListener = LoadImageWithChannel(aChannel, result).take();
-  return result.ErrorCode();
+  return result.StealNSResult();
 }
 
 void
@@ -725,7 +725,7 @@ nsImageLoadingContent::ForceReload(bool aNotify /* = true */,
 
   ErrorResult result;
   ForceReload(notify, result);
-  return result.ErrorCode();
+  return result.StealNSResult();
 }
 
 NS_IMETHODIMP

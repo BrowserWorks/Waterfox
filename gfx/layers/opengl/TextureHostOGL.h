@@ -37,10 +37,7 @@
 #endif
 #endif
 
-class gfxReusableSurfaceWrapper;
 class nsIntRegion;
-struct nsIntPoint;
-struct nsIntRect;
 
 namespace mozilla {
 namespace gfx {
@@ -56,7 +53,6 @@ namespace layers {
 class Compositor;
 class CompositorOGL;
 class TextureImageTextureSourceOGL;
-class TextureSharedDataGonkOGL;
 class GLTextureSource;
 
 inline void ApplyFilterToBoundTexture(gl::GLContext* aGL,
@@ -204,9 +200,9 @@ public:
   void EnsureBuffer(const gfx::IntSize& aSize,
                     gfxContentType aContentType);
 
-  void CopyTo(const nsIntRect& aSourceRect,
-                      DataTextureSource* aDest,
-                      const nsIntRect& aDestRect);
+  void CopyTo(const gfx::IntRect& aSourceRect,
+              DataTextureSource* aDest,
+              const gfx::IntRect& aDestRect);
 
   virtual TextureImageTextureSourceOGL* AsTextureImageTextureSource() override { return this; }
 
@@ -250,7 +246,7 @@ public:
     mIterating = false;
   }
 
-  virtual nsIntRect GetTileRect() override;
+  virtual gfx::IntRect GetTileRect() override;
 
   virtual size_t GetTileCount() override
   {

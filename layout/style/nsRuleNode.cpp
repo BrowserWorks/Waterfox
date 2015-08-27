@@ -17,7 +17,7 @@
 #include "mozilla/Likely.h"
 #include "mozilla/LookAndFeel.h"
 
-#include "nsDeviceContext.h"
+#include "nsAlgorithm.h" // for clamped()
 #include "nsRuleNode.h"
 #include "nscore.h"
 #include "nsIWidget.h"
@@ -47,6 +47,7 @@
 #include "CSSVariableResolver.h"
 #include "nsCSSParser.h"
 #include "CounterStyleManager.h"
+#include "nsCSSPropertySet.h"
 
 #if defined(_MSC_VER) || defined(__MINGW32__)
 #include <malloc.h>
@@ -1430,7 +1431,7 @@ nsRuleNode::DestroyInternal(nsRuleNode ***aDestroyQueueTail)
     PL_DHashTableEnumerate(children, EnqueueRuleNodeChildren,
                            &destroyQueueTail);
     *destroyQueueTail = nullptr; // ensure null-termination
-    PL_DHashTableDestroy(children);
+    delete children;
   } else if (HaveChildren()) {
     *destroyQueueTail = ChildrenList();
     do {
@@ -1613,11 +1614,9 @@ nsRuleNode::ConvertChildrenToHash(int32_t aNumKids)
 {
   NS_ASSERTION(!ChildrenAreHashed() && HaveChildren(),
                "must have a non-empty list of children");
-  PLDHashTable *hash = PL_NewDHashTable(&ChildrenHashOps,
+  PLDHashTable *hash = new PLDHashTable(&ChildrenHashOps,
                                         sizeof(ChildrenHashEntry),
                                         aNumKids);
-  if (!hash)
-    return;
   for (nsRuleNode* curr = ChildrenList(); curr; curr = curr->mNextSibling) {
     // This will never fail because of the initial size we gave the table.
     ChildrenHashEntry *entry = static_cast<ChildrenHashEntry*>(
@@ -1793,8 +1792,9 @@ CheckTextCallback(const nsRuleData* aRuleData,
 {
   const nsCSSValue* textAlignValue = aRuleData->ValueForTextAlign();
   if (textAlignValue->GetUnit() == eCSSUnit_Enumerated &&
-      textAlignValue->GetIntValue() ==
-        NS_STYLE_TEXT_ALIGN_MOZ_CENTER_OR_INHERIT) {
+      (textAlignValue->GetIntValue() ==
+        NS_STYLE_TEXT_ALIGN_MOZ_CENTER_OR_INHERIT ||
+       textAlignValue->GetIntValue() == NS_STYLE_TEXT_ALIGN_MATCH_PARENT)) {
     // Promote reset to mixed since we have something that depends on
     // the parent.
     if (aResult == nsRuleNode::eRulePartialReset)
@@ -2612,7 +2612,12 @@ nsRuleNode::SetDefaultOnRoot(const nsStyleStructID aSID, nsStyleContext* aContex
       parentdata_ = maybeFakeParentData.ptr();                                \
     }                                                                         \
   }                                                                           \
-  if (aStartStruct)                                                           \
+  if (eStyleStruct_##type_ == eStyleStruct_Variables)                         \
+    /* no need to copy construct an nsStyleVariables, as we will copy */      \
+    /* inherited variables (and set canStoreInRuleTree to false) in */        \
+    /* ComputeVariablesData */                                                \
+    data_ = new (mPresContext) nsStyle##type_ ctorargs_;                      \
+  else if (aStartStruct)                                                      \
     /* We only need to compute the delta between this computed data and */    \
     /* our computed data. */                                                  \
     data_ = new (mPresContext)                                                \
@@ -3783,7 +3788,7 @@ nsRuleNode::SetFont(nsPresContext* aPresContext, nsStyleContext* aContext,
     aFont->mFont.sizeAdjust = systemFont.sizeAdjust;
   } else
     SetFactor(*sizeAdjustValue, aFont->mFont.sizeAdjust,
-              aCanStoreInRuleTree, aParentFont->mFont.sizeAdjust, 0.0f,
+              aCanStoreInRuleTree, aParentFont->mFont.sizeAdjust, -1.0f,
               SETFCT_NONE | SETFCT_UNSET_INHERIT);
 }
 
@@ -4211,6 +4216,29 @@ nsRuleNode::ComputeTextData(void* aStartStruct,
     uint8_t parentAlign = parentText->mTextAlign;
     text->mTextAlign = (NS_STYLE_TEXT_ALIGN_DEFAULT == parentAlign) ?
       NS_STYLE_TEXT_ALIGN_CENTER : parentAlign;
+  } else if (eCSSUnit_Enumerated == textAlignValue->GetUnit() &&
+             NS_STYLE_TEXT_ALIGN_MATCH_PARENT ==
+               textAlignValue->GetIntValue()) {
+    canStoreInRuleTree = false;
+    nsStyleContext* parent = aContext->GetParent();
+    if (parent) {
+      uint8_t parentAlign = parentText->mTextAlign;
+      uint8_t parentDirection = parent->StyleVisibility()->mDirection;
+      switch (parentAlign) {
+        case NS_STYLE_TEXT_ALIGN_DEFAULT:
+          text->mTextAlign = parentDirection == NS_STYLE_DIRECTION_RTL ?
+            NS_STYLE_TEXT_ALIGN_RIGHT : NS_STYLE_TEXT_ALIGN_LEFT;
+          break;
+
+        case NS_STYLE_TEXT_ALIGN_END:
+          text->mTextAlign = parentDirection == NS_STYLE_DIRECTION_RTL ?
+            NS_STYLE_TEXT_ALIGN_LEFT : NS_STYLE_TEXT_ALIGN_RIGHT;
+          break;
+
+        default:
+          text->mTextAlign = parentAlign;
+      }
+    }
   } else {
     if (eCSSUnit_Pair == textAlignValue->GetUnit()) {
       // Two values were specified, one must be 'true'.
@@ -5882,7 +5910,7 @@ nsRuleNode::ComputeDisplayData(void* aStartStruct,
               display->mOrient, canStoreInRuleTree,
               SETDSC_ENUMERATED | SETDSC_UNSET_INITIAL,
               parentDisplay->mOrient,
-              NS_STYLE_ORIENT_AUTO, 0, 0, 0, 0);
+              NS_STYLE_ORIENT_INLINE, 0, 0, 0, 0);
 
   COMPUTE_END_RESET(Display, display)
 }
@@ -7326,6 +7354,8 @@ SetGridTrackBreadth(const nsCSSValue& aValue,
   nsCSSUnit unit = aValue.GetUnit();
   if (unit == eCSSUnit_FlexFraction) {
     aResult.SetFlexFractionValue(aValue.GetFloatValue());
+  } else if (unit == eCSSUnit_Auto) {
+    aResult.SetAutoValue();
   } else {
     MOZ_ASSERT(unit != eCSSUnit_Inherit && unit != eCSSUnit_Unset,
                "Unexpected value that would use dummyParentCoord");
@@ -7353,12 +7383,6 @@ SetGridTrackSize(const nsCSSValue& aValue,
                         aStyleContext, aPresContext, aCanStoreInRuleTree);
     SetGridTrackBreadth(func->Item(2), aResultMax,
                         aStyleContext, aPresContext, aCanStoreInRuleTree);
-  } else if (aValue.GetUnit() == eCSSUnit_Auto) {
-    // 'auto' computes to 'minmax(min-content, max-content)'
-    aResultMin.SetIntValue(NS_STYLE_GRID_TRACK_BREADTH_MIN_CONTENT,
-                           eStyleUnit_Enumerated);
-    aResultMax.SetIntValue(NS_STYLE_GRID_TRACK_BREADTH_MAX_CONTENT,
-                           eStyleUnit_Enumerated);
   } else {
     // A single <track-breadth>,
     // specifies identical min and max sizing functions.
@@ -7392,12 +7416,10 @@ SetGridAutoColumnsRows(const nsCSSValue& aValue,
   case eCSSUnit_Initial:
   case eCSSUnit_Unset:
     // The initial value is 'auto',
-    // which computes to 'minmax(min-content, max-content)'.
+    // which computes to 'minmax(auto, auto)'.
     // (Explicitly-specified 'auto' values are handled in SetGridTrackSize.)
-    aResultMin.SetIntValue(NS_STYLE_GRID_TRACK_BREADTH_MIN_CONTENT,
-                           eStyleUnit_Enumerated);
-    aResultMax.SetIntValue(NS_STYLE_GRID_TRACK_BREADTH_MAX_CONTENT,
-                           eStyleUnit_Enumerated);
+    aResultMin.SetAutoValue();
+    aResultMax.SetAutoValue();
     break;
 
   default:
@@ -7554,7 +7576,9 @@ SetGridLine(const nsCSSValue& aValue,
       if (item->mValue.GetUnit() == eCSSUnit_Enumerated) {
         aResult.mHasSpan = true;
       } else if (item->mValue.GetUnit() == eCSSUnit_Integer) {
-        aResult.mInteger = item->mValue.GetIntValue();
+        aResult.mInteger = clamped(item->mValue.GetIntValue(),
+                                   nsStyleGridLine::kMinLine,
+                                   nsStyleGridLine::kMaxLine);
       } else if (item->mValue.GetUnit() == eCSSUnit_Ident) {
         item->mValue.GetStringValue(aResult.mLineName);
       } else {
@@ -9348,7 +9372,7 @@ nsRuleNode::SweepChildren(nsTArray<nsRuleNode*>& aSweepQueue)
     PL_DHashTableEnumerate(children, SweepHashEntry, &survivorsWithChildren);
     childrenDestroyed = oldChildCount - children->EntryCount();
     if (childrenDestroyed == oldChildCount) {
-      PL_DHashTableDestroy(children);
+      delete children;
       mChildren.asVoid = nullptr;
     }
   } else {
@@ -9634,6 +9658,89 @@ nsRuleNode::HasAuthorSpecifiedRules(nsStyleContext* aStyleContext,
   } while (haveExplicitUAInherit && styleContext);
 
   return false;
+}
+
+/* static */ void
+nsRuleNode::ComputePropertiesOverridingAnimation(
+                              const nsTArray<nsCSSProperty>& aProperties,
+                              nsStyleContext* aStyleContext,
+                              nsCSSPropertySet& aPropertiesOverridden)
+{
+  /*
+   * Set up an nsRuleData with all the structs needed for all of the
+   * properties in aProperties.
+   */
+  uint32_t structBits = 0;
+  size_t nprops = 0;
+  size_t offsets[nsStyleStructID_Length];
+  for (size_t propIdx = 0, propEnd = aProperties.Length();
+       propIdx < propEnd; ++propIdx) {
+    nsCSSProperty prop = aProperties[propIdx];
+    nsStyleStructID sid = nsCSSProps::kSIDTable[prop];
+    uint32_t bit = nsCachedStyleData::GetBitForSID(sid);
+    if (!(structBits & bit)) {
+      structBits |= bit;
+      offsets[sid] = nprops;
+      nprops += nsCSSProps::PropertyCountInStruct(sid);
+    }
+  }
+
+  void* dataStorage = alloca(nprops * sizeof(nsCSSValue));
+  AutoCSSValueArray dataArray(dataStorage, nprops);
+
+  // We're relying on the use of |aStyleContext| not mutating it!
+  nsRuleData ruleData(structBits, dataArray.get(),
+                      aStyleContext->PresContext(), aStyleContext);
+  for (nsStyleStructID sid = nsStyleStructID(0);
+       sid < nsStyleStructID_Length; sid = nsStyleStructID(sid + 1)) {
+    if (structBits & nsCachedStyleData::GetBitForSID(sid)) {
+      ruleData.mValueOffsets[sid] = offsets[sid];
+    }
+  }
+
+  /*
+   * Actually walk up the rule tree until we're someplace less
+   * specific than animations.
+   */
+  for (nsRuleNode* ruleNode = aStyleContext->RuleNode(); ruleNode;
+       ruleNode = ruleNode->GetParent()) {
+    nsIStyleRule *rule = ruleNode->GetRule();
+    if (rule) {
+      ruleData.mLevel = ruleNode->GetLevel();
+      ruleData.mIsImportantRule = ruleNode->IsImportantRule();
+
+      // Transitions are the only non-!important level overriding
+      // animations in the cascade ordering.  They also don't actually
+      // override animations, since transitions are suppressed when both
+      // are present.  And since we might not have called
+      // UpdateCascadeResults (which updates when they are suppressed
+      // due to the presence of animations for the same element and
+      // property) for transitions yet (which will make their
+      // MapRuleInfoInto skip the properties that are currently
+      // animating), we should skip them explicitly.
+      if (ruleData.mLevel == nsStyleSet::eTransitionSheet) {
+        continue;
+      }
+
+      if (!ruleData.mIsImportantRule) {
+        // We're now equal to or less than the animation level; stop.
+        break;
+      }
+
+      rule->MapRuleInfoInto(&ruleData);
+    }
+  }
+
+  /*
+   * Fill in which properties were overridden.
+   */
+  for (size_t propIdx = 0, propEnd = aProperties.Length();
+       propIdx < propEnd; ++propIdx) {
+    nsCSSProperty prop = aProperties[propIdx];
+    if (ruleData.ValueFor(prop)->GetUnit() != eCSSUnit_Null) {
+      aPropertiesOverridden.AddProperty(prop);
+    }
+  }
 }
 
 /* static */

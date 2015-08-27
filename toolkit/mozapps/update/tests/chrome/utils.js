@@ -129,6 +129,7 @@ Cu.import("resource://gre/modules/AddonManager.jsm", this);
 Cu.import("resource://gre/modules/Services.jsm", this);
 
 const IS_MACOSX = ("nsILocalFileMac" in Ci);
+const IS_WIN = ("@mozilla.org/windows-registry-key;1" in Cc);
 
 // The tests have to use the pageid instead of the pageIndex due to the
 // app update wizard's access method being random.
@@ -183,6 +184,10 @@ const TEST_ADDONS = [ "appdisabled_1", "appdisabled_2",
 
 const LOG_FUNCTION = info;
 
+const BIN_SUFFIX = (IS_WIN ? ".exe" : "");
+const FILE_UPDATER_BIN = "updater" + (IS_MACOSX ? ".app" : BIN_SUFFIX);
+const FILE_UPDATER_BIN_BAK = FILE_UPDATER_BIN + ".bak";
+
 var gURLData = URL_HOST + "/" + REL_PATH_DATA + "/";
 
 var gTestTimeout = 240000; // 4 minutes
@@ -198,7 +203,6 @@ var gCloseWindowTimeoutCounter = 0;
 // The following vars are for restoring previous preference values (if present)
 // when the test finishes.
 var gAppUpdateEnabled;            // app.update.enabled
-var gAppUpdateMetroEnabled;       // app.update.metro.enabled
 var gAppUpdateServiceEnabled;     // app.update.service.enabled
 var gAppUpdateStagingEnabled;     // app.update.staging.enabled
 var gAppUpdateURLDefault;         // app.update.url (default prefbranch)
@@ -872,6 +876,26 @@ function verifyTestsRan() {
 }
 
 /**
+ * Restore the updater that was backed up.  This is called both in setupFiles
+ * and resetFiles.  It is called in setupFiles before the backup is done in
+ * case the previous test failed.  It is called in resetFiles to put things
+ * back to its original state.
+ */
+function resetUpdaterBackup() {
+  let baseAppDir = getAppBaseDir();
+  let updater = baseAppDir.clone();
+  let updaterBackup = baseAppDir.clone();
+  updater.append(FILE_UPDATER_BIN);
+  updaterBackup.append(FILE_UPDATER_BIN_BAK);
+  if (updaterBackup.exists()) {
+    if (updater.exists()) {
+      updater.remove(true);
+    }
+    updaterBackup.moveTo(baseAppDir, FILE_UPDATER_BIN);
+  }
+}
+
+/**
  * Creates a backup of files the tests need to modify so they can be restored to
  * the original file when the test has finished and then modifies the files.
  */
@@ -886,6 +910,31 @@ function setupFiles() {
   updateSettingsIni = baseAppDir.clone();
   updateSettingsIni.append(FILE_UPDATE_SETTINGS_INI);
   writeFile(updateSettingsIni, UPDATE_SETTINGS_CONTENTS);
+
+  // Just in case the last test failed, try to reset.
+  resetUpdaterBackup();
+
+  // Move away the real updater
+  let updater = baseAppDir.clone();
+  updater.append(FILE_UPDATER_BIN);
+  updater.moveTo(baseAppDir, FILE_UPDATER_BIN_BAK);
+
+  // Move in the test only updater
+  let testUpdaterDir = Cc["@mozilla.org/file/directory_service;1"].
+    getService(Ci.nsIProperties).
+    get("CurWorkD", Ci.nsILocalFile);
+
+  let relPath = REL_PATH_DATA;
+  let pathParts = relPath.split("/");
+  for (let i = 0; i < pathParts.length; ++i) {
+    testUpdaterDir.append(pathParts[i]);
+  }
+
+  let testUpdater = testUpdaterDir.clone();
+  testUpdater.append(FILE_UPDATER_BIN);
+  if (testUpdater.exists()) {
+    testUpdater.copyToFollowingLinks(baseAppDir, FILE_UPDATER_BIN);
+  }
 }
 
 /**
@@ -915,11 +964,6 @@ function setupPrefs() {
     gAppUpdateEnabled = Services.prefs.getBoolPref(PREF_APP_UPDATE_ENABLED);
   }
   Services.prefs.setBoolPref(PREF_APP_UPDATE_ENABLED, true);
-
-  if (Services.prefs.prefHasUserValue(PREF_APP_UPDATE_METRO_ENABLED)) {
-    gAppUpdateMetroEnabled = Services.prefs.getBoolPref(PREF_APP_UPDATE_METRO_ENABLED);
-  }
-  Services.prefs.setBoolPref(PREF_APP_UPDATE_METRO_ENABLED, true);
 
   if (Services.prefs.prefHasUserValue(PREF_APP_UPDATE_SERVICE_ENABLED)) {
     gAppUpdateServiceEnabled = Services.prefs.getBoolPref(PREF_APP_UPDATE_SERVICE_ENABLED);
@@ -978,6 +1022,7 @@ function resetFiles() {
                   ", Exception: " + e);
     }
   }
+  resetUpdaterBackup();
 }
 
 /**
@@ -998,12 +1043,6 @@ function resetPrefs() {
     Services.prefs.setBoolPref(PREF_APP_UPDATE_ENABLED, gAppUpdateEnabled);
   } else if (Services.prefs.prefHasUserValue(PREF_APP_UPDATE_ENABLED)) {
     Services.prefs.clearUserPref(PREF_APP_UPDATE_ENABLED);
-  }
-
-  if (gAppUpdateMetroEnabled !== undefined) {
-    Services.prefs.setBoolPref(PREF_APP_UPDATE_METRO_ENABLED, gAppUpdateMetroEnabled);
-  } else if (Services.prefs.prefHasUserValue(PREF_APP_UPDATE_METRO_ENABLED)) {
-    Services.prefs.clearUserPref(PREF_APP_UPDATE_METRO_ENABLED);
   }
 
   if (gAppUpdateServiceEnabled !== undefined) {

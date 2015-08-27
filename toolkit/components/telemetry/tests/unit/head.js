@@ -1,22 +1,67 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-Components.utils.import("resource://gre/modules/TelemetryPing.jsm", this);
-Components.utils.import("resource://gre/modules/Services.jsm", this);
+const { classes: Cc, utils: Cu, interfaces: Ci, results: Cr } = Components;
 
-const gIsWindows = ("@mozilla.org/windows-registry-key;1" in Components.classes);
-const gIsMac = ("@mozilla.org/xpcom/mac-utils;1" in Components.classes);
-const gIsAndroid =  ("@mozilla.org/android/bridge;1" in Components.classes);
-const gIsGonk = ("@mozilla.org/cellbroadcast/gonkservice;1" in Components.classes);
+Cu.import("resource://gre/modules/TelemetryController.jsm", this);
+Cu.import("resource://gre/modules/Services.jsm", this);
+
+const gIsWindows = ("@mozilla.org/windows-registry-key;1" in Cc);
+const gIsMac = ("@mozilla.org/xpcom/mac-utils;1" in Cc);
+const gIsAndroid =  ("@mozilla.org/android/bridge;1" in Cc);
+const gIsGonk = ("@mozilla.org/cellbroadcast/gonkservice;1" in Cc);
 
 const MILLISECONDS_PER_MINUTE = 60 * 1000;
 const MILLISECONDS_PER_HOUR = 60 * MILLISECONDS_PER_MINUTE;
 const MILLISECONDS_PER_DAY = 24 * MILLISECONDS_PER_HOUR;
 
-const HAS_DATAREPORTINGSERVICE = "@mozilla.org/datareporting/service;1" in Components.classes;
+const HAS_DATAREPORTINGSERVICE = "@mozilla.org/datareporting/service;1" in Cc;
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 let gOldAppInfo = null;
 let gGlobalScope = this;
+
+/**
+ * Decode the payload of an HTTP request into a ping.
+ * @param {Object} request The data representing an HTTP request (nsIHttpRequest).
+ * @return {Object} The decoded ping payload.
+ */
+function decodeRequestPayload(request) {
+  let s = request.bodyInputStream;
+  let payload = null;
+  let decoder = Cc["@mozilla.org/dom/json;1"].createInstance(Ci.nsIJSON)
+
+  if (request.getHeader("content-encoding") == "gzip") {
+    let observer = {
+      buffer: "",
+      onStreamComplete: function(loader, context, status, length, result) {
+        this.buffer = String.fromCharCode.apply(this, result);
+      }
+    };
+
+    let scs = Cc["@mozilla.org/streamConverters;1"]
+              .getService(Ci.nsIStreamConverterService);
+    let listener = Cc["@mozilla.org/network/stream-loader;1"]
+                  .createInstance(Ci.nsIStreamLoader);
+    listener.init(observer);
+    let converter = scs.asyncConvertData("gzip", "uncompressed",
+                                         listener, null);
+    converter.onStartRequest(null, null);
+    converter.onDataAvailable(null, null, s, 0, s.available());
+    converter.onStopRequest(null, null, null);
+    let unicodeConverter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]
+                    .createInstance(Ci.nsIScriptableUnicodeConverter);
+    unicodeConverter.charset = "UTF-8";
+    let utf8string = unicodeConverter.ConvertToUnicode(observer.buffer);
+    utf8string += unicodeConverter.Finish();
+    payload = decoder.decode(utf8string);
+  } else {
+    payload = decoder.decodeFromStream(s, s.available());
+  }
+
+  return payload;
+}
 
 function loadAddonManager(id, name, version, platformVersion) {
   let ns = {};
@@ -34,8 +79,7 @@ function createAppInfo(id, name, version, platformVersion) {
   const XULAPPINFO_CID = Components.ID("{c763b610-9d49-455a-bbd2-ede71682a1ac}");
   let gAppInfo;
   if (!gOldAppInfo) {
-    gOldAppInfo = Components.classes[XULAPPINFO_CONTRACTID]
-                            .getService(Components.interfaces.nsIXULRuntime);
+    gOldAppInfo = Cc[XULAPPINFO_CONTRACTID].getService(Ci.nsIXULRuntime);
   }
 
   gAppInfo = {
@@ -75,7 +119,7 @@ function createAppInfo(id, name, version, platformVersion) {
   var XULAppInfoFactory = {
     createInstance: function (outer, iid) {
       if (outer != null)
-        throw Components.results.NS_ERROR_NO_AGGREGATION;
+        throw Cr.NS_ERROR_NO_AGGREGATION;
       return gAppInfo.QueryInterface(iid);
     }
   };
@@ -86,33 +130,43 @@ function createAppInfo(id, name, version, platformVersion) {
 
 // Fake the timeout functions for the TelemetryScheduler.
 function fakeSchedulerTimer(set, clear) {
-  let session = Components.utils.import("resource://gre/modules/TelemetrySession.jsm");
+  let session = Cu.import("resource://gre/modules/TelemetrySession.jsm");
   session.Policy.setSchedulerTickTimeout = set;
   session.Policy.clearSchedulerTickTimeout = clear;
 }
 
-// Fake the current date.
-function fakeNow(date) {
+/**
+ * Fake the current date.
+ * This passes all received arguments to a new Date constructor and
+ * uses the resulting date to fake the time in Telemetry modules.
+ *
+ * @return Date The new faked date.
+ */
+function fakeNow(...args) {
+  const date = new Date(...args);
   const modules = [
-    Components.utils.import("resource://gre/modules/TelemetrySession.jsm"),
-    Components.utils.import("resource://gre/modules/TelemetryEnvironment.jsm"),
-    Components.utils.import("resource://gre/modules/TelemetryPing.jsm"),
+    Cu.import("resource://gre/modules/TelemetrySession.jsm"),
+    Cu.import("resource://gre/modules/TelemetryEnvironment.jsm"),
+    Cu.import("resource://gre/modules/TelemetryController.jsm"),
+    Cu.import("resource://gre/modules/TelemetryStorage.jsm"),
   ];
 
   for (let m of modules) {
     m.Policy.now = () => date;
   }
+
+  return new Date(date);
 }
 
-// Fake the timeout functions for TelemetryPing sending.
+// Fake the timeout functions for TelemetryController sending.
 function fakePingSendTimer(set, clear) {
-  let ping = Components.utils.import("resource://gre/modules/TelemetryPing.jsm");
+  let ping = Cu.import("resource://gre/modules/TelemetryController.jsm");
   ping.Policy.setPingSendTimeout = set;
   ping.Policy.clearPingSendTimeout = clear;
 }
 
 function fakeMidnightPingFuzzingDelay(delayMs) {
-  let ping = Components.utils.import("resource://gre/modules/TelemetryPing.jsm");
+  let ping = Cu.import("resource://gre/modules/TelemetryController.jsm");
   ping.Policy.midnightPingFuzzingDelay = () => delayMs;
 }
 
@@ -125,14 +179,21 @@ function truncateToDays(aMsec) {
   return Math.floor(aMsec / MILLISECONDS_PER_DAY);
 }
 
+// Returns a promise that resolves to true when the passed promise rejects,
+// false otherwise.
+function promiseRejects(promise) {
+  return promise.then(() => false, () => true);
+}
+
 // Set logging preferences for all the tests.
 Services.prefs.setCharPref("toolkit.telemetry.log.level", "Trace");
-Services.prefs.setBoolPref("toolkit.telemetry.log.dump", true);
-TelemetryPing.initLogging();
+TelemetryController.initLogging();
+
+// Telemetry archiving should be on.
+Services.prefs.setBoolPref("toolkit.telemetry.archive.enabled", true);
 
 // Avoid timers interrupting test behavior.
 fakeSchedulerTimer(() => {}, () => {});
 fakePingSendTimer(() => {}, () => {});
 // Make pind sending predictable.
 fakeMidnightPingFuzzingDelay(0);
-

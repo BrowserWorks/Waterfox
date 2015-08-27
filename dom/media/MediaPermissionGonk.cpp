@@ -12,6 +12,7 @@
 #include "nsIStringEnumerator.h"
 #include "nsISupportsArray.h"
 #include "nsJSUtils.h"
+#include "nsQueryObject.h"
 #include "nsPIDOMWindow.h"
 #include "nsTArray.h"
 #include "GetUserMediaRequest.h"
@@ -129,6 +130,7 @@ private:
   nsRefPtr<dom::GetUserMediaRequest> mRequest;
   nsTArray<nsCOMPtr<nsIMediaDevice> > mAudioDevices; // candidate audio devices
   nsTArray<nsCOMPtr<nsIMediaDevice> > mVideoDevices; // candidate video devices
+  nsCOMPtr<nsIContentPermissionRequester> mRequester;
 };
 
 // MediaPermissionRequest
@@ -155,6 +157,9 @@ MediaPermissionRequest::MediaPermissionRequest(nsRefPtr<dom::GetUserMediaRequest
       mVideoDevices.AppendElement(device);
     }
   }
+
+  nsCOMPtr<nsPIDOMWindow> window = GetOwner();
+  mRequester = new nsContentPermissionRequester(window.get());
 }
 
 // nsIContentPermissionRequest methods
@@ -274,6 +279,16 @@ MediaPermissionRequest::Allow(JS::HandleValue aChoices)
   return DoAllow(audioDevice, videoDevice);
 }
 
+NS_IMETHODIMP
+MediaPermissionRequest::GetRequester(nsIContentPermissionRequester** aRequester)
+{
+  NS_ENSURE_ARG_POINTER(aRequester);
+
+  nsCOMPtr<nsIContentPermissionRequester> requester = mRequester;
+  requester.forget(aRequester);
+  return NS_OK;
+}
+
 nsresult
 MediaPermissionRequest::DoAllow(const nsString &audioDevice,
                                 const nsString &videoDevice)
@@ -342,7 +357,7 @@ MediaDeviceSuccessCallback::OnSuccess(nsIVariant* aDevices)
   NS_ENSURE_SUCCESS(rv, rv);
 
   if (elementType != nsIDataType::VTYPE_INTERFACE) {
-    NS_Free(rawArray);
+    free(rawArray);
     return NS_ERROR_FAILURE;
   }
 
@@ -355,7 +370,7 @@ MediaDeviceSuccessCallback::OnSuccess(nsIVariant* aDevices)
     devices.AppendElement(device);
     NS_IF_RELEASE(supportsArray[i]); // explicitly decrease reference count for raw pointer
   }
-  NS_Free(rawArray); // explicitly free for the memory from nsIVariant::GetAsArray
+  free(rawArray); // explicitly free for the memory from nsIVariant::GetAsArray
 
   // Send MediaPermissionRequest
   nsRefPtr<MediaPermissionRequest> req = new MediaPermissionRequest(mRequest, devices);

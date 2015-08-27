@@ -18,14 +18,6 @@
 
 namespace mozilla {
 namespace gfx {
-class DrawTarget;
-class SourceSurface;
-class ScaledFont;
-}
-}
-
-namespace mozilla {
-namespace gfx {
 
 inline Rect ToRect(const gfxRect &aRect)
 {
@@ -33,14 +25,9 @@ inline Rect ToRect(const gfxRect &aRect)
               Float(aRect.width), Float(aRect.height));
 }
 
-inline Rect ToRect(const nsIntRect &aRect)
+inline Rect ToRect(const IntRect &aRect)
 {
   return Rect(aRect.x, aRect.y, aRect.width, aRect.height);
-}
-
-inline IntRect ToIntRect(const nsIntRect &aRect)
-{
-  return IntRect(aRect.x, aRect.y, aRect.width, aRect.height);
 }
 
 inline Color ToColor(const gfxRGBA &aRGBA)
@@ -71,19 +58,14 @@ inline Point ToPoint(const gfxPoint &aPoint)
   return Point(Float(aPoint.x), Float(aPoint.y));
 }
 
-inline IntPoint ToIntPoint(const nsIntPoint &aPoint)
+inline IntMargin ToIntMargin(const nsIntMargin& aMargin)
 {
-  return IntPoint(aPoint.x, aPoint.y);
+  return IntMargin(aMargin.top, aMargin.right, aMargin.bottom, aMargin.left);
 }
 
 inline Size ToSize(const gfxSize &aSize)
 {
   return Size(Float(aSize.width), Float(aSize.height));
-}
-
-inline IntSize ToIntSize(const gfxIntSize &aSize)
-{
-  return IntSize(aSize.width, aSize.height);
 }
 
 inline Filter ToFilter(GraphicsFilter aFilter)
@@ -160,11 +142,6 @@ inline gfxSize ThebesSize(const Size &aSize)
 inline gfxRect ThebesRect(const Rect &aRect)
 {
   return gfxRect(aRect.x, aRect.y, aRect.width, aRect.height);
-}
-
-inline nsIntRect ThebesIntRect(const IntRect &aRect)
-{
-  return nsIntRect(aRect.x, aRect.y, aRect.width, aRect.height);
 }
 
 inline gfxRGBA ThebesRGBA(const Color &aColor)

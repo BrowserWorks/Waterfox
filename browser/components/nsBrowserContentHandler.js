@@ -1,14 +1,19 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+Components.utils.importGlobalProperties(["URLSearchParams"]);
 
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 Components.utils.import("resource://gre/modules/Services.jsm");
+Components.utils.import("resource://gre/modules/AppConstants.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
                                   "resource://gre/modules/PrivateBrowsingUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "RecentWindow",
                                   "resource:///modules/RecentWindow.jsm");
+XPCOMUtils.defineLazyServiceGetter(this, "WindowsUIUtils",
+                                   "@mozilla.org/windows-ui-utils;1", "nsIWindowsUIUtils");
 
 const nsISupports            = Components.interfaces.nsISupports;
 
@@ -452,31 +457,35 @@ nsBrowserContentHandler.prototype = {
       cmdLine.preventDefault = true;
     }
 
-#ifdef XP_WIN
-    // Handle "? searchterm" for Windows Vista start menu integration
-    for (var i = cmdLine.length - 1; i >= 0; --i) {
-      var param = cmdLine.getArgument(i);
-      if (param.match(/^\? /)) {
-        cmdLine.removeArguments(i, i);
-        cmdLine.preventDefault = true;
+    if (AppConstants.platform  == "win") {
+      // Handle "? searchterm" for Windows Vista start menu integration
+      for (var i = cmdLine.length - 1; i >= 0; --i) {
+        var param = cmdLine.getArgument(i);
+        if (param.match(/^\? /)) {
+          cmdLine.removeArguments(i, i);
+          cmdLine.preventDefault = true;
 
-        searchParam = param.substr(2);
-        doSearch(searchParam, cmdLine);
+          searchParam = param.substr(2);
+          doSearch(searchParam, cmdLine);
+        }
       }
     }
-#endif
   },
 
-  helpInfo : "  --browser          Open a browser window.\n" +
-             "  --new-window <url> Open <url> in a new window.\n" +
-             "  --new-tab <url>    Open <url> in a new tab.\n" +
-             "  --private-window <url> Open <url> in a new private window.\n" +
-#ifdef XP_WIN
-             "  --preferences      Open Options dialog.\n" +
-#else
-             "  --preferences      Open Preferences dialog.\n" +
-#endif
-             "  --search <term>    Search <term> with your default search engine.\n",
+  get helpInfo() {
+    let info =
+              "  --browser          Open a browser window.\n" +
+              "  --new-window <url> Open <url> in a new window.\n" +
+              "  --new-tab <url>    Open <url> in a new tab.\n" +
+              "  --private-window <url> Open <url> in a new private window.\n";
+    if (AppConstants.platform == "win") {
+      info += "  --preferences      Open Options dialog.\n";
+    } else {
+      info += "  --preferences      Open Preferences dialog.\n";
+    }
+    info += "  --search <term>    Search <term> with your default search engine.\n";
+    return info;
+  },
 
   /* nsIBrowserHandler */
 
@@ -533,6 +542,23 @@ nsBrowserContentHandler.prototype = {
     // formatURLPref might return "about:blank" if getting the pref fails
     if (overridePage == "about:blank")
       overridePage = "";
+
+    // Temporary override page for users who are running Firefox on Windows 10 for their first time.
+    let platformVersion = Services.sysinfo.getProperty("version");
+    if (AppConstants.platform == "win" &&
+        Services.vc.compare(platformVersion, "10") == 0 &&
+        !Services.prefs.getBoolPref("browser.usedOnWindows10")) {
+      Services.prefs.setBoolPref("browser.usedOnWindows10", true);
+      let firstUseOnWindows10URL = Services.urlFormatter.formatURLPref("browser.usedOnWindows10.introURL");
+
+      if (firstUseOnWindows10URL && firstUseOnWindows10URL.length) {
+        if (overridePage) {
+          overridePage += "|" + firstUseOnWindows10URL;
+        } else {
+          overridePage = firstUseOnWindows10URL;
+        }
+      }
+    }
 
     var startPage = "";
     try {
@@ -622,6 +648,21 @@ nsBrowserContentHandler.prototype = {
       var urlParam = cmdLine.getArgument(urlFlagIdx + 1);
       if (cmdLine.length != urlFlagIdx + 2 || /firefoxurl:/.test(urlParam))
         throw NS_ERROR_ABORT;
+      var isDefault = false;
+      try {
+        var url = Services.urlFormatter.formatURLPref("app.support.baseURL") +
+                  "win10-default-browser";
+        if (urlParam == url) {
+          var shellSvc = Components.classes["@mozilla.org/browser/shell-service;1"]
+                                   .getService(Components.interfaces.nsIShellService);
+          isDefault = shellSvc.isDefaultBrowser(false, false);
+        }
+      } catch (ex) {}
+      if (isDefault) {
+        // Firefox is already the default HTTP handler.
+        // We don't have to show the instruction page.
+        throw NS_ERROR_ABORT;
+      }
       cmdLine.handleFlag("osint", false)
     }
   },
@@ -672,40 +713,85 @@ nsDefaultCommandLineHandler.prototype = {
     return this;
   },
 
-#ifdef XP_WIN
   _haveProfile: false,
-#endif
 
   /* nsICommandLineHandler */
   handle : function dch_handle(cmdLine) {
     var urilist = [];
 
-#ifdef XP_WIN
-    // If we don't have a profile selected yet (e.g. the Profile Manager is
-    // displayed) we will crash if we open an url and then select a profile. To
-    // prevent this handle all url command line flags and set the command line's
-    // preventDefault to true to prevent the display of the ui. The initial
-    // command line will be retained when nsAppRunner calls LaunchChild though
-    // urls launched after the initial launch will be lost.
-    if (!this._haveProfile) {
-      try {
-        // This will throw when a profile has not been selected.
-        var fl = Components.classes["@mozilla.org/file/directory_service;1"]
-                           .getService(Components.interfaces.nsIProperties);
-        var dir = fl.get("ProfD", Components.interfaces.nsILocalFile);
-        this._haveProfile = true;
-      }
-      catch (e) {
-        while ((ar = cmdLine.handleFlagWithParam("url", false))) { }
-        cmdLine.preventDefault = true;
+    if (AppConstants.platform == "win") {
+      // If we don't have a profile selected yet (e.g. the Profile Manager is
+      // displayed) we will crash if we open an url and then select a profile. To
+      // prevent this handle all url command line flags and set the command line's
+      // preventDefault to true to prevent the display of the ui. The initial
+      // command line will be retained when nsAppRunner calls LaunchChild though
+      // urls launched after the initial launch will be lost.
+      if (!this._haveProfile) {
+        try {
+          // This will throw when a profile has not been selected.
+          var fl = Components.classes["@mozilla.org/file/directory_service;1"]
+                             .getService(Components.interfaces.nsIProperties);
+          var dir = fl.get("ProfD", Components.interfaces.nsILocalFile);
+          this._haveProfile = true;
+        }
+        catch (e) {
+          while ((ar = cmdLine.handleFlagWithParam("url", false))) { }
+          cmdLine.preventDefault = true;
+        }
       }
     }
-#endif
+
+    let redirectWinSearch = false;
+    if (AppConstants.isPlatformAndVersionAtLeast("win", "10")) {
+      redirectWinSearch = Services.prefs.getBoolPref("browser.search.redirectWindowsSearch");
+    }
 
     try {
       var ar;
       while ((ar = cmdLine.handleFlagWithParam("url", false))) {
         var uri = resolveURIInternal(cmdLine, ar);
+
+        // Searches in the Windows 10 task bar searchbox simply open the default browser
+        // with a URL for a search on Bing. Here we extract the search term and use the
+        // user's default search engine instead.
+        var uriScheme = "", uriHost = "", uriPath = "";
+        try {
+          uriScheme = uri.scheme;
+          uriHost = uri.host;
+          uriPath = uri.path;
+        } catch(e) {
+        }
+
+        // Most Windows searches are "https://www.bing.com/search...", but bug
+        // 1182308 reports a Chinese edition of Windows 10 using
+        // "http://cn.bing.com/search...", so be a bit flexible in what we match.
+        if (redirectWinSearch &&
+            (uriScheme == "http" || uriScheme == "https") &&
+            uriHost.endsWith(".bing.com") && uriPath.startsWith("/search")) {
+          try {
+            var url = uri.QueryInterface(Components.interfaces.nsIURL);
+            var params = new URLSearchParams(url.query);
+            // We don't want to rewrite all Bing URLs coming from external apps. Look
+            // for the magic URL parm that's present in searches from the task bar.
+            // (Typed searches use "form=WNSGPH", Cortana voice searches use "FORM=WNSBOX"
+            // for direct results, or "FORM=WNSFC2" for "see more results on
+            // Bing.com")
+            var formParam = params.get("form");
+            if (!formParam) {
+              formParam = params.get("FORM");
+            }
+            if (formParam == "WNSGPH" || formParam == "WNSBOX" || formParam == "WNSFC2") {
+              var term = params.get("q");
+              var ss = Components.classes["@mozilla.org/browser/search-service;1"]
+                                 .getService(nsIBrowserSearchService);
+              var submission = ss.defaultEngine.getSubmission(term, null, "searchbar");
+              uri = submission.uri;
+            }
+          } catch (e) {
+            Components.utils.reportError("Couldn't redirect Windows search: " + e);
+          }
+        }
+
         urilist.push(uri);
       }
     }
@@ -752,6 +838,16 @@ nsDefaultCommandLineHandler.prototype = {
 
     }
     else if (!cmdLine.preventDefault) {
+      if (AppConstants.isPlatformAndVersionAtLeast("win", "10") &&
+          cmdLine.state != nsICommandLine.STATE_INITIAL_LAUNCH &&
+          WindowsUIUtils.inTabletMode) {
+        // In windows 10 tablet mode, do not create a new window, but reuse the existing one.
+        let win = RecentWindow.getMostRecentBrowserWindow();
+        if (win) {
+          win.focus();
+          return;
+        }
+      }
       // Passing defaultArgs, so use NO_EXTERNAL_URIS
       openWindow(null, gBrowserContentHandler.chromeURL, "_blank",
                  "chrome,dialog=no,all" + gBrowserContentHandler.getFeatures(cmdLine),

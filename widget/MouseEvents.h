@@ -306,6 +306,13 @@ public:
 
 class WidgetDragEvent : public WidgetMouseEvent
 {
+private:
+  friend class mozilla::dom::PBrowserParent;
+  friend class mozilla::dom::PBrowserChild;
+protected:
+  WidgetDragEvent()
+  {
+  }
 public:
   virtual WidgetDragEvent* AsDragEvent() override { return this; }
 
@@ -315,8 +322,8 @@ public:
     , mDefaultPreventedOnContent(false)
   {
     mFlags.mCancelable =
-      (aMessage != NS_DRAGDROP_EXIT_SYNTH &&
-       aMessage != NS_DRAGDROP_LEAVE_SYNTH &&
+      (aMessage != NS_DRAGDROP_EXIT &&
+       aMessage != NS_DRAGDROP_LEAVE &&
        aMessage != NS_DRAGDROP_END);
   }
 

@@ -29,6 +29,7 @@ Cu.import('resource://gre/modules/FxAccountsMgmtService.jsm');
 Cu.import('resource://gre/modules/DownloadsAPI.jsm');
 Cu.import('resource://gre/modules/MobileIdentityManager.jsm');
 Cu.import('resource://gre/modules/PresentationDeviceInfoManager.jsm');
+Cu.import('resource://gre/modules/AboutServiceWorkers.jsm');
 
 XPCOMUtils.defineLazyModuleGetter(this, "SystemAppProxy",
                                   "resource://gre/modules/SystemAppProxy.jsm");
@@ -1087,6 +1088,16 @@ window.addEventListener('ContentStart', function update_onContentStart() {
   let size = Math.floor(stats.totalBytes / 1024) - 1024;
   Services.prefs.setIntPref("browser.cache.disk.capacity", size);
 })();
+#endif
+
+#ifdef MOZ_WIDGET_GONK
+try {
+  let gmpService = Cc["@mozilla.org/gecko-media-plugin-service;1"]
+                     .getService(Ci.mozIGeckoMediaPluginChromeService);
+  gmpService.addPluginDirectory("/system/b2g/gmp-clearkey/0.1");
+} catch(e) {
+  dump("Failed to add clearkey path! " + e + "\n");
+}
 #endif
 
 // Calling this observer will cause a shutdown an a profile reset.

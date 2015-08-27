@@ -21,13 +21,13 @@ function test() {
 
 const BP_LOCATION = {
   line: 5,
-  column: 11
+  // column: 0
 };
 
 function findSource() {
   gThreadClient.getSources(({ error, sources }) => {
     ok(!error, "error should exist");
-    sources = sources.filter(s => s.url.contains("code_ugly-3.js"));
+    sources = sources.filter(s => s.url.includes("code_ugly-3.js"));
     is(sources.length, 1, "sources.length should be 1");
     [gSource] = sources;
     BP_LOCATION.actor = gSource.actor;

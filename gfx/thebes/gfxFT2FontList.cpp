@@ -50,7 +50,6 @@
 
 using namespace mozilla;
 
-#ifdef PR_LOGGING
 static PRLogModuleInfo *
 GetFontInfoLog()
 {
@@ -59,7 +58,6 @@ GetFontInfoLog()
         sLog = PR_NewLogModule("fontInfoLog");
     return sLog;
 }
-#endif /* PR_LOGGING */
 
 #undef LOG
 #define LOG(args) PR_LOG(GetFontInfoLog(), PR_LOG_DEBUG, args)
@@ -107,7 +105,7 @@ public:
             NS_ASSERTION(item, "failed to find zip entry");
 
             uint32_t bufSize = item->RealSize();
-            mFontDataBuf = static_cast<uint8_t*>(moz_malloc(bufSize));
+            mFontDataBuf = static_cast<uint8_t*>(malloc(bufSize));
             if (mFontDataBuf) {
                 nsZipCursor cursor(item, reader, mFontDataBuf, bufSize);
                 cursor.Copy(&bufSize);
@@ -136,7 +134,7 @@ public:
         if (mFace && mOwnsFace) {
             FT_Done_Face(mFace);
             if (mFontDataBuf) {
-                moz_free(mFontDataBuf);
+                free(mFontDataBuf);
             }
         }
     }
@@ -266,12 +264,12 @@ FT2FontEntry::CreateFontEntry(const nsAString& aFontName,
         FT_New_Memory_Face(gfxToolkitPlatform::GetPlatform()->GetFTLibrary(),
                            aFontData, aLength, 0, &face);
     if (error != FT_Err_Ok) {
-        NS_Free((void*)aFontData);
+        free((void*)aFontData);
         return nullptr;
     }
     if (FT_Err_Ok != FT_Select_Charmap(face, FT_ENCODING_UNICODE)) {
         FT_Done_Face(face);
-        NS_Free((void*)aFontData);
+        free((void*)aFontData);
         return nullptr;
     }
     // Create our FT2FontEntry, which inherits the name of the userfont entry
@@ -299,7 +297,7 @@ public:
     {
         FT_Done_Face(mFace);
         if (mFontData) {
-            NS_Free((void*)mFontData);
+            free((void*)mFontData);
         }
     }
 
@@ -619,18 +617,9 @@ FT2FontFamily::AddFacesToFontList(InfallibleTArray<FontListEntry>* aFontList,
 class FontNameCache {
 public:
     FontNameCache()
-        : mWriteNeeded(false)
+        : mMap(&sMapOps, sizeof(FNCMapEntry), 0)
+        , mWriteNeeded(false)
     {
-        mOps = (PLDHashTableOps) {
-            StringHash,
-            HashMatchEntry,
-            MoveEntry,
-            PL_DHashClearEntryStub,
-            nullptr
-        };
-
-        PL_DHashTableInit(&mMap, &mOps, sizeof(FNCMapEntry), 0);
-
         MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default,
                    "StartupCacheFontNameCache should only be used in chrome "
                    "process");
@@ -641,17 +630,12 @@ public:
 
     ~FontNameCache()
     {
-        if (!mMap.IsInitialized()) {
-            return;
-        }
         if (!mWriteNeeded || !mCache) {
-            PL_DHashTableFinish(&mMap);
             return;
         }
 
         nsAutoCString buf;
         PL_DHashTableEnumerate(&mMap, WriteOutMap, &buf);
-        PL_DHashTableFinish(&mMap);
         mCache->PutBuffer(CACHE_KEY, buf.get(), buf.Length() + 1);
     }
 
@@ -753,7 +737,7 @@ private:
     PLDHashTable mMap;
     bool mWriteNeeded;
 
-    PLDHashTableOps mOps;
+    static const PLDHashTableOps sMapOps;
 
     static PLDHashOperator WriteOutMap(PLDHashTable *aTable,
                                        PLDHashEntryHdr *aHdr,
@@ -810,6 +794,15 @@ private:
         to->mFaces.Assign(from->mFaces);
         to->mFileExists = from->mFileExists;
     }
+};
+
+/* static */ const PLDHashTableOps FontNameCache::sMapOps =
+{
+    FontNameCache::StringHash,
+    FontNameCache::HashMatchEntry,
+    FontNameCache::MoveEntry,
+    PL_DHashClearEntryStub,
+    nullptr
 };
 
 /***************************************************************
@@ -1060,7 +1053,6 @@ gfxFT2FontList::AddFaceToList(const nsCString& aEntryName, uint32_t aIndex,
         fe->CheckForBrokenFont(family);
 
         AppendToFaceList(aFaceList, name, fe);
-#ifdef PR_LOGGING
         if (LOG_ENABLED()) {
             LOG(("(fontinit) added (%s) to family (%s)"
                  " with style: %s weight: %d stretch: %d",
@@ -1069,7 +1061,6 @@ gfxFT2FontList::AddFaceToList(const nsCString& aEntryName, uint32_t aIndex,
                  fe->IsItalic() ? "italic" : "normal",
                  fe->Weight(), fe->Stretch()));
         }
-#endif
     }
 }
 

@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-// vim:set et cin sw=2 sts=2:
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -38,6 +38,7 @@
 #include "nsIBlocklistService.h"
 #include "nsIAsyncVerifyRedirectCallback.h"
 #include "nsIAppShell.h"
+#include "nsIXULRuntime.h"
 
 #include "nsError.h"
 
@@ -552,6 +553,11 @@ IsPluginEnabledByExtension(nsIURI* uri, nsCString& mimeType)
     return false;
   }
 
+  // Disables any native PDF plugins, when internal PDF viewer is enabled.
+  if (ext.EqualsIgnoreCase("pdf") && nsContentUtils::IsPDFJSEnabled()) {
+    return false;
+  }
+
   nsRefPtr<nsPluginHost> pluginHost = nsPluginHost::GetInst();
 
   if (!pluginHost) {
@@ -698,6 +704,8 @@ nsObjectLoadingContent::UnbindFromTree(bool aDeep, bool aNullParent)
 nsObjectLoadingContent::nsObjectLoadingContent()
   : mType(eType_Loading)
   , mFallbackType(eFallbackAlternate)
+  , mRunID(0)
+  , mHasRunID(false)
   , mChannelLoaded(false)
   , mInstantiating(false)
   , mNetworkCreated(true)
@@ -811,6 +819,17 @@ nsObjectLoadingContent::InstantiatePluginInstance(bool aIsLoading)
   }
 
   mInstanceOwner = newOwner;
+
+  if (mInstanceOwner) {
+    nsRefPtr<nsNPAPIPluginInstance> inst;
+    rv = mInstanceOwner->GetInstance(getter_AddRefs(inst));
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+
+    rv = inst->GetRunID(&mRunID);
+    mHasRunID = NS_SUCCEEDED(rv);
+  }
 
   // Ensure the frame did not change during instantiation re-entry (common).
   // HasNewFrame would not have mInstanceOwner yet, so the new frame would be
@@ -2652,6 +2671,13 @@ nsObjectLoadingContent::GetTypeOfContent(const nsCString& aMIMEType)
     return eType_Image;
   }
 
+  // Faking support of the PDF content as a document for EMBED tags
+  // when internal PDF viewer is enabled.
+  if (aMIMEType.LowerCaseEqualsLiteral("application/pdf") &&
+      nsContentUtils::IsPDFJSEnabled()) {
+    return eType_Document;
+  }
+
   // SVGs load as documents, but are their own capability
   bool isSVG = aMIMEType.LowerCaseEqualsLiteral("image/svg+xml");
   Capabilities supportType = isSVG ? eSupportSVG : eSupportDocuments;
@@ -3144,6 +3170,24 @@ nsObjectLoadingContent::CancelPlayPreview()
   return NS_OK;
 }
 
+NS_IMETHODIMP
+nsObjectLoadingContent::GetRunID(uint32_t* aRunID)
+{
+  if (NS_WARN_IF(!nsContentUtils::IsCallerChrome())) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+  if (NS_WARN_IF(!aRunID)) {
+    return NS_ERROR_INVALID_POINTER;
+  }
+  if (!mHasRunID) {
+    // The plugin instance must not have a run ID, so we must
+    // be running the plugin in-process.
+    return NS_ERROR_NOT_IMPLEMENTED;
+  }
+  *aRunID = mRunID;
+  return NS_OK;
+}
+
 static bool sPrefsInitialized;
 static uint32_t sSessionTimeoutMinutes;
 static uint32_t sPersistentTimeoutDays;
@@ -3159,6 +3203,14 @@ nsObjectLoadingContent::ShouldPlay(FallbackType &aReason, bool aIgnoreCurrentTyp
     Preferences::AddUintVarCache(&sPersistentTimeoutDays,
                                  "plugin.persistentPermissionAlways.intervalInDays", 90);
     sPrefsInitialized = true;
+  }
+
+  if (XRE_GetProcessType() == GeckoProcessType_Default &&
+      BrowserTabsRemoteAutostart()) {
+    // Plugins running OOP from the chrome process along with plugins running
+    // OOP from the content process will hang. Let's prevent that situation.
+    aReason = eFallbackDisabled;
+    return false;
   }
 
   nsRefPtr<nsPluginHost> pluginHost = nsPluginHost::GetInst();
@@ -3215,8 +3267,9 @@ nsObjectLoadingContent::ShouldPlay(FallbackType &aReason, bool aIgnoreCurrentTyp
   }
 
   // Before we check permissions, get the blocklist state of this plugin to set
-  // the fallback reason correctly.
-  uint32_t blocklistState = nsIBlocklistService::STATE_NOT_BLOCKED;
+  // the fallback reason correctly. In the content process this will involve
+  // an ipc call to chrome.
+  uint32_t blocklistState = nsIBlocklistService::STATE_BLOCKED;
   pluginHost->GetBlocklistStateForType(mContentType,
                                        nsPluginHost::eExcludeNone,
                                        &blocklistState);
@@ -3621,6 +3674,14 @@ nsObjectLoadingContent::DoResolve(JSContext* aCx, JS::Handle<JSObject*> aObject,
   if (NS_FAILED(rv)) {
     return mozilla::dom::Throw(aCx, rv);
   }
+  return true;
+}
+
+/* static */
+bool
+nsObjectLoadingContent::MayResolve(jsid aId)
+{
+  // We can resolve anything, really.
   return true;
 }
 

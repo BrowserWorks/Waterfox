@@ -13,7 +13,6 @@
 
 struct sqlite3;
 struct sqlite3_stmt;
-class mozIStorageError;
 class mozIStorageBindingParamsArray;
 class mozIStorageBindingParams;
 class mozIStorageStatementCallback;
@@ -322,6 +321,20 @@ NS_DEFINE_STATIC_IID_ACCESSOR(StorageBaseStatementInternal,
                  const uint8_t *aValue,                  \
                  uint32_t aValueSize),                   \
                 (aWhere, aValue, aValueSize))            \
+  BIND_GEN_IMPL(_class, _optionalGuard,                  \
+                StringAsBlob,                            \
+                (const nsACString &aWhere,               \
+                 const nsAString& aValue),               \
+                (uint32_t aWhere,                        \
+                 const nsAString& aValue),               \
+                (aWhere, aValue))                        \
+  BIND_GEN_IMPL(_class, _optionalGuard,                  \
+                UTF8StringAsBlob,                        \
+                (const nsACString &aWhere,               \
+                 const nsACString& aValue),              \
+                (uint32_t aWhere,                        \
+                 const nsACString& aValue),              \
+                (aWhere, aValue))                        \
   BIND_GEN_IMPL(_class, _optionalGuard,                  \
                 AdoptedBlob,                             \
                 (const nsACString &aWhere,               \

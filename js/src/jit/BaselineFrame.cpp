@@ -23,7 +23,7 @@ MarkLocals(BaselineFrame* frame, JSTracer* trc, unsigned start, unsigned end)
     if (start < end) {
         // Stack grows down.
         Value* last = frame->valueSlot(end - 1);
-        gc::MarkValueRootRange(trc, end - start, last, "baseline-stack");
+        TraceRootRange(trc, end - start, last, "baseline-stack");
     }
 }
 
@@ -32,27 +32,27 @@ BaselineFrame::trace(JSTracer* trc, JitFrameIterator& frameIterator)
 {
     replaceCalleeToken(MarkCalleeToken(trc, calleeToken()));
 
-    gc::MarkValueRoot(trc, &thisValue(), "baseline-this");
+    TraceRoot(trc, &thisValue(), "baseline-this");
 
     // Mark actual and formal args.
     if (isNonEvalFunctionFrame()) {
         unsigned numArgs = js::Max(numActualArgs(), numFormalArgs());
-        gc::MarkValueRootRange(trc, numArgs, argv(), "baseline-args");
+        TraceRootRange(trc, numArgs, argv(), "baseline-args");
     }
 
     // Mark scope chain, if it exists.
     if (scopeChain_)
-        gc::MarkObjectRoot(trc, &scopeChain_, "baseline-scopechain");
+        TraceRoot(trc, &scopeChain_, "baseline-scopechain");
 
     // Mark return value.
     if (hasReturnValue())
-        gc::MarkValueRoot(trc, returnValue().address(), "baseline-rval");
+        TraceRoot(trc, returnValue().address(), "baseline-rval");
 
     if (isEvalFrame())
-        gc::MarkScriptRoot(trc, &evalScript_, "baseline-evalscript");
+        TraceRoot(trc, &evalScript_, "baseline-evalscript");
 
     if (hasArgsObj())
-        gc::MarkObjectRoot(trc, &argsObj_, "baseline-args-obj");
+        TraceRoot(trc, &argsObj_, "baseline-args-obj");
 
     // Mark locals and stack values.
     JSScript* script = this->script();

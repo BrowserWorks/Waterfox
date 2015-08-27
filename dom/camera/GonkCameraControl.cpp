@@ -31,6 +31,7 @@
 #include "nsCOMPtr.h"
 #include "nsMemory.h"
 #include "nsThread.h"
+#include "nsITimer.h"
 #include "mozilla/FileUtils.h"
 #include "mozilla/Services.h"
 #include "mozilla/unused.h"
@@ -59,6 +60,9 @@ using namespace android;
     }                                                                     \
   } while(0)
 
+static const unsigned long kAutoFocusCompleteTimeoutMs = 1000;
+static const int32_t kAutoFocusCompleteTimeoutLimit = 3;
+
 // Construct nsGonkCameraControl on the main thread.
 nsGonkCameraControl::nsGonkCameraControl(uint32_t aCameraId)
   : mCameraId(aCameraId)
@@ -75,11 +79,18 @@ nsGonkCameraControl::nsGonkCameraControl(uint32_t aCameraId)
 #endif
   , mRecorderMonitor("GonkCameraControl::mRecorder.Monitor")
   , mVideoFile(nullptr)
+  , mAutoFocusPending(false)
+  , mAutoFocusCompleteExpired(0)
   , mReentrantMonitor("GonkCameraControl::OnTakePicture.Monitor")
 {
   // Constructor runs on the main thread...
   DOM_CAMERA_LOGT("%s:%d : this=%p\n", __func__, __LINE__, this);
   mImageContainer = LayerManager::CreateImageContainer();
+
+  mAutoFocusCompleteTimer = do_CreateInstance(NS_TIMER_CONTRACTID);
+  if (NS_WARN_IF(!mAutoFocusCompleteTimer)) {
+    mAutoFocusCompleteExpired = kAutoFocusCompleteTimeoutLimit;
+  }
 }
 
 nsresult
@@ -813,6 +824,12 @@ nsGonkCameraControl::AutoFocusImpl()
   if (mCameraHw->AutoFocus() != OK) {
     return NS_ERROR_FAILURE;
   }
+
+  ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+  mAutoFocusPending = true;
+  if (mAutoFocusCompleteTimer) {
+    mAutoFocusCompleteTimer->Cancel();
+  }
   return NS_OK;
 }
 
@@ -1238,7 +1255,7 @@ nsGonkCameraControl::StopRecordingImpl()
   class RecordingComplete : public nsRunnable
   {
   public:
-    RecordingComplete(DeviceStorageFile* aFile)
+    RecordingComplete(already_AddRefed<DeviceStorageFile> aFile)
       : mFile(aFile)
     { }
 
@@ -1268,6 +1285,11 @@ nsGonkCameraControl::StopRecordingImpl()
 
   mRecorder->stop();
   mRecorder = nullptr;
+#else
+  if (!mVideoFile) {
+    return NS_OK;
+  }
+#endif
   OnRecorderStateChange(CameraControlListener::kRecorderStopped);
 
   {
@@ -1282,10 +1304,7 @@ nsGonkCameraControl::StopRecordingImpl()
   }
 
   // notify DeviceStorage that the new video file is closed and ready
-  return NS_DispatchToMainThread(new RecordingComplete(mVideoFile));
-#else
-  return NS_OK;
-#endif
+  return NS_DispatchToMainThread(new RecordingComplete(mVideoFile.forget()));
 }
 
 nsresult
@@ -1305,30 +1324,118 @@ nsGonkCameraControl::ResumeContinuousFocusImpl()
   return NS_OK;
 }
 
+class AutoFocusMovingTimerCallback : public nsITimerCallback
+{
+public:
+  NS_DECL_THREADSAFE_ISUPPORTS
+
+  AutoFocusMovingTimerCallback(nsGonkCameraControl* aCameraControl)
+    : mCameraControl(aCameraControl)
+  { }
+
+  NS_IMETHODIMP
+  Notify(nsITimer* aTimer)
+  {
+    mCameraControl->OnAutoFocusComplete(true, true);
+    return NS_OK;
+  }
+
+protected:
+  virtual ~AutoFocusMovingTimerCallback()
+  { }
+
+  nsRefPtr<nsGonkCameraControl> mCameraControl;
+};
+
+NS_IMPL_ISUPPORTS(AutoFocusMovingTimerCallback, nsITimerCallback);
+
 void
-nsGonkCameraControl::OnAutoFocusComplete(bool aSuccess)
+nsGonkCameraControl::OnAutoFocusMoving(bool aIsMoving)
+{
+  CameraControlImpl::OnAutoFocusMoving(aIsMoving);
+
+  if (!aIsMoving) {
+    /* Some drivers do not signal us with the status of the continuous auto focus
+       operation, only the moving signal which comes first. As a result we need to
+       arm a timer to detect the driver behaviour and if necessary generate the
+       signal ourselves to update the application state. */
+    int32_t expiredCount = 0;
+
+    {
+      ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+
+      if (mAutoFocusCompleteTimer) {
+        mAutoFocusCompleteTimer->Cancel();
+
+        if (!mAutoFocusPending) {
+          nsRefPtr<nsITimerCallback> timerCb = new AutoFocusMovingTimerCallback(this);
+          nsresult rv = mAutoFocusCompleteTimer->InitWithCallback(timerCb,
+                                                                  kAutoFocusCompleteTimeoutMs,
+                                                                  nsITimer::TYPE_ONE_SHOT);
+          NS_WARN_IF(NS_FAILED(rv));
+        }
+        return;
+      }
+
+      if (!mAutoFocusPending) {
+        expiredCount = mAutoFocusCompleteExpired;
+      }
+    }
+
+    if (expiredCount == kAutoFocusCompleteTimeoutLimit) {
+      OnAutoFocusComplete(true, true);
+    }
+  }
+}
+
+void
+nsGonkCameraControl::OnAutoFocusComplete(bool aSuccess, bool aExpired)
 {
   class AutoFocusComplete : public nsRunnable
   {
   public:
-    AutoFocusComplete(nsGonkCameraControl* aCameraControl, bool aSuccess)
+    AutoFocusComplete(nsGonkCameraControl* aCameraControl, bool aSuccess, bool aExpired)
       : mCameraControl(aCameraControl)
       , mSuccess(aSuccess)
+      , mExpired(aExpired)
     { }
 
     NS_IMETHODIMP
     Run() override
     {
-      mCameraControl->OnAutoFocusComplete(mSuccess);
+      mCameraControl->OnAutoFocusComplete(mSuccess, mExpired);
       return NS_OK;
     }
 
   protected:
     nsRefPtr<nsGonkCameraControl> mCameraControl;
     bool mSuccess;
+    bool mExpired;
   };
 
   if (NS_GetCurrentThread() == mCameraThread) {
+    {
+      ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+
+      if (mAutoFocusPending) {
+        mAutoFocusPending = false;
+      } else if (mAutoFocusCompleteTimer) {
+        if (aExpired) {
+          NS_WARNING("Camera timed out waiting for OnAutoFocusComplete");
+          ++mAutoFocusCompleteExpired;
+        } else {
+          mAutoFocusCompleteTimer->Cancel();
+          --mAutoFocusCompleteExpired;
+        }
+
+        if (mAutoFocusCompleteExpired == kAutoFocusCompleteTimeoutLimit ||
+            mAutoFocusCompleteExpired == -kAutoFocusCompleteTimeoutLimit)
+        {
+          mAutoFocusCompleteTimer = nullptr;
+        }
+      }
+    }
+
     /**
      * Auto focusing can change some of the camera's parameters, so
      * we need to pull a new set before notifying any clients.
@@ -1342,7 +1449,7 @@ nsGonkCameraControl::OnAutoFocusComplete(bool aSuccess)
    * Because the callback needs to call PullParametersImpl(),
    * we need to dispatch this callback through the Camera Thread.
    */
-  mCameraThread->Dispatch(new AutoFocusComplete(this, aSuccess), NS_DISPATCH_NORMAL);
+  mCameraThread->Dispatch(new AutoFocusComplete(this, aSuccess, aExpired), NS_DISPATCH_NORMAL);
 }
 
 bool
@@ -1427,14 +1534,10 @@ nsGonkCameraControl::OnTakePictureComplete(uint8_t* aData, uint32_t aLength)
 {
   ReentrantMonitorAutoEnter mon(mReentrantMonitor);
 
-  uint8_t* data = new uint8_t[aLength];
-
-  memcpy(data, aData, aLength);
-
   nsString s(NS_LITERAL_STRING("image/"));
   s.Append(mFileFormat);
   DOM_CAMERA_LOGI("Got picture, type '%s', %u bytes\n", NS_ConvertUTF16toUTF8(s).get(), aLength);
-  OnTakePictureComplete(data, aLength, s);
+  OnTakePictureComplete(aData, aLength, s);
 
   if (mResumePreviewAfterTakingPicture) {
     nsresult rv = StartPreview();
@@ -2105,7 +2208,7 @@ OnTakePictureError(nsGonkCameraControl* gc)
 void
 OnAutoFocusComplete(nsGonkCameraControl* gc, bool aSuccess)
 {
-  gc->OnAutoFocusComplete(aSuccess);
+  gc->OnAutoFocusComplete(aSuccess, false);
 }
 
 void

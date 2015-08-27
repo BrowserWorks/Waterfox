@@ -29,7 +29,7 @@
 #include "nsAutoPtr.h"                  // for nsRefPtr
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_DTOR
 #include "nsPoint.h"                    // for nsIntPoint
-#include "nsRect.h"                     // for nsIntRect
+#include "nsRect.h"                     // for mozilla::gfx::IntRect
 #include "nsRegion.h"                   // for nsIntRegion
 #include "nsTArray.h"                   // for nsTArray, nsTArray_Impl, etc
 #include "nsExpirationTracker.h"
@@ -41,7 +41,6 @@
 namespace mozilla {
 namespace layers {
 
-class BasicTileDescriptor;
 class ClientTiledPaintedLayer;
 class ClientLayerManager;
 

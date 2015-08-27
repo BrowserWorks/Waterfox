@@ -28,6 +28,9 @@ from .mozconfig import (
 from .virtualenv import VirtualenvManager
 
 
+_config_guess_output = []
+
+
 def ancestors(path):
     """Emit the parent directories of a path."""
     while path:
@@ -353,6 +356,11 @@ class MozbuildObject(ProcessExecutionMixin):
         if config_guess:
             return config_guess
 
+        # config.guess results should be constant for process lifetime. Cache
+        # it.
+        if _config_guess_output:
+            return _config_guess_output[0]
+
         p = os.path.join(topsrcdir, 'build', 'autoconf', 'config.guess')
 
         # This is a little kludgy. We need access to the normalize_command
@@ -362,7 +370,63 @@ class MozbuildObject(ProcessExecutionMixin):
         o = MozbuildObject(topsrcdir, None, None, None)
         args = o._normalize_command([p], True)
 
-        return subprocess.check_output(args, cwd=topsrcdir).strip()
+        _config_guess_output.append(
+                subprocess.check_output(args, cwd=topsrcdir).strip())
+        return _config_guess_output[0]
+
+    def notify(self, msg):
+        """Show a desktop notification with the supplied message
+
+        On Linux and Mac, this will show a desktop notification with the message,
+        but on Windows we can only flash the screen.
+        """
+        moz_nospam = os.environ.get('MOZ_NOSPAM')
+        if moz_nospam:
+            return
+
+        try:
+            if sys.platform.startswith('darwin'):
+                try:
+                    notifier = which.which('terminal-notifier')
+                except which.WhichError:
+                    raise Exception('Install terminal-notifier to get '
+                        'a notification when the build finishes.')
+                self.run_process([notifier, '-title',
+                    'Mozilla Build System', '-group', 'mozbuild',
+                    '-message', msg], ensure_exit_code=False)
+            elif sys.platform.startswith('linux'):
+                try:
+                    import dbus
+                except ImportError:
+                    raise Exception('Install the python dbus module to '
+                        'get a notification when the build finishes.')
+                bus = dbus.SessionBus()
+                notify = bus.get_object('org.freedesktop.Notifications',
+                                        '/org/freedesktop/Notifications')
+                method = notify.get_dbus_method('Notify',
+                                                'org.freedesktop.Notifications')
+                method('Mozilla Build System', 0, '', msg, '', [], [], -1)
+            elif sys.platform.startswith('win'):
+                from ctypes import Structure, windll, POINTER, sizeof
+                from ctypes.wintypes import DWORD, HANDLE, WINFUNCTYPE, BOOL, UINT
+                class FLASHWINDOW(Structure):
+                    _fields_ = [("cbSize", UINT),
+                                ("hwnd", HANDLE),
+                                ("dwFlags", DWORD),
+                                ("uCount", UINT),
+                                ("dwTimeout", DWORD)]
+                FlashWindowExProto = WINFUNCTYPE(BOOL, POINTER(FLASHWINDOW))
+                FlashWindowEx = FlashWindowExProto(("FlashWindowEx", windll.user32))
+                FLASHW_CAPTION = 0x01
+                FLASHW_TRAY = 0x02
+                FLASHW_TIMERNOFG = 0x0C
+                params = FLASHWINDOW(sizeof(FLASHWINDOW),
+                                    windll.kernel32.GetConsoleWindow(),
+                                    FLASHW_CAPTION | FLASHW_TRAY | FLASHW_TIMERNOFG, 3, 0)
+                FlashWindowEx(params)
+        except Exception as e:
+            self.log(logging.WARNING, 'notifier-failed', {'error':
+                e.message}, 'Notification center failed: {error}')
 
     @property
     def _config_guess(self):
@@ -656,25 +720,28 @@ class MachCommandConditions(object):
         return False
 
     @staticmethod
-    def is_firefox_or_mulet(cls):
-        """Must have a Firefox or Mulet build."""
-        return (MachCommandConditions.is_firefox(cls) or
-                MachCommandConditions.is_mulet(cls))
-
-    @staticmethod
     def is_b2g(cls):
-        """Must have a Boot to Gecko build."""
+        """Must have a B2G build."""
         if hasattr(cls, 'substs'):
             return cls.substs.get('MOZ_WIDGET_TOOLKIT') == 'gonk'
         return False
 
     @staticmethod
     def is_b2g_desktop(cls):
-        """Must have a Boot to Gecko desktop build."""
+        """Must have a B2G desktop build."""
         if hasattr(cls, 'substs'):
             return cls.substs.get('MOZ_BUILD_APP') == 'b2g' and \
                    cls.substs.get('MOZ_WIDGET_TOOLKIT') != 'gonk'
         return False
+
+    @staticmethod
+    def is_emulator(cls):
+        """Must have a B2G build with an emulator configured."""
+        try:
+            return MachCommandConditions.is_b2g(cls) and \
+                   cls.device_name.startswith('emulator')
+        except AttributeError:
+            return False
 
     @staticmethod
     def is_android(cls):

@@ -16,7 +16,7 @@
 namespace mozilla {
 namespace gmp {
 
-class GMPChild;
+class GMPContentChild;
 
 class GMPVideoDecoderChild : public PGMPVideoDecoderChild,
                              public GMPVideoDecoderCallback,
@@ -25,7 +25,7 @@ class GMPVideoDecoderChild : public PGMPVideoDecoderChild,
 public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(GMPVideoDecoderChild);
 
-  explicit GMPVideoDecoderChild(GMPChild* aPlugin);
+  explicit GMPVideoDecoderChild(GMPContentChild* aPlugin);
 
   void Init(GMPVideoDecoder* aDecoder);
   GMPVideoHostImpl& Host();
@@ -59,7 +59,7 @@ private:
   virtual bool RecvDrain() override;
   virtual bool RecvDecodingComplete() override;
 
-  GMPChild* mPlugin;
+  GMPContentChild* mPlugin;
   GMPVideoDecoder* mVideoDecoder;
   GMPVideoHostImpl mVideoHost;
 

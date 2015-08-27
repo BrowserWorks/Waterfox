@@ -297,14 +297,16 @@ final class GeckoEditable
             }
         }
 
+        /**
+         * Remove the head of the queue. Throw if queue is empty.
+         */
         void poll() {
             if (DEBUG) {
                 ThreadUtils.assertOnGeckoThread();
             }
-            if (mActions.isEmpty()) {
+            if (mActions.poll() == null) {
                 throw new IllegalStateException("empty actions queue");
             }
-            mActions.poll();
 
             synchronized(this) {
                 if (mActions.isEmpty()) {
@@ -313,12 +315,14 @@ final class GeckoEditable
             }
         }
 
+        /**
+         * Return, but don't remove, the head of the queue, or null if queue is empty.
+         *
+         * @return head of the queue or null if empty.
+         */
         Action peek() {
             if (DEBUG) {
                 ThreadUtils.assertOnGeckoThread();
-            }
-            if (mActions.isEmpty()) {
-                throw new IllegalStateException("empty actions queue");
             }
             return mActions.peek();
         }
@@ -571,7 +575,7 @@ final class GeckoEditable
     }
 
     @Override
-    public void setUpdateGecko(boolean update, boolean force) {
+    public void setUpdateGecko(boolean update) {
         if (!onIcThread()) {
             // Android may be holding an old InputConnection; ignore
             if (DEBUG) {
@@ -580,7 +584,7 @@ final class GeckoEditable
             return;
         }
         if (update) {
-            icUpdateGecko(force);
+            icUpdateGecko(false);
         }
         mUpdateGecko = update;
     }
@@ -669,7 +673,11 @@ final class GeckoEditable
             // GeckoEditableListener methods should all be called from the Gecko thread
             ThreadUtils.assertOnGeckoThread();
         }
+
         final Action action = mActionQueue.peek();
+        if (action == null) {
+            throw new IllegalStateException("empty actions queue");
+        }
 
         if (DEBUG) {
             Log.d(LOGTAG, "reply: Action(" +
@@ -721,6 +729,46 @@ final class GeckoEditable
         }
     }
 
+    private void notifyCommitComposition() {
+        // Gecko already committed its composition, and
+        // we should remove the composition on our side as well.
+        boolean wasComposing = false;
+        final Object[] spans = mText.getSpans(0, mText.length(), Object.class);
+
+        for (Object span : spans) {
+            if ((mText.getSpanFlags(span) & Spanned.SPAN_COMPOSING) != 0) {
+                mText.removeSpan(span);
+                wasComposing = true;
+            }
+        }
+
+        if (!wasComposing) {
+            return;
+        }
+
+        // Generate a text change notification if we actually cleared the composition.
+        final CharSequence text = TextUtils.stringOrSpannedString(mText);
+        geckoPostToIc(new Runnable() {
+            @Override
+            public void run() {
+                mListener.onTextChange(text, 0, text.length(), text.length());
+            }
+        });
+    }
+
+    private void notifyCancelComposition() {
+        // Composition should have been cancelled on our side
+        // through text update notifications; verify that here.
+        if (DEBUG) {
+            final Object[] spans = mText.getSpans(0, mText.length(), Object.class);
+            for (Object span : spans) {
+                if ((mText.getSpanFlags(span) & Spanned.SPAN_COMPOSING) != 0) {
+                    throw new IllegalStateException("composition not cancelled");
+                }
+            }
+        }
+    }
+
     @Override
     public void notifyIME(final int type) {
         if (DEBUG) {
@@ -733,10 +781,11 @@ final class GeckoEditable
                               ")");
             }
         }
+
         if (type == NOTIFY_IME_REPLY_EVENT) {
             try {
-                if (mFocused) {
-                    // When mFocused is false, the reply is for a stale action,
+                if (mGeckoFocused) {
+                    // When mGeckoFocused is false, the reply is for a stale action,
                     // and we should not do anything
                     geckoActionReply();
                 } else if (DEBUG) {
@@ -748,22 +797,34 @@ final class GeckoEditable
                 mActionQueue.poll();
             }
             return;
+        } else if (type == NOTIFY_IME_TO_COMMIT_COMPOSITION) {
+            notifyCommitComposition();
+            return;
+        } else if (type == NOTIFY_IME_TO_CANCEL_COMPOSITION) {
+            notifyCancelComposition();
+            return;
         }
+
         geckoPostToIc(new Runnable() {
             @Override
             public void run() {
-                if (type == NOTIFY_IME_OF_BLUR) {
-                    mFocused = false;
-                } else if (type == NOTIFY_IME_OF_FOCUS) {
+                if (type == NOTIFY_IME_OF_FOCUS) {
                     mFocused = true;
                     // Unmask events on the Gecko side
                     mActionQueue.offer(new Action(Action.TYPE_ACKNOWLEDGE_FOCUS));
                 }
+
                 // Make sure there are no other things going on. If we sent
                 // GeckoEvent.IME_ACKNOWLEDGE_FOCUS, this line also makes us
                 // wait for Gecko to update us on the newly focused content
                 mActionQueue.syncWithGecko();
                 mListener.notifyIME(type);
+
+                // Unset mFocused after we call syncWithGecko because
+                // syncWithGecko becomes a no-op when mFocused is false.
+                if (type == NOTIFY_IME_OF_BLUR) {
+                    mFocused = false;
+                }
             }
         });
 
@@ -829,8 +890,8 @@ final class GeckoEditable
         /* An event (keypress, etc.) has potentially changed the selection,
            synchronize the selection here. There is not a race with the IC thread
            because the IC thread should be blocked on the event action */
-        if (!mActionQueue.isEmpty() &&
-            mActionQueue.peek().mType == Action.TYPE_EVENT) {
+        final Action action = mActionQueue.peek();
+        if (action != null && action.mType == Action.TYPE_EVENT) {
             Selection.setSelection(mText, start, end);
             return;
         }
@@ -863,6 +924,11 @@ final class GeckoEditable
         mText.insert(start, newText);
     }
 
+    private boolean isSameText(int start, int oldEnd, CharSequence newText) {
+        return oldEnd - start == newText.length() &&
+               TextUtils.regionMatches(mText, start, newText, 0, oldEnd - start);
+    }
+
     @Override
     public void onTextChange(final CharSequence text, final int start,
                       final int unboundedOldEnd, final int unboundedNewEnd) {
@@ -891,6 +957,7 @@ final class GeckoEditable
             throw new IllegalArgumentException("newEnd does not match text");
         }
         final int newEnd = start + text.length();
+        final Action action = mActionQueue.peek();
 
         /* Text changes affect the selection as well, and we may not receive another selection
            update as a result of selection notification masking on the Gecko side; therefore,
@@ -898,15 +965,19 @@ final class GeckoEditable
            to increment the seqno here as well */
         ++mGeckoUpdateSeqno;
 
-        mChangedText.clearSpans();
-        mChangedText.replace(0, mChangedText.length(), text);
-        // Preserve as many spans as possible
-        TextUtils.copySpansFrom(mText, start, Math.min(oldEnd, newEnd),
-                                Object.class, mChangedText, 0);
+        if (action != null && action.mType == Action.TYPE_ACKNOWLEDGE_FOCUS) {
+            // Simply replace the text for newly-focused editors.
+            mText.replace(0, mText.length(), text);
 
-        if (!mActionQueue.isEmpty()) {
-            final Action action = mActionQueue.peek();
-            if ((action.mType == Action.TYPE_REPLACE_TEXT ||
+        } else {
+            mChangedText.clearSpans();
+            mChangedText.replace(0, mChangedText.length(), text);
+            // Preserve as many spans as possible
+            TextUtils.copySpansFrom(mText, start, Math.min(oldEnd, newEnd),
+                                    Object.class, mChangedText, 0);
+
+            if (action != null &&
+                    (action.mType == Action.TYPE_REPLACE_TEXT ||
                     action.mType == Action.TYPE_COMPOSE_TEXT) &&
                     start <= action.mStart &&
                     action.mStart + action.mSequence.length() <= newEnd) {
@@ -938,12 +1009,18 @@ final class GeckoEditable
                     mText.setSpan(Selection.SELECTION_END, selEnd, selEnd,
                                   Spanned.SPAN_POINT_POINT);
                 }
+
             } else {
+                // Gecko side initiated the text change.
+                if (isSameText(start, oldEnd, mChangedText)) {
+                    // Nothing to do because the text is the same.
+                    // This could happen when the composition is updated for example.
+                    return;
+                }
                 geckoReplaceText(start, oldEnd, mChangedText);
             }
-        } else {
-            geckoReplaceText(start, oldEnd, mChangedText);
         }
+
         geckoPostToIc(new Runnable() {
             @Override
             public void run() {

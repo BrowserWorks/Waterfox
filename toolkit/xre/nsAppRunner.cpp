@@ -23,7 +23,9 @@
 
 #include "nsAppRunner.h"
 #include "mozilla/AppData.h"
+#if defined(MOZ_UPDATER) && !defined(MOZ_WIDGET_ANDROID)
 #include "nsUpdateDriver.h"
+#endif
 #include "ProfileReset.h"
 
 #ifdef MOZ_INSTRUMENT_EVENT_LOOP
@@ -55,6 +57,7 @@
 #include "nsICommandLineRunner.h"
 #include "nsIComponentManager.h"
 #include "nsIComponentRegistrar.h"
+#include "nsIConsoleService.h"
 #include "nsIContentHandler.h"
 #include "nsIDialogParamBlock.h"
 #include "nsIDOMWindow.h"
@@ -92,11 +95,10 @@
 #ifdef XP_WIN
 #include "nsIWinAppHelper.h"
 #include <windows.h>
+#include <intrin.h>
+#include <math.h>
 #include "cairo/cairo-features.h"
 #include "mozilla/WindowsVersion.h"
-#ifdef MOZ_METRO
-#include <roapi.h>
-#endif
 
 #ifndef PROCESS_DEP_ENABLE
 #define PROCESS_DEP_ENABLE 0x1
@@ -105,6 +107,9 @@
 
 #ifdef ACCESSIBILITY
 #include "nsAccessibilityService.h"
+#if defined(XP_WIN)
+#include "mozilla/a11y/Compatibility.h"
+#endif
 #endif
 
 #include "nsCRT.h"
@@ -124,10 +129,6 @@
 #include "nsXULAppAPI.h"
 #include "nsXREDirProvider.h"
 #include "nsToolkitCompsCID.h"
-
-#if defined(XP_WIN) && defined(MOZ_METRO)
-#include "updatehelper.h"
-#endif
 
 #include "nsINIParser.h"
 #include "mozilla/Omnijar.h"
@@ -574,16 +575,12 @@ ProcessDDE(nsINativeAppSupport* aNative, bool aWait)
 /**
  * Determines if there is support for showing the profile manager
  *
- * @return true in all environments except for Windows Metro
+ * @return true in all environments
 */
 static bool
 CanShowProfileManager()
 {
-#if defined(XP_WIN)
-  return XRE_GetWindowsEnvironment() == WindowsEnvironmentType_Desktop;
-#else
   return true;
-#endif
 }
 
 bool gSafeMode = false;
@@ -593,7 +590,7 @@ bool gSafeMode = false;
  * singleton.
  */
 class nsXULAppInfo : public nsIXULAppInfo,
-#ifdef NIGHTLY_BUILD
+#ifdef E10S_TESTING_ONLY
                      public nsIObserver,
 #endif
 #ifdef XP_WIN
@@ -611,7 +608,7 @@ public:
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_NSIXULAPPINFO
   NS_DECL_NSIXULRUNTIME
-#ifdef NIGHTLY_BUILD
+#ifdef E10S_TESTING_ONLY
   NS_DECL_NSIOBSERVER
 #endif
 #ifdef MOZ_CRASHREPORTER
@@ -626,7 +623,7 @@ public:
 NS_INTERFACE_MAP_BEGIN(nsXULAppInfo)
   NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIXULRuntime)
   NS_INTERFACE_MAP_ENTRY(nsIXULRuntime)
-#ifdef NIGHTLY_BUILD
+#ifdef E10S_TESTING_ONLY
   NS_INTERFACE_MAP_ENTRY(nsIObserver)
 #endif
 #ifdef XP_WIN
@@ -832,7 +829,7 @@ static bool gBrowserTabsRemoteAutostart = false;
 static nsString gBrowserTabsRemoteDisabledReason;
 static bool gBrowserTabsRemoteAutostartInitialized = false;
 
-#ifdef NIGHTLY_BUILD
+#ifdef E10S_TESTING_ONLY
 NS_IMETHODIMP
 nsXULAppInfo::Observe(nsISupports *aSubject, const char *aTopic, const char16_t *aData) {
   if (!nsCRT::strcmp(aTopic, "getE10SBlocked")) {
@@ -867,17 +864,20 @@ nsXULAppInfo::GetAccessibilityEnabled(bool* aResult)
 }
 
 NS_IMETHODIMP
-nsXULAppInfo::GetAccessibilityIsUIA(bool* aResult)
+nsXULAppInfo::GetAccessibilityIsBlacklistedForE10S(bool* aResult)
 {
   *aResult = false;
-#if defined(ACCESSIBILITY) && defined(XP_WIN)
-  // This is the same check the a11y service does to identify uia clients.
-  if (GetAccService() != nullptr &&
-      (::GetModuleHandleW(L"uiautomation") ||
-       ::GetModuleHandleW(L"uiautomationcore"))) {
+#if defined(ACCESSIBILITY)
+#if defined(XP_WIN)
+  if (GetAccService() && mozilla::a11y::Compatibility::IsBlacklistedForE10S()) {
+    *aResult = true;
+  }
+#elif defined(XP_MACOSX)
+  if (GetAccService()) {
     *aResult = true;
   }
 #endif
+#endif // defined(ACCESSIBILITY)
   return NS_OK;
 }
 
@@ -1624,8 +1624,8 @@ RemoteCommandLine(const char* aDesktopStartupID)
 
   ar = CheckArg("p", false, &profile, false);
   if (ar == ARG_BAD) {
-    PR_fprintf(PR_STDERR, "Error: argument -p requires a profile name\n");
-    return REMOTE_ARG_BAD;
+    // Leave it to the normal command line handling to handle this situation.
+    return REMOTE_NOT_FOUND;
   }
 
   const char *temp = nullptr;
@@ -2046,7 +2046,7 @@ ShowProfileManager(nsIToolkitProfileService* aProfileSvc,
       NS_ENSURE_SUCCESS(rv, rv);
 
       CopyUTF16toUTF8(profileNamePtr, profileName);
-      NS_Free(profileNamePtr);
+      free(profileNamePtr);
 
       lock->Unlock();
     }
@@ -2725,21 +2725,6 @@ static void MakeOrSetMinidumpPath(nsIFile* profD)
 const nsXREAppData* gAppData = nullptr;
 
 #ifdef MOZ_WIDGET_GTK
-#include "prlink.h"
-typedef void (*_g_set_application_name_fn)(const gchar *application_name);
-typedef void (*_gtk_window_set_auto_startup_notification_fn)(gboolean setting);
-
-static PRFuncPtr FindFunction(const char* aName)
-{
-  PRLibrary *lib = nullptr;
-  PRFuncPtr result = PR_FindFunctionSymbolAndLibrary(aName, &lib);
-  // Since the library was already loaded, we can safely unload it here.
-  if (lib) {
-    PR_UnloadLibrary(lib);
-  }
-  return result;
-}
-
 static void MOZ_gdk_display_close(GdkDisplay *display)
 {
 #if CLEANUP_MEMORY
@@ -2891,38 +2876,6 @@ static DWORD WINAPI InitDwriteBG(LPVOID lpdwThreadParam)
 bool fire_glxtest_process();
 #endif
 
-#if defined(XP_WIN) && defined(MOZ_METRO)
-#ifndef AHE_TYPE
-enum AHE_TYPE {
-  AHE_DESKTOP = 0,
-  AHE_IMMERSIVE = 1
-};
-#endif
-
-/*
- * The Windows launcher uses this value to decide what front end ui
- * to launch. We always launch the same ui unless the user
- * specifically asks to switch. Update the value on every startup
- * based on the environment requested.
- */
-void
-SetLastWinRunType(AHE_TYPE aType)
-{
-  HKEY key;
-  LONG result = RegOpenKeyExW(HKEY_CURRENT_USER,
-                              L"SOFTWARE\\Mozilla\\Firefox",
-                              0, KEY_WRITE, &key);
-  if (result != ERROR_SUCCESS) {
-    return;
-  }
-  DWORD value = (DWORD)aType;
-  result = RegSetValueEx(key, L"MetroLastAHE", 0, REG_DWORD,
-                         reinterpret_cast<LPBYTE>(&value),
-                         sizeof(DWORD));
-  RegCloseKey(key);
-}
-#endif // defined(XP_WIN) && defined(MOZ_METRO)
-
 #include "GeckoProfiler.h"
 
 // Encapsulates startup and shutdown state for XRE_main
@@ -3014,19 +2967,6 @@ XREMain::XRE_mainInit(bool* aExitFlag)
   // This call will cause a fork and the fork will terminate itself separately
   // from the usual shutdown sequence
   fire_glxtest_process();
-#endif
-
-#if defined(XP_WIN) && defined(MOZ_METRO)
-  // Don't remove this arg, we want to pass it on to nsUpdateDriver 
-  if (CheckArg("metro-update", false, nullptr, false) == ARG_FOUND ||
-      XRE_GetWindowsEnvironment() == WindowsEnvironmentType_Metro) {
-    // If we're doing a restart update that was initiated from metro land,
-    // we'll be running desktop to handle the actual update. Request that
-    // after the restart we launch into metro.
-    SetLastWinRunType(AHE_IMMERSIVE);
-  } else {
-    SetLastWinRunType(AHE_DESKTOP);
-  }
 #endif
 
   SetupErrorHandling(gArgv[0]);
@@ -3607,25 +3547,9 @@ XREMain::XRE_mainStartup(bool* aExitFlag)
   }
 #endif /* MOZ_WIDGET_GTK */
 #ifdef MOZ_X11
-  // Init X11 in thread-safe mode. Must be called prior to the first call to XOpenDisplay 
+  // Init X11 in thread-safe mode. Must be called prior to the first call to XOpenDisplay
   // (called inside gdk_display_open). This is a requirement for off main tread compositing.
-  // This is done only on X11 platforms if the environment variable MOZ_USE_OMTC is set so 
-  // as to avoid overhead when omtc is not used. 
-  //
-  // On nightly builds, we call this by default to enable OMTC for Electrolysis testing. On
-  // aurora, beta, and release builds, there is a small tpaint regression from enabling this
-  // call, so it sits behind an environment variable.
-  //
-  // An environment variable is used instead of a pref on X11 platforms because we start having 
-  // access to prefs long after the first call to XOpenDisplay which is hard to change due to 
-  // interdependencies in the initialization.
-# ifndef NIGHTLY_BUILD
-  if (PR_GetEnv("MOZ_USE_OMTC") ||
-      PR_GetEnv("MOZ_OMTC_ENABLED"))
-# endif
-  {
-    XInitThreads();
-  }
+  XInitThreads();
 #endif
 #if defined(MOZ_WIDGET_GTK)
   {
@@ -3669,17 +3593,8 @@ XREMain::XRE_mainStartup(bool* aExitFlag)
   }
 #endif
 #if defined(MOZ_WIDGET_GTK)
-  // g_set_application_name () is only defined in glib2.2 and higher.
-  _g_set_application_name_fn _g_set_application_name =
-    (_g_set_application_name_fn)FindFunction("g_set_application_name");
-  if (_g_set_application_name) {
-    _g_set_application_name(mAppData->name);
-  }
-  _gtk_window_set_auto_startup_notification_fn _gtk_window_set_auto_startup_notification =
-    (_gtk_window_set_auto_startup_notification_fn)FindFunction("gtk_window_set_auto_startup_notification");
-  if (_gtk_window_set_auto_startup_notification) {
-    _gtk_window_set_auto_startup_notification(false);
-  }
+  g_set_application_name(mAppData->name);
+  gtk_window_set_auto_startup_notification(false);
 
 #if (MOZ_WIDGET_GTK == 2)
   gtk_widget_set_default_colormap(gdk_rgb_get_colormap());
@@ -3717,7 +3632,7 @@ XREMain::XRE_mainStartup(bool* aExitFlag)
   }
 #endif
 
-#if defined(USE_MOZ_UPDATER)
+#if defined(MOZ_UPDATER) && !defined(MOZ_WIDGET_ANDROID)
   // Check for and process any available updates
   nsCOMPtr<nsIFile> updRoot;
   bool persistent;
@@ -3772,12 +3687,6 @@ XREMain::XRE_mainStartup(bool* aExitFlag)
     *aExitFlag = true;
     return 0;
   }
-#if defined(XP_WIN) && defined(MOZ_METRO)
-  if (CheckArg("metro-update", false) == ARG_FOUND) {
-    *aExitFlag = true;
-    return 0;
-  }
-#endif
 #endif
 
   rv = NS_NewToolkitProfileService(getter_AddRefs(mProfileSvc));
@@ -4198,6 +4107,17 @@ XREMain::XRE_main(int argc, char* argv[], const nsXREAppData* aAppData)
 
   NS_ENSURE_TRUE(aAppData, 2);
 
+#if defined(_MSC_VER) && _MSC_VER < 1900 && defined(_M_X64)
+  // Disable CRT use of FMA3 on non-AVX2 processors because of bug 1160148
+  int cpuid0[4] = {0};
+  int cpuid7[4] = {0};
+  __cpuid(cpuid0, 0); // Get the maximum supported CPUID function
+  __cpuid(cpuid7, 7); // AVX2 is function 7, subfunction 0, EBX, bit 5
+  if (cpuid0[0] < 7 || !(cpuid7[1] & 0x20)) {
+    _set_FMA3_enable(0);
+  }
+#endif
+
   // A initializer to initialize histogram collection, a chromium
   // thing used by Telemetry.
   mStatisticsRecorder = MakeUnique<base::StatisticsRecorder>();
@@ -4256,7 +4176,6 @@ XREMain::XRE_main(int argc, char* argv[], const nsXREAppData* aAppData)
   // Check for an application initiated restart.  This is one that
   // corresponds to nsIAppStartup.quit(eRestart)
   if (rv == NS_SUCCESS_RESTART_APP
-      || rv == NS_SUCCESS_RESTART_METRO_APP
       || rv == NS_SUCCESS_RESTART_APP_NOT_SAME_PROFILE) {
     appInitiatedRestart = true;
 
@@ -4301,12 +4220,6 @@ XREMain::XRE_main(int argc, char* argv[], const nsXREAppData* aAppData)
     MOZ_gdk_display_close(mGdkDisplay);
 #endif
 
-#if defined(MOZ_METRO) && defined(XP_WIN)
-    if (rv == NS_SUCCESS_RESTART_METRO_APP) {
-      LaunchDefaultMetroBrowser();
-      rv = NS_OK;
-    } else
-#endif
     {
       rv = LaunchChild(mNativeApp, true);
     }
@@ -4334,128 +4247,6 @@ XREMain::XRE_main(int argc, char* argv[], const nsXREAppData* aAppData)
   return NS_FAILED(rv) ? 1 : 0;
 }
 
-#if defined(MOZ_METRO) && defined(XP_WIN)
-extern bool XRE_MetroCoreApplicationRun();
-static XREMain* xreMainPtr;
-
-// must be called by the thread we want as the main thread
-nsresult
-XRE_metroStartup(bool runXREMain)
-{
-  nsresult rv;
-
-  // XXX This call, odly enough, will set this thread as
-  // the main thread. (see bug 1033358)
-  ScopedLogging log;
-
-  bool exit = false;
-  if (xreMainPtr->XRE_mainStartup(&exit) != 0 || exit)
-    return NS_ERROR_FAILURE;
-
-  // Start the real application
-  xreMainPtr->mScopedXPCOM = MakeUnique<ScopedXPCOMStartup>();
-  if (!xreMainPtr->mScopedXPCOM)
-    return NS_ERROR_FAILURE;
-
-  rv = xreMainPtr->mScopedXPCOM->Initialize();
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  if (runXREMain) {
-    rv = xreMainPtr->XRE_mainRun();
-    NS_ENSURE_SUCCESS(rv, rv);
-  }
-  return NS_OK;
-}
-
-void
-XRE_metroShutdown()
-{
-  xreMainPtr->mScopedXPCOM = nullptr;
-
-#ifdef MOZ_INSTRUMENT_EVENT_LOOP
-  mozilla::ShutdownEventTracing();
-#endif
-
-  // unlock the profile after ScopedXPCOMStartup object (xpcom) 
-  // has gone out of scope.  see bug #386739 for more details
-  xreMainPtr->mProfileLock->Unlock();
-  gProfileLock = nullptr;
-
-#ifdef MOZ_CRASHREPORTER
-  if (xreMainPtr->mAppData->flags & NS_XRE_ENABLE_CRASH_REPORTER)
-      CrashReporter::UnsetExceptionHandler();
-#endif
-
-  XRE_DeinitCommandLine();
-}
-
-class WinRTInitWrapper
-{
-public:
-  WinRTInitWrapper() {
-    mResult = ::RoInitialize(RO_INIT_MULTITHREADED);
-  }
-  ~WinRTInitWrapper() {
-    if (SUCCEEDED(mResult)) {
-      ::RoUninitialize();
-    }
-  }
-  HRESULT mResult;
-};
-
-int
-XRE_mainMetro(int argc, char* argv[], const nsXREAppData* aAppData)
-{
-  char aLocal;
-  GeckoProfilerInitRAII profilerGuard(&aLocal);
-
-  PROFILER_LABEL("Startup", "XRE_Main",
-    js::ProfileEntry::Category::OTHER);
-
-  mozilla::IOInterposerInit ioInterposerGuard;
-
-  nsresult rv = NS_OK;
-
-  xreMainPtr = new XREMain();
-  if (!xreMainPtr) {
-    return 1;
-  }
-
-  // Inits Winrt and COM underneath it.
-  WinRTInitWrapper wrap;
-
-  gArgc = argc;
-  gArgv = argv;
-
-  NS_ENSURE_TRUE(aAppData, 2);
-
-  xreMainPtr->mAppData = new ScopedAppData(aAppData);
-  if (!xreMainPtr->mAppData)
-    return 1;
-  // used throughout this file
-  gAppData = xreMainPtr->mAppData;
-
-  // init
-  bool exit = false;
-  if (xreMainPtr->XRE_mainInit(&exit) != 0 || exit)
-    return 1;
-
-  // Located in widget, will call back into XRE_metroStartup and
-  // XRE_metroShutdown above.
-  if (!XRE_MetroCoreApplicationRun()) {
-    return 1;
-  }
-
-  // XRE_metroShutdown should have already been called on the worker
-  // thread that called XRE_metroStartup.
-  NS_ASSERTION(!xreMainPtr->mScopedXPCOM,
-               "XPCOM Shutdown hasn't occured, and we are exiting.");
-  return 0;
-}
-
-void SetWindowsEnvironment(WindowsEnvironmentType aEnvID);
-#endif // MOZ_METRO || !defined(XP_WIN)
-
 void
 XRE_StopLateWriteChecks(void) {
   mozilla::StopLateWriteChecks();
@@ -4464,34 +4255,10 @@ XRE_StopLateWriteChecks(void) {
 int
 XRE_main(int argc, char* argv[], const nsXREAppData* aAppData, uint32_t aFlags)
 {
-#if !defined(MOZ_METRO) || !defined(XP_WIN)
   XREMain main;
   int result = main.XRE_main(argc, argv, aAppData);
   mozilla::RecordShutdownEndTimeStamp();
   return result;
-#else
-  if (aFlags == XRE_MAIN_FLAG_USE_METRO) {
-    SetWindowsEnvironment(WindowsEnvironmentType_Metro);
-  }
-
-  // Desktop
-  if (XRE_GetWindowsEnvironment() == WindowsEnvironmentType_Desktop) {
-    XREMain main;
-    int result = main.XRE_main(argc, argv, aAppData);
-    mozilla::RecordShutdownEndTimeStamp();
-    return result;
-  }
-
-  // Metro
-  NS_ASSERTION(XRE_GetWindowsEnvironment() == WindowsEnvironmentType_Metro,
-               "Unknown Windows environment");
-
-  SetLastWinRunType(AHE_IMMERSIVE);
-
-  int result = XRE_mainMetro(argc, argv, aAppData);
-  mozilla::RecordShutdownEndTimeStamp();
-  return result;
-#endif // MOZ_METRO || !defined(XP_WIN)
 }
 
 nsresult
@@ -4591,7 +4358,7 @@ XRE_IsParentProcess()
   return XRE_GetProcessType() == GeckoProcessType_Default;
 }
 
-#ifdef NIGHTLY_BUILD
+#ifdef E10S_TESTING_ONLY
 static void
 LogE10sBlockedReason(const char *reason) {
   gBrowserTabsRemoteDisabledReason.Assign(NS_ConvertASCIItoUTF16(reason));
@@ -4606,6 +4373,15 @@ LogE10sBlockedReason(const char *reason) {
 }
 #endif
 
+enum {
+  kE10sEnabledByUser = 0,
+  kE10sEnabledByDefault = 1,
+  kE10sDisabledByUser = 2,
+  // kE10sDisabledInSafeMode = 3, was removed in bug 1172491.
+  kE10sDisabledForAccessibility = 4,
+  kE10sDisabledForMacGfx = 5,
+};
+
 bool
 mozilla::BrowserTabsRemoteAutostart()
 {
@@ -4614,9 +4390,17 @@ mozilla::BrowserTabsRemoteAutostart()
   }
   gBrowserTabsRemoteAutostartInitialized = true;
   bool optInPref = Preferences::GetBool("browser.tabs.remote.autostart", false);
-  bool trialPref = Preferences::GetBool("browser.tabs.remote.autostart.1", false);
+  bool trialPref = Preferences::GetBool("browser.tabs.remote.autostart.2", false);
   bool prefEnabled = optInPref || trialPref;
-#if !defined(NIGHTLY_BUILD)
+  int status;
+  if (optInPref) {
+    status = kE10sEnabledByUser;
+  } else if (trialPref) {
+    status = kE10sEnabledByDefault;
+  } else {
+    status = kE10sDisabledByUser;
+  }
+#if !defined(E10S_TESTING_ONLY)
   // When running tests with 'layers.offmainthreadcomposition.testing.enabled' and
   // autostart set to true, return enabled.  These tests must be allowed to run
   // remotely. Otherwise remote isn't allowed in non-nightly builds.
@@ -4627,12 +4411,16 @@ mozilla::BrowserTabsRemoteAutostart()
 #else
   // Nightly builds, update gBrowserTabsRemoteAutostart based on all the
   // e10s remote relayed prefs we watch.
-  bool disabledForA11y = Preferences::GetBool("browser.tabs.remote.autostart.disabled-because-using-a11y", false);
+  bool disabledForA11y = Preferences::GetBool("browser.tabs.remote.disabled-for-a11y", false);
+  // Disable for VR
+  bool disabledForVR = Preferences::GetBool("dom.vr.enabled", false);
+
   if (prefEnabled) {
-    if (gSafeMode) {
-      LogE10sBlockedReason("Safe mode");
-    } else if (disabledForA11y) {
+    if (disabledForA11y) {
+      status = kE10sDisabledForAccessibility;
       LogE10sBlockedReason("An accessibility tool is or was active. See bug 1115956.");
+    } else if (disabledForVR) {
+      LogE10sBlockedReason("Experimental VR interfaces are enabled");
     } else {
       gBrowserTabsRemoteAutostart = true;
     }
@@ -4672,7 +4460,8 @@ mozilla::BrowserTabsRemoteAutostart()
     if (accelDisabled) {
       gBrowserTabsRemoteAutostart = false;
 
-#ifdef NIGHTLY_BUILD
+      status = kE10sDisabledForMacGfx;
+#ifdef E10S_TESTING_ONLY
       LogE10sBlockedReason("Hardware acceleration is disabled");
 #endif
     }
@@ -4680,6 +4469,7 @@ mozilla::BrowserTabsRemoteAutostart()
 #endif // defined(XP_MACOSX)
 
   mozilla::Telemetry::Accumulate(mozilla::Telemetry::E10S_AUTOSTART, gBrowserTabsRemoteAutostart);
+  mozilla::Telemetry::Accumulate(mozilla::Telemetry::E10S_AUTOSTART_STATUS, status);
   if (Preferences::GetBool("browser.enabledE10SFromPrompt", false)) {
     mozilla::Telemetry::Accumulate(mozilla::Telemetry::E10S_STILL_ACCEPTED_FROM_PROMPT,
                                     gBrowserTabsRemoteAutostart);

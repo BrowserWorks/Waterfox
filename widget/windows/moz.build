@@ -4,9 +4,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-if CONFIG['MOZ_METRO']:
-    DIRS += ['winrt']
-
 TEST_DIRS += ['tests']
 
 EXPORTS += [
@@ -23,6 +20,7 @@ UNIFIED_SOURCES += [
     'AudioSession.cpp',
     'GfxInfo.cpp',
     'IEnumFE.cpp',
+    'InkCollector.cpp',
     'JumpListItem.cpp',
     'KeyboardLayout.cpp',
     'nsAppShell.cpp',
@@ -65,6 +63,7 @@ SOURCES += [
     'nsBidiKeyboard.cpp',
     'nsFilePicker.cpp',
     'nsWidgetFactory.cpp',
+    'WindowsUIUtils.cpp',
     'WinMouseScrollHandler.cpp',
 ]
 
@@ -86,8 +85,6 @@ if CONFIG['NS_ENABLE_TSF']:
     ]
 
 FAIL_ON_WARNINGS = True
-
-MSVC_ENABLE_PGO = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

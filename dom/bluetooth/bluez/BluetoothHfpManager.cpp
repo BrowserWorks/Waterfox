@@ -1,5 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -80,6 +80,30 @@ namespace {
   StaticRefPtr<BluetoothHfpManager> sBluetoothHfpManager;
   bool sInShutdown = false;
   static const char kHfpCrlf[] = "\xd\xa";
+
+  // UUID of Handsfree Audio Gateway
+  static const BluetoothUuid kHandsfreeAG = {
+    {
+      0x00, 0x00, 0x11, 0x1F, 0x00, 0x00, 0x10, 0x00,
+      0x80, 0x00, 0x00, 0x80, 0x5F, 0x9B, 0x34, 0xFB
+    }
+  };
+
+  // UUID of Headset Audio Gateway
+  static const BluetoothUuid kHeadsetAG = {
+    {
+      0x00, 0x00, 0x11, 0x12, 0x00, 0x00, 0x10, 0x00,
+      0x80, 0x00, 0x00, 0x80, 0x5F, 0x9B, 0x34, 0xFB
+    }
+  };
+
+  // Unknown service UUID (for SCO socket)
+  static const BluetoothUuid kUnknownService = {
+    {
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00,
+      0x80, 0x00, 0x00, 0x80, 0x5F, 0x9B, 0x34, 0xFB
+    }
+  };
 
 #ifdef MOZ_B2G_RIL
   // Sending ringtone related
@@ -418,6 +442,8 @@ BluetoothHfpManager::Reset()
 bool
 BluetoothHfpManager::Init()
 {
+  // The function must run at b2g process since it would access SettingsService.
+  MOZ_ASSERT(IsMainProcess());
   MOZ_ASSERT(NS_IsMainThread());
 
   nsCOMPtr<nsIObserverService> obs = services::GetObserverService();
@@ -567,7 +593,8 @@ BluetoothHfpManager::HandleVolumeChanged(nsISupports* aSubject)
   //  {"key":"volumeup", "value":10}
   //  {"key":"volumedown", "value":2}
 
-  RootedDictionary<SettingChangeNotification> setting(nsContentUtils::RootingCx());
+  RootedDictionary<dom::SettingChangeNotification> setting(nsContentUtils::RootingCx());
+
   if (!WrappedJSToDictionary(aSubject, setting)) {
     return;
   }
@@ -716,7 +743,7 @@ BluetoothHfpManager::ParseAtCommand(const nsACString& aAtCommand,
 // Virtual function of class SocketConsumer
 void
 BluetoothHfpManager::ReceiveSocketData(BluetoothSocket* aSocket,
-                                       nsAutoPtr<UnixSocketRawData>& aMessage)
+                                       nsAutoPtr<UnixSocketBuffer>& aMessage)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aSocket);
@@ -1081,12 +1108,7 @@ BluetoothHfpManager::ReceiveSocketData(BluetoothSocket* aSocket,
     }
 #endif // MOZ_B2G_RIL
   } else {
-    nsCString warningMsg;
-    warningMsg.AppendLiteral("Unsupported AT command: ");
-    warningMsg.Append(msg);
-    warningMsg.AppendLiteral(", reply with ERROR");
-    BT_WARNING(warningMsg.get());
-
+    BT_WARNING("Unsupported AT command: %s, reply with ERROR", msg.get());
     SendLine("ERROR");
     return;
   }
@@ -1162,6 +1184,8 @@ BluetoothHfpManager::Listen()
       new BluetoothSocket(this, BluetoothSocketType::RFCOMM, true, true);
 
     if (!mHandsfreeSocket->Listen(
+          NS_LITERAL_STRING("Handsfree Audio Gateway"),
+          kHandsfreeAG,
           BluetoothReservedChannels::CHANNEL_HANDSFREE_AG)) {
       BT_WARNING("[HFP] Can't listen on RFCOMM socket!");
       mHandsfreeSocket = nullptr;
@@ -1174,6 +1198,8 @@ BluetoothHfpManager::Listen()
       new BluetoothSocket(this, BluetoothSocketType::RFCOMM, true, true);
 
     if (!mHeadsetSocket->Listen(
+          NS_LITERAL_STRING("Headset Audio Gateway"),
+          kHeadsetAG,
           BluetoothReservedChannels::CHANNEL_HEADSET_AG)) {
       BT_WARNING("[HSP] Can't listen on RFCOMM socket!");
       mHandsfreeSocket->Disconnect();
@@ -1654,7 +1680,7 @@ BluetoothHfpManager::HandleCallStateChanged(uint32_t aCallIndex,
           GetNumberOfCalls(nsITelephonyService::CALL_STATE_DISCONNECTED)) {
         // In order to let user hear busy tone via connected Bluetooth headset,
         // we postpone the timing of dropping SCO.
-        if (!(aError.EqualsLiteral("BusyError"))) {
+        if (!(aError.Equals(NS_LITERAL_STRING("BusyError")))) {
           DisconnectSco();
         } else {
           // Close Sco later since Dialer is still playing busy tone via HF.
@@ -1878,7 +1904,9 @@ BluetoothHfpManager::OnGetServiceChannel(const nsAString& aDeviceAddress,
 
   MOZ_ASSERT(mSocket);
 
-  if (!mSocket->Connect(NS_ConvertUTF16toUTF8(aDeviceAddress), aChannel)) {
+  if (!mSocket->Connect(aDeviceAddress,
+                        mIsHsp? kHeadsetAG : kHandsfreeAG,
+                        aChannel)) {
     OnConnect(NS_LITERAL_STRING(ERR_CONNECTION_FAILED));
   }
 }
@@ -1888,8 +1916,12 @@ BluetoothHfpManager::OnScoConnectSuccess()
 {
   // For active connection request, we need to reply the DOMRequest
   if (mScoRunnable) {
+#ifdef MOZ_B2G_BT_API_V2
+    DispatchReplySuccess(mScoRunnable);
+#else
     DispatchBluetoothReply(mScoRunnable,
                            BluetoothValue(true), EmptyString());
+#endif
     mScoRunnable = nullptr;
   }
 
@@ -1903,9 +1935,13 @@ void
 BluetoothHfpManager::OnScoConnectError()
 {
   if (mScoRunnable) {
+#ifdef MOZ_B2G_BT_API_V2
+    DispatchReplyError(mScoRunnable,
+                       NS_LITERAL_STRING("Failed to create SCO socket!"));
+#else
     NS_NAMED_LITERAL_STRING(replyError, "Failed to create SCO socket!");
     DispatchBluetoothReply(mScoRunnable, BluetoothValue(), replyError);
-
+#endif
     mScoRunnable = nullptr;
   }
 
@@ -1966,7 +2002,7 @@ BluetoothHfpManager::ConnectSco(BluetoothReplyRunnable* aRunnable)
   // Stop listening
   mScoSocket->Disconnect();
 
-  mScoSocket->Connect(NS_ConvertUTF16toUTF8(mDeviceAddress), -1);
+  mScoSocket->Connect(mDeviceAddress, kUnknownService, -1);
   mScoSocketStatus = mScoSocket->GetConnectionStatus();
 
   mScoRunnable = aRunnable;
@@ -2003,7 +2039,8 @@ BluetoothHfpManager::ListenSco()
 
   mScoSocket->Disconnect();
 
-  if (!mScoSocket->Listen(-1)) {
+  if (!mScoSocket->Listen(NS_LITERAL_STRING("Handsfree Audio Gateway SCO"),
+                          kUnknownService, -1)) {
     BT_WARNING("Can't listen on SCO socket!");
     return false;
   }

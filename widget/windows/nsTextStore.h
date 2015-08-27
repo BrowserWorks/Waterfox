@@ -38,10 +38,6 @@ struct ITfDocumentMgr;
 struct ITfDisplayAttributeMgr;
 struct ITfCategoryMgr;
 class nsWindow;
-#ifdef MOZ_METRO
-class MetroWidget;
-#endif
-class TSFStaticSink;
 
 namespace mozilla {
 namespace widget {
@@ -297,7 +293,7 @@ protected:
   // application.  Otherwise, this does nothing.
   void     CreateNativeCaret();
 
-  // Holds the pointer to our current win32 or metro widget
+  // Holds the pointer to our current win32 widget
   nsRefPtr<nsWindowBase>       mWidget;
   // Document manager for the currently focused editor
   nsRefPtr<ITfDocumentMgr>     mDocumentMgr;

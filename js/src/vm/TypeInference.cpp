@@ -643,6 +643,9 @@ ConstraintTypeSet::addType(ExclusiveContext* cxArg, Type type)
 void
 TypeSet::print(FILE* fp)
 {
+    if (!fp)
+        fp = stderr;
+
     if (flags & TYPE_FLAG_NON_DATA_PROPERTY)
         fprintf(fp, " [non-data]");
 
@@ -709,16 +712,16 @@ TypeSet::readBarrier(const TypeSet* types)
 }
 
 /* static */ bool
-TypeSet::IsTypeMarkedFromAnyThread(TypeSet::Type* v)
+TypeSet::IsTypeMarked(TypeSet::Type* v)
 {
     bool rv;
     if (v->isSingletonUnchecked()) {
         JSObject* obj = v->singletonNoBarrier();
-        rv = IsObjectMarkedFromAnyThread(&obj);
+        rv = IsMarkedUnbarriered(&obj);
         *v = TypeSet::ObjectType(obj);
     } else if (v->isGroupUnchecked()) {
         ObjectGroup* group = v->groupNoBarrier();
-        rv = IsObjectGroupMarkedFromAnyThread(&group);
+        rv = IsMarkedUnbarriered(&group);
         *v = TypeSet::ObjectType(group);
     } else {
         rv = true;
@@ -749,13 +752,13 @@ IsObjectKeyAboutToBeFinalized(TypeSet::ObjectKey** keyp)
     bool isAboutToBeFinalized;
     if (key->isGroup()) {
         ObjectGroup* group = key->groupNoBarrier();
-        isAboutToBeFinalized = IsObjectGroupAboutToBeFinalized(&group);
+        isAboutToBeFinalized = IsAboutToBeFinalizedUnbarriered(&group);
         if (!isAboutToBeFinalized)
             *keyp = TypeSet::ObjectKey::get(group);
     } else {
         MOZ_ASSERT(key->isSingleton());
         JSObject* singleton = key->singletonNoBarrier();
-        isAboutToBeFinalized = IsObjectAboutToBeFinalized(&singleton);
+        isAboutToBeFinalized = IsAboutToBeFinalizedUnbarriered(&singleton);
         if (!isAboutToBeFinalized)
             *keyp = TypeSet::ObjectKey::get(singleton);
     }
@@ -1294,7 +1297,7 @@ class TypeConstraintFreezeStack : public TypeConstraint
     }
 
     bool sweep(TypeZone& zone, TypeConstraint** res) {
-        if (IsScriptAboutToBeFinalized(&script_))
+        if (IsAboutToBeFinalizedUnbarriered(&script_))
             return false;
         *res = zone.typeLifoAlloc.new_<TypeConstraintFreezeStack>(script_);
         return true;
@@ -1815,7 +1818,7 @@ class ConstraintDataFreezeObjectForTypedArrayData
 
     bool shouldSweep() {
         // Note: |viewData| is only used for equality testing.
-        return IsObjectAboutToBeFinalized(&obj);
+        return IsAboutToBeFinalizedUnbarriered(&obj);
     }
 };
 
@@ -2381,6 +2384,8 @@ TemporaryTypeSet::propertyNeedsBarrier(CompilerConstraintList* constraints, jsid
 bool
 js::ClassCanHaveExtraProperties(const Class* clasp)
 {
+    if (clasp == &UnboxedPlainObject::class_ || clasp == &UnboxedArrayObject::class_)
+        return false;
     return clasp->resolve
         || clasp->ops.lookupProperty
         || clasp->ops.getProperty
@@ -3058,7 +3063,7 @@ class TypeConstraintClearDefiniteGetterSetter : public TypeConstraint
     void newType(JSContext* cx, TypeSet* source, TypeSet::Type type) {}
 
     bool sweep(TypeZone& zone, TypeConstraint** res) {
-        if (IsObjectGroupAboutToBeFinalized(&group))
+        if (IsAboutToBeFinalizedUnbarriered(&group))
             return false;
         *res = zone.typeLifoAlloc.new_<TypeConstraintClearDefiniteGetterSetter>(group);
         return true;
@@ -3109,7 +3114,7 @@ class TypeConstraintClearDefiniteSingle : public TypeConstraint
     }
 
     bool sweep(TypeZone& zone, TypeConstraint** res) {
-        if (IsObjectGroupAboutToBeFinalized(&group))
+        if (IsAboutToBeFinalizedUnbarriered(&group))
             return false;
         *res = zone.typeLifoAlloc.new_<TypeConstraintClearDefiniteSingle>(group);
         return true;
@@ -3329,7 +3334,7 @@ PreliminaryObjectArray::sweep()
     // destroyed.
     for (size_t i = 0; i < COUNT; i++) {
         JSObject** ptr = &objects[i];
-        if (*ptr && IsObjectAboutToBeFinalized(ptr))
+        if (*ptr && IsAboutToBeFinalizedUnbarriered(ptr))
             *ptr = nullptr;
     }
 }
@@ -3337,16 +3342,19 @@ PreliminaryObjectArray::sweep()
 void
 PreliminaryObjectArrayWithTemplate::trace(JSTracer* trc)
 {
-    MarkShape(trc, &shape_, "PreliminaryObjectArrayWithTemplate_shape");
+    if (shape_)
+        TraceEdge(trc, &shape_, "PreliminaryObjectArrayWithTemplate_shape");
 }
 
 /* static */ void
 PreliminaryObjectArrayWithTemplate::writeBarrierPre(PreliminaryObjectArrayWithTemplate* objects)
 {
-    if (!objects->shape()->runtimeFromAnyThread()->needsIncrementalBarrier())
+    Shape* shape = objects->shape();
+
+    if (!shape || !shape->runtimeFromAnyThread()->needsIncrementalBarrier())
         return;
 
-    JS::Zone* zone = objects->shape()->zoneFromAnyThread();
+    JS::Zone* zone = shape->zoneFromAnyThread();
     if (zone->needsIncrementalBarrier())
         objects->trace(zone->barrierTracer());
 }
@@ -3406,33 +3414,37 @@ PreliminaryObjectArrayWithTemplate::maybeAnalyze(ExclusiveContext* cx, ObjectGro
     ScopedJSDeletePtr<PreliminaryObjectArrayWithTemplate> preliminaryObjects(this);
     group->detachPreliminaryObjects();
 
-    MOZ_ASSERT(shape()->slotSpan() != 0);
-    MOZ_ASSERT(OnlyHasDataProperties(shape()));
+    if (shape()) {
+        MOZ_ASSERT(shape()->slotSpan() != 0);
+        MOZ_ASSERT(OnlyHasDataProperties(shape()));
 
-    // Make sure all the preliminary objects reflect the properties originally
-    // in the template object.
-    for (size_t i = 0; i < PreliminaryObjectArray::COUNT; i++) {
-        JSObject* objBase = preliminaryObjects->get(i);
-        if (!objBase)
-            continue;
-        PlainObject* obj = &objBase->as<PlainObject>();
+        // Make sure all the preliminary objects reflect the properties originally
+        // in the template object.
+        for (size_t i = 0; i < PreliminaryObjectArray::COUNT; i++) {
+            JSObject* objBase = preliminaryObjects->get(i);
+            if (!objBase)
+                continue;
+            PlainObject* obj = &objBase->as<PlainObject>();
 
-        if (obj->inDictionaryMode() || !OnlyHasDataProperties(obj->lastProperty()))
-            return;
+            if (obj->inDictionaryMode() || !OnlyHasDataProperties(obj->lastProperty()))
+                return;
 
-        if (CommonPrefix(obj->lastProperty(), shape()) != shape())
-            return;
+            if (CommonPrefix(obj->lastProperty(), shape()) != shape())
+                return;
+        }
     }
 
     TryConvertToUnboxedLayout(cx, shape(), group, preliminaryObjects);
     if (group->maybeUnboxedLayout())
         return;
 
-    // We weren't able to use an unboxed layout, but since the preliminary
-    // still reflect the template object's properties, and all objects in the
-    // future will be created with those properties, the properties can be
-    // marked as definite for objects in the group.
-    group->addDefiniteProperties(cx, shape());
+    if (shape()) {
+        // We weren't able to use an unboxed layout, but since the preliminary
+        // still reflect the template object's properties, and all objects in the
+        // future will be created with those properties, the properties can be
+        // marked as definite for objects in the group.
+        group->addDefiniteProperties(cx, shape());
+    }
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -3647,8 +3659,7 @@ TypeNewScript::maybeAnalyze(JSContext* cx, ObjectGroup* group, bool* regenerate,
     }
 
     RootedObjectGroup groupRoot(cx, group);
-    templateObject_ = NewObjectWithGroup<PlainObject>(cx, groupRoot, kind,
-                                                      MaybeSingletonObject);
+    templateObject_ = NewObjectWithGroup<PlainObject>(cx, groupRoot, kind, TenuredObject);
     if (!templateObject_)
         return false;
 
@@ -3880,16 +3891,16 @@ TypeNewScript::rollbackPartiallyInitializedObjects(JSContext* cx, ObjectGroup* g
 void
 TypeNewScript::trace(JSTracer* trc)
 {
-    MarkObject(trc, &function_, "TypeNewScript_function");
+    TraceEdge(trc, &function_, "TypeNewScript_function");
 
     if (templateObject_)
-        MarkObject(trc, &templateObject_, "TypeNewScript_templateObject");
+        TraceEdge(trc, &templateObject_, "TypeNewScript_templateObject");
 
     if (initializedShape_)
-        MarkShape(trc, &initializedShape_, "TypeNewScript_initializedShape");
+        TraceEdge(trc, &initializedShape_, "TypeNewScript_initializedShape");
 
     if (initializedGroup_)
-        MarkObjectGroup(trc, &initializedGroup_, "TypeNewScript_initializedGroup");
+        TraceEdge(trc, &initializedGroup_, "TypeNewScript_initializedGroup");
 }
 
 /* static */ void
@@ -4062,7 +4073,7 @@ ObjectGroup::maybeSweep(AutoClearTypeInferenceStateOnOOM* oom)
         // Remove unboxed layouts that are about to be finalized from the
         // compartment wide list while we are still on the main thread.
         ObjectGroup* group = this;
-        if (IsObjectGroupAboutToBeFinalized(&group))
+        if (IsAboutToBeFinalizedUnbarriered(&group))
             unboxedLayout().detachFromCompartment();
 
         if (unboxedLayout().newScript())
@@ -4241,7 +4252,7 @@ TypeZone::beginSweep(FreeOp* fop, bool releaseTypes, AutoClearTypeInferenceState
             CompilerOutput& output = (*compilerOutputs)[i];
             if (output.isValid()) {
                 JSScript* script = output.script();
-                if (IsScriptAboutToBeFinalized(&script)) {
+                if (IsAboutToBeFinalizedUnbarriered(&script)) {
                     script->ionScript()->recompileInfoRef() = RecompileInfo();
                     output.invalidate();
                 } else {
@@ -4287,7 +4298,7 @@ TypeZone::clearAllNewScriptsOnOOM()
          !iter.done(); iter.next())
     {
         ObjectGroup* group = iter.get<ObjectGroup>();
-        if (!IsObjectGroupAboutToBeFinalized(&group))
+        if (!IsAboutToBeFinalizedUnbarriered(&group))
             group->maybeClearNewScriptOnOOM();
     }
 }

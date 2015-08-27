@@ -17,7 +17,6 @@
 #include "nsAString.h"
 #include "nsRefPtr.h"                   // for nsRefPtr
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_CTOR, etc
-#include "nsPoint.h"                    // for nsIntPoint
 #include "nsString.h"                   // for nsAutoCString
 #include "gfxVR.h"
 
@@ -81,7 +80,7 @@ CanvasLayerComposite::GetRenderState()
 }
 
 void
-CanvasLayerComposite::RenderLayer(const nsIntRect& aClipRect)
+CanvasLayerComposite::RenderLayer(const IntRect& aClipRect)
 {
   if (!mImageHost || !mImageHost->IsAttached()) {
     return;

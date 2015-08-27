@@ -23,8 +23,6 @@ namespace mozilla {
 namespace gfx {
 
 class SourceSurfaceD2D1;
-class GradientStopsD2D;
-class ScaledFontDWrite;
 
 const int32_t kLayerCacheSize1 = 5;
 
@@ -181,14 +179,15 @@ private:
 
   void PopAllClips();
   void PushAllClips();
-  void PushClipsToDC(ID2D1DeviceContext *aDC);
+  void PushClipsToDC(ID2D1DeviceContext *aDC, bool aForceIgnoreAlpha = false, const D2D1_RECT_F& aMaxRect = D2D1::InfiniteRect());
   void PopClipsFromDC(ID2D1DeviceContext *aDC);
 
   TemporaryRef<ID2D1Brush> CreateTransparentBlackBrush();
   TemporaryRef<ID2D1SolidColorBrush> GetSolidColorBrush(const D2D_COLOR_F& aColor);
   TemporaryRef<ID2D1Brush> CreateBrushForPattern(const Pattern &aPattern, Float aAlpha = 1.0f);
 
-  void PushD2DLayer(ID2D1DeviceContext *aDC, ID2D1Geometry *aGeometry, const D2D1_MATRIX_3X2_F &aTransform);
+  void PushD2DLayer(ID2D1DeviceContext *aDC, ID2D1Geometry *aGeometry, const D2D1_MATRIX_3X2_F &aTransform,
+                    bool aForceIgnoreAlpha = false, const D2D1_RECT_F& aLayerRect = D2D1::InfiniteRect());
 
   IntSize mSize;
 

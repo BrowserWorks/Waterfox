@@ -3,8 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mp4_demuxer/Adts.h"
-#include "mp4_demuxer/DecoderData.h"
-#include "media/stagefright/MediaBuffer.h"
+#include "MediaData.h"
 #include "mozilla/Array.h"
 #include "mozilla/ArrayUtils.h"
 
@@ -14,14 +13,14 @@ namespace mp4_demuxer
 {
 
 int8_t
-Adts::GetFrequencyIndex(uint16_t aSamplesPerSecond)
+Adts::GetFrequencyIndex(uint32_t aSamplesPerSecond)
 {
-  static const int freq_lookup[] = { 96000, 88200, 64000, 48000, 44100,
-                                     32000, 24000, 22050, 16000, 12000,
-                                     11025, 8000,  7350,  0 };
+  static const uint32_t freq_lookup[] = { 96000, 88200, 64000, 48000, 44100,
+                                          32000, 24000, 22050, 16000, 12000,
+                                          11025, 8000,  7350,  0};
 
   int8_t i = 0;
-  while (aSamplesPerSecond < freq_lookup[i]) {
+  while (freq_lookup[i] && aSamplesPerSecond < freq_lookup[i]) {
     i++;
   }
 
@@ -34,11 +33,11 @@ Adts::GetFrequencyIndex(uint16_t aSamplesPerSecond)
 
 bool
 Adts::ConvertSample(uint16_t aChannelCount, int8_t aFrequencyIndex,
-                    int8_t aProfile, MP4Sample* aSample)
+                    int8_t aProfile, MediaRawData* aSample)
 {
   static const int kADTSHeaderSize = 7;
 
-  size_t newSize = aSample->size + kADTSHeaderSize;
+  size_t newSize = aSample->mSize + kADTSHeaderSize;
 
   // ADTS header uses 13 bits for packet size.
   if (newSize >= (1 << 13) || aChannelCount > 15 ||
@@ -56,16 +55,17 @@ Adts::ConvertSample(uint16_t aChannelCount, int8_t aFrequencyIndex,
   header[5] = ((newSize & 7) << 5) + 0x1f;
   header[6] = 0xfc;
 
-  if (!aSample->Prepend(&header[0], ArrayLength(header))) {
+  nsAutoPtr<MediaRawDataWriter> writer(aSample->CreateWriter());
+  if (!writer->Prepend(&header[0], ArrayLength(header))) {
     return false;
   }
 
-  if (aSample->crypto.valid) {
-    if (aSample->crypto.plain_sizes.Length() == 0) {
-      aSample->crypto.plain_sizes.AppendElement(kADTSHeaderSize);
-      aSample->crypto.encrypted_sizes.AppendElement(aSample->size - kADTSHeaderSize);
+  if (aSample->mCrypto.mValid) {
+    if (aSample->mCrypto.mPlainSizes.Length() == 0) {
+      writer->mCrypto.mPlainSizes.AppendElement(kADTSHeaderSize);
+      writer->mCrypto.mEncryptedSizes.AppendElement(aSample->mSize - kADTSHeaderSize);
     } else {
-      aSample->crypto.plain_sizes[0] += kADTSHeaderSize;
+      writer->mCrypto.mPlainSizes[0] += kADTSHeaderSize;
     }
   }
 

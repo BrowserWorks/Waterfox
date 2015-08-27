@@ -140,6 +140,9 @@ protected:
   bool RecvDivertMessages() override;
   bool RecvDeleteSelf() override;
 
+  bool RecvReportSecurityMessage(const nsString& messageTag,
+                                 const nsString& messageCategory) override;
+
   bool GetAssociatedContentSecurity(nsIAssociatedContentSecurity** res = nullptr);
   virtual void DoNotifyListenerCleanup() override;
 
@@ -159,7 +162,9 @@ private:
 
   // Override this channel's pending response with a synthesized one. The content will be
   // asynchronously read from the pump.
-  void OverrideWithSynthesizedResponse(nsAutoPtr<nsHttpResponseHead>& aResponseHead, nsInputStreamPump* aPump, int64_t aStreamLength);
+  void OverrideWithSynthesizedResponse(nsAutoPtr<nsHttpResponseHead>& aResponseHead,
+                                       nsIInputStream* aSynthesizedInput,
+                                       nsIStreamListener* aStreamListener);
 
   RequestHeaderTuples mClientSetRequestHeaders;
   nsCOMPtr<nsIChildChannel> mRedirectChannelChild;

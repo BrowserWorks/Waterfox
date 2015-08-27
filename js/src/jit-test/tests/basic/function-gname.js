@@ -11,8 +11,8 @@ function hasGname(f, v) {
     try {
 	var b = bytecode(f);
 	if (b != "unavailable") {
-	    assertEq(b.contains(`getgname "${v}"`), true);
-	    assertEq(b.contains(`getname "${v}"`), false);
+	    assertEq(b.includes(`getgname "${v}"`), true);
+	    assertEq(b.includes(`getname "${v}"`), false);
 	}
     } catch (e) {
 	print(e.stack);
@@ -26,11 +26,11 @@ var f1 = new Function("assertEq(x, 'outer')");
 f1();
 hasGname(f1, 'x');
 
-setLazyParsingEnabled(false);
+setLazyParsingDisabled(true);
 var f2 = new Function("assertEq(x, 'outer')");
 f2();
 hasGname(f2, 'x');
-setLazyParsingEnabled(true);
+setLazyParsingDisabled(false);
 
 {
     let x = "inner";
@@ -39,11 +39,11 @@ setLazyParsingEnabled(true);
     hasGname(f3, 'x');
 }
 
-setLazyParsingEnabled(false);
+setLazyParsingDisabled(true);
 {
     let x = "inner";
     var f4 = new Function("assertEq(x, 'outer')");
     f4();
     hasGname(f4, 'x');
 }
-setLazyParsingEnabled(true);
+setLazyParsingDisabled(false);

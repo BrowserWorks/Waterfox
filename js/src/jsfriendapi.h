@@ -92,12 +92,13 @@ extern JS_FRIEND_API(bool)
 JS_IsDeadWrapper(JSObject* obj);
 
 /*
- * Used by the cycle collector to trace through the shape and all
- * shapes it reaches, marking all non-shape children found in the
- * process. Uses bounded stack space.
+ * Used by the cycle collector to trace through a shape or object group and
+ * all cycle-participating data it reaches, using bounded stack space.
  */
 extern JS_FRIEND_API(void)
 JS_TraceShapeCycleCollectorChildren(JSTracer* trc, JS::GCCellPtr shape);
+extern JS_FRIEND_API(void)
+JS_TraceObjectGroupCycleCollectorChildren(JSTracer* trc, JS::GCCellPtr group);
 
 enum {
     JS_TELEMETRY_GC_REASON,
@@ -136,7 +137,6 @@ JS_GetScriptPrincipals(JSScript* script);
 
 extern JS_FRIEND_API(bool)
 JS_ScriptHasMutedErrors(JSScript* script);
-
 
 /* Safe to call with input obj == nullptr. Returns non-nullptr iff obj != nullptr. */
 extern JS_FRIEND_API(JSObject*)
@@ -186,6 +186,9 @@ AddRawValueRoot(JSContext* cx, JS::Value* vp, const char* name);
 
 JS_FRIEND_API(void)
 RemoveRawValueRoot(JSContext* cx, JS::Value* vp);
+
+JS_FRIEND_API(JSAtom*)
+GetPropertyNameFromPC(JSScript* script, jsbytecode* pc);
 
 #ifdef JS_DEBUG
 
@@ -317,6 +320,7 @@ namespace js {
         nullptr,                 /* setProperty */                                      \
         nullptr,                 /* enumerate */                                        \
         nullptr,                 /* resolve */                                          \
+        nullptr,                 /* mayResolve */                                       \
         js::proxy_Convert,                                                              \
         js::proxy_Finalize,      /* finalize    */                                      \
         nullptr,                 /* call        */                                      \
@@ -619,7 +623,7 @@ struct String
 extern JS_FRIEND_DATA(const js::Class* const) ObjectClassPtr;
 
 inline const js::Class*
-GetObjectClass(JSObject* obj)
+GetObjectClass(const JSObject* obj)
 {
     return reinterpret_cast<const shadow::Object*>(obj)->group->clasp;
 }
@@ -870,6 +874,12 @@ MOZ_ALWAYS_INLINE JSLinearString*
 AtomToLinearString(JSAtom* atom)
 {
     return reinterpret_cast<JSLinearString*>(atom);
+}
+
+MOZ_ALWAYS_INLINE JSFlatString*
+AtomToFlatString(JSAtom* atom)
+{
+    return reinterpret_cast<JSFlatString*>(atom);
 }
 
 MOZ_ALWAYS_INLINE JSLinearString*
@@ -1384,9 +1394,9 @@ struct MOZ_STACK_CLASS JS_FRIEND_API(ErrorReport)
     }
 
   private:
-    // More or less an equivalent of JS_ReportErrorNumber/js_ReportErrorNumberVA
+    // More or less an equivalent of JS_ReportErrorNumber/js::ReportErrorNumberVA
     // but fills in an ErrorReport instead of reporting it.  Uses varargs to
-    // make it simpler to call js_ExpandErrorArguments.
+    // make it simpler to call js::ExpandErrorArgumentsVA.
     //
     // Returns false if we fail to actually populate the ErrorReport
     // for some reason (probably out of memory).
@@ -1432,8 +1442,9 @@ GetSCOffset(JSStructuredCloneWriter* writer);
 
 namespace Scalar {
 
-/* Scalar types which can appear in typed arrays and typed objects.  The enum
- * values need to be kept in sync with the JS_SCALARTYPEREPR_ constants, as
+/*
+ * Scalar types that can appear in typed arrays and typed objects.  The enum
+ * values must to be kept in sync with the JS_SCALARTYPEREPR_ constants, as
  * well as the TypedArrayObject::classes and TypedArrayObject::protoClasses
  * definitions.
  */
@@ -1482,6 +1493,27 @@ byteSize(Type atype)
       case Int32x4:
       case Float32x4:
         return 16;
+      default:
+        MOZ_CRASH("invalid scalar type");
+    }
+}
+
+static inline bool
+isSignedIntType(Type atype) {
+    switch (atype) {
+      case Int8:
+      case Int16:
+      case Int32:
+      case Int32x4:
+        return true;
+      case Uint8:
+      case Uint8Clamped:
+      case Uint16:
+      case Uint32:
+      case Float32:
+      case Float64:
+      case Float32x4:
+        return false;
       default:
         MOZ_CRASH("invalid scalar type");
     }
@@ -2327,6 +2359,7 @@ struct JSJitInfo {
 #define JITINFO_OP_TYPE_BITS 4
 #define JITINFO_ALIAS_SET_BITS 4
 #define JITINFO_RETURN_TYPE_BITS 8
+#define JITINFO_SLOT_INDEX_BITS 10
 
     // The OpType that says what sort of function we are.
     uint32_t type_ : JITINFO_OP_TYPE_BITS;
@@ -2355,7 +2388,10 @@ struct JSJitInfo {
     uint32_t isMovable : 1;    /* Is op movable?  To be movable the op must
                                   not AliasEverything, but even that might
                                   not be enough (e.g. in cases when it can
-                                  throw). */
+                                  throw or is explicitly not movable). */
+    uint32_t isEliminatable : 1; /* Can op be dead-code eliminated? Again, this
+                                    depends on whether the op can throw, in
+                                    addition to the alias set. */
     // XXXbz should we have a JSValueType for the type of the member?
     uint32_t isAlwaysInSlot : 1; /* True if this is a getter that can always
                                     get the value from a slot of the "this"
@@ -2366,9 +2402,15 @@ struct JSJitInfo {
                                           slot of the "this" object. */
     uint32_t isTypedMethod : 1; /* True if this is an instance of
                                    JSTypedMethodJitInfo. */
-    uint32_t slotIndex : 11;   /* If isAlwaysInSlot or isSometimesInSlot is
-                                  true, the index of the slot to get the value
-                                  from.  Otherwise 0. */
+    uint32_t slotIndex : JITINFO_SLOT_INDEX_BITS; /* If isAlwaysInSlot or
+                                                     isSometimesInSlot is true,
+                                                     the index of the slot to
+                                                     get the value from.
+                                                     Otherwise 0. */
+
+    static const size_t maxSlotIndex = (1 << JITINFO_SLOT_INDEX_BITS) - 1;
+
+#undef JITINFO_SLOT_INDEX_BITS
 };
 
 static_assert(sizeof(JSJitInfo) == (sizeof(void*) + 2 * sizeof(uint32_t)),
@@ -2407,7 +2449,7 @@ FunctionObjectToShadowFunction(JSObject* fun)
 }
 
 /* Statically asserted in jsfun.h. */
-static const unsigned JS_FUNCTION_INTERPRETED_BITS = 0x1001;
+static const unsigned JS_FUNCTION_INTERPRETED_BITS = 0x401;
 
 // Return whether the given function object is native.
 static MOZ_ALWAYS_INLINE bool
@@ -2553,7 +2595,6 @@ inline void
 Debug_SetActiveJSContext(JSRuntime* rt, JSContext* cx) {}
 #endif
 
-
 enum CTypesActivityType {
     CTYPES_CALL_BEGIN,
     CTYPES_CALL_END,
@@ -2594,7 +2635,7 @@ class JS_FRIEND_API(AutoCTypesActivityCallback) {
 };
 
 typedef JSObject*
-(* ObjectMetadataCallback)(JSContext* cx);
+(* ObjectMetadataCallback)(JSContext* cx, JSObject* obj);
 
 /*
  * Specify a callback to invoke when creating each JS object in the current
@@ -2712,6 +2753,9 @@ extern JS_FRIEND_API(bool)
 DefineOwnProperty(JSContext* cx, JSObject* objArg, jsid idArg,
                   JS::Handle<JSPropertyDescriptor> descriptor, JS::ObjectOpResult& result);
 
+extern JS_FRIEND_API(JSObject*)
+ConvertArgsToArray(JSContext* cx, const JS::CallArgs& args);
+
 } /* namespace js */
 
 extern JS_FRIEND_API(void)
@@ -2723,5 +2767,15 @@ extern JS_FRIEND_API(void)
 JS_StoreStringPostBarrierCallback(JSContext* cx,
                                   void (*callback)(JSTracer* trc, JSString* key, void* data),
                                   JSString* key, void* data);
+
+/*
+ * Forcibly clear postbarrier callbacks queued by the previous two methods.
+ * This should be used when the object owning the postbarriered pointers is
+ * being destroyed outside of a garbage collection.
+ *
+ * This currently works by performing a minor GC.
+ */
+extern JS_FRIEND_API(void)
+JS_ClearAllPostBarrierCallbacks(JSRuntime *rt);
 
 #endif /* jsfriendapi_h */

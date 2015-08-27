@@ -156,6 +156,7 @@ TabSources.prototype = {
       source: source,
       originalUrl: originalUrl,
       generatedSource: generatedSource,
+      isInlineSource: isInlineSource,
       contentType: contentType
     });
 
@@ -281,28 +282,33 @@ TabSources.prototype = {
     // need to be conservative and only treat valid js files as real
     // sources. Otherwise, use the `originalUrl` property to treat it
     // as an HTML source that manages multiple inline sources.
-    if (url) {
-      try {
-        let urlInfo = Services.io.newURI(url, null, null).QueryInterface(Ci.nsIURL);
-        if (urlInfo.fileExtension === "html" || urlInfo.fileExtension === "xml") {
-          spec.isInlineSource = true;
-        }
-        else if (urlInfo.fileExtension === "js") {
-          spec.contentType = "text/javascript";
-        }
-      } catch(ex) {
-        // Not a valid URI.
 
-        // bug 1124536: fix getSourceText on scripts associated "javascript:SOURCE" urls
-        // (e.g. 'evaluate(sandbox, sourcecode, "javascript:"+sourcecode)' )
-        if (url.indexOf("javascript:") === 0) {
-          spec.contentType = "text/javascript";
+    // Assume the source is inline if the element that introduced it is not a
+    // script element, or does not have a src attribute.
+    let element = aSource.element ? aSource.element.unsafeDereference() : null;
+    if (element && (element.tagName !== "SCRIPT" || !element.hasAttribute("src"))) {
+      spec.isInlineSource = true;
+    } else {
+      if (url) {
+        try {
+          let urlInfo = Services.io.newURI(url, null, null).QueryInterface(Ci.nsIURL);
+          if (urlInfo.fileExtension === "js") {
+            spec.contentType = "text/javascript";
+          }
+        } catch(ex) {
+          // Not a valid URI.
+
+          // bug 1124536: fix getSourceText on scripts associated "javascript:SOURCE" urls
+          // (e.g. 'evaluate(sandbox, sourcecode, "javascript:"+sourcecode)' )
+          if (url.indexOf("javascript:") === 0) {
+            spec.contentType = "text/javascript";
+          }
         }
       }
-    }
-    else {
-      // Assume the content is javascript if there's no URL
-      spec.contentType = "text/javascript";
+      else {
+        // Assume the content is javascript if there's no URL
+        spec.contentType = "text/javascript";
+      }
     }
 
     return this.source(spec);
@@ -441,6 +447,12 @@ TabSources.prototype = {
    * Sets the source map's sourceRoot to be relative to the source map url.
    */
   _setSourceMapRoot: function (aSourceMap, aAbsSourceMapURL, aScriptURL) {
+    // No need to do this fiddling if we won't be fetching any sources over the
+    // wire.
+    if (aSourceMap.hasContentsOfAllSources()) {
+      return;
+    }
+
     const base = this._dirname(
       aAbsSourceMapURL.indexOf("data:") === 0
         ? aScriptURL
@@ -603,40 +615,29 @@ TabSources.prototype = {
       originalColumn
     } = originalLocation;
 
-    if (originalColumn === undefined) {
-      let source = originalSourceActor.source ||
-                   originalSourceActor.generatedSource;
+    let source = originalSourceActor.source ||
+                 originalSourceActor.generatedSource;
 
-      return this.fetchSourceMap(source).then((map) => {
-        if (map) {
-          map.computeColumnSpans();
+    return this.fetchSourceMap(source).then((map) => {
+      if (map) {
+        map.computeColumnSpans();
 
-          return map.allGeneratedPositionsFor({
-            source: originalSourceActor.url,
-            line: originalLine
-          }).map(({ line, column, lastColumn }) => {
-            return new GeneratedLocation(
-              this.createNonSourceMappedActor(source),
-              line,
-              column,
-              lastColumn
-            );
-          });
-        }
+        return map.allGeneratedPositionsFor({
+          source: originalSourceActor.url,
+          line: originalLine,
+          column: originalColumn
+        }).map(({ line, column, lastColumn }) => {
+          return new GeneratedLocation(
+            this.createNonSourceMappedActor(source),
+            line,
+            column,
+            lastColumn
+          );
+        });
+      }
 
-        return [GeneratedLocation.fromOriginalLocation(originalLocation)];
-      });
-    } else {
-      // TODO: Some source maps have multiple mappings for the same column
-      return this.getGeneratedLocation(originalLocation)
-                 .then((generatedLocation) => {
-        if (generatedLocation.generatedLine === null &&
-            generatedLocation.generatedColumn === null) {
-          return [];
-        }
-        return [generatedLocation];
-      });
-    }
+      return [GeneratedLocation.fromOriginalLocation(originalLocation)];
+    });
   },
 
 

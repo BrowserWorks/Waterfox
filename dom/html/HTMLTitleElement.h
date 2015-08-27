@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -7,7 +8,6 @@
 #define mozilla_dom_HTMLTITLEElement_h_
 
 #include "mozilla/Attributes.h"
-#include "nsIDOMHTMLTitleElement.h"
 #include "nsGenericHTMLElement.h"
 #include "nsStubMutationObserver.h"
 
@@ -17,7 +17,6 @@ class ErrorResult;
 namespace dom {
 
 class HTMLTitleElement final : public nsGenericHTMLElement,
-                               public nsIDOMHTMLTitleElement,
                                public nsStubMutationObserver
 {
 public:
@@ -29,15 +28,9 @@ public:
   // nsISupports
   NS_DECL_ISUPPORTS_INHERITED
 
-  // nsIDOMHTMLTitleElement
-  NS_DECL_NSIDOMHTMLTITLEELEMENT
-
   //HTMLTitleElement
-  //The xpcom GetTextContent() never fails so we just use that.
-  void SetText(const nsAString& aText, ErrorResult& aError)
-  {
-    aError = SetText(aText);
-  }
+  void GetText(DOMString& aText, ErrorResult& aError);
+  void SetText(const nsAString& aText, ErrorResult& aError);
 
   // nsIMutationObserver
   NS_DECL_NSIMUTATIONOBSERVER_CHARACTERDATACHANGED

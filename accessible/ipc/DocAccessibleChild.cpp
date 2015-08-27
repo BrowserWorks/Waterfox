@@ -27,6 +27,21 @@ InterfacesFor(Accessible* aAcc)
   if (aAcc->IsHyperText() && aAcc->AsHyperText()->IsTextRole())
     interfaces |= Interfaces::HYPERTEXT;
 
+  if (aAcc->IsLink())
+    interfaces |= Interfaces::HYPERLINK;
+
+  if (aAcc->HasNumericValue())
+    interfaces |= Interfaces::VALUE;
+
+  if (aAcc->IsImage())
+    interfaces |= Interfaces::IMAGE;
+
+  if (aAcc->IsTableCell())
+    interfaces |= Interfaces::TABLECELL;
+
+  if (aAcc->IsDoc())
+    interfaces |= Interfaces::DOCUMENT;
+
   return interfaces;
 }
 
@@ -52,6 +67,9 @@ SerializeTree(Accessible* aRoot, nsTArray<AccessibleData>& aTree)
 Accessible*
 DocAccessibleChild::IdToAccessible(const uint64_t& aID) const
 {
+  if (!aID)
+    return mDoc;
+
   return mDoc->GetAccessibleByUniqueID(reinterpret_cast<void*>(aID));
 }
 
@@ -209,7 +227,7 @@ DocAccessibleChild::RecvRelationByType(const uint64_t& aID,
 {
   Accessible* acc = mDoc->GetAccessibleByUniqueID((void*)aID);
   if (!acc)
-    return false;
+    return true;
 
   auto type = static_cast<RelationType>(aType);
   Relation rel = acc->RelationByType(type);
@@ -241,8 +259,8 @@ DocAccessibleChild::RecvRelations(const uint64_t& aID,
                                   nsTArray<RelationTargets>* aRelations)
 {
   Accessible* acc = mDoc->GetAccessibleByUniqueID((void*)aID);
-  if (!aID)
-    return false;
+  if (!acc)
+    return true;
 
 #define RELATIONTYPE(gecko, s, a, m, i) AddRelation(acc, RelationType::gecko, aRelations);
 
@@ -294,13 +312,14 @@ bool
 DocAccessibleChild::RecvTextSubstring(const uint64_t& aID,
                                       const int32_t& aStartOffset,
                                       const int32_t& aEndOffset,
-                                      nsString* aText)
+                                      nsString* aText, bool* aValid)
 {
   HyperTextAccessible* acc = IdToHyperTextAccessible(aID);
   if (!acc) {
     return true;
   }
 
+  *aValid = acc->IsValidRange(aStartOffset, aEndOffset);
   acc->TextSubstring(aStartOffset, aEndOffset, *aText);
   return true;
 }
@@ -561,10 +580,11 @@ DocAccessibleChild::RecvReplaceText(const uint64_t& aID,
 bool
 DocAccessibleChild::RecvInsertText(const uint64_t& aID,
                                    const nsString& aText,
-                                   const int32_t& aPosition)
+                                   const int32_t& aPosition, bool* aValid)
 {
   HyperTextAccessible* acc = IdToHyperTextAccessible(aID);
   if (acc && acc->IsTextRole()) {
+    *aValid = acc->IsValidOffset(aPosition);
     acc->InsertText(aText, aPosition);
   }
 
@@ -574,7 +594,7 @@ DocAccessibleChild::RecvInsertText(const uint64_t& aID,
 bool
 DocAccessibleChild::RecvCopyText(const uint64_t& aID,
                                  const int32_t& aStartPos,
-                                 const int32_t& aEndPos)
+                                 const int32_t& aEndPos, bool* aValid)
 {
   HyperTextAccessible* acc = IdToHyperTextAccessible(aID);
   if (acc && acc->IsTextRole()) {
@@ -587,10 +607,11 @@ DocAccessibleChild::RecvCopyText(const uint64_t& aID,
 bool
 DocAccessibleChild::RecvCutText(const uint64_t& aID,
                                 const int32_t& aStartPos,
-                                const int32_t& aEndPos)
+                                const int32_t& aEndPos, bool* aValid)
 {
   HyperTextAccessible* acc = IdToHyperTextAccessible(aID);
   if (acc && acc->IsTextRole()) {
+    *aValid = acc->IsValidRange(aStartPos, aEndPos);
     acc->CutText(aStartPos, aEndPos);
   }
 
@@ -600,10 +621,11 @@ DocAccessibleChild::RecvCutText(const uint64_t& aID,
 bool
 DocAccessibleChild::RecvDeleteText(const uint64_t& aID,
                                    const int32_t& aStartPos,
-                                   const int32_t& aEndPos)
+                                   const int32_t& aEndPos, bool* aValid)
 {
   HyperTextAccessible* acc = IdToHyperTextAccessible(aID);
   if (acc && acc->IsTextRole()) {
+    *aValid = acc->IsValidRange(aStartPos, aEndPos);
     acc->DeleteText(aStartPos, aEndPos);
   }
 
@@ -612,10 +634,11 @@ DocAccessibleChild::RecvDeleteText(const uint64_t& aID,
 
 bool
 DocAccessibleChild::RecvPasteText(const uint64_t& aID,
-                                  const int32_t& aPosition)
+                                  const int32_t& aPosition, bool* aValid)
 {
   HyperTextAccessible* acc = IdToHyperTextAccessible(aID);
   if (acc && acc->IsTextRole()) {
+    *aValid = acc->IsValidOffset(aPosition);
     acc->PasteText(aPosition);
   }
 
@@ -1592,6 +1615,22 @@ DocAccessibleChild::RecvTakeFocus(const uint64_t& aID)
     acc->TakeFocus();
   }
 
+  return true;
+}
+
+bool
+DocAccessibleChild::RecvIndexOfEmbeddedChild(const uint64_t& aID,
+                                             const uint64_t& aChildID,
+                                             uint32_t* aChildIdx)
+{
+  *aChildIdx = 0;
+
+  Accessible* parent = IdToAccessible(aID);
+  Accessible* child = IdToAccessible(aChildID);
+  if (!parent || !child)
+    return true;
+
+  *aChildIdx = parent->GetIndexOfEmbeddedChild(child);
   return true;
 }
 

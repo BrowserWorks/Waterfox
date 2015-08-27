@@ -1,5 +1,5 @@
-/* -*- Mode: C++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 2; -*- */
-/* vim: set sw=4 ts=8 et tw=80 : */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -197,6 +197,8 @@ protected:
     already_AddRefed<nsIDOMWindowUtils> GetDOMWindowUtils();
     // Get the Document for the top-level window in this tab.
     already_AddRefed<nsIDocument> GetDocument() const;
+    // Get the pres-shell of the document for the top-level window in this tab.
+    already_AddRefed<nsIPresShell> GetPresShell() const;
 
     // Wrapper for nsIDOMWindowUtils.setCSSViewport(). This updates some state
     // variables local to this class before setting it.
@@ -267,7 +269,8 @@ public:
     Create(nsIContentChild* aManager, const TabId& aTabId, const TabContext& aContext, uint32_t aChromeFlags);
 
     bool IsRootContentDocument();
-
+    // Let managees query if it is safe to send messages.
+    bool IsDestroyed() { return mDestroyed; }
     const TabId GetTabId() const {
       MOZ_ASSERT(mUniqueId != 0);
       return mUniqueId;
@@ -319,7 +322,7 @@ public:
     virtual bool RecvUpdateDimensions(const nsIntRect& rect,
                                       const ScreenIntSize& size,
                                       const ScreenOrientation& orientation,
-                                      const nsIntPoint& chromeDisp) override;
+                                      const LayoutDeviceIntPoint& chromeDisp) override;
     virtual bool RecvUpdateFrame(const layers::FrameMetrics& aFrameMetrics) override;
     virtual bool RecvRequestFlingSnap(const ViewID& aScrollId,
                                       const CSSPoint& aDestination) override;
@@ -349,6 +352,9 @@ public:
                                 const bool&     aIgnoreRootScrollFrame) override;
     virtual bool RecvRealMouseMoveEvent(const mozilla::WidgetMouseEvent& event) override;
     virtual bool RecvRealMouseButtonEvent(const mozilla::WidgetMouseEvent& event) override;
+    virtual bool RecvRealDragEvent(const WidgetDragEvent& aEvent,
+                                   const uint32_t& aDragAction,
+                                   const uint32_t& aDropEffect) override;
     virtual bool RecvRealKeyEvent(const mozilla::WidgetKeyboardEvent& event,
                                   const MaybeNativeKeyBinding& aBindings) override;
     virtual bool RecvMouseWheelEvent(const mozilla::WidgetWheelEvent& event,
@@ -367,6 +373,8 @@ public:
                               const bool&     aPreventDefault) override;
     virtual bool RecvMouseScrollTestEvent(const FrameMetrics::ViewID& aScrollId,
                                           const nsString& aEvent) override;
+    virtual bool RecvNativeSynthesisResponse(const uint64_t& aObserverId,
+                                             const nsCString& aResponse) override;
     virtual bool RecvCompositionEvent(const mozilla::WidgetCompositionEvent& event) override;
     virtual bool RecvSelectionEvent(const mozilla::WidgetSelectionEvent& event) override;
     virtual bool RecvActivateFrameEvent(const nsString& aType, const bool& capture) override;
@@ -378,6 +386,8 @@ public:
                                   const IPC::Principal& aPrincipal) override;
 
     virtual bool RecvAppOfflineStatus(const uint32_t& aId, const bool& aOffline) override;
+
+    virtual bool RecvSwappedWithOtherRemoteLoader() override;
 
     virtual PDocumentRendererChild*
     AllocPDocumentRendererChild(const nsRect& documentRect, const gfx::Matrix& transform,
@@ -396,12 +406,6 @@ public:
     virtual PColorPickerChild*
     AllocPColorPickerChild(const nsString& title, const nsString& initialColor) override;
     virtual bool DeallocPColorPickerChild(PColorPickerChild* actor) override;
-
-    virtual PContentPermissionRequestChild*
-    AllocPContentPermissionRequestChild(const InfallibleTArray<PermissionRequest>& aRequests,
-                                        const IPC::Principal& aPrincipal) override;
-    virtual bool
-    DeallocPContentPermissionRequestChild(PContentPermissionRequestChild* actor) override;
 
     virtual PFilePickerChild*
     AllocPFilePickerChild(const nsString& aTitle, const int16_t& aMode) override;
@@ -478,6 +482,8 @@ public:
 
     virtual bool RecvUIResolutionChanged() override;
 
+    virtual bool RecvThemeChanged(nsTArray<LookAndFeelInt>&& aLookAndFeelIntCache) override;
+
     /**
      * Native widget remoting protocol for use with windowed plugins with e10s.
      */
@@ -485,7 +491,7 @@ public:
     bool DeallocPPluginWidgetChild(PPluginWidgetChild* aActor) override;
     nsresult CreatePluginWidget(nsIWidget* aParent, nsIWidget** aOut);
 
-    nsIntPoint GetChromeDisplacement() { return mChromeDisp; };
+    LayoutDeviceIntPoint GetChromeDisplacement() { return mChromeDisp; };
 
     bool IPCOpen() { return mIPCOpen; }
 
@@ -619,12 +625,11 @@ private:
 
     bool mIgnoreKeyPressEvent;
     nsRefPtr<APZEventState> mAPZEventState;
-    nsRefPtr<SetTargetAPZCCallback> mSetTargetAPZCCallback;
     nsRefPtr<SetAllowedTouchBehaviorCallback> mSetAllowedTouchBehaviorCallback;
     bool mHasValidInnerSize;
     bool mDestroyed;
     // Position of tab, relative to parent widget (typically the window)
-    nsIntPoint mChromeDisp;
+    LayoutDeviceIntPoint mChromeDisp;
     TabId mUniqueId;
     float mDPI;
     double mDefaultScale;

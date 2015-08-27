@@ -8,7 +8,7 @@
 #include <math.h>                       // for fabsf, pow, powf
 #include <algorithm>                    // for max
 #include "AsyncPanZoomController.h"     // for AsyncPanZoomController
-#include "mozilla/dom/AnimationPlayer.h" // for ComputedTimingFunction
+#include "mozilla/dom/KeyframeEffect.h" // for ComputedTimingFunction
 #include "mozilla/layers/APZCTreeManager.h" // for APZCTreeManager
 #include "mozilla/layers/APZThreadUtils.h" // for AssertOnControllerThread
 #include "FrameMetrics.h"               // for FrameMetrics
@@ -140,7 +140,7 @@ bool Axis::AdjustDisplacement(ParentLayerCoord aDisplacement,
     return false;
   }
 
-  StopSamplingOverscrollAnimation();
+  ClearOverscrollAnimationState();
 
   ParentLayerCoord displacement = aDisplacement;
 
@@ -182,7 +182,7 @@ ParentLayerCoord Axis::ApplyResistance(ParentLayerCoord aRequestedOverscroll) co
 
 void Axis::OverscrollBy(ParentLayerCoord aOverscroll) {
   MOZ_ASSERT(CanScroll());
-  StopSamplingOverscrollAnimation();
+  ClearOverscrollAnimationState();
   aOverscroll = ApplyResistance(aOverscroll);
   if (aOverscroll > 0) {
 #ifdef DEBUG
@@ -224,10 +224,23 @@ ParentLayerCoord Axis::GetOverscroll() const {
   return result;
 }
 
-void Axis::StopSamplingOverscrollAnimation() {
-  ParentLayerCoord overscroll = GetOverscroll();
-  ClearOverscroll();
-  mOverscroll = overscroll;
+void Axis::StartOverscrollAnimation(float aVelocity) {
+  // Make sure any state from a previous animation has been cleared.
+  MOZ_ASSERT(mFirstOverscrollAnimationSample == 0 &&
+             mLastOverscrollPeak == 0 &&
+             mOverscrollScale == 1);
+
+  SetVelocity(aVelocity);
+}
+
+void Axis::EndOverscrollAnimation() {
+  ClearOverscrollAnimationState();
+}
+
+void Axis::ClearOverscrollAnimationState() {
+  mFirstOverscrollAnimationSample = 0;
+  mLastOverscrollPeak = 0;
+  mOverscrollScale = 1.0f;
 }
 
 void Axis::StepOverscrollAnimation(double aStepDurationMilliseconds) {
@@ -263,7 +276,9 @@ void Axis::StepOverscrollAnimation(double aStepDurationMilliseconds) {
   // overscroll, to ensure that GetOverscroll always returns a value of the
   // same sign, and that this value is correctly adjusted as the spring is
   // dampened.
-  bool velocitySignChange = (oldVelocity * mVelocity) < 0;
+  // To handle the case where one of the velocity samples is exaclty zero,
+  // consider a sign change to have occurred when the outgoing velocity is zero.
+  bool velocitySignChange = (oldVelocity * mVelocity) < 0 || mVelocity == 0;
   if (mFirstOverscrollAnimationSample == 0.0f) {
     mFirstOverscrollAnimationSample = mOverscroll;
 
@@ -345,10 +360,8 @@ bool Axis::IsOverscrolled() const {
 }
 
 void Axis::ClearOverscroll() {
+  ClearOverscrollAnimationState();
   mOverscroll = 0;
-  mFirstOverscrollAnimationSample = 0;
-  mLastOverscrollPeak = 0;
-  mOverscrollScale = 1.0f;
 }
 
 ParentLayerCoord Axis::PanStart() const {
@@ -408,6 +421,23 @@ bool Axis::CanScroll(double aDelta) const
 
   ParentLayerCoord delta = aDelta;
   return DisplacementWillOverscrollAmount(delta) != delta;
+}
+
+CSSCoord Axis::ClampOriginToScrollableRect(CSSCoord aOrigin) const
+{
+  CSSToParentLayerScale zoom = GetScaleForAxis(GetFrameMetrics().GetZoom());
+  ParentLayerCoord origin = aOrigin * zoom;
+
+  ParentLayerCoord result;
+  if (origin < GetPageStart()) {
+    result = GetPageStart();
+  } else if (origin + GetCompositionLength() > GetPageEnd()) {
+    result = GetPageEnd() - GetCompositionLength();
+  } else {
+    result = origin;
+  }
+
+  return result / zoom;
 }
 
 bool Axis::CanScrollNow() const {
@@ -503,7 +533,7 @@ ParentLayerCoord Axis::GetOrigin() const {
 }
 
 ParentLayerCoord Axis::GetCompositionLength() const {
-  return GetRectLength(GetFrameMetrics().mCompositionBounds);
+  return GetRectLength(GetFrameMetrics().GetCompositionBounds());
 }
 
 ParentLayerCoord Axis::GetPageStart() const {
@@ -518,7 +548,7 @@ ParentLayerCoord Axis::GetPageLength() const {
 
 bool Axis::ScaleWillOverscrollBothSides(float aScale) const {
   const FrameMetrics& metrics = GetFrameMetrics();
-  ParentLayerRect screenCompositionBounds = metrics.mCompositionBounds
+  ParentLayerRect screenCompositionBounds = metrics.GetCompositionBounds()
                                           / ParentLayerToParentLayerScale(aScale);
   return GetRectLength(screenCompositionBounds) - GetPageLength() > COORDINATE_EPSILON;
 }
@@ -547,6 +577,11 @@ ParentLayerCoord AxisX::GetRectLength(const ParentLayerRect& aRect) const
 ParentLayerCoord AxisX::GetRectOffset(const ParentLayerRect& aRect) const
 {
   return aRect.x;
+}
+
+CSSToParentLayerScale AxisX::GetScaleForAxis(const CSSToParentLayerScale2D& aScale) const
+{
+  return CSSToParentLayerScale(aScale.xScale);
 }
 
 ScreenPoint AxisX::MakePoint(ScreenCoord aCoord) const
@@ -578,6 +613,11 @@ ParentLayerCoord AxisY::GetRectLength(const ParentLayerRect& aRect) const
 ParentLayerCoord AxisY::GetRectOffset(const ParentLayerRect& aRect) const
 {
   return aRect.y;
+}
+
+CSSToParentLayerScale AxisY::GetScaleForAxis(const CSSToParentLayerScale2D& aScale) const
+{
+  return CSSToParentLayerScale(aScale.yScale);
 }
 
 ScreenPoint AxisY::MakePoint(ScreenCoord aCoord) const

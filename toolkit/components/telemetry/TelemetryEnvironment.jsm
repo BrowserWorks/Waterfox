@@ -11,18 +11,21 @@ this.EXPORTED_SYMBOLS = [
 const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 const myScope = this;
 
-Cu.import("resource://gre/modules/AddonManager.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm", this);
 Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://gre/modules/PromiseUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/TelemetryUtils.jsm", this);
 Cu.import("resource://gre/modules/ObjectUtils.jsm");
+
+const Utils = TelemetryUtils;
 
 XPCOMUtils.defineLazyModuleGetter(this, "ctypes",
                                   "resource://gre/modules/ctypes.jsm");
 #ifndef MOZ_WIDGET_GONK
+Cu.import("resource://gre/modules/AddonManager.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "LightweightThemeManager",
                                   "resource://gre/modules/LightweightThemeManager.jsm");
 #endif
@@ -48,7 +51,7 @@ function getGlobal() {
   return gGlobalEnvironment;
 }
 
-const TelemetryEnvironment = {
+this.TelemetryEnvironment = {
   get currentEnvironment() {
     return getGlobal().currentEnvironment;
   },
@@ -150,20 +153,11 @@ const PREF_PARTNER_ID = "mozilla.partner.id";
 const PREF_TELEMETRY_ENABLED = "toolkit.telemetry.enabled";
 const PREF_UPDATE_ENABLED = "app.update.enabled";
 const PREF_UPDATE_AUTODOWNLOAD = "app.update.auto";
-
-const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
+const PREF_SEARCH_COHORT = "browser.search.cohort";
 
 const EXPERIMENTS_CHANGED_TOPIC = "experiments-changed";
-
-/**
- * Turn a millisecond timestamp into a day timestamp.
- *
- * @param aMsec a number of milliseconds since epoch.
- * @return the number of whole days denoted by the input.
- */
-function truncateToDays(aMsec) {
-  return Math.floor(aMsec / MILLISECONDS_PER_DAY);
-}
+const SEARCH_ENGINE_MODIFIED_TOPIC = "browser-search-engine-modified";
+const SEARCH_SERVICE_TOPIC = "browser-search-service";
 
 /**
  * Get the current browser.
@@ -500,8 +494,8 @@ EnvironmentAddonBuilder.prototype = {
         type: addon.type,
         foreignInstall: addon.foreignInstall,
         hasBinaryComponents: addon.hasBinaryComponents,
-        installDay: truncateToDays(installDate.getTime()),
-        updateDay: truncateToDays(updateDate.getTime()),
+        installDay: Utils.millisecondsToDays(installDate.getTime()),
+        updateDay: Utils.millisecondsToDays(updateDate.getTime()),
       };
     }
 
@@ -535,8 +529,8 @@ EnvironmentAddonBuilder.prototype = {
         scope: theme.scope,
         foreignInstall: theme.foreignInstall,
         hasBinaryComponents: theme.hasBinaryComponents,
-        installDay: truncateToDays(installDate.getTime()),
-        updateDay: truncateToDays(updateDate.getTime()),
+        installDay: Utils.millisecondsToDays(installDate.getTime()),
+        updateDay: Utils.millisecondsToDays(updateDate.getTime()),
       };
     }
 
@@ -569,7 +563,7 @@ EnvironmentAddonBuilder.prototype = {
         disabled: tag.disabled,
         clicktoplay: tag.clicktoplay,
         mimeTypes: tag.getMimeTypes({}),
-        updateDay: truncateToDays(updateDate.getTime()),
+        updateDay: Utils.millisecondsToDays(updateDate.getTime()),
       });
     }
 
@@ -651,33 +645,42 @@ function EnvironmentCache() {
   };
 
   this._updateSettings();
+  // Fill in the default search engine, if the search provider is already initialized.
+  this._updateSearchEngine();
 
   // Build the remaining asynchronous parts of the environment. Don't register change listeners
   // until the initial environment has been built.
 
+#ifdef MOZ_WIDGET_GONK
+  this._addonBuilder = {
+    watchForChanges: function() {}
+  }
+  let p = [];
+#else
   this._addonBuilder = new EnvironmentAddonBuilder(this);
 
   let p = [ this._addonBuilder.init() ];
+#endif
 #ifndef MOZ_WIDGET_ANDROID
   this._currentEnvironment.profile = {};
   p.push(this._updateProfile());
 #endif
 
+  let setup = () => {
+    this._initTask = null;
+    this._startWatchingPrefs();
+    this._addonBuilder.watchForChanges();
+    this._addObservers();
+    return this.currentEnvironment;
+  };
+
   this._initTask = Promise.all(p)
     .then(
-      () => {
-        this._initTask = null;
-        this._startWatchingPrefs();
-        this._addonBuilder.watchForChanges();
-        return this.currentEnvironment;
-      },
+      () => setup(),
       (err) => {
         // log errors but eat them for consumers
         this._log.error("EnvironmentCache - error while initializing", err);
-        this._initTask = null;
-        this._startWatchingPrefs();
-        this._addonBuilder.watchForChanges();
-        return this.currentEnvironment;
+        return setup();
       });
 }
 EnvironmentCache.prototype = {
@@ -750,17 +753,17 @@ EnvironmentCache.prototype = {
    */
   _getPrefData: function () {
     let prefData = {};
-    for (let pref in this._watchedPrefs) {
+    for (let [pref, policy] of this._watchedPrefs.entries()) {
       // Only record preferences if they are non-default and policy allows recording.
       if (!Preferences.isSet(pref) ||
-          this._watchedPrefs[pref] == TelemetryEnvironment.RECORD_PREF_NOTIFY_ONLY) {
+          policy == TelemetryEnvironment.RECORD_PREF_NOTIFY_ONLY) {
         continue;
       }
 
       // Check the policy for the preference and decide if we need to store its value
       // or whether it changed from the default value.
       let prefValue = undefined;
-      if (this._watchedPrefs[pref] == TelemetryEnvironment.RECORD_PREF_STATE) {
+      if (policy == TelemetryEnvironment.RECORD_PREF_STATE) {
         prefValue = "<user-set>";
       } else {
         prefValue = Preferences.get(pref, null);
@@ -776,7 +779,7 @@ EnvironmentCache.prototype = {
   _startWatchingPrefs: function () {
     this._log.trace("_startWatchingPrefs - " + this._watchedPrefs);
 
-    for (let pref in this._watchedPrefs) {
+    for (let pref of this._watchedPrefs.keys()) {
       Preferences.observe(pref, this._onPrefChanged, this);
     }
   },
@@ -794,9 +797,104 @@ EnvironmentCache.prototype = {
   _stopWatchingPrefs: function () {
     this._log.trace("_stopWatchingPrefs");
 
-    for (let pref in this._watchedPrefs) {
+    for (let pref of this._watchedPrefs.keys()) {
       Preferences.ignore(pref, this._onPrefChanged, this);
     }
+  },
+
+  _addObservers: function () {
+    // Watch the search engine change and service topics.
+    Services.obs.addObserver(this, SEARCH_ENGINE_MODIFIED_TOPIC, false);
+    Services.obs.addObserver(this, SEARCH_SERVICE_TOPIC, false);
+  },
+
+  _removeObservers: function () {
+    // Remove the search engine change and service observers.
+    Services.obs.removeObserver(this, SEARCH_ENGINE_MODIFIED_TOPIC);
+    Services.obs.removeObserver(this, SEARCH_SERVICE_TOPIC);
+  },
+
+  observe: function (aSubject, aTopic, aData) {
+    this._log.trace("observe - aTopic: " + aTopic + ", aData: " + aData);
+    switch (aTopic) {
+      case SEARCH_ENGINE_MODIFIED_TOPIC:
+        if (aData != "engine-default" && aData != "engine-current") {
+          return;
+        }
+        // Record the new default search choice and send the change notification.
+        this._onSearchEngineChange();
+        break;
+      case SEARCH_SERVICE_TOPIC:
+        if (aData != "init-complete") {
+          return;
+        }
+        // Now that the search engine init is complete, record the default search choice.
+        this._updateSearchEngine();
+        break;
+    }
+  },
+
+  /**
+   * Get the default search engine.
+   * @return {String} Returns the search engine identifier, "NONE" if no default search
+   *         engine is defined or "UNDEFINED" if no engine identifier or name can be found.
+   */
+  _getDefaultSearchEngine: function () {
+    let engine;
+    try {
+      engine = Services.search.defaultEngine;
+    } catch (e) {}
+
+    let name;
+    if (!engine) {
+      name = "NONE";
+    } else if (engine.identifier) {
+      name = engine.identifier;
+    } else if (engine.name) {
+      name = "other-" + engine.name;
+    } else {
+      name = "UNDEFINED";
+    }
+
+    return name;
+  },
+
+  /**
+   * Update the default search engine value.
+   */
+  _updateSearchEngine: function () {
+    if (!Services.search) {
+      // Just ignore cases where the search service is not implemented.
+      return;
+    }
+
+    this._log.trace("_updateSearchEngine - isInitialized: " + Services.search.isInitialized);
+    if (!Services.search.isInitialized) {
+      return;
+    }
+
+    // Make sure we have a settings section.
+    this._currentEnvironment.settings = this._currentEnvironment.settings || {};
+    // Update the search engine entry in the current environment.
+    this._currentEnvironment.settings.defaultSearchEngine = this._getDefaultSearchEngine();
+    this._currentEnvironment.settings.defaultSearchEngineData =
+      Services.search.getDefaultEngineInfo();
+
+    // Record the cohort identifier used for search defaults A/B testing.
+    if (Services.prefs.prefHasUserValue(PREF_SEARCH_COHORT))
+      this._currentEnvironment.settings.searchCohort = Services.prefs.getCharPref(PREF_SEARCH_COHORT);
+  },
+
+  /**
+   * Update the default search engine value and trigger the environment change.
+   */
+  _onSearchEngineChange: function () {
+    this._log.trace("_onSearchEngineChange");
+
+    // Finally trigger the environment change notification.
+    let oldEnvironment = Cu.cloneInto(this._currentEnvironment, myScope);
+    this._updateSearchEngine();
+    this._onEnvironmentChange("search-engine-changed", oldEnvironment);
   },
 
   /**
@@ -805,13 +903,13 @@ EnvironmentCache.prototype = {
    */
   _getBuild: function () {
     let buildData = {
-      applicationId: Services.appinfo.ID,
-      applicationName: Services.appinfo.name,
+      applicationId: Services.appinfo.ID || null,
+      applicationName: Services.appinfo.name || null,
       architecture: Services.sysinfo.get("arch"),
-      buildId: Services.appinfo.appBuildID,
-      version: Services.appinfo.version,
-      vendor: Services.appinfo.vendor,
-      platformVersion: Services.appinfo.platformVersion,
+      buildId: Services.appinfo.appBuildID || null,
+      version: Services.appinfo.version || null,
+      vendor: Services.appinfo.vendor || null,
+      platformVersion: Services.appinfo.platformVersion || null,
       xpcomAbi: Services.appinfo.XPCOMABI,
       hotfixVersion: Preferences.get(PREF_HOTFIX_LASTVERSION, null),
     };
@@ -828,12 +926,15 @@ EnvironmentCache.prototype = {
   },
 
   /**
-   * Determine if Firefox is the default browser.
+   * Determine if we're the default browser.
    * @returns null on error, true if we are the default browser, or false otherwise.
    */
   _isDefaultBrowser: function () {
+#ifdef MOZ_WIDGET_GONK
+    return true;
+#else
     if (!("@mozilla.org/browser/shell-service;1" in Cc)) {
-      this._log.error("_isDefaultBrowser - Could not obtain shell service");
+      this._log.info("_isDefaultBrowser - Could not obtain browser shell service");
       return null;
     }
 
@@ -846,17 +947,16 @@ EnvironmentCache.prototype = {
       return null;
     }
 
-    if (shellService) {
-      try {
-        // This uses the same set of flags used by the pref pane.
-        return shellService.isDefaultBrowser(false, true) ? true : false;
-      } catch (ex) {
-        this._log.error("_isDefaultBrowser - Could not determine if default browser", ex);
-        return null;
-      }
+    try {
+      // This uses the same set of flags used by the pref pane.
+      return shellService.isDefaultBrowser(false, true) ? true : false;
+    } catch (ex) {
+      this._log.error("_isDefaultBrowser - Could not determine if default browser", ex);
+      return null;
     }
 
     return null;
+#endif
   },
 
   /**
@@ -865,7 +965,7 @@ EnvironmentCache.prototype = {
   _updateSettings: function () {
     let updateChannel = null;
     try {
-      updateChannel = UpdateChannel.get();
+      updateChannel = UpdateChannel.get(false);
     } catch (e) {}
 
     this._currentEnvironment.settings = {
@@ -883,6 +983,8 @@ EnvironmentCache.prototype = {
       },
       userPrefs: this._getPrefData(),
     };
+
+    this._updateSearchEngine();
   },
 
   /**
@@ -890,15 +992,17 @@ EnvironmentCache.prototype = {
    * @returns Promise<> resolved when the I/O is complete.
    */
   _updateProfile: Task.async(function* () {
-    let profileAccessor = new ProfileAge(null, this._log);
+    const logger = Log.repository.getLoggerWithMessagePrefix(LOGGER_NAME, "ProfileAge - ");
+    let profileAccessor = new ProfileAge(null, logger);
 
     let creationDate = yield profileAccessor.created;
     let resetDate = yield profileAccessor.reset;
 
     this._currentEnvironment.profile.creationDate =
-      truncateToDays(creationDate);
+      Utils.millisecondsToDays(creationDate);
     if (resetDate) {
-      this._currentEnvironment.profile.resetDate = truncateToDays(resetDate);
+      this._currentEnvironment.profile.resetDate =
+        Utils.millisecondsToDays(resetDate);
     }
   }),
 
@@ -942,11 +1046,9 @@ EnvironmentCache.prototype = {
     // Enumerate the available CPU extensions.
     let availableExts = [];
     for (let ext of CPU_EXTENSIONS) {
-      try {
-        Services.sysinfo.getProperty(ext);
-        // If it doesn't throw, add it to the list.
+      if (getSysinfoProperty(ext, false)) {
         availableExts.push(ext);
-      } catch (e) {}
+      }
     }
 
     cpuData.extensions = availableExts;
@@ -987,6 +1089,7 @@ EnvironmentCache.prototype = {
 #elif defined(XP_WIN)
       servicePackMajor: servicePack.major,
       servicePackMinor: servicePack.minor,
+      installYear: getSysinfoProperty("installYear", null),
 #endif
       locale: getSystemLocale(),
     };

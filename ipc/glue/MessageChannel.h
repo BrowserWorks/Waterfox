@@ -215,7 +215,7 @@ class MessageChannel : HasResultCodes
 
     void PostErrorNotifyTask();
     void OnNotifyMaybeChannelError();
-    void ReportConnectionError(const char* aChannelName) const;
+    void ReportConnectionError(const char* aChannelName, Message* aMsg = nullptr) const;
     void ReportMessageRouteError(const char* channelName) const;
     bool MaybeHandleError(Result code, const Message& aMsg, const char* channelName);
 
@@ -414,8 +414,8 @@ class MessageChannel : HasResultCodes
     // Can be run on either thread
     void AssertWorkerThread() const
     {
-        MOZ_ASSERT(mWorkerLoopID == MessageLoop::current()->id(),
-                   "not on worker thread!");
+        MOZ_RELEASE_ASSERT(mWorkerLoopID == MessageLoop::current()->id(),
+                           "not on worker thread!");
     }
 
     // The "link" thread is either the I/O thread (ProcessLink) or the
@@ -423,8 +423,8 @@ class MessageChannel : HasResultCodes
     // NOT our worker thread.
     void AssertLinkThread() const
     {
-        MOZ_ASSERT(mWorkerLoopID != MessageLoop::current()->id(),
-                   "on worker thread but should not be!");
+        MOZ_RELEASE_ASSERT(mWorkerLoopID != MessageLoop::current()->id(),
+                           "on worker thread but should not be!");
     }
 
   private:
@@ -592,6 +592,7 @@ class MessageChannel : HasResultCodes
     // hitting a lot of corner cases with message nesting that we don't really
     // care about.
     int32_t mTimedOutMessageSeqno;
+    int mTimedOutMessagePriority;
 
     // If waiting for the reply to a sync out-message, it will be saved here
     // on the I/O thread and then read and cleared by the worker thread.

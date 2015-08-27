@@ -50,10 +50,10 @@ GetDataFrom(const T& aObject, uint8_t*& aBuffer, uint32_t& aLength)
 {
   MOZ_ASSERT(!aBuffer);
   aObject.ComputeLengthAndData();
-  // We use moz_malloc here rather than a FallibleTArray or fallible
-  // operator new[] since the gfxUserFontEntry will be calling moz_free
+  // We use malloc here rather than a FallibleTArray or fallible
+  // operator new[] since the gfxUserFontEntry will be calling free
   // on it.
-  aBuffer = (uint8_t*) moz_malloc(aObject.Length());
+  aBuffer = (uint8_t*) malloc(aObject.Length());
   if (!aBuffer) {
     return;
   }
@@ -130,7 +130,7 @@ FontFace::~FontFace()
   }
 
   if (mSourceBuffer) {
-    NS_Free(mSourceBuffer);
+    free(mSourceBuffer);
   }
 }
 
@@ -485,10 +485,11 @@ FontFace::ParseDescriptor(nsCSSFontDesc aDescID,
   nsCOMPtr<nsIPrincipal> principal = global->PrincipalOrNull();
 
   nsCOMPtr<nsPIDOMWindow> window = do_QueryInterface(mParent);
+  nsCOMPtr<nsIURI> docURI = window->GetDocumentURI();
   nsCOMPtr<nsIURI> base = window->GetDocBaseURI();
 
   if (!parser.ParseFontFaceDescriptor(aDescID, aString,
-                                      nullptr, // aSheetURL
+                                      docURI, // aSheetURL
                                       base,
                                       principal,
                                       aResult)) {

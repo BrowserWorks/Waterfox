@@ -135,35 +135,37 @@ PRLogModuleInfo* XULDocument::gXULLog;
 
 //----------------------------------------------------------------------
 
-struct BroadcasterMapEntry : public PLDHashEntryHdr {
-    Element*         mBroadcaster; // [WEAK]
-    nsSmallVoidArray mListeners;   // [OWNING] of BroadcastListener objects
-};
-
 struct BroadcastListener {
     nsWeakPtr mListener;
     nsCOMPtr<nsIAtom> mAttribute;
 };
 
+struct BroadcasterMapEntry : public PLDHashEntryHdr
+{
+    Element* mBroadcaster;  // [WEAK]
+    nsTArray<BroadcastListener*> mListeners;  // [OWNING] of BroadcastListener objects
+};
+
 Element*
 nsRefMapEntry::GetFirstElement()
 {
-    return static_cast<Element*>(mRefContentList.SafeElementAt(0));
+    return mRefContentList.SafeElementAt(0);
 }
 
 void
 nsRefMapEntry::AppendAll(nsCOMArray<nsIContent>* aElements)
 {
-    for (int32_t i = 0; i < mRefContentList.Count(); ++i) {
-        aElements->AppendObject(static_cast<nsIContent*>(mRefContentList[i]));
+    for (size_t i = 0; i < mRefContentList.Length(); ++i) {
+        aElements->AppendObject(mRefContentList[i]);
     }
 }
 
 bool
 nsRefMapEntry::AddElement(Element* aElement)
 {
-    if (mRefContentList.IndexOf(aElement) >= 0)
+    if (mRefContentList.Contains(aElement)) {
         return true;
+    }
     return mRefContentList.AppendElement(aElement);
 }
 
@@ -171,7 +173,7 @@ bool
 nsRefMapEntry::RemoveElement(Element* aElement)
 {
     mRefContentList.RemoveElement(aElement);
-    return mRefContentList.Count() == 0;
+    return mRefContentList.IsEmpty();
 }
 
 //----------------------------------------------------------------------
@@ -215,9 +217,7 @@ XULDocument::~XULDocument()
     mPersistenceIds.Clear();
 
     // Destroy our broadcaster map.
-    if (mBroadcasterMap) {
-        PL_DHashTableDestroy(mBroadcasterMap);
-    }
+    delete mBroadcasterMap;
 
     delete mTemplateBuilderTable;
 
@@ -618,13 +618,14 @@ ClearBroadcasterMapEntry(PLDHashTable* aTable, PLDHashEntryHdr* aEntry)
 {
     BroadcasterMapEntry* entry =
         static_cast<BroadcasterMapEntry*>(aEntry);
-    for (int32_t i = entry->mListeners.Count() - 1; i >= 0; --i) {
-        delete (BroadcastListener*)entry->mListeners[i];
+    for (size_t i = entry->mListeners.Length() - 1; i != (size_t)-1; --i) {
+        delete entry->mListeners[i];
     }
+    entry->mListeners.Clear();
 
     // N.B. that we need to manually run the dtor because we
-    // constructed the nsSmallVoidArray object in-place.
-    entry->mListeners.~nsSmallVoidArray();
+    // constructed the nsTArray object in-place.
+    entry->mListeners.~nsTArray<BroadcastListener*>();
 }
 
 static bool
@@ -737,7 +738,7 @@ XULDocument::AddBroadcastListenerFor(nsIDOMElement* aBroadcaster,
     nsCOMPtr<Element> listener = do_QueryInterface(aListener);
     NS_ENSURE_ARG(broadcaster && listener);
     AddBroadcastListenerFor(*broadcaster, *listener, aAttr, rv);
-    return rv.ErrorCode();
+    return rv.StealNSResult();
 }
 
 void
@@ -768,12 +769,7 @@ XULDocument::AddBroadcastListenerFor(Element& aBroadcaster, Element& aListener,
     };
 
     if (! mBroadcasterMap) {
-        mBroadcasterMap = PL_NewDHashTable(&gOps, sizeof(BroadcasterMapEntry));
-
-        if (! mBroadcasterMap) {
-            aRv.Throw(NS_ERROR_OUT_OF_MEMORY);
-            return;
-        }
+        mBroadcasterMap = new PLDHashTable(&gOps, sizeof(BroadcasterMapEntry));
     }
 
     BroadcasterMapEntry* entry =
@@ -791,26 +787,22 @@ XULDocument::AddBroadcastListenerFor(Element& aBroadcaster, Element& aListener,
 
         entry->mBroadcaster = &aBroadcaster;
 
-        // N.B. placement new to construct the nsSmallVoidArray object
-        // in-place
-        new (&entry->mListeners) nsSmallVoidArray();
+        // N.B. placement new to construct the nsTArray object in-place
+        new (&entry->mListeners) nsTArray<BroadcastListener*>();
     }
 
     // Only add the listener if it's not there already!
     nsCOMPtr<nsIAtom> attr = do_GetAtom(aAttr);
 
-    BroadcastListener* bl;
-    for (int32_t i = entry->mListeners.Count() - 1; i >= 0; --i) {
-        bl = static_cast<BroadcastListener*>(entry->mListeners[i]);
-
+    for (size_t i = entry->mListeners.Length() - 1; i != (size_t)-1; --i) {
+        BroadcastListener* bl = entry->mListeners[i];
         nsCOMPtr<Element> blListener = do_QueryReferent(bl->mListener);
 
         if (blListener == &aListener && bl->mAttribute == attr)
             return;
     }
 
-    bl = new BroadcastListener;
-
+    BroadcastListener* bl = new BroadcastListener;
     bl->mListener  = do_GetWeakReference(&aListener);
     bl->mAttribute = attr;
 
@@ -847,17 +839,15 @@ XULDocument::RemoveBroadcastListenerFor(Element& aBroadcaster,
 
     if (entry) {
         nsCOMPtr<nsIAtom> attr = do_GetAtom(aAttr);
-        for (int32_t i = entry->mListeners.Count() - 1; i >= 0; --i) {
-            BroadcastListener* bl =
-                static_cast<BroadcastListener*>(entry->mListeners[i]);
-
+        for (size_t i = entry->mListeners.Length() - 1; i != (size_t)-1; --i) {
+            BroadcastListener* bl = entry->mListeners[i];
             nsCOMPtr<Element> blListener = do_QueryReferent(bl->mListener);
 
             if (blListener == &aListener && bl->mAttribute == attr) {
                 entry->mListeners.RemoveElementAt(i);
                 delete bl;
 
-                if (entry->mListeners.Count() == 0)
+                if (entry->mListeners.IsEmpty())
                     PL_DHashTableRemove(mBroadcasterMap, &aBroadcaster);
 
                 break;
@@ -972,13 +962,10 @@ XULDocument::AttributeChanged(nsIDocument* aDocument,
             nsAutoString value;
             bool attrSet = aElement->GetAttr(kNameSpaceID_None, aAttribute, value);
 
-            int32_t i;
-            for (i = entry->mListeners.Count() - 1; i >= 0; --i) {
-                BroadcastListener* bl =
-                    static_cast<BroadcastListener*>(entry->mListeners[i]);
-
+            for (size_t i = entry->mListeners.Length() - 1; i != (size_t)-1; --i) {
+                BroadcastListener* bl = entry->mListeners[i];
                 if ((bl->mAttribute == aAttribute) ||
-                    (bl->mAttribute == nsGkAtoms::_asterix)) {
+                    (bl->mAttribute == nsGkAtoms::_asterisk)) {
                     nsCOMPtr<Element> listenerEl
                         = do_QueryReferent(bl->mListener);
                     if (listenerEl) {
@@ -1220,7 +1207,7 @@ XULDocument::GetElementsByAttributeNS(const nsAString& aNamespaceURI,
     ErrorResult rv;
     *aReturn = GetElementsByAttributeNS(aNamespaceURI, aAttribute,
                                         aValue, rv).take();
-    return rv.ErrorCode();
+    return rv.StealNSResult();
 }
 
 already_AddRefed<nsINodeList>
@@ -1526,7 +1513,7 @@ XULDocument::GetPopupRangeOffset(int32_t* aRangeOffset)
 {
     ErrorResult rv;
     *aRangeOffset = GetPopupRangeOffset(rv);
-    return rv.ErrorCode();
+    return rv.StealNSResult();
 }
 
 int32_t
@@ -2041,8 +2028,7 @@ XULDocument::PrepareToLoadPrototype(nsIURI* aURI, const char* aCommand,
                                kCharsetFromDocTypeDefault);
     parser->SetContentSink(sink); // grabs a reference to the parser
 
-    *aResult = parser;
-    NS_ADDREF(*aResult);
+    parser.forget(aResult);
     return NS_OK;
 }
 
@@ -3566,7 +3552,7 @@ XULDocument::ExecuteScript(nsXULPrototypeScript *aScript)
 
     // We're about to run script via JS::CloneAndExecuteScript, so we need an
     // AutoEntryScript. This is Gecko specific and not in any spec.
-    AutoEntryScript aes(mScriptGlobalObject);
+    AutoEntryScript aes(mScriptGlobalObject, "precompiled XUL <script> element");
     aes.TakeOwnershipOfErrorReporting();
     JSContext* cx = aes.cx();
     JS::Rooted<JSObject*> baseGlobal(cx, JS::CurrentGlobalOrNull(cx));
@@ -3663,7 +3649,7 @@ XULDocument::CreateOverlayElement(nsXULPrototypeElement* aPrototype,
     rv = AddForwardReference(fwdref);
     if (NS_FAILED(rv)) return rv;
 
-    NS_ADDREF(*aResult = element);
+    element.forget(aResult);
     return NS_OK;
 }
 
@@ -4165,13 +4151,11 @@ XULDocument::BroadcastAttributeChangeFromOverlay(nsIContent* aNode,
         return rv;
 
     // We've got listeners: push the value.
-    int32_t i;
-    for (i = entry->mListeners.Count() - 1; i >= 0; --i) {
-        BroadcastListener* bl = static_cast<BroadcastListener*>
-            (entry->mListeners[i]);
+    for (size_t i = entry->mListeners.Length() - 1; i != (size_t)-1; --i) {
+        BroadcastListener* bl = entry->mListeners[i];
 
         if ((bl->mAttribute != aAttribute) &&
-            (bl->mAttribute != nsGkAtoms::_asterix))
+            (bl->mAttribute != nsGkAtoms::_asterisk))
             continue;
 
         nsCOMPtr<nsIContent> l = do_QueryReferent(bl->mListener);
@@ -4309,7 +4293,7 @@ XULDocument::CheckBroadcasterHookup(Element* aElement,
     ErrorResult domRv;
     AddBroadcastListenerFor(*broadcaster, *listener, attribute, domRv);
     if (domRv.Failed()) {
-        return domRv.ErrorCode();
+        return domRv.StealNSResult();
     }
 
 #ifdef PR_LOGGING
@@ -4373,7 +4357,7 @@ XULDocument::InsertElement(nsINode* aParent, nsIContent* aChild,
 
             token = nsCRT::strtok(rest, ", ", &rest);
         }
-        nsMemory::Free(str);
+        free(str);
 
         if (content) {
             int32_t pos = aParent->IndexOf(content);
@@ -4437,13 +4421,11 @@ XULDocument::CachedChromeStreamListener::CachedChromeStreamListener(XULDocument*
     : mDocument(aDocument),
       mProtoLoaded(aProtoLoaded)
 {
-    NS_ADDREF(mDocument);
 }
 
 
 XULDocument::CachedChromeStreamListener::~CachedChromeStreamListener()
 {
-    NS_RELEASE(mDocument);
 }
 
 
@@ -4662,7 +4644,7 @@ XULDocument::GetBoxObjectFor(nsIDOMElement* aElement, nsIBoxObject** aResult)
     ErrorResult rv;
     nsCOMPtr<Element> el = do_QueryInterface(aElement);
     *aResult = GetBoxObjectFor(el, rv).take();
-    return rv.ErrorCode();
+    return rv.StealNSResult();
 }
 
 JSObject*

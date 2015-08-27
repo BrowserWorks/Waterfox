@@ -13,10 +13,6 @@
 #include "MFTDecoder.h"
 #include "mozilla/RefPtr.h"
 
-namespace mp4_demuxer {
-class MP4Sample;
-}
-
 namespace mozilla {
 
 // Encapsulates the initialization of the MFTDecoder appropriate for decoding
@@ -33,7 +29,7 @@ public:
   // Submit a compressed sample for decoding.
   // This should forward to the MFTDecoder after performing
   // any required sample formatting.
-  virtual HRESULT Input(mp4_demuxer::MP4Sample* aSample) = 0;
+  virtual HRESULT Input(MediaRawData* aSample) = 0;
 
   // Produces decoded output, if possible. Blocks until output can be produced,
   // or until no more is able to be produced.
@@ -65,7 +61,7 @@ public:
 
   virtual nsresult Init() override;
 
-  virtual nsresult Input(mp4_demuxer::MP4Sample* aSample);
+  virtual nsresult Input(MediaRawData* aSample);
 
   virtual nsresult Flush() override;
 
@@ -73,30 +69,27 @@ public:
 
   virtual nsresult Shutdown() override;
 
-  virtual bool IsWaitingMediaResources() { return false; };
-  virtual bool IsDormantNeeded() { return true; };
-  virtual void AllocateMediaResources() override;
-  virtual void ReleaseMediaResources() override;
   virtual bool IsHardwareAccelerated() const override;
 
 private:
 
   // Called on the task queue. Inserts the sample into the decoder, and
   // extracts output if available.
-  void Decode();
-  void EnsureDecodeTaskDispatched();
-  void PurgeInputQueue();
+  void ProcessDecode(MediaRawData* aSample);
 
   // Called on the task queue. Extracts output if available, and delivers
   // it to the reader. Called after ProcessDecode() and ProcessDrain().
   void ProcessOutput();
+
+  // Called on the task queue. Orders the MFT to flush.  There is no output to
+  // extract.
+  void ProcessFlush();
 
   // Called on the task queue. Orders the MFT to drain, and then extracts
   // all available output.
   void ProcessDrain();
 
   void ProcessShutdown();
-  void ProcessReleaseDecoder();
 
   RefPtr<FlushableMediaTaskQueue> mTaskQueue;
   MediaDataDecoderCallback* mCallback;
@@ -108,10 +101,18 @@ private:
   // This is used to approximate the decoder's position in the media resource.
   int64_t mLastStreamOffset;
 
+  // For access to and waiting on mIsFlushing
   Monitor mMonitor;
-  std::queue<nsAutoPtr<mp4_demuxer::MP4Sample>> mInput;
-  bool mIsDecodeTaskDispatched;
+  // Set on reader/decode thread calling Flush() to indicate that output is
+  // not required and so input samples on mTaskQueue need not be processed.
+  // Cleared on mTaskQueue.
   bool mIsFlushing;
+
+  bool mIsShutDown;
+
+  // For telemetry
+  bool mHasSuccessfulOutput = false;
+  bool mRecordedError = false;
 };
 
 } // namespace mozilla

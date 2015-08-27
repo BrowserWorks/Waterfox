@@ -29,6 +29,7 @@ jfieldID AndroidGeckoEvent::jOrientations = 0;
 jfieldID AndroidGeckoEvent::jXField = 0;
 jfieldID AndroidGeckoEvent::jYField = 0;
 jfieldID AndroidGeckoEvent::jZField = 0;
+jfieldID AndroidGeckoEvent::jWField = 0;
 jfieldID AndroidGeckoEvent::jDistanceField = 0;
 jfieldID AndroidGeckoEvent::jRectField = 0;
 jfieldID AndroidGeckoEvent::jNativeWindowField = 0;
@@ -138,6 +139,7 @@ AndroidGeckoEvent::InitGeckoEventClass(JNIEnv *jEnv)
     jXField = geckoEvent.getField("mX", "D");
     jYField = geckoEvent.getField("mY", "D");
     jZField = geckoEvent.getField("mZ", "D");
+    jWField = geckoEvent.getField("mW", "D");
     jRectField = geckoEvent.getField("mRect", "Landroid/graphics/Rect;");
 
     jCharactersField = geckoEvent.getField("mCharacters", "Ljava/lang/String;");
@@ -466,6 +468,7 @@ AndroidGeckoEvent::Init(JNIEnv *jenv, jobject jobj)
              mX = jenv->GetDoubleField(jobj, jXField);
              mY = jenv->GetDoubleField(jobj, jYField);
              mZ = jenv->GetDoubleField(jobj, jZField);
+             mW = jenv->GetDoubleField(jobj, jWField);
              mFlags = jenv->GetIntField(jobj, jFlagsField);
              mMetaState = jenv->GetIntField(jobj, jMetaStateField);
              break;
@@ -669,6 +672,13 @@ AndroidGeckoEvent::ApzInputBlockId()
     return mApzInputBlockId;
 }
 
+nsEventStatus
+AndroidGeckoEvent::ApzEventStatus()
+{
+    MOZ_ASSERT(Type() == APZ_INPUT_EVENT);
+    return mApzEventStatus;
+}
+
 WidgetTouchEvent
 AndroidGeckoEvent::MakeTouchEvent(nsIWidget* widget)
 {
@@ -824,10 +834,10 @@ AndroidGeckoEvent::MakeMouseEvent(nsIWidget* widget)
                 msg = NS_MOUSE_MOVE;
                 break;
             case AndroidMotionEvent::ACTION_HOVER_ENTER:
-                msg = NS_MOUSE_ENTER;
+                msg = NS_MOUSE_ENTER_WIDGET;
                 break;
             case AndroidMotionEvent::ACTION_HOVER_EXIT:
-                msg = NS_MOUSE_EXIT;
+                msg = NS_MOUSE_EXIT_WIDGET;
                 break;
             default:
                 break;

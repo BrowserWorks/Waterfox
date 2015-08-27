@@ -14,9 +14,9 @@
 #include "mozilla/TimeStamp.h"
 #include "Units.h"
 #include <windows.h>
+#include "nsPoint.h"
 
 class nsWindowBase;
-struct nsIntPoint;
 
 namespace mozilla {
 namespace widget {
@@ -383,7 +383,6 @@ private:
     };
     Status mStatus;
 
-#ifdef PR_LOGGING
     const char* GetStatusName()
     {
       switch (mStatus) {
@@ -399,7 +398,6 @@ private:
           return "Unknown";
       }
     }
-#endif
 
     void Finish();
   }; // SynthesizingEvent

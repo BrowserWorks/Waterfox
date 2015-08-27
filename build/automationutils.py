@@ -101,12 +101,15 @@ def processSingleLeakFile(leakLogFileName, processType, leakThreshold, ignoreMis
   """Process a single leak log.
   """
 
-  #                  Per-Inst  Leaked      Total  Rem ...
-  #   0 TOTAL              17     192  419115886    2 ...
-  # 833 nsTimerImpl        60     120      24726    2 ...
-  lineRe = re.compile(r"^\s*\d+\s+(?P<name>\S+)\s+"
-                      r"(?P<size>-?\d+)\s+(?P<bytesLeaked>-?\d+)\s+"
-                      r"-?\d+\s+(?P<numLeaked>-?\d+)")
+  #     |              |Per-Inst  Leaked|     Total  Rem|
+  #   0 |TOTAL         |      17     192| 419115886    2|
+  # 833 |nsTimerImpl   |      60     120|     24726    2|
+  # 930 |Foo<Bar, Bar> |      32       8|       100    1|
+  lineRe = re.compile(r"^\s*\d+ \|"
+                      r"(?P<name>[^|]+)\|"
+                      r"\s*(?P<size>-?\d+)\s+(?P<bytesLeaked>-?\d+)\s*\|"
+                      r"\s*-?\d+\s+(?P<numLeaked>-?\d+)")
+  # The class name can contain spaces. We remove trailing whitespace later.
 
   processString = "%s process:" % processType
   crashedOnPurpose = False
@@ -125,7 +128,7 @@ def processSingleLeakFile(leakLogFileName, processType, leakThreshold, ignoreMis
         # eg: the leak table header row
         log.info(line.rstrip())
         continue
-      name = matches.group("name")
+      name = matches.group("name").rstrip()
       size = int(matches.group("size"))
       bytesLeaked = int(matches.group("bytesLeaked"))
       numLeaked = int(matches.group("numLeaked"))
@@ -398,6 +401,16 @@ def environment(xrePath, env=None, crashreporter=True, debugger=False, dmdPath=N
     else:
       log.info(message)
 
+  tsan = bool(mozinfo.info.get("tsan"))
+  if tsan and mozinfo.isLinux:
+    # Symbolizer support.
+    llvmsym = os.path.join(xrePath, "llvm-symbolizer")
+    if os.path.isfile(llvmsym):
+      env["TSAN_OPTIONS"] = "external_symbolizer_path=%s" % llvmsym
+      log.info("INFO | runtests.py | TSan using symbolizer at %s" % llvmsym)
+    else:
+      log.info("TEST-UNEXPECTED-FAIL | runtests.py | Failed to find TSan symbolizer at %s" % llvmsym)
+
   return env
 
 def dumpScreen(utilityPath):
@@ -574,9 +587,9 @@ class LSANLeaks(object):
     # Don't various allocation-related stack frames, as they do not help much to
     # distinguish different leaks.
     unescapedSkipList = [
-      "malloc", "js_malloc", "malloc_", "__interceptor_malloc", "moz_malloc", "moz_xmalloc",
-      "calloc", "js_calloc", "calloc_", "__interceptor_calloc", "moz_calloc", "moz_xcalloc",
-      "realloc","js_realloc", "realloc_", "__interceptor_realloc", "moz_realloc", "moz_xrealloc",
+      "malloc", "js_malloc", "malloc_", "__interceptor_malloc", "moz_xmalloc",
+      "calloc", "js_calloc", "calloc_", "__interceptor_calloc", "moz_xcalloc",
+      "realloc","js_realloc", "realloc_", "__interceptor_realloc", "moz_xrealloc",
       "new",
       "js::MallocProvider",
     ]

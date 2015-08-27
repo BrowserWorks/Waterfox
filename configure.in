@@ -50,7 +50,7 @@ _SUBDIR_CONFIG_ARGS="$ac_configure_args"
 dnl Set the version number of the libs included with mozilla
 dnl ========================================================
 MOZJPEG=62
-MOZPNG=10616
+MOZPNG=10617
 NSPR_VERSION=4
 NSPR_MINVER=4.10.8
 NSS_VERSION=3
@@ -288,7 +288,7 @@ if test -n "$gonkdir" ; then
         AC_DEFINE(MOZ_AUDIO_OFFLOAD)
         MOZ_FMP4=1
         ;;
-    21)
+    21|22)
         GONK_INCLUDES="-I$gonkdir/frameworks/native/include -I$gonkdir/frameworks/av/include -I$gonkdir/frameworks/av/include/media -I$gonkdir/frameworks/av/include/camera -I$gonkdir/frameworks/native/include/media/openmax -I$gonkdir/frameworks/av/media/libstagefright/include"
         MOZ_AUDIO_OFFLOAD=1
         MOZ_OMX_DECODER=1
@@ -367,6 +367,15 @@ dnl ========================================================
 dnl AR_FLAGS set here so HOST_AR_FLAGS can be set correctly (see bug 538269)
 AR_FLAGS='crs $@'
 
+if test -z "$COMPILE_ENVIRONMENT"; then
+if test "$target" != "$host"; then
+# Assert that we're cross compiling, but don't require a compile toolchain (as
+# MOZ_CROSS_COMPILER does below).
+CROSS_COMPILE=1
+AC_DEFINE(CROSS_COMPILE)
+fi
+fi # !COMPILE_ENVIRONMENT
+
 if test "$COMPILE_ENVIRONMENT"; then
 
 if test "$target" != "$host"; then
@@ -420,6 +429,18 @@ MOZ_TOOL_VARIABLES
 
 MOZ_CHECK_COMPILER_WRAPPER
 
+MOZ_PATH_PROG(RUSTC, rustc)
+MOZ_ARG_ENABLE_BOOL([rust],
+                    [  --enable-rust  Include rust language sources],
+                    [MOZ_RUST=1],
+                    [MOZ_RUST= ])
+if test -z "$RUSTC" -a -n "$MOZ_RUST"; then
+  AC_MSG_ERROR([Rust compiler not found.
+    To compile rust language sources, you must have 'rustc' in your path.
+    See http://www.rust-lang.org/ for more information.])
+fi
+AC_SUBST(MOZ_RUST)
+
 dnl ========================================================
 dnl Check for MacOS deployment target version
 dnl ========================================================
@@ -447,20 +468,6 @@ AC_SUBST(MACOSX_DEPLOYMENT_TARGET)
 dnl ========================================================
 dnl Special win32 checks
 dnl ========================================================
-
-MOZ_ARG_ENABLE_BOOL(metro,
-[  --enable-metro           Enable Windows Metro build targets],
-    MOZ_METRO=1,
-    MOZ_METRO=)
-if test -n "$MOZ_METRO"; then
-    AC_DEFINE(MOZ_METRO)
-    # toolkit/library/makefile.in needs these, see nsDllMain.
-    CRTDLLVERSION=110
-    CRTEXPDLLVERSION=1-1-0
-fi
-
-AC_SUBST(CRTDLLVERSION)
-AC_SUBST(CRTEXPDLLVERSION)
 
 # Target the Windows 8.1 SDK by default
 WINSDK_TARGETVER=603
@@ -559,7 +566,6 @@ See https://developer.mozilla.org/en/Windows_Build_Prerequisites.])
         AC_SUBST(MSVC_DESKTOPCRT_DLL)
 
         # Disable SEH on clang-cl because it doesn't implement them yet.
-            # Send our CFLAGS to NSS
             MOZ_CFLAGS_NSS=1
             AC_DEFINE_UNQUOTED(GTEST_HAS_SEH, 0)
 
@@ -568,16 +574,6 @@ See https://developer.mozilla.org/en/Windows_Build_Prerequisites.])
             AC_MSG_ERROR([Invalid Win32 Redist directory: ${WIN32_REDIST_DIR}])
           fi
           WIN32_REDIST_DIR=`cd "$WIN32_REDIST_DIR" && pwd`
-        fi
-
-        dnl Confirm we have the pri tools on win8 builds
-        if test -n "$MOZ_METRO"; then
-          AC_MSG_CHECKING([for makepri])
-          AC_CHECK_PROGS(MAKEPRI, makepri, "")
-          if test -z "MAKEPRI" ; then
-              AC_MSG_ERROR([makepri.exe is required for generating metro browser install components. It should be in the Win8 SDK.])
-          fi
-          AC_SUBST(MAKEPRI)
         fi
 
         dnl Ensure that mt.exe is 'Microsoft (R) Manifest Tool',
@@ -1520,9 +1516,11 @@ if test "$GNU_CC"; then
         _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Werror=return-type"
         _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Werror=sequence-point"
         _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Werror=trigraphs"
+        _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Werror=uninitialized"
         _WARNINGS_CFLAGS="${_WARNINGS_CFLAGS} -Werror=unknown-pragmas"
 
         MOZ_C_SUPPORTS_WARNING(-Werror=, non-literal-null-conversion, ac_c_has_werror_non_literal_null_conversion)
+        MOZ_C_SUPPORTS_WARNING(-Werror=, sometimes-uninitialized, ac_c_has_sometimes_uninitialized)
     fi
 
     # Turn off the following warnings that -Wall turns on:
@@ -1613,9 +1611,11 @@ if test "$GNU_CXX"; then
         _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Werror=switch"
         _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Werror=trigraphs"
         _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Werror=type-limits"
+        _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Werror=uninitialized"
         _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Werror=unused-label"
 
         MOZ_CXX_SUPPORTS_WARNING(-Werror=, non-literal-null-conversion, ac_cxx_has_werror_non_literal_null_conversion)
+        MOZ_CXX_SUPPORTS_WARNING(-Werror=, sometimes-uninitialized, ac_cxx_has_sometimes_uninitialized)
     fi
 
     # Turn off the following warnings that -Wall turns on:
@@ -1863,7 +1863,7 @@ dnl ========================================================
 case "$host" in
 *mingw*)
     if test -n "$_WIN32_MSVC"; then
-        HOST_AR=xilib
+        HOST_AR=lib
         HOST_AR_FLAGS='-NOLOGO -OUT:$@'
         HOST_CFLAGS="$HOST_CFLAGS -TC -nologo"
         HOST_RANLIB='echo ranlib'
@@ -1981,7 +1981,7 @@ case "$target" in
             TARGET_COMPILER_ABI="ibmc"
             CC_VERSION=`lslpp -Lcq vac.C 2>/dev/null | awk -F: '{ print $3 }'`
             CXX_VERSION=`lslpp -Lcq vacpp.cmp.core 2>/dev/null | awk -F: '{ print $3 }'`
-        fi
+        fi # COMPILE_ENVIRONMENT
     fi
     case "${target_os}" in
     aix4.1*)
@@ -1990,7 +1990,7 @@ case "$target" in
     esac
     if test "$COMPILE_ENVIRONMENT"; then
         MOZ_CHECK_HEADERS(sys/inttypes.h)
-    fi
+    fi # COMPILE_ENVIRONMENT
     AC_DEFINE(NSCAP_DISABLE_DEBUG_PTR_TYPES)
     ;;
 
@@ -2117,7 +2117,9 @@ ia64*-hpux*)
         MOZ_SYNTH_PICO=1
     else
         _PLATFORM_DEFAULT_TOOLKIT=cairo-android
-        MOZ_LINKER=1
+        if test "$COMPILE_ENVIRONMENT"; then
+            MOZ_LINKER=1
+        fi
     fi
     TARGET_NSPR_MDCPUCFG='\"md/_linux.cfg\"'
 
@@ -2202,7 +2204,7 @@ ia64*-hpux*)
         if test "$AS_BIN"; then
             AS="$(basename "$AS_BIN")"
         fi
-        AR='xilib'
+        AR='lib'
         AR_FLAGS='-NOLOGO -OUT:$@'
         AR_EXTRACT=
         RANLIB='echo not_ranlib'
@@ -2339,22 +2341,6 @@ ia64*-hpux*)
     *-mingw*)
         if test -n "$L10NBASEDIR"; then
             L10NBASEDIR=`cd $L10NBASEDIR && pwd -W`
-        fi
-        ;;
-    esac
-
-    case "$host" in
-    *-mingw*)
-        if test -z "$MOZ_TOOLS"; then
-            AC_MSG_ERROR([MOZ_TOOLS is not set])
-        fi
-        MOZ_TOOLS_DIR=`cd $MOZ_TOOLS && pwd -W`
-        if test "$?" != "0" -o -z "$MOZ_TOOLS_DIR"; then
-            AC_MSG_ERROR([cd \$MOZ_TOOLS failed. MOZ_TOOLS ==? $MOZ_TOOLS])
-        fi
-        MOZ_TOOLS_BIN_DIR="$(cd "$MOZ_TOOLS_DIR/bin" && pwd)"
-        if test `echo ${PATH}: | grep -ic "$MOZ_TOOLS_BINDIR:"` = 0; then
-            AC_MSG_ERROR([\$MOZ_TOOLS\\bin must be in your path.])
         fi
         ;;
     esac
@@ -2619,7 +2605,7 @@ if test -z "$COMPILE_ENVIRONMENT"; then
     SKIP_LIBRARY_CHECKS=1
 else
     MOZ_COMPILER_OPTS
-fi
+fi # COMPILE_ENVIRONMENT
 
 if test -z "$SKIP_COMPILER_CHECKS"; then
 dnl Checks for typedefs, structures, and compiler characteristics.
@@ -3448,20 +3434,6 @@ AC_CACHE_CHECK(for __attribute__((always_inline)),
                                ac_cv_attribute_always_inline=yes,
                                ac_cv_attribute_always_inline=no)])
 
-AC_CACHE_CHECK(for __attribute__((malloc)),
-               ac_cv_attribute_malloc,
-               [AC_TRY_COMPILE([void* f(int) __attribute__((malloc));],
-                               [],
-                               ac_cv_attribute_malloc=yes,
-                               ac_cv_attribute_malloc=no)])
-
-AC_CACHE_CHECK(for __attribute__((warn_unused_result)),
-               ac_cv_attribute_warn_unused,
-               [AC_TRY_COMPILE([int f(void) __attribute__((warn_unused_result));],
-                               [],
-                               ac_cv_attribute_warn_unused=yes,
-                               ac_cv_attribute_warn_unused=no)])
-
 dnl End of C++ language/feature checks
 AC_LANG_C
 
@@ -3493,25 +3465,6 @@ if test -n "${CPU_ARCH}" -a -n "${TARGET_COMPILER_ABI}"; then
     AC_DEFINE_UNQUOTED(TARGET_XPCOM_ABI, ["${TARGET_XPCOM_ABI}"])
 fi
 
-dnl Mozilla specific options
-dnl ========================================================
-dnl The macros used for command line options
-dnl are defined in build/autoconf/altoptions.m4.
-
-dnl If the compiler supports these attributes, define them as
-dnl convenience macros.
-if test "$ac_cv_attribute_malloc" = yes ; then
-  AC_DEFINE(NS_ATTR_MALLOC, [__attribute__((malloc))])
-else
-  AC_DEFINE(NS_ATTR_MALLOC,)
-fi
-
-if test "$ac_cv_attribute_warn_unused" = yes ; then
-  AC_DEFINE(NS_WARN_UNUSED_RESULT, [__attribute__((warn_unused_result))])
-else
-  AC_DEFINE(NS_WARN_UNUSED_RESULT,)
-fi
-
 dnl We can't run TRY_COMPILE tests on Windows, so hard-code some
 dnl features that Windows actually does support.
 
@@ -3521,6 +3474,11 @@ if test -n "$SKIP_COMPILER_CHECKS"; then
    AC_DEFINE(HAVE_FORCEINLINE)
    AC_DEFINE(HAVE_LOCALECONV)
 fi # SKIP_COMPILER_CHECKS
+
+dnl Mozilla specific options
+dnl ========================================================
+dnl The macros used for command line options
+dnl are defined in build/autoconf/altoptions.m4.
 
 dnl ========================================================
 dnl =
@@ -3568,10 +3526,10 @@ AC_SUBST(NIGHTLY_BUILD)
 AC_SUBST(RELEASE_BUILD)
 
 dnl ========================================================
-dnl Multiprocess Firefox Nightly Testing UI
+dnl Multiprocess Firefox Testing UI - Nightly and Aurora
 dnl To be removed in Bug 1003313
 dnl ========================================================
-if test -n "$NIGHTLY_BUILD"; then
+if test -z "$RELEASE_BUILD"; then
     E10S_TESTING_ONLY=1
     AC_DEFINE(E10S_TESTING_ONLY)
 fi
@@ -3955,12 +3913,16 @@ MOZ_ANDROID_SHARE_OVERLAY=
 MOZ_INSTALL_TRACKING=
 ACCESSIBILITY=1
 MOZ_TIME_MANAGER=
+MOZ_SIMPLEPUSH=
 MOZ_PAY=
 MOZ_AUDIO_CHANNEL_MANAGER=
 NSS_NO_LIBPKIX=
 MOZ_CONTENT_SANDBOX=
 MOZ_GMP_SANDBOX=
 MOZ_SANDBOX=1
+MOZ_BINARY_EXTENSIONS=
+MOZ_ADDON_SIGNING=
+MOZ_REQUIRE_SIGNING=
 
 case "$target_os" in
     mingw*)
@@ -3978,7 +3940,9 @@ case "${target}" in
         NSS_DISABLE_DBM=1
         MOZ_THEME_FASTSTRIPE=1
         MOZ_TREE_FREETYPE=1
-        MOZ_MEMORY=1
+        if test "$COMPILE_ENVIRONMENT"; then
+            MOZ_MEMORY=1
+        fi
         MOZ_RAW=1
         ;;
 
@@ -4121,6 +4085,19 @@ if test -n "$MOZ_ANDROID_RESOURCE_CONSTRAINED"; then
     AC_DEFINE(MOZ_ANDROID_RESOURCE_CONSTRAINED)
 fi
 AC_SUBST(MOZ_ANDROID_RESOURCE_CONSTRAINED)
+
+dnl ========================================================
+dnl = Trademarked Branding
+dnl ========================================================
+MOZ_ARG_ENABLE_BOOL(official-branding,
+[  --enable-official-branding
+                          Enable Official mozilla.org Branding
+                          Do not distribute builds with
+                          --enable-official-branding unless you have
+                          permission to use trademarks per
+                          http://www.mozilla.org/foundation/trademarks/ .],
+    MOZ_OFFICIAL_BRANDING=1,
+    MOZ_OFFICIAL_BRANDING=)
 
 # Allow the application to influence configure with a confvars.sh script.
 AC_MSG_CHECKING([if app-specific confvars.sh exists])
@@ -4697,28 +4674,14 @@ MOZ_ARG_ENABLE_STRING(ui-locale,
     MOZ_UI_LOCALE=$enableval )
 AC_SUBST(MOZ_UI_LOCALE)
 
-dnl ========================================================
-dnl = Trademarked Branding
-dnl ========================================================
-MOZ_ARG_ENABLE_BOOL(official-branding,
-[  --enable-official-branding
-                          Enable Official mozilla.org Branding
-                          Do not distribute builds with
-                          --enable-official-branding unless you have
-                          permission to use trademarks per
-                          http://www.mozilla.org/foundation/trademarks/ .],
-[
+AC_SUBST(MOZ_OFFICIAL_BRANDING)
+if test -n "$MOZ_OFFICIAL_BRANDING"; then
   if test -z "$MOZ_OFFICIAL_BRANDING_DIRECTORY"; then
     AC_MSG_ERROR([You must specify MOZ_OFFICIAL_BRANDING_DIRECTORY to use --enable-official-branding.])
   else
     MOZ_BRANDING_DIRECTORY=${MOZ_OFFICIAL_BRANDING_DIRECTORY}
-    MOZ_OFFICIAL_BRANDING=1
+    AC_DEFINE(MOZ_OFFICIAL_BRANDING)
   fi
-], MOZ_OFFICIAL_BRANDING=)
-
-AC_SUBST(MOZ_OFFICIAL_BRANDING)
-if test -n "$MOZ_OFFICIAL_BRANDING"; then
-  AC_DEFINE(MOZ_OFFICIAL_BRANDING)
 fi
 
 MOZ_ARG_WITH_STRING(branding,
@@ -5255,6 +5218,7 @@ if test "$MOZ_WIDGET_TOOLKIT" = "cocoa"; then
   MOZ_APPLEMEDIA=1
 fi
 
+if test "$COMPILE_ENVIRONMENT"; then
 if test -n "$MOZ_APPLEMEDIA"; then
   AC_DEFINE(MOZ_APPLEMEDIA)
   # hack in frameworks for fmp4 - see bug 1029974
@@ -5264,6 +5228,7 @@ if test -n "$MOZ_APPLEMEDIA"; then
   AC_CHECK_HEADER([CoreMedia/CoreMedia.h], [],
     [AC_MSG_ERROR([MacOS X 10.7 SDK or later is required])])
 fi
+fi # COMPILE_ENVIRONMENT
 
 dnl ========================================================
 dnl = DirectShow support
@@ -5341,6 +5306,10 @@ MOZ_ARG_DISABLE_BOOL(fmp4,
 [  --disable-fmp4  Disable support for in built Fragmented MP4 parsing],
     MOZ_FMP4=,
     MOZ_FMP4=1)
+
+if test -n "$MOZ_FFMPEG" -a -z "$MOZ_FMP4"; then
+    AC_MSG_ERROR([Fragmented MP4 support must be enabled if using FFMPEG])
+fi
 
 if test -n "$MOZ_FMP4"; then
     AC_DEFINE(MOZ_FMP4)
@@ -5518,7 +5487,7 @@ if test -n "$MOZ_VPX" -a -z "$MOZ_NATIVE_LIBVPX"; then
         VPX_ASFLAGS="-f win32 -rnasm -pnasm -DPIC"
         VPX_X86_ASM=1
         dnl The encoder needs obj_int_extract to get asm offsets.
-      fi
+      fi # COMPILE_ENVIRONMENT and others
     ;;
     *:arm*)
       if test -n "$GNU_AS" ; then
@@ -5548,7 +5517,7 @@ if test -n "$MOZ_VPX" -a -z "$MOZ_NATIVE_LIBVPX"; then
 
     if test -n "$COMPILE_ENVIRONMENT" -a -n "$VPX_X86_ASM" -a -z "$VPX_AS"; then
       AC_MSG_ERROR([yasm is a required build tool for this architecture when webm is enabled. You may either install yasm or --disable-webm (which disables the WebM video format). See https://developer.mozilla.org/en/YASM for more details.])
-    fi
+    fi # COMPILE_ENVIRONMENT and others
 
     if test -z "$GNU_CC" -a -z "$INTEL_CC" -a -z "$CLANG_CC" ; then
       dnl We prefer to get asm offsets using inline assembler, which the above
@@ -5566,6 +5535,9 @@ if test -n "$MOZ_VPX" -a -z "$MOZ_NATIVE_LIBVPX"; then
     else
       AC_MSG_WARN([No assembler or assembly support for libvpx. Using unoptimized C routines.])
     fi
+
+    dnl native libvpx no longer has vpx_mem_set_functions
+    AC_DEFINE(MOZ_VPX_NO_MEM_REPORTING)
 fi
 
 dnl ========================================================
@@ -6450,11 +6422,7 @@ MOZ_ARG_ENABLE_BOOL(verify-mar,
     MOZ_VERIFY_MAR_SIGNATURE= )
 
 if test -n "$MOZ_VERIFY_MAR_SIGNATURE"; then
-  if test "$OS_ARCH" = "WINNT"; then
-    AC_DEFINE(MOZ_VERIFY_MAR_SIGNATURE)
-  else
-    AC_MSG_ERROR([Can only build with --enable-verify-mar with a Windows target])
-  fi
+  AC_DEFINE(MOZ_VERIFY_MAR_SIGNATURE)
 fi
 
 dnl ========================================================
@@ -6983,20 +6951,23 @@ if test -z "$MOZ_ENABLE_WARNINGS_AS_ERRORS"; then
    WARNINGS_AS_ERRORS=''
 elif test "$GNU_CC"; then
     # Prevent the following GCC warnings from being treated as errors:
-    # -Wuninitialized - too many false positives
     # -Wmaybe-uninitialized - too many false positives
     # -Wdeprecated-declarations - we don't want our builds held hostage when a
     #   platform-specific API becomes deprecated.
-    MOZ_C_SUPPORTS_WARNING(-W, no-error=uninitialized, ac_c_has_noerror_uninitialized)
-    MOZ_CXX_SUPPORTS_WARNING(-W, no-error=uninitialized, ac_cxx_has_noerror_uninitialized)
+    # -Wfree-nonheap-object - false positives during PGO
+    # -Warray-bounds - false positives depending on optimization
     MOZ_C_SUPPORTS_WARNING(-W, no-error=maybe-uninitialized, ac_c_has_noerror_maybe_uninitialized)
     MOZ_CXX_SUPPORTS_WARNING(-W, no-error=maybe-uninitialized, ac_cxx_has_noerror_maybe_uninitialized)
     MOZ_C_SUPPORTS_WARNING(-W, no-error=deprecated-declarations, ac_c_has_noerror_deprecated_declarations)
     MOZ_CXX_SUPPORTS_WARNING(-W, no-error=deprecated-declarations, ac_cxx_has_noerror_deprecated_declarations)
+    MOZ_C_SUPPORTS_WARNING(-W, no-error=array-bounds, ac_c_has_noerror_array_bounds)
+    MOZ_CXX_SUPPORTS_WARNING(-W, no-error=array-bounds, ac_cxx_has_noerror_array_bounds)
 
     if test -n "$MOZ_PGO"; then
         MOZ_C_SUPPORTS_WARNING(-W, no-error=coverage-mismatch, ac_c_has_noerror_coverage_mismatch)
         MOZ_CXX_SUPPORTS_WARNING(-W, no-error=coverage-mismatch, ac_cxx_has_noerror_coverage_mismatch)
+        MOZ_C_SUPPORTS_WARNING(-W, no-error=free-nonheap-object, ac_c_has_noerror_free_nonheap_object)
+        MOZ_CXX_SUPPORTS_WARNING(-W, no-error=free-nonheap-object, ac_cxx_has_noerror_free_nonheap_object)
     fi
 fi
 
@@ -7407,7 +7378,7 @@ if test -n "$COMPILE_ENVIRONMENT" -a -n "$USE_ELF_HACK"; then
             USE_ELF_HACK=
         fi
     fi
-fi
+fi # COMPILE_ENVIRONMENT and others.
 
 dnl ========================================================
 dnl = libstdc++ compatibility hacks
@@ -7422,6 +7393,8 @@ if test -n "$STDCXX_COMPAT"; then
    eval $(CXX="$CXX" HOST_CXX="$HOST_CXX" $PYTHON -m mozbuild.configure.libstdcxx)
    AC_SUBST(MOZ_LIBSTDCXX_TARGET_VERSION)
    AC_SUBST(MOZ_LIBSTDCXX_HOST_VERSION)
+   CXXFLAGS="$CXXFLAGS -D_GLIBCXX_USE_CXX11_ABI=0"
+   HOST_CXXFLAGS="$HOST_CXXFLAGS -D_GLIBCXX_USE_CXX11_ABI=0"
 fi
 
 dnl ========================================================
@@ -7568,6 +7541,15 @@ fi
 AC_SUBST(MOZ_B2G_CAMERA)
 
 dnl ========================================================
+dnl = Enable Support for SimplePush (Gonk usually)
+dnl   This will disable the Push API.
+dnl ========================================================
+if test -n "$MOZ_SIMPLEPUSH"; then
+    AC_DEFINE(MOZ_SIMPLEPUSH)
+fi
+AC_SUBST(MOZ_SIMPLEPUSH)
+
+dnl ========================================================
 dnl = Enable Support for Payment API
 dnl ========================================================
 if test -n "$MOZ_PAY"; then
@@ -7693,19 +7675,6 @@ if test "$MOZ_CHROME_FILE_FORMAT" != "jar" &&
     test "$MOZ_CHROME_FILE_FORMAT" != "omni"; then
     AC_MSG_ERROR([--enable-chrome-format must be set to either jar, flat, or omni])
 fi
-
-dnl =========================================================
-dnl Enable support for revamped devtools Performance Tools
-dnl =========================================================
-
-MOZ_ARG_ENABLE_BOOL(devtools-perf,
-[  --enable-devtools-perf Set compile flags necessary for compiling devtools perftools],
-MOZ_DEVTOOLS_PERFTOOLS=1,
-MOZ_DEVTOOLS_PERFTOOLS= )
-if test -n "$MOZ_DEVTOOLS_PERFTOOLS"; then
-  AC_DEFINE(MOZ_DEVTOOLS_PERFTOOLS)
-fi
-AC_SUBST(MOZ_DEVTOOLS_PERFTOOLS)
 
 dnl =========================================================
 dnl Omnijar packaging (bug 552121)
@@ -8530,8 +8499,6 @@ AC_SUBST(MOZ_DIRECTX_SDK_PATH)
 AC_SUBST(MOZ_D3DCOMPILER_XP_DLL)
 AC_SUBST(MOZ_D3DCOMPILER_XP_CAB)
 
-AC_SUBST(MOZ_METRO)
-
 AC_SUBST(MOZ_ANDROID_HISTORY)
 AC_SUBST(MOZ_WEBSMS_BACKEND)
 AC_SUBST(MOZ_ANDROID_BEAM)
@@ -8544,6 +8511,9 @@ AC_SUBST(MOZ_ANDROID_SHARE_OVERLAY)
 AC_SUBST(MOZ_ANDROID_TAB_QUEUE)
 AC_SUBST(MOZ_ANDROID_MLS_STUMBLER)
 AC_SUBST(MOZ_ANDROID_DOWNLOADS_INTEGRATION)
+AC_SUBST(MOZ_ANDROID_APPLICATION_CLASS)
+AC_SUBST(MOZ_ANDROID_BROWSER_INTENT_CLASS)
+AC_SUBST(MOZ_ANDROID_SEARCH_INTENT_CLASS)
 AC_SUBST(MOZ_INSTALL_TRACKING)
 AC_SUBST(ENABLE_STRIP)
 AC_SUBST(PKG_SKIP_STRIP)
@@ -8562,6 +8532,13 @@ AC_SUBST(MOZ_BUILD_ROOT)
 AC_SUBST(MOZ_POST_DSO_LIB_COMMAND)
 AC_SUBST(MOZ_POST_PROGRAM_COMMAND)
 AC_SUBST(MOZ_LINKER_EXTRACT)
+
+AC_SUBST(MOZ_ADDON_SIGNING)
+AC_SUBST(MOZ_REQUIRE_SIGNING)
+
+if test -n "$MOZ_BINARY_EXTENSIONS"; then
+  AC_DEFINE(MOZ_BINARY_EXTENSIONS)
+fi
 
 AC_SUBST(MOZ_JSDOWNLOADS)
 if test -n "$MOZ_JSDOWNLOADS"; then
@@ -8727,7 +8704,6 @@ fi
 
 dnl win32 options
 AC_SUBST(MOZ_BROWSE_INFO)
-AC_SUBST(MOZ_TOOLS_DIR)
 AC_SUBST(WIN32_REDIST_DIR)
 AC_SUBST(MAKENSISU)
 
@@ -9030,11 +9006,8 @@ dnl ========================================================
 # builds.  Bugs to enable:
 #
 #   Android:  bug 864843
-#   B2G:      bug 866301
 
-if test "$MOZ_WIDGET_TOOLKIT" = "android" ||
-   test "$MOZ_BUILD_APP" = "b2g" ||
-   test "$MOZ_BUILD_APP" = "b2g/dev"; then
+if test "$MOZ_WIDGET_TOOLKIT" = "android"; then
     _INTL_API=no
 else
     _INTL_API=yes
@@ -9042,10 +9015,6 @@ fi
 
 if test "$MOZ_WIDGET_TOOLKIT" = "cocoa"; then
     USE_ICU=1
-fi
-
-if test "$OS_TARGET" = WINNT; then
-    MOZ_SHARED_ICU=1
 fi
 
 MOZ_CONFIG_ICU()
@@ -9083,9 +9052,11 @@ esac
 
 if test -z "$MOZ_NATIVE_JEMALLOC" -a "$MOZ_MEMORY" && test -n "$MOZ_JEMALLOC3" -o -n "$MOZ_REPLACE_MALLOC"; then
   ac_configure_args="--build=$build --host=$target --enable-stats --with-jemalloc-prefix=je_ --disable-valgrind"
+  # We're using memalign for _aligned_malloc in memory/build/mozmemory_wrap.c
+  # on Windows, so just export memalign on all platforms.
+  ac_configure_args="$ac_configure_args ac_cv_func_memalign=yes"
   if test -n "$MOZ_REPLACE_MALLOC"; then
-    # When using replace_malloc, we always want memalign and valloc exported from jemalloc.
-    ac_configure_args="$ac_configure_args ac_cv_func_memalign=yes"
+    # When using replace_malloc, we always want valloc exported from jemalloc.
     ac_configure_args="$ac_configure_args ac_cv_func_valloc=yes"
   fi
   if test -n "$MOZ_JEMALLOC3"; then

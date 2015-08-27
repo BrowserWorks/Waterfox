@@ -16,7 +16,7 @@ config = {
                 "."
             ],
             "run_filename": "remotecppunittests.py",
-            "testsdir": "cppunittests"
+            "testsdir": "cppunittest"
         },
         "crashtest": {
             "options": [
@@ -61,11 +61,9 @@ config = {
             "options": [
                 "--adbpath=%(adbpath)s",
                 "--b2gpath=%(b2gpath)s",
-                "--console-level=INFO",
                 "--emulator=%(emulator)s",
                 "--logdir=%(logcat_dir)s",
                 "--remote-webserver=%(remote_webserver)s",
-                "%(test_manifest)s",
                 "--xre-path=%(xre_path)s",
                 "--symbols-path=%(symbols_path)s",
                 "--busybox=%(busybox)s",
@@ -83,7 +81,6 @@ config = {
             "options": [
                 "--adbpath=%(adbpath)s",
                 "--b2gpath=%(b2gpath)s",
-                "--console-level=INFO",
                 "--emulator=%(emulator)s",
                 "--logdir=%(logcat_dir)s",
                 "--remote-webserver=%(remote_webserver)s",

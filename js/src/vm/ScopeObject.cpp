@@ -540,6 +540,7 @@ const Class DynamicWithObject::class_ = {
     nullptr, /* setProperty */
     nullptr, /* enumerate */
     nullptr, /* resolve */
+    nullptr, /* mayResolve */
     nullptr, /* convert */
     nullptr, /* finalize */
     nullptr, /* call */
@@ -977,6 +978,7 @@ const Class UninitializedLexicalObject::class_ = {
     nullptr, /* setProperty */
     nullptr, /* enumerate */
     nullptr, /* resolve */
+    nullptr, /* mayResolve */
     nullptr, /* convert */
     nullptr, /* finalize */
     nullptr, /* call */
@@ -1172,7 +1174,7 @@ void
 LiveScopeVal::sweep()
 {
     if (staticScope_)
-        MOZ_ALWAYS_FALSE(IsObjectAboutToBeFinalizedFromAnyThread(staticScope_.unsafeGet()));
+        MOZ_ALWAYS_FALSE(IsAboutToBeFinalized(&staticScope_));
 }
 
 // Live ScopeIter values may be added to DebugScopes::liveScopes, as
@@ -1351,10 +1353,18 @@ class DebugScopeProxy : public BaseProxyHandler
                 else
                     frame.unaliasedLocal(local) = vp;
             } else {
-                if (action == GET)
+                if (action == GET) {
+                    // A ClonedBlockObject whose static block does not need
+                    // cloning is a "hollow" block object reflected for
+                    // missing block scopes. Their slot values are lost.
+                    if (!block->staticBlock().needsClone()) {
+                        *accessResult = ACCESS_LOST;
+                        return true;
+                    }
                     vp.set(block->var(i, DONT_CHECK_ALIASING));
-                else
+                } else {
                     block->setVar(i, vp, DONT_CHECK_ALIASING);
+                }
             }
 
             *accessResult = ACCESS_UNALIASED;
@@ -1417,8 +1427,9 @@ class DebugScopeProxy : public BaseProxyHandler
     static bool isMagicMissingArgumentsValue(JSContext* cx, ScopeObject& scope, HandleValue v)
     {
         bool isMagic = v.isMagic() && v.whyMagic() == JS_OPTIMIZED_ARGUMENTS;
-        MOZ_ASSERT_IF(isMagic, isFunctionScope(scope) &&
-                               !scope.as<CallObject>().callee().nonLazyScript()->needsArgsObj());
+        MOZ_ASSERT_IF(isMagic,
+                      isFunctionScope(scope) &&
+                      scope.as<CallObject>().callee().nonLazyScript()->argumentsHasVarBinding());
         return isMagic;
     }
 
@@ -1870,7 +1881,7 @@ DebugScopes::sweep(JSRuntime* rt)
      */
     for (MissingScopeMap::Enum e(missingScopes); !e.empty(); e.popFront()) {
         DebugScopeObject** debugScope = e.front().value().unsafeGet();
-        if (IsObjectAboutToBeFinalizedFromAnyThread(debugScope)) {
+        if (IsAboutToBeFinalizedUnbarriered(debugScope)) {
             /*
              * Note that onPopCall and onPopBlock rely on missingScopes to find
              * scope objects that we synthesized for the debugger's sake, and
@@ -1908,7 +1919,7 @@ DebugScopes::sweep(JSRuntime* rt)
          * Scopes can be finalized when a debugger-synthesized ScopeObject is
          * no longer reachable via its DebugScopeObject.
          */
-        if (IsObjectAboutToBeFinalizedFromAnyThread(&scope))
+        if (IsAboutToBeFinalizedUnbarriered(&scope))
             e.removeFront();
         else if (scope != e.front().key())
             e.rekeyFront(scope);
@@ -2481,6 +2492,7 @@ js::GetDebugScopeForFrame(JSContext* cx, AbstractFramePtr frame, jsbytecode* pc)
     assertSameCompartment(cx, frame);
     if (CanUseDebugScopeMaps(cx) && !DebugScopes::updateLiveScopes(cx))
         return nullptr;
+
     ScopeIter si(cx, frame, pc);
     return GetDebugScope(cx, si);
 }

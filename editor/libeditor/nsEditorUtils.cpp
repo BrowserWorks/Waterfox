@@ -5,8 +5,8 @@
 
 #include "nsEditorUtils.h"
 
+#include "mozilla/dom/OwningNonNull.h"
 #include "mozilla/dom/Selection.h"
-#include "nsCOMArray.h"
 #include "nsComponentManagerUtils.h"
 #include "nsError.h"
 #include "nsIClipboardDragDropHookList.h"
@@ -66,90 +66,55 @@ nsAutoSelectionReset::Abort()
  * some helper classes for iterating the dom tree
  *****************************************************************************/
 
-nsDOMIterator::nsDOMIterator() :
-mIter(nullptr)
+nsDOMIterator::nsDOMIterator(nsINode& aNode)
+{
+  mIter = NS_NewContentIterator();
+  DebugOnly<nsresult> res = mIter->Init(&aNode);
+  MOZ_ASSERT(NS_SUCCEEDED(res));
+}
+
+nsresult
+nsDOMIterator::Init(nsRange& aRange)
+{
+  mIter = NS_NewContentIterator();
+  return mIter->Init(&aRange);
+}
+
+nsDOMIterator::nsDOMIterator()
 {
 }
-    
+
 nsDOMIterator::~nsDOMIterator()
 {
 }
-    
-nsresult
-nsDOMIterator::Init(nsRange* aRange)
-{
-  nsresult res;
-  mIter = do_CreateInstance("@mozilla.org/content/post-content-iterator;1", &res);
-  NS_ENSURE_SUCCESS(res, res);
-  NS_ENSURE_TRUE(mIter, NS_ERROR_FAILURE);
-  return mIter->Init(aRange);
-}
 
-nsresult
-nsDOMIterator::Init(nsIDOMNode* aNode)
-{
-  nsresult res;
-  mIter = do_CreateInstance("@mozilla.org/content/post-content-iterator;1", &res);
-  NS_ENSURE_SUCCESS(res, res);
-  NS_ENSURE_TRUE(mIter, NS_ERROR_FAILURE);
-  nsCOMPtr<nsIContent> content = do_QueryInterface(aNode);
-  return mIter->Init(content);
-}
-
-nsresult
-nsDOMIterator::AppendList(nsBoolDomIterFunctor& functor,
-                          nsTArray<nsCOMPtr<nsINode>>& arrayOfNodes) const
+void
+nsDOMIterator::AppendList(const nsBoolDomIterFunctor& functor,
+                          nsTArray<OwningNonNull<nsINode>>& arrayOfNodes) const
 {
   // Iterate through dom and build list
-  while (!mIter->IsDone()) {
+  for (; !mIter->IsDone(); mIter->Next()) {
     nsCOMPtr<nsINode> node = mIter->GetCurrentNode();
-    NS_ENSURE_TRUE(node, NS_ERROR_NULL_POINTER);
 
     if (functor(node)) {
-      arrayOfNodes.AppendElement(node);
+      arrayOfNodes.AppendElement(*node);
     }
-    mIter->Next();
   }
-  return NS_OK;
-}
-
-nsresult
-nsDOMIterator::AppendList(nsBoolDomIterFunctor& functor,
-                          nsCOMArray<nsIDOMNode>& arrayOfNodes) const
-{
-  nsCOMPtr<nsIDOMNode> node;
-  
-  // iterate through dom and build list
-  while (!mIter->IsDone())
-  {
-    node = do_QueryInterface(mIter->GetCurrentNode());
-    NS_ENSURE_TRUE(node, NS_ERROR_NULL_POINTER);
-
-    if (functor(node))
-    {
-      arrayOfNodes.AppendObject(node);
-    }
-    mIter->Next();
-  }
-  return NS_OK;
 }
 
 nsDOMSubtreeIterator::nsDOMSubtreeIterator()
 {
 }
-    
+
+nsresult
+nsDOMSubtreeIterator::Init(nsRange& aRange)
+{
+  mIter = NS_NewContentSubtreeIterator();
+  return mIter->Init(&aRange);
+}
+
 nsDOMSubtreeIterator::~nsDOMSubtreeIterator()
 {
-}
-    
-nsresult
-nsDOMSubtreeIterator::Init(nsRange* aRange)
-{
-  nsresult res;
-  mIter = do_CreateInstance("@mozilla.org/content/subtree-content-iterator;1", &res);
-  NS_ENSURE_SUCCESS(res, res);
-  NS_ENSURE_TRUE(mIter, NS_ERROR_FAILURE);
-  return mIter->Init(aRange);
 }
 
 /******************************************************************************

@@ -16,6 +16,7 @@
 #include "mozilla/DebugOnly.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/gfx/PathHelpers.h"
+#include "gfx2DGlue.h"
 
 #include "nsCOMPtr.h"
 #include "nsFrameList.h"
@@ -56,6 +57,7 @@
 #include "FrameLayerBuilder.h"
 
 #include "nsBidiPresUtils.h"
+#include "RubyUtils.h"
 
 // For triple-click pref
 #include "imgIContainer.h"
@@ -480,10 +482,11 @@ IsFontSizeInflationContainer(nsIFrame* aFrame,
   }
 
   nsIContent *content = aFrame->GetContent();
+  nsIAtom* frameType = aFrame->GetType();
   bool isInline = (aFrame->GetDisplay() == NS_STYLE_DISPLAY_INLINE ||
-                   aFrame->StyleDisplay()->IsRubyDisplayType() ||
+                   RubyUtils::IsRubyBox(frameType) ||
                    (aFrame->IsFloating() &&
-                    aFrame->GetType() == nsGkAtoms::letterFrame) ||
+                    frameType == nsGkAtoms::letterFrame) ||
                    // Given multiple frames for the same node, only the
                    // outer one should be considered a container.
                    // (Important, e.g., for nsSelectsAreaFrame.)
@@ -1987,9 +1990,11 @@ nsIFrame::BuildDisplayListForStackingContext(nsDisplayListBuilder* aBuilder,
 
   bool usingSVGEffects = nsSVGIntegrationUtils::UsingEffectsForFrame(this);
   nsRect dirtyRectOutsideSVGEffects = dirtyRect;
+  nsDisplayList hoistedScrollInfoItemsStorage;
   if (usingSVGEffects) {
     dirtyRect =
       nsSVGIntegrationUtils::GetRequiredSourceForInvalidArea(this, dirtyRect);
+    aBuilder->EnterSVGEffectsContents(&hoistedScrollInfoItemsStorage);
   }
 
   bool useOpacity = HasVisualOpacity() && !nsSVGUtils::CanOptimizeOpacity(this);
@@ -2123,6 +2128,10 @@ nsIFrame::BuildDisplayListForStackingContext(nsDisplayListBuilder* aBuilder,
     /* List now emptied, so add the new list to the top. */
     resultList.AppendNewToTop(
         new (aBuilder) nsDisplaySVGEffects(aBuilder, this, &resultList));
+    // Also add the hoisted scroll info items. We need those for APZ scrolling
+    // because nsDisplaySVGEffects items can't build active layers.
+    aBuilder->ExitSVGEffectsContents();
+    resultList.AppendToTop(&hoistedScrollInfoItemsStorage);
   }
   /* Else, if the list is non-empty and there is CSS group opacity without SVG
    * effects, wrap it up in an opacity item.
@@ -2672,8 +2681,7 @@ nsFrame::GetDataForTableSelection(const nsFrameSelection* aFrameSelection,
   if (offset < 0) return NS_ERROR_FAILURE;
 
   // Everything is OK -- set the return values
-  *aParentContent = parentContent;
-  NS_ADDREF(*aParentContent);
+  parentContent.forget(aParentContent);
 
   *aContentOffset = offset;
 
@@ -3328,10 +3336,7 @@ NS_IMETHODIMP nsFrame::HandleRelease(nsPresContext* aPresContext,
       // If not, the user must have clicked in a part of the selection.
       // Place the caret before continuing!
 
-      bool mouseDown = frameselection->GetDragState();
-
-      if (!mouseDown && frameselection->HasDelayedCaretData() &&
-          frameselection->GetClickCountInDelayedCaretData() < 2) {
+      if (frameselection->MouseDownRecorded()) {
         nsPoint pt = nsLayoutUtils::GetEventCoordinatesRelativeTo(aEvent, this);
         offsets = GetContentOffsetsFromPoint(pt, SKIP_HIDDEN);
         handleTableSelection = false;
@@ -4090,21 +4095,33 @@ nsFrame::IntrinsicISizeOffsets(nsRenderingContext* aRenderingContext)
 {
   IntrinsicISizeOffsetData result;
 
+  WritingMode wm = GetWritingMode();
+
   const nsStyleMargin *styleMargin = StyleMargin();
-  AddCoord(styleMargin->mMargin.GetLeft(), aRenderingContext, this,
-           &result.hMargin, &result.hPctMargin, false);
-  AddCoord(styleMargin->mMargin.GetRight(), aRenderingContext, this,
-           &result.hMargin, &result.hPctMargin, false);
+  AddCoord(wm.IsVertical() ? styleMargin->mMargin.GetTop()
+                           : styleMargin->mMargin.GetLeft(),
+           aRenderingContext, this, &result.hMargin, &result.hPctMargin,
+           false);
+  AddCoord(wm.IsVertical() ? styleMargin->mMargin.GetBottom()
+                           : styleMargin->mMargin.GetRight(),
+           aRenderingContext, this, &result.hMargin, &result.hPctMargin,
+           false);
 
   const nsStylePadding *stylePadding = StylePadding();
-  AddCoord(stylePadding->mPadding.GetLeft(), aRenderingContext, this,
-           &result.hPadding, &result.hPctPadding, true);
-  AddCoord(stylePadding->mPadding.GetRight(), aRenderingContext, this,
-           &result.hPadding, &result.hPctPadding, true);
+  AddCoord(wm.IsVertical() ? stylePadding->mPadding.GetTop()
+                           : stylePadding->mPadding.GetLeft(),
+           aRenderingContext, this, &result.hPadding, &result.hPctPadding,
+           true);
+  AddCoord(wm.IsVertical() ? stylePadding->mPadding.GetBottom()
+                           : stylePadding->mPadding.GetRight(),
+           aRenderingContext, this, &result.hPadding, &result.hPctPadding,
+           true);
 
   const nsStyleBorder *styleBorder = StyleBorder();
-  result.hBorder += styleBorder->GetComputedBorderWidth(NS_SIDE_LEFT);
-  result.hBorder += styleBorder->GetComputedBorderWidth(NS_SIDE_RIGHT);
+  result.hBorder += styleBorder->GetComputedBorderWidth(
+    wm.PhysicalSideForInlineAxis(eLogicalEdgeStart));
+  result.hBorder += styleBorder->GetComputedBorderWidth(
+    wm.PhysicalSideForInlineAxis(eLogicalEdgeEnd));
 
   const nsStyleDisplay *disp = StyleDisplay();
   if (IsThemed(disp)) {
@@ -4114,13 +4131,17 @@ nsFrame::IntrinsicISizeOffsets(nsRenderingContext* aRenderingContext)
     presContext->GetTheme()->GetWidgetBorder(presContext->DeviceContext(),
                                              this, disp->mAppearance,
                                              &border);
-    result.hBorder = presContext->DevPixelsToAppUnits(border.LeftRight());
+    result.hBorder =
+      presContext->DevPixelsToAppUnits(wm.IsVertical() ? border.TopBottom()
+                                                       : border.LeftRight());
 
     nsIntMargin padding;
     if (presContext->GetTheme()->GetWidgetPadding(presContext->DeviceContext(),
                                                   this, disp->mAppearance,
                                                   &padding)) {
-      result.hPadding = presContext->DevPixelsToAppUnits(padding.LeftRight());
+      result.hPadding =
+        presContext->DevPixelsToAppUnits(wm.IsVertical() ? padding.TopBottom()
+                                                         : padding.LeftRight());
       result.hPctPadding = 0;
     }
   }
@@ -4295,7 +4316,7 @@ nsFrame::ComputeSize(nsRenderingContext *aRenderingContext,
 
   const nsStyleDisplay *disp = StyleDisplay();
   if (IsThemed(disp)) {
-    nsIntSize widget(0, 0);
+    LayoutDeviceIntSize widget;
     bool canOverride = true;
     nsPresContext *presContext = PresContext();
     presContext->GetTheme()->
@@ -7904,7 +7925,11 @@ nsFrame::DoGetParentStyleContext(nsIFrame** aProviderFrame) const
     if (MOZ_LIKELY(parentContent)) {
       nsIAtom* pseudo = StyleContext()->GetPseudo();
       if (!pseudo || !mContent->IsElement() ||
-          !nsCSSAnonBoxes::IsAnonBox(pseudo) ||
+          (!nsCSSAnonBoxes::IsAnonBox(pseudo) &&
+           // Ensure that we don't return the display:contents style
+           // of the parent content for pseudos that have the same content
+           // as their primary frame (like -moz-list-bullets do):
+           mContent->GetPrimaryFrame() == this) ||
           /* if next is true then it's really a request for the table frame's
              parent context, see nsTable[Outer]Frame::GetParentStyleContext. */
           pseudo == nsCSSAnonBoxes::tableOuter) {
@@ -8839,22 +8864,6 @@ nsIFrame::GetPseudoElement(nsCSSPseudoElements::Type aType)
   }
   
   return nullptr;
-}
-
-nsIFrame::ContentOffsets::ContentOffsets()
-{
-}
-
-nsIFrame::ContentOffsets::ContentOffsets(const ContentOffsets& rhs)
-  : content(rhs.content),
-    offset(rhs.offset),
-    secondaryOffset(rhs.secondaryOffset),
-    associate(rhs.associate)
-{
-}
-
-nsIFrame::ContentOffsets::~ContentOffsets()
-{
 }
 
 nsIFrame::CaretPosition::CaretPosition()

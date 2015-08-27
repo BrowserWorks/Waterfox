@@ -265,6 +265,7 @@ class TestRecursiveMakeBackend(BackendTester):
             ],
             'EXTRA_COMPONENTS': [
                 'EXTRA_COMPONENTS += bar.js',
+                'EXTRA_COMPONENTS += dummy.manifest',
                 'EXTRA_COMPONENTS += foo.js',
             ],
             'EXTRA_PP_COMPONENTS': [
@@ -273,9 +274,6 @@ class TestRecursiveMakeBackend(BackendTester):
             ],
             'FAIL_ON_WARNINGS': [
                 'FAIL_ON_WARNINGS := 1',
-            ],
-            'MSVC_ENABLE_PGO': [
-                'MSVC_ENABLE_PGO := 1',
             ],
             'VISIBILITY_FLAGS': [
                 'VISIBILITY_FLAGS :=',
@@ -406,6 +404,19 @@ class TestRecursiveMakeBackend(BackendTester):
         self.assertIn('res/bar.res', m)
         self.assertIn('res/tests/test.manifest', m)
         self.assertIn('res/tests/extra.manifest', m)
+
+    def test_branding_files(self):
+        """Ensure BRANDING_FILES is handled properly."""
+        env = self._consume('branding-files', RecursiveMakeBackend)
+
+        #BRANDING_FILES should appear in the dist_branding install manifest.
+        m = InstallManifest(path=os.path.join(env.topobjdir,
+            '_build_manifests', 'install', 'dist_branding'))
+        self.assertEqual(len(m), 4)
+        self.assertIn('app.ico', m)
+        self.assertIn('bar.ico', m)
+        self.assertIn('quux.png', m)
+        self.assertIn('icons/foo.ico', m)
 
     def test_js_preference_files(self):
         """Ensure PREF_JS_EXPORTS is written out correctly."""
@@ -626,6 +637,21 @@ class TestRecursiveMakeBackend(BackendTester):
                 str.startswith('FINAL_TARGET') or str.startswith('XPI_NAME') or
                 str.startswith('DIST_SUBDIR')]
             self.assertEqual(found, expected_rules)
+
+    def test_dist_files(self):
+        """Test that DIST_FILES is written to backend.mk correctly."""
+        env = self._consume('dist-files', RecursiveMakeBackend)
+
+        backend_path = mozpath.join(env.topobjdir, 'backend.mk')
+        lines = [l.strip() for l in open(backend_path, 'rt').readlines()[2:]]
+
+        expected = [
+            'DIST_FILES += install.rdf',
+            'DIST_FILES += main.js',
+        ]
+
+        found = [str for str in lines if str.startswith('DIST_FILES')]
+        self.assertEqual(found, expected)
 
     def test_config(self):
         """Test that CONFIGURE_SUBST_FILES and CONFIGURE_DEFINE_FILES are

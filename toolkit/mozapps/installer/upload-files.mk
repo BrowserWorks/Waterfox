@@ -270,7 +270,6 @@ include $(MOZILLA_DIR)/config/android-common.mk
 DIST_FILES =
 
 # Place the files in the order they are going to be opened by the linker
-DIST_FILES += libmozalloc.so
 ifndef MOZ_FOLD_LIBS
 DIST_FILES += \
   libnspr4.so \
@@ -728,11 +727,17 @@ UPLOAD_FILES= \
   $(call QUOTED_WILDCARD,$(DIST)/$(LANGPACK)) \
   $(call QUOTED_WILDCARD,$(wildcard $(DIST)/$(PARTIAL_MAR))) \
   $(call QUOTED_WILDCARD,$(DIST)/$(PKG_PATH)$(TEST_PACKAGE)) \
+  $(call QUOTED_WILDCARD,$(DIST)/$(PKG_PATH)$(CPP_TEST_PACKAGE)) \
+  $(call QUOTED_WILDCARD,$(DIST)/$(PKG_PATH)$(XPC_TEST_PACKAGE)) \
+  $(call QUOTED_WILDCARD,$(DIST)/$(PKG_PATH)$(MOCHITEST_PACKAGE)) \
+  $(call QUOTED_WILDCARD,$(DIST)/$(PKG_PATH)$(REFTEST_PACKAGE)) \
+  $(call QUOTED_WILDCARD,$(DIST)/$(PKG_PATH)$(WP_TEST_PACKAGE)) \
   $(call QUOTED_WILDCARD,$(DIST)/$(PKG_PATH)$(SYMBOL_ARCHIVE_BASENAME).zip) \
   $(call QUOTED_WILDCARD,$(DIST)/$(SDK)) \
   $(call QUOTED_WILDCARD,$(MOZ_SOURCESTAMP_FILE)) \
   $(call QUOTED_WILDCARD,$(MOZ_BUILDINFO_FILE)) \
   $(call QUOTED_WILDCARD,$(MOZ_MOZINFO_FILE)) \
+  $(call QUOTED_WILDCARD,$(MOZ_TEST_PACKAGES_FILE)) \
   $(call QUOTED_WILDCARD,$(PKG_JSSHELL)) \
   $(if $(UPLOAD_EXTRA_FILES), $(foreach f, $(UPLOAD_EXTRA_FILES), $(wildcard $(DIST)/$(f))))
 

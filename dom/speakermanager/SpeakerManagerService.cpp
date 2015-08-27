@@ -1,5 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -99,10 +99,15 @@ SpeakerManagerService::TurnOnSpeaker(bool aOn)
 {
   nsCOMPtr<nsIAudioManager> audioManager = do_GetService(NS_AUDIOMANAGER_CONTRACTID);
   NS_ENSURE_TRUE_VOID(audioManager);
+  int32_t phoneState;
+  audioManager->GetPhoneState(&phoneState);
+  int32_t forceuse = (phoneState == nsIAudioManager::PHONE_STATE_IN_CALL ||
+                      phoneState == nsIAudioManager::PHONE_STATE_IN_COMMUNICATION)
+                        ? nsIAudioManager::USE_COMMUNICATION : nsIAudioManager::USE_MEDIA;
   if (aOn) {
-    audioManager->SetForceForUse(nsIAudioManager::USE_MEDIA, nsIAudioManager::FORCE_SPEAKER);
+    audioManager->SetForceForUse(forceuse, nsIAudioManager::FORCE_SPEAKER);
   } else {
-    audioManager->SetForceForUse(nsIAudioManager::USE_MEDIA, nsIAudioManager::FORCE_NONE);
+    audioManager->SetForceForUse(forceuse, nsIAudioManager::FORCE_NONE);
   }
 }
 

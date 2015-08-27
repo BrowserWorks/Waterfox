@@ -40,7 +40,7 @@ var TestSpeechServiceWithAudio = SpecialPowers.wrapCallbackObject({
 
   serviceType: SpecialPowers.Ci.nsISpeechService.SERVICETYPE_DIRECT_AUDIO,
 
-  speak: function speak(aText, aUri, aRate, aPitch, aTask) {
+  speak: function speak(aText, aUri, aVolume, aRate, aPitch, aTask) {
     var task = SpecialPowers.wrap(aTask);
 
     window.setTimeout(
@@ -64,7 +64,7 @@ var TestSpeechServiceWithAudio = SpecialPowers.wrapCallbackObject({
 var TestSpeechServiceNoAudio = SpecialPowers.wrapCallbackObject({
   serviceType: SpecialPowers.Ci.nsISpeechService.SERVICETYPE_INDIRECT_AUDIO,
 
-  speak: function speak(aText, aUri, aRate, aPitch, aTask) {
+  speak: function speak(aText, aUri, aVolume, aRate, aPitch, aTask) {
     var pair = this.expectedSpeaks.shift();
     if (pair) {
       // XXX: These tests do not happen in OOP
@@ -81,14 +81,38 @@ var TestSpeechServiceNoAudio = SpecialPowers.wrapCallbackObject({
       }
     }
 
+    // If the utterance contains the phrase 'callback events', we will dispatch
+    // an appropriate event for each callback method.
+    var no_events = (aText.indexOf('callback events') < 0);
+    // If the utterance contains the phrase 'never end', we don't immediately
+    // end the 'synthesis' of the utterance.
+    var end_utterance = (aText.indexOf('never end') < 0);
+
     var task = SpecialPowers.wrap(aTask);
-    task.setup(SpecialPowers.wrapCallbackObject(new SpeechTaskCallback()));
+    task.setup(SpecialPowers.wrapCallbackObject(new SpeechTaskCallback(
+      function() {
+        if (!no_events) {
+          task.dispatchPause(1, 1.23);
+        }
+      },
+      function() {
+        if (!no_events) {
+          task.dispatchResume(1, 1.23);
+        }
+      },
+      function() {
+        if (!no_events) {
+          task.dispatchEnd(1, 1.23);
+        }
+      })));
     setTimeout(function () {
                  task.dispatchStart();
-                 setTimeout(function () {
-                              task.dispatchEnd(aText.length / 2.0, aText.length);
-                            }, 0);
-
+                 if (end_utterance) {
+                   setTimeout(function () {
+                                task.dispatchEnd(
+                                  aText.length / 2.0, aText.length);
+                              }, 0);
+                 }
                }, 0);
   },
 

@@ -35,6 +35,10 @@ browser.jar:
   skin/classic/browser/Geolocation-16@2x.png
   skin/classic/browser/Geolocation-64.png
   skin/classic/browser/Geolocation-64@2x.png
+  skin/classic/browser/Push-16.png
+  skin/classic/browser/Push-16@2x.png
+  skin/classic/browser/Push-64.png
+  skin/classic/browser/Push-64@2x.png
   skin/classic/browser/heartbeat-icon.svg                   (../shared/heartbeat-icon.svg)
   skin/classic/browser/heartbeat-star-lit.svg               (../shared/heartbeat-star-lit.svg)
   skin/classic/browser/heartbeat-star-off.svg               (../shared/heartbeat-star-off.svg)
@@ -110,8 +114,6 @@ browser.jar:
   skin/classic/browser/search-pref.png                         (../shared/search/search-pref.png)
   skin/classic/browser/search-indicator.png                    (../shared/search/search-indicator.png)
   skin/classic/browser/search-indicator@2x.png                 (../shared/search/search-indicator@2x.png)
-  skin/classic/browser/search-indicator-add-engine.png         (../shared/search/search-indicator-add-engine.png)
-  skin/classic/browser/search-indicator-add-engine@2x.png      (../shared/search/search-indicator-add-engine@2x.png)
   skin/classic/browser/search-engine-placeholder.png           (../shared/search/search-engine-placeholder.png)
   skin/classic/browser/search-engine-placeholder@2x.png        (../shared/search/search-engine-placeholder@2x.png)
   skin/classic/browser/badge-add-engine.png                    (../shared/search/badge-add-engine.png)
@@ -122,8 +124,8 @@ browser.jar:
   skin/classic/browser/Secure-Glyph.png
   skin/classic/browser/Secure-Glyph@2x.png
   skin/classic/browser/slowStartup-16.png
-  skin/classic/browser/theme-switcher-icon.png
-  skin/classic/browser/theme-switcher-icon@2x.png
+  skin/classic/browser/theme-switcher-icon.png                 (../shared/theme-switcher-icon.png)
+  skin/classic/browser/theme-switcher-icon@2x.png              (../shared/theme-switcher-icon@2x.png)
   skin/classic/browser/Toolbar.png
   skin/classic/browser/Toolbar@2x.png
   skin/classic/browser/Toolbar-inverted.png
@@ -147,16 +149,16 @@ browser.jar:
   skin/classic/browser/readinglist/icons.svg          (../shared/readinglist/icons.svg)
   skin/classic/browser/readinglist/readinglist-icon.svg (../shared/readinglist/readinglist-icon.svg)
 * skin/classic/browser/readinglist/sidebar.css        (readinglist/sidebar.css)
-  skin/classic/browser/webRTC-shareDevice-16.png
-  skin/classic/browser/webRTC-shareDevice-16@2x.png
-  skin/classic/browser/webRTC-shareDevice-64.png
-  skin/classic/browser/webRTC-shareDevice-64@2x.png
+  skin/classic/browser/webRTC-shareDevice-16.png      (../shared/webrtc/webRTC-shareDevice-16.png)
+  skin/classic/browser/webRTC-shareDevice-16@2x.png   (../shared/webrtc/webRTC-shareDevice-16@2x.png)
+  skin/classic/browser/webRTC-shareDevice-64.png      (../shared/webrtc/webRTC-shareDevice-64.png)
+  skin/classic/browser/webRTC-shareDevice-64@2x.png   (../shared/webrtc/webRTC-shareDevice-64@2x.png)
   skin/classic/browser/webRTC-sharingDevice-16.png    (../shared/webrtc/webRTC-sharingDevice-16.png)
   skin/classic/browser/webRTC-sharingDevice-16@2x.png (../shared/webrtc/webRTC-sharingDevice-16@2x.png)
-  skin/classic/browser/webRTC-shareMicrophone-16.png
-  skin/classic/browser/webRTC-shareMicrophone-16@2x.png
-  skin/classic/browser/webRTC-shareMicrophone-64.png
-  skin/classic/browser/webRTC-shareMicrophone-64@2x.png
+  skin/classic/browser/webRTC-shareMicrophone-16.png  (../shared/webrtc/webRTC-shareMicrophone-16.png)
+  skin/classic/browser/webRTC-shareMicrophone-16@2x.png (../shared/webrtc/webRTC-shareMicrophone-16@2x.png)
+  skin/classic/browser/webRTC-shareMicrophone-64.png  (../shared/webrtc/webRTC-shareMicrophone-64.png)
+  skin/classic/browser/webRTC-shareMicrophone-64@2x.png (../shared/webrtc/webRTC-shareMicrophone-64@2x.png)
   skin/classic/browser/webRTC-sharingMicrophone-16.png (../shared/webrtc/webRTC-sharingMicrophone-16.png)
   skin/classic/browser/webRTC-sharingMicrophone-16@2x.png (../shared/webrtc/webRTC-sharingMicrophone-16@2x.png)
   skin/classic/browser/webRTC-shareScreen-16.png      (../shared/webrtc/webRTC-shareScreen-16.png)
@@ -211,7 +213,7 @@ browser.jar:
   skin/classic/browser/downloads/allDownloadsViewOverlay.css (downloads/allDownloadsViewOverlay.css)
   skin/classic/browser/downloads/buttons.png                (downloads/buttons.png)
   skin/classic/browser/downloads/buttons@2x.png             (downloads/buttons@2x.png)
-  skin/classic/browser/downloads/contentAreaDownloadsView.css (downloads/contentAreaDownloadsView.css)
+  skin/classic/browser/downloads/contentAreaDownloadsView.css (../shared/downloads/contentAreaDownloadsView.css)
   skin/classic/browser/downloads/download-glow-menuPanel.png (downloads/download-glow-menuPanel.png)
   skin/classic/browser/downloads/download-glow-menuPanel@2x.png (downloads/download-glow-menuPanel@2x.png)
   skin/classic/browser/downloads/download-notification-finish.png  (downloads/download-notification-finish.png)
@@ -225,12 +227,9 @@ browser.jar:
   skin/classic/browser/feeds/subscribe-ui.css               (feeds/subscribe-ui.css)
   skin/classic/browser/feeds/feedIcon.png                   (feeds/feedIcon.png)
   skin/classic/browser/feeds/feedIcon16.png                 (feeds/feedIcon16.png)
-  skin/classic/browser/feeds/videoFeedIcon.png              (feeds/feedIcon.png)
-  skin/classic/browser/feeds/videoFeedIcon16.png            (feeds/feedIcon16.png)
-  skin/classic/browser/feeds/audioFeedIcon.png              (feeds/feedIcon.png)
-  skin/classic/browser/feeds/audioFeedIcon16.png            (feeds/feedIcon16.png)
 * skin/classic/browser/newtab/newTab.css                    (newtab/newTab.css)
   skin/classic/browser/newtab/controls.svg                  (../shared/newtab/controls.svg)
+  skin/classic/browser/newtab/whimsycorn.png                (../shared/newtab/whimsycorn.png)
   skin/classic/browser/setDesktopBackground.css
   skin/classic/browser/monitor.png
   skin/classic/browser/monitor_16-10.png
@@ -362,7 +361,9 @@ browser.jar:
 * skin/classic/browser/devtools/common.css                  (../shared/devtools/common.css)
 * skin/classic/browser/devtools/dark-theme.css              (../shared/devtools/dark-theme.css)
 * skin/classic/browser/devtools/light-theme.css             (../shared/devtools/light-theme.css)
+  skin/classic/browser/devtools/add.svg                     (../shared/devtools/images/add.svg)
   skin/classic/browser/devtools/filters.svg                 (../shared/devtools/filters.svg)
+  skin/classic/browser/devtools/filter-swatch.svg           (../shared/devtools/images/filter-swatch.svg)
   skin/classic/browser/devtools/controls.png                (../shared/devtools/images/controls.png)
   skin/classic/browser/devtools/controls@2x.png             (../shared/devtools/images/controls@2x.png)
   skin/classic/browser/devtools/performance-icons.svg       (../shared/devtools/images/performance-icons.svg)
@@ -396,10 +397,12 @@ browser.jar:
   skin/classic/browser/devtools/command-console@2x.png        (../shared/devtools/images/command-console@2x.png)
   skin/classic/browser/devtools/command-eyedropper.png        (../shared/devtools/images/command-eyedropper.png)
   skin/classic/browser/devtools/command-eyedropper@2x.png     (../shared/devtools/images/command-eyedropper@2x.png)
+  skin/classic/browser/devtools/command-rulers.png            (../shared/devtools/images/command-rulers.png)
+  skin/classic/browser/devtools/command-rulers@2x.png         (../shared/devtools/images/command-rulers@2x.png)
   skin/classic/browser/devtools/alerticon-warning.png         (../shared/devtools/images/alerticon-warning.png)
   skin/classic/browser/devtools/alerticon-warning@2x.png      (../shared/devtools/images/alerticon-warning@2x.png)
 * skin/classic/browser/devtools/ruleview.css                (../shared/devtools/ruleview.css)
-  skin/classic/browser/devtools/commandline.css             (devtools/commandline.css)
+  skin/classic/browser/devtools/commandline.css             (../shared/devtools/commandline.css)
   skin/classic/browser/devtools/markup-view.css             (../shared/devtools/markup-view.css)
   skin/classic/browser/devtools/editor-error.png             (../shared/devtools/images/editor-error.png)
   skin/classic/browser/devtools/editor-breakpoint.png        (../shared/devtools/images/editor-breakpoint.png)
@@ -420,7 +423,6 @@ browser.jar:
 * skin/classic/browser/devtools/netmonitor.css              (devtools/netmonitor.css)
 * skin/classic/browser/devtools/profiler.css                (devtools/profiler.css)
 * skin/classic/browser/devtools/performance.css             (devtools/performance.css)
-* skin/classic/browser/devtools/timeline.css                (devtools/timeline.css)
   skin/classic/browser/devtools/timeline-filter.svg         (../shared/devtools/images/timeline-filter.svg)
 * skin/classic/browser/devtools/scratchpad.css              (devtools/scratchpad.css)
 * skin/classic/browser/devtools/shadereditor.css            (devtools/shadereditor.css)
@@ -497,6 +499,7 @@ browser.jar:
   skin/classic/browser/devtools/tool-styleeditor.svg        (../shared/devtools/images/tool-styleeditor.svg)
   skin/classic/browser/devtools/tool-storage.svg            (../shared/devtools/images/tool-storage.svg)
   skin/classic/browser/devtools/tool-profiler.svg           (../shared/devtools/images/tool-profiler.svg)
+  skin/classic/browser/devtools/tool-profiler-active.svg    (../shared/devtools/images/tool-profiler-active.svg)
   skin/classic/browser/devtools/tool-network.svg            (../shared/devtools/images/tool-network.svg)
   skin/classic/browser/devtools/tool-scratchpad.svg         (../shared/devtools/images/tool-scratchpad.svg)
   skin/classic/browser/devtools/tool-webaudio.svg           (../shared/devtools/images/tool-webaudio.svg)
@@ -533,7 +536,9 @@ browser.jar:
   skin/classic/browser/devtools/app-manager/rocket.svg                (../shared/devtools/app-manager/images/rocket.svg)
   skin/classic/browser/devtools/app-manager/noise.png                 (../shared/devtools/app-manager/images/noise.png)
   skin/classic/browser/devtools/app-manager/default-app-icon.png      (../shared/devtools/app-manager/images/default-app-icon.png)
-
+  skin/classic/browser/devtools/search-clear-failed.svg               (../shared/devtools/images/search-clear-failed.svg)
+  skin/classic/browser/devtools/search-clear-light.svg                (../shared/devtools/images/search-clear-light.svg)
+  skin/classic/browser/devtools/search-clear-dark.svg                 (../shared/devtools/images/search-clear-dark.svg)
 #ifdef MOZ_SERVICES_SYNC
   skin/classic/browser/sync-16.png
   skin/classic/browser/sync-32.png
@@ -600,6 +605,11 @@ browser.jar:
   skin/classic/browser/warning16.png                        (../shared/warning16.png)
   skin/classic/browser/warning16@2x.png                     (../shared/warning16@2x.png)
 
+../extensions/{972ce4c6-7e08-4474-a285-3208198ce6fd}/chrome.jar:
+% override chrome://browser/skin/feeds/audioFeedIcon.png                   chrome://browser/skin/feeds/feedIcon.png
+% override chrome://browser/skin/feeds/audioFeedIcon16.png                 chrome://browser/skin/feeds/feedIcon16.png
+% override chrome://browser/skin/feeds/videoFeedIcon.png                   chrome://browser/skin/feeds/feedIcon.png
+% override chrome://browser/skin/feeds/videoFeedIcon16.png                 chrome://browser/skin/feeds/feedIcon16.png
 % override chrome://browser/skin/toolbarbutton-dropmarker.png              chrome://browser/skin/lion/toolbarbutton-dropmarker.png                 os=Darwin osversion>=10.7
 % override chrome://browser/skin/tabbrowser/alltabs-box-bkgnd-icon.png     chrome://browser/skin/lion/tabbrowser/alltabs-box-bkgnd-icon.png        os=Darwin osversion>=10.7
 % override chrome://browser/skin/tabview/tabview.png                       chrome://browser/skin/lion/tabview/tabview.png                          os=Darwin osversion>=10.7

@@ -57,10 +57,7 @@
   width: 8px;
   height: 8px;
   margin: 0 8px;
-  border: 1px solid;
   border-radius: 1px;
-  background-color: var(--bullet-bg);
-  border-color: var(--bullet-border);
 }
 
 /* Recording Notice */
@@ -78,25 +75,89 @@
   margin: 0;
 }
 
+#performance-view .notice-container vbox {
+  text-align: center;
+}
+
+.console-profile-command {
+  font-family: monospace;
+  margin: 3px 2px;
+}
+
+#performance-view .realtime-message {
+  opacity: 0.5;
+  display: block;
+}
+
+#performance-view toolbarbutton.record-button {
+  padding: 5px;
+}
+
+#performance-view toolbarbutton.record-button[checked],
+#performance-view toolbarbutton.record-button[checked] {
+  color: var(--theme-selection-color);
+  background: var(--theme-selection-background);
+}
+
+#performance-view .realtime-disabled-message,
+#performance-view .realtime-disabled-on-e10s-message {
+  display: none;
+  /* This label does not want to wrap naturally (based on some combination of
+     it's parents and flex).  Quick and dirty way to force it to wrap -> don't
+     let it get bigger than half the screen size */
+  max-width: 60vw;
+}
+
+#performance-view[e10s="disabled"] .realtime-disabled-on-e10s-message {
+  display: block;
+  opacity: 0.5;
+
+}
+#performance-view[e10s="unsupported"] .realtime-disabled-message {
+  display: block;
+  opacity: 0.5;
+}
+
+#details-pane-container .buffer-status-message,
+#details-pane-container .buffer-status-message-full {
+  display: none;
+}
+
+#details-pane-container[buffer-status="in-progress"] .buffer-status-message {
+  display: block;
+  opacity: 0.5;
+}
+
+#details-pane-container[buffer-status="full"] .buffer-status-message {
+  display: block;
+  color: var(--theme-highlight-red);
+  font-weight: bold;
+  opacity: 1;
+}
+
+#details-pane-container[buffer-status="full"] .buffer-status-message-full {
+  display: block;
+}
+
 /* Overview Panel */
 
-.record-button {
+#main-record-button {
   list-style-image: url(profiler-stopwatch.svg);
 }
 
-.record-button[checked] {
+#main-record-button[checked] {
   list-style-image: url(profiler-stopwatch-checked.svg);
 }
 
-.record-button[locked] {
+#main-record-button[locked] {
   pointer-events: none;
 }
 
-.record-button .button-icon {
+#main-record-button .button-icon {
   margin: 0;
 }
 
-.record-button .button-text {
+#main-record-button .button-text {
   display: none;
 }
 
@@ -224,8 +285,11 @@
   opacity: 0.6;
 }
 
+.call-tree-name {
+  -moz-margin-end: 4px !important;
+}
+
 .call-tree-url {
-  -moz-margin-start: 4px !important;
   cursor: pointer;
 }
 
@@ -233,11 +297,11 @@
   text-decoration: underline;
 }
 
-.call-tree-url {
+.call-tree-url, .tree-widget-item:not(.theme-selected) .opt-url {
   color: var(--theme-highlight-blue);
 }
 
-.call-tree-line {
+.call-tree-line, .tree-widget-item:not(.theme-selected) .opt-line {
   color: var(--theme-highlight-orange);
 }
 
@@ -250,14 +314,6 @@
   -moz-margin-start: 8px !important;
   font-size: 90%;
   color: var(--theme-content-color2);
-}
-
-.call-tree-name[value=""],
-.call-tree-url[value=""],
-.call-tree-line[value=""],
-.call-tree-column[value=""],
-.call-tree-host[value=""] {
-  display: none;
 }
 
 .call-tree-zoom {
@@ -280,7 +336,7 @@
   background-image: url(magnifying-glass-light.png);
 }
 
-@media (min-resolution: 2dppx) {
+@media (min-resolution: 1.25dppx) {
   .theme-dark .call-tree-zoom {
     background-image: url(magnifying-glass@2x.png);
   }
@@ -380,7 +436,6 @@
   height: 8px;
   -moz-margin-start: 8px;
   -moz-margin-end: 6px;
-  border: 1px solid;
   border-radius: 1px;
 }
 
@@ -391,9 +446,8 @@
 
 .waterfall-marker-bar {
   height: 9px;
-  border: 1px solid;
-  border-radius: 1px;
   transform-origin: left center;
+  border-radius: 1px;
 }
 
 .waterfall-marker-container.selected > .waterfall-sidebar,
@@ -402,32 +456,43 @@
   color: var(--theme-selection-color);
 }
 
-.waterfall-marker-container.selected .waterfall-marker-bullet,
-.waterfall-marker-container.selected .waterfall-marker-bar {
-  border-color: initial !important;
-}
-
-.waterfall-marker-location {
-   color: -moz-nativehyperlinktext;
-}
-
-.waterfall-marker-location:hover,
-.waterfall-marker-location:focus {
-   text-decoration: underline;
-}
-
 #waterfall-details {
   -moz-padding-start: 8px;
   -moz-padding-end: 8px;
   padding-top: 2vh;
   overflow: auto;
+  min-width: 50px;
 }
 
 .marker-details-bullet {
   width: 8px;
   height: 8px;
-  border: 1px solid;
   border-radius: 1px;
+}
+
+menuitem.marker-color-graphs-purple:before,
+.marker-color-graphs-purple {
+  background-color: var(--theme-graphs-purple);
+}
+menuitem.marker-color-graphs-grey:before,
+.marker-color-graphs-grey{
+  background-color: var(--theme-graphs-grey);
+}
+menuitem.marker-color-graphs-green:before,
+.marker-color-graphs-green {
+  background-color: var(--theme-graphs-green);
+}
+menuitem.marker-color-graphs-yellow:before,
+.marker-color-graphs-yellow {
+  background-color: var(--theme-graphs-yellow);
+}
+menuitem.marker-color-graphs-red:before,
+.marker-color-graphs-red {
+  background-color: var(--theme-graphs-red);
+}
+menuitem.marker-color-graphs-blue:before,
+.marker-color-graphs-blue {
+  background-color: var(--theme-graphs-blue);
 }
 
 #waterfall-details > * {
@@ -475,4 +540,152 @@
 #recordings-list .selected label {
   /* Text inside a selected item should not be custom colored. */
   color: inherit !important;
+}
+
+/**
+ * JIT View
+ */
+
+#jit-optimizations-view {
+  width: 350px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  min-width: 200px;
+}
+
+/* override default styles for tree widget */
+#jit-optimizations-view .tree-widget-empty-text {
+  font-size: inherit;
+  padding: 0px;
+  margin: 8px;
+}
+
+#jit-optimizations-view:not(.empty) .tree-widget-empty-text {
+  display: none;
+}
+
+#jit-optimizations-toolbar {
+  height: 18px;
+  min-height: 0px; /* override .devtools-toolbar min-height */
+}
+
+.jit-optimizations-title {
+  margin: 0px 4px;
+  font-weight: 600;
+}
+
+#jit-optimizations-raw-view {
+  font-size: 90%;
+}
+
+/* override default .tree-widget-item line-height */
+#jit-optimizations-raw-view .tree-widget-item {
+  line-height: 20px !important;
+  display: block;
+  overflow: hidden;
+}
+
+#jit-optimizations-raw-view .tree-widget-item[level="1"] {
+  font-weight: 600;
+}
+
+#jit-optimizations-view .opt-outcome::before {
+  content: "→";
+  margin: 4px 0px;
+  color: var(--theme-body-color);
+}
+#jit-optimizations-view .theme-selected .opt-outcome::before {
+  color: var(--theme-selection-color);
+}
+
+#jit-optimizations-view .tree-widget-item:not(.theme-selected) .opt-outcome[outcome=success] {
+  color: var(--theme-highlight-green);
+}
+#jit-optimizations-view .tree-widget-item:not(.theme-selected) .opt-outcome[outcome=failure] {
+  color: var(--theme-highlight-red);
+}
+#jit-optimizations-view .tree-widget-container {
+  -moz-margin-end: 0px;
+}
+#jit-optimizations-view .tree-widget-container > li,
+#jit-optimizations-view .tree-widget-children > li {
+  overflow: hidden;
+}
+
+.opt-line::before {
+  content: ":";
+  color: var(--theme-highlight-orange);
+}
+.theme-selected .opt-line::before {
+  color: var(--theme-selection-color);
+}
+.opt-line.header-line::before {
+  color: var(--theme-body-color);
+}
+#jit-optimizations-view.empty .opt-line.header-line::before {
+  display: none;
+}
+
+.opt-url {
+  -moz-margin-start: 4px !important;
+}
+.opt-url:hover {
+  text-decoration: underline;
+}
+.opt-url.debugger-link {
+  cursor: pointer;
+}
+
+#jit-optimizations-view .opt-icon::before {
+  content: "";
+  background-image: url(chrome://browser/skin/devtools/webconsole.png);
+  background-repeat: no-repeat;
+  background-size: 48px 40px;
+  margin: 5px 6px 0 0;
+  width: 8px;
+  height: 8px;
+  max-height: 8px;
+  display: inline-block;
+}
+
+#jit-optimizations-view .opt-icon[severity=warning]::before {
+  background-position: -16px -16px;
+}
+
+@media (min-resolution: 1.25dppx) {
+  #jit-optimizations-view .opt-icon::before {
+    background-image: url(chrome://browser/skin/devtools/webconsole@2x.png);
+  }
+}
+
+/**
+ * Configurable Options
+ *
+ * Elements can be tagged with a class and visibility is controlled via a preference being
+ * applied or removed.
+ */
+
+/**
+ * devtools.performance.ui.experimental
+ */
+menuitem.experimental-option::before {
+  content: "";
+  background-image: url(chrome://browser/skin/devtools/webconsole.png);
+  background-repeat: no-repeat;
+  background-size: 48px 40px;
+  margin: 2px 5px 0 0;
+  width: 8px;
+  height: 8px;
+  max-height: 8px;
+  display: inline-block;
+  background-position: -16px -16px;
+}
+@media (min-resolution: 1.25dppx) {
+  menuitem.experimental-option::before {
+    background-image: url(chrome://browser/skin/devtools/webconsole@2x.png);
+  }
+}
+#performance-options-menupopup:not(.experimental-enabled) .experimental-option,
+#performance-options-menupopup:not(.experimental-enabled) .experimental-option::before {
+  display: none;
 }

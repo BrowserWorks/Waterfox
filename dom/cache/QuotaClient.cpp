@@ -153,6 +153,7 @@ public:
       if (isDir) {
         if (leafName.EqualsLiteral("morgue")) {
           rv = GetBodyUsage(file, aUsageInfo);
+          if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
         } else {
           NS_WARNING("Unknown Cache directory found!");
         }
@@ -198,18 +199,6 @@ public:
     // automatically.
   }
 
-  virtual bool
-  IsFileServiceUtilized() override
-  {
-    return false;
-  }
-
-  virtual bool
-  IsTransactionServiceActivated() override
-  {
-    return true;
-  }
-
   virtual void
   WaitForStoragesToComplete(nsTArray<nsIOfflineStorage*>& aStorages,
                             nsIRunnable* aCallback) override
@@ -231,7 +220,7 @@ public:
 
 
   virtual void
-  ShutdownTransactionService() override
+  ShutdownWorkThreads() override
   {
     MOZ_ASSERT(NS_IsMainThread());
 

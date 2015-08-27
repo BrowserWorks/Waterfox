@@ -62,6 +62,7 @@
 #include "nsBoxLayout.h"
 #include "nsFlexContainerFrame.h"
 #include "nsGridContainerFrame.h"
+#include "RubyUtils.h"
 #include "nsRubyFrame.h"
 #include "nsRubyBaseFrame.h"
 #include "nsRubyBaseContainerFrame.h"
@@ -1393,18 +1394,6 @@ nsFrameConstructorSaveState::~nsFrameConstructorSaveState()
   }
 }
 
-static
-bool IsBorderCollapse(nsIFrame* aFrame)
-{
-  for (nsIFrame* frame = aFrame; frame; frame = frame->GetParent()) {
-    if (nsGkAtoms::tableFrame == frame->GetType()) {
-      return ((nsTableFrame*)frame)->IsBorderCollapse();
-    }
-  }
-  NS_ASSERTION(false, "program error");
-  return false;
-}
-
 /**
  * Moves aFrameList from aOldParent to aNewParent.  This updates the parent
  * pointer of the frames in the list, and reparents their views as needed.
@@ -2186,7 +2175,8 @@ nsCSSFrameConstructor::ConstructTableCell(nsFrameConstructorState& aState,
   nsStyleContext* const styleContext = aItem.mStyleContext;
   const uint32_t nameSpaceID = aItem.mNameSpaceID;
 
-  bool borderCollapse = IsBorderCollapse(aParentFrame);
+  nsTableFrame* tableFrame =
+    static_cast<nsTableRowFrame*>(aParentFrame)->GetTableFrame();
   nsContainerFrame* newFrame;
   // <mtable> is border separate in mathml.css and the MathML code doesn't implement
   // border collapse. For those users who style <mtable> with border collapse,
@@ -2195,13 +2185,14 @@ nsCSSFrameConstructor::ConstructTableCell(nsFrameConstructorState& aState,
   // table code, and so we can freely mix <mtable> with <mtr> or <tr>, <mtd> or <td>.
   // What will happen is just that non-MathML frames won't understand MathML attributes
   // and will therefore miss the special handling that the MathML code does.
-  if (kNameSpaceID_MathML == nameSpaceID && !borderCollapse)
-    newFrame = NS_NewMathMLmtdFrame(mPresShell, styleContext);
-  else
+  if (kNameSpaceID_MathML == nameSpaceID && !tableFrame->IsBorderCollapse()) {
+    newFrame = NS_NewMathMLmtdFrame(mPresShell, styleContext, tableFrame);
+  } else {
     // Warning: If you change this and add a wrapper frame around table cell
     // frames, make sure Bug 368554 doesn't regress!
     // See IsInAutoWidthTableCellForQuirk() in nsImageFrame.cpp.
-    newFrame = NS_NewTableCellFrame(mPresShell, styleContext, borderCollapse);
+    newFrame = NS_NewTableCellFrame(mPresShell, styleContext, tableFrame);
+  }
 
   // Initialize the table cell frame
   InitAndRestoreFrame(aState, content, aParentFrame, newFrame);
@@ -2697,7 +2688,7 @@ nsCSSFrameConstructor::ConstructRootFrame()
   nsContainerFrame::SyncFrameViewProperties(mPresShell->GetPresContext(), viewportFrame,
                                             viewportPseudoStyle, rootView);
   nsContainerFrame::SyncWindowProperties(mPresShell->GetPresContext(), viewportFrame,
-                                         rootView);
+                                         rootView, nullptr, nsContainerFrame::SET_ASYNC);
 
   // Make it an absolute container for fixed-pos elements
   viewportFrame->AddStateBits(NS_FRAME_CAN_HAVE_ABSPOS_CHILDREN);
@@ -5182,6 +5173,17 @@ nsCSSFrameConstructor::FindSVGData(Element* aElement,
     // Elements with failing conditional processing attributes never get
     // rendered.  Note that this is not where we select which frame in a
     // <switch> to render!  That happens in nsSVGSwitchFrame::PaintSVG.
+    if (aIsWithinSVGText) {
+      // SVGTextFrame doesn't handle conditional processing attributes,
+      // so don't create frames for descendants of <text> with failing
+      // attributes.  We need frames not to be created so that text layout
+      // is correct.
+      return &sSuppressData;
+    }
+    // If we're not inside <text>, create an nsSVGContainerFrame (which is a
+    // frame that doesn't render) so that paint servers can still be referenced,
+    // even if they live inside an element with failing conditional processing
+    // attributes.
     return &sContainerData;
   }
 
@@ -8698,8 +8700,10 @@ nsCSSFrameConstructor::CreateContinuingFrame(nsPresContext*    aPresContext,
     // Warning: If you change this and add a wrapper frame around table cell
     // frames, make sure Bug 368554 doesn't regress!
     // See IsInAutoWidthTableCellForQuirk() in nsImageFrame.cpp.
+    nsTableFrame* tableFrame =
+      static_cast<nsTableRowFrame*>(aParentFrame)->GetTableFrame();
     nsTableCellFrame* cellFrame =
-      NS_NewTableCellFrame(shell, styleContext, IsBorderCollapse(aParentFrame));
+      NS_NewTableCellFrame(shell, styleContext, tableFrame);
 
     cellFrame->Init(content, aParentFrame, aFrame);
     if (cellFrame->GetStateBits() & NS_FRAME_CAN_HAVE_ABSPOS_CHILDREN) {
@@ -9155,8 +9159,7 @@ nsCSSFrameConstructor::MaybeRecreateContainerForFrameRemoval(nsIFrame* aFrame,
   // Check ruby containers
   nsIAtom* parentType = parent->GetType();
   if (parentType == nsGkAtoms::rubyFrame ||
-      parentType == nsGkAtoms::rubyBaseContainerFrame ||
-      parentType == nsGkAtoms::rubyTextContainerFrame) {
+      RubyUtils::IsRubyContainerBox(parentType)) {
     // In ruby containers, pseudo frames may be created from
     // whitespaces or even nothing. There are two cases we actually
     // need to handle here, but hard to check exactly:
@@ -9587,7 +9590,7 @@ nsCSSFrameConstructor::CreateNeededAnonFlexOrGridItems(
   FCItemIterator iter(aItems);
   do {
     // Advance iter past children that don't want to be wrapped
-    if (iter.SkipItemsThatDontNeedAnonFlexOrGridItem(aState)) {
+    if (iter.SkipItemsThatDontNeedAnonFlexOrGridItem(aState, containerType)) {
       // Hit the end of the items without finding any remaining children that
       // need to be wrapped. We're finished!
       return;
@@ -9609,7 +9612,8 @@ nsCSSFrameConstructor::CreateNeededAnonFlexOrGridItems(
       FCItemIterator afterWhitespaceIter(iter);
       bool hitEnd = afterWhitespaceIter.SkipWhitespace(aState);
       bool nextChildNeedsAnonItem =
-        !hitEnd && afterWhitespaceIter.item().NeedsAnonFlexOrGridItem(aState);
+        !hitEnd && afterWhitespaceIter.item().NeedsAnonFlexOrGridItem(aState,
+                                                containerType);
 
       if (!nextChildNeedsAnonItem) {
         // There's nothing after the whitespace that we need to wrap, so we
@@ -9623,7 +9627,7 @@ nsCSSFrameConstructor::CreateNeededAnonFlexOrGridItems(
         // we jump back to the beginning of the loop to skip over that child
         // (and anything else non-wrappable after it)
         MOZ_ASSERT(!iter.IsDone() &&
-                   !iter.item().NeedsAnonFlexOrGridItem(aState),
+                   !iter.item().NeedsAnonFlexOrGridItem(aState, containerType),
                    "hitEnd and/or nextChildNeedsAnonItem lied");
         continue;
       }
@@ -9633,7 +9637,7 @@ nsCSSFrameConstructor::CreateNeededAnonFlexOrGridItems(
     // anonymous flex/grid item. Now we see how many children after it also want
     // to be wrapped in an anonymous flex/grid item.
     FCItemIterator endIter(iter); // iterator to find the end of the group
-    endIter.SkipItemsThatNeedAnonFlexOrGridItem(aState);
+    endIter.SkipItemsThatNeedAnonFlexOrGridItem(aState, containerType);
 
     NS_ASSERTION(iter != endIter,
                  "Should've had at least one wrappable child to seek past");
@@ -10163,18 +10167,26 @@ nsCSSFrameConstructor::WrapItemsInPseudoParent(nsIContent* aParentContent,
                               wrapperStyle,
                               true, nullptr);
 
+  const nsStyleDisplay* disp = newItem->mStyleContext->StyleDisplay();
   // Here we're cheating a tad... technically, table-internal items should be
   // inline if aParentFrame is inline, but they'll get wrapped in an
   // inline-table in the end, so it'll all work out.  In any case, arguably
   // we don't need to maintain this state at this point... but it's better
   // to, I guess.
   newItem->mIsAllInline = newItem->mHasInlineEnds =
-    newItem->mStyleContext->StyleDisplay()->IsInlineOutsideStyle();
+    disp->IsInlineOutsideStyle();
 
-  // Table pseudo frames always induce line boundaries around their
-  // contents.
-  newItem->mChildItems.SetLineBoundaryAtStart(true);
-  newItem->mChildItems.SetLineBoundaryAtEnd(true);
+  bool isRuby = disp->IsRubyDisplayType();
+  // All types of ruby frames need a block frame to provide line layout,
+  // hence they are always line participant.
+  newItem->mIsLineParticipant = isRuby;
+
+  if (!isRuby) {
+    // Table pseudo frames always induce line boundaries around their
+    // contents.
+    newItem->mChildItems.SetLineBoundaryAtStart(true);
+    newItem->mChildItems.SetLineBoundaryAtEnd(true);
+  }
   // The parent of the items in aItems is also the parent of the items
   // in mChildItems
   newItem->mChildItems.SetParentHasNoXBLChildren(
@@ -11831,8 +11843,9 @@ nsCSSFrameConstructor::WipeContainingBlock(nsFrameConstructorState& aState,
 
     // Check if we're adding to-be-wrapped content right *after* an existing
     // anonymous flex or grid item (which would need to absorb this content).
+    nsIAtom* containerType = aFrame->GetType();
     if (aPrevSibling && IsAnonymousFlexOrGridItem(aPrevSibling) &&
-        iter.item().NeedsAnonFlexOrGridItem(aState)) {
+        iter.item().NeedsAnonFlexOrGridItem(aState, containerType)) {
       RecreateFramesForContent(aFrame->GetContent(), true,
                                REMOVE_FOR_RECONSTRUCTION, nullptr);
       return true;
@@ -11844,7 +11857,7 @@ nsCSSFrameConstructor::WipeContainingBlock(nsFrameConstructorState& aState,
       // Jump to the last entry in the list
       iter.SetToEnd();
       iter.Prev();
-      if (iter.item().NeedsAnonFlexOrGridItem(aState)) {
+      if (iter.item().NeedsAnonFlexOrGridItem(aState, containerType)) {
         RecreateFramesForContent(aFrame->GetContent(), true,
                                  REMOVE_FOR_RECONSTRUCTION, nullptr);
         return true;
@@ -11869,10 +11882,11 @@ nsCSSFrameConstructor::WipeContainingBlock(nsFrameConstructorState& aState,
     FCItemIterator iter(aItems);
     // Skip over things that _do_ need an anonymous flex item, because
     // they're perfectly happy to go here -- they won't cause a reframe.
-    if (!iter.SkipItemsThatNeedAnonFlexOrGridItem(aState)) {
+    nsIFrame* containerFrame = aFrame->GetParent();
+    if (!iter.SkipItemsThatNeedAnonFlexOrGridItem(aState,
+                                                  containerFrame->GetType())) {
       // We hit something that _doesn't_ need an anonymous flex item!
       // Rebuild the flex container to bust it out.
-      nsIFrame* containerFrame = aFrame->GetParent();
       RecreateFramesForContent(containerFrame->GetContent(), true,
                                REMOVE_FOR_RECONSTRUCTION, nullptr);
       return true;
@@ -11895,8 +11909,7 @@ nsCSSFrameConstructor::WipeContainingBlock(nsFrameConstructorState& aState,
   nsIAtom* frameType = aFrame->GetType();
   if (IsRubyPseudo(aFrame) ||
       frameType == nsGkAtoms::rubyFrame ||
-      frameType == nsGkAtoms::rubyBaseContainerFrame ||
-      frameType == nsGkAtoms::rubyTextContainerFrame) {
+      RubyUtils::IsRubyContainerBox(frameType)) {
     // We want to optimize it better, and avoid reframing as much as
     // possible. But given the cases above, and the fact that a ruby
     // usually won't be very large, it should be fine to reframe it.
@@ -12325,14 +12338,17 @@ Iterator::SkipItemsNotWantingParentType(ParentType aParentType)
 
 bool
 nsCSSFrameConstructor::FrameConstructionItem::
-  NeedsAnonFlexOrGridItem(const nsFrameConstructorState& aState)
+  NeedsAnonFlexOrGridItem(const nsFrameConstructorState& aState,
+                          nsIAtom* aContainerType)
 {
   if (mFCData->mBits & FCDATA_IS_LINE_PARTICIPANT) {
     // This will be an inline non-replaced box.
     return true;
   }
 
-  if (!(mFCData->mBits & FCDATA_DISALLOW_OUT_OF_FLOW) &&
+  // Bug 874718: Flex containers still wrap placeholders; Grid containers don't.
+  if (aContainerType == nsGkAtoms::flexContainerFrame &&
+      !(mFCData->mBits & FCDATA_DISALLOW_OUT_OF_FLOW) &&
       aState.GetGeometricParent(mStyleContext->StyleDisplay(), nullptr)) {
     // We're abspos or fixedpos, which means we'll spawn a placeholder which
     // we'll need to wrap in an anonymous flex item.  So, we just treat
@@ -12347,10 +12363,11 @@ nsCSSFrameConstructor::FrameConstructionItem::
 inline bool
 nsCSSFrameConstructor::FrameConstructionItemList::
 Iterator::SkipItemsThatNeedAnonFlexOrGridItem(
-  const nsFrameConstructorState& aState)
+  const nsFrameConstructorState& aState,
+  nsIAtom* aContainerType)
 {
   NS_PRECONDITION(!IsDone(), "Shouldn't be done yet");
-  while (item().NeedsAnonFlexOrGridItem(aState)) {
+  while (item().NeedsAnonFlexOrGridItem(aState, aContainerType)) {
     Next();
     if (IsDone()) {
       return true;
@@ -12362,10 +12379,11 @@ Iterator::SkipItemsThatNeedAnonFlexOrGridItem(
 inline bool
 nsCSSFrameConstructor::FrameConstructionItemList::
 Iterator::SkipItemsThatDontNeedAnonFlexOrGridItem(
-  const nsFrameConstructorState& aState)
+  const nsFrameConstructorState& aState,
+  nsIAtom* aContainerType)
 {
   NS_PRECONDITION(!IsDone(), "Shouldn't be done yet");
-  while (!(item().NeedsAnonFlexOrGridItem(aState))) {
+  while (!(item().NeedsAnonFlexOrGridItem(aState, aContainerType))) {
     Next();
     if (IsDone()) {
       return true;

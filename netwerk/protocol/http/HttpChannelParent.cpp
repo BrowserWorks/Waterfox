@@ -32,6 +32,8 @@
 #include "nsIOService.h"
 #include "nsICachingChannel.h"
 #include "mozilla/LoadInfo.h"
+#include "nsIHttpHeaderVisitor.h"
+#include "nsQueryObject.h"
 
 using namespace mozilla::dom;
 using namespace mozilla::ipc;
@@ -108,9 +110,10 @@ HttpChannelParent::Init(const HttpChannelCreationArgs& aArgs)
                        a.redirectionLimit(), a.allowPipelining(), a.allowSTS(),
                        a.thirdPartyFlags(), a.resumeAt(), a.startPos(),
                        a.entityID(), a.chooseApplicationCache(),
-                       a.appCacheClientID(), a.allowSpdy(), a.fds(),
+                       a.appCacheClientID(), a.allowSpdy(), a.allowAltSvc(), a.fds(),
                        a.requestingPrincipalInfo(), a.triggeringPrincipalInfo(),
-                       a.securityFlags(), a.contentPolicyType(), a.innerWindowID());
+                       a.securityFlags(), a.contentPolicyType(), a.innerWindowID(),
+                       a.synthesizedResponseHead());
   }
   case HttpChannelCreationArgs::THttpChannelConnectArgs:
   {
@@ -134,7 +137,68 @@ NS_IMPL_ISUPPORTS(HttpChannelParent,
                   nsIStreamListener,
                   nsIParentChannel,
                   nsIAuthPromptProvider,
-                  nsIParentRedirectingChannel)
+                  nsIParentRedirectingChannel,
+                  nsINetworkInterceptController)
+
+NS_IMETHODIMP
+HttpChannelParent::ShouldPrepareForIntercept(nsIURI* aURI, bool aIsNavigate, bool* aShouldIntercept)
+{
+  *aShouldIntercept = !!mSynthesizedResponseHead;
+  return NS_OK;
+}
+
+class HeaderVisitor final : public nsIHttpHeaderVisitor
+{
+  nsCOMPtr<nsIInterceptedChannel> mChannel;
+  ~HeaderVisitor()
+  {
+  }
+public:
+  explicit HeaderVisitor(nsIInterceptedChannel* aChannel) : mChannel(aChannel)
+  {
+  }
+
+  NS_DECL_ISUPPORTS
+
+  NS_IMETHOD VisitHeader(const nsACString& aHeader, const nsACString& aValue) override
+  {
+    mChannel->SynthesizeHeader(aHeader, aValue);
+    return NS_OK;
+  }
+};
+
+NS_IMPL_ISUPPORTS(HeaderVisitor, nsIHttpHeaderVisitor)
+
+class FinishSynthesizedResponse : public nsRunnable
+{
+  nsCOMPtr<nsIInterceptedChannel> mChannel;
+public:
+  explicit FinishSynthesizedResponse(nsIInterceptedChannel* aChannel)
+  : mChannel(aChannel)
+  {
+  }
+
+  NS_IMETHOD Run()
+  {
+    mChannel->FinishSynthesizedResponse();
+    return NS_OK;
+  }
+};
+
+NS_IMETHODIMP
+HttpChannelParent::ChannelIntercepted(nsIInterceptedChannel* aChannel)
+{
+  aChannel->SynthesizeStatus(mSynthesizedResponseHead->Status(),
+                             mSynthesizedResponseHead->StatusText());
+  nsCOMPtr<nsIHttpHeaderVisitor> visitor = new HeaderVisitor(aChannel);
+  mSynthesizedResponseHead->Headers().VisitHeaders(visitor);
+
+  nsCOMPtr<nsIRunnable> event = new FinishSynthesizedResponse(aChannel);
+  NS_DispatchToCurrentThread(event);
+
+  mSynthesizedResponseHead = nullptr;
+  return NS_OK;
+}
 
 //-----------------------------------------------------------------------------
 // HttpChannelParent::nsIInterfaceRequestor
@@ -196,12 +260,14 @@ HttpChannelParent::DoAsyncOpen(  const URIParams&           aURI,
                                  const bool&                chooseApplicationCache,
                                  const nsCString&           appCacheClientID,
                                  const bool&                allowSpdy,
+                                 const bool&                allowAltSvc,
                                  const OptionalFileDescriptorSet& aFds,
                                  const ipc::PrincipalInfo&  aRequestingPrincipalInfo,
                                  const ipc::PrincipalInfo&  aTriggeringPrincipalInfo,
                                  const uint32_t&            aSecurityFlags,
                                  const uint32_t&            aContentPolicyType,
-                                 const uint32_t&            aInnerWindowID)
+                                 const uint32_t&            aInnerWindowID,
+                                 const OptionalHttpResponseHead& aSynthesizedResponseHead)
 {
   nsCOMPtr<nsIURI> uri = DeserializeURI(aURI);
   if (!uri) {
@@ -264,6 +330,7 @@ HttpChannelParent::DoAsyncOpen(  const URIParams&           aURI,
     return SendFailedAsyncOpen(rv);
 
   mChannel = static_cast<nsHttpChannel *>(channel.get());
+  mChannel->SetWarningReporter(this);
   mChannel->SetTimingEnabled(true);
   if (mPBOverride != kPBOverride_Unset) {
     mChannel->SetPrivate(mPBOverride == kPBOverride_Private ? true : false);
@@ -318,6 +385,10 @@ HttpChannelParent::DoAsyncOpen(  const URIParams&           aURI,
     mChannel->SetUploadStreamHasHeaders(uploadStreamHasHeaders);
   }
 
+  if (aSynthesizedResponseHead.type() == OptionalHttpResponseHead::TnsHttpResponseHead) {
+    mSynthesizedResponseHead = new nsHttpResponseHead(aSynthesizedResponseHead.get_nsHttpResponseHead());
+  }
+
   if (priority != nsISupportsPriority::PRIORITY_NORMAL) {
     mChannel->SetPriority(priority);
   }
@@ -329,6 +400,7 @@ HttpChannelParent::DoAsyncOpen(  const URIParams&           aURI,
   mChannel->SetAllowSTS(allowSTS);
   mChannel->SetThirdPartyFlags(thirdPartyFlags);
   mChannel->SetAllowSpdy(allowSpdy);
+  mChannel->SetAllowAltSvc(allowAltSvc);
 
   nsCOMPtr<nsIApplicationCacheChannel> appCacheChan =
     do_QueryObject(mChannel);
@@ -1191,6 +1263,22 @@ HttpChannelParent::GetAuthPrompt(uint32_t aPromptReason, const nsIID& iid,
   nsCOMPtr<nsIAuthPrompt2> prompt =
     new NeckoParent::NestedFrameAuthPrompt(Manager(), mNestedFrameId);
   prompt.forget(aResult);
+  return NS_OK;
+}
+
+//-----------------------------------------------------------------------------
+// HttpChannelSecurityWarningReporter
+//-----------------------------------------------------------------------------
+
+nsresult
+HttpChannelParent::ReportSecurityMessage(const nsAString& aMessageTag,
+                                         const nsAString& aMessageCategory)
+{
+  if (mIPCClosed ||
+      NS_WARN_IF(!SendReportSecurityMessage(nsString(aMessageTag),
+                                            nsString(aMessageCategory)))) {
+    return NS_ERROR_UNEXPECTED;
+  }
   return NS_OK;
 }
 

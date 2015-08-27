@@ -136,8 +136,14 @@ ServerClient.prototype = {
         if (response && response.headers) {
           let backoff = response.headers["backoff"] || response.headers["retry-after"];
           if (backoff) {
-            log.info("Server requested backoff", backoff);
-            Services.obs.notifyObservers(null, "readinglist:backoff-requested", backoff);
+            let numeric = backoff.toLowerCase() == "none" ? 0 :
+                          parseInt(backoff, 10);
+            if (isNaN(numeric)) {
+              log.info("Server requested unrecognized backoff", backoff);
+            } else if (numeric > 0) {
+              log.info("Server requested backoff", numeric);
+              Services.obs.notifyObservers(null, "readinglist:backoff-requested", String(numeric));
+            }
           }
         }
         if (error) {
@@ -155,8 +161,8 @@ ServerClient.prototype = {
             result.body = JSON.parse(response.body);
           }
         } catch (e) {
-          log.info("Failed to parse JSON body |${body}|: ${e}",
-                    {body: response.body, e});
+          log.debug("Response is not JSON. First 1024 chars: |${body}|",
+                    { body: response.body.substr(0, 1024) });
           // We don't reject due to this (and don't even make a huge amount of
           // log noise - eg, a 50X error from a load balancer etc may not write
           // JSON.

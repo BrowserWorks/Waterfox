@@ -12,6 +12,7 @@ Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Promise.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
+Cu.import("resource://gre/modules/TelemetryController.jsm");
 
 Cu.importGlobalProperties(["URL"]);
 
@@ -430,7 +431,7 @@ this.UITour = {
 
         // We don't want to allow BrowserUITelemetry.BUCKET_SEPARATOR in the
         // pageID, as it could make parsing the telemetry bucket name difficult.
-        if (data.pageID.contains(BrowserUITelemetry.BUCKET_SEPARATOR)) {
+        if (data.pageID.includes(BrowserUITelemetry.BUCKET_SEPARATOR)) {
           log.warn("registerPageID: Invalid page ID specified");
           break;
         }
@@ -615,7 +616,7 @@ this.UITour = {
           return false;
         }
 
-        this.setConfiguration(data.configuration, data.value);
+        this.setConfiguration(window, data.configuration, data.value);
         break;
       }
 
@@ -706,15 +707,16 @@ this.UITour = {
         break;
       }
 
+      case "forceShowReaderIcon": {
+        ReaderParent.forceShowReaderIcon(browser);
+        break;
+      }
+
       case "toggleReaderMode": {
         let targetPromise = this.getTarget(window, "readerMode-urlBar");
         targetPromise.then(target => {
           ReaderParent.toggleReaderMode({target: target.node});
         });
-      }
-
-      case "forceShowReaderIcon": {
-        ReaderParent.forceShowReaderIcon(browser);
         break;
       }
     }
@@ -1713,6 +1715,14 @@ this.UITour = {
         let props = ["defaultUpdateChannel", "version"];
         let appinfo = {};
         props.forEach(property => appinfo[property] = Services.appinfo[property]);
+        let isDefaultBrowser = null;
+        try {
+          let shell = aWindow.getShellService();
+          if (shell) {
+            isDefaultBrowser = shell.isDefaultBrowser(false);
+          }
+        } catch (e) {}
+        appinfo["defaultBrowser"] = isDefaultBrowser;
         this.sendPageCallback(aMessageManager, aCallbackID, appinfo);
         break;
       case "availableTargets":
@@ -1747,8 +1757,18 @@ this.UITour = {
     }
   },
 
-  setConfiguration: function(aConfiguration, aValue) {
+  setConfiguration: function(aWindow, aConfiguration, aValue) {
     switch (aConfiguration) {
+      case "defaultBrowser":
+        // Ignore aValue in this case because the default browser can only
+        // be set, not unset.
+        try {
+          let shell = aWindow.getShellService();
+          if (shell) {
+            shell.setDefaultBrowser(true, false);
+          }
+        } catch (e) {}
+        break;
       case "Loop:ResumeTourOnFirstJoin":
         // Ignore aValue in this case to avoid accidentally setting it to false.
         Services.prefs.setBoolPref("loop.gettingStarted.resumeOnFirstJoin", true);
@@ -1979,6 +1999,16 @@ const DAILY_DISCRETE_TEXT_FIELD = Metrics.Storage.FIELD_DAILY_DISCRETE_TEXT;
  */
 const UITourHealthReport = {
   recordTreatmentTag: function(tag, value) {
+  TelemetryController.submitExternalPing("uitour-tag",
+    {
+      version: 1,
+      tagName: tag,
+      tagValue: value,
+    },
+    {
+      addClientId: true,
+      addEnvironment: true,
+    });
 #ifdef MOZ_SERVICES_HEALTHREPORT
     Task.spawn(function*() {
       let reporter = Cc["@mozilla.org/datareporting/service;1"]

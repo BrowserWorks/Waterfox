@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -312,6 +314,13 @@ ServiceWorkerRegistrar::ReadData()
     GET_LINE(entry->scriptSpec());
     GET_LINE(entry->currentWorkerURL());
 
+    nsAutoCString cacheName;
+    GET_LINE(cacheName);
+    CopyUTF8toUTF16(cacheName, entry->activeCacheName());
+
+    GET_LINE(cacheName);
+    CopyUTF8toUTF16(cacheName, entry->waitingCacheName());
+
 #undef GET_LINE
 
     rv = lineInputStream->ReadLine(line, &hasMoreLines);
@@ -542,6 +551,12 @@ ServiceWorkerRegistrar::WriteData()
     buffer.Append('\n');
 
     buffer.Append(data[i].currentWorkerURL());
+    buffer.Append('\n');
+
+    buffer.Append(NS_ConvertUTF16toUTF8(data[i].activeCacheName()));
+    buffer.Append('\n');
+
+    buffer.Append(NS_ConvertUTF16toUTF8(data[i].waitingCacheName()));
     buffer.Append('\n');
 
     buffer.AppendLiteral(SERVICEWORKERREGISTRAR_TERMINATOR);

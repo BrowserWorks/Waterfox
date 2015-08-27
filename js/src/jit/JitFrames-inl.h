@@ -49,14 +49,22 @@ JitFrameIterator::prevType() const
 }
 
 inline bool
+IsUnwoundFrame(FrameType type)
+{
+    return type == JitFrame_Unwound_Rectifier ||
+           type == JitFrame_Unwound_IonJS ||
+           type == JitFrame_Unwound_BaselineJS ||
+           type == JitFrame_Unwound_BaselineStub ||
+           type == JitFrame_Unwound_IonAccessorIC;
+}
+
+inline bool
 JitFrameIterator::isFakeExitFrame() const
 {
-    bool res = (prevType() == JitFrame_Unwound_Rectifier ||
-                prevType() == JitFrame_Unwound_IonJS ||
-                prevType() == JitFrame_Unwound_BaselineJS ||
-                prevType() == JitFrame_Unwound_BaselineStub ||
-                prevType() == JitFrame_Unwound_IonAccessorIC ||
-                (prevType() == JitFrame_Entry && type() == JitFrame_Exit));
+    if (type() == JitFrame_LazyLink)
+        return false;
+    bool res = IsUnwoundFrame(prevType()) ||
+               (prevType() == JitFrame_Entry && type() == JitFrame_Exit);
     MOZ_ASSERT_IF(res, type() == JitFrame_Exit || type() == JitFrame_BaselineJS);
     return res;
 }
@@ -64,7 +72,7 @@ JitFrameIterator::isFakeExitFrame() const
 inline ExitFrameLayout*
 JitFrameIterator::exitFrame() const
 {
-    MOZ_ASSERT(type() == JitFrame_Exit);
+    MOZ_ASSERT(isExitFrame());
     MOZ_ASSERT(!isFakeExitFrame());
     return (ExitFrameLayout*) fp();
 }

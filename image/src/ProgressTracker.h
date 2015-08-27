@@ -4,9 +4,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef ProgressTracker_h__
-#define ProgressTracker_h__
+#ifndef mozilla_image_src_ProgressTracker_h
+#define mozilla_image_src_ProgressTracker_h
 
+#include "mozilla/Mutex.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/WeakPtr.h"
 #include "nsCOMPtr.h"
@@ -15,7 +16,6 @@
 #include "nsRect.h"
 #include "IProgressObserver.h"
 
-class imgIContainer;
 class nsIRunnable;
 
 namespace mozilla {
@@ -77,13 +77,15 @@ public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(ProgressTracker)
 
   ProgressTracker()
-    : mImage(nullptr)
+    : mImageMutex("ProgressTracker::mImage")
+    , mImage(nullptr)
     , mProgress(NoProgress)
   { }
 
-  bool HasImage() const { return mImage; }
+  bool HasImage() const { MutexAutoLock lock(mImageMutex); return mImage; }
   already_AddRefed<Image> GetImage() const
   {
+    MutexAutoLock lock(mImageMutex);
     nsRefPtr<Image> image = mImage;
     return image.forget();
   }
@@ -159,21 +161,20 @@ public:
   // probably be improved, but it's too scary to mess with at the moment.
   bool FirstObserverIs(IProgressObserver* aObserver);
 
+  // Resets our weak reference to our image. Image subclasses should call this
+  // in their destructor.
+  void ResetImage();
+
 private:
   typedef nsTObserverArray<mozilla::WeakPtr<IProgressObserver>> ObserverArray;
   friend class AsyncNotifyRunnable;
   friend class AsyncNotifyCurrentStateRunnable;
-  friend class ProgressTrackerInit;
+  friend class ImageFactory;
 
   ProgressTracker(const ProgressTracker& aOther) = delete;
 
-  // This method should only be called once, and only on an ProgressTracker
-  // that was initialized without an image. ProgressTrackerInit automates this.
+  // Sets our weak reference to our image. Only ImageFactory should call this.
   void SetImage(Image* aImage);
-
-  // Resets our weak reference to our image, for when mImage is about to go out
-  // of scope.  ProgressTrackerInit automates this.
-  void ResetImage();
 
   // Send some notifications that would be necessary to make |aObserver| believe
   // the request is finished downloading and decoding.  We only send
@@ -191,7 +192,9 @@ private:
 
   nsCOMPtr<nsIRunnable> mRunnable;
 
-  // This weak ref should be set null when the image goes out of scope.
+  // mImage is a weak ref; it should be set to null when the image goes out of
+  // scope. mImageMutex protects mImage.
+  mutable Mutex mImageMutex;
   Image* mImage;
 
   // List of observers attached to the image. Each observer represents a
@@ -202,16 +205,7 @@ private:
   Progress mProgress;
 };
 
-class ProgressTrackerInit
-{
-public:
-  ProgressTrackerInit(Image* aImage, ProgressTracker* aTracker);
-  ~ProgressTrackerInit();
-private:
-  ProgressTracker* mTracker;
-};
-
 } // namespace image
 } // namespace mozilla
 
-#endif
+#endif // mozilla_image_src_ProgressTracker_h

@@ -172,45 +172,47 @@ function testGraph(graph, dragStop) {
 function hover(graph, x, y = 1) {
   x /= window.devicePixelRatio;
   y /= window.devicePixelRatio;
-  graph._onMouseMove({ clientX: x, clientY: y });
+  graph._onMouseMove({ testX: x, testY: y });
 }
 
 function click(graph, x, y = 1) {
   x /= window.devicePixelRatio;
   y /= window.devicePixelRatio;
-  graph._onMouseMove({ clientX: x, clientY: y });
-  graph._onMouseDown({ clientX: x, clientY: y });
-  graph._onMouseUp({ clientX: x, clientY: y });
+  graph._onMouseMove({ testX: x, testY: y });
+  graph._onMouseDown({ testX: x, testY: y });
+  graph._onMouseUp({ testX: x, testY: y });
 }
 
 function dragStart(graph, x, y = 1) {
   x /= window.devicePixelRatio;
   y /= window.devicePixelRatio;
-  graph._onMouseMove({ clientX: x, clientY: y });
-  graph._onMouseDown({ clientX: x, clientY: y });
+  graph._onMouseMove({ testX: x, testY: y });
+  graph._onMouseDown({ testX: x, testY: y });
 }
 
 function normalDragStop(graph, x, y = 1) {
   x /= window.devicePixelRatio;
   y /= window.devicePixelRatio;
-  graph._onMouseMove({ clientX: x, clientY: y });
-  graph._onMouseUp({ clientX: x, clientY: y });
+  graph._onMouseMove({ testX: x, testY: y });
+  graph._onMouseUp({ testX: x, testY: y });
 }
 
 function buggyDragStop(graph, x, y = 1) {
   x /= window.devicePixelRatio;
   y /= window.devicePixelRatio;
 
-  // Only fire a mousemove instead of a mouseup.
-  // This happens when the mouseup happens outside of the toolbox,
-  // see Bug 1066504.
-  graph._onMouseMove({ clientX: x, clientY: y });
-  graph._onMouseMove({ clientX: x, clientY: y, buttons: 0 });
+  graph._onMouseMove({ testX: x, testY: y });
+
+  // Only fire a mousemove with no buttons instead of a mouseup.
+  // This happens when the mouseup happens outside of the window.
+  // Send different coordinates to make sure the selection is preserved,
+  // see Bugs 1066504 and 1144779.
+  graph._onMouseMove({ testX: x+1, testY: y+1, buttons: 0 });
 }
 
 function scroll(graph, wheel, x, y = 1) {
   x /= window.devicePixelRatio;
   y /= window.devicePixelRatio;
-  graph._onMouseMove({ clientX: x, clientY: y });
-  graph._onMouseWheel({ clientX: x, clientY: y, detail: wheel });
+  graph._onMouseMove({ testX: x, testY: y });
+  graph._onMouseWheel({ testX: x, testY: y, detail: wheel });
 }

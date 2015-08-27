@@ -53,20 +53,14 @@ namespace mozilla {
 void
 MediaResource::Destroy()
 {
-  // If we're being destroyed on a non-main thread, we AddRef again and
-  // use a proxy to release the MediaResource on the main thread, where
-  // the MediaResource is deleted. This ensures we only delete the
-  // MediaResource on the main thread.
-  if (!NS_IsMainThread()) {
-    nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
-    NS_ENSURE_TRUE_VOID(mainThread);
-    nsRefPtr<MediaResource> doomed(this);
-    if (NS_FAILED(NS_ProxyRelease(mainThread, doomed, true))) {
-      NS_WARNING("Failed to proxy release to main thread!");
-    }
-  } else {
+  // Ensures we only delete the MediaResource on the main thread.
+  if (NS_IsMainThread()) {
     delete this;
+    return;
   }
+  nsCOMPtr<nsIRunnable> destroyRunnable =
+    NS_NewNonOwningRunnableMethod(this, &MediaResource::Destroy);
+  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToMainThread(destroyRunnable)));
 }
 
 NS_IMPL_ADDREF(MediaResource)
@@ -619,7 +613,7 @@ nsresult ChannelMediaResource::OpenChannel(nsIStreamListener** aStreamListener)
                                 element->NodePrincipal(),
                                 false);
       NS_ENSURE_TRUE(crossSiteListener, NS_ERROR_OUT_OF_MEMORY);
-      rv = crossSiteListener->Init(mChannel);
+      rv = crossSiteListener->Init(mChannel, DataURIHandling::Allow);
       NS_ENSURE_SUCCESS(rv, rv);
       listener = crossSiteListener;
     } else {

@@ -609,14 +609,15 @@ IsTopLevelWidget(nsIWidget* aWidget)
 void
 nsContainerFrame::SyncWindowProperties(nsPresContext*       aPresContext,
                                        nsIFrame*            aFrame,
-                                       nsView*             aView,
-                                       nsRenderingContext*  aRC)
+                                       nsView*              aView,
+                                       nsRenderingContext*  aRC,
+                                       uint32_t             aFlags)
 {
 #ifdef MOZ_XUL
   if (!aView || !nsCSSRendering::IsCanvasFrame(aFrame) || !aView->HasWidget())
     return;
 
-  nsIWidget* windowWidget = GetPresContextContainerWidget(aPresContext);
+  nsCOMPtr<nsIWidget> windowWidget = GetPresContextContainerWidget(aPresContext);
   if (!windowWidget || !IsTopLevelWidget(windowWidget))
     return;
 
@@ -650,14 +651,27 @@ nsContainerFrame::SyncWindowProperties(nsPresContext*       aPresContext,
   if (!rootFrame)
     return;
 
+  if (aFlags & SET_ASYNC) {
+    aView->SetNeedsWindowPropertiesSync();
+    return;
+  }
+
+  nsRefPtr<nsPresContext> kungFuDeathGrip(aPresContext);
+  nsWeakFrame weak(rootFrame);
+
   nsTransparencyMode mode = nsLayoutUtils::GetFrameTransparency(aFrame, rootFrame);
-  nsIWidget* viewWidget = aView->GetWidget();
+  int32_t shadow = rootFrame->StyleUIReset()->mWindowShadow;
+  nsCOMPtr<nsIWidget> viewWidget = aView->GetWidget();
   viewWidget->SetTransparencyMode(mode);
-  windowWidget->SetWindowShadowStyle(rootFrame->StyleUIReset()->mWindowShadow);
+  windowWidget->SetWindowShadowStyle(shadow);
 
   if (!aRC)
     return;
-  
+
+  if (!weak.IsAlive()) {
+    return;
+  }
+
   nsBoxLayoutState aState(aPresContext, aRC);
   nsSize minSize = rootFrame->GetMinSize(aState);
   nsSize maxSize = rootFrame->GetMaxSize(aState);
@@ -671,12 +685,12 @@ void nsContainerFrame::SetSizeConstraints(nsPresContext* aPresContext,
                                           const nsSize& aMinSize,
                                           const nsSize& aMaxSize)
 {
-  nsIntSize devMinSize(aPresContext->AppUnitsToDevPixels(aMinSize.width),
-                       aPresContext->AppUnitsToDevPixels(aMinSize.height));
-  nsIntSize devMaxSize(aMaxSize.width == NS_INTRINSICSIZE ? NS_MAXSIZE :
-                         aPresContext->AppUnitsToDevPixels(aMaxSize.width),
-                       aMaxSize.height == NS_INTRINSICSIZE ? NS_MAXSIZE :
-                         aPresContext->AppUnitsToDevPixels(aMaxSize.height));
+  LayoutDeviceIntSize devMinSize(aPresContext->AppUnitsToDevPixels(aMinSize.width),
+                                 aPresContext->AppUnitsToDevPixels(aMinSize.height));
+  LayoutDeviceIntSize devMaxSize(aMaxSize.width == NS_INTRINSICSIZE ? NS_MAXSIZE :
+                                 aPresContext->AppUnitsToDevPixels(aMaxSize.width),
+                                 aMaxSize.height == NS_INTRINSICSIZE ? NS_MAXSIZE :
+                                 aPresContext->AppUnitsToDevPixels(aMaxSize.height));
 
   // MinSize has a priority over MaxSize
   if (devMinSize.width > devMaxSize.width)
@@ -689,7 +703,8 @@ void nsContainerFrame::SetSizeConstraints(nsPresContext* aPresContext,
   // The sizes are in inner window sizes, so convert them into outer window sizes.
   // Use a size of (200, 200) as only the difference between the inner and outer
   // size is needed.
-  nsIntSize windowSize = aWidget->ClientToWindowSize(nsIntSize(200, 200));
+  LayoutDeviceIntSize windowSize =
+    aWidget->ClientToWindowSize(LayoutDeviceIntSize(200, 200));
   if (constraints.mMinSize.width)
     constraints.mMinSize.width += windowSize.width - 200;
   if (constraints.mMinSize.height)
@@ -792,14 +807,11 @@ nsContainerFrame::DoInlineIntrinsicISize(nsRenderingContext *aRenderingContext,
   NS_PRECONDITION(aType == nsLayoutUtils::MIN_ISIZE ||
                   aType == nsLayoutUtils::PREF_ISIZE, "bad type");
 
-  mozilla::css::Side startSide, endSide;
-  if (StyleVisibility()->mDirection == NS_STYLE_DIRECTION_LTR) {
-    startSide = NS_SIDE_LEFT;
-    endSide = NS_SIDE_RIGHT;
-  } else {
-    startSide = NS_SIDE_RIGHT;
-    endSide = NS_SIDE_LEFT;
-  }
+  WritingMode wm = GetWritingMode();
+  mozilla::css::Side startSide =
+    wm.PhysicalSideForInlineAxis(eLogicalEdgeStart);
+  mozilla::css::Side endSide =
+    wm.PhysicalSideForInlineAxis(eLogicalEdgeEnd);
 
   const nsStylePadding *stylePadding = StylePadding();
   const nsStyleBorder *styleBorder = StyleBorder();
@@ -951,7 +963,7 @@ nsContainerFrame::ReflowChild(nsIFrame*                aKidFrame,
   NS_PRECONDITION(aReflowState.frame == aKidFrame, "bad reflow state");
   if (aWM.IsVerticalRL() || (!aWM.IsVertical() && !aWM.IsBidiLTR())) {
     NS_ASSERTION(aContainerWidth != NS_UNCONSTRAINEDSIZE,
-                 "FinishReflowChild with unconstrained container width!");
+                 "ReflowChild with unconstrained container width!");
   }
 
   // Position the child frame and its view if requested.
@@ -1679,6 +1691,24 @@ nsContainerFrame::PullNextInFlowChild(ContinuationTraversingState& aState)
     nsContainerFrame::ReparentFrameView(frame, nextInFlow, this);
   }
   return frame;
+}
+
+bool
+nsContainerFrame::ResolvedOrientationIsVertical()
+{
+  uint8_t orient = StyleDisplay()->mOrient;
+  switch (orient) {
+    case NS_STYLE_ORIENT_HORIZONTAL:
+      return false;
+    case NS_STYLE_ORIENT_VERTICAL:
+      return true;
+    case NS_STYLE_ORIENT_INLINE:
+      return GetWritingMode().IsVertical();
+    case NS_STYLE_ORIENT_BLOCK:
+      return !GetWritingMode().IsVertical();
+  }
+  NS_NOTREACHED("unexpected -moz-orient value");
+  return false;
 }
 
 nsOverflowContinuationTracker::nsOverflowContinuationTracker(nsContainerFrame* aFrame,

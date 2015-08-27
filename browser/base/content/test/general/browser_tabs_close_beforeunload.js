@@ -26,33 +26,17 @@ add_task(function*() {
   });
 
   let closeBtn = document.getAnonymousElementByAttribute(secondTab, "anonid", "close-button");
-  let mutationObserver;
-  let browserToBeRemoved = secondTab.linkedBrowser;
-  let mutationObserverPromiseFn = (resolve, reject) => {
-    mutationObserver = new MutationObserver(function() {
-      if (!browserToBeRemoved.parentNode) {
-        mutationObserver.disconnect();
-        mutationObserver = null;
-        resolve();
-      }
-    });
-    mutationObserver.observe(browserToBeRemoved.parentNode, {childList: true});
-  };
-  let closePromise = new Promise(mutationObserverPromiseFn);
+  let closePromise = BrowserTestUtils.removeTab(secondTab, {dontRemove: true});
   info("closing second tab (which will self-close in beforeunload)");
   closeBtn.click();
   ok(secondTab.closing, "Second tab should be marked as closing synchronously.");
   yield closePromise;
-
   ok(secondTab.closing, "Second tab should still be marked as closing");
   ok(!secondTab.linkedBrowser, "Second tab's browser should be dead");
   ok(!firstTab.closing, "First tab should not be closing");
   ok(firstTab.linkedBrowser, "First tab's browser should be alive");
   info("closing first tab");
-  browserToBeRemoved = firstTab.linkedBrowser;
-  closePromise = new Promise(mutationObserverPromiseFn);
-  gBrowser.removeTab(firstTab);
-  yield closePromise;
+  yield BrowserTestUtils.removeTab(firstTab);
 
   ok(firstTab.closing, "First tab should be marked as closing");
   ok(!firstTab.linkedBrowser, "First tab's browser should be dead");

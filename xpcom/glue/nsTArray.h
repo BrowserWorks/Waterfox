@@ -112,7 +112,7 @@ struct nsTArrayFallibleResult
   // Note: allows implicit conversions from and to bool
   MOZ_IMPLICIT nsTArrayFallibleResult(bool aResult) : mResult(aResult) {}
 
-  operator bool() { return mResult; }
+  MOZ_IMPLICIT operator bool() { return mResult; }
 
 private:
   bool mResult;
@@ -167,13 +167,13 @@ struct nsTArrayInfallibleAllocatorBase
 
 struct nsTArrayFallibleAllocator : nsTArrayFallibleAllocatorBase
 {
-  static void* Malloc(size_t aSize) { return moz_malloc(aSize); }
+  static void* Malloc(size_t aSize) { return malloc(aSize); }
   static void* Realloc(void* aPtr, size_t aSize)
   {
-    return moz_realloc(aPtr, aSize);
+    return realloc(aPtr, aSize);
   }
 
-  static void Free(void* aPtr) { moz_free(aPtr); }
+  static void Free(void* aPtr) { free(aPtr); }
   static void SizeTooBig(size_t) {}
 };
 
@@ -185,7 +185,7 @@ struct nsTArrayInfallibleAllocator : nsTArrayInfallibleAllocatorBase
     return moz_xrealloc(aPtr, aSize);
   }
 
-  static void Free(void* aPtr) { moz_free(aPtr); }
+  static void Free(void* aPtr) { free(aPtr); }
   static void SizeTooBig(size_t aSize) { NS_ABORT_OOM(aSize); }
 };
 
@@ -304,6 +304,35 @@ template<class E, class Derived>
 struct nsTArray_SafeElementAtHelper<nsRefPtr<E>, Derived>
   : public nsTArray_SafeElementAtSmartPtrHelper<E, Derived>
 {
+};
+
+namespace mozilla {
+namespace dom {
+template<class T> class OwningNonNull;
+}
+}
+
+template<class E, class Derived>
+struct nsTArray_SafeElementAtHelper<mozilla::dom::OwningNonNull<E>, Derived>
+{
+  typedef E*     elem_type;
+  typedef size_t index_type;
+
+  elem_type SafeElementAt(index_type aIndex)
+  {
+    if (aIndex < static_cast<Derived*>(this)->Length()) {
+      return static_cast<Derived*>(this)->ElementAt(aIndex);
+    }
+    return nullptr;
+  }
+
+  const elem_type SafeElementAt(index_type aIndex) const
+  {
+    if (aIndex < static_cast<const Derived*>(this)->Length()) {
+      return static_cast<const Derived*>(this)->ElementAt(aIndex);
+    }
+    return nullptr;
+  }
 };
 
 //
@@ -845,7 +874,9 @@ public:
   // @param aOther The array object to copy.
   self_type& operator=(const self_type& aOther)
   {
-    ReplaceElementsAt(0, Length(), aOther.Elements(), aOther.Length());
+    if (this != &aOther) {
+      ReplaceElementsAt(0, Length(), aOther.Elements(), aOther.Length());
+    }
     return *this;
   }
 
@@ -854,8 +885,10 @@ public:
   // @param other  The array object to move from.
   self_type& operator=(self_type&& aOther)
   {
-    Clear();
-    SwapElements(aOther);
+    if (this != &aOther) {
+      Clear();
+      SwapElements(aOther);
+    }
     return *this;
   }
 
@@ -1808,7 +1841,7 @@ public:
   nsTArray() {}
   explicit nsTArray(size_type aCapacity) : base_type(aCapacity) {}
   explicit nsTArray(const nsTArray& aOther) : base_type(aOther) {}
-  explicit nsTArray(nsTArray&& aOther) : base_type(mozilla::Move(aOther)) {}
+  MOZ_IMPLICIT nsTArray(nsTArray&& aOther) : base_type(mozilla::Move(aOther)) {}
 
   template<class Allocator>
   explicit nsTArray(const nsTArray_Impl<E, Allocator>& aOther)

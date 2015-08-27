@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -241,7 +242,7 @@ nsGeolocationSettings::HandleGeolocationPerOriginSettingsChange(const JS::Value&
 
   // because the spec requires calling getters when enumerating the key of a
   // dictionary
-  AutoEntryScript aes(global);
+  AutoEntryScript aes(global, "geolocation.app_settings enumeration");
   aes.TakeOwnershipOfErrorReporting();
   JSContext *cx = aes.cx();
   JS::AutoIdArray ids(cx, JS_Enumerate(cx, obj));
@@ -317,7 +318,7 @@ nsGeolocationSettings::HandleGeolocationAlwaysPreciseChange(const JS::Value& aVa
   NS_ENSURE_TRUE_VOID(global && global->GetGlobalJSObject());
 
   // the spec requires calling getters when accessing array by index
-  AutoEntryScript aes(global);
+  AutoEntryScript aes(global, "geolocation.always_precise indexing");
   aes.TakeOwnershipOfErrorReporting();
   JSContext *cx = aes.cx();
 

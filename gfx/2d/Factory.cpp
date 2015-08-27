@@ -52,7 +52,6 @@
 
 #include "mozilla/CheckedInt.h"
 
-#if defined(PR_LOGGING)
 GFX2D_API PRLogModuleInfo *
 GetGFX2DLog()
 {
@@ -61,7 +60,6 @@ GetGFX2DLog()
     sLog = PR_NewLogModule("gfx2d");
   return sLog;
 }
-#endif
 
 // The following code was largely taken from xpcom/glue/SSE.cpp and
 // made a little simpler.
@@ -681,7 +679,10 @@ Factory::SetDirect3D11Device(ID3D11Device *aDevice)
 
   RefPtr<IDXGIDevice> device;
   aDevice->QueryInterface((IDXGIDevice**)byRef(device));
-  factory->CreateDevice(device, &mD2D1Device);
+  HRESULT hr = factory->CreateDevice(device, &mD2D1Device);
+  if (FAILED(hr)) {
+    gfxCriticalError() << "[D2D1] Failed to create gfx factory's D2D1 device, code: " << hexa(hr);
+  }
 }
 
 ID3D11Device*

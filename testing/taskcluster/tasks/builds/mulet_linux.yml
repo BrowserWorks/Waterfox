@@ -1,11 +1,19 @@
 $inherits:
   from: 'tasks/build.yml'
+  variables:
+    build_name: 'mulet'
+    build_type: 'opt'
 task:
   metadata:
     name: '[TC] Mulet Linux'
     description: Mulet Linux
 
   workerType: mulet-opt
+
+  routes:
+    - 'index.buildbot.branches.{{project}}.linux64-mulet'
+    - 'index.buildbot.revisions.{{head_rev}}.{{project}}.linux64-mulet'
+
   scopes:
     - 'docker-worker:cache:build-mulet-linux-workspace'
     - 'docker-worker:cache:tooltool-cache'
@@ -42,4 +50,4 @@ task:
     # files are located.
     locations:
       build: 'public/build/target.linux-x86_64.tar.bz2'
-      tests: 'public/build/target.tests.zip'
+      test_packages: 'public/build/test_packages.json'

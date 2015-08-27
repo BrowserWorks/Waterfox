@@ -15,10 +15,10 @@
 #include "nsError.h"
 #include "mozilla/EventForwards.h"
 #include "nsSize.h"
+#include "nsRect.h"
 
 class gfxContext;
 class nsCString;
-struct nsIntRect;
 class nsNPAPIPlugin;
 
 namespace mozilla {
@@ -84,6 +84,7 @@ public:
                                          const nsIntRect&, gfxContext**) = 0;
   virtual nsresult EndUpdateBackground(NPP instance,
                                        gfxContext*, const nsIntRect&) = 0;
+  virtual nsresult GetRunID(uint32_t* aRunID) = 0;
 };
 
 

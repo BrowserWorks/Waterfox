@@ -12,6 +12,7 @@
 #include "mozilla/dom/CSSFontFaceLoadEvent.h"
 #include "mozilla/dom/CSSFontFaceLoadEventBinding.h"
 #include "mozilla/dom/FontFaceSetBinding.h"
+#include "mozilla/dom/FontFaceSetIterator.h"
 #include "mozilla/dom/Promise.h"
 #include "mozilla/AsyncEventDispatcher.h"
 #include "mozilla/Preferences.h"
@@ -52,6 +53,9 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(FontFaceSet, DOMEventTargetHel
   for (size_t i = 0; i < tmp->mNonRuleFaces.Length(); i++) {
     NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mNonRuleFaces[i].mFontFace);
   }
+  if (tmp->mUserFontSet) {
+    NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mUserFontSet->mFontFaceSet);
+  }
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(FontFaceSet, DOMEventTargetHelper)
@@ -64,6 +68,10 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(FontFaceSet, DOMEventTargetHelpe
   for (size_t i = 0; i < tmp->mNonRuleFaces.Length(); i++) {
     NS_IMPL_CYCLE_COLLECTION_UNLINK(mNonRuleFaces[i].mFontFace);
   }
+  if (tmp->mUserFontSet) {
+    NS_IMPL_CYCLE_COLLECTION_UNLINK(mUserFontSet->mFontFaceSet);
+  }
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mUserFontSet);
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_IMPL_ADDREF_INHERITED(FontFaceSet, DOMEventTargetHelper)
@@ -106,6 +114,8 @@ FontFaceSet::FontFaceSet(nsPIDOMWindow* aWindow, nsPresContext* aPresContext)
   }
 
   mDocument->CSSLoader()->AddObserver(this);
+
+  mUserFontSet = new UserFontSet(this);
 }
 
 FontFaceSet::~FontFaceSet()
@@ -136,16 +146,6 @@ FontFaceSet::Disconnect()
       mDocument->CSSLoader()->RemoveObserver(this);
     }
   }
-}
-
-FontFaceSet::UserFontSet*
-FontFaceSet::EnsureUserFontSet(nsPresContext* aPresContext)
-{
-  if (!mUserFontSet) {
-    mUserFontSet = new UserFontSet(this);
-    mPresContext = aPresContext;
-  }
-  return mUserFontSet;
 }
 
 already_AddRefed<Promise>
@@ -212,14 +212,12 @@ FontFaceSet::Add(FontFace& aFontFace, ErrorResult& aRv)
     return nullptr;
   }
 
-  if (aFontFace.HasRule()) {
-    aRv.Throw(NS_ERROR_DOM_INVALID_MODIFICATION_ERR);
-    return nullptr;
-  }
-
   if (aFontFace.IsInFontFaceSet()) {
     return this;
   }
+
+  MOZ_ASSERT(!aFontFace.HasRule(),
+             "rule-backed FontFaces should always be in the FontFaceSet");
 
   bool removed = mUnavailableFaces.RemoveElement(&aFontFace);
   if (!removed) {
@@ -282,7 +280,6 @@ FontFaceSet::Delete(FontFace& aFontFace, ErrorResult& aRv)
   mPresContext->FlushUserFontSet();
 
   if (aFontFace.HasRule()) {
-    aRv.Throw(NS_ERROR_DOM_INVALID_MODIFICATION_ERR);
     return false;
   }
 
@@ -328,27 +325,24 @@ FontFaceSet::Has(FontFace& aFontFace)
 }
 
 FontFace*
-FontFaceSet::IndexedGetter(uint32_t aIndex, bool& aFound)
+FontFaceSet::GetFontFaceAt(uint32_t aIndex)
 {
   mPresContext->FlushUserFontSet();
 
   if (aIndex < mRuleFaces.Length()) {
-    aFound = true;
     return mRuleFaces[aIndex].mFontFace;
   }
 
   aIndex -= mRuleFaces.Length();
   if (aIndex < mNonRuleFaces.Length()) {
-    aFound = true;
     return mNonRuleFaces[aIndex].mFontFace;
   }
 
-  aFound = false;
   return nullptr;
 }
 
 uint32_t
-FontFaceSet::Length()
+FontFaceSet::Size()
 {
   mPresContext->FlushUserFontSet();
 
@@ -356,6 +350,36 @@ FontFaceSet::Length()
 
   size_t total = mRuleFaces.Length() + mNonRuleFaces.Length();
   return std::min<size_t>(total, INT32_MAX);
+}
+
+already_AddRefed<FontFaceSetIterator>
+FontFaceSet::Entries()
+{
+  nsRefPtr<FontFaceSetIterator> it = new FontFaceSetIterator(this, true);
+  return it.forget();
+}
+
+already_AddRefed<FontFaceSetIterator>
+FontFaceSet::Values()
+{
+  nsRefPtr<FontFaceSetIterator> it = new FontFaceSetIterator(this, false);
+  return it.forget();
+}
+
+void
+FontFaceSet::ForEach(JSContext* aCx,
+                     FontFaceSetForEachCallback& aCallback,
+                     JS::Handle<JS::Value> aThisArg,
+                     ErrorResult& aRv)
+{
+  JS::Rooted<JS::Value> thisArg(aCx, aThisArg);
+  for (size_t i = 0; i < Size(); i++) {
+    FontFace* face = GetFontFaceAt(i);
+    aCallback.Call(thisArg, *face, *face, *this, aRv);
+    if (aRv.Failed()) {
+      return;
+    }
+  }
 }
 
 static PLDHashOperator DestroyIterator(nsPtrHashKey<nsFontFaceLoader>* aKey,
@@ -386,6 +410,9 @@ FontFaceSet::DestroyUserFontSet()
   mNonRuleFaces.Clear();
   mUnavailableFaces.Clear();
   mReady = nullptr;
+  if (mUserFontSet) {
+    mUserFontSet->mFontFaceSet = nullptr;
+  }
   mUserFontSet = nullptr;
 }
 
@@ -482,7 +509,9 @@ FontFaceSet::StartLoad(gfxUserFontEntry* aUserFontEntry,
   } else {
     nsRefPtr<nsCORSListenerProxy> listener =
       new nsCORSListenerProxy(streamLoader, aUserFontEntry->GetPrincipal(), false);
-    rv = listener->Init(channel);
+    // Doesn't matter what data: URI handling we use here, since we
+    // don't even use a CORS listener proxy for the data: case.
+    rv = listener->Init(channel, DataURIHandling::Disallow);
     if (NS_SUCCEEDED(rv)) {
       rv = channel->AsyncOpen(listener, nullptr);
     }
@@ -1231,7 +1260,7 @@ FontFaceSet::SyncLoadFontData(gfxUserFontEntry* aFontToLoad,
   aBufferLength = static_cast<uint32_t>(bufferLength64);
 
   // read all the decoded data
-  aBuffer = static_cast<uint8_t*> (NS_Alloc(sizeof(uint8_t) * aBufferLength));
+  aBuffer = static_cast<uint8_t*> (moz_xmalloc(sizeof(uint8_t) * aBufferLength));
   if (!aBuffer) {
     aBufferLength = 0;
     return NS_ERROR_OUT_OF_MEMORY;
@@ -1258,7 +1287,7 @@ FontFaceSet::SyncLoadFontData(gfxUserFontEntry* aFontToLoad,
   }
 
   if (NS_FAILED(rv)) {
-    NS_Free(aBuffer);
+    free(aBuffer);
     aBuffer = nullptr;
     aBufferLength = 0;
     return rv;

@@ -6,6 +6,6 @@ Mozilla build system.
 
 The libvpx git repository is:
 
-    https://gerrit.chromium.org/gerrit/webm/libvpx
+    https://chromium.googlesource.com/webm/libvpx
 
-The git commit ID used was 587ff646f
+The git commit ID used was e67d45d4ce92468ba193288b59093fef0a502662

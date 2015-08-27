@@ -42,7 +42,6 @@
 @BINPATH@/@DLL_PREFIX@plds4@DLL_SUFFIX@
 @BINPATH@/@DLL_PREFIX@nspr4@DLL_SUFFIX@
 #endif
-@BINPATH@/@DLL_PREFIX@mozalloc@DLL_SUFFIX@
 @BINPATH@/@DLL_PREFIX@omxplugin@DLL_SUFFIX@
 @BINPATH@/@DLL_PREFIX@omxplugingb@DLL_SUFFIX@
 @BINPATH@/@DLL_PREFIX@omxplugingb235@DLL_SUFFIX@
@@ -124,7 +123,6 @@
 @BINPATH@/components/chrome.xpt
 @BINPATH@/components/commandhandler.xpt
 @BINPATH@/components/commandlines.xpt
-@BINPATH@/components/compartments.xpt
 @BINPATH@/components/composer.xpt
 @BINPATH@/components/content_events.xpt
 @BINPATH@/components/content_geckomediaplugins.xpt
@@ -255,6 +253,9 @@
 @BINPATH@/components/toolkit_finalizationwitness.xpt
 @BINPATH@/components/toolkit_formautofill.xpt
 @BINPATH@/components/toolkit_osfile.xpt
+#ifdef NIGHTLY_BUILD
+@BINPATH@/components/toolkit_perfmonitoring.xpt
+#endif
 @BINPATH@/components/toolkit_xulstore.xpt
 @BINPATH@/components/toolkitprofile.xpt
 #ifdef MOZ_ENABLE_XREMOTE
@@ -458,6 +459,8 @@
 
 @BINPATH@/components/PresentationDeviceInfoManager.manifest
 @BINPATH@/components/PresentationDeviceInfoManager.js
+@BINPATH@/components/BuiltinProviders.manifest
+@BINPATH@/components/TCPPresentationServer.js
 
 @BINPATH@/components/PACGenerator.js
 @BINPATH@/components/PACGenerator.manifest
@@ -510,7 +513,6 @@
 @BINPATH@/@PREF_DIR@/mobile-branding.js
 @BINPATH@/@PREF_DIR@/channel-prefs.js
 @BINPATH@/greprefs.js
-@BINPATH@/defaults/autoconfig/platform.js
 @BINPATH@/defaults/autoconfig/prefcalls.js
 @BINPATH@/defaults/profile/prefs.js
 

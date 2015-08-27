@@ -73,6 +73,7 @@ public class AppConstants {
          */
         public static final boolean preLollipop = MAX_SDK_VERSION < 21 || (MIN_SDK_VERSION < 21 && Build.VERSION.SDK_INT < 21);
         public static final boolean preJBMR2 = MAX_SDK_VERSION < 18 || (MIN_SDK_VERSION < 18 && Build.VERSION.SDK_INT < 18);
+        public static final boolean preJBMR1 = MAX_SDK_VERSION < 17 || (MIN_SDK_VERSION < 17 && Build.VERSION.SDK_INT < 17);
         public static final boolean preJB = MAX_SDK_VERSION < 16 || (MIN_SDK_VERSION < 16 && Build.VERSION.SDK_INT < 16);
         public static final boolean preICS = MAX_SDK_VERSION < 14 || (MIN_SDK_VERSION < 14 && Build.VERSION.SDK_INT < 14);
         public static final boolean preHCMR2 = MAX_SDK_VERSION < 13 || (MIN_SDK_VERSION < 13 && Build.VERSION.SDK_INT < 13);
@@ -81,10 +82,17 @@ public class AppConstants {
     }
 
     /**
-     * The name of the Java class that launches the browser.
+     * The name of the Java class that represents the android application.
      */
-    public static final String BROWSER_INTENT_CLASS_NAME = "org.mozilla.gecko.BrowserApp";
-    public static final String SEARCH_INTENT_CLASS_NAME = "org.mozilla.search.SearchActivity";
+    public static final String MOZ_ANDROID_APPLICATION_CLASS = "@MOZ_ANDROID_APPLICATION_CLASS@";
+    /**
+     * The name of the Java class that launches the browser activity.
+     */
+    public static final String MOZ_ANDROID_BROWSER_INTENT_CLASS = "@MOZ_ANDROID_BROWSER_INTENT_CLASS@";
+    /**
+     * The name of the Java class that launches the search activity.
+     */
+    public static final String MOZ_ANDROID_SEARCH_INTENT_CLASS = "@MOZ_ANDROID_SEARCH_INTENT_CLASS@";
 
     public static final String GRE_MILESTONE = "@GRE_MILESTONE@";
 

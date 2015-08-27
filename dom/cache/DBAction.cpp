@@ -14,6 +14,7 @@
 #include "nsIFile.h"
 #include "nsIURI.h"
 #include "nsNetUtil.h"
+#include "nsThreadUtils.h"
 #include "DBSchema.h"
 #include "FileUtils.h"
 
@@ -34,7 +35,8 @@ DBAction::~DBAction()
 }
 
 void
-DBAction::RunOnTarget(Resolver* aResolver, const QuotaInfo& aQuotaInfo)
+DBAction::RunOnTarget(Resolver* aResolver, const QuotaInfo& aQuotaInfo,
+                      Data* aOptionalData)
 {
   MOZ_ASSERT(!NS_IsMainThread());
   MOZ_ASSERT(aResolver);
@@ -59,12 +61,27 @@ DBAction::RunOnTarget(Resolver* aResolver, const QuotaInfo& aQuotaInfo)
   }
 
   nsCOMPtr<mozIStorageConnection> conn;
-  rv = OpenConnection(aQuotaInfo, dbDir, getter_AddRefs(conn));
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    aResolver->Resolve(rv);
-    return;
+
+  // Attempt to reuse the connection opened by a previous Action.
+  if (aOptionalData) {
+    conn = aOptionalData->GetConnection();
   }
-  MOZ_ASSERT(conn);
+
+  // If there is no previous Action, then we must open one.
+  if (!conn) {
+    rv = OpenConnection(aQuotaInfo, dbDir, getter_AddRefs(conn));
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      aResolver->Resolve(rv);
+      return;
+    }
+    MOZ_ASSERT(conn);
+
+    // Save this connection in the shared Data object so later Actions can
+    // use it.  This avoids opening a new connection for every Action.
+    if (aOptionalData) {
+      aOptionalData->SetConnection(conn);
+    }
+  }
 
   RunWithDBOnTarget(aResolver, aQuotaInfo, dbDir, conn);
 }
@@ -120,7 +137,8 @@ DBAction::OpenConnection(const QuotaInfo& aQuotaInfo, nsIFile* aDBDir,
   rv = dbFileUrl->SetQuery(
     NS_LITERAL_CSTRING("persistenceType=") + type +
     NS_LITERAL_CSTRING("&group=") + aQuotaInfo.mGroup +
-    NS_LITERAL_CSTRING("&origin=") + aQuotaInfo.mOrigin);
+    NS_LITERAL_CSTRING("&origin=") + aQuotaInfo.mOrigin +
+    NS_LITERAL_CSTRING("&cache=private"));
   if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
   nsCOMPtr<mozIStorageService> ss =
@@ -146,15 +164,16 @@ DBAction::OpenConnection(const QuotaInfo& aQuotaInfo, nsIFile* aDBDir,
   int32_t schemaVersion = 0;
   rv = conn->GetSchemaVersion(&schemaVersion);
   if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
-  if (schemaVersion > 0 && schemaVersion < DBSchema::kMaxWipeSchemaVersion) {
+  if (schemaVersion > 0 && schemaVersion < db::kMaxWipeSchemaVersion) {
     conn = nullptr;
     rv = WipeDatabase(dbFile, aDBDir);
     if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
     rv = ss->OpenDatabaseWithFileURL(dbFileUrl, getter_AddRefs(conn));
+    if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
   }
 
-  rv = DBSchema::InitializeConnection(conn);
+  rv = db::InitializeConnection(conn);
   if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
   conn.forget(aConnOut);
@@ -168,8 +187,11 @@ DBAction::WipeDatabase(nsIFile* aDBFile, nsIFile* aDBDir)
   nsresult rv = aDBFile->Remove(false);
   if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
+  // Note, the -wal journal file will be automatically deleted by sqlite when
+  // the new database is created.  No need to explicitly delete it here.
+
   // Delete the morgue as well.
-  rv = FileUtils::BodyDeleteDir(aDBDir);
+  rv = BodyDeleteDir(aDBDir);
   if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
   return rv;

@@ -4,8 +4,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef MOZILLA_IMAGELIB_IMAGEFACTORY_H_
-#define MOZILLA_IMAGELIB_IMAGEFACTORY_H_
+#ifndef mozilla_image_src_ImageFactory_h
+#define mozilla_image_src_ImageFactory_h
 
 #include "nsCOMPtr.h"
 #include "nsProxyRelease.h"
@@ -18,6 +18,7 @@ namespace image {
 
 class Image;
 class ImageURL;
+class MultipartImage;
 class ProgressTracker;
 
 class ImageFactory
@@ -54,6 +55,18 @@ public:
   static already_AddRefed<Image>
   CreateAnonymousImage(const nsCString& aMimeType);
 
+  /**
+   * Creates a new multipart/x-mixed-replace image wrapper, and initializes it
+   * with the first part. Subsequent parts should be passed to the existing
+   * MultipartImage via MultipartImage::BeginTransitionToPart().
+   *
+   * @param aFirstPart       An image containing the first part of the multipart
+   *                         stream.
+   * @param aProgressTracker A progress tracker for the multipart image.
+   */
+  static already_AddRefed<MultipartImage>
+  CreateMultipartImage(Image* aFirstPart, ProgressTracker* aProgressTracker);
+
 private:
   // Factory functions that create specific types of image containers.
   static already_AddRefed<Image>
@@ -79,4 +92,4 @@ private:
 } // namespace image
 } // namespace mozilla
 
-#endif // MOZILLA_IMAGELIB_IMAGEFACTORY_H_
+#endif // mozilla_image_src_ImageFactory_h

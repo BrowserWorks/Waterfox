@@ -348,13 +348,6 @@ xpc::TraceXPCGlobal(JSTracer* trc, JSObject* obj)
 
 namespace xpc {
 
-uint64_t
-GetCompartmentCPOWMicroseconds(JSCompartment* compartment)
-{
-    xpc::CompartmentPrivate* compartmentPrivate = xpc::CompartmentPrivate::Get(compartment);
-    return compartmentPrivate ? PR_IntervalToMicroseconds(compartmentPrivate->CPOWTime) : 0;
-}
-
 JSObject*
 CreateGlobalObject(JSContext* cx, const JSClass* clasp, nsIPrincipal* principal,
                    JS::CompartmentOptions& aOptions)
@@ -760,7 +753,7 @@ nsXPConnect::EvalInSandboxObject(const nsAString& source, const char* filename,
         filenameStr = NS_LITERAL_CSTRING("x-bogus://XPConnect/Sandbox");
     }
     return EvalInSandbox(cx, sandbox, source, filenameStr, 1,
-                         JSVERSION_DEFAULT, rval);
+                         JSVERSION_LATEST, rval);
 }
 
 /* nsIXPConnectJSObjectHolder getWrappedNativePrototype (in JSContextPtr aJSContext, in JSObjectPtr aScope, in nsIClassInfo aClassInfo); */
@@ -1264,7 +1257,7 @@ ReadScriptOrFunction(nsIObjectInputStream* stream, JSContext* cx,
         }
     }
 
-    nsMemory::Free(data);
+    free(data);
     return rv;
 }
 
@@ -1371,17 +1364,14 @@ bool
 SetAddonInterposition(const nsACString& addonIdStr, nsIAddonInterposition* interposition)
 {
     JSAddonId* addonId;
-    {
-        // We enter the junk scope just to allocate a string, which actually will go
-        // in the system zone.
-        AutoJSAPI jsapi;
-        jsapi.Init(xpc::PrivilegedJunkScope());
-        addonId = NewAddonId(jsapi.cx(), addonIdStr);
-        if (!addonId)
-            return false;
-    }
-
-    return XPCWrappedNativeScope::SetAddonInterposition(addonId, interposition);
+    // We enter the junk scope just to allocate a string, which actually will go
+    // in the system zone.
+    AutoJSAPI jsapi;
+    jsapi.Init(xpc::PrivilegedJunkScope());
+    addonId = NewAddonId(jsapi.cx(), addonIdStr);
+    if (!addonId)
+        return false;
+    return XPCWrappedNativeScope::SetAddonInterposition(jsapi.cx(), addonId, interposition);
 }
 
 } // namespace xpc

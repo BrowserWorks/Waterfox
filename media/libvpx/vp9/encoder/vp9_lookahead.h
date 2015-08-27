@@ -79,7 +79,11 @@ void vp9_lookahead_destroy(struct lookahead_ctx *ctx);
  * \param[in] active_map  Map that specifies which macroblock is active
  */
 int vp9_lookahead_push(struct lookahead_ctx *ctx, YV12_BUFFER_CONFIG *src,
-                       int64_t ts_start, int64_t ts_end, unsigned int flags);
+                       int64_t ts_start, int64_t ts_end,
+#if CONFIG_VP9_HIGHBITDEPTH
+                       int use_highbitdepth,
+#endif
+                       unsigned int flags);
 
 
 /**\brief Get the next source buffer to encode

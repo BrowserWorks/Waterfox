@@ -9,6 +9,7 @@
 
 #include "mozilla/DebugOnly.h"
 #include "mozilla/Assertions.h"
+#include "mozilla/SyncRunnable.h"
 #include "nsThreadUtils.h"
 #include "AndroidBridge.h"
 
@@ -55,6 +56,10 @@ extern "C" {
   __attribute__ ((visibility("default")))
   jclass
   jsjni_GetGlobalClassRef(const char *className) {
+    if (NS_IsMainThread()) {
+      return __jsjni_GetGlobalClassRef(className);
+    }
+
     nsCOMPtr<nsIThread> mainThread;
     mozilla::DebugOnly<nsresult> rv = NS_GetMainThread(getter_AddRefs(mainThread));
     MOZ_ASSERT(NS_SUCCEEDED(rv));
@@ -62,7 +67,8 @@ extern "C" {
     jclass foundClass;
     nsCOMPtr<nsIRunnable> runnable_ref(new GetGlobalClassRefRunnable(className,
                                                                      &foundClass));
-    mainThread->Dispatch(runnable_ref, NS_DISPATCH_SYNC);
+    nsRefPtr<mozilla::SyncRunnable> sr = new mozilla::SyncRunnable(runnable_ref);
+    sr->DispatchToThread(mainThread);
     if (!foundClass)
       return nullptr;
 

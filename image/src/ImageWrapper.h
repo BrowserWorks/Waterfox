@@ -3,8 +3,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef MOZILLA_IMAGELIB_IMAGEWRAPPER_H_
-#define MOZILLA_IMAGELIB_IMAGEWRAPPER_H_
+#ifndef mozilla_image_src_ImageWrapper_h
+#define mozilla_image_src_ImageWrapper_h
 
 #include "mozilla/MemoryReporting.h"
 #include "Image.h"
@@ -22,16 +22,12 @@ public:
   NS_DECL_IMGICONTAINER
 
   // Inherited methods from Image.
-  virtual nsresult Init(const char* aMimeType, uint32_t aFlags) override;
-
   virtual already_AddRefed<ProgressTracker> GetProgressTracker() override;
 
   virtual size_t
-  SizeOfSourceWithComputedFallback( MallocSizeOf aMallocSizeOf) const
-      override;
-  virtual size_t
-  SizeOfDecoded(gfxMemoryLocation aLocation,
-                MallocSizeOf aMallocSizeOf) const override;
+    SizeOfSourceWithComputedFallback(MallocSizeOf aMallocSizeOf) const override;
+  virtual void CollectSizeOfSurfaces(nsTArray<SurfaceMemoryCounter>& aCounters,
+                                     MallocSizeOf aMallocSizeOf) const override;
 
   virtual void IncrementAnimationConsumers() override;
   virtual void DecrementAnimationConsumers() override;
@@ -86,4 +82,4 @@ private:
 } // namespace image
 } // namespace mozilla
 
-#endif // MOZILLA_IMAGELIB_IMAGEWRAPPER_H_
+#endif // mozilla_image_src_ImageWrapper_h

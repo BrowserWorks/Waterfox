@@ -298,13 +298,13 @@ CallJSNativeConstructor(JSContext* cx, Native native, const CallArgs& args)
 }
 
 MOZ_ALWAYS_INLINE bool
-CallJSGetterOp(JSContext* cx, GetterOp op, HandleObject receiver, HandleId id,
+CallJSGetterOp(JSContext* cx, GetterOp op, HandleObject obj, HandleId id,
                MutableHandleValue vp)
 {
     JS_CHECK_RECURSION(cx, return false);
 
-    assertSameCompartment(cx, receiver, id, vp);
-    bool ok = op(cx, receiver, id, vp);
+    assertSameCompartment(cx, obj, id, vp);
+    bool ok = op(cx, obj, id, vp);
     if (ok)
         assertSameCompartment(cx, vp);
     return ok;
@@ -318,6 +318,16 @@ CallJSSetterOp(JSContext* cx, SetterOp op, HandleObject obj, HandleId id, Mutabl
 
     assertSameCompartment(cx, obj, id, vp);
     return op(cx, obj, id, vp, result);
+}
+
+inline bool
+CallJSAddPropertyOp(JSContext* cx, JSAddPropertyOp op, HandleObject obj, HandleId id,
+                    HandleValue v)
+{
+    JS_CHECK_RECURSION(cx, return false);
+
+    assertSameCompartment(cx, obj, id, v);
+    return op(cx, obj, id, v);
 }
 
 inline bool
@@ -370,7 +380,7 @@ JSContext::setPendingException(js::Value v)
 inline bool
 JSContext::runningWithTrustedPrincipals() const
 {
-    return !compartment() || compartment()->principals == runtime()->trustedPrincipals();
+    return !compartment() || compartment()->principals() == runtime()->trustedPrincipals();
 }
 
 inline void

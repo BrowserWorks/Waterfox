@@ -10,28 +10,13 @@
 #include "jsobj.h"
 
 #include "gc/Zone.h"
-
+#include "js/Value.h"
 #include "vm/Symbol.h"
 
-namespace js {
-
-void
-ValueReadBarrier(const Value& value)
-{
-    MOZ_ASSERT(!CurrentThreadIsIonCompiling());
-    if (value.isObject())
-        JSObject::readBarrier(&value.toObject());
-    else if (value.isString())
-        JSString::readBarrier(value.toString());
-    else if (value.isSymbol())
-        JS::Symbol::readBarrier(value.toSymbol());
-    else
-        MOZ_ASSERT(!value.isMarkable());
-}
-
 #ifdef DEBUG
+
 bool
-HeapSlot::preconditionForSet(NativeObject* owner, Kind kind, uint32_t slot)
+js::HeapSlot::preconditionForSet(NativeObject* owner, Kind kind, uint32_t slot)
 {
     return kind == Slot
          ? &owner->getSlotRef(slot) == this
@@ -39,16 +24,8 @@ HeapSlot::preconditionForSet(NativeObject* owner, Kind kind, uint32_t slot)
 }
 
 bool
-HeapSlot::preconditionForSet(Zone* zone, NativeObject* owner, Kind kind, uint32_t slot)
-{
-    bool ok = kind == Slot
-            ? &owner->getSlotRef(slot) == this
-            : &owner->getDenseElement(slot) == (const Value*)this;
-    return ok && owner->zone() == zone;
-}
-
-bool
-HeapSlot::preconditionForWriteBarrierPost(NativeObject* obj, Kind kind, uint32_t slot, Value target) const
+js::HeapSlot::preconditionForWriteBarrierPost(NativeObject* obj, Kind kind, uint32_t slot,
+                                              Value target) const
 {
     return kind == Slot
          ? obj->getSlotAddressUnchecked(slot)->get() == target
@@ -56,35 +33,75 @@ HeapSlot::preconditionForWriteBarrierPost(NativeObject* obj, Kind kind, uint32_t
 }
 
 bool
-RuntimeFromMainThreadIsHeapMajorCollecting(JS::shadow::Zone* shadowZone)
+js::RuntimeFromMainThreadIsHeapMajorCollecting(JS::shadow::Zone* shadowZone)
 {
     return shadowZone->runtimeFromMainThread()->isHeapMajorCollecting();
 }
 
 bool
-CurrentThreadIsIonCompiling()
+js::CurrentThreadIsIonCompiling()
 {
     return TlsPerThreadData.get()->ionCompiling;
 }
 
 bool
-CurrentThreadIsGCSweeping()
+js::CurrentThreadIsGCSweeping()
 {
     return js::TlsPerThreadData.get()->gcSweeping;
 }
 
 #endif // DEBUG
 
-bool
-StringIsPermanentAtom(JSString* str)
+template <typename S>
+template <typename T>
+void
+js::ReadBarrierFunctor<S>::operator()(T* t)
 {
-    return str->isPermanentAtom();
+    InternalGCMethods<T*>::readBarrier(t);
+}
+template void js::ReadBarrierFunctor<JS::Value>::operator()<JS::Symbol>(JS::Symbol*);
+template void js::ReadBarrierFunctor<JS::Value>::operator()<JSObject>(JSObject*);
+template void js::ReadBarrierFunctor<JS::Value>::operator()<JSString>(JSString*);
+
+template <typename S>
+template <typename T>
+void
+js::PreBarrierFunctor<S>::operator()(T* t)
+{
+    InternalGCMethods<T*>::preBarrier(t);
+}
+template void js::PreBarrierFunctor<JS::Value>::operator()<JS::Symbol>(JS::Symbol*);
+template void js::PreBarrierFunctor<JS::Value>::operator()<JSObject>(JSObject*);
+template void js::PreBarrierFunctor<JS::Value>::operator()<JSString>(JSString*);
+template void js::PreBarrierFunctor<jsid>::operator()<JS::Symbol>(JS::Symbol*);
+template void js::PreBarrierFunctor<jsid>::operator()<JSString>(JSString*);
+
+JS_PUBLIC_API(void)
+JS::HeapObjectPostBarrier(JSObject** objp)
+{
+    MOZ_ASSERT(objp);
+    MOZ_ASSERT(*objp);
+    js::InternalGCMethods<JSObject*>::postBarrierRelocate(objp);
 }
 
-bool
-SymbolIsWellKnown(JS::Symbol* sym)
+JS_PUBLIC_API(void)
+JS::HeapObjectRelocate(JSObject** objp)
 {
-    return sym->isWellKnownSymbol();
+    MOZ_ASSERT(objp);
+    MOZ_ASSERT(*objp);
+    js::InternalGCMethods<JSObject*>::postBarrierRemove(objp);
 }
 
-} // namespace js
+JS_PUBLIC_API(void)
+JS::HeapValuePostBarrier(JS::Value* valuep)
+{
+    MOZ_ASSERT(valuep);
+    js::InternalGCMethods<JS::Value>::postBarrierRelocate(valuep);
+}
+
+JS_PUBLIC_API(void)
+JS::HeapValueRelocate(JS::Value* valuep)
+{
+    MOZ_ASSERT(valuep);
+    js::InternalGCMethods<JS::Value>::postBarrierRemove(valuep);
+}

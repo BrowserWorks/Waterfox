@@ -153,7 +153,7 @@ nsStyleContext::~nsStyleContext()
 
   mRuleNode->Release();
 
-  styleSet->NotifyStyleContextDestroyed(presContext, this);
+  styleSet->NotifyStyleContextDestroyed(this);
 
   if (mParent) {
     mParent->RemoveChild(this);
@@ -348,7 +348,7 @@ nsStyleContext::FindChildWithRules(const nsIAtom* aPseudoTag,
         } else {
           match = !child->GetStyleIfVisited();
         }
-        if (match) {
+        if (match && !(child->mBits & NS_STYLE_INELIGIBLE_FOR_SHARING)) {
           result = child;
           break;
         }
@@ -447,6 +447,7 @@ nsStyleContext::GetUniqueStyleData(const nsStyleStructID& aSID)
 
   UNIQUE_CASE(Display)
   UNIQUE_CASE(Text)
+  UNIQUE_CASE(TextReset)
 
 #undef UNIQUE_CASE
 
@@ -544,6 +545,21 @@ ShouldSuppressLineBreak(const nsStyleDisplay* aStyleDisplay,
   // the level containers themselves are breakable. We have to check
   // the container display type against all ruby display type here
   // because any of the ruby boxes could be anonymous.
+  // Note that, when certain HTML tags, e.g. form controls, have ruby
+  // level container display type, they could also escape from this flag
+  // while they shouldn't. However, it is generally fine since they
+  // won't usually break the assertion that there is no line break
+  // inside ruby, because:
+  // 1. their display types, the ruby level container types, are inline-
+  //    outside, which means they won't cause any forced line break; and
+  // 2. they never start an inline span, which means their children, if
+  //    any, won't be able to break the line its ruby ancestor lays; and
+  // 3. their parent frame is always a ruby content frame (due to
+  //    anonymous ruby box generation), which makes line layout suppress
+  //    any optional line break around this frame.
+  // However, there is one special case which is BR tag, because it
+  // directly affects the line layout. This case is handled by the BR
+  // frame which checks the flag of its parent frame instead of itself.
   if ((aContainerDisplay->IsRubyDisplayType() &&
        aStyleDisplay->mDisplay != NS_STYLE_DISPLAY_RUBY_BASE_CONTAINER &&
        aStyleDisplay->mDisplay != NS_STYLE_DISPLAY_RUBY_TEXT_CONTAINER) ||
@@ -705,6 +721,24 @@ nsStyleContext::ApplyStyleFixups(bool aSkipParentDisplayBasedStyleFixup)
       disp->mDisplay == NS_STYLE_DISPLAY_RUBY_TEXT_CONTAINER) {
     CreateEmptyStyleData(eStyleStruct_Border);
     CreateEmptyStyleData(eStyleStruct_Padding);
+  }
+  if (disp->IsRubyDisplayType()) {
+    // Per CSS Ruby spec section Bidi Reordering, for all ruby boxes,
+    // the 'normal' and 'embed' values of 'unicode-bidi' should compute to
+    // 'isolate', and 'bidi-override' should compute to 'isolate-override'.
+    const nsStyleTextReset* textReset = StyleTextReset();
+    uint8_t unicodeBidi = textReset->mUnicodeBidi;
+    if (unicodeBidi == NS_STYLE_UNICODE_BIDI_NORMAL ||
+        unicodeBidi == NS_STYLE_UNICODE_BIDI_EMBED) {
+      unicodeBidi = NS_STYLE_UNICODE_BIDI_ISOLATE;
+    } else if (unicodeBidi == NS_STYLE_UNICODE_BIDI_OVERRIDE) {
+      unicodeBidi = NS_STYLE_UNICODE_BIDI_ISOLATE_OVERRIDE;
+    }
+    if (unicodeBidi != textReset->mUnicodeBidi) {
+      auto mutableTextReset = static_cast<nsStyleTextReset*>(
+        GetUniqueStyleData(eStyleStruct_TextReset));
+      mutableTextReset->mUnicodeBidi = unicodeBidi;
+    }
   }
 
   // Elements with display:inline whose writing-mode is orthogonal to their
@@ -1362,6 +1396,29 @@ nsStyleContext::DoClearCachedInheritedStyleDataOnDescendants(uint32_t aStructs)
   }
 
   ClearCachedInheritedStyleDataOnDescendants(aStructs);
+}
+
+void
+nsStyleContext::SetIneligibleForSharing()
+{
+  if (mBits & NS_STYLE_INELIGIBLE_FOR_SHARING) {
+    return;
+  }
+  mBits |= NS_STYLE_INELIGIBLE_FOR_SHARING;
+  if (mChild) {
+    nsStyleContext* child = mChild;
+    do {
+      child->SetIneligibleForSharing();
+      child = child->mNextSibling;
+    } while (mChild != child);
+  }
+  if (mEmptyChild) {
+    nsStyleContext* child = mEmptyChild;
+    do {
+      child->SetIneligibleForSharing();
+      child = child->mNextSibling;
+    } while (mEmptyChild != child);
+  }
 }
 
 #ifdef RESTYLE_LOGGING

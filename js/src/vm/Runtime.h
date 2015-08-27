@@ -31,6 +31,7 @@
 #include "gc/GCRuntime.h"
 #include "gc/Tracer.h"
 #include "irregexp/RegExpStack.h"
+#include "js/Debug.h"
 #include "js/HashTable.h"
 #ifdef DEBUG
 # include "js/Proxy.h" // For AutoEnterPolicy
@@ -428,6 +429,7 @@ namespace js {
 struct WellKnownSymbols
 {
     js::ImmutableSymbolPtr iterator;
+    js::ImmutableSymbolPtr match;
 
     const ImmutableSymbolPtr& get(size_t u) const {
         MOZ_ASSERT(u < JS::WellKnownSymbolLimit);
@@ -568,7 +570,6 @@ class PerThreadData : public PerThreadDataFriendFields
 };
 
 class AutoLockForExclusiveAccess;
-
 } // namespace js
 
 struct JSRuntime : public JS::shadow::Runtime,
@@ -678,6 +679,9 @@ struct JSRuntime : public JS::shadow::Runtime,
      * Value of asyncCause to be attached to asyncStackForNewActivations.
      */
     JSString* asyncCauseForNewActivations;
+
+    /* If non-null, report JavaScript entry points to this monitor. */
+    JS::dbg::AutoEntryMonitor* entryMonitor;
 
     js::Activation* const* addressOfActivation() const {
         return &activation_;
@@ -1357,18 +1361,18 @@ struct JSRuntime : public JS::shadow::Runtime,
     JS_FRIEND_API(void) onTooMuchMalloc();
 
     /*
-     * This should be called after system malloc/realloc returns nullptr to try
-     * to recove some memory or to report an error. Failures in malloc and
-     * calloc are signaled by p == null and p == reinterpret_cast<void*>(1).
-     * Other values of p mean a realloc failure.
+     * This should be called after system malloc/calloc/realloc returns nullptr
+     * to try to recove some memory or to report an error.  For realloc, the
+     * original pointer must be passed as reallocPtr.
      *
      * The function must be called outside the GC lock.
      */
-    JS_FRIEND_API(void*) onOutOfMemory(void* p, size_t nbytes);
-    JS_FRIEND_API(void*) onOutOfMemory(void* p, size_t nbytes, JSContext* cx);
+    JS_FRIEND_API(void*) onOutOfMemory(js::AllocFunction allocator, size_t nbytes,
+                                       void* reallocPtr = nullptr, JSContext* maybecx = nullptr);
 
     /*  onOutOfMemory but can call the largeAllocationFailureCallback. */
-    JS_FRIEND_API(void*) onOutOfMemoryCanGC(void* p, size_t bytes);
+    JS_FRIEND_API(void*) onOutOfMemoryCanGC(js::AllocFunction allocator, size_t nbytes,
+                                            void* reallocPtr = nullptr);
 
     void addSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf, JS::RuntimeSizes* runtime);
 
@@ -1432,7 +1436,7 @@ struct JSRuntime : public JS::shadow::Runtime,
             reportAllocationOverflow();
             return nullptr;
         }
-        return (T*)onOutOfMemoryCanGC(reinterpret_cast<void*>(1), numElems * sizeof(T));
+        return (T*)onOutOfMemoryCanGC(js::AllocFunction::Calloc, numElems * sizeof(T));
     }
 
     template <typename T>
@@ -1444,7 +1448,7 @@ struct JSRuntime : public JS::shadow::Runtime,
             reportAllocationOverflow();
             return nullptr;
         }
-        return (T*)onOutOfMemoryCanGC(p, newSize * sizeof(T));
+        return (T*)onOutOfMemoryCanGC(js::AllocFunction::Realloc, newSize * sizeof(T), p);
     }
 
     /*
@@ -1455,6 +1459,135 @@ struct JSRuntime : public JS::shadow::Runtime,
 
     /* Last time at which an animation was played for this runtime. */
     int64_t lastAnimationTime;
+
+  public:
+
+    /* ------------------------------------------
+       Performance measurements
+       ------------------------------------------ */
+    struct Stopwatch {
+        /**
+         * The number of times we have entered the event loop.
+         * Used to reset counters whenever we enter the loop,
+         * which may be caused either by having completed the
+         * previous run of the event loop, or by entering a
+         * nested loop.
+         *
+         * Always incremented by 1, may safely overflow.
+         */
+        uint64_t iteration;
+
+        /**
+         * `true` if no stopwatch has been registered for the
+         * current run of the event loop, `false` until then.
+         */
+        bool isEmpty;
+
+        /**
+         * Performance data on the entire runtime.
+         */
+        js::PerformanceData performance;
+
+        Stopwatch()
+          : iteration(0)
+          , isEmpty(true)
+          , isActive_(false)
+        { }
+
+        /**
+         * Reset the stopwatch.
+         *
+         * This method is meant to be called whenever we start processing
+         * an event, to ensure that stop any ongoing measurement that would
+         * otherwise provide irrelevant results.
+         */
+        void reset() {
+            ++iteration;
+            isEmpty = true;
+        }
+
+        /**
+         * Activate/deactivate stopwatch measurement.
+         *
+         * Noop if `value` is `true` and the stopwatch is already active,
+         * or if `value` is `false` and the stopwatch is already inactive.
+         *
+         * Otherwise, any pending measurements are dropped, but previous
+         * measurements remain stored.
+         *
+         * May return `false` if the underlying hashtable cannot be allocated.
+         */
+        bool setIsActive(bool value) {
+            if (isActive_ != value)
+                reset();
+
+            if (value && !groups_.initialized()) {
+                if (!groups_.init(128))
+                    return false;
+            }
+
+            isActive_ = value;
+            return true;
+        }
+
+        /**
+         * `true` if the stopwatch is currently monitoring, `false` otherwise.
+         */
+        bool isActive() const {
+            return isActive_;
+        }
+
+        // Some systems have non-monotonic clocks. While we cannot
+        // improve the precision, we can make sure that our measures
+        // are monotonic nevertheless. We do this by storing the
+        // result of the latest call to the clock and making sure
+        // that the next timestamp is greater or equal.
+        struct MonotonicTimeStamp {
+            MonotonicTimeStamp()
+              : latestGood_(0)
+            {}
+            inline uint64_t monotonize(uint64_t stamp)
+            {
+                if (stamp <= latestGood_)
+                    return latestGood_;
+                latestGood_ = stamp;
+                return stamp;
+            }
+          private:
+            uint64_t latestGood_;
+        };
+        MonotonicTimeStamp systemTimeFix;
+        MonotonicTimeStamp userTimeFix;
+
+    private:
+        /**
+         * A map used to collapse compartments belonging to the same
+         * add-on (respectively to the same webpage, to the platform)
+         * into a single group.
+         *
+         * Keys: for system compartments, a `JSAddonId*` (which may be
+         * `nullptr`), and for webpages, a `JSPrincipals*` (which may
+         * not). Note that compartments may start as non-system
+         * compartments and become compartments later during their
+         * lifetime, which requires an invalidation.
+         *
+         * This map is meant to be accessed only by instances of
+         * PerformanceGroupHolder, which handle both reference-counting
+         * of the values and invalidation of the key/value pairs.
+         */
+        typedef js::HashMap<void*, js::PerformanceGroup*,
+                            js::DefaultHasher<void*>,
+                            js::SystemAllocPolicy> Groups;
+
+        Groups groups_;
+        friend struct js::PerformanceGroupHolder;
+
+        /**
+         * `true` if stopwatch monitoring is active, `false` otherwise.
+         */
+        bool isActive_;
+    };
+    Stopwatch stopwatch;
 };
 
 namespace js {

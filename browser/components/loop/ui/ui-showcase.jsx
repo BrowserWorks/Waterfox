@@ -17,6 +17,7 @@
   // 1. Desktop components
   // 1.1 Panel
   var PanelView = loop.panel.PanelView;
+  var SignInRequestView = loop.panel.SignInRequestView;
   // 1.2. Conversation Window
   var AcceptCallView = loop.conversationViews.AcceptCallView;
   var DesktopPendingConversationView = loop.conversationViews.PendingConversationView;
@@ -145,18 +146,17 @@
     level: "error",
     message: "Could Not Authenticate",
     details: "Did you change your password?",
-    detailsButtonLabel: "Retry",
+    detailsButtonLabel: "Retry"
   });
 
   var SVGIcon = React.createClass({
     render: function() {
-      var sizeUnit = this.props.size.split("x")[0] + "px";
+      var sizeUnit = this.props.size.split("x");
       return (
-        <span className="svg-icon" style={{
-          "backgroundImage": "url(../content/shared/img/icons-" + this.props.size +
-                              ".svg#" + this.props.shapeId + ")",
-          "backgroundSize": sizeUnit + " " + sizeUnit
-        }} />
+        <img className="svg-icon"
+             src={"../content/shared/img/icons-" + this.props.size + ".svg#" + this.props.shapeId}
+             width={sizeUnit[0]}
+             height={sizeUnit[1]} />
       );
     }
   });
@@ -164,9 +164,9 @@
   var SVGIcons = React.createClass({
     shapes: {
       "10x10": ["close", "close-active", "close-disabled", "dropdown",
-        "dropdown-white", "dropdown-active", "dropdown-disabled", "expand",
-        "expand-active", "expand-disabled", "minimize", "minimize-active",
-        "minimize-disabled"
+        "dropdown-white", "dropdown-active", "dropdown-disabled", "edit",
+        "edit-active", "edit-disabled", "expand", "expand-active", "expand-disabled",
+        "minimize", "minimize-active", "minimize-disabled"
       ],
       "14x14": ["audio", "audio-active", "audio-disabled", "facemute",
         "facemute-active", "facemute-disabled", "hangup", "hangup-active",
@@ -178,7 +178,7 @@
       ],
       "16x16": ["add", "add-hover", "add-active", "audio", "audio-hover", "audio-active",
         "block", "block-red", "block-hover", "block-active", "contacts", "contacts-hover",
-        "contacts-active", "copy", "checkmark", "google", "google-hover", "google-active",
+        "contacts-active", "copy", "checkmark", "globe", "google", "google-hover", "google-active",
         "history", "history-hover", "history-active", "leave", "precall", "precall-hover",
         "precall-active", "screen-white", "screenmute-white", "settings",
         "settings-hover", "settings-active", "share-darkgrey", "tag", "tag-hover",
@@ -265,6 +265,9 @@
             <p className="note">
               <strong>Note:</strong> 332px wide.
             </p>
+            <Example summary="Re-sign-in view" dashed="true" style={{width: "332px"}}>
+              <SignInRequestView mozLoop={mockMozLoopRooms} />
+            </Example>
             <Example summary="Room list tab" dashed="true" style={{width: "332px"}}>
               <PanelView client={mockClient} notifications={notifications}
                          userProfile={{email: "test@example.com"}}

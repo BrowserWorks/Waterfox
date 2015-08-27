@@ -50,8 +50,6 @@ public:
   bool mIsInfinite;
 };
 
-struct NewLayerEntry;
-
 struct ContainerLayerParameters {
   ContainerLayerParameters()
     : mXScale(1)
@@ -86,16 +84,27 @@ struct ContainerLayerParameters {
     , mDisableSubpixelAntialiasingInDescendants(aParent.mDisableSubpixelAntialiasingInDescendants)
     , mInLowPrecisionDisplayPort(aParent.mInLowPrecisionDisplayPort)
   {}
+
   float mXScale, mYScale;
+
+  LayoutDeviceToLayerScale2D Scale() const {
+    return LayoutDeviceToLayerScale2D(mXScale, mYScale);
+  }
+
   /**
    * If non-null, the rectangle in which BuildContainerLayerFor stores the
    * visible rect of the layer, in the coordinate system of the created layer.
    */
   nsIntRect* mLayerContentsVisibleRect;
+
   /**
    * An offset to apply to all child layers created.
    */
   nsIntPoint mOffset;
+
+  LayerIntPoint Offset() const {
+    return LayerIntPoint::FromUntyped(mOffset);
+  }
 
   nscolor mBackgroundColor;
   bool mInTransformedSubtree;
@@ -181,8 +190,7 @@ public:
   static void Shutdown();
 
   void Init(nsDisplayListBuilder* aBuilder, LayerManager* aManager,
-            PaintedLayerData* aLayerData = nullptr,
-            ContainerState* aContainingContainerState = nullptr);
+            PaintedLayerData* aLayerData = nullptr);
 
   /**
    * Call this to notify that we have just started a transaction on the
@@ -663,11 +671,6 @@ public:
     return !mContainingPaintedLayer && mRetainingManager;
   }
 
-  ContainerState* GetContainingContainerState()
-  {
-    return mContainingContainerState;
-  }
-
   /**
    * Attempt to build the most compressed layer tree possible, even if it means
    * throwing away existing retained buffers.
@@ -718,8 +721,6 @@ protected:
    * inactive layer will be placed.
    */
   PaintedLayerData*                   mContainingPaintedLayer;
-
-  ContainerState*                     mContainingContainerState;
 
   /**
    * Saved generation counter so we can detect DOM changes.

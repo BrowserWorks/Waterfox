@@ -507,13 +507,13 @@
           if (!selection || (selection.index == -1)) {
             let source = "unknown";
             let type = "unknown";
+            let target = aEvent.originalTarget;
             if (aEvent instanceof KeyboardEvent) {
               type = "key";
               if (this._textbox.selectedButton) {
                 source = "oneoff";
               }
             } else if (aEvent instanceof MouseEvent) {
-              let target = aEvent.originalTarget;
               type = "mouse";
               if (target.classList.contains("searchbar-engine-one-off-item")) {
                 source = "oneoff";
@@ -523,11 +523,13 @@
               }
             } else if (aEvent instanceof XULCommandEvent) {
               if (target.getAttribute("anonid") == "paste-and-search") {
-                aEngine = this.currentEngine;
                 source = "paste";
               }
             }
 
+            if (!aEngine) {
+              aEngine = this.currentEngine;
+            }
             BrowserSearch.recordOneoffSearchInTelemetry(aEngine, source, type, where);
           }
 
@@ -1021,14 +1023,29 @@
           if (this._selectedButton)
             this._selectedButton.removeAttribute("selected");
 
+          let textbox = document.getBindingParent(this).textbox;
+          let header =
+            document.getAnonymousElementByAttribute(this.popup, "anonid",
+                                                    "search-panel-one-offs-header");
           // Avoid selecting dummy buttons.
           if (val && !val.classList.contains("dummy")) {
             val.setAttribute("selected", "true");
             this._selectedButton = val;
+            if (val.classList.contains("searchbar-engine-one-off-item")) {
+              let headerEngineText =
+                document.getAnonymousElementByAttribute(this.popup, "anonid",
+                                                        "searchbar-oneoffheader-engine");
+              header.selectedIndex = 2;
+              headerEngineText.value = val.engine.name;
+            }
+            else {
+              header.selectedIndex = textbox.value ? 1 : 0;
+            }
             this.setAttribute("aria-activedescendant", val.id);
             return;
           }
 
+          header.selectedIndex = textbox.value ? 1 : 0;
           this.removeAttribute("aria-activedescendant");
           this._selectedButton = null;
         ]]></setter>

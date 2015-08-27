@@ -132,11 +132,14 @@ pref("dom.workers.maxPerDomain", 20);
 // Whether or not Shared Web Workers are enabled.
 pref("dom.workers.sharedWorkers.enabled", true);
 
-// WebSocket in workers are disabled by default.
+// Whether or not WebSockets in workers are enabled.
+// Note: we need this pref because WebSocket in Workers is a new implementation
+// and we want to be able to disable it quickly in case of regressions.
+// When this feature is stable enough we can get rid of this pref: Bug 1159792
 pref("dom.workers.websocket.enabled", true);
 
 // Service workers
-pref("dom.serviceWorkers.enabled", true);
+pref("dom.serviceWorkers.enabled", false);
 
 // Whether nonzero values can be returned from performance.timing.*
 pref("dom.enable_performance", true);
@@ -152,11 +155,7 @@ pref("dom.performance.enable_user_timing_logging", false);
 
 // Whether the Gamepad API is enabled
 pref("dom.gamepad.enabled", true);
-#ifdef RELEASE_BUILD
-pref("dom.gamepad.non_standard_events.enabled", false);
-#else
 pref("dom.gamepad.non_standard_events.enabled", true);
-#endif
 
 // Whether the KeyboardEvent.code is enabled
 pref("dom.keyboardevent.code.enabled", true);
@@ -165,9 +164,6 @@ pref("dom.keyboardevent.code.enabled", true);
 // even during composition (keypress events are never fired during composition
 // even if this is true).
 pref("dom.keyboardevent.dispatch_during_composition", false);
-
-// Whether the WebCrypto API is enabled
-pref("dom.webcrypto.enabled", true);
 
 // Whether the UndoManager API is enabled
 pref("dom.undo_manager.enabled", false);
@@ -179,7 +175,7 @@ pref("dom.url.encode_decode_hash", true);
 // Whether to run add-on code in different compartments from browser code. This
 // causes a separate compartment for each (addon, global) combination, which may
 // significantly increase the number of compartments in the system.
-#ifdef NIGHTLY_BUILD
+#ifdef E10S_TESTING_ONLY
 pref("dom.compartment_per_addon", true);
 #else
 pref("dom.compartment_per_addon", false);
@@ -251,6 +247,9 @@ pref("browser.triple_click_selects_paragraph", true);
 // Print/Preview Shrink-To-Fit won't shrink below 20% for text-ish documents.
 pref("print.shrink-to-fit.scale-limit-percent", 20);
 
+// Enable scale transform for stretchy MathML operators. See bug 414277.
+pref("mathml.scale_stretchy_operators.enabled", true);
+
 // Media cache size in kilobytes
 pref("media.cache_size", 512000);
 // When a network connection is suspended, don't resume it until the
@@ -271,14 +270,13 @@ pref("media.wakelock_timeout", 2000);
 // opened as top-level documents, as opposed to inside a media element.
 pref("media.play-stand-alone", true);
 
-#if defined(XP_WIN)
+pref("media.hardware-video-decoding.enabled", true);
+
 pref("media.decoder.heuristic.dormant.enabled", true);
 pref("media.decoder.heuristic.dormant.timeout", 60000);
-#endif
 
 #ifdef MOZ_WMF
 pref("media.windows-media-foundation.enabled", true);
-pref("media.windows-media-foundation.use-dxva", true);
 #endif
 #ifdef MOZ_DIRECTSHOW
 pref("media.directshow.enabled", true);
@@ -377,11 +375,7 @@ pref("media.navigator.permission.disabled", false);
 pref("media.peerconnection.default_iceservers", "[{\"urls\": [\"stun:stun.services.mozilla.com\"]}]");
 pref("media.peerconnection.ice.loopback", false); // Set only for testing in offline environments.
 pref("media.peerconnection.use_document_iceservers", true);
-// Do not enable identity before ensuring that the UX cannot be spoofed
-// see Bug 884573 for details
-// Do not enable identity before fixing domain comparison: see Bug 958741
-// Do not enable identity before fixing origin spoofing: see Bug 968335
-pref("media.peerconnection.identity.enabled", false);
+pref("media.peerconnection.identity.enabled", true);
 pref("media.peerconnection.identity.timeout", 10000);
 pref("media.peerconnection.ice.loopback", false); // Set only for testing in offline environments.
 // These values (aec, agc, and noice) are from media/webrtc/trunk/webrtc/common_types.h
@@ -427,10 +421,10 @@ pref("media.getusermedia.screensharing.enabled", true);
 #endif
 
 #ifdef RELEASE_BUILD
-pref("media.getusermedia.screensharing.allowed_domains", "webex.com,*.webex.com,ciscospark.com,*.ciscospark.com,projectsquared.com,*.projectsquared.com,*.room.co,room.co,beta.talky.io,talky.io,*.clearslide.com,appear.in,*.appear.in,tokbox.com,*.tokbox.com,*.sso.francetelecom.fr,*.si.francetelecom.fr,*.sso.infra.ftgroup,*.multimedia-conference.orange-business.com,*.espacecollaboration.orange-business.com,free.gotomeeting.com,g2m.me,*.g2m.me,example.com,*.mypurecloud.com,*.mypurecloud.com.au");
+pref("media.getusermedia.screensharing.allowed_domains", "webex.com,*.webex.com,ciscospark.com,*.ciscospark.com,projectsquared.com,*.projectsquared.com,*.room.co,room.co,beta.talky.io,talky.io,*.clearslide.com,appear.in,*.appear.in,tokbox.com,*.tokbox.com,*.sso.francetelecom.fr,*.si.francetelecom.fr,*.sso.infra.ftgroup,*.multimedia-conference.orange-business.com,*.espacecollaboration.orange-business.com,free.gotomeeting.com,g2m.me,*.g2m.me,example.com,*.mypurecloud.com,*.mypurecloud.com.au,spreed.me,*.spreed.me,*.spreed.com");
 #else
  // temporary value, not intended for release - bug 1049087
-pref("media.getusermedia.screensharing.allowed_domains", "mozilla.github.io,webex.com,*.webex.com,ciscospark.com,*.ciscospark.com,projectsquared.com,*.projectsquared.com,*.room.co,room.co,beta.talky.io,talky.io,*.clearslide.com,appear.in,*.appear.in,tokbox.com,*.tokbox.com,*.sso.francetelecom.fr,*.si.francetelecom.fr,*.sso.infra.ftgroup,*.multimedia-conference.orange-business.com,*.espacecollaboration.orange-business.com,free.gotomeeting.com,g2m.me,*.g2m.me,example.com,*.mypurecloud.com,*.mypurecloud.com.au");
+pref("media.getusermedia.screensharing.allowed_domains", "mozilla.github.io,webex.com,*.webex.com,ciscospark.com,*.ciscospark.com,projectsquared.com,*.projectsquared.com,*.room.co,room.co,beta.talky.io,talky.io,*.clearslide.com,appear.in,*.appear.in,tokbox.com,*.tokbox.com,*.sso.francetelecom.fr,*.si.francetelecom.fr,*.sso.infra.ftgroup,*.multimedia-conference.orange-business.com,*.espacecollaboration.orange-business.com,free.gotomeeting.com,g2m.me,*.g2m.me,example.com,*.mypurecloud.com,*.mypurecloud.com.au,spreed.me,*.spreed.me,*.spreed.com");
 #endif
 // OS/X 10.6 and XP have screen/window sharing off by default due to various issues - Caveat emptor
 pref("media.getusermedia.screensharing.allow_on_old_platforms", false);
@@ -446,17 +440,13 @@ pref("media.track.enabled", true);
 // We want to enable on non-release  builds and on release windows and mac
 // but on release builds restrict to YouTube. We don't enable for other
 // configurations because code for those platforms isn't ready yet.
-#if defined(XP_WIN) || defined(XP_MACOSX)
+#if defined(XP_WIN) || defined(XP_MACOSX) || defined(MOZ_WIDGET_GONK)
 pref("media.mediasource.enabled", true);
 #else
 pref("media.mediasource.enabled", false);
 #endif
 
-#ifdef RELEASE_BUILD
 pref("media.mediasource.whitelist", false);
-#else
-pref("media.mediasource.whitelist", false);
-#endif // RELEASE_BUILD
 
 pref("media.mediasource.mp4.enabled", true);
 pref("media.mediasource.webm.enabled", true);
@@ -546,13 +536,15 @@ pref("apz.x_stationary_size_multiplier", "3.0");
 pref("apz.y_stationary_size_multiplier", "3.5");
 pref("apz.zoom_animation_duration_ms", 250);
 
-#ifdef XP_MACOSX
+#if !defined(MOZ_WIDGET_GONK) && !defined(MOZ_WIDGET_ANDROID)
+// Desktop prefs
 pref("apz.fling_repaint_interval", 16);
 pref("apz.smooth_scroll_repaint_interval", 16);
 pref("apz.pan_repaint_interval", 16);
 pref("apz.x_skate_size_multiplier", "2.5");
 pref("apz.y_skate_size_multiplier", "3.5");
 #else
+// Mobile prefs
 pref("apz.fling_repaint_interval", 75);
 pref("apz.smooth_scroll_repaint_interval", 75);
 pref("apz.pan_repaint_interval", 250);
@@ -648,7 +640,7 @@ pref("gfx.content.azure.backends", "direct2d1.1,direct2d,cairo");
 #else
 #ifdef XP_MACOSX
 pref("gfx.content.azure.backends", "cg");
-pref("gfx.canvas.azure.backends", "cg");
+pref("gfx.canvas.azure.backends", "skia");
 // Accelerated cg canvas where available (10.7+)
 pref("gfx.canvas.azure.accelerated", false);
 #else
@@ -697,7 +689,7 @@ pref("ui.scrollToClick", 0);
 // provide ability to turn on support for canvas focus rings
 pref("canvas.focusring.enabled", true);
 pref("canvas.customfocusring.enabled", false);
-pref("canvas.hitregions.enabled", true);
+pref("canvas.hitregions.enabled", false);
 pref("canvas.filters.enabled", false);
 // Add support for canvas path objects
 pref("canvas.path.enabled", true);
@@ -771,6 +763,8 @@ pref("toolkit.scrollbox.verticalScrollDistance", 3);
 pref("toolkit.scrollbox.horizontalScrollDistance", 5);
 pref("toolkit.scrollbox.clickToScroll.scrollDelay", 150);
 
+// Telemetry settings.
+// Server to submit telemetry pings to.
 pref("toolkit.telemetry.server", "https://incoming.telemetry.mozilla.org");
 // Telemetry server owner. Please change if you set toolkit.telemetry.server to a different server
 pref("toolkit.telemetry.server_owner", "Mozilla");
@@ -779,6 +773,8 @@ pref("toolkit.telemetry.infoURL", "https://www.mozilla.org/legal/privacy/firefox
 // Determines whether full SQL strings are returned when they might contain sensitive info
 // i.e. dynamically constructed SQL strings or SQL executed by addons against addon DBs
 pref("toolkit.telemetry.debugSlowSql", false);
+// Whether to use the unified telemetry behavior, requires a restart.
+pref("toolkit.telemetry.unified", true);
 
 // Identity module
 pref("toolkit.identity.enabled", false);
@@ -792,9 +788,9 @@ pref("devtools.errorconsole.deprecation_warnings", true);
 
 // Disable debugging chrome
 #ifdef MOZ_DEV_EDITION
-pref("devtools.chrome.enabled", true);
+sticky_pref("devtools.chrome.enabled", true);
 #else
-pref("devtools.chrome.enabled", false);
+sticky_pref("devtools.chrome.enabled", false);
 #endif
 
 // Disable remote debugging protocol logging
@@ -802,9 +798,9 @@ pref("devtools.debugger.log", false);
 pref("devtools.debugger.log.verbose", false);
 // Disable remote debugging connections
 #ifdef MOZ_DEV_EDITION
-pref("devtools.debugger.remote-enabled", true);
+sticky_pref("devtools.debugger.remote-enabled", true);
 #else
-pref("devtools.debugger.remote-enabled", false);
+sticky_pref("devtools.debugger.remote-enabled", false);
 #endif
 pref("devtools.debugger.remote-port", 6000);
 // Force debugger server binding on the loopback interface
@@ -835,6 +831,25 @@ pref("devtools.remote.tls-handshake-timeout", 10000);
 
 // URL of the remote JSON catalog used for device simulation
 pref("devtools.devices.url", "https://code.cdn.mozilla.net/devices/devices.json");
+
+// Display the introductory text
+pref("devtools.gcli.hideIntro", false);
+
+// How eager are we to show help: never=1, sometimes=2, always=3
+pref("devtools.gcli.eagerHelper", 2);
+
+// Alias to the script URLs for inject command.
+pref("devtools.gcli.jquerySrc", "https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js");
+pref("devtools.gcli.lodashSrc", "https://cdnjs.cloudflare.com/ajax/libs/lodash.js/2.4.1/lodash.min.js");
+pref("devtools.gcli.underscoreSrc", "https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore-min.js");
+
+// Set imgur upload client ID
+pref("devtools.gcli.imgurClientID", '0df414e888d7240');
+// Imgur's upload URL
+pref("devtools.gcli.imgurUploadURL", "https://api.imgur.com/3/image");
+
+// GCLI commands directory
+pref("devtools.commands.dir", "");
 
 // view source
 pref("view_source.syntax_highlight", true);
@@ -999,10 +1014,10 @@ pref("dom.forms.number", true);
 pref("dom.forms.color", true);
 
 // Support for new @autocomplete values
-pref("dom.forms.autocomplete.experimental", false);
+pref("dom.forms.autocomplete.experimental", true);
 
 // Enables requestAutocomplete DOM API on forms.
-pref("dom.forms.requestAutocomplete", false);
+pref("dom.forms.requestAutocomplete", true);
 
 // Enables system messages and activities
 pref("dom.sysmsg.enabled", false);
@@ -1168,6 +1183,11 @@ pref("network.warnOnAboutNetworking", true);
 
 // Example: make IMAP an exposed protocol
 // pref("network.protocol-handler.expose.imap", true);
+
+// Whether IOService.connectivity and NS_IsOffline depends on connectivity status
+pref("network.manage-offline-status", false);
+// If set to true, IOService.offline depends on IOService.connectivity
+pref("network.offline-mirrors-connectivity", true);
 
 // <http>
 pref("network.http.version", "1.1");      // default
@@ -1336,8 +1356,6 @@ pref("network.http.spdy.default-concurrent", 100);
 
 // alt-svc allows separation of transport routing from
 // the origin host without using a proxy.
-pref("network.http.atsvc.enabled", true);
-pref("network.http.atsvc.oe", true);
 pref("network.http.altsvc.enabled", true);
 pref("network.http.altsvc.oe", true);
 
@@ -1688,6 +1706,14 @@ pref("network.automatic-ntlm-auth.allow-proxies", true);
 pref("network.automatic-ntlm-auth.allow-non-fqdn", false);
 pref("network.automatic-ntlm-auth.trusted-uris", "");
 
+// Sub-resources HTTP-authentication:
+//   0 - don't allow sub-resources to open HTTP authentication credentials
+//       dialogs
+//   1 - allow sub-resources to open HTTP authentication credentials dialogs,
+//       but don't allow it for cross-origin sub-resources
+//   2 - allow the cross-origin authentication as well.
+pref("network.auth.allow-subresource-auth", 1);
+
 pref("permissions.default.image",           1); // 1-Accept, 2-Deny, 3-dontAcceptForeign
 
 pref("network.proxy.type",                  5);
@@ -1843,7 +1869,7 @@ pref("security.csp.debug", false);
 pref("security.csp.experimentalEnabled", false);
 
 // Default Content Security Policy to apply to privileged apps.
-pref("security.apps.privileged.CSP.default", "default-src *; script-src 'self'; object-src 'none'; style-src 'self' 'unsafe-inline'");
+pref("security.apps.privileged.CSP.default", "default-src * data: blob:; script-src 'self'; object-src 'none'; style-src 'self' 'unsafe-inline'");
 
 // Mixed content blocking
 pref("security.mixed_content.block_active_content", false);
@@ -2263,10 +2289,11 @@ pref("layout.css.scroll-behavior.damping-ratio", "1.0");
 pref("layout.css.scroll-snap.enabled", true);
 
 // Is support for document.fonts enabled?
-//
-// Don't enable the pref for the CSS Font Loading API until bug 1072101 is
-// fixed, as we don't want to expose more indexed properties on the Web.
+#ifdef RELEASE_BUILD
 pref("layout.css.font-loading-api.enabled", false);
+#else
+pref("layout.css.font-loading-api.enabled", true);
+#endif
 
 // Are the MouseEvent.offsetX/Y properties enabled?
 pref("dom.mouseEvent.offsetXY.enabled", true);
@@ -2390,7 +2417,7 @@ pref("dom.ipc.plugins.timeoutSecs", 45);
 pref("dom.ipc.plugins.parentTimeoutSecs", 0);
 // How long a plugin in e10s is allowed to process a synchronous IPC
 // message before we notify the chrome process of a hang.
-pref("dom.ipc.plugins.contentTimeoutSecs", 45);
+pref("dom.ipc.plugins.contentTimeoutSecs", 10);
 // How long a plugin launch is allowed to take before
 // we consider it failed.
 pref("dom.ipc.plugins.processLaunchTimeoutSecs", 45);
@@ -2435,7 +2462,11 @@ pref("dom.ipc.plugins.unloadTimeoutSecs", 30);
 
 // Asynchronous plugin initialization should only be enabled on non-e10s
 // channels until some remaining bugs are resolved.
+#ifdef E10S_TESTING_ONLY
 pref("dom.ipc.plugins.asyncInit", false);
+#else
+pref("dom.ipc.plugins.asyncInit", true);
+#endif
 
 pref("dom.ipc.processCount", 1);
 
@@ -3014,11 +3045,8 @@ pref("intl.keyboard.per_window_layout", false);
 
 #ifdef NS_ENABLE_TSF
 // Enable/Disable TSF support on Vista or later.
-#ifndef RELEASE_BUILD
-pref("intl.tsf.enable", true);
-#else
 pref("intl.tsf.enable", false);
-#endif
+
 // Force enable TSF even on WinXP or WinServer 2003.
 // Be aware, TSF framework on prior to Vista is not enough stable.
 pref("intl.tsf.force_enable", false);
@@ -3769,6 +3797,7 @@ pref("print.print_command", "lp -c -s ${MOZ_PRINTER_NAME:+-d\"$MOZ_PRINTER_NAME\
 
 // Login Manager prefs
 pref("signon.rememberSignons",              true);
+pref("signon.rememberSignons.visibilityToggle", false);
 pref("signon.autofillForms",                true);
 pref("signon.autologin.proxy",              false);
 pref("signon.storeWhenAutocompleteOff",     true);
@@ -3843,7 +3872,7 @@ pref("image.decode-only-on-draw.enabled", true);
 pref("image.decode-immediately.enabled", false);
 
 // Whether we attempt to downscale images during decoding.
-pref("image.downscale-during-decode.enabled", false);
+pref("image.downscale-during-decode.enabled", true);
 
 // The default Accept header sent for images loaded over HTTP(S)
 pref("image.http.accept", "image/png,image/*;q=0.8,*/*;q=0.5");
@@ -3931,6 +3960,8 @@ pref("webgl.enable-draft-extensions", false);
 pref("webgl.enable-privileged-extensions", false);
 pref("webgl.bypass-shader-validation", false);
 pref("webgl.enable-prototype-webgl2", false);
+pref("gl.require-hardware", false);
+
 #ifdef XP_WIN
 pref("webgl.angle.try-d3d11", true);
 pref("webgl.angle.force-d3d11", false);
@@ -3975,6 +4006,9 @@ pref("layers.bench.enabled", false);
 #ifdef ANDROID
 // bug 838603 -- on Android, accidentally blacklisting OpenGL layers
 // means a startup crash for everyone.
+// Temporarily force-enable GL compositing.  This is default-disabled
+// deep within the bowels of the widgetry system.  Remove me when GL
+// compositing isn't default disabled in widget/android.
 pref("layers.acceleration.force-enabled", true);
 #else
 pref("layers.acceleration.force-enabled", false);
@@ -4010,7 +4044,7 @@ pref("layers.max-active", -1);
 pref("layers.tiles.adjust", true);
 
 // Set the default values, and then override per-platform as needed
-pref("layers.offmainthreadcomposition.enabled", false);
+pref("layers.offmainthreadcomposition.enabled", true);
 // Compositor target frame rate. NOTE: If vsync is enabled the compositor
 // frame rate will still be capped.
 // -1 -> default (match layout.frame_rate or 60 FPS)
@@ -4022,23 +4056,9 @@ pref("layers.offmainthreadcomposition.frame-rate", -1);
 pref("layers.async-video.enabled", true);
 pref("layers.async-video-oop.enabled",true);
 
-#ifdef XP_WIN
-pref("layers.offmainthreadcomposition.enabled", true);
-#endif
-
-#ifdef MOZ_WIDGET_QT
-pref("layers.offmainthreadcomposition.enabled", true);
-#endif
-
 #ifdef XP_MACOSX
-pref("layers.offmainthreadcomposition.enabled", true);
 pref("layers.enable-tiles", true);
 pref("layers.tiled-drawtarget.enabled", true);
-#endif
-
-// ANDROID covers android and b2g
-#ifdef ANDROID
-pref("layers.offmainthreadcomposition.enabled", true);
 #endif
 
 // same effect as layers.offmainthreadcomposition.enabled, but specifically for
@@ -4049,7 +4069,11 @@ pref("layers.offmainthreadcomposition.testing.enabled", false);
 pref("layers.offmainthreadcomposition.force-basic", false);
 
 // Whether to animate simple opacity and transforms on the compositor
+#ifdef RELEASE_BUILD
 pref("layers.offmainthreadcomposition.async-animations", false);
+#else
+pref("layers.offmainthreadcomposition.async-animations", true);
+#endif
 
 // Whether to log information about off main thread animations to stderr
 pref("layers.offmainthreadcomposition.log-animations", false);
@@ -4117,6 +4141,8 @@ pref("browser.history.maxStateObjectSize", 655360);
 
 // XPInstall prefs
 pref("xpinstall.whitelist.required", true);
+// Only Firefox requires add-on signatures
+pref("xpinstall.signatures.required", false);
 pref("extensions.alwaysUnpack", false);
 pref("extensions.minCompatiblePlatformVersion", "2.0");
 
@@ -4183,8 +4209,55 @@ pref("dom.mozContacts.enabled", false);
 // WebAlarms
 pref("dom.mozAlarms.enabled", false);
 
-// SimplePush
-pref("services.push.enabled", false);
+// Push
+
+#if !defined(MOZ_WIDGET_GONK) && !defined(MOZ_WIDGET_ANDROID)
+// Desktop prefs
+#ifdef RELEASE_BUILD
+pref("dom.push.enabled", false);
+#else
+pref("dom.push.enabled", true);
+#endif
+#else
+// Mobile prefs
+pref("dom.push.enabled", false);
+#endif
+
+pref("dom.push.debug", false);
+pref("dom.push.serverURL", "wss://push.services.mozilla.com/");
+pref("dom.push.userAgentID", "");
+
+// Is the network connection allowed to be up?
+// This preference should be used in UX to enable/disable push.
+pref("dom.push.connection.enabled", true);
+
+// Exponential back-off start is 5 seconds like in HTTP/1.1.
+// Maximum back-off is pingInterval.
+pref("dom.push.retryBaseInterval", 5000);
+
+// Interval at which to ping PushServer to check connection status. In
+// milliseconds. If no reply is received within requestTimeout, the connection
+// is considered closed.
+pref("dom.push.pingInterval", 1800000); // 30 minutes
+
+// How long before we timeout
+pref("dom.push.requestTimeout", 10000);
+pref("dom.push.pingInterval.default", 180000);// 3 min
+pref("dom.push.pingInterval.mobile", 180000); // 3 min
+pref("dom.push.pingInterval.wifi", 180000);  // 3 min
+
+// Adaptive ping
+pref("dom.push.adaptive.enabled", false);
+pref("dom.push.adaptive.lastGoodPingInterval", 180000);// 3 min
+pref("dom.push.adaptive.lastGoodPingInterval.mobile", 180000);// 3 min
+pref("dom.push.adaptive.lastGoodPingInterval.wifi", 180000);// 3 min
+// Valid gap between the biggest good ping and the bad ping
+pref("dom.push.adaptive.gap", 60000); // 1 minute
+// We limit the ping to this maximum value
+pref("dom.push.adaptive.upperLimit", 1740000); // 29 min
+
+// enable udp wakeup support
+pref("dom.push.udp.wakeupEnabled", false);
 
 // WebNetworkStats
 pref("dom.mozNetworkStats.enabled", false);
@@ -4206,7 +4279,7 @@ pref("dom.w3c_pointer_events.enabled", true);
 pref("dom.imagecapture.enabled", true);
 
 // W3C touch-action css property (related to touch and pointer events)
-pref("layout.css.touch_action.enabled", true);
+pref("layout.css.touch_action.enabled", false);
 
 // Enables some assertions in nsStyleContext that are too expensive
 // for general use, but might be useful to enable for specific tests.
@@ -4279,6 +4352,9 @@ pref("dom.idle-observers-api.fuzz_time.disabled", true);
 
 // Lowest localId for apps.
 pref("dom.mozApps.maxLocalId", 1000);
+
+// Reset apps permissions
+pref("dom.apps.reset-permissions", false);
 
 // XXX Security: You CANNOT safely add a new app store for
 // installing privileged apps just by modifying this pref and
@@ -4440,11 +4516,11 @@ pref("dom.inter-app-communication-api.enabled", false);
 pref("dom.mapped_arraybuffer.enabled", false);
 
 // The tables used for Safebrowsing phishing and malware checks.
-pref("urlclassifier.malwareTable", "goog-malware-shavar,test-malware-simple");
+pref("urlclassifier.malwareTable", "goog-malware-shavar,goog-unwanted-shavar,test-malware-simple,test-unwanted-simple");
 pref("urlclassifier.phishTable", "goog-phish-shavar,test-phish-simple");
 pref("urlclassifier.downloadBlockTable", "");
 pref("urlclassifier.downloadAllowTable", "");
-pref("urlclassifier.disallow_completions", "test-malware-simple,test-phish-simple,goog-downloadwhite-digest256,mozpub-track-digest256");
+pref("urlclassifier.disallow_completions", "test-malware-simple,test-phish-simple,test-unwanted-simple,goog-downloadwhite-digest256,mozpub-track-digest256");
 
 // The table and update/gethash URLs for Safebrowsing phishing and malware
 // checks.
@@ -4473,6 +4549,9 @@ pref("selectioncaret.enabled", false);
 // This will inflate size of selection caret frame when we checking if
 // user click on selection caret or not. In app units.
 pref("selectioncaret.inflatesize.threshold", 40);
+
+// Selection carets will fall-back to internal LongTap detector.
+pref("selectioncaret.detects.longtap", true);
 
 // Wakelock is disabled by default.
 pref("dom.wakelock.enabled", false);
@@ -4517,6 +4596,7 @@ pref("dom.beforeAfterKeyboardEvent.enabled", false);
 
 // Presentation API
 pref("dom.presentation.enabled", false);
+pref("dom.presentation.tcp_server.debug", false);
 
 // Use raw ICU instead of CoreServices API in Unicode collation
 #ifdef XP_MACOSX
@@ -4651,21 +4731,31 @@ pref("reader.toolbar.vertical", true);
 pref("media.gmp.insecure.allow", false);
 #endif
 
-// Use vsync aligned rendering. b2g prefs are in b2g.js
-// Only supported on windows, os x, and b2g
-#if defined(XP_MACOSX)
+// Use vsync aligned rendering. b2g prefs are in b2g.js.
+// Hardware vsync supported on windows, os x, and b2g.
+// Linux and fennec will use software vsync.
 pref("gfx.vsync.hw-vsync.enabled", true);
 pref("gfx.vsync.compositor", true);
 pref("gfx.vsync.refreshdriver", true);
-#endif
-
-#if defined(XP_WIN)
-pref("gfx.vsync.hw-vsync.enabled", false);
-pref("gfx.vsync.compositor", false);
-pref("gfx.vsync.refreshdriver", false);
-#endif
 
 // Secure Element API
 #ifdef MOZ_SECUREELEMENT
 pref("dom.secureelement.enabled", false);
+#endif
+
+// Allow control characters appear in composition string.
+// When this is false, control characters except
+// CHARACTER TABULATION (horizontal tab) are removed from
+// both composition string and data attribute of compositionupdate
+// and compositionend events.
+pref("dom.compositionevent.allow_control_characters", false);
+
+#ifdef MOZ_WIDGET_GONK
+// Bug 1154053: Serialize B2G memory reports; smaller devices are
+// usually overcommitted on memory by using zRAM, so memory reporting
+// causes memory pressure from uncompressing cold heap memory.
+pref("memory.report_concurrency", 1);
+#else
+// Desktop probably doesn't have swapped-out children like that.
+pref("memory.report_concurrency", 10);
 #endif

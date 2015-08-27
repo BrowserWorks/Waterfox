@@ -140,20 +140,17 @@ LoginManagerPrompter.prototype = {
      * _showLoginNotification
      *
      * Displays a notification doorhanger.
-     * @param aName
-     *        Name of notification
      * @param aTitle
      *        Object with title and optional resource to display with the title, such as a favicon key
      * @param aBody
      *        String message to be displayed in the doorhanger
      * @param aButtons
      *        Buttons to display with the doorhanger
-     * @param aSubtext
-     *        String to be displayed below the aBody message
+     * @param aActionText
+     *        Object with text to be displayed as clickable, along with a bundle to create an action
      *
      */
-    _showLoginNotification : function (aName, aTitle, aBody, aButtons, aSubtext) {
-        this.log("Adding new " + aName + " notification bar");
+    _showLoginNotification : function (aTitle, aBody, aButtons, aActionText) {
         let notifyWin = this._window.top;
         let chromeWin = this._getChromeWindow(notifyWin).wrappedJSObject;
         let browser = chromeWin.BrowserApp.getBrowserForWindow(notifyWin);
@@ -171,12 +168,12 @@ LoginManagerPrompter.prototype = {
             persistWhileVisible: true,
             timeout: Date.now() + 10000,
             title: aTitle,
-            subtext: aSubtext
+            actionText: aActionText
         }
 
         var nativeWindow = this._getNativeWindow();
         if (nativeWindow)
-            nativeWindow.doorhanger.show(aBody, aName, aButtons, tabID, options, "LOGIN");
+            nativeWindow.doorhanger.show(aBody, "password", aButtons, tabID, options, "LOGIN");
     },
 
 
@@ -194,11 +191,16 @@ LoginManagerPrompter.prototype = {
 
         let displayHost = this._getShortDisplayHost(aLogin.hostname);
         let title = { text: displayHost, resource: aLogin.hostname };
-        let subtext = null;
 
-        if (aLogin.username) {
-          subtext = this._sanitizeUsername(aLogin.username);
-        }
+        let username = aLogin.username ? this._sanitizeUsername(aLogin.username) : "";
+
+        let actionText = {
+            text: username,
+            type: "EDIT",
+            bundle: { username: username,
+                       password: aLogin.password }
+        };
+
         // The callbacks in |buttons| have a closure to access the variables
         // in scope here; set one to |this._pwmgr| so we can get back to pwmgr
         // without a getService() call.
@@ -215,14 +217,19 @@ LoginManagerPrompter.prototype = {
             },
             {
                 label: this._getLocalizedString("rememberButton"),
-                callback: function() {
+                callback: function(checked, response) {
+
+                    if (response) {
+                        aLogin.username = response["username"] || aLogin.username;
+                        aLogin.password = response["password"] || aLogin.password;
+                    }
                     pwmgr.addLogin(aLogin);
                     promptHistogram.add(PROMPT_ADD);
                 }
             }
         ];
 
-        this._showLoginNotification("password-save", title, notificationText, buttons, subtext);
+        this._showLoginNotification(title, notificationText, buttons, actionText);
     },
 
     /*
@@ -279,7 +286,7 @@ LoginManagerPrompter.prototype = {
             }
         ];
 
-        this._showLoginNotification("password-change", title, notificationText, buttons);
+        this._showLoginNotification(title, notificationText, buttons);
     },
 
 

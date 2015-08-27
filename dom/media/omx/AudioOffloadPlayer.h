@@ -50,11 +50,11 @@ class WakeLock;
  * it to the sink
  *
  * Also this class passes state changes (play/pause/seek) from
- * MediaOmxCommonDecoder to AudioSink as well as provide AudioSink status
+ * MediaOmxCommonDecoder to GonkAudioSink as well as provide GonkAudioSink status
  * (position changed, playback ended, seek complete, audio tear down) back to
  * MediaOmxCommonDecoder
  *
- * It acts as a bridge between MediaOmxCommonDecoder and AudioSink during
+ * It acts as a bridge between MediaOmxCommonDecoder and GonkAudioSink during
  * offload playback
  */
 
@@ -78,25 +78,27 @@ public:
   ~AudioOffloadPlayer();
 
   // Caller retains ownership of "aSource".
-  void SetSource(const android::sp<MediaSource> &aSource);
+  virtual void SetSource(const android::sp<MediaSource> &aSource) override;
 
-  // Start the source if it's not already started and open the AudioSink to
+  // Start the source if it's not already started and open the GonkAudioSink to
   // create an offloaded audio track
-  status_t Start(bool aSourceAlreadyStarted = false);
+  virtual status_t Start(bool aSourceAlreadyStarted = false) override;
 
-  double GetMediaTimeSecs();
+  virtual status_t ChangeState(MediaDecoder::PlayState aState) override;
+
+  virtual void SetVolume(double aVolume) override;
+
+  virtual double GetMediaTimeSecs() override;
 
   // To update progress bar when the element is visible
-  void SetElementVisibility(bool aIsVisible);
-
-  status_t ChangeState(MediaDecoder::PlayState aState);
-
-  void SetVolume(double aVolume);
+  virtual void SetElementVisibility(bool aIsVisible) override;;
 
   // Update ready state based on current play state. Not checking data
   // availability since offloading is currently done only when whole compressed
   // data is available
-  MediaDecoderOwner::NextFrameStatus GetNextFrameStatus();
+  virtual MediaDecoderOwner::NextFrameStatus GetNextFrameStatus() override;
+
+  virtual nsRefPtr<MediaDecoder::SeekPromise> Seek(SeekTarget aTarget) override;
 
   void TimeUpdate();
 
@@ -104,7 +106,7 @@ public:
   void Reset();
 
 private:
-  // Set when audio source is started and audioSink is initialized
+  // Set when audio source is started and GonkAudioSink is initialized
   // Used only in main thread
   bool mStarted;
 
@@ -112,27 +114,11 @@ private:
   // Used only in main thread
   bool mPlaying;
 
-  // Set when playstate is seeking and reset when FillBUffer() acknowledged
-  // seeking by seeking audio source. Used in main thread and offload
-  // callback thread, protected by Mutex mLock
-  bool mSeeking;
-
   // Once playback reached end of stream (last ~100ms), position provided by DSP
   // may be reset/corrupted. This bool is used to avoid that.
   // Used in main thread and offload callback thread, protected by Mutex
   // mLock
   bool mReachedEOS;
-
-  // Set when there is a seek request during pause.
-  // Used in main thread and offload callback thread, protected by Mutex
-  // mLock
-  bool mSeekDuringPause;
-
-  // Seek can be triggered internally or by MediaDecoder. This bool is to
-  // to track seek triggered by MediaDecoder so that we can send back
-  // SeekingStarted and SeekingStopped events.
-  // Used in main thread and offload callback thread, protected by Mutex mLock
-  bool mDispatchSeekEvents;
 
   // Set when the HTML Audio Element is visible to the user.
   // Used only in main thread
@@ -155,10 +141,15 @@ private:
   // mLock
   int64_t mStartPosUs;
 
-  // Given seek time when there is a request to seek
+  // The target of current seek when there is a request to seek
   // Used in main thread and offload callback thread, protected by Mutex
   // mLock
-  int64_t mSeekTimeUs;
+  SeekTarget mSeekTarget;
+
+  // MediaPromise of current seek.
+  // Used in main thread and offload callback thread, protected by Mutex
+  // mLock
+  MediaPromiseHolder<MediaDecoder::SeekPromise> mSeekPromise;
 
   // Positions obtained from offlaoded tracks (DSP)
   // Used in main thread and offload callback thread, protected by Mutex
@@ -179,7 +170,7 @@ private:
   // Audio sink wrapper to access offloaded audio tracks
   // Used in main thread and offload callback thread
   // Race conditions are protected in underlying Android::AudioTrack class
-  android::sp<AudioSink> mAudioSink;
+  android::sp<GonkAudioSink> mAudioSink;
 
   // Buffer used to get date from audio source. Used in offload callback thread
   MediaBuffer* mInputBuffer;
@@ -192,7 +183,7 @@ private:
   // Timer to trigger position changed events
   nsCOMPtr<nsITimer> mTimeUpdateTimer;
 
-  // Timer to reset AudioSink when audio is paused for OFFLOAD_PAUSE_MAX_USECS.
+  // Timer to reset GonkAudioSink when audio is paused for OFFLOAD_PAUSE_MAX_USECS.
   // It is triggered in Pause() and canceled when there is a Play() within
   // OFFLOAD_PAUSE_MAX_USECS. Used only from main thread so no lock is needed.
   nsCOMPtr<nsITimer> mResetTimer;
@@ -212,24 +203,24 @@ private:
   // case of error
   size_t FillBuffer(void *aData, size_t aSize);
 
-  // Called by AudioSink when it needs data, to notify EOS or tear down event
-  static size_t AudioSinkCallback(AudioSink *aAudioSink,
+  // Called by GonkAudioSink when it needs data, to notify EOS or tear down event
+  static size_t AudioSinkCallback(GonkAudioSink *aAudioSink,
                                   void *aData,
                                   size_t aSize,
                                   void *aMe,
-                                  AudioSink::cb_event_t aEvent);
+                                  GonkAudioSink::cb_event_t aEvent);
 
   bool IsSeeking();
 
-  // Set mSeekTime to the given position and restart the sink. Actual seek
-  // happens in FillBuffer(). If aDispatchSeekEvents is true, send
+  // Set mSeekTarget to the given position and restart the sink. Actual seek
+  // happens in FillBuffer(). If mSeekPromise is not empty, send
   // SeekingStarted event always and SeekingStopped event when the play state is
   // paused to MediaDecoder.
   // When decoding and playing happens separately, if there is a seek during
   // pause, we can decode and keep data ready.
   // In case of offload player, no way to seek during pause. So just fake that
   // seek is done.
-  status_t SeekTo(int64_t aTimeUs, bool aDispatchSeekEvents = false);
+  status_t DoSeek();
 
   // Start/Resume the audio sink so that callback will start being called to get
   // compressed data
@@ -263,8 +254,8 @@ private:
   // MediaDecoder to re-evaluate offloading options
   void NotifyAudioTearDown();
 
-  // Send information from MetaData to the HAL via AudioSink
-  void SendMetaDataToHal(android::sp<AudioSink>& aSink,
+  // Send information from MetaData to the HAL via GonkAudioSink
+  void SendMetaDataToHal(android::sp<GonkAudioSink>& aSink,
                          const android::sp<MetaData>& aMeta);
 
   AudioOffloadPlayer(const AudioOffloadPlayer &);

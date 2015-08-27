@@ -1,5 +1,5 @@
-/* -*- Mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; tab-width: 40 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -71,7 +71,7 @@ ResolvePromiseCallback::~ResolvePromiseCallback()
   DropJSObjects(this);
 }
 
-void
+nsresult
 ResolvePromiseCallback::Call(JSContext* aCx,
                              JS::Handle<JS::Value> aValue)
 {
@@ -81,10 +81,11 @@ ResolvePromiseCallback::Call(JSContext* aCx,
   JS::Rooted<JS::Value> value(aCx, aValue);
   if (!JS_WrapValue(aCx, &value)) {
     NS_WARNING("Failed to wrap value into the right compartment.");
-    return;
+    return NS_ERROR_FAILURE;
   }
 
   mPromise->ResolveInternal(aCx, value);
+  return NS_OK;
 }
 
 // RejectPromiseCallback
@@ -129,7 +130,7 @@ RejectPromiseCallback::~RejectPromiseCallback()
   DropJSObjects(this);
 }
 
-void
+nsresult
 RejectPromiseCallback::Call(JSContext* aCx,
                             JS::Handle<JS::Value> aValue)
 {
@@ -139,11 +140,12 @@ RejectPromiseCallback::Call(JSContext* aCx,
   JS::Rooted<JS::Value> value(aCx, aValue);
   if (!JS_WrapValue(aCx, &value)) {
     NS_WARNING("Failed to wrap value into the right compartment.");
-    return;
+    return NS_ERROR_FAILURE;
   }
 
 
   mPromise->RejectInternal(aCx, value);
+  return NS_OK;
 }
 
 // WrapperPromiseCallback
@@ -190,7 +192,7 @@ WrapperPromiseCallback::~WrapperPromiseCallback()
   DropJSObjects(this);
 }
 
-void
+nsresult
 WrapperPromiseCallback::Call(JSContext* aCx,
                              JS::Handle<JS::Value> aValue)
 {
@@ -198,14 +200,15 @@ WrapperPromiseCallback::Call(JSContext* aCx,
   JS::Rooted<JS::Value> value(aCx, aValue);
   if (!JS_WrapValue(aCx, &value)) {
     NS_WARNING("Failed to wrap value into the right compartment.");
-    return;
+    return NS_ERROR_FAILURE;
   }
 
   ErrorResult rv;
 
   // PromiseReactionTask step 6
   JS::Rooted<JS::Value> retValue(aCx);
-  mCallback->Call(value, &retValue, rv, CallbackObject::eRethrowExceptions,
+  mCallback->Call(value, &retValue, rv, "promise callback",
+                  CallbackObject::eRethrowExceptions,
                   mNextPromise->Compartment());
 
   rv.WouldReportJSException();
@@ -218,7 +221,7 @@ WrapperPromiseCallback::Call(JSContext* aCx,
 
       if (!JS_WrapValue(aCx, &value)) {
         NS_WARNING("Failed to wrap value into the right compartment.");
-        return;
+        return NS_ERROR_FAILURE;
       }
     } else {
       // Convert the ErrorResult to a JS exception object that we can reject
@@ -231,7 +234,7 @@ WrapperPromiseCallback::Call(JSContext* aCx,
     }
 
     mNextPromise->RejectInternal(aCx, value);
-    return;
+    return NS_OK;
   }
 
   // If the return value is the same as the promise itself, throw TypeError.
@@ -269,7 +272,7 @@ WrapperPromiseCallback::Call(JSContext* aCx,
       if (!fn) {
         // Out of memory. Promise will stay unresolved.
         JS_ClearPendingException(aCx);
-        return;
+        return NS_ERROR_OUT_OF_MEMORY;
       }
 
       JS::Rooted<JSString*> message(aCx,
@@ -278,7 +281,7 @@ WrapperPromiseCallback::Call(JSContext* aCx,
       if (!message) {
         // Out of memory. Promise will stay unresolved.
         JS_ClearPendingException(aCx);
-        return;
+        return NS_ERROR_OUT_OF_MEMORY;
       }
 
       JS::Rooted<JS::Value> typeError(aCx);
@@ -286,21 +289,22 @@ WrapperPromiseCallback::Call(JSContext* aCx,
                            nullptr, message, &typeError)) {
         // Out of memory. Promise will stay unresolved.
         JS_ClearPendingException(aCx);
-        return;
+        return NS_ERROR_OUT_OF_MEMORY;
       }
 
       mNextPromise->RejectInternal(aCx, typeError);
-      return;
+      return NS_OK;
     }
   }
 
   // Otherwise, run resolver's resolve with value.
   if (!JS_WrapValue(aCx, &retValue)) {
     NS_WARNING("Failed to wrap value into the right compartment.");
-    return;
+    return NS_ERROR_FAILURE;
   }
 
   mNextPromise->ResolveInternal(aCx, retValue);
+  return NS_OK;
 }
 
 // NativePromiseCallback
@@ -326,21 +330,22 @@ NativePromiseCallback::~NativePromiseCallback()
 {
 }
 
-void
+nsresult
 NativePromiseCallback::Call(JSContext* aCx,
                             JS::Handle<JS::Value> aValue)
 {
   if (mState == Promise::Resolved) {
     mHandler->ResolvedCallback(aCx, aValue);
-    return;
+    return NS_OK;
   }
 
   if (mState == Promise::Rejected) {
     mHandler->RejectedCallback(aCx, aValue);
-    return;
+    return NS_OK;
   }
 
   NS_NOTREACHED("huh?");
+  return NS_ERROR_FAILURE;
 }
 
 /* static */ PromiseCallback*

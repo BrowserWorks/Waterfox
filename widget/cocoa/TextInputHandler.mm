@@ -21,12 +21,12 @@
 #include "nsCocoaUtils.h"
 #include "WidgetUtils.h"
 #include "nsPrintfCString.h"
+#include "mozilla/unused.h"
+#include "mozilla/dom/ContentParent.h"
 #include "ComplexTextInputPanel.h"
 
 using namespace mozilla;
 using namespace mozilla::widget;
-
-#ifdef PR_LOGGING
 
 PRLogModuleInfo* gLog = nullptr;
 
@@ -303,8 +303,6 @@ GetWindowLevelName(NSInteger aWindowLevel)
   }
 }
 
-#endif // #ifdef PR_LOGGING
-
 static bool
 IsControlChar(uint32_t aCharCode)
 {
@@ -317,14 +315,12 @@ static TISInputSourceWrapper gCurrentInputSource;
 static void
 InitLogModule()
 {
-#ifdef PR_LOGGING
   // Clear() is always called when TISInputSourceWrappper is created.
   if (!gLog) {
     gLog = PR_NewLogModule("TextInputHandlerWidgets");
     TextInputHandler::DebugPrintAllKeyboardLayouts();
     IMEInputHandler::DebugPrintAllIMEModes();
   }
-#endif
 }
 
 static void
@@ -1045,7 +1041,6 @@ TISInputSourceWrapper::InitKeyPressEvent(NSEvent *aNativeKeyEvent,
   NS_ASSERTION(aKeyEvent.message == NS_KEY_PRESS,
                "aKeyEvent must be NS_KEY_PRESS event");
 
-#ifdef PR_LOGGING
   if (PR_LOG_TEST(gLog, PR_LOG_ALWAYS)) {
     nsAutoString chars;
     nsCocoaUtils::GetStringForNSString([aNativeKeyEvent characters], chars);
@@ -1060,7 +1055,6 @@ TISInputSourceWrapper::InitKeyPressEvent(NSEvent *aNativeKeyEvent,
        utf8ExpectedChar.get(), GetGeckoKeyEventType(aKeyEvent), aKbType,
        TrueOrFalse(IsOpenedIMEMode())));
   }
-#endif // #ifdef PR_LOGGING
 
   aKeyEvent.isChar = true; // this is not a special key  XXX not used in XP
   aKeyEvent.charCode = aInsertChar;
@@ -1449,7 +1443,6 @@ TextInputHandler::CreateAllKeyboardLayoutList()
 void
 TextInputHandler::DebugPrintAllKeyboardLayouts()
 {
-#ifdef PR_LOGGING
   if (PR_LOG_TEST(gLog, PR_LOG_ALWAYS)) {
     CFArrayRef list = CreateAllKeyboardLayoutList();
     PR_LOG(gLog, PR_LOG_ALWAYS, ("Keyboard layout configuration:"));
@@ -1472,7 +1465,6 @@ TextInputHandler::DebugPrintAllKeyboardLayouts()
     }
     ::CFRelease(list);
   }
-#endif // #ifdef PR_LOGGING
 }
 
 
@@ -2227,6 +2219,7 @@ TextInputHandler::DoCommandBySelector(const char* aSelector)
  ******************************************************************************/
 
 bool IMEInputHandler::sStaticMembersInitialized = false;
+bool IMEInputHandler::sCachedIsForRTLLangage = false;
 CFStringRef IMEInputHandler::sLatestIMEOpenedModeInputSourceID = nullptr;
 IMEInputHandler* IMEInputHandler::sFocusedIMEHandler = nullptr;
 
@@ -2267,7 +2260,6 @@ IMEInputHandler::OnCurrentTextInputSourceChange(CFNotificationCenterRef aCenter,
     tis.GetInputSourceID(sLatestIMEOpenedModeInputSourceID);
   }
 
-#ifdef PR_LOGGING
   if (PR_LOG_TEST(gLog, PR_LOG_ALWAYS)) {
     static CFStringRef sLastTIS = nullptr;
     CFStringRef newTIS;
@@ -2314,7 +2306,20 @@ IMEInputHandler::OnCurrentTextInputSourceChange(CFNotificationCenterRef aCenter,
     }
     sLastTIS = newTIS;
   }
-#endif // #ifdef PR_LOGGING
+
+  /**
+   * When the direction is changed, all the children are notified.
+   * No need to treat the initial case separately because it is covered
+   * by the general case (sCachedIsForRTLLangage is initially false)
+   */
+  if (sCachedIsForRTLLangage != tis.IsForRTLLanguage()) {
+    nsTArray<dom::ContentParent*> children;
+    dom::ContentParent::GetAll(children);
+    for (uint32_t i = 0; i < children.Length(); i++) {
+      unused << children[i]->SendBidiKeyboardNotify(tis.IsForRTLLanguage());
+    }
+    sCachedIsForRTLLangage = tis.IsForRTLLanguage();
+  }
 }
 
 // static
@@ -2343,7 +2348,6 @@ IMEInputHandler::CreateAllIMEModeList()
 void
 IMEInputHandler::DebugPrintAllIMEModes()
 {
-#ifdef PR_LOGGING
   if (PR_LOG_TEST(gLog, PR_LOG_ALWAYS)) {
     CFArrayRef list = CreateAllIMEModeList();
     PR_LOG(gLog, PR_LOG_ALWAYS, ("IME mode configuration:"));
@@ -2365,7 +2369,6 @@ IMEInputHandler::DebugPrintAllIMEModes()
     }
     ::CFRelease(list);
   }
-#endif // #ifdef PR_LOGGING
 }
 
 //static
@@ -3678,7 +3681,6 @@ IMEInputHandler::OpenSystemPreferredLanguageIME()
       TISInputSourceWrapper tis;
       tis.InitByLanguage(lang);
       if (tis.IsOpenedIMEMode()) {
-#ifdef PR_LOGGING
         if (PR_LOG_TEST(gLog, PR_LOG_ALWAYS)) {
           CFStringRef foundTIS;
           tis.GetInputSourceID(foundTIS);
@@ -3687,7 +3689,6 @@ IMEInputHandler::OpenSystemPreferredLanguageIME()
              "foundTIS=%s, lang=%s",
              this, GetCharacters(foundTIS), GetCharacters(lang)));
         }
-#endif // #ifdef PR_LOGGING
         tis.Select();
         changed = true;
       }

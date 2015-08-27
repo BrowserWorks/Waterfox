@@ -10,9 +10,6 @@
 
 #include "nscore.h"
 #include "nsWindow.h"
-#ifdef MOZ_METRO
-#include "winrt/MetroWidget.h"
-#endif
 #include "nsPrintfCString.h"
 #include "WinUtils.h"
 #include "mozilla/Preferences.h"
@@ -30,7 +27,6 @@ using namespace mozilla::widget;
 static const char* kPrefNameEnableTSF = "intl.tsf.enable";
 static const char* kPrefNameForceEnableTSF = "intl.tsf.force_enable";
 
-#ifdef PR_LOGGING
 /**
  * TSF related code should log its behavior even on release build especially
  * in the interface methods.
@@ -103,6 +99,34 @@ GetFindFlagName(DWORD aFindFlag)
   }
   return description;
 }
+
+class GetACPFromPointFlagName : public nsAutoCString
+{
+public:
+  GetACPFromPointFlagName(DWORD aFlags)
+  {
+    if (!aFlags) {
+      AppendLiteral("no flags (0)");
+      return;
+    }
+    if (aFlags & GXFPF_ROUND_NEAREST) {
+      AppendLiteral("GXFPF_ROUND_NEAREST");
+      aFlags &= ~GXFPF_ROUND_NEAREST;
+    }
+    if (aFlags & GXFPF_NEAREST) {
+      HandleSeparator(*this);
+      AppendLiteral("GXFPF_NEAREST");
+      aFlags &= ~GXFPF_NEAREST;
+    }
+    if (aFlags) {
+      HandleSeparator(*this);
+      AppendLiteral("Unknown(");
+      AppendInt(static_cast<uint32_t>(aFlags));
+      Append(')');
+    }
+  }
+  virtual ~GetACPFromPointFlagName() {}
+};
 
 static const char*
 GetIMEEnabledName(IMEState::Enabled aIMEEnabled)
@@ -633,8 +657,6 @@ GetModifiersName(Modifiers aModifiers)
   return names;
 }
 
-#endif // #ifdef PR_LOGGING
-
 /******************************************************************/
 /* InputScopeImpl                                                 */
 /******************************************************************/
@@ -763,6 +785,37 @@ public:
   }
 
   bool EnsureInitActiveTIPKeyboard();
+
+  // Note that TIP name may depend on the language of the environment.
+  // For example, some TIP may use localized name for its target language
+  // environment but English name for the others.
+  bool IsGoogleJapaneseInputActive() const
+  {
+    return mActiveTIPKeyboardDescription.Equals(
+             NS_LITERAL_STRING("Google \x65E5\x672C\x8A9E\x5165\x529B")) ||
+           mActiveTIPKeyboardDescription.EqualsLiteral("Google Japanese Input");
+  }
+
+  bool IsATOKActive() const
+  {
+    // FYI: Name of ATOK includes the release year like "ATOK 2015".
+    return StringBeginsWith(mActiveTIPKeyboardDescription,
+                            NS_LITERAL_STRING("ATOK "));
+  }
+
+  bool IsFreeChangJieActive() const
+  {
+    // FYI: The TIP name is misspelled...
+    return mActiveTIPKeyboardDescription.EqualsLiteral("Free CangJie IME 10");
+  }
+
+  bool IsEasyChangjeiActive() const
+  {
+    return
+      mActiveTIPKeyboardDescription.Equals(
+        NS_LITERAL_STRING(
+          "\x4E2D\x6587 (\x7E41\x9AD4) - \x6613\x9821\x8F38\x5165\x6CD5"));
+  }
 
 public: // ITfActiveLanguageProfileNotifySink
   STDMETHODIMP OnActivated(REFCLSID clsid, REFGUID guidProfile,
@@ -1163,26 +1216,6 @@ bool nsTextStore::sDoNotReturnNoLayoutErrorToFreeChangJie = false;
 bool nsTextStore::sDoNotReturnNoLayoutErrorToEasyChangjei = false;
 bool nsTextStore::sDoNotReturnNoLayoutErrorToGoogleJaInputAtFirstChar = false;
 bool nsTextStore::sDoNotReturnNoLayoutErrorToGoogleJaInputAtCaret = false;
-
-#define TIP_NAME_BEGINS_WITH_ATOK \
-  (NS_LITERAL_STRING("ATOK "))
-// NOTE: Free ChangJie 2010 missspells its name...
-#define TIP_NAME_FREE_CHANG_JIE_2010 \
-  (NS_LITERAL_STRING("Free CangJie IME 10"))
-#define TIP_NAME_EASY_CHANGJEI \
-  (NS_LITERAL_STRING( \
-     "\x4E2D\x6587 (\x7E41\x9AD4) - \x6613\x9821\x8F38\x5165\x6CD5"))
-#define TIP_NAME_GOOGLE_JA_INPUT_JA \
-  (NS_LITERAL_STRING("Google \x65E5\x672C\x8A9E\x5165\x529B"))
-#define TIP_NAME_GOOGLE_JA_INPUT_EN \
-  (NS_LITERAL_STRING("Google Japanese Input"))
-
-static bool
-IsGoogleJapaneseInput(const nsAString& aTIPName)
-{
-  return aTIPName.Equals(TIP_NAME_GOOGLE_JA_INPUT_JA) ||
-         aTIPName.Equals(TIP_NAME_GOOGLE_JA_INPUT_EN);
-}
 
 #define TEXTSTORE_DEFAULT_VIEW (1)
 
@@ -1972,7 +2005,6 @@ nsTextStore::GetDisplayAttribute(ITfProperty* aAttrProperty,
 
   HRESULT hr;
 
-#ifdef PR_LOGGING
   if (PR_LOG_TEST(sTextStoreLog, PR_LOG_DEBUG)) {
     LONG start = 0, length = 0;
     hr = GetRangeExtent(aRange, &start, &length);
@@ -1983,7 +2015,6 @@ nsTextStore::GetDisplayAttribute(ITfProperty* aAttrProperty,
             start - mComposition.mStart + length,
             GetCommonReturnValueName(hr)));
   }
-#endif
 
   VARIANT propValue;
   ::VariantInit(&propValue);
@@ -3106,6 +3137,12 @@ nsTextStore::GetACPFromPoint(TsViewCookie vcView,
                              DWORD dwFlags,
                              LONG *pacp)
 {
+  PR_LOG(sTextStoreLog, PR_LOG_ALWAYS,
+         ("TSF: 0x%p nsTextStore::GetACPFromPoint(pvcView=%d, pt=%p (x=%d, "
+          "y=%d), dwFlags=%s, pacp=%p",
+          this, vcView, pt, pt ? pt->x : 0, pt ? pt->y : 0,
+          GetACPFromPointFlagName(dwFlags).get(), pacp));
+
   if (!IsReadLocked()) {
     PR_LOG(sTextStoreLog, PR_LOG_ERROR,
            ("TSF: 0x%p   nsTextStore::GetACPFromPoint() FAILED due to "
@@ -3120,6 +3157,20 @@ nsTextStore::GetACPFromPoint(TsViewCookie vcView,
     return E_INVALIDARG;
   }
 
+  if (!pt) {
+    PR_LOG(sTextStoreLog, PR_LOG_ERROR,
+           ("TSF: 0x%p   nsTextStore::GetACPFromPoint() FAILED due to "
+            "null pt", this));
+    return E_INVALIDARG;
+  }
+
+  if (!pacp) {
+    PR_LOG(sTextStoreLog, PR_LOG_ERROR,
+           ("TSF: 0x%p   nsTextStore::GetACPFromPoint() FAILED due to "
+            "null pacp", this));
+    return E_INVALIDARG;
+  }
+
   if (mLockedContent.IsLayoutChanged()) {
     PR_LOG(sTextStoreLog, PR_LOG_ERROR,
            ("TSF: 0x%p   nsTextStore::GetACPFromPoint() FAILED due to "
@@ -3128,13 +3179,106 @@ nsTextStore::GetACPFromPoint(TsViewCookie vcView,
     return TS_E_NOLAYOUT;
   }
 
-  PR_LOG(sTextStoreLog, PR_LOG_ALWAYS,
-         ("TSF: 0x%p nsTextStore::GetACPFromPoint(vcView=%ld, "
-          "pt(0x%p)={ x=%ld, y=%ld }, dwFlags=%s, pacp=0x%p) called "
-          "but not supported (E_NOTIMPL)", this));
+  nsIntPoint ourPt(pt->x, pt->y);
+  // Convert to widget relative coordinates from screen's.
+  ourPt -= mWidget->WidgetToScreenOffsetUntyped();
 
-  // not supported for now
-  return E_NOTIMPL;
+  // NOTE: Don't check if the point is in the widget since the point can be
+  //       outside of the widget if focused editor is in a XUL <panel>.
+
+  WidgetQueryContentEvent charAtPt(true, NS_QUERY_CHARACTER_AT_POINT, mWidget);
+  mWidget->InitEvent(charAtPt, &ourPt);
+
+  // FYI: WidgetQueryContentEvent may cause flushing pending layout and it
+  //      may cause focus change or something.
+  nsRefPtr<nsTextStore> kungFuDeathGrip(this);
+  mWidget->DispatchWindowEvent(&charAtPt);
+  if (!mWidget || mWidget->Destroyed()) {
+    PR_LOG(sTextStoreLog, PR_LOG_ERROR,
+           ("TSF: 0x%p   nsTextStore::GetACPFromPoint() FAILED due to "
+            "mWidget was destroyed during NS_QUERY_CHARACTER_AT_POINT", this));
+    return E_FAIL;
+  }
+
+  PR_LOG(sTextStoreLog, PR_LOG_DEBUG,
+         ("TSF: 0x%p   nsTextStore::GetACPFromPoint(), charAtPt={ "
+          "mSucceeded=%s, mReply={ mOffset=%u, mTentativeCaretOffset=%u }}",
+          this, GetBoolName(charAtPt.mSucceeded), charAtPt.mReply.mOffset,
+          charAtPt.mReply.mTentativeCaretOffset));
+
+  if (NS_WARN_IF(!charAtPt.mSucceeded)) {
+    PR_LOG(sTextStoreLog, PR_LOG_ERROR,
+           ("TSF: 0x%p   nsTextStore::GetACPFromPoint() FAILED due to "
+            "NS_QUERY_CHARACTER_AT_POINT failure", this));
+    return E_FAIL;
+  }
+
+  // If dwFlags isn't set and the point isn't in any character's bounding box,
+  // we should return TS_E_INVALIDPOINT.
+  if (!(dwFlags & GXFPF_NEAREST) &&
+      charAtPt.mReply.mOffset == WidgetQueryContentEvent::NOT_FOUND) {
+    PR_LOG(sTextStoreLog, PR_LOG_ERROR,
+           ("TSF: 0x%p   nsTextStore::GetACPFromPoint() FAILED due to the "
+            "point contained by no bounding box", this));
+    return TS_E_INVALIDPOINT;
+  }
+
+  // Although, we're not sure if mTentativeCaretOffset becomes NOT_FOUND,
+  // let's assume that there is no content in such case.
+  if (NS_WARN_IF(charAtPt.mReply.mTentativeCaretOffset ==
+                   WidgetQueryContentEvent::NOT_FOUND)) {
+    charAtPt.mReply.mTentativeCaretOffset = 0;
+  }
+
+  uint32_t offset;
+
+  // If dwFlags includes GXFPF_ROUND_NEAREST, we should return tentative
+  // caret offset (MSDN calls it "range position").
+  if (dwFlags & GXFPF_ROUND_NEAREST) {
+    offset = charAtPt.mReply.mTentativeCaretOffset;
+  } else if (charAtPt.mReply.mOffset != WidgetQueryContentEvent::NOT_FOUND) {
+    // Otherwise, we should return character offset whose bounding box contains
+    // the point.
+    offset = charAtPt.mReply.mOffset;
+  } else {
+    // If the point isn't in any character's bounding box but we need to return
+    // the nearest character from the point, we should *guess* the character
+    // offset since there is no inexpensive API to check it strictly.
+    // XXX If we retrieve 2 bounding boxes, one is before the offset and
+    //     the other is after the offset, we could resolve the offset.
+    //     However, dispatching 2 NS_QUERY_TEXT_RECT may be expensive.
+
+    // So, use tentative offset for now.
+    offset = charAtPt.mReply.mTentativeCaretOffset;
+
+    // However, if it's after the last character, we need to decrement the
+    // offset.
+    Content& lockedContent = LockedContent();
+    if (!lockedContent.IsInitialized()) {
+      PR_LOG(sTextStoreLog, PR_LOG_ERROR,
+             ("TSF: 0x%p   nsTextStore::GetACPFromPoint() FAILED due to "
+              "LockedContent() failure", this));
+      return E_FAIL;
+    }
+    if (lockedContent.Text().Length() <= offset) {
+      // If the tentative caret is after the last character, let's return
+      // the last character's offset.
+      offset = lockedContent.Text().Length() - 1;
+    }
+  }
+
+  if (NS_WARN_IF(offset > LONG_MAX)) {
+    PR_LOG(sTextStoreLog, PR_LOG_ERROR,
+           ("TSF: 0x%p   nsTextStore::GetACPFromPoint() FAILED due to out of "
+            "range of the result", this));
+    return TS_E_INVALIDPOINT;
+  }
+
+  *pacp = static_cast<LONG>(offset);
+  PR_LOG(sTextStoreLog, PR_LOG_ALWAYS,
+         ("TSF: 0x%p   nsTextStore::GetACPFromPoint() succeeded: *pacp=%d",
+          this, *pacp));
+  return S_OK;
 }
 
 STDMETHODIMP
@@ -3181,8 +3325,7 @@ nsTextStore::GetTextExt(TsViewCookie vcView,
   // caller even if we return it.  It's converted to just E_FAIL.
   // However, this is fixed on Win 10.
 
-  const nsString& activeTIPKeyboardDescription =
-    TSFStaticSink::GetInstance()->GetActiveTIPKeyboardDescription();
+  const TSFStaticSink* kSink = TSFStaticSink::GetInstance();
   if (mComposition.IsComposing() && mComposition.mStart < acpEnd &&
       mLockedContent.IsLayoutChangedAfter(acpEnd)) {
     const Selection& currentSel = CurrentSelection();
@@ -3197,7 +3340,7 @@ nsTextStore::GetTextExt(TsViewCookie vcView,
       if (!mLockedContent.IsLayoutChangedAfter(acpStart) &&
           acpStart < acpEnd &&
           sDoNotReturnNoLayoutErrorToGoogleJaInputAtFirstChar &&
-          IsGoogleJapaneseInput(activeTIPKeyboardDescription)) {
+          kSink->IsGoogleJapaneseInputActive()) {
         acpEnd = acpStart;
         PR_LOG(sTextStoreLog, PR_LOG_DEBUG,
                ("TSF: 0x%p   nsTextStore::GetTextExt() hacked the offsets of "
@@ -3213,7 +3356,7 @@ nsTextStore::GetTextExt(TsViewCookie vcView,
       else if (acpStart == acpEnd &&
                currentSel.IsCollapsed() && currentSel.EndOffset() == acpEnd &&
                sDoNotReturnNoLayoutErrorToGoogleJaInputAtCaret &&
-               IsGoogleJapaneseInput(activeTIPKeyboardDescription)) {
+               kSink->IsGoogleJapaneseInputActive()) {
         acpEnd = acpStart = mLockedContent.MinOffsetOfLayoutChanged();
         PR_LOG(sTextStoreLog, PR_LOG_DEBUG,
                ("TSF: 0x%p   nsTextStore::GetTextExt() hacked the offsets of "
@@ -3226,10 +3369,9 @@ nsTextStore::GetTextExt(TsViewCookie vcView,
     // TSF.  We need to check if this is necessary on Windows 10 before
     // disabling this on Windows 10.
     else if ((sDoNotReturnNoLayoutErrorToFreeChangJie &&
-              activeTIPKeyboardDescription.Equals(
-                                             TIP_NAME_FREE_CHANG_JIE_2010)) ||
+              kSink->IsFreeChangJieActive()) ||
              (sDoNotReturnNoLayoutErrorToEasyChangjei &&
-              activeTIPKeyboardDescription.Equals(TIP_NAME_EASY_CHANGJEI))) {
+              kSink->IsEasyChangjeiActive())) {
       acpEnd = mComposition.mStart;
       acpStart = std::min(acpStart, acpEnd);
       PR_LOG(sTextStoreLog, PR_LOG_DEBUG,
@@ -3263,21 +3405,19 @@ nsTextStore::GetTextExt(TsViewCookie vcView,
   if (event.mReply.mRect.height <= 0)
     event.mReply.mRect.height = 1;
 
-  if (XRE_GetWindowsEnvironment() == WindowsEnvironmentType_Desktop) {
-    // convert to unclipped screen rect
-    nsWindow* refWindow = static_cast<nsWindow*>(
-      event.mReply.mFocusedWidget ? event.mReply.mFocusedWidget : mWidget);
-    // Result rect is in top level widget coordinates
-    refWindow = refWindow->GetTopLevelWindow(false);
-    if (!refWindow) {
-      PR_LOG(sTextStoreLog, PR_LOG_ERROR,
-             ("TSF: 0x%p   nsTextStore::GetTextExt() FAILED due to "
-              "no top level window", this));
-      return E_FAIL;
-    }
-
-    event.mReply.mRect.MoveBy(refWindow->WidgetToScreenOffset());
+  // convert to unclipped screen rect
+  nsWindow* refWindow = static_cast<nsWindow*>(
+    event.mReply.mFocusedWidget ? event.mReply.mFocusedWidget : mWidget);
+  // Result rect is in top level widget coordinates
+  refWindow = refWindow->GetTopLevelWindow(false);
+  if (!refWindow) {
+    PR_LOG(sTextStoreLog, PR_LOG_ERROR,
+           ("TSF: 0x%p   nsTextStore::GetTextExt() FAILED due to "
+            "no top level window", this));
+    return E_FAIL;
   }
+
+  event.mReply.mRect.MoveBy(refWindow->WidgetToScreenOffset());
 
   // get bounding screen rect to test for clipping
   if (!GetScreenExtInternal(*prc)) {
@@ -3301,9 +3441,7 @@ nsTextStore::GetTextExt(TsViewCookie vcView,
   // ATOK refers native caret position and size on Desktop applications for
   // deciding candidate window.  Therefore, we need to create native caret
   // for hacking the bug.
-  if (sCreateNativeCaretForATOK &&
-      StringBeginsWith(
-        activeTIPKeyboardDescription, TIP_NAME_BEGINS_WITH_ATOK) &&
+  if (sCreateNativeCaretForATOK && kSink->IsATOKActive() &&
       mComposition.IsComposing() &&
       mComposition.mStart <= acpStart && mComposition.EndOffset() >= acpStart &&
       mComposition.mStart <= acpEnd && mComposition.EndOffset() >= acpEnd) {
@@ -3376,50 +3514,36 @@ nsTextStore::GetScreenExtInternal(RECT &aScreenExt)
     return false;
   }
 
-  if (XRE_GetWindowsEnvironment() == WindowsEnvironmentType_Metro) {
-    nsIntRect boundRect;
-    if (NS_FAILED(mWidget->GetClientBounds(boundRect))) {
-      PR_LOG(sTextStoreLog, PR_LOG_ERROR,
-             ("TSF: 0x%p   nsTextStore::GetScreenExtInternal() FAILED due to "
-              "failed to get the client bounds", this));
-      return false;
-    }
+  nsWindow* refWindow = static_cast<nsWindow*>(
+    event.mReply.mFocusedWidget ?
+      event.mReply.mFocusedWidget : mWidget);
+  // Result rect is in top level widget coordinates
+  refWindow = refWindow->GetTopLevelWindow(false);
+  if (!refWindow) {
+    PR_LOG(sTextStoreLog, PR_LOG_ERROR,
+           ("TSF: 0x%p   nsTextStore::GetScreenExtInternal() FAILED due to "
+            "no top level window", this));
+    return false;
+  }
+
+  nsIntRect boundRect;
+  if (NS_FAILED(refWindow->GetClientBounds(boundRect))) {
+    PR_LOG(sTextStoreLog, PR_LOG_ERROR,
+           ("TSF: 0x%p   nsTextStore::GetScreenExtInternal() FAILED due to "
+            "failed to get the client bounds", this));
+    return false;
+  }
+
+  boundRect.MoveTo(0, 0);
+
+  // Clip frame rect to window rect
+  boundRect.IntersectRect(LayoutDevicePixel::ToUntyped(event.mReply.mRect), boundRect);
+  if (!boundRect.IsEmpty()) {
+    boundRect.MoveBy(refWindow->WidgetToScreenOffsetUntyped());
     ::SetRect(&aScreenExt, boundRect.x, boundRect.y,
               boundRect.XMost(), boundRect.YMost());
   } else {
-    NS_ASSERTION(XRE_GetWindowsEnvironment() == WindowsEnvironmentType_Desktop,
-                 "environment isn't WindowsEnvironmentType_Desktop!");
-    nsWindow* refWindow = static_cast<nsWindow*>(
-      event.mReply.mFocusedWidget ?
-        event.mReply.mFocusedWidget : mWidget);
-    // Result rect is in top level widget coordinates
-    refWindow = refWindow->GetTopLevelWindow(false);
-    if (!refWindow) {
-      PR_LOG(sTextStoreLog, PR_LOG_ERROR,
-             ("TSF: 0x%p   nsTextStore::GetScreenExtInternal() FAILED due to "
-              "no top level window", this));
-      return false;
-    }
-
-    nsIntRect boundRect;
-    if (NS_FAILED(refWindow->GetClientBounds(boundRect))) {
-      PR_LOG(sTextStoreLog, PR_LOG_ERROR,
-             ("TSF: 0x%p   nsTextStore::GetScreenExtInternal() FAILED due to "
-              "failed to get the client bounds", this));
-      return false;
-    }
-
-    boundRect.MoveTo(0, 0);
-
-    // Clip frame rect to window rect
-    boundRect.IntersectRect(LayoutDevicePixel::ToUntyped(event.mReply.mRect), boundRect);
-    if (!boundRect.IsEmpty()) {
-      boundRect.MoveBy(refWindow->WidgetToScreenOffsetUntyped());
-      ::SetRect(&aScreenExt, boundRect.x, boundRect.y,
-                boundRect.XMost(), boundRect.YMost());
-    } else {
-      ::SetRectEmpty(&aScreenExt);
-    }
+    ::SetRectEmpty(&aScreenExt);
   }
 
   PR_LOG(sTextStoreLog, PR_LOG_DEBUG,
@@ -3847,7 +3971,6 @@ nsTextStore::OnUpdateComposition(ITfCompositionView* pComposition,
     return hr;
   }
 
-#ifdef PR_LOGGING
   if (PR_LOG_TEST(sTextStoreLog, PR_LOG_ALWAYS)) {
     Selection& currentSel = CurrentSelection();
     if (currentSel.IsDirty()) {
@@ -3865,7 +3988,6 @@ nsTextStore::OnUpdateComposition(ITfCompositionView* pComposition,
             currentSel.StartOffset(), currentSel.EndOffset(),
             GetActiveSelEndName(currentSel.ActiveSelEnd())));
   }
-#endif // #ifdef PR_LOGGING
   return S_OK;
 }
 
@@ -4025,9 +4147,10 @@ nsTextStore::OnFocusChange(bool aGotFocus,
     return NS_ERROR_NOT_AVAILABLE;
   }
 
+  nsRefPtr<ITfDocumentMgr> prevFocusedDocumentMgr;
+
   // If currently sEnableTextStore has focus, notifies TSF of losing focus.
   if (ThinksHavingFocus()) {
-    nsRefPtr<ITfDocumentMgr> prevFocusedDocumentMgr;
     DebugOnly<HRESULT> hr =
       sThreadMgr->AssociateFocus(
         sEnabledTextStore->mWidget->GetWindowHandle(),
@@ -4350,11 +4473,6 @@ nsTextStore::OnMouseButtonEventInternal(const IMENotification& aIMENotification)
 void
 nsTextStore::CreateNativeCaret()
 {
-  // This method must work only on desktop application.
-  if (XRE_GetWindowsEnvironment() != WindowsEnvironmentType_Desktop) {
-    return;
-  }
-
   PR_LOG(sTextStoreLog, PR_LOG_DEBUG,
          ("TSF: 0x%p   nsTextStore::CreateNativeCaret(), "
           "mComposition.IsComposing()=%s",
@@ -4607,11 +4725,9 @@ nsTextStore::MarkContextAsEmpty(ITfContext* aContext)
 void
 nsTextStore::Initialize()
 {
-#ifdef PR_LOGGING
   if (!sTextStoreLog) {
     sTextStoreLog = PR_NewLogModule("nsTextStoreWidgets");
   }
-#endif
 
   PR_LOG(sTextStoreLog, PR_LOG_ALWAYS,
     ("TSF: nsTextStore::Initialize() is called..."));

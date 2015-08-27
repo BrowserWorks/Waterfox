@@ -20,6 +20,9 @@
           ok(success, "The service worker should be unregistered successfully");
 
           SimpleTest.finish();
+        }, function(e) {
+          dump("Unregistering the SW failed with " + e + "\n");
+          SimpleTest.finish();
         });
       } else if (event.data.type == 'status') {
         ok(event.data.status, event.data.msg);
@@ -85,27 +88,34 @@
   }
 
   function runTest() {
-    navigator.serviceWorker.register("serviceworker_wrapper.js", {scope: "."})
-      .then(function(registration) {
-        if (registration.installing) {
-          registration.installing.onstatechange = function(e) {
-            setupSW(registration);
-            e.target.onstatechange = null;
-          };
-        } else {
-          setupSW(registration);
-        }
-      });
+    navigator.serviceWorker.ready.then(setupSW);
+    navigator.serviceWorker.register("serviceworker_wrapper.js", {scope: "."});
   }
 
   SimpleTest.waitForExplicitFinish();
   onload = function() {
-    SpecialPowers.pushPrefEnv({"set": [
+    // The handling of "dom.caches.enabled" here is a bit complicated.  What we
+    // want to happen is that Cache is always enabled in service workers.  So
+    // if service workers are disabled by default we want to force on both
+    // service workers and "dom.caches.enabled".  But if service workers are
+    // enabled by default, we do not want to mess with the "dom.caches.enabled"
+    // value, since that would defeat the purpose of the test.  Use a subframe
+    // to decide whether service workers are enabled by default, so we don't
+    // force creation of our own Navigator object before our prefs are set.
+    var prefs = [
       ["dom.serviceWorkers.exemptFromPerDomainMax", true],
       ["dom.serviceWorkers.enabled", true],
       ["dom.serviceWorkers.testing.enabled", true],
-      ["dom.caches.enabled", true]
-    ]}, runTest);
+    ];
+
+    var subframe = document.createElement("iframe");
+    document.body.appendChild(subframe);
+    if (!("serviceWorker" in subframe.contentWindow.navigator)) {
+	prefs.push(["dom.caches.enabled", true]);
+    }
+    subframe.remove();
+
+    SpecialPowers.pushPrefEnv({"set": prefs}, runTest);
   };
 </script>
 </body>

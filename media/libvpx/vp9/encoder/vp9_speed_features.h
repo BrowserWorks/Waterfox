@@ -34,6 +34,9 @@ enum {
 enum {
   INTER_ALL = (1 << NEARESTMV) | (1 << NEARMV) | (1 << ZEROMV) | (1 << NEWMV),
   INTER_NEAREST = (1 << NEARESTMV),
+  INTER_NEAREST_NEW = (1 << NEARESTMV) | (1 << NEWMV),
+  INTER_NEAREST_ZERO = (1 << NEARESTMV) | (1 << ZEROMV),
+  INTER_NEAREST_NEW_ZERO = (1 << NEARESTMV) | (1 << ZEROMV) | (1 << NEWMV),
   INTER_NEAREST_NEAR_NEW = (1 << NEARESTMV) | (1 << NEARMV) | (1 << NEWMV),
   INTER_NEAREST_NEAR_ZERO = (1 << NEARESTMV) | (1 << NEARMV) | (1 << ZEROMV),
 };
@@ -78,7 +81,9 @@ typedef enum {
 
 typedef enum {
   SUBPEL_TREE = 0,
-  SUBPEL_TREE_PRUNED = 1,
+  SUBPEL_TREE_PRUNED = 1,           // Prunes 1/2-pel searches
+  SUBPEL_TREE_PRUNED_MORE = 2,      // Prunes 1/2-pel searches more aggressively
+  SUBPEL_TREE_PRUNED_EVENMORE = 3,  // Prunes 1/2- and 1/4-pel searches
   // Other methods to come
 } SUBPEL_SEARCH_METHODS;
 
@@ -86,12 +91,6 @@ typedef enum {
   NO_MOTION_THRESHOLD = 0,
   LOW_MOTION_THRESHOLD = 7
 } MOTION_THRESHOLD;
-
-typedef enum {
-  LAST_FRAME_PARTITION_OFF = 0,
-  LAST_FRAME_PARTITION_LOW_MOTION = 1,
-  LAST_FRAME_PARTITION_ALL = 2
-} LAST_FRAME_PARTITION_METHOD;
 
 typedef enum {
   USE_FULL_RD = 0,
@@ -102,8 +101,7 @@ typedef enum {
 typedef enum {
   NOT_IN_USE = 0,
   RELAXED_NEIGHBORING_MIN_MAX = 1,
-  CONSTRAIN_NEIGHBORING_MIN_MAX = 2,
-  STRICT_NEIGHBORING_MIN_MAX = 3
+  STRICT_NEIGHBORING_MIN_MAX = 2
 } AUTO_MIN_MAX_MODE;
 
 typedef enum {
@@ -144,16 +142,12 @@ typedef enum {
 
 typedef enum {
   // Search partitions using RD/NONRD criterion
-  SEARCH_PARTITION = 0,
+  SEARCH_PARTITION,
 
   // Always use a fixed size partition
-  FIXED_PARTITION = 1,
+  FIXED_PARTITION,
 
-  // Use a fixed size partition in every 64X64 SB, where the size is
-  // determined based on source variance
-  VAR_BASED_FIXED_PARTITION = 2,
-
-  REFERENCE_PARTITION = 3,
+  REFERENCE_PARTITION,
 
   // Use an arbitrary partitioning scheme based on source variance within
   // a 64X64 SB
@@ -168,12 +162,9 @@ typedef enum {
   // before the final run.
   TWO_LOOP = 0,
 
-  // No dry run conducted.
-  ONE_LOOP = 1,
-
   // No dry run, also only half the coef contexts and bands are updated.
   // The rest are not updated at all.
-  ONE_LOOP_REDUCED = 2
+  ONE_LOOP_REDUCED = 1
 } FAST_COEFF_UPDATE;
 
 typedef struct MV_SPEED_FEATURES {
@@ -241,14 +232,8 @@ typedef struct SPEED_FEATURES {
   // level within a frame.
   int allow_skip_recode;
 
-  // This variable allows us to reuse the last frames partition choices
-  // (64x64 v 32x32 etc) for this frame. It can be set to only use the last
-  // frame as a starting point in low motion scenes or always use it. If set
-  // we use last partitioning_redo frequency to determine how often to redo
-  // the partitioning from scratch. Adjust_partitioning_from_last_frame
-  // enables us to adjust up or down one partitioning from the last frames
-  // partitioning.
-  LAST_FRAME_PARTITION_METHOD use_lastframe_partitioning;
+  // Coefficient probability model approximation step size
+  int coeff_prob_appx_step;
 
   // The threshold is to determine how slow the motino is, it is used when
   // use_lastframe_partitioning is set to LAST_FRAME_PARTITION_LOW_MOTION
@@ -262,8 +247,6 @@ typedef struct SPEED_FEATURES {
   // Low precision 32x32 fdct keeps everything in 16 bits and thus is less
   // precise but significantly faster than the non lp version.
   int use_lp32x32fdct;
-
-  // TODO(JBB): remove this as its no longer used.
 
   // After looking at the first set of modes (set by index here), skip
   // checking modes for reference frames that don't match the reference frame
@@ -288,11 +271,14 @@ typedef struct SPEED_FEATURES {
   // Sets min and max partition sizes for this 64x64 region based on the
   // same 64x64 in last encoded frame, and the left and above neighbor.
   AUTO_MIN_MAX_MODE auto_min_max_partition_size;
+  // Ensures the rd based auto partition search will always
+  // go down at least to the specified level.
+  BLOCK_SIZE rd_auto_partition_min_limit;
 
   // Min and max partition size we enable (block_size) as per auto
   // min max, but also used by adjust partitioning, and pick_partitioning.
-  BLOCK_SIZE min_partition_size;
-  BLOCK_SIZE max_partition_size;
+  BLOCK_SIZE default_min_partition_size;
+  BLOCK_SIZE default_max_partition_size;
 
   // Whether or not we allow partitions one smaller or one greater than the last
   // frame's partitioning. Only used if use_lastframe_partitioning is set.
@@ -301,12 +287,6 @@ typedef struct SPEED_FEATURES {
   // How frequently we re do the partitioning from scratch. Only used if
   // use_lastframe_partitioning is set.
   int last_partitioning_redo_frequency;
-
-  // This enables constrained copy partitioning, which, given an input block
-  // size bsize, will copy previous partition for partitions less than bsize,
-  // otherwise bsize partition is used. bsize is currently set to 16x16.
-  // Used for the case where motion is detected in superblock.
-  int constrain_copy_partition;
 
   // Disables sub 8x8 blocksizes in different scenarios: Choices are to disable
   // it always, to allow it for only Last frame and Intra, disable it for all
@@ -341,10 +321,6 @@ typedef struct SPEED_FEATURES {
   // Fast quantization process path
   int use_quant_fp;
 
-  // Search through variable block partition types in non-RD mode decision
-  // encoding process for RTC.
-  int partition_check;
-
   // Use finer quantizer in every other few frames that run variable block
   // partition type search.
   int force_frame_boost;
@@ -365,6 +341,10 @@ typedef struct SPEED_FEATURES {
   // transform size separately.
   int intra_y_mode_mask[TX_SIZES];
   int intra_uv_mode_mask[TX_SIZES];
+
+  // These bit masks allow you to enable or disable intra modes for each
+  // prediction block size separately.
+  int intra_y_mode_bsize_mask[BLOCK_SIZES];
 
   // This variable enables an early break out of mode testing if the model for
   // rd built from the prediction signal indicates a value that's much
@@ -416,9 +396,6 @@ typedef struct SPEED_FEATURES {
   // enabled in real time mode.
   int encode_breakout_thresh;
 
-  // In real time encoding, increase the threshold for NEWMV.
-  int elevate_newmv_thresh;
-
   // default interp filter choice
   INTERP_FILTER default_interp_filter;
 
@@ -435,15 +412,18 @@ typedef struct SPEED_FEATURES {
   // Partition search early breakout thresholds.
   int64_t partition_search_breakout_dist_thr;
   int partition_search_breakout_rate_thr;
+
+  // Allow skipping partition search for still image frame
+  int allow_partition_search_skip;
 } SPEED_FEATURES;
 
 struct VP9_COMP;
 
-void vp9_set_speed_features(struct VP9_COMP *cpi);
+void vp9_set_speed_features_framesize_independent(struct VP9_COMP *cpi);
+void vp9_set_speed_features_framesize_dependent(struct VP9_COMP *cpi);
 
 #ifdef __cplusplus
 }  // extern "C"
 #endif
 
 #endif  // VP9_ENCODER_VP9_SPEED_FEATURES_H_
-

@@ -480,7 +480,8 @@ NeckoParent::DeallocPTCPServerSocketParent(PTCPServerSocketParent* actor)
 }
 
 PUDPSocketParent*
-NeckoParent::AllocPUDPSocketParent(const nsCString& /* unused */)
+NeckoParent::AllocPUDPSocketParent(const Principal& /* unused */,
+                                   const nsCString& /* unused */)
 {
   nsRefPtr<UDPSocketParent> p = new UDPSocketParent();
 
@@ -489,9 +490,10 @@ NeckoParent::AllocPUDPSocketParent(const nsCString& /* unused */)
 
 bool
 NeckoParent::RecvPUDPSocketConstructor(PUDPSocketParent* aActor,
+                                       const Principal& aPrincipal,
                                        const nsCString& aFilter)
 {
-  return static_cast<UDPSocketParent*>(aActor)->Init(aFilter);
+  return static_cast<UDPSocketParent*>(aActor)->Init(aPrincipal, aFilter);
 }
 
 bool
@@ -694,12 +696,17 @@ NeckoParent::DeallocPRemoteOpenFileParent(PRemoteOpenFileParent* actor)
 }
 
 bool
-NeckoParent::RecvSpeculativeConnect(const URIParams &aURI)
+NeckoParent::RecvSpeculativeConnect(const URIParams& aURI, const bool& aAnonymous)
 {
   nsCOMPtr<nsISpeculativeConnect> speculator(gIOService);
   nsCOMPtr<nsIURI> uri = DeserializeURI(aURI);
   if (uri && speculator) {
-    speculator->SpeculativeConnect(uri, nullptr);
+    if (aAnonymous) {
+      speculator->SpeculativeAnonymousConnect(uri, nullptr);
+    } else {
+      speculator->SpeculativeConnect(uri, nullptr);
+    }
+
   }
   return true;
 }

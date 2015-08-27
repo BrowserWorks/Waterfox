@@ -10,11 +10,6 @@
 #include "nsBidiKeyboard.h"
 #include <gtk/gtk.h>
 
-#if (MOZ_WIDGET_GTK == 2)
-typedef gboolean (*GdkKeymapHaveBidiLayoutsType)(GdkKeymap *keymap);
-static GdkKeymapHaveBidiLayoutsType GdkKeymapHaveBidiLayouts = nullptr;
-#endif
-
 NS_IMPL_ISUPPORTS(nsBidiKeyboard, nsIBidiKeyboard)
 
 nsBidiKeyboard::nsBidiKeyboard()
@@ -25,32 +20,21 @@ nsBidiKeyboard::nsBidiKeyboard()
 NS_IMETHODIMP
 nsBidiKeyboard::Reset()
 {
-#if (MOZ_WIDGET_GTK == 2)
-    PRLibrary *gtklib = nullptr;
-#if defined(MOZ_X11)
-    if (!GdkKeymapHaveBidiLayouts) {
-        GdkKeymapHaveBidiLayouts = (GdkKeymapHaveBidiLayoutsType) 
-            PR_FindFunctionSymbolAndLibrary("gdk_keymap_have_bidi_layouts",
-                                            &gtklib);
-        if (gtklib)
-            PR_UnloadLibrary(gtklib);
-    }
-#endif
-
+    // NB: The default keymap can be null (e.g. in xpcshell). In that case,
+    // simply assume that we don't have bidi keyboards.
     mHaveBidiKeyboards = false;
-    if (GdkKeymapHaveBidiLayouts)
-        mHaveBidiKeyboards = (*GdkKeymapHaveBidiLayouts)(nullptr);
-#else
-    mHaveBidiKeyboards = gdk_keymap_have_bidi_layouts(gdk_keymap_get_default());
-#endif
+
+    GdkDisplay *display = gdk_display_get_default();
+    if (!display)
+        return NS_OK;
+
+    GdkKeymap *keymap = gdk_keymap_get_for_display(display);
+    mHaveBidiKeyboards = keymap && gdk_keymap_have_bidi_layouts(keymap);
     return NS_OK;
 }
 
 nsBidiKeyboard::~nsBidiKeyboard()
 {
-#if (MOZ_WIDGET_GTK == 2)
-    GdkKeymapHaveBidiLayouts = nullptr;
-#endif
 }
 
 NS_IMETHODIMP

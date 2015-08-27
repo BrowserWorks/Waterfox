@@ -47,7 +47,3 @@ add_task(function* () {
     Assert.equal(foundCookie[prop], COOKIE[prop], "Check cookie " + prop);
   }
 });
-
-function run_test() {
-  run_next_test();
-}

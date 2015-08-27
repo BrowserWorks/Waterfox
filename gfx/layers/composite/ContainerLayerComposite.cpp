@@ -29,8 +29,6 @@
 #include "nsDebug.h"                    // for NS_ASSERTION
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_CTOR, etc
 #include "nsISupportsUtils.h"           // for NS_ADDREF, NS_RELEASE
-#include "nsPoint.h"                    // for nsIntPoint
-#include "nsRect.h"                     // for nsIntRect
 #include "nsRegion.h"                   // for nsIntRegion
 #include "nsTArray.h"                   // for nsAutoTArray
 #include "TextRenderer.h"               // for TextRenderer
@@ -85,8 +83,8 @@ static void DrawLayerInfo(const RenderTargetIntRect& aClipRect,
 
   uint32_t maxWidth = std::min<uint32_t>(visibleRegion.GetBounds().width, 500);
 
-  nsIntPoint topLeft = visibleRegion.GetBounds().TopLeft();
-  aManager->GetTextRenderer()->RenderText(ss.str().c_str(), gfx::IntPoint(topLeft.x, topLeft.y),
+  IntPoint topLeft = visibleRegion.GetBounds().TopLeft();
+  aManager->GetTextRenderer()->RenderText(ss.str().c_str(), topLeft,
                                           aLayer->GetEffectiveTransform(), 16,
                                           maxWidth);
 }
@@ -94,9 +92,7 @@ static void DrawLayerInfo(const RenderTargetIntRect& aClipRect,
 template<class ContainerT>
 static gfx::IntRect ContainerVisibleRect(ContainerT* aContainer)
 {
-  nsIntRect visibleRect = aContainer->GetEffectiveVisibleRegion().GetBounds();
-  gfx::IntRect surfaceRect = gfx::IntRect(visibleRect.x, visibleRect.y,
-                                          visibleRect.width, visibleRect.height);
+  gfx::IntRect surfaceRect = aContainer->GetEffectiveVisibleRegion().GetBounds();
   return surfaceRect;
 }
 
@@ -137,7 +133,7 @@ struct PreparedLayer
 template<class ContainerT> void
 ContainerRenderVR(ContainerT* aContainer,
                   LayerManagerComposite* aManager,
-                  const nsIntRect& aClipRect,
+                  const gfx::IntRect& aClipRect,
                   gfx::VRHMDInfo* aHMD)
 {
   RefPtr<CompositingRenderTarget> surface;
@@ -146,7 +142,7 @@ ContainerRenderVR(ContainerT* aContainer,
 
   RefPtr<CompositingRenderTarget> previousTarget = compositor->GetCurrentRenderTarget();
 
-  nsIntRect visibleRect = aContainer->GetEffectiveVisibleRegion().GetBounds();
+  gfx::IntRect visibleRect = aContainer->GetEffectiveVisibleRegion().GetBounds();
 
   float opacity = aContainer->GetEffectiveOpacity();
 
@@ -176,7 +172,7 @@ ContainerRenderVR(ContainerT* aContainer,
   /**
    * Render this container's contents.
    */
-  nsIntRect surfaceClipRect(0, 0, surfaceRect.width, surfaceRect.height);
+  gfx::IntRect surfaceClipRect(0, 0, surfaceRect.width, surfaceRect.height);
   RenderTargetIntRect rtClipRect(0, 0, surfaceRect.width, surfaceRect.height);
   for (uint32_t i = 0; i < children.Length(); i++) {
     LayerComposite* layerToRender = static_cast<LayerComposite*>(children.ElementAt(i)->ImplData());
@@ -267,17 +263,21 @@ ContainerPrepare(ContainerT* aContainer,
   for (uint32_t i = 0; i < children.Length(); i++) {
     LayerComposite* layerToRender = static_cast<LayerComposite*>(children.ElementAt(i)->ImplData());
 
-    if (layerToRender->GetLayer()->GetEffectiveVisibleRegion().IsEmpty() &&
-        !layerToRender->GetLayer()->AsContainerLayer()) {
-      CULLING_LOG("Sublayer %p has no effective visible region\n", layerToRender->GetLayer());
-      continue;
-    }
-
     RenderTargetIntRect clipRect = layerToRender->GetLayer()->
         CalculateScissorRect(aClipRect);
-    if (clipRect.IsEmpty()) {
-      CULLING_LOG("Sublayer %p has an empty world clip rect\n", layerToRender->GetLayer());
-      continue;
+
+    // We don't want to skip container layers because otherwise their mPrepared
+    // may be null which is not allowed.
+    if (!layerToRender->GetLayer()->AsContainerLayer()) {
+      if (layerToRender->GetLayer()->GetEffectiveVisibleRegion().IsEmpty()) {
+        CULLING_LOG("Sublayer %p has no effective visible region\n", layerToRender->GetLayer());
+        continue;
+      }
+
+      if (clipRect.IsEmpty()) {
+        CULLING_LOG("Sublayer %p has an empty world clip rect\n", layerToRender->GetLayer());
+        continue;
+      }
     }
 
     CULLING_LOG("Preparing sublayer %p\n", layerToRender->GetLayer());
@@ -344,14 +344,15 @@ RenderLayers(ContainerT* aContainer,
     Layer* layer = layerToRender->GetLayer();
 
     gfxRGBA color;
-    if (LayerHasCheckerboardingAPZC(layer, &color)) {
+    if ((layer->GetContentFlags() & Layer::CONTENT_OPAQUE) &&
+        LayerHasCheckerboardingAPZC(layer, &color)) {
       // Ideally we would want to intersect the checkerboard region from the APZ with the layer bounds
       // and only fill in that area. However the layer bounds takes into account the base translation
       // for the painted layer whereas the checkerboard region does not. One does not simply
       // intersect areas in different coordinate spaces. So we do this a little more permissively
       // and only fill in the background when we know there is checkerboard, which in theory
       // should only occur transiently.
-      nsIntRect layerBounds = layer->GetLayerBounds();
+      gfx::IntRect layerBounds = layer->GetLayerBounds();
       EffectChain effectChain(layer);
       effectChain.mPrimaryEffect = new EffectSolidColor(ToColor(color));
       aManager->GetCompositor()->DrawQuad(gfx::Rect(layerBounds.x, layerBounds.y, layerBounds.width, layerBounds.height),
@@ -364,12 +365,12 @@ RenderLayers(ContainerT* aContainer,
       // Composer2D will compose this layer so skip GPU composition
       // this time & reset composition flag for next composition phase
       layerToRender->SetLayerComposited(false);
-      nsIntRect clearRect = layerToRender->GetClearRect();
+      gfx::IntRect clearRect = layerToRender->GetClearRect();
       if (!clearRect.IsEmpty()) {
         // Clear layer's visible rect on FrameBuffer with transparent pixels
         gfx::Rect fbRect(clearRect.x, clearRect.y, clearRect.width, clearRect.height);
         compositor->ClearRect(fbRect);
-        layerToRender->SetClearRect(nsIntRect(0, 0, 0, 0));
+        layerToRender->SetClearRect(gfx::IntRect(0, 0, 0, 0));
       }
     } else {
       layerToRender->RenderLayer(RenderTargetPixel::ToUntyped(clipRect));
@@ -395,7 +396,7 @@ RenderLayers(ContainerT* aContainer,
       if (layer->GetFrameMetrics(i - 1).IsScrollable()) {
         // Since the composition bounds are in the parent layer's coordinates,
         // use the parent's effective transform rather than the layer's own.
-        ParentLayerRect compositionBounds = layer->GetFrameMetrics(i - 1).mCompositionBounds;
+        ParentLayerRect compositionBounds = layer->GetFrameMetrics(i - 1).GetCompositionBounds();
         aManager->GetCompositor()->DrawDiagnostics(DiagnosticFlags::CONTAINER,
                                                    compositionBounds.ToUnknownRect(),
                                                    gfx::Rect(aClipRect.ToUnknownRect()),
@@ -444,7 +445,7 @@ CreateTemporaryTargetAndCopyFromBackground(ContainerT* aContainer,
                                            LayerManagerComposite* aManager)
 {
   Compositor* compositor = aManager->GetCompositor();
-  nsIntRect visibleRect = aContainer->GetEffectiveVisibleRegion().GetBounds();
+  gfx::IntRect visibleRect = aContainer->GetEffectiveVisibleRegion().GetBounds();
   RefPtr<CompositingRenderTarget> previousTarget = compositor->GetCurrentRenderTarget();
   gfx::IntRect surfaceRect = gfx::IntRect(visibleRect.x, visibleRect.y,
                                           visibleRect.width, visibleRect.height);
@@ -464,7 +465,7 @@ CreateTemporaryTargetAndCopyFromBackground(ContainerT* aContainer,
 template<class ContainerT> void
 RenderIntermediate(ContainerT* aContainer,
                    LayerManagerComposite* aManager,
-                   const nsIntRect& aClipRect,
+                   const gfx::IntRect& aClipRect,
                    RefPtr<CompositingRenderTarget> surface)
 {
   Compositor* compositor = aManager->GetCompositor();
@@ -484,7 +485,7 @@ RenderIntermediate(ContainerT* aContainer,
 template<class ContainerT> void
 ContainerRender(ContainerT* aContainer,
                  LayerManagerComposite* aManager,
-                 const nsIntRect& aClipRect)
+                 const gfx::IntRect& aClipRect)
 {
   MOZ_ASSERT(aContainer->mPrepared);
 
@@ -514,7 +515,7 @@ ContainerRender(ContainerT* aContainer,
 
     float opacity = aContainer->GetEffectiveOpacity();
 
-    nsIntRect visibleRect = aContainer->GetEffectiveVisibleRegion().GetBounds();
+    gfx::IntRect visibleRect = aContainer->GetEffectiveVisibleRegion().GetBounds();
 #ifdef MOZ_DUMP_PAINTING
     if (gfxUtils::sDumpPainting) {
       RefPtr<gfx::DataSourceSurface> surf = surface->Dump(aManager->GetCompositor());
@@ -613,7 +614,7 @@ ContainerLayerComposite::GetFirstChildComposite()
 }
 
 void
-ContainerLayerComposite::RenderLayer(const nsIntRect& aClipRect)
+ContainerLayerComposite::RenderLayer(const gfx::IntRect& aClipRect)
 {
   ContainerRender(this, mCompositeManager, aClipRect);
 }
@@ -664,7 +665,7 @@ RefLayerComposite::GetFirstChildComposite()
 }
 
 void
-RefLayerComposite::RenderLayer(const nsIntRect& aClipRect)
+RefLayerComposite::RenderLayer(const gfx::IntRect& aClipRect)
 {
   ContainerRender(this, mCompositeManager, aClipRect);
 }

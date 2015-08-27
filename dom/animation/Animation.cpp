@@ -1,374 +1,937 @@
-/* vim: set shiftwidth=2 tabstop=8 autoindent cindent expandtab: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "mozilla/dom/Animation.h"
+#include "Animation.h"
+#include "AnimationUtils.h"
 #include "mozilla/dom/AnimationBinding.h"
-#include "mozilla/dom/AnimationEffect.h"
-#include "mozilla/FloatingPoint.h"
-#include "AnimationCommon.h"
-#include "nsCSSPropertySet.h"
+#include "mozilla/AutoRestore.h"
+#include "AnimationCommon.h" // For AnimationCollection,
+                             // CommonAnimationManager
+#include "nsIDocument.h" // For nsIDocument
+#include "nsIPresShell.h" // For nsIPresShell
+#include "nsLayoutUtils.h" // For PostRestyleEvent (remove after bug 1073336)
+#include "PendingAnimationTracker.h" // For PendingAnimationTracker
 
 namespace mozilla {
-
-void
-ComputedTimingFunction::Init(const nsTimingFunction &aFunction)
-{
-  mType = aFunction.mType;
-  if (mType == nsTimingFunction::Function) {
-    mTimingFunction.Init(aFunction.mFunc.mX1, aFunction.mFunc.mY1,
-                         aFunction.mFunc.mX2, aFunction.mFunc.mY2);
-  } else {
-    mSteps = aFunction.mSteps;
-  }
-}
-
-static inline double
-StepEnd(uint32_t aSteps, double aPortion)
-{
-  MOZ_ASSERT(0.0 <= aPortion && aPortion <= 1.0, "out of range");
-  uint32_t step = uint32_t(aPortion * aSteps); // floor
-  return double(step) / double(aSteps);
-}
-
-double
-ComputedTimingFunction::GetValue(double aPortion) const
-{
-  switch (mType) {
-    case nsTimingFunction::Function:
-      return mTimingFunction.GetSplineValue(aPortion);
-    case nsTimingFunction::StepStart:
-      // There are diagrams in the spec that seem to suggest this check
-      // and the bounds point should not be symmetric with StepEnd, but
-      // should actually step up at rather than immediately after the
-      // fraction points.  However, we rely on rounding negative values
-      // up to zero, so we can't do that.  And it's not clear the spec
-      // really meant it.
-      return 1.0 - StepEnd(mSteps, 1.0 - aPortion);
-    default:
-      MOZ_ASSERT(false, "bad type");
-      // fall through
-    case nsTimingFunction::StepEnd:
-      return StepEnd(mSteps, aPortion);
-  }
-}
-
-// In the Web Animations model, the time fraction can be outside the range
-// [0.0, 1.0] but it shouldn't be Infinity.
-const double ComputedTiming::kNullTimeFraction = PositiveInfinity<double>();
-
 namespace dom {
 
-NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(Animation, mDocument, mTarget)
-
-NS_IMPL_CYCLE_COLLECTION_ROOT_NATIVE(Animation, AddRef)
-NS_IMPL_CYCLE_COLLECTION_UNROOT_NATIVE(Animation, Release)
+NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(Animation, mTimeline,
+                                      mEffect, mReady, mFinished)
+NS_IMPL_CYCLE_COLLECTING_ADDREF(Animation)
+NS_IMPL_CYCLE_COLLECTING_RELEASE(Animation)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(Animation)
+  NS_WRAPPERCACHE_INTERFACE_MAP_ENTRY
+  NS_INTERFACE_MAP_ENTRY(nsISupports)
+NS_INTERFACE_MAP_END
 
 JSObject*
 Animation::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
-  return AnimationBinding::Wrap(aCx, this, aGivenProto);
+  return dom::AnimationBinding::Wrap(aCx, this, aGivenProto);
 }
 
-already_AddRefed<AnimationEffect>
-Animation::GetEffect()
+// ---------------------------------------------------------------------------
+//
+// Animation interface:
+//
+// ---------------------------------------------------------------------------
+
+void
+Animation::SetEffect(KeyframeEffectReadOnly* aEffect)
 {
-  nsRefPtr<AnimationEffect> effect = new AnimationEffect(this);
-  return effect.forget();
+  if (mEffect) {
+    mEffect->SetParentTime(Nullable<TimeDuration>());
+  }
+  mEffect = aEffect;
+  if (mEffect) {
+    mEffect->SetParentTime(GetCurrentTime());
+  }
+  UpdateRelevance();
 }
 
 void
-Animation::SetParentTime(Nullable<TimeDuration> aParentTime)
+Animation::SetStartTime(const Nullable<TimeDuration>& aNewStartTime)
 {
-  mParentTime = aParentTime;
+#if 1
+  // Bug 1096776: once we support inactive/missing timelines we'll want to take
+  // the disabled branch.
+  MOZ_ASSERT(mTimeline && !mTimeline->GetCurrentTime().IsNull(),
+             "We don't support inactive/missing timelines yet");
+#else
+  Nullable<TimeDuration> timelineTime = mTimeline->GetCurrentTime();
+  if (mTimeline) {
+    // The spec says to check if the timeline is active (has a resolved time)
+    // before using it here, but we don't need to since it's harmless to set
+    // the already null time to null.
+    timelineTime = mTimeline->GetCurrentTime();
+  }
+  if (timelineTime.IsNull() && !aNewStartTime.IsNull()) {
+    mHoldTime.SetNull();
+  }
+#endif
+  Nullable<TimeDuration> previousCurrentTime = GetCurrentTime();
+  mStartTime = aNewStartTime;
+  if (!aNewStartTime.IsNull()) {
+    if (mPlaybackRate != 0.0) {
+      mHoldTime.SetNull();
+    }
+  } else {
+    mHoldTime = previousCurrentTime;
+  }
+
+  CancelPendingTasks();
+  if (mReady) {
+    // We may have already resolved mReady, but in that case calling
+    // MaybeResolve is a no-op, so that's okay.
+    mReady->MaybeResolve(this);
+  }
+
+  UpdateTiming();
+  PostUpdate();
 }
 
-ComputedTiming
-Animation::GetComputedTimingAt(const Nullable<TimeDuration>& aLocalTime,
-                               const AnimationTiming& aTiming)
+// http://w3c.github.io/web-animations/#current-time
+Nullable<TimeDuration>
+Animation::GetCurrentTime() const
 {
-  const TimeDuration zeroDuration;
-
-  // Currently we expect negative durations to be picked up during CSS
-  // parsing but when we start receiving timing parameters from other sources
-  // we will need to clamp negative durations here.
-  // For now, if we're hitting this it probably means we're overflowing
-  // integer arithmetic in mozilla::TimeStamp.
-  MOZ_ASSERT(aTiming.mIterationDuration >= zeroDuration,
-             "Expecting iteration duration >= 0");
-
-  // Always return the same object to benefit from return-value optimization.
-  ComputedTiming result;
-
-  result.mActiveDuration = ActiveDuration(aTiming);
-
-  // The default constructor for ComputedTiming sets all other members to
-  // values consistent with an animation that has not been sampled.
-  if (aLocalTime.IsNull()) {
+  Nullable<TimeDuration> result;
+  if (!mHoldTime.IsNull()) {
+    result = mHoldTime;
     return result;
   }
-  const TimeDuration& localTime = aLocalTime.Value();
 
-  // When we finish exactly at the end of an iteration we need to report
-  // the end of the final iteration and not the start of the next iteration
-  // so we set up a flag for that case.
-  bool isEndOfFinalIteration = false;
-
-  // Get the normalized time within the active interval.
-  StickyTimeDuration activeTime;
-  if (localTime >= aTiming.mDelay + result.mActiveDuration) {
-    result.mPhase = ComputedTiming::AnimationPhase_After;
-    if (!aTiming.FillsForwards()) {
-      // The animation isn't active or filling at this time.
-      result.mTimeFraction = ComputedTiming::kNullTimeFraction;
-      return result;
+  if (!mStartTime.IsNull()) {
+    Nullable<TimeDuration> timelineTime = mTimeline->GetCurrentTime();
+    if (!timelineTime.IsNull()) {
+      result.SetValue((timelineTime.Value() - mStartTime.Value())
+                        .MultDouble(mPlaybackRate));
     }
-    activeTime = result.mActiveDuration;
-    // Note that infinity == floor(infinity) so this will also be true when we
-    // have finished an infinitely repeating animation of zero duration.
-    isEndOfFinalIteration =
-      aTiming.mIterationCount != 0.0 &&
-      aTiming.mIterationCount == floor(aTiming.mIterationCount);
-  } else if (localTime < aTiming.mDelay) {
-    result.mPhase = ComputedTiming::AnimationPhase_Before;
-    if (!aTiming.FillsBackwards()) {
-      // The animation isn't active or filling at this time.
-      result.mTimeFraction = ComputedTiming::kNullTimeFraction;
-      return result;
-    }
-    // activeTime is zero
-  } else {
-    MOZ_ASSERT(result.mActiveDuration != zeroDuration,
-               "How can we be in the middle of a zero-duration interval?");
-    result.mPhase = ComputedTiming::AnimationPhase_Active;
-    activeTime = localTime - aTiming.mDelay;
   }
-
-  // Get the position within the current iteration.
-  StickyTimeDuration iterationTime;
-  if (aTiming.mIterationDuration != zeroDuration) {
-    iterationTime = isEndOfFinalIteration
-                    ? StickyTimeDuration(aTiming.mIterationDuration)
-                    : activeTime % aTiming.mIterationDuration;
-  } /* else, iterationTime is zero */
-
-  // Determine the 0-based index of the current iteration.
-  if (isEndOfFinalIteration) {
-    result.mCurrentIteration =
-      aTiming.mIterationCount == NS_IEEEPositiveInfinity()
-      ? UINT64_MAX // FIXME: When we return this via the API we'll need
-                   // to make sure it ends up being infinity.
-      : static_cast<uint64_t>(aTiming.mIterationCount) - 1;
-  } else if (activeTime == zeroDuration) {
-    // If the active time is zero we're either in the first iteration
-    // (including filling backwards) or we have finished an animation with an
-    // iteration duration of zero that is filling forwards (but we're not at
-    // the exact end of an iteration since we deal with that above).
-    result.mCurrentIteration =
-      result.mPhase == ComputedTiming::AnimationPhase_After
-      ? static_cast<uint64_t>(aTiming.mIterationCount) // floor
-      : 0;
-  } else {
-    result.mCurrentIteration =
-      static_cast<uint64_t>(activeTime / aTiming.mIterationDuration); // floor
-  }
-
-  // Normalize the iteration time into a fraction of the iteration duration.
-  if (result.mPhase == ComputedTiming::AnimationPhase_Before) {
-    result.mTimeFraction = 0.0;
-  } else if (result.mPhase == ComputedTiming::AnimationPhase_After) {
-    result.mTimeFraction = isEndOfFinalIteration
-                         ? 1.0
-                         : fmod(aTiming.mIterationCount, 1.0f);
-  } else {
-    // We are in the active phase so the iteration duration can't be zero.
-    MOZ_ASSERT(aTiming.mIterationDuration != zeroDuration,
-               "In the active phase of a zero-duration animation?");
-    result.mTimeFraction =
-      aTiming.mIterationDuration == TimeDuration::Forever()
-      ? 0.0
-      : iterationTime / aTiming.mIterationDuration;
-  }
-
-  bool thisIterationReverse = false;
-  switch (aTiming.mDirection) {
-    case NS_STYLE_ANIMATION_DIRECTION_NORMAL:
-      thisIterationReverse = false;
-      break;
-    case NS_STYLE_ANIMATION_DIRECTION_REVERSE:
-      thisIterationReverse = true;
-      break;
-    case NS_STYLE_ANIMATION_DIRECTION_ALTERNATE:
-      thisIterationReverse = (result.mCurrentIteration & 1) == 1;
-      break;
-    case NS_STYLE_ANIMATION_DIRECTION_ALTERNATE_REVERSE:
-      thisIterationReverse = (result.mCurrentIteration & 1) == 0;
-      break;
-  }
-  if (thisIterationReverse) {
-    result.mTimeFraction = 1.0 - result.mTimeFraction;
-  }
-
   return result;
 }
 
-StickyTimeDuration
-Animation::ActiveDuration(const AnimationTiming& aTiming)
+// Implements http://w3c.github.io/web-animations/#set-the-current-time
+void
+Animation::SetCurrentTime(const TimeDuration& aSeekTime)
 {
-  if (aTiming.mIterationCount == mozilla::PositiveInfinity<float>()) {
-    // An animation that repeats forever has an infinite active duration
-    // unless its iteration duration is zero, in which case it has a zero
-    // active duration.
-    const StickyTimeDuration zeroDuration;
-    return aTiming.mIterationDuration == zeroDuration
-           ? zeroDuration
-           : StickyTimeDuration::Forever();
-  }
-  return StickyTimeDuration(
-    aTiming.mIterationDuration.MultDouble(aTiming.mIterationCount));
-}
+  SilentlySetCurrentTime(aSeekTime);
 
-// http://w3c.github.io/web-animations/#in-play
-bool
-Animation::IsInPlay(const AnimationPlayer& aPlayer) const
-{
-  if (IsFinishedTransition() ||
-      aPlayer.PlayState() == AnimationPlayState::Finished) {
-    return false;
-  }
-
-  return GetComputedTiming().mPhase == ComputedTiming::AnimationPhase_Active;
-}
-
-// http://w3c.github.io/web-animations/#current
-bool
-Animation::IsCurrent(const AnimationPlayer& aPlayer) const
-{
-  if (IsFinishedTransition() ||
-      aPlayer.PlayState() == AnimationPlayState::Finished) {
-    return false;
-  }
-
-  ComputedTiming computedTiming = GetComputedTiming();
-  return computedTiming.mPhase == ComputedTiming::AnimationPhase_Before ||
-         computedTiming.mPhase == ComputedTiming::AnimationPhase_Active;
-}
-
-bool
-Animation::IsInEffect() const
-{
-  if (IsFinishedTransition()) {
-    return false;
-  }
-
-  ComputedTiming computedTiming = GetComputedTiming();
-  return computedTiming.mTimeFraction != ComputedTiming::kNullTimeFraction;
-}
-
-const AnimationProperty*
-Animation::GetAnimationOfProperty(nsCSSProperty aProperty) const
-{
-  for (size_t propIdx = 0, propEnd = mProperties.Length();
-       propIdx != propEnd; ++propIdx) {
-    if (aProperty == mProperties[propIdx].mProperty) {
-      return &mProperties[propIdx];
+  if (mPendingState == PendingState::PausePending) {
+    CancelPendingTasks();
+    if (mReady) {
+      mReady->MaybeResolve(this);
     }
+  }
+
+  UpdateFinishedState(true);
+  UpdateEffect();
+  PostUpdate();
+}
+
+void
+Animation::SetPlaybackRate(double aPlaybackRate)
+{
+  Nullable<TimeDuration> previousTime = GetCurrentTime();
+  mPlaybackRate = aPlaybackRate;
+  if (!previousTime.IsNull()) {
+    ErrorResult rv;
+    SetCurrentTime(previousTime.Value());
+    MOZ_ASSERT(!rv.Failed(), "Should not assert for non-null time");
+  }
+}
+
+AnimationPlayState
+Animation::PlayState() const
+{
+  if (mPendingState != PendingState::NotPending) {
+    return AnimationPlayState::Pending;
+  }
+
+  Nullable<TimeDuration> currentTime = GetCurrentTime();
+  if (currentTime.IsNull()) {
+    return AnimationPlayState::Idle;
+  }
+
+  if (mStartTime.IsNull()) {
+    return AnimationPlayState::Paused;
+  }
+
+  if ((mPlaybackRate > 0.0 && currentTime.Value() >= EffectEnd()) ||
+      (mPlaybackRate < 0.0 && currentTime.Value().ToMilliseconds() <= 0.0)) {
+    return AnimationPlayState::Finished;
+  }
+
+  return AnimationPlayState::Running;
+}
+
+static inline already_AddRefed<Promise>
+CreatePromise(DocumentTimeline* aTimeline, ErrorResult& aRv)
+{
+  nsIGlobalObject* global = aTimeline->GetParentObject();
+  if (global) {
+    return Promise::Create(global, aRv);
   }
   return nullptr;
 }
 
-void
-Animation::ComposeStyle(nsRefPtr<css::AnimValuesStyleRule>& aStyleRule,
-                        nsCSSPropertySet& aSetProperties)
+Promise*
+Animation::GetReady(ErrorResult& aRv)
 {
-  ComputedTiming computedTiming = GetComputedTiming();
+  if (!mReady) {
+    mReady = CreatePromise(mTimeline, aRv); // Lazily create on demand
+  }
+  if (!mReady) {
+    aRv.Throw(NS_ERROR_FAILURE);
+  } else if (PlayState() != AnimationPlayState::Pending) {
+    mReady->MaybeResolve(this);
+  }
+  return mReady;
+}
 
-  // If the time fraction is null, we don't have fill data for the current
-  // time so we shouldn't animate.
-  if (computedTiming.mTimeFraction == ComputedTiming::kNullTimeFraction) {
+Promise*
+Animation::GetFinished(ErrorResult& aRv)
+{
+  if (!mFinished) {
+    mFinished = CreatePromise(mTimeline, aRv); // Lazily create on demand
+  }
+  if (!mFinished) {
+    aRv.Throw(NS_ERROR_FAILURE);
+  } else if (IsFinished()) {
+    mFinished->MaybeResolve(this);
+  }
+  return mFinished;
+}
+
+void
+Animation::Cancel()
+{
+  DoCancel();
+  PostUpdate();
+}
+
+// https://w3c.github.io/web-animations/#finish-an-animation
+void
+Animation::Finish(ErrorResult& aRv)
+{
+  if (mPlaybackRate == 0 ||
+      (mPlaybackRate > 0 && EffectEnd() == TimeDuration::Forever())) {
+    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
     return;
   }
 
-  MOZ_ASSERT(0.0 <= computedTiming.mTimeFraction &&
-             computedTiming.mTimeFraction <= 1.0,
-             "timing fraction should be in [0-1]");
+  TimeDuration limit =
+    mPlaybackRate > 0 ? TimeDuration(EffectEnd()) : TimeDuration(0);
 
-  for (size_t propIdx = 0, propEnd = mProperties.Length();
-       propIdx != propEnd; ++propIdx)
-  {
-    const AnimationProperty& prop = mProperties[propIdx];
+  SetCurrentTime(limit);
 
-    MOZ_ASSERT(prop.mSegments[0].mFromKey == 0.0, "incorrect first from key");
-    MOZ_ASSERT(prop.mSegments[prop.mSegments.Length() - 1].mToKey == 1.0,
-               "incorrect last to key");
-
-    if (aSetProperties.HasProperty(prop.mProperty)) {
-      // Animations are composed by AnimationPlayerCollection by iterating
-      // from the last animation to first. For animations targetting the
-      // same property, the later one wins. So if this property is already set,
-      // we should not override it.
-      continue;
+  if (mPendingState == PendingState::PlayPending) {
+    CancelPendingTasks();
+    if (mReady) {
+      mReady->MaybeResolve(this);
     }
-
-    if (!prop.mWinsInCascade) {
-      // This isn't the winning declaration, so don't add it to style.
-      // For transitions, this is important, because it's how we
-      // implement the rule that CSS transitions don't run when a CSS
-      // animation is running on the same property and element.  For
-      // animations, this is only skipping things that will otherwise be
-      // overridden.
-      continue;
-    }
-
-    aSetProperties.AddProperty(prop.mProperty);
-
-    MOZ_ASSERT(prop.mSegments.Length() > 0,
-               "property should not be in animations if it has no segments");
-
-    // FIXME: Maybe cache the current segment?
-    const AnimationPropertySegment *segment = prop.mSegments.Elements(),
-                                *segmentEnd = segment + prop.mSegments.Length();
-    while (segment->mToKey < computedTiming.mTimeFraction) {
-      MOZ_ASSERT(segment->mFromKey < segment->mToKey, "incorrect keys");
-      ++segment;
-      if (segment == segmentEnd) {
-        MOZ_ASSERT_UNREACHABLE("incorrect time fraction");
-        break; // in order to continue in outer loop (just below)
-      }
-      MOZ_ASSERT(segment->mFromKey == (segment-1)->mToKey, "incorrect keys");
-    }
-    if (segment == segmentEnd) {
-      continue;
-    }
-    MOZ_ASSERT(segment->mFromKey < segment->mToKey, "incorrect keys");
-    MOZ_ASSERT(segment >= prop.mSegments.Elements() &&
-               size_t(segment - prop.mSegments.Elements()) <
-                 prop.mSegments.Length(),
-               "out of array bounds");
-
-    if (!aStyleRule) {
-      // Allocate the style rule now that we know we have animation data.
-      aStyleRule = new css::AnimValuesStyleRule();
-    }
-
-    double positionInSegment =
-      (computedTiming.mTimeFraction - segment->mFromKey) /
-      (segment->mToKey - segment->mFromKey);
-    double valuePosition =
-      segment->mTimingFunction.GetValue(positionInSegment);
-
-    StyleAnimationValue *val = aStyleRule->AddEmptyValue(prop.mProperty);
-
-#ifdef DEBUG
-    bool result =
-#endif
-      StyleAnimationValue::Interpolate(prop.mProperty,
-                                       segment->mFromValue,
-                                       segment->mToValue,
-                                       valuePosition, *val);
-    MOZ_ASSERT(result, "interpolate must succeed now");
   }
+  UpdateFinishedState(true);
+  PostUpdate();
+}
+
+void
+Animation::Play(LimitBehavior aLimitBehavior)
+{
+  DoPlay(aLimitBehavior);
+  PostUpdate();
+}
+
+void
+Animation::Pause()
+{
+  DoPause();
+  PostUpdate();
+}
+
+// ---------------------------------------------------------------------------
+//
+// JS wrappers for Animation interface:
+//
+// ---------------------------------------------------------------------------
+
+Nullable<double>
+Animation::GetStartTimeAsDouble() const
+{
+  return AnimationUtils::TimeDurationToDouble(mStartTime);
+}
+
+void
+Animation::SetStartTimeAsDouble(const Nullable<double>& aStartTime)
+{
+  return SetStartTime(AnimationUtils::DoubleToTimeDuration(aStartTime));
+}
+
+Nullable<double>
+Animation::GetCurrentTimeAsDouble() const
+{
+  return AnimationUtils::TimeDurationToDouble(GetCurrentTime());
+}
+
+void
+Animation::SetCurrentTimeAsDouble(const Nullable<double>& aCurrentTime,
+                                        ErrorResult& aRv)
+{
+  if (aCurrentTime.IsNull()) {
+    if (!GetCurrentTime().IsNull()) {
+      aRv.Throw(NS_ERROR_DOM_TYPE_ERR);
+    }
+    return;
+  }
+
+  return SetCurrentTime(TimeDuration::FromMilliseconds(aCurrentTime.Value()));
+}
+
+// ---------------------------------------------------------------------------
+
+void
+Animation::Tick()
+{
+  // Since we are not guaranteed to get only one call per refresh driver tick,
+  // it's possible that mPendingReadyTime is set to a time in the future.
+  // In that case, we should wait until the next refresh driver tick before
+  // resuming.
+  if (mPendingState != PendingState::NotPending &&
+      !mPendingReadyTime.IsNull() &&
+      mPendingReadyTime.Value() <= mTimeline->GetCurrentTime().Value()) {
+    FinishPendingAt(mPendingReadyTime.Value());
+    mPendingReadyTime.SetNull();
+  }
+
+  if (IsPossiblyOrphanedPendingAnimation()) {
+    MOZ_ASSERT(mTimeline && !mTimeline->GetCurrentTime().IsNull(),
+               "Orphaned pending animtaions should have an active timeline");
+    FinishPendingAt(mTimeline->GetCurrentTime().Value());
+  }
+
+  UpdateTiming();
+}
+
+void
+Animation::TriggerOnNextTick(const Nullable<TimeDuration>& aReadyTime)
+{
+  // Normally we expect the play state to be pending but it's possible that,
+  // due to the handling of possibly orphaned animations in Tick(), this
+  // animation got started whilst still being in another document's pending
+  // animation map.
+  if (PlayState() != AnimationPlayState::Pending) {
+    return;
+  }
+
+  // If aReadyTime.IsNull() we'll detect this in Tick() where we check for
+  // orphaned animations and trigger this animation anyway
+  mPendingReadyTime = aReadyTime;
+}
+
+void
+Animation::TriggerNow()
+{
+  MOZ_ASSERT(PlayState() == AnimationPlayState::Pending,
+             "Expected to start a pending animation");
+  MOZ_ASSERT(mTimeline && !mTimeline->GetCurrentTime().IsNull(),
+             "Expected an active timeline");
+
+  FinishPendingAt(mTimeline->GetCurrentTime().Value());
+}
+
+Nullable<TimeDuration>
+Animation::GetCurrentOrPendingStartTime() const
+{
+  Nullable<TimeDuration> result;
+
+  if (!mStartTime.IsNull()) {
+    result = mStartTime;
+    return result;
+  }
+
+  if (mPendingReadyTime.IsNull() || mHoldTime.IsNull()) {
+    return result;
+  }
+
+  // Calculate the equivalent start time from the pending ready time.
+  // This is the same as the calculation performed in ResumeAt and will
+  // need to incorporate the playbackRate when implemented (bug 1127380).
+  result.SetValue(mPendingReadyTime.Value() - mHoldTime.Value());
+  return result;
+}
+
+// http://w3c.github.io/web-animations/#silently-set-the-current-time
+void
+Animation::SilentlySetCurrentTime(const TimeDuration& aSeekTime)
+{
+  if (!mHoldTime.IsNull() ||
+      mStartTime.IsNull() ||
+      !mTimeline ||
+      mTimeline->GetCurrentTime().IsNull() ||
+      mPlaybackRate == 0.0) {
+    mHoldTime.SetValue(aSeekTime);
+    if (!mTimeline || mTimeline->GetCurrentTime().IsNull()) {
+      mStartTime.SetNull();
+    }
+  } else {
+    mStartTime.SetValue(mTimeline->GetCurrentTime().Value() -
+                          (aSeekTime.MultDouble(1 / mPlaybackRate)));
+  }
+
+  mPreviousCurrentTime.SetNull();
+}
+
+void
+Animation::SilentlySetPlaybackRate(double aPlaybackRate)
+{
+  Nullable<TimeDuration> previousTime = GetCurrentTime();
+  mPlaybackRate = aPlaybackRate;
+  if (!previousTime.IsNull()) {
+    ErrorResult rv;
+    SilentlySetCurrentTime(previousTime.Value());
+    MOZ_ASSERT(!rv.Failed(), "Should not assert for non-null time");
+  }
+}
+
+void
+Animation::DoCancel()
+{
+  if (mPendingState != PendingState::NotPending) {
+    CancelPendingTasks();
+    if (mReady) {
+      mReady->MaybeReject(NS_ERROR_DOM_ABORT_ERR);
+    }
+  }
+
+  if (mFinished) {
+    mFinished->MaybeReject(NS_ERROR_DOM_ABORT_ERR);
+  }
+  // Clear finished promise. We'll create a new one lazily.
+  mFinished = nullptr;
+
+  mHoldTime.SetNull();
+  mStartTime.SetNull();
+
+  UpdateEffect();
+}
+
+void
+Animation::UpdateRelevance()
+{
+  bool wasRelevant = mIsRelevant;
+  mIsRelevant = HasCurrentEffect() || IsInEffect();
+
+  // Notify animation observers.
+  if (wasRelevant && !mIsRelevant) {
+    nsNodeUtils::AnimationRemoved(this);
+  } else if (!wasRelevant && mIsRelevant) {
+    nsNodeUtils::AnimationAdded(this);
+  }
+}
+
+bool
+Animation::CanThrottle() const
+{
+  if (!mEffect ||
+      mEffect->IsFinishedTransition() ||
+      mEffect->Properties().IsEmpty()) {
+    return true;
+  }
+
+  if (!mIsRunningOnCompositor) {
+    return false;
+  }
+
+  if (PlayState() != AnimationPlayState::Finished) {
+    // Unfinished animations can be throttled.
+    return true;
+  }
+
+  // The animation has finished but, if this is the first sample since
+  // finishing, we need an unthrottled sample so we can apply the correct
+  // end-of-animation behavior on the main thread (either removing the
+  // animation style or applying the fill mode).
+  return mFinishedAtLastComposeStyle;
+}
+
+void
+Animation::ComposeStyle(nsRefPtr<css::AnimValuesStyleRule>& aStyleRule,
+                        nsCSSPropertySet& aSetProperties,
+                        bool& aNeedsRefreshes)
+{
+  if (!mEffect || mEffect->IsFinishedTransition()) {
+    return;
+  }
+
+  AnimationPlayState playState = PlayState();
+  if (playState == AnimationPlayState::Running ||
+      playState == AnimationPlayState::Pending) {
+    aNeedsRefreshes = true;
+  }
+
+  // In order to prevent flicker, there are a few cases where we want to use
+  // a different time for rendering that would otherwise be returned by
+  // GetCurrentTime. These are:
+  //
+  // (a) For animations that are pausing but which are still running on the
+  //     compositor. In this case we send a layer transaction that removes the
+  //     animation but which also contains the animation values calculated on
+  //     the main thread. To prevent flicker when this occurs we want to ensure
+  //     the timeline time used to calculate the main thread animation values
+  //     does not lag far behind the time used on the compositor. Ideally we
+  //     would like to use the "animation ready time" calculated at the end of
+  //     the layer transaction as the timeline time but it will be too late to
+  //     update the style rule at that point so instead we just use the current
+  //     wallclock time.
+  //
+  // (b) For animations that are pausing that we have already taken off the
+  //     compositor. In this case we record a pending ready time but we don't
+  //     apply it until the next tick. However, while waiting for the next tick,
+  //     we should still use the pending ready time as the timeline time. If we
+  //     use the regular timeline time the animation may appear jump backwards
+  //     if the main thread's timeline time lags behind the compositor.
+  //
+  // (c) For animations that are play-pending due to an aborted pause operation
+  //     (i.e. a pause operation that was interrupted before we entered the
+  //     paused state). When we cancel a pending pause we might momentarily take
+  //     the animation off the compositor, only to re-add it moments later. In
+  //     that case the compositor might have been ahead of the main thread so we
+  //     should use the current wallclock time to ensure the animation doesn't
+  //     temporarily jump backwards.
+  //
+  // To address each of these cases we temporarily tweak the hold time
+  // immediately before updating the style rule and then restore it immediately
+  // afterwards. This is purely to prevent visual flicker. Other behavior
+  // such as dispatching events continues to rely on the regular timeline time.
+  {
+    AutoRestore<Nullable<TimeDuration>> restoreHoldTime(mHoldTime);
+    bool updatedHoldTime = false;
+
+    AnimationPlayState playState = PlayState();
+
+    if (playState == AnimationPlayState::Pending &&
+        mHoldTime.IsNull() &&
+        !mStartTime.IsNull()) {
+      Nullable<TimeDuration> timeToUse = mPendingReadyTime;
+      if (timeToUse.IsNull() &&
+          mTimeline &&
+          !mTimeline->IsUnderTestControl()) {
+        timeToUse = mTimeline->ToTimelineTime(TimeStamp::Now());
+      }
+      if (!timeToUse.IsNull()) {
+        mHoldTime.SetValue((timeToUse.Value() - mStartTime.Value())
+                            .MultDouble(mPlaybackRate));
+        // Push the change down to the effect
+        UpdateEffect();
+        updatedHoldTime = true;
+      }
+    }
+
+    mEffect->ComposeStyle(aStyleRule, aSetProperties);
+
+    if (updatedHoldTime) {
+      UpdateTiming();
+    }
+
+    mFinishedAtLastComposeStyle = (playState == AnimationPlayState::Finished);
+  }
+}
+
+// http://w3c.github.io/web-animations/#play-an-animation
+void
+Animation::DoPlay(LimitBehavior aLimitBehavior)
+{
+  bool abortedPause = mPendingState == PendingState::PausePending;
+
+  bool reuseReadyPromise = false;
+  if (mPendingState != PendingState::NotPending) {
+    CancelPendingTasks();
+    reuseReadyPromise = true;
+  }
+
+  Nullable<TimeDuration> currentTime = GetCurrentTime();
+  if (mPlaybackRate > 0.0 &&
+      (currentTime.IsNull() ||
+       (aLimitBehavior == LimitBehavior::AutoRewind &&
+        (currentTime.Value().ToMilliseconds() < 0.0 ||
+         currentTime.Value() >= EffectEnd())))) {
+    mHoldTime.SetValue(TimeDuration(0));
+  } else if (mPlaybackRate < 0.0 &&
+             (currentTime.IsNull() ||
+              (aLimitBehavior == LimitBehavior::AutoRewind &&
+               (currentTime.Value().ToMilliseconds() <= 0.0 ||
+                currentTime.Value() > EffectEnd())))) {
+    mHoldTime.SetValue(TimeDuration(EffectEnd()));
+  } else if (mPlaybackRate == 0.0 && currentTime.IsNull()) {
+    mHoldTime.SetValue(TimeDuration(0));
+  }
+
+  // If the hold time is null then we're either already playing normally (and
+  // we can ignore this call) or we aborted a pending pause operation (in which
+  // case, for consistency, we need to go through the motions of doing an
+  // asynchronous start even though we already have a resolved start time).
+  if (mHoldTime.IsNull() && !abortedPause) {
+    return;
+  }
+
+  // Clear the start time until we resolve a new one (unless we are aborting
+  // a pending pause operation, in which case we keep the old start time so
+  // that the animation continues moving uninterrupted by the aborted pause).
+  if (!abortedPause) {
+    mStartTime.SetNull();
+  }
+
+  if (!reuseReadyPromise) {
+    // Clear ready promise. We'll create a new one lazily.
+    mReady = nullptr;
+  }
+
+  mPendingState = PendingState::PlayPending;
+
+  nsIDocument* doc = GetRenderedDocument();
+  if (!doc) {
+    TriggerOnNextTick(Nullable<TimeDuration>());
+    return;
+  }
+
+  PendingAnimationTracker* tracker = doc->GetOrCreatePendingAnimationTracker();
+  tracker->AddPlayPending(*this);
+
+  // We may have updated the current time when we set the hold time above.
+  UpdateTiming();
+}
+
+// http://w3c.github.io/web-animations/#pause-an-animation
+void
+Animation::DoPause()
+{
+  if (IsPausedOrPausing()) {
+    return;
+  }
+
+  bool reuseReadyPromise = false;
+  if (mPendingState == PendingState::PlayPending) {
+    CancelPendingTasks();
+    reuseReadyPromise = true;
+  }
+
+  // Mark this as no longer running on the compositor so that next time
+  // we update animations we won't throttle them and will have a chance
+  // to remove the animation from any layer it might be on.
+  mIsRunningOnCompositor = false;
+
+  if (!reuseReadyPromise) {
+    // Clear ready promise. We'll create a new one lazily.
+    mReady = nullptr;
+  }
+
+  mPendingState = PendingState::PausePending;
+
+  nsIDocument* doc = GetRenderedDocument();
+  if (!doc) {
+    TriggerOnNextTick(Nullable<TimeDuration>());
+    return;
+  }
+
+  PendingAnimationTracker* tracker = doc->GetOrCreatePendingAnimationTracker();
+  tracker->AddPausePending(*this);
+
+  UpdateFinishedState();
+}
+
+void
+Animation::ResumeAt(const TimeDuration& aReadyTime)
+{
+  // This method is only expected to be called for an animation that is
+  // waiting to play. We can easily adapt it to handle other states
+  // but it's currently not necessary.
+  MOZ_ASSERT(mPendingState == PendingState::PlayPending,
+             "Expected to resume a play-pending animation");
+  MOZ_ASSERT(mHoldTime.IsNull() != mStartTime.IsNull(),
+             "An animation in the play-pending state should have either a"
+             " resolved hold time or resolved start time (but not both)");
+
+  // If we aborted a pending pause operation we will already have a start time
+  // we should use. In all other cases, we resolve it from the ready time.
+  if (mStartTime.IsNull()) {
+    if (mPlaybackRate != 0) {
+      mStartTime.SetValue(aReadyTime -
+                          (mHoldTime.Value().MultDouble(1 / mPlaybackRate)));
+      mHoldTime.SetNull();
+    } else {
+      mStartTime.SetValue(aReadyTime);
+    }
+  }
+  mPendingState = PendingState::NotPending;
+
+  UpdateTiming();
+
+  if (mReady) {
+    mReady->MaybeResolve(this);
+  }
+}
+
+void
+Animation::PauseAt(const TimeDuration& aReadyTime)
+{
+  MOZ_ASSERT(mPendingState == PendingState::PausePending,
+             "Expected to pause a pause-pending animation");
+
+  if (!mStartTime.IsNull()) {
+    mHoldTime.SetValue((aReadyTime - mStartTime.Value())
+                        .MultDouble(mPlaybackRate));
+  }
+  mStartTime.SetNull();
+  mPendingState = PendingState::NotPending;
+
+  UpdateTiming();
+
+  if (mReady) {
+    mReady->MaybeResolve(this);
+  }
+}
+
+void
+Animation::UpdateTiming()
+{
+  // We call UpdateFinishedState before UpdateEffect because the former
+  // can change the current time, which is used by the latter.
+  UpdateFinishedState();
+  UpdateEffect();
+}
+
+void
+Animation::UpdateFinishedState(bool aSeekFlag)
+{
+  Nullable<TimeDuration> currentTime = GetCurrentTime();
+  TimeDuration effectEnd = TimeDuration(EffectEnd());
+
+  if (!mStartTime.IsNull() &&
+      mPendingState == PendingState::NotPending) {
+    if (mPlaybackRate > 0.0 &&
+        !currentTime.IsNull() &&
+        currentTime.Value() >= effectEnd) {
+      if (aSeekFlag) {
+        mHoldTime = currentTime;
+      } else if (!mPreviousCurrentTime.IsNull()) {
+        mHoldTime.SetValue(std::max(mPreviousCurrentTime.Value(), effectEnd));
+      } else {
+        mHoldTime.SetValue(effectEnd);
+      }
+    } else if (mPlaybackRate < 0.0 &&
+               !currentTime.IsNull() &&
+               currentTime.Value().ToMilliseconds() <= 0.0) {
+      if (aSeekFlag) {
+        mHoldTime = currentTime;
+      } else {
+        mHoldTime.SetValue(0);
+      }
+    } else if (mPlaybackRate != 0.0 &&
+               !currentTime.IsNull()) {
+      if (aSeekFlag && !mHoldTime.IsNull()) {
+        mStartTime.SetValue(mTimeline->GetCurrentTime().Value() -
+                              (mHoldTime.Value().MultDouble(1 / mPlaybackRate)));
+      }
+      mHoldTime.SetNull();
+    }
+  }
+
+  bool currentFinishedState = IsFinished();
+  if (currentFinishedState && !mIsPreviousStateFinished) {
+    if (mFinished) {
+      mFinished->MaybeResolve(this);
+    }
+  } else if (!currentFinishedState && mIsPreviousStateFinished) {
+    // Clear finished promise. We'll create a new one lazily.
+    mFinished = nullptr;
+    if (mEffect->AsTransition()) {
+      mEffect->SetIsFinishedTransition(false);
+    }
+  }
+  mIsPreviousStateFinished = currentFinishedState;
+  // We must recalculate the current time to take account of any mHoldTime
+  // changes the code above made.
+  mPreviousCurrentTime = GetCurrentTime();
+}
+
+void
+Animation::UpdateEffect()
+{
+  if (mEffect) {
+    mEffect->SetParentTime(GetCurrentTime());
+    UpdateRelevance();
+  }
+}
+
+void
+Animation::FlushStyle() const
+{
+  nsIDocument* doc = GetRenderedDocument();
+  if (doc) {
+    doc->FlushPendingNotifications(Flush_Style);
+  }
+}
+
+void
+Animation::PostUpdate()
+{
+  AnimationCollection* collection = GetCollection();
+  if (collection) {
+    collection->NotifyAnimationUpdated();
+  }
+}
+
+void
+Animation::CancelPendingTasks()
+{
+  if (mPendingState == PendingState::NotPending) {
+    return;
+  }
+
+  nsIDocument* doc = GetRenderedDocument();
+  if (doc) {
+    PendingAnimationTracker* tracker = doc->GetPendingAnimationTracker();
+    if (tracker) {
+      if (mPendingState == PendingState::PlayPending) {
+        tracker->RemovePlayPending(*this);
+      } else {
+        tracker->RemovePausePending(*this);
+      }
+    }
+  }
+
+  mPendingState = PendingState::NotPending;
+  mPendingReadyTime.SetNull();
+}
+
+bool
+Animation::IsFinished() const
+{
+  // Unfortunately there's some weirdness in the spec at the moment where if
+  // you're finished and paused, the playState is paused. This prevents us
+  // from just checking |PlayState() == AnimationPlayState::Finished| here,
+  // and we need this much more messy check to see if we're finished.
+  Nullable<TimeDuration> currentTime = GetCurrentTime();
+  return !currentTime.IsNull() &&
+      ((mPlaybackRate > 0.0 && currentTime.Value() >= EffectEnd()) ||
+       (mPlaybackRate < 0.0 && currentTime.Value().ToMilliseconds() <= 0.0));
+}
+
+bool
+Animation::IsPossiblyOrphanedPendingAnimation() const
+{
+  // Check if we are pending but might never start because we are not being
+  // tracked.
+  //
+  // This covers the following cases:
+  //
+  // * We started playing but our effect's target element was orphaned
+  //   or bound to a different document.
+  //   (note that for the case of our effect changing we should handle
+  //   that in SetEffect)
+  // * We started playing but our timeline became inactive.
+  //   In this case the pending animation tracker will drop us from its hashmap
+  //   when we have been painted.
+  // * When we started playing we couldn't find a PendingAnimationTracker to
+  //   register with (perhaps the effect had no document) so we simply
+  //   set mPendingState in DoPlay and relied on this method to catch us on the
+  //   next tick.
+
+  // If we're not pending we're ok.
+  if (mPendingState == PendingState::NotPending) {
+    return false;
+  }
+
+  // If we have a pending ready time then we will be started on the next
+  // tick.
+  if (!mPendingReadyTime.IsNull()) {
+    return false;
+  }
+
+  // If we don't have an active timeline then we shouldn't start until
+  // we do.
+  if (!mTimeline || mTimeline->GetCurrentTime().IsNull()) {
+    return false;
+  }
+
+  // If we have no rendered document, or we're not in our rendered document's
+  // PendingAnimationTracker then there's a good chance no one is tracking us.
+  //
+  // If we're wrong and another document is tracking us then, at worst, we'll
+  // simply start/pause the animation one tick too soon. That's better than
+  // never starting/pausing the animation and is unlikely.
+  nsIDocument* doc = GetRenderedDocument();
+  if (!doc) {
+    return false;
+  }
+
+  PendingAnimationTracker* tracker = doc->GetPendingAnimationTracker();
+  return !tracker ||
+         (!tracker->IsWaitingToPlay(*this) &&
+          !tracker->IsWaitingToPause(*this));
+}
+
+StickyTimeDuration
+Animation::EffectEnd() const
+{
+  if (!mEffect) {
+    return StickyTimeDuration(0);
+  }
+
+  return mEffect->Timing().mDelay
+         + mEffect->GetComputedTiming().mActiveDuration;
+}
+
+nsIDocument*
+Animation::GetRenderedDocument() const
+{
+  if (!mEffect) {
+    return nullptr;
+  }
+
+  Element* targetElement;
+  nsCSSPseudoElements::Type pseudoType;
+  mEffect->GetTarget(targetElement, pseudoType);
+  if (!targetElement) {
+    return nullptr;
+  }
+
+  return targetElement->GetComposedDoc();
+}
+
+nsPresContext*
+Animation::GetPresContext() const
+{
+  nsIDocument* doc = GetRenderedDocument();
+  if (!doc) {
+    return nullptr;
+  }
+  nsIPresShell* shell = doc->GetShell();
+  if (!shell) {
+    return nullptr;
+  }
+  return shell->GetPresContext();
+}
+
+AnimationCollection*
+Animation::GetCollection() const
+{
+  css::CommonAnimationManager* manager = GetAnimationManager();
+  if (!manager) {
+    return nullptr;
+  }
+  MOZ_ASSERT(mEffect,
+             "An animation with an animation manager must have an effect");
+
+  Element* targetElement;
+  nsCSSPseudoElements::Type targetPseudoType;
+  mEffect->GetTarget(targetElement, targetPseudoType);
+  MOZ_ASSERT(targetElement,
+             "An animation with an animation manager must have a target");
+
+  return manager->GetAnimations(targetElement, targetPseudoType, false);
 }
 
 } // namespace dom

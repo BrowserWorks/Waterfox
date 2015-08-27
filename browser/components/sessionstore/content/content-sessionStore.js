@@ -40,6 +40,9 @@ Cu.import("resource:///modules/sessionstore/ContentRestore.jsm", this);
 XPCOMUtils.defineLazyGetter(this, 'gContentRestore',
                             () => { return new ContentRestore(this) });
 
+// The current epoch.
+let gCurrentEpoch = 0;
+
 /**
  * Returns a lazy function that will evaluate the given
  * function |fn| only once and cache its return value.
@@ -88,14 +91,8 @@ let EventListener = {
       return;
     }
 
-    // If we're in the process of restoring, this load may signal
-    // the end of the restoration.
-    let epoch = gContentRestore.getRestoreEpoch();
-    if (!epoch) {
-      return;
-    }
-
-    // Restore the form data and scroll position.
+    // Restore the form data and scroll position. If we're not currently
+    // restoring a tab state then this call will simply be a noop.
     gContentRestore.restoreDocument();
   }
 };
@@ -116,6 +113,20 @@ let MessageListener = {
   },
 
   receiveMessage: function ({name, data}) {
+    // The docShell might be gone. Don't process messages,
+    // that will just lead to errors anyway.
+    if (!docShell) {
+      return;
+    }
+
+    // A fresh tab always starts with epoch=0. The parent has the ability to
+    // override that to signal a new era in this tab's life. This enables it
+    // to ignore async messages that were already sent but not yet received
+    // and would otherwise confuse the internal tab state.
+    if (data.epoch && data.epoch != gCurrentEpoch) {
+      gCurrentEpoch = data.epoch;
+    }
+
     switch (name) {
       case "SessionStore:restoreHistory":
         this.restoreHistory(data);
@@ -132,8 +143,8 @@ let MessageListener = {
     }
   },
 
-  restoreHistory({epoch, tabData}) {
-    gContentRestore.restoreHistory(epoch, tabData, {
+  restoreHistory({epoch, tabData, loadArguments}) {
+    gContentRestore.restoreHistory(tabData, loadArguments, {
       onReload() {
         // Inform SessionStore.jsm about the reload. It will send
         // restoreTabContent in response.
@@ -166,7 +177,7 @@ let MessageListener = {
   },
 
   restoreTabContent({loadArguments}) {
-    let epoch = gContentRestore.getRestoreEpoch();
+    let epoch = gCurrentEpoch;
 
     // We need to pass the value of didStartLoad back to SessionStore.jsm.
     let didStartLoad = gContentRestore.restoreTabContent(loadArguments, () => {
@@ -222,7 +233,11 @@ let SyncHandler = {
    * can occur by sending data shortly before flushing synchronously.
    */
   flushAsync: function () {
-    MessageQueue.flushAsync();
+    if (!Services.prefs.getBoolPref("browser.sessionstore.debug")) {
+      throw new Error("flushAsync() must be used for testing, only.");
+    }
+
+    MessageQueue.send();
   }
 };
 
@@ -255,6 +270,9 @@ let SessionHistoryListener = {
     if (!SessionHistory.isEmpty(docShell)) {
       this.collect();
     }
+
+    // Listen for page title changes.
+    addEventListener("DOMTitleChanged", this);
   },
 
   uninit: function () {
@@ -268,6 +286,10 @@ let SessionHistoryListener = {
     if (docShell) {
       MessageQueue.push("history", () => SessionHistory.collect(docShell));
     }
+  },
+
+  handleEvent(event) {
+    this.collect();
   },
 
   onFrameTreeCollected: function () {
@@ -680,9 +702,9 @@ let MessageQueue = {
 
     // Send all data to the parent process.
     sendMessage("SessionStore:update", {
-      id: this._id,
-      data: data,
-      telemetry: telemetry
+      id: this._id, data, telemetry,
+      isFinal: options.isFinal || false,
+      epoch: gCurrentEpoch
     });
 
     // Increase our unique message ID.
@@ -706,20 +728,6 @@ let MessageQueue = {
 
     this._data.clear();
     this._lastUpdated.clear();
-  },
-
-  /**
-   * DO NOT USE - DEBUGGING / TESTING ONLY
-   *
-   * This function is used to simulate certain situations where race conditions
-   * can occur by sending data shortly before flushing synchronously.
-   */
-  flushAsync: function () {
-    if (!Services.prefs.getBoolPref("browser.sessionstore.debug")) {
-      throw new Error("flushAsync() must be used for testing, only.");
-    }
-
-    this.send();
   }
 };
 
@@ -759,6 +767,10 @@ function handleRevivedTab() {
 addEventListener("pagehide", handleRevivedTab);
 
 addEventListener("unload", () => {
+  // Upon frameLoader destruction, send a final update message to
+  // the parent and flush all data currently held in the child.
+  MessageQueue.send({isFinal: true});
+
   // If we're browsing from the tab crashed UI to a URI that causes the tab
   // to go remote again, we catch this in the unload event handler, because
   // swapping out the non-remote browser for a remote one in

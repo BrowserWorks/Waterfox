@@ -199,7 +199,7 @@ add_test(function test_checkForAddons_bad_ssl() {
   promise.then(() => {
     do_throw("Defensive timeout should reject");
   }, err => {
-    do_check_true(err.message.contains("SSL is required and URI scheme is " +
+    do_check_true(err.message.includes("SSL is required and URI scheme is " +
                                        "not https."));
     installManager.uninit();
     if (PREF_KEY_URL_OVERRIDE_BACKUP) {
@@ -753,7 +753,6 @@ xhr.prototype = {
     eval("this._on" + aEvent + " = aValue");
   },
   flags: Ci.nsIClassInfo.SINGLETON,
-  implementationLanguage: Ci.nsIProgrammingLanguage.JAVASCRIPT,
   getScriptableHelper: function() null,
   getInterfaces: function(aCount) {
     let interfaces = [Ci.nsISupports];

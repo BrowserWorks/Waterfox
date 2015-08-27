@@ -183,9 +183,11 @@ class CxxCodeGen(CodePrinter, Visitor):
             self.println('>')
             self.printdent()
 
+        if md.warn_unused:
+            self.write('MOZ_WARN_UNUSED_RESULT ')
         if md.inline:
             self.write('inline ')
-        if md.inline:
+        if md.never_inline:
             self.write('MOZ_NEVER_INLINE ')
         if md.static:
             self.write('static ')
@@ -213,8 +215,6 @@ class CxxCodeGen(CodePrinter, Visitor):
         if md.ret and md.only_for_definition:
             self.write(' -> ')
             md.ret.accept(self)
-        if md.warn_unused:
-            self.write(' NS_WARN_UNUSED_RESULT')
         if md.pure:
             self.write(' = 0')
 

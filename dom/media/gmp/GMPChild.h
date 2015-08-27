@@ -7,7 +7,6 @@
 #define GMPChild_h_
 
 #include "mozilla/gmp/PGMPChild.h"
-#include "GMPSharedMemManager.h"
 #include "GMPTimerChild.h"
 #include "GMPStorageChild.h"
 #include "GMPLoader.h"
@@ -18,8 +17,9 @@
 namespace mozilla {
 namespace gmp {
 
+class GMPContentChild;
+
 class GMPChild : public PGMPChild
-               , public GMPSharedMem
                , public GMPAsyncShutdownHost
 {
 public:
@@ -28,7 +28,7 @@ public:
 
   bool Init(const std::string& aPluginPath,
             const std::string& aVoucherPath,
-            base::ProcessHandle aParentProcessHandle,
+            base::ProcessId aParentPid,
             MessageLoop* aIOLoop,
             IPC::Channel* aChannel);
 #ifdef XP_WIN
@@ -40,22 +40,20 @@ public:
   GMPTimerChild* GetGMPTimers();
   GMPStorageChild* GetGMPStorage();
 
-  // GMPSharedMem
-  virtual void CheckThread() override;
-
   // GMPAsyncShutdownHost
   void ShutdownComplete() override;
 
 #if defined(XP_MACOSX) && defined(MOZ_GMP_SANDBOX)
-  void StartMacSandbox();
+  bool SetMacSandboxInfo();
 #endif
 
 private:
+  friend class GMPContentChild;
 
   bool PreLoadPluginVoucher(const std::string& aPluginPath);
   void PreLoadSandboxVoucher();
 
-  bool GetLibPath(nsACString& aOutLibPath);
+  bool GetUTF8LibPath(nsACString& aOutLibPath);
 
   virtual bool RecvSetNodeId(const nsCString& aNodeId) override;
   virtual bool RecvStartPlugin() override;
@@ -63,35 +61,26 @@ private:
   virtual PCrashReporterChild* AllocPCrashReporterChild(const NativeThreadId& aThread) override;
   virtual bool DeallocPCrashReporterChild(PCrashReporterChild*) override;
 
-  virtual PGMPVideoDecoderChild* AllocPGMPVideoDecoderChild() override;
-  virtual bool DeallocPGMPVideoDecoderChild(PGMPVideoDecoderChild* aActor) override;
-  virtual bool RecvPGMPVideoDecoderConstructor(PGMPVideoDecoderChild* aActor) override;
-
-  virtual PGMPVideoEncoderChild* AllocPGMPVideoEncoderChild() override;
-  virtual bool DeallocPGMPVideoEncoderChild(PGMPVideoEncoderChild* aActor) override;
-  virtual bool RecvPGMPVideoEncoderConstructor(PGMPVideoEncoderChild* aActor) override;
-
-  virtual PGMPDecryptorChild* AllocPGMPDecryptorChild() override;
-  virtual bool DeallocPGMPDecryptorChild(PGMPDecryptorChild* aActor) override;
-  virtual bool RecvPGMPDecryptorConstructor(PGMPDecryptorChild* aActor) override;
-
-  virtual PGMPAudioDecoderChild* AllocPGMPAudioDecoderChild() override;
-  virtual bool DeallocPGMPAudioDecoderChild(PGMPAudioDecoderChild* aActor) override;
-  virtual bool RecvPGMPAudioDecoderConstructor(PGMPAudioDecoderChild* aActor) override;
-
   virtual PGMPTimerChild* AllocPGMPTimerChild() override;
   virtual bool DeallocPGMPTimerChild(PGMPTimerChild* aActor) override;
 
   virtual PGMPStorageChild* AllocPGMPStorageChild() override;
   virtual bool DeallocPGMPStorageChild(PGMPStorageChild* aActor) override;
 
+  virtual PGMPContentChild* AllocPGMPContentChild(Transport* aTransport,
+                                                  ProcessId aOtherPid) override;
+  void GMPContentChildActorDestroy(GMPContentChild* aGMPContentChild);
+
   virtual bool RecvCrashPluginNow() override;
   virtual bool RecvBeginAsyncShutdown() override;
+  virtual bool RecvCloseActive() override;
 
   virtual void ActorDestroy(ActorDestroyReason aWhy) override;
   virtual void ProcessingError(Result aCode, const char* aReason) override;
 
   GMPErr GetAPI(const char* aAPIName, void* aHostAPI, void** aPluginAPI);
+
+  nsTArray<UniquePtr<GMPContentChild>> mGMPContentChildren;
 
   GMPAsyncShutdown* mAsyncShutdown;
   nsRefPtr<GMPTimerChild> mTimerChild;
@@ -99,10 +88,7 @@ private:
 
   MessageLoop* mGMPMessageLoop;
   std::string mPluginPath;
-  std::string mVoucherPath;
-#if defined(XP_MACOSX) && defined(MOZ_GMP_SANDBOX)
-  nsCString mPluginBinaryPath;
-#endif
+  std::string mSandboxVoucherPath;
   std::string mNodeId;
   GMPLoader* mGMPLoader;
   nsTArray<uint8_t> mPluginVoucher;

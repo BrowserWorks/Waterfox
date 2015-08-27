@@ -1,6 +1,6 @@
-/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
- *
- * This Source Code Form is subject to the terms of the Mozilla Public
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -115,7 +115,7 @@ nsStaticCaseInsensitiveNameTable::~nsStaticCaseInsensitiveNameTable()
     for (uint32_t index = 0; index < mNameTable.EntryCount(); index++) {
       mNameArray[index].~nsDependentCString();
     }
-    nsMemory::Free((void*)mNameArray);
+    free((void*)mNameArray);
   }
   if (mNameTable.IsInitialized()) {
     PL_DHashTableFinish(&mNameTable);
@@ -133,16 +133,13 @@ nsStaticCaseInsensitiveNameTable::Init(const char* const aNames[],
   NS_ASSERTION(aLength, "0 length");
 
   mNameArray = (nsDependentCString*)
-    nsMemory::Alloc(aLength * sizeof(nsDependentCString));
+    moz_xmalloc(aLength * sizeof(nsDependentCString));
   if (!mNameArray) {
     return false;
   }
 
-  if (!PL_DHashTableInit(&mNameTable, &nametable_CaseInsensitiveHashTableOps,
-                         sizeof(NameTableEntry), fallible,
-                         aLength)) {
-    return false;
-  }
+  PL_DHashTableInit(&mNameTable, &nametable_CaseInsensitiveHashTableOps,
+                    sizeof(NameTableEntry), aLength);
 
   for (int32_t index = 0; index < aLength; ++index) {
     const char* raw = aNames[index];

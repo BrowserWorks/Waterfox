@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 sw=2 et tw=80: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -40,14 +40,12 @@
 
 using namespace mozilla::dom;
 
-nsresult NS_NewHTMLContentSerializer(nsIContentSerializer** aSerializer)
+nsresult
+NS_NewHTMLContentSerializer(nsIContentSerializer** aSerializer)
 {
-  nsHTMLContentSerializer* it = new nsHTMLContentSerializer();
-  if (!it) {
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
-
-  return CallQueryInterface(it, aSerializer);
+  nsRefPtr<nsHTMLContentSerializer> it = new nsHTMLContentSerializer();
+  it.forget(aSerializer);
+  return NS_OK;
 }
 
 nsHTMLContentSerializer::nsHTMLContentSerializer()
@@ -587,7 +585,7 @@ nsHTMLContentSerializer::AppendAndTranslateEntities(const nsAString& aStr,
       // if it comes from nsIEntityConverter, it already has '&' and ';'
       else if (fullEntityText) {
         bool ok = AppendASCIItoUTF16(fullEntityText, aOutputStr, mozilla::fallible);
-        nsMemory::Free(fullEntityText);
+        free(fullEntityText);
         advanceLength += lengthReplaced;
         NS_ENSURE_TRUE(ok, false);
       }

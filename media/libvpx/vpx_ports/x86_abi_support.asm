@@ -395,7 +395,7 @@ section .text
 
 ; On Android platforms use lrand48 when building postproc routines. Prior to L
 ; rand() was not available.
-%if CONFIG_POSTPROC=1
+%if CONFIG_POSTPROC=1 || CONFIG_VP9_POSTPROC=1
 %ifdef __ANDROID__
 extern sym(lrand48)
 %define LIBVPX_RAND lrand48
@@ -403,4 +403,4 @@ extern sym(lrand48)
 extern sym(rand)
 %define LIBVPX_RAND rand
 %endif
-%endif ; CONFIG_POSTPROC
+%endif ; CONFIG_POSTPROC || CONFIG_VP9_POSTPROC

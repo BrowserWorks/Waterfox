@@ -5,10 +5,12 @@
 
 #include "CertBlocklist.h"
 #include "mozilla/Base64.h"
+#include "mozilla/Preferences.h"
 #include "mozilla/unused.h"
 #include "nsAppDirectoryServiceDefs.h"
 #include "nsCRTGlue.h"
 #include "nsDirectoryServiceUtils.h"
+#include "nsICryptoHash.h"
 #include "nsIFileStreams.h"
 #include "nsILineInputStream.h"
 #include "nsIX509Cert.h"
@@ -21,76 +23,96 @@
 
 NS_IMPL_ISUPPORTS(CertBlocklist, nsICertBlocklist)
 
+using namespace mozilla;
+using namespace mozilla::pkix;
+
+#define PREF_BACKGROUND_UPDATE_TIMER "app.update.lastUpdateTime.blocklist-background-update-timer"
+#define PREF_MAX_STALENESS_IN_SECONDS "security.onecrl.maximum_staleness_in_seconds"
+
 static PRLogModuleInfo* gCertBlockPRLog;
 
-CertBlocklistItem::CertBlocklistItem(mozilla::pkix::Input aIssuer,
-                                     mozilla::pkix::Input aSerial)
-  : mIsCurrent(false)
-{
-  mIssuerData = new uint8_t[aIssuer.GetLength()];
-  memcpy(mIssuerData, aIssuer.UnsafeGetData(), aIssuer.GetLength());
-  mozilla::unused << mIssuer.Init(mIssuerData, aIssuer.GetLength());
+uint32_t CertBlocklist::sLastBlocklistUpdate = 0U;
+uint32_t CertBlocklist::sMaxStaleness = 0U;
 
-  mSerialData = new uint8_t[aSerial.GetLength()];
-  memcpy(mSerialData, aSerial.UnsafeGetData(), aSerial.GetLength());
-  mozilla::unused << mSerial.Init(mSerialData, aSerial.GetLength());
+CertBlocklistItem::CertBlocklistItem(const uint8_t* DNData,
+                                     size_t DNLength,
+                                     const uint8_t* otherData,
+                                     size_t otherLength,
+                                     CertBlocklistItemMechanism itemMechanism)
+  : mIsCurrent(false)
+  , mItemMechanism(itemMechanism)
+{
+  mDNData = new uint8_t[DNLength];
+  memcpy(mDNData, DNData, DNLength);
+  mDNLength = DNLength;
+
+  mOtherData = new uint8_t[otherLength];
+  memcpy(mOtherData, otherData, otherLength);
+  mOtherLength = otherLength;
 }
 
 CertBlocklistItem::CertBlocklistItem(const CertBlocklistItem& aItem)
 {
-  uint32_t issuerLength = aItem.mIssuer.GetLength();
-  mIssuerData = new uint8_t[issuerLength];
-  memcpy(mIssuerData, aItem.mIssuerData, issuerLength);
-  mozilla::unused << mIssuer.Init(mIssuerData, issuerLength);
+  mDNLength = aItem.mDNLength;
+  mDNData = new uint8_t[mDNLength];
+  memcpy(mDNData, aItem.mDNData, mDNLength);
 
-  uint32_t serialLength = aItem.mSerial.GetLength();
-  mSerialData = new uint8_t[serialLength];
-  memcpy(mSerialData, aItem.mSerialData, serialLength);
-  mozilla::unused << mSerial.Init(mSerialData, serialLength);
+  mOtherLength = aItem.mOtherLength;
+  mOtherData = new uint8_t[mOtherLength];
+  memcpy(mOtherData, aItem.mOtherData, mOtherLength);
+
+  mItemMechanism = aItem.mItemMechanism;
+
   mIsCurrent = aItem.mIsCurrent;
 }
 
 CertBlocklistItem::~CertBlocklistItem()
 {
-  delete[] mIssuerData;
-  delete[] mSerialData;
+  delete[] mDNData;
+  delete[] mOtherData;
 }
 
 nsresult
-CertBlocklistItem::ToBase64(nsACString& b64IssuerOut, nsACString& b64SerialOut)
+CertBlocklistItem::ToBase64(nsACString& b64DNOut, nsACString& b64OtherOut)
 {
-  nsDependentCSubstring issuerString(reinterpret_cast<char*>(mIssuerData),
-                                     mIssuer.GetLength());
-  nsDependentCSubstring serialString(reinterpret_cast<char*>(mSerialData),
-                                     mSerial.GetLength());
-  nsresult rv = mozilla::Base64Encode(issuerString, b64IssuerOut);
+  nsDependentCSubstring DNString(reinterpret_cast<char*>(mDNData),
+                                 mDNLength);
+  nsDependentCSubstring otherString(reinterpret_cast<char*>(mOtherData),
+                                    mOtherLength);
+  nsresult rv = Base64Encode(DNString, b64DNOut);
   if (NS_FAILED(rv)) {
     return rv;
   }
-  rv = mozilla::Base64Encode(serialString, b64SerialOut);
+  rv = Base64Encode(otherString, b64OtherOut);
   return rv;
 }
 
 bool
 CertBlocklistItem::operator==(const CertBlocklistItem& aItem) const
 {
-  bool retval = InputsAreEqual(aItem.mIssuer, mIssuer) &&
-                InputsAreEqual(aItem.mSerial, mSerial);
-  return retval;
+  if (aItem.mItemMechanism != mItemMechanism) {
+    return false;
+  }
+  if (aItem.mDNLength != mDNLength ||
+      aItem.mOtherLength != mOtherLength) {
+    return false;
+  }
+  return memcmp(aItem.mDNData, mDNData, mDNLength) == 0 &&
+         memcmp(aItem.mOtherData, mOtherData, mOtherLength) == 0;
 }
 
 uint32_t
 CertBlocklistItem::Hash() const
 {
   uint32_t hash;
-  uint32_t serialLength = mSerial.GetLength();
   // there's no requirement for a serial to be as large as the size of the hash
   // key; if it's smaller, fall back to the first octet (otherwise, the last
   // four)
-   if (serialLength >= sizeof(hash)) {
-     memcpy(&hash, mSerialData + serialLength - sizeof(hash), sizeof(hash));
+  if (mItemMechanism == BlockByIssuerAndSerial &&
+      mOtherLength >= sizeof(hash)) {
+    memcpy(&hash, mOtherData + mOtherLength - sizeof(hash), sizeof(hash));
   } else {
-    hash = *mSerialData;
+    hash = *mOtherData;
   }
   return hash;
 }
@@ -108,6 +130,12 @@ CertBlocklist::CertBlocklist()
 
 CertBlocklist::~CertBlocklist()
 {
+  Preferences::UnregisterCallback(CertBlocklist::PreferenceChanged,
+                                  PREF_BACKGROUND_UPDATE_TIMER,
+                                  this);
+  Preferences::UnregisterCallback(CertBlocklist::PreferenceChanged,
+                                  PREF_MAX_STALENESS_IN_SECONDS,
+                                  this);
 }
 
 nsresult
@@ -122,9 +150,24 @@ CertBlocklist::Init()
     return NS_ERROR_NOT_SAME_THREAD;
   }
 
+  // Register preference callbacks
+  nsresult rv =
+      Preferences::RegisterCallbackAndCall(CertBlocklist::PreferenceChanged,
+                                           PREF_BACKGROUND_UPDATE_TIMER,
+                                           this);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+  rv = Preferences::RegisterCallbackAndCall(CertBlocklist::PreferenceChanged,
+                                            PREF_MAX_STALENESS_IN_SECONDS,
+                                            this);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+
   // Get the profile directory
-  nsresult rv = NS_GetSpecialDirectory(NS_APP_USER_PROFILE_50_DIR,
-                                       getter_AddRefs(mBackingFile));
+  rv = NS_GetSpecialDirectory(NS_APP_USER_PROFILE_50_DIR,
+                              getter_AddRefs(mBackingFile));
   if (NS_FAILED(rv) || !mBackingFile) {
     PR_LOG(gCertBlockPRLog, PR_LOG_DEBUG,
            ("CertBlocklist::Init - couldn't get profile dir"));
@@ -150,7 +193,7 @@ CertBlocklist::Init()
 }
 
 nsresult
-CertBlocklist::EnsureBackingFileInitialized(mozilla::MutexAutoLock& lock)
+CertBlocklist::EnsureBackingFileInitialized(MutexAutoLock& lock)
 {
   PR_LOG(gCertBlockPRLog, PR_LOG_DEBUG,
          ("CertBlocklist::EnsureBackingFileInitialized"));
@@ -186,12 +229,14 @@ CertBlocklist::EnsureBackingFileInitialized(mozilla::MutexAutoLock& lock)
 
   nsCOMPtr<nsILineInputStream> lineStream(do_QueryInterface(fileStream, &rv));
   nsAutoCString line;
-  nsAutoCString issuer;
-  nsAutoCString serial;
+  nsAutoCString DN;
+  nsAutoCString other;
+  CertBlocklistItemMechanism mechanism;
   // read in the revocations file. The file format is as follows: each line
-  // contains a comment, base64 encoded DER for an issuer or base64 encoded DER
-  // for a serial number. Comment lines start with '#', serial number lines, ' '
-  // (a space) and anything else is assumed to be an issuer.
+  // contains a comment, base64 encoded DER for a DN, base64 encoded DER for a
+  // serial number or a Base64 encoded SHA256 hash of a public key. Comment
+  // lines start with '#', serial number lines, ' ' (a space), public key hashes
+  // with '\t' (a tab) and anything else is assumed to be a DN.
   bool more = true;
   do {
     rv = lineStream->ReadLine(line, &more);
@@ -202,24 +247,32 @@ CertBlocklist::EnsureBackingFileInitialized(mozilla::MutexAutoLock& lock)
     if (line.IsEmpty() || line.First() == '#') {
       continue;
     }
-    if (line.First() != ' ') {
-      issuer = line;
+    if (line.First() != ' ' && line.First() != '\t') {
+      DN = line;
       continue;
     }
-    serial = line;
-    serial.Trim(" ", true, false, false);
-    // serial numbers 'belong' to the last issuer line seen; if no issuer has
-    // been seen, the serial number is ignored
-    if (issuer.IsEmpty() || serial.IsEmpty()) {
+    other = line;
+    if (line.First() == ' ') {
+      mechanism = BlockByIssuerAndSerial;
+    } else {
+      mechanism = BlockBySubjectAndPubKey;
+    }
+    other.Trim(" \t", true, false, false);
+    // Serial numbers and public key hashes 'belong' to the last DN line seen;
+    // if no DN has been seen, the serial number or public key hash is ignored.
+    if (DN.IsEmpty() || other.IsEmpty()) {
       continue;
     }
     PR_LOG(gCertBlockPRLog, PR_LOG_DEBUG,
            ("CertBlocklist::EnsureBackingFileInitialized adding: %s %s",
-           issuer.get(), serial.get()));
-    rv = AddRevokedCertInternal(issuer.get(),
-                                serial.get(),
-                                CertOldFromLocalCache,
+            DN.get(), other.get()));
+
+    PR_LOG(gCertBlockPRLog, PR_LOG_DEBUG,
+           ("CertBlocklist::EnsureBackingFileInitialized - pre-decode"));
+
+    rv = AddRevokedCertInternal(DN, other, mechanism, CertOldFromLocalCache,
                                 lock);
+
     if (NS_FAILED(rv)) {
       // we warn here, rather than abandoning, since we need to
       // ensure that as many items as possible are read
@@ -232,56 +285,64 @@ CertBlocklist::EnsureBackingFileInitialized(mozilla::MutexAutoLock& lock)
   return NS_OK;
 }
 
-// void addRevokedCert (in string issuer, in string serialNumber);
+// void revokeCertBySubjectAndPubKey(in string subject, in string pubKeyHash);
 NS_IMETHODIMP
-CertBlocklist::AddRevokedCert(const char* aIssuer,
-                              const char* aSerialNumber)
+CertBlocklist::RevokeCertBySubjectAndPubKey(const char* aSubject,
+                                            const char* aPubKeyHash)
 {
   PR_LOG(gCertBlockPRLog, PR_LOG_DEBUG,
-         ("CertBlocklist::AddRevokedCert - issuer is: %s and serial: %s",
+         ("CertBlocklist::RevokeCertBySubjectAndPubKey - subject is: %s and pubKeyHash: %s",
+          aSubject, aPubKeyHash));
+  MutexAutoLock lock(mMutex);
+
+  return AddRevokedCertInternal(nsDependentCString(aSubject),
+                                nsDependentCString(aPubKeyHash),
+                                BlockBySubjectAndPubKey,
+                                CertNewFromBlocklist, lock);
+}
+
+// void revokeCertByIssuerAndSerial(in string issuer, in string serialNumber);
+NS_IMETHODIMP
+CertBlocklist::RevokeCertByIssuerAndSerial(const char* aIssuer,
+                                           const char* aSerialNumber)
+{
+  PR_LOG(gCertBlockPRLog, PR_LOG_DEBUG,
+         ("CertBlocklist::RevokeCertByIssuerAndSerial - issuer is: %s and serial: %s",
           aIssuer, aSerialNumber));
-  mozilla::MutexAutoLock lock(mMutex);
-  return AddRevokedCertInternal(aIssuer,
-                                aSerialNumber,
-                                CertNewFromBlocklist,
-                                lock);
+  MutexAutoLock lock(mMutex);
+
+  return AddRevokedCertInternal(nsDependentCString(aIssuer),
+                                nsDependentCString(aSerialNumber),
+                                BlockByIssuerAndSerial,
+                                CertNewFromBlocklist, lock);
 }
 
 nsresult
-CertBlocklist::AddRevokedCertInternal(const char* aIssuer,
-                                      const char* aSerialNumber,
+CertBlocklist::AddRevokedCertInternal(const nsACString& aEncodedDN,
+                                      const nsACString& aEncodedOther,
+                                      CertBlocklistItemMechanism aMechanism,
                                       CertBlocklistItemState aItemState,
-                                      mozilla::MutexAutoLock& /*proofOfLock*/)
+                                      MutexAutoLock& /*proofOfLock*/)
 {
-  nsCString decodedIssuer;
-  nsCString decodedSerial;
+    nsCString decodedDN;
+    nsCString decodedOther;
 
-  nsresult rv;
-  rv = mozilla::Base64Decode(nsDependentCString(aIssuer), decodedIssuer);
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-  rv = mozilla::Base64Decode(nsDependentCString(aSerialNumber), decodedSerial);
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
+    nsresult rv = Base64Decode(aEncodedDN, decodedDN);
+    if (NS_FAILED(rv)) {
+      return rv;
+    }
+    rv = Base64Decode(aEncodedOther, decodedOther);
+    if (NS_FAILED(rv)) {
+      return rv;
+    }
 
-  mozilla::pkix::Input issuer;
-  mozilla::pkix::Input serial;
+    CertBlocklistItem item(reinterpret_cast<const uint8_t*>(decodedDN.get()),
+                           decodedDN.Length(),
+                           reinterpret_cast<const uint8_t*>(decodedOther.get()),
+                           decodedOther.Length(),
+                           aMechanism);
 
-  mozilla::pkix::Result pkrv;
-  pkrv = issuer.Init(reinterpret_cast<const uint8_t*>(decodedIssuer.get()),
-                     decodedIssuer.Length());
-  if (pkrv != mozilla::pkix::Success) {
-    return NS_ERROR_FAILURE;
-  }
-  pkrv = serial.Init(reinterpret_cast<const uint8_t*>(decodedSerial.get()),
-                     decodedSerial.Length());
-  if (pkrv != mozilla::pkix::Success) {
-    return NS_ERROR_FAILURE;
-  }
 
-  CertBlocklistItem item(issuer, serial);
 
   if (aItemState == CertNewFromBlocklist) {
     // we want SaveEntries to be a no-op if no new entries are added
@@ -345,22 +406,30 @@ ProcessEntry(BlocklistItemKey* aHashKey, void* aUserArg)
     return PL_DHASH_NEXT;
   }
 
-  nsAutoCString encIssuer;
-  nsAutoCString encSerial;
+  nsAutoCString encDN;
+  nsAutoCString encOther;
 
-  nsresult rv = item.ToBase64(encIssuer, encSerial);
+  nsresult rv = item.ToBase64(encDN, encOther);
   if (NS_FAILED(rv)) {
     saveInfo->success = false;
     return PL_DHASH_STOP;
   }
 
-  saveInfo->issuers.PutEntry(encIssuer);
-  BlocklistStringSet* issuerSet = saveInfo->issuerTable.Get(encIssuer);
+  // If it's a subject / public key block, write it straight out
+  if (item.mItemMechanism == BlockBySubjectAndPubKey) {
+    WriteLine(saveInfo->outputStream, encDN);
+    WriteLine(saveInfo->outputStream, NS_LITERAL_CSTRING("\t") + encOther);
+    return PL_DHASH_NEXT;
+  }
+
+  // Otherwise, we have to group entries by issuer
+  saveInfo->issuers.PutEntry(encDN);
+  BlocklistStringSet* issuerSet = saveInfo->issuerTable.Get(encDN);
   if (!issuerSet) {
     issuerSet = new BlocklistStringSet();
-    saveInfo->issuerTable.Put(encIssuer, issuerSet);
+    saveInfo->issuerTable.Put(encDN, issuerSet);
   }
-  issuerSet->PutEntry(encSerial);
+  issuerSet->PutEntry(encOther);
   return PL_DHASH_NEXT;
 }
 
@@ -414,7 +483,7 @@ CertBlocklist::SaveEntries()
 {
   PR_LOG(gCertBlockPRLog, PR_LOG_DEBUG,
       ("CertBlocklist::SaveEntries - not initialized"));
-  mozilla::MutexAutoLock lock(mMutex);
+  MutexAutoLock lock(mMutex);
   if (!mModified) {
     return NS_OK;
   }
@@ -438,17 +507,18 @@ CertBlocklist::SaveEntries()
   if (NS_FAILED(rv)) {
     return rv;
   }
-  mBlocklist.EnumerateEntries(ProcessEntry, &saveInfo);
-  if (!saveInfo.success) {
-    PR_LOG(gCertBlockPRLog, PR_LOG_WARN,
-           ("CertBlocklist::SaveEntries writing revocation data failed"));
-    return NS_ERROR_FAILURE;
-  }
 
   rv = WriteLine(saveInfo.outputStream,
                  NS_LITERAL_CSTRING("# Auto generated contents. Do not edit."));
   if (NS_FAILED(rv)) {
     return rv;
+  }
+
+  mBlocklist.EnumerateEntries(ProcessEntry, &saveInfo);
+  if (!saveInfo.success) {
+    PR_LOG(gCertBlockPRLog, PR_LOG_WARN,
+           ("CertBlocklist::SaveEntries writing revocation data failed"));
+    return NS_ERROR_FAILURE;
   }
 
   saveInfo.issuers.EnumerateEntries(WriteIssuer, &saveInfo);
@@ -477,31 +547,112 @@ CertBlocklist::SaveEntries()
 // boolean isCertRevoked([const, array, size_is(issuerLength)] in octet issuer,
 //                       in unsigned long issuerLength,
 //                       [const, array, size_is(serialLength)] in octet serial,
-//                       in unsigned long serialLength);
-NS_IMETHODIMP CertBlocklist::IsCertRevoked(const uint8_t* aIssuer,
-                                           uint32_t aIssuerLength,
-                                           const uint8_t* aSerial,
-                                           uint32_t aSerialLength,
-                                           bool* _retval)
+//                       in unsigned long serialLength),
+//                       [const, array, size_is(subject_length)] in octet subject,
+//                       in unsigned long subject_length,
+//                       [const, array, size_is(pubkey_length)] in octet pubkey,
+//                       in unsigned long pubkey_length);
+NS_IMETHODIMP
+CertBlocklist::IsCertRevoked(const uint8_t* aIssuer,
+                             uint32_t aIssuerLength,
+                             const uint8_t* aSerial,
+                             uint32_t aSerialLength,
+                             const uint8_t* aSubject,
+                             uint32_t aSubjectLength,
+                             const uint8_t* aPubKey,
+                             uint32_t aPubKeyLength,
+                             bool* _retval)
 {
-  mozilla::MutexAutoLock lock(mMutex);
+  MutexAutoLock lock(mMutex);
 
   nsresult rv = EnsureBackingFileInitialized(lock);
   if (NS_FAILED(rv)) {
     return rv;
   }
 
-  mozilla::pkix::Input issuer;
-  mozilla::pkix::Input serial;
-  if (issuer.Init(aIssuer, aIssuerLength) != mozilla::pkix::Success) {
+  Input issuer;
+  Input serial;
+  if (issuer.Init(aIssuer, aIssuerLength) != Success) {
     return NS_ERROR_FAILURE;
   }
-  if (serial.Init(aSerial, aSerialLength) != mozilla::pkix::Success) {
+  if (serial.Init(aSerial, aSerialLength) != Success) {
     return NS_ERROR_FAILURE;
   }
 
-  CertBlocklistItem item(issuer, serial);
-  *_retval = mBlocklist.Contains(item);
+  CertBlocklistItem issuerSerial(aIssuer, aIssuerLength, aSerial, aSerialLength,
+                                 BlockByIssuerAndSerial);
+  *_retval = mBlocklist.Contains(issuerSerial);
+
+  if (*_retval) {
+    return NS_OK;
+  }
+
+  nsCOMPtr<nsICryptoHash> crypto;
+  crypto = do_CreateInstance(NS_CRYPTO_HASH_CONTRACTID, &rv);
+
+  rv = crypto->Init(nsICryptoHash::SHA256);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+
+  rv = crypto->Update(reinterpret_cast<const unsigned char*>(aPubKey),
+                      aPubKeyLength);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+
+  nsCString hashString;
+  rv = crypto->Finish(false, hashString);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+
+  CertBlocklistItem subjectPubKey(aSubject,
+                                  static_cast<size_t>(aSubjectLength),
+                                  reinterpret_cast<const uint8_t*>(hashString.get()),
+                                  hashString.Length(),
+                                  BlockBySubjectAndPubKey);
+  *_retval = mBlocklist.Contains(subjectPubKey);
 
   return NS_OK;
+}
+
+NS_IMETHODIMP
+CertBlocklist::IsBlocklistFresh(bool* _retval)
+{
+  MutexAutoLock lock(mMutex);
+  *_retval = false;
+
+  uint32_t now = uint32_t(PR_Now() / PR_USEC_PER_SEC);
+
+  if (now > sLastBlocklistUpdate) {
+    int64_t interval = now - sLastBlocklistUpdate;
+    PR_LOG(gCertBlockPRLog, PR_LOG_WARN,
+           ("CertBlocklist::IsBlocklistFresh we're after the last BlocklistUpdate "
+            "interval is %i, staleness %u", interval, sMaxStaleness));
+    *_retval = sMaxStaleness > interval;
+  }
+  PR_LOG(gCertBlockPRLog, PR_LOG_WARN,
+         ("CertBlocklist::IsBlocklistFresh ? %s", *_retval ? "true" : "false"));
+  return NS_OK;
+}
+
+
+/* static */
+void
+CertBlocklist::PreferenceChanged(const char* aPref, void* aClosure)
+
+{
+  CertBlocklist* blocklist = reinterpret_cast<CertBlocklist*>(aClosure);
+  MutexAutoLock lock(blocklist->mMutex);
+
+  PR_LOG(gCertBlockPRLog, PR_LOG_WARN,
+         ("CertBlocklist::PreferenceChanged %s changed", aPref));
+  if (strcmp(aPref, PREF_BACKGROUND_UPDATE_TIMER) == 0) {
+    sLastBlocklistUpdate = Preferences::GetUint(PREF_BACKGROUND_UPDATE_TIMER,
+                                                uint32_t(0));
+  } else if (strcmp(aPref, PREF_MAX_STALENESS_IN_SECONDS) == 0) {
+    sMaxStaleness = Preferences::GetUint(PREF_MAX_STALENESS_IN_SECONDS,
+                                         uint32_t(0));
+  }
 }

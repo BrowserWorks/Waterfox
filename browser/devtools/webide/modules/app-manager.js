@@ -117,6 +117,8 @@ let AppManager = exports.AppManager = {
    *     name, manifest details, etc.
    *   runtime:
    *     The selected runtime has changed.
+   *   runtime-apps-icons:
+   *     The list of URLs for the runtime app icons are available.
    *   runtime-global-actors:
    *     The list of global actors for the entire runtime (but not actors for a
    *     specific tab or app) are now available, so we can test for features
@@ -127,11 +129,13 @@ let AppManager = exports.AppManager = {
    *   runtime-list:
    *     The list of available runtimes has changed, or any of the user-visible
    *     details (like names) for the non-selected runtimes has changed.
+   *   runtime-telemetry:
+   *     Detailed runtime telemetry has been recorded.  Used by tests.
    *   runtime-targets:
    *     The list of remote runtime targets available from the currently
    *     connected runtime (such as tabs or apps) has changed, or any of the
    *     user-visible details (like names) for the non-selected runtime targets
-   *     has changed.  This event includes |type| in the details, to distguish
+   *     has changed.  This event includes |type| in the details, to distinguish
    *     "apps" and "tabs".
    */
   update: function(what, details) {
@@ -181,15 +185,17 @@ let AppManager = exports.AppManager = {
             // first.
             this._appsFront = front;
             this._listTabsResponse = response;
+            this._recordRuntimeInfo();
             this.update("runtime-global-actors");
           })
           .then(() => {
             this.checkIfProjectIsRunning();
             this.update("runtime-targets", { type: "apps" });
-            front.fetchIcons();
+            front.fetchIcons().then(() => this.update("runtime-apps-icons"));
           });
         } else {
           this._listTabsResponse = response;
+          this._recordRuntimeInfo();
           this.update("runtime-global-actors");
         }
       });
@@ -495,6 +501,33 @@ let AppManager = exports.AppManager = {
 
     return deferred.promise;
   },
+
+  _recordRuntimeInfo: Task.async(function*() {
+    if (!this.connected) {
+      return;
+    }
+    let runtime = this.selectedRuntime;
+    this._telemetry.logKeyed("DEVTOOLS_WEBIDE_CONNECTED_RUNTIME_TYPE",
+                             runtime.type || "UNKNOWN", true);
+    this._telemetry.logKeyed("DEVTOOLS_WEBIDE_CONNECTED_RUNTIME_ID",
+                             runtime.id || "unknown", true);
+    if (!this.deviceFront) {
+      this.update("runtime-telemetry");
+      return;
+    }
+    let d = yield this.deviceFront.getDescription();
+    this._telemetry.logKeyed("DEVTOOLS_WEBIDE_CONNECTED_RUNTIME_PROCESSOR",
+                             d.processor, true);
+    this._telemetry.logKeyed("DEVTOOLS_WEBIDE_CONNECTED_RUNTIME_OS",
+                             d.os, true);
+    this._telemetry.logKeyed("DEVTOOLS_WEBIDE_CONNECTED_RUNTIME_PLATFORM_VERSION",
+                             d.platformversion, true);
+    this._telemetry.logKeyed("DEVTOOLS_WEBIDE_CONNECTED_RUNTIME_APP_TYPE",
+                             d.apptype, true);
+    this._telemetry.logKeyed("DEVTOOLS_WEBIDE_CONNECTED_RUNTIME_VERSION",
+                             d.version, true);
+    this.update("runtime-telemetry");
+  }),
 
   isMainProcessDebuggable: function() {
     // Fx <39 exposes chrome tab actors on RootActor

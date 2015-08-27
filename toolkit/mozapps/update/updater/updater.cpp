@@ -64,8 +64,12 @@
 #define PROGRESS_FINISH_SIZE   5.0f
 
 // Amount of time in ms to wait for the parent process to close
-#define PARENT_WAIT 5000
-#define IMMERSIVE_PARENT_WAIT 15000
+#ifdef DEBUG
+// Use a large value for debug builds since the xpcshell tests take a long time.
+#define PARENT_WAIT 30000
+#else
+#define PARENT_WAIT 10000
+#endif
 
 #if defined(XP_MACOSX)
 // These functions are defined in launchchild_osx.mm
@@ -114,6 +118,11 @@ static int ioprio_set(int which, int who, int ioprio) {
 static bool sUseHardLinks = true;
 #else
 # define MAYBE_USE_HARD_LINKS 0
+#endif
+
+#if defined(MOZ_VERIFY_MAR_SIGNATURE) && !defined(XP_WIN) && !defined(XP_MACOSX)
+#include "nss.h"
+#include "prerror.h"
 #endif
 
 #ifdef XP_WIN
@@ -1794,23 +1803,6 @@ PatchIfFile::Finish(int status)
 #include "nsWindowsHelpers.h"
 #include "uachelper.h"
 #include "pathhash.h"
-
-#ifdef MOZ_METRO
-/**
- * Determines if the update came from an Immersive browser
- * @return true if the update came from an immersive browser
- */
-bool
-IsUpdateFromMetro(int argc, NS_tchar **argv)
-{
-  for (int i = 0; i < argc; i++) {
-    if (!wcsicmp(L"-ServerName:DefaultBrowserServer", argv[i])) {
-      return true;
-    }
-  }
-  return false;
-}
-#endif
 #endif
 
 static void
@@ -1837,14 +1829,6 @@ LaunchCallbackApp(const NS_tchar *workingDir,
   // Do not allow the callback to run when running an update through the
   // service as session 0.  The unelevated updater.exe will do the launching.
   if (!usingService) {
-#if defined(MOZ_METRO)
-    // If our callback application is the default metro browser, then
-    // launch it now.
-    if (IsUpdateFromMetro(argc, argv)) {
-      LaunchDefaultMetroBrowser();
-      return;
-    }
-#endif
     WinLaunchChild(argv[0], argc, argv, nullptr);
   }
 #else
@@ -1855,20 +1839,42 @@ LaunchCallbackApp(const NS_tchar *workingDir,
 static bool
 WriteStatusFile(const char* aStatus)
 {
-  NS_tchar filename[MAXPATHLEN];
+  NS_tchar filename[MAXPATHLEN] = {NS_T('\0')};
+#if defined(XP_WIN)
+  // The temp file is not removed on failure since there is client code that
+  // will remove it.
+  GetTempFileNameW(gPatchDirPath, L"sta", 0, filename);
+#else
   NS_tsnprintf(filename, sizeof(filename)/sizeof(filename[0]),
                NS_T("%s/update.status"), gPatchDirPath);
+#endif
 
   // Make sure that the directory for the update status file exists
-  if (ensure_parent_dir(filename))
+  if (ensure_parent_dir(filename)) {
     return false;
+  }
 
-  AutoFile file(NS_tfopen(filename, NS_T("wb+")));
-  if (file == nullptr)
-    return false;
+  // This is scoped to make the AutoFile close the file so it is possible to
+  // move the temp file to the update.status file on Windows.
+  {
+    AutoFile file(NS_tfopen(filename, NS_T("wb+")));
+    if (file == nullptr) {
+      return false;
+    }
 
-  if (fwrite(aStatus, strlen(aStatus), 1, file) != 1)
+    if (fwrite(aStatus, strlen(aStatus), 1, file) != 1) {
+      return false;
+    }
+  }
+
+#if defined(XP_WIN)
+  NS_tchar dstfilename[MAXPATHLEN] = {NS_T('\0')};
+  NS_tsnprintf(dstfilename, sizeof(dstfilename)/sizeof(dstfilename[0]),
+               NS_T("%s\\update.status"), gPatchDirPath);
+  if (MoveFileExW(filename, dstfilename, MOVEFILE_REPLACE_EXISTING) == 0) {
     return false;
+  }
+#endif
 
   return true;
 }
@@ -2261,7 +2267,12 @@ UpdateThreadFunc(void *param)
         NS_tchar updateSettingsPath[MAX_TEXT_LEN];
         NS_tsnprintf(updateSettingsPath,
                      sizeof(updateSettingsPath) / sizeof(updateSettingsPath[0]),
-                     NS_T("%s/update-settings.ini"), gWorkingDirPath);
+#ifdef XP_MACOSX
+                     NS_T("%s/Contents/Resources/update-settings.ini"),
+#else
+                     NS_T("%s/update-settings.ini"),
+#endif
+                     gWorkingDirPath);
         MARChannelStringTable MARStrings;
         if (ReadMARChannelIDs(updateSettingsPath, &MARStrings) != OK) {
           // If we can't read from update-settings.ini then we shouldn't impose
@@ -2351,6 +2362,20 @@ int NS_main(int argc, NS_tchar **argv)
     _exit(1);
   }
 #endif
+
+#if defined(MOZ_VERIFY_MAR_SIGNATURE) && !defined(XP_WIN) && !defined(XP_MACOSX)
+  // On Windows and Mac we rely on native APIs to do verifications so we don't
+  // need to initialize NSS at all there.
+  // Otherwise, minimize the amount of NSS we depend on by avoiding all the NSS
+  // databases.
+  if (NSS_NoDB_Init(NULL) != SECSuccess) {
+   PRErrorCode error = PR_GetError();
+   fprintf(stderr, "Could not initialize NSS: %s (%d)",
+           PR_ErrorToName(error), (int) error);
+    _exit(1);
+  }
+#endif
+
   InitProgressUI(&argc, &argv);
 
   // To process an update the updater command line must at a minimum have the
@@ -2532,15 +2557,10 @@ int NS_main(int argc, NS_tchar **argv)
     // Otherwise, wait for the parent process to exit before starting the
     // update.
     if (parent) {
-      bool updateFromMetro = false;
-#ifdef MOZ_METRO
-      updateFromMetro = IsUpdateFromMetro(argc, argv);
-#endif
-      DWORD waitTime = updateFromMetro ?
-                       IMMERSIVE_PARENT_WAIT : PARENT_WAIT;
+      DWORD waitTime = PARENT_WAIT;
       DWORD result = WaitForSingleObject(parent, waitTime);
       CloseHandle(parent);
-      if (result != WAIT_OBJECT_0 && !updateFromMetro)
+      if (result != WAIT_OBJECT_0)
         return 1;
     }
   }
@@ -2771,14 +2791,14 @@ int NS_main(int argc, NS_tchar **argv)
         }
       }
 
-      // If the service can't be used when staging and update, make sure that
+      // If the service can't be used when staging an update, make sure that
       // the UAC prompt is not shown! In this case, just set the status to
       // pending and the update will be applied during the next startup.
       if (!useService && sStagedUpdate) {
         if (updateLockFileHandle != INVALID_HANDLE_VALUE) {
           CloseHandle(updateLockFileHandle);
         }
-        WriteStatusPending(gPatchDirPath);
+        WriteStatusFile("pending");
         return 0;
       }
 

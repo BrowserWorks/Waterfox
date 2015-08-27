@@ -14,6 +14,7 @@
 #include "mozilla/dom/cache/OfflineStorage.h"
 #include "mozilla/dom/quota/OriginOrPatternString.h"
 #include "mozilla/dom/quota/QuotaManager.h"
+#include "mozIStorageConnection.h"
 #include "nsIFile.h"
 #include "nsIPrincipal.h"
 #include "nsIRunnable.h"
@@ -22,6 +23,7 @@
 namespace {
 
 using mozilla::dom::Nullable;
+using mozilla::dom::cache::Action;
 using mozilla::dom::cache::QuotaInfo;
 using mozilla::dom::quota::Client;
 using mozilla::dom::quota::OriginOrPatternString;
@@ -54,6 +56,22 @@ private:
   const QuotaInfo mQuotaInfo;
 };
 
+class NullAction final : public Action
+{
+public:
+  NullAction()
+  {
+  }
+
+  virtual void
+  RunOnTarget(Resolver* aResolver, const QuotaInfo&, Data*) override
+  {
+    // Resolve success immediately.  This Action does no actual work.
+    MOZ_ASSERT(aResolver);
+    aResolver->Resolve(NS_OK);
+  }
+};
+
 } // anonymous namespace
 
 namespace mozilla {
@@ -65,6 +83,45 @@ using mozilla::dom::quota::OriginOrPatternString;
 using mozilla::dom::quota::QuotaManager;
 using mozilla::dom::quota::PERSISTENCE_TYPE_DEFAULT;
 using mozilla::dom::quota::PersistenceType;
+
+class Context::Data final : public Action::Data
+{
+public:
+  explicit Data(nsIThread* aTarget)
+    : mTarget(aTarget)
+  {
+    MOZ_ASSERT(mTarget);
+  }
+
+  virtual mozIStorageConnection*
+  GetConnection() const override
+  {
+    MOZ_ASSERT(mTarget == NS_GetCurrentThread());
+    return mConnection;
+  }
+
+  virtual void
+  SetConnection(mozIStorageConnection* aConn) override
+  {
+    MOZ_ASSERT(mTarget == NS_GetCurrentThread());
+    MOZ_ASSERT(!mConnection);
+    mConnection = aConn;
+    MOZ_ASSERT(mConnection);
+  }
+
+private:
+  ~Data()
+  {
+    if (mConnection) {
+      NS_ProxyRelease(mTarget, mConnection);
+    }
+  }
+
+  nsCOMPtr<nsIThread> mTarget;
+  nsCOMPtr<mozIStorageConnection> mConnection;
+
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(Context::Data)
+};
 
 // Executed to perform the complicated dance of steps necessary to initialize
 // the QuotaManager.  This must be performed for each origin before any disk
@@ -336,7 +393,7 @@ Context::QuotaInitRunnable::Run()
 
       // Execute the provided initialization Action.  The Action must Resolve()
       // before returning.
-      mQuotaIOThreadAction->RunOnTarget(resolver, mQuotaInfo);
+      mQuotaIOThreadAction->RunOnTarget(resolver, mQuotaInfo, nullptr);
       MOZ_ASSERT(resolver->Resolved());
 
       break;
@@ -391,9 +448,10 @@ class Context::ActionRunnable final : public nsIRunnable
                                     , public Context::Activity
 {
 public:
-  ActionRunnable(Context* aContext, nsIEventTarget* aTarget, Action* aAction,
-                 const QuotaInfo& aQuotaInfo)
+  ActionRunnable(Context* aContext, Data* aData, nsIEventTarget* aTarget,
+                 Action* aAction, const QuotaInfo& aQuotaInfo)
     : mContext(aContext)
+    , mData(aData)
     , mTarget(aTarget)
     , mAction(aAction)
     , mQuotaInfo(aQuotaInfo)
@@ -403,9 +461,10 @@ public:
     , mExecutingRunOnTarget(false)
   {
     MOZ_ASSERT(mContext);
+    // mData may be nullptr
     MOZ_ASSERT(mTarget);
     MOZ_ASSERT(mAction);
-    MOZ_ASSERT(mQuotaInfo.mDir);
+    // mQuotaInfo.mDir may be nullptr if QuotaInitRunnable failed
     MOZ_ASSERT(mInitiatingThread);
   }
 
@@ -492,6 +551,7 @@ private:
   };
 
   nsRefPtr<Context> mContext;
+  nsRefPtr<Data> mData;
   nsCOMPtr<nsIEventTarget> mTarget;
   nsRefPtr<Action> mAction;
   const QuotaInfo mQuotaInfo;
@@ -558,7 +618,9 @@ Context::ActionRunnable::Run()
       mExecutingRunOnTarget = true;
 
       mState = STATE_RUNNING;
-      mAction->RunOnTarget(this, mQuotaInfo);
+      mAction->RunOnTarget(this, mQuotaInfo, mData);
+
+      mData = nullptr;
 
       // Resolve was called synchronously from RunOnTarget().  We can
       // immediately move to completing now since we are sure RunOnTarget()
@@ -667,10 +729,22 @@ void
 Context::ThreadsafeHandle::AllowToCloseOnOwningThread()
 {
   MOZ_ASSERT(mOwningThread == NS_GetCurrentThread());
+
   // A Context "closes" when its ref count drops to zero.  Dropping this
   // strong ref is necessary, but not sufficient for the close to occur.
   // Any outstanding IO will continue and keep the Context alive.  Once
   // the Context is idle, it will be destroyed.
+
+  // First, tell the context to flush any target thread shared data.  This
+  // data must be released on the target thread prior to running the Context
+  // destructor.  This will schedule an Action which ensures that the
+  // ~Context() is not immediately executed when we drop the strong ref.
+  if (mStrongRef) {
+    mStrongRef->DoomTargetData();
+  }
+
+  // Now drop our strong ref and let Context finish running any outstanding
+  // Actions.
   mStrongRef = nullptr;
 }
 
@@ -701,48 +775,52 @@ Context::ThreadsafeHandle::ContextDestroyed(Context* aContext)
 
 // static
 already_AddRefed<Context>
-Context::Create(Manager* aManager, Action* aQuotaIOThreadAction)
+Context::Create(Manager* aManager, nsIThread* aTarget,
+                Action* aQuotaIOThreadAction, Context* aOldContext)
 {
-  nsRefPtr<Context> context = new Context(aManager);
+  nsRefPtr<Context> context = new Context(aManager, aTarget);
 
+  // Do this here to avoid doing an AddRef() in the constructor
+  // TODO: pass context->mData to allow connetion sharing with init
   context->mInitRunnable = new QuotaInitRunnable(context, aManager,
                                                  aQuotaIOThreadAction);
-  nsresult rv = context->mInitRunnable->Dispatch();
-  if (NS_FAILED(rv)) {
-    // Shutdown must be delayed until all Contexts are destroyed.  Shutdown
-    // must also prevent any new Contexts from being constructed.  Crash
-    // for this invariant violation.
-    MOZ_CRASH("Failed to dispatch QuotaInitRunnable.");
+
+  if (aOldContext) {
+    aOldContext->SetNextContext(context);
+  } else {
+    context->Start();
   }
 
   return context.forget();
 }
 
-Context::Context(Manager* aManager)
+Context::Context(Manager* aManager, nsIThread* aTarget)
   : mManager(aManager)
-  , mState(STATE_CONTEXT_INIT)
+  , mTarget(aTarget)
+  , mData(new Data(aTarget))
+  , mState(STATE_CONTEXT_PREINIT)
 {
   MOZ_ASSERT(mManager);
 }
 
 void
-Context::Dispatch(nsIEventTarget* aTarget, Action* aAction)
+Context::Dispatch(Action* aAction)
 {
   NS_ASSERT_OWNINGTHREAD(Context);
-  MOZ_ASSERT(aTarget);
   MOZ_ASSERT(aAction);
 
+  MOZ_ASSERT(mState != STATE_CONTEXT_CANCELED);
   if (mState == STATE_CONTEXT_CANCELED) {
     return;
-  } else if (mState == STATE_CONTEXT_INIT) {
+  } else if (mState == STATE_CONTEXT_INIT ||
+             mState == STATE_CONTEXT_PREINIT) {
     PendingAction* pending = mPendingActions.AppendElement();
-    pending->mTarget = aTarget;
     pending->mAction = aAction;
     return;
   }
 
   MOZ_ASSERT(STATE_CONTEXT_READY);
-  DispatchAction(aTarget, aAction);
+  DispatchAction(aAction);
 }
 
 void
@@ -750,8 +828,15 @@ Context::CancelAll()
 {
   NS_ASSERT_OWNINGTHREAD(Context);
 
-  if (mInitRunnable) {
-    MOZ_ASSERT(mState == STATE_CONTEXT_INIT);
+  // In PREINIT state we have not dispatch the init runnable yet.  Just
+  // forget it.
+  if (mState == STATE_CONTEXT_PREINIT) {
+    mInitRunnable = nullptr;
+
+  // In INIT state we have dispatched the runnable, but not received the
+  // async completion yet.  Cancel the runnable, but don't forget about it
+  // until we get OnQuotaInit() callback.
+  } else if (mState == STATE_CONTEXT_INIT) {
     mInitRunnable->Cancel();
   }
 
@@ -766,11 +851,18 @@ Context::CancelAll()
   AllowToClose();
 }
 
+bool
+Context::IsCanceled() const
+{
+  NS_ASSERT_OWNINGTHREAD(Context);
+  return mState == STATE_CONTEXT_CANCELED;
+}
+
 void
 Context::Invalidate()
 {
   NS_ASSERT_OWNINGTHREAD(Context);
-  mManager->Invalidate();
+  mManager->NoteClosing();
   CancelAll();
 }
 
@@ -815,15 +907,48 @@ Context::~Context()
   }
 
   mManager->RemoveContext(this);
+
+  if (mNextContext) {
+    mNextContext->Start();
+  }
 }
 
 void
-Context::DispatchAction(nsIEventTarget* aTarget, Action* aAction)
+Context::Start()
+{
+  NS_ASSERT_OWNINGTHREAD(Context);
+
+  // Previous context closing delayed our start, but then we were canceled.
+  // In this case, just do nothing here.
+  if (mState == STATE_CONTEXT_CANCELED) {
+    MOZ_ASSERT(!mInitRunnable);
+    return;
+  }
+
+  MOZ_ASSERT(mState == STATE_CONTEXT_PREINIT);
+  mState = STATE_CONTEXT_INIT;
+
+  nsresult rv = mInitRunnable->Dispatch();
+  if (NS_FAILED(rv)) {
+    // Shutdown must be delayed until all Contexts are destroyed.  Shutdown
+    // must also prevent any new Contexts from being constructed.  Crash
+    // for this invariant violation.
+    MOZ_CRASH("Failed to dispatch QuotaInitRunnable.");
+  }
+}
+
+void
+Context::DispatchAction(Action* aAction, bool aDoomData)
 {
   NS_ASSERT_OWNINGTHREAD(Context);
 
   nsRefPtr<ActionRunnable> runnable =
-    new ActionRunnable(this, aTarget, aAction, mQuotaInfo);
+    new ActionRunnable(this, mData, mTarget, aAction, mQuotaInfo);
+
+  if (aDoomData) {
+    mData = nullptr;
+  }
+
   nsresult rv = runnable->Dispatch();
   if (NS_FAILED(rv)) {
     // Shutdown must be delayed until all Contexts are destroyed.  Crash
@@ -863,7 +988,7 @@ Context::OnQuotaInit(nsresult aRv, const QuotaInfo& aQuotaInfo,
   mState = STATE_CONTEXT_READY;
 
   for (uint32_t i = 0; i < mPendingActions.Length(); ++i) {
-    DispatchAction(mPendingActions[i].mTarget, mPendingActions[i].mAction);
+    DispatchAction(mPendingActions[i].mAction);
   }
   mPendingActions.Clear();
 }
@@ -895,6 +1020,35 @@ Context::CreateThreadsafeHandle()
   }
   nsRefPtr<ThreadsafeHandle> ref = mThreadsafeHandle;
   return ref.forget();
+}
+
+void
+Context::SetNextContext(Context* aNextContext)
+{
+  NS_ASSERT_OWNINGTHREAD(Context);
+  MOZ_ASSERT(aNextContext);
+  MOZ_ASSERT(!mNextContext);
+  mNextContext = aNextContext;
+}
+
+void
+Context::DoomTargetData()
+{
+  NS_ASSERT_OWNINGTHREAD(Context);
+  MOZ_ASSERT(mData);
+
+  // We are about to drop our reference to the Data.  We need to ensure that
+  // the ~Context() destructor does not run until contents of Data have been
+  // released on the Target thread.
+
+  // Dispatch a no-op Action.  This will hold the Context alive through a
+  // roundtrip to the target thread and back to the owning thread.  The
+  // ref to the Data object is cleared on the owning thread after creating
+  // the ActionRunnable, but before dispatching it.
+  nsRefPtr<Action> action = new NullAction();
+  DispatchAction(action, true /* doomed data */);
+
+  MOZ_ASSERT(!mData);
 }
 
 } // namespace cache
