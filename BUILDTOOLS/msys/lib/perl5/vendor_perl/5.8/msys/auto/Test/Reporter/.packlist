@@ -1,5 +1,0 @@
-/usr/bin/cpantest
-/usr/lib/perl5/vendor_perl/5.8/Test/Reporter.pm
-/usr/lib/perl5/vendor_perl/5.8/Test/Reporter/Date/Format.pm
-/usr/lib/perl5/vendor_perl/5.8/Test/Reporter/Mail/Util.pm
-/usr/lib/perl5/vendor_perl/5.8/Test/Reporter/Time/Zone.pm

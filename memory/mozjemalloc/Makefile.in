@@ -20,5 +20,5 @@ endif
 endif
 
 ifeq ($(HOST_OS_ARCH),WINNT)
-jemalloc.$(OBJ_SUFFIX): CFLAGS := -Od
+#jemalloc.$(OBJ_SUFFIX): CFLAGS := -Od
 endif

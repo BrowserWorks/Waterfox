@@ -1,0 +1,1757 @@
+diff --git a/browser/base/content/browser-addons.js b/browser/base/content/browser-addons.js
+index 3857e6d8..c4eb4ef 100644
+--- a/browser/base/content/browser-addons.js
++++ b/browser/base/content/browser-addons.js
+@@ -3,6 +3,32 @@
+ # License, v. 2.0. If a copy of the MPL was not distributed with this
+ # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ 
++// Removes a doorhanger notification if all of the installs it was notifying
++// about have ended in some way.
++function removeNotificationOnEnd(notification, installs) {
++  let count = installs.length;
++
++  function maybeRemove(install) {
++    install.removeListener(this);
++
++    if (--count == 0) {
++      // Check that the notification is still showing
++      let current = PopupNotifications.getNotification(notification.id, notification.browser);
++      if (current === notification)
++        notification.remove();
++    }
++  }
++
++  for (let install of installs) {
++    install.addListener({
++      onDownloadCancelled: maybeRemove,
++      onDownloadFailed: maybeRemove,
++      onInstallFailed: maybeRemove,
++      onInstallEnded: maybeRemove
++    });
++  }
++}
++
+ const gXPInstallObserver = {
+   _findChildShell: function (aDocShell, aSoughtShell)
+   {
+@@ -43,6 +69,23 @@ const gXPInstallObserver = {
+       return;
+     }
+ 
++    let showNextConfirmation = () => {
++      // Make sure the browser is still alive.
++      if (gBrowser.browsers.indexOf(browser) == -1)
++        return;
++
++      let pending = this.pendingInstalls.get(browser);
++      if (pending && pending.length)
++        this.showInstallConfirmation(browser, pending.shift());
++    }
++
++    // If all installs have already been cancelled in some way then just show
++    // the next confirmation
++    if (installInfo.installs.every(i => i.state != AddonManager.STATE_DOWNLOADED)) {
++      showNextConfirmation();
++      return;
++    }
++
+     const anchorID = "addons-notification-icon";
+ 
+     // Make notifications persist a minimum of 30 seconds
+@@ -58,25 +101,18 @@ const gXPInstallObserver = {
+ 
+     let cancelInstallation = () => {
+       if (installInfo) {
+-        for (let install of installInfo.installs)
+-          install.cancel();
++        for (let install of installInfo.installs) {
++          // The notification may have been closed because the add-ons got
++          // cancelled elsewhere, only try to cancel those that are still
++          // pending install.
++          if (install.state != AddonManager.STATE_CANCELLED)
++            install.cancel();
++        }
+       }
+ 
+       this.acceptInstallation = null;
+ 
+-      let tab = gBrowser.getTabForBrowser(browser);
+-      if (tab)
+-        tab.removeEventListener("TabClose", cancelInstallation);
+-
+-      window.removeEventListener("unload", cancelInstallation);
+-
+-      // Make sure the browser is still alive.
+-      if (gBrowser.browsers.indexOf(browser) == -1)
+-        return;
+-
+-      let pending = this.pendingInstalls.get(browser);
+-      if (pending && pending.length)
+-        this.showInstallConfirmation(browser, pending.shift());
++      showNextConfirmation();
+     };
+ 
+     let unsigned = installInfo.installs.filter(i => i.addon.signedState <= AddonManager.SIGNEDSTATE_MISSING);
+@@ -166,13 +202,13 @@ const gXPInstallObserver = {
+     let tab = gBrowser.getTabForBrowser(browser);
+     if (tab) {
+       gBrowser.selectedTab = tab;
+-      tab.addEventListener("TabClose", cancelInstallation);
+     }
+ 
+-    window.addEventListener("unload", cancelInstallation);
++    let popup = PopupNotifications.show(browser, "addon-install-confirmation",
++                                        messageString, anchorID, null, null,
++                                        options);
+ 
+-    PopupNotifications.show(browser, "addon-install-confirmation", messageString,
+-                            anchorID, null, null, options);
++    removeNotificationOnEnd(popup, installInfo.installs);
+ 
+     Services.telemetry
+             .getHistogramById("SECURITY_UI")
+@@ -228,6 +264,17 @@ const gXPInstallObserver = {
+       PopupNotifications.show(browser, notificationID, messageString, anchorID,
+                               action, null, options);
+       break; }
++    case "addon-install-origin-blocked": {
++      messageString = gNavigatorBundle.getFormattedString("xpinstallPromptMessage",
++                        [brandShortName]);
++
++      let secHistogram = Components.classes["@mozilla.org/base/telemetry;1"].getService(Ci.nsITelemetry).getHistogramById("SECURITY_UI");
++      secHistogram.add(Ci.nsISecurityUITelemetry.WARNING_ADDON_ASKING_PREVENTED);
++      let popup = PopupNotifications.show(browser, notificationID,
++                                          messageString, anchorID,
++                                          null, null, options);
++      removeNotificationOnEnd(popup, installInfo.installs);
++      break; }
+     case "addon-install-blocked": {
+       if (!options.displayOrigin) {
+         // Need to deal with missing originatingURI and with about:/data: URIs more gracefully,
+@@ -248,8 +295,10 @@ const gXPInstallObserver = {
+       };
+ 
+       secHistogram.add(Ci.nsISecurityUITelemetry.WARNING_ADDON_ASKING_PREVENTED);
+-      PopupNotifications.show(browser, notificationID, messageString, anchorID,
+-                              action, null, options);
++      let popup = PopupNotifications.show(browser, notificationID,
++                                          messageString, anchorID,
++                                          action, null, options);
++      removeNotificationOnEnd(popup, installInfo.installs);
+       break; }
+     case "addon-install-started": {
+       let needsDownload = function needsDownload(aInstall) {
+diff --git a/browser/base/content/browser.js b/browser/base/content/browser.js
+index 63de1bf..a5a04a5 100644
+--- a/browser/base/content/browser.js
++++ b/browser/base/content/browser.js
+@@ -1267,6 +1267,7 @@ var gBrowserInit = {
+     Services.obs.addObserver(gXPInstallObserver, "addon-install-disabled", false);
+     Services.obs.addObserver(gXPInstallObserver, "addon-install-started", false);
+     Services.obs.addObserver(gXPInstallObserver, "addon-install-blocked", false);
++    Services.obs.addObserver(gXPInstallObserver, "addon-install-origin-blocked", false);
+     Services.obs.addObserver(gXPInstallObserver, "addon-install-failed", false);
+     Services.obs.addObserver(gXPInstallObserver, "addon-install-confirmation", false);
+     Services.obs.addObserver(gXPInstallObserver, "addon-install-complete", false);
+@@ -1576,6 +1577,7 @@ var gBrowserInit = {
+       Services.obs.removeObserver(gXPInstallObserver, "addon-install-disabled");
+       Services.obs.removeObserver(gXPInstallObserver, "addon-install-started");
+       Services.obs.removeObserver(gXPInstallObserver, "addon-install-blocked");
++      Services.obs.removeObserver(gXPInstallObserver, "addon-install-origin-blocked");
+       Services.obs.removeObserver(gXPInstallObserver, "addon-install-failed");
+       Services.obs.removeObserver(gXPInstallObserver, "addon-install-confirmation");
+       Services.obs.removeObserver(gXPInstallObserver, "addon-install-complete");
+diff --git a/browser/base/content/test/general/browser_bug553455.js b/browser/base/content/test/general/browser_bug553455.js
+index 0536e47..f11180e 100644
+--- a/browser/base/content/test/general/browser_bug553455.js
++++ b/browser/base/content/test/general/browser_bug553455.js
+@@ -192,8 +192,7 @@ function test_disabled_install() {
+       gBrowser.removeTab(gBrowser.selectedTab);
+ 
+       AddonManager.getAllInstalls(function(aInstalls) {
+-        is(aInstalls.length, 1, "Should have been one install created");
+-        aInstalls[0].cancel();
++        is(aInstalls.length, 0, "Shouldn't be any pending installs");
+ 
+         runNextTest();
+       });
+@@ -673,8 +672,10 @@ function test_url() {
+     });
+   });
+ 
+-  gBrowser.selectedTab = gBrowser.addTab();
+-  gBrowser.loadURI(TESTROOT + "unsigned.xpi");
++  gBrowser.selectedTab = gBrowser.addTab("about:blank");
++  BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser).then(() => {
++    gBrowser.loadURI(TESTROOT + "unsigned.xpi");
++  });
+ },
+ 
+ function test_localfile() {
+@@ -702,8 +703,10 @@ function test_localfile() {
+   } catch (ex) {
+     var path = CHROMEROOT + "corrupt.xpi";
+   }
+-  gBrowser.selectedTab = gBrowser.addTab();
+-  gBrowser.loadURI(path);
++  gBrowser.selectedTab = gBrowser.addTab("about:blank");
++  BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser).then(() => {
++    gBrowser.loadURI(path);
++  });
+ },
+ 
+ function test_tabclose() {
+@@ -731,8 +734,70 @@ function test_tabclose() {
+     });
+   });
+ 
++  gBrowser.selectedTab = gBrowser.addTab("about:blank");
++  BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser).then(() => {
++    gBrowser.loadURI(TESTROOT + "unsigned.xpi");
++  });
++},
++
++// Add-ons should be cancelled and the install notification destroyed when
++// navigating to a new origin
++function test_tabnavigate() {
++  if (!Preferences.get("xpinstall.customConfirmationUI", false)) {
++    runNextTest();
++    return;
++  }
++
++  // Wait for the progress notification
++  wait_for_progress_notification(aPanel => {
++    // Wait for the install confirmation dialog
++    wait_for_install_dialog(() => {
++      wait_for_notification_close(() => {
++        AddonManager.getAllInstalls(aInstalls => {
++          is(aInstalls.length, 0, "Should be no pending install");
++
++          Services.perms.remove("http://example.com/", "install");
++          loadPromise.then(() => {
++            gBrowser.removeTab(gBrowser.selectedTab);
++            runNextTest();
++          });
++        });
++      });
++
++      let loadPromise = BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser);
++      gBrowser.loadURI("about:blank");
++    });
++  });
++
++  var pm = Services.perms;
++  pm.add(makeURI("http://example.com/"), "install", pm.ALLOW_ACTION);
++
++  var triggers = encodeURIComponent(JSON.stringify({
++    "Extension XPI": "unsigned.xpi"
++  }));
+   gBrowser.selectedTab = gBrowser.addTab();
+-  gBrowser.loadURI(TESTROOT + "unsigned.xpi");
++  gBrowser.loadURI(TESTROOT + "installtrigger.html?" + triggers);
++},
++
++function test_urlbar() {
++  wait_for_notification("addon-install-origin-blocked", function(aPanel) {
++    let notification = aPanel.childNodes[0];
++
++    is(notification.button.label, "", "Button to allow install should be hidden.");
++
++    wait_for_notification_close(() => {
++      runNextTest();
++    });
++
++    gBrowser.removeCurrentTab();
++  });
++
++  gBrowser.selectedTab = gBrowser.addTab("about:blank");
++  BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser).then(() => {
++    gURLBar.value = TESTROOT + "unsigned.xpi";
++    gURLBar.focus();
++    EventUtils.synthesizeKey("VK_RETURN", {});
++  });
+ },
+ 
+ function test_wronghost() {
+@@ -869,12 +934,16 @@ function test_renotify_blocked() {
+       executeSoon(function () {
+         wait_for_notification("addon-install-blocked", function(aPanel) {
+           AddonManager.getAllInstalls(function(aInstalls) {
+-          is(aInstalls.length, 2, "Should be two pending installs");
+-            aInstalls[0].cancel();
+-            aInstalls[1].cancel();
++            is(aInstalls.length, 2, "Should be two pending installs");
++
++            wait_for_notification_close(() => {
++              AddonManager.getAllInstalls(function(aInstalls) {
++                is(aInstalls.length, 0, "Should have cancelled the installs");
++                runNextTest();
++              });
++            });
+ 
+             info("Closing browser tab");
+-            wait_for_notification_close(runNextTest);
+             gBrowser.removeTab(gBrowser.selectedTab);
+           });
+         });
+diff --git a/browser/themes/shared/notification-icons.inc.css b/browser/themes/shared/notification-icons.inc.css
+index 0f1a641..f64761a 100644
+--- a/browser/themes/shared/notification-icons.inc.css
++++ b/browser/themes/shared/notification-icons.inc.css
+@@ -21,6 +21,7 @@
+ .popup-notification-icon[popupid="xpinstall-disabled"],
+ .popup-notification-icon[popupid="addon-progress"],
+ .popup-notification-icon[popupid="addon-install-blocked"],
++.popup-notification-icon[popupid="addon-install-origin-blocked"],
+ .popup-notification-icon[popupid="addon-install-failed"],
+ .popup-notification-icon[popupid="addon-install-confirmation"],
+ .popup-notification-icon[popupid="addon-install-complete"] {
+diff --git a/toolkit/mozapps/extensions/AddonManager.jsm b/toolkit/mozapps/extensions/AddonManager.jsm
+index 2553548..5e08bca 100644
+--- a/toolkit/mozapps/extensions/AddonManager.jsm
++++ b/toolkit/mozapps/extensions/AddonManager.jsm
+@@ -304,6 +304,37 @@ function getLocale() {
+ }
+ 
+ /**
++ * Previously the APIs for installing add-ons from webpages accepted nsIURI
++ * arguments for the installing page. They now take an nsIPrincipal but for now
++ * maintain backwards compatibility by converting an nsIURI to an nsIPrincipal.
++ *
++ * @param  aPrincipalOrURI
++ *         The argument passed to the API function. Can be null, an nsIURI or
++ *         an nsIPrincipal.
++ * @return an nsIPrincipal.
++ */
++function ensurePrincipal(principalOrURI) {
++  if (principalOrURI instanceof Ci.nsIPrincipal)
++    return principalOrURI;
++
++  logger.warn("Deprecated API call, please pass a non-null nsIPrincipal instead of an nsIURI");
++
++  // Previously a null installing URI meant allowing the install regardless.
++  if (!principalOrURI) {
++    return Services.scriptSecurityManager.getSystemPrincipal();
++  }
++
++  if (principalOrURI instanceof Ci.nsIURI) {
++    return Services.scriptSecurityManager.createCodebasePrincipal(principalOrURI, {
++      inBrowser: true
++    });
++  }
++
++  // Just return whatever we have, the API method will log an error about it.
++  return principalOrURI;
++}
++
++/**
+  * A helper class to repeatedly call a listener with each object in an array
+  * optionally checking whether the object has a method in it.
+  *
+@@ -350,6 +381,100 @@ AsyncObjectCaller.prototype = {
+ };
+ 
+ /**
++ * Listens for a browser changing origin and cancels the installs that were
++ * started by it.
++ */
++function BrowserListener(aBrowser, aInstallingPrincipal, aInstalls) {
++  this.browser = aBrowser;
++  this.principal = aInstallingPrincipal;
++  this.installs = aInstalls;
++  this.installCount = aInstalls.length;
++
++  aBrowser.addProgressListener(this, Ci.nsIWebProgress.NOTIFY_LOCATION);
++  Services.obs.addObserver(this, "message-manager-close", true);
++
++  for (let install of this.installs)
++    install.addListener(this);
++
++  this.registered = true;
++}
++
++BrowserListener.prototype = {
++  browser: null,
++  installs: null,
++  installCount: null,
++  registered: false,
++
++  unregister: function() {
++    if (!this.registered)
++      return;
++    this.registered = false;
++
++    Services.obs.removeObserver(this, "message-manager-close");
++    // The browser may have already been detached
++    if (this.browser.removeProgressListener)
++      this.browser.removeProgressListener(this);
++
++    for (let install of this.installs)
++      install.removeListener(this);
++    this.installs = null;
++  },
++
++  cancelInstalls: function() {
++    for (let install of this.installs) {
++      try {
++        install.cancel();
++      }
++      catch (e) {
++        // Some installs may have already failed or been cancelled, ignore these
++      }
++    }
++  },
++
++  observe: function(subject, topic, data) {
++    if (subject != this.browser.messageManager)
++      return;
++
++    // The browser's message manager has closed and so the browser is
++    // going away, cancel all installs
++    this.cancelInstalls();
++  },
++
++  onLocationChange: function(webProgress, request, location) {
++    if (this.browser.contentPrincipal && this.principal.subsumes(this.browser.contentPrincipal))
++      return;
++
++    // The browser has navigated to a new origin so cancel all installs
++    this.cancelInstalls();
++  },
++
++  onDownloadCancelled: function(install) {
++    // Don't need to hear more events from this install
++    install.removeListener(this);
++
++    // Once all installs have ended unregister everything
++    if (--this.installCount == 0)
++      this.unregister();
++  },
++
++  onDownloadFailed: function(install) {
++    this.onDownloadCancelled(install);
++  },
++
++  onInstallFailed: function(install) {
++    this.onDownloadCancelled(install);
++  },
++
++  onInstallEnded: function(install) {
++    this.onDownloadCancelled(install);
++  },
++
++  QueryInterface: XPCOMUtils.generateQI([Ci.nsISupportsWeakReference,
++                                         Ci.nsIWebProgressListener,
++                                         Ci.nsIObserver])
++};
++
++/**
+  * This represents an author of an add-on (e.g. creator or developer)
+  *
+  * @param  aName
+@@ -1988,11 +2113,11 @@ var AddonManagerInternal = {
+    *
+    * @param  aMimetype
+    *         The mimetype of the add-on
+-   * @param  aURI
+-   *         The optional nsIURI of the source
++   * @param  aInstallingPrincipal
++   *         The nsIPrincipal that initiated the install
+    * @return true if the source is allowed to install this mimetype
+    */
+-  isInstallAllowed: function AMI_isInstallAllowed(aMimetype, aURI) {
++  isInstallAllowed: function AMI_isInstallAllowed(aMimetype, aInstallingPrincipal) {
+     if (!gStarted)
+       throw Components.Exception("AddonManager is not initialized",
+                                  Cr.NS_ERROR_NOT_INITIALIZED);
+@@ -2001,14 +2126,14 @@ var AddonManagerInternal = {
+       throw Components.Exception("aMimetype must be a non-empty string",
+                                  Cr.NS_ERROR_INVALID_ARG);
+ 
+-    if (aURI && !(aURI instanceof Ci.nsIURI))
+-      throw Components.Exception("aURI must be a nsIURI or null",
++    if (!aInstallingPrincipal || !(aInstallingPrincipal instanceof Ci.nsIPrincipal))
++      throw Components.Exception("aInstallingPrincipal must be a nsIPrincipal",
+                                  Cr.NS_ERROR_INVALID_ARG);
+ 
+     let providers = [...this.providers];
+     for (let provider of providers) {
+       if (callProvider(provider, "supportsMimetype", false, aMimetype) &&
+-          callProvider(provider, "isInstallAllowed", null, aURI))
++          callProvider(provider, "isInstallAllowed", null, aInstallingPrincipal))
+         return true;
+     }
+     return false;
+@@ -2022,14 +2147,14 @@ var AddonManagerInternal = {
+    *         The mimetype of add-ons being installed
+    * @param  aBrowser
+    *         The optional browser element that started the installs
+-   * @param  aURI
+-   *         The optional nsIURI that started the installs
++   * @param  aInstallingPrincipal
++   *         The nsIPrincipal that initiated the install
+    * @param  aInstalls
+    *         The array of AddonInstalls to be installed
+    */
+   installAddonsFromWebpage: function AMI_installAddonsFromWebpage(aMimetype,
+                                                                   aBrowser,
+-                                                                  aURI,
++                                                                  aInstallingPrincipal,
+                                                                   aInstalls) {
+     if (!gStarted)
+       throw Components.Exception("AddonManager is not initialized",
+@@ -2043,8 +2168,8 @@ var AddonManagerInternal = {
+       throw Components.Exception("aSource must be a nsIDOMElement, or null",
+                                  Cr.NS_ERROR_INVALID_ARG);
+ 
+-    if (aURI && !(aURI instanceof Ci.nsIURI))
+-      throw Components.Exception("aURI must be a nsIURI or null",
++    if (!aInstallingPrincipal || !(aInstallingPrincipal instanceof Ci.nsIPrincipal))
++      throw Components.Exception("aInstallingPrincipal must be a nsIPrincipal",
+                                  Cr.NS_ERROR_INVALID_ARG);
+ 
+     if (!Array.isArray(aInstalls))
+@@ -2063,20 +2188,40 @@ var AddonManagerInternal = {
+       let weblistener = Cc["@mozilla.org/addons/web-install-listener;1"].
+                         getService(Ci.amIWebInstallListener);
+ 
+-      if (!this.isInstallEnabled(aMimetype, aURI)) {
+-        weblistener.onWebInstallDisabled(aBrowser, aURI, aInstalls,
+-                                         aInstalls.length);
++      if (!this.isInstallEnabled(aMimetype)) {
++        for (let install of aInstalls)
++          install.cancel();
++
++        weblistener.onWebInstallDisabled(aBrowser, aInstallingPrincipal.URI,
++                                         aInstalls, aInstalls.length);
++        return;
+       }
+-      else if (!this.isInstallAllowed(aMimetype, aURI)) {
+-        if (weblistener.onWebInstallBlocked(aBrowser, aURI, aInstalls,
+-                                            aInstalls.length)) {
++      else if (!aBrowser.contentPrincipal || !aInstallingPrincipal.subsumes(aBrowser.contentPrincipal)) {
++        for (let install of aInstalls)
++          install.cancel();
++
++        if (weblistener instanceof Ci.amIWebInstallListener2) {
++          weblistener.onWebInstallOriginBlocked(aBrowser, aInstallingPrincipal.URI,
++                                                aInstalls, aInstalls.length);
++        }
++        return;
++      }
++
++      // The installs may start now depending on the web install listener,
++      // listen for the browser navigating to a new origin and cancel the
++      // installs in that case.
++      new BrowserListener(aBrowser, aInstallingPrincipal, aInstalls);
++
++      if (!this.isInstallAllowed(aMimetype, aInstallingPrincipal)) {
++        if (weblistener.onWebInstallBlocked(aBrowser, aInstallingPrincipal.URI,
++                                            aInstalls, aInstalls.length)) {
+           aInstalls.forEach(function(aInstall) {
+             aInstall.install();
+           });
+         }
+       }
+-      else if (weblistener.onWebInstallRequested(aBrowser, aURI, aInstalls,
+-                                                   aInstalls.length)) {
++      else if (weblistener.onWebInstallRequested(aBrowser, aInstallingPrincipal.URI,
++                                                 aInstalls, aInstalls.length)) {
+         aInstalls.forEach(function(aInstall) {
+           aInstall.install();
+         });
+@@ -2931,13 +3076,16 @@ this.AddonManager = {
+     return AddonManagerInternal.isInstallEnabled(aType);
+   },
+ 
+-  isInstallAllowed: function AM_isInstallAllowed(aType, aUri) {
+-    return AddonManagerInternal.isInstallAllowed(aType, aUri);
++  isInstallAllowed: function AM_isInstallAllowed(aType, aInstallingPrincipal) {
++    return AddonManagerInternal.isInstallAllowed(aType, ensurePrincipal(aInstallingPrincipal));
+   },
+ 
+   installAddonsFromWebpage: function AM_installAddonsFromWebpage(aType, aBrowser,
+-                                                                 aUri, aInstalls) {
+-    AddonManagerInternal.installAddonsFromWebpage(aType, aBrowser, aUri, aInstalls);
++                                                                 aInstallingPrincipal,
++                                                                 aInstalls) {
++    AddonManagerInternal.installAddonsFromWebpage(aType, aBrowser,
++                                                  ensurePrincipal(aInstallingPrincipal),
++                                                  aInstalls);
+   },
+ 
+   addManagerListener: function AM_addManagerListener(aListener) {
+diff --git a/toolkit/mozapps/extensions/addonManager.js b/toolkit/mozapps/extensions/addonManager.js
+index 9ae80f2..dcaa43d 100644
+--- a/toolkit/mozapps/extensions/addonManager.js
++++ b/toolkit/mozapps/extensions/addonManager.js
+@@ -75,14 +75,15 @@ amManager.prototype = {
+    */
+   installAddonsFromWebpage: function AMC_installAddonsFromWebpage(aMimetype,
+                                                                   aBrowser,
+-                                                                  aReferer, aUris,
+-                                                                  aHashes, aNames,
+-                                                                  aIcons, aCallback) {
++                                                                  aInstallingPrincipal,
++                                                                  aUris, aHashes,
++                                                                  aNames, aIcons,
++                                                                  aCallback) {
+     if (aUris.length == 0)
+       return false;
+ 
+     let retval = true;
+-    if (!AddonManager.isInstallAllowed(aMimetype, aReferer)) {
++    if (!AddonManager.isInstallAllowed(aMimetype, aInstallingPrincipal)) {
+       aCallback = null;
+       retval = false;
+     }
+@@ -90,7 +91,7 @@ amManager.prototype = {
+     let installs = [];
+     function buildNextInstall() {
+       if (aUris.length == 0) {
+-        AddonManager.installAddonsFromWebpage(aMimetype, aBrowser, aReferer, installs);
++        AddonManager.installAddonsFromWebpage(aMimetype, aBrowser, aInstallingPrincipal, installs);
+         return;
+       }
+       let uri = aUris.shift();
+@@ -152,12 +153,10 @@ amManager.prototype = {
+    */
+   receiveMessage: function AMC_receiveMessage(aMessage) {
+     let payload = aMessage.data;
+-    let referer = payload.referer ? Services.io.newURI(payload.referer, null, null)
+-                                  : null;
+ 
+     switch (aMessage.name) {
+       case MSG_INSTALL_ENABLED:
+-        return this.isInstallEnabled(payload.mimetype, referer);
++        return AddonManager.isInstallEnabled(payload.mimetype);
+ 
+       case MSG_INSTALL_ADDONS: {
+         let callback = null;
+@@ -174,8 +173,8 @@ amManager.prototype = {
+         }
+ 
+         return this.installAddonsFromWebpage(payload.mimetype,
+-          aMessage.target, referer, payload.uris, payload.hashes,
+-          payload.names, payload.icons, callback);
++          aMessage.target, payload.triggeringPrincipal, payload.uris,
++          payload.hashes, payload.names, payload.icons, callback);
+       }
+     }
+   },
+diff --git a/toolkit/mozapps/extensions/amContentHandler.js b/toolkit/mozapps/extensions/amContentHandler.js
+index 8c880d4..ebe5521 100644
+--- a/toolkit/mozapps/extensions/amContentHandler.js
++++ b/toolkit/mozapps/extensions/amContentHandler.js
+@@ -43,15 +43,6 @@ amContentHandler.prototype = {
+     if (callbacks)
+       window = callbacks.getInterface(Ci.nsIDOMWindow);
+ 
+-    let referer = null;
+-    if (aRequest instanceof Ci.nsIPropertyBag2) {
+-      referer = aRequest.getPropertyAsInterface("docshell.internalReferrer",
+-                                                Ci.nsIURI);
+-    }
+-
+-    if (!referer && aRequest instanceof Ci.nsIHttpChannel)
+-      referer = aRequest.referrer;
+-
+     aRequest.cancel(Cr.NS_BINDING_ABORTED);
+ 
+     let messageManager = window.QueryInterface(Ci.nsIInterfaceRequestor)
+@@ -65,7 +56,7 @@ amContentHandler.prototype = {
+       names: [null],
+       icons: [null],
+       mimetype: XPI_CONTENT_TYPE,
+-      referer: referer ? referer.spec : null,
++      triggeringPrincipal: aRequest.loadInfo.triggeringPrincipal,
+       callbackID: -1
+     });
+   },
+diff --git a/toolkit/mozapps/extensions/amIWebInstallListener.idl b/toolkit/mozapps/extensions/amIWebInstallListener.idl
+index 33adf75..eed1080 100644
+--- a/toolkit/mozapps/extensions/amIWebInstallListener.idl
++++ b/toolkit/mozapps/extensions/amIWebInstallListener.idl
+@@ -87,6 +87,27 @@ interface amIWebInstallListener : nsISupports
+                                 [optional] in uint32_t aCount);
+ };
+ 
++[scriptable, uuid(a80b89ad-bb1a-4c43-9cb7-3ae656556f78)]
++interface amIWebInstallListener2 : nsISupports
++{
++  /**
++   * Called when a non-same-origin resource attempted to initiate an install.
++   * Installs will have already been cancelled and cannot be restarted.
++   *
++   * @param  aBrowser
++   *         The browser that triggered the installs
++   * @param  aUri
++   *         The URI of the site that triggered the installs
++   * @param  aInstalls
++   *         The AddonInstalls that were blocked
++   * @param  aCount
++   *         The number of AddonInstalls
++   */
++  boolean onWebInstallOriginBlocked(in nsIDOMElement aBrowser, in nsIURI aUri,
++                                    [array, size_is(aCount)] in nsIVariant aInstalls,
++                                    [optional] in uint32_t aCount);
++};
++
+ /**
+  * amIWebInstallPrompt is used, if available, by the default implementation of 
+  * amIWebInstallInfo to display a confirmation UI to the user before running
+diff --git a/toolkit/mozapps/extensions/amInstallTrigger.js b/toolkit/mozapps/extensions/amInstallTrigger.js
+index 5a3d6c7..ce853aa 100644
+--- a/toolkit/mozapps/extensions/amInstallTrigger.js
++++ b/toolkit/mozapps/extensions/amInstallTrigger.js
+@@ -61,13 +61,12 @@ RemoteMediator.prototype = {
+ 
+   enabled: function(url) {
+     let params = {
+-      referer: url,
+       mimetype: XPINSTALL_MIMETYPE
+     };
+     return this.mm.sendSyncMessage(MSG_INSTALL_ENABLED, params)[0];
+   },
+ 
+-  install: function(installs, referer, callback, window) {
++  install: function(installs, principal, callback, window) {
+     let messageManager = window.QueryInterface(Ci.nsIInterfaceRequestor)
+                          .getInterface(Ci.nsIWebNavigation)
+                          .QueryInterface(Ci.nsIDocShell)
+@@ -77,7 +76,7 @@ RemoteMediator.prototype = {
+     let callbackID = this._addCallback(callback, installs.uris);
+ 
+     installs.mimetype = XPINSTALL_MIMETYPE;
+-    installs.referer = referer;
++    installs.triggeringPrincipal = principal;
+     installs.callbackID = callbackID;
+ 
+     return messageManager.sendSyncMessage(MSG_INSTALL_ADDONS, installs)[0];
+@@ -167,7 +166,7 @@ InstallTrigger.prototype = {
+       installData.icons.push(iconUrl ? iconUrl.spec : null);
+     }
+ 
+-    return this._mediator.install(installData, this._url.spec, callback, this._window);
++    return this._mediator.install(installData, this._principal, callback, this._window);
+   },
+ 
+   startSoftwareUpdate: function(url, flags) {
+diff --git a/toolkit/mozapps/extensions/amWebInstallListener.js b/toolkit/mozapps/extensions/amWebInstallListener.js
+index 4857db0..9c3c0b4 100644
+--- a/toolkit/mozapps/extensions/amWebInstallListener.js
++++ b/toolkit/mozapps/extensions/amWebInstallListener.js
+@@ -292,6 +292,25 @@ extWebInstallListener.prototype = {
+   /**
+    * @see amIWebInstallListener.idl
+    */
++  onWebInstallOriginBlocked: function extWebInstallListener_onWebInstallOriginBlocked(aBrowser, aUri, aInstalls) {
++    let info = {
++      browser: aBrowser,
++      originatingURI: aUri,
++      installs: aInstalls,
++
++      install: function onWebInstallBlocked_install() {
++      },
++
++      QueryInterface: XPCOMUtils.generateQI([Ci.amIWebInstallInfo])
++    };
++    Services.obs.notifyObservers(info, "addon-install-origin-blocked", null);
++
++    return false;
++  },
++
++  /**
++   * @see amIWebInstallListener.idl
++   */
+   onWebInstallBlocked: function extWebInstallListener_onWebInstallBlocked(aBrowser, aUri, aInstalls) {
+     let info = {
+       browser: aBrowser,
+@@ -322,7 +341,8 @@ extWebInstallListener.prototype = {
+   classDescription: "XPI Install Handler",
+   contractID: "@mozilla.org/addons/web-install-listener;1",
+   classID: Components.ID("{0f38e086-89a3-40a5-8ffc-9b694de1d04a}"),
+-  QueryInterface: XPCOMUtils.generateQI([Ci.amIWebInstallListener])
++  QueryInterface: XPCOMUtils.generateQI([Ci.amIWebInstallListener,
++                                         Ci.amIWebInstallListener2])
+ };
+ 
+ this.NSGetFactory = XPCOMUtils.generateNSGetFactory([extWebInstallListener]);
+diff --git a/toolkit/mozapps/extensions/content/extensions.js b/toolkit/mozapps/extensions/content/extensions.js
+index af9e63f..c295709 100644
+--- a/toolkit/mozapps/extensions/content/extensions.js
++++ b/toolkit/mozapps/extensions/content/extensions.js
+@@ -1250,8 +1250,11 @@ var gViewController = {
+           if (!files.hasMoreElements()) {
+             if (installs.length > 0) {
+               // Display the normal install confirmation for the installs
+-              AddonManager.installAddonsFromWebpage("application/x-xpinstall",
+-                                                    getBrowserElement(), null, installs);
++              let webInstaller = Cc["@mozilla.org/addons/web-install-listener;1"].
++                                 getService(Ci.amIWebInstallListener);
++              webInstaller.onWebInstallRequested(getBrowserElement(),
++                                                 document.documentURIObject,
++                                                 installs, installs.length);
+             }
+             return;
+           }
+@@ -3738,8 +3741,11 @@ var gDragDrop = {
+       if (pos == urls.length) {
+         if (installs.length > 0) {
+           // Display the normal install confirmation for the installs
+-          AddonManager.installAddonsFromWebpage("application/x-xpinstall",
+-                                                getBrowserElement(), null, installs);
++          let webInstaller = Cc["@mozilla.org/addons/web-install-listener;1"].
++                             getService(Ci.amIWebInstallListener);
++          webInstaller.onWebInstallRequested(getBrowserElement(),
++                                             document.documentURIObject,
++                                             installs, installs.length);
+         }
+         return;
+       }
+diff --git a/toolkit/mozapps/extensions/content/xpinstallConfirm.js b/toolkit/mozapps/extensions/content/xpinstallConfirm.js
+index 1660ee9..678e370 100644
+--- a/toolkit/mozapps/extensions/content/xpinstallConfirm.js
++++ b/toolkit/mozapps/extensions/content/xpinstallConfirm.js
+@@ -8,6 +8,8 @@ var XPInstallConfirm = {};
+ 
+ XPInstallConfirm.init = function XPInstallConfirm_init()
+ {
++  Components.utils.import("resource://gre/modules/AddonManager.jsm");
++
+   var _installCountdown;
+   var _installCountdownInterval;
+   var _focused;
+@@ -20,6 +22,13 @@ XPInstallConfirm.init = function XPInstallConfirm_init()
+ 
+   let args = window.arguments[0].wrappedJSObject;
+ 
++  // If all installs have already been cancelled in some way then just close
++  // the window
++  if (args.installs.every(i => i.state != AddonManager.STATE_DOWNLOADED)) {
++    window.close();
++    return;
++  }
++
+   var _installCountdownLength = 5;
+   try {
+     var prefs = Components.classes["@mozilla.org/preferences-service;1"]
+@@ -29,6 +38,15 @@ XPInstallConfirm.init = function XPInstallConfirm_init()
+   } catch (ex) { }
+   
+   var itemList = document.getElementById("itemList");
++
++  let installMap = new WeakMap();
++  let installListener = {
++    onDownloadCancelled: function(install) {
++      itemList.removeChild(installMap.get(install));
++      if (--numItemsToInstall == 0)
++        window.close();
++    }
++  };
+   
+   var numItemsToInstall = args.installs.length;
+   for (let install of args.installs) {
+@@ -50,6 +68,9 @@ XPInstallConfirm.init = function XPInstallConfirm_init()
+       installItem.cert = bundle.getString("unverified");
+     }
+     installItem.signed = install.certName ? "true" : "false";
++
++    installMap.set(install, installItem);
++    install.addListener(installListener);
+   }
+   
+   var introString = bundle.getString("itemWarnIntroSingle");
+@@ -126,6 +147,9 @@ XPInstallConfirm.init = function XPInstallConfirm_init()
+     }
+     window.removeEventListener("unload", myUnload, false);
+ 
++    for (let install of args.installs)
++      install.removeListener(installListener);
++
+     // Now perform the desired action - either install the
+     // addons or cancel the installations
+     if (XPInstallConfirm._installOK) {
+@@ -133,8 +157,10 @@ XPInstallConfirm.init = function XPInstallConfirm_init()
+         install.install();
+     }
+     else {
+-      for (let install of args.installs)
+-        install.cancel();
++      for (let install of args.installs) {
++        if (install.state != AddonManager.STATE_CANCELLED)
++          install.cancel();
++      }
+     }
+   }
+ 
+diff --git a/toolkit/mozapps/extensions/internal/XPIProvider.jsm b/toolkit/mozapps/extensions/internal/XPIProvider.jsm
+index 13802e8..8765f59 100644
+--- a/toolkit/mozapps/extensions/internal/XPIProvider.jsm
++++ b/toolkit/mozapps/extensions/internal/XPIProvider.jsm
+@@ -3900,26 +3900,28 @@ this.XPIProvider = {
+   /**
+    * Called to test whether installing XPI add-ons from a URI is allowed.
+    *
+-   * @param  aUri
+-   *         The URI being installed from
++   * @param  aInstallingPrincipal
++   *         The nsIPrincipal that initiated the install
+    * @return true if installing is allowed
+    */
+-  isInstallAllowed: function XPI_isInstallAllowed(aUri) {
++  isInstallAllowed: function XPI_isInstallAllowed(aInstallingPrincipal) {
+     if (!this.isInstallEnabled())
+       return false;
+ 
++    let uri = aInstallingPrincipal.URI;
++
+     // Direct requests without a referrer are either whitelisted or blocked.
+-    if (!aUri)
++    if (!uri)
+       return this.isDirectRequestWhitelisted();
+ 
+     // Local referrers can be whitelisted.
+     if (this.isFileRequestWhitelisted() &&
+-        (aUri.schemeIs("chrome") || aUri.schemeIs("file")))
++        (uri.schemeIs("chrome") || uri.schemeIs("file")))
+       return true;
+ 
+     this.importPermissions();
+ 
+-    let permission = Services.perms.testPermission(aUri, XPI_PERMISSION);
++    let permission = Services.perms.testPermissionFromPrincipal(aInstallingPrincipal, XPI_PERMISSION);
+     if (permission == Ci.nsIPermissionManager.DENY_ACTION)
+       return false;
+ 
+@@ -3929,7 +3931,7 @@ this.XPIProvider = {
+ 
+     let requireSecureOrigin = Preferences.get(PREF_INSTALL_REQUIRESECUREORIGIN, true);
+     let safeSchemes = ["https", "chrome", "file"];
+-    if (requireSecureOrigin && safeSchemes.indexOf(aUri.scheme) == -1)
++    if (requireSecureOrigin && safeSchemes.indexOf(uri.scheme) == -1)
+       return false;
+ 
+     return true;
+diff --git a/toolkit/mozapps/extensions/test/xpcshell/test_blocklistchange.js b/toolkit/mozapps/extensions/test/xpcshell/test_blocklistchange.js
+index 79682f1..6ee71f8 100644
+--- a/toolkit/mozapps/extensions/test/xpcshell/test_blocklistchange.js
++++ b/toolkit/mozapps/extensions/test/xpcshell/test_blocklistchange.js
+@@ -468,46 +468,25 @@ function Pmanual_update(aVersion) {
+     }));
+   }
+ 
+-  return Promise.all(Pinstalls)
+-    .then(installs => {
+-      return new Promise((resolve, reject) => {
+-        Services.obs.addObserver(function(aSubject, aTopic, aData) {
+-          Services.obs.removeObserver(arguments.callee, "addon-install-blocked");
+-
+-          aSubject.QueryInterface(Ci.amIWebInstallInfo);
+-
+-          var installCount = aSubject.installs.length;
+-
+-          var listener = {
+-            installComplete: function() {
+-              installCount--;
+-              if (installCount)
+-                return;
+-
+-              resolve();
+-            },
+-
+-            onDownloadCancelled: function(aInstall) {
+-              this.installComplete();
+-            },
+-
+-            onInstallEnded: function(aInstall) {
+-              this.installComplete();
+-            }
+-          };
+-
+-          aSubject.installs.forEach(function(aInstall) {
+-            aInstall.addListener(listener);
+-          });
++  return Promise.all(Pinstalls).then(installs => {
++    let completePromises = [];
++    for (let install of installs) {
++      completePromises.push(new Promise(resolve => {
++        install.addListener({
++          onDownloadCancelled: resolve,
++          onInstallEnded: resolve
++        })
++      }));
++    }
+ 
+-          aSubject.install();
+-        }, "addon-install-blocked", false);
++    // Use the default web installer to cancel/allow installs based on whether
++    // the add-on is valid or not.
++    let webInstaller = Cc["@mozilla.org/addons/web-install-listener;1"]
++                       .getService(Ci.amIWebInstallListener);
++    webInstaller.onWebInstallRequested(null, null, installs, installs.length);
+ 
+-        AddonManager.installAddonsFromWebpage("application/x-xpinstall", null,
+-                                              NetUtil.newURI("http://localhost:" + gPort + "/"),
+-                                              installs);
+-      })
+-    });
++    return Promise.all(completePromises);
++  });
+ }
+ 
+ // Checks that an add-ons properties match expected values
+diff --git a/toolkit/mozapps/extensions/test/xpcshell/test_permissions.js b/toolkit/mozapps/extensions/test/xpcshell/test_permissions.js
+index 869b7bd..1146376 100644
+--- a/toolkit/mozapps/extensions/test/xpcshell/test_permissions.js
++++ b/toolkit/mozapps/extensions/test/xpcshell/test_permissions.js
+@@ -9,6 +9,10 @@ Components.utils.import("resource://gre/modules/NetUtil.jsm");
+ 
+ const XPI_MIMETYPE = "application/x-xpinstall";
+ 
++function newPrincipal(uri) {
++  return Services.scriptSecurityManager.getNoAppCodebasePrincipal(NetUtil.newURI(uri));
++}
++
+ function run_test() {
+   createAppInfo("xpcshell@tests.mozilla.org", "XPCShell", "2", "2");
+ 
+@@ -22,61 +26,61 @@ function run_test() {
+   startupManager();
+ 
+   do_check_false(AddonManager.isInstallAllowed(XPI_MIMETYPE,
+-                                               NetUtil.newURI("http://test1.com")));
++                                               newPrincipal("http://test1.com")));
+   do_check_true(AddonManager.isInstallAllowed(XPI_MIMETYPE,
+-                                              NetUtil.newURI("https://test1.com")));
++                                              newPrincipal("https://test1.com")));
+   do_check_true(AddonManager.isInstallAllowed(XPI_MIMETYPE,
+-                                              NetUtil.newURI("https://www.test2.com")));
++                                              newPrincipal("https://www.test2.com")));
+   do_check_true(AddonManager.isInstallAllowed(XPI_MIMETYPE,
+-                                              NetUtil.newURI("https://test3.com")));
++                                              newPrincipal("https://test3.com")));
+   do_check_false(AddonManager.isInstallAllowed(XPI_MIMETYPE,
+-                                               NetUtil.newURI("https://test4.com")));
++                                               newPrincipal("https://test4.com")));
+   do_check_true(AddonManager.isInstallAllowed(XPI_MIMETYPE,
+-                                              NetUtil.newURI("https://www.test4.com")));
++                                              newPrincipal("https://www.test4.com")));
+   do_check_false(AddonManager.isInstallAllowed(XPI_MIMETYPE,
+-                                               NetUtil.newURI("http://www.test5.com")));
++                                               newPrincipal("http://www.test5.com")));
+   do_check_true(AddonManager.isInstallAllowed(XPI_MIMETYPE,
+-                                              NetUtil.newURI("https://www.test5.com")));
++                                              newPrincipal("https://www.test5.com")));
+ 
+   do_check_false(AddonManager.isInstallAllowed(XPI_MIMETYPE,
+-                                               NetUtil.newURI("http://www.test6.com")));
++                                               newPrincipal("http://www.test6.com")));
+   do_check_false(AddonManager.isInstallAllowed(XPI_MIMETYPE,
+-                                               NetUtil.newURI("https://www.test6.com")));
++                                               newPrincipal("https://www.test6.com")));
+   do_check_false(AddonManager.isInstallAllowed(XPI_MIMETYPE,
+-                                               NetUtil.newURI("https://test7.com")));
++                                               newPrincipal("https://test7.com")));
+   do_check_false(AddonManager.isInstallAllowed(XPI_MIMETYPE,
+-                                               NetUtil.newURI("https://www.test8.com")));
++                                               newPrincipal("https://www.test8.com")));
+ 
+   // This should remain unaffected
+   do_check_false(AddonManager.isInstallAllowed(XPI_MIMETYPE,
+-                                               NetUtil.newURI("http://www.test9.com")));
++                                               newPrincipal("http://www.test9.com")));
+   do_check_true(AddonManager.isInstallAllowed(XPI_MIMETYPE,
+-                                              NetUtil.newURI("https://www.test9.com")));
++                                              newPrincipal("https://www.test9.com")));
+ 
+   Services.perms.removeAll();
+ 
+   do_check_false(AddonManager.isInstallAllowed(XPI_MIMETYPE,
+-                                               NetUtil.newURI("https://test1.com")));
++                                               newPrincipal("https://test1.com")));
+   do_check_false(AddonManager.isInstallAllowed(XPI_MIMETYPE,
+-                                               NetUtil.newURI("https://www.test2.com")));
++                                               newPrincipal("https://www.test2.com")));
+   do_check_false(AddonManager.isInstallAllowed(XPI_MIMETYPE,
+-                                               NetUtil.newURI("https://test3.com")));
++                                               newPrincipal("https://test3.com")));
+   do_check_false(AddonManager.isInstallAllowed(XPI_MIMETYPE,
+-                                               NetUtil.newURI("https://www.test4.com")));
++                                               newPrincipal("https://www.test4.com")));
+   do_check_false(AddonManager.isInstallAllowed(XPI_MIMETYPE,
+-                                               NetUtil.newURI("https://www.test5.com")));
++                                               newPrincipal("https://www.test5.com")));
+ 
+   // Upgrade the application and verify that the permissions are still not there
+   restartManager("2");
+ 
+   do_check_false(AddonManager.isInstallAllowed(XPI_MIMETYPE,
+-                                               NetUtil.newURI("https://test1.com")));
++                                               newPrincipal("https://test1.com")));
+   do_check_false(AddonManager.isInstallAllowed(XPI_MIMETYPE,
+-                                               NetUtil.newURI("https://www.test2.com")));
++                                               newPrincipal("https://www.test2.com")));
+   do_check_false(AddonManager.isInstallAllowed(XPI_MIMETYPE,
+-                                               NetUtil.newURI("https://test3.com")));
++                                               newPrincipal("https://test3.com")));
+   do_check_false(AddonManager.isInstallAllowed(XPI_MIMETYPE,
+-                                               NetUtil.newURI("https://www.test4.com")));
++                                               newPrincipal("https://www.test4.com")));
+   do_check_false(AddonManager.isInstallAllowed(XPI_MIMETYPE,
+-                                               NetUtil.newURI("https://www.test5.com")));
++                                               newPrincipal("https://www.test5.com")));
+ }
+diff --git a/toolkit/mozapps/extensions/test/xpcshell/test_permissions_prefs.js b/toolkit/mozapps/extensions/test/xpcshell/test_permissions_prefs.js
+index 75c615a..ae13732 100644
+--- a/toolkit/mozapps/extensions/test/xpcshell/test_permissions_prefs.js
++++ b/toolkit/mozapps/extensions/test/xpcshell/test_permissions_prefs.js
+@@ -8,6 +8,10 @@
+ const PREF_XPI_WHITELIST_PERMISSIONS  = "xpinstall.whitelist.add";
+ const PREF_XPI_BLACKLIST_PERMISSIONS  = "xpinstall.blacklist.add";
+ 
++function newPrincipal(uri) {
++  return Services.scriptSecurityManager.getNoAppCodebasePrincipal(NetUtil.newURI(uri));
++}
++
+ function do_check_permission_prefs(preferences) {
+   // Check preferences were emptied
+   for (let pref of preferences) {
+@@ -43,8 +47,7 @@ function run_test() {
+ 
+   // Permissions are imported lazily - act as thought we're checking an install,
+   // to trigger on-deman importing of the permissions.
+-  let url = Services.io.newURI("http://example.com/file.xpi", null, null);
+-  AddonManager.isInstallAllowed("application/x-xpinstall", url);
++  AddonManager.isInstallAllowed("application/x-xpinstall", newPrincipal("http://example.com/file.xpi"));
+   do_check_permission_prefs(preferences);
+ 
+ 
+diff --git a/toolkit/mozapps/extensions/test/xpinstall/browser.ini b/toolkit/mozapps/extensions/test/xpinstall/browser.ini
+index 9ec3d1d..d6392cd 100644
+--- a/toolkit/mozapps/extensions/test/xpinstall/browser.ini
++++ b/toolkit/mozapps/extensions/test/xpinstall/browser.ini
+@@ -16,6 +16,7 @@ support-files =
+   installtrigger.html
+   installtrigger_frame.html
+   multipackage.xpi
++  navigate.html
+   redirect.sjs
+   restartless.xpi
+   signed-no-cn.xpi
+@@ -53,6 +54,7 @@ skip-if = e10s # Bug 1083269
+ [browser_cookies4.js]
+ skip-if = true # Bug 1084646
+ [browser_corrupt.js]
++[browser_datauri.js]
+ [browser_empty.js]
+ [browser_enabled.js]
+ [browser_enabled2.js]
+@@ -72,6 +74,8 @@ skip-if = true # Bug 1084646
+ [browser_multipackage.js]
+ [browser_navigateaway.js]
+ [browser_navigateaway2.js]
++[browser_navigateaway3.js]
++[browser_navigateaway4.js]
+ [browser_offline.js]
+ [browser_relative.js]
+ [browser_signed_multiple.js]
+@@ -86,6 +90,8 @@ skip-if = true # Bug 1084646
+ [browser_unsigned_trigger.js]
+ [browser_unsigned_trigger_iframe.js]
+ skip-if = buildapp == "mulet"
++[browser_unsigned_trigger_xorigin.js]
++skip-if = buildapp == "mulet"
+ [browser_unsigned_url.js]
+ [browser_whitelist.js]
+ [browser_whitelist2.js]
+diff --git a/toolkit/mozapps/extensions/test/xpinstall/browser_datauri.js b/toolkit/mozapps/extensions/test/xpinstall/browser_datauri.js
+new file mode 100644
+index 0000000..ed23923
+--- /dev/null
++++ b/toolkit/mozapps/extensions/test/xpinstall/browser_datauri.js
+@@ -0,0 +1,37 @@
++// ----------------------------------------------------------------------------
++// Checks that a chained redirect through a data URI and javascript is blocked
++
++function setup_redirect(aSettings) {
++  var url = TESTROOT + "redirect.sjs?mode=setup";
++  for (var name in aSettings) {
++    url += "&" + name + "=" + encodeURIComponent(aSettings[name]);
++  }
++
++  var req = new XMLHttpRequest();
++  req.open("GET", url, false);
++  req.send(null);
++}
++
++function test() {
++  Harness.installOriginBlockedCallback = install_blocked;
++  Harness.installsCompletedCallback = finish_test;
++  Harness.setup();
++
++  setup_redirect({
++    "Location": "data:text/html,<script>window.location.href='" + TESTROOT + "unsigned.xpi'</script>"
++  });
++
++  gBrowser.selectedTab = gBrowser.addTab();
++  gBrowser.loadURI(TESTROOT + "redirect.sjs?mode=redirect");
++}
++
++function install_blocked(installInfo) {
++}
++
++function finish_test(count) {
++  is(count, 0, "No add-ons should have been installed");
++  Services.perms.remove("http://example.com", "install");
++
++  gBrowser.removeCurrentTab();
++  Harness.finish();
++}
+diff --git a/toolkit/mozapps/extensions/test/xpinstall/browser_httphash6.js b/toolkit/mozapps/extensions/test/xpinstall/browser_httphash6.js
+index 5244fef..9ab4902 100644
+--- a/toolkit/mozapps/extensions/test/xpinstall/browser_httphash6.js
++++ b/toolkit/mozapps/extensions/test/xpinstall/browser_httphash6.js
+@@ -65,7 +65,7 @@ function finish_failed_download() {
+   // Restart the install as a regular webpage install so the harness tracks it
+   AddonManager.installAddonsFromWebpage("application/x-xpinstall",
+                                         gBrowser.selectedBrowser,
+-                                        gBrowser.currentURI, [gInstall]);
++                                        gBrowser.contentPrincipal, [gInstall]);
+ }
+ 
+ function install_ended(install, addon) {
+diff --git a/toolkit/mozapps/extensions/test/xpinstall/browser_localfile.js b/toolkit/mozapps/extensions/test/xpinstall/browser_localfile.js
+index fc5e816..0e70e81 100644
+--- a/toolkit/mozapps/extensions/test/xpinstall/browser_localfile.js
++++ b/toolkit/mozapps/extensions/test/xpinstall/browser_localfile.js
+@@ -14,8 +14,11 @@ function test() {
+   } catch (ex) {
+     var xpipath = chromeroot + "unsigned.xpi"; //scenario where we are running from a .jar and already extracted
+   }
+-  gBrowser.selectedTab = gBrowser.addTab();
+-  gBrowser.loadURI(xpipath);
++
++  gBrowser.selectedTab = gBrowser.addTab("about:blank");
++  BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser).then(() => {
++    gBrowser.loadURI(xpipath);
++  });
+ }
+ 
+ function install_ended(install, addon) {
+diff --git a/toolkit/mozapps/extensions/test/xpinstall/browser_localfile3.js b/toolkit/mozapps/extensions/test/xpinstall/browser_localfile3.js
+index 5bf07d2..f24f41c 100644
+--- a/toolkit/mozapps/extensions/test/xpinstall/browser_localfile3.js
++++ b/toolkit/mozapps/extensions/test/xpinstall/browser_localfile3.js
+@@ -18,8 +18,11 @@ function test() {
+   } catch (ex) {
+     var xpipath = chromeroot + "unsigned.xpi"; //scenario where we are running from a .jar and already extracted
+   }
+-  gBrowser.selectedTab = gBrowser.addTab();
+-  gBrowser.loadURI(xpipath);
++
++  gBrowser.selectedTab = gBrowser.addTab("about:blank");
++  BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser).then(() => {
++    gBrowser.loadURI(xpipath);
++  });
+ }
+ 
+ function allow_blocked(installInfo) {
+diff --git a/toolkit/mozapps/extensions/test/xpinstall/browser_multipackage.js b/toolkit/mozapps/extensions/test/xpinstall/browser_multipackage.js
+index 1194281..c5e0000 100644
+--- a/toolkit/mozapps/extensions/test/xpinstall/browser_multipackage.js
++++ b/toolkit/mozapps/extensions/test/xpinstall/browser_multipackage.js
+@@ -6,8 +6,10 @@ function test() {
+   Harness.installsCompletedCallback = finish_test;
+   Harness.setup();
+ 
+-  gBrowser.selectedTab = gBrowser.addTab();
+-  gBrowser.loadURI(TESTROOT + "multipackage.xpi");
++  gBrowser.selectedTab = gBrowser.addTab("about:blank");
++  BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser).then(() => {
++    gBrowser.loadURI(TESTROOT + "multipackage.xpi");
++  });
+ }
+ 
+ function get_item(items, name) {
+diff --git a/toolkit/mozapps/extensions/test/xpinstall/browser_navigateaway.js b/toolkit/mozapps/extensions/test/xpinstall/browser_navigateaway.js
+index 58fc6a6..a2ba85d 100644
+--- a/toolkit/mozapps/extensions/test/xpinstall/browser_navigateaway.js
++++ b/toolkit/mozapps/extensions/test/xpinstall/browser_navigateaway.js
+@@ -19,7 +19,7 @@ function test() {
+ }
+ 
+ function download_progress(addon, value, maxValue) {
+-  gBrowser.loadURI("about:blank");
++  gBrowser.loadURI(TESTROOT + "enabled.html");
+ }
+ 
+ function install_ended(install, addon) {
+diff --git a/toolkit/mozapps/extensions/test/xpinstall/browser_navigateaway2.js b/toolkit/mozapps/extensions/test/xpinstall/browser_navigateaway2.js
+index 4601df6..46d4ffe 100644
+--- a/toolkit/mozapps/extensions/test/xpinstall/browser_navigateaway2.js
++++ b/toolkit/mozapps/extensions/test/xpinstall/browser_navigateaway2.js
+@@ -1,7 +1,6 @@
+ // ----------------------------------------------------------------------------
+-// Tests that closing the initiating page during the install doesn't break the
+-// install.
+-// This verifies bugs 473060 and 475347
++// Tests that closing the initiating page during the install cancels the install
++// to avoid spoofing the user.
+ function test() {
+   Harness.downloadProgressCallback = download_progress;
+   Harness.installEndedCallback = install_ended;
+@@ -23,11 +22,11 @@ function download_progress(addon, value, maxValue) {
+ }
+ 
+ function install_ended(install, addon) {
+-  install.cancel();
++  ok(false, "Should not have seen installs complete");
+ }
+ 
+ function finish_test(count) {
+-  is(count, 1, "1 Add-on should have been successfully installed");
++  is(count, 0, "No add-ons should have been successfully installed");
+ 
+   Services.perms.remove("example.com", "install");
+ 
+diff --git a/toolkit/mozapps/extensions/test/xpinstall/browser_navigateaway3.js b/toolkit/mozapps/extensions/test/xpinstall/browser_navigateaway3.js
+new file mode 100644
+index 0000000..544e660
+--- /dev/null
++++ b/toolkit/mozapps/extensions/test/xpinstall/browser_navigateaway3.js
+@@ -0,0 +1,38 @@
++// ----------------------------------------------------------------------------
++// Tests that navigating to a new origin cancels ongoing installs.
++
++// Block the modal install UI from showing.
++Services.prefs.setBoolPref(PREF_CUSTOM_CONFIRMATION_UI, true);
++
++function test() {
++  Harness.downloadProgressCallback = download_progress;
++  Harness.installEndedCallback = install_ended;
++  Harness.installsCompletedCallback = finish_test;
++  Harness.setup();
++
++  var pm = Services.perms;
++  pm.add(makeURI("http://example.com/"), "install", pm.ALLOW_ACTION);
++
++  var triggers = encodeURIComponent(JSON.stringify({
++    "Unsigned XPI": TESTROOT + "unsigned.xpi"
++  }));
++  gBrowser.selectedTab = gBrowser.addTab();
++  gBrowser.loadURI(TESTROOT + "installtrigger.html?" + triggers);
++}
++
++function download_progress(addon, value, maxValue) {
++  gBrowser.loadURI(TESTROOT2 + "enabled.html");
++}
++
++function install_ended(install, addon) {
++  ok(false, "Should not have seen installs complete");
++}
++
++function finish_test(count) {
++  is(count, 0, "No add-ons should have been successfully installed");
++
++  Services.perms.remove("http://example.com", "install");
++
++  gBrowser.removeCurrentTab();
++  Harness.finish();
++}
+diff --git a/toolkit/mozapps/extensions/test/xpinstall/browser_navigateaway4.js b/toolkit/mozapps/extensions/test/xpinstall/browser_navigateaway4.js
+new file mode 100644
+index 0000000..61fc7d3
+--- /dev/null
++++ b/toolkit/mozapps/extensions/test/xpinstall/browser_navigateaway4.js
+@@ -0,0 +1,44 @@
++// ----------------------------------------------------------------------------
++// Tests that navigating to a new origin cancels ongoing installs and closes
++// the install UI.
++let sawUnload = null;
++
++function test() {
++  Harness.installConfirmCallback = confirm_install;
++  Harness.installEndedCallback = install_ended;
++  Harness.installsCompletedCallback = finish_test;
++  Harness.setup();
++
++  var pm = Services.perms;
++  pm.add(makeURI("http://example.com/"), "install", pm.ALLOW_ACTION);
++
++  var triggers = encodeURIComponent(JSON.stringify({
++    "Unsigned XPI": TESTROOT + "unsigned.xpi"
++  }));
++  gBrowser.selectedTab = gBrowser.addTab();
++  gBrowser.loadURI(TESTROOT + "installtrigger.html?" + triggers);
++}
++
++function confirm_install(window) {
++  sawUnload = BrowserTestUtils.waitForEvent(window, "unload");
++
++  gBrowser.loadURI(TESTROOT2 + "enabled.html");
++
++  return Harness.leaveOpen;
++}
++
++function install_ended(install, addon) {
++  ok(false, "Should not have seen installs complete");
++}
++
++function finish_test(count) {
++  is(count, 0, "No add-ons should have been successfully installed");
++
++  Services.perms.remove("http://example.com", "install");
++
++  sawUnload.then(() => {
++    ok(true, "The install UI should have closed itself.");
++    gBrowser.removeCurrentTab();
++    Harness.finish();
++  });
++}
+diff --git a/toolkit/mozapps/extensions/test/xpinstall/browser_signed_url.js b/toolkit/mozapps/extensions/test/xpinstall/browser_signed_url.js
+index 351092a..33cda6e 100644
+--- a/toolkit/mozapps/extensions/test/xpinstall/browser_signed_url.js
++++ b/toolkit/mozapps/extensions/test/xpinstall/browser_signed_url.js
+@@ -6,8 +6,10 @@ function test() {
+   Harness.installsCompletedCallback = finish_test;
+   Harness.setup();
+ 
+-  gBrowser.selectedTab = gBrowser.addTab();
+-  gBrowser.loadURI(TESTROOT + "signed.xpi");
++  gBrowser.selectedTab = gBrowser.addTab("about:blank");
++  BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser).then(() => {
++    gBrowser.loadURI(TESTROOT + "signed.xpi");
++  });
+ }
+ 
+ function confirm_install(window) {
+diff --git a/toolkit/mozapps/extensions/test/xpinstall/browser_unsigned_trigger_iframe.js b/toolkit/mozapps/extensions/test/xpinstall/browser_unsigned_trigger_iframe.js
+index 1a32a31..658bbfe 100644
+--- a/toolkit/mozapps/extensions/test/xpinstall/browser_unsigned_trigger_iframe.js
++++ b/toolkit/mozapps/extensions/test/xpinstall/browser_unsigned_trigger_iframe.js
+@@ -12,15 +12,15 @@ function test() {
+   var pm = Services.perms;
+   pm.add(makeURI("http://example.com/"), "install", pm.ALLOW_ACTION);
+ 
+-  var triggers = encodeURIComponent(JSON.stringify({
++  var inner_url = encodeURIComponent(TESTROOT + "installtrigger.html?" + encodeURIComponent(JSON.stringify({
+     "Unsigned XPI": {
+       URL: TESTROOT + "unsigned.xpi",
+       IconURL: TESTROOT + "icon.png",
+       toString: function() { return this.URL; }
+     }
+-  }));
++  })));
+   gBrowser.selectedTab = gBrowser.addTab();
+-  gBrowser.loadURI(TESTROOT + "installtrigger_frame.html?" + triggers);
++  gBrowser.loadURI(TESTROOT + "installtrigger_frame.html?" + inner_url);
+ }
+ 
+ function confirm_install(window) {
+diff --git a/toolkit/mozapps/extensions/test/xpinstall/browser_unsigned_trigger_xorigin.js b/toolkit/mozapps/extensions/test/xpinstall/browser_unsigned_trigger_xorigin.js
+new file mode 100644
+index 0000000..07947a1
+--- /dev/null
++++ b/toolkit/mozapps/extensions/test/xpinstall/browser_unsigned_trigger_xorigin.js
+@@ -0,0 +1,38 @@
++// ----------------------------------------------------------------------------
++// Ensure that an inner frame from a different origin can't initiate an install
++
++let wasOriginBlocked = false;
++
++function test() {
++  Harness.installOriginBlockedCallback = install_blocked;
++  Harness.installsCompletedCallback = finish_test;
++  Harness.finalContentEvent = "InstallComplete";
++  Harness.setup();
++
++  var pm = Services.perms;
++  pm.add(makeURI("http://example.com/"), "install", pm.ALLOW_ACTION);
++
++  var inner_url = encodeURIComponent(TESTROOT + "installtrigger.html?" + encodeURIComponent(JSON.stringify({
++    "Unsigned XPI": {
++      URL: TESTROOT + "unsigned.xpi",
++      IconURL: TESTROOT + "icon.png",
++      toString: function() { return this.URL; }
++    }
++  })));
++  gBrowser.selectedTab = gBrowser.addTab();
++  gBrowser.loadURI(TESTROOT2 + "installtrigger_frame.html?" + inner_url);
++}
++
++function install_blocked(installInfo) {
++  wasOriginBlocked = true;
++}
++
++function finish_test(count) {
++  ok(wasOriginBlocked, "Should have been blocked due to the cross origin request.");
++
++  is(count, 0, "No add-ons should have been installed");
++  Services.perms.remove("http://example.com", "install");
++
++  gBrowser.removeCurrentTab();
++  Harness.finish();
++}
+diff --git a/toolkit/mozapps/extensions/test/xpinstall/browser_unsigned_url.js b/toolkit/mozapps/extensions/test/xpinstall/browser_unsigned_url.js
+index bc3be4f..e103dff 100644
+--- a/toolkit/mozapps/extensions/test/xpinstall/browser_unsigned_url.js
++++ b/toolkit/mozapps/extensions/test/xpinstall/browser_unsigned_url.js
+@@ -6,8 +6,10 @@ function test() {
+   Harness.installsCompletedCallback = finish_test;
+   Harness.setup();
+ 
+-  gBrowser.selectedTab = gBrowser.addTab();
+-  gBrowser.loadURI(TESTROOT + "unsigned.xpi");
++  gBrowser.selectedTab = gBrowser.addTab("about:blank");
++  BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser).then(() => {
++    gBrowser.loadURI(TESTROOT + "unsigned.xpi");
++  });
+ }
+ 
+ function confirm_install(window) {
+diff --git a/toolkit/mozapps/extensions/test/xpinstall/browser_whitelist3.js b/toolkit/mozapps/extensions/test/xpinstall/browser_whitelist3.js
+index 94ac43a..888e1bd 100644
+--- a/toolkit/mozapps/extensions/test/xpinstall/browser_whitelist3.js
++++ b/toolkit/mozapps/extensions/test/xpinstall/browser_whitelist3.js
+@@ -1,6 +1,8 @@
+ // ----------------------------------------------------------------------------
+ // Tests installing an unsigned add-on through a navigation. Should not be
+ // blocked since the referer is whitelisted.
++let URL = TESTROOT2 + "navigate.html?" + encodeURIComponent(TESTROOT + "unsigned.xpi");
++
+ function test() {
+   Harness.installConfirmCallback = confirm_install;
+   Harness.installsCompletedCallback = finish_test;
+@@ -9,11 +11,8 @@ function test() {
+   var pm = Services.perms;
+   pm.add(makeURI("http://example.org/"), "install", pm.ALLOW_ACTION);
+ 
+-  var triggers = encodeURIComponent(JSON.stringify({
+-    "Unsigned XPI": TESTROOT2 + "unsigned.xpi"
+-  }));
+   gBrowser.selectedTab = gBrowser.addTab();
+-  gBrowser.loadURI(TESTROOT + "unsigned.xpi", makeURI(TESTROOT2 + "test.html"));
++  gBrowser.loadURI(URL);
+ }
+ 
+ function confirm_install(window) {
+diff --git a/toolkit/mozapps/extensions/test/xpinstall/browser_whitelist4.js b/toolkit/mozapps/extensions/test/xpinstall/browser_whitelist4.js
+index 59d5135..14a9617 100644
+--- a/toolkit/mozapps/extensions/test/xpinstall/browser_whitelist4.js
++++ b/toolkit/mozapps/extensions/test/xpinstall/browser_whitelist4.js
+@@ -1,6 +1,8 @@
+ // ----------------------------------------------------------------------------
+ // Tests installing an unsigned add-on through a navigation. Should be
+ // blocked since the referer is not whitelisted even though the target is.
++let URL = TESTROOT2 + "navigate.html?" + encodeURIComponent(TESTROOT + "unsigned.xpi");
++
+ function test() {
+   Harness.installBlockedCallback = allow_blocked;
+   Harness.installsCompletedCallback = finish_test;
+@@ -9,16 +11,13 @@ function test() {
+   var pm = Services.perms;
+   pm.add(makeURI("http://example.com/"), "install", pm.ALLOW_ACTION);
+ 
+-  var triggers = encodeURIComponent(JSON.stringify({
+-    "Unsigned XPI": TESTROOT2 + "unsigned.xpi"
+-  }));
+   gBrowser.selectedTab = gBrowser.addTab();
+-  gBrowser.loadURI(TESTROOT + "unsigned.xpi", makeURI(TESTROOT2 + "test.html"));
++  gBrowser.loadURI(URL);
+ }
+ 
+ function allow_blocked(installInfo) {
+   is(installInfo.browser, gBrowser.selectedBrowser, "Install should have been triggered by the right browser");
+-  is(installInfo.originatingURI.spec, TESTROOT2 + "test.html", "Install should have been triggered by the right uri");
++  is(installInfo.originatingURI.spec, URL, "Install should have been triggered by the right uri");
+   return false;
+ }
+ 
+diff --git a/toolkit/mozapps/extensions/test/xpinstall/browser_whitelist7.js b/toolkit/mozapps/extensions/test/xpinstall/browser_whitelist7.js
+index 26ae220..b36617a 100644
+--- a/toolkit/mozapps/extensions/test/xpinstall/browser_whitelist7.js
++++ b/toolkit/mozapps/extensions/test/xpinstall/browser_whitelist7.js
+@@ -10,8 +10,10 @@ function test() {
+   // Disable direct request whitelisting, installing should be blocked.
+   Services.prefs.setBoolPref("xpinstall.whitelist.directRequest", false);
+ 
+-  gBrowser.selectedTab = gBrowser.addTab();
+-  gBrowser.loadURI(TESTROOT + "unsigned.xpi");
++  gBrowser.selectedTab = gBrowser.addTab("about:blank");
++  BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser).then(() => {
++    gBrowser.loadURI(TESTROOT + "unsigned.xpi");
++  });
+ }
+ 
+ function allow_blocked(installInfo) {
+diff --git a/toolkit/mozapps/extensions/test/xpinstall/head.js b/toolkit/mozapps/extensions/test/xpinstall/head.js
+index 1bbf2e1..514fc73 100644
+--- a/toolkit/mozapps/extensions/test/xpinstall/head.js
++++ b/toolkit/mozapps/extensions/test/xpinstall/head.js
+@@ -46,6 +46,8 @@ var Harness = {
+   // If set then the callback is called when an install is attempted and
+   // then canceled.
+   installCancelledCallback: null,
++  // If set then the callback will be called when an install's origin is blocked.
++  installOriginBlockedCallback: null,
+   // If set then the callback will be called when an install is blocked by the
+   // whitelist. The callback should return true to continue with the install
+   // anyway.
+@@ -89,6 +91,10 @@ var Harness = {
+ 
+   waitingForFinish: false,
+ 
++  // A unique value to return from the installConfirmCallback to indicate that
++  // the install UI shouldn't be closed automatically
++  leaveOpen: {},
++
+   // Setup and tear down functions
+   setup: function() {
+     if (!this.waitingForFinish) {
+@@ -100,6 +106,7 @@ var Harness = {
+       Services.prefs.setBoolPref(PREF_LOGGING_ENABLED, true);
+       Services.obs.addObserver(this, "addon-install-started", false);
+       Services.obs.addObserver(this, "addon-install-disabled", false);
++      Services.obs.addObserver(this, "addon-install-origin-blocked", false);
+       Services.obs.addObserver(this, "addon-install-blocked", false);
+       Services.obs.addObserver(this, "addon-install-failed", false);
+       Services.obs.addObserver(this, "addon-install-complete", false);
+@@ -114,6 +121,7 @@ var Harness = {
+         Services.prefs.clearUserPref(PREF_INSTALL_REQUIRESECUREORIGIN);
+         Services.obs.removeObserver(self, "addon-install-started");
+         Services.obs.removeObserver(self, "addon-install-disabled");
++        Services.obs.removeObserver(self, "addon-install-origin-blocked");
+         Services.obs.removeObserver(self, "addon-install-blocked");
+         Services.obs.removeObserver(self, "addon-install-failed");
+         Services.obs.removeObserver(self, "addon-install-complete");
+@@ -150,6 +158,7 @@ var Harness = {
+       info("Install for " + aInstall.sourceURI + " is in state " + aInstall.state);
+     });
+ 
++    this.installOriginBlockedCallback = null;
+     this.installBlockedCallback = null;
+     this.authenticationCallback = null;
+     this.installConfirmCallback = null;
+@@ -177,7 +186,14 @@ var Harness = {
+ 
+       // If there is a confirm callback then its return status determines whether
+       // to install the items or not. If not the test is over.
+-      if (this.installConfirmCallback && !this.installConfirmCallback(window)) {
++      let result = true;
++      if (this.installConfirmCallback) {
++        result = this.installConfirmCallback(window);
++        if (result === this.leaveOpen)
++          return;
++      }
++
++      if (!result) {
+         window.document.documentElement.cancelDialog();
+       }
+       else {
+@@ -228,11 +244,6 @@ var Harness = {
+     ok(!!this.installDisabledCallback, "Installation shouldn't have been disabled");
+     if (this.installDisabledCallback)
+       this.installDisabledCallback(installInfo);
+-    this.expectingCancelled = true;
+-    installInfo.installs.forEach(function(install) {
+-      install.cancel();
+-    });
+-    this.expectingCancelled = false;
+     this.endTest();
+   },
+ 
+@@ -246,6 +257,13 @@ var Harness = {
+     this.endTest();
+   },
+ 
++  installOriginBlocked: function(installInfo) {
++    ok(!!this.installOriginBlockedCallback, "Shouldn't have been blocked");
++    if (this.installOriginBlockedCallback)
++      this.installOriginBlockedCallback(installInfo);
++    this.endTest();
++  },
++
+   installBlocked: function(installInfo) {
+     ok(!!this.installBlockedCallback, "Shouldn't have been blocked by the whitelist");
+     if (this.installBlockedCallback && this.installBlockedCallback(installInfo)) {
+@@ -369,6 +387,9 @@ var Harness = {
+     case "addon-install-cancelled":
+       this.installCancelled(installInfo);
+       break;
++    case "addon-install-origin-blocked":
++      this.installOriginBlocked(installInfo);
++      break;
+     case "addon-install-blocked":
+       this.installBlocked(installInfo);
+       break;
+diff --git a/toolkit/mozapps/extensions/test/xpinstall/installtrigger_frame.html b/toolkit/mozapps/extensions/test/xpinstall/installtrigger_frame.html
+index 11af0f35..2b30264 100644
+--- a/toolkit/mozapps/extensions/test/xpinstall/installtrigger_frame.html
++++ b/toolkit/mozapps/extensions/test/xpinstall/installtrigger_frame.html
+@@ -3,7 +3,7 @@
+ 
+ <html>
+ 
+-<!-- This page will accept some json as the uri query and pass it to
++<!-- This page will accept some url as the uri query and load it in
+      an inner iframe, which will run InstallTrigger.install -->
+ 
+ <head>
+@@ -12,8 +12,8 @@
+ function prepChild() {
+   // Pass our parameters over to the child
+   var child = window.frames[0];
+-  var params = document.location.search.substr(1);
+-  child.location = "installtrigger.html?" + params;
++  var url = decodeURIComponent(document.location.search.substr(1));
++  child.location = url;
+ }
+ </script>
+ </head>
+diff --git a/toolkit/mozapps/extensions/test/xpinstall/navigate.html b/toolkit/mozapps/extensions/test/xpinstall/navigate.html
+new file mode 100644
+index 0000000..5a6903eb
+--- /dev/null
++++ b/toolkit/mozapps/extensions/test/xpinstall/navigate.html
+@@ -0,0 +1,26 @@
++<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
++          "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
++
++<html>
++
++<!-- This page will accept some url as the uri query and navigate to it by
++     clicking a link -->
++
++<head>
++<title>Navigation tests</title>
++<script type="text/javascript">
++function navigate() {
++  // Pass our parameters over to the child
++  var child = window.frames[0];
++  var url = decodeURIComponent(document.location.search.substr(1));
++  var link = document.getElementById("link");
++  link.href = url;
++  link.click();
++}
++</script>
++</head>
++<body onload="navigate()">
++
++<p><a id="link">Test Link</a></p>
++</body>
++</html>
+diff --git a/toolkit/mozapps/extensions/test/xpinstall/redirect.sjs b/toolkit/mozapps/extensions/test/xpinstall/redirect.sjs
+index 1e58e68..d248bfb 100644
+--- a/toolkit/mozapps/extensions/test/xpinstall/redirect.sjs
++++ b/toolkit/mozapps/extensions/test/xpinstall/redirect.sjs
+@@ -9,7 +9,7 @@ function handleRequest(request, response)
+ 
+   parts.forEach(function(aString) {
+     let [k, v] = aString.split("=");
+-    settings[k] = v;
++    settings[k] = decodeURIComponent(v);
+   })
+ 
+   if (settings.mode == "setup") {

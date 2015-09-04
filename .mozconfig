@@ -31,7 +31,7 @@ mk_add_options MOZ_OPTIMIZE_LDFLAGS="-MACHINE:X64 -OPT:REF,ICF -FORCE"
 ac_add_options --enable-optimize="-Qstd=c++11 -D_ATL_XP_TARGETING -O3 -no-prec-div -Qparallel -arch:SSE3 -QaxCORE-AVX2,CORE-AVX-I,AVX,SSE4.2,SSE4.1,SSSE3 -w"
 
 ac_add_options --disable-verify-mar
-#ac_add_options --disable-jemalloc
+ac_add_options --disable-jemalloc
 ac_add_options --disable-crashreporter
 ac_add_options --disable-maintenance-service
 ac_add_options --disable-services-healthreport
