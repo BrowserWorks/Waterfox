@@ -1,0 +1,1 @@
+Search.setIndex({envversion:46,filenames:["index"],objects:{},objnames:{},objtypes:{},terms:{also:0,build:0,compil:0,detail:0,help:0,here:0,intel:0,mozilla:0,patch:0,platform:0,quick:0,system:0,thi:0,well:0,you:0,your:0},titles:["Welcome to Waterfox&#8217;s documentation!"],titleterms:{develop:0,document:0,waterfox:0,welcom:0}})
