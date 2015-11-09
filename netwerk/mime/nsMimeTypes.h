@@ -96,6 +96,7 @@
 #define IMAGE_XBM                           "image/x-xbitmap"
 #define IMAGE_XBM2                          "image/x-xbm"
 #define IMAGE_XBM3                          "image/xbm"
+#define IMAGE_WEBP                          "image/webp"
 #define IMAGE_ART                           "image/x-jg"
 #define IMAGE_TIFF                          "image/tiff"
 #define IMAGE_BMP                           "image/bmp"

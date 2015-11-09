@@ -34,6 +34,9 @@ if CONFIG['MOZ_WEBM_ENCODER']:
 if CONFIG['MOZ_VPX'] and not CONFIG['MOZ_NATIVE_LIBVPX']:
     external_dirs += ['media/libvpx']
 
+if CONFIG['MOZ_WEBP'] and not CONFIG['MOZ_NATIVE_WEBP']:
+    external_dirs += ['media/libwebp']
+
 if not CONFIG['MOZ_NATIVE_PNG']:
     external_dirs += ['media/libpng']
 

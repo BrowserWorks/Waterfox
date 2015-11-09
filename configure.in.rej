@@ -1,0 +1,10 @@
+--- configure.in	Mon Mar 23 16:47:58 2015 -0700
++++ configure.in	Mon Mar 23 19:23:45 2015 -0700
+@@ -51,6 +51,7 @@
+ dnl ========================================================
+ MOZJPEG=62
+ MOZPNG=10616
++MOZWEBP=0x201
+ NSPR_VERSION=4
+ NSPR_MINVER=4.10.8
+ NSS_VERSION=3

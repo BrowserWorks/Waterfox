@@ -112,6 +112,10 @@ Image::GetDecoderType(const char* aMimeType)
     rv = eDecoderType_icon;
   }
 
+  // WEBP
+  else if (!strcmp(aMimeType, IMAGE_WEBP))
+    rv = eDecoderType_webp;
+
   return rv;
 }
 

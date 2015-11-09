@@ -28,6 +28,7 @@
 #include "nsPNGDecoder.h"
 #include "nsGIFDecoder2.h"
 #include "nsJPEGDecoder.h"
+#include "nsWEBPDecoder.h"
 #include "nsBMPDecoder.h"
 #include "nsICODecoder.h"
 #include "nsIconDecoder.h"
@@ -1376,6 +1377,9 @@ RasterImage::CreateDecoder(const Maybe<IntSize>& aSize, uint32_t aFlags)
       break;
     case eDecoderType_icon:
       decoder = new nsIconDecoder(this);
+      break;
+    case eDecoderType_webp:
+      decoder = new nsWEBPDecoder(this);
       break;
     default:
       MOZ_ASSERT_UNREACHABLE("Unknown decoder type");

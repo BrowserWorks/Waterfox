@@ -1,0 +1,95 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+
+src_dir = 'src/'
+dec_dir = src_dir + 'dec/'
+dsp_dir = src_dir + 'dsp/'
+utils_dir = src_dir + 'utils/'
+webp_dir = src_dir + 'webp/'
+
+EXPORTS.webp += [
+    webp_dir + 'decode.h',
+    webp_dir + 'types.h'
+]
+
+dec_sources = [
+    dec_dir + 'alpha.c',
+    dec_dir + 'buffer.c',
+    dec_dir + 'frame.c',
+    dec_dir + 'idec.c',
+    dec_dir + 'io.c',
+    dec_dir + 'quant.c',
+    dec_dir + 'tree.c',
+    dec_dir + 'vp8.c',
+    dec_dir + 'vp8l.c',
+    dec_dir + 'webp.c',
+]
+
+dsp_sources = [
+    dsp_dir + 'alpha_processing.c',
+    dsp_dir + 'alpha_processing_sse2.c',
+    dsp_dir + 'cpu.c',
+    dsp_dir + 'dec.c',
+    dsp_dir + 'dec_clip_tables.c',
+    dsp_dir + 'dec_mips32.c',
+    dsp_dir + 'dec_neon.c',
+    dsp_dir + 'dec_sse2.c',
+    dsp_dir + 'lossless.c',
+    dsp_dir + 'lossless_mips32.c',
+    dsp_dir + 'lossless_neon.c',
+    dsp_dir + 'lossless_sse2.c',
+    dsp_dir + 'upsampling.c',
+    dsp_dir + 'upsampling_neon.c',
+    dsp_dir + 'upsampling_sse2.c',
+    dsp_dir + 'yuv.c',
+    dsp_dir + 'yuv_mips32.c',
+    dsp_dir + 'yuv_sse2.c',
+]
+
+utils_sources = [
+    utils_dir + 'bit_reader.c',
+    utils_dir + 'bit_writer.c',
+    utils_dir + 'color_cache.c',
+    utils_dir + 'filters.c',
+    utils_dir + 'huffman.c',
+    utils_dir + 'huffman_encode.c',
+    utils_dir + 'quant_levels.c',
+    utils_dir + 'quant_levels_dec.c',
+    utils_dir + 'random.c',
+    utils_dir + 'rescaler.c',
+    utils_dir + 'thread.c',
+    utils_dir + 'utils.c',
+]
+
+# NB: dsp especially isn't UNIFIED_SOURCES friendly.
+SOURCES += dec_sources + dsp_sources + utils_sources
+
+if CONFIG['OS_TARGET'] == 'Android':
+    # Older versions of the Android NDK don't pre-define anything to indicate
+    # the OS they're on, so do it for them.
+    DEFINES['__linux__'] = True
+    CFLAGS += [
+        '-I%s/sources/android/cpufeatures/' % CONFIG['ANDROID_NDK'],
+    ]
+
+    if not CONFIG['MOZ_WEBRTC']:
+        SOURCES += [
+            '%s/sources/android/cpufeatures/cpu-features.c' % CONFIG['ANDROID_NDK'],
+        ]
+
+# TODO: aarch64?
+if CONFIG['CPU_ARCH'] == 'arm' and CONFIG['GNU_CC']:
+    for f in dsp_sources:
+        if f.endswith('.c') and 'neon' in f:
+            SOURCES[f].flags += ['-mfloat-abi=softfp', '-mfpu=neon']
+
+Library('mozwebp')
+
+if CONFIG['GKMEDIAS_SHARED_LIBRARY']:
+    NO_VISIBILITY_FLAGS = True
+
+FINAL_LIBRARY = 'gkmedias'

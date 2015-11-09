@@ -436,6 +436,9 @@ static nsDefaultMimeTypeEntry defaultMimeEntries [] =
   { IMAGE_JPEG, "jpeg" },
   { IMAGE_JPEG, "jpg" },
   { IMAGE_SVG_XML, "svg" },
+#ifdef MOZ_WEBP
+  { IMAGE_WEBP, "webp" },
+#endif
   { TEXT_HTML, "html" },
   { TEXT_HTML, "htm" },
   { APPLICATION_XPINSTALL, "xpi" },
@@ -513,6 +516,7 @@ static nsExtraMimeTypeEntry extraMimeEntries [] =
   { IMAGE_TIFF, "tiff,tif", "TIFF Image" },
   { IMAGE_XBM, "xbm", "XBM Image" },
   { IMAGE_SVG_XML, "svg", "Scalable Vector Graphics" },
+  { IMAGE_WEBP, "webp", "WebP Image" },
   { MESSAGE_RFC822, "eml", "RFC-822 data" },
   { TEXT_PLAIN, "txt,text", "Text File" },
   { TEXT_HTML, "html,htm,shtml,ehtml", "HyperText Markup Language" },

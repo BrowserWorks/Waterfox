@@ -16,7 +16,7 @@ dnl = Defaults
 dnl ========================================================
 MOD_MAJOR_VERSION=4
 MOD_MINOR_VERSION=10
-MOD_PATCH_VERSION=8
+MOD_PATCH_VERSION=10
 NSPR_MODNAME=nspr20
 _HAVE_PTHREADS=
 USE_PTHREADS=
@@ -1378,7 +1378,7 @@ case "$target" in
     if test "`echo $CC | grep -c '\-arch '`" = "0"; then
         CC="$CC -arch $CPU_ARCH"
     fi
-    AC_CHECK_HEADER(crt_externs.h)
+    AC_CHECK_HEADER(crt_externs.h, AC_DEFINE(HAVE_CRT_EXTERNS_H))
     DSO_CFLAGS=-fPIC
     DSO_LDOPTS='-dynamiclib -compatibility_version 1 -current_version 1 -all_load -install_name @executable_path/$@ -headerpad_max_install_names'
     _OPTIMIZE_FLAGS=-O2
@@ -2086,6 +2086,7 @@ tools are selected during the Xcode/Developer Tools installation.])
     AC_DEFINE(XP_UNIX)
     AC_DEFINE(NETBSD)
     AC_DEFINE(HAVE_BSD_FLOCK)
+    AC_DEFINE(HAVE_SOCKLEN_T)
     if test -z "$USE_NSPR_THREADS"; then
         USE_PTHREADS=1
     fi

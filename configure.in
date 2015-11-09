@@ -51,6 +51,7 @@ dnl Set the version number of the libs included with mozilla
 dnl ========================================================
 MOZJPEG=62
 MOZPNG=10617
+MOZWEBP=0x201
 NSPR_VERSION=4
 NSPR_MINVER=4.10.8
 NSS_VERSION=3
@@ -3781,6 +3782,44 @@ fi # SKIP_LIBRARY_CHECKS
 AC_SUBST(MOZ_PNG_ARM_NEON)
 
 dnl ========================================================
+dnl system WEBP Support
+dnl ========================================================
+MOZ_ARG_WITH_STRING(system-webp,
+[  --with-system-webp[=PFX]
+                          Use system libwebp [installed at prefix PFX]],
+    WEBP_DIR=$withval)
+
+_SAVE_CFLAGS=$CFLAGS
+_SAVE_LDFLAGS=$LDFLAGS
+_SAVE_LIBS=$LIBS
+if test -n "${WEBP_DIR}" -a "${WEBP_DIR}" != "yes"; then
+    CFLAGS="-I${WEBP_DIR}/include $CFLAGS"
+    LDFLAGS="-L${WEBP_DIR}/lib $LDFLAGS"
+fi
+if test -z "$WEBP_DIR" -o "$WEBP_DIR" = no; then
+    MOZ_NATIVE_WEBP=
+else
+    AC_CHECK_LIB(webp, WebPGetDecoderVersion, [MOZ_NATIVE_WEBP=1 MOZ_WEBP_LIBS="-lwebp"],
+        [MOZ_NATIVE_WEBP= MOZ_WEBP_CFLAGS= MOZ_WEBP_LIBS=])
+fi
+if test "$MOZ_NATIVE_WEBP" = 1; then
+    AC_TRY_COMPILE([ #include <webp/decode.h> ],
+                   [ #if WEBP_DECODER_ABI_VERSION < $MOZWEBP
+                     #error "Insufficient libwebp decoder version ($MOZWEBP required)."
+                     #endif ],
+                   MOZ_NATIVE_WEBP=1,
+                   AC_MSG_ERROR([--with-system-webp requested but no working libwebp found]))
+fi
+CFLAGS=$_SAVE_CFLAGS
+LDFLAGS=$_SAVE_LDFLAGS
+LIBS=$_SAVE_LIBS
+
+if test "${WEBP_DIR}" -a -d "${WEBP_DIR}" -a "$MOZ_NATIVE_WEBP" = 1; then
+    MOZ_WEBP_CFLAGS="-I${WEBP_DIR}/include"
+    MOZ_WEBP_LIBS="-L${WEBP_DIR}/lib ${MOZ_WEBP_LIBS}"
+fi
+
+dnl ========================================================
 dnl system HunSpell Support
 dnl ========================================================
 MOZ_ARG_ENABLE_BOOL(system-hunspell,
@@ -3837,6 +3876,7 @@ MOZ_WAVE=1
 MOZ_SAMPLE_TYPE_FLOAT32=
 MOZ_SAMPLE_TYPE_S16=
 MOZ_WEBM=1
+MOZ_WEBP=1
 MOZ_GSTREAMER=
 MOZ_DIRECTSHOW=
 MOZ_WMF=
@@ -5445,6 +5485,10 @@ fi
 AC_SUBST(MOZ_NATIVE_LIBVPX)
 AC_SUBST_LIST(MOZ_LIBVPX_CFLAGS)
 AC_SUBST_LIST(MOZ_LIBVPX_LIBS)
+
+if test "$MOZ_WEBP"; then
+    AC_DEFINE(MOZ_WEBP)
+fi
 
 if test "$MOZ_WEBM"; then
     if test "$MOZ_SAMPLE_TYPE_FLOAT32"; then
@@ -8736,6 +8780,7 @@ HOST_CXXFLAGS=`echo \
 
 AC_SUBST(MOZ_NATIVE_JPEG)
 AC_SUBST(MOZ_NATIVE_PNG)
+AC_SUBST(MOZ_NATIVE_WEBP)
 AC_SUBST(MOZ_NATIVE_BZ2)
 
 AC_SUBST(MOZ_JPEG_CFLAGS)
@@ -8744,6 +8789,8 @@ AC_SUBST(MOZ_BZ2_CFLAGS)
 AC_SUBST_LIST(MOZ_BZ2_LIBS)
 AC_SUBST(MOZ_PNG_CFLAGS)
 AC_SUBST_LIST(MOZ_PNG_LIBS)
+AC_SUBST(MOZ_WEBP_CFLAGS)
+AC_SUBST_LIST(MOZ_WEBP_LIBS)
 
 if test "$MOZ_WIDGET_TOOLKIT" = gonk -a -n "$MOZ_NUWA_PROCESS"; then
     export MOZ_NUWA_PROCESS
@@ -8845,6 +8892,7 @@ AC_SUBST(MOZ_WAVE)
 AC_SUBST(MOZ_VORBIS)
 AC_SUBST(MOZ_TREMOR)
 AC_SUBST(MOZ_WEBM)
+AC_SUBST(MOZ_WEBP)
 AC_SUBST(MOZ_WMF)
 AC_SUBST(MOZ_FFMPEG)
 AC_SUBST(MOZ_FMP4)

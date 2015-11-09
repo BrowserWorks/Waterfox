@@ -15,6 +15,7 @@ contract @mozilla.org/uriloader/content-handler;1?type=image/gif {5d0ce354-df01-
 contract @mozilla.org/uriloader/content-handler;1?type=image/jpeg {5d0ce354-df01-421a-83fb-7ead0990c24e} application={ec8030f7-c20a-464f-9b0e-13a3a9e97384}
 contract @mozilla.org/uriloader/content-handler;1?type=image/jpg {5d0ce354-df01-421a-83fb-7ead0990c24e} application={ec8030f7-c20a-464f-9b0e-13a3a9e97384}
 contract @mozilla.org/uriloader/content-handler;1?type=image/png {5d0ce354-df01-421a-83fb-7ead0990c24e} application={ec8030f7-c20a-464f-9b0e-13a3a9e97384}
+contract @mozilla.org/uriloader/content-handler;1?type=image/webp {5d0ce354-df01-421a-83fb-7ead0990c24e} application={ec8030f7-c20a-464f-9b0e-13a3a9e97384}
 contract @mozilla.org/uriloader/content-handler;1?type=image/bmp {5d0ce354-df01-421a-83fb-7ead0990c24e} application={ec8030f7-c20a-464f-9b0e-13a3a9e97384}
 contract @mozilla.org/uriloader/content-handler;1?type=image/x-icon {5d0ce354-df01-421a-83fb-7ead0990c24e} application={ec8030f7-c20a-464f-9b0e-13a3a9e97384}
 contract @mozilla.org/uriloader/content-handler;1?type=image/vnd.microsoft.icon {5d0ce354-df01-421a-83fb-7ead0990c24e} application={ec8030f7-c20a-464f-9b0e-13a3a9e97384}

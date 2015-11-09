@@ -1,9 +1,0 @@
-amazon-en-GB
-bing
-chambers-en-GB
-eBay-en-GB
-google
-twitter
-wikipedia
-yahoo-en-GB
-ddg

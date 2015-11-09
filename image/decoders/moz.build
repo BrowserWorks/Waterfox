@@ -30,6 +30,7 @@ UNIFIED_SOURCES += [
     'nsIconDecoder.cpp',
     'nsJPEGDecoder.cpp',
     'nsPNGDecoder.cpp',
+    'nsWEBPDecoder.cpp',
 ]
 
 FAIL_ON_WARNINGS = True
