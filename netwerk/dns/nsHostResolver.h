@@ -351,9 +351,9 @@ private:
     PRCList       mLowQ;
     PRCList       mEvictionQ;
     uint32_t      mEvictionQSize;
-    uint32_t      mPendingCount;
+	uint32_t      mPendingCount;
     PRTime        mCreationTime;
-    bool          mShutdown;
+	bool          mShutdown;
     PRIntervalTime mLongIdleTimeout;
     PRIntervalTime mShortIdleTimeout;
 

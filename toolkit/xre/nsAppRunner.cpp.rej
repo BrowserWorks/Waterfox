@@ -1,0 +1,41 @@
+--- toolkit/xre/nsAppRunner.cpp
++++ toolkit/xre/nsAppRunner.cpp
+@@ -16,16 +16,17 @@
+ #include "mozilla/Attributes.h"
+ #include "mozilla/ChaosMode.h"
+ #include "mozilla/IOInterposer.h"
+ #include "mozilla/Likely.h"
+ #include "mozilla/Poison.h"
+ #include "mozilla/Preferences.h"
+ #include "mozilla/Services.h"
+ #include "mozilla/Telemetry.h"
++#include "mozilla/MemoryChecking.h"
+ 
+ #include "nsAppRunner.h"
+ #include "mozilla/AppData.h"
+ #if defined(MOZ_UPDATER) && !defined(MOZ_WIDGET_ANDROID)
+ #include "nsUpdateDriver.h"
+ #endif
+ #include "ProfileReset.h"
+ 
+@@ -4334,20 +4333,16 @@
+ 
+   nsresult rv = NS_OK;
+ 
+   gArgc = argc;
+   gArgv = argv;
+ 
+   NS_ENSURE_TRUE(aAppData, 2);
+ 
+-  // A initializer to initialize histogram collection, a chromium
+-  // thing used by Telemetry.
+-  mStatisticsRecorder = MakeUnique<base::StatisticsRecorder>();
+-
+   mAppData = new ScopedAppData(aAppData);
+   if (!mAppData)
+     return 1;
+   if (!mAppData->remotingName) {
+     SetAllocatedString(mAppData->remotingName, mAppData->name);
+   }
+   // used throughout this file
+   gAppData = mAppData;

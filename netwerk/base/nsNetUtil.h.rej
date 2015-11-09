@@ -1,0 +1,25 @@
+--- netwerk/base/nsNetUtil.h
++++ netwerk/base/nsNetUtil.h
+@@ -484,19 +484,19 @@
+  * referrer from the property docshell.internalReferrer, and if that doesn't
+  * work and the channel is an nsIHTTPChannel, we check it's referrer property.
+  *
+  * @returns NS_ERROR_NOT_AVAILABLE if no referrer is available.
+  */
+ nsresult NS_GetReferrerFromChannel(nsIChannel *channel,
+                                    nsIURI **referrer);
+ 
+-nsresult NS_ParseResponseContentType(const nsACString &rawContentType,
+-                                     nsCString        &contentType,
+-                                     nsCString        &contentCharset);
++nsresult NS_ParseContentType(const nsACString &rawContentType,
++                             nsCString        &contentType,
++                             nsCString        &contentCharset);
+ 
+ nsresult NS_ExtractCharsetFromContentType(const nsACString &rawContentType,
+                                           nsCString        &contentCharset,
+                                           bool             *hadCharset,
+                                           int32_t          *charsetStart,
+                                           int32_t          *charsetEnd);
+ 
+ nsresult NS_NewLocalFileInputStream(nsIInputStream **result,

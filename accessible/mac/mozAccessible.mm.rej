@@ -1,0 +1,54 @@
+--- accessible/mac/mozAccessible.mm
++++ accessible/mac/mozAccessible.mm
+@@ -448,19 +448,22 @@
+           }
+         }
+         return nativeArray;
+       }
+     } else if (accWrap->IsTableRow()) {
+       if ([attribute isEqualToString:NSAccessibilityIndexAttribute]) {
+         // Count the number of rows before that one to obtain the row index.
+         uint32_t index = 0;
+-        for (int32_t i = accWrap->IndexInParent() - 1; i >= 0; i--) {
+-          if (accWrap->GetChildAt(i)->IsTableRow()) {
+-            index++;
++        Accessible* parent = accWrap->Parent();
++        if (parent) {
++          for (int32_t i = accWrap->IndexInParent() - 1; i >= 0; i--) {
++            if (parent->GetChildAt(i)->IsTableRow()) {
++              index++;
++            }
+           }
+         }
+         return [NSNumber numberWithUnsignedInteger:index];
+       }
+     } else if (accWrap->IsTableCell()) {
+       TableCellAccessible* cell = accWrap->AsTableCell();
+       if ([attribute isEqualToString:NSAccessibilityRowIndexRangeAttribute])
+         return [NSValue valueWithRange:NSMakeRange(cell->RowIdx(),
+@@ -498,19 +501,22 @@
+           }
+         }
+         return nativeArray;
+       }
+     } else if (proxy->IsTableRow()) {
+       if ([attribute isEqualToString:NSAccessibilityIndexAttribute]) {
+         // Count the number of rows before that one to obtain the row index.
+         uint32_t index = 0;
+-        for (int32_t i = proxy->IndexInParent() - 1; i >= 0; i--) {
+-          if (proxy->ChildAt(i)->IsTableRow()) {
+-            index++;
++        ProxyAccessible* parent = proxy->Parent();
++        if (parent) {
++          for (int32_t i = proxy->IndexInParent() - 1; i >= 0; i--) {
++            if (parent->ChildAt(i)->IsTableRow()) {
++              index++;
++            }
+           }
+         }
+         return [NSNumber numberWithUnsignedInteger:index];
+       }
+     } else if (proxy->IsTableCell()) {
+       if ([attribute isEqualToString:NSAccessibilityRowIndexRangeAttribute])
+         return [NSValue valueWithRange:NSMakeRange(proxy->RowIdx(),
+                                                    proxy->RowExtent())];

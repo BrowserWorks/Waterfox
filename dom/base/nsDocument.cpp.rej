@@ -1,0 +1,21 @@
+--- dom/base/nsDocument.cpp
++++ dom/base/nsDocument.cpp
+@@ -3871,17 +3871,17 @@
+   aKey->RequestDiscard();
+   return PL_DHASH_NEXT;
+ }
+ 
+ void
+ nsDocument::DeleteShell()
+ {
+   mExternalResourceMap.HideViewers();
+-  if (IsEventHandlingEnabled()) {
++  if (IsEventHandlingEnabled() && !AnimationsPaused()) {
+     RevokeAnimationFrameNotifications();
+   }
+   if (nsPresContext* presContext = mPresShell->GetPresContext()) {
+     presContext->RefreshDriver()->CancelPendingEvents(this);
+   }
+ 
+   // When our shell goes away, request that all our images be immediately
+   // discarded, so we don't carry around decoded image data for a document we

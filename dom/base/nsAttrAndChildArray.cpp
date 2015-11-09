@@ -11,6 +11,7 @@
 
 #include "nsAttrAndChildArray.h"
 
+#include "mozilla/CheckedInt.h"
 #include "mozilla/MathAlgorithms.h"
 #include "mozilla/MemoryReporting.h"
 
@@ -22,6 +23,8 @@
 #include "nsUnicharUtils.h"
 #include "nsAutoPtr.h"
 #include "nsContentUtils.h" // nsAutoScriptBlocker
+
+using mozilla::CheckedUint32;
 
 /*
 CACHE_POINTER_SHIFT indicates how many steps to downshift the |this| pointer.
@@ -764,20 +767,41 @@ nsAttrAndChildArray::MakeMappedUnique(nsMappedAttributes* aAttributes)
 bool
 nsAttrAndChildArray::GrowBy(uint32_t aGrowSize)
 {
-  uint32_t size = mImpl ? mImpl->mBufferSize + NS_IMPL_EXTRA_SIZE : 0;
-  uint32_t minSize = size + aGrowSize;
+  CheckedUint32 size = 0;
+  if (mImpl) {
+    size += mImpl->mBufferSize;
+    size += NS_IMPL_EXTRA_SIZE;
+    if (!size.isValid()) {
+      return false;
+    }
+  }
 
-  if (minSize <= ATTRCHILD_ARRAY_LINEAR_THRESHOLD) {
+  CheckedUint32 minSize = size.value();
+  minSize += aGrowSize;
+  if (!minSize.isValid()) {
+    return false;
+  }
+
+  if (minSize.value() <= ATTRCHILD_ARRAY_LINEAR_THRESHOLD) {
     do {
       size += ATTRCHILD_ARRAY_GROWSIZE;
-    } while (size < minSize);
+      if (!size.isValid()) {
+        return false;
+      }
+    } while (size.value() < minSize.value());
   }
   else {
-    size = 1u << mozilla::CeilingLog2(minSize);
+    size = 1u << mozilla::CeilingLog2(minSize.value());
   }
 
   bool needToInitialize = !mImpl;
-  Impl* newImpl = static_cast<Impl*>(realloc(mImpl, size * sizeof(void*)));
+  CheckedUint32 neededSize = size;
+  neededSize *= sizeof(void*);
+  if (!neededSize.isValid()) {
+    return false;
+  }
+
+  Impl* newImpl = static_cast<Impl*>(realloc(mImpl, neededSize.value()));
   NS_ENSURE_TRUE(newImpl, false);
 
   mImpl = newImpl;
@@ -788,7 +812,7 @@ nsAttrAndChildArray::GrowBy(uint32_t aGrowSize)
     SetAttrSlotAndChildCount(0, 0);
   }
 
-  mImpl->mBufferSize = size - NS_IMPL_EXTRA_SIZE;
+  mImpl->mBufferSize = size.value() - NS_IMPL_EXTRA_SIZE;
 
   return true;
 }
@@ -799,11 +823,20 @@ nsAttrAndChildArray::AddAttrSlot()
   uint32_t slotCount = AttrSlotCount();
   uint32_t childCount = ChildCount();
 
+  CheckedUint32 size = slotCount;
+  size += 1;
+  size *= ATTRSIZE;
+  size += childCount;
+  if (!size.isValid()) {
+    return false;
+  }
+
   // Grow buffer if needed
-  if (!(mImpl && mImpl->mBufferSize >= (slotCount + 1) * ATTRSIZE + childCount) &&
+  if (!(mImpl && mImpl->mBufferSize >= size.value()) &&
       !GrowBy(ATTRSIZE)) {
     return false;
   }
+
   void** offset = mImpl->mBuffer + slotCount * ATTRSIZE;
 
   if (childCount > 0) {

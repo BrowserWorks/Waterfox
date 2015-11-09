@@ -1,4 +1,3 @@
-waterfox
 bing
 startpage
 google

@@ -1775,7 +1775,7 @@ fi
 dnl ========================================================
 dnl SPS Profiler
 dnl ========================================================
-MOZ_ENABLE_PROFILER_SPS=1
+MOZ_ENABLE_PROFILER_SPS=
 
 case "${OS_TARGET}" in
 Android)

@@ -35,7 +35,7 @@ This is likely the same like id.heading in crashes.dtd. -->
 
 
 <!ENTITY aboutSupport.appBasicsTitle "Application Basics">
-<!ENTITY aboutSupport.appBasicsName "Name">
+<!ENTITY aboutSupport.appBasicsName "Waterfox">
 <!ENTITY aboutSupport.appBasicsVersion "Version">
 <!ENTITY aboutSupport.appBasicsBuildID "Build ID">
 

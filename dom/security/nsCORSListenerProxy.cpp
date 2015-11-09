@@ -387,7 +387,6 @@ nsPreflightCache::GetCacheKey(nsIURI* aURI,
     port.AppendInt(NS_GetRealPort(uri));
   }
 
-  nsAutoCString cred;
   if (aWithCredentials) {
     _retval.AssignLiteral("cred");
   }
@@ -399,7 +398,7 @@ nsPreflightCache::GetCacheKey(nsIURI* aURI,
   rv = aURI->GetSpec(spec);
   NS_ENSURE_SUCCESS(rv, false);
 
-  _retval.Assign(cred + space + scheme + space + host + space + port + space +
+  _retval.Append(space + scheme + space + host + space + port + space +
                  spec);
 
   return true;
@@ -1027,6 +1026,7 @@ nsCORSPreflightListener::AddResultToCache(nsIRequest *aRequest)
 
   // The "Access-Control-Allow-Methods" header contains a comma separated
   // list of method names.
+  headerVal.Truncate();
   http->GetResponseHeader(NS_LITERAL_CSTRING("Access-Control-Allow-Methods"),
                           headerVal);
 
@@ -1057,6 +1057,7 @@ nsCORSPreflightListener::AddResultToCache(nsIRequest *aRequest)
 
   // The "Access-Control-Allow-Headers" header contains a comma separated
   // list of method names.
+  headerVal.Truncate();
   http->GetResponseHeader(NS_LITERAL_CSTRING("Access-Control-Allow-Headers"),
                           headerVal);
 

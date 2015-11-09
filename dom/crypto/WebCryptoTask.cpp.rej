@@ -1,0 +1,53 @@
+--- dom/crypto/WebCryptoTask.cpp
++++ dom/crypto/WebCryptoTask.cpp
+@@ -1703,20 +1690,17 @@
+     nsNSSShutDownPreventionLock locker;
+     if (mFormat.EqualsLiteral(WEBCRYPTO_KEY_FORMAT_JWK) && mJwk.mD.WasPassed()) {
+       // Private key import
+       privKey = CryptoKey::PrivateKeyFromJwk(mJwk, locker);
+       if (!privKey) {
+         return NS_ERROR_DOM_DATA_ERR;
+       }
+ 
+-      if (NS_FAILED(mKey->SetPrivateKey(privKey.get()))) {
+-        return NS_ERROR_DOM_OPERATION_ERR;
+-      }
+-
++      mKey->SetPrivateKey(privKey.get());
+       mKey->SetType(CryptoKey::PRIVATE);
+     } else if (mFormat.EqualsLiteral(WEBCRYPTO_KEY_FORMAT_RAW) ||
+                mFormat.EqualsLiteral(WEBCRYPTO_KEY_FORMAT_SPKI) ||
+                (mFormat.EqualsLiteral(WEBCRYPTO_KEY_FORMAT_JWK) &&
+                 !mJwk.mD.WasPassed())) {
+       // Public key import
+       if (mFormat.EqualsLiteral(WEBCRYPTO_KEY_FORMAT_RAW)) {
+         pubKey = CryptoKey::PublicECKeyFromRaw(mKeyData, mNamedCurve, locker);
+@@ -2376,25 +2351,23 @@
+   SECKEYPublicKey* pubKey = nullptr;
+   mPrivateKey = PK11_GenerateKeyPair(slot.get(), mMechanism, param, &pubKey,
+                                      PR_FALSE, PR_FALSE, nullptr);
+   mPublicKey = pubKey;
+   if (!mPrivateKey.get() || !mPublicKey.get()) {
+     return NS_ERROR_DOM_UNKNOWN_ERR;
+   }
+ 
+-  nsresult rv = mKeyPair.mPrivateKey.get()->SetPrivateKey(mPrivateKey);
+-  NS_ENSURE_SUCCESS(rv, NS_ERROR_DOM_OPERATION_ERR);
+-  rv = mKeyPair.mPublicKey.get()->SetPublicKey(mPublicKey);
+-  NS_ENSURE_SUCCESS(rv, NS_ERROR_DOM_OPERATION_ERR);
++  mKeyPair.mPrivateKey.get()->SetPrivateKey(mPrivateKey);
++  mKeyPair.mPublicKey.get()->SetPublicKey(mPublicKey);
+ 
+   // PK11_GenerateKeyPair() does not set a CKA_EC_POINT attribute on the
+   // private key, we need this later when exporting to PKCS8 and JWK though.
+   if (mMechanism == CKM_EC_KEY_PAIR_GEN) {
+-    rv = mKeyPair.mPrivateKey->AddPublicKeyData(mPublicKey);
++    nsresult rv = mKeyPair.mPrivateKey->AddPublicKeyData(mPublicKey);
+     NS_ENSURE_SUCCESS(rv, NS_ERROR_DOM_OPERATION_ERR);
+   }
+ 
+   return NS_OK;
+ }
+ 
+ void
+ GenerateAsymmetricKeyTask::Resolve()

@@ -1916,6 +1916,10 @@ pref("browser.reader.detectedFirstArticle", false);
 // Don't limit how many nodes we care about on desktop:
 pref("reader.parse-node-limit", 0);
 
+// On desktop, we want the URLs to be included here for ease of debugging,
+// and because (normally) these errors are not persisted anywhere.
+pref("reader.errors.includeURLs", true);
+
 // Enable Service workers for desktop on non-release builds
 pref("dom.serviceWorkers.enabled", true);
 

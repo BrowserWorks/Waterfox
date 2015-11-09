@@ -651,8 +651,7 @@ WebGLTexture::EnsureNoUninitializedImageData(TexImageTarget imageTarget,
                         imageInfo.mDepth,
                         bytespertexel,
                         mContext->mPixelStoreUnpackAlignment);
-    MOZ_ASSERT(checked_byteLength.isValid()); // Should have been checked
-                                              // earlier.
+    MOZ_RELEASE_ASSERT(checked_byteLength.isValid()); // Should have been checked earlier.
 
      // Infallible for now.
     UniquePtr<uint8_t> zeros((uint8_t*)moz_xcalloc(1,
