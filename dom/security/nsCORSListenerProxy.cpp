@@ -1,4 +1,4 @@
-/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+#include "nsIConsoleService.h"/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -535,14 +535,8 @@ nsCORSListenerProxy::CheckRequestApproved(nsIRequest* aRequest)
   // Check if the request failed
   nsresult status;
   nsresult rv = aRequest->GetStatus(&status);
-  if (NS_FAILED(rv)) {
-    LogBlockedRequest(aRequest, "CORSRequestFailed", nullptr);
-    return rv;
-  }
-  if (NS_FAILED(status)) {
-    LogBlockedRequest(aRequest, "CORSRequestFailed", nullptr);
-    return status;
-  }
+  NS_ENSURE_SUCCESS(rv, rv);
+  NS_ENSURE_SUCCESS(status, status);
 
   // Test that things worked on a HTTP level
   nsCOMPtr<nsIHttpChannel> http = do_QueryInterface(aRequest);

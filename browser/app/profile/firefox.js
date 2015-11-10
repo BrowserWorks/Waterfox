@@ -406,10 +406,10 @@ pref("browser.search.geoSpecificDefaults", false);
 pref("browser.search.geoSpecificDefaults.url", "");
 
 // US specific default (used as a fallback if the geoSpecificDefaults request fails).
-pref("browser.search.defaultenginename.US",      "data:text/plain,browser.search.defaultenginename.US=Waterfox");
-pref("browser.search.order.US.1",                "data:text/plain,browser.search.order.US.1=Waterfox");
-pref("browser.search.order.US.2",                "data:text/plain,browser.search.order.US.2=Google");
-pref("browser.search.order.US.3",                "data:text/plain,browser.search.order.US.3=Bing");
+pref("browser.search.defaultenginename.US",      "data:text/plain,browser.search.defaultenginename.US=Google");
+pref("browser.search.order.US.1",                "data:text/plain,browser.search.order.US.1=Google");
+pref("browser.search.order.US.2",                "data:text/plain,browser.search.order.US.2=Bing");
+pref("browser.search.order.US.3",                "data:text/plain,browser.search.order.US.3=Yahoo");
 
 // search bar results always open in a new tab
 pref("browser.search.openintab", false);
@@ -1698,7 +1698,7 @@ pref("pdfjs.previousHandler.preferredAction", 0);
 pref("pdfjs.previousHandler.alwaysAskBeforeHandling", false);
 
 // Shumway is only bundled in Nightly.
-#ifdef NIGHTLY_BUILD
+//#ifdef NIGHTLY_BUILD
 // By default, Shumway (SWF player) is only enabled for whitelisted SWFs on Windows + OS X.
 #ifdef UNIX_BUT_NOT_MAC
 pref("shumway.disabled", true);
@@ -1706,7 +1706,7 @@ pref("shumway.disabled", true);
 pref("shumway.disabled", false);
 pref("shumway.swf.whitelist", "http://g-ecx.images-amazon.com/*/AiryBasicRenderer*.swf,http://z-ecx.images-amazon.com/*/AiryFlashlsRenderer._TTW_.swf,http://ia.media-imdb.com/*/AiryFlashlsRenderer._TTW_.swf");
 #endif
-#endif
+//#endif
 
 // The maximum amount of decoded image data we'll willingly keep around (we
 // might keep around more than this, but we'll try to get down to this value).
